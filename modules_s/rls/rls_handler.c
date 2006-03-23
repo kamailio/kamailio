@@ -231,7 +231,7 @@ static int handle_new_subscription(struct sip_msg *m, rls_xcap_query_t *query, i
 	
 	rls_lock();
 
-	TRACE("handle_new_subscription(rls)\n");
+	DBG("handle_new_subscription(rls)\n");
 	/* create a new subscription structure */
 	res = rls_create_subscription(m, &s, query->flat_list, params);
 	if (res != RES_OK) {
@@ -317,7 +317,7 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	call_id = NULL;
 	if (m->callid) call_id = &m->callid->body;
 	
-	TRACE("handle_renew_subscription(rls)\n");
+	DBG("handle_renew_subscription(rls)\n");
 	
 	rls_lock();
 	
@@ -424,7 +424,7 @@ static int get_xcap_root(str *dst)
 	avp = search_first_avp(AVP_NAME_STR, name, &val, 0);
 	if (avp) {
 		/* don't use default - use value from AVP */
-		TRACE("redefined xcap_root = %.*s\n", FMT_STR(val.s));
+		DBG("redefined xcap_root = %.*s\n", FMT_STR(val.s));
 		*dst = val.s;
 	} 
 	else {

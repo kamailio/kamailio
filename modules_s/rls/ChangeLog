@@ -1,3 +1,6 @@
+2006-03-22
+	* corrected memory leak
+
 2006-03-21
 	* accepts subscription status through QSA
 

@@ -325,10 +325,12 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	dlg_t *dlg;
 	int exp_time = 0;
 	char expiration[32];
-	
+
 	dlg = s->u.external.dialog;
 	if (!dlg) return -1;
 
+	DEBUG("generating external notify\n");
+	
 	str_clear(&doc);
 	str_clear(&content_type);
 	if (sm_subscription_pending(&s->u.external) != 0) {
@@ -410,6 +412,8 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	
 	if (use_db) rls_db_update(s);
 	
+	DEBUG("external notify generated\n");
+	
 	return res;
 }
 
@@ -436,6 +440,8 @@ static int rls_generate_notify_int(rl_subscription_t *s)
 
 	if (!s->u.internal.vs) return 1;
 	
+	DBG("generating internal rls notification\n");
+
 	/* raw = rls2raw_presence_info(s); */
 	create_rlmi_document(&doc, &content_type, s, 1);
 	
@@ -450,6 +456,8 @@ static int rls_generate_notify_int(rl_subscription_t *s)
 int rls_generate_notify(rl_subscription_t *s, int full_info)
 {
 	/* !!! the main mutex must be locked here !!! */
+	DBG("generating rls notification\n");
+
 	if (!s) {
 		ERR("called with <null> subscription\n");
 		return -1;

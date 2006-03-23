@@ -63,8 +63,8 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 	raw_presence_info_t *raw;
 	str_t new_doc = STR_NULL;
 	str_t new_type = STR_NULL;
-	int changed = 0;
 	subscription_status_t old_status;
+	int self_allocated = 0;
 	
 	if ((!vs) || (!info)) return;
 	
@@ -86,11 +86,11 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 			vs->status = subscription_terminated;
 			break;
 	}
-	if (old_status != vs->status) changed = 1;
+	if (old_status != vs->status) vs->changed = 1;
 
 	switch (info->data_type) {
 		case PRESENTITY_RAW_INFO:
-			/* TRACE("Processing raw notification\n"); */
+			DEBUG("Processing raw notification\n");
 			
 			raw = (raw_presence_info_t*)info->data;
 			if (!raw) return;
@@ -103,7 +103,7 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 			vs->status = subscription_active;
 			break;
 		case PRESENTITY_INFO_TYPE:
-			/* TRACE("Processing structured notification\n"); */
+			DEBUG("Processing structured notification\n");
 			
 			pinfo = (presentity_info_t*)info->data;
 			if (!pinfo) {
@@ -118,7 +118,8 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 				str_free_content(&vs->content_type);
 				return;
 			}
-			vs->status = subscription_active;
+			self_allocated = 1;
+			/* vs->status = subscription_active; */
 			
 			/* DEBUG_LOG("created pidf document:\n %.*s\n", FMT_STR(vs->state_document)); */
 			break;
@@ -131,20 +132,24 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 	
 	if (str_case_equals(&vs->state_document, &new_doc) == 0) {
 		/* TRACE("new document is equal to the older one\n"); */
+		if (self_allocated) str_free_content(&new_doc);
 	}
 	else {
 		str_free_content(&vs->state_document);
-		str_dup(&vs->state_document, &new_doc);
-		changed = 1;
+		if (self_allocated) vs->state_document = new_doc;
+		else str_dup(&vs->state_document, &new_doc);
+		vs->changed = 1;
 	}
 	
 	if (str_case_equals(&vs->content_type, &new_type) == 0) {
 		/* TRACE("new content-type is equal to the older one\n"); */
+		if (self_allocated) str_free_content(&new_type);
 	}
 	else {
 		str_free_content(&vs->content_type);
-		str_dup(&vs->content_type, &new_type);
-		changed = 1;
+		if (self_allocated) vs->content_type = new_type;
+		else str_dup(&vs->content_type, &new_type);
+		vs->changed = 1;
 	}
 	
 	if (changed) rls_generate_notify(vs->subscription, 1);
@@ -376,7 +381,7 @@ int vs_create(str *uri,
 
 	add_to_vs_list(*dst);
 
-	TRACE("created VS %p to %.*s\n", *dst, uri->len, uri->s);
+	DBG("created VS %p to %.*s\n", *dst, uri->len, uri->s);
 	
 	res = create_subscriptions(*dst);
 	if (res != 0) {

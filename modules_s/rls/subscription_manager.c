@@ -374,7 +374,7 @@ void subscription_expiration_cb(struct _time_event_data_t *ted)
 	
 	mng = ted->cb_param1;
 	s = ted->cb_param;
-	TRACE_LOG("subscription %p(%p) expired at: %s\n", s, mng, ctime(&t));
+	DBG("subscription %p(%p) expired at: %s\n", s, mng, ctime(&t));
 
 	if (mng && s) {
 		if (s->status == subscription_pending)
