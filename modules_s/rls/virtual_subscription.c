@@ -57,6 +57,76 @@ int vs_destroy()
 }
 
 /******** Helper functions ********/
+
+/* sets new documents (frees them if equal) */
+static void set_vs_document(virtual_subscription_t *vs,
+		str_t *new_doc, 
+		str_t *new_content_type)
+{
+	if (str_case_equals(&vs->state_document, new_doc) == 0) {
+		/* DEBUG("new document is equal to the older one\n"); */
+		str_free_content(new_doc);
+	}
+	else {
+		str_free_content(&vs->state_document);
+		if (new_doc) vs->state_document = *new_doc;
+		else str_clear(&vs->state_document);
+		vs->changed = 1;
+	}
+	
+	if (str_case_equals(&vs->content_type, new_content_type) == 0) {
+		/* DEBUG("new content-type is equal to the older one\n"); */
+		str_free_content(new_content_type);
+	}
+	else {
+		str_free_content(&vs->content_type);
+		if (new_content_type) vs->content_type = *new_content_type;
+		else str_clear(&vs->content_type);
+		vs->changed = 1;
+	}
+}
+
+/* duplicates documents if changed */
+static int set_vs_document_dup(virtual_subscription_t *vs,
+		str_t *new_doc, 
+		str_t *new_content_type)
+{
+	if (str_case_equals(&vs->state_document, new_doc) == 0) {
+		/* DEBUG("new document is equal to the older one\n"); */
+	}
+	else {
+		str_free_content(&vs->state_document);
+		str_dup(&vs->state_document, new_doc);
+		vs->changed = 1;
+	}
+	
+	if (str_case_equals(&vs->content_type, new_content_type) == 0) {
+		/* DEBUG("new content-type is equal to the older one\n"); */
+	}
+	else {
+		str_free_content(&vs->content_type);
+		str_dup(&vs->content_type, new_content_type);
+		vs->changed = 1;
+	}
+	return 0;
+}
+
+static void propagate_change(virtual_subscription_t *vs)
+{
+	if (vs->subscription->type == rls_internal_subscription) {
+		/* propagate change to higher level */
+		rls_generate_notify(vs->subscription, 1);
+	}
+	else {
+		/* external subscriptions will send NOTIFY only sometimes 
+		 * => we mark it as changed now */
+		vs->subscription->changed++;
+		/* FIXME: put this subscription in some queue? (needs remove from it
+		 * when freeing!) */
+		if (rls) rls->changed_subscriptions++; /* change indicator */
+	}
+}
+
 void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *info) 
 {
 	presentity_info_t *pinfo;
@@ -64,7 +134,6 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 	str_t new_doc = STR_NULL;
 	str_t new_type = STR_NULL;
 	subscription_status_t old_status;
-	int self_allocated = 0;
 	
 	if ((!vs) || (!info)) return;
 	
@@ -94,14 +163,14 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 			
 			raw = (raw_presence_info_t*)info->data;
 			if (!raw) return;
-			
-			/* create_presence_rlmi_document(linfo, &vs->state_document, &vs->content_type); */
-			/* TRACE(" ... duplicating documents\n"); */
-			new_doc = raw->pres_doc;
-			new_type = raw->content_type;
-			
-			vs->status = subscription_active;
+	
+			/* document MUST be duplicated !!! */
+			if (set_vs_document_dup(vs, &raw->pres_doc, &raw->content_type) < 0) {
+				ERR("can't set new status document for VS %p\n", vs);
+				return;
+			}
 			break;
+
 		case PRESENTITY_INFO_TYPE:
 			DEBUG("Processing structured notification\n");
 			
@@ -118,11 +187,9 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 				str_free_content(&vs->content_type);
 				return;
 			}
-			self_allocated = 1;
-			/* vs->status = subscription_active; */
-			
-			/* DEBUG_LOG("created pidf document:\n %.*s\n", FMT_STR(vs->state_document)); */
+			set_vs_document(vs, &new_doc, &new_type);
 			break;
+			
 		default:
 			ERR("received unacceptable notification (%d)\n", info->data_type);
 			str_free_content(&vs->state_document); 		
@@ -130,29 +197,7 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 			return;
 	}
 	
-	if (str_case_equals(&vs->state_document, &new_doc) == 0) {
-		/* TRACE("new document is equal to the older one\n"); */
-		if (self_allocated) str_free_content(&new_doc);
-	}
-	else {
-		str_free_content(&vs->state_document);
-		if (self_allocated) vs->state_document = new_doc;
-		else str_dup(&vs->state_document, &new_doc);
-		vs->changed = 1;
-	}
-	
-	if (str_case_equals(&vs->content_type, &new_type) == 0) {
-		/* TRACE("new content-type is equal to the older one\n"); */
-		if (self_allocated) str_free_content(&new_type);
-	}
-	else {
-		str_free_content(&vs->content_type);
-		if (self_allocated) vs->content_type = new_type;
-		else str_dup(&vs->content_type, &new_type);
-		vs->changed = 1;
-	}
-	
-	if (changed) rls_generate_notify(vs->subscription, 1);
+	if (vs->changed) propagate_change(vs);
 }
 
 void process_internal_notify(virtual_subscription_t *vs, 
@@ -162,21 +207,10 @@ void process_internal_notify(virtual_subscription_t *vs,
 	if (!vs) return;
 	
 	DBG("Processing internal notification for VS %p\n", vs);
-		
-	/* free old_documents */
-	str_free_content(&vs->state_document); 		
-	str_free_content(&vs->content_type);
 	
-	/* don't copy documents - use them directly - 
-	 * see rls_generate_notify_int */
-	if (new_state_document) vs->state_document = *new_state_document;
-	else str_clear(&vs->state_document);
-	if (new_content_type) vs->content_type = *new_content_type;
-	else str_clear(&vs->content_type);
-	
-	/* propagate notification */
-	rls_generate_notify(vs->subscription, 1);
-	vs->subscription->changed = 0;
+	/* don't copy document - use it directly */
+	set_vs_document(vs, new_state_document, new_content_type);
+	if (vs->changed) propagate_change(vs);
 }
 
 #if 0
@@ -240,21 +274,6 @@ static void vs_timer_cb(unsigned int ticks, void *param)
 }
 
 #endif
-
-void notify_all_modified_vs()
-{
-	virtual_subscription_t *vs;
-
-	vs = vsd->first;
-	while (vs) {
-		if (vs->subscription->changed > 0) {
-			DEBUG_LOG("RL subscription generate notify\n");
-			rls_generate_notify(vs->subscription, 1);
-			vs->subscription->changed = 0;
-		}
-		vs = vs->next;
-	}
-}
 
 static int add_to_vs_list(virtual_subscription_t *vs)
 {
@@ -377,6 +396,7 @@ int vs_create(str *uri,
 	(*dst)->local_subscription_pres = NULL;
 	(*dst)->local_subscription_list = NULL;
 	(*dst)->subscription = subscription;
+	(*dst)->changed = 0;
 	generate_db_id(&(*dst)->dbid, *dst);
 
 	add_to_vs_list(*dst);

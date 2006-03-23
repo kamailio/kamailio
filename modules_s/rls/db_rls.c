@@ -521,7 +521,6 @@ int db_load_rls()
 			s = rls_alloc_subscription(rls_external_subscription);
 			if (!s) { r = -1; break; }
 		
-			s->enable_generate_notify = 0;
 			get_str_val(row_vals[0], id);
 			strcpy(s->dbid, id.s);
 			get_int_val(row_vals[1], s->doc_version);
@@ -558,8 +557,6 @@ int db_load_rls()
 		
 			/* load virtual subscriptions */
 			db_load_vs(rls_db, s);	
-			
-			s->enable_generate_notify = 1;
 		}
 
 		rls_dbf.free_result(rls_db, res);

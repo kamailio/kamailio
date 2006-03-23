@@ -121,6 +121,21 @@ int create_virtual_subscriptions(rl_subscription_t *ss)
 	free_flat_list(flat);
 	return RES_OK;
 }
+
+static void clear_change_flags(rl_subscription_t *s)
+{
+	int i, cnt;
+	virtual_subscription_t *vs;
+
+	cnt = ptr_vector_size(&s->vs);
+	for (i = 0; i < cnt; i++) {
+		vs = ptr_vector_get(&s->vs, i);
+		if (!vs) continue;
+		vs->changed = 0;
+	}
+	s->changed = 0;
+}
+
 /************* RL subscription manipulation function  ************/
 
 rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
@@ -139,7 +154,6 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 	s->doc_version = 0;
 	s->changed = 0;
 	s->type = type;
-	s->enable_generate_notify = 0;
 	s->dbid[0] = 0;
 
 	/* s->first_vs = NULL;
@@ -169,7 +183,6 @@ int rls_create_subscription(struct sip_msg *m,
 		return RES_MEMORY_ERR;
 	}
 	generate_db_id(&s->dbid, s);
-	s->enable_generate_notify = 0;
 
 	res = sm_init_subscription_nolock(rls_manager, &s->u.external, m);
 	if (res != RES_OK) {
@@ -215,8 +228,6 @@ int rls_create_subscription(struct sip_msg *m,
 		}
 	}
 
-	s->enable_generate_notify = 1;
-	
 	*dst = s;
 	return RES_OK;
 }
@@ -378,31 +389,35 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	dstr_append_str(&dstr, &content_type);
 	dstr_append_zt(&dstr, "\r\n");
 
-	dstr_get_str(&dstr, &headers);
+	res = dstr_get_str(&dstr, &headers);
 	dstr_destroy(&dstr);
 
-	/* DEBUG_LOG("sending NOTIFY message to %.*s (subscription %p)\n",  
-			dlg->rem_uri.len, 
-			ZSW(dlg->rem_uri.s), s); */
-	
-	if (sm_subscription_terminated(&s->u.external) == 0) {
-		/* doesn't matter if delivered or not, it will be freed otherwise !!! */
-		res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
-	}
-	else {
-		/* the subscritpion will be destroyed if NOTIFY delivery problems */
-		/* rls_unlock();  the callback locks this mutex ! */
+	if (res >= 0) {
+		/* DEBUG("sending NOTIFY message to %.*s (subscription %p)\n",  
+				dlg->rem_uri.len, 
+				ZSW(dlg->rem_uri.s), s); */
 		
-		/* !!!! FIXME: callbacks can't be safely used (may be called or not,
-		 * may free memory automaticaly or not) !!! */
-		res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
-		
-/*		res = tmb.t_request_within(&method, &headers, &doc, dlg, rls_notify_cb, s); */
-		/* rls_lock(); the callback locks this mutex ! */
-		if (res < 0) {
-			/* does this mean, that the callback was not called ??? */
-			ERR("t_request_within FAILED: %d! Freeing RL subscription.\n", res);
-			rls_remove(s); /* ?????? */
+		if (sm_subscription_terminated(&s->u.external) == 0) {
+			/* doesn't matter if delivered or not, it will be freed otherwise !!! */
+			res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
+			if (res >= 0) clear_change_flags(s);
+		}
+		else {
+			/* the subscritpion will be destroyed if NOTIFY delivery problems */
+			/* rls_unlock();  the callback locks this mutex ! */
+			
+			/* !!!! FIXME: callbacks can't be safely used (may be called or not,
+			 * may free memory automaticaly or not) !!! */
+			res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
+			
+	/*		res = tmb.t_request_within(&method, &headers, &doc, dlg, rls_notify_cb, s); */
+			/* rls_lock(); the callback locks this mutex ! */
+			if (res < 0) {
+				/* does this mean, that the callback was not called ??? */
+				ERR("t_request_within FAILED: %d! Freeing RL subscription.\n", res);
+				rls_remove(s); /* ?????? */
+			}
+			else clear_change_flags(s);
 		}
 	}
 	
@@ -412,7 +427,8 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	
 	if (use_db) rls_db_update(s);
 	
-	DEBUG("external notify generated\n");
+	if (res < 0) DEBUG("external notify NOT generated\n");
+	else DEBUG("external notify generated\n");
 	
 	return res;
 }
@@ -430,8 +446,8 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 
 	return info;
 } */
-
-static int rls_generate_notify_int(rl_subscription_t *s)
+	
+static int rls_generate_notify_int(rl_subscription_t *s, int full_info)
 {
 	/* generate internal notification */
 	str_t doc, content_type;
@@ -443,7 +459,12 @@ static int rls_generate_notify_int(rl_subscription_t *s)
 	DBG("generating internal rls notification\n");
 
 	/* raw = rls2raw_presence_info(s); */
-	create_rlmi_document(&doc, &content_type, s, 1);
+	if (create_rlmi_document(&doc, &content_type, s, full_info) < 0) {
+		ERR("can't generate internal notification document\n");
+		return -1;
+	}
+
+	clear_change_flags(s);
 	
 	/* documents are given to VS (we don't care about them
 	 * more - no free, ... */
@@ -463,16 +484,11 @@ int rls_generate_notify(rl_subscription_t *s, int full_info)
 		return -1;
 	}
 	
-	if (!s->enable_generate_notify) {
-		/* disabled */
-		return 0;
-	} 
-	
 	switch (s->type) {
 		case rls_external_subscription:
 			return rls_generate_notify_ext(s, full_info);
 		case rls_internal_subscription:
-			return rls_generate_notify_int(s);
+			return rls_generate_notify_int(s, full_info);
 	}
 	
 	return -1;
@@ -522,7 +538,6 @@ int rls_create_internal_subscription(virtual_subscription_t *vs,
 		return -1;
 	}
 
-	rls->enable_generate_notify = 0;
 	rls->u.internal.record_id = &vs->uri; /* !!! NEVER !!! free this */
 	rls->u.internal.package = rls_get_package(vs->subscription); /* !!! NEVER !!! free this */
 	rls->u.internal.subscriber_id = rls_get_subscriber(vs->subscription); /* !!! NEVER !!! free this */
@@ -540,8 +555,6 @@ int rls_create_internal_subscription(virtual_subscription_t *vs,
 		if (dst) *dst = NULL;
 		return -1;
 	}
-
-	rls->enable_generate_notify = 1;
 
 	rls_generate_notify(rls, 1);
 

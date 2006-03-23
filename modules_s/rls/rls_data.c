@@ -21,6 +21,26 @@ static int terminate_subscription_cb(struct _subscription_data_t *s)
 	return 0;
 }
 
+static void do_external_notifications()
+{
+	subscription_data_t *s = NULL;
+	rl_subscription_t *rs;
+	
+	if (rls_manager) s = rls_manager->first;
+	/* this goes through all EXTERNAL subscriptions only !!!
+	 * but internal subscriptions are notified immediately, thus this is what
+	 * we want */
+	
+	/* there can be some logic to handle at most xxx subscriptions ... */
+	while (s) {
+		rs = (rl_subscription_t*)(s->usr_data);
+		if (rs->changed) rls_generate_notify(rs, 0);
+		s = s->next;
+	}
+		
+	rls->changed_subscriptions = 0;
+}
+
 static void rls_timer_cb(unsigned int ticks, void *param)
 {
 	virtual_subscription_t *vs;
@@ -45,14 +65,20 @@ static void rls_timer_cb(unsigned int ticks, void *param)
 		free_message(msg);
 	}
 
-	/* TRACE_LOG("processed %d mesage(s)\n", cnt); */
-
-#if 0
-	if (cnt > 0) {
-		/* this could be called from some rli_timer ? */
-		notify_all_modified_vs(); 	
+	/* experimental optimization:
+	 *   if priority (change count) is high, it is processed
+	 *   otherwise is the priority incremented => changes are 
+	 *   cumulated together */
+	if (rls->changed_subscriptions > 5) {
+		do_external_notifications();
+		/* other logic may be used to generate at most some number of
+		 * subscriptions -> rls->changed_subscriptions is reset from
+		 * do_external_notifications() */
 	}
-#endif
+	else {
+		if (rls->changed_subscriptions > 0) 
+			rls->changed_subscriptions++;
+	}
 	
 	rls_unlock();
 	stop = time(NULL);
@@ -81,8 +107,10 @@ int rls_init()
 		LOG(L_ERR, "rls_init(): memory allocation error\n");
 		return -1;
 	}
-	rls->first = NULL;
-	rls->last = NULL;
+/*	rls->first = NULL;
+	rls->last = NULL;*/
+	rls->changed_subscriptions = 0;
+
 	if (msg_queue_init(&rls->notify_mq) != 0) {
 		ERR("can't initialize message queue for RLS notifications!\n");
 		return -1;

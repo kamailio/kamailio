@@ -51,6 +51,8 @@ typedef struct _virtual_subscription_t {
 	vector_t display_names;
 
 	rl_subscription_t *subscription;
+
+	int changed;
 	
 	/** whole document describing the state of this resource */
 	str state_document;
@@ -108,7 +110,7 @@ struct _rl_subscription_t {
 	int doc_version;
 
 	/** the count of changed virtual subscriptions 
-	 * (enough changes = send notify) */
+	 * (enough changes ?= send notify) */
 	int changed;
 	
 	/* virtual subscriptions for this rls */
@@ -119,10 +121,6 @@ struct _rl_subscription_t {
 
 	/* generated id for database */
 	db_id_t dbid;
-
-	/* if set, notifications are propagated to the parent (internal subscriptions) 
-	 * or subscriber (external subscription) */
-	int enable_generate_notify;
 };
 
 str_t * rls_get_package(rl_subscription_t *s);
@@ -130,11 +128,6 @@ str_t * rls_get_uri(rl_subscription_t *s);
 str_t * rls_get_subscriber(rl_subscription_t *subscription);
 
 /********* resource list subscription functions ********/
-
-int rls_init();
-int rls_destroy();
-void rls_lock();
-void rls_unlock();
 
 int rls_create_subscription(struct sip_msg *m, 
 		rl_subscription_t **dst, 
@@ -188,8 +181,6 @@ int xcap_query_rls_services(const str_t *xcap_root,
 void process_internal_notify(virtual_subscription_t *vs, 
 		str_t *new_state_document,
 		str_t *new_content_type);
-
-void notify_all_modified_vs();
 
 void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *info);
  
