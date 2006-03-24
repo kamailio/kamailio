@@ -49,7 +49,7 @@ static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream
 int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bsize)
 {
 	CURLcode res = -1;
-	CURL *handle;
+	static CURL *handle = NULL; /*FIXME: experimental*/
 	dstring_t data;
 	char *auth = NULL;
 	int i;
@@ -75,10 +75,10 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 	
 	dstr_init(&data, 512);
 	
-	handle = curl_easy_init();
+	if (!handle) handle = curl_easy_init(); /*FIXME: experimental*/
 	if (handle) {
 		curl_easy_setopt(handle, CURLOPT_URL, uri);
-		/* TRACE_LOG("uri: %s\n", uri ? uri : "<null>"); */
+		TRACE_LOG("uri: %s\n", uri ? uri : "<null>");
 		
 		/* do not store data into a file - store them in memory */
 		curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data_func);
@@ -107,13 +107,13 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 		curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
 		
 		/* FIXME: experimetns */
-		curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 1);
-		curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10);
+	/*	curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 1);
+		curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10);*/
 		
 		/* Accept headers */
 		
 		res = curl_easy_perform(handle);
-		curl_easy_cleanup(handle);
+		/* curl_easy_cleanup(handle); */ /* FIXME: experimental */
 	}
 	else ERROR_LOG("can't initialize curl handle\n");
 	if (res == 0) {
