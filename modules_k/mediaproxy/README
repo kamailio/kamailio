@@ -323,6 +323,12 @@ if (client_nat_test("3")) {
    Called when you want to make the session go through a proxy
    server.
 
+   This function has the following return codes:
+
+     * +1 - successfully modified message (true value)
+     * -1 - error in processing message (false value)
+     * -2 - missing SDP body, nothing to process (false value)
+
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
@@ -349,7 +355,7 @@ if (method==INVITE) {
    Example 1-8. end_media_session usage
 ...
 if (method==BYE) {
-        use_media_proxy();
+        end_media_session();
 }
 ...
      _________________________________________________________

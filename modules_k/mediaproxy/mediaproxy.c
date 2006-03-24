@@ -206,7 +206,7 @@ struct module_exports exports = {
     "mediaproxy", // module name
     commands,     // module exported functions
     parameters,   // module exported parameters
-	0,            /* exported statistics */
+    NULL,         // exported statistics
     mod_init,     // module init (before any kid is created. kids will inherit)
     NULL,         // reply processing
     NULL,         // destroy function
@@ -731,24 +731,22 @@ checkContentType(struct sip_msg *msg)
 
 
 // Get the SDP message from SIP message and check it's Content-Type
-// return -1 on error, 0 if empty message, 1 if message present and not empty
+// Return values:
+//    1 - success
+//   -1 - error in getting body or invalid content type
+//   -2 - empty message
 static int
 getSDPMessage(struct sip_msg *msg, str *sdp)
 {
     sdp->s = get_body(msg);
     if (sdp->s==NULL) {
-        LOG(L_ERR, "error: mediaproxy/getSDPMessage(): cannot get the SDP body from SIP message\n");
+        LOG(L_ERR, "error: mediaproxy/getSDPMessage(): cannot get body from message\n");
         return -1;
     }
+
     sdp->len = msg->buf + msg->len - sdp->s;
-    if (sdp->len==0) {
-        // 0 length body is ok for ACK messages
-        if (!(msg->first_line.type == SIP_REQUEST &&
-              msg->first_line.u.request.method_value == METHOD_ACK)) {
-            LOG(L_ERR, "error: mediaproxy/getSDPMessage(): SDP message has zero length\n");
-        }
-        return 0;
-    }
+    if (sdp->len == 0)
+        return -2;
 
     if (!checkContentType(msg)) {
         LOG(L_ERR, "error: mediaproxy/getSDPMessage(): content type is not `application/sdp'\n");
@@ -1352,7 +1350,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     str sdp, sessionIP, callId, fromDomain, toDomain, userAgent, tokens[64];
     str fromAddr, toAddr, fromTag, toTag;
     char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType, *info;
-    int streamCount, i, port, count, portCount, cmdlen, infolen, success, type;
+    int streamCount, i, port, count, portCount, cmdlen, infolen, status, type;
     StreamInfo streams[64], stream;
     Bool request;
 
@@ -1382,13 +1380,10 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         return -1;
     }
 
-    success = getSDPMessage(msg, &sdp);
-    if (success==0 && type==MSG_ACK) {
-        return 1; // nothing to do. it's ok for ACK to not have a SDP body
-    } else if (success <= 0) {
-        LOG(L_ERR, "error: use_media_proxy(): failed to get the SDP message\n");
-        return -1;
-    }
+    status = getSDPMessage(msg, &sdp);
+    // status = -1 is error, -2 is missing SDP body
+    if (status < 0)
+        return status;
 
     if (!getSessionLevelMediaIP(&sdp, &sessionIP)) {
         LOG(L_ERR, "error: use_media_proxy(): error parsing the SDP message\n");
@@ -1507,8 +1502,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     }
 
     if (sessionIP.s && !isAnyAddress(sessionIP)) {
-        success = replaceElement(msg, &sessionIP, &tokens[0]);
-        if (!success) {
+        if (!replaceElement(msg, &sessionIP, &tokens[0])) {
             LOG(L_ERR, "error: use_media_proxy(): failed to replace "
                 "session-level media IP in SDP body\n");
             return -1;
@@ -1528,8 +1522,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         }
 
         if (streams[i].port.len!=1 || streams[i].port.s[0]!='0') {
-            success = replaceElement(msg, &(streams[i].port), &tokens[i+1]);
-            if (!success) {
+            if (!replaceElement(msg, &(streams[i].port), &tokens[i+1])) {
                 LOG(L_ERR, "error: use_media_proxy(): failed to replace "
                     "port in media stream nr. %d\n", i+1);
                 return -1;
@@ -1537,8 +1530,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         }
 
         if (streams[i].localIP && !isAnyAddress(streams[i].ip)) {
-            success = replaceElement(msg, &(streams[i].ip), &tokens[0]);
-            if (!success) {
+            if (!replaceElement(msg, &(streams[i].ip), &tokens[0])) {
                 LOG(L_ERR, "error: use_media_proxy(): failed to replace "
                     "IP address in media stream nr. %d\n", i+1);
                 return -1;

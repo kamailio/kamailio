@@ -350,6 +350,20 @@ if (client_nat_test("3")) {
 			<para>
 				Called when you want to make the session go through a proxy server.
 			</para>
+			<para>This function has the following return codes:</para>
+			<para>
+				<itemizedlist>
+				<listitem><para>
+					+1 - successfully modified message (true value)
+				</para></listitem>
+				<listitem><para>
+					-1 - error in processing message (false value)
+				</para></listitem>
+				<listitem><para>
+					-2 - missing SDP body, nothing to process (false value)
+				</para></listitem>
+				</itemizedlist>
+			</para>
 			<para>
 				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 			</para>		
@@ -385,7 +399,7 @@ if (method==INVITE) {
 				<programlisting format="linespecific">
 ...
 if (method==BYE) {
-	use_media_proxy();
+	end_media_session();
 }
 ...
 </programlisting>
