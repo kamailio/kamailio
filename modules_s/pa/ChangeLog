@@ -1,5 +1,7 @@
 2006-03-27
 	* added (empty) function for message authorization
+	* corrected bug in offline watcherinfo dumping (removed were messages with
+	id less or equal than requested instead of equal only)
 
 2006-03-23
 	* added debugging messages into send_winfo_notify due to problems with

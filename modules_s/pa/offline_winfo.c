@@ -213,7 +213,7 @@ int db_remove_winfos(offline_winfo_t *info)
 {
 	db_key_t keys[] = { "dbid" };
 	db_val_t vals[1];
-	db_op_t ops[] = { OP_LEQ };
+	db_op_t ops[] = { OP_EQ };
 	int res = 0;
 
 	if (!pa_db) {
