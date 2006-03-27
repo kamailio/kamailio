@@ -23,6 +23,7 @@
 #include "offline_winfo.h"
 
 #include "winfo_doc.h"
+#include "message.h"
 
 /* ----- Helper and internal functions ----- */
 

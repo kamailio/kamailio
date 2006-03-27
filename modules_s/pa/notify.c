@@ -364,25 +364,35 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	str doc = STR_NULL;
 	str content_type = STR_NULL;
 	str headers = STR_NULL;
+	int res = 0;
 
+	DEBUG("sending winfo notify\n");
+	
 	switch (_w->preferred_mimetype) {
 		case DOC_WINFO:
 			create_winfo_document(_p, _w, &doc, &content_type);
+			DEBUG("winfo document created\n");
 			break;
 		/* other formats ? */
 		default:
-			LOG(L_ERR, "send_winfo_notify: unknow doctype\n");
+			ERR("unknow doctype\n");
 			return -1;
 	}
 
+	DEBUG("creating headers\n");
 	if (create_headers(_w, &headers, &content_type) < 0) {
-		LOG(L_ERR, "send_winfo_notify(): Error while adding headers\n");
+		ERR("Error while adding headers\n");
 		str_free_content(&doc);
 		str_free_content(&content_type);
 		return -7;
 	}
+	DEBUG("headers created\n");
 
-	tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
+	res = tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
+	DEBUG("request sent with result %d\n", res);
+	if (res < 0) {
+		ERR("Can't send watcherinfo notification (%d)\n", res);
+	}
 
 	str_free_content(&doc);
 	str_free_content(&headers);
@@ -392,7 +402,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	
 	if (use_db) db_update_watcher(_p, _w); /* dialog and index have changed */
 
-	return 0;
+	return res;
 }
 
 int send_winfo_notify_offline(struct presentity* _p, 

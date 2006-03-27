@@ -530,8 +530,10 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 	(*_w)->flags |= WFLAG_SUBSCRIPTION_CHANGED;
 	
 	/* changed only when presence watcher added  */
-	if (et == EVENT_PRESENCE)
+	if (et == EVENT_PRESENCE) {
 		_p->flags |= PFLAG_WATCHERINFO_CHANGED;
+		DEBUG("setting PFLAG_WATCHERINFO_CHANGED\n");
+	}
 	
 	return 0;
 }

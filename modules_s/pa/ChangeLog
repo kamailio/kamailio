@@ -1,3 +1,11 @@
+2006-03-27
+	* added (empty) function for message authorization
+
+2006-03-23
+	* added debugging messages into send_winfo_notify due to problems with
+	messages (Long UDP messages are sometimes ignored by clients; sometimes
+	are too big to be sent. But there are problems with TCP too!)
+
 2006-03-22
 	* using get_content_length instead of strlen(body)
 
