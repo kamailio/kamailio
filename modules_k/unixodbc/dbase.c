@@ -645,8 +645,8 @@ db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 		if (ret < 0) return -1;
 		off += ret;
 
-		*(sql_buf + off) = '\0';
 	}
+	*(sql_buf + off) = '\0';
 
 	if (submit_query(_h, sql_buf) < 0)
 	{
