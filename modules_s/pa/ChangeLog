@@ -1,3 +1,7 @@
+2006-03-28
+	* added parameter max_publish_expiration (max time for expiration of
+	information published via PUBLISH request)
+
 2006-03-27
 	* added (empty) function for message authorization
 	* corrected bug in offline watcherinfo dumping (removed were messages with

@@ -714,6 +714,8 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 			msg_expires = ((exp_body_t*)_m->expires->parsed)->val;
 		}
 	}
+	if (msg_expires > max_publish_expiration) 
+		msg_expires = max_publish_expiration;
 	if (msg_expires != 0) expires = msg_expires + act_time;
 
 	if (_m->sipifmatch) str_dup(&etag, (str*)_m->sipifmatch->parsed);
