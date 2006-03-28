@@ -692,7 +692,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
 					&next_hop, /* next hop */
 					m_tm_callback,    /* Callback function */
-					(void*)(long)mid        /* Callback parameter */
+					(void*)mid        /* Callback parameter */
 				);
 	}
 
@@ -785,12 +785,15 @@ void destroy(void)
  */
 void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
+	int mid = -1;
+	
 	DBG("MSILO:m_tm_callback: completed with status %d\n", ps->code);
 	if(!ps->param)
 	{
 		DBG("MSILO m_tm_callback: message id not received\n");
 		goto done;
 	}
+	mid = (int)(*ps->param);
 	if(!db_con)
 	{
 		DBG("MSILO:m_tm_callback: db_con is NULL\n");
@@ -798,13 +801,14 @@ void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 	if(ps->code < 200 || ps->code >= 300)
 	{
-		DBG("MSILO:m_tm_callback: message <%ld> was not sent successfully\n",
-				(long)ps->param);
-		msg_list_set_flag(ml, (int)(long)ps->param, MS_MSG_ERRO);
+		
+		DBG("MSILO:m_tm_callback: message <%d> was not sent successfully\n",
+				mid);
+		msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 		goto done;
 	}
 
-	msg_list_set_flag(ml, (int)(long)ps->param, MS_MSG_DONE);
+	msg_list_set_flag(ml, mid, MS_MSG_DONE);
 
 done:
 	return;
