@@ -502,12 +502,23 @@ void acc_log_missed( struct cell* t, struct sip_msg *reply,
 void acc_log_reply(  struct cell* t , struct sip_msg *reply,
 	unsigned int code )
 {
-	str code_str;
 	static str lead={ACC_ANSWERED, ACC_ANSWERED_LEN};
+	str new_uri_bk;
+	str code_str;
+
+	if (t->relaied_reply_branch>=0) {
+		new_uri_bk = t->uas.request->new_uri;
+		t->uas.request->new_uri = t->uac[t->relaied_reply_branch].uri;
+	} else {
+		new_uri_bk.len = -1;
+	}
 
 	code_str.s=int2str(code, &code_str.len);
 	acc_log_request(t->uas.request, 
 			valid_to(t,reply), &lead, &code_str );
+
+	if (new_uri_bk.len>=0)
+		t->uas.request->new_uri = new_uri_bk;
 }
 
 /********************************************
@@ -899,7 +910,9 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		if (!rc_avpair_add(rh, &send, attrs[atr_arr[i].len].v,
 				val_arr[i]->s,val_arr[i]->len, 0)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-				"failed for %s\n", atr_arr[i].s );
+				"failed for extra %s {%d,%d,%d} val {%p,%d}\n", atr_arr[i].s,
+				i, atr_arr[i].len, attrs[atr_arr[i].len].v,
+				val_arr[i]->s, val_arr[i]->len);
 			goto error;
 		}
 	}
