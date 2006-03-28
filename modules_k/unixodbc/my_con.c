@@ -43,13 +43,12 @@
 #define PWD_ATTR  "PWD="
 #define PWD_ATTR_LEN  (sizeof(PWD_ATTR)-1)
 
-#define MAX_CONN_STR_LEN 2048
-
-static char *build_conn_str(struct db_id* id) 
+char *build_conn_str(struct db_id* id, char *buf)
 {
-	static char buf[MAX_CONN_STR_LEN];
 	int len, ld, lu, lp;
 	char *p;
+
+	if (!buf) return 0;
 
 	ld = id->database?strlen(id->database):0;
 	lu = id->username?strlen(id->username):0;
@@ -104,7 +103,7 @@ struct my_con* new_connection(struct db_id* id)
 	SQLSMALLINT outstrlen;
 	int ret;
 	struct my_con* ptr;
-	char *conn_str;
+	char conn_str[MAX_CONN_STR_LEN];
 
 	if (!id)
 	{
@@ -126,8 +125,7 @@ struct my_con* new_connection(struct db_id* id)
 	SQLSetEnvAttr(ptr->env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
 	SQLAllocHandle(SQL_HANDLE_DBC, ptr->env, &(ptr->dbc));
 
-	conn_str = build_conn_str(id);
-	if (conn_str==0) {
+	if (!build_conn_str(id, conn_str)) {
 		LOG(L_ERR, "ERROR:unixodbc:new_connection: failed to build "
 			"connection string\n");
 		return 0;

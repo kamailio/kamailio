@@ -66,6 +66,10 @@ struct my_con
 #define CON_CONNECTION(db_con) (((struct my_con*)((db_con)->tail))->dbc)
 #define CON_ROW(db_con)		(((struct my_con*)((db_con)->tail))->row)
 #define CON_TIMESTAMP(db_con)  (((struct my_con*)((db_con)->tail))->timestamp)
+#define CON_ID(db_con) 		(((struct my_con*)((db_con)->tail))->id)
+#define CON_ENV(db_con)		(((struct my_con*)((db_con)->tail))->env)
+
+#define MAX_CONN_STR_LEN 2048
 
 /*
  * Create a new connection structure,
@@ -79,4 +83,6 @@ struct my_con* new_connection(struct db_id* id);
 void free_connection(struct my_con* con);
 
 void extract_error(char *fn, SQLHANDLE handle, SQLSMALLINT type);
+
+char *build_conn_str(struct db_id* id, char *buf);
 #endif													  /* MY_CON_H */

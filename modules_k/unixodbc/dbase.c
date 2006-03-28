@@ -52,6 +52,13 @@ static char sql_buf[SQL_BUF_LEN];
 static int submit_query(db_con_t* _h, const char* _s)
 {
 	int ret;
+        SQLCHAR outstr[1024];
+        SQLSMALLINT outstrlen;
+	SQLCHAR sqlstate[15];
+	SQLCHAR ErrorMsg[SQL_MAX_MESSAGE_LENGTH+1];
+	SQLINTEGER native_error = 0;
+	char conn_str[MAX_CONN_STR_LEN];
+	SQLRETURN sts;
 
 	/* first do some cleanup if required */
 	if(CON_RESULT(_h))
@@ -65,16 +72,53 @@ static int submit_query(db_con_t* _h, const char* _s)
 	ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
 	if (!SQL_SUCCEEDED(ret))
 	{
-		LOG(L_ERR, "Statement allocation error %d\n",
-			(int)(long)CON_CONNECTION(_h));
+		LOG(L_ERR, "ERROR:unixodbc:submit_query: Statement allocation error "
+			"%d\n", (int)(long)CON_CONNECTION(_h));
 		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
-		return ret;
+
+		sts = SQLError (CON_ENV(_h), CON_CONNECTION(_h), SQL_NULL_HSTMT, 
+				sqlstate, &native_error, ErrorMsg, sizeof(ErrorMsg), NULL);
+		if (SQL_SUCCEEDED (sts) && 
+			strncmp(sqlstate,"08003",5)!=0 && /* Connect not open */
+			strncmp(sqlstate,"08S01",5)!=0) /* Communication link failure */ {
+			return ret;
+		}
+
+		LOG(L_ERR, "ERROR:unixodbc:submit_query: try to reconnect\n");
+
+		/* Disconnect */
+		SQLDisconnect (CON_CONNECTION(_h));
+
+		/* Reconnect */
+		if (!build_conn_str(CON_ID(_h), conn_str)) {
+			LOG(L_ERR, "ERROR:unixodbc:submit_query: failed to build "
+				"connection string\n");
+			return ret;
+		}
+
+		ret = SQLDriverConnect(CON_CONNECTION(_h), (void *)1, 
+				(SQLCHAR*)conn_str, SQL_NTS, outstr, sizeof(outstr), 
+				&outstrlen, SQL_DRIVER_COMPLETE);
+		if (!SQL_SUCCEEDED(ret)) {
+			LOG(L_ERR, "ERROR:unixodbc:submit_query: failed to connect\n");
+			extract_error("SQLDriverConnect", CON_CONNECTION(_h), 
+					SQL_HANDLE_DBC);
+			return ret;
+		}
+
+		ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
+		if (!SQL_SUCCEEDED(ret)) {
+			LOG(L_ERR, "Statement allocation error %d\n",
+				(int)(long)CON_CONNECTION(_h));
+			extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
+			return ret;
+		}
 	}
 	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, SQL_NTS);
 	if (!SQL_SUCCEEDED(ret))
 	{
-		LOG(L_ERR, "Return value: %d\n", ret);
-		extract_error("SQLExecDirect", CON_CONNECTION(_h), SQL_HANDLE_DBC);
+		LOG(L_ERR, "SQLExecDirect <%s> Return value: %d\n", _s, ret);
+		extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_DBC);
 	}
 	return ret;
 
