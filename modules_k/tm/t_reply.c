@@ -90,6 +90,7 @@
 #include "t_fwd.h"
 #include "fix_lumps.h"
 #include "t_stats.h"
+#include "uac.h"
 
 
 /* restart fr timer on each provisional reply, default yes */
@@ -1136,12 +1137,23 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 	}
 	UNLOCK_REPLIES(t);
-	if (local_winner>=0 && winning_code>=200 ) {
-		DBG("DEBUG:tm:local_reply: local transaction completed\n");
-		if (!totag_retr) {
-			if ( has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) )
+
+	if ( local_winner >= 0 ) {
+		if (winning_code < 200) {
+			if ( pass_provisional_replies ) {
+				if (!totag_retr && has_tran_tmcbs(t,TMCB_LOCAL_RESPONSE_OUT)) {
+					DBG("DEBUG: Passing provisional reply %d to FIFO "
+						"application\n", winning_code);
+					run_trans_callbacks( TMCB_LOCAL_RESPONSE_OUT, t, 0,
+						winning_msg, winning_code);
+				}
+			}
+		} else {
+			DBG("DEBUG:tm:local_reply: local transaction completed\n");
+			if (!totag_retr && has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) ) {
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, t, 0,
 					winning_msg, winning_code );
+			}
 		}
 	}
 	return reply_status;

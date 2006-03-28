@@ -565,7 +565,6 @@ static inline int print_uris(FILE* out, struct sip_msg* reply)
 	return 0;
 }
 
-
 static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 {
 	
@@ -605,7 +604,10 @@ static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 	}
 	DBG("DEBUG: fifo_callback successfully completed\n");
 done:
-	shm_free(filename);
+	if (ps->code >= 200) {
+	    /* Do not free if we received provisional reply */
+	    shm_free(filename);
+	}
 }
 
 

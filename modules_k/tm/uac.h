@@ -34,6 +34,9 @@
 
 #define DEFAULT_CSEQ 10 /* Default CSeq number */
 
+/* Pass provisional replies to fifo applications */
+extern int pass_provisional_replies;
+
 
 /*
  * Function prototypes

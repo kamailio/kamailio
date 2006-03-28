@@ -220,7 +220,8 @@ static param_export_t params[]={
 		&bf_mask_param },
 	{ "enable_stats",             INT_PARAM,
 		&tm_enable_stats },
-
+	{ "pass_provisional_replies", INT_PARAM,
+	        &pass_provisional_replies },
 	{0,0,0}
 };
 

@@ -569,6 +569,27 @@ modparam("tm", "branch_flag_mask", "4278190080")
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>pass_provisional_replies</varname> (string)</title>
+		<para>
+		Enable/disable passing of provisional replies to FIFO applications.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pass_provisional_replies</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "pass_provisional_replies", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 

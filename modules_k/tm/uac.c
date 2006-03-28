@@ -69,6 +69,10 @@
 
 static char from_tag[FROM_TAG_LEN + 1];
 
+ /* Enable/disable passing of provisional replies to FIFO applications */
+int pass_provisional_replies = 0;
+
+
 /*
  * Initialize UAC
  */
@@ -163,8 +167,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	struct cell *new_cell;
 	struct retr_buf *request;
 	char* buf;
-	int buf_len;
-	int ret;
+	int buf_len, ret, flags;
 	unsigned int hi;
 
 	ret=-1;
@@ -205,7 +208,10 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	reset_avps();
 
 	/* add the callback the the transaction for LOCAL_COMPLETED event */
-	if(cb && insert_tmcb(&(new_cell->tmcb_hl),TMCB_LOCAL_COMPLETED,cb,cbp)!=1){
+	flags = TMCB_LOCAL_COMPLETED;
+	/* Add also TMCB_LOCAL_REPLY_OUT if provisional replies are desired */
+	if (pass_provisional_replies) flags |= TMCB_LOCAL_RESPONSE_OUT;
+	if(cb && insert_tmcb(&(new_cell->tmcb_hl),flags,cb,cbp)!=1){
 		ret=E_OUT_OF_MEM;
 		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
 		goto error2;

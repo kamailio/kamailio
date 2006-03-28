@@ -45,7 +45,8 @@ struct cell;
 #define TMCB_ON_FAILURE       (1<<6)
 #define TMCB_RESPONSE_OUT     (1<<7)
 #define TMCB_LOCAL_COMPLETED  (1<<8)
-#define TMCB_MAX              ((1<<9)-1)
+#define TMCB_LOCAL_RESPONSE_OUT (1<<9)
+#define TMCB_MAX              ((1<<10)-1)
 
 /* 
  *  Caution: most of the callbacks work with shmem-ized messages
