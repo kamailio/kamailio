@@ -146,6 +146,8 @@
  *             add_rcv_param() may take as parameter a flag telling if the
  *              parameter should go to the contact URI or contact header;
  *             (bogdan)
+ * 2006-03-28 Support for changing session-level SDP connection (c=) IP when
+ *            media-description also includes connection information (bayan)
  */
 
 #include <sys/types.h>
@@ -1682,7 +1684,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp;
-	int create, port, len, asymmetric, flookup, argc, proxied, real, orgip;
+	int create, port, len, asymmetric, flookup, argc, proxied, real;
+	int orgip, commip;
 	int oidx, pf, pf1, force, swap;
 	char opts[16];
 	char *cp, *cp1;
@@ -1713,7 +1716,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	int c1p_altered;
 
 	v[1].iov_base=opts;
-	asymmetric = flookup = force = real = orgip = swap = 0;
+	asymmetric = flookup = force = real = orgip = commip = swap = 0;
 	oidx = 1;
 	for (cp = str1; *cp != '\0'; cp++) {
 		switch (*cp) {
@@ -1747,6 +1750,11 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		case 'r':
 		case 'R':
 			real = 1;
+			break;
+
+		case 'c':
+		case 'C':
+			commip = 1;
 			break;
 
 		case 'o':
@@ -1987,6 +1995,23 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 					return -1;
 				if (!c2p)
 					c1p_altered = 1;
+			}
+			/*
+			 * Alter common IP if required, but don't do it more than once.
+			 */
+			if (commip && !c1p_altered) {
+				tmpstr1.s = c1p;
+				tmpstr1.len = v2p - tmpstr1.s;
+				if (extract_mediaip(&tmpstr1, &oldip, &pf,"c=") == -1) {
+					LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
+						" extract media IP from the message\n");
+					return -1;
+				}
+				body1.s = c1p;
+				body1.len = bodylimit - body1.s;
+				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0)==-1)
+					return -1;
+				c1p_altered = 1;
 			}
 			/*
 			 * Alter the IP in "o=", but only once per session

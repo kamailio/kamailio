@@ -387,6 +387,9 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
             media address which is passed to the RTP proxy.
           + o - flags that IP from the origin description (o=)
             should be also changed.
+          + c - flags to change the session-level SDP connection
+            (c=) IP if media-description also includes connection
+            information.
           + s - flags to swap creation with confirmation between
             requests and replies. By default, a request creates
             the RTP session and a reply confirms it. If swapped,

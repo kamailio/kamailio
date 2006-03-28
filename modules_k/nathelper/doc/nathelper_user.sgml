@@ -496,6 +496,11 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 				description (o=) should be also changed.
 				</para></listitem>
 				<listitem><para>
+				<emphasis>c</emphasis> - flags to change the session-level 
+				SDP connection (c=) IP if media-description also includes 
+				connection information.
+				</para></listitem>
+				<listitem><para>
 				<emphasis>s</emphasis> - flags to swap creation with 
 				confirmation between requests and replies. By default, a 
 				request creates the RTP session and a reply confirms it. If
