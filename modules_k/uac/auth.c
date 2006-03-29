@@ -378,7 +378,7 @@ int uac_auth( struct sip_msg *msg)
 	for ( b=t->first_branch; b<t->nr_of_outgoings ; b++ )
 	{
 		/* skip 'empty branches' */
-		if (!t->uac[b].request.buffer)
+		if (!t->uac[b].request.buffer.s)
 			continue;
 		/* there is still an unfinished UAC transaction? */
 		if ( t->uac[b].last_received<200 )
