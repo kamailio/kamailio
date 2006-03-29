@@ -23,7 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <xcap/parse_pres_rules.h>
+#include <xcap/parse_common_rules.h>
+#include <xcap/parse_msg_rules.h>
 #include <xcap/xcap_result_codes.h>
 
 #include <cds/dstring.h>
@@ -34,33 +35,33 @@
 
 #include <xcap/xml_utils.h>
 
-char *pres_rules_ns = NULL;
+char *msg_rules_ns = NULL;
 
-static int str2sub_handling(const char *s, sub_handling_t *dst)
+static int str2msg_handling(const char *s, msg_handling_t *dst)
 {
 	if (!s) return RES_INTERNAL_ERR;
 	
 	if (strcmp(s, "allow") == 0) {
-		*dst = sub_handling_allow;
+		*dst = msg_handling_allow;
 		return 0;
 	}
 	if (strcmp(s, "block") == 0) {
-		*dst = sub_handling_block;
+		*dst = msg_handling_block;
 		return 0;
 	}
-	if (strcmp(s, "polite-block") == 0) {
-		*dst = sub_handling_polite_block;
+/*	if (strcmp(s, "polite-block") == 0) {
+		*dst = msg_handling_polite_block;
 		return 0;
 	}
 	if (strcmp(s, "confirm") == 0) {
-		*dst = sub_handling_confirm;
+		*dst = msg_handling_confirm;
 		return 0;
-	}
-	ERROR_LOG("invalid sub-handling value: \'%s\'\n", s);
+	}*/
+	ERROR_LOG("invalid im-handling value: \'%s\'\n", s);
 	return RES_INTERNAL_ERR;
 }
 
-static int read_pres_actions(xmlNode *an, cp_actions_t **dst)
+static int read_msg_actions(xmlNode *an, cp_actions_t **dst)
 {
 	xmlNode *n;
 	const char *s;
@@ -71,20 +72,21 @@ static int read_pres_actions(xmlNode *an, cp_actions_t **dst)
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_actions_t));
 
-	n = find_node(an, "sub-handling", common_policy_ns);
+	n = find_node(an, "im-handling", msg_rules_ns);
 	if (n) {
 		/* may be only one sub-handling node? */
 		s = get_node_value(n);
-		(*dst)->unknown = create_unknown(sizeof(sub_handling_t));
+		(*dst)->unknown = create_unknown(sizeof(msg_handling_t));
 		if (!(*dst)->unknown) return RES_MEMORY_ERR;
-		res = str2sub_handling(s, (sub_handling_t*)(*dst)->unknown->data);
+		res = str2msg_handling(s, (msg_handling_t*)(*dst)->unknown->data);
 	}
 
 	return res;
 }
 
-int parse_pres_rules(const char *data, int dsize, cp_ruleset_t **dst)
+int parse_msg_rules(const char *data, int dsize, cp_ruleset_t **dst)
 {
-	return parse_common_rules(data, dsize, dst, read_pres_actions, free_pres_actions);
+	return parse_common_rules(data, dsize, dst, 
+			read_msg_actions, free_msg_actions);
 }
 

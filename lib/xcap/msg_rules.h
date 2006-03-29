@@ -23,29 +23,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __PRES_RULES_H
-#define __PRES_RULES_H
+#ifndef __MSG_RULES_H
+#define __MSG_RULES_H
 
 #include <cds/sstr.h>
 #include <xcap/xcap_client.h>
 #include <xcap/common_policy.h>
 
-typedef cp_ruleset_t presence_rules_t;
+typedef cp_ruleset_t msg_rules_t;
 
 /* Type defining action for pres_rules */
 typedef enum {
-	sub_handling_block,
-	sub_handling_confirm,
-	sub_handling_polite_block,
-	sub_handling_allow
-} sub_handling_t;
+	msg_handling_block,
+/*	msg_handling_confirm, */
+	msg_handling_allow
+} msg_handling_t;
 
-char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri);
-int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, cp_ruleset_t **dst);
-void free_pres_rules(cp_ruleset_t *r);
-void free_pres_actions(cp_actions_t *a);
+char *xcap_uri_for_msg_rules(const char *xcap_root, const str_t *uri);
+int get_msg_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, msg_rules_t **dst);
+void free_msg_rules(cp_ruleset_t *r);
+void free_msg_actions(cp_actions_t *a);
 
 /* returns 0 if rule found, 1 if not found and -1 on error */
-int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri, sub_handling_t *dst_action);
+int get_msg_rules_action(msg_rules_t *r, const str_t *wuri, msg_handling_t *dst_action);
 
 #endif

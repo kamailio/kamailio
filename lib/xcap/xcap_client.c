@@ -78,7 +78,7 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 	if (!handle) handle = curl_easy_init(); /*FIXME: experimental*/
 	if (handle) {
 		curl_easy_setopt(handle, CURLOPT_URL, uri);
-		TRACE_LOG("uri: %s\n", uri ? uri : "<null>");
+		/* TRACE_LOG("uri: %s\n", uri ? uri : "<null>"); */
 		
 		/* do not store data into a file - store them in memory */
 		curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data_func);

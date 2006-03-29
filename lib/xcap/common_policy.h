@@ -104,4 +104,12 @@ typedef struct {
 	cp_rule_t *rules;
 } cp_ruleset_t;
 
+cp_unknown_t *create_unknown(int data_size);
+
+typedef void (cp_free_actions_func)(cp_actions_t *a);
+
+void free_cp_rule(cp_rule_t *r, cp_free_actions_func free_actions);
+void free_common_rules(cp_ruleset_t *r, cp_free_actions_func free_actions);
+int is_rule_for_uri(cp_rule_t *rule, const str_t *uri);
+
 #endif

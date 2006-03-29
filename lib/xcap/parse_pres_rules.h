@@ -27,6 +27,7 @@
 #define __PARSE_PRES_RULES_H
 
 #include <xcap/pres_rules.h>
+#include <xcap/parse_common_rules.h>
 
 int parse_pres_rules(const char *data, int dsize, cp_ruleset_t **dst);
 

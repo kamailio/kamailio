@@ -23,8 +23,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <xcap/pres_rules.h>
-#include <xcap/parse_pres_rules.h>
+#include <xcap/msg_rules.h>
+#include <xcap/parse_msg_rules.h>
 #include <xcap/xcap_result_codes.h>
 #include <cds/dstring.h>
 #include <cds/memory.h>
@@ -33,7 +33,7 @@
 #include <cds/sstr.h>
 #include <string.h>
 
-char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri)
+char *xcap_uri_for_msg_rules(const char *xcap_root, const str_t *uri)
 {
 	dstring_t s;
 	int l;
@@ -44,9 +44,9 @@ char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri)
 	dstr_init(&s, 2 * l + 32);
 	dstr_append(&s, xcap_root, l);
 	if (xcap_root[l - 1] != '/') dstr_append(&s, "/", 1);
-	dstr_append_zt(&s, "pres-rules/users/");
+	dstr_append_zt(&s, "im-rules/users/");
 	dstr_append_str(&s, uri);
-	dstr_append_zt(&s, "/presence-rules.xml");
+	dstr_append_zt(&s, "/im-rules.xml");
 	
 	l = dstr_get_data_length(&s);
 	if (l > 0) {
@@ -60,17 +60,17 @@ char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri)
 	return dst;
 }
 
-int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, cp_ruleset_t **dst)
+int get_msg_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, msg_rules_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
 	char *xcap_uri;
 	int res = RES_OK;
 	
-	xcap_uri = xcap_uri_for_pres_rules(xcap_root, uri);
+	xcap_uri = xcap_uri_for_msg_rules(xcap_root, uri);
 	res = xcap_query(xcap_uri, xcap_params, &data, &dsize);
 	if (res != RES_OK) {
-		DEBUG_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
+		TRACE_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
 		if (data) cds_free(data);
 		if (xcap_uri) cds_free(xcap_uri);
 		return RES_XCAP_QUERY_ERR;
@@ -78,7 +78,7 @@ int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t 
 	if (xcap_uri) cds_free(xcap_uri);
 	
 	/* parse input data */
-	res = parse_pres_rules(data, dsize, dst);
+	res = parse_msg_rules(data, dsize, dst);
 	if (res != RES_OK) {
 		ERROR_LOG("Error occured during document parsing!\n");
 	}
@@ -87,13 +87,13 @@ int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t 
 	return res;
 }
 
-int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri, 
-		sub_handling_t *dst_action)
+int get_msg_rules_action(cp_ruleset_t *r, const str_t *wuri, 
+		msg_handling_t *dst_action)
 {
 	int res = 1; /* rule not found */
 	cp_rule_t *rule;
-	sub_handling_t a = sub_handling_block;
-	sub_handling_t aa;
+	msg_handling_t a = msg_handling_block;
+	msg_handling_t aa;
 	
 	if (!r) return -1;
 	
@@ -107,7 +107,7 @@ int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri,
 
 			if (!rule->actions) continue;
 			if (!rule->actions->unknown) continue;
-			aa = *(sub_handling_t*)(rule->actions->unknown->data);
+			aa = *(msg_handling_t*)(rule->actions->unknown->data);
 			if (aa > a) a = aa;
 			res = 0;
 		}
@@ -118,9 +118,7 @@ int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri,
 	return res;
 }
 
-/* ------- freeing used memory for pres-rules ------- */
-
-void free_pres_actions(cp_actions_t *a)
+void free_msg_actions(cp_actions_t *a)
 {
 	cp_unknown_t *u, *nu;
 	
@@ -135,8 +133,8 @@ void free_pres_actions(cp_actions_t *a)
 	cds_free(a);
 }
 
-void free_pres_rules(cp_ruleset_t *r)
+void free_msg_rules(cp_ruleset_t *r)
 {
-	free_common_rules(r, free_pres_actions);
+	free_common_rules(r, free_msg_actions);
 }
 

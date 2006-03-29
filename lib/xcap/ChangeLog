@@ -1,2 +1,5 @@
+2006-03-29
+	* added message authorization functions
+
 2006-03-24
 	* optimized XCAP document access - each process has its own curl handle
