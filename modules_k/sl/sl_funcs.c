@@ -33,6 +33,7 @@
  *               build_res_buf_from_sip_req() interface (bogdan)
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  * 2004-10-10: use of mhomed disabled for replies (jiri)
+ * 2006-03-29: callbacks for sending replies added (bogdan)
  */
 
 
@@ -53,6 +54,7 @@
 #include "../../tags.h"
 #include "sl.h"
 #include "sl_funcs.h"
+#include "sl_cb.h"
 
 
 /* to-tag including pre-calculated and fixed part */
@@ -97,8 +99,7 @@ int sl_shutdown()
 
 int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 {
-	char               *buf;
-	unsigned int       len;
+	str buf;
 	union sockaddr_union to;
 	char *dset;
 	int dset_len;
@@ -106,19 +107,16 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 	int backup_mhomed;
 	int ret;
 
-
-	if ( msg->first_line.u.request.method_value==METHOD_ACK)
-	{
-		LOG(L_WARN, "Warning: sl_send_reply: I won't send a reply for ACK!!\n");
+	if ( msg->first_line.u.request.method_value==METHOD_ACK) {
+		LOG(L_WARN,"WARNING:sl:sl_send_reply: I won't send "
+			"a reply for ACK!!\n");
 		goto error;
 	}
 
 	if (reply_to_via) {
-		if (update_sock_struct_from_via(  &(to), msg, msg->via1 )==-1)
-		{
-			LOG(L_ERR, "ERROR: sl_send_reply: "
-				"cannot lookup reply dst: %s\n",
-				msg->via1->host.s );
+		if (update_sock_struct_from_via(  &(to), msg, msg->via1 )==-1) {
+			LOG(L_ERR, "ERROR:sl:sl_send_reply: cannot lookup reply dst: "
+				"%s\n", msg->via1->host.s );
 			goto error;
 		}
 	} else update_sock_struct_from_ip( &to, msg );
@@ -137,16 +135,18 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
 		calc_crc_suffix( msg, tag_suffix );
-		buf = build_res_buf_from_sip_req(code,text,&sl_tag,msg,&len,&dummy_bm);
+		buf.s = build_res_buf_from_sip_req( code, text, &sl_tag, msg,
+			&buf.len, &dummy_bm);
 	} else {
-		buf = build_res_buf_from_sip_req(code,text,0,msg,&len,&dummy_bm);
+		buf.s = build_res_buf_from_sip_req( code, text, 0, msg,
+			&buf.len, &dummy_bm);
 	}
-	if (!buf)
-	{
+	if (!buf.s) {
 		DBG("DEBUG: sl_send_reply: response building failed\n");
 		goto error;
 	}
-	
+
+	run_sl_callbacks( msg, &buf, code, text, &to );
 
 	/* supress multhoming support when sending a reply back -- that makes sure
 	   that replies will come from where requests came in; good for NATs
@@ -157,13 +157,13 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 	mhomed=0;
 	/* use for sending the received interface -bogdan*/
 	ret = msg_send( msg->rcv.bind_address, msg->rcv.proto, &to,
-			msg->rcv.proto_reserved1, buf, len);
+			msg->rcv.proto_reserved1, buf.s, buf.len);
 	mhomed=backup_mhomed;
 	if (ret<0) 
 		goto error;
 
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
-	pkg_free(buf);
+	pkg_free(buf.s);
 
 	if (sl_enable_stats) {
 		if (code < 200 ) {

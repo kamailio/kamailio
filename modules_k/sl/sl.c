@@ -28,6 +28,7 @@
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free
  *  2005-03-01  force for stateless replies the incoming interface of
  *              the request (bogdan)
+ *  2006-03-29  callbacks for sending replies added (bogdan)
  */
 
 
@@ -42,6 +43,7 @@
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
 #include "sl_funcs.h"
+#include "sl_cb.h"
 
 MODULE_VERSION
 
@@ -68,8 +70,12 @@ stat_var *rcv_acks;
 
 
 static cmd_export_t cmds[]={
-	{"sl_send_reply",  w_sl_send_reply,  2, fixup_sl_send_reply, REQUEST_ROUTE},
-	{"sl_reply_error", w_sl_reply_error, 0, 0,                   REQUEST_ROUTE},
+	{"sl_send_reply",   w_sl_send_reply,            2,  fixup_sl_send_reply,
+			REQUEST_ROUTE},
+	{"sl_reply_error",  w_sl_reply_error,           0,  0,
+			REQUEST_ROUTE},
+	{"register_slcb",  (cmd_function)register_slcb, 0,  0,
+			0},
 	{0,0,0,0,0}
 };
 
@@ -146,6 +152,8 @@ static int mod_init(void)
 static void mod_destroy()
 {
 	sl_shutdown();
+	destroy_slcb_lists();
+
 }
 
 
