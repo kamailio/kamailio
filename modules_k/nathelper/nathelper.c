@@ -1999,7 +1999,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			/*
 			 * Alter common IP if required, but don't do it more than once.
 			 */
-			if (commip && !c1p_altered) {
+			if (commip && c1p && !c1p_altered) {
 				tmpstr1.s = c1p;
 				tmpstr1.len = v2p - tmpstr1.s;
 				if (extract_mediaip(&tmpstr1, &oldip, &pf,"c=") == -1) {
