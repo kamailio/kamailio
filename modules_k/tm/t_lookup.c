@@ -785,7 +785,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		   as canceled transactions) */
 		if (!( /* it's a local cancel */
 			(cseq->method_id==METHOD_CANCEL && is_invite(p_cell)
-				&& p_cell->uac[branch_id].local_cancel.buffer_len )
+				&& p_cell->uac[branch_id].local_cancel.buffer.len )
 			/* method match */
 			|| ((cseq->method_id!=METHOD_OTHER && p_cell->uas.request)?
 				(cseq->method_id==REQ_LINE(p_cell->uas.request).method_value)

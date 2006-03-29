@@ -101,13 +101,19 @@ void cancel_branch( struct cell *t, int branch )
 		return;
 	}
 	/* install cancel now */
-	crb->buffer=cancel;
-	crb->buffer_len=len;
+	crb->buffer.s=cancel;
+	crb->buffer.len=len;
 	crb->dst=irb->dst;
 	crb->branch=branch;
 	/* label it as cancel so that FR timer can better now how 
 	 * to deal with it */
 	crb->activ_type=TYPE_LOCAL_CANCEL;
+
+	if ( has_tran_tmcbs( t, TMCB_REQUEST_BUILT) ) {
+		set_extra_tmcb_params( &crb->buffer, &crb->dst);
+		run_trans_callbacks( TMCB_REQUEST_BUILT, t, t->uas.request,0,
+			-t->uas.request->REQ_METHOD);
+	}
 
 	DBG("DEBUG: cancel_branch: sending cancel...\n");
 	SEND_BUFFER( crb );

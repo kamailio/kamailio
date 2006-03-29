@@ -26,6 +26,8 @@
  * 2003-12-04 : global callbacks moved into transaction callbacks;
  *              multiple events per callback added; single list per
  *              transaction for all its callbacks (bogdan)
+ * 2006-03-29 : added transaction callbacks: TMCB_REQUEST_BUILT and
+ *              TMCB_REQUEST_DELETED (bogdan)
  */
 
 
@@ -36,17 +38,19 @@ struct sip_msg;
 struct cell;
 
 
-#define TMCB_REQUEST_IN       (1<<0)
-#define TMCB_RESPONSE_IN      (1<<1)
-#define TMCB_E2EACK_IN        (1<<2)
-#define TMCB_REQUEST_FWDED    (1<<3)
-#define TMCB_RESPONSE_FWDED   (1<<4)
-#define TMCB_ON_FAILURE_RO    (1<<5)
-#define TMCB_ON_FAILURE       (1<<6)
-#define TMCB_RESPONSE_OUT     (1<<7)
-#define TMCB_LOCAL_COMPLETED  (1<<8)
+#define TMCB_REQUEST_IN         (1<<0)
+#define TMCB_RESPONSE_IN        (1<<1)
+#define TMCB_E2EACK_IN          (1<<2)
+#define TMCB_REQUEST_FWDED      (1<<3)
+#define TMCB_RESPONSE_FWDED     (1<<4)
+#define TMCB_ON_FAILURE_RO      (1<<5)
+#define TMCB_ON_FAILURE         (1<<6)
+#define TMCB_RESPONSE_OUT       (1<<7)
+#define TMCB_LOCAL_COMPLETED    (1<<8)
 #define TMCB_LOCAL_RESPONSE_OUT (1<<9)
-#define TMCB_MAX              ((1<<10)-1)
+#define TMCB_REQUEST_BUILT      (1<<10)
+#define TMCB_TRANS_DELETED      (1<<11)
+#define TMCB_MAX                ((1<<12)-1)
 
 /* 
  *  Caution: most of the callbacks work with shmem-ized messages
@@ -160,6 +164,8 @@ struct tmcb_params {
 	struct sip_msg* rpl;
 	int code;
 	void **param;
+	void *extra1;
+	void *extra2;
 };
 
 /* callback function prototype */
@@ -206,6 +212,9 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 /* inserts a callback into the a callback list */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 									transaction_cb f, void *param );
+
+/* set extra params for callbacks */
+void set_extra_tmcb_params(void *extra1, void *extra2);
 
 /* run all transaction callbacks for an event type */
 void run_trans_callbacks( int type , struct cell *trans,

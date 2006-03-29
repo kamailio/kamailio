@@ -91,7 +91,7 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 #endif
 
 #define SEND_BUFFER( _rb ) \
-	SEND_PR_BUFFER( (_rb) , (_rb)->buffer , (_rb)->buffer_len )
+	SEND_PR_BUFFER( (_rb) , (_rb)->buffer.s , (_rb)->buffer.len )
 
 
 #define UNREF_UNSAFE(_T_cell) ((_T_cell)->ref_count--)

@@ -116,14 +116,17 @@ void free_cell( struct cell* dead_cell )
 	struct totag_elem *tt, *foo;
 	struct tm_callback *cbs, *cbs_tmp;
 
+	if ( has_tran_tmcbs( dead_cell, TMCB_TRANS_DELETED) )
+		run_trans_callbacks( TMCB_TRANS_DELETED, dead_cell, 0, 0, 0);
+
 	release_cell_lock( dead_cell );
 	shm_lock();
 
 	/* UA Server */
 	if ( dead_cell->uas.request )
 		sip_msg_free_unsafe( dead_cell->uas.request );
-	if ( dead_cell->uas.response.buffer )
-		shm_free_unsafe( dead_cell->uas.response.buffer );
+	if ( dead_cell->uas.response.buffer.s )
+		shm_free_unsafe( dead_cell->uas.response.buffer.s );
 
 	/* callbacks */
 	for( cbs=dead_cell->tmcb_hl.first ; cbs ; ) {
@@ -136,9 +139,9 @@ void free_cell( struct cell* dead_cell )
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
 	{
 		/* retransmission buffer */
-		if ( (b=dead_cell->uac[i].request.buffer) )
+		if ( (b=dead_cell->uac[i].request.buffer.s) )
 			shm_free_unsafe( b );
-		b=dead_cell->uac[i].local_cancel.buffer;
+		b=dead_cell->uac[i].local_cancel.buffer.s;
 		if (b!=0 && b!=BUSY_BUFFER)
 			shm_free_unsafe( b );
 		rpl=dead_cell->uac[i].reply;

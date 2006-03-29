@@ -96,8 +96,7 @@ typedef struct retr_buf
 	/* set to status code if the buffer is a reply,
 	0 if request or -1 if local CANCEL */
 
-	char *buffer;
-	int   buffer_len;
+	str buffer;
 	
 	struct dest_info dst;
 

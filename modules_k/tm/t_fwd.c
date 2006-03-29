@@ -284,7 +284,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop, s
 	}
 
 	/* check existing buffer -- rewriting should never occur */
-	if (t->uac[branch].request.buffer) {
+	if (t->uac[branch].request.buffer.s) {
 		LOG(L_CRIT, "ERROR:tm:add_uac: buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
@@ -345,9 +345,9 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop, s
 	t->uac[branch].request.dst.send_sock=send_sock;
 	t->uac[branch].request.dst.proto=proxy->proto;
 	t->uac[branch].request.dst.proto_reserved1=0;
-	t->uac[branch].request.buffer=shbuf;
-	t->uac[branch].request.buffer_len=len;
-	t->uac[branch].uri.s=t->uac[branch].request.buffer+
+	t->uac[branch].request.buffer.s=shbuf;
+	t->uac[branch].request.buffer.len=len;
+	t->uac[branch].uri.s=t->uac[branch].request.buffer.s+
 		request->first_line.u.request.method.len+1;
 	t->uac[branch].uri.len=request->new_uri.len;
 	t->uac[branch].br_flags = request->flags&(~gflags_mask);
@@ -380,7 +380,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	unsigned int len;
 	str bk_dst_uri;
 
-	if (t_cancel->uac[branch].request.buffer) {
+	if (t_cancel->uac[branch].request.buffer.s) {
 		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
@@ -417,9 +417,9 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 
 	/* install buffer */
 	t_cancel->uac[branch].request.dst=t_invite->uac[branch].request.dst;
-	t_cancel->uac[branch].request.buffer=shbuf;
-	t_cancel->uac[branch].request.buffer_len=len;
-	t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer+
+	t_cancel->uac[branch].request.buffer.s=shbuf;
+	t_cancel->uac[branch].request.buffer.len=len;
+	t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer.s+
 		cancel_msg->first_line.u.request.method.len+1;
 	t_cancel->uac[branch].uri.len=t_invite->uac[branch].uri.len;
 	t_cancel->uac[branch].br_flags = cancel_msg->flags&(~gflags_mask);
@@ -482,6 +482,12 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	/* send them out */
 	for (i=t_cancel->first_branch; i<t_cancel->nr_of_outgoings; i++) {
 		if (cancel_bm & (1<<i)) {
+			if ( has_tran_tmcbs( t_cancel, TMCB_REQUEST_BUILT) ) {
+				set_extra_tmcb_params( &t_cancel->uac[i].request.buffer,
+					&t_cancel->uac[i].request.dst);
+				run_trans_callbacks( TMCB_REQUEST_BUILT, t_cancel, cancel_msg,
+					0, -cancel_msg->REQ_METHOD);
+			}
 			if (SEND_BUFFER( &t_cancel->uac[i].request)==-1) {
 				LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
 			}
@@ -674,6 +680,12 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	success_branch=0;
 	for (i=t->first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
+			if ( has_tran_tmcbs( t, TMCB_REQUEST_BUILT) ) {
+				set_extra_tmcb_params( &t->uac[i].request.buffer,
+					&t->uac[i].request.dst);
+				run_trans_callbacks( TMCB_REQUEST_BUILT, t, p_msg,0,
+					-p_msg->REQ_METHOD);
+			}
 			if (SEND_BUFFER( &t->uac[i].request)==-1) {
 				LOG(L_ERR, "ERROR:tm:t_forward_nonack: sending request "
 					"failed\n");

@@ -275,7 +275,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 		|| r_buf->activ_type==TYPE_REQUEST ) {
 			DBG("DEBUG: retransmission_handler : "
 				"request resending (t=%p, %.9s ... )\n", 
-				r_buf->my_T, r_buf->buffer);
+				r_buf->my_T, r_buf->buffer.s);
 			if (SEND_BUFFER( r_buf )==-1) {
 				reset_timer( &r_buf->fr_timer );
 				fake_reply(r_buf->my_T, r_buf->branch, 503 );
@@ -284,7 +284,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 	} else {
 			DBG("DEBUG: retransmission_handler : "
 				"reply resending (t=%p, %.9s ... )\n", 
-				r_buf->my_T, r_buf->buffer);
+				r_buf->my_T, r_buf->buffer.s);
 			t_retransmit_reply(r_buf->my_T);
 	}
 

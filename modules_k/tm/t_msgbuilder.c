@@ -202,8 +202,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	to = *uas_to;
 
 	if (req && req->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ)) {
-		if ( extract_hdrs( Trans->uac[branch].request.buffer,
-		Trans->uac[branch].request.buffer_len,
+		if ( extract_hdrs( Trans->uac[branch].request.buffer.s,
+		Trans->uac[branch].request.buffer.len,
 		(req->msg_flags&FL_USE_UAC_FROM)?&from:0 ,
 		(req->msg_flags&FL_USE_UAC_TO)?&to:0 ,
 		(req->msg_flags&FL_USE_UAC_CSEQ)?&cseq_n:0 )!=0 ) {

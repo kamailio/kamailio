@@ -329,17 +329,17 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	rb->activ_type=code;
 
 	trans->uas.status = code;
-	buf_len = rb->buffer ? len : len + REPLY_OVERBUFFER_LEN;
-	rb->buffer = (char*)shm_resize( rb->buffer, buf_len );
+	buf_len = rb->buffer.s ? len : len + REPLY_OVERBUFFER_LEN;
+	rb->buffer.s = (char*)shm_resize( rb->buffer.s, buf_len );
 	/* puts the reply's buffer to uas.response */
-	if (! rb->buffer ) {
-			LOG(L_ERR, "ERROR:tm:_reply_light: cannot allocate shmem buffer\n");
+	if (! rb->buffer.s ) {
+			LOG(L_ERR,"ERROR:tm:_reply_light: cannot allocate shmem buffer\n");
 			goto error3;
 	}
-	update_local_tags(trans, bm, rb->buffer, buf);
+	update_local_tags(trans, bm, rb->buffer.s, buf);
 
-	rb->buffer_len = len ;
-	memcpy( rb->buffer , buf , len );
+	rb->buffer.len = len ;
+	memcpy( rb->buffer.s , buf , len );
 	/* needs to be protected too because what timers are set depends
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
@@ -351,13 +351,16 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (code>=200) {
 		if ( is_local(trans) ) {
 			DBG("DEBUG:tm:_reply_light: local transaction completed\n");
-			if ( has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) )
+			if ( has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) ) {
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, trans,
 					0, FAKED_REPLY, code);
+			}
 		} else {
-			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_OUT) )
+			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_OUT) ) {
+				set_extra_tmcb_params( &rb->buffer, &rb->dst);
 				run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
 					trans->uas.request, FAKED_REPLY, code);
+			}
 		}
 
 		cleanup_uac_timers( trans );
@@ -372,7 +375,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	}
 	SEND_PR_BUFFER( rb, buf, len );
 	DBG("DEBUG:tm:_reply_light: reply sent out. buf=%p: %.9s..., "
-		"shmem=%p: %.9s\n", buf, buf, rb->buffer, rb->buffer );
+		"shmem=%p: %.9s\n", buf, buf, rb->buffer.s, rb->buffer.s );
 	pkg_free( buf ) ;
 	stats_trans_rpl( code, 1 /*local*/ );
 	DBG("DEBUG:tm:_reply_light: finished\n");
@@ -625,7 +628,7 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 			continue;
 		}
 		/* skip 'empty branches' */
-		if (!t->uac[b].request.buffer) continue;
+		if (!t->uac[b].request.buffer.s) continue;
 		/* there is still an unfinished UAC transaction; wait now! */
 		if ( t->uac[b].last_received<200 ) 
 			return -2;
@@ -811,7 +814,7 @@ int t_retransmit_reply( struct cell *t )
 	   upstream may change it continuously */
 	LOCK_REPLIES( t );
 
-	if (!t->uas.response.buffer) {
+	if (!t->uas.response.buffer.s) {
 		DBG("DEBUG:tm:t_retransmit_reply: nothing to retransmit\n");
 		goto error;
 	}
@@ -824,17 +827,17 @@ int t_retransmit_reply( struct cell *t )
 		goto error;
 	}
 
-	len=t->uas.response.buffer_len;
+	len=t->uas.response.buffer.len;
 	if ( len==0 || len>BUF_SIZE )  {
 		DBG("DEBUG:tm:t_retransmit_reply: zero length or too big "
 			"to retransmit: %d\n", len);
 		goto error;
 	}
-	memcpy( b, t->uas.response.buffer, len );
+	memcpy( b, t->uas.response.buffer.s, len );
 	UNLOCK_REPLIES( t );
 	SEND_PR_BUFFER( & t->uas.response, b, len );
 	DBG("DEBUG:tm:t_retransmit_reply: buf=%p: %.9s..., shmem=%p: %.9s\n", 
-		b, b, t->uas.response.buffer, t->uas.response.buffer );
+		b, b, t->uas.response.buffer.s, t->uas.response.buffer.s );
 	return 1;
 
 error:
@@ -1022,16 +1025,16 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		      larger messages are likely to follow and we will be 
 		      able to reuse the memory frag 
 		*/
-		uas_rb->buffer = (char*)shm_resize( uas_rb->buffer, res_len +
+		uas_rb->buffer.s = (char*)shm_resize( uas_rb->buffer.s, res_len +
 			(msg_status<200 ?  REPLY_OVERBUFFER_LEN : 0));
-		if (!uas_rb->buffer) {
+		if (!uas_rb->buffer.s) {
 			LOG(L_ERR, "ERROR:tm:relay_reply: cannot alloc reply shmem\n");
 			goto error03;
 		}
-		uas_rb->buffer_len = res_len;
-		memcpy( uas_rb->buffer, buf, res_len );
+		uas_rb->buffer.len = res_len;
+		memcpy( uas_rb->buffer.s, buf, res_len );
 		if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
-			update_local_tags(t, &bm, uas_rb->buffer, buf);
+			update_local_tags(t, &bm, uas_rb->buffer.s, buf);
 		}
 		stats_trans_rpl( relayed_code, (relayed_msg==FAKED_REPLY)?1:0 );
 
@@ -1059,8 +1062,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	if (relay >= 0) {
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
 		DBG("DEBUG:tm:relay_reply: sent buf=%p: %.9s..., shmem=%p: %.9s\n", 
-			buf, buf, uas_rb->buffer, uas_rb->buffer );
+			buf, buf, uas_rb->buffer.s, uas_rb->buffer.s );
 		if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
+			set_extra_tmcb_params( &uas_rb->buffer, &uas_rb->dst);
 			run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
 				relayed_msg, relayed_code);
 		}

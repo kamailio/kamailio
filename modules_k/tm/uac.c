@@ -243,8 +243,8 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	new_cell->method.s = buf;
 	new_cell->method.len = method->len;
 
-	request->buffer = buf;
-	request->buffer_len = buf_len;
+	request->buffer.s = buf;
+	request->buffer.len = buf_len;
 	new_cell->nr_of_outgoings++;
 	
 	if (SEND_BUFFER(request) == -1) {

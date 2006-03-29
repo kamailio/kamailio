@@ -62,10 +62,10 @@ inline short static should_cancel_branch( struct cell *t, int b )
 	/* cancel only if provisional received and noone else
 	   attempted to cancel yet */
 	should=last_received>=100 && last_received<200
-		&& t->uac[b].local_cancel.buffer==0;
+		&& t->uac[b].local_cancel.buffer.s==0;
 	/* we'll cancel -- label it so that noone else
 		(e.g. another 200 branch) will try to do the same */
-	if (should) t->uac[b].local_cancel.buffer=BUSY_BUFFER;
+	if (should) t->uac[b].local_cancel.buffer.s=BUSY_BUFFER;
 	return should;
 }
 
