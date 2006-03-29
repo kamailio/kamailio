@@ -1,3 +1,6 @@
+2006-03-29
+	* added function for MESSAGE authorization
+
 2006-03-28
 	* added parameter max_publish_expiration (max time for expiration of
 	information published via PUBLISH request)
