@@ -25,55 +25,36 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
- *  atomic operations init
+ *  memory barriers for sparc32 ( version < v 9))
+ *  see atomic_ops.h for more details 
+ *
+ * Config defines: NOSMP
  */
 /* 
  * History:
  * --------
- *  2006-03-08  created by andrei
+ *  2006-03-28  created by andrei
  */
 
-#include "atomic_ops_init.h"
-#include "atomic_ops.h"
 
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifndef _atomic_sparc_h
+#define _atomic_sparc_h
 
-#include "locking.h"
+#define HAVE_ASM_INLINE_MEMBAR
 
-gen_lock_t* _atomic_lock;
+
+#warning "sparc32 atomic operations support not tested"
+
+#ifdef NOSMP
+#define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
+#define membar_read()  membar()
+#define membar_write() membar()
+#else /* SMP */
+#define membar_write() asm volatile ("stbar \n\t" : : : "memory") 
+#define membar() membar_write()
+#define membar_read() asm volatile ("" : : : "memory") 
+#endif /* NOSMP */
+
+
+
 #endif
-
-
-/* returns 0 on success, -1 on error */
-int init_atomic_ops()
-{
-	int ret;
-	
-	ret=0;
-#ifdef ATOMIC_OPS_USE_LOCK
-	if ((_atomic_lock=lock_alloc())==0){
-		ret=-1;
-		goto end;
-	}
-	if (lock_init(_atomic_lock)==0){
-		ret=-1;
-		atomic_ops_destroy();
-		goto end;
-	}
-end:
-#endif
-	return ret;
-}
-
-
-
-void destroy_atomic_ops()
-{
-#ifdef ATOMIC_OPS_USE_LOCK
-	if (_atomic_lock!=0){
-		lock_destroy(_atomic_lock);
-		lock_dealloc(_atomic_lock);
-		_atomic_lock=0;
-	}
-#endif
-}

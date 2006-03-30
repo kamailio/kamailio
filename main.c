@@ -128,6 +128,7 @@
 #include "usr_avp.h"
 #include "core_cmd.h"
 #include "flags.h"
+#include "atomic_ops_init.h"
 
 #include "stats.h"
 
@@ -390,6 +391,7 @@ void cleanup(show_status)
 	destroy_timer();
 	destroy_script_cb();
 	destroy_routes();
+	destroy_atomic_ops();
 #ifdef PKG_MALLOC
 	if (show_status){
 		LOG(memlog, "Memory status (pkg):\n");
@@ -1537,6 +1539,8 @@ try_again:
 	 *        the sems will have the correct euid)
 	 * --andrei */
 	if (init_shm_mallocs()==-1)
+		goto error;
+	if (init_atomic_ops()==-1)
 		goto error;
 	/*init timer, before parsing the cfg!*/
 	if (init_timer()<0){

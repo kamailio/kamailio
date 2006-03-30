@@ -25,55 +25,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
- *  atomic operations init
+ * atomic_ops init functions
+ * (needed for lock intializing if no native asm locks are available
+ *  for the current arch./compiler combination, see atomic_ops.c)
  */
 /* 
  * History:
  * --------
- *  2006-03-08  created by andrei
+ *  2006-03-30  created by andrei
  */
 
-#include "atomic_ops_init.h"
-#include "atomic_ops.h"
+#ifndef __atomic_ops_init_h
+#define __atomic_ops_init_h
 
-#ifdef ATOMIC_OPS_USE_LOCK
+/* init atomic ops */
+int init_atomic_ops();
+/* destroy atomic ops (e.g. frees the locks, if locks are used) */
+void destroy_atomic_ops();
 
-#include "locking.h"
-
-gen_lock_t* _atomic_lock;
 #endif
-
-
-/* returns 0 on success, -1 on error */
-int init_atomic_ops()
-{
-	int ret;
-	
-	ret=0;
-#ifdef ATOMIC_OPS_USE_LOCK
-	if ((_atomic_lock=lock_alloc())==0){
-		ret=-1;
-		goto end;
-	}
-	if (lock_init(_atomic_lock)==0){
-		ret=-1;
-		atomic_ops_destroy();
-		goto end;
-	}
-end:
-#endif
-	return ret;
-}
-
-
-
-void destroy_atomic_ops()
-{
-#ifdef ATOMIC_OPS_USE_LOCK
-	if (_atomic_lock!=0){
-		lock_destroy(_atomic_lock);
-		lock_dealloc(_atomic_lock);
-		_atomic_lock=0;
-	}
-#endif
-}

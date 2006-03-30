@@ -45,6 +45,9 @@
 #  2005-07-25  better solaris arch detection (andrei)
 #  2005-09-12  -mallign-double removed (too many problems) (andrei)
 #  2005-10-02  distcc get gcc version hack (andrei)
+#  2006-03-30  64 bit mode compile by default on sparc64 (-m64), added
+#              CC_GCC_LIKE_ASM and SPARC64_MODE (andrei)
+#              sparc <= v8 support (andrei)
 
 
 # check if already included/exported
@@ -445,7 +448,7 @@ endif
 
 ifeq ($(ARCH), sparc)
 	# smp no supported on sparc32
-	DEFS+= -DNOSMP 
+	DEFS+= -DNOSMP # FIXME
 	use_fast_lock=yes
 endif
 
@@ -489,6 +492,7 @@ ifeq ($(mode), release)
 ifeq	($(ARCH), i386)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
 					-Wall  
@@ -532,6 +536,7 @@ endif			# CC_SHORTVER, 4.x
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
+			DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
 					 -tpp6 -xK  #-openmp  #optimize for PIII 
 				# -prefetch doesn't seem to work
@@ -549,6 +554,7 @@ endif	#ARCH, i386
 ifeq	($(ARCH), x86_64)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
 					-Wall 
@@ -592,6 +598,7 @@ endif			# CC_SHORTVER, 4.x
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
+			DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
 					 -tpp6 -xK  #-openmp  #optimize for PIII 
 				# -prefetch doesn't seem to work
@@ -605,15 +612,21 @@ endif		#CC_NAME, icc
 endif		#CC_NAME, gcc
 endif	#ARCH, x86_64
 
-	#if sparc
+	#if sparc64
 ifeq	($(ARCH), sparc64)
 			#if gcc
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM -DSPARC64_MODE
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
+				CFLAGS=-m64 -g -O9 -funroll-loops  $(PROFILE) \
 					-Wall\
 					#-Wcast-align \
 					#-Wmissing-prototypes 
+				# use -m64 to force 64 bit (but add it also to LDFLAGS and
+				#  don't forget to define SPARC64_MODE)
+				# -m32 for 32 bit (default on solaris),
+				# nothing for arch. default
+				LDFLAGS+=-m64
 				#if gcc 4.x
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= ultrasparc
@@ -633,9 +646,6 @@ ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= ultrasparc
 					#use 32bit for now
 					CFLAGS+= -mcpu=ultrasparc -mtune=$(CPU)   \
-					# use -m64 to force 64 bit (but add it also to LDFLAGS), 
-					# -m32 for 32 bit (default on solaris),
-					# nothing for arch. default
 					# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
 					#-mno-epilogue #try to inline function exit code
 					#-mflat # omit save/restore
@@ -647,7 +657,7 @@ $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
 ifneq				($(OS), netbsd)
 						# on netbsd/sparc64,  gcc 2.95.3 does not compile
 						# ser with -mv8
-						CFLAGS+= -mv8 
+						CFLAGS+= -mv9 
 endif
 ifeq					($(ASTYPE), solaris)
 							CFLAGS+= -Wa,-xarch=v8plus
@@ -657,7 +667,7 @@ else			#CC_SHORTVER, 2.9x
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
 					
-					CFLAGS+= -mv8 
+					CFLAGS+= -mv9 
 ifeq					($(ASTYPE), solaris)
 							CFLAGS+= -Wa,-xarch=v8plus
 endif					
@@ -666,10 +676,11 @@ endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 endif			#CC_SHORTVER, 3.4
 endif			#CC_SHORTVER, 4.x
-
+	
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
-			CFLAGS+=-g -xO5 -fast -native -xarch=v8plusa -xCC \
+			DEFS+=-DSPARC64_MODE
+			CFLAGS+= -m64 -g -xO5 -fast -native -xarch=v9 -xCC \
 					-xc99 # C99 support
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
 else
@@ -679,10 +690,69 @@ endif		#CC_NAME, suncc
 endif		#CC_NAME, gcc
 endif	#ARCH, sparc64
 
+	#if sparc
+ifeq	($(ARCH), sparc)
+			#if gcc
+ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
+				#common stuff
+				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
+					-Wall\
+					#-Wcast-align \
+					#-Wmissing-prototypes 
+				#if gcc 4.x
+ifeq			($(CC_SHORTVER), 4.x)
+					CPU ?= v8 
+					#use 32bit for now
+					CFLAGS+= -minline-all-stringops \
+							-mtune=$(CPU) \
+							-ftree-vectorize
+else
+				#if gcc 3.4
+ifeq			($(CC_SHORTVER), 3.4)
+					CPU ?= v8
+					#use 32bit for now
+					CFLAGS+= -mtune=$(CPU)
+else
+				#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CPU ?= v8 
+					#use 32bit for now
+					CFLAGS+= -mtune=$(CPU)   \
+					#-mno-epilogue #try to inline function exit code
+					#-mflat # omit save/restore
+					#-,faster-structs #faster non Sparc ABI structure copy ops
+else			# CC_SHORTVER, 3.0
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
+					for better results)
+else			#CC_SHORTVER, 2.9x
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+					
+endif			#CC_SHORTVER, 2.9x
+endif			#CC_SHORTVER, 3.0
+endif			#CC_SHORTVER, 3.4
+endif			#CC_SHORTVER, 4.x
+	
+else		#CC_NAME, gcc
+ifeq		($(CC_NAME), suncc)
+			CFLAGS+= -g -xO5 -fast -native -xCC \
+					-xc99 # C99 support
+			# -Dinline="" # add this if cc < 5.3 (define inline as null)
+else
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, suncc
+endif		#CC_NAME, gcc
+endif	#ARCH, sparc
+
 	#if ipaq/netwinder
 ifeq	($(ARCH), arm)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
 					-Wall   
@@ -725,6 +795,7 @@ endif	#ARCH, arm
 ifeq	($(ARCH), mips)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  $(PROFILE) \
 					-Wall 
@@ -766,6 +837,7 @@ endif	#ARCH, mips
 ifeq	($(ARCH), mips2)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE) \
 					-Wall 
@@ -806,6 +878,7 @@ endif	#ARCH, mips2
 ifeq	($(ARCH), alpha)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
 			#if gcc 4.0+
@@ -844,6 +917,7 @@ endif	#ARCH, alpha
 ifeq	($(ARCH), ppc)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
 			#if gcc 4.0+
@@ -884,6 +958,7 @@ endif	#ARCH, ppc
 ifeq	($(ARCH), ppc64)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
 ifeq			($(CC_SHORTVER), 4.x)
@@ -950,7 +1025,9 @@ else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align $(PROFILE)
 ifeq		($(ARCH), sparc64)
-			CFLAGS+= -mcpu=ultrasparc 
+			DEFS+=SPARC64_MODE
+			CFLAGS+= -mcpu=ultrasparc -m64
+			LDFLAGS+=-m64
 endif
 ifeq		($(LDTYPE), solaris)
 			#solaris ld
