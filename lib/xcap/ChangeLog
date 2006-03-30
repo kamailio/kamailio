@@ -1,3 +1,6 @@
+2006-03-30
+	* corrected bug (library couldn't be compiled)
+
 2006-03-29
 	* added message authorization functions
 

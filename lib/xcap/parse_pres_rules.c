@@ -71,7 +71,7 @@ static int read_pres_actions(xmlNode *an, cp_actions_t **dst)
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_actions_t));
 
-	n = find_node(an, "sub-handling", common_policy_ns);
+	n = find_node(an, "sub-handling", pres_rules_ns);
 	if (n) {
 		/* may be only one sub-handling node? */
 		s = get_node_value(n);
