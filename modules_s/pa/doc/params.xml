@@ -9,16 +9,61 @@
 <varlistentry>
 	<term><varname>default_expires</varname> (integer)</term>
 	<listitem>
-		<para>Default expires value to be used when the client doesn't supply one
-	    (in seconds).</para>
+		<para>Default expiration value to be used when the client
+		doesn't supply one (in seconds). It is used for both subscriptions and
+		publications.</para>
 		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>max_subscription_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Maximal subscription expiration value in seconds.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>max_publish_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Maximal expiration of presence status information published via
+		PUBLISH in seconds.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>use_db</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1, PA module stores all subscription data into database
+		and reloads them on startup. Requires <varname>db_url</varname> to be
+		set.</para> 
+		<para>Default value is 1.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>db_url</varname> (integer)</term>
+	<listitem>
+		<para>Database connection URL. It has to be specified if
+		<varname>use_db</varname> or <varname>use_offline_winfo</varname> is
+		set.</para>
+		<para>Default value is empty.</para>
+		<example><title><varname>db_url</varname> settings</title>
+<programlisting>
+...
+modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
+...
+</programlisting>
+		</example>
 	</listitem>
 </varlistentry>
 
 <varlistentry>
 	<term><varname>use_callbacks</varname> (integer)</term>
 	<listitem>
-		<para>If set to 1 callbacks to usrloc/jabber will be used, if set to 0
+		<para>If set to 1 callbacks to registrar/jabber will be used, if set to 0
 		callbacks will not be used, thus it will work only with published
 		information.</para>
 		<para>Default value is 1.</para>
@@ -51,16 +96,17 @@
 	<listitem>
 		<para>Set this to 1 if you want to use offline watcher info
 		notifications. In such case can be watcher information stored in database
-		and later dumped to presentity in watcher info notification. See functions
-		for example.</para>
+		and later dumped to presentity in watcher info notification, requires
+		<varname>db_url</varname> to be set. See functions for example.</para>
 		<para>Default value is 0.</para>
 	</listitem>
 </varlistentry>
 
 <varlistentry>
-	<term><varname>use_offline_winfo_expiration</varname> (integer)</term>
+	<term><varname>offline_winfo_expiration</varname> (integer)</term>
 	<listitem>
-		<para>Time for expiration of stored watcher information in seconds.</para>
+		<para>Expiration time of stored "offline watcher information" in seconds.
+		After this time is the information removed from database.</para>
 		<para>Default value is 259200.</para>
 	</listitem>
 </varlistentry>
@@ -69,7 +115,7 @@
 	<term><varname>offline_winfo_timer</varname> (integer)</term>
 	<listitem>
 		<para>Number of seconds after which is triggered automatic cleanup of
-		stored watcherinfo.</para>
+		expired offline watcherinfo.</para>
 		<para>Default value is 3600.</para>
 	</listitem>
 </varlistentry>

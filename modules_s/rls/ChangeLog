@@ -1,3 +1,8 @@
+2006-03-24
+	* removed parameter 'mode' from code (it was not needed due to explicit xcap query
+	needs before resource list subscription. There is query functions for
+	simplified usage: query_resource_list)
+
 2006-03-22
 	* corrected memory leak
 	* reduced sent NOTIFY request count

@@ -36,9 +36,6 @@ char *rls_xcap_root = NULL;	/* must be set if xcap authorization */
 int db_mode = 0; /* 0 -> no DB, 1 -> write through */
 char *db_url = NULL;
 
-char *rls_mode_str = "full"; /* full, simple */
-rls_mode_t rls_mode = rls_mode_full;
-
 int reduce_xcap_needs = 0;
 
 /* internal data members */
@@ -77,7 +74,6 @@ static param_export_t params[]={
 	{"auth_xcap_root", PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{"db_mode", PARAM_INT, &db_mode },
 	{"db_url", PARAM_STRING, &db_url },
-	{"mode", PARAM_STRING, &rls_mode_str },
 	{"reduce_xcap_needs", PARAM_INT, &reduce_xcap_needs },
 	{"xcap_root", PARAM_STRING, &rls_xcap_root }, /* xcap root settings - only one XCAP root allowed !!! */
 	
@@ -144,28 +140,6 @@ static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, ch
 
 	LOG(L_ERR, "Can't resolve subscription authorization type: \'%s\'."
 			" Use one of: none, implicit, xcap.\n", auth_type_str);
-	return -1;
-}
-
-static int set_rls_mode(rls_mode_t *dst, const char *mode)
-{
-	if (!mode) {
-		LOG(L_ERR, "RLS operation mode not set! Using full.\n");
-		if (dst) *dst = rls_mode_full;
-		return 0;
-	}
-	if (strcmp(mode, "full") == 0) {
-		if (dst) *dst = rls_mode_full;
-		LOG(L_INFO, "Using \'full\' rls operation mode.\n");
-		return 0;
-	}
-	if (strcmp(mode, "simple") == 0) {
-		if (dst) *dst = rls_mode_simple;
-		LOG(L_INFO, "Using \'simple\' rls operation mode.\n");
-		return 0;
-	}
-
-	LOG(L_ERR, "Can't resolve operation mode for rls \'%s\'. Use full or simple\n", mode);
 	return -1;
 }
 
@@ -258,9 +232,6 @@ int rls_mod_init(void)
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
 	if (set_auth_params(&rls_auth_params, auth_type_str, auth_xcap_root) != 0) return -1;
-
-	/* set RLS operation mode according to user's wish */
-	if (set_rls_mode(&rls_mode, rls_mode_str) != 0) return -1;
 
 	use_db = 0;
 	if (db_mode > 0) {

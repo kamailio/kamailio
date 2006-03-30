@@ -7,11 +7,6 @@
 #include "../dialog/dlg_mod.h"
 #include "rls_data.h"
 
-typedef enum {
-	rls_mode_full, /* according to drafts */
-	rls_mode_simple /* subscription to "xxx-list@domain.com" -> get buddy list for user xxx */
-} rls_mode_t;
-
 extern struct tm_binds tmb;
 
 /** min interval for subscription expiration */
@@ -31,7 +26,6 @@ extern db_con_t* rls_db; /* database connection handle */
 extern db_func_t rls_dbf;	/* database functions */
 extern dlg_func_t dlg_func;
 extern char *db_url;
-extern rls_mode_t rls_mode;
 extern int reduce_xcap_needs; /* allows XCAP simulation with web server if possible */
 extern char *rls_xcap_root; /* global XCAP root for RLS module */
 

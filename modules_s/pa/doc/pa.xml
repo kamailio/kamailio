@@ -41,17 +41,67 @@
     <section id="pa.overview">
 	<title>Overview</title>
 	<para>
-	    This module implements a presence server, i.e. entity that receives SUBSCRIBE messages
+<!--	    This module implements a presence server, i.e. entity that receives SUBSCRIBE messages
 	    and sends NOTIFY when presence status of a user changes. Currently the presence server
 	    can be connected to registrar and jabber module so SIP users can see presence of jabber
-	    users.
+	    users.-->
+		This module implements a presence server, i.e. entity that receives
+		SUBSCRIBE requests and sends NOTIFY when presence status of a user
+		changes and allows user to use PUBLISH request for publishing presence
+		status information. 
 	</para>
-	<para>
-	    This module currently cannot work as a <acronym>B2BUA</acronym>, i.e. it cannot subscribe
-	    to presence of users using SIP. We are currently working on that feature.
+	
+	<section><title>Features</title>
+	<para><itemizedlist>
+		<listitem><para>handle SUBSCRIBE requests</para></listitem>
+		<listitem><para>handle PUBLISH requests</para></listitem>
+		<listitem><para>XCAP authorization of subscriptions</para></listitem>
+		<listitem><para>failover - all subscription's data including SIP dialogs
+		can be stored into database and reloaded on startup</para></listitem>
+		<listitem><para>offline watcher info - watchers can be stored into
+		database when presentity is offline and sent in watcher info
+		notification when presentity subscribes to its watcherinfo
+		again</para></listitem>
+	</itemizedlist>
 	</para>
+	</section>
+	
+	<section><title>Presence status</title>
+	<para>User's presence status is hold internaly; it can be taken from:
+	<itemizedlist>
+		<listitem><para>registrar - online/offline information with
+		contact</para></listitem>
+		<listitem><para>published information by user (see <xref
+		linkend="pres_rfc_publish"/>) </para></listitem>
+	</itemizedlist>
+	</para>
+	</section>
+
+	<section><title>Supported document formats</title>
+	<para>Supported document formats in PUBLISH:
+	<itemizedlist>
+		<listitem><para>PIDF - see <xref linkend="pres_rfc_pidf"/></para></listitem>
+		<listitem><para>CPIM-PIDF (last version which differs from PIDF only in
+		namespaces and MIME type name)</para></listitem>
+		<listitem><para>RPID - only &lt;person&gt; elements - see <xref linkend="pres_rpid"/></para></listitem>
+	</itemizedlist>
+	</para>
+	
+	<para>Supported document formats in NOTIFY:
+	<itemizedlist>
+		<listitem><para>PIDF - see <xref linkend="pres_rfc_pidf"/></para></listitem>
+		<listitem><para>CPIM-PIDF (last version which differs from PIDF only in
+		namespaces and MIME type name)</para></listitem>
+		<listitem><para>LPIDF</para></listitem>
+		<listitem><para>XPIDF (MS variant used by Windows Messenger 4.7)</para></listitem>
+		<listitem><para>RPID - only &lt;person&gt; elements - see <xref linkend="pres_rpid"/></para></listitem>
+	</itemizedlist>
+	</para>
+	</section>
+	
     </section>
 
+    <include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
     <!-- <include xmlns="http://www.w3.org/2001/XInclude" href="biblio.xml"/> -->

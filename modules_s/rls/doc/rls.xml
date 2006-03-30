@@ -16,6 +16,7 @@ by user's client software.
 <para>TODO: describe tables</para>
 </section>-->
 
+<include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
 <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
 <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
 

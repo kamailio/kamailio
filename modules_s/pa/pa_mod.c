@@ -106,11 +106,6 @@ auth_params_t winfo_auth_params;	/* structure for watcherinfo filled according t
 
 int use_bsearch = 0;
 int use_location_package = 0;
-int authorize_watchers = 1;
-int callback_update_db = 1;
-int callback_lock_pdomain = 1;
-int new_tuple_on_publish = 1;
-int pa_pidf_priority = 1;
 
 /* use callbacks to usrloc/??? - if 0 only pusblished information is used */
 int use_callbacks = 1;
@@ -123,14 +118,13 @@ int offline_winfo_timer_interval = 3600;
 static cmd_export_t cmds[]={
 	{"handle_subscription",   handle_subscription,   1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"handle_publish",        handle_publish,        1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-
-	/* still undocumented (TODO) */
+	
 	{"target_online",         target_online,         1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"store_winfo",           store_offline_winfo,   1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"dump_stored_winfo",     dump_offline_winfo,    2, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 
 	/* TODO: move into XCAP module */
-	{"authorize_message",     authorize_message,    2, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"authorize_message",     authorize_message,    1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	
 	/* FIXME: are these functions used to something by somebody */
 /*
@@ -150,43 +144,40 @@ static cmd_export_t cmds[]={
  */
 static param_export_t params[]={
 	{"default_expires",      PARAM_INT,    &default_expires      },
+	{"max_subscription_expiration", PARAM_INT, &max_subscription_expiration },
+	{"max_publish_expiration", PARAM_INT, &max_publish_expiration },
+	
 	{"auth",                 PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
 	{"auth_xcap_root",       PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{"winfo_auth",           PARAM_STRING, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
 	{"winfo_auth_xcap_root", PARAM_STRING, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	
+	{"use_db",               PARAM_INT,    &use_db               },
 	{"use_callbacks", PARAM_INT, &use_callbacks  }, /* use callbacks to usrloc/jabber ? */
+	{"accept_internal_subscriptions", PARAM_INT, &accept_internal_subscriptions },
 	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   }, /* accept winfo subscriptions ? */
+	
 	{"use_offline_winfo", PARAM_INT, &use_offline_winfo  }, /* use DB for offline winfo */
 	{"offline_winfo_expiration", PARAM_INT, &offline_winfo_expiration }, /* how long hold information in DB */
 	{"offline_winfo_timer", PARAM_INT, &offline_winfo_timer_interval }, /* basic ticks of "offline winfo" timer */
 
+	{"db_url",               PARAM_STR,    &db_url               },
+	
 	/* undocumented still (TODO) */
-	{"max_subscription_expiration", PARAM_INT, &max_subscription_expiration },
-	{"max_publish_expiration", PARAM_INT, &max_publish_expiration },
-	{"accept_internal_subscriptions", PARAM_INT, &accept_internal_subscriptions },
 	{"presentity_table",     PARAM_STRING, &presentity_table     },
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
 	{"place_table",          PARAM_STRING, &place_table          },
 	{"default_priority_percentage", PARAM_INT,    &default_priority_percentage  },
 	{"timer_interval",       PARAM_INT,    &timer_interval       },
-	{"use_db",               PARAM_INT,    &use_db               },
 	{"use_place_table",      PARAM_INT,    &use_place_table      },
 	{"use_bsearch",          PARAM_INT,    &use_bsearch          },
 	{"use_location_package", PARAM_INT,    &use_location_package },
-	{"db_url",               PARAM_STR,    &db_url               },
 #ifdef HAVE_LOCATION_PACKAGE
 	{"pa_domain",            PARAM_STR,    &pa_domain            },
 #endif /* HAVE_LOCATION_PACKAGE */
 	{"offline_winfo_table", PARAM_STRING, &offline_winfo_table }, /* table with offline winfo */
 
-	/* not used -> remove (TODO) */
-	{"authorize_watchers",   PARAM_INT, &authorize_watchers  },
-	{"callback_update_db",   PARAM_INT, &callback_update_db   },
-	{"callback_lock_pdomain",PARAM_INT, &callback_lock_pdomain },
-	{"pidf_priority",        PARAM_INT, &pa_pidf_priority  },
-	{"new_tuple_on_publish", PARAM_INT, &new_tuple_on_publish  },
-	
 	{0, 0, 0}
 };
 

@@ -58,11 +58,6 @@ handle_subscription("registrar");
 	<para>If the client responds with 2xx on generated NOTIFY request, the
 	stored information is removed from database.
 	</para>
-	</listitem>
-</varlistentry>
-
-</variablelist>
-
 <example><title><function>target_online</function>,
 <function>store_winfo</function>, <function>dump_stored_winfo</function> usage</title>
 <programlisting>
@@ -95,5 +90,39 @@ if (method=="SUBSCRIBE") {
 ...
 </programlisting>
 </example>
+</listitem>
+</varlistentry>
 
+<varlistentry>
+	<term><varname>authorize_message(xcap_root)</varname></term>
+	<listitem><para>This function reads and processes IM authorization data and
+	returns 1 if message can be accepted by destination user. If there is no IM
+	authorization document on given XCAP server, it returns 1 too (MESSAGE is
+	enabled by default). If the sender is blocked by recipient rules, this
+	function returns -1. For more details about authorization documents see
+	<xref linkend="im_rules"/>.
+	</para>
+<example><title><function>authorize_message</function> usage</title>
+<programlisting>
+...
+if (method=="MESSAGE") {
+	if (authorize_message("http://localhost/xcap")) {
+		if (!lookup("location")) {
+			sl_reply("404", "Not Found");
+			break;
+		};
+		if (!t_relay()) { sl_reply_error(); };
+	}
+	else {
+		sl_reply("403", "Forbidden");
+	}
+	break;
+}
+...
+</programlisting>
+</example>
+</listitem>
+</varlistentry>
+
+</variablelist>
 </section>

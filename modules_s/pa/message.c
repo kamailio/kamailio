@@ -53,7 +53,7 @@ static int get_sender_uri(struct sip_msg* _m, str* uri)
 	return res;
 }
 
-int authorize_message(struct sip_msg* _m, char* _xcap_root, char*st)
+int authorize_message(struct sip_msg* _m, char* _xcap_root, char*_st)
 {
 	/* get and process XCAP authorization document */
 	/* may modify the message or its body */
