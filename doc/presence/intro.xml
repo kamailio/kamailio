@@ -3,7 +3,16 @@
 	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
 	
 <section><title>Introduction</title>
-<para>
+<para>This document describes usage of SIP Express Router as a presence server.
 <!-- TODO: What is presence, ... (use doc from PIC-SE wiki?) -->
+</para>
+<para>Main features:
+<itemizedlist>
+	<listitem><para>presence events with XCAP authorization</para></listitem>
+	<listitem><para>presence watcherinfo</para></listitem>
+	<listitem><para>resource list server (only for presence now)</para></listitem>
+	<listitem><para>B2BUA for presence events (no resource list support now)</para></listitem>
+	<listitem><para>MESSAGE authorization</para></listitem>
+</itemizedlist>
 </para>
 </section>

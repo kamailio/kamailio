@@ -1,0 +1,174 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE article PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+	
+<article lang="en" id="im_rules"><title>MESSAGE authorization rules</title>
+<articleinfo><author><firstname>Vaclav</firstname><surname>Kubart</surname></author>
+</articleinfo>
+<abstract><para>This document folows specification of authorization documents
+suggested by <xref linkend="common_auth"/> and defines document format for
+storing rules for authorization of instant messages.
+</para></abstract>
+
+<section><title>Terms</title>
+<para>
+<variablelist><title></title>
+<varlistentry>
+	<term>sender</term>
+	<listitem><para>User sending the instant message represented by URI present
+	in From header field.
+	</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term>recipient</term>
+	<listitem><para>User receiving the instant message represented by AOR/To
+	URI.</para></listitem>
+</varlistentry>
+</variablelist>
+</para>
+</section>
+
+<!-- ******************** Documents ********************* -->
+<section id="docs"><title>Instant message authorization documents</title>
+<para>Instant message authorization document is XML document formated according
+to schema defined in <xref linkend="common_auth"/>. It inherits MIME
+type of common policy documents defined there - application/auth-policy+xml.
+</para>
+
+<para>All XML elements designed in this document belong to 
+<quote>urn:iptel:xml:ns:im-rules</quote> namespace.</para>
+
+<section><title>Conditions</title>
+<para>Conditions are processed according specification in <xref linkend="common_auth"/>.
+</para>
+
+<!--<section><title>Identity representation by URI</title>
+<para>
+</para>
+</section>-->
+
+<section><title>Sphere</title>
+<para>If the "instant messaging server" (proxy) trying to resolve authorization
+rules is bound together with presence server it can take the sphere value from
+presence server as defined in <xref linkend="pres_auth"/>, otherwise is sphere
+value considered undefined in terms of common policy processing.</para>
+
+<!-- <para>This sphere
+handling is due to near relation between presence and instant messaging.
+</para>-->
+
+</section>
+
+</section>
+
+<section><title>Actions</title>
+<para>This document defines one action - &lt;im-handling&gt;. It
+is defined an enumerated integer type (like sub-handling in <xref
+linkend="pres_auth"/>). Possible values are:</para>
+<variablelist><title></title>
+<varlistentry>
+	<term>block (value 0)</term>
+	<listitem><para>The message should not be delivered to the user and should
+	be rejected with 403 Forbidden result code. This is the dafault value of
+	im-handling.
+	</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term>allow (value 1)</term>
+	<listitem><para>The message should be delivered to the destination user.
+	</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>In the future may these values change.</para>
+<para>If there are more matching rules, the resulting action will be the maximum
+of their &lt;im-handling&gt; values.
+</para>
+</section>
+
+<section><title>Transformations</title>
+<para>Transformations are not defined at this moment. In the future there can be
+for example length limitations or some flagging (like <quote>spam</quote>) or
+rate limitations.
+</para>
+</section>
+
+
+</section>
+
+<section><title>Example</title>
+<para>
+<programlisting><![CDATA[
+<?xml version="1.0"?>
+<ruleset xmlns="urn:ietf:params:xml:ns:common-policy"
+xmlns:im="urn:iptel:xml:ns:im-rules">
+  <rule id="whitelist">
+    <conditions>
+      <identity>
+        <id>sip:jan@test-domain.com</id>
+        <id>sip:pavel@test-domain.com</id>
+        <id>sip:vasek@test-domain.com</id>
+        <id>sip:ja@test-domain.com</id>
+      </identity>
+    </conditions>
+    <actions>
+      <im:im-handling>allow</im:im-handling>
+    </actions>
+    <transformations/>
+  </rule>
+  <rule id="blacklist">
+    <conditions>
+      <identity>
+        <id>sip:smith@test-domain.com</id>
+      </identity>
+    </conditions>
+    <actions>
+      <im:im-handling>block</im:im-handling>
+    </actions>
+    <transformations/>
+  </rule>
+</ruleset>
+]]></programlisting>
+</para>
+</section>
+
+
+<section><title>Usage with XCAP</title>
+<para>This document defines <quote>im-rules</quote> as unique application usage
+ID (AUID) requiered by XCAP specification.
+</para>
+
+<section><title>Naming conventions</title>
+<para>When an instant message comes to a IM/presence server (proxy) within its
+domain, the server should look for document
+[xcap-root]/im-rules/users/[recipient username]/im-rules.xml and process rules
+in it.</para>
+</section>
+
+</section>
+
+<!-- ******************** Bibliography ********************* -->
+
+<bibliography id="bib">
+<note><para>There might be new versions of internet drafts and thus links to
+them my be obsolete. In such case try increment version in link or find the
+draft on <ulink url="http://www.ietf.org">IETF</ulink> by name.</para></note>
+
+<biblioentry id="common_auth">
+<abbrev>common auth</abbrev>
+<title><ulink
+url="http://www.ietf.org/internet-drafts/draft-ietf-geopriv-common-policy-05.txt"
+>draft-ietf-geopriv-common-policy-05.txt</ulink></title>
+</biblioentry>
+
+<biblioentry id="pres_auth">
+<abbrev>presence auth</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-presence-rules-03.txt"
+>draft-ietf-simple-presence-rules-03.txt</ulink> - presence authorization XML based data format 
+and usage with XCAP</title>
+</biblioentry>
+
+</bibliography>
+
+</article>

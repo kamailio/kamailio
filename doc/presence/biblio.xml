@@ -50,8 +50,14 @@ package</ulink></title>
 Data Format</ulink></title>
 </biblioentry>
 
+<biblioentry id="pres_rpid">
+<abbrev>rpid</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-rpid-09.txt"
+>draft-ietf-simple-rpid-09.txt</ulink></title>
+</biblioentry>
+
 <biblioentry id="pres_rfc_publish">
-<abbrev>pidf</abbrev>
+<abbrev>publish</abbrev>
 <title><ulink url="http://www.ietf.org/rfc/rfc3903.txt">RFC 3903 - Event state 
 publication</ulink></title>
 </biblioentry>

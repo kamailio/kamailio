@@ -34,9 +34,9 @@ on common libraries which have their own dependencies as mentioned below.
 </itemizedlist>-->
 </section>
 
-<section><title>Installation steps</title>
+<section><title>Installation from CVS</title>
 <para>There is an example of steps which need to be done while installing SER
-with these libraries into directory /base/ser/directory (if no directory specified - 
+with shared libraries into directory /base/ser/directory (if no directory specified - 
 no prefix parameter given - default value is used: /usr/local/)
 <orderedlist>
 	<listitem><para>Download current ser sources:</para>
@@ -57,14 +57,40 @@ no prefix parameter given - default value is used: /usr/local/)
 	</listitem>
 </orderedlist>
 </para>
-</section> <!-- Installation steps -->
+</section> <!-- Installation from CVS -->
+
+<section><title>Installation from presence-snapshot</title>
+
+<para>There are snapshots of sources from CVS named "presence snapshots" on our
+FTP server ftp://ftp.iptel.org/pub/ser/presence/.</para>
+
+<para>Presence snapshot contains example config files, has modified Makefiles for
+simplier compilation and installation and it is a bit tested for presence
+functions. Snapshot compiles only modules needed by presence!</para>
+
+<para>There is an example of steps which need to be done while installing SER
+from presence snapshot into directory /base/ser/directory (if no directory specified - 
+no prefix parameter given - default value is used: /usr/local/)
+<orderedlist>
+	<listitem><para>Download last versiom from
+	ftp://ftp.iptel.org/pub/ser/presence/</para></listitem>
+
+	<listitem><para>Compile and install</para>
+	<para><userinput>make install prefix=/base/ser/directory</userinput></para>
+	</listitem>
+</orderedlist>
+</para>
+</section> <!-- Installation from snapshot -->
 
 <section><title>Running SER</title>
 <para>Linker used for dynamic linking must know, where to find these libraries.
 This may be done by setting <varname>LD_LIBRARY_PATH</varname> before
 startup.</para>
 <para><userinput>export LD_LIBRARY_PATH=/base/ser/directory/lib/ser</userinput></para>
-<para><userinput>/base/ser/directory/sbin/ser -f /base/ser/directory/etc/ser/ser.cfg</userinput></para>
+<para><userinput>/base/ser/directory/sbin/ser -f /base/ser/directory/etc/ser/ser.cfg</userinput></para> 
+
+<warning>If you want to run SER under sudo like <quote>sudo /base/ser/directory/sbin/ser -f
+/base/ser/directory/etc/ser/ser.cfg</quote> it might not work!</warning>
 </section> <!-- running SER -->
 
 </section>
