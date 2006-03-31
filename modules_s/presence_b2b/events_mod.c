@@ -41,7 +41,6 @@ static int handle_presence_subscriptions = 1;
 
 /** Exported parameters */
 static param_export_t params[]={
-	/* TODO: missing documentation */
 	{"default_expiration", PARAM_INT, &subscribe_time },
 	{"on_error_retry_time", PARAM_INT, &resubscribe_timeout_on_err },
 	{"presence_route", PARAM_STR, &presence_route },

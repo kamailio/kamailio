@@ -11,15 +11,6 @@ for storing data about lists of users. These data can be manipulated in any way
 by user's client software.
 </para>
 
-<!-- DB storage -->
-<!--<section><title>Persistence</title>
-<para>TODO: describe tables</para>
-</section>-->
-
-<include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
-<include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
-<include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
-
 <section id="rls.dependencies"><title>Dependencies</title>
 <itemizedlist><title>Modules</title>
 	<listitem><para><application>tm</application></para></listitem>
@@ -35,6 +26,15 @@ by user's client software.
 		internal subscriptions ta PA/presence_b2b</para></listitem>
 </itemizedlist>
 </section>
+
+<!-- DB storage -->
+<!--<section><title>Persistence</title>
+<para>TODO: describe tables</para>
+</section>-->
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
 
 </section>
 

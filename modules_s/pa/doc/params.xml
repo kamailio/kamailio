@@ -53,6 +53,7 @@
 		<example><title><varname>db_url</varname> settings</title>
 <programlisting>
 ...
+modparam("pa", "use_db", 1)
 modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 ...
 </programlisting>

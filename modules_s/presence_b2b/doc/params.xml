@@ -57,6 +57,16 @@
 	</listitem>
 </varlistentry>
 
+<varlistentry>
+	<term><varname>handle_presence_subscriptions</varname> (integer)</term>
+	<listitem>
+		<para>If set to nonzero value the module will handle internal (QSA)
+		subscriptions to presence events. If not set, these internal
+		subscriptions are ignored.</para>
+		<para>Default value is 1.</para>
+	</listitem>
+</varlistentry>
+
 </variablelist>
 </section>
 

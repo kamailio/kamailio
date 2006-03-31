@@ -56,11 +56,11 @@ static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
 	{"handle_rls_subscription", (cmd_function)handle_rls_subscription, 1,
 		rls_subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	
-	/* TODO: undocumented */
 	{"is_simple_rls_target", is_simple_rls_target, 1, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"query_rls_services", query_rls_services, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"query_resource_list", query_resource_list, 1, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
+	
+	/* TODO: undocumented */
 	{"have_flat_list", have_flat_list, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };

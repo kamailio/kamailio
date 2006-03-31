@@ -207,7 +207,8 @@ implicit link there.
 
 <para>
 The document below for user Smith can be stored on XCAP server in
-http://localhost/xcap-root/resource-lists/users/smith/resource-lists.xml
+http://localhost/xcap-root/resource-lists/users/smith/resource-lists.xml. It
+contains two resource lists: <quote>default</quote> and <quote>contacts</quote>.
 <programlisting><![CDATA[
 <?xml version="1.0" encoding="UTF-8"?>
 <resource-lists 

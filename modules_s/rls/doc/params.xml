@@ -91,6 +91,34 @@
 	<para>Default value: not set.
 	</para></listitem>
 </varlistentry>
+
+<varlistentry>
+	<term><varname>db_mode</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1, RLS module stores all subscription data into database
+		and reloads them on startup. Requires <varname>db_url</varname> to be
+		set.</para> 
+		<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>db_url</varname> (integer)</term>
+	<listitem>
+		<para>Database connection URL. It has to be specified if
+		<varname>db_mode</varname> is set.</para>
+		<para>Default value is empty.</para>
+		<example><title><varname>db_url</varname> settings</title>
+<programlisting>
+...
+modparam("rls", "db_mode", 1)
+modparam("rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
+...
+</programlisting>
+		</example>
+	</listitem>
+</varlistentry>
+
 </variablelist>
 </section>
 
