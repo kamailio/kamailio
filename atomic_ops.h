@@ -86,11 +86,13 @@
  *                            safe
  *                   __CPU_i386, __CPU_x86_64, X86_OOSTORE - see 
  *                       atomic/atomic_x86.h
- *                   __CPU_mips, __CPU_mip2, __CPU_mip64, MIPS_HAS_LLSC - see
+ *                   __CPU_mips, __CPU_mips2, __CPU_mips64, MIPS_HAS_LLSC - see
  *                       atomic/atomic_mip2.h
  *                   __CPU_ppc, __CPU_ppc64 - see atomic/atomic_ppc.h
  *                   __CPU_sparc - see atomic/atomic_sparc.h
  *                   __CPU_sparc64, SPARC64_MODE - see atomic/atomic_sparc64.h
+ *                   __CPU_arm, __CPU_arm6 - see atomic/atomic_arm.h
+ *                   __CPU_alpha - see atomic/atomic_alpha.h
  */
 /* 
  * History:
@@ -146,6 +148,14 @@ inline static int atomic_get(atomic_t *v)
 #elif defined __CPU_sparc
 
 #include "atomic/atomic_sparc.h"
+
+#elif defined __CPU_arm || defined __CPU_arm6
+
+#include "atomic/atomic_arm.h"
+
+#elif defined __CPU_alpha
+
+#include "atomic/atomic_alpha.h"
 
 #endif /* __CPU_xxx  => no known cpu */
 

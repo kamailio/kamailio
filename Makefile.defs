@@ -48,6 +48,8 @@
 #  2006-03-30  64 bit mode compile by default on sparc64 (-m64), added
 #              CC_GCC_LIKE_ASM and SPARC64_MODE (andrei)
 #              sparc <= v8 support (andrei)
+#  2006-03-31  armv6 & mips64 support added
+#              mips and arm set to NOSMP by default (andrei)
 
 
 # check if already included/exported
@@ -64,7 +66,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev34
+EXTRAVERSION = -dev35
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -78,7 +80,8 @@ else
 endif
 
 ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
-			-e s/armv4l/arm/ -e "s/Power Macintosh/ppc/" \
+			-e s/armv[3-5].*/arm/  -e s/armv6.*/arm6/ \
+			-e "s/Power Macintosh/ppc/" \
 			-e "s/cobalt/mips2/" \
 			-e s/amd64/x86_64/ )
 # fix sparc -> sparc64
@@ -447,12 +450,15 @@ endif
 endif
 
 ifeq ($(ARCH), sparc)
-	# smp no supported on sparc32
-	DEFS+= -DNOSMP # FIXME
 	use_fast_lock=yes
 endif
 
 ifeq ($(ARCH), arm)
+	use_fast_lock=yes
+	DEFS+=-DNOSMP # very unlikely to have an smp arm
+endif
+
+ifeq ($(ARCH), arm6)
 	use_fast_lock=yes
 endif
 
@@ -467,9 +473,16 @@ endif
 ifeq ($(ARCH), mips)
 # mips1 arch. (e.g. R3000) - no hardware locking support
 	use_fast_lock=no
+	DEFS+=-DMIPS_HAS_LLSC # likely
+	DEFS+=-DNOSMP # very likely
 endif
 
 ifeq ($(ARCH), mips2)
+# mips2 arch and newer (mips3=R4000, mips4=R5000 a.s.o)
+	use_fast_lock=yes
+endif
+
+ifeq ($(ARCH), mips64)
 # mips2 arch and newer (mips3=R4000, mips4=R5000 a.s.o)
 	use_fast_lock=yes
 endif
@@ -754,20 +767,20 @@ ifeq	($(ARCH), arm)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
+				CFLAGS=-O9 -funroll-loops $(PROFILE) \
 					-Wall   
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-mcpu=strongarm1100 -minline-all-stringops \
-							-ftree-vectorize
+					CFLAGS+= -ftree-vectorize
+					# not supported on arm: -minline-all-stringops 
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
-					CFLAGS+= -mcpu=strongarm1100
+					CFLAGS+=
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CFLAGS+= -mcpu=strongarm1100
+					CFLAGS+= 
 							#-mcpu=athlon
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
@@ -790,6 +803,48 @@ else		# CC_NAME, gcc
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, arm 
+
+	#if armv6 cpu 
+ifeq	($(ARCH), arm6)
+		# if gcc 
+ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
+				#common stuff
+				CFLAGS=-march=armv6 -O9 -funroll-loops \
+						$(PROFILE) -Wall   
+			#if gcc 4.x+
+ifeq			($(CC_SHORTVER), 4.x)
+					CFLAGS+= -ftree-vectorize
+else
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CFLAGS+=
+else
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CFLAGS+= 
+							#-mcpu=athlon
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+					
+					CFLAGS+=
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+	
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
+endif			# CC_SHORTVER, 4.0
+	
+else		# CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, arm6
 
 	#if  mips (R3000)
 ifeq	($(ARCH), mips)
@@ -873,6 +928,45 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, mips2
 
+#if  >=mips64
+ifeq	($(ARCH), mips64)
+		# if gcc 
+ifeq		($(CC_NAME), gcc)
+				DEFS+=-DCC_GCC_LIKE_ASM
+				#common stuff
+				CFLAGS= -mips64 -O9 -funroll-loops $(PROFILE) \
+					-Wall 
+			#if gcc 4.0+
+ifeq			($(CC_SHORTVER), 4.x)
+					CFLAGS+=-minline-all-stringops -ftree-vectorize
+else
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CFLAGS+=
+else
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CFLAGS+=
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+					CFLAGS+=
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+	
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
+endif			# CC_SHORTVER, 4.x
+	
+else		# CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, mips64
 
 #if  alpha
 ifeq	($(ARCH), alpha)
@@ -883,7 +977,8 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-minline-all-stringops
+					CFLAGS+= 
+					# not supported: -minline-all-stringops
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)

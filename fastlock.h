@@ -97,7 +97,7 @@ inline static int tsl(fl_lock_t* lock)
 			: "=r"(val) : "r"(lock):"memory"
 	);
 	
-#elif defined __CPU_arm
+#elif defined __CPU_arm || defined __CPU_arm6
 	asm volatile(
 			"# here \n\t"
 			"swpb %0, %1, [%2] \n\t"
@@ -121,7 +121,8 @@ inline static int tsl(fl_lock_t* lock)
 			: "r"(1), "b" (lock) :
 			"memory", "cc"
         );
-#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC )
+#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC ) \
+	|| defined __CPU_mips64
 	long tmp;
 	
 	asm volatile(
@@ -156,8 +157,7 @@ inline static int tsl(fl_lock_t* lock)
 		"    mb           \n\t"
 		"2:               \n\t"
 		:"=&r" (val), "=m"(*lock), "=r"(tmp)
-		:"1"(*lock)  /* warning on gcc 3.4: replace it with m or remove
-						it and use +m in the input line ? */
+		:"m"(*lock) 
 		: "memory"
 	);
 #else
@@ -204,7 +204,7 @@ inline static void release_lock(fl_lock_t* lock)
 			: "r" (lock)
 			: "memory"
 	);
-#elif defined __CPU_arm
+#elif defined __CPU_arm || defined __CPU_arm6
 	asm volatile(
 		" str %0, [%1] \n\r" 
 		: /*no outputs*/ 
@@ -223,7 +223,8 @@ inline static void release_lock(fl_lock_t* lock)
 			: "r"(0), "b" (lock)
 			: "memory"
 	);
-#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC )
+#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC ) \
+	|| defined __CPU_mips64
 	asm volatile(
 		".set push \n\t"
 		".set noreorder \n\t"
