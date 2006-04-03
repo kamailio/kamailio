@@ -31,6 +31,8 @@
  *
  *  Config defines:   - NOSMP
  *                    - X86_OOSTORE (out of order store, defined by default)
+ *                    - X86_64_OOSTORE, like X86_OOSTORE, but for x86_64 cpus,
+ *                      default off
  *                    - __CPU_x86_64 (64 bit mode, long and void* is 64 bit and
  *                                    the cpu has all of the mfence, lfence
  *                                    and sfence instructions)
@@ -79,7 +81,7 @@
 */
 #define membar() 		asm volatile( " mfence \n\t " : : : "memory" )
 #define membar_read()	asm volatile( " lfence \n\t " : : : "memory" )
-#ifdef X86_OOSTORE
+#ifdef X86_64_OOSTORE
 #define membar_write()	asm volatile( " sfence \n\t " : : : "memory" )
 #else
 #define membar_write()	asm volatile ("" : : : "memory") /* gcc don't cache*/
