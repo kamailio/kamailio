@@ -44,6 +44,10 @@
  *               unlock part (andrei)
  *  2006-03-08  mips2 NOSMP (skip sync), optimized x86 & mips clobbers and
  *               input/output constraints (andrei)
+ *  2006-04-03  optimization: call lock_get memory barrier outside tsl,in the 
+ *               calling function, only if the lock operation succeeded
+ *               (membar_getlock()) (andrei)
+ *              added try_lock()  (andrei)
  *
  */
 
@@ -67,8 +71,58 @@ typedef  volatile int fl_lock_t;
 #define init_lock( l ) (l)=0
 
 
+/* what membar to use (if any) after taking a lock. This
+ *  was separated from the lock code to allow better optimizations.
+ *  e.g.: use the membar_getlock only after getting the lock and don't use 
+ *  it if lock_get fails / when spinning on tsl.
+ *  There is no corresponding membar_release_lock (because lock_release
+ *  must always include the needed memory barrier).
+ *  WARNING: this is intended only for internal fastlock use*/
+#if defined(__CPU_i386) || defined(__CPU_x86_64)
+#define membar_getlock()   /* not needed on x86 */
+#elif defined(__CPU_sparc64) || defined(__CPU_sparc)
+#ifndef NOSMP
+#define membar_getlock() \
+	asm volatile ("membar #StoreStore | #StoreLoad \n\t" : : : "memory");
+#else
+/* no need for a compiler barrier, that is already included in lock_get/tsl*/
+#define membar_getlock() /* not needed if no smp*/
+#endif /* NOSMP */
+#elif defined __CPU_arm || defined __CPU_arm6
+#error "FIXME: check arm6 membar"
+#define membar_getlock() 
+#elif defined(__CPU_ppc) || defined(__CPU_ppc64)
+#ifndef NOSMP
+#define membar_getlock() \
+	asm volatile("lwsync \n\t" : : : "memory");
+#else
+#define membar_getlock() 
+#endif /* NOSMP */
+#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC ) \
+	|| defined __CPU_mips64
+#ifndef NOSMP
+#define membar_getlock() \
+	asm volatile("sync \n\t" : : : "memory");
+#else
+#define membar_getlock() 
+#endif /* NOSMP */
+#elif defined __CPU_alpha
+#ifndef NOSMP
+#define membar_getlock() \
+	asm volatile("mb \n\t" : : : "memory");
+#else
+#define membar_getlock() 
+#endif /* NOSMP */
+#else
+#error "unknown architecture"
+#endif
 
-/*test and set lock, ret 1 if lock held by someone else, 0 otherwise*/
+
+
+/*test and set lock, ret 1 if lock held by someone else, 0 otherwise
+ * WARNING: no memory barriers included, if you use this function directly
+ *          (not recommended) and it gets the lock (ret==0), you should call 
+ *          membar_getlock() after it */
 inline static int tsl(fl_lock_t* lock)
 {
 	int val;
@@ -91,9 +145,7 @@ inline static int tsl(fl_lock_t* lock)
 #elif defined(__CPU_sparc64) || defined(__CPU_sparc)
 	asm volatile(
 			"ldstub [%1], %0 \n\t"
-#ifndef NOSMP
-			"membar #StoreStore | #StoreLoad \n\t"
-#endif
+			/* membar_getlock must be  called outside this function */
 			: "=r"(val) : "r"(lock):"memory"
 	);
 	
@@ -112,10 +164,7 @@ inline static int tsl(fl_lock_t* lock)
 			"   bne    0f\n\t"
 			"   stwcx. %1, 0, %2\n\t"
 			"   bne-   1b\n\t"
-			"   lwsync\n\t" /* lwsync or isync, lwsync is faster
-							   and should work, see
-							   [ IBM Programming environments Manual, D.4.1.1]
-							 */
+			/* membar_getlock must be  called outside this function */
 			"0:\n\t"
 			: "=r" (val)
 			: "r"(1), "b" (lock) :
@@ -134,9 +183,7 @@ inline static int tsl(fl_lock_t* lock)
 		"    sc %0, %2  \n\t"
 		"    beqz %0, 1b \n\t"
 		"    nop \n\t"
-#ifndef NOSMP
-		"    sync \n\t"
-#endif
+		/* membar_getlock must be called outside this function */
 		".set pop\n\t"
 		: "=&r" (tmp), "=&r" (val), "=m" (*lock) 
 		: "m" (*lock) 
@@ -154,7 +201,7 @@ inline static int tsl(fl_lock_t* lock)
 		"    lda %2, 1    \n\t"  /* or: or $31, 1, %2 ??? */
 		"    stl_c %2, %1 \n\t"
 		"    beq %2, 1b   \n\t"
-		"    mb           \n\t"
+		/* membar_getlock must be called outside this function */
 		"2:               \n\t"
 		:"=&r" (val), "=m"(*lock), "=r"(tmp)
 		:"m"(*lock) 
@@ -183,6 +230,20 @@ inline static void get_lock(fl_lock_t* lock)
 		sched_yield();
 #endif
 	}
+	membar_getlock();
+}
+
+
+
+/* like get_lock, but it doesn't wait. If it gets the lock returns 0,
+ *  <0  otherwise (-1) */
+inline static int try_lock(fl_lock_t* lock)
+{
+	if (tsl(lock)){
+		return -1;
+	}
+	membar_getlock();
+	return 0;
 }
 
 

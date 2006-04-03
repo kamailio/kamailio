@@ -1,4 +1,5 @@
 /*
+ * $Id$
  *
  *  simple locking test program
  *  (no paralles stuff)
@@ -23,18 +24,21 @@ int main(int argc, char** argv)
 	lock=0;
 	printf("starting locking basic tests...\n");
 	
-	r=tsl(&lock);
-	printf(" tsl should return 0                 ... %d\n", r);
+	r=try_lock(&lock);
+	printf(" try_lock should return 0            ... %d\n", r);
 	printf("     lock should be 1 now            ... %d\n", lock);
-	r=tsl(&lock);
-	printf(" tsl should return 1                 ... %d\n", r);
+	r=try_lock(&lock);
+	printf(" tsl should return -1                ... %d\n", r);
 	printf("     lock should still be 1 now      ... %d\n", lock);
 	release_lock(&lock);
 	printf(" release_lock: lock should be 0 now  ... %d\n", lock);
-	printf("trying tsl once more...\n");
-	r=tsl(&lock);
-	printf(" tsl should return 0                 ... %d\n", r);
+	printf("try_lock once more...\n");
+	r=try_lock(&lock);
+	printf(" try_lock should return 0            ... %d\n", r);
 	printf("     lock should be 1 now            ... %d\n", lock);
+	release_lock(&lock);
+	get_lock(&lock);
+	printf(" get_lock, lock should be 1 now      ... %d\n", lock);
 	printf("\ndone.\n");
 	return 0;
 }
