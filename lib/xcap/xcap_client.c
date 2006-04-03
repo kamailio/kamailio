@@ -128,7 +128,7 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 			else dstr_get_data(&data, *buf);
 		}
 	}
-	else ERROR_LOG("curl error: %d\n", res);
+	else DEBUG_LOG("curl error: %d\n", res);
 	dstr_destroy(&data);
 	if (auth) cds_free(auth);
 	return res;
