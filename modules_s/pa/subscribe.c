@@ -57,6 +57,7 @@
 #include <cds/sstr.h>
 #include <cds/msg_queue.h>
 #include <cds/logger.h>
+#include <presence/utils.h>
 
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
@@ -425,34 +426,6 @@ int get_preferred_event_mimetype(struct sip_msg *_m, int et)
 	return acc;
 }
 
-int extract_server_contact(struct sip_msg *m, str *dst)
-{
-	char *tmp = "";
-	if (!dst) return -1;
-
-	switch(m->rcv.bind_address->proto){ 
-		case PROTO_NONE: break;
-		case PROTO_UDP: break;
-		case PROTO_TCP: tmp = ";transport=tcp";	break;
-		case PROTO_TLS: tmp = ";transport=tls"; break;
-		case PROTO_SCTP: tmp = ";transport=sctp"; break;
-		default: LOG(L_CRIT, "BUG: extract_server_contact: unknown proto %d\n", m->rcv.bind_address->proto); 
-	}
-	
-	dst->len = 7 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len + strlen(tmp);
-	dst->s = (char *)mem_alloc(dst->len + 1);
-	if (!dst->s) {
-		dst->len = 0;
-		return -1;
-	}
-	snprintf(dst->s, dst->len + 1, "<sip:%.*s:%.*s%s>",
-			m->rcv.bind_address->name.len, m->rcv.bind_address->name.s,
-			m->rcv.bind_address->port_no_str.len, m->rcv.bind_address->port_no_str.s,
-			tmp);
-
-	return 0;
-}
-
 static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watcher** _w, int et, time_t expires)
 {
 	dlg_t* dialog;
@@ -474,7 +447,7 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 		return -4;
 	}
 	
-	if (extract_server_contact(_m, &server_contact) != 0) {
+	if (extract_server_contact(_m, &server_contact, 1) != 0) {
 		paerrno = PA_DIALOG_ERR;
 		LOG(L_ERR, "create_watcher(): Error while extracting server contact\n");
 		return -3;

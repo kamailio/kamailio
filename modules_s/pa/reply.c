@@ -32,7 +32,7 @@
 #include "reply.h"
 #include "paerrno.h"
 #include "pa_mod.h"
-
+#include <presence/utils.h>
 
 #define MSG_200 "OK"
 #define MSG_400 "Bad Request"
@@ -102,36 +102,6 @@ int codes[] = {
 	403 /* EI_PA_SUBSCRIPTION_REJECTED */
 };
 
-static int extract_contact_rpl(struct sip_msg *m, str *dst)
-{
-	char *tmp = "";
-	if (!dst) return -1;
-	dst->s = NULL;
-	dst->len = 0;
-	
-	switch(m->rcv.bind_address->proto){ 
-		case PROTO_NONE: break;
-		case PROTO_UDP: break;
-		case PROTO_TCP: tmp = ";transport=tcp";	break;
-		case PROTO_TLS: tmp = ";transport=tls"; break;
-		case PROTO_SCTP: tmp = ";transport=sctp"; break;
-		default: LOG(L_CRIT, "BUG: extract_server_contact: unknown proto %d\n", m->rcv.bind_address->proto); 
-	}
-
-	dst->len = 18 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len + strlen(tmp);
-	dst->s = (char *)mem_alloc(dst->len + 1);
-	if (!dst->s) {
-		dst->len = 0;
-		return -1;
-	}
-	snprintf(dst->s, dst->len + 1, "Contact: <sip:%.*s:%.*s%s>\r\n",
-			m->rcv.bind_address->name.len, m->rcv.bind_address->name.s,
-			m->rcv.bind_address->port_no_str.len, m->rcv.bind_address->port_no_str.s,
-			tmp);
-
-	return 0;
-}
-
 /*
  * Send a reply
  */
@@ -192,7 +162,7 @@ int send_reply(struct sip_msg* _m)
 	if ((code >= 200) && (code < 300)) {
 		/* add Contact header field into response */
 		str s;
-		if (extract_contact_rpl(_m, &s) == 0) {
+		if (extract_server_contact(_m, &s, 0) == 0) {
 			if (s.len > 0) {
 				if (!add_lump_rpl(_m, s.s, s.len, LUMP_RPL_HDR)) {
 					ERR("Can't add Contact header into the response\n");

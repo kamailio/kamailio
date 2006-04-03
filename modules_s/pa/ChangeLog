@@ -1,3 +1,7 @@
+2006-04-03
+	* function for server contact extraction was moved into common libraries
+	(it is used by RLS too)
+
 2006-03-29
 	* added function for MESSAGE authorization
 

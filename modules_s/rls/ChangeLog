@@ -1,3 +1,7 @@
+2006-04-03
+	* using function from common libraries for server contact extraction
+	* RLMI document contains always fullState="true"
+
 2006-03-24
 	* removed parameter 'mode' from code (it was not needed due to explicit xcap query
 	needs before resource list subscription. There is query functions for

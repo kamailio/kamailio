@@ -569,7 +569,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			break;
 		case EVENT_PRESENCE_WINFO:
 			rc = send_winfo_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
+			if (rc < 0) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
 			break;
 		default: LOG(L_ERR, "sending notify for unknow package\n");
 	}

@@ -9,6 +9,7 @@
 #include <cds/dstring.h>
 #include <cds/logger.h>
 #include "result_codes.h"
+#include <presence/utils.h>
 
 static struct tm_binds tmb;
 
@@ -169,40 +170,6 @@ static int get_subscription_expiration(subscription_manager_t *mng,
 	return e;
 }
 
-static int extract_contact(struct sip_msg *m, str_t *dst)
-{
-	int res = 0;
-	dstring_t contact_buf;
-	int use_ruri = 0;
-	
-	if (!dst) return -1;
-	dst->s = NULL;
-	dst->len = 0;
-
-	dstr_init(&contact_buf, 256);
-	dstr_append_zt(&contact_buf, "Contact: <");
-
-	if (m->parsed_uri_ok && use_ruri) {
-		dstr_append_zt(&contact_buf, "sip:");
-		dstr_append_str(&contact_buf, &m->parsed_uri.host);
-		/* dstr_append_str(&contact_buf, &m->first_line.u.request.uri); */
-	}
-	else {
-		dstr_append_zt(&contact_buf, "sip:");
-		dstr_append_str(&contact_buf, &m->rcv.bind_address->name);
-		if (m->rcv.bind_address->port_no != 5060) {
-			dstr_append_zt(&contact_buf, ":");
-			dstr_append_str(&contact_buf, &m->rcv.bind_address->port_no_str);
-		}
-	}
-	dstr_append_zt(&contact_buf, ">\r\n");
-
-	res = dstr_get_str(&contact_buf, dst);
-			
-	dstr_destroy(&contact_buf);
-	return res;
-}
-
 static void free_subscription_dialog(subscription_data_t *dst)
 {
 	if (dst->dialog) tmb.free_dlg(dst->dialog);
@@ -336,7 +303,7 @@ static int set_subscription_info(struct sip_msg *m, subscription_data_t *s)
 		return r;
 	}
 	
-	extract_contact(m, &s->contact);
+	extract_server_contact(m, &s->contact, 0);
 	
 	DEBUG_LOG("set_subscription_info(): uri=\'%.*s\'\n", FMT_STR(uri));
 	DEBUG_LOG("set_subscription_info(): package=\'%.*s\'\n", FMT_STR(package));

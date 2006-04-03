@@ -162,8 +162,13 @@ int create_rlmi_document(str *dst, str *content_type_dst, rl_subscription_t *s, 
 	dstr_append_zt(&doc, "\" version=\"");
 	sprintf(tmp, "%d", s->doc_version); 
 	dstr_append_zt(&doc, tmp);
-	if (full_info) dstr_append_zt(&doc, "\" fullState=\"true\">\r\n");
+
+	dstr_append_zt(&doc, "\" fullState=\"true\">\r\n");
+	
+	/* FIXME: as soon as will be finished partial notification document
+	 * if (full_info) dstr_append_zt(&doc, "\" fullState=\"true\">\r\n");
 	else dstr_append_zt(&doc, "\" fullState=\"false\">\r\n");
+	*/
 
 	/* add all virtual subscriptions to the RLMI document */
 	add_virtual_subscriptions_to_rlmi(&doc, s, part_id);
