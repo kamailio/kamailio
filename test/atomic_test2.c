@@ -41,13 +41,19 @@
 
 #include "../atomic_ops.h"
 
-#ifdef ATOMIC_OPS_USE_LOCK 
+#if defined ATOMIC_OPS_USE_LOCK  || defined MEMBAR_USES_LOCK
 /* hack to make lock work */
 #include "../lock_ops.h"
+#endif
 
-gen_lock_t* _atomic_lock;
+#ifdef MEMBAR_USES_LOCK
+gen_lock_t* __membar_lock=0; /* init in atomic_ops.c */
+gen_lock_t dummy_membar_lock;
+#endif
 
-gen_lock_t dummy_lock;
+#ifdef ATOMIC_OPS_USE_LOCK
+gen_lock_t* _atomic_lock=0;
+gen_lock_t dummy_atomic_lock;
 
 #endif
 
@@ -152,11 +158,21 @@ int main(int argc, char** argv)
 	v=&var;
 	
 	
+#ifdef MEMBAR_USES_LOCK
+	__membar_lock=&dummy_membar_lock;
+	if (lock_init(__membar_lock)==0){
+		fprintf(stderr, "ERROR: failed to initialize membar_lock\n");
+		__membar_lock=0;
+		goto error;
+	}
+	_membar_lock; /* start with the lock "taken" so that we can safely use
+					 unlock/lock sequences on it later */
+#endif
 #ifdef ATOMIC_OPS_USE_LOCK
 	/* init the lock (emulate atomic_ops.c) */
-	_atomic_lock=&dummy_lock;
+	_atomic_lock=&dummy_atomic_lock;
 	if (lock_init(_atomic_lock)==0){
-		fprintf(stderr, "ERROR: failed to initialize the lock\n");
+		fprintf(stderr, "ERROR: failed to initialize atomic_lock\n");
 		_atomic_lock=0;
 		goto error;
 	}
@@ -204,11 +220,18 @@ int main(int argc, char** argv)
 
 	
 	printf("\ndone.\n");
+#ifdef MEMBAR_USES_LOCK
+	lock_destroy(__membar_lock);
+#endif
 #ifdef ATOMIC_OPS_USE_LOCK
 	lock_destroy(_atomic_lock);
 #endif
 	return 0;
 error:
+#ifdef MEMBAR_USES_LOCK
+	if (__membar_lock)
+		lock_destroy(__membar_lock);
+#endif
 #ifdef ATOMIC_OPS_USE_LOCK
 	if (_atomic_lock)
 		lock_destroy(_atomic_lock);

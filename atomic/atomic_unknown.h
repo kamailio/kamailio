@@ -49,16 +49,9 @@
 
 #include "../lock_ops.h"
 
-extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic.c */
-
-#define atomic_lock    lock_get(_atomic_lock)
-#define atomic_unlock  lock_release(_atomic_lock)
 
 
 #ifndef HAVE_ASM_INLINE_MEMBAR
-
-#define ATOMIC_OPS_USE_LOCK
-
 
 #ifdef NOSMP
 #define membar()
@@ -67,13 +60,27 @@ extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic.c */
 #warning no native memory barrier implementations, falling back to slow lock \
 	       based workarround
 
+#define MEMBAR_USES_LOCK
+
+extern gen_lock_t* __membar_lock; /* init in atomic_ops.c */
+#define _membar_lock    lock_get(__membar_lock)
+#define _membar_unlock  lock_release(__membar_lock)
+
 /* memory barriers 
- *  not a known cpu -> fall back lock/unlock: safe but costly  (it should 
- *  include a memory barrier effect) */
+ *  not a known cpu -> fall back unlock/lock: safe but costly  (it should 
+ *  include a memory barrier effect)
+ *  lock/unlock does not imply a full memory barrier effect (it allows mixing
+ *   operations from before the lock with operations after the lock _inside_
+ *  the lock & unlock block; however in most implementations it is equivalent
+ *  with at least membar StoreStore | StoreLoad | LoadStore => only LoadLoad
+ *  is missing). On the other hand and unlock/lock will always be equivalent
+ *  with a full memory barrier
+ *  => to be safe we must use either unlock; lock or lock; unlock; lock; unlock
+ *  --andrei*/
 #define membar() \
 	do{\
-		atomic_lock; \
-		atomic_unlock; \
+		_membar_unlock; \
+		_membar_lock; \
 	} while(0)
 #endif /* NOSMP */
 
@@ -90,6 +97,12 @@ extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic.c */
 #ifndef ATOMIC_OPS_USE_LOCK
 #define ATOMIC_OPS_USE_LOCK
 #endif
+
+extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic_ops.c */
+
+#define atomic_lock    lock_get(_atomic_lock)
+#define atomic_unlock  lock_release(_atomic_lock)
+
 
 /* atomic ops */
 

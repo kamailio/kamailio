@@ -36,39 +36,64 @@
 #include "atomic_ops_init.h"
 #include "atomic_ops.h"
 
-#ifdef ATOMIC_OPS_USE_LOCK
-
+#if defined ATOMIC_OPS_USE_LOCK  || defines MEMBAR_USES_LOCK
 #include "locking.h"
+#endif
 
-gen_lock_t* _atomic_lock;
+#ifdef MEMBAR_USES_LOCK
+gen_lock_t* __membar_lock=0; /* init in atomic_ops.c */
+#endif
+
+#ifdef ATOMIC_OPS_USE_LOCK
+gen_lock_t* _atomic_lock=0;
 #endif
 
 
 /* returns 0 on success, -1 on error */
 int init_atomic_ops()
 {
-	int ret;
 	
-	ret=0;
+#ifdef MEMBAR_USES_LOCK
+	if ((__membar_lock=lock_alloc())==0){
+		goto error;
+	}
+	if (lock_init(__membar_lock)==0){
+		lock_dealloc(__membar_lock);
+		__membar_lock=0;
+		goto error;
+	}
+	_membar_lock; /* start with the lock "taken" so that we can safely use
+					 unlock/lock sequences on it later */
+#endif
 #ifdef ATOMIC_OPS_USE_LOCK
 	if ((_atomic_lock=lock_alloc())==0){
-		ret=-1;
-		goto end;
+		goto error;
 	}
 	if (lock_init(_atomic_lock)==0){
-		ret=-1;
-		atomic_ops_destroy();
-		goto end;
+		lock_dealloc(_atomic_lock);
+		_atomic_lock=0;
+		goto error;
 	}
-end:
 #endif
-	return ret;
+	return 0;
+#if defined MEMBAR_USES_LOCK || defined ATOMIC_OPS_USE_LOCK
+error:
+	destroy_atomic_ops();
+	return -1;
+#endif
 }
 
 
 
 void destroy_atomic_ops()
 {
+#ifdef MEMBAR_USES_LOCK
+	if (__membar_lock!=0){
+		lock_destroy(__membar_lock);
+		lock_dealloc(__membar_lock);
+		__membar_lock=0;
+	}
+#endif
 #ifdef ATOMIC_OPS_USE_LOCK
 	if (_atomic_lock!=0){
 		lock_destroy(_atomic_lock);
