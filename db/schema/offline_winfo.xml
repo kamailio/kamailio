@@ -40,6 +40,13 @@
 		<null/>
     </column>
 	
+	<column>
+		<name>status</name>
+		<type>string</type>
+		<size>32</size>
+		<null/>
+    </column>
+	
     <column>
 		<name>created_on</name>
 		<type>datetime</type>
