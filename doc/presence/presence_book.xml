@@ -21,10 +21,9 @@ http://www.sagehill.net/docbookxsl/ValidXinclude.htm -->
 <!--	</section>-->
 	<include xmlns="http://www.w3.org/2001/XInclude" href="examples.xml"/>
 	
-	<include xmlns="http://www.w3.org/2001/XInclude" href="draft_iptel_im_rules.xml"/>
-	
 	<include xmlns="http://www.w3.org/2001/XInclude" href="biblio.xml"/>
-	
+
+	<include xmlns="http://www.w3.org/2001/XInclude" href="draft_iptel_im_rules.xml"/>
 	
 <!--	<chapter id="pres"><title>Presence in SER</title>-->
 <!--

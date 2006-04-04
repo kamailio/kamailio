@@ -8,11 +8,11 @@
 </para>
 <para>Main features:
 <itemizedlist>
-	<listitem><para>presence events with XCAP authorization</para></listitem>
-	<listitem><para>presence watcherinfo</para></listitem>
+	<listitem><para>presence events with XCAP authorization and watcher info
+	support</para></listitem>
 	<listitem><para>resource list server (only for presence now)</para></listitem>
 	<listitem><para>B2BUA for presence events (no resource list support now)</para></listitem>
-	<listitem><para>MESSAGE authorization</para></listitem>
+	<listitem><para>MESSAGE authorization (via XCAP)</para></listitem>
 </itemizedlist>
 </para>
 </section>
