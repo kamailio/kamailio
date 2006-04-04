@@ -54,7 +54,8 @@ int offline_winfo_expiration = 259200;
 static offline_winfo_t *create_winfo(str *uid, 
 		str *wuri, 
 		str *events, 
-		str *domain)
+		str *domain,
+		str *status)
 {
 	int len = 0;
 	offline_winfo_t *info;
@@ -63,6 +64,7 @@ static offline_winfo_t *create_winfo(str *uid,
 	add_str_len(len, wuri);
 	add_str_len(len, events);
 	add_str_len(len, domain);
+	add_str_len(len, status);
 	len += sizeof(offline_winfo_t);
 	
 	info = (offline_winfo_t*)mem_alloc(len);
@@ -73,6 +75,7 @@ static offline_winfo_t *create_winfo(str *uid,
 		set_member_str(info->buffer, len, info->watcher, wuri);
 		set_member_str(info->buffer, len, info->events, events);
 		set_member_str(info->buffer, len, info->domain, domain);
+		set_member_str(info->buffer, len, info->status, status);
 		info->created = time(NULL);
 		info->expires = info->created + offline_winfo_expiration;
 		info->index = -1;
@@ -126,6 +129,9 @@ static int db_store_winfo(offline_winfo_t *info)
 	cols[++n] = "domain";
 	string_val(vals[n], info->domain);
 	
+	cols[++n] = "status";
+	string_val(vals[n], info->status);
+	
 	cols[++n] = "created_on";
 	time_val(vals[n], info->created);
 	
@@ -154,13 +160,14 @@ static int get_watcher_uri(struct sip_msg* _m, str* uri)
 		LOG(L_ERR, "Error while parsing URI\n");
 		return -1;
 	}
-	
+#if 0	
 	uri->s = puri.user.s;
 	if ((!uri->s) || (puri.user.len < 1)) {
 		uri->s = puri.host.s;
 		uri->len = puri.host.len;
 		res = 1; /* it is uri without username ! */
 	}
+#endif
 	uri->len = puri.host.s + puri.host.len - uri->s;
 	return res;
 }
@@ -293,7 +300,7 @@ int db_load_winfo(str *uid, str *events, str *domain, offline_winfo_t **infos)
 	int i, r = 0;
 	db_res_t *res = NULL;
 	db_key_t result_cols[] = { 
-		"watcher", "created_on", "expires_on", "dbid"
+		"watcher", "created_on", "expires_on", "dbid", "status"
 	};
 	db_key_t keys[] = { "uid", "events" };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
@@ -321,6 +328,7 @@ int db_load_winfo(str *uid, str *events, str *domain, offline_winfo_t **infos)
 			db_row_t *row = &res->rows[i];
 			db_val_t *row_vals = ROW_VALUES(row);
 			str watcher = STR_NULL;
+			str status = STR_NULL;
 			time_t created_on = 0;
 			time_t expires_on = 0;
 			int index = 0;
@@ -329,8 +337,9 @@ int db_load_winfo(str *uid, str *events, str *domain, offline_winfo_t **infos)
 			get_time_val(row_vals[1], created_on);
 			get_time_val(row_vals[2], expires_on);
 			get_int_val(row_vals[3], index);
+			get_str_val(row_vals[4], status);
 			
-			info = create_winfo(uid, &watcher, events, domain);
+			info = create_winfo(uid, &watcher, events, domain, &status);
 			if (!info) { 
 				r = -1; 
 				break; 
@@ -356,12 +365,38 @@ int db_load_winfo(str *uid, str *events, str *domain, offline_winfo_t **infos)
 
 /* ----- Handler functions ----- */
 
+static int get_status(str *dst)
+{
+	avp_t *avp;
+	int_str name, val;
+	struct search_state s;
+	str avp_subscription_status = STR_STATIC_INIT("subscription_status");
+
+	/* if (!dst) return -1; */
+	
+	name.s = avp_subscription_status;
+	avp = search_first_avp(AVP_NAME_STR, name, &val, &s);
+	if (avp) {
+		/* don't use default - use value from AVP */
+		/* TRACE("subscription status = %.*s\n", FMT_STR(val.s)); */
+		*dst = val.s;
+		return 0;
+	} 
+	else {
+		/* leave default value!! */
+		/* TRACE("left default subscription status\n"); */
+	}
+	
+	return 1;
+}
+
 int store_offline_winfo(struct sip_msg* _m, char* _domain, char* _table)
 {
 	str uid = STR_NULL;
 	str wuri = STR_NULL;
 	str events = STR_NULL;
 	str domain = STR_NULL;
+	str status = STR_NULL;
 	int res = -1;
 	offline_winfo_t *info;
 
@@ -375,7 +410,12 @@ int store_offline_winfo(struct sip_msg* _m, char* _domain, char* _table)
 		domain.s = _domain;
 		domain.len = strlen(_domain);
 	}
-	info = create_winfo(&uid, &wuri, &events, &domain);
+
+	/* get status value from AVP */
+	get_status(&status);
+	/* TRACE("subscription status is: %.*s\n", FMT_STR(status)); */
+
+	info = create_winfo(&uid, &wuri, &events, &domain, &status);
 	/* store it into database or use internal data structures too? */
 	/* better to use only database because of lower memory usage - this 
 	 * information could be stored for very long time ! */

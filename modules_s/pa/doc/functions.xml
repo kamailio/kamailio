@@ -11,7 +11,11 @@
 	<listitem>
 		<para>This function processes SUBSCRIBE requests to "presence" and
 		"presence.winfo" (see <link
-		linkend="pa.param.watcherinfo_notify">watcherinfo_notify parameter</link>) events.
+		linkend="pa.param.watcherinfo_notify">watcherinfo_notify
+		parameter</link>) events. It sets AVP named
+		<quote>subscription_status</quote> according to status assigned by
+		authorization (<quote>active</quote>, <quote>pending</quote>, <quote>terminated</quote>) or
+		<quote>error</quote> if an error occurs.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -44,7 +48,8 @@ handle_subscription("registrar");
 	<listitem><para>This function stores data about currently created
 	subscription into database for later dumping in the form of watcherinfo
 	notification. It should be called after handle_subscription
-	during processing SUBSCRIBE request.
+	during processing SUBSCRIBE request. As subscription status is stored value
+	taken from AVP <quote>subscription_status</quote>.
 	</para>
 	</listitem>
 </varlistentry>
@@ -69,15 +74,15 @@ if (method=="SUBSCRIBE") {
 	};
 	
 	if (handle_subscription("registrar")) {; # uses uid from AVP (get_to_uid)
-		<listitem><para>if (@msg.event=~"presence\.winfo") {</para></listitem>
+		if (@msg.event=~"presence\.winfo") {
 			log(1, "subscription to watcherinfo\n");
 			dump_stored_winfo("registrar", "presence");
 			log(1, "OFFLINE AUTH: watcherinfo dumped\n");
 		}
 		else {
-			if (@msg.event=~"presence") {
-				log(1, "subscription to presence\n");
-				# if offline user and new subscription (empty to tag)
+			if ((@msg.event=~"presence") &amp;&amp; (%subscription_status=="pending")) {
+				log(1, "pending subscription to presence\n");
+				# if offline user and new "pending" subscription
 				if (!target_online("registrar") &amp;&amp; (@to.tag=="")) {
 					log(1, "OFFLINE AUTH: storing for offline user\n");
 					store_winfo("registrar");

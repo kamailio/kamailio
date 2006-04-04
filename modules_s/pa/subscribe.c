@@ -783,6 +783,52 @@ static int has_to_tag(struct sip_msg *_m)
 	return 0;
 }
 
+static void set_status_avp(str *value)
+{
+	struct search_state s;
+	int_str val, name;
+	avp_t* a;
+	int res;
+	str avp_subscription_status = STR_STATIC_INIT("subscription_status");
+
+	name.s = avp_subscription_status;
+	a = search_first_avp(AVP_CLASS_GLOBAL | AVP_NAME_STR, name, 0, &s);
+	while(a) {
+		destroy_avp(a);
+		a = search_next_avp(&s, 0);
+	}
+
+	if (value) val.s = *value;
+	else {
+		val.s.len = 0;
+		val.s.s = NULL;
+	}
+/*	str_dup(&val.s, value);*/
+
+	res = add_avp(AVP_CLASS_GLOBAL | AVP_NAME_STR | AVP_VAL_STR, name, val);
+	/* TRACE("storing (%d) AVP status: %.*s\n", res, FMT_STR(val.s)); */
+}
+
+static void set_status_avp_ex(watcher_t *w)
+{
+	str s;
+	
+	switch(w->status) {
+		case WS_ACTIVE: ;
+			s = watcher_status_names[WS_ACTIVE];
+			break;
+		case WS_REJECTED:
+		case WS_PENDING_TERMINATED:
+		case WS_TERMINATED:
+			s = watcher_status_names[WS_TERMINATED];
+			break;
+		case WS_PENDING: 
+			s = watcher_status_names[WS_PENDING];
+			break;
+	}
+	set_status_avp(&s);
+}
+
 /*
  * Handle a subscribe Request
  */
@@ -796,6 +842,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	char tmp[64];
 	int i;
 	int is_renewal = 0;
+	str avp_err = STR_STATIC_INIT("error");
 	
 	get_act_time();
 	paerrno = PA_OK;
@@ -869,6 +916,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 
 	/* process and change this presentity and notify watchers */
 	if (p && w) {
+		set_status_avp_ex(w);
+		
 		/* immediately send NOTIFY */
 		send_notify(p, w);
 		w->flags &= ~WFLAG_SUBSCRIPTION_CHANGED; /* already notified */
@@ -877,6 +926,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		 * receive another NOTIFY generated from timer_pdomain */
 		remove_watcher_if_expired(p, w);
 	}
+	else set_status_avp(&avp_err);
 	
 	unlock_pdomain(d);
 	return 1;
@@ -886,10 +936,12 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	ERR("handle_subscription about to return -1\n");
 	unlock_pdomain(d);
 	send_reply(_m);
+	set_status_avp(&avp_err);
 	return -1;
  error:
 	ERR("handle_subscription about to send_reply and return -2\n");
 	send_reply(_m);
+	set_status_avp(&avp_err);
 	return -1;
 }
 

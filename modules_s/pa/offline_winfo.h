@@ -11,6 +11,7 @@ typedef struct _offline_winfo_t {
 	str watcher; /* watcher's uri */
 	str events;  /* event package */
 	str domain;  /* domain */
+	str status;  /* status of subscription */
 	struct _offline_winfo_t *next; /* for linking infos together */
 	char buffer[1];
 } offline_winfo_t;

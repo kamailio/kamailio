@@ -1,6 +1,9 @@
 2006-04-04
 	* sending empty string in NOTIFY bodies - TCP requires content-length and
 	if sending message with NULL body, it is not set
+	* handle_subscription sets AVP subscription_status (pending, terminated,
+	error)
+	* store_offline_winfo stores status from AVP subscription_status
 
 2006-04-03
 	* function for server contact extraction was moved into common libraries
