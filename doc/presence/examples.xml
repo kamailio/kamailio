@@ -57,29 +57,29 @@ alias="test-domain.com"
 
 mhomed=yes  # usefull for multihomed hosts, small performance penalty
 
-tcp_accept_aliases=yes # accepts the tcp alias via option (see NEWS)
-tcp_poll_method="sigio_rt"
+#tcp_accept_aliases=yes # accepts the tcp alias via option (see NEWS)
+#tcp_poll_method="sigio_rt"
 
 # ------------------ module loading ----------------------------------
 
 # Uncomment this if you want to use SQL database
-loadmodule "/home/kubartv/SER/lib/ser/modules/sl.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/avp.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/avpops.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/tm.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/rr.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/maxfwd.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/usrloc.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/registrar.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/textops.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/dialog.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/rls.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/pa.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/presence_b2b.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/uri.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/fifo.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/xmlrpc.so"
-loadmodule "/home/kubartv/SER/lib/ser/modules/xlog.so"
+loadmodule "/usr/lib/ser/modules/sl.so"
+loadmodule "/usr/lib/ser/modules/avp.so"
+loadmodule "/usr/lib/ser/modules/avpops.so"
+loadmodule "/usr/lib/ser/modules/tm.so"
+loadmodule "/usr/lib/ser/modules/rr.so"
+loadmodule "/usr/lib/ser/modules/maxfwd.so"
+loadmodule "/usr/lib/ser/modules/usrloc.so"
+loadmodule "/usr/lib/ser/modules/registrar.so"
+loadmodule "/usr/lib/ser/modules/textops.so"
+loadmodule "/usr/lib/ser/modules/dialog.so"
+loadmodule "/usr/lib/ser/modules/rls.so"
+loadmodule "/usr/lib/ser/modules/pa.so"
+loadmodule "/usr/lib/ser/modules/presence_b2b.so"
+loadmodule "/usr/lib/ser/modules/uri.so"
+loadmodule "/usr/lib/ser/modules/fifo.so"
+loadmodule "/usr/lib/ser/modules/xmlrpc.so"
+loadmodule "/usr/lib/ser/modules/xlog.so"
 
 # ----------------- setting module-specific parameters ---------------
 
@@ -298,8 +298,8 @@ port=5060
 children=2
 alias="test-domain.com"
 mhomed=yes  # usefull for multihomed hosts, small performance penalty
-tcp_accept_aliases=yes # accepts the tcp alias via option (see NEWS)
-tcp_poll_method="sigio_rt"
+#tcp_accept_aliases=yes # accepts the tcp alias via option (see NEWS)
+#tcp_poll_method="sigio_rt"
 
 # ------------------ module loading ----------------------------------
 
@@ -697,12 +697,14 @@ failure_route[1] {
 
 <section><title>Forwarding to presence server</title>
 <para>It is good idea to have separated presence stuff from the proxy. You can
-use following piece of code for that.
+use following piece of code for that. Instead of
+<function>t_forward_nonack</function> you can use
+<function>t_forward_nonack_tcp</function>.
 </para>
 <example><title>forwarding to presence server</title>
 <programlisting><![CDATA[
-# forward presence messages to presence server
 ...
+# forward presence messages to presence server
 if ((method=="SUBSCRIBE") || (method=="PUBLISH") || (method=="MESSAGE")) {
 	log(1, "Forwarding request\n");
 	
@@ -718,7 +720,7 @@ if ((method=="SUBSCRIBE") || (method=="PUBLISH") || (method=="MESSAGE")) {
 		break;
 	};
 	
-	if (!t_forward_nonack("presence-server@test-domain.com", "5060")) {
+	if (!t_forward_nonack("presence-server.test-domain.com", "5060")) {
 		log(1, "Forward to presence server failed\n");
 		sl_reply_error();
 	}
