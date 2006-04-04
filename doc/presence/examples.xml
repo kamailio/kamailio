@@ -695,4 +695,38 @@ failure_route[1] {
 </example>
 </section>
 
+<section><title>Forwarding to presence server</title>
+<para>It is good idea to have separated presence stuff from the proxy. You can
+use following piece of code for that.
+</para>
+<example><title>forwarding to presence server</title>
+<programlisting><![CDATA[
+# forward presence messages to presence server
+...
+if ((method=="SUBSCRIBE") || (method=="PUBLISH") || (method=="MESSAGE")) {
+	log(1, "Forwarding request\n");
+	
+	# uncomment this if you want authenticate the request
+#	if (!proxy_authenticate("test-domain.com", "credentials")) {
+#		proxy_challenge( "test-domain.com", "0");
+#		break;
+#	};	
+	
+	if (!t_newtran()) {
+		log(1, "newtran error\n");
+		sl_reply_error();
+		break;
+	};
+	
+	if (!t_forward_nonack("presence-server@test-domain.com", "5060")) {
+		log(1, "Forward to presence server failed\n");
+		sl_reply_error();
+	}
+	break;
+};
+]]>
+</programlisting>
+</example>
+</section>
+
 </section>
