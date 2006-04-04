@@ -1,3 +1,7 @@
+2006-04-04
+	* sending empty string in SUBSCRIBE bodies - TCP requires content-length and
+	if sending message with NULL body, it is not set
+
 2006-03-22
 	* using get_content_length instead of strlen(body)
 	* added "Content-Length: 0" into outgoing SUBSCRIBE requests (such message

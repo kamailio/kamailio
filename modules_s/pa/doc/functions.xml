@@ -69,7 +69,7 @@ if (method=="SUBSCRIBE") {
 	};
 	
 	if (handle_subscription("registrar")) {; # uses uid from AVP (get_to_uid)
-		if (@msg.event=~"presence\.winfo") {
+		<listitem><para>if (@msg.event=~"presence\.winfo") {</para></listitem>
 			log(1, "subscription to watcherinfo\n");
 			dump_stored_winfo("registrar", "presence");
 			log(1, "OFFLINE AUTH: watcherinfo dumped\n");

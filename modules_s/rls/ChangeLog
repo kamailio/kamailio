@@ -1,3 +1,7 @@
+2006-04-04
+	* sending empty string in NOTIFY bodies - TCP requires content-length and
+	if sending message with NULL body, it is not set
+
 2006-04-03
 	* using function from common libraries for server contact extraction
 	* RLMI document contains always fullState="true"

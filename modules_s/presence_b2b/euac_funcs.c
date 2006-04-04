@@ -241,6 +241,7 @@ int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 	static str method = STR_STATIC_INIT("SUBSCRIBE");
 	unsigned int cseq = 1;
 	str hdr = STR_NULL;
+	str body = STR_STATIC_INIT("");
 	str *uri;
 	
 	DBG("sending new SUBSCRIBE request\n");
@@ -278,7 +279,7 @@ int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 
 	/* generate subscribe request */
 	if (euac_internals->dlgb.request_outside(&method, 
-			&hdr, NULL /* no body */, 
+			&hdr, &body, 
 			uac->dialog, subscribe_cb, uac) < 0)
 		goto ns_err_in_ht;
 
@@ -312,6 +313,7 @@ int renew_subscription(events_uac_t *uac, int expires, int failover_time)
 	str hdr;
 	char tmp[256];
 	str tmps;
+	str body = STR_STATIC_INIT("");
 
 	DBG("sending renewal SUBSCRIBE request\n");
 	
@@ -339,7 +341,7 @@ int renew_subscription(events_uac_t *uac, int expires, int failover_time)
 	/* generate subscribe request - don't call the TM version
 	 * (frees callback params on error!!!) */
 	res = euac_internals->dlgb.request_inside(&method, 
-			&hdr, NULL /* no body */, 
+			&hdr, &body, 
 			uac->dialog, subscribe_cb, uac);
 
 	str_free_content(&hdr);

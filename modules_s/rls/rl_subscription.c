@@ -336,6 +336,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	dlg_t *dlg;
 	int exp_time = 0;
 	char expiration[32];
+	str body = STR_STATIC_INIT("");
 
 	dlg = s->u.external.dialog;
 	if (!dlg) return -1;
@@ -397,9 +398,11 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 				dlg->rem_uri.len, 
 				ZSW(dlg->rem_uri.s), s); */
 		
+		if (!is_str_empty(&doc)) body = doc;
+		
 		if (sm_subscription_terminated(&s->u.external) == 0) {
 			/* doesn't matter if delivered or not, it will be freed otherwise !!! */
-			res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
+			res = tmb.t_request_within(&method, &headers, &body, dlg, 0, 0);
 			if (res >= 0) clear_change_flags(s);
 		}
 		else {
@@ -408,9 +411,9 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 			
 			/* !!!! FIXME: callbacks can't be safely used (may be called or not,
 			 * may free memory automaticaly or not) !!! */
-			res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
+			res = tmb.t_request_within(&method, &headers, &body, dlg, 0, 0);
 			
-	/*		res = tmb.t_request_within(&method, &headers, &doc, dlg, rls_notify_cb, s); */
+	/*		res = tmb.t_request_within(&method, &headers, &body, dlg, rls_notify_cb, s); */
 			/* rls_lock(); the callback locks this mutex ! */
 			if (res < 0) {
 				/* does this mean, that the callback was not called ??? */

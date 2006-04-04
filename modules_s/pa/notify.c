@@ -307,6 +307,7 @@ static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 	str doc = STR_NULL;
 	str content_type = STR_NULL;
 	str headers = STR_NULL;
+	str body = STR_STATIC_INIT("");
 	presentity_info_t *pinfo = NULL;
 	int res = 0;
 	
@@ -349,7 +350,8 @@ static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 		return -7;
 	}
 
-	tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
+	if (!is_str_empty(&doc)) body = doc;
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	str_free_content(&doc);
 	str_free_content(&headers);
 	str_free_content(&content_type);
@@ -365,6 +367,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	str content_type = STR_NULL;
 	str headers = STR_NULL;
 	int res = 0;
+	str body = STR_STATIC_INIT("");
 
 	DEBUG("sending winfo notify\n");
 	
@@ -388,7 +391,8 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	}
 	DEBUG("headers created\n");
 
-	res = tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
+	if (!is_str_empty(&doc)) body = doc;
+	res = tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	DEBUG("request sent with result %d\n", res);
 	if (res < 0) {
 		ERR("Can't send watcherinfo notification (%d)\n", res);
@@ -413,6 +417,7 @@ int send_winfo_notify_offline(struct presentity* _p,
 	str doc = STR_NULL;
 	str content_type = STR_NULL;
 	str headers = STR_NULL;
+	str body = STR_STATIC_INIT("");
 	
 	switch (_w->preferred_mimetype) {
 		case DOC_WINFO:
@@ -431,7 +436,8 @@ int send_winfo_notify_offline(struct presentity* _p,
 		return -7;
 	}
 
-	tmb.t_request_within(&method, &headers, &doc, _w->dialog, completion_cb, cbp);
+	if (!is_str_empty(&doc)) body = doc;
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, completion_cb, cbp);
 
 	str_free_content(&doc);
 	str_free_content(&headers);
@@ -531,6 +537,7 @@ int send_location_notify(struct presentity* _p, struct watcher* _w)
 int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
 {
 	str headers = STR_NULL;
+	str body = STR_STATIC_INIT("");
 
 	/* send notifications to unauthorized (pending) watchers */
 	if (create_headers(_w, &headers, NULL) < 0) {
@@ -538,8 +545,7 @@ int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
 		return -7;
 	}
 
-	/* tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0); */
-	tmb.t_request_within(&method, &headers, 0, _w->dialog, 0, 0);
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 
 	str_free_content(&headers);
 		

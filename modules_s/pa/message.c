@@ -73,7 +73,7 @@ int authorize_message(struct sip_msg* _m, char* _xcap_root, char*_st)
 	
 	if (xcap_get_msg_rules(&uid, &rules, _xcap_root) < 0) {
 		/* enabled */
-		TRACE("get_msg_rules failed\n");
+		DBG("get_msg_rules failed\n");
 		return 1;
 	}
 	
