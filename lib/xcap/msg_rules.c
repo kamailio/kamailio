@@ -70,7 +70,7 @@ int get_msg_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *
 	xcap_uri = xcap_uri_for_msg_rules(xcap_root, uri);
 	res = xcap_query(xcap_uri, xcap_params, &data, &dsize);
 	if (res != RES_OK) {
-		TRACE_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
+		DEBUG_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
 		if (data) cds_free(data);
 		if (xcap_uri) cds_free(xcap_uri);
 		return RES_XCAP_QUERY_ERR;
