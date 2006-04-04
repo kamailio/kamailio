@@ -36,7 +36,7 @@
 #include "atomic_ops_init.h"
 #include "atomic_ops.h"
 
-#if defined ATOMIC_OPS_USE_LOCK  || defines MEMBAR_USES_LOCK
+#if defined ATOMIC_OPS_USE_LOCK  || defined MEMBAR_USES_LOCK
 #include "locking.h"
 #endif
 
