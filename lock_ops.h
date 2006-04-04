@@ -42,6 +42,7 @@
  *  2003-03-17  possible signal interruptions treated for sysv (andrei)
  *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
  *              on darwin (andrei)
+ *  2006-04-04  added lock_try(lock) and lock_set_try(s,i) (andrei)
  *
 Implements:
 
@@ -51,13 +52,19 @@ Implements:
 	void    lock_destroy(gen_lock_t* lock);  - removes the lock (e.g sysv rmid)
 	void    lock_get(gen_lock_t* lock);      - lock (mutex down)
 	void    lock_release(gen_lock_t* lock);  - unlock (mutex up)
+	int     lock_try(gen_lock_t* lock);      - tries to get the lock, returns
+	                                            0 on success and -1 on failure
 	
-	lock sets: [implemented only for FL & SYSV so far]
+	lock sets: 
 	----------
 	gen_lock_set_t* lock_set_init(gen_lock_set_t* set);  - inits the lock set
 	void lock_set_destroy(gen_lock_set_t* s);        - removes the lock set
 	void lock_set_get(gen_lock_set_t* s, int i);     - locks sem i from the set
-	void lock_set_release(gen_lock_set_t* s, int i)  - unlocks sem i from the set
+	void lock_set_release(gen_lock_set_t* s, int i)  - unlocks sem i from the
+	                                                   set
+	int  lock_set_try(gen_lock_set_t* s, int i);    - tries to lock the sem i,
+	                                                  returns 0 on success and
+	                                                  -1 on failure
 
 WARNING: - lock_set_init may fail for large number of sems (e.g. sysv). 
          - signals are not treated! (some locks are "awakened" by the signals)
@@ -81,8 +88,10 @@ inline static gen_lock_t* lock_init(gen_lock_t* lock)
 	return lock;
 }
 
+#define lock_try(lock) try_lock(lock)
 #define lock_get(lock) get_lock(lock)
 #define lock_release(lock) release_lock(lock)
+
 
 #elif defined USE_PTHREAD_MUTEX
 #include <pthread.h>
@@ -97,6 +106,7 @@ inline static gen_lock_t* lock_init(gen_lock_t* lock)
 	else return 0;
 }
 
+#define lock_try(lock) pthread_mutex_trylock(lock)
 #define lock_get(lock) pthread_mutex_lock(lock)
 #define lock_release(lock) pthread_mutex_unlock(lock)
 
@@ -115,6 +125,7 @@ inline static gen_lock_t* lock_init(gen_lock_t* lock)
 	return lock;
 }
 
+#define lock_try(lock) sem_trywait(lock)
 #define lock_get(lock) sem_wait(lock)
 #define lock_release(lock) sem_post(lock)
 
@@ -173,6 +184,30 @@ inline static void lock_destroy(gen_lock_t* lock)
 	semctl(*lock, 0, IPC_RMID, (union semun)(int)0);
 }
 
+
+/* returns 0 if it got the lock, -1 otherwise */
+inline static int lock_try(gen_lock_t* lock)
+{
+	struct sembuf sop;
+
+	sop.sem_num=0;
+	sop.sem_op=-1; /* down */
+	sop.sem_flg=IPC_NOWAIT; 
+tryagain:
+	if (semop(*lock, &sop, 1)==-1){
+		if (errno==EAGAIN){
+			return -1;
+		}else if (errno==EINTR){
+			DBG("lock_get: signal received while waiting for on a mutex\n");
+			goto tryagain;
+		}else{
+			LOG(L_CRIT, "ERROR: lock_get sysv: %s (%d)\n", strerror(errno),
+						errno);
+			return -1;
+		}
+	}
+	return 0;
+}
 
 inline static void lock_get(gen_lock_t* lock)
 {
@@ -241,6 +276,7 @@ inline static gen_lock_set_t* lock_set_init(gen_lock_set_t* s)
 }
 
 /* WARNING: no boundary checks!*/
+#define lock_set_try(set, i) lock_try(&set->locks[i])
 #define lock_set_get(set, i) lock_get(&set->locks[i])
 #define lock_set_release(set, i) lock_release(&set->locks[i])
 
@@ -288,6 +324,32 @@ inline static void lock_set_destroy(gen_lock_set_t* s)
 {
 	semctl(s->semid, 0, IPC_RMID, (union semun)(int)0);
 }
+
+
+/* returns 0 if it "gets" the lock, -1 otherwise */
+inline static int lock_set_try(gen_lock_set_t* s, int n)
+{
+	struct sembuf sop;
+	
+	sop.sem_num=n;
+	sop.sem_op=-1; /* down */
+	sop.sem_flg=IPC_NOWAIT; 
+tryagain:
+	if (semop(s->semid, &sop, 1)==-1){
+		if (errno==EAGAIN){
+			return -1;
+		}else if (errno==EINTR){
+			DBG("lock_get: signal received while waiting for on a mutex\n");
+			goto tryagain;
+		}else{
+			LOG(L_CRIT, "ERROR: lock_get sysv: %s (%d)\n", strerror(errno),
+						errno);
+			return -1;
+		}
+	}
+	return 0;
+}
+
 
 inline static void lock_set_get(gen_lock_set_t* s, int n)
 {

@@ -3,6 +3,7 @@
 # History:
 #---------
 #  2003-03-11  created by andrei
+#  2006-04-04  minor archs updates, added lock_try(..)  (andrei)
 
 
 SER locking interface
@@ -12,9 +13,9 @@ SER locking interface
    ----------
 
  The main reason in creating it was to have a single transparent interface to various locking methods. For example right now ser uses the following locking methods, depending on their availability on the target system:
- FAST_LOCK - fast inline assembly locks, defined in fast_lock.h. They are currently available for x86, sparc64, strongarm (amv4l) and ppc (external untested contributed code). In general if the assembly code exists for a given arhitecture and the compiler knows inline assembly (for example sun cc does not) FAST_LOCK is prefered. The main advantage of using FAST_LOCK is very low memory overhead and extremely fast lock/unlock operations (like 20 times faster then SYSV semaphores on linux & 40 times on solaris). The only thing that comes close to them are pthread mutexes (which are about 3-4 times slower).
+ FAST_LOCK - fast inline assembly locks, defined in fast_lock.h. They are currently available for x86, x86_64, sparc, sparc64, arm , armv6 (no smp mode supported yet), ppc, ppc64, mips, mips64 and alpha . In general if the assembly code exists for a given arhitecture and the compiler knows inline assembly (for example sun cc does not) FAST_LOCK is prefered. The main advantage of using FAST_LOCK is very low memory overhead and extremely fast lock/unlock operations (like 20 times faster then SYSV semaphores on linux & 40 times on solaris). The only thing that comes close to them are pthread mutexes (which are about 3-4 times slower).
  PTHREAD_MUTEX - uses pthread_mutex_lock/unlock. They are quite fast but they work between processes only on some systems (they do not work on linux).
- POSIX_SEM  - uses posix semaphores (sem_wait/sem_post). They are slower then the previous methods but still way faster then SYSV sempahores. Unfortunately they also do not work  on all the systems (e.g. linux).
+ POSIX_SEM  - uses posix semaphores (sem_wait/sem_post). They are slower then the previous methods but still way faster then SYSV sempahores. Unfortunately they also do not work on all the systems (e.g. linux).
  SYSV_SEM - this is the most portable but also the slowest locking method. Another problem is that the number of semaphores that can be alocated by a process is limited. One also has to free them before exiting.
 
 
@@ -93,6 +94,9 @@ Locking & unlocking:
 
 void    lock_get(gen_lock_t* lock);      - lock (mutex down)
 void    lock_release(gen_lock_t* lock);  - unlock (mutex up)
+int     lock_try(gen_lock_t* lock);      - tries to lock and returns 0 
+                                           if succesfull, -1 if not (this is
+                                           a non-blocking lock_get())
 
 
 
@@ -143,6 +147,9 @@ Locking & unlocking:
 
 void lock_set_get(lock_set_t* s, int i);
 void lock_set_release(lock_set_t* s, int i);
+int  lock_set_try(lock_set_t* s, int i);      - tries to lock the i-th lock
+                                                from the set. If succesfull
+                                                returns 0, if not -1.
 
 Example:
 
