@@ -51,6 +51,8 @@
  *               fix (andrei)
  * 2006-04-04  sparc* optimizations, sparc32 smp support, armv6 no smp support,
  *              ppc, mips*, alpha optimizations (andrei)
+ * 2006-04-05  ppc fixes (s/stw/stwx/, s/lwz/lwzx), early clobber added
+ *             where needed (andrei)
  *
  */
 
@@ -170,7 +172,7 @@ inline static int tsl(fl_lock_t* lock)
 		" xor %0, %0 \n\t"
 		" btsl $0, %2 \n\t"
 		" setc %b0 \n\t"
-		: "=q" (val), "=m" (*lock) : "m"(*lock) : "memory", "cc"
+		: "=&q" (val), "=m" (*lock) : "m"(*lock) : "memory", "cc"
 	);
 #else
 	asm volatile(
@@ -183,7 +185,7 @@ inline static int tsl(fl_lock_t* lock)
 #endif
 		" xchgb %2, %b0 \n\t"
 		"1: \n\t"
-		: "=q" (val), "=m" (*lock) : "m"(*lock) : "memory"
+		: "=&q" (val), "=m" (*lock) : "m"(*lock) : "memory"
 #ifdef SPIN_OPTIMIZE
 				, "cc"
 #endif
@@ -199,7 +201,7 @@ inline static int tsl(fl_lock_t* lock)
 			"   ldstub [%2], %0 \n\t"
 			"1: \n\t"
 			/* membar_getlock must be  called outside this function */
-			: "=r"(val), "=m"(*lock) : "r"(lock): "memory"
+			: "=&r"(val), "=m"(*lock) : "r"(lock): "memory"
 	);
 #elif defined(__CPU_sparc)
 	asm volatile(
@@ -212,7 +214,7 @@ inline static int tsl(fl_lock_t* lock)
 			"   ldstub [%2], %0 \n\t"
 			"1: \n\t"
 			/* membar_getlock must be  called outside this function */
-			: "=r"(val), "=m"(*lock) : "r"(lock): "memory"
+			: "=&r"(val), "=m"(*lock) : "r"(lock): "memory"
 #ifdef SPIN_OPTIMIZE
 				, "cc"
 #endif
@@ -230,13 +232,13 @@ inline static int tsl(fl_lock_t* lock)
 			/* if %0!=0 => either it was 1 initially or was 0
 			 * and somebody changed it just before the strexeq (so the 
 			 * lock is taken) => it's safe to return %0 */
-			: "=r"(val), "=m"(*lock) : "r"(lock), "r"(1) : "cc"
+			: "=&r"(val), "=m"(*lock) : "r"(lock), "r"(1) : "cc"
 	);
 #elif defined(__CPU_ppc) || defined(__CPU_ppc64)
 	asm volatile(
 			"1: \n\t"
 #ifdef SPIN_OPTIMIZE
-			"   lwz %0, 0, (%2) \n\t"
+			"   lwzx %0, 0, %2 \n\t"
 			"   cmpwi %0, 0 \n\t"
 			"   bne- 2f \n\t" /* predict: not taken */
 #endif
@@ -247,7 +249,7 @@ inline static int tsl(fl_lock_t* lock)
 			"   bne-   1b\n\t"
 			/* membar_getlock must be  called outside this function */
 			"2:\n\t"
-			: "=r" (val), "=m"(*lock) :  "r" (lock), "r"(1) : "memory", "cc"
+			: "=&r" (val), "=m"(*lock) :  "r"(lock), "r"(1) : "memory", "cc"
         );
 #elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC ) \
 	|| defined __CPU_mips64
@@ -293,7 +295,7 @@ inline static int tsl(fl_lock_t* lock)
 		".subsection 2 \n\t"
 		"3:  br 1b \n\t"
 		".previous \n\t"
-		:"=&r" (val), "=m"(*lock), "=r"(tmp)
+		:"=&r" (val), "=m"(*lock), "=&r"(tmp)
 		:"m"(*lock) 
 		: "memory"
 	);
@@ -388,8 +390,8 @@ inline static void release_lock(fl_lock_t* lock)
 			 *             [IBM Prgramming Environments Manual, D.4.2.2]
 			 */
 			"lwsync\n\t"
-			"stw %1, 0(%2)\n\t"
-			: "=m"(*lock) : "r"(0), "r" (lock) : "memory"
+			"stwx %1, 0, %2\n\t"
+			: "=m"(*lock) : "r"(0), "r"(lock) : "memory"
 	);
 #elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC ) \
 	|| defined __CPU_mips64
