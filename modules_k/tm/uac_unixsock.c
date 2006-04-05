@@ -538,7 +538,7 @@ int unixsock_uac(str* msg)
 	if (get_nexthop(&nexthop, &pnexthop, msg) < 0) return -1;
 	if (get_headers(&headers, msg) < 0) return -1;
 
-	     /* use SIP parser to look at what is in the FIFO request */
+	/* use SIP parser to look at what is in the FIFO request */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
 	faked_msg.len = headers.len; 
 	faked_msg.buf = faked_msg.unparsed = headers.s;
@@ -550,13 +550,13 @@ int unixsock_uac(str* msg)
 
 	if (get_body_lines(&body, msg) < 0) goto error;
 	
-	     /* at this moment, we collected all the things we got, let's
-	      * verify user has not forgotten something */
-	if (check_msg(&faked_msg, &method, &body, &fromtag, 
-		      &cseq_is, &cseq, &callid) < 0) goto error;
+	/* at this moment, we collected all the things we got, let's
+	 * verify user has not forgotten something */
+	if (check_msg(&faked_msg, &method, &body, &fromtag,
+		&cseq_is, &cseq, &callid) < 0) goto error;
 
 	hfb.s = get_hfblock(nexthop.len ? &nexthop : &ruri, 
-			    faked_msg.headers, &hfb.len, PROTO_UDP);
+			faked_msg.headers, &hfb.len, PROTO_UDP);
 	if (!hfb.s) {
 		unixsock_reply_asciiz("500 No memory for HF block");
 		unixsock_reply_send();
@@ -564,22 +564,22 @@ int unixsock_uac(str* msg)
 	}
 
 	memset(&dlg, 0, sizeof(dlg_t));
-	     /* Fill in Call-ID, use given Call-ID if
-	      * present and generate it if not present
-	      */
+	/* Fill in Call-ID, use given Call-ID if
+	 * present and generate it if not present
+	 */
 	if (callid.s && callid.len) dlg.id.call_id = callid;
 	else generate_callid(&dlg.id.call_id);
 	
-	     /* We will not fill in dlg->id.rem_tag because
-	      * if present it will be printed within To HF
-	      */
+	/* We will not fill in dlg->id.rem_tag because
+	 * if present it will be printed within To HF
+	 */
 	
-	     /* Generate fromtag if not present */
+	/* Generate fromtag if not present */
 	if (!fromtag) {
 		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
 	}
 	
-	     /* Fill in CSeq */
+	/* Fill in CSeq */
 	if (cseq_is) dlg.loc_seq.value = cseq;
 	else dlg.loc_seq.value = DEFAULT_CSEQ;
 	dlg.loc_seq.is_set = 1;
@@ -589,12 +589,12 @@ int unixsock_uac(str* msg)
 	dlg.hooks.request_uri = &ruri;
 	dlg.hooks.next_hop = (nexthop.len ? &nexthop : &ruri);
 	
-	if (new_uac_cb_param(&shm_param,&faked_msg,unixsock_sender_addr())
-	    < 0) {
-	    unixsock_reply_send();
-	    goto error01;
+	shm_param = 0;
+	if ( new_uac_cb_param(&shm_param,&faked_msg,unixsock_sender_addr())< 0) {
+		unixsock_reply_send();
+		goto error01;
 	}
-	     /* we got it all, initiate transaction now! */
+	/* we got it all, initiate transaction now! */
 	ret = t_uac(&method, &hfb, &body, &dlg, callback, shm_param);
 	if (ret <= 0) {
 		err_ret = err2reason_phrase(ret, &sip_error, err_buf, sizeof(err_buf), "FIFO/UAC");
@@ -608,16 +608,16 @@ int unixsock_uac(str* msg)
 		goto error01;
 	}
 
-	     /* Do not free shm_sockaddr here, it will be used
-	      * by the callback
-	      */
+	/* Do not free shm_sockaddr here, it will be used
+	 * by the callback
+	 */
 	pkg_free(hfb.s);
 	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
 	return 0;
 	
- error01:
+error01:
 	pkg_free(hfb.s);
- error:
+error:
 	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
 	return -1;
 }

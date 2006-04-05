@@ -490,9 +490,6 @@ ok:
 
 static int mod_init(void)
 {
-	xl_spec_t tmspec;
-	str pvname;
-
 	LOG(L_INFO,"TM - initializing...\n");
 
 	/* checking if we have sufficient bitmap capacity for given
@@ -612,15 +609,10 @@ static int mod_init(void)
 		return -1;
 	}
 
-	memset(&tmspec, 0, sizeof(xl_spec_t));
-	tmspec.type = 100;
-	tmspec.itf = it_get_tm_branch_idx;
-	pvname.s   = "T_branch_idx";
-	pvname.len = sizeof("T_branch_idx")-1;
-	if(xl_add_extra_spec(&pvname, &tmspec)!=0)
+	if(xl_add_extra("T_branch_idx", it_get_tm_branch_idx, 100 )!=0)
 	{
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to register pvar [%.*s]\n",
-				pvname.len, pvname.s);
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to register pvar "
+			"[T_branch_idx]\n");
 		return -1;
 	}
 	return 0;
