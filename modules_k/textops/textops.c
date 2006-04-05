@@ -1193,7 +1193,7 @@ static int fixup_body_type(void** param, int param_no)
 {
 	char *p;
 	char *r;
-	int type;
+	unsigned int type;
 
 	if(param_no==1) {
 		p = (char*)*param;
@@ -1258,7 +1258,7 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 	}
 	DBG("DBUG:textops:has_body: Content type is %d\n",mime);
 
-	if ( mime!=(int)(unsigned long)type )
+	if ( (unsigned int)mime!=(unsigned int)(unsigned long)type )
 		return -1;
 
 	return 1;

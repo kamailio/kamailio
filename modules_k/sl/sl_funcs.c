@@ -136,10 +136,10 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 	{
 		calc_crc_suffix( msg, tag_suffix );
 		buf.s = build_res_buf_from_sip_req( code, text, &sl_tag, msg,
-			&buf.len, &dummy_bm);
+			(unsigned int*)&buf.len, &dummy_bm);
 	} else {
 		buf.s = build_res_buf_from_sip_req( code, text, 0, msg,
-			&buf.len, &dummy_bm);
+			(unsigned int*)&buf.len, &dummy_bm);
 	}
 	if (!buf.s) {
 		DBG("DEBUG: sl_send_reply: response building failed\n");

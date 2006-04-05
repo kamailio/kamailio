@@ -511,11 +511,11 @@ void acc_log_reply(  struct cell* t , struct sip_msg *reply,
 		t->uas.request->new_uri = t->uac[t->relaied_reply_branch].uri;
 	} else {
 		new_uri_bk.len = -1;
+		new_uri_bk.s = 0;
 	}
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_log_request(t->uas.request, 
-			valid_to(t,reply), &lead, &code_str );
+	acc_log_request(t->uas.request, valid_to(t,reply), &lead, &code_str );
 
 	if (new_uri_bk.len>=0)
 		t->uas.request->new_uri = new_uri_bk;
