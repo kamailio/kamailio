@@ -41,6 +41,10 @@
  *  2005-04-27  added alpha locking code (andrei)
  *  2005-06-06  ppc locking code enabled also for ppc64, note however
  *               that the version in HEAD might be more reliable (andrei)
+ *  2006-04-05 early clobber fixes for ppc, alpha; reverted unlock on x86
+                to xchg (andrei)
+ *
+ *
  *
  */
 
@@ -110,7 +114,7 @@ inline static int tsl(fl_lock_t* lock)
 			"   stwcx. %1, 0, %2\n\t"
 			"   bne-   1b\n\t"
 			"0:\n\t"
-			: "=r" (val)
+			: "=&r" (val)
 			: "r"(1), "b" (lock) :
 			"memory", "cc"
         );
@@ -144,9 +148,8 @@ inline static int tsl(fl_lock_t* lock)
 		"    beq %2, 1b   \n\t"
 		"    mb           \n\t"
 		"2:               \n\t"
-		:"=&r" (val), "=m"(*lock), "=r"(tmp)
-		:"1"(*lock)  /* warning on gcc 3.4: replace it with m or remove
-						it and use +m in the input line ? */
+		:"=&r" (val), "=m"(*lock), "=&r"(tmp)
+		:"m"(*lock)  
 		: "memory"
 	);
 #else
@@ -182,8 +185,8 @@ inline static void release_lock(fl_lock_t* lock)
 	char val;
 	val=0;
 	asm volatile(
-		" movb $0, (%0)" : /*no output*/ : "r"(lock): "memory"
-		/*" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"*/
+		/*" movb $0, (%0)" : : "r"(lock): "memory" */
+		" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"
 	); 
 #elif defined(__CPU_sparc64) || defined(__CPU_sparc)
 	asm volatile(
