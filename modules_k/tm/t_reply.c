@@ -593,8 +593,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
-		if (run_actions(failure_rlist[on_failure], &faked_req[level])<0)
-			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
+		run_top_route(failure_rlist[on_failure], &faked_req[level]);
 	}
 
 	/* restore original environment and free the fake msg */
@@ -1249,8 +1248,8 @@ int reply_received( struct sip_msg  *p_msg )
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(&t->user_avps);
 		/* run block */
-		if (run_actions(onreply_rlist[t->on_reply], p_msg)==0 &&
-		(msg_status<200) && (action_flags&ACT_FL_DROP) ) {
+		if ( (run_top_route(onreply_rlist[t->on_reply], p_msg)&ACT_FL_DROP) &&
+		(msg_status<200) ) {
 			DBG("DEBUG:tm:reply_received: dropping provisional reply %d\n",
 				msg_status);
 			goto done;

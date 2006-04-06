@@ -139,10 +139,9 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		swap_route_type( backup_route_type, BRANCH_ROUTE);
 
 		_tm_branch_index = branch+1;
-		if (run_actions(branch_rlist[t->on_branch], request)==0 &&
-		(action_flags&ACT_FL_DROP) ) {
+		if (run_top_route(branch_rlist[t->on_branch], request)&ACT_FL_DROP) {
 			DBG("DEBUG:tm:pre_print_uac_request: dropping branch <%.*s>\n",
-				request->dst_uri.len, request->dst_uri.s);
+				request->new_uri.len, request->new_uri.s);
 			_tm_branch_index = 0;
 			goto error;
 		}
