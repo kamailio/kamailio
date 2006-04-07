@@ -1,0 +1,58 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "siptrace_user.sgml">
+<!ENTITY devel SYSTEM "siptrace_devel.sgml">
+<!ENTITY faq SYSTEM "siptrace_faq.sgml">
+
+<!ENTITY siptracecfg SYSTEM "siptrace.cfg">
+<!ENTITY siptracesql SYSTEM "siptrace.sql">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>SipTrace Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		<email>daniel@voice-system.ro</email>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<address>
+		    <email>daniel@voice-system.ro</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2006</year>
+	    <holder>voice-system.ro</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
