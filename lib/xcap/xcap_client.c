@@ -31,6 +31,159 @@
 #include <cds/dstring.h>
 #include <cds/memory.h>
 #include <cds/logger.h>
+
+static const str_t *get_xcap_doc_dir(xcap_document_type_t doc_type)
+{
+	static str_t pres_rules = STR_STATIC_INIT("pres-rules");
+	static str_t im_rules = STR_STATIC_INIT("im-rules");
+	static str_t rls_services = STR_STATIC_INIT("rls-services");
+	static str_t resource_lists = STR_STATIC_INIT("resource-lists");
+
+	switch (doc_type) {
+		case xcap_doc_pres_rules: return &pres_rules;
+		case xcap_doc_im_rules: return &im_rules;
+		case xcap_doc_rls_services: return &rls_services;
+		case xcap_doc_resource_lists: return &resource_lists;
+		/* when new doc_type added, there will be a warning -> add it there */
+	}
+	WARN_LOG("unknow XCAP document type\n");
+	return NULL;
+}
+
+static const str_t *get_default_user_doc(xcap_document_type_t doc_type)
+{
+	static str_t pres_rules = STR_STATIC_INIT("presence-rules.xml");
+	static str_t im_rules = STR_STATIC_INIT("im-rules.xml");
+	static str_t rls_services = STR_STATIC_INIT("rls-services.xml");
+	static str_t resource_lists = STR_STATIC_INIT("resource-list.xml");
+
+	switch (doc_type) {
+		case xcap_doc_pres_rules: return &pres_rules;
+		case xcap_doc_im_rules: return &im_rules;
+		case xcap_doc_rls_services: return &rls_services;
+		case xcap_doc_resource_lists: return &resource_lists;
+		/* when new doc_type added, there will be a warning -> add it there */
+	}
+	WARN_LOG("unknow XCAP document type\n");
+	return NULL;
+}
+
+static int ends_with_separator(str_t *s)
+{
+	if (!is_str_empty(s))
+		if (s->s[s->len - 1] == '/') return 1;
+	return 0;
+}
+
+char *xcap_uri_for_users_document(xcap_document_type_t doc_type,
+		const str_t *username, 
+		const str_t*filename,
+		xcap_query_params_t *params)
+{
+	dstring_t s;
+	/* int res = RES_OK; */
+	int l = 0;
+	char *dst = NULL;
+
+	dstr_init(&s, 128);
+	if (params) {
+		dstr_append_str(&s, &params->xcap_root);
+		if (!ends_with_separator(&params->xcap_root))
+			dstr_append(&s, "/", 1);
+	}
+	else dstr_append(&s, "/", 1);
+	dstr_append_str(&s, get_xcap_doc_dir(doc_type));
+	dstr_append_zt(&s, "/users/");
+	dstr_append_str(&s, username);
+	dstr_append(&s, "/", 1);
+	if (filename) dstr_append_str(&s, filename);
+	else {
+		/* default filename if NULL */
+		dstr_append_str(&s, get_default_user_doc(doc_type));
+	}
+	/* res = dstr_get_str(&s, dst); */
+	
+	l = dstr_get_data_length(&s);
+	if (l > 0) {
+		dst = (char *)cds_malloc(l + 1);
+		if (dst) {
+			dstr_get_data(&s, dst);
+			dst[l] = 0;
+		}
+		else ERROR_LOG("can't allocate memory (%d bytes)\n", l);
+	}
+	
+	dstr_destroy(&s);
+	return dst;
+}
+
+
+char *xcap_uri_for_global_document(xcap_document_type_t doc_type,
+		const str_t *filename, 
+		xcap_query_params_t *params)
+{
+	dstring_t s;
+	/* int res = RES_OK; */
+	char *dst = NULL;
+	int l = 0;
+
+	dstr_init(&s, 128);
+	if (params) {
+		dstr_append_str(&s, &params->xcap_root);
+		if (!ends_with_separator(&params->xcap_root))
+			dstr_append(&s, "/", 1);
+	}
+	else dstr_append(&s, "/", 1);
+	dstr_append_str(&s, get_xcap_doc_dir(doc_type));
+	if (filename) {
+		dstr_append_zt(&s, "/global/");
+		dstr_append_str(&s, filename);
+	}
+	else {
+		/* default filename if NULL */
+		dstr_append_zt(&s, "/global/index");
+	}
+	/* res = dstr_get_str(&s, dst); */
+	
+	l = dstr_get_data_length(&s);
+	if (l > 0) {
+		dst = (char *)cds_malloc(l + 1);
+		if (dst) {
+			dstr_get_data(&s, dst);
+			dst[l] = 0;
+		}
+	}
+	
+	dstr_destroy(&s);
+	return dst;
+}
+
+#ifdef SER
+
+#include "sr_module.h"
+
+int xcap_query(const char *uri, 
+		xcap_query_params_t *params, char **buf, int *bsize)
+{
+	static xcap_query_func query = NULL;
+	static int initialized = 0;
+
+	if (!initialized) {
+		query = (xcap_query_func)find_export("xcap_query", 0, -1);
+		initialized = 1;
+		if (!query) WARN_LOG("No XCAP query support! (Missing module?)\n");
+	}
+	if (!query) {
+		/* no function for doing XCAP queries */
+		return -1;
+	}
+	
+	/* all XCAP queries are done through XCAP module */
+	return query(uri, params, buf, bsize);
+}
+
+#else /* compiled WITHOUT SER */
+
 #include <curl/curl.h>
 
 static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream)
@@ -46,10 +199,11 @@ static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream
 	return s;
 }
 
-int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bsize)
+
+int xcap_query(const str_t *uri, xcap_query_params_t *params, char **buf, int *bsize)
 {
 	CURLcode res = -1;
-	static CURL *handle = NULL; /*FIXME: experimental*/
+	static CURL *handle = NULL;
 	dstring_t data;
 	char *auth = NULL;
 	int i;
@@ -75,7 +229,7 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 	
 	dstr_init(&data, 512);
 	
-	if (!handle) handle = curl_easy_init(); /*FIXME: experimental*/
+	if (!handle) handle = curl_easy_init(); 
 	if (handle) {
 		curl_easy_setopt(handle, CURLOPT_URL, uri);
 		/* TRACE_LOG("uri: %s\n", uri ? uri : "<null>"); */
@@ -106,7 +260,6 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 		/* follow redirects (needed for apache mod_speling - case insesitive names) */
 		curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
 		
-		/* FIXME: experimetns */
 	/*	curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 1);
 		curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10);*/
 		
@@ -134,9 +287,12 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 	return res;
 }
 
+#endif
+
 void free_xcap_params_content(xcap_query_params_t *params)
 {
 	if (params) {
+		str_free_content(&params->xcap_root);
 		if (params->auth_user) cds_free(params->auth_user);
 		if (params->auth_pass) cds_free(params->auth_pass);
 		memset(params, 0, sizeof(*params));
@@ -145,22 +301,37 @@ void free_xcap_params_content(xcap_query_params_t *params)
 
 int dup_xcap_params(xcap_query_params_t *dst, xcap_query_params_t *src)
 {
+	int res = -10;
+	
 	if (dst) memset(dst, 0, sizeof(*dst));
 	
 	if (src && dst) {
-		if (src->auth_user) {
+		res = 0;
+		
+		res = str_dup(&dst->xcap_root, &src->xcap_root);
+		
+		if ((res == 0) && (src->auth_user)) {
 			dst->auth_user = zt_strdup(src->auth_user);
-			if (!dst->auth_user) return -1;
+			if (!dst->auth_user) res = -1;
 		}
-		if (src->auth_pass) {
+		if ((res == 0) && (src->auth_pass)) {
 			dst->auth_pass = zt_strdup(src->auth_pass);
-			if (!dst->auth_pass) {
-				free_xcap_params_content(dst);
-				return -2;
-			}
+			if (!dst->auth_pass) res= -2;
 		}
+
+		if (res != 0) free_xcap_params_content(dst);
 	}
 	
-	return 0;
+	return res;
+}
+
+int str2xcap_params(xcap_query_params_t *dst, const str_t *src)
+{
+	return -1;
+}
+
+int xcap_params2str(str_t *dst, const xcap_query_params_t *src)
+{
+	return -1;
 }
 

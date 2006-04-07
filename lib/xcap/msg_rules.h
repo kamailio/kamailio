@@ -39,8 +39,8 @@ typedef enum {
 	msg_handling_allow
 } msg_handling_t;
 
-char *xcap_uri_for_msg_rules(const char *xcap_root, const str_t *uri);
-int get_msg_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, msg_rules_t **dst);
+int get_msg_rules(const str_t *username, const str_t *filename,
+		xcap_query_params_t *xcap_params, msg_rules_t **dst);
 void free_msg_rules(cp_ruleset_t *r);
 void free_msg_actions(cp_actions_t *a);
 

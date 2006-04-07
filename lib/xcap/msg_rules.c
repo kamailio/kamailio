@@ -33,49 +33,31 @@
 #include <cds/sstr.h>
 #include <string.h>
 
-char *xcap_uri_for_msg_rules(const char *xcap_root, const str_t *uri)
-{
-	dstring_t s;
-	int l;
-	char *dst = NULL;
-
-	if (!xcap_root) return NULL;
-	l = strlen(xcap_root);
-	dstr_init(&s, 2 * l + 32);
-	dstr_append(&s, xcap_root, l);
-	if (xcap_root[l - 1] != '/') dstr_append(&s, "/", 1);
-	dstr_append_zt(&s, "im-rules/users/");
-	dstr_append_str(&s, uri);
-	dstr_append_zt(&s, "/im-rules.xml");
-	
-	l = dstr_get_data_length(&s);
-	if (l > 0) {
-		dst = (char *)cds_malloc(l + 1);
-		if (dst) {
-			dstr_get_data(&s, dst);
-			dst[l] = 0;
-		}
-	}
-	dstr_destroy(&s);
-	return dst;
-}
-
-int get_msg_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, msg_rules_t **dst)
+int get_msg_rules(const str_t *username, const str_t *filename,
+		xcap_query_params_t *xcap_params, msg_rules_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
-	char *xcap_uri;
+	char *uri = NULL;
 	int res = RES_OK;
 	
-	xcap_uri = xcap_uri_for_msg_rules(xcap_root, uri);
-	res = xcap_query(xcap_uri, xcap_params, &data, &dsize);
-	if (res != RES_OK) {
-		DEBUG_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
-		if (data) cds_free(data);
-		if (xcap_uri) cds_free(xcap_uri);
+	uri = xcap_uri_for_users_document(xcap_doc_im_rules,
+				username, filename,
+				xcap_params);
+	if (!uri) {
+		/* can't create XCAP uri */
+		ERROR_LOG("can't build XCAP uri\n");
 		return RES_XCAP_QUERY_ERR;
 	}
-	if (xcap_uri) cds_free(xcap_uri);
+	
+	res = xcap_query(uri, xcap_params, &data, &dsize);
+	if (res != RES_OK) {
+		DEBUG_LOG("XCAP problems for uri \'%s\'\n", uri);
+		if (data) cds_free(data);
+		cds_free(uri);
+		return RES_XCAP_QUERY_ERR;
+	}
+	cds_free(uri);
 	
 	/* parse input data */
 	res = parse_msg_rules(data, dsize, dst);

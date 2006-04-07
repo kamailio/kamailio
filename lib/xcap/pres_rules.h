@@ -40,8 +40,7 @@ typedef enum {
 	sub_handling_allow
 } sub_handling_t;
 
-char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri);
-int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, cp_ruleset_t **dst);
+int get_pres_rules(const str_t *username, const str_t *filename, xcap_query_params_t *xcap_params, cp_ruleset_t **dst);
 void free_pres_rules(cp_ruleset_t *r);
 void free_pres_actions(cp_actions_t *a);
 

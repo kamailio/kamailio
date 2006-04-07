@@ -24,7 +24,7 @@
 	<listitem><para><application>libxml2</application> (external library for
 	parsing XML documents)</para></listitem>
 	<listitem><para><application>libcurl3</application> (external library for
-	HTTP operations)</para></listitem>
+	HTTP operations, used only in nonSER version!)</para></listitem>
 </itemizedlist>
 </para>
 </section>

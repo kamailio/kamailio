@@ -430,13 +430,14 @@ static int process_resource_list(const char *rl_uri, process_params_t *params)
 	return res;
 }
 
-static int create_flat_list(service_t *srv, xcap_query_params_t *xcap_params, const str_t *xcap_root, flat_list_t **dst)
+static int create_flat_list(service_t *srv, 
+		xcap_query_params_t *xcap_params, 
+		flat_list_t **dst)
 {
 	process_params_t params;
 	int res = -1;
 	if (!srv) return RES_INTERNAL_ERR;
 
-	params.xcap_root = xcap_root;
 	params.xcap_params = xcap_params;
 	params.flat = NULL;
 	params.flat_last = NULL;
@@ -518,30 +519,36 @@ static service_t *find_service(rls_services_t *rls, const str_t *uri)
 
 /* ------- rls examining ------- */
 
-int get_rls(const str_t *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, const str_t *package, flat_list_t **dst)
+int get_rls(const str_t *uri, xcap_query_params_t *xcap_params, 
+		const str_t *package, flat_list_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
 	service_t *service = NULL;
-	char *xcap_uri;
+	char *xcap_uri = NULL;
+	str_t *filename = NULL;
 	int res;
 
 	if (!dst) return RES_INTERNAL_ERR;
 	
 	/* get basic document */
-	xcap_uri = xcap_uri_for_rls_resource(xcap_root, uri);
-	/* DEBUG_LOG("XCAP uri \'%s\'\n", xcap_uri ? xcap_uri: "???"); */
+	xcap_uri = xcap_uri_for_global_document(xcap_doc_rls_services, 
+			filename, xcap_params);
+	if (!xcap_uri) {
+		ERROR_LOG("can't get XCAP uri\n");
+		return RES_XCAP_QUERY_ERR;
+	}
+	
 	res = xcap_query(xcap_uri, xcap_params, &data, &dsize);
 	if (res != 0) {
-		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
+		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap_uri);
 		if (data) {
 			cds_free(data);
 		}
-		if (xcap_uri) cds_free(xcap_uri);
+		cds_free(xcap_uri);
 		return RES_XCAP_QUERY_ERR;
 	}
-	if (xcap_uri) cds_free(xcap_uri);
-	xcap_uri = NULL;
+	cds_free(xcap_uri);
 	
 	/* parse document as a service element in rls-sources */
 	if (parse_service(data, dsize, &service) != 0) {
@@ -567,7 +574,7 @@ int get_rls(const str_t *xcap_root, const str_t *uri, xcap_query_params_t *xcap_
 	}
 	
 	/* create flat document */
-	res = create_flat_list(service, xcap_params, xcap_root, dst);
+	res = create_flat_list(service, xcap_params, dst);
 	if (res != RES_OK) {
 		ERROR_LOG("Flat list creation error\n");
 		free_service(service);
@@ -580,7 +587,10 @@ int get_rls(const str_t *xcap_root, const str_t *uri, xcap_query_params_t *xcap_
 	return RES_OK;
 }
 
-int get_rls_from_full_doc(const str_t *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, const str_t *package, flat_list_t **dst)
+int get_rls_from_full_doc(const str_t *uri, 
+		/* const str_t *filename,  */
+		xcap_query_params_t *xcap_params, 
+		const str_t *package, flat_list_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
@@ -588,25 +598,30 @@ int get_rls_from_full_doc(const str_t *xcap_root, const str_t *uri, xcap_query_p
 	service_t *service = NULL;
 	str_t curi;
 	int res;
-	char *xcap_uri;
+	char *xcap_uri = NULL;
+	str_t *filename = NULL;
 
 	if (!dst) return RES_INTERNAL_ERR;
 	
 
 	/* get basic document */
-	xcap_uri = xcap_uri_for_rls_services(xcap_root);
-	DEBUG_LOG("XCAP uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
+	xcap_uri = xcap_uri_for_global_document(xcap_doc_rls_services, 
+			filename, xcap_params);
+	if (!xcap_uri) {
+		ERROR_LOG("can't get XCAP uri\n");
+		return -1;
+	}
+	
 	res = xcap_query(xcap_uri, xcap_params, &data, &dsize);
 	if (res != 0) {
-		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
+		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap_uri);
 		if (data) {
 			cds_free(data);
 		}
-		if (xcap_uri) cds_free(xcap_uri);
+		cds_free(xcap_uri);
 		return RES_XCAP_QUERY_ERR;
 	}
-	if (xcap_uri) cds_free(xcap_uri);
-	xcap_uri = NULL;
+	cds_free(xcap_uri);
 	
 	/* parse document as a service element in rls-sources */
 	if (parse_rls_services_xml(data, dsize, &rls) != 0) {
@@ -638,7 +653,7 @@ int get_rls_from_full_doc(const str_t *xcap_root, const str_t *uri, xcap_query_p
 	}
 	
 	/* create flat document */
-	res = create_flat_list(service, xcap_params, xcap_root, dst);
+	res = create_flat_list(service, xcap_params, dst);
 	if (res != RES_OK) {
 		ERROR_LOG("Flat list creation error\n");
 		free_rls_services(rls);
@@ -649,32 +664,6 @@ int get_rls_from_full_doc(const str_t *xcap_root, const str_t *uri, xcap_query_p
 	free_rls_services(rls);
 	
 	return RES_OK;
-}
-
-char *xcap_uri_for_resource_list(const str_t *xcap_root, const str_t *user)
-{
-	dstring_t s;
-	int l;
-	char *dst = NULL;
-
-	if (!xcap_root) return NULL;
-	dstr_init(&s, 2 * xcap_root->len + 32);
-	dstr_append_str(&s, xcap_root);
-	if (xcap_root->s[xcap_root->len - 1] != '/') dstr_append(&s, "/", 1);
-	dstr_append_zt(&s, "resource-lists/users/");
-	dstr_append_str(&s, user);
-	dstr_append_zt(&s, "/resource-list.xml");
-	
-	l = dstr_get_data_length(&s);
-	if (l > 0) {
-		dst = (char *)cds_malloc(l + 1);
-		if (dst) {
-			dstr_get_data(&s, dst);
-			dst[l] = 0;
-		}
-	}
-	dstr_destroy(&s);
-	return dst;
 }
 
 static list_t *find_list(list_t *root, const char *name)
@@ -702,8 +691,9 @@ static list_t *find_list(list_t *root, const char *name)
 }
 
 /* catches and processes user's resource list as rls-services document */
-int get_resource_list_from_full_doc(const str_t *xcap_root, 
-		const str_t *user, xcap_query_params_t *xcap_params, 
+int get_resource_list_from_full_doc(const str_t *user, 
+		const str_t *filename, 
+		xcap_query_params_t *xcap_params, 
 		const char *list_name, flat_list_t **dst)
 {
 	char *data = NULL;
@@ -711,24 +701,28 @@ int get_resource_list_from_full_doc(const str_t *xcap_root,
 	service_t *service = NULL; 
 	list_t *list = NULL, *right = NULL;
 	int res;
-	char *xcap_uri;
+	char *uri = NULL;
 
 	if (!dst) return RES_INTERNAL_ERR;
 	
 	/* get basic document */
-	xcap_uri = xcap_uri_for_resource_list(xcap_root, user);
-	DEBUG_LOG("XCAP uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
-	res = xcap_query(xcap_uri, xcap_params, &data, &dsize);
+	uri = xcap_uri_for_users_document(xcap_doc_resource_lists,
+			user, filename, xcap_params);
+	if (!uri) {
+		ERROR_LOG("can't get XCAP uri\n");
+		return -1;
+	}
+	DEBUG_LOG("XCAP uri \'%s\'\n", uri);
+	res = xcap_query(uri, xcap_params, &data, &dsize);
 	if (res != 0) {
-		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
+		ERROR_LOG("XCAP problems for uri \'%s\'\n", uri);
 		if (data) {
 			cds_free(data);
 		}
-		if (xcap_uri) cds_free(xcap_uri);
+		cds_free(uri);
 		return RES_XCAP_QUERY_ERR;
 	}
-	if (xcap_uri) cds_free(xcap_uri);
-	xcap_uri = NULL;
+	cds_free(uri);
 	
 	/* parse document as a list element in resource-lists */
 	if (parse_as_list_content_xml(data, dsize, &list) != 0) {
@@ -763,7 +757,7 @@ int get_resource_list_from_full_doc(const str_t *xcap_root,
 	/*service->uri = ??? */
 
 	/* create flat document */
-	res = create_flat_list(service, xcap_params, xcap_root, dst);
+	res = create_flat_list(service, xcap_params, dst);
 
 	service->content.list = list; /* free whole document not only "right" list */
 	free_service(service);

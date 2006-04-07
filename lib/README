@@ -11,7 +11,7 @@ presence - Library holding common structures and functions abaut presence
 
 xcap - Common XCAP operations and structures (XCAP authorization documents
        and XCAP resource lists processing)
-       requires external libraries: libxml2, libcurl3
+       requires external libraries: libxml2, libcurl3 (nonSER version)
        requires internal libraries: cds
 
 Used by modules: pa, rls, dialog, rpa

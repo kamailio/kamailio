@@ -476,10 +476,9 @@ route{
 						}
 						else {
 							# new presence subscription
-							if ((@msg.event=~"presence") && (%subscription_status=="pending")) {
+							if ((@msg.event=~"presence") &&	(check_subscription_status("pending"))) {
 								# if offline user and new pending subscription 
 								if (!target_online("registrar")) {
-									#%subscription_status="waiting"; # store it as waiting subscription
 									xlog("L_ERR", "storing 'pending' winfo to: %tu, from: %fu\n");
 									store_winfo("registrar");
 								}

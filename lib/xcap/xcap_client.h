@@ -26,7 +26,12 @@
 #ifndef __XCAP_CLIENT_H
 #define __XCAP_CLIENT_H
 
+#include <cds/sstr.h>
+#include <xcap/xcap_result_codes.h>
+
 typedef struct {
+	/* "prefix" for XCAP query */
+	str_t xcap_root;
 	/** username for authentication */
 	char *auth_user;
 	/** password used for authentication */
@@ -37,13 +42,37 @@ typedef struct {
 	int enable_unverified_ssl_peer;
 } xcap_query_params_t;
 
+typedef enum {
+	xcap_doc_pres_rules,
+	xcap_doc_im_rules,
+	xcap_doc_rls_services,
+	xcap_doc_resource_lists
+} xcap_document_type_t;
+
+char *xcap_uri_for_users_document(xcap_document_type_t doc_type,
+		const str_t *username, 
+		const str_t*filename,
+		xcap_query_params_t *params);
+
+char *xcap_uri_for_global_document(xcap_document_type_t doc_type,
+		const str_t *filename,
+		xcap_query_params_t *params);
+
 /** Sends a XCAP query to the destination and using parameters from 
  * query variable a returns received data in output variables buf
  * and bsize. */
-/* URI is full HTTP/HTTPS uri for the query */
-int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bsize);
+/* URI is absolute HTTP/HTTPS uri for the query  */
+int xcap_query(const char *uri, xcap_query_params_t *params, 
+		char **buf, int *bsize);
+
+typedef int (*xcap_query_func)(const char *uri, 
+		xcap_query_params_t *params, 
+		char **buf, int *bsize);
 
 void free_xcap_params_content(xcap_query_params_t *params);
 int dup_xcap_params(xcap_query_params_t *dst, xcap_query_params_t *src);
+
+int str2xcap_params(xcap_query_params_t *dst, const str_t *src);
+int xcap_params2str(str_t *dst, const xcap_query_params_t *src);
 
 #endif
