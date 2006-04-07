@@ -20,6 +20,9 @@
 #             tables to domain (janakj)
 # 2003-04-14  reinstall introduced (jiri)
 # 2004-07-05  new definition of table silo (dcm)
+# 2006-04-07  removed gen_ha1 dependency - use md5sum;
+#             separated the serweb from openser tables;
+#             fixed the reinstall functionality (bogdan)
 
 PATH=$PATH:/usr/local/sbin
 
@@ -78,10 +81,6 @@ fi
 if [ -z "$USERCOL" ]; then
 	USERCOL="username"
 fi
-# path to gen_ha1 tool
-if [ -z "$GENHA1" ]; then
-	GENHA1='openser_gen_ha1'
-fi
 
 FOREVER="2020-05-28 21:32:15"
 
@@ -101,9 +100,11 @@ usage: $COMMAND create
        $COMMAND drop   (!!entirely deletes tables)
        $COMMAND reinit (!!entirely deletes and than re-creates tables
        $COMMAND backup (dumps current database to stdout)
-	   $COMMAND restore <file> (restores tables from a file)
+       $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
-       $COMMAND reinstall (updates to a new SER database)
+       $COMMAND reinstall (updates to a new OpenSER database)
+       $COMMAND serweb (adds the SERWEB specific tables)
+       $COMMAND reinit (drops ans install OpenSER database)
 
        if you want to manipulate database as other MySql user than
        root, want to change database name from default value "$DBNAME",
@@ -132,10 +133,10 @@ sql_query()
 }
 
 # dump all rows
-ser_dump()  # pars: <database name>
+openser_dump()  # pars: <database name>
 {
 	if [ $# -ne 1 ] ; then
-		echo "ser_dump function takes one param"
+		echo "openser_dump function takes one param"
 		exit 1
 	fi
 	$DUMP_CMD "-p$PW" $1
@@ -143,50 +144,53 @@ ser_dump()  # pars: <database name>
 
 
 # copy a database to database_bak
-ser_backup() # par: <database name>
+openser_backup() # par: <database name>
 {
 	if [ $# -ne 1 ] ; then
-		echo  "ser_backup function takes one param"
+		echo  "openser_backup function takes one param"
 		exit 1
 	fi
 	BU=/tmp/mysql_bup.$$
 	$BACKUP_CMD "-p$PW" $1 > $BU
 	if [ "$?" -ne 0 ] ; then
-		echo "ser backup dump failed"
+		echo "openser_backup dump failed"
 		exit 1
 	fi
 	sql_query <<EOF
 	create database $1_bak;
 EOF
 
-	ser_restore $1_bak $BU
+	openser_restore $1_bak $BU
 	if [ "$?" -ne 0 ]; then
-		echo "ser backup/restore failed"
+		echo "openser backup/restore failed"
 		rm $BU
 		exit 1
 	fi
 }
 
-ser_restore() #pars: <database name> <filename>
+
+openser_restore() #pars: <database name> <filename>
 {
 if [ $# -ne 2 ] ; then
-	echo "ser_restore function takes two params"
+	echo "openser_restore function takes two params"
 	exit 1
 fi
 sql_query $1 < $2
 }
 
-ser_drop()  # pars: <database name>
+
+openser_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	echo "ser_drop function takes two params"
+	echo "openser_drop function takes two params"
 	exit 1
 fi
 
 sql_query << EOF
 drop database $1;
 EOF
-} #ser_drop
+}
+
 
 # read realm
 prompt_realm()
@@ -196,30 +200,32 @@ prompt_realm()
 	echo
 }
 
+
 # calculate credentials for admin
 credentials()
 {
-	HA1=`$GENHA1 admin $SIP_DOMAIN $DEFAULT_PW`
+	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | md5sum | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`$GENHA1 "admin@$SIP_DOMAIN" $SIP_DOMAIN $DEFAULT_PW`
+	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | md5sum | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
 	fi
 
-  #PHPLIB_ID of users should be difficulty to guess for security reasons
-  NOW=`date`;
-  PHPLIB_ID=`$GENHA1 "$RANDOM" "$NOW" $SIP_DOMAIN`
+	#PHPLIB_ID of users should be difficulty to guess for security reasons
+	NOW=`date`;
+	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | md5sum | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
-    echo "PHPLIB_ID calculation failed"
+		echo "PHPLIB_ID calculation failed"
 		exit 1
 	fi
 }
 
-ser_create () # pars: <database name> [<no_init_user>]
+
+openser_create () # pars: <database name> [<no_init_user>]
 {
 if [ $# -eq 1 ] ; then
 	if [ -z "$SIP_DOMAIN" ] ; then
@@ -230,23 +236,17 @@ if [ $# -eq 1 ] ; then
 	INITIAL_USER="INSERT INTO subscriber
 		($USERCOL, password, first_name, last_name, phone,
 		email_address, datetime_created, datetime_modified, confirmation,
-    flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
+		flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
 		VALUES ( 'admin', '$DEFAULT_PW', 'Initial', 'Admin', '123',
 		'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00',
 		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
 		'$HA1', '$SIP_DOMAIN', '$HA1B',
-    '$PHPLIB_ID' );
-
-    INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-    VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
-
-    INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-    VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
+		'$PHPLIB_ID' );"
 elif [ $# -eq 2 ] ; then
 	# if 3rd param set, don't create any initial user
 	INITIAL_USER=""
 else
-	echo "ser_create function takes one or two params"
+	echo "openser_create function takes one or two params"
 	exit 1
 fi
 
@@ -277,29 +277,17 @@ CREATE TABLE version (
 #
 
 INSERT INTO version VALUES ( 'subscriber', '5');
-INSERT INTO version VALUES ( 'reserved', '1');
-INSERT INTO version VALUES ( 'phonebook', '1');
-INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'location', '1003');
 INSERT INTO version VALUES ( 'aliases', '1003');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
-INSERT INTO version VALUES ( 'event', '1');
-INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '2');
-INSERT INTO version VALUES ( 'config', '1');
 INSERT INTO version VALUES ( 'silo', '4');
-INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
-INSERT INTO version VALUES ( 'server_monitoring', '1');
-INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'trusted', '3');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
-INSERT INTO version VALUES ( 'usr_preferences_types', '1');
-INSERT INTO version VALUES ( 'admin_privileges', '1');
-INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'gw', '3');
@@ -307,14 +295,43 @@ INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'sip_trace', '1');
 
+
+
+#
+# Table structure for table 'subscriber' -- user database
+#
+CREATE TABLE subscriber (
+  phplib_id varchar(32) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  password varchar(25) NOT NULL default '',
+  first_name varchar(25) NOT NULL default '',
+  last_name varchar(45) NOT NULL default '',
+  phone varchar(15) NOT NULL default '',
+  email_address varchar(50) NOT NULL default '',
+  datetime_created datetime NOT NULL default '0000-00-00 00:00:00',
+  datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
+  confirmation varchar(64) NOT NULL default '',
+  flag char(1) NOT NULL default 'o',
+  sendnotification varchar(50) NOT NULL default '',
+  greeting varchar(50) NOT NULL default '',
+  ha1 varchar(128) NOT NULL default '',
+  ha1b varchar(128) NOT NULL default '',
+  allow_find char(1) NOT NULL default '0',
+  timezone varchar(128) default NULL,
+  rpid varchar(128) default NULL,
+  domn int(10) default NULL,
+  uuid varchar(64) default NULL,
+  UNIQUE KEY phplib_id (phplib_id),
+  PRIMARY KEY ($USERCOL, domain),
+  KEY user_2 ($USERCOL)
+) $TABLE_TYPE;
+
+
 #
 # Table structure for table 'acc' -- accounted calls
 #
-
-
 CREATE TABLE acc (
-  caller_UUID varchar(64) NOT NULL default '',
-  callee_UUID varchar(64) NOT NULL default '',
   sip_from varchar(128) NOT NULL default '',
   sip_to varchar(128) NOT NULL default '',
   sip_status varchar(128) NOT NULL default '',
@@ -330,8 +347,6 @@ CREATE TABLE acc (
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL,
-  caller_deleted char(1) NOT NULL default '0',
-  callee_deleted char(1) NOT NULL default '0',
   src_leg varchar(128) default NULL,
   dst_leg varchar(128) default NULL,
   INDEX acc_user ($USERCOL, domain),
@@ -339,88 +354,29 @@ CREATE TABLE acc (
 ) $TABLE_TYPE;
 
 
-
-
 #
-# Table structure for table 'active_sessions' -- web stuff
+# Table structure for table 'missed_calls' -- acc-like table
+# for keeping track of missed calls
 #
-
-
-CREATE TABLE active_sessions (
-  sid varchar(32) NOT NULL default '',
-  name varchar(32) NOT NULL default '',
-  val text,
-  changed varchar(14) NOT NULL default '',
-  PRIMARY KEY  (name,sid),
-  KEY changed (changed)
-) $TABLE_TYPE;
-
-
-
-#
-# Table structure for table 'aliases' -- location-like table
-# (aliases_contact index makes lookup of missed calls much faster)
-#
-
-CREATE TABLE aliases (
+CREATE TABLE missed_calls (
+  sip_from varchar(128) NOT NULL default '',
+  sip_to varchar(128) NOT NULL default '',
+  sip_status varchar(128) NOT NULL default '',
+  sip_method varchar(16) NOT NULL default '',
+  i_uri varchar(128) NOT NULL default '',
+  o_uri varchar(128) NOT NULL default '',
+  from_uri varchar(128) NOT NULL default '',
+  to_uri varchar(128) NOT NULL default '',
+  sip_callid varchar(128) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
-  contact varchar(255) NOT NULL default '',
-  received varchar(255) default NULL,
-  path varchar(255) default NULL,
-  expires datetime NOT NULL default '$DEFAULT_ALIASES_EXPIRES',
-  q float(10,2) NOT NULL default '$DEFAULT_Q',
-  callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
-  cseq int(11) NOT NULL default '$DEFAULT_CSEQ',
-  last_modified timestamp(14) NOT NULL,
-  flags int(11) NOT NULL default '0',
-  user_agent varchar(255) NOT NULL default '',
-  socket varchar(128) default NULL,
-  methods int(11) default NULL,
-  PRIMARY KEY($USERCOL, domain, contact),
-  INDEX aliases_contact (contact)
-) $TABLE_TYPE;
-
-
-#
-# DB aliases
-#
-
-CREATE TABLE dbaliases (
-  alias_username varchar(64) NOT NULL default '',
-  alias_domain varchar(128) NOT NULL default '',
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  UNIQUE KEY alias_key (alias_username,alias_domain),
-  INDEX alias_user ($USERCOL, domain)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'grp' -- group membership
-# table; used primarily for ACLs
-#
-
-
-CREATE TABLE grp (
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  grp varchar(50) NOT NULL default '',
-  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY($USERCOL, domain, grp)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 're_grp' -- group membership
-# based on regular expressions
-#
-
-
-CREATE TABLE re_grp (
-  reg_exp varchar(128) NOT NULL default '',
-  group_id int(11) NOT NULL default '0',
-  UNIQUE KEY reg_exp (reg_exp)
+  fromtag varchar(128) NOT NULL default '',
+  totag varchar(128) NOT NULL default '',
+  time datetime NOT NULL default '0000-00-00 00:00:00',
+  timestamp timestamp(14) NOT NULL,
+  src_leg varchar(128) default NULL,
+  dst_leg varchar(128) default NULL,
+  INDEX mc_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 
@@ -446,44 +402,280 @@ CREATE TABLE location (
 ) $TABLE_TYPE;
 
 
-
-
 #
-# Table structure for table 'missed_calls' -- acc-like table
-# for keeping track of missed calls
+# Table structure for table 'aliases' -- location-like table
+# (aliases_contact index makes lookup of missed calls much faster)
 #
-
-
-CREATE TABLE missed_calls (
-  sip_from varchar(128) NOT NULL default '',
-  sip_to varchar(128) NOT NULL default '',
-  sip_status varchar(128) NOT NULL default '',
-  sip_method varchar(16) NOT NULL default '',
-  i_uri varchar(128) NOT NULL default '',
-  o_uri varchar(128) NOT NULL default '',
-  from_uri varchar(128) NOT NULL default '',
-  to_uri varchar(128) NOT NULL default '',
-  sip_callid varchar(128) NOT NULL default '',
+CREATE TABLE aliases (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
-  fromtag varchar(128) NOT NULL default '',
-  totag varchar(128) NOT NULL default '',
-  time datetime NOT NULL default '0000-00-00 00:00:00',
-  timestamp timestamp(14) NOT NULL,
-  src_leg varchar(128) default NULL,
-  dst_leg varchar(128) default NULL,
-  INDEX mc_user ($USERCOL, domain)
+  contact varchar(255) NOT NULL default '',
+  received varchar(255) default NULL,
+  path varchar(255) default NULL,
+  expires datetime NOT NULL default '$DEFAULT_ALIASES_EXPIRES',
+  q float(10,2) NOT NULL default '$DEFAULT_Q',
+  callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
+  cseq int(11) NOT NULL default '$DEFAULT_CSEQ',
+  last_modified timestamp(14) NOT NULL,
+  flags int(11) NOT NULL default '0',
+  user_agent varchar(255) NOT NULL default '',
+  socket varchar(128) default NULL,
+  methods int(11) default NULL,
+  PRIMARY KEY($USERCOL, domain, contact),
+  INDEX aliases_contact (contact)
 ) $TABLE_TYPE;
 
 
+#
+# DB aliases
+#
+CREATE TABLE dbaliases (
+  alias_username varchar(64) NOT NULL default '',
+  alias_domain varchar(128) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  UNIQUE KEY alias_key (alias_username,alias_domain),
+  INDEX alias_user ($USERCOL, domain)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'grp' -- group membership
+# table; used primarily for ACLs
+#
+CREATE TABLE grp (
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  grp varchar(50) NOT NULL default '',
+  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
+  PRIMARY KEY($USERCOL, domain, grp)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 're_grp' -- group membership
+# based on regular expressions
+#
+CREATE TABLE re_grp (
+  reg_exp varchar(128) NOT NULL default '',
+  group_id int(11) NOT NULL default '0',
+  UNIQUE KEY reg_exp (reg_exp)
+) $TABLE_TYPE;
+
+
+#
+# "instant" message silo
+#
+CREATE TABLE silo(
+    mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    src_addr VARCHAR(255) NOT NULL DEFAULT "",
+    dst_addr VARCHAR(255) NOT NULL DEFAULT "",
+    r_uri VARCHAR(255) NOT NULL DEFAULT "",
+    $USERCOL VARCHAR(64) NOT NULL DEFAULT "",
+    domain VARCHAR(128) NOT NULL DEFAULT "",
+    inc_time INTEGER NOT NULL DEFAULT 0,
+    exp_time INTEGER NOT NULL DEFAULT 0,
+    snd_time INTEGER NOT NULL DEFAULT 0,
+    ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
+    body BLOB NOT NULL DEFAULT ""
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'domain' -- domains proxy is responsible for
+#
+CREATE TABLE domain (
+  domain varchar(128) NOT NULL default '',
+  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
+  PRIMARY KEY  (domain)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'uri' -- uri user parts users are allowed to use
+#
+CREATE TABLE uri (
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  uri_user varchar(50) NOT NULL default '',
+  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
+  PRIMARY KEY ($USERCOL, domain, uri_user)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'usr_preferences'
+#
+DROP TABLE IF EXISTS usr_preferences;
+CREATE TABLE usr_preferences (
+  uuid varchar(64) NOT NULL default '',
+  $USERCOL varchar(100) NOT NULL default '0',
+  domain varchar(128) NOT NULL default '',
+  attribute varchar(32) NOT NULL default '',
+  type int(11) NOT NULL default '0',
+  value varchar(128) NOT NULL default '',
+  modified timestamp(14) NOT NULL,
+  PRIMARY KEY (uuid,$USERCOL,domain,attribute,type,value),
+  INDEX ua_idx  (uuid,attribute),
+  INDEX uda_idx ($USERCOL,domain,attribute)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table trusted
+#
+CREATE TABLE trusted (
+  src_ip varchar(39) NOT NULL,
+  proto varchar(4) NOT NULL,
+  from_pattern varchar(64) DEFAULT NULL,
+  tag varchar(32) DEFAULT NULL,
+  KEY Key1 (src_ip)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'speed_dial'
+#
+CREATE TABLE speed_dial (
+  uuid varchar(64) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  sd_username varchar(64) NOT NULL default '',
+  sd_domain varchar(128) NOT NULL default '',
+  new_uri varchar(192) NOT NULL default '',
+  fname varchar(128) NOT NULL default '',
+  lname varchar(128) NOT NULL default '',
+  description varchar(64) NOT NULL default '',
+  PRIMARY KEY  ($USERCOL,domain,sd_domain,sd_username)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'gw'
+#
+CREATE TABLE gw (
+  gw_name VARCHAR(128) NOT NULL,
+  grp_id INT UNSIGNED NOT NULL,
+  ip_addr INT UNSIGNED NOT NULL,
+  port SMALLINT UNSIGNED,
+  uri_scheme TINYINT UNSIGNED,
+  transport TINYINT UNSIGNED,
+  strip TINYINT UNSIGNED,
+  prefix varchar(16) default NULL,
+  PRIMARY KEY (gw_name),
+  KEY (grp_id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'gw_grp'
+#
+CREATE TABLE gw_grp (
+  grp_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  grp_name VARCHAR(64) NOT NULL
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'lcr'
+#
+CREATE TABLE lcr (
+  prefix varchar(16) NOT NULL,
+  from_uri varchar(128) DEFAULT NULL,
+  grp_id INT UNSIGNED NOT NULL,
+  priority TINYINT UNSIGNED NOT NULL,
+  KEY (prefix),
+  KEY (from_uri),
+  KEY (grp_id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'siptrace'
+#
+CREATE TABLE sip_trace (
+  id bigint(20) NOT NULL auto_increment,
+  date datetime NOT NULL default '0000-00-00 00:00:00',
+  callid varchar(254) NOT NULL default '',
+  traced_user varchar(128) NOT NULL default '',
+  msg text NOT NULL,
+  method varchar(50) NOT NULL default '',
+  status varchar(254) NOT NULL default '',
+  fromip varchar(50) NOT NULL default '',
+  toip varchar(50) NOT NULL default '',
+  fromtag varchar(64) NOT NULL default '',
+  direction varchar(4) NOT NULL default '',
+  PRIMARY KEY  (id),
+  INDEX user_idx (traced_user),
+  INDEX date_id (date),
+  INDEX ip_idx (fromip),
+  KEY call_id (callid)
+) $TABLE_TYPE;
+
+# add an admin user "admin" with password==$DEFAULT_PW,
+# so that one can try it out on quick start
+$INITIAL_USER
+EOF
+
+echo -n "Install SERWEB tables ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	serweb_create $1 $2
+fi
+} # openser_create
+
+
+serweb_create () # pars: <database name>
+{
+if [ $# -eq 1 ] ; then
+	if [ -z "$SIP_DOMAIN" ] ; then
+		prompt_realm
+	fi
+	INITIAL_INSERT="
+		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
+		VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
+		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
+		VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
+elif [ $# -eq 2 ] ; then
+	# if 3rd param set, don't do any initial insert
+	INITIAL_INSERT=""
+else
+	echo "serweb_create function takes one or two params"
+	exit 1
+fi
+
+echo "creating serweb tables into $1 ..."
+
+sql_query <<EOF
+use $1;
+
+INSERT INTO version VALUES ( 'phonebook', '1');
+INSERT INTO version VALUES ( 'pending', '4');
+INSERT INTO version VALUES ( 'active_sessions', '1');
+INSERT INTO version VALUES ( 'server_monitoring', '1');
+INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
+INSERT INTO version VALUES ( 'usr_preferences_types', '1');
+INSERT INTO version VALUES ( 'admin_privileges', '1');
+
+
+#
+# Table structure for table 'active_sessions' -- web stuff
+#
+CREATE TABLE active_sessions (
+  sid varchar(32) NOT NULL default '',
+  name varchar(32) NOT NULL default '',
+  val text,
+  changed varchar(14) NOT NULL default '',
+  PRIMARY KEY  (name,sid),
+  KEY changed (changed)
+) $TABLE_TYPE;
 
 
 #
 # Table structure for table 'pending' -- unconfirmed subscribtion
 # requests
 #
-
-
 CREATE TABLE pending (
   phplib_id varchar(32) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
@@ -512,13 +704,9 @@ CREATE TABLE pending (
 ) $TABLE_TYPE;
 
 
-
-
 #
 # Table structure for table 'phonebook' -- user's phonebook
 #
-
-
 CREATE TABLE phonebook (
   id int(10) unsigned NOT NULL auto_increment,
   $USERCOL varchar(64) NOT NULL default '',
@@ -531,81 +719,8 @@ CREATE TABLE phonebook (
 
 
 #
-# Table structure for table 'subscriber' -- user database
-#
-
-
-CREATE TABLE subscriber (
-  phplib_id varchar(32) NOT NULL default '',
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  password varchar(25) NOT NULL default '',
-  first_name varchar(25) NOT NULL default '',
-  last_name varchar(45) NOT NULL default '',
-  phone varchar(15) NOT NULL default '',
-  email_address varchar(50) NOT NULL default '',
-  datetime_created datetime NOT NULL default '0000-00-00 00:00:00',
-  datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  confirmation varchar(64) NOT NULL default '',
-  flag char(1) NOT NULL default 'o',
-  sendnotification varchar(50) NOT NULL default '',
-  greeting varchar(50) NOT NULL default '',
-  ha1 varchar(128) NOT NULL default '',
-  ha1b varchar(128) NOT NULL default '',
-  allow_find char(1) NOT NULL default '0',
-  timezone varchar(128) default NULL,
-  rpid varchar(128) default NULL,
-  domn int(10) default NULL,
-  uuid varchar(64) default NULL,
-  UNIQUE KEY phplib_id (phplib_id),
-  PRIMARY KEY ($USERCOL, domain),
-  KEY user_2 ($USERCOL)
-) $TABLE_TYPE;
-
-# "instant" message silo
-
-CREATE TABLE silo(
-    mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    src_addr VARCHAR(255) NOT NULL DEFAULT "",
-    dst_addr VARCHAR(255) NOT NULL DEFAULT "",
-    r_uri VARCHAR(255) NOT NULL DEFAULT "",
-    $USERCOL VARCHAR(64) NOT NULL DEFAULT "",
-    domain VARCHAR(128) NOT NULL DEFAULT "",
-    inc_time INTEGER NOT NULL DEFAULT 0,
-    exp_time INTEGER NOT NULL DEFAULT 0,
-    snd_time INTEGER NOT NULL DEFAULT 0,
-    ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
-    body BLOB NOT NULL DEFAULT ""
-) $TABLE_TYPE;
-
-#
-# Table structure for table 'domain' -- domains proxy is responsible for
-#
-
-CREATE TABLE domain (
-  domain varchar(128) NOT NULL default '',
-  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY  (domain)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'uri' -- uri user parts users are allowed to use
-#
-CREATE TABLE uri (
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  uri_user varchar(50) NOT NULL default '',
-  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY ($USERCOL, domain, uri_user)
-) $TABLE_TYPE;
-
-#
 # Table structure for table 'server_monitoring'
 #
-
-
-DROP TABLE IF EXISTS server_monitoring;
 CREATE TABLE server_monitoring (
   time datetime NOT NULL default '0000-00-00 00:00:00',
   id int(10) unsigned NOT NULL default '0',
@@ -615,30 +730,10 @@ CREATE TABLE server_monitoring (
   PRIMARY KEY  (id,param)
 ) $TABLE_TYPE;
 
-#
-# Table structure for table 'usr_preferences'
-#
-
-DROP TABLE IF EXISTS usr_preferences;
-CREATE TABLE usr_preferences (
-  uuid varchar(64) NOT NULL default '',
-  $USERCOL varchar(100) NOT NULL default '0',
-  domain varchar(128) NOT NULL default '',
-  attribute varchar(32) NOT NULL default '',
-  type int(11) NOT NULL default '0',
-  value varchar(128) NOT NULL default '',
-  modified timestamp(14) NOT NULL,
-  PRIMARY KEY (uuid,$USERCOL,domain,attribute,type,value),
-  INDEX ua_idx  (uuid,attribute),
-  INDEX uda_idx ($USERCOL,domain,attribute)
-) $TABLE_TYPE;
-
 
 #
 # Table structure for table 'usr_preferences_type'
 #
-
-DROP TABLE IF EXISTS usr_preferences_types;
 CREATE TABLE usr_preferences_types (
   att_name varchar(32) NOT NULL default '',
   att_rich_type varchar(32) NOT NULL default 'string',
@@ -650,20 +745,8 @@ CREATE TABLE usr_preferences_types (
 
 
 #
-# Table structure for table trusted
-CREATE TABLE trusted (
-  src_ip varchar(39) NOT NULL,
-  proto varchar(4) NOT NULL,
-  from_pattern varchar(64) DEFAULT NULL,
-  tag varchar(32) DEFAULT NULL,
-  KEY Key1 (src_ip)
-) $TABLE_TYPE;
-
-
-#
 # Table structure for table 'server_monitoring_agg'
 #
-DROP TABLE IF EXISTS server_monitoring_agg;
 CREATE TABLE server_monitoring_agg (
   param varchar(32) NOT NULL default '',
   s_value int(10) NOT NULL default '0',
@@ -681,10 +764,11 @@ CREATE TABLE server_monitoring_agg (
   PRIMARY KEY  (param)
 ) $TABLE_TYPE;
 
-#
-# Table structure for table 'admin_privileges' -- multidomain serweb ACL control
-#
 
+#
+# Table structure for table 'admin_privileges' 
+# for multidomain serweb ACL control
+#
 CREATE TABLE admin_privileges (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
@@ -692,100 +776,11 @@ CREATE TABLE admin_privileges (
   priv_value varchar(64) NOT NULL default '',
   PRIMARY KEY  ($USERCOL,priv_name,priv_value,domain)
 ) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'speed_dial'
-#
-
-CREATE TABLE speed_dial (
-  uuid varchar(64) NOT NULL default '',
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  sd_username varchar(64) NOT NULL default '',
-  sd_domain varchar(128) NOT NULL default '',
-  new_uri varchar(192) NOT NULL default '',
-  fname varchar(128) NOT NULL default '',
-  lname varchar(128) NOT NULL default '',
-  description varchar(64) NOT NULL default '',
-  PRIMARY KEY  ($USERCOL,domain,sd_domain,sd_username)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'gw'
-#
-
-CREATE TABLE gw (
-  gw_name VARCHAR(128) NOT NULL,
-  grp_id INT UNSIGNED NOT NULL,
-  ip_addr INT UNSIGNED NOT NULL,
-  port SMALLINT UNSIGNED,
-  uri_scheme TINYINT UNSIGNED,
-  transport TINYINT UNSIGNED,
-  strip TINYINT UNSIGNED,
-  prefix varchar(16) default NULL,
-  PRIMARY KEY (gw_name),
-  KEY (grp_id)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'gw_grp'
-#
-
-CREATE TABLE gw_grp (
-  grp_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  grp_name VARCHAR(64) NOT NULL
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'lcr'
-#
-
-CREATE TABLE lcr (
-  prefix varchar(16) NOT NULL,
-  from_uri varchar(128) DEFAULT NULL,
-  grp_id INT UNSIGNED NOT NULL,
-  priority TINYINT UNSIGNED NOT NULL,
-  KEY (prefix),
-  KEY (from_uri),
-  KEY (grp_id)
-) $TABLE_TYPE;
-
-#
-# Table structure for table 'siptrace'
-#
-
-CREATE TABLE sip_trace (
-  id bigint(20) NOT NULL auto_increment,
-  date datetime NOT NULL default '0000-00-00 00:00:00',
-  callid varchar(254) NOT NULL default '',
-  traced_user varchar(128) NOT NULL default '',
-  msg text NOT NULL,
-  method varchar(50) NOT NULL default '',
-  status varchar(254) NOT NULL default '',
-  fromip varchar(50) NOT NULL default '',
-  toip varchar(50) NOT NULL default '',
-  fromtag varchar(64) NOT NULL default '',
-  direction varchar(4) NOT NULL default '',
-  PRIMARY KEY  (id),
-  INDEX user_idx (traced_user),
-  INDEX date_id (date),
-  INDEX ip_idx (fromip),
-  KEY call_id (callid)
-) $TABLE_TYPE;
-
-# add an admin user "admin" with password==$DEFAULT_PW,
-# so that one can try it out on quick start
-
-$INITIAL_USER
-
-
+$INITIAL_INSERT
 EOF
 
-} # ser_create
+}  # end serweb_create
+
 
 
 export PW
@@ -793,30 +788,29 @@ if [ "$#" -ne 0 ] && [ "$PW" = "" ]; then
 	prompt_pw
 fi
 
+
 case $1 in
 	reinstall)
-
 		#1 create a backup database (named *_bak)
 		echo "creating backup database"
-		ser_backup $DBNAME
+		openser_backup $DBNAME
 		if [ "$?" -ne 0 ] ; then
-			echo "reinstall: ser_backup failed"
+			echo "reinstall: creating backup db failed"
 			exit 1
 		fi
 		#2 dump original database and change names in it
 		echo "dumping table content ($DBNAME)"
-		tmp_file=/tmp/ser_mysql.$$
-		ser_dump $DBNAME  > $tmp_file
+		tmp_file=/tmp/openser_mysql.$$
+		openser_dump "$DBNAME --ignore-table=$DBNAME.version" > $tmp_file
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: dumping original db failed"
 			exit 1
 		fi
-		sed "s/[uU][sS][eE][rR]_[iI][dD]/user/g" $tmp_file |
-			sed "s/[uU][sS][eE][rR]\($\|[^a-zA-Z]\)/$USERCOL\1/g" |
-			sed "s/[rR][eE][aA][lL][mM]/domain/g"> ${tmp_file}.2
+		sed "s/[sS][rR][cC]\($\|[^_]\)/src_leg\1/g" $tmp_file |
+			sed "s/[dD][sS][tT]\($\|[^_]\)/dst_leg\1/g"> ${tmp_file}.2
 		#3 drop original database
 		echo "dropping table ($DBNAME)"
-		ser_drop $DBNAME
+		openser_drop $DBNAME
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: dropping table failed"
 			rm $tmp_file*
@@ -824,7 +818,7 @@ case $1 in
 		fi
 		#4 change names in table definition and restore
 		echo "creating new structures"
-		ser_create $DBNAME no_init_user
+		openser_create $DBNAME no_init_user
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: creating new table failed"
 			rm $tmp_file*
@@ -832,37 +826,14 @@ case $1 in
 		fi
 		#5 restoring table content
 		echo "restoring table content"
-
-		# Recreate perms column here so that subsequent
-		# restore succeeds
-
-    sql_query $DBNAME << EOF
-    ALTER TABLE subscriber ADD perms VARCHAR(32)  AFTER ha1b;
-    ALTER TABLE pending ADD perms VARCHAR(32)  AFTER ha1b;
-EOF
-
-
-		ser_restore $DBNAME ${tmp_file}.2
+		openser_restore $DBNAME ${tmp_file}.2
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: restoring table failed"
 			rm $tmp_file*
 			exit 1
 		fi
-
-
-    sql_query $DBNAME << EOF
-
-    # Move perms from subscriber to admin_privileges
-    INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value) SELECT $USERCOL, domain, 'is_admin', '1' FROM subscriber WHERE perms='admin';
-
-		# Drop perms column here
-    ALTER TABLE subscriber DROP perms;
-    ALTER TABLE pending DROP perms;
-
-EOF
-
-#XX
-#		rm $tmp_file*
+		# done
+		rm -f $tmp_file*
 		exit 0
 		;;
 	copy)
@@ -872,27 +843,29 @@ EOF
 			usage
 			exit 1
 		fi
-		tmp_file=/tmp/ser_mysql.$$
-		ser_dump $DBNAME  > $tmp_file
+		tmp_file=/tmp/openser_mysql.$$
+		openser_dump $DBNAME > $tmp_file
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
+			echo "copy: dumping original db failed"
 			rm $tmp_file
 			exit $ret
 		fi
-		ser_create $1 no_init_user
+		openser_create $1 no_init_user
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
+			echo "copy: creating new db failed"
 			rm $tmp_file
 			exit $ret
 		fi
-		ser_restore $1 $tmp_file
+		openser_restore $1 $tmp_file
 		ret=$?
-		rm $tmp_file
+		rm -f $tmp_file
 		exit $ret
 		;;
 	backup)
 		# backup current database
-		ser_dump $DBNAME
+		openser_dump $DBNAME
 		exit $?
 		;;
 	restore)
@@ -902,7 +875,7 @@ EOF
 			usage
 			exit 1
 		fi
-		ser_restore $DBNAME $1
+		openser_restore $DBNAME $1
 		exit $?
 		;;
 	create)
@@ -911,22 +884,26 @@ EOF
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
 		fi
-		ser_create $DBNAME
+		openser_create $DBNAME
+		exit $?
+		;;
+	serweb)
+		serweb_create $DBNAME
 		exit $?
 		;;
 	drop)
-		# delete ser database
-		ser_drop $DBNAME
+		# delete openser database
+		openser_drop $DBNAME
 		exit $?
 		;;
 	reinit)
 		# delete database and create a new one
-		ser_drop $DBNAME
+		openser_drop $DBNAME
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		ser_create $DBNAME
+		openser_create $DBNAME
 		exit $?
 		;;
 	*)
