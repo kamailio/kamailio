@@ -209,7 +209,6 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 static inline int nodb_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
-	int not = 0;
 
 	ptr = _r->contacts;
 
@@ -227,10 +226,6 @@ static inline int nodb_timer(urecord_t* _r)
 			
 			t = ptr;
 			ptr = ptr->next;
-			
-			     /* it was the last contact and it was in normal
-			      * state, so notify */
-			if (!ptr && t->state == CS_NEW) not=1;
 			
 			mem_delete_ucontact(_r, t);
 			update_stat( _r->slot->d->expires, 1);
@@ -251,10 +246,9 @@ static inline int nodb_timer(urecord_t* _r)
 static inline int wt_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
-	int not = 0;
-	
+
 	ptr = _r->contacts;
-	
+
 	while(ptr) {
 		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
@@ -271,10 +265,6 @@ static inline int wt_timer(urecord_t* _r)
 			t = ptr;
 			ptr = ptr->next;
 			
-			     /* it was the last contact and it was in normal
-			      * state, so notify */
-			if (!ptr && t->state == CS_SYNC) not=1;
-			
 			if (db_delete_ucontact(t) < 0) {
 				LOG(L_ERR, "wt_timer(): Error while deleting contact from "
 				    "database\n");
@@ -282,9 +272,6 @@ static inline int wt_timer(urecord_t* _r)
 			mem_delete_ucontact(_r, t);
 			update_stat( _r->slot->d->expires, 1);
 		} else {
-			     /* the contact was unregistered and is not marked 
-			      * for replication so remove it, but the notify was
-			      * already done during unregister */
 			ptr = ptr->next;
 		}
 	}
@@ -301,7 +288,6 @@ static inline int wb_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
 	int op;
-	int not = 0;
 
 	ptr = _r->contacts;
 
@@ -317,7 +303,6 @@ static inline int wb_timer(urecord_t* _r)
 			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
 			    ptr->aor->len, ZSW(ptr->aor->s),
 			    ptr->c.len, ZSW(ptr->c.s));
-			if (ptr->next == 0) not=1;
 			update_stat( _r->slot->d->expires, 1);
 
 			t = ptr;

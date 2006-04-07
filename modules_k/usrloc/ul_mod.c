@@ -222,7 +222,7 @@ static int mod_init(void)
 	}
 
 	/* Register cache timer */
-	register_timer(/*FIXME for DB_ONLY*/ timer, 0, timer_interval);
+	register_timer( timer, 0, timer_interval);
 
 	/* Initialize fifo interface */
 	if (init_ul_fifo() < 0) {
