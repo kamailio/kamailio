@@ -18,7 +18,7 @@ RETVAL=0
 
 start() {
         echo -n $"Starting $prog: "
-        daemon $oser $OPTIONS
+        daemon $oser $OPTIONS >/dev/null 2>/dev/null
         RETVAL=$?
         echo
         [ $RETVAL = 0 ] && touch /var/lock/subsys/openser
