@@ -128,7 +128,7 @@ void free_watcher(watcher_t* _w);
 /*
  * Update expires value of a watcher
  */
-int update_watcher(struct presentity *p, watcher_t* _w, time_t _e);
+int update_watcher(struct presentity *p, watcher_t* _w, time_t _e, struct sip_msg *m);
 
 /*
  * Read watcherinfo table from database for presentity _p

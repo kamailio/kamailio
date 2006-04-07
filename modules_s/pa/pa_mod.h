@@ -36,6 +36,9 @@
 #include "../dialog/dlg_mod.h"
 #include "auth.h"
 
+/* we have to use something from this module */
+#include "../xcap/xcap_mod.h"
+
 extern int default_expires;
 extern int max_subscription_expiration;  /* max expires value for SUBSCRIBE */
 extern int max_publish_expiration;  /* max expires value for PUBLISH */
@@ -50,6 +53,7 @@ extern dlg_func_t dlg_func;
 /* DB module bind */
 extern db_func_t pa_dbf;
 extern db_con_t* pa_db;
+extern fill_xcap_params_func fill_xcap_params;
 
 /* PA database */
 extern int use_db;

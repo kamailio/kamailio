@@ -106,13 +106,13 @@ int verify_event_package(int et)
 
 watcher_status_t watcher_status_from_string(str *wsname) 
 {
-     int i;
-     for (i = 0; watcher_status_names[i].len; i++) {
-	  if (str_strcasecmp(wsname, &watcher_status_names[i]) == 0) {
-	       return i;
-	  }
-     }
-     return 0;
+	int i;
+	for (i = 0; watcher_status_names[i].len; i++) {
+		if (str_strcasecmp(wsname, &watcher_status_names[i]) == 0) {
+			return i;
+		}
+	}
+	return 0;
 }
 
 watcher_event_t watcher_event_from_string(str *wename) 
@@ -606,7 +606,7 @@ void free_watcher(watcher_t* _w)
 /*
  * Update a watcher structure
  */
-int update_watcher(struct presentity *p, watcher_t* _w, time_t _e)
+int update_watcher(struct presentity *p, watcher_t* _w, time_t _e, struct sip_msg *m)
 {
 	watcher_status_t old = _w->status; /* old status of subscription */
 	
@@ -625,7 +625,7 @@ int update_watcher(struct presentity *p, watcher_t* _w, time_t _e)
 		/* do reauthorization for non-terminated watchers (policy may
 		 * change) - in the future should be done elsewhere using 
 		 * "subscriptions to XCAP changes" */
-		_w->status = authorize_watcher(p,_w);
+		_w->status = authorize_watcher(p,_w, m);
 		/* handle rejected watchers here? */
 	}
 	

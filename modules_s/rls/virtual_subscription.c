@@ -300,17 +300,16 @@ static int remove_from_vs_list(virtual_subscription_t *vs)
 	return RES_OK;
 }
 
-int xcap_query_rls_services(const str_t *xcap_root, 
-		xcap_query_params_t *xcap_params,
+int xcap_query_rls_services(xcap_query_params_t *xcap_params,
 		const str *uri, const str *package, 
 		flat_list_t **dst)
 {
 	if (dst) *dst = NULL;
 	
 	if (reduce_xcap_needs)
-		return get_rls_from_full_doc(xcap_root, uri, xcap_params, package, dst);
+		return get_rls_from_full_doc(uri, xcap_params, package, dst);
 	else
-		return get_rls(xcap_root, uri, xcap_params, package, dst);
+		return get_rls(uri, xcap_params, package, dst);
 }
 
 static int create_subscriptions(virtual_subscription_t *vs)
@@ -324,8 +323,7 @@ static int create_subscriptions(virtual_subscription_t *vs)
 
 	DEBUG_LOG("creating local subscription to %.*s\n", FMT_STR(vs->uri));
 
-	if (xcap_query_rls_services(&vs->subscription->xcap_root,
-				&vs->subscription->xcap_params,
+	if (xcap_query_rls_services(&vs->subscription->xcap_params,
 				&vs->uri, package, &flat) == 0) {
 		/* it is resource list -> do internal subscription to RLS */
 		if (rls_create_internal_subscription(vs,

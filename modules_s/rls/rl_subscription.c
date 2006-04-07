@@ -109,8 +109,7 @@ int create_virtual_subscriptions(rl_subscription_t *ss)
 	ss_uri = rls_get_uri(ss);
 	ss_package = rls_get_package(ss);
 
-	res = xcap_query_rls_services(&ss->xcap_root, 
-		&ss->xcap_params,
+	res = xcap_query_rls_services(&ss->xcap_params,
 		ss_uri, ss_package, &flat);
 			
 	if (res != RES_OK) return res;
@@ -159,7 +158,6 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 	/* s->first_vs = NULL;
 	s->last_vs = NULL; */
 	str_clear(&s->from_uid);
-	str_clear(&s->xcap_root);
 	ptr_vector_init(&s->vs, 4);
 	
 	return s;
@@ -168,7 +166,7 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 int rls_create_subscription(struct sip_msg *m, 
 		rl_subscription_t **dst, 
 		flat_list_t *flat, 
-		rls_create_params_t *params)
+		xcap_query_params_t *params)
 {
 	rl_subscription_t *s;
 	str from_uid = STR_NULL;
@@ -191,12 +189,7 @@ int rls_create_subscription(struct sip_msg *m,
 	}
 	
 	if (params) {
-		if (str_dup(&s->xcap_root, &params->xcap_root) < 0) {
-			ERR("can't duplicate xcap_root\n");
-			rls_free(s);
-			return -1;
-		}
-		if (dup_xcap_params(&s->xcap_params, &params->xcap_params) < 0) {
+		if (dup_xcap_params(&s->xcap_params, params) < 0) {
 			ERR("can't duplicate xcap_params\n");
 			rls_free(s);
 			return -1;
@@ -293,12 +286,12 @@ void rls_free(rl_subscription_t *s)
 
 	if (s->type == rls_external_subscription) {
 		sm_release_subscription_nolock(rls_manager, &s->u.external);
-		str_free_content(&s->xcap_root); /* free ONLY for external subscriptions */
+		
+		/* free ONLY for external subscriptions */
 		free_xcap_params_content(&s->xcap_params);
 	}
 	else {
 		/* release_internal_subscription(s); */
-		/* don't free xcap_root because it is "linked" to "parent" subscription */
 		/* don't free xcap_params */
 	}
 
@@ -544,7 +537,6 @@ int rls_create_internal_subscription(virtual_subscription_t *vs,
 	rls->u.internal.record_id = &vs->uri; /* !!! NEVER !!! free this */
 	rls->u.internal.package = rls_get_package(vs->subscription); /* !!! NEVER !!! free this */
 	rls->u.internal.subscriber_id = rls_get_subscriber(vs->subscription); /* !!! NEVER !!! free this */
-	rls->xcap_root = vs->subscription->xcap_root; /* !!! NEVER free this !!! */
 	rls->xcap_params = vs->subscription->xcap_params; /* !!! NEVER free this !!! */
 	rls->u.internal.vs = vs;
 	if (dst) *dst = rls;

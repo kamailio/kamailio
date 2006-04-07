@@ -34,11 +34,6 @@ struct _rl_subscription_t;
 typedef struct _rl_subscription_t rl_subscription_t;
 
 typedef struct {
-	str_t xcap_root;
-	xcap_query_params_t xcap_params;
-} rls_create_params_t;
-
-typedef struct {
 	str name;
 	str lang;
 } vs_display_name_t;
@@ -94,7 +89,6 @@ struct _rl_subscription_t {
 
 	/* XCAP server settings (needed for reloading internal subscriptions
 	 * from DB, XCAP notifications, ...) */
-	str xcap_root;
 	xcap_query_params_t xcap_params;
 	
 	union {
@@ -132,7 +126,7 @@ str_t * rls_get_subscriber(rl_subscription_t *subscription);
 int rls_create_subscription(struct sip_msg *m, 
 		rl_subscription_t **dst, 
 		flat_list_t *flat, 
-		rls_create_params_t *params);
+		xcap_query_params_t *params);
 int rls_create_internal_subscription(virtual_subscription_t *vs, 
 		rl_subscription_t **dst, 
 		flat_list_t *flat);
@@ -172,8 +166,7 @@ int rls_subscription_expires_in(rl_subscription_t *s);
 rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type);
 
 /* XCAP queries */
-int xcap_query_rls_services(const str_t *xcap_root, 
-		xcap_query_params_t *xcap_params,
+int xcap_query_rls_services(xcap_query_params_t *xcap_params,
 		const str *uri, const str *package, 
 		flat_list_t **dst);
 

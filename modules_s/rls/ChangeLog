@@ -1,3 +1,6 @@
+2006-04-06
+	* xcap queries moved into xcap module
+
 2006-04-04
 	* sending empty string in NOTIFY bodies - TCP requires content-length and
 	if sending message with NULL body, it is not set

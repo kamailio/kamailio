@@ -79,6 +79,10 @@ modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 		to be using internal subscriptions to PA. You can't use presence B2B UA
 		in this case!</para>
 		<para>Default value is 0.</para>
+		<para><warning>Internal subscriptions are not handled in configuration
+		script thus they use default values of parameters (like XCAP root
+		settings for authorization, ...)</warning>
+		</para>
 	</listitem>
 </varlistentry>
 

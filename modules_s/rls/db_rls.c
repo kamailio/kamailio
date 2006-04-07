@@ -175,7 +175,8 @@ int rls_db_add(rl_subscription_t *s)
 {
 	db_key_t cols[20];
 	db_val_t vals[20];
-	str_t dialog = { 0, 0 };
+	str_t dialog = STR_NULL;
+	str_t str_xcap_params = STR_NULL;
 	int n = -1;
 	int res = 0;
 	time_t t;
@@ -221,9 +222,14 @@ int rls_db_add(rl_subscription_t *s)
 	
 	cols[++n] = "w_uri";
 	string_val(vals[n], s->u.external.subscriber);
-	
-	cols[++n] = "xcap_root";
-	string_val(vals[n], s->xcap_root);
+
+	if (xcap_params2str(&str_xcap_params, &s->xcap_params) != 0) {
+		LOG(L_ERR, "Error while serializing xcap params\n");
+		str_free_content(&dialog);
+		return -1;
+	}
+	cols[++n] = "xcap_params";
+	blob_val(vals[n], str_xcap_params);
 	
 	cols[++n] = "id";
 	string_val_ex(vals[n], s->dbid, strlen(s->dbid));
@@ -235,6 +241,7 @@ int rls_db_add(rl_subscription_t *s)
 	}
 	
 	str_free_content(&dialog);
+	str_free_content(&str_xcap_params);
 
 	if (res == 0) res = vs_db_add(s);
 	
@@ -274,7 +281,8 @@ int rls_db_update(rl_subscription_t *s)
 {
 	db_key_t cols[20];
 	db_val_t vals[20];
-	str_t dialog = { 0, 0 };
+	str_t dialog = STR_NULL;
+	str_t str_xcap_params = STR_NULL;
 	int n = -1;
 	int res = 0;
 	time_t t;
@@ -327,8 +335,13 @@ int rls_db_update(rl_subscription_t *s)
 	cols[++n] = "w_uri";
 	string_val(vals[n], s->u.external.subscriber);
 	
-	cols[++n] = "xcap_root";
-	string_val(vals[n], s->xcap_root);
+	if (xcap_params2str(&str_xcap_params, &s->xcap_params) != 0) {
+		LOG(L_ERR, "Error while serializing xcap params\n");
+		str_free_content(&dialog);
+		return -1;
+	}
+	cols[++n] = "xcap_params";
+	blob_val(vals[n], str_xcap_params);
 	
 	if (rls_dbf.update(rls_db, keys, ops, k_vals, 
 				cols, vals, 1, n + 1) < 0) {
@@ -337,6 +350,7 @@ int rls_db_update(rl_subscription_t *s)
 	}
 	
 	str_free_content(&dialog);
+	str_free_content(&str_xcap_params);
 
 	return vs_db_update(s);
 }
@@ -476,7 +490,7 @@ int db_load_rls()
 		"id", "doc_version", "dialog",
 		"expires", "status", "contact",
 		"uri", "package", "w_uri",
-		"xcap_root"
+		"xcap_params"
 	};
 
 	if (!use_db) return 0;
@@ -509,10 +523,10 @@ int db_load_rls()
 			str id = STR_NULL;
 			str contact = STR_NULL;
 			str dialog = STR_NULL;
+			str xcap_params = STR_NULL;
 			str uri = STR_NULL;
 			str package = STR_NULL;
 			str w_uri = STR_NULL;
-			str xcap_root = STR_NULL;
 			subscription_status_t status;
 			time_t expires = 0;
 			int expires_after;
@@ -531,7 +545,7 @@ int db_load_rls()
 			get_str_val(row_vals[6], uri);
 			get_str_val(row_vals[7], package);
 			get_str_val(row_vals[8], w_uri);
-			get_str_val(row_vals[9], xcap_root);
+			get_blob_val(row_vals[9], xcap_params);
 			if (expires != 0) expires_after = expires - time(NULL);
 			else expires_after = 0;
 			dlg = dlg2str(&dialog);
@@ -547,8 +561,8 @@ int db_load_rls()
 			DEBUG_LOG("  created RLS to %.*s from %.*s\n", 
 					FMT_STR(uri), FMT_STR(w_uri));
 
-			if (str_dup(&s->xcap_root, &xcap_root) < 0) {
-				ERR("can't set xcap root\n");
+			if (str2xcap_params(&s->xcap_params, &xcap_params) < 0) {
+				ERR("can't set xcap params\n");
 				rls_free(s);
 				s = 0;
 				r = -1;

@@ -29,6 +29,17 @@ as the subscriber. There is a possibility to do subscriptions with the same
 To + From only once, but this is left for future optimalizations.
 </para>
 
+<section id="presence_b2b.dependencies"><title>Dependencies</title>
+<itemizedlist><title>Modules</title>
+	<listitem><para><application>tm</application></para></listitem>
+	<listitem><para><application>dialog</application></para></listitem>
+</itemizedlist>
+<itemizedlist><title>Libraries</title>
+		<listitem><para><application>libcds (internal)</application></para></listitem>
+		<listitem><para><application>libpresence (internal)</application></para></listitem>
+</itemizedlist>
+</section>
+
 <section><title>Usage</title>
 <para>This module can be used by RLS module (e.g. RLS module does internal
 subscriptions to "presence" which can be handled by this module or PA module).
@@ -89,18 +100,6 @@ route {
 </programlisting>
 </example>
 <!--</section> -->
-
-<section id="presence_b2b.dependencies"><title>Dependencies</title>
-<itemizedlist><title>Modules</title>
-	<listitem><para><application>tm</application></para></listitem>
-	<listitem><para><application>dialog</application></para></listitem>
-</itemizedlist>
-<itemizedlist><title>Libraries</title>
-		<listitem><para><application>libcds (internal)</application></para></listitem>
-		<listitem><para><application>libpresence (internal)</application></para></listitem>
-</itemizedlist>
-</section>
-
 
 </section>
 

@@ -28,7 +28,8 @@
 
 /* Authorization */
 static int xcap_get_pres_rules(str *uid, 
-		cp_ruleset_t **dst, auth_params_t *params)
+		cp_ruleset_t **dst, auth_params_t *params,
+		struct sip_msg *m)
 {
 	xcap_query_params_t xcap;
 	int res;
@@ -40,16 +41,16 @@ static int xcap_get_pres_rules(str *uid,
 	/* if (get_user_from_uri(uri, &u) != 0) u = *uri; */
 	
 	memset(&xcap, 0, sizeof(xcap));
-	/* TODO: 
-	xcap.auth_user = "???";
-	xcap.auth_pass = "???"; */
-	xcap.enable_unverified_ssl_peer = 1;
-	res = get_pres_rules(params->xcap_root, uid, &xcap, dst);
+	if (fill_xcap_params) fill_xcap_params(m, &xcap);
+	res = get_pres_rules(uid, 
+			NULL /*TODO: set filename from script */, 
+			&xcap, dst);
 	return res;
 }
 		
 static watcher_status_t xcap_authorize(presentity_t *p, 
-		str *w_uri, auth_params_t *params)
+		str *w_uri, auth_params_t *params,
+		struct sip_msg *m)
 {
 	sub_handling_t sh;
 	int res = 0;
@@ -63,7 +64,7 @@ static watcher_status_t xcap_authorize(presentity_t *p,
 	}
 	
 	if (!p->authorization_info) {
-		res = xcap_get_pres_rules(&p->uuid, &p->authorization_info, params);
+		res = xcap_get_pres_rules(&p->uuid, &p->authorization_info, params, m);
 		if (res != 0) {
 			DBG("can't get authorization rules for %.*s\n", 
 					p->uri.len, ZSW(p->uri.s));
@@ -119,7 +120,7 @@ static watcher_status_t winfo_implicit_auth(presentity_t *p, watcher_t *w)
 	}
 }
 
-watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w)
+watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w, struct sip_msg *m)
 {
 	if (w->event_package == EVENT_PRESENCE_WINFO) {
 		switch (winfo_auth_params.type) {
@@ -135,7 +136,7 @@ watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w)
 		switch (pa_auth_params.type) {
 			case auth_none: return WS_ACTIVE;
 			case auth_implicit: return WS_PENDING;
-			case auth_xcap: return xcap_authorize(p, &w->uri, &pa_auth_params);
+			case auth_xcap: return xcap_authorize(p, &w->uri, &pa_auth_params, m);
 		}
 	}
 	return WS_PENDING;
@@ -148,7 +149,8 @@ watcher_status_t authorize_internal_watcher(presentity_t *p, internal_pa_subscri
 		case auth_implicit: return WS_PENDING;
 		case auth_xcap: return xcap_authorize(p, 
 								&is->subscription->subscriber_id,
-								&pa_auth_params);
+								&pa_auth_params, 
+								NULL /* => uses default XCAP values !!! */ );
 	}
 	return WS_PENDING;
 }

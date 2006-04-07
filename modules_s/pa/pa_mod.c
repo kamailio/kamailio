@@ -76,6 +76,7 @@ struct tm_binds tmb;
 
 dlg_func_t dlg_func;
 
+fill_xcap_params_func fill_xcap_params = NULL;
 
 /** database */
 db_con_t* pa_db = NULL; /* Database connection handle */
@@ -120,9 +121,11 @@ static cmd_export_t cmds[]={
 	{"handle_publish",        handle_publish,        1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	
 	{"target_online",         target_online,         1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"check_subscription_status", check_subscription_status,   1, check_subscription_status_fix, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"store_winfo",           store_offline_winfo,   1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"dump_stored_winfo",     dump_offline_winfo,    2, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 
+	
 	/* TODO: move into XCAP module */
 	{"authorize_message",     authorize_message,    1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	
@@ -360,6 +363,8 @@ static int pa_mod_init(void)
 		LOG(L_CRIT, "pa_mod_init(): QSA interface initialization failed!\n");
 		return -1;
 	}
+
+	fill_xcap_params = (fill_xcap_params_func)find_export("fill_xcap_params", 0, -1);
 
 	LOG(L_DBG, "pa_mod_init done\n");
 	return 0;

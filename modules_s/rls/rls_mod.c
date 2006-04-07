@@ -5,7 +5,6 @@
 #include "../../mem/shm_mem.h"
 
 #include <libxml/parser.h>
-#include <curl/curl.h>
 #include <cds/memory.h>
 #include <cds/ptr_vector.h>
 #include <cds/logger.h>
@@ -97,6 +96,8 @@ struct module_exports exports = {
 
 struct tm_binds tmb;
 dlg_func_t dlg_func;
+fill_xcap_params_func fill_xcap_params = NULL;
+
 int use_db = 0;
 
 int rls_min_expiration = 60;
@@ -173,7 +174,6 @@ int rls_mod_init(void)
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
 	xmlInitParser();
-	curl_global_init(CURL_GLOBAL_ALL);
 
 	DEBUG_LOG(" ... common libraries\n");
 	cds_initialize();
@@ -269,6 +269,9 @@ int rls_mod_init(void)
 		timer_add(i_timer, S_TO_TICKS(init_timer_delay));
 	}
 	
+	fill_xcap_params = (fill_xcap_params_func)find_export("fill_xcap_params", 0, -1);
+
+	
 	return 0;
 }
 
@@ -335,8 +338,7 @@ void rls_mod_destroy(void)
 	cds_cleanup();
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
-/*	xmlCleanupParser();
-	curl_global_cleanup();*/
+/*	xmlCleanupParser(); */
 	DEBUG_LOG("RLS module cleanup finished\n");
 }
 

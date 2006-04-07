@@ -51,6 +51,19 @@
 /* expiration time in secs */
 int offline_winfo_expiration = 259200;
 
+/* status of last subscription */
+static watcher_status_t last_subscription_status = WS_PENDING; 
+
+void set_last_subscription_status(watcher_status_t status)
+{
+	last_subscription_status = status;
+}
+
+watcher_status_t get_last_subscription_status()
+{
+	return last_subscription_status;
+}
+
 static offline_winfo_t *create_winfo(str *uid, 
 		str *wuri, 
 		str *events, 
@@ -364,7 +377,8 @@ int db_load_winfo(str *uid, str *events, str *domain, offline_winfo_t **infos)
 }
 
 /* ----- Handler functions ----- */
-
+#if 0
+/* not used due to problems with lost AVP after sending NOTIFY */
 static int get_status(str *dst)
 {
 	avp_t *avp;
@@ -375,19 +389,42 @@ static int get_status(str *dst)
 	/* if (!dst) return -1; */
 	
 	name.s = avp_subscription_status;
-	avp = search_first_avp(AVP_NAME_STR, name, &val, &s);
+	avp = search_first_avp(AVP_CLASS_USER | 
+			AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, &val, 0);
 	if (avp) {
 		/* don't use default - use value from AVP */
-		/* TRACE("subscription status = %.*s\n", FMT_STR(val.s)); */
+		TRACE("subscription status = %.*s\n", FMT_STR(val.s));
 		*dst = val.s;
 		return 0;
 	} 
 	else {
 		/* leave default value!! */
 		/* TRACE("left default subscription status\n"); */
+		TRACE("subscription status AVP not found\n");
 	}
 	
 	return 1;
+}
+#endif
+
+static void get_status_str(str *dst)
+{
+	str s;
+	
+	switch(get_last_subscription_status()) {
+		case WS_ACTIVE: ;
+			s = watcher_status_names[WS_ACTIVE];
+			break;
+		case WS_REJECTED:
+		case WS_PENDING_TERMINATED:
+		case WS_TERMINATED:
+			s = watcher_status_names[WS_TERMINATED];
+			break;
+		case WS_PENDING: 
+			s = watcher_status_names[WS_PENDING];
+			break;
+	}
+	if (dst) *dst = s;
 }
 
 int store_offline_winfo(struct sip_msg* _m, char* _domain, char* _table)
@@ -411,8 +448,8 @@ int store_offline_winfo(struct sip_msg* _m, char* _domain, char* _table)
 		domain.len = strlen(_domain);
 	}
 
-	/* get status value from AVP */
-	get_status(&status);
+	/* get stored subscription status value */
+	get_status_str(&status);
 	/* TRACE("subscription status is: %.*s\n", FMT_STR(status)); */
 
 	info = create_winfo(&uid, &wuri, &events, &domain, &status);
@@ -479,5 +516,37 @@ int dump_offline_winfo(struct sip_msg* _m, char* _domain, char* _events)
 void offline_winfo_timer(unsigned int ticks, void* param)
 {
 	remove_expired_winfos();
+}
+
+int check_subscription_status(struct sip_msg* _m, char* _status, char* _x)
+{
+	watcher_status_t status = (watcher_status_t)_status;
+	if (status == get_last_subscription_status()) return 1;
+	else return -1;
+}
+
+/* convert char* parameter to watcher_status_t */
+int check_subscription_status_fix(void **param, int param_no)
+{
+	watcher_status_t status = WS_PENDING;
+	char *s;
+	str ss;
+
+	if (param_no == 1) {
+		s = (char*)*param;
+		if (!s) {
+			ERR("status not given!\n");
+			return -1;
+		}
+		
+		TRACE("status name is %s\n", (char*)*param);
+		
+		ss.s = s;
+		ss.len = strlen(s);
+		
+		status = watcher_status_from_string(&ss);
+		*param = (void*)status;
+	}
+	return 0;
 }
 

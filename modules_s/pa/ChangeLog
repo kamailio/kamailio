@@ -1,3 +1,13 @@
+2006-04-07
+	* added function check_subscription_status and removed AVP operations due
+	to problems with them (after sending NOTIFY in handle_subscription are
+	AVPs lost!)
+	* store_offline_winfo and check_subscription_status uses global variable
+	with last subscription status instead of AVP (see above)
+
+2006-04-06
+	* xcap queries moved into xcap module
+
 2006-04-04
 	* sending empty string in NOTIFY bodies - TCP requires content-length and
 	if sending message with NULL body, it is not set

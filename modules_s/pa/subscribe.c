@@ -58,6 +58,7 @@
 #include <cds/msg_queue.h>
 #include <cds/logger.h>
 #include <presence/utils.h>
+#include "offline_winfo.h"
 
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
@@ -462,7 +463,7 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 	}
 	if (server_contact.s) mem_free(server_contact.s);
 	
-	(*_w)->status = authorize_watcher(_p, (*_w));
+	(*_w)->status = authorize_watcher(_p, (*_w), _m);
 	if ((*_w)->status == WS_REJECTED) {
 		free_watcher((*_w));
 		LOG(L_ERR, "create_watcher(): watcher rejected\n");
@@ -613,7 +614,7 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	if (find_watcher_dlg(_p, &dlg_id, et, _w) == 0) { 
 		/* LOG(L_ERR, "update_presentity: watcher found\n"); */
 		if (e > 0) e += act_time;
-		if (update_watcher(_p, *_w, e) < 0) {
+		if (update_watcher(_p, *_w, e, _m) < 0) {
 			LOG(L_ERR, "update_presentity(): Error while updating watcher\n");
 			return -3;
 		}
@@ -782,7 +783,8 @@ static int has_to_tag(struct sip_msg *_m)
 	if (to->tag_value.len > 0) return 1;
 	return 0;
 }
-
+#if 0
+/* not used due to problems with lost AVP after sending NOTIFY */
 static void set_status_avp(str *value)
 {
 	struct search_state s;
@@ -792,7 +794,8 @@ static void set_status_avp(str *value)
 	str avp_subscription_status = STR_STATIC_INIT("subscription_status");
 
 	name.s = avp_subscription_status;
-	a = search_first_avp(AVP_CLASS_GLOBAL | AVP_NAME_STR, name, 0, &s);
+	a = search_first_avp(AVP_CLASS_USER | 
+			AVP_TRACK_FROM | AVP_NAME_STR, name, 0, &s);
 	while(a) {
 		destroy_avp(a);
 		a = search_next_avp(&s, 0);
@@ -805,8 +808,10 @@ static void set_status_avp(str *value)
 	}
 /*	str_dup(&val.s, value);*/
 
-	res = add_avp(AVP_CLASS_GLOBAL | AVP_NAME_STR | AVP_VAL_STR, name, val);
-	/* TRACE("storing (%d) AVP status: %.*s\n", res, FMT_STR(val.s)); */
+	res = add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | 
+			AVP_NAME_STR | AVP_VAL_STR, name, val);
+	TRACE("storing (%d) AVP status: %.*s\n", res, FMT_STR(val.s));
+	
 }
 
 static void set_status_avp_ex(watcher_t *w)
@@ -828,6 +833,7 @@ static void set_status_avp_ex(watcher_t *w)
 	}
 	set_status_avp(&s);
 }
+#endif
 
 /*
  * Handle a subscribe Request
@@ -842,7 +848,6 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	char tmp[64];
 	int i;
 	int is_renewal = 0;
-	str avp_err = STR_STATIC_INIT("error");
 	
 	get_act_time();
 	paerrno = PA_OK;
@@ -905,6 +910,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		/* return -1; */
 	}
 
+	/*if (w) set_status_avp_ex(w); */
+	
 	if (send_reply(_m) < 0) {
 	  LOG(L_ERR, "handle_subscription(): Error while sending reply\n");
 	  unlock_pdomain(d);
@@ -916,18 +923,18 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 
 	/* process and change this presentity and notify watchers */
 	if (p && w) {
-		set_status_avp_ex(w);
+		set_last_subscription_status(w->status);
 		
 		/* immediately send NOTIFY */
 		send_notify(p, w);
 		w->flags &= ~WFLAG_SUBSCRIPTION_CHANGED; /* already notified */
-
+		
 		/* remove terminated watcher otherwise he will 
 		 * receive another NOTIFY generated from timer_pdomain */
 		remove_watcher_if_expired(p, w);
 	}
-	else set_status_avp(&avp_err);
-	
+	else set_last_subscription_status(WS_REJECTED);
+		
 	unlock_pdomain(d);
 	return 1;
 	
@@ -936,12 +943,12 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	ERR("handle_subscription about to return -1\n");
 	unlock_pdomain(d);
 	send_reply(_m);
-	set_status_avp(&avp_err);
+	set_last_subscription_status(WS_REJECTED);
 	return -1;
  error:
 	ERR("handle_subscription about to send_reply and return -2\n");
 	send_reply(_m);
-	set_status_avp(&avp_err);
+	set_last_subscription_status(WS_REJECTED);
 	return -1;
 }
 

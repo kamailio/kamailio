@@ -4,7 +4,6 @@
 #include "../../mem/shm_mem.h"
 
 #include <libxml/parser.h>
-#include <curl/curl.h>
 #include <cds/memory.h>
 #include <cds/ptr_vector.h>
 #include <cds/logger.h>
@@ -75,7 +74,6 @@ int events_mod_init(void)
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
 	xmlInitParser();
-	curl_global_init(CURL_GLOBAL_ALL);
 
 	DEBUG_LOG(" ... common libraries\n");
 	cds_initialize();
@@ -137,8 +135,7 @@ void events_mod_destroy(void)
 	cds_cleanup();
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
-/*	xmlCleanupParser();
-	curl_global_cleanup();*/
+/*	xmlCleanupParser(); */
 	DEBUG_LOG("presence_b2b module cleanup finished\n");
 }
 

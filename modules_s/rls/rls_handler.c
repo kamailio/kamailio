@@ -23,12 +23,12 @@
 
 /* static variables for sharing data loaded from XCAP */
 typedef struct  {
-	rls_create_params_t params;
+	xcap_query_params_t xcap_params;
 	flat_list_t *flat_list;
 } rls_xcap_query_t;
 
 static rls_xcap_query_t query = { 
-	params: { xcap_root: {s: NULL, len: 0} }, 
+	xcap_params: { xcap_root: {s: NULL, len: 0} }, 
 	flat_list: NULL
 };
 
@@ -39,7 +39,7 @@ static void clear_last_query()
 		free_flat_list(query.flat_list);
 		query.flat_list = NULL;
 		/* str_clear(&query.params.xcap_root); */
-		memset(&query.params, 0, sizeof(query.params));
+		memset(&query.xcap_params, 0, sizeof(query.xcap_params));
 	}
 }
 
@@ -225,9 +225,9 @@ static int handle_new_subscription(struct sip_msg *m, rls_xcap_query_t *query, i
 {
 	rl_subscription_t *s;
 	int res = 0;
-	rls_create_params_t *params = NULL;
+	xcap_query_params_t *params = NULL;
 	
-	if (query) params = &query->params;
+	if (query) params = &query->xcap_params;
 	
 	rls_lock();
 
@@ -410,32 +410,6 @@ int handle_rls_subscription(struct sip_msg* _m, char *send_bad_resp)
 
 /*****************************************************************/
 
-/* helper functions for XCAP queries */
-
-static int get_xcap_root(str *dst)
-{
-	avp_t *avp;
-	int_str name, val;
-	str avp_xcap_root = STR_STATIC_INIT("xcap_root");
-
-	/* if (!dst) return -1; */
-	
-	name.s = avp_xcap_root;
-	avp = search_first_avp(AVP_NAME_STR, name, &val, 0);
-	if (avp) {
-		/* don't use default - use value from AVP */
-		DBG("redefined xcap_root = %.*s\n", FMT_STR(val.s));
-		*dst = val.s;
-	} 
-	else {
-		dst->s = rls_xcap_root;
-		dst->len = strlen(rls_xcap_root);
-	}
-	
-	if (is_str_empty(dst)) return -1;
-	return 0;
-}
-
 /* XCAP query functions accessible from the CFG script */
 
 /* Get resource-list URI from SUBSCRIBE request */
@@ -467,10 +441,7 @@ int query_rls_services(struct sip_msg* _m, char *a, char *b)
 	
 	clear_last_query();
 	
-	if (get_xcap_root(&query.params.xcap_root) < 0) {
-		ERR("XCAP root not set (set AVP or default value)\n");
-		return -1;
-	}
+	if (fill_xcap_params) fill_xcap_params(_m, &query.xcap_params);
 	
 	if (get_dst_uri(_m, &uri) < 0) {
 		ERR("can't get destination URI\n");
@@ -478,8 +449,7 @@ int query_rls_services(struct sip_msg* _m, char *a, char *b)
 		return -1;
 	}
 	
-	if (xcap_query_rls_services(&query.params.xcap_root, 
-				&query.params.xcap_params,
+	if (xcap_query_rls_services(&query.xcap_params,
 				&uri, &package, &query.flat_list) < 0) {
 		ERR("XCAP query problems\n");
 		clear_last_query();
@@ -498,10 +468,7 @@ int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 	
 	clear_last_query();
 	
-	if (get_xcap_root(&query.params.xcap_root) < 0) {
-		ERR("XCAP root not set (set AVP or default value)\n");
-		return -1;
-	}
+	if (fill_xcap_params) fill_xcap_params(_m, &query.xcap_params);
 	
 	if (get_from_uid(&uid, _m) < 0) {
 		ERR("can't get From uid\n");
@@ -509,8 +476,9 @@ int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 		return -1;
 	}
 	
-	res = get_resource_list_from_full_doc(&query.params.xcap_root,
-			&uid, &query.params.xcap_params, 
+	res = get_resource_list_from_full_doc(&uid, 
+			NULL, /* TODO: filename */
+			&query.xcap_params,
 			list_name, &query.flat_list);
 	/* TODO: add function for real XCAP server */
 	

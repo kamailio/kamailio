@@ -30,5 +30,18 @@ int send_winfo_notify_offline(struct presentity* _p,
 		struct watcher* _w, 
 		offline_winfo_t *info, 
 		transaction_cb completion_cb, void* cbp);
+
+
+/* For storing status of last subscription is used global variable,
+ * NOT AVP because AVPs are cleared when sending NOTIFY request from
+ * handle_subscripton function and behaviour of AVPs in such cases is
+ * not strictly defined. */
+
+void set_last_subscription_status(watcher_status_t status);
+watcher_status_t get_last_subscription_status();
+
+int check_subscription_status(struct sip_msg* _m, char* _status, char* _x);
+int check_subscription_status_fix(void **param, int param_no);
+
 	
 #endif

@@ -7,7 +7,8 @@
 #include <xcap/msg_rules.h>
 
 static int xcap_get_msg_rules(str *uid, 
-		msg_rules_t **dst, char *xcap_root)
+		msg_rules_t **dst, char *xcap_root,
+		struct sip_msg *m)
 {
 	xcap_query_params_t xcap;
 	int res;
@@ -22,11 +23,10 @@ static int xcap_get_msg_rules(str *uid,
 			xcap_root);
 	
 	memset(&xcap, 0, sizeof(xcap));
-	/* TODO: 
-	xcap.auth_user = "???";
-	xcap.auth_pass = "???"; */
-	xcap.enable_unverified_ssl_peer = 1;
-	res = get_msg_rules(xcap_root, uid, &xcap, dst);
+	if (fill_xcap_params) fill_xcap_params(m, &xcap);
+	res = get_msg_rules(uid, 
+			NULL /* TODO: filename */, 
+			&xcap, dst);
 	return res;
 }
 
@@ -71,7 +71,7 @@ int authorize_message(struct sip_msg* _m, char* _xcap_root, char*_st)
 		return 1;
 	}
 	
-	if (xcap_get_msg_rules(&uid, &rules, _xcap_root) < 0) {
+	if (xcap_get_msg_rules(&uid, &rules, _xcap_root, _m) < 0) {
 		/* enabled */
 		DBG("get_msg_rules failed\n");
 		return 1;
