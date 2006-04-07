@@ -2,7 +2,6 @@ etc/openser/openser.cfg
 sbin/openser
 sbin/openserctl
 sbin/openser_mysql.sh
-sbin/openser_gen_ha1
 lib/openser/modules/acc.so
 lib/openser/modules/alias_db.so
 lib/openser/modules/avpops.so

@@ -25,7 +25,7 @@ MAKE_ENV=	CC="${CC}" \
 		PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
 		PTHREAD_LIBS="${PTHREAD_LIBS}"
 
-PLIST_FILES=	sbin/openser sbin/openser_gen_ha1 sbin/openser_mysql.sh \
+PLIST_FILES=	sbin/openser sbin/openser_mysql.sh \
 		sbin/openserctl sbin/openserunix sbin/openser_postgresql.sh
 PLIST_DIRS=	lib/openser/modules lib/openser
 

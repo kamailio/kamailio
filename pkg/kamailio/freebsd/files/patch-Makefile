@@ -58,7 +58,7 @@
 +			$(BSD_INSTALL_DATA) etc/tls/README $(cfg-prefix)/$(cfg-dir)/tls/; \
  		fi
  
- install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1 utils/$(NAME)unix/$(NAME)unix
+ install-bin: $(bin-prefix)/$(bin-dir) utils/$(NAME)unix/$(NAME)unix
 @@ -372,17 +342,17 @@
  		sed -e "s#PATH:/usr/local/sbin#PATH:$(bin-prefix)/$(bin-dir)#g" \
  			< scripts/sc > /tmp/$(NAME)ctl
@@ -78,8 +78,6 @@
 -		$(INSTALL-BIN) /tmp/$(NAME)_postgresql.sh $(bin-prefix)/$(bin-dir)
 +		$(BSD_INSTALL_SCRIPT) /tmp/$(NAME)_postgresql.sh $(bin-prefix)/$(bin-dir)
  		rm -fr /tmp/$(NAME)_postgresql.sh
- 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)_gen_ha1
- 		$(INSTALL-BIN) utils/gen_ha1/gen_ha1 $(bin-prefix)/$(bin-dir)/$(NAME)_gen_ha1
 @@ -431,9 +401,7 @@
  			if [ -f modules/"$$r"/README ]; then \
  				$(INSTALL-TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \
