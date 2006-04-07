@@ -35,7 +35,6 @@
 
 struct sl_cb_param {
 	str  *buffer;
-	int  buf_len;
 	int  code;
 	char *reason;
 	union sockaddr_union *dst;
