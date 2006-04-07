@@ -229,6 +229,7 @@ CHILDREN children
 CHECK_VIA	check_via
 SYN_BRANCH syn_branch
 MEMLOG		"memlog"|"mem_log"
+MEMDBG		"memdbg"|"mem_dbg"
 SIP_WARNING sip_warning
 SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
@@ -418,6 +419,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{SYN_BRANCH}	{ count(); yylval.strval=yytext; return SYN_BRANCH; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
+<INITIAL>{MEMDBG}	{ count(); yylval.strval=yytext; return MEMDBG; }
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
 <INITIAL>{GROUP}	{ count(); yylval.strval=yytext; return GROUP; }

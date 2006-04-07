@@ -36,6 +36,7 @@
 #define L_ALERT -3
 #define L_CRIT  -2
 #define L_ERR   -1
+#define L_DEFAULT 0
 #define L_WARN   1
 #define L_NOTICE 2
 #define L_INFO   3

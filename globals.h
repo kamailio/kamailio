@@ -139,6 +139,8 @@ extern int is_main;
 
 /* debugging level for dumping memory status */
 extern int memlog;
+/* debugging level for malloc debugging messages */
+extern int memdbg;
 
 /* debugging level for timer debugging (see -DTIMER_DEBUG) */
 extern int timerlog;

@@ -49,6 +49,11 @@ modules:
               Vias a.s.o) and not on the original message
  
 core:
+ - default log level switched to 0 (only messages < L_WARN will be printed
+   by default)
+ - separate memdbg log level which controls the memory/malloc related
+   debug messages (to see them ser must be compiled with malloc debuging:
+     -DDBG_QM_MALLOC or -DDBG_FM_MALLOC and memdbg must be <= debug )
  - added named routes: names can be used instead of numbers in all the
    route commads or route declarations. route(number) is equivalent to
    route("number").

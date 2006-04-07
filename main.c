@@ -242,7 +242,7 @@ int tls_disable = 0; /* 1 if tls is disabled */
 struct process_table *pt=0;		/*array with children pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
 int sig_flag = 0;              /* last signal received */
-int debug = L_NOTICE;
+int debug = L_DEFAULT; /* print only msg. < L_WARN */
 int dont_fork = 0;
 int log_stderr = 0;
 /* log facility (see syslog(3)) */
@@ -254,6 +254,8 @@ int check_via =  0;
 int syn_branch = 1;
 /* debugging level for memory stats */
 int memlog = L_DBG;
+/* debugging level for the malloc debug messages */
+int memdbg = L_DBG;
 /* debugging level for timer debugging */
 int timerlog = L_WARN;
 /* should replies include extensive warnings? by default yes,

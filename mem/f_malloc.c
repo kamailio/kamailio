@@ -37,6 +37,7 @@
  *  2005-12-12  fixed realloc shrink real_used accounting (andrei)
  *              fixed initial size (andrei)
  *  2006-02-03  fixed realloc out of mem. free bug (andrei)
+ *  2006-04-07  s/DBG/MDBG (andrei)
  */
 
 
@@ -48,6 +49,7 @@
 #include "f_malloc.h"
 #include "../dprint.h"
 #include "../globals.h"
+#include "memdbg.h"
 
 
 /*useful macros*/
@@ -256,7 +258,7 @@ void* fm_malloc(struct fm_block* qm, unsigned long size)
 	int hash;
 	
 #ifdef DBG_F_MALLOC
-	DBG("fm_malloc(%p, %lu) called from %s: %s(%d)\n", qm, size, file, func,
+	MDBG("fm_malloc(%p, %lu) called from %s: %s(%d)\n", qm, size, file, func,
 			line);
 #endif
 	/*size must be a multiple of 8*/
@@ -292,7 +294,7 @@ found:
 	frag->func=func;
 	frag->line=line;
 	frag->check=ST_CHECK_PATTERN;
-	DBG("fm_malloc(%p, %lu) returns address %p \n", qm, size,
+	MDBG("fm_malloc(%p, %lu) returns address %p \n", qm, size,
 		(char*)frag+sizeof(struct fm_frag));
 #else
 	fm_split_frag(qm, frag, size);
@@ -320,7 +322,7 @@ void fm_free(struct fm_block* qm, void* p)
 	unsigned long size;
 
 #ifdef DBG_F_MALLOC
-	DBG("fm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
+	MDBG("fm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
 	if (p>(void*)qm->last_frag || p<(void*)qm->first_frag){
 		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!) - "
 				"aborting\n", p);
@@ -333,8 +335,8 @@ void fm_free(struct fm_block* qm, void* p)
 	}
 	f=(struct fm_frag*) ((char*)p-sizeof(struct fm_frag));
 #ifdef DBG_F_MALLOC
-	DBG("fm_free: freeing block alloc'ed from %s: %s(%ld)\n", f->file, f->func,
-			f->line);
+	MDBG("fm_free: freeing block alloc'ed from %s: %s(%ld)\n",
+			f->file, f->func, f->line);
 #endif
 	size=f->size;
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
@@ -366,7 +368,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 	int hash;
 	
 #ifdef DBG_F_MALLOC
-	DBG("fm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p, size,
+	MDBG("fm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p, size,
 			file, func, line);
 	if ((p)&&(p>(void*)qm->last_frag || p<(void*)qm->first_frag)){
 		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!) - "
@@ -391,7 +393,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #endif
 	f=(struct fm_frag*) ((char*)p-sizeof(struct fm_frag));
 #ifdef DBG_F_MALLOC
-	DBG("fm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
+	MDBG("fm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
 #endif
 	size=ROUNDUP(size);
@@ -399,7 +401,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 	if (f->size > size){
 		/* shrink */
 #ifdef DBG_F_MALLOC
-		DBG("fm_realloc: shrinking from %lu to %lu\n", f->size, size);
+		MDBG("fm_realloc: shrinking from %lu to %lu\n", f->size, size);
 		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line);
 #else
 		fm_split_frag(qm, f, size);
@@ -411,7 +413,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 	}else if (f->size<size){
 		/* grow */
 #ifdef DBG_F_MALLOC
-		DBG("fm_realloc: growing from %lu to %lu\n", f->size, size);
+		MDBG("fm_realloc: growing from %lu to %lu\n", f->size, size);
 #endif
 		diff=size-f->size;
 		n=FRAG_NEXT(f);
@@ -471,12 +473,12 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 	}else{
 		/* do nothing */
 #ifdef DBG_F_MALLOC
-		DBG("fm_realloc: doing nothing, same size: %lu - %lu\n", 
+		MDBG("fm_realloc: doing nothing, same size: %lu - %lu\n", 
 				f->size, size);
 #endif
 	}
 #ifdef DBG_F_MALLOC
-	DBG("fm_realloc: returning %p\n", p);
+	MDBG("fm_realloc: returning %p\n", p);
 #endif
 	return p;
 }

@@ -38,6 +38,7 @@
  *  2005-12-12  fixed realloc shrink real_used & used accounting;
  *              fixed initial size (andrei)
  *  2006-02-03  fixed realloc out of mem. free bug (andrei)
+ *  2006-04-07  s/DBG/MDBG (andrei)
  */
 
 
@@ -50,6 +51,7 @@
 #include "q_malloc.h"
 #include "../dprint.h"
 #include "../globals.h"
+#include "memdbg.h"
 
 
 /*useful macros*/
@@ -364,7 +366,7 @@ void* qm_malloc(struct qm_block* qm, unsigned long size)
 	unsigned int list_cntr;
 
 	list_cntr = 0;
-	DBG("qm_malloc(%p, %lu) called from %s: %s(%d)\n", qm, size, file, func,
+	MDBG("qm_malloc(%p, %lu) called from %s: %s(%d)\n", qm, size, file, func,
 			line);
 #endif
 	/*size must be a multiple of 8*/
@@ -403,7 +405,7 @@ void* qm_malloc(struct qm_block* qm, unsigned long size)
 		f->check=ST_CHECK_PATTERN;
 		/*  FRAG_END(f)->check1=END_CHECK_PATTERN1;
 			FRAG_END(f)->check2=END_CHECK_PATTERN2;*/
-		DBG("qm_malloc(%p, %lu) returns address %p frag. %p (size=%lu) on %d"
+		MDBG("qm_malloc(%p, %lu) returns address %p frag. %p (size=%lu) on %d"
 				" -th hit\n",
 			 qm, size, (char*)f+sizeof(struct qm_frag), f, f->size, list_cntr );
 #endif
@@ -427,7 +429,7 @@ void qm_free(struct qm_block* qm, void* p)
 	unsigned long size;
 
 #ifdef DBG_QM_MALLOC
-	DBG("qm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
+	MDBG("qm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
 	if (p>(void*)qm->last_frag_end || p<(void*)qm->first_frag){
 		LOG(L_CRIT, "BUG: qm_free: bad pointer %p (out of memory block!) - "
 				"aborting\n", p);
@@ -448,7 +450,7 @@ void qm_free(struct qm_block* qm, void* p)
 				f->file, f->func, f->line);
 		abort();
 	}
-	DBG("qm_free: freeing frag. %p alloc'ed from %s: %s(%ld)\n",
+	MDBG("qm_free: freeing frag. %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
 #endif
 	size=f->size;
@@ -513,7 +515,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 	
 	
 #ifdef DBG_QM_MALLOC
-	DBG("qm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p, size,
+	MDBG("qm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p, size,
 			file, func, line);
 	if ((p)&&(p>(void*)qm->last_frag_end || p<(void*)qm->first_frag)){
 		LOG(L_CRIT, "BUG: qm_free: bad pointer %p (out of memory block!) - "
@@ -540,7 +542,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f);
-	DBG("qm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
+	MDBG("qm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
 	if (f->u.is_free){
 		LOG(L_CRIT, "BUG:qm_realloc: trying to realloc an already freed "
@@ -554,9 +556,9 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 		orig_size=f->size;
 		/* shrink */
 #ifdef DBG_QM_MALLOC
-		DBG("qm_realloc: shrinking from %lu to %lu\n", f->size, size);
+		MDBG("qm_realloc: shrinking from %lu to %lu\n", f->size, size);
 		if(split_frag(qm, f, size, file, "fragm. from qm_realloc", line)!=0){
-		DBG("qm_realloc : shrinked successful\n");
+		MDBG("qm_realloc : shrinked successful\n");
 #else
 		if(split_frag(qm, f, size)!=0){
 #endif
@@ -568,7 +570,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 	}else if (f->size < size){
 		/* grow */
 #ifdef DBG_QM_MALLOC
-		DBG("qm_realloc: growing from %lu to %lu\n", f->size, size);
+		MDBG("qm_realloc: growing from %lu to %lu\n", f->size, size);
 #endif
 			orig_size=f->size;
 			diff=size-f->size;
@@ -614,12 +616,12 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 	}else{
 		/* do nothing */
 #ifdef DBG_QM_MALLOC
-		DBG("qm_realloc: doing nothing, same size: %lu - %lu\n",
+		MDBG("qm_realloc: doing nothing, same size: %lu - %lu\n",
 				f->size, size);
 #endif
 	}
 #ifdef DBG_QM_MALLOC
-	DBG("qm_realloc: returning %p\n", p);
+	MDBG("qm_realloc: returning %p\n", p);
 #endif
 	return p;
 }
