@@ -87,9 +87,6 @@ fi
 ### binaries
 
 # binaries
-if [ -z "$GENHA1" ] ; then
-	GENHA1='openser_gen_ha1'
-fi
 if [ -z "$PGSQL" ] ; then
 	PGSQL='psql'
 fi
@@ -555,12 +552,12 @@ is_user() {
 # output: HA1, HA1B
 credentials()
 {
-	HA1=`$GENHA1 $1 $SIP_DOMAIN $2`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`$GENHA1 "$1@$SIP_DOMAIN" $SIP_DOMAIN $2`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1

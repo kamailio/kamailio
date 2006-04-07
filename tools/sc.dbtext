@@ -34,9 +34,6 @@ fi
 
 ##### ----------------------------------------------- #####
 ### binaries
-if [ -z "$GENHA1" ] ; then
-	GENHA1='openser_gen_ha1'
-fi
 if [ -z "$LAST_LINE" ] ; then
 	LAST_LINE='tail -1'
 fi
@@ -709,12 +706,12 @@ credentials()
 {
 	set_user $1
 
-	HA1=`$GENHA1 $SERUSER $SERDOMAIN $2`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo -e "\nHA1 calculation failed\n"
 		exit 1
 	fi
-	HA1B=`$GENHA1 "$SERUSER@$SERDOMAIN" $SERDOMAIN $2`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo -e "\nHA1B calculation failed\n"
 		exit 1
