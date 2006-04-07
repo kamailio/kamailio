@@ -343,6 +343,7 @@ INSERT INTO version VALUES ( 'trusted', '3');
 INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'usr_preferences_types', '1');
+INSERT INTO version VALUES ( 'sip_trace', '1');
 
 
 /*
@@ -807,6 +808,29 @@ CREATE TABLE usr_preferences_types (
   PRIMARY KEY  (att_name)
 ) $TABLE_TYPE;
 
+/*
+ * Table structure for table 'siptrace'
+ */
+
+CREATE TABLE sip_trace (
+  id bigint(20) NOT NULL auto_increment,
+  date datetime NOT NULL default '0000-00-00 00:00:00',
+  callid varchar(254) NOT NULL default '',
+  traced_user varchar(128) NOT NULL default '',
+  msg text NOT NULL,
+  method varchar(50) NOT NULL default '',
+  status varchar(254) NOT NULL default '',
+  fromip varchar(50) NOT NULL default '',
+  toip varchar(50) NOT NULL default '',
+  fromtag varchar(64) NOT NULL default '',
+  direction varchar(4) NOT NULL default '',
+  PRIMARY KEY  (id)
+) $TABLE_TYPE;
+
+CREATE INDEX user_idx ON sip_trace (traced_user);
+CREATE INDEX date_idx ON sip_trace (date);
+CREATE INDEX fromip_idx ON sip_trace (fromip);
+CREATE INDEX callid_idx ON sip_trace (callid);
 
 /* add an admin user "admin" with password==$DEFAULT_PW,
  * so that one can try it out on quick start
