@@ -216,7 +216,7 @@ static inline struct lump* get_fdisplay_anchor(struct sip_msg *msg,
 
 
 /*
- * if display name does not exist, then from_dsp is ignored
+ * relace from uri and/or from display name
  */
 int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 {
@@ -231,7 +231,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 
 	/* consistency check! in AUTO mode, do NOT allow FROM changing
 	 * in sequential request */
-	if (from_restore_mode==FROM_AUTO_RESTORE) {
+	if (from_restore_mode==FROM_AUTO_RESTORE && from_uri && from_uri->len) {
 		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
 			LOG(L_ERR,"ERROR:uac:replace_from: failed to parse TO hdr\n");
 			goto error;
