@@ -182,7 +182,7 @@ CREATE TABLE user_attrs (
 CREATE TABLE domain (
     did VARCHAR(64) NOT NULL,
     domain VARCHAR(128) NOT NULL,
-    last_modified TIMESTAMP NOT NULL,
+    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
     flags INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT domain_idx UNIQUE (domain)
 );
