@@ -408,7 +408,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 
 	if (!read_line(contact, MAX_CONTACT_LEN, pipe, &c.len) || c.len == 0) {
 		fifo_reply(response_file,
-			   "400 ul_rm_contact: contact expected\n");
+			"400 ul_rm_contact: contact expected\n");
 		LOG(L_ERR, "ERROR: ul_rm_contact: contact expected\n");
 		return 1;
 	}
@@ -430,42 +430,49 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 
 		res = get_urecord(d, &aor, &r);
 		if (res < 0) {
-			fifo_reply(response_file, "500 Error while looking for username %s in table %s\n", user, table);
-			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for username %s in table %s\n", user, table);
+			fifo_reply(response_file, "500 Error while looking for "
+				"username %s in table %s\n", user, table);
+			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for "
+				"username %s in table %s\n", user, table);
 			unlock_udomain(d);
 			return 1;
 		}
 		
 		if (res > 0) {
-			fifo_reply(response_file, "404 Username %s in table %s not found\n", user, table);
+			fifo_reply(response_file, "404 Username %s in table %s "
+				"not found\n", user, table);
 			unlock_udomain(d);
 			return 1;
 		}
 
 		res = get_ucontact(r, &c, &fifo_cid, FIFO_CSEQ+1, &con);
 		if (res < 0) {
-			fifo_reply(response_file, "500 Error while looking for contact %s\n", contact);
-			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for contact %s\n", contact);
+			fifo_reply(response_file, "500 Error while looking for "
+				"contact %s\n", contact);
+			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for "
+				"contact %s\n", contact);
 			unlock_udomain(d);
 			return 1;
 		}			
 
 		if (res > 0) {
-			fifo_reply(response_file, "404 Contact %s in table %s not found\n", contact, table);
+			fifo_reply(response_file, "404 Contact %s in table %s "
+				"not found\n", contact, table);
 			unlock_udomain(d);
 			return 1;
 		}
 
 		if (delete_ucontact(r, con) < 0) {
-			fifo_reply(response_file, "500 ul_rm_contact: Error while deleting contact %s\n", contact);
+			fifo_reply(response_file, "500 ul_rm_contact: Error while "
+				"deleting contact %s\n", contact);
 			unlock_udomain(d);
 			return 1;
 		}
 
 		release_urecord(r);
 		unlock_udomain(d);
-		fifo_reply(response_file, "200 Contact (%s, %s) deleted from table %s\n", 
-			user, contact, table);
+		fifo_reply(response_file, "200 Contact (%s, %s) deleted from "
+			"table %s\n", user, contact, table);
 		return 1;
 	} else {
 		fifo_reply(response_file, "400 table (%s) not found\n", table);
@@ -495,7 +502,8 @@ static inline int print_contacts(FILE* _o, ucontact_t* _c)
 				"%s%.*s%s\n", /*path*/
 				_c->c.len, ZSW(_c->c.s),
 				q2str(_c->q, 0), (int)(_c->expires - act_time), _c->flags,
-				_c->sock->sock_str.len, _c->sock->sock_str.s,
+				_c->sock?_c->sock->sock_str.len:3,
+					_c->sock?_c->sock->sock_str.s:"NULL",
 				_c->methods,
 				_c->received.len?";received=<":"",_c->received.len,
 					ZSW(_c->received.s), _c->received.len?">":"",

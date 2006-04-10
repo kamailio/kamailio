@@ -444,7 +444,8 @@ static inline int print_contacts(ucontact_t* _c)
 				"%s%.*s%s\n", /*path*/
 				_c->c.len, ZSW(_c->c.s),
 				q2str(_c->q, 0), (int)(_c->expires - act_time), _c->flags,
-				_c->sock->sock_str.len, _c->sock->sock_str.s,
+								_c->sock?_c->sock->sock_str.len:3,
+					_c->sock?_c->sock->sock_str.s:"NULL",
 				_c->methods,
 				_c->received.len?";received=<":"",_c->received.len,
 					ZSW(_c->received.s), _c->received.len?">":"",
