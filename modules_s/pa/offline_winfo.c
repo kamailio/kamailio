@@ -539,7 +539,7 @@ int check_subscription_status_fix(void **param, int param_no)
 			return -1;
 		}
 		
-		TRACE("status name is %s\n", (char*)*param);
+		/* TRACE("status name is %s\n", (char*)*param); */
 		
 		ss.s = s;
 		ss.len = strlen(s);

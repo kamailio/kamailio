@@ -36,6 +36,8 @@ static str presence_qsa_package = { s: "presence", len: 8 };
 
 static int handle_presence_subscriptions = 0;
 
+static qsa_content_type_t *ct_presence_info = NULL;
+
 /* default route for presence UAC */
 str presence_route = {s: "", len: 0 };
 
@@ -164,9 +166,7 @@ static void presence_notification_cb(events_uac_t *uac,
 	
 	/* send the message to internal subscriber */
 	notify_subscriber(subscription, presence_notifier,
-			PRESENTITY_INFO_TYPE,
-			p, (destroy_function_f)free_presentity_info,
-			status);
+			ct_presence_info, p, status);
 }
 
 static events_subscription_t *create_presence_subscription(subscription_t *subscription)
@@ -306,11 +306,21 @@ static int cmp_events_subscription(subscription_t *a, subscription_t *b)
 
 int events_qsa_interface_init(int _handle_presence_subscriptions)
 {
+	static str presence_info = STR_STATIC_INIT(CT_PRESENCE_INFO);
+	
 	domain = qsa_get_default_domain();
 	if (!domain) {
 		ERR("can't register notifier domain\n");
 		return -1;	
 	}
+	
+	ct_presence_info = register_content_type(domain, 
+			&presence_info, (destroy_function_f)free_presentity_info);
+	if (!ct_presence_info) {
+		ERR("can't register QSA content type\n");
+		return -1;
+	}
+	else TRACE("b2b_CONTENT_TYPE: %p\n", ct_presence_info);
 
 	handle_presence_subscriptions = _handle_presence_subscriptions;
 	

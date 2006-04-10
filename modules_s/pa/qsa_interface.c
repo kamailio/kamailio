@@ -14,8 +14,10 @@
 static notifier_domain_t *domain = NULL;
 static notifier_t *notifier = NULL;
 
+static qsa_content_type_t *ct_presence_info = NULL;
+/*static qsa_content_type_t *ct_pidf_xml = NULL;*/
+
 /* static str_t notifier_name = { s: "pa", len: 2 }; */
-static str_t presence_package = { s: "presence", len: 8 };
 
 static int pa_subscribe(notifier_t *n, subscription_t *subscription);
 static void pa_unsubscribe(notifier_t *n, subscription_t *subscription);
@@ -27,6 +29,9 @@ int accept_internal_subscriptions = 0;
 /* QSA interface initialization */
 int pa_qsa_interface_init()
 {
+	static str presence_info = STR_STATIC_INIT(CT_PRESENCE_INFO);
+	static str_t presence_package = { s: "presence", len: 8 };
+	
 	domain = qsa_get_default_domain();
 	if (!domain) {
 		ERR("can't register notifier domain\n");
@@ -40,6 +45,15 @@ int pa_qsa_interface_init()
 		ERR("can't register notifier\n");
 		return -1;	
 	}
+	
+	ct_presence_info = register_content_type(domain, 
+			&presence_info, (destroy_function_f)free_presentity_info);
+	if (!ct_presence_info) {
+		ERR("can't register QSA content type\n");
+		return -1;
+	}
+	else TRACE("PA_CONTENT_TYPE: %p\n", ct_presence_info);
+	
 	/* DBG("pa_qsa_interface_init(): created notifier %.*s\n", FMT_STR(notifier_name)); */
 	return 0;
 }
@@ -313,18 +327,15 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 	switch (ss->status) {
 		case WS_PENDING:
 				return notify_subscriber(ss->subscription, notifier, 
-							PRESENTITY_INFO_TYPE,
-							NULL, NULL, qsa_subscription_pending);
+							ct_presence_info, NULL, qsa_subscription_pending);
 		case WS_REJECTED:
 				return notify_subscriber(ss->subscription, notifier, 
-							PRESENTITY_INFO_TYPE,
-							NULL, NULL, qsa_subscription_rejected);
+							ct_presence_info, NULL, qsa_subscription_rejected);
 
 		case WS_PENDING_TERMINATED:
 		case WS_TERMINATED:
 				return notify_subscriber(ss->subscription, notifier,
-							PRESENTITY_INFO_TYPE,
-							NULL, NULL, qsa_subscription_terminated);
+							ct_presence_info, NULL, qsa_subscription_terminated);
 		case WS_ACTIVE:
 				pinfo = presentity2presentity_info(p);
 				if (!pinfo) {
@@ -333,9 +344,7 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 				}
 				
 				return notify_subscriber(ss->subscription, notifier, 
-						PRESENTITY_INFO_TYPE,
-						pinfo, (destroy_function_f)free_presentity_info,
-						qsa_subscription_active);
+						ct_presence_info, pinfo, qsa_subscription_active);
 	}
 
 	return 0;

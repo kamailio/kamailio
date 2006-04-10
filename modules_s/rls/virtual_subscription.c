@@ -19,6 +19,8 @@ typedef struct {
 	virtual_subscription_t *last;
 	/* hash, ... */
 	notifier_domain_t *domain;
+	qsa_content_type_t *ct_presence_info;
+	qsa_content_type_t *ct_raw;
 } vs_data_t;
 
 static vs_data_t *vsd = NULL;
@@ -27,6 +29,9 @@ static vs_data_t *vsd = NULL;
 
 int vs_init()
 {
+	static str presence_info = STR_STATIC_INIT(CT_PRESENCE_INFO);
+	static str raw = STR_STATIC_INIT(CT_RAW);
+	
 	vsd = (vs_data_t*)mem_alloc(sizeof(vs_data_t));
 	if (!vsd) {
 		LOG(L_ERR, "vs_init(): memory allocation error\n");
@@ -40,6 +45,22 @@ int vs_init()
 		return -1;	
 	}
 	DEBUG_LOG("QSA (vs) domain: %p\n", vsd->domain);
+	
+	vsd->ct_presence_info = register_content_type(vsd->domain, 
+			&presence_info, (destroy_function_f)free_presentity_info);
+	if (!vsd->ct_presence_info) {
+		ERR("can't register QSA content type\n");
+		return -1;
+	}
+	else TRACE("RLS_PRESENCE_INFO: %p\n", vsd->ct_presence_info);
+	
+	vsd->ct_raw = register_content_type(vsd->domain, 
+			&raw, (destroy_function_f)free_raw_presence_info);
+	if (!vsd->ct_raw) {
+		ERR("can't register QSA content type\n");
+		return -1;
+	}
+	else TRACE("RLS_RAW: %p\n", vsd->ct_raw);
 	
 	return 0;
 }
@@ -157,44 +178,46 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 	}
 	if (old_status != vs->status) vs->changed = 1;
 
-	switch (info->data_type) {
-		case PRESENTITY_RAW_INFO:
-			DEBUG("Processing raw notification\n");
+	if (info->content_type == vsd->ct_raw) {
+		DEBUG("Processing raw notification\n");
 			
-			raw = (raw_presence_info_t*)info->data;
-			if (!raw) return;
+		raw = (raw_presence_info_t*)info->data;
+		if (!raw) return;
 	
-			/* document MUST be duplicated !!! */
-			if (set_vs_document_dup(vs, &raw->pres_doc, &raw->content_type) < 0) {
-				ERR("can't set new status document for VS %p\n", vs);
-				return;
-			}
-			break;
-
-		case PRESENTITY_INFO_TYPE:
+		/* document MUST be duplicated !!! */
+		if (set_vs_document_dup(vs, &raw->pres_doc, &raw->content_type) < 0) {
+			ERR("can't set new status document for VS %p\n", vs);
+			return;
+		}
+	}
+	else {	
+		if (info->content_type == vsd->ct_presence_info) {
 			DEBUG("Processing structured notification\n");
 			
 			pinfo = (presentity_info_t*)info->data;
 			if (!pinfo) {
 				str_clear(&new_doc);
 				str_clear(&new_type);
-				break;	
 			}
-			
-			if (create_pidf_document(pinfo, &new_doc, &new_type) < 0) {
-				ERR("can't create PIDF document\n");
-				str_free_content(&vs->state_document); 		
-				str_free_content(&vs->content_type);
-				return;
+			else {
+				if (create_pidf_document(pinfo, &new_doc, &new_type) < 0) {
+					ERR("can't create PIDF document\n");
+					str_free_content(&vs->state_document); 		
+					str_free_content(&vs->content_type);
+					return;
+				}
+				set_vs_document(vs, &new_doc, &new_type);
 			}
-			set_vs_document(vs, &new_doc, &new_type);
-			break;
-			
-		default:
-			ERR("received unacceptable notification (%d)\n", info->data_type);
+		}
+		else {
+			if (info->content_type)
+				ERR("received unacceptable notification (%.*s)\n", 
+					FMT_STR(info->content_type->name));
+			else ERR("received unacceptable notification without content type\n");
 			str_free_content(&vs->state_document); 		
 			str_free_content(&vs->content_type);
 			return;
+		}
 	}
 	
 	if (vs->changed) propagate_change(vs);
