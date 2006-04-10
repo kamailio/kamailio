@@ -111,6 +111,7 @@ cat <<EOF
 usage: $COMMAND create
        $COMMAND drop   (!!entirely deletes tables)
        $COMMAND reinit (!!entirely deletes and than re-creates tables
+       $COMMAND serweb (adds the SERWEB specific tables)
 
  NOTE: the following commands are not tested with postgresql,
  thus they are disabled.
@@ -118,8 +119,6 @@ usage: $COMMAND create
        $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
        $COMMAND reinstall (updates to a new OpenSER database)
-       $COMMAND serweb (adds the SERWEB specific tables)
-       $COMMAND reinit (drops ans install OpenSER database)
 
        if you want to manipulate database as other postgresql user than
        "postgres", want to change database name from default value "$DBNAME",

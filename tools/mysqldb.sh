@@ -104,7 +104,6 @@ usage: $COMMAND create
        $COMMAND copy <new_db> (creates a new db from an existing one)
        $COMMAND reinstall (updates to a new OpenSER database)
        $COMMAND serweb (adds the SERWEB specific tables)
-       $COMMAND reinit (drops ans install OpenSER database)
 
        if you want to manipulate database as other MySql user than
        root, want to change database name from default value "$DBNAME",
