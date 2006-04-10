@@ -18,9 +18,7 @@ INSERT INTO version (table_name, table_version) VALUES ('user_attrs', '3');
 INSERT INTO version (table_name, table_version) VALUES ('phonebook', '1');
 INSERT INTO version (table_name, table_version) VALUES ('silo', '4');
 INSERT INTO version (table_name, table_version) VALUES ('uri', '2');
-INSERT INTO version (table_name, table_version) VALUES ('server_monitoring', '1');
 INSERT INTO version (table_name, table_version) VALUES ('trusted', '1');
-INSERT INTO version (table_name, table_version) VALUES ('server_monitoring_agg', '1');
 INSERT INTO version (table_name, table_version) VALUES ('speed_dial', '2');
 INSERT INTO version (table_name, table_version) VALUES ('sd_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('gw', '3');
@@ -217,34 +215,6 @@ CREATE TABLE trusted (
     from_pattern VARCHAR(64) NOT NULL,
     CONSTRAINT trusted_idx UNIQUE (src_ip, proto, from_pattern)
 );
-
-CREATE TABLE server_monitoring (
-    time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
-    id INTEGER NOT NULL DEFAULT '0',
-    param VARCHAR(32) NOT NULL DEFAULT '',
-    value INTEGER NOT NULL DEFAULT '0',
-    increment INTEGER NOT NULL DEFAULT '0'
-);
-
-CREATE INDEX sm_idx1 ON server_monitoring (id, param);
-
-CREATE TABLE server_monitoring_agg (
-    param VARCHAR(32) NOT NULL DEFAULT '',
-    s_value INTEGER NOT NULL DEFAULT '0',
-    s_increment INTEGER NOT NULL DEFAULT '0',
-    last_aggregated_increment INTEGER NOT NULL DEFAULT '0',
-    av DOUBLE PRECISION NOT NULL DEFAULT '0',
-    mv INTEGER NOT NULL DEFAULT '0',
-    ad DOUBLE PRECISION NOT NULL DEFAULT '0',
-    lv INTEGER NOT NULL DEFAULT '0',
-    min_val INTEGER NOT NULL DEFAULT '0',
-    max_val INTEGER NOT NULL DEFAULT '0',
-    min_inc INTEGER NOT NULL DEFAULT '0',
-    max_inc INTEGER NOT NULL DEFAULT '0',
-    lastupdate TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
-);
-
-CREATE INDEX smagg_idx1 ON server_monitoring_agg (param);
 
 CREATE TABLE phonebook (
     id SERIAL NOT NULL,
@@ -584,5 +554,5 @@ CREATE TABLE customers (
 );
 
 
-GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
-GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;
+GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
+GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;

@@ -41,10 +41,7 @@
     <!-- Table containing list of trusted peers -->
     <xi:include href="trusted.xml"/>
 
-    <!-- SER monitoring data (used by serweb -->
-    <xi:include href="server_monitoring.xml"/>
-    <xi:include href="server_monitoring_agg.xml"/>
-
+    <!-- Table containing phonebook (used by serweb -->
     <xi:include href="phonebook.xml"/>
 
     <!-- Least Cost Routing related tables -->

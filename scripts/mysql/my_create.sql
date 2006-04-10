@@ -18,9 +18,7 @@ INSERT INTO version (table_name, table_version) VALUES ('user_attrs', '3');
 INSERT INTO version (table_name, table_version) VALUES ('phonebook', '1');
 INSERT INTO version (table_name, table_version) VALUES ('silo', '4');
 INSERT INTO version (table_name, table_version) VALUES ('uri', '2');
-INSERT INTO version (table_name, table_version) VALUES ('server_monitoring', '1');
 INSERT INTO version (table_name, table_version) VALUES ('trusted', '1');
-INSERT INTO version (table_name, table_version) VALUES ('server_monitoring_agg', '1');
 INSERT INTO version (table_name, table_version) VALUES ('speed_dial', '2');
 INSERT INTO version (table_name, table_version) VALUES ('sd_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('gw', '3');
@@ -211,32 +209,6 @@ CREATE TABLE trusted (
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) NOT NULL,
     UNIQUE KEY trusted_idx (src_ip, proto, from_pattern)
-);
-
-CREATE TABLE server_monitoring (
-    time DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
-    id INT NOT NULL DEFAULT '0',
-    param VARCHAR(32) NOT NULL DEFAULT '',
-    value INT NOT NULL DEFAULT '0',
-    increment INT NOT NULL DEFAULT '0',
-    KEY sm_idx1 (id, param)
-);
-
-CREATE TABLE server_monitoring_agg (
-    param VARCHAR(32) NOT NULL DEFAULT '',
-    s_value INT NOT NULL DEFAULT '0',
-    s_increment INT NOT NULL DEFAULT '0',
-    last_aggregated_increment INT NOT NULL DEFAULT '0',
-    av DOUBLE NOT NULL DEFAULT '0',
-    mv INT NOT NULL DEFAULT '0',
-    ad DOUBLE NOT NULL DEFAULT '0',
-    lv INT NOT NULL DEFAULT '0',
-    min_val INT NOT NULL DEFAULT '0',
-    max_val INT NOT NULL DEFAULT '0',
-    min_inc INT NOT NULL DEFAULT '0',
-    max_inc INT NOT NULL DEFAULT '0',
-    lastupdate DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
-    KEY smagg_idx1 (param)
 );
 
 CREATE TABLE phonebook (

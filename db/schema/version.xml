@@ -71,17 +71,9 @@
 	<value col="tv"><xi:include href="uri.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn"><xi:include href="server_monitoring.xml" xpointer="xpointer(table/name/text())"/></value>
-	<value col="tv"><xi:include href="server_monitoring.xml" xpointer="xpointer(table/version/text())"/></value>
-    </row>
-    <row>
 	<value col="tn"><xi:include href="trusted.xml" xpointer="xpointer(table/name/text())"/></value>
 	<value col="tv"><xi:include href="trusted.xml" xpointer="xpointer(table/version/text())"/></value>
 	
-    </row>
-    <row>
-	<value col="tn"><xi:include href="server_monitoring_agg.xml" xpointer="xpointer(table/name/text())"/></value>
-	<value col="tv"><xi:include href="server_monitoring_agg.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
 	<value col="tn"><xi:include href="speed_dial.xml" xpointer="xpointer(table/name/text())"/></value>

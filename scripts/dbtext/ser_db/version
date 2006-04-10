@@ -11,9 +11,7 @@ user_attrs:3
 phonebook:1
 silo:4
 uri:2
-server_monitoring:1
 trusted:1
-server_monitoring_agg:1
 speed_dial:2
 sd_attrs:1
 gw:3
