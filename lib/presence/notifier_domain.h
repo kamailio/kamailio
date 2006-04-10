@@ -66,6 +66,13 @@ typedef int (*server_subscribe_func)(notifier_t *n, subscription_t *subscription
 
 typedef void (*server_unsubscribe_func)(notifier_t *n, subscription_t *subscription);
 
+typedef struct _qsa_content_type_t {
+	struct _qsa_content_type_t *next, *prev;
+	str_t name;
+	destroy_function_f destroy_func;
+	char buf[1]; /* buffer for name allocation together with the structure */
+} qsa_content_type_t;
+
 /** Internal structure storing registered notifiers. */
 struct _notifier_t {
 	server_subscribe_func subscribe;
@@ -89,6 +96,7 @@ struct _notifier_domain_t {
 	cds_mutex_t data_mutex; /* mutex for locking standalone subscription data, may be changed to mutex pool */
 	str_t name;
 	notifier_package_t *first_package, *last_package;
+	qsa_content_type_t *first_content_type, *last_content_type;
 	reference_counter_data_t ref;
 };
 
@@ -101,6 +109,10 @@ notifier_domain_t *create_notifier_domain(const str_t *name);
  * structures. If there are any subscribers, they are unsubscribed,
  * if there are any notifiers, they are unregistered. */
 void destroy_notifier_domain(notifier_domain_t *domain);
+
+qsa_content_type_t *register_content_type(notifier_domain_t *d, 
+		const str_t *name,
+		destroy_function_f destroy_func);
 
 #define lock_notifier_domain(d) cds_mutex_lock(&(d->mutex))
 #define unlock_notifier_domain(d) cds_mutex_unlock(&(d->mutex))

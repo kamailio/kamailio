@@ -136,6 +136,66 @@ static void destroy_package(notifier_package_t *p)
 	cds_free(p);
 }
 
+/* -------- content type functions -------- */
+
+static qsa_content_type_t *find_content_type(notifier_domain_t *d, const str_t *name)
+{
+	qsa_content_type_t *p;
+
+	if (!d) return NULL;
+	p = d->first_content_type;
+	while (p) {
+		if (str_case_equals(name, &p->name) == 0) return p;
+		p = p->next;
+	}
+	return NULL;
+}
+
+static void add_content_type(notifier_domain_t *d, qsa_content_type_t *p)
+{
+	DOUBLE_LINKED_LIST_ADD(d->first_content_type, d->last_content_type, p);
+}
+
+static qsa_content_type_t *create_content_type(const str_t *name, 
+		destroy_function_f destroy_func)
+{
+	qsa_content_type_t *p = (qsa_content_type_t*)cds_malloc(sizeof(qsa_content_type_t) + str_len(name));
+	if (p) {
+		p->next = NULL;
+		p->prev = NULL;
+		p->name.s = p->buf;
+		if (str_len(name) > 0) {
+			memcpy(p->name.s, name->s, name->len);
+			p->name.len = name->len;
+		}
+		else p->name.len = 0;
+		p->destroy_func = destroy_func;
+	}
+	return p;
+}
+
+/** finds existing package or adds new if not exists */
+qsa_content_type_t *register_content_type(notifier_domain_t *d, 
+		const str_t *name,
+		destroy_function_f destroy_func)
+{
+	qsa_content_type_t *p = NULL;
+	
+	if (is_str_empty(name)) return NULL;
+	
+	p = find_content_type(d, name);
+	if (!p) {
+		p = create_content_type(name, destroy_func);
+		if (p) add_content_type(d, p);
+	}
+	return p;
+}
+	
+static void destroy_content_type(qsa_content_type_t *p) 
+{
+	cds_free(p);
+}
+
 /* -------- Helper functions -------- */
 
 static void free_notifier(notifier_t *info)
@@ -188,6 +248,8 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 	if (d) {
 		d->first_package = NULL;
 		d->last_package = NULL;
+		d->first_content_type = NULL;
+		d->last_content_type = NULL;
 		if (str_dup(&d->name, name) < 0) {
 			cds_free(d);
 			ERROR_LOG("can't allocate memory\n");
@@ -206,6 +268,7 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 void destroy_notifier_domain(notifier_domain_t *domain)
 {
 	notifier_package_t *p, *n;
+	qsa_content_type_t *c, *nc;
 
 	/* this function is always called only if no only one reference
 	 * to domain exists (see domain maintainer), this should mean, that 
@@ -222,6 +285,14 @@ void destroy_notifier_domain(notifier_domain_t *domain)
 	}
 	domain->first_package = NULL;
 	domain->last_package = NULL;
+	
+	c = domain->first_content_type;
+	while (c) {
+		nc = c->next;
+		destroy_content_type(c);
+	}
+	domain->first_content_type = NULL;
+	domain->last_content_type = NULL;
 	
 	unlock_notifier_domain(domain);
 	
@@ -427,9 +498,8 @@ void unsubscribe(notifier_domain_t *domain, subscription_t *s)
 /* void notify_subscriber(subscription_t *s, mq_message_t *msg) */
 int notify_subscriber(subscription_t *s, 
 		notifier_t *n,
-		int data_type, 
+		qsa_content_type_t *content_type, 
 		void *data, 
-		destroy_function_f data_destroy,
 		qsa_subscription_status_t status)
 {
 	int ok = 1;
@@ -440,6 +510,11 @@ int notify_subscriber(subscription_t *s,
 	if (!s) {
 		ERROR_LOG("BUG: sending notify for <null> subscription\n");
 		ok = 0;
+	}
+	
+	if (!content_type) {
+		ERROR_LOG("BUG: content type not given! Possible memory leaks!\n");
+		return -1;
 	}
 	
 	if (ok) {
@@ -455,10 +530,9 @@ int notify_subscriber(subscription_t *s,
 		info = (client_notify_info_t*)msg->data;
 		
 		info->subscription = s;
-		info->data_type = data_type;
+		info->content_type = content_type;
 		info->data = data;
 		info->status = status;
-		info->destroy_func = data_destroy;
 		
 		lock_subscription_data(s);
 		if (s->dst) {
@@ -471,7 +545,7 @@ int notify_subscriber(subscription_t *s,
 	if (!sent) {
 		/* free unsent messages */
 		if (msg) free_message(msg);
-		else if (data_destroy && data) data_destroy(data);
+		else if (data) content_type->destroy_func(data);
 	}
 
 	if (ok) return 0;
@@ -485,6 +559,9 @@ void free_client_notify_info_content(client_notify_info_t *info)
 	str_free_content(&info->record_id);
 	str_free_content(&info->notifier); */
 	DEBUG_LOG(" ... calling destroy func on data\n");
-	if (info->destroy_func) info->destroy_func(info->data);
+	if (info->content_type) {
+		if (info->data) info->content_type->destroy_func(info->data);
+	}
+	else ERR("BUG: content-type not given! Possible memory leaks!\n");
 }
 

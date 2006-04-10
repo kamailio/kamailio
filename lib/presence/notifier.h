@@ -73,10 +73,9 @@ typedef enum {
 typedef struct {
 	/* replacement for record_id, package, ... it is much more efficient */
 	subscription_t *subscription; 
-	int data_type;
+	qsa_content_type_t *content_type;
 	void *data;
 	int data_len;
-	destroy_function_f destroy_func; /* function used to destroy data */
 	qsa_subscription_status_t status;
 } client_notify_info_t;
 
@@ -86,9 +85,8 @@ void free_client_notify_info_content(client_notify_info_t *info);
 /* notifications SHOULD be sent through this method */
 int notify_subscriber(subscription_t *s, 
 		notifier_t *n,
-		int data_type, 
+		qsa_content_type_t *content_type, 
 		void *data, 
-		destroy_function_f data_destroy,
 		qsa_subscription_status_t status);
 
 #ifdef __cplusplus
