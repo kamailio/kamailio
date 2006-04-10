@@ -151,6 +151,14 @@ CREATE TABLE global_attrs (
     global_attrs_idx UNIQUE (name, value, )
 );
 
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_domain_default_flags', '0', '33', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_credential_default_flags', '0', '33', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_uri_default_flags', '0', '57', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_show_status', '0', '1', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_require_conf', '0', '1', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('lang', '2', 'en', '33');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_timezone', '2', 'Europe/Prague', '32');
+
 CREATE TABLE domain_attrs (
     did string(64),
     name string(32) NOT NULL,
