@@ -599,12 +599,95 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 	return 0;
 }
 
+static int set_new_uri_simple(struct sip_msg *msg, str *uri)
+{
+	if (msg->new_uri.s)
+	{
+		pkg_free(msg->new_uri.s);
+		msg->new_uri.len=0;
+	}
 
+	msg->parsed_uri_ok=0;
+	msg->new_uri.s = (char*)pkg_malloc(uri->len+1);
+	if (msg->new_uri.s==0)
+	{
+		ERR("no more pkg memory\n");
+		return -1;
+	}
+	memcpy(msg->new_uri.s, uri->s, uri->len);
+	msg->new_uri.s[uri->len]=0;
+	msg->new_uri.len=uri->len;
+	return 0;
+}
+
+static int set_new_uri_with_user(struct sip_msg *msg, str *uri, str *user)
+{
+	struct sip_uri dst;
+	int start_len, stop_len;
+	
+	if (parse_uri(uri->s, uri->len, &dst) < 0) {
+		ERR("can't parse destination URI\n");
+		return -1;
+	}
+	if ((!dst.host.s) || (dst.host.len <= 0)) {
+		ERR("destination URI host not set\n");
+		return -1;
+	}
+	if (dst.user.s && (dst.user.len > 0)) {
+		DBG("user already exists\n");
+		/* don't replace the user */
+		return set_new_uri_simple(msg, uri);
+	}
+	
+	if (msg->new_uri.s)
+	{
+		pkg_free(msg->new_uri.s);
+		msg->new_uri.len=0;
+	}
+	
+	start_len = dst.host.s - uri->s;
+	stop_len = uri->len - start_len;
+	
+	msg->parsed_uri_ok=0;
+	msg->new_uri.s = (char*)pkg_malloc(uri->len+1+user->len+1);
+	if (msg->new_uri.s==0)
+	{
+		ERR("no more pkg memory\n");
+		return -1;
+	}
+	memcpy(msg->new_uri.s, uri->s, start_len);
+	memcpy(msg->new_uri.s + start_len, user->s, user->len);
+	*(msg->new_uri.s + start_len + user->len) = '@';
+	memcpy(msg->new_uri.s + start_len + user->len + 1, dst.host.s, stop_len);
+	
+	msg->new_uri.len=uri->len + user->len + 1;
+	msg->new_uri.s[msg->new_uri.len]=0;
+	
+	return 0;
+}
+
+static int set_new_uri(struct sip_msg *msg, str *uri)
+{
+	struct to_body* to;
+	struct sip_uri to_uri;
+	
+	/* we need to leave original user */
+	to = get_to(msg);
+	if (to) {
+		if (parse_uri(to->uri.s, to->uri.len, &to_uri) >= 0) {
+			if (to_uri.user.s && (to_uri.user.len > 0)) {
+				return set_new_uri_with_user(msg, uri, &to_uri.user);
+			}
+		}
+	}
+
+	return set_new_uri_simple(msg, uri);
+}
 
 /**
  *
  */
-int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
+int ds_select_dst_impl(struct sip_msg *msg, char *set, char *alg, int set_new)
 {
 	int a, s, idx;
 	ds_setidx_p si = NULL;
@@ -700,14 +783,40 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 
 	hash = hash%_ds_list[idx].nr;
 
-	if (set_dst_uri(msg, &_ds_list[idx].dlist[hash].uri) < 0) {
-		LOG(L_ERR, "DISPATCHER:dst_select_dst: Error while setting dst_uri\n");
-		return -1;
-	}
+	if (!set_new) {
+		if (set_dst_uri(msg, &_ds_list[idx].dlist[hash].uri) < 0) {
+			LOG(L_ERR, "DISPATCHER:dst_select_dst: Error while setting dst_uri\n");
+			return -1;
+		}
 
-	DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
-			a, s, idx, hash, msg->dst_uri.len, msg->dst_uri.s);
+		DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
+				a, s, idx, hash, msg->dst_uri.len, msg->dst_uri.s);
+	}
+	else {
+		if (set_new_uri(msg, &_ds_list[idx].dlist[hash].uri) < 0) {
+			LOG(L_ERR, "DISPATCHER:dst_select_dst: Error while setting new_uri\n");
+			return -1;
+		}
+		DBG("DISPATCHER:ds_select_new: selected [%d-%d/%d/%d] <%.*s>\n",
+				a, s, idx, hash, msg->new_uri.len, msg->new_uri.s);
+	}
 	
 	return 1;
+}
+
+/**
+ *
+ */
+int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
+{
+	return ds_select_dst_impl(msg, set, alg, 0);
+}
+
+/**
+ *
+ */
+int ds_select_new(struct sip_msg *msg, char *set, char *alg)
+{
+	return ds_select_dst_impl(msg, set, alg, 1);
 }
 

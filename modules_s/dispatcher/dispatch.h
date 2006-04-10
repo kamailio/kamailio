@@ -47,6 +47,7 @@ extern int ds_flags;
 int ds_load_list(char *lfile);
 int ds_destroy_list();
 int ds_select_dst(struct sip_msg *msg, char *set, char *alg);
+int ds_select_new(struct sip_msg *msg, char *set, char *alg);
 
 #endif
 
