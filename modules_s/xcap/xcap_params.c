@@ -93,8 +93,8 @@ int fill_xcap_params_impl(struct sip_msg *m, xcap_query_params_t *params)
 		params->xcap_root.len = strlen(xcap_root);
 	}
 	
-	ERR("**** XCAP PARAMS: ****\n");
-	ERR("XCAP ROOT: %.*s\n", FMT_STR(params->xcap_root));
+/*	ERR("**** XCAP PARAMS: ****\n");
+	ERR("XCAP ROOT: %.*s\n", FMT_STR(params->xcap_root)); */
 	/*ERR"(XCAP FILE: %.*s\n", FMT_STR(params->xcap_file); */
 	return res;
 }

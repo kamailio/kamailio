@@ -104,6 +104,7 @@ char *winfo_auth_type_str = "implicit"; /* type of authorization */
 char *winfo_auth_xcap_root = NULL;	/* must be set if xcap authorization */
 auth_params_t pa_auth_params;	/* structure filled according to parameters */
 auth_params_t winfo_auth_params;	/* structure for watcherinfo filled according to parameters */
+str pres_rules_file = STR_NULL; /* filename for XCAP queries */
 
 int use_bsearch = 0;
 int use_location_package = 0;
@@ -165,6 +166,7 @@ static param_export_t params[]={
 	{"offline_winfo_timer", PARAM_INT, &offline_winfo_timer_interval }, /* basic ticks of "offline winfo" timer */
 
 	{"db_url",               PARAM_STR,    &db_url               },
+	{"pres_rules_file",      PARAM_STR,    &pres_rules_file },
 	
 	/* undocumented still (TODO) */
 	{"presentity_table",     PARAM_STRING, &presentity_table     },

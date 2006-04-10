@@ -1,3 +1,6 @@
+2006-04-10
+	* reduced trace logs
+
 2006-04-07
 	* using global variables instead of AVPs for modifying parameters like
 	XCAP_ROOT

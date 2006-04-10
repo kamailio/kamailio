@@ -33,7 +33,10 @@ static int xcap_get_pres_rules(str *uid,
 {
 	xcap_query_params_t xcap;
 	int res;
+	str *filename = NULL;
 	/* str u; */
+	
+	if (!is_str_empty(&pres_rules_file)) filename = &pres_rules_file;
 	
 	/* get only presentity name, not whole uri
 	 * can't use parse_uri because of absence 
@@ -43,7 +46,7 @@ static int xcap_get_pres_rules(str *uid,
 	memset(&xcap, 0, sizeof(xcap));
 	if (fill_xcap_params) fill_xcap_params(m, &xcap);
 	res = get_pres_rules(uid, 
-			NULL /*TODO: set filename from script */, 
+			filename, 
 			&xcap, dst);
 	return res;
 }

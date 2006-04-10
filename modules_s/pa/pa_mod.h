@@ -76,6 +76,7 @@ extern int use_callbacks;
 extern int use_offline_winfo;
 extern char *offline_winfo_table;
 
+extern str pres_rules_file; /* filename for XCAP queries */
 /*
  * compare two str's
  */
