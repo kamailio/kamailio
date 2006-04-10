@@ -825,7 +825,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 	} else {
 #ifdef ENABLE_USER_CHECK
 		if (is_myself(&_m->parsed_uri.user, &_m->parsed_uri.host,
-		&_m->parsed_uri.port_no)) {
+		_m->parsed_uri.port_no)) {
 #else
 		if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no)) {
 #endif
