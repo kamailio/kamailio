@@ -196,9 +196,9 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		}
 	}
 
-	/* optimize asn keep the attribute name as str also to
+	/* optimize and keep the attribute name as str also to
 	 * speed up db querie builds */
-	if (!(dbp->a.opd&AVPOPS_VAL_PVAR))
+	if (!(dbp->a.opd&AVPOPS_VAL_PVAR) && !(dbp->a.opd&AVPOPS_VAL_NONE))
 	{
 		if (dbp->a.opd&AVPOPS_VAL_STR)
 		{
