@@ -366,6 +366,6 @@ rpc_export_t ul_rpc[] = {
 	{"usrloc.dump",            rpc_dump,            rpc_dump_doc,           0},
 	{"usrloc.flush",           rpc_flush,           rpc_flush_doc,          0},
 	{"usrloc.add_contact",     rpc_add_contact,     rpc_add_contact_doc,    0},
-	{"usrloc.show_contacts",   rpc_show_contacts,   rpc_show_contacts_doc,  0},
+	{"usrloc.show_contacts",   rpc_show_contacts,   rpc_show_contacts_doc,  RET_ARRAY},
 	{0, 0, 0, 0}
 };
