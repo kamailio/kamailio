@@ -36,20 +36,19 @@ extern "C" {
 
 /* If a notifier publishing watched state registeres after subscibe
  * call, it receives the subscription automaticaly too! */
-/*subscription_t *subscribe(notifier_domain_t *domain, 
-		subscription_t *params);*/
-subscription_t *subscribe(notifier_domain_t *domain, 
+/*qsa_subscription_t *subscribe(notifier_domain_t *domain, 
+		qsa_subscription_t *params);*/
+qsa_subscription_t *subscribe(notifier_domain_t *domain, 
 		str_t *package,
-		str_t *record_id,
-		str_t *subscriber_id,
-		msg_queue_t *dst,
-		void *subscriber_data);
+		qsa_subscription_data_t *data);
 
 /** Destroys an existing subscription */
-void unsubscribe(notifier_domain_t *domain, subscription_t *s);
+void unsubscribe(notifier_domain_t *domain, qsa_subscription_t *s);
 
-void set_subscriber_data(subscription_t *s, void *data);
-void *get_subscriber_data(subscription_t *s);
+void set_subscriber_data(qsa_subscription_t *s, void *data);
+void *get_subscriber_data(qsa_subscription_t *s);
+
+void clear_subscription_data(qsa_subscription_data_t *data);
 	
 #ifdef __cplusplus
 }

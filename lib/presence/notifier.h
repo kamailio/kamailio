@@ -51,13 +51,13 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info);
  *
  * Note: only for asynchonously processed subscriptions (synchronous 
  * don't need it) */
-void accept_subscription(subscription_t *s);
+void accept_subscription(qsa_subscription_t *s);
 
 /** releases accepted subscription - MUST be called on all accepted 
  * subscriptions (only on them!) to be freed from memory !
  * Note: only for asynchonously processed subscriptions (synchronous 
  * don't need it) */
-void release_subscription(subscription_t *s);
+void release_subscription(qsa_subscription_t *s);
 
 /** This structure is sent via message queue
  * to client. It must contain all information
@@ -72,7 +72,7 @@ typedef enum {
 
 typedef struct {
 	/* replacement for record_id, package, ... it is much more efficient */
-	subscription_t *subscription; 
+	qsa_subscription_t *subscription; 
 	qsa_content_type_t *content_type;
 	void *data;
 	int data_len;
@@ -83,11 +83,23 @@ typedef struct {
 void free_client_notify_info_content(client_notify_info_t *info);
 
 /* notifications SHOULD be sent through this method */
-int notify_subscriber(subscription_t *s, 
+int notify_subscriber(qsa_subscription_t *s, 
 		notifier_t *n,
 		qsa_content_type_t *content_type, 
 		void *data, 
 		qsa_subscription_status_t status);
+
+/* this can be called in notifier and the returned value is valid
+ * before finishes "unsubscribe" processing */
+str_t *get_subscriber_id(qsa_subscription_t *s);
+
+/* this can be called in notifier and the returned value is valid
+ * before finishes "unsubscribe" processing */
+str_t *get_record_id(qsa_subscription_t *s);
+
+/* this can be called in notifier and the returned value is valid
+ * before finishes "unsubscribe" processing */
+void *get_subscriber_data(qsa_subscription_t *s);
 
 #ifdef __cplusplus
 }

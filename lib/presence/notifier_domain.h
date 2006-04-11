@@ -29,15 +29,15 @@
 #include <cds/sstr.h>
 #include <cds/ptr_vector.h>
 #include <cds/sync.h>
-#include <cds/msg_queue.h>
-#include <cds/ref_cntr.h>
+
+#include <presence/qsa_params.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct _subscription_t;
-typedef struct _subscription_t subscription_t;
+struct _qsa_subscription_t;
+typedef struct _qsa_subscription_t qsa_subscription_t;
 struct _notifier_package_t;
 typedef struct _notifier_package_t notifier_package_t;
 struct _notifier_t;
@@ -45,26 +45,35 @@ typedef struct _notifier_t notifier_t;
 struct _notifier_domain_t;
 typedef struct _notifier_domain_t notifier_domain_t;
 
-/* typedef void (*client_notify_func)(client_notify_info_t *info); */
+/* data hold by subscriber for the time of subscription duration 
+ * (from subscribe to unsubscribe; after calling unsubscribe can
+ * be destroyed contents of them) */
+typedef struct _qsa_subscription_data_t {
+	msg_queue_t *dst;
+	str_t record_id;
+	str_t subscriber_id;
+	qsa_subscription_params_t *first_param;
+	void *subscriber_data;
+} qsa_subscription_data_t;
 
 /** Internal structure holding informations about
  * created client subscriptions.
  */
-struct _subscription_t {
+struct _qsa_subscription_t {
 	/* client_notify_func notify; */
 	cds_mutex_t *mutex;
-	msg_queue_t *dst;
-	str_t record_id;
-	str_t subscriber_id;
 	notifier_package_t *package;
-	void *subscriber_data;
-	struct _subscription_t *prev, *next;
+	int allow_notifications;
+	qsa_subscription_data_t *data;
+	struct _qsa_subscription_t *prev, *next;
 	reference_counter_data_t ref;
 };
 
-typedef int (*server_subscribe_func)(notifier_t *n, subscription_t *subscription);
+/* typedef void (*client_notify_func)(client_notify_info_t *info); */
 
-typedef void (*server_unsubscribe_func)(notifier_t *n, subscription_t *subscription);
+typedef int (*server_subscribe_func)(notifier_t *n, qsa_subscription_t *subscription);
+
+typedef void (*server_unsubscribe_func)(notifier_t *n, qsa_subscription_t *subscription);
 
 typedef struct _qsa_content_type_t {
 	struct _qsa_content_type_t *next, *prev;
@@ -87,7 +96,7 @@ struct _notifier_package_t {
 	/* maybe: serialize and deserialize methods */
 	notifier_domain_t *domain;
 	notifier_t *first_notifier, *last_notifier; /* notifiers are linked in theirs package! */
-	subscription_t *first_subscription, *last_subscription;
+	qsa_subscription_t *first_subscription, *last_subscription;
 	notifier_package_t *next, *prev;
 };
 

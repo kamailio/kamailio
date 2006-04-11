@@ -36,19 +36,19 @@
 /*#define lock_subscription_data(s) if (s->mutex) cds_mutex_lock(s->mutex);
 #define unlock_subscription_data(s) if (s->mutex) cds_mutex_unlock(s->mutex);*/
 
-static void lock_subscription_data(subscription_t *s)
+static void lock_subscription_data(qsa_subscription_t *s)
 {
 	/* is function due to debugging */
 	if (s->mutex) cds_mutex_lock(s->mutex);
 }
 
-static void unlock_subscription_data(subscription_t *s) {
+static void unlock_subscription_data(qsa_subscription_t *s) {
 	/* is function due to debugging */
 	if (s->mutex) cds_mutex_unlock(s->mutex);
 }
 
 static void free_notifier(notifier_t *info);
-static void free_subscription(subscription_t *s);
+static void free_subscription(qsa_subscription_t *s);
 
 /* -------- package functions -------- */
 
@@ -109,7 +109,7 @@ static notifier_package_t *get_package(notifier_domain_t *d, const str_t *name)
 static void destroy_package(notifier_package_t *p) 
 {
 	/* notifier_t *e, *n; */
-	subscription_t *s, *ns;
+	qsa_subscription_t *s, *ns;
 	
 	/* release all subscriptions ???  */
 	s = p->first_subscription;
@@ -203,15 +203,13 @@ static void free_notifier(notifier_t *info)
 	cds_free(info);
 }
 
-static void free_subscription(subscription_t *s)
+static void free_subscription(qsa_subscription_t *s)
 {
-	DEBUG_LOG("freeing subscription to %.*s\n", FMT_STR(s->record_id));
-	str_free_content(&s->record_id);
-	str_free_content(&s->subscriber_id);
+	DEBUG_LOG("freeing subscription to %p\n", s);
 	cds_free(s);
 }
 
-/*static void add_server_subscription(notifier_t *n, subscription_t *s)
+/*static void add_server_subscription(notifier_t *n, qsa_subscription_t *s)
 {
 	server_subscription_t server_s;
 	
@@ -223,7 +221,7 @@ static void free_subscription(subscription_t *s)
 	else ERROR_LOG("subscription not accepted by notifier %p\n", n);
 }
 			
-static void remove_notifier_from_subscription(subscription_t *s, notifier_t *n)
+static void remove_notifier_from_subscription(qsa_subscription_t *s, notifier_t *n)
 {
 	int cnt,i;
 
@@ -314,7 +312,7 @@ notifier_t *register_notifier(
 {
 	notifier_t *info;
 	notifier_package_t *p;
-	subscription_t *s;
+	qsa_subscription_t *s;
 
 	lock_notifier_domain(domain);
 	p = get_package(domain, package);
@@ -362,7 +360,7 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info)
 		/* accepted subscriptions MUST be removed by the notifier 
 		 * how to solve this ? */
 		
-		/* subscription_t *s;
+		/* qsa_subscription_t *s;
 		s = p->first_subscription;
 		while (s) {
 			CAN NOT be called !!!!! info->unsubscribe(info, s);
@@ -380,28 +378,24 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info)
 
 /* If a notifier publishing watched state registeres after subscibe
  * call, it receives the subscription automaticaly too! */
-subscription_t *subscribe(notifier_domain_t *domain, 
+qsa_subscription_t *subscribe(notifier_domain_t *domain, 
 		str_t *package,
-		str_t *record_id,
-		str_t *subscriber_id,
-		msg_queue_t *dst,
-		void *subscriber_data)
+		qsa_subscription_data_t *data)
 {
-	subscription_t *s;
+	qsa_subscription_t *s;
 	notifier_t *e;
 	notifier_package_t *p;
 	int cnt = 0;
-	int res;
 
 	lock_notifier_domain(domain);
 	p = get_package(domain, package);
 	if (!p) {
-		ERROR_LOG("can't find package for subscription\n");
+		ERROR_LOG("can't find/add package for subscription\n");
 		unlock_notifier_domain(domain);
 		return NULL;
 	}
 	
-	s = cds_malloc(sizeof(subscription_t));
+	s = cds_malloc(sizeof(qsa_subscription_t));
 	if (!s) {
 		ERROR_LOG("can't allocate memory\n");
 		unlock_notifier_domain(domain);
@@ -409,20 +403,9 @@ subscription_t *subscribe(notifier_domain_t *domain,
 	}
 
 	s->package = p;
-	s->dst = dst;
 	s->mutex = &domain->data_mutex;
-	s->subscriber_data = subscriber_data;
-	res = str_dup(&s->record_id, record_id);
-	if (res == 0) res = str_dup(&s->subscriber_id, subscriber_id);
-	else str_clear(&s->subscriber_id);
-	if (res != 0) {
-		str_free_content(&s->record_id);
-		str_free_content(&s->subscriber_id);
-		cds_free(s);
-		ERROR_LOG("can't allocate memory\n");
-		unlock_notifier_domain(domain);
-		return NULL;
-	}
+	s->data = data;
+	s->allow_notifications = 1;
 	init_reference_counter(&s->ref);
 
 	DOUBLE_LINKED_LIST_ADD(p->first_subscription, p->last_subscription, s);
@@ -447,27 +430,27 @@ subscription_t *subscribe(notifier_domain_t *domain,
 	return s;
 }
 	
-void release_subscription(subscription_t *s)
+void release_subscription(qsa_subscription_t *s)
 {
 	if (!s) return;
 	if (remove_reference(&s->ref)) free_subscription(s);
 }
 
-void accept_subscription(subscription_t *s)
+void accept_subscription(qsa_subscription_t *s)
 {
 	if (!s) return;
 	add_reference(&s->ref);
 }
 
 /** Destroys an existing subscription - can be called ONLY by client !!! */
-void unsubscribe(notifier_domain_t *domain, subscription_t *s)
+void unsubscribe(notifier_domain_t *domain, qsa_subscription_t *s)
 {
 	notifier_package_t *p;
 	notifier_t *e;
 
 	/* mark subscription as un-notifyable */
 	lock_subscription_data(s);
-	s->dst = NULL;
+	s->allow_notifications = 0;
 	unlock_subscription_data(s);
 
 	lock_notifier_domain(domain);
@@ -489,14 +472,19 @@ void unsubscribe(notifier_domain_t *domain, subscription_t *s)
 	
 	unlock_notifier_domain(domain);
 	
+	/* mark subscription data as invalid */
+	lock_subscription_data(s);
+	s->data = NULL;
+	unlock_subscription_data(s);
+	
 	/* remove clients reference (dont give references to client?) */
 	remove_reference(&s->ref);
 	
 	release_subscription(s); 
 }
 
-/* void notify_subscriber(subscription_t *s, mq_message_t *msg) */
-int notify_subscriber(subscription_t *s, 
+/* void notify_subscriber(qsa_subscription_t *s, mq_message_t *msg) */
+int notify_subscriber(qsa_subscription_t *s, 
 		notifier_t *n,
 		qsa_content_type_t *content_type, 
 		void *data, 
@@ -535,9 +523,11 @@ int notify_subscriber(subscription_t *s,
 		info->status = status;
 		
 		lock_subscription_data(s);
-		if (s->dst) {
-			if (push_message(s->dst, msg) < 0) ok = 0;
-			else sent = 1;
+		if ((s->allow_notifications) && (s->data)) {
+			if (s->data->dst) {
+				if (push_message(s->data->dst, msg) < 0) ok = 0;
+				else sent = 1;
+			}
 		}
 		unlock_subscription_data(s);
 	}
@@ -563,5 +553,37 @@ void free_client_notify_info_content(client_notify_info_t *info)
 		if (info->data) info->content_type->destroy_func(info->data);
 	}
 	else ERR("BUG: content-type not given! Possible memory leaks!\n");
+}
+
+/* this can be called in notifier and the returned value is valid
+ * before finishes "unsubscribe" processing */
+str_t *get_subscriber_id(qsa_subscription_t *s)
+{
+	if (!s) return NULL;
+	if (!s->data) return NULL;
+	return &s->data->subscriber_id;
+}
+
+/* this can be called in notifier and the returned value is valid
+ * before finishes "unsubscribe" processing */
+str_t *get_record_id(qsa_subscription_t *s)
+{
+	if (!s) return NULL;
+	if (!s->data) return NULL;
+	return &s->data->record_id;
+}
+
+/* this can be called in notifier and the returned value is valid
+ * before finishes "unsubscribe" processing */
+void *get_subscriber_data(qsa_subscription_t *s)
+{
+	if (!s) return NULL;
+	if (!s->data) return NULL;
+	return s->data->subscriber_data;
+}
+
+void clear_subscription_data(qsa_subscription_data_t *data)
+{
+	if (data) memset(data, 0, sizeof(*data));
 }
 
