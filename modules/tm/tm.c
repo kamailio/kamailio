@@ -354,7 +354,7 @@ static int fixup_t_reply(void** param, int param_no)
 	} else if (param_no == 2) {
 		ret = fix_param(FPARAM_AVP, param);
 		if (ret <= 0) return ret;
-		return fix_param(FPARAM_ASCIIZ, param);
+		return fix_param(FPARAM_STRING, param);
 	}
     return 0;
 }
@@ -439,7 +439,7 @@ static int fixup_proto_hostport2proxy(void** param, int param_no) {
                 ret = fix_param(FPARAM_INT, param);
 		if (ret <= 0) return ret;
 	} */
-	return fix_param(FPARAM_ASCIIZ, param);
+	return fix_param(FPARAM_STRING, param);
 }
 
 
@@ -665,7 +665,7 @@ inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par)
 	case FPARAM_INT:
 		proto = ((fparam_t *)proto_par)->v.i;
 		break;
-	case FPARAM_ASCIIZ:
+	case FPARAM_STRING:
 		proto = str2proto( ((fparam_t *)proto_par)->v.asciiz, strlen(((fparam_t *)proto_par)->v.asciiz));
 		break;
 	default:
@@ -688,7 +688,7 @@ inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par)
 		}
 		break;
 
-	case FPARAM_ASCIIZ:
+	case FPARAM_STRING:
 		s.s = ((fparam_t *) addr_par)->v.asciiz;
 		s.len = strlen(s.s);
 		break;
@@ -835,7 +835,7 @@ static int get_param_val(int* code, char** reason, fparam_t* c, fparam_t* r) {
 		}
 		break;
 
-	case FPARAM_ASCIIZ:
+	case FPARAM_STRING:
 		*reason = r->v.asciiz;
 		break;
 
@@ -1121,7 +1121,7 @@ int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
 	c.orig = NULL; /* ? */
 	c.v.i = code;
 	
-	r.type = FPARAM_ASCIIZ;
+	r.type = FPARAM_STRING;
 	r.orig = NULL; /* ? */
 	r.v.asciiz = txt;
 

@@ -112,7 +112,7 @@ struct param_export_ {
 
 enum {
 	FPARAM_UNSPEC = 0,
-	FPARAM_ASCIIZ = (1 << 0),
+	FPARAM_STRING = (1 << 0),
 	FPARAM_STR    = (1 << 1),
 	FPARAM_INT    = (1 << 2),
 	FPARAM_REGEX  = (1 << 3),

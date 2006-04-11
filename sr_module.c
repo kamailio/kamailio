@@ -750,7 +750,7 @@ int fix_param(int type, void** param)
 		ERR("fix_param: Invalid type value\n");
 		goto error;
 
-	case FPARAM_ASCIIZ:
+	case FPARAM_STRING:
 		p->v.asciiz = *param;
 		break;
 
