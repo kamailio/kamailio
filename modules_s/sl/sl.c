@@ -182,7 +182,7 @@ static int get_param_val(int* code, char** reason, fparam_t* c, fparam_t* r)
 		}
 		break;
 
-	case FPARAM_ASCIIZ:
+	case FPARAM_STRING:
 		*reason = r->v.asciiz;
 		break;
 
@@ -227,7 +227,7 @@ static int fixup_sl_reply(void** param, int param_no)
 	} else if (param_no == 2) {
 		ret = fix_param(FPARAM_AVP, param);
 		if (ret <= 0) return ret;
-		return fix_param(FPARAM_ASCIIZ, param);
+		return fix_param(FPARAM_STRING, param);
 	}
 	return 0;
 }
