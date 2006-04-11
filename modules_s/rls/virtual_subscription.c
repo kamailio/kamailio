@@ -361,12 +361,18 @@ static int create_subscriptions(virtual_subscription_t *vs)
 		/* FIXME: rls_authorize_subscription(vs->local_subscription_list); */
 	}
 	else {
+		/* fill QSA subscription data */
+		clear_subscription_data(&vs->local_subscription_pres_data);
+		vs->local_subscription_pres_data.dst = &rls->notify_mq;
+		vs->local_subscription_pres_data.record_id = vs->uri;
 		subscriber = rls_get_subscriber(vs->subscription);
+		vs->local_subscription_pres_data.subscriber_data = vs;
+		if (subscriber) 
+			vs->local_subscription_pres_data.subscriber_id = *subscriber;
+
 		/* not RLS record -> do QSA subscription to given package */
 		vs->local_subscription_pres = subscribe(vsd->domain, 
-				package, 
-				&vs->uri, subscriber, 
-				&rls->notify_mq, vs);
+				package, &vs->local_subscription_pres_data);
 		if (!vs->local_subscription_pres) {
 			LOG(L_ERR, "can't create local subscription (pres)!\n");
 			return -1;
@@ -488,8 +494,9 @@ void vs_free(virtual_subscription_t *vs)
 			unsubscribe(vsd->domain, vs->local_subscription_pres);
 		if (vs->local_subscription_list) 
 			rls_remove(vs->local_subscription_list);
-		
-		destroy_vs_notifications(vs);
+	
+		/* remove notification messages for given subscription */
+		destroy_notifications(vs->local_subscription_pres);
 		
 		remove_from_vs_list(vs);
 		

@@ -58,7 +58,10 @@ static void rls_timer_cb(unsigned int ticks, void *param)
 		if (!msg) continue;
 		info = (client_notify_info_t *)msg->data;
 		if (info) {
-			vs = (virtual_subscription_t *)info->subscription->subscriber_data;
+			vs = (virtual_subscription_t *)get_subscriber_data(info->subscription);
+			if (!vs) {
+				ERR("BUG: empty QSA subscription parameter (vs)\n");
+			}
 			process_rls_notification(vs, info);
 			cnt++;
 		}
@@ -83,7 +86,7 @@ static void rls_timer_cb(unsigned int ticks, void *param)
 	rls_unlock();
 	stop = time(NULL);
 
-	if (stop - start > 1) WARN("rls_timer_cb took %d secs\n", (int) (stop - start));
+	if (stop - start > 0) WARN("rls_timer_cb took %d secs\n", (int) (stop - start));
 }
 
 
@@ -178,9 +181,9 @@ static int process_rls_messages()
 	return cnt;
 }*/
 
-void destroy_vs_notifications(virtual_subscription_t *vs)
+void destroy_notifications(qsa_subscription_t *s)
 {
-	/* removes all notifications for given VS from message queue 
+	/* removes all notifications for given qsa_subscription from message queue 
 	 * and discards them */
 	int cnt = 0;
 	int other_cnt = 0;
@@ -196,7 +199,7 @@ void destroy_vs_notifications(virtual_subscription_t *vs)
 		if (!msg) continue;
 		info = (client_notify_info_t *)msg->data;
 		if (info) {
-			if (vs == info->subscription->subscriber_data) {
+			if (s == info->subscription) {
 				cnt++;
 				free_message(msg);
 			}

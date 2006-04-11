@@ -15,7 +15,9 @@ typedef struct {
 extern rls_data_t *rls;
 extern subscription_manager_t *rls_manager;
 
-void destroy_vs_notifications(virtual_subscription_t *vs);
+/* removes all notifications for given qsa_subscription from message queue 
+ * and discards them */
+void destroy_notifications(qsa_subscription_t *s);
 
 int rls_init();
 int rls_destroy();

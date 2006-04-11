@@ -143,7 +143,7 @@ typedef enum pflag {
 typedef struct _internal_pa_subscription_t {
 	struct _internal_pa_subscription_t *prev, *next;
 	watcher_status_t status;
-	subscription_t *subscription;
+	qsa_subscription_t *subscription;
 	/* msg_queue_t *dst;
 	 * str_t package; 
 	 * str_t watcher_uri; */

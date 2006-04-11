@@ -77,7 +77,7 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	iw = p->first_qsa_subscription;
 	while (iw) {
 		rpc->printf(c, "     %.*s %d", 
-				FMT_STR(iw->subscription->subscriber_id), (int)iw->status);
+				FMT_STR(*get_subscriber_id(iw->subscription)), (int)iw->status);
 		rpc_lf(rpc, c);
 		iw = iw->next;
 	}
@@ -210,7 +210,7 @@ static int grant_watchers(presentity_t *p, str *wuri)
 	
 	iw = p->first_qsa_subscription;
 	while (iw) {
-		if (str_case_equals(&iw->subscription->subscriber_id, wuri) == 0) 
+		if (str_case_equals(get_subscriber_id(iw->subscription), wuri) == 0) 
 			grant_internal_watcher(p, iw);
 		iw = iw->next;
 	}

@@ -1,3 +1,6 @@
+2006-04-11
+	* changed QSA (reduced memory allocations)
+
 2006-04-10
 	* changed QSA - corrected content-type propagation
 

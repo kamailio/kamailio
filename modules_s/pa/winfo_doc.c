@@ -40,7 +40,7 @@ static int doc_add_internal_watcher(dstring_t *buf, internal_pa_subscription_t *
 	dstr_append_zt(buf, tmp);
 	dstr_append_zt(buf, "\">");
 	
-	dstr_append_str(buf, &iw->subscription->subscriber_id);
+	dstr_append_str(buf, get_subscriber_id(iw->subscription));
 
 	dstr_append_zt(buf, "</watcher>\r\n");
 	return 0;

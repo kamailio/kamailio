@@ -151,7 +151,7 @@ watcher_status_t authorize_internal_watcher(presentity_t *p, internal_pa_subscri
 		case auth_none: return WS_ACTIVE;
 		case auth_implicit: return WS_PENDING;
 		case auth_xcap: return xcap_authorize(p, 
-								&is->subscription->subscriber_id,
+								get_subscriber_id(is->subscription),
 								&pa_auth_params, 
 								NULL /* => uses default XCAP values !!! */ );
 	}

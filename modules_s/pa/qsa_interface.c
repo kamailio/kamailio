@@ -19,8 +19,8 @@ static qsa_content_type_t *ct_presence_info = NULL;
 
 /* static str_t notifier_name = { s: "pa", len: 2 }; */
 
-static int pa_subscribe(notifier_t *n, subscription_t *subscription);
-static void pa_unsubscribe(notifier_t *n, subscription_t *subscription);
+static int pa_subscribe(notifier_t *n, qsa_subscription_t *subscription);
+static void pa_unsubscribe(notifier_t *n, qsa_subscription_t *subscription);
 
 extern dlist_t* root; /* ugly !!!!! */
 
@@ -96,7 +96,7 @@ static int add_internal_subscription(presentity_t *p, internal_pa_subscription_t
 	return 0;
 }
 
-internal_pa_subscription_t *create_internal_subscription(subscription_t *s)
+internal_pa_subscription_t *create_internal_subscription(qsa_subscription_t *s)
 {
 	internal_pa_subscription_t *ss = cds_malloc(sizeof(internal_pa_subscription_t));
 	if (!ss) return ss;
@@ -112,20 +112,27 @@ void free_internal_subscription(internal_pa_subscription_t *is)
 	if (is) cds_free(is);
 }
 		
-static int pa_subscribe(notifier_t *n, subscription_t *subscription)
+static int pa_subscribe(notifier_t *n, qsa_subscription_t *subscription)
 {
 	dlist_t *dl;
 	presentity_t *p = NULL;
 	internal_pa_subscription_t *ss;
 	str uid = STR_NULL;
+	str *record_id = NULL;
 	
 	if (!accept_internal_subscriptions) return 0; /* do not accept subscriptions */
 	
+	record_id = get_record_id(subscription);
+	if (!record_id) {
+		ERR("BUG: subscription to empty record\n");
+		return -1;
+	}
+	
 	DBG("SUBSCRIBE to PA for %.*s [%.*s]\n", 
-			FMT_STR(subscription->record_id),
+			FMT_STR(*record_id),
 			FMT_STR(subscription->package->name));
 
-	if (pres_uri2uid(&uid, &subscription->record_id) != 0) {
+	if (pres_uri2uid(&uid, record_id) != 0) {
 		/* can't convert uri to uid */
 		INFO("can't convert URI to UID for internal PA subscription\n");
 		return -1;
@@ -145,7 +152,7 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 		lock_pdomain(dl->d);	
 		if (find_presentity_uid(dl->d, &uid, &p) != 0) p = NULL;
 		if (!p) {
-			if (create_presentity_ex(dl->d, &subscription->record_id, &uid, &p) < 0) {
+			if (create_presentity_ex(dl->d, record_id, &uid, &p) < 0) {
 				ERR("can't create presentity\n");
 			}
 		}
@@ -166,13 +173,13 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 
 	str_free_content(&uid);
 	DBG("finished SUBSCRIBE to PA for %.*s [%.*s]\n", 
-			FMT_STR(subscription->record_id),
+			FMT_STR(*record_id),
 			FMT_STR(subscription->package->name));
 	
 	return 0;
 }
 
-static void remove_internal_subscription(presentity_t *p, subscription_t *s)
+static void remove_internal_subscription(presentity_t *p, qsa_subscription_t *s)
 {	
 	internal_pa_subscription_t *ss;
 	ss = p->first_qsa_subscription;
@@ -186,15 +193,22 @@ static void remove_internal_subscription(presentity_t *p, subscription_t *s)
 	}
 }
 
-static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
+static void pa_unsubscribe(notifier_t *n, qsa_subscription_t *subscription)
 {
 	dlist_t *dl;
 	presentity_t *p = NULL;
 	str uid = STR_NULL;
+	str *record_id = NULL;
 	
 	if (!accept_internal_subscriptions) return; /* do not accept subscriptions */
 	
-	if (pres_uri2uid(&uid, &subscription->record_id) != 0) {
+	record_id = get_record_id(subscription);
+	if (!record_id) {
+		ERR("BUG: unsubscription to empty record\n");
+		return;
+	}
+	
+	if (pres_uri2uid(&uid, record_id) != 0) {
 		/* can't convert uri to uid */
 		ERR("can't convert URI to UID for internal PA unsubscription\n");
 		return;

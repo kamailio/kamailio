@@ -15,7 +15,7 @@
 #include "../../parser/parse_content.h"
 
 /* typedef struct {
-	subscription_t *s;
+	qsa_subscription_t *s;
 	enum { internal_subscribe, internal_unsubscribe } action;
 } internal_subscription_msg_t;
 
@@ -45,7 +45,7 @@ str presence_headers = {s: "", len: 0 };
 
 typedef struct _events_subscription_t {
 	events_uac_t *uac; /* SIP subscription */
-	subscription_t *internal_subscription;
+	qsa_subscription_t *internal_subscription;
 	struct _events_subscription_t *next,  *prev;
 } events_subscription_t;
 
@@ -69,7 +69,7 @@ void unlock_events_qsa()
 
 /* ************** presence operations *************** */
 
-static events_subscription_t *find_presence_subscription(subscription_t *subscription)
+static events_subscription_t *find_presence_subscription(qsa_subscription_t *subscription)
 {
 	events_subscription_t *es;
 	
@@ -114,15 +114,14 @@ static void presence_notification_cb(events_uac_t *uac,
 		struct sip_msg *m, 
 		void *param)
 {
-	subscription_t *subscription = (subscription_t*)param;
+	qsa_subscription_t *subscription = (qsa_subscription_t*)param;
 	char *body = NULL;
 	int len = 0;
 	presentity_info_t *p = NULL;
 	qsa_subscription_status_t status = qsa_subscription_active;
 	
 	if (!subscription) return;
-	DBG("received notification for %.*s\n", 
-			FMT_STR(subscription->record_id));
+	DBG("received notification for %p\n", subscription);
 	
 	/* get body */
 	if (m) {
@@ -143,7 +142,7 @@ static void presence_notification_cb(events_uac_t *uac,
 			}
 		}
 		else DBG("received empty notification - s: %p, usr data: %p\n",
-				subscription, subscription->subscriber_data);
+				subscription, get_subscriber_data(subscription));
 	}
 	else {
 		/* notify about status */
@@ -171,7 +170,7 @@ static void presence_notification_cb(events_uac_t *uac,
 			ct_presence_info, p, status);
 }
 
-static events_subscription_t *create_presence_subscription(subscription_t *subscription)
+static events_subscription_t *create_presence_subscription(qsa_subscription_t *subscription)
 {
 	events_subscription_t *es;
 	
@@ -184,8 +183,8 @@ static events_subscription_t *create_presence_subscription(subscription_t *subsc
 	memset(es, 0, sizeof(*es));
 
 	es->internal_subscription = subscription;
-	es->uac = create_events_uac(&subscription->record_id, 
-			&subscription->subscriber_id, 
+	es->uac = create_events_uac(get_record_id(subscription), 
+			get_subscriber_id(subscription), 
 			&presence_events_package, 
 			presence_notification_cb, /* callback function */
 			subscription, /* parameter for callback */
@@ -225,15 +224,23 @@ static void destroy_presence_subscription(events_subscription_t *es)
 	mem_free(es);
 }
 
-static int presence_subscribe(notifier_t *n, subscription_t *subscription)
+static int presence_subscribe(notifier_t *n, qsa_subscription_t *subscription)
 {
 	events_subscription_t *es;
+	str *record_id = NULL;
 
 	if (!handle_presence_subscriptions) return 0;
 	
-	DBG("internal subscribe to presence_b2b for %.*s [%.*s]\n", 
-			FMT_STR(subscription->record_id),
-			FMT_STR(subscription->package->name));
+	record_id = get_record_id(subscription);
+	if (record_id) {
+		DBG("internal subscribe to presence_b2b for %.*s [%.*s]\n", 
+				FMT_STR(*record_id),
+				FMT_STR(subscription->package->name));
+	}
+	else {
+		ERR("BUG: subscription to empty record id\n");
+		return -1;
+	}
 
 	lock_events_qsa();
 	
@@ -257,15 +264,13 @@ static int presence_subscribe(notifier_t *n, subscription_t *subscription)
 	return 0;
 }
 
-static void presence_unsubscribe(notifier_t *n, subscription_t *subscription)
+static void presence_unsubscribe(notifier_t *n, qsa_subscription_t *subscription)
 {
 	events_subscription_t *es;
 	
 	if (!handle_presence_subscriptions) return;
 	
-	DBG("internal unsubscribe to presence_b2b for %.*s [%.*s]\n", 
-			FMT_STR(subscription->record_id),
-			FMT_STR(subscription->package->name));
+	DBG("internal unsubscribe to presence_b2b for %p\n", subscription);
 
 	lock_events_qsa();
 	
@@ -273,9 +278,7 @@ static void presence_unsubscribe(notifier_t *n, subscription_t *subscription)
 	es = find_presence_subscription(subscription);
 	if (!es) {
 		/* subscription doesn't exist */
-		INFO("unsubscribe to nonexisting ES %.*s, %.*s\n", 
-			FMT_STR(subscription->record_id),
-			FMT_STR(subscription->subscriber_id));
+		INFO("unsubscribe to nonexisting ES\n");
 		unlock_events_qsa();
 		return;
 	}
@@ -294,13 +297,13 @@ static void presence_unsubscribe(notifier_t *n, subscription_t *subscription)
 /************************************************************/
 /* initialization / destruction + helper functions for that */
 
-static unsigned int hash_events_subscription(subscription_t *s)
+static unsigned int hash_events_subscription(qsa_subscription_t *s)
 {
 	if (s) return rshash((char *)&s, sizeof(s));
 	else return 0;
 }
 
-static int cmp_events_subscription(subscription_t *a, subscription_t *b)
+static int cmp_events_subscription(qsa_subscription_t *a, qsa_subscription_t *b)
 {
 	if (a == b) return 0;
 	else return 1;

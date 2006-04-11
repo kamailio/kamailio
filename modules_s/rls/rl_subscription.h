@@ -39,8 +39,11 @@ typedef struct {
 } vs_display_name_t;
 
 typedef struct _virtual_subscription_t {
+	/* helper to reduce memory allocations */
+	qsa_subscription_data_t local_subscription_pres_data;
+	
 	/* local subscription data */
-	subscription_t *local_subscription_pres;
+	qsa_subscription_t *local_subscription_pres;
 	rl_subscription_t *local_subscription_list;
 	
 	vector_t display_names;
