@@ -7,7 +7,7 @@
 #include <xcap/msg_rules.h>
 
 static int xcap_get_msg_rules(str *uid, 
-		msg_rules_t **dst, char *xcap_root,
+		msg_rules_t **dst, str *filename,
 		struct sip_msg *m)
 {
 	xcap_query_params_t xcap;
@@ -19,14 +19,9 @@ static int xcap_get_msg_rules(str *uid,
 	 * of protocol specification ! */
 	/* if (get_user_from_uri(uri, &u) != 0) u = *uri; */
 
-	DBG("querying IM-authorization document from XCAP server: %s\n",
-			xcap_root);
-	
 	memset(&xcap, 0, sizeof(xcap));
 	if (fill_xcap_params) fill_xcap_params(m, &xcap);
-	res = get_msg_rules(uid, 
-			NULL /* TODO: filename */, 
-			&xcap, dst);
+	res = get_msg_rules(uid, filename, &xcap, dst);
 	return res;
 }
 
@@ -53,7 +48,7 @@ static int get_sender_uri(struct sip_msg* _m, str* uri)
 	return res;
 }
 
-int authorize_message(struct sip_msg* _m, char* _xcap_root, char*_st)
+int authorize_message(struct sip_msg* _m, char* _filename, char*_st)
 {
 	/* get and process XCAP authorization document */
 	/* may modify the message or its body */
@@ -62,6 +57,9 @@ int authorize_message(struct sip_msg* _m, char* _xcap_root, char*_st)
 	msg_rules_t *rules = NULL;
 	msg_handling_t mh = msg_handling_allow;
 	str sender_uri = STR_NULL;
+	str tmp = STR_NULL;
+	str *filename = NULL;
+	int len;
 	
 	get_sender_uri(_m, &sender_uri);
 	
@@ -71,7 +69,16 @@ int authorize_message(struct sip_msg* _m, char* _xcap_root, char*_st)
 		return 1;
 	}
 	
-	if (xcap_get_msg_rules(&uid, &rules, _xcap_root, _m) < 0) {
+	if (_filename) {
+		len =strlen(_filename);
+		if (len > 0) {
+			tmp.s = _filename;
+			tmp.len = len;
+			filename = &tmp;
+		}
+	}
+		
+	if (xcap_get_msg_rules(&uid, &rules, filename, _m) < 0) {
 		/* enabled */
 		DBG("get_msg_rules failed\n");
 		return 1;

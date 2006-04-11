@@ -3,6 +3,6 @@
 
 /* message processing */
 
-int authorize_message(struct sip_msg* _m, char* _xcap_root, char*);
+int authorize_message(struct sip_msg* _m, char* _filename, char*);
 
 #endif
