@@ -312,7 +312,10 @@ int load_domains(domain_t** dest)
 		domain.len = strlen(domain.s);
 		flags = val[2].val.int_val;
 
+		     /* Skip entries that are disabled/scheduled for removal */
 		if (flags & DB_DISABLED) continue;
+		     /* Skip entries that are for serweb/ser-ctl only */
+		if (!(flags & DB_LOAD_SER)) continue;
 		
 		DBG("domain:load_domains: Processing entry (%.*s, %.*s, %u)\n",
 		    did.len, ZSW(did.s),
