@@ -43,6 +43,7 @@ static param_export_t params[]={
 	{"default_expiration", PARAM_INT, &subscribe_time },
 	{"on_error_retry_time", PARAM_INT, &resubscribe_timeout_on_err },
 	{"presence_route", PARAM_STR, &presence_route },
+	{"additional_presence_headers", PARAM_STR, &presence_headers },
 	{"wait_for_term_notify", PARAM_INT, &waiting_for_notify_time },
 	{"resubscribe_delta", PARAM_INT, &resubscribe_delta },
 	{"min_resubscribe_time", PARAM_INT, &min_resubscribe_time },

@@ -40,6 +40,8 @@ static qsa_content_type_t *ct_presence_info = NULL;
 
 /* default route for presence UAC */
 str presence_route = {s: "", len: 0 };
+/* additional headers for presence subscriptions */
+str presence_headers = {s: "", len: 0 };
 
 typedef struct _events_subscription_t {
 	events_uac_t *uac; /* SIP subscription */
@@ -187,7 +189,7 @@ static events_subscription_t *create_presence_subscription(subscription_t *subsc
 			&presence_events_package, 
 			presence_notification_cb, /* callback function */
 			subscription, /* parameter for callback */
-			NULL, /* additional headers */
+			&presence_headers, /* additional headers */
 			&presence_route);
 	
 	if (!es->uac) {

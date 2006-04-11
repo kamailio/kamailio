@@ -8,5 +8,6 @@ void events_qsa_interface_destroy();
 
 /* default route for Events: presence */
 extern str presence_route;
+extern str presence_headers;
 
 #endif
