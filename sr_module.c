@@ -764,9 +764,9 @@ int fix_param(int type, void** param)
 		if (err == 0) {
 			p->v.i = num;
 		} else {
-			ERR("Bad number <%s>\n",
-			    (char*)(*param));
-			goto error;
+			     /* Not a number */
+			pkg_free(p);
+			return 1;
 		}
 		break;
 
