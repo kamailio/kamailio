@@ -112,7 +112,7 @@ struct receive_info{
 
 struct dest_info{
 	int proto;
-	int proto_reserved1; /* tcp stores the connection id here */ 
+	int id; /* tcp stores the connection id here */ 
 	union sockaddr_union to;
 	struct socket_info* send_sock;
 };

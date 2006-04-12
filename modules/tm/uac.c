@@ -235,7 +235,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	request->dst.to = to_su;
 	request->dst.send_sock = send_sock;
 	request->dst.proto = send_sock->proto;
-	request->dst.proto_reserved1 = 0;
+	request->dst.id = 0;
 
 	hi=dlg2hash(dialog);
 	LOCK_HASH(hi);

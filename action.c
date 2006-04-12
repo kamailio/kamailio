@@ -40,6 +40,7 @@
  *  2004-11-30  added FORCE_SEND_SOCKET_T (andrei)
  *  2005-12-12  return & drop/exit differentiation (andrei)
  *  2005-12-19  select framework (mma)
+ *  2006-04-12  updated *_send() calls to use a struct dest_info (andrei)
  */
 
 
@@ -95,8 +96,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 {
 	int ret;
 	int v;
-	union sockaddr_union* to;
-	struct socket_info* send_sock;
+	struct dest_info dst;
 	struct proxy_l* p;
 	char* tmp;
 	char *new_uri, *end, *crt;
@@ -222,7 +222,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}else if ((a->val[0].type==PROXY_ST) && (a->val[1].type==NUMBER_ST)){
 				if (proto==PROTO_NONE)
 					proto=msg->rcv.proto;
-				ret=forward_request(msg,(struct proxy_l*)a->val[0].u.data, proto);
+				ret=forward_request(msg, (struct proxy_l*)a->val[0].u.data,
+										proto);
 				if (ret>=0) ret=1;
 			}else{
 				LOG(L_CRIT, "BUG: do_action: bad forward() types %d, %d\n",
@@ -238,17 +239,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			to=(union sockaddr_union*)
-					pkg_malloc(sizeof(union sockaddr_union));
-			if (to==0){
-				LOG(L_ERR, "ERROR: do_action: "
-							"memory allocation failure\n");
-				ret=E_OUT_OF_MEM;
-				break;
-			}
-
 			p=(struct proxy_l*)a->val[0].u.data;
-
 			if (p->ok==0){
 				if (p->host.h_addr_list[p->addr_idx+1])
 					p->addr_idx++;
@@ -256,7 +247,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					p->addr_idx=0;
 				p->ok=1;
 			}
-			ret=hostent2su(	to, &p->host, p->addr_idx,
+			ret=hostent2su(&dst.to, &p->host, p->addr_idx,
 						(p->port)?p->port:SIP_PORT );
 			if (ret==0){
 				if (p_onsend){
@@ -270,9 +261,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 				p->tx_bytes+=len;
 				if (a->type==SEND_T){
 					/*udp*/
-					send_sock=get_send_socket(msg, to, PROTO_UDP);
-					if (send_sock!=0){
-						ret=udp_send(send_sock, tmp, len, to);
+					dst.proto=PROTO_UDP; /* not really needed for udp_send */
+					dst.send_sock=get_send_socket(msg, &dst.to, PROTO_UDP);
+					if (dst.send_sock!=0){
+						ret=udp_send(&dst, tmp, len);
 					}else{
 						ret=-1;
 					}
@@ -280,11 +272,12 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 					else{
 					/*tcp*/
-					ret=tcp_send(PROTO_TCP, tmp, len, to, 0);
+					dst.proto=PROTO_TCP;
+					dst.id=0;
+					ret=tcp_send(&dst, tmp, len);
 				}
 #endif
 			}
-			pkg_free(to);
 			if (ret<0){
 				p->errors++;
 				p->ok=0;

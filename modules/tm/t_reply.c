@@ -316,21 +316,20 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch
 static int send_local_ack(struct sip_msg* msg, str* next_hop,
 							char* ack, int ack_len)
 {
-	struct socket_info* send_sock;
-	union sockaddr_union to_su;
+	struct dest_info dst;
 
 	if (!next_hop) {
 		LOG(L_ERR, "send_local_ack: Invalid parameter value\n");
 		return -1;
 	}
 
-	send_sock = uri2sock(msg, next_hop, &to_su, PROTO_NONE);
-	if (!send_sock) {
+	dst.send_sock = uri2sock(msg, next_hop, &dst.to, PROTO_NONE);
+	if (!dst.send_sock) {
 		LOG(L_ERR, "send_local_ack: no socket found\n");
 		return -1;
 	}
-
-	return msg_send(send_sock, send_sock->proto, &to_su, 0, ack, ack_len);
+	dst.id=0;
+	return msg_send(&dst, ack, ack_len);
 }
 
 

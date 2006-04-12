@@ -36,6 +36,7 @@
  *              cleanups (andrei)
  *  2005-03-10  multicast options are now set for all the udp sockets (andrei)
  *  2005-06-26  failure to set mcast options is not an error anymore (andrei)
+ *  2006-04-12  udp_send() switched to struct dest_info (andrei)
  */
 
 
@@ -488,13 +489,15 @@ error:
 
 
 
-/* which socket to use? main socket or new one? */
-int udp_send(struct socket_info *source, char *buf, unsigned len,
-										union sockaddr_union*  to)
+/* send buf:len over udp to dst (uses only the to and send_sock dst members)
+ * returns the numbers of bytes sent on success (>=0) and -1 on error
+ */
+int udp_send(struct dest_info* dst, char *buf, unsigned len)
 {
 
 	int n;
 	int tolen;
+	struct ip_addr ip; /* used only on error, for debugging */
 
 #ifdef DBG_MSG_QA
 	/* aborts on error, does nothing otherwise */
@@ -504,15 +507,16 @@ int udp_send(struct socket_info *source, char *buf, unsigned len,
 	}
 #endif
 
-	tolen=sockaddru_len(*to);
+	tolen=sockaddru_len(dst->to);
 again:
-	n=sendto(source->socket, buf, len, 0, &to->s, tolen);
+	n=sendto(dst->send_sock->socket, buf, len, 0, &dst->to.s, tolen);
 #ifdef XL_DEBUG
 	LOG(L_INFO, "INFO: send status: %d\n", n);
 #endif
 	if (n==-1){
-		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%d,0,%p,%d): %s(%d)\n",
-				buf,len,to,tolen,
+		su2ip_addr(&ip, &dst->to);
+		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%d,0,%s:%d,%d): %s(%d)\n",
+				buf,len, ip_addr2a(&ip), su_getport(&dst->to), tolen,
 				strerror(errno),errno);
 		if (errno==EINTR) goto again;
 		if (errno==EINVAL) {

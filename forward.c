@@ -48,6 +48,7 @@
  *  2004-11-08  added force_send_socket support in get_send_socket (andrei)
  *  2005-12-11  onsend_router support; forward_request to no longer
  *              pkg_malloc'ed (andrei)
+ *  2006-04-12  forward_{request,reply} use now struct dest_info (andrei)
  */
 
 
@@ -260,17 +261,19 @@ found:
 
 
 
-int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
+/* parameters:
+ *   msg - sip msg
+ *   p   - proxy structure to forward to
+ *   proto - protocol used
+ */
+int forward_request(struct sip_msg* msg, struct proxy_l * p, int proto)
 {
 	unsigned int len;
 	char* buf;
-	union sockaddr_union to;
-	struct socket_info* send_sock;
 	char md5[MD5_LEN];
-	int id; /* used as branch for tcp! */
+	struct dest_info send_info;
 	
 	buf=0;
-	id=0;
 	
 	/* if error try next ip address if possible */
 	if (p->ok==0){
@@ -280,16 +283,20 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 		p->ok=1;
 	}
 	
-	hostent2su(&to, &p->host, p->addr_idx, 
+	hostent2su(&send_info.to, &p->host, p->addr_idx, 
 				(p->port)?p->port:SIP_PORT);
 	p->tx++;
 	p->tx_bytes+=len;
 	
-
-	send_sock=get_send_socket(msg, &to, proto);
-	if (send_sock==0){
+	
+	send_info.proto=proto;
+	send_info.id=0;
+	send_info.send_sock=get_send_socket(msg, &send_info.to,
+											send_info.proto);
+	if (send_info.send_sock==0){
 		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
-				"no corresponding listening socket\n", to.s.sa_family, proto);
+				"no corresponding listening socket\n",
+				send_info.to.s.sa_family, send_info.proto);
 		ser_error=E_NO_SOCKET;
 		goto error;
 	}
@@ -312,28 +319,30 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 			goto error;
 		}
 		msg->hash_index=hash( msg->callid->body, get_cseq(msg)->number);
-		if (!branch_builder( msg->hash_index, 0, md5, id /* 0-th branch */,
+		if (!branch_builder( msg->hash_index, 0, md5, 0 /* 0-th branch */,
 					msg->add_to_branch_s, &msg->add_to_branch_len )) {
 			LOG(L_ERR, "ERROR: forward_request: branch_builder failed\n");
 			goto error;
 		}
 	}
 
-	buf = build_req_buf_from_sip_req( msg, &len, send_sock,  proto);
+	buf = build_req_buf_from_sip_req(msg, &len, send_info.send_sock,
+											send_info.proto);
 	if (!buf){
 		LOG(L_ERR, "ERROR: forward_request: building failed\n");
 		goto error;
 	}
 	 /* send it! */
 	DBG("Sending:\n%.*s.\n", (int)len, buf);
-	DBG("orig. len=%d, new_len=%d, proto=%d\n", msg->len, len, proto );
+	DBG("orig. len=%d, new_len=%d, proto=%d\n",
+			msg->len, len, send_info.proto );
 	
-	if (run_onsend(msg, send_sock, proto, &to, buf, len)==0){
+	if (run_onsend(msg, &send_info, buf, len)==0){
 		LOG(L_INFO, "forward_request: request dropped (onsend_route)\n");
 		STATS_TX_DROPS;
 		goto error; /* error ? */
 	}
-	if (msg_send(send_sock, proto, &to, 0, buf, len)<0){
+	if (msg_send(&send_info, buf, len)<0){
 		ser_error=E_SEND;
 		p->errors++;
 		p->ok=0;
@@ -424,18 +433,15 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 int forward_reply(struct sip_msg* msg)
 {
 	char* new_buf;
-	union sockaddr_union* to;
+	struct dest_info dst;
 	unsigned int new_len;
 	struct sr_module *mod;
-	int proto;
-	unsigned int id; /* used only by tcp*/
 #ifdef USE_TCP
 	char* s;
 	int len;
 #endif
 	
-	to=0;
-	id=0;
+	dst.id=0;
 	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){
@@ -467,44 +473,37 @@ int forward_reply(struct sip_msg* msg)
 		goto error;
 	}
 
-	to=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
-	if (to==0){
-		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
-		goto error;
-	}
-
 	new_buf = build_res_buf_from_sip_res( msg, &new_len);
 	if (!new_buf){
 		LOG(L_ERR, "ERROR: forward_reply: building failed\n");
 		goto error;
 	}
 
-	proto=msg->via2->proto;
-	if (update_sock_struct_from_via( to, msg, msg->via2 )==-1) goto error;
+	dst.proto=msg->via2->proto;
+	if (update_sock_struct_from_via( &dst.to, msg, msg->via2 )==-1) goto error;
 
 
 #ifdef USE_TCP
-	if (proto==PROTO_TCP
+	if (dst.proto==PROTO_TCP
 #ifdef USE_TLS
-			|| proto==PROTO_TLS
+			|| dst.proto==PROTO_TLS
 #endif
 			){
 		/* find id in i param if it exists */
-		if (msg->via1->i&&msg->via1->i->value.s){
+		if (msg->via1->i && msg->via1->i->value.s){
 			s=msg->via1->i->value.s;
 			len=msg->via1->i->value.len;
 			DBG("forward_reply: i=%.*s\n",len, ZSW(s));
-			if (reverse_hex2int(s, len, &id)<0){
+			if (reverse_hex2int(s, len, (unsigned int*)&dst.id)<0){
 				LOG(L_ERR, "ERROR: forward_reply: bad via i param \"%.*s\"\n",
 						len, ZSW(s));
-					id=0;
+					dst.id=0;
 			}
-			DBG("forward_reply: id= %x\n", id);
 		}		
 				
 	} 
 #endif
-	if (msg_send(0, proto, to, (int)id, new_buf, new_len)<0) goto error;
+	if (msg_send(&dst, new_buf, new_len)<0) goto error;
 #ifdef STATS
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
@@ -514,11 +513,9 @@ int forward_reply(struct sip_msg* msg)
 			(unsigned short) msg->via2->port);
 
 	pkg_free(new_buf);
-	pkg_free(to);
 skip:
 	return 0;
 error:
 	if (new_buf) pkg_free(new_buf);
-	if (to) pkg_free(to);
 	return -1;
 }

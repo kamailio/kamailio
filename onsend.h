@@ -54,17 +54,16 @@ extern struct onsend_info* p_onsend;
 /*
  * returns: 0 drop the message, >= ok, <0 error (but forward the message)
  * WARNING: buf must be 0 terminated (to allow regex matches on it) */
-static inline int run_onsend(struct sip_msg* orig_msg,
-							struct socket_info* send_sock, int proto,
-							union sockaddr_union* to, char* buf, int len)
+static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
+								char* buf, int len)
 {
 	struct onsend_info onsnd_info;
 	int ret;
 	
 	ret=1;
 	if (onsend_rt.rlist[DEFAULT_RT]){
-		onsnd_info.to=to;
-		onsnd_info.send_sock=send_sock;
+		onsnd_info.to=&dst->to;
+		onsnd_info.send_sock=dst->send_sock;
 		onsnd_info.buf=buf;
 		onsnd_info.len=len;
 		p_onsend=&onsnd_info;

@@ -29,6 +29,7 @@
 #ifndef tcp_server_h
 #define tcp_server_h
 
+#include "ip_addr.h"
 
 
 /* "public" functions*/
@@ -36,8 +37,7 @@
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port, 
 									int timeout);
 void tcpconn_put(struct tcp_connection* c);
-int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
-			int id);
+int tcp_send(struct dest_info* dst, char* buf, unsigned len);
 
 int tcpconn_add_alias(int id, int port, int proto);
 

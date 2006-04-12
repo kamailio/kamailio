@@ -33,6 +33,8 @@
  *  2003-04-07 changed all ports to host byte order (andrei)
  *  2003-04-12  FORCE_RPORT_T added (andrei)
  *  2003-04-15  added tcp_disable support (andrei)
+ *  2006-04-12  reduced msg_send() parameter list: it uses now a struct 
+ *               dest_info param. (andrei)
  */
 
 
@@ -75,40 +77,41 @@ int forward_reply( struct sip_msg* msg);
 
 
 /* params:
- *  send_sock= 0 if already known (e.g. for udp in some cases), non-0 otherwise
- *  proto=TCP|UDP
- *  to = destination,
- *  id - only used on tcp, it will force sending on connection "id" if id!=0 
- *       and the connection exists, else it will send to "to" 
- *       (useful for sending replies on  the same connection as the request
- *       that generated them; use 0 if you don't want this)
+ * dst = struct dest_info containing:
+ *    send_sock = 0 if not known (e.g. for udp in some cases), non-0 otherwise
+ *    proto = TCP|UDP
+ *    to = destination (sockaddr_union)
+ *    id = only used on tcp, it will force sending on connection "id" if id!=0 
+ *         and the connection exists, else it will send to "to" 
+ *        (useful for sending replies on  the same connection as the request
+ *         that generated them; use 0 if you don't want this)
+ * buf, len = buffer
  * returns: 0 if ok, -1 on error*/
-static inline int msg_send(	struct socket_info* send_sock, int proto,
-							union sockaddr_union* to, int id,
-							char* buf, int len)
+static inline int msg_send(struct dest_info* dst, char* buf, int len)
 {
 	
-	if (proto==PROTO_UDP){
-		if (send_sock==0) send_sock=get_send_socket(0, to, proto);
-		if (send_sock==0){
+	if (dst->proto==PROTO_UDP){
+		if (dst->send_sock==0) 
+			dst->send_sock=get_send_socket(0, &dst->to, dst->proto);
+		if (dst->send_sock==0){
 			LOG(L_ERR, "msg_send: ERROR: no sending socket found\n");
 			goto error;
 		}
-		if (udp_send(send_sock, buf, len, to)==-1){
+		if (udp_send(dst, buf, len)==-1){
 			STATS_TX_DROPS;
 			LOG(L_ERR, "msg_send: ERROR: udp_send failed\n");
 			goto error;
 		}
 	}
 #ifdef USE_TCP
-	else if (proto==PROTO_TCP){
+	else if (dst->proto==PROTO_TCP){
 		if (tcp_disable){
 			STATS_TX_DROPS;
 			LOG(L_WARN, "msg_send: WARNING: attempt to send on tcp and tcp"
 					" support is disabled\n");
 			goto error;
 		}else{
-			if (tcp_send(proto, buf, len, to, id)<0){
+			if (tcp_send(dst, buf, len)<0){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
 				goto error;
@@ -116,14 +119,14 @@ static inline int msg_send(	struct socket_info* send_sock, int proto,
 		}
 	}
 #ifdef USE_TLS
-	else if (proto==PROTO_TLS){
+	else if (dst->proto==PROTO_TLS){
 		if (tls_disable){
 			STATS_TX_DROPS;
 			LOG(L_WARN, "msg_send: WARNING: attempt to send on tls and tls"
 					" support is disabled\n");
 			goto error;
 		}else{
-			if (tcp_send(proto, buf, len, to, id)<0){
+			if (tcp_send(dst, buf, len)<0){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
 				goto error;
@@ -133,7 +136,7 @@ static inline int msg_send(	struct socket_info* send_sock, int proto,
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 	else{
-			LOG(L_CRIT, "BUG: msg_send: unknown proto %d\n", proto);
+			LOG(L_CRIT, "BUG: msg_send: unknown proto %d\n", dst->proto);
 			goto error;
 	}
 	return 0;

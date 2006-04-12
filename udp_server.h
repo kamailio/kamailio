@@ -38,8 +38,7 @@
 
 
 int udp_init(struct socket_info* si);
-int udp_send(struct socket_info* source,char *buf, unsigned len,
-				union sockaddr_union*  to);
+int udp_send(struct dest_info* dst, char *buf, unsigned len);
 int udp_rcv_loop();
 
 

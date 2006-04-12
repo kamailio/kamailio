@@ -68,6 +68,7 @@
  *              EAGAIN; lots of bug fixes (andrei)
  *  2006-02-06  better tcp_max_connections checks, tcp_connections_no moved to
  *              shm (andrei)
+ *  2006-04-12  tcp_send() changed to use struct dest_info (andrei)
  */
 
 
@@ -730,10 +731,10 @@ void tcpconn_put(struct tcp_connection* c)
 
 
 /* finds a tcpconn & sends on it
+ * uses the dst members to, proto (TCP|TLS) and id
  * returns: number of bytes written (>=0) on success
  *          <0 on error */
-int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
-				int id)
+int tcp_send(struct dest_info* dst, char* buf, unsigned len)
 {
 	struct tcp_connection *c;
 	struct tcp_connection *tmp;
@@ -743,27 +744,26 @@ int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
 	long response[2];
 	int n;
 	
-	port=0;
-	if (to){
-		su2ip_addr(&ip, to);
-		port=su_getport(to);
-		c=tcpconn_get(id, &ip, port, tcp_con_lifetime); 
-	}else if (id){
-		c=tcpconn_get(id, 0, 0, tcp_con_lifetime);
+	port=su_getport(&dst->to);
+	if (port){
+		su2ip_addr(&ip, &dst->to);
+		c=tcpconn_get(dst->id, &ip, port, tcp_con_lifetime); 
+	}else if (dst->id){
+		c=tcpconn_get(dst->id, 0, 0, tcp_con_lifetime);
 	}else{
 		LOG(L_CRIT, "BUG: tcp_send called with null id & to\n");
 		return -1;
 	}
 	
-	if (id){
+	if (dst->id){
 		if (c==0) {
-			if (to){
+			if (port){
 				/* try again w/o id */
 				c=tcpconn_get(0, &ip, port, tcp_con_lifetime);
 				goto no_id;
 			}else{
 				LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
-						id);
+						dst->id);
 				return -1;
 			}
 		}else goto get_fd;
@@ -772,7 +772,7 @@ no_id:
 		if (c==0){
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
-			if ((c=tcpconn_connect(to, type))==0){
+			if ((c=tcpconn_connect(&dst->to, dst->proto))==0){
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;
 			}

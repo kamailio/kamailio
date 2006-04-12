@@ -82,8 +82,7 @@ int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
 					)
 {
 	if (buf && len && rb )
-		return msg_send( rb->dst.send_sock, rb->dst.proto, &rb->dst.to,
-				         rb->dst.proto_reserved1, buf, len);
+		return msg_send( &rb->dst, buf, len);
 	else {
 #ifdef EXTRA_DEBUG
 		LOG(L_CRIT, "ERROR: send_pr_buffer: sending an empty buffer"

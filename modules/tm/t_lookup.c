@@ -1002,7 +1002,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 		proto=via->proto;
 	}
 	rb->dst.proto=proto;
-	rb->dst.proto_reserved1=msg->rcv.proto_reserved1;
+	rb->dst.id=msg->rcv.proto_reserved1;
 	/* turn off mhomed for generating replies -- they are ideally sent to where
 	   request came from to make life with NATs and other beasts easier
 	*/

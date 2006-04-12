@@ -293,7 +293,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	t->uac[branch].request.dst.to=to;
 	t->uac[branch].request.dst.send_sock=send_sock;
 	t->uac[branch].request.dst.proto=proto;
-	t->uac[branch].request.dst.proto_reserved1=0;
+	t->uac[branch].request.dst.id=0;
 	t->uac[branch].request.buffer=shbuf;
 	t->uac[branch].request.buffer_len=len;
 	t->uac[branch].uri.s=t->uac[branch].request.buffer+
@@ -571,9 +571,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	success_branch=0;
 	for (i=first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
-			if (run_onsend(p_msg,	t->uac[i].request.dst.send_sock,
-									t->uac[i].request.dst.proto,
-									&t->uac[i].request.dst.to,
+			if (run_onsend(p_msg,	&t->uac[i].request.dst,
 									t->uac[i].request.buffer,
 									t->uac[i].request.buffer_len)==0)
 				continue; /* if onsend drop, try next branch */
