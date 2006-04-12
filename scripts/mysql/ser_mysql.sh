@@ -88,7 +88,7 @@ db_save()
 	echo "ERROR: Bug in $COMMAND"
 	exit 1
     fi
-    $DUMP_CMD -t $PW $1 > $2
+    $DUMP_CMD $PW $1 > $2
 }
 
 
