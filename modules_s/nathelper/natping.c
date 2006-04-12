@@ -99,9 +99,8 @@ natping(unsigned int ticks, void *param)
 	void *buf, *cp;
 	str c;
 	struct sip_uri curi;
-	union sockaddr_union to;
 	struct hostent* he;
-	struct socket_info* send_sock;
+	struct dest_info dst;
 	str p_method, p_from;
 
 	buf = NULL;
@@ -139,8 +138,8 @@ natping(unsigned int ticks, void *param)
 			break;
 		c.s = (char *)cp + sizeof(c.len);
 		cp =  (char *)cp + sizeof(c.len) + c.len;
-		memcpy(&send_sock, cp, sizeof(send_sock));
-		cp += sizeof(send_sock);
+		memcpy(&dst.send_sock, cp, sizeof(dst.send_sock));
+		cp += sizeof(dst.send_sock);
 
 		if (natping_method != NULL) {
 			/* XXX: add send_sock handling */
@@ -166,16 +165,17 @@ natping(unsigned int ticks, void *param)
 				LOG(L_ERR, "ERROR: nathelper::natping: can't resolve host\n");
 				continue;
 			}
-			hostent2su(&to, he, 0, curi.port_no);
-			if (send_sock == NULL) {
-				send_sock = force_socket ? force_socket :
-					get_send_socket(0, &to, PROTO_UDP);
+			hostent2su(&dst.to, he, 0, curi.port_no);
+			if (dst.send_sock == NULL) {
+				dst.send_sock = force_socket ? force_socket :
+					get_send_socket(0, &dst.to, PROTO_UDP);
 			}
-			if (send_sock == NULL) {
+			if (dst.send_sock == NULL) {
 				LOG(L_ERR, "ERROR: nathelper::natping: can't get sending socket\n");
 				continue;
 			}
-			udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to);
+			dst.proto=PROTO_UDP;
+			udp_send(&dst, (char *)sbuf, sizeof(sbuf));
 		}
 	}
 	pkg_free(buf);

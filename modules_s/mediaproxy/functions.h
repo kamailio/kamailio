@@ -31,9 +31,8 @@ pingClients(unsigned int ticks, void *param)
 {
     static char pingbuf[4] = "\0\0\0\0";
     static int length = 256;
-    struct socket_info* sock;
     struct hostent* hostent;
-    union sockaddr_union to;
+    struct dest_info dst;
     struct sip_uri uri;
     void *buf, *ptr;
     str contact;
@@ -72,8 +71,8 @@ pingClients(unsigned int ticks, void *param)
             break;
         contact.s = (char*)ptr + sizeof(contact.len);
         ptr = contact.s + contact.len;
-	memcpy(&sock, ptr, sizeof(sock));
-	ptr += sizeof(sock);
+	memcpy(&dst.send_sock, ptr, sizeof(dst.send_sock));
+	ptr += sizeof(dst.send_sock);
         if (parse_uri(contact.s, contact.len, &uri) < 0) {
             LOG(L_ERR, "error: mediaproxy/pingClients(): can't parse contact uri\n");
             continue;
@@ -87,16 +86,17 @@ pingClients(unsigned int ticks, void *param)
             LOG(L_ERR, "error: mediaproxy/pingClients(): can't resolve host\n");
             continue;
         }
-        hostent2su(&to, hostent, 0, uri.port_no);
-	if (sock==0) {
- 		sock = get_send_socket(0, &to, PROTO_UDP);
-        	if (sock == NULL) {
+        hostent2su(&dst.to, hostent, 0, uri.port_no);
+	if (dst.send_sock==0) {
+ 		dst.send_sock = get_send_socket(0, &dst.to, PROTO_UDP);
+        	if (dst.send_sock == NULL) {
 			LOG(L_ERR, "error: mediaproxy/pingClients(): can't get "
 			    "sending socket\n");
 			continue;
 		}
         }
-        udp_send(sock, pingbuf, sizeof(pingbuf), &to);
+		dst.proto=PROTO_UDP;
+        udp_send(&dst, pingbuf, sizeof(pingbuf));
     }
     pkg_free(buf);
 }
