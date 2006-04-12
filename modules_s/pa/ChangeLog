@@ -1,3 +1,6 @@
+2006-04-12
+	* added missing parsing From header into message authorization function
+
 2006-04-11
 	* changed QSA (reduced memory allocations)
 	* changed parameter of "authorize_message" function (filename with

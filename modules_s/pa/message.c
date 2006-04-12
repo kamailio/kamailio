@@ -30,6 +30,11 @@ static int get_sender_uri(struct sip_msg* _m, str* uri)
 	struct sip_uri puri;
 	int res = 0;
 	
+	if (parse_headers(_m, HDR_FROM_F, 0) < 0) {
+		ERR("Error while parsing headers\n");
+		return -1;
+	}
+	
 	uri->s = get_from(_m)->uri.s;
 	uri->len = get_from(_m)->uri.len;
 
