@@ -29,7 +29,7 @@
  *
  * History:
  * -------
- * 2003-03-21  save_noreply added, provided by Maxim Sobolev <sobomax@portaone.com> (janakj)
+ * 2003-03-21  save_noreply added, provided by Maxim Sobolev <sobomax@sippysoft.com> (janakj)
  */
 
 

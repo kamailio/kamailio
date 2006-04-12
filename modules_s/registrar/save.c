@@ -31,7 +31,7 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-02-28 scrathcpad compatibility abandoned (jiri)
  * 2003-03-21 save_noreply added, patch provided by 
- *            Maxim Sobolev <sobomax@portaone.com> (janakj)
+ *            Maxim Sobolev <sobomax@sippysoft.com> (janakj)
  * 2005-02-25 incoming socket is saved in USRLOC (bogdan)
  */
 
