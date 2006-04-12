@@ -176,14 +176,10 @@ install: build
 	# Install serctl only
 	cd $(SERCTL_PATH); \
 	$(MAKE) install \
-		usr_prefix=$(CURDIR)/debian/ser-ctl/usr \
-		var_prefix=$(CURDIR)/debian/ser-ctl/var \
-		sysconfdir=$(CURDIR)/debian/ser-ctl/etc \
-		bindir=$(CURDIR)/debian/ser-ctl/usr/bin \
-		libexecdir=$(CURDIR)/debian/ser-ctl/usr/lib \
-		datadir=$(CURDIR)/debian/ser-ctl/usr/share \
-		docdir=$(CURDIR)/debian/ser-ctl/usr/share/doc \
-		prefix=/usr
+		prefix=$(CURDIR)/debian/ser-ctl \
+		'usr_prefix=$$(prefix)/usr' \
+		'var_prefix=$$(prefix)/var' \
+		'DOC_DIR=$$(docdir)/ser-ctl'
 	#dh_movefiles
 
 
