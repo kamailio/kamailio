@@ -692,7 +692,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
 					&next_hop, /* next hop */
 					m_tm_callback,    /* Callback function */
-					(void*)mid        /* Callback parameter */
+					(void*)(long)mid        /* Callback parameter */
 				);
 	}
 
@@ -793,7 +793,7 @@ void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		DBG("MSILO m_tm_callback: message id not received\n");
 		goto done;
 	}
-	mid = (int)(*ps->param);
+	mid = (int)(long)(*ps->param);
 	if(!db_con)
 	{
 		DBG("MSILO:m_tm_callback: db_con is NULL\n");
