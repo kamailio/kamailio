@@ -73,7 +73,7 @@
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("module", "contact_flds_separator", "-")
+modparam("mangler", "contact_flds_separator", "-")
 ...
 </programlisting>
 		</example>

@@ -87,7 +87,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set db_url parameter
 ...
-modparam("module", "contact_flds_separator", "-")
+modparam("mangler", "contact_flds_separator", "-")
 ...
 
    then an encoded uri might look
@@ -245,4 +245,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.
