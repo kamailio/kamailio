@@ -1,3 +1,7 @@
+2006-04-13
+	* added parameters subscribe_to_users and pa_subscription_uri (prepared
+	for subscriptions to clients)
+
 2006-04-12
 	* added missing parsing From header into message authorization function
 

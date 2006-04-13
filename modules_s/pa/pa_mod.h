@@ -73,6 +73,8 @@ extern auth_params_t pa_auth_params;
 extern auth_params_t winfo_auth_params;
 extern int watcherinfo_notify;
 extern int use_callbacks;
+extern int subscribe_to_users;
+extern str pa_subscription_uri;
 extern int use_offline_winfo;
 extern char *offline_winfo_table;
 

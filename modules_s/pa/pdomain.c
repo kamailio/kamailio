@@ -234,6 +234,10 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 		DBG("! registering callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
 		_d->reg(&_p->uri, &_p->uuid, (void*)callback, _p);
 	}
+	if (subscribe_to_users) {
+		TRACE("! subscribing to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
+		subscribe_to_user(_p);
+	}
 }
 
 
@@ -243,6 +247,10 @@ void remove_presentity(pdomain_t* _d, struct presentity* _p)
 		DBG("! unregistering callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
 		_d->unreg(&_p->uri, &_p->uuid, (void*)callback, _p);
 		DBG("! unregistered callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
+	}
+	if (subscribe_to_users) {
+		DBG("! unsubscribing from %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
+		unsubscribe_to_user(_p);
 	}
 	
 	LOG(L_DBG, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);

@@ -378,3 +378,26 @@ int notify_qsa_watchers(presentity_t *p)
 	return res;
 }
 
+int subscribe_to_user(presentity_t *_p)
+{
+	static str package = STR_STATIC_INIT("presence");
+	
+	clear_subscription_data(&_p->presence_subscription_data);
+	/* ??? FIXME msg queue */ _p->presence_subscription_data.dst = &_p->mq;
+	_p->presence_subscription_data.record_id = _p->uri;
+	_p->presence_subscription_data.subscriber_id = pa_subscription_uri;
+	_p->presence_subscription_data.subscriber_data = _p;
+	_p->presence_subscription = subscribe(domain, 
+			&package, &_p->presence_subscription_data);
+
+	if (_p->presence_subscription) return 0;
+	else return -1;
+}
+
+int unsubscribe_to_user(presentity_t *_p)
+{
+	unsubscribe(domain, _p->presence_subscription);
+	/* TODO ? clean messages ? they will be freed automaticaly ... */
+	return 0;
+}
+

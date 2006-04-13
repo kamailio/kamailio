@@ -87,7 +87,7 @@ static event_mimetypes_t event_package_mimetypes[] = {
 	{ -1, { 0 }},
 };
 
-static void free_tuple_change_info_content(tuple_change_info_t *i)
+void free_tuple_change_info_content(tuple_change_info_t *i)
 {
 	str_free_content(&i->user);
 	str_free_content(&i->contact);
@@ -95,7 +95,6 @@ static void free_tuple_change_info_content(tuple_change_info_t *i)
 
 /*
  * contact will be NULL if user is offline
- * fixme:locking
  */
 void callback(str* _user, str *_contact, int state, void* data)
 {

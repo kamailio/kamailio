@@ -1084,42 +1084,65 @@ static void remove_expired_person_elements(presentity_t *_p)
 	}
 }
 
+static void process_tuple_change(presentity_t *p, tuple_change_info_t *info)
+{
+	presence_tuple_t *tuple = NULL;
+	int orig;
+			
+
+	DBG("processing tuple change message: %.*s, %.*s, %d\n",
+			FMT_STR(info->user), FMT_STR(info->contact), info->state);
+	if (info->contact.len > 0) {
+		tuple = NULL;
+		if (find_registered_presence_tuple(&info->contact, p, &tuple) != 0) {
+			new_presence_tuple(&info->contact, act_time + default_expires, &tuple, 0);
+			add_presence_tuple(p, tuple);
+		}
+		if (tuple) {
+			if (!tuple->is_published) {	/* not overwrite published information */
+				orig = tuple->state;
+				tuple->state = info->state;
+				if (tuple->state == PS_OFFLINE)
+					tuple->expires = act_time + 2 * timer_interval;
+				else {
+					tuple->expires = INT_MAX; /* act_time + default_expires; */
+					/* hack - re-registrations don't call the callback */
+				}
+				db_update_presentity(p);
+				
+				if (orig != tuple->state) {
+					p->flags |= PFLAG_PRESENCE_CHANGED;
+				}
+			}
+		}
+	}
+}
+
+static int process_qsa_message(presentity_t *p, client_notify_info_t *info)
+{
+	TRACE("received QSA notification for presentity %.*s\n", FMT_STR(p->uri));
+
+	/* TODO: handle it as publish for special tuple */
+	
+	return 0;
+}
 static void process_presentity_messages(presentity_t *p)
 {
 	mq_message_t *msg;
 	tuple_change_info_t *info;
-	presence_tuple_t *tuple = NULL;
-	int orig;
+	client_notify_info_t *qsa_info;
 
 	while ((msg = pop_message(&p->mq)) != NULL) {
-		info = get_message_data(msg);
-		if (!info) continue; /* error */
-		
-		LOG(L_DBG, "processing presentity message: %.*s, %.*s, %d\n",
-				FMT_STR(info->user), FMT_STR(info->contact), info->state);
-		if (info->contact.len > 0) {
-			tuple = NULL;
-			if (find_registered_presence_tuple(&info->contact, p, &tuple) != 0) {
-				new_presence_tuple(&info->contact, act_time + default_expires, &tuple, 0);
-				add_presence_tuple(p, tuple);
-			}
-			if (tuple) {
-				if (!tuple->is_published) {	/* not overwrite published information */
-					orig = tuple->state;
-					tuple->state = info->state;
-					if (tuple->state == PS_OFFLINE)
-						tuple->expires = act_time + 2 * timer_interval;
-					else {
-						tuple->expires = INT_MAX; /* act_time + default_expires; */
-						/* hack - re-registrations don't call the callback */
-					}
-					db_update_presentity(p);
-					
-					if (orig != tuple->state) {
-						p->flags |= PFLAG_PRESENCE_CHANGED;
-					}
-				}
-			}
+
+		/* FIXME: ugly data type detection */
+		if (msg->destroy_function == (destroy_function_f)free_tuple_change_info_content) {
+			info = (tuple_change_info_t*)get_message_data(msg);
+			if (info) process_tuple_change(p, info);
+		}
+		else {
+			/* QSA message */
+			qsa_info = (client_notify_info_t *)get_message_data(msg);
+			if (qsa_info) process_qsa_message(p, qsa_info);
 		}
 			
 		free_message(msg);

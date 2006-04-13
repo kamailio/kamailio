@@ -114,6 +114,9 @@ int use_callbacks = 1;
 int use_offline_winfo = 0;
 int offline_winfo_timer_interval = 3600;
 
+int subscribe_to_users = 0;
+str pa_subscription_uri = STR_NULL;
+
 /*
  * Exported functions
  */
@@ -125,9 +128,8 @@ static cmd_export_t cmds[]={
 	{"check_subscription_status", check_subscription_status,   1, check_subscription_status_fix, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"store_winfo",           store_offline_winfo,   1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"dump_stored_winfo",     dump_offline_winfo,    2, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-
 	
-	/* TODO: move into XCAP module */
+	/* TODO: move into XCAP module? */
 	{"authorize_message",     authorize_message,    1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	
 	/* FIXME: are these functions used to something by somebody */
@@ -169,6 +171,9 @@ static param_export_t params[]={
 	{"pres_rules_file",      PARAM_STR,    &pres_rules_file },
 	
 	/* undocumented still (TODO) */
+	{"subscribe_to_users",   PARAM_INT,    &subscribe_to_users },
+	{"pa_subscription_uri",  PARAM_STR,    &pa_subscription_uri },
+	
 	{"presentity_table",     PARAM_STRING, &presentity_table     },
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
@@ -294,6 +299,17 @@ static int pa_mod_init(void)
 	cds_initialize();
 	qsa_initialize();
 
+	if (subscribe_to_users) {
+		if (is_str_empty(&pa_subscription_uri)) {
+			ERR("pa_subscription_uri must be set if set subscribe_to_users\n");
+			return -1;
+		}
+		if (accept_internal_subscriptions) {
+			ERR("impossible to have set accept_internal_subscriptions together with subscribe_to_users\n");
+			return -1;
+		}
+	}
+	
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
 	if (set_auth_params(&pa_auth_params, auth_type_str,

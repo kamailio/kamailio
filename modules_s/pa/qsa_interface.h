@@ -11,6 +11,8 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss);
 void free_internal_subscription(internal_pa_subscription_t *is);
 
 presentity_info_t *presentity2presentity_info(presentity_t *p);
+int subscribe_to_user(presentity_t *_p);
+int unsubscribe_to_user(presentity_t *_p);
 
 extern int accept_internal_subscriptions;
 
