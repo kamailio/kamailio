@@ -79,6 +79,7 @@
 
     <xi:include href="pdt.xml"/>
 
+    <xi:include href="cpl.xml"/>
 
     <!-- Customers -->
     <xi:include href="customers.xml"/>
