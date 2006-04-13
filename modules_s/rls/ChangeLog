@@ -1,3 +1,7 @@
+2006-04-13
+	* modified optimizations of sent notifications, added parameter
+	max_notifications_at_once
+
 2006-04-11
 	* changed QSA (reduced memory allocations)
 

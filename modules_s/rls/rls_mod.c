@@ -50,6 +50,9 @@ to other modules (may be not itialised
 yet) */
 static int init_timer_delay = 3; 
 
+/* parameters for optimizations */
+int max_notifications_at_once = 1000000;
+
 /** Exported functions */
 static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
@@ -77,6 +80,7 @@ static param_export_t params[]={
 	{"xcap_root", PARAM_STRING, &rls_xcap_root }, /* xcap root settings - only one XCAP root allowed !!! */
 	
 	/* TODO: have to be documented */
+	{"max_notifications_at_once", PARAM_INT, &max_notifications_at_once },
 	{ "init_timer_delay", PARAM_INT, &init_timer_delay }, /* timer for delayed DB reload (due to internal subscriptions can't be reloaded from init or child init) */
 	
 	{0, 0, 0}

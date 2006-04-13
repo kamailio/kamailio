@@ -33,4 +33,7 @@ extern char *rls_xcap_root; /* global XCAP root for RLS module */
 
 extern fill_xcap_params_func fill_xcap_params;
 
+/* parameters for optimizations */
+extern int max_notifications_at_once;
+
 #endif

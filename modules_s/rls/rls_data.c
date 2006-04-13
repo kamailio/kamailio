@@ -25,6 +25,7 @@ static void do_external_notifications()
 {
 	subscription_data_t *s = NULL;
 	rl_subscription_t *rs;
+	int notified = 0;
 	
 	if (rls_manager) s = rls_manager->first;
 	/* this goes through all EXTERNAL subscriptions only !!!
@@ -34,11 +35,21 @@ static void do_external_notifications()
 	/* there can be some logic to handle at most xxx subscriptions ... */
 	while (s) {
 		rs = (rl_subscription_t*)(s->usr_data);
-		if (rs->changed) rls_generate_notify(rs, 0);
+		if (rs->changed) {
+			rls_generate_notify(rs, 0);
+			rls->changed_subscriptions -= rs->changed;
+			if (rls->changed_subscriptions <= 0) break;
+			if (++notified >= max_notifications_at_once) {
+				break;
+			}
+		}
 		s = s->next;
 	}
 		
-	rls->changed_subscriptions = 0;
+	if (rls->changed_subscriptions < 0) {
+		ERR("BUG: changed_subscriptions = %d\n", rls->changed_subscriptions);
+		rls->changed_subscriptions = 0;
+	}
 }
 
 static void rls_timer_cb(unsigned int ticks, void *param)
@@ -68,19 +79,10 @@ static void rls_timer_cb(unsigned int ticks, void *param)
 		free_message(msg);
 	}
 
-	/* experimental optimization:
-	 *   if priority (change count) is high, it is processed
-	 *   otherwise is the priority incremented => changes are 
-	 *   cumulated together */
-	if (rls->changed_subscriptions > 5) {
+	if (rls->changed_subscriptions > 0) {
 		do_external_notifications();
-		/* other logic may be used to generate at most some number of
-		 * subscriptions -> rls->changed_subscriptions is reset from
+		/* rls->changed_subscriptions is reset (or decremented) from
 		 * do_external_notifications() */
-	}
-	else {
-		if (rls->changed_subscriptions > 0) 
-			rls->changed_subscriptions++;
 	}
 	
 	rls_unlock();
