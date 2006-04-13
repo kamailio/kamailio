@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="cpl" xmlns:xi="http://www.w3.org/2001/XInclude"
+   xmlns:pg="http://iptel.org/dbschema/postgres">
+    <name>cpl</name>
+
+    <column id="cpl.uid">
+	<name>uid</name>
+	<type>string</type>
+	<size>&id_len;</size>
+    </column>
+
+    <column>
+	<name>cpl_xml</name>
+	<type>binary</type>
+	<null/>
+    </column>
+
+    <column>
+	<name>cpl_bin</name>
+	<type>binary</type>
+	<null/>
+    </column>
+
+    <index>
+	<name>cpl_key</name>
+	<unique/>
+	<colref linkend="cpl.uid"/>
+    </index>
+</table>
