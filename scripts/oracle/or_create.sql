@@ -179,7 +179,6 @@ CREATE TABLE user_attrs (
 CREATE TABLE domain (
     did string(64) NOT NULL,
     domain string(128) NOT NULL,
-    last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     flags int NOT NULL DEFAULT '0',
     domain_idx UNIQUE (domain, )
 );
@@ -510,6 +509,13 @@ CREATE TABLE pdt (
     prefix string(32) NOT NULL,
     domain string(255) NOT NULL,
     pdt_idx UNIQUE (prefix, )
+);
+
+CREATE TABLE cpl (
+    uid string(64) NOT NULL,
+    cpl_xml binary,
+    cpl_bin binary,
+    cpl_key UNIQUE (uid, )
 );
 
 CREATE TABLE customers (

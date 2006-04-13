@@ -188,7 +188,6 @@ CREATE TABLE user_attrs (
 CREATE TABLE domain (
     did VARCHAR(64) NOT NULL,
     domain VARCHAR(128) NOT NULL,
-    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
     flags INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT domain_idx UNIQUE (domain)
 );
@@ -544,6 +543,13 @@ CREATE TABLE pdt (
     CONSTRAINT pdt_idx UNIQUE (prefix)
 );
 
+CREATE TABLE cpl (
+    uid VARCHAR(64) NOT NULL,
+    cpl_xml BYTEA,
+    cpl_bin BYTEA,
+    CONSTRAINT cpl_key UNIQUE (uid)
+);
+
 CREATE TABLE customers (
     cid SERIAL NOT NULL,
     name VARCHAR(128) NOT NULL,
@@ -554,5 +560,5 @@ CREATE TABLE customers (
 );
 
 
-GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
-GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;
+GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,cpl,customers TO ser;
+GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,cpl,customers TO serro;

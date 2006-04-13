@@ -184,7 +184,6 @@ CREATE TABLE user_attrs (
 CREATE TABLE domain (
     did VARCHAR(64) NOT NULL,
     domain VARCHAR(128) NOT NULL,
-    last_modified timestamp NOT NULL DEFAULT '1970-01-01 00:00:00',
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     UNIQUE KEY domain_idx (domain)
 );
@@ -526,6 +525,13 @@ CREATE TABLE pdt (
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(255) NOT NULL,
     UNIQUE KEY pdt_idx (prefix)
+);
+
+CREATE TABLE cpl (
+    uid VARCHAR(64) NOT NULL,
+    cpl_xml BLOB,
+    cpl_bin BLOB,
+    UNIQUE KEY cpl_key (uid)
 );
 
 CREATE TABLE customers (
