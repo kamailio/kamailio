@@ -1107,8 +1107,8 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			break;
 		if(avp==NULL)
 			break;
-		avp = search_next_avp( avp, &avp_val);
-		flags = avp->flags;
+		if((avp = search_next_avp(avp, &avp_val))!=NULL)
+			flags = avp->flags;
 	} while (avp);/* end while */
 
 	DBG("DEBUG:avpops:pushto_avps: %d avps were processed\n",n);
