@@ -57,6 +57,7 @@ extern int case_sensitive;
 extern int desc_time_order;
 extern int nat_flag;
 extern int sip_natping_flag;
+extern int tcp_persistent_flag;
 extern int min_expires;
 extern int max_expires;
 extern int received_avp;

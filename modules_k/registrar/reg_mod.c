@@ -67,6 +67,8 @@ int case_sensitive  = 0;
 int desc_time_order = 0;
 /* flag marking contacts behind NAT */
 int nat_flag        = -1;
+/* if the TCP connection should be kept open */
+int tcp_persistent_flag = -1;
 /* flag marking nated contacts to be pinged with SIP method  */
 int sip_natping_flag  = -1;
 /* Minimum expires the phones are allowed to use in seconds
@@ -139,28 +141,29 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_expires",   INT_PARAM, &default_expires   },
-	{"default_q",         INT_PARAM, &default_q         },
-	{"append_branches",   INT_PARAM, &append_branches   },
-	{"case_sensitive",    INT_PARAM, &case_sensitive    },
-	{"desc_time_order",   INT_PARAM, &desc_time_order   },
-	{"nat_flag",          INT_PARAM, &nat_flag          },
-	{"sip_natping_flag",  INT_PARAM, &sip_natping_flag  },
-	{"realm_prefix",      STR_PARAM, &realm_pref        },
-	{"min_expires",       INT_PARAM, &min_expires       },
-	{"max_expires",       INT_PARAM, &max_expires       },
-	{"received_param",    STR_PARAM, &rcv_param         },
-	{"received_avp",      INT_PARAM, &rcv_avp_no        },
-	{"use_domain",        INT_PARAM, &use_domain        },
-	{"max_contacts",      INT_PARAM, &max_contacts      },
-	{"retry_after",       INT_PARAM, &retry_after       },
-	{"sock_flag",         INT_PARAM, &sock_flag         },
-	{"sock_hdr_name",     STR_PARAM, &sock_hdr_name.s   },
-	{"use_branch_flags",  INT_PARAM, &use_branch_flags  },
-	{"method_filtering",  INT_PARAM, &method_filtering  },
-	{"use_path",          INT_PARAM, &path_enabled      },
-	{"path_mode",         INT_PARAM, &path_mode         },
-	{"path_use_received", INT_PARAM, &path_use_params   },
+	{"default_expires",    INT_PARAM, &default_expires     },
+	{"default_q",          INT_PARAM, &default_q           },
+	{"append_branches",    INT_PARAM, &append_branches     },
+	{"case_sensitive",     INT_PARAM, &case_sensitive      },
+	{"desc_time_order",    INT_PARAM, &desc_time_order     },
+	{"nat_flag",           INT_PARAM, &nat_flag            },
+	{"sip_natping_flag",   INT_PARAM, &sip_natping_flag    },
+	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag },
+	{"realm_prefix",       STR_PARAM, &realm_pref          },
+	{"min_expires",        INT_PARAM, &min_expires         },
+	{"max_expires",        INT_PARAM, &max_expires         },
+	{"received_param",     STR_PARAM, &rcv_param           },
+	{"received_avp",       INT_PARAM, &rcv_avp_no          },
+	{"use_domain",         INT_PARAM, &use_domain          },
+	{"max_contacts",       INT_PARAM, &max_contacts        },
+	{"retry_after",        INT_PARAM, &retry_after         },
+	{"sock_flag",          INT_PARAM, &sock_flag           },
+	{"sock_hdr_name",      STR_PARAM, &sock_hdr_name.s     },
+	{"use_branch_flags",   INT_PARAM, &use_branch_flags    },
+	{"method_filtering",   INT_PARAM, &method_filtering    },
+	{"use_path",           INT_PARAM, &path_enabled        },
+	{"path_mode",          INT_PARAM, &path_mode           },
+	{"path_use_received",  INT_PARAM, &path_use_params     },
 	{0, 0, 0}
 };
 
@@ -258,12 +261,10 @@ static int mod_init(void)
 	}
 
 	/* fix the flags */
-	if (sock_flag!=-1)
-		sock_flag = 1 << sock_flag;
-	if (nat_flag!=-1)
-		nat_flag = 1 << nat_flag;
-	if (sip_natping_flag!=-1)
-		sip_natping_flag = 1 << sip_natping_flag;
+	sock_flag = (sock_flag!=-1)?(1<<sock_flag):0;
+	nat_flag = (nat_flag!=-1)?(1<<nat_flag):0;
+	sip_natping_flag = (sip_natping_flag!=-1)?(1<<sip_natping_flag):0;
+	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
 
 	return 0;
 }
