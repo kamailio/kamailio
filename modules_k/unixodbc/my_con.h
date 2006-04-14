@@ -85,4 +85,4 @@ void free_connection(struct my_con* con);
 void extract_error(char *fn, SQLHANDLE handle, SQLSMALLINT type);
 
 char *build_conn_str(struct db_id* id, char *buf);
-#endif													  /* MY_CON_H */
+#endif  /* MY_CON_H */

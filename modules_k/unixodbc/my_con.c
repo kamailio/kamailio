@@ -43,6 +43,7 @@
 #define PWD_ATTR  "PWD="
 #define PWD_ATTR_LEN  (sizeof(PWD_ATTR)-1)
 
+
 char *build_conn_str(struct db_id* id, char *buf)
 {
 	int len, ld, lu, lp;
@@ -187,15 +188,13 @@ SQLSMALLINT type)
 	SQLSMALLINT  len;
 	SQLRETURN	ret;
 
-	LOG(L_ERR,"ERROR:unixodbc: the driver reported the following diagnostics "
-		"whilst running %s\n",fn);
-
 	do
 	{
 		ret = SQLGetDiagRec(type, handle, ++i, state, &native, text,
 			sizeof(text), &len );
 		if (SQL_SUCCEEDED(ret))
-			LOG(L_ERR,"\t%s:%ld:%ld:%s\n", state, (long)i, (long)native, text);
+			LOG(L_ERR,"unixodbc:SQLGetDiagRec=%s:%ld:%ld:%s\n", state,
+				(long)i, (long)native, text);
 	}
 	while( ret == SQL_SUCCESS );
 }

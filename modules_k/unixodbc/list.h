@@ -25,6 +25,7 @@
  * History:
  * --------
  *  2005-12-01  initial commit (chgen)
+ *  2006-04-04  simplified link list (sgupta)
  */
 
 #ifndef _UNIXODBC_LIST_H_
@@ -34,23 +35,14 @@
 #include <stdlib.h>
 #include "my_con.h"
 
-typedef struct element
+typedef struct list
 {
-	struct element *next;
-	struct element *end;
-
+	struct list *next;
 	strn *data;
 
-} element;
+} list;
 
-typedef element* list;
-
-int insert(list l, int n, strn* value);
-
-void destroy(list l);
-
-strn* view(list l);
-
-int create(list *l, int n, strn* value);
+int insert(list** start, list** link, int n, strn* value);
+void destroy(list* link);
 
 #endif

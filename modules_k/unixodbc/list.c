@@ -25,86 +25,70 @@
  * History:
  * --------
  *  2005-12-01  initial commit (chgen)
+ *  2006-04-04  simplified link list (sgupta)
  */
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "list.h"
 
-int insert(list l, int n, strn* value)
+int insert(list** start, list** link, int n, strn* value)
 {
-	int i;
-	list ln;
+	int i = 0;
 
-	if(!l->next)
-	{
-		ln=(list)pkg_malloc(sizeof(element));
-		if(!ln)
-		{
-			LOG(L_ERR,"ERROR:unixodbc:insert: No enought pkg memory (1)\n");
+	if(!(*start)) {
+		*link = (list*)pkg_malloc(sizeof(list));
+		if(!(*link)) {
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (1)\n");
 			return -1;
 		}
-		ln->data=pkg_malloc(sizeof(strn)*n);
-		if(!ln->data)
-		{
-			LOG(L_ERR,"ERROR:unixodbc:insert: No enought pkg memory (2)\n");
-			pkg_free(ln);
+		(*link)->next = NULL;
+		(*link)->data = pkg_malloc(sizeof(strn)*n);
+		if(!(*link)->data) {
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (2)\n");
+			pkg_free(*link);
+			*link = NULL;
 			return -1;
 		}
 		for(i=0; i<n; i++)
-			strcpy(ln->data[i].s, value[i].s);
-		/* link it */
-		ln->next=NULL;
-		ln->end=ln;
-		l->next=ln;
-		l->end=ln;
-		
+			strcpy((*link)->data[i].s, value[i].s);
+	
+		*start = *link;
 		return 0;
 	}
 	else
-		return insert(l->end, n, value);
-}
-
-void destroy(list l)
-{
-	if(l->next)
-		destroy(l->next);
-	pkg_free(l->data);
-	pkg_free(l);
-}
-
-strn* view(list l)
-{
-   return l->data;
-}
-
-int create(list *l, int n, strn* value)
-{
-	int i;
-	if(*l)
 	{
-		LOG(L_WARN,"WARNING:unixodbc:create: List already created\n");
+		list* nlink;
+		nlink=(list*)pkg_malloc(sizeof(list));
+		if(!nlink) {
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (3)\n");
+			return -1;
+		}
+		nlink->data = pkg_malloc(sizeof(strn)*n);
+		if(!nlink->data) {
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (4)\n");
+			pkg_free(nlink);
+			return -1;
+		}
+		for(i=0; i<n; i++)
+			strcpy(nlink->data[i].s, value[i].s);
+
+		nlink->next = NULL;
+		(*link)->next = nlink;
+		*link = (*link)->next;
+
 		return 0;
 	}
-	*l=(list)pkg_malloc(sizeof(element));
-	if(!*l)
-	{
-		LOG(L_ERR,"ERROR:unixodbc:create: No enought pkg memory (1)\n");
-		return -1;
-	}
-	(*l)->next=NULL;
-	(*l)->end=*l;
-	(*l)->data=pkg_malloc(sizeof(strn)*n);
-	if(!(*l)->data)
-	{
-		LOG(L_ERR,"ERROR:unixodbc:create: No enought pkg memory (2)\n");
-		pkg_free(*l);
-		*l = 0;
-		return -1;
-	}
-	for(i=0; i<n; i++)
-		strcpy((*l)->data[i].s, value[i].s);
+}
 
-	return 0;
+
+void destroy(list *start)
+{
+	while(start) {
+		list* temp = start;
+		start = start->next;
+		pkg_free(temp->data);
+		pkg_free(temp);
+	}
 }
 

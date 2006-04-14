@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$
  *
  * UNIXODBC module core functions
@@ -25,6 +25,8 @@
  * History:
  * --------
  *  2005-12-01  initial commit (chgen)
+ *  2006-04-03  fixed invalid handle to extract error (sgupta)
+ *  2006-04-04  removed deprecated ODBC functions, closed cursors on error (sgupta)
  */
 
 
@@ -52,8 +54,8 @@ static char sql_buf[SQL_BUF_LEN];
 static int submit_query(db_con_t* _h, const char* _s)
 {
 	int ret;
-        SQLCHAR outstr[1024];
-        SQLSMALLINT outstrlen;
+	SQLCHAR outstr[1024];
+	SQLSMALLINT outstrlen;
 	SQLCHAR sqlstate[15];
 	SQLCHAR ErrorMsg[SQL_MAX_MESSAGE_LENGTH+1];
 	SQLINTEGER native_error = 0;
@@ -63,24 +65,24 @@ static int submit_query(db_con_t* _h, const char* _s)
 	/* first do some cleanup if required */
 	if(CON_RESULT(_h))
 	{
-		SQLFreeStmt(&CON_RESULT(_h), SQL_RESET_PARAMS);
-		SQLFreeStmt(&CON_RESULT(_h), SQL_UNBIND);
-		SQLFreeStmt(&CON_RESULT(_h), SQL_CLOSE);
-		SQLFreeStmt(&CON_RESULT(_h), SQL_DROP);
+		SQLCloseCursor(CON_RESULT(_h));
+		SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
 	}
 
-	ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
+	ret = SQLAllocHandle(SQL_HANDLE_STMT, CON_CONNECTION(_h), &CON_RESULT(_h));
 	if (!SQL_SUCCEEDED(ret))
 	{
-		LOG(L_ERR, "ERROR:unixodbc:submit_query: Statement allocation error "
-			"%d\n", (int)(long)CON_CONNECTION(_h));
+		LOG(L_ERR, "ERROR:unixodbc:submit_query: Statement allocation "
+			"error %d\n", (int)(long)CON_CONNECTION(_h));
 		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
 
-		sts = SQLError (CON_ENV(_h), CON_CONNECTION(_h), SQL_NULL_HSTMT, 
-				sqlstate, &native_error, ErrorMsg, sizeof(ErrorMsg), NULL);
-		if (SQL_SUCCEEDED (sts) && 
-			strncmp(sqlstate,"08003",5)!=0 && /* Connect not open */
-			strncmp(sqlstate,"08S01",5)!=0) /* Communication link failure */ {
+		sts = SQLError (CON_ENV(_h), CON_CONNECTION(_h), SQL_NULL_HSTMT,
+				sqlstate, &native_error,
+				ErrorMsg, sizeof(ErrorMsg), NULL);
+		if (SQL_SUCCEEDED (sts) &&
+		strncmp((char*)sqlstate,"08003",5)!=0 && /* Connect not open */
+		strncmp((char*)sqlstate,"08S01",5)!=0) /* Communication link failure */
+		{
 			return ret;
 		}
 
@@ -96,32 +98,40 @@ static int submit_query(db_con_t* _h, const char* _s)
 			return ret;
 		}
 
-		ret = SQLDriverConnect(CON_CONNECTION(_h), (void *)1, 
-				(SQLCHAR*)conn_str, SQL_NTS, outstr, sizeof(outstr), 
+		ret = SQLDriverConnect(CON_CONNECTION(_h), (void *)1,
+				(SQLCHAR*)conn_str, SQL_NTS, outstr, sizeof(outstr),
 				&outstrlen, SQL_DRIVER_COMPLETE);
 		if (!SQL_SUCCEEDED(ret)) {
 			LOG(L_ERR, "ERROR:unixodbc:submit_query: failed to connect\n");
-			extract_error("SQLDriverConnect", CON_CONNECTION(_h), 
-					SQL_HANDLE_DBC);
+			extract_error("SQLDriverConnect", CON_CONNECTION(_h),
+				SQL_HANDLE_DBC);
 			return ret;
 		}
 
-		ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
-		if (!SQL_SUCCEEDED(ret)) {
+		//ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
+		ret = SQLAllocHandle(SQL_HANDLE_STMT, CON_CONNECTION(_h),
+			&CON_RESULT(_h));
+		if (!SQL_SUCCEEDED(ret))
+		{
 			LOG(L_ERR, "Statement allocation error %d\n",
 				(int)(long)CON_CONNECTION(_h));
 			extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
 			return ret;
 		}
 	}
+
 	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, SQL_NTS);
 	if (!SQL_SUCCEEDED(ret))
 	{
-		LOG(L_ERR, "SQLExecDirect <%s> Return value: %d\n", _s, ret);
-		extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_DBC);
-	}
-	return ret;
+		LOG(L_ERR, "SQLExecDirect, rv=%d. Query= %s\n", ret, _s);
+		extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT);
 
+		/* Close the cursor */
+		SQLCloseCursor(CON_RESULT(_h));
+		SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
+	}
+
+	return ret;
 }
 
 /*
@@ -478,14 +488,14 @@ db_key_t _o, db_res_t** _r)
 	*(sql_buf + off) = '\0';
 	if (submit_query(_h, sql_buf) < 0)
 	{
-		LOG(L_ERR, "db_query: Error while submitting query\n");
+		LOG(L_ERR, "unixodbc:db_query: Error while submitting query\n");
 		return -2;
 	}
 
 	return store_result(_h, _r);
 
 	error:
-	LOG(L_ERR, "db_query: Error in snprintf\n");
+	LOG(L_ERR, "unixodbc:db_query: Error in snprintf\n");
 	return -1;
 }
 
@@ -644,7 +654,6 @@ db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 		ret = print_where(&CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
 		if (ret < 0) return -1;
 		off += ret;
-
 	}
 	*(sql_buf + off) = '\0';
 
