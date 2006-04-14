@@ -129,7 +129,7 @@
 	 <value col="at.prior">65536</value>
     </row>
     
-    <row><value col="at.name">sw_fname</value>      
+    <row><value col="at.name">first_name</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
          <value col="at.desc">@ff_first_name</value>
@@ -138,7 +138,7 @@
          <value col="at.prior">256</value>
          <value col="at.order">10</value>
          </row>
-    <row><value col="at.name">sw_lname</value>      
+    <row><value col="at.name">last_name</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
          <value col="at.desc">@ff_last_name</value>
@@ -147,7 +147,7 @@
          <value col="at.prior">256</value>
          <value col="at.order">20</value>
          </row>
-    <row><value col="at.name">sw_email</value>      
+    <row><value col="at.name">email</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">email_adr</value>
          <value col="at.desc">@ff_email</value>
@@ -156,7 +156,7 @@
          <value col="at.prior">256</value>
          <value col="at.order">30</value>
          </row>
-    <row><value col="at.name">sw_timezone</value>   
+    <row><value col="at.name">timezone</value>   
          <value col="at.type">2</value>
          <value col="at.rich_t">timezone</value>
          <value col="at.desc">@ff_timezone</value>
@@ -224,7 +224,7 @@
          <value col="at.flags">0</value>
          <value col="at.prior">0</value>
          </row>
-    <row><value col="at.name">sw_phone</value>      
+    <row><value col="at.name">phone</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
          <value col="at.desc">@ff_phone</value>
@@ -289,7 +289,7 @@
          <value col="at.flags">0</value>
          <value col="at.prior">0</value>
          </row>
-    <row><value col="at.name">sw_require_conf</value>
+    <row><value col="at.name">sw_require_confirm</value>
          <value col="at.type">0</value>
          <value col="at.rich_t">boolean</value>
          <value col="at.desc">@ff_reg_confirmation</value>

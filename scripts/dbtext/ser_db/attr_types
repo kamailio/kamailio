@@ -7,10 +7,10 @@ fr_inv_timer:string:2:::1:0:0:0
 flags:string:0:::1:0:0:0
 gflags:string:0:::1:0:0:0
 digest_realm:string:2::digest realm:33:0:65536:0
-sw_fname:string:2::@ff_first_name:32:2:256:10
-sw_lname:string:2::@ff_last_name:32:2:256:20
-sw_email:email_adr:2::@ff_email:32:2:256:30
-sw_timezone:timezone:2::@ff_timezone:32:2:1073807616:60
+first_name:string:2::@ff_first_name:32:2:256:10
+last_name:string:2::@ff_last_name:32:2:256:20
+email:email_adr:2::@ff_email:32:2:256:30
+timezone:timezone:2::@ff_timezone:32:2:1073807616:60
 sw_allow_find:boolean:0::@ff_allow_lookup_for_me:32:0:256:110
 lang:lang:2::@ff_language:33:0:1073807616:50
 sw_show_status:boolean:0::@ff_status_visibility:32:0:1073742080:100
@@ -18,7 +18,7 @@ sw_admin:string:2::admin of domain:32:1:0:0
 sw_owner:string:2::owner of domain:32:0:0:0
 sw_domain_default_flags:int:0::@ff_domain_def_f:32:0:1073741824:0
 sw_deleted_ts:int:0::deleted timestamp:32:0:0:0
-sw_phone:string:2::@ff_phone:32:2:256:40
+phone:string:2::@ff_phone:32:2:256:40
 sw_acl_control:string:2::acl control:32:1:0:0
 sw_credential_default_flags:int:0::@ff_credential_def_f:32:0:1073741824:0
 sw_uri_default_flags:int:0::@ff_uri_def_f:32:0:1073741824:0
@@ -26,5 +26,5 @@ sw_is_admin:boolean:0::admin privilege:32:0:0:0
 sw_is_hostmaster:boolean:0::hostmaster privilege:32:0:0:0
 sw_confirmation:string:2::registration confirmation:32:0:0:0
 sw_pending_ts:string:2::registration timestamp:32:0:0:0
-sw_require_conf:boolean:0::@ff_reg_confirmation:32:0:1073807360:120
+sw_require_confirm:boolean:0::@ff_reg_confirmation:32:0:1073807360:120
 sw_send_missed:boolean:0::@ff_send_daily_missed_calls:32:0:1073807616:130

@@ -127,10 +127,10 @@ INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('fr_inv_timer', '
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('flags', '0', '1');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('gflags', '0', '1');
 INSERT INTO attr_types (name, raw_type, description, default_flags, priority) VALUES ('digest_realm', '2', 'digest realm', '33', '65536');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_fname', '2', 'string', '@ff_first_name', '32', '2', '256', '10');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_lname', '2', 'string', '@ff_last_name', '32', '2', '256', '20');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_email', '2', 'email_adr', '@ff_email', '32', '2', '256', '30');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_timezone', '2', 'timezone', '@ff_timezone', '32', '2', '1073807616', '60');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('first_name', '2', 'string', '@ff_first_name', '32', '2', '256', '10');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('last_name', '2', 'string', '@ff_last_name', '32', '2', '256', '20');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('email', '2', 'email_adr', '@ff_email', '32', '2', '256', '30');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('timezone', '2', 'timezone', '@ff_timezone', '32', '2', '1073807616', '60');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_allow_find', '0', 'boolean', '@ff_allow_lookup_for_me', '32', '0', '256', '110');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('lang', '2', 'lang', '@ff_language', '33', '0', '1073807616', '50');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_show_status', '0', 'boolean', '@ff_status_visibility', '32', '0', '1073742080', '100');
@@ -138,7 +138,7 @@ INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, f
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_owner', '2', 'string', 'owner of domain', '32', '0', '0');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_domain_default_flags', '0', 'int', '@ff_domain_def_f', '32', '0', '1073741824');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_deleted_ts', '0', 'int', 'deleted timestamp', '32', '0', '0');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_phone', '2', 'string', '@ff_phone', '32', '2', '256', '40');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('phone', '2', 'string', '@ff_phone', '32', '2', '256', '40');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_acl_control', '2', 'string', 'acl control', '32', '1', '0');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_credential_default_flags', '0', 'int', '@ff_credential_def_f', '32', '0', '1073741824');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_uri_default_flags', '0', 'int', '@ff_uri_def_f', '32', '0', '1073741824');
@@ -146,7 +146,7 @@ INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, f
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_is_hostmaster', '0', 'boolean', 'hostmaster privilege', '32', '0', '0');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_confirmation', '2', 'string', 'registration confirmation', '32', '0', '0');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_pending_ts', '2', 'string', 'registration timestamp', '32', '0', '0');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_require_conf', '0', 'boolean', '@ff_reg_confirmation', '32', '0', '1073807360', '120');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_require_confirm', '0', 'boolean', '@ff_reg_confirmation', '32', '0', '1073807360', '120');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_send_missed', '0', 'boolean', '@ff_send_daily_missed_calls', '32', '0', '1073807616', '130');
 
 CREATE TABLE global_attrs (
