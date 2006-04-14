@@ -129,6 +129,16 @@
 	 <value col="at.prior">65536</value>
     </row>
     
+    <row><value col="at.name">acl</value>
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">access control list of user</value>
+         <value col="at.d_flags">33</value>
+         <value col="at.flags">1</value>
+         <value col="at.prior">0</value>
+         <value col="at.order">0</value>
+    </row>
+     
     <row><value col="at.name">first_name</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>

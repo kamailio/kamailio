@@ -127,6 +127,7 @@ INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('fr_inv_timer', '
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('flags', '0', '1');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('gflags', '0', '1');
 INSERT INTO attr_types (name, raw_type, description, default_flags, priority) VALUES ('digest_realm', '2', 'digest realm', '33', '65536');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('acl', '2', 'string', 'access control list of user', '33', '1', '0', '0');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('first_name', '2', 'string', '@ff_first_name', '32', '2', '256', '10');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('last_name', '2', 'string', '@ff_last_name', '32', '2', '256', '20');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('email', '2', 'email_adr', '@ff_email', '32', '2', '256', '30');

@@ -7,6 +7,7 @@ fr_inv_timer:string:2:::1:0:0:0
 flags:string:0:::1:0:0:0
 gflags:string:0:::1:0:0:0
 digest_realm:string:2::digest realm:33:0:65536:0
+acl:string:2::access control list of user:33:1:0:0
 first_name:string:2::@ff_first_name:32:2:256:10
 last_name:string:2::@ff_last_name:32:2:256:20
 email:email_adr:2::@ff_email:32:2:256:30
