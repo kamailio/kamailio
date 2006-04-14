@@ -1,0 +1,294 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	The dialog module provides dialog awareness to &ser; proxy. Its 
+	functionality is to keep trace of the current dialogs, to offer information
+	about them (like how many dialogs are active). The module exports no 
+	functions that could be used directly from scripts.
+	</para>
+	<para>
+	The module, via an internal API, also provide the foundation to build on 
+	top of it more complex dialog-based functionalities via other &ser; 
+	modules.
+	</para>
+	</section>
+
+	<section>
+	<title>How it works</title>
+	<para>
+	To create the dialog associated to an initial request, the flag 
+	<quote>dlg_flag</quote> (<xref linkend="dlg-flag-id">) must be set before
+	creating the corresponding transaction.
+	</para>
+	<para>
+	The dialog is automatically destroyed when a <quote>BYE</quote> is 
+	received. In case of no <quote>BYE</quote>, the dialog lifetime is 
+	controlled via the default timeout (see <quote>default_timeout</quote>
+	 - <xref linkend="default-timeout-id">) and custom timeout (see 
+	 <quote>timeout_avp</quote> - <xref linkend="timeout-avp-id">). The 
+	dialog timeout is reset each time a sequential request passes.
+	</para>
+	</section>
+
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>TM</emphasis> - Transaction module
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>RR</emphasis> - Record-Route module
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>enable_stats</varname> (integer)</title>
+		<para>
+		If the statistics support should be enabled or not. Via statistic 
+		variables, the module provide information about the dialog processing.
+		Set it to zero to disable or to non-zero to enable it.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1 (enabled)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_stats</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "enable_stats", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>hash_size</varname> (integer)</title>
+		<para>
+		The size of the hash table internally used to keep the dialogs. A 
+		larger table is much faster but consumes more memory. The hash size
+		must be a power of 2 number.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>4096</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "hash_size", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>rr_param</varname> (string)</title>
+		<para>
+		Name of the Record-Route parameter to be added with the dialog cookie.
+		It is used for fast dialog matching of the sequential requests.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>did</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rr_param</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "rr_param", "xyz")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dlg-flag-id">
+		<title><varname>dlg_flag</varname> (integer)</title>
+		<para>
+		Flag to be used for marking if a dialog should be constructed for the
+		current request (make sense only for initial requests).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>none</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dlg_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dlg_flag", 4)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="timeout-avp-id">
+		<title><varname>timeout_avp</varname> (string)</title>
+		<para>
+		The specification of an AVP to contain a custom timeout (in seconds)
+		for the dialog. It may be used only in a request 
+		(initial or sequential) context 
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>none</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "timeout_avp", "$avp(i:10)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="default-timeout-id">
+		<title><varname>default_timeout</varname> (integer)</title>
+		<para>
+		The default dialog timeout (in seconds) if no custom one is set.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>43200 (12 hours)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "default_timeout", 21600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>use_tight_match</varname> (integer)</title>
+		<para>
+		If tight matching should be use dialog matching of sequential requests.
+		By default, the matching is done only on the RR cookie; tight matching
+		extra checks the callid. Set it to zero to disable or to non-zero to 
+		enable it.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0 (disabled)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_tight_match</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "use_tight_match", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+
+	<section>
+	<title>Exported Functions</title>
+	<para>
+		There are no exported functions that could be used in scripts.
+	</para>
+	</section>
+
+
+	<section>
+	<title>Exported statistics</title>
+		<section>
+			<title><varname>active_dialogs</varname></title>
+			<para>
+			Returns the number of current active dialogs (may be confirmed or
+			not).
+			</para>
+		</section>
+		<section>
+			<title><varname>processed_dialogs</varname></title>
+			<para>
+			Returns the total number of processed dialogs (terminated, 
+			expired or active) from the startup.
+			</para>
+		</section>
+		<section>
+			<title><varname>expired_dialogs</varname></title>
+			<para>
+			Returns the total number of expired dialogs from the startup.
+			</para>
+		</section>
+	</section>
+
+
+	<section>
+	<title>Exported pseudo-variables</title>
+		<section>
+			<title><varname>$dlg_count</varname></title>
+			<para>
+			Returns the number of current active dialogs (may be confirmed or
+			not).
+			</para>
+		</section>
+	</section>
+
+
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("dialog.sgml" "Book" "chapter")
+End:
+-->

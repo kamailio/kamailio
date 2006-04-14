@@ -1,0 +1,309 @@
+
+dialog Module
+
+Bogdan-Andrei Iancu
+
+   Voice Sistem SRL
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+   Copyright © 2006 voice-system.ro
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. How it works
+        1.3. Dependencies
+
+              1.3.1. OpenSER Modules
+              1.3.2. External Libraries or Applications
+
+        1.4. Exported Parameters
+
+              1.4.1. enable_stats (integer)
+              1.4.2. hash_size (integer)
+              1.4.3. rr_param (string)
+              1.4.4. dlg_flag (integer)
+              1.4.5. timeout_avp (string)
+              1.4.6. default_timeout (integer)
+              1.4.7. use_tight_match (integer)
+
+        1.5. Exported Functions
+        1.6. Exported statistics
+
+              1.6.1. active_dialogs
+              1.6.2. processed_dialogs
+              1.6.3. expired_dialogs
+
+        1.7. Exported pseudo-variables
+
+              1.7.1. $dlg_count
+
+   2. Developer's Guide
+
+        2.1. Available Functions
+
+              2.1.1. register_dlgcb (dialog, type, cb, param)
+
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set enable_stats parameter
+   1-2. Set hash_size parameter
+   1-3. Set rr_param parameter
+   1-4. Set dlg_flag parameter
+   1-5. Set timeout_avp parameter
+   1-6. Set default_timeout parameter
+   1-7. Set use_tight_match parameter
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   The dialog module provides dialog awareness to OpenSER proxy.
+   Its functionality is to keep trace of the current dialogs, to
+   offer information about them (like how many dialogs are
+   active). The module exports no functions that could be used
+   directly from scripts.
+
+   The module, via an internal API, also provide the foundation
+   to build on top of it more complex dialog-based
+   functionalities via other OpenSER modules.
+     _________________________________________________________
+
+1.2. How it works
+
+   To create the dialog associated to an initial request, the
+   flag "dlg_flag" (Section 1.4.4) must be set before creating
+   the corresponding transaction.
+
+   The dialog is automatically destroyed when a "BYE" is
+   received. In case of no "BYE", the dialog lifetime is
+   controlled via the default timeout (see "default_timeout" -
+   Section 1.4.6) and custom timeout (see "timeout_avp" - Section
+   1.4.5). The dialog timeout is reset each time a sequential
+   request passes.
+     _________________________________________________________
+
+1.3. Dependencies
+
+1.3.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * TM - Transaction module
+     * RR - Record-Route module
+     _________________________________________________________
+
+1.3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.4. Exported Parameters
+
+1.4.1. enable_stats (integer)
+
+   If the statistics support should be enabled or not. Via
+   statistic variables, the module provide information about the
+   dialog processing. Set it to zero to disable or to non-zero to
+   enable it.
+
+   Default value is "1 (enabled)". 
+
+   Example 1-1. Set enable_stats parameter
+...
+modparam("dialog", "enable_stats", 0)
+...
+     _________________________________________________________
+
+1.4.2. hash_size (integer)
+
+   The size of the hash table internally used to keep the
+   dialogs. A larger table is much faster but consumes more
+   memory. The hash size must be a power of 2 number.
+
+   Default value is "4096". 
+
+   Example 1-2. Set hash_size parameter
+...
+modparam("dialog", "hash_size", 1024)
+...
+     _________________________________________________________
+
+1.4.3. rr_param (string)
+
+   Name of the Record-Route parameter to be added with the dialog
+   cookie. It is used for fast dialog matching of the sequential
+   requests.
+
+   Default value is "did". 
+
+   Example 1-3. Set rr_param parameter
+...
+modparam("dialog", "rr_param", "xyz")
+...
+     _________________________________________________________
+
+1.4.4. dlg_flag (integer)
+
+   Flag to be used for marking if a dialog should be constructed
+   for the current request (make sense only for initial
+   requests).
+
+   Default value is "none". 
+
+   Example 1-4. Set dlg_flag parameter
+...
+modparam("dialog", "dlg_flag", 4)
+...
+     _________________________________________________________
+
+1.4.5. timeout_avp (string)
+
+   The specification of an AVP to contain a custom timeout (in
+   seconds) for the dialog. It may be used only in a request
+   (initial or sequential) context
+
+   Default value is "none". 
+
+   Example 1-5. Set timeout_avp parameter
+...
+modparam("usrloc", "timeout_avp", "$avp(i:10)")
+...
+     _________________________________________________________
+
+1.4.6. default_timeout (integer)
+
+   The default dialog timeout (in seconds) if no custom one is
+   set.
+
+   Default value is "43200 (12 hours)". 
+
+   Example 1-6. Set default_timeout parameter
+...
+modparam("dialog", "default_timeout", 21600)
+...
+     _________________________________________________________
+
+1.4.7. use_tight_match (integer)
+
+   If tight matching should be use dialog matching of sequential
+   requests. By default, the matching is done only on the RR
+   cookie; tight matching extra checks the callid. Set it to zero
+   to disable or to non-zero to enable it.
+
+   Default value is "0 (disabled)". 
+
+   Example 1-7. Set use_tight_match parameter
+...
+modparam("dialog", "use_tight_match", 1)
+...
+     _________________________________________________________
+
+1.5. Exported Functions
+
+   There are no exported functions that could be used in scripts.
+     _________________________________________________________
+
+1.6. Exported statistics
+
+1.6.1. active_dialogs
+
+   Returns the number of current active dialogs (may be confirmed
+   or not).
+     _________________________________________________________
+
+1.6.2. processed_dialogs
+
+   Returns the total number of processed dialogs (terminated,
+   expired or active) from the startup.
+     _________________________________________________________
+
+1.6.3. expired_dialogs
+
+   Returns the total number of expired dialogs from the startup.
+     _________________________________________________________
+
+1.7. Exported pseudo-variables
+
+1.7.1. $dlg_count
+
+   Returns the number of current active dialogs (may be confirmed
+   or not).
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+2.1. Available Functions
+
+2.1.1. register_dlgcb (dialog, type, cb, param)
+
+   Register a new callback to the dialog.
+
+   Meaning of the parameters is as follows:
+
+     * struct dlg_cell* dlg - dialog to register callback to. If
+       maybe NULL only for DLG_CREATED callback type, which is
+       not a per dialog type.
+     * int type - types of callbacks; more types may be register
+       for the same callback function; only DLG_CREATED must be
+       register alone. Possible types:
+          + DLG_CREATED - called when a new dialog is created -
+            it's a global type (not associated to any dialog)
+          + DLG_FAILED - called when the dialog was negatively
+            replied (non-2xx) - it's a per dialog type.
+          + DLG_CONFIRMED - called when the dialog is confirmed
+            (2xx replied) - it's a per dialog type.
+          + DLG_REQ_WITHIN - called when the dialog matches a
+            sequential request - it's a per dialog type.
+          + DLG_TERMINATED - called when the dialog is terminated
+            via BYE - it's a per dialog type.
+          + DLG_EXPIRED - called when the dialog expires without
+            receiving a BYE - it's a per dialog type.
+     * dialog_cb f - callback function to be called. Prototype
+       is: "void (dialog_cb) (struct dlg_cell* dlg, int type,
+       struct sip_msg* msg, void** param);"
+     * void *param - parameter to be passed to the callback
+       function.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://sourceforge.net/tracker/?group_id=139143.
