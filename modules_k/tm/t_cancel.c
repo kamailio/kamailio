@@ -83,7 +83,7 @@ void cancel_branch( struct cell *t, int branch )
 	irb=&t->uac[branch].request;
 
 #	ifdef EXTRA_DEBUG
-	if (crb->buffer!=0 && crb->buffer!=BUSY_BUFFER) {
+	if (crb->buffer.s!=0 && crb->buffer.s!=BUSY_BUFFER) {
 		LOG(L_CRIT, "ERROR: attempt to rewrite cancel buffer\n");
 		abort();
 	}
