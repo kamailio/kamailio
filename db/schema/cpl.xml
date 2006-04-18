@@ -10,6 +10,7 @@
 <table id="cpl" xmlns:xi="http://www.w3.org/2001/XInclude"
    xmlns:pg="http://iptel.org/dbschema/postgres">
     <name>cpl</name>
+    <version>2</version>
 
     <column id="cpl.uid">
 	<name>uid</name>
