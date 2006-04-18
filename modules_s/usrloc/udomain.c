@@ -233,7 +233,7 @@ static struct socket_info* find_socket(str* received)
 		return 0;
 	}
 
-	if (!hooks.uri.dstip->body.s || !hooks.uri.dstip->body.len) goto end;
+	if (!hooks.uri.dstip || !hooks.uri.dstip->body.s || !hooks.uri.dstip->body.len) goto end;
 
 	buf = (char*)pkg_malloc(hooks.uri.dstip->body.len + 1);
 	if (!buf) {
@@ -251,7 +251,7 @@ static struct socket_info* find_socket(str* received)
 	}
 	pkg_free(buf);
 
-	if (hooks.uri.dstport->body.s && hooks.uri.dstport->body.len) {
+	if (hooks.uri.dstport && hooks.uri.dstport->body.s && hooks.uri.dstport->body.len) {
 		port = str2s(hooks.uri.dstport->body.s, hooks.uri.dstport->body.len, &error);
 		if (error != 0) {
 			LOG(L_ERR, "find_socket: Unable to convert port number\n");		
