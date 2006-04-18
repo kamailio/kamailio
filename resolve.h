@@ -359,4 +359,6 @@ skip_ipv4:
 
 int resolv_init();
 
+int sip_hostport2su(union sockaddr_union* su, str* host, unsigned short port,
+						int proto);
 #endif

@@ -38,6 +38,7 @@
 #include <netdb.h>
 #include "ip_addr.h"
 #include "str.h"
+#include "config.h"
 
 struct proxy_l{
 	struct proxy_l* next;
@@ -64,6 +65,37 @@ struct proxy_l* mk_proxy(str* name, unsigned short port, int proto);
 struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 									int proto);
 void free_proxy(struct proxy_l* p);
+
+
+
+/* returns 0 on success, -1 on error (unknown af/bug) */
+inline static int proxy2su(union sockaddr_union* su, struct proxy_l* p)
+{
+	/* if error try next ip address if possible */
+	if (p->ok==0){
+		if (p->host.h_addr_list[p->addr_idx+1])
+			p->addr_idx++;
+		else p->addr_idx=0;
+		p->ok=1;
+	}
+	
+	return hostent2su(su, &p->host, p->addr_idx,
+				(p->port)?p->port:((p->proto==PROTO_TLS)?SIPS_PORT:SIP_PORT) );
+}
+
+
+
+/* mark as proxy either as ok (err>=0) or as bad (err<0) */
+inline static void proxy_mark(struct proxy_l* p, int err)
+{
+	if (err<0){
+		p->errors++;
+		p->ok=0;
+	}else{
+		p->tx++;
+	}
+}
+
 
 
 #endif

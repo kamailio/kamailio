@@ -29,6 +29,7 @@
 #ifndef error_h
 #define error_h
 
+#define E_OK           0
 #define E_UNSPEC      -1
 #define E_OUT_OF_MEM  -2
 #define E_BAD_RE      -3

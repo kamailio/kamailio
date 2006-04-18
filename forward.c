@@ -261,42 +261,31 @@ found:
 
 
 
-/* parameters:
- *   msg - sip msg
- *   p   - proxy structure to forward to
- *   proto - protocol used
+/* forwards a request to dst
+ * parameters:
+ *   msg       - sip msg
+ *   send_info - filled dest_info structure:
+ *               if the send_socket memeber is null, a send_socket will be 
+ *               choosen automatically
+ * WARNING: don' forget to zero-fill all the  unused members (a non-zero 
+ * random id along with proto==PROTO_TCP can have bad consequences, same for
+ *   a bogus send_socket vaule)
  */
-int forward_request(struct sip_msg* msg, struct proxy_l * p, int proto)
+int forward_request(struct sip_msg* msg, struct dest_info* send_info)
 {
 	unsigned int len;
 	char* buf;
 	char md5[MD5_LEN];
-	struct dest_info send_info;
 	
 	buf=0;
 	
-	/* if error try next ip address if possible */
-	if (p->ok==0){
-		if (p->host.h_addr_list[p->addr_idx+1])
-			p->addr_idx++;
-		else p->addr_idx=0;
-		p->ok=1;
-	}
-	
-	hostent2su(&send_info.to, &p->host, p->addr_idx, 
-				(p->port)?p->port:SIP_PORT);
-	p->tx++;
-	p->tx_bytes+=len;
-	
-	
-	send_info.proto=proto;
-	send_info.id=0;
-	send_info.send_sock=get_send_socket(msg, &send_info.to,
-											send_info.proto);
-	if (send_info.send_sock==0){
+	if (send_info->send_sock==0)
+		send_info->send_sock=get_send_socket(msg, &send_info->to,
+												send_info->proto);
+	if (send_info->send_sock==0){
 		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
 				"no corresponding listening socket\n",
-				send_info.to.s.sa_family, send_info.proto);
+				send_info->to.s.sa_family, send_info->proto);
 		ser_error=E_NO_SOCKET;
 		goto error;
 	}
@@ -326,8 +315,8 @@ int forward_request(struct sip_msg* msg, struct proxy_l * p, int proto)
 		}
 	}
 
-	buf = build_req_buf_from_sip_req(msg, &len, send_info.send_sock,
-											send_info.proto);
+	buf = build_req_buf_from_sip_req(msg, &len, send_info->send_sock,
+											send_info->proto);
 	if (!buf){
 		LOG(L_ERR, "ERROR: forward_request: building failed\n");
 		goto error;
@@ -335,17 +324,16 @@ int forward_request(struct sip_msg* msg, struct proxy_l * p, int proto)
 	 /* send it! */
 	DBG("Sending:\n%.*s.\n", (int)len, buf);
 	DBG("orig. len=%d, new_len=%d, proto=%d\n",
-			msg->len, len, send_info.proto );
+			msg->len, len, send_info->proto );
 	
-	if (run_onsend(msg, &send_info, buf, len)==0){
+	if (run_onsend(msg, send_info, buf, len)==0){
 		LOG(L_INFO, "forward_request: request dropped (onsend_route)\n");
 		STATS_TX_DROPS;
+		ser_error=E_OK; /* no error */
 		goto error; /* error ? */
 	}
-	if (msg_send(&send_info, buf, len)<0){
+	if (msg_send(send_info, buf, len)<0){
 		ser_error=E_SEND;
-		p->errors++;
-		p->ok=0;
 		STATS_TX_DROPS;
 		goto error;
 	}
@@ -440,7 +428,7 @@ int forward_reply(struct sip_msg* msg)
 	char* s;
 	int len;
 #endif
-	memset(&dst, 0, sizeof(struct dest_info));	
+	init_dest_info(&dst);
 	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){

@@ -119,6 +119,10 @@ int err2reason_phrase(
 			*sip_error=500;
 			break;
 #endif
+		case E_OK:
+			error_txt="No error";
+			*sip_error=500;
+			break;
 		default:
 			error_txt="I'm terribly sorry, server error occurred";
 			*sip_error=500;

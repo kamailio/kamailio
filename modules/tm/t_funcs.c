@@ -202,6 +202,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	int reply_ret;
 	/* struct hdr_field *hdr; */
 	struct cell *t;
+	struct dest_info dst;
 
 	ret=0;
 
@@ -229,18 +230,16 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 		DBG( "SER: forwarding ACK  statelessly \n");
 		if (proxy==0) {
 			uri = GET_RURI(p_msg);
-			proxy=uri2proxy(GET_NEXT_HOP(p_msg), proto);
-			if (proxy==0) {
-					ret=E_BAD_ADDRESS;
-					goto done;
+			if (uri2dst(&dst, GET_NEXT_HOP(p_msg), proto)==0){
+				ret=E_BAD_ADDRESS;
+				goto done;
 			}
-			proto=proxy->proto; /* uri2proxy set it correctly */
-			ret=forward_request( p_msg , proxy, proto) ;
-			free_proxy( proxy );	
-			pkg_free( proxy );
+			ret=forward_request( p_msg , &dst) ;
 		} else {
-			proto=get_proto(proto, proxy->proto);
-			ret=forward_request( p_msg , proxy, proto ) ;
+			init_dest_info(&dst);
+			dst.proto=get_proto(proto, proxy->proto);
+			proxy2su(&dst.to, proxy);
+			ret=forward_request( p_msg , &dst) ;
 		}
 		goto done;
 	}

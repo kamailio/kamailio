@@ -232,6 +232,8 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[0].request;
+	
+	init_dest_info(&request->dst);
 	request->dst.to = to_su;
 	request->dst.send_sock = send_sock;
 	request->dst.proto = send_sock->proto;

@@ -30,6 +30,7 @@
  *  2003-02-13  added proto to sip_resolvehost, for SRV lookups (andrei)
  *  2003-07-03  default port value set according to proto (andrei)
  *  2005-07-11  added resolv_init (timeouts a.s.o) (andrei)
+ *  2006-04-13  added sip_hostport2su()  (andrei)
  */ 
 
 
@@ -43,6 +44,7 @@
 #include "dprint.h"
 #include "mem/mem.h"
 #include "ip_addr.h"
+#include "error.h"
 
 
 
@@ -586,4 +588,32 @@ skip_srv:
 	tmp[name->len] = '\0';
 	he=resolvehost(tmp);
 	return he;
+}
+
+
+
+/* resolve host, port, proto using sip rules (e.g. use SRV if port=0 a.s.o)
+ *  and write the result in the sockaddr_union to
+ *  returns -1 on error (resolve failed), 0 on success */
+int sip_hostport2su(union sockaddr_union* su, str* name, unsigned short port,
+						int proto)
+{
+	struct hostent* he;
+	
+	
+	he=sip_resolvehost(name, &port, proto);
+	if (he==0){
+		ser_error=E_BAD_ADDRESS;
+		LOG(L_ERR, "ERROR: sip_hostport2su: could not resolve hostname:"
+					" \"%.*s\"\n", name->len, name->s);
+		goto error;
+	}
+	/* port filled by sip_resolvehost if empty*/
+	if (hostent2su(su, he, 0, port)<0){
+		ser_error=E_BAD_ADDRESS;
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
 }

@@ -48,6 +48,7 @@
  *  2006-01-27  t_forward_no_ack will return error if a forward on an 
  *              already canceled transaction is attempted (andrei)
  *  2006-02-07  named routes support (andrei)
+ *  2006-04-18  add_uac simplified + switched to struct dest_info (andrei)
  */
 
 #include "defs.h"
@@ -227,10 +228,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 {
 
 	int ret;
-	short temp_proxy;
-	union sockaddr_union to;
 	unsigned short branch;
-	struct socket_info* send_sock;
 	char *shbuf;
 	unsigned int len;
 
@@ -248,52 +246,44 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		goto error;
 	}
 
+	init_dest_info(&t->uac[branch].request.dst);
 	/* check DNS resolution */
 	if (proxy){
-		temp_proxy=0;
-		proto=get_proto(proto, proxy->proto);
+		/* dst filled from the proxy */
+		t->uac[branch].request.dst.proto=get_proto(proto, proxy->proto);
+		proxy2su(&t->uac[branch].request.dst.to, proxy);
 	}else {
-		proxy=uri2proxy( next_hop ? next_hop : uri, proto );
-		if (proxy==0)  {
+		/* dst filled from the uri */
+		if (uri2dst(&t->uac[branch].request.dst,
+						next_hop ? next_hop: uri, proto)==0){
 			ret=E_BAD_ADDRESS;
 			goto error;
 		}
-		proto=proxy->proto; /* uri2proxy will fix it for us */
-		temp_proxy=1;
 	}
 
-	if (proxy->ok==0) {
-		if (proxy->host.h_addr_list[proxy->addr_idx+1])
-			proxy->addr_idx++;
-		else proxy->addr_idx=0;
-		proxy->ok=1;
-	}
-
-	hostent2su( &to, &proxy->host, proxy->addr_idx, 
-		proxy->port ? proxy->port:((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT));
-
-	send_sock=get_send_socket( request, &to , proto);
-	if (send_sock==0) {
+	/* fill dst send_sock */
+	t->uac[branch].request.dst.send_sock =
+			get_send_socket( request, &t->uac[branch].request.dst.to,
+								t->uac[branch].request.dst. proto);
+	if (t->uac[branch].request.dst.send_sock==0) {
 		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d, proto %d "
 			" (no corresponding listening socket)\n",
-			to.s.sa_family, proto );
+			t->uac[branch].request.dst.to.s.sa_family, 
+			t->uac[branch].request.dst.proto );
 		ret=ser_error=E_NO_SOCKET;
 		goto error01;
 	}
 
 	/* now message printing starts ... */
 	shbuf=print_uac_request( t, request, branch, uri, 
-		&len, send_sock, proto );
+		&len, t->uac[branch].request.dst.send_sock, 
+			t->uac[branch].request.dst.proto );
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error01;
 	}
 
 	/* things went well, move ahead and install new buffer! */
-	t->uac[branch].request.dst.to=to;
-	t->uac[branch].request.dst.send_sock=send_sock;
-	t->uac[branch].request.dst.proto=proto;
-	t->uac[branch].request.dst.id=0;
 	t->uac[branch].request.buffer=shbuf;
 	t->uac[branch].request.buffer_len=len;
 	t->uac[branch].uri.s=t->uac[branch].request.buffer+
@@ -302,17 +292,13 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	t->nr_of_outgoings++;
 
 	/* update stats */
-	proxy->tx++;
-	proxy->tx_bytes+=len;
-
+	if (proxy){
+		proxy_mark(proxy, 1);
+	}
 	/* done! */	
 	ret=branch;
 		
 error01:
-	if (temp_proxy) {
-		free_proxy( proxy );
-		pkg_free( proxy );
-	}
 error:
 	return ret;
 }

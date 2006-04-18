@@ -547,4 +547,16 @@ static inline struct hostent* ip_addr2he(str* name, struct ip_addr* ip)
 	he.h_name=hostname;
 	return &he;
 }
+
+
+
+/* init a dest_info structure */
+#define init_dest_info(dst) \
+	do{ \
+		(dst)->proto=0; \
+		(dst)->id=0; \
+		(dst)->send_sock=0; \
+		memset(&(dst)->to, 0, sizeof(union sockaddr_union)); \
+	} while(0) 
+
 #endif

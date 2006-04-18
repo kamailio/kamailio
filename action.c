@@ -62,6 +62,7 @@
 #include "globals.h"
 #include "dset.h"
 #include "onsend.h"
+#include "resolve.h"
 #ifdef USE_TCP
 #include "tcp_server.h"
 #endif
@@ -97,7 +98,6 @@ int do_action(struct action* a, struct sip_msg* msg)
 	int ret;
 	int v;
 	struct dest_info dst;
-	struct proxy_l* p;
 	char* tmp;
 	char *new_uri, *end, *crt;
 	int len;
@@ -105,7 +105,6 @@ int do_action(struct action* a, struct sip_msg* msg)
 	struct sip_uri uri, next_hop;
 	struct sip_uri *u;
 	unsigned short port;
-	int proto;
 	unsigned short flags;
 	int_str name, value;
 
@@ -133,15 +132,16 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case FORWARD_TLS_T:
 #endif
 		case FORWARD_UDP_T:
-
-			if (a->type==FORWARD_UDP_T) proto=PROTO_UDP;
+			/* init dst */
+			init_dest_info(&dst);
+			if (a->type==FORWARD_UDP_T) dst.proto=PROTO_UDP;
 #ifdef USE_TCP
-			else if (a->type==FORWARD_TCP_T) proto= PROTO_TCP;
+			else if (a->type==FORWARD_TCP_T) dst.proto= PROTO_TCP;
 #endif
 #ifdef USE_TLS
-			else if (a->type==FORWARD_TLS_T) proto= PROTO_TLS;
+			else if (a->type==FORWARD_TLS_T) dst.proto= PROTO_TLS;
 #endif
-			else proto= PROTO_NONE;
+			else dst.proto= PROTO_NONE;
 			if (a->val[0].type==URIHOST_ST){
 				/*parse uri*/
 
@@ -172,11 +172,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 							ret=E_UNSPEC;
 							goto error_fwd_uri;
 				}
-				if (proto == PROTO_NONE){ /* only if proto not set get it
+				if (dst.proto == PROTO_NONE){ /* only if proto not set get it
 											 from the uri */
 					switch(u->proto){
 						case PROTO_NONE:
-							proto=PROTO_UDP;
+							dst.proto=PROTO_UDP;
 							break;
 						case PROTO_UDP:
 #ifdef USE_TCP
@@ -185,7 +185,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TLS
 						case PROTO_TLS:
 #endif
-							proto=u->proto;
+							dst.proto=u->proto;
 							break;
 						default:
 							LOG(L_ERR,"ERROR: do action: forward: bad uri"
@@ -202,29 +202,29 @@ int do_action(struct action* a, struct sip_msg* msg)
 							ret=E_BAD_PROTO;
 							goto error_fwd_uri;
 						}
-						proto=PROTO_TLS;
+						dst.proto=PROTO_TLS;
 					}
 #endif
 				}
-				/* create a temporary proxy*/
-				p=mk_proxy(&u->host, port, proto);
-				if (p==0){
+				if (sip_hostport2su(&dst.to, &u->host, port, dst.proto)<0){
 					LOG(L_ERR, "ERROR:  bad host name in uri,"
 							" dropping packet\n");
 					ret=E_BAD_ADDRESS;
 					goto error_fwd_uri;
 				}
-				ret=forward_request(msg, p, proto);
-				/*free_uri(&uri); -- no longer needed, in sip_msg*/
-				free_proxy(p); /* frees only p content, not p itself */
-				pkg_free(p);
+				ret=forward_request(msg, &dst);
 				if (ret>=0) ret=1;
 			}else if ((a->val[0].type==PROXY_ST) && (a->val[1].type==NUMBER_ST)){
-				if (proto==PROTO_NONE)
-					proto=msg->rcv.proto;
-				ret=forward_request(msg, (struct proxy_l*)a->val[0].u.data,
-										proto);
-				if (ret>=0) ret=1;
+				if (dst.proto==PROTO_NONE)
+					dst.proto=msg->rcv.proto;
+				proxy2su(&dst.to,  (struct proxy_l*)a->val[0].u.data);
+				ret=forward_request(msg, &dst);
+				if (ret>=0){
+					ret=1;
+					proxy_mark((struct proxy_l*)a->val[0].u.data, ret);
+				}else if (ser_error!=E_OK){
+					proxy_mark((struct proxy_l*)a->val[0].u.data, ret);
+				}
 			}else{
 				LOG(L_CRIT, "BUG: do_action: bad forward() types %d, %d\n",
 						a->val[0].type, a->val[1].type);
@@ -239,16 +239,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			p=(struct proxy_l*)a->val[0].u.data;
-			if (p->ok==0){
-				if (p->host.h_addr_list[p->addr_idx+1])
-					p->addr_idx++;
-				else
-					p->addr_idx=0;
-				p->ok=1;
-			}
-			ret=hostent2su(&dst.to, &p->host, p->addr_idx,
-						(p->port)?p->port:SIP_PORT );
+			/* init dst */
+			init_dest_info(&dst);
+			ret=proxy2su(&dst.to,  (struct proxy_l*)a->val[0].u.data);
 			if (ret==0){
 				if (p_onsend){
 					tmp=p_onsend->buf;
@@ -257,8 +250,6 @@ int do_action(struct action* a, struct sip_msg* msg)
 					tmp=msg->buf;
 					len=msg->len;
 				}
-				p->tx++;
-				p->tx_bytes+=len;
 				if (a->type==SEND_T){
 					/*udp*/
 					dst.proto=PROTO_UDP; /* not really needed for udp_send */
@@ -271,17 +262,18 @@ int do_action(struct action* a, struct sip_msg* msg)
 				}
 #ifdef USE_TCP
 					else{
-					/*tcp*/
-					dst.proto=PROTO_TCP;
-					dst.id=0;
-					ret=tcp_send(&dst, tmp, len);
+						/*tcp*/
+						dst.proto=PROTO_TCP;
+						dst.id=0;
+						ret=tcp_send(&dst, tmp, len);
 				}
 #endif
+			}else{
+				ret=E_BUG;
+				break;
 			}
-			if (ret<0){
-				p->errors++;
-				p->ok=0;
-			}else ret=1;
+			proxy_mark((struct proxy_l*)a->val[0].u.data, ret);
+			if (ret>=0) ret=1;
 
 			break;
 		case LOG_T:

@@ -35,6 +35,7 @@
  *              specified explicitly (jiri)
  *  2003-07-07  get_proto takes now two protos as arguments (andrei)
  *              tls/sips support for get_proto & uri2proxy (andrei)
+ *  2006-04-13  added uri2dst(), simplified uri2sock() (andrei)
  */
 
 
@@ -52,6 +53,7 @@
 #include "../../forward.h"
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
+#include "../../resolve.h"
 
 /* a forced_proto takes precedence if != PROTO_NONE */
 inline static enum sip_protos get_proto(enum sip_protos force_proto,
@@ -130,35 +132,71 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 }
 
 
+
+/*
+ * Convert a URI into a dest_info structure
+ * params: dst - will be filled
+ *         uri - uri in str form
+ *         proto - if != PROTO_NONE, this protocol will be forced over the
+ *                 uri_proto, otherwise the uri proto will be used
+ * returns 0 on error, dst on success
+ */
+inline static struct dest_info *uri2dst(struct dest_info* dst, str *uri, 
+											int proto )
+{
+	struct sip_uri parsed_uri;
+	enum sip_protos uri_proto;
+
+	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
+		LOG(L_ERR, "ERROR: uri2dst: bad_uri: %.*s\n",
+		    uri->len, uri->s );
+		return 0;
+	}
+	
+	if (parsed_uri.type==SIPS_URI_T){
+		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
+			LOG(L_ERR, "ERROR: uri2dst: bad transport  for sips uri: %d\n",
+					parsed_uri.proto);
+			return 0;
+		}else
+			uri_proto=PROTO_TLS;
+	}else
+		uri_proto=parsed_uri.proto;
+	
+	init_dest_info(dst);
+	dst->proto= get_proto(proto, uri_proto);
+	sip_hostport2su(&dst->to, &parsed_uri.host, parsed_uri.port_no,
+						dst->proto);
+	return dst;
+}
+
+
+
 /*
  * Convert a URI into socket_info
  */
 static inline struct socket_info *uri2sock(struct sip_msg* msg, str *uri,
 									union sockaddr_union *to_su, int proto)
 {
-	struct proxy_l *proxy;
 	struct socket_info* send_sock;
+	struct dest_info dst;
 
-	proxy = uri2proxy(uri, proto);
-	if (!proxy) {
-		ser_error = E_BAD_ADDRESS;
+	if (uri2dst(&dst, uri, proto)==0){
 		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
+		ser_error=E_BAD_ADDRESS;
 		return 0;
 	}
+	*to_su=dst.to; /* copy su */
 	
-	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
-		   (proxy->port) ? proxy->port : SIP_PORT);
-			/* we use proxy->proto since uri2proxy just set it correctly*/
-	send_sock = get_send_socket(msg, to_su, proxy->proto);
+	/* we use dst->proto since uri2dst just set it correctly*/
+	send_sock = get_send_socket(msg, to_su, dst.proto);
 	if (!send_sock) {
 		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
 		    to_su->s.sa_family);
 		ser_error = E_NO_SOCKET;
 	}
-
-	free_proxy(proxy);
-	pkg_free(proxy);
 	return send_sock;
 }
+
 
 #endif /* _TM_UT_H */
