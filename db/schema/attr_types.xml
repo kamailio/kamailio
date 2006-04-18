@@ -116,17 +116,50 @@
 
     <row><value col="at.name">uid</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
     <row><value col="at.name">did</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
-    <row><value col="at.name">rpid</value>        <value col="at.type">2</value><value col="at.d_flags">1</value></row>
-    <row><value col="at.name">fr_timer</value>    <value col="at.type">0</value><value col="at.d_flags">1</value></row>
-    <row><value col="at.name">fr_inv_timer</value><value col="at.type">2</value><value col="at.d_flags">1</value></row>
-    <row><value col="at.name">flags</value>       <value col="at.type">0</value><value col="at.d_flags">1</value></row>
-    <row><value col="at.name">gflags</value>      <value col="at.type">0</value><value col="at.d_flags">1</value></row>
+    
+    <row><value col="at.name">rpid</value>        
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">remote party id</value>
+         <value col="at.d_flags">1</value>
+         <value col="at.prior">0</value>
+         <value col="at.order">0</value>
+    </row>
+	 
+    <row><value col="at.name">fr_timer</value>    
+         <value col="at.type">0</value>
+	 <value col="at.rich_t">int</value>
+         <value col="at.desc">@ff_fr_timer</value>
+         <value col="at.d_flags">33</value>
+         <value col="at.prior">1073807616</value>
+	 <value col="at.order">140</value>
+    </row>
+    
+    <row><value col="at.name">fr_inv_timer</value>
+         <value col="at.type">0</value>
+         <value col="at.rich_t">int</value>
+         <value col="at.desc">@ff_fr_inv_timer</value>
+         <value col="at.d_flags">33</value>
+         <value col="at.prior">1073807616</value>
+         <value col="at.order">150</value>
+    </row>
+    
+    <row><value col="at.name">gflags</value>     
+         <value col="at.type">0</value>
+         <value col="at.rich_t">int</value>
+         <value col="at.desc">global flags</value>
+         <value col="at.d_flags">33</value>
+         <value col="at.prior">1073741824</value>
+         <value col="at.order">0</value>
+    </row>
     
     <row><value col="at.name">digest_realm</value>
          <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
 	 <value col="at.desc">digest realm</value>
 	 <value col="at.d_flags">33</value>
 	 <value col="at.prior">65536</value>
+         <value col="at.order">0</value>
     </row>
     
     <row><value col="at.name">acl</value>
@@ -161,7 +194,7 @@
          <value col="at.type">2</value>
          <value col="at.rich_t">email_adr</value>
          <value col="at.desc">@ff_email</value>
-         <value col="at.d_flags">32</value>
+         <value col="at.d_flags">33</value>
          <value col="at.flags">2</value>
          <value col="at.prior">256</value>
          <value col="at.order">30</value>
