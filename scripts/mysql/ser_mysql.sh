@@ -4,230 +4,342 @@
 #
 # Script for adding and dropping ser MySQL tables
 #
+# Copyright (C) 2006 iptelorg GmbH
+#
 
 #################################################################
-# config vars
+# configuration variables
 #################################################################
-DEFAULT_DBHOST="localhost"
-DEFAULT_DBNAME="ser"
-DEFAULT_SQLUSER="root"
+DEFAULT_DBHOST="localhost"   # Default hostname of the database server
+DEFAULT_SQLUSER="root"       # Database username with admin privileges
+DEFAULT_DBNAME="ser"         # Default name of SER database
+DEFAULT_ROUSER="serro"       # Default read-only username to SER database
+DEFAULT_ROPASS="47serro11"   # Default password of read-only user
+DEFAULT_RWUSER="ser"         # Default username of read-write user
+DEFAULT_RWPASS="heslo"       # Default password of read-write user
 
-DEFAULT_MYSQL="/usr/bin/mysql"
-DEFAULT_MYSQLDUMP="/usr/bin/mysqldump"
+DEFAULT_MYSQL="mysql"
+DEFAULT_MYSQLDUMP="mysqldump"
 
 DEFAULT_CREATE_SCRIPT="my_create.sql"
 DEFAULT_DROP_SCRIPT="my_drop.sql"
 
 CMD="$MYSQL -f -h$DBHOST -u$SQLUSER"
+DEFAULT_DUMP_OPTS="-c -a -e --add-locks --all"
 
 usage() {
 cat <<EOF
-Usage: $COMMAND create 
-       $COMMAND drop   
-       $COMMAND backup [database] <file> 
-       $COMMAND restore [database] <file>
-       $COMMAND copy <source_db> <dest_db>
-   
-  Command 'create' creates database named '${DBNAME}' containing tables 
-  needed for SER and SERWeb. In addition to that two users are created, 
-  one with read/write permissions and one with read-only permissions.
+NAME
+  $COMMAND - SER MySQL database administration tool
 
-  Commmand 'drop' deletes database named '${DBNAME}' and associated users.
+SYNOPSIS
+  $COMMAND [options] create
+  $COMMAND [options] drop
+  $COMMAND [options] backup [filename] 
+  $COMMAND [options] restore [filename]
 
-  Command 'backup' Dumps the contents of the database in <file>. If no
-  database name is provided on the command line then the default '${DBNAME}'
-  database will be used.
+DESCRIPTION
+  This tool is a simple shell wrapper over mysql client utility that can
+  be used to create, drop, or backup SER database stored on a MySQL server.
+  See section COMMANDS for brief overview of supported actions.
 
-  Command 'restore' will load the datata previously saved with 'backup'
-  command in the database. If no database name is provided on the command
-  line then '${DBNAME}' database will be loaded.
-    Note: Make sure that you have no conflicting data in the database before
-          you execute 'restore' command.
+  The SQL definition of tables within SER database is stored in a separate
+  file which can be usualy found in /usr/lib/ser/my_create.sql (depending
+  on installation). You can use that file to create SER database manually
+  if you cannot or do not want to use this shell wrapper.
 
-  Command 'copy' will copy the contents of <source_db> to database <dest_db>.
-  The destination database must not exist -- it will be created.
-    Note: The default users (ser, serro) will not have sufficient permissions
-          to access the new database.
+  This tool requires mysql client utility to create or drop SER database.
+  Furthemore backup and restore commands require mysqldump. Both tools
+  can be found in mysql-client package.
 
-  Environment variables:
-    DBHOST    Hostname of the MySQL server (${DBHOST})
-    DBNAME    Default name of SER database (${DBNAME})
-    SQLUSER   Database username with administrator privileges (${SQLUSER})
-              (Make sure that the specified user has sufficient permissions
-               to create databases, tables, and users)
-    MYSQL     Full path to mysql command (${MYSQL})
-    MYSQLDUMP Full path to mysqldump command (${MYSQLDUMP})
-           
-Report bugs to <ser-bugs@iptel.org>
+COMMANDS
+  create
+    Create a new SER database from scratch. The database must not exist.
+    This command creates the database, the default name of the database
+    is '${DEFAULT_DBNAME}' (the default name can be changed using a command line
+    parameter, see below). Furthemore the script will load table definition
+    from the external SQL file and create users with access to the newly
+    created database. You can use command line options to change the
+    default database name, usernames and passwords. Note that you need to
+    change SER and SERWeb configuration if you change database name or
+    usernames because SER and SERWeb are pre-configured to use the default
+    names.
+
+  drop
+    This command can be used to delete SER database and corresponding
+    database users. WARNING: This command will delete all data in the
+    database and this action cannot be undone afterwards. Make sure that
+    you have backups if you want to keep the data from the database.
+    The command also deletes the database users by default. You can change
+    that behavior using -k command line options, see below.
+
+  backup <filename>
+    Backup the contents of SER database. If you specify a filename then the
+    contents of the database will be saved in that file, otherwise the tool
+    will dumps the contents on the standard output. By default the backup
+    SQL data contains CREATE TABLE statements that will drop and recreate
+    database tables being loaded. This ensures that the tables are empty
+    and have correct structure. You can change this behavior using -t command 
+    line option.
+
+  restore <filename>
+    Load the contents of SER database from a file (if you specify one) or
+    from the standard input. Make sure that the database exists before you
+    load the data. Make sure that the database is empty if you have backups 
+    without create table statements (i.e. created with -t command line option) 
+    and that the tables are empty.
+
+OPTIONS
+  -h, --help
+      Display this help text.
+
+  -n NAME, --name=NAME
+      Database name of SER database.
+      (Default value is '$DEFAULT_DBNAME')
+
+  -r USERNAME, --ro-username=USERNAME
+      Username of user with read-only permissions to SER database.
+      (Default value is '$DEFAULT_ROUSER')
+
+  -w USERNAME, --rw-username=USERNAME
+      Username of user with read-write permissions to SER database.
+      (Default value is '$DEFAULT_RWUSER')
+
+  -p PASSWORD, --ro-password=PASSWORD
+      Password of user with read-only permissions to SER database.
+      (Default value is '$DEFAULT_ROPASS')
+
+  -P PASSWORD, --rw-password=PASSWORD
+      Password of user with read-write permissions to SER database.
+      (Default value is '$DEFAULT_RWPASS')
+
+  -t, --tables
+      Do not write CREATE TABLE statements that recreate tables when
+      restoring data from backup.      
+
+  -s HOST, --server=HOST
+      Hostname or IP address of database server.
+      (Default value is '$DEFAULT_DBHOST')
+
+  -u USERNAME, --username=USERNAME
+      Username of database administrator.
+      (Default value is '$DEFAULT_SQLUSER')
+
+  -q[PASSWORD], --sql-password[=PASSWORD]
+      Database administrator password. If you specify this option without
+      value then the script will assume that no password for database
+      administrator is needed and will not ask for it.
+      (No default value)
+
+  -k, --keep-users
+      Do not delete database users when removing the database. This
+      is useful if you have multiple databases and use the same users
+      to access them.
+
+  -v, --verbose
+      Enable verbose mode. This option can be given multiple times
+      to produce more and more output.
+        
+ENVIRONMENT VARIABLES
+  MYSQL     Path to mysql command (Currently ${MYSQL})
+  MYSQLDUMP Path to mysqldump command (Currently ${MYSQLDUMP})
+
+AUTHOR
+  Written by Jan Janak <jan@iptel.org>
+
+COPYRIGHT
+  Copyright (C) 2006 iptelorg GmbH
+  This is free software. You may redistribute copies of it under the
+  termp of the GNU General Public License. There is NO WARRANTY, to the
+  extent permitted by law.
+
+FILES
+  $CREATE_SCRIPT
+  $DROP_SCRIPT
+    
+REPORTING BUGS
+  Report bugs to <ser-bugs@iptel.org>             
 EOF
 } #usage
 
 
-# read password
+#
+# Read password from user
+#
 prompt_pw()
 {
+    export PW
+
+    if [ ! -z $DONT_ASK ] ; then
+	unset PW
+	return 0
+    elif [ -z "$PW" ] ; then
 	savetty=`stty -g`
-	printf "Enter password for MySQL user ${SQLUSER} (hit enter for no password): "
+	printf "Enter password for MySQL user ${SQLUSER} (Hit enter for no password): "
 	stty -echo
 	read PW
 	stty $savetty
 	echo
+    fi
+    if [ -z "$PW" ]; then
+	unset PW
+    else
+	PW="-p$PW"
+    fi
 }
 
-# execute sql command
+#
+# Execute an SQL command
+#
 sql_query()
 {
-    $CMD $PW "$@"
-}
-
-
-# Dump the contents of the database to stdout
-db_save() 
-{
-    if [ $# -ne 2 ] ; then
-	echo "ERROR: Bug in $COMMAND"
-	exit 1
+    if [ $# -gt 1 ] ; then
+	DB=$1
+	shift
+	$CMD $PW $MYSQL_OPTS "$DB" -e "$@"
+    else
+	$CMD $PW $MYSQL_OPTS "$@"
     fi
-    $DUMP_CMD $PW $1 > $2
 }
-
-
-# Load the contents of the database from a file
-db_load() #pars: <database name> <filename>
-{
-    if [ $# -ne 2 ] ; then
-	echo "ERROR: Bug in $COMMAND"
-	exit 1
-    fi
-    sql_query $1 < $2
-}
-
-
-# copy a database to database_bak
-db_copy() # par: <source_database> <destination_database>
-{
-	if [ $# -ne 2 ] ; then
-		echo  "ERROR: Bug in $COMMAND"
-		exit 1
-	fi
-
-	BU=/tmp/mysql_bup.$$
-	$DUMP_CMD $PW $1 > $BU
-	if [ "$?" -ne 0 ] ; then
-		echo "ERROR: Failed to copy the source database"
-		exit 1
-	fi
-	sql_query <<EOF
-	CREATE DATABASE $2;
-EOF
-
-	db_load $2 $BU
-	if [ "$?" -ne 0 ]; then
-		echo "ERROR: Failed to create the destination database (database exists or insuffucient permissions)"
-		rm -f $BU
-		exit 1
-	fi
-}
-
 
 # Drop SER database
-ser_drop()
+drop_db()
 {
-    # Drop dabase
-    # Revoke user permissions
+    # Drop the database if it exists
+    sql_query "" "DROP DATABASE IF EXISTS ${DBNAME}"
 
-    echo "Dropping SER database"
-    sql_query < $DROP_SCRIPT
-} #ser_drop
+    # Revoke permissions to both RW and RO users
+    sql_query "" "REVOKE ALL PRIVILEGES ON ${DBNAME}.* FROM '${RWUSER}'@'%'"
+    sql_query "" "REVOKE ALL PRIVILEGES ON ${DBNAME}.* FROM '${RWUSER}'@'localhost'"
+
+    sql_query "" "REVOKE ALL PRIVILEGES ON ${DBNAME}.* FROM '${ROUSER}'@'%'"
+    sql_query "" "REVOKE ALL PRIVILEGES ON ${DBNAME}.* FROM '${ROUSER}'@'localhost'"
+
+    if [ ! $KEEP_USERS ] ; then
+	sql_query "" "DROP USER '${RWUSER}'@'%'"
+	sql_query "" "DROP USER '${RWUSER}'@'localhost'"
+	sql_query "" "DROP USER '${ROUSER}'@'%'"
+	sql_query "" "DROP USER '${ROUSER}'@'localhost'"
+    fi
+
+    sql_query "" "FLUSH PRIVILEGES"
+} # drop_db
 
 
 # Create SER database
-ser_create ()
+create_db ()
 {
-    echo "Creating SER database"
-    sql_query < $CREATE_SCRIPT
-} # ser_create
+    # Create the database
+    sql_query "" "CREATE DATABASE IF NOT EXISTS ${DBNAME}"
+
+    # Add read/write access to RWUSER
+    sql_query "" "GRANT ALL ON ${DBNAME}.* TO '${RWUSER}'@'%' IDENTIFIED BY '${RWPASS}'"
+    sql_query "" "GRANT ALL ON ${DBNAME}.* TO '${RWUSER}'@'localhost' IDENTIFIED BY '${RWPASS}'"
+    
+    # Add read-only access to ROUSER
+    sql_query "" "GRANT ALL ON ${DBNAME}.* TO '${ROUSER}'@'%' IDENTIFIED BY '${ROPASS}'"
+    sql_query "" "GRANT ALL ON ${DBNAME}.* TO '${ROUSER}'@'localhost' IDENTIFIED BY '${ROPASS}'"
+    
+    # Activate changes
+    sql_query "" "FLUSH PRIVILEGES"
+
+    # Load table definitions
+    sql_query $DBNAME < $CREATE_SCRIPT
+} # create_db
 
 
 
 # Main program
-
 COMMAND=`basename $0`
 
-if [ -z "$DBHOST" ]; then
-    DBHOST=$DEFAULT_DBHOST;
-fi
+if [ -z "$DBNAME" ] ; then DBNAME=$DEFAULT_DBNAME; fi;
+if [ -z "$ROUSER" ] ; then ROUSER=$DEFAULT_ROUSER; fi;
+if [ -z "$RWUSER" ] ; then RWUSER=$DEFAULT_RWUSER; fi;
+if [ -z "$ROPASS" ] ; then ROPASS=$DEFAULT_ROPASS; fi;
+if [ -z "$RWPASS" ] ; then RWPASS=$DEFAULT_RWPASS; fi;
+if [ -z "$DBHOST" ] ; then DBHOST=$DEFAULT_DBHOST; fi;
+if [ -z "$SQLUSER" ] ; then SQLUSER=$DEFAULT_SQLUSER; fi;
+if [ -z "$MYSQL" ] ; then MYSQL=$DEFAULT_MYSQL; fi
+if [ -z "$MYSQLDUMP" ] ; then MYSQLDUMP=$DEFAULT_MYSQLDUMP; fi
+if [ -z "$DUMP_OPTS" ] ; then DUMP_OPTS=$DEFAULT_DUMP_OPTS; fi 
+if [ -z "$CREATE_SCRIPT" ] ; then CREATE_SCRIPT=`dirname $0`"/"$DEFAULT_CREATE_SCRIPT; fi
+if [ -z "$DROP_SCRIPT" ] ; then DROP_SCRIPT=`dirname $0`"/"$DEFAULT_DROP_SCRIPT; fi
 
-if [ -z "$DBNAME" ]; then
-    DBNAME=$DEFAULT_DBNAME;
-fi
+TEMP=`getopt -o hn:r:w:p:P:ts:u:vkq:: --long help,name:,ro-username:,rw-username:,\
+ro-password:,rw-password:,tables,server:,username:,verbose,keep-users,sql-password:: -n $COMMAND -- "$@"`
+if [ $? != 0 ] ; then exit 1; fi
+eval set -- "$TEMP"
 
-if [ -z "$SQLUSER" ]; then
-    SQLUSER=$DEFAULT_SQLUSER;
-fi
-
-if [ -z "$MYSQL" ]; then
-    MYSQL=$DEFAULT_MYSQL;
-fi
-
-if [ -z "$MYSQLDUMP" ]; then
-    MYSQLDUMP=$DEFAULT_MYSQLDUMP;
-fi
-
-if [ -z "$CREATE_SCRIPT" ]; then
-    CREATE_SCRIPT=$DEFAULT_CREATE_SCRIPT;
-fi
-
-if [ -z "$DROP_SCRIPT" ]; then
-    DROP_SCRIPT=$DEFAULT_DROP_SCRIPT;
-fi
+while true ; do
+    case "$1" in
+	-h|--help)         usage; exit 0 ;;
+	-n|--name)         DBNAME=$2; shift 2 ;;
+	-r|--ro-username)  ROUSER=$2; shift 2 ;;
+	-w|--rw-username)  RWUSER=$2; shift 2 ;;
+	-p|--ro-password)  ROPASS=$2; shift 2 ;;
+	-P|--rw-password)  RWPASS=$2; shift 2 ;;
+	-t|--tables)       DUMP_OPTS="$DUMP_OPTS -t "; shift ;;
+	-s|--server)       DBHOST=$2; shift 2 ;;
+	-u|--username)     SQLUSER=$2; shift 2 ;;
+        -v|--verbose)      MYSQL_OPTS="$MYSQL_OPTS -v "; shift ;;
+	-k|--keep-users)   KEEP_USERS=1; shift ;;
+        -q|--sql-password)
+	    case "$2" in
+		"") DONT_ASK=1; shift 2 ;;
+		*)  PW=$2; shift 2 ;;
+	    esac 
+	    ;;
+	--)               shift; break ;;
+	*)                echo "Internal error"; exit 1 ;;
+    esac
+done
 
 if [ $# -eq 0 ]; then
     usage
     exit 1
 fi
 
-if [ ! -x $MYSQL ]; then
-    echo "ERROR: Could not execute MySQL tool $MYSQL, please set MYSQL variable"
-    echo "       Run ($COMMAND without parameters for more information)"
+# Make sure we can execute mysql command
+TEMP=`which $MYSQL`
+if [ $? != 0 ] ; then
+    echo "Could not find mysql client utility"
+    echo "Set MYSQL environment variable properly (see -h for more info)"
     exit 1
 fi
 
-if [ ! -x $MYSQLDUMP ]; then
-    echo "ERROR: Could not execute MySQL tool $MYSQLDUMP, please set MYSQLDUMP variable"
-    echo "       (Run $COMMAND without parameters for more information"
+# Make sure we can execute mysqldump command
+TEMP=`which $MYSQLDUMP`
+if [ $? != 0 ] ; then
+    echo "Could not find mysqldump utility"
+    echo "Set MYSQLDUMP environment variable properly (see -h for more info)"
     exit 1
 fi
+
 
 CMD="$MYSQL -h$DBHOST -u$SQLUSER"
-DUMP_CMD="${MYSQLDUMP} -h$DBHOST -u$SQLUSER -c -a -e --add-locks --all"
-
-export PW
-prompt_pw
-
-if [ -z "$PW" ]; then
-    unset PW
-else
-    PW="-p$PW"
-fi
+DUMP_CMD="${MYSQLDUMP} -h$DBHOST -u$SQLUSER $DUMP_OPTS"
 
 case $1 in
     create) # Create SER database and users
-	ser_create
+	prompt_pw
+	create_db
 	exit $?
-		;;
+	;;
     
     drop) # Drop SER database and users
-	ser_drop
+	prompt_pw
+	drop_db
 	exit $?
 	;;
 
     backup) # backup SER database
 	shift
-	if [ $# -eq 1 ]; then
-	    db_save $DBNAME $1
-	elif [ $# -eq 2 ]; then
-	    db_save $1 $2
+	if [ $# -eq 1 ] ; then
+	    prompt_pw
+	    $DUMP_CMD $PW $MYSQL_OPTS ${DBNAME} > $1
+	elif [ $# -eq 0 ] ; then
+	    prompt_pw
+	    $DUMP_CMD $PW $MYSQL_OPTS ${DBNAME}
 	else
 	    usage
 	    exit 1
@@ -238,9 +350,11 @@ case $1 in
     restore) # restore SER database
 	shift
 	if [ $# -eq 1 ]; then
-	    db_load $DBNAME $1
-	elif [ $# -eq 2 ]; then
-	    db_load $1 $2
+	    prompt_pw
+	    sql_query $DBNAME < $1
+	elif [ $# -eq 0 ] ; then
+	    prompt_pw
+	    cat | sql_query $DBNAME
 	else
 	    usage
 	    exit 1
@@ -248,17 +362,8 @@ case $1 in
 	exit $?
 	;;
         
-    copy)
-	shift
-	if [ $# -ne 2 ]; then
-	    usage
-	    exit 1
-	fi
-	db_copy $1 $2
-	exit $?
-	;;
-    
     *)
+	echo "Unknown command '$1'"
 	usage
 	exit 1;
 	;;
