@@ -7,29 +7,10 @@
     <xsl:import href="sql.xsl"/>
 
     <xsl:template match="database">
-	<xsl:variable name="database.name">
-	    <xsl:call-template name="get-name"/>
-	</xsl:variable>
-
-	<xsl:text>CREATE DATABASE </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>;&#x0A;</xsl:text>
-
-	<xsl:text>USE </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>;&#x0A;&#x0A;</xsl:text>
 	<xsl:apply-imports/>
     </xsl:template>
 
     <xsl:template match="database" mode="drop">
-	<xsl:variable name="database.name">
-	    <xsl:call-template name="get-name"/>
-	</xsl:variable>
-
-	<xsl:text>DROP DATABASE </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>;&#x0A;</xsl:text>
-
 	<xsl:apply-templates mode="drop"/>
     </xsl:template>
     
@@ -137,12 +118,6 @@
 	</xsl:if>
     </xsl:template>
 
-    <xsl:template match="user">
-	<xsl:text>GRANT ALL PRIVILEGES ON </xsl:text>	
-	<xsl:text>FLUSH PRIVILEGES;</xsl:text>
-    </xsl:template>
-
-
     <xsl:template name="get-userid">
 	<xsl:param name="select" select="."/>
 	<xsl:param name="host" select="/.."/>
@@ -176,128 +151,5 @@
 	</xsl:choose>
 	<xsl:text>'</xsl:text>
     </xsl:template>
-
-    <xsl:template match="user" mode="drop">
-	<xsl:variable name="database.name">
-	    <xsl:call-template name="get-name">
-		<xsl:with-param name="select" select="parent::database"/>
-	    </xsl:call-template>
-	</xsl:variable>
-	
-	<xsl:text>REVOKE ALL PRIVILEGES ON </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>.* FROM </xsl:text>
-
-	<xsl:call-template name="get-userid"/>
-
-	<xsl:text>;&#x0A;</xsl:text>
-
-	<xsl:text>DROP USER </xsl:text>
-	<xsl:call-template name="get-userid"/>
-	<xsl:text>;&#x0A;</xsl:text>
-
-	<!-- No host tag present means connect from anywhere so we need to
-	delete @localhost account as well -->
-	
-	<xsl:choose>
-	    <xsl:when test="count(db:host)='1'"/>
-	    <xsl:when test="count(host)='1'"/>
-	    <xsl:otherwise>
-		<xsl:text>REVOKE ALL PRIVILEGES ON </xsl:text>
-		<xsl:value-of select="$database.name"/>
-		<xsl:text>.* FROM </xsl:text>
-		<xsl:call-template name="get-userid">
-		    <xsl:with-param name="host">localhost</xsl:with-param>
-		</xsl:call-template>
-		<xsl:text>;&#x0A;</xsl:text>
-		<xsl:text>DROP USER </xsl:text>
-		<xsl:call-template name="get-userid">
-		    <xsl:with-param name="host">localhost</xsl:with-param>
-		</xsl:call-template>
-		<xsl:text>;&#x0A;</xsl:text>
-	    </xsl:otherwise>
-	</xsl:choose>
-
-	<xsl:text>FLUSH PRIVILEGES;</xsl:text>
-	<xsl:text>&#x0A;</xsl:text>
-    </xsl:template>
-
-
-    <xsl:template match="user">
-	<xsl:variable name="database.name">
-	    <xsl:call-template name="get-name">
-		<xsl:with-param name="select" select="parent::database"/>
-	    </xsl:call-template>
-	</xsl:variable>
-	
-	<xsl:text>GRANT </xsl:text>
-	<xsl:choose>
-	    <xsl:when test="count(db:privileges)='1'">
-		<xsl:value-of select="normalize-space(db:privileges)"/>
-	    </xsl:when>
-	    <xsl:otherwise>
-		<xsl:value-of select="normalize-space(privileges)"/>
-	    </xsl:otherwise>
-	</xsl:choose>
-	<xsl:text> ON </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>.* TO </xsl:text>
-	<xsl:call-template name="get-userid"/>
-	<xsl:choose>
-	    <xsl:when test="count(db:password)='1'">
-		<xsl:text> IDENTIFIED BY '</xsl:text>
-		<xsl:value-of select="normalize-space(db:password)"/>
-		<xsl:text>'</xsl:text>
-	    </xsl:when>
-	    <xsl:when test="count(password)='1'">
-		<xsl:text> IDENTIFIED BY '</xsl:text>
-		<xsl:value-of select="normalize-space(password)"/>
-		<xsl:text>'</xsl:text>
-	    </xsl:when>
-	</xsl:choose>
-	<xsl:text>;&#x0A;</xsl:text>
-
-	<!-- No host tag present means connect from anywhere so we need to
-	delete @localhost account as well -->
-	
-	<xsl:choose>
-	    <xsl:when test="count(db:host)='1'"/>
-	    <xsl:when test="count(host)='1'"/>
-	    <xsl:otherwise>
-		<xsl:text>GRANT </xsl:text>
-		<xsl:choose>
-		    <xsl:when test="count(db:privileges)='1'">
-			<xsl:value-of select="normalize-space(db:privileges)"/>
-		    </xsl:when>
-		    <xsl:otherwise>
-			<xsl:value-of select="normalize-space(privileges)"/>
-		    </xsl:otherwise>
-		</xsl:choose>
-		<xsl:text> ON </xsl:text>
-		<xsl:value-of select="$database.name"/>
-		<xsl:text>.* TO </xsl:text>
-		<xsl:call-template name="get-userid">
-		    <xsl:with-param name="host">localhost</xsl:with-param>
-		</xsl:call-template>
-		<xsl:choose>
-		    <xsl:when test="count(db:password)='1'">
-			<xsl:text> IDENTIFIED BY '</xsl:text>
-			<xsl:value-of select="normalize-space(db:password)"/>
-			<xsl:text>'</xsl:text>
-		    </xsl:when>
-		    <xsl:when test="count(password)='1'">
-			<xsl:text> IDENTIFIED BY '</xsl:text>
-			<xsl:value-of select="normalize-space(password)"/>
-			<xsl:text>'</xsl:text>
-		    </xsl:when>
-		</xsl:choose>
-		<xsl:text>;&#x0A;</xsl:text>
-	    </xsl:otherwise>
-	</xsl:choose>
-
-	<xsl:text>FLUSH PRIVILEGES;</xsl:text>
-	<xsl:text>&#x0A;</xsl:text>
-    </xsl:template>
-
 
 </xsl:stylesheet>
