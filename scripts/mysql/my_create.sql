@@ -1,6 +1,3 @@
-CREATE DATABASE ser;
-USE ser;
-
 CREATE TABLE version (
     table_name VARCHAR(32) NOT NULL,
     table_version INT UNSIGNED NOT NULL DEFAULT '0'
@@ -30,6 +27,7 @@ INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
 INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
 INSERT INTO version (table_name, table_version) VALUES ('pdt', '1');
 INSERT INTO version (table_name, table_version) VALUES ('customers', '1');
+INSERT INTO version (table_name, table_version) VALUES ('cpl', '2');
 
 CREATE TABLE acc (
     id INT AUTO_INCREMENT NOT NULL,
@@ -544,9 +542,4 @@ CREATE TABLE customers (
     UNIQUE KEY cu_idx (cid)
 );
 
-GRANT ALL ON ser.* TO 'ser'@'%' IDENTIFIED BY 'heslo';
-GRANT ALL ON ser.* TO 'ser'@'localhost' IDENTIFIED BY 'heslo';
-FLUSH PRIVILEGES;
-GRANT SELECT ON ser.* TO 'serro'@'%' IDENTIFIED BY '47serro11';
-GRANT SELECT ON ser.* TO 'serro'@'localhost' IDENTIFIED BY '47serro11';
-FLUSH PRIVILEGES;
+ 

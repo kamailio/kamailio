@@ -27,6 +27,7 @@ INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
 INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
 INSERT INTO version (table_name, table_version) VALUES ('pdt', '1');
 INSERT INTO version (table_name, table_version) VALUES ('customers', '1');
+INSERT INTO version (table_name, table_version) VALUES ('cpl', '2');
 
 CREATE TABLE acc (
     id int NOT NULL,
@@ -528,3 +529,4 @@ CREATE TABLE customers (
     cu_idx UNIQUE (cid, )
 );
 
+ 

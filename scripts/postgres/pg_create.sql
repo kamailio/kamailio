@@ -1,5 +1,3 @@
-CREATE USER ser PASSWORD 'heslo';
-CREATE USER serro PASSWORD '47serro11';
 
 CREATE TABLE version (
     table_name VARCHAR(32) NOT NULL,
@@ -30,6 +28,7 @@ INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
 INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
 INSERT INTO version (table_name, table_version) VALUES ('pdt', '1');
 INSERT INTO version (table_name, table_version) VALUES ('customers', '1');
+INSERT INTO version (table_name, table_version) VALUES ('cpl', '2');
 
 CREATE TABLE acc (
     id SERIAL NOT NULL,
@@ -561,5 +560,4 @@ CREATE TABLE customers (
 );
 
 
-GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,cpl,customers TO ser;
-GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,cpl,customers TO serro;
+ 
