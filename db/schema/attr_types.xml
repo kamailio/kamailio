@@ -117,10 +117,10 @@
     <row><value col="at.name">uid</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
     <row><value col="at.name">did</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
     
-    <row><value col="at.name">rpid</value>        
+    <row><value col="at.name">asserted_id</value>        
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
-         <value col="at.desc">remote party id</value>
+         <value col="at.desc">asserted identity</value>
          <value col="at.d_flags">1</value>
          <value col="at.prior">0</value>
          <value col="at.order">0</value>

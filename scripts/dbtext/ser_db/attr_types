@@ -1,7 +1,7 @@
 name(str) rich_type(str) raw_type(int) type_spec(str,null) description(str,null) default_flags(int) flags(int) priority(int) ordering(int) 
 uid:string:2:::1:0:0:0
 did:string:2:::1:0:0:0
-rpid:string:2::remote party id:1:0:0:0
+asserted_id:string:2::asserted identity:1:0:0:0
 fr_timer:int:0::@ff_fr_timer:33:0:1073807616:140
 fr_inv_timer:int:0::@ff_fr_inv_timer:33:0:1073807616:150
 gflags:int:0::global flags:33:0:1073741824:0
