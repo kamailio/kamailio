@@ -440,8 +440,7 @@ int forward_reply(struct sip_msg* msg)
 	char* s;
 	int len;
 #endif
-	
-	dst.id=0;
+	memset(&dst, 0, sizeof(struct dest_info));	
 	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){
