@@ -138,6 +138,7 @@ natping(unsigned int ticks, void *param)
 			break;
 		c.s = (char *)cp + sizeof(c.len);
 		cp =  (char *)cp + sizeof(c.len) + c.len;
+		init_dest_info(&dst);
 		memcpy(&dst.send_sock, cp, sizeof(dst.send_sock));
 		cp += sizeof(dst.send_sock);
 

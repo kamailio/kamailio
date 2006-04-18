@@ -71,6 +71,7 @@ pingClients(unsigned int ticks, void *param)
             break;
         contact.s = (char*)ptr + sizeof(contact.len);
         ptr = contact.s + contact.len;
+		init_dest_info(&dst);
 	memcpy(&dst.send_sock, ptr, sizeof(dst.send_sock));
 	ptr += sizeof(dst.send_sock);
         if (parse_uri(contact.s, contact.len, &uri) < 0) {

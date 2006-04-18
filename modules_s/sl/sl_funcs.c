@@ -114,7 +114,7 @@ int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 		LOG(L_WARN, "Warning: sl_send_reply: I won't send a reply for ACK!!\n");
 		goto error;
 	}
-
+	init_dest_info(&dst);
 	if (reply_to_via) {
 		if (update_sock_struct_from_via(  &dst.to, msg, msg->via1 )==-1)
 		{
