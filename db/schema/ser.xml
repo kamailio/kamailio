@@ -92,18 +92,4 @@
     <xi:include href="extra.xml" xpointer="xpointer(data/table)">
 	<xi:fallback/>
     </xi:include>
-
-    <!-- User with read/write access -->
-    <user>
-	<username>ser</username>
-	<password>heslo</password>
-	<privileges>ALL</privileges>
-    </user>
-
-    <!-- User with read-only access -->
-    <user>
-	<username>serro</username>
-	<password>47serro11</password>
-	<privileges>SELECT</privileges>
-    </user>
 </database>
