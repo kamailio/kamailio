@@ -4,32 +4,6 @@ CREATE TABLE version (
     table_version INTEGER NOT NULL DEFAULT '0'
 );
 
-INSERT INTO version (table_name, table_version) VALUES ('acc', '3');
-INSERT INTO version (table_name, table_version) VALUES ('missed_calls', '3');
-INSERT INTO version (table_name, table_version) VALUES ('location', '8');
-INSERT INTO version (table_name, table_version) VALUES ('credentials', '6');
-INSERT INTO version (table_name, table_version) VALUES ('domain', '2');
-INSERT INTO version (table_name, table_version) VALUES ('attr_types', '2');
-INSERT INTO version (table_name, table_version) VALUES ('global_attrs', '1');
-INSERT INTO version (table_name, table_version) VALUES ('domain_attrs', '1');
-INSERT INTO version (table_name, table_version) VALUES ('user_attrs', '3');
-INSERT INTO version (table_name, table_version) VALUES ('phonebook', '1');
-INSERT INTO version (table_name, table_version) VALUES ('silo', '4');
-INSERT INTO version (table_name, table_version) VALUES ('uri', '2');
-INSERT INTO version (table_name, table_version) VALUES ('trusted', '1');
-INSERT INTO version (table_name, table_version) VALUES ('speed_dial', '2');
-INSERT INTO version (table_name, table_version) VALUES ('sd_attrs', '1');
-INSERT INTO version (table_name, table_version) VALUES ('gw', '3');
-INSERT INTO version (table_name, table_version) VALUES ('gw_grp', '2');
-INSERT INTO version (table_name, table_version) VALUES ('lcr', '1');
-INSERT INTO version (table_name, table_version) VALUES ('presentity', '1');
-INSERT INTO version (table_name, table_version) VALUES ('presentity_contact', '1');
-INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
-INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
-INSERT INTO version (table_name, table_version) VALUES ('pdt', '1');
-INSERT INTO version (table_name, table_version) VALUES ('customers', '1');
-INSERT INTO version (table_name, table_version) VALUES ('cpl', '2');
-
 CREATE TABLE acc (
     id SERIAL NOT NULL,
     from_uid VARCHAR(64),

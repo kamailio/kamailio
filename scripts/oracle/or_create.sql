@@ -3,32 +3,7 @@ CREATE TABLE version (
     table_version int NOT NULL DEFAULT '0'
 );
 
-INSERT INTO version (table_name, table_version) VALUES ('acc', '3');
-INSERT INTO version (table_name, table_version) VALUES ('missed_calls', '3');
-INSERT INTO version (table_name, table_version) VALUES ('location', '8');
-INSERT INTO version (table_name, table_version) VALUES ('credentials', '6');
-INSERT INTO version (table_name, table_version) VALUES ('domain', '2');
-INSERT INTO version (table_name, table_version) VALUES ('attr_types', '2');
-INSERT INTO version (table_name, table_version) VALUES ('global_attrs', '1');
-INSERT INTO version (table_name, table_version) VALUES ('domain_attrs', '1');
-INSERT INTO version (table_name, table_version) VALUES ('user_attrs', '3');
-INSERT INTO version (table_name, table_version) VALUES ('phonebook', '1');
-INSERT INTO version (table_name, table_version) VALUES ('silo', '4');
-INSERT INTO version (table_name, table_version) VALUES ('uri', '2');
-INSERT INTO version (table_name, table_version) VALUES ('trusted', '1');
-INSERT INTO version (table_name, table_version) VALUES ('speed_dial', '2');
-INSERT INTO version (table_name, table_version) VALUES ('sd_attrs', '1');
-INSERT INTO version (table_name, table_version) VALUES ('gw', '3');
-INSERT INTO version (table_name, table_version) VALUES ('gw_grp', '2');
-INSERT INTO version (table_name, table_version) VALUES ('lcr', '1');
-INSERT INTO version (table_name, table_version) VALUES ('presentity', '1');
-INSERT INTO version (table_name, table_version) VALUES ('presentity_contact', '1');
-INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
-INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
-INSERT INTO version (table_name, table_version) VALUES ('pdt', '1');
-INSERT INTO version (table_name, table_version) VALUES ('customers', '1');
-INSERT INTO version (table_name, table_version) VALUES ('cpl', '2');
-
+INSERT INTO version (table_name, table_version) values ('acc','3');
 CREATE TABLE acc (
     id int NOT NULL,
     from_uid string(64),
@@ -59,6 +34,7 @@ CREATE TABLE acc (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('missed_calls','3');
 CREATE TABLE missed_calls (
     id int NOT NULL,
     from_uid string(64),
@@ -89,6 +65,7 @@ CREATE TABLE missed_calls (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('credentials','6');
 CREATE TABLE credentials (
     auth_username string(64) NOT NULL,
     realm string(64) NOT NULL,
@@ -99,6 +76,7 @@ CREATE TABLE credentials (
     uid string(64) NOT NULL
 );
 
+INSERT INTO version (table_name, table_version) values ('attr_types','2');
 CREATE TABLE attr_types (
     name string(32) NOT NULL,
     rich_type string(32) NOT NULL DEFAULT 'string',
@@ -142,6 +120,7 @@ INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, f
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_require_confirm', '0', 'boolean', '@ff_reg_confirmation', '32', '0', '1073807360', '120');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_send_missed', '0', 'boolean', '@ff_send_daily_missed_calls', '32', '0', '1073807616', '130');
 
+INSERT INTO version (table_name, table_version) values ('global_attrs','1');
 CREATE TABLE global_attrs (
     name string(32) NOT NULL,
     type int NOT NULL DEFAULT '0',
@@ -158,6 +137,7 @@ INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_require_conf', '
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('lang', '2', 'en', '33');
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_timezone', '2', 'Europe/Prague', '32');
 
+INSERT INTO version (table_name, table_version) values ('domain_attrs','1');
 CREATE TABLE domain_attrs (
     did string(64),
     name string(32) NOT NULL,
@@ -168,6 +148,7 @@ CREATE TABLE domain_attrs (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('user_attrs','3');
 CREATE TABLE user_attrs (
     uid string(64) NOT NULL,
     name string(32) NOT NULL,
@@ -177,6 +158,7 @@ CREATE TABLE user_attrs (
     userattrs_idx UNIQUE (uid, name, value, )
 );
 
+INSERT INTO version (table_name, table_version) values ('domain','2');
 CREATE TABLE domain (
     did string(64) NOT NULL,
     domain string(128) NOT NULL,
@@ -184,6 +166,7 @@ CREATE TABLE domain (
     domain_idx UNIQUE (domain, )
 );
 
+INSERT INTO version (table_name, table_version) values ('location','8');
 CREATE TABLE location (
     uid string(64) NOT NULL,
     contact string(255) NOT NULL,
@@ -199,6 +182,7 @@ CREATE TABLE location (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('trusted','1');
 CREATE TABLE trusted (
     src_ip string(39) NOT NULL,
     proto string(4) NOT NULL,
@@ -206,6 +190,7 @@ CREATE TABLE trusted (
     trusted_idx UNIQUE (src_ip, proto, from_pattern, )
 );
 
+INSERT INTO version (table_name, table_version) values ('phonebook','1');
 CREATE TABLE phonebook (
     id int NOT NULL,
     uid string(64) NOT NULL,
@@ -216,6 +201,7 @@ CREATE TABLE phonebook (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('gw','3');
 CREATE TABLE gw (
     gw_name string(128) NOT NULL,
     ip_addr int NOT NULL,
@@ -227,12 +213,14 @@ CREATE TABLE gw (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('gw_grp','2');
 CREATE TABLE gw_grp (
     grp_id int NOT NULL,
     grp_name string(64) NOT NULL,
     gwgrp_idx UNIQUE (grp_id, )
 );
 
+INSERT INTO version (table_name, table_version) values ('lcr','1');
 CREATE TABLE lcr (
     prefix string(16) NOT NULL,
     from_uri string(255) NOT NULL DEFAULT '%',
@@ -240,12 +228,14 @@ CREATE TABLE lcr (
     priority int
 );
 
+INSERT INTO version (table_name, table_version) values ('grp','3');
 CREATE TABLE grp (
     uid string(64) NOT NULL DEFAULT '',
     grp string(64) NOT NULL DEFAULT '',
     last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
+INSERT INTO version (table_name, table_version) values ('silo','4');
 CREATE TABLE silo (
     mid int NOT NULL,
     from_hdr string(255) NOT NULL,
@@ -259,6 +249,7 @@ CREATE TABLE silo (
     silo_idx1 UNIQUE (mid, )
 );
 
+INSERT INTO version (table_name, table_version) values ('uri','2');
 CREATE TABLE uri (
     uid string(64) NOT NULL,
     did string(64) NOT NULL,
@@ -266,6 +257,7 @@ CREATE TABLE uri (
     flags int NOT NULL DEFAULT '0'
 );
 
+INSERT INTO version (table_name, table_version) values ('speed_dial','2');
 CREATE TABLE speed_dial (
     id int NOT NULL,
     uid string(64) NOT NULL,
@@ -277,6 +269,7 @@ CREATE TABLE speed_dial (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('sd_attrs','1');
 CREATE TABLE sd_attrs (
     id string(64) NOT NULL,
     name string(32) NOT NULL,
@@ -286,6 +279,7 @@ CREATE TABLE sd_attrs (
     sd_idx UNIQUE (id, name, value, )
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity','1');
 CREATE TABLE presentity (
     presid int(10) NOT NULL,
     uri string(255) NOT NULL,
@@ -295,6 +289,7 @@ CREATE TABLE presentity (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity_notes','1');
 CREATE TABLE presentity_notes (
     dbid string(64) NOT NULL,
     presid int(10) NOT NULL,
@@ -305,6 +300,7 @@ CREATE TABLE presentity_notes (
     pnotes_idx1 UNIQUE (dbid, )
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity_persons','1');
 CREATE TABLE presentity_persons (
     dbid string(64) NOT NULL,
     presid int(10) NOT NULL,
@@ -315,6 +311,7 @@ CREATE TABLE presentity_persons (
     prespersons_idx1 UNIQUE (dbid, )
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity_contact','1');
 CREATE TABLE presentity_contact (
     contactid int(10) NOT NULL,
     presid int(10) NOT NULL,
@@ -333,6 +330,7 @@ CREATE TABLE presentity_contact (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('watcherinfo','1');
 CREATE TABLE watcherinfo (
     r_uri string(255) NOT NULL,
     w_uri string(255) NOT NULL,
@@ -351,6 +349,7 @@ CREATE TABLE watcherinfo (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('tuple_notes','1');
 CREATE TABLE tuple_notes (
     presid int(10) NOT NULL,
     tupleid string(64) NOT NULL,
@@ -358,6 +357,7 @@ CREATE TABLE tuple_notes (
     lang string(64) NOT NULL
 );
 
+INSERT INTO version (table_name, table_version) values ('offline_winfo','1');
 CREATE TABLE offline_winfo (
     uid string(64) NOT NULL,
     watcher string(255) NOT NULL,
@@ -369,6 +369,7 @@ CREATE TABLE offline_winfo (
     dbid int(10) NOT NULL
 );
 
+INSERT INTO version (table_name, table_version) values ('rls_subscription','1');
 CREATE TABLE rls_subscription (
     id string(48) NOT NULL,
     doc_version int NOT NULL,
@@ -383,6 +384,7 @@ CREATE TABLE rls_subscription (
     rls_subscription_key UNIQUE (id, )
 );
 
+INSERT INTO version (table_name, table_version) values ('rls_vs','1');
 CREATE TABLE rls_vs (
     id string(48) NOT NULL,
     rls_id string(48) NOT NULL,
@@ -390,12 +392,14 @@ CREATE TABLE rls_vs (
     rls_vs_key UNIQUE (id, )
 );
 
+INSERT INTO version (table_name, table_version) values ('rls_vs_names','1');
 CREATE TABLE rls_vs_names (
     id string(48) NOT NULL,
     name string(64),
     lang string(64)
 );
 
+INSERT INTO version (table_name, table_version) values ('i18n','1');
 CREATE TABLE i18n (
     code int NOT NULL,
     reason_re string(255) DEFAULT NULL,
@@ -506,12 +510,14 @@ INSERT INTO i18n (code, lang, new_reason) VALUES ('603', 'cs_CZ.ascii', 'Odmitnu
 INSERT INTO i18n (code, lang, new_reason) VALUES ('604', 'cs_CZ.ascii', 'Neexistujici uzivatel nebo sluzba');
 INSERT INTO i18n (code, lang, new_reason) VALUES ('606', 'cs_CZ.ascii', 'Nelze akceptovat');
 
+INSERT INTO version (table_name, table_version) values ('pdt','1');
 CREATE TABLE pdt (
     prefix string(32) NOT NULL,
     domain string(255) NOT NULL,
     pdt_idx UNIQUE (prefix, )
 );
 
+INSERT INTO version (table_name, table_version) values ('cpl','2');
 CREATE TABLE cpl (
     uid string(64) NOT NULL,
     cpl_xml binary,
@@ -519,6 +525,7 @@ CREATE TABLE cpl (
     cpl_key UNIQUE (uid, )
 );
 
+INSERT INTO version (table_name, table_version) values ('customers','1');
 CREATE TABLE customers (
     cid int NOT NULL,
     name string(128) NOT NULL,
