@@ -859,7 +859,7 @@ int run_actions(struct action* a, struct sip_msg* msg)
 	}
 
 	if (a==0){
-		LOG(L_ERR, "WARNING: run_actions: null action list (rec_level=%d)\n",
+		DBG("DEBUG: run_actions: null action list (rec_level=%d)\n",
 			rec_lev);
 		ret=0;
 	}
