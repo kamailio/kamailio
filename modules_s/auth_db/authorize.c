@@ -65,6 +65,7 @@ static inline int get_ha1(struct username* username, str* realm,
 #ifndef SUPPORT_EMPTY_AUTHNAME
 	/* sanity check first to avoid unnecessary DB lookups */
 	if (username->user.len == 0) {
+		*res = 0;
 		return 1;
 	}
 #endif
@@ -250,7 +251,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, char* table,
 	}
 
 	cred = (auth_body_t*)h->parsed;
-
+	result = 0;
 	res = get_ha1(&cred->digest.username, &r, table, ha1, &result, &row);
         if (res < 0) {
 		     /* Error while accessing the database */
@@ -261,7 +262,9 @@ static inline int authenticate(struct sip_msg* msg, str* realm, char* table,
 	}
 	if (res > 0) {
 		     /* Username not found in the database */
-		auth_dbf.free_result(auth_db_handle, result);
+		if (result) {
+			auth_dbf.free_result(auth_db_handle, result);
+		}
 		return -1;
 	}
 
