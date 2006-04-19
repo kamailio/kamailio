@@ -68,16 +68,16 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f, void *param )
 {
 	struct dlg_callback *cb;
 
-	if ( types&DLG_CREATED ) {
-		if (types!=DLG_CREATED) {
-			LOG(L_CRIT,"BUG:dialog:register_dlgcb: DLG_CREATED type must be "
+	if ( types&DLGCB_CREATED ) {
+		if (types!=DLGCB_CREATED) {
+			LOG(L_CRIT,"BUG:dialog:register_dlgcb: DLGCB_CREATED type must be "
 				"register alone!\n");
 			return -1;
 		}
 	} else {
 		if (dlg==0) {
-			LOG(L_CRIT,"BUG:dialog:register_dlgcb: non-DLG_CREATED type must "
-				"be register to a dialog (dlg missing)!\n");
+			LOG(L_CRIT,"BUG:dialog:register_dlgcb: non-DLGCB_CREATED type "
+				"must be register to a dialog (dlg missing)!\n");
 			return -1;
 		}
 	}
@@ -91,7 +91,7 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f, void *param )
 	cb->callback = f;
 	cb->param = param;
 
-	if ( types&DLG_CREATED ) {
+	if ( types&DLGCB_CREATED ) {
 		cb->next = create_cbs->first;
 		create_cbs->first = cb;
 		create_cbs->types |= types;
@@ -114,7 +114,7 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 
 	for ( cb=create_cbs->first; cb; cb=cb->next)  {
 		DBG("DEBUG:dialog:run_create_callbacks: dialog=%p\n",dlg);
-		cb->callback( dlg, DLG_CREATED, msg, &cb->param );
+		cb->callback( dlg, DLGCB_CREATED, msg, &cb->param );
 	}
 	return;
 }

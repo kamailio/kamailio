@@ -143,7 +143,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 			"with code %d (%p)\n", param->code, dlg);
 
 		/* dialog setup not completed (3456XX) */
-		run_dlg_callbacks( DLG_FAILED, dlg, rpl);
+		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl);
 
 		unref_dlg(dlg,1,1);
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
@@ -163,7 +163,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	}
 
 	/* dialog confirmed */
-	run_dlg_callbacks( DLG_CONFIRMED, dlg, rpl);
+	run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl);
 
 	insert_dlg_timer( &dlg->tl, dlg->lifetime );
 
@@ -340,14 +340,14 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				"unconfirmed dialog ?!\n");
 
 		/* dialog terminated (BYE) */
-		run_dlg_callbacks( DLG_TERMINATED, dlg, req);
+		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req);
 
 		unref_dlg(dlg, 2, 1);
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		return;
 	} else {
 		/* within dialog request */
-		run_dlg_callbacks( DLG_REQ_WITHIN, dlg, req);
+		run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
 	}
 
 	if (req->first_line.u.request.method_value!=METHOD_ACK) {
@@ -374,7 +374,7 @@ void dlg_ontimeout( struct dlg_tl *tl)
 		dlg, tl->timeout);
 
 	/* dialog timeout */
-	run_dlg_callbacks( DLG_EXPIRED, dlg, 0);
+	run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0);
 
 	unref_dlg(dlg, 1, 1);
 
