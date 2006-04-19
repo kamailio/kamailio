@@ -432,7 +432,7 @@ inline static void adjust_ticks()
 #ifndef TIMER_DEBUG
 					if (delta > 2*(s_ticks_t)TIMER_MAX_DRIFT+1)
 #endif
-						LOG(L_INFO, "adjusting timer ticks (%lu) with %ld ms"
+						DBG("adjusting timer ticks (%lu) with %ld ms"
 								" (%ld ticks)\n",
 								(unsigned long)*ticks,
 							(long)(delta*1000)/TIMER_TICKS_HZ, (long)delta);
