@@ -129,14 +129,22 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
+	rpl = param->rpl;
+
+	if (type==TMCB_RESPONSE_FWDED) {
+	  /* The state does not change, but the msg is mutable in this callback */
+	  run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, rpl);
+	  return;
+	}
+
 	if (param->code<200) {
 		DBG("DEBUG:dialog:dlg_onreply: dialog %p goes into Early state "
 			"with code %d\n", dlg, param->code);
 		dlg->state = DLG_STATE_EARLY;
+		/* Early state, the message is immutable here */
+		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl);
 		return;
 	}
-
-	rpl = param->rpl;
 
 	if (param->code>=300) {
 		DBG("DEBUG:dialog:dlg_onreply: destroying unconfirmed dialog "
@@ -241,8 +249,9 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		goto error;
 	}
 
-	if ( d_tmb.register_tmcb( 0, t, TMCB_RESPONSE_OUT|TMCB_TRANS_DELETED,
-	dlg_onreply, (void*)dlg)<0 ) {
+	if ( d_tmb.register_tmcb( 0, t, 
+				  TMCB_RESPONSE_OUT|TMCB_TRANS_DELETED|TMCB_RESPONSE_FWDED,
+				  dlg_onreply, (void*)dlg)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:dlg_onreq: failed to register TMCB\n");
 		goto error;
 	}
