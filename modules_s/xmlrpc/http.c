@@ -137,6 +137,7 @@ int create_via(struct sip_msg* msg, char* s1, char* s2)
 	unsigned int via_len;
 	str ip, port;
 	struct hostport hp;
+	struct dest_info dst;
 
 	ip.s = ip_addr2a(&msg->rcv.src_ip);
 	ip.len = strlen(ip.s);
@@ -146,7 +147,8 @@ int create_via(struct sip_msg* msg, char* s1, char* s2)
 	hp.host = &ip;
 	hp.port = &port;
 
-	via = via_builder(&via_len, msg->rcv.bind_address, 0, 0, msg->rcv.proto, &hp);
+	init_dst_from_rcv(&dst, &msg->rcv);
+	via = via_builder(&via_len, &dst, 0, 0, &hp);
 	if (!via) {
 		ERR("Unable to build Via header field\n");
 		return -1;

@@ -164,6 +164,9 @@ int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 	dst.proto=msg->rcv.proto;
 	dst.send_sock=msg->rcv.bind_address;
 	dst.id=msg->rcv.proto_reserved1;
+#ifdef USE_COMP
+	dst.comp=msg->via1->comp_no;
+#endif
 	ret = msg_send(&dst, buf, len);
 	mhomed=backup_mhomed;
 	if (ret<0) 
