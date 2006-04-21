@@ -322,13 +322,10 @@ static int send_local_ack(struct sip_msg* msg, str* next_hop,
 		LOG(L_ERR, "send_local_ack: Invalid parameter value\n");
 		return -1;
 	}
-	init_dest_info(&dst);
-	dst.send_sock = uri2sock(msg, next_hop, &dst.to, PROTO_NONE);
-	if (!dst.send_sock) {
+	if ((uri2dst(&dst, msg,  next_hop, PROTO_NONE)==0) || (dst.send_sock==0)){
 		LOG(L_ERR, "send_local_ack: no socket found\n");
 		return -1;
 	}
-	dst.id=0;
 	return msg_send(&dst, ack, ack_len);
 }
 

@@ -38,6 +38,8 @@
  * 2003-10-02  added via_builder set host/port support (andrei)
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
+ * 2006-04-21  build_uac_req, assemble_via use struct dest_info now;
+ *              uri2sock replaced with uri2dst (andrei)
  */
 
 #include "defs.h"
@@ -100,8 +102,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	branch_str.s=branch_buf;
 	branch_str.len=branch_len;
 	set_hostport(&hp, (is_local(Trans))?0:(Trans->uas.request));
-	via=via_builder(&via_len, Trans->uac[branch].request.dst.send_sock,
-		&branch_str, 0, Trans->uac[branch].request.dst.proto, &hp );
+	via=via_builder(&via_len, &Trans->uac[branch].request.dst,
+		&branch_str, 0, &hp );
 	if (!via)
 	{
 		LOG(L_ERR, "ERROR: build_local: "
@@ -355,7 +357,7 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 
      /*
       * The function creates an ACK to 200 OK. Route set will be created
-      * and parsed and next_hop parameter will contain uri the which the
+      * and parsed and next_hop parameter will contain the uri to which the
       * request should be send. The function is used by tm when it generates
       * local ACK to 200 OK (on behalf of applications using uac
       */
@@ -370,8 +372,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	struct hostport hp;
 	struct rte* list;
 	str contact, ruri, *cont;
-	struct socket_info* send_sock;
-	union sockaddr_union to_su;
+	struct dest_info dst;
 	
 	if (get_contact_uri(rpl, &contact) < 0) {
 		return 0;
@@ -399,9 +400,8 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	
 	
 	     /* via */
-	send_sock = uri2sock(rpl, next_hop, &to_su, PROTO_NONE);
-	if (!send_sock) {
-		LOG(L_ERR, "build_dlg_ack: no socket found\n");
+	if ((uri2dst(&dst, rpl, next_hop, PROTO_NONE)==0) || (dst.send_sock==0)){
+			LOG(L_ERR, "build_dlg_ack: no socket found\n");
 		goto error;
 	}
 	
@@ -409,7 +409,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	branch_str.s = branch_buf;
 	branch_str.len = branch_len;
 	set_hostport(&hp, 0);
-	via = via_builder(&via_len, send_sock, &branch_str, 0, send_sock->proto, &hp);
+	via = via_builder(&via_len, &dst, &branch_str, 0, &hp);
 	if (!via) {
 		LOG(L_ERR, "build_dlg_ack: No via header got from builder\n");
 		goto error;
@@ -529,7 +529,8 @@ static inline int print_cseq_num(str* _s, dlg_t* _d)
 /*
  * Create Via header
  */
-static inline int assemble_via(str* dest, struct cell* t, struct socket_info* sock, int branch)
+static inline int assemble_via(str* dest, struct cell* t, 
+								struct dest_info* dst, int branch)
 {
 	static char branch_buf[MAX_BRANCH_PARAM_LEN];
 	char* via;
@@ -551,7 +552,7 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 #endif
 
 	set_hostport(&hp, 0);
-	via = via_builder(&via_len, sock, &branch_str, 0, sock->proto, &hp);
+	via = via_builder(&via_len, dst, &branch_str, 0, &hp);
 	if (!via) {
 		LOG(L_ERR, "assemble_via: via building failed\n");
 		return -2;
@@ -674,7 +675,7 @@ static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
  * Create a request
  */
 char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int branch, 
-			struct cell *t, int* len, struct socket_info* send_sock)
+			struct cell *t, int* len, struct dest_info* dst)
 {
 	char* buf, *w;
 	str content_length, cseq, via;
@@ -693,7 +694,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	}
 	*len = method->len + 1 + dialog->hooks.request_uri->len + 1 + SIP_VERSION_LEN + CRLF_LEN;
 
-	if (assemble_via(&via, t, send_sock, branch) < 0) {
+	if (assemble_via(&via, t, dst, branch) < 0) {
 		LOG(L_ERR, "build_uac_req(): Error while assembling Via\n");
 		return 0;
 	}

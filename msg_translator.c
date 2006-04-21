@@ -56,6 +56,9 @@
  * 2003-10-08  receive_test function-alized (jiri)
  * 2003-10-20  added body_lump list (sip_msg), adjust_clen (andrei & jan)
  * 2003-11-11  type of rpl_lumps replaced by flags (bogdan)
+ * 2006-04-20  build_req_from_sip_req, via_builder and lump_* functions
+ *              use now struct dest_info; lumps & via comp param support
+ *              (rfc3486) (andrei)
  *
  */
 /* Via special params:
@@ -436,7 +439,7 @@ char* clen_builder(struct sip_msg* msg, int *clen_len, int diff)
  * returns 1 if cond is true, 0 if false */
 static inline int lump_check_opt(	enum lump_conditions cond,
 									struct sip_msg* msg,
-									struct socket_info* snd_s
+									struct dest_info* snd_i
 									)
 {
 	struct ip_addr* ip;
@@ -444,7 +447,7 @@ static inline int lump_check_opt(	enum lump_conditions cond,
 	int proto;
 
 #define get_ip_port_proto \
-			if (snd_s==0){ \
+			if ((snd_i==0) || (snd_i->send_sock==0)){ \
 				LOG(L_CRIT, "ERROR: lump_check_opt: null send socket\n"); \
 				return 1; /* we presume they are different :-) */ \
 			} \
@@ -466,30 +469,34 @@ static inline int lump_check_opt(	enum lump_conditions cond,
 		case COND_IF_DIFF_REALMS:
 			get_ip_port_proto;
 			/* faster tests first */
-			if ((port==snd_s->port_no)&&(proto==snd_s->proto)&&
-				(ip_addr_cmp(ip, &snd_s->address)))
+			if ((port==snd_i->send_sock->port_no) && 
+					(proto==snd_i->send_sock->proto) &&
+#ifdef USE_COMP
+					(msg->rcv.comp==snd_i->comp) &&
+#endif
+					(ip_addr_cmp(ip, &snd_i->send_sock->address)))
 				return 0;
 			else return 1;
 		case COND_IF_DIFF_AF:
 			get_ip_port_proto;
-			if (ip->af!=snd_s->address.af) return 1;
+			if (ip->af!=snd_i->send_sock->address.af) return 1;
 			else return 0;
 		case COND_IF_DIFF_PROTO:
 			get_ip_port_proto;
-			if (proto!=snd_s->proto) return 1;
+			if (proto!=snd_i->send_sock->proto) return 1;
 			else return 0;
 		case COND_IF_DIFF_PORT:
 			get_ip_port_proto;
-			if (port!=snd_s->port_no) return 1;
+			if (port!=snd_i->send_sock->port_no) return 1;
 			else return 0;
 		case COND_IF_DIFF_IP:
 			get_ip_port_proto;
-			if (ip_addr_cmp(ip, &snd_s->address)) return 0;
+			if (ip_addr_cmp(ip, &snd_i->send_sock->address)) return 0;
 			else return 1;
 		case COND_IF_RAND:
 			return (rand()>=RAND_MAX/2);
 		default:
-			LOG(L_CRIT, "BUG: lump_check_opt: unknown lump condition %d\n",
+			LOG(L_CRIT, "BUG: lump:w_check_opt: unknown lump condition %d\n",
 					cond);
 	}
 	return 0; /* false */
@@ -499,7 +506,8 @@ static inline int lump_check_opt(	enum lump_conditions cond,
 
 /* computes the "unpacked" len of a lump list,
    code moved from build_req_from_req */
-static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct socket_info* send_sock)
+static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, 
+								struct dest_info* send_info)
 {
 	int s_offset;
 	int new_len;
@@ -507,7 +515,46 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 	struct lump* r;
 	str* send_address_str;
 	str* send_port_str;
+	struct socket_info* send_sock;
+	
 
+#ifdef USE_COMP
+	#define RCVCOMP_LUMP_LEN \
+						/* add;comp=xxx */ \
+					switch(msg->rcv.comp){ \
+						case COMP_NONE: \
+								break; \
+						case COMP_SIGCOMP: \
+								new_len+=COMP_PARAM_LEN+SIGCOMP_NAME_LEN; \
+								break; \
+						case COMP_SERGZ: \
+								new_len+=COMP_PARAM_LEN+SERGZ_NAME_LEN ; \
+								break; \
+						default: \
+						LOG(L_CRIT, "BUG: lumps_len: unknown comp %d\n", \
+								msg->rcv.comp); \
+					}
+
+	#define SENDCOMP_LUMP_LEN \
+					/* add;comp=xxx */ \
+					switch(send_info->comp){ \
+						case COMP_NONE: \
+								break; \
+						case COMP_SIGCOMP: \
+								new_len+=COMP_PARAM_LEN+SIGCOMP_NAME_LEN; \
+								break; \
+						case COMP_SERGZ: \
+								new_len+=COMP_PARAM_LEN+SERGZ_NAME_LEN ; \
+								break; \
+						default: \
+						LOG(L_CRIT, "BUG: lumps_len: unknown comp %d\n", \
+								send_info->comp); \
+					}
+#else
+	#define RCVCOMP_LUMP_LEN
+	#define SENDCOMP_LUMP_LEN
+#endif /*USE_COMP */
+	
 #define SUBST_LUMP_LEN(subst_l) \
 		switch((subst_l)->u.subst){ \
 			case SUBST_RCV_IP: \
@@ -574,6 +621,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
 					}\
+					RCVCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
 					LOG(L_CRIT, "FIXME: null bind_address\n"); \
@@ -646,6 +694,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
 								send_sock->proto); \
 					}\
+					SENDCOMP_LUMP_LEN \
 				}else{ \
 					/* FIXME */ \
 					LOG(L_CRIT, "FIXME: lumps_len called with" \
@@ -658,7 +707,12 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 				LOG(L_CRIT, "BUG: unknown subst type %d\n", \
 						(subst_l)->u.subst); \
 		}
-
+	
+	if (send_info){
+		send_sock=send_info->send_sock;
+	}else{
+		send_sock=0;
+	};
 	s_offset=0;
 	new_len=0;
 	/* init send_address_str & send_port_str */
@@ -674,7 +728,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 
 	for(t=lumps;t;t=t->next){
 		/* skip if this is an OPT lump and the condition is not satisfied */
-		if ((t->op==LUMP_ADD_OPT) && !lump_check_opt(t->u.cond, msg, send_sock))
+		if ((t->op==LUMP_ADD_OPT)&& !lump_check_opt(t->u.cond, msg, send_info))
 			continue;
 		for(r=t->before;r;r=r->before){
 			switch(r->op){
@@ -687,7 +741,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 				case LUMP_ADD_OPT:
 					/* skip if this is an OPT lump and the condition is
 					 * not satisfied */
-					if (!lump_check_opt(r->u.cond, msg, send_sock))
+					if (!lump_check_opt(r->u.cond, msg, send_info))
 						goto skip_before;
 					break;
 				default:
@@ -743,7 +797,7 @@ skip_before:
 				case LUMP_ADD_OPT:
 					/* skip if this is an OPT lump and the condition is
 					 * not satisfied */
-					if (!lump_check_opt(r->u.cond, msg, send_sock))
+					if (!lump_check_opt(r->u.cond, msg, send_info))
 						goto skip_after;
 					break;
 				default:
@@ -756,6 +810,8 @@ skip_after:
 		; /* to make gcc 3.* happy */
 	}
 	return new_len;
+#undef RCVCOMP_LUMP_LEN
+#undef SENDCOMP_LUMP_LEN
 }
 
 
@@ -768,7 +824,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 									char* new_buf,
 									unsigned int* new_buf_offs,
 									unsigned int* orig_offs,
-									struct socket_info* send_sock)
+									struct dest_info* send_info)
 {
 	struct lump *t;
 	struct lump *r;
@@ -778,6 +834,58 @@ static inline void process_lumps(	struct sip_msg* msg,
 	int s_offset;
 	str* send_address_str;
 	str* send_port_str;
+	struct socket_info* send_sock;
+
+#ifdef USE_COMP
+	#define RCVCOMP_PARAM_ADD \
+				/* add ;comp=xxxx */ \
+				switch(msg->rcv.comp){ \
+					case COMP_NONE: \
+						break; \
+					case COMP_SIGCOMP: \
+						memcpy(new_buf+offset, COMP_PARAM, COMP_PARAM_LEN);\
+						offset+=COMP_PARAM_LEN; \
+						memcpy(new_buf+offset, SIGCOMP_NAME, \
+								SIGCOMP_NAME_LEN); \
+						offset+=SIGCOMP_NAME_LEN; \
+						break; \
+					case COMP_SERGZ: \
+						memcpy(new_buf+offset, COMP_PARAM, COMP_PARAM_LEN);\
+						offset+=COMP_PARAM_LEN; \
+						memcpy(new_buf+offset, SERGZ_NAME, SERGZ_NAME_LEN); \
+						offset+=SERGZ_NAME_LEN; \
+						break;\
+					default:\
+						LOG(L_CRIT, "BUG: process_lumps: unknown comp %d\n", \
+								msg->rcv.comp); \
+				}
+	
+	#define SENDCOMP_PARAM_ADD \
+				/* add ;comp=xxxx */ \
+				switch(send_info->comp){ \
+					case COMP_NONE: \
+						break; \
+					case COMP_SIGCOMP: \
+						memcpy(new_buf+offset, COMP_PARAM, COMP_PARAM_LEN);\
+						offset+=COMP_PARAM_LEN; \
+						memcpy(new_buf+offset, SIGCOMP_NAME, \
+								SIGCOMP_NAME_LEN); \
+						offset+=SIGCOMP_NAME_LEN; \
+						break; \
+					case COMP_SERGZ: \
+						memcpy(new_buf+offset, COMP_PARAM, COMP_PARAM_LEN);\
+						offset+=COMP_PARAM_LEN; \
+						memcpy(new_buf+offset, SERGZ_NAME, SERGZ_NAME_LEN); \
+						offset+=SERGZ_NAME_LEN; \
+						break;\
+					default:\
+						LOG(L_CRIT, "BUG: process_lumps: unknown comp %d\n", \
+								msg->rcv.comp); \
+				} 
+#else
+	#define RCVCOMP_PARAM_ADD
+	#define SENDCOMP_PARAM_ADD
+#endif /* USE_COMP */
 
 #define SUBST_LUMP(subst_l) \
 	switch((subst_l)->u.subst){ \
@@ -856,6 +964,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
 				} \
+				RCVCOMP_PARAM_ADD \
 			}else{  \
 				/*FIXME*/ \
 				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
@@ -942,6 +1051,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
 								send_sock->proto); \
 				} \
+				SENDCOMP_PARAM_ADD \
 			}else{  \
 				/*FIXME*/ \
 				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
@@ -1008,11 +1118,15 @@ static inline void process_lumps(	struct sip_msg* msg,
 			}; \
 			break; \
 		default: \
-					LOG(L_CRIT, "BUG: process_lumps: unknown subst type %d\n", \
+				LOG(L_CRIT, "BUG: process_lumps: unknown subst type %d\n", \
 							(subst_l)->u.subst); \
-	} \
- \
+	}
 
+	if (send_info){
+		send_sock=send_info->send_sock;
+	}else{
+		send_sock=0;
+	}
 	/* init send_address_str & send_port_str */
 	if (msg->set_global_address.len)
 		send_address_str=&(msg->set_global_address);
@@ -1036,7 +1150,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 				/* skip if this is an OPT lump and the condition is
 				 * not satisfied */
 				if ((t->op==LUMP_ADD_OPT) &&
-						(!lump_check_opt(t->u.cond, msg, send_sock)))
+						(!lump_check_opt(t->u.cond, msg, send_info)))
 					continue;
 				/* just add it here! */
 				/* process before  */
@@ -1053,7 +1167,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_sock))
+							if (!lump_check_opt(r->u.cond, msg, send_info))
 								goto skip_before;
 							break;
 						default:
@@ -1094,7 +1208,7 @@ skip_before:
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_sock))
+							if (!lump_check_opt(r->u.cond, msg, send_info))
 								goto skip_after;
 							break;
 						default:
@@ -1135,7 +1249,7 @@ skip_after:
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_sock))
+							if (!lump_check_opt(r->u.cond, msg, send_info))
 								goto skip_nop_before;
 							break;
 						default:
@@ -1164,7 +1278,7 @@ skip_nop_before:
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_sock))
+							if (!lump_check_opt(r->u.cond, msg, send_info))
 								goto skip_nop_after;
 							break;
 						default:
@@ -1182,6 +1296,8 @@ skip_nop_after:
 	}
 	*new_buf_offs=offset;
 	*orig_offs=s_offset;
+#undef RCVCOMP_PARAM_ADD 
+#undef SENDCOMP_PARAM_ADD
 }
 
 
@@ -1285,7 +1401,7 @@ error:
 
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len,
-								struct socket_info* send_sock, int proto)
+								struct dest_info* send_info)
 {
 	unsigned int len, new_len, received_len, rport_len, uri_len, via_len, body_delta;
 	char* line_buf;
@@ -1343,8 +1459,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	     /* Calculate message body difference and adjust
 	      * Content-Length
 	      */
-	body_delta = lumps_len(msg, msg->body_lumps, send_sock);
-	if (adjust_clen(msg, body_delta, proto) < 0) {
+	body_delta = lumps_len(msg, msg->body_lumps, send_info);
+	if (adjust_clen(msg, body_delta, send_info->proto) < 0) {
 		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: Error while adjusting"
 				" Content-Length\n");
 		goto error00;
@@ -1353,8 +1469,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	branch.s=msg->add_to_branch_s;
 	branch.len=msg->add_to_branch_len;
 	set_hostport(&hp, msg);
-	line_buf = via_builder( &via_len, send_sock, &branch,
-							extra_params.len?&extra_params:0, proto, &hp);
+	line_buf = via_builder( &via_len, send_info, &branch,
+							extra_params.len?&extra_params:0, &hp);
 	if (!line_buf){
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
 		goto error00;
@@ -1441,7 +1557,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	}
 
 	/* compute new msg len and fix overlapping zones*/
-	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_sock);
+	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_info);
 #ifdef XL_DEBUG
 	LOG(L_ERR, "DEBUG: new_len(%d)=len(%d)+lumps_len\n", new_len, len);
 #endif
@@ -1471,8 +1587,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	}
 	new_buf[new_len]=0;
 	/* copy msg adding/removing lumps */
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_sock);
-	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset,send_sock);
+	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info);
+	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset,send_info);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
 	new_buf[new_len]=0;
@@ -1931,16 +2047,24 @@ int branch_builder( unsigned int hash_index,
 }
 
 
+
+/* uses only the send_info->send_socket, send_info->proto and 
+ * send_info->comp (so that a send_info used for sending can be passed
+ * to this function w/o changes and the correct via will be built) */
 char* via_builder( unsigned int *len,
-	struct socket_info* send_sock,
-	str* branch, str* extra_params, int proto, struct hostport* hp)
+	struct dest_info* send_info /* where to send the reply */,
+	str* branch, str* extra_params, struct hostport* hp)
 {
 	unsigned int  via_len, extra_len;
 	char               *line_buf;
 	int max_len;
 	str* address_str; /* address displayed in via */
 	str* port_str; /* port no displayed in via */
+	struct socket_info* send_sock;
+	int comp_len, comp_name_len;
+	char* comp_name;
 
+	send_sock=send_info->send_sock;
 	/* use pre-set address in via or the outbound socket one */
 	if ( hp && hp->host->len)
 		address_str=hp->host;
@@ -1950,12 +2074,36 @@ char* via_builder( unsigned int *len,
 		port_str=hp->port;
 	else
 		port_str=&(send_sock->port_no_str);
-
+	
+	comp_len=comp_name_len=0;
+	comp_name=0;
+#ifdef USE_COMP
+	switch(send_info->comp){
+		case COMP_NONE:
+			break;
+		case COMP_SIGCOMP:
+			comp_len=COMP_PARAM_LEN;
+			comp_name_len=SIGCOMP_NAME_LEN;
+			comp_name=SIGCOMP_NAME;
+			break;
+		case COMP_SERGZ:
+			comp_len=COMP_PARAM_LEN;
+			comp_name_len=SERGZ_NAME_LEN;
+			comp_name=SERGZ_NAME;
+			break;
+		default:
+			LOG(L_CRIT, "BUG: via_builder: unknown comp %d\n",
+					send_info->comp);
+			/* continue, we'll just ignore comp */
+	}
+#endif /* USE_COMP */
+			
 	max_len=MY_VIA_LEN+address_str->len /* space in MY_VIA */
 		+2 /* just in case it is a v6 address ... [ ] */
 		+1 /*':'*/+port_str->len
 		+(branch?(MY_BRANCH_LEN+branch->len):0)
 		+(extra_params?extra_params->len:0)
+		+comp_len+comp_name_len
 		+CRLF_LEN+1;
 	line_buf=pkg_malloc( max_len );
 	if (line_buf==0){
@@ -1969,14 +2117,14 @@ char* via_builder( unsigned int *len,
 	via_len=MY_VIA_LEN+address_str->len; /*space included in MY_VIA*/
 
 	memcpy(line_buf, MY_VIA, MY_VIA_LEN);
-	if (proto==PROTO_UDP){
+	if (send_info->proto==PROTO_UDP){
 		/* do nothing */
-	}else if (proto==PROTO_TCP){
+	}else if (send_info->proto==PROTO_TCP){
 		memcpy(line_buf+MY_VIA_LEN-4, "TCP ", 4);
-	}else if (proto==PROTO_TLS){
+	}else if (send_info->proto==PROTO_TLS){
 		memcpy(line_buf+MY_VIA_LEN-4, "TLS ", 4);
 	}else{
-		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", proto);
+		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", send_info->proto);
 		return 0;
 	}
 #	ifdef USE_IPV6
@@ -2009,6 +2157,15 @@ char* via_builder( unsigned int *len,
 		memcpy(line_buf+via_len, extra_params->s, extra_params->len);
 		via_len+=extra_params->len;
 	}
+#ifdef USE_COMP
+	/* comp */
+	if (comp_len){
+		memcpy(line_buf+via_len, COMP_PARAM, COMP_PARAM_LEN);
+		via_len+=COMP_PARAM_LEN;
+		memcpy(line_buf+via_len, comp_name, comp_name_len);
+		via_len+=comp_name_len;
+	}
+#endif
 
 	memcpy(line_buf+via_len, CRLF, CRLF_LEN);
 	via_len+=CRLF_LEN;

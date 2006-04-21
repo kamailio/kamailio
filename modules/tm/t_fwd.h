@@ -45,9 +45,10 @@ typedef int (*taddblind_f)( /*struct cell *t */ );
 void t_on_branch(unsigned int go_to);
 unsigned int get_on_branch();
 int t_replicate(struct sip_msg *p_msg, struct proxy_l * proxy, int proto);
+/*  -- not use outside t_fwd.c for noe
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
-    int branch, str *uri, unsigned int *len, struct socket_info *send_sock,
-    enum sip_protos proto);
+    int branch, str *uri, unsigned int *len, struct dest_info *dst);
+*/
 void e2e_cancel( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell *t_invite );
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell *t_invite, int branch );
 int add_uac(	struct cell *t, struct sip_msg *request, str *uri, str* next_hop,

@@ -146,7 +146,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 				/*parse uri*/
 
 				if (msg->dst_uri.len) {
-					ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
+					ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len,
+									&next_hop);
 					u = &next_hop;
 				} else {
 					ret = parse_sip_msg_uri(msg);
@@ -212,6 +213,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 					ret=E_BAD_ADDRESS;
 					goto error_fwd_uri;
 				}
+#ifdef USE_COMP
+				dst.comp=u->comp;
+#endif
 				ret=forward_request(msg, &dst);
 				if (ret>=0) ret=1;
 			}else if ((a->val[0].type==PROXY_ST) && (a->val[1].type==NUMBER_ST)){

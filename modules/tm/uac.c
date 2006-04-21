@@ -170,8 +170,7 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	  transaction_cb cb, void* cbp)
 {
-	struct socket_info* send_sock;
-	union sockaddr_union to_su;
+	struct dest_info dst;
 	struct cell *new_cell;
 	struct retr_buf *request;
 	char* buf;
@@ -189,8 +188,9 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
 			dialog->hooks.next_hop->s);
 	/* it's a new message, so we will take the default socket */
-	send_sock = uri2sock(0, dialog->hooks.next_hop, &to_su, PROTO_NONE);
-	if (!send_sock) {
+	if ((uri2dst(&dst, 0, dialog->hooks.next_hop, PROTO_NONE)==0) ||
+			(dst.send_sock==0)){
+		ser_error = E_NO_SOCKET;
 		ret=ser_error;
 		LOG(L_ERR, "t_uac: no socket found\n");
 		goto error2;
@@ -233,11 +233,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 
 	request = &new_cell->uac[0].request;
 	
-	init_dest_info(&request->dst);
-	request->dst.to = to_su;
-	request->dst.send_sock = send_sock;
-	request->dst.proto = send_sock->proto;
-	request->dst.id = 0;
+	request->dst = dst;
 
 	hi=dlg2hash(dialog);
 	LOCK_HASH(hi);
@@ -245,7 +241,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	UNLOCK_HASH(hi);
 
 	buf = build_uac_req(method, headers, body, dialog, 0, new_cell,
-		&buf_len, send_sock);
+		&buf_len, &dst);
 	if (!buf) {
 		LOG(L_ERR, "t_uac: Error while building message\n");
 		ret=E_OUT_OF_MEM;

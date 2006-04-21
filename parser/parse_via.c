@@ -49,6 +49,7 @@
  *  2004-03-31  fixed rport set instead of i bug (andrei)
  *  2005-03-02  if via has multiple bodies, and one of them is bad set
  *               also the first one as bad (andrei)
+ *  2006-02-24  added support for comp parameter parsing (see rfc3486) (andrei)
  */
 
 
@@ -106,9 +107,20 @@ enum {
 	RECEIVED7,
 	RPORT1, RPORT2, RPORT3,
 	ALIAS1, ALIAS2, ALIAS3, ALIAS4,
+#ifdef USE_COMP
+	COMP1, COMP2, COMP3, 
+	/* values */
+	L_COMP_VALUE, F_COMP_VALUE,
+	V_COMP_S, V_SIGCOMP_I, V_SIGCOMP_G, V_SIGCOMP_C, V_SIGCOMP_O, V_SIGCOMP_M,
+	FIN_V_SIGCOMP_P,
+	V_SERGZ_E, V_SERGZ_R, V_SERGZ_G, FIN_V_SERGZ_Z,
+#endif
 	     /* fin states (227-...)*/
 	FIN_HIDDEN = 230, FIN_TTL, FIN_BRANCH,
 	FIN_MADDR, FIN_RECEIVED, FIN_RPORT, FIN_I, FIN_ALIAS
+#ifdef USE_COMP
+	, FIN_COMP
+#endif
 	     /*GEN_PARAM,
 	       PARAM_ERROR*/ /* declared in msg_parser.h*/
 };
@@ -124,11 +136,93 @@ enum {
 static /*inline*/ char* parse_via_param(char* p, char* end,
 										unsigned char* pstate, 
 				    					unsigned char* psaved_state,
-										struct via_param* param)
+										struct via_param* param,
+										struct via_body* vb)
 {
 	char* tmp;
 	register unsigned char state;
 	unsigned char saved_state;
+
+#define value_case(c, C, oldstate, newstate, start_of_value) \
+			case (c): \
+			case (C): \
+				switch(state){ \
+					case (oldstate): \
+						state=(newstate); \
+						if ((start_of_value))  param->value.s=tmp; \
+						break; \
+					default_value_cases \
+				} \
+				break
+
+#define value_case_double(c, C, oldstate1, newstate1, oldstate2, newstate2) \
+			case (c): \
+			case (C): \
+				switch(state){ \
+					case (oldstate1): \
+						state=(newstate1); \
+						break; \
+					case (oldstate2): \
+						state=(newstate2); \
+						break; \
+					default_value_cases \
+				} \
+				break
+
+#define default_value_cases \
+					case F_VALUE: \
+						state=P_VALUE; \
+						param->value.s=tmp; \
+						break; \
+					case P_VALUE: \
+					case P_STRING: \
+						break; \
+					case F_LF: \
+					case F_CR:  \
+					case F_CRLF: \
+						state=END_OF_HEADER; \
+						goto end_via; \
+					default: \
+						switch(state){ \
+							case F_COMP_VALUE: \
+								comp_unexpected_char; \
+								state=P_VALUE; \
+								param->value.s=tmp; \
+								break; \
+							comp_states_cases \
+							comp_fin_states_cases \
+								comp_unexpected_char; \
+								state=P_VALUE; \
+								break; \
+							default: \
+								LOG(L_ERR, "ERROR: parse_via_param: invalid " \
+									"char <%c> in state %d\n", *tmp, state); \
+								goto error; \
+						}
+
+#define comp_states_cases \
+					case V_COMP_S: \
+					case V_SIGCOMP_I: \
+					case V_SIGCOMP_G: \
+					case V_SIGCOMP_C: \
+					case V_SIGCOMP_O: \
+					case V_SIGCOMP_M: \
+					case V_SERGZ_E: \
+					case V_SERGZ_R: \
+					case V_SERGZ_G: 
+
+#define comp_fin_states_cases \
+					case FIN_V_SIGCOMP_P: \
+					case FIN_V_SERGZ_Z:
+
+
+/* if unrecognized/bad comp, don't return error, just ignore comp */
+#define comp_unexpected_char \
+							LOG(L_ERR, "parse_via_param: bad/unrecognized" \
+									" comp method\n"); \
+							vb->comp_no=0
+								
+
 
 	state=*pstate;
 	saved_state=*psaved_state;
@@ -155,6 +249,13 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						param->name.len=tmp-param->name.s;
 						state=L_VALUE;
 						goto find_value;
+#ifdef USE_COMP
+					case FIN_COMP:
+						param->type=state;
+						param->name.len=tmp-param->name.s;
+						state=L_COMP_VALUE;
+						goto find_value;
+#endif
 					case F_PARAM:
 						break;
 					case F_LF:
@@ -193,6 +294,15 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						saved_state=L_VALUE;
 						state=F_LF;
 						goto find_value;
+#ifdef USE_COMP
+					case FIN_COMP:
+						param->type=state;
+						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
+						saved_state=L_COMP_VALUE;
+						state=F_LF;
+						goto find_value;
+#endif
 					case F_PARAM:
 						saved_state=state;
 						state=F_LF;
@@ -236,6 +346,15 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						saved_state=L_VALUE;
 						state=F_CR;
 						goto find_value;
+#ifdef USE_COMP
+					case FIN_COMP:
+						param->type=state;
+						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
+						saved_state=L_COMP_VALUE;
+						state=F_LF;
+						goto find_value;
+#endif
 					case F_PARAM:
 						saved_state=state;
 						state=F_CR;
@@ -267,6 +386,13 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						param->name.len=tmp-param->name.s;
 						state=F_VALUE;
 						goto find_value;
+#ifdef USE_COMP
+					case FIN_COMP:
+						param->type=state;
+						param->name.len=tmp-param->name.s;
+						state=F_COMP_VALUE;
+						goto find_value;
+#endif
 					case F_PARAM:
 					case FIN_HIDDEN:
 					case FIN_ALIAS:
@@ -300,6 +426,9 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_RECEIVED:
 					case FIN_I:
+#ifdef USE_COMP
+					case FIN_COMP:
+#endif
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c> in"
 								" state %d\n", *tmp, state);
 						goto error;
@@ -330,6 +459,9 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_RECEIVED:
 					case FIN_I:
+#ifdef USE_COMP
+					case FIN_COMP:
+#endif
 						LOG(L_ERR, "ERROR: parse_via_param: new via found" 
 								"(',') when '=' expected (state %d=)\n",
 								state);
@@ -539,6 +671,11 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=MADDR1;
 						param->name.s=tmp;
 						break;
+#ifdef USE_COMP
+					case COMP2:
+						state=COMP3;
+						break;
+#endif
 					case GEN_PARAM:
 						break;
 					case F_CR:
@@ -608,7 +745,11 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case 'C':
 				switch(state){
 					case F_PARAM:
+#ifdef USE_COMP
+						state=COMP1;
+#else
 						state=GEN_PARAM;
+#endif
 						param->name.s=tmp;
 						break;
 					case RECEIVED2:
@@ -677,6 +818,11 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case RECEIVED1:
 						state=RPORT1;
 						break;
+#ifdef USE_COMP
+					case COMP3:
+						state=FIN_COMP;
+						break;
+#endif
 					case F_CR:
 					case F_LF:
 					case F_CRLF:
@@ -696,6 +842,11 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case RPORT1:
 						state=RPORT2;
 						break;
+#ifdef USE_COMP
+					case COMP1:
+						state=COMP2;
+						break;
+#endif
 					case F_CR:
 					case F_LF:
 					case F_CRLF:
@@ -762,6 +913,26 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=L_PARAM;
 						param->value.len=tmp-param->value.s;
 						goto endofvalue;
+#ifdef USE_COMP
+					case L_COMP_VALUE:
+					case F_COMP_VALUE:
+						break; /* eat space */
+					case FIN_V_SIGCOMP_P:
+						state=L_PARAM;
+						param->value.len=tmp-param->value.s;
+						vb->comp_no=COMP_SIGCOMP;
+						goto endofvalue;
+					case FIN_V_SERGZ_Z:
+						state=L_PARAM;
+						param->value.len=tmp-param->value.s;
+						vb->comp_no=COMP_SIGCOMP;
+						goto endofvalue;
+					comp_states_cases
+						state=L_PARAM;
+						param->value.len=tmp-param->value.s;
+						comp_unexpected_char;
+						goto endofvalue;
+#endif
 					case P_STRING:
 						break;
 					case F_CR:
@@ -779,6 +950,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 				switch(state){
 					case L_VALUE:
 					case F_VALUE: /*eat space*/
+#ifdef USE_COMP
+					case L_COMP_VALUE:
+					case F_COMP_VALUE:
+#endif
 					case P_STRING:
 						saved_state=state;
 						param->size=tmp-param->start;
@@ -789,6 +964,26 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=F_LF;
 						param->value.len=tmp-param->value.s;
 						goto endofvalue;
+#ifdef USE_COMP
+					case FIN_V_SIGCOMP_P:
+						saved_state=L_PARAM;
+						state=F_LF;
+						param->value.len=tmp-param->value.s;
+						vb->comp_no=COMP_SIGCOMP;
+						goto endofvalue;
+					case FIN_V_SERGZ_Z:
+						saved_state=L_PARAM;
+						state=F_LF;
+						param->value.len=tmp-param->value.s;
+						vb->comp_no=COMP_SIGCOMP;
+						goto endofvalue;
+					comp_states_cases
+						saved_state=L_PARAM;
+						state=F_LF;
+						param->value.len=tmp-param->value.s;
+						comp_unexpected_char;
+						goto endofvalue;
+#endif
 					case F_LF:
 					case F_CRLF:
 						state=END_OF_HEADER;
@@ -806,6 +1001,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 				switch(state){
 					case L_VALUE:
 					case F_VALUE: /*eat space*/
+#ifdef USE_COMP
+					case L_COMP_VALUE:
+					case F_COMP_VALUE:
+#endif
 					case P_STRING:
 						saved_state=state;
 						param->size=tmp-param->start;
@@ -816,6 +1015,26 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						saved_state=L_PARAM;
 						state=F_CR;
 						goto endofvalue;
+#ifdef USE_COMP
+					case FIN_V_SIGCOMP_P:
+						saved_state=L_PARAM;
+						state=F_CR;
+						param->value.len=tmp-param->value.s;
+						vb->comp_no=COMP_SIGCOMP;
+						goto endofvalue;
+					case FIN_V_SERGZ_Z:
+						saved_state=L_PARAM;
+						state=F_CR;
+						param->value.len=tmp-param->value.s;
+						vb->comp_no=COMP_SIGCOMP;
+						goto endofvalue;
+					comp_states_cases
+						saved_state=L_PARAM;
+						state=F_CR;
+						param->value.len=tmp-param->value.s;
+						comp_unexpected_char;
+						goto endofvalue;
+#endif
 					case F_LF:
 					case F_CR:
 					case F_CRLF:
@@ -833,6 +1052,13 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case L_VALUE:
 						state=F_VALUE;
 						break;
+#ifdef USE_COMP
+					case L_COMP_VALUE:
+						state=F_COMP_VALUE;
+						break;
+					/* '=' in any other COMP value state is an error,
+					 * and it will be catched by the default branch */
+#endif
 					case P_STRING:
 						break;
 					case F_LF:
@@ -863,6 +1089,35 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case F_CRLF:
 						state=END_OF_HEADER;
 						goto end_via;
+#ifdef USE_COMP
+					case L_COMP_VALUE:
+						comp_unexpected_char;
+						/* we want to contine with no comp */
+						state=F_PARAM;
+						param->value.len=0;
+						param->value.s=0;
+						goto endofvalue;
+					case F_COMP_VALUE:
+						comp_unexpected_char;
+						param->value.len=0;
+						state=F_PARAM;
+						goto endofvalue;
+					comp_states_cases
+						comp_unexpected_char;
+						param->value.len=tmp-param->value.s;
+						state=F_PARAM;
+						goto endofvalue;
+					case FIN_V_SIGCOMP_P:
+						vb->comp_no=COMP_SIGCOMP;
+						param->value.len=tmp-param->value.s;
+						state=F_PARAM;
+						goto endofvalue;
+					case FIN_V_SERGZ_Z:
+						vb->comp_no=COMP_SIGCOMP;
+						param->value.len=tmp-param->value.s;
+						state=F_PARAM;
+						goto endofvalue;
+#endif
 					case L_VALUE:
 						if (param->type==FIN_RPORT){
 							param->value.len=0;
@@ -889,6 +1144,35 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case F_CRLF:
 						state=END_OF_HEADER;
 						goto end_via;
+#ifdef USE_COMP
+					case L_COMP_VALUE:
+						comp_unexpected_char;
+						/* we want to contine with no comp */
+						state=F_VIA;
+						param->value.len=0;
+						param->value.s=0;
+						goto endofvalue;
+					case F_COMP_VALUE:
+						comp_unexpected_char;
+						param->value.len=0;
+						state=F_VIA;
+						goto endofvalue;
+					comp_states_cases
+						comp_unexpected_char;
+						param->value.len=tmp-param->value.s;
+						state=F_VIA;
+						goto endofvalue;
+					case FIN_V_SIGCOMP_P:
+						vb->comp_no=COMP_SIGCOMP;
+						param->value.len=tmp-param->value.s;
+						state=F_VIA;
+						goto endofvalue;
+					case FIN_V_SERGZ_Z:
+						vb->comp_no=COMP_SIGCOMP;
+						param->value.len=tmp-param->value.s;
+						state=F_VIA;
+						goto endofvalue;
+#endif
 					case L_VALUE:
 						if (param->type==FIN_RPORT){
 							param->value.len=0;
@@ -924,6 +1208,21 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						goto error;
 				}
 				break;
+#ifdef USE_COMP
+			value_case('s', 'S', F_COMP_VALUE, V_COMP_S, 1);
+			value_case('i', 'I', V_COMP_S, V_SIGCOMP_I, 0);
+			value_case_double('g', 'G', V_SIGCOMP_I, V_SIGCOMP_G,
+					                    V_SERGZ_R,   V_SERGZ_G);
+			value_case('c', 'C', V_SIGCOMP_G, V_SIGCOMP_C, 0);
+			value_case('o', 'O', V_SIGCOMP_C, V_SIGCOMP_O, 0);
+			value_case('m', 'M', V_SIGCOMP_O, V_SIGCOMP_M, 0);
+			value_case('p', 'P', V_SIGCOMP_M, FIN_V_SIGCOMP_P, 0);
+			
+			value_case('e', 'E', V_COMP_S, V_SERGZ_E, 0);
+			value_case('r', 'R', V_SERGZ_E, V_SERGZ_R, 0);
+			value_case('z', 'Z', V_SERGZ_G, FIN_V_SERGZ_Z, 0);
+#endif /* USE_COMP */
+				
 			default:
 				switch(state){
 					case F_VALUE:
@@ -939,9 +1238,28 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=END_OF_HEADER;
 						goto end_via;
 					default:
+#ifdef USE_COMP
+						switch(state){
+							case F_COMP_VALUE:
+								comp_unexpected_char;
+								state=P_VALUE;
+								param->value.s=tmp;
+								break;
+							comp_states_cases
+							comp_fin_states_cases
+								comp_unexpected_char;
+								state=P_VALUE;
+								break;
+							default:
+								LOG(L_ERR, "ERROR: parse_via_param: invalid "
+									"char <%c> in state %d\n", *tmp, state);
+								goto error;
+						}
+#else
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
 								" in state %d\n", *tmp, state);
 						goto error;
+#endif /* USE_COMP */
 				}
 		}
 	} /* for2 tmp*/
@@ -1830,7 +2148,7 @@ parse_again:
 						memset(param,0, sizeof(struct via_param));
 						param->start=param_start;
 						tmp=parse_via_param(tmp, end, &state, &saved_state,
-											param);
+											param, vb);
 
 						switch(state){
 							case F_PARAM:
@@ -1879,6 +2197,28 @@ parse_again:
 							case PARAM_ALIAS:
 								vb->alias=param;
 								break;
+#ifdef USE_COMP
+							case PARAM_COMP:
+								vb->comp=param;
+								/*  moved comp value parsing in via_param */
+								/*
+								if  ((param->value.len==SIGCOMP_NAME_LEN) &&
+									(strncasecmp(param->value.s, SIGCOMP_NAME,
+												SIGCOMP_NAME_LEN)==0)){
+									vb->comp_no=COMP_SIGCOMP;
+								}else if ((param->value.len==SERGZ_NAME_LEN) &&
+										(strncasecmp(param->value.s,
+													SERGZ_NAME,
+													SERGZ_NAME_LEN)==0)){
+									vb->comp_no=COMP_SERGZ;
+								}else{
+									LOG(L_ERR, "ERROR: parse_via: unrecognized"
+										" compression method in comp=%.*s\n",
+										param->value.len, param->value.s);
+								}
+								*/
+								break;
+#endif
 						}
 						
 						if (state==END_OF_HEADER){

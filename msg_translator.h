@@ -76,8 +76,7 @@ struct hostport {
 	}while(0)
 
 char * build_req_buf_from_sip_req (	struct sip_msg* msg, 
-				unsigned int *returned_len, struct socket_info* send_sock,
-				int proto);
+				unsigned int *returned_len, struct dest_info* send_info);
 
 char * build_res_buf_from_sip_res(	struct sip_msg* msg,
 				unsigned int *returned_len);
@@ -103,8 +102,8 @@ char * build_res_buf_with_body_from_sip_req(	unsigned int code ,
 				struct bookmark *bmark);
 */
 char* via_builder( unsigned int *len,
-	struct socket_info* send_sock,
-	str *branch, str* extra_params, int proto, struct hostport *hp );
+	struct dest_info* send_info,
+	str *branch, str* extra_params, struct hostport *hp );
 
 
 int branch_builder( unsigned int hash_index, 

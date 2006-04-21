@@ -66,7 +66,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev39
+EXTRAVERSION = -dev40
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -335,6 +335,10 @@ endif
 # -DHAVE_RESOLV_RES
 #		support for changing some of the resolver parameters present
 #		 (_res structure in <resolv.h>)
+# -DUSE_COMP
+#		compiles in comp=[sergz|sigcomp] support (parsing uri & via, 
+#		adding it to via, lumps a.s.o). WARNING: right now this option
+#		is useless since the compression code doesn't exist yet.
 
 
 DEFS+= $(extra_defs) \

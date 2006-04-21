@@ -32,6 +32,7 @@
  *               by tcp to identify the sending socket, by andrei
  *  2003-01-27  added a new member (start) to via_param, by andrei
  *  2003-10-27  added alias to via && PARAM_ALIAS (andrei)
+ *  2006-02-24  added comp/PARAM_COMP support (andrei)
  */
 
 
@@ -48,7 +49,10 @@
 enum {
 	PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH, 
 	PARAM_MADDR, PARAM_RECEIVED, PARAM_RPORT, PARAM_I, PARAM_ALIAS,
-	GEN_PARAM,
+#ifdef USE_COMP
+	PARAM_COMP,
+#endif
+	GEN_PARAM=253,
 	PARAM_ERROR
 };
 
@@ -74,9 +78,12 @@ struct via_body {
 	str name;
 	str version;   
 	str transport;
-	int proto; /* transport */
 	str host;
-	int port;
+	short proto; /* transport */
+	unsigned short port;
+#ifdef USE_COMP
+	short comp_no;
+#endif
 	str port_str;
 	str params;
 	str comment;
@@ -91,6 +98,9 @@ struct via_body {
 	struct via_param* rport;
 	struct via_param* i;
 	struct via_param* alias; /* alias see draft-ietf-sip-connect-reuse-00 */
+#ifdef USE_COMP
+	struct via_param* comp; /* see rfc3486 */
+#endif
 	struct via_body* next; /* pointer to next via body string if
 				  compact via or null */
 };

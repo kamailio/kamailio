@@ -135,13 +135,17 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 
 /*
  * Convert a URI into a dest_info structure
- * params: dst - will be filled
+ * params: msg - sip message used to set dst->send_sock, if 0 dst->send_sock
+ *               will be set to the default w/o using msg->force_send_socket 
+ *               (see get_send_socket()) 
+ *         dst - will be filled
  *         uri - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
  *                 uri_proto, otherwise the uri proto will be used
  * returns 0 on error, dst on success
  */
-inline static struct dest_info *uri2dst(struct dest_info* dst, str *uri, 
+inline static struct dest_info *uri2dst(struct dest_info* dst,
+										struct sip_msg *msg, str *uri, 
 											int proto )
 {
 	struct sip_uri parsed_uri;
@@ -165,37 +169,53 @@ inline static struct dest_info *uri2dst(struct dest_info* dst, str *uri,
 	
 	init_dest_info(dst);
 	dst->proto= get_proto(proto, uri_proto);
+#ifdef USE_COMP
+	dst->comp=parsed_uri.comp;
+#endif
 	sip_hostport2su(&dst->to, &parsed_uri.host, parsed_uri.port_no,
 						dst->proto);
+	if (msg){
+		dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
+		if (dst->send_sock==0) {
+			LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
+					dst->to.s.sa_family);
+			/* ser_error = E_NO_SOCKET;*/
+			/* try to continue */
+		}
+	}
 	return dst;
 }
 
 
 
 /*
- * Convert a URI into socket_info
+ * Convert a URI into the corresponding sockaddr_union (address to send to) and
+ *  send socket_info (socket/address from which to send)
+ *  to_su is filled with the destination and the socket_info that will be 
+ *  used for sending is returned.
+ *  On error return 0.
+ *
+ *  NOTE: this function is deprecated, you should use uri2dst instead
  */
 static inline struct socket_info *uri2sock(struct sip_msg* msg, str *uri,
 									union sockaddr_union *to_su, int proto)
 {
-	struct socket_info* send_sock;
 	struct dest_info dst;
 
-	if (uri2dst(&dst, uri, proto)==0){
+	if (uri2dst(&dst, msg, uri, proto)==0){
 		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
 		ser_error=E_BAD_ADDRESS;
 		return 0;
 	}
 	*to_su=dst.to; /* copy su */
 	
-	/* we use dst->proto since uri2dst just set it correctly*/
-	send_sock = get_send_socket(msg, to_su, dst.proto);
-	if (!send_sock) {
+	/* we use dst->send_socket since uri2dst just set it correctly*/
+	if (dst.send_sock==0) {
 		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
 		    to_su->s.sa_family);
 		ser_error = E_NO_SOCKET;
 	}
-	return send_sock;
+	return dst.send_sock;
 }
 
 

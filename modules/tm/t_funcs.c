@@ -230,7 +230,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 		DBG( "SER: forwarding ACK  statelessly \n");
 		if (proxy==0) {
 			uri = GET_RURI(p_msg);
-			if (uri2dst(&dst, GET_NEXT_HOP(p_msg), proto)==0){
+			if (uri2dst(&dst, p_msg, GET_NEXT_HOP(p_msg), proto)==0){
 				ret=E_BAD_ADDRESS;
 				goto done;
 			}
@@ -239,6 +239,8 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			init_dest_info(&dst);
 			dst.proto=get_proto(proto, proxy->proto);
 			proxy2su(&dst.to, proxy);
+			/* dst->send_sock not set, but forward_request will take care
+			 * of it */
 			ret=forward_request( p_msg , &dst) ;
 		}
 		goto done;

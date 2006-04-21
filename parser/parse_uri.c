@@ -35,6 +35,7 @@
  * 2003-07-03  sips:, r2, lr=on support added (andrei)
  * 2005-02-25  preliminary tel uri support (andrei)
  * 2005-03-03  more tel uri fixes (andrei)
+ * 2006-04-20  comp uri param. support (rfc3486) if defined USE_COMP  (andrei)
  */
 
 
@@ -73,6 +74,19 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 					PLR_L, PLR_R_FIN, PLR_eq,
 					/* r2 */
 					PR2_R, PR2_2_FIN, PR2_eq,
+#ifdef USE_COMP
+					/* comp */
+					PCOMP_C, PCOMP_O, PCOMP_M, PCOMP_P, PCOMP_eq,
+					
+					/* comp values */
+					/* sigcomp */
+					VCOMP_S, VCOMP_SIGC_I, VCOMP_SIGC_G,
+					VCOMP_SIGC_C, VCOMP_SIGC_O,  VCOMP_SIGC_M,
+					VCOMP_SIGC_P_FIN,
+					/* sergz */
+							VCOMP_SGZ_E, VCOMP_SGZ_R, VCOMP_SGZ_G,
+							VCOMP_SGZ_Z_FIN,
+#endif
 					
 					/* transport values */
 					/* udp */
@@ -100,6 +114,10 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	int error_headers;
 	unsigned int scheme;
 	uri_type backup;
+#ifdef USE_COMP
+	str comp_str; /* not returned for now */
+	str comp_val; /* not returned for now */
+#endif
 	
 #define SIP_SCH		0x3a706973
 #define SIPS_SCH	0x73706973
@@ -313,7 +331,30 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 				} \
 				break
 			
-	
+
+#ifdef USE_COMP
+#define comp_fin(c_state, comp_no) \
+			case c_state: \
+				switch(*p){ \
+					case '@': \
+						still_at_user; \
+						break; \
+					semicolon_case; \
+						/* param_set(b, v); */ \
+						uri->comp=(comp_no); \
+						break; \
+					question_case; \
+						/* param_set(b, v) */; \
+						uri->comp=(comp_no); \
+						break; \
+					colon_case;  \
+					default: \
+						state=URI_VAL_P; \
+						break; \
+				} \
+				break
+			
+#endif
 
 	/* init */
 	end=buf+len;
@@ -579,6 +620,13 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						b=p;
 						state=PR2_R;
 						break;
+#ifdef USE_COMP
+					case 'c':
+					case 'C':
+						b=p;
+						state=PCOMP_C;
+						break;
+#endif
 					default:
 						state=URI_PARAM_P;
 				}
@@ -784,6 +832,44 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						state=URI_VAL_P;
 				}
 				break;
+#ifdef USE_COMP
+			param_switch(PCOMP_C,  'o', 'O' , PCOMP_O);
+			param_switch(PCOMP_O,  'm', 'M' , PCOMP_M);
+			param_switch(PCOMP_M,  'p', 'P' , PCOMP_P);
+			param_switch1(PCOMP_P,  '=', PCOMP_eq);
+			/* value */
+			case PCOMP_eq:
+				param=&comp_str;
+				param_val=&comp_val;
+				switch (*p){
+					param_common_cases;
+					case 's':
+					case 'S':
+						v=p;
+						state=VCOMP_S;
+						break;
+					default:
+						v=p;
+						state=URI_VAL_P;
+				}
+				break;
+			/* sigcomp*/
+			value_switch_big(VCOMP_S, 'i', 'I', 'e', 'E',
+									VCOMP_SIGC_I, VCOMP_SGZ_E);
+			value_switch(VCOMP_SIGC_I, 'g', 'G', VCOMP_SIGC_G);
+			value_switch(VCOMP_SIGC_G, 'c', 'C', VCOMP_SIGC_C);
+			value_switch(VCOMP_SIGC_C, 'o', 'O', VCOMP_SIGC_O);
+			value_switch(VCOMP_SIGC_O, 'm', 'M', VCOMP_SIGC_M);
+			value_switch(VCOMP_SIGC_M, 'p', 'P', VCOMP_SIGC_P_FIN);
+			comp_fin(VCOMP_SIGC_P_FIN, COMP_SIGCOMP);
+			
+			/* sergz*/
+			value_switch(VCOMP_SGZ_E, 'r', 'R', VCOMP_SGZ_R);
+			value_switch(VCOMP_SGZ_R, 'g', 'G', VCOMP_SGZ_G);
+			value_switch(VCOMP_SGZ_G, 'z', 'Z', VCOMP_SGZ_Z_FIN);
+			comp_fin(VCOMP_SGZ_Z_FIN, COMP_SERGZ);
+#endif
+				
 				
 				
 			case URI_HEADERS:
@@ -893,6 +979,13 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		case PM_eq:
 		case PLR_L: /* lr */
 		case PR2_R:  /* r2 */
+#ifdef USE_COMP
+		case PCOMP_C:
+		case PCOMP_O:
+		case PCOMP_M:
+		case PCOMP_P:
+		case PCOMP_eq:
+#endif
 			uri->params.s=s;
 			uri->params.len=p-s;
 			break;
@@ -925,6 +1018,22 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->params.len=p-s;
 			param_set(b, v);
 			break;
+#ifdef USE_COMP
+		case VCOMP_S:
+		case VCOMP_SIGC_I:
+		case VCOMP_SIGC_G:
+		case VCOMP_SIGC_C:
+		case VCOMP_SIGC_O:
+		case VCOMP_SIGC_M:
+		case VCOMP_SGZ_E:
+		case VCOMP_SGZ_R:
+		case VCOMP_SGZ_G:
+			/* unrecognized comp method, assume none */
+			uri->params.s=s;
+			uri->params.len=p-s;
+			/* uri->comp=COMP_NONE ; */
+			break;
+#endif
 		/* fin value states */
 		case VU_P_FIN:
 			uri->params.s=s;
@@ -950,6 +1059,20 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			param_set(b, v);
 			uri->proto=PROTO_SCTP;
 			break;
+#ifdef USE_COMP
+		case VCOMP_SIGC_P_FIN:
+			uri->params.s=s;
+			uri->params.len=p-s;
+			/* param_set(b, v); */
+			uri->comp=COMP_SIGCOMP;
+			break;
+		case VCOMP_SGZ_Z_FIN:
+			uri->params.s=s;
+			uri->params.len=p-s;
+			/* param_set(b, v); */
+			uri->comp=COMP_SERGZ;
+			break;
+#endif
 		/* headers */
 		case URI_HEADERS:
 			uri->headers.s=s;
@@ -1027,6 +1150,10 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->maddr_val.len, ZSW(uri->maddr_val.s));
 	DBG("   lr=<%.*s>\n", uri->lr.len, ZSW(uri->lr.s)); 
 	DBG("   r2=<%.*s>\n", uri->r2.len, ZSW(uri->r2.s));
+#ifdef USE_COMP
+	DBG("   comp=%d\n", uri->comp);
+#endif
+
 #endif
 	return 0;
 	

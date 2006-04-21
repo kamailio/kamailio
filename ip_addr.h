@@ -30,6 +30,8 @@
  * --------
  *  2003-02-13  added struct dest_info (andrei)
  *  2003-04-06  all ports are stored/passed in host byte order now (andrei)
+ *  2006-04-20  comp support in recv_info and dest_info (andrei)
+ *  2006-04-21  added init_dst_from_rcv (andrei)
  */
 
 #ifndef ip_addr_h
@@ -46,7 +48,9 @@
 #include "dprint.h"
 
 enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP };
-
+#ifdef USE_COMP
+enum comp_methods { COMP_NONE, COMP_SIGCOMP, COMP_SERGZ };
+#endif
 
 struct ip_addr{
 	unsigned int af; /* address family: AF_INET6 or AF_INET */
@@ -100,21 +104,27 @@ struct receive_info{
 	struct ip_addr dst_ip;
 	unsigned short src_port; /* host byte order */
 	unsigned short dst_port; /* host byte order */
-	int proto;
 	int proto_reserved1; /* tcp stores the connection id here */
 	int proto_reserved2;
 	union sockaddr_union src_su; /* useful for replies*/
 	struct socket_info* bind_address; /* sock_info structure on which 
 									  the msg was received*/
+	short proto;
+#ifdef USE_COMP
+	short comp; /* compression */
+#endif
 	/* no need for dst_su yet */
 };
 
 
 struct dest_info{
-	int proto;
-	int id; /* tcp stores the connection id here */ 
-	union sockaddr_union to;
 	struct socket_info* send_sock;
+	union sockaddr_union to;
+	int id; /* tcp stores the connection id here */ 
+	short proto;
+#ifdef USE_COMP
+	short comp;
+#endif
 };
 
 
@@ -553,10 +563,23 @@ static inline struct hostent* ip_addr2he(str* name, struct ip_addr* ip)
 /* init a dest_info structure */
 #define init_dest_info(dst) \
 	do{ \
-		(dst)->proto=0; \
-		(dst)->id=0; \
-		(dst)->send_sock=0; \
-		memset(&(dst)->to, 0, sizeof(union sockaddr_union)); \
+		memset((dst), 0, sizeof(struct dest_info)); \
 	} while(0) 
+
+
+
+/* init a dest_info structure from a recv_info structure */
+inline static void init_dst_from_rcv(struct dest_info* dst,
+									struct receive_info* rcv)
+{
+		dst->send_sock=rcv->bind_address;
+		dst->to=rcv->src_su;
+		dst->id=rcv->proto_reserved1;
+		dst->proto=rcv->proto;
+#ifdef USE_COMP
+		dst->comp=rcv->comp;
+#endif
+}
+
 
 #endif

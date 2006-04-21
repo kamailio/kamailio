@@ -38,6 +38,7 @@
  *  2003-11-02  added diversion header field to sip_msg (jh)
  *  2004-11-08  added force_send_socket (andrei)
  *  2005-02-25  uri types added (sip, sips & tel)  (andrei)
+ *  2006-04-20  uri comp member (only if USE_COMP is defined) (andrei)
  */
 
 
@@ -140,6 +141,9 @@ struct sip_uri {
 	unsigned short port_no;
 	unsigned short proto; /* from transport */
 	uri_type type; /* uri scheme */
+#ifdef USE_COMP
+	unsigned short comp;
+#endif
 	/* parameters */
 	str transport;
 	str ttl;

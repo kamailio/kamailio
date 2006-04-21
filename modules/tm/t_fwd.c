@@ -49,6 +49,7 @@
  *              already canceled transaction is attempted (andrei)
  *  2006-02-07  named routes support (andrei)
  *  2006-04-18  add_uac simplified + switched to struct dest_info (andrei)
+ *  2006-04-20  pint_uac_request uses now struct dest_info (andrei)
  */
 
 #include "defs.h"
@@ -98,9 +99,8 @@ unsigned int get_on_branch(void)
 }
 
 
-char *print_uac_request( struct cell *t, struct sip_msg *i_req,
-	int branch, str *uri, unsigned int *len, struct socket_info *send_sock,
-	enum sip_protos proto )
+static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
+	int branch, str *uri, unsigned int *len, struct dest_info* dst)
 {
 	char *buf, *shbuf;
 	str* msg_uri;
@@ -139,7 +139,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0, -i_req->REQ_METHOD);
 
 	/* ... and build it now */
-	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
+	buf=build_req_buf_from_sip_req( i_req, len, dst);
 #ifdef DBG_MSG_QA
 	if (buf[*len-1]==0) {
 		LOG(L_ERR, "ERROR: print_uac_request: sanity check failed\n");
@@ -246,25 +246,26 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		goto error;
 	}
 
-	init_dest_info(&t->uac[branch].request.dst);
 	/* check DNS resolution */
 	if (proxy){
 		/* dst filled from the proxy */
+		init_dest_info(&t->uac[branch].request.dst);
 		t->uac[branch].request.dst.proto=get_proto(proto, proxy->proto);
 		proxy2su(&t->uac[branch].request.dst.to, proxy);
+		/* fill dst send_sock */
+		t->uac[branch].request.dst.send_sock =
+		get_send_socket( request, &t->uac[branch].request.dst.to,
+								t->uac[branch].request.dst.proto);
 	}else {
-		/* dst filled from the uri */
-		if (uri2dst(&t->uac[branch].request.dst,
+		/* dst filled from the uri & request (send_socket) */
+		if (uri2dst(&t->uac[branch].request.dst, request,
 						next_hop ? next_hop: uri, proto)==0){
 			ret=E_BAD_ADDRESS;
 			goto error;
 		}
 	}
-
-	/* fill dst send_sock */
-	t->uac[branch].request.dst.send_sock =
-			get_send_socket( request, &t->uac[branch].request.dst.to,
-								t->uac[branch].request.dst. proto);
+	
+	/* check if send_sock is ok */
 	if (t->uac[branch].request.dst.send_sock==0) {
 		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d, proto %d "
 			" (no corresponding listening socket)\n",
@@ -276,8 +277,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 
 	/* now message printing starts ... */
 	shbuf=print_uac_request( t, request, branch, uri, 
-		&len, t->uac[branch].request.dst.send_sock, 
-			t->uac[branch].request.dst.proto );
+							&len, &t->uac[branch].request.dst);
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error01;
@@ -322,9 +322,8 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 
 	/* print */
 	shbuf=print_uac_request( t_cancel, cancel_msg, branch, 
-		&t_invite->uac[branch].uri, &len, 
-		t_invite->uac[branch].request.dst.send_sock,
-		t_invite->uac[branch].request.dst.proto);
+							&t_invite->uac[branch].uri, &len, 
+							&t_invite->uac[branch].request.dst);
 	if (!shbuf) {
 		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
 		ret=ser_error=E_OUT_OF_MEM;
