@@ -35,6 +35,7 @@ void free_events_uac(events_uac_t *uac)
 	str_free_content(&uac->local_uri);
 	str_free_content(&uac->remote_uri);
 	str_free_content(&uac->route);
+	str_free_content(&uac->outbound_proxy);
 	/* if the dialog is not freed we should free it */
 	if (uac->dialog) {
 		euac_internals->tmb.free_dlg(uac->dialog);
@@ -46,7 +47,7 @@ void free_events_uac(events_uac_t *uac)
 events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *events, 
 		notify_callback_func cb, /* callback function for processing NOTIFY messages (parsing, ...) */
 		void *cbp, /* parameter for callback function */
-		const str *other_headers, str *route)
+		const str *other_headers, str *route, str *outbound_proxy)
 {
 	events_uac_t *uac;
 	dstring_t dstr;
@@ -88,6 +89,8 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 	else str_clear(&uac->remote_uri);
 	if (res == 0) res = str_dup(&uac->route, route);
 	else str_clear(&uac->route);
+	if (res == 0) res = str_dup(&uac->outbound_proxy, outbound_proxy);
+	else str_clear(&uac->outbound_proxy);
 	uac->timer_started = 0;
 	uac->cb = cb;
 	uac->cbp = cbp;

@@ -55,6 +55,7 @@ struct _events_uac_t {
 	str local_uri;
 	str remote_uri;
 	str route;
+	str outbound_proxy;
 
 	struct _events_uac_t *prev, *next; /* linked list ? */
 
@@ -76,7 +77,8 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri,
 		const str *events, 
 		notify_callback_func cb, /* callback function for processing NOTIFY messages (parsing, ...) */
 		void *cbp, /* parameter for callback function */
-		const str *other_headers, str *route);
+		const str *other_headers, str *route,
+		str *outbound_proxy);
 
 void free_events_uac(events_uac_t *uac);
 

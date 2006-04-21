@@ -48,6 +48,9 @@ static param_export_t params[]={
 	{"resubscribe_delta", PARAM_INT, &resubscribe_delta },
 	{"min_resubscribe_time", PARAM_INT, &min_resubscribe_time },
 	{"handle_presence_subscriptions", PARAM_INT, &handle_presence_subscriptions },
+
+	/* TODO: undocumented */
+	{"presence_outbound_proxy", PARAM_STR, &presence_outbound_proxy },	
 	{0, 0, 0}
 };
 

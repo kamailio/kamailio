@@ -18,9 +18,8 @@
 /* method for UAC testing */
 void test1(rpc_t *rpc, void *c)
 {
-	events_uac_t *uac = NULL;
+	/*events_uac_t *uac = NULL;
 	str presence = STR_STATIC_INIT("presence");
-	/* str reg = STR_STATIC_INIT("reg"); */
 	str to = STR_STATIC_INIT("<sip:ms2@test-domain.com>");
 	str from = STR_STATIC_INIT("<sip:b2b@test-domain.com>");
 	str route = STR_STATIC_INIT("<sip:vencore.sip-server.net:5060;lr>");
@@ -28,10 +27,10 @@ void test1(rpc_t *rpc, void *c)
 	rpc->add(c, "s", "test called");
 	rpc->send(c);
 
-	uac = create_events_uac(&to, &from, &presence, NULL, NULL, NULL, &route);
+	 uac = create_events_uac(&to, &from, &presence, NULL, NULL, NULL, &route);
 
-	sleep(5); /* wait a moment */
-	destroy_events_uac(uac);/* remove */
+	sleep(5);
+	destroy_events_uac(uac); */
 }
 
 static void test(rpc_t *rpc, void *c)

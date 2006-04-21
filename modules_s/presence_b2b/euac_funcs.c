@@ -89,7 +89,7 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 		id.rem_tag.len = 0;
 		
 		uac = (events_uac_t*)ht_find(&euac_internals->ht_unconfirmed, &id);
-/*		
+		
 		if (!uac) {
 			WARN("events UAC not found for arriving NOTIFY: "
 				"%.*s * %.*s * %.*s\n",
@@ -97,7 +97,7 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 				FMT_STR(id.rem_tag),
 				FMT_STR(id.call_id));
 		}
-		else INFO("received NOTIFY for unconfirmed dialog!\n");*/
+/*		else INFO("received NOTIFY for unconfirmed dialog!\n");*/
 	}
 
 	return uac;
@@ -263,6 +263,10 @@ int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 		if (euac_internals->dlgb.preset_dialog_route(uac->dialog, &uac->route) < 0)
 			goto ns_err_dlg;
 
+	/* preset outbound proxy */
+	if (!is_str_empty(&uac->outbound_proxy)) 
+		uac->dialog->hooks.next_hop = &uac->outbound_proxy;
+	
 	if (prepare_hdrs(uac, &hdr, contact_to_send) < 0) goto ns_err_dlg;
 
 	add_reference(&uac->ref_cntr); /* add reference for callback function */

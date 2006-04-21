@@ -40,6 +40,8 @@ static qsa_content_type_t *ct_presence_info = NULL;
 
 /* default route for presence UAC */
 str presence_route = {s: "", len: 0 };
+/* outbound proxy for presence UAC */
+str presence_outbound_proxy = {s: "", len: 0 };
 /* additional headers for presence subscriptions */
 str presence_headers = {s: "", len: 0 };
 
@@ -189,7 +191,8 @@ static events_subscription_t *create_presence_subscription(qsa_subscription_t *s
 			presence_notification_cb, /* callback function */
 			subscription, /* parameter for callback */
 			&presence_headers, /* additional headers */
-			&presence_route);
+			&presence_route,
+			&presence_outbound_proxy);
 	
 	if (!es->uac) {
 		mem_free(es);

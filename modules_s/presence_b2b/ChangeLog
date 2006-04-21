@@ -1,3 +1,8 @@
+2006-04-21
+	* added parameter presence_outbound_proxy (may be used instead of
+	presence_route or both together) - presence subscriptions are sent there
+	if set
+
 2006-04-11
 	* changed QSA (reduced memory allocations)
 
