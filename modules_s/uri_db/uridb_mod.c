@@ -54,9 +54,9 @@
 
 MODULE_VERSION
 
-#define LOAD_RURI 0
-#define LOAD_FROM 1
-#define LOAD_TO 2
+#define USE_RURI 0
+#define USE_FROM 1
+#define USE_TO 2
 
 
 /*
@@ -70,7 +70,8 @@ static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
 static int mod_init(void);       /* Module initialization function */
 static int lookup_user(struct sip_msg* msg, char* s1, char* s2);
-static int lookup_user_fixup(void** param, int param_no);
+static int check_uri(struct sip_msg* msg, char* s1, char* s2);
+static int header_fixup(void** param, int param_no);
 
 #define URI_TABLE    "uri"
 #define UID_COL      "uid"
@@ -101,7 +102,8 @@ db_func_t db;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"lookup_user", lookup_user, 1, lookup_user_fixup, REQUEST_ROUTE},
+	{"lookup_user", lookup_user, 1, header_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"check_uri",   check_uri,   1, header_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -208,21 +210,23 @@ static void destroy(void)
 }
 
 
-static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
+/*
+ * Lookup UID from uri table. If store parameter is non-zero then
+ * store the UID in an attribute.
+ * The function returns 1 if UID was found, -1 if not or on an error
+ */
+static int lookup_uid(struct sip_msg* msg, long id, int store)
 {
 	struct to_body* from, *to;
 	struct sip_uri puri;
 	str did, uid;
-	long id;
 	db_key_t keys[2], cols[2];
 	db_val_t vals[2], *val;
 	db_res_t* res;
 	int flag, i, ret;
 
 	int_str avp_name, avp_val;
-
 	flag=0; /*warning fix*/
-	id = (long)s1;
 
 	keys[0] = username_col.s;
 	keys[1] = did_col.s;
@@ -234,33 +238,33 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 
 	did.s = 0; did.len = 0;
 
-	if (id == LOAD_FROM) {
+	if (id == USE_FROM) {
 		get_from_did(&did, msg);
 		flag = DB_IS_FROM;
 
 		if (parse_from_header(msg) < 0) {
-			LOG(L_ERR, "uri_db:lookup_user: Error while parsing From header\n");
+			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing From header\n");
 			return -1;
 		}
 		from = get_from(msg);
 		if (!from) {
-			LOG(L_ERR, "uri_db:lookup_user: Unable to get From username\n");
+			LOG(L_ERR, "uri_db:lookup_uid: Unable to get From username\n");
 			return -1;
 		}
 		if (parse_uri(from->uri.s, from->uri.len, &puri) < 0) {
-			LOG(L_ERR, "uri_db:lookup_user: Error while parsing From URI\n");
+			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing From URI\n");
 			return -1;
 		}
 		vals[0].val.str_val = puri.user;
-	} else if (id == LOAD_TO) {
+	} else if (id == USE_TO) {
 		get_to_did(&did, msg);
 		to = get_to(msg);
 		if (!to) {
-			LOG(L_ERR, "uri_db:lookup_user: Unable to get To username\n");
+			LOG(L_ERR, "uri_db:lookup_uid: Unable to get To username\n");
 			return -1;
 		}
 		if (parse_uri(to->uri.s, to->uri.len, &puri) < 0) {
-			LOG(L_ERR, "uri_db:lookup_user: Error while parsing To URI\n");
+			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing To URI\n");
 			return -1;
 		}
 		vals[0].val.str_val = puri.user;
@@ -282,12 +286,12 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 	}
 
 	if (db.use_table(con, uri_table.s) < 0) {
-		LOG(L_ERR, "uri_db:lookup_user: Error in use_table\n");
+		LOG(L_ERR, "uri_db:lookup_uid: Error in use_table\n");
 		return -1;
 	}
 
 	if (db.query(con, keys, 0, vals, cols, 2, 2, 0, &res) < 0) {
-		LOG(L_ERR, "uri_db:lookup_user: Error in db_query\n");
+		LOG(L_ERR, "uri_db:lookup_uid: Error in db_query\n");
 		return -1;
 	}
 
@@ -295,7 +299,7 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 		val = res->rows[i].values;
 
 		if (val[0].nul || val[1].nul) {
-			LOG(L_ERR, "uri_db:lookup_user: Bogus line in %s table\n", uri_table.s);
+			LOG(L_ERR, "uri_db:lookup_uid: Bogus line in %s table\n", uri_table.s);
 			continue;
 		}
 
@@ -307,41 +311,58 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 	ret = -1; /* Not found -> not allowed */
 	goto freeres;
  found:
-	uid.s = (char*)val[0].val.string_val;
-	uid.len = strlen(uid.s);
-	if (id == LOAD_FROM) {
-		set_from_uid(&uid);
-	} else {
-		set_to_uid(&uid);
-		if (id == LOAD_RURI) {
-			/* store as str|int avp if alias is canonical or not (1,0) */
-			if ((val[1].val.int_val & DB_CANON) != 0) {
-				avp_name.s = canonical_avp;
-				avp_val.s = canonical_avp_val;
-				add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
+	if (store) {
+		uid.s = (char*)val[0].val.string_val;
+		uid.len = strlen(uid.s);
+		if (id == USE_FROM) {
+			set_from_uid(&uid);
+		} else {
+			set_to_uid(&uid);
+			if (id == USE_RURI) {
+				     /* store as str|int avp if alias is canonical or not (1,0) */
+				if ((val[1].val.int_val & DB_CANON) != 0) {
+					avp_name.s = canonical_avp;
+					avp_val.s = canonical_avp_val;
+					add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
+				}
 			}
 		}
 	}
 	ret = 1;
+
  freeres:
 	db.free_result(con, res);
 	return ret;
 }
 
 
-static int lookup_user_fixup(void** param, int param_no)
+static int check_uri(struct sip_msg* msg, char* s1, char* s2)
+{
+	return lookup_uid(msg, (long)s1, 0);
+}
+
+
+
+static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
+{
+	return lookup_uid(msg, (long)s1, 1);
+}
+
+
+
+static int header_fixup(void** param, int param_no)
 {
 	long id = 0;
 
 	if (param_no == 1) {
 		if (!strcasecmp(*param, "Request-URI")) {
-			id = LOAD_RURI;
+			id = USE_RURI;
 		} else if (!strcasecmp(*param, "From")) {
-			id = LOAD_FROM;
+			id = USE_FROM;
 		} else if (!strcasecmp(*param, "To")) {
-			id = LOAD_TO;
+			id = USE_TO;
 		} else {
-			LOG(L_ERR, "uri_db:: Unknown parameter\n");
+			LOG(L_ERR, "uri_db:header_fixup Unknown parameter\n");
 			return -1;
 		}
 	}
