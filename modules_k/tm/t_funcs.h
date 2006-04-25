@@ -66,8 +66,8 @@ extern int noisy_ctimer;
 
 
 /* default names for timer's AVPs  */
-#define FR_TIMER_AVP      "callee_fr_timer"
-#define FR_INV_TIMER_AVP  "callee_fr_inv_timer"
+#define FR_TIMER_AVP      "s:callee_fr_timer"
+#define FR_INV_TIMER_AVP  "s:callee_fr_inv_timer"
 
 
 /* send a private buffer: utilize a retransmission structure
