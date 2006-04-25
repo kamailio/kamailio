@@ -170,7 +170,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 
 	while(SQL_SUCCEEDED(ret = SQLFetch(CON_RESULT(_h))))
 	{
-		for(i=1; i < columns; i++)
+		for(i=0; i < columns; i++)
 		{
 			SQLINTEGER indicator;
 			ret = SQLGetData(CON_RESULT(_h), i+1, SQL_C_CHAR,
