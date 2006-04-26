@@ -166,6 +166,18 @@ CREATE TABLE domain (
     domain_idx UNIQUE (domain, )
 );
 
+INSERT INTO version (table_name, table_version) values ('domain_settings','1');
+CREATE TABLE domain_settings (
+    did string(64) NOT NULL,
+    filename string(255) NOT NULL,
+    version int NOT NULL,
+    timestamp int,
+    content binary,
+    flags int NOT NULL DEFAULT '0',
+    ds_id UNIQUE (did, filename, version, ),
+
+);
+
 INSERT INTO version (table_name, table_version) values ('location','8');
 CREATE TABLE location (
     uid string(64) NOT NULL,

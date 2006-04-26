@@ -35,6 +35,9 @@
     <!-- Multi-domain support -->
     <xi:include href="domain.xml"/>
 
+    <!-- Table containing text files, styles and other files specific for domain (used by serweb) -->
+    <xi:include href="domain_settings.xml"/>
+
     <!-- User location database -->
     <xi:include href="location.xml"/>
 

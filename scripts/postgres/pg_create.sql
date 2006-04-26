@@ -165,6 +165,18 @@ CREATE TABLE domain (
     CONSTRAINT domain_idx UNIQUE (domain)
 );
 
+CREATE TABLE domain_settings (
+    did VARCHAR(64) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    version INTEGER NOT NULL,
+    timestamp INTEGER,
+    content BYTEA,
+    flags INTEGER NOT NULL DEFAULT '0',
+    CONSTRAINT ds_id UNIQUE (did, filename, version)
+);
+
+CREATE INDEX ds_df ON domain_settings (did, filename);
+
 CREATE TABLE location (
     uid VARCHAR(64) NOT NULL,
     contact VARCHAR(255) NOT NULL,
