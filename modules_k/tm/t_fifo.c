@@ -677,7 +677,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 			empty_param : msg->rcv.bind_address->port_no_str; /* port */
 
 	/* r_uri ('Contact:' for next requests) */
-	eol_line(7)=msg->first_line.u.request.uri;
+	eol_line(7)=*GET_RURI(msg);
 
 	/* r_uri for subsequent requests */
 	eol_line(8)=str_uri.len?str_uri:empty_param;
