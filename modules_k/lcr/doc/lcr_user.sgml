@@ -67,8 +67,7 @@
 	</para>
 	<para>
 	In addition to gw and lcr tables there is third table gw_grp that is
-	used for administrative purposes only to associate names with gateway
-	group ids.
+	used to associate names with gateway group ids.
 	</para>
 	</section>
 
@@ -570,12 +569,14 @@ modparam("lcr","db_mode",0)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">load_gws()</function>
+		<function moreinfo="none">load_gws(), load_gws(group-id)</function>
 		</title>
 		<para>
 		Loads URI schemes, addresses, ports, and transports of gateways
 		that match user part of Request-URI to gw_uri_avp AVPs (see Overview
-		section).  Returns 1 or -1 depending on success.
+		section). If an optional group-id is specified, only gateways belonging
+		to this group are loaded.
+		Returns 1 or -1 depending on success.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -586,6 +587,17 @@ modparam("lcr","db_mode",0)
 ...
 if (!load_gws()) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
+	break;
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>load_gws</function> usage with group-id</title>
+		<programlisting format="linespecific">
+...
+if (!load_gws("1")) {
+	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
 	break;
 };
 ...
@@ -645,10 +657,12 @@ if (!next_gw()) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">from_gw()</function>
+		<function moreinfo="none">from_gw(), from_gw(group-id)</function>
 		</title>
 		<para>
-			Checks if request came from IP address of a gateway.
+			Checks if request came from IP address of a gateway. If an
+			optional group-id is given, only gateways belonging to this
+			group are checked.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -665,13 +679,26 @@ if (from_gw()) {
 ...
 </programlisting>
 		</example>
+		<example>
+		<title><function>from_gw</function> usage with group-id</title>
+		<programlisting format="linespecific">
+...
+if (from_gw("1")) {
+	...
+	break;
+};
+...
+</programlisting>
+		</example>
 		</section>
 		<section>
 		<title>
-		<function moreinfo="none">to_gw()</function>
+		<function moreinfo="none">to_gw(), to_gw(group-id)</function>
 		</title>
 		<para>
-			Checks if in-dialog request goes to a gateway.
+			Checks if in-dialog request goes to a gateway. If an optional
+			group-id is given, only gateways belonging to this group
+			are checked.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -681,6 +708,17 @@ if (from_gw()) {
 		<programlisting format = "linespecific">
 ...
 if (to_gw()) {
+	...
+	break;
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>to_gw</function> usage with group-id</title>
+		<programlisting format = "linespecific">
+...
+if (to_gw("1")) {
 	...
 	break;
 };

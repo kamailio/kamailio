@@ -73,6 +73,7 @@ MODULE_VERSION
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
 static int mod_init(void);       /* Module initialization function */
+static int fixstring2int(void **param, int param_count); /* string to int fixup */
 
 int reload_gws ( void );
 
@@ -221,9 +222,12 @@ struct from_uri_regex from_uri_reg[MAX_NO_OF_LCRS];
  * Module functions that are defined later
  */
 int load_gws(struct sip_msg* _m, char* _s1, char* _s2);
+int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 int from_gw(struct sip_msg* _m, char* _s1, char* _s2);
+int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int to_gw(struct sip_msg* _m, char* _s1, char* _s2);
+int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int load_contacts (struct sip_msg*, char*, char*);
 int next_contacts (struct sip_msg*, char*, char*);
 
@@ -232,9 +236,12 @@ int next_contacts (struct sip_msg*, char*, char*);
  */
 static cmd_export_t cmds[] = {
 	{"load_gws",      load_gws,      0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws",      load_gws_grp,  1, fixstring2int, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"next_gw",       next_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"from_gw",       from_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_gw",       from_gw_grp,   1, fixstring2int, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"to_gw",         to_gw,         0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"to_gw",         to_gw_grp,     1, fixstring2int, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"load_contacts", load_contacts, 0, 0, REQUEST_ROUTE},
 	{"next_contacts", next_contacts, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
@@ -959,11 +966,10 @@ void print_gws (FILE *reply_file)
 	}
 }
 
-
 /*
  * Load info of matching GWs from database to gw_uri AVPs
  */
-int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
+static int do_load_gws(struct sip_msg* _m, int grp_id)
 {
     db_res_t* res;
     db_row_t *row, *r;
@@ -1034,22 +1040,42 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     }
 
 	if (db_mode == 0) {
-		q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
-			gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
-			gw_table.len, gw_table.s, port_col.len, port_col.s,
-			gw_table.len, gw_table.s, uri_scheme_col.len, uri_scheme_col.s,
-			gw_table.len, gw_table.s, transport_col.len, transport_col.s,
-			gw_table.len, gw_table.s, strip_col.len, strip_col.s,
-			gw_table.len, gw_table.s, prefix_col.len, prefix_col.s,
-			gw_table.len, gw_table.s, lcr_table.len, lcr_table.s,
-			from_uri.len, from_uri.s,
-			lcr_table.len, lcr_table.s, from_uri_col.len, from_uri_col.s,
-			ruri_user.len, ruri_user.s,
-			lcr_table.len, lcr_table.s, prefix_col.len, prefix_col.s,
-			lcr_table.len, lcr_table.s, grp_id_col.len,  grp_id_col.s,
-			gw_table.len, gw_table.s, grp_id_col.len, grp_id_col.s,
-			lcr_table.len, lcr_table.s, prefix_col.len, prefix_col.s,
-			lcr_table.len, lcr_table.s, priority_col.len, priority_col.s);
+		if(grp_id >= 0) {
+			q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE %.*s.%.*s = %d AND '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
+				gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
+				gw_table.len, gw_table.s, port_col.len, port_col.s,
+				gw_table.len, gw_table.s, uri_scheme_col.len, uri_scheme_col.s,
+				gw_table.len, gw_table.s, transport_col.len, transport_col.s,
+				gw_table.len, gw_table.s, strip_col.len, strip_col.s,
+				gw_table.len, gw_table.s, prefix_col.len, prefix_col.s,
+				gw_table.len, gw_table.s, lcr_table.len, lcr_table.s,
+				lcr_table.len, lcr_table.s, grp_id_col.len, grp_id_col.s, grp_id,
+				from_uri.len, from_uri.s,
+				lcr_table.len, lcr_table.s, from_uri_col.len, from_uri_col.s,
+				ruri_user.len, ruri_user.s,
+				lcr_table.len, lcr_table.s, prefix_col.len, prefix_col.s,
+				lcr_table.len, lcr_table.s, grp_id_col.len,  grp_id_col.s,
+				gw_table.len, gw_table.s, grp_id_col.len, grp_id_col.s,
+				lcr_table.len, lcr_table.s, prefix_col.len, prefix_col.s,
+				lcr_table.len, lcr_table.s, priority_col.len, priority_col.s);
+		} else {
+			q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
+				gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
+				gw_table.len, gw_table.s, port_col.len, port_col.s,
+				gw_table.len, gw_table.s, uri_scheme_col.len, uri_scheme_col.s,
+				gw_table.len, gw_table.s, transport_col.len, transport_col.s,
+				gw_table.len, gw_table.s, strip_col.len, strip_col.s,
+				gw_table.len, gw_table.s, prefix_col.len, prefix_col.s,
+				gw_table.len, gw_table.s, lcr_table.len, lcr_table.s,
+				from_uri.len, from_uri.s,
+				lcr_table.len, lcr_table.s, from_uri_col.len, from_uri_col.s,
+				ruri_user.len, ruri_user.s,
+				lcr_table.len, lcr_table.s, prefix_col.len, prefix_col.s,
+				lcr_table.len, lcr_table.s, grp_id_col.len,  grp_id_col.s,
+				gw_table.len, gw_table.s, grp_id_col.len, grp_id_col.s,
+				lcr_table.len, lcr_table.s, prefix_col.len, prefix_col.s,
+				lcr_table.len, lcr_table.s, priority_col.len, priority_col.s);
+		}
 		if (q_len >= MAX_QUERY_SIZE) {
 			LOG(L_ERR, "load_gws(): Too long database query\n");
 			return -1;
@@ -1199,7 +1225,7 @@ skip1:
 		    if ((*gws)[j].ip_addr == 0) {
 			break;
 		    }
-		    if (lcr_rec.grp_id == (*gws)[j].grp_id) {
+		    if (lcr_rec.grp_id == (*gws)[j].grp_id && (grp_id < 0 || (*gws)[j].grp_id == grp_id)) {
 			/* 3. grp_id matching is done */
 			for (k = 0; k < gw_index; k++) {
 			    if ((*gws)[j].ip_addr ==
@@ -1392,6 +1418,28 @@ skip1:
     }
 }
 
+/*
+ * Load info of matching GWs from database to gw_uri AVPs
+ * taking into account the given group id.
+ */
+int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2)
+{
+    int grp_id;
+
+    grp_id = (int)(long)_s1;
+    return do_load_gws(_m, grp_id);
+}
+
+/*
+ * Load info of matching GWs from database to gw_uri AVPs
+ * ignoring the group id.
+ */
+int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
+{
+    return do_load_gws(_m, -1);
+}
+
+
 
 /*
  * If called from request route block, rewrites scheme, host, port, and
@@ -1532,7 +1580,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 /*
  * Checks if request comes from a gateway
  */
-int from_gw(struct sip_msg* _m, char* _s1, char* _s2)
+static int do_from_gw(struct sip_msg* _m, int grp_id)
 {
     int i;
     unsigned int src_addr;
@@ -1543,7 +1591,8 @@ int from_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    if ((*gws)[i].ip_addr == 0) {
 		    return -1;
 	    }
-	    if ((*gws)[i].ip_addr == src_addr) {
+	    if ((*gws)[i].ip_addr == src_addr && 
+		    (grp_id < 0 || (*gws)[i].grp_id == grp_id)) {
 		    return 1;
 	    }
     }
@@ -1553,9 +1602,31 @@ int from_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
+ * Checks if request comes from a gateway, taking
+ * into account the group id.
+ */
+int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	int grp_id;
+
+	grp_id = (int)(long)_s1;
+	return do_from_gw(_m, grp_id);
+}
+
+/*
+ * Checks if request comes from a gateway, ignoring
+ * the group id.
+ */
+int from_gw(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	return do_from_gw(_m, -1);
+}
+
+
+/*
  * Checks if in-dialog request goes to gateway
  */
-int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
+static int do_to_gw(struct sip_msg* _m, int grp_id)
 {
     char host[16];
     struct in_addr addr;
@@ -1580,12 +1651,36 @@ int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	if ((*gws)[i].ip_addr == 0) {
 	    return -1;
 	}
-	if ((*gws)[i].ip_addr == addr.s_addr) {
+	if ((*gws)[i].ip_addr == addr.s_addr && 
+		(grp_id < 0 || (*gws)[i].grp_id == grp_id)) {
 	    return 1;
 	}
     }
 
     return -1;
+}
+
+
+/*
+ * Checks if in-dialog request goes to gateway, taking
+ * into account the group id.
+ */
+int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	int grp_id;
+
+	grp_id = (int)(long)_s1;
+	return do_to_gw(_m, grp_id);
+}
+
+
+/*
+ * Checks if in-dialog request goes to gateway, ignoring
+ * the group id.
+ */
+int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	return do_to_gw(_m, -1);
 }
 
 
@@ -1825,3 +1920,28 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
 	return 1;
 }
+
+/* 
+ * Convert string parameter to integer for functions that expect an integer.
+ * Taken from mediaproxy module.
+ */
+static int fixstring2int(void **param, int param_count)
+{
+	unsigned long number;
+	int err;
+
+	if (param_count == 1) {
+		number = str2s(*param, strlen(*param), &err);
+		if (err == 0) {
+			pkg_free(*param);
+			*param = (void*)number;
+			return 0;
+		} else {
+			LOG(L_ERR, "lcr/fixstring2int(): ERROR: bad number `%s'\n",
+				(char*)(*param));
+			return E_CFG;
+		}
+	}
+	return 0;
+}
+
