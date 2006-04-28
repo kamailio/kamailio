@@ -195,7 +195,7 @@
          <value col="at.rich_t">email_adr</value>
          <value col="at.desc">@ff_email</value>
          <value col="at.d_flags">33</value>
-         <value col="at.flags">2</value>
+         <value col="at.flags">6</value>
          <value col="at.prior">256</value>
          <value col="at.order">30</value>
          </row>
@@ -256,7 +256,7 @@
          <value col="at.rich_t">int</value>
          <value col="at.desc">@ff_domain_def_f</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
+         <value col="at.flags">4</value>
          <value col="at.prior">1073741824</value>
          </row>
     <row><value col="at.name">sw_deleted_ts</value>      
@@ -289,7 +289,7 @@
          <value col="at.rich_t">int</value>
          <value col="at.desc">@ff_credential_def_f</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
+         <value col="at.flags">4</value>
          <value col="at.prior">1073741824</value>
          </row>
     <row><value col="at.name">sw_uri_default_flags</value>      
@@ -297,7 +297,7 @@
          <value col="at.rich_t">int</value>
          <value col="at.desc">@ff_uri_def_f</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
+         <value col="at.flags">4</value>
          <value col="at.prior">1073741824</value>
          </row>
     <row><value col="at.name">sw_is_admin</value>      
