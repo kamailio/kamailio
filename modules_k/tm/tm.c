@@ -609,7 +609,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(xl_add_extra("T_branch_idx", it_get_tm_branch_idx, 100 )!=0)
+	if(xl_add_extra("T_branch_idx", it_get_tm_branch_idx, 100, NULL)!=0)
 	{
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to register pvar "
 			"[T_branch_idx]\n");
