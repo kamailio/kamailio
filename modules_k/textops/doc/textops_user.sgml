@@ -732,7 +732,9 @@ if (is_present_hf("From")) log(1, "From HF Present");
 		<function moreinfo="none">append_time()</function>
 		</title>
 		<para>
-		Adds a time header to the message. Header format is: 
+		Adds a time header to the reply of the request. You must use it
+		before functions that are likely to send a reply, e.g., save()
+		from 'registrar' module. Header format is: 
 		<quote>Date: %a, %d %b %Y %H:%M:%S GMT</quote>, with the legend:
 		<itemizedlist>
 		<listitem>

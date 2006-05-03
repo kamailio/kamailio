@@ -521,8 +521,10 @@ if (is_present_hf("From")) log(1, "From HF Present");
 
 1.3.20. append_time()
 
-   Adds a time header to the message. Header format is: "Date:
-   %a, %d %b %Y %H:%M:%S GMT", with the legend:
+   Adds a time header to the reply of the request. You must use
+   it before functions that are likely to send a reply, e.g.,
+   save() from 'registrar' module. Header format is: "Date: %a,
+   %d %b %Y %H:%M:%S GMT", with the legend:
 
      * %a abbreviated week of day name (locale)
      * %d day of month as decimal number
