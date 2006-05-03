@@ -42,7 +42,7 @@
 	    string value (type is 2).
 	</description>
     </column>
-    <column role="serweb">
+    <column role="serweb" id="at.type_spec">
 	<name>type_spec</name>
 	<type>string</type>
 	<size>255</size>
@@ -349,7 +349,27 @@
          <value col="at.flags">0</value>
          <value col="at.prior">1073807616</value>
          <value col="at.order">130</value>
-   </row>
-								       
+    </row>
+    <row><value col="at.name">uid_format</value>
+         <value col="at.type">2</value>
+         <value col="at.rich_t">list</value>
+         <value col="at.desc">@ff_uid_format</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073741824</value>
+         <value col="at.order">160</value>
+	 <value col="at.type_spec">a:3:{i:0;s:14:"username@realm";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}</value>
+    </row>
+    <row><value col="at.name">did_format</value>
+         <value col="at.type">2</value>
+         <value col="at.rich_t">list</value>
+         <value col="at.desc">@ff_did_format</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073741824</value>
+         <value col="at.order">170</value>
+	 <value col="at.type_spec">a:3:{i:0;s:11:"domain name";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}</value>
+    </row>
+								      
 
 </table>

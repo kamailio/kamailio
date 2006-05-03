@@ -242,4 +242,16 @@
 	<value col="global_attrs.flags">32</value>
     </row>
 
+    <row><value col="global_attrs.name">uid_format</value>
+         <value col="global_attrs.type">2</value>
+         <value col="global_attrs.value">0</value>
+         <value col="global_attrs.flags">32</value>
+    </row>
+
+    <row><value col="global_attrs.name">did_format</value>
+         <value col="global_attrs.type">2</value>
+         <value col="global_attrs.value">0</value>
+         <value col="global_attrs.flags">32</value>
+    </row>
+								
 </table>

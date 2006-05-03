@@ -121,6 +121,8 @@ INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, f
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_pending_ts', '2', 'string', 'registration timestamp', '32', '0', '0');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_require_confirm', '0', 'boolean', '@ff_reg_confirmation', '32', '0', '1073807360', '120');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_send_missed', '0', 'boolean', '@ff_send_daily_missed_calls', '32', '0', '1073807616', '130');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, type_spec) VALUES ('uid_format', '2', 'list', '@ff_uid_format', '32', '0', '1073741824', '160', 'a:3:{i:0;s:14:"username@realm";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, type_spec) VALUES ('did_format', '2', 'list', '@ff_did_format', '32', '0', '1073741824', '170', 'a:3:{i:0;s:11:"domain name";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}');
 
 CREATE TABLE global_attrs (
     name VARCHAR(32) NOT NULL,
@@ -137,6 +139,8 @@ INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_show_status', '0
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_require_conf', '0', '1', '32');
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('lang', '2', 'en', '33');
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_timezone', '2', 'Europe/Prague', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('uid_format', '2', '0', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('did_format', '2', '0', '32');
 
 CREATE TABLE domain_attrs (
     did VARCHAR(64),

@@ -6,3 +6,5 @@ sw_show_status:0:1:32
 sw_require_conf:0:1:32
 lang:2:en:33
 sw_timezone:2:Europe/Prague:32
+uid_format:2:0:32
+did_format:2:0:32
