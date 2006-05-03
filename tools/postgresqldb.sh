@@ -280,11 +280,11 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 	GRANT ALL PRIVILEGES ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
 		location, missed_calls, pending, phonebook, phonebook_id_seq, subscriber, silo, silo_mid_seq, domain,
 		uri, server_monitoring, usr_preferences, usr_preferences_types, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr TO $DBRWUSER;
+		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBRWUSER;
 	GRANT SELECT ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
 		location, missed_calls, pending, phonebook, phonebook_id_seq, subscriber, silo, silo_mid_seq, domain,
 		uri, server_monitoring, usr_preferences, usr_preferences_types, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr TO $DBROUSER;"
+		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
 DATETIME="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DUMMY_DATE'"
 DATETIMEALIAS="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_ALIASES_EXPIRES'"
