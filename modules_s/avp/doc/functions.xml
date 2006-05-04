@@ -23,7 +23,7 @@
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    <emphasis>attribute</emphasis> - The name of of the AVP to
+		    <emphasis>attribute</emphasis> - The name of the AVP to
 		    be created.
 		</para>
 	    </listitem>
@@ -67,7 +67,7 @@ flags2attr()
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of of the
+		<para><emphasis>attribute</emphasis> - The name of the
 		    AVP to be created.
 		</para>
 	    </listitem>
@@ -98,7 +98,7 @@ set_sattr("called_number", "1234")
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    <emphasis>attribute</emphasis> - The name of of the AVP.
+		    <emphasis>attribute</emphasis> - The name of the AVP.
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -121,14 +121,14 @@ uri2attr("saved_ruri")
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of of the
+		<para><emphasis>attribute</emphasis> - The name of the
 		    AVP.
 		</para>
 	    </listitem>
 	</itemizedlist>
     </section>
     
-    <section>
+    <section id="attr2uri">
 	<title><function>attr2uri(attribute)</function></title>
 	<para>
 	    Rewrite the Request-URI of the message being processed with
@@ -137,7 +137,7 @@ uri2attr("saved_ruri")
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of of the
+		<para><emphasis>attribute</emphasis> - The name of the
 		    AVP.
 		</para>
 	    </listitem>
@@ -153,7 +153,7 @@ uri2attr("saved_ruri")
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of of the
+		<para><emphasis>attribute</emphasis> - The name of the
 		    AVP.
 		</para>
 	    </listitem>
@@ -183,7 +183,7 @@ if (is_sattr_set("saved_ruri")) {
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of of the
+		<para><emphasis>attribute</emphasis> - The name of the
 		    AVP.
 		</para>
 	    </listitem>
@@ -206,7 +206,7 @@ if (is_sattr_set("saved_ruri")) {
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of of the
+		<para><emphasis>attribute</emphasis> - The name of the
 		    AVP.
 		</para>
 	    </listitem>
@@ -216,6 +216,7 @@ if (is_sattr_set("saved_ruri")) {
 		</para>
 	    </listitem>
 	</itemizedlist>
+	<para>Note: You must ensure, that the xlog module is loaded to be able to use this function.</para>
 	<example>
 	    <title><function>avp_equals_xl</function> usage</title>
 	    <programlisting>
@@ -240,7 +241,7 @@ if (avp_equals_xl("my_avp", "%ct")) {
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of of the
+		<para><emphasis>attribute</emphasis> - The name of the
 		    AVP.
 		</para>
 	    </listitem>
@@ -253,6 +254,27 @@ if (avp_equals_xl("my_avp", "%ct")) {
 		Dumps all AVPs in user lists to the debug output (with level INFO).
 	</para>
 	<para>The function does not require any parameters.</para>
+    </section>
+    
+	<section id="xlset_attr">
+	<title><function>xlset_attr(attribute, xl_format)</function></title>
+	<para>
+		Creates new AVP identified by <emphasis>attribute</emphasis> and assigns the result string of xlog formatting rules as its value.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of the
+		    AVP.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>xl_format</emphasis> - String used for xlog formatting.
+		    For detailed info see documentation of xlog module.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<para>Note: You must ensure, that the xlog module is loaded to be able to use this function.</para>
     </section>
     
 	<section id="insert_avp_hf_1">
@@ -268,7 +290,7 @@ if (avp_equals_xl("my_avp", "%ct")) {
     <itemizedlist>
         <listitem>
         <para><emphasis>name</emphasis>
-		- The name of of the header field which is inserted into forwarded
+		- The name of the header field which is inserted into forwarded
 		request as well as name of AVP which's value is put as the header field
 		value.
 		</para>
@@ -288,7 +310,7 @@ if (avp_equals_xl("my_avp", "%ct")) {
     <itemizedlist>
         <listitem>
         <para><emphasis>header_name</emphasis>
-		- The name of of the header field which is inserted into forwarded
+		- The name of the header field which is inserted into forwarded
 		request.
 		</para>
 	    </listitem>
@@ -323,7 +345,7 @@ insert_avp_hf("Route", "my_route");
     <itemizedlist>
         <listitem>
         <para><emphasis>name</emphasis>
-		- The name of of the header field which is appended into forwarded
+		- The name of the header field which is appended into forwarded
 		request as well as name of AVP which's value is put as the header field
 		value.
 		</para>
@@ -343,7 +365,53 @@ insert_avp_hf("Route", "my_route");
     <itemizedlist>
         <listitem>
         <para><emphasis>header_name</emphasis>
-		- The name of of the header field which is appended into forwarded
+		- The name of the header field which is appended into forwarded
+		request.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>avp_name</emphasis>
+		- The name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="replace_avp_hf_1">
+	<title><function>replace_avp_hf(name)</function></title>
+	<para>
+		Replaces header in the request, which is beeing forwarded. The AVP name is the same as the name of the header field.
+		If you need to replace header with name which differs from the AVP name use <function>replace_avp_hf(header_name, avp_name)</function> instead.
+	</para>
+	<para>
+		Replacing means removing all the headers with specified name and appending new one at the end, with the value from AVP.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>name</emphasis>
+		- The name of the header field which is replaced in forwarded
+		request as well as name of AVP which's value is put as the header field
+		value.
+		</para>
+        </listitem>
+    </itemizedlist>
+	</section>
+	
+	<section id="replace_avp_hf_2">
+	<title><function>replace_avp_hf(header_name, avp_name)</function></title>
+	<para>
+		Replaces header in the request, which is beeing forwarded. 
+	</para>
+	<para>
+		Replacing means removing all the headers with specified name and appending new one at the end, with the value from AVP.
+	</para>
+    <para>Meaning of the parameter is as follows:</para>
+    <itemizedlist>
+        <listitem>
+        <para><emphasis>header_name</emphasis>
+		- The name of the header field which is replaced in forwarded
 		request.
 		</para>
 	    </listitem>
@@ -369,7 +437,7 @@ insert_avp_hf("Route", "my_route");
     <itemizedlist>
         <listitem>
         <para><emphasis>name</emphasis>
-		- The name of of the header field which is appended into 
+		- The name of the header field which is appended into 
 		reply as well as name of AVP which's value is put as the header field
 		value.
 		</para>
@@ -386,7 +454,7 @@ insert_avp_hf("Route", "my_route");
     <itemizedlist>
         <listitem>
         <para><emphasis>header_name</emphasis>
-		- The name of of the header field which is appended into
+		- The name of the header field which is appended into
 		reply.
 		</para>
 	    </listitem>
@@ -447,6 +515,7 @@ t_relay();
 		</para>
         </listitem>
     </itemizedlist>
+	<para>Note: You must ensure, that the xlog module is loaded to be able to use this function.</para>
 	<example>
 	    <title><function>xlset_destination</function> usage</title>
 	    <programlisting>
@@ -563,6 +632,7 @@ failure_route[1] {
 		</listitem>
     </itemizedlist>
 	<example>
+	<title><function>hdr_body2attrs</function> and <function>hdr_body2attrs2</function> usage</title>
 	<programlisting>
 if (method=="BYE") {
 	# QoS reporting

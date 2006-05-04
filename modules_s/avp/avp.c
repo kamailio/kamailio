@@ -449,7 +449,7 @@ static void dump_avp_reverse(avp_t* avp)
 			case AVP_NAME_STR:
 				/* avp type str, int value */
 				name=get_avp_name(avp);
-				LOG(L_INFO,"AVP[\"%.*s\"=%d\n", name->len, name->s, val.n);
+				LOG(L_INFO,"AVP[\"%.*s\"]=%d\n", name->len, name->s, val.n);
 				break;
 			case AVP_VAL_STR:
 				/* avp type ID, str value */
@@ -482,7 +482,7 @@ static int dump_avp(struct sip_msg* m, char* x, char* y)
 	} else {
 		dump_avp_reverse(avp_list);
 	}
-        return 1;
+	return 1;
 }
 
 static int xlset_attr(struct sip_msg* m, char* name, char* format)
@@ -490,7 +490,7 @@ static int xlset_attr(struct sip_msg* m, char* name, char* format)
 	avp_value_t val;
 	
 	if (xl_printstr(m, (xl_elog_t*) format, &val.s.s, &val.s.len)>0) {
-		if (add_avp(((avp_ident_t*)name)->flags, ((avp_ident_t*)name)->name, val)) {
+		if (add_avp(((avp_ident_t*)name)->flags | AVP_VAL_STR, ((avp_ident_t*)name)->name, val)) {
 			ERR("xlset_attr:Error adding new AVP\n");
 			return -1;
 		}
