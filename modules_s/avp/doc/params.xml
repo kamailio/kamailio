@@ -14,4 +14,24 @@
 
     <title>Parameters</title>
 
+    <section id="xlbuf_size">
+    <title><varname>xlbuf_size</varname> (integer)</title>
+    <para>
+		Defines size of internal buffer for all xlog formatting calls. If you
+don't use xlog formatting calls, you can set it to 0 to preserve some memory, if
+you get errors while formatting due to buffer size, you can enlarge it.
+	</para>
+    <para>
+        Default value is 256.
+    </para>
+    <example>
+        <title>Set <varname>xlbuf_size</varname> parameter</title>
+        <programlisting>
+...
+modparam("avp", "xlbuf_size", 1024)
+...
+        </programlisting>
+    </example>
+    </section>
+
 </section>

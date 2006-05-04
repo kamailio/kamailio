@@ -11,11 +11,19 @@
 		<affiliation><orgname>FhG Fokus</orgname></affiliation>
 		<email>jiri@iptel.org</email>
 	    </author>
+		<author>
+		<firstname>Michal</firstname>
+		<surname>Matyska</surname>
+		<affiliation><orgname>iptel</orgname></affiliation>
+		<email>michal@iptel.org</email>
+		</author>
 	</authorgroup>
 	<copyright>
 	    <year>2004</year>
 	    <year>2005</year>
 	    <holder>FhG FOKUS</holder>
+		<year>2006</year>
+		<holder>iptelorg GmbH</holder>
 	</copyright>
 	<revhistory>
 	    <revision>
@@ -44,6 +52,7 @@
     </section>
 
     <xi:include href="functions.xml"/>
+    <xi:include href="params.xml"/>
 
 </section>
 
