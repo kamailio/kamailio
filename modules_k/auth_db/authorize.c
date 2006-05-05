@@ -179,28 +179,52 @@ static int generate_avps(db_res_t* result)
 	str value;
 	int i;
 
-	for ( cred=credentials,i=1 ; cred ; cred=cred->next,i++ ) {
-		value.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
+	for (cred=credentials, i=1; cred; cred=cred->next, i++) {
+		switch (result->col.types[i]) {
+		case DB_STRING:
+			value.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
 
-		if (VAL_NULL(&(result->rows[0].values[i])) || value.s == NULL)
-			continue;
+			if (VAL_NULL(&(result->rows[0].values[i])) || value.s == NULL)
+				continue;
 
-		value.len = strlen(value.s);
-		
-		if (value.len == 0)
-			continue;
+			value.len = strlen(value.s);
+			if (value.len == 0)
+				continue;
 
-		ivalue.s = value;
+			ivalue.s = value;
 
-		if (add_avp( cred->avp_type|AVP_VAL_STR, cred->avp_name, ivalue)!=0) {
-			LOG(L_ERR,"ERROR:auth_db:generate_avps: failed to add AVP\n");
-			return -1;
+			if (add_avp( cred->avp_type|AVP_VAL_STR, cred->avp_name, ivalue)!=0) {
+				LOG(L_ERR,"ERROR:auth_db:generate_avps: failed to add AVP\n");
+				return -1;
+			}
+
+			DBG("generate_avps: set string AVP \"%s\"/%d = \"%.*s\"\n",
+				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
+				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
+				value.len, ZSW(value.s));
+			break;
+		case DB_INT:
+			if (VAL_NULL(&(result->rows[0].values[i])))
+				continue;
+
+			ivalue.n = (int)VAL_INT(&(result->rows[0].values[i]));
+
+
+			if (add_avp(cred->avp_type, cred->avp_name, ivalue)!=0) {
+				LOG(L_ERR,"ERROR:auth_db:generate_avps: failed to add AVP\n");
+				return -1;
+			}
+
+			DBG("generate_avps: set int AVP \"%s\"/%d = %d\n",
+				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
+				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
+				ivalue.n);
+			break;
+		default:
+			LOG(L_ERR, "ERROR:auth_db:generate_avps: subscriber table column `%s' has unsuported type. "
+				"Only string or int columns are supported by load_credentials.\n", result->col.names[i]);
+			break;
 		}
-
-		DBG("generate_avps: set string AVP \"%s\"/%d = \"%.*s\"\n",
-			(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
-			(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
-			value.len, ZSW(value.s));
 	}
 
 	return 0;
