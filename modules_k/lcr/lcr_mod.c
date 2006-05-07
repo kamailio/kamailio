@@ -1001,7 +1001,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
     ruri_user = _m->parsed_uri.user;
 
    /* Look for Caller RPID or From URI */
-    if (search_first_avp(rpid_avp_name_str, rpid_name, &val) &&
+    if (search_first_avp(rpid_avp_name_str, rpid_name, &val, 0) &&
 	val.s.s && val.s.len) {
 	/* Get URI user from RPID */
 	from_uri.len = val.s.len;
@@ -1464,7 +1464,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     unsigned int strip;
 
     gw_uri_avp = search_first_avp(gw_uri_avp_name_str,
-				  gw_uri_name, &gw_uri_val);
+				  gw_uri_name, &gw_uri_val, 0);
     if (!gw_uri_avp) return -1;
 
     if (route_type == REQUEST_ROUTE) {
@@ -1524,7 +1524,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	/* Create new Request-URI taking URI user from ruri_user AVP
 	   and other parts of from gateway URI AVP. */
 	ruri_user_avp = search_first_avp(ruri_user_avp_name_str,
-					 ruri_user_name, &ruri_user_val);
+					 ruri_user_name, &ruri_user_val, 0);
 	if (!ruri_user_avp) {
 	    LOG(L_ERR, "next_gw(): No ruri_user AVP\n");
 	    return -1;
@@ -1822,7 +1822,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
 	if ( route_type == REQUEST_ROUTE) {
 		/* Find first lcr_contact_avp value */
-		avp = search_first_avp(contact_avp_name_str, contact_name, &val);
+		avp = search_first_avp(contact_avp_name_str, contact_name, &val, 0);
 		if (!avp) {
 			DBG("next_contacts(): DEBUG: No AVPs -- we are done!\n");
 			return 1;
@@ -1880,7 +1880,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		}
 
 	} else if ( route_type == FAILURE_ROUTE) {
-		avp = search_first_avp(contact_avp_name_str, contact_name, &val);
+		avp = search_first_avp(contact_avp_name_str, contact_name, &val, 0);
 		if (!avp) return -1;
 
 		prev = avp;

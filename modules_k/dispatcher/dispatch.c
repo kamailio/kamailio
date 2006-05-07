@@ -892,7 +892,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 
 	avp_name.n = dst_avp_id;
 
-	prev_avp = search_first_avp(0, avp_name, &avp_value);
+	prev_avp = search_first_avp(0, avp_name, &avp_value, 0);
 	if(prev_avp==NULL)
 		return -1; /* used avp deleted -- strange */
 
@@ -926,14 +926,14 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 	}
 
 	avp_name.n = grp_avp_id;
-	prev_avp = search_first_avp(0, avp_name, &avp_value);
+	prev_avp = search_first_avp(0, avp_name, &avp_value, 0);
 	
 	if(prev_avp==NULL || prev_avp->flags&AVP_VAL_STR)
 		return -1; /* grp avp deleted -- strange */
 	group = avp_value.n;
 	
 	avp_name.n = dst_avp_id;
-	prev_avp = search_first_avp(0, avp_name, &avp_value);
+	prev_avp = search_first_avp(0, avp_name, &avp_value, 0);
 	
 	if(prev_avp==NULL || !(prev_avp->flags&AVP_VAL_STR))
 		return -1; /* dst avp deleted -- strange */

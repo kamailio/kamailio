@@ -272,7 +272,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 
 	avp = NULL;
 	avp_name.n = traced_user_avp;
-	avp=search_first_avp(0, avp_name, &avp_value);
+	avp=search_first_avp(0, avp_name, &avp_value, 0);
 	
 	if((avp==NULL) && (trace_on_flag==NULL || *trace_on_flag==0))
 	{
@@ -440,7 +440,7 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 	
 	avp = NULL;
 	avp_name.n = traced_user_avp;
-	avp=search_first_avp(0, avp_name, &avp_value);
+	avp=search_first_avp(0, avp_name, &avp_value, 0);
 	
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL || 
 				*trace_on_flag==0 || isflagset(msg, trace_flag)!=1))
@@ -517,7 +517,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	
 	avp = NULL;
 	avp_name.n = traced_user_avp;
-	avp=search_first_avp(0, avp_name, &avp_value);
+	avp=search_first_avp(0, avp_name, &avp_value, 0);
 	
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL 
 				|| *trace_on_flag==0 || isflagset(msg, trace_flag)!=1))
@@ -744,7 +744,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	
 	avp = NULL;
 	avp_name.n = traced_user_avp;
-	avp=search_first_avp(0, avp_name, &avp_value);
+	avp=search_first_avp(0, avp_name, &avp_value, 0);
 	
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL
 			|| *trace_on_flag==0 || isflagset(t->uas.request, trace_flag)!=1))
@@ -963,7 +963,7 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 	
 	avp = NULL;
 	avp_name.n = traced_user_avp;
-	avp=search_first_avp(0, avp_name, &avp_value);
+	avp=search_first_avp(0, avp_name, &avp_value, 0);
 	
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL
 				|| *trace_on_flag==0 || isflagset(req, trace_flag)!=1))

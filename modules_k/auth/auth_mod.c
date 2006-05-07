@@ -54,7 +54,7 @@ MODULE_VERSION
 #define DEF_RPID_PREFIX ""
 #define DEF_RPID_SUFFIX ";party=calling;id-type=subscriber;screen=yes"
 #define DEF_STRIP_REALM ""
-#define DEF_RPID_AVP "rpid"
+#define DEF_RPID_AVP "s:rpid"
 
 
 /*

@@ -297,7 +297,7 @@ void reportOrigCallSetUpUsage()
 
 	errorCode = OSPPTransactionNew(_provider, &transaction);
 
-	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL);
+	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL,0);
 		dest_avp != NULL;
 		dest_avp=search_next_avp(dest_avp,NULL)) {
 

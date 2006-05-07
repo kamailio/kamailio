@@ -355,8 +355,8 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 
 
 #define BEGIN_loop_all_legs \
-	src = search_first_avp(0,(int_str)src_avp_id,&src_val); \
-	dst = search_first_avp(0,(int_str)dst_avp_id,&dst_val); \
+	src = search_first_avp(0,(int_str)src_avp_id,&src_val,0); \
+	dst = search_first_avp(0,(int_str)dst_avp_id,&dst_val,0); \
 	do { \
 		while (src && (src->flags&AVP_VAL_STR)==0 ) \
 			src = search_next_avp(src,&src_val); \

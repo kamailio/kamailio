@@ -343,7 +343,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.received = _c->received->body;
 		} else {
 			if (received_found==0) {
-				if (search_first_avp(0, rcv_avp, &val) && val.s.s) {
+				if (search_first_avp(0, rcv_avp, &val, 0) && val.s.s) {
 					if (val.s.len>RECEIVED_MAX_SIZE) {
 						rerrno = R_CONTACT_LEN;
 						LOG(L_ERR,"ERROR:registrar:pack_ci: received "

@@ -121,7 +121,7 @@ osp_dest* getNextOrigDestination() {
 
 	DBG("osp: Looking for the first unused orig destination\n");
 
-	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL);
+	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL,0);
 		dest_avp != NULL;
 		dest_avp=search_next_avp(dest_avp,NULL)) {
 
@@ -164,7 +164,7 @@ osp_dest* getLastOrigDestination() {
 	struct usr_avp* dest_avp = NULL;
 	int_str   dest_val;
 
-	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL);
+	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL,0);
 		dest_avp != NULL;
 		dest_avp=search_next_avp(dest_avp,NULL)) {
 
@@ -197,7 +197,7 @@ osp_dest* getTermDestination() {
 	struct usr_avp* dest_avp = NULL;
 	int_str   dest_val;
 
-	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)TERM_OSPDESTS_LABEL,NULL);
+	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)TERM_OSPDESTS_LABEL,NULL,0);
 
 	if (dest_avp) {
 		get_avp_val(dest_avp, &dest_val);
@@ -302,7 +302,7 @@ void dumpDebugInfo() {
 
 	DBG("osp: dumpDebugInfo: IN\n");
 
-	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL);
+	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL,0);
 		dest_avp != NULL;
 		dest_avp=search_next_avp(dest_avp,NULL)) {
 
@@ -321,7 +321,7 @@ void dumpDebugInfo() {
 		DBG("osp: dumpDebugInfo: There is no orig OSPDESTS AVP\n");
 	}
 
-	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)TERM_OSPDESTS_LABEL,NULL);
+	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)TERM_OSPDESTS_LABEL,NULL,0);
 
 	if (dest_avp) {
 		get_avp_val(dest_avp, &dest_val);

@@ -256,7 +256,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(xl_add_extra("dlg_count", it_get_dlg_count, 100, NULL )!=0) {
+	if(xl_add_extra("dlg_count", it_get_dlg_count, 100, 0 )!=0) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register pvar "
 			"[dlg_no]\n");
 		return -1;

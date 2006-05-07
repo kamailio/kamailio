@@ -154,9 +154,11 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 {
 	unsigned long ul;
 	str   tmp;
+	str   s0;
 	char  have_scheme;
 	char *p;
 	char *p0;
+	unsigned int flags;
 
 	tmp.s = s;
 	/* parse the attribute name - check first if it's not an alias */
@@ -165,20 +167,40 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		*p0=0;
 	if ( *s!='$')
 	{
-		if(*s=='\0')
+		if(strlen(s)<1)
 		{
-			dbp->a.opd = AVPOPS_VAL_NONE;
-		}
-		else if (strlen(s)==2 && s[1]==':' && (s[0]=='s' ||s[0]=='S'))
-		{
-			dbp->a.opd = AVPOPS_VAL_NONE|AVPOPS_VAL_STR;
-		} else if ((strlen(s)==2 && s[1]==':' && (s[0]=='i' || s[0]=='I'))) {
-			dbp->a.opd = AVPOPS_VAL_NONE|AVPOPS_VAL_INT;
-		} else {
 			LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
-				"expected : $avp(name), s: or i: value\n");
+				"expected : $avp(name), *, s or i value\n");
 			return E_UNSPEC;
 		}
+		switch(*s) {
+			case 's': case 'S':
+				dbp->a.opd = AVPOPS_VAL_NONE|AVPOPS_VAL_STR;
+			break;
+			case 'i': case 'I':
+				dbp->a.opd = AVPOPS_VAL_NONE|AVPOPS_VAL_INT;
+			break;
+			case '*': case 'a': case 'A':
+				dbp->a.opd = AVPOPS_VAL_NONE;
+			break;
+			default:
+				LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
+					"expected : *, s or i AVP flag\n");
+			return E_UNSPEC;
+		}
+		/* flags */
+		flags = 0;
+		if(*(s+1)!='\0')
+		{
+			s0.s = s+1;
+			s0.len = strlen(s0.s);
+			if(str2int(&s0, &flags)!=0)
+			{
+				LOG(L_ERR, "ERROR:avops:parse_avp_db:: error - bad avp flags\n");
+				goto error;
+			}
+		}
+		dbp->a.sval.flags |= flags<<24;
 	} else {
 		p = xl_parse_spec(s, &dbp->a.sval,
 				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);

@@ -21,37 +21,38 @@ Ramona-Elena Modroiu
               1.2.1. OpenSER Modules
               1.2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        1.3. AVP naming format
+        1.4. Exported Parameters
 
-              1.3.1. avp_url (string)
-              1.3.2. db_url (string)
-              1.3.3. avp_table (string)
-              1.3.4. avp_aliases (string)
-              1.3.5. use_domain (integer)
-              1.3.6. uuid_column (string)
-              1.3.7. username_column (string)
-              1.3.8. domain_column (string)
-              1.3.9. attribute_column (string)
-              1.3.10. value_column (string)
-              1.3.11. type_column (string)
-              1.3.12. db_scheme (string)
+              1.4.1. avp_url (string)
+              1.4.2. db_url (string)
+              1.4.3. avp_table (string)
+              1.4.4. avp_aliases (string)
+              1.4.5. use_domain (integer)
+              1.4.6. uuid_column (string)
+              1.4.7. username_column (string)
+              1.4.8. domain_column (string)
+              1.4.9. attribute_column (string)
+              1.4.10. value_column (string)
+              1.4.11. type_column (string)
+              1.4.12. db_scheme (string)
 
-        1.4. Exported Functions
+        1.5. Exported Functions
 
-              1.4.1. avp_db_load(source,name) 
-              1.4.2. avp_db_store(source,name)
-              1.4.3. avp_db_delete(source,name)
-              1.4.4. avp_db_query(query[,dest])
-              1.4.5. avp_write(value,name)
-              1.4.6. avp_delete(name) 
-              1.4.7. avp_pushto(destination,name) 
-              1.4.8. avp_check(name,op_value) 
-              1.4.9. avp_copy(old_name,new_name) 
-              1.4.10. avp_printf(dest, format) 
-              1.4.11. avp_subst(avps, subst)
-              1.4.12. avp_op(name,op_value) 
-              1.4.13. is_avp_set(name) 
-              1.4.14. avp_print() 
+              1.5.1. avp_db_load(source,name) 
+              1.5.2. avp_db_store(source,name)
+              1.5.3. avp_db_delete(source,name)
+              1.5.4. avp_db_query(query[,dest])
+              1.5.5. avp_write(value,name)
+              1.5.6. avp_delete(name) 
+              1.5.7. avp_pushto(destination,name) 
+              1.5.8. avp_check(name,op_value) 
+              1.5.9. avp_copy(old_name,new_name) 
+              1.5.10. avp_printf(dest, format) 
+              1.5.11. avp_subst(avps, subst)
+              1.5.12. avp_op(name,op_value) 
+              1.5.13. is_avp_set(name) 
+              1.5.14. avp_print() 
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -120,9 +121,35 @@ Chapter 1. User's Guide
      * None
      _________________________________________________________
 
-1.3. Exported Parameters
+1.3. AVP naming format
 
-1.3.1. avp_url (string)
+   Since OpenSER v1.1.x, the format of the parameters specifying
+   an AVP has changed. The new format is:
+   $avp(avp_flags:avp_name) or $avp(avp_alias).
+
+     * avp_flags = type_flags [script_flags]; type_flags = 'I' |
+       'i' | 'S' | 's'; script_flags = 0..255
+       'I' or 'i' means that the type of avp name is integer (ID)
+       'S' or 's' means that the type of avp name is string
+       The type flag is mandatory.
+       script_flags must be an 8 bit unsigned number, therefore
+       can be set up to 8 flags. If no script flag is provided,
+       the name will match all AVPs, regardless they have or not
+       a script flag set (preserves the compatibility with the
+       old naming schema).
+     * avp_name = string | integer
+       string - might be any alphanumeric string, wich contain
+       following characters: [a-z] [A-Z] [0-9] '_'
+       integer - might be an unsigned integer, greater than zero,
+       up to 2^16-1
+     * avp_alias = string
+       string - might be any alphanumeric string, wich contain
+       following characters: [a-z] [A-Z] [0-9] '_'
+     _________________________________________________________
+
+1.4. Exported Parameters
+
+1.4.1. avp_url (string)
 
    DB URL for database connection.
 
@@ -134,12 +161,12 @@ modparam("avpops","avp_url","mysql://user:passwd@host/database")
 ...
      _________________________________________________________
 
-1.3.2. db_url (string)
+1.4.2. db_url (string)
 
    This parameter has the same meaning as "avp_url" parameter.
      _________________________________________________________
 
-1.3.3. avp_table (string)
+1.4.3. avp_table (string)
 
    DB table to be used.
 
@@ -151,7 +178,7 @@ modparam("avpops","avp_table","avptable")
 ...
      _________________________________________________________
 
-1.3.4. avp_aliases (string)
+1.4.4. avp_aliases (string)
 
    Contains a multiple definition of aliases for AVP names.
 
@@ -164,7 +191,7 @@ modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:75
 ...
      _________________________________________________________
 
-1.3.5. use_domain (integer)
+1.4.5. use_domain (integer)
 
    If the domain part of the an URI should be used for
    identifying an AVP in DB operations.
@@ -177,7 +204,7 @@ modparam("avpops","use_domain",1)
 ...
      _________________________________________________________
 
-1.3.6. uuid_column (string)
+1.4.6. uuid_column (string)
 
    Name of column containing the uuid (unique user id).
 
@@ -189,7 +216,7 @@ modparam("avpops","uuid_column","uuid")
 ...
      _________________________________________________________
 
-1.3.7. username_column (string)
+1.4.7. username_column (string)
 
    Name of column containing the username.
 
@@ -201,7 +228,7 @@ modparam("avpops","username_column","username")
 ...
      _________________________________________________________
 
-1.3.8. domain_column (string)
+1.4.8. domain_column (string)
 
    Name of column containing the domain name.
 
@@ -213,7 +240,7 @@ modparam("avpops","domain_column","domain")
 ...
      _________________________________________________________
 
-1.3.9. attribute_column (string)
+1.4.9. attribute_column (string)
 
    Name of column containing the attribute name (AVP name).
 
@@ -225,7 +252,7 @@ modparam("avpops","attribute_column","attribute")
 ...
      _________________________________________________________
 
-1.3.10. value_column (string)
+1.4.10. value_column (string)
 
    Name of column containing the AVP value.
 
@@ -237,7 +264,7 @@ modparam("avpops","value_column","value")
 ...
      _________________________________________________________
 
-1.3.11. type_column (string)
+1.4.11. type_column (string)
 
    Name of column containing the AVP type.
 
@@ -249,7 +276,7 @@ modparam("avpops","type_column","type")
 ...
      _________________________________________________________
 
-1.3.12. db_scheme (string)
+1.4.12. db_scheme (string)
 
    Definition of a DB schemeto be used for non-standard access to
    Database information.
@@ -263,12 +290,12 @@ modparam("avpops","db_scheme",
 ...
      _________________________________________________________
 
-1.4. Exported Functions
+1.5. Exported Functions
 
-1.4.1. avp_db_load(source,name)
+1.5.1. avp_db_load(source,name)
 
    Loads from DB into memory the AVPs corresponding to the given
-   source.
+   source. If given, it sets the script flags for loaded AVPs.
 
    Meaning of the parameters is as follows:
 
@@ -284,7 +311,12 @@ modparam("avpops","db_scheme",
        Parameter syntax is:
           + name = avp_spec['/'(table_name|'$'db_scheme)] 
           + avp_spec =
-            ''|'s:'|'i:'|$avp(avp_name)|$avp(avp_alias) 
+            matching_flags|$avp(avp_name)|$avp(avp_alias) 
+          + matching_flags = 'a' | 'A' | 'i' | 'I' | 's' | 'S'
+            [script_flags] 
+            'a' or 'A' means matching any of AVP name types ('i'
+            and 's'), the rest have the meaning descriped in 'AVP
+            naming format' chapter.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
@@ -294,11 +326,11 @@ modparam("avpops","db_scheme",
 avp_db_load("$fu","$(i:678)");
 avp_db_load("$ru/domain","i:/domain_preferences");
 avp_db_load("$uuid","$avp(s:404fwd)/fwd_table");
-avp_db_load("$ru","$avp(i:123)/$some_scheme");
+avp_db_load("$ru","$avp(i1:123)/$some_scheme");
 ...
      _________________________________________________________
 
-1.4.2. avp_db_store(source,name)
+1.5.2. avp_db_store(source,name)
 
    Stores to DB the AVPs corresponding to the given source.
 
@@ -312,11 +344,11 @@ avp_db_load("$ru","$avp(i:123)/$some_scheme");
    Example 1-13. avp_db_store usage
 ...
 avp_db_store("$tu","$avp(i:678)");
-avp_db_store("$ru/username","$avp($email)");
+avp_db_store("$ru/username","$avp(email)");
 ...
      _________________________________________________________
 
-1.4.3. avp_db_delete(source,name)
+1.5.3. avp_db_delete(source,name)
 
    Deletes from DB the AVPs corresponding to the given source.
 
@@ -330,12 +362,12 @@ avp_db_store("$ru/username","$avp($email)");
    Example 1-14. avp_db_delete usage
 ...
 avp_db_delete("$tu","$avp(i:678)");
-avp_db_delete("$ru/username","$avp($email)");
+avp_db_delete("$ru/username","$avp(email)");
 avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 ...
      _________________________________________________________
 
-1.4.4. avp_db_query(query[,dest])
+1.5.4. avp_db_query(query[,dest])
 
    Make a database query and store the result in AVPs.
 
@@ -361,7 +393,7 @@ avp_db_query("delete from subscriber");
 ...
      _________________________________________________________
 
-1.4.5. avp_write(value,name)
+1.5.5. avp_write(value,name)
 
    The function writes some value (given) or some information
    from the SIP message into a new AVP.
@@ -386,7 +418,7 @@ avp_db_query("delete from subscriber");
    Example 1-16. avp_write usage
 ...
 avp_write("$tu","$avp(i:678)");
-avp_write("$ru/username","$avp($email)");
+avp_write("$ru/username","$avp(email)");
 avp_write("$si","$avp(s:ip)");
 avp_write("$du","$avp(s:next_hop)");
 avp_write("$hdr(call-id)","$avp(i:11)");
@@ -394,7 +426,7 @@ avp_write("i:333","$avp(i:6)");
 ...
      _________________________________________________________
 
-1.4.6. avp_delete(name)
+1.5.6. avp_delete(name)
 
    Deletes from memory the AVPs with name or, if empty, all AVPs.
 
@@ -402,7 +434,9 @@ avp_write("i:333","$avp(i:6)");
 
      * name - which AVPs will be deleted from memory. Parameter
        syntax is:
-          + name = (''|'s:'|'i:'|avp_name|avp_alias)['/'flag] 
+          + name = (matching_flags|avp_name|avp_alias)['/'flag] 
+          + matching_flags = please refer to avp_db_load()
+            function 
           + flag = 'g'|'G' 
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -411,13 +445,13 @@ avp_write("i:333","$avp(i:6)");
    Example 1-17. avp_delete usage
 ...
 avp_delete("$avp(i:678)/g");
-avp_delete("$avp($email)");
-avp_delete("i:");
-avp_delete("");
+avp_delete("$avp(email)");
+avp_delete("i");
+avp_delete("a3");
 ...
      _________________________________________________________
 
-1.4.7. avp_pushto(destination,name)
+1.5.7. avp_pushto(destination,name)
 
    Pushes the value of AVP(s) into the SIP message.
 
@@ -446,7 +480,7 @@ avp_pushto("$du","$avp(i:679)");
 ...
      _________________________________________________________
 
-1.4.8. avp_check(name,op_value)
+1.5.8. avp_check(name,op_value)
 
    Checks the value of the AVP(s) against an operator and value.
 
@@ -475,11 +509,11 @@ avp_check("$avp(i:678)", "lt/i:345/g");
 avp_check("$fd","eq/$td/I");
 avp_check("$avp(s:foo)","gt/$avp($bar)/g");
 avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
-avp_check("$avp(s:foo)","fm/$fm_avp/g");
+avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
 ...
      _________________________________________________________
 
-1.4.9. avp_copy(old_name,new_name)
+1.5.9. avp_copy(old_name,new_name)
 
    Copy / move an avp under a new name.
 
@@ -499,11 +533,11 @@ avp_check("$avp(s:foo)","fm/$fm_avp/g");
    Example 1-20. avp_copy usage
 ...
 avp_copy("$avp(i:678)", "$avp(s:345)/g");
-avp_copy("$avp($old)","$avp($new)/gd");
+avp_copy("$avp(old)","$avp(new)/gd");
 ...
      _________________________________________________________
 
-1.4.10. avp_printf(dest, format)
+1.5.10. avp_printf(dest, format)
 
    Prints the formatted string 'format' in the AVP 'dest'. The
    'format' parameter can include any pseudo-variable defined in
@@ -527,7 +561,7 @@ id)");
 ...
      _________________________________________________________
 
-1.4.11. avp_subst(avps, subst)
+1.5.11. avp_subst(avps, subst)
 
    Perl/sed-like subst applied to AVPs having string value.
 
@@ -573,7 +607,7 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    it will be added in avp list and next processing will use it.
      _________________________________________________________
 
-1.4.12. avp_op(name,op_value)
+1.5.12. avp_op(name,op_value)
 
    Different integer operations with avps.
 
@@ -604,11 +638,11 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    Example 1-23. avp_op usage
 ...
 avp_op("$avp(i:678)", "add/i:345/g");
-avp_op("$avp($number)","sub/$avp($number2)/d");
+avp_op("$avp(number)","sub/$avp(number2)/d");
 ...
      _________________________________________________________
 
-1.4.13. is_avp_set(name)
+1.5.13. is_avp_set(name)
 
    Check if any AVP with name is set.
 
@@ -629,7 +663,7 @@ if(is_avp_set("$avp(i:678)"))
 ...
      _________________________________________________________
 
-1.4.14. avp_print()
+1.5.14. avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.

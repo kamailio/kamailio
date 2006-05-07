@@ -142,7 +142,7 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 		return -1;
 	}
 
-	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val))==0 ) {
+	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val, 0))==0 ) {
 		DBG("append_rpid_hf: No rpid AVP\n");
 		return -1;
 	}
@@ -202,7 +202,7 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 		return -1;
 	}
 
-	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val))==0 ) {
+	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val, 0))==0 ) {
 		DBG("append_rpid_hf: No rpid AVP\n");
 		return -1;
 	}
@@ -264,7 +264,7 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 		return -1;
 	}
 
-	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val))==0 ) {
+	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val, 0))==0 ) {
 		DBG("is_rpid_user_e164: No rpid AVP\n");
 		goto err;
 	}

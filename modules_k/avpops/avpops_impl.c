@@ -104,7 +104,7 @@ void init_store_avps( char **db_columns)
  * value 1 - attr name
  * value 2 - attr type
  */
-static int dbrow2avp(struct db_row *row, int flags, int_str attr,
+static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 														int just_val_flags)
 {
 	unsigned int uint;
@@ -113,6 +113,9 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 	str  vtmp;
 	int_str avp_attr;
 	int_str avp_val;
+	int flags;
+
+	flags = dbp->a.opd;
 
 	if (just_val_flags==-1)
 	{
@@ -219,6 +222,8 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 
 	/* added the avp */
 	db_flags |= AVP_IS_IN_DB;
+	/* set script flags */
+	db_flags |= (dbp->a.sval.flags>>16)&0xff00;
 	return add_avp( (unsigned short)db_flags, avp_attr, avp_val);
 }
 
@@ -413,7 +418,8 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 		} else {
 			avpops_str2int_str(dbp->a.sval.p.val, avp_name);
 		}
-		if ( dbrow2avp( &res->rows[i], dbp->a.opd, avp_name, sh_flg) < 0 )
+		//if ( dbrow2avp( &res->rows[i], dbp->a.opd, avp_name, sh_flg) < 0 )
+		if ( dbrow2avp( &res->rows[i], dbp, avp_name, sh_flg) < 0 )
 			continue;
 		n++;
 	}
@@ -635,7 +641,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		if(xvalue.flags&(XL_VAL_NULL|XL_VAL_EMPTY))
 		{
 			LOG(L_INFO, 
-					"INFO:dbstore:load_avps: no value for P2\n");
+					"INFO:dbstore_avps: no value for P2\n");
 			goto error;
 		}
 		if(xvalue.flags&XL_TYPE_INT)
@@ -650,7 +656,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
 			{
 				LOG(L_ERR, 
-					"ERROR:avpops:load_avps: name too long [%d/%.*s...]\n",
+					"ERROR:avpops:dbstore_avps: name too long [%d/%.*s...]\n",
 					xvalue.rs.len, 16, xvalue.rs.s);
 				goto error;
 			}
@@ -661,7 +667,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 			avp_name.s = dbp->sa;
 		} else {
 			LOG(L_INFO, 
-					"INFO:avpops:load_avps: no string value for p2\n");
+					"INFO:avpops:dbstore_avps: no string value for p2\n");
 			goto error;
 		}
 	} else if((dbp->a.opd&AVPOPS_VAL_NONE)==0) {
@@ -674,7 +680,9 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		}
 	}
 
-
+	/* set the script flags */
+	name_type |= ((dbp->a.sval.flags>>16)&0xff00);
+	
 	/* set uuid/(username and domain) fields */
 
 	n =0 ;
@@ -683,8 +691,8 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		/* avp name is known ->set it and its type */
 		store_vals[1].val.str_val = dbp->sa; /*attr name*/
-		avp = search_first_avp( name_type, avp_name, &i_s);
-		for( ; avp; avp=search_next_avp(avp,&i_s))
+		avp = search_first_avp( name_type, avp_name, &i_s, 0);
+		for( ; avp; avp=search_first_avp( name_type, avp_name, &i_s, avp))
 		{
 			/* don't insert avps which were loaded */
 			if (avp->flags&AVP_IS_IN_DB)
@@ -829,8 +837,7 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 		goto error;
 	}
 
-	if(name_type == AVP_NAME_STR)
-		flags |=  AVP_NAME_STR;
+	flags |=  name_type;
 
 	/* added the avp */
 	if (add_avp(flags, avp_name, avp_val)<0)
@@ -878,6 +885,9 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 			((ap->opd&AVPOPS_VAL_INT)&&((avp->flags&AVP_NAME_STR))==0) ||
 			((ap->opd&AVPOPS_VAL_STR)&&(avp->flags&AVP_NAME_STR)) )  )
 				continue;
+			if(((ap->sval.flags>>16)&AVP_SCRIPT_MASK)!=0
+					&& (((ap->sval.flags>>16)&AVP_SCRIPT_MASK)&avp->flags)==0)
+				continue;
 			/* remove avp */
 			destroy_avp( avp );
 			n++;
@@ -922,7 +932,7 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
 		goto error;
 	}
 
-	avp = search_first_avp( name_type1, avp_name1, &avp_val);
+	avp = search_first_avp( name_type1, avp_name1, &avp_val, 0);
 	while ( avp )
 	{
 		/* build a new avp with new name, but old value */
@@ -959,7 +969,7 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
 			break;
 		} else {
 			prev_avp = avp;
-			avp = search_next_avp( prev_avp, &avp_val);
+			avp = search_first_avp( name_type1, avp_name1, &avp_val, prev_avp);
 			/* delete the old one? */
 			if (dst->ops&AVPOPS_FLAG_DELETE)
 				destroy_avp( prev_avp );
@@ -1012,7 +1022,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 				"avpops:pushto_avp: error getting src AVP name\n");
 			goto error;
 		}
-		avp = search_first_avp( name_type, avp_name, &avp_val);
+		avp = search_first_avp( name_type, avp_name, &avp_val, 0);
 		if (avp==0)
 		{
 			DBG("DEBUG:avpops:pushto_avp: no src avp found\n");
@@ -1107,7 +1117,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			break;
 		if(avp==NULL)
 			break;
-		if((avp = search_next_avp(avp, &avp_val))!=NULL)
+		if((avp = search_first_avp( name_type, avp_name, &avp_val, avp))!=NULL)
 			flags = avp->flags;
 	} while (avp);/* end while */
 
@@ -1120,11 +1130,13 @@ error:
 int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 													struct fis_param* val)
 {
-	unsigned short    name_type;
+	unsigned short    name_type1;
+	unsigned short    name_type2;
 	struct usr_avp    *avp1;
 	struct usr_avp    *avp2;
 	regmatch_t        pmatch;
-	int_str           avp_name;
+	int_str           avp_name1;
+	int_str           avp_name2;
 	int_str           avp_val;
 	int_str           check_val;
 	int               check_flags;
@@ -1137,13 +1149,13 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 	if(src->sval.type==XL_AVP)
 	{
 		/* search for the avp */
-		if(avpops_get_aname(msg, src, &avp_name, &name_type)!=0)
+		if(avpops_get_aname(msg, src, &avp_name1, &name_type1)!=0)
 		{
 			LOG(L_ERR,
 				"avpops:ops_check_avp: error getting src AVP name\n");
 			goto error;
 		}
-		avp1 = search_first_avp( name_type, avp_name, &avp_val);
+		avp1 = search_first_avp( name_type1, avp_name1, &avp_val, 0);
 		if (avp1==0)
 		{
 			DBG("DEBUG:avpops:ops_check_avp: no src avp found\n");
@@ -1188,13 +1200,13 @@ cycle1:
 		if(val->sval.type==XL_AVP)
 		{
 			/* search for the avp */
-			if(avpops_get_aname(msg, val, &avp_name, &name_type)!=0)
+			if(avpops_get_aname(msg, val, &avp_name2, &name_type2)!=0)
 			{
 				LOG(L_ERR,
 					"avpops:ops_check_avp: error getting dst AVP name\n");
 				goto error;
 			}
-			avp2 = search_first_avp( name_type, avp_name, &check_val);
+			avp2 = search_first_avp( name_type2, avp_name2, &check_val, 0);
 			if (avp2==0)
 			{
 				DBG("DEBUG:avpops:ops_check_avp: no dst avp found\n");
@@ -1343,7 +1355,8 @@ cycle2:
 
 next:
 	/* cycle for the second value (only if avp can have multiple vals) */
-	if ((avp2!=NULL) && (avp2=search_next_avp(avp2,&check_val))!=NULL)
+	if ((avp2!=NULL)
+		&& (avp2=search_first_avp( name_type2, avp_name2, &check_val, avp2))!=NULL)
 	{
 		check_flags = avp2->flags;
 		goto cycle2;
@@ -1351,7 +1364,7 @@ next:
 	} else {
 		if(avp1 && val->ops&AVPOPS_FLAG_ALL)
 		{
-			avp1=search_next_avp(avp1,&avp_val);
+			avp1=search_first_avp(name_type1, avp_name1, &avp_val, avp1);
 			if (avp1)
 				goto cycle1;
 		}
@@ -1377,7 +1390,8 @@ int ops_print_avp()
 
 	for ( ; avp ; avp=avp->next)
 	{
-		LOG(L_INFO,"INFO:avpops:print_avp: p=%p, flags=%X\n",avp, avp->flags);
+		LOG(L_INFO,"INFO:avpops:print_avp: p=%p, flags=0x%04X\n",avp,
+				avp->flags);
 		if (avp->flags&AVP_NAME_STR)
 		{
 			name = get_avp_name(avp);
@@ -1453,7 +1467,8 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 	int_str         avp_val;
 	unsigned short name_type1;
 	unsigned short name_type2;
-	int_str         avp_name;
+	int_str         avp_name1;
+	int_str         avp_name2;
 	int n;
 	int nmatches;
 	str* result;
@@ -1463,14 +1478,14 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 
 	/* avp name is known ->search by name */
 	/* get src avp name */
-	if(avpops_get_aname(msg, src[0], &avp_name, &name_type1)!=0)
+	if(avpops_get_aname(msg, src[0], &avp_name1, &name_type1)!=0)
 	{
 		LOG(L_ERR,
 			"BUG:avpops:ops_subst: error getting src AVP name\n");
 		return -1;
 	}
 
-	avp = search_first_avp(name_type1, avp_name, &avp_val);
+	avp = search_first_avp(name_type1, avp_name1, &avp_val, 0);
 
 	if(avp==NULL)
 		return -1;
@@ -1478,7 +1493,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 	if(src[1]!=0)
 	{
 		/* get dst avp name */
-		if(avpops_get_aname(msg, src[1], &avp_name, &name_type2)!=0)
+		if(avpops_get_aname(msg, src[1], &avp_name2, &name_type2)!=0)
 		{
 			LOG(L_ERR,
 				"BUG:avpops:ops_subst: error getting dst AVP name\n");
@@ -1486,18 +1501,19 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		}
 	} else {
 		name_type2 = name_type1;
+		avp_name2 = avp_name1;
 	}
 	
 	if(name_type2&AVP_NAME_STR)
 	{
-		if(avp_name.s.len>=STR_BUF_SIZE)
+		if(avp_name2.s.len>=STR_BUF_SIZE)
 		{
 			LOG(L_ERR,
 				"avpops:ops_subst: error dst name too long\n");
 			goto error;
 		}
-		strcpy(str_buf, avp_name.s.s);
-		avp_name.s.s = str_buf;
+		strcpy(str_buf, avp_name2.s.s);
+		avp_name2.s.s = str_buf;
 	}
 
 	while(avp)
@@ -1505,7 +1521,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		if(!is_avp_str_val(avp))
 		{
 			prev_avp = avp;
-			avp = search_next_avp(prev_avp, &avp_val);
+			avp = search_first_avp(name_type1, avp_name1, &avp_val, prev_avp);
 			continue;
 		}
 		
@@ -1514,7 +1530,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		{
 			/* build a new avp with new name */
 			avp_val.s = *result;
-			if(add_avp(name_type2|AVP_VAL_STR, avp_name, avp_val)==-1 ) {
+			if(add_avp(name_type2|AVP_VAL_STR, avp_name2, avp_val)==-1 ) {
 				LOG(L_ERR,"ERROR:avpops:ops_subst: failed to create new avp\n");
 				if(result->s!=0)
 					pkg_free(result->s);
@@ -1533,14 +1549,14 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 				break;
 			} else {
 				prev_avp = avp;
-				avp = search_next_avp(prev_avp, &avp_val);
+				avp = search_first_avp(name_type1,avp_name1,&avp_val,prev_avp);
 				/* delete the old one? */
 				if (src[0]->ops&AVPOPS_FLAG_DELETE || src[1]==0)
 					destroy_avp( prev_avp );
 			}
 		} else {
 			prev_avp = avp;
-			avp = search_next_avp(prev_avp, &avp_val);
+			avp = search_first_avp(name_type1, avp_name1, &avp_val, prev_avp);
 		}
 
 	}
@@ -1553,14 +1569,16 @@ error:
 int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 													struct fis_param* val)
 {
-	unsigned short    name_type;
+	unsigned short    name_type1;
 	unsigned short    name_type2;
+	unsigned short    name_type3;
 	struct fis_param* src;
 	struct usr_avp    *avp1;
 	struct usr_avp    *avp2;
 	struct usr_avp    *prev_avp;
-	int_str           avp_name;
+	int_str           avp_name1;
 	int_str           avp_name2;
+	int_str           avp_name3;
 	int_str           avp_val;
 	int_str           op_val;
 	int               op_flags;
@@ -1570,13 +1588,13 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 	src = av[0];
 	/* look if the required avp(s) is/are present */
 			/* search for the avp */
-	if(avpops_get_aname(msg, src, &avp_name, &name_type)!=0)
+	if(avpops_get_aname(msg, src, &avp_name1, &name_type1)!=0)
 	{
 		LOG(L_ERR,
 			"avpops:ops_op_avp: error getting src AVP name\n");
 		goto error;
 	}
-	avp1 = search_first_avp(name_type, avp_name, &avp_val);
+	avp1 = search_first_avp(name_type1, avp_name1, &avp_val, 0);
 	if (avp1==0)
 	{
 		DBG("DEBUG:avpops:ops_op_avp: no src avp found\n");
@@ -1587,32 +1605,33 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 	{
 		if(!(avp1->flags&AVP_VAL_STR))
 			break;
-		avp1 = search_next_avp(avp1, &avp_val);
+		avp1 = search_first_avp(name_type1, avp_name1, &avp_val, avp1);
 	}
 	if (avp1==0 && !(val->ops&AVPOPS_OP_BNOT)) {
 		DBG("DEBUG:avpops:op_avp: no proper avp found\n");
 		goto error;
 	}
-	name_type2 = name_type;
+	name_type3 = name_type1;
+	avp_name3 = avp_name1;
 	if(av[1]!=0)
 	{
-		if(avpops_get_aname(msg, av[1], &avp_name, &name_type2)!=0)
+		if(avpops_get_aname(msg, av[1], &avp_name3, &name_type3)!=0)
 		{
 			LOG(L_ERR,
 				"avpops:ops_op_avp: error getting dst AVP name\n");
 			goto error;
 		}
 	}
-	if(name_type2&AVP_NAME_STR)
+	if(name_type3&AVP_NAME_STR)
 	{
-		if(avp_name.s.len>=STR_BUF_SIZE)
+		if(avp_name3.s.len>=STR_BUF_SIZE)
 		{
 			LOG(L_ERR,
 				"avpops:ops_op_avp: error dst name too long\n");
 			goto error;
 		}
-		strcpy(str_buf, avp_name.s.s);
-		avp_name.s.s = str_buf;
+		strcpy(str_buf, avp_name3.s.s);
+		avp_name3.s.s = str_buf;
 	}
 	prev_avp = 0;
 	result = 0;
@@ -1625,18 +1644,18 @@ cycle1:
 		if(val->sval.type==XL_AVP)
 		{
 			/* search for the avp */
-			if(avpops_get_aname(msg, val, &avp_name2, &name_type)!=0)
+			if(avpops_get_aname(msg, val, &avp_name2, &name_type2)!=0)
 			{
 				LOG(L_ERR,
 					"avpops:ops_op_avp: error getting dst AVP name\n");
 				goto error;
 			}
-			avp2 = search_first_avp( name_type, avp_name2, &op_val);
+			avp2 = search_first_avp( name_type2, avp_name2, &op_val, 0);
 			while(avp2!=0)
 			{
 				if(!(avp2->flags&AVP_VAL_STR))
 					break;
-				avp2 = search_next_avp(avp2, &op_val);
+				avp2 = search_first_avp( name_type2, avp_name2, &op_val, avp2);
 			}
 			if (avp2==0)
 			{
@@ -1707,20 +1726,22 @@ cycle2:
 
 	/* add the new avp */
 	avp_val.n = result;
-	if(add_avp(name_type2, avp_name, avp_val)==-1 ) {
+	if(add_avp(name_type3, avp_name3, avp_val)==-1 ) {
 		LOG(L_ERR,"ERROR:avpops:op_avp: failed to create new avp\n");
 		goto error;
 	}
 
 	/* cycle for the second value (only if avp can have multiple vals) */
-	while((avp2!=NULL)&&(avp2=search_next_avp(avp2,&op_val))!=0)
+	while((avp2!=NULL)
+		&&(avp2=search_first_avp( name_type2, avp_name2, &op_val, avp2))!=0)
 	{
 		if(!(avp2->flags&AVP_VAL_STR))
 			goto cycle2;
 	}
 	prev_avp = avp1;
 	/* cycle for the first value -> next avp */
-	while((avp1!=NULL)&&(avp1=search_next_avp(avp1,&avp_val))!=0)
+	while((avp1!=NULL)
+		&&(avp1=search_first_avp(name_type1, avp_name1, &avp_val, avp1))!=0)
 	{
 		if (!(avp1->flags&AVP_VAL_STR))
 		{
@@ -1759,7 +1780,7 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 		return -1;
 	}
 	
-	avp=search_first_avp(name_type, avp_name, &avp_value);
+	avp=search_first_avp(name_type, avp_name, &avp_value, 0);
 	if(avp==0)
 		return -1;
 	if(ap->ops&AVPOPS_FLAG_ALL)
@@ -1777,7 +1798,7 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 			else if(avp_value.n==0)
 				return 1;
 		}
-	} while ((avp=search_next_avp(avp, &avp_value))!=0);
+	} while ((avp=search_first_avp(name_type, avp_name, &avp_value, avp))!=0);
 	
 	return -1;
 }

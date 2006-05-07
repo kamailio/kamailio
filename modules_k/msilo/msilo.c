@@ -478,7 +478,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 	{
 		avp = NULL;
 		avp_name.n = ms_userid_avp;
-		avp=search_first_avp(0, avp_name, &avp_value);
+		avp=search_first_avp(0, avp_name, &avp_value, 0);
 		if(avp!=NULL && is_avp_str_val(avp))
 		{
 			if(parse_uri(avp_value.s.s, avp_value.s.len, &puri)!=0)
@@ -641,7 +641,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 	{
 		avp = NULL;
 		avp_name.n = ms_snd_time_avp;
-		avp=search_first_avp(0, avp_name, &avp_value);
+		avp=search_first_avp(0, avp_name, &avp_value, 0);
 		if(avp!=NULL && is_avp_str_val(avp))
 		{
 			if(ms_extract_time(&avp_value.s, &db_vals[nr_keys].val.int_val)!=0)

@@ -228,7 +228,7 @@ int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2)
     case PARAM_SOURCE_FROM:
         return is_from_local(_msg, _s1, _s2);
     case PARAM_SOURCE_AVP:
-        avp = search_first_avp(ps->avp_type, ps->avp_name, &avp_value);
+        avp = search_first_avp(ps->avp_type, ps->avp_name, &avp_value, 0);
         if (!avp || !(avp->flags & AVP_VAL_STR) || !avp_value.s.s 
 				|| !avp_value.s.len) {
             DBG("domain/w_is_domain_local(): Undefined, empty or non-string"

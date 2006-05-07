@@ -47,6 +47,7 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../ut.h"
 #include "avpops_parse.h"
 #include "avpops_impl.h"
 #include "avpops_db.h"
@@ -472,6 +473,8 @@ static int fixup_delete_avp(void** param, int param_no)
 	struct fis_param *ap=NULL;
 	char *p;
 	char *s;
+	unsigned int flags;
+	str s0;
 
 	s = (char*)(*param);
 	if (param_no==1) {
@@ -497,7 +500,13 @@ static int fixup_delete_avp(void** param, int param_no)
 				return E_UNSPEC;
 			}
 			ap->opd|=AVPOPS_VAL_PVAR;
-		} else if(*s=='\0') {
+		} else {
+			if(strlen(s)<1)
+			{
+				LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
+					"expected : $avp(name), *, s or i value\n");
+				return E_UNSPEC;
+			}
 			ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 			if (ap==0)
 			{
@@ -507,10 +516,37 @@ static int fixup_delete_avp(void** param, int param_no)
 			}
 			memset(ap, 0, sizeof(struct fis_param));
 			ap->opd|=AVPOPS_VAL_NONE;
-		} else {
-			LOG(L_ERR,"ERROR:avops:fixup_delete_avp: bad param 1; "
-				"expected : $avp(name) or empty\n");
-			return E_UNSPEC;
+			switch(*s) {
+				case 's': case 'S':
+					ap->opd = AVPOPS_VAL_NONE|AVPOPS_VAL_STR;
+				break;
+				case 'i': case 'I':
+					ap->opd = AVPOPS_VAL_NONE|AVPOPS_VAL_INT;
+				break;
+				case '*': case 'a': case 'A':
+					ap->opd = AVPOPS_VAL_NONE;
+				break;
+				default:
+					LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: bad param - "
+						"expected : *, s or i AVP flag\n");
+					pkg_free(ap);
+					return E_UNSPEC;
+			}
+			/* flags */
+			flags = 0;
+			if(*(s+1)!='\0')
+			{
+				s0.s = s+1;
+				s0.len = strlen(s0.s);
+				if(str2int(&s0, &flags)!=0)
+				{
+					LOG(L_ERR,
+					"ERROR:avpops:fixup_delete_avp: error - bad avp flags\n");
+					pkg_free(ap);
+					return E_UNSPEC;
+				}
+			}
+			ap->sval.flags |= flags<<24;
 		}
 
 		/* flags */
@@ -909,41 +945,44 @@ static int fixup_subst(void** param, int param_no)
 			return 0;
 		}
 		
-		/* dst */
+		/* dst || flags */
 		s = p;
-		if ( (p=strchr(s,'/'))!=0 )
-			*(p++)=0;
-		if(p==0 || (p!=0 && p-s>1))
+		if(*s==ITEM_MARKER)
 		{
-			ap = avpops_parse_pvar(s, 
-				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
-			if (ap==0)
+			if ( (p=strchr(s,'/'))!=0 )
+				*(p++)=0;
+			if(p==0 || (p!=0 && p-s>1))
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
+				ap = avpops_parse_pvar(s, 
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+				if (ap==0)
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
 						" pseudo-variable in param 2 [%s]\n",s);
-				return E_OUT_OF_MEM;
-			}
+					return E_OUT_OF_MEM;
+				}
 			
-			if (ap->sval.type!=XL_AVP)
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
-					" <%s>!\n", s);
-				pkg_free(av);
-				return E_UNSPEC;
+				if (ap->sval.type!=XL_AVP)
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
+						" <%s>!\n", s);
+					pkg_free(av);
+					return E_UNSPEC;
+				}
+				/* attr name is mandatory */
+				if (ap->opd&AVPOPS_VAL_NONE)
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_subst: you must specify "
+						"a name for the AVP!\n");
+					return E_UNSPEC;
+				}
+				av[1] = ap;
 			}
-			/* attr name is mandatory */
-			if (ap->opd&AVPOPS_VAL_NONE)
+			if(p==0 || *p=='\0')
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_subst: you must specify "
-					"a name for the AVP!\n");
-				return E_UNSPEC;
+				*param=(void*)av;
+				return 0;
 			}
-			av[1] = ap;
-		}
-		if(p==0 || *p=='\0')
-		{
-			*param=(void*)av;
-			return 0;
 		}
 		
 		/* flags */

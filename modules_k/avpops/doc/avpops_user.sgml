@@ -62,6 +62,70 @@
 	</section>
 
 	<section>
+		<title>AVP naming format</title>
+		<para>
+		The format of the parameters specifying an AVP in functions exported
+		by this module is:
+			<emphasis role="bold">$avp(avp_flags:avp_name)</emphasis> or
+			<emphasis role="bold">$avp(avp_alias)</emphasis>.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>avp_flags</emphasis> = type_flags [script_flags]; type_flags = 'I' | 'i' | 'S' | 's'; script_flags = 0..255
+		</para>
+		<para>
+		'I' or 'i' means that the type of avp name is integer (ID)
+		</para>
+		<para>
+		'S' or 's' means that the type of avp name is string
+		</para>
+		<para>
+		The type flag is mandatory.
+		</para>
+		<para>
+		script_flags must be an 8 bit unsigned number, therefore can be set
+		up to 8 flags. If no script flag is provided, the name will
+		match all AVPs, regardless they have or not a script flag set (preserves
+		the compatibility with the old naming schema).
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>avp_name</emphasis> = string | integer
+		</para>
+		<para>
+		string - might be any alphanumeric string, wich contain following
+		characters: [a-z] [A-Z] [0-9] '_'
+		</para>
+		<para>
+		integer - might be an unsigned integer, greater than zero, up to 2^16-1
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>avp_alias</emphasis> = string
+		</para>
+		<para>
+		string - might be any alphanumeric string, wich contain following
+		characters: [a-z] [A-Z] [0-9] '_'
+		</para>
+		</listitem>
+		</itemizedlist>
+			<example>
+				<title>AVP naming examples</title>
+				<programlisting format="linespecific">
+...
+$avp(i:11) - the AVP identified by integer 11
+$avp(s:foo) - the AVP identified by the string 'foo'
+$avp(bar) - the AVP identified by the AVP alias 'bar'
+$avp(i3:123) - the AVP identified by the integer 123 which has script flags 1
+    and 2 set
+...
+				</programlisting>
+			</example>
+	</section>
+	<section>
 		<title>Exported Parameters</title>
 		<section>
 			<title><varname>avp_url</varname> (string)</title>
@@ -290,7 +354,8 @@ modparam("avpops","db_scheme",
 			</title>
 			<para>
 			Loads from DB into memory the AVPs corresponding to the given
-			<emphasis>source</emphasis>.
+			<emphasis>source</emphasis>. If given, it sets the script flags
+			for loaded AVPs.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
@@ -319,8 +384,15 @@ modparam("avpops","db_scheme",
 					name = avp_spec['/'(table_name|'$'db_scheme)]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					avp_spec = ''|'s:'|'i:'|$avp(avp_name)|$avp(avp_alias)
+					avp_spec = matching_flags|$avp(avp_name)|$avp(avp_alias)
 					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					matching_flags = 'a' | 'A' | 'i' | 'I' | 's' | 'S'
+					[script_flags]
+					</emphasis></para><para>'a' or 'A' means matching any of
+					AVP name types ('i' and 's'), the rest have the
+					meaning descriped in 'AVP naming format' chapter.</para>
+					</listitem>
 				</itemizedlist>
 				</para>
 			</listitem>
@@ -336,7 +408,7 @@ modparam("avpops","db_scheme",
 avp_db_load("$fu","$(i:678)");
 avp_db_load("$ru/domain","i:/domain_preferences");
 avp_db_load("$uuid","$avp(s:404fwd)/fwd_table");
-avp_db_load("$ru","$avp(i:123)/$some_scheme");
+avp_db_load("$ru","$avp(i1:123)/$some_scheme");
 ...
 				</programlisting>
 			</example>
@@ -362,7 +434,7 @@ avp_db_load("$ru","$avp(i:123)/$some_scheme");
 				<programlisting format="linespecific">
 ...
 avp_db_store("$tu","$avp(i:678)");
-avp_db_store("$ru/username","$avp($email)");
+avp_db_store("$ru/username","$avp(email)");
 ...
 				</programlisting>
 			</example>
@@ -386,7 +458,7 @@ avp_db_store("$ru/username","$avp($email)");
 				<programlisting format="linespecific">
 ...
 avp_db_delete("$tu","$avp(i:678)");
-avp_db_delete("$ru/username","$avp($email)");
+avp_db_delete("$ru/username","$avp(email)");
 avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 ...
 				</programlisting>
@@ -486,7 +558,7 @@ avp_db_query("delete from subscriber");
 				<programlisting format="linespecific">
 ...
 avp_write("$tu","$avp(i:678)");
-avp_write("$ru/username","$avp($email)");
+avp_write("$ru/username","$avp(email)");
 avp_write("$si","$avp(s:ip)");
 avp_write("$du","$avp(s:next_hop)");
 avp_write("$hdr(call-id)","$avp(i:11)");
@@ -512,7 +584,10 @@ avp_write("i:333","$avp(i:6)");
 				Parameter syntax is:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					name = (''|'s:'|'i:'|avp_name|avp_alias)['/'flag]
+					name = (matching_flags|avp_name|avp_alias)['/'flag]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					matching_flags = please refer to avp_db_load() function
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					flag = 'g'|'G'
@@ -529,9 +604,9 @@ avp_write("i:333","$avp(i:6)");
 				<programlisting format="linespecific">
 ...
 avp_delete("$avp(i:678)/g");
-avp_delete("$avp($email)");
-avp_delete("i:");
-avp_delete("");
+avp_delete("$avp(email)");
+avp_delete("i");
+avp_delete("a3");
 ...
 				</programlisting>
 			</example>
@@ -655,7 +730,7 @@ avp_check("$avp(i:678)", "lt/i:345/g");
 avp_check("$fd","eq/$td/I");
 avp_check("$avp(s:foo)","gt/$avp($bar)/g");
 avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
-avp_check("$avp(s:foo)","fm/$fm_avp/g");
+avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
 ...
 				</programlisting>
 			</example>
@@ -704,7 +779,7 @@ avp_check("$avp(s:foo)","fm/$fm_avp/g");
 				<programlisting format="linespecific">
 ...
 avp_copy("$avp(i:678)", "$avp(s:345)/g");
-avp_copy("$avp($old)","$avp($new)/gd");
+avp_copy("$avp(old)","$avp(new)/gd");
 ...
 				</programlisting>
 			</example>
@@ -907,7 +982,7 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
 				<programlisting format="linespecific">
 ...
 avp_op("$avp(i:678)", "add/i:345/g");
-avp_op("$avp($number)","sub/$avp($number2)/d");
+avp_op("$avp(number)","sub/$avp(number2)/d");
 ...
 				</programlisting>
 			</example>
@@ -927,7 +1002,7 @@ avp_op("$avp($number)","sub/$avp($number2)/d");
 				Parameter syntax is:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					name = ('s:'|'i:'|avp_name|avp_alias [ '/' flags ])
+					name = avp_name|avp_alias [ '/' flags ])
 					</emphasis></para>
 					<para><emphasis>
 					flags = ('e'|'s'|'n') - e = empty value; s = value string;
