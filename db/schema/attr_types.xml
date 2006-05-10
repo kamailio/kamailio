@@ -167,7 +167,7 @@
          <value col="at.rich_t">string</value>
          <value col="at.desc">access control list of user</value>
          <value col="at.d_flags">33</value>
-         <value col="at.flags">1</value>
+         <value col="at.flags">1024</value>
          <value col="at.prior">0</value>
          <value col="at.order">0</value>
     </row>
@@ -177,7 +177,7 @@
          <value col="at.rich_t">string</value>
          <value col="at.desc">@ff_first_name</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">2</value>
+         <value col="at.flags">2048</value>
          <value col="at.prior">256</value>
          <value col="at.order">10</value>
          </row>
@@ -186,7 +186,7 @@
          <value col="at.rich_t">string</value>
          <value col="at.desc">@ff_last_name</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">2</value>
+         <value col="at.flags">2048</value>
          <value col="at.prior">256</value>
          <value col="at.order">20</value>
          </row>
@@ -195,7 +195,7 @@
          <value col="at.rich_t">email_adr</value>
          <value col="at.desc">@ff_email</value>
          <value col="at.d_flags">33</value>
-         <value col="at.flags">6</value>
+         <value col="at.flags">6144</value>
          <value col="at.prior">256</value>
          <value col="at.order">30</value>
          </row>
@@ -204,7 +204,7 @@
          <value col="at.rich_t">timezone</value>
          <value col="at.desc">@ff_timezone</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">2</value>
+         <value col="at.flags">2048</value>
          <value col="at.prior">1073807616</value>
          <value col="at.order">60</value>
          </row>
@@ -240,7 +240,7 @@
          <value col="at.rich_t">string</value>
          <value col="at.desc">admin of domain</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">1</value>
+         <value col="at.flags">1024</value>
          <value col="at.prior">0</value>
          </row>
     <row><value col="at.name">sw_owner</value>      
@@ -256,7 +256,7 @@
          <value col="at.rich_t">int</value>
          <value col="at.desc">@ff_domain_def_f</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">4</value>
+         <value col="at.flags">4096</value>
          <value col="at.prior">1073741824</value>
          </row>
     <row><value col="at.name">sw_deleted_ts</value>      
@@ -272,7 +272,7 @@
          <value col="at.rich_t">string</value>
          <value col="at.desc">@ff_phone</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">2</value>
+         <value col="at.flags">2048</value>
          <value col="at.prior">256</value>
          <value col="at.order">40</value>
          </row>
@@ -281,7 +281,7 @@
          <value col="at.rich_t">string</value>
          <value col="at.desc">acl control</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">1</value>
+         <value col="at.flags">1024</value>
          <value col="at.prior">0</value>
          </row>
     <row><value col="at.name">sw_credential_default_flags</value>
@@ -289,7 +289,7 @@
          <value col="at.rich_t">int</value>
          <value col="at.desc">@ff_credential_def_f</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">4</value>
+         <value col="at.flags">4096</value>
          <value col="at.prior">1073741824</value>
          </row>
     <row><value col="at.name">sw_uri_default_flags</value>      
@@ -297,7 +297,7 @@
          <value col="at.rich_t">int</value>
          <value col="at.desc">@ff_uri_def_f</value>
          <value col="at.d_flags">32</value>
-         <value col="at.flags">4</value>
+         <value col="at.flags">4096</value>
          <value col="at.prior">1073741824</value>
          </row>
     <row><value col="at.name">sw_is_admin</value>      
