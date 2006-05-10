@@ -55,6 +55,10 @@
 #define DB_DELETED    (1 << 7)
 #define DB_CALLER_DELETED (1 << 8) /* Accounting table */
 #define DB_CALLEE_DELETED (1 << 9) /* Accounting table */
+#define DB_MULTIVALUE     (1 << 10) /* Attr_types table */
+#define DB_FILL_ON_REG    (1 << 11) /* Attr_types table */
+#define DB_REQUIRED       (1 << 12) /* Attr_types table */
+#define DB_DIR            (1 << 13) /* Domain_settings table */
 
 
 /*
