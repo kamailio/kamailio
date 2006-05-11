@@ -79,8 +79,9 @@
 	<default>0</default>
 	<description>
 	    Various flags. Meaning of bits in flags field is this:
-	      0 - multivalue  (if is set, attribute may contain multiple values)
-	      1 - fill_on_reg (attribute should be set when user is registrating)
+	      10 - multivalue  (if is set, attribute may contain multiple values)
+	      11 - fill_on_reg (attribute should be set when user is registrating)
+	      12 - required    (attribute should not be empty)
 	</description>
     </column>
 

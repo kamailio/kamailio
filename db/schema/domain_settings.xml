@@ -80,7 +80,7 @@
                     </db:thead>
                     <db:tbody>
                         <db:row>
-                           <db:entry>0</db:entry>
+                           <db:entry>7</db:entry>
                            <db:entry>0x00000001</db:entry>
                            <db:entry>DELETED</db:entry>
                            <db:entry>
@@ -88,7 +88,7 @@
                            </db:entry>
                         </db:row>
                         <db:row>
-                           <db:entry>1</db:entry>
+                           <db:entry>13</db:entry>
                            <db:entry>0x00000002</db:entry>
                            <db:entry>DIR</db:entry>
                            <db:entry>
