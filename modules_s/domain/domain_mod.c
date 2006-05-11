@@ -45,6 +45,7 @@
 #include "../../ut.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
+#include "../../usr_avp.h"
 #include "domain_rpc.h"
 #include "hash.h"
 #include "domain.h"
@@ -58,6 +59,7 @@ static void destroy(void);
 static int child_init(int rank);
 static int is_from_local(struct sip_msg* msg, char* s1, char* s2);
 static int is_ruri_local(struct sip_msg* msg, char* s1, char* s2);
+static int is_from_anonym(struct sip_msg* msg, char* s1, char* s2);
 static int lookup_domain(struct sip_msg* msg, char* s1, char* s2);
 static int lookup_domain_fixup(void** param, int param_no);
 
@@ -88,6 +90,11 @@ MODULE_VERSION
 #define DOMATTR_FLAGS "flags"
 #define DOMAIN_COL    "domain"
 
+#define PPREFEREDID     "P-Preferred-Identity"
+#define ANONYM_DOMAIN   "anonymous.invalid"
+#define ANONYM_FROM     "is_anonymous"
+#define ANONYM_FROM_VAL "1"
+
 int db_mode = 0;  /* Database usage mode: 0 = no cache, 1 = cache */
 
 /*
@@ -107,7 +114,14 @@ str domattr_type  = STR_STATIC_INIT(DOMATTR_TYPE);
 str domattr_value = STR_STATIC_INIT(DOMATTR_VALUE);
 str domattr_flags = STR_STATIC_INIT(DOMATTR_FLAGS);
 
+str ppi             = STR_STATIC_INIT(PPREFEREDID);
+str anonym_domain   = STR_STATIC_INIT(ANONYM_DOMAIN);
+str from_anonym     = STR_STATIC_INIT(ANONYM_FROM);
+str from_anonym_val = STR_STATIC_INIT(ANONYM_FROM_VAL);
+
 int load_domain_attrs = 0;  /* Load attributes for each domain by default */
+
+int load_prefered_id  = 0;  /* Load attributes for domain in P-Prefered-Identiy */
 
 db_con_t* con = 0;
 db_func_t db;
@@ -126,6 +140,7 @@ domain_t** domains_2 = 0;    /* List of domains 2 */
 static cmd_export_t cmds[] = {
 	{"is_from_local",     is_from_local,  0, 0, REQUEST_ROUTE                },
 	{"is_uri_host_local", is_ruri_local,  0, 0, REQUEST_ROUTE | BRANCH_ROUTE },
+	{"is_from_anonym",    is_from_anonym, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"lookup_domain",     lookup_domain,  1, lookup_domain_fixup, REQUEST_ROUTE },
 	{0, 0, 0, 0, 0}
 };
@@ -148,6 +163,8 @@ static param_export_t params[] = {
 	{"domattr_value",     PARAM_STR, &domattr_value    },
 	{"domattr_flags",     PARAM_STR, &domattr_flags    },
 	{"load_domain_attrs", PARAM_INT, &load_domain_attrs},
+	{"anonym_domain",     PARAM_STR, &anonym_domain    },
+	{"load_preferred_id", PARAM_INT, &load_prefered_id },
 	{0, 0, 0}
 };
 
@@ -392,6 +409,56 @@ static int is_local(str* host)
 }
 
 
+static inline int is_anonym_domain(str *dom) {
+	str doml;
+	int ret = 0;
+	int_str avp_name, avp_val;
+
+	if (dom->len == anonym_domain.len) {
+		doml.s = pkg_malloc(dom->len);
+		if (!doml.s) {
+			LOG(L_ERR, "domain:is_anonym_domain: no memory left\n");
+			return 0;
+		}
+		memcpy(doml.s, dom->s, dom->len);
+		doml.len = dom->len;
+		strlower(&doml);
+		ret = (memcmp(doml.s, anonym_domain.s, doml.len) == 0);
+		if (ret) {
+			avp_name.s = from_anonym;
+			avp_val.s = from_anonym_val;
+			add_avp(AVP_CLASS_USER| AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
+		}
+		pkg_free(doml.s);
+	}
+	return ret;
+}
+
+static int is_from_anonym(struct sip_msg* msg, char* s1, char* s2)
+{
+	struct sip_uri puri;
+	str uri;
+
+	if (parse_from_header(msg) < 0) {
+		LOG(L_ERR, "domain:get_from_host: Error while parsing From header\n");
+		return -1;
+	}
+
+	uri = get_from(msg)->uri;
+
+	if (parse_uri(uri.s, uri.len, &puri) < 0) {
+		LOG(L_ERR, "domain:get_from_host: Error while parsing From URI\n");
+		return -1;
+	}
+
+	if (is_anonym_domain(&(puri.host))) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
+}
+
 /*
  * Extract From host and convert it to lower case, the
  * result must be disposed using pkg_free after use
@@ -399,7 +466,13 @@ static int is_local(str* host)
 static int get_from_host(str* res, struct sip_msg* msg)
 {
 	struct sip_uri puri;
+	struct sip_uri ppiuri;
+	struct to_body ppibody;
+	struct hdr_field *hf;
 	str uri;
+	
+	res->s=0; /* must be initialized to 0 */
+	res->len=0;
 
 	if (parse_from_header(msg) < 0) {
 		LOG(L_ERR, "domain:get_from_host: Error while parsing From header\n");
@@ -413,13 +486,49 @@ static int get_from_host(str* res, struct sip_msg* msg)
 		return -3;
 	}
 
-	res->s = pkg_malloc(puri.host.len);
-	if (!res->s) {
-		LOG(L_ERR, "domain:get_from_host: No memory left\n");
-		return -1;
+	if (load_prefered_id &&
+		is_anonym_domain(&(puri.host))) {
+		/* check for a P-Preferred-Id header */
+		parse_headers(msg, HDR_EOH_F, 0);
+		for (hf=msg->headers; hf; hf=hf->next) {
+			if (hf->name.len == ppi.len &&
+					strncasecmp(hf->name.s, ppi.s, ppi.len) == 0)
+				break;
+		}
+		if (!hf) {
+			LOG(L_INFO, "domain:get_from_host: anonymous domain in From but missing '%.*s' header\n", ppi.len, ppi.s);
+			goto skip_ppi;
+		}
+		/* we found a P-Preferred-Id header */
+		memset(&ppibody, 0, sizeof(struct to_body));
+		parse_to(hf->body.s, hf->body.s+hf->body.len+1, &ppibody);
+		if (ppibody.error == PARSE_ERROR) {
+			LOG(L_WARN, "domain:get_from_host: Failed to parse P-Preferred-Id body\n");
+			goto skip_ppi;
+		}
+		if (parse_uri(ppibody.uri.s, ppibody.uri.len, &ppiuri) < 0) {
+			LOG(L_WARN, "domain:get_from_host: Failed to parse P-Preferred-Id URI\n");
+			goto skip_ppi;
+		}
+		res->s = pkg_malloc(ppiuri.host.len);
+		if (!res->s) {
+			LOG(L_ERR, "domain:get_form_host: No memory left for P-Preferred-Id URI\n");
+			return -1;
+		}
+		LOG(L_INFO, "domain:get_from_host: using domain from '%.*s' header\n", ppi.len, ppi.s);
+		memcpy(res->s, ppiuri.host.s, ppiuri.host.len);
+		res->len = ppiuri.host.len;
 	}
-	memcpy(res->s, puri.host.s, puri.host.len);
-	res->len = puri.host.len;
+skip_ppi:
+	if (!res->s) {
+		res->s = pkg_malloc(puri.host.len);
+		if (!res->s) {
+			LOG(L_ERR, "domain:get_from_host: No memory left\n");
+			return -1;
+		}
+		memcpy(res->s, puri.host.s, puri.host.len);
+		res->len = puri.host.len;
+	}
 	strlower(res);
 	return 0;
 }
