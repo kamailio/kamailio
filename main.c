@@ -245,6 +245,7 @@ int sig_flag = 0;              /* last signal received */
 int debug = L_DEFAULT; /* print only msg. < L_WARN */
 int dont_fork = 0;
 int log_stderr = 0;
+pid_t creator_pid = (pid_t) -1;
 /* log facility (see syslog(3)) */
 int log_facility = LOG_DAEMON;
 int config_check = 0;
@@ -1211,6 +1212,7 @@ int main(int argc, char** argv)
 	int debug_save, debug_flag = 0;
 
 	/*init*/
+	creator_pid = getpid();
 	ret=-1;
 	my_argc=argc; my_argv=argv;
 
