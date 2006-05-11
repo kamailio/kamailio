@@ -130,6 +130,7 @@ static int child_init(int rank);
 
 /* exported functions */
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
+inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
@@ -191,6 +192,8 @@ static cmd_export_t cmds[]={
 	{"t_newtran",          w_t_newtran,             0, 0,
 			REQUEST_ROUTE},
 	{"t_lookup_request",   w_t_check,               0, 0,
+			REQUEST_ROUTE},
+	{"t_lookup_cancel",    w_t_lookup_cancel,     0, 0,
 			REQUEST_ROUTE},
 	{T_REPLY,              w_t_reply,               2, fixup_t_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -627,6 +630,28 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_check( msg , 0  ) ? 1 : -1;
+}
+
+inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
+{
+	struct cell *ret;
+	if (msg->REQ_METHOD==METHOD_CANCEL) {
+		if (t_check( msg , 0 )==-1) {
+			LOG(L_WARN, "WARNING: t_lookup_cancel() failed to find transaction\n");
+			return -1;
+		}
+		ret = t_lookupOriginalT( msg );
+		DBG("lookup_original: t_lookupOriginalT returned: %p\n", ret);
+		if (ret != T_NULL_CELL) {
+			/* The cell is reffed by t_lookupOriginalT, but T is not set.
+			So we must unref it before returning. */
+			UNREF(ret);
+			return 1;
+		}
+	} else {
+		LOG(L_WARN, "WARNING: script error t_lookup_cancel() called for non-CANCEL request\n");
+	}
+	return -1;
 }
 
 inline static int str2proto(char *s, int len) {
