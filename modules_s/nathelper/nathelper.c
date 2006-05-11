@@ -2051,8 +2051,12 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	memcpy(p, "sip:", 4);
 	p += 4;
 
+	if (m->rcv.src_ip.af == AF_INET6)
+		*p++ = '[';
 	memcpy(p, src_ip.s, src_ip.len);
 	p += src_ip.len;
+	if (m->rcv.src_ip.af == AF_INET6)
+		*p++ = ']';
 
 	*p++ = ':';
 
