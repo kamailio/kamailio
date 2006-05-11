@@ -49,6 +49,7 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../re.h"
+#include "../../action.h"
 
 #include "../../parser/parse_hname2.h"
 #include "../xlog/xl_lib.h"
@@ -108,6 +109,7 @@ static int avp_hdr_body2attrs2_fixup(void**, int);
 static int avp_delete(struct sip_msg*, char*, char*);
 
 
+static int fixup_part(void** param, int param_no);
 static int fixup_attr_1(void** param, int param_no); /* (attr_ident_t*) */
 static int fixup_xl_1(void** param, int param_no); /* (xl_format*) */
 //static int fixup_attr_1_str_2(void** param, int param_no); /* (attr_ident_t*, str*) */
@@ -128,7 +130,8 @@ static cmd_export_t cmds[] = {
 	{"set_sattr",       set_sattr,    2, fixup_str_12,   REQUEST_ROUTE | FAILURE_ROUTE},
 	{"uri2attr",        uri2attr,     1, fixup_str_12,   REQUEST_ROUTE | FAILURE_ROUTE},
 	{"print_sattr",     print_sattr,  1, fixup_str_12,   REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr2uri",        attr2uri,     1, fixup_str_12,   REQUEST_ROUTE | FAILURE_ROUTE},
+	{"attr2uri",        attr2uri,     1, fixup_part,     REQUEST_ROUTE | FAILURE_ROUTE},
+	{"attr2uri",        attr2uri,     2, fixup_part,     REQUEST_ROUTE | FAILURE_ROUTE},
 	{"is_sattr_set",    is_sattr_set, 1, fixup_str_12,   REQUEST_ROUTE | FAILURE_ROUTE},
 	{"avp_equals",      avp_equals,   2, fixup_str_12,   REQUEST_ROUTE | FAILURE_ROUTE},
 	{"avp_equals_xl",   avp_equals_xl,2, fixup_attr_1_xl_2,  REQUEST_ROUTE | FAILURE_ROUTE},
@@ -314,11 +317,20 @@ static int is_sattr_set(struct sip_msg* msg, char* attr, char* foo)
 }
 
 
-static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
+static int attr2uri(struct sip_msg* msg, char* attr, char* part)
 {
 	str s_value;
 	int_str name, value;
 	struct usr_avp *avp_entry;
+	struct action act;
+	int pnr;
+
+	if (part) {
+		pnr = *part;
+	}
+	else {
+		pnr = SET_URI_T;
+	}
 
 	name.s=*(str*)attr;
 
@@ -331,8 +343,13 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
 
 	s_value.s = value.s.s;
 	s_value.len = value.s.len;
-	if (rewrite_uri(msg, &s_value) < 0) {
-		LOG(L_ERR, "attr2uri: no attribute found\n");
+
+	memset(&act, 0, sizeof(act));
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = s_value.s;
+	act.type = pnr;
+	if (do_action(&act, msg) < 0) {
+		LOG(L_ERR, "attr2uri: failed to change ruri part'n");
 		return -1;
 	}
 	return 1;
@@ -1287,3 +1304,51 @@ static int fixup_attr_1_subst_2(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_part(void** param, int param_no) {
+	str s;
+	char *action = NULL;
+
+	if (param_no == 1) {
+		return fixup_str_1(param, 1);
+	}
+	else if (param_no == 2) {
+		s.s = *param;
+		s.len = strlen(s.s);
+		action = pkg_malloc(sizeof(SET_URI_T));
+		if (action == NULL) {
+			ERR("fixup_part: out of memory'n");
+			return E_OUT_OF_MEM;
+		}
+		*action = 0;
+		if (s.len == 0) {
+			*action = SET_URI_T;
+		}
+		else if (strncasecmp(s.s, "prefix", 6) == 0) {
+			*action = PREFIX_T;
+		}
+		else if (strncasecmp(s.s, "uri", 3) == 0) {
+			*action = SET_URI_T;
+		}
+		else if (strncasecmp(s.s, "username", 8) == 0) {
+			*action = SET_USER_T;
+		}
+		else if (strncasecmp(s.s, "usernamepassword", 16) == 0) {
+			*action = SET_USERPASS_T;
+		}
+		else if (strncasecmp(s.s, "domain", 6) == 0) {
+			*action = SET_HOST_T;
+		}
+		else if (strncasecmp(s.s, "domainport", 6) == 0) {
+			*action = SET_HOSTPORT_T;
+		}
+		else if (strncasecmp(s.s, "port", 4) == 0) {
+			*action = SET_PORT_T;
+		}
+		else {
+			ERR("fixup_part: unsupported part '' requested\n");
+			return E_UNSPEC;
+		}
+		*param = (void*)action;
+	}
+	return 0;
+}
