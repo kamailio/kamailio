@@ -100,6 +100,26 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %Hn : host's hostname (if system hostname is FQDN, part before first .)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Hd : host's domain (if system hosntame is FQDN, part behind first .)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Hf : host's FQDN hostname
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Hi : host's IP address
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %mb : whole SIP message buffer
 		</para>
 	    </listitem>
@@ -120,7 +140,22 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %mx : SIP message id (in hex notation)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %nh : message's next hop
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %pp : process id (pid)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %px : process id (pid) (in hex notation)
 		</para>
 	    </listitem>
 	    <listitem>
@@ -191,7 +226,18 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %Tx : unix time stamp (in hex notation)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %ua : User agent header field
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %uq : unique id (per SER's process) - to make really unique id use
+			%uq-%px-%mx or %uq-%px-%Tx
 		</para>
 	    </listitem>
 	    <listitem>
@@ -212,6 +258,37 @@
 		    explicitely. It is recommended to use dedicated specifiers
 		    for headers (e.g., %ua for user agent header), if they are
 		    available -- they are faster.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+			%&lt;name[N]&gt; : print the value of AVP optionally
+			%indexed by the [N] value
+			It uses AVPs subindexing, e.g. if you don't specify
+			subindex and there are more AVPs with the same name, the
+			result is NULL. To specify first AVP use [1], negative
+			values are indexes counted backward through the list.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %@select.framework[N].value : print the value of select
+			framework call. For detailed info what calls are available
+			see select framework documentation (and modules
+			documentation, as modules can extend select framework
+			calls).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %| or %(space) : end of %@select.framework identifier.
+			If you need to concatenate select framework call and
+			another non-whitespace literal, you need to explicitelly
+			set the end of the select framework identifier.
+		</para>
+		<para>
+			E.g. %@ruri.user%|@%@ruri.host converts all featured request
+			uri into user@host form only.
 		</para>
 	    </listitem>
 	</itemizedlist>
