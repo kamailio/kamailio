@@ -61,7 +61,9 @@ int get_pres_rules(const str_t *username, const str_t *filename,
 	/* parse input data */
 	res = parse_pres_rules(data, dsize, dst);
 	if (res != RES_OK) {
-		ERROR_LOG("Error occured during document parsing!\n");
+		ERROR_LOG("Error occured during parsing pres-rules for %.*s!\n", 
+				str_len(username), 
+				username ? username->s : "");
 	}
 
 	if (data) cds_free(data);

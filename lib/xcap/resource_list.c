@@ -638,11 +638,11 @@ int get_rls_from_full_doc(const str_t *uri,
 	/* try to find given service according to uri */
 	canonicalize_uri(uri, &curi);
 	service = find_service(rls, &curi); 
+	if (!service) DEBUG_LOG("Service %.*s not found!\n", FMT_STR(curi));
 	str_free_content(&curi);
 	
 	if (!service) {
 		if (rls) free_rls_services(rls);
-		DEBUG_LOG("Empty service!\n");
 		return RES_XCAP_QUERY_ERR;
 	}
 
@@ -740,7 +740,9 @@ int get_resource_list_from_full_doc(const str_t *user,
 	
 	if (!list) {
 		ERROR_LOG("Empty resource list!\n");
-		return RES_INTERNAL_ERR;
+		*dst = NULL;
+		return 0; /* this is not error! */
+		/* return RES_INTERNAL_ERR; */
 	}
 
 	/* search for right list element */

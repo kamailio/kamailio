@@ -1,0 +1,4 @@
+2006-05-11
+	* added changelog
+	* added "simple profiling" capability (need to call PROF_START and
+	PROF_STOP macros in profiled routine)
