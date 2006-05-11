@@ -468,6 +468,27 @@ static int dump_avp(struct sip_msg* m, char* x, char* y)
 {
 	avp_list_t avp_list;
 
+	avp_list=get_avp_list(AVP_CLASS_GLOBAL);
+	INFO("class=GLOBAL\n");
+	if (!avp_list) {
+		LOG(L_INFO,"INFO: No AVP present\n");
+	} else {
+		dump_avp_reverse(avp_list);
+	}
+	avp_list=get_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM);
+	INFO("track=FROM class=DOMAIN\n");
+	if (!avp_list) {
+		LOG(L_INFO,"INFO: No AVP present\n");
+	} else {
+		dump_avp_reverse(avp_list);
+	}
+	avp_list=get_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO);
+	INFO("track=TO class=DOMAIN\n");
+	if (!avp_list) {
+		LOG(L_INFO,"INFO: No AVP present\n");
+	} else {
+		dump_avp_reverse(avp_list);
+	}
 	avp_list=get_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM);
 	INFO("track=FROM class=USER\n");
 	if (!avp_list) {
