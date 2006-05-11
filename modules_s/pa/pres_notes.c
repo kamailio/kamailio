@@ -73,6 +73,52 @@ static int db_add_pres_note(presentity_t *p, pa_presence_note_t *n)
 	return 0;
 }
 
+int db_update_pres_note(presentity_t *p, pa_presence_note_t *n)
+{
+	db_key_t cols[20];
+	db_val_t vals[20];
+	int n_updates = 0;
+	
+	db_key_t keys[] = { "presid", "etag", "dbid" };
+	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
+	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } },
+		{ DB_STR, 0, { .str_val = n->etag } },
+		{ DB_STR, 0, { .str_val = n->dbid } }
+	};
+	
+	if (!use_db) return 0;
+	
+	cols[n_updates] = "note";
+	vals[n_updates].type = DB_STR;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.str_val = n->note;
+	n_updates++;
+	
+	cols[n_updates] = "lang";
+	vals[n_updates].type = DB_STR;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.str_val = n->lang;
+	n_updates++;
+	
+	cols[n_updates] = "expires";
+	vals[n_updates].type = DB_DATETIME;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.time_val = n->expires;
+	n_updates++;	
+
+	if (pa_dbf.use_table(pa_db, presentity_notes_table) < 0) {
+		LOG(L_ERR, "db_remove_pres_note: Error in use_table\n");
+		return -1;
+	}
+	
+	if (pa_dbf.update(pa_db, keys, ops, k_vals, 
+				cols, vals, 3, n_updates) < 0) {
+		ERR("Can't update record\n");
+		return -1;
+	}
+
+	return 0;
+}
 int db_remove_pres_notes(presentity_t *p)
 {
 	db_key_t keys[] = { "presid" };

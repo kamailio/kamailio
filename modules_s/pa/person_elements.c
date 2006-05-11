@@ -118,6 +118,53 @@ static int db_remove_person_element(presentity_t *p, pa_person_element_t *n)
 	return 0;
 }
 
+int db_update_person_element(presentity_t *p, pa_person_element_t *n)
+{
+	db_key_t cols[20];
+	db_val_t vals[20];
+	int n_updates = 0;
+	
+	db_key_t keys[] = { "presid", "etag", "dbid" };
+	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
+	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } },
+		{ DB_STR, 0, { .str_val = n->etag } },
+		{ DB_STR, 0, { .str_val = n->dbid } }
+	};
+	
+	if (!use_db) return 0;
+
+	cols[n_updates] = "person_element";
+	vals[n_updates].type = DB_BLOB;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.blob_val = n->person;
+	n_updates++;
+	
+	cols[n_updates] = "id";
+	vals[n_updates].type = DB_STR;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.str_val = n->id;
+	n_updates++;
+	
+	cols[n_updates] = "expires";
+	vals[n_updates].type = DB_DATETIME;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.time_val = n->expires;
+	n_updates++;	
+	
+	if (pa_dbf.use_table(pa_db, person_elements_table) < 0) {
+		LOG(L_ERR, "db_remove_person_element: Error in use_table\n");
+		return -1;
+	}
+
+	if (pa_dbf.update(pa_db, keys, ops, k_vals, 
+				cols, vals, 3, n_updates) < 0) {
+		ERR("Can't update record\n");
+		return -1;
+	}
+	
+	return 0;
+}
+
 int db_read_person_elements(presentity_t *p, db_con_t* db)
 {
 	db_key_t keys[] = { "presid" };

@@ -99,9 +99,7 @@ char *offline_winfo_table = "offline_winfo";
 
 /* authorization parameters */
 char *auth_type_str = NULL; /* type of authorization */
-char *auth_xcap_root = NULL;	/* must be set if xcap authorization */
 char *winfo_auth_type_str = "implicit"; /* type of authorization */
-char *winfo_auth_xcap_root = NULL;	/* must be set if xcap authorization */
 auth_params_t pa_auth_params;	/* structure filled according to parameters */
 auth_params_t winfo_auth_params;	/* structure for watcherinfo filled according to parameters */
 str pres_rules_file = STR_NULL; /* filename for XCAP queries */
@@ -154,9 +152,7 @@ static param_export_t params[]={
 	{"max_publish_expiration", PARAM_INT, &max_publish_expiration },
 	
 	{"auth",                 PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"auth_xcap_root",       PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{"winfo_auth",           PARAM_STRING, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"winfo_auth_xcap_root", PARAM_STRING, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	
 	{"use_db",               PARAM_INT,    &use_db               },
 	{"use_callbacks", PARAM_INT, &use_callbacks  }, /* use callbacks to usrloc/jabber ? */
@@ -251,24 +247,14 @@ static void test_mimetype_parser(void)
 }
 
 static int set_auth_params(auth_params_t *dst, const char *auth_type_str,
-		char *xcap_root, const char *log_str)
+		const char *log_str)
 {
-	dst->xcap_root = NULL;
 	if (!auth_type_str) {
 		LOG(L_ERR, "no subscription authorization type for %s given, using \'implicit\'!\n", log_str);
 		dst->type = auth_none;
 		return 0;
 	}
 	if (strcmp(auth_type_str, "xcap") == 0) {
-		if (!xcap_root) {
-			LOG(L_ERR, "XCAP authorization for %s selected, but no auth_xcap_root given!\n", log_str);
-			return -1;
-		}
-		dst->xcap_root = xcap_root;
-		if (!(*dst->xcap_root)) {
-			LOG(L_ERR, "XCAP authorization for %s selected, but empty auth_xcap_root given!\n", log_str);
-			return -1;
-		}
 		dst->type = auth_xcap;
 		return 0;
 	}
@@ -291,6 +277,8 @@ static int pa_mod_init(void)
 {
 	load_tm_f load_tm;
 	bind_dlg_mod_f bind_dlg;
+
+	/* SER_PROFILE_INIT - init in child (each process needs it) */
 	
 	test_mimetype_parser();
 	DBG("Presence Agent - initializing\n");
@@ -312,14 +300,12 @@ static int pa_mod_init(void)
 	
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_auth_params(&pa_auth_params, auth_type_str,
-				auth_xcap_root, "presence") != 0) return -1;
+	if (set_auth_params(&pa_auth_params, auth_type_str, "presence") != 0) return -1;
 
 	/* set authorization type for watcherinfo
 	 * according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_auth_params(&winfo_auth_params, winfo_auth_type_str,
-				winfo_auth_xcap_root, "watcher info") != 0) return -1;
+	if (set_auth_params(&winfo_auth_params, winfo_auth_type_str, "watcher info") != 0) return -1;
 
 	     /* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
@@ -384,6 +370,11 @@ static int pa_mod_init(void)
 
 	fill_xcap_params = (fill_xcap_params_func)find_export("fill_xcap_params", 0, -1);
 
+	/* FIXME: memory tests only */
+	TRACE("sizeof(presentity_t): %d\n", sizeof(presentity_t));
+	TRACE("sizeof(watcher_t): %d\n", sizeof(watcher_t));
+	TRACE("sizeof(dlg_t): %d\n", sizeof(dlg_t));
+	
 	LOG(L_DBG, "pa_mod_init done\n");
 	return 0;
 }
@@ -414,7 +405,10 @@ static int pa_child_init(int _rank)
 		}
 	}
 
-	// signal(SIGSEGV, pa_sig_handler);
+#ifdef DO_TRACE
+	TRACE("initializing profiler\n");
+	SER_PROFILE_INIT
+#endif
 
 	return 0;
 }

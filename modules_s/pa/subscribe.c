@@ -465,7 +465,7 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 	(*_w)->status = authorize_watcher(_p, (*_w), _m);
 	if ((*_w)->status == WS_REJECTED) {
 		free_watcher((*_w));
-		LOG(L_ERR, "create_watcher(): watcher rejected\n");
+		INFO("watcher rejected\n");
 		paerrno = PA_SUBSCRIPTION_REJECTED;
 		return -6;
 	}
@@ -554,7 +554,7 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	e = get_expires(_m);
 
 	if (verify_event_package(et) != 0) {
-		LOG(L_ERR, "create_presentity(): Unsupported event package\n");
+		INFO("Unsupported event package\n");
 		paerrno = PA_EVENT_UNSUPP;
 		return -1;
 	}
@@ -563,7 +563,7 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	if (e > 0) e += act_time;
 
 	if (new_presentity(_d, _puri, uid, _p) < 0) {
-		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
+		INFO("Error while creating presentity\n");
 		return -2;
 	}
 
@@ -619,7 +619,8 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		}
 	} else {
 		if (is_renewal) {
-			ERR("resubscription for nonexisting watcher\n");
+			ERR("resubscription for nonexisting watcher (%.*s)\n", 
+					FMT_STR(watch_uri));
 			paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
 			return -1;
 		}
@@ -847,7 +848,11 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	char tmp[64];
 	int i;
 	int is_renewal = 0;
-	
+	PROF_START_DECL(pa_response_generation)
+
+	PROF_START(pa_handle_subscription)
+	PROF_START_BODY(pa_response_generation)
+
 	get_act_time();
 	paerrno = PA_OK;
 
@@ -881,17 +886,18 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 
 	if (find_presentity_uid(d, &uid, &p) > 0) {
 		if (is_renewal) {
-			ERR("Resubscription to nonexisting presentity\n");
+			ERR("Resubscription to nonexisting presentity %.*s (%.*s)\n",
+					FMT_STR(uid), FMT_STR(p_uri));
 			paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
 			goto error2;
 		}
 		if (create_presentity(_m, d, &p_uri, &uid, &p, &w) < 0) {
-			ERR("Error while creating new presentity\n");
+			INFO("Error while creating new presentity\n");
 			goto error2;
 		}
 	} else {
 		if (update_presentity(_m, d, p, &w, is_renewal) < 0) {
-			ERR("Error while updating presentity\n");
+			INFO("Error while updating presentity\n");
 			goto error2;
 		}
 	}
@@ -906,16 +912,27 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	sprintf(tmp, "Expires: %d\r\n", i);
 	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
 		ERR("Can't add Expires header to the response\n");
-		/* return -1; */
+		/* prof_stop(pa_handle_subscription)
+		 * return -1; */
 	}
 
 	/*if (w) set_status_avp_ex(w); */
+/*	if (w) {
+		TRACE("sending reply for dlg id = %.*s, %.*s, %.*s\n",
+			FMT_STR(w->dialog->id.call_id), 
+			FMT_STR(w->dialog->id.rem_tag), 
+			FMT_STR(w->dialog->id.loc_tag));
+	}*/
+
 	
 	if (send_reply(_m) < 0) {
-	  LOG(L_ERR, "handle_subscription(): Error while sending reply\n");
-	  unlock_pdomain(d);
-	  return -3;
+		ERR("Error while sending reply\n");
+		unlock_pdomain(d);
+		PROF_STOP(pa_handle_subscription)
+		PROF_STOP(pa_response_generation)
+		return -3;
 	}
+	PROF_STOP(pa_response_generation)
 
 	DBG("handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
 	    (w ? w->event_package : -1), (w ? w->preferred_mimetype : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
@@ -923,6 +940,11 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	/* process and change this presentity and notify watchers */
 	if (p && w) {
 		set_last_subscription_status(w->status);
+		
+		/*TRACE("sending NOTIFY for dlg id = %.*s, %.*s, %.*s\n",
+			FMT_STR(w->dialog->id.call_id), 
+			FMT_STR(w->dialog->id.rem_tag), 
+			FMT_STR(w->dialog->id.loc_tag));*/
 		
 		/* immediately send NOTIFY */
 		send_notify(p, w);
@@ -935,19 +957,24 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	else set_last_subscription_status(WS_REJECTED);
 		
 	unlock_pdomain(d);
+	PROF_STOP(pa_handle_subscription)
 	return 1;
 	
  error2:
 	str_free_content(&uid);
-	ERR("handle_subscription about to return -1\n");
+	INFO("handle_subscription about to return -1\n");
 	unlock_pdomain(d);
 	send_reply(_m);
 	set_last_subscription_status(WS_REJECTED);
+	PROF_STOP(pa_handle_subscription)
+	PROF_STOP(pa_response_generation)
 	return -1;
  error:
-	ERR("handle_subscription about to send_reply and return -2\n");
+	INFO("handle_subscription about to send_reply and return -2\n");
 	send_reply(_m);
 	set_last_subscription_status(WS_REJECTED);
+	PROF_STOP(pa_handle_subscription)
+	PROF_STOP(pa_response_generation)
 	return -1;
 }
 

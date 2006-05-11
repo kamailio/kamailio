@@ -11,7 +11,6 @@ typedef enum {
 
 typedef struct {
 	authorization_type_t type;
-	char *xcap_root; /* zero terminated (using libcurl, why not?) */
 } auth_params_t;
 
 #include "watcher.h"

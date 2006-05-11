@@ -13,7 +13,8 @@
 
 extern dlist_t* root; /* FIXME ugly !!!!! */
 
-#define rpc_lf(rpc, c)	rpc->add(c, "s","")
+/* #define rpc_lf(rpc, c)	rpc->add(c, "s","") */
+#define rpc_lf(rpc, c)	do { } while (0)
 
 static void trace_tuple(presence_tuple_t *t, rpc_t* rpc, void* c) {
 	presence_note_t *n;
@@ -106,9 +107,10 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	rpc_lf(rpc, c);
 }
 
-static void trace_dlist(dlist_t *dl, rpc_t* rpc, void* c)
+static void trace_dlist(dlist_t *dl, rpc_t* rpc, void* c, int detailed)
 {
 	presentity_t *p;
+	int cnt = 0;
 
 	if (!dl) return;
 	if (!dl->d) return;
@@ -118,9 +120,13 @@ static void trace_dlist(dlist_t *dl, rpc_t* rpc, void* c)
 	rpc->add(c, "S", dl->d->name);
 	p = dl->d->first;
 	while (p) {
-		trace_presentity(p, rpc, c);
+		if (detailed) trace_presentity(p, rpc, c);
+		cnt++;
 		p = p->next;
 	}
+	
+	rpc_lf(rpc, c);
+	rpc->printf(c, "presentity count: %d", cnt);
 	
 	unlock_pdomain(dl->d);
 }
@@ -134,10 +140,16 @@ static const char* rpc_trace_doc[] = {
 static void rpc_trace(rpc_t* rpc, void* c)
 {
 	dlist_t *dl;
+	int detailed = 0;
 
+	if (rpc->scan(c, "d", &detailed) <= 0)
+		detailed = 0;
+	
+	rpc->fault(c, 200, "OK");
+	
 	dl = root;
 	while (dl) {
-		trace_dlist(dl, rpc, c);
+		trace_dlist(dl, rpc, c, detailed);
 		dl = dl->next;
 	}
 	
@@ -305,23 +317,26 @@ static void rpc_pa_publish(rpc_t* rpc, void* c)
 	}
 	str_free_content(&uid);
 
-	if (parse_pidf_document(&pi, doc.s, doc.len) != 0) {
-		rpc->fault(c, 400, "Can't parse presence document (not PIDF?)\n");
-		unlock_pdomain(d);
-		return;
-		
+	if (doc.len > 0) {
+		if (parse_pidf_document(&pi, doc.s, doc.len) != 0) {
+			rpc->fault(c, 400, "Can't parse presence document (not PIDF?)\n");
+			unlock_pdomain(d);
+			return;
+			
+		}
 	}
+	else pi = NULL;
 
-	if (pi) {
+/*	if (pi) { */
 		if (process_published_presentity_info(p, pi, &etag, expires) != 0) {
-			free_presentity_info(pi);
+			if (pi) free_presentity_info(pi);
 			rpc->fault(c, 400, "Can't publish\n");
 			unlock_pdomain(d);
 			return;
 		}
-	}
+/*	} */
 
-	free_presentity_info(pi);
+	if (pi) free_presentity_info(pi);
 	unlock_pdomain(d);
 	
 	if (rpc->add(c, "{", &st) < 0) return;

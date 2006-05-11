@@ -1,3 +1,21 @@
+2006-05-10
+	* corrected bug in PUBLISH handling (refreshing state with empty body
+	destroyed notes and person elements and did not store tuples into DB)
+	* corrected RPC function pa.publish (accepts empty file for status
+	refreshes)
+
+2006-05-09
+	* removed unused parameter xcap_root
+
+2006-04-20
+	* added uid and uri into error log for "resubscription to nonexisting
+	presentity"
+	* rpc_trace doesn't put empty strings as separators (more readable using
+	new serctl)
+
+2006-04-18
+	* added profiling
+
 2006-04-13
 	* added parameters subscribe_to_users and pa_subscription_uri (prepared
 	for subscriptions to clients)

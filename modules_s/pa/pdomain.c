@@ -130,6 +130,7 @@ int timer_pdomain(pdomain_t* _d)
 	struct presentity* presentity, *t;
 	time_t start, stop;
 
+	PROF_START(pa_timer_pdomain)
 	lock_pdomain(_d);
 	start = time(NULL);
 
@@ -139,6 +140,7 @@ int timer_pdomain(pdomain_t* _d)
 		if (timer_presentity(presentity) < 0) {
 			LOG(L_ERR, "timer_pdomain(): Error in timer_pdomain\n");
 			unlock_pdomain(_d);
+			PROF_STOP(pa_timer_pdomain)
 			return -1;
 		}
 		
@@ -163,6 +165,7 @@ int timer_pdomain(pdomain_t* _d)
 	if (stop - start > 1) WARN("timer_pdomain took %d seconds\n", (int) (stop - start));
 			
 	unlock_pdomain(_d);
+	PROF_STOP(pa_timer_pdomain)
 	return 0;
 }
 

@@ -173,8 +173,8 @@ int send_reply(struct sip_msg* _m)
 			if (s.s) mem_free(s.s);
 		}
 	}
-
-	if (tmb.t_reply(_m, code, msg) == -1) {
+	
+	if (tmb.t_reply(_m, code, msg) < 0) {
 		ERR("Error while sending %d %s\n", code, msg);
 		return -1;
 	} else return 0;

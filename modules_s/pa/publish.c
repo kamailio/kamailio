@@ -653,8 +653,39 @@ static int update_all_published_tuples(presentity_t *p, str *etag, time_t expire
 		if (str_case_equals(&tuple->etag, etag) == 0) {
 			tuple->expires = expires;
 			found++;
+			db_update_presence_tuple(p, tuple, 0);
 		}
 		tuple = tuple->next;
+	}
+	return found;
+}
+
+static int update_pres_notes(presentity_t *p, str *etag, time_t expires)
+{
+	int found = 0;
+	pa_presence_note_t *note = p->notes;
+	while (note) {
+		if (str_case_equals(&note->etag, etag) == 0) {
+			note->expires = expires;
+			found++;
+			db_update_pres_note(p, note);
+		}
+		note = note->next;
+	}
+	return found;
+}
+
+static int update_person_elements(presentity_t *p, str *etag, time_t expires)
+{
+	int found = 0;
+	pa_person_element_t *person = p->person_elements;
+	while (person) {
+		if (str_case_equals(&person->etag, etag) == 0) {
+			person->expires = expires;
+			db_update_person_element(p, person);
+			found++;
+		}
+		person = person->next;
 	}
 	return found;
 }
@@ -678,19 +709,24 @@ int process_published_presentity_info(presentity_t *presentity, presentity_info_
 		add_person_elements(presentity, p, etag, expires);
 	}
 	else {
-		/* remove all notes for this etag */
-		remove_pres_notes(presentity, etag);
-		
-		/* remove all person elements (RPID) */
-		remove_person_elements(presentity, etag);
-		
 		if (p) {
+			/* remove all notes for this etag */
+			remove_pres_notes(presentity, etag);
+			
+			/* remove all person elements (RPID) */
+			remove_person_elements(presentity, etag);
+		
 			/* add all notes for presentity */
 			add_presentity_notes(presentity, p, etag, expires);
 			update_published_tuples(presentity, p, etag, expires);
 			add_person_elements(presentity, p, etag, expires);
 		}
-		else update_all_published_tuples(presentity, etag, expires);
+		else {
+			/* all expirations must be refreshed, nothing cleared */
+			update_all_published_tuples(presentity, etag, expires);
+			update_person_elements(presentity, etag, expires);
+			update_pres_notes(presentity, etag, expires);
+		}
 	}
 	presentity->flags |= PFLAG_PRESENCE_CHANGED;
 	return 0;

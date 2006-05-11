@@ -219,6 +219,8 @@ void add_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
 void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
 
 int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_notes);
+int db_update_person_element(presentity_t *p, pa_person_element_t *n);
+int db_update_pres_note(presentity_t *p, pa_presence_note_t *n);
 
 void set_tuple_published(presentity_t *p, presence_tuple_t *t);
 
