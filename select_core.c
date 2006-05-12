@@ -56,7 +56,12 @@
 int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 {
 	if (msg->first_line.type==SIP_REQUEST) {
-		RETURN0_res(msg->first_line.u.request.uri);
+		if(msg->new_uri.s) {
+			RETURN0_res(msg->new_uri);
+		}
+		else {
+			RETURN0_res(msg->first_line.u.request.uri);
+		}
 	}
 	return 1;
 }
