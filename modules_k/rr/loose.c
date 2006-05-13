@@ -219,7 +219,7 @@ static inline int is_myself(str* _host, unsigned short _port)
 	if(i_user.len && i_user.len==_user->len
 			&& !strncmp(i_user.s, _user->s, _user->len))
 	{
-		DBG("is_myself: this URI isn't mine\n");
+		DBG("DEBUG:rr:is_myself: this URI isn't mine\n");
 		return -1;
 	}
 #endif
@@ -478,6 +478,7 @@ static inline int find_rem_target(struct sip_msg* _m, struct hdr_field** _h, rr_
 
 		*_p = 0;
 		*_l = (rr_t*)last->parsed;
+		*_h = last;
 		while ((*_l)->next) {
 			*_p = *_l;
 			*_l = (*_l)->next;
@@ -548,12 +549,13 @@ static inline int after_strict(struct sip_msg* _m)
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
-	}
 
-	uri = &rt->nameaddr.uri;
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		LOG(L_ERR, "after_strict: Error while parsing URI\n");
-		return RR_ERROR;
+		/* parse the new found uri */
+		uri = &rt->nameaddr.uri;
+		if (parse_uri(uri->s, uri->len, &puri) < 0) {
+			LOG(L_ERR, "after_strict: Error while parsing URI\n");
+			return RR_ERROR;
+		}
 	}
 
 	/* set the hooks for the params -bogdan

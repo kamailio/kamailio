@@ -10,4 +10,6 @@ auto_gen=
 NAME=rr.so
 LIBS=
 
+#DEFS+=-DENABLE_USER_CHECK
+
 include ../../Makefile.modules
