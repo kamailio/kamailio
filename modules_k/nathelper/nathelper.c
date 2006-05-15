@@ -1693,7 +1693,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	char **ap, *argv[10];
 	struct lump* anchor;
 	struct rtpp_node *node;
-	struct iovec v[14] = {
+	struct iovec v[16] = {
 		{NULL, 0},	/* command */
 		{NULL, 0},	/* options */
 		{" ", 1},	/* separator */
@@ -1707,7 +1707,9 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		{";", 1},	/* separator */
 		{NULL, 0},	/* medianum */
 		{" ", 1},	/* separator */
-		{NULL, 0}	/* to_tag */
+		{NULL, 0},	/* to_tag */
+		{";", 1},	/* separator */
+		{NULL, 0}	/* medianum */
 	};
 	char *v1p, *v2p, *c1p, *c2p, *m1p, *m2p, *bodylimit, *o1p;
 	char medianum_buf[20];
@@ -1913,9 +1915,6 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 				opts[oidx] = '6';
 				oidx++;
 			}
-			snprintf(medianum_buf, sizeof medianum_buf, "%d", medianum);
-			medianum_str.s = medianum_buf;
-			medianum_str.len = strlen(medianum_buf);
 			opts[0] = (create == 0) ? 'L' : 'U';
 			v[1].iov_len = oidx;
 			STR2IOVEC(callid, v[3]);
@@ -1924,9 +1923,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			STR2IOVEC(from_tag, v[9]);
 			if (1 || media_multi) /* XXX netch: can't choose now*/
 			{
+				snprintf(medianum_buf, sizeof medianum_buf, "%d", medianum);
+				medianum_str.s = medianum_buf;
+				medianum_str.len = strlen(medianum_buf);
 				STR2IOVEC(medianum_str, v[11]);
+				STR2IOVEC(medianum_str, v[15]);
 			} else {
 				v[10].iov_len = v[11].iov_len = 0;
+				v[14].iov_len = v[15].iov_len = 0;
 			}
 			STR2IOVEC(to_tag, v[13]);
 			do {
@@ -1936,7 +1940,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 						"proxies\n");
 					return -1;
 				}
-				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 14 : 12);
+				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
 			} while (cp == NULL);
 			LOG(L_DBG, "force_rtp_proxy2: proxy reply: %s\n", cp);
 			/* Parse proxy reply to <argc,argv> */
@@ -1959,8 +1963,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			}
 			port = atoi(argv[0]);
 			if (port <= 0 || port > 65535) {
-				LOG(L_ERR, "force_rtp_proxy2: incorrect port in reply "
-					"from rtp proxy\n");
+				LOG(L_ERR, "force_rtp_proxy2: incorrect port %i in reply "
+					"from rtp proxy\n",port);
 				return -1;
 			}
 
