@@ -340,10 +340,11 @@ endif
 #		adding it to via, lumps a.s.o). WARNING: right now this option
 #		is useless since the compression code doesn't exist yet.
 
+# Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
 DEFS+= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
-	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
+	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DSER_VER=$(SER_VER) \
 	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \

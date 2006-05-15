@@ -162,7 +162,7 @@ Options:\n\
                   (to use both use `-rR`)\n\
     -v           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
-    -D           Do not fork into daemon mode\n\
+    -D           1..do not fork (almost) anyway, 2..do not daemonize creator, 3..daemonize(default)\n\
     -E           Log to stderr\n"
 #ifdef USE_TCP
 "    -T           Disable tcp\n\
@@ -244,6 +244,7 @@ struct process_table *pt=0;		/*array with children pids, 0= main proc,
 int sig_flag = 0;              /* last signal received */
 int debug = L_DEFAULT; /* print only msg. < L_WARN */
 int dont_fork = 0;
+int dont_daemonize = 0;
 int log_stderr = 0;
 pid_t creator_pid = (pid_t) -1;
 /* log facility (see syslog(3)) */
@@ -1210,6 +1211,7 @@ int main(int argc, char** argv)
 	unsigned int seed;
 	int rfd;
 	int debug_save, debug_flag = 0;
+	int dont_fork_cnt = 0;
 
 	/*init*/
 	creator_pid = getpid();
@@ -1416,7 +1418,7 @@ try_again:
 					received_dns|=DO_REV_DNS;
 					break;
 			case 'D':
-					dont_fork=1;
+					dont_fork_cnt++;
 					break;
 			case 'T':
 				#ifdef USE_TCP
@@ -1477,6 +1479,13 @@ try_again:
 		}
 	}
 
+	if (dont_fork_cnt)
+		dont_fork = dont_fork_cnt;	/* override by command line */
+
+	if (dont_fork > 0) {
+		dont_daemonize = dont_fork == 2;
+		dont_fork = dont_fork == 1;
+	}
 	/* init the resolver, before fixing the config */
 	resolv_init();
 	/* fix parameters */

@@ -91,6 +91,7 @@ extern int tls_disable;
 extern unsigned short tls_port_no;
 #endif
 extern int dont_fork;
+extern int dont_daemonize;
 extern int check_via;
 extern int received_dns;
 extern int syn_branch;

@@ -31,8 +31,7 @@
 #ifndef version_h
 #define version_h
 
-#define SER_FULL_VERSION  NAME " " VERSION " (" ARCH "/" OS ")" 
-
+#define SER_FULL_VERSION  NAME " " VERSION " (" ARCH "/" OS_QUOTED ")" 
 
 #ifdef STATS
 #define STATS_STR  "STATS: On"
@@ -185,7 +184,6 @@
 #else
 #define USE_SYSV_SEM_STR ""
 #endif
-
 
 #ifdef NOSMP
 #define NOSMP_STR "-NOSMP"

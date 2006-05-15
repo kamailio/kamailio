@@ -59,12 +59,11 @@
 #include "daemonize.h"
 #include "globals.h"
 #include "dprint.h"
+#include "signals.h"
 
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
-
-
 
 /* daemon init, return 0 on success, -1 on error */
 int daemonize(char*  name)
@@ -92,29 +91,30 @@ int daemonize(char*  name)
 		goto error;
 	}
 
-	/* fork to become!= group leader*/
-	if ((pid=fork())<0){
-		LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
-		goto error;
-	}else if (pid!=0){
-		/* parent process => exit*/
-		exit(0);
+	if (!dont_daemonize) {
+		/* fork to become!= group leader*/
+		if ((pid=fork())<0){
+			LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
+			goto error;
+		}else if (pid!=0){	
+			/*parent process => exit */
+			exit(0);
+		}
+		/* become session leader to drop the ctrl. terminal */
+		if (setsid()<0){
+			LOG(L_WARN, "setsid failed: %s\n",strerror(errno));
+		}else{
+			own_pgid=1;/* we have our own process group */
+		}
+		/* fork again to drop group  leadership */
+		if ((pid=fork())<0){
+			LOG(L_CRIT, "Cannot  fork:%s\n", strerror(errno));
+			goto error;
+		}else if (pid!=0){
+			/*parent process => exit */
+			exit(0);
+		}
 	}
-	/* become session leader to drop the ctrl. terminal */
-	if (setsid()<0){
-		LOG(L_WARN, "setsid failed: %s\n",strerror(errno));
-	}else{
-		own_pgid=1;/* we have our own process group */
-	}
-	/* fork again to drop group  leadership */
-	if ((pid=fork())<0){
-		LOG(L_CRIT, "Cannot  fork:%s\n", strerror(errno));
-		goto error;
-	}else if (pid!=0){
-		/*parent process => exit */
-		exit(0);
-	}
-
 	/* added by noh: create a pid file for the main process */
 	if (pid_file!=0){
 		
