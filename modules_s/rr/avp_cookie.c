@@ -47,14 +47,14 @@ int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
 	struct search_state st;
 	ident = (void*) param1;
 	DBG("rr_add_avp_cookie: inquired\n");
-	while (ident->flags != (avp_flags_t) -1) {	
+	while (ident->flags != (avp_flags_t) -1) {
 		for (avp=search_avp(*ident, NULL, &st); avp; avp = search_next_avp(&st, NULL)) {
 			avp->flags |= AVP_FLAG_DIALOG;
 		}
 		ident++;
 	}
 	return 1;
-}	
+}
 
 void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	int pos, i, n;
@@ -111,15 +111,15 @@ void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	for (pos=0, *tgt_len=0; pos < src_len; pos+=3,*tgt_len+=4) {
 		tgt_buf[*tgt_len+0] = code64[(unsigned char)src_buf[pos+0] >> 2];
 		tgt_buf[*tgt_len+1] = code64[(((unsigned char)src_buf[pos+0] & 0x03) << 4) | ((pos+1 < src_len)?((unsigned char)src_buf[pos+1] >> 4):0)];
-		if (pos+1 < src_len) 
+		if (pos+1 < src_len)
 			tgt_buf[*tgt_len+2] = code64[(((unsigned char)src_buf[pos+1] & 0x0F) << 2) | ((pos+2 < src_len)?((unsigned char)src_buf[pos+2] >> 6):0)];
-		else   
-			*tgt_len--;		
+		else
+			(*tgt_len)--;
 			/* tgt_buf[*tgt_len+2] = '='; do not add trailing equals - not header compliant without quotes */
-		if (pos+2 < src_len) 
+		if (pos+2 < src_len)
 			tgt_buf[*tgt_len+3] = code64[(unsigned char)src_buf[pos+2] & 0x3F];
 		else
-			*tgt_len--;
+			(*tgt_len)--;
 			/* tgt_buf[*tgt_len+3] = '='; */
 	}
 }
@@ -157,7 +157,7 @@ str *rr_get_avp_cookies(void) {
 				avp_name = 0;  /* dummy */
 
 			get_avp_val(avp, &avp_val);
-			
+
 			l = sizeof(rr_avp_flags_t);
 			if (avp->flags & AVP_NAME_STR )
 				l += avp_name->len+sizeof(unsigned short);
@@ -237,7 +237,7 @@ void rr_set_avp_cookies(str *enc_cookies, int reverse_direction) {
 		return;
 	}
 	base64decode(enc_cookies->s, enc_cookies->len, buf, &len);
-	
+
 	if (len <= sizeof(crc))
 		return;
 	crc = crcitt_string_ex(buf+sizeof(crc), len-sizeof(crc), crc_secret);
