@@ -461,7 +461,7 @@ int db_load_vs(db_con_t *rls_db, rl_subscription_t *s)
 			get_str_val(row_vals[0], id);
 			get_str_val(row_vals[1], uri);
 			
-			r = vs_create(&uri, &vs, NULL, s) | r;
+			r = vs_create(&uri, &vs, NULL, s, max_list_nesting_level) | r;
 			if ((r != 0) || (!vs)) { r = -1; break; }
 			
 			strcpy(vs->dbid, id.s);

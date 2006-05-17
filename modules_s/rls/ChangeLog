@@ -1,3 +1,23 @@
+2006-05-15
+	* handling responses on NOTIFY
+	* added parameter ignore_408_on_notify
+
+2006-04-21
+	* added parameter expiration_timer_period (timer interval for checking
+	expirations)
+
+2006-04-20
+	* rls_trace function puts XML datafile in CDATA section
+	* rls_trace doesn't put empty strings as separators (more readable using
+	new serctl)
+	* rls_trace has optional number argument - if nonzero it displays stored
+	status documents
+	* added parameter max_list_nesting_level for control over nested list
+	processing
+
+2006-04-18
+	* added profiling
+
 2006-04-13
 	* modified optimizations of sent notifications, added parameter
 	max_notifications_at_once

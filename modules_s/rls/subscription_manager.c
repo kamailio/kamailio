@@ -43,7 +43,8 @@ int sm_init(subscription_manager_t *sm,
 		gen_lock_t *mutex,
 		int min_exp, 
 		int max_exp, 
-		int default_exp)
+		int default_exp,
+		int expiration_timer_period)
 {
 	if (!sm) return -1;
 	
@@ -57,7 +58,7 @@ int sm_init(subscription_manager_t *sm,
 	sm->min_expiration = min_exp;
 	sm->max_expiration = max_exp;
 	return tem_init(&sm->timer, 
-			1, /* atomic time = 1 s */
+			expiration_timer_period, /* atomic time = 1 s */
 			4093, /* time slot count */
 			1, /* enable delay <= terminate AFTER the timeout */
 			mutex);
@@ -69,7 +70,8 @@ subscription_manager_t *sm_create(send_notify_func notify,
 		gen_lock_t *mutex,
 		int min_exp, 
 		int max_exp, 
-		int default_exp)
+		int default_exp,
+		int expiration_timer_period)
 {
 	subscription_manager_t *sm;
 	
@@ -80,7 +82,7 @@ subscription_manager_t *sm_create(send_notify_func notify,
 	}
 
 	if (sm_init(sm, notify, terminate, authorize, mutex, min_exp, 
-				max_exp, default_exp) != 0) {
+				max_exp, default_exp, expiration_timer_period) != 0) {
 		mem_free(sm);
 		return NULL;
 	}

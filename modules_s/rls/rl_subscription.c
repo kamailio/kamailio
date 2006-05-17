@@ -19,9 +19,77 @@
 #include "../../parser/parse_from.h"
 #include "../../data_lump_rpl.h"
 
+typedef struct {
+	dlg_id_t id;
+	char buf[1];
+} rls_notify_cb_param_t;
+
 subscription_manager_t *rls_manager = NULL;
 
 #define METHOD_NOTIFY "NOTIFY"
+
+/************* Helper functions for TM callback ************/
+
+static rls_notify_cb_param_t *create_notify_cb_param(rl_subscription_t *s)
+{
+	rls_notify_cb_param_t *cbd;
+	int size;
+	dlg_t *dlg;
+
+	if (!s) return NULL;
+	if (s->type != rls_external_subscription) return NULL;
+	dlg = s->u.external.dialog;
+	if (!dlg) return NULL;
+
+	size = sizeof(*cbd) + 
+			dlg->id.call_id.len +
+			dlg->id.rem_tag.len +
+			dlg->id.loc_tag.len;
+	
+	cbd = (rls_notify_cb_param_t*)mem_alloc(size);
+	if (!cbd) {
+		ERR("can't allocate memory (%d bytes)\n", size);
+		return NULL;
+	}
+
+	cbd->id.call_id.s = cbd->buf;
+	cbd->id.call_id.len = dlg->id.call_id.len;
+	
+	cbd->id.rem_tag.s = cbd->id.call_id.s + cbd->id.call_id.len;
+	cbd->id.rem_tag.len = dlg->id.rem_tag.len;
+	
+	cbd->id.loc_tag.s = cbd->id.rem_tag.s + cbd->id.rem_tag.len;
+	cbd->id.loc_tag.len = dlg->id.loc_tag.len;
+	
+	/* copy data */
+	if (dlg->id.call_id.s) memcpy(cbd->id.call_id.s, 
+			dlg->id.call_id.s, dlg->id.call_id.len); 
+	if (dlg->id.rem_tag.s) memcpy(cbd->id.rem_tag.s, 
+			dlg->id.rem_tag.s, dlg->id.rem_tag.len); 
+	if (dlg->id.loc_tag.s) memcpy(cbd->id.loc_tag.s, 
+			dlg->id.loc_tag.s, dlg->id.loc_tag.len); 
+	
+	return cbd;
+}
+
+static void destroy_subscription(rls_notify_cb_param_t *cbd)
+{
+	int res;
+	rl_subscription_t *s = NULL;
+	
+	rls_lock();
+	
+	res = rls_find_subscription(&cbd->id.rem_tag, &cbd->id.loc_tag, 
+			&cbd->id.call_id, &s);
+	if ((res != RES_OK) || (!s)) {
+		/* subscription NOT found */
+		rls_unlock();
+		return;
+	}
+	rls_remove(s);
+
+	rls_unlock();
+}
 
 /************* Helper functions for RL subscription manipulation ************/
 
@@ -67,7 +135,9 @@ str_t * rls_get_subscriber(rl_subscription_t *subscription)
 	return NULL;
 }
 
-int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat)
+int add_virtual_subscriptions(rl_subscription_t *ss, 
+		flat_list_t *flat, 
+		int nesting_level)
 {
 	flat_list_t *e;
 	/* xcap_query_t xcap; */
@@ -85,7 +155,7 @@ int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat)
 		if (s.s) s.len = strlen(s.s);
 		else s.len = 0;
 
-		res = vs_create(&s, &vs, e->names, ss);
+		res = vs_create(&s, &vs, e->names, ss, nesting_level);
 		
 		if (res != RES_OK) {
 			/* FIXME: remove already added members? */
@@ -99,7 +169,7 @@ int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat)
 	return RES_OK;
 }
 
-int create_virtual_subscriptions(rl_subscription_t *ss)
+int create_virtual_subscriptions(rl_subscription_t *ss, int nesting_level)
 {
 	flat_list_t *flat = NULL;
 	int res = 0;
@@ -115,7 +185,7 @@ int create_virtual_subscriptions(rl_subscription_t *ss)
 	if (res != RES_OK) return res;
 	
 	/* go through flat list and find/create virtual subscriptions */
-	res = add_virtual_subscriptions(ss, flat);
+	res = add_virtual_subscriptions(ss, flat, nesting_level);
 	DEBUG_LOG("rli_create_content(): freeing flat list\n");
 	free_flat_list(flat);
 	return RES_OK;
@@ -208,7 +278,7 @@ int rls_create_subscription(struct sip_msg *m,
 		return res;
 	}*/
 	
-	res = add_virtual_subscriptions(s, flat);
+	res = add_virtual_subscriptions(s, flat, max_list_nesting_level);
 	if (res != 0) {
 		rls_free(s);
 		return res;
@@ -301,20 +371,34 @@ void rls_free(rl_subscription_t *s)
 }
 
 /* void rls_notify_cb(struct cell* t, struct sip_msg* msg, int code, void *param) */
-void rls_notify_cb(struct cell* t, int type, struct tmcb_params* params)
+static void rls_notify_cb(struct cell* t, int type, struct tmcb_params* params)
 {
-	rl_subscription_t *s = NULL;
+	rls_notify_cb_param_t *cbd = NULL;
 
 	if (!params) return;
 
-	if (params->param) s = (rl_subscription_t *)*(params->param);
+	if (params->param) cbd = (rls_notify_cb_param_t *)*(params->param);
+	if (!cbd) {
+		ERR("BUG empty cbd parameter given to callback function\n");
+		return;
+	}
 
 	if (params->code >= 300) { /* what else can we do with 3xx ? */
-		LOG(L_ERR, "rls_notify_cb(): %d response on NOTIFY - removing subscription %p\n", params->code, s);
-
-		rls_lock();
-		if (s) rls_remove(s);
-		rls_unlock();
+		int ignore = 0;
+		
+		switch (params->code) {
+			case 408: 
+				if (rls_ignore_408_on_notify) ignore = 1;
+				/* due to eyeBeam's problems with processing more NOTIFY
+				 * requests sent consequently without big delay */
+				break;
+		}
+	
+		if (!ignore) {
+			WARN("destroying subscription from callback due to %d response on NOTIFY\n", params->code);
+			destroy_subscription(cbd);
+			TRACE("subscription destroyed!!!\n");
+		}
 	}
 }
 
@@ -330,6 +414,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	int exp_time = 0;
 	char expiration[32];
 	str body = STR_STATIC_INIT("");
+	int removed = 0;
 
 	dlg = s->u.external.dialog;
 	if (!dlg) return -1;
@@ -399,21 +484,31 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 			if (res >= 0) clear_change_flags(s);
 		}
 		else {
-			/* the subscritpion will be destroyed if NOTIFY delivery problems */
-			/* rls_unlock();  the callback locks this mutex ! */
-			
-			/* !!!! FIXME: callbacks can't be safely used (may be called or not,
-			 * may free memory automaticaly or not) !!! */
-			res = tmb.t_request_within(&method, &headers, &body, dlg, 0, 0);
-			
-	/*		res = tmb.t_request_within(&method, &headers, &body, dlg, rls_notify_cb, s); */
-			/* rls_lock(); the callback locks this mutex ! */
-			if (res < 0) {
-				/* does this mean, that the callback was not called ??? */
-				ERR("t_request_within FAILED: %d! Freeing RL subscription.\n", res);
+			rls_notify_cb_param_t *cbd = create_notify_cb_param(s);
+			if (!cbd) {
+				ERR("Can't create notify cb data! Freeing RL subscription.\n");
 				rls_remove(s); /* ?????? */
+				removed = 1;
+				res = -13;
 			}
-			else clear_change_flags(s);
+			else {
+				/* the subscritpion will be destroyed if NOTIFY delivery problems */
+				/* rls_unlock();  the callback locks this mutex ! */
+				
+				/* !!!! FIXME: callbacks can't be safely used (may be called or not,
+				 * may free memory automaticaly or not) !!! */
+				res = tmb.t_request_within(&method, &headers, &body, dlg, rls_notify_cb, cbd);
+				
+		/*		res = tmb.t_request_within(&method, &headers, &body, dlg, rls_notify_cb, s); */
+				/* rls_lock(); the callback locks this mutex ! */
+				if (res < 0) {
+					/* does this mean, that the callback was not called ??? */
+					ERR("t_request_within FAILED: %d! Freeing RL subscription.\n", res);
+					rls_remove(s); /* ?????? */
+					removed = 1;
+				}
+				else clear_change_flags(s);
+			}
 		}
 	}
 	
@@ -421,7 +516,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	if (content_type.s) cds_free(content_type.s);
 	if (headers.s) cds_free(headers.s);
 	
-	if (use_db) rls_db_update(s);
+	if ((!removed) && use_db) rls_db_update(s);
 	
 	if (res < 0) DEBUG("external notify NOT generated\n");
 	else DEBUG("external notify generated\n");
@@ -519,7 +614,8 @@ int is_presence_list_package(const str_t *package)
 
 int rls_create_internal_subscription(virtual_subscription_t *vs, 
 		rl_subscription_t **dst, 
-		flat_list_t *flat)
+		flat_list_t *flat,
+		int nesting_level)
 {
 	rl_subscription_t *rls;
 	
@@ -545,7 +641,7 @@ int rls_create_internal_subscription(virtual_subscription_t *vs,
 			FMT_STR(*rls->u.internal.record_id), 
 			rls->u.internal.vs);
 
-	if (add_virtual_subscriptions(rls, flat) != 0) {
+	if (add_virtual_subscriptions(rls, flat, nesting_level) != 0) {
 		rls_free(rls);
 		if (dst) *dst = NULL;
 		return -1;

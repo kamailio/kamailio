@@ -13,9 +13,10 @@
 	rpc_lf(rpc, c);
 */
 
-#define rpc_lf(rpc, c)	rpc->add(c, "s","")
+/* #define rpc_lf(rpc, c)	rpc->add(c, "s","") */
+#define rpc_lf(rpc, c)	do { } while (0)
 
-static void trace_vs(rpc_t *rpc, void *c, virtual_subscription_t *vs)
+static void trace_vs(rpc_t *rpc, void *c, virtual_subscription_t *vs, int details)
 {
 	rpc->printf(c, " Virtual subscriptions:");
 	rpc_lf(rpc, c);
@@ -24,14 +25,16 @@ static void trace_vs(rpc_t *rpc, void *c, virtual_subscription_t *vs)
 	rpc_lf(rpc, c);
 	rpc->printf(c, " -> status = %d", vs->status);
 	rpc_lf(rpc, c);
-	
-	rpc->printf(c, " -> document = %.*s", FMT_STR(vs->state_document));
-	rpc_lf(rpc, c);
+
+	if (details > 0) {
+		rpc->printf(c, " -> document = <![CDATA[%.*s]]>", FMT_STR(vs->state_document));
+		rpc_lf(rpc, c);
+	}
 
 	rpc_lf(rpc, c);
 }
 
-static void rls_trace_subscription(rpc_t *rpc, void *c, rl_subscription_t *s)
+static void rls_trace_subscription(rpc_t *rpc, void *c, rl_subscription_t *s, int details)
 {
 	virtual_subscription_t *vs;
 	int cnt, i;
@@ -51,7 +54,7 @@ static void rls_trace_subscription(rpc_t *rpc, void *c, rl_subscription_t *s)
 	for (i = 0; i < cnt; i++) {
 		vs = ptr_vector_get(&s->vs, i);
 		if (!vs) continue;
-		trace_vs(rpc, c, vs);
+		if (details > 0) trace_vs(rpc, c, vs, details - 1);
 	}
 	
 	rpc_lf(rpc, c);
@@ -62,6 +65,11 @@ static void rls_trace(rpc_t *rpc, void *c)
 	int i = 0;
 	subscription_data_t *s;
 	rl_subscription_t *rs;
+	int details = 0;
+	
+	if (rpc->scan(c, "d", &details) <= 0)
+		details = 0;
+	rpc->fault(c, 200, "OK");
 	
 	rpc->add(c, "s", "RLS Trace:");
 
@@ -75,7 +83,7 @@ static void rls_trace(rpc_t *rpc, void *c)
 	while (s) {
 		i++;
 		rs = (rl_subscription_t*)(s->usr_data);
-		rls_trace_subscription(rpc, c, rs);
+		if (details > 0) rls_trace_subscription(rpc, c, rs, details);
 		s = s->next;
 	}
 	rpc->printf(c, "subscription count: %d", i);

@@ -17,7 +17,10 @@ static int send_notify_cb(struct _subscription_data_t *s)
 
 static int terminate_subscription_cb(struct _subscription_data_t *s)
 {
-	if (s) rls_remove((rl_subscription_t*)s->usr_data);
+	if (s) {
+		TRACE("destroying RLS subscription %p using timer\n", s);
+		rls_remove((rl_subscription_t*)s->usr_data);
+	}
 	return 0;
 }
 
@@ -60,6 +63,7 @@ static void rls_timer_cb(unsigned int ticks, void *param)
 	mq_message_t *msg;
 	client_notify_info_t *info;
 
+	PROF_START(rls_timer_cb)
 	start = time(NULL);
 	rls_lock();
 
@@ -88,7 +92,8 @@ static void rls_timer_cb(unsigned int ticks, void *param)
 	rls_unlock();
 	stop = time(NULL);
 
-	if (stop - start > 0) WARN("rls_timer_cb took %d secs\n", (int) (stop - start));
+	if (stop - start > 1) WARN("rls_timer_cb took %d secs\n", (int) (stop - start));
+	PROF_STOP(rls_timer_cb)
 }
 
 
@@ -134,11 +139,11 @@ int rls_init()
 			rls_mutex,
 			rls_min_expiration,	/* min expiration time in seconds */
 			rls_max_expiration, /* max expiration time in seconds */
-			rls_default_expiration /* default expiration time in seconds */
-			);
+			rls_default_expiration, /* default expiration time in seconds */
+			rls_expiration_timer_period);
 	
 	/* register timer for handling notify messages */
-	if (register_timer(rls_timer_cb, NULL, 10) < 0) {
+	if (register_timer(rls_timer_cb, NULL, rls_timer_interval) < 0) {
 		LOG(L_ERR, "vs_init(): can't register timer\n");
 		return -1;
 	}

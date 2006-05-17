@@ -20,6 +20,7 @@ static void tem_timer_cb(unsigned int ticks, void *param)
 {
 	time_event_manager_t *e, *n;
 
+	PROF_START(tem_timer_cb)
 	if (!tem_info) return;
 
 	e = tem_info->first;
@@ -31,6 +32,7 @@ static void tem_timer_cb(unsigned int ticks, void *param)
 		}
 		e = n;
 	}
+	PROF_STOP(tem_timer_cb)
 }
 
 int time_event_management_init()
@@ -159,6 +161,7 @@ void tem_add_event_nolock(time_event_manager_t *tem, unsigned int action_time, t
 {
 	unsigned int tick, s;
 	
+	PROF_START(tem_add_event)
 	if (!te) return;
 	tick = action_time / tem->atomic_time;
 	if ((tem->enable_delay) && (action_time % tem->atomic_time > 0)) {
@@ -178,12 +181,14 @@ void tem_add_event_nolock(time_event_manager_t *tem, unsigned int action_time, t
 	tem->time_slots[s].last = te;
 
 	te->tick_time = tick;
+	PROF_STOP(tem_add_event)
 }
 
 void tem_remove_event_nolock(time_event_manager_t *tem, time_event_data_t *te)
 {
 	time_event_slot_t *slot;
 
+	PROF_START(tem_remove_event)
 	if (!te) return;
 	
 	slot = &tem->time_slots[te->tick_time % tem->slot_cnt];
@@ -194,6 +199,7 @@ void tem_remove_event_nolock(time_event_manager_t *tem, time_event_data_t *te)
 	else slot->last = te->prev;
 	te->next = NULL;
 	te->prev = NULL;
+	PROF_STOP(tem_remove_event)
 }
 
 static void tem_do_step(time_event_manager_t *tem) 
@@ -201,6 +207,7 @@ static void tem_do_step(time_event_manager_t *tem)
 	time_event_data_t *e, *n, *unprocessed_first, *unprocessed_last;
 	time_event_slot_t *slot;
 
+	PROF_START(tem_do_step)
 	if (tem->mutex) lock_get(tem->mutex);
 	
 	unprocessed_first = NULL;
@@ -230,5 +237,6 @@ static void tem_do_step(time_event_manager_t *tem)
 	tem->tick_counter++;
 	
 	if (tem->mutex) lock_release(tem->mutex);
+	PROF_STOP(tem_do_step)
 }
 

@@ -335,7 +335,7 @@ int xcap_query_rls_services(xcap_query_params_t *xcap_params,
 		return get_rls(uri, xcap_params, package, dst);
 }
 
-static int create_subscriptions(virtual_subscription_t *vs)
+static int create_subscriptions(virtual_subscription_t *vs, int nesting_level)
 {
 	/* create concrete local subscription */
 	str *package = NULL;
@@ -346,11 +346,14 @@ static int create_subscriptions(virtual_subscription_t *vs)
 
 	DEBUG_LOG("creating local subscription to %.*s\n", FMT_STR(vs->uri));
 
-	if (xcap_query_rls_services(&vs->subscription->xcap_params,
-				&vs->uri, package, &flat) == 0) {
+	if ((nesting_level != 0) &&
+			(xcap_query_rls_services(&vs->subscription->xcap_params,
+				&vs->uri, package, &flat) == 0)) {
+		if (nesting_level > 0) nesting_level--;
 		/* it is resource list -> do internal subscription to RLS */
 		if (rls_create_internal_subscription(vs,
-					&vs->local_subscription_list, flat) != 0) {
+					&vs->local_subscription_list, flat,
+					nesting_level) != 0) {
 			ERR("can't create internal subscription\n");
 			free_flat_list(flat);
 			return -1;
@@ -387,7 +390,8 @@ static int create_subscriptions(virtual_subscription_t *vs)
 int vs_create(str *uri, 
 		virtual_subscription_t **dst, 
 		display_name_t *dnames, 
-		rl_subscription_t *subscription)
+		rl_subscription_t *subscription,
+		int nesting_level)
 {
 	int res;
 	display_name_t *d;
@@ -430,7 +434,7 @@ int vs_create(str *uri,
 
 	DBG("created VS %p to %.*s\n", *dst, uri->len, uri->s);
 	
-	res = create_subscriptions(*dst);
+	res = create_subscriptions(*dst, nesting_level);
 	if (res != 0) {
 		vs_free(*dst);
 		return res;

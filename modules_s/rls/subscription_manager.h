@@ -86,7 +86,8 @@ subscription_manager_t *sm_create(send_notify_func notify,
 		gen_lock_t *mutex,
 		int min_exp, 
 		int max_exp, 
-		int default_exp);
+		int default_exp,
+		int expiration_timer_period);
 
 /** initialize a new subscription manager */
 int sm_init(subscription_manager_t *sm,
@@ -96,7 +97,8 @@ int sm_init(subscription_manager_t *sm,
 		gen_lock_t *mutex,
 		int min_exp, 
 		int max_exp, 
-		int default_exp);
+		int default_exp,
+		int expiration_timer_period);
 
 /** initializes internal data members SIP dialog and status 
  * and intializes expiration timer */

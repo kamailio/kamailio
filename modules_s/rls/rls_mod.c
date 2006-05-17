@@ -53,6 +53,17 @@ static int init_timer_delay = 3;
 /* parameters for optimizations */
 int max_notifications_at_once = 1000000;
 
+/* timer for processing notifications from QSA */
+int rls_timer_interval = 10;
+
+/* ignore if NOTIFY times out (don't destroy subscription */
+int rls_ignore_408_on_notify = 0;
+
+/* maximum nested list level (if 0, no nested lists are possible,
+ * if 1 only one nested list level is possible, if 2 it is possible to
+ * have lists in lists, ..., unlimited if -1) */
+int max_list_nesting_level = -1;
+
 /** Exported functions */
 static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
@@ -81,7 +92,11 @@ static param_export_t params[]={
 	
 	/* TODO: have to be documented */
 	{"max_notifications_at_once", PARAM_INT, &max_notifications_at_once },
-	{ "init_timer_delay", PARAM_INT, &init_timer_delay }, /* timer for delayed DB reload (due to internal subscriptions can't be reloaded from init or child init) */
+	{"init_timer_delay", PARAM_INT, &init_timer_delay }, /* timer for delayed DB reload (due to internal subscriptions can't be reloaded from init or child init) */
+	{"timer_interval", PARAM_INT, &rls_timer_interval },
+	{"max_list_nesting_level", PARAM_INT, &max_list_nesting_level },
+	{"expiration_timer_period", PARAM_INT, &rls_expiration_timer_period },
+	{"ignore_408_on_notify", PARAM_INT, &rls_ignore_408_on_notify },
 	
 	{0, 0, 0}
 };
@@ -107,6 +122,8 @@ int use_db = 0;
 int rls_min_expiration = 60;
 int rls_max_expiration = 7200;
 int rls_default_expiration = 3761;
+int rls_expiration_timer_period = 10;
+
 rls_auth_params_t rls_auth_params;	/* structure filled according to parameters (common for all XCAP servers now) */
 char *xcap_server = NULL; /* XCAP server URI */
 

@@ -24,20 +24,23 @@
 /* static variables for sharing data loaded from XCAP */
 typedef struct  {
 	xcap_query_params_t xcap_params;
-	flat_list_t *flat_list;
+	flat_list_t *flat_list; /* may be NULL for empty lists!!! */
+	int have_flat_list; /* added due to possibility of NULL flat list */
 } rls_xcap_query_t;
 
 static rls_xcap_query_t query = { 
 	xcap_params: { xcap_root: {s: NULL, len: 0} }, 
-	flat_list: NULL
+	flat_list: NULL,
+	have_flat_list: 0
 };
 
 /* clears last data stored from one of query_... functions */
 static void clear_last_query()
 {
-	if (query.flat_list) {
-		free_flat_list(query.flat_list);
+	if (query.have_flat_list) {
+		if (query.flat_list) free_flat_list(query.flat_list);
 		query.flat_list = NULL;
+		query.have_flat_list = 0;
 		/* str_clear(&query.params.xcap_root); */
 		memset(&query.xcap_params, 0, sizeof(query.xcap_params));
 	}
@@ -323,10 +326,11 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	
 	res = rls_find_subscription(from_tag, to_tag, call_id, &s);
 	if ((res != RES_OK) || (!s)) {
-		WARN("can't refresh unknown subscription\n");
 		rls_unlock();
-		if (send_error_responses)
+		if (send_error_responses) {
+			WARN("can't refresh unknown subscription\n");
 			send_reply(m, 481, "Call/Transaction Does Not Exist");
+		}
 		return -1; /* "unprocessed" */
 	}
 		
@@ -376,6 +380,7 @@ int handle_rls_subscription(struct sip_msg* _m, char *send_bad_resp)
 	int res;
 	int send_err = 1;
 	
+	PROF_START(rls_handle_subscription)
 	send_err = (int)send_bad_resp;
 	
 	res = parse_rls_headers(_m);
@@ -386,11 +391,13 @@ int handle_rls_subscription(struct sip_msg* _m, char *send_bad_resp)
 			send_reply(_m, 400, "Bad Request");
 		}
 		clear_last_query();
+		PROF_STOP(rls_handle_subscription)
 		return -1;
 	}
 	if (check_message(_m, send_err) != 0) {
 		DBG("check message failed\n");
 		clear_last_query();
+		PROF_STOP(rls_handle_subscription)
 		return -1;
 	}
 	if (has_to_tag(_m)) {
@@ -404,6 +411,7 @@ int handle_rls_subscription(struct sip_msg* _m, char *send_bad_resp)
 		
 	clear_last_query();
 
+	PROF_STOP(rls_handle_subscription)
 	if (res == 0) return 1;
 	else return -1;
 }
@@ -438,7 +446,8 @@ int query_rls_services(struct sip_msg* _m, char *a, char *b)
 	static str package = STR_STATIC_INIT("presence"); 
 	/* TODO: take package from Event header or allow packages
 	 * given as parameter? */
-	
+
+	PROF_START(rls_query_rls_sevices)
 	clear_last_query();
 	
 	if (fill_xcap_params) fill_xcap_params(_m, &query.xcap_params);
@@ -446,17 +455,21 @@ int query_rls_services(struct sip_msg* _m, char *a, char *b)
 	if (get_dst_uri(_m, &uri) < 0) {
 		ERR("can't get destination URI\n");
 		clear_last_query();
+		PROF_STOP(rls_query_rls_sevices)
 		return -1;
 	}
 	
 	if (xcap_query_rls_services(&query.xcap_params,
 				&uri, &package, &query.flat_list) < 0) {
-		ERR("XCAP query problems\n");
+		ERR("XCAP query problems for uri %.*s\n", FMT_STR(uri));
 		clear_last_query();
+		PROF_STOP(rls_query_rls_sevices)
 		return -1;
 	}
 
+	query.have_flat_list = 1;
 	
+	PROF_STOP(rls_query_rls_sevices)
 	return 1;
 }
 
@@ -465,7 +478,8 @@ int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 {
 	int res;
 	str_t uid;
-	
+
+	PROF_START(rls_query_resource_list)
 	clear_last_query();
 	
 	if (fill_xcap_params) fill_xcap_params(_m, &query.xcap_params);
@@ -473,6 +487,7 @@ int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 	if (get_from_uid(&uid, _m) < 0) {
 		ERR("can't get From uid\n");
 		clear_last_query();
+		PROF_STOP(rls_query_resource_list)
 		return -1;
 	}
 	
@@ -485,16 +500,26 @@ int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 	if (res < 0) {
 		ERR("XCAP query problems\n");
 		clear_last_query();
+		PROF_STOP(rls_query_resource_list)
 		return -1;
 	}
+	query.have_flat_list = 1;
 
+	PROF_STOP(rls_query_resource_list)
 	return 1;
 }
 
 int have_flat_list(struct sip_msg* _m, char *a, char *b)
 {
-	if (query.flat_list) return 1;
-	else return -1;
+	PROF_START(rls_have_flat_list)
+	if (query.have_flat_list) {
+		PROF_STOP(rls_have_flat_list)
+		return 1;
+	}
+	else {
+		PROF_STOP(rls_have_flat_list)
+		return -1;
+	}
 }
 
 	

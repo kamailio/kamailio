@@ -132,7 +132,8 @@ int rls_create_subscription(struct sip_msg *m,
 		xcap_query_params_t *params);
 int rls_create_internal_subscription(virtual_subscription_t *vs, 
 		rl_subscription_t **dst, 
-		flat_list_t *flat);
+		flat_list_t *flat,
+		int nesting_level);
 int rls_refresh_subscription(struct sip_msg *m, rl_subscription_t *s);
 int rls_find_subscription(str *from_tag, str *to_tag, str *call_id, rl_subscription_t **dst);
 void rls_free(rl_subscription_t *s); /* removes from memory only */
@@ -147,11 +148,18 @@ int rls_prepare_subscription_response(rl_subscription_t *s, struct sip_msg *m);
 int vs_init();
 int vs_destroy();
 
-int vs_create(str *uri, virtual_subscription_t **dst, display_name_t *dnames, rl_subscription_t *subscription);
+int vs_create(str *uri, 
+		virtual_subscription_t **dst, 
+		display_name_t *dnames, 
+		rl_subscription_t *subscription,
+		int nesting_level);
 int vs_add_display_name(virtual_subscription_t *vs, const char *name, const char *lang);
 void vs_free(virtual_subscription_t *vs);
-int create_virtual_subscriptions(rl_subscription_t *ss);
-int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat);
+int create_virtual_subscriptions(rl_subscription_t *ss,
+		int nesting_level);
+int add_virtual_subscriptions(rl_subscription_t *ss, 
+		flat_list_t *flat,
+		int nesting_level);
 
 /* database operations */
 int rls_db_add(rl_subscription_t *s);
