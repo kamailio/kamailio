@@ -264,8 +264,8 @@ void print_udomain(FILE* _f, udomain_t* _d)
 
 
 /*
- * expects 11 rows (contact, expirs, q, callid, cseq, flags, 
- *   ua, received, path, socket, methods)
+ * expects 12 rows (contact, expirs, q, callid, cseq, flags, 
+ *   ua, received, path, socket, methods, last_modified)
  */
 static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 {
@@ -366,6 +366,11 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		ci.methods = VAL_BITMAP(vals+10);
 	}
 
+	/* last modified time */
+	if (!VAL_NULL(vals+11)) {
+		ci.last_modified = VAL_TIME(vals+11);
+	}
+
 	return &ci;
 }
 
@@ -375,7 +380,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	char uri[MAX_URI_SIZE];
 	ucontact_info_t *ci;
 	db_row_t *row;
-	db_key_t columns[13];
+	db_key_t columns[14];
 	db_res_t* res;
 	str user, contact;
 	char* domain;
@@ -396,14 +401,15 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[9] = path_col.s;
 	columns[10] = sock_col.s;
 	columns[11] = methods_col.s;
-	columns[12] = domain_col.s;
+	columns[12] = last_mod_col.s;
+	columns[13] = domain_col.s;
 
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error in use_table\n");
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (13) : (12), 0,
+	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
 				&res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
@@ -436,7 +442,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		}
 
 		if (use_domain) {
-			domain = (char*)VAL_STRING(ROW_VALUES(row) + 12);
+			domain = (char*)VAL_STRING(ROW_VALUES(row) + 13);
 			if (VAL_NULL(ROW_VALUES(row)+12) || domain==0 || domain[0]==0) {
 				LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty domain "
 				"record for user %.*s...skipping\n", user.len, user.s);
@@ -489,7 +495,7 @@ error:
 urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 {
 	ucontact_info_t *ci;
-	db_key_t columns[11];
+	db_key_t columns[12];
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_res_t* res;
@@ -532,13 +538,14 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	columns[8] = path_col.s;
 	columns[9] = sock_col.s;
 	columns[10] = methods_col.s;
+	columns[11] = last_mod_col.s;
 
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:db_load_urecord: failed to use_table\n");
 		return 0;
 	}
 
-	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 11, 0,
+	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 12, 0,
 				&res) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:db_load_urecord: db_query failed\n");
 		return 0;

@@ -43,6 +43,7 @@
 
 int matching_mode = CONTACT_ONLY;
 
+int cseq_delay = 20;
 
 /*
  * Create and initialize new record structure
@@ -502,6 +503,11 @@ static inline struct ucontact* contact_callid_match( ucontact_t* ptr,
 
 /*
  * Get pointer to ucontact with given contact
+ * Returns:
+ *      0 - found
+ *      1 - not found
+ *     -1 - invalid found
+ *     -2 - found, but to be skipped (same cseq)
  */
 int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
 														struct ucontact** _co)
@@ -528,13 +534,17 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
 
 	if (ptr) {
 		/* found -> check callid and cseq */
-		if (no_callid) {
-			if (_cseq<=ptr->cseq)
+		if (!no_callid) {
+			if (ptr->callid.len!=_callid->len
+			|| memcmp(_callid->s, ptr->callid.s, _callid->len)!=0 ) {
 				return -1;
-		} else {
-			if (ptr->callid.len==_callid->len && _cseq<=ptr->cseq
-			&& !memcmp(_callid->s, ptr->callid.s, _callid->len) )
-				return -1;
+			}
+		}
+		if (_cseq<ptr->cseq)
+			return -1;
+		if (_cseq==ptr->cseq) {
+			get_act_time();
+			return (ptr->last_modified+cseq_delay>act_time)?-2:-1;
 		}
 		
 		*_co = ptr;

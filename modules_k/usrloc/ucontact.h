@@ -80,6 +80,7 @@ typedef struct ucontact {
 	unsigned int flags;     /* Various flags (NAT, supported methods etc) */
 	str user_agent;         /* User-Agent header field */
 	struct socket_info *sock; /* received soket */
+	time_t last_modified;   /* when the record was last modified */
 	unsigned int methods;   /* Supported methods */
 	struct ucontact* next;  /* Next contact in the linked list */
 	struct ucontact* prev;  /* Previous contact in the linked list */
@@ -97,6 +98,7 @@ typedef struct ucontact_info {
 	str *user_agent;
 	struct socket_info *sock;
 	unsigned int methods;
+	time_t last_modified;
 } ucontact_info_t;
 
 /*

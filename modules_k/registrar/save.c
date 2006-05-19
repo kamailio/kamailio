@@ -292,6 +292,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			}
 		}
 
+		ci.last_modified = act_time;
+
 		allow_parsed = 0; /* not parsed yet */
 		received_found = 0; /* not found yet */
 		m = _m; /* remember the message */
@@ -515,7 +517,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 	}
 	DBG("DEBUG:registrar:test_max_contacts: %d valid contacts\n", num);
 	
-	while(_c) {
+	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e);
 		
@@ -525,6 +527,8 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 				"<%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
 			return -1;
+		} else if (ret==-2) {
+			continue;
 		}
 		if (ret > 0) {
 			/* Contact not found */
@@ -532,8 +536,6 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		} else {
 			if (e == 0) num--;
 		}
-		
-		_c = get_next_contact(_c);
 	}
 	
 	DBG("DEBUG:registrar:test_max_contacts: %d contacts after commit\n", num);
@@ -614,6 +616,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				"<%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
 			goto error;
+		} else if (ret==-2) {
+			continue;
 		}
 
 		if ( ret > 0 ) {

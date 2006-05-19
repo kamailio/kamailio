@@ -535,6 +535,36 @@ modparam("usrloc", "matching_mode", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>cseq_delay</varname> (integer)</title>
+		<para>
+		Delay (in seconds) for accepting as retransmissions register requests
+		with same Call-ID and Cseq. The delay is calculated starting from the 
+		receiving time of the first register with that Call-ID and Cseq.
+		</para>
+		<para>
+		Retransmissions within this delay interval will be accepted and replied
+		as the original request, but no update will be done in location. If the
+		delay is exceeded, error is reported.
+		</para>
+		<para>
+		A value of 0 disable the retransmission detection.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>20 seconds</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cseq_delay</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "cseq_delay", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

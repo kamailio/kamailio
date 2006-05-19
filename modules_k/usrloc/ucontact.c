@@ -90,6 +90,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 	c->state = CS_NEW;
 	c->flags = _ci->flags1;
 	c->methods = _ci->methods;
+	c->last_modified = _ci->last_modified;
 
 	return c;
 error:
@@ -225,6 +226,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 	_c->q = _ci->q;
 	_c->cseq = _ci->cseq;
 	_c->methods = _ci->methods;
+	_c->last_modified = _ci->last_modified;
 	_c->flags |= _ci->flags1;
 	_c->flags &= ~_ci->flags2;
 
@@ -386,8 +388,8 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[13];
-	db_val_t vals[13];
+	db_key_t keys[14];
+	db_val_t vals[14];
 	
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -405,7 +407,8 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[9] = path_col.s;
 	keys[10] = sock_col.s;
 	keys[11] = methods_col.s;
-	keys[12] = domain_col.s;
+	keys[12] = last_mod_col.s;
+	keys[13] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -477,14 +480,18 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[11].nul = 0;
 	}
 
+	vals[12].type = DB_DATETIME;
+	vals[12].nul = 0;
+	vals[12].val.time_val = _c->last_modified;
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals[0].val.str_val.len = dom - _c->aor->s;
 
-		vals[12].type = DB_STR;
-		vals[12].nul = 0;
-		vals[12].val.str_val.s = dom + 1;
-		vals[12].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		vals[13].type = DB_STR;
+		vals[13].nul = 0;
+		vals[13].val.str_val.s = dom + 1;
+		vals[13].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
@@ -492,7 +499,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (13) : (12)) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (14) : (13)) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -510,8 +517,8 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[3];
 	db_val_t vals1[3];
 
-	db_key_t keys2[10];
-	db_val_t vals2[10];
+	db_key_t keys2[11];
+	db_val_t vals2[11];
 
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -530,7 +537,8 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[7] = path_col.s;
 	keys2[8] = sock_col.s;
 	keys2[9] = methods_col.s;
-	
+	keys2[10] = last_mod_col.s;
+
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
 	vals1[0].val.str_val = *_c->aor;
@@ -595,6 +603,10 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[9].nul = 0;
 	}
 
+	vals2[10].type = DB_DATETIME;
+	vals2[10].nul = 0;
+	vals2[10].val.time_val = _c->last_modified;
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals1[0].val.str_val.len = dom - _c->aor->s;
@@ -611,7 +623,7 @@ int db_update_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, 
-	(use_domain) ? (3) : (2), 10) < 0) {
+	(use_domain) ? (3) : (2), 11) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
