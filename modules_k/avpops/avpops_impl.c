@@ -1071,6 +1071,10 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			if (!(flags&AVP_VAL_STR)) {
 				goto error;
 			}
+		} else if (dst->opd&AVPOPS_USE_BRANCH) {
+			if (!(flags&AVP_VAL_STR)) {
+				goto error;
+			}
 		} else {
 			LOG(L_CRIT,"BUG:avpops:pushto_avp: destination unknown (%d/%d)\n",
 				dst->opd, dst->ops);
@@ -1104,7 +1108,16 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 		} else if (dst->opd&AVPOPS_USE_DURI) {
 			if(set_dst_uri(msg, &val)!=0)
 			{
-				LOG(L_ERR,"ERROR:avpops:pushto_avp: changing dst uri failed\n");
+				LOG(L_ERR,"ERROR:avpops:pushto_avp: changing dst uri "
+					"failed\n");
+				goto error;
+			}
+		} else if (dst->opd&AVPOPS_USE_BRANCH) {
+			if (append_branch( msg, &val, 0, 0, Q_UNSPECIFIED, 0,
+			msg->force_send_socket)!=1 )
+			{
+				LOG(L_ERR,"ERROR:avpops:pushto_avp: append_branch action"
+					" failed\n");
 				goto error;
 			}
 		} else {

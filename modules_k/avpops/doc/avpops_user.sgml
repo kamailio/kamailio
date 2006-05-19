@@ -627,7 +627,8 @@ avp_delete("a3");
 				Parameter syntax:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					destination = '$ru' ['/'('username'|'domain')] | '$du'
+					destination = '$ru' ['/'('username'|'domain')] | '$du' |
+					'$br'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					$ru '['/'('username'|'domain')] - write the AVP in the
@@ -635,6 +636,10 @@ avp_delete("a3");
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					$du - write the AVP in 'dst_uri' field
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					$br - write the AVP directly as a new branch (does not 
+					affect RURI)
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -664,6 +669,7 @@ avp_delete("a3");
 avp_pushto("$ru","$avp(i:678)");
 avp_pushto("$ru/domain","$avp(s:backup_domains)/g");
 avp_pushto("$du","$avp(i:679)");
+avp_pushto("$br","$avp(i:680)");
 ...
 				</programlisting>
 			</example>

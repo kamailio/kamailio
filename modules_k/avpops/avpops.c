@@ -673,14 +673,6 @@ static int fixup_pushto_avp(void** param, int param_no)
 					" pseudo-variable in param 1\n");
 			return E_OUT_OF_MEM;
 		}
-		if (ap->sval.type!=XL_HDR && ap->sval.type!=XL_RURI
-				&& ap->sval.type!=XL_DSTURI)
-		{
-			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; "
-				"expected : $ru $du ...\n");
-			pkg_free(ap);
-			return E_UNSPEC;
-		}
 
 		switch(ap->sval.type) {
 			case XL_RURI:
@@ -712,9 +704,18 @@ static int fixup_pushto_avp(void** param, int param_no)
 						" from textops module!\n");
 				return E_UNSPEC;
 			break;
+			case XL_BRANCH:
+				if ( p!=0 )
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
+						" branch flag \"%s\"!\n",p);
+					return E_UNSPEC;
+				}
+				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_BRANCH;
+			break;
 			default:
-				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
-					" destination \"%s\"!\n",s);
+				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unsupported "
+					" destination \"%s\"; expected $ru,$du,$br\n",s);
 				return E_UNSPEC;
 		}
 	} else if (param_no==2) {
