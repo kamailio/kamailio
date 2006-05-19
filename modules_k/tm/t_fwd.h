@@ -29,6 +29,7 @@
 #define _T_FWD_H
 
 #include "../../proxy.h"
+#include "../../str.h"
 
 extern unsigned int gflags_mask;
 
@@ -46,7 +47,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 
 int add_blind_uac( );
 
-int t_replicate(struct sip_msg *p_msg, struct proxy_l * proxy);
+int t_replicate(struct sip_msg *p_msg, str *dst);
 
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		struct proxy_l * p);

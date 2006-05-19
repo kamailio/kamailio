@@ -247,7 +247,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 		if (!t_reply( t, p_msg , 100 ,
 			"trying -- your call is important to us"))
 				DBG("SER: ERROR: t_reply (100)\n");
-	} 
+	}
 
 	/* now go ahead and forward ... */
 	ret=t_forward_nonack( t, p_msg, proxy);

@@ -784,7 +784,7 @@ t_retransmit_reply();
 
 	<section id="treplicate">
 		<title>
-		<function moreinfo="none">t_replicate(proto:host:port)</function>
+		<function moreinfo="none">t_replicate(URI)</function>
 		</title>
 		<para>
 		Replicates a request to another destination. No information due the
@@ -792,7 +792,8 @@ t_retransmit_reply();
 		original SIP UAC.
 		</para>
 		<para>
-		The destination is specified as <quote>[proto:]host[:port]</quote>.
+		The destination is specified by a SIP URI. If multiple destinations are
+		to be used, the additional SIP URIs have to be set as branches.
 		</para>
 		<para>
 		This functions can be used from REQUEST_ROUTE.
@@ -801,9 +802,9 @@ t_retransmit_reply();
 		<title><function>t_replicate</function> usage</title>
 		<programlisting format="linespecific">
 ...
-t_replicate("1.2.3.4:5060");
-t_replicate("tcp:1.2.3.4:5060");
-t_replicate("udp:1.2.3.4");
+t_replicate("sip:1.2.3.4:5060");
+t_replicate("sip:1.2.3.4:5060;transport=tcp");
+t_replicate("sip:1.2.3.4");
 ...
 </programlisting>
 		</example>

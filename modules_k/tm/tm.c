@@ -82,6 +82,7 @@ static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
 
 /* fixup functions */
 static int fixup_t_send_reply(void** param, int param_no);
+static int fixup_str(void** param, int param_no);
 static int fixup_str2int( void** param, int param_no);
 static int fixup_phostport2proxy(void** param, int param_no);
 static int fixup_str2regexp(void** param, int param_no);
@@ -94,24 +95,22 @@ static int child_init(int rank);
 
 
 /* exported functions */
-inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_release(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
-		char* bar );
-inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
-inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_relay(struct sip_msg  *p_msg , char *_foo, char *_bar);
-inline static int w_t_replicate(struct sip_msg  *p_msg , char *proxy,
-		char *_foo);
-inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
-inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
-inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
-inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo );
-inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
-inline static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar);
-inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar);
-inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar);
-inline static int t_was_cancelled(struct sip_msg* msg, char *foo, char *bar);
+inline static int w_t_check(struct sip_msg* msg, char* , char* );
+inline static int w_t_release(struct sip_msg* msg, char* , char* );
+inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* ,char* );
+inline static int w_t_newtran(struct sip_msg* p_msg, char* , char* );
+inline static int w_t_reply(struct sip_msg *msg, char* code, char* text);
+inline static int w_t_relay(struct sip_msg *p_msg , char *proxy, char* );
+inline static int w_t_replicate(struct sip_msg *p_msg, char *dst,char* );
+inline static int w_t_forward_nonack(struct sip_msg* msg, char* proxy, char* );
+inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char* );
+inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char* );
+inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char* );
+inline static int t_check_status(struct sip_msg* msg, char *regexp, char* );
+inline static int t_flush_flags(struct sip_msg* msg, char*, char* );
+inline static int t_local_replied(struct sip_msg* msg, char *type, char* );
+inline static int t_check_trans(struct sip_msg* msg, char* , char* );
+inline static int t_was_cancelled(struct sip_msg* msg, char* , char* );
 
 
 /* strings with avp definition */
@@ -147,7 +146,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
 	{"t_release",            w_t_release,             0, 0,
 			REQUEST_ROUTE},
-	{"t_replicate",          w_t_replicate,          1,fixup_phostport2proxy,
+	{"t_replicate",          w_t_replicate,           1, fixup_str,
 			REQUEST_ROUTE},
 	{"t_relay",              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -260,6 +259,24 @@ struct module_exports exports= {
 
 
 /**************************** fixup functions ******************************/
+static int fixup_str(void** param, int param_no)
+{
+	str *s;
+
+	if (param_no == 1) {
+		s = (str*)pkg_malloc( sizeof(str) );
+		if (s==0) {
+			LOG(L_ERR,"ERROR:tm:fixup_str: no more pkg mem\n");
+			return E_OUT_OF_MEM;
+		}
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
+	}
+	return 0;
+}
+
+
 static int fixup_str2int( void** param, int param_no)
 {
 	unsigned long go_to;
@@ -272,7 +289,7 @@ static int fixup_str2int( void** param, int param_no)
 			*param=(void *)go_to;
 			return 0;
 		} else {
-			LOG(L_ERR, "ERROR: fixup_str2int: bad number <%s>\n",
+			LOG(L_ERR, "ERROR:tm:fixup_str2int: bad number <%s>\n",
 				(char *)(*param));
 			return E_CFG;
 		}
@@ -912,14 +929,9 @@ inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo )
 }
 
 
-inline static int w_t_replicate( struct sip_msg  *p_msg , 
-	char *proxy, /* struct proxy_l *proxy expected */
-	char *_foo       /* nothing expected */ )
+inline static int w_t_replicate(struct sip_msg *p_msg, char *dst, char *_bar)
 {
-	/* preserve proto if not explicitly changed */
-	if (((struct proxy_l *)proxy)->proto==PROTO_NONE)
-		((struct proxy_l *)proxy)->proto = p_msg->rcv.proto;
-	return t_replicate( p_msg, ( struct proxy_l *) proxy );
+	return t_replicate( p_msg, (str*)dst );
 }
 
 

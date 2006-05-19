@@ -64,7 +64,7 @@ Bogdan-Andrei Iancu
 
               1.4.6. t_reply(code, reason_phrase)
               1.4.7. t_retransmit_reply()
-              1.4.8. t_replicate(proto:host:port)
+              1.4.8. t_replicate(URI)
               1.4.9. t_release()
               1.4.10. t_check_status(re)
               1.4.11. t_flush_flags()
@@ -648,21 +648,23 @@ t_retransmit_reply();
 ...
      _________________________________________________________
 
-1.4.8. t_replicate(proto:host:port)
+1.4.8. t_replicate(URI)
 
    Replicates a request to another destination. No information
    due the replicated request (like reply code) will be forwarded
    to the original SIP UAC.
 
-   The destination is specified as "[proto:]host[:port]".
+   The destination is specified by a SIP URI. If multiple
+   destinations are to be used, the additional SIP URIs have to
+   be set as branches.
 
    This functions can be used from REQUEST_ROUTE.
 
    Example 1-26. t_replicate usage
 ...
-t_replicate("1.2.3.4:5060");
-t_replicate("tcp:1.2.3.4:5060");
-t_replicate("udp:1.2.3.4");
+t_replicate("sip:1.2.3.4:5060");
+t_replicate("sip:1.2.3.4:5060;transport=tcp");
+t_replicate("sip:1.2.3.4");
 ...
      _________________________________________________________
 

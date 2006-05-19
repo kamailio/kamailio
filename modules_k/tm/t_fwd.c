@@ -627,7 +627,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	if (t->first_branch==0) {
 		try_new=1;
 		current_uri = *GET_RURI(p_msg);
-		branch_ret = add_uac( t, p_msg, &current_uri, &backup_dst, &p_msg->path_vec, proxy);
+		branch_ret = add_uac( t, p_msg, &current_uri, &backup_dst, 
+				&p_msg->path_vec, proxy);
 		if (branch_ret>=0)
 			added_branches |= 1<<branch_ret;
 		else
@@ -704,7 +705,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 }
 
 
-int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy)
+int t_replicate(struct sip_msg *p_msg, str *dst)
 {
 	/* this is a quite horrible hack -- we just take the message
 	   as is, including Route-s, Record-route-s, and Vias ,
@@ -717,5 +718,16 @@ int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy)
 		if we want later to make it thoroughly, we need to
 		introduce delete lumps for all the header fields above
 	*/
-	return t_relay_to(p_msg, proxy, 1 /* replicate */);
+
+	if ( set_dst_uri( p_msg, dst)!=0 ) {
+		LOG(L_ERR,"ERROR:tm:t_replicate: failed to set dst uri\n");
+		return -1;
+	}
+
+	if ( branch_uri2dset( GET_RURI(p_msg) )!=0 ) {
+		LOG(L_ERR,"ERROR:tm:t_replicate: failed to convert uri to dst\n");
+		return -1;
+	}
+
+	return t_relay_to( p_msg, 0, 1/* replicate */);
 }
