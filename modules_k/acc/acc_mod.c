@@ -562,8 +562,8 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			TMCB_RESPONSE_OUT |
 			/* account e2e acks if configured to do so */
 			TMCB_E2EACK_IN |
-			/* report on missed calls
-			TMCB_ON_FAILURE | */
+			/* report on missed calls */
+			TMCB_ON_FAILURE |
 			/* get incoming replies ready for processing */
 			TMCB_RESPONSE_IN;
 		if (tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
@@ -583,24 +583,20 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 
 
 /* is this reply of interest for accounting ? */
-static inline int should_acc_reply(struct cell *t, int code)
+static inline int should_acc_reply(struct sip_msg *req, int code)
 {
-	struct sip_msg *r;
-
-	r=t->uas.request;
-
 	/* validation */
-	if (r==0) {
+	if (req==0) {
 		LOG(L_ERR, "ERROR: acc: should_acc_reply: 0 request\n");
 		return 0;
 	}
 
 	/* negative transactions reported otherwise only if explicitly 
 	 * demanded */
-	if (!is_failed_acc_on(r) && code >=300) return 0;
-	if (!is_acc_on(r))
+	if (!is_failed_acc_on(req) && code >=300) return 0;
+	if (!is_acc_on(req))
 		return 0;
-	if (skip_cancel(r))
+	if (skip_cancel(req))
 		return 0;
 	if (code < 200 && ! (early_media && code==183))
 		return 0;
@@ -609,27 +605,26 @@ static inline int should_acc_reply(struct cell *t, int code)
 }
 
 /* parse incoming replies before cloning */
-static inline void acc_onreply_in(struct cell *t, struct sip_msg *reply,
-	int code, void *param)
+static inline void acc_onreply_in(struct cell *t, struct sip_msg *req,
+											struct sip_msg *reply, int code)
 {
 	/* validation */
-	if (t->uas.request==0) {
+	if (req==0) {
 		LOG(L_ERR, "ERROR: acc: should_acc_reply: 0 request\n");
 		return;
 	}
 
 	/* don't parse replies in which we are not interested */
 	/* missed calls enabled ? */
-	if (((is_invite(t) && code>=300 && is_mc_on(t->uas.request))
-					|| should_acc_reply(t,code)) 
-				&& (reply && reply!=FAKED_REPLY)) {
+	if ( (reply && reply!=FAKED_REPLY) && (should_acc_reply(req,code)
+	|| (is_invite(t) && code>=300 && is_mc_on(req))) ) {
 		parse_headers(reply, HDR_TO_F, 0 );
 	}
 }
 
 /* initiate a report if we previously enabled MC accounting for this t */
-static inline void on_missed(struct cell *t, struct sip_msg *reply,
-	int code, void *param )
+static inline void on_missed(struct cell *t, struct sip_msg *req,
+											struct sip_msg *reply, int code)
 {
 	int reset_lmf; 
 #ifdef SQL_ACC
@@ -642,119 +637,139 @@ static inline void on_missed(struct cell *t, struct sip_msg *reply,
 #ifdef DIAM_ACC
 	int reset_dimf;
 #endif
+	str new_uri_bk;
 
 	/* validation */
-	if (t->uas.request==0) {
-		DBG("DBG: acc: on_missed: no uas.request, local t; skipping\n");
+	if (req==0) {
+		DBG("DBG: acc: on_missed: no request, local t; skipping\n");
 		return;
 	}
 
 	if (is_invite(t) && code>=300) {
-		if (is_log_mc_on(t->uas.request)) {
-			acc_log_missed( t, reply, code);
+		/* set as new_uri the last branch */
+		new_uri_bk = req->new_uri;
+		req->new_uri = t->uac[t->nr_of_outgoings-1].uri;
+
+		if (is_log_mc_on(req)) {
+			acc_log_missed( t, req, reply, code);
 			reset_lmf=1;
 		} else reset_lmf=0;
 #ifdef SQL_ACC
-		if (db_url && is_db_mc_on(t->uas.request)) {
-			acc_db_missed( t, reply, code);
+		if (db_url && is_db_mc_on(req)) {
+			acc_db_missed( t, req, reply, code);
 			reset_dmf=1;
 		} else reset_dmf=0;
 #endif
 #ifdef RAD_ACC
-		if (is_rad_mc_on(t->uas.request)) {
-			acc_rad_missed(t, reply, code );
+		if (is_rad_mc_on(req)) {
+			acc_rad_missed(t, req, reply, code );
 			reset_rmf=1;
 		} else reset_rmf=0;
 #endif
 /* DIAMETER */
 #ifdef DIAM_ACC
-		if (is_diam_mc_on(t->uas.request)) {
-			acc_diam_missed(t, reply, code );
+		if (is_diam_mc_on(req)) {
+			acc_diam_missed(t, req, reply, code );
 			reset_dimf=1;
 		} else reset_dimf=0;
 #endif
+		req->new_uri = new_uri_bk;
+
 		/* we report on missed calls when the first
 		 * forwarding attempt fails; we do not wish to
 		 * report on every attempt; so we clear the flags; 
 		 * we do it after all reporting is over to be sure
 		 * that all reporting functions got a fair chance
 		 */
-		if (reset_lmf) resetflag(t->uas.request, log_missed_flag);
+		if (reset_lmf) resetflag(req, log_missed_flag);
 #ifdef SQL_ACC
-		if (reset_dmf) resetflag(t->uas.request, db_missed_flag);
+		if (reset_dmf) resetflag(req, db_missed_flag);
 #endif
 #ifdef RAD_ACC
-		if (reset_rmf) resetflag(t->uas.request, radius_missed_flag);
+		if (reset_rmf) resetflag(req, radius_missed_flag);
 #endif
 /* DIAMETER */
 #ifdef DIAM_ACC
-		if (reset_dimf) resetflag(t->uas.request, diameter_missed_flag);
+		if (reset_dimf) resetflag(req, diameter_missed_flag);
 #endif
 	}
 }
 
 
 /* initiate a report if we previously enabled accounting for this t */
-static inline void acc_onreply( struct cell* t, struct sip_msg *reply,
-	int code, void *param )
+static inline void acc_onreply( struct cell* t, struct sip_msg *req,
+											struct sip_msg *reply, int code)
 {
+	str new_uri_bk;
+
 	/* validation */
-	if (t->uas.request==0) {
-		DBG("DBG: acc: onreply: no uas.request, local t; skipping\n");
+	if (req==0) {
+		DBG("DBG: acc: onreply: no request, local t; skipping\n");
 		return;
 	}
 
 	/* acc_onreply is bound to TMCB_REPLY which may be called
 	   from _reply, like when FR hits; we should not miss this
 	   event for missed calls either */
-	on_missed(t, reply, code, param );
+	on_missed(t, req, reply, code);
 
-	if (!should_acc_reply(t, code)) return;
-	if (is_log_acc_on(t->uas.request))
-		acc_log_reply(t, reply, code);
+	/* for reply processing, set as new_uri the winning branch */
+	if (t->relaied_reply_branch>=0) {
+		new_uri_bk = req->new_uri;
+		req->new_uri = t->uac[t->relaied_reply_branch].uri;
+	} else {
+		new_uri_bk.len = -1;
+		new_uri_bk.s = 0;
+	}
+
+	if (!should_acc_reply(req, code)) return;
+	if ( is_log_acc_on(req) )
+		acc_log_reply(t, req, reply, code);
 #ifdef SQL_ACC
-	if (db_url && is_db_acc_on(t->uas.request))
-		acc_db_reply(t, reply, code);
+	if (db_url && is_db_acc_on(req))
+		acc_db_reply(t, req, reply, code);
 #endif
 #ifdef RAD_ACC
-	if (is_rad_acc_on(t->uas.request))
-		acc_rad_reply(t, reply, code);
+	if (is_rad_acc_on(req))
+		acc_rad_reply(t, req, reply, code);
 #endif
 /* DIAMETER */
 #ifdef DIAM_ACC
-	if (is_diam_acc_on(t->uas.request))
-		acc_diam_reply(t, reply, code);
+	if (is_diam_acc_on(req))
+		acc_diam_reply(t, req, reply, code);
 #endif
+
+	if (new_uri_bk.len>=0)
+		req->new_uri = new_uri_bk;
 }
 
 
 
-
-static inline void acc_onack( struct cell* t , struct sip_msg *ack,
-	int code, void *param )
+static inline void acc_onack( struct cell* t, struct sip_msg *req,
+		struct sip_msg *ack, int code)
 {
 	/* only for those guys who insist on seeing ACKs as well */
 	if (!report_ack) return;
 	/* if acc enabled for flagged transaction, check if flag matches */
-	if (is_log_acc_on(t->uas.request)) {
+	if (is_log_acc_on(req)) {
 		acc_preparse_req(ack);
-		acc_log_ack(t, ack);
+		acc_log_ack(t, req, ack);
 	}
 #ifdef SQL_ACC
-	if (db_url && is_db_acc_on(t->uas.request)) {
+	if (db_url && is_db_acc_on(req)) {
 		acc_preparse_req(ack);
-		acc_db_ack(t, ack);
+		acc_db_ack(t, req, ack);
 	}
 #endif
 #ifdef RAD_ACC
-	if (is_rad_acc_on(t->uas.request)) {
+	if (is_rad_acc_on(req)) {
 		acc_preparse_req(ack);
-		acc_rad_ack(t,ack);
+		acc_rad_ack(t, req, ack);
 	}
 #endif
 /* DIAMETER */
 #ifdef DIAM_ACC
-	if (is_diam_acc_on(t->uas.request)) {
+	if (is_diam_acc_on(req)) {
 		acc_preparse_req(ack);
 		acc_diam_ack(t,ack);
 	}
@@ -766,13 +781,13 @@ static inline void acc_onack( struct cell* t , struct sip_msg *ack,
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
 {
 	if (type&TMCB_RESPONSE_OUT) {
-		acc_onreply( t, ps->rpl, ps->code, ps->param );
+		acc_onreply( t, ps->req, ps->rpl, ps->code);
 	} else if (type&TMCB_E2EACK_IN) {
-		acc_onack( t, ps->req, ps->code, ps->param );
-	/*} else if (type&TMCB_ON_FAILURE) {
-		on_missed( t, ps->rpl, ps->code, ps->param );*/
+		acc_onack( t, t->uas.request, ps->req, ps->code);
+	} else if (type&TMCB_ON_FAILURE) {
+		on_missed( t, ps->req, ps->rpl, ps->code);
 	} else if (type&TMCB_RESPONSE_IN) {
-		acc_onreply_in( t, ps->rpl, ps->code, ps->param);
+		acc_onreply_in( t, ps->req, ps->rpl, ps->code);
 	}
 }
 

@@ -104,11 +104,12 @@ extern struct val vals[];
 
 int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 		str *txt, str* phrase);
-void acc_log_missed( struct cell* t, struct sip_msg *reply,
-	unsigned int code );
-void acc_log_ack(  struct cell* t , struct sip_msg *ack );
-void acc_log_reply(  struct cell* t , struct sip_msg *reply,
-	unsigned int code);
+void acc_log_missed( struct cell* t, struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code );
+void acc_log_ack( struct cell* t, struct sip_msg *req,
+		struct sip_msg *ack );
+void acc_log_reply( struct cell* t, struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code);
 
 #ifdef SQL_ACC
 int acc_db_bind(char* db_url);
@@ -116,31 +117,34 @@ int acc_db_init(char* db_url);
 void acc_db_close();
 int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 		str* phrase,  char *table, char *fmt);
-void acc_db_missed( struct cell* t, struct sip_msg *reply,
-	unsigned int code );
-void acc_db_ack(  struct cell* t , struct sip_msg *ack );
-void acc_db_reply(  struct cell* t , struct sip_msg *reply,
-	unsigned int code);
+void acc_db_missed( struct cell* t,  struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code );
+void acc_db_ack( struct cell* t, struct sip_msg *req,
+		struct sip_msg *ack );
+void acc_db_reply( struct cell* t,  struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code);
 #endif
 
 #ifdef RAD_ACC
 int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		str* phrase);
-void acc_rad_missed( struct cell* t, struct sip_msg *reply,
-	unsigned int code );
-void acc_rad_ack(  struct cell* t , struct sip_msg *ack );
-void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
-	unsigned int code);
+void acc_rad_missed( struct cell* t, struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code );
+void acc_rad_ack( struct cell* t, struct sip_msg *req,
+		struct sip_msg *ack );
+void acc_rad_reply( struct cell* t, struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code);
 #endif
 
 #ifdef DIAM_ACC
 int acc_diam_request( struct sip_msg *rq, struct hdr_field *to,
 		str* phrase);
-void acc_diam_missed( struct cell* t, struct sip_msg *reply,
-	unsigned int code );
-void acc_diam_ack(  struct cell* t , struct sip_msg *ack );
-void acc_diam_reply(  struct cell* t , struct sip_msg *reply,
-	unsigned int code);
+void acc_diam_missed( struct cell* t, struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code );
+void acc_diam_ack( struct cell* t, struct sip_msg *req,
+		struct sip_msg *ack );
+void acc_diam_reply( struct cell* t, struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code);
 #endif
 
 inline static int skip_cancel(struct sip_msg *msg)

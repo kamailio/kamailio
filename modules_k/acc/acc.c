@@ -476,8 +476,8 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
  ********************************************/
 
 
-void acc_log_missed( struct cell* t, struct sip_msg *reply,
-	unsigned int code )
+void acc_log_missed( struct cell* t, struct sip_msg *req,
+								struct sip_msg *reply, unsigned int code )
 {
 	str acc_text;
 	static str leading_text={ACC_MISSED, ACC_MISSED_LEN};
@@ -489,8 +489,7 @@ void acc_log_missed( struct cell* t, struct sip_msg *reply,
 		return;
 	}
 
-	acc_log_request(t->uas.request, 
-			valid_to(t, reply), &leading_text, &acc_text);
+	acc_log_request( req, valid_to(t, reply), &leading_text, &acc_text);
 	pkg_free(acc_text.s);
 }
 
@@ -499,42 +498,28 @@ void acc_log_missed( struct cell* t, struct sip_msg *reply,
  *        acc_reply_report
  ********************************************/
 
-void acc_log_reply(  struct cell* t , struct sip_msg *reply,
-	unsigned int code )
+void acc_log_reply( struct cell* t, struct sip_msg *req,
+									struct sip_msg *reply, unsigned int code )
 {
 	static str lead={ACC_ANSWERED, ACC_ANSWERED_LEN};
-	str new_uri_bk;
 	str code_str;
 
-	if (t->relaied_reply_branch>=0) {
-		new_uri_bk = t->uas.request->new_uri;
-		t->uas.request->new_uri = t->uac[t->relaied_reply_branch].uri;
-	} else {
-		new_uri_bk.len = -1;
-		new_uri_bk.s = 0;
-	}
-
 	code_str.s=int2str(code, &code_str.len);
-	acc_log_request(t->uas.request, valid_to(t,reply), &lead, &code_str );
-
-	if (new_uri_bk.len>=0)
-		t->uas.request->new_uri = new_uri_bk;
+	acc_log_request( req, valid_to(t,reply), &lead, &code_str );
 }
+
 
 /********************************************
  *        reports for e2e ACKs
  ********************************************/
-void acc_log_ack(  struct cell* t , struct sip_msg *ack )
+void acc_log_ack( struct cell* t, struct sip_msg *req, struct sip_msg *ack )
 {
 
-	struct sip_msg *rq;
 	struct hdr_field *to;
 	static str lead={ACC_ACKED, ACC_ACKED_LEN};
 	str code_str;
 
-	rq =  t->uas.request;
-
-	if (ack->to) to=ack->to; else to=rq->to;
+	if (ack->to) to=ack->to; else to=req->to;
 	code_str.s=int2str(t->uas.status, &code_str.len);
 	acc_log_request(ack, to, &lead, &code_str );
 }
@@ -701,7 +686,7 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 	return 1;
 }
 
-void acc_db_missed( struct cell* t, struct sip_msg *reply,
+void acc_db_missed( struct cell* t, struct sip_msg *req, struct sip_msg *reply,
 	unsigned int code )
 {
 	str acc_text;
@@ -712,30 +697,29 @@ void acc_db_missed( struct cell* t, struct sip_msg *reply,
 						"get_reply_status failed\n" );
 		return;
 	}
-	acc_db_request(t->uas.request, valid_to(t,reply), &acc_text,
-				db_table_mc, SQL_MC_FMT );
+	acc_db_request(req, valid_to(t,reply), &acc_text, db_table_mc, SQL_MC_FMT);
 	pkg_free(acc_text.s);
 }
 
-void acc_db_ack(  struct cell* t , struct sip_msg *ack )
+void acc_db_ack( struct cell* t, struct sip_msg *req, struct sip_msg *ack )
 {
 	str code_str;
 
 	code_str.s=int2str(t->uas.status, &code_str.len);
-	acc_db_request(ack, ack->to ? ack->to : t->uas.request->to,
+	acc_db_request(ack, ack->to ? ack->to : req->to,
 			&code_str, db_table_acc, SQL_ACC_FMT);
 }
 
 
 
-void acc_db_reply(  struct cell* t , struct sip_msg *reply,
+void acc_db_reply( struct cell* t, struct sip_msg *req, struct sip_msg *reply,
 	unsigned int code )
 {
 	str code_str;
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_db_request(t->uas.request, valid_to(t,reply), &code_str,
-				db_table_acc, SQL_ACC_FMT);
+	acc_db_request(req, valid_to(t,reply), &code_str,
+			db_table_acc, SQL_ACC_FMT);
 }
 #endif
 
@@ -953,8 +937,8 @@ error:
 }
 
 
-void acc_rad_missed( struct cell* t, struct sip_msg *reply,
-	unsigned int code )
+void acc_rad_missed( struct cell* t, struct sip_msg *req,
+									struct sip_msg *reply, unsigned int code )
 {
 	str acc_text;
 
@@ -964,28 +948,28 @@ void acc_rad_missed( struct cell* t, struct sip_msg *reply,
 						"get_reply_status failed\n" );
 		return;
 	}
-	acc_rad_request(t->uas.request, valid_to(t,reply), &acc_text);
+	acc_rad_request( req, valid_to(t,reply), &acc_text);
 	pkg_free(acc_text.s);
 }
 
 
-void acc_rad_ack(  struct cell* t , struct sip_msg *ack )
+void acc_rad_ack( struct cell* t, struct sip_msg *req, struct sip_msg *ack )
 {
 	str code_str;
 
 	code_str.s=int2str(t->uas.status, &code_str.len);
-	acc_rad_request(ack, ack->to ? ack->to : t->uas.request->to,
+	acc_rad_request(ack, ack->to ? ack->to : req->to,
 			&code_str);
 }
 
 
-void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
+void acc_rad_reply( struct cell* t, struct sip_msg *req, struct sip_msg *reply,
 	unsigned int code )
 {
 	str code_str;
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_rad_request(t->uas.request, valid_to(t,reply), &code_str);
+	acc_rad_request( req, valid_to(t,reply), &code_str);
 }
 #endif
 
@@ -1333,28 +1317,30 @@ error:
 }
 
 
-void acc_diam_missed( struct cell* t, struct sip_msg *reply, unsigned int code )
+void acc_diam_missed( struct cell* t, struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code )
 {
 	str acc_text;
 
 	get_reply_status(&acc_text, reply, code);
-	acc_diam_request(t->uas.request, valid_to(t,reply), &acc_text);
+	acc_diam_request( req, valid_to(t,reply), &acc_text);
 }
-void acc_diam_ack( struct cell* t, struct sip_msg *ack )
+void acc_diam_ack( struct cell* t, struct sip_msg *req, struct sip_msg *ack )
 {
 	str code_str;
 
 	code_str.s=int2str(t->uas.status, &code_str.len);
-	acc_diam_request(ack, ack->to ? ack->to : t->uas.request->to,
+	acc_diam_request(ack, ack->to ? ack->to : req->to,
 			&code_str);
 }
 
-void acc_diam_reply( struct cell* t , struct sip_msg *reply, unsigned int code )
+void acc_diam_reply( struct cell* t , struct sip_msg *req,
+		struct sip_msg *reply, unsigned int code )
 {
 	str code_str;
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_diam_request(t->uas.request, valid_to(t, reply), &code_str);
+	acc_diam_request(req, valid_to(t, reply), &code_str);
 }
 
 #endif
