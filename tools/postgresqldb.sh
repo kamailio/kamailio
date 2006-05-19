@@ -93,7 +93,7 @@ if [ -z "$USERCOL" ]; then
 	USERCOL="username"
 fi
 
-DUMMY_DATE="2000-01-01 00:00:01"
+DUMMY_DATE="1900-01-01 00:00:01"
 FOREVER="2020-05-28 21:32:15"
 
 DEFAULT_ALIASES_EXPIRES=$FOREVER
@@ -428,7 +428,7 @@ CREATE TABLE location (
   q $FLOAT NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
   cseq int NOT NULL default '$DEFAULT_CSEQ',
-  last_modified $TIMESTAMP,
+  last_modified $DATETIMELOCATION,
   flags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
@@ -451,7 +451,7 @@ CREATE TABLE aliases (
   q $FLOAT NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
   cseq int NOT NULL default '$DEFAULT_CSEQ',
-  last_modified $TIMESTAMP,
+  last_modified $DATETIMEALIAS,
   flags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
