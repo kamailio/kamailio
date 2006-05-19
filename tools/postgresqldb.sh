@@ -28,6 +28,8 @@
 #  -  datetime types not sure
 # 2006-04-07  removed gen_ha1 dependency - use md5sum;
 #             separated the serweb from openser tables (bogdan)
+# 2006-05-16  added ability to specify MD5 from a configuration file
+#             FreeBSD does not have the md5sum function (norm)
 
 PATH=$PATH:/usr/local/sbin
 
@@ -91,6 +93,11 @@ fi
 # user name column
 if [ -z "$USERCOL" ]; then
 	USERCOL="username"
+fi
+
+# Program to calculate a message-digest fingerprint 
+if [ -z "$MD5" ]; then
+	MD5="md5sum"
 fi
 
 DUMMY_DATE="1900-01-01 00:00:01"
@@ -221,12 +228,12 @@ prompt_realm()
 # calculate credentials for admin
 credentials()
 {
-	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | md5sum | awk '{ print $1 }'`
+	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | md5sum | awk '{ print $1 }'`
+	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -234,7 +241,7 @@ credentials()
 
 	#PHPLIB_ID of users should be difficulty to guess for security reasons
 	NOW=`date`;
-	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | md5sum | awk '{ print $1 }'`
+	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | awk '{ print $1 }'`
 	PHPLIB_ID=`$GENHA1 "$RANDOM" "$NOW" $SIP_DOMAIN`
 	if [ $? -ne 0 ] ; then
 		echo "PHPLIB_ID calculation failed"

@@ -2,14 +2,18 @@
 #
 # $Id$
 #
-# sc: ser control; tool for maintaining ser's databases using UNIX sockets
+# sc: openser control; tool for maintaining openser's databases 
+#                      using UNIX sockets
 #
 # History:
 # -------
 # 2004-03-09 Derived from the original FIFO version (janakj)
+# 2006-05-16 added ability to specify MD5 from a configuration file
+#            FreeBSD does not have the md5sum function (norm)
+
 #
 
-# configuration for starting/stopping ser
+# configuration for starting/stopping openser
 PID_FILE=/var/run/openser.pid
 SYSLOG=1 # 0=output to console, 1=output to syslog
 STARTOPTIONS= # for example -dddd
@@ -50,6 +54,11 @@ SERUNIX='openserunix'
 MYSQL='mysql'
 SER='openser'
 LAST_LINE='tail -1'
+# Program to calculate a message-digest fingerprint 
+if [ -z "$MD5" ]; then
+	MD5="md5sum"
+fi
+
 
 # ACL name verification
 VERIFY_ACL=1
@@ -640,12 +649,12 @@ credentials()
 {
 	set_user $1
 
-	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1

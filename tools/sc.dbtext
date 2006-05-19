@@ -1,11 +1,15 @@
 #!/bin/sh 
 #
+# $Id$
+#
 # sc: openser control; tool for maintaining openser's databases
 #
 # History:
 # --------
 # 2005-03-25 - SC with DBText support (cesc santasusana)
 # 2005-07-08 - Removed all non-DBText functions (daniel)
+# 2006-05-16 - added ability to specify MD5 from a configuration file
+#              FreeBSD does not have the md5sum function (norm)
 #
 
 
@@ -36,6 +40,9 @@ fi
 ### binaries
 if [ -z "$LAST_LINE" ] ; then
 	LAST_LINE='tail -1'
+fi
+if [ -z "$MD5" ]; then
+	MD5="md5sum"
 fi
 
 ##### ----------------------------------------------- #####
@@ -706,12 +713,12 @@ credentials()
 {
 	set_user $1
 
-	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo -e "\nHA1 calculation failed\n"
 		exit 1
 	fi
-	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo -e "\nHA1B calculation failed\n"
 		exit 1

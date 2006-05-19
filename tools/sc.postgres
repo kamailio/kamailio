@@ -8,6 +8,8 @@
 # --------
 # 2003-04-06 this is a hack, from serctl, to make work with postgres
 # 2003-02-23 Thomas's start|stop commands checked in
+# 2006-05-16  added ability to specify MD5 from a configuration file
+#             FreeBSD does not have the md5sum function (norm)
 #
 # To-DO:
 # -----
@@ -95,6 +97,9 @@ if [ -z "$SER" ] ; then
 fi
 if [ -z "$LAST_LINE" ] ; then
 	LAST_LINE='tail -1'
+fi
+if [ -z "$MD5" ]; then
+	MD5="md5sum"
 fi
 
 ##### ----------------------------------------------- #####
@@ -552,12 +557,12 @@ is_user() {
 # output: HA1, HA1B
 credentials()
 {
-	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | md5sum | awk '{ print $1 }'`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
