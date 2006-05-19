@@ -63,6 +63,7 @@ struct tm_binds {
 	free_dlg_f         free_dlg;
 	print_dlg_f        print_dlg;
 	tgett_f            t_gett;
+	tget_picked_f      t_get_picked;
 };
 
 

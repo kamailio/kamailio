@@ -101,7 +101,7 @@ inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_relay(struct sip_msg  *p_msg , char *_foo, char *_bar);
-inline static int w_t_replicate1(struct sip_msg  *p_msg , char *proxy,
+inline static int w_t_replicate(struct sip_msg  *p_msg , char *proxy,
 		char *_foo);
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
@@ -147,7 +147,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
 	{"t_release",            w_t_release,             0, 0,
 			REQUEST_ROUTE},
-	{"t_replicate",          w_t_replicate1,          1,fixup_phostport2proxy,
+	{"t_replicate",          w_t_replicate,          1,fixup_phostport2proxy,
 			REQUEST_ROUTE},
 	{"t_relay",              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -221,7 +221,7 @@ static param_export_t params[]={
 	{ "enable_stats",             INT_PARAM,
 		&tm_enable_stats },
 	{ "pass_provisional_replies", INT_PARAM,
-	        &pass_provisional_replies },
+		&pass_provisional_replies },
 	{0,0,0}
 };
 
@@ -400,7 +400,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->register_tmcb = register_tmcb;
 
 	/* replicate function */
-	tmb->t_replicate = w_t_replicate1;
+	tmb->t_replicate = w_t_replicate;
 	/* relay/forward functions */
 	tmb->t_relay = w_t_relay;
 	tmb->t_forward_nonack = (tfwd_f)w_t_forward_nonack;
@@ -414,6 +414,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_get_trans_ident = t_get_trans_ident;
 	tmb->t_lookup_ident = t_lookup_ident;
 	tmb->t_gett = get_t;
+	tmb->t_get_picked = t_get_picked_branch;
 
 	/* tm uac functions */
 	tmb->t_addblind = add_blind_uac;
@@ -640,7 +641,7 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 	struct cell *t;
 	char *status;
 	char backup;
-	int lowest_status;
+	int branch;
 	int n;
 
 	/* first get the transaction */
@@ -665,12 +666,12 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 			break;
 		case FAILURE_ROUTE:
 			/* use the status of the winning reply */
-			if (t_pick_branch( -1, 0, t, &lowest_status)<0 ) {
-				LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
-					" a final response in MODE_ONFAILURE\n");
+			if ( (branch=t_get_picked_branch())<0 ) {
+				LOG(L_CRIT,"BUG:t_check_status: no picked branch (%d) for"
+					" a final response in MODE_ONFAILURE\n", branch);
 				return -1;
 			}
-			status = int2str( lowest_status , 0);
+			status = int2str( t->uac[branch].last_received , 0);
 			break;
 		default:
 			LOG(L_ERR,"ERROR:t_check_status: unsupported route_type %d\n",
@@ -911,7 +912,7 @@ inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo )
 }
 
 
-inline static int w_t_replicate1( struct sip_msg  *p_msg , 
+inline static int w_t_replicate( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {

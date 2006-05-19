@@ -120,6 +120,10 @@ void cleanup_uac_timers( struct cell *t );
 void on_negative_reply( struct cell* t, struct sip_msg* msg,
 	int code, void *param  );
 
+typedef int (*tget_picked_f)(void);
+
+int t_get_picked_branch();
+
 /* set which 'reply' structure to take if only negative
    replies arrive 
 */
@@ -131,9 +135,6 @@ unsigned int get_on_reply();
 int t_retransmit_reply( struct cell *t );
 
 void tm_init_tags();
-
-/* selects the branch for fwd-ing the reply */
-int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code);
 
 int fifo_t_reply( FILE *stream, char *response_file );
 

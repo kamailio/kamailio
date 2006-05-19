@@ -97,18 +97,23 @@
 int restart_fr_on_each_reply=1;
 
 /* private place where we create to-tags for replies */
-/* janakj: made public, I need to access this value to store it in dialogs */
 char tm_tags[TOTAG_VALUE_LEN];
-/* bogdan: pack tm_tag buffer and len into a str to pass them to
- * build_res_buf_from_sip_req() */
 static str  tm_tag = {tm_tags,TOTAG_VALUE_LEN};
 char *tm_tag_suffix;
+
+static int picked_branch=-1;
 
 /* where to go if there is no positive reply */
 static int goto_on_negative=0;
 /* where to go on receipt of reply */
 static int goto_on_reply=0;
 
+
+/* returns the picked branch */
+int t_get_picked_branch()
+{
+	return picked_branch;
+}
 
 
 /* we store the reply_route # in private memory which is
@@ -434,19 +439,18 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	}
 }
 
-#define FAILURE_ROUTE_STACK_SIZE 2
 /*if msg is set -> it will fake the env. vars conforming with the msg; if NULL
  * the env. will be restore to original */
-static inline void faked_env( struct cell *t,struct sip_msg *msg, int level)
+static inline void faked_env( struct cell *t,struct sip_msg *msg)
 {
-	static struct cell *backup_t[FAILURE_ROUTE_STACK_SIZE];
-	static unsigned int backup_msgid[FAILURE_ROUTE_STACK_SIZE];
-	static struct usr_avp **backup_list[FAILURE_ROUTE_STACK_SIZE];
-	static struct socket_info* backup_si[FAILURE_ROUTE_STACK_SIZE];
-	static int backup_route_type[FAILURE_ROUTE_STACK_SIZE];
+	static struct cell *backup_t;
+	static unsigned int backup_msgid;
+	static struct usr_avp **backup_list;
+	static struct socket_info* backup_si;
+	static int backup_route_type;
 
 	if (msg) {
-		swap_route_type( backup_route_type[level], FAILURE_ROUTE);
+		swap_route_type( backup_route_type, FAILURE_ROUTE);
 		/* tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing 
 		 * or a timer process, we need to set current transaction;
@@ -454,24 +458,24 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg, int level)
 		 * up (unnecessary overhead, refcounting)
 		 */
 		/* backup */
-		backup_t[level] = get_t();
-		backup_msgid[level] = global_msg_id;
+		backup_t = get_t();
+		backup_msgid = global_msg_id;
 		/* fake transaction and message id */
 		global_msg_id = msg->id;
 		set_t(t);
 		/* make available the avp list from transaction */
-		backup_list[level] = set_avp_list( &t->user_avps );
+		backup_list = set_avp_list( &t->user_avps );
 		/* set default send address to the saved value */
-		backup_si[level] = bind_address;
+		backup_si = bind_address;
 		bind_address = t->uac[0].request.dst.send_sock;
 	} else {
 		/* restore original environment */
-		set_t(backup_t[level]);
-		global_msg_id = backup_msgid[level];
-		set_route_type( backup_route_type[level] );
+		set_t(backup_t);
+		global_msg_id = backup_msgid;
+		set_route_type( backup_route_type );
 		/* restore original avp list */
-		set_avp_list( backup_list[level] );
-		bind_address = backup_si[level];
+		set_avp_list( backup_list );
+		bind_address = backup_si;
 	}
 }
 
@@ -545,18 +549,15 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 
 
 /* return 1 if a failure_route processes */
-static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
-													int branch, int code)
+static inline int run_failure_handlers(struct cell *t)
 {
-	static struct sip_msg faked_req[FAILURE_ROUTE_STACK_SIZE];
-	static int level = -1;
-	struct sip_msg *shmem_msg = t->uas.request;
+	static struct sip_msg faked_req;
+	struct sip_msg *shmem_msg;
+	struct ua_client *uac;
 	int on_failure;
 
-	if (level+1==FAILURE_ROUTE_STACK_SIZE) {
-		LOG(L_CRIT,"BUG:tm:run_failure_handlers: stack level is 1!!\n");
-		return 0;
-	}
+	shmem_msg = t->uas.request;
+	uac = &t->uac[picked_branch];
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg || REQ_LINE(shmem_msg).method_value==METHOD_CANCEL ) {
@@ -574,17 +575,17 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	if (!fake_req(&faked_req[level+1], shmem_msg, &t->uas, &t->uac[branch])) {
+	if (!fake_req(&faked_req, shmem_msg, &t->uas, uac)) {
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
-	level++;
 	/* fake also the env. conforming to the fake msg */
-	faked_env( t, &faked_req[level], level);
+	faked_env( t, &faked_req);
 
 	/* DONE with faking ;-) -> run the failure handlers */
 	if ( has_tran_tmcbs( t, TMCB_ON_FAILURE) ) {
-		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req[level], rpl, code);
+		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req,
+				uac->reply, uac->last_received);
 	}
 	if (t->on_negative) {
 		/* avoid recursion -- if failure_route forwards, and does not 
@@ -593,16 +594,15 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
-		run_top_route(failure_rlist[on_failure], &faked_req[level]);
+		run_top_route(failure_rlist[on_failure], &faked_req);
 	}
 
 	/* restore original environment and free the fake msg */
-	faked_env( t, 0, level);
-	free_faked_req(&faked_req[level],t);
+	faked_env( t, 0);
+	free_faked_req(&faked_req,t);
 
 	/* if failure handler changed flag, update transaction context */
-	shmem_msg->flags = faked_req[level].flags & gflags_mask;
-	level--;
+	shmem_msg->flags = faked_req.flags & gflags_mask;
 	return 1;
 }
 
@@ -612,34 +612,33 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
  * -1   ... error
  * -2   ... can't decide yet -- incomplete branches present
  */
-int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
+static inline int t_pick_branch( struct cell *t, int *res_code)
 {
 	int lowest_b, lowest_s, b;
+	int cancelled;
 
 	lowest_b=-1; lowest_s=999;
+	cancelled = (t->flags&T_WAS_CANCELLED_FLAG);
 	for ( b=t->first_branch; b<t->nr_of_outgoings ; b++ ) {
-		/* "fake" for the currently processed branch */
-		if (b==inc_branch) {
-			if (inc_code<lowest_s) {
-				lowest_b=b;
-				lowest_s=inc_code;
-			}
-			continue;
-		}
 		/* skip 'empty branches' */
 		if (!t->uac[b].request.buffer.s) continue;
 		/* there is still an unfinished UAC transaction; wait now! */
 		if ( t->uac[b].last_received<200 ) 
 			return -2;
-		if ( t->uac[b].last_received<lowest_s ) {
+		/* replyes to cancel has max priority */
+		if ( (cancelled && t->uac[b].last_received==487)
+		|| (!cancelled && t->uac[b].last_received<lowest_s) ) {
 			lowest_b =b;
 			lowest_s = t->uac[b].last_received;
 		}
 	} /* find lowest branch */
+	DBG("DEBUG:tm:t_pick_branch: picked branch %d, code %d\n",
+		lowest_b,lowest_s);
 
 	*res_code=lowest_s;
 	return lowest_b;
 }
+
 
 /* This is the neurological point of reply processing -- called
  * from within a REPLY_LOCK, t_should_relay_response decides
@@ -657,7 +656,6 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
 {
 	int branch_cnt;
-	int picked_branch;
 	int picked_code;
 	int inv_through;
 
@@ -714,12 +712,17 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	if (new_code >=300 ) {
 
 		Trans->uac[branch].last_received=new_code;
+		/* also append the current reply to the transaction to 
+		 * make it available in failure routes - a kind of "fake"
+		 * save of the final reply per branch */
+		Trans->uac[branch].reply = reply;
 
 		/* if all_final return lowest */
-		picked_branch=t_pick_branch(branch,new_code, Trans, &picked_code);
+		picked_branch = t_pick_branch( Trans, &picked_code);
 		if (picked_branch==-2) { /* branches open yet */
 			*should_store=1;
 			*should_relay=-1;
+			picked_branch=-1;
 			return RPS_STORE;
 		}
 		if (picked_branch==-1) {
@@ -732,15 +735,10 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		 * a callback; save branch count to be able to determine
 		 * later if new branches were initiated */
 		branch_cnt=Trans->nr_of_outgoings;
-		/* also append the current reply to the transaction to 
-		 * make it available in failure routes - a kind of "fake"
-		 * save of the final reply per branch */
-		Trans->uac[branch].reply = reply;
 
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE) || Trans->on_negative ) {
-			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
-				picked_branch, picked_code);
+			run_failure_handlers( Trans );
 		}
 
 		/* now reset it; after the failure logic, the reply may
@@ -762,6 +760,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			   put it on wait again; perhaps splitting put_on_wait
 			   from send_reply or a new RPS_ code would be healthy
 			*/
+			picked_branch=-1;
 			return RPS_COMPLETED;
 		}
 		/* look if the callback/failure_route introduced new branches ... */
@@ -769,15 +768,14 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			/* await then result of new branches */
 			*should_store=1;
 			*should_relay=-1;
+			picked_branch=-1;
 			return RPS_STORE;
 		}
 
-		/* really no more pending branches -- return lowest code */
+		/* really no more pending branches -- return selected code */
 		*should_store=0;
 		*should_relay=picked_branch;
-		/* we dont need 'which_cancel' here -- all branches 
-		   known to have completed */
-		/* which_cancel( Trans, cancel_bitmap ); */
+		picked_branch=-1;
 		return RPS_COMPLETED;
 	} 
 
