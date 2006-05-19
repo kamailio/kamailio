@@ -357,7 +357,7 @@ int uac_auth( struct sip_msg *msg)
 {
 	static struct authenticate_body auth;
 	struct uac_credential *crd;
-	int picked_code, picked_br, b;
+	int code, branch;
 	struct sip_msg *rpl;
 	struct cell *t;
 	struct hdr_field *hdr;
@@ -372,36 +372,16 @@ int uac_auth( struct sip_msg *msg)
 		goto error;
 	}
 
-	/* pick the selected reply */
-	picked_br = -1;
-	picked_code = 999;
-	for ( b=t->first_branch; b<t->nr_of_outgoings ; b++ )
-	{
-		/* skip 'empty branches' */
-		if (!t->uac[b].request.buffer.s)
-			continue;
-		/* there is still an unfinished UAC transaction? */
-		if ( t->uac[b].last_received<200 )
-		{
-			LOG(L_CRIT,"BUG:uac:uac_auth: incomplet transaction in failure "
-				"route\n");
-			goto error;
-		}
-		if ( t->uac[b].last_received<picked_code )
-		{
-			picked_br = b;
-			picked_code = t->uac[b].last_received;
-		}
-	}
-	if (picked_br<0)
-	{
-		LOG(L_CRIT,"BUG:uac:uac_auth: empty transaction in failure "
-			"route\n");
+	/* get the selected branch */
+	branch = uac_tmb.t_get_picked();
+	if (branch<0) {
+		LOG(L_CRIT,"BUG:uac:uac_auth: no picked branch (%d)\n",branch);
 		goto error;
 	}
 
-	rpl = t->uac[picked_br].reply;
-	DBG("DEBUG:uac:uac_auth: picked reply is %p, code %d\n",rpl,picked_code);
+	rpl = t->uac[branch].reply;
+	code = t->uac[branch].last_received;
+	DBG("DEBUG:uac:uac_auth: picked reply is %p, code %d\n",rpl,code);
 
 	if (rpl==0)
 	{
@@ -414,7 +394,7 @@ int uac_auth( struct sip_msg *msg)
 		goto error;
 	}
 
-	hdr = get_autenticate_hdr( rpl, picked_code);
+	hdr = get_autenticate_hdr( rpl, code);
 	if (hdr==0)
 	{
 		LOG( L_ERR,"ERROR:uac:uac_auth: failed to extract authenticate hdr\n");
@@ -447,10 +427,10 @@ int uac_auth( struct sip_msg *msg)
 	}
 
 	/* do authentication */
-	do_uac_auth( msg, &t->uac[picked_br].uri, crd, &auth, response);
+	do_uac_auth( msg, &t->uac[branch].uri, crd, &auth, response);
 
 	/* build the authorization header */
-	new_hdr = build_authorization_hdr( picked_code, &t->uac[picked_br].uri,
+	new_hdr = build_authorization_hdr( code, &t->uac[branch].uri,
 		crd, &auth, response);
 	if (new_hdr==0)
 	{
@@ -459,7 +439,7 @@ int uac_auth( struct sip_msg *msg)
 	}
 
 	/* so far, so good -> add the header and set the proper RURI */
-	if ( apply_urihdr_changes( msg, &t->uac[picked_br].uri, new_hdr)<0 )
+	if ( apply_urihdr_changes( msg, &t->uac[branch].uri, new_hdr)<0 )
 	{
 		LOG(L_ERR,"ERROR:uac:uac_auth: failed to apply changes\n");
 		goto error;
