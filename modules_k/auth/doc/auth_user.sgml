@@ -162,7 +162,8 @@ modparam("auth", "realm_prefix", "sip.")
 			runtime.
 		</para>
 		<para>
-		Default value is <quote>rpid</quote> (Name AVP).
+		Default value is <quote>rpid</quote> (Name AVP - e.g, 'i:number',
+		's:string' or 'avp_alias_string').
 		</para>
 		<example>
 		<title>rpid_avp parameter example</title>

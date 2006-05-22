@@ -181,7 +181,8 @@ modparam("auth", "realm_prefix", "sip.")
    If defined to NULL string, all RPID functions will fail at
    runtime.
 
-   Default value is "rpid" (Name AVP).
+   Default value is "rpid" (Name AVP - e.g, 'i:number',
+   's:string' or 'avp_alias_string').
 
    Example 1-6. rpid_avp parameter example
 modparam("auth", "rpid_avp", "i:13")
