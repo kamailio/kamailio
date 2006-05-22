@@ -1,0 +1,129 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This is a module which provides MySQL connectivity for OpenSER.
+		It implements the DB API defined in OpenSER.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libmysqlclient-dev</emphasis> - the development libraries of mysql-client.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>ping_interval</varname> (integer)</title>
+		<para>
+		Time interval to send ping messages to MySQL server in order to keep
+		the connection open.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 300 (5min).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ping_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mysql", "ping_interval", 600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>auto_reconnect</varname> (integer)</title>
+		<para>
+		Configure the module to auto reconnect to MySQL server if the
+		connection was lost.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (1 - on / 0 - off).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>auto_reconnect</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("auto_reconnect", "auto_reconnect", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+		<para>
+		No function exported to be used from configuration file.
+		</para>
+	</section>
+	<section>
+	<title>Installation</title>
+		<para>
+		Because it dependes on an external library, the mysql module is not
+		compiled and installed by default. You can use one of the next options.
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			- edit the "Makefile" and remove "mysql" from "excluded_modules"
+			list. Then follow the standard procedure to install &ser;:
+			"make all; make install".
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			- from command line use: 'make all include_modules="mysql";
+			make install include_modules="mysql"'.
+			</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: "mysql.sgml" "Book" "chapter")
+End:
+-->

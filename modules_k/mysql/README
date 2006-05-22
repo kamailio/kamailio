@@ -1,0 +1,149 @@
+
+mysql Module
+
+Daniel-Constantin Mierla
+
+   voice-system.ro
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   Copyright © 2006 voice-system.ro
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. OpenSER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. ping_interval (integer)
+              1.3.2. auto_reconnect (integer)
+
+        1.4. Exported Functions
+        1.5. Installation
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set ping_interval parameter
+   1-2. Set auto_reconnect parameter
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This is a module which provides MySQL connectivity for
+   OpenSER. It implements the DB API defined in OpenSER.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * No dependencies on other OpenSER modules.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * libmysqlclient-dev - the development libraries of
+       mysql-client.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. ping_interval (integer)
+
+   Time interval to send ping messages to MySQL server in order
+   to keep the connection open.
+
+   Default value is 300 (5min). 
+
+   Example 1-1. Set ping_interval parameter
+...
+modparam("mysql", "ping_interval", 600)
+...
+     _________________________________________________________
+
+1.3.2. auto_reconnect (integer)
+
+   Configure the module to auto reconnect to MySQL server if the
+   connection was lost.
+
+   Default value is 1 (1 - on / 0 - off). 
+
+   Example 1-2. Set auto_reconnect parameter
+...
+modparam("auto_reconnect", "auto_reconnect", 0)
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+   No function exported to be used from configuration file.
+     _________________________________________________________
+
+1.5. Installation
+
+   Because it dependes on an external library, the mysql module
+   is not compiled and installed by default. You can use one of
+   the next options.
+
+     * - edit the "Makefile" and remove "mysql" from
+       "excluded_modules" list. Then follow the standard
+       procedure to install OpenSER: "make all; make install".
+     * - from command line use: 'make all
+       include_modules="mysql"; make install
+       include_modules="mysql"'.
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://sourceforge.net/tracker/?group_id=139143.
