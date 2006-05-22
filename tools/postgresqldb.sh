@@ -644,8 +644,8 @@ CREATE FUNCTION "rand" () RETURNS double precision AS 'SELECT random();' LANGUAG
  * Table structure for table 'siptrace'
  */
 CREATE TABLE sip_trace (
-  id BIGSERIAL PRIMARY KEY,
-  date $DATETIME,
+  id bigint(20) NOT NULL auto_increment,
+  date datetime NOT NULL default '0000-00-00 00:00:00',
   callid varchar(254) NOT NULL default '',
   traced_user varchar(128) NOT NULL default '',
   msg text NOT NULL,
@@ -654,7 +654,8 @@ CREATE TABLE sip_trace (
   fromip varchar(50) NOT NULL default '',
   toip varchar(50) NOT NULL default '',
   fromtag varchar(64) NOT NULL default '',
-  direction varchar(4) NOT NULL default ''
+  direction varchar(4) NOT NULL default '',
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 CREATE INDEX user_idx ON sip_trace (traced_user);
 CREATE INDEX date_idx ON sip_trace (date);
