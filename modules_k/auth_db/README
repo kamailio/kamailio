@@ -224,7 +224,7 @@ modparam("auth_db", "use_domain", 1)
      * load_credentials = credential (';' credential)* 
      * credential = (avp_specification '=' column_name) |
        (column_name) 
-     * avp_specification = 'i:'ID | 's:'NAME | NAME | '$'alias 
+     * avp_specification = 'i:'ID | 's:'NAME | alias 
 
    Default value of this parameter is "rpid".
 
