@@ -52,6 +52,7 @@ static str  str_buf[2*MAX_ACC_EXTRA];
 
 static char *static_detector = 0;
 
+static str na = {"n/a", 3};
 
 void init_acc_extra()
 {
@@ -268,18 +269,24 @@ int extra2strar( struct acc_extra *extra, /* extra list to account */
 				"-> ommiting extras for accounting\n");
 			goto done;
 		}
-
-		/* set the value into the acc buffer */
-		if (value.rs.s+value.rs.len==static_detector)
-		{
-			memcpy(str_buf[p].s, value.rs.s, value.rs.len);
-			str_buf[p].len = value.rs.len;
-			set_acc( n, extra->name, &str_buf[p] );
-			p++;
-		} else {
-			str_buf[r] = value.rs;
+		if(value.flags&XL_VAL_NULL)
+		{ /* convert <null> to <n/a> to have consistency */
+			str_buf[r] = na;
 			set_acc( n, extra->name, &str_buf[r] );
 			r++;
+		} else {
+			/* set the value into the acc buffer */
+			if (value.rs.s+value.rs.len==static_detector)
+			{
+				memcpy(str_buf[p].s, value.rs.s, value.rs.len);
+				str_buf[p].len = value.rs.len;
+				set_acc( n, extra->name, &str_buf[p] );
+				p++;
+			} else {
+				str_buf[r] = value.rs;
+				set_acc( n, extra->name, &str_buf[r] );
+				r++;
+			}
 		}
 
 		extra = extra->next;
