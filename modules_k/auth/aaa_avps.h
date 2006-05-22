@@ -122,7 +122,7 @@ static inline int parse_aaa_avps(char *definition,
 			/* go to after the equal sign */
 			p = s+1;
 		}
-		/* attr - is between p end e*/
+		/* attr - is between p and e*/
 		foo.s = p;
 		foo.len = e-p;
 		trim( &foo );
