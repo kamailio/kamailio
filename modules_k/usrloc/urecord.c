@@ -534,19 +534,15 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
 
 	if (ptr) {
 		/* found -> check callid and cseq */
-		if (!no_callid) {
-			if (ptr->callid.len!=_callid->len
-			|| memcmp(_callid->s, ptr->callid.s, _callid->len)!=0 ) {
+		if ( no_callid || (ptr->callid.len==_callid->len
+		&& memcmp(_callid->s, ptr->callid.s, _callid->len)==0 ) ) {
+			if (_cseq<ptr->cseq)
 				return -1;
+			if (_cseq==ptr->cseq) {
+				get_act_time();
+				return (ptr->last_modified+cseq_delay>act_time)?-2:-1;
 			}
 		}
-		if (_cseq<ptr->cseq)
-			return -1;
-		if (_cseq==ptr->cseq) {
-			get_act_time();
-			return (ptr->last_modified+cseq_delay>act_time)?-2:-1;
-		}
-		
 		*_co = ptr;
 		return 0;
 	}
