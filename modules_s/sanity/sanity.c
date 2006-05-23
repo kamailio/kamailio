@@ -565,3 +565,148 @@ int check_proxy_require(struct sip_msg* _msg) {
 
 	return 0;
 }
+
+/* check if the typical URI's are parseable */
+int check_parse_uris(struct sip_msg* _msg, int checks) {
+
+	struct to_body *ft_body = NULL;
+	struct sip_uri *uri = NULL;
+
+	DBG("check_parse_uris entered\n");
+
+	/* check R-URI */
+	if (SANITY_URI_CHECK_RURI & checks) {
+#ifdef EXTRA_DEBUG
+		DBG("check_parse_uris(): parsing ruri\n");
+#endif
+		if (_msg->parsed_uri_ok == 0 &&
+				parse_sip_msg_uri(_msg) != 1) {
+			LOG(L_WARN, "sanity_check(): check_parse_uris(): failed to parse request uri\n");
+			if (sl.reply(_msg, 400, "Bad Request URI") == -1) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to send 400 via send_reply (bad ruri)\n");
+				return -1;
+			}
+			return 1;
+		}
+		/* FIXME: would it make sense to check here for "mandatory"
+		 * or "requested" parts of the URI? */
+	}
+	/* check From URI */
+	if (SANITY_URI_CHECK_FROM & checks) {
+#ifdef EXTRA_DEBUG
+		DBG("check_parse_uris(): looking up From header\n");
+#endif
+		if (!_msg->from && parse_headers(_msg, HDR_FROM_F, 0) != 0) {
+			LOG(L_ERR, "sanity_check(): check_parse_uris(): missing from header\n");
+			if (sl.reply(_msg, 400, "Missing From Header") == -1) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to send 400 via send_reply (missing From)\n");
+				return -1;
+			}
+			return 1;
+		}
+		if (!_msg->from->parsed) {
+#ifdef EXTRA_DEBUG
+			DBG("check_parse_uris(): parsing From header\n");
+#endif
+			ft_body = pkg_malloc(sizeof(struct to_body));
+			if (!ft_body) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): out of pkg_memory (From)\n");
+				return -1;
+			}
+			memset(ft_body, 0, sizeof(struct to_body));
+			parse_to(_msg->from->body.s, _msg->from->body.s + \
+					_msg->from->body.len + 1, ft_body);
+			if (ft_body->error == PARSE_ERROR) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to parse From header\n");
+				pkg_free(ft_body);
+				if (sl.reply(_msg, 400, "Bad From header") == -1) {
+					LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to send 400 via send_reply (bad from header)\n");
+					return -1;
+				}
+				return 1;
+			}
+			_msg->from->parsed = ft_body;
+			ft_body = NULL;
+		}
+		if (((struct to_body*)_msg->from->parsed)->uri.s) {
+#ifdef EXTRA_DEBUG
+			DBG("check_parse_uris(): parsing From URI\n");
+#endif
+			uri = pkg_malloc(sizeof(struct sip_uri));
+			if (!uri) {
+				LOG(L_ERR, "sanity_check(): check_parse_ruis(): out of pkg_memory (from uri)\n");
+				return -1;
+			}
+			memset(uri, 0, sizeof(struct sip_uri));
+			if (parse_uri(((struct to_body*)_msg->from->parsed)->uri.s, 
+					((struct to_body*)_msg->from->parsed)->uri.len, uri) != 0) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to parse From uri\n");
+				pkg_free(uri);
+				if (sl.reply(_msg, 400, "Bad From URI") == -1) {
+					LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to send 400 via send_reply (bad from uri)\n");
+					return -1;
+				}
+				return 1;
+			}
+			/* FIXME: we should store this parsed struct somewhere so that
+			 * it could be re-used */
+			/* FIXME 2: would it make sense to check here for "mandatory"
+			 * or "requested" parts of the URI? */
+			pkg_free(uri);
+		}
+	}
+	/* check To URI */
+	if (SANITY_URI_CHECK_TO & checks) {
+#ifdef EXTRA_DEBUG
+		DBG("check_parse_uris(): looking up To header\n");
+#endif
+		if (!_msg->to && parse_headers(_msg, HDR_TO_F, 0) != 0) {
+			LOG(L_ERR, "sanity_check(): check_parse_uris(): missing to header\n");
+			if (sl.reply(_msg, 400, "Missing To Header") == -1) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to send 400 via send_reply (missing To)\n");
+				return -1;
+			}
+			return 1;
+		}
+		/* parse_to is automatically called for HDR_TO_F */
+		if (!_msg->to->parsed) {
+			LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to parse To header\n");
+			if (sl.reply(_msg, 400, "Bad To URI") == -1) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to send 400 via send_reply (bad to uri)\n");
+				return -1;
+			}
+			return 1;
+		}
+		if (((struct to_body*)_msg->to->parsed)->uri.s) {
+#ifdef EXTRA_DEBUG
+			DBG("check_parse_uris(): parsing To URI\n");
+#endif
+			uri = pkg_malloc(sizeof(struct sip_uri));
+			if (!uri) {
+				LOG(L_ERR, "sanity_check(): check_parse_ruis(): out of pkg_memory (to uri)\n");
+				return -1;
+			}
+			memset(uri, 0, sizeof(struct sip_uri));
+			if (parse_uri(((struct to_body*)_msg->to->parsed)->uri.s, 
+					((struct to_body*)_msg->to->parsed)->uri.len, uri) != 0) {
+				LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to parse To uri\n");
+				pkg_free(uri);
+				if (sl.reply(_msg, 400, "Bad To URI") == -1) {
+					LOG(L_ERR, "sanity_check(): check_parse_uris(): failed to send 400 via send_reply (bad to uri)\n");
+					return -1;
+				}
+				return 1;
+			}
+			/* FIXME: we should store this parsed struct somewhere so that
+			 * it could be re-used */
+			/* FIXME 2: would it make sense to check here for "mandatory"
+			 * or "requested" parts of the URI? */
+			pkg_free(uri);
+		}
+	}
+
+#ifdef EXTRA_DEBUG
+	DBG("check_parse_uris passed\n");
+#endif
+	return 0;
+}

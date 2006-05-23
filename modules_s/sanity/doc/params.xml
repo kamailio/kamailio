@@ -25,8 +25,9 @@
 	</para>
 	<para>
 	    Default value is 999. This resolves to the following list of
-		checks: ruri_sip_version, ruri_scheme, required_headers, cseq_method,
-		cseq_value, cotent_length, expires_value, proxy_require.
+		checks: ruri_sip_version (1), ruri_scheme (2), required_headers (4),
+		cseq_method (32), cseq_value (64), cotent_length (128), 
+		expires_value (256), proxy_require (512).
 	</para>
 	<example>
 	    <title>Set <varname>default_checks</varname> parameter</title>
@@ -37,6 +38,18 @@ modparam("sanity", "default_checks", "1")
 	    </programlisting>
 	</example>
     </section>
+
+	<section id="uri_checks">
+	<title><varname>uri_checks</varname> (integer)</title>
+	<para>
+		This parameter determines which URIs are going to be checked
+		if the 'parse uri' will be executed.
+	</para>
+	<para>
+		Default value is 7. This resolves to the following list of
+		parsed URIs: Request RUI (1), From URI (2) and To URI (4).
+	</para>
+	</section>
 
 	<section id="proxy_require">
 	<title><varname>proxy_require</varname> (string)</title>

@@ -73,4 +73,7 @@ int check_ruri_sip_version(struct sip_msg* _msg);
 /* check if the r-uri scheme */
 int check_ruri_scheme(struct sip_msg* _msg);
 
+/* check if the typical URIs are parseable */
+int check_parse_uris(struct sip_msg* _msg, int checks);
+
 #endif /* SANITY_CHK_H */

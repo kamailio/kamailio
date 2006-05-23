@@ -39,10 +39,10 @@
 		This checks are not required by SER itself for its functionality.
 		But on the other side it makes not much sence if a broken
 		request traverses through a SIP network if it is rejected sooner
-		or later by SIP device any way. As every sanity cost extra
+		or later by a SIP device any way. As every sanity cost extra
 		performance because of additional parsing and evaluation it
 		is now with this module up to the SER adminstrator which checks
-		should be done on which requests.
+		should be done on which request.
 	</para>
 	<para>
 		The following checks are available:
@@ -106,6 +106,12 @@
 			proxy require - (512) - checks if all items of the proxy require header
 			are present in the list of the extensions from the module 
 			parameter proxy_require.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			parse uri's - (1024) - checks if the specified URIs are present and
+			parseable by the SER parsers
 			</para>
 		</listitem>
 		</itemizedlist>

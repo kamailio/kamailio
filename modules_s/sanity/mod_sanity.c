@@ -41,7 +41,10 @@ MODULE_VERSION
 str pr_str 	= STR_STATIC_INIT(PROXY_REQUIRE_DEF);
 
 int default_checks = SANITY_DEFAULT_CHECKS;
+int uri_checks = SANITY_DEFAULT_URI_CHECKS;
 strl* proxyrequire_list = NULL;
+
+sl_api_t sl;
 
 static int mod_init(void);
 static int sanity_fixup(void** param, int param_no);
@@ -53,6 +56,7 @@ static int sanity_check(struct sip_msg* _msg, char* _foo, char* _bar);
 static cmd_export_t cmds[] = {
 	{"sanity_check", (cmd_function)sanity_check, 0, 0, REQUEST_ROUTE},
 	{"sanity_check", (cmd_function)sanity_check, 1, sanity_fixup, REQUEST_ROUTE},
+	{"sanity_check", (cmd_function)sanity_check, 2, sanity_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0}
 };
 
@@ -61,6 +65,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"default_checks", 	PARAM_INT, 	&default_checks},
+	{"uri_checks",		PARAM_INT,  &uri_checks	},
 	{"proxy_require", 	PARAM_STR, 	&pr_str 	},
 	{0, 0, 0}
 };
@@ -89,11 +94,11 @@ static int mod_init(void) {
 
 	DBG("sanity initializing\n");
 
-             /*
-              * We will need sl_send_reply from stateless
-	      * module for sending replies
-	      */
-        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	/*
+	 * We will need sl_send_reply from stateless
+	 * module for sending replies
+	 */
+	bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
 	if (!bind_sl) {
 		ERR("This module requires sl module\n");
 		return -1;
@@ -130,17 +135,36 @@ static int sanity_fixup(void** param, int param_no) {
 		}
 		*param = (void*)(long)checks;
 	}
+	if (param_no == 2) {
+		in.s = (char*)*param;
+		in.len = strlen(in.s);
+		if (str2int(&in, (unsigned int*)&checks) < 0) {
+			LOG(L_ERR, "sanity: failed to convert second integer argument\n");
+			return E_UNSPEC;
+		}
+		if ((checks < 1) || (checks > (SANITY_DEFAULT_URI_CHECKS))) {
+			LOG(L_ERR, "sanity: second input parameter (%i) outside of valid range 1-%i\n", checks, SANITY_DEFAULT_URI_CHECKS);
+			return E_UNSPEC;
+		}
+		*param = (void*)(long)checks;
+	}
 	return 0;
 }
 
-static int sanity_check(struct sip_msg* _msg, char* _number, char* _foo) {
-	int check;
+static int sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
+	int check, arg;
 
 	if (_number == NULL) {
 		check = default_checks;
 	}
 	else {
 		check = (int)(long)_number;
+	}
+	if (_arg == NULL) {
+		arg = uri_checks;
+	}
+	else {
+		arg = (int)(long)_arg;
 	}
 
 	if (SANITY_RURI_SIP_VERSION & check &&
@@ -181,6 +205,10 @@ static int sanity_check(struct sip_msg* _msg, char* _number, char* _foo) {
 	}
 	if (SANITY_PROXY_REQUIRE & check &&
 		check_proxy_require(_msg) != 0) {
+		return 1;
+	}
+	if (SANITY_PARSE_URIS & check &&
+		check_parse_uris(_msg, arg) != 0) {
 		return 1;
 	}
 

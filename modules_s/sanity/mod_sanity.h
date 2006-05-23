@@ -45,8 +45,10 @@
 #define SANITY_CL                      (1<<7)
 #define SANITY_EXPIRES_VALUE           (1<<8)
 #define SANITY_PROXY_REQUIRE           (1<<9)
+#define SANITY_PARSE_URIS              (1<<10)
 
-/* RURI_SCHEME, VIA_SIP_VERSION and VIA_PROTOCOL do not work yet */
+/* VIA_SIP_VERSION and VIA_PROTOCOL do not work yet
+ * and PARSE_URIS is very expensive */
 #define SANITY_DEFAULT_CHECKS 	SANITY_RURI_SIP_VERSION | \
 								SANITY_RURI_SCHEME | \
 								SANITY_REQUIRED_HEADERS | \
@@ -65,7 +67,16 @@
 								SANITY_CSEQ_VALUE | \
 								SANITY_CL | \
 								SANITY_EXPIRES_VALUE | \
-								SANITY_PROXY_REQUIRE
+								SANITY_PROXY_REQUIRE | \
+								SANITY_PARSE_URIS
+
+#define SANITY_URI_CHECK_RURI   (1<<0)
+#define SANITY_URI_CHECK_FROM   (1<<1)
+#define SANITY_URI_CHECK_TO     (1<<2)
+
+#define SANITY_DEFAULT_URI_CHECKS	SANITY_URI_CHECK_RURI | \
+									SANITY_URI_CHECK_FROM | \
+									SANITY_URI_CHECK_TO
 
 struct _strlist {
 	str string;            /* the string */
