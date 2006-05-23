@@ -17,6 +17,6 @@ LIBS=-L/usr/lib/mysql -L$(LOCALBASE)/lib -L$(LOCALBASE)/lib/mysql \
 		-L$(LOCALBASE)/mysql/lib/mysql/ \
 		-L$(LOCALBASE)/mysql/lib \
 		-L/usr/lib64/mysql \
-		-lmysqlclient -lz
+		-lm -lmysqlclient -lz
 
 include ../../Makefile.modules
