@@ -40,12 +40,14 @@
 #include <sql.h>
 #include <sqlext.h>
 
+
 #define STRN_LEN 1024
 
 typedef struct strn
 {
 	char s[STRN_LEN];
 } strn;
+
 
 struct my_con
 {
@@ -55,7 +57,7 @@ struct my_con
 	SQLHENV env;
 	SQLHSTMT stmt_handle;			  /* Actual result */
 	SQLHDBC dbc;					  /* Connection representation */
-	strn *row;						  /* Actual row in the result */
+	char** row;						  /* Actual row in the result */
 	time_t timestamp;				  /* Timestamp of last query */
 };
 
@@ -82,7 +84,7 @@ struct my_con* new_connection(struct db_id* id);
  */
 void free_connection(struct my_con* con);
 
-void extract_error(char *fn, SQLHANDLE handle, SQLSMALLINT type);
+void extract_error(char *fn, SQLHANDLE handle, SQLSMALLINT type, char* stret);
 
 char *build_conn_str(struct db_id* id, char *buf);
 #endif  /* MY_CON_H */

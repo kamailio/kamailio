@@ -27,6 +27,7 @@
  *  2005-12-01  initial commit (chgen)
  *  2006-01-10  UID (username) and PWD (password) attributes added to 
  *              connection string (bogdan)
+ *  2006-05-05  extract_error passes back last error state on return (sgupta)
  */
 
 #include "my_con.h"
@@ -142,14 +143,14 @@ struct my_con* new_connection(struct db_id* id)
 		{
 			DBG("DEBUG:unixodbc:new_connection: driver reported the "
 				"following diagnostics\n");
-			extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC);
+			extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
 			goto err;
 		}
 	}
 	else
 	{
 		LOG(L_ERR, "ERROR:unixodbc:new_connection: failed to connect\n");
-		extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC);
+		extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
 		goto err;
 	}
 
@@ -176,10 +177,12 @@ void free_connection(struct my_con* con)
 	pkg_free(con);
 }
 
+
 void extract_error(
 char *fn,
 SQLHANDLE handle,
-SQLSMALLINT type)
+SQLSMALLINT type,
+char* stret)
 {
 	SQLINTEGER   i = 0;
 	SQLINTEGER   native;
@@ -192,9 +195,11 @@ SQLSMALLINT type)
 	{
 		ret = SQLGetDiagRec(type, handle, ++i, state, &native, text,
 			sizeof(text), &len );
-		if (SQL_SUCCEEDED(ret))
-			LOG(L_ERR,"unixodbc:SQLGetDiagRec=%s:%ld:%ld:%s\n", state,
-				(long)i, (long)native, text);
+		if (SQL_SUCCEEDED(ret)) {
+			LOG(L_ERR,"unixodbc:%s=%s:%ld:%ld:%s\n", fn, state, (long)i, 
+					(long)native, text);
+			if(stret) strcpy( stret, (char*)state );
+		}
 	}
 	while( ret == SQL_SUCCESS );
 }

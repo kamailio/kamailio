@@ -26,6 +26,7 @@
  * --------
  *  2005-12-01  initial commit (chgen)
  *  2006-04-04  simplified link list (sgupta)
+ *  2006-05-05  removed static allocation of 1k per column data (sgupta)
  */
 
 #ifndef _UNIXODBC_LIST_H_
@@ -37,9 +38,10 @@
 
 typedef struct list
 {
-	struct list *next;
-	strn *data;
-
+	struct list* next;
+	char** data;
+	unsigned long* lengths;
+	int rownum;
 } list;
 
 int insert(list** start, list** link, int n, strn* value);

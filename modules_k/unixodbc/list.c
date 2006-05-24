@@ -26,6 +26,7 @@
  * --------
  *  2005-12-01  initial commit (chgen)
  *  2006-04-04  simplified link list (sgupta)
+ *  2006-05-05  removed static allocation of 1k per column data (sgupta)
  */
 
 #include "../../dprint.h"
@@ -42,16 +43,41 @@ int insert(list** start, list** link, int n, strn* value)
 			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (1)\n");
 			return -1;
 		}
+		(*link)->rownum = n;
 		(*link)->next = NULL;
-		(*link)->data = pkg_malloc(sizeof(strn)*n);
-		if(!(*link)->data) {
+
+		(*link)->lengths = (unsigned long*)pkg_malloc(sizeof(unsigned long)*n);
+		if(!(*link)->lengths) {
 			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (2)\n");
 			pkg_free(*link);
 			*link = NULL;
 			return -1;
 		}
 		for(i=0; i<n; i++)
-			strcpy((*link)->data[i].s, value[i].s);
+			(*link)->lengths[i] = strlen(value[i].s) + 1;
+
+		(*link)->data = (char**)pkg_malloc(sizeof(char*)*n);
+		if(!(*link)->data) {
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (3)\n");
+			pkg_free( (*link)->lengths );
+			pkg_free(*link);
+			*link = NULL;
+			return -1;
+		}
+
+		for(i=0; i<n; i++) {
+			(*link)->data[i] = pkg_malloc(sizeof(char) * (*link)->lengths[i]);
+			if(!(*link)->data[i]) {
+				LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory "
+					"(4)\n");
+				pkg_free( (*link)->lengths );
+				pkg_free( (*link)->data );
+				pkg_free(*link);
+				*link = NULL;
+				return -1;
+			}
+			strncpy((*link)->data[i], value[i].s, (*link)->lengths[i]);
+		}
 	
 		*start = *link;
 		return 0;
@@ -61,17 +87,43 @@ int insert(list** start, list** link, int n, strn* value)
 		list* nlink;
 		nlink=(list*)pkg_malloc(sizeof(list));
 		if(!nlink) {
-			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (3)\n");
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (5)\n");
 			return -1;
 		}
-		nlink->data = pkg_malloc(sizeof(strn)*n);
-		if(!nlink->data) {
-			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (4)\n");
+		nlink->rownum = n;
+
+		nlink->lengths = (unsigned long*)pkg_malloc(sizeof(unsigned long)*n);
+		if(!nlink->lengths) {
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (6)\n");
 			pkg_free(nlink);
+			nlink = NULL;
 			return -1;
 		}
 		for(i=0; i<n; i++)
-			strcpy(nlink->data[i].s, value[i].s);
+			nlink->lengths[i] = strlen(value[i].s) + 1;
+
+		nlink->data = (char**)pkg_malloc(sizeof(char*)*n);
+		if(!nlink->data) {
+			LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory (7)\n");
+			pkg_free( nlink->lengths );
+			pkg_free(nlink);
+			nlink = NULL;
+			return -1;
+		}
+
+		for(i=0; i<n; i++) {
+			nlink->data[i] = pkg_malloc(sizeof(char) * nlink->lengths[i]);
+			if(!nlink->data[i]) {
+				LOG(L_ERR,"ERROR:unixodbc:insert: Not enough pkg memory "
+					"(8)\n");
+				pkg_free( nlink->lengths );
+				pkg_free( nlink->data );
+				pkg_free(nlink);
+				nlink = NULL;
+				return -1;
+			}
+			strncpy(nlink->data[i], value[i].s, nlink->lengths[i]);
+		}
 
 		nlink->next = NULL;
 		(*link)->next = nlink;
@@ -84,10 +136,15 @@ int insert(list** start, list** link, int n, strn* value)
 
 void destroy(list *start)
 {
+	int i = 0;
+
 	while(start) {
 		list* temp = start;
 		start = start->next;
+		for(i = 0; i < temp->rownum; i++)
+			pkg_free( temp->data[i] );
 		pkg_free(temp->data);
+		pkg_free(temp->lengths);
 		pkg_free(temp);
 	}
 }

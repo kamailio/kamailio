@@ -26,6 +26,7 @@
  * --------
  *  2005-12-01  initial commit (chgen)
  *  2006-04-04  fixed memory leak in convert_rows (sgupta)
+ *  2006-05-05  removed static allocation of 1k per column data (sgupta)
  */
 
 #include "../../mem/mem.h"
@@ -81,12 +82,13 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 		SQLSMALLINT NameLength, DataType, DecimalDigits, Nullable;
 		SQLUINTEGER ColumnSize;
 
-		ret=SQLDescribeCol(CON_RESULT(_h), i + 1, (SQLCHAR *)ColumnName, 80, &NameLength,
-			&DataType, &ColumnSize, &DecimalDigits, &Nullable);
+		ret=SQLDescribeCol(CON_RESULT(_h), i + 1, (SQLCHAR *)ColumnName, 80,
+			&NameLength, &DataType, &ColumnSize, &DecimalDigits, &Nullable);
 		if(!SQL_SUCCEEDED(ret))
 		{
 			LOG(L_ERR, "SQLDescribeCol fallita: %d\n", ret);
-			extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT);
+			extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT, 
+				NULL);
 		}
 		RES_NAMES(_r)[i]=ColumnName;
 		switch(DataType)
@@ -153,6 +155,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	SQLSMALLINT columns;
 	list* rows = NULL;
 	list* rowstart = NULL;
+	strn* temp_row = NULL;
 
 	if((!_h) || (!_r))
 	{
@@ -161,8 +164,8 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	}
 
 	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
-	CON_ROW(_h) = (strn*)pkg_malloc( columns*sizeof(strn) );
-	if(!CON_ROW(_h))
+	temp_row = (strn*)pkg_malloc( columns*sizeof(strn) );
+	if(!temp_row)
 	{
 		LOG(L_ERR, "unixodbc:convert_rows: No memory left\n");
 		return -1;
@@ -174,10 +177,10 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 		{
 			SQLINTEGER indicator;
 			ret = SQLGetData(CON_RESULT(_h), i+1, SQL_C_CHAR,
-				(CON_ROW(_h)[i]).s, STRN_LEN, &indicator);
+				temp_row[i].s, STRN_LEN, &indicator);
 			if (SQL_SUCCEEDED(ret)) {
 				if (indicator == SQL_NULL_DATA)
-					strcpy((CON_ROW(_h)[i]).s, "NULL");
+					strcpy(temp_row[i].s, "NULL");
 			}
 			else
 			{
@@ -185,18 +188,18 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 			}
 		}
 
-		if (insert(&rowstart, &rows, columns, CON_ROW(_h)) < 0) {
+		if (insert(&rowstart, &rows, columns, temp_row) < 0) {
 			LOG(L_ERR, "unixodbc:convertrows: insert failed\n");
-			pkg_free(CON_ROW(_h));
-			CON_ROW(_h) = NULL;
+			pkg_free(temp_row);
+			temp_row= NULL;
 			return -5;
 		}
 
 		row_n++;
 	}
-	/* free temporary CON_ROW(_h) data */
-	pkg_free(CON_ROW(_h));
-	 CON_ROW(_h) = NULL;
+	/* free temporary row data */
+	pkg_free(temp_row);
+	CON_ROW(_h) = NULL;
 
 	RES_ROW_N(_r) = row_n;
 	if (!row_n)
@@ -222,7 +225,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 			free_rows(_r);
 			return -3;
 		}
-		if (convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0)
+		if (convert_row(_h, _r, &(RES_ROWS(_r)[i]), rows->lengths) < 0)
 		{
 			LOG(L_ERR, "unixodbc:convert_rows: Error while converting "
 				"row #%d\n", i);

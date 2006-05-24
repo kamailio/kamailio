@@ -89,4 +89,5 @@ int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
  * subsequent database functions
  */
 int use_table(db_con_t* _h, const char* _t);
+
 #endif                                                      /* DBASE_H */

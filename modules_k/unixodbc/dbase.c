@@ -26,7 +26,10 @@
  * --------
  *  2005-12-01  initial commit (chgen)
  *  2006-04-03  fixed invalid handle to extract error (sgupta)
- *  2006-04-04  removed deprecated ODBC functions, closed cursors on error (sgupta)
+ *  2006-04-04  removed deprecated ODBC functions, closed cursors on error
+ *              (sgupta)
+ *  2006-05-05  Fixed reconnect code to actually work on connection loss 
+ *              (sgupta)
  */
 
 
@@ -49,18 +52,56 @@
 static char sql_buf[SQL_BUF_LEN];
 
 /*
+ * Reconnect if connection is broken
+ */
+static int reconnect(db_con_t* _h, const char* _s)
+{
+	int ret = 0;
+	SQLCHAR outstr[1024];
+	SQLSMALLINT outstrlen;
+	char conn_str[MAX_CONN_STR_LEN];
+
+	LOG(L_ERR, "ERROR:unixodbc:reconnect: Attempting DB reconnect\n");
+
+	/* Disconnect */
+	SQLDisconnect (CON_CONNECTION(_h));
+
+	/* Reconnect */
+	if (!build_conn_str(CON_ID(_h), conn_str)) {
+		LOG(L_ERR, "ERROR:unixodbc:reconnect: failed to build "
+			"connection string\n");
+		return ret;
+	}
+
+	ret = SQLDriverConnect(CON_CONNECTION(_h), (void *)1,
+			(SQLCHAR*)conn_str, SQL_NTS, outstr, sizeof(outstr),
+			&outstrlen, SQL_DRIVER_COMPLETE);
+	if (!SQL_SUCCEEDED(ret)) {
+		LOG(L_ERR, "ERROR:unixodbc:reconnect: failed to connect\n");
+		extract_error("SQLDriverConnect", CON_CONNECTION(_h),
+			SQL_HANDLE_DBC, NULL);
+		return ret;
+	}
+
+	ret = SQLAllocHandle(SQL_HANDLE_STMT, CON_CONNECTION(_h),
+			&CON_RESULT(_h));
+	if (!SQL_SUCCEEDED(ret)) {
+		LOG(L_ERR, "ERROR:unixodbc:reconnect: Statement allocation "
+			"error %d\n", (int)(long)CON_CONNECTION(_h));
+		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,NULL);
+		return ret;
+	}
+
+	return ret;
+}
+
+/*
  * Send an SQL query to the server
  */
 static int submit_query(db_con_t* _h, const char* _s)
 {
-	int ret;
-	SQLCHAR outstr[1024];
-	SQLSMALLINT outstrlen;
-	SQLCHAR sqlstate[15];
-	SQLCHAR ErrorMsg[SQL_MAX_MESSAGE_LENGTH+1];
-	SQLINTEGER native_error = 0;
-	char conn_str[MAX_CONN_STR_LEN];
-	SQLRETURN sts;
+	int ret = 0;
+	SQLCHAR sqlstate[7];
 
 	/* first do some cleanup if required */
 	if(CON_RESULT(_h))
@@ -74,48 +115,15 @@ static int submit_query(db_con_t* _h, const char* _s)
 	{
 		LOG(L_ERR, "ERROR:unixodbc:submit_query: Statement allocation "
 			"error %d\n", (int)(long)CON_CONNECTION(_h));
-		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
-
-		sts = SQLError (CON_ENV(_h), CON_CONNECTION(_h), SQL_NULL_HSTMT,
-				sqlstate, &native_error,
-				ErrorMsg, sizeof(ErrorMsg), NULL);
-		if (SQL_SUCCEEDED (sts) &&
-		strncmp((char*)sqlstate,"08003",5)!=0 && /* Connect not open */
-		strncmp((char*)sqlstate,"08S01",5)!=0) /* Communication link failure */
-		{
-			return ret;
-		}
-
-		LOG(L_ERR, "ERROR:unixodbc:submit_query: try to reconnect\n");
-
-		/* Disconnect */
-		SQLDisconnect (CON_CONNECTION(_h));
-
-		/* Reconnect */
-		if (!build_conn_str(CON_ID(_h), conn_str)) {
-			LOG(L_ERR, "ERROR:unixodbc:submit_query: failed to build "
-				"connection string\n");
-			return ret;
-		}
-
-		ret = SQLDriverConnect(CON_CONNECTION(_h), (void *)1,
-				(SQLCHAR*)conn_str, SQL_NTS, outstr, sizeof(outstr),
-				&outstrlen, SQL_DRIVER_COMPLETE);
-		if (!SQL_SUCCEEDED(ret)) {
-			LOG(L_ERR, "ERROR:unixodbc:submit_query: failed to connect\n");
-			extract_error("SQLDriverConnect", CON_CONNECTION(_h),
-				SQL_HANDLE_DBC);
-			return ret;
-		}
-
-		//ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
-		ret = SQLAllocHandle(SQL_HANDLE_STMT, CON_CONNECTION(_h),
-			&CON_RESULT(_h));
-		if (!SQL_SUCCEEDED(ret))
-		{
-			LOG(L_ERR, "Statement allocation error %d\n",
-				(int)(long)CON_CONNECTION(_h));
-			extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
+		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,
+			(char*)sqlstate);
+		
+		/* Connection broken */
+		if( !strncmp((char*)sqlstate,"08003",5) ||
+		!strncmp((char*)sqlstate,"08S01",5) ) {
+			ret = reconnect(_h, _s);
+			if( !SQL_SUCCEEDED(ret) ) return ret;
+		} else {
 			return ret;
 		}
 	}
@@ -123,12 +131,37 @@ static int submit_query(db_con_t* _h, const char* _s)
 	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, SQL_NTS);
 	if (!SQL_SUCCEEDED(ret))
 	{
-		LOG(L_ERR, "SQLExecDirect, rv=%d. Query= %s\n", ret, _s);
-		extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT);
+		SQLCHAR sqlstate[7];
+		LOG(L_ERR, "unixodbc:SQLExecDirect, rv=%d. Query= %s\n", ret, _s);
+		extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT,
+			(char*)sqlstate);
 
-		/* Close the cursor */
-		SQLCloseCursor(CON_RESULT(_h));
-		SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
+		/* Connection broken */
+		if( !strncmp((char*)sqlstate,"08003",5) ||
+		    !strncmp((char*)sqlstate,"08S01",5) 
+		    )
+		{
+			ret = reconnect(_h, _s);
+			if( SQL_SUCCEEDED(ret) ) {
+				/* Try again */
+				ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, SQL_NTS);
+				if (!SQL_SUCCEEDED(ret)) {
+					LOG(L_ERR, "unixodbc:SQLExecDirect, rv=%d. Query= %s\n",
+						ret, _s);
+					extract_error("SQLExecDirect", CON_RESULT(_h),
+						SQL_HANDLE_STMT, (char*)sqlstate);
+					/* Close the cursor */
+					SQLCloseCursor(CON_RESULT(_h));
+					SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
+				}
+			}
+
+		}
+		else {
+			/* Close the cursor */ 
+			SQLCloseCursor(CON_RESULT(_h));
+			SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
+		}
 	}
 
 	return ret;
@@ -393,11 +426,6 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 	{
 		LOG(L_ERR, "store_result: Error while converting result\n");
 		pkg_free(*_r);
-/* This cannot be used because if convert_result fails,
- * free_result will try to free rows and columns too
- * and free will be called two times
- */
-/* free_result(*_r); */
 		*_r = 0;
 		return -4;
 	}
@@ -641,7 +669,8 @@ db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
-	ret = print_set(&CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
+	ret = print_set(&CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off,
+			_uk, _uv, _un);
 	if (ret < 0) return -1;
 	off += ret;
 
@@ -651,7 +680,8 @@ db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 
-		ret = print_where(&CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		ret = print_where(&CON_CONNECTION(_h), sql_buf + off,
+				SQL_BUF_LEN - off, _k, _o, _v, _n);
 		if (ret < 0) return -1;
 		off += ret;
 	}
@@ -694,7 +724,8 @@ int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
 
-	ret = print_values(&CON_CONNECTION(handle), sql_buf + off, SQL_BUF_LEN - off, vals, n);
+	ret = print_values(&CON_CONNECTION(handle), sql_buf + off,
+			SQL_BUF_LEN - off, vals, n);
 	if (ret < 0) return -1;
 	off += ret;
 

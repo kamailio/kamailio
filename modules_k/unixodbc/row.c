@@ -25,6 +25,7 @@
  * History:
  * --------
  *  2005-12-01  initial commit (chgen)
+ *  2006-05-05  passing proper lengths of column data (sgupta)
  */
 
 #include "../../dprint.h"
@@ -36,7 +37,7 @@
 /*
  * Convert a row from result into db API representation
  */
-int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
+int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengths)
 {
 	int i;
 
@@ -56,7 +57,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	for(i = 0; i < RES_COL_N(_res); i++)
 	{
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
-			((CON_ROW(_h))[i]).s, STRN_LEN) < 0)
+			((CON_ROW(_h))[i]), lengths[i]) < 0)
 		{
 			LOG(L_ERR, "convert_row: Error while converting value\n");
 			free_row(_r);
