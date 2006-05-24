@@ -23,6 +23,7 @@
  * History:
  * ---------
  *  2005-06-22  first version (bogdan)
+ *  2006-05-23  push also q value into branches (bogdan)
  */
 
 
@@ -109,9 +110,9 @@ error:
 
 
 /* returns the number of contacts put in the sorted array */
-static int sort_contacts(contact_t *ct_list, contact_t **ct_array)
+static int sort_contacts(contact_t *ct_list, contact_t **ct_array,
+														qvalue_t *q_array)
 {
-	static qvalue_t q_array[MAX_CONTACTS_PER_REPLY];
 	param_t *q_para;
 	qvalue_t q;
 	int n;
@@ -176,6 +177,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 {
 	static struct sip_msg  dup_rpl;
 	static contact_t *scontacts[MAX_CONTACTS_PER_REPLY];
+	static qvalue_t  sqvalues[MAX_CONTACTS_PER_REPLY];
 	struct hdr_field *hdr;
 	struct hdr_field *contact_hdr;
 	contact_t        *contacts;
@@ -257,7 +259,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 			"has no contacts\n");
 		goto restore;
 	}
-	n = sort_contacts( contacts, scontacts);
+	n = sort_contacts( contacts, scontacts, sqvalues);
 
 	/* to many branches ? */
 	if (max!=-1 && n>max)
@@ -269,7 +271,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	for ( i=0 ; i<n ; i++ ) {
 		DBG("DEBUG:uac_redirect:shmcontact2dset: adding contact <%.*s>\n",
 			scontacts[i]->uri.len, scontacts[i]->uri.s);
-		if (append_branch( 0, &scontacts[i]->uri, 0, 0, Q_UNSPECIFIED, 0, 0)<0 ) {
+		if (append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i], 0, 0)<0) {
 			LOG(L_ERR,"ERROR:uac_redirect:shmcontact2dset: failed to add "
 				"contact to dset\n");
 		} else {
