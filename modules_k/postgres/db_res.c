@@ -133,11 +133,6 @@ int convert_row_pg(db_con_t* _h, db_res_t* _res, db_row_t* _r, char **row_buf,
 	}
 	memset(ROW_VALUES(_r),0,sizeof(db_val_t) * RES_COL_N(_res));
 	ROW_N(_r) = RES_COL_N(_res);
-	/* debug */
-	for(i = 0; i < RES_COL_N(_res); i++) {
-		LOG(L_ERR,"*** after memset: col %d -> nul=%d\n",
-				i,(ROW_VALUES(_r)[i]).nul ) ;
-	}
 
 	/* I'm not sure about this */
 	/* PQfsize() gives us the native length in the database, so */
@@ -145,8 +140,6 @@ int convert_row_pg(db_con_t* _h, db_res_t* _res, db_row_t* _r, char **row_buf,
 	/* however, strlen of the value would be easy to strlen() */
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
-		LOG(L_ERR,"*** before str2valp: col %d -> nul=%d\n",
-				i,(ROW_VALUES(_r)[i]).nul ) ;
 		if (str2valp(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
 			    row_buf[i],
 			    PQfsize(CON_RESULT(_h),i),
@@ -164,12 +157,32 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 {
 	int n, i, j, k;
 	char **row_buf, *s;
+	int value;
+
 	n = PQntuples(CON_RESULT(_h));
 	RES_ROW_N(_r) = n;
 	if (!n) {
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
+	j = RES_COL_N(_r);
+	value = 0;
+
+	/* row instance but column(s) value ? */
+	for(i = 0; i < n; i++) {
+		for(k = 0; k < j; k++) {
+			if(PQgetlength(CON_RESULT(_h), i, k))
+				value = 1;
+		}
+	}
+	/* Looking for the row instance with no values */
+	if(!value){
+		LOG(L_ERR, "convert_rows(): Row instance, does not have "
+			"a column value!\n");
+		RES_ROW_N(_r) = 0;
+		return 0;
+	}
+
 	RES_ROWS(_r) = (struct db_row*)aug_alloc(sizeof(db_row_t) * n,_r);
 	if(RES_ROWS(_r)==NULL)
 	{
@@ -177,7 +190,6 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 	memset(RES_ROWS(_r),0,sizeof(db_row_t) * n);
-	j = RES_COL_N(_r);
 	row_buf = (char **) aug_alloc(sizeof(char *) * (j + 1), CON_SQLURL(_h));
 
 	/* j is the number of columns in the answer set */
