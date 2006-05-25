@@ -174,14 +174,12 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 #endif
 	sip_hostport2su(&dst->to, &parsed_uri.host, parsed_uri.port_no,
 						dst->proto);
-	if (msg){
-		dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
-		if (dst->send_sock==0) {
-			LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
-					dst->to.s.sa_family);
-			/* ser_error = E_NO_SOCKET;*/
-			/* try to continue */
-		}
+	dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
+	if (dst->send_sock==0) {
+		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
+				dst->to.s.sa_family);
+		/* ser_error = E_NO_SOCKET;*/
+		/* try to continue */
 	}
 	return dst;
 }
