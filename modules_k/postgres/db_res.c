@@ -133,6 +133,11 @@ int convert_row_pg(db_con_t* _h, db_res_t* _res, db_row_t* _r, char **row_buf,
 	}
 	memset(ROW_VALUES(_r),0,sizeof(db_val_t) * RES_COL_N(_res));
 	ROW_N(_r) = RES_COL_N(_res);
+	/* debug */
+	for(i = 0; i < RES_COL_N(_res); i++) {
+		LOG(L_ERR,"*** after memset: col %d -> nul=%d\n",
+				i,(ROW_VALUES(_r)[i]).nul ) ;
+	}
 
 	/* I'm not sure about this */
 	/* PQfsize() gives us the native length in the database, so */
@@ -140,6 +145,8 @@ int convert_row_pg(db_con_t* _h, db_res_t* _res, db_row_t* _r, char **row_buf,
 	/* however, strlen of the value would be easy to strlen() */
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
+		LOG(L_ERR,"*** before str2valp: col %d -> nul=%d\n",
+				i,(ROW_VALUES(_r)[i]).nul ) ;
 		if (str2valp(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
 			    row_buf[i],
 			    PQfsize(CON_RESULT(_h),i),

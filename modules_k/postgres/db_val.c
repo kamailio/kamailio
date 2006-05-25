@@ -242,7 +242,8 @@ int str2valp(db_type_t _t, db_val_t* _v, char* _s, int _l, void *_p)
 		}
 
 	case DB_BLOB:
-		VAL_BLOB(_v).s = PQunescapeBytea(_s, &(VAL_BLOB(_v).len) );
+		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s,
+				(unsigned int*)&(VAL_BLOB(_v).len) );
 		VAL_TYPE(_v) = DB_BLOB;
 		DBG("DEBUG:postgres:str2valp: got blob len %d\n", _l);
 		return 0;
@@ -346,7 +347,8 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 			return -7;
 		} else {
 			*_s++ = '\'';
-			tmp_s = PQescapeBytea(VAL_STRING(_v), l, &tmp_len);
+			tmp_s = (char*)PQescapeBytea((unsigned char*)VAL_STRING(_v),
+					l, (unsigned int*)&tmp_len);
 			memcpy(_s, tmp_s, tmp_len);
 			PQfreemem(tmp_s);
 			tmp_len = strlen(_s);
