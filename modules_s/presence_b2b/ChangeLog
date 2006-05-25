@@ -1,4 +1,5 @@
 2006-05-25
+	* added Max-Forwards header into SUBSCRIBE requests
 	* removed unnecessary TM/DIALOG binding function call in module
 	initialization
 

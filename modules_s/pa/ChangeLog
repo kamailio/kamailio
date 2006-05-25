@@ -1,3 +1,6 @@
+2006-05-25
+	* added Max-Forwards header into NOTIFY requests
+
 2006-05-15
 	* added reaction on failed NOTIFY into non-winfo subscriptions
 	* added parameter ignore_408_on_notify

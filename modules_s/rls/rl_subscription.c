@@ -461,6 +461,8 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	}
 	dstr_append_str(&dstr, &s->u.external.contact);
 	
+	/* required by RFC 3261 */
+	dstr_append_zt(&dstr, "Max-Forwards: 70\r\n"); 
 	dstr_append_zt(&dstr, "Event: ");
 	dstr_append_str(&dstr, rls_get_package(s));
 	dstr_append_zt(&dstr, "\r\n");

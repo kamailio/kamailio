@@ -396,6 +396,9 @@ static inline int create_headers(struct watcher* _w, str *dst, str *content_type
 	dstr_init(&buf, 256);
 	str_clear(dst);
 
+	/* required by RFC 3261 */
+	dstr_append_zt(&buf, "Max-Forwards: 70\r\n"); 
+	
 	/* Event header */
 
 	dstr_append_zt(&buf, "Event: ");

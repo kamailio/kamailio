@@ -67,6 +67,8 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 	dstr_append_str(&dstr, events);
 	dstr_append_zt(&dstr, "\r\n");
 
+	/* required by RFC 3261 */
+	dstr_append_zt(&dstr, "Max-Forwards: 70\r\n"); 
 	/* needed for SUBSCRIBE via TCP - if not given the message is not parsed by ser!!! */
 	dstr_append_zt(&dstr, "Content-Length: 0\r\n"); 
 	
