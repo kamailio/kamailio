@@ -32,6 +32,7 @@
 #include <presence/subscriber.h>
 #include <cds/list.h>
 #include <cds/cds.h>
+#include <string.h>
 
 /*#define lock_subscription_data(s) if (s->mutex) cds_mutex_lock(s->mutex);
 #define unlock_subscription_data(s) if (s->mutex) cds_mutex_unlock(s->mutex);*/
@@ -552,7 +553,7 @@ void free_client_notify_info_content(client_notify_info_t *info)
 	if (info->content_type) {
 		if (info->data) info->content_type->destroy_func(info->data);
 	}
-	else ERR("BUG: content-type not given! Possible memory leaks!\n");
+	else ERROR_LOG("BUG: content-type not given! Possible memory leaks!\n");
 }
 
 /* this can be called in notifier and the returned value is valid

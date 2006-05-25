@@ -45,6 +45,8 @@ typedef struct {
 	int len;
 } str_t;
 
+#define STR_STATIC_INIT(v) {(v), sizeof(v) - 1}
+
 #endif
 
 #define FMT_STR(str)	(str).len,((str).s ? (str).s : "")	

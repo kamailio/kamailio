@@ -200,7 +200,7 @@ static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream
 }
 
 
-int xcap_query(const str_t *uri, xcap_query_params_t *params, char **buf, int *bsize)
+int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bsize)
 {
 	CURLcode res = -1;
 	static CURL *handle = NULL;
@@ -209,8 +209,14 @@ int xcap_query(const str_t *uri, xcap_query_params_t *params, char **buf, int *b
 	int i;
 	long auth_methods;
 	
-	if (!uri) return -1;
-	if (!buf) return -1;
+	if (!uri) {
+		ERROR_LOG("BUG: no uri given\n");
+		return -1;
+	}
+	if (!buf) {
+		ERROR_LOG("BUG: no buf given\n");
+		return -1;
+	}
 
 	i = 0;
 	if (params) {
