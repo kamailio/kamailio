@@ -1,3 +1,11 @@
+2006-05-25
+	* removed unnecessary TM/DIALOG binding function call in module
+	initialization
+
+2006-04-27
+	* added parameter for delayed sending of SUBSCRIBE requests
+	(max_subscribe_delay)
+
 2006-04-21
 	* added parameter presence_outbound_proxy (may be used instead of
 	presence_route or both together) - presence subscriptions are sent there

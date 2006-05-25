@@ -67,6 +67,7 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 {
 	dlg_id_t id;
 	events_uac_t *uac;
+	int tmp;
 
 	if (parse_headers(m, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F, 0) < 0) {
 		ERR("can't parse headers\n");
@@ -86,13 +87,15 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 			FMT_STR(id.rem_tag),
 			FMT_STR(id.call_id));*/
 
+		tmp = id.rem_tag.len;
 		id.rem_tag.len = 0;
 		
 		uac = (events_uac_t*)ht_find(&euac_internals->ht_unconfirmed, &id);
 		
 		if (!uac) {
+			id.rem_tag.len = tmp; /* for printing whole dlg id */
 			WARN("events UAC not found for arriving NOTIFY: "
-				"%.*s * %.*s * %.*s\n",
+				"%.*s, %.*s, %.*s\n",
 				FMT_STR(id.loc_tag),
 				FMT_STR(id.rem_tag),
 				FMT_STR(id.call_id));
@@ -144,7 +147,7 @@ static void subscribe_cb(struct cell* t, int type, struct tmcb_params* params)
 		return;
 	}
 
-	DBG("%d response on SUBSCRIBE %p\n", params->code, uac);
+	/* TRACE("%d response on SUBSCRIBE %p [%s]\n", params->code, uac, uac->id); */
 
 	action = act_4xx;
 	if ((params->code >= 100) && (params->code < 200)) action = act_1xx;
@@ -276,7 +279,8 @@ int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 	if (ht_add(&euac_internals->ht_unconfirmed, &uac->dialog->id, uac) != 0) 
 		goto ns_err_ref;
 	
-	/* ERR("DIALOG ID = %.*s:%.*s:%.*s\n",
+	/* TRACE("new subscription [%s] dlg id = %.*s, %.*s, %.*s\n",
+			uac->id,
 			FMT_STR(uac->dialog->id.call_id), 
 			FMT_STR(uac->dialog->id.rem_tag), 
 			FMT_STR(uac->dialog->id.loc_tag)); */
@@ -413,8 +417,9 @@ static ticks_t timer_cb(ticks_t ticks, struct timer_ln* tl, void* data)
 
 	/* TRACE("timer called at %d ticks with %p\n", ticks, data); */
 
+	uac->timer_started = 0; /* hack */
 	lock_events_uac();
-	uac->timer_started = 0;
+	/* uac->timer_started = 0; */
 	euac_do_step(act_tick, NULL, uac);
 	remove_euac_reference_nolock(uac);
 	unlock_events_uac();

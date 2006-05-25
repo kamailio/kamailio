@@ -25,8 +25,16 @@ int events_child_init(int _rank);
 
 static int handle_notify(struct sip_msg* m)
 {
-	if (process_euac_notify(m) == 0) return 1;
-	else return -1;
+	int res;
+	
+	PROF_START(b2b_handle_notify)
+		
+	if (process_euac_notify(m) == 0) res = 1;
+	else res = -1;
+	
+	PROF_STOP(b2b_handle_notify)
+
+	return res;
 }
 
 
@@ -51,6 +59,7 @@ static param_export_t params[]={
 
 	/* TODO: undocumented */
 	{"presence_outbound_proxy", PARAM_STR, &presence_outbound_proxy },	
+	{"max_subscribe_delay", PARAM_INT, &max_subscribe_delay }, /* for randomized sent of SUBSCRIBE requests */
 	{0, 0, 0}
 };
 
@@ -66,14 +75,8 @@ struct module_exports exports = {
 	events_child_init	/* per-child init function */
 };
 
-struct tm_binds tmb;
-dlg_func_t dlg_func;
-
 int events_mod_init(void)
 {
-    load_tm_f load_tm;
-	bind_dlg_mod_f bind_dlg;
-
 	DEBUG_LOG("presence_b2b module initialization\n");
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
@@ -82,26 +85,6 @@ int events_mod_init(void)
 	DEBUG_LOG(" ... common libraries\n");
 	cds_initialize();
 	qsa_initialize();
-
-	/* import the TM auto-loading function */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
-		ERR("Can't import tm!\n");
-		return -1;
-	}
-	/* let the auto-loading function load all TM stuff */
-	if (load_tm(&tmb)==-1) {
-		ERR("load_tm() failed\n");
-		return -1;
-	}
-
-	bind_dlg = (bind_dlg_mod_f)find_export("bind_dlg_mod", -1, 0);
-	if (!bind_dlg) {
-		LOG(L_ERR, "Can't import dlg\n");
-		return -1;
-	}
-	if (bind_dlg(&dlg_func) != 0) {
-		return -1;
-	}
 
 	if (events_uac_init() != 0) {
 		return -1;

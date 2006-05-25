@@ -1,20 +1,10 @@
 #include "euac_state_machine.h"
 #include "euac_internals.h"
 #include "euac_funcs.h"
-
-static void accept_response(events_uac_t *uac, euac_action_t action)
-{
-	if (action != act_1xx) {
-		/* remove reference reserved for cb (final responses 
-		 * only or timer tick instead of 408) */
-		remove_euac_reference_nolock(uac); 
-	}
-}
-
-static void decline_response(events_uac_t *uac, euac_action_t action)
-{
-	ERR("[%s]: out of order response action = %d) (BUG?)\n", uac->id, action);
-}
+	
+/* if set to number > 0 SUBSCRIBE requests are sent randomly, at last 
+ * after max_subscribe_delay seconds */
+int max_subscribe_delay = 0;
 
 /* waiting time after error (before new attempt about subscription) */
 int resubscribe_timeout_on_err = 120; 
@@ -36,6 +26,21 @@ int min_resubscribe_time = 30;
 int failover_timeout = 60;
 
 /* helper functions for internal usage */
+
+static void accept_response(events_uac_t *uac, euac_action_t action)
+{
+	if (action != act_1xx) {
+		/* remove reference reserved for cb (final responses 
+		 * only or timer tick instead of 408) */
+		remove_euac_reference_nolock(uac); 
+	}
+}
+
+static void decline_response(events_uac_t *uac, euac_action_t action)
+{
+	ERR("[%s]: out of order response action = %d) (BUG?)\n", uac->id, action);
+}
+
 
 static int get_resubscribe_time(struct sip_msg *m)
 {
@@ -372,6 +377,14 @@ void do_step_destroyed(euac_action_t action, struct sip_msg *m, events_uac_t *ua
 			WARN("[%s]: received NOTIFY for destroyed dialog !\n", uac->id);
 			discard_notification(uac, m, 481, "Subscription does not exist");
 			break;
+
+		/* response can be received because the step predestroyed -> destroyed could 
+		 * be done after receiving terminating NOTIFY (before response) */
+		case act_2xx:
+		case act_3xx:
+		case act_4xx: 
+			break;
+			
 		default:
 			ERR("[%s]: action not allowed (%d) (BUG?)\n", uac->id, action);
 			break;
@@ -384,6 +397,13 @@ void do_step_predestroyed(euac_action_t action, struct sip_msg *m, events_uac_t 
 		case act_notify:
 				refresh_dialog(uac, m);
 				discard_notification(uac, m, 200, "OK");
+				if (is_terminating_notify(m)) {
+					destroy_confirmed_dialog(uac);
+					euac_clear_timer(uac);
+					uac->status = euac_destroyed;
+					/* DBG("destroying dialog (NOTIFY)\n"); */
+					remove_euac_reference_nolock(uac); /* free EUAC */
+				}
 				break;
 		case act_1xx: 
 				accept_response(uac, action);
@@ -426,9 +446,14 @@ void do_step_waiting_for_term_notify(euac_action_t action, struct sip_msg *m, ev
 				break;
 		case act_tick:
 				/* wait no more */
+				if (!uac->dialog) WARN("[%s]: destroying dialog with timer (no term NOTIFY)!\n", uac->id);
+				else WARN("[%s]: destroying dialog with timer (no term NOTIFY; %.*s, %.*s, %.*s)!\n", 
+						uac->id,
+						FMT_STR(uac->dialog->id.loc_tag),
+						FMT_STR(uac->dialog->id.rem_tag),
+						FMT_STR(uac->dialog->id.call_id));
 				uac->status = euac_destroyed;
 				destroy_confirmed_dialog(uac);
-				WARN("[%s]: destroying dialog with timer (no term NOTIFY)!\n", uac->id);
 				remove_euac_reference_nolock(uac); /* free EUAC */
 				break;
 		case act_1xx:
@@ -517,10 +542,20 @@ void euac_do_step(euac_action_t action, struct sip_msg *m, events_uac_t *uac)
 
 void euac_start(events_uac_t *uac)
 {
-	uac->status = euac_unconfirmed;
-	if (new_subscription(uac, NULL, failover_timeout) != 0) {
+	int subscribe_delay = 0;
+	
+	if (max_subscribe_delay > 0) {
 		uac->status = euac_waiting;
-		euac_set_timer(uac, resubscribe_timeout_on_err);
+		/* subscribe_delay = (double)rand() / (double)RAND_MAX * max_subscribe_delay; */
+		subscribe_delay = rand() % (max_subscribe_delay) + 1; /* dissallow timer with 0 expiration */
+		euac_set_timer(uac, subscribe_delay);
+	}
+	else {
+		uac->status = euac_unconfirmed;
+		if (new_subscription(uac, NULL, failover_timeout) != 0) {
+			uac->status = euac_waiting;
+			euac_set_timer(uac, resubscribe_timeout_on_err);
+		}
 	}
 }
 

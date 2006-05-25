@@ -48,4 +48,7 @@ extern int min_resubscribe_time;
 
 extern int failover_timeout;
 
+/* for randomized start of subscriptions */
+extern int max_subscribe_delay;
+
 #endif
