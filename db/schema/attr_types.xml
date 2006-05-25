@@ -122,9 +122,9 @@
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
          <value col="at.desc">asserted identity</value>
-         <value col="at.d_flags">1</value>
-         <value col="at.prior">0</value>
-         <value col="at.order">0</value>
+         <value col="at.d_flags">33</value>
+         <value col="at.prior">256</value>
+         <value col="at.order">200</value>
     </row>
 	 
     <row><value col="at.name">fr_timer</value>    

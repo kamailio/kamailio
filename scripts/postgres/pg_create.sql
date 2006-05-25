@@ -94,7 +94,7 @@ CREATE TABLE attr_types (
 
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('uid', '2', '1');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('did', '2', '1');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('asserted_id', '2', 'string', 'asserted identity', '1', '0', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('asserted_id', '2', 'string', 'asserted identity', '33', '256', '200');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('fr_timer', '0', 'int', '@ff_fr_timer', '33', '1073807616', '140');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('fr_inv_timer', '0', 'int', '@ff_fr_inv_timer', '33', '1073807616', '150');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('gflags', '0', 'int', 'global flags', '33', '1073741824', '0');
