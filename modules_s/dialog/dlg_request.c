@@ -14,10 +14,14 @@ int request_outside(str* method, str* headers, str* body, dlg_t* dialog, transac
 		LOG(L_ERR, "req_within: Dialog is not in DLG_NEW state\n");
 		goto err;
 	}
-	
-	if (tmb.calculate_hooks(dialog) < 0) {
-		LOG(L_ERR, "Error while calculating hooks\n");
-		return -2;
+
+	if (!dialog->hooks.next_hop) {
+		/* FIXME: this is only experimental - hooks are calculated only when
+		 * next hop is not known */
+		if (tmb.calculate_hooks(dialog) < 0) {
+			LOG(L_ERR, "Error while calculating hooks\n");
+			return -2;
+		}
 	}
 
 	return tmb.t_uac(method, headers, body, dialog, cb, cbp);

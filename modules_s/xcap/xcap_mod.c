@@ -114,8 +114,14 @@ int xcap_query_impl(const char *uri, xcap_query_params_t *params, char **buf, in
 	int i;
 	long auth_methods;
 	
-	if (!uri) return -1;
-	if (!buf) return -1;
+	if (!uri) {
+		ERR("BUG: no uri given\n");
+		return -1;
+	}
+	if (!buf) {
+		ERR("BUG: no buf given\n");
+		return -1;
+	}
 
 	i = 0;
 	if (params) {
@@ -186,7 +192,7 @@ int xcap_query_impl(const char *uri, xcap_query_params_t *params, char **buf, in
 			else dstr_get_data(&data, *buf);
 		}
 	}
-	else DEBUG_LOG("curl error: %d\n", res);
+	else TRACE_LOG("curl error: %d\n", res); /* see curl/curl.h for possible values*/
 	dstr_destroy(&data);
 	if (auth) cds_free(auth);
 	return res;
