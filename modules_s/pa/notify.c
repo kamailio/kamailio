@@ -48,6 +48,7 @@
 #include <presence/xpidf.h>
 #include <presence/lpidf.h>
 #include "winfo_doc.h"
+#include "dlist.h"
 
 #define CONTACT "Contact: "
 #define CONTACT_L  (sizeof(CONTACT) - 1)
@@ -135,6 +136,149 @@ static str reason[] = {
 
 
 static str method = STR_STATIC_INIT(METHOD_NOTIFY);
+
+/* TM callback processing */
+
+typedef struct {
+	dlg_id_t id;
+	str uid;
+	struct pdomain *domain; /* replace with domain name for safe stop */
+	char buf[1];
+} pa_notify_cb_param_t;
+
+static pa_notify_cb_param_t *create_notify_cb_param(presentity_t *p, watcher_t *w)
+{
+	pa_notify_cb_param_t *cbd;
+	int size;
+
+	if ((!p) || (!w)) return NULL;
+	if (!w->dialog) return NULL;
+
+	size = sizeof(*cbd) + p->uuid.len +
+			w->dialog->id.call_id.len +
+			w->dialog->id.rem_tag.len +
+			w->dialog->id.loc_tag.len;
+	
+	cbd = (pa_notify_cb_param_t*)mem_alloc(size);
+	if (!cbd) {
+		ERR("can't allocate memory (%d bytes)\n", size);
+		return NULL;
+	}
+
+	cbd->domain = p->pdomain;
+
+	cbd->uid.s = cbd->buf;
+	cbd->uid.len = p->uuid.len;
+	
+	cbd->id.call_id.s = cbd->uid.s + cbd->uid.len;
+	cbd->id.call_id.len = w->dialog->id.call_id.len;
+	
+	cbd->id.rem_tag.s = cbd->id.call_id.s + cbd->id.call_id.len;
+	cbd->id.rem_tag.len = w->dialog->id.rem_tag.len;
+	
+	cbd->id.loc_tag.s = cbd->id.rem_tag.s + cbd->id.rem_tag.len;
+	cbd->id.loc_tag.len = w->dialog->id.loc_tag.len;
+	
+	/* copy data */
+	if (p->uuid.s) memcpy(cbd->uid.s, p->uuid.s, p->uuid.len); 
+	if (w->dialog->id.call_id.s) memcpy(cbd->id.call_id.s, 
+			w->dialog->id.call_id.s, w->dialog->id.call_id.len); 
+	if (w->dialog->id.rem_tag.s) memcpy(cbd->id.rem_tag.s, 
+			w->dialog->id.rem_tag.s, w->dialog->id.rem_tag.len); 
+	if (w->dialog->id.loc_tag.s) memcpy(cbd->id.loc_tag.s, 
+			w->dialog->id.loc_tag.s, w->dialog->id.loc_tag.len); 
+	
+	return cbd;
+}
+
+static void destroy_subscription(pa_notify_cb_param_t *cbd)
+{
+	struct pdomain *domain = NULL;
+	presentity_t *p = NULL;
+	watcher_t *w = NULL;
+	int et = EVENT_PRESENCE;
+	
+/*	if (find_pdomain(cbd->domain, &domain) != 0) {
+		ERR("can't find PA domain\n");
+		return;
+	} */
+	domain = cbd->domain;
+
+	lock_pdomain(domain);
+	
+	if (find_presentity_uid(domain, &cbd->uid, &p) != 0) {
+		/* presentity NOT found */
+		unlock_pdomain(domain);
+		return;
+	}
+	
+	if (find_watcher_dlg(p, &cbd->id, et, &w) != 0) {
+		/* presence watcher NOT found */
+		
+		et = EVENT_PRESENCE_WINFO;
+		if (find_watcher_dlg(p, &cbd->id, et, &w) != 0) {
+			/* presence.winfo watcher NOT found */
+			unlock_pdomain(domain);
+			return;
+		}
+	}
+
+	/* have watcher, et and presentity */
+	if (use_db) db_remove_watcher(p, w);
+
+	if (et == EVENT_PRESENCE) {
+		/* presence watcher */
+		p->flags |= PFLAG_WATCHERINFO_CHANGED;
+		remove_watcher(p, w);
+	}
+	else {
+		/* presence winfo watcher */
+		remove_winfo_watcher(p, w);
+	}
+
+	free_watcher(w);
+
+
+	unlock_pdomain(domain);
+	
+}
+
+static void pa_notify_cb(struct cell* t, int type, struct tmcb_params* params)
+{
+	pa_notify_cb_param_t *cbd = NULL;
+	
+	if (!params) return;
+
+	/* Possible problems - see subscribe_cb in presence_b2b/euac_funcs.c */
+
+	if (params->param) cbd = (pa_notify_cb_param_t *)*(params->param);
+	if (!cbd) {
+		ERR("BUG empty cbd parameter given to callback function\n");
+		return;
+	}
+
+	if ((params->code >= 300)) {
+		int ignore = 0;
+		
+		switch (params->code) {
+			case 408: 
+				if (ignore_408_on_notify) ignore = 1;
+				/* due to eyeBeam's problems with processing more NOTIFY
+				 * requests sent consequently without big delay */
+				break;
+		}
+	
+		if (!ignore) {
+			WARN("destroying subscription from callback due to %d response on NOTIFY\n", params->code);
+			destroy_subscription(cbd);
+			TRACE("subscription destroyed!!!\n");
+		}
+	}
+	
+	shm_free(cbd);
+}
+
+/* helper functions */
 
 static inline int add_event_hf(dstring_t *buf, int event_package)
 {
@@ -310,6 +454,7 @@ static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 	str body = STR_STATIC_INIT("");
 	presentity_info_t *pinfo = NULL;
 	int res = 0;
+	pa_notify_cb_param_t *cbd = NULL;
 	
 	pinfo = presentity2presentity_info(_p);
 	if (!pinfo) {
@@ -349,14 +494,28 @@ static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 		
 		return -7;
 	}
+	
+	/* alloc data for callback */
+	cbd = create_notify_cb_param(_p, _w);
+	if (!cbd) {
+		ERR("can't allocate data for callback\n");
+		/* FIXME: destroy subscription? */
+		
+		str_free_content(&headers);
+		str_free_content(&doc);
+		str_free_content(&content_type);
+		return -1;
+	}	
 
 	if (!is_str_empty(&doc)) body = doc;
-	res = tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	res = tmb.t_request_within(&method, &headers, &body, 
+			_w->dialog, pa_notify_cb, cbd);
 	if (res < 0) {
 		ERR("Can't send NOTIFY (%d) in dlg %.*s, %.*s, %.*s\n", res, 
 			FMT_STR(_w->dialog->id.call_id), 
 			FMT_STR(_w->dialog->id.rem_tag), 
 			FMT_STR(_w->dialog->id.loc_tag));
+		/* FIXME: destroy subscription? */
 	}
 	str_free_content(&doc);
 	str_free_content(&headers);
@@ -544,6 +703,8 @@ int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
 {
 	str headers = STR_NULL;
 	str body = STR_STATIC_INIT("");
+	pa_notify_cb_param_t *cbd = NULL;
+	int res;
 
 	/* send notifications to unauthorized (pending) watchers */
 	if (create_headers(_w, &headers, NULL) < 0) {
@@ -551,7 +712,24 @@ int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
 		return -7;
 	}
 
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	/* alloc data for callback */
+	cbd = create_notify_cb_param(_p, _w);
+	if (!cbd) {
+		ERR("can't allocate data for callback\n");
+		str_free_content(&headers);
+		/* FIXME: destroy subscription? */
+		return -1;
+	}	
+	
+	res = tmb.t_request_within(&method, &headers, &body, _w->dialog, pa_notify_cb, cbd);
+	if (res < 0) {
+		ERR("Can't send NOTIFY (%d) in dlg %.*s, %.*s, %.*s\n", res, 
+			FMT_STR(_w->dialog->id.call_id), 
+			FMT_STR(_w->dialog->id.rem_tag), 
+			FMT_STR(_w->dialog->id.loc_tag));
+		/* FIXME: destroy subscription? */
+		/* FIXME: destroy CBD? */
+	}
 
 	str_free_content(&headers);
 		

@@ -1,3 +1,7 @@
+2006-05-15
+	* added reaction on failed NOTIFY into non-winfo subscriptions
+	* added parameter ignore_408_on_notify
+
 2006-05-10
 	* corrected bug in PUBLISH handling (refreshing state with empty body
 	destroyed notes and person elements and did not store tuples into DB)

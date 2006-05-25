@@ -180,7 +180,6 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 	/* Allocate memory buffer for watcher_t structure and uri string */
 	size = sizeof(watcher_t) + _uri->len + _dn->len + S_ID_LEN + server_contact->len;
 	watcher = (watcher_t*)mem_alloc(size);
-	TRACE("allocating watcher: %d\n", size);
 	if (!watcher) {
 		paerrno = PA_NO_MEMORY;
 	        LOG(L_ERR, "new_watcher(): No memory left (%d bytes)\n", size);

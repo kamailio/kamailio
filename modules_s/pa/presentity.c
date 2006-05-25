@@ -114,7 +114,7 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, str *uid, presentit
 
 	size = sizeof(presentity_t) + _uri->len + 1 + uid->len + 1;
 	presentity = (presentity_t*)mem_alloc(size);
-	TRACE("allocating presentity: %d\n", size);
+	/* TRACE("allocating presentity: %d\n", size); */
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_presentity_no_wb(): No memory left: size=%d\n", size);

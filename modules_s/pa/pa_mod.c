@@ -115,6 +115,9 @@ int offline_winfo_timer_interval = 3600;
 int subscribe_to_users = 0;
 str pa_subscription_uri = STR_NULL;
 
+/* ignore 408 response on NOTIFY messages (don't destroy the subscription in the case of it if set */
+int ignore_408_on_notify = 0;
+
 /*
  * Exported functions
  */
@@ -167,6 +170,7 @@ static param_export_t params[]={
 	{"pres_rules_file",      PARAM_STR,    &pres_rules_file },
 	
 	/* undocumented still (TODO) */
+	{"ignore_408_on_notify", PARAM_INT, &ignore_408_on_notify }, /* ignore 408 responses on NOTIFY */
 	{"subscribe_to_users",   PARAM_INT,    &subscribe_to_users },
 	{"pa_subscription_uri",  PARAM_STR,    &pa_subscription_uri },
 	
