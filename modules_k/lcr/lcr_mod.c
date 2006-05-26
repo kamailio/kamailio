@@ -1497,10 +1497,19 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
 	sscanf(strip_char+1,"%d",&strip);
 	at = at + (strip_char - gw_uri_val.s.s);
-	memcpy(at, _m->parsed_uri.user.s+strip, _m->parsed_uri.user.len-strip);
-	at = at + _m->parsed_uri.user.len-strip;
-	memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
-	at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
+	if (_m->parsed_uri.user.len - strip > 0) {
+	    memcpy(at, _m->parsed_uri.user.s + strip,
+		   _m->parsed_uri.user.len - strip);
+	    at = at + _m->parsed_uri.user.len - strip;
+	}
+	if (*(at - 1) != ':') {
+	    memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
+	    at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
+	} else {
+	    memcpy(at, at_char + 1, gw_uri_val.s.len -
+		   (at_char + 1 - gw_uri_val.s.s));
+	    at = at + gw_uri_val.s.len - (at_char + 1 - gw_uri_val.s.s);
+	}
 	*at = '\0';
 	/* Save Request-URI user for use in FAILURE_ROUTE */
 	val.s = _m->parsed_uri.user;
@@ -1552,10 +1561,19 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
 	sscanf(strip_char+1,"%d",&strip);
 	at = at + (strip_char - gw_uri_val.s.s);
-	memcpy(at, ruri_user_val.s.s + strip, ruri_user_val.s.len - strip);
-	at = at + ruri_user_val.s.len - strip;
-	memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
-	at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
+	if (ruri_user_val.s.len - strip > 0) {
+	    memcpy(at, ruri_user_val.s.s + strip,
+		   ruri_user_val.s.len - strip);
+	    at = at + ruri_user_val.s.len - strip;
+	}
+	if (*(at - 1) != ':') {
+	    memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
+	    at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
+	} else {
+	    memcpy(at, at_char + 1, gw_uri_val.s.len -
+		   (at_char + 1 - gw_uri_val.s.s));
+	    at = at + gw_uri_val.s.len - (at_char + 1 - gw_uri_val.s.s);
+	}
 	*at = '\0';
 	act.type = APPEND_BRANCH_T;
 	act.p1_type = STRING_ST;
