@@ -218,7 +218,7 @@ parameter usage:
  rm <username> ...................... delete a user (*)
  mail <username> .................... send an email to a user
  rpid add <username> <rpid> ......... add rpid for a user (*)
- rpid rm <username> ................. set rpid to NULL for a user (*)
+ rpid rm <username> ................. remove rpid for a user (*)
  rpid show <username> ............... show rpid of a user
 
            * access control lists *
@@ -367,7 +367,7 @@ rpid() {
 			if [ "$MODE" = "add" ] ; then
 			        RPID_VAL="'$1'";
 			else
-			        RPID_VAL=NULL;
+			        RPID_VAL="";
 			fi
 
 			old_line=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | head -n 1`
@@ -774,7 +774,7 @@ case $1 in
 		#phplib_id(str) username(str) domain(str) password(str) 
 		#first_name(str,null) last_name(str,null) phone(str,null) email_address(str) 
 		#datetime_created(int) datetime_modified(int) confirmation(str,null) flag(str,null) sendnotification(str,null) greeting(str,null) ha1(str) ha1b(str) allow_find(str) timezone(str,null) rpid(str,null) domn(int,null) uuid(str,null)
-		line="$HA1:$SERUSER:$SERDOMAIN:$2::::$3:$date_now:$date_now::o:::$HA1:$HA1B:0:NULL:NULL::NULL"
+		line="$HA1:$SERUSER:$SERDOMAIN:$2::::$3:$date_now:$date_now::o:::$HA1:$HA1B:0::::"
 		echo $line >> $SUB_FILE
 			
 		#Add to URI file
