@@ -32,7 +32,6 @@ extern db_func_t rls_dbf;	/* database functions */
 extern dlg_func_t dlg_func;
 extern char *db_url;
 extern int reduce_xcap_needs; /* allows XCAP simulation with web server if possible */
-extern char *rls_xcap_root; /* global XCAP root for RLS module */
 extern int rls_timer_interval;
 
 extern fill_xcap_params_func fill_xcap_params;

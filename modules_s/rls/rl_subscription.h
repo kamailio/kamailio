@@ -26,7 +26,6 @@ typedef enum {
 
 typedef struct {
 	rls_authorization_type_t type;
-	char *xcap_root; /* zero terminated (using libcurl, why not?) */
 } rls_auth_params_t;
 
 struct _virtual_subscription_t;

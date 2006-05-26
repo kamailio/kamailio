@@ -28,9 +28,6 @@ static int rls_subscribe_fixup(void** param, int param_no);
 
 /* authorization parameters */
 char *auth_type_str = NULL; /* type of authorization: none,implicit,xcap */
-char *auth_xcap_root = NULL;	/* must be set if xcap authorization */
-
-char *rls_xcap_root = NULL;	/* must be set if xcap authorization */
 
 int db_mode = 0; /* 0 -> no DB, 1 -> write through */
 char *db_url = NULL;
@@ -84,11 +81,9 @@ static param_export_t params[]={
 	{"max_expiration", PARAM_INT, &rls_max_expiration },
 	{"default_expiration", PARAM_INT, &rls_default_expiration },
 	{"auth", PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"auth_xcap_root", PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{"db_mode", PARAM_INT, &db_mode },
 	{"db_url", PARAM_STRING, &db_url },
 	{"reduce_xcap_needs", PARAM_INT, &reduce_xcap_needs },
-	{"xcap_root", PARAM_STRING, &rls_xcap_root }, /* xcap root settings - only one XCAP root allowed !!! */
 	
 	/* TODO: have to be documented */
 	{"max_notifications_at_once", PARAM_INT, &max_notifications_at_once },
@@ -129,24 +124,14 @@ char *xcap_server = NULL; /* XCAP server URI */
 
 /* TODO: settings of other xcap parameters (auth, ssl, ...) */
 
-static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, char *xcap_root)
+static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str)
 {
-	dst->xcap_root = NULL;
 	if (!auth_type_str) {
 		LOG(L_ERR, "no subscription authorization type given, using \'implicit\'!\n");
 		dst->type = rls_auth_none;
 		return 0;
 	}
 	if (strcmp(auth_type_str, "xcap") == 0) {
-		if (!xcap_root) {
-			LOG(L_ERR, "XCAP authorization selected, but no auth_xcap_root given!\n");
-			return -1;
-		}
-		dst->xcap_root = xcap_root;
-		if (!(*dst->xcap_root)) {
-			LOG(L_ERR, "XCAP authorization selected, but empty auth_xcap_root given!\n");
-			return -1;
-		}
 		dst->type = rls_auth_xcap;
 		return 0;
 	}
@@ -245,14 +230,9 @@ int rls_mod_init(void)
 	}
 	ptr_vector_init(xcap_servers, 8); */
 
-	if (!rls_xcap_root) {
-		LOG(L_ERR, "rls_mod_init(): \'xcap_root\' not set (global XCAP root)!\n");
-		return -1;
-	}
-
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_auth_params(&rls_auth_params, auth_type_str, auth_xcap_root) != 0) return -1;
+	if (set_auth_params(&rls_auth_params, auth_type_str) != 0) return -1;
 
 	use_db = 0;
 	if (db_mode > 0) {
