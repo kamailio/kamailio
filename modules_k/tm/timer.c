@@ -738,9 +738,8 @@ void set_timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext
 	unsigned int timeout;
 	struct timer* list;
 
-
 	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
-		LOG(L_CRIT, "ERROR: set_timer: unknown list: %d\n", list_id);
+		LOG(L_CRIT, "BUG:set_timer: unknown list: %d\n", list_id);
 #ifdef EXTRA_DEBUG
 		abort();
 #endif
@@ -761,15 +760,15 @@ void set_timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext
 	 * (sideffect: reset_timer ; set_timer is not safe, a reseted timer
 	 *  might be lost, depending on this race condition ) */
 	if (new_tl->timer_list==DETACHED_LIST){
-		LOG(L_CRIT, "WARNING: set_timer called on a \"detached\" timer"
-				" -- ignoring: %p\n", new_tl);
+		LOG(L_CRIT, "WARNING: set_timer for %d list called on a \"detached\" "
+			"timer -- ignoring: %p\n", list_id, new_tl);
 		goto end;
 	}
 	/* make sure I'm not already on a list */
 	remove_timer_unsafe( new_tl );
-	     /*
-	       add_timer_unsafe( list, new_tl, get_ticks()+timeout);
-	     */
+	/*
+	  add_timer_unsafe( list, new_tl, get_ticks()+timeout);
+	 */
 	insert_timer_unsafe( list, new_tl, get_ticks()+timeout);
 end:
 	unlock(list->mutex);
