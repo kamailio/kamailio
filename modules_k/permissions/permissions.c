@@ -97,14 +97,22 @@ static int child_init(int rank);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-        {"allow_routing",  allow_routing_0,  0, 0,             REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_routing",  allow_routing_1,  1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_routing",  allow_routing_2,  2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_register", allow_register_1, 1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_register", allow_register_2, 2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_trusted",  allow_trusted,    0, 0,             REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_refer_to", allow_refer_to_1, 1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_refer_to", allow_refer_to_2, 2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_routing",  allow_routing_0,  0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_routing",  allow_routing_1,  1, single_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_routing",  allow_routing_2,  2, load_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_register", allow_register_1, 1, single_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_register", allow_register_2, 2, load_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_trusted",  allow_trusted,    0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_refer_to", allow_refer_to_1, 1, single_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_refer_to", allow_refer_to_2, 2, load_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -123,7 +131,7 @@ static param_export_t params[] = {
 	{"from_col",           STR_PARAM, &from_col          },
 	{"tag_col",            STR_PARAM, &tag_col           },
 	{"peer_tag_avp",       STR_PARAM, &tag_avp_param     },
-        {0, 0, 0}
+	{0, 0, 0}
 };
 
 /* Module interface */

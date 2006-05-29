@@ -91,10 +91,10 @@ struct trusted_list** new_hash_table(void)
  */
 void free_hash_table(struct trusted_list** table)
 {
-	if (table) {
-	        empty_hash_table(table);
-	}
+	if (!table)
+		return;
 
+	empty_hash_table(table);
 	shm_free(table);
 }
 
@@ -249,25 +249,14 @@ void hash_table_print(struct trusted_list** hash_table, FILE* reply_file)
 {
 	int i;
 	struct trusted_list *np;
-	char *pattern, *tag;
 
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-		    if (np->pattern) {
-			pattern = np->pattern;
-		    } else {
-			pattern = "NULL";
-		    }
-		    if (np->tag.len > 0) {
-			tag = np->tag.s;
-		    } else {
-			tag = "NULL";
-		    }
-		    fprintf(reply_file, "%4d <%.*s, %d, %s, %s>\n", i,
-			    np->src_ip.len, ZSW(np->src_ip.s),
-			    np->proto, pattern, tag);
-		    np = np->next;
+			fprintf(reply_file, "%4d <%.*s, %d, %s, %s>\n", i,
+				np->src_ip.len, ZSW(np->src_ip.s), np->proto,
+				np->pattern?np->pattern:"NULL", np->tag.len?np->tag.s:"NULL");
+			np = np->next;
 		}
 	}
 }
@@ -285,7 +274,7 @@ void empty_hash_table(struct trusted_list **hash_table)
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-			shm_free(np->src_ip.s);
+			if (np->src_ip.s) shm_free(np->src_ip.s);
 			if (np->pattern) shm_free(np->pattern);
 			if (np->tag.s) shm_free(np->tag.s);
 			next = np->next;

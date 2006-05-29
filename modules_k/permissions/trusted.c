@@ -119,7 +119,8 @@ int init_trusted(void)
 		hash_table_2  = new_hash_table();
 		if (!hash_table_2) goto error;
 		
-		hash_table = (struct trusted_list ***)shm_malloc(sizeof(struct trusted_list **));
+		hash_table = (struct trusted_list ***)shm_malloc
+			(sizeof(struct trusted_list **));
 		if (!hash_table) goto error;
 
 		*hash_table = hash_table_1;
