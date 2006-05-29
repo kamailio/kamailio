@@ -342,6 +342,7 @@ int db_query_avp(struct sip_msg *msg, char *query, avpname_list_t* dest)
 	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
 	{
 		DBG("avpops:db_query_avp: no result after query\n");
+		db_close_query( db_res );
 		return 1;
 	}
 
@@ -411,6 +412,7 @@ int db_query_avp(struct sip_msg *msg, char *query, avpname_list_t* dest)
 			if(add_avp(avp_type, avp_name, avp_val)!=0)
 			{
 				LOG(L_ERR,"avpops:db_query_avp: error - unable to add avp\n");
+				db_close_query( db_res );
 				return -1;
 			}
 next_avp:
@@ -423,5 +425,6 @@ next_avp:
 		}
 	}
 
+	db_close_query( db_res );
 	return 0;
 }
