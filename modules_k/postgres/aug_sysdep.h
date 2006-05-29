@@ -313,7 +313,7 @@ typedef unsigned int augUInt32;
 */
 
 #ifndef AUG_CONFIGURATION
-error: os/cpu/compiler combination not configured in $Source$ $Revision$
+#error "os/cpu/compiler combination not configured in $Source$ $Revision$"
 #endif
 
 #endif /* AUG_SYSDEP_H */
