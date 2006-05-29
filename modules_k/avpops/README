@@ -511,6 +511,18 @@ avp_pushto("$br","$avp(i:680)");
           + value = pseudo-variable | fix_value 
           + fix_value = 'i:'integer | 's:'string | string 
           + flags = 'g' | 'G' | 'i' | 'I' 
+       Operator meaning:
+          + eq - equal
+          + ne - not equal
+          + lt - less than
+          + le - less or equal
+          + gt - greater than
+          + ge - greater or equal
+          + re - regexp (regular exression match)
+          + fm - fast match (see: man fnmatch)
+          + and - bitwise 'and'
+          + or - bitwise 'or'
+          + xor - bitwise 'xor'
        Integer values can be given in hexadecimal using notation:
        'i:0xhex_number' (e.g.,: 'i:0xabcd');
 

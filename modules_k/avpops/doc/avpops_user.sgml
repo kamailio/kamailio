@@ -699,6 +699,7 @@ avp_pushto("$br","$avp(i:680)");
 				<para><emphasis>op_value</emphasis> - define the operator, 
 				the value and flags for checking.
 				Parameter syntax is:
+				</para>
 				<itemizedlist>
 					<listitem><para><emphasis>
 					op_value = operator '/' value ['/'flags]
@@ -717,7 +718,35 @@ avp_pushto("$br","$avp(i:680)");
 					flags = 'g' | 'G' | 'i' | 'I'
 					</emphasis></para></listitem>
 				</itemizedlist>
+				<para>
+				Operator meaning:
 				</para>
+				<itemizedlist>
+					<listitem><para><emphasis>eq
+					</emphasis> - equal</para></listitem>
+					<listitem><para><emphasis>ne
+					</emphasis> - not equal</para></listitem>
+					<listitem><para><emphasis>lt
+					</emphasis> - less than</para></listitem>
+					<listitem><para><emphasis>le
+					</emphasis> - less or equal</para></listitem>
+					<listitem><para><emphasis>gt
+					</emphasis> - greater than</para></listitem>
+					<listitem><para><emphasis>ge
+					</emphasis> - greater or equal</para></listitem>
+					<listitem><para><emphasis>re
+					</emphasis> - regexp (regular exression match)</para>
+					</listitem>
+					<listitem><para><emphasis>fm
+					</emphasis> - fast match (see: man fnmatch)</para>
+					</listitem>
+					<listitem><para><emphasis>and
+					</emphasis> - bitwise 'and'</para></listitem>
+					<listitem><para><emphasis>or
+					</emphasis> - bitwise 'or'</para></listitem>
+					<listitem><para><emphasis>xor
+					</emphasis> - bitwise 'xor'</para></listitem>
+				</itemizedlist>
 				<para>
 				Integer values can be given in hexadecimal using notation:
 				'i:0xhex_number' (e.g.,: 'i:0xabcd');
