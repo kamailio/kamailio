@@ -277,19 +277,19 @@ static inline int parse_dlg_rr_param(char *p, char *end,
 	for ( s=p ; p<end && *p!=DLG_SEPARATOR ; p++ );
 	if (*p!=DLG_SEPARATOR) {
 		LOG(L_ERR,"ERROR:dialog:parse_dlg_rr_param: malformed rr param "
-			"'%.*s'\n", end-s, s);
+			"'%.*s'\n", (int)(long)(end-s), s);
 		return -1;
 	}
 
 	if ( (*h_entry=reverse_hex2int( s, p-s))<0 ) {
 		LOG(L_ERR,"ERROR:dialog:parse_dlg_rr_param: invalid hash entry "
-			"'%.*s'\n", p-s, s);
+			"'%.*s'\n", (int)(long)(p-s), s);
 		return -1;
 	}
 
 	if ( (*h_id=reverse_hex2int( p+1, end-(p+1)))<0 ) {
 		LOG(L_ERR,"ERROR:dialog:parse_dlg_rr_param: invalid hash id "
-			"'%.*s'\n", end-(p+1), p+1 );
+			"'%.*s'\n", (int)(long)(end-(p+1)), p+1 );
 		return -1;
 	}
 
