@@ -478,12 +478,11 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 
 
 /*
- * The function creates an ACK to 200 OK. Route set will be created
- * and parsed. The function is used by tm when it generates
- * local ACK to 200 OK (on behalf of applications using uac
+ * The function creates an ACK for a local INVITE. If 200 OK, route set 
+ * will be created and parsed
  */
-char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch,
-												str* to, unsigned int *len)
+char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
+							unsigned int branch, str* to, unsigned int *len)
 {
 	char *req_buf, *p, *via;
 	unsigned int via_len;
@@ -496,27 +495,37 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	struct socket_info* send_sock;
 	str next_hop;
 
-	if (get_contact_uri(rpl, &contact) < 0) {
-		return 0;
-	}
 
-	if (process_routeset(rpl, &contact, &list, &ruri, &next_hop) < 0) {
-		return 0;
-	}
+	if (rpl->first_line.u.reply.statuscode < 300 ) {
+		/* build e2e ack for 2xx reply -> we need the route set */
+		if (get_contact_uri(rpl, &contact) < 0) {
+			return 0;
+		}
 
-	if ((contact.s != ruri.s) || (contact.len != ruri.len)) {
-		     /* contact != ruri means that the next
-		      * hop is a strict router, cont will be non-zero
-		      * and print_routeset will append it at the end
-		      * of the route set
-		      */
-		cont = &contact;
+		if (process_routeset(rpl, &contact, &list, &ruri, &next_hop) < 0) {
+			return 0;
+		}
+
+		if ((contact.s != ruri.s) || (contact.len != ruri.len)) {
+			/* contact != ruri means that the next
+			 * hop is a strict router, cont will be non-zero
+			 * and print_routeset will append it at the end
+			 * of the route set
+			 */
+			cont = &contact;
+		} else {
+			/* Next hop is a loose router, nothing to append */
+			cont = 0;
+		}
 	} else {
-		     /* Next hop is a loose router, nothing to append */
+		/* build hop-by-hop ack for negative reply ->
+		 * ruri is the same as in INVITE; no route set */
+		ruri = Trans->uac[branch].uri;
 		cont = 0;
+		list = 0;
 	}
 
-	/* method, separators, version: "ACK sip:p2@iptel.org SIP/2.0" */
+	/* method, separators, version: "ACK sip:user@domain.org SIP/2.0" */
 	*len = SIP_VERSION_LEN + ACK_LEN + 2 /* spaces */ + CRLF_LEN;
 	*len += ruri.len;
 
@@ -529,26 +538,28 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	set_hostport(&hp, 0);
 
 	/* build via */
-	via = via_builder(&via_len, send_sock, &branch_str, 0, send_sock->proto, &hp);
+	via = via_builder(&via_len, send_sock, &branch_str, 0, 
+			send_sock->proto, &hp);
 	if (!via) {
 		LOG(L_ERR, "build_dlg_ack: No via header got from builder\n");
 		goto error;
 	}
 	*len+= via_len;
-	
+
 	/*headers*/
-	*len += Trans->from.len + Trans->callid.len + to->len + Trans->cseq_n.len + 1 + ACK_LEN + CRLF_LEN;
-	
+	*len += Trans->from.len + Trans->callid.len + to->len +
+		Trans->cseq_n.len + 1 + ACK_LEN + CRLF_LEN;
+
 	/* copy'n'paste Route headers */
 	*len += calc_routeset_len(list, cont);
-	
+
 	/* User Agent */
 	if (server_signature)
 		*len += user_agent_header.len + CRLF_LEN;
-	
+
 	/* Content Length, EoM */
 	*len += CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN;
-	
+
 	req_buf = shm_malloc(*len + 1);
 	if (!req_buf) {
 		LOG(L_ERR, "build_dlg_ack: Cannot allocate memory\n");
@@ -589,13 +600,12 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	pkg_free(via);
 	free_rte_list(list);
 	return req_buf;
-	
- error01:
+error01:
 	pkg_free(via);
- error:
+error:
 	free_rte_list(list);
 	return 0;
-  	 }
+}
 
 
 /*
