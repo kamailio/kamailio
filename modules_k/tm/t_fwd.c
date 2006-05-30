@@ -451,7 +451,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	lowest_error=0;
 
 	/* e2e_cancel_branch() makes no RURI parsing, so no need to 
-	 * save the ->parse_uri_ok */
+	 * save the -> parse_uri_ok */
 	backup_uri = cancel_msg->new_uri;
 	/* branch flags specific to RURI */
 	rurib_flags = cancel_msg->flags&(~gflags_mask);
@@ -528,6 +528,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	*/
 	} else if (cancel_bm) {
 		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
+		t_cancel->flags |= T_HOPBYHOP_CANCEL_FLAG;
 		t_reply( t_cancel, cancel_msg, 200, CANCELING );
 	/* if the transaction exists, but there is no more pending
 	   branch, tell upstream we're done

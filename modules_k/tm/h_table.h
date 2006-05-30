@@ -173,6 +173,7 @@ struct totag_elem {
 /* set if a CANCEL was received for the transaction */
 #define T_WAS_CANCELLED_FLAG (1<<3)
 
+#define T_HOPBYHOP_CANCEL_FLAG (1<<4)
 
 /* transaction UAC's flags */
 /* is the UAC pending for CANCEL ?  */
@@ -316,6 +317,7 @@ struct s_table
 #define is_local(_t_)            ((_t_)->flags&T_IS_LOCAL_FLAG)
 #define has_noisy_ctimer(_t_)    ((_t_)->flags&T_NOISY_CTIMER_FLAG)
 #define was_cancelled(_t_)       ((_t_)->flags&T_WAS_CANCELLED_FLAG)
+#define is_hopbyhop_cancel(_t_)  ((_t_)->flags&T_HOPBYHOP_CANCEL_FLAG)
 
 
 void set_kr( enum kill_reason kr );

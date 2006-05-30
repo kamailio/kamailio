@@ -368,9 +368,11 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			}
 		}
 
-		cleanup_uac_timers( trans );
-		if (is_invite(trans)) cancel_uacs( trans, cancel_bitmap );
-		set_final_timer(  trans );
+		if (!is_hopbyhop_cancel(trans)) {
+			cleanup_uac_timers( trans );
+			if (is_invite(trans)) cancel_uacs( trans, cancel_bitmap );
+			set_final_timer(  trans );
+		}
 	}
 
 	/* send it out : response.dst.send_sock is valid all the time now, 
@@ -678,6 +680,12 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			*should_relay=branch;
 			return RPS_PUSHED_AFTER_COMPLETION;
 		} 
+		if ( is_hopbyhop_cancel(Trans) && new_code>=200) {
+			*should_store=0;
+			*should_relay=-1;
+			picked_branch=-1;
+			return RPS_COMPLETED;
+		}
 		/* except the exception above, too late  messages will
 		   be discarded */
 		goto discard;
