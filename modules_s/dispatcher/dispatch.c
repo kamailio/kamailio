@@ -450,7 +450,8 @@ static inline int get_uri_hash_keys(str* key1, str* key2,
 	*key1=parsed_uri->user;
 	key2->s=0;
 	key2->len=0;
-	if (!(flags & DS_HASH_USER_ONLY)){
+	if (!(flags & DS_HASH_USER_ONLY) ||
+		(key1->s==0 && (flags & DS_HASH_USER_OR_HOST))){
 		/* key2=host */
 		*key2=parsed_uri->host;
 		/* add port if needed */
@@ -461,8 +462,8 @@ static inline int get_uri_hash_keys(str* key1, str* key2,
 				key2->len+=parsed_uri->port.len+1 /* ':' */;
 		}
 	}
-	if (key1->s==0){
-		LOG(L_WARN, "DISPATCHER: get_uri_hashs_keys: empty username in:"
+	if (key1->s==0 && (flags & DS_HASH_USER_ONLY)){
+		LOG(L_WARN, "DISPATCHER: get_uri_hash_keys: empty username in:"
 					" %.*s\n", uri->len, uri->len?uri->s:"");
 	}
 	return 0;

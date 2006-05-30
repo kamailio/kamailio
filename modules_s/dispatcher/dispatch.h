@@ -42,6 +42,8 @@
 
 
 #define DS_HASH_USER_ONLY 1  /* use only the uri user part for hashing */
+#define DS_HASH_USER_OR_HOST 2  /* use user part of uri for hashing with
+                                   fallback to host */
 extern int ds_flags; 
 
 int ds_load_list(char *lfile);
