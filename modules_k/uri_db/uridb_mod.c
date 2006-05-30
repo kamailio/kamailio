@@ -78,25 +78,32 @@ static int mod_init(void);       /* Module initialization function */
  * Module parameter variables
  */
 static str db_url         = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str uri_table             = {URI_TABLE, URI_TABLE_LEN};               /* Name of URI table */
-str uri_user_col          = {USER_COL, USER_COL_LEN};                 /* Name of username column in URI table */
-str uri_domain_col        = {DOMAIN_COL, DOMAIN_COL_LEN};             /* Name of domain column in URI table */
-str uri_uriuser_col       = {URI_USER_COL, URI_USER_COL_LEN};         /* Name of uri_user column in URI table */
-str subscriber_table      = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN}; /* Name of subscriber table */
-str subscriber_user_col   = {USER_COL, USER_COL_LEN};                 /* Name of user column in subscriber table */
-str subscriber_domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};             /* Name of domain column in subscriber table */
+/* Name of URI table */
+str uri_table             = {URI_TABLE, URI_TABLE_LEN};
+/* Name of username column in URI table */
+str uri_user_col          = {USER_COL, USER_COL_LEN};
+/* Name of domain column in URI table */
+str uri_domain_col        = {DOMAIN_COL, DOMAIN_COL_LEN};
+/* Name of uri_user column in URI table */
+str uri_uriuser_col       = {URI_USER_COL, URI_USER_COL_LEN};
+/* Name of subscriber table */
+str subscriber_table      = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN};
+/* Name of user column in subscriber table */
+str subscriber_user_col   = {USER_COL, USER_COL_LEN};
+/* Name of domain column in subscriber table */
+str subscriber_domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};
 
 int use_uri_table = 0;     /* Should uri table be used */
 int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
 
-
+static int fixup_exist(void** param, int param_no);
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"check_to",       check_to,       0, 0,         REQUEST_ROUTE},
-	{"check_from",     check_from,     0, 0,         REQUEST_ROUTE},
-	{"does_uri_exist", does_uri_exist, 0, 0,         REQUEST_ROUTE},
+	{"check_to",       check_to,       0, 0,           REQUEST_ROUTE},
+	{"check_from",     check_from,     0, 0,           REQUEST_ROUTE},
+	{"does_uri_exist", does_uri_exist, 0, fixup_exist, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -123,10 +130,10 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"uri_db", 
+	"uri_db",
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
-	0,          /* exported statistics */
+	0,         /* exported statistics */
 	mod_init,  /* module initialization function */
 	0,         /* response function */
 	destroy,   /* destroy function */
@@ -139,7 +146,10 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
-	return uridb_db_init(db_url.s);
+	if (db_url.len)
+		return uridb_db_init(db_url.s);
+	else
+		return 0;
 }
 
 
@@ -153,45 +163,56 @@ static int mod_init(void)
 	DBG("uri_db - initializing\n");
 
 	db_url.len = strlen(db_url.s);
-        uri_table.len = strlen(uri_table.s);
+	if (db_url.len == 0 ) {
+		if (use_uri_table) {
+			LOG(L_ERR, "ERROR:uri_db:mod_init: configuration error - no "
+				"database URL, but use_uri_table is set!\n");
+			goto error;
+		}
+		return 0;
+	}
+
+	uri_table.len = strlen(uri_table.s);
 	uri_user_col.len = strlen(uri_user_col.s);
 	uri_domain_col.len = strlen(uri_domain_col.s);
-        uri_uriuser_col.len = strlen(uri_uriuser_col.s);
+	uri_uriuser_col.len = strlen(uri_uriuser_col.s);
 	subscriber_table.len = strlen(subscriber_table.s);
 	subscriber_user_col.len = strlen(subscriber_user_col.s);
-        subscriber_domain_col.len = strlen(subscriber_domain_col.s);
+	subscriber_domain_col.len = strlen(subscriber_domain_col.s);
 
 	if (uridb_db_bind(db_url.s)) {
 		LOG(L_ERR, "ERROR: uri_db:mod_init(): No database module found\n");
-		return -1;
+		goto error;
 	}
-	     /* Check table version */
-	ver = uridb_db_ver(db_url.s, &uri_table);
-	if (ver < 0) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init():"
-				" Error while querying table version\n");
-		goto err;
-	} else if (ver < URI_TABLE_VERSION) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version"
-				" of uri table (use openser_mysql.sh reinstall)\n");
-		goto err;
-	}		
 
-	     /* Check table version */
-	ver = uridb_db_ver(db_url.s, &subscriber_table);
-	if (ver < 0) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init():"
-				" Error while querying table version\n");
-		goto err;
-	} else if (ver < SUBSCRIBER_TABLE_VERSION) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version of"
-				" subscriber table (use openser_mysql.sh reinstall)\n");
-		goto err;
-	}		
+	if (use_uri_table) {
+		/* Check table version */
+		ver = uridb_db_ver(db_url.s, &uri_table);
+		if (ver < 0) {
+			LOG(L_ERR, "ERROR: uri_db:mod_init():"
+					" Error while querying table version\n");
+			goto error;
+		} else if (ver < URI_TABLE_VERSION) {
+			LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version"
+					" of uri table (use openser_mysql.sh reinstall)\n");
+			goto error;
+		}
+	} else {
+		/* Check table version */
+		ver = uridb_db_ver(db_url.s, &subscriber_table);
+		if (ver < 0) {
+			LOG(L_ERR, "ERROR: uri_db:mod_init():"
+					" Error while querying table version\n");
+			goto error;
+		} else if (ver < SUBSCRIBER_TABLE_VERSION) {
+			LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version of"
+					" subscriber table (use openser_mysql.sh reinstall)\n");
+			goto error;
+		}
+	}
 
 	return 0;
-
- err:
+error:
 	return -1;
 }
 
@@ -201,3 +222,13 @@ static void destroy(void)
 	uridb_db_close();
 }
 
+
+static int fixup_exist(void** param, int param_no)
+{
+	if (db_url.len == 0) {
+		LOG(L_ERR, "ERROR:uri_db:fixup_exist: configuration error - no "
+			"database URL, but does_uri_exist() is called!\n");
+		return E_CFG;
+	}
+	return 0;
+}

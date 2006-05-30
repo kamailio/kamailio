@@ -63,36 +63,38 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		return -1;
 	}
 
-	     /* Get authorized digest credentials */
+	/* Get authorized digest credentials */
 	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
 		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) {
-			LOG(L_ERR, "check_username(): No authorized credentials found (error in scripts)\n");
-			LOG(L_ERR, "check_username(): Call {www,proxy}_authorize before calling check_* function !\n");
+			LOG(L_ERR, "check_username(): No authorized credentials "
+				"found (error in scripts)\n");
+			LOG(L_ERR, "check_username(): Call {www,proxy}_authorize "
+				"before calling check_* function !\n");
 			return -2;
 		}
 	}
 
 	c = (auth_body_t*)(h->parsed);
 
-	     /* Parse To/From URI */
+	/* Parse To/From URI */
 	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
 		LOG(L_ERR, "check_username(): Error while parsing URI\n");
 		return -3;
 	}
 	
-	     /* Make sure that the URI contains username */
- 	if (!puri.user.len) {
+	/* Make sure that the URI contains username */
+	if (!puri.user.len) {
 		LOG(L_ERR, "check_username(): Username not found in URI\n");
 		return -4;
 	}
 
-	     /* If use_uri_table is set, use URI table to determine if Digest username
-	      * and To/From username match. URI table is a table enumerating all allowed
-	      * usernames for a single, thus a user can have several different usernames
-	      * (which are different from digest username and it will still match)
-	      */
+	/* If use_uri_table is set, use URI table to determine if Digest username
+	 * and To/From username match. URI table is a table enumerating all allowed
+	 * usernames for a single, thus a user can have several different usernames
+	 * (which are different from digest username and it will still match)
+	 */
 	if (use_uri_table) {
 		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
 			LOG(L_ERR, "ERROR: check_username(): "
@@ -107,9 +109,9 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 
 		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
 		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
-    
+
 		VAL_STR(vals) = c->digest.username.user;
-    	VAL_STR(vals + 1) = *GET_REALM(&c->digest);
+		VAL_STR(vals + 1) = *GET_REALM(&c->digest);
 		VAL_STR(vals + 2) = puri.user;
 
 		if (uridb_dbf.query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0)
@@ -119,10 +121,10 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 			return -8;
 		}
 
-		     /* If the previous function returns at least one row, it means
-		      * there is an entry for given digest username and URI username
-		      * and thus this combination is allowed and the function will match
-		      */
+		/* If the previous function returns at least one row, it means
+		 * there is an entry for given digest username and URI username
+		 * and thus this combination is allowed and the function will match
+		 */
 		if (RES_ROW_N(res) == 0) {
 			DBG("check_username(): From/To user '%.*s' is spoofed\n", 
 			    puri.user.len, ZSW(puri.user.s));
@@ -135,17 +137,20 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 			return 1;
 		}
 	} else {
-		     /* URI table not used, simply compare digest username and From/To
-		      * username, the comparison is case insensitive
-		      */
+		/* URI table not used, simply compare digest username and From/To
+		 * username, the comparison is case insensitive
+		 */
 		if (puri.user.len == c->digest.username.user.len) {
-			if (!strncasecmp(puri.user.s, c->digest.username.user.s, puri.user.len)) {
-				DBG("check_username(): Digest username and URI username match\n");
+			if (!strncasecmp(puri.user.s, c->digest.username.user.s, 
+			puri.user.len)) {
+				DBG("check_username(): Digest username and URI "
+					"username match\n");
 				return 1;
 			}
 		}
-	
-		DBG("check_username(): Digest username and URI username do NOT match\n");
+
+		DBG("check_username(): Digest username and URI username "
+			"do NOT match\n");
 		return -10;
 	}
 }

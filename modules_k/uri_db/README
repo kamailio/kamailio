@@ -76,7 +76,7 @@ Chapter 1. User's Guide
 
    The following modules must be loaded before this module:
 
-     * a OpenSER database module.
+     * a OpenSER database module (optional).
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -92,6 +92,9 @@ Chapter 1. User's Guide
 1.3.1. db_url (string)
 
    URL of the database to be used.
+
+   If the db_url string is empty, the DB backend will be disabled
+   - some function may operated without DB support.
 
    Default value is "DEFAULT_RODB_URL". 
 
@@ -191,6 +194,8 @@ modparam("uri_db", "subscriber_domain_column", "domain")
    Specify if the "uri" table should be used for checkings
    instead of "subscriber" table. Non 0 value means true.
 
+   If enabled, setting a non-null db_url is mandatory.
+
    Default value is "0 (false)". 
 
    Example 1-9. Set use_uri_table parameter
@@ -217,7 +222,8 @@ modparam("uri_db", "use_domain", 1)
 
 1.4.1. check_to()
 
-   Check To username against URI table or digest credentials.
+   Check To username against URI table (if use_uri_table is set)
+   or digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -231,7 +237,8 @@ if (check_to()) {
 
 1.4.2. check_from()
 
-   Check From username against URI table or digest credentials.
+   Check From username against URI table (if use_uri_table is
+   set) or digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -247,6 +254,10 @@ if (check_from()) {
 
    Check if username in the request URI belongs to an existing
    user.
+
+   As the checking is done against URI table (if use_uri_table is
+   set) or subscriber table, setting a non-null db_url is
+   mandatory.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -294,4 +305,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

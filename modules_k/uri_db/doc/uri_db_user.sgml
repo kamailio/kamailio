@@ -24,7 +24,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>a &ser; database module</emphasis>.
+				<emphasis>a &ser; database module (optional)</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -33,8 +33,8 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		The following libraries or applications must be installed before 
+		running &ser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -52,6 +52,10 @@
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		&url; of the database to be used.
+		</para>
+		<para>
+		If the db_url string is empty, the DB backend will be disabled - some
+		function may operated without DB support.
 		</para>
 		<para>
 		<emphasis>
@@ -215,6 +219,9 @@ modparam("uri_db", "subscriber_domain_column", "domain")
 		instead of <quote>subscriber</quote> table. Non 0 value means true.
 		</para>
 		<para>
+		If enabled, setting a non-null db_url is mandatory.
+		</para>
+		<para>
 		<emphasis>
 			Default value is <quote>0 (false)</quote>.
 		</emphasis>
@@ -259,8 +266,8 @@ modparam("uri_db", "use_domain", 1)
 		<function moreinfo="none">check_to()</function>
 		</title>
 		<para>
-		Check To username against &uri; table or digest
-		credentials.
+		Check To username against &uri; table (if use_uri_table is set) or
+		digest credentials (no DB backend required).
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -282,8 +289,8 @@ if (check_to()) {
 		<function moreinfo="none">check_from()</function>
 		</title>
 		<para>
-		Check From username against &uri; table or digest
-		credentials.
+		Check From username against &uri; table (if use_uri_table is set) or
+		digest credentials (no DB backend required).
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -306,6 +313,10 @@ if (check_from()) {
 		</title>
 		<para>
 		Check if username in the request &uri; belongs to an existing user.
+		</para>
+		<para>
+		As the checking is done against &uri; table (if use_uri_table is set) 
+		or subscriber table, setting a non-null db_url is mandatory.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
