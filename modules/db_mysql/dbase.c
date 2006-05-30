@@ -191,11 +191,12 @@ static int print_where(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, d
 		l = _l - len;
 		val2str(_c, &(_v[i]), _b + len, &l);
 		len += l;
-		if (i != (_n - 1)) {
+		if (i == (_n - 1))
+			ret = snprintf(_b + len, _l - len, " ");
+		else
 			ret = snprintf(_b + len, _l - len, " AND ");
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
-		}
+		if (ret < 0 || ret >= (_l - len)) goto error;
+		len += ret;
 	}
 	return len;
 
