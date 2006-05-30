@@ -390,6 +390,11 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
 			break;
 			
+			case DB_BITMAP:
+				_drp->fields[_idx].type = DB_INT;
+				_drp->fields[_idx].val.int_val = (int)_vp->val.bitmap_val;
+			break;
+			
 			default:
 				LOG(L_ERR,"ERROR:dbtext: unsupported type %d in update\n",_t);
 				_drp->fields[_idx].nul = 1;
