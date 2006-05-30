@@ -626,8 +626,8 @@ static inline int t_pick_branch( struct cell *t, int *res_code)
 		if ( t->uac[b].last_received<200 ) 
 			return -2;
 		/* replyes to cancel has max priority */
-		if ( (cancelled && t->uac[b].last_received==487)
-		|| (!cancelled && t->uac[b].last_received<lowest_s) ) {
+		if ( (cancelled && t->uac[b].last_received==487) ||
+		(t->uac[b].last_received<lowest_s && (lowest_s!=487 || !cancelled))) {
 			lowest_b =b;
 			lowest_s = t->uac[b].last_received;
 		}
