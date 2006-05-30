@@ -66,7 +66,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev40
+EXTRAVERSION = -dev41
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -1195,7 +1195,7 @@ ifeq ($(OS), linux)
 	# check for >= 2.2.0
 	ifeq ($(shell [ $(OSREL_N) -ge 2002000 ] && echo has_sigio), has_sigio)
 		ifeq ($(NO_SIGIO),)
-			DEFS+=-DHAVE_SIGIO_RT
+			DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKARROUND
 		endif
 	endif
 	ifeq ($(NO_SELECT),)

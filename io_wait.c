@@ -87,6 +87,8 @@ char* poll_method_str[POLL_END]={ "none", "poll", "epoll_lt", "epoll_et",
 								  "sigio_rt", "select", "kqueue",  "/dev/poll"
 								};
 
+int _os_ver=0; /* os version number */
+
 #ifdef HAVE_SIGIO_RT
 static int _sigio_init=0;
 static int _sigio_crt_rtsig;
@@ -334,10 +336,10 @@ static unsigned int get_sys_version(int* major, int* minor, int* minor2)
 char* check_poll_method(enum poll_types poll_method)
 {
 	char* ret;
-	unsigned int os_ver;
 
 	ret=0;
-	os_ver=get_sys_version(0,0,0);	
+	if (_os_ver==0) 
+		_os_ver=get_sys_version(0,0,0);
 	switch(poll_method){
 		case POLL_NONE:
 			break;
@@ -356,7 +358,7 @@ char* check_poll_method(enum poll_types poll_method)
 			ret="epoll not supported, try re-compiling with -DHAVE_EPOLL";
 #else
 			/* only on 2.6 + */
-			if (os_ver<0x020542) /* if ver < 2.5.66 */
+			if (_os_ver<0x020542) /* if ver < 2.5.66 */
 			 	ret="epoll not supported on kernels < 2.6";
 #endif
 			break;
@@ -366,7 +368,7 @@ char* check_poll_method(enum poll_types poll_method)
 				" -DHAVE_SIGIO_RT";
 #else
 			/* only on 2.2 +  ?? */
-			if (os_ver<0x020200) /* if ver < 2.2.0 */
+			if (_os_ver<0x020200) /* if ver < 2.2.0 */
 			 	ret="epoll not supported on kernels < 2.2 (?)";
 #endif
 			break;
@@ -376,13 +378,13 @@ char* check_poll_method(enum poll_types poll_method)
 #else
 		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD 2.9, Darwin */
 	#ifdef __OS_freebsd
-			if (os_ver<0x0401) /* if ver < 4.1 */
+			if (_os_ver<0x0401) /* if ver < 4.1 */
 				ret="kqueue not supported on FreeBSD < 4.1";
 	#elif defined (__OS_netbsd)
-			if (os_ver<0x020000) /* if ver < 2.0 */
+			if (_os_ver<0x020000) /* if ver < 2.0 */
 				ret="kqueue not supported on NetBSD < 2.0";
 	#elif defined (__OS_openbsd)
-			if (os_ver<0x0209) /* if ver < 2.9 ? */
+			if (_os_ver<0x0209) /* if ver < 2.9 ? */
 				ret="kqueue not supported on OpenBSD < 2.9 (?)";
 	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
 #endif
@@ -394,7 +396,7 @@ char* check_poll_method(enum poll_types poll_method)
 #else
 	/* only in Solaris >= 7.0 (?) */
 	#ifdef __OS_solaris
-		if (os_ver<0x0507) /* ver < 5.7 */
+		if (_os_ver<0x0507) /* ver < 5.7 */
 			ret="/dev/poll not supported on Solaris < 7.0 (SunOS 5.7)";
 	#endif
 #endif
@@ -411,12 +413,12 @@ char* check_poll_method(enum poll_types poll_method)
 enum poll_types choose_poll_method()
 {
 	enum poll_types poll_method;
-	unsigned int os_ver;
 
-	os_ver=get_sys_version(0,0,0);	
+	if (_os_ver==0)
+		_os_ver=get_sys_version(0,0,0);	
 	poll_method=0;
 #ifdef HAVE_EPOLL
-	if (os_ver>=0x020542) /* if ver >= 2.5.66 */
+	if (_os_ver>=0x020542) /* if ver >= 2.5.66 */
 		poll_method=POLL_EPOLL_LT; /* or POLL_EPOLL_ET */
 		
 #endif
@@ -424,11 +426,11 @@ enum poll_types choose_poll_method()
 	if (poll_method==0)
 		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD 2.9, Darwin */
 	#ifdef __OS_freebsd
-		if (os_ver>=0x0401) /* if ver >= 4.1 */
+		if (_os_ver>=0x0401) /* if ver >= 4.1 */
 	#elif defined (__OS_netbsd)
-		if (os_ver>=0x020000) /* if ver >= 2.0 */
+		if (_os_ver>=0x020000) /* if ver >= 2.0 */
 	#elif defined (__OS_openbsd)
-		if (os_ver>=0x0209) /* if ver >= 2.9 (?) */
+		if (_os_ver>=0x0209) /* if ver >= 2.9 (?) */
 	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
 			poll_method=POLL_KQUEUE;
 #endif
@@ -436,13 +438,13 @@ enum poll_types choose_poll_method()
 	#ifdef __OS_solaris
 	if (poll_method==0)
 		/* only in Solaris >= 7.0 (?) */
-		if (os_ver>=0x0507) /* if ver >=SunOS 5.7 */
+		if (_os_ver>=0x0507) /* if ver >=SunOS 5.7 */
 			poll_method=POLL_DEVPOLL;
 	#endif
 #endif
 #ifdef  HAVE_SIGIO_RT
 		if (poll_method==0) 
-			if (os_ver>=0x020200) /* if ver >= 2.2.0 */
+			if (_os_ver>=0x020200) /* if ver >= 2.2.0 */
 				poll_method=POLL_SIGIO_RT;
 #endif
 		if (poll_method==0) poll_method=POLL_POLL;
@@ -488,6 +490,7 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 {
 	char * poll_err;
 	
+	if (_os_ver==0) _os_ver=get_sys_version(0,0,0);
 	memset(h, 0, sizeof(*h));
 	h->max_fd_no=max_fd;
 #ifdef HAVE_EPOLL

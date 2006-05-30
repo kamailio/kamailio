@@ -48,6 +48,7 @@
  *  2005-06-13  created by andrei
  *  2005-06-26  added kqueue (andrei)
  *  2005-07-01  added /dev/poll (andrei)
+ *  2006-05-30  sigio 64 bit workarround enabled for kernels < 2.6.5 (andrei)
  */
 
 
@@ -91,6 +92,9 @@
 #ifdef HAVE_SIGIO_RT
 #include "pt.h" /* mypid() */
 #endif
+
+
+extern int _os_ver; /* os version number, needed to select bugs workarrounds */
 
 
 #if 0
@@ -823,13 +827,14 @@ again:
 	if (n!=SIGIO){
 #ifdef SIGINFO64_WORKARROUND
 		/* on linux siginfo.si_band is defined as long in userspace
-		 * and as int kernel (< 2.6.5) => on 64 bits things will break!
+		 * and as int in kernel (< 2.6.5) => on 64 bits things will break!
 		 * (si_band will include si_fd, and si_fd will contain
-		 *  garbage)
+		 *  garbage).
 		 *  see /usr/src/linux/include/asm-generic/siginfo.h and
 		 *      /usr/include/bits/siginfo.h
+		 *  On newer kernels this is fixed (si_band is long in the kernel too).
 		 * -- andrei */
-		if (sizeof(siginfo.si_band)>sizeof(int)){
+		if  ((_os_ver<0x020605) && (sizeof(siginfo.si_band)>sizeof(int))){
 			sigio_band=*((int*)&siginfo.si_band);
 			sigio_fd=*(((int*)&siginfo.si_band)+1);
 		}else
