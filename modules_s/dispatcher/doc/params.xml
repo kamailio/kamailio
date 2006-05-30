@@ -60,8 +60,10 @@ modparam("dispatcher", "force_dst", 1)
 	<title><varname>flags</varname> (int)</title>
 	<para>
 	    Various flags that affect the hashing behaviour.  For now only the
-	    flag 1 is defined. If flag 1 is set only the username part of the
-	    uri will be used when computing an uri based hash.  If no flags are
+	    flag 1 and 2 are defined. If flag 1 is set only the username part of
+	    the uri will be used when computing an uri based hash. If flag 2 is
+	    set the username part of the uri will be used and if no username 
+	    part is present the hostname part will be used. If no flags are
 	    set the username, hostname and port will be used The port is used
 	    only if different from 5060 (normal sip uri) or 5061 (in the sips
 	    case).
