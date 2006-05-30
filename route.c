@@ -204,6 +204,8 @@ static inline int route_new_list(struct route_list* rt)
 			LOG(L_CRIT, "ERROR: route_new_list: out of memory\n");
 			goto end;
 		}
+		/* init the newly allocated memory chunk */
+		memset(&tmp[rt->entries], 0, rt->entries*sizeof(struct action*));
 		rt->rlist=tmp;
 		rt->entries*=2;
 	}
@@ -244,6 +246,28 @@ int route_get(struct route_list* rt, char* name)
 	return i;
 error:
 	return -1;
+}
+
+
+
+/* 
+ * if the "name" route already exists, return its index, else
+ * return error
+ * return route index in rt->rlist or -1 on error
+ */
+int route_lookup(struct route_list* rt, char* name)
+{
+	int len;
+	struct str_hash_entry* e;
+	
+	len=strlen(name);
+	/* check if exists an non empty*/
+	e=str_hash_get(&rt->names, name, len);
+	if (e){
+		return e->u.n;
+	}else{
+		return -1;
+	}
 }
 
 

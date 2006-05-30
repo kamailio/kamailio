@@ -823,7 +823,7 @@ again:
 	if (n!=SIGIO){
 #ifdef SIGINFO64_WORKARROUND
 		/* on linux siginfo.si_band is defined as long in userspace
-		 * and as int kernel => on 64 bits things will break!
+		 * and as int kernel (< 2.6.5) => on 64 bits things will break!
 		 * (si_band will include si_fd, and si_fd will contain
 		 *  garbage)
 		 *  see /usr/src/linux/include/asm-generic/siginfo.h and

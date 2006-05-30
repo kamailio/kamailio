@@ -62,6 +62,7 @@ extern struct route_list onsend_rt;
 int init_routes();
 void destroy_routes();
 int route_get(struct route_list* rt, char* name);
+int route_lookup(struct route_list* rt, char* name);
 
 void push(struct action* a, struct action** head);
 int add_actions(struct action* a, struct action** head);
