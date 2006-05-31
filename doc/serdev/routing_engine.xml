@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="routing_engine" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -69,7 +69,7 @@
 	</para>
 	<para>
 	    The following commands are handled by the <acronym>SER</acronym> core
-	    itself: 
+	    itself:
 	    <function>drop</function>,
 	    <function>forward</function>,
 	    <function>send</function>,
@@ -79,6 +79,9 @@
 	    <function>setflag</function>,
 	    <function>resetflag</function>,
 	    <function>isflagset</function>,
+	    <function>setavpflag</function>,
+	    <function>resetavpflag</function>,
+	    <function>isavpflagset</function>,
 	    <function>error</function>,
 	    <function>route</function>,
 	    <function>exec</function>,
@@ -152,7 +155,7 @@
 		    function.
 		</para>
 		<para>
-		    The message will be sent out using 
+		    The message will be sent out using
 		    <function>udp_send</function> directly.
 		</para>
 	    </listitem>
@@ -218,6 +221,29 @@
 	    <listitem>
 		<para>
 		    <function>isflagset</function> - Test if the flag
+		    is set or not.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>setavpflag(avp, flag_id)</function> - Sets a flag in the
+		    AVP(s). The command simply set custom flag of AVP. The flags
+		    may be used in script using <function>isavpflagset</function>
+		    or in a module to perform specific operation on marked AVPs.
+		    Flag identifier must be declared via <emphasis>avpflags</emphasis>
+		    statement.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>resetavpflag(avp, flag_id)</function> - Same as command
+		    <function>setavpflag</function> - only resetavpflag will be
+		    called instead of setavpflag.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>isavpflagset(avp, flag_id)</function> - Test if the avp flag
 		    is set or not.
 		</para>
 	    </listitem>

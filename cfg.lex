@@ -131,6 +131,10 @@ SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
 FLAGS_DECL	"flags"|"bool"
+SETAVPFLAG	setavpflag
+RESETAVPFLAG	resetavpflag
+ISAVPFLAGSET	isavpflagset
+AVPFLAGS_DECL	avpflags
 SET_HOST		"rewritehost"|"sethost"|"seth"
 SET_HOSTPORT	"rewritehostport"|"sethostport"|"sethp"
 SET_USER		"rewriteuser"|"setuser"|"setu"
@@ -336,6 +340,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{RESETFLAG}	{ count(); yylval.strval=yytext; return RESETFLAG; }
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
 <INITIAL>{FLAGS_DECL}	{ count(); yylval.strval=yytext; return FLAGS_DECL; }
+<INITIAL>{SETAVPFLAG}	{ count(); yylval.strval=yytext; return SETAVPFLAG; }
+<INITIAL>{RESETAVPFLAG}	{ count(); yylval.strval=yytext; return RESETAVPFLAG; }
+<INITIAL>{ISAVPFLAGSET}	{ count(); yylval.strval=yytext; return ISAVPFLAGSET; }
+<INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
 <INITIAL>{RETCODE}	{ count(); yylval.strval=yytext; return RETCODE; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }

@@ -322,6 +322,9 @@ void print_action(struct action* t)
 		case ISFLAGSET_T:
 			DBG("isflagset(");
 			break;
+		case AVPFLAG_OPER_T:
+			DBG("avpflagoper(");
+			break;
 		case SET_HOST_T:
 			DBG("sethost(");
 			break;

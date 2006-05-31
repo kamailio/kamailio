@@ -71,6 +71,7 @@
  * 2005-01-07  optional semicolon in statement, PARAM_STR&PARAM_STRING
  * 2006-02-02  named flags support (andrei)
  * 2006-02-06  named routes support (andrei)
+ * 2006-05-30  avp flags (tma)
  */
 
 %{
@@ -193,6 +194,9 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token SETFLAG
 %token RESETFLAG
 %token ISFLAGSET
+%token SETAVPFLAG
+%token RESETAVPFLAG
+%token ISAVPFLAGSET
 %token METHOD
 %token URI
 %token FROM_URI
@@ -280,6 +284,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TOS
 
 %token FLAGS_DECL
+%token AVPFLAGS_DECL
 
 %token ATTR_MARK
 %token SELECT_MARK
@@ -349,11 +354,13 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <attr> attr_id_ass
 %type <attr> attr_id_val
 %type <attr> attr_id_any
+%type <attr> attr_id_any_str
 /* %type <intval> class_id */
 %type <intval> assign_op
 %type <select> select_id
 %type <strval>	flag_name;
 %type <strval>	route_name;
+%type <intval> avpflag_oper
 
 /*%type <route_el> rules;
   %type <route_el> rule;
@@ -373,6 +380,7 @@ statements:
 statement:
 	assign_stm
 	| flags_decl
+	| avpflags_decl
 	| module_stm
 	| {rt=REQUEST_ROUTE;} route_stm
 	| {rt=FAILURE_ROUTE;} failure_route_stm
@@ -460,6 +468,20 @@ flag_name:		STRING	{ $$=$1; }
 			|	ID		{ $$=$1; }
 ;
 
+avpflags_decl:
+	AVPFLAGS_DECL avpflag_list
+	| AVPFLAGS_DECL error { yyerror("avpflag list expected\n"); }
+	;
+avpflag_list:
+	avpflag_spec
+	| avpflag_spec COMMA avpflag_list
+	;
+avpflag_spec:
+	flag_name {
+		if (register_avpflag($1)==0)
+			yyerror("cannot declare avpflag");
+	}
+	;
 assign_stm:
 	DEBUG_V EQUAL NUMBER { debug=$3; }
 	| DEBUG_V EQUAL error  { yyerror("number  expected"); }
@@ -891,7 +913,7 @@ route_stm:
 	| ROUTE error { yyerror("invalid  route  statement"); }
 	;
 failure_route_stm:
-	ROUTE_FAILURE LBRACE actions RBRACE { 
+	ROUTE_FAILURE LBRACE actions RBRACE {
 									push($3, &failure_rt.rlist[DEFAULT_RT]);
 										}
 	| ROUTE_FAILURE LBRACK route_name RBRACK LBRACE actions RBRACE {
@@ -927,7 +949,7 @@ onreply_route_stm:
 	| ROUTE_ONREPLY error { yyerror("invalid onreply_route statement"); }
 	;
 branch_route_stm:
-	ROUTE_BRANCH LBRACE actions RBRACE { 
+	ROUTE_BRANCH LBRACE actions RBRACE {
 									push($3, &branch_rt.rlist[DEFAULT_RT]);
 										}
 	| ROUTE_BRANCH LBRACK route_name RBRACK LBRACE actions RBRACE {
@@ -1404,6 +1426,29 @@ attr_id_any:
 	| attr_id_no_idx
 	| attr_id_num_idx
 ;
+attr_id_any_str:
+	attr_id
+	| STRING {
+		avp_spec_t *avp_spec;
+		str s;
+		int type, idx;
+		avp_spec = pkg_malloc(sizeof(*avp_spec));
+		if (!avp_spec) {
+			yyerror("Not enough memory");
+			YYABORT;
+		}
+		s.s = $1+1; /* skip $ */
+		s.len = strlen(s.s);
+		if (parse_avp_name(&s, &type, &avp_spec->name, &idx)) {
+			yyerror("error when parsing AVP");
+		        pkg_free(avp_spec);
+			YYABORT;
+		}
+		avp_spec->type = type;
+		avp_spec->index = idx;
+		$$ = avp_spec;
+	}
+	;
 /*
 assign_op:
 	ADDEQ { $$ = ADD_T; }
@@ -1420,6 +1465,11 @@ assign_action:
 	| attr_id_ass assign_op attr_id_any { $$=mk_action($2, 2, AVP_ST, $1, AVP_ST, $3); }
 	| attr_id_ass assign_op select_id { $$=mk_action($2, 2, AVP_ST, (void*)$1, SELECT_ST, (void*)$3); }
 	| attr_id_ass assign_op LPAREN exp RPAREN { $$ = mk_action($2, 2, AVP_ST, $1, EXPR_ST, $4); }
+	;
+avpflag_oper:
+	SETAVPFLAG { $$ = 1; }
+	| RESETAVPFLAG { $$ = 0; }
+	| ISAVPFLAGSET { $$ = -1; }
 	;
 cmd:
 	FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
@@ -1568,7 +1618,7 @@ cmd:
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(SETFLAG_T, 1, NUMBER_ST,
-										(void*)(long)i_tmp); 
+										(void*)(long)i_tmp);
 									}
 	| SETFLAG error			{ $$=0; yyerror("missing '(' or ')'?"); }
 	| RESETFLAG LPAREN NUMBER RPAREN {
@@ -1580,7 +1630,7 @@ cmd:
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(RESETFLAG_T, 1, NUMBER_ST,
-										(void*)(long)i_tmp); 
+										(void*)(long)i_tmp);
 									}
 	| RESETFLAG error		{ $$=0; yyerror("missing '(' or ')'?"); }
 	| ISFLAGSET LPAREN NUMBER RPAREN {
@@ -1592,13 +1642,19 @@ cmd:
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(ISFLAGSET_T, 1, NUMBER_ST,
-										(void*)(long)i_tmp); 
+										(void*)(long)i_tmp);
 									}
 	| ISFLAGSET error { $$=0; yyerror("missing '(' or ')'?"); }
+	| avpflag_oper LPAREN attr_id_any_str COMMA flag_name RPAREN {
+		i_tmp=get_avpflag_no($5);
+		if (i_tmp==0) yyerror("avpflag not declared");
+		$$=mk_action(AVPFLAG_OPER_T, 3, AVP_ST, $3, NUMBER_ST, (void*)(long)i_tmp, NUMBER_ST, (void*)$1);
+	}
+	| avpflag_oper error { $$=0; yyerror("missing '(' or ')'?"); }
 	| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T, 2, STRING_ST, $3, STRING_ST, $5); }
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error argument"); }
-	| ROUTE LPAREN route_name RPAREN	{ 
+	| ROUTE LPAREN route_name RPAREN	{
 						i_tmp=route_get(&main_rt, $3);
 						if (i_tmp==-1){
 							yyerror("internal error");

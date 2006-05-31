@@ -147,10 +147,11 @@ typedef struct avp_spec {
 #define AVP_INDEX_BACKWARD	(1<<11)
 #define AVP_INDEX_ALL		(AVP_INDEX_FORWARD | AVP_INDEX_BACKWARD)
 
-#define AVP_FLAG_DIALOG         (1<<12)
+#define AVP_CUSTOM_FLAGS	12
 
 #define GALIAS_CHAR_MARKER  '$'
 
+#define AVP_IS_ASSIGNABLE(ident) ( ((ident).flags & AVP_NAME_RE) == 0 && (((ident).flags & AVP_NAME) == 0 || (((ident)->flags & AVP_NAME) && (ident).name.s.len)) )
 /* Initialize memory structures */
 int init_avps(void);
 
@@ -195,5 +196,11 @@ int parse_avp_ident( str *name, avp_ident_t* attr);
 int parse_avp_name( str *name, int *type, int_str *avp_name, int *index);
 int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index);
 void free_avp_name( int *type, int_str *avp_name);
+
+/* AVP flags functions */
+#define MAX_AVPFLAG  ((unsigned int)( sizeof(avp_flags_t) * CHAR_BIT - 1 - AVP_CUSTOM_FLAGS))
+
+avp_flags_t register_avpflag(char* name);
+avp_flags_t get_avpflag_no(char* name);
 
 #endif

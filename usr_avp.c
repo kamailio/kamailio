@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -38,6 +38,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <stdio.h>
 
 #include "sr_module.h"
 #include "dprint.h"
@@ -71,6 +73,9 @@ static avp_list_t* crt_list[IDX_MAX];  /* Pointer to current AVP lists */
 static avp_list_t* def_glist;
 static avp_list_t** crt_glist;
 
+/* AVP flags */
+int registered_avpflags_no = 0;
+static char *registered_avpflags[MAX_AVPFLAG];
 
 /* Initialize AVP lists in private memory and allocate memory
  * for shared lists
@@ -80,7 +85,7 @@ int init_avps(void)
 	int i;
 	     /* Empty default lists */
 	memset(def_list, 0, sizeof(avp_list_t) * IDX_MAX);
-	
+
 	     /* Point current pointers to default lists */
 	for(i = 0; i < IDX_MAX; i++) {
 		crt_list[i] = &def_list[i];
@@ -144,7 +149,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 		LOG(L_ERR,"ERROR:avp:add_avp: 0 ID or NULL NAME AVP!");
 		goto error;
 	}
-	
+
 	/* compute the required mem size */
 	len = sizeof(struct usr_avp);
 	if (flags&AVP_NAME_STR) {
@@ -153,11 +158,11 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 			goto error;
 		}
 		if (flags&AVP_VAL_STR) {
-			len += sizeof(struct str_str_data)-sizeof(void*) 
+			len += sizeof(struct str_str_data)-sizeof(void*)
 				+ name.s.len + 1 /* Terminating zero for regex search */
 				+ val.s.len + 1; /* Value is zero terminated */
 		} else {
-			len += sizeof(struct str_int_data)-sizeof(void*) 
+			len += sizeof(struct str_int_data)-sizeof(void*)
 				+ name.s.len + 1; /* Terminating zero for regex search */
 		}
 	} else if (flags&AVP_VAL_STR) {
@@ -226,7 +231,7 @@ int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value
 		*list = avp;
 		return 0;
 	}
-	
+
 	return -1;
 }
 
@@ -256,14 +261,14 @@ int add_avp(avp_flags_t flags, avp_name_t name, avp_value_t val)
 int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *new_avp;
-	
+
 	if (!avp) {
 		return add_avp(flags, name, val);
 	}
 
 	if ((flags & AVP_CLASS_ALL) == 0) flags |= (avp->flags & AVP_CLASS_ALL);
 	if ((flags & AVP_TRACK_ALL) == 0) flags |= (avp->flags & AVP_TRACK_ALL);
-	
+
 	if ((avp->flags & (AVP_CLASS_ALL|AVP_TRACK_ALL)) != (flags & (AVP_CLASS_ALL|AVP_TRACK_ALL))) {
 		ERR("add_avp_before:Source and target AVPs have different CLASS/TRACK\n");
 		return -1;
@@ -400,7 +405,7 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 		LOG(L_ERR,"ERROR:avp:search_first_avp: 0 ID or NULL NAME AVP!");
 		return 0;
 	}
-	
+
 	switch (ident.flags & AVP_INDEX_ALL) {
 		case AVP_INDEX_BACKWARD:
 		case AVP_INDEX_FORWARD:
@@ -415,7 +420,7 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 		      * all of them by default
 		      */
 		ident.flags |= AVP_CLASS_ALL;
-		
+
 		if ((ident.flags & AVP_TRACK_ALL) == 0) {
 		    /* The caller did not specify even the track to search in, so search
 		     * in the track_from
@@ -496,7 +501,7 @@ int search_reverse( avp_t *cur, struct search_state* st,
                      avp_index_t index, avp_list_t *ret)
 {
 	avp_index_t lvl;
-	
+
 	if (!cur)
 		return 0;
 	lvl = search_reverse(search_next_avp(st, NULL), st, index, ret)+1;
@@ -504,13 +509,13 @@ int search_reverse( avp_t *cur, struct search_state* st,
 		*ret=cur;
 	return lvl;
 }
-                            
+
 avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
-                            avp_value_t *val, avp_index_t index) 	
+                            avp_value_t *val, avp_index_t index)
 {
 	avp_t *ret, *cur;
 	struct search_state st;
-	
+
 	if (flags & AVP_NAME_RE) {
 		BUG("search_by_index not supported for AVP_NAME_RE\n");
 		return 0;
@@ -537,9 +542,9 @@ avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
 			for (index--; (ret && index); ret=search_next_avp(&st, val), index--);
 			return ret;
 	}
-		
+
 	return 0;
-}                            
+}
 
 /* FIXME */
 /********* free functions ********/
@@ -550,7 +555,7 @@ void destroy_avp(avp_t *avp_del)
 	avp_t *avp, *avp_prev;
 
 	for (i = 0; i < IDX_MAX; i++) {
-		for( avp_prev=0,avp=*crt_list[i] ; avp ; 
+		for( avp_prev=0,avp=*crt_list[i] ; avp ;
 		     avp_prev=avp,avp=avp->next ) {
 			if (avp==avp_del) {
 				if (avp_prev) {
@@ -564,7 +569,7 @@ void destroy_avp(avp_t *avp_del)
 		}
 	}
 
-	for( avp_prev=0,avp=**crt_glist ; avp ; 
+	for( avp_prev=0,avp=**crt_glist ; avp ;
 	     avp_prev=avp,avp=avp->next ) {
 		if (avp==avp_del) {
 			if (avp_prev) {
@@ -766,7 +771,7 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 {
 	int ret;
 	avp_ident_t attr;
-	
+
 	ret=parse_avp_ident(name, &attr);
 	if (!ret) {
 		if (type) *type = attr.flags;
@@ -866,7 +871,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 			p=memchr(name->s, '[', name->len);
 			if (!p) {
 				ERR("missing '[' for AVP index\n");
-				goto error; 
+				goto error;
 			}
 			s.s=p+1;
 			s.len=name->len-(p-name->s)-2; // [ and ]
@@ -878,7 +883,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 					s.s++;s.len--;
 				} else {
 					attr->flags |= AVP_INDEX_FORWARD;
-				}	
+				}
 				if ((str2int(&s, &id) != 0)||(id==0)) {
 					ERR("Invalid AVP index '%.*s'\n", s.len, s.s);
 					goto error;
@@ -956,7 +961,7 @@ int add_avp_galias_str(char *alias_definition)
 	str  alias;
 	int  type;
 	int  index;
-	
+
 	s = alias_definition;
 	while(*s && isspace((int)*s))
 		s++;
@@ -1026,4 +1031,27 @@ void delete_avp(avp_flags_t flags, avp_name_t name)
 		destroy_avp(avp);
 		avp = search_next_avp(&st, 0);
 	}
+}
+
+/* AVP flags functions */
+
+/* name2id conversion is intended to use during fixup (cfg parsing and modinit) only therefore no hash is used */
+avp_flags_t register_avpflag(char* name) {
+	avp_flags_t ret;
+	ret = get_avpflag_no(name);
+	if (ret == 0) {
+		if (registered_avpflags_no >= MAX_AVPFLAG) return -1;
+		ret = 1<<(AVP_CUSTOM_FLAGS+registered_avpflags_no);
+		registered_avpflags[registered_avpflags_no++] = name;
+	}
+	return ret;
+}
+
+avp_flags_t get_avpflag_no(char* name) {
+	int i;
+	for (i=0; i<registered_avpflags_no; i++) {
+		if (strcasecmp(name, registered_avpflags[i])==0)
+			return 1<<(AVP_CUSTOM_FLAGS+i);
+	}
+	return 0;
 }

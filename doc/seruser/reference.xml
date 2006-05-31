@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="reference" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -21,9 +21,9 @@
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			<varname>debug</varname> - Set log level, this is number between 0 and 9. Default 
+			<varname>debug</varname> - Set log level, this is number between 0 and 9. Default
 			is 0.
-			
+
 		    </para>
 		</listitem>
 		<listitem>
@@ -34,10 +34,10 @@
 			    <para>
 				Disabling child spawning is useful mainly for
 				debugging. When <varname>fork</varname> is turned off,
-				some features are unavailable: 
+				some features are unavailable:
 				there is no attendant process, no pid file is generated,
 				and server listens only at one address. Make sure you
-				are debugging the same interface at which 
+				are debugging the same interface at which
 				<application>ser</application> listens.
 				The easiest way to do so is to set the interface using
 				<varname>listen</varname> option explicitly.
@@ -47,8 +47,8 @@
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>log_stderror</varname> - If set to yes, the server will print its debugging 
-			information to standard error output. If set to no, <command>syslog</command> 
+			<varname>log_stderror</varname> - If set to yes, the server will print its debugging
+			information to standard error output. If set to no, <command>syslog</command>
 			will be used. Default is no (printing to syslog).
 		    </para>
 		</listitem>
@@ -60,9 +60,9 @@
 					This parameter may repeat several times, then SER will
 					listen on all addresses. For example, the following
 					command-line options (equivalent to "listen" config
-					option) may be used: 
+					option) may be used:
 					<command>
-						ser -l foo  -l bar -p 5061 -l x -l y 
+						ser -l foo  -l bar -p 5061 -l x -l y
 					</command>
 					will listen on foo:5060, bar:5061 &amp; x:5061 &amp; y:5061
 
@@ -73,7 +73,7 @@
 		<listitem>
 		    <para>
 			<varname>alias</varname> - Add IP addresses or hostnames to list of name aliases.
-			All requests with hostname matching an alias will satisfy the condition 
+			All requests with hostname matching an alias will satisfy the condition
 			"uri==myself".
 		    </para>
 		</listitem>
@@ -90,13 +90,13 @@
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>port</varname> - Listens on the specified port (default 5060). It applies to the last 
+			<varname>port</varname> - Listens on the specified port (default 5060). It applies to the last
 			address specified in listen and to all the following that do not have a corresponding "port" option.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>maxbuffer</varname> - Maximum receive buffer size which will not be exceeded by 
+			<varname>maxbuffer</varname> - Maximum receive buffer size which will not be exceeded by
 			the auto-probing procedure even if the OS allows. Default value is MAX_RECV_BUFFER_SIZE,
 			which is 256k.
 		    </para>
@@ -104,8 +104,8 @@
 		<listitem>
 		    <para>
 			<varname>children</varname> - Specifies how many processes should be started
-		        for each transport protocol. 
-		    Running multiple children allows a server to 
+		        for each transport protocol.
+		    Running multiple children allows a server to
 			server multiple requests in parallel when request processing block (e.g., on DNS
 			lookup). Note that <application>ser</application> typically spawns additional
 			processes, such as timer process or FIFO server. If FIFO server is turned on,
@@ -123,7 +123,7 @@
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>syn_branch</varname> - Shall the server use stateful synonym branches? It is faster but not 
+			<varname>syn_branch</varname> - Shall the server use stateful synonym branches? It is faster but not
 			reboot-safe. Default is yes.
 		    </para>
 		</listitem>
@@ -165,12 +165,12 @@
 			whether they should send reply
 			to IP advertised in Via.
 			Turned off by default, which means that replies are
-			sent to IP address from which requests came from. 
+			sent to IP address from which requests came from.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>user | uid</varname> - uid to be used by the server. 
+			<varname>user | uid</varname> - uid to be used by the server.
 		    </para>
 		</listitem>
 		<listitem>
@@ -180,7 +180,7 @@
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>mhomed</varname> -- enable calculation of 
+			<varname>mhomed</varname> -- enable calculation of
 			outbound interface; useful on multihomed servers,
 			see <xref linkend="mhomed"/>.
 		    </para>
@@ -227,13 +227,13 @@
 		<listitem>
 		    <para>
 			<command>route[number]{...}</command> - This marks a "route block" in configuration files.
-			route blocks are basic building blocks of <application>ser</application> scripts. 
-			Each route block contains a sequence of 
+			route blocks are basic building blocks of <application>ser</application> scripts.
+			Each route block contains a sequence of
 			<application>SER</application> actions enclosed in braces. Multiple route blocks
 			can be included in a configuration file.
-			When script execution begins on request receipt, 
-			route block number 0 is entered. Other route blocks serve as a kind of sub-routines and 
-			may be entered by calling the action <command>route(n)</command>, 
+			When script execution begins on request receipt,
+			route block number 0 is entered. Other route blocks serve as a kind of sub-routines and
+			may be entered by calling the action <command>route(n)</command>,
 			where n is number of the block. The action <command>break</command>
 			exits currently executed route block. It stops script execution for
 			route block number 0 or returns to calling route block otherwise.
@@ -263,7 +263,7 @@ route[2] {
 			<command>t_relay</command>. When a negative reply
 			comes back, the desired <command>failure_route</command>
 			will be entered and processing of the original request may
-			continue. 
+			continue.
 			</para>
 		    <para>
 			The set of actions applicable from within
@@ -288,14 +288,14 @@ failure_route[1] {
 
 		<listitem>
 		    <para>
-		    	The action <command>break</command> exits currently executed route block. 
-			It stops script execution for route block number 0 or returns to calling 
+		    	The action <command>break</command> exits currently executed route block.
+			It stops script execution for route block number 0 or returns to calling
 			route block otherwise.
 			<note>
 			    <para>
 				We recommend to use <command>break</command>
 				after any request forwarding or replying. This practice
-				helps to avoid erroneous scripts that 
+				helps to avoid erroneous scripts that
 				continue execution and mistakenly send another reply or
 				forward a request to another place, resulting in
 				protocol confusion.
@@ -376,6 +376,46 @@ if (isflagset(1)) {
 </programlisting>
 		    </example>
 		</listitem>
+		<listitem>
+		    <para>
+			<function>setavpflag(avp, flag_id)</function> - Sets a flag in the
+			AVP(s). The command simply set custom flag of AVP. The flags
+			may be used in script using <function>isavpflagset</function>
+			or in a module to perform specific operation on marked AVPs.
+			Flag identifier must be declared via <emphasis>avpflags</emphasis>
+			statement.
+		    </para>
+		    <example>
+			<title>setavpflag</title>
+			<programlisting>
+avpflags
+	my_flag,
+	your_flag;
+....
+setavpflag($avp[1], "my_flag");
+....
+if (isavpflagset($avp2, "your_flag")) {
+
+}
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<function>resetavpflag(avp, flag_id)</function> - Same as command
+			<function>setavpflag</function> - only resetavpflag will be
+			called instead of setavpflag.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function>isavpflagset(avp, flag_id)</function> - Test if the avp flag
+			is set or not.
+		    </para>
+		</listitem>
+
+
+
 	    </itemizedlist>
 	    <itemizedlist>
 		<title>Manipulation of URI and Destination Set</title>
@@ -476,8 +516,8 @@ sl_send_reply("300", "redirection");
 		<title>Message Forwarding</title>
 		<listitem>
 		    <para>
-			<command>forward(uri, port)</command> - Forward the request to given 
-			destination statelessly.  The uri and port parameters may take special 
+			<command>forward(uri, port)</command> - Forward the request to given
+			destination statelessly.  The uri and port parameters may take special
 			values 'uri:host'
 			and 'uri:port' respectively, in which case SER forwards to destination
 			set in current URI. All other elements in a destination set are
@@ -489,7 +529,7 @@ sl_send_reply("300", "redirection");
 		</listitem>
 		<listitem>
 		    <para>
-			<command>send</command> - Send the message as is to a third party 
+			<command>send</command> - Send the message as is to a third party
 		    </para>
 		    <para>
 			<emphasis>Example:</emphasis> send("foo.bar.com");
@@ -498,10 +538,10 @@ sl_send_reply("300", "redirection");
 	    </itemizedlist>
 	    <itemizedlist>
 		<title>Logging</title>
-		
+
 
 		<listitem>
-		    
+
 		    <para>
 			<command>log([level], message)</command> - Log a message.
 		    </para>
@@ -530,7 +570,7 @@ sl_send_reply("300", "redirection");
 		<listitem>
 		    <para>
 			<command>len_gt</command> - If length of the message is greater than value given as parameter, the
-			command will return 1 (indicating true). Otherwise -1 (indicating false) will be returned. It may 
+			command will return 1 (indicating true). Otherwise -1 (indicating false) will be returned. It may
 			take 'max_len' as parameter, in which case message size is limited
 			to internal buffer size BUF_SIZE (3040 by default).
 		    </para>
@@ -608,25 +648,25 @@ if (len_gt(1024)) {
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>-l address</emphasis> - Listens on the specified address. Multiple -l mean listening 
+			<emphasis>-l address</emphasis> - Listens on the specified address. Multiple -l mean listening
 			on multiple addresses. The default behavior is to listen on all the ipv4 interfaces.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>-p port</emphasis> - Listens on the specified port (default 5060). It applies to the last 
+			<emphasis>-p port</emphasis> - Listens on the specified port (default 5060). It applies to the last
 			address specified with -l and to all the following that do not have a corresponding -p.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>-n processes-no</emphasis> - Specifies the number of children processes forked per 
+			<emphasis>-n processes-no</emphasis> - Specifies the number of children processes forked per
 			interface (default 8).
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>-b max_rcv_buf_size</emphasis> - Maximum receive buffer size which will not be exceeded by 
+			<emphasis>-b max_rcv_buf_size</emphasis> - Maximum receive buffer size which will not be exceeded by
 			the auto-probing procedure even if the OS allows.
 		    </para>
 		</listitem>
@@ -637,7 +677,7 @@ if (len_gt(1024)) {
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>-w working-dir</emphasis> - Specifies the working directory. In the very improbable event 
+			<emphasis>-w working-dir</emphasis> - Specifies the working directory. In the very improbable event
 			that will crash, the core file will be generated here.
 		    </para>
 		</listitem>
@@ -770,7 +810,7 @@ if (len_gt(1024)) {
 		    <listitem>
 			<para>
 			    <emphasis>
-					nathelper	
+					nathelper
 			    </emphasis>
 			    -- facilitates NAT traversal for symmetric SIP phones such as ATA.
 			    </para>
@@ -823,8 +863,8 @@ if (len_gt(1024)) {
 				<emphasis>textops</emphasis> -- textual database back-end.
 			</para>
 			</listitem>
-				
-		    <listitem>			
+
+		    <listitem>
 			<para>
 			    <emphasis>
 				tm
@@ -833,7 +873,7 @@ if (len_gt(1024)) {
 			</para>
 		    </listitem>
 
-		    <listitem>			
+		    <listitem>
 			<para>
 			    <emphasis>
 				uri, uri_radius
@@ -846,7 +886,7 @@ if (len_gt(1024)) {
 	    </para>
 	    <para>
 		The most frequently used actions exported by modules are summarized
-		in <xref linkend="moduleactions"/>. For a full explanation of 
+		in <xref linkend="moduleactions"/>. For a full explanation of
 		module actions, see documentation in respective module directories
 		in source distribution of <application>ser</application>.
 	    </para>
@@ -854,7 +894,7 @@ if (len_gt(1024)) {
 		<title>Frequently Used Module Actions</title>
 		<tgroup cols="4">
 		    <thead>
-			<row>			    
+			<row>
 			    <entry>
 				Command
 			    </entry>
@@ -1081,7 +1121,7 @@ if (len_gt(1024)) {
 				RegExp, Substitute
 			    </entry>
 			    <entry>
-				find the first occurrence of a string matching the regular 
+				find the first occurrence of a string matching the regular
 				expression in header or body and replace it with a substitute
 			    </entry>
 			</row>
@@ -1096,7 +1136,7 @@ if (len_gt(1024)) {
 				RegExp, Substitute
 			    </entry>
 			    <entry>
-				find all occurrences of a string matching the regular 
+				find all occurrences of a string matching the regular
 				expression in header or body and replace it with a substitute
 			    </entry>
 			</row>
@@ -1210,7 +1250,7 @@ if (len_gt(1024)) {
 		is restarted.
 	    </para>
 	    <table>
-		
+
 		<title>FIFO Commands</title>
 		<tgroup cols="4">
 		    <thead>
@@ -1223,7 +1263,7 @@ if (len_gt(1024)) {
 			    </entry>
 			    <entry>
 				Parameters
-			    </entry>			    
+			    </entry>
 			    <entry>
 				Comments
 			    </entry>
@@ -1255,7 +1295,7 @@ if (len_gt(1024)) {
 			    <entry>arg</entry>
 			    <entry>core</entry>
 			    <entry>none</entry>
-			    <entry>prints list of command-line arguments with which 
+			    <entry>prints list of command-line arguments with which
 				<application>ser</application> was started</entry>
 			</row>
 			<row>
@@ -1300,9 +1340,9 @@ if (len_gt(1024)) {
 			    <entry>tm</entry>
 			    <entry>method, request URI, outbound URI (if none, empty line with a single dot),
 					dot-line-terminated header fields, optionally dot-line terminated message
-					body. 
+					body.
 				</entry>
-					
+
 			    <entry>initiate a transaction.
 					From and To header fields must be present in header field list,
 					so does Content-Type if body is present. If CSeq, CallId and From-tag
@@ -1463,7 +1503,7 @@ if (len_gt(1024)) {
 
 		    <listitem>
 			<para>
-			    server_monitoring-* -- reserved for persistent monitoring of 
+			    server_monitoring-* -- reserved for persistent monitoring of
 				server's operation
 			</para>
 		    </listitem>
@@ -1478,7 +1518,7 @@ if (len_gt(1024)) {
 
 
 		</itemizedlist>
-		
+
 	    </para>
 	</section>
 </section>

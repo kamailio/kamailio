@@ -365,6 +365,45 @@ int do_action(struct action* a, struct sip_msg* msg)
 			break;
 		/* jku - end : flag processing */
 
+		case AVPFLAG_OPER_T:  {
+			struct search_state st;
+			avp_t* avp;
+			int flag;
+			ret = 0;
+			flag = a->val[1].u.number;
+			if ((a->val[0].u.attr->type & AVP_INDEX_ALL) == AVP_INDEX_ALL || (a->val[0].u.attr->type & AVP_NAME_RE)!=0) {
+				for (avp=search_first_avp(a->val[0].u.attr->type, a->val[0].u.attr->name, NULL, &st); avp; avp = search_next_avp(&st, NULL)) {
+					switch (a->val[2].u.number) {   /* oper: 0..reset, 1..set, -1..no change */
+						case 0:
+							avp->flags &= ~(avp_flags_t)a->val[1].u.number;
+							break;
+						case 1:
+							avp->flags |= (avp_flags_t)a->val[1].u.number;
+							break;
+						default:;
+					}
+					ret = ret || ((avp->flags & (avp_flags_t)a->val[1].u.number) != 0);
+				}
+			}
+			else {
+				avp = search_avp_by_index(a->val[0].u.attr->type, a->val[0].u.attr->name, NULL, a->val[0].u.attr->index);
+				if (avp) {
+					switch (a->val[2].u.number) {   /* oper: 0..reset, 1..set, -1..no change */
+						case 0:
+							avp->flags &= ~(avp_flags_t)a->val[1].u.number;
+							break;
+						case 1:
+							avp->flags |= (avp_flags_t)a->val[1].u.number;
+							break;
+						default:;
+					}
+					ret = (avp->flags & (avp_flags_t)a->val[1].u.number) != 0;
+				}
+			}
+			if (ret==0)
+				ret = -1;
+			break;
+		}
 		case ERROR_T:
 			if ((a->val[0].type!=STRING_ST)|(a->val[1].type!=STRING_ST)){
 				LOG(L_CRIT, "BUG: do_action: bad error() types %d, %d\n",
