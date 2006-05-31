@@ -58,7 +58,7 @@ int resolve_select(select_t* s)
 
 	f = NULL;
 	nested = 0;
-	s->f[0] = NULL;
+	memset (s->f, 0, sizeof(s->f));
 	while (param_idx<s->n) {
 		accept = 0;
 		switch (s->params[param_idx].type) {
@@ -145,7 +145,6 @@ int resolve_select(select_t* s)
 		if (t->table[table_idx].flags & NESTED) {
 			if (nested < MAX_NESTED_CALLS-1) { /* need space for final function */
 				s->f[nested++] = f;
-				s->f[nested] = NULL;
 			} else {
 				BUG("MAX_NESTED_CALLS too small to resolve select\n");
 				goto not_found;
