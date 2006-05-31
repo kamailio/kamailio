@@ -1437,7 +1437,9 @@ attr_id_any_str:
 			yyerror("Not enough memory");
 			YYABORT;
 		}
-		s.s = $1+1; /* skip $ */
+		s.s = $1;
+		if (s.s[0] == '$')
+			s.s++;
 		s.len = strlen(s.s);
 		if (parse_avp_name(&s, &type, &avp_spec->name, &idx)) {
 			yyerror("error when parsing AVP");
