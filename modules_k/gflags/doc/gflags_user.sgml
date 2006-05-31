@@ -22,7 +22,8 @@
 	<para>
 	The benefit of this module is the value of the switch flags
 	can be manipulated by external applications such as web interface
-	or command line tools. The size of bitmap is 32 (unsigned int).
+	or command line tools. The size of bitmap is 32 or 64 on 
+	64bit architectures.
 	</para>
 	<para>
 	The module exports commands to FIFO server that can be used to change
@@ -48,18 +49,17 @@
 	<section>
 	<title>Exported Parameters</title>
 	<section>
-		<title><varname>initial</varname> (string)</title>
+		<title><varname>initial</varname> (integer)</title>
 		<para>
 		The initial value of global flags bitmap.
 		</para>
 		<para>
-		Default value is 
-			<quote>0</quote>.
+		Default value is <quote>0</quote>.
 		</para>
 		<example>
 		<title><varname>initial</varname> parameter usage</title>
 		<programlisting format="linespecific">
-modparam("gflags", "initial", "15)
+modparam("gflags", "initial", 15)
 		</programlisting>
 		</example>
 	</section>
@@ -77,7 +77,7 @@ modparam("gflags", "initial", "15)
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE.
+		ONREPLY_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function moreinfo="none">set_gflag()</function> usage</title>
@@ -96,7 +96,7 @@ set_gflag("4");
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE.
+		ONREPLY_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function moreinfo="none">reset_gflag()</function> usage</title>
@@ -116,7 +116,7 @@ reset_gflag("4");
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE.
+		ONREPLY_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function moreinfo="none">is_gflag()</function> usage</title>
@@ -135,57 +135,58 @@ if(is_gflag("4"))
 
 	</section>
 
-        <section>
-        <title><acronym>FIFO</acronym> Commands</title>
-        <section>
-                <title><function moreinfo="none">set_gflag</function></title>
-                <para>
-		Set the value of a flag to 1. The function accepts one 
-		parameter which is the number of the flag to be set.
-                </para>
-		<example>
-		<title><function moreinfo="none">set_gflag</function> usage</title>
-		<programlisting format="linespecific">
+	<section>
+		<title><acronym>FIFO</acronym> Commands</title>
+		<section>
+			<title><function moreinfo="none">set_gflag</function></title>
+			<para>
+			Set the value of a flag to 1. The function accepts one 
+			parameter which is the number of the flag to be set.
+			</para>
+			<example>
+			<title><function moreinfo="none">set_gflag</function> usage</title>
+			<programlisting format="linespecific">
 ...
 $ openserctl fifo set_gflag 1
 ...
 </programlisting>
-		</example>
+			</example>
 
-        </section>
-        <section>
-                <title><function moreinfo="none">reset_gflag</function></title>
-                <para>
-		Reset the value of a flag to 0. The function accepts 
-		one parameter which is the number of the flag to be reset.
-                </para>
-		<example>
-		<title><function moreinfo="none">reset_gflag</function> usage</title>
-		<programlisting format="linespecific">
+		</section>
+		<section>
+			<title><function moreinfo="none">reset_gflag</function></title>
+			<para>
+			Reset the value of a flag to 0. The function accepts 
+			one parameter which is the number of the flag to be reset.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">reset_gflag</function> usage</title>
+			<programlisting format="linespecific">
 ...
 $ openserctl fifo reset_gflag 1
 ...
 </programlisting>
-		</example>
-        </section>
-        <section>
-                <title><function moreinfo="none">is_gflag</function></title>
-                <para>
-		Return the status of a flag. The FIFO function would return TRUE 
-		if the flag is set and FALSE if it is not set. The only 
-		parameter of this function is the number of the flag.
-                </para>
-		<example>
-		<title><function moreinfo="none">set_gflag</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">is_gflag</function></title>
+			<para>
+			Return the status of a flag. The FIFO function would return TRUE 
+			if the flag is set and FALSE if it is not set. The only 
+			parameter of this function is the number of the flag.
+			</para>
+			<example>
+			<title><function moreinfo="none">set_gflag</function> usage</title>
+			<programlisting format="linespecific">
 ...
 $ openserctl fifo is_gflag 1
 ...
 </programlisting>
-		</example>
-        </section>
-        </section>
- 
+			</example>
+		</section>
+	</section>
+
 </chapter>
 
 <!-- Keep this element at the end of the file

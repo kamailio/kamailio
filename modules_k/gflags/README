@@ -17,7 +17,7 @@ Daniel-Constantin Mierla
         1.2. Dependencies
         1.3. Exported Parameters
 
-              1.3.1. initial (string)
+              1.3.1. initial (integer)
 
         1.4. Exported Functions
 
@@ -56,8 +56,8 @@ Chapter 1. User's Guide
 
    The benefit of this module is the value of the switch flags
    can be manipulated by external applications such as web
-   interface or command line tools. The size of bitmap is 32
-   (unsigned int).
+   interface or command line tools. The size of bitmap is 32 or
+   64 on 64bit architectures.
 
    The module exports commands to FIFO server that can be used to
    change the global flags via FIFO interface. The FIFO commands
@@ -74,14 +74,14 @@ Chapter 1. User's Guide
 
 1.3. Exported Parameters
 
-1.3.1. initial (string)
+1.3.1. initial (integer)
 
    The initial value of global flags bitmap.
 
    Default value is "0".
 
    Example 1-1. initial parameter usage
-modparam("gflags", "initial", "15)
+modparam("gflags", "initial", 15)
      _________________________________________________________
 
 1.4. Exported Functions
@@ -93,7 +93,7 @@ modparam("gflags", "initial", "15)
    "flag" can have a value from the range 1..31.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   ONREPLY_ROUTE.
+   ONREPLY_ROUTE and BRANCH_ROUTE.
 
    Example 1-2. set_gflag() usage
 ...
@@ -106,7 +106,7 @@ set_gflag("4");
    Reset the bit at the position "flag" in global flags.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   ONREPLY_ROUTE.
+   ONREPLY_ROUTE and BRANCH_ROUTE.
 
    Example 1-3. reset_gflag() usage
 ...
@@ -119,7 +119,7 @@ reset_gflag("4");
    Check if bit at the position "flag" in global flags is set.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   ONREPLY_ROUTE.
+   ONREPLY_ROUTE and BRANCH_ROUTE.
 
    Example 1-4. is_gflag() usage
 ...
@@ -204,4 +204,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

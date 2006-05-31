@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2004 FhG
+ * Copyright (C) 2005-2006 Voice Sistem S.R.L.
  *
  * This file is part of openser, a free SIP server.
  *
@@ -22,10 +23,13 @@
  * History:
  * --------
  *  2004-09-09  initial module created (jiri)
+ *  2006-05-31  flag range checked ; proper cleanup at module destroy ;
+ *              got rid of memory allocation in fixup function ;
+ *              optimized fixup function -> compute directly the bitmap ;
+ *              allowed functions from BRANCH_ROUTE (bogdan)
  *
  * TODO:
  * -----
- * - flag range checking
  * - named flags (takes a protected name list)
  *
  *
@@ -50,7 +54,6 @@
 #define FIFO_RESET_GFLAG "reset_gflag"
 
 #include "../../sr_module.h"
-#include "../../error.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -65,22 +68,19 @@ static int is_gflag(struct sip_msg*, char *, char *);
 
 static int fixup_str2int( void** param, int param_no);
 
-static int mod_init(void);
+static int  mod_init(void);
+static void mod_destroy(void);
 
 static int initial=0;
-static unsigned int *gflags; 
+static unsigned int *gflags=0;
 
 static cmd_export_t cmds[]={
-	{"set_gflag", /* action name as in scripts */
-		set_gflag,  /* C function name */
-		1,          /* number of parameters */
-		fixup_str2int,          /* */
-		/* can be applied to original/failed requests and replies */
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
-	{"reset_gflag", reset_gflag, 1, fixup_str2int,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
-	{"is_gflag", is_gflag, 1, fixup_str2int,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
+	{"set_gflag",    set_gflag,   1,   fixup_str2int,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"reset_gflag",  reset_gflag, 1,   fixup_str2int,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"is_gflag",     is_gflag,    1,   fixup_str2int,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -90,147 +90,148 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"gflags", 
-	cmds,
-	params,
-	0,        /* exported statistics */
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	0,        /* destroy function */
-	0         /* per-child init function */
+	"gflags",
+	cmds,        /* exported functions */
+	params,      /* exported parameters */
+	0,           /* exported statistics */
+	mod_init,    /* module initialization function */
+	0,           /* response function*/
+	mod_destroy, /* destroy function */
+	0            /* per-child init function */
 };
 
 
 /**************************** fixup functions ******************************/
 static int fixup_str2int( void** param, int param_no)
 {
-	unsigned int *myint;
+	unsigned int myint;
 	str param_str;
 
 	/* we only fix the parameter #1 */
 	if (param_no!=1)
 		return 0;
 
-	myint=(unsigned int *) pkg_malloc(sizeof(unsigned int));
-	if (!myint) {
-		LOG(L_ERR, "ERROR: gflags initi: no memory\n");
-		return -1;
-	}
-
-
 	param_str.s=(char*) *param;
 	param_str.len=strlen(param_str.s);
 
-	if (str2int(&param_str, myint )<0) {
-		LOG(L_ERR, "ERROR: fixup_str2int: bad number <%s>\n",
-                (char *)(*param));
+	if (str2int(&param_str, &myint )<0) {
+		LOG(L_ERR, "ERROR:gflags:fixup_str2int: bad number <%s>\n",
+			(char *)(*param));
 		return E_CFG;
-    }
+	}
+	if ( myint >= 8*sizeof(*gflags) ) {
+		LOG(L_ERR, "ERROR:gflags:fixup_str2int: flag <%d> out of "
+			"range [0..%d]\n", myint, 8*sizeof(*gflags) );
+		return E_CFG;
+	}
+	/* convert from flag index to flag bitmap */
+	myint = 1 << myint;
 	/* success -- change to int */
 	pkg_free(*param);
-	*param=(void *)myint;
-    return 0;
+	*param=(void *)(long)myint;
+	return 0;
 }
+
 
 static unsigned int read_flag(FILE *pipe, char *response_file)
 {
 	char flag_str[MAX_FLAG_LEN];
 	int flag_len;
-	unsigned int flag_nr;
+	unsigned int flag;
 	str fs;
 
 	if (!read_line(flag_str, MAX_FLAG_LEN, pipe, &flag_len) 
 			|| flag_len == 0) {
 		fifo_reply(response_file, "400: gflags: invalid flag number\n");
-		LOG(L_ERR, "ERROR: read_flag: invalid flag number\n");
+		LOG(L_ERR, "ERROR:gflags:read_flag: invalid flag number\n");
 		return 0;
 	}
 
 	fs.s=flag_str;fs.len=flag_len;
-	if (str2int(&fs, &flag_nr) < 0) {
+	if (str2int(&fs, &flag) < 0) {
 		fifo_reply(response_file, "400: gflags: invalid flag format\n");
-		LOG(L_ERR, "ERROR: read_flag: invalid flag format\n");
+		LOG(L_ERR, "ERROR:gflags:read_flag: invalid flag format\n");
 		return 0;
 	}
 
-	return flag_nr;
+	if ( flag >= 8*sizeof(*gflags) ) {
+		fifo_reply(response_file, "400: gflags: flag out of range\n");
+		LOG(L_ERR, "ERROR:gflags:read_flag: flag out of range\n");
+		return 0;
+	}
+	/* convert from flag index to flag bitmap */
+	flag = 1 << flag;
+	return flag;
 }
-	
+
 
 static int fifo_set_gflag( FILE* pipe, char* response_file )
 {
-
 	unsigned int flag;
 
 	flag=read_flag(pipe, response_file);
-	if 	(!flag) {
-		LOG(L_ERR, "ERROR: fifo_set_gflag: failed in read_flag\n");
+	if (!flag) {
+		LOG(L_ERR, "ERROR:gflags:fifo_set_gflag: failed in read_flag\n");
 		return 1;
 	}
 
-	(*gflags) |= 1 << flag;
+	(*gflags) |= flag;
 	fifo_reply (response_file, "200 OK\n");
 	return 1;
 }
+
 
 static int fifo_reset_gflag( FILE* pipe, char* response_file )
 {
-
 	unsigned int flag;
 
 	flag=read_flag(pipe, response_file);
-	if 	(!flag) {
-		LOG(L_ERR, "ERROR: fifo_reset_gflag: failed in read_flag\n");
+	if (!flag) {
+		LOG(L_ERR, "ERROR:gflags:fifo_reset_gflag: failed in read_flag\n");
 		return 1;
 	}
 
-	(*gflags) &= ~ (1 << flag);
+	(*gflags) &= ~ flag;
 	fifo_reply (response_file, "200 OK\n");
 	return 1;
 }
 
+
 static int fifo_is_gflag( FILE* pipe, char* response_file )
 {
-
 	unsigned int flag;
 
 	flag=read_flag(pipe, response_file);
-	if 	(!flag) {
-		LOG(L_ERR, "ERROR: fifo_reset_gflag: failed in read_flag\n");
+	if (!flag) {
+		LOG(L_ERR, "ERROR:gflags:fifo_reset_gflag: failed in read_flag\n");
 		return 1;
 	}
 
 	fifo_reply (response_file, "200 OK\n%s\n", 
-			((*gflags) & (1<<flag)) ? "TRUE" : "FALSE" );
+			((*gflags) & flag) ? "TRUE" : "FALSE" );
 	return 1;
 }
 
-static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo) 
-{
-	unsigned long int flag;
 
-	flag=*((unsigned long int*)flag_par);
-	(*gflags) |= 1 << flag;
-	return 1;
-}
-	
-static int reset_gflag(struct sip_msg *bar, char *flag_par, char *foo)
+static int set_gflag(struct sip_msg *bar, char *flag, char *foo) 
 {
-	unsigned long int flag;
-
-	flag=*((unsigned long int*)flag_par);
-	(*gflags) &= ~ (1 << flag);
+	(*gflags) |= (unsigned int)(long)flag;
 	return 1;
 }
 
-static int is_gflag(struct sip_msg *bar, char *flag_par, char *foo)
-{
-	unsigned long int flag;
 
-	flag=*((unsigned long int*)flag_par);
-	return ( (*gflags) & (1<<flag)) ? 1 : -1;
+static int reset_gflag(struct sip_msg *bar, char *flag, char *foo)
+{
+	(*gflags) &= ~ ((unsigned int)(long)flag);
+	return 1;
 }
-	
+
+
+static int is_gflag(struct sip_msg *bar, char *flag, char *foo)
+{
+	return ( (*gflags) & ((unsigned int)(long)flag)) ? 1 : -1;
+}
+
 
 static int mod_init(void)
 {
@@ -257,3 +258,8 @@ static int mod_init(void)
 }
 
 
+static void mod_destroy(void)
+{
+	if (gflags)
+		shm_free(gflags);
+}
