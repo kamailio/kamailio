@@ -53,35 +53,6 @@ strict_route();
 	</example>
     </section>
 
-    <section id="rr_add_avp_cookie">
-	<title>
-		<function moreinfo="none">rr_add_avp_cookie(string)</function>
-	</title>
-	<para>
-		The function marks Avp for a new Record-Route header field. The header field will be inserted
-		in the message before any other Record-Route header fields. Note that only user class AVPs may
-		be passed as cookies, i.e. domain and global are ignored.
-	</para>
-	<para>Meaning of the parameters is as follows:</para>
-	<itemizedlist>
-		<listitem>
-		    <para>
-			<emphasis>string</emphasis> - Avp(s) to be inserted into the Record-route in <function>record_route</function>.
-		    </para>
-		</listitem>
-	</itemizedlist>
-	<example>
-		<title><function>rr_add_avp_cookie</function> usage</title>
-		<programlisting format="linespecific">
-...
-rr_add_avp_cookie("foo");
-rr_add_avp_cookie("f.foo,bar");  # identified by number
-rr_add_avp_cookie("avp_*"); # identified by regex
-...
-</programlisting>
-	</example>
-    </section>
-
     <section id="record_route">
 	<title>
 	    <function>record_route()</function>
@@ -89,12 +60,18 @@ rr_add_avp_cookie("avp_*"); # identified by regex
 	<para>
 	    The function adds a new Record-Route header field. The header field
 	    will be inserted in the message before any other Record-Route
-	    header fields.
+	    header fields. Avp marked using <function>setavpflag</function>, flag <emphasis>dialog_cookie</emphasis>
+	    will be inserted as serialized parameter of record-route header. Note that only user class AVPs should
+	    be passed as cookies, i.e. domain and global should be avoided.
 	</para>
 	<example>
 	    <title><function>record_route</function> usage</title>
 	    <programlisting>
+avpflags
+	dialog_cookie;  # must be declared when used in script
 ...
+setavpflag($cookie, "dialog_cookie");
+setavpflag("$f./^dlg_/", "dialog_cookie");
 record_route();
 ...
 	    </programlisting>

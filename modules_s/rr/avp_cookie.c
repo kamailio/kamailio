@@ -39,22 +39,7 @@
 
 unsigned short crc_secret = 0;
 regex_t* cookie_filter_re = 0;
-
-
-int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
-	avp_ident_t *ident;
-	struct usr_avp *avp;
-	struct search_state st;
-	ident = (void*) param1;
-	DBG("rr_add_avp_cookie: inquired\n");
-	while (ident->flags != (avp_flags_t) -1) {
-		for (avp=search_avp(*ident, NULL, &st); avp; avp = search_next_avp(&st, NULL)) {
-			avp->flags |= AVP_FLAG_DIALOG;
-		}
-		ident++;
-	}
-	return 1;
-}
+avp_flags_t avp_flag_dialog = 0;
 
 void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	int pos, i, n;
@@ -142,7 +127,7 @@ str *rr_get_avp_cookies(void) {
 	for (avp_list_no=0; avp_list_no<MAX_AVP_DIALOG_LISTS; avp_list_no++) {
 		for ( avp=get_avp_list(avp_dialog_lists[avp_list_no]); avp; avp = avp->next ) {
 
-			if ( (avp->flags & AVP_FLAG_DIALOG) == 0)
+			if ( (avp->flags & avp_flag_dialog) == 0)
 				continue;
 
 			if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
@@ -315,7 +300,7 @@ void rr_set_avp_cookies(str *enc_cookies, int reverse_direction) {
 		/* set avp from cookie */
 		DBG("rr:set_avp_cookies: adding AVP\n");
 
-		if ( add_avp(avp.flags|AVP_FLAG_DIALOG, avp_name, avp_val)!=0 ) {
+		if ( add_avp(avp.flags|avp_flag_dialog, avp_name, avp_val)!=0 ) {
 			LOG(L_ERR, "ERROR: rr:set_avp_cookies: add_avp failed\n");
 		}
 	}

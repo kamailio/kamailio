@@ -71,8 +71,8 @@ avp_ident_t next_route_avp_ident;
 MODULE_VERSION
 
 static int mod_init(void);
-static int fixup_avp_list(void** param, int param_no);
 
+#define AVP_FLAG_DIALOG "dialog_cookie"
 
 /*
  * Exported functions
@@ -89,8 +89,6 @@ static cmd_export_t cmds[] = {
 	{"record_route",         record_route,        0, 0,           REQUEST_ROUTE},
 	{"record_route_preset",  record_route_preset, 1, fixup_str_1, REQUEST_ROUTE},
 	{"record_route_strict" , record_route_strict, 0, 0,           0            },
-	{"rr_add_avp_cookie",    rr_add_avp_cookie,   1, fixup_avp_list, REQUEST_ROUTE},
-        {"rr_store",             rr_add_avp_cookie,   1, fixup_avp_list, REQUEST_ROUTE},
 	{"remove_record_route",  remove_record_route, 0, 0,           REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -109,7 +107,7 @@ static param_export_t params[] ={
 	{"add_username",     PARAM_INT,    &add_username    },
 	{"cookie_filter",    PARAM_STRING, &cookie_filter   },
 	{"cookie_secret",    PARAM_STR,    &crc_secret_str  },
-	{"user_part_avp",    PARAM_STR,    &user_part_avp   },	
+	{"user_part_avp",    PARAM_STR,    &user_part_avp   },
 	{"next_route_avp",   PARAM_STR,    &next_route_avp  },
 	{0, 0, 0 }
 };
@@ -140,64 +138,25 @@ static int mod_init(void)
 			return E_BAD_RE;
 		}
 	}
-	
+
 	memset (&user_part_avp_ident, 0, sizeof(avp_ident_t));
 	if (user_part_avp.s && user_part_avp.len) {
 		if (parse_avp_ident(&user_part_avp, &user_part_avp_ident)!=0) {
 			ERR("modparam \"user_part_avp\" : error while parsing\n");
-			return E_CFG; 
+			return E_CFG;
 		}
 	}
 	memset (&next_route_avp_ident, 0, sizeof(avp_ident_t));
 	if (next_route_avp.s && next_route_avp.len) {
 		if (parse_avp_ident(&next_route_avp, &next_route_avp_ident)!=0) {
 			ERR("modparam \"next_route_avp\" : error while parsing\n");
-			return E_CFG; 
+			return E_CFG;
 		}
 	}
-	return 0;
-}
-
-static int fixup_avp_list(void** param, int param_no)
-{
-	int n;
-	char *c;
-	avp_ident_t *ident;
-	str s;
-	
-	DBG("rr:fixup_avp_list: #%d, '%s'\n", param_no, (char*)(*param));
-	if (param_no!=1) return 0;
-	
-	s.s = (char*) *param;
-        s.len = strlen(s.s);
-	for (c=(char*)*param, n=2; *c; c++) {
-		if (*c == ',') n++;
-	}
-	ident = pkg_malloc(sizeof(*ident)*n);
-	if (!ident) {
-		LOG(L_ERR, "ERROR: rr: out of memory\n");
+	avp_flag_dialog = register_avpflag(AVP_FLAG_DIALOG);
+	if (avp_flag_dialog == 0) {
+		LOG(L_ERR, "ERROR: %s: cannot register avpflag \"%s\"\n", exports.name, AVP_FLAG_DIALOG);
 		return E_CFG;
 	}
-		
-	s.s = (char*) *param;
-	n = 0;
-	while (*s.s) {
-		while (*s.s == ' ' || *s.s == ',') s.s++;
-		s.len = 0;
-		while (s.s[s.len] && s.s[s.len] != ',') s.len++;
-		while (s.len > 0 && s.s[s.len-1] == ' ') s.len--;
-		if (s.len > 0) {
-			if (parse_avp_ident(&s, &ident[n]) < 0) {
-				LOG(L_ERR, "ERROR: rr: parsing error near '%s'\n", s.s);
-				return E_CFG;
-			}
-			n++;
-		}
-		s.s += s.len;
-	}
-	ident[n].flags = (avp_flags_t) -1;  /* bumper */
-	/* pkg_free(*param); do not free it because it's used in idents!*/
-	*param = ident;
 	return 0;
 }
-
