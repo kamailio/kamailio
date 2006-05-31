@@ -259,12 +259,6 @@ static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply, unsigned int offs
 			ERR("No memory left: %d\n", reply->buf.len + text->len + 1024);
 			return -1;
 		}
-		p = pkg_malloc(reply->buf.len + text->len + 1024);
-		if (!p) {
-			set_fault(reply, 500, "Internal Server Error (No memory left)");
-			ERR("No memory left: %d\n", reply->buf.len + text->len + 1024);
-			return -1;
-		}
 		memcpy(p, reply->body.s, reply->body.len);
 		pkg_free(reply->buf.s);
 		reply->buf.s = p;
