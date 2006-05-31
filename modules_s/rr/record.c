@@ -41,6 +41,7 @@
 #include "record.h"
 #include "rr_mod.h"
 #include "avp_cookie.h"
+#include "fix_lumps.h"
 
 
 #define RR_PREFIX "Record-Route: <sip:"
@@ -173,20 +174,20 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	memcpy(crlf, CRLF, 2);
 	memcpy(r2, RR_R2, RR_R2_LEN);
 
-	if (!(_l = insert_new_lump_after(_l, prefix, prefix_len, 0))) goto lump_err;
+	if (!(_l = insert_new_lump_after(_l, prefix, prefix_len, HDR_RECORDROUTE_T))) goto lump_err;
 	prefix = 0;
-	if (!(_l = insert_subst_lump_after(_l, _inbound ? SUBST_RCV_ALL : SUBST_SND_ALL, 0))) goto lump_err;
+	if (!(_l = insert_subst_lump_after(_l, _inbound ? SUBST_RCV_ALL : SUBST_SND_ALL, HDR_RECORDROUTE_T))) goto lump_err;
 	if (enable_double_rr) {
-		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0))) goto lump_err;
-		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0))) goto lump_err;
+		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, HDR_RECORDROUTE_T))) goto lump_err;
+		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, HDR_RECORDROUTE_T))) goto lump_err;
 		r2 = 0;
 	} else {
 		pkg_free(r2);
 		r2 = 0;
 	}
-	if (!(_l2 = insert_new_lump_before(_l2, suffix, suffix_len, 0))) goto lump_err;
+	if (!(_l2 = insert_new_lump_before(_l2, suffix, suffix_len, HDR_RECORDROUTE_T))) goto lump_err;
 	suffix = 0;
-	if (!(_l2 = insert_new_lump_before(_l2, crlf, 2, 0))) goto lump_err;
+	if (!(_l2 = insert_new_lump_before(_l2, crlf, 2, HDR_RECORDROUTE_T))) goto lump_err;
 	crlf = 0;
 	return 0;
 
@@ -237,15 +238,15 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 
 	avp_cookie = rr_get_avp_cookies();
 	if (enable_double_rr) {
-		l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
-		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+		l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
+		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 		if (!l || !l2) {
 			LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 			res = -5;
 			goto exit;
 		}
-		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, 0);
-		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, 0);
+		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, HDR_RECORDROUTE_T);
+		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, HDR_RECORDROUTE_T);
 		if (!l || !l2) {
 			LOG(L_ERR, "insert_RR(): Error while inserting conditional lump\n");
 			res = -6;
@@ -258,8 +259,8 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 		}
 	}
 
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
-	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
+	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	if (!l || !l2) {
 		LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 		res = -3;
@@ -336,7 +337,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 		from = (struct to_body*)_m->from->parsed;
 	}
 
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	if (!l) {
 		LOG(L_ERR, "record_route_preset(): Error while creating an anchor\n");
 		return -3;
@@ -396,7 +397,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 
 	memcpy(p, CRLF, 2);
 
-	if (!insert_new_lump_after(l, hdr, hdr_len, 0)) {
+	if (!insert_new_lump_after(l, hdr, hdr_len, HDR_RECORDROUTE_T)) {
 		LOG(L_ERR, "record_route_preset(): Error while inserting new lump\n");
 		pkg_free(hdr);
 		return -5;
@@ -411,4 +412,13 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	return do_RR(_m, 0);
+}
+
+/*
+ * Remove Record-Route header from message lumps
+ */
+int remove_record_route(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	free_rr_lump(&(_m->add_rm));
+	return 1;
 }
