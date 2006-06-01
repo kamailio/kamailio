@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "rr_mod.h"
 #include "../../sr_module.h"
 #include "../../ut.h"
 #include "../../error.h"
@@ -71,8 +72,6 @@ avp_ident_t next_route_avp_ident;
 MODULE_VERSION
 
 static int mod_init(void);
-
-#define AVP_FLAG_DIALOG "dialog_cookie"
 
 /*
  * Exported functions
@@ -153,9 +152,9 @@ static int mod_init(void)
 			return E_CFG;
 		}
 	}
-	avp_flag_dialog = register_avpflag(AVP_FLAG_DIALOG);
+	avp_flag_dialog = register_avpflag(AVP_FLAG_DIALOG_COOKIE);
 	if (avp_flag_dialog == 0) {
-		LOG(L_ERR, "ERROR: %s: cannot register avpflag \"%s\"\n", exports.name, AVP_FLAG_DIALOG);
+		LOG(L_ERR, "ERROR: %s: cannot register avpflag \"%s\"\n", exports.name, AVP_FLAG_DIALOG_COOKIE);
 		return E_CFG;
 	}
 	return 0;
