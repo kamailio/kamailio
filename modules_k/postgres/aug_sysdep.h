@@ -218,8 +218,10 @@ typedef unsigned int augUInt32;
 
 /*  FreeBSD lacks these error codes.  */
 #define ENODATA	ENOBUFS
-#define EPROTO	EPROTOTYPE
 #define EUNATCH	ENOPROTOOPT
+#ifndef EPROTO
+#define EPROTO	EPROTOTYPE
+#endif
 
 /*  FreeBSD lacks these termios codes.  */
 #define TCGETS	TIOCGETA
