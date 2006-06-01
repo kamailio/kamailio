@@ -201,7 +201,8 @@ modparam("speeddial", "use_domain", 1)
 
 1.4.1. sd_lookup(table)
 
-   Print a formated message using LOG function.
+   The function lookups the short dial number from R-URI in
+   'table' and replaces the R-URI with associated address.
 
    Meaning of the parameters is as follows:
 

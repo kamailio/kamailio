@@ -223,7 +223,7 @@ modparam("speeddial", "use_domain", 1)
 		<function moreinfo="none">sd_lookup(table)</function>
 		</title>
 		<para>
-		Print a formated message using LOG function.
+		The function lookups the short dial number from R-URI in 'table' and replaces the R-URI with associated address.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
