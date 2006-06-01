@@ -121,7 +121,7 @@ static int fixup_str2int( void** param, int param_no)
 	}
 	if ( myint >= 8*sizeof(*gflags) ) {
 		LOG(L_ERR, "ERROR:gflags:fixup_str2int: flag <%d> out of "
-			"range [0..%d]\n", myint, 8*sizeof(*gflags) );
+			"range [0..%lu]\n", myint, 8*sizeof(*gflags) );
 		return E_CFG;
 	}
 	/* convert from flag index to flag bitmap */
