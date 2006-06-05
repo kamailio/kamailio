@@ -33,7 +33,7 @@
  */
 typedef enum {
 	DB_INT,        /* 32-bit integer */
-        DB_DOUBLE,     /* double data type */
+	DB_DOUBLE,     /* double data type */
 	DB_STRING,     /* Zero-terminated string */
 	DB_STR,        /* str structure */
 	DB_DATETIME,   /* Date and time */
