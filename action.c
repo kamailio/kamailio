@@ -207,6 +207,17 @@ int do_action(struct action* a, struct sip_msg* msg)
 					}
 #endif
 				}
+
+#ifdef HONOR_MADDR				
+				if (u->maddr_val.s && u->maddr_val.len) {
+					if (sip_hostport2su(&dst.to, &u->maddr_val, port, dst.proto)<0){
+						LOG(L_ERR, "ERROR:  bad maddr param in uri,"
+								" dropping packet\n");
+						ret=E_BAD_ADDRESS;
+						goto error_fwd_uri;
+					}
+				} else
+#endif
 				if (sip_hostport2su(&dst.to, &u->host, port, dst.proto)<0){
 					LOG(L_ERR, "ERROR:  bad host name in uri,"
 							" dropping packet\n");

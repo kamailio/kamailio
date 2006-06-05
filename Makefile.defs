@@ -339,6 +339,10 @@ endif
 #		compiles in comp=[sergz|sigcomp] support (parsing uri & via, 
 #		adding it to via, lumps a.s.o). WARNING: right now this option
 #		is useless since the compression code doesn't exist yet.
+# -DHONOR_MADDR
+#		compiles in checks and use for maddr parameter in uri.
+#		Required to support Windows Messenger 5.x over TCP connection
+#		which (mis)uses this parameter.
 
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 

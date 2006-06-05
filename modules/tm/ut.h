@@ -119,9 +119,21 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 			uri_proto=PROTO_TLS;
 	}else
 		uri_proto=parsed_uri.proto;
+#ifdef HONOR_MADDR
+	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
+		p = mk_proxy(&parsed_uri.maddr_val, 
+					  parsed_uri.port_no, 
+					  get_proto(proto, uri_proto));
+		if (p == 0) {
+			LOG(L_ERR, "ERROR: uri2proxy: bad maddr param in URI <%.*s>\n",
+				uri->len, ZSW(uri->s));
+			return 0;
+		}
+	} else
+#endif
 	p = mk_proxy(&parsed_uri.host, 
-		      parsed_uri.port_no, 
-		      get_proto(proto, uri_proto));
+				  parsed_uri.port_no, 
+				  get_proto(proto, uri_proto));
 	if (p == 0) {
 		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
 		    uri->len, ZSW(uri->s));
@@ -171,6 +183,12 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 	dst->proto= get_proto(proto, uri_proto);
 #ifdef USE_COMP
 	dst->comp=parsed_uri.comp;
+#endif
+#ifdef HONOR_MADDR
+	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
+		sip_hostport2su(&dst->to, &parsed_uri.maddr_val, parsed_uri.port_no, dst->proto);
+		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len, parsed_uri.maddr_val.s, parsed_uri.port_no);
+	} else
 #endif
 	sip_hostport2su(&dst->to, &parsed_uri.host, parsed_uri.port_no,
 						dst->proto);
