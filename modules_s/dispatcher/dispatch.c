@@ -450,8 +450,8 @@ static inline int get_uri_hash_keys(str* key1, str* key2,
 	*key1=parsed_uri->user;
 	key2->s=0;
 	key2->len=0;
-	if (!(flags & DS_HASH_USER_ONLY) ||
-		(key1->s==0 && (flags & DS_HASH_USER_OR_HOST))){
+	if ((!(flags & (DS_HASH_USER_ONLY | DS_HASH_USER_OR_HOST))) ||
+		((key1->s==0) && (flags & DS_HASH_USER_OR_HOST))){
 		/* key2=host */
 		*key2=parsed_uri->host;
 		/* add port if needed */
