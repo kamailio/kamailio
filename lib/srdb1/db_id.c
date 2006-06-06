@@ -246,7 +246,11 @@ unsigned char cmp_db_id(struct db_id* id1, struct db_id* id2)
 
 	if (strcmp(id1->scheme, id2->scheme)) return 0;
 	if (strcmp(id1->username, id2->username)) return 0;
-	if (strcmp(id1->password, id2->password)) return 0;
+	if (id1->password!=0 && id2->password!=0) {
+		if(strcmp(id1->password, id2->password)) return 0;
+	} else {
+		if (id1->password!=0 || id2->password!=0) return 0;
+	}
 	if (strcasecmp(id1->host, id2->host)) return 0;
 	if (strcmp(id1->database, id2->database)) return 0;
 	return 1;
