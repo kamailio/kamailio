@@ -4,6 +4,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../modules/tm/ut.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_from.h"
 
 #include <presence/notifier.h>
 
@@ -73,6 +74,8 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 		ERR("can't parse headers\n");
 		return NULL;
 	}
+	
+	parse_from_header(m);
 	
 	memset(&id, 0, sizeof(id));
 	if (m->to) id.loc_tag = ((struct to_body*)m->to->parsed)->tag_value;

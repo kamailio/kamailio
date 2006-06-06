@@ -1,3 +1,7 @@
+2006-06-06
+	* corrected BUG reported by Luis Silva - added missing call to
+	parse_from_header
+
 2006-05-25
 	* added Max-Forwards header into SUBSCRIBE requests
 	* removed unnecessary TM/DIALOG binding function call in module
