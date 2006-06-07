@@ -1,0 +1,57 @@
+timer module
+============
+
+Author: tomas.mandys at iptel dot org
+
+enable set timers in script
+
+mod_params
+-----------
+declare_timer = (route#|route_name)   route#|route_name , interval, ("slow"/"fast") , "start"
+
+format:
+
+
+commands
+--------
+
+timer_enable(timer#, 0|1)
+
+
+selects
+-------
+
+@timer[timer#].enabled
+
+
+m4 processor
+------------
+
+define(`declare_timer', `gen_id(`declare_timer_cnt') define(`$1', indir(`declare_timer_cnt')) modparam("`timer'", "`declare_timer'", $2)')
+
+usage:
+
+declare_timer(TIMER_1, "TIMER_ROUTE,1000");
+declare_timer(TIMER_2, "2,1000,slow,enable");
+
+
+Examples:
+--------
+1) example
+
+loadmodule "modules/xlog/xlog.so"
+loadmodule "../../mods/timer/trunk/timer.so"
+
+modparam("timer", "declare_timer", "ONTIMER,1000");  #0
+modparam("timer", "declare_timer", "ONTIMER2,2000,slow,enable"); #1
+
+route["ONTIMER"] {
+	# do something
+}
+
+
+route["ONTIMER2"] {
+	# do something
+	timer_enable(0, 0);
+}
+
