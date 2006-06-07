@@ -116,4 +116,30 @@ int branch_builder( unsigned int hash_index,
 /* check if IP address in Via != source IP address of signaling */
 int received_test( struct sip_msg *msg );
 
+/* builds a char* buffer from message headers without body
+ * first line is excluded in case of skip_first_line=1
+ */
+char * build_only_headers( struct sip_msg* msg, int skip_first_line,
+				unsigned int *returned_len,
+				int *error,
+				struct dest_info* send_info);
+
+/* builds a char* buffer from message body
+ * error is set -1 if the memory allocation failes
+ */
+char * build_body( struct sip_msg* msg,
+			unsigned int *returned_len,
+			int *error,
+			struct dest_info* send_info);
+
+/* builds a char* buffer from SIP message including body
+ * The function adjusts the Content-Length HF according
+ * to body lumps in case of adjust_clen=1.
+ */
+char * build_all( struct sip_msg* msg, int adjust_clen,
+			unsigned int *returned_len,
+			int *error,
+			struct dest_info* send_info);
+
+
 #endif

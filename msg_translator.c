@@ -2174,3 +2174,167 @@ char* via_builder( unsigned int *len,
 	*len = via_len;
 	return line_buf;
 }
+
+/* builds a char* buffer from message headers without body
+ * first line is excluded in case of skip_first_line=1
+ * error is set -1 if the memory allocation failes
+ */
+char * build_only_headers( struct sip_msg* msg, int skip_first_line,
+				unsigned int *returned_len,
+				int *error,
+				struct dest_info* send_info)
+{
+	char		*buf, *new_buf;
+	unsigned int	offset, s_offset, len, new_len;
+
+	*error = 0;
+	buf = msg->buf;
+	if (skip_first_line)
+		s_offset = msg->headers->name.s - buf;
+	else
+		s_offset = 0;
+
+	/* original length without body, and without final \r\n */
+	len = msg->unparsed - buf;
+	/* new msg length */
+	new_len =	len - /* original length  */
+			s_offset + /* skipped first line */
+			lumps_len(msg, msg->add_rm, send_info); /* lumps */
+
+	if (new_len == 0) {
+		*returned_len = 0;
+		return 0;
+	}
+
+	new_buf = (char *)pkg_malloc(new_len+1);
+	if (!new_buf) {
+		LOG(L_ERR, "ERROR: build_only_headers: Not enough memory\n");
+		*error = -1;
+		return 0;
+	}
+	new_buf[0] = 0;
+	offset = 0;
+
+	/* copy message lumps */
+	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info);
+	/* copy the rest of the message without body */
+	if (len > s_offset) {
+		memcpy(new_buf+offset, buf+s_offset, len-s_offset);
+		offset += (len-s_offset);
+	}
+	new_buf[offset] = 0;
+
+	*returned_len = offset;
+	return new_buf;
+}
+
+/* builds a char* buffer from message body
+ * error is set -1 if the memory allocation failes
+ */
+char * build_body( struct sip_msg* msg,
+			unsigned int *returned_len,
+			int *error,
+			struct dest_info* send_info)
+{
+	char		*buf, *new_buf, *body;
+	unsigned int	offset, s_offset, len, new_len;
+
+	*error = 0;
+	body = get_body(msg);
+
+	if (!body || (body[0] == 0)) {
+		*returned_len = 0;
+		return 0;
+	}
+	buf = msg->buf;
+	s_offset = body - buf;
+
+	/* original length of msg with body */
+	len = msg->len;
+	/* new body length */
+	new_len =	len - /* original length  */
+			s_offset + /* msg without body */
+			lumps_len(msg, msg->body_lumps, send_info); /* lumps */
+
+	new_buf = (char *)pkg_malloc(new_len+1);
+	if (!new_buf) {
+		LOG(L_ERR, "ERROR: build_body: Not enough memory\n");
+		*error = -1;
+		return 0;
+	}
+	new_buf[0] = 0;
+	offset = 0;
+
+	/* copy body lumps */
+	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, send_info);
+	/* copy the rest of the message without body */
+	if (len > s_offset) {
+		memcpy(new_buf+offset, buf+s_offset, len-s_offset);
+		offset += (len-s_offset);
+	}
+	new_buf[offset] = 0;
+
+	*returned_len = offset;
+	return new_buf;
+}
+
+/* builds a char* buffer from SIP message including body
+ * The function adjusts the Content-Length HF according
+ * to body lumps in case of touch_clen=1.
+ */
+char * build_all( struct sip_msg* msg, int touch_clen,
+			unsigned int *returned_len,
+			int *error,
+			struct dest_info* send_info)
+{
+	char		*buf, *new_buf;
+	unsigned int	offset, s_offset, len, new_len;
+	unsigned int	body_delta;
+
+	*error = 0;
+	/* Calculate message body difference */
+	body_delta = lumps_len(msg, msg->body_lumps, send_info);
+	if (touch_clen) {
+		/* adjust Content-Length */
+		if (adjust_clen(msg, body_delta, send_info->proto) < 0) {
+			LOG(L_ERR, "ERROR: build_all: Error while adjusting"
+					" Content-Length\n");
+			*error = -1;
+			return 0;
+		}
+	}
+
+	buf = msg->buf;
+	/* original msg length */
+	len = msg->len;
+	/* new msg length */
+	new_len =	len + /* original length  */
+			lumps_len(msg, msg->add_rm, send_info) + /* hdr lumps */
+			body_delta; /* body lumps */
+
+	if (new_len == 0) {
+		returned_len = 0;
+		return 0;
+	}
+
+	new_buf = (char *)pkg_malloc(new_len+1);
+	if (!new_buf) {
+		LOG(L_ERR, "ERROR: build_all: Not enough memory\n");
+		*error = -1;
+		return 0;
+	}
+	new_buf[0] = 0;
+	offset = s_offset = 0;
+
+	/* copy message lumps */
+	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info);
+	/* copy body lumps */
+	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, send_info);
+	/* copy the rest of the message */
+	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
+	offset += (len-s_offset);
+	new_buf[offset] = 0;
+
+	*returned_len = offset;
+	return new_buf;	
+}
