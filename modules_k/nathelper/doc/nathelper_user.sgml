@@ -371,13 +371,13 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">fix_nated_sdp(flags), </function>
+		<function moreinfo="none">fix_nated_sdp(flags)</function>
 		<function moreinfo="none">fix_nated_sdp(flags,IP)</function>
 		</title>
 		<para>
 		Alters the SDP information in orer to facilitate NAT traversal. What
 		changes to be performed may be controled via the 
-		<quote>parameter</quote>.
+		<quote>flags</quote> paramter.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -407,8 +407,9 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 			</listitem>
 			<listitem><para>
 			<emphasis>IP</emphasis> - IP to be used for rewritting SDP. If not
-			specified, the received signalling IP will be used. The paramter
-			allows pseudo-variables usage.
+			specified, the received signalling IP will be used. The parameter
+			allows pseudo-variables usage.NOTE: For the IP to be used, you 
+			need to use 0x02 or 0x08 flags, otherwise it will have no effect.
 			</para>
 		</itemizedlist>
 		<para>

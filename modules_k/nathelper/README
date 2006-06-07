@@ -43,9 +43,7 @@ Bogdan-Andrei Iancu
         1.5. Exported Functions
 
               1.5.1. fix_nated_contact()
-              1.5.2. fix_nated_sdp(flags),
-                      fix_nated_sdp(flags,IP)
-
+              1.5.2. fix_nated_sdp(flags) fix_nated_sdp(flags,IP)
               1.5.3. force_rtp_proxy()
               1.5.4. force_rtp_proxy(flags)
               1.5.5. force_rtp_proxy(flags, ip_address)
@@ -315,11 +313,11 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
      _________________________________________________________
 
-1.5.2. fix_nated_sdp(flags), fix_nated_sdp(flags,IP)
+1.5.2. fix_nated_sdp(flags) fix_nated_sdp(flags,IP)
 
    Alters the SDP information in orer to facilitate NAT
    traversal. What changes to be performed may be controled via
-   the "parameter".
+   the "flags" paramter.
 
    Meaning of the parameters is as follows:
 
@@ -332,8 +330,10 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
           + 0x08 - rewrite IP from origin description (o=) with
             source address of the message.
      * IP - IP to be used for rewritting SDP. If not specified,
-       the received signalling IP will be used. The paramter
-       allows pseudo-variables usage.
+       the received signalling IP will be used. The parameter
+       allows pseudo-variables usage.NOTE: For the IP to be used,
+       you need to use 0x02 or 0x08 flags, otherwise it will have
+       no effect.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.

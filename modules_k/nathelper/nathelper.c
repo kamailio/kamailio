@@ -1074,10 +1074,9 @@ extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 			break;
 		cp = cp1 + 2;
 	}
-	if (cp1 == NULL) {
-		LOG(L_ERR, "ERROR: extract_mediaip: no `%s' in SDP\n",line);
+	if (cp1 == NULL)
 		return -1;
-	}
+
 	mediaip->s = cp1 + 2;
 	mediaip->len = eat_line(mediaip->s, body->s + body->len - mediaip->s) - mediaip->s;
 	trim_len(mediaip->len, mediaip->s, *mediaip);
