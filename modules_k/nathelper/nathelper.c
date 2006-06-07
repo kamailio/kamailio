@@ -2223,7 +2223,7 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 		return -1;
 	}
 
-	len = 4 + ip.len + 1 + port.len;
+	len = 4 + ip.len + 2*(m->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
 	if (proto.s) {
 		len += TRANSPORT_PARAM_LEN;
 		len += proto.len;
@@ -2238,8 +2238,12 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	memcpy(p, "sip:", 4);
 	p += 4;
 	
+	if (m->rcv.src_ip.af==AF_INET6)
+		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
 	p += ip.len;
+	if (m->rcv.src_ip.af==AF_INET6)
+		*p++ = ']';
 
 	*p++ = ':';
 	
