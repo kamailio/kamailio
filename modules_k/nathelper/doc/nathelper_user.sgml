@@ -393,7 +393,9 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 				</listitem>
 				<listitem>
 					<para><emphasis>0x02</emphasis> - rewrite media
-					&ip; address (c=) with source address of the message.
+					&ip; address (c=) with source address of the message
+					or the provided IP address (the provide IP address take
+					precedence over the source address).
 				</listitem>
 				<listitem>
 					<para><emphasis>0x04</emphasis> - adds 
@@ -401,7 +403,9 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 				</listitem>
 				<listitem>
 					<para><emphasis>0x08</emphasis> - rewrite IP from
-					origin description (o=) with source address of the message.
+					origin description (o=) with source address of the message
+					or the provided IP address (the provide IP address take
+					precedence over the source address).
 				</listitem>
 			</itemizedlist>
 			</listitem>

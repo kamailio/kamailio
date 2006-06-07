@@ -325,10 +325,14 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
        flags:
           + 0x01 - adds "a=direction:active" SDP line;
           + 0x02 - rewrite media IP address (c=) with source
-            address of the message.
+            address of the message or the provided IP address
+            (the provide IP address take precedence over the
+            source address).
           + 0x04 - adds "a=nortpproxy:yes" SDP line;
           + 0x08 - rewrite IP from origin description (o=) with
-            source address of the message.
+            source address of the message or the provided IP
+            address (the provide IP address take precedence over
+            the source address).
      * IP - IP to be used for rewritting SDP. If not specified,
        the received signalling IP will be used. The parameter
        allows pseudo-variables usage.NOTE: For the IP to be used,
