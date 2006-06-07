@@ -745,6 +745,8 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 {
 	avp_t* avp;
 	int_str val;
+	union exp_op num_val;
+	str tmp;
 
 	if (spec->type & AVP_INDEX_ALL) {
 		avp = search_first_avp(spec->type & ~AVP_INDEX_ALL, spec->name, NULL, NULL);
@@ -774,7 +776,30 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 	if (avp->flags & AVP_VAL_STR) {
 		return comp_str(op, &val.s, rtype, r, msg);
 	} else {
-		return comp_num(op, val.n, rtype, r);
+		switch(rtype){
+			case NUMBER_ST:
+				return comp_num(op, val.n, rtype, r);
+			case STRING_ST:
+				tmp.s=r->string;
+				tmp.len=strlen(r->string);
+				if (str2int(&tmp, (unsigned int*)&num_val.intval)<0){
+					LOG(L_ERR, "ERROR: comp_avp: cannot convert string value"
+								" to int (%s)\n", ZSW(r->string));
+					return -1;
+				}
+				return comp_num(op, val.n, NUMBER_ST, &num_val);
+			case STR_ST:
+				if (str2int(&r->str, (unsigned int*)&num_val.intval)<0){
+					LOG(L_ERR, "ERROR: comp_avp: cannot convert str value"
+								" to int (%.*s)\n", r->str.len, ZSW(r->str.s));
+					return -1;
+				}
+				return comp_num(op, val.n, NUMBER_ST, &num_val);
+			default:
+				LOG(L_CRIT, "BUG: comp_avp: invalid type for numeric avp "
+							"comparison (%d)\n", rtype);
+				return -1;
+		}
 	}
 }
 

@@ -860,7 +860,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 
 			/* If the action is assign then remove the old avp value
 			 * before adding new ones */
-//			if ((unsigned char)a->type == ASSIGN_T) delete_avp(flags, name);
+/*			if ((unsigned char)a->type == ASSIGN_T) delete_avp(flags, name); */
 			if (add_avp(flags & ~AVP_INDEX_ALL, name, value) < 0) {
 				LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
 				ret=E_UNSPEC;
