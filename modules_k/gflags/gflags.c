@@ -52,6 +52,7 @@
 #define FIFO_SET_GFLAG "set_gflag"
 #define FIFO_IS_GFLAG "is_gflag"
 #define FIFO_RESET_GFLAG "reset_gflag"
+#define FIFO_GET_GFLAGS "get_gflags"
 
 #include "../../sr_module.h"
 #include "../../ut.h"
@@ -213,6 +214,13 @@ static int fifo_is_gflag( FILE* pipe, char* response_file )
 }
 
 
+static int fifo_get_gflags( FILE* pipe, char* response_file )
+{
+	fifo_reply (response_file, "200 OK\n0x%X\n%u\n", (*gflags),(*gflags));
+	return 1;
+}
+
+
 static int set_gflag(struct sip_msg *bar, char *flag, char *foo) 
 {
 	(*gflags) |= (unsigned int)(long)flag;
@@ -250,6 +258,10 @@ static int mod_init(void)
 		return -1;
 	}
 	if (register_fifo_cmd(fifo_is_gflag, FIFO_IS_GFLAG, 0) < 0) {
+		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
+		return -1;
+	}
+	if (register_fifo_cmd(fifo_get_gflags, FIFO_GET_GFLAGS, 0) < 0) {
 		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
 		return -1;
 	}

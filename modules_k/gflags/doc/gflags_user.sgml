@@ -185,6 +185,25 @@ $ openserctl fifo is_gflag 1
 </programlisting>
 			</example>
 		</section>
+		<section>
+			<title><function moreinfo="none">get_gflags</function></title>
+			<para>
+			Return the bitmap with all flags. The FIFO function gets no 
+			parameters and returns the bitmap in hexa format on the first line
+			and decimal format on the second line.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">get_gflags</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo get_gflags
+0x3039
+12345
+...
+</programlisting>
+			</example>
+		</section>
 	</section>
 
 </chapter>
