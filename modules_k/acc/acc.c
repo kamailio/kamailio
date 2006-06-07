@@ -44,7 +44,6 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/digest/digest.h"
 #include "../tm/t_funcs.h"
-#include "../rr/api.h"
 #include "acc_mod.h"
 #include "acc.h"
 #include "acc_extra.h"
@@ -73,7 +72,6 @@
 static str na={NA, NA_LEN};
 
 extern struct acc_extra *log_extra;
-extern struct rr_binds rrb;
 
 #ifdef RAD_ACC
 /* caution: keep these aligned to RAD_ACC_FMT !! */
@@ -157,7 +155,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 #define get_from_to( _msg, _from, _to) \
 	do{ \
 		if (!from_to_set) {\
-			if(detect_direction && !rrb.is_direction(_msg,RR_FLOW_UPSTREAM)){\
+			if(_msg->flags&FL_REQ_UPSTREAM){\
 				/* swap from and to */ \
 				_from = to_hdr; \
 				_to = _msg->from; \

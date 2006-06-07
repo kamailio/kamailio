@@ -578,6 +578,10 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			DBG("DEBUG: noisy_timer set for accounting\n");
 			t->flags |= T_NOISY_CTIMER_FLAG;
 		}
+		/* if required, determine request direction */
+		if( detect_direction && !rrb.is_direction(ps->req,RR_FLOW_UPSTREAM) ) {
+			ps->req->flags |= FL_REQ_UPSTREAM;
+		}
 	}
 }
 
