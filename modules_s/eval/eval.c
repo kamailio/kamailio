@@ -331,7 +331,21 @@ static xl_parse_format_f* xl_parse = NULL;
 
 
 enum {esotAdd, esotInsert, esotXchg, esotPut, esotGet, esotPop};
-enum {esovtInt, esovtStr, esovtAvp, esovtXStr, esovtRegister};
+enum {esovtInt, esovtStr, esovtAvp, esovtXStr, esovtRegister, esovtFunc};
+enum {esofNone=0, esofTime, esofUuid, esofStackNo};
+
+struct eval_location_func {
+	int type;
+	char *name;
+};
+
+static struct eval_location_func loc_functions[] = {
+	{esofTime, "time"},
+	{esofUuid, "uuid"},
+	{esofStackNo, "stackno"},
+
+	{esofNone, NULL}
+};
 
 struct eval_location {
 	int value_type;
@@ -341,7 +355,7 @@ struct eval_location {
 		xl_elog_t* xl;
 		struct register_item *reg;
 		avp_ident_t avp;
-
+		struct eval_location_func *func;
 	} u;
 };
 
@@ -386,6 +400,23 @@ static int parse_location(str s, struct eval_location *p) {
 				}
 				p->value_type = esovtXStr;
 				break;
+			case 'f': {
+				struct eval_location_func* f;
+				s.s += 2;
+				s.len -= 2;
+				for (f=loc_functions; f->type != esofNone; f++) {
+					if (strlen(f->name)==s.len && strncasecmp(s.s, f->name, s.len) == 0) {
+						p->value_type = esovtFunc;
+						p->u.func = f;
+						break;
+					}
+				}
+				if (!f) {
+					LOG(L_ERR, "ERROR: unknown function '%.*s'\n", s.len, s.s);
+					return E_CFG;
+				}
+				break;
+			}
 			case 's':
 				s.s += 2;
 				s.len -= 2;
@@ -446,6 +477,8 @@ static int eval_xl(struct sip_msg *msg, xl_elog_t* xl, str* s) {
 	s->len = xllen;
 	return 1;
 }
+
+static int sel_gen_uuid(str* res, select_t* s, struct sip_msg* msg);
 
 static int eval_location(struct sip_msg *msg, struct eval_location* so, struct eval_value* v, int get_static_str) {
 	static struct eval_str ss;
@@ -516,6 +549,43 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 			else {
 				v->type = evtInt;
 				v->u.n = val.n;
+			}
+			break;
+		}
+		case esovtFunc: {
+			switch (so->u.func->type) {
+			        case esofTime: {
+					time_t stamp;
+					stamp = time(NULL);
+					v->type = evtInt;
+					v->u.n = stamp;
+					break;
+				}
+				case esofUuid: {
+					str s;
+					sel_gen_uuid(&s, 0, msg);
+					if (get_static_str) {
+						ss.s = s;
+						ss.cnt = 0;
+						v->u.s = &ss;
+					}
+					else {
+						v->u.s = eval_str_malloc(&s);
+						if (!v->u.s) {
+							LOG(L_ERR, "ERROR: out of memory to allocate uuid string\n");
+							return E_OUT_OF_MEM;
+						}
+					}
+					v->type = evtStr;
+					break;
+        			}
+				case esofStackNo:
+					v->type = evtInt;
+					v->u.n = stack_no;
+					break;
+				default:
+					BUG("bad func type (%d)\n", so->u.func->type);
+					return -1;
 			}
 			break;
 		}
@@ -892,6 +962,7 @@ static int eval_stack_func_fixup( void** param, int param_no) {
 			case esovtAvp:
 			case esovtXStr:
 			case esovtRegister:
+			case esovtFunc:
 				(*p)->oper.loc = so;
 				(*p)->resolved = 0;
 				break;

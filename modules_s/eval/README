@@ -48,6 +48,16 @@ string: any string, prefix "s:" forces string even when is "integer"
 xlib: string prefixed by "x:"
 AVP: an AVP compliant string starting with "$"
 register: register name declared using "declare_register" and starting with "r:"
+function: get value from function, "f:<funcname>"
+
+Currently are supported following functions:
+time ... get time in seconds
+uuid ... get uuid using uuid library
+stackno ... get current stack size
+
+Example:
+"f:time"
+
 
 Note that result of any select may be used using xlib string, e.g. "x:%@eval.get[0]"
 
@@ -86,6 +96,8 @@ Add value above stack_pos item.
 
 Example:
 eval_insert("s:1");
+eval_push("f:uuid");
+eval_push("f:time");
 
 eval_xchg(location[, stack_pos]);
 Default: stack_pos: 0
