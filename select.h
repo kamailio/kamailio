@@ -157,6 +157,29 @@ void print_select(select_t* s);
  */
 int register_select_table(select_row_t *table);
 
+/*
+ * Tries to parse string pointed by *p (up to first non alpha char) into select structure
+ * if parsing succeeded, call resolve_select
+ * if resolving passes, returns final structure
+ * *p moves to first unused char
+ * return 0
+ *
+ * if memory allocation fails, returns -1
+ * if parsing or resolving fails, returns -2
+ */
+int parse_select (char** p, select_t** s);
+
+/*
+ * Select parser, result is stored in SHARED memory
+ * 
+ * If you call this, you must ensure, that the string which
+ * is beeing parsed MUST be at the same place for all child
+ * processes, e.g. allocated in the shared memory as well
+ *
+ * parameters and results same as parse_select
+ */
+int shm_parse_select (char** p, select_t** s);
+
 #define SELECT_F(function) extern int function (str* res, select_t* s, struct sip_msg* msg);
 #define ABSTRACT_F(function) int function (str* res, select_t* s, struct sip_msg* msg) {return -1;}
 

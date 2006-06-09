@@ -31,14 +31,22 @@
  *              DIVERSION flag checked
  *  2006-02-26  don't free str when changing type STR -> DIVERSION (mma)
  *				it can't be freeable sometimes (e.g. xlog's select)
+ *	2006-05-30  parse_select (mma)
+ *	2006-06-02  shm_parse_select (mma)
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
 
 #include "select.h"
 #include "dprint.h"
 #include "select_core.h"
 #include "mem/mem.h"
+#include "mem/shm_mem.h"
 
 /*
  * The main parser table list placeholder
@@ -46,6 +54,101 @@
  * add their own via register_select_table call
  */
 static select_table_t *select_list = &select_core_table;
+
+/*
+ * Parse select string into select structure s
+ * moves pointer p to the first unused char
+ *
+ * Returns -1 error
+ *			  p points to the first unconsumed char
+ *          0 success
+ *			  p points to the first unconsumed char
+ *			  s points to the select structure
+ */
+
+int w_parse_select(char**p, select_t* sel)
+{
+	str name;
+	
+	if (**p=='@') (*p)++;
+	sel->n=0;
+	while (isalpha(*(*p))) {
+		if (sel->n > MAX_SELECT_PARAMS -2) {
+			ERR("parse_select: select depth exceeds max\n");
+			goto error;
+		}
+		name.s=(*p);
+		while (isalpha(*(*p)) || isdigit(*(*p)) || (*(*p)=='_')) (*p)++;
+		name.len=(*p)-name.s;
+		sel->params[sel->n].type=SEL_PARAM_STR;
+		sel->params[sel->n].v.s=name;
+		DBG("parse_select: part %d: %.*s\n", sel->n, sel->params[sel->n].v.s.len, sel->params[sel->n].v.s.s);
+		sel->n++;
+		if (*(*p)=='[') {
+			(*p)++; 
+			name.s=(*p);
+			if (*(*p)=='-') (*p)++;
+			while (isdigit(*(*p))) (*p)++;
+			name.len=(*p)-name.s;
+			if (*(*p)!=']') {
+				ERR("parse_select: invalid index, no closing ]\n");
+				goto error;
+			};
+			(*p)++;
+			sel->params[sel->n].type=SEL_PARAM_INT;
+			sel->params[sel->n].v.i=atoi(name.s);
+			DBG("parse_select: part %d: [%d]\n", sel->n, sel->params[sel->n].v.i);
+			sel->n++;
+		}
+		if (*(*p)!='.') break;
+		(*p)++;
+	};
+	if (sel->n==0) {
+		ERR("parse_select: invalid select\n");
+		goto error;
+	};
+	DBG("parse_select: end, total elements: %d, calling resolve_select\n", sel->n);
+	if (resolve_select(sel)<0) {
+		ERR("parse_select: error while resolve_select\n");
+		goto error;
+	}
+	return 0;
+	
+error:
+	return -1;
+}
+
+int parse_select (char** p, select_t** s)
+{
+	select_t* sel;
+	
+	sel=(select_t*)pkg_malloc(sizeof(select_t));
+	if (!sel) {
+		ERR("parse_select: no free memory\n");
+		return -1;
+	}
+	if (w_parse_select(p, sel)<0) {
+		return -2;
+	}
+	*s=sel;
+	return 0;
+}
+
+int shm_parse_select (char** p, select_t** s)
+{
+	select_t* sel;
+	
+	sel=(select_t*)shm_malloc(sizeof(select_t));
+	if (!sel) {
+		ERR("parse_select: no free shared memory\n");
+		return -1;
+	}
+	if (w_parse_select(p, sel)<0) {
+		return -2;
+	}
+	*s=sel;
+	return 0;
+}
 
 int resolve_select(select_t* s)
 {

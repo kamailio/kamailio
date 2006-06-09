@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="select_module" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+<section><title>Extend select framework with module related functions</title>
+<para>
+	If you want to extend functions which select framework can call with some
+	dependent on module you have to follow next steps:
+	<itemizedlist>
+		<listitem><para>
+			define working functions
+			</para>
+		</listitem>
+		<listitem><para>
+			create module's select parsing table
+		</para>
+		</listitem>
+		<listitem><para>
+			in module's mod_init call register_select_table
+		</para>
+		</listitem>
+	</itemizedlist>
+</para>
+</section>
+<section>
+<title>Define your working functions</title>
+<para>
+	Working functions are the piece of code, which is called as when SER needs
+	get result of select function (defined as @name.foo[2].bar[5]). The working copy
+	has following definition:
+</para>
+<para><emphasis>
+int <function>select_function_name</function>(str* res, struct select *s, struct sip_msg *msg)
+</emphasis>
+	Pointer to the string result workspace <emphasis>res</emphasis>, don't allocate
+	memory for the string, but use static buffer. There is no way to free the
+	allocated memory.
+	Pointer to the parsed select structure <emphasis>s</emphasis>. Holds all names,
+	numbers divided by the dot and square bracket notation. Use that if any of the
+	part used CONSUME_NEXT_STR or CONSUME_NEXT_INT to get the value.
+	Pointer to the processed message structure <emphasis>msg</emphasis>.
+</para>
+<para>
+	<emphasis>FIXUP CALL:</emphasis>
+	If you set FIXUP_CALL flag for the final
+	function, the fixup call will be done immediatelly after function resolution.
+	Such call is indicated with res==NULL &amp;&amp; msg==NULL. Such call can convert any of
+	the select's parameter into internal data (can hold one pointer), if you do
+	that, set param_type to SEL_PARAM_DATA.
+</para>
+<para>
+	Result code of the function declares if the call was sucessful and if the result is
+	valid string or empty string.
+</para>
+<itemizedlist>
+	<listitem><para><emphasis>-1</emphasis> error</para></listitem>
+	<listitem><para><emphasis>0</emphasis> success, res contains non-empty string</para></listitem>
+	<listitem><para><emphasis>1</emphasis> success, result of select call is empty string (res can be left
+	unchanged)</para></listitem>
+</itemizedlist>
+</section>
+<section>
+<title>Create module's select parsing table</title>
+<para>Define static table of select_row_t type and initialize it directly.
+</para>
+<para>The table is representation of tree (or oriented graph if you want), where
+first column represents current (up-to now) resolved function (starting with NULL),
+next two columns define if next parameter is integer or particullar string, next
+column is new resolved function which will be tested in next round and the last
+column is set of flags.
+</para>
+<programlisting><![CDATA[
+static select_row_t test_sel[] = {
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("test"), select_test, 0},
+	{ select_test, SEL_PARAM_STR, STR_STATIC_INIT("value"), select_test_val, 0},
+	{ select_test, SEL_PARAM_STR, STR_STATIC_INIT("echo"), select_test_echo, CONSUME_NEXT_STR},
+	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
+};
+]]>
+</programlisting>
+<para>
+So in the previous example, the first line will accept syntax
+<emphasis>@test</emphasis> and set the resolved function to select_test. In the
+next round, all rows with the select_test in the first column will be used to
+match, so the next two lines
+are candidates to match depending on the next part of select syntax. If it
+matches <emphasis>@test.value</emphasis>, the function is resolved to
+select_test_val, if it matches <emphasis>@test.echo.anystring</emphasis>, it is
+resolved into select_test_echo. Flag <emphasis>CONSUME_NEXT_STR</emphasis> will
+accept any string at the 3rd position. As the <emphasis>OPTIONAL</emphasis> flag
+is not present, it won't accept just the <emphasis>@test.echo</emphasis> syntax.
+</para>
+<para>
+The table ends with the <emphasis>NULL</emphasis> in the 1st and 4th column,
+other columns are not checked (the notation in the example suits well).
+</para>
+<para>
+At the resolving time all function names must be already defined. For functions which are
+not leaves, you can use macro <emphasis>ABSTRACT_F(name)</emphasis> to define empty
+function, for working function you can use advance definition using
+<emphasis>SELECT_F(name)</emphasis> macro.
+</para>
+</section>
+<!--
+TODO:
+<section>
+<title>Available flag options and their meaning</title>
+<para>
+<emphasis></emphasis>
+</para>
+</section>
+-->
+<section>
+<title>Register the created table</title>
+<para>
+	In the module initialization function call <emphasis>register_select_table(table)</emphasis>
+	where table is the parsing tree/table you have defined in previous step.
+	This call ensures, that the table will become part of the parsing logic for
+	all select framework calls defined in the script file or called by another
+	module's parse_select.
+</para>
+<para>
+	<emphasis>NOTE:</emphasis> The tables are inserted into the beginning of the
+	list, so the core's table (and thus parseable names and definitions) can be
+	overrided by module's function, if it is defined with the same name. To
+	avoid such situation, the best practice is to start module's select with the
+	module's name. E.g in our example code both select functions start
+	with @test...
+</para>
+</section>
+<section>
+<title>Example - module defining select extension</title>
+<para>Example module <emphasis>test</emphasis>, which defines two select function.
+<itemizedlist>
+	<listitem><para>
+	<emphasis>@test.value</emphasis> - returns value passed as modules parameter
+	"value"
+	</para></listitem>
+	<listitem><para>
+	<emphasis>@test.echo.xxx</emphasis> - returns xxx regardless of what you put
+	as xxx (shows CONSUME_NEXT_STR option)
+	</para></listitem>
+</itemizedlist>
+</para>
+<example id="test.c">
+<title>test.c</title>
+<programlisting><![CDATA[
+#include <string.h>
+#include "../../sr_module.h"
+#include "../../str.h"
+#include "../../dprint.h"
+#include "../../select.h"
+
+MODULE_VERSION
+
+static cmd_export_t cmds[] = {
+	{0, 0, 0, 0, 0}
+};
+
+static char* value=NULL;
+
+static param_export_t params[] = {
+	{"value", STR_PARAM, &value},
+	{0, 0, 0}
+};
+
+int select_test_val(str* res, struct select* s, struct sip_msg* msg) {
+	DBG("SELECT_TEST_VAL called test_val=%s\n", value);
+	res->s=value;
+	res->len=strlen(value);
+	return 0;
+}
+
+int select_test_echo(str* res, struct select* s, struct sip_msg* msg) {
+	DBG("SELECT_TEST_ECHO called\n");
+	if (s->params[s->n-1].type==SEL_PARAM_STR) {
+		*res=s->params[s->n-1].v.s;
+		return 0;
+	} else
+		return -1;
+}
+
+ABSTRACT_F(select_test)
+	
+static select_row_t test_sel[] = {
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("test"), select_test, 0},
+	{ select_test, SEL_PARAM_STR, STR_STATIC_INIT("value"), select_test_val, 0},
+	{ select_test, SEL_PARAM_STR, STR_STATIC_INIT("echo"), select_test_echo, CONSUME_NEXT_STR},
+	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
+};
+ 
+static int init(void) {
+	register_select_table(test_sel);
+	return 0;
+};
+
+struct module_exports exports = {
+	"test", 
+	cmds,           /* Exported commands */
+	0,              /* RPC methods */
+	params,         /* Exported parameters */
+	init,           /* module initialization function */
+	0,              /* response function*/
+	0,              /* destroy function */
+	0,              /* oncancel function */
+	0               /* per-child init function */
+};
+
+]]>
+</programlisting>
+</example>
+</section>
+</section>

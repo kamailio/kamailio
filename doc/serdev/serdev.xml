@@ -61,6 +61,8 @@
     <xi:include href="db_interface.xml"/>
     <xi:include href="locking.xml"/>
 
+	<xi:include href="select_module.xml"/>
+
     <!--    
     TODO:
     * How to traverse all headers of given type
