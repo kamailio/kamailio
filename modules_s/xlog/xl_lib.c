@@ -1457,52 +1457,10 @@ int xl_parse_format(char *s, xl_elog_p *el)
 			case '@':
 					/* fill select structure and call resolve_select */
 				DBG("xlog: xl_parse_format: @\n");
-				sel=(select_t*)pkg_malloc(sizeof(select_t));
-				if (!sel) {
-					ERR("xlog: xl_parse_format: no free memory\n");
+				n=parse_select(&p, &sel);
+				if (n<0) {
+					ERR("xlog: xl_parse_format: parse_select returned error\n");
 					goto error;
-				}
-				p++;
-				sel->n=0;
-				while (isalpha(*p)) {
-					if (sel->n > MAX_SELECT_PARAMS -2) {
-						ERR("xlog: xl_parse_format: select depth exceeds max\n");
-						goto sel_error;
-					}
-					name.s=p;
-					while (isalpha(*p) || isdigit(*p) || (*p=='_')) p++;
-					name.len=p-name.s;
-					sel->params[sel->n].type=SEL_PARAM_STR;
-					sel->params[sel->n].v.s=name;
-					DBG("xlog: xl_parse_format: @part %d: %.*s\n", sel->n, sel->params[sel->n].v.s.len, sel->params[sel->n].v.s.s);
-					sel->n++;
-					if (*p=='[') {
-						p++;c=*p;
-						name.s=p;
-						if (*p=='-') p++;
-						while (isdigit(*p)) p++;
-						name.len=p-name.s;
-						if (*p!=']') {
-							ERR("xlog: xl_parse_format: invalid index, no closing ]\n");
-							goto sel_error;
-						};
-						p++;
-						sel->params[sel->n].type=SEL_PARAM_INT;
-						sel->params[sel->n].v.i=atoi(name.s);
-						DBG("xlog: xl_parse_format: @part %d: [%d]\n", sel->n, sel->params[sel->n].v.i);
-						sel->n++;
-					}
-					if (*p!='.') break;
-					p++;
-				};
-				if (sel->n==0) {
-					ERR("xlog: xl_parse_format: invalid select\n");
-					goto sel_error;
-				};
-				DBG("xlog: xl_parse_format: @end, total elements: %d, calling resolve_select\n", sel->n);
-				if (resolve_select(sel)<0) {
-					ERR("xlog: xl_parse_format: error while resolve_select\n");
-					goto sel_error;
 				}
 				e->itf = xl_get_select;
 				e->hparam.s = (char*)sel;
@@ -1527,8 +1485,6 @@ int xl_parse_format(char *s, xl_elog_p *el)
 
 	return 0;
 
-sel_error:
-	pkg_free(s);
 error:
 	xl_elog_free_all(*el);
 	*el = NULL;
