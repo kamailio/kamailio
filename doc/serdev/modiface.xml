@@ -441,8 +441,8 @@ str bar_bar = STR_STATIC_INIT("default");
 
 static param_export params[] = {
     {"foo_bar", PARAM_INT, &amp;foo_bar},
-    {"bar_foo", PARAM_STRING, &bar_foo},
-    {"bar_bar", PARAM_STR, &bar_bar.s},
+    {"bar_foo", PARAM_STRING, &amp;bar_foo},
+    {"bar_bar", PARAM_STR, &amp;ar_bar.s},
     {0, 0, 0}
 }; 
 	</programlisting>
