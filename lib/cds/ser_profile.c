@@ -1,4 +1,5 @@
 #ifdef SER
+#ifdef DO_PROFILE
 
 #include <cds/ser_profile.h>
 #include "dprint.h"
@@ -86,4 +87,6 @@ void ser_profile_init()
 	start_profile(trace_func);
 }
 
-#endif
+#endif /* DO_PROFILE */
+
+#endif /* SER */

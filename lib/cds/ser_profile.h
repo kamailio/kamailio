@@ -3,9 +3,11 @@
 
 #ifdef SER
 
-/* declarations of watched profile points */
+#ifdef DO_PROFILING
 
 #include <cds/simple_profile.h>
+
+/* declarations of watched profile points */
 
 DECLARE_PROF_POINT(pa_handle_subscription)
 DECLARE_PROF_POINT(pa_timer_presentity)
@@ -30,6 +32,17 @@ void ser_profile_init();
 
 #define SER_PROFILE_INIT	ser_profile_init();
 
-#endif
+#else /* don't profile */
+
+#define SER_PROFILE_INIT
+#define PROF_START(name)
+#define PROF_START_BODY(name)
+#define PROF_START_DECL(name)
+#define PROF_STOP(name)
+
+#endif /* DO_PROFILING */
+
+#endif /* SER */
+
 
 #endif
