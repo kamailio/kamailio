@@ -146,8 +146,8 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 			cp = (char*)cp + p_len;
 
 			/* sock */
-			p  = (char*)VAL_STRING(ROW_VALUES(row) + 3);
-			if (VAL_NULL(ROW_VALUES(row)+3) || p==0 || p[0]==0){
+			p  = (char*)VAL_STRING(ROW_VALUES(row) + 2);
+			if (VAL_NULL(ROW_VALUES(row)+2) || p==0 || p[0]==0){
 				sock = 0;
 			} else {
 				if (parse_phostport( p, strlen(p), &host.s, &host.len,
@@ -165,7 +165,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 			}
 
 			/* flags */
-			dbflags = VAL_BITMAP(ROW_VALUES(row) + 2);
+			dbflags = VAL_BITMAP(ROW_VALUES(row) + 3);
 
 			/* write sock and flags */
 			memcpy(cp, &sock, sizeof(sock));
