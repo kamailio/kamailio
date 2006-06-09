@@ -281,6 +281,12 @@ get_my_host() {
 	uname -n
 }
 
+chown_openser() {
+	if [ -n "$OPENSER_USER" -a -n "$OPENSER_GROUP" ] ; then
+		chown $OPENSER_USER:$OPENSER_GROUP $1
+	fi
+}
+
 # calculate name and domain of current user
 set_user() {
 
@@ -491,7 +497,7 @@ lcr() {
 				exit 1
 			fi
 			echo $2:$1 >> $GW_GRP_FILE
-			chown openser:openser $GW_GRP_FILE
+			chown_openser $GW_GRP_FILE
 			#FIXME: lcr_reload command not supported yet
 			#fifo_cmd lcr_reload
 			;;
@@ -504,7 +510,7 @@ lcr() {
 			fi
 			cat $GW_GRP_FILE | $EGREP -v "^$1:" > $GW_GRP_FILE.tmp
 			mv -f $GW_GRP_FILE.tmp $GW_GRP_FILE
-			chown openser:openser $GW_GRP_FILE
+			chown_openser $GW_GRP_FILE
 			#FIXME: lcr_reload command not supported yet
 			#fifo_cmd lcr_reload
 			;;
@@ -544,13 +550,20 @@ lcr() {
 				GW_TRANSPORT=3
 			fi
 			GW_GRP_ID=$6
+			EXPR_PATH=`which expr`
 			oldIFS=$IFS
 			IFS=.
 			set -- $2
-			GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
+			if [ -z "$EXPR_PATH" ] ; then
+				GW_IP=`echo "$(($1+$2*256+$3*65536+$4*16777216))"`
+			else
+				GW_IP=`$EXPR_PATH $1 + $2 \* 256 + $3 \* 65536 + $4 \* 16777216`
+			fi
+
+			# GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
 			IFS=$oldIFS
 			echo $GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX >> $GW_FILE
-			chown openser:openser $GW_FILE
+			chown_openser $GW_FILE
 			#FIXME: lcr_reload command not supported yet
 			#fifo_cmd lcr_reload
 			;;
@@ -563,7 +576,7 @@ lcr() {
 			fi
 			cat $GW_FILE | $EGREP -v "^$1:" > $GW_FILE.tmp
 			mv -f $GW_FILE.tmp $GW_FILE
-			chown openser:openser $GW_FILE
+			chown_openser $GW_FILE
 			#FIXME: lcr_reload command not supported yet
 			#fifo_cmd lcr_reload
 			;;
@@ -576,7 +589,7 @@ lcr() {
 				exit 1
 			fi
 			echo $1:$2:$3:$4 >> $LCR_FILE
-			chown openser:openser $LCR_FILE
+			chown_openser $LCR_FILE
 			#FIXME: lcr_reload command not supported yet
 			#fifo_cmd lcr_reload
 			;;
@@ -590,7 +603,7 @@ lcr() {
 			fi
 			cat $LCR_FILE | $EGREP -v "^$1:$2:$3:$4\$" > $LCR_FILE.tmp
 			mv -f $LCR_FILE.tmp $LCR_FILE
-			chown openser:openser $LCR_FILE
+			chown_openser $LCR_FILE
 			#FIXME: lcr_reload command not supported yet
 			#fifo_cmd lcr_reload
 			;;

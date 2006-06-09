@@ -1093,10 +1093,10 @@ lcr() {
 			oldIFS=$IFS
 			IFS=.
 			set -- $2
-			GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
+			#GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
 			IFS=$oldIFS
 			prompt_pw
-			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_GRP_ID, $GW_IP, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT, $STRIP, '$GW_PREFIX');"
+			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_GRP_ID, $1+$2*256+$3*65536+$4*16777216, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT, $STRIP, '$GW_PREFIX');"
 			sql_query "$QUERY"
 			if [ $? -ne 0 ] ; then
 				echo "SQL Error"
