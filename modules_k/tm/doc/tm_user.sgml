@@ -571,7 +571,7 @@ modparam("tm", "branch_flag_mask", "4278190080")
 	</section>
 
 	<section>
-		<title><varname>pass_provisional_replies</varname> (string)</title>
+		<title><varname>pass_provisional_replies</varname> (integer)</title>
 		<para>
 		Enable/disable passing of provisional replies to FIFO applications.
 		</para>
