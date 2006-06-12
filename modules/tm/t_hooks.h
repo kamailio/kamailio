@@ -43,16 +43,17 @@ struct sip_msg;
 struct cell;
 
 
-#define TMCB_REQUEST_IN       (1<<0)
-#define TMCB_RESPONSE_IN      (1<<1)
-#define TMCB_E2EACK_IN        (1<<2)
-#define TMCB_REQUEST_FWDED    (1<<3)
-#define TMCB_RESPONSE_FWDED   (1<<4)
-#define TMCB_ON_FAILURE_RO    (1<<5)
-#define TMCB_ON_FAILURE       (1<<6)
-#define TMCB_RESPONSE_OUT     (1<<7)
-#define TMCB_LOCAL_COMPLETED  (1<<8)
-#define TMCB_MAX              ((1<<9)-1)
+#define TMCB_REQUEST_IN         (1<<0)
+#define TMCB_RESPONSE_IN        (1<<1)
+#define TMCB_E2EACK_IN          (1<<2)
+#define TMCB_REQUEST_FWDED      (1<<3)
+#define TMCB_RESPONSE_FWDED     (1<<4)
+#define TMCB_ON_FAILURE_RO      (1<<5)
+#define TMCB_ON_FAILURE         (1<<6)
+#define TMCB_RESPONSE_OUT       (1<<7)
+#define TMCB_LOCAL_COMPLETED    (1<<8)
+#define TMCB_LOCAL_RESPONSE_OUT (1<<9)
+#define TMCB_MAX                ((1<<10)-1)
 
 /* 
  *  Caution: most of the callbacks work with shmem-ized messages
