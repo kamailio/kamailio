@@ -92,6 +92,7 @@
 	<description>
 	    Field of flags describeing where the attribute may be used (user, domain, global,...)
 	    Meaning of bits is this:
+	     4 - uri
 	     8 - user
 	    16 - domain
 	    30 - global
