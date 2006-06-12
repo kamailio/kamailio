@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table>
+    <name>uri_attrs</name>
+    <version>1</version>
+
+    <column id="uriattrs.username">
+	<name>username</name>
+	<type>string</type>
+	<size>&user_len;</size>
+    </column>
+
+    <column id="uriattrs.did">
+        <name>did</name>
+        <type>string</type>
+        <size>&id_len;</size>
+    </column>
+				
+    <column id="uriattrs.name">
+	<name>name</name>
+	<type>string</type>
+	<size>&avp_name_len;</size>
+    </column>
+
+    <column id="uriattrs.value">
+	<name>value</name>
+	<type>string</type>
+	<null/>
+	<size>&avp_val_len;</size>
+    </column>
+
+    <column>
+	<name>type</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+
+    <column id="uriattrs.flags">
+	<name>flags</name>
+	<type>unsigned int</type>
+	<default>0</default>
+	<description>
+	    Various flags (SER_LOAD and such).
+	</description>
+    </column>
+
+    <index>
+	<unique/>
+	<name>uriattrs_idx</name>
+        <colref linkend="uriattrs.username"/>
+	<colref linkend="uriattrs.did"/>
+	<colref linkend="uriattrs.name"/>
+	<colref linkend="uriattrs.value"/>
+    </index>
+
+</table>

@@ -162,6 +162,17 @@ CREATE TABLE user_attrs (
     userattrs_idx UNIQUE (uid, name, value, )
 );
 
+INSERT INTO version (table_name, table_version) values ('uri_attrs','1');
+CREATE TABLE uri_attrs (
+    username string(64) NOT NULL,
+    did string(64) NOT NULL,
+    name string(32) NOT NULL,
+    value string(255),
+    type int NOT NULL DEFAULT '0',
+    flags int NOT NULL DEFAULT '0',
+    uriattrs_idx UNIQUE (username, did, name, value, )
+);
+
 INSERT INTO version (table_name, table_version) values ('domain','2');
 CREATE TABLE domain (
     did string(64) NOT NULL,

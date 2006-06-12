@@ -162,6 +162,16 @@ CREATE TABLE user_attrs (
     CONSTRAINT userattrs_idx UNIQUE (uid, name, value)
 );
 
+CREATE TABLE uri_attrs (
+    username VARCHAR(64) NOT NULL,
+    did VARCHAR(64) NOT NULL,
+    name VARCHAR(32) NOT NULL,
+    value VARCHAR(255),
+    type INTEGER NOT NULL DEFAULT '0',
+    flags INTEGER NOT NULL DEFAULT '0',
+    CONSTRAINT uriattrs_idx UNIQUE (username, did, name, value)
+);
+
 CREATE TABLE domain (
     did VARCHAR(64) NOT NULL,
     domain VARCHAR(128) NOT NULL,
