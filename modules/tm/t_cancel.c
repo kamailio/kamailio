@@ -95,6 +95,8 @@ void cancel_branch( struct cell *t, int branch )
 	}
 #	endif
 
+	stop_rb_timers( irb );
+
 	if (t->uac[branch].last_received < 100) {
 		DBG("DEBUG: cancel_branch: no response ever received: "
 		    "giving up on cancel\n");
