@@ -458,13 +458,16 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 				elem->name.len,elem->name.s);
 		}
 
-		/* write the value into the buffer */
-		buf = add2buf( buf, end, &elem->name, &value.rs);
-		if (!buf)
-		{
-			LOG(L_ERR,"ERROR:tm:append2buf: overflow -> append "
-				"exceeded %d len\n",len);
-			return 0;
+		/* empty element? */
+		if ( !(value.flags&XL_VAL_NULL) ) {
+			/* write the value into the buffer */
+			buf = add2buf( buf, end, &elem->name, &value.rs);
+			if (!buf)
+			{
+				LOG(L_ERR,"ERROR:tm:append2buf: overflow -> append "
+					"exceeded %d len\n",len);
+				return 0;
+			}
 		}
 
 		elem = elem->next;
