@@ -171,7 +171,8 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 
 	int cnt, tl, al;
 	struct to_body *ft_body;
-	static struct sip_uri puri;
+	static struct sip_uri f_puri;
+	static struct sip_uri t_puri;
 	static str mycode;
 	str *cr;
 	struct cseq_body *cseq;
@@ -243,8 +244,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				/* fallback to from-uri if digest unavailable ... */
 			case 'F': /* from-uri */
 				get_from_to( rq, from, to);
-				if (from && (ft_body=get_ft_body(from))
-							&& ft_body->uri.len) {
+				if (from && (ft_body=get_ft_body(from)) && ft_body->uri.len) {
 						val_arr[cnt]=&ft_body->uri;
 				} else val_arr[cnt]=&na;
 				ATR(FROMURI);
@@ -252,22 +252,20 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 			case '0': /* from-user */
 				get_from_to( rq, from, to);
 				val_arr[cnt]=&na;
-				if (from && (ft_body=get_ft_body(from))
-						&& ft_body->uri.len) {
-					parse_uri(ft_body->uri.s, ft_body->uri.len, &puri);
-					if (puri.user.len) 
-							val_arr[cnt]=&puri.user;
+				if (from && (ft_body=get_ft_body(from)) && ft_body->uri.len) {
+					parse_uri(ft_body->uri.s, ft_body->uri.len, &f_puri);
+					if (f_puri.user.len) 
+							val_arr[cnt]=&f_puri.user;
 				} 
 				ATR(FROMUSER);
 				break;
 			case 'X': /* from-domain */
 				get_from_to( rq, from, to);
 				val_arr[cnt]=&na;
-				if (from && (ft_body=get_ft_body(from))
-						&& ft_body->uri.len) {
-					parse_uri(ft_body->uri.s, ft_body->uri.len, &puri);
-					if (puri.host.len) 
-							val_arr[cnt]=&puri.host;
+				if (from && (ft_body=get_ft_body(from)) && ft_body->uri.len) {
+					parse_uri(ft_body->uri.s, ft_body->uri.len, &f_puri);
+					if (f_puri.host.len) 
+							val_arr[cnt]=&f_puri.host;
 				} 
 				ATR(FROMDOMAIN);
 				break;
@@ -293,11 +291,10 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 			case '1': /* to user */ 
 				get_from_to( rq, from, to);
 				val_arr[cnt]=&na;
-				if (to && (ft_body=get_ft_body(to))
-							&& ft_body->uri.len) {
-					parse_uri(ft_body->uri.s, ft_body->uri.len, &puri);
-					if (puri.user.len)
-						val_arr[cnt]=&puri.user;
+				if (to && (ft_body=get_ft_body(to)) && ft_body->uri.len) {
+					parse_uri(ft_body->uri.s, ft_body->uri.len, &t_puri);
+					if (t_puri.user.len)
+						val_arr[cnt]=&t_puri.user;
 				} 
 				ATR(TOUSER);
 				break;
