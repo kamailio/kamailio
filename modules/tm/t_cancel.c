@@ -134,6 +134,43 @@ char *build_cancel(struct cell *Trans,unsigned int branch,
 		CANCEL, CANCEL_LEN, &Trans->to );
 }
 
+static void cancel_all_branches(struct cell *t)
+{
+    int i;
+    int reply_recved=0;
+    
+    /* cancel pending client transactions, if any */
+    for( i=0 ; i<t->nr_of_outgoings ; i++ ){
+
+
+	if(t->uac[i].last_received < 100){
+	    
+	    /* stop_rb_timers(&t->uac[i].request); */
+	    reset_timer( &t->uac[i].request.retr_timer );
+	    reset_timer( &t->uac[i].request.fr_timer );
+	}
+	else {
+
+	    reply_recved++;
+	}
+    }
+
+    if(!reply_recved){
+	
+	put_on_wait(t);
+    }
+    else {
+	
+	/* tell tm to cancel the call */
+	DBG("Now calling cancel_uacs\n");
+	(*cancel_uacs)(t, ~0);
+    }
+
+    /* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
+    UNREF(t);
+}
+
+
 /* fifo command to cancel a pending call (Uli)
   Syntax:
 
@@ -179,12 +216,8 @@ int fifo_uac_cancel( FILE* stream, char *response_file )
 		fifo_reply(response_file, "481 fifo_uac_cancel: no such transaction");
 		return -1;
 	}
-	/* tell tm to cancel the call */
-	DBG("DEBUG: fifo_uac_cancel: now calling cancel_uacs\n");
-	(*cancel_uacs)(trans,~0);
 
-	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
-	UNREF(trans);
+	cancel_all_branches(trans);
 
 	fifo_reply(response_file, "200 fifo_uac_cancel succeeded\n");
 	DBG("DEBUG: fifo_uac_cancel: ################ end ##############\n");
@@ -218,11 +251,7 @@ int unixsock_uac_cancel(str* msg)
 		return 1;
 	}
 
-	     /* tell tm to cancel the call */
-	(*cancel_uacs)(trans, ~0);
-
-	     /* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
-	UNREF(trans);
+	cancel_all_branches(trans);
 
 	unixsock_reply_asciiz("200 uac_cancel succeeded\n");
 	unixsock_reply_send();
