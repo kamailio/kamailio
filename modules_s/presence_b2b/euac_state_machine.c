@@ -1,7 +1,8 @@
 #include "euac_state_machine.h"
 #include "euac_internals.h"
 #include "euac_funcs.h"
-	
+#include <cds/sip_utils.h>
+
 /* if set to number > 0 SUBSCRIBE requests are sent randomly, at last 
  * after max_subscribe_delay seconds */
 int max_subscribe_delay = 0;
@@ -44,7 +45,9 @@ static void decline_response(events_uac_t *uac, euac_action_t action)
 
 static int get_resubscribe_time(struct sip_msg *m)
 {
-	int expiration = get_expiration_value(m);
+	int expiration;
+	
+	if (get_expiration_value(m, &expiration) != 0) expiration = 0;
 
 	expiration -= resubscribe_delta;
 	if (expiration < min_resubscribe_time) expiration = min_resubscribe_time;

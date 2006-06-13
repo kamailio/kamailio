@@ -4,7 +4,6 @@
 #include "events_uac.h"
 
 /* manipulation with message */
-int get_expiration_value(struct sip_msg *m);
 void extract_contact(struct sip_msg *m, str *dst);
 int is_terminating_notify(struct sip_msg *m);
 

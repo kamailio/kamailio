@@ -1,3 +1,6 @@
+2006-06-13
+	* few common functions moved into cds/sip_utils
+
 2006-06-06
 	* corrected BUG reported by Luis Silva - added missing call to
 	parse_from_header

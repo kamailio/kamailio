@@ -7,27 +7,7 @@
 #include "../../parser/parse_from.h"
 
 #include <presence/notifier.h>
-
-int get_expiration_value(struct sip_msg *m)
-{
-	exp_body_t *expires = NULL;
-	int e = 0;
-
-	if (parse_headers(m, HDR_EXPIRES_F, 0) == -1) {
-		/* can't parse expires header */
-		return 0;
-	}
-	if (m->expires) {
-		if (parse_expires(m->expires) < 0) {
-			return 0;
-		}
-
-		expires = (exp_body_t *)m->expires->parsed;
-		if (expires) if (expires->valid) e = expires->val;
-	}
-	/* ERR("subscription will expire in %d secs\n", e); */
-	return e;
-}
+#include <cds/sip_utils.h>
 
 void extract_contact(struct sip_msg *m, str *dst)
 {
