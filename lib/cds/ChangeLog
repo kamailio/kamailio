@@ -1,3 +1,6 @@
+2006-06-13
+	* added few common SIP/SER functions into sip_utils.h
+
 2006-05-11
 	* added changelog
 	* added "simple profiling" capability (need to call PROF_START and

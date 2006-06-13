@@ -84,6 +84,7 @@ void trace_func()
 	
 void ser_profile_init()
 {
+	WARN("initializing profiler\n");
 	start_profile(trace_func);
 }
 
