@@ -31,8 +31,6 @@
 #include <cds/sstr.h>
 #include "dlg_utils.h"
 #include "dlg_request.h"
-#include "dlg_handler.h"
-#include "dlg_storage.h"
 #include "../../locking.h"
 
 MODULE_VERSION
@@ -59,12 +57,6 @@ static int dlg_mod_child_init(int _rank);
  */
 static cmd_export_t cmds[]={
 	{"bind_dlg_mod", (cmd_function)bind_dlg_mod, -1, 0, 0},
-	{"save_dialog", (cmd_function)handle_save_dialog, 0, 0, 
-		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"load_dialog", (cmd_function)handle_load_dialog, 0, 0, 
-		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"remove_dialog", (cmd_function)handle_remove_dialog, 0, 0, 
-		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -137,26 +129,16 @@ static int dlg_mod_init(void)
 		return -1;
 	}
 
-	if (init_dlg_storage(db_mode, &db_url) < 0) {
-		ERR("Can't initialize dialog storage\n");
-		return -1;
-	}
-
 	return 0;
 }
 
 static int dlg_mod_child_init(int _rank)
 {
-	if (init_dlg_storage_child(db_mode, &db_url) < 0) {
-		ERR("Can't initialize dialog storage\n");
-		return -1;
-	}
 	return 0;
 }
 
 static void dlg_mod_destroy(void)
 {
-	destroy_dlg_storage();
 	destroy_dialog_mutex();
 }
 
