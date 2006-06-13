@@ -1,5 +1,6 @@
 2006-06-13
 	* added few common SIP/SER functions into sip_utils.h
+	* added functions for traversing hash table
 
 2006-05-11
 	* added changelog

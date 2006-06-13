@@ -173,6 +173,44 @@ void ht_clear_statistic(hash_table_t *ht)
 	ht->missed_cnt = 0;
 }
 
+/* --------- hash table traversing functions -------- */
+
+ht_element_t *get_first_ht_element(hash_table_t *ht, ht_traversal_info_t *info)
+{
+	int i;
+	if (!info) return NULL;
+	info->ht = ht;
+	info->current = NULL;
+	for (i = 0; i < ht->size; i++) {
+		if (ht->cslots[i].first) {
+			info->current = ht->cslots[i].first;
+			break;
+		}
+	}
+	info->slot_pos = i;
+	return info->current;
+}
+
+ht_element_t *get_next_ht_element(ht_traversal_info_t *info)
+{
+	int i;
+	if (!info) return NULL;
+
+	if (info->current) info->current = info->current->next;
+	
+	if (info->current) return info->current;
+	else {
+		for (i = info->slot_pos + 1; i < info->ht->size; i++) {
+			if (info->ht->cslots[i].first) {
+				info->current = info->ht->cslots[i].first;
+				break;
+			}
+		}
+		info->slot_pos = i;
+	}
+	return info->current;
+}
+
 /* --------- HASH functions -------- */
 
 unsigned int rshash(const char* str, unsigned int len)

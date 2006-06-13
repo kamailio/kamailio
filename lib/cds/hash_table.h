@@ -74,6 +74,16 @@ ht_data_t ht_find(hash_table_t *ht, ht_key_t key);
 void ht_get_statistic(hash_table_t *ht, ht_statistic_t *s);
 void ht_clear_statistic(hash_table_t *ht);
 
+/* traversing through whole hash table */
+typedef struct {
+	hash_table_t *ht;
+	int slot_pos;
+	ht_element_t *current;
+} ht_traversal_info_t;
+
+ht_element_t *get_first_ht_element(hash_table_t *ht, ht_traversal_info_t *info);
+ht_element_t *get_next_ht_element(ht_traversal_info_t *info);
+
 /* hash functions */
 unsigned int rshash(const char* str, unsigned int len);
 
