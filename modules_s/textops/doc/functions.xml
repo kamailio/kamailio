@@ -607,6 +607,8 @@ if (@hf_value_exists.supported.path == "1") {
 		@hf_value.HFNAME[IDX].uri # (&lt; &amp; &gt; excluded)
 		@hf_value.HFNAME[*].uri # return comma delimited list of uris (&lt; &amp; &gt; included)
 		@hf_value.HFNAME.uri    # the same as above [*] but may be parsed by cfg.y
+		@hf_value.HFNAME[IDX].name  # returns name part, quotes excluded
+		@hf_value.HFNAME.name   # returns name part of the first value
 
 		@hf_value2.HFNAME        # returns value of first header
 		@hf_value2.HFNAME[IDX]   # returns value of idx's header
@@ -615,6 +617,7 @@ if (@hf_value_exists.supported.path == "1") {
 
 		@hf_value.HFNAME[IDX].uri  # return URI, quotes excluded
 		@hf_value.HFNAME.p.uri  # returns param named uri, not URI itself
+		@hf_value.HFNAME.p.name # returns param named name, not name itself
 		@hf_value.HFNAME[IDX].uri.name #  any sel_any_uri nested features may be used
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
