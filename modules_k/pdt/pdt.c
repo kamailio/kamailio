@@ -225,6 +225,7 @@ static int mod_init(void)
 	}
 		
 	pdt_dbf.close(db_con);
+	db_con = 0;
 
 	pdt_print_tree(_ptree);
 	DBG("PDT:mod_init: -------------------\n");
@@ -502,7 +503,7 @@ int pdt_load_db()
 				LOG(L_ERR,
 				"PDT:pdt_load_db:sdomain [%.*s]: prefix [%.*s] or domain <%.*s> duplicated\n",
 					sdomain.len, sdomain.s, p.len, p.s, d.len, d.s);
-				goto error;;
+				goto error;
 			}
 
 			if(pdt_add_to_tree(&_ptree, &sdomain, &p, &d)<0)
