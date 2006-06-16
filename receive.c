@@ -208,11 +208,11 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 				LOG(L_WARN, "WARNING: receive_msg: "
 						"error while trying onreply script\n");
 				goto error_rpl;
-			}else if (ret==0) goto end; /* drop the message, no error */
+			}else if (ret==0) goto skip_send_reply; /* drop the message, no error */
 		}
 		/* send the msg */
 		forward_reply(msg);
-
+	skip_send_reply:
 #ifdef STATS
 		gettimeofday( & tve, &tz );
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);

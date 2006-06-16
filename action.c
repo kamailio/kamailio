@@ -915,7 +915,7 @@ int run_actions(struct action* a, struct sip_msg* msg)
 	if (a==0){
 		DBG("DEBUG: run_actions: null action list (rec_level=%d)\n",
 			rec_lev);
-		ret=0;
+		ret=1;
 	}
 
 	for (t=a; t!=0; t=t->next){
