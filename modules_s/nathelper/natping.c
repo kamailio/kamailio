@@ -98,10 +98,7 @@ natping(unsigned int ticks, void *param)
 	int rval;
 	void *buf, *cp;
 	str c;
-	struct sip_uri curi;
-	struct hostent* he;
 	struct dest_info dst;
-	str p_method, p_from;
 
 	buf = NULL;
 	if (cblen > 0) {
@@ -141,43 +138,52 @@ natping(unsigned int ticks, void *param)
 		init_dest_info(&dst);
 		memcpy(&dst.send_sock, cp, sizeof(dst.send_sock));
 		cp += sizeof(dst.send_sock);
-
-		if (natping_method != NULL) {
-			/* XXX: add send_sock handling */
-			p_method.s = natping_method;
-			p_method.len = strlen(p_method.s);
-			p_from.s = "sip:registrar"; /* XXX */
-			p_from.len = strlen(p_from.s);
-			if (tmb.t_request(&p_method, &c, &c, &p_from,
-			    NULL, NULL, NULL, NULL, NULL) == -1) {
-				LOG(L_ERR, "ERROR: nathelper::natping(): t_request() failed\n");
-			}
-		} else {
-			if (parse_uri(c.s, c.len, &curi) < 0) {
-				LOG(L_ERR, "ERROR: nathelper::natping: can't parse contact uri\n");
-				continue;
-			}
-			if (curi.proto != PROTO_UDP && curi.proto != PROTO_NONE)
-				continue;
-			if (curi.port_no == 0)
-				curi.port_no = SIP_PORT;
-			he = sip_resolvehost(&curi.host, &curi.port_no, PROTO_UDP);
-			if (he == NULL){
-				LOG(L_ERR, "ERROR: nathelper::natping: can't resolve host\n");
-				continue;
-			}
-			hostent2su(&dst.to, he, 0, curi.port_no);
-			if (dst.send_sock == NULL) {
-				dst.send_sock = force_socket ? force_socket :
-					get_send_socket(0, &dst.to, PROTO_UDP);
-			}
-			if (dst.send_sock == NULL) {
-				LOG(L_ERR, "ERROR: nathelper::natping: can't get sending socket\n");
-				continue;
-			}
-			dst.proto=PROTO_UDP;
-			udp_send(&dst, (char *)sbuf, sizeof(sbuf));
-		}
+		natping_contact(c, &dst);
 	}
 	pkg_free(buf);
+}
+
+int natping_contact(str contact, struct dest_info *dst) {
+	struct sip_uri curi;
+	struct hostent* he;
+	str p_method, p_from;
+
+	if (natping_method != NULL) {
+		/* XXX: add send_sock handling */
+		p_method.s = natping_method;
+		p_method.len = strlen(p_method.s);
+		p_from.s = "sip:registrar"; /* XXX */
+		p_from.len = strlen(p_from.s);
+		if (tmb.t_request(&p_method, &contact, &contact, &p_from,
+			NULL, NULL, NULL, NULL, NULL) == -1) {
+			LOG(L_ERR, "ERROR: nathelper::natping(): t_request() failed\n");
+			return -1;
+		}
+	} else {
+		if (parse_uri(contact.s, contact.len, &curi) < 0) {
+			LOG(L_ERR, "ERROR: nathelper::natping: can't parse contact uri\n");
+			return -1;
+		}
+		if (curi.proto != PROTO_UDP && curi.proto != PROTO_NONE)
+			return -1;
+		if (curi.port_no == 0)
+			curi.port_no = SIP_PORT;
+		he = sip_resolvehost(&curi.host, &curi.port_no, PROTO_UDP);
+		if (he == NULL){
+			LOG(L_ERR, "ERROR: nathelper::natping: can't resolve host\n");
+			return -1;
+		}
+		hostent2su(&dst->to, he, 0, curi.port_no);
+		if (dst->send_sock == NULL) {
+			dst->send_sock = force_socket ? force_socket :
+				get_send_socket(0, &dst->to, PROTO_UDP);
+		}
+		if (dst->send_sock == NULL) {
+			LOG(L_ERR, "ERROR: nathelper::natping: can't get sending socket\n");
+			return -1;
+		}
+		dst->proto=PROTO_UDP;
+		udp_send(dst, (char *)sbuf, sizeof(sbuf));
+	}
+	return 1;
 }

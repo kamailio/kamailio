@@ -156,6 +156,9 @@
  *		Since nathelper is not transaction or call stateful, care should be
  *		taken to ensure that force_rtp_proxy() in request path matches
  *		force_rtp_proxy() in reply path, that is the same node is selected.
+ *
+ * 2006-06-10	select nathepler.rewrite_contact
+ *		pingcontact function (tma)
  */
 
 #include "nhelpr_funcs.h"
@@ -181,6 +184,7 @@
 #include "../usrloc/usrloc.h"
 #include "../../usr_avp.h"
 #include "../../socket_info.h"
+#include "../../select.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -240,6 +244,8 @@ static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static char *find_sdp_line(char *, char *, char);
 static char *find_next_sdp_line(char *, char *, char, char *);
+static int fixup_ping_contact(void **param, int param_no);
+static int ping_contact_f(struct sip_msg* msg, char* str1, char* str2);
 
 static int mod_init(void);
 static int child_init(int);
@@ -304,6 +310,7 @@ static cmd_export_t cmds[] = {
 	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"nat_uac_test",       nat_uac_test_f,         1, fixup_int_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"fix_nated_register", fix_nated_register_f,   0, 0,             REQUEST_ROUTE },
+	{"ping_contact",       ping_contact_f,         1, fixup_ping_contact,  REQUEST_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -330,6 +337,21 @@ struct module_exports exports = {
 	0, /* destroy function */
 	0, /* on_break */
 	child_init
+};
+
+static int sel_nathelper(str* res, select_t* s, struct sip_msg* msg) {  /* dummy */
+	return 0;
+}
+
+static int sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg);
+//TODO:SELECT_F(select_any_nameuri)
+
+select_row_t sel_declaration[] = {
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("nathelper"), sel_nathelper, SEL_PARAM_EXPECTED},
+	{ sel_nathelper, SEL_PARAM_STR, STR_STATIC_INIT("rewrite_contact"), sel_rewrite_contact, CONSUME_NEXT_INT },
+//TODO:	{ sel_rewrite_contact, SEL_PARAM_INT, STR_NULL, select_any_nameuri, NESTED},
+
+	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
 
 static int
@@ -425,7 +447,7 @@ mod_init(void)
 			}
 		}
 	}
-
+	register_select_table(sel_declaration);
 	return 0;
 }
 
@@ -700,6 +722,60 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	c->uri.len = len;
 
 	return 1;
+}
+
+static int sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg) {
+	static char buf[100];
+	contact_t* c;
+	int n, def_port_fl, len;
+	char *cp;
+	str hostport;
+	struct sip_uri uri;
+
+	res->len = 0;
+	n = s->params[2].v.i;
+	if (n <= 0) {
+		LOG(L_ERR, "ERROR: rewrite_contact[%d]: zero or negative index not supported\n", n);
+		return -1;
+	}
+	c = 0;
+	do {
+		if (contact_iterator(&c, msg, c) < 0 || !c)
+			return -1;
+		n--;
+	} while (n > 0);
+
+	if (parse_uri(c->uri.s, c->uri.len, &uri) < 0 || uri.host.len <= 0) {
+		LOG(L_ERR, "rewrite_contact[%d]: Error while parsing Contact URI\n", s->params[2].v.i);
+		return -1;
+	}
+	len = c->len - uri.host.len;
+	if (uri.port.len > 0)
+		len -= uri.port.len;
+	def_port_fl = (msg->rcv.proto == PROTO_TLS && msg->rcv.src_port == SIPS_PORT) || (msg->rcv.proto != PROTO_TLS && msg->rcv.src_port == SIP_PORT);
+	if (!def_port_fl)
+		len += 1/*:*/+5/*port*/;
+	if (len > sizeof(buf)) {
+		LOG(L_ERR, "ERROR: rewrite_contact[%d]: contact too long\n", s->params[2].v.i);
+		return -1;
+	}
+	hostport = uri.host;
+	if (uri.port.len > 0)
+		hostport.len = uri.port.s + uri.port.len - uri.host.s;
+
+	res->s = buf;
+	res->len = hostport.s - c->name.s;
+	memcpy(buf, c->name.s, res->len);
+	cp = ip_addr2a(&msg->rcv.src_ip);
+	if (def_port_fl) {
+		res->len+= snprintf(buf+res->len, sizeof(buf)-res->len, "%s", cp);
+	} else {
+		res->len+= snprintf(buf+res->len, sizeof(buf)-res->len, "%s:%d", cp, msg->rcv.src_port);
+	}
+	memcpy(buf+res->len, hostport.s+hostport.len, c->len-(hostport.s+hostport.len-c->name.s));
+	res->len+= c->len-(hostport.s+hostport.len-c->name.s);
+
+	return 0;
 }
 
 /*
@@ -2142,4 +2218,40 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	return 1;
+}
+
+static int fixup_ping_contact(void **param, int param_no) {
+	int ret;
+	if (param_no == 1) {
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;
+		return fix_param(FPARAM_STR, param);
+	}
+	return 0;
+}
+
+static int ping_contact_f(struct sip_msg* msg, char* str1, char* str2) {
+	struct dest_info dst;
+	str s;
+	avp_t* avp;
+	avp_value_t val;
+
+	switch (((fparam_t*) str1)->type) {
+		case FPARAM_AVP:
+			if (!(avp = search_first_avp(((fparam_t*) str1)->v.avp.flags, ((fparam_t*) str1)->v.avp.name, &val, 0))) {
+				return -1;
+			} else {
+				if ((avp->flags & AVP_VAL_STR) == 0) return -1;
+				s = val.s;
+			}
+			break;
+		case FPARAM_STRING:
+			s = ((fparam_t*) str1)->v.str;
+			break;
+	        default:
+        	        ERR("BUG: Invalid parameter value in ping_contact\n");
+                	return -1;
+        }
+	init_dest_info(&dst);
+	return natping_contact(s, &dst);
 }

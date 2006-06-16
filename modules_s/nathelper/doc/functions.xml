@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="nathelper.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -30,7 +30,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="fix_nated_sdp">
 	<title>
 	    <function>fix_nated_sdp(mode)</function>
@@ -69,7 +69,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 	    <title><function>force_rtp_proxy</function> usage</title>
 	    <programlisting>
 ...
-if (search("User-Agent: Cisco ATA.*") 
+if (search("User-Agent: Cisco ATA.*")
 {
     force_rtp_proxy();
 };
@@ -160,6 +160,44 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
 	    can be bitwise combined, the test returns true if any of the tests
 	    identified a NAT.
 	</para>
+    </section>
+
+    <section id="ping_contact">
+	<title>
+	    <function>ping_contact(contact)</function>
+	</title>
+	<para>
+	    Ping contact specified by parameter. It enables pinging independently
+	    on <emphasis>usrloc</emphasis>. It may be processed e.g. via timer
+	    module.
+	</para>
+	<example>
+	    <title><function>ping_contact</function> usage</title>
+	    <programlisting>
+...
+$c = @get_a_contact;
+ping_contact($c);
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="nathelper.rewrite_contact">
+	<title>
+	    <function>@nathelper.rewrite_contact[n]</function>
+	</title>
+	<para>
+	    Get n-th Contact value with IP:Port rewritten to source ip:port. N is counted from 1.
+	    Only IP:port is rewritten, remaining part are left unchanged. Full nameaddr is supported.
+	</para>
+	<example>
+	    <title><function>@nathelper.rewrite_contact</function> usage</title>
+	    <programlisting>
+...
+$c = @nathelper.rewrite_contact[1];
+...
+	    </programlisting>
+	</example>
     </section>
 
 </section>
