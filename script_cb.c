@@ -97,7 +97,7 @@ int register_script_cb( cb_function f, int type, void *param )
 				goto add_error;
 		}
 	}
-	if (type&REQ_TYPE_CB) {
+	if (type&RPL_TYPE_CB) {
 		/* callback (also) for reply script */
 		if (type&PRE_SCRIPT_CB) {
 			if (add_callback( &pre_rpl_cb, f, param)<0)
