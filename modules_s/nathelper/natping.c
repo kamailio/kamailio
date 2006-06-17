@@ -143,8 +143,7 @@ natping(unsigned int ticks, void *param)
 	pkg_free(buf);
 }
 
-static int
-natping_contact(str contact, struct dest_info *dst) {
+int natping_contact(str contact, struct dest_info *dst) {
 	struct sip_uri curi;
 	struct hostent* he;
 	str p_method, p_from;
@@ -186,5 +185,5 @@ natping_contact(str contact, struct dest_info *dst) {
 		dst->proto=PROTO_UDP;
 		udp_send(dst, (char *)sbuf, sizeof(sbuf));
 	}
-	return 0;
+	return 1;
 }
