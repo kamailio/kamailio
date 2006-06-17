@@ -2220,8 +2220,11 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 	return 1;
 }
 
-static int fixup_ping_contact(void **param, int param_no) {
+static int
+fixup_ping_contact(void **param, int param_no)
+{
 	int ret;
+
 	if (param_no == 1) {
 		ret = fix_param(FPARAM_AVP, param);
 		if (ret <= 0) return ret;
@@ -2230,23 +2233,27 @@ static int fixup_ping_contact(void **param, int param_no) {
 	return 0;
 }
 
-static int ping_contact_f(struct sip_msg* msg, char* str1, char* str2) {
+static int
+ping_contact_f(struct sip_msg *msg, char *str1, char *str2)
+{
 	struct dest_info dst;
 	str s;
-	avp_t* avp;
+	avp_t *avp;
 	avp_value_t val;
 
-	switch (((fparam_t*) str1)->type) {
+	switch (((fparam_t *)str1)->type) {
 		case FPARAM_AVP:
-			if (!(avp = search_first_avp(((fparam_t*) str1)->v.avp.flags, ((fparam_t*) str1)->v.avp.name, &val, 0))) {
+			if (!(avp = search_first_avp(((fparam_t *)str1)->v.avp.flags,
+			    ((fparam_t *)str1)->v.avp.name, &val, 0))) {
 				return -1;
 			} else {
-				if ((avp->flags & AVP_VAL_STR) == 0) return -1;
+				if ((avp->flags & AVP_VAL_STR) == 0)
+					return -1;
 				s = val.s;
 			}
 			break;
 		case FPARAM_STRING:
-			s = ((fparam_t*) str1)->v.str;
+			s = ((fparam_t *)str1)->v.str;
 			break;
 	        default:
         	        ERR("BUG: Invalid parameter value in ping_contact\n");

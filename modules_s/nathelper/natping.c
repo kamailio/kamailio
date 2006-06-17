@@ -143,9 +143,10 @@ natping(unsigned int ticks, void *param)
 	pkg_free(buf);
 }
 
-int natping_contact(str contact, struct dest_info *dst) {
+int
+natping_contact(str contact, struct dest_info *dst) {
 	struct sip_uri curi;
-	struct hostent* he;
+	struct hostent *he;
 	str p_method, p_from;
 
 	if (natping_method != NULL) {
@@ -155,7 +156,7 @@ int natping_contact(str contact, struct dest_info *dst) {
 		p_from.s = "sip:registrar"; /* XXX */
 		p_from.len = strlen(p_from.s);
 		if (tmb.t_request(&p_method, &contact, &contact, &p_from,
-			NULL, NULL, NULL, NULL, NULL) == -1) {
+		    NULL, NULL, NULL, NULL, NULL) == -1) {
 			LOG(L_ERR, "ERROR: nathelper::natping(): t_request() failed\n");
 			return -1;
 		}
@@ -176,7 +177,7 @@ int natping_contact(str contact, struct dest_info *dst) {
 		hostent2su(&dst->to, he, 0, curi.port_no);
 		if (dst->send_sock == NULL) {
 			dst->send_sock = force_socket ? force_socket :
-				get_send_socket(0, &dst->to, PROTO_UDP);
+			    get_send_socket(0, &dst->to, PROTO_UDP);
 		}
 		if (dst->send_sock == NULL) {
 			LOG(L_ERR, "ERROR: nathelper::natping: can't get sending socket\n");

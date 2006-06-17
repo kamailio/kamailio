@@ -39,7 +39,7 @@ extern struct socket_info* force_socket;
 /* Functions from natping.c */
 int natpinger_init(void);
 
-int natping_contact(str contact, struct dest_info *dst);
+int natping_contact(str, struct dest_info *);
 
 /* Variables from natping.c referenced from nathelper.c */
 extern int natping_interval;
