@@ -146,6 +146,20 @@ static void get_as_str(struct eval_value *value, str *s) {
 	}
 }
 
+static int get_as_bool(struct eval_value *value) {
+	switch (value->type) {
+		case evtVoid:
+			return 0;
+		case evtInt:
+			return value->u.n != 0;
+		case evtStr:
+			return (value->u.s->s.s && value->u.s->s.len > 0);
+		default:
+			BUG("Bad value type %d\n", value->type);
+			return -1;
+	}
+}
+
 static struct eval_str* eval_str_malloc(str* s) {
 	struct eval_str* p;
 	p = pkg_malloc(sizeof(*p)+s->len);
@@ -159,6 +173,99 @@ static struct eval_str* eval_str_malloc(str* s) {
 		p->cnt = 1;
 	}
 	return p;
+}
+
+/* taken from modules/textops */
+#define is_space(_p) ((_p) == '\t' || (_p) == '\n' || (_p) == '\r' || (_p) == ' ')
+
+static void get_uri_and_skip_until_params(str *param_area, str *uri) {
+	int i, quoted, uri_pos, uri_done;
+
+	uri->len = 0;
+	uri_done = 0;
+	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {	/* [ *(token LSW)/quoted-string ] "<" addr-spec ">" | addr-spec */
+		/* skip name */
+
+		for (quoted=0, uri_pos=i; i<param_area->len; i++) {
+			if (!quoted) {
+				if (param_area->s[i] == '\"') {
+					quoted = 1;
+					uri_pos = -1;
+				}
+				else if (param_area->s[i] == '<' || param_area->s[i] == ';' || is_space(param_area->s[i])) break;
+			}
+			else if (param_area->s[i] == '\"' && param_area->s[i-1] != '\\') quoted = 0;
+		}
+		if (uri_pos >= 0 && !uri_done) {
+			uri->s = param_area->s+uri_pos;
+			uri->len = param_area->s+i-uri->s;
+		}
+		/* skip uri */
+		while (i<param_area->len && is_space(param_area->s[i])) i++;
+		if (i<param_area->len && param_area->s[i]=='<') {
+			uri->s = param_area->s+i;
+			uri->len = 0;
+			for (quoted=0; i<param_area->len; i++) {
+				if (!quoted) {
+					if (param_area->s[i] == '\"') quoted = 1;
+					else if (param_area->s[i] == '>') {
+						uri->len = param_area->s+i-uri->s+1;
+						uri_done = 1;
+						break;
+					}
+				}
+				else if (param_area->s[i] == '\"' && param_area->s[i-1] != '\\') quoted = 0;
+			}
+		}
+	}
+        param_area->s+= i;
+	param_area->len-= i;
+}
+
+static int find_next_value(char** start, char* end, str* val, str* lump_val) {
+	int quoted = 0;
+	lump_val->s = *start;
+	while (*start < end && is_space(**start) ) (*start)++;
+	val->s = *start;
+	while ( *start < end && (**start != ',' || quoted) ) {
+		if (**start == '\"' && (!quoted || (*start)[-1]!='\\') )
+			quoted = ~quoted;
+		(*start)++;
+	}
+	val->len = *start - val->s;
+	while (val->len > 0 && is_space(val->s[val->len-1])) val->len--;
+	if (val->len >= 2 && val->s[0] == '\"' && val->s[val->len-1] == '\"') {
+		val->s++;
+		val->len -= 2;
+	}
+	while (*start < end && **start != ',') (*start)++;
+	if (*start < end) {
+		(*start)++;
+	}
+	lump_val->len = *start - lump_val->s;
+	return (*start < end);
+}
+
+#define MAX_HF_VALUES 30
+
+static int parse_hf_values(str s, int* n, str** vals) {
+	static str values[MAX_HF_VALUES];
+	char *start, *end;
+	str lump_val;
+	*n = 0;
+	*vals = values;
+	if (!s.s) return 1;
+	start = s.s;
+	end = start+s.len;
+	while (start < end) {
+		find_next_value(&start, end, &values[*n], &lump_val);
+		if (*n >= MAX_HF_VALUES) {
+			LOG(L_ERR, "ERROR: too many values\n");
+			return -1;
+		}
+		(*n)++;
+	}
+	return 1;
 }
 
 static void destroy_stack() {
@@ -330,7 +437,7 @@ static xl_parse_format_f* xl_parse = NULL;
 #define NO_SCRIPT -1
 
 
-enum {esotAdd, esotInsert, esotXchg, esotPut, esotGet, esotPop};
+enum {esotAdd, esotInsert, esotXchg, esotPut, esotGet, esotPop, esotAddValue, esotInsertValue};
 enum {esovtInt, esovtStr, esovtAvp, esovtXStr, esovtRegister, esovtFunc};
 enum {esofNone=0, esofTime, esofUuid, esofStackNo};
 
@@ -662,14 +769,19 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 		idx = l;
 	}
 	else {
-		if (so->oper_type == esotAdd)  /* default values */
-			idx = -1;
-		else
-			idx = 0;
+		switch (so->oper_type) {  /* default values */
+			case esotAdd:
+			case esotAddValue:
+				idx = -1;
+				break;
+			default:
+				idx = 0;
+				break;
+		}
 	}
 
 	pivot = find_stack_item(idx);
-	if ( !(pivot!=NULL || (so->oper_type == esotAdd && idx == -1) || (so->oper_type == esotInsert && idx == 0)) )
+	if ( !(pivot!=NULL || ((so->oper_type == esotAdd || so->oper_type == esotAddValue) && idx == -1) || ((so->oper_type == esotInsert || so->oper_type == esotInsertValue) && idx == 0)) )
 		return -1;
 
 	switch (so->oper_type) {
@@ -758,6 +870,42 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 			}
 			break;
 		}
+		case esotInsertValue:
+		case esotAddValue: {
+			struct eval_value v;
+			str s, *vals;
+			int i, n;
+			struct eval_str* es;
+			eval_location(msg, &so->loc, &v, 0);
+			get_as_str(&v, &s);
+			if ((parse_hf_values(s, &n, &vals) < 0) || n == 0) {
+				destroy_value(v);
+				return -1;
+			}
+			for (i=0; i<n; i++) {
+				struct stack_item *si;
+				si = pkg_malloc(sizeof(*si));
+				if (!si) {
+					LOG(L_ERR, "ERROR: eval: out of memory\n");
+					destroy_value(v);
+					return -1;
+				}
+				es = eval_str_malloc(vals+i);
+				if (!es) {
+					LOG(L_ERR, "ERROR: out of memory\n");
+					destroy_value(v);
+					return -1;
+				}
+				si->value.type = evtStr;
+				si->value.u.s = es;
+				insert_stack_item(si, pivot, so->oper_type == esotAddValue);
+				if (so->oper_type == esotAddValue) {
+					pivot = si;
+				}
+			}
+			destroy_value(v);
+			return 1;
+		}
 		default:
 			BUG("Unexpected operation (%d)\n", so->oper_type);
 			return -1;
@@ -787,6 +935,15 @@ static int eval_pop_fixup( void** param, int param_no) {
 static int eval_xchg_fixup( void** param, int param_no) {
 	return fixup_stack_oper(param, param_no, esotXchg);
 }
+
+static int eval_add_value_fixup( void** param, int param_no) {
+	return fixup_stack_oper(param, param_no, esotAddValue);
+}
+
+static int eval_insert_value_fixup( void** param, int param_no) {
+	return fixup_stack_oper(param, param_no, esotInsertValue);
+}
+
 
 static int eval_remove_func(struct sip_msg *msg, char *param1, char *param2) {
 	struct stack_item *p, *p2;
@@ -850,10 +1007,10 @@ static int eval_clear_func(struct sip_msg *msg, char *param1, char *param2) {
 	return 1;
 }
 
-enum {esftNone=0, esftAdd, esftSub, esftMultiplication, esftDivision, esftModulo, esftNeg, esftAbs, esftSgn,
+enum {esftNone=0, esftAdd, esftSub, esftMultiplication, esftDivision, esftModulo, esftNeg, esftAbs, esftSgn, esftDec, esftInc,
 esftConcat, esftSubstr, esftStrLen, esftStrStr, esftStrDel, esftStrUpper, esftStrLower,
 esftCastAsInt, esftCastAsStr,
-esftValueAt, esftValueUris, esftValueRev, esftSubValue, esftValueCount,
+esftValueAt, esftValueUris, esftValueRev, esftSubValue, esftValueCount, esftValueConcat,
 esftGetUri,
 esftAnd, esftOr, esftNot, esftBitAnd, esftBitOr, esftBitNot, esftBitXor, esftEQ, esftNE, esftGT, esftGE, esftLW, esftLE};
 
@@ -871,6 +1028,8 @@ static struct eval_function_def eval_functions[] = {
 	{esftModulo, "%", 2},
 	{esftNeg, "neg", 1},
 	{esftAbs, "abs", 1},
+	{esftDec, "dec", 1},
+	{esftInc, "inc", 1},
 	{esftSgn, "sgn", 1},
 	{esftConcat, "concat", 2},
 	{esftSubstr, "substr", 3},
@@ -886,6 +1045,7 @@ static struct eval_function_def eval_functions[] = {
 	{esftValueRev, "valrev", 1},
 	{esftSubValue, "subval", 3},
 	{esftValueCount, "valcount", 1},
+	{esftValueConcat, "valconcat", 1},
 	{esftGetUri, "geturi", 1},
 	{esftAnd, "&&", 2},
 	{esftOr, "||", 2},
@@ -975,99 +1135,6 @@ static int eval_stack_func_fixup( void** param, int param_no) {
 	}
 	*param = head;
 	return 0;
-}
-
-/* taken from modules/textops */
-#define is_space(_p) ((_p) == '\t' || (_p) == '\n' || (_p) == '\r' || (_p) == ' ')
-
-static void get_uri_and_skip_until_params(str *param_area, str *uri) {
-	int i, quoted, uri_pos, uri_done;
-
-	uri->len = 0;
-	uri_done = 0;
-	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {	/* [ *(token LSW)/quoted-string ] "<" addr-spec ">" | addr-spec */
-		/* skip name */
-
-		for (quoted=0, uri_pos=i; i<param_area->len; i++) {
-			if (!quoted) {
-				if (param_area->s[i] == '\"') {
-					quoted = 1;
-					uri_pos = -1;
-				}
-				else if (param_area->s[i] == '<' || param_area->s[i] == ';' || is_space(param_area->s[i])) break;
-			}
-			else if (param_area->s[i] == '\"' && param_area->s[i-1] != '\\') quoted = 0;
-		}
-		if (uri_pos >= 0 && !uri_done) {
-			uri->s = param_area->s+uri_pos;
-			uri->len = param_area->s+i-uri->s;
-		}
-		/* skip uri */
-		while (i<param_area->len && is_space(param_area->s[i])) i++;
-		if (i<param_area->len && param_area->s[i]=='<') {
-			uri->s = param_area->s+i;
-			uri->len = 0;
-			for (quoted=0; i<param_area->len; i++) {
-				if (!quoted) {
-					if (param_area->s[i] == '\"') quoted = 1;
-					else if (param_area->s[i] == '>') {
-						uri->len = param_area->s+i-uri->s+1;
-						uri_done = 1;
-						break;
-					}
-				}
-				else if (param_area->s[i] == '\"' && param_area->s[i-1] != '\\') quoted = 0;
-			}
-		}
-	}
-        param_area->s+= i;
-	param_area->len-= i;
-}
-
-static int find_next_value(char** start, char* end, str* val, str* lump_val) {
-	int quoted = 0;
-	lump_val->s = *start;
-	while (*start < end && is_space(**start) ) (*start)++;
-	val->s = *start;
-	while ( *start < end && (**start != ',' || quoted) ) {
-		if (**start == '\"' && (!quoted || (*start)[-1]!='\\') )
-			quoted = ~quoted;
-		(*start)++;
-	}
-	val->len = *start - val->s;
-	while (val->len > 0 && is_space(val->s[val->len-1])) val->len--;
-	if (val->len >= 2 && val->s[0] == '\"' && val->s[val->len-1] == '\"') {
-		val->s++;
-		val->len -= 2;
-	}
-	while (*start < end && **start != ',') (*start)++;
-	if (*start < end) {
-		(*start)++;
-	}
-	lump_val->len = *start - lump_val->s;
-	return (*start < end);
-}
-
-#define MAX_HF_VALUES 30
-
-static int parse_hf_values(str s, int* n, str** vals) {
-	static str values[MAX_HF_VALUES];
-	char *start, *end;
-	str lump_val;
-	*n = 0;
-	*vals = values;
-	if (!s.s) return 1;
-	start = s.s;
-	end = start+s.len;
-	while (start < end) {
-		find_next_value(&start, end, &values[*n], &lump_val);
-		if (*n >= MAX_HF_VALUES) {
-			LOG(L_ERR, "ERROR: too many values\n");
-			return -1;
-		}
-		(*n)++;
-	}
-	return 1;
 }
 
 #ifndef _GNU_SOURCE
@@ -1185,6 +1252,8 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 			case esftNeg:
 			case esftAbs:
 			case esftSgn:
+			case esftDec:
+			case esftInc:
 			case esftNot:
 			case esftBitNot:
 			case esftCastAsInt: {
@@ -1204,6 +1273,12 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 							a = 1;
 						else
 							a = 0;
+						break;
+					case esftDec:
+						a--;
+						break;
+					case esftInc:
+						a++;
 						break;
 					case esftNot:
 						a = !a;
@@ -1538,6 +1613,46 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				remove_stack_item(pivot->next);
 				break;
 			}
+			case esftValueConcat: {
+				long n;
+				int i, pos;
+				str s1, s;
+				struct eval_str* es;
+				struct stack_item *si;
+
+				if (get_as_int(&pivot->value, &n) < 0) return -1;
+				for (si=pivot->next, s.len=0, i=0; i<n && si; i++, si=si->next) {
+					get_as_str(&si->value, &s1);
+					s.len += s1.len+1;
+				}
+				if (s.len)
+					s.len--;
+				s.s = 0;
+				es = eval_str_malloc(&s);
+				if (!es) {
+					LOG(L_ERR, "ERROR: out of memory\n");
+					return -1;
+				}
+				for (si=pivot->next, i=0, pos=0; i<n && si; i++, si=si->next) {
+					if (pos > 0)
+						s.s[pos++] = ',';
+					get_as_str(&si->value, &s1);
+					memcpy(s.s+pos, s1.s, s1.len);
+					pos += s1.len;
+				}
+
+				destroy_value(pivot->value);
+				pivot->value.type = evtStr;
+				pivot->value.u.s = es;
+				for (si=pivot->next, i=0; i<n && si; i++) {
+					struct stack_item *si2;
+					si2 = si;
+					si=si->next;
+					remove_stack_item(si2);
+				}
+				break;
+
+			}
 			case esftValueRev: {
 				int i, n, pos;
 				str s1, s, *vals;
@@ -1632,6 +1747,92 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 		}
 	}
         return ret;
+}
+
+static int eval_while_fixup(void **param, int param_no) {
+
+	if (param_no == 2) {
+		return fixup_location_12(param, param_no);
+	}
+	else if (param_no == 1) {
+		int n;
+		n = route_get(&main_rt, (char*) *param);
+		if (n == -1) {
+			LOG(L_ERR, "ERROR: eval_while: bad route\n");
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*) (unsigned int) n;
+	}
+	return 0;
+}
+
+static int eval_while_func(struct sip_msg *msg, char *route_no, char *param2) {
+	int ret, idx;
+	struct stack_item *pivot;
+
+	if (param2) {
+		long l;
+		struct eval_value v;
+		eval_location(msg, (struct eval_location*) param2, &v, 1);
+		ret = get_as_int(&v, &l);
+		if (ret < 0) return ret;
+		idx = l;
+	}
+	else {
+		idx = 0;      /* default values */
+	}
+
+	ret = -1;
+	while (1) {
+		pivot = find_stack_item(idx);
+		if (!pivot) break;
+		if (get_as_bool(&pivot->value) <= 0) break;
+		if ((int)route_no >= main_rt.idx) {
+			BUG("invalid routing table number #%d of %d\n", (int) route_no, main_rt.idx);
+			return -1;
+		}
+		if (!main_rt.rlist[(int) route_no]) {
+			LOG(L_WARN, "WARN: route not declared (hash:%d)\n", (int) route_no);
+			return -1;
+		}
+		/* exec the routing script */
+		ret = run_actions(main_rt.rlist[(int) route_no], msg);
+		run_flags &= ~RETURN_R_F; /* absorb returns */
+		if (ret <= 0) break;
+	}
+	return ret;
+}
+
+static int eval_while_stack_func(struct sip_msg *msg, char *route_no, char *param2) {
+	int ret, count;
+	if (param2) {
+		long l;
+		struct eval_value v;
+		eval_location(msg, (struct eval_location*) param2, &v, 1);
+		ret = get_as_int(&v, &l);
+		if (ret < 0) return ret;
+		count = l;
+	}
+	else {
+		count = 0;      /* default values */
+	}
+	ret = -1;
+	while ((count >= 0 && stack_no > count) || (count < 0 && stack_no < -count)) {
+		if ((int)route_no >= main_rt.idx) {
+			BUG("invalid routing table number #%d of %d\n", (int) route_no, main_rt.idx);
+			return -1;
+		}
+		if (!main_rt.rlist[(int) route_no]) {
+			LOG(L_WARN, "WARN: route not declared (hash:%d)\n", (int) route_no);
+			return -1;
+		}
+		/* exec the routing script */
+		ret = run_actions(main_rt.rlist[(int) route_no], msg);
+		run_flags &= ~RETURN_R_F; /* absorb returns */
+		if (ret <= 0) break;
+	}
+	return ret;
 }
 
 /* select functions */
@@ -1774,6 +1975,10 @@ static cmd_export_t cmds[] = {
 	{"eval_put", eval_stack_oper_func, 1, eval_put_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 	{"eval_pop", eval_stack_oper_func, 2, eval_pop_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 	{"eval_pop", eval_stack_oper_func, 1, eval_pop_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{"eval_add_value", eval_stack_oper_func, 2, eval_add_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{"eval_add_value", eval_stack_oper_func, 1, eval_add_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{"eval_insert_value", eval_stack_oper_func, 2, eval_insert_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{"eval_insert_value", eval_stack_oper_func, 1, eval_insert_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
 	{"eval_remove", eval_remove_func, 0, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 	{"eval_remove", eval_remove_func, 1, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
@@ -1782,6 +1987,11 @@ static cmd_export_t cmds[] = {
 
 	{"eval_oper", eval_stack_func_func, 2, eval_stack_func_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 	{"eval_oper", eval_stack_func_func, 1, eval_stack_func_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+
+	{"eval_while", eval_while_func, 1, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{"eval_while", eval_while_func, 2, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{"eval_while_stack", eval_while_stack_func, 1, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{"eval_while_stack", eval_while_stack_func, 2, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
 	{"eval_dump", eval_dump_func, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
