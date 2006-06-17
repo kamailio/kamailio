@@ -917,11 +917,9 @@ static int dbops_foreach_func(struct sip_msg* m, char* query_no, char* route_no)
 	save_row_no = open_queries[(int) query_no].cur_row_no;
 	for (open_queries[(int) query_no].cur_row_no=0; open_queries[(int) query_no].cur_row_no < RES_ROW_N(open_queries[(int) query_no].result); open_queries[(int) query_no].cur_row_no++) {
 		/* exec the routing script */
-		if (run_actions(main_rt.rlist[(int) route_no], m)<0){
-			LOG(L_WARN, "WARNING: db_foreach: error while trying route script\n");
-		}
-		else
-			res = 1;    /* at least one record processed correctly */
+		res = run_actions(main_rt.rlist[(int) route_no], m);
+		run_flags &= ~RETURN_R_F; /* absorb returns */
+		if (res <= 0) break;
 	}
 	open_queries[(int) query_no].cur_row_no = save_row_no;
 	return res;

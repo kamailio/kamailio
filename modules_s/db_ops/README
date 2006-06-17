@@ -44,7 +44,7 @@ db_close (query_handle)
   note all close after script processing automatically
 
 db_foreach(select | declare_no, route)
-  call route for each row
+  call route for each row, loop is interrupted if route return code <= 0, retcode of the last route call is returned as result of db_foreach (or -1 when no select is empty)
 
 declare_no references to query declared using "declare_query"
 

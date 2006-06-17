@@ -154,9 +154,9 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 		if (exec_pre_req_cb(msg)==0 )
 			goto end; /* drop the request */
 		/* exec the routing script */
-		if (run_actions(main_rt.rlist[a->route_no], msg)<0){
-			LOG(L_WARN, "WARNING: timer: handler: error while trying script\n");
-		}
+		run_actions(main_rt.rlist[a->route_no], msg);
+		run_flags &= ~RETURN_R_F; /* absorb returns */
+
 		/* execute post request-script callbacks */
 		exec_post_req_cb(msg);
 	end:
