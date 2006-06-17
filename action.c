@@ -87,7 +87,7 @@
 
 
 struct onsend_info* p_onsend=0; /* onsend route send info */
-static unsigned int run_flags=0;
+unsigned int run_flags=0;
 int last_retcode=0; /* last return from a route() */
 
 /* ret= 0! if action -> end of list(e.g DROP),
@@ -208,7 +208,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 #endif
 				}
 
-#ifdef HONOR_MADDR				
+#ifdef HONOR_MADDR
 				if (u->maddr_val.s && u->maddr_val.len) {
 					if (sip_hostport2su(&dst.to, &u->maddr_val, port, dst.proto)<0){
 						LOG(L_ERR, "ERROR:  bad maddr param in uri,"
