@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Fast 32-bit Header Field Name Parser -- keys
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -39,6 +39,10 @@
 /*
  * a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z  :  ' ' -
  * 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 78 79 7a 3a 20  2d
+ *
+ * Test manually/visually if dword is intended string using:
+ * awk '/^#define/ {printf("%s \"%x%x%x%x\" ... %s \n",  $3,strtonum("0x" substr($3,9,2)),strtonum("0x" substr($3,7,2)),strtonum("0x" substr($3,5,2)),strtonum("0x" substr($3,3,2)),$5)}' keys.h
+ *
  */
 
 #define _acce_ 0x65636361   /* "acce" */
@@ -115,7 +119,7 @@
 #define _ion2_ 0x206e6f69   /* "ion " */
 #define _ion1_ 0x3a6e6f69   /* "ion:" */
 
-#define _pt_d_ 0x64617470   /* "pt-d" */
+#define _pt_d_ 0x642d7470   /* "pt-d" */
 #define _ispo_ 0x6f707369   /* "ispo" */
 #define _siti_ 0x69746973   /* "siti" */
 
@@ -130,5 +134,28 @@
 
 #define _refe_ 0x65666572   /* "refe" */
 #define _r_to_ 0x6f742d72   /* "r-to" */
+
+#define _pt_c_ 0x632d7470   /* "pt-c" */
+#define _onta_ 0x61746e6f   /* "onta" */
+
+#define _sess_ 0x73736573   /* "sess" */
+#define _ion__ 0x2d6e6f69   /* "ion-" */
+#define _res2_ 0x20736572   /* "res " */
+#define _res1_ 0x3a736572   /* "res:" */
+
+#define _w_ev_ 0x76652d77   /* "w-ev" */
+#define _ents_ 0x73746e65   /* "ents" */
+
+#define _enco_ 0x6f636e65   /* "enco" */
+#define _ding_ 0x676e6964   /* "ding" */
+
+#define _rred_ 0x64657272   /* "rred" */
+#define __by2_ 0x2079622d   /* "-by " */
+#define __by1_ 0x3a79622d   /* "-by:" */
+
+#define _reje_ 0x656a6572   /* "reje" */
+#define _ct_c_ 0x632d7463   /* "ct-c" */
+
+#define _est__ 0x2d747365   /* "est-" */
 
 #endif /* KEYS_H */

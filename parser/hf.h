@@ -87,6 +87,14 @@ enum _hdr_types_t {
 	HDR_RPID_T					       /* Remote-Party-ID header field */,
 	HDR_REFER_TO_T				       /* Refer-To header fiels */,
 	HDR_SIPIFMATCH_T                   /* SIP-If-Match header field */,
+	HDR_SESSIONEXPIRES_T                           /* Session-Expires header */,
+	HDR_ACCEPTCONTACT_T                            /* Accept-Contact header */,
+	HDR_ALLOWEVENTS_T                              /* Allow-Events header */,
+	HDR_CONTENTENCODING_T                          /* Content-Encoding header */,
+	HDR_REFERREDBY_T                               /* Referred-By header */,
+	HDR_REJECTCONTACT_T                            /* Reject-Contact header */,
+	HDR_REQUESTDISPOSITION_T                       /* Request-Disposition header */,
+
 	HDR_EOH_T				       /* End of message header */
 };
 
@@ -137,6 +145,14 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_RPID_F					HDR_F_DEF(RPID)
 #define HDR_REFER_TO_F				HDR_F_DEF(REFER_TO)
 #define HDR_SIPIFMATCH_F			HDR_F_DEF(SIPIFMATCH)
+#define HDR_SESSIONEXPIRES_F			HDR_F_DEF(SESSIONEXPIRES)
+#define HDR_ACCEPTCONTACT_F			HDR_F_DEF(HDR_ACCEPTCONTACT_T)
+#define HDR_ALLOWEVENTS_F			HDR_F_DEF(HDR_ALLOWEVENTS_T)
+#define HDR_CONTENTENCODING_F			HDR_F_DEF(HDR_CONTENTENCODING_T)
+#define HDR_REFERREDBY_F			HDR_F_DEF(HDR_REFERREDBY_T)
+#define HDR_REJECTCONTACT_F			HDR_F_DEF(HDR_REJECTCONTACT_T)
+#define HDR_REQUESTDISPOSITION_F		HDR_F_DEF(HDR_REQUESTDISPOSITION_T)
+
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 
 typedef enum _hdr_types_t hdr_types_t;

@@ -1,7 +1,7 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
- * Contact, Content-Type, Content-Length, Content-Disposition
+ * Contact, Content-Type, Content-Length, Content-Disposition, Content-Encoding
  * Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -23,8 +23,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -81,6 +81,14 @@
 	}
 
 
+#define ENCODING_CASE              \
+	switch(LOWER_DWORD(val)) { \
+	case _ding_:               \
+		p += 4;            \
+		hdr->type = HDR_CONTENTENCODING_T; \
+		goto dc_end;       \
+	}
+
 #define CONTENT_CASE                         \
         switch(LOWER_DWORD(val)) {           \
         case _leng_:                         \
@@ -98,6 +106,11 @@
                 p += 4;                      \
 		val = READ(p);               \
 		DISPOSITION_CASE;            \
+                goto other;                  \
+        case _enco_:                         \
+                p += 4;                      \
+		val = READ(p);               \
+		ENCODING_CASE;               \
                 goto other;                  \
         }
 
@@ -119,7 +132,7 @@
                 val = READ(p);           \
                 CONTENT_CASE;            \
                 goto other;              \
-        }                         
+        }
 
 #define cont_CASE      \
      p += 4;           \

@@ -1,7 +1,7 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
- * Accept and Accept-Language Header Field Name Parsing Macros
+ * Accept, Accept-Language, Accept-Contact, Accept-Disposition Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -85,8 +85,27 @@
                 goto other;        \
         }
 
+#define accept_contact_ct_CASE                             \
+        if (LOWER_BYTE(*p) == 'c') {                       \
+                p++;                                       \
+                if (LOWER_BYTE(*p) == 't') {               \
+                        hdr->type = HDR_ACCEPTCONTACT_T;   \
+                        p++;                               \
+                        goto dc_end;                       \
+                }                                          \
+        }
 
-#define ptld_CASE                  \
+#define accept_c_onta_CASE         \
+        switch(LOWER_DWORD(val)) { \
+        case _onta_:               \
+                p += 4;            \
+                val = READ(p);     \
+                accept_contact_ct_CASE;  \
+                goto other;        \
+        }
+
+
+#define ptldc_CASE                 \
         switch(LOWER_DWORD(val)) { \
         case _pt_l_:               \
 		p += 4;            \
@@ -99,13 +118,18 @@
                 val = READ(p);     \
                 ispo_CASE;         \
                 goto other;        \
+        case _pt_c_:               \
+                p += 4;            \
+                val = READ(p);     \
+                accept_c_onta_CASE;\
+                goto other;        \
 	}
 
 
 #define acce_CASE                           \
     p += 4;                                 \
     val = READ(p);                          \
-    ptld_CASE;                              \
+    ptldc_CASE;                             \
                                             \
     if (LOWER_BYTE(*p) == 'p') {            \
             p++;                            \

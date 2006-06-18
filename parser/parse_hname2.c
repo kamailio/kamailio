@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Fast 32-bit Header Field Name Parser
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -49,14 +49,14 @@
 static inline char* skip_ws(char* p, unsigned int size)
 {
 	char* end;
-	
+
 	end = p + size;
 	for(; p < end; p++) {
 		if ((*p != ' ') && (*p != '\t')) return p;
 	}
 	return p;
 }
-	
+
 /*
  * Parser macros
  */
@@ -65,7 +65,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_to.h"       /* To */
 #include "case_cseq.h"     /* CSeq */
 #include "case_call.h"     /* Call-ID */
-#include "case_cont.h"     /* Contact, Content-Type, Content-Length, Content-Purpose, 
+#include "case_cont.h"     /* Contact, Content-Type, Content-Length, Content-Purpose,
 			    * Content-Action, Content-Disposition */
 #include "case_rout.h"     /* Route */
 #include "case_max.h"      /* Max-Forwards */
@@ -86,6 +86,8 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_dive.h"     /* Diversion */
 #include "case_remo.h"     /* Remote-Party-ID */
 #include "case_refe.h"     /* Refer-To */
+#include "case_sess.h"     /* Session-Expires */
+#include "case_reje.h"     /* Reject-Contact */
 
 
 #define READ(val) \
@@ -110,7 +112,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _allo_: allo_CASE; \
 	case _unsu_: unsu_CASE; \
         case _even_: even_CASE; \
-        case _sip_: sip_CASE; \
+        case _sip_ : sip_CASE;  \
         case _acce_: acce_CASE; \
         case _orga_: orga_CASE; \
         case _prio_: prio_CASE; \
@@ -118,7 +120,10 @@ static inline char* skip_ws(char* p, unsigned int size)
         case _user_: user_CASE; \
         case _dive_: dive_CASE; \
         case _remo_: remo_CASE; \
-        case _refe_: refe_CASE;
+        case _refe_: refe_CASE; \
+	case _sess_: sess_CASE; \
+	case _reje_: reje_CASE; \
+
 
 
 #define PARSE_COMPACT(id)          \
@@ -132,7 +137,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 	        hdr->type = id;    \
 	        hdr->name.len = 1; \
 	        return (p + 2);    \
-        }                            
+        }
 
 
 char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
@@ -155,19 +160,19 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 
 	default:
 		switch(LOWER_BYTE(*p)) {
-		case 't':                           
-			switch(LOWER_BYTE(*(p + 1))) {          
-			case 'o':                   
-			case ' ':                   
-				hdr->type = HDR_TO_T; 
-				p += 2;             
-				goto dc_end;        
-				
-			case ':':                   
-				hdr->type = HDR_TO_T; 
-				hdr->name.len = 1;  
-				return (p + 2);     
-			}                           
+		case 't':
+			switch(LOWER_BYTE(*(p + 1))) {
+			case 'o':
+			case ' ':
+				hdr->type = HDR_TO_T;
+				p += 2;
+				goto dc_end;
+
+			case ':':
+				hdr->type = HDR_TO_T;
+				hdr->name.len = 1;
+				return (p + 2);
+			}
 			break;
 
 		case 'v': PARSE_COMPACT(HDR_VIA_T);           break;
@@ -178,6 +183,15 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 		case 'k': PARSE_COMPACT(HDR_SUPPORTED_T);     break;
 		case 'c': PARSE_COMPACT(HDR_CONTENTTYPE_T);   break;
 		case 'o': PARSE_COMPACT(HDR_EVENT_T);         break;
+		case 'x': PARSE_COMPACT(HDR_SESSIONEXPIRES_T);break;
+		case 'a': PARSE_COMPACT(HDR_ACCEPTCONTACT_T); break;
+		case 'u': PARSE_COMPACT(HDR_ALLOWEVENTS_T);   break;
+		case 'e': PARSE_COMPACT(HDR_CONTENTENCODING_T); break;
+		case 'b': PARSE_COMPACT(HDR_REFERREDBY_T);    break;
+		case 'j': PARSE_COMPACT(HDR_REJECTCONTACT_T); break;
+		case 'd': PARSE_COMPACT(HDR_REQUESTDISPOSITION_T); break;
+		case 's': PARSE_COMPACT(HDR_SUBJECT_T);       break;
+		case 'r': PARSE_COMPACT(HDR_REFER_TO_T);      break;
 		}
 		goto other;
         }
@@ -185,7 +199,7 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	     /* Double colon hasn't been found yet */
  dc_end:
        	p = skip_ws(p, end - p);
-	if (*p != ':') {   
+	if (*p != ':') {
 	        goto other;
 	} else {
 		hdr->name.len = p - hdr->name.s;
@@ -193,7 +207,7 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	}
 
 	     /* Unknown header type */
- other:    
+ other:
 	p = q_memchr(p, ':', end - p);
 	if (!p) {        /* No double colon found, error.. */
 		hdr->type = HDR_ERROR_T;

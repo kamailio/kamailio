@@ -1,7 +1,7 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
- * Allow Header Field Name Parsing Macros
+ * Allow, Allow-Events Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -22,21 +22,42 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #ifndef CASE_ALLO_H
 #define CASE_ALLO_H
 
+#define allow_ev_ents_CASE         \
+	switch(LOWER_DWORD(val)) { \
+	case _ents_:               \
+		p += 4;            \
+		hdr->type = HDR_ALLOWEVENTS_T; \
+		goto dc_end;       \
+	}
+
+
+
+#define allo_w_ev_CASE             \
+        switch(LOWER_DWORD(val)) { \
+        case _w_ev_:               \
+                p += 4;            \
+                val = READ(p);     \
+                allow_ev_ents_CASE;\
+                goto other;        \
+        }
+
 
 #define allo_CASE                  \
     p += 4;                        \
+    val = READ(p);                 \
+    allo_w_ev_CASE;                \
     if (LOWER_BYTE(*p) == 'w') {   \
             hdr->type = HDR_ALLOW_T; \
             p++;                   \
-	    goto dc_end;           \
+            goto dc_end;           \
     }                              \
     goto other;
 

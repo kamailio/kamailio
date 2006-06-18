@@ -1,7 +1,7 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
- * Require Header Field Name Parsing Macros
+ * Require, Request-Disposition Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -38,6 +38,38 @@
 
 #include "../comp_defs.h"
 
+#define REQUESTDISPOSIT_ion_CASE                    \
+        switch(LOWER_DWORD(val)) {                  \
+        case _ion1_:                                \
+	        hdr->type = HDR_REQUESTDISPOSITION_T; \
+	        hdr->name.len = 19;                 \
+	        return (p + 4);                     \
+                                                    \
+        case _ion2_:                                \
+                hdr->type = HDR_REQUESTDISPOSITION_T; \
+                p += 4;                             \
+	        goto dc_end;                        \
+        }
+
+
+#define REQUESTDISP_OSITION_CASE   \
+        switch(LOWER_DWORD(val)) { \
+        case _osit_:               \
+		p += 4;            \
+		val = READ(p);     \
+		REQUESTDISPOSIT_ion_CASE;  \
+		goto other;        \
+	}
+
+#define REQUEST_DISPOSITION_CASE             \
+        switch(LOWER_DWORD(val)) {           \
+        case _disp_:                         \
+                p += 4;                      \
+		val = READ(p);               \
+		REQUESTDISP_OSITION_CASE;    \
+                goto other;                  \
+        }
+
 
 #define IRE_CASE                         \
         switch(LOWER_DWORD(val)) {       \
@@ -50,6 +82,11 @@
                 hdr->type = HDR_REQUIRE_T; \
                 p += 4;                  \
                 goto dc_end;             \
+        case _est__:                     \
+                p += 4;                  \
+                val = READ(p);           \
+                REQUEST_DISPOSITION_CASE;\
+                goto other;              \
         }
 
 

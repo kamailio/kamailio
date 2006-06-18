@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -49,7 +49,7 @@
 #include "../ut.h"
 
 
-/* 
+/*
  * Frees a hdr_field structure,
  * WARNING: it frees only parsed (and not name.s, body.s)
  */
@@ -135,10 +135,10 @@ void clean_hdr_field(struct hdr_field* hf)
 
 		case HDR_ACCEPTLANGUAGE_T:
 			break;
-			
+
 		case HDR_ORGANIZATION_T:
 			break;
-			
+
 		case HDR_PRIORITY_T:
 			break;
 
@@ -167,6 +167,14 @@ void clean_hdr_field(struct hdr_field* hf)
 			free_to(hf->parsed);
 			break;
 
+		case HDR_SESSIONEXPIRES_T:
+		case HDR_ACCEPTCONTACT_T:
+		case HDR_ALLOWEVENTS_T:
+		case HDR_CONTENTENCODING_T:
+		case HDR_REFERREDBY_T:
+		case HDR_REJECTCONTACT_T:
+		case HDR_REQUESTDISPOSITION_T:
+			break;
 		default:
 			LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",
 			    hf->type);
@@ -176,13 +184,13 @@ void clean_hdr_field(struct hdr_field* hf)
 }
 
 
-/* 
+/*
  * Frees a hdr_field list,
  * WARNING: frees only ->parsed and ->next*/
 void free_hdr_field_lst(struct hdr_field* hf)
 {
 	struct hdr_field* foo;
-	
+
 	while(hf) {
 		foo=hf;
 		hf=hf->next;
