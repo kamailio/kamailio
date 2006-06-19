@@ -199,13 +199,13 @@ usage:
 
            * server health *
  $CMD monitor ............................ show internal status
- $CMD ps ................................. show runnig processes 
+ $CMD ps ................................. show running processes 
  $CMD fifo ............................... send raw commands to FIFO
 
            * server control *
- $CMD start .............................. start ser
- $CMD stop ............................... stop ser
- $CMD restart ............................ restart ser
+ $CMD start .............................. start openser
+ $CMD stop ............................... stop openser
+ $CMD restart ............................ restart openser
 
 
         Commands labeled with (*) needs  a POSTGRES password.

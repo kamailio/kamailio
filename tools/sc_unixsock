@@ -172,9 +172,9 @@ parameter usage:
  domain rm <domainname> ............. remove a served domain
 
            * control and diagnostics *
- moni ... show internal status        start .... start ser
- ps ..... show runnig processes       stop ..... stop ser
- unixsock ... send raw unixsock commands  restart .. restart ser
+ moni ... show internal status        start .... start openser
+ ps ..... show running processes      stop ..... stop openser
+ unixsock ... send raw unixsock commands  restart .. restart openser
  ping <uri> .. ping a URI (OPTIONS)
  cisco_restart <uri> .. restart a Cisco phone (NOTIFY)
 
