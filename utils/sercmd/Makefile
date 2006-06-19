@@ -27,7 +27,7 @@ endif
 
 ifeq ($(use_readline),1)
 	DEFS+=-DUSE_READLINE
-	LIBS+=-lreadline
+	LIBS+=-lreadline -lncurses
 endif
 
 
