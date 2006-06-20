@@ -174,6 +174,8 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 			cp = (char*)cp + sizeof(dbflags);
 			len -= needed;
 		} /* row cycle */
+
+		ul_dbf.free_result(ul_dbh, res);
 	} /* domain cycle */
 
 	/* len < 0 is possible, if size of the buffer < sizeof(c->c.len) */
