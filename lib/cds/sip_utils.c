@@ -3,6 +3,7 @@
 #include <cds/sip_utils.h>
 #include <cds/sstr.h>
 #include <parser/parse_expires.h>
+#include <parser/parse_subscription_state.h>
 
 int get_expiration_value(struct sip_msg *m, int *value)
 {
@@ -28,26 +29,29 @@ int get_expiration_value(struct sip_msg *m, int *value)
 
 int is_terminating_notify(struct sip_msg *m)
 {
-	int res = 0;
-	struct hdr_field *h;
-	static str ss = STR_STATIC_INIT("Subscription-State");
-	static str terminated = STR_STATIC_INIT("terminated");
+	subscription_state_t *ss;
 
-	if (parse_headers(m, HDR_EOH_F, 0) == -1) {
-		ERR("can't parse NOTIFY message\n");
-		return 0;
+	if (parse_headers(m, HDR_SUBSCRIPTION_STATE_F, 0) == -1) {
+		ERR("Error while parsing headers\n");
+		return 0; /* ignore */
 	}
-	h = m->headers;
-	while (h) {
-		/* try to find Subscription-Status with "terminated" */
-		if (str_nocase_equals(&h->name, &ss) == 0) {
-			if (str_str(&h->body, &terminated)) return 1;
-			else return 0;
-		}
-		h = h->next;
+	if (!m->subscription_state) {
+		ERR("Invalid NOTIFY request (without Subscription-State)\n");
+		return 0; /* ignore */
 	}
+	if (parse_subscription_state(m->subscription_state) < 0) {
+		ERR("can't parse Subscription-State\n");
+		return 0; /* ignore */
+	}
+	ss = (subscription_state_t*)m->subscription_state->parsed;
+	if (!ss) {
+		ERR("invalid Subscription-State\n");
+		return 0; /* ignore */
+	}
+	
+	if (ss->value == ss_terminated) return 1;
 
-	return res;
+	return 0;
 }
 
 #endif
