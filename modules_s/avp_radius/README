@@ -92,11 +92,19 @@ modparam("avp_radius", "callee_service_type", 19)
   
    The functions loads user's attributes from radius and stores them
    into AVPs.  Parameter "user" is used to indicate, whose attributes
-   are loaded.  Possible values are "caller", "callee", and "digest".
+   are loaded.  Possible values are "caller", "caller_from_ruri", 
+   "callee", and "digest".
 
    In "caller" case, attributes belong to the user of the From URI, in
    "callee" case, to the user of the Request URI, and, in "digest" case,
    to the authenticated user.  
+
+   The "caller_from_uri" case loads attribute value pairs defined for
+   caller (default SER-Caller-AVPs), but uses the user in the Request
+   URI. This is useful for the case where a call has been forwarded
+   by callee (Request URI) and you need to look up whether callee
+   is allowed to forward the call to ex. PSTN or if the call should be
+   anonymous (i.e. not show info about who diverted the call).
 
    AVP name returned from Radius is prefixed by string "caller_", if
    avp_load_radius parameter is "caller" or "digest", and by "callee_",

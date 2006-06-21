@@ -54,6 +54,7 @@ MODULE_VERSION
 
 typedef enum load_avp_param {
 	LOAD_CALLER,       /* Use the caller's username and domain as the key */
+	LOAD_CALLER_FROM_RURI, /* Load caller's avpairs, but use ruri (callee) as key */
 	LOAD_CALLEE,       /* Use the callee's username and domain as the key */
 	LOAD_DIGEST
 } load_avp_param_t;
@@ -215,6 +216,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		break;
 
 	case LOAD_CALLEE:
+	case LOAD_CALLER_FROM_RURI:
 		     /* Use the Request-URI */
 		if (parse_sip_msg_uri(msg) < 0) {
 			LOG(L_ERR, "load_avp_user: Error while parsing Request-URI\n");
@@ -228,7 +230,11 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 
 		user = &msg->parsed_uri.user;
 		domain = &msg->parsed_uri.host;
-		service = vals[V_SER_CALLEE_AVPS].v;
+		if(type == LOAD_CALLER_FROM_RURI) {
+		  service = vals[V_SER_CALLER_AVPS].v;
+		} else {
+		  service = vals[V_SER_CALLEE_AVPS].v;
+		}
 		break;
 
 	case LOAD_DIGEST:
@@ -325,6 +331,10 @@ static int load_avp_radius(struct sip_msg* msg, char* attr, char* _dummy)
 		return load_avp_user(msg, &caller_prefix, LOAD_CALLER);
 		break;
 
+	case LOAD_CALLER_FROM_RURI:
+		return load_avp_user(msg, &caller_prefix, LOAD_CALLER_FROM_RURI);
+		break;
+
 	case LOAD_CALLEE:
 		return load_avp_user(msg, &callee_prefix, LOAD_CALLEE);
 		break;
@@ -346,6 +356,8 @@ static int load_avp_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		if (!strcasecmp(*param, "caller")) {
 			id = LOAD_CALLER;
+		} else if (!strcasecmp(*param, "caller_from_ruri")) {
+		  id = LOAD_CALLER_FROM_RURI;
 		} else if (!strcasecmp(*param, "callee")) {
 			id = LOAD_CALLEE;
 		} else if (!strcasecmp(*param, "digest")) {
