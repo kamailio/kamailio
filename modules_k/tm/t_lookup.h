@@ -69,6 +69,7 @@ struct cell *get_t();
  * primarily set by lookup functions */
 void set_t(struct cell *t);
 
+struct cell *get_tack();
 
 #define T_GET_TI       "t_get_trans_ident"
 #define T_LOOKUP_IDENT "t_lookup_ident"

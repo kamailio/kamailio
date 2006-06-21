@@ -50,6 +50,7 @@
 #include "../../mem/mem.h"
 #include "t_funcs.h"
 #include "t_fwd.h"
+#include "t_msgbuilder.h"
 #include "t_lookup.h"
 #include "config.h"
 
@@ -215,7 +216,24 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 
 	/* ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
-		DBG("DEBUG:tm:t_relay: forwarding ACK  statelessly \n");
+		DBG("DEBUG:tm:t_relay: forwarding end2end ACK\n");
+		t = get_tack();
+		/* to ensure unigueness acros time and space, compute the ACK branch
+		 * in the same maner as for INVITE, but put a t->branch value that 
+		 * cannot exist for that INVITE - as it is compute as an INVITE, it 
+		 * will not overlapp with other INVITEs or requests. But the faked
+		 * value for t->branch guarantee no overalap with corresponding
+		 * INVITE  --bogdan */
+		if (!t_calc_branch( t, t->nr_of_outgoings+1, p_msg->add_to_branch_s,
+		&p_msg->add_to_branch_len )) {
+			UNREF(t);
+			LOG(L_ERR, "ERROR:tm:t_relay: ACK branch computation failed\n");
+			ret = E_BAD_SERVER;
+			goto done;
+		}
+		UNREF(t);
+
+		/* send it out */
 		if (proxy==0) {
 			uri = GET_RURI(p_msg);
 			proxy=uri2proxy(GET_NEXT_HOP(p_msg), PROTO_NONE);

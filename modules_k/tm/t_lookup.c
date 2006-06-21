@@ -150,6 +150,7 @@ static struct cell *T;
 */
 unsigned int     global_msg_id;
 
+struct cell *get_tack() { return t_ack; }
 struct cell *get_t() { return T; }
 void set_t(struct cell *t) { T=t; }
 void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
@@ -1067,12 +1068,12 @@ int t_newtran( struct sip_msg* p_msg )
 	/* from now on, be careful -- hash table is locked */
 
 	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
+		REF_UNSAFE(t_ack);
 		/* no callbacks? complete quickly */
 		if ( !has_tran_tmcbs(t_ack,TMCB_E2EACK_IN) ) {
 			UNLOCK_HASH(p_msg->hash_index);
 			return 1;
 		} 
-		REF_UNSAFE(t_ack);
 		UNLOCK_HASH(p_msg->hash_index);
 		/* we don't call from within REPLY_LOCK -- that introduces
 		 * a race condition; however, it is so unlikely and the
@@ -1083,10 +1084,8 @@ int t_newtran( struct sip_msg* p_msg )
 			run_trans_callbacks( TMCB_E2EACK_IN , t_ack, p_msg, 0,
 				-p_msg->REQ_METHOD );
 		}
-		UNREF(t_ack);
 		return 1;
-	} 
-
+	}
 
 	/* transaction not found, it's a new request (lret<0, lret!=-2);
 	   establish a new transaction ... */
@@ -1104,13 +1103,13 @@ int t_newtran( struct sip_msg* p_msg )
 
 	UNLOCK_HASH(p_msg->hash_index);
 	/* now, when the transaction state exists, check if
- 	   there is a meaningful Via and calculate it; better
- 	   do it now than later: state is established so that
- 	   subsequent retransmissions will be absorbed and will
-  	  not possibly block during Via DNS resolution; doing
+	   there is a meaningful Via and calculate it; better
+	   do it now than later: state is established so that
+	   subsequent retransmissions will be absorbed and will
+	  not possibly block during Via DNS resolution; doing
 	   it later would only burn more CPU as if there is an
 	   error, we cannot relay later whatever comes out of the
-  	   the transaction 
+	   the transaction 
 	*/
 	if (!init_rb( &T->uas.response, p_msg)) {
 		LOG(L_ERR, "ERROR: t_newtran: unresolvable via1\n");
@@ -1120,8 +1119,6 @@ int t_newtran( struct sip_msg* p_msg )
 	}
 
 	return 1;
-
-
 new_err:
 	UNLOCK_HASH(p_msg->hash_index);
 	return my_err;
