@@ -168,6 +168,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_SESSIONEXPIRES_T:
+		case HDR_MIN_SE_T:
 		case HDR_ACCEPTCONTACT_T:
 		case HDR_ALLOWEVENTS_T:
 		case HDR_CONTENTENCODING_T:

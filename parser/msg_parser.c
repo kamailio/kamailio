@@ -209,6 +209,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_SIPIFMATCH_T:
 		case HDR_REFER_TO_T:
 		case HDR_SESSIONEXPIRES_T:
+		case HDR_MIN_SE_T:
 		case HDR_ACCEPTCONTACT_T:
 		case HDR_ALLOWEVENTS_T:
 		case HDR_CONTENTENCODING_T:
@@ -307,7 +308,6 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 				msg->parsed_flag|=HDR_EOH_F;
 				pkg_free(hf);
 				goto skip;
-			case HDR_SESSIONEXPIRES_T:
 			case HDR_ACCEPTCONTACT_T:
 			case HDR_ALLOWEVENTS_T:
 			case HDR_CONTENTENCODING_T:
@@ -435,6 +435,14 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_REFER_TO_T:
 				if (msg->refer_to==0) msg->refer_to = hf;
 				msg->parsed_flag|=HDR_REFER_TO_F;
+				break;
+			case HDR_SESSIONEXPIRES_T:
+				if (msg->session_expires==0) msg->session_expires = hf;
+				msg->parsed_flag|=HDR_SESSIONEXPIRES_F;
+				break;
+			case HDR_MIN_SE_T:
+				if (msg->min_se==0) msg->min_se = hf;
+				msg->parsed_flag|=HDR_MIN_SE_F;
 				break;
 			case HDR_VIA_T:
 				msg->parsed_flag|=HDR_VIA_F;

@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History
@@ -67,7 +67,7 @@
 #define REPLY_CLASS(_reply) ((_reply)->REPLY_STATUS/100)
 
 /* number methods as power of two to allow bitmap matching */
-enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4, 
+enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4,
 	METHOD_BYE=8, METHOD_INFO=16, METHOD_REGISTER=32, METHOD_SUBSCRIBE=64,
         METHOD_NOTIFY=128, METHOD_OTHER=256 };
 
@@ -123,7 +123,7 @@ struct sip_uri {
 	str host;     /* Host name */
 	str port;     /* Port number */
 	str params;   /* Parameters */
-	str headers;  
+	str headers;
 	unsigned short port_no;
 };
 #endif
@@ -137,7 +137,7 @@ struct sip_uri {
 	str host;     /* Host name */
 	str port;     /* Port number */
 	str params;   /* Parameters */
-	str headers;  
+	str headers;
 	unsigned short port_no;
 	unsigned short proto; /* from transport */
 	uri_type type; /* uri scheme */
@@ -207,12 +207,14 @@ struct sip_msg {
 	struct hdr_field* accept_disposition;
 	struct hdr_field* diversion;
 	struct hdr_field* rpid;
-        struct hdr_field* refer_to;
+	struct hdr_field* refer_to;
+	struct hdr_field* session_expires;
+	struct hdr_field* min_se;
 	struct hdr_field* sipifmatch;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/
-	
+
 	struct receive_info rcv; /* source & dest ip, ports, proto a.s.o*/
 
 	char* buf;        /* scratch pad, holds a modified message,
@@ -220,7 +222,7 @@ struct sip_msg {
 	unsigned int len; /* message len (orig) */
 
 	     /* modifications */
-	
+
 	str new_uri; /* changed first line uri, when you change this
 	                don't forget to set parsed_uri_ok to 0*/
 
@@ -233,25 +235,25 @@ struct sip_msg {
 	/* the same for original uri */
 	int parsed_orig_ruri_ok;
 	struct sip_uri parsed_orig_ruri;
-	
+
 	struct lump* add_rm;       /* used for all the forwarded requests/replies */
 	struct lump* body_lumps;     /* Lumps that update Content-Length */
 	struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/
 
-	/* str add_to_branch; 
-	   whatever whoever want to append to branch comes here 
+	/* str add_to_branch;
+	   whatever whoever want to append to branch comes here
 	*/
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
 	int add_to_branch_len;
-	
+
 	     /* index to TM hash table; stored in core to avoid unnecessary calculations */
 	unsigned int  hash_index;
 	unsigned int msg_flags; /* flags used by core */
-	     /* allows to set various flags on the message; may be used for 
+	     /* allows to set various flags on the message; may be used for
 	      *	simple inter-module communication or remembering processing state
-	      * reached 
+	      * reached
 	      */
-	flag_t flags;	
+	flag_t flags;
 	str set_global_address;
 	str set_global_port;
 	struct socket_info* force_send_socket; /* force sending on this socket,
@@ -300,7 +302,7 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	src[2]= msg->callid->body;
 	src[3]= msg->first_line.u.request.uri;
 	src[4]= get_cseq( msg )->number;
-	
+
 	/* topmost Via is part of transaction key as well ! */
 	src[5]= msg->via1->host;
 	src[6]= msg->via1->port_str;

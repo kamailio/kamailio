@@ -155,7 +155,7 @@ inline struct via_body* via_body_cloner( char* new_buf,
 					case PARAM_ALIAS:
 							new_via->alias = new_vp;
 							break;
-							
+
 #ifdef USE_COMP
 					case PARAM_COMP:
 							new_via->comp = new_vp;
@@ -318,7 +318,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_VIA2_T:
 		case HDR_EOH_T:
 			break;
-			
+
 		case HDR_VIA_T:
 			for (via=(struct via_body*)hdr->parsed;via;via=via->next) {
 				len+=ROUND4(sizeof(struct via_body));
@@ -327,7 +327,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 					len+=ROUND4(sizeof(struct via_param ));
 			}
 			break;
-			
+
 		case HDR_TO_T:
 		case HDR_FROM_T:
 			     /* From header might be unparsed */
@@ -343,7 +343,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_CSEQ_T:
 			len+=ROUND4(sizeof(struct cseq_body));
 			break;
-			
+
 
 		case HDR_AUTHORIZATION_T:
 		case HDR_PROXYAUTH_T:
@@ -377,7 +377,15 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_RPID_T:
 		case HDR_REFER_TO_T:
 		case HDR_SIPIFMATCH_T:
-			     /* we ignore them for now even if they have something parsed*/
+		case HDR_SESSIONEXPIRES_T:
+		case HDR_MIN_SE_T:
+		case HDR_ACCEPTCONTACT_T:
+		case HDR_ALLOWEVENTS_T:
+		case HDR_CONTENTENCODING_T:
+		case HDR_REFERREDBY_T:
+		case HDR_REJECTCONTACT_T:
+		case HDR_REQUESTDISPOSITION_T:
+/* we ignore them for now even if they have something parsed*/
 			break;
 		}/*switch*/
 	}/*for all headers*/
@@ -509,6 +517,12 @@ do { \
 		case HDR_OTHER_T:
 		case HDR_VIA2_T:
 		case HDR_EOH_T:
+		case HDR_ACCEPTCONTACT_T:
+		case HDR_ALLOWEVENTS_T:
+		case HDR_CONTENTENCODING_T:
+		case HDR_REFERREDBY_T:
+		case HDR_REJECTCONTACT_T:
+		case HDR_REQUESTDISPOSITION_T:
 			break;
 
 		case HDR_VIA_T:
@@ -561,7 +575,7 @@ do { \
 			((struct to_body*)new_hdr->parsed)->body.s =
 				translate_pointer( new_msg->buf , org_msg->buf ,
 						   ((struct to_body*)hdr->parsed)->body.s );
-			((struct to_body*)new_hdr->parsed)->display.s = 
+			((struct to_body*)new_hdr->parsed)->display.s =
 				translate_pointer( new_msg->buf, org_msg->buf,
 						   ((struct to_body*)hdr->parsed)->display.s);
 			((struct to_body*)new_hdr->parsed)->uri.s =
@@ -733,6 +747,16 @@ do { \
 		case HDR_REFER_TO_T:
 			if (!HOOK_SET(refer_to)) {
 				new_msg->refer_to = new_hdr;
+			}
+			break;
+		case HDR_SESSIONEXPIRES_T:
+			if (!HOOK_SET(session_expires)) {
+				new_msg->session_expires = new_hdr;
+			}
+			break;
+		case HDR_MIN_SE_T:
+			if (!HOOK_SET(min_se)) {
+				new_msg->min_se = new_hdr;
 			}
 			break;
 		case HDR_SIPIFMATCH_T:

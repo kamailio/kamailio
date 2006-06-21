@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -88,6 +88,7 @@ enum _hdr_types_t {
 	HDR_REFER_TO_T				       /* Refer-To header fiels */,
 	HDR_SIPIFMATCH_T                   /* SIP-If-Match header field */,
 	HDR_SESSIONEXPIRES_T                           /* Session-Expires header */,
+	HDR_MIN_SE_T                                   /* Min-SE */,
 	HDR_ACCEPTCONTACT_T                            /* Accept-Contact header */,
 	HDR_ALLOWEVENTS_T                              /* Allow-Events header */,
 	HDR_CONTENTENCODING_T                          /* Content-Encoding header */,
@@ -146,6 +147,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_REFER_TO_F				HDR_F_DEF(REFER_TO)
 #define HDR_SIPIFMATCH_F			HDR_F_DEF(SIPIFMATCH)
 #define HDR_SESSIONEXPIRES_F			HDR_F_DEF(SESSIONEXPIRES)
+#define HDR_MIN_SE_F				HDR_F_DEF(MIN_SE)
 #define HDR_ACCEPTCONTACT_F			HDR_F_DEF(HDR_ACCEPTCONTACT_T)
 #define HDR_ALLOWEVENTS_F			HDR_F_DEF(HDR_ALLOWEVENTS_T)
 #define HDR_CONTENTENCODING_F			HDR_F_DEF(HDR_CONTENTENCODING_T)
@@ -157,10 +159,10 @@ typedef unsigned long long hdr_flags_t;
 
 typedef enum _hdr_types_t hdr_types_t;
 
-/* 
- * Format: name':' body 
+/*
+ * Format: name':' body
  */
-struct hdr_field {   
+struct hdr_field {
 	hdr_types_t type;       /* Header field type */
 	str name;               /* Header field name */
 	str body;               /* Header field body (may not include CRLF) */

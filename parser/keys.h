@@ -41,7 +41,7 @@
  * 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 78 79 7a 3a 20  2d
  *
  * Test manually/visually if dword is intended string using:
- * awk '/^#define/ {printf("%s \"%x%x%x%x\" ... %s \n",  $3,strtonum("0x" substr($3,9,2)),strtonum("0x" substr($3,7,2)),strtonum("0x" substr($3,5,2)),strtonum("0x" substr($3,3,2)),$5)}' keys.h
+ * awk '/^#define/ {printf("%s \"%c%c%c%c\" ... %s \n",  $3,strtonum("0x" substr($3,9,2)),strtonum("0x" substr($3,7,2)),strtonum("0x" substr($3,5,2)),strtonum("0x" substr($3,3,2)),$5)}' keys.h
  *
  */
 
@@ -157,5 +157,7 @@
 #define _ct_c_ 0x632d7463   /* "ct-c" */
 
 #define _est__ 0x2d747365   /* "est-" */
+
+#define _min__ 0x2d6e696d   /* "min-" */
 
 #endif /* KEYS_H */
