@@ -18,6 +18,7 @@ int get_expiration_value(struct sip_msg *m, int *value)
 			return -1;
 		}
 
+		res = 0;
 		expires = (exp_body_t *)m->expires->parsed;
 		if (expires) if (expires->valid && value) *value = expires->val;
 	}
