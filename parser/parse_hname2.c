@@ -89,6 +89,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_sess.h"     /* Session-Expires */
 #include "case_reje.h"     /* Reject-Contact */
 #include "case_min.h"      /* Min-SE */
+#include "case_subs.h"     /* Subscription-State */
 
 
 #define READ(val) \
@@ -118,6 +119,7 @@ static inline char* skip_ws(char* p, unsigned int size)
         case _orga_: orga_CASE; \
         case _prio_: prio_CASE; \
         case _subj_: subj_CASE; \
+        case _subs_: subs_CASE; \
         case _user_: user_CASE; \
         case _dive_: dive_CASE; \
         case _remo_: remo_CASE; \

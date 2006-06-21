@@ -210,6 +210,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_REFER_TO_T:
 		case HDR_SESSIONEXPIRES_T:
 		case HDR_MIN_SE_T:
+		case HDR_SUBSCRIPTION_STATE_T:
 		case HDR_ACCEPTCONTACT_T:
 		case HDR_ALLOWEVENTS_T:
 		case HDR_CONTENTENCODING_T:
@@ -443,6 +444,10 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_MIN_SE_T:
 				if (msg->min_se==0) msg->min_se = hf;
 				msg->parsed_flag|=HDR_MIN_SE_F;
+				break;
+			case HDR_SUBSCRIPTION_STATE_T:
+				if (msg->subscription_state==0) msg->subscription_state = hf;
+				msg->parsed_flag|=HDR_SUBSCRIPTION_STATE_F;
 				break;
 			case HDR_VIA_T:
 				msg->parsed_flag|=HDR_VIA_F;

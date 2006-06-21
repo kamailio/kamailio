@@ -379,6 +379,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_SIPIFMATCH_T:
 		case HDR_SESSIONEXPIRES_T:
 		case HDR_MIN_SE_T:
+		case HDR_SUBSCRIPTION_STATE_T:
 		case HDR_ACCEPTCONTACT_T:
 		case HDR_ALLOWEVENTS_T:
 		case HDR_CONTENTENCODING_T:
@@ -757,6 +758,11 @@ do { \
 		case HDR_MIN_SE_T:
 			if (!HOOK_SET(min_se)) {
 				new_msg->min_se = new_hdr;
+			}
+			break;
+		case HDR_SUBSCRIPTION_STATE_T:
+			if (!HOOK_SET(subscription_state)) {
+				new_msg->subscription_state = new_hdr;
 			}
 			break;
 		case HDR_SIPIFMATCH_T:
