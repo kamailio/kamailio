@@ -112,7 +112,7 @@ static int fixup_maxfwd_header(void** param, int param_no)
 		if (err==0){
 			if (code<1 || code>MAXFWD_UPPER_LIMIT){
 				LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: "
-					"invalid MAXFWD number <%ld> [1,%d\\n",
+					"invalid MAXFWD number <%ld> [1,%d]\n",
 					code,MAXFWD_UPPER_LIMIT);
 				return E_UNSPEC;
 			}
