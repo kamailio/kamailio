@@ -34,6 +34,7 @@
  
 #include "select.h"
 #include "select_core.h"
+#include "select_buf.h"
 #include "dprint.h"
 #include "trim.h"
 #include "parser/hf.h"
@@ -602,6 +603,45 @@ int select_uri_port(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 
 	RETURN0_res(uri.port);
+}
+
+int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
+{
+	char* p;
+	int size;
+	
+	if (parse_uri(res->s,res->len, &uri)<0)
+		return -1;
+
+	if (!uri.host.len)
+		return -1;
+	
+	if (uri.port.len) {
+		res->s=uri.host.s;
+		res->len=uri.host.len+uri.port.len+1;
+		return 0;
+	}
+	
+	size=uri.host.len+5;
+	if (!(p = get_static_buffer(size)))
+		return -1;
+			
+	strncpy(p, uri.host.s, uri.host.len);
+	switch (uri.type) {
+		case SIPS_URI_T:
+		case TELS_URI_T:
+			strncpy(p+uri.host.len, ":5061", 5); 
+			break;
+		case SIP_URI_T:
+		case TEL_URI_T:
+			strncpy(p+uri.host.len, ":5060", 5);
+			break;
+		case ERROR_URI_T:
+			return -1;
+	}
+	res->s = p;
+	res->len = size;
+	return 0;
 }
 
 int select_uri_params(str* res, select_t* s, struct sip_msg* msg)

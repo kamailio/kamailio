@@ -79,6 +79,7 @@ SELECT_F(select_uri_user)
 SELECT_F(select_uri_pwd)
 SELECT_F(select_uri_host)
 SELECT_F(select_uri_port)
+SELECT_F(select_uri_hostport)
 SELECT_F(select_uri_params)
 
 SELECT_F(select_event)
@@ -142,6 +143,7 @@ static select_row_t select_core[] = {
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("host"), select_uri_host, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_uri_port, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_uri_params, 0},
+	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("hostport"), select_uri_hostport, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("event"), select_event, 0},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("record_route"), select_rr, 0},

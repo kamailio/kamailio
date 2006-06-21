@@ -57,7 +57,7 @@
 #include "script_cb.h"
 #include "dset.h"
 #include "usr_avp.h"
-
+#include "select_buf.h"
 
 #include "tcp_server.h" /* for tcpconn_add_alias */
 
@@ -119,6 +119,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 	/* ... clear branches from previous message */
 	clear_branches();
+	reset_static_buffer();
 
 	if (msg->first_line.type==SIP_REQUEST){
 		/* sanity checks */

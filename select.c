@@ -250,6 +250,7 @@ int resolve_select(select_t* s)
 		if (t->table[table_idx].flags & NESTED) {
 			if (nested < MAX_NESTED_CALLS-1) { /* need space for final function */
 				s->f[nested++] = f;
+				s->param_offset[nested] = param_idx+1;
 			} else {
 				BUG("MAX_NESTED_CALLS too small to resolve select\n");
 				goto not_found;
@@ -271,8 +272,9 @@ int resolve_select(select_t* s)
 	if ((nested>0) && (s->f[nested-1] == f)) {
 		BUG("Topmost nested function equals to final function, won't call it twice\n");
 	} else {
-		s->f[nested] = f;
+		s->f[nested++] = f;
 	}
+	s->param_offset[nested] = s->n;
 
 	return 0;
 
@@ -282,7 +284,7 @@ not_found:
 
 int run_select(str* res, select_t* s, struct sip_msg* msg)
 {
-	int ret, i;
+	int ret;
 
 	if (res == NULL) {
 		BUG("Select unprepared result space\n");
@@ -299,8 +301,8 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 	DBG("Calling SELECT %p \n", s->f);
 
 	ret = 0;
-	for (i=0; (ret == 0) && (s->f[i] !=0 ) && (i<MAX_NESTED_CALLS); i++)	{
-		ret = s->f[i](res, s, msg);
+	for (s->lvl=0; (ret == 0) && (s->f[s->lvl] !=0 ) && (s->lvl<MAX_NESTED_CALLS); (s->lvl)++)	{
+		ret = s->f[s->lvl](res, s, msg);
 	}
 	return ret;
 }

@@ -119,8 +119,10 @@ typedef int (*select_f)(str* res, struct select* s, struct sip_msg* msg);
 
 typedef struct select {
 	select_f f[MAX_NESTED_CALLS];
+	int param_offset[MAX_NESTED_CALLS+1];
 	select_param_t params[MAX_SELECT_PARAMS];
 	int n;
+	int lvl;
 } select_t;
 
 typedef struct {
