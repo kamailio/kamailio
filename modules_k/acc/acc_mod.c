@@ -561,11 +561,12 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			/* report on completed transactions */
 			TMCB_RESPONSE_OUT |
 			/* account e2e acks if configured to do so */
-			TMCB_E2EACK_IN |
-			/* report on missed calls */
-			TMCB_ON_FAILURE |
+			(report_ack?TMCB_E2EACK_IN:0) |
 			/* get incoming replies ready for processing */
-			TMCB_RESPONSE_IN;
+			TMCB_RESPONSE_IN |
+			/* report on missed calls */
+			((ps->req->REQ_METHOD!=METHOD_CANCEL && is_mc_on(ps->req))?
+				TMCB_ON_FAILURE:0) ;
 		if (tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
 			LOG(L_ERR,"ERROR:acc:acc_onreq: cannot register additional "
 				"callbacks\n");
