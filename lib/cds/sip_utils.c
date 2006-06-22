@@ -4,6 +4,9 @@
 #include <cds/sstr.h>
 #include <parser/parse_expires.h>
 #include <parser/parse_subscription_state.h>
+#include <parser/parser_f.h>
+#include <trim.h>
+
 
 int get_expiration_value(struct sip_msg *m, int *value)
 {
@@ -53,5 +56,59 @@ int is_terminating_notify(struct sip_msg *m)
 
 	return 0;
 }
+
+static inline int contains_extension_support(struct hdr_field *h, 
+		str *extension)
+{
+	/* "parses" Supported header and looks for extension */
+	str s, val;
+	char *c;
+	
+	if (!h) return 0;
+
+	s = h->body;
+	while (s.len > 0) {
+		c = find_not_quoted(&s, ',');
+		if (c) {
+			val.s = s.s;
+			val.len = c - val.s;
+			trim(&val);
+			if (str_case_equals(&val, extension) == 0) return 1;
+			s.len = s.len - (c - s.s) - 1;
+			s.s = c + 1;
+		}
+		else {
+			trim(&s);
+			if (str_case_equals(&s, extension) == 0) return 1;
+			break;
+		}
+	}
+	return 0;
+}
+
+int supports_extension(struct sip_msg *m, str *extension)
+{
+	/* walk through all Supported headers */
+	struct hdr_field *h;
+	int res;
+
+	/* we need all Supported headers, Min-SE, 
+	 * Session-Expires */
+	res = parse_headers(m, HDR_EOH_F, 0);
+	if (res == -1) {
+		ERR("Error while parsing headers (%d)\n", res);
+		return 0; /* what to return here ? */
+	}
+	
+	h = m->supported;
+	while (h) {
+		if (h->type == HDR_SUPPORTED_T) {
+			if (contains_extension_support(h, extension)) return 1;
+		}
+		h = h->next;
+	}
+	return 0;
+}
+
 
 #endif

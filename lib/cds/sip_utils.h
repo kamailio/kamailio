@@ -12,6 +12,10 @@ int get_expiration_value(struct sip_msg *m, int *value);
 /* returns 1 if the message has Subscription-Status: terminated (hack!) */
 int is_terminating_notify(struct sip_msg *m);
 
+/* returns 1 if given extension is in Supported headers, 
+ * 0 if not or an error occured while parsing */
+int supports_extension(struct sip_msg *m, str *extension);
+
 #endif
 
 #endif

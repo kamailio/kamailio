@@ -1,3 +1,6 @@
+2006-06-22
+	* added function supports_extension
+
 2006-06-21
 	* corrected bug in get_expiration_value (result was always -1/1)
 	* is_terminating_notify changed to use Subscription-State parser
