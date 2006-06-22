@@ -16,9 +16,6 @@ typedef struct _subscription_state_t {
 	int expires_set; /* expires is valid if nonzero here */
 } subscription_state_t;
 
-/* FIXME: temporary only */
-int ss_parse(str *src, subscription_state_t *ss);
-
 int parse_subscription_state(struct hdr_field *h);
 
 void free_subscription_state(subscription_state_t **ss);

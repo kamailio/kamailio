@@ -26,7 +26,7 @@ static inline int str_cmp(const str *a, const str *b)
 	return 0;
 }
 
-int ss_parse(str *src, subscription_state_t *ss)
+static int ss_parse(str *src, subscription_state_t *ss)
 {
 	static str active = STR_STATIC_INIT("active");
 	static str pending = STR_STATIC_INIT("pending");
