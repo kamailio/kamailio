@@ -160,6 +160,7 @@
          <value col="at.rich_t">string</value>
 	 <value col="at.desc">digest realm</value>
 	 <value col="at.d_flags">33</value>
+	 <value col="at.flags">4096</value>
 	 <value col="at.prior">65536</value>
          <value col="at.order">0</value>
     </row>
