@@ -90,9 +90,12 @@ int build_path_vector(struct sip_msg *_m, str *path, str **received)
 				goto error;
 			}
 			for (;params; params = params->next) {
-				if (params->type == P_RECEIVED)
+				if (params->type == P_RECEIVED) {
 					*received = &hooks.contact.received->body;
+					break;
+				}
 			}
+			free_params(params);
 		}
 		free_rr(&route);
 	}
