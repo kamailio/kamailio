@@ -361,6 +361,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_CONTENTLENGTH_T:
 		case HDR_EXPIRES_T:
 		case HDR_SUPPORTED_T:
+		case HDR_REQUIRE_T:
 		case HDR_PROXYREQUIRE_T:
 		case HDR_UNSUPPORTED_T:
 		case HDR_ALLOW_T:
@@ -673,6 +674,11 @@ do { \
 		case HDR_SUPPORTED_T:
 			if (!HOOK_SET(supported)) {
 				new_msg->supported = new_hdr;
+			}
+			break;
+		case HDR_REQUIRE_T:
+			if (!HOOK_SET(require)) {
+				new_msg->require = new_hdr;
 			}
 			break;
 		case HDR_PROXYREQUIRE_T:
