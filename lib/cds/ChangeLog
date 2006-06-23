@@ -1,3 +1,6 @@
+2006-06-23
+	* added function requires_extension
+
 2006-06-22
 	* added function supports_extension
 

@@ -117,6 +117,9 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_SUPPORTED_T:
 			break;
 
+		case HDR_REQUIRE_T:
+			break;
+			
 		case HDR_PROXYREQUIRE_T:
 			break;
 

@@ -92,8 +92,7 @@ int supports_extension(struct sip_msg *m, str *extension)
 	struct hdr_field *h;
 	int res;
 
-	/* we need all Supported headers, Min-SE, 
-	 * Session-Expires */
+	/* we need all Supported headers */
 	res = parse_headers(m, HDR_EOH_F, 0);
 	if (res == -1) {
 		ERR("Error while parsing headers (%d)\n", res);
@@ -110,5 +109,27 @@ int supports_extension(struct sip_msg *m, str *extension)
 	return 0;
 }
 
+int requires_extension(struct sip_msg *m, str *extension)
+{
+	/* walk through all Require headers */
+	struct hdr_field *h;
+	int res;
+
+	/* we need all Require headers */
+	res = parse_headers(m, HDR_EOH_F, 0);
+	if (res == -1) {
+		ERR("Error while parsing headers (%d)\n", res);
+		return 0; /* what to return here ? */
+	}
+	
+	h = m->require;
+	while (h) {
+		if (h->type == HDR_REQUIRE_T) {
+			if (contains_extension_support(h, extension)) return 1;
+		}
+		h = h->next;
+	}
+	return 0;
+}
 
 #endif

@@ -60,6 +60,7 @@ static int ss_parse(str *src, subscription_state_t *ss)
 	}
 
 	/* set state value */
+	trim(&state);
 	if (str_cmp(&state, &active) == 0) {
 		ss->value = ss_active;
 	}

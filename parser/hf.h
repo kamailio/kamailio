@@ -71,6 +71,7 @@ enum _hdr_types_t {
 	HDR_EXPIRES_T				       /* Expires header field */,
 	HDR_PROXYAUTH_T				       /* Proxy-Authorization hdr field */,
 	HDR_SUPPORTED_T				       /* Supported  header field */,
+	HDR_REQUIRE_T					   /* Require header */,
 	HDR_PROXYREQUIRE_T			       /* Proxy-Require header field */,
 	HDR_UNSUPPORTED_T			       /* Unsupported header field */,
 	HDR_ALLOW_T					       /* Allow header field */,
@@ -131,6 +132,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_EXPIRES_F				HDR_F_DEF(EXPIRES)
 #define HDR_PROXYAUTH_F				HDR_F_DEF(PROXYAUTH)
 #define HDR_SUPPORTED_F				HDR_F_DEF(SUPPORTED)
+#define HDR_REQUIRE_F				HDR_F_DEF(REQUIRE)
 #define HDR_PROXYREQUIRE_F			HDR_F_DEF(PROXYREQUIRE)
 #define HDR_UNSUPPORTED_F			HDR_F_DEF(UNSUPPORTED)
 #define HDR_ALLOW_F					HDR_F_DEF(ALLOW)

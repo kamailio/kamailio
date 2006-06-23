@@ -16,6 +16,10 @@ int is_terminating_notify(struct sip_msg *m);
  * 0 if not or an error occured while parsing */
 int supports_extension(struct sip_msg *m, str *extension);
 
+/* returns 1 if given extension is in Require headers, 
+ * 0 if not or an error occured while parsing */
+int requires_extension(struct sip_msg *m, str *extension);
+
 #endif
 
 #endif

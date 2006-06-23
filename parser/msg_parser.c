@@ -182,6 +182,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 					(int)(long)hdr->parsed);
 			break;
 		case HDR_SUPPORTED_T:
+		case HDR_REQUIRE_T:
 		case HDR_CONTENTTYPE_T:
 		case HDR_FROM_T:
 		case HDR_CALLID_T:
@@ -380,6 +381,10 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_SUPPORTED_T:
 				if (msg->supported==0) msg->supported=hf;
 				msg->parsed_flag|=HDR_SUPPORTED_F;
+				break;
+			case HDR_REQUIRE_T:
+				if (msg->require==0) msg->require=hf;
+				msg->parsed_flag|=HDR_REQUIRE_F;
 				break;
 			case HDR_UNSUPPORTED_T:
 				if (msg->unsupported==0) msg->unsupported=hf;
