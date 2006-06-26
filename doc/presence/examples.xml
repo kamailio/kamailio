@@ -62,7 +62,7 @@ mhomed=yes  # usefull for multihomed hosts, small performance penalty
 
 # ------------------ module loading ----------------------------------
 
-# Uncomment this if you want to use SQL database
+loadmodule "/usr/lib/ser/modules/xcap.so"
 loadmodule "/usr/lib/ser/modules/sl.so"
 loadmodule "/usr/lib/ser/modules/avp.so"
 loadmodule "/usr/lib/ser/modules/avpops.so"
@@ -208,6 +208,7 @@ route{
 			}
 			else { # renewal subscription
 				if (!handle_rls_subscription("0")) {
+					lookup_user("To");
 					handle_subscription("registrar");
 				}
 				break;
@@ -288,6 +289,9 @@ RLS module are NOT able to authenticate the user.
 be needed password for registration. You can put that piece of code into
 handling PUBLISH or MESSAGE for their authentication too.
 </para>
+<para>To have this configuration working you have to have initialized database
+with presence tables, silo, domain, etc.
+</para>
 <example><title>Full configuration</title>
 <programlisting><![CDATA[
 debug=3         # debug level (cmd line: -dddddddddd)
@@ -303,6 +307,7 @@ mhomed=yes  # usefull for multihomed hosts, small performance penalty
 
 # ------------------ module loading ----------------------------------
 
+loadmodule "/usr/lib/ser/modules/xcap.so"
 loadmodule "/usr/lib/ser/modules/sl.so"
 loadmodule "/usr/lib/ser/modules/avp.so"
 loadmodule "/usr/lib/ser/modules/avpops.so"
@@ -537,6 +542,7 @@ route{
 				# FIXME: better will be test like existing_rls_subscription() 
 				#        and existing_subscription("registrar")
 				if (!handle_rls_subscription("0")) {
+					lookup_user("To");
 					handle_subscription("registrar");
 				}
 				break;

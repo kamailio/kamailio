@@ -9,7 +9,7 @@ http://www.sagehill.net/docbookxsl/ValidXinclude.htm -->
 
 
 <article>
-	<title>SER presence handbook</title>
+	<title>SER presence handbook (v. 5) </title>
 	
 	<include xmlns="http://www.w3.org/2001/XInclude" href="intro.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
@@ -18,6 +18,9 @@ http://www.sagehill.net/docbookxsl/ValidXinclude.htm -->
 	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/pa/doc/pa.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/rls/doc/rls.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/presence_b2b/doc/presence_b2b.xml"/>
+	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/xcap/doc/xcap.xml"/>
+<!--	<include xmlns="http://www.w3.org/2001/XInclude"
+href="../../modules/xcap/doc/xcap.xml"/> -->
 <!--	</section>-->
 	<include xmlns="http://www.w3.org/2001/XInclude" href="examples.xml"/>
 	

@@ -53,7 +53,7 @@ no prefix parameter given - default value is used: /usr/local/)
 
 	<listitem><para>Compile and install SER with presence modules</para>
 	<para><userinput>cd ..</userinput></para>
-	<para><userinput>make install include_modules="pa rls mysql" prefix=/base/ser/directory</userinput></para>
+	<para><userinput>make install include_modules="dialog pa rls presence_b2b xcap mysql xmlrpc" prefix=/base/ser/directory</userinput></para>
 	</listitem>
 </orderedlist>
 </para>
