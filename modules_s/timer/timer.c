@@ -108,7 +108,7 @@ select_row_t sel_declaration[] = {
         { NULL, SEL_PARAM_STR, STR_NULL, NULL, 0}
 };
 
-static unsigned int msg_no = 0;
+static unsigned int timer_msg_no = 0;
 
 static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 	/* min length of first line of message is 16 char! */
@@ -134,14 +134,14 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 			LOG(L_ERR, "ERROR: timer: handler: no mem for sip_msg\n");
 			goto err2;
 		}
-		msg_no++;
+		timer_msg_no++;
 		memset(msg, 0, sizeof(struct sip_msg)); /* init everything to 0 */
 
 		msg->buf=MSG;
 		msg->len=sizeof(MSG)-1;
 
 		msg->rcv= rcv_info;
-		msg->id=msg_no;
+		msg->id=timer_msg_no;
 		msg->set_global_address=default_global_address;
 		msg->set_global_port=default_global_port;
 
