@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section><title>Parameters</title>
+<para>
+<variablelist>
+<varlistentry>
+	<term>xcap_root</term>
+	<listitem><para>Default settings of XCAP root. It can be overridden by
+	<function>set_xcap_root</function> call in config script.
+	</para></listitem>
+</varlistentry>
+</variablelist>
+</para>
+</section>

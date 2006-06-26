@@ -153,29 +153,6 @@ modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 		is used with an error message.</para>
 	</listitem>
 </varlistentry>
-</variablelist>
-
-<varlistentry>
-	<term><varname>auth_xcap_root</varname> (string)</term>
-	<listitem>
-		<para>This parameter holds value of XCAP root URI used for reading authorization
-		rules. Value must be set to nonempty value if <quote>xcap</quote> authorization
-		is used.</para>
-		<para>Authorization document is loaded using HTTP GET method from URI composed
-		from <varname>auth_xcap_root</varname> and user's name as follows:
-		<varname>auth_xcap_root</varname>/pres-rules/users/<varname>username</varname>/presence-rules.xml.</para>
-		<example><title>XCAP authorization settings</title>
-		<programlisting>
-...
-modparam("pa", "auth", "xcap")
-modparam("pa", "auth_xcap_root", "http://localhost/xcap-root")
-...
-		</programlisting>
-		<para>Settings above will result for presentity <quote>smith@iptel.org</quote> in authorization
-		queries to http://localhost/xcap-root/pres-rules/users/smith/presence-rules.xml.</para>
-		</example>
-	</listitem>
-</varlistentry>
 
 <varlistentry>
 	<term><varname>winfo_auth</varname> (string)</term>
@@ -201,5 +178,27 @@ modparam("pa", "auth_xcap_root", "http://localhost/xcap-root")
 		<para>Default value is <quote>implict</quote></para>
 	</listitem>
 </varlistentry>
-	
+
+<varlistentry>
+	<term>pres_rules_file</term>
+	<listitem><para>Name of the file with presence rules on XCAP server. The filename is
+	by default <quote>presence-rules.xml</quote>.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>ignore_408_on_notify</term>
+	<listitem><para>If set to 1 the 408 response to NOTIFY is ignored, otherwise
+	all 4xx responses including 408 destroys the subscription. Default value is 0.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>timer_interval</term>
+	<listitem><para>Interval in seconds when the timer runs and clears expired
+	watchers/tuples and send NOTIFYs for changed presentities.
+	</para></listitem>
+</varlistentry>
+
+</variablelist>
 </section>

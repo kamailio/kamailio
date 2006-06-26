@@ -26,7 +26,8 @@ This is due to authorization of such subscriptions - B2B UA can't decide about
 authorization rules, thus it has to leave it on the presence server to which it
 creates the subscription and this means, that it has to create the subscription
 as the subscriber. There is a possibility to do subscriptions with the same
-To + From only once, but this is left for future optimalizations.
+To + From only once, but this is left for future optimalizations (it will
+probably not help a lot).
 </para>
 
 <section id="presence_b2b.dependencies"><title>Dependencies</title>
@@ -44,9 +45,9 @@ To + From only once, but this is left for future optimalizations.
 <para>This module can be used by RLS module (e.g. RLS module does internal
 subscriptions to "presence" which can be handled by this module or PA module).
 </para>
-<para>In near future it will be used by PA module; this could be useful with
-UACs capable to process SUBSCRIBE/NOTIFY but not using PUBLISH for presence
-state publication (like Windows Messenger).
+<para>In near future it will be used by PA module for subscribing to users; this
+could be useful with UACs capable to process SUBSCRIBE/NOTIFY but not using
+PUBLISH for presence state publication (like Windows Messenger).
 </para>
 </section>
 

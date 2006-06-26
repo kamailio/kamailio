@@ -67,6 +67,25 @@
 	</listitem>
 </varlistentry>
 
+<varlistentry>
+	<term><varname>presence_outbound_proxy</varname></term>
+	<listitem><para>URI where to send all presence SUBSCRIBEs. It is better to use
+	this than <varname>presence_route</varname>.
+	</para>
+	<para>Empty by default.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>max_subscribe_delay</varname></term>
+	<listitem><para>If set to value greater than zero SUBSCRIBE requests are
+	sent randomly at most after <varname>max_subscribe_delay</varname> seconds.
+	SUBSCRIBE requests are sent immediately when processing internal (QSA)
+	subscription when set to 0.</para>
+	<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
 </variablelist>
 </section>
 

@@ -69,8 +69,6 @@ static cmd_export_t cmds[]={
 	{"is_simple_rls_target", is_simple_rls_target, 1, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"query_rls_services", query_rls_services, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"query_resource_list", query_resource_list, 1, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
-	
-	/* TODO: undocumented */
 	{"have_flat_list", have_flat_list, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -84,14 +82,12 @@ static param_export_t params[]={
 	{"db_mode", PARAM_INT, &db_mode },
 	{"db_url", PARAM_STRING, &db_url },
 	{"reduce_xcap_needs", PARAM_INT, &reduce_xcap_needs },
-	
-	/* TODO: have to be documented */
 	{"max_notifications_at_once", PARAM_INT, &max_notifications_at_once },
-	{"init_timer_delay", PARAM_INT, &init_timer_delay }, /* timer for delayed DB reload (due to internal subscriptions can't be reloaded from init or child init) */
 	{"timer_interval", PARAM_INT, &rls_timer_interval },
 	{"max_list_nesting_level", PARAM_INT, &max_list_nesting_level },
 	{"expiration_timer_period", PARAM_INT, &rls_expiration_timer_period },
 	{"ignore_408_on_notify", PARAM_INT, &rls_ignore_408_on_notify },
+	{"init_timer_delay", PARAM_INT, &init_timer_delay }, /* timer for delayed DB reload (due to internal subscriptions can't be reloaded from init or child init) */
 	
 	{0, 0, 0}
 };

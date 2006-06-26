@@ -83,7 +83,7 @@ handle_subscription("registrar");
 
 <varlistentry>
 	<term><varname>dump_stored_winfo(domain, event_package)</varname></term>
-	<listitem><para>This function tries to send stored watcherinfo data in
+	<listitem><para>This function tries to send stored watcherinfo data
 	in the context of existing watcherinfo subscription. It uses get_to_uid as 
 	target for notification. If there is no watcherinfo subscription to such
 	presentity, no information is sent.</para>
@@ -126,7 +126,7 @@ if (method=="SUBSCRIBE") {
 </varlistentry>
 
 <varlistentry>
-	<term><varname>authorize_message(xcap_root)</varname></term>
+	<term><varname>authorize_message(filename)</varname></term>
 	<listitem><para>This function reads and processes IM authorization data and
 	returns 1 if message can be accepted by destination user. If there is no IM
 	authorization document on given XCAP server, it returns 1 too (MESSAGE is
@@ -134,11 +134,15 @@ if (method=="SUBSCRIBE") {
 	function returns -1. For more details about authorization documents see
 	<xref linkend="im_rules"/>.
 	</para>
+	<para>Filename parameter specifies the name of file on XCAP server which
+	contains message authorization rules. It is <quote>im-rules.xml</quote> by
+	default.
+	</para>
 <example><title><function>authorize_message</function> usage</title>
 <programlisting>
 ...
 if (method=="MESSAGE") {
-	if (authorize_message("http://localhost/xcap")) {
+	if (authorize_message("im-rules.xml")) {
 		if (!lookup("location")) {
 			sl_reply("404", "Not Found");
 			break;

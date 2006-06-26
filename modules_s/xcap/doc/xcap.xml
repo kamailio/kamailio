@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section><title>XCAP module</title>
+<para>Module for doing XCAP queries.</para>
+
+<para>This module covers functions called internaly to access XCAP server. These
+functions were separated into standalone module to allow simple replacing XCAP
+queries with queries into database or local filesystem or whatever else.  Next
+reason was to protect other modules from linking with libcurl (implements
+HTTP) or other such stuff.
+</para>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
+
+</section>

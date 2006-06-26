@@ -35,7 +35,6 @@ static cmd_export_t cmds[]={
 /** Exported parameters */
 static param_export_t params[]={
 	{"xcap_root", PARAM_STR, &default_xcap_root },
-/*	{"wait_for_term_notify", PARAM_INT, &waiting_for_notify_time }, */
 	{0, 0, 0}
 };
 

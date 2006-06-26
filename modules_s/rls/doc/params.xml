@@ -81,16 +81,6 @@
 	</para>
 	<para>Default value is 0.</para></listitem>
 </varlistentry>
-<varlistentry>
-	<term><varname>xcap_root</varname> (string)</term>
-	<listitem><para>Globaly defined XCAP root. This parameter was added due to
-	simplification of configuration. Previous versions were able to work with
-	more XCAP servers (given as parameter to handle_rls_subscription, but this
-	may lead to problems with nested lists, thus it was removed).
-	</para>
-	<para>Default value: not set.
-	</para></listitem>
-</varlistentry>
 
 <varlistentry>
 	<term><varname>db_mode</varname> (integer)</term>
@@ -117,6 +107,56 @@ modparam("rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 </programlisting>
 		</example>
 	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>max_notifications_at_once</term>
+	<listitem><para>Max. number of notifications sent within one timer tick
+	(experimental). It might be used to reduce network traffic. Default value 
+	is 1000000.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>timer_interval</term>
+	<listitem><para>Interval in seconds when are processed internal
+	notifications and sent NOTIFYs to subscribers.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>max_nesting_level</term>
+	<listitem><para>Maximum number of nested lists. For example if set to 2, it
+	it possible to use "list nested in list nested in root list". Default value
+	is -1 what means <quote>unlimited</quote>.</para>
+	<para>It is possible to use this for speedup - if you know, that you will
+	need only <quote>flat</quote> lists (no nested lists), you can set this to
+	0. In this case RLS doesn't try to query XCAP server for <quote>possibly
+	netsted list URIs</quote> and directly creates subscription to URIs in list
+	like if they are URIs of standalone users.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>expiration_timer_period</term>
+	<listitem><para>Interval in seconds of timer which removes expired
+	subscriptions.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>ignore_408_on_notify</term>
+	<listitem><para>If set to 1 and 408 response to NOTIFY arrives, the dialog
+	is NOT destroyed like in the case of other non-2xx responses. Use for
+	testing only. Default value is 0.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>init_timer_delay</term>
+	<listitem><para>Delay in seconds of timer which triggers loading data from
+	database. This is needed by dependencies on other modules (pa/presence_b2b).
+	Default value is 3.
+	</para></listitem>
 </varlistentry>
 
 </variablelist>

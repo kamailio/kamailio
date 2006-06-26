@@ -110,6 +110,8 @@
 		<listitem><para><application>usrloc</application></para></listitem>
 		<listitem><para>optionaly database module
 		(<application>mysql</application>, ...)</para></listitem>
+		<listitem><para>optionaly <application>xcap</application> module for XCAP
+		authorization</para></listitem>
 	</itemizedlist>
 	<itemizedlist><title>Libraries</title>
 			<listitem><para><application>libxml2</application> - external
@@ -122,6 +124,22 @@
 	</itemizedlist>
 	</section>
 
+<section><title>Behaviour</title>
+<para>Short notes to be remembered...
+</para>
+
+<para>Re-authorization is done for every re-subscription (renewal SUBSCRIBE
+request). This is due to absence of notification mechanism for XCAP server data
+changes (might be implemented in the future).
+</para>
+
+<para>When a non-2xx final response to a NOTIFY comes, the subscription is
+destroyed (really needed under high load). It is possible to say that 408
+responses are ignored (see parameter
+<parameter>ignore_408_on_notify</parameter>) but this should be used for testing
+only.
+</para>
+</section>
 
     <include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>

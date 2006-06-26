@@ -169,11 +169,13 @@ static param_export_t params[]={
 	{"db_url",               PARAM_STR,    &db_url               },
 	{"pres_rules_file",      PARAM_STR,    &pres_rules_file },
 	
-	/* undocumented still (TODO) */
 	{"ignore_408_on_notify", PARAM_INT, &ignore_408_on_notify }, /* ignore 408 responses on NOTIFY */
+	
+	/* experimental, undocumented */
 	{"subscribe_to_users",   PARAM_INT,    &subscribe_to_users },
 	{"pa_subscription_uri",  PARAM_STR,    &pa_subscription_uri },
 	
+	/* undocumented still (TODO) */
 	{"presentity_table",     PARAM_STRING, &presentity_table     },
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },

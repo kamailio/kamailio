@@ -55,9 +55,12 @@ actions for them.)
 URIs. Presentity URI is AOR of SUBSCRIBE request. Resulting URI will be:</para>
 <para>
 <filename>&lt;xcap-root&gt;/pres-rules/users/&lt;username&gt;/presence-rules.xml</filename>
-where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration and
+where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration of XCAP
+module and
 <parameter>&lt;username&gt;</parameter> is UUID (unique user identification used
-in SER everywhere) discovered from presentity URI.
+in SER everywhere) discovered from presentity URI. If you need to use other
+filename than default <quote>presence-rules.xml</quote>, you can redefine it by
+parameter <parameter>pres_rules_file</parameter>.
 </para>
 <example><title>presence authorization document uri</title>
 <para>For example for presentity <literal>sip:joe@iptel.org</literal> with
@@ -100,10 +103,12 @@ messages sent from users <quote>jan@test-domain.com</quote> and
 
 <section><title>Message authorization document URI</title>
 <para>Authorization documents are read for recipients according to To
-URIs. Resulting URI for XCAP will be:</para>
+URIs. Resulting URI for XCAP query will be:</para>
 <para>
 <filename>&lt;xcap-root&gt;/im-rules/users/&lt;username&gt;/im-rules.xml</filename>
-where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration and
+where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration of XCAP
+module, im-rules.xml is default filename for message authorization rules (may be
+redefined in <function>authorize_message</function> call parameter) and
 <parameter>&lt;username&gt;</parameter> is UUID discovered from To URI.
 </para>
 <example><title>message authorization document uri</title>
