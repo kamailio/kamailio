@@ -519,6 +519,7 @@ static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 			FMT_STR(_w->dialog->id.rem_tag), 
 			FMT_STR(_w->dialog->id.loc_tag));
 		/* FIXME: destroy subscription? */
+		/* FIXME: destroy cbd? */
 	}
 	str_free_content(&doc);
 	str_free_content(&headers);
