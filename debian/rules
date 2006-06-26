@@ -30,7 +30,7 @@ export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" package or unstable 
 EXCLUDED_MODULES=	mysql jabber acc_radius xmlrpc auth_radius group_radius uri_radius \
-					avp_radius pa rls dialog postgres snmp cpl cpl-c ext extcmd 
+					avp_radius pa rls dialog presence_b2b xcap postgres snmp cpl cpl-c ext extcmd 
 
 # modules depending on mysql
 MYSQL_MODULES=mysql
@@ -41,7 +41,7 @@ RADIUS_MODULES=acc_radius auth_radius group_radius uri_radius avp_radius
 #cpl related modules
 CPL_MODULES=cpl-c
 # pa related modules
-PA_MODULES=pa rls dialog
+PA_MODULES=pa rls dialog presence_b2b xcap
 # postgres modules
 POSTGRES_MODULES=postgres
 # xmlrpc module
