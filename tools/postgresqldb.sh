@@ -549,6 +549,7 @@ CREATE TABLE uri (
  * Table structure for table 'usr_preferences'
  */
 CREATE TABLE usr_preferences (
+  id bigint(20) NOT NULL auto_increment,
   uuid varchar(64) NOT NULL default '',
   $USERCOL varchar(100) NOT NULL default '0',
   domain varchar(128) NOT NULL default '',
@@ -556,7 +557,7 @@ CREATE TABLE usr_preferences (
   value varchar(128) NOT NULL default '',
   type int NOT NULL default '0',
   modified $TIMESTAMP,
-  PRIMARY KEY (uuid,$USERCOL,domain,attribute,type,value),
+  PRIMARY KEY (id),
   INDEX ua_idx  (uuid,attribute),
   INDEX uda_idx ($USERCOL,domain,attribute)
 ) $TABLE_TYPE;
