@@ -5,7 +5,6 @@
 
 /* manipulation with message */
 void extract_contact(struct sip_msg *m, str *dst);
-int is_terminating_notify(struct sip_msg *m);
 
 /* creating/recreating subscriptions 
  * if failover_time > 0 it calls euac_set_timer to this value 
