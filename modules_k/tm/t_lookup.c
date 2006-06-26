@@ -1090,6 +1090,7 @@ int t_newtran( struct sip_msg* p_msg )
 	/* transaction not found, it's a new request (lret<0, lret!=-2);
 	   establish a new transaction ... */
 	if (p_msg->REQ_METHOD==METHOD_ACK) { /* ... unless it is in ACK */
+		t_ack = 0;
 		my_err=1;
 		goto new_err;
 	}

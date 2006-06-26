@@ -213,9 +213,9 @@ static void delete_cell( struct cell *p_cell, int unlock )
 #endif
 	/* still in use ... don't delete */
 	if ( IS_REFFED_UNSAFE(p_cell) ) {
+		DBG("DEBUG: delete_cell %p: can't delete -- still reffed (%d)\n",
+			p_cell, p_cell->ref_count);
 		if (unlock) UNLOCK_HASH(p_cell->hash_index);
-		DBG("DEBUG: delete_cell %p: can't delete -- still reffed\n",
-			p_cell);
 		/* it's added to del list for future del */
 		set_timer( &(p_cell->dele_tl), DELETE_LIST, 0 );
 	} else {

@@ -94,12 +94,18 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 	SEND_PR_BUFFER( (_rb) , (_rb)->buffer.s , (_rb)->buffer.len )
 
 
-#define UNREF_UNSAFE(_T_cell) ((_T_cell)->ref_count--)
+#define UNREF_UNSAFE(_T_cell) do { \
+	((_T_cell)->ref_count--);\
+	DBG("DEBUG:tm:UNREF_UNSAFE: after is %d\n",(_T_cell)->ref_count);\
+	}while(0)
 #define UNREF(_T_cell) do{ \
 	LOCK_HASH( (_T_cell)->hash_index ); \
 	UNREF_UNSAFE(_T_cell); \
 	UNLOCK_HASH( (_T_cell)->hash_index ); }while(0)
-#define REF_UNSAFE(_T_cell) ((_T_cell)->ref_count++)
+#define REF_UNSAFE(_T_cell) do {\
+	((_T_cell)->ref_count++);\
+	DBG("DEBUG:tm:REF_UNSAFE: after is %d\n",(_T_cell)->ref_count);\
+	}while(0)
 #define INIT_REF_UNSAFE(_T_cell) ((_T_cell)->ref_count=1)
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
