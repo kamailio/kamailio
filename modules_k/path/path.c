@@ -193,9 +193,11 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 		if (params->type == P_RECEIVED) {
 			if (set_dst_uri(_m, &hooks.contact.received->body) != 0) {
 				LOG(L_ERR, "ERROR: path_rr_callback: Failed to set dst-uri\n");
+				free_params(params);
 				return;
 			}
 			break;
 		}
 	}
+	free_params(params);
 }
