@@ -155,7 +155,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 #define get_from_to( _msg, _from, _to) \
 	do{ \
 		if (!from_to_set) {\
-			if(_msg->flags&FL_REQ_UPSTREAM){\
+			if(_msg->msg_flags&FL_REQ_UPSTREAM){\
 				/* swap from and to */ \
 				_from = to_hdr; \
 				_to = _msg->from; \

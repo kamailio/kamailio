@@ -581,7 +581,7 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 		}
 		/* if required, determine request direction */
 		if( detect_direction && !rrb.is_direction(ps->req,RR_FLOW_UPSTREAM) ) {
-			ps->req->flags |= FL_REQ_UPSTREAM;
+			ps->req->msg_flags |= FL_REQ_UPSTREAM;
 		}
 	}
 }
