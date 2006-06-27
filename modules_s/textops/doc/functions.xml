@@ -619,6 +619,7 @@ if (@hf_value_exists.supported.path == "1") {
 		@hf_value.HFNAME.p.uri  # returns param named uri, not URI itself
 		@hf_value.HFNAME.p.name # returns param named name, not name itself
 		@hf_value.HFNAME[IDX].uri.name #  any sel_any_uri nested features may be used
+		@hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>

@@ -85,8 +85,6 @@
 
 MODULE_VERSION
 
-SELECT_F(select_any_uri)
-
 /* RFC822-conforming dates format:
 
    %a -- abbreviated week of day name (locale), %d day of month
@@ -1697,7 +1695,7 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 	if (!msg) {
 		struct hdr_field hdr;
 		char buf[50];
-		int i;
+		int i, n;
 
 		if (s->params[1].type == SEL_PARAM_STR) {
 			hname = pkg_malloc(sizeof(*hname));
@@ -1723,8 +1721,8 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 		else {
 			hname = s->params[1].v.p;
 		}
-
-		if (s->n >= 2 && s->params[2].type == SEL_PARAM_INT) {
+		n = s->param_offset[s->lvl+1] - s->param_offset[s->lvl];  /* number of values before NESTED */
+		if (n >= 2 && s->params[2].type == SEL_PARAM_INT) {
 			hname->idx = s->params[2].v.i;
 			hname->flags |= HNF_IDX;
 			if (hname->idx < -MAX_HF_VALUE_STACK) {
@@ -1739,7 +1737,7 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 			i = 2;
 			hname->idx = 1;
 		}
-		if (s->n > i && s->params[i].type == SEL_PARAM_STR) {
+		if (n > i && s->params[i].type == SEL_PARAM_STR) {
 			hname->param = s->params[i].v.s;
 			for (i=hname->param.len-1; i>0; i--) {
 				if (hname->param.s[i]=='_')
@@ -1780,7 +1778,7 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 								retbuf_tail++;
 							}
 							if (huri.len) {
-							/* TODO: normalize uri, lowercase except quoted params */
+							/* TODO: normalize uri, lowercase except quoted params, add < > */
 								memcpy(retbuf_tail, huri.s, huri.len);
 								retbuf_tail+= huri.len;
 							}
@@ -1855,7 +1853,9 @@ static int sel_hf_value_name_param_name(str* res, select_t* s, struct sip_msg* m
 
 static int sel_hf_value_name_param_name2(str* res, select_t* s, struct sip_msg* msg) {
 	if (!msg) { /* eliminate "param" level */
-		s->params[s->n-2] = s->params[s->n-1];
+		int n;
+		n = s->param_offset[s->lvl+1] - s->param_offset[s->lvl];
+		s->params[n-2] = s->params[n-1];
 	}
 	return sel_hf_value_name(res, s, msg);
 }
@@ -1919,6 +1919,9 @@ static int sel_hf_value2_name_param_name(str* res, select_t* s, struct sip_msg* 
 	return sel_hf_value2_name(res, s, msg);
 }
 
+SELECT_F(select_any_nameaddr)
+SELECT_F(select_any_uri)
+
 select_row_t sel_declaration[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value"), sel_hf_value, SEL_PARAM_EXPECTED},
 
@@ -1927,16 +1930,18 @@ select_row_t sel_declaration[] = {
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("p"), sel_hf_value_name_param_name2, CONSUME_NEXT_STR | FIXUP_CALL},
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("uri"), sel_hf_value_name_uri, FIXUP_CALL},
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("name"), sel_hf_value_name_name, FIXUP_CALL},
+	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR}, /* it duplicates param,p,name,... */
 	{ sel_hf_value_name_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_NULL, sel_hf_value_name_param_name, FIXUP_CALL},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value_exists"), sel_hf_value_exists, CONSUME_NEXT_STR | SEL_PARAM_EXPECTED},
 	{ sel_hf_value_exists, SEL_PARAM_STR, STR_NULL, sel_hf_value_exists_param, FIXUP_CALL},
 
-
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value2"), sel_hf_value2, SEL_PARAM_EXPECTED},
 	{ sel_hf_value2, SEL_PARAM_STR, STR_NULL, sel_hf_value2_name, CONSUME_NEXT_INT | OPTIONAL | FIXUP_CALL},
 	{ sel_hf_value2_name, SEL_PARAM_STR, STR_NULL, sel_hf_value2_name_param_name, FIXUP_CALL},
+	{ sel_hf_value2_name_param_name, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED},
+	{ sel_hf_value2_name_param_name, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
