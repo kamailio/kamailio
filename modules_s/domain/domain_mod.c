@@ -748,9 +748,10 @@ static int lookup_domain_fixup(void** param, int param_no)
 			} else if (!strcasecmp(fp->orig, "To")) {
 				fp->v.i = LOAD_TO;
 			}
+		} else {
+			ERR("Unknown parameter\n");
+			return -1;
 		}
-		ERR("Unknown parameter\n");
-		return -1;
 	}
 
 	return 0;
