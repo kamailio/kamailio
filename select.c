@@ -248,7 +248,7 @@ int resolve_select(select_t* s)
 			if (nested < MAX_NESTED_CALLS-1) { /* need space for final function */
 				s->lvl = nested;
 				s->f[nested++] = f;
-				s->param_offset[nested] = param_idx+1;
+				s->param_offset[nested] = param_idx;
 			} else {
 				BUG("MAX_NESTED_CALLS too small to resolve select\n");
 				goto not_found;

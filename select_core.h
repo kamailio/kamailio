@@ -73,6 +73,10 @@ SELECT_F(select_via_params_spec)
 SELECT_F(select_msgheader)
 SELECT_F(select_anyheader)
 
+SELECT_F(select_any_nameaddr)
+SELECT_F(select_nameaddr_name)
+SELECT_F(select_nameaddr_uri)
+	
 SELECT_F(select_any_uri)
 SELECT_F(select_uri_type)
 SELECT_F(select_uri_user)
@@ -156,8 +160,13 @@ static select_row_t select_core[] = {
 	{ select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("num"), select_cseq_num, 0},
 	{ select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_cseq_method, 0},
 
+	{ select_any_nameaddr, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_nameaddr_name, 0},
+	{ select_any_nameaddr, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_nameaddr_uri, 0},
+	{ select_nameaddr_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msgheader, SEL_PARAM_EXPECTED},
 	{ select_msgheader, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT | FIXUP_CALL},
+	{ select_anyheader, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
 
