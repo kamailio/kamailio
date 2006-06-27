@@ -694,23 +694,25 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	/* if final response received at this branch, allow only INVITE 2xx */
 	if (Trans->uac[branch].last_received>=200
 			&& !(inv_through && Trans->uac[branch].last_received<300)) {
+#ifdef EXTRA_DEBUG
 		/* don't report on retransmissions */
 		if (Trans->uac[branch].last_received==new_code) {
-			DBG("DEBUG:tm:t_should_relay_response: final reply retransmission\n");
-			goto discard;
-		}
+			DBG("DEBUG:tm:t_should_relay_response: final reply "
+				"retransmission\n");
+		} else
 		/* if you FR-timed-out, faked a local 408 and 487 came, don't
 		 * report on it either */
 		if (Trans->uac[branch].last_received==408 && new_code==487) {
 			DBG("DEBUG:tm:t_should_relay_response: 487 reply came for a "
 				"timed-out branch\n");
-			goto discard;
-		}
+		} else {
 		/* this looks however how a very strange status rewrite attempt;
 		 * report on it */
-		LOG(L_ERR, "ERROR:tm:t_should_relay_response: status rewrite by UAS: "
-			"stored: %d, received: %d\n",
-			Trans->uac[branch].last_received, new_code );
+			DBG("DEBUG:tm:t_should_relay_response: status rewrite by UAS: "
+				"stored: %d, received: %d\n",
+				Trans->uac[branch].last_received, new_code );
+		}
+#endif
 		goto discard;
 	}
 
