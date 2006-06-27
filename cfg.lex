@@ -91,7 +91,7 @@
 
 
 	static int comment_nest=0;
-	static int state=0;
+	static int state=0, old_state=0, old_initial=0;
 	static struct str_buf s_buf;
 	int line=1;
 	int column=1;
@@ -514,7 +514,6 @@ EAT_ABLE	[\ \t\b\r]
 <SELECT>{HEXNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 16); return NUMBER; }
 <SELECT>{OCTNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 8); return NUMBER; }
 <SELECT>{BINNUMBER}     { count(); yylval.intval=(int)strtol(yytext, 0, 2); return NUMBER; }
-<SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
 
 
 <INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
@@ -579,18 +578,18 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{CR}		{ count();/* return CR;*/ }
 
 
-<INITIAL>{QUOTES} { count(); state=STRING_S; BEGIN(STRING1); }
-<INITIAL>{TICK} { count(); state=STRING_S; BEGIN(STRING2); }
+<INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; old_state = state; state=STRING_S; BEGIN(STRING1); }
+<INITIAL>{TICK} { count(); old_initial = YY_START; old_state = state; state=STRING_S; BEGIN(STRING2); }
 
 
-<STRING1>{QUOTES} { count(); state=INITIAL_S; BEGIN(INITIAL);
+<STRING1>{QUOTES} { count(); state=old_state; BEGIN(old_initial);
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						yylval.strval=s_buf.s;
 						memset(&s_buf, 0, sizeof(s_buf));
 						return STRING;
 					}
-<STRING2>{TICK}  { count(); state=INITIAL_S; BEGIN(INITIAL);
+<STRING2>{TICK}  { count(); state=old_state; BEGIN(old_initial);
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						yylval.strval=s_buf.s;
@@ -631,6 +630,8 @@ EAT_ABLE	[\ \t\b\r]
 									yylval.strval=s_buf.s;
 									memset(&s_buf, 0, sizeof(s_buf));
 									return ID; }
+
+<SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
 
 
 <<EOF>>							{
