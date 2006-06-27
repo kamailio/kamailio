@@ -168,7 +168,7 @@ static select_row_t select_core[] = {
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("pwd"), select_uri_pwd, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("host"), select_uri_host, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_uri_port, 0},
-	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_uri_params, CONSUME_NEXT_STR | OPTIONAL},
+	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_uri_params, CONSUME_NEXT_STR | OPTIONAL | FIXUP_CALL },
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("hostport"), select_uri_hostport, 0},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("event"), select_event, 0},

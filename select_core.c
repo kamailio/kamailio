@@ -652,6 +652,17 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 	param_hooks_t h;
 	param_t *p, *list=NULL;
 	str* wanted;
+	int i;
+
+	if (!msg || !res) {
+		if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1) return 0;
+		if (s->params[s->param_offset[s->lvl]+1].type!=SEL_PARAM_STR) return -1;
+		wanted=&s->params[s->param_offset[s->lvl]+1].v.s;
+		for (i=0; i<wanted->len; i++) 
+			if (wanted->s[i]=='_') 
+				wanted->s[i]='-';
+		return 0;
+	}
 	
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
@@ -662,11 +673,12 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 	if (s->params[s->param_offset[s->lvl]+1].type!=SEL_PARAM_STR) return -1;
 	wanted=&s->params[s->param_offset[s->lvl]+1].v.s;
 	
+	if (!uri.params.len) return -1;
 	if (parse_params(&uri.params, CLASS_ANY, &h, &list)<0) return -1;
 	
-	for (p = list; p->next; p=p->next) {
+	for (p = list; p; p=p->next) {
 		if ((p->name.len==wanted->len) && 
-			 !strncmp(p->name.s, wanted->s,wanted->len)) {
+			 !strncasecmp(p->name.s, wanted->s,wanted->len)) {
 			*res=p->body;
 			free_params(list);
 			return (res->len ? 0 : 1);
