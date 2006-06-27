@@ -73,8 +73,6 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 	str_dup( &c->user_agent, _ci->user_agent);
 
 	if (_ci->received.s && _ci->received.len) {
-		DBG("============= usrloc:new_ucontact: %s\n",
-				_ci->received.s);
 		str_dup( &c->received, &_ci->received);
 	}
 	if (_ci->path && _ci->path->len) {

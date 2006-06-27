@@ -92,7 +92,7 @@ void free_urecord(urecord_t* _r)
 		free_ucontact(ptr);
 	}
 	
-	/* if mem is not used, the urecord struct is static*/
+	/* if mem cache is not used, the urecord struct is static*/
 	if (db_mode!=DB_ONLY) {
 		if (_r->aor.s) shm_free(_r->aor.s);
 		shm_free(_r);

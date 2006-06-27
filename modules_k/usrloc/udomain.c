@@ -212,8 +212,7 @@ void free_udomain(udomain_t* _d)
 	}
 	unlock_udomain(_d);
 	lock_destroy(&_d->lock);/* destroy the lock (required for SYSV sems!)*/
-
-        shm_free(_d);
+	shm_free(_d);
 }
 
 
