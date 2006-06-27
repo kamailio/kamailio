@@ -1900,6 +1900,14 @@ static int sel_get(str* res, select_t* s, struct sip_msg* msg) {
 	return 0;
 }
 
+static int sel_get_uri(str* res, select_t* s, struct sip_msg* msg) {
+	return sel_get(res, s, msg);
+}
+
+static int sel_register_uri(str* res, select_t* s, struct sip_msg* msg) {
+	return sel_register(res, s, msg);
+}
+
 static int sel_gen_uuid(str* res, select_t* s, struct sip_msg* msg) {
 	static char buff[36+1];
 	uuid_t u;
@@ -1920,8 +1928,10 @@ select_row_t sel_declaration[] = {
 	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("get"), sel_get, CONSUME_NEXT_INT },
 	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("reg"), sel_register, CONSUME_NEXT_STR|FIXUP_CALL },
 
-	{ sel_get, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
-	{ sel_register, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ sel_get, SEL_PARAM_STR, STR_STATIC_INIT("uri"), sel_get_uri, 0},
+	{ sel_register, SEL_PARAM_STR, STR_STATIC_INIT("uri"), sel_register_uri, 0},
+	{ sel_get_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ sel_register_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 
 	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("uuid"), sel_gen_uuid, 0},
 
