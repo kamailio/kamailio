@@ -68,6 +68,7 @@ MODULE_VERSION
 #define LOAD_RURI 0
 #define LOAD_FROM 1
 #define LOAD_TO 2
+#define LOAD_AVP 3
 
 /*
  * Version of domain table required by the module,
@@ -297,6 +298,7 @@ static int mod_init(void)
 		if (reload_domain_list() < 0) goto error;
 		disconnect_db();
 	}
+
 	return 0;
 
  error:
@@ -621,37 +623,72 @@ static int is_ruri_local(struct sip_msg* msg, char* s1, char* s2)
 	return ret;
 }
 
+static int get_host_from_avp(str* res, unsigned int* track, fparam_t* param)
+{
+
+	int_str val;
+	
+	if (search_first_avp(param->v.avp.flags, param->v.avp.name, &val, 0)) {
+		*track = param->v.avp.flags & AVP_TRACK_ALL;
+		if (!*track) *track = AVP_TRACK_FROM;
+
+		res->s = pkg_malloc(val.s.len);
+		if (!res->s) {
+			ERR("No memory left\n");
+			return -1;
+		}
+		memcpy(res->s, val.s.s, val.s.len);
+		res->len = val.s.len;
+		strlower(res);
+		return 0;
+	} else {
+		return -1;
+	}
+
+}
 
 static int lookup_domain(struct sip_msg* msg, char* s1, char* s2)
 {
-	long id;
+	fparam_t* param;
 	str host;
 	domain_t* d;
 	unsigned int track;
 
-	id = (long)s1;
+	param = (fparam_t*)s1;
 	track = 0;
 
 	if (db_mode == 0) {
 		LOG(L_ERR, "domain:lookup_domain only works in cache mode\n");
 		return -1;
 	}
+	
+	switch(param->type) {
+	case FPARAM_AVP:
+		if (get_host_from_avp(&host, &track, param) < 0) return -1;
+		break;
+		
+	case FPARAM_STRING:
+		switch(param->v.i) {
+		case LOAD_FROM:
+			if (get_from_host(&host, msg) < 0) return -1;
+			track = AVP_TRACK_FROM;
+			break;
 
-	switch(id) {
-	case LOAD_FROM:
-		if (get_from_host(&host, msg) < 0) return -1;
-		track = AVP_TRACK_FROM;
+		case LOAD_TO:
+			if (get_to_host(&host, msg) < 0) return -1;
+			track = AVP_TRACK_TO;
+			break;
+
+		case LOAD_RURI:
+			if (get_ruri_host(&host, msg) < 0) return -1;
+			track = AVP_TRACK_TO;
+			break;
+		}
 		break;
 
-	case LOAD_RURI:
-		if (get_ruri_host(&host, msg) < 0) return -1;
-		track = AVP_TRACK_TO;
-		break;
-
-	case LOAD_TO:
-		if (get_to_host(&host, msg) < 0) return -1;
-		track = AVP_TRACK_TO;
-		break;
+	default:
+		ERR("Unsupported parameter\n");
+		return -1;
 	}
 
 	if (hash_lookup(&d, *active_hash, &host) == 1) {
@@ -694,22 +731,27 @@ int reload_domain_list(void)
 
 static int lookup_domain_fixup(void** param, int param_no)
 {
-	long id = 0;
+	int ret;
+	fparam_t* fp;
 
 	if (param_no == 1) {
-		if (!strcasecmp(*param, "Request-URI")) {
-			id = LOAD_RURI;
-		} else if (!strcasecmp(*param, "From")) {
-			id = LOAD_FROM;
-		} else if (!strcasecmp(*param, "To")) {
-			id = LOAD_TO;
-		} else {
-			LOG(L_ERR, "domain:lookup_domain_fixup: Unknown parameter\n");
-			return -1;
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;
+
+		ret = fix_param(FPARAM_STRING, param);
+		if (ret <= 0) {
+			fp = (fparam_t*)(*param);
+			if (!strcasecmp(fp->orig, "Request-URI")) {
+				fp->v.i = LOAD_RURI;
+			} else if (!strcasecmp(fp->orig, "From")) {
+				fp->v.i = LOAD_FROM;
+			} else if (!strcasecmp(fp->orig, "To")) {
+				fp->v.i = LOAD_TO;
+			}
 		}
+		ERR("Unknown parameter\n");
+		return -1;
 	}
 
-	pkg_free(*param);
-	*param=(void*)id;
 	return 0;
 }
