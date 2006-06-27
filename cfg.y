@@ -1359,6 +1359,19 @@ select_param:
 		sel.params[sel.n].v.i = $3;
 		sel.n++;
 	}
+	| ID LBRACK STRING RBRACK {
+		if (sel.n >= MAX_SELECT_PARAMS-2) {
+			yyerror("Select identifier too long\n");
+		}
+		sel.params[sel.n].type = SEL_PARAM_STR;
+		sel.params[sel.n].v.s.s = $1;
+		sel.params[sel.n].v.s.len = strlen($1);
+		sel.n++;
+		sel.params[sel.n].type = SEL_PARAM_STR;
+		sel.params[sel.n].v.s.s = $3;
+		sel.params[sel.n].v.s.len = strlen($3);
+		sel.n++;
+	}
 	;
 select_params:
 	select_params DOT select_param
