@@ -73,12 +73,6 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 	ul.lock_udomain((udomain_t*)_t);
 	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
-	if (res < 0) {
-		LOG(L_ERR, "lookup(): Error while querying usrloc\n");
-		ul.unlock_udomain((udomain_t*)_t);
-		return -3;
-	}
-	
 	if (res > 0) {
 		DBG("lookup(): '%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain((udomain_t*)_t);
@@ -87,21 +81,21 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 	ptr = r->contacts;
 	ret = -1;
-	/* look first first un-expired and suported contact */
+	/* look first for an un-expired and suported contact */
 	while ( (ptr) &&
 	!(VALID_CONTACT(ptr,act_time) && (ret=-2) && allowed_method(_m,ptr)))
 		ptr = ptr->next;
 	if (ptr==0) {
 		/* nothing found */
-		ul.unlock_udomain((udomain_t*)_t);
-		return ret;
+		goto done;
 	}
 
+	ret = 1;
 	if (ptr) {
 		if (rewrite_uri(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
-			ul.unlock_udomain((udomain_t*)_t);
-			return -3;
+			ret = -3;
+			goto done;
 		}
 
 		/* If a Path is present, use first path-uri in favour of
@@ -110,23 +104,23 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		if (ptr->path.s && ptr->path.len) {
 			if (get_path_dst_uri(&ptr->path, &path_dst) < 0) {
 				LOG(L_ERR, "lookup(): Failed to get dst_uri for Path\n");
-				ul.unlock_udomain((udomain_t*)_t);
-				return -3;
+				ret = -3;
+				goto done;
 			}
 			if (set_path_vector(_m, &ptr->path) < 0) {
 				LOG(L_ERR, "lookup(): Failed to set path vector\n");
-				ul.unlock_udomain((udomain_t*)_t);
-				return -3;
+				ret = -3;
+				goto done;
 			}
 			if (set_dst_uri(_m, &path_dst) < 0) {
 				LOG(L_ERR, "lookup(): Failed to set dst_uri of Path\n");
-				ul.unlock_udomain((udomain_t*)_t);
-				return -3;
+				ret = -3;
+				goto done;
 			}
 		} else if (ptr->received.s && ptr->received.len) {
 			if (set_dst_uri(_m, &ptr->received) < 0) {
-				ul.unlock_udomain((udomain_t*)_t);
-				return -3;
+				ret = -3;
+				goto done;
 			}
 		}
 
@@ -143,7 +137,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 
 	/* Append branches if enabled */
-	if (!append_branches) goto skip;
+	if (!append_branches) goto done;
 
 	for( ; ptr ; ptr = ptr->next ) {
 		if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
@@ -171,9 +165,10 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		}
 	}
 
-skip:
+done:
+	ul.release_urecord(r);
 	ul.unlock_udomain((udomain_t*)_t);
-	return 1;
+	return ret;
 }
 
 
