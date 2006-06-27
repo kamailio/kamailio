@@ -46,7 +46,7 @@ int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u);
 auth_result_t pre_auth(struct sip_msg* m, str* realm, int hftype, 
 						struct hdr_field** h);
 
-int find_credentials(struct sip_msg* m, str* realm, int hftype, 
+int find_credentials(struct sip_msg* m, str* realm, hdr_types_t hftype, 
 						struct hdr_field** h);
 
 int authorize(struct sip_msg* msg, str* realm, int hftype);
