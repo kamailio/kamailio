@@ -67,6 +67,8 @@ selects
 @db.fetch[query_handle].row[n]
 @db.fetch[query_handle].row[n].field[m]
 
+@*.field supports select_any_uri and select_any_nameaddr
+
 m4 processor
 ------------
 

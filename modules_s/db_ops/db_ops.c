@@ -639,22 +639,36 @@ static int sel_fetch_row_field(str* res, select_t* s, struct sip_msg* msg) {
 	return sel_do_fetch(res, s->params[2].v.i, s->params[4].v.i, s->params[6].v.i, msg);
 }
 
+SELECT_F(select_any_nameaddr)
+SELECT_F(select_any_uri)
 
 select_row_t sel_declaration[] = {
         { NULL, SEL_PARAM_STR, STR_STATIC_INIT("db"), sel_dbops, SEL_PARAM_EXPECTED},
 
 	{ sel_dbops, SEL_PARAM_STR, STR_STATIC_INIT("query"), sel_select, CONSUME_NEXT_INT},
+	{ sel_select, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ sel_select, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
 	{ sel_select, SEL_PARAM_STR, STR_STATIC_INIT("count"), sel_select_count, 0},
 	{ sel_select, SEL_PARAM_STR, STR_STATIC_INIT("field"), sel_select_field, CONSUME_NEXT_INT},
+	{ sel_select_field, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ sel_select_field, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
 	{ sel_select, SEL_PARAM_STR, STR_STATIC_INIT("row"), sel_select_row, CONSUME_NEXT_INT},
 	{ sel_select_row, SEL_PARAM_STR, STR_STATIC_INIT("field"), sel_select_row_field, CONSUME_NEXT_INT},
+	{ sel_select_row_field, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ sel_select_row_field, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
 
 	{ sel_dbops, SEL_PARAM_STR, STR_STATIC_INIT("fetch"), sel_fetch, CONSUME_NEXT_INT},
+	{ sel_fetch, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ sel_fetch, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
 	{ sel_fetch, SEL_PARAM_STR, STR_STATIC_INIT("count"), sel_fetch_count, 0},
 	{ sel_fetch, SEL_PARAM_STR, STR_STATIC_INIT("row_no"), sel_fetch_cur_row_no, 0},
 	{ sel_fetch, SEL_PARAM_STR, STR_STATIC_INIT("field"), sel_fetch_field, CONSUME_NEXT_INT},
+	{ sel_fetch_field, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ sel_fetch_field, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
 	{ sel_fetch, SEL_PARAM_STR, STR_STATIC_INIT("row"), sel_fetch_row, CONSUME_NEXT_INT},
 	{ sel_fetch_row, SEL_PARAM_STR, STR_STATIC_INIT("field"), sel_fetch_row_field, CONSUME_NEXT_INT},
+	{ sel_fetch_row_field, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ sel_fetch_row_field, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
 
         { NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
