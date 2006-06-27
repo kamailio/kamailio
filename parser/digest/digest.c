@@ -231,3 +231,86 @@ int get_authorized_cred(struct hdr_field* _f, struct hdr_field** _h)
 	
 	return 0;
 }
+
+
+/*
+ * Find credentials with given realm in a SIP message header
+ */
+int find_credentials(struct sip_msg* msg, str* realm,
+		     hdr_types_t hftype, struct hdr_field** hdr)
+{
+	struct hdr_field** hook, *ptr, *prev;
+	hdr_flags_t hdr_flags;
+	int res;
+	str* r;
+
+	     /*
+	      * Determine if we should use WWW-Authorization or
+	      * Proxy-Authorization header fields, this parameter
+	      * is set in www_authorize and proxy_authorize
+	      */
+	switch(hftype) {
+	case HDR_AUTHORIZATION_T: 
+		hook = &(msg->authorization);
+		hdr_flags=HDR_AUTHORIZATION_F;
+		break;
+	case HDR_PROXYAUTH_T:
+		hook = &(msg->proxy_auth);
+		hdr_flags=HDR_PROXYAUTH_F;
+		break;
+	default:				
+		hook = &(msg->authorization);
+		hdr_flags=HDR_T2F(hftype);
+		break;
+	}
+
+	     /*
+	      * If the credentials haven't been parsed yet, do it now
+	      */
+	if (*hook == 0) {
+		     /* No credentials parsed yet */
+		if (parse_headers(msg, hdr_flags, 0) == -1) {
+			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
+			return -1;
+		}
+	}
+
+	ptr = *hook;
+
+	     /*
+	      * Iterate through the credentials in the message and
+	      * find credentials with given realm
+	      */
+	while(ptr) {
+		res = parse_credentials(ptr);
+		if (res < 0) {
+			LOG(L_ERR, "auth:find_credentials: Error while parsing credentials\n");
+			return (res == -1) ? -2 : -3;
+		} else if (res == 0) {
+			r = &(((auth_body_t*)(ptr->parsed))->digest.realm);
+
+			if (r->len == realm->len) {
+				if (!strncasecmp(realm->s, r->s, r->len)) {
+					*hdr = ptr;
+					return 0;
+				}
+			}
+		}
+
+		prev = ptr;
+		if (parse_headers(msg, hdr_flags, 1) == -1) {
+			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
+			return -4;
+		} else {
+			if (prev != msg->last_header) {
+				if (msg->last_header->type == hftype) ptr = msg->last_header;
+				else break;
+			} else break;
+		}
+	}
+	
+	     /*
+	      * Credentials with given realm not found
+	      */
+	return 1;
+}

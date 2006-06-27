@@ -108,4 +108,10 @@ int get_authorized_cred(struct hdr_field* _f, struct hdr_field** _h);
 dig_err_t check_dig_cred(dig_cred_t* _c);
 
 
+/*
+ * Find credentials with given realm in a SIP message header
+ */
+int find_credentials(struct sip_msg* msg, str* realm,
+		     hdr_types_t hftype, struct hdr_field** hdr);
+
 #endif /* DIGEST_H */
