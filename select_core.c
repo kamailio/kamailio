@@ -37,6 +37,7 @@
 #include "select_buf.h"
 #include "dprint.h"
 #include "trim.h"
+#include "ut.h"
 #include "parser/parser_f.h"
 #include "parser/hf.h"
 #include "parser/parse_from.h"
@@ -47,6 +48,7 @@
 #include "parser/parse_uri.h"
 #include "parser/parse_event.h"
 #include "parser/parse_rr.h"
+#include "parser/digest/digest.h"
 #include "mem/mem.h"
 #include "parser/parse_hname2.h"
 
@@ -794,6 +796,101 @@ int select_cseq_method(str* res, select_t* s, struct sip_msg* msg)
 	return 0;
 }
 
+static struct hdr_field* get_credentials(struct sip_msg* msg, select_t* s)
+{
+	int ret;
+	struct hdr_field* hdr;
+	str realm;
+	hdr_types_t hdr_type;
+
+	     /* Try to find credentials with corresponding realm
+	      * in the message, parse them and return pointer to
+	      * parsed structure
+	      */
+	realm = s->params[1].v.s;
+
+	switch (s->params[0].v.i) {
+	case SEL_AUTH_WWW:
+		hdr_type = HDR_AUTHORIZATION_T;
+		break;
+
+	case SEL_AUTH_PROXY:
+		hdr_type = HDR_PROXYAUTH_T;
+		break;
+
+	default:
+		BUG("Unexpected parameter value \"%d\"\n", s->params[0].v.i);
+		return 0;
+	}
+
+	ret = find_credentials(msg, &realm, hdr_type, &hdr);
+	if (ret < 0) {
+		ERR("Error while looking for credentials\n");
+		return 0;
+	} else if (ret > 0) {
+		return 0;
+	}
+
+	return hdr;
+}
+
+
+int select_auth(str* res, select_t* s, struct sip_msg* msg)
+{
+	struct hdr_field* hdr;
+
+	if (s->n != 2 && s->params[1].type != SEL_PARAM_STR) return -1;
+
+	if (s->params[0].type != SEL_PARAM_DIV) {
+		BUG("Last parameter should have type DIV (converted)\n");
+		return -1;
+	}
+
+        hdr = get_credentials(msg, s);
+	if (!hdr) return -1;
+	RETURN0_res(hdr->body);
+}
+
+int select_auth_param(str* res, select_t* s, struct sip_msg* msg)
+{
+	struct hdr_field* hdr;
+	dig_cred_t* cred;
+
+	if (s->n != 3 && s->n != 4 || s->params[s->n - 1].type != SEL_PARAM_DIV) return -1;
+
+	hdr = get_credentials(msg, s);
+	if (!hdr) return 1;
+	cred = &((auth_body_t*)hdr->parsed)->digest;
+
+	switch(s->params[s->n - 1].v.i) {
+	case SEL_AUTH_USER:     RETURN0_res(cred->username.user);
+	case SEL_AUTH_DOMAIN:   RETURN0_res(cred->username.domain);
+	case SEL_AUTH_USERNAME: RETURN0_res(cred->username.whole);
+	case SEL_AUTH_REALM:    RETURN0_res(cred->realm);
+	case SEL_AUTH_NONCE:    RETURN0_res(cred->nonce);
+	case SEL_AUTH_URI:      RETURN0_res(cred->uri);
+	case SEL_AUTH_CNONCE:   RETURN0_res(cred->cnonce);
+	case SEL_AUTH_NC:       RETURN0_res(cred->nc);
+	case SEL_AUTH_RESPONSE: RETURN0_res(cred->response);
+	case SEL_AUTH_OPAQUE:   RETURN0_res(cred->opaque);
+	case SEL_AUTH_ALG:      RETURN0_res(cred->alg.alg_str);
+	case SEL_AUTH_QOP:      RETURN0_res(cred->qop.qop_str);
+	default:
+		BUG("Unsupported digest credentials parameter in select\n");
+		return -1;
+	}
+}
+
+int select_auth_username(str* res, select_t* s, struct sip_msg* msg)
+{
+	return select_auth_param(res, s, msg);
+}
+
+int select_auth_username_comp(str* res, select_t* s, struct sip_msg* msg)
+{
+	return select_auth_param(res, s, msg);
+}
+
 ABSTRACT_F(select_any_nameaddr)
 
 int select_nameaddr_name(str* res, select_t* s, struct sip_msg* msg)
@@ -834,4 +931,3 @@ int select_nameaddr_uri(str* res, select_t* s, struct sip_msg* msg)
 	res->len=p-res->s;
 	return 0;
 }
-

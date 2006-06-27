@@ -44,6 +44,23 @@ enum {
 	SEL_PARAM_BRANCH, SEL_PARAM_RPORT, SEL_PARAM_I, SEL_PARAM_ALIAS
        };
 
+enum {
+	SEL_AUTH_PROXY,
+	SEL_AUTH_WWW,
+	SEL_AUTH_USERNAME,
+	SEL_AUTH_USER,
+	SEL_AUTH_DOMAIN,
+	SEL_AUTH_REALM,
+	SEL_AUTH_NONCE,
+	SEL_AUTH_URI,
+	SEL_AUTH_CNONCE,
+	SEL_AUTH_NC,
+	SEL_AUTH_RESPONSE,
+	SEL_AUTH_OPAQUE,
+	SEL_AUTH_ALG,
+	SEL_AUTH_QOP
+};
+
 SELECT_F(select_ruri)
 SELECT_F(select_from)
 SELECT_F(select_from_uri)
@@ -96,6 +113,11 @@ SELECT_F(select_rr_params)
 SELECT_F(select_cseq)
 SELECT_F(select_cseq_method)
 SELECT_F(select_cseq_num)
+
+SELECT_F(select_auth)
+SELECT_F(select_auth_param)
+SELECT_F(select_auth_username)
+SELECT_F(select_auth_username_comp)
 
 static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0},
@@ -166,6 +188,22 @@ static select_row_t select_core[] = {
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msgheader, SEL_PARAM_EXPECTED},
 	{ select_msgheader, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT | FIXUP_CALL},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("proxy_authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_PROXY},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_WWW}, 
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("username"), select_auth_username, DIVERSION | SEL_AUTH_USERNAME},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("realm"), select_auth_param, DIVERSION | SEL_AUTH_REALM},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("nonce"), select_auth_param, DIVERSION | SEL_AUTH_NONCE},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_auth_param, DIVERSION | SEL_AUTH_URI},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("cnonce"), select_auth_param, DIVERSION | SEL_AUTH_CNONCE},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("nc"), select_auth_param, DIVERSION | SEL_AUTH_NC},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("response"), select_auth_param, DIVERSION | SEL_AUTH_RESPONSE},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("opaque"), select_auth_param, DIVERSION | SEL_AUTH_OPAQUE},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("algorithm"), select_auth_param, DIVERSION | SEL_AUTH_ALG},
+	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("qop"), select_auth_param, DIVERSION | SEL_AUTH_QOP},
+	{ select_auth_username, SEL_PARAM_STR, STR_STATIC_INIT("user"), select_auth_username_comp, DIVERSION | SEL_AUTH_USER},
+	{ select_auth_username, SEL_PARAM_STR, STR_STATIC_INIT("domain"), select_auth_username_comp, DIVERSION | SEL_AUTH_DOMAIN},
+
 	{ select_anyheader, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
