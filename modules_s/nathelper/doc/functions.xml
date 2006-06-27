@@ -196,6 +196,7 @@ ping_contact($c);
 ...
 $c = @nathelper.rewrite_contact[1];
 ...
+$c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
 	    </programlisting>
 	</example>
     </section>

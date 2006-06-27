@@ -344,12 +344,14 @@ static int sel_nathelper(str* res, select_t* s, struct sip_msg* msg) {  /* dummy
 }
 
 static int sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg);
-//TODO:SELECT_F(select_any_nameuri)
+
+SELECT_F(select_any_nameaddr)
 
 select_row_t sel_declaration[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("nathelper"), sel_nathelper, SEL_PARAM_EXPECTED},
 	{ sel_nathelper, SEL_PARAM_STR, STR_STATIC_INIT("rewrite_contact"), sel_rewrite_contact, CONSUME_NEXT_INT },
-//TODO:	{ sel_rewrite_contact, SEL_PARAM_INT, STR_NULL, select_any_nameuri, NESTED},
+
+	{ sel_rewrite_contact, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
