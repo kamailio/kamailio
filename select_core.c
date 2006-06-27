@@ -649,10 +649,33 @@ int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 {
+	param_hooks_t h;
+	param_t *p, *list=NULL;
+	str* wanted;
+	
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
-		
-	RETURN0_res(uri.params);
+	
+	if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1)
+		RETURN0_res(uri.params);
+
+	if (s->params[s->param_offset[s->lvl]+1].type!=SEL_PARAM_STR) return -1;
+	wanted=&s->params[s->param_offset[s->lvl]+1].v.s;
+	
+	if (parse_params(&uri.params, CLASS_ANY, &h, &list)<0) return -1;
+	
+	for (p = list; p->next; p=p->next) {
+		if ((p->name.len==wanted->len) && 
+			 !strncmp(p->name.s, wanted->s,wanted->len)) {
+			*res=p->body;
+			free_params(list);
+			return (res->len ? 0 : 1);
+		}
+	}
+	free_params(list);
+
+	DBG("SELECT ...uri.params.%s NOT FOUND !", wanted->s);
+	return -1;
 }
 
 int select_event(str* res, select_t* s, struct sip_msg* msg)
@@ -856,7 +879,7 @@ int select_auth_param(str* res, select_t* s, struct sip_msg* msg)
 	struct hdr_field* hdr;
 	dig_cred_t* cred;
 
-	if (s->n != 3 && s->n != 4 || s->params[s->n - 1].type != SEL_PARAM_DIV) return -1;
+	if ((s->n != 3 && s->n != 4) || (s->params[s->n - 1].type != SEL_PARAM_DIV)) return -1;
 
 	hdr = get_credentials(msg, s);
 	if (!hdr) return 1;
