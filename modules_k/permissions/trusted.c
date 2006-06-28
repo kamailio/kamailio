@@ -60,10 +60,11 @@ int init_trusted(void)
 {
 	int ver;
 	str name;
-	     /* Check if hash table needs to be loaded from trusted table */
+	/* Check if hash table needs to be loaded from trusted table */
 
 	if (!db_url) {
-		LOG(L_INFO, "db_url parameter of permissions module not set, disabling allow_trusted\n");
+		LOG(L_INFO, "db_url parameter of permissions module not set, "
+			"disabling allow_trusted\n");
 		return 0;
 	} else {
 		if (bind_dbmod(db_url, &perm_dbf) < 0) {
@@ -74,7 +75,7 @@ int init_trusted(void)
 
 		if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
 			LOG(L_ERR, "ERROR: permissions: init_trusted: "
-			    "Database module does not implement 'query' function\n");
+				"Database module does not implement 'query' function\n");
 			return -1;
 		}
 	}
@@ -95,20 +96,24 @@ int init_trusted(void)
 		ver = table_version(&perm_dbf, db_handle, &name);
 
 		if (ver < 0) {
-			LOG(L_ERR, "permissions:init_trusted(): Error while querying table version\n");
+			LOG(L_ERR, "permissions:init_trusted(): Error while querying "
+					"table version\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "permissions:init_trusted(): Invalid table version (use openser_mysql.sh reinstall)\n");
+			LOG(L_ERR, "permissions:init_trusted(): Invalid table version %d "
+					"- expected %d (use openser_mysql.sh reinstall)\n",
+					ver,TABLE_VERSION);
 			perm_dbf.close(db_handle);
 			return -1;
-		}		
+		}
 		
 		/* Initialize fifo interface */
 		(void)init_trusted_fifo();
 		
 		if (init_trusted_unixsock() < 0) {
-			LOG(L_ERR, "permissions:init_trusted(): Error while initializing unixsock interface\n");
+			LOG(L_ERR, "permissions:init_trusted(): Error while initializing "
+				"unixsock interface\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}
@@ -129,16 +134,27 @@ int init_trusted(void)
 			LOG(L_CRIT, "init_trusted(): Reload of trusted table failed\n");
 			goto error;
 		}
-			
+
 		perm_dbf.close(db_handle);
+		db_handle = 0;
 	}
 	return 0;
 
- error:
-	if (hash_table_1) free_hash_table(hash_table_1);
-	if (hash_table_2) free_hash_table(hash_table_2);
-	if (hash_table) shm_free(hash_table);
+error:
+	if (hash_table_1) {
+		free_hash_table(hash_table_1);
+		hash_table_1 = 0;
+	}
+	if (hash_table_2) {
+		free_hash_table(hash_table_2);
+		hash_table_2 = 0;
+	}
+	if (hash_table) {
+		shm_free(hash_table);
+		hash_table = 0;
+	}
 	perm_dbf.close(db_handle);
+	db_handle = 0;
 	return -1;
 }
 

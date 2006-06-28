@@ -447,7 +447,7 @@ static int single_fixup(void** param, int param_no)
 }
 
 
-/* 
+/*
  * module initialization function 
  */
 static int mod_init(void)
@@ -455,31 +455,33 @@ static int mod_init(void)
 	LOG(L_INFO, "permissions - initializing\n");
 
 	allow[0].filename = get_pathname(DEFAULT_ALLOW_FILE);
-        allow[0].rules = parse_config_file(allow[0].filename);
-        if (allow[0].rules) {
-                LOG(L_INFO, "Default allow file (%s) parsed\n", allow[0].filename);
+	allow[0].rules = parse_config_file(allow[0].filename);
+	if (allow[0].rules) {
+		LOG(L_INFO, "Default allow file (%s) parsed\n", allow[0].filename);
 	} else {
-		LOG(L_WARN, "Default allow file (%s) not found => empty rule set\n", allow[0].filename);
+		LOG(L_WARN, "Default allow file (%s) not found => empty rule set\n",
+			allow[0].filename);
 	}
-	
+
 	deny[0].filename = get_pathname(DEFAULT_DENY_FILE);
 	deny[0].rules = parse_config_file(deny[0].filename);
 	if (deny[0].rules) {
 		LOG(L_INFO, "Default deny file (%s) parsed\n", deny[0].filename);
 	} else {
-		LOG(L_WARN, "Default deny file (%s) not found => empty rule set\n", deny[0].filename);
+		LOG(L_WARN, "Default deny file (%s) not found => empty rule set\n",
+			deny[0].filename);
 	}
 
 	if (init_trusted() != 0) {
 		LOG(L_ERR, "Error while initializing allow_trusted function\n");
+		return -1;
 	}
-	
+
 	if (init_tag_avp( tag_avp_param) < 0) {
-	    LOG(L_ERR,"ERROR:permissions:mod_init: "
-		"failed to process tag AVP\n");
-	    return -1;
+		LOG(L_ERR,"ERROR:permissions:mod_init: failed to process tag AVP\n");
+		return -1;
 	}
-	
+
 	rules_num = 1;
 	return 0;
 }

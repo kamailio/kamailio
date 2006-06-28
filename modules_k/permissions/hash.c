@@ -43,16 +43,16 @@ static str     tag_str;
  */
 int init_tag_avp(char *tag_avp_param)
 {
-    if (tag_avp_param && *tag_avp_param) {
-	tag_str.s = tag_avp_param;
-	tag_str.len = strlen(tag_str.s);
-	if (parse_avp_spec( &tag_str, &tag_avp_type, &tag_avp)<0) {
-	    LOG(L_CRIT,"ERROR:permissions:init_tag_avp: "
-		"invalid tag AVP spec \"%s\"\n", tag_avp_param);
-	    return -1;
+	if (tag_avp_param && *tag_avp_param) {
+		tag_str.s = tag_avp_param;
+		tag_str.len = strlen(tag_str.s);
+		if (parse_avp_spec( &tag_str, &tag_avp_type, &tag_avp)<0) {
+			LOG(L_CRIT,"ERROR:permissions:init_tag_avp: "
+				"invalid tag AVP spec \"%s\"\n", tag_avp_param);
+			return -1;
+		}
 	}
-    }
-    return 0;
+	return 0;
 }
 
 
