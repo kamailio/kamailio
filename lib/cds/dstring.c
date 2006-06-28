@@ -27,26 +27,28 @@
 #include <string.h>
 #include <cds/dstring.h>
 #include <cds/memory.h>
+#include <cds/list.h>
+#include <cds/logger.h>
 
-static dstr_buff_t *get_current_buffer(dstring_t *dstr) 
-{
-	dstr_buff_t *buff;
-	buff = (dstr_buff_t*)dlink_element_data(dlink_last_element(&dstr->buffers));
-	return buff;
-}
+#define get_current_buffer(dstr) (dstr)->last
 
 static dstr_buff_t *add_new_buffer(dstring_t *dstr) 
 {
 	dstr_buff_t *buff = NULL;
-	dlink_element_t *e;
 	
 	/* e = dlink_element_alloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size); */
-	e = dlink_element_alloc(sizeof(dstr_buff_t) + dstr->buff_size);
-	if (e) {
-		buff = (dstr_buff_t*)dlink_element_data(e);
+/*	if (dstr->flags & DSTR_PKG_MEM)
+		buff = cds_malloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size);
+	else
+		buff = cds_malloc(sizeof(dstr_buff_t) + dstr->buff_size);
+		*/
+/*	buff = cds_malloc(sizeof(dstr_buff_t) + dstr->buff_size);*/
+	buff = cds_malloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size);
+	if (buff) {
 		buff->len = dstr->buff_size;
 		buff->used = 0;
-		dlink_add(&dstr->buffers, e);
+		buff->next = NULL;
+		LINKED_LIST_ADD(dstr->first, dstr->last, buff);
 	}
 	else dstr->error = 1;
 	return buff;
@@ -57,7 +59,7 @@ int dstr_append(dstring_t *dstr, const char *s, int len)
 	int size;
 	dstr_buff_t *buff;
 
-	if (!dstr) return -1;
+/*	if (!dstr) return -1; */
 	if (dstr->error) return -2;
 
 	if (len == 0) return 0; /*append empty string*/
@@ -83,38 +85,36 @@ int dstr_append(dstring_t *dstr, const char *s, int len)
 
 int dstr_append_zt(dstring_t *dstr, const char *s)
 {
-	if (!dstr) return -1;
+/*	if (!dstr) return -1; */
 	if (!s) return 0; /*append empty string*/
 	return dstr_append(dstr, s, strlen(s));
 }
 
 int dstr_append_str(dstring_t *dstr, const str_t *s)
 {
-	if (!dstr) return -1;
+/*	if (!dstr) return -1; */
 	if (!s) return 0; /*append empty string*/
 	return dstr_append(dstr, s->s, s->len);
 }
 
-int dstr_get_data_length(dstring_t *dstr)
+/* int dstr_get_data_length(dstring_t *dstr)
 {
 	if (!dstr) return 0;
 	else return dstr->len;
-}
+} */
 
 int dstr_get_data(dstring_t *dstr, char *dst)
 {
-	dlink_element_t *e;
 	dstr_buff_t* buff;
 	
-	if (!dstr) return -1;
+	/* if (!dstr) return -1; */
 	if (dstr->error) return -2; /* a previous operation returned error */
 	
-	e = dlink_start_walk(&dstr->buffers);
-	while (e) {
-		buff = (dstr_buff_t*)dlink_element_data(e);
+	buff = dstr->first;
+	while (buff) {
 		memcpy(dst, buff->data, buff->used);
 		dst += buff->used;
-		e = dlink_next_element(e);
+		buff = buff->next;
 	}
 	return 0;
 }
@@ -125,7 +125,8 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 	
 	if (!dst) return -1;
 	if (dstr->error) {
-		str_clear(dst);
+		dst->s = NULL;
+		dst->len = 0;
 		return -2; /* a previous operation returned error */
 	}
 
@@ -135,7 +136,6 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 		if (!dst->s) {
 			res = -1;
 			dst->len = 0;
-			dst->s = NULL;
 		}
 		else res = dstr_get_data(dstr, dst->s);
 	} 
@@ -147,34 +147,65 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 	return res;
 }
 
+int dstr_get_str_pkg(dstring_t *dstr, str_t *dst)
+{
+	int res = 0;
+	
+	if (!dst) return -1;
+	if (dstr->error) {
+		dst->s = NULL;
+		dst->len = 0;
+		return -2; /* a previous operation returned error */
+	}
+
+	dst->len = dstr_get_data_length(dstr);
+	if (dst->len > 0) {
+		dst->s = (char*)cds_malloc_pkg(dst->len);
+		if (!dst->s) {
+			res = -1;
+			dst->len = 0;
+		}
+		else res = dstr_get_data(dstr, dst->s);
+	} 
+	else {
+		dst->s = NULL;
+		dst->len = 0;
+	}
+
+	return res;
+}
 
 int dstr_init(dstring_t *dstr, int buff_size)
 {
-	if (!dstr) return -1;
+	/* if (!dstr) return -1; */
 	dstr->buff_size = buff_size;
 	dstr->len = 0;
 	dstr->error = 0;
-	dlink_init(&dstr->buffers);
+	dstr->first = 0;
+	dstr->last = 0;
 	return 0;
 }
 
 int dstr_destroy(dstring_t *dstr)
 {
-	dlink_element_t *e,*n;
-	if (!dstr) return -1;
+	dstr_buff_t *e,*n;
+/*	if (!dstr) return -1; */
 	/* dlink_destroy(&dstr->buffers); */
-	e = dlink_start_walk(&dstr->buffers);
+	e = dstr->first;
 	while (e) {
-		n = dlink_next_element(e);
-		dlink_remove(&dstr->buffers, e);
-		dlink_element_free(e);
-		/* dlink_element_free_pkg(e); */
+		n = e->next;
+/*		if (dstr->flags & DSTR_PKG_MEM) cds_free_pkg(e);
+		else cds_free(e);*/
+/*		cds_free(e);*/
+		cds_free_pkg(e);
 		e = n;
 	}
+	dstr->first = 0;
+	dstr->last = 0;
 	return 0;
 }
 
-int dstr_error(dstring_t *dstr)
+/* int dstr_error(dstring_t *dstr)
 {
 	if (dstr) return dstr->error;
 	else return -1;
@@ -184,4 +215,4 @@ void dstr_clear_error(dstring_t *dstr)
 {
 	if (dstr) dstr->error = 0;
 }
-
+*/

@@ -56,6 +56,8 @@ void cds_memory_trace_init();
 #define cds_free(p)		debug_free(p,__FILE__, __LINE__)
 #define cds_free_ptr	debug_free_ex
 #define cds_malloc_ptr	debug_malloc_ex
+#define cds_malloc_pkg(s)	debug_malloc(s,__FILE__, __LINE__)
+#define cds_free_pkg(p)		debug_free(p,__FILE__, __LINE__)
 
 #else /* !TRACE */
 
@@ -71,6 +73,8 @@ void shm_free_x(void *ptr);
 #define cds_free(p)		shm_free(p)
 #define cds_malloc_ptr	shm_malloc_x
 #define cds_free_ptr	shm_free_x
+#define cds_malloc_pkg(s)	pkg_malloc(s)
+#define cds_free_pkg(p)		pkg_free(p)
 
 #else /* !SER */
 
@@ -80,6 +84,8 @@ void shm_free_x(void *ptr);
 #define cds_free(p)		free(p)
 #define cds_malloc_ptr	malloc
 #define cds_free_ptr	free
+#define cds_malloc_pkg(s)	malloc(s)
+#define cds_free_pkg(p)		free(p)
 
 #endif /* !SER */
 

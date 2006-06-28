@@ -28,7 +28,8 @@ multiple strings without worry about memory allocations.</para>
 
 <para>Internaly it uses list of data buffers which are allocated 
 if needed. The content of dynamic string may be copied out from internal buffers
-using simple function call (see <xref linkend="dstr_get_data"/>).
+using simple function call (see <xref linkend="dstr_get_data"/>). Internal
+buffers are allocated in package memory (when compiled with SER)!
 </para>
 
 <para>This structure is used as base for simple object serialization (see <xref

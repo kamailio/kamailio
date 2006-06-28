@@ -25,6 +25,7 @@
 
 #include <cds/serialize.h>
 #include <cds/logger.h>
+#include <stdio.h>
 
 int init_input_sstream(sstream_t *ss, char *data_in, int data_len)
 {

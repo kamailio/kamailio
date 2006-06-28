@@ -1,3 +1,8 @@
+2006-06-28
+	* optimalization of dstring operations (internal buffers allocated in PKG
+	memory, some functions changed to macros, added function dstr_get_str_pkg)
+	* some str functions changed to macros
+
 2006-06-23
 	* added function requires_extension
 

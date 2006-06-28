@@ -182,7 +182,7 @@ void str_free(str_t *s)
 		str_free_content(s);
 		cds_free(s);
 	}
-}*/
+}
 
 void str_clear(str_t *s)
 {
@@ -190,7 +190,7 @@ void str_clear(str_t *s)
 		s->s = NULL;
 		s->len = 0;
 	}
-}
+} */
 
 char *str_strchr(const str_t *s, char c)
 {

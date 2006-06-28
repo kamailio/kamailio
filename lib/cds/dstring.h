@@ -27,22 +27,26 @@
 #define __DSTRING_H
 
 #include <cds/sstr.h>
-#include <cds/dlink.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct dstr_buff {
+typedef struct _dstr_buff_t {
 	int len;
 	int used;
+	struct _dstr_buff_t *next; /* pointer to next buffer */
 	char data[1];
 } dstr_buff_t;
 
 /** Dynamic string structure. It is used
- * for muliple appends of any strings. */
+ * for muliple appends of any strings. 
+ *
+ * There was an attempt to add flags for SHM/PKG memory using, ...
+ * but it shows that it slows down, thus they were removed and only the
+ * "most quick" version is used (rather two functions than one with param) */
 typedef struct _dstring_t {
-	dlink_t buffers;
+	dstr_buff_t *first, *last;
 	/** the length of whole string */
 	int len;
 	int buff_size;
@@ -54,15 +58,20 @@ typedef struct _dstring_t {
 int dstr_append_zt(dstring_t *dstr, const char *s);
 int dstr_append(dstring_t *dstr, const char *s, int len);
 int dstr_append_str(dstring_t *dstr, const str_t *s);
-int dstr_get_data_length(dstring_t *dstr);
+/* int dstr_get_data_length(dstring_t *dstr); */
 int dstr_get_data(dstring_t *dstr, char *dst);
 int dstr_get_str(dstring_t *dstr, str_t *dst);
+int dstr_get_str_pkg(dstring_t *dstr, str_t *dst);
 int dstr_init(dstring_t *dstr, int buff_size);
 int dstr_destroy(dstring_t *dstr);
 
 /* returns nozero if error !!! */
-int dstr_error(dstring_t *dstr);
-void dstr_clear_error(dstring_t *dstr);
+/* int dstr_error(dstring_t *dstr);
+void dstr_clear_error(dstring_t *dstr); */
+
+#define dstr_get_data_length(dstr) (dstr)->len
+#define dstr_error(dstr) (dstr)->error
+#define dstr_clear_error(dstr) (dstr)->error = 0
 
 #ifdef __cplusplus
 }

@@ -73,18 +73,25 @@ char *zt_strdup(const char*src);
 
 /** frees string content if allocated */
 /* void str_free_content(str_t *s); */
-#define str_free_content(str)	if (str) { \
+#define str_free_content(str)	do { if (str) { \
 		if (((str)->len > 0) && ((str)->s)) cds_free((str)->s);\
 		(str)->len = 0; \
 		(str)->s = 0; \
-	}
+	} } while (0)
 
 /** frees string content if allocated and then the string itself */
 /* void str_free(str_t *s); */
-#define str_free(str)	if (str) { \
-		str_free_content(str); \
+#define str_free(str)	do { if (str) { \
+		if (((str)->len > 0) && ((str)->s)) cds_free((str)->s);\
 		cds_free(str); \
-	}
+	} } while (0)
+
+/* clears string content */
+#define str_clear(str)	do { if (str) { \
+		(str)->len = 0; \
+		(str)->s = 0; \
+	} } while (0)
+
 
 /** case sensitive comparation - returns 0 if equal, nonzero otherwise */
 int str_case_equals(const str_t *a, const str_t *b);
@@ -99,7 +106,7 @@ int str_prefix(const str_t *a, const str_t *b); /* ss_start */
 
 /* #define ss_cmp(const str_t *a, const str_t *b) ((a->len == b->len)?sz_cmp(a, b->s):(-1)) */
 
-void str_clear(str_t *s);
+/* void str_clear(str_t *s); */
 
 /** locate character in string */
 char *str_strchr(const str_t *s, char c);
