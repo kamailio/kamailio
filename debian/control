@@ -24,7 +24,7 @@ Description: Sip Express Router, very fast and configurable SIP proxy
 Package: ser-ctl
 Architecture: any
 Depends: python2.3
-Suggests: python2.3-mysqldb, python2.3-psycopg
+Suggests: python2.3-mysqldb, python2.3-psycopg, uuid
 Description: SER command line administration tools
  This package contains the SER command line administration tools written
  in python. The tools can be used to administer SIP accounts, SIP domains,
