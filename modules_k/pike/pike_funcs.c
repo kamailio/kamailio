@@ -213,7 +213,7 @@ void clean_routine(unsigned int ticks , void *param)
 			ll->prev = ll->prev->prev;
 			node->expires = 0;
 			node->timer_ll.prev = node->timer_ll.next = 0;
-			if ( node->flags|NODE_EXPIRED_FLAG)
+			if ( node->flags&NODE_EXPIRED_FLAG )
 				node->flags &= ~NODE_EXPIRED_FLAG;
 			else
 				continue;
