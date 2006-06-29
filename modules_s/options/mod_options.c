@@ -67,7 +67,7 @@ static param_export_t params[] = {
 	{"accept",          PARAM_STRING, &acpt_c},
 	{"accept_encoding", PARAM_STRING, &acpt_enc_c},
 	{"accept_language", PARAM_STRING, &acpt_lan_c},
-	{"support",         PARAM_STRING, &supt_c},
+	{"supported",       PARAM_STRING, &supt_c},
 	{0, 0, 0}
 };
 

@@ -78,21 +78,22 @@ modparam("options", "accept_language", "de")
 	</example>
     </section>
     
-    <section id="options.support">
-	<title><varname>support</varname> (string)</title>
+    <section id="options.supported">
+	<title><varname>supported</varname> (string)</title>
 	<para>
-	    This parameter is the content of the Support header field.  Please
-	    do not change the default value, because SER currently does not
-	    support any of the SIP extensions registered at the IANA.
+	    This parameter is the content of the Supported header field  Here
+	    you can enter the extensions which are supported by your SER config.
+	    Normally you should only use values here which are registered with the
+	    IANA.
 	</para>
 	<para>
 	    Default value is "".
 	</para>
 	<example>
-	    <title>Set <varname>support</varname> parameter</title>
+	    <title>Set <varname>supported</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("options", "support", "100rel")
+modparam("options", "supported", "100rel")
 ...
 	    </programlisting>
 	</example>
