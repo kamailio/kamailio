@@ -61,6 +61,7 @@ enum {
 	SEL_AUTH_QOP
 };
 
+SELECT_F(select_method)
 SELECT_F(select_ruri)
 SELECT_F(select_from)
 SELECT_F(select_from_uri)
@@ -120,6 +121,7 @@ SELECT_F(select_auth_username)
 SELECT_F(select_auth_username_comp)
 
 static select_row_t select_core[] = {
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0},
 	{ select_ruri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("from"), select_from, 0},

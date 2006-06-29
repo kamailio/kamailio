@@ -212,15 +212,20 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	/* parsing error, memory alloc, whatever ... if via is bad
 	   and we are forced to reply there, return with 0 (->break),
 	   pass error status otherwise
+
+       MMA: return value E_SCRIPT means that transaction was already started from the script
+	   so continue with that transaction
 	*/
-	if (new_tran<0) {
-		ret = (ser_error==E_BAD_VIA && reply_to_via) ? 0 : new_tran;
-		goto done;
-	}
-	/* if that was a retransmission, return we are happily done */
-	if (new_tran==0) {
-		ret = 1;
-		goto done;
+	if (new_tran!=E_SCRIPT) {
+		if (new_tran<0) {
+			ret = (ser_error==E_BAD_VIA && reply_to_via) ? 0 : new_tran;
+			goto done;
+		}
+		/* if that was a retransmission, return we are happily done */
+		if (new_tran==0) {
+			ret = 1;
+			goto done;
+		}
 	}
 
 	/* new transaction */

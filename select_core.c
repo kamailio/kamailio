@@ -57,6 +57,13 @@
 #define TEST_RET_res_body(x) if (x){*res=x->body;return 0;}else return 1;
 #define TEST_RET_res_value(x) if (x){*res=x->value;return 0;}else return 1;
 
+int select_method(str* res, select_t* s, struct sip_msg* msg)
+{
+	if (msg->first_line.type==SIP_REQUEST) {
+		RETURN0_res(msg->first_line.u.request.method);
+	} else return -1;
+}
+
 int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 {
 	if (msg->first_line.type==SIP_REQUEST) {
@@ -67,7 +74,7 @@ int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 			RETURN0_res(msg->first_line.u.request.uri);
 		}
 	}
-	return 1;
+	return -1;
 }
 
 int select_from(str* res, select_t* s, struct sip_msg* msg)
@@ -117,15 +124,15 @@ int select_from_params(str* res, select_t* s, struct sip_msg* msg)
 
 int parse_to_header(struct sip_msg *msg)
 {
-        if ( !msg->to && ( parse_headers(msg,HDR_TO_F,0)==-1 || !msg->to)) {
-                ERR("bad msg or missing TO header\n");
-                return -1;
-        }
+	if ( !msg->to && ( parse_headers(msg,HDR_TO_F,0)==-1 || !msg->to)) {
+		ERR("bad msg or missing TO header\n");
+		return -1;
+	}
 
-        // HDR_TO_T is automatically parsed (get_hdr_field in parser/msg_parser.c)
-        // so check only ptr validity
-        if (msg->to->parsed)
-                return 0;
+	// HDR_TO_T is automatically parsed (get_hdr_field in parser/msg_parser.c)
+	// so check only ptr validity
+	if (msg->to->parsed)
+		return 0;
 	else
 		return -1;
 }
