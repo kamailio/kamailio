@@ -90,10 +90,13 @@ SELECT_F(select_via_params_spec)
 
 SELECT_F(select_msgheader)
 SELECT_F(select_anyheader)
+SELECT_F(select_anyheader_params)
 
 SELECT_F(select_any_nameaddr)
 SELECT_F(select_nameaddr_name)
 SELECT_F(select_nameaddr_uri)
+SELECT_F(select_nameaddr_params)
+SELECT_F(select_any_params)
 	
 SELECT_F(select_any_uri)
 SELECT_F(select_uri_type)
@@ -187,10 +190,15 @@ static select_row_t select_core[] = {
 
 	{ select_any_nameaddr, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_nameaddr_name, 0},
 	{ select_any_nameaddr, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_nameaddr_uri, 0},
+	{ select_any_nameaddr, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_nameaddr_params, 0},
 	{ select_nameaddr_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ select_nameaddr_params, SEL_PARAM_STR, STR_NULL, select_any_params, 0},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msgheader, SEL_PARAM_EXPECTED},
 	{ select_msgheader, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT | FIXUP_CALL},
+	{ select_anyheader, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ select_anyheader, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_anyheader_params, NESTED},
+	{ select_anyheader_params, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_any_params, CONSUME_NEXT_STR},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("proxy_authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_PROXY},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_WWW}, 
@@ -207,7 +215,6 @@ static select_row_t select_core[] = {
 	{ select_auth_username, SEL_PARAM_STR, STR_STATIC_INIT("user"), select_auth_username_comp, DIVERSION | SEL_AUTH_USER},
 	{ select_auth_username, SEL_PARAM_STR, STR_STATIC_INIT("domain"), select_auth_username_comp, DIVERSION | SEL_AUTH_DOMAIN},
 
-	{ select_anyheader, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
 

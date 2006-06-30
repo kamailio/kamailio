@@ -524,7 +524,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 	hf0 = NULL;
 
 	/* extract header index if present */
-	if (s->n == 3) {
+	if (s->param_offset[s->lvl+1] == 3) {
 		if (s->params[2].type == SEL_PARAM_INT) {
 			hi = s->params[2].v.i;
 		} else {
@@ -558,6 +558,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 	return 0;
 }
 
+ABSTRACT_F(select_anyheader_params)
 ABSTRACT_F(select_any_uri)
 
 static struct sip_uri uri;
@@ -656,6 +657,22 @@ int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 {
+	if (!msg || !res) {
+		return select_any_params(res, s, msg);
+	}
+
+	if (parse_uri(res->s, res->len, &uri)<0)
+		return -1;
+	
+	if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1)
+		RETURN0_res(uri.params);
+
+	*res=uri.params;
+	return select_any_params(res, s, msg);
+}
+
+int select_any_params(str* res, select_t* s, struct sip_msg* msg)
+{
 	param_hooks_t h;
 	param_t *p, *list=NULL;
 	str* wanted;
@@ -671,17 +688,11 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 		return 0;
 	}
 	
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
-	
-	if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1)
-		RETURN0_res(uri.params);
-
 	if (s->params[s->param_offset[s->lvl]+1].type!=SEL_PARAM_STR) return -1;
 	wanted=&s->params[s->param_offset[s->lvl]+1].v.s;
 	
-	if (!uri.params.len) return -1;
-	if (parse_params(&uri.params, CLASS_ANY, &h, &list)<0) return -1;
+	if (!res->len) return -1;
+	if (parse_params(res, CLASS_ANY, &h, &list)<0) return -1;
 	
 	for (p = list; p; p=p->next) {
 		if ((p->name.len==wanted->len) && 
@@ -973,3 +984,35 @@ int select_nameaddr_uri(str* res, select_t* s, struct sip_msg* msg)
 	res->len=p-res->s;
 	return 0;
 }
+
+int select_nameaddr_params(str* res, select_t* s, struct sip_msg* msg)
+{
+	char *p;
+	
+	p=find_not_quoted(res, '<');
+	if (!p) {
+		p=find_not_quoted(res, ';');
+	} else {
+		res->len=res->len - (p-res->s) -1;
+		res->s=p +1;
+		p=find_not_quoted(res, '>');
+		if (!p) {
+			ERR("select_nameaddr_params: no > found, invalid nameaddr value\n");
+			return -1;
+		}
+		res->len=res->len - (p-res->s) -1;
+		res->s=p +1;
+		
+		p=find_not_quoted(res, ';');
+	}
+	if (!p) return 1;
+	
+	res->len=res->len - (p-res->s) -1;
+	res->s=p +1;
+	
+	if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1)
+		return (res->len ? 0 : 1);
+
+	return select_any_params(res, s, msg);
+}
+
