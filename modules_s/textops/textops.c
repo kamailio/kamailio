@@ -1812,17 +1812,46 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 			}
 			break;
 		case hnoGetValue:
-			r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
-			if (r > 0) {
-				if (hname->param.len) {
-					str d1, d2;
-					get_uri_and_skip_until_params(&hval1, &dummy_name, &huri);
-					if (find_hf_value_param(hname, &hval1, &val, &d1, &d2)) {
-						*res = val;
+			if (hname->flags & HNF_ALL || (hname->flags & HNF_IDX) == 0) {
+				res->s = retbuf_tail;
+				hf = 0;
+				do {
+					r = find_next_hf(msg, hname, &hf);
+					if (r < 0) break;
+					if (hf) {
+						char *p;
+						hval2.len = 0;
+						p = hf->body.s;
+						do {
+							r = find_next_value(&p, hf->body.s+hf->body.len, &hval1, &hval2);
+							if (retbuf_tail+hval1.len+1 > retbuf+retbuf_size) goto brk2;
+							if (retbuf_tail != res->s) {
+								*retbuf_tail = ',';
+								retbuf_tail++;
+							}
+							if (hval1.len) {
+								memcpy(retbuf_tail, hval1.s, hval1.len);
+								retbuf_tail+= hval1.len;
+							}
+						} while (r);
 					}
-				}
-				else {
-					*res = hval1;
+				} while (hf);
+			brk2:
+				res->len = retbuf_tail-res->s;
+			}
+			else {
+				r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+				if (r > 0) {
+					if (hname->param.len) {
+						str d1, d2;
+						get_uri_and_skip_until_params(&hval1, &dummy_name, &huri);
+						if (find_hf_value_param(hname, &hval1, &val, &d1, &d2)) {
+							*res = val;
+						}
+					}
+					else {
+						*res = hval1;
+					}
 				}
 			}
 			break;
