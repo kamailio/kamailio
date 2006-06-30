@@ -1,4 +1,4 @@
-# New ports collection makefile for:    ser
+# New ports collection makefile for:    openser
 #
 # $OpenBSD$
 #
@@ -8,9 +8,9 @@
 COMMENT= "Open SIP Express Router"
 
 PORTNAME= openser
-PORTVERSION= 1.0.0
+PORTVERSION= 1.1.0
 CATEGORIES= net
-MASTER_SITES= http://openser.org/pub/openser/1.0.0/src/
+MASTER_SITES= http://openser.org/pub/openser/1.1.0/src/
 
 MAINTAINER= daniel@voice-system.ro
 
