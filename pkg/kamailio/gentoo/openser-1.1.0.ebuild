@@ -12,14 +12,16 @@ SRC_URI="http://openser.org/pub/openser/${PV}/src/${MY_P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~x86"
-IUSE="debug ipv6 mysql postgres radius jabber ssl"
+IUSE="debug ipv6 mysql postgres radius jabber ssl cpl unixodbc"
 
 RDEPEND="
-	mysql? ( >=dev-db/mysql-3.23.52 )
+	mysql? ( >=dev-db/mysql-4.1.20 )
 	radius? ( >=net-dialup/radiusclient-ng-0.5.0 )
-	postgres? ( >=dev-db/postgresql-7.3.4 )
+	postgres? ( >=dev-db/postgresql-8.0.8 )
 	jabber? ( dev-libs/expat )
-	ssl? ( dev-libs/openssl )"
+	ssl? ( dev-libs/openssl )
+	cpl? ( dev-libs/libxml2 )
+	unixodbc? ( dev-libs/unixodbc-2.2.6 )"
 
 inc_mod=""
 make_options=""
@@ -36,7 +38,13 @@ pkg_setup() {
 
 	use jabber && \
 		inc_mod="${inc_mod} jabber"
-		
+
+	use cpl && \
+		inc_mod="${inc_mod} cpl-c"
+
+	use unixodbc && \
+		inc_mod="${inc_mod} unixodbc"
+
 	export inc_mod
 }
 
@@ -98,10 +106,10 @@ src_install () {
 }
 
 pkg_postinst() {
-	einfo "WARNING: If you upgraded from a previous Ser version"
+	einfo "WARNING: If you upgraded from a previous OpenSER version"
 	einfo "please read the README, NEWS and INSTALL files in the"
 	einfo "documentation directory because the database and the"
-	einfo "configuration file of old Ser versions are incompatible"
+	einfo "configuration file of old OpenSER versions are incompatible"
 	einfo "with the current version."
 }
 
