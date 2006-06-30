@@ -1,3 +1,9 @@
+openser##PKGVER## (1.1.0-0.0) unstable; urgency=low
+
+  * new debian packaging: openser-unixodbc and openser-pa
+
+ -- Daniel-Constantin Mierla <daniel@voice-system.ro>  Fri, 30 Jun 2006 16:00:00 +0200
+
 openser##PKGVER## (1.0.1-0.1) unstable; urgency=low
 
   * debian packaging files are created from templates
