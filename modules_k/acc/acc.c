@@ -156,6 +156,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 	do{ \
 		if (!from_to_set) {\
 			if(_msg->msg_flags&FL_REQ_UPSTREAM){\
+				DBG("DBUG:acc:fmt2strar: UPSTREAM flag set -> swap F/T\n"); \
 				/* swap from and to */ \
 				_from = to_hdr; \
 				_to = _msg->from; \

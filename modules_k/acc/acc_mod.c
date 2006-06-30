@@ -581,6 +581,7 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 		}
 		/* if required, determine request direction */
 		if( detect_direction && !rrb.is_direction(ps->req,RR_FLOW_UPSTREAM) ) {
+			DBG("DBUG:acc:acc_onreq: UPSTREAM req detected -> flaging it\n");
 			ps->req->msg_flags |= FL_REQ_UPSTREAM;
 		}
 	}
