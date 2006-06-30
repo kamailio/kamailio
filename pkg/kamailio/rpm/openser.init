@@ -17,12 +17,12 @@ prog=openser
 RETVAL=0
 
 start() {
-        echo -n $"Starting $prog: "
-        daemon $oser $OPTIONS >/dev/null 2>/dev/null
-        RETVAL=$?
-        echo
-        [ $RETVAL = 0 ] && touch /var/lock/subsys/openser
-        return $RETVAL
+	echo -n $"Starting $prog: "
+	daemon $oser $OPTIONS >/dev/null 2>/dev/null
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/openser
+	return $RETVAL
 }
 
 stop() {
@@ -33,38 +33,31 @@ stop() {
 	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/openser /var/run/openser.pid
 }
 
-reload() {
-	echo -n $"Reloading $prog: "
-	killproc $oser -HUP
-	RETVAL=$?
-	echo
-}
-
 # See how we were called.
 case "$1" in
-  start)
-	start
-	;;
-  stop)
-	stop
-	;;
-  status)
-        status $oser
-	RETVAL=$?
-	;;
-  restart)
-	stop
-	start
-	;;
-  condrestart)
-	if [ -f /var/run/openser.pid ] ; then
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status $oser
+		RETVAL=$?
+		;;
+	restart)
 		stop
 		start
-	fi
-	;;
-  *)
-	echo $"Usage: $prog {start|stop|restart|condrestart|status|help}"
-	exit 1
+		;;
+	condrestart)
+		if [ -f /var/run/openser.pid ] ; then
+			stop
+			start
+		fi
+		;;
+	*)
+		echo $"Usage: $prog {start|stop|restart|condrestart|status|help}"
+		exit 1
 esac
 
 exit $RETVAL

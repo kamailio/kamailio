@@ -1,11 +1,14 @@
 %define name    openser
-%define ver     1.0.0
+%define ver     1.1.0
 %define rel     0
 
-%define EXCLUDED_MODULES	mysql jabber cpl-c avp_radius auth_radius group_radius uri_radius postgress pa
+%define EXCLUDED_MODULES	mysql jabber cpl-c avp_radius auth_radius group_radius uri_radius pa postgres osp tlsops unixodbc
 %define MYSQL_MODULES		mysql
+%define UNIXODBC_MODULES	unixodbc
+%define POSTGRES_MODULES	postgres
 %define JABBER_MODULES		jabber
 %define CPL_MODULES			cpl-c
+%define PA_MODULES			pa
 %define RADIUS_MODULES		avp_radius auth_radius group_radius uri_radius
 %define RADIUS_MOD_PATH		modules/avp_radius modules/auth_radius modules/group_radius modules/uri_radius
 
@@ -21,7 +24,7 @@ Source2:      openser.init
 URL:          http://openser.org/
 Vendor:       openser.org
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
-Conflicts:    openser-mysql < %ver, openser-jabber < %ver, openser-radius < %ver
+Conflicts:    openser-mysql < %ver, openser-jabber < %ver, openser-radius < %ver, openser-cpl < %ver, openser-unixodbc < %ver, openser-pa < %ver, openser-postgres < %ver
 BuildPrereq:  make flex bison
 
 
@@ -32,12 +35,13 @@ per second even on low-budget hardware. A C Shell like scripting language
 provides full control over the server's behaviour. It's modular
 architecture allows only required functionality to be loaded.
 Currently the following modules are available: digest authentication,
-CPL scripts, instant messaging, MySQL support, a presence agent, radius
-authentication, record routing, an SMS gateway, a jabber gateway, a 
-transaction module, registrar and user location.
+CPL scripts, instant messaging, MySQL and UNIXODBC support, a presence agent,
+radius authentication, record routing, an SMS gateway, a jabber gateway, a 
+transaction and dialog module, OSP module, statistics support, 
+registrar and user location.
 
 %package  mysql
-Summary:  MySQL connectivity for the SIP Express Router.
+Summary:  MySQL connectivity for the OPEN SIP Express Router.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  mysql-devel zlib-devel
@@ -47,8 +51,29 @@ The openser-mysql package contains MySQL database connectivity that you
 need to use digest authentication module or persistent user location
 entries.
 
+%package  postgres
+Summary:  MPOSTGRES connectivity for the OPEN SIP Express Router.
+Group:    System Environment/Daemons
+Requires: openser = %ver
+BuildPrereq:  postgresql-devel
+
+%description postgres
+The openser-postgres package contains Postgres database connectivity that you
+need to use digest authentication module or persistent user location
+entries.
+
+%package  unixodbc
+Summary:  UNIXODBC connectivity for OPEN SIP Express Router.
+Group:    System Environment/Daemons
+Requires: openser = %ver
+BuildPrereq:  unixodbc-dev
+
+%description unixodbc
+The openser-unixodbc package contains UNIXODBC database connectivity support
+that is required by other modules with database dependencies.
+
 %package  jabber
-Summary:  sip jabber message translation support for the Open SIP Express Router.
+Summary:  sip jabber message translation support for the OPEN SIP Express Router.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  expat-devel
@@ -56,14 +81,23 @@ BuildPrereq:  expat-devel
 %description jabber
 The openser-jabber package contains a sip to jabber message translator.
 
-%package  cpl
-Summary:  CPL interpreter engine for the Open SIP Express Router.
+%%package  cpl
+Summary:  CPL interpreter engine for the OPEN SIP Express Router.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  libxml2-dev
 
 %description cpl
 The openser-cpl package contains a SIP CPL interpreter engine.
+
+%package  pa
+Summary:  sip presence agent support for the OPEN SIP Express Router.
+Group:    System Environment/Daemons
+Requires: openser = %ver
+BuildPrereq:  libxml2-dev
+
+%description pa
+The openser-pa package contains a sip Presence Agent.
 
 %package  radius
 Summary:  openser radius authentication, group and uri check modules.
@@ -79,11 +113,14 @@ The openser-radius package contains modules for radius authentication, group
 %setup
 
 %build
-make all skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/openser/
-make modules modules="modules/%MYSQL_MODULES"  cfg-target=/%{_sysconfdir}/openser/
-make modules modules="modules/%JABBER_MODULES" cfg-target=/%{_sysconfdir}/openser/
-make modules modules="modules/%CPL_MODULES"    cfg-target=/%{_sysconfdir}/openser/
-make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/openser/
+make all skip_modules="%EXCLUDED_MODULES"         cfg-target=/%{_sysconfdir}/openser/
+make modules modules="modules/%MYSQL_MODULES"     cfg-target=/%{_sysconfdir}/openser/
+make modules modules="modules/%POSTGRES_MODULES"  cfg-target=/%{_sysconfdir}/openser/
+make modules modules="modules/%UNIXODBC_MODULES"  cfg-target=/%{_sysconfdir}/openser/
+make modules modules="modules/%JABBER_MODULES"    cfg-target=/%{_sysconfdir}/openser/
+make modules modules="modules/%CPL_MODULES"       cfg-target=/%{_sysconfdir}/openser/
+make modules modules="modules/%PA_MODULES"        cfg-target=/%{_sysconfdir}/openser/
+make modules modules="%RADIUS_MOD_PATH"           cfg-target=/%{_sysconfdir}/openser/
 
 
 %install
@@ -99,7 +136,37 @@ make install-modules modules="modules/%MYSQL_MODULES" \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
 		cfg-target=/%{_sysconfdir}/openser/ 
+make install-doc modules="modules/%MYSQL_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
+make install-modules modules="modules/%POSTGRES_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
+make install-doc modules="modules/%POSTGRES_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
+make install-modules modules="modules/%UNIXODBC_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
+make install-doc modules="modules/%UNIXODBC_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
 make install-modules modules="modules/%JABBER_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
+make install-doc modules="modules/%JABBER_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
@@ -109,7 +176,17 @@ make install-modules modules="modules/%CPL_MODULES" \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
 		cfg-target=/%{_sysconfdir}/openser/ 
-make install-doc modules="modules/%JABBER_MODULES" \
+make install-doc modules="modules/%CPL_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
+make install-modules modules="modules/%PA_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/openser/ 
+make install-doc modules="modules/%PA_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
@@ -155,11 +232,12 @@ fi
 %doc %{_docdir}/openser/README-MODULES
 %doc %{_docdir}/openser/README.acc
 %doc %{_docdir}/openser/README.alias_db
-%doc %{_docdir}/openser/README.avpops
 %doc %{_docdir}/openser/README.auth
 %doc %{_docdir}/openser/README.auth_db
 %doc %{_docdir}/openser/README.auth_diameter
+%doc %{_docdir}/openser/README.avpops
 %doc %{_docdir}/openser/README.dbtext
+%doc %{_docdir}/openser/README.dialog
 %doc %{_docdir}/openser/README.dispatcher
 %doc %{_docdir}/openser/README.diversion
 %doc %{_docdir}/openser/README.domain
@@ -168,24 +246,29 @@ fi
 %doc %{_docdir}/openser/README.flatstore
 %doc %{_docdir}/openser/README.gflags
 %doc %{_docdir}/openser/README.group
+%doc %{_docdir}/openser/README.lcr
 %doc %{_docdir}/openser/README.mangler
 %doc %{_docdir}/openser/README.maxfwd
 %doc %{_docdir}/openser/README.mediaproxy
 %doc %{_docdir}/openser/README.msilo
 %doc %{_docdir}/openser/README.nathelper
+%doc %{_docdir}/openser/README.options
+%doc %{_docdir}/openser/README.path
 %doc %{_docdir}/openser/README.pdt
 %doc %{_docdir}/openser/README.permissions
 %doc %{_docdir}/openser/README.pike
 %doc %{_docdir}/openser/README.registrar
 %doc %{_docdir}/openser/README.rr
+%doc %{_docdir}/openser/README.siptrace
 %doc %{_docdir}/openser/README.sl
 %doc %{_docdir}/openser/README.sms
 %doc %{_docdir}/openser/README.speeddial
+%doc %{_docdir}/openser/README.statistics
 %doc %{_docdir}/openser/README.textops
 %doc %{_docdir}/openser/README.tm
-%doc %{_docdir}/openser/README.uri
 %doc %{_docdir}/openser/README.uac
 %doc %{_docdir}/openser/README.uac_redirect
+%doc %{_docdir}/openser/README.uri
 %doc %{_docdir}/openser/README.uri_db
 %doc %{_docdir}/openser/README.usrloc
 %doc %{_docdir}/openser/README.xlog
@@ -198,10 +281,10 @@ fi
 %dir %{_libdir}/openser/modules
 %{_libdir}/openser/modules/acc.so
 %{_libdir}/openser/modules/alias_db.so
-%{_libdir}/openser/modules/avpops.so
 %{_libdir}/openser/modules/auth.so
 %{_libdir}/openser/modules/auth_db.so
 %{_libdir}/openser/modules/auth_diameter.so
+%{_libdir}/openser/modules/avpops.so
 %{_libdir}/openser/modules/dbtext.so
 %{_libdir}/openser/modules/dispatcher.so
 %{_libdir}/openser/modules/diversion.so
@@ -211,21 +294,28 @@ fi
 %{_libdir}/openser/modules/flatstore.so
 %{_libdir}/openser/modules/gflags.so
 %{_libdir}/openser/modules/group.so
+%{_libdir}/openser/modules/lcr.so
 %{_libdir}/openser/modules/mangler.so
 %{_libdir}/openser/modules/maxfwd.so
 %{_libdir}/openser/modules/mediaproxy.so
 %{_libdir}/openser/modules/msilo.so
 %{_libdir}/openser/modules/nathelper.so
+%{_libdir}/openser/modules/options.so
+%{_libdir}/openser/modules/path.so
 %{_libdir}/openser/modules/pdt.so
 %{_libdir}/openser/modules/permissions.so
 %{_libdir}/openser/modules/pike.so
 %{_libdir}/openser/modules/registrar.so
 %{_libdir}/openser/modules/rr.so
+%{_libdir}/openser/modules/siptrace.so
 %{_libdir}/openser/modules/sl.so
 %{_libdir}/openser/modules/sms.so
 %{_libdir}/openser/modules/speeddial.so
+%{_libdir}/openser/modules/statistics.so
 %{_libdir}/openser/modules/textops.so
 %{_libdir}/openser/modules/tm.so
+%{_libdir}/openser/modules/uac.so
+%{_libdir}/openser/modules/uac_redirect.so
 %{_libdir}/openser/modules/uri.so
 %{_libdir}/openser/modules/uri_db.so
 %{_libdir}/openser/modules/usrloc.so
@@ -240,9 +330,23 @@ fi
 
 %files mysql
 %defattr(-,root,root)
+%doc %{_docdir}/openser/README.mysql
 
 %{_libdir}/openser/modules/mysql.so
 %{_sbindir}/openser_mysql.sh
+
+%files postgres
+%defattr(-,root,root)
+%doc %{_docdir}/openser/README.postgres
+
+%{_libdir}/openser/modules/postgres.so
+%{_sbindir}/openser_postgres.sh
+
+%files unixodbc
+%defattr(-,root,root)
+%doc %{_docdir}/openser/README.unixodbc
+
+%{_libdir}/openser/modules/unixodbc.so
 
 %files jabber
 %defattr(-,root,root)
@@ -255,6 +359,12 @@ fi
 %doc %{_docdir}/openser/README.cpl-c
 
 %{_libdir}/openser/modules/cpl-c.so
+
+%files pa
+%defattr(-,root,root)
+%doc %{_docdir}/openser/README.pa
+
+%{_libdir}/openser/modules/pa.so
 
 %files radius
 %defattr(-,root,root)
@@ -270,6 +380,11 @@ fi
 
 
 %changelog
+
+* Fri Jun 30 2006 Bogdan-Andrei Iancu <bogdan@voice-system.ro>
+- version set to 1.1.0
+- added packages for pa, postgres and unixodbc
+- added dialog, lcr, options, path, siptrace, statistics modules
 
 * Thu Oct 27 2005 Daniel-Constantin Mierla <daniel@voice-system.ro>
 - version set to 1.0.0

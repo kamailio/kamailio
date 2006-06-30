@@ -60,74 +60,74 @@ rc_reset
 # considered a success.
 
 case "$1" in
-    start)
-	echo -n "Starting Open SIP Express Router "
-	## Start daemon with startproc(8). If this fails
-	## the return value is set appropriately by startproc.
-	startproc $OSER_BIN -f $OSER_CONFIG
+	start)
+		echo -n "Starting Open SIP Express Router "
+		## Start daemon with startproc(8). If this fails
+		## the return value is set appropriately by startproc.
+		startproc $OSER_BIN -f $OSER_CONFIG
 
-	# Remember status and be verbose
-	rc_status -v
-	;;
-    stop)
-	echo -n "Shutting down Open SIP Express Router "
-	## Stop daemon with killproc(8) and if this fails
-	## killproc sets the return value according to LSB.
+		# Remember status and be verbose
+		rc_status -v
+		;;
+	stop)
+		echo -n "Shutting down Open SIP Express Router "
+		## Stop daemon with killproc(8) and if this fails
+		## killproc sets the return value according to LSB.
 
-	killproc -TERM $OSER_BIN
+		killproc -TERM $OSER_BIN
 
-	# Remember status and be verbose
-	rc_status -v
-	;;
-    restart)
-	## Stop the service and regardless of whether it was
-	## running or not, start it again.
-	$0 stop
-	$0 start
+		# Remember status and be verbose
+		rc_status -v
+		;;
+	restart)
+		## Stop the service and regardless of whether it was
+		## running or not, start it again.
+		$0 stop
+		$0 start
 
-	# Remember status and be quiet
-	rc_status
-	;;
-    force-reload)
-	## Signal the daemon to reload its config. Most daemons
-	## do this on signal 1 (SIGHUP).
-	## If it does not support it, restart.
+		# Remember status and be quiet
+		rc_status
+		;;
+	force-reload)
+		## Signal the daemon to reload its config. Most daemons
+		## do this on signal 1 (SIGHUP).
+		## If it does not support it, restart.
 
-	echo -n "Reload service Open SIP Express Router "
-	## Otherwise:
-	$0 stop  &&  $0 start
-	rc_status
-	;;
-    reload)
-	## Like force-reload, but if daemon does not support
-	## signaling, do nothing (!)
+		echo -n "Reload service Open SIP Express Router "
+		## Otherwise:
+		$0 stop  &&  $0 start
+		rc_status
+		;;
+	reload)
+		## Like force-reload, but if daemon does not support
+		## signaling, do nothing (!)
 
-	## Otherwise if it does not support reload:
-	rc_failed 3
-	rc_status -v
-	;;
-    status)
-	echo -n "Checking for service Open SIP Express Router "
-	## Check status with checkproc(8), if process is running
-	## checkproc will return with exit status 0.
+		## Otherwise if it does not support reload:
+		rc_failed 3
+		rc_status -v
+		;;
+	status)
+		echo -n "Checking for service Open SIP Express Router "
+		## Check status with checkproc(8), if process is running
+		## checkproc will return with exit status 0.
 
-	# Return value is slightly different for the status command:
-	# 0 - service up and running
-	# 1 - service dead, but /var/run/  pid  file exists
-	# 2 - service dead, but /var/lock/ lock file exists
-	# 3 - service not running (unused)
-	# 4 - service status unknown :-(
-	# 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
-	
-	# NOTE: checkproc returns LSB compliant status values.
-	checkproc $OSER_BIN
-	# NOTE: rc_status knows that we called this init script with
-	# "status" option and adapts its messages accordingly.
-	rc_status -v
-	;;
-    *)
-	echo "Usage: $0 {start|stop|status|restart}"
-	exit 1
-	;;
+		# Return value is slightly different for the status command:
+		# 0 - service up and running
+		# 1 - service dead, but /var/run/  pid  file exists
+		# 2 - service dead, but /var/lock/ lock file exists
+		# 3 - service not running (unused)
+		# 4 - service status unknown :-(
+		# 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
+
+		# NOTE: checkproc returns LSB compliant status values.
+		checkproc $OSER_BIN
+		# NOTE: rc_status knows that we called this init script with
+		# "status" option and adapts its messages accordingly.
+		rc_status -v
+		;;
+	*)
+		echo "Usage: $0 {start|stop|status|restart|force-reload|reload}"
+		exit 1
+		;;
 esac
 rc_exit
