@@ -141,6 +141,53 @@ only.
 </para>
 </section>
 
+<section><title>State aggregation</title>
+<para>PA modules does state aggregation from multiple sources:
+<variablelist>
+	<varlistentry><term>registrar</term>
+	<listitem><para>Information from registrar is taken by callbacks
+	to usrloc module. Each registered contact is taken as a standalone tuple.
+	Status may be <quote>open</quote> or <quote>closed</quote>, contact for the
+	tuple is taken from contact registration. Priority of such tuples is taken
+	from parameter <varname>default_priority_percentage</varname>. It is
+	recommended to have this value lower than priority of tuples published by
+	PUBLISH.</para>
+	<para>You can ommit this source by setting <varname>use_callbacks</varname>
+	to 0.</para></listitem></varlistentry>
+
+	<varlistentry><term>published state</term>
+	<listitem><para>State published by clients using PUBLISH request according
+	to RFC 3903. There can be more published tuples, each of them is identified
+	by its id in PIDF document. This id is used for tuple identification in
+	re-publications, but it is NOT used as identification in internal state and thus
+	in NOTIFYs sent to watchers too! It is NOT possible to replace existing tuple with
+	publishing information for tuple with the same id - this would be against
+	RFC 3903! When publishing status it is only possible to have influence on
+	tuples published with the same entity tag (see Sip-If-Match and SIP-ETag
+	header fields).</para>
+	<para>Not only tuples can be published. You can publish whatever PIDF
+	documents including &lt;note&gt; elements etc. But only PIDF (and
+	&lt;person&gt; elements from RPID) data are hold internaly and present
+	in sent NOTIFYs.
+	</para>
+	<para>You can control this source by PUBLISH request handling in config
+	script.
+	</para>
+	</listitem></varlistentry>
+
+<!--
+	<varlistentry><term>UACs</term>
+		<listitem><para>PA module is able to send subscriptions using
+		presence_b2b module through internal API (QSA) and handle received
+		NOTIFY requests like PUBLISH.
+		</para></listitem>
+	</varlistentry>
+	-->
+	
+</variablelist>
+</para>
+</section>
+
     <include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>

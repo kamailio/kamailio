@@ -171,6 +171,8 @@ static param_export_t params[]={
 	
 	{"ignore_408_on_notify", PARAM_INT, &ignore_408_on_notify }, /* ignore 408 responses on NOTIFY */
 	
+	{"default_priority_percentage", PARAM_INT,    &default_priority_percentage  },
+	
 	/* experimental, undocumented */
 	{"subscribe_to_users",   PARAM_INT,    &subscribe_to_users },
 	{"pa_subscription_uri",  PARAM_STR,    &pa_subscription_uri },
@@ -180,7 +182,6 @@ static param_export_t params[]={
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
 	{"place_table",          PARAM_STRING, &place_table          },
-	{"default_priority_percentage", PARAM_INT,    &default_priority_percentage  },
 	{"timer_interval",       PARAM_INT,    &timer_interval       },
 	{"use_place_table",      PARAM_INT,    &use_place_table      },
 	{"use_bsearch",          PARAM_INT,    &use_bsearch          },

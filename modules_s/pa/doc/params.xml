@@ -200,5 +200,12 @@ modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 	</para></listitem>
 </varlistentry>
 
+<varlistentry>
+	<term>default_priority_percentage</term>
+	<listitem><para>Priority value used for tuples created by registration in
+	percents. Default value is 0.
+	</para></listitem>
+</varlistentry>
+
 </variablelist>
 </section>
