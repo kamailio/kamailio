@@ -158,7 +158,9 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_uac' not found\n");
 		return -1;
 	}
-
+	tmb->prepare_request_within = prepare_req_within;
+	tmb->send_prepared_request = send_prepared_request;
+	
 	tmb->route_mode = &rmode;
 	return 1;
 }

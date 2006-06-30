@@ -164,11 +164,8 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 	return hashid;
 }
 
-/*
- * Send a request using data from the dialog structure
- */
-int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
-	  transaction_cb cb, void* cbp)
+static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dialog,
+	  transaction_cb cb, void* cbp, struct retr_buf **dst_req)
 {
 	struct dest_info dst;
 	struct cell *new_cell;
@@ -178,6 +175,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	unsigned int hi;
 
 	ret=-1;
+	/*if (dst_req) *dst_req = NULL;*/
 	
 	/*** added by dcm 
 	 * - needed by external ua to send a request within a dlg
@@ -216,12 +214,12 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 
 	/* add the callback the the transaction for LOCAL_COMPLETED event */
  
-        flags = TMCB_LOCAL_COMPLETED;
-             /* Add also TMCB_LOCAL_REPLY_OUT if provisional replies are desired */
-        if (pass_provisional_replies) flags |= TMCB_LOCAL_RESPONSE_OUT;
- 
-        if(cb && insert_tmcb(&(new_cell->tmcb_hl), flags, cb, cbp)!=1){
-                ret=E_OUT_OF_MEM; 
+	flags = TMCB_LOCAL_COMPLETED;
+	/* Add also TMCB_LOCAL_REPLY_OUT if provisional replies are desired */
+	if (pass_provisional_replies) flags |= TMCB_LOCAL_RESPONSE_OUT;
+
+	if(cb && insert_tmcb(&(new_cell->tmcb_hl), flags, cb, cbp)!=1){
+		ret=E_OUT_OF_MEM; 
 		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
 		goto error2;
 	}
@@ -255,14 +253,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	request->buffer_len = buf_len;
 	new_cell->nr_of_outgoings++;
 	
-	if (SEND_BUFFER(request) == -1) {
-		LOG(L_ERR, "t_uac: Attempt to send to '%.*s' failed\n", 
-			dialog->hooks.next_hop->len,
-			dialog->hooks.next_hop->s);
-	}
-	
-	if (start_retr(request)!=0)
-		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", request);
+	if (dst_req) *dst_req = request;
 	return 1;
 
  error1:
@@ -271,6 +262,66 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	UNLOCK_HASH(hi);
 	free_cell(new_cell);
 error2:
+	return ret;
+}
+
+/*
+ * Prepare a message within a dialog
+ */
+int prepare_req_within(str* method, str* headers, 
+		str* body, dlg_t* dialog, transaction_cb completion_cb, 
+		void* cbp, struct retr_buf **dst_req)
+{
+	if (!method || !dialog) {
+		LOG(L_ERR, "req_within: Invalid parameter value\n");
+		goto err;
+	}
+
+	if (dialog->state != DLG_CONFIRMED) {
+		LOG(L_ERR, "req_within: Dialog is not confirmed yet\n");
+		goto err;
+	}
+
+	if ((method->len == 3) && (!memcmp("ACK", method->s, 3))) goto send;
+	if ((method->len == 6) && (!memcmp("CANCEL", method->s, 6))) goto send;
+	dialog->loc_seq.value++; /* Increment CSeq */
+ send:
+	return t_uac_prepare(method, headers, body, dialog, completion_cb, cbp, dst_req);
+
+ err:
+	/* if (cbp) shm_free(cbp); */
+	/* !! never free cbp here because if t_uac_prepare fails, cbp is not freed
+	 * and thus caller has no chance to discover if it is freed or not !! */
+	return -1;
+}
+
+static inline void send_prepared_request_impl(struct retr_buf *request)
+{
+	if (SEND_BUFFER(request) == -1) {
+		LOG(L_ERR, "t_uac: Attempt to send to precreated request failed\n");
+	}
+	
+	if (start_retr(request)!=0)
+		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", request);
+}
+
+void send_prepared_request(struct retr_buf *request)
+{
+	send_prepared_request_impl(request);
+}
+
+/*
+ * Send a request using data from the dialog structure
+ */
+int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
+	  transaction_cb cb, void* cbp)
+{
+	struct retr_buf *request;
+	int ret;
+
+	ret = t_uac_prepare(method, headers, body, dialog, cb, cbp, &request);
+	if (ret < 0) return ret;
+	send_prepared_request_impl(request);
 	return ret;
 }
 

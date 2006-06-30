@@ -37,6 +37,7 @@
 #include "../../str.h"
 #include "dlg.h"
 #include "t_hooks.h"
+#include "h_table.h"
 
 #define DEFAULT_CSEQ 10 /* Default CSeq number */
 
@@ -50,6 +51,10 @@ typedef int (*reqwith_t)(str* m, str* h, str* b, dlg_t* d, transaction_cb c, voi
 typedef int (*reqout_t)(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
 typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, str *next_hop, transaction_cb c, void* cp);
 typedef int (*t_uac_t)(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp);
+typedef int (*prepare_request_within_f)(str* method, str* headers, 
+		str* body, dlg_t* dialog, transaction_cb cb, void* cbp,
+		struct retr_buf **request_dst);
+typedef void (*send_prepared_request_f)(struct retr_buf *request_dst);
 
 
 /*
@@ -85,6 +90,11 @@ int req_outside(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_c
  * Send a transactional request, no dialogs involved
  */
 int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *next_hop, transaction_cb c, void* cp);
+
+int prepare_req_within(str* method, str* headers, str* body, dlg_t* dialog,
+	  transaction_cb cb, void* cbp, struct retr_buf **dst_req);
+
+void send_prepared_request(struct retr_buf *request);
 
 
 #endif
