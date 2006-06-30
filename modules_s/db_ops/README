@@ -21,7 +21,8 @@ op = "=" | "<" | ">" | "<=" | ">="  ; note: non-equal nit supported by db API
 where = fields
 ops = op [ "," op ... ]
 order = field
-value = xltext
+type = "s" | "i" | "d" | "f" | "t" ; enables to force particular type when writing to db driver (string/int/double/float/datetime), valueable especially for datetime
+value = [type ":"] xltext
 values = value [ "," value ...]
 
 select = "select/" [database "/"] table "/" fields "/" where "/" ops "/" order "/" values

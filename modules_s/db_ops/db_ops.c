@@ -86,6 +86,7 @@ struct dbops_action {
 	struct xlstr* ops;
 	int value_count;
 	struct xlstr* values;
+	db_type_t *value_types;
 	struct xlstr order;
 	struct xlstr raw;
 
@@ -187,7 +188,7 @@ static int split_fields(char *part, int *n, struct xlstr **strs) {
 }
 
 static int parse_ops(char* act_s, struct dbops_action** action) {
-	int res = 0;
+	int res = 0, i;
 	char *c, *s, *part;
 
 	s = act_s;
@@ -311,6 +312,37 @@ static int parse_ops(char* act_s, struct dbops_action** action) {
 		case DELETE_OPS:
 			res = split_fields(part, &(*action)->value_count, &(*action)->values);
 			if (res < 0) return res;
+			(*action)->value_types = pkg_malloc( (*action)->value_count*sizeof(*((*action)->value_types)));
+			if (!(*action)->value_types) {
+				LOG(L_ERR, "ERROR: db_ops: parse_ops: not enough pkg memory\n");
+				return E_OUT_OF_MEM;
+			}
+			for (i=0; i<(*action)->value_count; i++) {
+				if ((*action)->values[i].s && (*action)->values[i].s[0] && (*action)->values[i].s[1]==':') {
+					switch ((*action)->values[i].s[0]) {
+						case 't':
+							(*action)->value_types[i] = DB_DATETIME;
+							break;
+						case 'i':
+							(*action)->value_types[i] = DB_INT;
+							break;
+						case 'f':
+							(*action)->value_types[i] = DB_FLOAT;
+							break;
+						case 'd':
+							(*action)->value_types[i] = DB_DOUBLE;
+							break;
+						case 's':
+						default:
+							(*action)->value_types[i] = DB_STRING;
+							break;
+					}
+					(*action)->values[i].s+=2;
+				}
+				else {
+					(*action)->value_types[i] = DB_STRING;
+				}
+			}
 			break;
 		default:;
 	}
@@ -458,11 +490,40 @@ static int dbops_func(struct sip_msg* m, struct dbops_action* action) {
 	}
 
 	for (i=0; i<action->value_count; i++) {
+		char *end;
 		res = eval_xlstr(m, &action->values[i]);
 		if (res < 0) goto cleanup;
-		vals[i].type = DB_STRING;
-		vals[i].nul = 0;
-		vals[i].val.string_val = action->values[i].s;
+		vals[i].nul = !action->values[i].s || !action->values[i].s[0];
+		switch (action->value_types[i]) {
+			case DB_DATETIME:
+				if (!vals[i].nul)
+					vals[i].val.time_val = strtol(action->values[i].s, &end, 10);
+				break;
+			case DB_INT:
+				if (!vals[i].nul)
+					vals[i].val.int_val = strtol(action->values[i].s, &end, 10);
+				break;
+			case DB_FLOAT:
+				if (!vals[i].nul)
+				#ifdef  __USE_ISOC99
+					vals[i].val.float_val = strtof(action->values[i].s, &end);
+				#else
+					vals[i].val.float_val = strtod(action->values[i].s, &end);
+				#endif
+				break;
+			case DB_DOUBLE:
+				if (!vals[i].nul)
+					vals[i].val.double_val = strtod(action->values[i].s, &end);
+				break;
+			case DB_STRING:
+				vals[i].val.string_val = action->values[i].s;
+				vals[i].nul = 0;
+				break;
+			default:
+				BUG("Unknown value type: %d\n", action->value_types[i]);
+				goto err;
+		}
+		vals[i].type = action->value_types[i];
 	}
 
 	switch (action->operation) {
