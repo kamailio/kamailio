@@ -301,7 +301,7 @@ void db_close(db_con_t* _h)
 	}
 
 	con = (struct pool_con*)_h->tail;
-	if (pool_remove(con) != 0) {
+	if (pool_remove(con) == 1) {
 		free_connection((struct my_con*)con);
 	}
 
