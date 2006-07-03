@@ -189,7 +189,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 				return -1; \
 			}\
 			memcpy(ptr, (_new)->s, (_new)->len);\
-			shm_free((_old)->s);\
+			if ((_old)->s) shm_free((_old)->s);\
 			(_old)->s = ptr;\
 		} else {\
 			memcpy((_old)->s, (_new)->s, (_new)->len);\
