@@ -1778,7 +1778,11 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 								retbuf_tail++;
 							}
 							if (huri.len) {
-							/* TODO: normalize uri, lowercase except quoted params, add < > */
+							/* TODO: normalize uri, lowercase except quoted params, add/strip < > */
+								if (*huri.s == '<') {
+									huri.s++;
+									huri.len -= 2;
+								}
 								memcpy(retbuf_tail, huri.s, huri.len);
 								retbuf_tail+= huri.len;
 							}
