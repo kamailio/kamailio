@@ -1126,7 +1126,8 @@ int t_newtran( struct sip_msg* p_msg )
 		" T on entrance=%p\n",p_msg->id,global_msg_id,T);
 
 	if ( T && T!=T_UNDEFINED  ) {
-		LOG(L_ERR, "ERROR: t_newtran: "
+		/* ERROR message moved to w_t_newtran */
+		DBG("DEBUG: t_newtran: "
 			"transaction already in process %p\n", T );
 		return E_SCRIPT;
 	}

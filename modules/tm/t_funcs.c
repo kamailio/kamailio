@@ -205,10 +205,9 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	struct dest_info dst;
 
 	ret=0;
-
+	
 	new_tran = t_newtran( p_msg );
 	
-
 	/* parsing error, memory alloc, whatever ... if via is bad
 	   and we are forced to reply there, return with 0 (->break),
 	   pass error status otherwise
