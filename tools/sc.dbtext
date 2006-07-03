@@ -290,8 +290,8 @@ chown_openser() {
 # calculate name and domain of current user
 set_user() {
 
-	SERUSER=`echo $1|awk -F @ '{print $1}'`
-	SERDOMAIN=`echo $1|awk -F @ '{print $2}'`
+	SERUSER=`echo $1|$AWK -F@ '{print $1}'`
+	SERDOMAIN=`echo $1|$AWK -F@ '{print $2}'`
 
 	if [ -z "$SERDOMAIN" ] ; then
 		SERDOMAIN="$SIP_DOMAIN"
@@ -726,12 +726,12 @@ credentials()
 {
 	set_user $1
 
-	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo -e "\nHA1 calculation failed\n"
 		exit 1
 	fi
-	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo -e "\nHA1B calculation failed\n"
 		exit 1

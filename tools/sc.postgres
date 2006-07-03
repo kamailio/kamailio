@@ -103,6 +103,15 @@ if [ -z "$MD5" ]; then
 fi
 
 ##### ----------------------------------------------- #####
+### path to useful tools
+if [ -z "$EGREP" ] ; then
+	EGREP="egrep"
+fi
+if [ -z "$AWK" ] ; then
+	AWK="awk"
+fi
+
+##### ----------------------------------------------- #####
 # ACL name verification
 if [ -z "$VERIFY_ACL" ] ; then
 	VERIFY_ACL=1
@@ -219,7 +228,7 @@ EOF
 # quite simplified now -- it captures just very basic
 # errors
 check_uri() {
-	echo "$1" | grep -E "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
+	echo "$1" | $EGREP -E "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
 }
 
 
@@ -230,7 +239,7 @@ filter_fl()
 {
 #	tail +2
 	
-	awk 'BEGIN {line=0;IGNORECASE=1;}
+	$AWK 'BEGIN {line=0;IGNORECASE=1;}
 		{line++}
 		line==1 && /^200 ok/ { next }
 		{ print }'
@@ -543,7 +552,7 @@ acl() {
 is_user() {
 	QUERY="select count(*) from $TABLE \
 		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
-	CNT=`sql_ro_raw_query "$QUERY" | grep -v ERROR | $LAST_LINE`
+	CNT=`sql_ro_raw_query "$QUERY" | $EGREP -v ERROR | $LAST_LINE`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
 	else
@@ -557,12 +566,12 @@ is_user() {
 # output: HA1, HA1B
 credentials()
 {
-	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -733,7 +742,7 @@ case $1 in
 		shift
 		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
 			$TABLE.$SUBSCRIBER_COLUMN='$1'"
-		EA=`sql_ro_raw_query "$QUERY" "-B" | grep -v ERROR | $LAST_LINE`
+		EA=`sql_ro_raw_query "$QUERY" "-B" | $EGREP -v ERROR | $LAST_LINE`
 		if [ $? -ne 0 ] ; then
 			echo "MySql query failed"
 			exit 1
@@ -753,7 +762,7 @@ case $1 in
 		;;
 
 	online)
-		fifo_cmd ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
+		fifo_cmd ul_dump |$EGREP aor| $AWK '{print $3}' | sort | sort -mu
 		exit $?
 		;;
 

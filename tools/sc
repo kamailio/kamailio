@@ -442,8 +442,8 @@ get_my_host() {
 # calculate name and domain of current user
 set_user() {
 
-	SERUSER=`echo $1|awk -F @ '{print $1}'`
-	SERDOMAIN=`echo $1|awk -F @ '{print $2}'`
+	SERUSER=`echo $1|$AWK -F@ '{print $1}'`
+	SERDOMAIN=`echo $1|$AWK -F@ '{print $2}'`
 
 	if [ -z "$SERDOMAIN" ] ; then
 		SERDOMAIN="$SIP_DOMAIN"
@@ -507,16 +507,16 @@ check_alias() {
 				> /dev/stderr
 			exit 1
 		fi
-		echo "$RES" | grep "^404" > /dev/null
+		echo "$RES" | $EGREP "^404" > /dev/null
 		if [ $? -ne 0 ] ; then
 			false
-			echo "$RES" | grep "^400" > /dev/null
+			echo "$RES" | $EGREP "^400" > /dev/null
 			if [ $? -eq 0 ] ; then
 				echo "error: 400; check if you use aliases in OpenSER" \
 					> /dev/stderr
 				exit 1
 			fi
-			echo "$RES" | grep "^200" > /dev/null
+			echo "$RES" | $EGREP "^200" > /dev/null
 			if [ $? -eq 0 ] ; then
 				true
 			fi
@@ -530,7 +530,7 @@ check_alias() {
 		QUERY="select count(*) from $DA_TABLE \
 			where $DA_ALIAS_USER_COLUMN='$1' and \
 			$DA_ALIAS_DOMAIN_COLUMN='$2';"
-		CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
+		CNT=`sql_ro_query "$QUERY" | $EGREP -v ERROR | $LAST_LINE`
 		if [ "0$CNT" -eq 0 ] ; then
 			false
 		else
@@ -556,7 +556,7 @@ prompt_pw() {
 }
 
 print_status() {
-	echo $1 | grep "^[1-6][0-9][0-9]" > /dev/null
+	echo $1 | $EGREP "^[1-6][0-9][0-9]" > /dev/null
 	if [ "$?" -eq 0 ] ; then 
 		echo $1
 	else
@@ -571,7 +571,7 @@ filter_fl()
 {
 #	tail +2
 	
-	awk 'BEGIN {line=0;IGNORECASE=1;}
+	$AWK 'BEGIN {line=0;IGNORECASE=1;}
 		{line++}
 		line==1 && /^200 ok/ { next }
 		{ print }'
@@ -1237,7 +1237,7 @@ is_user() {
 	
 	QUERY="select count(*) from $SUB_TABLE \
 		where $SUBSCRIBER_COLUMN='$SERUSER' and $REALM_COLUMN='$SERDOMAIN';"
-	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
+	CNT=`sql_ro_query "$QUERY" | $EGREP -v ERROR | $LAST_LINE`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
 	else
@@ -1253,7 +1253,7 @@ is_alias_db()
 	
 	QUERY="select count(*) from $DA_TABLE \
 		where $DA_ALIAS_USER_COLUMN='$SERUSER' and $DA_ALIAS_DOMAIN_COLUMN='$SERDOMAIN';"
-	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
+	CNT=`sql_ro_query "$QUERY" | $EGREP -v ERROR | $LAST_LINE`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
 	else
@@ -1267,12 +1267,12 @@ credentials()
 {
 	set_user $1
 
-	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
+	HA1=`echo -n "$SERUSER:$SERDOMAIN:$2" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | awk '{ print $1 }'`
+	HA1B=`echo -n "$SERUSER@$SERDOMAIN:$SERDOMAIN:$2" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -2079,7 +2079,7 @@ case $1 in
 		set_user $1
 		QUERY="select $SUB_TABLE.$EMAIL_COLUMN from $SUB_TABLE where  \
 			$SUB_TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $SUB_TABLE.$REALM_COLUMN='$SERDOMAIN'"
-		EA=`sql_ro_query "$QUERY" "-B" | grep -v ERROR | $LAST_LINE`
+		EA=`sql_ro_query "$QUERY" "-B" | $EGREP -v ERROR | $LAST_LINE`
 		if [ $? -ne 0 ] ; then
 			echo "MySql query failed"
 			exit 1
@@ -2119,7 +2119,7 @@ case $1 in
 		;;
 
 	online)
-		fifo_cmd ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
+		fifo_cmd ul_dump |$EGREP aor| $AWK '{print $3}' | sort | sort -mu
 		exit $?
 		;;
 
