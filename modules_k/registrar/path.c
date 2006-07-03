@@ -33,7 +33,7 @@
 /*
  * Combines all Path HF bodies into one string.
  */
-int build_path_vector(struct sip_msg *_m, str *path, str **received)
+int build_path_vector(struct sip_msg *_m, str *path, str *received)
 {
 	static char buf[MAX_PATH_SIZE];
 	char *p;
@@ -44,7 +44,8 @@ int build_path_vector(struct sip_msg *_m, str *path, str **received)
 
 	path->len = 0;
 	path->s = 0;
-	*received = 0;
+	received->s = 0;
+	received->len = 0;
 
 	if(parse_headers(_m, HDR_EOH_F, 0) < 0) {
 		LOG(L_ERR,"ERROR: build_path_vector(): Error while parsing message\n");
@@ -71,8 +72,9 @@ int build_path_vector(struct sip_msg *_m, str *path, str **received)
 				"body, no head found\n");
 			goto error;
 		}
-		if (parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri) < 0) {
-			LOG(L_ERR, "ERROR: build_path_vector(): Error while parsing first Path URI\n");
+		if (parse_uri(route->nameaddr.uri.s,route->nameaddr.uri.len,&puri)<0){
+			LOG(L_ERR, "ERROR: build_path_vector(): Error while parsing "
+				"first Path URI\n");
 			goto error;
 		}
 		if (!puri.lr.s) {
@@ -84,17 +86,18 @@ int build_path_vector(struct sip_msg *_m, str *path, str **received)
 			param_hooks_t hooks;
 			param_t *params;
 
-			if (parse_params(&(puri.params), CLASS_CONTACT, &hooks, &params) != 0) {
-				LOG(L_ERR, "ERROR: build_path_vector(): Error parsing parameters "
-						"of first hop\n");
+			if (parse_params(&(puri.params),CLASS_CONTACT,&hooks,&params)!=0){
+				LOG(L_ERR, "ERROR: build_path_vector(): Error parsing "
+					"parameters of first hop\n");
 				goto error;
 			}
-			for (;params; params = params->next) {
+			*received = hooks.contact.received->body;
+			/*for (;params; params = params->next) {
 				if (params->type == P_RECEIVED) {
-					*received = &hooks.contact.received->body;
+					*received = hooks.contact.received->body;
 					break;
 				}
-			}
+			}*/
 			free_params(params);
 		}
 		free_rr(&route);

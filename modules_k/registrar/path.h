@@ -33,7 +33,7 @@
  * checks if first hop is a loose router. It also extracts
  * the received-param of the first hop if path_use_received is 1.
  */
-int build_path_vector(struct sip_msg *_m, str *path, str **received);
+int build_path_vector(struct sip_msg *_m, str *path, str *received);
 
 /*
  * If Path is available, sets _dst to uri of first element .

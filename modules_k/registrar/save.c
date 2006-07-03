@@ -228,16 +228,14 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
 	static str callid;
-	static str path;
-	static str *path_received = 0;
-	static str received;
+	static str path_received = {0,0};
+	static str received = {0,0};
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	static struct sip_msg *m = 0;
+	str path;
 	int_str val;
 
-	received.s = 0;
-	received.len = 0;
 	if (_m!=0) {
 		memset( &ci, 0, sizeof(ucontact_info_t));
 
@@ -336,10 +334,10 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* get received */
-		if (path_received && path_received->s) {
+		if (path_received.len && path_received.s) {
 			ci.flags1 |= FL_NAT;
 			ci.flags2 &= ~FL_NAT;
-			ci.received = *path_received;
+			ci.received = path_received;
 		}
 		else if (_c->received) {
 			ci.received = _c->received->body;
