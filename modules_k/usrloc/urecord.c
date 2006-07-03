@@ -133,7 +133,7 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 	ucontact_t* ptr, *prev = 0;
 	ucontact_t* c;
 
-	if ( (c=new_ucontact(_r->domain, &_r->aor, _c, _ci)) < 0) {
+	if ( (c=new_ucontact(_r->domain, &_r->aor, _c, _ci)) == 0) {
 		LOG(L_ERR, "ERROR:usrloc:mem_insert_ucontact: failed to "
 			"create new contact\n");
 		return 0;
