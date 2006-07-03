@@ -554,7 +554,7 @@ int pdt_sync_cache()
 		while(ito!=NULL && itree->idsync >= ito->id)
 			ito = ito->n;
 		
-		while(ito!=NULL)
+		while(ito!=NULL && itree->idsync<ito->id)
 		{
 			DBG("PDT:pdt_sync_cache: sync op[%d]=%d...\n",
 				ito->id, ito->op);
@@ -585,11 +585,11 @@ int pdt_sync_cache()
 				default:
 					LOG(L_ERR, "PDT:pdt_sync_cache: unknown operation\n");
 			}
-			itree->idsync = ito->id;
 			ito->count++;
 			ito = ito->n;
 		}
-		
+		if(it->diff!=NULL)
+			itree->idsync = it->diff->id;
 		it = it->next;
 	}
 
