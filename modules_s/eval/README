@@ -353,6 +353,8 @@ Get values[idx], positive/negative logic similar to stack manipulation
 
 "subval" ... get subvalues, (str) values, (idx) index, (len) length  (... see substr)
 
+"strvalat" ... (str) values, (str) needle, get index of string in value (-1 if string does not exist)
+
 "valcount" ... get number of items
 
 "geturi" ... get uri part, "<", ">" are stripped, (str) addr

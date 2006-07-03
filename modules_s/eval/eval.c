@@ -1022,7 +1022,7 @@ static int eval_clear_func(struct sip_msg *msg, char *param1, char *param2) {
 enum {esftNone=0, esftAdd, esftSub, esftMultiplication, esftDivision, esftModulo, esftNeg, esftAbs, esftSgn, esftDec, esftInc,
 esftConcat, esftSubstr, esftStrLen, esftStrStr, esftStrDel, esftStrUpper, esftStrLower,
 esftCastAsInt, esftCastAsStr,
-esftValueAt, esftValueUris, esftValueRev, esftSubValue, esftValueCount, esftValueConcat,
+esftValueAt, esftValueUris, esftValueRev, esftSubValue, esftValueCount, esftValueConcat, esftStrValueAt,
 esftGetUri,
 esftAnd, esftOr, esftNot, esftBitAnd, esftBitOr, esftBitNot, esftBitXor, esftEQ, esftNE, esftGT, esftGE, esftLW, esftLE};
 
@@ -1058,6 +1058,7 @@ static struct eval_function_def eval_functions[] = {
 	{esftSubValue, "subval", 3},
 	{esftValueCount, "valcount", 1},
 	{esftValueConcat, "valconcat", 1},
+	{esftStrValueAt, "strvalat", 1},
 	{esftGetUri, "geturi", 1},
 	{esftAnd, "&&", 2},
 	{esftOr, "||", 2},
@@ -1559,6 +1560,28 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				destroy_value(pivot->value);
 				pivot->value.type = evtStr;
 				pivot->value.u.s = es;
+				remove_stack_item(pivot->next);
+				break;
+			}
+			case esftStrValueAt: {
+				char buf[25];
+				str s1, s2, *vals;
+				int i, n;
+
+				get_as_str(&pivot->value, &s1);
+				if (pivot->value.type == evtInt && pivot->next->value.type == evtInt) {
+					memcpy(buf, s1.s, s1.len);  /* result in static buffer */
+					s1.s = buf;
+				}
+				get_as_str(&pivot->next->value, &s2);
+				if (parse_hf_values(s1, &n, &vals) < 0) return -1;
+				for (i=0; i<n; i++) {
+					if (s2.len == vals[i].len && strncmp(s2.s, vals[i].s, s2.len) == 0)
+						break;
+				}
+				destroy_value(pivot->value);
+				pivot->value.type = evtInt;
+				pivot->value.u.n = (i>=n)?-1:i;
 				remove_stack_item(pivot->next);
 				break;
 			}
