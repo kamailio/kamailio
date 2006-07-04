@@ -49,15 +49,12 @@
 
 MODULE_VERSION
 
-typedef enum load_avp_param {
-	LOAD_FROM_UID,  /* Use the caller's UID as the key */
-	LOAD_TO_UID,    /* Use the callee's UID as the key */
-} load_avp_param_t;
-
-
 static char* db_url           = DEFAULT_RODB_URL;    /* Database URL */
-static char* db_table         = "user_attrs";
+static char* user_attrs_table = "user_attrs";
+static char* uri_attrs_table  = "uri_attrs";
 static char* uid_column       = "uid";
+static char* username_column  = "username";
+static char* did_column       = "did";
 static char* name_column      = "name";
 static char* type_column      = "type";
 static char* val_column       = "value";
@@ -68,16 +65,16 @@ db_func_t db;
 
 static int mod_init(void);
 static int child_init(int);
-static int load_avps(struct sip_msg* msg, char* s1, char* s2);
-static int load_avps_fixup(void** param, int param_no);
+static int load_attrs(struct sip_msg* msg, char* s1, char* s2);
+static int attrs_fixup(void** param, int param_no);
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"load_attrs", load_avps, 1, load_avps_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+    {"load_attrs", load_attrs, 2, attrs_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+    {0, 0, 0, 0, 0}
 };
 
 
@@ -85,12 +82,16 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",       PARAM_STRING, &db_url      },
-	{"uid_column",   PARAM_STRING, &uid_column  },
-	{"name_column",  PARAM_STRING, &name_column },
-	{"type_column",  PARAM_STRING, &name_column },
-	{"value_column", PARAM_STRING, &val_column  },
-	{"flags_column", PARAM_STRING, &flags_column  },
+	{"db_url",           PARAM_STRING, &db_url          },
+	{"user_attrs_table", PARAM_STRING, &user_attrs_table},
+	{"uri_attrs_table",  PARAM_STRING, &uri_attrs_table },
+	{"uid_column",       PARAM_STRING, &uid_column      },
+	{"username_column",  PARAM_STRING, &username_column },
+	{"did_column",       PARAM_STRING, &did_column      },
+	{"name_column",      PARAM_STRING, &name_column     },
+	{"type_column",      PARAM_STRING, &type_column     },
+	{"value_column",     PARAM_STRING, &val_column      },
+	{"flags_column",     PARAM_STRING, &flags_column    },
 	{0, 0, 0}
 };
 
@@ -137,141 +138,274 @@ static int child_init(int rank)
 }
 
 
-/*
- * Load attributes from domain_attrs table
- */
-static int load_attrs(str* uid, int track)
+static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp)
 {
-	int_str name, v;
+    int_str name, v;
+    str avp_name, avp_val;
+    int i, type, n;
+    db_key_t keys[2], cols[4];
+    db_res_t* res;
+    db_val_t kv[2], *val;
+    str uri;
+    struct sip_uri puri;
 
-	str avp_name, avp_val;
-	int i, type, n;
-	db_key_t keys[1], cols[4];
-	db_res_t* res;
-	db_val_t kv[1], *val;
-	unsigned short flags;
+    keys[0] = username_column;
+    keys[1] = did_column;
+    kv[0].type = DB_STR;
+    kv[0].nul = 0;
+    kv[1].type = DB_STR;
+    kv[1].nul = 0;
 
-	if (!con) {
-		LOG(L_ERR, "avp_db:load_attrs: Invalid database handle\n");
-		return -1;
+    if (get_str_fparam(&uri, msg, (fparam_t*)fp) < 0) {
+	ERR("Unable to get URI\n");
+	return -1;
+    }
+
+    if (parse_uri(uri.s, uri.len, &puri) < 0) {
+	ERR("Error while parsing URI '%.*s'\n", uri.len, uri.s);
+	return -1;
+    }
+
+    kv[0].val.str_val = puri.user;
+    kv[1].val.str_val = puri.host;
+
+    cols[0] = name_column;
+    cols[1] = type_column;
+    cols[2] = val_column;
+    cols[3] = flags_column;
+    
+    if (db.use_table(con, uri_attrs_table) < 0) {
+	ERR("Error in use_table\n");
+	return -1;
+    }
+    
+    if (db.query(con, keys, 0, kv, cols, 2, 4, 0, &res) < 0) {
+	ERR("Error while quering database\n");
+	return -1;
+    }
+    
+    n = 0;
+    for(i = 0; i < res->n; i++) {
+	val = res->rows[i].values;
+	
+	if (val[0].nul || val[1].nul || val[3].nul) {
+	    ERR("Skipping row containing NULL entries\n");
+	    continue;
+	}
+	
+	if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
+	
+	n++;
+	     /* Get AVP name */
+	avp_name.s = (char*)val[0].val.string_val;
+	avp_name.len = strlen(avp_name.s);
+	name.s = avp_name;
+	
+	     /* Get AVP type */
+	type = val[1].val.int_val;
+	
+	     /* Test for NULL value */
+	if (val[2].nul) {
+	    avp_val.s = 0;
+	    avp_val.len = 0;
+	} else {
+	    avp_val.s = (char*)val[2].val.string_val;
+	    avp_val.len = strlen(avp_val.s);
 	}
 
-	keys[0] = uid_column;
-	kv[0].type = DB_STR;
-	kv[0].nul = 0;
-	kv[0].val.str_val = *uid;
-
-	cols[0] = name_column;
-	cols[1] = type_column;
-	cols[2] = val_column;
-	cols[3] = flags_column;
-
-	if (db.use_table(con, db_table) < 0) {
-		LOG(L_ERR, "avp_db:load_attrs: Error in use_table\n");
-		return -1;
+	flags |= AVP_NAME_STR;
+	if (type == AVP_VAL_STR) {
+		 /* String AVP */
+	    v.s = avp_val;
+	    flags |= AVP_VAL_STR;
+	} else {
+		 /* Integer AVP */
+	    str2int(&avp_val, (unsigned*)&v.n);
 	}
-
-	if (db.query(con, keys, 0, kv, cols, 1, 4, 0, &res) < 0) {
-		LOG(L_ERR, "avp_db:load_attrs: Error while quering database\n");
-		return -1;
-	}
-
-	n = 0;
-	for(i = 0; i < res->n; i++) {
-		val = res->rows[i].values;
-
-		if (val[0].nul || val[1].nul || val[3].nul) {
-			LOG(L_ERR, "avp_db:load_attrs: Skipping row containing NULL entries\n");
-			continue;
-		}
-
-		if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
-
-		n++;
-		     /* Get AVP name */
-		avp_name.s = (char*)val[0].val.string_val;
-		avp_name.len = strlen(avp_name.s);
-		name.s = avp_name;
-
-		     /* Get AVP type */
-		type = val[1].val.int_val;
-
-		     /* Test for NULL value */
-		if (val[2].nul) {
-			avp_val.s = 0;
-			avp_val.len = 0;
-		} else {
-			avp_val.s = (char*)val[2].val.string_val;
-			avp_val.len = strlen(avp_val.s);
-		}
-
-		flags = AVP_CLASS_USER | AVP_NAME_STR;
-		if (track == LOAD_FROM_UID) {
-			flags |= AVP_TRACK_FROM;
-		} else {
-			flags |= AVP_TRACK_TO;
-		}
-
-		if (type == AVP_VAL_STR) {
-			     /* String AVP */
-			v.s = avp_val;
-			flags |= AVP_VAL_STR;
-		} else {
-			     /* Integer AVP */
-			str2int(&avp_val, (unsigned*)&v.n);
-		}
-
-		if (add_avp(flags, name, v) < 0) {
-			LOG(L_ERR, "avp_db:load_attrs: Error while adding user attribute %.*s, skipping\n",
-			    avp_name.len, ZSW(avp_name.s));
-			continue;
-		}
+	
+	if (add_avp(flags, name, v) < 0) {
+	    ERR("Error while adding user attribute %.*s, skipping\n",
+		avp_name.len, ZSW(avp_name.s));
+	    continue;
 	}
 	DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
 	db.free_result(con, res);
 	return 1;
+    }
+
+    return 0;
 }
 
 
-
-static int load_avps(struct sip_msg* msg, char* attr, char* dummy)
+static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp)
 {
-	str uid;
+    int_str name, v;
+    str avp_name, avp_val;
+    int i, type, n;
+    db_key_t keys[1], cols[4];
+    db_res_t* res;
+    db_val_t kv[1], *val;
 
-	switch((load_avp_param_t)attr) {
-	case LOAD_FROM_UID:
-		if (get_from_uid(&uid, msg) < 0) return -1;
-		return load_attrs(&uid, LOAD_FROM_UID);
-		break;
+    keys[0] = uid_column;
+    kv[0].type = DB_STR;
+    kv[0].nul = 0;
+    if (get_str_fparam(&kv[0].val.str_val, msg, (fparam_t*)fp) < 0) {
+	ERR("Unable to get UID\n");
+	return -1;
+    }
 
-	case LOAD_TO_UID:
-		if (get_to_uid(&uid, msg) < 0) return -1;
-		return load_attrs(&uid, LOAD_TO_UID);
-		break;
-
-	default:
-		LOG(L_ERR, "load_avps: Unknown parameter value\n");
-		return -1;
+    cols[0] = name_column;
+    cols[1] = type_column;
+    cols[2] = val_column;
+    cols[3] = flags_column;
+    
+    if (db.use_table(con, user_attrs_table) < 0) {
+	ERR("Error in use_table\n");
+	return -1;
+    }
+    
+    if (db.query(con, keys, 0, kv, cols, 1, 4, 0, &res) < 0) {
+	ERR("Error while quering database\n");
+	return -1;
+    }
+    
+    n = 0;
+    for(i = 0; i < res->n; i++) {
+	val = res->rows[i].values;
+	
+	if (val[0].nul || val[1].nul || val[3].nul) {
+	    ERR("Skipping row containing NULL entries\n");
+	    continue;
 	}
+	
+	if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
+	
+	n++;
+	     /* Get AVP name */
+	avp_name.s = (char*)val[0].val.string_val;
+	avp_name.len = strlen(avp_name.s);
+	name.s = avp_name;
+	
+	     /* Get AVP type */
+	type = val[1].val.int_val;
+	
+	     /* Test for NULL value */
+	if (val[2].nul) {
+	    avp_val.s = 0;
+	    avp_val.len = 0;
+	} else {
+	    avp_val.s = (char*)val[2].val.string_val;
+	    avp_val.len = strlen(avp_val.s);
+	}
+
+	flags |= AVP_NAME_STR;
+	if (type == AVP_VAL_STR) {
+		 /* String AVP */
+	    v.s = avp_val;
+	    flags |= AVP_VAL_STR;
+	} else {
+		 /* Integer AVP */
+	    str2int(&avp_val, (unsigned*)&v.n);
+	}
+	
+	if (add_avp(flags, name, v) < 0) {
+	    ERR("Error while adding user attribute %.*s, skipping\n",
+		avp_name.len, ZSW(avp_name.s));
+	    continue;
+	}
+	DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
+	db.free_result(con, res);
+	return 1;
+    }
+
+    return 0;
 }
 
 
-static int load_avps_fixup(void** param, int param_no)
+/*
+ * Load user attributes
+ */
+static int load_attrs(struct sip_msg* msg, char* fl, char* fp)
 {
-	long id = 0;
+
+    unsigned long flags;
+    
+    if (!con) {
+	ERR("Invalid database handle\n");
+	return -1;
+    }
+    flags = (unsigned long)fl;
+
+    if (flags & AVP_CLASS_URI) {
+	return load_uri_attrs(msg, flags, (fparam_t*)fp);
+    } else {
+	return load_user_attrs(msg, flags, (fparam_t*)fp);
+    }
+}
+
+
+static int attrs_fixup(void** param, int param_no)
+{
+	unsigned long flags;
+	int ret, err;
+	fparam_t* fp;
+	char* s;
 
 	if (param_no == 1) {
-		if (!strcasecmp(*param, "f.uid")) {
-			id = LOAD_FROM_UID;
-		} else if (!strcasecmp(*param, "t.uid")) {
-			id = LOAD_TO_UID;
-		} else {
-			LOG(L_ERR, "avp_db:load_avps_fixup: Unknown parameter\n");
-			return -1;
-		}
-	}
+		 /* Determine the track and class of attributes to be loaded */
+	    s = (char*)*param;
+	    flags = 0;
+	    if (*s != '$' || (strlen(s) != 3)) {
+		ERR("Invalid parameter value, $xy expected\n");
+		return -1;
+	    }
+	    switch((s[1] << 8) + s[2]) {
+	    case 0x4655: /* $fu */
+	    case 0x6675:
+	    case 0x4675:
+	    case 0x6655:
+		flags = AVP_TRACK_FROM | AVP_CLASS_USER;
+		break;
 
-	pkg_free(*param);
-	*param=(void*)id;
+	    case 0x4652: /* $fr */
+	    case 0x6672:
+	    case 0x4672:
+	    case 0x6652:
+		flags = AVP_TRACK_FROM | AVP_CLASS_URI;
+		break;
+
+	    case 0x5455: /* $tu */
+	    case 0x7475:
+	    case 0x5475:
+	    case 0x7455:
+		flags = AVP_TRACK_TO | AVP_CLASS_USER;
+		break;
+
+	    case 0x5452: /* $tr */
+	    case 0x7472:
+	    case 0x5472:
+	    case 0x7452:
+		flags = AVP_TRACK_TO | AVP_CLASS_URI;
+		break;
+		
+	    default:
+		ERR("Invalid parameter value: '%s'\n", s);
+		return -1;
+	    }
+
+	    pkg_free(*param);
+	    *param = (void*)flags;
+	} else if (param_no == 2) {
+	    ret = fix_param(FPARAM_AVP, param);
+	    if (ret <= 0) return ret;
+	    ret = fix_param(FPARAM_SELECT, param);
+	    if (ret <= 0) return ret;
+	    ret = fix_param(FPARAM_STR, param);
+	    if (ret <= 0) return ret;
+	    else {
+		ERR("Unknown parameter\n");
+		return -1;
+	    }
+	}
 	return 0;
 }
