@@ -91,7 +91,8 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 					"parameters of first hop\n");
 				goto error;
 			}
-			*received = hooks.contact.received->body;
+			if (hooks.contact.received)
+				*received = hooks.contact.received->body;
 			/*for (;params; params = params->next) {
 				if (params->type == P_RECEIVED) {
 					*received = hooks.contact.received->body;
