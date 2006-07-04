@@ -131,6 +131,7 @@ typedef struct avp_spec {
 #define AVP_NAME_RE      (1<<2)
 
 /* AVP classes */
+#define AVP_CLASS_URI    (1<<4)
 #define AVP_CLASS_USER   (1<<5)
 #define AVP_CLASS_DOMAIN (1<<6)
 #define AVP_CLASS_GLOBAL (1<<7)
@@ -140,7 +141,7 @@ typedef struct avp_spec {
 #define AVP_TRACK_TO     (1<<9)
 #define AVP_TRACK_ALL    (AVP_TRACK_FROM|AVP_TRACK_TO)
 
-#define AVP_CLASS_ALL (AVP_CLASS_USER|AVP_CLASS_DOMAIN|AVP_CLASS_GLOBAL)
+#define AVP_CLASS_ALL (AVP_CLASS_URI|AVP_CLASS_USER|AVP_CLASS_DOMAIN|AVP_CLASS_GLOBAL)
 
 /* AVP name index */
 #define AVP_INDEX_FORWARD	(1<<10)

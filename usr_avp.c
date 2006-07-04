@@ -50,7 +50,9 @@
 #include "usr_avp.h"
 
 enum idx {
-	IDX_FROM_USER = 0,
+	IDX_FROM_URI = 0,
+	IDX_TO_URI,
+	IDX_FROM_USER,
 	IDX_TO_USER,
 	IDX_FROM_DOMAIN,
 	IDX_TO_DOMAIN,
@@ -108,7 +110,13 @@ int init_avps(void)
  */
 static avp_list_t* select_list(avp_flags_t flags)
 {
-	if (flags & AVP_CLASS_USER) {
+	if (flags & AVP_CLASS_URI) {
+		if (flags & AVP_TRACK_TO) {
+			return crt_list[IDX_TO_URI];
+		} else {
+			return crt_list[IDX_FROM_URI];
+		}
+	} else if (flags & AVP_CLASS_USER) {
 		if (flags & AVP_TRACK_TO) {
 			return crt_list[IDX_TO_USER];
 		} else {
@@ -241,14 +249,15 @@ int add_avp(avp_flags_t flags, avp_name_t name, avp_value_t val)
 	avp_flags_t avp_class;
 	avp_list_t* list;
 
-	     /* Add avp to user class if no class has been
+	     /* Add avp to uri class if no class has been
 	      * specified by the caller
 	      */
-	if ((flags & AVP_CLASS_ALL) == 0) flags |= AVP_CLASS_USER;
+	if ((flags & AVP_CLASS_ALL) == 0) flags |= AVP_CLASS_URI;
 	if ((flags & AVP_TRACK_ALL) == 0) flags |= AVP_TRACK_FROM;
 	list = select_list(flags);
 
-	if (flags & AVP_CLASS_USER) avp_class = AVP_CLASS_USER;
+	if (flags & AVP_CLASS_URI) avp_class = AVP_CLASS_URI;
+	else if (flags & AVP_CLASS_USER) avp_class = AVP_CLASS_USER;
 	else if (flags & AVP_CLASS_DOMAIN) avp_class = AVP_CLASS_DOMAIN;
 	else avp_class = AVP_CLASS_GLOBAL;
 
@@ -482,7 +491,10 @@ avp_t *search_next_avp(struct search_state* s, avp_value_t *val )
 			}
 		}
 
-		if (s->flags & AVP_CLASS_USER) {
+		if (s->flags & AVP_CLASS_URI) {
+			s->flags &= ~AVP_CLASS_URI;
+			s->avp = *select_list(s->flags);
+		} else if (s->flags & AVP_CLASS_USER) {
 			s->flags &= ~AVP_CLASS_USER;
 			s->avp = *select_list(s->flags);
 		} else if (s->flags & AVP_CLASS_DOMAIN) {
@@ -627,7 +639,15 @@ avp_list_t* set_avp_list( avp_flags_t flags, avp_list_t* list )
 {
 	avp_list_t* prev;
 
-	if (flags & AVP_CLASS_USER) {
+	if (flags & AVP_CLASS_URI) {
+		if (flags & AVP_TRACK_FROM) {
+			prev = crt_list[IDX_FROM_URI];
+			crt_list[IDX_FROM_URI] = list;
+		} else {
+			prev = crt_list[IDX_TO_URI];
+			crt_list[IDX_TO_URI] = list;
+		}
+	} else if (flags & AVP_CLASS_USER) {
 		if (flags & AVP_TRACK_FROM) {
 			prev = crt_list[IDX_FROM_USER];
 			crt_list[IDX_FROM_USER] = list;
@@ -845,6 +865,12 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 			case 't':
 				attr->flags = AVP_TRACK_TO;
 				break;
+			case 0x6672: /* 'fr' */
+				attr->flags = AVP_TRACK_FROM | AVP_CLASS_URI;
+				break;
+			case 0x7472: /* 'tr' */
+				attr->flags = AVP_TRACK_TO | AVP_CLASS_URI;
+				break;				
 			case 0x6675: /* 'fu' */
 				attr->flags = AVP_TRACK_FROM | AVP_CLASS_USER;
 				break;
