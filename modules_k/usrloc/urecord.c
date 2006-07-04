@@ -221,13 +221,13 @@ static inline int nodb_timer(urecord_t* _r)
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-			    ptr->aor->len, ZSW(ptr->aor->s),
-			    ptr->c.len, ZSW(ptr->c.s));
-			
+			DBG("DEBUG:usrloc:nodb_timer: Binding '%.*s','%.*s' has expired\n",
+				ptr->aor->len, ZSW(ptr->aor->s),
+				ptr->c.len, ZSW(ptr->c.s));
+
 			t = ptr;
 			ptr = ptr->next;
-			
+
 			mem_delete_ucontact(_r, t);
 			update_stat( _r->slot->d->expires, 1);
 		} else {
@@ -259,13 +259,13 @@ static inline int wt_timer(urecord_t* _r)
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-			    ptr->aor->len, ZSW(ptr->aor->s),
-			    ptr->c.len, ZSW(ptr->c.s));
-			
+			DBG("DEBUG:usrloc:wt_timer: Binding '%.*s','%.*s' has expired\n",
+				ptr->aor->len, ZSW(ptr->aor->s),
+				ptr->c.len, ZSW(ptr->c.s));
+
 			t = ptr;
 			ptr = ptr->next;
-			
+
 			if (db_delete_ucontact(t) < 0) {
 				LOG(L_ERR, "wt_timer(): Error while deleting contact from "
 				    "database\n");
@@ -301,14 +301,14 @@ static inline int wb_timer(urecord_t* _r)
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-			    ptr->aor->len, ZSW(ptr->aor->s),
-			    ptr->c.len, ZSW(ptr->c.s));
+			DBG("DEBUG:usrloc:wb_timer: Binding '%.*s','%.*s' has expired\n",
+				ptr->aor->len, ZSW(ptr->aor->s),
+				ptr->c.len, ZSW(ptr->c.s));
 			update_stat( _r->slot->d->expires, 1);
 
 			t = ptr;
 			ptr = ptr->next;
-			
+
 			/* Should we remove the contact from the database ? */
 			if (st_expired_ucontact(t) == 1) {
 				if (db_delete_ucontact(t) < 0) {
