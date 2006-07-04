@@ -234,8 +234,8 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 }
 
 #define VALID_AOR(contact, aor) \
-    ((aor)->len == (contact)->aor.len && \
-     !strncasecmp((aor)->s, (contact)->aor.s, (aor->len)))
+    ((aor).len == (contact)->aor.len && \
+     !strncasecmp((aor).s, (contact)->aor.s, (aor.len)))
 
 /*
  * Lookup contact in the database and rewrite Request-URI,
@@ -248,30 +248,19 @@ int lookup2(struct sip_msg* msg, char* table, char* p2)
 	ucontact_t* ptr;
 	int res;
 	unsigned int nat;
-	str new_uri, *aor;
+	str new_uri, aor;
 	fparam_t* fp;
 	int_str val;
 
-
-	ERR("Lookup2 called\n");
 	nat = 0;
 	fp = (fparam_t*)p2;
-	if (fp->type == FPARAM_AVP) {
-	    if (search_first_avp(fp->v.avp.flags, fp->v.avp.name, &val, 0)) {
-		aor = &val.s;
-		return 0;
-	    } else {
-		return -1;
-	    }
-	} else if (fp->type = FPARAM_STR) {
-	    aor = &fp->v.str;
-	} else {
-	    ERR("Unsupported AOR parameter\n");
+	
+	if (get_str_fparam(&aor, msg, (fparam_t*)p2) != 0) {
+	    ERR("Unable to get the AOR value\n");
 	    return -1;
 	}
 
 	if (get_to_uid(&uid, msg) < 0) return -1;
-
 	get_act_time();
 
 	ul.lock_udomain((udomain_t*)table);
