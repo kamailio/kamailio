@@ -10,11 +10,8 @@ PATH=$PATH:/usr/local/sbin
 
 
 ### include resource files, if any
-if [ -f /etc/openser/.openserctlrc ]; then
-	. /etc/openser/.openserctlrc
-fi
-if [ -f /usr/local/etc/openser/.openserctlrc ]; then
-	. /usr/local/etc/openser/.openserctlrc
+if [ -f /usr/local/etc/openser/openserctlrc ]; then
+	. /usr/local/etc/openser/openserctlrc
 fi
 if [ -f ~/.openserctlrc ]; then
 	. ~/.openserctlrc
@@ -37,12 +34,13 @@ if [ -z "$MYDIR" ] ; then
 fi
 
 if [ -z "$MYLIBDIR" ] ; then
-	if [ -f "$MYDIR/../lib/openserctl" ]; then
-		MYLIBDIR="$MYDIR/../lib/openserctl"
-	else
+	MYLIBDIR="/usr/local/lib/openser/openserctl"
+	if [ ! -d "$MYLIBDIR" ]; then
 		MYLIBDIR=$MYDIR
 	fi
 fi
+
+echo "mydir = '$MYDIR' mylibdir = '$MYLIBDIR'"
 
 ##### ------------------------------------------------ #####
 ### load base functions
@@ -63,13 +61,13 @@ DBENGINELOADED=0
 #	DBENGINE="MYSQL"
 #fi
 case $DBENGINE in
-	MYSQL)
+	MYSQL|mysql|MySQL)
 		if [ -f "$MYLIBDIR/openserctl.mysql" ]; then
 			. "$MYLIBDIR/openserctl.mysql"
 			DBENGINELOADED=1
 		fi
 		;;
-	PGSQL)
+	PGSQL|pgsql|postgres|postgresql)
 		if [ -f "$MYLIBDIR/openserctl.pgsql" ]; then
 			. "$MYLIBDIR/openserctl.pgsql"
 			DBENGINELOADED=1
@@ -92,13 +90,13 @@ if [ -z "$CTLENGINE" ] ; then
 	CTLENGINE="FIFO"
 fi
 case $CTLENGINE in
-	FIFO)
+	FIFO|fifo)
 	if [ -f "$MYLIBDIR/openserctl.fifo" ]; then
 		. "$MYLIBDIR/openserctl.fifo"
 			CTLENGINELOADED=1
 		fi
 		;;
-	UNIXSOCK)
+	UNIXSOCK|unixsock)
 		if [ -f "$MYLIBDIR/openserctl.unixsock" ]; then
 			. "$MYLIBDIR/openserctl.unixsock"
 			CTLENGINELOADED=1
