@@ -520,6 +520,20 @@ static int dump_avp(struct sip_msg* m, char* x, char* y)
 	} else {
 		dump_avp_reverse(avp_list);
 	}
+	avp_list=get_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM);
+	INFO("track=FROM class=URI\n");
+	if (!avp_list) {
+		LOG(L_INFO,"INFO: No AVP present\n");
+	} else {
+		dump_avp_reverse(avp_list);
+	}
+	avp_list=get_avp_list(AVP_CLASS_URI | AVP_TRACK_TO);
+	INFO("track=TO class=URI\n");
+	if (!avp_list) {
+		LOG(L_INFO,"INFO: No AVP present\n");
+	} else {
+		dump_avp_reverse(avp_list);
+	}
 	return 1;
 }
 
