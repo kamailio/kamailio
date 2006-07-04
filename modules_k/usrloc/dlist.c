@@ -158,7 +158,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 				} else {
 					sock = grep_sock_info( &host, (unsigned short)port, proto);
 					if (sock==0) {
-						LOG(L_WARN,"ERROR:usrloc:get_all_db_ucontacts: "
+						LOG(L_WARN,"WARNING:usrloc:get_all_db_ucontacts: "
 							"non-local socket <%s>...ignoring\n", p);
 					}
 				}

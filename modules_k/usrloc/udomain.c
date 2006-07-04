@@ -353,7 +353,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		}
 		ci.sock = grep_sock_info( &host, (unsigned short)port, proto);
 		if (ci.sock==0) {
-			LOG(L_WARN,"ERROR:usrloc:dbrow2info: non-local socket "
+			LOG(L_WARN,"WARNING:usrloc:dbrow2info: non-local socket "
 				"<%s>...ignoring\n", p);
 		}
 	}
