@@ -156,7 +156,7 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
     kv[1].type = DB_STR;
     kv[1].nul = 0;
 
-    if (get_str_fparam(&uri, msg, (fparam_t*)fp) < 0) {
+    if (get_str_fparam(&uri, msg, (fparam_t*)fp) != 0) {
 	ERR("Unable to get URI\n");
 	return -1;
     }
@@ -402,10 +402,8 @@ static int attrs_fixup(void** param, int param_no)
 	    if (ret <= 0) return ret;
 	    ret = fix_param(FPARAM_STR, param);
 	    if (ret <= 0) return ret;
-	    else {
-		ERR("Unknown parameter\n");
-		return -1;
-	    }
+	    ERR("Unknown parameter\n");
+	    return -1;
 	}
 	return 0;
 }
