@@ -242,6 +242,14 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	/* timers */
 	init_cell_timers(new_cell);
 
+	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI,  &new_cell->uri_avps_from );
+	new_cell->uri_avps_from = *old;
+	*old = 0;
+
+	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI,  &new_cell->uri_avps_to );
+	new_cell->uri_avps_to = *old;
+	*old = 0;
+
 	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  &new_cell->user_avps_from );
 	new_cell->user_avps_from = *old;
 	*old = 0;

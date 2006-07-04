@@ -241,6 +241,8 @@ typedef struct cell
 	struct totag_elem *fwded_totags;
 
 	     /* list with avp */
+	struct usr_avp *uri_avps_from;
+	struct usr_avp *uri_avps_to;
 	struct usr_avp *user_avps_from;
 	struct usr_avp *user_avps_to;
 	struct usr_avp *domain_avps_from;

@@ -489,6 +489,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	static unsigned int backup_msgid;
 	static avp_list_t* backup_user_from, *backup_user_to;
 	static avp_list_t* backup_domain_from, *backup_domain_to;
+	static avp_list_t* backup_uri_from, *backup_uri_to;
 	static struct socket_info* backup_si;
 
 	if (msg) {
@@ -512,6 +513,8 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		set_t(t);
 		/* make available the avp list from transaction */
 
+		backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from );
+		backup_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to );
 		backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
@@ -529,6 +532,8 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from );
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to );
 		bind_address=backup_si;
 	}
 }
@@ -1276,6 +1281,7 @@ int reply_received( struct sip_msg  *p_msg )
 	str next_hop;
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
+	avp_list_t* backup_uri_from, *backup_uri_to;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -1348,6 +1354,8 @@ int reply_received( struct sip_msg  *p_msg )
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
 
+		backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from );
+		backup_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to );
 		backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
@@ -1357,6 +1365,8 @@ int reply_received( struct sip_msg  *p_msg )
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		/* restore original avp list */
+		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from );
+		set_avp_list( AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to );
 		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from );
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
 		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
