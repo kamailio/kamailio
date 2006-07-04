@@ -110,7 +110,7 @@ void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 }
 
 #define MAX_AVP_DIALOG_LISTS 2
-static unsigned short avp_dialog_lists[MAX_AVP_DIALOG_LISTS] = {AVP_CLASS_USER|AVP_TRACK_FROM, AVP_CLASS_USER|AVP_TRACK_TO};
+static unsigned short avp_dialog_lists[MAX_AVP_DIALOG_LISTS] = {AVP_CLASS_URI|AVP_TRACK_FROM, AVP_CLASS_URI|AVP_TRACK_TO};
 typedef char rr_avp_flags_t;
 
 str *rr_get_avp_cookies(void) {
@@ -239,7 +239,7 @@ void rr_set_avp_cookies(str *enc_cookies, int reverse_direction) {
 		}
 
 		avp.flags = (avp_flags & 0x0F) | avp_dialog_lists[avp_flags >> 4];
-		if (reverse_direction && (avp.flags & (AVP_CLASS_DOMAIN|AVP_CLASS_USER)) ) {
+		if (reverse_direction && (avp.flags & (AVP_CLASS_DOMAIN|AVP_CLASS_USER|AVP_CLASS_URI)) ) {
 			avp.flags ^= AVP_TRACK_ALL;  /* flip from/to flags */
 		}
 		pos+= sizeof(rr_avp_flags_t);
