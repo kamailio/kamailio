@@ -1,0 +1,108 @@
+#!/bin/sh 
+#
+# $Id$
+#
+# sc: openser control; tool for maintaining openser
+#
+#===================================================================
+
+##### ----------------------------------------------- #####
+### UNIXSOCK specific variables and functions
+#
+
+##### ----------------------------------------------- #####
+### load CTL base
+#
+if [ -f "$MYLIBDIR/openserctl.ctlbase" ]; then
+	. "$MYLIBDIR/openserctl.ctlbase"
+else
+	mwarn "Cannot load CTL core functions '$MYLIBDIR/openserctl.ctlbase' ..."
+	# exit -1
+fi
+
+#
+##### ----------------------------------------------- #####
+### parameters
+#
+if [ -z "$OSER_UNIXSOCK" ]; then
+	OSER_UNIXSOCK=/tmp/openser.sock
+fi
+
+if [ -z "$OSERUNIX" ]; then
+	OSERUNIX=openserunix
+fi
+
+#
+##### ----------------------------------------------- #####
+### functions
+#
+usage_unixsock() {
+	echo
+	mecho " -- command 'unixsock'"
+	echo
+cat <<EOF
+ unixsock ........................... send raw unixsock command
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_unixsock"
+
+
+unixsock_cmd()
+{
+	mdbg "entering unixsock_cmd $*"
+	if [ "$#" -lt 1 ]; then
+		merr "unixsock_cmd must take at least command name as parameter"
+		exit
+	fi
+
+	# construct the command now
+	CMD=":$1:\n";
+	shift
+	while [ -n "$1" ] ; do
+		CMD="${CMD}${1}\n"
+		shift
+	done
+	CMD="${CMD}\n"
+	
+	printf "$CMD" | $OSERUNIX $OSER_UNIXSOCK | filter_fl
+
+	mdbg "UNIXSOCK command was:\n$CMD"
+}
+
+CTLCMD=unixsock_cmd
+
+unixsock_openser_monitor() {
+		attempt=0
+		if [ "$2" == "" ]; then
+		    loops=-1;
+		else
+		    loops=$2;
+		fi
+		clear
+		while [ $loops -ne $attempt ] ; do
+			attempt=$(($attempt + 1))
+			#clear
+			tput cup 0 0
+
+			# print_stats $attempt
+			mecho "[cycle #: $attempt; if constant make sure server lives]"
+			unixsock_cmd version
+			unixsock_cmd uptime
+			mecho "Transaction Statistics"
+			unixsock_cmd t_stats
+			mecho "Stateless Server Statistics"
+			unixsock_cmd sl_stats
+			mecho "UsrLoc Stats"
+			unixsock_cmd ul_stats
+
+			if [ $loops -ne $attempt ] ; then
+				sleep $WATCH_PERIOD
+			fi
+				
+		done
+		exit 0
+
+}
+
+OPENSER_MONITOR=unixsock_openser_monitor
+

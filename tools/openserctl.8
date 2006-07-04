@@ -1,0 +1,240 @@
+.\" $Id$
+.TH openserctl 8 21.06.2006 openser "OpenSER" 
+.\" Process with
+.\" groff -man -Tascii openserctl.8 
+.\"
+.SH NAME
+opneserctl \- openser control tool
+.SH SYNOPSIS
+.B openserctl
+.BI command
+[
+.BI parameters
+]
+
+.SH DESCRIPTION
+.B openserctl
+is a shell script to control
+.B OpenSER SIP server
+It can be used to manage users, domains, aliases and other server options
+
+.SH FILES
+.bL
+.I /etc/openser/.openserctlrc
+.br
+.I /usr/local/etc/openser/.openserctlrc
+.br
+.I ~/.openserctlrc
+.br
+
+.SH COMMANDS
+.TP 12
+.B \-h
+Displays a short usage description, including all available options.
+.TP
+.B moni
+show internal status
+.TP
+.B ps
+show running processes
+.TP
+.B fifo
+send raw FIFO commands
+.TP
+.B ping <uri>
+ping a URI (OPTIONS)
+.TP
+.B cisco_restart <uri>
+restart a Cisco phone (NOTIFY)
+.TP 16
+.I SUBSCRIBER management:
+.TP
+.B add <username> <password> <email>
+add a new subscriber (*)
+.TP
+.B passwd <username> <passwd>
+change user's password (*)
+.TP
+.B rm <username>
+delete a user (*)
+.TP
+.B mail <username>
+send an email to a user
+.TP
+.B alias show [<alias>]
+show aliases
+.TP
+.B alias rm <alias>
+remove an alias
+.TP
+.B alias add <alias> <uri> 
+add an aliases
+.TP
+.B rpid add <username> <rpid>
+add rpid for a user (*)
+.TP
+.B rpid rm <username>
+set rpid to NULL for a user (*)
+.TP
+.B rpid show <username>
+show rpid of a user
+.TP
+.B alias_db show <alias>
+show alias details
+.TP
+.B alias_db list <sip-id>
+list aliases for uri
+.TP
+.B alias_db add <alias> <sip-id>
+add an alias (*)
+.TP
+.B alias_db rm <alias>
+remove an alias (*)
+.TP
+.B alias_db help
+help message
+.TP
+.B speeddial show <speeddial-id>
+show speeddial details
+.TP
+.B speeddial list <sip-id>
+list speeddial for uri
+.TP
+.B speeddial add <sip-id> <sd-id> <new-uri> [<desc>]
+add a speedial (*)
+.TP
+.B speeddial rm <sip-id> <sd-id>
+remove a speeddial (*)
+.TP
+.B speeddial help
+help message
+.TP 16
+.I AVP management:
+.TP
+.B avp list [-T table] [-u <sip-id|uuid>] \
+[-a attribute] [-v value] [-t type]
+list AVPs
+.TP
+.B avp add [-T table] <sip-id|uuid> \
+<attribute> <type> <value>
+add AVP (*)
+.TP
+.B avp rm [-T table]  [-u <sip-id|uuid>] \
+[-a attribute] [-v value] [-t type]
+remove AVP (*)
+.TP
+.B avp help
+help message
+.TP 16
+.I ACL (Access Control Lists) management
+.TP
+.B acl show [<username>]
+show user membership
+.TP
+.B acl grant <username> <group>
+grant user membership (*)
+.TP
+.B acl revoke <username> [<group>]
+grant user membership(s) (*)
+
+.TP 16
+.I USRLOC (User Location) management
+.TP
+.B ul show [<username>]
+show in-RAM online users
+.TP
+.B ul rm <username> [<contact URI>]
+delete user's UsrLoc entries
+.TP
+.B ul add <username> <uri>
+introduce a permanent UrLoc entry
+.TP
+.B ul add <username> <uri> <expires>
+introduce a temporary UrLoc entry
+.TP
+.B showdb [<username>]
+show online users flushed in DB
+.TP 16
+.I DOMAIN management
+.TP
+.B domain show
+show list of served domains
+.TP
+.B domain add <domainname>
+add a new served domain
+.TP
+.B domain rm <domainname>
+remove a served domain
+.TP 16
+.I LCR (Least Cost Routing) management
+.TP
+.B lcr show
+show routes, gateways and groups
+.TP
+.B lcr reload
+reload lcr gateways
+.TP
+.B lcr addgw_grp <grp_name>
+add gateway group, autocreate grp_id
+.TP
+.B lcr addgw_grp <grp_name> <grp_id>
+add gateway group with grp_id
+.TP
+.B lcr rmgw_grp  <grp_id>
+delete the gw_grp
+.TP
+.B lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id>
+add a gateway
+.TP
+.B lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix>
+add a gateway with prefix
+.TP
+.B lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> \
+<prefix> <strip>
+add a gateway with prefix and strip
+.TP
+.B lcr rmgw  <gw_name>
+delete a gateway
+.TP
+.B lcr addroute <prefix> <from> <grp_id> <prio>
+add a route
+.TP
+.B lcr rmroute  <prefix> <from> <grp_id> <prio>
+delete a route
+
+.SH NOTES
+.PP
+Commands labeled with (*) will prompt for a MySQL password.
+If the environment variable PW is set, the password will not be prompted.
+.PP
+IP addresses must be entered in dotted quad format e.g. 1.2.3.4
+<uri_scheme> and <transport> must be entered in integer or text,
+e.g. transport '2' is identical to transport 'tcp'.
+.br
+scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls
+.br
+Examples:
+.br
+lcr addgw_grp usa 1
+.br
+lcr addgw level3 1.2.3.4 5080 sip tcp 1
+.br
+lcr addroute +1 % 1 1
+
+.SH AUTHORS
+
+see 
+.B /usr/share/doc/openser/AUTHORS
+
+.SH SEE ALSO
+.BR openser(8), openser.cfg(5)
+.PP
+Full documentation on openser is available at
+.I http://www.openser.org/.
+.PP
+Mailing lists:
+.nf 
+users@openser.org - openser user community
+.nf 
+devel@openser.org - openser development, new features and unstable version
+

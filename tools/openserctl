@@ -1,0 +1,1857 @@
+#!/bin/sh 
+#
+# $Id$
+#
+# openser control tool for maintaining openser
+#
+#===================================================================
+
+PATH=$PATH:/usr/local/sbin
+
+
+### include resource files, if any
+if [ -f /etc/openser/.openserctlrc ]; then
+	. /etc/openser/.openserctlrc
+fi
+if [ -f /usr/local/etc/openser/.openserctlrc ]; then
+	. /usr/local/etc/openser/.openserctlrc
+fi
+if [ -f ~/.openserctlrc ]; then
+	. ~/.openserctlrc
+fi
+
+##### ------------------------------------------------ #####
+### force values for variables in this section
+#
+
+# you better set the variables in ~/.openserctlrc
+
+##### ------------------------------------------------ #####
+### 
+#
+### version for this script
+VERSION='1.2 - $Revision$'
+
+if [ -z "$MYDIR" ] ; then
+	MYDIR=`dirname $0`
+fi
+
+if [ -z "$MYLIBDIR" ] ; then
+	if [ -f "$MYDIR/../lib/openserctl" ]; then
+		MYLIBDIR="$MYDIR/../lib/openserctl"
+	else
+		MYLIBDIR=$MYDIR
+	fi
+fi
+
+##### ------------------------------------------------ #####
+### load base functions
+#
+if [ -f "$MYLIBDIR/openserctl.base" ]; then
+	. "$MYLIBDIR/openserctl.base"
+else
+	echo "Cannot load core functions '$MYLIBDIR/openserctl.base' - exiting ..."
+	exit -1
+fi
+
+#
+##### ------------------------------------------------ #####
+### DBENGINE
+#
+DBENGINELOADED=0
+#if [ -z "$DBENGINE" ] ; then
+#	DBENGINE="MYSQL"
+#fi
+case $DBENGINE in
+	MYSQL)
+		if [ -f "$MYLIBDIR/openserctl.mysql" ]; then
+			. "$MYLIBDIR/openserctl.mysql"
+			DBENGINELOADED=1
+		fi
+		;;
+	PGSQL)
+		if [ -f "$MYLIBDIR/openserctl.pgsql" ]; then
+			. "$MYLIBDIR/openserctl.pgsql"
+			DBENGINELOADED=1
+		fi
+		;;
+esac
+
+if [ $DBENGINELOADED -eq 1 ] ; then 
+	mdbg "database engine '$DBENGINE' loaded"
+else
+	mwarn "no database engine found - tried '$DBENGINE'"
+fi
+
+#
+##### ------------------------------------------------ #####
+### CTLENGINE
+#
+CTLENGINELOADED=0
+if [ -z "$CTLENGINE" ] ; then
+	CTLENGINE="FIFO"
+fi
+case $CTLENGINE in
+	FIFO)
+	if [ -f "$MYLIBDIR/openserctl.fifo" ]; then
+		. "$MYLIBDIR/openserctl.fifo"
+			CTLENGINELOADED=1
+		fi
+		;;
+	UNIXSOCK)
+		if [ -f "$MYLIBDIR/openserctl.unixsock" ]; then
+			. "$MYLIBDIR/openserctl.unixsock"
+			CTLENGINELOADED=1
+		fi
+		;;
+esac
+
+if [ $CTLENGINELOADED -eq 1 ] ; then 
+	mdbg "Control engine '$CTLENGINE' loaded"
+else
+	mwarn "no control engine found - tried '$CTLENGINE'"
+fi
+
+#
+##### ------------------------------------------------ #####
+### common functions
+#
+usage() {
+	CMD=`basename $0`
+	if [ "0$VERIFY_ACL" -eq 1 ] ; then
+		EXTRA_TEXT="ACL privileges are: $ACL_GROUPS"
+	fi
+	cat <<EOF
+$0 $VERSION
+Existing commands:
+EOF
+for f in $USAGE_FUNCTIONS
+do
+	$f
+done
+	echo
+
+}
+
+require_dbengine() {
+	if [ $DBENGINELOADED -eq 0 ] ; then 
+		echo "This command requires a database engine - none was loaded"
+		exit -1
+	fi
+}
+
+require_ctlengine() {
+	if [ $CTLENGINELOADED -eq 0 ] ; then 
+		echo "This command requires a control engine - none was loaded"
+		exit -1
+	fi
+}
+
+#
+##### ------------------------------------------------ #####
+### combined functions (require db and/or ctl)
+#
+#
+
+#
+##### ------------------------------------------------ #####
+### helper functions (require db and/or ctl)
+#
+
+# params: user
+# output: false if exists, true otherwise
+is_user() {
+	set_user $1
+	
+	QUERY="select count(*) from $SUB_TABLE where \
+$SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
+
+	CNT=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+	mdbg "is_user: user counter=$CNT"
+	if [ "$CNT" = "0" ] ; then
+		false
+	else
+		true
+	fi
+}
+
+
+#
+##### ------------------------------------------------ #####
+### ACL Management
+#
+acl() {
+	require_dbengine
+	case $1 in
+		show)
+			if [ $# -eq 2 ] ; then
+				is_user $2 
+				if [ $? -ne 0 ] ; then
+					printf "Non-existent user '$2'. Still proceeding? \
+[Y|N] " > /dev/stderr
+					read answer
+					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+						mecho "Proceeding with non-local user"
+					else
+						exit 1
+					fi
+				fi
+				set_user $2
+				CLAUSE=" WHERE $ACL_USER_COLUMN='$OSERUSER' AND \
+					$ACL_DOMAIN_COLUMN='$OSERDOMAIN' "
+			elif [ $# -ne 1 ] ; then
+				usage_acl
+				exit 1
+			fi
+			QUERY="select * FROM $ACL_TABLE $CLAUSE ; "
+			$DBROCMD "$QUERY"
+
+			;;
+
+		grant)
+			if [ $# -lt 3 ] ; then
+				usage
+				exit 1
+			fi
+			is_user $2 
+			if [ $? -ne 0 ] ; then
+				printf "Non-existent user '$2'. Still proceeding?\
+					[Y|N] " > /dev/stderr
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					mecho "Proceeding with non-local user"
+				else
+					exit 1
+				fi
+			fi
+			set_user $2
+			shift 2
+			acl_inserted=0
+			while [ $# -gt 0 ] ; do
+
+				if [ $VERIFY_ACL -eq 1 ] ; then
+					found=0
+					for i in $ACL_GROUPS ; do
+						if [ "$1" = "$i" ] ; then
+							found=1
+							break
+						fi
+					done
+					if [ $found -eq 0 ] ; then
+						mwarn "Invalid privilege: acl '$1' ignored"
+						shift
+						continue
+					fi
+				fi
+
+				QUERY="insert into $ACL_TABLE ($ACL_USER_COLUMN,\
+$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN,$ACL_DOMAIN_COLUMN ) values \
+('$OSERUSER','$1', now(), '$OSERDOMAIN' );"
+				$DBCMD "$QUERY"
+				if [ $? -ne 0 ] ; then
+					merr "acl - SQL Error"
+					exit 1
+				fi
+				acl_inserted=1
+				shift
+			done
+
+			if [ $acl_inserted -eq 1 ] ; then
+				$0 acl show "$OSERUSER@$OSERDOMAIN"
+			fi
+
+			;;
+
+		revoke)
+			if [ $# -eq 3 ] ; then
+				CLAUSE=" and $ACL_GROUP_COLUMN='$3' "
+			elif [ $# -ne 2 ] ; then
+				merr "acl - wrong number of parameters"
+				usage_acl
+				exit 1
+			fi	
+
+			set_user $2
+
+			QUERY="delete from $ACL_TABLE where \
+$ACL_TABLE.$ACL_USER_COLUMN='$OSERUSER' AND $ACL_DOMAIN_COLUMN='$OSERDOMAIN' \
+$CLAUSE"
+			$DBCMD "$QUERY"
+
+			$0 acl show "$2"
+
+			;;
+
+		*)
+			merr "lcr - invalid commad '$1'"
+			usage_acl
+			exit 1
+			;;
+	esac
+}
+
+
+#
+##### ------------------------------------------------ #####
+### alias management
+#
+check_ul_alias() {
+	require_ctlengine
+	RES=`$CTLCMD ul_show_contact "$ALS_TABLE" "$1@$2"`
+	RET="$?"
+	if [ $RET -ne 0 ] ; then
+		merr "OpenSER $CTLENGINE not accessible: $RET" \
+			> /dev/stderr
+		exit 1
+	fi
+	echo "$RES" | grep "^404" > /dev/null
+	if [ $? -ne 0 ] ; then
+		echo "$RES" | grep "^400" > /dev/null
+		if [ $? -eq 0 ] ; then
+			merr "400; check if you use aliases in OpenSER" \
+				> /dev/stderr
+			exit 1
+		fi
+		echo "$RES" | grep "^200" > /dev/null
+		if [ $? -eq 0 ] ; then
+			true
+		fi
+		# other errors
+		merr "$RES" > /dev/stderr
+		exit 1
+	fi
+	# alias does not exist yet, go ahead!
+	false
+}
+
+check_db_alias() {
+	require_dbengine
+
+	QUERY="select count(*) from $DA_TABLE where $DA_ALIAS_USER_COLUMN='$1' \
+and $DA_ALIAS_DOMAIN_COLUMN='$2';"
+	CNT=`$DBROCMD "$QUERY" | grep -v ERROR | $LAST_LINE`
+	mdbg "check_db_alias: alias counter=$CNT"
+	if [ "$CNT" = "0" ] ; then
+		false
+	else
+		true
+	fi
+}
+
+# params: user
+# output: false if exists, true otherwise
+is_alias_db()
+{
+	set_user $1
+	check_db_alias "$OSERUSER" "$OSERDOMAIN"
+
+	if [ $? -eq 0 ] ; then
+		false
+	else
+		true
+	fi
+}
+
+#
+# check for alias duplicates
+#   params: user domain
+#   output: false if exists, true otherwise
+check_alias() {
+	if [ "$ENABLE_ALIASES" = "0" ] ; then
+		false
+	fi
+
+	if [ "$ENABLE_ALIASES" = "1" ] ; then
+		check_ul_alias "$1" "$2"
+		if [ $? -eq 0 ] ; then
+			false
+		else
+			true
+		fi
+	else
+		check_db_alias "$1" "$2"
+		if [ $? -eq 0 ] ; then
+			false
+		else
+			true
+		fi
+	fi
+}
+
+# db-based aliases
+alias_db() {
+	if [ "$#" -lt 2 ] ; then
+		merr "alias_db - too few parameters"
+		echo
+		usage_alias_db
+		exit 1
+	fi
+
+	require_dbengine
+
+	shift
+
+	case $1 in 
+		list)
+			if [ $# -eq 2 ] ; then
+				# print aliases for user
+				check_aor "$2"
+				if [ "$?" -ne "0" ] ; then
+					merr "alias_db - <$2> is not a valid AoR (user@domain)"
+					exit 1
+				fi
+				
+				set_user $2
+				
+				CLAUSE="WHERE $DA_USER_COLUMN='$OSERUSER' AND \
+$DA_DOMAIN_COLUMN='$OSERDOMAIN'"
+				mecho "Dumping aliases for user=<$2>"
+				echo
+				QUERY="SELECT CONCAT($DA_ALIAS_USER_COLUMN,\
+'@',$DA_ALIAS_DOMAIN_COLUMN) AS ALIAS FROM $DA_TABLE $CLAUSE;"
+				$DBROCMD "$QUERY"
+									# | $AWK 'BEGIN {line=0;}
+									#		/^\+/ { next }
+									#		{	if(line==0) print "ALIASES";
+									#			else print line ")\t" $1 "@" $2;
+									#			line++; }'
+			elif [ $# -eq 1 ] ; then
+				printf "Dumping all aliases may take long: do you want to \
+proceed? [Y|N] "
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					mecho "Dumping all aliases..."
+					echo
+				else
+					exit 1
+				fi
+				QUERY="SELECT $DA_ALIAS_USER_COLUMN, $DA_ALIAS_DOMAIN_COLUMN,\
+$DA_USER_COLUMN, $DA_DOMAIN_COLUMN FROM $DA_TABLE;"
+				$DBROCMD "$QUERY"
+					# | $AWK 'BEGIN {line=0;}
+					#	/^\+/ { next }
+					#	{	line++;
+					#		if(line==1) print "SIP-ID               \tALIAS\n";
+					#		else print $3 "@" $4 "\t" $1 "@" $2 }'
+			else
+				merr "alias_db - wrong number of params for command [list]"
+				echo
+				usage_alias_db
+				exit 1
+			fi
+
+			exit $?
+			;;
+		show)
+			if [ $# -ne 2 ] ; then
+				merr "alias_db - wrong number of params for command [show]"
+				usage_alias_db
+				exit 1
+			fi
+			
+			check_aor "$2"
+			if [ "$?" -ne "0" ] ; then
+				merr "alias_db - $2 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+			
+			set_user $2
+			
+			CLAUSE="WHERE $DA_ALIAS_USER_COLUMN='$OSERUSER' AND \
+$DA_ALIAS_DOMAIN_COLUMN='$OSERDOMAIN'"
+			QUERY="SELECT CONCAT($DA_USER_COLUMN,'@',$DA_DOMAIN_COLUMN) \
+AS 'SIP-ID' FROM $DA_TABLE $CLAUSE ; "
+			$DBROCMD "$QUERY"
+			#TMP_UUID=`sql_ro_query "$QUERY" | $AWK 'BEGIN {line=0;}
+			#								/^\+/ { next } 
+			#								{ line++;
+			#								  if(line==2) print $1 "@" $2;}'`
+			#
+			#if [ "$TMP_UUID" = "" ] ; then
+			#	mecho "non-existent alias <$2>"
+			#	exit 1
+			#fi
+			#
+			#echo "Details for alias <$2>"
+			#echo
+			#echo "SIP-ID: $TMP_UUID"
+			#echo
+			#exit $?
+			;;
+		add)
+			if [ $# -ne 3 ] ; then
+				usage_alias_db
+				exit 1
+			fi
+			shift
+			check_aor "$1"
+			if [ "$?" -ne "0" ] ; then
+				err "alias_db - $1 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+
+			check_aor "$2"
+			if [ "$?" -ne "0" ] ; then
+				err "alias_db - $2 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+			
+			set_user $1
+			TMP_OSERUSER=$OSERUSER
+			TMP_OSERDOMAIN=$OSERDOMAIN
+			set_user $2
+			
+			QUERY="INSERT INTO $DA_TABLE ($DA_USER_COLUMN,$DA_DOMAIN_COLUMN,\
+$DA_ALIAS_USER_COLUMN,$DA_ALIAS_DOMAIN_COLUMN) VALUES ('$OSERUSER',\
+'$OSERDOMAIN','$TMP_OSERUSER','$TMP_OSERDOMAIN' );"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "alias_db - SQL Error"
+				exit 1
+			fi
+			
+			exit $?
+			;;
+		rm)
+			if [ $# -ne 2 ] ; then
+				merr "alias_db - wrong numbers of parameters"
+				usage_alias_db
+				exit 1
+			fi
+			
+			shift
+			
+			check_aor "$1"
+			if [ "$?" -ne "0" ] ; then
+				merr "alias_db - $1 is not a valid URI"
+				exit 1
+			fi
+
+			set_user $1
+			CLAUSE="WHERE $DA_ALIAS_USER_COLUMN='$OSERUSER' AND \
+$DA_ALIAS_DOMAIN_COLUMN='$OSERDOMAIN'"
+			QUERY="DELETE FROM $DA_TABLE $CLAUSE;"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "alias_db - SQL Error"
+				exit 1
+			fi
+			
+			exit $?
+			;;
+			
+		help)
+			usage_alias_db "alone"
+			;;
+			
+		*)
+			usage_alias_db
+			exit 1
+			;;
+	esac
+} # end db-aliases
+
+
+#
+##### ------------------------------------------------ #####
+### AVP management
+#
+# avp list [-T table] [-u <sip-id|uuid>]
+#     [-a attribute] [-v value] [-t type] ... list AVPs
+# avp add [-T table] <sip-id|uuid>
+#     <attribute> <type> <value> ............ add AVP (*)
+# avp rm [-T table]  [-u <sip-id|uuid>]
+#     [-a attribute] [-v value] [-t type] ... remove AVP (*)
+
+avpops() {
+	require_dbengine
+	if [ "$#" -lt 2 ] ; then
+		merr "avp - too few parameters"
+		minfo "see '$0 avp help'"
+		exit 1
+	fi
+	if [ "$1" = "avp" ] ; then
+		shift
+	else
+		merr "avp - unknown command $1"
+		minfo "see '$0 avp help'"
+		exit 1
+	fi
+
+	case $1 in 
+		list)
+			shift
+			CLAUSE=""
+			while [ "$#" != "0" ] 
+			do
+				TMP_ARG=$1
+				shift
+				case $TMP_ARG in 
+					-T)
+						if [ -z "$1" ] ; then
+							merr "avp list - table name parameter missing"
+							exit 1
+						fi
+						AVP_TABLE=$1
+					;;
+					-u)
+						if [ -z "$1" ] ; then
+							merr "avp list - user id or uuid parameter missing"
+							exit 1
+						fi
+						is_aor "$1"
+						if [ "$?" -eq "0" ] ; then
+							set_user $1
+							if [ "$CLAUSE" = "" ] ; then
+								CLAUSE=" WHERE $AVP_USER_COLUMN='$OSERUSER' \
+AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
+							else
+								CLAUSE="$CLAUSE AND \
+$AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
+							fi
+						else
+							if [ "$CLAUSE" = "" ] ; then
+								CLAUSE=" WHERE $AVP_UUID_COLUMN='$1'"
+							else
+								CLAUSE="$CLAUSE AND $AVP_UUID_COLUMN='$1'"
+							fi
+						fi				
+					;;
+					-a)
+						if [ -z "$1" ] ; then
+							merr "avp list - attribute name parameter missing"
+							exit 1
+						fi
+						if [ "$CLAUSE" = "" ] ; then
+							CLAUSE=" WHERE $AVP_ATTRIBUTE_COLUMN='$1'"
+						else
+							CLAUSE="$CLAUSE AND $AVP_ATTRIBUTE_COLUMN='$1'"
+						fi
+					;;
+					-v)
+						if [ -z "$1" ] ; then
+							merr "avp list - value parameter missing"
+							exit 1
+						fi
+						if [ "$CLAUSE" = "" ] ; then
+							CLAUSE=" WHERE $AVP_VALUE_COLUMN='$1'"
+						else
+							CLAUSE="$CLAUSE AND $AVP_VALUE_COLUMN='$1'"
+						fi
+					;;
+					-t)
+						if [ -z "$1" ] ; then
+							merr "avp list - type parameter missing"
+							exit 1
+						fi
+						if [ "$CLAUSE" = "" ] ; then
+							CLAUSE=" WHERE $AVP_TYPE_COLUMN='$1'"
+						else
+							CLAUSE="$CLAUSE AND $AVP_TYPE_COLUMN='$1'"
+						fi
+					;;
+					*)
+						merr "avp list - unknown parameter $1"
+						exit 1
+					;;
+				esac
+				shift
+			done
+			
+			QUERY="SELECT $AVP_UUID_COLUMN,$AVP_USER_COLUMN,\
+$AVP_DOMAIN_COLUMN,$AVP_ATTRIBUTE_COLUMN,$AVP_TYPE_COLUMN,$AVP_VALUE_COLUMN \
+FROM $AVP_TABLE $CLAUSE;"
+			mdbg "Query: $QUERY"
+			mecho "Dumping AVPs"
+			echo
+			$DBROCMD "$QUERY"
+			# | $AWK 'BEGIN {line=0;}
+			#		/^\+/ { next }
+			#		{	if(line==0) print "##   UUID   \tUserID     \tAttribute     \tType     \tValue\n";
+			#			else {
+			#				ORS_BAK=ORS;
+			#				ORS="";
+			#				print line ")  " $1  $2 "@" $3 "\t" $4 "\t\"" $5;
+			#				for (i=6;i<=NF;++i) print FS $i;
+			#				ORS=ORS_BAK;
+			#				print "\"";
+			#			}
+			#			line++;
+			#		}'
+			
+			exit $?
+			;;
+			
+		add)
+			shift
+			if [ $# -ne 4 ] ; then
+				if [ $# -ne 6 ] ; then
+					merr "avp add - bad number of parameters"
+					exit 1
+				fi
+			fi
+			if [ $# -eq 6 ] ; then
+				if [ "$1" = "-T" ] ; then
+					AVP_TABLE=$2
+					shift
+					shift
+				else
+					echo "avp add - unknown parameter '$1'"
+					exit 1					
+				fi
+			fi
+						
+			is_aor "$1"
+			if [ "$?" -eq "0" ] ; then
+				set_user $1
+			else
+				AVP_UUID=$1
+			fi
+
+			QUERY="INSERT INTO $AVP_TABLE \
+($AVP_UUID_COLUMN,$AVP_USER_COLUMN,$AVP_DOMAIN_COLUMN,$AVP_ATTRIBUTE_COLUMN,\
+$AVP_TYPE_COLUMN,$AVP_VALUE_COLUMN,$AVP_MODIFIED_COLUMN) \
+VALUES ('$AVP_UUID','$OSERUSER','$OSERDOMAIN','$2',$3,'$4',NOW());"
+			# echo "Query: $QUERY"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "avp add - SQL Error"
+				exit 1
+			else
+				echo
+				mecho "avp add - attribute added"
+			fi
+			
+			exit $?
+			;;
+
+		rm)
+			shift
+			CLAUSE=""
+			while [ "$#" != "0" ] 
+			do
+				TMP_ARG=$1
+				shift
+				case $TMP_ARG in 
+					-T)
+						if [ -z "$1" ] ; then
+							merr "avp rm - table name parameter missing"
+							exit 1
+						fi
+						AVP_TABLE=$1
+					;;
+					-u)
+						if [ -z "$1" ] ; then
+							merr "avp rm - user id or uuid parameter missing"
+							exit 1
+						fi
+						is_aor "$1"
+						if [ "$?" -eq "0" ] ; then
+							set_user $1
+							if [ "$CLAUSE" = "" ] ; then
+								CLAUSE="WHERE $AVP_USER_COLUMN='$OSERUSER' \
+AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
+							else
+								CLAUSE="$CLAUSE AND \
+$AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
+							fi
+						else
+							if [ "$CLAUSE" = "" ] ; then
+								CLAUSE="WHERE $AVP_UUID_COLUMN='$1'"
+							else
+								CLAUSE="$CLAUSE AND $AVP_UUID_COLUMN='$1'"
+							fi
+						fi				
+					;;
+					-a)
+						if [ -z "$1" ] ; then
+							merr "avp rm - attribute name parameter missing"
+							exit 1
+						fi
+						if [ "$CLAUSE" = "" ] ; then
+							CLAUSE="WHERE $AVP_ATTRIBUTE_COLUMN='$1'"
+						else
+							CLAUSE="$CLAUSE AND $AVP_ATTRIBUTE_COLUMN='$1'"
+						fi
+					;;
+					-v)
+						if [ -z "$1" ] ; then
+							merr "avp rm - value parameter missing"
+							exit 1
+						fi
+						if [ "$CLAUSE" = "" ] ; then
+							CLAUSE="WHERE $AVP_VALUE_COLUMN='$1'"
+						else
+							CLAUSE="$CLAUSE AND $AVP_VALUE_COLUMN='$1'"
+						fi
+					;;
+					-t)
+						if [ -z "$1" ] ; then
+							merr "avp rm - type parameter missing"
+							exit 1
+						fi
+						if [ "$CLAUSE" = "" ] ; then
+							CLAUSE="WHERE $AVP_TYPE_COLUMN='$1'"
+						else
+							CLAUSE="$CLAUSE AND $AVP_TYPE_COLUMN='$1'"
+						fi
+					;;
+					*)
+						merr "avp rm - unknown parameter $1"
+						exit 1
+					;;
+				esac
+				shift
+			done
+			QUERY="DELETE FROM $AVP_TABLE $CLAUSE;"
+			mdbg "Query: $QUERY"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "avp rm - SQL Error"
+				exit 1
+			else
+				echo
+				mecho "avp rm - AVP(s) deleted"
+			fi
+			
+			exit $?
+			;;
+			
+		help)
+			usage_avp
+			;;
+			
+		*)
+			merr "avp - unknown command"
+			usage
+			exit 1
+			;;
+	esac
+} # end avpops()
+
+#
+##### ------------------------------------------------ #####
+### cisco restart
+#
+cisco_restart() {
+	require_ctlengine
+	myhost=`get_my_host`
+	RET=`$CTLCMD t_uac_dlg NOTIFY "$1" "." \
+		"From: sip:daemon@$myhost" \
+		"To: <$1>" "Event: check-sync" \
+		"Contact: <sip:daemon@!!>" "." "." |
+		head -1 `
+	print_status $RET
+}
+
+#
+##### ------------------------------------------------ #####
+### DB operations
+#
+db_ops() {
+	require_dbengine
+	case $1 in
+		exec)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing query parameter"
+				exit 1
+			fi
+			$DBCMD "$1"
+			;;
+		show)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing table parameter"
+				exit 1
+			fi
+			QUERY="select * FROM $1;"
+			$DBROCMD "$QUERY"
+			;;
+		*)
+			usage_db_ops
+			exit 1
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
+### domain management
+#
+domain() {
+	case $1 in
+		reload)
+			require_ctlengine
+			$CTLCMD domain_reload
+			;;
+		show)
+			require_ctlengine
+			$CTLCMD domain_dump
+			;;
+		showdb)
+			require_dbengine
+			QUERY="select * FROM $DOMAIN_TABLE ; "
+			$DBROCMD "$QUERY"
+			;;
+		add)
+			require_dbengine
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing domain parameter"
+				exit 1
+			fi
+       		QUERY="insert into $DOMAIN_TABLE (domain) VALUES ('$1');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "domain - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 domain reload' to synchronoze cache and database"
+			;;
+		rm)
+			require_dbengine
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing domain parameter"
+				exit 1
+			fi
+       		QUERY="delete from $DOMAIN_TABLE where domain='$1';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "domai - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 domain reload' to synchronoze cache and database"
+			;;
+		*)
+			usage_domain
+			exit 1
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
+### LCR management
+#
+lcr() {
+	require_dbengine
+	require_ctlengine
+	case $1 in
+		show)
+			mecho "lcr routes"
+			QUERY="select * FROM $LCR_TABLE ORDER BY prefix; "
+			$DBROCMD "$QUERY"
+			mecho "lcr gateway groups"
+			QUERY="select * FROM $GW_GRP_TABLE ORDER BY grp_id; "
+			$DBROCMD "$QUERY"
+			mecho "lcr gateways"
+			#QUERY="select * FROM $GW_TABLE ORDER BY grp_id; "
+			QUERY="select gw_name, CONCAT(ip_addr, ' (',\
+CONCAT_WS('.',floor(ip_addr - floor(ip_addr/16777216)*16777216 \
+- floor((ip_addr - floor(ip_addr/16777216)*16777216)/65536)*65536 \
+- floor((ip_addr - floor(ip_addr/16777216)*16777216 - floor((ip_addr \
+- floor(ip_addr/16777216)*16777216)/65536)*65536)/256)*256),\
+floor((ip_addr - floor(ip_addr / 16777216) * 16777216 - floor((ip_addr \
+- floor(ip_addr / 16777216) * 16777216) / 65536) * 65536) / 256),\
+floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536),\
+floor(ip_addr / 16777216) ), ') ') as ip, port, uri_scheme, transport,\
+grp_id, strip, prefix FROM $GW_TABLE ORDER BY grp_id; "
+			$DBROCMD "$QUERY"
+			;;
+		reload)
+			$CTLCMD lcr_reload
+			;;
+		addgw_grp)
+			shift
+			if [ $# -lt 1 ] ; then
+				merr "lcr - too few paramters"
+				usage_lcr
+				exit 1
+			fi
+			if [ $# -gt 1 ] ; then
+				GRP_ID=$2
+			else
+				GRP_ID=NULL
+			fi
+			QUERY="insert into $GW_GRP_TABLE VALUES ($GRP_ID, '$1');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "lcr - SQL Error"
+				exit 1
+			fi
+			$CTLCMD lcr_reload
+			;;
+		rmgw_grp)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing grp_id to be removed"
+				exit 1
+			fi
+			QUERY="delete from $GW_GRP_TABLE where grp_id=$1;"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "lcr - SQL Error"
+				exit 1
+			fi
+			$CTLCMD lcr_reload
+			;;
+		addroute)
+			shift
+			if [ $# -ne 4 ] ; then
+				merr "lcr - too few paramters"
+				usage_lcr
+				exit 1
+			fi
+			QUERY="insert into $LCR_TABLE VALUES ('$1', '$2', $3, $4);"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+			merr "lcr - SQL Error"
+				exit 1
+			fi
+			$CTLCMD lcr_reload
+			;;
+		rmroute)
+			shift
+			if [ $# -ne 4 ] ; then
+				merr "too few paramters"
+				usage_lcr
+				exit 1
+			fi
+			QUERY="delete from $LCR_TABLE where prefix='$1' AND \
+from_uri='$2' AND grp_id=$3 AND priority=$4;"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "lcr - SQL Error"
+				exit 1
+			fi
+			$CTLCMD lcr_reload
+			;;
+		addgw)
+			shift
+			if [ $# -lt 6 ] ; then
+				merr "lcr - too few paramters"
+				usage_lcr
+				exit 1
+			fi
+			if [ $# -gt 6 ] ; then
+				GW_PREFIX=$7
+				if [ $# -gt 7 ] ; then
+					STRIP=$8
+				else
+					STRIP=0
+				fi
+			else
+				GW_PREFIX=""
+				STRIP=0
+			fi
+			GW_NAME=$1
+			GW_PORT=$3
+			GW_URI_SCHEME=$4
+			if   [ $GW_URI_SCHEME = 'sip' ]; then
+				GW_URI_SCHEME=1
+			elif [ $GW_URI_SCHEME = 'sips' ]; then
+				GW_URI_SCHEME=2
+			fi
+			GW_TRANSPORT=$5
+			if   [ $GW_TRANSPORT = 'udp' ]; then
+				GW_TRANSPORT=1
+			elif [ $GW_TRANSPORT = 'tcp' ]; then
+				GW_TRANSPORT=2
+			elif [ $GW_TRANSPORT = 'tls' ]; then
+				GW_TRANSPORT=3
+			fi
+			GW_GRP_ID=$6
+			oldIFS=$IFS
+			IFS=.
+			set -- $2
+			#GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
+			IFS=$oldIFS
+			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_GRP_ID,\
+$1+$2*256+$3*65536+$4*16777216, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT,\
+$STRIP, '$GW_PREFIX');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "lcr - SQL Error"
+				exit 1
+			fi
+			$CTLCMD lcr_reload
+			;;
+		rmgw)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing gateway to be removed"
+				exit 1
+			fi
+			QUERY="delete from $GW_TABLE where gw_name='$1';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "lcr - SQL Error"
+				exit 1
+			fi
+			$CTLCMD lcr_reload
+			;;
+		*)
+			usage
+			exit 1
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
+### openser_start
+#
+openser_start() {
+	echo
+	printf "Starting OpenSER : "
+	if [ -r $PID_FILE ] ; then
+		minfo "PID file exists! ($PID_FILE) already running?"
+		exit 1
+	fi
+	
+	if [ ! -x "$OSERBIN" ] ; then
+		echo
+		merr "OpenSER binaries not found at $OSERBIN"
+		merr "set OSERBIN to the path of openser in $0 or ~/.openserctlrc"
+		exit 1
+	fi
+	if [ $SYSLOG = 1 ] ; then
+		$OSERBIN -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+	else
+	 	$OSERBIN -P $PID_FILE -E $STARTOPTIONS
+	fi
+	sleep 3
+	if [ ! -s $PID_FILE ] ; then
+		echo
+		merr "PID file $PID_FILE does not exist -- OpenSER start failed"
+		exit 1
+	fi
+	minfo "started (pid: `cat $PID_FILE`)"
+}
+
+#
+##### ------------------------------------------------ #####
+### openser_stop
+#
+openser_stop() {
+	echo
+	printf "Stopping OpenSER : "
+	if [ -r $PID_FILE ] ; then
+		kill `cat $PID_FILE`
+		minfo "stopped"
+	else
+		echo
+		merr "No PID file found ($PID_FILE)! OpenSER probably not running"
+		exit 1
+	fi
+}
+
+#
+##### ------------------------------------------------ #####
+### options_ping
+#
+options_ping() {
+	require_ctlengine
+	myhost=`get_my_host`
+	RET=`$CTLCMD t_uac_dlg OPTIONS "$1" "." \
+		"From: sip:daemon@$myhost" \
+		"To: <$1>" "Contact: <sip:daemon@!!>" "." "." \
+		| head -1 ` 
+	print_status $RET
+}
+
+#
+##### ------------------------------------------------ #####
+### rpid management
+#
+rpid() {
+	if [ "$#" -lt 2 ] ; then
+		merr "rpid - too few parameters"
+		exit 1
+	fi
+    shift;
+
+	require_dbengine
+
+	case $1 in
+		show)
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				is_user $2 
+				if [ $? -ne 0 ] ; then
+					merr "rpid - invalid user '$2'"
+					exit 1;
+				fi
+				CLAUSE=" WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND \
+$REALM_COLUMN='$SERDOMAIN' "
+			elif [ $# -ne 1 ] ; then
+				usage_rpid
+				exit 1
+			fi
+			QUERY="select $SUBSCRIBER_COLUMN, $RPID_COLUMN FROM $SUB_TABLE \
+$CLAUSE ; "
+			$DBROCMD "$QUERY"
+			;;
+
+		add|rm)
+		    MODE=$1;
+
+			if [ "$MODE" = "add" ] ; then
+			    ARG_NUM=3;
+			else
+			    ARG_NUM=2;
+			fi
+			
+			if [ $# -lt $ARG_NUM ] ; then
+				usage_rpid
+				exit 1
+			fi
+
+			set_user $2
+			is_user $2 
+			if [ $? -ne 0 ] ; then
+				merr "rpid - invalid user '$2'"
+				exit 1
+			fi
+			shift 2
+
+			if [ "$MODE" = "add" ] ; then
+			        RPID_VAL="'$1'";
+			else
+			        RPID_VAL=NULL;
+			fi
+
+			QUERY="UPDATE $SUB_TABLE SET $RPID_COLUMN=$RPID_VAL \
+WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "rpid - SQL Error"
+				exit 1
+			fi
+
+			$0 rpid show "$SERUSER@$SERDOMAIN"
+
+			;;
+
+		*)
+			usage_rpid
+			exit 1
+			;;
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
+### send email
+#
+send_email() {
+	require_dbengine
+
+	set_user $1
+	QUERY="select $EMAIL_COLUMN from $SUB_TABLE where \
+$SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN'"
+	EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+	if [ $? -ne 0 ] ; then
+		merr "mail - SQL query failed"
+		exit 1
+	fi
+	mecho "Write email to $1: $EA now ..."
+	mail -s "Message from $OSERDOMAIN SIP admin" $EA
+	if [ $? -eq 0 ] ; then
+		mecho "message sent"
+	else
+		merr "sending message failed"
+	fi
+}
+
+#
+##### ------------------------------------------------ #####
+### SPEEDDIAL management
+#
+speeddial() {
+	if [ "$#" -lt 2 ] ; then
+		merr "speeddial - too few parameters"
+		echo
+		usage_speeddial
+		exit 1
+	fi
+
+	require_dbengine
+	shift
+
+	case $1 in 
+		list)
+			if [ $# -eq 2 ] ; then
+				# print speed-dials for user
+				check_aor "$2"
+				if [ "$?" -ne "0" ] ; then
+					merr "speeddial - <$2> is not a valid AoR (user@domain)"
+					exit 1
+				fi
+				
+				set_user $2
+				
+				CLAUSE="WHERE $SD_USER_COLUMN='$OSERUSER' AND \
+$SD_DOMAIN_COLUMN='$OSERDOMAIN'"
+				mecho "Dumping speed-dials for user=<$2>"
+				echo
+				QUERY="SELECT CONCAT($SD_SD_USER_COLUMN,'@',\
+$SD_SD_DOMAIN_COLUMN) AS 'Short number', $SD_NEW_URI_COLUMN AS 'New URI',\
+$SD_DESC_COLUMN FROM $SD_TABLE $CLAUSE;"
+				$DBROCMD "$QUERY"
+					#| $AWK 'BEGIN {line=0;}
+					#	/^\+/ { next }
+		#{ if(line==0) print "##   SpeedDial   \tNew-URI     \tDescription\n";
+					#	else {
+					#		ORS_BAK=ORS;
+					#		ORS="";
+					#		print line ")  " $1 "@" $2 "\t" $3 "\t\"" $4;
+					#		for (i=5;i<=NF;++i) print FS $i;
+					#		ORS=ORS_BAK;
+					#		print "\"";
+					#	}
+					#	line++;
+					#}'
+			elif [ $# -eq 1 ] ; then
+				printf "Dumping all speed-dials may take long: do you want to proceed? [Y|N] "
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					echo "Dumping all speed-dials..."
+					echo
+				else
+					exit 1
+				fi
+				QUERY="SELECT CONCAT($SD_SD_USER_COLUMN,'@',\
+$SD_SD_DOMAIN_COLUMN) AS 'Short number', CONCAT($SD_USER_COLUMN,'@',\
+$SD_DOMAIN_COLUMN) AS 'Owner', $SD_NEW_URI_COLUMN AS 'New URI',\
+$SD_DESC_COLUMN FROM $SD_TABLE;"
+				$DBROCMD "$QUERY"
+				#| $AWK 'BEGIN {line=0;}
+				#	/^\+/ { next }
+				#	{	line++;
+	#if(line==1) print "SIP-ID     \tSpeedDial  \tNew-URI    \tDescritpion\n";
+				#		else {
+				#			ORS_BAK=ORS;
+				#			ORS="";
+				#			print $3 "@" $4 "\t" $1 "@" $2 "\t" $5 "\t\"" $6;
+				#			for (i=7;i<=NF;++i) print FS $i;
+				#			ORS=ORS_BAK;
+				#			print "\"";
+				#		}
+				#	}'
+			else
+				merr "speeddial - wrong number of params for command [list]"
+				usage_speeddial
+				exit 1
+			fi
+
+			exit $?
+			;;
+		show)
+			if [ $# -ne 2 ] ; then
+				merr "speeddial - wrong number of params for command [show]"
+				usage_speeddial
+				exit 1
+			fi
+			
+			check_aor "$2"
+			if [ "$?" -ne "0" ] ; then
+				merr "speeddial - $2 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+			
+			set_user $2
+			
+			CLAUSE="WHERE $SD_SD_USER_COLUMN='$OSERUSER' AND \
+$SD_SD_DOMAIN_COLUMN='$OSERDOMAIN'"
+			QUERY="SELECT CONCAT($SD_USER_COLUMN,'@',$SD_DOMAIN_COLUMN) \
+AS 'Owner', $SD_NEW_URI_COLUMN AS 'New URI', $SD_DESC_COLUMN FROM \
+$SD_TABLE $CLAUSE ; "
+			echo "Details for speeddial <$2>"
+			$DBROCMD "$QUERY"
+			# | $AWK 'BEGIN {line=0;} /^\+/ { next } 
+			# { 
+			#	  if(line==0) print "##  SIP-ID    \tNew-URI   \tDescritpion\n";
+			#	  else {
+			#		  ORS_BAK=ORS;usage_openser_monitor() {
+			#		  ORS="";
+			#		  print line ") " $1 "@" $2 "\t" $3 "\t\"" $4;
+			#		  for (i=5;i<=NF;++i) print FS $i;
+			#		  ORS=ORS_BAK;
+			#		  print "\"";
+			#	  }
+			#	  line++;
+			# }'
+
+			exit $?
+			;;
+		add)
+			if [ $# -ne 4 ] ; then
+				if [ $# -ne 5 ] ; then
+					merr "speeddial - wrong number of parameters"
+					usage_speeddial
+					exit 1
+				fi
+			fi
+			shift
+			check_aor "$1"
+			if [ "$?" -ne "0" ] ; then
+				merr "speeddial - $1 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+
+			check_aor "$2"
+			if [ "$?" -ne "0" ] ; then
+				merr "speeddial - $2 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+			
+			check_sipaor "$3"
+			if [ "$?" -ne "0" ] ; then
+				merr "speeddial - $3 is not a valid SIP AoR (sip:user@domain)"
+				exit 1
+			fi
+			
+			set_user $1
+			TMP_OSERUSER=$OSERUSER
+			TMP_OSERDOMAIN=$OSERDOMAIN
+			set_user $2
+			
+			QUERY="INSERT INTO $SD_TABLE ($SD_USER_COLUMN,$SD_DOMAIN_COLUMN,\
+$SD_SD_USER_COLUMN,$SD_SD_DOMAIN_COLUMN,$SD_NEW_URI_COLUMN,$SD_DESC_COLUMN) \
+VALUES ('$TMP_OSERUSER','$TMP_OSERDOMAIN','$OSERUSER','$OSERDOMAIN','$3','$4');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "speeddial - SQL Error"
+				exit 1
+			fi
+			mecho "ok - spedd dial added"
+			echo
+			exit $?
+			;;
+		rm)
+			if [ $# -ne 3 ] ; then
+				merr "speeddial rm - invalid number of parameters"
+				usage_speeddial
+				exit 1
+			fi
+			
+			shift
+			
+			check_aor "$1"
+			if [ "$?" -ne "0" ] ; then
+				merr "speeddial - $1 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+			
+			check_aor "$2"
+			if [ "$?" -ne "0" ] ; then
+				merr "speeddial - $2 is not a valid AoR (user@domain)"
+				exit 1
+			fi
+
+			set_user $1
+			TMP_OSERUSER=$OSERUSER
+			TMP_OSERDOMAIN=$OSERDOMAIN
+			set_user $2
+
+			CLAUSE="WHERE $SD_USER_COLUMN='$TMP_OSERUSER' AND \
+$SD_DOMAIN_COLUMN='$TMP_OSERDOMAIN' AND $SD_SD_USER_COLUMN='$OSERUSER' AND \
+$SD_SD_DOMAIN_COLUMN='$OSERDOMAIN'"
+			QUERY="DELETE FROM $SD_TABLE $CLAUSE;"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "speeddial - SQL Error"
+				exit 1
+			fi
+			
+			mecho "ok - spedd dial deleted"
+			echo
+
+			;;
+			
+		help)
+			usage_speeddial
+			;;
+			
+		*)
+			merr "speeddial - unknown command"
+			usage_speeddial
+			exit 1
+			;;
+	esac
+} # end speed_dial()
+
+#
+##### ================================================ #####
+### subscriber management
+#
+subscriber() {
+	if [ "$#" -lt 2 ] ; then
+		merr "too few parameters"
+		usage_subscriber
+		exit 1
+	fi
+
+	require_dbengine
+	
+	case $1 in
+		add)
+			if [ $# -ne 4 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+			credentials $1 $2
+			is_user $1
+			if [ $? -eq 0 ] ; then
+				merr "user '$1' already exists"
+				exit 1
+			fi
+			set_user $1
+			check_alias $OSERUSER $OSERDOMAIN
+			if [ $? -eq 0 ] ; then
+				merr "user '$1' already exists as alias"
+				exit 1
+			fi
+
+			_gen_phplib_id 
+			QUERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,$REALM_COLUMN,\
+$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN,$SUB_CREATED_COLUMN,\
+$PHP_LIB_COLUMN) values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
+now(),'$PHPLIB_ID');";
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "introducing the new user '$1' to the database failed"
+			else
+				mecho "new user '$1' added"
+			fi
+			;;
+
+		mail|email)
+			if [ $# -ne 2 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+			set_user $1
+			QUERY="select $EMAIL_COLUMN from $SUB_TABLE where \
+$SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN'"
+			EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+			if [ $? -ne 0 ] ; then
+				merr "mail - SQL query failed"
+				exit 1
+			fi
+			mecho "Write email to $1: $EA now ..."
+			mail -s "Message from $SERDOMAIN SIP admin" $EA
+			if [ $? -eq 0 ] ; then
+				mecho "message sent"
+			else
+				merr "sending message failed"
+			fi
+			;;
+
+		passwd)
+			if [ $# -ne 3 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+			shift
+			credentials $1 $2
+
+			is_user $1
+			if [ $? -ne 0 ] ; then
+				merr "non-existent user '$1'"
+				exit 1
+			fi
+			QUERY="update $SUB_TABLE set $HA1_COLUMN='$HA1', \
+$HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2', $SUB_MODIFIED_COLUMN=now() \
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "password change failed"
+			else
+				echo "password change succeeded"
+			fi
+			;;
+
+		rm)
+			if [ $# -ne 2 ] ; then
+				usage_subscriber
+				exit 1
+			fi
+
+			require_ctlengine
+			shift 
+
+			is_user $1 
+			if [ $? -ne 0 ] ; then
+				merr "non-existent user '$1'"
+				exit 1
+			fi
+
+			# begin with remove all user's privileges
+			acl revoke $1  > /dev/null 2>&1
+
+			# destroy db-aliases
+			QUERY="delete from $DA_TABLE where $DA_USER_COLUMN='$OSERUSER' \
+and $DA_DOMAIN_COLUMN='$OSERDOMAIN'"
+			$DBCMD "$QUERY"
+
+
+			# destroy the user now
+			QUERY="delete from $SUB_TABLE where $SUBSCRIBER_COLUMN='$OSERUSER' \
+and $REALM_COLUMN='$OSERDOMAIN'"
+			$DBCMD "$QUERY"
+
+			# and also all his contacts
+			$0 ul rm $1   > /dev/null 2>&1
+			;;
+	esac
+
+}
+
+#
+##### ================================================ #####
+### USRLOC management
+#
+usrloc() {
+	if [ "$#" -lt 2 ] ; then
+		merr "usrloc - too few parameters"
+		usage_usrloc
+		exit 1
+	fi
+
+	require_ctlengine
+
+	if [ "$1" = "alias" ] ; then
+		USRLOC_TABLE="$ALS_TABLE"
+		CHECK_SUB=1
+	elif [ "$1" = "ul" ] ; then
+		USRLOC_TABLE="$UL_TABLE"
+		CHECK_SUB=0
+	elif [ "$1" = "usrloc" ] ; then
+		USRLOC_TABLE="$UL_TABLE"
+		CHECK_SUB=0
+	else
+		merr "usrloc - unknown subcommand '$1'"
+		usage_usrloc
+		exit 1
+	fi
+	shift
+
+	case $1 in 
+		show)
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				$CTLCMD ul_show_contact $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN"
+			elif [ $# -eq 1 ] ; then
+				printf "Dumping all contacts may take long: are you sure you \
+want to proceed? [Y|N] " > /dev/stderr
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					$CTLCMD ul_dump
+				fi
+			else
+				merr "wrong number of params"
+				usage_usrloc
+				exit 1
+			fi
+			exit $?
+			;;
+		add)
+			if [ $# -eq 3 ] ; then
+				UL_EXPIRES=0
+				# 128 means FL_PERSISTENT is on
+				UL_FLAGS=128
+			elif [ $# -eq 4 ] ; then
+				UL_EXPIRES=$4
+				UL_FLAGS=0
+			else
+				usage_usrloc
+				exit 1
+			fi
+			shift
+			check_uri "$2"
+				
+			if [ "$?" -ne "0" ] ; then
+				merr "$2 is not a valid URI"
+				exit 1
+			fi
+
+			set_user $1
+			if [ "$CHECK_SUB" -ne 0 ] ; then
+				is_user $1 
+				if [ $? -eq 0 ] ; then
+					merr "overlap of alias with an existing subscriber name"
+					exit 1;
+				fi
+			fi
+
+			check_alias $OSERUSER $OSERDOMAIN
+			if [ $? -eq 0 ] ; then
+				if [ "$CHECK_SUB" -ne 0 ] ; then
+					merr "alias already defined"
+				else
+					merr "AOR is an alias"
+				fi
+				exit 1
+			fi
+
+			$CTLCMD ul_add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
+"$UL_EXPIRES" "1.00" "0" "$UL_FLAGS" "$ALL_METHODS"
+			exit $?
+			;;
+		rm)
+			if [ $# -eq 2 ] ; then
+				shift
+				set_user $1
+				$CMDCTL ul_rm $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN"
+
+			elif [ $# -eq 3 ] ; then
+				shift
+				set_user $1
+				check_uri "$2"
+				if [ "$?" -ne "0" ] ; then
+					merr "$2 is not a valid SIP URI (sip:[user@]domain)"
+					exit 1
+				fi
+
+				$CTLCMD ul_rm_contact $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN" "$2"
+
+			else
+				merr "wrong number of params"
+				usage_usrloc
+				exit 1
+			fi
+			;;
+
+		*)
+			usage_usrloc
+			exit 1
+			;;
+	esac
+}
+
+
+#
+##### ================================================ #####
+### main command switch
+#
+case $1 in
+	acl)
+		shift
+		acl "$@"
+		;;
+
+	add|passwd|rm)
+		subscriber "$@"
+		;;
+
+	alias|ul|usrloc)
+		usrloc "$@"
+		;;
+
+	alias_db|aliasdb)
+		alias_db "$@"
+		;;
+		
+	avp)
+		avpops "$@"
+		;;
+
+	cisco_restart)
+		if [ "$#" -ne 2 ] ; then	
+			usage_cisco_restart
+			exit 1
+		fi
+		cisco_restart $2
+		;;
+
+	db)
+		shift
+		db_ops "$@"
+		;;
+
+	domain)
+		shift
+		domain "$@"
+		;;
+
+	fifo|unixsock)
+		require_ctlengine
+		shift
+		$CTLCMD "$@"
+		;;
+
+	lcr)
+		shift
+		lcr "$@"
+		;;
+
+	mail|email)
+		if [ $# -ne 2 ] ; then
+			usage_send_email
+			exit 1
+		fi
+		send_email $1
+		;;
+
+	monitor|console|moni|con)
+		require_ctlengine
+		$OPENSER_MONITOR
+		;;
+
+	online)
+		require_ctlengine
+		$CTLCMD ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
+		exit $?
+		;;
+
+	ping)
+		# error handling is hacked -- filter_fl should not
+		# consume positive status -- that should be done by
+		# calling app
+		if [ "$#" -ne 2 ] ; then	
+			usage_ping
+			exit 1
+		fi
+		options_ping $2
+		;;
+
+	ps)
+		require_ctlengine
+		$CTLCMD ps
+		;;
+
+	restart)
+		openser_stop
+		sleep 2
+		openser_start
+		;;
+	
+	rpid)
+		rpid "$@"
+		;;
+
+	speeddial|speed_dial)
+		speeddial "$@"
+		;;
+
+	start)
+		openser_start
+		;;
+
+	stop)
+		openser_stop
+		;;
+
+	version)
+		echo  "$0 $VERSION"
+		;;
+		
+	*)
+		usage
+		exit 1
+		;;
+esac
+

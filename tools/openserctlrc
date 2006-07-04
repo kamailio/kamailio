@@ -1,0 +1,43 @@
+# $Id$
+#
+# openser control tool resource file
+#
+# here you can set variables used in the openserctl
+
+## your SIP domain
+# SIP_DOMAIN=openser.org
+
+## database type: MYSQL or PGSQL, by defaulte none is loaded
+# DBENGINE=MYSQL
+
+## database host
+# DBHOST=localhost
+
+## database name
+# DBNAME=openser
+
+## database read/write user
+# DBRWUSER=openser
+
+## database read only user
+# DBROUSER=openserro
+
+## password for database read only user
+# DBROPW=openserro
+
+## database super user
+# DBROOTUSER="root"
+
+## type of aliases used: DB - database aliases; UL - usrloc aliases
+## - default: none
+#ALIASES_TYPE="DB"
+
+## control engine: FIFO or UNIXSOCK
+## - default FIFO
+# CTLENGINE="FIFO"
+
+## path to FIFO file
+# OSER_FIFO="FIFO"
+
+## verbose - debug purposes - default '0'
+# VERBOSE=1
