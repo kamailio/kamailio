@@ -99,7 +99,7 @@ int reload_gws ( void );
 
 #define PRIORITY_COL "priority"
 
-#define MAX_QUERY_SIZE 512
+#define LCR_MAX_QUERY_SIZE 512
 #define MAX_PREFIX_LEN 16
 
 /* Default avp names */
@@ -436,11 +436,11 @@ int reload_gws ( void )
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
-    char query[MAX_QUERY_SIZE], *prefix;
+    char query[LCR_MAX_QUERY_SIZE], *prefix;
     db_res_t* res;
     db_row_t* row;
 
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s, %.*s, %.*s, %.*s, %.*s FROM %.*s",
+    q_len = snprintf(query, LCR_MAX_QUERY_SIZE, "SELECT %.*s, %.*s, %.*s, %.*s, %.*s FROM %.*s",
 		     ip_addr_col.len, ip_addr_col.s,
 		     port_col.len, port_col.s,
 		     uri_scheme_col.len, uri_scheme_col.s,
@@ -448,7 +448,7 @@ int reload_gws ( void )
 		     prefix_col.len, prefix_col.s,
 		     gw_table.len, gw_table.s);
 
-    if (q_len >= MAX_QUERY_SIZE) {
+    if (q_len >= LCR_MAX_QUERY_SIZE) {
 	LOG(L_ERR, "lcr_reload_gws(): Too long database query\n");
 	return -1;
     }
@@ -573,7 +573,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     db_res_t* res;
     db_row_t *row, *r;
     str ruri_user, from_uri, value;
-    char query[MAX_QUERY_SIZE];
+    char query[LCR_MAX_QUERY_SIZE];
     char ruri[MAX_URI_SIZE];
     unsigned int q_len, i, j, prefix_len;
     unsigned int addr, port;
@@ -614,7 +614,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	from_uri = get_from(_m)->uri;
     }
 
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
+    q_len = snprintf(query, LCR_MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
 		     gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
 		     gw_table.len, gw_table.s, port_col.len, port_col.s,
 		     gw_table.len, gw_table.s, uri_scheme_col.len, uri_scheme_col.s,
@@ -629,7 +629,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 		     gw_table.len, gw_table.s, grp_id_col.len, grp_id_col.s,
 		     lcr_table.len, lcr_table.s, prefix_col.len, prefix_col.s,
 		     lcr_table.len, lcr_table.s, priority_col.len, priority_col.s);
-    if (q_len >= MAX_QUERY_SIZE) {
+    if (q_len >= LCR_MAX_QUERY_SIZE) {
 	LOG(L_ERR, "load_gws(): Too long database query\n");
 	return -1;
     }
