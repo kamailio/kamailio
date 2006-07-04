@@ -229,11 +229,11 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static str no_ua = str_init("n/a");
 	static str callid;
 	static str path_received = {0,0};
+	static str path;
 	static str received = {0,0};
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	static struct sip_msg *m = 0;
-	str path;
 	int_str val;
 
 	if (_m!=0) {
