@@ -195,9 +195,10 @@ CREATE TABLE domain_settings (
     KEY ds_df (did, filename)
 );
 
-INSERT INTO version (table_name, table_version) values ('location','8');
+INSERT INTO version (table_name, table_version) values ('location','9');
 CREATE TABLE location (
     uid VARCHAR(64) NOT NULL,
+    aor VARCHAR(255) NOT NULL,
     contact VARCHAR(255) NOT NULL,
     received VARCHAR(255),
     expires DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',

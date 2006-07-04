@@ -9,7 +9,7 @@
 
 <table id="location">
     <name>location</name>
-    <version>8</version>
+    <version>9</version>
 
     <description>
 	Location table contains contacts registered by users. This table
@@ -24,6 +24,16 @@
 	    UID (Unique user ID) of the user who owns the contact.
 	</description>
     </column>
+
+    <column id="location.aor">
+	<name>aor</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+	<description>
+           Address of record.
+	</description>
+    </column>
+
 
     <column id="location.contact">
 	<name>contact</name>
