@@ -278,13 +278,13 @@ static struct socket_info* find_socket(str* received)
 int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[10];
+	db_key_t columns[11];
 	db_res_t* res;
 	db_row_t* row;
 	int i, cseq;
 	unsigned int flags;
 	struct socket_info* sock;
-	str uid, contact, callid, ua, received, instance;
+	str uid, contact, callid, ua, received, instance, aor;
 	str* rec;
 	time_t expires;
 	qvalue_t q;
@@ -302,6 +302,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[7] = user_agent_col.s;
 	columns[8] = received_col.s;
 	columns[9] = instance_col.s;
+	columns[10] = aor_col.s;
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
@@ -311,7 +312,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 10, 0, &res) < 0) {
+	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 11, 0, &res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}
@@ -404,6 +405,18 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			instance.len = 0;
 		}
 
+		if (!VAL_NULL(ROW_VALUES(row) + 10)) {
+			aor.s  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
+			if (aor.s) {
+				aor.len = strlen(aor.s);
+			} else {
+				aor.len = 0;
+			}
+		} else {
+			aor.s = 0;
+			aor.len = 0;
+		}
+
 		if (get_urecord(_d, &uid, &r) > 0) {
 			if (mem_insert_urecord(_d, &uid, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
@@ -413,7 +426,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, &c, &ua, rec, sock, &instance) < 0) {
+		if (mem_insert_ucontact(r, &aor, &contact, expires, q, &callid, cseq, flags, &c, &ua, rec, sock, &instance) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			ul_dbf.free_result(_c, res);
 			unlock_udomain(_d);

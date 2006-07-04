@@ -69,6 +69,7 @@ MODULE_VERSION
 #define USER_AGENT_COL "user_agent"
 #define RECEIVED_COL   "received"
 #define INSTANCE_COL   "instance"
+#define AOR_COL        "aor"
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -92,6 +93,7 @@ str flags_col       = STR_STATIC_INIT(FLAGS_COL);      /* Name of column contain
 str user_agent_col  = STR_STATIC_INIT(USER_AGENT_COL); /* Name of column containing user agent string */
 str received_col    = STR_STATIC_INIT(RECEIVED_COL);   /* Name of column containing transport info of REGISTER */
 str instance_col    = STR_STATIC_INIT(INSTANCE_COL);   /* Name of column containing sip-instance parameter */
+str aor_col         = STR_STATIC_INIT(AOR_COL);        /* Name of column containing address of record */
 str db_url          = STR_STATIC_INIT(DEFAULT_DB_URL); /* Database URL */
 
 int timer_interval  = 60;             /* Timer interval in seconds */
@@ -147,6 +149,7 @@ static param_export_t params[] = {
 	{"user_agent_column", PARAM_STR, &user_agent_col },
 	{"received_column",   PARAM_STR, &received_col   },
 	{"instance_column",   PARAM_STR, &instance_col   },
+	{"aor_column",        PARAM_STR, &aor_col        },
 	{0, 0, 0}
 };
 

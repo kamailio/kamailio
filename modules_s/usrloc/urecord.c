@@ -128,13 +128,13 @@ void print_urecord(FILE* _f, urecord_t* _r)
  * Contacts are ordered by: 1) q 
  *                          2) descending modification time
  */
-int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
+int mem_insert_ucontact(urecord_t* _r, str* aor, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 			unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
 			struct socket_info* sock, str* _inst)
 {
 	ucontact_t* ptr, *prev = 0;
 
-	if (new_ucontact(_r->domain, &_r->uid, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
+	if (new_ucontact(_r->domain, &_r->uid, aor, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
 		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
 		return -1;
 	}
@@ -430,11 +430,11 @@ void release_urecord(urecord_t* _r)
  * Create and insert new contact
  * into urecord
  */
-int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, 
+int insert_ucontact(urecord_t* _r, str* aor, str* _c, time_t _e, qvalue_t _q, str* _cid, 
 			int _cs, unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
 			struct socket_info* sock, str* _inst)
 {
-	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
+	if (mem_insert_ucontact(_r, aor, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
 		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}

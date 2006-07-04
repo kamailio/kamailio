@@ -62,6 +62,7 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
         int res;
         str cid;
         str ua;
+	str aor = STR_NULL;
 
         if (_e == 0 && !(_f & FL_PERMANENT)) {
                 LOG(L_ERR, "rpc_add_contact(): expires == 0 and not persistent contact, giving up\n");
@@ -95,13 +96,13 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
         ua.len = sizeof(ua.s) - 1;
 
         if (c) {
-                if (update_ucontact(c, _c, _e + act_time, _q, &cid, 42, _f, FL_NONE, &ua, 0, 0, 0) < 0) {
+                if (update_ucontact(c, &aor, _c, _e + act_time, _q, &cid, 42, _f, FL_NONE, &ua, 0, 0, 0) < 0) {
                         LOG(L_ERR, "rpc_add_contact(): Error while updating contact\n");
                         release_urecord(r);
                         return -5;
                 }
         } else {
-                if (insert_ucontact(r, _c, _e + act_time, _q, &cid, 42, _f, &c, &ua, 0, 0, 0) < 0) {
+                if (insert_ucontact(r, &aor, _c, _e + act_time, _q, &cid, 42, _f, &c, &ua, 0, 0, 0) < 0) {
                         LOG(L_ERR, "rpc_add_contact(): Error while inserting contact\n");
                         release_urecord(r);
                         return -6;

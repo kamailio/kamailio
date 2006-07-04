@@ -72,6 +72,7 @@ typedef enum flags {
 typedef struct ucontact {
 	str* domain;              /* Pointer to domain name */
 	str* uid;                 /* UID of owner of contact*/
+        str  aor;                 /* Address of record */
 	str c;                    /* Contact address */
 	str received;             /* IP, port, and protocol we received the REGISTER from */
 	struct socket_info* sock; /* Socket to be used when sending SIP messages to this contact */
@@ -97,7 +98,7 @@ typedef struct ucontact {
 /*
  * Create a new contact structure
  */
-int new_ucontact(str* _dom, str* _uid, str* _contact, time_t _e, qvalue_t _q, 
+int new_ucontact(str* _dom, str* _uid, str* aor, str* _contact, time_t _e, qvalue_t _q, 
 		 str* _callid, int _cseq, unsigned int _flags, ucontact_t** _c, 
 		 str* _ua, str* _recv, struct socket_info* sock, str* _inst);
 
@@ -117,7 +118,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 /*
  * Update existing contact in memory with new values
  */
-int mem_update_ucontact(ucontact_t* _c, str* _u, time_t _e, qvalue_t _q, str* _cid, int _cs,
+int mem_update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs,
 			unsigned int _set, unsigned int _res, str* _ua, str* _recv,
 			struct socket_info* sock, str* _inst);
 
@@ -186,10 +187,10 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values without replication
  */
-typedef int (*update_ucontact_t)(ucontact_t* _c, str* _u, time_t _e, qvalue_t _q, str* _cid, int _cs, 
+typedef int (*update_ucontact_t)(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 				 unsigned int _set, unsigned int _res, str* _ua, str* _recv,
 				 struct socket_info* sock, str* _inst);
-int update_ucontact(ucontact_t* _c, str* _u, time_t _e, qvalue_t _q, str* _cid, int _cs,
+int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res, str* _ua, str* _recv,
 		    struct socket_info* sock, str* _inst);
 

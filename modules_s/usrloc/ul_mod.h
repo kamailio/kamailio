@@ -50,7 +50,7 @@
 #define WRITE_BACK    2
 #define READONLY      3
 
-#define TABLE_VERSION 8
+#define TABLE_VERSION 9
 
 extern str uid_col;
 extern str contact_col;
@@ -63,6 +63,7 @@ extern str flags_col;
 extern str user_agent_col;
 extern str received_col;
 extern str instance_col;
+extern str aor_col;
 extern str db_url;
 extern int timer_interval;
 extern int db_mode;
