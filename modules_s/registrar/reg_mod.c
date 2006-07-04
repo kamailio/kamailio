@@ -55,6 +55,7 @@ static int mod_init(void);                           /* Module init function */
 static int fix_save_nat_flag( modparam_t type, void* val);
 static int fix_load_nat_flag( modparam_t type, void* val);
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
+static int lookup2_fixup(void** param, int param_no); /* Fixup that converts domain name */
 static void mod_destroy(void);
 
 usrloc_api_t ul;            /* Structure containing pointers to usrloc functions */
@@ -78,6 +79,7 @@ int received_to_uri = 0;  /* copy received to uri, don't add it to dst_uri */
 str reply_code_attr = STR_STATIC_INIT("$code");
 str reply_reason_attr = STR_STATIC_INIT("$reason");
 str contact_attr = STR_STATIC_INIT("$contact");
+str aor_attr = STR_STATIC_INIT("$aor");
 
 avp_ident_t avpid_code, avpid_reason, avpid_contact;
 
@@ -98,7 +100,9 @@ static cmd_export_t cmds[] = {
 	{"save_noreply",          save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
 	{"save_memory",           save_memory,  1, domain_fixup, REQUEST_ROUTE                },
 	{"lookup_contacts",       lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_contacts",       lookup2,      2, lookup2_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"lookup",                lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup",                lookup2,      2, lookup2_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"registered",            registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -125,6 +129,7 @@ static param_export_t params[] = {
 	{"reply_code_attr",   PARAM_STR, &reply_code_attr},
 	{"reply_reason_attr", PARAM_STR, &reply_reason_attr},
 	{"contact_attr",      PARAM_STR, &contact_attr},
+	{"aor_attr",          PARAM_STR, &aor_attr},
 	{0, 0, 0}
 };
 
@@ -267,6 +272,32 @@ static int domain_fixup(void** param, int param_no)
 		}
 
 		*param = (void*)d;
+	}
+	return 0;
+}
+
+
+/*
+ * Convert char* parameter to udomain_t* pointer
+ */
+static int lookup2_fixup(void** param, int param_no)
+{
+	int ret;
+	fparam_t* fp;
+	udomain_t* d;
+
+	if (param_no == 1) {
+	    return domain_fixup(param, param_no);
+	} else {
+	    ret = fix_param(FPARAM_AVP, param);
+	    if (ret <= 0) return ret;
+	    ret = fix_param(FPARAM_STR, param);
+	    if (ret <= 0) {
+		return ret;
+	    } else {
+		ERR("Unknown parameter\n");
+		return -1;
+	    }
 	}
 	return 0;
 }

@@ -48,7 +48,7 @@
 #include "regtime.h"
 #include "reg_mod.h"
 #include "lookup.h"
-
+#include "../../usr_avp.h"
 
 
 
@@ -130,7 +130,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 				return -4;
 			}
 		}
-																																																											
+		
 		if (rewrite_uri(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
 			ul.unlock_udomain((udomain_t*)_t);
@@ -232,3 +232,140 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	DBG("registered(): '%.*s' not found in usrloc\n", uid.len, ZSW(uid.s));
 	return -1;
 }
+
+#define VALID_AOR(contact, aor) \
+    ((aor)->len == (contact)->aor.len && \
+     !strncasecmp((aor)->s, (contact)->aor.s, (aor->len)))
+
+/*
+ * Lookup contact in the database and rewrite Request-URI,
+ * and filter them by aor
+ */
+int lookup2(struct sip_msg* msg, char* table, char* p2)
+{
+	urecord_t* r;
+	str uid;
+	ucontact_t* ptr;
+	int res;
+	unsigned int nat;
+	str new_uri, *aor;
+	fparam_t* fp;
+	int_str val;
+
+
+	ERR("Lookup2 called\n");
+	nat = 0;
+	fp = (fparam_t*)p2;
+	if (fp->type == FPARAM_AVP) {
+	    if (search_first_avp(fp->v.avp.flags, fp->v.avp.name, &val, 0)) {
+		aor = &val.s;
+		return 0;
+	    } else {
+		return -1;
+	    }
+	} else if (fp->type = FPARAM_STR) {
+	    aor = &fp->v.str;
+	} else {
+	    ERR("Unsupported AOR parameter\n");
+	    return -1;
+	}
+
+	if (get_to_uid(&uid, msg) < 0) return -1;
+
+	get_act_time();
+
+	ul.lock_udomain((udomain_t*)table);
+	res = ul.get_urecord((udomain_t*)table, &uid, &r);
+	if (res < 0) {
+		ERR("Error while querying usrloc\n");
+		ul.unlock_udomain((udomain_t*)table);
+		return -2;
+	}
+	
+	if (res > 0) {
+		DBG("'%.*s' Not found in usrloc\n", uid.len, ZSW(uid.s));
+		ul.unlock_udomain((udomain_t*)table);
+		return -3;
+	}
+
+	ptr = r->contacts;
+	while ((ptr) && !(VALID_CONTACT(ptr, act_time) && VALID_AOR(ptr, aor)))
+	    ptr = ptr->next;
+	
+	if (ptr) {
+	       if (ptr->received.s && ptr->received.len) {
+			if (received_to_uri){
+				if (add_received(&new_uri, &ptr->c, &ptr->received) < 0) {
+					ERR("Out of memory\n");
+					return -4;
+				}
+			/* replace the msg uri */
+			if (msg->new_uri.s) pkg_free(msg->new_uri.s);
+			msg->new_uri = new_uri;
+			msg->parsed_uri_ok = 0;
+			goto skip_rewrite_uri;
+			} else if (set_dst_uri(msg, &ptr->received) < 0) {
+			        ul.unlock_udomain((udomain_t*)table);
+				return -4;
+			}
+		}
+		
+		if (rewrite_uri(msg, &ptr->c) < 0) {
+			ERR("Unable to rewrite Request-URI\n");
+			ul.unlock_udomain((udomain_t*)table);
+			return -4;
+		}
+
+		if (ptr->sock) {
+			msg->force_send_socket = ptr->sock;
+		}
+
+skip_rewrite_uri:
+		set_ruri_q(ptr->q);
+
+		nat |= ptr->flags & FL_NAT;
+		ptr = ptr->next;
+	} else {
+		     /* All contacts expired */
+		ul.unlock_udomain((udomain_t*)table);
+		return -5;
+	}
+	
+	     /* Append branches if enabled */
+	if (!append_branches) goto skip;
+
+	while(ptr) {
+		if (VALID_CONTACT(ptr, act_time) && VALID_AOR(ptr, aor)) {
+			if (received_to_uri && ptr->received.s && ptr->received.len) {
+				if (add_received(&new_uri, &ptr->c, &ptr->received) < 0) {
+					ERR("branch: out of memory\n");
+					goto cont; /* try to continue */
+				}
+				if (append_branch(msg, new_uri.s, new_uri.len, 0, 0, ptr->q, 0) == -1) {
+					ERR("Error while appending a branch\n");
+					pkg_free(new_uri.s);
+					if (ser_error == E_TOO_MANY_BRANCHES) goto skip;
+					else goto cont; /* try to continue, maybe we have an
+							                   oversized contact */
+				}
+				pkg_free(new_uri.s); /* append_branch doesn't free it */
+			} else {
+				if (append_branch(msg, ptr->c.s, ptr->c.len, ptr->received.s,
+							ptr->received.len, ptr->q, ptr->sock) == -1) {
+					ERR("Error while appending a branch\n");
+					goto skip; /* Return OK here so the function succeeds */
+				}
+			}
+			
+			nat |= ptr->flags & FL_NAT; 
+		} 
+cont:
+		ptr = ptr->next; 
+	}
+	
+ skip:
+	ul.unlock_udomain((udomain_t*)table);
+	if (nat) setflag(msg, load_nat_flag);
+	return 1;
+}
+

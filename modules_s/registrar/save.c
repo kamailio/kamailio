@@ -260,7 +260,7 @@ static int create_rcv_uri(str** uri, struct sip_msg* m)
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _u, str *ua)
+static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t* _d, str* _u, str *ua)
 {
 	urecord_t* r = 0;
 	ucontact_t* c;
@@ -338,7 +338,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 			inst = 0;
 		}
 
-		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv, 
+		if (ul.insert_ucontact(r, aor, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv, 
 				       _m->rcv.bind_address, inst) < 0) {
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
@@ -415,7 +415,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* _ua)
+static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t* _c, str* _ua)
 {
 	ucontact_t* c, *c2;
 	str callid;
@@ -487,7 +487,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					recv = 0;
 				}
 
-				if (ul.insert_ucontact(_r, &_c->uri, e, q, &callid, cseq, 
+				if (ul.insert_ucontact(_r, aor, &_c->uri, e, q, &callid, cseq, 
 						       nated | mem_only,
 						       &c2, _ua, recv, 
 						       _m->rcv.bind_address,
@@ -543,7 +543,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 
 				set = nated | mem_only;
 				reset = ~(nated | mem_only) & (FL_NAT | FL_MEM);
-				if (ul.update_ucontact(c, &_c->uri, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst) < 0) {
+				if (ul.update_ucontact(c, aor, &_c->uri, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
@@ -565,6 +565,16 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 {
 	int res;
 	urecord_t* r;
+	str* aor;
+	int_str name, val;
+
+	name.s.s = aor_attr.s + 1; /* Skip the 1st char which is $ */
+	name.s.len = aor_attr.len - 1;
+	if (search_first_avp(AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
+	    aor = &val.s;
+	} else {
+	    aor = &get_to(_m)->uri;
+	}
 
 	ul.lock_udomain(_d);
 	res = ul.get_urecord(_d, _u, &r);
@@ -576,7 +586,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	}
 
 	if (res == 0) { /* Contacts found */
-		if (update(_m, r, _c, _ua) < 0) {
+		if (update(_m, r, aor, _c, _ua) < 0) {
 			LOG(L_ERR, "contacts(): Error while updating record\n");
 			build_contact(r->contacts);
 			ul.release_urecord(r);
@@ -586,7 +596,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 		build_contact(r->contacts);
 		ul.release_urecord(r);
 	} else {
-		if (insert(_m, _c, _d, _u, _ua) < 0) {
+		if (insert(_m, aor, _c, _d, _u, _ua) < 0) {
 			LOG(L_ERR, "contacts(): Error while inserting record\n");
 			ul.unlock_udomain(_d);
 			return -4;
