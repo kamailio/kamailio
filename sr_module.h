@@ -48,6 +48,7 @@
 #include "version.h"
 #include "rpc.h"
 #include "route_struct.h"
+#include "str.h"
 
 typedef  struct module_exports* (*module_register)();
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
@@ -117,6 +118,7 @@ enum {
 	FPARAM_INT    = (1 << 2),
 	FPARAM_REGEX  = (1 << 3),
 	FPARAM_AVP    = (1 << 5),
+	FPARAM_SELECT = (1 << 6),
 };
 
 /*
@@ -131,6 +133,7 @@ typedef struct fparam {
 		int i;             /* Integer value */
 		regex_t* regex;    /* Compiled regular expression */
 		avp_ident_t avp;   /* AVP identifier */
+	        select_t* select;  /* select structure */ 
 	} v;
 } fparam_t;
 
@@ -138,7 +141,7 @@ typedef struct fparam {
 typedef struct cmd_export_ cmd_export_t;
 typedef struct param_export_ param_export_t;
 
-struct module_exports{
+struct module_exports {
 	char* name;                     /* null terminated module name */
 
 	cmd_export_t* cmds;             /* null terminated array of the exported
@@ -234,6 +237,15 @@ int fixup_regex_2(void** param, int param_no);
  * parameter types
  */
 int fix_param(int type, void** param);
+
+/*
+ * Get the function parameter value as string
+ * Return values:  0 - Success
+ *                 1 - Incompatible type (i.e. int)
+ *                -1 - Cannot get value
+ */
+int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param);
+
 
 /* API function to get other parameters from fixup */
 action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no);

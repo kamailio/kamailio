@@ -799,6 +799,22 @@ int fix_param(int type, void** param)
 			goto error;
 		}
 		break;
+
+	case FPARAM_SELECT:
+		name.s = (char*)*param;
+		name.len = strlen(name.s);
+		trim(&name);
+		if (!name.len || name.s[0] != '@') {
+			     /* Not a select identifier */
+			pkg_free(p);
+			return 1;
+		}
+
+		if (parse_select(&name.s, &p->v.select) < 0) {
+			ERR("Error while parsing select identifier\n");
+			goto error;
+		}
+		break;
 	}
 
 	p->type = type;
@@ -809,3 +825,51 @@ int fix_param(int type, void** param)
 	pkg_free(p);
 	return E_UNSPEC;
 }
+
+
+/*
+ * Get the function parameter value as string
+ * Return values:  0 - Success
+ *                 1 - Incompatible type (i.e. int)
+ *                -1 - Cannot get value
+ */
+int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
+{
+    int_str val;
+    int ret;
+    avp_t* avp;
+
+    switch(param->type) {
+    case FPARAM_INT:
+    case FPARAM_REGEX:
+    case FPARAM_UNSPEC:
+	return 1;
+
+    case FPARAM_STRING:
+	dst->s = param->v.asciiz;
+	dst->len = strlen(param->v.asciiz);
+	break;
+
+    case FPARAM_STR:
+	*dst = param->v.str;
+	break;
+
+    case FPARAM_AVP:
+	avp = search_first_avp(param->v.avp.flags, param->v.avp.name, &val, 0);
+	if (avp && avp->flags & AVP_VAL_STR) {
+	    *dst = val.s;
+	} else {
+	    DBG("Value for AVP function parameter '%s' not found or is not string\n", param->orig);
+	    return -1;
+	}
+	break;
+
+    case FPARAM_SELECT:
+	ret = run_select(dst, param->v.select, msg);
+	if (ret < 0 || ret > 0) return -1;
+	break;
+    }
+
+    return 0;
+}
+
