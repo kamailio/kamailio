@@ -190,15 +190,12 @@ typedef unsigned int augUInt32;
 #define AUG_NO_PTHREADS
 #endif
 
-#if defined(__i386)
-
 #if defined(__GNUC__)
-#define AUG_CONFIGURATION	"Linux x86 with GCC"
+#define AUG_CONFIGURATION	"Linux with GCC"
 #endif
 
 typedef unsigned int augUInt32;
 
-#endif /* i386 */
 #endif /* linux */
 
 /*
