@@ -153,6 +153,7 @@ int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 	db_key_t key[1], col[1];
 	db_val_t val[1];
 	db_res_t* res;
+	db_val_t* ver;
 	int ret;
 
 	if (!dbf||!connection || !table) {
@@ -179,28 +180,28 @@ int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		DBG("table_version(): No row for table %.*s found\n", table->len,
-				ZSW(table->s));
+		DBG("table_version(): No row for table %.*s found\n",
+			table->len, ZSW(table->s));
 		return 0;
 	}
 
 	if (RES_ROW_N(res) != 1) {
-		LOG(L_ERR,
-			"table_version(): Invalid number of rows received: %d, %.*s\n",
-			RES_ROW_N(res), table->len, ZSW(table->s));
+		LOG(L_ERR, "table_version(): Invalid number of rows received:"
+			" %d, %.*s\n", RES_ROW_N(res), table->len, ZSW(table->s));
 		dbf->free_result(connection, res);
 		return -1;
 	}
 
-	if (VAL_TYPE(ROW_VALUES(RES_ROWS(res)))!=DB_INT) {
-		LOG(L_ERR,
-			"table_version(): Invalid type for table version: %d\n",
-			VAL_TYPE(ROW_VALUES(RES_ROWS(res))));
+	ver = ROW_VALUES(RES_ROWS(res));
+	if ( VAL_TYPE(ver)!=DB_INT || VAL_NULL(ver) ) {
+		LOG(L_ERR, "table_version(): Invalid type (%d) or nul (%d) version "
+			"columns for %.*s\n", VAL_TYPE(ver), VAL_NULL(ver),
+			table->len, ZSW(table->s));
 		dbf->free_result(connection, res);
 		return -1;
 	}
 
-	ret = VAL_INT(ROW_VALUES(RES_ROWS(res)));
+	ret = VAL_INT(ver);
 	dbf->free_result(connection, res);
 	return ret;
 }
