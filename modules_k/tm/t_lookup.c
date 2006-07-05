@@ -150,7 +150,6 @@ static struct cell *T;
 */
 unsigned int     global_msg_id;
 
-struct cell *get_tack() { return t_ack; }
 struct cell *get_t() { return T; }
 void set_t(struct cell *t) { T=t; }
 void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
@@ -1069,11 +1068,25 @@ int t_newtran( struct sip_msg* p_msg )
 
 	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
 		REF_UNSAFE(t_ack);
+		DBG("DEBUG:tm:t_newtran: building branch for end2end ACK\n");
+		/* to ensure unigueness acros time and space, compute the ACK 
+		 * branch in the same maner as for INVITE, but put a t->branch 
+		 * value that cannot exist for that INVITE - as it is compute as 
+		 * an INVITE, it will not overlapp with other INVITEs or requests.
+		 * But the faked value for t->branch guarantee no overalap with 
+		 * corresponding INVITE  --bogdan */
+		if (!t_calc_branch(t_ack, t_ack->nr_of_outgoings+1,
+		p_msg->add_to_branch_s, &p_msg->add_to_branch_len )) {
+			LOG(L_ERR,"ERROR:tm:t_newtran: ACK branch computation failed\n");
+		}
+
 		/* no callbacks? complete quickly */
 		if ( !has_tran_tmcbs(t_ack,TMCB_E2EACK_IN) ) {
+			UNREF_UNSAFE(t_ack);
 			UNLOCK_HASH(p_msg->hash_index);
 			return 1;
-		} 
+		}
+
 		UNLOCK_HASH(p_msg->hash_index);
 		/* we don't call from within REPLY_LOCK -- that introduces
 		 * a race condition; however, it is so unlikely and the
@@ -1084,6 +1097,7 @@ int t_newtran( struct sip_msg* p_msg )
 			run_trans_callbacks( TMCB_E2EACK_IN , t_ack, p_msg, 0,
 				-p_msg->REQ_METHOD );
 		}
+		UNREF(t_ack);
 		return 1;
 	}
 
