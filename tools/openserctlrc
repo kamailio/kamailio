@@ -39,5 +39,12 @@
 ## path to FIFO file
 # OSER_FIFO="FIFO"
 
+## check ACL names; default on (1); off (0)
+# VERIFY_ACL=1
+
+## ACL names - if VERIFY_ACL is set, only the ACL names from below list
+## are accepted
+# ACL_GROUPS="local ld int voicemail free-pstn"
+
 ## verbose - debug purposes - default '0'
 # VERBOSE=1
