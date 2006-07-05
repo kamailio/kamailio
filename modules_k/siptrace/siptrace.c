@@ -250,9 +250,9 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	if (db_con!=NULL)
-	{
 		db_funcs.close(db_con);
-	}
+	if (trace_on_flag)
+		shm_free(trace_on_flag);
 }
 
 static int sip_trace(struct sip_msg *msg, char *s1, char *s2)

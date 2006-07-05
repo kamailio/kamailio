@@ -60,6 +60,7 @@ void destroy_dlg_callbacks()
 		/* FIXME - what about parameters ? */
 		shm_free(cb_t);
 	}
+	shm_free(create_cbs);
 	create_cbs = 0;
 }
 
