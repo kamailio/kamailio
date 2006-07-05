@@ -42,6 +42,7 @@
 #include "domain.h"
 #include "fifo.h"
 #include "unixsock.h"
+#include "hash.h"
 
 /*
  * Module management function prototypes
@@ -71,8 +72,8 @@ MODULE_VERSION
  */
 static str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 int db_mode = 0;			/* Database usage mode: 0 = no cache, 1 = cache */
-str domain_table = {DOMAIN_TABLE, DOMAIN_TABLE_LEN};     /* Name of domain table */
-str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};           /* Name of domain column */
+str domain_table = {DOMAIN_TABLE, DOMAIN_TABLE_LEN}; /* Name of domain table */
+str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};       /* Name of domain column */
 
 /*
  * Other module variables
@@ -86,9 +87,12 @@ struct domain_list **hash_table_2;	/* Pointer to hash table 2 */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_from_local",     is_from_local,     0, 0, REQUEST_ROUTE},
-	{"is_uri_host_local", is_uri_host_local, 0, 0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"is_domain_local",   w_is_domain_local, 1, fixup_avp, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"is_from_local",       is_from_local,       0,  0,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"is_uri_host_local",   is_uri_host_local,   0,  0,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"is_domain_local",     w_is_domain_local,   1,  fixup_avp,
+			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -109,7 +113,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"domain", 
+	"domain",
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */
@@ -136,19 +140,17 @@ static int mod_init(void)
 	/* Check if cache needs to be loaded from domain table */
 	if (db_mode != 0) {
 		if (domain_db_init(db_url.s)<0) return -1;
-		     /* Check table version */
+		/* Check table version */
 		ver = domain_db_ver(&domain_table);
 		if (ver < 0) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): "
 					"error while querying table version\n");
-			domain_db_close();
-			return -1;
+			goto error;
 		} else if (ver < TABLE_VERSION) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): invalid table"
 					" version (use openser_mysql.sh reinstall)\n");
-			domain_db_close();
-			return -1;
-		}		
+			goto error;
+		}
 
 		/* Initialize fifo interface */
 		(void)init_domain_fifo();
@@ -156,8 +158,7 @@ static int mod_init(void)
 		if (init_domain_unixsock() < 0) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): error while initializing"
 					" unix socket interface\n");
-			domain_db_close();
-			return -1;
+			goto error;
 		}
 
 		/* Initializing hash tables and hash table variable */
@@ -166,6 +167,7 @@ static int mod_init(void)
 		if (hash_table_1 == 0) {
 			LOG(L_ERR, "ERROR: domain: mod_init(): "
 					"No memory for hash table\n");
+			goto error;
 		}
 
 		hash_table_2 = (struct domain_list **)shm_malloc
@@ -173,6 +175,7 @@ static int mod_init(void)
 		if (hash_table_2 == 0) {
 			LOG(L_ERR, "ERROR: domain: mod_init():"
 					" No memory for hash table\n");
+			goto error;
 		}
 		for (i = 0; i < DOM_HASH_SIZE; i++) {
 			hash_table_1[i] = hash_table_2[i] = (struct domain_list *)0;
@@ -185,13 +188,16 @@ static int mod_init(void)
 		if (reload_domain_table() == -1) {
 			LOG(L_CRIT, "ERROR: domain:mod_init():"
 					" Domain table reload failed\n");
-			return -1;
+			goto error;
 		}
-			
+
 		domain_db_close();
 	}
 
 	return 0;
+error:
+	domain_db_close();
+	return -1;
 }
 
 
@@ -215,6 +221,20 @@ static void destroy(void)
 	 * there is no need to close database here because
 	 * it is closed in mod_init already
 	 */
+	if (hash_table) {
+		shm_free(hash_table);
+		hash_table = 0;
+	}
+	if (hash_table_1) {
+		hash_table_free(hash_table_1);
+		shm_free(hash_table_1);
+		hash_table_1 = 0;
+	}
+	if (hash_table_2) {
+		hash_table_free(hash_table_2);
+		shm_free(hash_table_2);
+		hash_table_2 = 0;
+	}
 }
 
 

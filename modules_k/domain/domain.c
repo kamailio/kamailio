@@ -291,9 +291,9 @@ int reload_domain_table ( void )
 		val = ROW_VALUES(row + i);
 		if ((ROW_N(row) == 1) && (VAL_TYPE(val) == DB_STRING)) {
 			
-			DBG("Value: %s inserted into domain hash table\n", VAL_STRING(val));
+			DBG("Value: %s inserted into domain hash table\n",VAL_STRING(val));
 
-			if (hash_table_install(new_hash_table, (char *)(VAL_STRING(val))) == -1) {
+			if (hash_table_install(new_hash_table,(char*)VAL_STRING(val))==-1){
 				LOG(L_ERR, "domain_reload(): Hash table problem\n");
 				domain_dbf.free_result(db_handle, res);
 				return -1;
