@@ -245,6 +245,8 @@ int set_hash_domain(hash_t *h, str *s)
 
 void free_hash(hash_t* hash)
 {
+	pd_op_t *op, *op_t;
+
 	if(hash==NULL)
 		return;
 
@@ -253,7 +255,11 @@ void free_hash(hash_t* hash)
 	if(hash->sdomain.s!=NULL)
 		shm_free(hash->sdomain.s);
 	
-	/* todo: destroy diff list */
+	/* destroy diff list */
+	for( op = hash->diff ; op ; op=op_t) {
+		op_t = op->n;
+		shm_free(op);
+	}
 
 	/* free next element in the list */
 	free_hash(hash->next);
