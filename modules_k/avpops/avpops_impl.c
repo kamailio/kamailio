@@ -1784,33 +1784,55 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 	unsigned short    name_type;
 	int_str avp_name;
 	int_str avp_value;
+	int index;
 	
 	/* get avp name */
 	if(avpops_get_aname(msg, ap, &avp_name, &name_type)!=0)
 	{
 		LOG(L_ERR,
-			"avpops:write_avp: error getting dst AVP name\n");
+			"avpops:write_avp: error getting AVP name\n");
+		return -1;
+	}
+
+	/* get avp index */
+	if(xl_get_spec_index(&ap->sval, &index)!=0)
+	{
+		LOG(L_ERR,
+			"avpops:write_avp: error getting AVP index\n");
 		return -1;
 	}
 	
 	avp=search_first_avp(name_type, avp_name, &avp_value, 0);
 	if(avp==0)
 		return -1;
-	if(ap->ops&AVPOPS_FLAG_ALL)
-		return 1;
 	
 	do {
-		if((ap->ops&AVPOPS_FLAG_CASTS && avp->flags&AVP_VAL_STR)
-				|| (ap->ops&AVPOPS_FLAG_CASTN && !(avp->flags&AVP_VAL_STR)))
-			return 1;
-		if(ap->ops&AVPOPS_FLAG_EMPTY)
+		/* last index [-1] or all [*] go here as well */
+		if(index<=0)
 		{
-			if((avp->flags&AVP_VAL_STR)
-					&& (avp_value.s.s==0 || avp_value.s.len==0))
+			if(ap->ops&AVPOPS_FLAG_ALL)
 				return 1;
-			else if(avp_value.n==0)
-				return 1;
+			if((ap->ops&AVPOPS_FLAG_CASTS && !(avp->flags&AVP_VAL_STR))
+					||(ap->ops&AVPOPS_FLAG_CASTN && avp->flags&AVP_VAL_STR))
+				return -1;
+			if(ap->ops&AVPOPS_FLAG_EMPTY)
+			{
+				if(avp->flags&AVP_VAL_STR)
+				{
+					if(avp_value.s.s==0 || avp_value.s.len==0)
+						return 1;
+					else
+						return -1;
+				} else {
+					if(avp_value.n==0)
+						return 1;
+					else
+						return -1;
+				}
+			}
+			return 1;
 		}
+		index--;
 	} while ((avp=search_first_avp(name_type, avp_name, &avp_value, avp))!=0);
 	
 	return -1;

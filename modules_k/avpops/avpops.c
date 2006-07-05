@@ -1120,7 +1120,7 @@ static int fixup_is_avp_set(void** param, int param_no)
 			*(p++)=0;
 		
 		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+			XL_THROW_ERROR|XL_DISABLE_COLORS);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: unable to get"
@@ -1147,10 +1147,22 @@ static int fixup_is_avp_set(void** param, int param_no)
 					break;
 				case 'n':
 				case 'N':
+					if(ap->ops&AVPOPS_FLAG_CASTS)
+					{
+						LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: invalid flag"
+							" combination <%c> and 's|S'\n",*p);
+						return E_UNSPEC;
+					}
 					ap->ops|=AVPOPS_FLAG_CASTN;
 					break;
 				case 's':
 				case 'S':
+					if(ap->ops&AVPOPS_FLAG_CASTN)
+					{
+						LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: invalid flag"
+							" combination <%c> and 'n|N'\n",*p);
+						return E_UNSPEC;
+					}
 					ap->ops|=AVPOPS_FLAG_CASTS;
 					break;
 				default:
