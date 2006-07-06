@@ -221,8 +221,10 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 
 	for( dlg=d_entry->first ; dlg ; dlg=dlg->next ) {
 		if (dlg->h_id == h_id) {
-			if (dlg->state==DLG_STATE_DELETED)
+			if (dlg->state==DLG_STATE_DELETED) {
+				dlg_unlock( d_table, d_entry);
 				goto not_found;
+			}
 			dlg->ref++;
 			dlg_unlock( d_table, d_entry);
 			DBG("DEBUG:dialog:lookup_dlg: dialog id=%u found on entry %u\n",
@@ -231,8 +233,8 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 		}
 	}
 
-not_found:
 	dlg_unlock( d_table, d_entry);
+not_found:
 	DBG("DEBUG:dialog:lookup_dlg: no dialog id=%u found on entry %u\n",
 		h_id, h_entry);
 	return 0;
