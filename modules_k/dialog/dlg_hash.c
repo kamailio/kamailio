@@ -231,8 +231,8 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 		}
 	}
 
-	dlg_unlock( d_table, d_entry);
 not_found:
+	dlg_unlock( d_table, d_entry);
 	DBG("DEBUG:dialog:lookup_dlg: no dialog id=%u found on entry %u\n",
 		h_id, h_entry);
 	return 0;
