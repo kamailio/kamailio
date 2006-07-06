@@ -240,7 +240,7 @@ not_found:
 
 
 
-void link_dlg(struct dlg_cell *dlg)
+void link_dlg(struct dlg_cell *dlg, int n)
 {
 	struct dlg_entry *d_entry;
 
@@ -257,7 +257,7 @@ void link_dlg(struct dlg_cell *dlg)
 		d_entry->last = dlg;
 	}
 
-	dlg->ref++;
+	dlg->ref += 1 + n;
 
 	dlg_unlock( d_table, d_entry);
 	return;

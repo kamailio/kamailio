@@ -271,5 +271,6 @@ static void mod_destroy()
 	destroy_dlg_timer();
 	destroy_dlg_table();
 	destroy_dlg_callbacks();
+	destroy_dlg_handlers();
 }
 

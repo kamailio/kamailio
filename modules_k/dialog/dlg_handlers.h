@@ -39,6 +39,8 @@
 void init_dlg_handlers(char *rr_param, int dlg_flag,
 		xl_spec_t *timeout_avp, int default_timeout, int use_tight_match);
 
+void destroy_dlg_handlers();
+
 void dlg_onreq(struct cell* t, int type, struct tmcb_params *param);
 
 void dlg_onroute(struct sip_msg* req, str *rr_param, void *param);

@@ -19,6 +19,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * TODO - several races to be fixed:
+ *   1) race between multiple 200 OK (parallel execution)
+ *   2) race between 200 OK and BYE - BYE received before going into CONFIRMED
+ *       state (rpl callback is actually called after sending out the reply)
+ *   3) race between non-200 OK and 200 OK replies - 200 Ok may be pushed after
+ *       (or in parallel) with a negative reply
+ *
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
@@ -43,6 +50,7 @@ static int       dlg_flag;
 static xl_spec_t *timeout_avp;
 static int       default_timeout;
 static int       use_tight_match;
+static int       shutdown_done = 0;
 
 extern struct tm_binds d_tmb;
 extern struct rr_binds d_rrb;
@@ -71,6 +79,11 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 	use_tight_match = use_tight_match_p;
 }
 
+
+void destroy_dlg_handlers()
+{
+	shutdown_done = 1;
+}
 
 
 static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
@@ -117,24 +130,26 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	str tag;
 
 	dlg = (struct dlg_cell *)(*param->param);
-	if (dlg==0)
+	if (shutdown_done || dlg==0)
 		return;
 
 	if (type==TMCB_TRANS_DELETED) {
 		if (dlg->state == DLG_STATE_UNCONFIRMED) {
 			DBG("DEBUG:dialog:dlg_onreply: destroying unused dialog %p\n",dlg);
-			unref_dlg(dlg,1,1);
+			unref_dlg(dlg,2,1);
 			if_update_stat( dlg_enable_stats, active_dlgs, -1);
+			return;
 		}
+		unref_dlg(dlg,1,0);
 		return;
 	}
 
 	rpl = param->rpl;
 
 	if (type==TMCB_RESPONSE_FWDED) {
-	  /* The state does not change, but the msg is mutable in this callback */
-	  run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, rpl);
-	  return;
+		/* The state does not change, but the msg is mutable in this callback*/
+		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, rpl);
+		return;
 	}
 
 	if (param->code<200) {
@@ -146,8 +161,16 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
+	/* for this point we deal only with final requests that trigger dialog
+	 * ending, so prevent any sequential callbacks to be executed */
+	if ( (dlg->state & (DLG_STATE_UNCONFIRMED|DLG_STATE_EARLY))==0 )
+		return;
+
+	DBG("DEBUG:dialog:dlg_onreply: dialog %p confirmed\n",dlg);
+	dlg->state = DLG_STATE_CONFIRMED;
+
 	if (param->code>=300) {
-		DBG("DEBUG:dialog:dlg_onreply: destroying unconfirmed dialog "
+		DBG("DEBUG:dialog:dlg_onreply: destroying dialog "
 			"with code %d (%p)\n", param->code, dlg);
 
 		/* dialog setup not completed (3456XX) */
@@ -158,15 +181,14 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
-	DBG("DEBUG:dialog:dlg_onreply: dialog %p confirmed\n",dlg);
-	dlg->state = DLG_STATE_CONFIRMED;
-
 	if ( (!rpl->to && parse_headers(rpl, HDR_TO_F,0)<0) || !rpl->to ) {
 		LOG(L_ERR, "ERROR:dialog:dlg_onreply: bad reply or "
 			"missing TO hdr :-/\n");
 	} else {
 		tag = get_to(rpl)->tag_value;
 		if (tag.s!=0 && tag.len!=0)
+			/* FIXME: this should be sincronized since multiple 200 can be
+			 * sent out */
 			dlg_set_totag( dlg, &tag);
 	}
 
@@ -174,8 +196,6 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl);
 
 	insert_dlg_timer( &dlg->tl, dlg->lifetime );
-
-	*(param->param) = 0;
 
 	return;
 }
@@ -242,14 +262,14 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	/* first INVITE seen (dialog created, unconfirmed) */
 	run_create_callbacks( dlg, req);
 
-	link_dlg( dlg );
+	link_dlg( dlg , 1/* one extra ref for the callback*/);
 
 	if ( add_dlg_rr_param( req, dlg->h_entry, dlg->h_id)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:dlg_onreq: failed to add RR param\n");
 		goto error;
 	}
 
-	if ( d_tmb.register_tmcb( 0, t, 
+	if ( d_tmb.register_tmcb( 0, t,
 				  TMCB_RESPONSE_OUT|TMCB_TRANS_DELETED|TMCB_RESPONSE_FWDED,
 				  dlg_onreply, (void*)dlg)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:dlg_onreq: failed to register TMCB\n");
@@ -263,7 +283,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 
 	return;
 error:
-	unref_dlg(dlg,1,1);
+	unref_dlg(dlg,2,1);
 	return;
 }
 

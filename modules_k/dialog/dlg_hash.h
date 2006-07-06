@@ -93,7 +93,7 @@ int dlg_set_totag(struct dlg_cell *dlg, str *tag);
 
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
 
-void link_dlg(struct dlg_cell *dlg);
+void link_dlg(struct dlg_cell *dlg, int n);
 
 void ref_dlg(struct dlg_cell *dlg);
 
