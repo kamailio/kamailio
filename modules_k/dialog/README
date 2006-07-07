@@ -177,7 +177,7 @@ modparam("dialog", "dlg_flag", 4)
 
    Example 1-5. Set timeout_avp parameter
 ...
-modparam("usrloc", "timeout_avp", "$avp(i:10)")
+modparam("dialog", "timeout_avp", "$avp(i:10)")
 ...
      _________________________________________________________
 
