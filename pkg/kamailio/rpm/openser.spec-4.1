@@ -323,6 +323,11 @@ fi
 
 %{_sbindir}/openser
 %{_sbindir}/openserctl
+%{_libdir}/openserctl/openserctl.base
+%{_libdir}/openserctl/openserctl.sqlbase
+%{_libdir}/openserctl/openserctl.ctlbase
+%{_libdir}/openserctl/openserctl.fifo
+%{_libdir}/openserctl/openserctl.unixsock
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -334,6 +339,7 @@ fi
 
 %{_libdir}/openser/modules/mysql.so
 %{_sbindir}/openser_mysql.sh
+%{_libdir}/openserctl/openserctl.mysql
 
 %files postgres
 %defattr(-,root,root)
@@ -341,6 +347,7 @@ fi
 
 %{_libdir}/openser/modules/postgres.so
 %{_sbindir}/openser_postgres.sh
+%{_libdir}/openserctl/openserctl.pgsql
 
 %files unixodbc
 %defattr(-,root,root)

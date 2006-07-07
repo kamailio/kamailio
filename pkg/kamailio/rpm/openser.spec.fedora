@@ -234,6 +234,7 @@ fi
 %{_mandir}/man8/*
 %exclude %{_libdir}/openser/modules/mysql.so
 %exclude %{_sbindir}/openser_mysql.sh
+%exclude %{_libdir}/openserctl/openserctl.mysql
 %exclude %{_docdir}/openser/README.jabber
 %exclude %{_libdir}/openser/modules/jabber.so
 %exclude %{_docdir}/openser/README.cpl-c
@@ -244,6 +245,7 @@ fi
 %exclude %{_libdir}/openser/modules/pa.so
 %exclude %{_docdir}/openser/README.postgres
 %exclude %{_libdir}/openser/modules/postgres.so
+%exclude %{_libdir}/openserctl/openserctl.pgsql
 %exclude %{_docdir}/openser/README.unixodbc
 %exclude %{_libdir}/openser/modules/unixodbc.so
 %exclude %{_docdir}/openser/README.tlsops
@@ -257,6 +259,7 @@ fi
 %doc %{_docdir}/openser/README.mysql
 %{_libdir}/openser/modules/mysql.so
 %{_sbindir}/openser_mysql.sh
+%{_libdir}/openserctl/openserctl.mysql
 
 
 %files postgres
@@ -264,6 +267,7 @@ fi
 %doc %{_docdir}/openser/README.postgres
 %{_libdir}/openser/modules/postgres.so
 %{_sbindir}/openser_postgres.sh
+%{_libdir}/openserctl/openserctl.pgsql
 
 
 %files unixodbc
