@@ -40,8 +40,6 @@ if [ -z "$MYLIBDIR" ] ; then
 	fi
 fi
 
-echo "mydir = '$MYDIR' mylibdir = '$MYLIBDIR'"
-
 ##### ------------------------------------------------ #####
 ### load base functions
 #
@@ -297,6 +295,7 @@ check_ul_alias() {
 	require_ctlengine
 	RES=`$CTLCMD ul_show_contact "$ALS_TABLE" "$1@$2"`
 	RET="$?"
+	ALIAS_UL_EXISTS=0
 	if [ $RET -ne 0 ] ; then
 		merr "OpenSER $CTLENGINE not accessible: $RET" \
 			> /dev/stderr
@@ -312,41 +311,27 @@ check_ul_alias() {
 		fi
 		echo "$RES" | grep "^200" > /dev/null
 		if [ $? -eq 0 ] ; then
-			true
+			ALIAS_UL_EXISTS=1
 		fi
 		# other errors
 		merr "$RES" > /dev/stderr
 		exit 1
 	fi
-	# alias does not exist yet, go ahead!
-	false
 }
 
 check_db_alias() {
 	require_dbengine
+
+	ALIAS_DB_EXISTS=0
 
 	QUERY="select count(*) from $DA_TABLE where $DA_ALIAS_USER_COLUMN='$1' \
 and $DA_ALIAS_DOMAIN_COLUMN='$2';"
 	CNT=`$DBROCMD "$QUERY" | grep -v ERROR | $LAST_LINE`
 	mdbg "check_db_alias: alias counter=$CNT"
 	if [ "$CNT" = "0" ] ; then
-		false
+		ALIAS_DB_EXISTS=0
 	else
-		true
-	fi
-}
-
-# params: user
-# output: false if exists, true otherwise
-is_alias_db()
-{
-	set_user $1
-	check_db_alias "$OSERUSER" "$OSERDOMAIN"
-
-	if [ $? -eq 0 ] ; then
-		false
-	else
-		true
+		ALIAS_DB_EXISTS=1
 	fi
 }
 
@@ -355,23 +340,21 @@ is_alias_db()
 #   params: user domain
 #   output: false if exists, true otherwise
 check_alias() {
-	if [ "$ENABLE_ALIASES" = "0" ] ; then
-		false
-	fi
+	ALIAS_EXISTS=0
 
 	if [ "$ENABLE_ALIASES" = "1" ] ; then
 		check_ul_alias "$1" "$2"
-		if [ $? -eq 0 ] ; then
-			false
+		if [ "$ALIAS_UL_EXISTS" = "0" ] ; then
+			ALIAS_EXISTS=0
 		else
-			true
+			ALIAS_EXISTS=1
 		fi
-	else
+	elif  [ "$ENABLE_ALIASES" = "2" ] ; then
 		check_db_alias "$1" "$2"
-		if [ $? -eq 0 ] ; then
-			false
+		if [ "$ALIAS_DB_EXISTS" = "0" ] ; then
+			ALIAS_EXISTS=0
 		else
-			true
+			ALIAS_EXISTS=1
 		fi
 	fi
 }
@@ -1507,7 +1490,7 @@ subscriber() {
 			fi
 			set_user $1
 			check_alias $OSERUSER $OSERDOMAIN
-			if [ $? -eq 0 ] ; then
+			if [ "$ALIAS_EXISTS" = "1" ] ; then
 				merr "user '$1' already exists as alias"
 				exit 1
 			fi
@@ -1686,7 +1669,7 @@ want to proceed? [Y|N] " > /dev/stderr
 			fi
 
 			check_alias $OSERUSER $OSERDOMAIN
-			if [ $? -eq 0 ] ; then
+			if [ "$ALIAS_EXISTS" = "1" ] ; then
 				if [ "$CHECK_SUB" -ne 0 ] ; then
 					merr "alias already defined"
 				else
