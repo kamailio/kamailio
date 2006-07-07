@@ -6,7 +6,7 @@
 #
 
 PORTNAME=	openser
-PORTVERSION=	1.0.1
+PORTVERSION=	1.1.0
 CATEGORIES=	net
 MASTER_SITES=	http://openser.org/pub/openser/${PORTVERSION}/src/
 DISTNAME=	${PORTNAME}-${PORTVERSION}-tls_src
@@ -101,7 +101,7 @@ post-patch:
 	@${REINPLACE_CMD} -e 's|install-doc install-man|install-man|' \
 		${WRKSRC}/Makefile
 .endif
-	@${REINPLACE_CMD} -e 's|/usr/local/etc/ser|${PREFIX}/etc/openser|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/etc/openser|${PREFIX}/etc/openser|' \
 		${WRKSRC}/scripts/sc.dbtext \
 		${WRKSRC}/modules/dispatcher/README
 	@${REINPLACE_CMD} -e 's|/etc/openser|${PREFIX}/etc/openser|' \
@@ -110,10 +110,10 @@ post-patch:
 		${WRKSRC}/etc/openser.cfg \
 		${WRKSRC}/scripts/mysqldb.sh \
 		${WRKSRC}/scripts/postgresqldb.sh \
-		${WRKSRC}/scripts/sc \
+		${WRKSRC}/scripts/openserctl \
 		${WRKSRC}/scripts/sc.dbtext \
 		${WRKSRC}/modules/speeddial/README
-	@${REINPLACE_CMD} -e 's|/home/jiri/sip_router/modules/acc/etc|${PREFIX}/etc/openser/acc|; \
+	@${REINPLACE_CMD} -e 's|/home/sip-server/modules/acc/etc|${PREFIX}/etc/openser/acc|; \
 		s|/usr/local|${LOCALBASE}|' \
 		${WRKSRC}/modules/acc/etc/radiusclient.conf
 	@${REINPLACE_CMD} -e 's|/usr/local/etc/radiusclient|${PREFIX}/etc/openser/acc|' \
@@ -122,6 +122,8 @@ post-patch:
 post-install:
 	${INSTALL_DATA} ${WRKSRC}/etc/openser.cfg \
 		${PREFIX}/etc/openser/openser.cfg.default
+	${INSTALL_DATA} ${WRKSRC}/scripts/openserctlrc \
+		${PREFIX}/etc/openser/openserctlrc
 	${MKDIR} ${PREFIX}/etc/openser/acc
 	${INSTALL_DATA} ${WRKSRC}/modules/acc/etc/radiusclient.conf \
 		${PREFIX}/etc/openser/acc/radiusclient.conf.default
