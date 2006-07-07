@@ -4,7 +4,7 @@
 
 inherit eutils
 
-DESCRIPTION="Open SIP Express Router"
+DESCRIPTION="OpenSER - flexible and robust SIP (RFC3261) server"
 HOMEPAGE="http://www.openser.org/"
 MY_P="${P}_src"
 SRC_URI="http://openser.org/pub/openser/${PV}/src/${MY_P}.tar.gz"
