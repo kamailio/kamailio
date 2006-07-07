@@ -19,8 +19,8 @@
 	</para>
 	<para>
 	For internal(non-script) usage, the RR module offers to other module the
-	possiblity to register callback functions to be executed each time a
-	local Route heaer is proccesed. The callback function will receive as
+	possibility to register callback functions to be executed each time a
+	local Route header is processed. The callback function will receive as
 	parameter the register parameter and the Route header parameter string.
 	</para>
 
@@ -62,9 +62,9 @@
 		</title>
 		<para>
 		The function checks for the request <quote>msg</quote> if the URI 
-		parameters of the local Route header (coresponding to the local server) 
-		matches the given regular expression <quote>re</quote>. It must be call 
-		after the loose_route was done.
+		parameters of the local Route header (corresponding to the local 
+		server) matches the given regular expression <quote>re</quote>. 
+		It must be call after the loose_route was done.
 		</para>
 		<para>
 		The function returns 0 on success. Otherwise, -1 is returned.
@@ -90,7 +90,7 @@
 		</title>
 		<para>
 		The function checks the flow direction of the request 
-		<quote>msg</quote>. As for cheking it's used the <quote>ftag</quote> 
+		<quote>msg</quote>. As for checking it's used the <quote>ftag</quote> 
 		Route header parameter, the append_fromtag (see 
 		<xref linkend="append-fromtag-id"> module parameter 
 		must be enables. Also this must be call only after the loose_route is 

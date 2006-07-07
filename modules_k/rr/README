@@ -103,13 +103,13 @@ Chapter 1. User's Guide
    The solution is to store additional dialog-related information
    in the routing set (Record-Route/Route headers), headers which
    show up in all sequential requests. So any information added
-   to rhe Record-Route header will be found (with no direction
+   to the Record-Route header will be found (with no direction
    dependencies) in Route header (corresponding to the proxy
    address).
 
-   As storage container, the parameters of the Rocord-Route /
+   As storage container, the parameters of the Record-Route /
    Route header will be used - Record-Route parameters mirroring
-   are re-infonced by RFC 3261 (see 12.1.1 UAS behavior).
+   are reinforced by RFC 3261 (see 12.1.1 UAS behavior).
 
    For this purpose, the modules offers the following functions:
 
@@ -234,7 +234,7 @@ loose_route();
    Record-Route header fields.
 
    If any string is passed as parameter, it will be appended as
-   URI paramter to the Record-Route header. The string must
+   URI parameter to the Record-Route header. The string must
    follow the ";name=value" scheme and it may contain
    pseudo-variables.
 
@@ -290,7 +290,7 @@ add_rr_param(";nat=yes");
 1.5.5. check_route_param(re)
 
    The function checks if the URI parameters of the local Route
-   header (coresponding to the local server) matches the given
+   header (corresponding to the local server) matches the given
    regular expression. It must be call after loose_route() (see
    Section 1.5.1).
 
@@ -312,7 +312,7 @@ if (check_route_param("nat=yes")) {
 1.5.6. is_direction(dir)
 
    The function checks the flow direction of the request. As for
-   cheking it's used the "ftag" Route header parameter, the
+   checking it's used the "ftag" Route header parameter, the
    append_fromtag (see Section 1.4.2 module parameter must be
    enables. Also this must be call only after loose_route() (see
    Section 1.5.1).
@@ -321,7 +321,7 @@ if (check_route_param("nat=yes")) {
    request's flow direction.
 
    The "downstream" (UAC to UAS) direction is relative to the
-   inital request that created the dialog.
+   initial request that created the dialog.
 
    Meaning of the parameters is as follows:
 
@@ -347,8 +347,8 @@ Chapter 2. Developer's Guide
    RR module, see Section 1.2.
 
    For internal(non-script) usage, the RR module offers to other
-   module the possiblity to register callback functions to be
-   executed each time a local Route heaer is proccesed. The
+   module the possibility to register callback functions to be
+   executed each time a local Route header is processed. The
    callback function will receive as parameter the register
    parameter and the Route header parameter string.
      _________________________________________________________
@@ -373,7 +373,7 @@ Chapter 2. Developer's Guide
 2.1.2. check_route_param( msg, re)
 
    The function checks for the request "msg" if the URI
-   parameters of the local Route header (coresponding to the
+   parameters of the local Route header (corresponding to the
    local server) matches the given regular expression "re". It
    must be call after the loose_route was done.
 
@@ -390,7 +390,7 @@ Chapter 2. Developer's Guide
 2.1.3. is_direction( msg, dir)
 
    The function checks the flow direction of the request "msg".
-   As for cheking it's used the "ftag" Route header parameter,
+   As for checking it's used the "ftag" Route header parameter,
    the append_fromtag (see Section 1.4.2 module parameter must be
    enables. Also this must be call only after the loose_route is
    done.

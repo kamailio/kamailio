@@ -38,13 +38,13 @@
 	<para>
 	The solution is to store additional dialog-related information in the 
 	routing set (Record-Route/Route headers), headers which show up in all 
-	sequential requests. So any information added to rhe Record-Route header
+	sequential requests. So any information added to the Record-Route header
 	will be found (with no direction dependencies) in Route header 
 	(corresponding to the proxy address).
 	</para>
 	<para>
-	As storage container, the parameters of the Rocord-Route / Route header
-	will be used - Record-Route parameters mirroring are re-infonced by 
+	As storage container, the parameters of the Record-Route / Route header
+	will be used - Record-Route parameters mirroring are reinforced by 
 	RFC 3261 (see 12.1.1 UAS behavior).
 	</para>
 	<para>
@@ -248,7 +248,7 @@ loose_route();
 		</para>
 		<para>
 		If any string is passed as parameter, it will be appended as URI
-		paramter to the Record-Route header. The string must follow the 
+		parameter to the Record-Route header. The string must follow the 
 		<quote>;name=value</quote> scheme and it may contain pseudo-variables.
 		</para>
 		<para>
@@ -335,7 +335,7 @@ add_rr_param(";nat=yes");
 		<function moreinfo="none">check_route_param(re)</function>
 		</title>
 		<para>The function checks if the URI parameters of the local Route 
-		header (coresponding to the local server) matches the given regular 
+		header (corresponding to the local server) matches the given regular 
 		expression. It must be call after loose_route() 
 		(see <xref linkend="loose-route-id">).
 		</para>
@@ -368,9 +368,9 @@ if (check_route_param("nat=yes")) {
 		<function moreinfo="none">is_direction(dir)</function>
 		</title>
 		<para>The function checks the flow direction of the request.
-		As for cheking it's used the <quote>ftag</quote> Route header parameter,
-		the append_fromtag (see <xref linkend="append-fromtag-id"> module 
-		parameter must be enables. Also this must be call only after 
+		As for checking it's used the <quote>ftag</quote> Route header 
+		parameter, the append_fromtag (see <xref linkend="append-fromtag-id"> 
+		module parameter must be enables. Also this must be call only after 
 		loose_route() (see <xref linkend="loose-route-id">).
 		</para>
 		<para>
@@ -379,7 +379,7 @@ if (check_route_param("nat=yes")) {
 		</para>
 		<para>
 		The <quote>downstream</quote> (UAC to UAS) direction is relative to the
-		inital request that created the dialog.
+		initial request that created the dialog.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
