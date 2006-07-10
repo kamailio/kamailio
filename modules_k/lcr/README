@@ -45,10 +45,10 @@ Juha Heinanen
 
         1.4. Exported Functions
 
-              1.4.1. load_gws()
+              1.4.1. load_gws(), load_gws(group-id)
               1.4.2. next_gw()
-              1.4.3. from_gw()
-              1.4.4. to_gw()
+              1.4.3. from_gw(), from_gw(group-id)
+              1.4.4. to_gw(), to_gw(group-id)
               1.4.5. load_contacts()
               1.4.6. next_contacts()
 
@@ -86,13 +86,16 @@ Juha Heinanen
    1-20. Setting rpid_avp module parameter
    1-21. Setting db_mode module parameter
    1-22. load_gws usage
-   1-23. next_gw usage from a route block
-   1-24. next_gw usage from a failure route block
-   1-25. from_gw usage
-   1-26. to_gw usage
-   1-27. load_contacts usage
-   1-28. next_contacts usage from route block
-   1-29. next_contacts usage from failure route block
+   1-23. load_gws usage with group-id
+   1-24. next_gw usage from a route block
+   1-25. next_gw usage from a failure route block
+   1-26. from_gw usage
+   1-27. from_gw usage with group-id
+   1-28. to_gw usage
+   1-29. to_gw usage with group-id
+   1-30. load_contacts usage
+   1-31. next_contacts usage from route block
+   1-32. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -141,8 +144,7 @@ Chapter 1. User's Guide
    From URI is a regular expression.
 
    In addition to gw and lcr tables there is third table gw_grp
-   that is used for administrative purposes only to associate
-   names with gateway group ids.
+   that is used to associate names with gateway group ids.
      _________________________________________________________
 
 1.2. Dependencies
@@ -445,12 +447,13 @@ modparam("lcr","db_mode",0)
 
 1.4. Exported Functions
 
-1.4.1. load_gws()
+1.4.1. load_gws(), load_gws(group-id)
 
    Loads URI schemes, addresses, ports, and transports of
    gateways that match user part of Request-URI to gw_uri_avp
-   AVPs (see Overview section). Returns 1 or -1 depending on
-   success.
+   AVPs (see Overview section). If an optional group-id is
+   specified, only gateways belonging to this group are loaded.
+   Returns 1 or -1 depending on success.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -459,6 +462,15 @@ modparam("lcr","db_mode",0)
 if (!load_gws()) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
 ays");
+        break;
+};
+...
+
+   Example 1-23. load_gws usage with group-id
+...
+if (!load_gws("1")) {
+        sl_send_reply("500", "Server Internal Error - Cannot load gatew
+ays from group 1");
         break;
 };
 ...
@@ -485,7 +497,7 @@ ays");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-23. next_gw usage from a route block
+   Example 1-24. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -493,7 +505,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1-24. next_gw usage from a failure route block 
+   Example 1-25. next_gw usage from a failure route block 
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -502,31 +514,51 @@ if (!next_gw()) {
 ...
      _________________________________________________________
 
-1.4.3. from_gw()
+1.4.3. from_gw(), from_gw(group-id)
 
-   Checks if request came from IP address of a gateway.
+   Checks if request came from IP address of a gateway. If an
+   optional group-id is given, only gateways belonging to this
+   group are checked.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-25. from_gw usage
+   Example 1-26. from_gw usage
 ...
 if (from_gw()) {
         ...
         break;
 };
 ...
+
+   Example 1-27. from_gw usage with group-id
+...
+if (from_gw("1")) {
+        ...
+        break;
+};
+...
      _________________________________________________________
 
-1.4.4. to_gw()
+1.4.4. to_gw(), to_gw(group-id)
 
-   Checks if in-dialog request goes to a gateway.
+   Checks if in-dialog request goes to a gateway. If an optional
+   group-id is given, only gateways belonging to this group are
+   checked.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-26. to_gw usage
+   Example 1-28. to_gw usage
 ...
 if (to_gw()) {
+        ...
+        break;
+};
+...
+
+   Example 1-29. to_gw usage with group-id
+...
+if (to_gw("1")) {
         ...
         break;
 };
@@ -545,7 +577,7 @@ if (to_gw()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-27. load_contacts usage
+   Example 1-30. load_contacts usage
 ...
 if (!load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load conta
@@ -575,7 +607,7 @@ cts");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-28. next_contacts usage from route block 
+   Example 1-31. next_contacts usage from route block 
 ...
 if (!next_contacts()) {
         sl_send_reply("500", "Server Internal Error");
@@ -585,7 +617,7 @@ if (!next_contacts()) {
 };
 ...
 
-   Example 1-29. next_contacts usage from failure route block 
+   Example 1-32. next_contacts usage from failure route block 
 if (next_contacts()) {
         t_relay();
 };
@@ -657,4 +689,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

@@ -97,7 +97,7 @@ Chapter 1. User's Guide
      * Aliases -- Possibility to set host aliases for addresses
        (see parameter's desc.) (December 2003).
      * Send received SIP MESSAGE messages to different IM
-       networks (Jabber, ICQ, MSN, AIM, Yahoo) using a Jabber
+       networks (Jabber, ICQ,MSN, AIM, Yahoo) using a Jabber
        server (December 2003).
      * Send incoming Jabber instant messages as SIP MESSAGE
        messages.
@@ -547,4 +547,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.
