@@ -120,9 +120,11 @@ static int mem_bad(MemHead *mem, char *where, char *file, int line)
 
 static MemMagic mem_magic = MEM_MAGIC_BOUND;
 #define MEM_TAIL(p) (memcmp((p)->m.end,(char*)&mem_magic,sizeof mem_magic)==0)
-#define MEM_CHECK(p,w) ((p) && \
-			((p)->m.magic != MEM_MAGIC_BOUND || !MEM_TAIL(p)) && \
-			mem_bad((p),(w),file,line))
+#define MEM_CHECK(p,w) \
+		do {\
+			if ((p) && ((p)->m.magic != MEM_MAGIC_BOUND || !MEM_TAIL(p))) \
+				mem_bad((p),(w),file,line);\
+		}while(0);
 
 /*  Initialize stats structure with estimated overhead */
 static augAllocStats mem_stats = {sizeof (MemHead) + sizeof (MemMagic) + 8, 0};
