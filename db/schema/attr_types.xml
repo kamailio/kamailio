@@ -373,6 +373,16 @@
          <value col="at.order">170</value>
 	 <value col="at.type_spec">a:3:{i:0;s:11:"domain name";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}</value>
     </row>
+    <row><value col="at.name">contact_email</value>
+         <value col="at.type">2</value>
+         <value col="at.rich_t">email_adr</value>
+         <value col="at.desc">@ff_contact_email</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">4096</value>
+         <value col="at.prior">1073807360</value>
+         <value col="at.order">0</value>
+    </row>
+
 								      
 
 </table>

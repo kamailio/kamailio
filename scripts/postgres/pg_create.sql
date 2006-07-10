@@ -123,6 +123,7 @@ INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, f
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_send_missed', '0', 'boolean', '@ff_send_daily_missed_calls', '32', '0', '1073807616', '130');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, type_spec) VALUES ('uid_format', '2', 'list', '@ff_uid_format', '32', '0', '1073741824', '160', 'a:3:{i:0;s:14:"username@realm";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, type_spec) VALUES ('did_format', '2', 'list', '@ff_did_format', '32', '0', '1073741824', '170', 'a:3:{i:0;s:11:"domain name";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('contact_email', '2', 'email_adr', '@ff_contact_email', '32', '4096', '1073807360', '0');
 
 CREATE TABLE global_attrs (
     name VARCHAR(32) NOT NULL,
@@ -193,6 +194,7 @@ CREATE INDEX ds_df ON domain_settings (did, filename);
 
 CREATE TABLE location (
     uid VARCHAR(64) NOT NULL,
+    aor VARCHAR(255) NOT NULL,
     contact VARCHAR(255) NOT NULL,
     received VARCHAR(255),
     expires TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
