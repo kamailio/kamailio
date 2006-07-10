@@ -27,57 +27,14 @@
 } */
 
 /* Authorization */
-static int xcap_get_pres_rules(str *uid, 
-		cp_ruleset_t **dst, auth_params_t *params,
-		struct sip_msg *m)
-{
-	xcap_query_params_t xcap;
-	int res;
-	str *filename = NULL;
-	/* str u; */
-	
-	if (!is_str_empty(&pres_rules_file)) filename = &pres_rules_file;
-	
-	/* get only presentity name, not whole uri
-	 * can't use parse_uri because of absence 
-	 * of protocol specification ! */
-	/* if (get_user_from_uri(uri, &u) != 0) u = *uri; */
-	
-	memset(&xcap, 0, sizeof(xcap));
-	if (fill_xcap_params) fill_xcap_params(m, &xcap);
-	res = get_pres_rules(uid, 
-			filename, 
-			&xcap, dst);
-	return res;
-}
-		
-static watcher_status_t xcap_authorize(presentity_t *p, 
-		str *w_uri, auth_params_t *params,
-		struct sip_msg *m)
+static watcher_status_t xcap_authorize(presentity_t *p, str *w_uri)
 {
 	sub_handling_t sh;
-	int res = 0;
-
-	/* hack - this is due to unimplemented "subscriptions to XCAP change"
-	 * -> reads authorization info on each authorization request - this
-	 * is VERY inefficient -> FIXME */
-	if (p->authorization_info) {
-		free_pres_rules(p->authorization_info);
-		p->authorization_info = NULL;
-	}
 	
 	if (!p->authorization_info) {
-		res = xcap_get_pres_rules(&p->uuid, &p->authorization_info, params, m);
-		if (res != 0) {
-			DBG("can't get authorization rules for %.*s\n", 
-					p->uri.len, ZSW(p->uri.s));
-			return WS_PENDING;
-		}
-		if (!p->authorization_info) {
-			/* DBG("got empty set of authorization rules for %.*s\n", 
-					p->uri.len, ZSW(p->uri.s)); */
-			return WS_PENDING;
-		}
+		/* DBG("got empty set of authorization rules for %.*s\n", 
+				p->uri.len, ZSW(p->uri.s)); */
+		return WS_PENDING;
 	}
 
 	/* process rules for given watcher's uri (w_uri) */
@@ -123,7 +80,7 @@ static watcher_status_t winfo_implicit_auth(presentity_t *p, watcher_t *w)
 	}
 }
 
-watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w, struct sip_msg *m)
+watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w)
 {
 	if (w->event_package == EVENT_PRESENCE_WINFO) {
 		switch (winfo_auth_params.type) {
@@ -139,7 +96,7 @@ watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w, struct sip_msg
 		switch (pa_auth_params.type) {
 			case auth_none: return WS_ACTIVE;
 			case auth_implicit: return WS_PENDING;
-			case auth_xcap: return xcap_authorize(p, &w->uri, &pa_auth_params, m);
+			case auth_xcap: return xcap_authorize(p, &w->uri);
 		}
 	}
 	return WS_PENDING;
@@ -151,9 +108,7 @@ watcher_status_t authorize_internal_watcher(presentity_t *p, internal_pa_subscri
 		case auth_none: return WS_ACTIVE;
 		case auth_implicit: return WS_PENDING;
 		case auth_xcap: return xcap_authorize(p, 
-								get_subscriber_id(is->subscription),
-								&pa_auth_params, 
-								NULL /* => uses default XCAP values !!! */ );
+								get_subscriber_id(is->subscription));
 	}
 	return WS_PENDING;
 }

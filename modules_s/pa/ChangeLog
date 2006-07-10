@@ -1,3 +1,34 @@
+2006-07-10
+	* added parameter async_auth_queries for switching between sync/async
+	loading of auth rules (synchronous dowload is done from inside of critical
+	section locked by pdomain mutext, which is not good for performance)
+	* added parameter max_auth_requests_per_tick for async. auth queries
+	* added parameter auth_rules_refresh_time for control how often are auth.
+	rules refreshed (we have no "XCAP change" notifications) - it could be
+	better than refresh on resubscription (criticised)
+
+2006-07-07
+	* asynchronous loading of authorization rules (better response than
+	synchronous)
+
+2006-07-04
+	* removed unused parts from code (old which were rewritten; location
+	related which need to be completely rewritten; resource lists which are
+	better in RLS module)
+	* cosmetical changes
+
+2006-07-03
+	* improved handling new subscription - most work moved outside of critical
+	secion
+
+2006-06-29
+	* rearranged work with mimetypes
+	* cleaned code of PA:
+		- less tests - most left on parse_hfs and check_message
+		- separated handling renewal and new subscription (better
+		performance?)
+		- removed location stuff
+
 2006-05-25
 	* added Max-Forwards header into NOTIFY requests
 

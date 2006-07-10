@@ -107,7 +107,7 @@ watcher_event_t watcher_event_from_string(str *wename);
  * Create a new watcher structure
  */
 struct presentity;
-int new_watcher_no_wb(struct presentity *_p, str* _uri, time_t _e, int event_package, 
+int new_watcher_no_wb(str* _uri, time_t _e, int event_package, 
 		int doc_type, dlg_t* _dlg, str *display_name, 
 		str *server_contact, watcher_t** _w);
 
@@ -146,7 +146,6 @@ int is_watcher_authorized(watcher_t *w);
 /** Sets status to correct terminated status for this watcher. */
 void set_watcher_terminated_status(watcher_t *w);
 
-int verify_event_package(int et);
 const char *event_package2str(int et);
 
 #endif /* WATCHER_H */

@@ -151,7 +151,8 @@ int timer_pdomain(pdomain_t* _d)
 				(!presentity->winfo_watchers) && 
 				(!presentity->tuples) &&
 				(!presentity->notes) &&
-				(!presentity->first_qsa_subscription)) {
+				(!presentity->first_qsa_subscription) &&
+				(presentity->ref_cnt == 0)) {
 			LOG(L_DBG, "timer_pdomain(): removing empty presentity\n");
 			t = presentity;
 			presentity = presentity->next;
@@ -221,7 +222,32 @@ int find_presentity_uid(pdomain_t* _d, str* uid, struct presentity** _p)
 	return res;   /* Nothing found */
 }
 
-void callback(str* _user, str *_contact, int state, void* data);
+/*
+ * contact will be NULL if user is offline
+ */
+static void callback(str* _user, str *_contact, int state, void* data)
+{
+	mq_message_t *msg;
+	tuple_change_info_t *info;
+
+	if ((!_user) || (!_contact) || (!data)) {
+		ERROR_LOG("callback(): error!\n");
+	}
+		
+	/* asynchronous processing */
+	msg = create_message_ex(sizeof(tuple_change_info_t));
+	if (!msg) {
+		LOG(L_ERR, "can't create message with tuple status change\n");
+		return;
+	}
+	set_data_destroy_function(msg, (destroy_function_f)free_tuple_change_info_content);
+	info = get_message_data(msg);
+	if (state == 0) info->state = PS_OFFLINE;
+	else info->state = PS_ONLINE;
+	str_dup(&info->user, _user);
+	str_dup(&info->contact, _contact);
+	if (data) push_message(&((struct presentity*)data)->mq, msg);
+}
 
 void add_presentity(pdomain_t* _d, struct presentity* _p)
 {

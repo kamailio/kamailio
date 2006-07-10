@@ -283,6 +283,7 @@ static void rpc_pa_publish(rpc_t* rpc, void* c)
 	int exp_sec = 0;
 	int res;
 	void *st;
+	xcap_query_params_t xcap_params;
 	
 	res = rpc->scan(c, "sSSd", &domain, &pstr, &doc, &exp_sec);
 	/* TODO: args = domain, uri, presence doc, expires, etag (for republishing) */
@@ -308,7 +309,11 @@ static void rpc_pa_publish(rpc_t* rpc, void* c)
 	lock_pdomain(d);
 	res = find_presentity_uid(d, &uid, &p);
 	
-	if (res > 0) res = new_presentity(d, &pstr, &uid, &p);
+	if (res > 0) {
+		memset(&xcap_params, 0, sizeof(xcap_params));
+		if (fill_xcap_params) fill_xcap_params(NULL, &xcap_params);
+		res = new_presentity(d, &pstr, &uid, &xcap_params, &p);
+	}
 	if (res < 0) {
 		rpc->fault(c, 400, "Can't create/find presentity '%.*s'\n", pstr.len, pstr.s);
 		unlock_pdomain(d);

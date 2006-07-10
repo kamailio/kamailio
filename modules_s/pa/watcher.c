@@ -81,18 +81,6 @@ int str2event_package(const char *epname)
 	return -1; /* unsupported */
 }
 
-/* returns 0 if package supported by PA */
-int verify_event_package(int et)
-{
-	switch (et) {
-		case EVENT_PRESENCE: return 0;
-		case EVENT_PRESENCE_WINFO: 
-			if (watcherinfo_notify) return 0;
-			else return -1;
-		default: return -1;
-	}
-}
-
 /*int event_package_from_string(str *epname) 
 {
      int i;
@@ -165,7 +153,7 @@ static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watc
 /*
  * Create a new watcher structure but do not write to database
  */
-int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package, 
+int new_watcher_no_wb(str* _uri, time_t _e, int event_package, 
 		int doc_type, dlg_t* _dlg, str *_dn, str *server_contact, watcher_t** _w)
 {
 	watcher_t* watcher;
@@ -564,7 +552,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 			}
 
 			LOG(L_DBG, "db_read_watcherinfo(): creating watcher\n");
-			if (new_watcher_no_wb(_p, &w_uri, expires, 
+			if (new_watcher_no_wb(&w_uri, expires, 
 						event_package, accepts, dlg, &display_name, 
 						&server_contact, &watcher) == 0) {
 				
@@ -621,15 +609,17 @@ int update_watcher(struct presentity *p, watcher_t* _w, time_t _e, struct sip_ms
 		_w->expires = 0;
 		set_watcher_terminated_status(_w);
 	}
-	
+#if 0
+	/* done outside of here from now */
 	/*if (_w->status == WS_PENDING) {*/
 	if (!is_watcher_terminated(_w)) {
 		/* do reauthorization for non-terminated watchers (policy may
 		 * change) - in the future should be done elsewhere using 
 		 * "subscriptions to XCAP changes" */
-		_w->status = authorize_watcher(p,_w, m);
+		_w->status = authorize_watcher(p,_w);
 		/* handle rejected watchers here? */
 	}
+#endif
 	
 	if ((old != _w->status) && (_w->event_package == EVENT_PRESENCE)) {
 		/* changed only when presence watcher changes status  */

@@ -48,9 +48,12 @@
 #include "location.h"
 #include "qsa_interface.h"
 #include <cds/logger.h>
+#include "async_auth.h"
 
 extern int use_db;
 extern char *presentity_table;
+
+int auth_rules_refresh_time = 300;
 
 str pstate_name[PS_NSTATES] = {
 	STR_STATIC_INIT("unknown"),
@@ -73,16 +76,6 @@ int basic2status(str basic)
 	return 0;
 }
 
-str str_strdup(str string)
-{
-	str new_string;
-	new_string.s = mem_alloc(string.len + 1);
-	new_string.len = string.len;
-	strncpy(new_string.s, string.s, string.len);
-	new_string.s[string.len] = 0;
-	return new_string;
-}
-	
 int get_presentity_uid(str *uid_dst, struct sip_msg *m)
 {
 	str s = STR_NULL;
@@ -101,14 +94,17 @@ int get_presentity_uid(str *uid_dst, struct sip_msg *m)
 /*
  * Create a new presentity but do not update database
  */
-int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, str *uid, presentity_t** _p)
+int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, 
+		str *uid, 
+		xcap_query_params_t *xcap_params,
+		presentity_t** _p)
 {
 	presentity_t* presentity;
 	int size = 0;
 
 	if ((!_uri) || (!_p) || (!uid)) {
 		paerrno = PA_INTERNAL_ERROR;
-		LOG(L_ERR, "new_presentity_no_wb(): Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -117,7 +113,7 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, str *uid, presentit
 	/* TRACE("allocating presentity: %d\n", size); */
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
-		LOG(L_ERR, "new_presentity_no_wb(): No memory left: size=%d\n", size);
+		LOG(L_ERR, "No memory left: size=%d\n", size);
 		return -1;
 	}
 	memset(presentity, 0, sizeof(presentity_t));
@@ -129,20 +125,37 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, str *uid, presentit
 	presentity->uri.s[_uri->len] = 0;
 	presentity->uri.len = _uri->len;
 	presentity->pdomain = pdomain;
-	presentity->first_qsa_subscription = 0;
+
+	/* these are initialized by memset */
+	/* presentity->first_qsa_subscription = 0;
 	presentity->last_qsa_subscription = 0;
 	presentity->presid = 0;
-	presentity->authorization_info = NULL;
+	presentity->authorization_info = NULL; 
+	presentiy->ref_cnt */
+	
 	presentity->uuid.s = presentity->uri.s + presentity->uri.len + 1;
 	strncpy(presentity->uuid.s, uid->s, uid->len);
 	presentity->uuid.s[uid->len] = 0;
 	presentity->uuid.len = uid->len;
 
+	/* async XCAP query */
+	if (dup_xcap_params(&presentity->xcap_params, xcap_params) < 0) {
+		ERR("can't duplicate XCAP parameters\n");
+		shm_free(presentity);
+		*_p = NULL;
+		return -1;
+	}
+	if (ask_auth_rules(presentity) < 0) {
+/*		shm_free(presentity);
+		free_xcap_params_content(&presentity->xcap_params);
+		*_p = NULL;
+		return -1; */
+		/* try it from timer if fails here */
+		presentity->auth_rules_refresh_time = act_time;
+	}
+	else presentity->auth_rules_refresh_time = act_time + auth_rules_refresh_time;
+	
 	*_p = presentity;
-
-	DBG("new_presentity_no_wb=%p for uri=%.*s uuid=%.*s\n", 
-			presentity, presentity->uri.len, ZSW(presentity->uri.s),
-			presentity->uuid.len, ZSW(presentity->uuid.s));
 
 	/* add presentity into domain */
 	add_presentity(pdomain, *_p);
@@ -189,14 +202,14 @@ static int db_add_presentity(presentity_t* presentity)
 	result_cols[presid_col = n_result_cols++] = "presid";
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) {
-		LOG(L_ERR, "new_presentity: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 
 	while (!presid) {
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 					result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
-			LOG(L_ERR, "new_presentity: Error while querying presentity\n");
+			ERR("Error while querying presentity\n");
 			return -1;
 		}
 		if (res && res->n > 0) {
@@ -205,14 +218,14 @@ static int db_add_presentity(presentity_t* presentity)
 			db_val_t *row_vals = ROW_VALUES(row);
 			presid = presentity->presid = row_vals[presid_col].val.int_val;
 
-			LOG(L_DBG, "  presid=%d\n", presid);
+			DBG("  presid=%d\n", presid);
 
 		} else {
 			/* insert new record into database */
-			LOG(L_DBG, "new_presentity: inserting %d cols into table\n", n_query_cols);
+			DBG("inserting %d cols into table\n", n_query_cols);
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
 					< 0) {
-				LOG(L_ERR, "new_presentity: Error while inserting tuple\n");
+				ERR("Error while inserting tuple\n");
 				return -1;
 			}
 		}
@@ -239,12 +252,12 @@ static int db_remove_tuples(presentity_t* presentity)
 	n_query_cols++;
 
 	if (pa_dbf.use_table(pa_db, presentity_contact_table) < 0) {
-		LOG(L_ERR, "new_presentity: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.delete(pa_db, query_cols, query_ops, query_vals, n_query_cols) < 0) {
-		LOG(L_ERR, "new_presentity: Error while querying presentity\n");
+		ERR("Error while querying presentity\n");
 		return -1;
 	}
 	
@@ -269,12 +282,12 @@ static int db_remove_watchers(presentity_t* presentity)
 	n_query_cols++;
 
 	if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
-		LOG(L_ERR, "new_presentity: Error in use_table\n");
+		LOG(L_ERR, "Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.delete(pa_db, query_cols, query_ops, query_vals, n_query_cols) < 0) {
-		LOG(L_ERR, "new_presentity: Error while querying presentity\n");
+		LOG(L_ERR, "Error while querying presentity\n");
 		return -1;
 	}
 	
@@ -313,12 +326,12 @@ int db_remove_presentity(presentity_t* presentity)
 	n_query_cols++;
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) {
-		LOG(L_ERR, "new_presentity: Error in use_table\n");
+		LOG(L_ERR, "Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.delete(pa_db, query_cols, query_ops, query_vals, n_query_cols) < 0) {
-		LOG(L_ERR, "new_presentity: Error while querying presentity\n");
+		LOG(L_ERR, "Error while querying presentity\n");
 		return -1;
 	}
 	
@@ -327,11 +340,13 @@ int db_remove_presentity(presentity_t* presentity)
 /*
  * Create a new presentity
  */
-int new_presentity(struct pdomain *pdomain, str* _uri, str *uid, presentity_t** _p)
+int new_presentity(struct pdomain *pdomain, str* _uri, str *uid, 
+		xcap_query_params_t *params, 
+		presentity_t** _p)
 {
 	int res = 0;
 
-	res = new_presentity_no_wb(pdomain, _uri, uid, _p);
+	res = new_presentity_no_wb(pdomain, _uri, uid, params, _p);
 	if (res != 0) {
 		return res;
 	}
@@ -476,78 +491,7 @@ static int set_tuple_db_data(presentity_t *_p, presence_tuple_t *tuple,
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = tuple->published_id;
 	n_updates++;	
-	
-	if (use_place_table) {
-		int placeid = 0;
-		LOG(L_ERR, "set_tuple_db_data: room=%.*s loc=%.*s\n", 
-				tuple->location.room.len, tuple->location.room.s,
-				tuple->location.loc.len, tuple->location.loc.s);
 
-		if (tuple->location.room.len && tuple->location.room.s) {
-			location_lookup_placeid(&tuple->location.room, &placeid);
-		} else if (tuple->location.loc.len && tuple->location.loc.s) {
-			location_lookup_placeid(&tuple->location.loc, &placeid);
-		}
-		if (placeid) {
-			cols[n_updates] = "placeid";
-			vals[n_updates].type = DB_INT;
-			vals[n_updates].nul = 0;
-			vals[n_updates].val.int_val = placeid;
-			n_updates++;
-		}
-	} else {
-		if (tuple->location.loc.len && tuple->location.loc.s) {
-			cols[n_updates] = "location";
-			vals[n_updates].type = DB_STR;
-			vals[n_updates].nul = 0;
-			vals[n_updates].val.str_val = tuple->location.loc;
-			LOG(L_ERR, "set_tuple_db_data:  tuple->location.loc=%s len=%d\n", 
-					tuple->location.loc.s, tuple->location.loc.len);
-			n_updates++;
-		}
-		if (tuple->location.site.len && tuple->location.site.s) {
-			cols[n_updates] = "site";
-			vals[n_updates].type = DB_STR;
-			vals[n_updates].nul = 0;
-			vals[n_updates].val.str_val = tuple->location.site;
-			n_updates++;
-		}
-		if (tuple->location.floor.len && tuple->location.floor.s) {
-			cols[n_updates] = "floor";
-			vals[n_updates].type = DB_STR;
-			vals[n_updates].nul = 0;
-			vals[n_updates].val.str_val = tuple->location.floor;
-			n_updates++;
-		}
-		if (tuple->location.room.len && tuple->location.room.s) {
-			cols[n_updates] = "room";
-			vals[n_updates].type = DB_STR;
-			vals[n_updates].nul = 0;
-			vals[n_updates].val.str_val = tuple->location.room;
-			n_updates++;
-		}
-	}
-	if (tuple->location.x != 0) {
-		cols[n_updates] = "x";
-		vals[n_updates].type = DB_DOUBLE;
-		vals[n_updates].nul = 0;
-		vals[n_updates].val.double_val = tuple->location.x;
-		n_updates++;
-	}
-	if (tuple->location.y != 0) {
-		cols[n_updates] = "y";
-		vals[n_updates].type = DB_DOUBLE;
-		vals[n_updates].nul = 0;
-		vals[n_updates].val.double_val = tuple->location.y;
-		n_updates++;
-	}
-	if (tuple->location.radius != 0) {
-		cols[n_updates] = "radius";
-		vals[n_updates].type = DB_DOUBLE;
-		vals[n_updates].nul = 0;
-		vals[n_updates].val.double_val = tuple->location.radius;
-		n_updates++;
-	}
 	if (tuple->priority != 0.0) {
 		cols[n_updates] = "priority";
 		vals[n_updates].type = DB_DOUBLE;
@@ -720,12 +664,6 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 			tuple->id.len = id.len;
 			tuple->priority = priority;
 			tuple->prescaps = prescaps;
-			if (use_place_table) {
-				/* FIXME: what to do with placeid ? */
-			}
-			else {
-				/* FIXME: copy location, x, y, ... */
-			}
 			str_dup(&tuple->etag, &etag);
 			str_dup(&tuple->published_id, &published_id);
 
@@ -785,11 +723,6 @@ int new_presence_tuple(str* _contact, time_t expires, presence_tuple_t ** _t, in
 	strncpy(tuple->contact.s, _contact->s, _contact->len);
 	tuple->contact.s[_contact->len] = 0;
 	tuple->contact.len = _contact->len;
-	tuple->location.loc.s = tuple->location.loc_buf;
-	tuple->location.site.s = tuple->location.site_buf;
-	tuple->location.floor.s = tuple->location.floor_buf;
-	tuple->location.room.s = tuple->location.room_buf;
-	tuple->location.packet_loss.s = tuple->location.packet_loss_buf;
 	tuple->id.s = tuple->id_buf;
 	tuple->expires = expires;
 	tuple->priority = default_priority;
@@ -912,10 +845,7 @@ static void process_watchers(presentity_t* _p, int *changed)
 	/* !!! "changed" is not initialized here it is only set if change
 	 * in presentity occurs */
 	
-	presentity_changed = _p->flags & (PFLAG_PRESENCE_CHANGED
-			| PFLAG_PRESENCE_LISTS_CHANGED
-			| PFLAG_XCAP_CHANGED
-			| PFLAG_LOCATION_CHANGED);
+	presentity_changed = _p->flags & PFLAG_PRESENCE_CHANGED;
 
 	prev = NULL;
 	w = _p->watchers;
@@ -1127,6 +1057,13 @@ static int process_qsa_message(presentity_t *p, client_notify_info_t *info)
 	
 	return 0;
 }
+
+void free_tuple_change_info_content(tuple_change_info_t *i)
+{
+	str_free_content(&i->user);
+	str_free_content(&i->contact);
+}
+
 static void process_presentity_messages(presentity_t *p)
 {
 	mq_message_t *msg;
@@ -1150,6 +1087,18 @@ static void process_presentity_messages(presentity_t *p)
 	}
 }
 
+static inline int refresh_auth_rules(presentity_t *p)
+{
+	/* TODO reload authorization rules if needed */
+	if ((p->auth_rules_refresh_time > 0) && 
+			(p->auth_rules_refresh_time <= act_time)) {
+/*		INFO("refreshing auth rules\n"); */
+		ask_auth_rules(p); /* it will run next time if fails now */
+		p->auth_rules_refresh_time = act_time + auth_rules_refresh_time;
+	}
+	return 0;
+}
+
 int timer_presentity(presentity_t* _p)
 {
 	int old_flags;
@@ -1158,6 +1107,9 @@ int timer_presentity(presentity_t* _p)
 	PROF_START(pa_timer_presentity)
 	old_flags = _p->flags;
 
+	/* reload authorization rules if needed */
+	refresh_auth_rules(_p);
+	
 	process_presentity_messages(_p);
 	
 	remove_expired_tuples(_p, NULL);
@@ -1171,21 +1123,14 @@ int timer_presentity(presentity_t* _p)
 	process_winfo_watchers(_p, NULL); 
 	
 	/* notify internal watchers */
-	presentity_changed = _p->flags & (PFLAG_PRESENCE_CHANGED
-			|PFLAG_PRESENCE_LISTS_CHANGED
-			|PFLAG_XCAP_CHANGED
-			|PFLAG_LOCATION_CHANGED);
+	presentity_changed = _p->flags & PFLAG_PRESENCE_CHANGED;
 	if (presentity_changed) {
 		/* DBG("presentity %.*s changed\n", _p->uri.len, _p->uri.s); */
 		notify_qsa_watchers(_p);
 	}
 
 	/* clear presentity "change" flags */
-	_p->flags &= ~(PFLAG_PRESENCE_CHANGED
-			| PFLAG_PRESENCE_LISTS_CHANGED
-			| PFLAG_XCAP_CHANGED
-			| PFLAG_LOCATION_CHANGED
-			| PFLAG_WATCHERINFO_CHANGED);
+	_p->flags &= ~(PFLAG_PRESENCE_CHANGED | PFLAG_WATCHERINFO_CHANGED);
 	
 	/* update DB record if something changed - USELESS */
 /*	if (changed) {
@@ -1254,11 +1199,7 @@ int notify_watchers(presentity_t* _p)
 		watcher = watcher->next;
 	}
 	/* clear the flags */
-	_p->flags &= ~(PFLAG_PRESENCE_CHANGED
-		       |PFLAG_PRESENCE_LISTS_CHANGED
-		       |PFLAG_XCAP_CHANGED
-		       |PFLAG_LOCATION_CHANGED);
-	_p->flags &= ~(PFLAG_PRESENCE_LISTS_CHANGED | PFLAG_WATCHERINFO_CHANGED);
+	_p->flags &= ~(PFLAG_PRESENCE_CHANGED | PFLAG_WATCHERINFO_CHANGED);
 	return 0;
 }
 
@@ -1367,23 +1308,6 @@ int find_watcher(struct presentity* _p, str* _uri, int _et, watcher_t** _w)
 	return 1;
 }
 
-/* returns 0 if equal strings */
-/*static int str_case_equals(const str *a, const str *b)
-{
-	int i;
-
-	if (!a) {
-		if (!b) return 0;
-		else return 1;
-	}
-	if (!b) return 1;
-	if (a->len != b->len) return 1;
-
-	for (i = 0; i < a->len; i++) 
-		if (a->s[i] != b->s[i]) return 1;
-	return 0;
-}*/
-
 /* returns 0 if equal dialog IDs */
 static int cmp_dlg_ids(dlg_id_t *a, dlg_id_t *b)
 {
@@ -1430,85 +1354,6 @@ int find_watcher_dlg(struct presentity* _p, dlg_id_t *dlg_id, int _et, watcher_t
 	return 1;
 }
 
-/* FIXME: will be removed */
-resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri)
-{
-	resource_list_t *head = list;
-	resource_list_t *last = NULL;
-	fprintf(stderr, "resource_lists_append_unique: list=%p uri=%.*s\n", list, uri->len, uri->s);
-	while (list) {
-		if (str_strcasecmp(&list->uri, uri) == 0)
-		     return head;
-		last = list;
-		list = list->next;
-	}
-	list = (resource_list_t *)mem_alloc(sizeof(resource_list_t) + uri->len + 1);
-	list->uri.len = uri->len;
-	list->uri.s = ((char*)list) + sizeof(resource_list_t);
-	strncpy(list->uri.s, uri->s, uri->len);
-	list->uri.s[uri->len] = 0;
-	if (last) {
-		list->prev = last;
-		last->next = list;
-	}
-	if (head) {
-		return head;
-	} else {
-		return list;
-	}
-}
-
-/* FIXME: will be removed */
-resource_list_t *resource_list_remove(resource_list_t *list, str *uri)
-{
-	resource_list_t *head = list;
-	resource_list_t *last = NULL;
-	resource_list_t *next = NULL;
-	while (list) {
-		if (str_strcasecmp(&list->uri, uri) == 0)
-			goto remove;
-		last = list;
-		list = list->next;
-	}
-	return head;
- remove:
-	next = list->next;
-	if (last)
-		last->next = next;
-	if (next)
-		next->prev = last;
-
-	mem_free(list);
-
-	if (head == list)
-		return next;
-	else
-		return head;
-}
-
-/*
- * Create a new presentity but no watcher list
- */
-int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-		str *uid, struct presentity** _p)
-{
-	event_t *parsed_event;
-	int et = EVENT_PRESENCE;
-
-	if (_m && _m->event) {
-		parsed_event = (event_t *)_m->event->parsed;
-		et = parsed_event->parsed;
-	}
-
-	if (new_presentity(_d, _puri, uid, _p) < 0) {
-		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
-		return -2;
-	}
-
-	return 0;
-}
-
-
 int pdomain_load_presentities(pdomain_t *pdomain)
 {
 	if (!use_db) return 0;
@@ -1532,6 +1377,8 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 		ERR("Can't load presentities - no DB connection\n");
 		return -1;
 	}
+
+	act_time = time(NULL); /* needed for fetching auth rules, ... */
 
 	query_cols[n_query_cols] = "pdomain";
 	query_ops[n_query_cols] = OP_EQ;
@@ -1577,7 +1424,8 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 			DBG("pdomain_load_presentities: pdomain=%.*s presentity uri=%.*s presid=%d\n",
 					pdomain->name->len, pdomain->name->s, uri.len, uri.s, presid);
 
-			new_presentity_no_wb(pdomain, &uri, &uid, &presentity);
+			/* TODO: loading and storing XCAP parameters */
+			new_presentity_no_wb(pdomain, &uri, &uid, NULL, &presentity);
 			if (presentity) {
 				presentity->presid = presid;
 			}
@@ -1619,80 +1467,34 @@ int pres_uri2uid(str_t *uid_dst, const str_t *uri)
 	return 0;
 }
 
-#if 0
-
-#define URI_TABLE    "uri"
-#define UID_COL      "uid"
-#define DID_COL      "did"
-#define USERNAME_COL "username"
-#define FLAGS_COL    "flags"
-
-static str uri_table    = STR_STATIC_INIT(URI_TABLE);
-static str uid_col      = STR_STATIC_INIT(UID_COL);      
-static str did_col      = STR_STATIC_INIT(DID_COL);
-static str username_col = STR_STATIC_INIT(USERNAME_COL);
-static str flags_col    = STR_STATIC_INIT(FLAGS_COL);
-
-static int db_lookup_user(str *uri, str *dst_uid)
+int set_auth_rules(presentity_t *p, presence_rules_t *new_auth_rules)
 {
-	struct sip_uri puri;
-	str uid;
-	db_key_t keys[2], cols[2];
-	db_val_t vals[2], *val;
-	db_res_t* res;
-	int flag, i;
-
-	flag=0; /*warning fix*/
-
-	keys[0] = username_col.s;
-	keys[1] = did_col.s;
-	cols[0] = uid_col.s;
-	cols[1] = flags_col.s;
-
-	vals[0].type = DB_STR;
-	vals[0].nul = 0;
-
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		ERR("lookup_user: Error while parsing URI\n");
-		return -1;
-	}
-	vals[0].val.str_val = puri.user;
-
-	vals[1].type = DB_STR;
-	if (did->s && did->len) {
-		vals[1].nul = 0;
-		vals[1].val.str_val = *did;
-	} else {
-		vals[1].nul = 1;
+	watcher_t *w;
+	watcher_status_t s;
+	
+	/* ! call from locked region only ! */
+/*	INFO("setting auth rules\n"); */
+	
+	if (p->authorization_info) {
+		free_pres_rules(p->authorization_info); /* free old rules */
 	}
 
-	if (pa_dbf.use_table(pa_db, uri_table.s) < 0) {
-		LOG(L_ERR, "uri_db:lookup_user: Error in use_table\n");
-		return -1;
-	}
-
-	if (pa_dbf.query(pa_db, keys, 0, vals, cols, 2, 2, 0, &res) < 0) {
-		LOG(L_ERR, "uri_db:lookup_user: Error in db_query\n");
-		return -1;
-	}
-
-	for(i = 0; i < res->n; i++) {
-		val = res->rows[i].values;
-
-		if (val[0].nul || val[1].nul) {
-			LOG(L_ERR, "uri_db:lookup_user: Bogus line in %s table\n", uri_table.s);
-			continue;
+	p->authorization_info = new_auth_rules;
+	
+	/* reauthorize all watchers (but NOT winfo watchers - not needed
+	 * now because we have only "implicit" auth. rules for them) */
+	
+	w = p->watchers;
+	while (w) {
+		s = authorize_watcher(p, w);
+		if (w->status != s) {
+			/* status has changed */
+			w->status = s;
+			w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
+			/* NOTIFYs, terminating, ... wil be done in timer */
 		}
-
-		if ((val[1].val.int_val & DB_LOAD_SER) == 0) continue; /* Not for SER */
-		if ((val[1].val.int_val & flag) == 0) continue;        /* Not allowed in the header we are interested in */
-		goto found;
+		w = w->next;
 	}
-	return -1; /* Not found -> not allowed */
- found:
-	uid.s = (char*)val[0].val.string_val;
-	uid.len = strlen(uid.s);
-	return 1;
+	
+	return 0;
 }
-
-#endif

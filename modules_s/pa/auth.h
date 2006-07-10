@@ -19,6 +19,6 @@ typedef struct {
 #include "../../parser/msg_parser.h"
 
 watcher_status_t authorize_internal_watcher(presentity_t *p, internal_pa_subscription_t *is);
-watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w, struct sip_msg *m);
+watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w);
 
 #endif

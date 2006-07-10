@@ -60,33 +60,6 @@ extern const char *prescap_names[];
 #define TUPLE_LOCATION_PACKET_LOSS_LEN 32
 #define TUPLE_ID_STR_LEN (32)
 
-typedef struct location {
-	str   loc; /* human readable description of location */
-	str   site;
-	str   floor;
-	str   room;
-	str   packet_loss;
-	double x;
-	double y;
-	double radius;
-	char loc_buf[TUPLE_LOCATION_LOC_LEN];
-	char site_buf[TUPLE_LOCATION_SITE_LEN];
-	char floor_buf[TUPLE_LOCATION_FLOOR_LEN];
-	char room_buf[TUPLE_LOCATION_ROOM_LEN];
-	char packet_loss_buf[TUPLE_LOCATION_PACKET_LOSS_LEN];
-} location_t;
-
-typedef struct resource_list {
-	str   uri;
-	struct resource_list *next;
-	struct resource_list *prev;
-} resource_list_t;
-
-typedef struct location_package {
-	resource_list_t *users;
-	resource_list_t *phones;
-} location_package_t;
-
 typedef struct presence_tuple {
 	str id;
 	str contact;
@@ -95,7 +68,6 @@ typedef struct presence_tuple {
 	double priority;
 	time_t expires;
 	pstate_t state;
-	location_t location;
 	struct presence_tuple *next;
 	struct presence_tuple *prev;
 	char status_buf[TUPLE_STATUS_STR_LEN];
@@ -135,10 +107,7 @@ struct pdomain;
 
 typedef enum pflag {
 	PFLAG_PRESENCE_CHANGED=1,
-	PFLAG_PRESENCE_LISTS_CHANGED=2,
-	PFLAG_WATCHERINFO_CHANGED=4,
-	PFLAG_XCAP_CHANGED=8,
-	PFLAG_LOCATION_CHANGED=16
+	PFLAG_WATCHERINFO_CHANGED=2
 } pflag_t;
 
 typedef struct _internal_pa_subscription_t {
@@ -152,10 +121,10 @@ typedef struct _internal_pa_subscription_t {
 
 
 typedef struct presentity {
-	str uri;                 /* URI of presentity */
-	int presid;              /* presid of the record in the presentity table */
+	str uri;      /* URI of presentity - doesn't change for the presentity's life */
+	int presid;   /* presid of the record in the presentity table */
+	int ref_cnt;  /* reference counter - don't remove if > 1 */
 	presence_tuple_t *tuples;
-	location_package_t location_package;
 	watcher_t* watchers;     /* List of watchers */
 	watcher_t* winfo_watchers;  /* Watchers subscribed to winfo */
 	pflag_t flags;
@@ -166,12 +135,17 @@ typedef struct presentity {
 	
 	internal_pa_subscription_t *first_qsa_subscription, *last_qsa_subscription;
 	presence_rules_t *authorization_info;
+	xcap_query_params_t xcap_params; /* doesn't change for the presentity's life */
+	time_t auth_rules_refresh_time;
+	
 	msg_queue_t mq;	/* message queue supplying direct usrloc callback processing */
 	
 	pa_presence_note_t *notes;
 	pa_person_element_t *person_elements;
-	str uuid; /* use after usrloc uuid-zation - callbacks are registered to this */
-	
+	str uuid; /* use after usrloc uuid-zation - callbacks are 
+				 registered to this,  - doesn't change for 
+				 the presentity's life  */
+
 	/* data for internal subscriptions to presence */
 	/* reduces memory allocation count */
 	qsa_subscription_data_t presence_subscription_data;
@@ -180,8 +154,10 @@ typedef struct presentity {
 
 /*
  * Create a new presentity
+ * (message is given due to XCAP parameters)
  */
-int new_presentity(struct pdomain *pdomain, str* _uri, str *uid, presentity_t** _p);
+int new_presentity(struct pdomain *pdomain, str* _uri, str *uid, 
+		xcap_query_params_t *xcap_params, presentity_t** _p);
 
 
 /*
@@ -278,9 +254,6 @@ void remove_watcher_if_expired(presentity_t* _p, watcher_t *w);
  */
 int notify_winfo_watchers(presentity_t* _p);
 
-resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri);
-resource_list_t *resource_list_remove(resource_list_t *list, str *uri);
-
 int db_remove_presentity(presentity_t* presentity);
 
 /* helper functions */
@@ -329,14 +302,17 @@ void add_tuple_note_no_wb(presence_tuple_t *t, presence_note_t *n);
 /* frees all notes for given tuple (in memory only, not DB) */
 void free_tuple_notes(presence_tuple_t *t);
 
-/*
- * Create a new presentity but no watcher list
- */
-int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-		str *uid, struct presentity** _p);
-
 struct pdomain;
 int pdomain_load_presentities(struct pdomain *pdomain);
 
-#endif /* PRESENTITY_H */
 
+
+/* set authorization rules for presentity
+ * ! call from locked region only ! */
+int set_auth_rules(presentity_t *p, presence_rules_t *new_auth_rules);
+
+/* how often refresh authorization rules (xcap change events are 
+ * not implemented yet!) */
+extern int auth_rules_refresh_time;
+
+#endif /* PRESENTITY_H */

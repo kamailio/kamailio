@@ -46,6 +46,7 @@
 #include "watcher.h"
 #include "rpc.h"
 #include "qsa_interface.h"
+#include "async_auth.h"
 
 #include <cds/logger.h>
 #include <cds/cds.h>
@@ -134,6 +135,7 @@ static cmd_export_t cmds[]={
 	{"authorize_message",     authorize_message,    1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	
 	/* FIXME: are these functions used to something by somebody */
+
 /*
  *
 	{"pua_exists",            pua_exists,            1, subscribe_fixup, REQUEST_ROUTE                },
@@ -178,6 +180,9 @@ static param_export_t params[]={
 	{"pa_subscription_uri",  PARAM_STR,    &pa_subscription_uri },
 	
 	/* undocumented still (TODO) */
+	{"auth_rules_refresh_time", PARAM_INT, &auth_rules_refresh_time },
+	{"async_auth_queries", PARAM_INT, &async_auth_queries },
+	{"max_auth_requests_per_tick", PARAM_INT, &max_auth_requests_per_tick },
 	{"presentity_table",     PARAM_STRING, &presentity_table     },
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
@@ -377,6 +382,11 @@ static int pa_mod_init(void)
 
 	fill_xcap_params = (fill_xcap_params_func)find_export("fill_xcap_params", 0, -1);
 
+	if (async_auth_timer_init() < 0) {
+		ERR("can't init async timer\n");
+		return -1;
+	}
+	
 	LOG(L_DBG, "pa_mod_init done\n");
 	return 0;
 }

@@ -41,7 +41,6 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_event.h"
-#include "../../parser/parse_content.h"
 #include "../../data_lump_rpl.h"
 #include "presentity.h"
 #include "watcher.h"
@@ -57,71 +56,29 @@
 #include <cds/sstr.h>
 #include <cds/msg_queue.h>
 #include <cds/logger.h>
+#include <cds/sip_utils.h>
 #include <presence/utils.h>
 #include "offline_winfo.h"
+#include "mimetypes.h"
+
+#include <string.h>
+#include "../../mem/shm_mem.h"
+#include "../../dprint.h"
+#include "../../globals.h"
+#include "../../md5.h"
+#include "../../crc.h"
+#include "../../ip_addr.h"
+#include "../../socket_info.h"
+#include "../tm/ut.h"
+#include "../tm/h_table.h"
+#include "../tm/t_hooks.h"
+#include "../tm/t_funcs.h"
+#include "../tm/t_msgbuilder.h"
+#include "../tm/callid.h"
+#include "../tm/uac.h"
 
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
-
-typedef struct {
-	int event_type;
-	int mimes[MAX_MIMES_NR];
-} event_mimetypes_t;
-
-static event_mimetypes_t event_package_mimetypes[] = {
-	{ EVENT_PRESENCE, {
-			MIMETYPE(APPLICATION,PIDFXML), 
-/*		    MIMETYPE(APPLICATION,XML_MSRTC_PIDF), */
-/*		    MIMETYPE(TEXT,XML_MSRTC_PIDF), */
-			MIMETYPE(APPLICATION,CPIM_PIDFXML), 
-		    MIMETYPE(APPLICATION,XPIDFXML), 
-			MIMETYPE(APPLICATION,LPIDFXML), 
-			0 } },
-	{ EVENT_PRESENCE_WINFO, { 
-			MIMETYPE(APPLICATION,WATCHERINFOXML), 
-			0 } },
-/*	{ EVENT_SIP_PROFILE, { 
-			MIMETYPE(MESSAGE,EXTERNAL_BODY), 
-			0 } }, */
-/*	{ EVENT_XCAP_CHANGE, { MIMETYPE(APPLICATION,WINFO+XML), 0 } }, */
-	{ -1, { 0 }},
-};
-
-void free_tuple_change_info_content(tuple_change_info_t *i)
-{
-	str_free_content(&i->user);
-	str_free_content(&i->contact);
-}
-
-/*
- * contact will be NULL if user is offline
- */
-void callback(str* _user, str *_contact, int state, void* data)
-{
-	mq_message_t *msg;
-	tuple_change_info_t *info;
-
-	if ((!_user) || (!_contact) || (!data)) {
-		ERROR_LOG("callback(): error!\n");
-	}
-		
-	DBG("callback(): user=%.*s, contact=%.*s, %p, state=%d!\n",
-			FMT_STR(*_user), FMT_STR(*_contact), data, state);
-	
-	/* asynchronous processing */
-	msg = create_message_ex(sizeof(tuple_change_info_t));
-	if (!msg) {
-		LOG(L_ERR, "can't create message with tuple status change\n");
-		return;
-	}
-	set_data_destroy_function(msg, (destroy_function_f)free_tuple_change_info_content);
-	info = get_message_data(msg);
-	if (state == 0) info->state = PS_OFFLINE;
-	else info->state = PS_ONLINE;
-	str_dup(&info->user, _user);
-	str_dup(&info->contact, _contact);
-	if (data) push_message(&((struct presentity*)data)->mq, msg);
-}
 
 /*
  * Extract plain uri -- return URI without parameters
@@ -151,7 +108,6 @@ static int extract_plain_uri(str* _uri)
 	_uri->len = puri.host.s + puri.host.len - _uri->s;
 	return res;
 }
-
 
 /*
  * Get presentity URI, which is stored in R-URI
@@ -209,6 +165,17 @@ static int get_dlg_id(struct sip_msg *_m, dlg_id_t *dst)
 	return 0;
 }
 
+static time_t get_expires(struct sip_msg *_m)
+{
+	time_t e;
+	
+	if (_m->expires) e = ((exp_body_t*)_m->expires->parsed)->val;
+	else e = default_expires;
+	if (e > max_subscription_expiration) 
+		e = max_subscription_expiration;
+	return e;
+}
+
 /*
  * Parse all header fields that will be needed
  * to handle a SUBSCRIBE request
@@ -239,12 +206,14 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 
 	if (_m->event) {
 		if (parse_event(_m->event) < 0) {
+			/* can not parse Event header */
 			paerrno = PA_EVENT_PARSE;
 			LOG(L_ERR, "parse_hfs(): Error while parsing Event header field\n");
 			return -8;
 		}
 	}
 	else { 
+		/* no Event header -> bad message */
 		paerrno = PA_EVENT_PARSE;
 		LOG(L_ERR, "parse_hfs(): Error while parsing Event header field\n");
 		return -8;
@@ -280,62 +249,26 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 	return 0;
 }
 
-/* returns -1 if m is NOT found in mimes
- * index to the found element otherwise (non-negative value) */
-static int find_mime(int *mimes, int m)
+/* returns 0 if package supported by PA */
+static inline int verify_event_package(int et)
 {
-	int i;
-	for (i = 0; mimes[i]; i++) {
-		if (mimes[i] == m) return i;
+	switch (et) {
+		case EVENT_PRESENCE: return 0;
+		case EVENT_PRESENCE_WINFO: 
+			if (watcherinfo_notify) return 0;
+			else return -1;
+		default: return -1;
 	}
-	return -1;
 }
 
-static event_mimetypes_t *find_event_mimetypes(int et)
-{
-	int i;
-	event_mimetypes_t *em;
-		
-	i = 0;
-	while (et != event_package_mimetypes[i].event_type) {
-		if (event_package_mimetypes[i].event_type == -1) break;
-		i++;
-	}
-	em = &event_package_mimetypes[i]; /* if not found is it the "separator" (-1, 0)*/
-	return em;
-}
-
-static int check_mime_types(int *accepts_mimes, event_mimetypes_t *em)
-{
-	/* LOG(L_ERR, "check_message -2- accepts_mimes=%p\n", accepts_mimes); */
-	if (accepts_mimes) {
-		int j = 0, k;
-		int mimetype;
-		while ((mimetype = em->mimes[j]) != 0) {
-			k = find_mime(accepts_mimes, mimetype);
-			if (k >= 0) {
-				int am0 = accepts_mimes[0];
-				/* we have a match */
-				/*LOG(L_ERR, "check_message -4b- eventtype=%#x accepts_mime=%#x\n", eventtype, mimetype); */
-				/* move it to front for later */
-				accepts_mimes[0] = mimetype;
-				accepts_mimes[k] = am0;
-				return 0; /* ! this may be useful, but it modifies the parsed content !!! */
-			}
-			j++;
-		}
-		
-		return -1;
-	}
-	return 0;
-}
+/* get_event MUST be parsed when calling get event -> done by parse_hfs! */
+#define get_event(_m) ((event_t*)(_m->event->parsed))->parsed
 
 /*
  * Check if a message received has been constructed properly
  */
 int check_message(struct sip_msg* _m)
 {
-	event_t *parsed_event;
 	int eventtype = 0;
 	int *accepts_mimes = NULL;
 	event_mimetypes_t *em;
@@ -348,8 +281,14 @@ int check_message(struct sip_msg* _m)
 	}
 
 	/* event package verification */
-	parsed_event = (event_t*)(_m->event->parsed);
-	eventtype = parsed_event->parsed;
+	eventtype = get_event(_m);
+	
+	if (verify_event_package(eventtype) != 0) {
+		INFO("Unsupported event package\n");
+		paerrno = PA_EVENT_UNSUPP;
+		return -1;
+	}
+
 	em = find_event_mimetypes(eventtype);
 	if (em) 
 		if (em->event_type == -1) em = NULL;
@@ -379,82 +318,40 @@ int check_message(struct sip_msg* _m)
 	return -1;
 }
 
-/* returns index of mimetype, the lowest index = highest priority */
-static int get_accepted_mime_type_idx(int *accepts_mimes, event_mimetypes_t *em)
-{
-	int i, mt;
-	if (accepts_mimes) {
-		/* try find "preferred" mime type */
-		i = 0;
-		while ((mt = em->mimes[i]) != 0) {
-			/* TRACE_LOG("searching for %x\n", mt); */
-			if (find_mime(accepts_mimes, mt) >= 0) return i;
-			i++;
-		}
-	}
-	return -1;
-}
-
-int get_preferred_event_mimetype(struct sip_msg *_m, int et)
-{
-	int idx, tmp, acc = 0;
-	int *accepts_mimes;
-	struct hdr_field *accept;
-
-	event_mimetypes_t *em = find_event_mimetypes(et);
-	if (!em) return 0; /* never happens, but ... */
-
-	accept = _m->accept;
-	idx = -1;
-	while (accept) { /* go through all Accept headers */
-		if (accept->type == HDR_ACCEPT_T) {
-			/* it MUST be parsed from parse_hdr !!! */
-			accepts_mimes = (int *)accept->parsed;
-			tmp = get_accepted_mime_type_idx(accepts_mimes, em);
-			if (idx == -1) idx = tmp;
-			else
-				if ((tmp != -1) && (tmp < idx)) idx = tmp;
-			/* TRACE_LOG("%s: found mimetype %x (idx %d), %p\n", __FUNCTION__, (idx >= 0) ? em->mimes[idx]: -1, idx, accepts_mimes); */
-			if (idx == 0) break; /* the lowest value */
-		}
-		accept = accept->next;
-	}
-	if (idx != -1) return em->mimes[idx]; /* found value with highest priority */
-
-	acc = em->mimes[0];
-	DBG("defaulting to mimetype %x for event_type=%d\n", acc, et);
-	return acc;
-}
-
-static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watcher** _w, int et, time_t expires)
+static int create_watcher(struct sip_msg* _m, struct watcher** _w)
 {
 	dlg_t* dialog;
 	str server_contact = STR_NULL;
 	int acc = 0;
 	str watch_uri;
 	str watch_dn;
-	int res;
+	int et;
+	time_t expires;
+	
+	et = get_event(_m);	
+	expires = get_expires(_m);
+	if (expires) expires += act_time;
 	
 	if (get_watch_uri(_m, &watch_uri, &watch_dn) < 0) {
 		paerrno = PA_URI_PARSE;
-		LOG(L_ERR, "create_watcher(): Error while extracting watcher URI\n");
+		ERR("Error while extracting watcher URI\n");
 		return -1;
 	}
 	acc = get_preferred_event_mimetype(_m, et);
 	if (tmb.new_dlg_uas(_m, 200, &dialog) < 0) {
 		paerrno = PA_DIALOG_ERR;
-		LOG(L_ERR, "create_watcher(): Error while creating dialog state\n");
+		ERR("Error while creating dialog state\n");
 		return -4;
 	}
 	
 	if (extract_server_contact(_m, &server_contact, 1) != 0) {
 		paerrno = PA_DIALOG_ERR;
-		LOG(L_ERR, "create_watcher(): Error while extracting server contact\n");
+		ERR("Error while extracting server contact\n");
 		return -3;
 	}
 
-	if (new_watcher_no_wb(_p, &watch_uri, expires, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
-		LOG(L_ERR, "create_watcher(): Error while creating watcher\n");
+	if (new_watcher_no_wb(&watch_uri, expires, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
+		ERR("Error while creating watcher\n");
 		tmb.free_dlg(dialog);
 		if (server_contact.s) mem_free(server_contact.s);
 		paerrno = PA_NO_MEMORY;
@@ -462,396 +359,254 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 	}
 	if (server_contact.s) mem_free(server_contact.s);
 	
-	(*_w)->status = authorize_watcher(_p, (*_w), _m);
-	if ((*_w)->status == WS_REJECTED) {
-		free_watcher((*_w));
-		INFO("watcher rejected\n");
-		paerrno = PA_SUBSCRIPTION_REJECTED;
-		return -6;
-	}
-	if ((*_w)->status == WS_PENDING) {
-		paerrno = PA_OK_WAITING_FOR_AUTH;
-	}
+	(*_w)->flags |= WFLAG_SUBSCRIPTION_CHANGED;
+	
+	return 0;
+}
 
-	res = 0;
-	if (et == EVENT_PRESENCE_WINFO) res = add_winfo_watcher(_p, *_w);
-	else res = add_watcher(_p, *_w);
+static int append_watcher(presentity_t *_p, watcher_t *_w)
+{
+	int res = 0;
+
+	if (_w->event_package == EVENT_PRESENCE_WINFO)
+		res = add_winfo_watcher(_p, _w);
+	else
+		res = add_watcher(_p, _w);
+	
+	if (res >= 0) res = db_add_watcher(_p, _w);
+	if (res != 0) {
+		if (_w->event_package == EVENT_PRESENCE_WINFO) 
+			remove_winfo_watcher(_p, _w);
+		else remove_watcher(_p, _w);
+	}
+	
 	if (res < 0) {
 		LOG(L_ERR, "create_watcher(): Error while adding watcher\n");
-		free_watcher(*_w);
 		paerrno = PA_INTERNAL_ERROR;
 		return -5;
 	}
 	
-	res = db_add_watcher(_p, *_w);
-	if (res != 0) {
-		if (et == EVENT_PRESENCE_WINFO) remove_winfo_watcher(_p, *_w);
-		else remove_watcher(_p, *_w);
-		LOG(L_ERR, "create_watcher(): Error while adding watcher into DB\n");
-		free_watcher(*_w);
-		paerrno = PA_INTERNAL_ERROR;
-		return -7;
-	}
-	
-	/* actualize watcher's status according to time */
-	if ((*_w)->expires <= act_time) {
-		LOG(L_DBG, "Created expired watcher %.*s\n", (*_w)->uri.len, (*_w)->uri.s);
-		(*_w)->expires = 0;
-		set_watcher_terminated_status(*_w);
-	}
-	
-	(*_w)->flags |= WFLAG_SUBSCRIPTION_CHANGED;
-	
 	/* changed only when presence watcher added  */
-	if (et == EVENT_PRESENCE) {
+	if (_w->event_package == EVENT_PRESENCE) {
 		_p->flags |= PFLAG_WATCHERINFO_CHANGED;
 		DEBUG("setting PFLAG_WATCHERINFO_CHANGED\n");
 	}
-	
+
 	return 0;
+
 }
 
-static int get_event(struct sip_msg *_m)
+
+static inline int add_rpl_expires(struct sip_msg *_m, watcher_t *w)
 {
-	int et = 0;
-	event_t *event = NULL;
+	int i = 0;
+	char tmp[64];
 	
-	if (_m->event) {
-		event = (event_t*)(_m->event->parsed);
-		et = event->parsed;
-	} else {
-		LOG(L_ERR, "update_presentity defaulting to EVENT_PRESENCE\n");
-		et = EVENT_PRESENCE;
-	}
-	return et;
-}
-
-static time_t get_expires(struct sip_msg *_m)
-{
-	time_t e;
-	
-	if (_m->expires) {
-		e = ((exp_body_t*)_m->expires->parsed)->val;
-	} else {
-		e = default_expires;
-	}
-	if (e > max_subscription_expiration) 
-		e = max_subscription_expiration;
-	return e;
-}
-
-/*
- * Create a new presentity and corresponding watcher list
- */
-int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-			     str *uid, struct presentity** _p, struct watcher** _w)
-{
-	time_t e;
-	int et = 0;
-	int res = 0;
-
-	et = get_event(_m);
-	e = get_expires(_m);
-
-	if (verify_event_package(et) != 0) {
-		INFO("Unsupported event package\n");
-		paerrno = PA_EVENT_UNSUPP;
+	/* add expires header field into response */
+	if (w) i = w->expires - act_time;
+	if (i < 0) i = 0;
+	sprintf(tmp, "Expires: %d\r\n", i);
+	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
+		ERR("Can't add Expires header to the response\n");
 		return -1;
 	}
-
-	/* Convert to absolute time if nonzero (zero = polling) */
-	if (e > 0) e += act_time;
-
-	if (new_presentity(_d, _puri, uid, _p) < 0) {
-		INFO("Error while creating presentity\n");
-		return -2;
-	}
-
-	res = create_watcher(_m, *_p, _w, et, e);
-	if (res != 0) {
-		/* remove presentity from database !!*/
-		release_presentity(*_p);
-		return res;
-	}
-		
+	
 	return 0;
 }
 
-/*
- * Update existing presentity and watcher list
- */
-static int update_presentity(struct sip_msg* _m, struct pdomain* _d, 
-			     struct presentity* _p, struct watcher** _w, int is_renewal)
+int handle_renewal_subscription(struct sip_msg* _m, struct pdomain *d)
 {
-	time_t e;
-	str watch_uri;
-	str watch_dn;
-	int et = 0;
-	int res = 0;
+	struct presentity *p = NULL;
+	struct watcher* w = NULL;
+	str uid = STR_NULL;
 	dlg_id_t dlg_id;
-
-	et = get_event(_m);
-	e = get_expires(_m);
+	int et, e;
 	
-	if (verify_event_package(et) != 0) {
-		LOG(L_ERR, "update_presentity(): Unsupported event package\n");
-		paerrno = PA_EVENT_UNSUPP;
-		return -1;
-	}
+	if (get_presentity_uid(&uid, _m) != 0) {
+		ERR("Error while extracting presentity UID\n");
+		paerrno = PA_INTERNAL_ERROR;
+		goto err;
+	}	
 
-	if (get_watch_uri(_m, &watch_uri, &watch_dn) < 0) {
-		LOG(L_ERR, "update_presentity(): Error while extracting watcher URI\n");
-		return -1;
-	}
-
-	/* LOG(L_ERR, "update_presentity: after get_watch_uri\n"); */
-	
+	/* needed to find watcher (better to set outside of crit. sect. due to
+	 * better performance) */
+	et = get_event(_m);	
 	get_dlg_id(_m, &dlg_id);
 	
-	/* LOG(L_ERR, "update_presentity: searching watcher\n"); */
-	
-	if (find_watcher_dlg(_p, &dlg_id, et, _w) == 0) { 
-		/* LOG(L_ERR, "update_presentity: watcher found\n"); */
-		if (e > 0) e += act_time;
-		if (update_watcher(_p, *_w, e, _m) < 0) {
-			LOG(L_ERR, "update_presentity(): Error while updating watcher\n");
-			return -3;
-		}
-	} else {
-		if (is_renewal) {
-			ERR("resubscription for nonexisting watcher (%.*s)\n", 
-					FMT_STR(watch_uri));
-			paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
-			return -1;
-		}
-		/* LOG(L_ERR, "update_presentity: watcher not found\n"); */
-		if (e) e += act_time;
-		res = create_watcher(_m, _p, _w, et, e);
-	}
-
-	return res;
-}
-
-
-/* FIXME: remove */
-#if 0
-
-/*
- * Handle a registration request -- make sure aor exists in presentity table
- */
-/*
- * Extract Address of Record
- */
-#define MAX_AOR_LEN 256
-
-static int pa_extract_aor(str* _uri, str* _a)
-{
-	static char aor_buf[MAX_AOR_LEN];
-	struct sip_uri puri;
-	int user_len;
-
-	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
-		LOG(L_ERR, "pa_extract_aor(): Error while parsing Address of Record\n");
-		return -1;
+	lock_pdomain(d);
+		
+	if (find_presentity_uid(d, &uid, &p) != 0) { 
+		/* presentity not found */
+		INFO("resubscription to nonexisting presentity %.*s\n", FMT_STR(uid));
+		paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
+		goto err2;
 	}
 	
-	if ((puri.user.len + puri.host.len + 1) > MAX_AOR_LEN) {
-		LOG(L_ERR, "pa_extract_aor(): Address Of Record too long\n");
-		return -2;
+	if (find_watcher_dlg(p, &dlg_id, et, &w) != 0) {
+		/* watcher not found */
+		INFO("resubscription for nonexisting watcher\n");
+		paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
+		goto err2;
 	}
-
-	_a->s = aor_buf;
-	_a->len = puri.user.len;
-
-	user_len = _a->len;
-
-	memcpy(aor_buf, puri.user.s, puri.user.len);
-	aor_buf[_a->len] = '@';
-	memcpy(aor_buf + _a->len + 1, puri.host.s, puri.host.len);
-	_a->len += 1 + puri.host.len;
-
-#if 0
-	if (case_sensitive) {
-		tmp.s = _a->s + user_len + 1;
-		tmp.len = puri.host.len;
-		strlower(&tmp);
-	} else {
-		strlower(_a);
-	}
-#endif
-
-	return 0;
-}
-
-int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
-{
-     struct pdomain* d = (struct pdomain*)_domain;
-     struct presentity *presentity;
-     str p_uri;
-     struct to_body *from = NULL;
-     int e = 0;
-
-
-     // LOG(L_ERR, "pa_handle_registration() entered\n");
-     paerrno = PA_OK;
-
-     d = (struct pdomain*)_domain;
-
-     if (parse_hfs(_m, 0) < 0) {
-	  paerrno = PA_PARSE_ERR;
-	  LOG(L_ERR, "pa_handle_registration(): Error while parsing headers\n");
-	  return -1;
-     }
-
-     from = get_from(_m);
-     if (!from || (pa_extract_aor(&from->uri, &p_uri) < 0)) {
-	  LOG(L_ERR, "pa_handle_registration(): Error while extracting Address Of Record\n");
-	  goto error;
-     }
-
-     if (_m->expires) {
-	  e = ((exp_body_t*)_m->expires->parsed)->val;
-     } else {
-	  e = default_expires;
-     }
-
-     if (from)
-       LOG(L_ERR, "pa_handle_registration: from=%.*s p_uri=%.*s expires=%d\n", 
-	   from->uri.len, from->uri.s, p_uri.len, p_uri.s, e);
-
-     lock_pdomain(d);
 	
-     if (find_presentity(d, &p_uri, &presentity) > 0) {
-	  LOG(L_ERR, "pa_handle_registration: find_presentity did not find presentity\n");
-	  if (e > 0) {
-	       if (create_presentity_only(_m, d, &p_uri, &presentity) < 0) {
-		    LOG(L_ERR, "pa_handle_registration(): Error while creating new presentity\n");
-		    goto error2;
-	       }
-	  } 
-#if 0
-	  else {
-	       presence_tuple_t *tuple = NULL;
-	       if (_m->contact) {
-		    struct hdr_field* ptr = _m->contact;
-		    while (ptr) {
-			 if (ptr->type == HDR_CONTACT_T) {
-			      if (!ptr->parsed && (parse_contact(ptr) < 0)) {
-				   goto next;
-			      }
-			 }
-			 if (find_presence_tuple(contact, presentity, &tuple) == 0) {
-			      tuple->state = PS_OFFLINE;
-			 }
-		    next:
-			 ptr = ptr->next;
-		    }
-	       }
-
-	       db_update_presentity(presentity);
-	  }
-#endif
-     }
-
-     if (presentity && e > 0) {
-	  LOG(L_ERR, "pa_handle_registration about to call d->reg p=%p expires=%d", presentity, e);
-	  d->reg(&presentity->uri, &presentity->uri, (void*)callback, presentity);
-     }
-
-     /* LOG(L_ERR, "pa_handle_registration about to return 1"); */
-     unlock_pdomain(d);
-     return 1;
+	e = get_expires(_m);
+	if (e) e += act_time;
 	
- error2:
-     LOG(L_DBG, "pa_handle_registration about to return -1\n");
-     unlock_pdomain(d);
-     return -1;
- error:
-     LOG(L_DBG, "pa_handle_registration about to return -2\n");
-     return -1;
-}
-#endif
-
-/**
- * Verifies presence of the To-tag in message. Returns 1 if
- * the tag is present, 0 if not, -1 on error.
- */
-static int has_to_tag(struct sip_msg *_m)
-{
-	struct to_body *to = (struct to_body*)_m->to->parsed;
-	if (!to) return 0;
-	if (to->tag_value.len > 0) return 1;
-	return 0;
-}
-#if 0
-/* not used due to problems with lost AVP after sending NOTIFY */
-static void set_status_avp(str *value)
-{
-	struct search_state s;
-	int_str val, name;
-	avp_t* a;
-	int res;
-	str avp_subscription_status = STR_STATIC_INIT("subscription_status");
-
-	name.s = avp_subscription_status;
-	a = search_first_avp(AVP_CLASS_USER | 
-			AVP_TRACK_FROM | AVP_NAME_STR, name, 0, &s);
-	while(a) {
-		destroy_avp(a);
-		a = search_next_avp(&s, 0);
+	update_watcher(p, w, e, _m);
+	set_last_subscription_status(w->status);	
+	add_rpl_expires(_m, w);
+	if (send_reply(_m) >= 0) {
+		/* we have successfully sent the response */
+		if (send_notify(p, w) >= 0) {		
+			w->flags &= ~WFLAG_SUBSCRIPTION_CHANGED; /* notified */
+			
+			/* remove terminated watcher otherwise he will 
+			 * receive another NOTIFY generated from timer_pdomain */
+			remove_watcher_if_expired(p, w);
+		} 
 	}
-
-	if (value) val.s = *value;
 	else {
-		val.s.len = 0;
-		val.s.s = NULL;
+		ERR("Error while sending reply\n");
 	}
-/*	str_dup(&val.s, value);*/
-
-	res = add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | 
-			AVP_NAME_STR | AVP_VAL_STR, name, val);
-	TRACE("storing (%d) AVP status: %.*s\n", res, FMT_STR(val.s));
 	
+	unlock_pdomain(d);
+	str_free_content(&uid);
+	
+	return 1;
+
+err2:
+	unlock_pdomain(d);
+	str_free_content(&uid);
+	
+err:
+	set_last_subscription_status(WS_REJECTED);
+	
+	if (send_reply(_m) < 0) ERR("Error while sending reply\n");
+	return -1;
 }
 
-static void set_status_avp_ex(watcher_t *w)
+presentity_t *get_presentity(struct sip_msg *_m, struct pdomain *d, int allow_creation)
 {
-	str s;
+	str p_uri, uid;
+	presentity_t *p = NULL;
+	xcap_query_params_t xcap_params;
+/*	presence_rules_t *auth_rules = NULL;*/
+
+	if (get_presentity_uid(&uid, _m) < 0) {
+		ERR("Error while extracting presentity UID\n");
+		return NULL;
+	}
 	
-	switch(w->status) {
-		case WS_ACTIVE: ;
-			s = watcher_status_names[WS_ACTIVE];
-			break;
+	if (find_presentity_uid(d, &uid, &p) > 0)  {
+		if (allow_creation) {
+			if (get_pres_uri(_m, &p_uri) < 0) {
+				ERR("Error while extracting presentity URI\n");
+			}
+			else {
+				/* presentity not found -> create new presentity */
+				memset(&xcap_params, 0, sizeof(xcap_params));
+				if (fill_xcap_params) fill_xcap_params(_m, &xcap_params);
+				if (new_presentity(d, &p_uri, &uid, &xcap_params, &p) < 0)
+					ERR("Error while creating new presentity\n");
+			}
+		}
+	}
+	str_free_content(&uid);
+	return p;
+}
+
+int handle_new_subscription(struct sip_msg* _m, struct pdomain *d)
+{
+	struct presentity *p;
+	struct watcher* w;
+	struct retr_buf *req;
+	int is_terminated;
+	
+	if (create_watcher(_m, &w) < 0) {
+		/* may fail due to error or authorization rules */
+		ERR("can't create watcher\n");
+		goto err;
+	}
+
+	lock_pdomain(d);
+
+	p = get_presentity(_m, d, 1);
+	if (!p) goto err3;
+	
+	/* authorize watcher */
+	w->status = authorize_watcher(p, w);
+										   
+	switch (w->status) {
 		case WS_REJECTED:
+			unlock_pdomain(d);
+			free_watcher(w);
+			paerrno = PA_SUBSCRIPTION_REJECTED;
+			INFO("watcher rejected\n");
+			goto err;
+		case WS_PENDING:
 		case WS_PENDING_TERMINATED:
-		case WS_TERMINATED:
-			s = watcher_status_names[WS_TERMINATED];
-			break;
-		case WS_PENDING: 
-			s = watcher_status_names[WS_PENDING];
+			paerrno = PA_OK_WAITING_FOR_AUTH;
+		default:
 			break;
 	}
-	set_status_avp(&s);
+	if (w->expires <= act_time) {
+		set_watcher_terminated_status(w);
+		is_terminated = 1;
+	}
+	else {
+		is_terminated = 0;	
+
+		if (append_watcher(p, w) < 0) {
+			ERR("can't add watcher\n");
+			goto err3;
+		}
+	}
+	
+	if (prepare_notify(&req, p, w) < 0) {
+		ERR("can't send notify\n");
+		goto err3;
+	}
+
+	set_last_subscription_status(w->status);
+	add_rpl_expires(_m, w);
+	
+	unlock_pdomain(d);
+
+	send_reply(_m); 
+	
+	if (req) {
+		tmb.send_prepared_request(req);
+		w->flags &= ~WFLAG_SUBSCRIPTION_CHANGED; /* notified */
+		if (is_terminated) {
+			free_watcher(w);
+			w = NULL;
+		} 
+	}
+
+	return 1;
+
+err3:
+	unlock_pdomain(d);
+	free_watcher(w);
+	paerrno = PA_INTERNAL_ERROR;
+	
+err:
+	set_last_subscription_status(WS_REJECTED);
+	
+	if (paerrno == PA_OK) paerrno = PA_INTERNAL_ERROR;
+	if (send_reply(_m) < 0) ERR("Error while sending reply\n");
+	return -1;
 }
-#endif
 
 /*
  * Handle a subscribe Request
  */
 int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 {
-	struct pdomain* d;
-	struct presentity *p;
-	struct watcher* w;
-	str p_uri = STR_NULL;
-	str uid = STR_NULL;
-	char tmp[64];
-	int i;
-	int is_renewal = 0;
+	int res;
 	PROF_START_DECL(pa_response_generation)
 
 	PROF_START(pa_handle_subscription)
-	PROF_START_BODY(pa_response_generation)
 
 	get_act_time();
 	paerrno = PA_OK;
@@ -866,180 +621,19 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
-	is_renewal = has_to_tag(_m);
-	if (is_renewal) DBG("handling renewal subscription\n");
-	else DBG("handling new subscription\n");
+	if (has_to_tag(_m)) 
+		res = handle_renewal_subscription(_m, (struct pdomain*)_domain);
+	else
+		res = handle_new_subscription(_m, (struct pdomain*)_domain);
 
-	d = (struct pdomain*)_domain;
-
-	if (get_pres_uri(_m, &p_uri) < 0) {
-		ERR("Error while extracting presentity URI\n");
-		goto error;
-	}
-
-	if (get_presentity_uid(&uid, _m) != 0) {
-		ERR("Error while extracting presentity UID\n");
-		goto error;
-	}
-
-	lock_pdomain(d);
-
-	if (find_presentity_uid(d, &uid, &p) > 0) {
-		if (is_renewal) {
-			ERR("Resubscription to nonexisting presentity %.*s (%.*s)\n",
-					FMT_STR(uid), FMT_STR(p_uri));
-			paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
-			goto error2;
-		}
-		if (create_presentity(_m, d, &p_uri, &uid, &p, &w) < 0) {
-			INFO("Error while creating new presentity\n");
-			goto error2;
-		}
-	} else {
-		if (update_presentity(_m, d, p, &w, is_renewal) < 0) {
-			INFO("Error while updating presentity\n");
-			goto error2;
-		}
-	}
-	str_free_content(&uid);
-
-	DBG("generating response\n");
-	
-	/* add expires header field into response */
-	if (w) i = w->expires - act_time;
-	else i = 0;
-	if (i < 0) i = 0;
-	sprintf(tmp, "Expires: %d\r\n", i);
-	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
-		ERR("Can't add Expires header to the response\n");
-		/* prof_stop(pa_handle_subscription)
-		 * return -1; */
-	}
-
-	/*if (w) set_status_avp_ex(w); */
-/*	if (w) {
-		TRACE("sending reply for dlg id = %.*s, %.*s, %.*s\n",
-			FMT_STR(w->dialog->id.call_id), 
-			FMT_STR(w->dialog->id.rem_tag), 
-			FMT_STR(w->dialog->id.loc_tag));
-	}*/
-
-	
-	if (send_reply(_m) < 0) {
-		ERR("Error while sending reply\n");
-		unlock_pdomain(d);
-		PROF_STOP(pa_handle_subscription)
-		PROF_STOP(pa_response_generation)
-		return -3;
-	}
-	PROF_STOP(pa_response_generation)
-
-	DBG("handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
-	    (w ? w->event_package : -1), (w ? w->preferred_mimetype : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
-
-	/* process and change this presentity and notify watchers */
-	if (p && w) {
-		set_last_subscription_status(w->status);
-		
-		/*TRACE("sending NOTIFY for dlg id = %.*s, %.*s, %.*s\n",
-			FMT_STR(w->dialog->id.call_id), 
-			FMT_STR(w->dialog->id.rem_tag), 
-			FMT_STR(w->dialog->id.loc_tag));*/
-		
-		/* immediately send NOTIFY */
-		send_notify(p, w);
-		w->flags &= ~WFLAG_SUBSCRIPTION_CHANGED; /* already notified */
-		
-		/* remove terminated watcher otherwise he will 
-		 * receive another NOTIFY generated from timer_pdomain */
-		remove_watcher_if_expired(p, w);
-	}
-	else set_last_subscription_status(WS_REJECTED);
-		
-	unlock_pdomain(d);
 	PROF_STOP(pa_handle_subscription)
-	return 1;
+	return res;
 	
- error2:
-	str_free_content(&uid);
-	INFO("handle_subscription about to return -1\n");
-	unlock_pdomain(d);
-	send_reply(_m);
-	set_last_subscription_status(WS_REJECTED);
-	PROF_STOP(pa_handle_subscription)
-	PROF_STOP(pa_response_generation)
-	return -1;
  error:
 	INFO("handle_subscription about to send_reply and return -2\n");
 	send_reply(_m);
 	set_last_subscription_status(WS_REJECTED);
 	PROF_STOP(pa_handle_subscription)
-	PROF_STOP(pa_response_generation)
 	return -1;
 }
 
-/* FIXME: remove */
-#if 0
-
-/*
- * Returns 1 if subscription exists and -1 if not
- */
-int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
-{
-	struct pdomain* d;
-	struct presentity* p;
-	struct watcher* w;
-	str p_uri, w_uri;
-	str w_dn;
-	int et = 0;
-	dlg_id_t w_dlg_id;
-	
-	if (_m->event) {
-		event_t *event = (event_t*)(_m->event->parsed);
-		et = event->parsed;
-	} else {
-		LOG(L_ERR, "existing_subscription defaulting to EVENT_PRESENCE\n");
-		et = EVENT_PRESENCE;
-	}
-
-	paerrno = PA_OK;
-
-	if (parse_from_header(_m) < 0) {
-		paerrno = PA_PARSE_ERR;
-		LOG(L_ERR, "existing_subscription(): Error while parsing From header field\n");
-		goto error;
-	}
-
-	d = (struct pdomain*)_domain;
-
-	if (get_pres_uri(_m, &p_uri) < 0) {
-		LOG(L_ERR, "existing_subscription(): Error while extracting presentity URI\n");
-		goto error;
-	}
-
-	if (get_watch_uri(_m, &w_uri, &w_dn) < 0) {
-		LOG(L_ERR, "existing_subscription(): Error while extracting watcher URI\n");
-		goto error;
-	}
-
-	get_dlg_id(_m, &w_dlg_id);
-	
-	lock_pdomain(d);
-	
-	if (find_presentity(d, &p_uri, &p) == 0) {
-		if (find_watcher_dlg(p, &w_dlg_id, et, &w) == 0) { 
-			LOG(L_ERR, "existing_subscription() found watcher\n");
-			unlock_pdomain(d);
-			return 1;
-		}
-	}
-
-	unlock_pdomain(d);
-	return -1;
-
- error:
-	send_reply(_m);       
-	return 0;
-}
-
-#endif

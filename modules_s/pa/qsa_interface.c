@@ -73,17 +73,6 @@ void pa_qsa_interface_destroy()
 }
 
 /* notifier functions */
-static int create_presentity_ex(pdomain_t *_d, str_t *_puri, str_t *uid, presentity_t **_p)
-{
-	if (new_presentity(_d, _puri, uid, _p) < 0) {
-		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
-		return -2;
-	}
-
-	/*(*_p)->flags |= PFLAG_PRESENCE_CHANGED; */
-
-	return 0;
-}
 
 static int add_internal_subscription(presentity_t *p, internal_pa_subscription_t *is)
 {
@@ -119,6 +108,7 @@ static int pa_subscribe(notifier_t *n, qsa_subscription_t *subscription)
 	internal_pa_subscription_t *ss;
 	str uid = STR_NULL;
 	str *record_id = NULL;
+	xcap_query_params_t xcap_params;
 	
 	if (!accept_internal_subscriptions) return 0; /* do not accept subscriptions */
 	
@@ -152,7 +142,9 @@ static int pa_subscribe(notifier_t *n, qsa_subscription_t *subscription)
 		lock_pdomain(dl->d);	
 		if (find_presentity_uid(dl->d, &uid, &p) != 0) p = NULL;
 		if (!p) {
-			if (create_presentity_ex(dl->d, record_id, &uid, &p) < 0) {
+			memset(&xcap_params, 0, sizeof(xcap_params));
+			if (fill_xcap_params) fill_xcap_params(NULL, &xcap_params);
+			if (new_presentity(dl->d, record_id, &uid, &xcap_params, &p) < 0) {
 				ERR("can't create presentity\n");
 			}
 		}

@@ -122,288 +122,7 @@ static int parse_publish_hfs(struct sip_msg* _m)
 	return 0;
 }
 
-
-#ifdef HAVE_LOCATION_PACKAGE
-int location_package_location_add_user(pdomain_t *pdomain, str *site, str *floor, str *room, presentity_t *presentity)
-{
-	str l_uri;
-	presentity_t *l_presentity = NULL;
-	resource_list_t *users = NULL;
-	int changed = 0;
-	struct sip_msg *msg = NULL;
-	l_uri.len = pa_domain.len + site->len + floor->len + room->len + 4;
-	l_uri.s = mem_malloc(l_uri.len);
-	if (!l_uri.s)
-		return -2;
-	sprintf(l_uri.s, "%s.%s.%s@%s", room->s, floor->s, site->s, pa_domain.s);
-	if (find_presentity(pdomain, &l_uri, &l_presentity) > 0) {
-		changed = 1;
-		if (create_presentity_only(msg, pdomain, &l_uri, &l_presentity) < 0) {
-			goto error;
-		}
-	}
-
-	if (!l_presentity) {
-		LOG(L_ERR, "location_package_location_add_user: failed to find or create presentity for %s\n", l_uri.s);
-		return -2;
-	}
-	if (!presentity) {
-		LOG(L_ERR, "location_package_location_add_user: was passed null presentity\n");
-		return -3;
-	}
-
-	users = l_presentity->location_package.users;
-	l_presentity->location_package.users = 
-		resource_list_append_unique(users, &presentity->uri);
-
- error:
-	return -1;
-}
-
-int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor, str *room, presentity_t *presentity)
-{
-	str l_uri;
-	presentity_t *l_presentity = NULL;
-	resource_list_t *users;
-	struct sip_msg *msg = NULL;
-	int changed = 0;
-	l_uri.len = pa_domain.len + site->len + floor->len + room->len + 4;
-	l_uri.s = mem_malloc(l_uri.len);
-	if (!l_uri.s)
-		return -2;
-	sprintf(l_uri.s, "%s.%s.%s@%s", room->s, floor->s, site->s, pa_domain.s);
-	if (find_presentity(pdomain, &l_uri, &l_presentity) > 0) {
-		changed = 1;
-		if (create_presentity_only(msg, pdomain, &l_uri, &l_presentity) < 0) {
-			goto error;
-		}
-	}
-
-	users = l_presentity->location_package.users;
-	l_presentity->location_package.users = 
-		resource_list_remove(users, &presentity->uri);
-
- error:
-	return -1;
-}
-#endif /* HAVE_LOCATION_PACKAGE */
-
 #if 0
-
-/* FIXME: remove as soon as will be rewritten */
-
-static int basic_status2status(str *s)
-{
-	if ((strcasecmp(s->s, "online") == 0)
-		|| (strcasecmp(s->s, "open") == 0)) return PS_ONLINE;
-	if ((strcasecmp(s->s, "closed") == 0)
-		|| (strcasecmp(s->s, "offline") == 0)) return PS_OFFLINE;
-	/* return basic2status(*s); */
-	return PS_OFFLINE;
-}
-/*
- * Update existing presentity and watcher list
- */
-static int publish_presentity_pidf(struct sip_msg* _m, struct presentity* presentity, presence_tuple_t **modified_tuple)
-{
-	char *body = get_body(_m);
-	presence_tuple_t *tuple = NULL;
-	str contact = STR_NULL;
-	str basic = STR_NULL;
-	str status = STR_NULL;
-	str location = STR_NULL;
-	str site = STR_NULL;
-	str floor = STR_NULL;
-	str room = STR_NULL;
-	str packet_loss = STR_NULL;
-	double x=0, y=0, radius=0;
-	time_t expires = act_time + default_expires;
-	time_t msg_expires = 0;
-	double priority = default_priority;
-	int prescaps = 0;
-	int flags = 0;
-	int changed = 0;
-	int ret = 0;
-	str id = STR_NULL;
-	 
-	if (modified_tuple) *modified_tuple = 0;
-	if (_m->expires) {
-		if (_m->expires->parsed) {
-			expires = ((exp_body_t*)_m->expires->parsed)->val + act_time;
-			msg_expires = expires;
-		}
-	}
-	if (_m->sipifmatch) {
-		str *s = (str*)_m->sipifmatch->parsed;
-		if (s) id = *s;
-	}
-
-	flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, 
-			&packet_loss, &priority, &expires, &prescaps);
-	if (msg_expires > 0) {
-		/* this has more power than those in PIDF document */
-		expires = msg_expires;
-	}
-	
-	/* use etag in SIP-If-Match header if present to find the tuple */
-	if (id.len > 0) {
-		LOG(L_DBG, "trying to find presetity using SIP-If-Match %.*s\n",
-				id.len, ZSW(id.s));
-		find_presence_tuple_id(&id, presentity, &tuple);
-		if (!tuple) {
-			LOG(L_ERR, "publish_presentity: No matching tuple found\n");
-			paerrno = PA_NO_MATCHING_TUPLE;
-			return -1;
-		}
-	} else {
-		LOG(L_DBG, "NO SIP-If-Match header found\n");
-	}
-	
-	/* try to find tuple using contact from document */
-	if ((!tuple) && (contact.len > 0))
-		find_registered_presence_tuple(&contact, presentity, &tuple);
-	
-	/* try to find tuple using contact from message headers */
-	if (!tuple) {
-		contact_t *sip_contact = NULL;
-		/* get contact from SIP Headers*/
-		contact_iterator(&sip_contact, _m, NULL);
-		if (sip_contact) {
-			LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
-					sip_contact->uri.len, sip_contact->uri.s);
-			find_registered_presence_tuple(&sip_contact->uri, presentity, &tuple);
-		}
-	}
-	if (!tuple && new_tuple_on_publish) {
-		new_presence_tuple(&contact, expires, &tuple, 1);
-		add_presence_tuple(presentity, tuple);
-		changed = 1;
-	}
-	if (!tuple) {
-		LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
-				presentity->uri.len, presentity->uri.s);
-		return -1;
-	}
-
-	if (basic.len && basic.s) {
-		int origstate = tuple->state;
-		tuple->state = basic_status2status(&basic);
-		if (tuple->state != origstate)
-			changed = 1;
-	}
-	if (status.len && status.s) {
-		if (tuple->status.len && str_strcasecmp(&tuple->status, &status) != 0)
-			changed = 1;
-		tuple->status.len = status.len;
-		strncpy(tuple->status.s, status.s, status.len);
-		tuple->status.s[status.len] = 0;
-	}
-	if (location.len && location.s) {
-		if (tuple->location.loc.len && str_strcasecmp(&tuple->location.loc, &location) != 0)
-			changed = 1;
-		tuple->location.loc.len = location.len;
-		strncpy(tuple->location.loc.s, location.s, location.len);
-		tuple->location.loc.s[location.len] = 0;
-	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.loc.len = 0;
-	}
-	if (site.len && site.s) {
-		if (tuple->location.site.len && str_strcasecmp(&tuple->location.site, &site) != 0)
-			changed = 1;
-		tuple->location.site.len = site.len;
-		strncpy(tuple->location.site.s, site.s, site.len);
-		tuple->location.site.s[site.len] = 0;
-	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.site.len = 0;
-	}
-	if (floor.len && floor.s) {
-		if (tuple->location.floor.len && str_strcasecmp(&tuple->location.floor, &floor) != 0)
-			changed = 1;
-		tuple->location.floor.len = floor.len;
-		strncpy(tuple->location.floor.s, floor.s, floor.len);
-		tuple->location.floor.s[floor.len] = 0;
-	}else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.floor.len = 0;
-	}
-	if (room.len && room.s) {
-		if (tuple->location.room.len && str_strcasecmp(&tuple->location.room, &room) != 0)
-			changed = 1;
-		tuple->location.room.len = room.len;
-		strncpy(tuple->location.room.s, room.s, room.len);
-		tuple->location.room.s[room.len] = 0;
-	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.room.len = 0;
-	}
-	if (packet_loss.len && packet_loss.s) {
-		if (tuple->location.packet_loss.len && str_strcasecmp(&tuple->location.packet_loss, &packet_loss) != 0)
-			changed = 1;
-		tuple->location.packet_loss.len = packet_loss.len;
-		strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
-		tuple->location.packet_loss.s[packet_loss.len] = 0;
-	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.packet_loss.len = 0;
-	}
-	if (x) {
-		if (tuple->location.x != x)
-			changed = 1;
-		tuple->location.x = x;
-	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.x = 0;
-	}
-	if (y) {
-		if (tuple->location.y != y)
-			changed = 1;
-		tuple->location.y = y;
-	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.y = 0;
-	}
-	if (radius) {
-		if (tuple->location.radius != radius)
-			changed = 1;
-		tuple->location.radius = radius;
-	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
-		tuple->location.radius = 0;
-	}
-
-	if (tuple->priority != priority) {
-		changed = 1;
-		tuple->priority = priority;
-	}
-	if (tuple->expires != expires) {
-		changed = 1;
-		tuple->expires = expires;
-	}
-	LOG(L_DBG, "PUBLISH: tuple expires after %d s\n", (int)(tuple->expires - act_time));
-#ifdef HAVE_LOCATION_PACKAGE
-	if (use_location_package)
-		if (site.len && floor.len && room.len && changed) {
-			location_package_location_add_user(_d, &site, &floor, &room, presentity);
-		}
-#endif /* HAVE_LOCATION_PACKAGE */
-	if (flags & PARSE_PIDF_PRESCAPS) {
-		if (tuple->prescaps != prescaps)
-			changed = 1;
-		tuple->prescaps = prescaps;
-	}
-
-	changed = 1;
-	if (changed) presentity->flags |= PFLAG_PRESENCE_CHANGED;
-
-	if ((ret = db_update_presentity(presentity)) < 0) {
-		return ret;
-	}
-	if (!tuple->is_published)
-		set_tuple_published(presentity, tuple);
-	if (use_db) db_update_presence_tuple(presentity, tuple, 1);
-	
-	if (modified_tuple) *modified_tuple = tuple;
-	return 0;
-}
-
-/* FIXME: remove as soon as will be rewritten */
-
-#endif
-
 /*
  * If this xcap change is on a watcher list, then reread authorizations
  */
@@ -427,6 +146,7 @@ static int publish_presentity_xcap_change(struct sip_msg* _m, struct pdomain* _d
 	}
 	return 0;
 }
+#endif
 
 static void add_expires_to_rpl(struct sip_msg *_m, int expires)
 {
@@ -799,7 +519,6 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 	event_t *parsed_event = NULL;
 	int event_package = EVENT_OTHER;
 	str callid = STR_STATIC_INIT("???");
-	int changed = 0; /* temporarily */
 	int res;
 	
 	if (_m->event) 
@@ -811,11 +530,6 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 	switch (event_package) {
 		case EVENT_PRESENCE: 
 			res = publish_presence(_m, presentity);
-			break;
-		case EVENT_XCAP_CHANGE:
-			/* FIXME: throw it out - it is not presence related, it is XCAP */
-			/* FIXME: add headers Expires and SIP-ETag */
-			res = publish_presentity_xcap_change(_m, _d, presentity, &changed);
 			break;
 		default:
 			if (_m->callid)	callid = _m->callid->body;
@@ -838,6 +552,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	struct presentity *p;
 	str p_uri = STR_NULL;
 	str uid = STR_NULL;
+	xcap_query_params_t xcap_params;
 
 	get_act_time();
 	paerrno = PA_OK;
@@ -871,7 +586,9 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	lock_pdomain(d);
 
 	if (find_presentity_uid(d, &uid, &p) > 0) {
-		if (create_presentity_only(_m, d, &p_uri, &uid, &p) < 0) {
+		memset(&xcap_params, 0, sizeof(xcap_params));
+		if (fill_xcap_params) fill_xcap_params(_m, &xcap_params);
+		if (new_presentity(d, &p_uri, &uid, &xcap_params, &p) < 0) {
 			LOG(L_ERR, "handle_publish can't create presentity\n");
 			goto error2;
 		}

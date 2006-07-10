@@ -50,92 +50,8 @@
 #include "winfo_doc.h"
 #include "dlist.h"
 
-#define CONTACT "Contact: "
-#define CONTACT_L  (sizeof(CONTACT) - 1)
 
-#define CONTENT_TYPE "Content-Type: "
-#define CONTENT_TYPE_L  (sizeof(CONTENT_TYPE) - 1)
-
-#define EVENT "Event: "
-#define EVENT_L (sizeof(EVENT) - 1)
-
-#define PRESENCE_TEXT "presence"
-#define PRESENCE_TEXT_L (sizeof(PRESENCE_TEXT) - 1)
-
-#define WINFO_TEXT "presence.winfo"
-#define WINFO_TEXT_L (sizeof(WINFO_TEXT) - 1)
-
-#define XCAP_CHANGE_TEXT "xcap-change"
-#define XCAP_CHANGE_TEXT_L (sizeof(XCAP_CHANGE_TEXT) - 1)
-
-#define CONT_TYPE_XPIDF "application/xpidf+xml"
-#define CONT_TYPE_XPIDF_L  (sizeof(CONT_TYPE_XPIDF) - 1)
-
-#define CONT_TYPE_LPIDF "text/lpidf"
-#define CONT_TYPE_LPIDF_L (sizeof(CONT_TYPE_LPIDF) - 1)
-
-#define CONT_TYPE_PIDF "application/pidf+xml"
-#define CONT_TYPE_PIDF_L (sizeof(CONT_TYPE_PIDF) - 1)
-
-#define CONT_TYPE_CPIM_PIDF "application/cpim-pidf+xml"
-#define CONT_TYPE_CPIM_PIDF_L (sizeof(CONT_TYPE_CPIM_PIDF) - 1)
-
-#define CONT_TYPE_WINFO "application/watcherinfo+xml"
-#define CONT_TYPE_WINFO_L (sizeof(CONT_TYPE_WINFO) - 1)
-
-#define CONT_TYPE_XCAP_CHANGE "application/xcap-change+xml"
-#define CONT_TYPE_XCAP_CHANGE_L (sizeof(CONT_TYPE_XCAP_CHANGE) - 1)
-
-#define SUBSCRIPTION_STATE "Subscription-State: "
-#define SUBSCRIPTION_STATE_L (sizeof(SUBSCRIPTION_STATE) - 1)
-
-#define SS_EXPIRES ";expires="
-#define SS_EXPIRES_L (sizeof(SS_EXPIRES) - 1)
-
-#define SS_REASON ";reason="
-#define SS_REASON_L (sizeof(SS_REASON) - 1)
-
-#define CRLF "\r\n"
-#define CRLF_L (sizeof(CRLF) - 1)
-
-#define ST_ACTIVE "active"
-#define ST_ACTIVE_L (sizeof(ST_ACTIVE) - 1)
-
-#define ST_TERMINATED "terminated"
-#define ST_TERMINATED_L (sizeof(ST_TERMINATED) - 1)
-
-#define ST_PENDING "pending"
-#define ST_PENDING_L (sizeof(ST_PENDING) - 1)
-
-#define REASON_DEACTIVATED "deactivated"
-
-#define REASON_NORESOURCE "noresource"
-
-#define REASON_PROBATION "probation"
-
-#define REASON_REJECTED "rejected"
-
-#define REASON_TIMEOUT "timeout"
-
-#define REASON_GIVEUP "giveup"
-
-#define METHOD_NOTIFY "NOTIFY"
-
-
-/* 
- * Subscription-State reason parameter values
- */
-static str reason[] = {
-	STR_STATIC_INIT(REASON_DEACTIVATED),
-	STR_STATIC_INIT(REASON_NORESOURCE),
-	STR_STATIC_INIT(REASON_PROBATION),
-	STR_STATIC_INIT(REASON_REJECTED),
-	STR_STATIC_INIT(REASON_TIMEOUT),
-	STR_STATIC_INIT(REASON_GIVEUP),
-};
-
-
-static str method = STR_STATIC_INIT(METHOD_NOTIFY);
+static str notify = STR_STATIC_INIT("NOTIFY");
 
 /* TM callback processing */
 
@@ -300,38 +216,6 @@ static inline int add_cont_type_hf(dstring_t *buf, str *content_type)
 	
 	dstr_append_zt(buf, "Content-Type: ");
 	
-	/* FIXME: remove */
-/*	switch(doc_type) {
-		case DOC_XPIDF:
-			dstr_append_zt(buf, "application/xpidf+xml");
-			break;
-		case DOC_LPIDF:
-			dstr_append_zt(buf, "text/lpidf");
-			break;
-
-/ *		case DOC_MSRTC_PIDF: * /
-		case DOC_PIDF:
-			dstr_append_zt(buf, "application/pidf+xml");
-			break;
-			
-		case DOC_CPIM_PIDF:
-			dstr_append_zt(buf, "application/cpim-pidf+xml");
-			break;
-			
-		case DOC_WINFO:
-			dstr_append_zt(buf, "application/watcherinfo+xml");
-			break;
-
-		/ * case DOC_XCAP_CHANGE:
-			dstr_append_zt(buf, "application/xcap-change+xml");
-			break; * /
-
-		default:
-			paerrno = PA_UNSUPP_DOC;
-			LOG(L_ERR, "add_cont_type_hf(): Unsupported document type\n");
-			return -3;
-	}*/
-	
 	dstr_append_str(buf, content_type);
 	dstr_append_zt(buf, "\r\n");
 	
@@ -344,11 +228,9 @@ static inline int add_subs_state_hf(dstring_t *buf, watcher_status_t _s, time_t 
 	char* num;
 	int len;
 	str s = STR_NULL;
-	ss_reason_t _r;
+	static str timeout = STR_STATIC_INIT("timeout");
+	static str rejected = STR_STATIC_INIT("rejected");
 	
-	if (_e <= 0) _r = SR_TIMEOUT;
-	else _r = SR_REJECTED;
-
 	switch(_s) {
 		case WS_ACTIVE: ;
 			s = watcher_status_names[WS_ACTIVE];
@@ -378,7 +260,8 @@ static inline int add_subs_state_hf(dstring_t *buf, watcher_status_t _s, time_t 
 		case WS_PENDING_TERMINATED:
 		case WS_TERMINATED:
 			dstr_append_zt(buf, ";reason=");
-			dstr_append_str(buf, &reason[_r]);
+			if (_e <= 0) dstr_append_str(buf, &timeout);
+			else dstr_append_str(buf, &rejected);
 			break;
 
 	}
@@ -444,7 +327,11 @@ static inline int create_headers(struct watcher* _w, str *dst, str *content_type
 	return err;
 }
 
-static int send_presence_notify(struct presentity* _p, struct watcher* _w)
+/* NOTIFY creation functions for specific events/state */
+
+static int prepare_presence_notify(struct retr_buf **dst, 
+		struct presentity* _p, struct watcher* _w,
+		pa_notify_cb_param_t *cbd)
 {
 	/* Send a notify, saved Contact will be put in
 	 * Request-URI, To will be put in from and new tag
@@ -457,7 +344,6 @@ static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 	str body = STR_STATIC_INIT("");
 	presentity_info_t *pinfo = NULL;
 	int res = 0;
-	pa_notify_cb_param_t *cbd = NULL;
 	
 	pinfo = presentity2presentity_info(_p);
 	if (!pinfo) {
@@ -498,47 +384,34 @@ static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 		return -7;
 	}
 	
-	/* alloc data for callback */
-	cbd = create_notify_cb_param(_p, _w);
-	if (!cbd) {
-		ERR("can't allocate data for callback\n");
-		/* FIXME: destroy subscription? */
-		
-		str_free_content(&headers);
-		str_free_content(&doc);
-		str_free_content(&content_type);
-		return -1;
-	}	
-
 	if (!is_str_empty(&doc)) body = doc;
-	res = tmb.t_request_within(&method, &headers, &body, 
-			_w->dialog, pa_notify_cb, cbd);
+/*	res = tmb.t_request_within(&notify, &headers, &body, 
+			_w->dialog, pa_notify_cb, cbd);*/
+	res = tmb.prepare_request_within(&notify, &headers, &body, 
+			_w->dialog, pa_notify_cb, cbd, dst);
 	if (res < 0) {
 		ERR("Can't send NOTIFY (%d) in dlg %.*s, %.*s, %.*s\n", res, 
 			FMT_STR(_w->dialog->id.call_id), 
 			FMT_STR(_w->dialog->id.rem_tag), 
 			FMT_STR(_w->dialog->id.loc_tag));
-		/* FIXME: destroy subscription? */
-		/* FIXME: destroy cbd? */
 	}
+
 	str_free_content(&doc);
 	str_free_content(&headers);
-	str_free_content(&content_type);
-		
-	if (use_db) db_update_watcher(_p, _w); /* dialog has changed */
+	str_free_content(&content_type);	
 	
 	return res;
 }
 
-static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
+static int prepare_winfo_notify(struct retr_buf **dst,
+		struct presentity* _p, struct watcher* _w,
+		pa_notify_cb_param_t *cbd)
 {
 	str doc = STR_NULL;
 	str content_type = STR_NULL;
 	str headers = STR_NULL;
 	int res = 0;
 	str body = STR_STATIC_INIT("");
-
-	DEBUG("sending winfo notify\n");
 	
 	switch (_w->preferred_mimetype) {
 		case DOC_WINFO:
@@ -551,30 +424,115 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 			return -1;
 	}
 
-	DEBUG("creating headers\n");
 	if (create_headers(_w, &headers, &content_type) < 0) {
 		ERR("Error while adding headers\n");
 		str_free_content(&doc);
 		str_free_content(&content_type);
 		return -7;
 	}
-	DEBUG("headers created\n");
 
 	if (!is_str_empty(&doc)) body = doc;
-	res = tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
-	DEBUG("request sent with result %d\n", res);
+	/* res = tmb.t_request_within(&notify, &headers, &body, _w->dialog, 0, 0); */
+	res = tmb.prepare_request_within(&notify, &headers, &body, 
+			_w->dialog, pa_notify_cb, cbd, dst);
 	if (res < 0) {
 		ERR("Can't send watcherinfo notification (%d)\n", res);
+	}
+	else {
+		_w->document_index++; /* increment index for next document */
 	}
 
 	str_free_content(&doc);
 	str_free_content(&headers);
 	str_free_content(&content_type);
 
-	_w->document_index++; /* increment index for next document */
-	
-	if (use_db) db_update_watcher(_p, _w); /* dialog and index have changed */
+	return res;
+}
 
+int prepare_unauthorized_notify(struct retr_buf **dst, 
+		struct presentity* _p, struct watcher* _w,
+		pa_notify_cb_param_t *cbd)
+{
+	str headers = STR_NULL;
+	str body = STR_STATIC_INIT("");
+	int res;
+
+	/* send notifications to unauthorized (pending) watchers */
+	if (create_headers(_w, &headers, NULL) < 0) {
+		LOG(L_ERR, "notify_unauthorized_watcher(): Error while adding headers\n");
+		return -7;
+	}
+
+	res = tmb.prepare_request_within(&notify, &headers, &body, 
+			_w->dialog, pa_notify_cb, cbd, dst);
+	if (res < 0) {
+		ERR("Can't send NOTIFY (%d) in dlg %.*s, %.*s, %.*s\n", res, 
+			FMT_STR(_w->dialog->id.call_id), 
+			FMT_STR(_w->dialog->id.rem_tag), 
+			FMT_STR(_w->dialog->id.loc_tag));
+	}
+
+	str_free_content(&headers);
+		
+	
+	return res;
+}
+
+int prepare_notify(struct retr_buf **dst, 
+		struct presentity* _p, struct watcher* _w)
+{
+	int rc = 0;
+	pa_notify_cb_param_t *cbd = NULL;
+
+	/* alloc data for callback */
+	cbd = create_notify_cb_param(_p, _w);
+	if (!cbd) {
+		ERR("can't allocate data for callback\n");
+		/* FIXME: destroy subscription? */
+		return -1;
+	}	
+	
+	LOG(L_DBG, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
+	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->preferred_mimetype, _w->status);
+
+	if ((_w->status == WS_PENDING) || 
+			(_w->status == WS_PENDING_TERMINATED) ||
+			(_w->status == WS_REJECTED)) {
+		rc = prepare_unauthorized_notify(dst, _p, _w, cbd);
+	}
+	else {
+		switch (_w->event_package) {
+			case EVENT_PRESENCE:
+				rc = prepare_presence_notify(dst, _p, _w, cbd);
+				break;
+			case EVENT_PRESENCE_WINFO:
+				rc = prepare_winfo_notify(dst, _p, _w, cbd);
+				break;
+			default: 
+				LOG(L_ERR, "sending notify for unknow package\n");
+				rc = -1;
+		}
+	}
+	if ((rc < 0) && cbd) shm_free(cbd); /* ??? or not ??? */
+	else {
+		 /* At least dialog has changed (sometimes more - for example
+		  * version counter for winfo)! 
+		  * Ignore errors there because the watcher need NOT to be in DB
+		  * (polling). */
+		if (use_db) db_update_watcher(_p, _w);
+		/* if (use_db && (!is_watcher_terminated(_w)))
+				db_update_watcher(_p, _w);	 */
+	}
+
+	return rc;
+}
+
+int send_notify(struct presentity* _p, struct watcher* _w)
+{
+	struct retr_buf *request;
+	int res = prepare_notify(&request, _p, _w);
+	if (res < 0) return res;
+	tmb.send_prepared_request(request);
 	return res;
 }
 
@@ -606,7 +564,7 @@ int send_winfo_notify_offline(struct presentity* _p,
 	}
 
 	if (!is_str_empty(&doc)) body = doc;
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, completion_cb, cbp);
+	tmb.t_request_within(&notify, &headers, &body, _w->dialog, completion_cb, cbp);
 
 	str_free_content(&doc);
 	str_free_content(&headers);
@@ -619,183 +577,3 @@ int send_winfo_notify_offline(struct presentity* _p,
 	return 0;
 }
 
-/* FIXME: will be removed */
-#if 0 
-#ifdef HAVE_XCAP_CHANGE_NOTIFY
-static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
-{
-	int len = 0;
-	int presence_list_changed = _p->flags & PFLAG_PRESENCE_LISTS_CHANGED;
-	int watcherinfo_changed = _p->flags & PFLAG_WATCHERINFO_CHANGED;
-
-	
-	LOG(L_ERR, "  send_xcap_change flags=%x\n", _p->flags);
-
-	len += sprintf(body.s + len, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
-	len += sprintf(body.s + len, "<documents xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n");
-	if (presence_list_changed) { 
-		len += sprintf(body.s + len, "  <document uri=\"http://%.*s/presence-lists/users/%.*s/presence.xml\">\r\n",
-			       pa_domain.len, pa_domain.s, _p->uri.len, _p->uri.s);
-		len += sprintf(body.s + len, "    <change method=\"PUT\">someone@example.com</change>\r\n");
-		len += sprintf(body.s + len, "  </document>\r\n");
-	}
-	if (watcherinfo_changed) {
-		len += sprintf(body.s + len, "  <document uri=\"http://%.*s/watcherinfo/users/%.*s/watcherinfo.xml\">\r\n",
-			       pa_domain.len, pa_domain.s, _p->uri.len, _p->uri.s);
-		len += sprintf(body.s + len, "    <change method=\"PUT\">someone@example.com</change>\r\n");
-		len += sprintf(body.s + len, "  </document>\r\n");
-	}
-	len += sprintf(body.s + len, "</documents>\r\n");
-	body.len = len;
-
-	if (create_headers(_w) < 0) {
-		LOG(L_ERR, "send_location_notify(): Error while adding headers\n");
-		return -7;
-	}
-
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
-	return 0;
-}
-#endif /* HAVE_XCAP_CHANGE_NOTIFY */
-
-int send_location_notify(struct presentity* _p, struct watcher* _w)
-{
-	resource_list_t *user = _p->location_package.users;
-
-	LOG(L_ERR, "send_location_notify to watcher %.*s\n", _w->uri.len, _w->uri.s);
-
-	if (location_doc_start(&body, BUF_LEN) < 0) {
-		LOG(L_ERR, "send_location_notify(): start_location_doc failed\n");
-		return -1;
-	}
-
-	if (location_doc_start_userlist(&body, BUF_LEN - body.len, &_p->uri) < 0) {
-		LOG(L_ERR, "send_location_notify(): location_add_uri failed\n");
-		return -3;
-	}
-
-	while (user) {
-		if (location_doc_add_user(&body, BUF_LEN - body.len, &user->uri) < 0) {
-			LOG(L_ERR, "send_location_notify(): location_add_watcher failed\n");
-			return -3;
-		}
-
-		user = user->next;
-	}
-
-	if (location_doc_end_resource(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_location_notify(): location_add_resource failed\n");
-		return -5;
-	}
-
-	if (location_doc_end(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_location_notify(): end_xlocation_doc failed\n");
-		return -6;
-	}
-
-	if (create_headers(_w) < 0) {
-		LOG(L_ERR, "send_location_notify(): Error while adding headers\n");
-		return -7;
-	}
-
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
-	return 0;
-}
-#endif
-		
-int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
-{
-	str headers = STR_NULL;
-	str body = STR_STATIC_INIT("");
-	pa_notify_cb_param_t *cbd = NULL;
-	int res;
-
-	/* send notifications to unauthorized (pending) watchers */
-	if (create_headers(_w, &headers, NULL) < 0) {
-		LOG(L_ERR, "notify_unauthorized_watcher(): Error while adding headers\n");
-		return -7;
-	}
-
-	/* alloc data for callback */
-	cbd = create_notify_cb_param(_p, _w);
-	if (!cbd) {
-		ERR("can't allocate data for callback\n");
-		str_free_content(&headers);
-		/* FIXME: destroy subscription? */
-		return -1;
-	}	
-	
-	res = tmb.t_request_within(&method, &headers, &body, _w->dialog, pa_notify_cb, cbd);
-	if (res < 0) {
-		ERR("Can't send NOTIFY (%d) in dlg %.*s, %.*s, %.*s\n", res, 
-			FMT_STR(_w->dialog->id.call_id), 
-			FMT_STR(_w->dialog->id.rem_tag), 
-			FMT_STR(_w->dialog->id.loc_tag));
-		/* FIXME: destroy subscription? */
-		/* FIXME: destroy CBD? */
-	}
-
-	str_free_content(&headers);
-		
-	if (use_db) db_update_watcher(_p, _w); /* dialog has changed */
-	
-	return 0;
-}
-
-int send_notify(struct presentity* _p, struct watcher* _w)
-{
-	int rc = 0;
-
-	LOG(L_DBG, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
-	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->preferred_mimetype, _w->status);
-
-	if ((_w->status == WS_PENDING) || 
-			(_w->status == WS_PENDING_TERMINATED) ||
-			(_w->status == WS_REJECTED)) {
-		notify_unauthorized_watcher(_p, _w);
-		return 0;
-	}
-
-	switch (_w->event_package) {
-		case EVENT_PRESENCE:
-			rc = send_presence_notify(_p, _w);
-			break;
-		case EVENT_PRESENCE_WINFO:
-			rc = send_winfo_notify(_p, _w);
-			break;
-		default: LOG(L_ERR, "sending notify for unknow package\n");
-	}
-
-/* FIXME: will be removed */
-#if 0 
-#ifdef HAVE_XCAP_CHANGE_NOTIFY
-	if ((_p->flags & PFLAG_XCAP_CHANGED) 
-	    && (_w->event_package == EVENT_XCAP_CHANGE)) {
-		switch(_w->preferred_mimetype) {
-#ifdef DOC_XCAP_CHANGE
-		case DOC_XCAP_CHANGE:
-#endif
-		default:
-			rc = send_xcap_change_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_xcap_change_notify returned %d\n", rc);
-		}
-	}
-#endif /* HAVE_XCAP_CHANGE_NOTIFY */
-#ifdef PFLAG_LOCATION_CHANGED
-	if ((_p->flags & PFLAG_LOCATION_CHANGED) 
-	    && (_w->event_package == EVENT_LOCATION)) {
-		switch(_w->preferred_mimetype) {
-		case DOC_LOCATION:
-			rc = send_location_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_location_notify returned %d\n", rc);
-			break;
-		default:
-		  rc = -1;
-		  ;
-		}
-	}
-#endif /* PFLAG_LOCATION_CHANGED */
-#endif
-	
-	return rc;
-}
