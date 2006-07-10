@@ -1202,7 +1202,8 @@ cycle1:
 				"avpops:ops_check_avp: error src value too long\n");
 			goto error;
 		}
-		strcpy(str_buf, avp_val.s.s);
+		strncpy(str_buf, avp_val.s.s, avp_val.s.len);
+		str_buf[avp_val.s.len] = '\0';
 		avp_val.s.s = str_buf;
 	}
 
@@ -1525,7 +1526,8 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 				"avpops:ops_subst: error dst name too long\n");
 			goto error;
 		}
-		strcpy(str_buf, avp_name2.s.s);
+		strncpy(str_buf, avp_name2.s.s, avp_name2.s.len);
+		str_buf[avp_name2.s.len] = '\0';
 		avp_name2.s.s = str_buf;
 	}
 
@@ -1643,7 +1645,8 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 				"avpops:ops_op_avp: error dst name too long\n");
 			goto error;
 		}
-		strcpy(str_buf, avp_name3.s.s);
+		strncpy(str_buf, avp_name3.s.s, avp_name3.s.len);
+		str_buf[avp_name3.s.len] = '\0';
 		avp_name3.s.s = str_buf;
 	}
 	prev_avp = 0;
