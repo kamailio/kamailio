@@ -7,10 +7,9 @@ auto_gen=
 NAME=tlsops.so
 LIBS=
 
-LIBS=-L$(LOCALBASE)/lib
+DEFS+= -I$(LOCALBASE)/ssl/include
+LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
 
 include ../../Makefile.modules
 
-#DEFS+= -I$(LOCALBASE)/ssl/include
-#LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
 
