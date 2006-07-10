@@ -1,0 +1,22 @@
+OpenSER for Debian
+------------------
+
+To setup OpenSER, you need to:
+ - configure OpenSER properly to suit your needs
+ - edit /etc/default/openser, adjust the MEMORY parameter and set
+   RUN_OPENSER to "yes"
+
+If you are building an HA cluster using heartbeat or similar, you'll want
+to disable the init script by running:
+
+  update-rc.d remove
+
+so that OpenSER will not be launched at system startup. You still need
+to set RUN_OPENSER to "yes" if you want to use the /etc/init.d/openser init
+script.
+
+Set the DUMP_CORE parameter in /etc/default/openser to "yes" if you want to
+get a core dump in case OpenSER crashes. The debug symbols for OpenSER are
+provided by the openser-dbg package.
+
+-- Julien BLACHE <jblache@debian.org>, Fri, 30 Jun 2006 21:28:43 +0200

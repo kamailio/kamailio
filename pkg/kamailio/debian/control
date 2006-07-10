@@ -1,0 +1,116 @@
+Source: openser
+Section: net
+Priority: optional
+Maintainer: Debian VoIP Maintainers <pkg-voip-maintainers@lists.alioth.debian.org>
+Uploaders: Julien BLACHE <jblache@debian.org>
+Build-Depends: debhelper (>= 5), dpatch, libmysqlclient15-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev | postgresql-dev, libradiusclient-ng-dev, libssl-dev, flex, bison, zlib1g-dev, unixodbc-dev
+Standards-Version: 3.7.2
+
+Package: openser
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
+Suggests: openser-mysql-module, openser-postgres-module, openser-jabber-module, openser-cpl-module, openser-radius-modules, openser-unixodbc-module
+Conflicts: openser-mysql-module (<< ${Source-Version}), openser-postgres-module (<< ${Source-Version}), openser-jabber-module (<< ${Source-Version}), openser-cpl-module (<< ${Source-Version}), openser-unixodbc-module (<< ${Source-Version}), openser-radius-modules (<< ${Source-Version})
+Description: OpenSER - very fast and configurable SIP proxy
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ C Shell-like scripting language provides full control over the server's
+ behaviour. Its modular architecture allows only required functionality to be
+ loaded.
+ .
+ Among others, the following modules are available: Digest Authentication, CPL
+ scripts, Instant Messaging, MySQL support, Presence Agent, Radius
+ Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction
+ Module, Registrar and User Location, ENUM, LCR, TLS secure communication.
+ .
+ This package contains the main OpenSER binary along with the principal modules
+ and support binaries.
+
+Package: openser-dbg
+Architecture: any
+Depends: openser (= ${Source-Version})
+Suggests: openser-mysql-module, openser-postgres-module, openser-jabber-module, openser-cpl-module, openser-radius-modules, openser-unixodbc-module
+Conflicts: openser (<< ${Source-Version}), openser-mysql-module (<< ${Source-Version}), openser-postgres-module (<< ${Source-Version}), openser-jabber-module (<< ${Source-Version}), openser-cpl-module (<< ${Source-Version}), openser-unixodbc-module (<< ${Source-Version}), openser-radius-modules (<< ${Source-Version})
+Description: OpenSER - very fast and configurable SIP proxy [debug symbols]
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ C Shell-like scripting language provides full control over the server's
+ behaviour. Its modular architecture allows only required functionality to be
+ loaded.
+ .
+ Among others, the following modules are available: Digest Authentication, CPL
+ scripts, Instant Messaging, MySQL support, Presence Agent, Radius
+ Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction
+ Module, Registrar and User Location, ENUM, LCR, TLS secure communication.
+ .
+ This package contains the debugging symbols for the OpenSER binaries and
+ modules. You only need to install it if you need to debug OpenSER.
+
+Package: openser-mysql-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version}), mysql-client
+Description: MySQL database connectivity module for OpenSER
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides MySQL database driver for OpenSER.
+
+Package: openser-postgres-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version}), postgresql-client
+Description: PostgreSQL database connectivity module for openser
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides PostgreSQL database driver for OpenSER.
+
+Package: openser-jabber-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: Jabber module (sip-jabber message translation) for openser
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the SIP to Jabber translator module for OpenSER.
+
+Package: openser-cpl-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: CPL module (CPL interpreter engine) for openser
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides a CPL (Call Processing Language) interpreter for
+ OpenSER, turning OpenSER into a CPL server (storage and interpreter).
+
+Package: openser-radius-modules
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: radius modules for openser
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides a set of Radius modules for OpenSER, for
+ authentication, group membership and messages URIs checking against a
+ Radius Server.
+
+Package: openser-unixodbc-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: unixodbc database connectivity module for OpenSER
+ OpenSER is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides unixodbc database driver for OpenSER.
+
+

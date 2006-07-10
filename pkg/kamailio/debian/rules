@@ -1,0 +1,217 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+DEBVERSION:=$(shell head -n 1 debian/changelog \
+                    | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
+UPVERSION:=$(shell echo $(DEBVERSION) | sed -e 's/^.*://' -e 's/-[0-9.]*$$//' -e 's/.dfsg$$//')
+
+FILENAME := openser_$(UPVERSION).orig.tar.gz
+UPFILENAME := openser-$(UPVERSION)-tls_src.tar.gz
+URL := http://openser.org/pub/openser/$(UPVERSION)/src/openser-$(UPVERSION)-tls_src.tar.gz
+
+# Uncomment this to turn on verbose mode.
+# export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+# export DH_COMPAT=4
+
+# Include dpatch rules
+include /usr/share/dpatch/dpatch.make
+
+
+# modules depending on mysql
+MYSQL_MODULES = mysql
+# modules depending on postgres
+POSTGRES_MODULES = postgres
+# jabber related modules
+JABBER_MODULES = jabber
+# cpl related modules
+CPL_MODULES = cpl-c
+# module depending on radiusclient
+RADIUS_MODULES = auth_radius group_radius uri_radius
+# modules depending on unixodbc
+UNIXODBC_MODULES=unixodbc
+
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(UNIXODBC_MODULES)
+
+# modules not in the "main" package or unstable modules
+EXCLUDED_MODULES = $(ALL_MODULES) pa
+
+# the same but with path prepended (needed for modules="...")
+MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
+POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
+JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
+CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
+RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
+UNIXODBC_MOD_PATH=$(addprefix modules/, $(UNIXODBC_MODULES))
+
+ifeq (cc, $(CC))
+CC = gcc
+endif
+
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+        CFLAGS += -O0
+else
+        CFLAGS += -O2
+endif
+
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+build-stamp: patch-stamp configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+	CC="$(CC)" CFLAGS="$(CFLAGS)" NICER=1 TLS=1 $(MAKE) all skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" NICER=1 TLS=1 $(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" NICER=1 TLS=1 $(MAKE) modules modules="$(POSTGRES_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" NICER=1 TLS=1 $(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" NICER=1 TLS=1 $(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" NICER=1 TLS=1 $(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" NICER=1 TLS=1 $(MAKE) modules modules="$(UNIXODBC_MOD_PATH)" cfg-target=/etc/openser/
+
+	touch build-stamp
+
+clean: real-clean unpatch
+real-clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) TLS=1 include_modules="$(ALL_MODULES)" proper
+	rm -f cfg.tab.h utils/openserunix/*.d
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Add here commands to install the package into debian/openser
+	# openser base package
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=1 $(MAKE) install  skip_modules="$(EXCLUDED_MODULES)" \
+		basedir=$(CURDIR)/debian/openser \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser \
+		cfg-target=/etc/openser/
+
+	find $(CURDIR)/debian/openser/etc/openser -type f -exec chmod -x {} \;
+	sed -i -e "s/^PATH//" $(CURDIR)/debian/openser/usr/sbin/openserctl
+
+	# install only the mysql module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=1 $(MAKE) install-modules-all modules="$(MYSQL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-mysql-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-mysql-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-mysql-module
+
+	mkdir -p $(CURDIR)/debian/openser-mysql-module/usr/sbin
+	mv $(CURDIR)/debian/openser/usr/sbin/openser_mysql.sh $(CURDIR)/debian/openser-mysql-module/usr/sbin/openser_mysql
+	sed -i -e "s/^PATH//" $(CURDIR)/debian/openser-mysql-module/usr/sbin/openser_mysql
+
+	# install only the postgres module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=1 $(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-postgres-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-postgres-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-postgres-module
+
+	mkdir -p $(CURDIR)/debian/openser-postgres-module/usr/sbin
+	mv $(CURDIR)/debian/openser/usr/sbin/openser_postgresql.sh $(CURDIR)/debian/openser-postgres-module/usr/sbin/openser_postgresql
+	sed -i -e "s/^PATH//" $(CURDIR)/debian/openser-postgres-module/usr/sbin/openser_postgresql
+
+	#install only the jabber module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=1 $(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-jabber-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-jabber-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-jabber-module
+
+	#install only the cpl module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=1 $(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-cpl-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-cpl-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-cpl-module
+
+	#install only the radius modules
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=1 $(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-radius-modules \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-radius-modules \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-radius-modules
+
+	mkdir -p $(CURDIR)/debian/openser-radius-modules/etc/openser/
+	mv $(CURDIR)/debian/openser/etc/openser/dictionary.radius $(CURDIR)/debian/openser-radius-modules/etc/openser/
+
+	# install only the unixodbc module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=1 $(MAKE) install-modules-all modules="$(UNIXODBC_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-unixodbc-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-unixodbc-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-unixodbc-module
+
+# This single target is used to build all the packages, all at once, or
+# one at a time. So keep in mind: any options passed to commands here will
+# affect _all_ packages. Anything you want to only affect one package
+# should be put in another target, such as the install target.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs
+	dh_installexamples
+#	dh_installlogrotate
+	dh_installinit -popenser -- defaults 23
+	dh_installcron
+	dh_installman
+	dh_installinfo
+	dh_installchangelogs
+	dh_link
+	dh_strip --dbg-package=openser-dbg
+	dh_compress 
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-independent packages using the common target
+binary-indep: build install
+# We have nothing to do by default.
+
+binary: binary-indep binary-arch
+
+print-version:
+	@@echo "Debian version:          $(DEBVERSION)"
+	@@echo "Upstream version:        $(UPVERSION)"
+
+get-orig-source:
+	@@dh_testdir
+	@@[ -d ../tarballs/. ]||mkdir -p ../tarballs
+	@@echo Downloading $(FILENAME) from $(URL) ...
+	@@wget -N -nv -T10 -t3 -O ../tarballs/$(FILENAME) $(URL)
+
+.PHONY: build clean binary-indep binary-arch binary install configure patch unpatch real-clean
