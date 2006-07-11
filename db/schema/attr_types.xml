@@ -9,7 +9,7 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql" role="serweb">
     <name>attr_types</name>
-    <version>2</version>
+    <version>3</version>
     <description>
 	Each attribute, identified by name, has associated set of
 	properties and constraints. This table contains types and
@@ -99,6 +99,18 @@
 	</description>
     </column>
 
+    <column role="serweb" id="at.access">
+        <name>access</name>
+	<type>int</type>
+        <default>0</default>
+        <description>
+	    Access rights to attribute. Meaning values is this:
+	        0 - full access (read and write)
+		1 - read only for users (read and write for admins)
+		3 - admins only (read and write), no access for users
+        </description>
+    </column>
+
 	<column role="serweb" id="at.order">
 	<name>ordering</name>
 	<type>int</type>
@@ -126,6 +138,7 @@
          <value col="at.d_flags">33</value>
          <value col="at.prior">256</value>
          <value col="at.order">200</value>
+	 <value col="at.access">1</value>
     </row>
 	 
     <row><value col="at.name">fr_timer</value>    

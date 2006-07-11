@@ -78,7 +78,7 @@ CREATE TABLE credentials (
     KEY uid (uid)
 );
 
-INSERT INTO version (table_name, table_version) values ('attr_types','2');
+INSERT INTO version (table_name, table_version) values ('attr_types','3');
 CREATE TABLE attr_types (
     name VARCHAR(32) NOT NULL,
     rich_type VARCHAR(32) NOT NULL DEFAULT 'string',
@@ -88,13 +88,14 @@ CREATE TABLE attr_types (
     default_flags INT NOT NULL DEFAULT '0',
     flags INT NOT NULL DEFAULT '0',
     priority INT NOT NULL DEFAULT '0',
+    access INT NOT NULL DEFAULT '0',
     ordering INT NOT NULL DEFAULT '0',
     UNIQUE KEY upt_idx1 (name)
 );
 
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('uid', '2', '1');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('did', '2', '1');
-INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('asserted_id', '2', 'string', 'asserted identity', '33', '256', '200');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering, access) VALUES ('asserted_id', '2', 'string', 'asserted identity', '33', '256', '200', '1');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('fr_timer', '0', 'int', '@ff_fr_timer', '33', '1073807616', '140');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('fr_inv_timer', '0', 'int', '@ff_fr_inv_timer', '33', '1073807616', '150');
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering) VALUES ('gflags', '0', 'int', 'global flags', '33', '1073741824', '0');
