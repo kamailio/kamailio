@@ -5,8 +5,6 @@
 #include "euac_internals.h"
 #include <unistd.h>
 
-#include "../pa/presentity.h"
-
 /*
 #define rpc_lf(rpc, c)	rpc->add(c, "s","")
 	rpc->printf(c, "    %.*s contact=\'%.*s\' exp=%u status=%d published=%d (id=%.*s)", 
