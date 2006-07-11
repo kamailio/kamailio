@@ -1,3 +1,6 @@
+2006-06-29
+	* added function has_to_tag common for more presence modules
+
 2006-06-28
 	* optimalization of dstring operations (internal buffers allocated in PKG
 	memory, some functions changed to macros, added function dstr_get_str_pkg)

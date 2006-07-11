@@ -132,4 +132,17 @@ int requires_extension(struct sip_msg *m, str *extension)
 	return 0;
 }
 
+/**
+ * Verifies presence of the To-tag in message. Returns 1 if
+ * the tag is present, 0 if not, -1 on error.
+ */
+int has_to_tag(struct sip_msg *_m)
+{
+	struct to_body *to = (struct to_body*)_m->to->parsed;
+	if (!to) return -1;
+	if (to->tag_value.len > 0) return 1;
+	return 0;
+}
+
+
 #endif
