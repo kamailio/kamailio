@@ -3,6 +3,7 @@
 #include "rl_subscription.h"
 #include <cds/dstring.h>
 #include <cds/logger.h>
+#include <cds/sip_utils.h>
 #include "result_codes.h"
 
 #include "../../str.h"
@@ -209,18 +210,6 @@ static int check_message(struct sip_msg *_m, int send_err)
 
 	/* verify Supported: eventlist */
 	
-	return 0;
-}
-
-/**
- * Verifies presence of the To-tag in message. Returns 1 if
- * the tag is present, 0 if not, -1 on error.
- */
-static int has_to_tag(struct sip_msg *_m)
-{
-	struct to_body *to = (struct to_body*)_m->to->parsed;
-	if (!to) return 0;
-	if (to->tag_value.len > 0) return 1;
 	return 0;
 }
 
