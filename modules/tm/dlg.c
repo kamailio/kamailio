@@ -366,6 +366,54 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 	return -1;
 }
 
+/*
+ * Extract method from CSeq header field
+ */
+static inline int get_cseq_method(struct sip_msg* _m, str* _method)
+{
+	if (!_m->cseq && ((parse_headers(_m, HDR_CSEQ_F, 0) == -1) || !_m->cseq)) {
+		LOG(L_ERR, "get_cseq_method(): Error while parsing CSeq\n");
+		return -1;
+	}
+
+	_method->s = get_cseq(_m)->method.s;
+	_method->len = get_cseq(_m)->method.len;
+	return 0;
+}
+
+
+static inline int refresh_dialog_resp(struct sip_msg* _m, 
+		target_refresh_t is_target_refresh)
+{
+	str method;
+	
+	switch (is_target_refresh) {
+		case IS_NOT_TARGET_REFRESH: 
+			return 0;
+		case IS_TARGET_REFRESH: 
+			return 1;
+		case TARGET_REFRESH_UNKNOWN: 
+			if (get_cseq_method(_m, &method) < 0) return 0; /* error */
+			if ((method.len == 6) && !memcmp("INVITE", method.s, 6)) 
+				return 1;
+			else return 0;
+	}
+	return 0;
+}
+		
+static inline int refresh_dialog_req(struct sip_msg* _m, target_refresh_t is_target_refresh)
+{
+	switch (is_target_refresh) {
+		case IS_NOT_TARGET_REFRESH: 
+			return 0;
+		case IS_TARGET_REFRESH: 
+			return 1;
+		case TARGET_REFRESH_UNKNOWN: 
+			return (_m->first_line.u.request.method_value == METHOD_INVITE);
+			break;
+	}
+	return 0;
+}
 
 /*
  * Extract all necessary information from a response and put it
@@ -469,6 +517,10 @@ static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
 		     /* We are in early state already, do nothing
 		      */
 	} else if ((code >= 200) && (code <= 299)) {
+		/* Warning - we can handle here response for non-initial request (for
+		 * example UPDATE within early INVITE/BYE dialog) and move into
+		 * confirmed state may be error! But this depends on dialog type... */
+		
 		     /* Same as in dlg_new_resp_uac */
 		     /* A final response, update the structures and transit
 		      * into DLG_CONFIRMED
@@ -492,29 +544,14 @@ static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
 
 
 /*
- * Extract method from CSeq header field
- */
-static inline int get_cseq_method(struct sip_msg* _m, str* _method)
-{
-	if (!_m->cseq && ((parse_headers(_m, HDR_CSEQ_F, 0) == -1) || !_m->cseq)) {
-		LOG(L_ERR, "get_cseq_method(): Error while parsing CSeq\n");
-		return -1;
-	}
-
-	_method->s = get_cseq(_m)->method.s;
-	_method->len = get_cseq(_m)->method.len;
-	return 0;
-}
-
-
-/*
  * Handle dialog in DLG_CONFIRMED state, we will be processing
  * a response to a request sent within a dialog
  */
-static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
+static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m, 
+		target_refresh_t is_target_refresh)
 {
 	int code;
-	str method, contact;
+	str contact;
 
 	code = _m->first_line.u.reply.statuscode;	
 
@@ -522,10 +559,6 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 	      * a response to a request sent within the dialog. We will
 	      * update remote target URI if and only if the message sent was
 	      * a target refresher. 
-	      */
-
-	     /* FIXME: Currently we support only INVITEs as target refreshers,
-	      * this should be generalized
 	      */
 
 	     /* IF we receive a 481 response, terminate the dialog because
@@ -541,8 +574,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 	     /* Do nothing if not 2xx */
 	if ((code < 200) || (code >= 300)) return 0;
 	
-	if (get_cseq_method(_m, &method) < 0) return -1;
-	if ((method.len == 6) && !memcmp("INVITE", method.s, 6)) {
+	if (refresh_dialog_resp(_m, is_target_refresh)) {
 		     /* Get contact if any and update remote target */
 		if (parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
 			LOG(L_ERR, "dlg_confirmed_resp_uac(): Error while parsing headers\n");
@@ -558,6 +590,8 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 			     /* Duplicate new remote target */
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -4;
 		}
+
+		calculate_hooks(_d);
 	}
 
 	return 0;
@@ -567,7 +601,8 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 /*
  * A response arrived, update dialog
  */
-int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
+int dlg_response_uac(dlg_t* _d, struct sip_msg* _m, 
+		target_refresh_t is_target_refresh)
 {
 	if (!_d || !_m) {
 		LOG(L_ERR, "dlg_response_uac(): Invalid parameter value\n");
@@ -583,7 +618,7 @@ int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
 		return dlg_early_resp_uac(_d, _m);
 
 	case DLG_CONFIRMED: 
-		return dlg_confirmed_resp_uac(_d, _m);
+		return dlg_confirmed_resp_uac(_d, _m, is_target_refresh);
 
 	case DLG_DESTROYED:
 		LOG(L_ERR, "dlg_response_uac(): Cannot handle destroyed dialog\n");
@@ -791,11 +826,10 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 	return 0;
 }
 
-
 /*
  * UAS side - update a dialog from a request
  */
-int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
+int dlg_request_uas(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_refresh)
 {
 	str contact;
 	int cseq;
@@ -822,8 +856,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 	     /* We will als update remote target URI if the message 
 	      * is target refresher
 	      */
-	if (_m->first_line.u.request.method_value == METHOD_INVITE) {
-		     /* target refresher */
+	if (refresh_dialog_req(_m, is_target_refresh)) { /* target refresher */
 		if (parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
 			LOG(L_ERR, "dlg_request_uas(): Error while parsing headers\n");
 			return -4;
@@ -834,6 +867,9 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 			if (_d->rem_target.s) shm_free(_d->rem_target.s);
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -6;
 		}
+
+		calculate_hooks(_d);
+		
 	}
 
 	return 0;
