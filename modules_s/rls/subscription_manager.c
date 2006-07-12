@@ -501,7 +501,7 @@ int sm_refresh_subscription_nolock(subscription_manager_t *mng,
 	if (!s) return RES_INTERNAL_ERR;
 	
 	/* refresh SIP dialog */	
-	if (s->dialog) tmb.dlg_request_uas(s->dialog, m);
+	if (s->dialog) tmb.dlg_request_uas(s->dialog, m, IS_TARGET_REFRESH);
 		
 	if (sm_subscription_terminated(s) != 0) { /* not terminated */
 		tem_remove_event_nolock(&mng->timer, &s->expiration);

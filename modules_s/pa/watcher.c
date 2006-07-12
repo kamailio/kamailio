@@ -599,6 +599,9 @@ void free_watcher(watcher_t* _w)
 int update_watcher(struct presentity *p, watcher_t* _w, time_t _e, struct sip_msg *m)
 {
 	watcher_status_t old = _w->status; /* old status of subscription */
+
+	INFO("updating watcher dialog\n");
+	tmb.dlg_request_uas(_w->dialog, m, IS_TARGET_REFRESH);
 	
 	_w->expires = _e;
 	_w->flags |= WFLAG_SUBSCRIPTION_CHANGED;

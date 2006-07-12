@@ -191,6 +191,10 @@ only.
     <include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
+	
+<section><title>Development</title>
+<include xmlns="http://www.w3.org/2001/XInclude" href="auth.xml"/>
+</section>
     <!-- <include xmlns="http://www.w3.org/2001/XInclude" href="biblio.xml"/> -->
 
 </section>

@@ -1,3 +1,7 @@
+2006-07-12
+	* improved and tested dialog refreshing (contacts in NOTIFY responses and
+	renewal SUBSCRIBE requests)
+
 2006-07-10
 	* added parameter async_auth_queries for switching between sync/async
 	loading of auth rules (synchronous dowload is done from inside of critical
@@ -20,6 +24,9 @@
 2006-07-03
 	* improved handling new subscription - most work moved outside of critical
 	secion
+
+2006-06-30
+	* added short description of state aggregation
 
 2006-06-29
 	* rearranged work with mimetypes

@@ -65,7 +65,7 @@ static void confirm_dialog(events_uac_t *uac, struct sip_msg *m)
 	ht_remove(&euac_internals->ht_unconfirmed, &uac->dialog->id);	
 	
 	/* process confirmation response */
-	euac_internals->tmb.dlg_response_uac(uac->dialog, m);
+	euac_internals->tmb.dlg_response_uac(uac->dialog, m, IS_TARGET_REFRESH);
 
 	/* add to confirmed dialogs */
 	DBG("adding into confirmed EUACs\n");

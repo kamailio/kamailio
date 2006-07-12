@@ -107,38 +107,45 @@ static pa_notify_cb_param_t *create_notify_cb_param(presentity_t *p, watcher_t *
 	return cbd;
 }
 
+static int get_watcher(pa_notify_cb_param_t *cbd, 
+		watcher_t **w, presentity_t **p, int *events)
+{
+	int et = EVENT_PRESENCE;
+	
+	if (find_presentity_uid(cbd->domain, &cbd->uid, p) != 0) {
+		return -1;
+	}
+	
+	if (find_watcher_dlg(*p, &cbd->id, et, w) != 0) {
+		/* presence watcher NOT found */
+		
+		et = EVENT_PRESENCE_WINFO;
+		if (find_watcher_dlg(*p, &cbd->id, et, w) != 0) {
+			/* presence.winfo watcher NOT found */
+			return -1;
+		}
+	}
+	if (events) *events = et;
+	return 0;
+}
+
 static void destroy_subscription(pa_notify_cb_param_t *cbd)
 {
-	struct pdomain *domain = NULL;
 	presentity_t *p = NULL;
 	watcher_t *w = NULL;
-	int et = EVENT_PRESENCE;
+	int et;
 	
 /*	if (find_pdomain(cbd->domain, &domain) != 0) {
 		ERR("can't find PA domain\n");
 		return;
 	} */
-	domain = cbd->domain;
-
-	lock_pdomain(domain);
+	lock_pdomain(cbd->domain);
 	
-	if (find_presentity_uid(domain, &cbd->uid, &p) != 0) {
-		/* presentity NOT found */
-		unlock_pdomain(domain);
+	if (get_watcher(cbd, &w, &p, &et) != 0) {
+		unlock_pdomain(cbd->domain);
 		return;
 	}
 	
-	if (find_watcher_dlg(p, &cbd->id, et, &w) != 0) {
-		/* presence watcher NOT found */
-		
-		et = EVENT_PRESENCE_WINFO;
-		if (find_watcher_dlg(p, &cbd->id, et, &w) != 0) {
-			/* presence.winfo watcher NOT found */
-			unlock_pdomain(domain);
-			return;
-		}
-	}
-
 	/* have watcher, et and presentity */
 	if (use_db) db_remove_watcher(p, w);
 
@@ -155,8 +162,19 @@ static void destroy_subscription(pa_notify_cb_param_t *cbd)
 	free_watcher(w);
 
 
-	unlock_pdomain(domain);
+	unlock_pdomain(cbd->domain);
 	
+}
+
+static void refresh_dialog(pa_notify_cb_param_t *cbd, struct sip_msg *m)
+{
+	watcher_t *w;
+	presentity_t *p;
+	
+	lock_pdomain(cbd->domain);
+	if (get_watcher(cbd, &w, &p, NULL) >= 0)
+		tmb.dlg_response_uac(w->dialog, m, IS_TARGET_REFRESH);
+	unlock_pdomain(cbd->domain);
 }
 
 static void pa_notify_cb(struct cell* t, int type, struct tmcb_params* params)
@@ -173,6 +191,10 @@ static void pa_notify_cb(struct cell* t, int type, struct tmcb_params* params)
 		return;
 	}
 
+	if ((params->code >= 200) && (params->code < 300)) {
+		if (params->rpl && (params->rpl != FAKED_REPLY)) 
+			refresh_dialog(cbd, params->rpl);
+	}
 	if ((params->code >= 300)) {
 		int ignore = 0;
 		

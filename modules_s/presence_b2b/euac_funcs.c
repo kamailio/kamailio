@@ -353,14 +353,16 @@ void discard_notification(events_uac_t *uac, struct sip_msg *m, int res_code, ch
 
 void refresh_dialog(events_uac_t *uac, struct sip_msg *m)
 {
+	/* only NOTIFYs are here? */
 	if (uac->dialog)
-		euac_internals->tmb.dlg_request_uas(uac->dialog, m);
+		euac_internals->tmb.dlg_request_uas(uac->dialog, m, IS_TARGET_REFRESH);
 }
 
 void refresh_dialog_resp(events_uac_t *uac, struct sip_msg *m)
 {
+	/* only responses to SUBSCRIBE are here? */
 	if (uac->dialog)
-		euac_internals->tmb.dlg_response_uac(uac->dialog, m);
+		euac_internals->tmb.dlg_response_uac(uac->dialog, m, IS_TARGET_REFRESH);
 }
 
 /* ----- Timer functions ----- */
