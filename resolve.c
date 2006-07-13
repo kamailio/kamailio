@@ -438,6 +438,7 @@ struct rdata* get_record(char* name, int type)
 	return head;
 error_boundary:
 		LOG(L_ERR, "ERROR: get_record: end of query buff reached\n");
+		 if (head) free_rdata_list(head);
 		return 0;
 error_parse:
 		LOG(L_ERR, "ERROR: get_record: rdata parse error \n");
