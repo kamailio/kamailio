@@ -31,6 +31,7 @@
  *  2003-07-03  default port value set according to proto (andrei)
  *  2005-07-11  added resolv_init (timeouts a.s.o) (andrei)
  *  2006-04-13  added sip_hostport2su()  (andrei)
+ *  2006-07-13  rdata structures put on diet (andrei)
  */ 
 
 
@@ -146,26 +147,37 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 								  unsigned char* rdata)
 {
 	struct srv_rdata* srv;
+	unsigned short priority;
+	unsigned short weight;
+	unsigned short port;
 	int len;
+	char name[MAX_DNS_NAME];
 	
 	srv=0;
 	if ((rdata+6)>=end) goto error;
-	srv=(struct srv_rdata*)local_malloc(sizeof(struct srv_rdata));
+	
+	memcpy((void*)&priority, rdata, 2);
+	memcpy((void*)&weight,   rdata+2, 2);
+	memcpy((void*)&port,     rdata+4, 2);
+	rdata+=6;
+	if (dn_expand(msg, end, rdata, name, MAX_DNS_NAME-1)<0)
+		goto error;
+	len=strlen(name);
+	if (len>255)
+		goto error;
+	/* alloc enought space for the struct + null terminated name */
+	srv=local_malloc(sizeof(struct srv_rdata)-1+len+1);
 	if (srv==0){
 		LOG(L_ERR, "ERROR: dns_srv_parser: out of memory\n");
 		goto error;
 	}
+	srv->priority=ntohs(priority);
+	srv->weight=ntohs(weight);
+	srv->port=ntohs(port);
+	srv->name_len=len;
+	memcpy(srv->name, name, srv->name_len);
+	srv->name[srv->name_len]=0;
 	
-	memcpy((void*)&srv->priority, rdata, 2);
-	memcpy((void*)&srv->weight,   rdata+2, 2);
-	memcpy((void*)&srv->port,     rdata+4, 2);
-	rdata+=6;
-	srv->priority=ntohs(srv->priority);
-	srv->weight=ntohs(srv->weight);
-	srv->port=ntohs(srv->port);
-	if ((len=dn_expand(msg, end, rdata, srv->name, MAX_DNS_NAME-1))==-1)
-		goto error;
-	/* add terminating 0 ? (warning: len=compressed name len) */
 	return srv;
 error:
 	if (srv) local_free(srv);
@@ -203,36 +215,63 @@ struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
 								  unsigned char* rdata)
 {
 	struct naptr_rdata* naptr;
+	unsigned char* flags;
+	unsigned char* services;
+	unsigned char* regexp;
+	unsigned short order;
+	unsigned short pref;
+	unsigned char flags_len;
+	unsigned char services_len;
+	unsigned char regexp_len;
 	int len;
+	char repl[MAX_DNS_NAME];
 	
 	naptr = 0;
 	if ((rdata + 7) >= end) goto error;
-	naptr=(struct naptr_rdata*)local_malloc(sizeof(struct naptr_rdata));
+	
+	memcpy((void*)&order, rdata, 2);
+	memcpy((void*)&pref, rdata + 2, 2);
+	flags_len = rdata[4];
+	if ((rdata + 7 +  flags_len) >= end)
+		goto error;
+	flags=rdata+5;
+	services_len = rdata[5 + flags_len];
+	if ((rdata + 7 + flags_len + services_len) >= end)
+		goto error;
+	services=rdata + 6 + flags_len;
+	regexp_len = rdata[6 + flags_len + services_len];
+	if ((rdata + 7 + flags_len + services_len + regexp_len) >= end)
+		goto error;
+	regexp=rdata + 7 + flags_len + services_len;
+	rdata = rdata + 7 + flags_len + services_len + regexp_len;
+	if (dn_expand(msg, end, rdata, repl, MAX_DNS_NAME-1) == -1)
+		goto error;
+	len=strlen(repl);
+	if (len>255)
+		goto error;
+	naptr=local_malloc(sizeof(struct naptr_rdata)+flags_len+services_len+
+						regexp_len+len+1-1);
 	if (naptr == 0){
 		LOG(L_ERR, "ERROR: dns_naptr_parser: out of memory\n");
 		goto error;
 	}
-	
-	memcpy((void*)&naptr->order, rdata, 2);
 	naptr->order=ntohs(naptr->order);
-	memcpy((void*)&naptr->pref, rdata + 2, 2);
 	naptr->pref=ntohs(naptr->pref);
-	naptr->flags_len = (int)rdata[4];
-	if ((rdata + 7 +  naptr->flags_len) >= end) goto error;
-	memcpy((void*)&naptr->flags, rdata + 5, naptr->flags_len);
-	naptr->services_len = (int)rdata[5 + naptr->flags_len];
-	if ((rdata + 7 + naptr->flags_len + naptr->services_len) >= end) goto error;
-	memcpy((void*)&naptr->services, rdata + 6 + naptr->flags_len, naptr->services_len);
-	naptr->regexp_len = (int)rdata[6 + naptr->flags_len + naptr->services_len];
-	if ((rdata + 7 + naptr->flags_len + naptr->services_len +
-					naptr->regexp_len) >= end) goto error;
-	memcpy((void*)&naptr->regexp, rdata + 7 + naptr->flags_len +
-				naptr->services_len, naptr->regexp_len);
-	rdata = rdata + 7 + naptr->flags_len + naptr->services_len + 
-			naptr->regexp_len;
-	if ((len=dn_expand(msg, end, rdata, naptr->repl, MAX_DNS_NAME-1)) == -1)
-		goto error;
-	/* add terminating 0 ? (warning: len=compressed name len) */
+	
+	naptr->flags=&naptr->str_table[0];
+	naptr->flags_len=flags_len;
+	memcpy(naptr->flags, flags, naptr->flags_len);
+	naptr->services=&naptr->str_table[flags_len];
+	naptr->services_len=services_len;
+	memcpy(naptr->services, services, naptr->services_len);
+	naptr->regexp=&naptr->str_table[flags_len+services_len];
+	naptr->regexp_len=regexp_len;
+	memcpy(naptr->regexp, regexp, naptr->regexp_len);
+	naptr->repl=&naptr->str_table[flags_len+services_len+regexp_len];
+	naptr->repl_len=len;
+	memcpy(naptr->repl, repl, len);
+	naptr->repl[len]=0; /* null term. */
+	
 	return naptr;
 error:
 	if (naptr) local_free(naptr);
@@ -247,15 +286,23 @@ struct cname_rdata* dns_cname_parser( unsigned char* msg, unsigned char* end,
 {
 	struct cname_rdata* cname;
 	int len;
+	char name[MAX_DNS_NAME];
 	
 	cname=0;
-	cname=(struct cname_rdata*)local_malloc(sizeof(struct cname_rdata));
+	if (dn_expand(msg, end, rdata, name, MAX_DNS_NAME-1)==-1)
+		goto error;
+	len=strlen(name);
+	if (len>255)
+		goto error;
+	/* alloc sizeof struct + space for the null terminated name */
+	cname=local_malloc(sizeof(struct cname_rdata)-1+len+1);
 	if(cname==0){
 		LOG(L_ERR, "ERROR: dns_cname_parser: out of memory\n");
 		goto error;
 	}
-	if ((len=dn_expand(msg, end, rdata, cname->name, MAX_DNS_NAME-1))==-1)
-		goto error;
+	cname->name_len=len;
+	memcpy(cname->name, name, cname->name_len);
+	cname->name[cname->name_len]=0;
 	return cname;
 error:
 	if (cname) local_free(cname);
@@ -431,6 +478,8 @@ struct rdata* get_record(char* name, int type)
 				
 				/* insert sorted into the list */
 				for (crt=&head; *crt; crt= &((*crt)->next)){
+					if ((*crt)->type!=T_SRV)
+						continue;
 					crt_srv=(struct srv_rdata*)(*crt)->rdata;
 					if ((srv_rd->priority <  crt_srv->priority) ||
 					   ( (srv_rd->priority == crt_srv->priority) && 
@@ -483,6 +532,7 @@ struct rdata* get_record(char* name, int type)
 	return head;
 error_boundary:
 		LOG(L_ERR, "ERROR: get_record: end of query buff reached\n");
+		if (head) free_rdata_list(head);
 		return 0;
 error_parse:
 		LOG(L_ERR, "ERROR: get_record: rdata parse error \n");

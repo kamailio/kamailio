@@ -31,8 +31,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * tester for ser resolver  (andrei) */
 
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -50,6 +53,11 @@ int process_no=0;
 long shm_mem_size=0;
 char mem_pool[1024*1024];
 struct qm_block* mem_block;
+int log_facility=0;
+int memlog=0;
+int memdbg=0;
+int ser_error=0;
+struct process_table* pt=0;
 
 
 static char* id="$Id$";
@@ -74,6 +82,7 @@ int main(int argc, char** argv)
 	struct rdata* head;
 	struct rdata* l;
 	struct srv_rdata* srv;
+	struct naptr_rdata* naptr;
 	struct a_rdata* ip;
 
 	name=type_str=0;
@@ -154,7 +163,9 @@ int main(int argc, char** argv)
 							l->type, l->class, l->ttl);
 					printf("       prio= %d weight=%d port=%d\n",
 								srv->priority, srv->weight, srv->port);
-					printf("       name= [%s]\n", srv->name);
+					printf("       name_len= %d (%d), name= [%.*s]\n",
+									srv->name_len, strlen(srv->name),
+									srv->name_len, srv->name);
 					break;
 				case T_CNAME:
 					printf("CNAME  type= %d class=%d  ttl=%d\n",
@@ -170,13 +181,32 @@ int main(int argc, char** argv)
 								ip->ip[0], ip->ip[1], ip->ip[2], ip->ip[3]);
 					break;
 				case T_AAAA:
-					printf("AAAA    type= %d class=%d  ttl=%d\n",
+					printf("AAAA   type= %d class=%d  ttl=%d\n",
 							l->type, l->class, l->ttl);
 					printf("        ip6= ");
 					for(r=0;r<16;r++) 
 						printf("%x ", ((struct aaaa_rdata*)l->rdata)->ip6[r]);
 					printf("\n");
 					break;
+				case T_NAPTR:
+					naptr=(struct naptr_rdata*)l->rdata;
+					printf("NAPTR  type= %d class=%d  ttl=%d\n",
+							l->type, l->class, l->ttl);
+					printf("       order= %d pref=%d\n",
+								naptr->order, naptr->pref);
+					printf("       flags_len= %d,     flags= [%.*s]\n",
+									naptr->flags_len, 
+									naptr->flags_len, naptr->flags);
+					printf("       services_len= %d,  services= [%.*s]\n",
+									naptr->services_len, 
+									naptr->services_len, naptr->services);
+					printf("       regexp_len= %d,    regexp= [%.*s]\n",
+									naptr->regexp_len, 
+									naptr->regexp_len, naptr->regexp);
+					printf("       repl_len= %d,      repl= [%s]\n",
+									naptr->repl_len, naptr->repl);
+					break;
+
 				default:
 					printf("UNKN    type= %d class=%d  ttl=%d\n",
 								l->type, l->class, l->ttl);

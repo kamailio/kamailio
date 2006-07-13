@@ -30,6 +30,7 @@
  * --------
  *  2003-04-12  support for resolving ipv6 address references added (andrei)
  *  2004-07-28  darwin needs nameser_compat.h (andrei)
+ *  2006-07-13  rdata structures put on diet (andrei)
  */
 
 
@@ -79,23 +80,38 @@ struct srv_rdata {
 	unsigned short priority;
 	unsigned short weight;
 	unsigned short port;
-	unsigned int name_len;
-	char name[MAX_DNS_NAME];
+	unsigned char name_len; /* name length w/o the terminating 0 */
+	char name[1]; /* null terminated name (len=name_len+1) */
 };
+
+
+/* real size of the structure */
+#define SRV_RDATA_SIZE (s) (sizeof(struct srv_rdata)+(s).name_len)
 
 /* naptr rec. struct*/
 struct naptr_rdata {
+	char* flags;    /* points inside str_table */
+	char* services; /* points inside str_table */
+	char* regexp;   /* points inside str_table */
+	char* repl;     /* points inside str_table, null terminated */
+	
 	unsigned short order;
 	unsigned short pref;
-	unsigned int flags_len;
-	char flags[MAX_DNS_STRING];
-	unsigned int services_len;
-	char services[MAX_DNS_STRING];
-	unsigned int regexp_len;
-	char regexp[MAX_DNS_STRING];
-	unsigned int repl_len; /* not currently used */
-	char repl[MAX_DNS_NAME];
+	
+	unsigned char flags_len;
+	unsigned char services_len;
+	unsigned char regexp_len;
+	unsigned char repl_len; /* not currently used */
+	
+	char str_table[1]; /* contains all the strings */
 };
+
+/* real size of the structure */
+#define NAPTR_RDATA_SIZE (s) (sizeof(struct naptr_rdata) \
+								+ (s).flags_len \
+								+ (s).services_len \
+								+ (s).regexp_len \
+								+ (s).repl_len + 1 - 1)
 
 
 /* A rec. struct */
@@ -109,8 +125,12 @@ struct aaaa_rdata {
 
 /* cname rec. struct*/
 struct cname_rdata {
-	char name[MAX_DNS_NAME];
+	unsigned char name_len; /* name length w/o the terminating 0 */
+	char name[1]; /* null terminated name (len=name_len+1) */
 };
+
+/* real size of the structure */
+#define CNAME_RDATA_SIZE (s) (sizeof(struct cname_rdata)+(s).name_len)
 
 
 
