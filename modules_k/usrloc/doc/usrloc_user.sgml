@@ -565,7 +565,6 @@ modparam("usrloc", "cseq_delay", 5)
 		</example>
 	</section>
 
-
 	<section>
 		<title><varname>fetch_rows</varname> (integer)</title>
 		<para>
@@ -581,10 +580,32 @@ modparam("usrloc", "cseq_delay", 5)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>cseq_delay</varname> parameter</title>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "fetch_rows", 3000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>hash_size</varname> (integer)</title>
+		<para>
+		The number of entries of the hash table used by usrloc to store the
+		location records is 2^hash_size. For hash_size=4, the number of entries
+		of the hash table is 16.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>9</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "hash_size", 10)
 ...
 </programlisting>
 		</example>
