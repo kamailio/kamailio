@@ -37,7 +37,9 @@ typedef struct db_res {
 		int n;             /* Number of columns */
 	} col;
 	struct db_row* rows;       /* Rows */
-	int n;                     /* Number of rows */
+	int n;                     /* Number of rows in current fetch */
+	int res_rows;              /* Number of total rows in query */
+	int last_row;              /* Last row */
 } db_res_t;
 
 
@@ -46,6 +48,8 @@ typedef struct db_res {
 #define RES_COL_N(re) ((re)->col.n)
 #define RES_ROWS(re)  ((re)->rows)
 #define RES_ROW_N(re) ((re)->n)
+#define RES_LAST_ROW(re)  ((re)->last_row)
+#define RES_NUM_ROWS(re) ((re)->res_rows)
 
 
 #endif /* DB_RES_H */

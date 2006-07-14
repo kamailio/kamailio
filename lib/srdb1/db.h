@@ -82,6 +82,11 @@ typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k,
 			   db_key_t* _c, int _n, int _nc,
 			   db_key_t _o, db_res_t** _r);
 
+/*
+ * Fetch number of rows from result !
+ */
+typedef int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n);
+
 
 /*
  * Raw SQL query, database specific !
@@ -139,17 +144,18 @@ typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, i
 
 
 typedef struct db_func {
-	unsigned int     cap;          /* Capability vector of the database transport */
-	db_use_table_f   use_table;    /* Specify table name */
-	db_init_f        init;         /* Initialize database connection */
-	db_close_f       close;        /* Close database connection */
-	db_query_f       query;        /* query a table */
-	db_raw_query_f   raw_query;    /* Raw query - SQL */
-	db_free_result_f free_result;  /* Free a query result */
-	db_insert_f      insert;       /* Insert into table */
-	db_delete_f      delete;       /* Delete from table */ 
-	db_update_f      update;       /* Update table */
-	db_replace_f     replace;      /* Replace row in a table */
+	unsigned int     cap;           /* Capability vector of the database transport */
+	db_use_table_f    use_table;     /* Specify table name */
+	db_init_f         init;          /* Initialize database connection */
+	db_close_f        close;         /* Close database connection */
+	db_query_f        query;         /* query a table */
+	db_fetch_result_f fetch_result; /* fetch result */
+	db_raw_query_f    raw_query;     /* Raw query - SQL */
+	db_free_result_f  free_result;   /* Free a query result */
+	db_insert_f       insert;        /* Insert into table */
+	db_delete_f       delete;        /* Delete from table */ 
+	db_update_f       update;        /* Update table */
+	db_replace_f      replace;       /* Replace row in a table */
 } db_func_t;
 
 

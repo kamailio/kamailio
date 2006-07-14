@@ -34,6 +34,7 @@ typedef enum db_cap {
 	DB_CAP_DELETE =    1 << 3,  /* Database driver can delete data from database */
 	DB_CAP_UPDATE =    1 << 4,  /* Database driver can update data in the database */
 	DB_CAP_REPLACE =   1 << 5,  /* Replace (also known as INSERT OR UPDATE) support */
+	DB_CAP_FETCH   =   1 << 6,  /* Fetch result support */
 } db_cap_t;
 
 

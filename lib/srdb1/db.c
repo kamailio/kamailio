@@ -100,6 +100,12 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 		dbf.cap |= DB_CAP_QUERY;
 	}
 
+	dbf.fetch_result = (db_fetch_result_f)find_mod_export(tmp,
+			"db_fetch_result", 2, 0);
+	if (dbf.fetch_result) {
+		dbf.cap |= DB_CAP_FETCH;
+	}
+
 	dbf.raw_query = (db_raw_query_f)find_mod_export(tmp, "db_raw_query", 2, 0);
 	if (dbf.raw_query) {
 		dbf.cap |= DB_CAP_RAW_QUERY;
@@ -152,8 +158,8 @@ int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 {
 	db_key_t key[1], col[1];
 	db_val_t val[1];
-	db_res_t* res;
-	db_val_t* ver;
+	db_res_t* res = 0;
+	db_val_t* ver = 0;
 	int ret;
 
 	if (!dbf||!connection || !table) {
