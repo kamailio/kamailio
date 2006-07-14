@@ -30,6 +30,21 @@
 #             separated the serweb from openser tables (bogdan)
 # 2006-05-16  added ability to specify MD5 from a configuration file
 #             FreeBSD does not have the md5sum function (norm)
+# 2006-07-14  Corrected syntax from MySQL to Postgres (norm)
+#             moved INDEX creation out of CREATE table statement into 
+#                  CREATE INDEX (usr_preferences, trusted)
+#             auto_increment isn't valid in Postgres, replaced with 
+#                  local AUTO_INCREMENT
+#             datetime isn't valid in Postgres, replaced with local DATETIME 
+#             split GRANTs for SERWeb tables so that it is only executed 
+#                  if SERWeb tables are created
+#             added GRANTs for re_grp table
+#             added CREATE pd_multidomain table (from PDT module)
+#             corrected comments to indicate Postgres as opposed to MySQL
+#             made last_modified/created stamps consistent to now() using 
+#                  local TIMESTAMP
+#
+
 
 PATH=$PATH:/usr/local/sbin
 
@@ -51,7 +66,7 @@ fi
 if [ -z "$DBNAME" ]; then
 	DBNAME="openser"
 fi
-# address of MySQL server
+# address of Postgres server
 if [ -z "$DBHOST" ]; then
 	DBHOST="localhost"
 fi
@@ -71,7 +86,7 @@ fi
 if [ -z "$RO_PW" ]; then
 	RO_PW="openserro"
 fi
-# full privileges MySQL user
+# full privileges Postgres user
 if [ -z "$SQL_USER" ]; then
 	SQL_USER="postgres"
 	if [ ! -r ~/.pgpass ]; then
@@ -242,7 +257,6 @@ credentials()
 	#PHPLIB_ID of users should be difficulty to guess for security reasons
 	NOW=`date`;
 	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | awk '{ print $1 }'`
-	PHPLIB_ID=`$GENHA1 "$RANDOM" "$NOW" $SIP_DOMAIN`
 	if [ $? -ne 0 ] ; then
 		echo "PHPLIB_ID calculation failed"
 		exit 1
@@ -265,13 +279,8 @@ if [ $# -eq 1 ] ; then
 		'root@localhost', '2002-09-04 19:37:45', '$DUMMY_DATE',
 		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
 		'$HA1', '$SIP_DOMAIN', '$HA1B',
-		'$PHPLIB_ID' );
+		'$PHPLIB_ID' );"
 
-		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-		VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
-
-		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-		VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
 elif [ $# -eq 2 ] ; then
 	# if 3rd param set, don't create any initial user
 	INITIAL_USER=""
@@ -284,14 +293,14 @@ fi
 USE_CMD='\connect'
 GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 	CREATE USER $DBROUSER WITH PASSWORD '$RO_PW';
-	GRANT ALL PRIVILEGES ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
-		location, missed_calls, pending, phonebook, phonebook_id_seq, subscriber, silo, silo_mid_seq, domain,
-		uri, server_monitoring, usr_preferences, usr_preferences_types, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBRWUSER;
-	GRANT SELECT ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
-		location, missed_calls, pending, phonebook, phonebook_id_seq, subscriber, silo, silo_mid_seq, domain,
-		uri, server_monitoring, usr_preferences, usr_preferences_types, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBROUSER;"
+	GRANT ALL PRIVILEGES ON TABLE version, acc, aliases, dbaliases, grp,
+		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
+		uri, usr_preferences, trusted, re_grp, pd_multidomain,
+		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBRWUSER;
+	GRANT SELECT ON TABLE version, acc, aliases, dbaliases, grp,
+		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
+		uri, usr_preferences, trusted, re_grp, pd_multidomain,
+		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
 DATETIME="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DUMMY_DATE'"
 DATETIMEALIAS="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_ALIASES_EXPIRES'"
@@ -351,8 +360,8 @@ CREATE TABLE subscriber (
   last_name varchar(45) NOT NULL default '',
   phone varchar(15) NOT NULL default '',
   email_address varchar(50) NOT NULL default '',
-  datetime_created $DATETIME,
-  datetime_modified $DATETIME,
+  datetime_created $TIMESTAMP,
+  datetime_modified $TIMESTAMP,
   confirmation varchar(64) NOT NULL default '',
   flag char(1) NOT NULL default 'o',
   sendnotification varchar(50) NOT NULL default '',
@@ -435,7 +444,7 @@ CREATE TABLE location (
   q $FLOAT NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
   cseq int NOT NULL default '$DEFAULT_CSEQ',
-  last_modified $DATETIMELOCATION,
+  last_modified $TIMESTAMP,
   flags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
@@ -458,7 +467,7 @@ CREATE TABLE aliases (
   q $FLOAT NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
   cseq int NOT NULL default '$DEFAULT_CSEQ',
-  last_modified $DATETIMEALIAS,
+  last_modified $TIMESTAMP,
   flags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
@@ -489,7 +498,7 @@ CREATE TABLE grp (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
-  last_modified $DATETIME,
+  last_modified $TIMESTAMP,
   PRIMARY KEY($USERCOL, domain, grp)
 ) $TABLE_TYPE;
 
@@ -510,15 +519,15 @@ CREATE TABLE re_grp (
  */
 CREATE TABLE silo(
     mid $AUTO_INCREMENT,
-    src_addr VARCHAR(255) NOT NULL DEFAULT '',
-    dst_addr VARCHAR(255) NOT NULL DEFAULT '',
-    r_uri VARCHAR(255) NOT NULL DEFAULT '',
-    $USERCOL VARCHAR(64) NOT NULL DEFAULT '',
-    domain VARCHAR(128) NOT NULL DEFAULT '',
+    src_addr varchar(255) NOT NULL DEFAULT '',
+    dst_addr varchar(255) NOT NULL DEFAULT '',
+    r_uri varchar(255) NOT NULL DEFAULT '',
+    $USERCOL varchar(64) NOT NULL DEFAULT '',
+    domain varchar(128) NOT NULL DEFAULT '',
     inc_time INTEGER NOT NULL DEFAULT 0,
     exp_time INTEGER NOT NULL DEFAULT 0,
     snd_time INTEGER NOT NULL DEFAULT 0,
-    ctype VARCHAR(32) NOT NULL DEFAULT 'text/plain',
+    ctype varchar(32) NOT NULL DEFAULT 'text/plain',
     body TEXT NOT NULL DEFAULT ''
 ) $TABLE_TYPE;
 
@@ -528,7 +537,7 @@ CREATE TABLE silo(
  */
 CREATE TABLE domain (
   domain varchar(128) NOT NULL default '',
-  last_modified $DATETIME,
+  last_modified $TIMESTAMP,
   PRIMARY KEY  (domain)
 ) $TABLE_TYPE;
 
@@ -540,7 +549,7 @@ CREATE TABLE uri (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   uri_user varchar(50) NOT NULL default '',
-  last_modified $DATETIME,
+  last_modified $TIMESTAMP,
   PRIMARY KEY ($USERCOL, domain, uri_user)
 ) $TABLE_TYPE;
 
@@ -549,19 +558,18 @@ CREATE TABLE uri (
  * Table structure for table 'usr_preferences'
  */
 CREATE TABLE usr_preferences (
-  id bigint(20) NOT NULL auto_increment,
+  id $AUTO_INCREMENT,
   uuid varchar(64) NOT NULL default '',
   $USERCOL varchar(100) NOT NULL default '0',
   domain varchar(128) NOT NULL default '',
   attribute varchar(32) NOT NULL default '',
   value varchar(128) NOT NULL default '',
   type int NOT NULL default '0',
-  modified $TIMESTAMP,
-  PRIMARY KEY (id),
-  INDEX ua_idx  (uuid,attribute),
-  INDEX uda_idx ($USERCOL,domain,attribute)
+  modified $TIMESTAMP
 ) $TABLE_TYPE;
 
+CREATE INDEX ua_idx ON usr_preferences(uuid,attribute);
+CREATE INDEX uda_idx ON usr_preferences($USERCOL,domain,attribute);
 
 /*
  * Table structure for table trusted
@@ -570,10 +578,10 @@ CREATE TABLE trusted (
   src_ip varchar(39) NOT NULL,
   proto varchar(4) NOT NULL,
   from_pattern varchar(64) default NULL,
-  tag varchar(32) default NULL,
-  INDEX ip_addr (src_ip)
+  tag varchar(32) default NULL
 ) $TABLE_TYPE;
 
+CREATE INDEX ip_addr ON trusted(src_ip);
 
 /*
  * Table structure for table 'speed_dial'
@@ -596,7 +604,7 @@ CREATE TABLE speed_dial (
  * Table structure for table 'gw' (lcr module)
  */
 CREATE TABLE gw (
-  gw_name VARCHAR(128) NOT NULL,
+  gw_name varchar(128) NOT NULL,
   grp_id INT CHECK (grp_id > 0) NOT NULL,
   ip_addr BIGINT CHECK (ip_addr > 0 AND ip_addr < 4294967296) NOT NULL,
   port INT CHECK (port > 0 AND port < 65536),
@@ -614,7 +622,7 @@ CREATE INDEX gw_grp_id_indx ON gw (grp_id);
  */
 CREATE TABLE gw_grp (
   grp_id SERIAL PRIMARY KEY,
-  grp_name VARCHAR(64) NOT NULL
+  grp_name varchar(64) NOT NULL
 );
 
 
@@ -645,8 +653,8 @@ CREATE FUNCTION "rand" () RETURNS double precision AS 'SELECT random();' LANGUAG
  * Table structure for table 'siptrace'
  */
 CREATE TABLE sip_trace (
-  id bigint(20) NOT NULL auto_increment,
-  date datetime NOT NULL default '0000-00-00 00:00:00',
+  id $AUTO_INCREMENT,
+  date $TIMESTAMP,
   callid varchar(254) NOT NULL default '',
   traced_user varchar(128) NOT NULL default '',
   msg text NOT NULL,
@@ -655,13 +663,22 @@ CREATE TABLE sip_trace (
   fromip varchar(50) NOT NULL default '',
   toip varchar(50) NOT NULL default '',
   fromtag varchar(64) NOT NULL default '',
-  direction varchar(4) NOT NULL default '',
-  PRIMARY KEY  (id)
+  direction varchar(4) NOT NULL default ''
 ) $TABLE_TYPE;
 CREATE INDEX user_idx ON sip_trace (traced_user);
 CREATE INDEX date_idx ON sip_trace (date);
 CREATE INDEX fromip_idx ON sip_trace (fromip);
 CREATE INDEX callid_idx ON sip_trace (callid);
+
+/*
+ * Table structure for table 'pdt'
+ */
+CREATE TABLE pd_multidomain (
+        sdomain varchar(255) NOT NULL,
+        prefix varchar(32) NOT NULL,
+        domain varchar(255) NOT NULL DEFAULT '',
+        PRIMARY KEY (sdomain, prefix)
+);
 
 
 /* add an admin user "admin" with password==$DEFAULT_PW,
@@ -690,6 +707,13 @@ fi
 
 serweb_create () # pars: <database name>
 {
+
+GRANT_SERWEB_CMD="
+        GRANT ALL PRIVILEGES ON TABLE phonebook, pending, active_sessions, server_monitoring, server_monitoring_agg,
+                usr_preferences_types, admin_privileges to $DBRWUSER; 
+        GRANT ALL PRIVILEGES ON TABLE phonebook, pending, active_sessions, server_monitoring, server_monitoring_agg,
+                usr_preferences_types, admin_privileges to $DBROUSER;" 
+
 if [ $# -eq 1 ] ; then
 	if [ -z "$SIP_DOMAIN" ] ; then
 		prompt_realm
@@ -748,8 +772,8 @@ CREATE TABLE pending (
   last_name varchar(45) NOT NULL default '',
   phone varchar(15) NOT NULL default '',
   email_address varchar(50) NOT NULL default '',
-  datetime_created $DATETIME,
-  datetime_modified $DATETIME,
+  datetime_created $TIMESTAMP,
+  datetime_modified $TIMESTAMP,
   confirmation varchar(64) NOT NULL default '',
   flag char(1) NOT NULL default 'o',
   sendnotification varchar(50) NOT NULL default '',
@@ -784,7 +808,7 @@ CREATE TABLE phonebook (
  * Table structure for table 'server_monitoring'
  */
 CREATE TABLE server_monitoring (
-  time $DATETIME,
+  time $TIMESTAMP,
   id bigint NOT NULL default '0',
   param varchar(32) NOT NULL default '',
   value int NOT NULL default '0',
@@ -823,7 +847,7 @@ CREATE TABLE server_monitoring_agg (
   max_val int NOT NULL default '0',
   min_inc int NOT NULL default '0',
   max_inc int NOT NULL default '0',
-  lastupdate $DATETIME,
+  lastupdate $TIMESTAMP,
   PRIMARY KEY  (param)
 ) $TABLE_TYPE;
 
@@ -850,6 +874,9 @@ CREATE FUNCTION "truncate" (numeric,int) RETURNS numeric AS 'SELECT trunc(\$1,\$
 create function unix_timestamp(timestamp) returns integer as 'select date_part(''epoch'', \$1)::int4 as result' language 'sql';
 
 $INITIAL_INSERT
+
+$GRANT_SERWEB_CMD
+
 EOF
 
 }  # end serweb_create
