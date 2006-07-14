@@ -565,6 +565,31 @@ modparam("usrloc", "cseq_delay", 5)
 		</example>
 	</section>
 
+
+	<section>
+		<title><varname>fetch_rows</varname> (integer)</title>
+		<para>
+		The number of the rows to be fetched at once from database
+		when loading the location records. This value can be used
+		to tune the load time at startup. For 1MB of private memory (default)
+		it should be below 4000. The database driver must support
+		fetch_result() capability.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>2000</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cseq_delay</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "fetch_rows", 3000)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
