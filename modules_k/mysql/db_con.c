@@ -33,7 +33,7 @@
  * Store name of table that will be used by
  * subsequent database functions
  */
-int use_table(db_con_t* _h, const char* _t)
+int db_mysql_use_table(db_con_t* _h, const char* _t)
 {
 	if ((!_h) || (!_t)) {
 		LOG(L_ERR, "use_table: Invalid parameter value\n");

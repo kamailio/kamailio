@@ -121,6 +121,8 @@ int use_domain      = 0;
 /* By default do not enable timestamp ordering */
 int desc_time_order = 0;
 
+/* number of rows to fetch from result */
+int ul_fetch_rows = 2000;
 
 db_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
@@ -175,6 +177,7 @@ static param_export_t params[] = {
 	{"methods_column",    STR_PARAM, &methods_col.s   },
 	{"matching_mode",     INT_PARAM, &matching_mode   },
 	{"cseq_delay",        INT_PARAM, &cseq_delay      },
+	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
 	{0, 0, 0}
 };
 
@@ -255,6 +258,11 @@ static int mod_init(void)
 		if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
 			LOG(L_ERR, "usrloc:mod_init: Database module does not implement"
 						" all functions needed by the module\n");
+			return -1;
+		}
+		if(ul_fetch_rows<=0) {
+			LOG(L_ERR, "usrloc:mod_init: invalid fetch_rows number '%d'\n",
+					ul_fetch_rows);
 			return -1;
 		}
 	}

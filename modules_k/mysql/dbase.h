@@ -37,64 +37,69 @@
 /*
  * Initialize database connection
  */
-db_con_t* db_init(const char* _sqlurl);
+db_con_t* db_mysql_init(const char* _sqlurl);
 
 
 /*
  * Close a database connection
  */
-void db_close(db_con_t* _h);
+void db_mysql_close(db_con_t* _h);
 
 
 /*
  * Free all memory allocated by get_result
  */
-int db_free_result(db_con_t* _h, db_res_t* _r);
+int db_mysql_free_result(db_con_t* _h, db_res_t* _r);
 
 
 /*
  * Do a query
  */
-int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
+int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
 	     db_key_t _o, db_res_t** _r);
 
 
 /*
+ * fetch rows from a result
+ */
+int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows);
+
+/*
  * Raw SQL query
  */
-int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
+int db_mysql_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
 
 
 /*
  * Insert a row into table
  */
-int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
 
 /*
  * Delete a row from table
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+int db_mysql_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
 
 
 /*
  * Update a row in table
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
+int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
+int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 
 
 /*
  * Store name of table that will be used by
  * subsequent database functions
  */
-int use_table(db_con_t* _h, const char* _t);
+int db_mysql_use_table(db_con_t* _h, const char* _t);
 
 
 #endif /* DBASE_H */

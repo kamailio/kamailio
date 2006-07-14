@@ -23,6 +23,7 @@
  */
 
 
+#include <string.h>
 #include <mysql/mysql.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -34,7 +35,7 @@
 /*
  * Get and convert columns from a result
  */
-static inline int get_columns(db_con_t* _h, db_res_t* _r)
+int db_mysql_get_columns(db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
 	MYSQL_FIELD* fields;
@@ -109,7 +110,7 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 /*
  * Release memory used by rows
  */
-static inline int free_rows(db_res_t* _r)
+int db_mysql_free_rows(db_res_t* _r)
 {
 	int i;
 
@@ -119,9 +120,11 @@ static inline int free_rows(db_res_t* _r)
 	}
 
 	for(i = 0; i < RES_ROW_N(_r); i++) {
-		free_row(&(RES_ROWS(_r)[i]));
+		db_mysql_free_row(&(RES_ROWS(_r)[i]));
 	}
 	if (RES_ROWS(_r)) pkg_free(RES_ROWS(_r));
+	RES_ROWS(_r) = 0;
+
 	return 0;
 }
 
@@ -129,7 +132,7 @@ static inline int free_rows(db_res_t* _r)
 /*
  * Convert rows from mysql to db API representation
  */
-static inline int convert_rows(db_con_t* _h, db_res_t* _r)
+static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
 
@@ -155,13 +158,13 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 		if (!CON_ROW(_h)) {
 			LOG(L_ERR, "convert_rows: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(_r) = i;
-			free_rows(_r);
+			db_mysql_free_rows(_r);
 			return -3;
 		}
-		if (convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) {
+		if (db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) {
 			LOG(L_ERR, "convert_rows: Error while converting row #%d\n", i);
 			RES_ROW_N(_r) = i;
-			free_rows(_r);
+			db_mysql_free_rows(_r);
 			return -4;
 		}
 	}
@@ -172,7 +175,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 /*
  * Release memory used by columns
  */
-static inline int free_columns(db_res_t* _r)
+static inline int db_mysql_free_columns(db_res_t* _r)
 {
 	if (!_r) {
 		LOG(L_ERR, "free_columns: Invalid parameter\n");
@@ -188,7 +191,7 @@ static inline int free_columns(db_res_t* _r)
 /*
  * Create a new result structure and initialize it
  */
-db_res_t* new_result(void)
+db_res_t* db_mysql_new_result(void)
 {
 	db_res_t* r;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
@@ -196,11 +199,7 @@ db_res_t* new_result(void)
 		LOG(L_ERR, "new_result: No memory left\n");
 		return 0;
 	}
-	RES_NAMES(r) = 0;
-	RES_TYPES(r) = 0;
-	RES_COL_N(r) = 0;
-	RES_ROWS(r) = 0;
-	RES_ROW_N(r) = 0;
+	memset(r, 0, sizeof(db_res_t));
 	return r;
 }
 
@@ -208,21 +207,21 @@ db_res_t* new_result(void)
 /*
  * Fill the structure with data from database
  */
-int convert_result(db_con_t* _h, db_res_t* _r)
+int db_mysql_convert_result(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r)) {
 		LOG(L_ERR, "convert_result: Invalid parameter\n");
 		return -1;
 	}
 
-	if (get_columns(_h, _r) < 0) {
+	if (db_mysql_get_columns(_h, _r) < 0) {
 		LOG(L_ERR, "convert_result: Error while getting column names\n");
 		return -2;
 	}
 
-	if (convert_rows(_h, _r) < 0) {
+	if (db_mysql_convert_rows(_h, _r) < 0) {
 		LOG(L_ERR, "convert_result: Error while converting rows\n");
-		free_columns(_r);
+		db_mysql_free_columns(_r);
 		return -3;
 	}
 	return 0;
@@ -232,15 +231,15 @@ int convert_result(db_con_t* _h, db_res_t* _r)
 /*
  * Release memory used by a result structure
  */
-int free_result(db_res_t* _r)
+int db_mysql_free_dbresult(db_res_t* _r)
 {
 	if (!_r) {
 		LOG(L_ERR, "free_result: Invalid parameter\n");
 		return -1;
 	}
 
-	free_columns(_r);
-	free_rows(_r);
+	db_mysql_free_columns(_r);
+	db_mysql_free_rows(_r);
 	pkg_free(_r);
 	return 0;
 }

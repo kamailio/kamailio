@@ -34,7 +34,7 @@
 /*
  * Convert a row from result into db API representation
  */
-int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
+int db_mysql_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {
 	unsigned long* lengths;
 	int i;
@@ -57,7 +57,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
 			    ((MYSQL_ROW)CON_ROW(_h))[i], lengths[i]) < 0) {
 			LOG(L_ERR, "convert_row: Error while converting value\n");
-			free_row(_r);
+			db_mysql_free_row(_r);
 			return -3;
 		}
 	}
@@ -68,7 +68,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 /*
  * Release memory used by row
  */
-int free_row(db_row_t* _r)
+int db_mysql_free_row(db_row_t* _r)
 {
 	if (!_r) {
 		LOG(L_ERR, "free_row: Invalid parameter value\n");

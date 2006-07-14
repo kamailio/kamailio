@@ -380,10 +380,11 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	ucontact_info_t *ci;
 	db_row_t *row;
 	db_key_t columns[14];
-	db_res_t* res;
+	db_res_t* res = 0;
 	str user, contact;
 	char* domain;
 	int i;
+	int n;
 
 	urecord_t* r;
 	ucontact_t* c;
@@ -408,10 +409,22 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
+	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
+				0) < 0) {
+			LOG(L_ERR, "preload_udomain(): Error while doing db_query (1)\n");
+			return -1;
+		}
+		if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
+			LOG(L_ERR, "preload_udomain(): Error fetching rows\n");
+			return -1;
+		}
+	} else {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
 				&res) < 0) {
-		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
-		return -1;
+			LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
+			return -1;
+		}
 	}
 
 	if (RES_ROW_N(res) == 0) {
@@ -422,59 +435,73 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 	lock_udomain(_d);
 
-	for(i = 0; i < RES_ROW_N(res); i++) {
-		row = RES_ROWS(res) + i;
+	n = 0;
+	do {
+		DBG("preload_udomain(): loading records - cycle [%d]\n", ++n);
+		for(i = 0; i < RES_ROW_N(res); i++) {
+			row = RES_ROWS(res) + i;
 
-		user.s = (char*)VAL_STRING(ROW_VALUES(row));
-		if (VAL_NULL(ROW_VALUES(row)) || user.s==0 || user.s[0]==0) {
-			LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty username "
-				"record in table %s...skipping\n",_d->name->s);
-			continue;
-		}
-		user.len = strlen(user.s);
-
-		ci = dbrow2info( ROW_VALUES(row)+1, &contact);
-		if (ci==0) {
-			LOG(L_ERR, "ERROR:usrloc:preload_udomain: skipping record for "
-				"%.*s in table %s\n", user.len, user.s, _d->name->s);
-			continue;
-		}
-
-		if (use_domain) {
-			domain = (char*)VAL_STRING(ROW_VALUES(row) + 13);
-			if (VAL_NULL(ROW_VALUES(row)+12) || domain==0 || domain[0]==0) {
-				LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty domain "
-				"record for user %.*s...skipping\n", user.len, user.s);
+			user.s = (char*)VAL_STRING(ROW_VALUES(row));
+			if (VAL_NULL(ROW_VALUES(row)) || user.s==0 || user.s[0]==0) {
+				LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty username "
+					"record in table %s...skipping\n",_d->name->s);
 				continue;
 			}
-			/* user.s cannot be NULL - checked previosly */
-			user.len = snprintf(uri, MAX_URI_SIZE, "%.*s@%s",
-				user.len, user.s, domain);
-			user.s = uri;
-			if (user.s[user.len]!=0) {
-				LOG(L_CRIT,"ERROR:usrloc:preload_udomain: URI '%.*s@%s' "
-					"longer than %d\n", user.len, user.s, domain,MAX_URI_SIZE);
+			user.len = strlen(user.s);
+
+			ci = dbrow2info( ROW_VALUES(row)+1, &contact);
+			if (ci==0) {
+				LOG(L_ERR, "ERROR:usrloc:preload_udomain: skipping record for "
+					"%.*s in table %s\n", user.len, user.s, _d->name->s);
 				continue;
 			}
-		}
+
+			if (use_domain) {
+				domain = (char*)VAL_STRING(ROW_VALUES(row) + 13);
+				if (VAL_NULL(ROW_VALUES(row)+12) || domain==0 || domain[0]==0) {
+					LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty domain "
+					"record for user %.*s...skipping\n", user.len, user.s);
+					continue;
+				}
+				/* user.s cannot be NULL - checked previosly */
+				user.len = snprintf(uri, MAX_URI_SIZE, "%.*s@%s",
+					user.len, user.s, domain);
+				user.s = uri;
+				if (user.s[user.len]!=0) {
+					LOG(L_CRIT,"ERROR:usrloc:preload_udomain: URI '%.*s@%s' "
+						"longer than %d\n", user.len, user.s, domain,
+						MAX_URI_SIZE);
+					continue;
+				}
+			}
 
 		
-		if (get_urecord(_d, &user, &r) > 0) {
-			if (mem_insert_urecord(_d, &user, &r) < 0) {
-				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
-				goto error;
+			if (get_urecord(_d, &user, &r) > 0) {
+				if (mem_insert_urecord(_d, &user, &r) < 0) {
+					LOG(L_ERR, "preload_udomain(): Can't create a record\n");
+					goto error;
+				}
 			}
-		}
 
-		if ( (c=mem_insert_ucontact(r, &contact, ci)) < 0) {
-			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
-			goto error1;
-		}
+			if ( (c=mem_insert_ucontact(r, &contact, ci)) < 0) {
+				LOG(L_ERR,
+					"preload_udomain(): Error while inserting contact\n");
+				goto error1;
+			}
 
-		/* We have to do this, because insert_ucontact sets state to CS_NEW
-		 * and we have the contact in the database already */
-		c->state = CS_SYNC;
-	}
+			/* We have to do this, because insert_ucontact sets state to CS_NEW
+			 * and we have the contact in the database already */
+			c->state = CS_SYNC;
+		}
+		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+			if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
+				LOG(L_ERR, "preload_udomain(): Error fetching rows (1)\n");
+				return -1;
+			}
+		} else {
+			break;
+		}
+	} while(RES_ROW_N(res)>0);
 
 	ul_dbf.free_result(_c, res);
 	unlock_udomain(_d);
