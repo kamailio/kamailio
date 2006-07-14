@@ -709,10 +709,12 @@ serweb_create () # pars: <database name>
 {
 
 GRANT_SERWEB_CMD="
-        GRANT ALL PRIVILEGES ON TABLE phonebook, pending, active_sessions, server_monitoring, server_monitoring_agg,
-                usr_preferences_types, admin_privileges to $DBRWUSER; 
-        GRANT ALL PRIVILEGES ON TABLE phonebook, pending, active_sessions, server_monitoring, server_monitoring_agg,
-                usr_preferences_types, admin_privileges to $DBROUSER;" 
+	GRANT ALL PRIVILEGES ON TABLE phonebook, pending, active_sessions,
+		server_monitoring, server_monitoring_agg,
+		usr_preferences_types, admin_privileges to $DBRWUSER; 
+	GRANT SELECT ON TABLE phonebook, pending, active_sessions,
+		server_monitoring, server_monitoring_agg,
+		usr_preferences_types, admin_privileges to $DBROUSER;" 
 
 if [ $# -eq 1 ] ; then
 	if [ -z "$SIP_DOMAIN" ] ; then
