@@ -31,8 +31,8 @@
 #define ACPT_ENC_STR_LEN 17
 #define ACPT_LAN_STR "Accept-Language: "
 #define ACPT_LAN_STR_LEN 17
-#define SUPT_STR "Support: "
-#define SUPT_STR_LEN 9
+#define SUPT_STR "Supported: "
+#define SUPT_STR_LEN 11
 #define HF_SEP_STR "\r\n"
 #define HF_SEP_STR_LEN 2
 
