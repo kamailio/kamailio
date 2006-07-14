@@ -340,7 +340,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	ptr->name.len = _n->len;
 	ptr->name.s[ptr->name.len] = 0;
 
-	if (new_udomain(&(ptr->name), 512, &(ptr->d)) < 0) {
+	if (new_udomain(&(ptr->name), ul_hash_size, &(ptr->d)) < 0) {
 		LOG(L_ERR, "new_dlist(): Error while creating domain structure\n");
 		shm_free(ptr->name.s);
 		shm_free(ptr);

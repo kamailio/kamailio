@@ -123,6 +123,7 @@ int desc_time_order = 0;
 
 /* number of rows to fetch from result */
 int ul_fetch_rows = 2000;
+int ul_hash_size = 9;
 
 db_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
@@ -178,6 +179,7 @@ static param_export_t params[] = {
 	{"matching_mode",     INT_PARAM, &matching_mode   },
 	{"cseq_delay",        INT_PARAM, &cseq_delay      },
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
+	{"hash_size",         INT_PARAM, &ul_hash_size   },
 	{0, 0, 0}
 };
 
@@ -266,6 +268,11 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if(ul_hash_size<=1)
+		ul_hash_size = 512;
+	else
+		ul_hash_size = 1<<ul_hash_size;
 
 	return 0;
 }

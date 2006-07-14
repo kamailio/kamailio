@@ -409,6 +409,11 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
+#ifdef EXTRA_DEBUG
+	LOG(L_ERR, "usrloc:preload_udomain(): load start time [%d]\n",
+			(int)time(NULL));
+#endif
+
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
 		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
 				0) < 0) {
@@ -505,6 +510,10 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 	ul_dbf.free_result(_c, res);
 	unlock_udomain(_d);
+#ifdef EXTRA_DEBUG
+	LOG(L_ERR, "usrloc:preload_udomain(): load end time [%d]\n",
+			(int)time(NULL));
+#endif
 	return 0;
 error1:
 	free_ucontact(c);
