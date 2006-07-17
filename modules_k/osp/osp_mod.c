@@ -32,248 +32,249 @@
  *  2006-03-13  RR functions are loaded via API function (bogdan)
  */
 
-
-
-
-
+#include <osp/osp.h>
+#include "../rr/api.h"
 #include "osp_mod.h"
-#include "provider.h"
-#include "sipheader.h"
 #include "orig_transaction.h"
 #include "term_transaction.h"
 #include "usage.h"
 #include "tm.h"
-#include "../../sr_module.h"
-#include "../../data_lump_rpl.h"
-#include "../../mem/mem.h"
-#include "../../timer.h"
-#include "../../locking.h"
-#include "../rr/api.h"
-
-#include <stdio.h>
-
+#include "provider.h"
 
 MODULE_VERSION
 
-extern int   _spWeights[2];
-extern char* _spURIs[2];
-extern char* _private_key;
-extern char* _local_certificate;
-extern char* _ca_certificate;
-extern char* _device_ip;
-extern char* _device_port;
-extern int   _ssl_lifetime;
-extern int   _persistence;
-extern int   _retry_delay;
-extern int   _retry_limit;
-extern int   _timeout;
-extern int   _max_destinations;
-extern int   _token_format;
-extern int   _crypto_hw_support;
-extern int   _validate_call_id;
-extern OSPTPROVHANDLE _provider;
-extern char _PRIVATE_KEY[255];
-extern char _LOCAL_CERTIFICATE[255];
-extern char _CA_CERTIFICATE[255];
+extern char* _osp_sp_uris[];
+extern unsigned long _osp_sp_weights[];
+extern unsigned char* _osp_private_key;
+extern unsigned char* _osp_local_certificate;
+extern unsigned char* _osp_ca_certificate;
+extern char* _osp_device_ip;
+extern char* _osp_device_port;
+extern int _osp_ssl_lifetime;
+extern int _osp_persistence;
+extern int _osp_retry_delay;
+extern int _osp_retry_limit;
+extern int _osp_timeout;
+extern int _osp_max_dests;
+extern int _osp_token_format;
+extern int _osp_crypto_hw;
+extern int _osp_validate_callid;
+extern char _osp_PRIVATE_KEY[];
+extern char _osp_LOCAL_CERTIFICATE[];
+extern char _osp_CA_CERTIFICATE[];
+extern OSPTPROVHANDLE _osp_provider;
 
 struct rr_binds osp_rrb;
 
-/* exported function prototypes */
-static int mod_init(void);
-static int child_init(int);
-static void mod_destroy();
-
-static int  verify_parameter();
-static void dump_parameter();
-
+static int ospInitMod(void);
+static void ospDestMod(void);
+static int ospInitChild(int);
+static int  ospVerifyParameters(void);
+static void ospDumpParameters(void);
 
 static cmd_export_t cmds[]={
-	{"checkospheader",       checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"validateospheader",    validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"requestosprouting",    requestosprouting,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"preparefirstosproute", preparefirstosproute, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"preparenextosproute",  preparenextosproute,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"prepareallosproutes",  prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"reportospusage",       reportospusage,       0, 0, REQUEST_ROUTE}, 
-	{0, 0, 0, 0, 0}
+    {"checkospheader",       checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"validateospheader",    validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"requestosprouting",    requestosprouting,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"checkosproute",        checkosproute,        0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"prepareosproute",      prepareosproute,      0, 0, BRANCH_ROUTE}, 
+    {"prepareallosproutes",  prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"reportospusage",       reportospusage,       0, 0, REQUEST_ROUTE}, 
+    {0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={ 
-	{"sp1_uri",           STR_PARAM, &_spURIs[0]},
-	{"sp1_weight",        INT_PARAM, &(_spWeights[0])},
-	{"sp2_uri",           STR_PARAM, &_spURIs[1]},
-	{"sp2_weight",        INT_PARAM, &(_spWeights[1])},
-
-	{"device_ip",         STR_PARAM, &_device_ip},
-	{"device_port",       STR_PARAM, &_device_port},
-
-	{"private_key",       STR_PARAM, &_private_key},
-	{"local_certificate", STR_PARAM, &_local_certificate},
-	{"ca_certificates",   STR_PARAM, &_ca_certificate},
-	{"enable_crypto_hardware_support", 
-                              INT_PARAM, &_crypto_hw_support},
-	{"validate_call_id",  INT_PARAM, &(_validate_call_id)},
-
-	{"token_format",      INT_PARAM, &_token_format},
-	{"ssl_lifetime",      INT_PARAM, &_ssl_lifetime},
-	{"persistence",       INT_PARAM, &_persistence},
-	{"retry_delay",       INT_PARAM, &_retry_delay},
-	{"retry_limit",       INT_PARAM, &_retry_limit},
-	{"timeout",           INT_PARAM, &_timeout},
-	{"max_destinations",  INT_PARAM, &_max_destinations},
-	{0,0,0} 
+    {"sp1_uri",                        STR_PARAM, &_osp_sp_uris[0]},
+    {"sp1_weight",                     INT_PARAM, &(_osp_sp_weights[0])},
+    {"sp2_uri",                        STR_PARAM, &_osp_sp_uris[1]},
+    {"sp2_weight",                     INT_PARAM, &(_osp_sp_weights[1])},
+    {"device_ip",                      STR_PARAM, &_osp_device_ip},
+    {"device_port",                    STR_PARAM, &_osp_device_port},
+    {"private_key",                    STR_PARAM, &_osp_private_key},
+    {"local_certificate",              STR_PARAM, &_osp_local_certificate},
+    {"ca_certificates",                STR_PARAM, &_osp_ca_certificate},
+    {"enable_crypto_hardware_support", INT_PARAM, &_osp_crypto_hw},
+    {"validate_callid",                INT_PARAM, &(_osp_validate_callid)},
+    {"token_format",                   INT_PARAM, &_osp_token_format},
+    {"ssl_lifetime",                   INT_PARAM, &_osp_ssl_lifetime},
+    {"persistence",                    INT_PARAM, &_osp_persistence},
+    {"retry_delay",                    INT_PARAM, &_osp_retry_delay},
+    {"retry_limit",                    INT_PARAM, &_osp_retry_limit},
+    {"timeout",                        INT_PARAM, &_osp_timeout},
+    {"max_destinations",               INT_PARAM, &_osp_max_dests},
+    {0,0,0} 
 };
 
 struct module_exports exports = {
-	"osp", 
-	cmds,
-	params,
-	0,          /* exported statistics */
-	mod_init,   /* module initialization function */
-	0,          /* response function*/
-	mod_destroy,/* destroy function */
-	child_init, /* per-child init function */
+    "osp", 
+    cmds,
+    params,
+    0,            /* exported statistics */
+    ospInitMod,   /* module initialization function */
+    0,            /* response function*/
+    ospDestMod,   /* destroy function */
+    ospInitChild, /* per-child init function */
 };
 
-
-static int mod_init(void)
+/*
+ * Initialize OSP module
+ * return 0 success, -1 failure
+ */
+static int ospInitMod(void)
 {
-	DBG("---------------------Initializing OSP module\n");
+    LOG(L_DBG, "osp: ospInitMod\n");
 
-	if (verify_parameter() != 0) 
-		return -1;   /* at least one parameter incorrect -> error */
+    if (ospVerifyParameters() != 0) {
+        /* At least one parameter incorrect -> error */
+        return -1;   
+    }
 
-	/* load the RR API */
-	if (load_rr_api(&osp_rrb)!=0) {
-		LOG(L_WARN, "WARNING:osp:mod_init: can't load RR API\n");
-		LOG(L_WARN, "WARNING:osp:mod_init: add_rr_param is required for "
-			"reporting duration for OSP transactions\n");
-		memset( &osp_rrb, 0, sizeof(osp_rrb));
-	}
+    /* Load the RR API */
+    if (load_rr_api(&osp_rrb) != 0) {
+        LOG(L_WARN, "osp: WARN: failed to load RR API\n");
+        LOG(L_WARN, "osp: WARN: add_rr_param is required for reporting duration for OSP transactions\n");
+        memset(&osp_rrb, 0, sizeof(osp_rrb));
+    }
 
-	if ( mod_init_tm()<0 )
-		return -1;
+    if (ospInitTm() < 0) {
+        return -1;
+    }
 
-	/* everything is fine, initialization done */
-	return 0;
+    /* everything is fine, initialization done */
+    return 0;
 }
 
+/*
+ * Destrroy OSP module
+ */
+static void ospDestMod(void)
+{
+    LOG(L_DBG, "osp: ospDestMod\n");
+}    
 
+/*
+ * Initializeild process of OSP module
+ * param rank
+ * return 0 success, -1 failure
+ */
+static int ospInitChild(
+    int rank)
+{
+    int code = -1;
 
+    LOG(L_DBG, "osp: ospInitChild\n");
 
+    code = ospSetupProvider();
 
+    LOG(L_DBG, "osp: provider '%i' (%d)\n", _osp_provider, code);
 
-static int child_init(int rank) {
-	int code = -1;
-
-	DBG("---------------------Initializing OSP module for the child process\n");
-
-	DBG("Initializing the toolkit and creating a new provider\n");
-
-	code = setup_provider();
-
-	DBG("Result: (%i) Provider (%i)\n", code, _provider);
-
-	return 0;
+    return 0;
 }
 
-static void mod_destroy() {
-	DBG("---------------------Destroying OSP module for the child process\n");
-}	
+/*
+ * Verify parameters for OSP module
+ * return 0 success, -1 failure
+ */
+static int ospVerifyParameters(void)
+{
+    int result = 0;
 
+    LOG(L_DBG, "osp: ospVerifyParamters\n");
 
-int verify_parameter() {
-	/* Assume success. If any validation fails the values will be set to -1 */
-	int errorcode = 0;
+    /* Default location for the cert files is in the compile time variable CFG_DIR */
+    if (_osp_private_key == NULL) {
+        sprintf(_osp_PRIVATE_KEY, "%spkey.pem", CFG_DIR);
+        _osp_private_key = _osp_PRIVATE_KEY;
+    } 
 
-	LOG(L_INFO,"osp: Initialzing OSP module\n");
+    if (_osp_local_certificate == NULL) {
+        sprintf(_osp_LOCAL_CERTIFICATE, "%slocalcert.pem", CFG_DIR);
+        _osp_local_certificate = _osp_LOCAL_CERTIFICATE;
+    }
 
-	/* Default location for the cert files is in the compile time variable CFG_DIR */
-	if (_private_key == NULL) {
-		sprintf(_PRIVATE_KEY,"%spkey.pem",CFG_DIR);
-		_private_key = _PRIVATE_KEY;
-	} 
+    if (_osp_ca_certificate == NULL) {
+        sprintf(_osp_CA_CERTIFICATE, "%scacert_0.pem", CFG_DIR);
+        _osp_ca_certificate = _osp_CA_CERTIFICATE;
+    }
 
-	if (_local_certificate == NULL) {
-		sprintf(_LOCAL_CERTIFICATE,"%slocalcert.pem",CFG_DIR);
-		_local_certificate = _LOCAL_CERTIFICATE;
-	}
+    if (_osp_device_ip == NULL) {
+        _osp_device_ip = "";
+    }
 
-	if (_ca_certificate == NULL) {
-		sprintf(_CA_CERTIFICATE,"%scacert_0.pem",CFG_DIR);
-		_ca_certificate = _CA_CERTIFICATE;
-	}
+    if (_osp_device_port == NULL) {
+        _osp_device_port = "";
+    }
 
-	if (_device_ip == NULL) {
-		_device_ip = "";
-	}
+    if (_osp_max_dests > OSP_DEF_DESTS || _osp_max_dests < 1) {
+        _osp_max_dests = OSP_DEF_DESTS;    
+        LOG(L_WARN,
+            "osp: WARN: max_destinations is out of range, reset to %d\n", 
+            OSP_DEF_DESTS);
+    }
 
-	if (_device_port == NULL) {
-		_device_port = "";
-	}
+    if (_osp_token_format < 0 || _osp_token_format > 2) {
+        _osp_token_format = OSP_DEF_TOKEN;
+        LOG(L_WARN, 
+            "osp: WARN: token_format is out of range, reset to %d\n", 
+            OSP_DEF_TOKEN);
+    }
 
-	if (_max_destinations > MAX_DESTS || _max_destinations < 1) {
-		_max_destinations = 5;	
-		LOG(L_WARN,"WARN: osp: Maximum destinations 'max_destinations' is out of range, re-setting to 5\n");
-	}
+    if (_osp_sp_uris[1] == NULL) {
+        _osp_sp_uris[1] = _osp_sp_uris[0];
+    }
 
-	if (_token_format < 0 || _token_format > 2) {
-		_token_format = 0;
-		LOG(L_WARN,"WARN: osp: Token format 'token_format' is out of range, re-setting to 0\n");
-	}
+    if (_osp_sp_uris[0] == NULL) {
+        LOG(L_ERR, "osp: ERROR: sp1_uri must be configured\n");
+        result = -1;
+    }
 
-	if (_spURIs[1] == NULL) {
-		_spURIs[1] = _spURIs[0];
-	}
+    ospDumpParameters();
 
-	if (_spURIs[0] == NULL) {
-		LOG(L_ERR,"ERROR: osp: Service Point 1 'sp1_uri' must be configured\n");
-		errorcode = -1;
-	}
-
-	dump_parameter();
-
-	return errorcode;
+    return result;
 }
 
-
-void dump_parameter() {
-	LOG(L_INFO, "osp: module parameter settings\n"
-	" sp1_uri: '%s'"
-	" sp1_weight: '%d'"
-	" sp2_uri: '%s'"
-	" sp2_weight: '%d'"
-	" device_ip: '%s'"
-	" device_port: '%s'"
-	" private_key: '%s'"
-	" local_certificate: '%s'"
-	" ca_certificates: '%s'"
-	" enable_crypto_hardware_support: '%d'"
-	" token_format: '%d'"
-	" ssl_lifetime: '%d'"
-	" persistence: '%d'"
-	" retry_delay: '%d'"
-	" retry_limit: '%d'"
-	" timeout: '%d'"
-	" validate_call_id: '%d'"
-	" max_destinations: '%d'",
-	_spURIs[0],
-	_spWeights[0],
-	_spURIs[1],
-	_spWeights[1],
-	_device_ip,
-	_device_port,
-	_private_key,
-	_local_certificate,
-	_ca_certificate,
-	_crypto_hw_support,
-	_token_format,
-	_ssl_lifetime,
-	_persistence,
-	_retry_delay,
-	_retry_limit,
-	_timeout,
-	_validate_call_id,
-	_max_destinations);
+/*
+ * Dump OSP module configuration
+ */
+void ospDumpParameters(void) 
+{
+    LOG(L_INFO, 
+        "osp: module configuration: "
+        "sp1_uri '%s' "
+        "sp1_weight '%ld' "
+        "sp2_uri '%s' "
+        "sp2_weight '%ld' "
+        "device_ip '%s' "
+        "device_port '%s' "
+        "private_key '%s' "
+        "local_certificate '%s' "
+        "ca_certificates '%s' "
+        "enable_crypto_hardware_support '%d' "
+        "token_format '%d' "
+        "ssl_lifetime '%d' "
+        "persistence '%d' "
+        "retry_delay '%d' "
+        "retry_limit '%d' "
+        "timeout '%d' "
+        "validate_call_id '%d' "
+        "max_destinations '%d'\n",
+        _osp_sp_uris[0],
+        _osp_sp_weights[0],
+        _osp_sp_uris[1],
+        _osp_sp_weights[1],
+        _osp_device_ip,
+        _osp_device_port,
+        _osp_private_key,
+        _osp_local_certificate,
+        _osp_ca_certificate,
+        _osp_crypto_hw,
+        _osp_token_format,
+        _osp_ssl_lifetime,
+        _osp_persistence,
+        _osp_retry_delay,
+        _osp_retry_limit,
+        _osp_timeout,
+        _osp_validate_callid,
+        _osp_max_dests);
 }
 

@@ -28,16 +28,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _OSP_MOD_PROVIDER_H_
+#define _OSP_MOD_PROVIDER_H_
 
+int ospSetupProvider(void);
+int ospDeleteProvider(void);
 
-
-
-#ifndef OSP_MOD_PROVIDER_H
-#define OSP_MOD_PROVIDER_H
-
-#include "osp/ospproviderapi.h"
-
-int setup_provider();
-int delete_provider();
-
-#endif
+#endif /* _OSP_MOD_PROVIDER_H_ */

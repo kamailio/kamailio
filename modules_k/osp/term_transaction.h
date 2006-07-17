@@ -28,16 +28,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _OSP_MOD_TERM_TRANSACTION_H_
+#define _OSP_MOD_TERM_TRANSACTION_H_
 
+#include "../../parser/msg_parser.h"
 
+int checkospheader(struct sip_msg*, char*, char*);
+int validateospheader(struct sip_msg*, char*, char*);
 
-
-#ifndef OSP_MOD_TERM_TRANSACTION_H
-#define OSP_MOD_TERM_TRANSACTION_H
-
-#include "../../sr_module.h"
-
-int checkospheader(   struct sip_msg*, char*,char*);
-int validateospheader(struct sip_msg*, char*,char*);
-
-#endif
+#endif /* _OSP_MOD_TERM_TRANSACTION_H_ */

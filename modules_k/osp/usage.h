@@ -28,16 +28,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _OSP_MOD_USAGE_H_
+#define _OSP_MOD_USAGE_H_
 
-
-
-
-#ifndef OSP_USAGE_MOD_H
-#define OSP_USAGE_MOD_H
-
-#include "osp/osp.h"
-#include "osp_mod.h"
-#include "../../sr_module.h"
+#include <osp/osp.h>
+#include "../../parser/msg_parser.h"
 
 /* This module reports originating and terminating call set up and duration usage
  * for OSP transactions.
@@ -54,10 +49,10 @@
  * Actual conversation duration maybe calculated using connect time (from the call
  * set up usage) and stop time (from the duration usage). 
  */
-void record_orig_transaction(struct sip_msg* msg, OSPTTRANHANDLE transaction, char* uac, char* from, char* to, time_t time_auth);
-void record_term_transaction(struct sip_msg* msg, OSPTTRANHANDLE transaction, char* uac, char* from, char* to, time_t time_auth);
+void ospRecordOrigTransaction(struct sip_msg* msg, OSPTTRANHANDLE trans, char* uac, char* from, char* to, time_t authtime);
+void ospRecordTermTransaction(struct sip_msg* msg, OSPTTRANHANDLE trans, char* uac, char* from, char* to, time_t authtime);
+void ospReportOrigSetupUsage(void);
+void ospReportTermSetupUsage(void);
 int  reportospusage(struct sip_msg* msg, char* ignore1, char* ignore2);
-void reportOrigCallSetUpUsage();
-void reportTermCallSetUpUsage();
 
-#endif
+#endif /* _OSP_MOD_USAGE_H_ */

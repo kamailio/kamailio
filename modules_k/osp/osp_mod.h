@@ -28,19 +28,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _OSP_MOD_H_
+#define _OSP_MOD_H_
 
+#define MODULE_RETURNCODE_TRUE          1
+#define MODULE_RETURNCODE_STOPROUTE     0
+#define MODULE_RETURNCODE_FALSE         -1
 
+#define OSP_DEF_SPS                     2
+#define OSP_DEF_WEIGHT                  1000
+#define OSP_DEF_SSLLIFE                 300
+#define OSP_DEF_PERSISTENCE             (60 * 1000)
+#define OSP_DEF_DELAY                   0
+#define OSP_DEF_RETRY                   2
+#define OSP_DEF_TIMEOUT                 (60 * 1000)
+#define OSP_DEF_DESTS                   5
+#define OSP_DEF_TOKEN                   2
+#define OSP_DEF_HW                      0
+#define OSP_DEF_CALLID                  1    /* Validate call ids, set to 0 to disable */
 
+#define OSP_KEYBUF_SIZE                 256
+#define OSP_STRBUF_SIZE                 256
+#define OSP_E164BUF_SIZE                1024
+#define OSP_TOKENBUF_SIZE               2048
+#define OSP_HEADERBUF_SIZE              3072
 
-#ifndef OSP_MOD_H
-#define OSP_MOD_H
-
-#include "../../sr_module.h"
-
-#define MODULE_RETURNCODE_TRUE    1
-#define MODULE_RETURNCODE_STOPROUTE  0
-#define MODULE_RETURNCODE_FALSE  -1
-
-#define MAX_DESTS                   10
-
-#endif
+#endif /* _OSP_MOD_H_ */
