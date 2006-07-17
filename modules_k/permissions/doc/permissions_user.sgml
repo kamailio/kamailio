@@ -112,18 +112,18 @@
 		<xref linkend="sec-call-routing">.
 		</para>
 	</section>
-	<section id="sec-referral-permissions">
-		<title>Referral Permissions</title>
+	<section id="sec-uri-permissions">
+		<title>URI Permissions</title>
 		<para>
-		The module can be used to determine if referral is
-		allowed to the destination specified by Refer-To header
-		of REFER request. Permission rules are stored in
+		The module can be used to determine if request is
+		allowed to the destination specified by an URI stored in
+		a pseudo-variable.  Permission rules are stored in
 		plaintext configuration files similar to
 		<filename moreinfo="none">hosts.allow</filename> and
 		<filename moreinfo="none">hosts.deny</filename> used by tcpd.
 		</para>
 		<para>
-		When <function moreinfo="none">allow_refer_to</function>
+		When <function moreinfo="none">allow_uri</function>
 		function is called, it tries to find a rule that matches
 		selected fields of the message.
 		The matching algorithm is as follows, first match wins:
@@ -131,23 +131,23 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			Create a pair &lt;From URI, Refer-To URI&gt;.
+			Create a pair &lt;From URI, URI stored in pseudo-variable&gt;.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Referral will be allowed when the pair matches
+			Request will be allowed when the pair matches
 			an entry in the allow file.
 		</listitem>
 		<listitem>
 			<para>
-			Otherwise referral will be denied when the pair
+			Otherwise request will be denied when the pair
 			matches an entry in the	deny file.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Otherwise, referral will be allowed.
+			Otherwise, request will be allowed.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -157,7 +157,7 @@
 		no permission control files.
 		</para>
 		<para>
-		From URI and Refer-To URI are always compared with regular 
+		From URI and URI stored in pseudo-variable are always compared with regular 
 		expressions! For the syntax see the sample file: 
 		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
@@ -737,11 +737,11 @@ if (method=="REGISTER") {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">allow_refer_to(basename)</function>
+		<function moreinfo="none">allow_uri(basename, pseudo-variable)</function>
 		</title>
 		<para>
 		Returns true if the pair constructed as described in <xref
-		linkend="sec-referral-permissions"> have appropriate permissions 
+		linkend="sec-uri-permissions"> have appropriate permissions 
 		according to the configuration files specified by the parameter.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
@@ -758,59 +758,23 @@ if (method=="REGISTER") {
 			configuration file of the server.
 			</para>
 		</listitem>
+		<listitem>
+			<para><emphasis>pseudo-variable</emphasis> - Any
+			pseudo-variable defined in OpenSER.
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>allow_refer_to(basename)</function> usage</title>
+		<title><function>allow_uri(basename, pseudo-variable)</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (allow_refer_to("basename")) {
+if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
 	t_relay();
 };
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">allow_refer_to(allow_file, deny_file)</function>
-		</title>
-		<para>
-		Returns true if the pair constructed as described in <xref
-		linkend="sec-referral-permissions"> have appropriate permissions 
-		according to the configuration files specified by parameters.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>allow_file</emphasis> - File containing allow rules.
-			</para>
-			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
-			configuration file of the server.
-			</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>deny_file</emphasis> - File containing deny rules.
-			</para>
-			<para>
-			If the parameter doesn't contain full pathname then the function
-			expects the file to be located in the same directory as the main 
-			configuration file of the server.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-		</para>
-		<example>
-		<title><function>allow_refer_to(allow_file, deny_file)</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (allow_refer_to("rules.allow", "rules.deny")) {
+if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 	t_relay();
 };
 ...

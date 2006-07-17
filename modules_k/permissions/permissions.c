@@ -38,6 +38,7 @@
 #include "../../str.h"
 #include "../../dset.h"
 #include "../../globals.h"
+#include "../../items.h"
 
 MODULE_VERSION
 
@@ -82,13 +83,17 @@ static int load_fixup(void** param, int param_no);
  */
 static int single_fixup(void** param, int param_no);
 
+/*
+ * Parse pseudo variable parameter
+ */
+static int double_fixup(void** param, int param_no);
+
 static int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
 static int allow_routing_1(struct sip_msg* msg, char* basename, char* str2);
 static int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file);
 static int allow_register_1(struct sip_msg* msg, char* basename, char* s);
 static int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file);
-static int allow_refer_to_1(struct sip_msg* msg, char* basename, char* s);
-static int allow_refer_to_2(struct sip_msg* msg, char* allow_file, char* deny_file);
+static int allow_uri(struct sip_msg* msg, char* basename, char* uri);
 
 static int mod_init(void);
 static void mod_exit(void);
@@ -109,9 +114,7 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_trusted",  allow_trusted,    0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_refer_to", allow_refer_to_1, 1, single_fixup,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_refer_to", allow_refer_to_2, 2, load_fixup,
+	{"allow_uri", allow_uri, 2, double_fixup,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -448,6 +451,78 @@ static int single_fixup(void** param, int param_no)
 
 
 /*
+ * Convert the name of the file into table index and pvar into fis_param
+ */
+static int double_fixup(void** param, int param_no)
+{
+	char* buffer;
+	void* tmp;
+	int param_len, ret, suffix_len;
+	xl_spec_t *sp;
+
+	if (param_no == 1) { /* basename */
+	    param_len = strlen((char*)*param);
+	    if (strlen(allow_suffix) > strlen(deny_suffix)) {
+		suffix_len = strlen(allow_suffix);
+	    } else {
+		suffix_len = strlen(deny_suffix);
+	    }
+
+	    buffer = pkg_malloc(param_len + suffix_len + 1);
+	    if (!buffer) {
+		LOG(L_ERR, "permissions:double_fixup(): No memory left\n");
+		return -1;
+	    }
+	    
+	    strcpy(buffer, (char*)*param);
+	    strcat(buffer, allow_suffix);
+	    tmp = buffer; 
+	    ret = load_fixup(&tmp, 1);
+	    
+	    strcpy(buffer + param_len, deny_suffix);
+	    tmp = buffer;
+	    ret |= load_fixup(&tmp, 2);
+	    
+	    *param = tmp;
+	    
+	    pkg_free(buffer);
+
+	    return 0;
+
+	} else if (param_no == 2) { /* pseudo variable */
+
+	    sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+	    if (sp == 0) {
+		LOG(L_ERR,"permissions:double_fixup(): no pkg memory left\n");
+		return -1;
+	    }
+
+	    if (xl_parse_spec((char*)*param, sp, XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS) == 0) {
+		LOG(L_ERR,"permissions:double_fixup(): parsing of "
+		    "pseudo variable %s failed!\n", (char*)*param);
+		pkg_free(sp);
+		return -1;
+	    }
+
+	    if (sp->type == XL_NULL) {
+		LOG(L_ERR,"permissions:double_fixup(): bad pseudo "
+		    "variable\n");
+		pkg_free(sp);
+		return -1;
+	    }
+
+	    *param = (void*)sp;
+
+	    return 0;
+	}
+
+	*param = (void *)0;
+
+	return 0;
+}
+
+
+/*
  * module initialization function 
  */
 static int mod_init(void)
@@ -651,102 +726,90 @@ int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 
 
 /*
- * determines the permission to refer to given refer-to uri
+ * determines the permission to an uri
  * return values:
  * -1:	deny
  * 1:	allow
  */
-static int check_refer_to(struct sip_msg* msg, int idx) 
+static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp) 
 {
-	struct hdr_field *from, *refer_to;
-	int len;
+	struct hdr_field *from;
+	int idx, len;
 	static char from_str[EXPRESSION_LENGTH+1];
-	static char refer_to_str[EXPRESSION_LENGTH+1];
+	static char uri_str[EXPRESSION_LENGTH+1];
+	xl_spec_t *sp;
+	xl_value_t xl_val;
+
+	idx = (int)_idx;
+	sp = (xl_spec_t *)_sp;
 	
-	/* turn off control, allow any refer */
+	/* turn off control, allow any uri */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
-		DBG("check_refer_to(): No rules => allow any refer\n");
+		DBG("allow_uri(): No rules => allow any uri\n");
 		return 1;
 	}
 	
 	/* looking for FROM HF */
         if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
-                LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
+                LOG(L_ERR, "allow_uri(): Error while parsing message\n");
                 return -1;
         }
 	
 	if (!msg->from) {
-		LOG(L_ERR, "check_refer_to(): FROM header field not found\n");
+		LOG(L_ERR, "allow_uri(): FROM header field not found\n");
 		return -1;
 	}
 	
 	/* we must call parse_from_header explicitly */
         if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
-                LOG(L_ERR, "check_refer_to(): Error while parsing From body\n");
+                LOG(L_ERR, "allow_uri(): Error while parsing From body\n");
                 return -1;
         }
 	
 	from = msg->from;
 	len = ((struct to_body*)from->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
-                LOG(L_ERR, "check_refer_to(): From header field is too long: %d chars\n", len);
+                LOG(L_ERR, "allow_uri(): From header field is too long: "
+		    "%d chars\n", len);
                 return -1;
 	}
 	strncpy(from_str, ((struct to_body*)from->parsed)->uri.s, len);
 	from_str[len] = '\0';
-	
-	/* looking for REFER-TO HF */
-        if ((!msg->refer_to) && (parse_headers(msg, HDR_REFER_TO_F, 0) == -1)){
-                LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
-                return -1;
-        }
-	
-	if (!msg->refer_to) {
-		LOG(L_ERR, "check_refer_to(): Refer-To header field not found\n");
+
+	if (sp && (xl_get_spec_value(msg, sp, &xl_val, 0) == 0)) {
+	    LOG(L_ERR, "allow_uri(): flags: %d\n", xl_val.flags);
+	    if (xl_val.flags & XL_VAL_STR) {
+		if (xl_val.rs.len > EXPRESSION_LENGTH) {
+		    LOG(L_ERR, "allow_uri(): pseudo variable value is too "
+			"long: %d chars\n", len);
+		    return -1;
+		}
+		strncpy(uri_str, xl_val.rs.s, xl_val.rs.len);
+		uri_str[xl_val.rs.len] = '\0';
+	    } else {
+		LOG(L_ERR, "allow_uri(): pseudo variable value is not "
+		    "string\n");
 		return -1;
+	    }
+	} else {
+	    LOG(L_ERR, "allow_uri(): cannot get pseudo variable value\n");
+	    return -1;
 	}
-	
-	/* we must call parse_refer_to_header explicitly */
-        if ((!(msg->refer_to)->parsed) && (parse_refer_to_header(msg) < 0)) {
-                LOG(L_ERR, "check_refer_to(): Error while parsing Refer-To body\n");
-                return -1;
-        }
-	
-	refer_to = msg->refer_to;
-	len = ((struct to_body*)refer_to->parsed)->uri.len;
-	if (len > EXPRESSION_LENGTH) {
-                LOG(L_ERR, "check_refer_to(): Refer-To header field is too long: %d chars\n", len);
-                return -1;
-	}
-	strncpy(refer_to_str, ((struct to_body*)refer_to->parsed)->uri.s, len);
-	refer_to_str[len] = '\0';
-	
-        DBG("check_refer_to(): looking for From: %s Refer-To: %s\n", from_str, refer_to_str);
+
+        DBG("allow_uri(): looking for From: %s URI: %s\n", from_str, uri_str);
 	     /* rule exists in allow file */
-	if (search_rule(allow[idx].rules, from_str, refer_to_str)) {
-    		DBG("check_refer_to(): allow rule found => refer is allowed\n");
+	if (search_rule(allow[idx].rules, from_str, uri_str)) {
+    		DBG("allow_uri(): allow rule found => URI is allowed\n");
 		return 1;
 	}
 	
 	/* rule exists in deny file */
-	if (search_rule(deny[idx].rules, from_str, refer_to_str)) {
-		DBG("check_refer_to(): deny rule found => refer is denied\n");
-		return -1;
+	if (search_rule(deny[idx].rules, from_str, uri_str)) {
+	    DBG("allow_uri(): deny rule found => URI is denied\n");
+	    return -1;
 	}
 
-	DBG("check_refer_to(): Neither allow nor deny rule found => refer_to is allowed\n");
+	DBG("allow_uri(): Neither allow nor deny rule found => URI is allowed\n");
 
 	return 1;
-}
-
-
-int allow_refer_to_1(struct sip_msg* msg, char* basename, char* s)
-{
-	return check_refer_to(msg, (int)(long)basename);
-}
-
-
-int allow_refer_to_2(struct sip_msg* msg, char* allow_file, char* deny_file)
-{
-	return check_refer_to(msg, (int)(long)allow_file);
 }
