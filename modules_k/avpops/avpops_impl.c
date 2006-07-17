@@ -802,6 +802,8 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 			LOG(L_ERR,"ERROR:avpops:write_avp: cannot get value\n");
 			goto error;
 		}
+		if(xvalue.flags&XL_VAL_NULL)
+			return -1;
 		if(xvalue.flags&XL_TYPE_INT)
 		{
 			avp_val.n = xvalue.ri;
@@ -825,8 +827,11 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 		}
 		if (src->opd&AVPOPS_FLAG_DOMAIN0)
 			avp_val.s = uri.host;
-		else
+		else {
+			if(uri.user.len<=0)
+				return -1;
 			avp_val.s = uri.user;
+		}
 	}
 
 	/* get dst avp name */

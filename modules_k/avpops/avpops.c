@@ -438,6 +438,7 @@ static int fixup_write_avp(void** param, int param_no)
 				return E_UNSPEC;
 			}
 		}
+		ap->opd |= flags;
 	} else if (param_no==2) {
 		if(s==0 || *s!='$')
 		{
