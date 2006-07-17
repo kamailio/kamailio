@@ -747,9 +747,9 @@ INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 
 
-#
-# Table structure for table 'active_sessions' -- web stuff
-#
+/*
+ * Table structure for table 'active_sessions' -- web stuff
+ */
 CREATE TABLE active_sessions (
   sid varchar(32) NOT NULL default '',
   name varchar(32) NOT NULL default '',
