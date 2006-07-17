@@ -479,4 +479,11 @@ int group2gid(int* gid, char* group);
  */
 time_t _timegm(struct tm* t);
 
+
+/*
+ * Return str as zero terminated string allocated
+ * using pkg_malloc
+ */
+char* as_asciiz(str* s);
+
 #endif
