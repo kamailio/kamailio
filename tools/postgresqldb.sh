@@ -747,18 +747,17 @@ INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 
 
-/*
- * Table structure for table 'usr_preferences_types' -- types of atributes 
- * in preferences
- */
-CREATE TABLE usr_preferences_types (
-  att_name varchar(32) NOT NULL default '',
-  att_rich_type varchar(32) NOT NULL default 'string',
-  att_raw_type int NOT NULL default '2',
-  att_type_spec text,
-  default_value varchar(100) NOT NULL default '',
-  PRIMARY KEY  (att_name)
+#
+# Table structure for table 'active_sessions' -- web stuff
+#
+CREATE TABLE active_sessions (
+  sid varchar(32) NOT NULL default '',
+  name varchar(32) NOT NULL default '',
+  val text,
+  changed varchar(14) NOT NULL default '',
+  PRIMARY KEY  (name,sid)
 ) $TABLE_TYPE;
+CREATE INDEX ch_active_sess_indx ON active_sessions (changed);
 
 
 /*
