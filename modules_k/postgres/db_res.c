@@ -104,9 +104,10 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 			break;
 
 			case VARCHAROID:
+			case TEXTOID:
 				RES_TYPES(_r)[i] = DB_STRING;
 			break;
-			
+
 			default:
 				LOG(L_ERR, "unknown type %d\n", ft);
 				RES_TYPES(_r)[i] = DB_STRING;
