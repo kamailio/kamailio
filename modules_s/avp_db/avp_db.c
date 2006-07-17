@@ -185,7 +185,11 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
     }
     
     n = 0;
+    /* AVP names from DB are always strings */
+    flags |= AVP_NAME_STR;
     for(i = 0; i < res->n; i++) {
+	/* reset val_str as the value could be an integer */
+	flags &= ~AVP_VAL_STR;
 	val = res->rows[i].values;
 	
 	if (val[0].nul || val[1].nul || val[3].nul) {
@@ -213,7 +217,6 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
 	    avp_val.len = strlen(avp_val.s);
 	}
 
-	flags |= AVP_NAME_STR;
 	if (type == AVP_VAL_STR) {
 		 /* String AVP */
 	    v.s = avp_val;
@@ -228,12 +231,10 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
 		avp_name.len, ZSW(avp_name.s));
 	    continue;
 	}
-	DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
-	db.free_result(con, res);
-	return 1;
     }
-
-    return 0;
+    DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
+    db.free_result(con, res);
+    return 1;
 }
 
 
@@ -270,7 +271,11 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
     }
     
     n = 0;
+    /* AVP names from DB are always strings */
+    flags |= AVP_NAME_STR;
     for(i = 0; i < res->n; i++) {
+	/* reset val_str as the value could be an integer */
+	flags &= ~AVP_VAL_STR;
 	val = res->rows[i].values;
 	
 	if (val[0].nul || val[1].nul || val[3].nul) {
@@ -298,7 +303,6 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
 	    avp_val.len = strlen(avp_val.s);
 	}
 
-	flags |= AVP_NAME_STR;
 	if (type == AVP_VAL_STR) {
 		 /* String AVP */
 	    v.s = avp_val;
@@ -313,12 +317,10 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
 		avp_name.len, ZSW(avp_name.s));
 	    continue;
 	}
-	DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
-	db.free_result(con, res);
-	return 1;
     }
-
-    return 0;
+    DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
+    db.free_result(con, res);
+    return 1;
 }
 
 
