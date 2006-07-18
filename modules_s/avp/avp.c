@@ -107,7 +107,6 @@ static int attr_hdr_body2attrs2(struct sip_msg* msg, char* p1, char* p2);
 static int del_attrs(struct sip_msg* msg, char* p1, char* p2);
 
 static int set_iattr_fixup(void**, int);
-static int print_attr_fixup(void**, int);
 static int avpid_fixup(void**, int);
 static int subst_attr_fixup(void**, int);
 static int fixup_part(void**, int);
@@ -200,7 +199,7 @@ static int get_avp_id(avp_ident_t* id, fparam_t* p, struct sip_msg* msg)
 	    DBG("get_avp_id: AVP %s does not exist\n", p->orig);
 	    return -1;
 	}
-	if (avp->flags & AVP_VAL_STR == 0) {
+	if (avp->flags & (AVP_VAL_STR == 0)) {
 	    DBG("get_avp_id: Not a string AVP\n");
 	    return -1;
 	}
@@ -328,9 +327,6 @@ static int del_attrs(struct sip_msg* msg, char* p1, char* p2)
 
 static int subst_attr_fixup(void** param, int param_no)
 {
-    struct subst_expr* subst;
-    str s;
-    
     if (param_no == 1) {
 	return avpid_fixup(param, 1);
     }
@@ -387,7 +383,7 @@ static int subst_attr(struct sip_msg* msg, char* p1, char* p2)
 static int flags2attr(struct sip_msg* msg, char* p1, char* p2)
 {
     avp_ident_t* id;
-    int_str name, value;
+    int_str value;
     
     value.n = msg->flags;
     
@@ -404,9 +400,7 @@ static int flags2attr(struct sip_msg* msg, char* p1, char* p2)
 
 static int fixup_part(void** param, int param_no) 
 {
-    str s;
     int i;
-    char *action = NULL;
     fparam_t* fp;
     
     static struct {
@@ -448,8 +442,8 @@ static int fixup_part(void** param, int param_no)
 	}
 	
 	ERR("Invalid parameter value: '%s'\n", fp->orig);
-	return -1;
     }
+    return -1;
 }
 
 
@@ -656,7 +650,7 @@ static int attr_equals(struct sip_msg* msg, char* p1, char* p2)
 
 static int attr_exists(struct sip_msg* msg, char* p1, char* p2)
 {
-	return avp_equals(msg, p1, NULL);
+	return attr_equals(msg, p1, NULL);
 }
 
 
@@ -1042,7 +1036,6 @@ static int set_destination(struct sip_msg* msg, str* dest)
 
 static int attr_destination(struct sip_msg* msg, char* p1, char* p2)
 {
-    avp_ident_t* avpid;
     avp_t* avp;
     avp_value_t val;
     
@@ -1088,7 +1081,7 @@ static int attr_hdr_body2attrs(struct sip_msg* m, char* header_, char* prefix_)
     int val_type, arr;
     if (header->kind == HDR_STR) {
 	if (parse_headers(m, HDR_EOH_F, 0) == -1) {
-	    LOG(L_ERR, "ERROR: avr_hdr_body2attrs: Error while parsing message\n");
+	    LOG(L_ERR, "ERROR: attr_hdr_body2attrs: Error while parsing message\n");
 	    return -1;
 	}
 	
@@ -1101,7 +1094,7 @@ static int attr_hdr_body2attrs(struct sip_msg* m, char* header_, char* prefix_)
     }
     else {
 	if (parse_headers(m, header->name.n, 0) == -1) {
-	    LOG(L_ERR, "ERROR: avr_hdr_body2attrs: Error while parsing message\n");
+	    LOG(L_ERR, "ERROR: attr_hdr_body2attrs: Error while parsing message\n");
 	    return -1;
 	}
 	switch (header->name.n) {
@@ -1240,12 +1233,12 @@ static int attr_hdr_body2attrs(struct sip_msg* m, char* header_, char* prefix_)
 			if (val_type) {
 			    val2.s.s = val.s;
 			    val2.s.len = val.len;
-			    DBG("DEBUG: avp_hdr_body2attrs: adding avp '%.*s', sval: '%.*s'\n", name2.s.len, (char*) name2.s.s, val.len, val.s);
+			    DBG("DEBUG: attr_hdr_body2attrs: adding avp '%.*s', sval: '%.*s'\n", name2.s.len, (char*) name2.s.s, val.len, val.s);
 			} else {
-			    DBG("DEBUG: avp_hdr_body2attrs: adding avp '%.*s', ival: '%d'\n", name2.s.len, (char*) name2.s.s, val2.n);
+			    DBG("DEBUG: attr_hdr_body2attrs: adding avp '%.*s', ival: '%d'\n", name2.s.len, (char*) name2.s.s, val2.n);
 			}
 			if ( add_avp(AVP_NAME_STR | val_type, name2, val2)!=0) {
-			    LOG(L_ERR, "ERROR: avp_hdr_body2attrs: add_avp failed\n");
+			    LOG(L_ERR, "ERROR: attr_hdr_body2attrs: add_avp failed\n");
 			    return 1;
 			}
 		    }
@@ -1274,7 +1267,7 @@ static int attr_hdr_body2attrs(struct sip_msg* m, char* header_, char* prefix_)
 
 static int attr_hdr_body2attrs2(struct sip_msg* msg, char* header_, char* prefix_) 
 {
-    return avp_hdr_body2attrs(msg, header_, prefix_);
+    return attr_hdr_body2attrs(msg, header_, prefix_);
 }
 
 
@@ -1295,7 +1288,7 @@ static int attr_hdr_body2attrs_fixup(void** param, int param_no) {
 		params = 0;
 		break;
 	    default:
-		LOG(L_ERR, "avp_hdr_body2attrs_fixup: bad AVP value\n");
+		LOG(L_ERR, "attr_hdr_body2attrs_fixup: bad AVP value\n");
 		return E_CFG;
 	    }
 	    switch (n) {
@@ -1303,12 +1296,12 @@ static int attr_hdr_body2attrs_fixup(void** param, int param_no) {
 		//				case HDR_xxx:
 		//					break;
 	    default:
-		LOG(L_ERR, "avp_hdr_body2attrs_fixup: header name is not valid and supported HDR_xxx id '%s' resolved as %d\n", c, n);
+		LOG(L_ERR, "attr_hdr_body2attrs_fixup: header name is not valid and supported HDR_xxx id '%s' resolved as %d\n", c, n);
 		return E_CFG;
 	    }
 	    h = pkg_malloc(sizeof(*h));
 	    if (!h) {
-		LOG(L_ERR, "avp_hdr_body2attrs_fixup: out of memory\n");
+		LOG(L_ERR, "attr_hdr_body2attrs_fixup: out of memory\n");
 		return E_OUT_OF_MEM;
 	    }
 	    
@@ -1324,12 +1317,12 @@ static int attr_hdr_body2attrs_fixup(void** param, int param_no) {
 	    else
 		n = strlen(c);
 	    if (n == 0) {
-		LOG(L_ERR, "avp_hdr_body2attrs_fixup: header name is empty\n");
+		LOG(L_ERR, "attr_hdr_body2attrs_fixup: header name is empty\n");
 		return E_CFG;
 	    }
 	    h = pkg_malloc(sizeof(*h)+n+1);
 	    if (!h) {
-		LOG(L_ERR, "avp_hdr_body2attrs_fixup: out of memory\n");
+		LOG(L_ERR, "attr_hdr_body2attrs_fixup: out of memory\n");
 		return E_OUT_OF_MEM;
 	    }
 	    h->kind = HDR_STR;
@@ -1352,13 +1345,13 @@ static int attr_hdr_body2attrs_fixup(void** param, int param_no) {
 		case PARAM_DELIM:
 		    break;
 		default:
-		    LOG(L_ERR, "avp_hdr_body2attrs_fixup: bad field param modifier near '%s'\n", params);
+		    LOG(L_ERR, "attr_hdr_body2attrs_fixup: bad field param modifier near '%s'\n", params);
 		    return E_CFG;
 		}
 		params++;
 	    }
 	    if (!h->val_types) {
-		LOG(L_ERR, "avp_hdr_body2attrs_fixup: no field param modifier specified\n");
+		LOG(L_ERR, "attr_hdr_body2attrs_fixup: no field param modifier specified\n");
 		return E_CFG;
 	    }
 	}
@@ -1379,7 +1372,7 @@ static int attr_hdr_body2attrs_fixup(void** param, int param_no) {
 	else {
 	    s = pkg_malloc(sizeof(*s)+n+1);
 	    if (!s) {
-		LOG(L_ERR, "avp_hdr_body2attrs_fixup: out of memory\n");
+		LOG(L_ERR, "attr_hdr_body2attrs_fixup: out of memory\n");
 		return E_OUT_OF_MEM;
 	    }
 	    s->len = n;
@@ -1395,7 +1388,7 @@ static int attr_hdr_body2attrs_fixup(void** param, int param_no) {
 static int attr_hdr_body2attrs2_fixup(void** param, int param_no) 
 {
     struct hdr_name *h;
-    int res = avp_hdr_body2attrs_fixup(param, param_no);
+    int res = attr_hdr_body2attrs_fixup(param, param_no);
     if (res == 0 && param_no == 1) {
 	h = *param;
 	h->field_delimiter = ';';
@@ -1474,5 +1467,7 @@ static int avpgroup_fixup(void** param, int param_no)
 	
 	pkg_free(*param);
 	*param = (void*)flags;
+	return 1;
     }
+    return 0;
 }
