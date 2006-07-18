@@ -66,7 +66,6 @@
 #define AVP_FR_INV_TIMER "fr_inv_timer"  /* Value of final response invite timer */
 #define AVP_RPID         "rpid"          /* Remote-Party-ID */
 #define AVP_GFLAGS       "gflags"        /* global flags */
-#define AVP_FLAGS	 "flags"	 /* message flags */
 
 struct str_int_data {
 	str name;
@@ -173,6 +172,8 @@ avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
 avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* state);
 avp_t *search_next_avp(struct search_state* state, avp_value_t *val);
 
+/* Reset one avp list */
+int reset_avp_list(int flags);
 
 /* free functions */
 void reset_avps(void);
