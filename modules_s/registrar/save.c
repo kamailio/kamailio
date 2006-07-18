@@ -543,7 +543,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 
 				set = nated | mem_only;
 				reset = ~(nated | mem_only) & (FL_NAT | FL_MEM);
-				if (ul.update_ucontact(c, aor, &_c->uri, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst) < 0) {
+				if (ul.update_ucontact(c, &_c->uri, aor, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
