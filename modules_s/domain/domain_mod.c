@@ -60,6 +60,7 @@ static int child_init(int rank);
 
 static int is_local(struct sip_msg* msg, char* s1, char* s2);
 static int lookup_domain(struct sip_msg* msg, char* s1, char* s2);
+static int get_did(str* did, str* domain);
 
 static int str_fixup(void** param, int param_no);
 static int lookup_domain_fixup(void** param, int param_no);
@@ -95,7 +96,7 @@ int db_mode = 0;  /* Database usage mode: 0 = no cache, 1 = cache */
 static str db_url = STR_STATIC_INIT(DEFAULT_RODB_URL);
 
 str domain_table = STR_STATIC_INIT(DOMAIN_TABLE); /* Name of domain table */
-str domain_col   = STR_STATIC_INIT(DOMAIN_TABLE); /* Name of domain column */
+str domain_col   = STR_STATIC_INIT(DOMAIN_COL);   /* Name of domain column */
 str did_col      = STR_STATIC_INIT(DID_COL);      /* Domain id */
 str flags_col    = STR_STATIC_INIT(FLAGS_COL);    /* Domain flags */
 
@@ -123,8 +124,9 @@ domain_t** domains_2 = 0;    /* List of domains 2 */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"is_local",          is_local,       1, str_fixup,           REQUEST_ROUTE   },
-    {"lookup_domain",     lookup_domain,  2, lookup_domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+    {"is_local",      is_local,              1, str_fixup,           REQUEST_ROUTE   },
+    {"lookup_domain", lookup_domain,         2, lookup_domain_fixup, REQUEST_ROUTE|FAILURE_ROUTE },
+    {"get_did",       (cmd_function)get_did, 0, 0,                   0},
     {0, 0, 0, 0, 0}
 };
 
@@ -443,6 +445,39 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
     
     if (hash_lookup(&d, *active_hash, &tmp) == 1) {
 	set_avp_list((unsigned long)flags, &d->attrs);
+	pkg_free(tmp.s);
+	return 1;
+    } else {
+	pkg_free(tmp.s);
+	return -1;
+    }
+}
+
+
+static int get_did(str* did, str* domain)
+{
+    str tmp;
+    domain_t* d;
+    unsigned int track;
+    
+    track = 0;
+    
+    if (db_mode == 0) {
+	ERR("lookup_domain only works in cache mode\n");
+	return -1;
+    }
+    
+    tmp.s = pkg_malloc(domain->len);
+    if (!tmp.s) {
+	ERR("No memory left\n");
+	return -1;
+    }
+    memcpy(tmp.s, domain->s, domain->len);
+    tmp.len = domain->len;
+    strlower(&tmp);
+    
+    if (hash_lookup(&d, *active_hash, &tmp) == 1) {
+	*did = d->did;
 	pkg_free(tmp.s);
 	return 1;
     } else {
