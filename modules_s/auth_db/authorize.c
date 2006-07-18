@@ -53,7 +53,7 @@
 
 
 static inline int get_ha1(struct username* username, str* realm,
-			  char* table, char* ha1, db_res_t** res, int* row)
+			  str* table, char* ha1, db_res_t** res, int* row)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -61,6 +61,7 @@ static inline int get_ha1(struct username* username, str* realm,
 	db_key_t* col;
 	str result;
 	int n, nc, i;
+	char* t = 0;
 
 #ifndef SUPPORT_EMPTY_AUTHNAME
 	/* sanity check first to avoid unnecessary DB lookups */
@@ -98,11 +99,14 @@ static inline int get_ha1(struct username* username, str* realm,
 
 	n = 2;
 	nc = 2 + credentials_n;
-	if (auth_dbf.use_table(auth_db_handle, table) < 0) {
+	t = as_asciiz(table);
+	if (auth_dbf.use_table(auth_db_handle, t) < 0) {
 		LOG(L_ERR, "auth_db:get_ha1: Error in use_table\n");
+		if (t) pkg_free(t);
 		pkg_free(col);
 		return -1;
 	}
+	if (t) pkg_free(t);
 
 	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
 		LOG(L_ERR, "auth_db:get_ha1: Error while querying database\n");
@@ -228,7 +232,7 @@ static int generate_avps(db_res_t* result, unsigned int row)
 /*
  * Authenticate digest credentials
  */
-static inline int authenticate(struct sip_msg* msg, str* realm, char* table,
+static inline int authenticate(struct sip_msg* msg, str* realm, str* table,
 			       hdr_types_t hftype)
 {
 	char ha1[256];
@@ -298,38 +302,38 @@ static inline int authenticate(struct sip_msg* msg, str* realm, char* table,
 /*
  * Authenticate using Proxy-Authorize header field
  */
-int proxy_authenticate(struct sip_msg* msg, char* realm, char* table)
+int proxy_authenticate(struct sip_msg* msg, char* p1, char* p2)
 {
-	     /* realm parameter is converted to str* in str_fixup */
-	return authenticate(msg, (str*)realm, table, HDR_PROXYAUTH_T);
+    str realm, table;
+
+    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	ERR("Cannot obtain digest realm from parameter '%s'\n", ((fparam_t*)p1)->orig);
+	return -1;
+    }
+
+    if (get_str_fparam(&table, msg, (fparam_t*)p2) < 0) {
+	ERR("Cannot obtain table name from parameter '%s'\n", ((fparam_t*)p2)->orig);
+	return -1;
+    }
+    return authenticate(msg, &realm, &table, HDR_PROXYAUTH_T);
 }
 
 
 /*
  * Authorize using WWW-Authorize header field
  */
-int www_authenticate(struct sip_msg* msg, char* realm, char* table)
+int www_authenticate(struct sip_msg* msg, char* p1, char* p2)
 {
-	return authenticate(msg, (str*)realm, table, HDR_AUTHORIZATION_T);
-}
+    str realm, table;
 
+    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	ERR("Cannot obtain digest realm from parameter '%s'\n", ((fparam_t*)p1)->orig);
+	return -1;
+    }
 
-/*
- * Authorize using Proxy-Authorize header field
- */
-int proxy_authenticate1(struct sip_msg* msg, char* table, char* s2)
-{
-	static str realm = STR_STATIC_INIT("");
-	     /* realm parameter is converted to str* in str_fixup */
-	return authenticate(msg, &realm, table, HDR_PROXYAUTH_T);
-}
-
-
-/*
- * Authorize using WWW-Authorize header field
- */
-int www_authenticate1(struct sip_msg* msg, char* table, char* s2)
-{
-	static str realm = STR_STATIC_INIT("");
-	return authenticate(msg, &realm, table, HDR_AUTHORIZATION_T);
+    if (get_str_fparam(&table, msg, (fparam_t*)p2) < 0) {
+	ERR("Cannot obtain table name from parameter '%s'\n", ((fparam_t*)p2)->orig);
+	return -1;
+    }
+    return authenticate(msg, &realm, &table, HDR_AUTHORIZATION_T);
 }

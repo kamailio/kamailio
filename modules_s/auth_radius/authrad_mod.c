@@ -73,10 +73,10 @@ static int service_type = -1;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_www_authorize",   radius_www_authorize,   1, fixup_str_1, REQUEST_ROUTE},
-	{"radius_proxy_authorize", radius_proxy_authorize, 1, fixup_str_1, REQUEST_ROUTE},
-	{"radius_www_authenticate",   radius_www_authorize,   1, fixup_str_1, REQUEST_ROUTE},
-	{"radius_proxy_authenticate", radius_proxy_authorize, 1, fixup_str_1, REQUEST_ROUTE},
+	{"radius_www_authorize",      radius_www_authorize,   1, fixup_var_str_1, REQUEST_ROUTE},
+	{"radius_proxy_authorize",    radius_proxy_authorize, 1, fixup_var_str_1, REQUEST_ROUTE},
+	{"radius_www_authenticate",   radius_www_authorize,   1, fixup_var_str_1, REQUEST_ROUTE},
+	{"radius_proxy_authenticate", radius_proxy_authorize, 1, fixup_var_str_1, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -85,8 +85,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"radius_config",    PARAM_STRING, &radius_config   },
-	{"service_type",     PARAM_INT,   &service_type    },
+	{"radius_config",    PARAM_STRING, &radius_config },
+	{"service_type",     PARAM_INT,   &service_type   },
 	{0, 0, 0}
 };
 

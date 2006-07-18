@@ -89,10 +89,10 @@ char* sec_rand = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_challenge",       www_challenge,           2, challenge_fixup, REQUEST_ROUTE},
-	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup, REQUEST_ROUTE},
-	{"www_challenge",       www_challenge1,          1, fixup_int_1,     REQUEST_ROUTE},
-	{"proxy_challenge",     proxy_challenge1,        1, fixup_int_1,     REQUEST_ROUTE},
+	{"www_challenge",       www_challenge2,          2, challenge_fixup, REQUEST_ROUTE},
+	{"proxy_challenge",     proxy_challenge2,        2, challenge_fixup, REQUEST_ROUTE},
+	{"www_challenge",       www_challenge1,          1, fixup_var_str_1, REQUEST_ROUTE},
+	{"proxy_challenge",     proxy_challenge1,        1, fixup_var_str_1, REQUEST_ROUTE},
 	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
 	{"bind_auth",           (cmd_function)bind_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
@@ -199,9 +199,9 @@ static void destroy(void)
 static int challenge_fixup(void** param, int param_no)
 {
 	if (param_no == 1) {
-		return fixup_str_12(param, param_no);
+		return fixup_var_str_12(param, param_no);
 	} else if (param_no == 2) {
-		return fixup_int_12(param, param_no);
+		return fixup_var_int_12(param, param_no);
 	}
 
 	return 0;

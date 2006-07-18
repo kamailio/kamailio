@@ -114,13 +114,9 @@ int credentials_n;         /* Number of credentials in the list */
  */
 static cmd_export_t cmds[] = {
 	{"www_authenticate",   www_authenticate,    2, authdb_fixup, REQUEST_ROUTE},
-	{"www_authenticate",   www_authenticate1,   1, 0,            REQUEST_ROUTE},
 	{"www_authorize",      www_authenticate,    2, authdb_fixup, REQUEST_ROUTE},
-	{"www_authorize",      www_authenticate1,   1, 0,            REQUEST_ROUTE},
 	{"proxy_authenticate", proxy_authenticate,  2, authdb_fixup, REQUEST_ROUTE},
-	{"proxy_authenticate", proxy_authenticate1, 1, 0,            REQUEST_ROUTE},
 	{"proxy_authorize",    proxy_authenticate,  2, authdb_fixup, REQUEST_ROUTE},
-	{"proxy_authorize",    proxy_authenticate1, 1, 0,            REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -220,28 +216,32 @@ static int authdb_fixup(void** param, int param_no)
 	db_con_t* dbh;
 	int ver;
 	str name;
+	fparam_t* p;
 
 	if (param_no == 1) {
-		return fixup_str_12(param, param_no);
+	    return fixup_var_str_12(param, param_no);
 	} else if (param_no == 2) {
-		name.s = (char*)*param;
-		name.len = strlen(name.s);
-
+	    if (fixup_var_str_12(param, param_no) < 0) return -1;
+	    p = (fparam_t*)(*param);
+	    if (p->type == FPARAM_STR) {
 		dbh = auth_dbf.init(db_url);
 		if (!dbh) {
-			LOG(L_ERR, "authdb_fixup: Unable to open database connection\n");
-			return -1;
+		    ERR("Unable to open database connection\n");
+		    return -1;
 		}
-		ver = table_version(&auth_dbf, dbh, &name);
+		ver = table_version(&auth_dbf, dbh, &p->v.str);
 		auth_dbf.close(dbh);
 		if (ver < 0) {
-			LOG(L_ERR, "authdb_fixup: Error while querying table version\n");
-			return -1;
+		    ERR("Error while querying table version\n");
+		    return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "authdb_fixup: Invalid table version (use ser_mysql.sh reinstall)\n");
-			return -1;
+		    ERR("Invalid table version (use ser_mysql.sh reinstall)\n");
+		    return -1;
 		}
+	    } else {
+		DBG("Not checking table version, parameter is attribute or select\n");
+	    }
 	}
-
+	
 	return 0;
 }

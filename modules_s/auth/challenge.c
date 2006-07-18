@@ -184,39 +184,68 @@ static inline int challenge(struct sip_msg* msg, str* realm, int qop,
 /*
  * Challenge a user to send credentials using WWW-Authorize header field
  */
-int www_challenge(struct sip_msg* msg, char* realm, char* qop)
+int www_challenge2(struct sip_msg* msg, char* p1, char* p2)
 {
-	return challenge(msg, (str*)realm, (int)(long)qop, 401, MESSAGE_401,
-			 WWW_AUTH_CHALLENGE);
+    str realm;
+    int qop;
+
+    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	ERR("Cannot obtain digest realm from '%s'\n", ((fparam_t*)p1)->orig);
+	return -1;
+    }
+    if (get_int_fparam(&qop, msg, (fparam_t*)p2) < 0) {
+	qop = 1;
+    }
+    return challenge(msg, &realm, qop, 401, MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
 
 
 /*
  * Challenge a user to send credentials using Proxy-Authorize header field
  */
-int proxy_challenge(struct sip_msg* msg, char* realm, char* qop)
+int proxy_challenge2(struct sip_msg* msg, char* p1, char* p2)
 {
-	return challenge(msg, (str*)realm, (int)(long)qop, 407, MESSAGE_407, 
-			 PROXY_AUTH_CHALLENGE);
+    str realm;
+    int qop;
+
+    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	ERR("Cannot obtain digest realm from '%s'\n", ((fparam_t*)p1)->orig);
+	return -1;
+    }
+    if (get_int_fparam(&qop, msg, (fparam_t*)p2) < 0) {
+	qop = 1;
+    }
+    return challenge(msg, &realm, qop, 407, MESSAGE_407, PROXY_AUTH_CHALLENGE);
 }
+
 
 /*
  * Challenge a user to send credentials using WWW-Authorize header field
  */
-int www_challenge1(struct sip_msg* msg, char* qop, char* s2)
+int www_challenge1(struct sip_msg* msg, char* p1, char* p2)
 {
-	return challenge(msg, 0, (int)(long)qop, 401, MESSAGE_401,
-			 WWW_AUTH_CHALLENGE);
+    str realm;
+
+    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	ERR("Cannot obtain digest realm from '%s'\n", ((fparam_t*)p1)->orig);
+	return -1;
+    }
+    return challenge(msg, &realm, 1, 401, MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
 
 
 /*
  * Challenge a user to send credentials using Proxy-Authorize header field
  */
-int proxy_challenge1(struct sip_msg* msg, char* qop, char* s2)
+int proxy_challenge1(struct sip_msg* msg, char* p1, char* p2)
 {
-	return challenge(msg, 0, (int)(long)qop, 407, MESSAGE_407, 
-			 PROXY_AUTH_CHALLENGE);
+    str realm = STR_NULL;
+
+    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	ERR("Cannot obtain digest realm from '%s'\n", ((fparam_t*)p1)->orig);
+	return -1;
+    }
+    return challenge(msg, &realm, 1, 407, MESSAGE_407, PROXY_AUTH_CHALLENGE);
 }
 
 
