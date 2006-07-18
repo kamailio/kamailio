@@ -123,12 +123,16 @@ static void *rh;
 static struct attr attrs[A_MAX];
 static struct val vals[V_MAX];
 
-static int acc_rad_request(struct sip_msg *rq, char *comment, char *foo);
-static int acc_rad_missed(struct sip_msg *rq, char *comment, char *foo);
+static int acc_rad_request0(struct sip_msg *rq, char *p1, char *p2);
+static int acc_rad_missed0(struct sip_msg *rq, char *p1, char *p2);
+static int acc_rad_request1(struct sip_msg *rq, char *p1, char *p2);
+static int acc_rad_missed1(struct sip_msg *rq, char *p1, char *p2);
 
 static cmd_export_t cmds[] = {
-	{"acc_rad_log",    acc_rad_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"acc_rad_missed", acc_rad_missed, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_rad_log",    acc_rad_request0, 0, 0,               REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_rad_missed", acc_rad_missed0,  0, 0,               REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_rad_log",    acc_rad_request1, 1, fixup_var_int_1, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_rad_missed", acc_rad_missed1,  1, fixup_var_int_1, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -812,7 +816,7 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
  * the result -- accounting functions just display "unavailable" if there
  * is nothing meaningful
  */
-static int acc_rad_request(struct sip_msg *rq, char* comment, char* s2)
+static int acc_rad_request0(struct sip_msg *rq, char* p1, char* p2)
 {
 	preparse_req(rq);
 	return log_request(rq, rq->to, 0, time(0));
@@ -823,10 +827,39 @@ static int acc_rad_request(struct sip_msg *rq, char* comment, char* s2)
  * the result -- accounting functions just display "unavailable" if there
  * is nothing meaningful
  */
-static int acc_rad_missed(struct sip_msg *rq, char* comment, char* s2)
+static int acc_rad_missed0(struct sip_msg *rq, char* p1, char* p2)
 {
 	preparse_req(rq);
 	return log_request(rq, rq->to, 0, time(0));
+}
+
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int acc_rad_request1(struct sip_msg *rq, char* p1, char* p2)
+{
+    int code;
+    preparse_req(rq);
+    if (get_int_fparam(&code, rq, (fparam_t*)p1) < 0) {
+	code = 0;
+    }
+    return log_request(rq, rq->to, code, time(0));
+}
+
+
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int acc_rad_missed1(struct sip_msg *rq, char* p1, char* p2)
+{
+    int code;
+    preparse_req(rq);
+    if (get_int_fparam(&code, rq, (fparam_t*)p1) < 0) {
+	code = 0;
+    }
+    return log_request(rq, rq->to, code, time(0));
 }
 
 

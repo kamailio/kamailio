@@ -151,15 +151,19 @@ static char* attrs = "";
 avp_ident_t* avps;
 int avps_n;
 
-static int acc_log_request(struct sip_msg *rq, char *comment, char *foo);
-static int acc_log_missed(struct sip_msg *rq, char *comment, char *foo);
+static int acc_log_request0(struct sip_msg *rq, char *p1, char *p2);
+static int acc_log_missed0(struct sip_msg *rq, char *p1, char *p2);
+static int acc_log_request1(struct sip_msg *rq, char *p1, char *p2);
+static int acc_log_missed1(struct sip_msg *rq, char *p1, char *p2);
 
 static str na = STR_STATIC_INIT(NA);
 
 
 static cmd_export_t cmds[] = {
-	{"acc_syslog_log",    acc_log_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"acc_syslog_missed", acc_log_missed, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_syslog_log",    acc_log_request0, 0, 0,               REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_syslog_missed", acc_log_missed0,  0, 0,               REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_syslog_log",    acc_log_request1, 1, fixup_var_str_1, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_syslog_missed", acc_log_missed1,  1, fixup_var_str_2, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -722,13 +726,15 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
  * the result -- accounting functions just display "unavailable" if there
  * is nothing meaningful
  */
-static int acc_log_request(struct sip_msg *rq, char* comment, char* s2)
+static int acc_log_request1(struct sip_msg *rq, char* p1, char* p2)
 {
 	str phrase;
 	str txt = STR_STATIC_INIT(ACC_REQUEST);
 
-	phrase.s = comment;
-	phrase.len = strlen(comment);	/* fix_param would be faster! */
+	if (get_str_fparam(&phrase, rq, (fparam_t*)p1) < 0) {
+	    phrase.s = 0;
+	    phrase.len = 0;
+	}
 	preparse_req(rq);
 	return log_request(rq, rq->to, &txt, &phrase, time(0));
 }
@@ -738,16 +744,45 @@ static int acc_log_request(struct sip_msg *rq, char* comment, char* s2)
  * the result -- accounting functions just display "unavailable" if there
  * is nothing meaningful
  */
-static int acc_log_missed(struct sip_msg *rq, char* comment, char* s2)
+static int acc_log_missed1(struct sip_msg *rq, char* p1, char* p2)
 {
 	str phrase;
 	str txt = STR_STATIC_INIT(ACC_MISSED);
 
-	phrase.s = comment;
-	phrase.len = strlen(comment);	/* fix_param would be faster! */
+	if (get_str_fparam(&phrase, rq, (fparam_t*)p1) < 0) {
+	    phrase.s = 0;
+	    phrase.len = 0;
+	}
 	preparse_req(rq);
 	return log_request(rq, rq->to, &txt, &phrase, time(0));
 }
+
+
+
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int acc_log_request0(struct sip_msg *rq, char* p1, char* p2)
+{
+	static str phrase = STR_NULL;
+	str txt = STR_STATIC_INIT(ACC_REQUEST);
+	return log_request(rq, rq->to, &txt, &phrase, time(0));
+}
+
+
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int acc_log_missed0(struct sip_msg *rq, char* p1, char* p2)
+{
+	static str phrase = STR_NULL;
+	str txt = STR_STATIC_INIT(ACC_MISSED);
+	preparse_req(rq);
+	return log_request(rq, rq->to, &txt, &phrase, time(0));
+}
+
 
 
 static void ack_handler(struct cell* t, int type, struct tmcb_params* ps)
