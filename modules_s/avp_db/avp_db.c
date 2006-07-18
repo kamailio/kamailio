@@ -69,6 +69,9 @@ static int load_attrs(struct sip_msg* msg, char* s1, char* s2);
 static int attrs_fixup(void** param, int param_no);
 
 
+typedef int (*dm_get_did_t)(str* did, str* domain);
+static dm_get_did_t dm_get_did = NULL;
+
 /*
  * Exported functions
  */
@@ -82,59 +85,57 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",           PARAM_STRING, &db_url          },
-	{"user_attrs_table", PARAM_STRING, &user_attrs_table},
-	{"uri_attrs_table",  PARAM_STRING, &uri_attrs_table },
-	{"uid_column",       PARAM_STRING, &uid_column      },
-	{"username_column",  PARAM_STRING, &username_column },
-	{"did_column",       PARAM_STRING, &did_column      },
-	{"name_column",      PARAM_STRING, &name_column     },
-	{"type_column",      PARAM_STRING, &type_column     },
-	{"value_column",     PARAM_STRING, &val_column      },
-	{"flags_column",     PARAM_STRING, &flags_column    },
-	{0, 0, 0}
+    {"db_url",           PARAM_STRING, &db_url          },
+    {"user_attrs_table", PARAM_STRING, &user_attrs_table},
+    {"uri_attrs_table",  PARAM_STRING, &uri_attrs_table },
+    {"uid_column",       PARAM_STRING, &uid_column      },
+    {"username_column",  PARAM_STRING, &username_column },
+    {"did_column",       PARAM_STRING, &did_column      },
+    {"name_column",      PARAM_STRING, &name_column     },
+    {"type_column",      PARAM_STRING, &type_column     },
+    {"value_column",     PARAM_STRING, &val_column      },
+    {"flags_column",     PARAM_STRING, &flags_column    },
+    {0, 0, 0}
 };
 
 
-
-
 struct module_exports exports = {
-	"avp_db",
-	cmds,        /* Exported commands */
-	0,           /* RPC methods */
-	params,      /* Exported parameters */
-	mod_init,    /* module initialization function */
-	0,           /* response function*/
-	0,           /* destroy function */
-	0,           /* oncancel function */
-	child_init   /* per-child init function */
+    "avp_db",
+    cmds,        /* Exported commands */
+    0,           /* RPC methods */
+    params,      /* Exported parameters */
+    mod_init,    /* module initialization function */
+    0,           /* response function*/
+    0,           /* destroy function */
+    0,           /* oncancel function */
+    child_init   /* per-child init function */
 };
 
 
 static int mod_init(void)
 {
-	if (bind_dbmod(db_url, &db) < 0) {
-		LOG(L_ERR, "avp_db:mod_init: Unable to bind a database driver\n");
-		return -1;
-	}
-
-	if (!DB_CAPABILITY(db, DB_CAP_QUERY)) {
-		LOG(L_ERR, "avp_db:mod_init: Selected database driver does not suppor the query capability\n");
-		return -1;
-	}
-
-	return 0;
+    if (bind_dbmod(db_url, &db) < 0) {
+	LOG(L_ERR, "avp_db:mod_init: Unable to bind a database driver\n");
+	return -1;
+    }
+    
+    if (!DB_CAPABILITY(db, DB_CAP_QUERY)) {
+	LOG(L_ERR, "avp_db:mod_init: Selected database driver does not suppor the query capability\n");
+	return -1;
+    }
+    
+    return 0;
 }
 
 
 static int child_init(int rank)
 {
-	con = db.init(db_url);
-	if (!con) {
-		LOG(L_ERR, "avp_db:child_init: Could not initialize connection to %s\n", db_url);
-		return -1;
-	}
-	return 0;
+    con = db.init(db_url);
+    if (!con) {
+	LOG(L_ERR, "avp_db:child_init: Could not initialize connection to %s\n", db_url);
+	return -1;
+    }
+    return 0;
 }
 
 
@@ -167,7 +168,11 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
     }
 
     kv[0].val.str_val = puri.user;
-    kv[1].val.str_val = puri.host;
+
+    if (dm_get_did(&kv[1].val.str_val, &puri.host) < 0) {
+	DBG("Cannot lookup DID for domain %.*s\n", puri.host.len, ZSW(puri.host.s));
+	kv[1].val.str_val = puri.host;
+    }
 
     cols[0] = name_column;
     cols[1] = type_column;
@@ -329,7 +334,6 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
  */
 static int load_attrs(struct sip_msg* msg, char* fl, char* fp)
 {
-
     unsigned long flags;
     
     if (!con) {
@@ -348,64 +352,68 @@ static int load_attrs(struct sip_msg* msg, char* fl, char* fp)
 
 static int attrs_fixup(void** param, int param_no)
 {
-	unsigned long flags;
-	int ret, err;
-	fparam_t* fp;
-	char* s;
-
-	if (param_no == 1) {
-		 /* Determine the track and class of attributes to be loaded */
-	    s = (char*)*param;
-	    flags = 0;
-	    if (*s != '$' || (strlen(s) != 3)) {
-		ERR("Invalid parameter value, $xy expected\n");
-		return -1;
-	    }
-	    switch((s[1] << 8) + s[2]) {
-	    case 0x4655: /* $fu */
-	    case 0x6675:
-	    case 0x4675:
-	    case 0x6655:
-		flags = AVP_TRACK_FROM | AVP_CLASS_USER;
-		break;
-
-	    case 0x4652: /* $fr */
-	    case 0x6672:
-	    case 0x4672:
-	    case 0x6652:
-		flags = AVP_TRACK_FROM | AVP_CLASS_URI;
-		break;
-
-	    case 0x5455: /* $tu */
-	    case 0x7475:
-	    case 0x5475:
-	    case 0x7455:
-		flags = AVP_TRACK_TO | AVP_CLASS_USER;
-		break;
-
-	    case 0x5452: /* $tr */
-	    case 0x7472:
-	    case 0x5472:
-	    case 0x7452:
-		flags = AVP_TRACK_TO | AVP_CLASS_URI;
-		break;
-		
-	    default:
-		ERR("Invalid parameter value: '%s'\n", s);
-		return -1;
-	    }
-
-	    pkg_free(*param);
-	    *param = (void*)flags;
-	} else if (param_no == 2) {
-	    ret = fix_param(FPARAM_AVP, param);
-	    if (ret <= 0) return ret;
-	    ret = fix_param(FPARAM_SELECT, param);
-	    if (ret <= 0) return ret;
-	    ret = fix_param(FPARAM_STR, param);
-	    if (ret <= 0) return ret;
-	    ERR("Unknown parameter\n");
+    unsigned long flags;
+    int ret, err;
+    fparam_t* fp;
+    char* s;
+    
+    if (param_no == 1) {
+	     /* Determine the track and class of attributes to be loaded */
+	s = (char*)*param;
+	flags = 0;
+	if (*s != '$' || (strlen(s) != 3)) {
+	    ERR("Invalid parameter value, $xy expected\n");
 	    return -1;
 	}
-	return 0;
+	switch((s[1] << 8) + s[2]) {
+	case 0x4655: /* $fu */
+	case 0x6675:
+	case 0x4675:
+	case 0x6655:
+	    flags = AVP_TRACK_FROM | AVP_CLASS_USER;
+	    break;
+	    
+	case 0x4652: /* $fr */
+	case 0x6672:
+	case 0x4672:
+	case 0x6652:
+	    flags = AVP_TRACK_FROM | AVP_CLASS_URI;
+	    break;
+	    
+	case 0x5455: /* $tu */
+	case 0x7475:
+	case 0x5475:
+	case 0x7455:
+	    flags = AVP_TRACK_TO | AVP_CLASS_USER;
+	    break;
+	    
+	case 0x5452: /* $tr */
+	case 0x7472:
+	case 0x5472:
+	case 0x7452:
+	    flags = AVP_TRACK_TO | AVP_CLASS_URI;
+	    break;
+	    
+	default:
+	    ERR("Invalid parameter value: '%s'\n", s);
+	    return -1;
+	}
+
+	if (flags & AVP_CLASS_URI) {
+	    dm_get_did = (dm_get_did_t)find_export("get_did", 0, 0);
+	}
+	
+	pkg_free(*param);
+	*param = (void*)flags;
+    } else if (param_no == 2) {
+	ret = fix_param(FPARAM_AVP, param);
+	if (ret <= 0) return ret;
+	ret = fix_param(FPARAM_SELECT, param);
+	if (ret <= 0) return ret;
+	ret = fix_param(FPARAM_STR, param);
+	if (ret <= 0) return ret;
+	ERR("Unknown parameter\n");
+	return -1;
+    }
+    return 0;
 }
