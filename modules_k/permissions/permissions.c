@@ -451,7 +451,8 @@ static int single_fixup(void** param, int param_no)
 
 
 /*
- * Convert the name of the file into table index and pvar into fis_param
+ * Convert the name of the file into table index and pvar into parsed pseudo
+ * variable specification
  */
 static int double_fixup(void** param, int param_no)
 {
