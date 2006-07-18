@@ -119,21 +119,23 @@ enum {
 	FPARAM_REGEX  = (1 << 3),
 	FPARAM_AVP    = (1 << 5),
 	FPARAM_SELECT = (1 << 6),
+	FPARAM_SUBST  = (1 << 7)
 };
 
 /*
  * Function parameter
  */
 typedef struct fparam {
-        char* orig;                /* The original value */
-        int type;                  /* Type of parameter */
+        char* orig;                       /* The original value */
+        int type;                         /* Type of parameter */
         union {
-		char* asciiz;      /* Zero terminated ASCII string */
-		struct _str str;   /* pointer/len string */
-		int i;             /* Integer value */
-		regex_t* regex;    /* Compiled regular expression */
-		avp_ident_t avp;   /* AVP identifier */
-	        select_t* select;  /* select structure */ 
+		char* asciiz;             /* Zero terminated ASCII string */
+		struct _str str;          /* pointer/len string */
+		int i;                    /* Integer value */
+		regex_t* regex;           /* Compiled regular expression */
+		avp_ident_t avp;          /* AVP identifier */
+	        select_t* select;         /* select structure */ 
+	        struct subst_expr* subst; /* Regex substitution */
 	} v;
 } fparam_t;
 
@@ -200,36 +202,17 @@ void* find_param_export(struct sr_module* mod, char* name, modparam_t type_mask,
  */
 
 
+/* API function to get other parameters from fixup */
+action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no);
+int fixup_get_param_count(void **cur_param, int cur_param_no);
+
+int fix_flag( modparam_t type, void* val,
+					char* mod_name, char* param_name, int* flag);
+
+
 /*
- * Common fixup functions shared across modules
+ * Common function parameter fixups
  */
-
-/* Convert both parameters from char* to str* */
-int fixup_str_12(void** param, int param_no);
-
-/* Convert first parameter from char* to str* */
-int fixup_str_1(void** param, int param_no);
-
-/* Convert second parameter from char* to str* */
-int fixup_str_2(void** param, int param_no);
-
-/* Convert both parameters from char* to long */
-int fixup_int_12(void** param, int param_no);
-
-/* Convert first parameter from char* to long */
-int fixup_int_1(void** param, int param_no);
-
-/* Convert second parameter from char* to long */
-int fixup_int_2(void** param, int param_no);
-
-/* Compile regular expressions in both parameters */
-int fixup_regex_12(void** param, int param_no);
-
-/* Compile regular expression in first parameter */
-int fixup_regex_1(void** param, int param_no);
-
-/* Compile regular expression in second parameter */
-int fixup_regex_2(void** param, int param_no);
 
 /*
  * Generic parameter fixup function which creates
@@ -239,19 +222,86 @@ int fixup_regex_2(void** param, int param_no);
 int fix_param(int type, void** param);
 
 /*
+ * Fixup variable string, the parameter can be
+ * AVP, SELECT, or ordinary string. AVP and select
+ * identifiers will be resolved to their values during
+ * runtime
+ *
+ * The parameter value will be converted to fparam structure
+ * This function returns -1 on an error
+ */
+int fixup_var_str_12(void** param, int param_no);
+
+/* Same as fixup_var_str_12 but applies to the 1st parameter only */
+int fixup_var_str_1(void** param, int param_no);
+
+/* Same as fixup_var_str_12 but applies to the 2nd parameter only */
+int fixup_var_str_2(void** param, int param_no);
+
+/*
+ * Fixup variable integer, the parameter can be
+ * AVP, SELECT, or ordinary integer. AVP and select
+ * identifiers will be resolved to their values and 
+ * converted to int if necessary during runtime
+ *
+ * The parameter value will be converted to fparam structure
+ * This function returns -1 on an error
+ */
+int fixup_var_int_12(void** param, int param_no);
+
+/* Same as fixup_var_int_12 but applies to the 1st parameter only */
+int fixup_var_int_1(void** param, int param_no);
+
+/* Same as fixup_var_int_12 but applies to the 2nd parameter only */
+int fixup_var_int_2(void** param, int param_no);
+
+/*
+ * The parameter must be a regular expression which must compile, the
+ * parameter will be converted to compiled regex
+ */
+int fixup_regex_12(void** param, int param_no);
+
+/* Same as fixup_regex_12 but applies to the 1st parameter only */
+int fixup_regex_1(void** param, int param_no);
+
+/* Same as fixup_regex_12 but applies to the 2nd parameter only */
+int fixup_regex_2(void** param, int param_no);
+
+/*
+ * The string parameter will be converted to integer
+ */
+int fixup_int_12(void** param, int param_no);
+
+/* Same as fixup_int_12 but applies to the 1st parameter only */
+int fixup_int_1(void** param, int param_no);
+
+/* Same as fixup_int_12 but applies to the 2nd parameter only */
+int fixup_int_2(void** param, int param_no);
+
+/*
+ * Parse the parameter as static string, do not resolve
+ * AVPs or selects, convert the parameter to str structure
+ */
+int fixup_str_12(void** param, int param_no);
+
+/* Same as fixup_str_12 but applies to the 1st parameter only */
+int fixup_str_1(void** param, int param_no);
+
+/* Same as fixup_str_12 but applies to the 2nd parameter only */
+int fixup_str_2(void** param, int param_no);
+
+/*
  * Get the function parameter value as string
  * Return values:  0 - Success
- *                 1 - Incompatible type (i.e. int)
  *                -1 - Cannot get value
  */
 int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param);
 
-
-/* API function to get other parameters from fixup */
-action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no);
-int fixup_get_param_count(void **cur_param, int cur_param_no);
-
-int fix_flag( modparam_t type, void* val,
-					char* mod_name, char* param_name, int* flag);
+/*
+ * Get the function parameter value as integer
+ * Return values:  0 - Success
+ *                -1 - Cannot get value
+ */
+int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param);
 
 #endif /* sr_module_h */

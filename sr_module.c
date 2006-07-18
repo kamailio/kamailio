@@ -45,6 +45,7 @@
 #include "mem/mem.h"
 #include "core_cmd.h"
 #include "ut.h"
+#include "re.h"
 #include "route_struct.h"
 #include "flags.h"
 #include "trim.h"
@@ -535,124 +536,6 @@ int init_modules(void)
 #endif
 
 
-/*
- * Common fixup functions shared across modules
- */
-
-int fixup_str_12(void** param, int param_no)
-{
-	str* s;
-
-	s = (str*)pkg_malloc(sizeof(str));
-	if (!s) {
-		LOG(L_ERR, "fixup_str_12: No memory left\n");
-		return E_UNSPEC;
-	}
-
-	s->s = (char*)*param;
-	s->len = strlen(s->s);
-	*param = (void*)s;
-	return 0;
-}
-
-
-int fixup_str_1(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_str_12(param, param_no);
-	}
-
-	return 0;
-}
-
-
-int fixup_str_2(void** param, int param_no)
-{
-	if (param_no == 2) {
-		return fixup_str_12(param, param_no);
-	}
-
-	return 0;
-}
-
-
-int fixup_int_12(void** param, int param_no)
-{
-	unsigned long num;
-	int err;
-
-	num = str2s(*param, strlen(*param), &err);
-
-	if (err == 0) {
-		pkg_free(*param);
-		*param=(void*)num;
-	} else {
-		LOG(L_ERR, "fixup_int_12: Bad number <%s>\n",
-		    (char*)(*param));
-		return E_UNSPEC;
-	}
-
-	return 0;
-}
-
-
-int fixup_int_1(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_int_12(param, param_no);
-	}
-
-	return 0;
-}
-
-
-int fixup_int_2(void** param, int param_no)
-{
-	if (param_no == 2) {
-		return fixup_int_12(param, param_no);
-	}
-
-	return 0;
-}
-
-
-int fixup_regex_12(void** param, int param_no)
-{
-	regex_t* re;
-
-	if ((re=pkg_malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
-	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
-		pkg_free(re);
-		LOG(L_ERR, "ERROR: fixup_regex_12: Bad regular expression '%s'\n", (char*)*param);
-		return E_BAD_RE;
-	}
-	/* free string */
-	pkg_free(*param);
-	/* replace it with the compiled re */
-	*param=re;
-	return 0;
-}
-
-
-int fixup_regex_1(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_regex_12(param, param_no);
-	}
-
-	return 0;
-}
-
-
-int fixup_regex_2(void** param, int param_no)
-{
-	if (param_no == 2) {
-		return fixup_regex_12(param, param_no);
-	}
-
-	return 0;
-}
-
 action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no) {
 	action_u_t *a, a2;
         /* cur_param points to a->u.string, get pointer to a */
@@ -724,6 +607,9 @@ int fix_flag( modparam_t type, void* val,
 	return 0;
 }
 
+/*
+ * Common function parameter fixups
+ */
 
 /*
  * Generic parameter fixup function which creates
@@ -732,105 +618,264 @@ int fix_flag( modparam_t type, void* val,
  */
 int fix_param(int type, void** param)
 {	
-	fparam_t* p;
-	str name;
-	unsigned long num;
-	int err;
-
-	p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
-	if (!p) {
-		ERR("fix_param: No memory left\n");
-		return E_OUT_OF_MEM;
+    fparam_t* p;
+    str name, s;
+    unsigned long num;
+    int err;
+    
+    p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
+    if (!p) {
+	ERR("No memory left\n");
+	return E_OUT_OF_MEM;
+    }
+    memset(p, 0, sizeof(fparam_t));
+    p->orig = *param;
+    
+    switch(type) {
+    case FPARAM_UNSPEC:
+	ERR("Invalid type value\n");
+	goto error;
+	
+    case FPARAM_STRING:
+	p->v.asciiz = *param;
+	break;
+	
+    case FPARAM_STR:
+	p->v.str.s = (char*)*param;
+	p->v.str.len = strlen(p->v.str.s);
+	break;
+	
+    case FPARAM_INT:
+	num = str2s(*param, strlen(*param), &err);
+	if (err == 0) {
+	    p->v.i = num;
+	} else {
+		 /* Not a number */
+	    pkg_free(p);
+	    return 1;
 	}
-	memset(p, 0, sizeof(fparam_t));
-	p->orig = *param;
-
-	switch(type) {
-	case FPARAM_UNSPEC:
-		ERR("fix_param: Invalid type value\n");
-		goto error;
-
-	case FPARAM_STRING:
-		p->v.asciiz = *param;
-		break;
-
-	case FPARAM_STR:
-		p->v.str.s = (char*)*param;
-		p->v.str.len = strlen(p->v.str.s);
-		break;
-
-	case FPARAM_INT:
-		num = str2s(*param, strlen(*param), &err);
-		if (err == 0) {
-			p->v.i = num;
-		} else {
-			     /* Not a number */
-			pkg_free(p);
-			return 1;
-		}
-		break;
-
-	case FPARAM_REGEX:
-		if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
-			ERR("No memory left\n");
-			goto error;
-		}
-		if (regcomp(p->v.regex, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
-			pkg_free(p->v.regex);
-			ERR("Bad regular expression '%s'\n", (char*)*param);
-		        goto error;
-		}
-		break;
-
-	case FPARAM_AVP:
-		name.s = (char*)*param;
-		name.len = strlen(name.s);
-		trim(&name);
-		if (!name.len || name.s[0] != '$') {
-			     /* Not an AVP identifier */
-			pkg_free(p);
-			return 1;
-		}
-		name.s++;
-		name.len--;
-		
-		if (parse_avp_ident(&name, &p->v.avp) < 0) {
-			ERR("Error while parsing attribute name\n");
-			goto error;
-		}
-		break;
-
-	case FPARAM_SELECT:
-		name.s = (char*)*param;
-		name.len = strlen(name.s);
-		trim(&name);
-		if (!name.len || name.s[0] != '@') {
-			     /* Not a select identifier */
-			pkg_free(p);
-			return 1;
-		}
-
-		if (parse_select(&name.s, &p->v.select) < 0) {
-			ERR("Error while parsing select identifier\n");
-			goto error;
-		}
-		break;
+	break;
+	
+    case FPARAM_REGEX:
+	if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
+	    ERR("No memory left\n");
+	    goto error;
 	}
+	if (regcomp(p->v.regex, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+	    pkg_free(p->v.regex);
+	    ERR("Bad regular expression '%s'\n", (char*)*param);
+	    goto error;
+	}
+	break;
+	
+    case FPARAM_AVP:
+	name.s = (char*)*param;
+	name.len = strlen(name.s);
+	trim(&name);
+	if (!name.len || name.s[0] != '$') {
+		 /* Not an AVP identifier */
+	    pkg_free(p);
+	    return 1;
+	}
+	name.s++;
+	name.len--;
+	
+	if (parse_avp_ident(&name, &p->v.avp) < 0) {
+	    ERR("Error while parsing attribute name\n");
+	    goto error;
+	}
+	break;
+	
+    case FPARAM_SELECT:
+	name.s = (char*)*param;
+	name.len = strlen(name.s);
+	trim(&name);
+	if (!name.len || name.s[0] != '@') {
+		 /* Not a select identifier */
+	    pkg_free(p);
+	    return 1;
+	}
+	
+	if (parse_select(&name.s, &p->v.select) < 0) {
+	    ERR("Error while parsing select identifier\n");
+	    goto error;
+	}
+	break;
 
-	p->type = type;
-	*param = (void*)p;
-	return 0;
-
+    case FPARAM_SUBST:
+	s.s = *param;
+	s.len = strlen(s.s);
+	p->v.subst = subst_parser(&s);
+	if (!p->v.subst) {
+	    ERR("Error while parsing regex substitution\n");
+	    return -1;
+	}
+	break;
+    }
+    
+    p->type = type;
+    *param = (void*)p;
+    return 0;
+    
  error:
-	pkg_free(p);
-	return E_UNSPEC;
+    pkg_free(p);
+    return E_UNSPEC;
+}
+
+
+/*
+ * Fixup variable string, the parameter can be
+ * AVP, SELECT, or ordinary string. AVP and select
+ * identifiers will be resolved to their values during
+ * runtime
+ *
+ * The parameter value will be converted to fparam structure
+ * This function returns -1 on an error
+ */
+int fixup_var_str_12(void** param, int param_no)
+{
+    int ret;
+    if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
+    if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+    if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+    ERR("Error while fixing parameter, AVP, SELECT, and str conversions failed\n");
+    return -1;
+}
+
+/* Same as fixup_var_str_12 but applies to the 1st parameter only */
+int fixup_var_str_1(void** param, int param_no)
+{
+    if (param_no == 1) return fixup_var_str_12(param, param_no);
+    else return 0;
+}
+
+/* Same as fixup_var_str_12 but applies to the 2nd parameter only */
+int fixup_var_str_2(void** param, int param_no)
+{
+    if (param_no == 2) return fixup_var_str_12(param, param_no);
+    else return 0;
+}
+
+
+/*
+ * Fixup variable integer, the parameter can be
+ * AVP, SELECT, or ordinary integer. AVP and select
+ * identifiers will be resolved to their values and 
+ * converted to int if necessary during runtime
+ *
+ * The parameter value will be converted to fparam structure
+ * This function returns -1 on an error
+ */
+int fixup_var_int_12(void** param, int param_no)
+{
+    int ret;
+    if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
+    if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+    if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
+    ERR("Error while fixing parameter, AVP, SELECT, and int conversions failed\n");
+    return -1;
+}
+
+/* Same as fixup_var_int_12 but applies to the 1st parameter only */
+int fixup_var_int_1(void** param, int param_no)
+{
+    if (param_no == 1) return fixup_var_int_12(param, param_no);
+    else return 0;
+}
+
+/* Same as fixup_var_int_12 but applies to the 2nd parameter only */
+int fixup_var_int_2(void** param, int param_no)
+{
+    if (param_no == 2) return fixup_var_int_12(param, param_no);
+    else return 0;
+}
+
+
+/*
+ * The parameter must be a regular expression which must compile, the
+ * parameter will be converted to compiled regex
+ */
+int fixup_regex_12(void** param, int param_no)
+{
+    int ret;
+
+    if ((ret = fix_param(FPARAM_REGEX, param)) <= 0) return ret;
+    ERR("Error while compiling regex in function parameter\n");
+    return -1;
+}
+
+/* Same as fixup_regex_12 but applies to the 1st parameter only */
+int fixup_regex_1(void** param, int param_no)
+{
+    if (param_no == 1) return fixup_regex_12(param, param_no);
+    else return 0;
+}
+
+/* Same as fixup_regex_12 but applies to the 2nd parameter only */
+int fixup_regex_2(void** param, int param_no)
+{
+    if (param_no == 2) return fixup_regex_12(param, param_no);
+    else return 0;
+}
+
+/*
+ * The string parameter will be converted to integer
+ */
+int fixup_int_12(void** param, int param_no)
+{
+    int ret;
+
+    if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
+    ERR("Cannot function parameter to integer\n");
+    return -1;
+
+}
+
+/* Same as fixup_int_12 but applies to the 1st parameter only */
+int fixup_int_1(void** param, int param_no)
+{
+    if (param_no == 1) return fixup_int_12(param, param_no);
+    else return 0;
+}
+
+/* Same as fixup_int_12 but applies to the 2nd parameter only */
+int fixup_int_2(void** param, int param_no)
+{
+    if (param_no == 2) return fixup_int_12(param, param_no);
+    else return 0;
+}
+
+/*
+ * Parse the parameter as static string, do not resolve
+ * AVPs or selects, convert the parameter to str structure
+ */
+int fixup_str_12(void** param, int param_no)
+{
+    int ret;
+
+    if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+    ERR("Cannot function parameter to integer\n");
+    return -1;
+}
+
+/* Same as fixup_str_12 but applies to the 1st parameter only */
+int fixup_str_1(void** param, int param_no)
+{
+    if (param_no == 1) return fixup_str_12(param, param_no);
+    else return 0;
+}
+
+/* Same as fixup_str_12 but applies to the 2nd parameter only */
+int fixup_str_2(void** param, int param_no)
+{
+    if (param_no == 2) return fixup_str_12(param, param_no);
+    else return 0;
 }
 
 
 /*
  * Get the function parameter value as string
  * Return values:  0 - Success
- *                 1 - Incompatible type (i.e. int)
  *                -1 - Cannot get value
  */
 int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
@@ -840,10 +885,10 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
     avp_t* avp;
 
     switch(param->type) {
-    case FPARAM_INT:
     case FPARAM_REGEX:
     case FPARAM_UNSPEC:
-	return 1;
+    case FPARAM_INT:
+	return -1;
 
     case FPARAM_STRING:
 	dst->s = param->v.asciiz;
@@ -856,11 +901,17 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 
     case FPARAM_AVP:
 	avp = search_first_avp(param->v.avp.flags, param->v.avp.name, &val, 0);
-	if (avp && avp->flags & AVP_VAL_STR) {
+	if (!avp) {
+	    DBG("Could not find AVP from function parameter '%s'\n", param->orig);
+	    return -1;
+	}
+	if (avp->flags & AVP_VAL_STR) {
 	    *dst = val.s;
 	} else {
-	    DBG("Value for AVP function parameter '%s' not found or is not string\n", param->orig);
-	    return -1;
+		 /* The caller does not know of what type the AVP will be so
+		  * convert int AVPs into string here
+		  */
+	    dst->s = int2str(val.n, &dst->len);
 	}
 	break;
 
@@ -873,3 +924,55 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
     return 0;
 }
 
+
+/*
+ * Get the function parameter value as integer
+ * Return values:  0 - Success
+ *                -1 - Cannot get value
+ */
+int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
+{
+    int_str val;
+    int ret;
+    avp_t* avp;
+    str tmp;
+
+    switch(param->type) {
+    case FPARAM_INT:
+	*dst = param->v.i;
+	return 0;
+	
+    case FPARAM_REGEX:
+    case FPARAM_UNSPEC:
+    case FPARAM_STRING:
+    case FPARAM_STR:
+	return -1;
+	
+    case FPARAM_AVP:
+	avp = search_first_avp(param->v.avp.flags, param->v.avp.name, &val, 0);
+	if (!avp) {
+	    DBG("Could not find AVP from function parameter '%s'\n", param->orig);
+	    return -1;
+	}
+	if (avp->flags & AVP_VAL_STR) {
+	    if (str2int(&val.s, (unsigned int*)dst) < 0) {
+		ERR("Could not convert AVP string value to int\n");
+		return -1;
+	    }
+	} else {
+	    *dst = val.n;
+	}
+	break;
+
+    case FPARAM_SELECT:
+	ret = run_select(&tmp, param->v.select, msg);
+	if (ret < 0 || ret > 0) return -1;
+	if (str2int(&tmp, (unsigned int*)dst) < 0) {
+	    ERR("Could not convert select result to int\n");
+	    return -1;
+	}
+	break;
+    }
+
+    return 0;
+}
