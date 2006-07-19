@@ -41,6 +41,7 @@
 #include "../../ut.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../items.h"
 #include "uri_mod.h"
 #include "checks.h"
 
@@ -49,6 +50,7 @@ MODULE_VERSION
 
 static int str_fixup(void** param, int param_no);
 static int uri_fixup(void** param, int param_no);
+static int pvar_fixup(void** param, int param_no);
 
 
 /*
@@ -61,6 +63,8 @@ static cmd_export_t cmds[] = {
 	{"uri_param",      uri_param_2,    2, uri_fixup, REQUEST_ROUTE},
 	{"add_uri_param",  add_uri_param,  1, str_fixup, REQUEST_ROUTE},
 	{"tel2sip",        tel2sip,        0, 0,         REQUEST_ROUTE},
+	{"is_uri_user_e164", is_uri_user_e164, 1, pvar_fixup,
+	 REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -122,4 +126,39 @@ static int uri_fixup(void** param, int param_no)
                return str_fixup(param, 1);
        }
        return 0;
+}
+
+/*
+ * Convert pvar into parsed pseudo variable specification
+ */
+static int pvar_fixup(void** param, int param_no)
+{
+    xl_spec_t *sp;
+
+    if (param_no == 1) { /* pseudo variable */
+
+	sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+	if (sp == 0) {
+	    LOG(L_ERR,"permissions:double_fixup(): no pkg memory left\n");
+	    return -1;
+	}
+
+	if (xl_parse_spec((char*)*param, sp, XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS) == 0) {
+	    LOG(L_ERR,"permissions:double_fixup(): parsing of "
+		"pseudo variable %s failed!\n", (char*)*param);
+	    pkg_free(sp);
+	    return -1;
+	}
+
+	if (sp->type == XL_NULL) {
+	    LOG(L_ERR,"permissions:double_fixup(): bad pseudo "
+		"variable\n");
+	    pkg_free(sp);
+	    return -1;
+	}
+
+	*param = (void*)sp;
+    }
+
+    return 0;
 }

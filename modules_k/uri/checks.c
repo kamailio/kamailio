@@ -39,6 +39,7 @@
 #include "../../ut.h"                   /* Handy utilities */
 #include "../../db/db.h"                /* Database API */
 #include "../../dset.h"
+#include "../../items.h"
 #include "uri_mod.h"
 #include "checks.h"
 
@@ -345,4 +346,53 @@ int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 		pkg_free(suri.s);
 		return -1;
 	}
+}
+
+
+/*
+ * Check if parameter is an e164 number.
+ */
+static inline int e164_check(str* _user)
+{
+    int i;
+    char c;
+    
+    if ((_user->len > 2) && (_user->len < 17) && ((_user->s)[0] == '+')) {
+	for (i = 1; i <= _user->len; i++) {
+	    c = (_user->s)[i];
+	    if (c < '0' && c > '9') return -1;
+	}
+	return 1;
+    }
+    return -1;
+}
+
+
+/*
+ * Check if user part of URI in pseudo variable is an e164 number
+ */
+int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
+{
+    xl_spec_t *sp;
+    xl_value_t xl_val;
+    struct sip_uri puri;
+
+    sp = (xl_spec_t *)_sp;
+
+    if (sp && (xl_get_spec_value(_m, sp, &xl_val, 0) == 0)) {
+	if (xl_val.flags & XL_VAL_STR) {
+	    if (parse_uri(xl_val.rs.s, xl_val.rs.len, &puri) < 0) {
+		LOG(L_ERR, "is_uri_user_e164(): Error while parsing URI\n");
+		return -1;
+	    }
+	    return e164_check(&(puri.user));
+	} else {
+	    LOG(L_ERR, "is_uri_user_e164(): pseudo variable value is "
+		"not string\n");
+	    return -1;
+	}
+    } else {
+	LOG(L_ERR, "is_uri_user_e164(): cannot get pseudo variable value\n");
+	return -1;
+    }
 }

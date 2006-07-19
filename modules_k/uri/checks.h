@@ -71,4 +71,10 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2);
  */
 int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2);
 
+
+/*
+ * Check if user part of URI in pseudo variable is an e164 number
+ */
+int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2);
+
 #endif /* CHECKS_H */

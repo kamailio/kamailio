@@ -34,6 +34,7 @@ Bogdan-Andrei Iancu
               1.4.4. uri_param(param,value)
               1.4.5. add_uri_param(param)
               1.4.6. tel2sip()
+              1.4.7. is_uri_user_e164(pseudo-variable)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -45,6 +46,7 @@ Bogdan-Andrei Iancu
    1-4. uri_param usage
    1-5. add_uri_param usage
    1-6. tel2sip usage
+   1-7. is_uri_user_e164 usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -173,6 +175,26 @@ add_uri_param("nat=yes");
    Example 1-6. tel2sip usage
 ...
 tel2sip();
+...
+     _________________________________________________________
+
+1.4.7. is_uri_user_e164(pseudo-variable)
+
+   Checks if userpart of URI stored in pseudo variable is E164
+   number.
+
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1-7. is_uri_user_e164 usage
+...
+if (is_uri_user_e164("$fu")) {  # Check From header URI user part
+   ...
+}
+if (is_uri_user_e164("$avp(i:705)") {
+   # Check user part of URI stored in avp i:705
+   ...
+};
 ...
      _________________________________________________________
 
