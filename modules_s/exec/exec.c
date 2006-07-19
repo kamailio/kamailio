@@ -73,8 +73,8 @@ int exec_msg(struct sip_msg *msg, str* cmd )
 	pipe=popen( c, "w" );
 	pkg_free(c);
 	if (pipe==NULL) {
-		LOG(L_ERR, "ERROR: exec_msg: cannot open pipe: %.*s\n",
-			cmd.len, ZSW(cmd.z));
+	    LOG(L_ERR, "ERROR: exec_msg: cannot open pipe: %.*s\n",
+			cmd->len, ZSW(cmd->s));
 		ser_error=E_EXEC;
 		return -1;
 	}
@@ -101,7 +101,7 @@ error01:
 	} else { /* exited erroneously */
 		LOG(L_ERR, "ERROR: exec_msg: cmd %.*s failed. "
 			"exit_status=%d, errno=%d: %s\n",
-			cmd.len, ZSW(cmd.s), exit_status, errno, strerror(errno) );
+			cmd->len, ZSW(cmd->s), exit_status, errno, strerror(errno) );
 		ret=-1;
 	}
 	return ret;
@@ -131,8 +131,8 @@ int exec_str(struct sip_msg *msg, str* cmd, char *param, int param_len) {
 	}
 
 	/* 'command parameter \0' */
-	memcpy(cmd_line, cmd->s, cmd->len); cmd_line[l1]=' ';
-	memcpy(cmd_line+l1+1, param, param_len);cmd_line[l1+param_len+1]=0;
+	memcpy(cmd_line, cmd->s, cmd->len); cmd_line[cmd->len]=' ';
+	memcpy(cmd_line+cmd->len+1, param, param_len);cmd_line[cmd->len+param_len+1]=0;
 
 	pipe=popen( cmd_line, "r" );
 	if (pipe==NULL) {
