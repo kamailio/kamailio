@@ -34,13 +34,9 @@
 
 #include "../../str.h"
 
-
-/*
- * Internal module variables
- */
-extern str suffix;           /* str version of domain_suffix */
-extern str param;            /* str version of tel_uri_params */
-extern str service;          /* default (empty) service */
+extern str domain_suffix;
+extern str tel_uri_params;
+extern str default_service;
 
 
 #endif /* ENUM_MOD_H */

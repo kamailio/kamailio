@@ -43,35 +43,19 @@
 
 MODULE_VERSION
 
-/*
- * Module initialization function prototype
- */
-static int mod_init(void);
-
-
-/*
- * Module parameter variables
- */
-char* domain_suffix = "e164.arpa.";
-char* tel_uri_params = "";
-
-
-/*
- * Internal module variables
- */
-str suffix;
-str param;
-str service;
+str domain_suffix = STR_STATIC_INIT("e164.arpa.");
+str tel_uri_params = STR_STATIC_INIT("");
+str default_service = STR_NULL;
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"enum_query",        enum_query_0,      0, 0,            REQUEST_ROUTE},
-	{"enum_query",        enum_query_1,      1, fixup_str_1,  REQUEST_ROUTE},
-	{"enum_query",        enum_query_2,      2, fixup_str_12, REQUEST_ROUTE},
-	{"is_from_user_e164", is_from_user_e164, 0, 0,            REQUEST_ROUTE},
+	{"enum_query", enum_query, 0, 0,                REQUEST_ROUTE},
+	{"enum_query", enum_query, 1, fixup_var_str_1,  REQUEST_ROUTE},
+	{"enum_query", enum_query, 2, fixup_var_str_12, REQUEST_ROUTE},
+	{"is_e164",    is_e164,    1, fixup_var_str_1,  REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -80,8 +64,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-        {"domain_suffix", PARAM_STRING, &domain_suffix},
-        {"tel_uri_params", PARAM_STRING, &tel_uri_params},
+        {"domain_suffix",   PARAM_STR, &domain_suffix },
+        {"tel_uri_params",  PARAM_STR, &tel_uri_params},
+	{"default_service", PARAM_STR, &default_service},
 	{0, 0, 0}
 };
 
@@ -94,26 +79,9 @@ struct module_exports exports = {
 	cmds,     /* Exported functions */
 	0,        /* RPC method */
 	params,   /* Exported parameters */
-	mod_init, /* module initialization function */
+	0,        /* module initialization function */
 	0,        /* response function*/
 	0,        /* destroy function */
 	0,        /* oncancel function */
 	0         /* per-child init function */
 };
-
-
-static int mod_init(void)
-{
-	DBG("enum module - initializing\n");
-
-	suffix.s = domain_suffix;
-	suffix.len = strlen(suffix.s);
-
-	param.s = tel_uri_params;
-	param.len = strlen(param.s);
-
-	service.len = 0;
-
-	return 0;
-}
-

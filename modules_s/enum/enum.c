@@ -37,6 +37,7 @@
 #include "../../mem/mem.h"
 #include "../../dset.h"
 #include "../../qvalue.h"
+#include "../../sr_module.h"
 #include "enum_mod.h"
 #include "regexp.h"
 
@@ -112,63 +113,34 @@ static inline int sip_match( struct naptr_rdata* naptr, str* service)
 }
 
 
-/*
- * Check that From header is properly parsed and if so,
- * return pointer to parsed From header.  Otherwise return NULL.
- */
-static inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
+static int test_e164(str* user)
 {
-	if (!(_msg->from)) {
-		LOG(L_ERR, "get_parsed_from(): Request does not have a From header\n");
-		return NULL;
+    int i;
+    char c;
+
+    if ((user->len > 2) && (user->len < 17) && ((user->s)[0] == '+')) {
+	for (i = 1; i <= user->len; i++) {
+	    c = (user->s)[i];
+	    if (c < '0' && c > '9') return -1;
 	}
-	if (!(_msg->from->parsed) || ((struct to_body *)_msg->from->parsed)->error != PARSE_OK) {
-		LOG(L_ERR, "get_parsed_from(): From header is not properly parsed\n");
-		return NULL;
-	}
-	return (struct to_body *)(_msg->from->parsed);
+	return 1;
+    }
+    return -1;
 }
 
 
-
-/*
- * Checks if argument is an e164 number starting with +
- */
-static inline int is_e164(str* _user)
-{
-	int i;
-	char c;
-
-	if ((_user->len > 2) && (_user->len < 17) && ((_user->s)[0] == '+')) {
-		for (i = 1; i <= _user->len; i++) {
-			c = (_user->s)[i];
-			if (c < '0' && c > '9') return -1;
-		}
-		return 1;
-	}
-	return -1;
-}
-				
-		
 /*
  * Check if from user is an e164 number
  */
-int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
+int is_e164(struct sip_msg* msg, char* p1, char* p2)
 {
-	struct to_body* body;
-	struct sip_uri uri;
-	int result;
+    str user;
 
-	body = get_parsed_from_body(_msg);
-	if (!body) return -1;
-
-	if (parse_uri(body->uri.s, body->uri.len, &uri) < 0) {
-		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
-		return -1;
-	}
-
-	result = is_e164(&(uri.user));
-	return result;
+    if (get_str_fparam(&user, msg, (fparam_t*)p1) < 0) {
+	ERR("Error while obtaining username to be checked\n");
+	return -1;
+    }
+    return test_e164(&user);
 }
 
 
@@ -344,26 +316,10 @@ static inline void naptr_sort(struct rdata** head)
 
 	
 /*
- * Call enum_query_2 with module parameter suffix and default service.
- */
-int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2)
-{
-	return enum_query_2(_msg, (char *)(&suffix), (char *)(&service));
-}
-
-/*
- * Call enum_query_2 with given suffix and default service.
- */
-int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2)
-{
-	return enum_query_2(_msg, _suffix, (char *)(&service));
-}
-
-/*
  * See documentation in README file.
  */
 
-int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
+int enum_query(struct sip_msg* msg, char* p1, char* p2)
 {
 	char *user_s;
 	int user_len, i, j, first;
@@ -381,23 +337,38 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 	char string[17];
 
-	str *suffix, *service;
+	str suffix, service;
 
-	suffix = (str*)_suffix;
-	service = (str*)_service;
+	if (p1) {
+	    if (get_str_fparam(&suffix, msg, (fparam_t*)p1) < 0) {
+		ERR("Unable to get suffix value\n");
+		return -1;
+	    }
+	} else {
+	    suffix = domain_suffix;
+	}
 
-	if (parse_sip_msg_uri(_msg) < 0) {
+	if (p2) {
+	    if (get_str_fparam(&service, msg, (fparam_t*)p2) < 0) {
+		ERR("Unable to get service value\n");
+		return -1;
+	    }
+	} else {
+	    service = default_service;
+	}
+	
+	if (parse_sip_msg_uri(msg) < 0) {
 		LOG(L_ERR, "enum_query(): uri parsing failed\n");
 		return -1;
 	}
 
-	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
+	if (test_e164(&(msg->parsed_uri.user)) == -1) {
 		LOG(L_ERR, "enum_query(): uri user is not an E164 number\n");
 		return -1;
 	}
 
-	user_s = _msg->parsed_uri.user.s;
-	user_len = _msg->parsed_uri.user.len;
+	user_s = msg->parsed_uri.user.s;
+	user_len = msg->parsed_uri.user.len;
 
 	memcpy(&(string[0]), user_s, user_len);
 	string[user_len] = (char)0;
@@ -409,7 +380,7 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		j = j + 2;
 	}
 
-	memcpy(name + j, suffix->s, suffix->len + 1);
+	memcpy(name + j, suffix.s, suffix.len + 1);
 
 	head = get_record(name, T_NAPTR);
 
@@ -440,7 +411,7 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
 		    (int)(naptr->regexp_len), ZSW(naptr->regexp));
 
-		if (sip_match(naptr, service) == 0) continue;
+		if (sip_match(naptr, &service) == 0) continue;
 
 		if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
 				       &pattern, &replacement) < 0) {
@@ -464,14 +435,14 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		pattern.s[pattern.len] = '!';
 		replacement.s[replacement.len] = '!';
 		
-		if (param.len > 0) {
-			if (result.len + param.len > MAX_URI_SIZE - 1) {
+		if (tel_uri_params.len > 0) {
+			if (result.len + tel_uri_params.len > MAX_URI_SIZE - 1) {
 				LOG(L_ERR, "ERROR: enum_query(): URI is too long\n");
 				continue;
 			}
 			new_result.s = &(new_uri[0]);
 			new_result.len = MAX_URI_SIZE;
-			if (add_uri_param(&result, &param, &new_result) == 0) {
+			if (add_uri_param(&result, &tel_uri_params, &new_result) == 0) {
 				LOG(L_ERR, "ERROR: enum_query(): Parsing of URI failed\n");
 				continue;
 			}
@@ -481,7 +452,7 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		}
 
 		if (first) {
-			if (rewrite_uri(_msg, &result) == -1) {
+			if (rewrite_uri(msg, &result) == -1) {
 				goto done;
 			}
 			set_ruri_q(q);
@@ -493,7 +464,7 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 				q = q - 10;
 				curr_prio = priority;
 			}
-			if (append_branch(_msg, result.s, result.len, 0, 0, q, 0) == -1) {
+			if (append_branch(msg, result.s, result.len, 0, 0, q, 0) == -1) {
 				goto done;
 			}
 		}
