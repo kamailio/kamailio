@@ -65,7 +65,7 @@ static int mod_init(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"add_diversion",    add_diversion,    1, fixup_str_12, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"add_diversion",    add_diversion,    1, fixup_var_str_1, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -148,13 +148,13 @@ int add_diversion(struct sip_msg* msg, char* r, char* s)
 	str div_hf;
 	char *at;
 	str* uri;
-	str* reason;
+	str reason;
 
-	reason = (str*)r;
+	if (get_str_fparam(&reason, msg, (fparam_t*)r) < 0) return -1;
 
 	uri = &msg->first_line.u.request.uri;
 
-	div_hf.len = DIVERSION_PREFIX_LEN + uri->len + DIVERSION_SUFFIX_LEN + reason->len + CRLF_LEN;
+	div_hf.len = DIVERSION_PREFIX_LEN + uri->len + DIVERSION_SUFFIX_LEN + reason.len + CRLF_LEN;
 	div_hf.s = pkg_malloc(div_hf.len);
 	if (!div_hf.s) {
 		LOG(L_ERR, "add_diversion: No memory left\n");
@@ -171,8 +171,8 @@ int add_diversion(struct sip_msg* msg, char* r, char* s)
 	memcpy(at, DIVERSION_SUFFIX, DIVERSION_SUFFIX_LEN);
 	at += DIVERSION_SUFFIX_LEN;
 
-	memcpy(at, reason->s, reason->len);
-	at += reason->len;
+	memcpy(at, reason.s, reason.len);
+	at += reason.len;
 
 	memcpy(at, CRLF, CRLF_LEN);
 
