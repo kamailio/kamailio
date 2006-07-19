@@ -6,6 +6,18 @@
 # The fields are: name (N), email (E), web-address (W), CVS account login (C),
 # PGP key ID and fingerprint (P), description (D), and snail-mail address (S).
 
+N: Adrian Georgescu
+C: agprojects
+E: ag@ag-projects.com
+P:
+D:
+
+N: Andreas Granig
+C: agranig
+E:
+P:
+D:
+
 N: Andrei Pelinescu - Onciul
 C: andrei
 E: pelinescu-onciul@fokus.fraunhofer.de
@@ -15,6 +27,18 @@ D:
 N: Bogdan Andrei Iancu
 C: bogdan
 E:
+D:
+
+N: Cesc Santa
+C: cesc
+E:
+P:
+D:
+
+N: Dan Pascu
+C: danp
+E:
+P:
 D:
 
 N: Daniel-Constantin Mierla
@@ -32,6 +56,16 @@ C: lgfausak
 E:
 D:
 
+N: Greger Viken Teigre
+C: greger
+E:
+D:
+
+N: Hendrik Scholz
+C: hscholz
+E:
+D:
+
 N: Jan Halla
 C: hallik
 E: hallik@iptel.org
@@ -42,7 +76,7 @@ D: serctl maintainer
 N: Jan Janak
 C: janakj
 E: jan@iptel.org
-W: http://iptel.org/~janakj
+W: http://iptel.org/jan
 P: F8190A31   FCC0 3F4A 1ACB 84C2 505C  573E CC03 B08E F819 0A31
 D:
 
@@ -63,9 +97,26 @@ E: jh@song.fi
 W: http://lohi.eng.song.fi
 D:
 
+N: Karel Kozlik
+C: karel
+E: karel@iptel.org
+P:
+D: serweb maintainer
+
+N: Klaus Darilion
+C: klaus3000
+E:
+D:
+
 N: Maxim Sobolev
 C: sobomax
 E:
+D:
+
+N: Michal Matyska
+C: mma
+E: michal.matyska@iptel.org
+P: 68BF64BC   D14B 6288 1B07 1D6C D04C  B527 CA00 35E7 68BF 64BC
 D:
 
 N: Miklos Tirpak
@@ -78,6 +129,12 @@ C: calrissian, noh
 E: nils@iptel.org
 W: http://www.ohlmeier.org
 P: BAD6CA40   B5E7 4FB0 800F 0A2C E3E9  4073 C7C3 F275 BAD6 CA40
+D:
+
+N: Peter Nixon
+C: peternixon
+E:
+P:
 D:
 
 N: Ramona-Elena Modroiu
@@ -99,9 +156,20 @@ C: ssi
 E:
 D:
 
-N: Michal Matyska
-C: mma
-E: michal.matyska@iptel.org
-P: 68BF64BC   D14B 6288 1B07 1D6C D04C  B527 CA00 35E7 68BF 64BC
+N: Tomas Mandys
+C: tma0
+E:
 D:
+P:
 
+N: Ulrich Abend
+C: ullstar
+E:
+D:
+P:
+
+N: Vaclav Kubart
+C: kubartv
+E: vaclav.kubart@iptel.org
+P:
+D: Maintainer of presence modules
