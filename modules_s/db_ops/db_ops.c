@@ -898,7 +898,7 @@ static int child_init(int rank) {
 }
 
 static int dbops_close_query_fixup(void** param, int param_no) {
-	int res, n;
+	int /*res, */ n;
 /*	res = fixup_int_12(param, param_no); was changed to return fparam_t* 
 	if (res < 0) return res;
 	n = (int) *param; */
@@ -907,7 +907,7 @@ static int dbops_close_query_fixup(void** param, int param_no) {
 		LOG(LOG_ERR, "ERROR: db_ops: query handle (%d) must be in interval <0..%d)\n", n, max_queries);
 		return E_CFG;
 	}
-	pkgfree (*param);
+	pkg_free (*param);
 	*param=(void*) (unsigned int) n;
 	return 0;
 }
@@ -952,7 +952,7 @@ static int dbops_query_func(struct sip_msg* m, char* dbops_action, char* query_n
 }
 
 static int dbops_foreach_fixup(void** param, int param_no) {
-	int res;
+/*	int res;*/
 	if (param_no == 1) {
 		int n;
 /*		res = fixup_int_12(param, param_no); was changed to return fparam_t*
