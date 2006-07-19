@@ -59,35 +59,32 @@ ATTRIBUTE Digest-CNonce               1070  string     # Sterman, auth_radius
 ATTRIBUTE Digest-Nonce-Count          1071  string     # Sterman, auth_radius
 ATTRIBUTE Digest-User-Name            1072  string     # Sterman, auth_radius
 
-#
-# The following three attributes are used for URI and group membership
-# checking. They will be deprecated in favor of generic attributes in
-# a future version of SER
-#
-# The following group of attributes is mapped into the experimental range
-ATTRIBUTE SER-Uri-User                 208  string     # SER, auth_radius
-ATTRIBUTE SER-Group                    211  string     # SER, group_radius
-ATTRIBUTE SER-Rpid                     213  string     # SER, auth_radius
-
-# The following group of attributes is mapped into the implementation-specific range
-ATTRIBUTE SER-Attrs                    225  string     # SER, acc_radius
-ATTRIBUTE SER-From                     226  string     # SER, acc_radius
-ATTRIBUTE SER-Flags                    227  integer    # SER, acc_radius
-ATTRIBUTE SER-Original-Request-ID      228  string     # SER, acc_radius
-ATTRIBUTE SER-To                       229  string     # SER, acc_radius
-ATTRIBUTE SER-Digest-Username          230  string     # SER, acc_radius
-ATTRIBUTE SER-Digest-Realm             231  string     # SER, acc_radius
-ATTRIBUTE SER-Request-Timestamp        232  integer    # SER, acc_radius
-ATTRIBUTE SER-To-DID                   233  string     # SER, acc_radius
-ATTRIBUTE SER-From-UID                 234  string     # SER, acc_radius
-ATTRIBUTE SER-From-DID                 235  string     # SER, acc_radius
-ATTRIBUTE SER-To-UID                   236  string     # SER, acc_radius
-ATTRIBUTE SER-Response-Timestamp       237  integer    # SER, acc_radius
-
-
 ### CISCO Vendor Specific Attributes ###
 #VENDOR Cisco              9
 #ATTRIBUTE Cisco-AVPair    1   string   Cisco          # VSA, auth_radius
+
+### iptel.org Vendor Specific Attributes ###
+VENDOR iptelorg           24960
+
+ATTRIBUTE SER-Attrs                     1   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-From                      2   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Flags                     3   integer  iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Original-Request-ID       4   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-To                        5   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Digest-Username           6   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Digest-Realm              7   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Request-Timestamp         8   integer  iptelorg  # SER, acc_radius
+ATTRIBUTE SER-To-DID                    9   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-From-UID                 10   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-From-DID                 11   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-To-UID                   12   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Response-Timestamp       13   integer  iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Attr                     14   string   iptelorg  # SER, avp_radius
+ATTRIBUTE SER-Service-Type             15   string   iptelorg  # SER, avp_radius
+ATTRIBUTE SER-DID                      16   string   iptelorg  # SER, ?
+ATTRIBUTE SER-UID                      17   string   iptelorg  # SER, ?
+ATTRIBUTE SER-Domain                   18   string   iptelorg  # SER, ?
+
 
 ### Acct-Status-Type Values ###
 #VALUE Acct-Status-Type     Start            1         # RFC2866, acc_radius
@@ -96,8 +93,11 @@ VALUE Acct-Status-Type      Interim-Update   3         # RFC2866, acc_radius
 VALUE Acct-Status-Type      Failed          15         # RFC2866, acc_radius
 
 ### Service-Type Values ###
-VALUE Service-Type         Call-Check       10         # RFC2865, uri_radius
-VALUE Service-Type         SER-Group-Check  12         # SER, group_radius
 VALUE Service-Type         Sip-Session      15         # Schulzrinne, acc_radius, auth_radius
-VALUE Service-Type         SER-Caller-AVPs  30         # SER, avp_radius
-VALUE Service-Type         SER-Callee-AVPs  31         # SER, avp_radius
+
+### SER-Service-Type Values ###
+VALUE SER-Service-Type     Get-URI-Attrs     1         # SER, avp_radius
+VALUE SER-Service-Type     Get-User-Attrs    2         # SER, avp_radius
+VALUE SER-Service-Type     Get-Domain-Attrs  3         # SER, ?
+VALUE SER-Service-Type     Get-Global-Attrs  4         # SER, ?
+VALUE SER-Service-Type     Lookup-Domain     5         # SER, ?
