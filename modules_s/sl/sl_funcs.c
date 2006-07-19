@@ -186,14 +186,14 @@ error:
 
 int sl_reply_error(struct sip_msg *msg )
 {
-	char err_buf[MAX_REASON_LEN];
+	static char err_buf[MAX_REASON_LEN];
 	int sip_error;
 	int ret;
 
 	ret=err2reason_phrase( prev_ser_error, &sip_error, 
 		err_buf, sizeof(err_buf), "SL");
 	if (ret>0) {
-		sl_send_reply( msg, sip_error, err_buf );
+	        sl_send_reply( msg, sip_error, err_buf );
 		LOG(L_ERR, "ERROR: sl_reply_error used: %s\n", 
 			err_buf );
 		return 1;

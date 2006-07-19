@@ -74,6 +74,8 @@
 
 MODULE_VERSION
 
+static int default_code = 500;
+static str default_reason = STR_STATIC_INIT("Internal Server Error");
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
@@ -93,20 +95,30 @@ static cmd_export_t cmds[]={
 };
 
 
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+    {"default_code",   PARAM_INT, &default_code},
+    {"default_reason", PARAM_STR, &default_reason},
+    {0, 0, 0}
+};
+    
+
 #ifdef STATIC_SL
 struct module_exports sl_exports = {
 #else
 struct module_exports exports= {
 #endif
-	"sl",
-	cmds,
-	sl_rpc,     /* RPC methods */
-	0,          /* param exports */
-	mod_init,   /* module initialization function */
-	(response_function) 0,
-	mod_destroy,
-	0,
-	child_init  /* per-child init function */
+    "sl",
+    cmds,
+    sl_rpc,     /* RPC methods */
+    params,     /* param exports */
+    mod_init,   /* module initialization function */
+    (response_function) 0,
+    mod_destroy,
+    0,
+    child_init  /* per-child init function */
 };
 
 
@@ -146,67 +158,25 @@ static void mod_destroy()
 }
 
 
-static int get_param_val(int* code, char** reason, fparam_t* c, fparam_t* r)
-{
-	avp_t* avp;
-	avp_value_t val;
-
-	switch(c->type) {
-	case FPARAM_AVP:
-		if (!(avp = search_first_avp(c->v.avp.flags, c->v.avp.name, &val, 0))) {
-			goto internal;
-		} else {
-			if (avp->flags & AVP_VAL_STR) goto internal;
-			*code = val.n;
-		}
-		break;
-
-	case FPARAM_INT:
-		*code = c->v.i;
-		break;
-
-	default:
-		ERR("BUG: Invalid parameter value in sl_send_reply\n");
-		return -1;
-	}
-
-
-	switch(r->type) {
-	case FPARAM_AVP:
-		if (!(avp = search_first_avp(r->v.avp.flags, r->v.avp.name, &val, 0))) {
-			goto internal;
-		} else {
-			if ((avp->flags & AVP_VAL_STR) == 0) goto internal;
-			     /* FIXME: AVP values are zero terminated */
-			*reason = val.s.s;
-		}
-		break;
-
-	case FPARAM_STRING:
-		*reason = r->v.asciiz;
-		break;
-
-	default:
-		ERR("BUG: Invalid parameter value in sl_send_reply\n");
-		return -1;
-	}
-
-	return 0;
-
- internal:
-	*code = 500;
-	*reason = "Internal Server Error (AVP from sl_reply param not found)";
-	return 0;
-}
-
-
-
 static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
 {
-	int code;
-	char* reason;
-	if (get_param_val(&code, &reason, (fparam_t*)p1, (fparam_t*)p2) < 0) return -1;
-	return sl_send_reply(msg, code, reason);
+    int code, ret;
+    str reason;
+    char* r;
+
+    if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+	code = default_code;
+    }
+    
+    if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+	reason = default_reason;;
+    }
+
+    r = as_asciiz(&reason);
+    if (r == NULL) r = default_reason.s;
+    ret = sl_send_reply(msg, code, r);
+    if (r) pkg_free(r);
+    return ret;
 }
 
 
@@ -225,9 +195,7 @@ static int fixup_sl_reply(void** param, int param_no)
 		if (ret <= 0) return ret;		
 		return fix_param(FPARAM_INT, param);
 	} else if (param_no == 2) {
-		ret = fix_param(FPARAM_AVP, param);
-		if (ret <= 0) return ret;
-		return fix_param(FPARAM_STRING, param);
+	        return fixup_var_str_12(param, 2);
 	}
 	return 0;
 }
