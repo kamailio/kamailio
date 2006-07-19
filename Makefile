@@ -48,7 +48,7 @@ skip_cfg_install?=
 skip_modules?=
 
 # if not set on the cmd. line or the env, exclude this modules:
-exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm \
+exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm group mangler auth_diameter \
 							postgres snmp \
 							im \
 							jabber mysql \
