@@ -1,5 +1,0 @@
-This directory contains various SER related tools:
-
-serctl - SER control command line administration tool.
-         This is the new administration tool written in
-         python.
