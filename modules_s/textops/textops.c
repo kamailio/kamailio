@@ -152,10 +152,10 @@ static cmd_export_t cmds[]={
 	{"append_urihf",     append_urihf,      2, fixup_xlstr,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 	/* obsolete: use remove_hf_value(), does not support compact headers */
-	{"remove_hf",        remove_hf_f,         1, fixup_str_1,
+	{"remove_hf",        remove_hf_f,         1, fixup_var_str_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	/* obsolete: use @msg.HFNAME, , does not support compact headers */
-	{"is_present_hf",        is_present_hf_f,         1, fixup_str_1,
+	{"is_present_hf",        is_present_hf_f,         1, fixup_var_str_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"subst",            subst_f,             1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
@@ -315,7 +315,7 @@ static int search_f(struct sip_msg* msg, char* key, char* str2)
 	else
 		buf=msg->buf;
 
-	if (regexec((regex_t*) key, buf, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(((fparam_t*)key)->v.regex, buf, 1, &pmatch, 0)!=0) return -1;
 	return 1;
 }
 
@@ -331,7 +331,7 @@ static int search_append_f(struct sip_msg* msg, char* key, char* _str)
 	begin=get_header(msg); /* msg->orig/buf previously .. uri problems */
 	off=begin-msg->buf;
 
-	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(((fparam_t*)key)->v.regex, begin, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
 		if (eval_xlstr(msg, (void*) _str, &str) < 0) return -1;
 
@@ -371,7 +371,7 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* _str)
 
 	if (eval_xlstr(msg, (void*) _str, &str) < 0) return -1;
 	while (begin<msg->buf+msg->len
-				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
+				&& regexec(((fparam_t*)key)->v.regex, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
 		/* change eflags, not to match any more at string start */
 		eflags|=REG_NOTBOL;
@@ -413,7 +413,7 @@ static int replace_f(struct sip_msg* msg, char* key, char* _str)
 
 	begin=get_header(msg); /* msg->orig previously .. uri problems */
 
-	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
+	if (regexec(((fparam_t*)key)->v.regex, begin, 1, &pmatch, 0)!=0) return -1;
 	off=begin-msg->buf;
 
 	if (pmatch.rm_so!=-1){
@@ -576,19 +576,25 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 
 
 
-static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
+static int remove_hf_f(struct sip_msg* msg, char* p1, char* foo)
 {
 	struct hdr_field *hf;
 	struct lump* l;
 	int cnt;
+	str hfn;
+
+	if (get_str_fparam(&hfn, msg, (fparam_t*)p1) < 0) {
+	    ERR("remove_hf: Error while obtaining parameter value\n");
+	    return -1;
+	}
 
 	cnt=0;
 	/* we need to be sure we have seen all HFs */
 	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->name.len!=((str *)str_hf)->len)
+		if (hf->name.len!=hfn.len)
 			continue;
-		if (strncasecmp(hf->name.s, ((str *)str_hf)->s, hf->name.len)!=0)
+		if (strncasecmp(hf->name.s, hfn.s, hf->name.len)!=0)
 			continue;
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0) {
@@ -600,16 +606,22 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	return cnt==0 ? -1 : 1;
 }
 
-static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
+static int is_present_hf_f(struct sip_msg* msg, char* p1, char* foo)
 {
 	struct hdr_field *hf;
+	str hfn;
+
+	if (get_str_fparam(&hfn, msg, (fparam_t*)p1) < 0) {
+	    ERR("is_present_hf: Error while obtaining parameter value\n");
+	    return -1;
+	}
 
 	/* we need to be sure we have seen all HFs */
 	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->name.len!=((str *)str_hf)->len)
+		if (hf->name.len!=hfn.len)
 			continue;
-		if (strncasecmp(hf->name.s, ((str *)str_hf)->s, hf->name.len)!=0)
+		if (strncasecmp(hf->name.s, hfn.s, hf->name.len)!=0)
 			continue;
 		return 1;
 	}
