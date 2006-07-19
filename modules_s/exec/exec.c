@@ -52,19 +52,29 @@
 #include "../../dprint.h"
 #include "../../dset.h"
 #include "../../action.h"
+#include "../../ut.h"
 #include "config.h"
 
-int exec_msg(struct sip_msg *msg, char *cmd )
+int exec_msg(struct sip_msg *msg, str* cmd )
 {
 	FILE *pipe;
 	int exit_status;
 	int ret;
+	char* c;
 
 	ret=-1; /* pessimist: assume error */
-	pipe=popen( cmd, "w" );
+
+	c = as_asciiz(cmd);
+	if (!c) {
+	    ERR("No memory left\n");
+	    return -1;
+	}
+
+	pipe=popen( c, "w" );
+	pkg_free(c);
 	if (pipe==NULL) {
-		LOG(L_ERR, "ERROR: exec_msg: cannot open pipe: %s\n",
-			cmd);
+		LOG(L_ERR, "ERROR: exec_msg: cannot open pipe: %.*s\n",
+			cmd.len, ZSW(cmd.z));
 		ser_error=E_EXEC;
 		return -1;
 	}
@@ -89,22 +99,21 @@ error01:
 		/* return false if script exited with non-zero status */
 		if (WEXITSTATUS(exit_status)!=0) ret=-1;
 	} else { /* exited erroneously */
-		LOG(L_ERR, "ERROR: exec_msg: cmd %s failed. "
+		LOG(L_ERR, "ERROR: exec_msg: cmd %.*s failed. "
 			"exit_status=%d, errno=%d: %s\n",
-			cmd, exit_status, errno, strerror(errno) );
+			cmd.len, ZSW(cmd.s), exit_status, errno, strerror(errno) );
 		ret=-1;
 	}
 	return ret;
 }
 
-int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
+int exec_str(struct sip_msg *msg, str* cmd, char *param, int param_len) {
 
 	struct action act;
 	int cmd_len;
 	FILE *pipe;
 	char *cmd_line;
 	int ret;
-	int l1;
 	char uri_line[MAX_URI_SIZE+1];
 	int uri_cnt;
 	int uri_len;
@@ -113,7 +122,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	/* pessimist: assume error by default */
 	ret=-1;
 
-	l1=strlen(cmd);cmd_len=l1+param_len+2;
+	cmd_len=cmd->len+param_len+2;
 	cmd_line=pkg_malloc(cmd_len);
 	if (cmd_line==0) {
 		ret=ser_error=E_OUT_OF_MEM;
@@ -122,7 +131,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	}
 
 	/* 'command parameter \0' */
-	memcpy(cmd_line, cmd, l1); cmd_line[l1]=' ';
+	memcpy(cmd_line, cmd->s, cmd->len); cmd_line[l1]=' ';
 	memcpy(cmd_line+l1+1, param, param_len);cmd_line[l1+param_len+1]=0;
 
 	pipe=popen( cmd_line, "r" );

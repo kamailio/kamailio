@@ -60,8 +60,8 @@ inline static void exec_shutdown();
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"exec_dset", w_exec_dset, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"exec_msg",  w_exec_msg,  1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"exec_dset", w_exec_dset, 1, fixup_var_str_1, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"exec_msg",  w_exec_msg,  1, fixup_var_str_1, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -105,11 +105,18 @@ static int mod_init( void )
 	return 0;
 }
 
-inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
+inline static int w_exec_dset(struct sip_msg* msg, char* p1, char* foo)
 {
+        str cmd;
 	str *uri;
 	environment_t *backup;
 	int ret;
+	char* c;
+
+	if (get_str_fparam(&cmd, msg, (fparam_t*)p1) < 0) {
+	    ERR("Error while obtaining command name\n");
+	    return -1;
+	}
 
 	backup=0;
 	if (setvars) {
@@ -125,7 +132,7 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	else
 		uri=&msg->first_line.u.request.uri;
 
-	ret=exec_str(msg, cmd, uri->s, uri->len);
+	ret=exec_str(msg, &cmd, uri->s, uri->len);
 	if (setvars) {
 		unset_env(backup);
 	}
@@ -133,10 +140,16 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 }
 
 
-inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
+inline static int w_exec_msg(struct sip_msg* msg, char* p1, char* foo)
 {
+        str cmd;
 	environment_t *backup;
 	int ret;
+
+	if (get_str_fparam(&cmd, msg, (fparam_t*)p1) < 0) {
+	    ERR("Error while obtaining command name\n");
+	    return -1;
+	}
 
 	backup=0;
 	if (setvars) {
@@ -146,7 +159,7 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 			return -1;
 		}
 	}
-	ret=exec_msg(msg,cmd);
+	ret=exec_msg(msg, &cmd);
 	if (setvars) {
 		unset_env(backup);
 	}

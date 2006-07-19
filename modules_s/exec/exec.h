@@ -30,8 +30,8 @@
 #ifndef _EXEC_H
 #define _EXEC_H
 
-int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len);
-int exec_msg(struct sip_msg *msg, char *cmd );
+int exec_str(struct sip_msg *msg, str* cmd, char *param, int param_len);
+int exec_msg(struct sip_msg *msg, str* cmd );
 
 #endif
 
