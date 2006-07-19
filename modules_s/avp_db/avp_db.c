@@ -406,14 +406,7 @@ static int attrs_fixup(void** param, int param_no)
 	pkg_free(*param);
 	*param = (void*)flags;
     } else if (param_no == 2) {
-	ret = fix_param(FPARAM_AVP, param);
-	if (ret <= 0) return ret;
-	ret = fix_param(FPARAM_SELECT, param);
-	if (ret <= 0) return ret;
-	ret = fix_param(FPARAM_STR, param);
-	if (ret <= 0) return ret;
-	ERR("Unknown parameter\n");
-	return -1;
+	return fixup_var_str_12(param, 2);
     }
     return 0;
 }
