@@ -268,7 +268,7 @@ static int parse_ops(char* act_s, struct dbops_action** action) {
 			res = split_fields(part, &(*action)->field_count, &(*action)->fields);
 			if (res < 0) return res;
 			if ((*action)->field_count == 0) {
-				LOG(L_ERR, "ERROR: dbops: no field specified near '%s' ín '%s'\n", part, act_s);
+				LOG(L_ERR, "ERROR: dbops: no field specified near '%s' ?n '%s'\n", part, act_s);
 				return E_CFG;
 			}
 			break;
@@ -899,7 +899,8 @@ static int child_init(int rank) {
 
 static int dbops_close_query_fixup(void** param, int param_no) {
 	int res, n;
-	res = fixup_int_12(param, param_no);
+/*	res = fixup_int_12(param, param_no); was changed to return fparam_t* */
+	res = atoi((char*)*param);
 	if (res < 0) return res;
 	n = (int) *param;
 	if (n < 0 || n >= max_queries) {
@@ -952,7 +953,8 @@ static int dbops_foreach_fixup(void** param, int param_no) {
 	int res;
 	if (param_no == 1) {
 		int n;
-		res = fixup_int_12(param, param_no);
+/*		res = fixup_int_12(param, param_no); was changed to return fparam_t* */
+		res = atoi((char*)*param);
 		if (res < 0) return res;
 		n = (int) *param;
 		if (n < 0 || n >= max_queries) {

@@ -1012,9 +1012,14 @@ static int eval_remove_func(struct sip_msg *msg, char *param1, char *param2) {
 }
 
 static int eval_clear_func(struct sip_msg *msg, char *param1, char *param2) {
-	if ((int)param1 & 1)
+	int n;
+	if (get_int_fparam(&n, msg, (fparam_t*)param1)<0) {
+		ERR("eval_clear: Invalid number specified");
+		return -1;
+	}
+	if (n & 1)
 		destroy_stack();
-	if ((int)param1 & 2)
+	if (n & 2)
 		destroy_register_values();
 	return 1;
 }
