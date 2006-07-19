@@ -111,7 +111,7 @@ select_row_t sel_declaration[] = {
 static unsigned int timer_msg_no = 0;
 
 static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
-	/* min length of first line of message is 16 char! */
+	/*?min length of first line of message is 16 char!?*/
 	#define MSG "GET /timer HTTP/0.9\n\n"
 	struct sip_msg* msg;
 	struct timer_action *a;
@@ -183,12 +183,13 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 
 static int timer_enable_fixup(void** param, int param_no) {
 	struct timer_action* a;
-	int res, n;
-	res = fixup_int_12(param, param_no);
-	if (res < 0) return res;
+	int /* res, */ n;
+/*	res = fixup_int_12(param, param_no);
+	if (res < 0) return res; */
+	n=atoi((char *)*param);
 	switch (param_no) {
 		case 1:
-			for (a = timer_actions, n=(int) *param; a && n!=0; a=a->next, n--);
+			for (a = timer_actions /*, n=(int) *param*/; a && n!=0; a=a->next, n--);
 			if (!a) {
 				LOG(L_ERR, "ERROR: timer: timer_enable_fixup: timer #%d not declared\n", (int) *param);
 				return E_CFG;
@@ -196,7 +197,7 @@ static int timer_enable_fixup(void** param, int param_no) {
 			*param = a;
 			break;
 		case 2:
-			*param = (void*) ((int) *param != 0);
+			*param = (void*) (/*(int) *param*/n != 0);
 			break;
 		default: ;
 	}
