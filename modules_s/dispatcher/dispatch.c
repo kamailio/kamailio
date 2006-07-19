@@ -33,6 +33,7 @@
  * -------
  * 2004-07-31  first version, by dcm
  * 2005-04-22  added ruri  & to_uri hashing (andrei)
+ * 2005-07-19  fixup_int_12 now returns fparam_t*, updated (mma)
  * 
  */
 
@@ -45,6 +46,7 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../sr_module.h"
 
 #include "dispatch.h"
 
@@ -714,8 +716,8 @@ int ds_select_dst_impl(struct sip_msg *msg, char *set, char *alg, int set_new)
 		return -1;
 	}
 	
-	s = (int)(long)set;
-	a = (int)(long)alg;
+	get_int_fparam(&s, msg, (fparam_t*)set);
+	get_int_fparam(&a, msg, (fparam_t*)alg);
 
 	/* get the index of the set */
 	si = _ds_index;
