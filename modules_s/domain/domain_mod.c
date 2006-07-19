@@ -62,7 +62,6 @@ static int is_local(struct sip_msg* msg, char* s1, char* s2);
 static int lookup_domain(struct sip_msg* msg, char* s1, char* s2);
 static int get_did(str* did, str* domain);
 
-static int str_fixup(void** param, int param_no);
 static int lookup_domain_fixup(void** param, int param_no);
 
 MODULE_VERSION
@@ -124,7 +123,7 @@ domain_t** domains_2 = 0;    /* List of domains 2 */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"is_local",      is_local,              1, str_fixup,           REQUEST_ROUTE   },
+    {"is_local",      is_local,              1, fixup_var_str_1,     REQUEST_ROUTE|FAILURE_ROUTE },
     {"lookup_domain", lookup_domain,         2, lookup_domain_fixup, REQUEST_ROUTE|FAILURE_ROUTE },
     {"get_did",       (cmd_function)get_did, 0, 0,                   0},
     {0, 0, 0, 0, 0}
@@ -553,32 +552,9 @@ static int lookup_domain_fixup(void** param, int param_no)
 	pkg_free(*param);
 	*param = (void*)flags;
     } else if (param_no == 2) {
-	ret = fix_param(FPARAM_AVP, param);
-	if (ret <= 0) return ret;
-	ret = fix_param(FPARAM_SELECT, param);
-	if (ret <= 0) return ret;
-	ret = fix_param(FPARAM_STR, param);
-	if (ret <= 0) return ret;
-	ERR("Unknown parameter\n");
-	return -1;
+	return fixup_var_str_12(param, 2);
     }
     
     return 0;
 }
 
-static int str_fixup(void** param, int param_no)
-{
-    int ret;
-    
-    if (param_no == 1) {
-	ret = fix_param(FPARAM_AVP, param);
-	if (ret <= 0) return ret;
-	ret = fix_param(FPARAM_SELECT, param);
-	if (ret <= 0) return ret;
-	ret = fix_param(FPARAM_STR, param);
-	if (ret <= 0) return ret;
-	ERR("Unknown parameter\n");
-	return -1;
-    }
-    return 0;
-}
