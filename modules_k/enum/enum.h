@@ -34,11 +34,6 @@
 		
 
 /*
- * Check if from user is an e164 number
- */
-int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2);
-
-/*
  * Check if from user is an e164 number and has a naptr record
  */
 int is_from_user_enum_0(struct sip_msg* _msg, char* _str1, char* _str2);

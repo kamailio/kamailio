@@ -80,10 +80,6 @@
 		and -1 if not.
 	</para>
 	<para>
-		Enum module also implements is_from_user_e164 function that checks if 
-		the user part of from URI is an E164 number.
-	</para>
-	<para>
 		Enum module also implements is_from_user_enum function.
 		This function does an enum lookup on the from user and
 		returns true if found, false otherwise.
@@ -249,28 +245,6 @@ enum_fquery("e164.arpa.");
 enum_fquery("e164.arpa.","voice");
 # or use instead
 enum_fquery("e164.arpa.","+sip+voice:sip");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><function moreinfo="none">is_from_user_e164()</function></title>
-		<para>
-		Checks if the user part of from <abbrev>URI</abbrev> an 
-		<abbrev>E164</abbrev> number of the form +[0-9]{2,15}. Returns 1 if 
-		yes and -1 if not.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function moreinfo="none">is_from_user_e164</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (is_from_user_e164()) {
-	....
-};
 ...
 </programlisting>
 		</example>

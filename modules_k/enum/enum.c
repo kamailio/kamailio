@@ -169,7 +169,6 @@ static inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
 }
 
 
-
 /*
  * Checks if argument is an e164 number starting with +
  */
@@ -188,27 +187,6 @@ static inline int is_e164(str* _user)
 	return -1;
 }
 				
-		
-/*
- * Check if from user is an e164 number
- */
-int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
-{
-	struct to_body* body;
-	struct sip_uri uri;
-	int result;
-
-	body = get_parsed_from_body(_msg);
-	if (!body) return -1;
-
-	if (parse_uri(body->uri.s, body->uri.len, &uri) < 0) {
-		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
-		return -1;
-	}
-
-	result = is_e164(&(uri.user));
-	return result;
-}
 
 /*
  * Call is_from_user_enum_2 with module parameter suffix and default service.
@@ -257,7 +235,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	if (!body) return -1;
 
 	if (parse_uri(body->uri.s, body->uri.len, &muri) < 0) {
-		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
+		LOG(L_ERR, "is_from_user_enum(): Error while parsing From uri\n");
 		return -1;
 	}
 
@@ -265,7 +243,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	service = (str*)_service;
 
 	if (is_e164(&(muri.user)) == -1) {
-		LOG(L_ERR, "is_from_user_valid(): from user is not an E164 number\n");
+		LOG(L_ERR, "is_from_user_enum(): from user is not an E164 number\n");
 		return -2;
 	}
 
@@ -286,7 +264,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	head = get_record(name, T_NAPTR);
 
 	if (head == 0) {
-		DBG("enum_query(): No NAPTR record found for %s.\n", name);
+		DBG("is_from_user_enum(): No NAPTR record found for %s.\n", name);
 		return -3;
 	}
 
