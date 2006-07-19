@@ -188,6 +188,10 @@ static char *fr_inv_timer_param = FR_INV_TIMER_AVP;
 
 static rpc_export_t tm_rpc[];
 
+static int default_code = 500;
+static str default_reason = STR_STATIC_INIT("Server Internal Error");
+
+
 static cmd_export_t cmds[]={
 	{"t_newtran",          w_t_newtran,             0, 0,
 			REQUEST_ROUTE},
@@ -257,9 +261,9 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_write_unix",      t_write_unix,             2, fixup_t_write,
 	                REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_set_fr",          t_set_fr_inv,             1, fixup_int_1,
+	{"t_set_fr",          t_set_fr_inv,             1, fixup_var_int_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_set_fr",          t_set_fr_all,             2, fixup_int_12,
+	{"t_set_fr",          t_set_fr_all,             2, fixup_var_int_12,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 
 	/* not applicable from the script */
@@ -303,6 +307,8 @@ static param_export_t params[]={
 	{"fr_inv_timer_avp",    PARAM_STRING, &fr_inv_timer_param                },
 	{"tw_append",           PARAM_STRING|PARAM_USE_FUNC, (void*)parse_tw_append },
         {"pass_provisional_replies", PARAM_INT, &pass_provisional_replies        },
+	{"default_code",        PARAM_INT, &default_code                         },
+	{"default_reason",      PARAM_STR, &default_reason                       },
 	{0,0,0}
 };
 
@@ -355,9 +361,7 @@ static int fixup_t_reply(void** param, int param_no)
 		if (ret <= 0) return ret;
 		return fix_param(FPARAM_INT, param);
 	} else if (param_no == 2) {
-		ret = fix_param(FPARAM_AVP, param);
-		if (ret <= 0) return ret;
-		return fix_param(FPARAM_STRING, param);
+	        return fixup_var_str_12(param, 2);
 	}
     return 0;
 }
@@ -574,7 +578,7 @@ static int child_init(int rank) {
 
 
 /**************************** wrapper functions ***************************/
-static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
+static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 {
 	regmatch_t pmatch;
 	struct cell *t;
@@ -619,7 +623,7 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 
 	DBG("DEBUG:t_check_status: checked status is <%s>\n",status);
 	/* do the checking */
-	n = regexec((regex_t*)regexp, status, 1, &pmatch, 0);
+	n = regexec(((fparam_t*)p1)->v.regex, status, 1, &pmatch, 0);
 
 	if (backup) status[msg->first_line.u.reply.status.len] = backup;
 	if (n!=0) return -1;
@@ -824,64 +828,13 @@ inline static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
 	return r;
 }
 
-static int get_param_val(int* code, char** reason, fparam_t* c, fparam_t* r) {
 
-	avp_t* avp;
-	avp_value_t val;
-
-	switch(c->type) {
-	case FPARAM_AVP:
-		if (!(avp = search_first_avp(c->v.avp.flags, c->v.avp.name, &val, 0))) {
-			goto internal;
-		} else {
-                        if (avp->flags & AVP_VAL_STR) goto internal;
-                        *code = val.n;
-                }
-                break;
-
-        case FPARAM_INT:
-                *code = c->v.i;
-                break;
-
-        default:
-                ERR("BUG: Invalid parameter value in t_reply\n");
-                return -1;
-        }
-
-
-	switch(r->type) {
-	case FPARAM_AVP:
-		if (!(avp = search_first_avp(r->v.avp.flags, r->v.avp.name, &val, 0))) {
-			goto internal;
-		} else {
-			if ((avp->flags & AVP_VAL_STR) == 0) goto internal;
-			     /* FIXME: AVP values are zero terminated */
-			*reason = val.s.s;
-		}
-		break;
-
-	case FPARAM_STRING:
-		*reason = r->v.asciiz;
-		break;
-
-	default:
-		ERR("BUG: Invalid parameter value in t_reply\n");
-		return -1;
-	}
-
-	return 0;
-
- internal:
-	*code = 500;
-	*reason = "Internal Server Error (AVP from t_reply param not found)";
-	return 0;
-}
-
-inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
+inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 {
 	struct cell *t;
-	int code;
-	char *reason;
+	int code, ret = -1;
+	str reason;
+	char* r;
 
 	if (msg->REQ_METHOD==METHOD_ACK) {
 		LOG(L_WARN, "WARNING: t_reply: ACKs are not replied\n");
@@ -894,6 +847,17 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 			"for which no T-state has been established\n");
 		return -1;
 	}
+
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+	    code = default_code;
+	}
+	
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+	    reason = default_reason;
+	}
+	
+	r = as_asciiz(&reason);
+	if (r == NULL) r = default_reason.s;
 	
 	/* if called from reply_route, make sure that unsafe version
 	 * is called; we are already in a mutex and another mutex in
@@ -902,15 +866,16 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 	 
 	if (rmode==MODE_ONFAILURE) {
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
-		if (get_param_val(&code, &reason, (fparam_t*) str, (fparam_t*) str2) < 0) return -1;
-		return t_reply_unsafe(t, msg, code, reason);
+		ret = t_reply_unsafe(t, msg, code, r);
 	} else if (rmode==MODE_REQUEST) {
-		if (get_param_val(&code, &reason, (fparam_t*) str, (fparam_t*) str2) < 0) return -1;
-		return t_reply( t, msg, code, reason);
+		ret = t_reply( t, msg, code, r);
 	} else {
 		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
-		return -1;
+		ret = -1;
 	}
+
+	if (r) pkg_free(r);
+	return ret;
 }
 
 
@@ -1123,10 +1088,18 @@ inline static int w_t_relay( struct sip_msg  *p_msg ,
 }
 
 /* set fr_inv_timeout & or fr_timeout; 0 means: use the default value */
-static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr)
+static int t_set_fr_all(struct sip_msg* msg, char* p1, char* p2)
 {
+    int fr, fr_inv;
 
-	return t_set_fr(msg, (unsigned int)(long)fr_inv, (unsigned int)(long)fr);
+    if (get_int_fparam(&fr_inv, msg, (fparam_t*)p1) < 0) return -1;
+    if (p2) {
+	if (get_int_fparam(&fr, msg, (fparam_t*)p2) < 0) return -1;
+    } else {
+	fr = 0;
+    }
+
+    return t_set_fr(msg, fr_inv, fr);
 }
 
 static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo)
