@@ -236,16 +236,22 @@ bin:
 
 .PHONY: deb
 deb:
-	dpkg-buildpackage -rfakeroot -tc
+	-@if [ -d debian ]; then \
+		dpkg-buildpackage -rfakeroot -tc; \
+	else \
+		ln -s pkg/debian debian; \
+		dpkg-buildpackage -rfakeroot -tc; \
+		rm debian; \
+	fi
 
 .PHONY: sunpkg
 sunpkg:
 	mkdir -p tmp/ser
 	mkdir -p tmp/ser_sun_pkg
 	$(MAKE) install basedir=tmp/ser prefix=/usr/local
-	(cd solaris; \
-	pkgmk -r ../tmp/ser/usr/local -o -d ../tmp/ser_sun_pkg/ -v "$(RELEASE)" ;\
-	cd ..)
+	(cd pkg/solaris; \
+	pkgmk -r ../../tmp/ser/usr/local -o -d ../../tmp/ser_sun_pkg/ -v "$(RELEASE)" ;\
+	cd ../..)
 	cat /dev/null > ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local
 	pkgtrans -s tmp/ser_sun_pkg/ ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local \
 		IPTELser
