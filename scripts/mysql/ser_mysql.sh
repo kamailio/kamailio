@@ -22,6 +22,7 @@ DEFAULT_MYSQL="mysql"
 DEFAULT_MYSQLDUMP="mysqldump"
 
 DEFAULT_CREATE_SCRIPT="my_create.sql"
+DEFAULT_DATA_SCRIPT="my_data.sql"
 DEFAULT_DROP_SCRIPT="my_drop.sql"
 
 CMD="$MYSQL -f -h$DBHOST -u$SQLUSER"
@@ -37,6 +38,7 @@ SYNOPSIS
   $COMMAND [options] drop
   $COMMAND [options] backup [filename] 
   $COMMAND [options] restore [filename]
+  $COMMAND [options] update-data
 
 DESCRIPTION
   This tool is a simple shell wrapper over mysql client utility that can
@@ -89,6 +91,11 @@ COMMANDS
     without create table statements (i.e. created with -t command line option) 
     and that the tables are empty.
 
+  update-data
+    Update initial data in database. This command delete vendor-controled
+    rows from databaze and replace them with new ones.
+    
+    
 OPTIONS
   -h, --help
       Display this help text.
@@ -155,6 +162,7 @@ COPYRIGHT
 
 FILES
   $CREATE_SCRIPT
+  $DATA_SCRIPT
   $DROP_SCRIPT
     
 REPORTING BUGS
@@ -252,8 +260,17 @@ create_db ()
 
     # Load table definitions
     sql_query $DBNAME < $CREATE_SCRIPT
+
+    # Load initial data
+    sql_query $DBNAME < $DATA_SCRIPT
 } # create_db
 
+
+# Update initial data
+update_db_data ()
+{
+    sql_query $DBNAME < $DATA_SCRIPT
+} # update_db_data
 
 
 # Main program
@@ -270,6 +287,7 @@ if [ -z "$MYSQL" ] ; then MYSQL=$DEFAULT_MYSQL; fi
 if [ -z "$MYSQLDUMP" ] ; then MYSQLDUMP=$DEFAULT_MYSQLDUMP; fi
 if [ -z "$DUMP_OPTS" ] ; then DUMP_OPTS=$DEFAULT_DUMP_OPTS; fi 
 if [ -z "$CREATE_SCRIPT" ] ; then CREATE_SCRIPT=`dirname $0`"/"$DEFAULT_CREATE_SCRIPT; fi
+if [ -z "$DATA_SCRIPT" ] ; then DATA_SCRIPT=`dirname $0`"/"$DEFAULT_DATA_SCRIPT; fi
 if [ -z "$DROP_SCRIPT" ] ; then DROP_SCRIPT=`dirname $0`"/"$DEFAULT_DROP_SCRIPT; fi
 
 TEMP=`getopt -o hn:r:w:p:P:ts:u:vkq:: --long help,name:,ro-username:,rw-username:,\
@@ -339,6 +357,12 @@ case $1 in
 	exit $?
 	;;
 
+    update-data) # Update initial data
+	prompt_pw
+	update_db_data
+	exit $?
+	;;
+    
     backup) # backup SER database
 	shift
 	if [ $# -eq 1 ] ; then

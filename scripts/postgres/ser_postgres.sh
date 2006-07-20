@@ -15,6 +15,7 @@ DEFAULT_PSQL="/usr/bin/psql"
 DEFAULT_PG_DUMP="/usr/bin/pg_dump"
 
 DEFAULT_CREATE_SCRIPT="pg_create.sql"
+DEFAULT_DATA_SCRIPT="pg_data.sql"
 DEFAULT_DROP_SCRIPT="pg_drop.sql"
 
 #DBHOST="localhost"
@@ -96,6 +97,7 @@ db_create ()
     echo "Creating database $1"
     echo "CREATE DATABASE $1" | $CMD "template1"
     $CMD $1 < $CREATE_SCRIPT
+    $CMD $1 < $DATA_SCRIPT
 }
 
 
@@ -126,6 +128,10 @@ fi
 
 if [ -z "$CREATE_SCRIPT" ]; then
     CREATE_SCRIPT=$DEFAULT_CREATE_SCRIPT;
+fi
+
+if [ -z "$DATA_SCRIPT" ]; then
+    DATA_SCRIPT=$DEFAULT_DATA_SCRIPT;
 fi
 
 if [ -z "$DROP_SCRIPT" ]; then
