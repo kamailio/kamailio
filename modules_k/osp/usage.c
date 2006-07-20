@@ -166,7 +166,7 @@ void ospRecordTermTransaction(
  * param isorig Originate / Terminate
  * return
  */
-int ospReportUsageFromCookie(
+static int ospReportUsageFromCookie(
     struct sip_msg* msg,
     char* cookie, 
     OSPTCALLID* callid, 
@@ -219,12 +219,12 @@ int ospReportUsageFromCookie(
 
     ospGetSourceAddress(msg, firstvia, sizeof(firstvia));
     ospGetFromUserpart(msg, from, sizeof(from));
-    ospGetToUserpart(msg, to, sizeof(to));
+    ospGetUriUserpart(msg, to, sizeof(to));
     ospGetNextHop(msg, nexthop, sizeof(nexthop));
 
     if (strcmp(firstvia, uac) == 0) {
         LOG(L_INFO,
-            "osp: originator '%s' released the call, call-id '%.*s' transaction-id '%lld'\n",
+            "osp: originator '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
@@ -235,7 +235,7 @@ int ospReportUsageFromCookie(
         terminator = nexthop;
     } else {
         LOG(L_INFO,
-            "osp: terminator '%s' released the cal, call-id '%.*s' transaction-id '%lld'\n",
+            "osp: terminator '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
@@ -268,7 +268,7 @@ int ospReportUsageFromCookie(
         NULL,
         NULL);
 
-    LOG(L_DBG, "osp: building usage handle '%d' (%d)\n", transaction, errorcode);
+    LOG(L_DBG, "osp: built usage handle '%d' (%d)\n", transaction, errorcode);
 
     ospReportUsage(
         transaction,
@@ -313,7 +313,7 @@ int reportospusage(
         {
             if (strncmp(token, OSP_ORIG_COOKY, strlen(OSP_ORIG_COOKY)) == 0) {
                 LOG(L_INFO,
-                    "osp: reporting originate duration usage for call-id '%.*s'\n",
+                    "osp: report originate duration usage for call_id '%.*s'\n",
                     callid->ospmCallIdLen,
                     callid->ospmCallIdVal);
                 isorig = 1;
@@ -321,7 +321,7 @@ int reportospusage(
                 result = MODULE_RETURNCODE_TRUE;
             } else if (strncmp(token, OSP_TERM_COOKY, strlen(OSP_TERM_COOKY)) == 0) {
                 LOG(L_INFO,
-                    "osp: reporting terminate duration usage for call-id '%.*s'\n",
+                    "osp: report terminate duration usage for call_id '%.*s'\n",
                     callid->ospmCallIdLen,
                     callid->ospmCallIdVal);
                 isorig = 0;
@@ -338,7 +338,7 @@ int reportospusage(
     }
 
     if (result == MODULE_RETURNCODE_FALSE) {
-        LOG(L_DBG, "osp: there is no OSP originating or terminating usage information\n");
+        LOG(L_DBG, "osp: there is not OSP originating or terminating usage information\n");
     }
 
     return result;
@@ -351,7 +351,7 @@ int reportospusage(
  * param lastcode Destination status
  * return 0 success, others failure
  */
-int ospBuildUsageFromDestination(
+static int ospBuildUsageFromDestination(
     OSPTTRANHANDLE transaction, 
     osp_dest* dest, 
     int lastcode)
@@ -389,7 +389,7 @@ int ospBuildUsageFromDestination(
  * param dest Destination
  * return 0 success
  */
-int ospReportUsageFromDestination(
+static int ospReportUsageFromDestination(
     OSPTTRANHANDLE transaction, 
     osp_dest* dest)
 {
@@ -440,7 +440,7 @@ void ospReportOrigSetupUsage(void)
                 break;
             }
 
-            LOG(L_DBG, "osp: iterating through a used destination\n");
+            LOG(L_DBG, "osp: iterating through used destination\n");
 
             ospDumpDestination(dest);
 
@@ -457,7 +457,7 @@ void ospReportOrigSetupUsage(void)
 
     if (lastused) {
         LOG(L_INFO,
-            "osp: reporting originate setup usage for call-id '%.*s' transaction-id '%lld'\n",
+            "osp: reporting originate setup usage for call_id '%.*s' transaction_id '%lld'\n",
             lastused->callidsize,
             lastused->callid,
             lastused->tid);
@@ -485,7 +485,7 @@ void ospReportTermSetupUsage(void)
     if ((dest = ospGetTermDestination())) {
         if (dest->reported == 0) {
             LOG(L_INFO,
-                "osp: reporting terminate setup usage for call-id '%.*s' transaction-id '%lld'\n",
+                "osp: reporting terminate setup usage for call_id '%.*s' transaction_id '%lld'\n",
                 dest->callidsize,
                 dest->callid,
                 dest->tid);
@@ -496,6 +496,6 @@ void ospReportTermSetupUsage(void)
             LOG(L_DBG, "osp: destination usage has already been reported\n");
         }
     } else {
-        LOG(L_ERR, "osp: ERROR: there is no terminate destination to report\n");
+        LOG(L_ERR, "osp: ERROR: there is not terminate destination to report\n");
     }
 }

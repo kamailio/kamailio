@@ -357,7 +357,7 @@ int ospGetSourceAddress(
             via = (struct via_body*)hf->parsed;    
             ospCopyStrToBuffer(&via->host, sourceaddress, buffersize);
 
-            LOG(L_DBG, "osp: source address is '%s'\n", sourceaddress);
+            LOG(L_DBG, "osp: source address '%s'\n", sourceaddress);
 
             result = 0;
             break;
@@ -591,3 +591,4 @@ void ospGetNextHop(
         found =1;
     }
 }
+

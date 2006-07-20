@@ -164,7 +164,7 @@ int ospCheckOrigDestination(void)
     }
 
     if (result == -1) {
-        LOG(L_DBG, "osp: there is no unused destination\n");
+        LOG(L_DBG, "osp: there is not unused destination\n");
     }
 
     return result;
@@ -216,7 +216,7 @@ osp_dest* ospGetNextOrigDestination(void)
     }
 
     if (result == NULL) {
-        LOG(L_DBG, "osp: there is no unused destination\n");
+        LOG(L_DBG, "osp: there is not unused destination\n");
     }
 
     return result;
@@ -287,55 +287,6 @@ static osp_dest* ospGetLastOrigDestination(void)
     }
 
     return lastdest;
-}
-
-/*
- * Retrieved the forked destination from an AVP
- *    name - OSP_ORIGDEST_LABEL
- *    value - osp_dest wrapped in a string
- *    There can be 0, 1 or more destinations. 
- *    Find the used (used==1), has the same dest item as the parameter fork,
- *    and return it.
- *    Note, there maybe multiple result destinations. osp_fork can be exten to
- *    deal with it in the future. 
- * param fork Forked destination index
- * return NULL on failure
- */
-osp_dest* ospGetForkedDestination(
-    osp_fork* fork)
-{
-    struct usr_avp* destavp = NULL;
-    int_str destval;
-    osp_dest* dest = NULL;
-    osp_dest* forked = NULL;
-    char* host;
-
-    LOG(L_DBG, "osp: ospGetForkedDesintaion\n");
-
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
-        destavp != NULL;
-        destavp = search_next_avp(destavp, NULL))
-    {
-        get_avp_val(destavp, &destval);
-
-        /* OSP destination is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
-
-        if (dest->used == 1) {
-            if (*dest->host == '[') {
-                host = dest->host + 1;
-            } else {
-                host = dest->host ;
-            }
-            if (memcmp(host, fork->host, strlen(fork->host)) == 0) {
-                LOG(L_DBG, "osp: found\n");
-                forked = dest;
-                break;
-            }
-        }
-    }
-
-    return forked;
 }
 
 /*
@@ -474,7 +425,7 @@ void ospDumpAllDestination(void)
         ospDumpDestination(dest);
     }
     if (count == 0) {
-        LOG(L_DBG, "osp: there is no originate destination AVP\n");
+        LOG(L_DBG, "osp: there is not originate destination AVP\n");
     }
 
     destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_LABEL, NULL, 0);
@@ -489,7 +440,7 @@ void ospDumpAllDestination(void)
 
         ospDumpDestination(dest);
     } else {
-        LOG(L_DBG, "osp: there is no terminate destination AVP\n");
+        LOG(L_DBG, "osp: there is not terminate destination AVP\n");
     }
 }
 

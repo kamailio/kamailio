@@ -97,7 +97,7 @@ int validateospheader (
         LOG(L_ERR, "osp: ERROR: failed to create a new OSP transaction handle (%d)\n", errorcode);
     } else if (ospGetFromUserpart(msg, dest.calling, sizeof(dest.calling)) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
-    } else if (ospGetToUserpart(msg, dest.called, sizeof(dest.called)) != 0) {
+    } else if (ospGetUriUserpart(msg, dest.called, sizeof(dest.called)) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract called number\n");
     } else if (ospGetCallId(msg, &callid) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract call id\n");
@@ -107,12 +107,12 @@ int validateospheader (
         LOG(L_ERR, "osp: ERROR: failed to extract OSP authorization token\n");
     } else {
         LOG(L_INFO, 
-            "osp: validating token for: "
-            "transaction-handle '%i' "
+            "osp: validate token for: "
+            "transaction_handle '%i' "
             "e164_source '%s' "
             "e164_dest '%s' "
             "validate_call_id '%s' "
-            "call-id '%.*s'\n",
+            "call_id '%.*s'\n",
             transaction,
             dest.calling,
             dest.called,
@@ -156,7 +156,7 @@ int validateospheader (
 
         if ((errorcode == 0) && (authorized == 1)) {
             LOG(L_DBG, 
-                "osp: call is authorized for %d seconds, call-id '%.*s' transaction-id '%lld'",
+                "osp: call is authorized for %d seconds, call_id '%.*s' transaction_id '%lld'",
                 timelimit,
                 dest.callidsize,
                 dest.callid,

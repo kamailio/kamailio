@@ -68,7 +68,7 @@ unsigned long long ospGetTransactionId(
         id = (unsigned long long)context->TransactionID;
     } else {
         LOG(L_ERR, 
-            "osp: ERROR: failed to extract transaction ID from transaction handle %d (%d)\n",
+            "osp: ERROR: failed to extract transaction_id from transaction handle %d (%d)\n",
             transaction,
             errorcode);
     }
@@ -107,7 +107,7 @@ void ospReportUsage(
     int errorcode;
 
     LOG(L_DBG, "osp: ospReportUsage\n");
-    LOG(L_DBG, "osp: Scheduling usage report for '%lld'\n", ospGetTransactionId(ospvTransaction));
+    LOG(L_DBG, "osp: schedule usage report for '%lld'\n", ospGetTransactionId(ospvTransaction));
 
     usage = (osp_usage*)malloc(sizeof(osp_usage));
 
@@ -167,7 +167,7 @@ static OSPTTHREADRETURN ospReportUsageWork(
 
         if (errorcode == 0) {
             LOG(L_DBG, 
-                "osp: reported usage for '%lld'\n", 
+                "osp: reporte usage for '%lld'\n", 
                 ospGetTransactionId(usage->ospvTransaction));
             break;
         } else {

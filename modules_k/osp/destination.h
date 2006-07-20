@@ -61,19 +61,15 @@ typedef struct _osp_dest {
     int reported;
 } osp_dest;
 
-typedef struct _osp_fork {
-    char host[OSP_STRBUF_SIZE];
-} osp_fork;
-
 osp_dest* ospInitDestination(osp_dest* dest);
 int ospSaveOrigDestination(osp_dest* dest);
 int ospSaveTermDestination(osp_dest* dest);
 int ospCheckOrigDestination(void);
 osp_dest* ospGetNextOrigDestination(void);
 osp_dest* ospGetTermDestination(void);
-osp_dest* ospGetForkedDestination(osp_fork* fork);
 void ospRecordEvent(int clientcode, int servercode);
 void ospDumpDestination(osp_dest* dest);
 void ospDumpAllDestination(void);
 
 #endif /* _OSP_MOD_DESTINATION_H_ */
+

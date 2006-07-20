@@ -184,7 +184,7 @@ static int ospLoadRoutes(
             "valid after '%s' "
             "valid until '%s' "
             "time limit '%i' seconds "
-            "call-id '%.*s' "
+            "call id '%.*s' "
             "calling number '%s' "
             "called number '%s' "
             "host '%s' "
@@ -252,10 +252,10 @@ int requestosprouting(
     destcount = _osp_max_dests;
 
     if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction)) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to create a new OSP transaction (%d)\n", errorcode);
+        LOG(L_ERR, "osp: ERROR: failed to create new OSP transaction (%d)\n", errorcode);
     } else if (ospGetFromUserpart(msg, source, sizeof(source)) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
-    } else if (ospGetToUserpart(msg, destination, sizeof(destination)) != 0) {
+    } else if (ospGetUriUserpart(msg, destination, sizeof(destination)) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract called number\n");
     } else if (ospGetCallId(msg, &(callids[0])) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract call id\n");
@@ -263,14 +263,14 @@ int requestosprouting(
         LOG(L_ERR, "osp: ERROR: failed to extract source address\n");
     } else {
         LOG(L_INFO,
-            "osp: requesting OSP auth and routing for: "
-            "transaction-handle '%i' "
-            "osp_source '%s' "
-            "osp_source_port '%s' "
-            "osp_source_dev '%s' "
+            "osp: request auth and routing for: "
+            "transaction '%i' "
+            "source '%s' "
+            "source_port '%s' "
+            "source_dev '%s' "
             "e164_source '%s' "
             "e164_dest '%s' "
-            "call-id '%.*s' "
+            "call_id '%.*s' "
             "dest_count '%i'\n",
             transaction,
             _osp_device_ip,
@@ -306,7 +306,7 @@ int requestosprouting(
 
         if ((errorcode == 0) && (destcount > 0)) {
             LOG(L_INFO, 
-                "osp: there are '%d' OSP routes, call-id '%.*s' transaction-id '%lld'\n",
+                "osp: there are '%d' OSP routes, call_id '%.*s' transaction_id '%lld'\n",
                 destcount,
                 callids[0]->ospmCallIdLen, 
                 callids[0]->ospmCallIdVal,
@@ -315,7 +315,7 @@ int requestosprouting(
             result = ospLoadRoutes(msg, transaction, destcount, _osp_device_ip, sourcedev, authtime);
         } else if ((errorcode == 0) && (destcount == 0)) {
             LOG(L_INFO, 
-                "osp: there is 0 osp routes, call-id '%.*s' transaction-id '%lld'\n",
+                "osp: there is 0 osp routes, call_id '%.*s' transaction_id '%lld'\n",
                 callids[0]->ospmCallIdLen,
                 callids[0]->ospmCallIdVal,
                 ospGetTransactionId(transaction));
@@ -323,7 +323,7 @@ int requestosprouting(
             ospRecordEvent(0, 503);
         } else {
             LOG(L_ERR, 
-                "osp: ERROR: failed to request auth and routing (%i), call-id '%.*s' transaction-id '%lld'\n",
+                "osp: ERROR: failed to request auth and routing (%i), call_id '%.*s' transaction_id '%lld'\n",
                 errorcode,
                 callids[0]->ospmCallIdLen,
                 callids[0]->ospmCallIdVal,
@@ -386,7 +386,7 @@ static int ospPrepareDestination(
         ospRebuildDestionationUri(&newuri, dest->called, dest->host, dest->networkid);
 
         LOG(L_INFO, 
-            "osp: preparing route to uri '%.*s' for call-id '%.*s' transaction-id '%lld'\n",
+            "osp: prepare route to URI '%.*s' for call_id '%.*s' transaction_id '%lld'\n",
             newuri.len,
             newuri.s,
             dest->callidsize,
@@ -460,7 +460,7 @@ int prepareallosproutes(
 {
     int result = MODULE_RETURNCODE_TRUE;
 
-    LOG(L_DBG, "osp: preparingallosproute\n");
+    LOG(L_DBG, "osp: prepareallosproute\n");
 
     for(result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE);
         result == MODULE_RETURNCODE_TRUE;
@@ -470,3 +470,4 @@ int prepareallosproutes(
 
     return MODULE_RETURNCODE_TRUE;
 }
+

@@ -93,7 +93,7 @@ int ospSetupProvider(void)
         if (result != 0) {
             LOG(L_ERR, "osp: ERROR: failed to create provider (%i)\n", result);
         } else {
-            LOG(L_DBG, "osp: created a new (per process) provider '%d'\n", _osp_provider);
+            LOG(L_DBG, "osp: created new (per process) provider '%d'\n", _osp_provider);
             result = 0;
         }
     }

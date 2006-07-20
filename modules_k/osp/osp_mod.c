@@ -236,7 +236,7 @@ static int ospVerifyParameters(void)
 /*
  * Dump OSP module configuration
  */
-void ospDumpParameters(void) 
+static void ospDumpParameters(void) 
 {
     LOG(L_INFO, 
         "osp: module configuration: "

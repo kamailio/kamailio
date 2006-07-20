@@ -37,3 +37,4 @@ int checkospheader(struct sip_msg*, char*, char*);
 int validateospheader(struct sip_msg*, char*, char*);
 
 #endif /* _OSP_MOD_TERM_TRANSACTION_H_ */
+
