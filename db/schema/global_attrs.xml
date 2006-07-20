@@ -199,59 +199,71 @@
 	<colref linkend="global_attrs.value"/>
     </index>
 
-    <row><value col="global_attrs.name">sw_domain_default_flags</value>
-         <value col="global_attrs.type">0</value>
-         <value col="global_attrs.value">33</value>
-         <value col="global_attrs.flags">32</value>
-    </row>
+	<row-identificator>
+		<colref linkend="global_attrs.name"/>
+	</row-identificator>
 
-    <row><value col="global_attrs.name">sw_credential_default_flags</value>
-	<value col="global_attrs.type">0</value>
-	<value col="global_attrs.value">33</value>
-	<value col="global_attrs.flags">32</value>
-    </row>
-
-
-    <row><value col="global_attrs.name">sw_uri_default_flags</value>
-	<value col="global_attrs.type">0</value>
-	<value col="global_attrs.value">57</value>
-	<value col="global_attrs.flags">32</value>
-    </row>
-    
-    <row><value col="global_attrs.name">sw_show_status</value>
-	<value col="global_attrs.type">0</value>
-	<value col="global_attrs.value">1</value>
-	<value col="global_attrs.flags">32</value>
-    </row>
-    
-    <row><value col="global_attrs.name">sw_require_conf</value>
-	<value col="global_attrs.type">0</value>
-	<value col="global_attrs.value">1</value>
-	<value col="global_attrs.flags">32</value>
-    </row>
-    
-    <row><value col="global_attrs.name">lang</value>
-	<value col="global_attrs.type">2</value>
-	<value col="global_attrs.value">en</value>
-	<value col="global_attrs.flags">33</value>
-    </row>
-    
-    <row><value col="global_attrs.name">sw_timezone</value>
-	<value col="global_attrs.type">2</value>
-	<value col="global_attrs.value">Europe/Prague</value>
-	<value col="global_attrs.flags">32</value>
-    </row>
-
-    <row><value col="global_attrs.name">uid_format</value>
-         <value col="global_attrs.type">2</value>
-         <value col="global_attrs.value">0</value>
-         <value col="global_attrs.flags">32</value>
-    </row>
-
-    <row><value col="global_attrs.name">did_format</value>
-         <value col="global_attrs.type">2</value>
-         <value col="global_attrs.value">0</value>
-         <value col="global_attrs.flags">32</value>
-    </row>
+	<row vendor-controlled="1">
+		<value col="global_attrs.name">sw_domain_default_flags</value>
+		<value col="global_attrs.type">0</value>
+		<value col="global_attrs.value">33</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
+		
+	<row vendor-controlled="1">
+		<value col="global_attrs.name">sw_credential_default_flags</value>
+		<value col="global_attrs.type">0</value>
+		<value col="global_attrs.value">33</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
+		
+	<row vendor-controlled="1">
+		<value col="global_attrs.name">sw_uri_default_flags</value>
+		<value col="global_attrs.type">0</value>
+		<value col="global_attrs.value">57</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
+		
+	<row>
+		<value col="global_attrs.name">sw_show_status</value>
+		<value col="global_attrs.type">0</value>
+		<value col="global_attrs.value">1</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
+		
+	<row>
+		<value col="global_attrs.name">sw_require_conf</value>
+		<value col="global_attrs.type">0</value>
+		<value col="global_attrs.value">1</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
+		
+	<row>
+		<value col="global_attrs.name">lang</value>
+		<value col="global_attrs.type">2</value>
+		<value col="global_attrs.value">en</value>
+		<value col="global_attrs.flags">33</value>
+	</row>
+		
+	<row>
+		<value col="global_attrs.name">sw_timezone</value>
+		<value col="global_attrs.type">2</value>
+		<value col="global_attrs.value">Europe/Prague</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
+		
+	<row>
+		<value col="global_attrs.name">uid_format</value>
+		<value col="global_attrs.type">2</value>
+		<value col="global_attrs.value">0</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
+		
+	<row>
+		<value col="global_attrs.name">did_format</value>
+		<value col="global_attrs.type">2</value>
+		<value col="global_attrs.value">0</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
 								
 </table>

@@ -128,273 +128,339 @@
 	<unique/>
     </index>
 
-    <row><value col="at.name">uid</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
-    <row><value col="at.name">did</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
+	<row-identificator>
+		<colref linkend="at.name"/>
+	</row-identificator>
+
+	<row vendor-controlled="1">
+		<value col="at.name">uid</value>
+		<value col="at.type">2</value>
+		<value col="at.d_flags">1</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">did</value>
+		<value col="at.type">2</value>
+		<value col="at.d_flags">1</value>
+	</row>
     
-    <row><value col="at.name">asserted_id</value>        
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">asserted identity</value>
-         <value col="at.d_flags">33</value>
-         <value col="at.prior">256</value>
-         <value col="at.order">200</value>
-	 <value col="at.access">1</value>
-    </row>
+	<row vendor-controlled="1">
+		<value col="at.name">asserted_id</value>        
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">asserted identity</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">200</value>
+		<value col="at.access">1</value>
+	</row>
 	 
-    <row><value col="at.name">fr_timer</value>    
-         <value col="at.type">0</value>
-	 <value col="at.rich_t">int</value>
-         <value col="at.desc">@ff_fr_timer</value>
-         <value col="at.d_flags">33</value>
-         <value col="at.prior">1073807616</value>
-	 <value col="at.order">140</value>
-    </row>
+	<row vendor-controlled="1">
+		<value col="at.name">fr_timer</value>    
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">@ff_fr_timer</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.prior">1073807616</value>
+		<value col="at.order">140</value>
+	</row>
     
-    <row><value col="at.name">fr_inv_timer</value>
-         <value col="at.type">0</value>
-         <value col="at.rich_t">int</value>
-         <value col="at.desc">@ff_fr_inv_timer</value>
-         <value col="at.d_flags">33</value>
-         <value col="at.prior">1073807616</value>
-         <value col="at.order">150</value>
-    </row>
+	<row vendor-controlled="1">
+		<value col="at.name">fr_inv_timer</value>
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">@ff_fr_inv_timer</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.prior">1073807616</value>
+		<value col="at.order">150</value>
+	</row>
     
-    <row><value col="at.name">gflags</value>     
-         <value col="at.type">0</value>
-         <value col="at.rich_t">int</value>
-         <value col="at.desc">global flags</value>
-         <value col="at.d_flags">33</value>
-         <value col="at.prior">1073741824</value>
-         <value col="at.order">0</value>
-    </row>
+	<row vendor-controlled="1">
+		<value col="at.name">gflags</value>     
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">global flags</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.prior">1073741824</value>
+		<value col="at.order">0</value>
+	</row>
+		
+	<row vendor-controlled="1">
+		<value col="at.name">digest_realm</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">digest realm</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">4096</value>
+		<value col="at.prior">65536</value>
+		<value col="at.order">0</value>
+	</row>
     
-    <row><value col="at.name">digest_realm</value>
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-	 <value col="at.desc">digest realm</value>
-	 <value col="at.d_flags">33</value>
-	 <value col="at.flags">4096</value>
-	 <value col="at.prior">65536</value>
-         <value col="at.order">0</value>
-    </row>
-    
-    <row><value col="at.name">acl</value>
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">access control list of user</value>
-         <value col="at.d_flags">33</value>
-         <value col="at.flags">1024</value>
-         <value col="at.prior">0</value>
-         <value col="at.order">0</value>
-    </row>
+	<row vendor-controlled="1">
+		<value col="at.name">acl</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">access control list of user</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">1024</value>
+		<value col="at.prior">0</value>
+		<value col="at.order">0</value>
+	</row>
      
-    <row><value col="at.name">first_name</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">@ff_first_name</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">2048</value>
-         <value col="at.prior">256</value>
-         <value col="at.order">10</value>
-         </row>
-    <row><value col="at.name">last_name</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">@ff_last_name</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">2048</value>
-         <value col="at.prior">256</value>
-         <value col="at.order">20</value>
-         </row>
-    <row><value col="at.name">email</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">email_adr</value>
-         <value col="at.desc">@ff_email</value>
-         <value col="at.d_flags">33</value>
-         <value col="at.flags">6144</value>
-         <value col="at.prior">256</value>
-         <value col="at.order">30</value>
-         </row>
-    <row><value col="at.name">timezone</value>   
-         <value col="at.type">2</value>
-         <value col="at.rich_t">timezone</value>
-         <value col="at.desc">@ff_timezone</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">2048</value>
-         <value col="at.prior">1073807616</value>
-         <value col="at.order">60</value>
-         </row>
-    <row><value col="at.name">sw_allow_find</value>      
-         <value col="at.type">0</value>
-         <value col="at.rich_t">boolean</value>
-         <value col="at.desc">@ff_allow_lookup_for_me</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">256</value>
-         <value col="at.order">110</value>
-         </row>
-    <row><value col="at.name">lang</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">lang</value>
-         <value col="at.desc">@ff_language</value>
-         <value col="at.d_flags">33</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">1073807616</value>
-         <value col="at.order">50</value>
-         </row>
-    <row><value col="at.name">sw_show_status</value>      
-         <value col="at.type">0</value>
-         <value col="at.rich_t">boolean</value>
-         <value col="at.desc">@ff_status_visibility</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">1073742080</value>
-         <value col="at.order">100</value>
-         </row>
-    <row><value col="at.name">sw_admin</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">admin of domain</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">1024</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">sw_owner</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">owner of domain</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">sw_domain_default_flags</value>      
-         <value col="at.type">0</value>
-         <value col="at.rich_t">int</value>
-         <value col="at.desc">@ff_domain_def_f</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">4096</value>
-         <value col="at.prior">1073741824</value>
-         </row>
-    <row><value col="at.name">sw_deleted_ts</value>      
-         <value col="at.type">0</value>
-         <value col="at.rich_t">int</value>
-         <value col="at.desc">deleted timestamp</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">phone</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">@ff_phone</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">2048</value>
-         <value col="at.prior">256</value>
-         <value col="at.order">40</value>
-         </row>
-    <row><value col="at.name">sw_acl_control</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">acl control</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">1024</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">sw_credential_default_flags</value>
-         <value col="at.type">0</value>
-         <value col="at.rich_t">int</value>
-         <value col="at.desc">@ff_credential_def_f</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">4096</value>
-         <value col="at.prior">1073741824</value>
-         </row>
-    <row><value col="at.name">sw_uri_default_flags</value>      
-         <value col="at.type">0</value>
-         <value col="at.rich_t">int</value>
-         <value col="at.desc">@ff_uri_def_f</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">4096</value>
-         <value col="at.prior">1073741824</value>
-         </row>
-    <row><value col="at.name">sw_is_admin</value>      
-         <value col="at.type">0</value>
-         <value col="at.rich_t">boolean</value>
-         <value col="at.desc">admin privilege</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">sw_is_hostmaster</value>      
-         <value col="at.type">0</value>
-         <value col="at.rich_t">boolean</value>
-         <value col="at.desc">hostmaster privilege</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">sw_confirmation</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">registration confirmation</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">sw_pending_ts</value>      
-         <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
-         <value col="at.desc">registration timestamp</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">0</value>
-         </row>
-    <row><value col="at.name">sw_require_confirm</value>
-         <value col="at.type">0</value>
-         <value col="at.rich_t">boolean</value>
-         <value col="at.desc">@ff_reg_confirmation</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">1073807360</value>
-	 <value col="at.order">120</value>
-    </row>
-    <row><value col="at.name">sw_send_missed</value>
-         <value col="at.type">0</value>
-         <value col="at.rich_t">boolean</value>
-         <value col="at.desc">@ff_send_daily_missed_calls</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">1073807616</value>
-         <value col="at.order">130</value>
-    </row>
-    <row><value col="at.name">uid_format</value>
-         <value col="at.type">2</value>
-         <value col="at.rich_t">list</value>
-         <value col="at.desc">@ff_uid_format</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">1073741824</value>
-         <value col="at.order">160</value>
-	 <value col="at.type_spec">a:3:{i:0;s:14:"username@realm";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}</value>
-    </row>
-    <row><value col="at.name">did_format</value>
-         <value col="at.type">2</value>
-         <value col="at.rich_t">list</value>
-         <value col="at.desc">@ff_did_format</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">0</value>
-         <value col="at.prior">1073741824</value>
-         <value col="at.order">170</value>
-	 <value col="at.type_spec">a:3:{i:0;s:11:"domain name";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}</value>
-    </row>
-    <row><value col="at.name">contact_email</value>
-         <value col="at.type">2</value>
-         <value col="at.rich_t">email_adr</value>
-         <value col="at.desc">@ff_contact_email</value>
-         <value col="at.d_flags">32</value>
-         <value col="at.flags">4096</value>
-         <value col="at.prior">1073807360</value>
-         <value col="at.order">0</value>
-    </row>
+	<row vendor-controlled="1">
+		<value col="at.name">first_name</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">@ff_first_name</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">2048</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">10</value>
+	</row>
+
+	<row vendor-controlled="1">
+		<value col="at.name">last_name</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">@ff_last_name</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">2048</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">20</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">email</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">email_adr</value>
+		<value col="at.desc">@ff_email</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">6144</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">30</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">timezone</value>   
+		<value col="at.type">2</value>
+		<value col="at.rich_t">timezone</value>
+		<value col="at.desc">@ff_timezone</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">2048</value>
+		<value col="at.prior">1073807616</value>
+		<value col="at.order">60</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_allow_find</value>      
+		<value col="at.type">0</value>
+		<value col="at.rich_t">boolean</value>
+		<value col="at.desc">@ff_allow_lookup_for_me</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">110</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">lang</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">lang</value>
+		<value col="at.desc">@ff_language</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">1073807616</value>
+		<value col="at.order">50</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_show_status</value>      
+		<value col="at.type">0</value>
+		<value col="at.rich_t">boolean</value>
+		<value col="at.desc">@ff_status_visibility</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">1073742080</value>
+		<value col="at.order">100</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_admin</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">admin of domain</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">1024</value>
+		<value col="at.prior">0</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_owner</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">owner of domain</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_domain_default_flags</value>      
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">@ff_domain_def_f</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">4096</value>
+		<value col="at.prior">1073741824</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_deleted_ts</value>      
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">deleted timestamp</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">phone</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">@ff_phone</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">2048</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">40</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_acl_control</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">acl control</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">1024</value>
+		<value col="at.prior">0</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_credential_default_flags</value>
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">@ff_credential_def_f</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">4096</value>
+		<value col="at.prior">1073741824</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_uri_default_flags</value>      
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">@ff_uri_def_f</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">4096</value>
+		<value col="at.prior">1073741824</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_is_admin</value>      
+		<value col="at.type">0</value>
+		<value col="at.rich_t">boolean</value>
+		<value col="at.desc">admin privilege</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_is_hostmaster</value>      
+		<value col="at.type">0</value>
+		<value col="at.rich_t">boolean</value>
+		<value col="at.desc">hostmaster privilege</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_confirmation</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">registration confirmation</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_pending_ts</value>      
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">registration timestamp</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+	</row>
+
+	<row vendor-controlled="1">
+		<value col="at.name">sw_require_confirm</value>
+		<value col="at.type">0</value>
+		<value col="at.rich_t">boolean</value>
+		<value col="at.desc">@ff_reg_confirmation</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">1073807360</value>
+		<value col="at.order">120</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">sw_send_missed</value>
+		<value col="at.type">0</value>
+		<value col="at.rich_t">boolean</value>
+		<value col="at.desc">@ff_send_daily_missed_calls</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">1073807616</value>
+		<value col="at.order">130</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">uid_format</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">list</value>
+		<value col="at.desc">@ff_uid_format</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">1073741824</value>
+		<value col="at.order">160</value>
+		<value col="at.type_spec">a:3:{i:0;s:14:"username@realm";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">did_format</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">list</value>
+		<value col="at.desc">@ff_did_format</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">1073741824</value>
+		<value col="at.order">170</value>
+		<value col="at.type_spec">a:3:{i:0;s:11:"domain name";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}</value>
+	</row>
+	
+	<row vendor-controlled="1">
+		<value col="at.name">contact_email</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">email_adr</value>
+		<value col="at.desc">@ff_contact_email</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">4096</value>
+		<value col="at.prior">1073807360</value>
+		<value col="at.order">0</value>
+	</row>
 
 								      
 
