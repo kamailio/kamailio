@@ -1,0 +1,136 @@
+#! /bin/sh
+# Copyright (c) 2002 Frauenhofer Gesellschaft FOKUS, Germany.
+# All rights reserved.
+#
+# Author: Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+#
+# /etc/init.d/ser
+#
+### BEGIN INIT INFO
+# Provides:          sip
+# Required-Start:    $network
+# X-UnitedLinux-Should-Start: $network
+# Required-Stop:     $network
+# X-UnitedLinux-Should-Stop: $network
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: SIP Express Router
+# Description:       Start SER and provide the routing of SIP requests.
+### END INIT INFO
+
+
+# Check for missing binaries (stale symlinks should not happen)
+SER_BIN=/usr/sbin/ser
+test -x $SER_BIN || exit 5
+
+# Check for existence of needed config file and read it
+SER_CONFIG=/etc/ser/ser.cfg
+test -r $SER_CONFIG || exit 6
+#. $FOO_CONFIG
+
+# Shell functions sourced from /etc/rc.status:
+#      rc_check         check and set local and overall rc status
+#      rc_status        check and set local and overall rc status
+#      rc_status -v     ditto but be verbose in local rc status
+#      rc_status -v -r  ditto and clear the local rc status
+#      rc_status -s     display "skipped" and exit with status 3
+#      rc_status -u     display "unused" and exit with status 3
+#      rc_failed        set local and overall rc status to failed
+#      rc_failed <num>  set local and overall rc status to <num>
+#      rc_reset         clear local rc status (overall remains)
+#      rc_exit          exit appropriate to overall rc status
+#      rc_active	checks whether a service is activated by symlinks
+#      rc_splash arg    sets the boot splash screen to arg (if active)
+. /etc/rc.status
+
+# Reset status of this service
+rc_reset
+
+# Return values acc. to LSB for all commands but status:
+# 0	  - success
+# 1       - generic or unspecified error
+# 2       - invalid or excess argument(s)
+# 3       - unimplemented feature (e.g. "reload")
+# 4       - user had insufficient privileges
+# 5       - program is not installed
+# 6       - program is not configured
+# 7       - program is not running
+# 8--199  - reserved (8--99 LSB, 100--149 distrib, 150--199 appl)
+# 
+# Note that starting an already running service, stopping
+# or restarting a not-running service as well as the restart
+# with force-reload (in case signaling is not supported) are
+# considered a success.
+
+case "$1" in
+    start)
+	echo -n "Starting SIP Express Router "
+	## Start daemon with startproc(8). If this fails
+	## the return value is set appropriately by startproc.
+	startproc $SER_BIN -f $SER_CONFIG
+
+	# Remember status and be verbose
+	rc_status -v
+	;;
+    stop)
+	echo -n "Shutting down SIP Express Router "
+	## Stop daemon with killproc(8) and if this fails
+	## killproc sets the return value according to LSB.
+
+	killproc -TERM $SER_BIN
+
+	# Remember status and be verbose
+	rc_status -v
+	;;
+    restart)
+	## Stop the service and regardless of whether it was
+	## running or not, start it again.
+	$0 stop
+	$0 start
+
+	# Remember status and be quiet
+	rc_status
+	;;
+    force-reload)
+	## Signal the daemon to reload its config. Most daemons
+	## do this on signal 1 (SIGHUP).
+	## If it does not support it, restart.
+
+	echo -n "Reload service SIP Express Router "
+	## Otherwise:
+	$0 stop  &&  $0 start
+	rc_status
+	;;
+    reload)
+	## Like force-reload, but if daemon does not support
+	## signaling, do nothing (!)
+
+	## Otherwise if it does not support reload:
+	rc_failed 3
+	rc_status -v
+	;;
+    status)
+	echo -n "Checking for service SIP Express Router "
+	## Check status with checkproc(8), if process is running
+	## checkproc will return with exit status 0.
+
+	# Return value is slightly different for the status command:
+	# 0 - service up and running
+	# 1 - service dead, but /var/run/  pid  file exists
+	# 2 - service dead, but /var/lock/ lock file exists
+	# 3 - service not running (unused)
+	# 4 - service status unknown :-(
+	# 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
+	
+	# NOTE: checkproc returns LSB compliant status values.
+	checkproc $SER_BIN
+	# NOTE: rc_status knows that we called this init script with
+	# "status" option and adapts its messages accordingly.
+	rc_status -v
+	;;
+    *)
+	echo "Usage: $0 {start|stop|status|restart}"
+	exit 1
+	;;
+esac
+rc_exit

@@ -1,0 +1,15 @@
+examples/acc.cfg
+examples/ccdiversion.cfg
+examples/ctd.sh
+examples/exec.cfg
+examples/logging.cfg
+examples/msilo.cfg
+examples/onr.cfg
+examples/pstn.cfg
+examples/redirect.cfg
+examples/replicate.cfg
+examples/serial_183.cfg
+examples/uas.cfg
+examples/vm_proxy.cfg
+examples/voicemail.cfg
+examples/welcome.cfg

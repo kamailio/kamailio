@@ -1,0 +1,236 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+#
+# $Id$
+#
+# History:
+# --------
+#  2003-05-30  updated for the 0.8.11 release, changed modules list and
+#              some ser make options (andrei)
+#  2003-06-27  changed to DH_COMPAT 4 (debian/compat) + other filenames
+#              & small fixes (andrei)
+#  2003-08-29  replaced modules-install with modules-install-all, to 
+#               install also the modules doc (andrei)
+#  2004-07-23  added ext and commented out the radius modules
+#              (the current radius modules depend on radiusclient-ng which
+#               is not yet part of debian)  (andrei)
+#  2005-06-23  added cpl-c, pa & re-enabled radius (with libradiusclient-ng)
+#                (andrei)
+
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+# export DH_COMPAT=4
+#  -- already set in compat
+#  force no striping (always include debug symbols for now)
+export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
+
+# modules not in the "main" package or unstable 
+EXCLUDED_MODULES=	mysql jabber acc_radius xmlrpc auth_radius group_radius uri_radius \
+					avp_radius pa rls dialog presence_b2b xcap postgres snmp cpl cpl-c ext extcmd 
+
+# modules depending on mysql
+MYSQL_MODULES=mysql
+#jabber related modules
+JABBER_MODULES=jabber
+#module depending on radiusclient
+RADIUS_MODULES=acc_radius auth_radius group_radius uri_radius avp_radius
+#cpl related modules
+CPL_MODULES=cpl-c
+# pa related modules
+PA_MODULES=pa rls dialog presence_b2b xcap
+# postgres modules
+POSTGRES_MODULES=postgres
+# xmlrpc module
+XMLRPC_MODULES=xmlrpc
+
+# the same but with path prepended (needed for modules="...")
+MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
+JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
+RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
+CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
+PA_MOD_PATH=$(addprefix modules/, $(PA_MODULES))
+POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
+XMLRPC_MOD_PATH=$(addprefix modules/, $(XMLRPC_MODULES))
+
+SERCTL_PATH=tools/serctl
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+	$(MAKE) all  skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/ser/
+
+	# Compile shared libraries needed for presence modules
+	$(MAKE) -C lib -f Makefile.ser 
+	$(MAKE) modules modules="$(PA_MOD_PATH)" cfg-target=/etc/ser/
+	
+	$(MAKE) modules modules="$(POSTGRES_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(XMLRPC_MOD_PATH)" cfg-target=/etc/ser/
+	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) -C lib -f Makefile.ser proper
+	-$(MAKE) \
+		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(RADIUS_MODULES)\
+							$(CPL_MODULES) $(PA_MODULES) $(POSTGRES_MODULES) $(XMLRPC_MODULES)"\
+							proper
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Add here commands to install the package into debian/ser
+	$(MAKE) install  skip_modules="$(EXCLUDED_MODULES)" \
+		basedir=$(CURDIR)/debian/ser \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser \
+		cfg-target=/etc/ser/
+	# install only the mysql module
+	$(MAKE) install-modules-all modules="$(MYSQL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-mysql-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-mysql-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-mysql-module
+	#install only the jabber module
+	$(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-jabber-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-jabber-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-jabber-module
+	#install only the radius modules
+	$(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-radius-modules \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-radius-modules
+	#install only the cpl module
+	$(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-cpl-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-cpl-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-cpl-module
+	#install only the pa module
+	$(MAKE) -C lib -f Makefile.ser install \
+	        prefix=$(CURDIR)/debian/ser-presence-module/usr/
+	$(MAKE) install-modules-all modules="$(PA_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-presence-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-presence-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-presence-module
+	#install only the postgres module
+	$(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-postgres-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-postgres-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-postgres-module
+	#install only the xmlrpc module
+	$(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-xmlrpc-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-xmlrpc-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-xmlrpc-module
+	
+	# Install serctl only
+	cd $(SERCTL_PATH); \
+	$(MAKE) install \
+		prefix=$(CURDIR)/debian/ser-ctl \
+		'usr_prefix=$$(prefix)/usr' \
+		'var_prefix=$$(prefix)/var' \
+		'DOC_DIR=$$(docdir)/ser-ctl'
+	#dh_movefiles
+
+
+
+# This single target is used to build all the packages, all at once, or
+# one at a time. So keep in mind: any options passed to commands here will
+# affect _all_ packages. Anything you want to only affect one package
+# should be put in another target, such as the install target.
+binary-common: 
+	dh_testdir
+	dh_testroot
+#	dh_installdebconf	
+	dh_installdocs
+	dh_installexamples
+	dh_installmenu
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+	dh_installinit  -- defaults 23
+	dh_installcron
+	dh_installman
+	dh_installinfo
+#	dh_undocumented
+	dh_installchangelogs 
+	dh_link
+	dh_strip
+	dh_compress 
+	dh_fixperms
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_perl
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-independent packages using the common target
+binary-indep: build install
+# (Uncomment this next line if you have such packages.)
+#        $(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+# We have nothing to do by default.
+
+
+# Build architecture-dependent packages using the common target
+binary-arch: build install
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+# Any other binary targets build just one binary package at a time.
+binary-%: build install
+	$(MAKE) -f debian/rules binary-common DH_OPTIONS=-p$*
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

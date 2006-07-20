@@ -1,0 +1,296 @@
+%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius avp_radius pa postgres snmp cpl cpl-c ext extcmd
+%define MYSQL_MODULES		mysql
+%define JABBER_MODULES		jabber
+%define RADIUS_MODULES		auth_radius group_radius uri_radius avp_radius
+%define CPL_MODULES		cpl-c
+%define PA_MODULES		pa
+%define POSTGRES_MODULES		postgres
+%define ACC_MODULE		acc
+%define RADIUS_MOD_PATH		modules/auth_radius modules/group_radius modules/uri_radius
+
+
+Summary:      SIP Express Router, very fast and flexible SIP Proxy
+Name:         ser
+Version:      0.9.4
+Release:      fc2.0
+Copyright:    GPL
+Group:        System Environment/Daemons
+Source:       http://iptel.org/ser/stable/%{name}-%{version}_src.tar.gz
+Source1:      ser.init
+URL:          http://iptel.org/ser
+Vendor:       FhG Fokus
+BuildRoot:    /var/tmp/%{name}-%{version}-root
+Conflicts:    ser-mysql < %{version}, ser-jabber < %{version}, ser-radius < %{version}
+BuildPrereq:  make flex bison
+
+
+%description
+Ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
+proxy server. Written entirely in C, ser can handle thousands calls
+per second even on low-budget hardware. A C Shell like scripting language
+provides full control over the server's behaviour. It's modular
+architecture allows only required functionality to be loaded.
+Currently the following modules are available: digest authentication,
+CPL scripts, instant messaging, MySQL support, a presence agent, radius
+authentication, record routing, an SMS gateway, a jabber gateway, a 
+transaction module, registrar and user location.
+
+
+%package  mysql
+Summary:  MySQL connectivity for the SIP Express Router.
+Group:    System Environment/Daemons
+Requires: ser = %{version}
+BuildPrereq:  mysql-devel zlib-devel
+
+
+%description mysql
+The ser-mysql package contains MySQL database connectivity that you
+need to use digest authentication module or persistent user location
+entries.
+
+
+%package  jabber
+Summary:  sip jabber message translation support for the SIP Express Router.
+Group:    System Environment/Daemons
+Requires: ser = %{version}
+BuildPrereq:  expat-devel
+
+
+%description jabber
+The ser-jabber package contains a sip to jabber message translator.
+
+
+# commented out due to missing libradiusclient-ng
+#%package  radius
+#Summary:  ser radius authentication, group and uri check modules.
+#Group:    System Environment/Daemons
+#Requires: ser = %{version}
+#BuildPrereq:  radiusclient-ng-devel
+
+
+#%description radius
+#The ser-radius package contains modules for radius authentication, group
+# membership and uri checking.
+
+%package  cpl 
+Summary:  CPL support.
+Group:    System Environment/Daemons
+Requires: ser = %{version}
+BuildPrereq:  xml2-devel
+
+%package  pa 
+Summary:  presence server support.
+Group:    System Environment/Daemons
+Requires: ser = %{version}
+BuildPrereq:  xml2-devel
+
+%package  postgres
+Summary:  postgres connectivity for the SIP Express Router.
+Group:    System Environment/Daemons
+Requires: ser = %{version}
+BuildPrereq:  libpq-devel
+
+
+
+%prep
+%setup
+
+
+%build
+make all skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/ser/
+make modules modules="modules/%MYSQL_MODULES"  cfg-target=/%{_sysconfdir}/ser/
+make modules modules="modules/%JABBER_MODULES" cfg-target=/%{_sysconfdir}/ser/
+#make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/ser/
+make modules modules="modules/%CPL_MODULES"    cfg-target=/%{_sysconfdir}/ser/
+make modules modules="modules/%PA_MODULES"     cfg-target=/%{_sysconfdir}/ser/
+make modules modules="modules/%POSTGRES_MODULES" cfg-target=/%{_sysconfdir}/ser/
+
+
+%install
+rm -rf %{buildroot}
+make install skip_modules="%EXCLUDED_MODULES" \
+		basedir=%{buildroot} \
+		prefix=%{_prefix} \
+		cfg-prefix=%{buildroot} \
+		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules-all modules="modules/%MYSQL_MODULES" \
+		basedir=%{buildroot} \
+		prefix=%{_prefix} \
+		cfg-prefix=%{buildroot} \
+		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules-all modules="modules/%JABBER_MODULES" \
+		basedir=%{buildroot} \
+		prefix=%{_prefix} \
+		cfg-prefix=%{buildroot} \
+		cfg-target=/%{_sysconfdir}/ser/ 
+#make install-modules modules="%RADIUS_MOD_PATH" \
+#		basedir=%{buildroot} \
+#		prefix=%{_prefix} \
+#		cfg-prefix=%{buildroot} \
+#		cfg-target=/%{_sysconfdir}/ser/ 
+#make install-doc modules="%RADIUS_MOD_PATH" \
+#		basedir=%{buildroot} \
+#		prefix=%{_prefix} \
+#		cfg-prefix=%{buildroot} \
+#		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules-all modules="modules/%CPL_MODULES" \
+		basedir=%{buildroot} \
+		prefix=%{_prefix} \
+		cfg-prefix=%{buildroot} \
+		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules-all modules="modules/%PA_MODULES" \
+		basedir=%{buildroot} \
+		prefix=%{_prefix} \
+		cfg-prefix=%{buildroot} \
+		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules-all modules="modules/%POSTGRES_MODULES" \
+		basedir=%{buildroot} \
+		prefix=%{_prefix} \
+		cfg-prefix=%{buildroot} \
+		cfg-target=/%{_sysconfdir}/ser/ 
+install -m755 -D %{SOURCE1} %{buildroot}/%{_initrddir}/ser
+
+
+%clean
+rm -rf %{buildroot}
+
+
+%post
+/sbin/chkconfig --add ser
+
+
+%preun
+if [ $1 = 0 ]; then
+    /sbin/service ser stop > /dev/null 2>&1
+    /sbin/chkconfig --del ser
+fi
+
+
+%files
+%defattr(-,root,root)
+%doc %{_docdir}/ser/*
+%config(noreplace) %{_sysconfdir}/ser/*
+%config %{_initrddir}/ser
+%{_libdir}/ser/modules/*
+%{_sbindir}/*
+%{_mandir}/man5/*
+%{_mandir}/man8/*
+%exclude %{_libdir}/ser/modules/mysql.so
+%exclude %{_sbindir}/ser_mysql.sh
+%exclude %{_docdir}/ser/README.jabber
+%exclude %{_libdir}/ser/modules/jabber.so
+#%exclude %{_docdir}/ser/README.*_radius
+#%exclude %{_libdir}/ser/modules/*_radius.so
+%exclude %{_docdir}/ser/README.cpl-c
+%exclude %{_libdir}/ser/modules/cpl-c.so
+%exclude %{_docdir}/ser/README.pa
+%exclude %{_libdir}/ser/modules/pa.so
+%exclude %{_docdir}/ser/README.postgres
+%exclude %{_libdir}/ser/modules/postgres.so
+
+
+%files mysql
+%defattr(-,root,root)
+%{_libdir}/ser/modules/mysql.so
+%{_sbindir}/ser_mysql.sh
+
+
+%files jabber
+%defattr(-,root,root)
+%doc %{_docdir}/ser/README.jabber
+%{_libdir}/ser/modules/jabber.so
+
+
+#%files radius
+#%defattr(-,root,root)
+#%doc %{_docdir}/ser/README.*_radius
+#%{_libdir}/ser/modules/*_radius.so
+
+
+%files cpl 
+%defattr(-,root,root)
+%doc %{_docdir}/ser/README.cpl-c
+%{_libdir}/ser/modules/cpl-c.so
+
+
+%files pa 
+%defattr(-,root,root)
+%doc %{_docdir}/ser/README.pa
+%{_libdir}/ser/modules/pa.so
+
+
+%files postgres 
+%defattr(-,root,root)
+%doc %{_docdir}/ser/README.postgres
+%{_libdir}/ser/modules/postgres.so
+
+
+%changelog
+
+* Fri Sep 02 2005 Andrei Pelinescu - Onciul <andrei@iptel.org>
+- changed vesion to 0.9.4 (new upstream release)
+
+* Fri Jun 28 2005 Andrei Pelinescu - Onciul <andrei@iptel.org>
+- changed vesion to 0.9.3 (new upstream release)
+- added cpl, pa and postgres to the modules list
+
+* Tue Nov 23 2004 Gabriel Somlo <somlo@acns.colostate.edu>
+- reworked spec file for fedora core 2
+- replaced absolute paths with macros wherever possible
+- globbed main package filelist
+
+* Fri Jul 23 2004 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.14 (new upstream release)
+- added ext to the modules list, removed the radius modules (they depend on radiusclient-ng now)
+
+* Fri Nov 14 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.12 (new upstream release)
+- added auth_diameter, pdt & mangler to the modules list
+
+* Wed Aug 27 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.11
+- gen_ha1 is now left in _sbindir
+- removed harv_ser.sh
+- added xlog to the modules list
+
+* Fri Jun 6 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- added Conflicts:, changed vesion to 0.8.11pre30
+
+* Mon Jun 2 2003 Daniel-Constantin Mierla <mierla@fokus.fraunhofer.de>
+- added README files for ser-jabber and ser-radius packages
+- spec file updated to work with rpm v4.1+
+
+* Sun Jun 1 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- added a separate rpm for the radius modules
+- updated to the new makefile variables (removed lots of unnecessary stuff)
+
+* Thu Nov 14 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- Installing harv_ser.sh again
+- quick hack to move gen_ha1 to bin directory instead of sbin (should
+  be done from the Makefile next time)
+
+* Tue Nov 12 2002 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>
+- added a separate rpm for the jabber modules
+- moved all the binaries to sbin
+- removed obsolete installs (make install installs everything now)
+
+* Fri Oct 25 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- Minor description fixes
+
+* Fri Oct  4 2002 Jiri Kuthan <jiri@iptel.org>
+- exec module introduced
+
+* Wed Sep 25 2002 Andrei Pelinescu - Onciul  <pelinescu-onciul@fokus.gmd.de>
+- modified make install & make: added cfg-target & modules-target
+
+* Sun Sep 08 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- Created subpackage containing mysql connectivity support.
+
+* Mon Sep 02 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- gen_ha1 utility added, scripts added.
+
+* Tue Aug 28 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- Finished the first version of the spec file.
+
+* Sun Aug 12 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- First version of the spec file.

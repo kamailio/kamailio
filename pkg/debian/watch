@@ -1,0 +1,7 @@
+# Example watch control file for uscan
+# Rename this file to "watch" and then you can run the "uscan" command
+# to check for upstream updates and more.
+version=2
+
+# Site		Directory		Pattern			Version	Script
+ftp://ftp.berlios.de/pub/ser/latest/src/ser-(.*)_src\.tar\.gz	debian	uupdate

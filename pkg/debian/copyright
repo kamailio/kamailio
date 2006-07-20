@@ -1,0 +1,19 @@
+This package was debianized by Andrei Pelinescu-Onciul
+<pelinescu-onciul@fokus.fraunhofer.de> on Tue, 16 Jul 2002 15:41:31 +0200.
+
+It was downloaded from http://iptel.org/ser.
+
+Upstream Authors: Andrei Pelinescu-Onciul
+<pelinescu-onciul@fokus.fraunhofer.de>, Bogdan Iancu
+<iancu@fokus.fraunhofer.de>, Daniel-Constantin Mierla, Jan Janak
+<jan@iptel.org>, Jiri Kuthan <jiri@iptel.org>, Juha Heinanen, Maxim
+Sobolev, Miklos Tirpak, Nils Ohlmeier, Ramona-Elena Modroiu, Raphael Coeffic,
+Ricardo Baratto, Stelios Sidiroglou-Douskos  (see AUTHORS file for details)
+
+This software is copyright (c) 2002-2003 by FhG Fokus
+
+You are free to distribute this software under the terms of
+the GNU General Public License.
+
+On Debian systems, the complete text of the GNU General Public
+License can be found in the file `/usr/share/common-licenses/GPL.
