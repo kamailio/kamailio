@@ -60,6 +60,12 @@
 	<xsl:apply-templates select="user"/>
     </xsl:template>
 
+    <xsl:template match="database" mode="data">
+
+	<!-- Insert initial data -->
+	<xsl:apply-templates select="table" mode="data"/>
+    </xsl:template>
+
     <!-- ################ /DATABASE ################# -->
 
     <!-- ################ TABLE ################# -->
@@ -146,6 +152,28 @@
 	</xsl:choose>
     </xsl:template>
 
+
+    <!-- column ID to column name -->
+    <xsl:template name="get-column-name">
+	<xsl:param name="select" select="."/>
+
+	<xsl:variable name="columns" select="key('column_id', $select)"/>
+	<xsl:variable name="column" select="$columns[1]"/>
+	<xsl:choose>
+	    <xsl:when test="count($column) = 0">
+		<xsl:message terminate="yes">
+		    <xsl:text>ERROR: Column with id '</xsl:text>
+		    <xsl:value-of select="$select"/>
+		    <xsl:text>' does not exist.</xsl:text>
+		</xsl:message>
+	    </xsl:when>
+	    <xsl:otherwise>
+		<xsl:call-template name="get-name">
+		    <xsl:with-param name="select" select="$column"/>
+		</xsl:call-template>
+	    </xsl:otherwise>
+	</xsl:choose>
+    </xsl:template>
     <!-- ################ /COLUMN ################# -->
 
     <!-- ################ INDEX ################# -->

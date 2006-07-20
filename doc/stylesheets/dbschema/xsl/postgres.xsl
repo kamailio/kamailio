@@ -106,9 +106,6 @@
 	<xsl:for-each select="index[count(child::unique)=0]">
 	    <xsl:call-template name="create_index"/>
 	</xsl:for-each>
-
-	<!-- Process initial rows of data -->
-	<xsl:apply-templates select="row"/>
     </xsl:template>
 
     <xsl:template match="index">

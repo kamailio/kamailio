@@ -15,6 +15,15 @@
 	    <xsl:text> </xsl:text>
 	</xsl:document>
 
+	<xsl:variable name="datafile" select="concat($dir, concat('/', concat($prefix, 'data.sql')))"/>
+	<xsl:document href="{$datafile}" method="text" indent="no" omit-xml-declaration="yes">
+	    <xsl:apply-templates mode="data" select="/database[1]"/>
+	    <!-- This is a hack to ensure that the file gets created when
+	    nothing is written
+	    -->
+	    <xsl:text> </xsl:text>
+	</xsl:document>
+
 	<xsl:variable name="dropfile" select="concat($dir, concat('/', concat($prefix, 'drop.sql')))"/>
 	<xsl:document href="{$dropfile}" method="text" indent="no" omit-xml-declaration="yes">
 	    <xsl:apply-templates mode="drop" select="/database[1]"/>
@@ -53,8 +62,10 @@
 	<xsl:text>&#x0A;</xsl:text>
 
 	<xsl:call-template name="table.close"/>
+    </xsl:template>
 
-	<!-- Process initial rows of data -->
+    <xsl:template match="table" mode="data">
+	<!-- Process initial data --> 
 	<xsl:apply-templates select="row"/>
     </xsl:template>
 
@@ -178,22 +189,9 @@
 <!-- ################ COLREF ################  -->
 
     <xsl:template match="colref">
-	<xsl:variable name="columns" select="key('column_id', @linkend)"/>
-	<xsl:variable name="column" select="$columns[1]"/>
-	<xsl:choose>
-	    <xsl:when test="count($column) = 0">
-		<xsl:message terminate="yes">
-		    <xsl:text>ERROR: Column with id '</xsl:text>
-		    <xsl:value-of select="@linkend"/>
-		    <xsl:text>' does not exist.</xsl:text>
-		</xsl:message>
-	    </xsl:when>
-	    <xsl:otherwise>
-		<xsl:call-template name="get-name">
-		    <xsl:with-param name="select" select="$column"/>
-		</xsl:call-template>
-	    </xsl:otherwise>
-	</xsl:choose>
+	<xsl:call-template name="get-column-name">
+	    <xsl:with-param name="select" select="@linkend"/>
+	</xsl:call-template>
 	<xsl:if test="not(position()=last())">
 	    <xsl:text>, </xsl:text>
 	</xsl:if>
@@ -204,6 +202,16 @@
 <!-- ################ ROW ################  -->
 
     <xsl:template match="row">
+	<xsl:if test="@vendor-controlled[1]">
+	    <xsl:text>DELETE FROM </xsl:text>	    
+	    <xsl:call-template name="get-name">
+		<xsl:with-param name="select" select="parent::table"/>
+	    </xsl:call-template>
+	    <xsl:text> WHERE </xsl:text>	    
+	    <xsl:call-template name="row-identification"/>
+	    <xsl:text>;&#x0A;</xsl:text>	    
+	</xsl:if>
+
 	<xsl:text>INSERT INTO </xsl:text>
 	<xsl:call-template name="get-name">
 	    <xsl:with-param name="select" select="parent::table"/>
@@ -216,6 +224,65 @@
 	<xsl:if test="position()=last()">
 	    <xsl:text>&#x0A;</xsl:text>	    
 	</xsl:if>
+    </xsl:template>
+
+    <xsl:template name="row-identification">
+	<xsl:variable name="row-ident" select="parent::table/row-identificator"/>
+	<xsl:variable name="row" select="."/>
+	<xsl:variable name="columns" select="$row-ident/colref"/>
+
+
+	<xsl:choose>
+	    <xsl:when test="count($row-ident) = 0">
+		<xsl:message terminate="yes">
+		    <xsl:text>ERROR: row-identificator does not exists.</xsl:text>
+		</xsl:message>
+	    </xsl:when>
+	    <xsl:when test="count($columns) = 0">
+		<xsl:message terminate="yes">
+		    <xsl:text>ERROR: row-identificator does not have any column.</xsl:text>
+		</xsl:message>
+	    </xsl:when>
+	    <xsl:otherwise>
+
+
+	<xsl:for-each select="$columns">
+	    <xsl:variable name="col-id" select="@linkend"/>
+	    
+	    <!-- column name -->
+	    <xsl:call-template name="get-column-name">
+		<xsl:with-param name="select" select="$col-id"/>
+	    </xsl:call-template>
+
+	    <xsl:text>=</xsl:text>	    
+
+	    <!-- value of column -->
+	    <xsl:variable name="value" select="$row/value[@col=$col-id]"/>
+	    <xsl:choose>
+		<xsl:when test="count($value) = 0">
+		    <xsl:message terminate="yes">
+			<xsl:text>ERROR: Value of column with id '</xsl:text>
+			<xsl:value-of select="$col-id"/>
+			<xsl:text>' does not exist.</xsl:text>
+		    </xsl:message>
+		</xsl:when>
+		<xsl:otherwise>
+		    <xsl:text>'</xsl:text>
+		    <xsl:value-of select="$value"/>
+		    <xsl:text>'</xsl:text>
+		</xsl:otherwise>
+	    </xsl:choose>
+
+
+	    <xsl:if test="not(position()=last())">
+		<xsl:text> AND </xsl:text>
+	    </xsl:if>
+	</xsl:for-each>
+
+
+	    </xsl:otherwise>
+	</xsl:choose>
+    	
     </xsl:template>
 
 <!-- ################ /ROW ################  -->
@@ -239,22 +306,9 @@
     </xsl:template>
 
     <xsl:template match="value" mode="colname">
-	<xsl:variable name="columns" select="key('column_id', @col)"/>
-	<xsl:variable name="column" select="$columns[1]"/>
-	<xsl:choose>
-	    <xsl:when test="count($column) = 0">
-		<xsl:message terminate="yes">
-		    <xsl:text>ERROR: Column with id '</xsl:text>
-		    <xsl:value-of select="@col"/>
-		    <xsl:text>' does not exist.</xsl:text>
-		</xsl:message>
-	    </xsl:when>
-	    <xsl:otherwise>
-		<xsl:call-template name="get-name">
-		    <xsl:with-param name="select" select="$column"/>
-		</xsl:call-template>
-	    </xsl:otherwise>
-	</xsl:choose>
+	<xsl:call-template name="get-column-name">
+	    <xsl:with-param name="select" select="@col"/>
+	</xsl:call-template>
 	<xsl:if test="not(position()=last())">
 	    <xsl:text>, </xsl:text>
 	</xsl:if>

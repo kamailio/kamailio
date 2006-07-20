@@ -6,10 +6,6 @@
 
     <xsl:import href="sql.xsl"/>
 
-    <xsl:template match="database">
-	<xsl:apply-imports/>
-    </xsl:template>
-
     <xsl:template match="database" mode="drop">
 	<xsl:apply-templates mode="drop"/>
     </xsl:template>
@@ -151,5 +147,37 @@
 	</xsl:choose>
 	<xsl:text>'</xsl:text>
     </xsl:template>
+
+<!-- ################ ROW ################  -->
+
+    <!-- override common template for ROW. Create INSERT statements 
+         with IGNORE keyword
+      -->
+    <xsl:template match="row">
+	<xsl:if test="@vendor-controlled[1]">
+	    <xsl:text>DELETE FROM </xsl:text>	    
+	    <xsl:call-template name="get-name">
+		<xsl:with-param name="select" select="parent::table"/>
+	    </xsl:call-template>
+	    <xsl:text> WHERE </xsl:text>	    
+	    <xsl:call-template name="row-identification"/>
+	    <xsl:text>;&#x0A;</xsl:text>	    
+	</xsl:if>
+
+	<xsl:text>INSERT IGNORE INTO </xsl:text>
+	<xsl:call-template name="get-name">
+	    <xsl:with-param name="select" select="parent::table"/>
+	</xsl:call-template>
+	<xsl:text> (</xsl:text>
+	<xsl:apply-templates select="value" mode="colname"/>
+	<xsl:text>) VALUES (</xsl:text>
+	<xsl:apply-templates select="value"/>
+	<xsl:text>);&#x0A;</xsl:text>
+	<xsl:if test="position()=last()">
+	    <xsl:text>&#x0A;</xsl:text>	    
+	</xsl:if>
+    </xsl:template>
+
+<!-- ################ /ROW ################  -->
 
 </xsl:stylesheet>

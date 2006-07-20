@@ -42,7 +42,12 @@
     linkend IDREF #REQUIRED
 >
 
+<!ELEMENT row-identificator (colref+) >
+
 <!ELEMENT row (value*) >
+<!ATTLIST row
+    vendor-controlled (0|1) #IMPLIED
+>
 
 <!ELEMENT value (#PCDATA | null)* >
 <!ATTLIST value
