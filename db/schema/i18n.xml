@@ -38,6 +38,12 @@
 	<name>i18n_idx</name>
 	<colref linkend="i18n.code"/>
     </index>
+    <index>
+	<name>i18n_uniq_idx</name>
+	<unique/>
+	<colref linkend="i18n.code"/>
+	<colref linkend="i18n.lang"/>
+    </index>
 
     <xi:include href="i18n-en.xml" xpointer="xpointer(data/row)"/>
     <xi:include href="i18n-cs.xml" xpointer="xpointer(data/row)"/>
