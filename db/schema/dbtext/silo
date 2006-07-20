@@ -1,1 +1,0 @@
-mid(int) src_addr(str) dst_addr(str) r_uri(str) username(str) domain(str) inc_time(int) exp_time(int) ctype(str) body(str) 

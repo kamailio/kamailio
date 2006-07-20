@@ -1,1 +1,0 @@
-caller_UUID(str) callee_UUID(str) sip_from(str) sip_to(str) sip_status(str) sip_method(str) i_uri(str) o_uri(str) from_uri(str) to_uri(str) sip_callid(str) username(str) domain(str) fromtag(str) totag(str) time(int) timestamp(int) caller_deleted(int) callee_deleted(int) 

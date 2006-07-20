@@ -1,1 +1,0 @@
-attribute(str) value(str) username(str) domain(str) modified(int,null) 

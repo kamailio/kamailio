@@ -1,1 +1,0 @@
-username(str) domain(str) uri_re(str) purpose(str) action(str) param1(str,null) param2(str,null) 

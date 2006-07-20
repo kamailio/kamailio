@@ -1,1 +1,0 @@
-param(str) s_value(int) s_increment(int) last_aggregated_increment(int) av(double) mv(int) ad(double) lv(int) min_val(int) max_val(int) min_inc(int) max_inc(int) lastupdate(int) 
