@@ -667,8 +667,11 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 	return 1;
 
  error:
-	if (doreply) send_reply(_m);
-	return 0;
+	if (doreply) {
+		send_reply(_m);
+		return 0;
+	}
+	return -2;
 }
 
 
