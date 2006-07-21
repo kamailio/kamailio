@@ -233,6 +233,7 @@ int requestosprouting(
 {
     int errorcode;
     time_t authtime;
+    char tmp[OSP_STRBUF_SIZE];
     char source[OSP_E164BUF_SIZE];
     char sourcedev[OSP_STRBUF_SIZE];
     char destination[OSP_E164BUF_SIZE];
@@ -262,6 +263,8 @@ int requestosprouting(
     } else if (ospGetSourceAddress(msg, sourcedev, sizeof(sourcedev)) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract source address\n");
     } else {
+        ospConvertAddress(sourcedev, tmp, sizeof(tmp));
+
         LOG(L_INFO,
             "osp: request auth and routing for: "
             "transaction '%i' "
@@ -291,7 +294,7 @@ int requestosprouting(
         errorcode = OSPPTransactionRequestAuthorisation(
             transaction,       /* transaction handle */
             _osp_device_ip,    /* from the configuration file */
-            sourcedev,         /* source of call, protocol specific */
+            tmp,               /* source of call, protocol specific, in OSP format */
             source,            /* calling number in nodotted e164 notation */
             OSPC_E164,         /* calling number format */
             destination,       /* called number */

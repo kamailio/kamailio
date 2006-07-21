@@ -188,6 +188,13 @@ static int ospReportUsageFromCookie(
     char* calling;
     char* called;
     char* terminator;
+    unsigned issource;
+    char* source;
+    char srcbuf[OSP_STRBUF_SIZE];
+    char* destination;
+    char dstbuf[OSP_STRBUF_SIZE];
+    char* srcdev;
+    char devbuf[OSP_STRBUF_SIZE];
     OSPTTRANHANDLE transaction = -1;
     int errorcode = 0;
 
@@ -250,13 +257,28 @@ static int ospReportUsageFromCookie(
 
     LOG(L_DBG, "osp: created new transaction handle '%d' (%d)\n", transaction, errorcode);
 
+    if (isorig == 1) {
+        issource = OSPC_SOURCE;
+        source = _osp_device_ip;
+        ospConvertAddress(terminator, dstbuf, sizeof(dstbuf));
+        destination = dstbuf;
+        ospConvertAddress(uac, devbuf, sizeof(devbuf));
+        srcdev = devbuf;
+    } else {
+        issource = OSPC_DESTINATION;
+        ospConvertAddress(uac, srcbuf, sizeof(srcbuf));
+        source = srcbuf;
+        destination = _osp_device_ip;
+        srcdev = "";
+    }
+
     errorcode = OSPPTransactionBuildUsageFromScratch(
         transaction,
         transactionid,
-        isorig == 1 ? OSPC_SOURCE : OSPC_DESTINATION,
-        isorig == 1 ? _osp_device_ip : uac,
-        isorig == 1 ? terminator : _osp_device_ip,
-        isorig == 1 ? uac : "",
+        issource,
+        source,
+        destination,
+        srcdev,
         "",
         calling,
         OSPC_E164,
@@ -357,18 +379,31 @@ static int ospBuildUsageFromDestination(
     int lastcode)
 {
     int errorcode;
+    char addr[OSP_STRBUF_SIZE];
+    char* source;
+    char* srcdev;
 
     dest->reported = 1;
 
     LOG(L_DBG, "osp: ospBuildUsageFromDestination\n");
 
+    if (dest->type == OSPC_SOURCE) {
+        ospConvertAddress(dest->srcdev, addr, sizeof(addr));
+        source = dest->source;
+        srcdev = addr;
+    } else {
+        ospConvertAddress(dest->source, addr, sizeof(addr));
+        source = addr;
+        srcdev = dest->srcdev;
+    }
+
     errorcode = OSPPTransactionBuildUsageFromScratch(
         transaction,
         dest->tid,
         dest->type,
-        dest->source,
+        source,
         dest->host,
-        dest->srcdev,
+        srcdev,
         dest->destdev,
         dest->calling,
         OSPC_E164,

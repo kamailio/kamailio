@@ -29,6 +29,9 @@
  */
 
 #include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../usr_avp.h"
@@ -441,6 +444,28 @@ void ospDumpAllDestination(void)
         ospDumpDestination(dest);
     } else {
         LOG(L_DBG, "osp: there is not terminate destination AVP\n");
+    }
+}
+
+/*
+ * Convert address to "[x.x.x.x]" or "host.domain" format
+ * param src Source address
+ * param dst Destination address
+ * param buffersize Size of dst buffer
+ */
+void ospConvertAddress(
+    char* src,
+    char* dst,
+    int buffersize)
+{
+    struct in_addr inp;
+
+    LOG(L_DBG, "osp: ospConvertAddress\n");
+
+    if (inet_aton(src, &inp) != 0) {
+        snprintf(dst, buffersize, "[%s]", src);
+    } else {
+        snprintf(dst, buffersize, "%s", src);
     }
 }
 
