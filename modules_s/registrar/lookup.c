@@ -358,3 +358,49 @@ cont:
 	return 1;
 }
 
+
+/*
+ * Return true if the AOR in the Request-URI is registered,
+ * it is similar to lookup but registered neither rewrites
+ * the Request-URI nor appends branches
+ */
+int registered2(struct sip_msg* _m, char* _t, char* p2)
+{
+	str uid, aor;
+	urecord_t* r;
+        ucontact_t* ptr;
+	int res;
+
+	if (get_str_fparam(&aor, _m, (fparam_t*)p2) != 0) {
+	    ERR("Unable to get the AOR value\n");
+	    return -1;
+	}
+
+	if (get_to_uid(&uid, _m) < 0) return -1;
+
+	ul.lock_udomain((udomain_t*)_t);
+	res = ul.get_urecord((udomain_t*)_t, &uid, &r);
+
+	if (res < 0) {
+		ul.unlock_udomain((udomain_t*)_t);
+		LOG(L_ERR, "registered(): Error while querying usrloc\n");
+		return -1;
+	}
+
+	if (res == 0) {
+		ptr = r->contacts;
+		while (ptr && !VALID_CONTACT(ptr, act_time) || !VALID_AOR(ptr, aor)) {
+			ptr = ptr->next;
+		}
+
+		if (ptr) {
+			ul.unlock_udomain((udomain_t*)_t);
+			DBG("registered(): '%.*s' found in usrloc\n", uid.len, ZSW(uid.s));
+			return 1;
+		}
+	}
+
+	ul.unlock_udomain((udomain_t*)_t);
+	DBG("registered(): '%.*s' not found in usrloc\n", uid.len, ZSW(uid.s));
+	return -1;
+}

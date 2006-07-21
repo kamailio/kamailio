@@ -53,5 +53,12 @@ int lookup2(struct sip_msg* msg, char* table, char* aor);
  */
 int registered(struct sip_msg* _m, char* _t, char* _s);
 
+/*
+ * Return true if the AOR in the Request-URI is registered,
+ * it is similar to lookup but registered neither rewrites
+ * the Request-URI nor appends branches
+ */
+int registered2(struct sip_msg* msg, char* table, char* p2);
+
 
 #endif /* LOOKUP_H */
