@@ -400,7 +400,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 				"(use openser_mysql.sh reinstall)\n");
 			goto err;
 		}
-		
+#if 0
 		if (db_mode!= DB_ONLY) {
 			/* if cache is used, populate it from DB */
 			if (preload_udomain(con, d->d) < 0) {
@@ -409,14 +409,16 @@ int register_udomain(const char* _n, udomain_t** _d)
 				goto err;
 			}
 		} else {
+#endif
 			/* test if DB really exists */
 			if (testdb_udomain(con, d->d) < 0) {
 				LOG(L_ERR, "register_udomain(): Error while testing "
 					"domain '%.*s'\n", s.len, ZSW(s.s));
 				goto err;
 			}
-			
+#if 0
 		}
+#endif
 
 		ul_dbf.close(con);
 	}

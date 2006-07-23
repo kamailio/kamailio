@@ -37,24 +37,11 @@
 #include "../../db/db.h"
 #include "../../socket_info.h"
 #include "../../ut.h"
+#include "../../hash_func.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "utime.h"
 #include "notify.h"
 
-
-/*
- * Hash function
- */
-static inline int hash_func(udomain_t* _d, unsigned char* _s, int _l)
-{
-	int res = 0, i;
-	
-	for(i = 0; i < _l; i++) {
-		res += _s[i];
-	}
-	
-	return res % _d->size;
-}
 
 
 /*
@@ -438,11 +425,11 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return 0;
 	}
 
-	lock_udomain(_d);
 
 	n = 0;
 	do {
 		DBG("preload_udomain(): loading records - cycle [%d]\n", ++n);
+		lock_udomain(_d);
 		for(i = 0; i < RES_ROW_N(res); i++) {
 			row = RES_ROWS(res) + i;
 
@@ -483,14 +470,14 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		
 			if (get_urecord(_d, &user, &r) > 0) {
 				if (mem_insert_urecord(_d, &user, &r) < 0) {
-					LOG(L_ERR, "preload_udomain(): Can't create a record\n");
+					LOG(L_ERR, "ul:preload_udomain(): Can't create a record\n");
 					goto error;
 				}
 			}
 
 			if ( (c=mem_insert_ucontact(r, &contact, ci)) < 0) {
 				LOG(L_ERR,
-					"preload_udomain(): Error while inserting contact\n");
+					"ul:preload_udomain(): Error while inserting contact\n");
 				goto error1;
 			}
 
@@ -498,9 +485,15 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			 * and we have the contact in the database already */
 			c->state = CS_SYNC;
 		}
+		unlock_udomain(_d);
+		
 		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+			/* give a bigger chance to other processes to access usrloc
+			 *  -- check first if usleep(s) is portable -- */
+			/* usleep(10); */
 			if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
-				LOG(L_ERR, "preload_udomain(): Error fetching rows (1)\n");
+				LOG(L_ERR, "ul:preload_udomain(): Error fetching rows (1)\n");
+				ul_dbf.free_result(_c, res);
 				return -1;
 			}
 		} else {
@@ -509,7 +502,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	} while(RES_ROW_N(res)>0);
 
 	ul_dbf.free_result(_c, res);
-	unlock_udomain(_d);
+
 #ifdef EXTRA_DEBUG
 	LOG(L_ERR, "usrloc:preload_udomain(): load end time [%d]\n",
 			(int)time(NULL));
@@ -690,7 +683,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 		return -1;
 	}
 
-	sl = hash_func(_d, (unsigned char*)_aor->s, _aor->len);
+	sl = core_hash(_aor, 0, _d->size);
 	slot_add(&_d->table[sl], *_r);
 	udomain_add(_d, *_r);
 	update_stat( _d->users, 1);
@@ -789,7 +782,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 
 	if (db_mode!=DB_ONLY) {
 		/* search in cache */
-		sl = hash_func(_d, (unsigned char*)_aor->s, _aor->len);
+		sl = core_hash(_aor, 0, _d->size);
 		r = _d->table[sl].first;
 
 		for(i = 0; i < _d->table[sl].n; i++) {

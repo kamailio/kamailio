@@ -280,13 +280,28 @@ static int mod_init(void)
 
 static int child_init(int _rank)
 {
+	dlist_t* ptr;
+
 	/* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
 		ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
 		if (!ul_dbh) {
-			LOG(L_ERR, "ERROR: child_init(%d): "
+			LOG(L_ERR, "ERROR:ul:child_init(%d): "
 					"Error while connecting database\n", _rank);
 			return -1;
+		}
+		/* _rank==1 is used even when fork is disabled */
+		if (_rank==1 && db_mode!= DB_ONLY) {
+			/* if cache is used, populate domains from DB */
+			for( ptr=root ; ptr ; ptr=ptr->next) {
+				if (preload_udomain(ul_dbh, ptr->d) < 0) {
+					LOG(L_ERR,
+						"ERROR:ul:child_init(%d): Error while preloading "
+						"domain '%.*s'\n", _rank, ptr->name.len,
+						ZSW(ptr->name.s));
+					return -1;
+				}
+			}
 		}
 	}
 
