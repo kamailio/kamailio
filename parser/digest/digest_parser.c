@@ -220,7 +220,7 @@ static inline int parse_digest_param(str* _s, dig_cred_t* _c)
 /*
  * Parse qop parameter body
  */
-static inline void parse_qop(struct qp* _q)
+void parse_qop(struct qp* _q)
 {
 	str s;
 
