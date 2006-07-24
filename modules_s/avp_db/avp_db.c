@@ -45,6 +45,7 @@
 #include "../../usr_avp.h"
 #include "../../ut.h"
 #include "../../id.h"
+#include "../domain/domain.h"
 #include "avp_db.h"
 
 MODULE_VERSION
@@ -69,8 +70,7 @@ static int load_attrs(struct sip_msg* msg, char* s1, char* s2);
 static int attrs_fixup(void** param, int param_no);
 
 
-typedef int (*dm_get_did_t)(str* did, str* domain);
-static dm_get_did_t dm_get_did = NULL;
+static domain_get_did_t dm_get_did = NULL;
 
 /*
  * Exported functions
@@ -400,7 +400,7 @@ static int attrs_fixup(void** param, int param_no)
 	}
 
 	if (flags & AVP_CLASS_URI) {
-	    dm_get_did = (dm_get_did_t)find_export("get_did", 0, 0);
+	    dm_get_did = (domain_get_did_t)find_export("get_did", 0, 0);
 	}
 	
 	pkg_free(*param);
