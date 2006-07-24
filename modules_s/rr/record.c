@@ -138,17 +138,6 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	memcpy(prefix, RR_PREFIX, RR_PREFIX_LEN);
 	if (user->len) {
 		memcpy(prefix + RR_PREFIX_LEN, user->s, user->len);
-#ifdef ENABLE_USER_CHECK
-		/* don't add the ignored user into a RR */
-		if(i_user.len && i_user.len == user->len &&
-				!strncmp(i_user.s, user->s, i_user.len))
-		{
-			if(prefix[RR_PREFIX_LEN]=='x')
-				prefix[RR_PREFIX_LEN]='y';
-			else
-				prefix[RR_PREFIX_LEN]='x';
-		}
-#endif
 		prefix[RR_PREFIX_LEN + user->len] = '@';
 	}
 

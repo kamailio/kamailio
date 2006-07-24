@@ -52,12 +52,7 @@
 #include "../../usr_avp.h"
 #include "../../crc.h"
 #include "../../select.h"
-
-#ifdef ENABLE_USER_CHECK
-#include <string.h>
-#include "../../str.h"
-str i_user = STR_NULL;
-#endif
+#include "../domain/domain.h"
 
 int append_fromtag = 1;
 int enable_double_rr = 1; /* Enable using of 2 RR by default */
@@ -73,6 +68,8 @@ avp_ident_t next_route_avp_ident;
 MODULE_VERSION
 
 static int mod_init(void);
+
+domain_get_did_t dm_get_did = 0;
 
 /*
  * Exported functions
@@ -173,6 +170,11 @@ static int mod_init(void)
 	}
 
 	register_select_table(rr_select_table);
-	
+
+	dm_get_did = (domain_get_did_t)find_export("get_did", 0, 0);
+	if (!dm_get_did) {
+	    DBG("Domain module not found, rr support for multidomain disabled\n");
+	}
+
 	return 0;
 }

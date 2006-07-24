@@ -200,27 +200,24 @@ static inline int is_2rr(str* _params)
 /*
  * Check if URI is myself
  */
-#ifdef ENABLE_USER_CHECK
-static inline int is_myself(str *_user, str* _host, unsigned short _port)
-#else
 static inline int is_myself(str* _host, unsigned short _port)
-#endif
 {
-	int ret;
-
-	ret = check_self(_host, _port ? _port : SIP_PORT, 0);/* match all protos*/
+    str did;
+    int ret;
+    
+    ret = check_self(_host, _port ? _port : SIP_PORT, 0);/* match all protos*/
+    if (ret < 0) return 0;
+    
+    if (ret == 0 && dm_get_did) {
+	DBG("Checking domain: %.*s\n", _host->len, _host->s);
+	ret = dm_get_did(&did, _host);
 	if (ret < 0) return 0;
+    } else {
+	DBG("NOT Checking domain\n");
+    }
 
-#ifdef ENABLE_USER_CHECK
-	if(i_user.len && i_user.len==_user->len
-			&& !strncmp(i_user.s, _user->s, _user->len))
-	{
-		DBG("is_myself: this URI isn't mine\n");
-		return -1;
-	}
-#endif
-
-	return ret;
+    DBG("It is my domain\n");
+    return ret;
 }
 
 static inline void store_user_in_avps(str* user)
@@ -803,12 +800,7 @@ static inline int after_strict(struct sip_msg* _m)
 		return RR_ERROR;
 	}
 
-#ifdef ENABLE_USER_CHECK
-	if (is_myself(&puri.user, &puri.host, puri.port_no))
-#else
-	if (is_myself(&puri.host, puri.port_no))
-#endif
-	{
+	if (is_myself(&puri.host, puri.port_no)) {
 		store_user_in_avps(&puri.user);
 
 		     /*	if (enable_double_rr && is_2rr(&_ruri->params)) { */
@@ -956,13 +948,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	}
 
 	     /* IF the URI was added by me, remove it */
-#ifdef ENABLE_USER_CHECK
-	ret=is_myself(&puri.user, &puri.host, puri.port_no);
-	if (ret>0)
-#else
-	if (is_myself(&puri.host, puri.port_no))
-#endif
-	{
+	if (is_myself(&puri.host, puri.port_no)) {
 		store_user_in_avps(&puri.user);
 
 		DBG("after_loose: Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
@@ -1080,11 +1066,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 	} else if (ret == 1) {
 		return after_loose(_m, 1);
 	} else {
-#ifdef ENABLE_USER_CHECK
-		if (is_myself(&_m->parsed_uri, &_m->parsed_uri.host, &_m->parsed_uri.port_no)) {
-#else
 		if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no)) {
-#endif
 			return after_strict(_m);
 		} else {
 			return after_loose(_m, 0);
