@@ -170,9 +170,8 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 		version.len = _msg->first_line.u.request.version.len - (version.s - _msg->first_line.u.request.version.s);
 
 		if (version.len != SIP_VERSION_TWO_POINT_ZERO_LENGTH ||
-		    (memcmp(version.s, SIP_VERSION_TWO_POINT_ZERO, 
-			    SIP_VERSION_TWO_POINT_ZERO_LENGTH) != 0)) {
-		    if (ret != 0) {
+			(memcmp(version.s, SIP_VERSION_TWO_POINT_ZERO, 
+				SIP_VERSION_TWO_POINT_ZERO_LENGTH) != 0)) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
 				if (sl.reply(_msg, 505, "Version Not Supported (R-URI)") == -1) {
 					LOG(L_WARN, "sanity_check(): check_ruri_sip_version(): failed to send 505 via send_reply\n");
@@ -183,9 +182,6 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 #endif
 			return SANITY_CHECK_FAILED;
 		}
-		DBG("check_ruri_sip_version failed\n");
-		return 1;
-	    }
 	}
 #ifdef EXTRA_DEBUG
 	DBG("check_ruri_sip_version passed\n");
@@ -804,14 +800,14 @@ int check_digest(struct sip_msg* msg, int checks)
 
     if (parse_headers(msg, HDR_EOH_F, 0) != 0) {
 	LOG(L_ERR, "sanity_check(): check_digest: failed to parse proxy require header\n");
-	return -1;
+	return SANITY_CHECK_FAILED;
     }
 
     if (!msg->authorization && !msg->proxy_auth) {
 #ifdef EXTRA_DEBUG
 	DBG("sanity_check(): check_digest: Nothing to check\n");
 #endif
-	return 0;
+	return SANITY_CHECK_PASSED;
     }
 
     if (msg->authorization) {
@@ -824,7 +820,7 @@ int check_digest(struct sip_msg* msg, int checks)
     while(ptr) {
 	if (ret = parse_credentials(ptr) != 0) {
 	    DBG("sanity_check(): check_digest: Cannot parse credentials: %d\n", ret);
-	    return -1;
+	    return SANITY_CHECK_FAILED;
 	}
 
 	cred = &((auth_body_t*)ptr->parsed)->digest;
@@ -833,28 +829,28 @@ int check_digest(struct sip_msg* msg, int checks)
 #ifdef EXTRA_DEBUG
 	    DBG("sanity_check(): check_digest: Digest credentials malformed\n");
 #endif
-	    return 1;
+	    return SANITY_CHECK_FAILED;
 	}
 
 	if (cred->username.whole.len == 0) {
 #ifdef EXTRA_DEBUG
 	    DBG("sanity_check(): check_digest: Empty username\n");
 #endif
-	    return 1;
+	    return SANITY_CHECK_FAILED;
 	}
 	
 	if (cred->nonce.len == 0) {
 #ifdef EXTRA_DEBUG
 	    DBG("sanity_check(): check_digest: Empty nonce attribute\n");
 #endif
-	    return 1;
+	    return SANITY_CHECK_FAILED;
 	}
 
 	if (cred->response.len == 0) {
 #ifdef EXTRA_DEBUG
 	    DBG("sanity_check(): check_digest: Empty response attribute\n");
 #endif
-	    return 1;
+	    return SANITY_CHECK_FAILED;
 	}
 
 	do {
@@ -867,5 +863,5 @@ int check_digest(struct sip_msg* msg, int checks)
 	}
     }
 
-    return 0;
+    return SANITY_CHECK_PASSED;
 }
