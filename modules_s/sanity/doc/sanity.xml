@@ -114,6 +114,13 @@
 			parseable by the SER parsers
 			</para>
 		</listitem>
+		<listitem>
+		        <para>
+			digest credentials (2048) Check all instances of digest credentials in a
+			message. The test checks whether there are all required
+			digest parameters and have meaningful values.
+			</para>
+		</listitem>
 		</itemizedlist>
 	</para>
     </section>
