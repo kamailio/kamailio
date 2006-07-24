@@ -129,8 +129,8 @@ static int sanity_fixup(void** param, int param_no) {
 			LOG(L_ERR, "sanity: failed to convert input integer\n");
 			return E_UNSPEC;
 		}
-		if ((checks < 1) || (checks > (SANITY_MAX_CHECKS))) {
-			LOG(L_ERR, "sanity: input parameter (%i) outside of valid range 1-%i\n", checks, SANITY_MAX_CHECKS);
+		if ((checks < 1) || (checks >= (SANITY_MAX_CHECKS))) {
+			LOG(L_ERR, "sanity: input parameter (%i) outside of valid range <1-%i)\n", checks, SANITY_MAX_CHECKS);
 			return E_UNSPEC;
 		}
 		*param = (void*)(long)checks;
@@ -212,7 +212,12 @@ static int sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
 		return ret;
 	}
 
+	if (SANITY_CHECK_DIGEST & check &&
+	        (ret = check_digest(_msg, arg)) != SANITY_CHECK_PASSED) {
+	        return ret;
+	}
+
 	DBG("all sanity checks passed\n");
 	/* nobody complained so everything is fine */
-	return -1;
+	return 1;
 }

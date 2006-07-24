@@ -76,4 +76,9 @@ int check_ruri_scheme(struct sip_msg* _msg);
 /* check if the typical URIs are parseable */
 int check_parse_uris(struct sip_msg* _msg, int checks);
 
+/* Make sure that username attribute in all digest credentials
+ * instances has a meaningful value
+ */
+int check_digest(struct sip_msg* _msg, int checks);
+
 #endif /* SANITY_CHK_H */
