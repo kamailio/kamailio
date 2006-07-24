@@ -79,7 +79,7 @@ static cmd_export_t cmds[]={
     {"checkosproute",        checkosproute,        0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
     {"prepareosproute",      prepareosproute,      0, 0, BRANCH_ROUTE}, 
     {"prepareallosproutes",  prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"reportospusage",       reportospusage,       0, 0, REQUEST_ROUTE}, 
+    {"reportospusage",       reportospusage,       1, 0, REQUEST_ROUTE}, 
     {0, 0, 0, 0, 0}
 };
 

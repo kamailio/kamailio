@@ -42,8 +42,8 @@
 #define OSP_ORIG_COOKY "osp-o"
 #define OSP_TERM_COOKY "osp-t"
 
-#define RELEASE_SOURCE_ORIG 0
-#define RELEASE_SOURCE_TERM 1
+#define OSP_RELEASE_ORIG    0
+#define OSP_RELEASE_TERM    1
 
 extern char* _osp_device_ip;
 extern OSPTPROVHANDLE _osp_provider;
@@ -51,7 +51,7 @@ extern str OSP_ORIGDEST_LABEL;
 extern struct rr_binds osp_rrb;
 
 static void ospRecordTransaction(struct sip_msg* msg, OSPTTRANHANDLE transaction, char* uac, char* from, char* to, time_t authtime, int isorig);
-static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID* callid, int isorig);
+static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID* callid, int release, int isorig);
 static int ospBuildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest, int lastcode);
 static int ospReportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest);
 
@@ -163,6 +163,7 @@ void ospRecordTermTransaction(
  * param msg SIP message
  * param cookie OSP cookie
  * param callid Call ID
+ * param release Who releases the call first. 0 orig, 1 term
  * param isorig Originate / Terminate
  * return
  */
@@ -170,6 +171,7 @@ static int ospReportUsageFromCookie(
     struct sip_msg* msg,
     char* cookie, 
     OSPTCALLID* callid, 
+    int release,
     int isorig) 
 {
     char* tmp;
@@ -180,7 +182,6 @@ static int ospReportUsageFromCookie(
     char* uac = "";
     time_t authtime = -1;
     time_t endtime = time(NULL);
-    int releasesource;
     char firstvia[OSP_STRBUF_SIZE];
     char from[OSP_STRBUF_SIZE];
     char to[OSP_STRBUF_SIZE];
@@ -229,25 +230,25 @@ static int ospReportUsageFromCookie(
     ospGetUriUserpart(msg, to, sizeof(to));
     ospGetNextHop(msg, nexthop, sizeof(nexthop));
 
-    if (strcmp(firstvia, uac) == 0) {
+    
+    if (release == OSP_RELEASE_ORIG) {
         LOG(L_INFO,
             "osp: originator '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
             transactionid);
-        releasesource = RELEASE_SOURCE_ORIG;
         calling = from;
         called = to;
         terminator = nexthop;
     } else {
+        release = OSP_RELEASE_TERM;
         LOG(L_INFO,
             "osp: terminator '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
             transactionid);
-        releasesource = RELEASE_SOURCE_TERM;
         calling = to;
         called = from;
         terminator = firstvia;
@@ -300,7 +301,7 @@ static int ospReportUsageFromCookie(
         endtime,
         0,0,
         0,0,
-        releasesource);
+        release);
 
     return errorcode;
 }
@@ -308,19 +309,20 @@ static int ospReportUsageFromCookie(
 /*
  * Report OSP usage
  * param msg SIP message
- * param ignore1
+ * param whorelease Who releases the call first, 0 orig, 1 term
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int reportospusage(
     struct sip_msg* msg, 
-    char* ignore1, 
+    char* whorelease, 
     char* ignore2)
 {
     char parameters[OSP_HEADERBUF_SIZE];
-    int  isorig;
-    char *tmp;
-    char *token;
+    int isorig;
+    int release;
+    char* tmp;
+    char* token;
     OSPTCALLID* callid = NULL;
     int result = MODULE_RETURNCODE_FALSE;
 
@@ -329,6 +331,12 @@ int reportospusage(
     ospGetCallId(msg, &callid);
 
     if (callid != NULL && ospGetRouteParameters(msg, parameters, sizeof(parameters)) == 0) {
+        /* Who releases the call first, 0 orig, 1 term */
+        if (sscanf(whorelease, "%d", &release) != 1) {
+            release = OSP_RELEASE_ORIG;
+        }
+        LOG(L_DBG, "osp: who releases the call first '%d'\n", release);
+
         for (token = strtok_r(parameters, ";", &tmp);
              token;
              token = strtok_r(NULL, ";", &tmp))
@@ -339,7 +347,7 @@ int reportospusage(
                     callid->ospmCallIdLen,
                     callid->ospmCallIdVal);
                 isorig = 1;
-                ospReportUsageFromCookie(msg, token + strlen(OSP_ORIG_COOKY) + 1, callid, isorig);
+                ospReportUsageFromCookie(msg, token + strlen(OSP_ORIG_COOKY) + 1, callid, release, isorig);
                 result = MODULE_RETURNCODE_TRUE;
             } else if (strncmp(token, OSP_TERM_COOKY, strlen(OSP_TERM_COOKY)) == 0) {
                 LOG(L_INFO,
@@ -347,7 +355,7 @@ int reportospusage(
                     callid->ospmCallIdLen,
                     callid->ospmCallIdVal);
                 isorig = 0;
-                ospReportUsageFromCookie(msg, token + strlen(OSP_TERM_COOKY) + 1, callid, isorig);
+                ospReportUsageFromCookie(msg, token + strlen(OSP_TERM_COOKY) + 1, callid, release, isorig);
                 result = MODULE_RETURNCODE_TRUE;
             } else {
                 LOG(L_DBG, "osp: ignoring parameter '%s'\n", token);
@@ -456,7 +464,7 @@ void ospReportOrigSetupUsage(void)
     int lastcode = 0;
     int errorcode = 0;
 
-    LOG(L_ALERT, "osp: ospReportOrigSetupUsage\n");
+    LOG(L_DBG, "osp: ospReportOrigSetupUsage\n");
 
     errorcode = OSPPTransactionNew(_osp_provider, &transaction);
 
@@ -515,7 +523,7 @@ void ospReportTermSetupUsage(void)
     OSPTTRANHANDLE transaction = -1;
     int errorcode = 0;
 
-    LOG(L_ALERT, "osp: ospReportTermSetupUsage\n");
+    LOG(L_DBG, "osp: ospReportTermSetupUsage\n");
 
     if ((dest = ospGetTermDestination())) {
         if (dest->reported == 0) {
