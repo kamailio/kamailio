@@ -152,7 +152,7 @@ static int sanity_fixup(void** param, int param_no) {
 }
 
 static int sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
-	int check, arg;
+	int ret, check, arg;
 
 	if (_number == NULL) {
 		check = default_checks;
@@ -168,48 +168,48 @@ static int sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
 	}
 
 	if (SANITY_RURI_SIP_VERSION & check &&
-		check_ruri_sip_version(_msg) != 0) {
-		return 1;
+		(ret = check_ruri_sip_version(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_RURI_SCHEME & check &&
-		check_ruri_scheme(_msg) != 0) {
-		return 1;
+		(ret = check_ruri_scheme(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_REQUIRED_HEADERS & check &&
-		check_required_headers(_msg) != 0) {
-		return 1;
+		(ret = check_required_headers(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_VIA_SIP_VERSION & check &&
-		check_via_sip_version(_msg) != 0) {
-		return 1;
+		(ret = check_via_sip_version(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_VIA_PROTOCOL & check &&
-		check_via_protocol(_msg) != 0) {
-		return 1;
+		(ret = check_via_protocol(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_CSEQ_METHOD & check &&
-		check_cseq_method(_msg) != 0) {
-		return 1;
+		(ret = check_cseq_method(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_CSEQ_VALUE & check &&
-		check_cseq_value(_msg) != 0) {
-		return 1;
+		(ret = check_cseq_value(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_CL & check &&
-		check_cl(_msg) != 0) {
-		return 1;
+		(ret = check_cl(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_EXPIRES_VALUE & check &&
-		check_expires_value(_msg) != 0) {
-		return 1;
+		(ret = check_expires_value(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_PROXY_REQUIRE & check &&
-		check_proxy_require(_msg) != 0) {
-		return 1;
+		(ret = check_proxy_require(_msg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 	if (SANITY_PARSE_URIS & check &&
-		check_parse_uris(_msg, arg) != 0) {
-		return 1;
+		(ret = check_parse_uris(_msg, arg)) != SANITY_CHECK_PASSED) {
+		return ret;
 	}
 
 	DBG("all sanity checks passed\n");

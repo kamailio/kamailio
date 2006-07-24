@@ -70,13 +70,18 @@
 								SANITY_PROXY_REQUIRE | \
 								SANITY_PARSE_URIS
 
-#define SANITY_URI_CHECK_RURI   (1<<0)
-#define SANITY_URI_CHECK_FROM   (1<<1)
-#define SANITY_URI_CHECK_TO     (1<<2)
+#define SANITY_URI_CHECK_RURI    (1<<0)
+#define SANITY_URI_CHECK_FROM    (1<<1)
+#define SANITY_URI_CHECK_TO      (1<<2)
+#define SANITY_URI_CHECK_CONTACT (1<<3)
 
 #define SANITY_DEFAULT_URI_CHECKS	SANITY_URI_CHECK_RURI | \
 									SANITY_URI_CHECK_FROM | \
 									SANITY_URI_CHECK_TO
+
+#define SANITY_CHECK_PASSED 1
+#define SANITY_CHECK_FAILED 0
+#define SANITY_CHECK_ERROR -1
 
 struct _strlist {
 	str string;            /* the string */
