@@ -85,6 +85,8 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 	uac->dialog = NULL;
 	init_reference_counter(&uac->ref_cntr); /* main reference - removed in "destroyed" status */
 	add_reference(&uac->ref_cntr); /* add reference for client */
+	/*TRACE("[%s]: added reference (%d)\n", "???", 
+				uac->ref_cntr.cntr);*/
 	uac->status = euac_unconfirmed;
 	res = str_dup(&uac->local_uri, local_uri);
 	if (res == 0) res = str_dup(&uac->remote_uri, remote_uri);

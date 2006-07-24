@@ -70,6 +70,8 @@ int remove_euac_reference_nolock(events_uac_t *uac)
 {
 	/* must be called from locked section !! */
 
+/*	TRACE("[%s]: removing reference (%d)\n", uac->id, 
+				uac->ref_cntr.cntr - 1);*/
 	if (remove_reference(&uac->ref_cntr)) {
 		/* all other references are freed - we can remove uac from the list */
 		if (uac->status == euac_destroyed) {
@@ -232,6 +234,9 @@ int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 	if (prepare_hdrs(uac, &hdr, contact_to_send) < 0) goto ns_err_dlg;
 
 	add_reference(&uac->ref_cntr); /* add reference for callback function */
+	/*TRACE("[%s]: added reference (%d)\n", uac->id, 
+				uac->ref_cntr.cntr);*/
+
 
 	/* add to hash table (hash acording to dialog id) */
 	DBG("adding into unconfirmed EUACs\n");
@@ -260,6 +265,8 @@ ns_err_in_ht:
 	ht_remove(&euac_internals->ht_unconfirmed, &uac->dialog->id);
 	
 ns_err_ref:
+/*	TRACE("[%s]: removing reference (%d)\n", uac->id, 
+				uac->ref_cntr.cntr - 1);*/
 	remove_reference(&uac->ref_cntr);
 
 ns_err_dlg:
@@ -304,6 +311,8 @@ int renew_subscription(events_uac_t *uac, int expires, int failover_time)
 
 	/* generate subscribe request */
 	add_reference(&uac->ref_cntr); /* add reference for callback function */
+/*	TRACE("[%s]: added reference (%d)\n", uac->id, 
+				uac->ref_cntr.cntr);*/
 
 	/* generate subscribe request - don't call the TM version
 	 * (frees callback params on error!!!) */
@@ -315,6 +324,8 @@ int renew_subscription(events_uac_t *uac, int expires, int failover_time)
 	
 	if (res < 0) {
 /*		euac_do_step(act_4xx, NULL, uac); */
+/*		TRACE("[%s]: removing reference (%d)\n", uac->id, 
+				uac->ref_cntr.cntr - 1);*/
 		remove_reference(&uac->ref_cntr); /* remove reference for cb function */
 		return res;
 	}
@@ -393,6 +404,8 @@ void euac_set_timer(events_uac_t *uac, int seconds)
 	if (uac->timer_started) euac_clear_timer(uac);
 	
 	add_reference(&uac->ref_cntr); /* add reference for timer callback function */
+/*	TRACE("[%s]: added reference (%d)\n", uac->id, 
+				uac->ref_cntr.cntr);*/
 	timer_init(&uac->timer, timer_cb, uac, 0);
 	if (timer_add(&uac->timer, S_TO_TICKS(seconds)) != 0) {
 		ERR("can't set timer for [%s]!\n", uac->id);

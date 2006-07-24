@@ -40,6 +40,9 @@ static void accept_response(events_uac_t *uac, euac_action_t action)
 static void decline_response(events_uac_t *uac, euac_action_t action)
 {
 	ERR("[%s]: out of order response action = %d) (BUG?)\n", uac->id, action);
+	if (action != act_1xx) {
+		remove_euac_reference_nolock(uac); 
+	}
 }
 
 
@@ -115,12 +118,12 @@ void do_step_unconfirmed(euac_action_t action, struct sip_msg *m, events_uac_t *
 				break;
 		case act_2xx:
 				uac->status = euac_confirmed;
-				accept_response(uac, action);
 				euac_clear_timer(uac);
 				confirm_dialog(uac, m);	
 				expires = get_resubscribe_time(m);
 				/* DBG("expires after %d seconds\n", expires); */
 				euac_set_timer(uac, expires);
+				accept_response(uac, action);
 				break;
 		case act_3xx:
 				accept_response(uac, action);
@@ -146,11 +149,11 @@ void do_step_unconfirmed(euac_action_t action, struct sip_msg *m, events_uac_t *
 		case act_tick:
 		case act_4xx: /* 4xx, 5xx, ... */
 				uac->status = euac_waiting;
-				accept_response(uac, action);
 				euac_clear_timer(uac);
 				destroy_unconfirmed_dialog(uac);
 				send_error_notification(uac);
 				euac_set_timer(uac, resubscribe_timeout_on_err);
+				accept_response(uac, action);
 				break;
 		case act_destroy:
 				uac->status = euac_unconfirmed_destroy;
@@ -386,6 +389,7 @@ void do_step_destroyed(euac_action_t action, struct sip_msg *m, events_uac_t *ua
 		case act_2xx:
 		case act_3xx:
 		case act_4xx: 
+			accept_response(uac, action);
 			break;
 			
 		default:
@@ -413,17 +417,17 @@ void do_step_predestroyed(euac_action_t action, struct sip_msg *m, events_uac_t 
 				break;
 		case act_2xx:
 				uac->status = euac_waiting_for_termination;
-				accept_response(uac, action);
 				euac_clear_timer(uac);
 				euac_set_timer(uac, waiting_for_notify_time);
+				accept_response(uac, action);
 				break;
 		case act_tick:
 		case act_3xx:
 		case act_4xx:
 				uac->status = euac_destroyed;
 				euac_clear_timer(uac);
-				accept_response(uac, action);
 				destroy_confirmed_dialog(uac);
+				accept_response(uac, action);
 				remove_euac_reference_nolock(uac); /* free EUAC */
 				break;
 		case act_destroy:
@@ -509,7 +513,7 @@ void do_step_waiting(euac_action_t action, struct sip_msg *m, events_uac_t *uac)
 void euac_do_step(euac_action_t action, struct sip_msg *m, events_uac_t *uac)
 {
 /*	TRACE("STEP [%s]: %d ---(%d)---> ...\n", 
-			uac->id, uac->status, action); */
+			uac->id, uac->status, action);*/
 	
 	switch (uac->status) {
 		case euac_unconfirmed:

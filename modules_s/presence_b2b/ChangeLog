@@ -1,3 +1,6 @@
+2006-07-24
+	* corrected memory leak
+
 2006-07-12
 	* improved dialog refreshing
 
