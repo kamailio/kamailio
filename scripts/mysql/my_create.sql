@@ -65,16 +65,17 @@ CREATE TABLE missed_calls (
     KEY mc_cid_key (sip_callid)
 );
 
-INSERT INTO version (table_name, table_version) values ('credentials','6');
+INSERT INTO version (table_name, table_version) values ('credentials','7');
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
+    did VARCHAR(64) NOT NULL,
     realm VARCHAR(64) NOT NULL,
     password VARCHAR(28) NOT NULL DEFAULT '',
     flags INT NOT NULL DEFAULT '0',
     ha1 VARCHAR(32) NOT NULL,
     ha1b VARCHAR(32) NOT NULL DEFAULT '',
     uid VARCHAR(64) NOT NULL,
-    KEY cred_idx (auth_username, realm),
+    KEY cred_idx (auth_username, did),
     KEY uid (uid)
 );
 

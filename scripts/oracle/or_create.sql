@@ -65,9 +65,10 @@ CREATE TABLE missed_calls (
 
 );
 
-INSERT INTO version (table_name, table_version) values ('credentials','6');
+INSERT INTO version (table_name, table_version) values ('credentials','7');
 CREATE TABLE credentials (
     auth_username string(64) NOT NULL,
+    did string(64) NOT NULL,
     realm string(64) NOT NULL,
     password string(28) NOT NULL DEFAULT '',
     flags int NOT NULL DEFAULT '0',
