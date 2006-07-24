@@ -72,5 +72,6 @@ int load_domains(domain_t** dest);
  */
 void free_domain_list(domain_t* list);
 
+typedef int (*domain_get_did_t)(str* did, str* domain);
 
 #endif /* _DOMAIN_H */
