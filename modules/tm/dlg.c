@@ -83,7 +83,6 @@ void get_raw_uri(str* _s)
 }
 
 
-
 /*
  * Make a copy of a str structure using shm_malloc
  */
@@ -430,6 +429,11 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 	}
 	
 	if (get_contact_uri(_m, &contact) < 0) return -2;
+	if (_d->rem_target.s) {
+		shm_free(_d->rem_target.s);
+		_d->rem_target.s = 0; 
+		_d->rem_target.len = 0;
+	}
 	if (contact.len && str_duplicate(&_d->rem_target, &contact) < 0) return -3;
 	
 	if (get_to_tag(_m, &rtag) < 0) goto err1;
