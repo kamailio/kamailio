@@ -516,8 +516,6 @@ int reload_domain_list(void)
 
 static int lookup_domain_fixup(void** param, int param_no)
 {
-    int ret;
-    fparam_t* fp;
     unsigned long flags;
     char* s;
     
