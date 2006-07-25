@@ -31,37 +31,14 @@
 #ifndef CHALLENGE_H
 #define CHALLENGE_H
 
-#include "../../parser/msg_parser.h"
-
-
-/* 
- * Challenge a user agent using WWW-Authenticate header field
- */
-int www_challenge2(struct sip_msg* msg, char* p1, char* p2);
-
+#include "../../str.h"
 
 /*
- * Challenge a user agent using Proxy-Authenticate header field
+ * Create {WWW,Proxy}-Authenticate header field
+ * The result is stored in an attribute
+ * return -1 on error, 0 on success
  */
-int proxy_challenge2(struct sip_msg* msg, char* p1, char* p2);
+typedef int (*build_challenge_hf_t)(struct sip_msg* msg, int stale, str* realm, int hftype);
+int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype);
 
-
-/* 
- * Challenge a user agent using WWW-Authenticate header field
- */
-int www_challenge1(struct sip_msg* msg, char* p1, char* p2);
-
-
-/*
- * Challenge a user agent using Proxy-Authenticate header field
- */
-int proxy_challenge1(struct sip_msg* msg, char* p1, char* p2);
-
-
-/*
- * Remove used credentials from a SIP message header
- */
-int consume_credentials(struct sip_msg* msg, char* p1, char* p2);
-
-
-#endif /* AUTH_H */
+#endif /* CHALLENGE_H */

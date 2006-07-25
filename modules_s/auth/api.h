@@ -32,8 +32,10 @@
 
 
 #include "../../parser/msg_parser.h"
+#include "../../usr_avp.h"
 #include "../../parser/hf.h"
 #include "../../str.h"
+#include "challenge.h"
 
 
 typedef enum auth_result {
@@ -68,8 +70,10 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr);
  * Auth module API
  */
 typedef struct auth_api {
-	pre_auth_t pre_auth;    /* The function to be called before authentication */
-	post_auth_t post_auth;  /* The function to be called after authentication */
+    pre_auth_t pre_auth;                  /* The function to be called before authentication */
+    post_auth_t post_auth;                /* The function to be called after authentication */
+    build_challenge_hf_t build_challenge; /* Function to build digest challenge header */
+    struct qp* qop;                       /* qop module parameter */
 } auth_api_t;
 
 typedef int (*bind_auth_t)(auth_api_t* api);

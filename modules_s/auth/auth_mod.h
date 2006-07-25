@@ -37,7 +37,7 @@
 #include "../../str.h"
 #include "../sl/sl.h"
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
-
+#include "../../parser/digest/digest.h"
 
 /*
  * Module parameters variables
@@ -46,5 +46,9 @@ extern str secret;            /* secret phrase used to generate nonce */
 extern int nonce_expire;      /* nonce expire interval */
 extern int protect_contacts;  /* Enable/disable contact hashing in nonce */
 extern sl_api_t sl;
+extern avp_ident_t challenge_avpid;
+extern str proxy_challenge_header;
+extern str www_challenge_header;
+extern struct qp qop;
 
 #endif /* AUTH_MOD_H */

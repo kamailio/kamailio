@@ -42,6 +42,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "../../parser/digest/digest.h"
 #include "../../error.h"
 #include "../../ut.h"
 #include "../sl/sl.h"
@@ -64,14 +65,10 @@ static void destroy(void);
  */
 static int mod_init(void);
 
-
-static int challenge_fixup(void** param, int param_no);
-
-
 /*
- * sl module interface
+ * Remove used credentials from a SIP message header
  */
-sl_api_t sl;
+int consume_credentials(struct sip_msg* msg, char* s1, char* s2);
 
 
 /*
@@ -84,18 +81,25 @@ int   protect_contacts = 0; /* Do not include contacts in nonce by default */
 str secret;
 char* sec_rand = 0;
 
+str challenge_attr = STR_STATIC_INIT("$digest_challenge");
+avp_ident_t challenge_avpid;
+
+str proxy_challenge_header = STR_STATIC_INIT("Proxy-Authenticate");
+str www_challenge_header = STR_STATIC_INIT("WWW-Authenticate");
+
+struct qp qop = {
+    STR_STATIC_INIT("auth"),
+    QOP_AUTH
+};
+
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_challenge",       www_challenge2,          2, challenge_fixup, REQUEST_ROUTE},
-	{"proxy_challenge",     proxy_challenge2,        2, challenge_fixup, REQUEST_ROUTE},
-	{"www_challenge",       www_challenge1,          1, fixup_var_str_1, REQUEST_ROUTE},
-	{"proxy_challenge",     proxy_challenge1,        1, fixup_var_str_1, REQUEST_ROUTE},
-	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
-	{"bind_auth",           (cmd_function)bind_auth, 0, 0,               0            },
-	{0, 0, 0, 0, 0}
+    {"consume_credentials", consume_credentials,     0, 0, REQUEST_ROUTE},
+    {"bind_auth",           (cmd_function)bind_auth, 0, 0, 0            },
+    {0, 0, 0, 0, 0}
 };
 
 
@@ -103,10 +107,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"secret",           PARAM_STRING, &sec_param       },
-	{"nonce_expire",     PARAM_INT,    &nonce_expire    },
-	{"protect_contacts", PARAM_INT,    &protect_contacts},
-	{0, 0, 0}
+    {"secret",                 PARAM_STRING, &sec_param             },
+    {"nonce_expire",           PARAM_INT,    &nonce_expire          },
+    {"protect_contacts",       PARAM_INT,    &protect_contacts      },
+    {"challenge_attr",         PARAM_STR,    &challenge_attr        },
+    {"proxy_challenge_header", PARAM_STR,    &proxy_challenge_header},
+    {"www_challenge_header",   PARAM_STR,    &www_challenge_header  },
+    {"qop",                    PARAM_STR,    &qop.qop_str           },
+    {0, 0, 0}
 };
 
 
@@ -114,15 +122,15 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth",
-	cmds,
-	0,          /* RPC methods */
-	params,
-	mod_init,   /* module initialization function */
-	0,          /* response function */
-	destroy,    /* destroy function */
-	0,          /* oncancel function */
-	0           /* child initialization function */
+    "auth",
+    cmds,
+    0,          /* RPC methods */
+    params,
+    mod_init,   /* module initialization function */
+    0,          /* response function */
+    destroy,    /* destroy function */
+    0,          /* oncancel function */
+    0           /* child initialization function */
 };
 
 
@@ -132,77 +140,106 @@ struct module_exports exports = {
  */
 static inline int generate_random_secret(void)
 {
-	int i;
-
-	sec_rand = (char*)pkg_malloc(RAND_SECRET_LEN);
-	if (!sec_rand) {
-		LOG(L_ERR, "auth:generate_random_secret: No memory left\n");
-		return -1;
-	}
-
-	srandom(time(0));
-
-	for(i = 0; i < RAND_SECRET_LEN; i++) {
-		sec_rand[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
-	}
-
-	secret.s = sec_rand;
-	secret.len = RAND_SECRET_LEN;
-
-	     /*	DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
-
-	return 0;
+    int i;
+    
+    sec_rand = (char*)pkg_malloc(RAND_SECRET_LEN);
+    if (!sec_rand) {
+	LOG(L_ERR, "auth:generate_random_secret: No memory left\n");
+	return -1;
+    }
+    
+    srandom(time(0));
+    
+    for(i = 0; i < RAND_SECRET_LEN; i++) {
+	sec_rand[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+    }
+    
+    secret.s = sec_rand;
+    secret.len = RAND_SECRET_LEN;
+    
+	 /* DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
+    
+    return 0;
 }
 
 
 static int mod_init(void)
 {
-	bind_sl_t bind_sl;
-
-	DBG("auth module - initializing\n");
-
-             /*
-              * We will need sl_send_reply from stateless
-	      * module for sending replies
-	      */
-	bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
-	if (!bind_sl) {
-		ERR("This module requires sl module\n");
-		return -1;
+    str attr;
+    
+    DBG("auth module - initializing\n");
+    
+	 /* If the parameter was not used */
+    if (sec_param == 0) {
+	     /* Generate secret using random generator */
+	if (generate_random_secret() < 0) {
+	    LOG(L_ERR, "auth:mod_init: Error while generating random secret\n");
+	    return -3;
 	}
-	if (bind_sl(&sl) < 0) return -1;
+    } else {
+	     /* Otherwise use the parameter's value */
+	secret.s = sec_param;
+	secret.len = strlen(secret.s);
+    }
+    
+    if ((!challenge_attr.s || challenge_attr.len == 0) ||
+	challenge_attr.s[0] != '$'){
+	ERR("auth: Invalid value of challenge_attr module parameter\n");
+	return -1;
+    }
+    
+    attr.s = challenge_attr.s + 1;
+    attr.len = challenge_attr.len - 1;
+    
+    if (parse_avp_ident(&attr, &challenge_avpid) < 0) {
+	ERR("auth: Error while parsing value of challenge_attr module parameter\n");
+	return -1;
+    }
 
-	     /* If the parameter was not used */
-	if (sec_param == 0) {
-		     /* Generate secret using random generator */
-		if (generate_random_secret() < 0) {
-			LOG(L_ERR, "auth:mod_init: Error while generating random secret\n");
-			return -3;
-		}
-	} else {
-		     /* Otherwise use the parameter's value */
-		secret.s = sec_param;
-		secret.len = strlen(secret.s);
-	}
-
-	return 0;
+    parse_qop(&qop);
+    if (qop.qop_parsed == QOP_OTHER) {
+	ERR("auth: Unsupported qop parameter value\n");
+	return -1;
+    }
+    
+    return 0;
 }
-
 
 
 static void destroy(void)
 {
-	if (sec_rand) pkg_free(sec_rand);
+    if (sec_rand) pkg_free(sec_rand);
 }
 
 
-static int challenge_fixup(void** param, int param_no)
+/*
+ * Remove used credentials from a SIP message header
+ */
+int consume_credentials(struct sip_msg* msg, char* s1, char* s2)
 {
-	if (param_no == 1) {
-		return fixup_var_str_12(param, param_no);
-	} else if (param_no == 2) {
-		return fixup_var_int_12(param, param_no);
+    struct hdr_field* h;
+    int len;
+    
+    get_authorized_cred(msg->authorization, &h);
+    if (!h) {
+	get_authorized_cred(msg->proxy_auth, &h);
+	if (!h) { 
+	    if (msg->REQ_METHOD!=METHOD_ACK 
+		&& msg->REQ_METHOD!=METHOD_CANCEL) {
+		LOG(L_ERR, "auth:consume_credentials: No authorized "
+		    "credentials found (error in scripts)\n");
+	    }
+	    return -1;
 	}
-
-	return 0;
+    }
+    
+    len=h->len;
+    
+    if (del_lump(msg, h->name.s - msg->buf, len, 0) == 0) {
+	LOG(L_ERR, "auth:consume_credentials: Can't remove credentials\n");
+	return -1;
+    }
+    
+    return 1;
 }
+

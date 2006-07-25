@@ -45,112 +45,106 @@
 #include "../../parser/parser_f.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
+#include "../../config.h"
 #include "authdb_mod.h"
 #include "rfc2617.h"
 
 
-#define MESSAGE_500 "Server Internal Error"
-
-
-static inline int get_ha1(struct username* username, str* realm,
+static inline int get_ha1(struct username* username, str* did, str* realm,
 			  str* table, char* ha1, db_res_t** res, int* row)
 {
-	db_key_t keys[2];
-	db_val_t vals[2];
-	db_val_t* val;
-	db_key_t* col;
-	str result;
-	int n, nc, i;
-	char* t = 0;
-
-#ifndef SUPPORT_EMPTY_AUTHNAME
-	/* sanity check first to avoid unnecessary DB lookups */
-	if (username->user.len == 0) {
-		*res = 0;
-		return 1;
-	}
-#endif
-
-	val = 0; /* Fixes gcc warning */
-	col = pkg_malloc(sizeof(*col) * (credentials_n + 2));
-	if (col == NULL) {
-		LOG(L_ERR, "auth_db:get_ha1: Error while allocating memory\n");
-		return -1;
-	}
-
-	keys[0] = username_column.s;
-	keys[1] = realm_column.s;
-	col[0] = (username->domain.len && !calc_ha1) ? (pass_column_2.s) : (pass_column.s);
-	col[1] = flags_column.s;
-
-	for (n = 0; n < credentials_n; n++) {
-		col[2 + n] = credentials[n].s;
-	}
-
-	vals[0].type = vals[1].type = DB_STR;
-	vals[0].nul = vals[1].nul = 0;
-	vals[0].val.str_val = username->user;
-
-	if (username->domain.len) {
-		vals[1].val.str_val = username->domain;
-	} else {
-		vals[1].val.str_val = *realm;
-	}
-
+    db_key_t keys[3];
+    db_val_t vals[3];
+    db_val_t* val;
+    db_key_t* col;
+    str result;
+    int n, nc, i;
+    char* t = 0;
+    
+    val = 0; /* Fixes gcc warning */
+    col = pkg_malloc(sizeof(*col) * (credentials_n + 2));
+    if (col == NULL) {
+	LOG(L_ERR, "auth_db:get_ha1: Error while allocating memory\n");
+	return -1;
+    }
+    
+    keys[0] = username_column.s;
+    keys[1] = realm_column.s;
+    keys[2] = did_column.s;
+    col[0] = (username->domain.len && !calc_ha1) ? (pass_column_2.s) : (pass_column.s);
+    col[1] = flags_column.s;
+    
+    for (n = 0; n < credentials_n; n++) {
+	col[2 + n] = credentials[n].s;
+    }
+    
+    vals[0].type = vals[1].type = DB_STR;
+    vals[0].nul = vals[1].nul = 0;
+    vals[0].val.str_val = username->user;
+    vals[1].val.str_val = *realm;
+    
+    if (use_did) {
+	vals[2].type = DB_STR;
+	vals[2].nul = 0;
+	vals[2].val.str_val = *did;
+	n = 3;
+    } else { 
 	n = 2;
-	nc = 2 + credentials_n;
-	t = as_asciiz(table);
-	if (auth_dbf.use_table(auth_db_handle, t) < 0) {
-		LOG(L_ERR, "auth_db:get_ha1: Error in use_table\n");
-		if (t) pkg_free(t);
-		pkg_free(col);
-		return -1;
-	}
+    }
+
+    nc = 2 + credentials_n;
+    t = as_asciiz(table);
+    if (auth_dbf.use_table(auth_db_handle, t) < 0) {
+	LOG(L_ERR, "auth_db:get_ha1: Error in use_table\n");
 	if (t) pkg_free(t);
-
-	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
-		LOG(L_ERR, "auth_db:get_ha1: Error while querying database\n");
-		pkg_free(col);
-		return -1;
-	}
 	pkg_free(col);
-
-	for(i = 0; i < (*res)->n; i++) {
-		val = ((*res)->rows[i].values);
-
-		if (val[0].nul || val[1].nul) {
-			LOG(L_ERR, "auth_db:get_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
-			    username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
-			return 1;
-		}
-
-		if (val[1].val.int_val & DB_DISABLED) continue;
-		if (val[1].val.int_val & DB_LOAD_SER) {
-			*row = i;
-			break;
-		}
+	return -1;
+    }
+    if (t) pkg_free(t);
+    
+    if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
+	LOG(L_ERR, "auth_db:get_ha1: Error while querying database\n");
+	pkg_free(col);
+	return -1;
+    }
+    pkg_free(col);
+    
+    for(i = 0; i < (*res)->n; i++) {
+	val = ((*res)->rows[i].values);
+	
+	if (val[0].nul || val[1].nul) {
+	    LOG(L_ERR, "auth_db:get_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
+		username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+	    continue;
 	}
-
-	if (i == (*res)->n) {
-		DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found",
-		    username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
-		return 1;
-	}		
-
-        result.s = (char*)val[0].val.string_val;
-	result.len = strlen(result.s);
-
-	if (calc_ha1) {
-		     /* Only plaintext passwords are stored in database,
-		      * we have to calculate HA1 */
-		calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
-		DBG("auth_db:get_ha1: HA1 string calculated: %s\n", ha1);
-	} else {
-		memcpy(ha1, result.s, result.len);
-		ha1[result.len] = '\0';
+	
+	if (val[1].val.int_val & DB_DISABLED) continue;
+	if (val[1].val.int_val & DB_LOAD_SER) {
+	    *row = i;
+	    break;
 	}
-
-	return 0;
+    }
+    
+    if (i == (*res)->n) {
+	DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found",
+	    username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+	return 1;
+    }		
+    
+    result.s = (char*)val[0].val.string_val;
+    result.len = strlen(result.s);
+    
+    if (calc_ha1) {
+	     /* Only plaintext passwords are stored in database,
+	      * we have to calculate HA1 */
+	calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
+	DBG("auth_db:get_ha1: HA1 string calculated: %s\n", ha1);
+    } else {
+	memcpy(ha1, result.s, result.len);
+	ha1[result.len] = '\0';
+    }
+    
+    return 0;
 }
 
 /*
@@ -159,39 +153,39 @@ static inline int get_ha1(struct username* username, str* realm,
  */
 static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 {
-	HASHHEX resp, hent;
-
-	     /*
-	      * First, we have to verify that the response received has
-	      * the same length as responses created by us
-	      */
-	if (cred->response.len != 32) {
-		DBG("auth_db:check_response: Receive response len != 32\n");
-		return 1;
-	}
-
-	     /*
-	      * Now, calculate our response from parameters received
-	      * from the user agent
-	      */
-	calc_response(ha1, &(cred->nonce), 
-		      &(cred->nc), &(cred->cnonce), 
-		      &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
-		      method, &(cred->uri), hent, resp);
-	
-	DBG("auth_db:check_response: Our result = \'%s\'\n", resp);
-	
-	     /*
-	      * And simply compare the strings, the user is
-	      * authorized if they match
-	      */
-	if (!memcmp(resp, cred->response.s, 32)) {
-		DBG("auth_db:check_response: Authorization is OK\n");
-		return 0;
-	} else {
-		DBG("auth_db:check_response: Authorization failed\n");
-		return 2;
-	}
+    HASHHEX resp, hent;
+    
+	 /*
+	  * First, we have to verify that the response received has
+	  * the same length as responses created by us
+	  */
+    if (cred->response.len != 32) {
+	DBG("auth_db:check_response: Receive response len != 32\n");
+	return 1;
+    }
+    
+	 /*
+	  * Now, calculate our response from parameters received
+	  * from the user agent
+	  */
+    calc_response(ha1, &(cred->nonce), 
+		  &(cred->nc), &(cred->cnonce), 
+		  &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
+		  method, &(cred->uri), hent, resp);
+    
+    DBG("auth_db:check_response: Our result = \'%s\'\n", resp);
+    
+	 /*
+	  * And simply compare the strings, the user is
+	  * authorized if they match
+	  */
+    if (!memcmp(resp, cred->response.s, 32)) {
+	DBG("auth_db:check_response: Authorization is OK\n");
+	return 0;
+    } else {
+	DBG("auth_db:check_response: Authorization failed\n");
+	return 2;
+    }
 }
 
 
@@ -200,102 +194,124 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
  */
 static int generate_avps(db_res_t* result, unsigned int row)
 {
-	int i;
-	int_str iname, ivalue;
-	str value;
-
-	for (i = 2; i < credentials_n + 2; i++) {
-		value.s = (char*)VAL_STRING(&(result->rows[row].values[i]));
-
-		if (VAL_NULL(&(result->rows[row].values[i]))
-		    || value.s == NULL) {
-			continue;
-		}
-		
-		iname.s = credentials[i - 2];
-		value.len = strlen(value.s);
-		ivalue.s = value;
-
-		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, iname, ivalue) < 0) {
-			LOG(L_ERR, "auth_db:generate_avps: Error while creating AVPs\n");
-			return -1;
-		}
-
-		DBG("auth_db:generate_avps: set string AVP \'%.*s = %.*s\'\n",
-		    iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
+    int i;
+    int_str iname, ivalue;
+    str value;
+    
+    for (i = 2; i < credentials_n + 2; i++) {
+	value.s = (char*)VAL_STRING(&(result->rows[row].values[i]));
+	
+	if (VAL_NULL(&(result->rows[row].values[i]))
+	    || value.s == NULL) {
+	    continue;
 	}
-
-	return 0;
+	
+	iname.s = credentials[i - 2];
+	value.len = strlen(value.s);
+	ivalue.s = value;
+	
+	if (add_avp(AVP_NAME_STR | AVP_VAL_STR, iname, ivalue) < 0) {
+	    LOG(L_ERR, "auth_db:generate_avps: Error while creating AVPs\n");
+	    return -1;
+	}
+	
+	DBG("auth_db:generate_avps: set string AVP \'%.*s = %.*s\'\n",
+	    iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
+    }
+    
+    return 0;
 }
 
 
 /*
  * Authenticate digest credentials
+ * Returns:
+ *      -3 -- Bad Request
+ *      -2 -- Error while checking credentials (such as malformed message or database problem)
+ *      -1 -- Authentication failed
+ *       1 -- Authentication successful
  */
-static inline int authenticate(struct sip_msg* msg, str* realm, str* table,
-			       hdr_types_t hftype)
+static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_types_t hftype)
 {
-	char ha1[256];
-	int res, row;
-	struct hdr_field* h;
-	auth_body_t* cred;
-	auth_result_t ret;
-	str r;
-	db_res_t* result;
+    char ha1[256];
+    int res, row, ret;
+    struct hdr_field* h;
+    auth_body_t* cred;
+    db_res_t* result;
+    str did;
+    
+    cred = 0;
+    result = 0;
+    ret = -1;
+    
+    switch(auth_api.pre_auth(msg, realm, hftype, &h)) {
+    case ERROR:
+	ret = -3;
+	goto end;
+	
+    case NOT_AUTHENTICATED: 
+	ret = -1;
+	goto end;
+	
+    case DO_AUTHENTICATION: 
+	break;
+	
+    case AUTHENTICATED:
+	ret = 1; 
+	goto end;
+    }
+    
+    cred = (auth_body_t*)h->parsed;
 
-	r = *realm;
-
-	ret = auth_api.pre_auth(msg, &r, hftype, &h);
-
-	switch(ret) {
-	case ERROR:             return 0;
-	case NOT_AUTHENTICATED: return -1;
-	case DO_AUTHENTICATION: break;
-	case AUTHENTICATED:     return 1;
+    if (msg->REQ_METHOD == METHOD_REGISTER) {
+	ret = get_to_did(&did, msg);
+    } else {
+	ret = get_from_did(&did, msg);
+    }
+    if (ret != 0) did = default_did;
+    
+    res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
+    if (res < 0) {
+	ret = -2;
+	goto end;
+    }
+    if (res > 0) {
+	     /* Username not found in the database */
+	ret = -1;
+	goto end;
+    }
+    
+	 /* Recalculate response, it must be same to authorize successfully */
+    if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
+	switch(auth_api.post_auth(msg, h)) {
+	case ERROR: 
+	    ret = -2; 
+	    break;
+	    
+	case NOT_AUTHENTICATED: 
+	    ret = -1; 
+	    break;
+	    
+	case AUTHENTICATED:
+	    generate_avps(result, row);
+	    ret = 1;
+	    break;
+	    
+	default:
+	    ret = -1;
+	    break;
 	}
-
-	cred = (auth_body_t*)h->parsed;
-	result = 0;
-	res = get_ha1(&cred->digest.username, &r, table, ha1, &result, &row);
-        if (res < 0) {
-		     /* Error while accessing the database */
-		if (sl.reply(msg, 500, MESSAGE_500) == -1) {
-			LOG(L_ERR, "auth_db:authenticate: Error while sending 500 reply\n");
-		}
-		return 0;
+    }
+    
+ end:
+    if (result) auth_dbf.free_result(auth_db_handle, result);
+    if (ret < 0) {
+	if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
+	    ERR("Error while creating challenge\n");
+	    ret = -2;
 	}
-	if (res > 0) {
-		     /* Username not found in the database */
-		if (result) {
-			auth_dbf.free_result(auth_db_handle, result);
-		}
-		return -1;
-	}
-
-	     /* Recalculate response, it must be same to authorize successfully */
-        if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
-		ret = auth_api.post_auth(msg, h);
-		switch(ret) {
-		case ERROR:
-			auth_dbf.free_result(auth_db_handle, result);
-			return 1;
-
-		case NOT_AUTHENTICATED:
-			auth_dbf.free_result(auth_db_handle, result);
-			return -1;
-
-		case AUTHENTICATED:
-			generate_avps(result, row);
-			auth_dbf.free_result(auth_db_handle, result);
-			return 1;
-		default:
-			auth_dbf.free_result(auth_db_handle, result);
-			return -1;
-		}
-	}
-
-	auth_dbf.free_result(auth_db_handle, result);
-	return -1;
+    }
+    return ret;
 }
 
 
@@ -304,6 +320,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, str* table,
  */
 int proxy_authenticate(struct sip_msg* msg, char* p1, char* p2)
 {
+    int ret;
     str realm, table;
 
     if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {

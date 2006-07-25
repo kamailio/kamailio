@@ -32,9 +32,9 @@
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h"
 #include "../../sr_module.h"
+#include "../../ut.h"
 #include "auth_mod.h"
 #include "nonce.h"
-#include "common.h"
 
 /*
  * Purpose of this function is to find credentials with given realm,
@@ -63,14 +63,6 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 			return AUTHENTICATED;
 	}
 
-	if (get_realm(msg, hftype, realm) < 0) {
-		LOG(L_ERR, "auth:pre_auth: Error while extracting realm\n");
-		if (send_resp(msg, 400, MESSAGE_400, 0, 0) == -1) {
-			LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
-		}
-		return ERROR;
-	}
-
 	     /* Try to find credentials with corresponding realm
 	      * in the message, parse them and return pointer to
 	      * parsed structure
@@ -78,13 +70,9 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	ret = find_credentials(msg, realm, hftype, hdr);
 	if (ret < 0) {
 		LOG(L_ERR, "auth:pre_auth: Error while looking for credentials\n");
-		if (send_resp(msg, (ret == -2) ? 500 : 400, 
-			      (ret == -2) ? MESSAGE_500 : MESSAGE_400, 0, 0) == -1) {
-			LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
-		}
 		return ERROR;
 	} else if (ret > 0) {
-		DBG("auth:pre_auth: Credentials with given realm '%.*s' not found\n", realm->len, realm->s);
+		DBG("auth:pre_auth: Credentials with realm '%.*s' not found\n", realm->len, ZSW(realm->s));
 		return NOT_AUTHENTICATED;
 	}
 
@@ -93,10 +81,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 
 	     /* Check credentials correctness here */
 	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
-		LOG(L_ERR, "auth:pre_auth: Credentials received are not filled properly\n");
-		if (send_resp(msg, 400, MESSAGE_400, 0, 0) == -1) {
-			LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
-		}
+		LOG(L_ERR, "auth:pre_auth: Credentials are not filled properly\n");
 		return ERROR;
 	}
 
@@ -138,9 +123,6 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 
 	if (mark_authorized_cred(msg, hdr) < 0) {
 		LOG(L_ERR, "auth:post_auth: Error while marking parsed credentials\n");
-		if (send_resp(msg, 500, MESSAGE_500, 0, 0) == -1) {
-			LOG(L_ERR, "auth:post_auth: Error while sending 500 reply\n");
-		}
 		res = ERROR;
 	}
 
@@ -157,6 +139,7 @@ int bind_auth(auth_api_t* api)
 
 	api->pre_auth = pre_auth;
 	api->post_auth = post_auth;
-
+	api->build_challenge = build_challenge_hf;
+	api->qop = &qop;
 	return 0;
 }

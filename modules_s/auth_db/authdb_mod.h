@@ -41,8 +41,8 @@
 /*
  * Module parameters variables
  */
-
 extern str username_column; /* 'username' column name */
+extern str did_column;      /* 'did' column name */
 extern str realm_column;    /* 'realm' column name */
 extern str pass_column;     /* 'password' column name */
 extern str pass_column_2;   /* Column containing HA1 string constructed
@@ -51,6 +51,7 @@ extern str pass_column_2;   /* Column containing HA1 string constructed
 extern str flags_column;    /* Flags column in credentials table */
 
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
+extern int use_did;           /* Whether query should also use did in query */
 
 extern db_con_t* auth_db_handle; /* database connection handle */
 extern db_func_t auth_dbf;
@@ -59,6 +60,8 @@ extern auth_api_t auth_api;
 
 extern str* credentials;
 extern int credentials_n;
+
+extern str default_did;
 
 /*
  * Pointer to reply function in stateless module
