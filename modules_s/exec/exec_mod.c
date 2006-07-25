@@ -111,7 +111,6 @@ inline static int w_exec_dset(struct sip_msg* msg, char* p1, char* foo)
 	str *uri;
 	environment_t *backup;
 	int ret;
-	char* c;
 
 	if (get_str_fparam(&cmd, msg, (fparam_t*)p1) < 0) {
 	    ERR("Error while obtaining command name\n");
