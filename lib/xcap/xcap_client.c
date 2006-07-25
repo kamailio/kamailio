@@ -220,8 +220,8 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 
 	i = 0;
 	if (params) {
-		if (params->auth_user) i += strlen(params->auth_user);
-		if (params->auth_pass) i += strlen(params->auth_pass);
+		if (params->auth_user) i += params->auth_user->len;
+		if (params->auth_pass) i += params->auth_pass->len;
 	}
 	if (i > 0) {
 		/* do authentication */
@@ -299,8 +299,8 @@ void free_xcap_params_content(xcap_query_params_t *params)
 {
 	if (params) {
 		str_free_content(&params->xcap_root);
-		if (params->auth_user) cds_free(params->auth_user);
-		if (params->auth_pass) cds_free(params->auth_pass);
+		str_free_content(&params->auth_user);
+		str_free_content(&params->auth_pass);
 		memset(params, 0, sizeof(*params));
 	}
 }
@@ -315,29 +315,64 @@ int dup_xcap_params(xcap_query_params_t *dst, xcap_query_params_t *src)
 		res = 0;
 		
 		res = str_dup(&dst->xcap_root, &src->xcap_root);
+		if (res == 0) res = str_dup(&dst->auth_user, &src->auth_user);
+		if (res == 0) res = str_dup(&dst->auth_pass, &src->auth_pass);
 		
-		if ((res == 0) && (src->auth_user)) {
-			dst->auth_user = zt_strdup(src->auth_user);
-			if (!dst->auth_user) res = -1;
-		}
-		if ((res == 0) && (src->auth_pass)) {
-			dst->auth_pass = zt_strdup(src->auth_pass);
-			if (!dst->auth_pass) res= -2;
-		}
-
 		if (res != 0) free_xcap_params_content(dst);
 	}
 	
 	return res;
 }
 
+int get_inline_xcap_buf_len(xcap_query_params_t *params)
+{
+	int len;
+	
+	/* counts the length for data buffer storing values of
+	 * xcap parameter members */
+	if (!params) {
+		ERR("BUG: empty params given\n");
+		return 0;
+	}
+
+	len = params->xcap_root.len;
+	len += params->auth_user.len;
+	len += params->auth_pass.len;
+
+	return len;
+}
+
+int dup_xcap_params_inline(xcap_query_params_t *dst, xcap_query_params_t *src, char *data_buffer)
+{
+	int res = -10;
+	
+	/* copies structure into existing buffer */
+	if (dst) {
+		memset(dst, 0, sizeof(*dst));
+		res = 0;
+	}
+	
+	if (src && dst) {
+		dst->xcap_root.s = data_buffer;
+		str_cpy(&dst->xcap_root, &src->xcap_root);
+
+		dst->auth_user.s = after_str_ptr(&dst->xcap_root);
+		str_cpy(&dst->auth_user, &src->auth_user);
+		dst->auth_pass.s = after_str_ptr(&dst->auth_user);
+		str_cpy(&dst->auth_pass, &src->auth_pass);
+	}
+	return res;
+}
+
 int str2xcap_params(xcap_query_params_t *dst, const str_t *src)
 {
+	ERR("BUG: unimplemented yet");
 	return -1;
 }
 
 int xcap_params2str(str_t *dst, const xcap_query_params_t *src)
 {
+	ERR("BUG: unimplemented yet");
 	return -1;
 }
 

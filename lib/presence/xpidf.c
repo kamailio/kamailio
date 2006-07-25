@@ -91,7 +91,7 @@ static void doc_add_empty_tuple(dstring_t *buf, presentity_info_t *p)
 	dstr_append_zt(buf, "\t<atom id=\"none\">\r\n");
 	
 	dstr_append_zt(buf, "\t\t<address uri=\"");
-	dstr_append_str(buf, &p->presentity);
+	dstr_append_str(buf, &p->uri);
 	dstr_append_zt(buf, "\" priority=\"1\">\r\n");
 /*	dstr_append_zt(buf, ";user=ip\" priority=\"1\">\r\n");*/
 	dstr_append_zt(buf, "\t\t\t<status status=\"closed\"/>\r\n");
@@ -109,7 +109,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 	/* !!! there SHOULD be pres URI of presentity !!! */
 	dstr_append_zt(buf, "<presentity uri=\"");
 	/* dstr_put_pres_uri(buf, &p->presentity); */
-	dstr_append_str(buf, &p->presentity);
+	dstr_append_str(buf, &p->uri);
 	dstr_append_zt(buf, ";method=SUBSCRIBE\"/>\r\n");
 	
 	t = p->first_tuple;

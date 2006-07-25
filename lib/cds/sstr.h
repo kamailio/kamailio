@@ -59,10 +59,10 @@ str_t zt2str(char *str);
 /** returns 1 if the string is empty */
 int is_str_empty(const str_t *s);
 
-/** duplicate string into given destination */
+/** duplicate string into given destination (data region is newly allocated) */
 int str_dup(str_t* dst, const str_t* src);
 
-/** duplicate string into newly allocated destination */
+/** duplicate string into newly allocated destination (data and str structure are newly allocated) */
 str_t *str_dup_new(const str_t* src);
 
 /** duplicate zero-terminated string */
@@ -118,6 +118,29 @@ char *str_str(const str_t *s, const str_t *search_for);
 int str_concat(str_t *dst, str_t *a, str_t *b);
 
 int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *value);
+
+/** Copies string into another one. The destination string buffer 
+ * MUST be allocated in needed size! */
+#define str_cpy(dst, src) do { \
+	memcpy((dst)->s, (src)->s, (src)->len); \
+	(dst)->len = (src)->len; \
+	} while (0)
+
+/* pointer after given string - often used when strings
+ * allocated together with data structure holding them */
+#define after_str_ptr(ss)	((ss)->s + (ss)->len)
+
+/*
+ * Append a string app with length app_len
+ * to the end of string str which is a str* pointer
+ * the buffer must be large enough
+ */
+#define str_append(str, app, app_len)                    \
+    do {                                                 \
+        memcpy((str)->s + (str)->len, (app), (app_len)); \
+        (str)->len += (app_len);                         \
+    } while(0)
+
 
 #ifdef __cplusplus
 }

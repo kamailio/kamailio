@@ -33,9 +33,9 @@ typedef struct {
 	/* "prefix" for XCAP query */
 	str_t xcap_root;
 	/** username for authentication */
-	char *auth_user;
+	str_t auth_user;
 	/** password used for authentication */
-	char *auth_pass;
+	str_t auth_pass;
 	/** Accept unverifiable peers (ignore information 
 	 * stored in certificate and trust a certificate
 	 * without know CA). */
@@ -71,6 +71,13 @@ typedef int (*xcap_query_func)(const char *uri,
 
 void free_xcap_params_content(xcap_query_params_t *params);
 int dup_xcap_params(xcap_query_params_t *dst, xcap_query_params_t *src);
+
+/* counts the length for data buffer storing values of
+ * xcap parameter members */
+int get_inline_xcap_buf_len(xcap_query_params_t *params);
+
+/* copies structure into existing buffer */
+int dup_xcap_params_inline(xcap_query_params_t *dst, xcap_query_params_t *src, char *data_buffer);
 
 int str2xcap_params(xcap_query_params_t *dst, const str_t *src);
 int xcap_params2str(str_t *dst, const xcap_query_params_t *src);

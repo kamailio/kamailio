@@ -38,7 +38,8 @@ typedef struct _presence_note_t {
 
 typedef enum {
 	presence_tuple_open,
-	presence_tuple_closed
+	presence_tuple_closed,
+	presence_tuple_undefined_status
 } presence_tuple_status_t;
 
 typedef enum {
@@ -52,9 +53,7 @@ typedef struct _presence_tuple_info_t {
 	str_t contact;
 	str_t id;
 	double priority;
-	time_t expires;
 	presence_tuple_status_t status;
-	str_t extra_status;
 	struct _presence_tuple_info_t *next, *prev;
 	presence_note_t *first_note, *last_note;/* published notes */
 } presence_tuple_info_t;
@@ -71,15 +70,14 @@ typedef struct _person_t {
 /*	str_t activities;*/
 	str_t person_element;
 
-	struct _person_t *next; /* there can be more person elements in PIDF */
+	struct _person_t *next, *prev; /* there can be more person elements in PIDF */
 } person_t;
 
 typedef struct {
-	str_t presentity; /* do not modify this !*/
+	str_t uri; /* do not modify this !*/
 	presence_tuple_info_t *first_tuple, *last_tuple;
-	presence_authorization_status_t auth;
 	presence_note_t *first_note, *last_note;/* published notes */
-	person_t *first_person;
+	person_t *first_person, *last_person;
 		
 	char presentity_data[1];
 } presentity_info_t;
@@ -113,6 +111,15 @@ presence_note_t *create_presence_note_zt(const char *note, const char *lang);
 void free_presence_note(presence_note_t *n);
 
 person_t *create_person(const str_t *element, const str_t *id);
+
+/** returns pointer to constant string (do not free it!),
+ * the return value is never NULL */
+str_t* tuple_status2str(presence_tuple_status_t status);
+
+presence_tuple_status_t str2tuple_status(const str *s);
+
+/* duplicates presentity info */
+presentity_info_t *dup_presentity_info(presentity_info_t *p);
 
 /* content type names usable with QSA */
 #define CT_PRESENCE_INFO    "structured/presence-info" /* uses presence_info_t */

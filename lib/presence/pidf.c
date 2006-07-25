@@ -60,8 +60,12 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 	dstr_append_str(buf, &t->id);
 	dstr_append_zt(buf, "\">\r\n");
 	
-	if (t->status == presence_tuple_open) dstr_append_zt(buf, "\t\t<status><basic>open</basic></status>\r\n");
-	else dstr_append_zt(buf, "\t\t<status><basic>closed</basic></status>\r\n");
+	if (t->status != presence_tuple_undefined_status) {
+		/* do not add unknown status it is not mandatory in PIDF */
+		dstr_append_zt(buf, "\t\t<status><basic>");
+		dstr_append_str(buf, tuple_status2str(t->status));
+		dstr_append_zt(buf, "</basic></status>\r\n");
+	}
 
 	dstr_append_zt(buf, "\t\t<contact priority=\"");
 	sprintf(tmp, "%1.2f", t->priority);
@@ -145,7 +149,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 	else 
 		dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"");
 	/* !!! there SHOULD be pres URI of presentity !!! */
-	dstr_put_pres_uri(buf, &p->presentity);
+	dstr_put_pres_uri(buf, &p->uri);
 	/* dstr_append_str(buf, &p->presentity); */ /* only for test !!! */
 	dstr_append_zt(buf, "\">\r\n");
 	

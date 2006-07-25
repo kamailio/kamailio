@@ -53,7 +53,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 	/* presence_note_t *n; */
 
 	dstr_append_zt(buf, "To: ");
-	dstr_append_str(buf, &p->presentity);
+	dstr_append_str(buf, &p->uri);
 	dstr_append_zt(buf, "\r\n");
 	
 	t = p->first_tuple;

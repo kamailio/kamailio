@@ -30,28 +30,53 @@
 
 #include <string.h>
 
-presentity_info_t *create_presentity_info(const str_t *presentity)
+/* ---------------------------------------------------------------- */
+/* Helper functions */
+
+static str_t open = STR_STATIC_INIT("open");
+static str_t closed = STR_STATIC_INIT("closed");
+static str_t unknown = STR_STATIC_INIT("undefined");
+
+str_t* tuple_status2str(presence_tuple_status_t status)
+{
+	switch (status) {
+		case presence_tuple_open: return &open;
+		case presence_tuple_closed: return &closed;
+		case presence_tuple_undefined_status: return &unknown;
+	}
+	return &unknown;
+}
+
+presence_tuple_status_t str2tuple_status(const str *s)
+{
+	if (str_nocase_equals(s, &open) == 0) return presence_tuple_open;
+	if (str_nocase_equals(s, &closed) == 0) return presence_tuple_closed;
+	return presence_tuple_undefined_status;
+}
+
+/* ---------------------------------------------------------------- */
+
+presentity_info_t *create_presentity_info(const str_t *presentity_uri)
 {
 	presentity_info_t *p;
 	int len = 0;
 	
-	if (!is_str_empty(presentity)) len = presentity->len;
+	if (!is_str_empty(presentity_uri)) len = presentity_uri->len;
 	p = (presentity_info_t*)cds_malloc(sizeof(presentity_info_t) + len);
 	if (!p) {
 		ERROR_LOG("can't allocate memory for presentity info\n");
 		return p;
 	}
-	p->presentity.len = len;
+	p->uri.len = len;
 	if (len > 0) {
-		p->presentity.s = p->presentity_data;
-		memcpy(p->presentity.s, presentity->s, len);
+		p->uri.s = p->presentity_data;
+		memcpy(p->uri.s, presentity_uri->s, len);
 	}
-	else p->presentity.s = NULL;
+	else p->uri.s = NULL;
 	p->first_tuple = NULL;
 	p->last_tuple = NULL;
 	p->first_note = NULL;
 	p->last_note = NULL;
-	p->auth = presence_auth_unresolved;
 
 	/* RPID extensions */
 	p->first_person = NULL;
@@ -79,12 +104,10 @@ presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, 
 		cds_free(t);
 		return NULL;
 	}
-	str_clear(&t->extra_status);
 	t->prev = NULL;
 	t->next = NULL;
 	t->status = status;
 	t->priority = 0.0;
-	t->expires = 0;
 	t->first_note = NULL;
 	t->last_note = NULL;
 	return t;
@@ -111,7 +134,6 @@ void free_tuple_info(presence_tuple_info_t *t)
 	if (!t) return;
 	str_free_content(&t->contact);
 	str_free_content(&t->id);
-	str_free_content(&t->extra_status);
 	
 	n = t->first_note;
 	while (n) {
@@ -260,3 +282,100 @@ person_t *create_person(const str_t *element, const str_t *id)
 	t->next = NULL;
 	return t;
 }
+
+/*************************************************************/
+static int copy_tuple_notes(presence_tuple_info_t *dst_info, 
+		const presence_tuple_info_t *src)
+{
+	presence_note_t *n, *nn;
+
+	n = src->first_note;
+	while (n) {
+		nn = create_presence_note(&n->value, &n->lang);
+		if (!nn) {
+			ERR("can't create presence note\n");
+			return -1;
+		}
+		DOUBLE_LINKED_LIST_ADD(dst_info->first_note, dst_info->last_note, nn);
+		n = n->next;
+	}
+	return 0;
+}
+
+presentity_info_t *dup_presentity_info(presentity_info_t *p)
+{
+	presentity_info_t *pinfo;
+	presence_tuple_info_t *tinfo, *t;
+	presence_note_t *n, *pan;
+	person_t *ps, *last_ps, *paps;
+	int err = 0;
+
+	/* DBG("p2p_info()\n"); */
+	if (!p) return NULL;
+/*	pinfo = (presentity_info_t*)cds_malloc(sizeof(*pinfo)); */
+	pinfo = create_presentity_info(&p->uri);
+	if (!pinfo) {
+		ERROR_LOG("can't allocate memory\n");
+		return NULL;
+	}
+	/* DBG("p2p_info(): created presentity info\n"); */
+
+	t = p->first_tuple;
+	while (t) {
+		tinfo = create_tuple_info(&t->contact, &t->id, t->status);
+		if (!tinfo) {
+			ERROR_LOG("can't create tuple info\n");
+			err = 1;
+			break;
+		}
+		tinfo->priority = t->priority;
+		/* tinfo->expires = t->expires; ??? */
+		add_tuple_info(pinfo, tinfo);
+		if (copy_tuple_notes(tinfo, t) < 0) {
+			ERROR_LOG("can't copy tuple notes\n");
+			err = 1;
+			break;
+		}
+		t = t->next;
+	}
+
+	/* notes */
+	if (!err) {
+		pan = p->first_note;
+		while (pan) {
+			n = create_presence_note(&pan->value, &pan->lang);
+			if (n) DOUBLE_LINKED_LIST_ADD(pinfo->first_note, pinfo->last_note, n);
+			else {
+				ERROR_LOG("can't copy presence notes\n");
+				err = 1;
+				break;
+			}
+			pan = pan->next;
+		}
+	}
+	
+	/* person elements */
+	if (!err) {
+		last_ps = NULL;
+		paps = p->first_person;
+		while (paps) {
+			ps = create_person(&paps->person_element, &paps->id);
+			if (ps) LINKED_LIST_ADD(pinfo->first_person, last_ps, ps);
+			else {
+				ERROR_LOG("can't copy person elements\n");
+				err = 1;
+				break;
+			}
+			paps = paps->next;
+		}
+	}
+	
+	if (err) {
+		free_presentity_info(pinfo);
+		return NULL;
+	}
+	
+	/* DBG("p2p_info() finished\n"); */
+	return pinfo;
+}
+
