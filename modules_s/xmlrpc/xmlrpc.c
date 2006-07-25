@@ -186,6 +186,8 @@ static rpc_ctx_t ctx;
 
 static void close_doc(rpc_ctx_t* ctx);
 static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...);
+static int fixup_xmlrpc_reply(void** param, int param_no);
+
 
 static rpc_t func_param;
 
@@ -197,9 +199,9 @@ sl_api_t sl;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"create_via",   create_via,   0, 0,           REQUEST_ROUTE},
-	{"dispatch_rpc", dispatch_rpc, 0, 0,           REQUEST_ROUTE},
-	{"xmlrpc_reply", xmlrpc_reply, 2, fixup_int_1, REQUEST_ROUTE},
+	{"create_via",   create_via,   0, 0,                  REQUEST_ROUTE},
+	{"dispatch_rpc", dispatch_rpc, 0, 0,                  REQUEST_ROUTE},
+	{"xmlrpc_reply", xmlrpc_reply, 2, fixup_xmlrpc_reply, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -1207,15 +1209,24 @@ static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2)
 }
 
 
-static int xmlrpc_reply(struct sip_msg* msg, char* code, char* reason)
+static int xmlrpc_reply(struct sip_msg* msg, char* p1, char* p2)
 {
+        str reason;
 	static str succ = STR_STATIC_INIT("1");
 	struct xmlrpc_reply reply;
 
 	memset(&reply, 0, sizeof(struct xmlrpc_reply));
 	if (init_xmlrpc_reply(&reply) < 0) return -1;
-	reply.code = (int)code;
-	reply.reason = reason;
+
+	if (get_int_fparam(&reply.code, msg, (fparam_t*)p1) < 0) return -1;
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) return -1;
+
+	reply.reason = as_asciiz(&reason);
+	if (reply.reason == NULL) {
+	    ERR("No memory left\n");
+	    return -1;
+	}
+
 	if (reply.code >= 300) { 
 		if (build_fault_reply(&reply) < 0) goto error;
 	} else {
@@ -1226,9 +1237,11 @@ static int xmlrpc_reply(struct sip_msg* msg, char* code, char* reason)
 		if (add_xmlrpc_reply(&reply, &success_suffix) < 0) return -1;
 	}
 	if (send_reply(msg, &reply.body) < 0) goto error;
+	if (reply.reason) pkg_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return 1;
  error:
+	if (reply.reason) pkg_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return -1;
 }
@@ -1308,3 +1321,19 @@ static int mod_init(void)
 	register_select_table(tls_sel);
 	return 0;
 }
+
+
+static int fixup_xmlrpc_reply(void** param, int param_no)
+{
+	int ret;
+
+	if (param_no == 1) {
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;		
+		return fix_param(FPARAM_INT, param);
+	} else if (param_no == 2) {
+	        return fixup_var_str_12(param, 2);
+	}
+	return 0;
+}
+
