@@ -1,14 +1,7 @@
 #include "presentity.h"
 #include "pa_mod.h"
+#include "pres_notes.h"
 #include <cds/logger.h>
-
-static void add_pres_note_no_wb(presentity_t *_p, pa_presence_note_t *n)
-{
-	pa_presence_note_t *notes = _p->notes;
-	n->next = notes;
-	_p->notes = n;
-	if (notes) notes->prev = n;
-}
 
 /* DB manipulation */
 
@@ -28,10 +21,10 @@ static int db_add_pres_note(presentity_t *p, pa_presence_note_t *n)
 	vals[n_updates].val.str_val = n->dbid;
 	n_updates++;
 	
-	cols[n_updates] = "presid";
-	vals[n_updates].type = DB_INT;
+	cols[n_updates] = "pres_id";
+	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.int_val = p->presid;
+	vals[n_updates].val.str_val = p->pres_id;
 	n_updates++;
 	
 	cols[n_updates] = "etag";
@@ -43,13 +36,13 @@ static int db_add_pres_note(presentity_t *p, pa_presence_note_t *n)
 	cols[n_updates] = "note";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->note;
+	vals[n_updates].val.str_val = n->data.value;
 	n_updates++;
 	
 	cols[n_updates] = "lang";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->lang;
+	vals[n_updates].val.str_val = n->data.lang;
 	n_updates++;
 	
 	cols[n_updates] = "expires";
@@ -79,9 +72,9 @@ int db_update_pres_note(presentity_t *p, pa_presence_note_t *n)
 	db_val_t vals[20];
 	int n_updates = 0;
 	
-	db_key_t keys[] = { "presid", "etag", "dbid" };
+	db_key_t keys[] = { "pres_id", "etag", "dbid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } },
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } },
 		{ DB_STR, 0, { .str_val = n->etag } },
 		{ DB_STR, 0, { .str_val = n->dbid } }
 	};
@@ -91,13 +84,13 @@ int db_update_pres_note(presentity_t *p, pa_presence_note_t *n)
 	cols[n_updates] = "note";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->note;
+	vals[n_updates].val.str_val = n->data.value;
 	n_updates++;
 	
 	cols[n_updates] = "lang";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->lang;
+	vals[n_updates].val.str_val = n->data.lang;
 	n_updates++;
 	
 	cols[n_updates] = "expires";
@@ -119,32 +112,12 @@ int db_update_pres_note(presentity_t *p, pa_presence_note_t *n)
 
 	return 0;
 }
-int db_remove_pres_notes(presentity_t *p)
-{
-	db_key_t keys[] = { "presid" };
-	db_op_t ops[] = { OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } } };
-	
-	if (!use_db) return 0;
-
-	if (pa_dbf.use_table(pa_db, presentity_notes_table) < 0) {
-		LOG(L_ERR, "db_remove_pres_notes: Error in use_table\n");
-		return -1;
-	}
-
-	if (pa_dbf.delete(pa_db, keys, ops, k_vals, 1) < 0) {
-		LOG(L_ERR, "db_remove_pres_notes: Can't delete record\n");
-		return -1;
-	}
-	
-	return 0;
-}
 
 static int db_remove_pres_note(presentity_t *p, pa_presence_note_t *n)
 {
-	db_key_t keys[] = { "presid", "etag", "dbid" };
+	db_key_t keys[] = { "pres_id", "etag", "dbid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } },
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } },
 		{ DB_STR, 0, { .str_val = n->etag } },
 		{ DB_STR, 0, { .str_val = n->dbid } }
 	};
@@ -166,9 +139,9 @@ static int db_remove_pres_note(presentity_t *p, pa_presence_note_t *n)
 
 int db_read_notes(presentity_t *p, db_con_t* db)
 {
-	db_key_t keys[] = { "presid" };
+	db_key_t keys[] = { "pres_id" };
 	db_op_t ops[] = { OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } } };
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } } };
 
 	int i;
 	int r = 0;
@@ -216,7 +189,8 @@ int db_read_notes(presentity_t *p, db_con_t* db)
 #undef get_time_val		
 
 		n = create_pres_note(&etag, &note, &lang, expires, &dbid);
-		if (n) add_pres_note_no_wb(p, n);
+		if (n) DOUBLE_LINKED_LIST_ADD(p->data.first_note, 
+					p->data.last_note, (presence_note_t*)n);
 	}
 	
 	pa_dbf.free_result(db, res);
@@ -228,18 +202,16 @@ int db_read_notes(presentity_t *p, db_con_t* db)
 
 void add_pres_note(presentity_t *_p, pa_presence_note_t *n)
 {
-	add_pres_note_no_wb(_p, n);
+	DOUBLE_LINKED_LIST_ADD(_p->data.first_note, 
+					_p->data.last_note, (presence_note_t*)n);
 	if (use_db) db_add_pres_note(_p, n); 
 }
 
 void remove_pres_note(presentity_t *_p, pa_presence_note_t *n)
 {
-	pa_presence_note_t *notes = _p->notes;
+	DOUBLE_LINKED_LIST_REMOVE(_p->data.first_note, 
+			_p->data.last_note, (presence_note_t*)n);
 	
-	if (notes == n) _p->notes = n->next;
-	if (n->prev) n->prev->next = n->next;
-	if (n->next) n->next->prev = n->prev;
-
 	if (use_db) db_remove_pres_note(_p, n);
 	free_pres_note(n);
 }
@@ -247,10 +219,8 @@ void remove_pres_note(presentity_t *_p, pa_presence_note_t *n)
 void free_pres_note(pa_presence_note_t *n)
 {
 	if (n) {
-		str_free_content(&n->etag);
-		str_free_content(&n->note);
-		str_free_content(&n->lang);
-		str_free_content(&n->dbid);
+		str_free_content(&n->data.value);
+		str_free_content(&n->data.lang);
 		mem_free(n);
 	}
 }
@@ -261,14 +231,12 @@ int remove_pres_notes(presentity_t *p, str *etag)
 	int found = 0;
 
 	prev = NULL;
-	n = p->notes;
+	n = (pa_presence_note_t *)p->data.first_note;
 	while (n) {
-		nn = n->next;
-		if (str_strcasecmp(&n->etag, etag) == 0) {
+		nn = (pa_presence_note_t *)n->data.next;
+		if (str_case_equals(&n->etag, etag) == 0) {
 			/* remove this */
 			found++;
-			if (prev) prev->next = nn;
-			else p->notes = nn;
 			remove_pres_note(p, n);
 		}
 		else prev = n;
@@ -278,29 +246,48 @@ int remove_pres_notes(presentity_t *p, str *etag)
 	return found;
 }
 
-/* generate ID for given data */
-static void generate_dbid(str *id, void *data)
+pa_presence_note_t *create_pres_note(str *etag, str *note, str *lang, 
+		time_t expires, str *dbid)
 {
-	char tmp[256];
-	if (id) {
-		snprintf(tmp, sizeof(tmp), "%py%xy%x", 
-				data, (int)time(NULL), rand());
-		str_dup_zt(id, tmp);
+	int size;
+	pa_presence_note_t *pan;
+
+	if (!dbid) {
+		ERR("invalid parameters\n"); 
+		return NULL;
 	}
+	
+	size = sizeof(pa_presence_note_t);
+	if (dbid) size += dbid->len;
+	if (etag) size += etag->len;
+
+	pan = (pa_presence_note_t*)mem_alloc(size);
+	if (!pan) {
+		ERR("can't allocate memory (%d)\n", size);
+		return pan;
+	}
+	pan->data.next = NULL;
+	pan->data.prev = NULL;
+	pan->expires = expires;
+	str_dup(&pan->data.value, note);
+	str_dup(&pan->data.lang, lang);
+
+	pan->dbid.s = (char*)pan + sizeof(*pan);
+	if (dbid) str_cpy(&pan->dbid, dbid); 
+	else pan->dbid.len = 0;
+	pan->etag.s = after_str_ptr(&pan->dbid);
+	str_cpy(&pan->etag, etag);
+	return pan;
 }
 
-pa_presence_note_t *create_pres_note(str *etag, str *note, str *lang, time_t expires, str *dbid)
+pa_presence_note_t *presence_note2pa(presence_note_t *n, str *etag, time_t expires)
 {
-	pa_presence_note_t *pan = (pa_presence_note_t*)mem_alloc(sizeof(pa_presence_note_t));
-	if (!pan) return pan;
-	pan->next = NULL;
-	pan->prev = NULL;
-	pan->expires = expires;
-	str_dup(&pan->etag, etag);
-	str_dup(&pan->note, note);
-	str_dup(&pan->lang, lang);
-	if (dbid) str_dup(&pan->dbid, dbid);
-	else generate_dbid(&pan->dbid, pan);
-	return pan;
+	dbid_t id;
+	str s;
+	
+	generate_dbid(id);
+	s.len = dbid_strlen(id);
+	s.s = dbid_strptr(id);
+	return create_pres_note(etag, &n->value, &n->lang, expires, &s);
 }
 

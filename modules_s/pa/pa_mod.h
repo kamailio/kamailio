@@ -80,15 +80,6 @@ extern char *offline_winfo_table;
 extern int ignore_408_on_notify;
 
 extern str pres_rules_file; /* filename for XCAP queries */
-/*
- * compare two str's
- */
-int str_strcmp(const str *stra, const str *strb);
-/*
- * case-insensitive compare two str's
- */
-int str_strcasecmp(const str *stra, const str *strb);
-
 db_con_t* create_pa_db_connection();
 void close_pa_db_connection(db_con_t* db);
 

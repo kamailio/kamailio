@@ -1,14 +1,8 @@
 #include "presentity.h"
+#include "person_elements.h"
 #include "pa_mod.h"
 #include <cds/logger.h>
-
-static void add_person_element_no_wb(presentity_t *_p, pa_person_element_t *n)
-{
-	pa_person_element_t *person_elements = _p->person_elements;
-	n->next = person_elements;
-	_p->person_elements = n;
-	if (person_elements) person_elements->prev = n;
-}
+#include <cds/list.h>
 
 /* DB manipulation */
 
@@ -28,10 +22,10 @@ static int db_add_person_element(presentity_t *p, pa_person_element_t *n)
 	vals[n_updates].val.str_val = n->dbid;
 	n_updates++;
 	
-	cols[n_updates] = "presid";
-	vals[n_updates].type = DB_INT;
+	cols[n_updates] = "pres_id";
+	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.int_val = p->presid;
+	vals[n_updates].val.str_val = p->pres_id;
 	n_updates++;
 	
 	cols[n_updates] = "etag";
@@ -43,13 +37,13 @@ static int db_add_person_element(presentity_t *p, pa_person_element_t *n)
 	cols[n_updates] = "person_element";
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.blob_val = n->person;
+	vals[n_updates].val.blob_val = n->data.person_element;
 	n_updates++;
 	
 	cols[n_updates] = "id";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->id;
+	vals[n_updates].val.str_val = n->data.id;
 	n_updates++;
 	
 	cols[n_updates] = "expires";
@@ -73,32 +67,11 @@ static int db_add_person_element(presentity_t *p, pa_person_element_t *n)
 	return 0;
 }
 
-int db_remove_person_elements(presentity_t *p)
-{
-	db_key_t keys[] = { "presid" };
-	db_op_t ops[] = { OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } } };
-	
-	if (!use_db) return 0;
-
-	if (pa_dbf.use_table(pa_db, person_elements_table) < 0) {
-		LOG(L_ERR, "db_remove_person_elements: Error in use_table\n");
-		return -1;
-	}
-
-	if (pa_dbf.delete(pa_db, keys, ops, k_vals, 1) < 0) {
-		LOG(L_ERR, "db_remove_person_elements: Can't delete record\n");
-		return -1;
-	}
-	
-	return 0;
-}
-
 static int db_remove_person_element(presentity_t *p, pa_person_element_t *n)
 {
-	db_key_t keys[] = { "presid", "etag", "dbid" };
+	db_key_t keys[] = { "pres_id", "etag", "dbid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } },
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } },
 		{ DB_STR, 0, { .str_val = n->etag } },
 		{ DB_STR, 0, { .str_val = n->dbid } }
 	};
@@ -124,9 +97,9 @@ int db_update_person_element(presentity_t *p, pa_person_element_t *n)
 	db_val_t vals[20];
 	int n_updates = 0;
 	
-	db_key_t keys[] = { "presid", "etag", "dbid" };
+	db_key_t keys[] = { "pres_id", "etag", "dbid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } },
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } },
 		{ DB_STR, 0, { .str_val = n->etag } },
 		{ DB_STR, 0, { .str_val = n->dbid } }
 	};
@@ -136,13 +109,13 @@ int db_update_person_element(presentity_t *p, pa_person_element_t *n)
 	cols[n_updates] = "person_element";
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.blob_val = n->person;
+	vals[n_updates].val.blob_val = n->data.person_element;
 	n_updates++;
 	
 	cols[n_updates] = "id";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->id;
+	vals[n_updates].val.str_val = n->data.id;
 	n_updates++;
 	
 	cols[n_updates] = "expires";
@@ -167,9 +140,9 @@ int db_update_person_element(presentity_t *p, pa_person_element_t *n)
 
 int db_read_person_elements(presentity_t *p, db_con_t* db)
 {
-	db_key_t keys[] = { "presid" };
+	db_key_t keys[] = { "pres_id" };
 	db_op_t ops[] = { OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } } };
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } } };
 
 	int i;
 	int r = 0;
@@ -218,7 +191,8 @@ int db_read_person_elements(presentity_t *p, db_con_t* db)
 #undef get_time_val		
 
 		n = create_person_element(&etag, &person_element, &id, expires, &dbid);
-		if (n) add_person_element_no_wb(p, n);
+		if (n) DOUBLE_LINKED_LIST_ADD(p->data.first_person, 
+				p->data.last_person, (person_t*)n);	
 	}
 	
 	pa_dbf.free_result(db, res);
@@ -230,17 +204,15 @@ int db_read_person_elements(presentity_t *p, db_con_t* db)
 
 void add_person_element(presentity_t *_p, pa_person_element_t *n)
 {
-	add_person_element_no_wb(_p, n);
+	DOUBLE_LINKED_LIST_ADD(_p->data.first_person, 
+		_p->data.last_person, (person_t*)n);	
 	if (use_db) db_add_person_element(_p, n); 
 }
 
 void remove_person_element(presentity_t *_p, pa_person_element_t *n)
 {
-	pa_person_element_t *person_elements = _p->person_elements;
-	
-	if (person_elements == n) _p->person_elements = n->next;
-	if (n->prev) n->prev->next = n->next;
-	if (n->next) n->next->prev = n->prev;
+	DOUBLE_LINKED_LIST_REMOVE(_p->data.first_person, _p->data.last_person, 
+			(person_t*)n);
 
 	if (use_db) db_remove_person_element(_p, n);
 	free_person_element(n);
@@ -250,8 +222,8 @@ void free_person_element(pa_person_element_t *n)
 {
 	if (n) {
 		str_free_content(&n->etag);
-		str_free_content(&n->person);
-		str_free_content(&n->id);
+		str_free_content(&n->data.person_element);
+		str_free_content(&n->data.id);
 		str_free_content(&n->dbid);
 		mem_free(n);
 	}
@@ -259,50 +231,70 @@ void free_person_element(pa_person_element_t *n)
 
 int remove_person_elements(presentity_t *p, str *etag)
 {
-	pa_person_element_t *n, *nn, *prev;
+	pa_person_element_t *n, *nn;
 	int found = 0;
 
-	prev = NULL;
-	n = p->person_elements;
+	n = (pa_person_element_t*)p->data.first_person;
 	while (n) {
-		nn = n->next;
-		if (str_strcasecmp(&n->etag, etag) == 0) {
+		nn = (pa_person_element_t*)n->data.next;
+		if (str_case_equals(&n->etag, etag) == 0) {
 			/* remove this */
 			found++;
-			if (prev) prev->next = nn;
-			else p->person_elements = nn;
 			remove_person_element(p, n);
 		}
-		else prev = n;
 		n = nn;
 	}
 
 	return found;
 }
 
-/* generate ID for given data */
-static void generate_dbid(str *id, void *data)
+pa_person_element_t *create_person_element(str *etag, str *person_element, str *id, 
+		time_t expires, str *dbid)
 {
-	char tmp[256];
-	if (id) {
-		snprintf(tmp, sizeof(tmp), "%py%xy%x", 
-				data, (int)time(NULL), rand());
-		str_dup_zt(id, tmp);
+	pa_person_element_t *pan;
+	int size;
+	
+	if (!dbid) {
+		ERR("invalid parameters\n"); 
+		return NULL;
 	}
+	
+	size = sizeof(pa_person_element_t);
+	if (dbid) size += dbid->len;
+	if (etag) size += etag->len;
+
+	pan = (pa_person_element_t*)mem_alloc(size);
+	if (!pan) {
+		ERR("can't allocate memory: %d\n", size);
+		return pan;
+	}
+
+	memset(pan, 0, sizeof(*pan));
+	
+	/* FIXME: don't allocate person_element separately */
+	str_dup(&pan->data.person_element, person_element);
+	str_dup(&pan->data.id, id);
+	
+	pan->expires = expires;
+	
+	pan->dbid.s = (char*)pan + sizeof(pa_person_element_t);
+	if (dbid) str_cpy(&pan->dbid, dbid);
+	else pan->dbid.len = 0;
+	
+	pan->etag.s = after_str_ptr(&pan->dbid);
+	str_cpy(&pan->etag, etag);
+
+	return pan;
 }
 
-pa_person_element_t *create_person_element(str *etag, str *person_element, str *id, time_t expires, str *dbid)
+pa_person_element_t *person_element2pa(person_t *n, str *etag, time_t expires)
 {
-	pa_person_element_t *pan = (pa_person_element_t*)mem_alloc(sizeof(pa_person_element_t));
-	if (!pan) return pan;
-	pan->next = NULL;
-	pan->prev = NULL;
-	pan->expires = expires;
-	str_dup(&pan->etag, etag);
-	str_dup(&pan->person, person_element);
-	str_dup(&pan->id, id);
-	if (dbid) str_dup(&pan->dbid, dbid);
-	else generate_dbid(&pan->dbid, pan);
-	return pan;
+	dbid_t id;
+	str s;
+	
+	generate_dbid(id);
+	s.len = dbid_strlen(id);
+	s.s = dbid_strptr(id);
+	return create_person_element(etag, &n->person_element, &n->id, expires, &s);
 }
 

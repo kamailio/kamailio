@@ -12,11 +12,11 @@ static int doc_add_watcher(dstring_t *buf, watcher_t *w)
 	dstr_append_str(buf, &watcher_event_names[w->event]);
 	dstr_append_zt(buf, "\" id=\"");
 
-	if (w->s_id.len < 1) {
+	if (w->id.len < 1) {
 		sprintf(tmp, "%p", w);
 		dstr_append_zt(buf, tmp);
 	}
-	else dstr_append_str(buf, &w->s_id);
+	else dstr_append_str(buf, &w->id);
 	dstr_append_zt(buf, "\">");
 	
 	dstr_append_str(buf, &w->uri);
@@ -48,11 +48,11 @@ static int doc_add_internal_watcher(dstring_t *buf, internal_pa_subscription_t *
 
 static int doc_add_watcher_list(dstring_t *buf, struct presentity* p)
 {
-	watcher_t *watcher = p->watchers;
+	watcher_t *watcher = p->first_watcher;
 	internal_pa_subscription_t *subscription = p->first_qsa_subscription;
 	
 	dstr_append_zt(buf, "\t<watcher-list resource=\"");
-	dstr_append_str(buf, &p->uri);
+	dstr_append_str(buf, &p->data.uri);
 	dstr_append_zt(buf, "\" package=\"presence\">\r\n");
 
 	while (watcher) {
@@ -157,7 +157,7 @@ static int doc_add_watcher_list_offline(dstring_t *buf, struct presentity* p, of
 {
 	offline_winfo_t *i = info;
 	dstr_append_zt(buf, "\t<watcher-list resource=\"");
-	dstr_append_str(buf, &p->uri);
+	dstr_append_str(buf, &p->data.uri);
 	dstr_append_zt(buf, "\" package=\"presence\">\r\n");
 
 	while (i) {

@@ -34,6 +34,7 @@
 #include "../tm/dlg.h"
 #include "../../db/db.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_event.h" /* EVENT_PRESENCE, EVENT_PRESENCE_WINFO, ... */
 #include <stdio.h>
 #include <time.h>
 
@@ -85,58 +86,50 @@ typedef struct watcher {
 	int preferred_mimetype; /* Type of document accepted by the watcher */
 	int document_index;		/* many documents (winfo, ...) requires sequential numbering */
  	dlg_t* dialog;          /* Dialog handle */
-	str s_id;               /* id of this watcherinfo statement */
+	str id;                 /* id of this watcher (used for DB and winfo docs) */
 	str server_contact;		/* used for contact header in NOTIFY messages */
 	wflags_t flags;
 	watcher_event_t  event;
 	watcher_status_t status; /* status of subscription */
-	struct watcher* next;   /* Next watcher in the list */
+	struct watcher *prev, *next;   /* linking members */
 } watcher_t;
 
-/*
- * Convert watcher status name to enum
- */
+struct presentity;
+
+/* Convert watcher status name to enum */
 watcher_status_t watcher_status_from_string(str *wsname);
 
-/*
- * Convert watcher event name to enum
- */
-watcher_event_t watcher_event_from_string(str *wename);
-
-/*
- * Create a new watcher structure
- */
-struct presentity;
+/* Create a new watcher structure */
 int new_watcher_no_wb(str* _uri, time_t _e, int event_package, 
 		int doc_type, dlg_t* _dlg, str *display_name, 
-		str *server_contact, watcher_t** _w);
+		str *server_contact, 
+		str *id, /* database ID or NULL if not loading from DB */
+		watcher_t** _w);
 
-/* add watcher into db */
-int db_add_watcher(struct presentity *_p, watcher_t *watcher);
+/* Release a watcher structure */
+void free_watcher(watcher_t* _w);
+
+/** Appends watcher/winfo watcher to presentity. It updates presentity's
+ * flags and adds the watcher into DB if requested and use_db set. */
+int append_watcher(struct presentity *_p, watcher_t *_w, int add_to_db);
+	
+/* Remove a watcher/winfo watcher from the watcher list and from database. */
+void remove_watcher(struct presentity* _p, watcher_t* _w);
+
+/* Find a watcher/winfo watcher in the list/winfo list (according to
+ * _et parameter) via dialog identifier */
+int find_watcher_dlg(struct presentity* _p, dlg_id_t *dlg_id, int _et, watcher_t** _w);
 
 /* update watcher in db */
 int db_update_watcher(struct presentity *p, watcher_t* _w);
 
-/* delete watcher from db */
-int db_remove_watcher(struct presentity *_p, watcher_t *w);
-
-/*
- * Release a watcher structure
- */
-void free_watcher(watcher_t* _w);
-
-/*
- * Update expires value of a watcher
- */
+/* Update expires value of a watcher */
 int update_watcher(struct presentity *p, watcher_t* _w, time_t _e, struct sip_msg *m);
 
-/*
- * Read watcherinfo table from database for presentity _p
- */
-struct presentity;
+/* Read watcherinfo table from database for presentity _p */
 int db_read_watcherinfo(struct presentity *_p, db_con_t* db);
 
-/** Returns 1 if givn watcher is in one of terminated statuses 
+/** Returns 1 if given watcher is in one of terminated statuses 
  * and should be deleted */
 int is_watcher_terminated(watcher_t *w);
 

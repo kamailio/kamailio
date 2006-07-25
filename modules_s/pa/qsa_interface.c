@@ -225,106 +225,6 @@ static void pa_unsubscribe(notifier_t *n, qsa_subscription_t *subscription)
 	str_free_content(&uid);
 }
 
-int copy_tuple_notes(presence_tuple_info_t *dst_info, const presence_tuple_t *src)
-{
-	presence_note_t *n, *nn;
-
-	n = src->notes;
-	while (n) {
-		nn = create_presence_note(&n->value, &n->lang);
-		if (!nn) {
-			ERR("can't create presence note\n");
-			return -1;
-		}
-		DOUBLE_LINKED_LIST_ADD(dst_info->first_note, dst_info->last_note, nn);
-		n = n->next;
-	}
-	return 0;
-}
-
-presentity_info_t *presentity2presentity_info(presentity_t *p)
-{
-	presentity_info_t *pinfo;
-	presence_tuple_info_t *tinfo;
-	presence_tuple_status_t s;
-	presence_tuple_t *t;
-	pa_presence_note_t *pan;
-	presence_note_t *n;
-	pa_person_element_t *paps;
-	person_t *ps, *last_ps;
-	int err = 0;
-
-	/* DBG("p2p_info()\n"); */
-	if (!p) return NULL;
-/*	pinfo = (presentity_info_t*)cds_malloc(sizeof(*pinfo)); */
-	pinfo = create_presentity_info(&p->uri);
-	if (!pinfo) {
-		ERROR_LOG("can't allocate memory\n");
-		return NULL;
-	}
-	/* DBG("p2p_info(): created presentity info\n"); */
-
-	t = p->tuples;
-	while (t) {
-		s = presence_tuple_open;
-		if (t->state == PS_OFFLINE) s = presence_tuple_closed;
-		tinfo = create_tuple_info(&t->contact, &t->id, s);
-		if (!tinfo) {
-			ERROR_LOG("can't create tuple info\n");
-			err = 1;
-			break;
-		}
-		tinfo->priority = t->priority;
-		tinfo->expires = t->expires;
-		add_tuple_info(pinfo, tinfo);
-		if (copy_tuple_notes(tinfo, t) < 0) {
-			ERROR_LOG("can't copy tuple notes\n");
-			err = 1;
-			break;
-		}
-		t = t->next;
-	}
-
-	/* notes */
-	if (!err) {
-		pan = p->notes;
-		while (pan) {
-			n = create_presence_note(&pan->note, &pan->lang);
-			if (n) DOUBLE_LINKED_LIST_ADD(pinfo->first_note, pinfo->last_note, n);
-			else {
-				ERROR_LOG("can't copy presence notes\n");
-				err = 1;
-				break;
-			}
-			pan = pan->next;
-		}
-	}
-	
-	/* person elements */
-	if (!err) {
-		last_ps = NULL;
-		paps = p->person_elements;
-		while (paps) {
-			ps = create_person(&paps->person, &paps->id);
-			if (ps) LINKED_LIST_ADD(pinfo->first_person, last_ps, ps);
-			else {
-				ERROR_LOG("can't copy person elements\n");
-				err = 1;
-				break;
-			}
-			paps = paps->next;
-		}
-	}
-	
-	if (err) {
-		free_presentity_info(pinfo);
-		return NULL;
-	}
-	
-	/* DBG("p2p_info() finished\n"); */
-	return pinfo;
-}
-
 int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 {
 	presentity_info_t *pinfo;
@@ -343,7 +243,7 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 				return notify_subscriber(ss->subscription, notifier,
 							ct_presence_info, NULL, qsa_subscription_terminated);
 		case WS_ACTIVE:
-				pinfo = presentity2presentity_info(p);
+				pinfo = dup_presentity_info(&p->data);
 				if (!pinfo) {
 					ERROR_LOG("can't create presentity info from presentity!\n");
 					return -1; 
@@ -376,7 +276,7 @@ int subscribe_to_user(presentity_t *_p)
 	
 	clear_subscription_data(&_p->presence_subscription_data);
 	/* ??? FIXME msg queue */ _p->presence_subscription_data.dst = &_p->mq;
-	_p->presence_subscription_data.record_id = _p->uri;
+	_p->presence_subscription_data.record_id = _p->data.uri;
 	_p->presence_subscription_data.subscriber_id = pa_subscription_uri;
 	_p->presence_subscription_data.subscriber_data = _p;
 	_p->presence_subscription = subscribe(domain, 

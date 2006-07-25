@@ -1,5 +1,6 @@
 #include "presentity.h"
 #include "pa_mod.h"
+#include "tuple_notes.h"
 #include <cds/logger.h>
 
 
@@ -15,16 +16,16 @@ static int db_add_tuple_note(presentity_t *p, presence_tuple_t *t, presence_note
 	
 	/* set data */
 	
-	cols[n_updates] = "presid";
-	vals[n_updates].type = DB_INT;
-	vals[n_updates].nul = 0;
-	vals[n_updates].val.int_val = p->presid;
-	n_updates++;
-	
-	cols[n_updates] = "tupleid";
+	cols[n_updates] = "pres_id";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = t->id;
+	vals[n_updates].val.str_val = p->pres_id;
+	n_updates++;
+	
+	cols[n_updates] = "tuple_id";
+	vals[n_updates].type = DB_STR;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.str_val = t->data.id;
 	n_updates++;
 
 	cols[n_updates] = "note";
@@ -58,7 +59,7 @@ int db_add_tuple_notes(presentity_t *p, presence_tuple_t *t)
 {
 	presence_note_t *n;
 	
-	n = t->notes;
+	n = t->data.first_note;
 	while (n) {
 		db_add_tuple_note(p, t, n);
 		n = n->next;
@@ -68,11 +69,11 @@ int db_add_tuple_notes(presentity_t *p, presence_tuple_t *t)
 
 int db_remove_tuple_notes(presentity_t *p, presence_tuple_t *t)
 {
-	db_key_t keys[] = { "presid", "tupleid" };
+	db_key_t keys[] = { "pres_id", "tupleid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { 
-		{ DB_INT, 0, { .int_val = p->presid } },
-		{ DB_STR, 0, { .str_val = t->id } }
+		{ DB_STR, 0, { .str_val = p->pres_id } },
+		{ DB_STR, 0, { .str_val = t->data.id } }
 	};
 	
 	if (!use_db) return 0;
@@ -90,27 +91,6 @@ int db_remove_tuple_notes(presentity_t *p, presence_tuple_t *t)
 	return 0;
 }
 
-int db_remove_all_tuple_notes(presentity_t *p)
-{
-	db_key_t keys[] = { "presid" };
-	db_op_t ops[] = { OP_EQ };
-	db_val_t k_vals[] = { { DB_INT, 0, { .int_val = p->presid } }	};
-	
-	if (!use_db) return 0;
-
-	if (pa_dbf.use_table(pa_db, tuple_notes_table) < 0) {
-		LOG(L_ERR, "db_remove_tuple_notes: Error in use_table\n");
-		return -1;
-	}
-
-	if (pa_dbf.delete(pa_db, keys, ops, k_vals, 1) < 0) {
-		LOG(L_ERR, "db_remove_tuple_notes: Can't delete record\n");
-		return -1;
-	}
-	
-	return 0;
-}
-
 int db_update_tuple_notes(presentity_t *p, presence_tuple_t *t)
 {
 	db_remove_tuple_notes(p, t);
@@ -120,11 +100,11 @@ int db_update_tuple_notes(presentity_t *p, presence_tuple_t *t)
 
 int db_read_tuple_notes(presentity_t *p, presence_tuple_t *t, db_con_t* db)
 {
-	db_key_t keys[] = { "presid", "tupleid" };
+	db_key_t keys[] = { "pres_id", "tupleid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { 
-		{ DB_INT, 0, { .int_val = p->presid } },
-		{ DB_STR, 0, { .str_val = t->id } }
+		{ DB_STR, 0, { .str_val = p->pres_id } },
+		{ DB_STR, 0, { .str_val = t->data.id } }
 	};
 
 	int i;
@@ -176,11 +156,7 @@ int db_read_tuple_notes(presentity_t *p, presence_tuple_t *t, db_con_t* db)
 
 void add_tuple_note_no_wb(presence_tuple_t *t, presence_note_t *n) 
 {
-	presence_note_t *nn = t->notes;
-	
-	n->next = nn;
-	t->notes = n;
-	if (nn) nn->prev = n;
+	DOUBLE_LINKED_LIST_ADD(t->data.first_note, t->data.last_note, n);
 }
 
 void free_tuple_notes(presence_tuple_t *t)
@@ -188,12 +164,14 @@ void free_tuple_notes(presence_tuple_t *t)
 	presence_note_t *n, *nn;
 	
 	/* remove all notes for this tuple */
-	n = t->notes;
+	n = t->data.first_note;
 	while (n) {
 		nn = n->next;
 		free_presence_note(n);
 		n = nn;
 	}
-	t->notes = NULL;
+	
+	t->data.first_note = NULL;
+	t->data.last_note = NULL;
 }
 

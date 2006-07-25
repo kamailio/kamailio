@@ -8,10 +8,8 @@
 #include "dlist.h"
 #include "presentity.h"
 #include "watcher.h"
-#include "pstate.h"
 #include "pdomain.h"
 #include "pa_mod.h"
-#include "common.h"
 #include "../../parser/parse_from.h"
 
 #include <libxml/parser.h>
@@ -296,7 +294,7 @@ static int send_winfo(presentity_t *p, offline_winfo_t *info)
 		return -1;
 	}
 	
-	w = p->winfo_watchers;
+	w = p->first_winfo_watcher;
 	while (w) {
 		if (w->status == WS_ACTIVE) {
 			if (send_winfo_notify_offline(p, w, info, send_winfo_cb, info) == 0) 
@@ -437,7 +435,7 @@ int store_offline_winfo(struct sip_msg* _m, char* _domain, char* _table)
 	int res = -1;
 	offline_winfo_t *info;
 
-	if (get_presentity_uid(&uid, _m) != 0) {
+	if (get_presentity_uid(&uid, _m) < 0) {
 		ERR("Error while extracting presentity UID\n");
 		return 0; /* ??? impossible to return -1 or 1 */
 	}
@@ -456,8 +454,6 @@ int store_offline_winfo(struct sip_msg* _m, char* _domain, char* _table)
 	/* store it into database or use internal data structures too? */
 	/* better to use only database because of lower memory usage - this 
 	 * information could be stored for very long time ! */
-	
-	str_free_content(&uid);
 	
 	db_store_winfo(info);
 	
@@ -479,7 +475,7 @@ int dump_offline_winfo(struct sip_msg* _m, char* _domain, char* _events)
 
 	d = (struct pdomain*)_domain;
 
-	if (get_presentity_uid(&uid, _m) != 0) {
+	if (get_presentity_uid(&uid, _m) < 0) {
 		ERR("Error while extracting presentity UID\n");
 		return -1;
 	}
@@ -490,12 +486,10 @@ int dump_offline_winfo(struct sip_msg* _m, char* _domain, char* _events)
 	}
 
 	if (db_load_winfo(&uid, &events, d->name, &info) != 0) {
-		str_free_content(&uid);
 		return -1;
 	}
 
 	if (!info) {
-		str_free_content(&uid);
 		return 1; /* nothing to do */
 	}
 
@@ -506,7 +500,6 @@ int dump_offline_winfo(struct sip_msg* _m, char* _domain, char* _events)
 		if (send_winfo(p, info) == 0) res = 1;
 		else res = -1;
 	}
-	str_free_content(&uid);
 
 	unlock_pdomain(d);
 

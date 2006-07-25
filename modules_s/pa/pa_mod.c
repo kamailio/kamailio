@@ -41,7 +41,6 @@
 #include "subscribe.h"
 #include "publish.h"
 #include "dlist.h"
-#include "location.h"
 #include "pa_mod.h"
 #include "watcher.h"
 #include "rpc.h"
@@ -191,14 +190,10 @@ static param_export_t params[]={
 	{"use_place_table",      PARAM_INT,    &use_place_table      },
 	{"use_bsearch",          PARAM_INT,    &use_bsearch          },
 	{"use_location_package", PARAM_INT,    &use_location_package },
-#ifdef HAVE_LOCATION_PACKAGE
-	{"pa_domain",            PARAM_STR,    &pa_domain            },
-#endif /* HAVE_LOCATION_PACKAGE */
 	{"offline_winfo_table", PARAM_STRING, &offline_winfo_table }, /* table with offline winfo */
 
 	{0, 0, 0}
 };
-
 
 struct module_exports exports = {
 	"pa",
@@ -211,12 +206,6 @@ struct module_exports exports = {
 	0,              /* oncancel function */
 	pa_child_init   /* per-child init function */
 };
-
-
-void pa_sig_handler(int s)
-{
-	DBG("PA:pa_worker:%d: SIGNAL received=%d\n **************", getpid(), s);
-}
 
 char* decode_mime_type(char *start, char *end, unsigned int *mime_type);
 
@@ -477,50 +466,4 @@ static void timer(unsigned int ticks, void* param)
 	if (timer_all_pdomains() != 0) {
 		LOG(L_ERR, "timer(): Error while synchronizing domains\n");
 	}
-}
-
-/*
- * compare two str's
- */
-int str_strcmp(const str *stra, const str *strb)
-{
-     int i;
-     int alen = stra->len;
-     int blen = strb->len;
-     int minlen = (alen < blen ? alen : blen);
-     for (i = 0; i < minlen; i++) {
-	  const char a = stra->s[i];
-	  const char b = strb->s[i];
-	  if (a < b) return -1;
-	  if (a > b) return 1;
-     }
-     if (alen < blen)
-	  return -1;
-     else if (blen > alen)
-	  return 1;
-     else
-	  return 0;
-}
-
-/*
- * case-insensitive compare two str's
- */
-int str_strcasecmp(const str *stra, const str *strb)
-{
-     int i;
-     int alen = stra->len;
-     int blen = strb->len;
-     int minlen = (alen < blen ? alen : blen);
-     for (i = 0; i < minlen; i++) {
-	  const char a = tolower(stra->s[i]);
-	  const char b = tolower(strb->s[i]);
-	  if (a < b) return -1;
-	  if (a > b) return 1;
-     }
-     if (alen < blen)
-	  return -1;
-     else if (blen > alen)
-	  return 1;
-     else
-	  return 0;
 }

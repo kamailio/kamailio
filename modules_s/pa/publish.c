@@ -42,7 +42,6 @@
 #include "dlist.h"
 #include "presentity.h"
 #include "watcher.h"
-#include "pstate.h"
 #include "notify.h"
 #include "paerrno.h"
 #include "pdomain.h"
@@ -51,7 +50,9 @@
 #include "reply.h"
 #include "subscribe.h"
 #include "publish.h"
-#include "common.h"
+#include "tuple.h"
+#include "pres_notes.h"
+#include "person_elements.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/parse_sipifmatch.h"
 
@@ -60,6 +61,9 @@
 
 #include <presence/pidf.h>
 #include <cds/logger.h>
+#include <cds/sstr.h>
+
+/* ------------ Helper functions ------------ */
 
 /*
  * Parse all header fields that will be needed
@@ -122,31 +126,11 @@ static int parse_publish_hfs(struct sip_msg* _m)
 	return 0;
 }
 
-#if 0
-/*
- * If this xcap change is on a watcher list, then reread authorizations
- */
-static int publish_presentity_xcap_change(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
+static inline void generate_etag(dbid_t dst, presentity_t *p)
 {
-	char *body = get_body(_m);
-	LOG(L_ERR, "publish_presentity_xcap_change: body=%p\n", body);
-	if (body) {
-		/* cheesy hack to see if it is presence-lists or watcherinfo that was changed */
-		if (strstr(body, "presence-lists"))
-			presentity->flags |= PFLAG_PRESENCE_LISTS_CHANGED;
-		if (strstr(body, "watcherinfo"))
-			presentity->flags |= PFLAG_WATCHERINFO_CHANGED;
-		presentity->flags |= PFLAG_XCAP_CHANGED;
-
-		LOG(L_ERR, "publish_presentity_xcap_change: got body, setting flags=%x", 
-		    presentity->flags);
-
-		if (pchanged)
-			*pchanged = 1;
-	}
-	return 0;
+	generate_dbid_ptr(dst, p);
 }
-#endif
+
 
 static void add_expires_to_rpl(struct sip_msg *_m, int expires)
 {
@@ -164,18 +148,13 @@ static void add_etag_to_rpl(struct sip_msg *_m, str *etag)
 {
 	char *tmp;
 
-	if (!etag) {
-		LOG(L_ERR, "Can't add empty SIP-ETag header to the response\n");
-		return;
-	}
-	
 	tmp = (char*)pkg_malloc(32 + etag->len);
 	if (!tmp) {
 		LOG(L_ERR, "Can't allocate package memory for SIP-ETag header to the response\n");
 		return;
 	}
 	
-	sprintf(tmp, "SIP-ETag: %.*s\r\n", etag->len, ZSW(etag->s));
+	sprintf(tmp, "SIP-ETag: %.*s\r\n", etag->len, etag->s);
 	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
 		LOG(L_ERR, "Can't add SIP-ETag header to the response\n");
 		/* return -1; */
@@ -183,20 +162,7 @@ static void add_etag_to_rpl(struct sip_msg *_m, str *etag)
 	pkg_free(tmp);
 }
 
-static void generate_etag(str *dst, presentity_t *p)
-{
-	if (!dst) return;
-	char tmp[128];
-
-	/* this might not be sufficient !!! */
-	sprintf(tmp, "%px%xx%x", p, rand(), (unsigned int)time(NULL));
-	str_dup_zt(dst, tmp);
-}
-
-static pa_presence_note_t *presence_note2pa(presence_note_t *n, str *etag, time_t expires)
-{
-	return create_pres_note(etag, &n->value, &n->lang, expires, NULL);
-}
+/* ------------ publishing functions ------------ */
 
 static void add_presentity_notes(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
 {
@@ -211,11 +177,6 @@ static void add_presentity_notes(presentity_t *presentity, presentity_info_t *p,
 		if (pan) add_pres_note(presentity, pan);
 		n = n->next;
 	}
-}
-
-static pa_person_element_t *person_element2pa(person_t *n, str *etag, time_t expires)
-{
-	return create_person_element(etag, &n->person_element, &n->id, expires, NULL);
 }
 
 static void add_person_elements(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
@@ -233,60 +194,6 @@ static void add_person_elements(presentity_t *presentity, presentity_info_t *p, 
 	}
 }
 
-presence_tuple_t *presence_tuple_info2pa(presence_tuple_info_t *i, str *etag, time_t expires)
-{
-	presence_tuple_t *t = NULL;
-	presence_note_t *n, *nn;
-	int res;
-			
-	res = new_presence_tuple(&i->contact, expires, &t, 1);
-	if (res != 0) return NULL;
-	/* ID for the tuple is newly generated ! */
-	t->priority = i->priority;
-	switch (i->status) {
-		case presence_tuple_open: t->state = PS_ONLINE; break;
-		case presence_tuple_closed: t->state = PS_OFFLINE; break;
-	}
-	str_dup(&t->etag, etag);
-	str_dup(&t->published_id, &i->id); /* store published tuple ID - used on update */
-
-	/* add notes for tuple */
-	n = i->first_note;
-	while (n) {
-		nn = create_presence_note(&n->value, &n->lang);
-		if (nn) add_tuple_note_no_wb(t, nn);
-		n = n->next;
-	}
-	return t;
-}
-
-static void update_tuple(presentity_t *p, presence_tuple_t *t, presence_tuple_info_t *i, time_t expires)
-{
-	presence_note_t *n, *nn;
-	
-	t->expires = expires;
-	t->priority = i->priority;
-	switch (i->status) {
-		case presence_tuple_open: t->state = PS_ONLINE; break;
-		case presence_tuple_closed: t->state = PS_OFFLINE; break;
-	}
-	/* FIXME: enable other changes like contact ??? */
-
-	/* remove all old notes for this tuple */
-	free_tuple_notes(t);
-		
-	/* add new notes for tuple */
-	n = i->first_note;
-	while (n) {
-		nn = create_presence_note(&n->value, &n->lang);
-		if (nn) add_tuple_note_no_wb(t, nn);
-		
-		n = n->next;
-	}
-
-	if (use_db) db_update_presence_tuple(p, t, 1);
-}
-
 static void add_published_tuples(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
 {
 	presence_tuple_info_t *i;
@@ -302,19 +209,6 @@ static void add_published_tuples(presentity_t *presentity, presentity_info_t *p,
 	}
 }
 
-static presence_tuple_t *find_published_tuple(presentity_t *presentity, str *etag, str *id)
-{
-	presence_tuple_t *tuple = presentity->tuples;
-	while (tuple) {
-		if (str_case_equals(&tuple->etag, etag) == 0) {
-			if (str_case_equals(&tuple->published_id, id) == 0)
-				return tuple;
-		}
-		tuple = tuple->next;
-	}
-	return NULL;
-}
-
 static int update_published_tuples(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
 {
 	presence_tuple_info_t *i;
@@ -325,13 +219,13 @@ static int update_published_tuples(presentity_t *presentity, presentity_info_t *
 	if (!p) return 0;
 	
 	/* mark tuples as unprocessed */
-	t = presentity->tuples;
+	t = get_first_tuple(presentity);
 	while (t) {
 		if (str_case_equals(&t->etag, etag) == 0) {
-			t->priority = mark;
+			t->data.priority = mark;
 			found++;
 		}
-		t = t->next;
+		t = get_next_tuple(t);
 	}
 	
 	/* add previously not published tuples and update previously published */
@@ -352,10 +246,10 @@ static int update_published_tuples(presentity_t *presentity, presentity_info_t *
 	}
 	
 	/* remove previously published tuples which were not processed (not present now) */
-	t = presentity->tuples;
+	t = get_first_tuple(presentity);
 	while (t) {
-		tt = t->next;
-		if (t->priority == mark) {
+		tt = get_next_tuple(t);
+		if (t->data.priority == mark) {
 			remove_presence_tuple(presentity, t);
 			free_presence_tuple(t);
 		}
@@ -368,14 +262,14 @@ static int update_published_tuples(presentity_t *presentity, presentity_info_t *
 static int update_all_published_tuples(presentity_t *p, str *etag, time_t expires)
 {
 	int found = 0;
-	presence_tuple_t *tuple = p->tuples;
+	presence_tuple_t *tuple = get_first_tuple(p);
 	while (tuple) {
 		if (str_case_equals(&tuple->etag, etag) == 0) {
 			tuple->expires = expires;
 			found++;
 			db_update_presence_tuple(p, tuple, 0);
 		}
-		tuple = tuple->next;
+		tuple = get_next_tuple(tuple);
 	}
 	return found;
 }
@@ -383,14 +277,14 @@ static int update_all_published_tuples(presentity_t *p, str *etag, time_t expire
 static int update_pres_notes(presentity_t *p, str *etag, time_t expires)
 {
 	int found = 0;
-	pa_presence_note_t *note = p->notes;
+	pa_presence_note_t *note = get_first_note(p);
 	while (note) {
 		if (str_case_equals(&note->etag, etag) == 0) {
 			note->expires = expires;
 			found++;
 			db_update_pres_note(p, note);
 		}
-		note = note->next;
+		note = get_next_note(note);
 	}
 	return found;
 }
@@ -398,26 +292,24 @@ static int update_pres_notes(presentity_t *p, str *etag, time_t expires)
 static int update_person_elements(presentity_t *p, str *etag, time_t expires)
 {
 	int found = 0;
-	pa_person_element_t *person = p->person_elements;
+	pa_person_element_t *person = get_first_person(p);
 	while (person) {
 		if (str_case_equals(&person->etag, etag) == 0) {
 			person->expires = expires;
 			db_update_person_element(p, person);
 			found++;
 		}
-		person = person->next;
+		person = get_next_person(person);
 	}
 	return found;
 }
 
-int process_published_presentity_info(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
+int process_published_presentity_info(presentity_t *presentity, presentity_info_t *p, str *etag, 
+		time_t expires, int has_etag)
 {
-	if (etag->len < 1) {
+	if (!has_etag) {
 		
 		if (!p) return -1; /* must be published something */
-		
-		/* etag is empty -> generate new one and generate published info as new */
-		generate_etag(etag, presentity);
 		
 		/* add all notes for presentity */
 		add_presentity_notes(presentity, p, etag, expires);
@@ -452,6 +344,8 @@ int process_published_presentity_info(presentity_t *presentity, presentity_info_
 	return 0;
 }
 
+/* ------------ PUBLISH handling functions ------------ */
+
 static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 {
 	char *body = get_body(_m);
@@ -459,6 +353,8 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 	int msg_expires = default_expires;
 	time_t expires = 0;
 	str etag;
+	dbid_t generated_etag;
+	int has_etag;
 	presentity_info_t *p = NULL;
 	int content_type = -1;
 	
@@ -474,8 +370,19 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 		msg_expires = max_publish_expiration;
 	if (msg_expires != 0) expires = msg_expires + act_time;
 
-	if (_m->sipifmatch) str_dup(&etag, (str*)_m->sipifmatch->parsed);
-	else str_clear(&etag);
+	if (_m->sipifmatch) {
+		if (_m->sipifmatch->parsed) 
+			etag = *(str*)_m->sipifmatch->parsed;
+		else str_clear(&etag);
+		has_etag = 1;
+	}
+	else {
+		/* ETag was not set, generate a new one */
+		generate_dbid(generated_etag);
+		etag.len = dbid_strlen(generated_etag);
+		etag.s = dbid_strptr(generated_etag);
+		has_etag = 0;
+	}
 				
 	if (body_len > 0) {
 		switch (content_type) {
@@ -497,18 +404,15 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 				paerrno = PA_UNSUPP_DOC;
 		}
 		
-		if (paerrno != PA_OK) {
-			str_free_content(&etag);
-			return -1;
-		}
+		if (paerrno != PA_OK) return -1;
 	}
 	
-	if (process_published_presentity_info(presentity, p, &etag, expires) == 0) {
+	if (process_published_presentity_info(presentity, p, &etag, 
+				expires, has_etag) == 0) {
 		/* add header fields into response */
 		add_expires_to_rpl(_m, msg_expires);
 		add_etag_to_rpl(_m, &etag);
 	}
-	str_free_content(&etag);
 	if (p) free_presentity_info(p);
 	
 	return 0;
@@ -562,15 +466,6 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
-#if 0
-	if (check_message(_m) < 0) {
-		LOG(L_ERR, "handle_publish(): Error while checking message\n");
-		goto error;
-	}
-	LOG(L_ERR, "handle_publish -1c-\n");
-#endif
-	LOG(L_DBG, "handle_publish entered\n");
-
 	d = (struct pdomain*)_domain;
 
 	if (get_pres_uri(_m, &p_uri) < 0 || p_uri.s == NULL || p_uri.len == 0) {
@@ -578,8 +473,8 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
-	if (get_presentity_uid(&uid, _m) != 0) {
-		LOG(L_ERR, "handle_subscription(): Error while extracting presentity UID\n");
+	if (get_presentity_uid(&uid, _m) < 0) {
+		ERR("Error while extracting presentity UID\n");
 		goto error;
 	}
 
@@ -593,10 +488,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 			goto error2;
 		}
 	}
-	str_free_content(&uid);
 
-	LOG(L_DBG, "handle_publish - publishing status\n");
-	
 	/* update presentity event state */
 	if (p) publish_presentity(_m, d, p);
 
@@ -604,12 +496,10 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 	if (send_reply(_m) < 0) return -1;
 
-	LOG(L_DBG, "handle_publish finished\n");
 	return 1;
 
 error2:
 	unlock_pdomain(d);
-	str_free_content(&uid);
 error:
 	send_reply(_m);
 	return 0;

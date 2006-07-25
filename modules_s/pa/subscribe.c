@@ -44,7 +44,6 @@
 #include "../../data_lump_rpl.h"
 #include "presentity.h"
 #include "watcher.h"
-#include "pstate.h"
 #include "notify.h"
 #include "paerrno.h"
 #include "pdomain.h"
@@ -267,7 +266,7 @@ static inline int verify_event_package(int et)
 /*
  * Check if a message received has been constructed properly
  */
-int check_message(struct sip_msg* _m)
+static int check_message(struct sip_msg* _m)
 {
 	int eventtype = 0;
 	int *accepts_mimes = NULL;
@@ -276,7 +275,7 @@ int check_message(struct sip_msg* _m)
 
 	if ((!_m->event) || (!_m->event->parsed)) {
 		paerrno = PA_EXPIRES_PARSE;
-		LOG(L_ERR, "check_message(): Event header field not found\n");
+		ERR("Event header field not found\n");
 		return -1; /* should be verified in parse_hfs before */
 	}
 
@@ -294,7 +293,7 @@ int check_message(struct sip_msg* _m)
 		if (em->event_type == -1) em = NULL;
 	if (!em) {
 		paerrno = PA_EVENT_UNSUPP;
-		LOG(L_ERR, "check_message(): Unsupported event package\n");
+		ERR("Unsupported event package\n");
 		return -1;
 	}
 
@@ -308,13 +307,13 @@ int check_message(struct sip_msg* _m)
 			if (check_mime_types(accepts_mimes, em) == 0) return 0;
 			
 			/* else, none of the mimetypes accepted are generated for this event package */
-			LOG(L_INFO, "check_message(): Accepts %.*s not valid for event package et=%.*s\n",
+			INFO("Accepts %.*s not valid for event package et=%.*s\n",
 				acc->body.len, acc->body.s, _m->event->body.len, _m->event->body.s);
 		}
 		acc = acc->next;
 	}
 	paerrno = PA_WRONG_ACCEPTS;
-	LOG(L_ERR, "no satisfactory document type found\n");
+	ERR("no satisfactory document type found\n");
 	return -1;
 }
 
@@ -350,7 +349,8 @@ static int create_watcher(struct sip_msg* _m, struct watcher** _w)
 		return -3;
 	}
 
-	if (new_watcher_no_wb(&watch_uri, expires, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
+	if (new_watcher_no_wb(&watch_uri, expires, et, acc, dialog, 
+				&watch_dn, &server_contact, NULL, _w) < 0) {
 		ERR("Error while creating watcher\n");
 		tmb.free_dlg(dialog);
 		if (server_contact.s) mem_free(server_contact.s);
@@ -362,38 +362,6 @@ static int create_watcher(struct sip_msg* _m, struct watcher** _w)
 	(*_w)->flags |= WFLAG_SUBSCRIPTION_CHANGED;
 	
 	return 0;
-}
-
-static int append_watcher(presentity_t *_p, watcher_t *_w)
-{
-	int res = 0;
-
-	if (_w->event_package == EVENT_PRESENCE_WINFO)
-		res = add_winfo_watcher(_p, _w);
-	else
-		res = add_watcher(_p, _w);
-	
-	if (res >= 0) res = db_add_watcher(_p, _w);
-	if (res != 0) {
-		if (_w->event_package == EVENT_PRESENCE_WINFO) 
-			remove_winfo_watcher(_p, _w);
-		else remove_watcher(_p, _w);
-	}
-	
-	if (res < 0) {
-		LOG(L_ERR, "create_watcher(): Error while adding watcher\n");
-		paerrno = PA_INTERNAL_ERROR;
-		return -5;
-	}
-	
-	/* changed only when presence watcher added  */
-	if (_w->event_package == EVENT_PRESENCE) {
-		_p->flags |= PFLAG_WATCHERINFO_CHANGED;
-		DEBUG("setting PFLAG_WATCHERINFO_CHANGED\n");
-	}
-
-	return 0;
-
 }
 
 
@@ -422,7 +390,7 @@ int handle_renewal_subscription(struct sip_msg* _m, struct pdomain *d)
 	dlg_id_t dlg_id;
 	int et, e;
 	
-	if (get_presentity_uid(&uid, _m) != 0) {
+	if (get_presentity_uid(&uid, _m) < 0) {
 		ERR("Error while extracting presentity UID\n");
 		paerrno = PA_INTERNAL_ERROR;
 		goto err;
@@ -462,7 +430,10 @@ int handle_renewal_subscription(struct sip_msg* _m, struct pdomain *d)
 			
 			/* remove terminated watcher otherwise he will 
 			 * receive another NOTIFY generated from timer_pdomain */
-			remove_watcher_if_expired(p, w);
+			if (is_watcher_terminated(w)) {
+				remove_watcher(p, w);
+				free_watcher(w);
+			}
 		} 
 	}
 	else {
@@ -470,13 +441,11 @@ int handle_renewal_subscription(struct sip_msg* _m, struct pdomain *d)
 	}
 	
 	unlock_pdomain(d);
-	str_free_content(&uid);
 	
 	return 1;
 
 err2:
 	unlock_pdomain(d);
-	str_free_content(&uid);
 	
 err:
 	set_last_subscription_status(WS_REJECTED);
@@ -511,7 +480,6 @@ presentity_t *get_presentity(struct sip_msg *_m, struct pdomain *d, int allow_cr
 			}
 		}
 	}
-	str_free_content(&uid);
 	return p;
 }
 
@@ -523,7 +491,6 @@ int handle_new_subscription(struct sip_msg* _m, struct pdomain *d)
 	int is_terminated;
 	
 	if (create_watcher(_m, &w) < 0) {
-		/* may fail due to error or authorization rules */
 		ERR("can't create watcher\n");
 		goto err;
 	}
@@ -556,7 +523,7 @@ int handle_new_subscription(struct sip_msg* _m, struct pdomain *d)
 	else {
 		is_terminated = 0;	
 
-		if (append_watcher(p, w) < 0) {
+		if (append_watcher(p, w, 1) < 0) {
 			ERR("can't add watcher\n");
 			goto err3;
 		}

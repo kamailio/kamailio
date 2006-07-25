@@ -1,6 +1,32 @@
+2006-07-24
+	* litle xcap_params optimization (allocation together with parent
+	structure)
+
+2006-07-21
+	* watcher lists replaced by double linked lists (better for remove)
+	* db schema updates
+
+2006-07-20
+	* get_presentity_uid doesn't allocate memory
+	* removed db_update_presentity (only one - ineffective - call replaced by
+	call to db_update_presence_tuple)
+	* improved process_tuple_change - two possible DB updates reduced to one
+	* clarified add_watcher/remove_watcher functions
+	* removed notify_all_watchers, notify_all_winfo_watchers (not called)
+	* removed common.h (function str_append was moved into CDS library is it
+	needed?)
+
+2006-07-19
+	* splitted code from presentity.c and presentity.h into smaller pieces
+	(pres_timer.c/h, tuple.c/h, ...)
+	* finished structures rewriting (joined PA structures with structures
+	from presence library -> no translations between them for presence doc
+	creation)
+
 2006-07-12
 	* improved and tested dialog refreshing (contacts in NOTIFY responses and
 	renewal SUBSCRIBE requests)
+	* ??? PA structures contains common presence structures
 
 2006-07-10
 	* added parameter async_auth_queries for switching between sync/async

@@ -37,11 +37,9 @@
 #include "../../parser/parse_event.h"
 #include "pa_mod.h"
 #include "presentity.h"
-#include "common.h"
 #include "paerrno.h"
 #include "notify.h"
 #include "watcher.h"
-#include "location.h"
 #include "qsa_interface.h"
 
 #include <presence/pidf.h>
@@ -108,7 +106,7 @@ static pa_notify_cb_param_t *create_notify_cb_param(presentity_t *p, watcher_t *
 }
 
 static int get_watcher(pa_notify_cb_param_t *cbd, 
-		watcher_t **w, presentity_t **p, int *events)
+		watcher_t **w, presentity_t **p)
 {
 	int et = EVENT_PRESENCE;
 	
@@ -125,7 +123,6 @@ static int get_watcher(pa_notify_cb_param_t *cbd,
 			return -1;
 		}
 	}
-	if (events) *events = et;
 	return 0;
 }
 
@@ -133,7 +130,6 @@ static void destroy_subscription(pa_notify_cb_param_t *cbd)
 {
 	presentity_t *p = NULL;
 	watcher_t *w = NULL;
-	int et;
 	
 /*	if (find_pdomain(cbd->domain, &domain) != 0) {
 		ERR("can't find PA domain\n");
@@ -141,26 +137,13 @@ static void destroy_subscription(pa_notify_cb_param_t *cbd)
 	} */
 	lock_pdomain(cbd->domain);
 	
-	if (get_watcher(cbd, &w, &p, &et) != 0) {
+	if (get_watcher(cbd, &w, &p) != 0) {
 		unlock_pdomain(cbd->domain);
 		return;
 	}
 	
-	/* have watcher, et and presentity */
-	if (use_db) db_remove_watcher(p, w);
-
-	if (et == EVENT_PRESENCE) {
-		/* presence watcher */
-		p->flags |= PFLAG_WATCHERINFO_CHANGED;
-		remove_watcher(p, w);
-	}
-	else {
-		/* presence winfo watcher */
-		remove_winfo_watcher(p, w);
-	}
-
+	remove_watcher(p, w);
 	free_watcher(w);
-
 
 	unlock_pdomain(cbd->domain);
 	
@@ -172,7 +155,7 @@ static void refresh_dialog(pa_notify_cb_param_t *cbd, struct sip_msg *m)
 	presentity_t *p;
 	
 	lock_pdomain(cbd->domain);
-	if (get_watcher(cbd, &w, &p, NULL) >= 0)
+	if (get_watcher(cbd, &w, &p) >= 0)
 		tmb.dlg_response_uac(w->dialog, m, IS_TARGET_REFRESH);
 	unlock_pdomain(cbd->domain);
 }
@@ -364,34 +347,26 @@ static int prepare_presence_notify(struct retr_buf **dst,
 	str content_type = STR_NULL;
 	str headers = STR_NULL;
 	str body = STR_STATIC_INIT("");
-	presentity_info_t *pinfo = NULL;
 	int res = 0;
 	
-	pinfo = presentity2presentity_info(_p);
-	if (!pinfo) {
-		LOG(L_ERR, "can't create presence document (0)\n");
-		return -1;
-	}
-
 	switch(_w->preferred_mimetype) {
 		case DOC_XPIDF:
-			res = create_xpidf_document(pinfo, &doc, &content_type);
+			res = create_xpidf_document(&_p->data, &doc, &content_type);
 			break;
 
 		case DOC_LPIDF:
-			res = create_lpidf_document(pinfo, &doc, &content_type);
+			res = create_lpidf_document(&_p->data, &doc, &content_type);
 			break;
 		
 		case DOC_CPIM_PIDF:
-			res = create_cpim_pidf_document(pinfo, &doc, &content_type);
+			res = create_cpim_pidf_document(&_p->data, &doc, &content_type);
 			break;
 
 		case DOC_MSRTC_PIDF:
 		case DOC_PIDF:
 		default:
-			res = create_pidf_document(pinfo, &doc, &content_type);
+			res = create_pidf_document(&_p->data, &doc, &content_type);
 	}
-	free_presentity_info(pinfo);
 	
 	if (res != 0) {
 		LOG(L_ERR, "can't create presence document (%d)\n", _w->preferred_mimetype);

@@ -5,27 +5,6 @@
 #include <xcap/pres_rules.h>
 #include <cds/logger.h>
 
-/* static int get_user_from_uri(str *uri, str *user)
-{
-	char *a;
-	char *d;
-	char *s;
-	
-	str_clear(user);
-	if (uri->len > 0) {
-		d = strchr(uri->s, ':');
-		if (d) s = d + 1;
-		else s = uri->s;
-		a = strchr(s, '@');
-		if (a) {
-			user->s = s;
-			user->len = a - s;
-			return 0;
-		}
-	}
-	return -1;
-} */
-
 /* Authorization */
 static watcher_status_t xcap_authorize(presentity_t *p, str *w_uri)
 {
@@ -68,14 +47,14 @@ static watcher_status_t winfo_implicit_auth(presentity_t *p, watcher_t *w)
 	if (get_user_from_uri(&p->uri, p_user) != 0) return WS_REJECTED;
 	if (get_user_from_uri(&w->uri, w_user) != 0) return WS_REJECTED;*/
 
-	if (str_case_equals(&p->uri, &w->uri) == 0) {
+	if (str_case_equals(&p->data.uri, &w->uri) == 0) {
 		DBG("winfo_implicit_auth(%.*s): enabled for %.*s\n", 
-				FMT_STR(p->uri), FMT_STR(w->uri));
+				FMT_STR(p->data.uri), FMT_STR(w->uri));
 		return WS_ACTIVE;
 	}
 	else {
 		DBG("winfo_implicit_auth(%.*s): disabled for %.*s\n", 
-				FMT_STR(p->uri), FMT_STR(w->uri));
+				FMT_STR(p->data.uri), FMT_STR(w->uri));
 		return WS_REJECTED;
 	}
 }

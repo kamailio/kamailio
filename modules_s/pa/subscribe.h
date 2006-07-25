@@ -33,11 +33,6 @@
 #include "../../parser/msg_parser.h"
 
 /*
- * Check if a message received has been constructed properly
- */
-int check_message(struct sip_msg* _m);
-
-/*
  * Handle a subscribe Request
  */
 int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2);

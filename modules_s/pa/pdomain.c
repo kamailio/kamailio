@@ -147,10 +147,11 @@ int timer_pdomain(pdomain_t* _d)
 		/* Remove the entire record
 		 * if it is empty
 		 */
-		if ( (!presentity->watchers) && 
-				(!presentity->winfo_watchers) && 
-				(!presentity->tuples) &&
-				(!presentity->notes) &&
+		if ( (!presentity->first_watcher) && 
+				(!presentity->first_winfo_watcher) && 
+				(!presentity->data.first_tuple) &&
+				(!presentity->data.first_note) &&
+				(!presentity->data.first_person) &&
 				(!presentity->first_qsa_subscription) &&
 				(presentity->ref_cnt == 0)) {
 			LOG(L_DBG, "timer_pdomain(): removing empty presentity\n");
@@ -242,8 +243,8 @@ static void callback(str* _user, str *_contact, int state, void* data)
 	}
 	set_data_destroy_function(msg, (destroy_function_f)free_tuple_change_info_content);
 	info = get_message_data(msg);
-	if (state == 0) info->state = PS_OFFLINE;
-	else info->state = PS_ONLINE;
+	if (state == 0) info->state = presence_tuple_closed;
+	else info->state = presence_tuple_open;
 	str_dup(&info->user, _user);
 	str_dup(&info->contact, _contact);
 	if (data) push_message(&((struct presentity*)data)->mq, msg);
@@ -253,15 +254,13 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	int sl;
 
-	LOG(L_DBG, "add_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
-
 	sl = hash_func(_d, _p->uuid.s, _p->uuid.len);
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
 
 	if (use_callbacks) {
 		DBG("! registering callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
-		_d->reg(&_p->uri, &_p->uuid, (void*)callback, _p);
+		_d->reg(&_p->data.uri, &_p->uuid, (void*)callback, _p);
 	}
 	if (subscribe_to_users) {
 		TRACE("! subscribing to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
@@ -274,7 +273,7 @@ void remove_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	if (use_callbacks) {
 		DBG("! unregistering callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
-		_d->unreg(&_p->uri, &_p->uuid, (void*)callback, _p);
+		_d->unreg(&_p->data.uri, &_p->uuid, (void*)callback, _p);
 		DBG("! unregistered callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
 	}
 	if (subscribe_to_users) {
@@ -282,7 +281,8 @@ void remove_presentity(pdomain_t* _d, struct presentity* _p)
 		unsubscribe_to_user(_p);
 	}
 	
-	LOG(L_DBG, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
+	LOG(L_DBG, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->data.uri.len, 
+			_p->data.uri.s);
 	slot_rem(_p->slot, _p, &_d->first, &_d->last);
 
 	/* remove presentity from database */
