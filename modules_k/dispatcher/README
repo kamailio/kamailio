@@ -98,12 +98,12 @@ Chapter 1. User's Guide
 
    Path to the file with destination sets.
 
-   Default value is "/etc/ser/dispatcher.list" or
-   "/usr/local/etc/ser/dispatcher.list". 
+   Default value is "/etc/openser/dispatcher.list" or
+   "/usr/local/etc/openser/dispatcher.list". 
 
    Example 1-1. Set the "list_file" parameter
 ...
-modparam("dispatcher", "list_file", "/var/run/ser/dispatcher.list")
+modparam("dispatcher", "list_file", "/var/run/openser/dispatcher.list")
 ...
      _________________________________________________________
 
