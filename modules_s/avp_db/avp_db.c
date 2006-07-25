@@ -353,8 +353,6 @@ static int load_attrs(struct sip_msg* msg, char* fl, char* fp)
 static int attrs_fixup(void** param, int param_no)
 {
     unsigned long flags;
-    int ret, err;
-    fparam_t* fp;
     char* s;
     
     if (param_no == 1) {
