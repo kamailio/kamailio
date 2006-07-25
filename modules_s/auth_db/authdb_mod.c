@@ -215,7 +215,6 @@ static int authdb_fixup(void** param, int param_no)
 {
     db_con_t* dbh;
     int ver;
-    str name;
     fparam_t* p;
     
     if (param_no == 1) {
