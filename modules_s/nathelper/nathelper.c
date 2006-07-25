@@ -727,7 +727,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 }
 
 static int sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg) {
-	static char buf[100];
+	static char buf[500];
 	contact_t* c;
 	int n, def_port_fl, len;
 	char *cp;
