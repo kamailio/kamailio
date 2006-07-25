@@ -250,7 +250,6 @@ int lookup2(struct sip_msg* msg, char* table, char* p2)
 	unsigned int nat;
 	str new_uri, aor;
 	fparam_t* fp;
-	int_str val;
 
 	nat = 0;
 	fp = (fparam_t*)p2;
@@ -278,7 +277,7 @@ int lookup2(struct sip_msg* msg, char* table, char* p2)
 	}
 
 	ptr = r->contacts;
-	while ((ptr) && !(VALID_CONTACT(ptr, act_time) && VALID_AOR(ptr, aor)))
+	while (ptr && (!VALID_CONTACT(ptr, act_time) || !VALID_AOR(ptr, aor)))
 	    ptr = ptr->next;
 	
 	if (ptr) {
@@ -389,7 +388,7 @@ int registered2(struct sip_msg* _m, char* _t, char* p2)
 
 	if (res == 0) {
 		ptr = r->contacts;
-		while (ptr && !VALID_CONTACT(ptr, act_time) || !VALID_AOR(ptr, aor)) {
+		while (ptr && (!VALID_CONTACT(ptr, act_time) || !VALID_AOR(ptr, aor))) {
 			ptr = ptr->next;
 		}
 

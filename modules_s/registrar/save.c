@@ -269,7 +269,6 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 	str callid;
 	unsigned int flags;
 	str *recv, *inst;
-	str rcvuri;
 	int num;
 
 	if (isflagset(_m, save_nat_flag) == 1) flags = FL_NAT;

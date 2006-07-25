@@ -52,4 +52,9 @@ int build_contact(ucontact_t* c);
 void free_contact_buf(void);
 
 
+/*
+ * Sets the reason and contact attributes.
+ */
+int setup_attrs(struct sip_msg* msg);
+
 #endif /* REPLY_H */
