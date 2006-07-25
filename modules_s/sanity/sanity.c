@@ -818,7 +818,7 @@ int check_digest(struct sip_msg* msg, int checks)
 	ptr = msg->proxy_auth;
     }
     while(ptr) {
-	if (ret = parse_credentials(ptr) != 0) {
+	if ((ret = parse_credentials(ptr)) != 0) {
 	    DBG("sanity_check(): check_digest: Cannot parse credentials: %d\n", ret);
 	    return SANITY_CHECK_FAILED;
 	}
