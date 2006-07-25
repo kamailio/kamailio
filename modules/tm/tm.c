@@ -810,7 +810,7 @@ inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, ( struct proxy_l *) PROTO_TLS);
+	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_TLS);
 }
 #endif
 
