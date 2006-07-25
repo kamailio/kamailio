@@ -43,6 +43,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest.h"
+#include "../../data_lump.h"
 #include "../../error.h"
 #include "../../ut.h"
 #include "../sl/sl.h"

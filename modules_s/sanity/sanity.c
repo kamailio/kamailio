@@ -151,7 +151,6 @@ int parse_proxyrequire(struct hdr_field* _h) {
 
 /* check the SIP version in the request URI */
 int check_ruri_sip_version(struct sip_msg* _msg) {
-	int ret;
 	char *sep;
 	str version;
 

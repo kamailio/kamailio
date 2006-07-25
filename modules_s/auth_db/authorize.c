@@ -46,6 +46,7 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../config.h"
+#include "../../id.h"
 #include "authdb_mod.h"
 #include "rfc2617.h"
 
@@ -320,7 +321,6 @@ static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_
  */
 int proxy_authenticate(struct sip_msg* msg, char* p1, char* p2)
 {
-    int ret;
     str realm, table;
 
     if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
