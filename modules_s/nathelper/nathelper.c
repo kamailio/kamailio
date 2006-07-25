@@ -863,7 +863,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	int tests;
 
-	tests = (int)(long)str1;
+	if (get_int_fparam(&tests, msg, (fparam_t*) str1) < -1) return -1;
 
 	/* return true if any of the NAT-UAC tests holds */
 
@@ -927,8 +927,8 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	char *buf;
 	struct lump* anchor;
 
-	level = (int)(long)str1;
-
+	if (get_int_fparam(&level, msg, (fparam_t*) str1) < -1) return -1;
+	
 	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
 		return -1;
@@ -1642,7 +1642,7 @@ unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	int node_idx;
 
-	node_idx = (int)(long)str1;
+	if (get_int_fparam(&node_idx, msg, (fparam_t*) str1) < -1) return -1;
 	return unforce_rtp_proxy_f(msg, node_idx);
 }
 
