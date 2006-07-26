@@ -37,7 +37,7 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 {
 	char tmp[64];
 	
-	if (t->status == presence_tuple_closed) return; /* do not append closed tuples */
+	if (t->status.basic == presence_tuple_closed) return; /* do not append closed tuples */
 	
 	dstr_append_zt(buf, "Contact: ");
 	dstr_append_str(buf, &t->contact);

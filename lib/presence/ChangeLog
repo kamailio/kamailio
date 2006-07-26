@@ -1,3 +1,6 @@
+2006-07-26
+	* PIDF extensions support
+
 2006-04-11
 	* reduced memory allocations in QSA
 	* prepared for parameters to QSA subscriptions

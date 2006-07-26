@@ -37,7 +37,7 @@ static str_t open = STR_STATIC_INIT("open");
 static str_t closed = STR_STATIC_INIT("closed");
 static str_t unknown = STR_STATIC_INIT("undefined");
 
-str_t* tuple_status2str(presence_tuple_status_t status)
+str_t* tuple_status2str(basic_tuple_status_t status)
 {
 	switch (status) {
 		case presence_tuple_open: return &open;
@@ -47,7 +47,7 @@ str_t* tuple_status2str(presence_tuple_status_t status)
 	return &unknown;
 }
 
-presence_tuple_status_t str2tuple_status(const str *s)
+basic_tuple_status_t str2tuple_status(const str *s)
 {
 	if (str_nocase_equals(s, &open) == 0) return presence_tuple_open;
 	if (str_nocase_equals(s, &closed) == 0) return presence_tuple_closed;
@@ -78,13 +78,14 @@ presentity_info_t *create_presentity_info(const str_t *presentity_uri)
 	p->first_note = NULL;
 	p->last_note = NULL;
 
-	/* RPID extensions */
-	p->first_person = NULL;
+	/* extensions */
+	p->first_unknown_element = NULL;
+	p->last_unknown_element = NULL;
 	
 	return p;
 }
 
-presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, presence_tuple_status_t status)
+presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, basic_tuple_status_t status)
 {
 	presence_tuple_info_t *t;
 	t = (presence_tuple_info_t*)cds_malloc(sizeof(*t));
@@ -106,10 +107,14 @@ presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, 
 	}
 	t->prev = NULL;
 	t->next = NULL;
-	t->status = status;
+	t->status.basic = status;
+	t->status.first_unknown_element = NULL;
+	t->status.last_unknown_element = NULL;
 	t->priority = 0.0;
 	t->first_note = NULL;
-	t->last_note = NULL;
+	t->last_note = NULL;	
+	t->first_unknown_element = NULL;
+	t->last_unknown_element = NULL;
 	return t;
 }
 
@@ -127,9 +132,19 @@ void free_presence_note(presence_note_t *n)
 	}
 }
 
+void free_extension_element(extension_element_t *p)
+{
+	if (p) {
+		/* TODO: allocate element together with the structure */
+		str_free_content(&p->element);
+	}
+	cds_free(p);
+}
+
 void free_tuple_info(presence_tuple_info_t *t)
 {
 	presence_note_t *n, *nn;
+	extension_element_t *e, *ne;
 	
 	if (!t) return;
 	str_free_content(&t->contact);
@@ -142,25 +157,28 @@ void free_tuple_info(presence_tuple_info_t *t)
 		n = nn;
 	}
 	
-	cds_free(t);
-}
-
-void free_person(person_t *p)
-{
-	if (p) {
-		str_free_content(&p->person_element);
-		str_free_content(&p->id);
-		/* str_free_content(&p->mood);
-		str_free_content(&p->activities); */
+	e = t->first_unknown_element;
+	while (e) {
+		ne = e->next;
+		free_extension_element(e);
+		e = ne;
 	}
-	cds_free(p);
+	
+	e = t->status.first_unknown_element;
+	while (e) {
+		ne = e->next;
+		free_extension_element(e);
+		e = ne;
+	}
+	
+	cds_free(t);
 }
 
 void free_presentity_info(presentity_info_t *p)
 {
 	presence_tuple_info_t *t, *tt;
 	presence_note_t *n, *nn;
-	person_t *np, *ps;
+	extension_element_t *np, *ps;
 	
 	if (!p) return;
 	t = p->first_tuple;
@@ -177,10 +195,10 @@ void free_presentity_info(presentity_info_t *p)
 		n = nn;
 	}
 	
-	ps = p->first_person;
+	ps = p->first_unknown_element;
 	while (ps) {
 		np = ps->next;
-		free_person(ps);
+		free_extension_element(ps);
 		ps = np;
 	}
 	
@@ -259,26 +277,21 @@ presence_note_t *create_presence_note_zt(const char *note, const char *lang)
 	return create_presence_note(&note_s, &lang_s);
 }
 
-person_t *create_person(const str_t *element, const str_t *id)
+extension_element_t *create_extension_element(const str_t *element)
 {
-	person_t *t;
-	t = (person_t*)cds_malloc(sizeof(*t));
+	extension_element_t *t;
+	t = (extension_element_t*)cds_malloc(sizeof(*t));
 	if (!t) {
 		ERROR_LOG("can't allocate memory for person\n");
 		return t;
 	}
-	/* str_clear(&t->contact.s); */
-	if (str_dup(&t->person_element, element) < 0) {
+	if (str_dup(&t->element, element) < 0) {
 		ERROR_LOG("can't duplicate person element\n");
 		cds_free(t);
 		return NULL;
 	}
-	if (str_dup(&t->id, id) < 0) {
-		ERROR_LOG("can't duplicate person element id\n");
-		str_free_content(&t->person_element);
-		cds_free(t);
-		return NULL;
-	}
+	
+	t->prev = NULL;
 	t->next = NULL;
 	return t;
 }
@@ -307,7 +320,7 @@ presentity_info_t *dup_presentity_info(presentity_info_t *p)
 	presentity_info_t *pinfo;
 	presence_tuple_info_t *tinfo, *t;
 	presence_note_t *n, *pan;
-	person_t *ps, *last_ps, *paps;
+	extension_element_t *ps, *paps;
 	int err = 0;
 
 	/* DBG("p2p_info()\n"); */
@@ -322,7 +335,7 @@ presentity_info_t *dup_presentity_info(presentity_info_t *p)
 
 	t = p->first_tuple;
 	while (t) {
-		tinfo = create_tuple_info(&t->contact, &t->id, t->status);
+		tinfo = create_tuple_info(&t->contact, &t->id, t->status.basic);
 		if (!tinfo) {
 			ERROR_LOG("can't create tuple info\n");
 			err = 1;
@@ -336,6 +349,8 @@ presentity_info_t *dup_presentity_info(presentity_info_t *p)
 			err = 1;
 			break;
 		}
+		/* TODO: duplicate status extension elements */
+		/* TODO: duplicate extension elements */
 		t = t->next;
 	}
 
@@ -354,13 +369,13 @@ presentity_info_t *dup_presentity_info(presentity_info_t *p)
 		}
 	}
 	
-	/* person elements */
+	/* extension elements */
 	if (!err) {
-		last_ps = NULL;
-		paps = p->first_person;
+		paps = p->first_unknown_element;
 		while (paps) {
-			ps = create_person(&paps->person_element, &paps->id);
-			if (ps) LINKED_LIST_ADD(pinfo->first_person, last_ps, ps);
+			ps = create_extension_element(&paps->element);
+			if (ps) DOUBLE_LINKED_LIST_ADD(pinfo->first_unknown_element, 
+					pinfo->last_unknown_element, ps);
 			else {
 				ERROR_LOG("can't copy person elements\n");
 				err = 1;

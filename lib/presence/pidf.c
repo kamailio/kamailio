@@ -48,10 +48,16 @@ static void doc_add_tuple_note(dstring_t *buf, presence_note_t *n)
 	dstr_append_zt(buf, "</note>\r\n");
 }
 
+static inline void doc_add_extension(dstring_t *buf, extension_element_t *ex)
+{
+	dstr_append_str(buf, &ex->element);
+	dstr_append_zt(buf, "\r\n");
+}
 
 static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_info_t *t)
 {
 	presence_note_t *n;
+	extension_element_t *e;
 	char tmp[32];
 	
 	DEBUG_LOG("doc_add_tuple()\n");
@@ -60,19 +66,36 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 	dstr_append_str(buf, &t->id);
 	dstr_append_zt(buf, "\">\r\n");
 	
-	if (t->status != presence_tuple_undefined_status) {
+	dstr_append_zt(buf, "\t\t<status>\r\n");
+	if (t->status.basic != presence_tuple_undefined_status) {
 		/* do not add unknown status it is not mandatory in PIDF */
-		dstr_append_zt(buf, "\t\t<status><basic>");
-		dstr_append_str(buf, tuple_status2str(t->status));
-		dstr_append_zt(buf, "</basic></status>\r\n");
+		dstr_append_zt(buf, "\t\t\t<basic>");
+		dstr_append_str(buf, tuple_status2str(t->status.basic));
+		dstr_append_zt(buf, "</basic>\r\n");
+	}
+	/* add extension status elements */
+	e = t->status.first_unknown_element;
+	while (e) {
+		doc_add_extension(buf, e);
+		e = e->next;
+	}
+	dstr_append_zt(buf, "\t\t</status>\r\n");
+	
+	/* add extension elements */
+	e = t->first_unknown_element;
+	while (e) {
+		doc_add_extension(buf, e);
+		e = e->next;
 	}
 
-	dstr_append_zt(buf, "\t\t<contact priority=\"");
-	sprintf(tmp, "%1.2f", t->priority);
-	dstr_append_zt(buf, tmp);
-	dstr_append_zt(buf, "\">");
-	dstr_append_str(buf, &t->contact);
-	dstr_append_zt(buf, "</contact>\r\n");
+	if (!is_str_empty(&t->contact)) {
+		dstr_append_zt(buf, "\t\t<contact priority=\"");
+		sprintf(tmp, "%1.2f", t->priority);
+		dstr_append_zt(buf, tmp);
+		dstr_append_zt(buf, "\">");
+		dstr_append_str(buf, &t->contact);
+		dstr_append_zt(buf, "</contact>\r\n");
+	}
 
 	n = t->first_note;
 	while (n) {
@@ -109,12 +132,6 @@ static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *
 	dstr_append_zt(buf, "</note>\r\n");
 }
 
-static void doc_add_person(dstring_t *buf, presentity_info_t *p, person_t *ps)
-{
-	dstr_append_str(buf, &ps->person_element);
-	dstr_append_zt(buf, "\r\n");
-}
-
 static void dstr_put_pres_uri(dstring_t *buf, str_t *uri)
 {
 	char *c;
@@ -141,7 +158,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 {
 	presence_tuple_info_t *t;
 	presence_note_t *n;
-	person_t *ps;
+	extension_element_t *e;
 
 	DEBUG_LOG("doc_add_presentity()\n");
 	if (use_cpim_pidf_ns)
@@ -168,11 +185,12 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 		n = n->next;
 	}
 	
-	DEBUG_LOG("adding persons\n");
-	ps = p->first_person;
-	while (ps) {
-		doc_add_person(buf, p, ps);
-		ps = ps->next;
+	/* add extension elements */
+	DEBUG_LOG("adding extension elements\n");
+	e = p->first_unknown_element;
+	while (e) {
+		doc_add_extension(buf, e);
+		e = e->next;
 	}
 
 	dstr_append_zt(buf, "</presence>\r\n");
@@ -225,7 +243,7 @@ int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_ty
 
 static char *pidf_ns = "urn:ietf:params:xml:ns:pidf";
 /* static char *rpid_ns = "urn:ietf:params:xml:ns:pidf:rpid"; */
-static char *data_model_ns = "urn:ietf:params:xml:ns:pidf:data-model";
+/* static char *data_model_ns = "urn:ietf:params:xml:ns:pidf:data-model"; */
 
 static int read_note(xmlNode *node, presence_note_t **dst)
 {
@@ -239,94 +257,6 @@ static int read_note(xmlNode *node, presence_note_t **dst)
 	if (!dst) return -1;
 	
 	return 0;
-}
-
-
-static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns)
-{
-	str_t contact, id;
-	presence_tuple_status_t status;
-	xmlNode *n;
-	double priority = 0;
-	const char *s;
-	int res = 0;
-	presence_note_t *note;
-	char *ns = ignore_ns ? NULL: pidf_ns;
-
-	*dst = NULL;
-
-	DEBUG_LOG("read_tuple()\n");
-	/* process contact (only one node) */
-	n = find_node(tuple, "contact", ns);
-	if (!n) {
-		/* ERROR_LOG("contact not found\n"); */
-		str_clear(&contact);
-		/* return -1; */
-	}
-	else {
-		s = get_attr_value(find_attr(n->properties, "priority"));
-		if (s) priority = atof(s);
-		s = get_node_value(n);
-		contact.s = (char *)s;
-		if (s) contact.len = strlen(s);
-		else contact.len = 0;
-		if (contact.len < 1) {
-			ERROR_LOG("empty contact using default\n");
-			/* return -1; */
-		}	
-	}
-	
-	/* process status (only one node) */
-	n = find_node(tuple, "status", ns);
-	if (!n) {
-		ERROR_LOG("status not found\n");
-		return -1;
-	}
-	n = find_node(n, "basic", ns);
-	if (!n) {
-		ERROR_LOG("basic status not found - using \'closed\'\n");
-		/* return -1; */
-		s = "closed";
-	}
-	else s = get_node_value(n);
-	if (!s) {
-		ERROR_LOG("basic status without value\n");
-		return -1;
-	}
-
-	/* translate status */
-	status = presence_tuple_closed; /* default value */
-	if (strcmp(s, "open") == 0) status = presence_tuple_open;
-	if (strcmp(s, "closed") == 0) status = presence_tuple_closed;
-	/* FIXME: handle not standardized variants too (add note to basic status) */
-	
-	/* get ID from tuple node attribute? */
-	id.s = (char *)get_attr_value(find_attr(tuple->properties, "id"));
-	if (id.s) id.len = strlen(id.s);
-	else id.len = 0;
-	
-	*dst = create_tuple_info(&contact, &id, status);
-	if (!(*dst)) return -1;
-
-	(*dst)->priority = priority;
-
-	/* handle notes */
-	n = tuple->children;
-	while (n) {
-		if (n->type == XML_ELEMENT_NODE) {
-			if (cmp_node(n, "note", ns) >= 0) {
-				res = read_note(n, &note);
-				if ((res == 0) && note) {
-					DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
-							(*dst)->last_note, note);
-				}
-				else break;
-			}
-		}
-		n = n->next;
-	}
-
-	return res;
 }
 
 static int get_whole_node_content(xmlNode *n, str_t *dst, xmlDocPtr doc)
@@ -361,45 +291,151 @@ static int get_whole_node_content(xmlNode *n, str_t *dst, xmlDocPtr doc)
 	return res;
 }
 
-static int read_person(xmlNode *person, person_t **dst, xmlDocPtr doc)
+static int read_extension(xmlNode *ex, extension_element_t **dst, xmlDocPtr doc)
 {
-	person_t *p;
+	extension_element_t *e;
 	/* xmlNode *n; */
 
 	if (!dst) return -1;
 	*dst = NULL;
 	
-	p = (person_t*)cds_malloc(sizeof(person_t));
-	if (!p) return -1;
+	e = (extension_element_t*)cds_malloc(sizeof(extension_element_t));
+	if (!e) return -1;
 	
-	memset(p, 0, sizeof(*p));
-	*dst = p;
+	memset(e, 0, sizeof(*e));
+	*dst = e;
 
-	TRACE_LOG("reading person ()\n");
+	TRACE_LOG("reading extension element ()\n");
 	
-	if (str_dup_zt(&p->id, get_attr_value(find_attr(person->properties, "id"))) < 0) {
-		cds_free(p);
-		*dst = NULL;
-		return -1;
-	}
-	
-	/* try to find mood */
-/*	n = find_node(person, "mood", rpid_ns);
-	if (n) get_whole_node_content(n, &p->mood, doc);
-*/	
-	/* try to find activities */
-/*	n = find_node(person, "activities", rpid_ns);
-	if (n) get_whole_node_content(n, &p->activities, doc);
-*/
-	/* do not care about internals of person - take whole element ! */
-	if (get_whole_node_content(person, &p->person_element, doc) != 0) {
-		str_free_content(&p->id);
-		cds_free(p);
+	/* do not care about internals - take whole element ! */
+	if (get_whole_node_content(ex, &e->element, doc) != 0) {
+		cds_free(e);
 		*dst = NULL;
 		return -1;
 	}
 	
 	return 0;
+}
+
+static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns, xmlDocPtr doc)
+{
+	str_t contact, id;
+	basic_tuple_status_t status;
+	xmlNode *n, *status_node;
+	double priority = 0;
+	const char *s;
+	int res = 0;
+	presence_note_t *note;
+	char *ns = ignore_ns ? NULL: pidf_ns;
+	extension_element_t *ex;
+
+	*dst = NULL;
+
+	DEBUG_LOG("read_tuple()\n");
+	/* process contact (only one node) */
+	n = find_node(tuple, "contact", ns);
+	if (!n) {
+		/* ERROR_LOG("contact not found\n"); */
+		str_clear(&contact);
+		/* return -1; */
+	}
+	else {
+		s = get_attr_value(find_attr(n->properties, "priority"));
+		if (s) priority = atof(s);
+		s = get_node_value(n);
+		contact.s = (char *)s;
+		if (s) contact.len = strlen(s);
+		else contact.len = 0;
+		if (contact.len < 1) {
+			ERROR_LOG("empty contact using default\n");
+			/* return -1; */
+		}	
+	}
+	
+	/* process status (only one node) */
+	status_node = find_node(tuple, "status", ns);
+	if (!status_node) {
+		ERROR_LOG("status not found\n");
+		return -1;
+	}
+	n = find_node(status_node, "basic", ns);
+	if (!n) {
+		ERROR_LOG("basic status not found - using \'closed\'\n");
+		/* return -1; */
+		s = "closed";
+	}
+	else s = get_node_value(n);
+	if (!s) {
+		ERROR_LOG("basic status without value\n");
+		return -1;
+	}
+
+	/* translate status */
+	status = presence_tuple_closed; /* default value */
+	if (strcmp(s, "open") == 0) status = presence_tuple_open;
+	if (strcmp(s, "closed") == 0) status = presence_tuple_closed;
+	/* FIXME: handle not standardized variants too (add note to basic status) */
+	
+	/* get ID from tuple node attribute? */
+	id.s = (char *)get_attr_value(find_attr(tuple->properties, "id"));
+	if (id.s) id.len = strlen(id.s);
+	else id.len = 0;
+	
+	*dst = create_tuple_info(&contact, &id, status);
+	if (!(*dst)) return -1;
+
+	(*dst)->priority = priority;
+
+	/* handle nested elements */
+	n = tuple->children;
+	while (n) {
+		if (n->type == XML_ELEMENT_NODE) {
+			if (cmp_node(n, "note", ns) >= 0) {
+				res = read_note(n, &note);
+				if ((res == 0) && note) {
+					DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
+							(*dst)->last_note, note);
+				}
+				else break;
+			}
+			else if (cmp_node(n, "contact", ns) >= 0) {
+				/* skip, already processed */
+			}
+			else if (cmp_node(n, "status", ns) >= 0) {
+				/* skip, already processed */
+			}	
+			else if (cmp_node(n, "timestamp", ns) >= 0) {
+				/* FIXME: process */
+			}
+			else { /* PIDF extensions - only from non-PIDF namespace? */
+				res = read_extension(n, &ex, doc);
+				if ((res == 0) && ex) 
+					DOUBLE_LINKED_LIST_ADD((*dst)->first_unknown_element, 
+							(*dst)->last_unknown_element, ex);
+			}
+		}
+		n = n->next;
+	}
+	
+	/* handle nested elements in status */
+	if (status_node) n = status_node->children;
+	else n = NULL;
+	while (n) {
+		if (n->type == XML_ELEMENT_NODE) {
+			if (cmp_node(n, "basic", ns) >= 0) {
+				/* skip, already processed */
+			}
+			else { /* PIDF extensions - only from non-PIDF namespace? */
+				res = read_extension(n, &ex, doc);
+				if ((res == 0) && ex) 
+					DOUBLE_LINKED_LIST_ADD((*dst)->status.first_unknown_element, 
+							(*dst)->status.last_unknown_element, ex);
+			}
+		}
+		n = n->next;
+	}
+
+	return res;
 }
 
 static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns, xmlDocPtr doc)
@@ -410,9 +446,9 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	presence_note_t *note;
 	int res = 0;
 	char *ns = ignore_ns ? NULL: pidf_ns;
-	person_t *p, *lastp;
+	extension_element_t *ex;
 	
-	DEBUG_LOG("read_presentity(ns=%s)\n", ns ? ns : "");
+	TRACE_LOG("read_presentity(ns=%s)\n", ns ? ns : "");
 	if (cmp_node(root, "presence", ns) < 0) {
 		ERROR_LOG("document is not presence \n");
 		return -1;
@@ -422,30 +458,27 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	*dst = create_presentity_info(&entity);
 	if (!(*dst)) return -1; /* memory */
 
-	lastp = NULL;
 	n = root->children;
 	while (n) {
 		if (n->type == XML_ELEMENT_NODE) {
 			if (cmp_node(n, "tuple", ns) >= 0) {
-				res = read_tuple(n, &t, ignore_ns);
+				res = read_tuple(n, &t, ignore_ns, doc);
 				if ((res == 0) && t) add_tuple_info(*dst, t);
 				else break;
 			}
-			if (cmp_node(n, "note", ns) >= 0) {
-				res = read_note(n, &note);
-				if ((res == 0) && note) {
-					DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
-							(*dst)->last_note, note);
+			else if (cmp_node(n, "note", ns) >= 0) {
+					res = read_note(n, &note);
+					if ((res == 0) && note) {
+						DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
+								(*dst)->last_note, note);
+					}
+					else break;
 				}
-				else break;
-			}
-			
-			/* RPID extensions */
-			if (cmp_node(n, "person", data_model_ns) >= 0) {
-				p = NULL;
-				res = read_person(n, &p, doc);
-				if ((res == 0) && p) 
-					LINKED_LIST_ADD((*dst)->first_person, lastp, p);
+			else { /* PIDF extensions - only from non-PIDF namespace? */
+				res = read_extension(n, &ex, doc);
+				if ((res == 0) && ex) 
+					DOUBLE_LINKED_LIST_ADD((*dst)->first_unknown_element, 
+							(*dst)->last_unknown_element, ex);
 				/*if (res != 0) break; ignore errors there */
 			}
 			
@@ -466,12 +499,14 @@ int parse_pidf_document_ex(presentity_info_t **dst, const char *data, int data_l
 	if ((!data) || (data_len < 1)) return -2;
 
 	*dst = NULL;
+	TRACE_LOG("parsing document\n");
 	doc = xmlReadMemory(data, data_len, NULL, NULL, xml_parser_flags);
 	if (doc == NULL) {
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+	TRACE_LOG("document parsed\n");
+
 	res = read_presentity(xmlDocGetRootElement(doc), dst, ignore_ns, doc);
 	if (res != 0) {
 		/* may be set => must be freed */

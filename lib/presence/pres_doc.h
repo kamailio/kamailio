@@ -40,7 +40,7 @@ typedef enum {
 	presence_tuple_open,
 	presence_tuple_closed,
 	presence_tuple_undefined_status
-} presence_tuple_status_t;
+} basic_tuple_status_t;
 
 typedef enum {
 	presence_auth_rejected,
@@ -49,35 +49,34 @@ typedef enum {
 	presence_auth_granted
 } presence_authorization_status_t;
 
+/* additional data which need not to be understood by us */
+typedef struct _extension_element_t {
+	str_t element;
+	/* TODO: add mustUnderstand attribute and its handling */
+	struct _extension_element_t *next, *prev; /* there can be more person elements in PIDF */
+} extension_element_t;
+
+typedef struct {
+	basic_tuple_status_t basic;
+	extension_element_t *first_unknown_element, *last_unknown_element;
+} presence_tuple_status_t;
+
 typedef struct _presence_tuple_info_t {
 	str_t contact;
 	str_t id;
 	double priority;
 	presence_tuple_status_t status;
+	extension_element_t *first_unknown_element, *last_unknown_element;
 	struct _presence_tuple_info_t *next, *prev;
 	presence_note_t *first_note, *last_note;/* published notes */
+	/* TODO: add timestamp element */
 } presence_tuple_info_t;
-
-/* additional data taken from RPID specification */
-typedef struct _person_t {
-	str_t id;
-
-	/* mood has absolutely no value for our processing - 
-	 * we hold there the content of <mood> element */
-/*	str_t mood;*/
-	
-	/* other such element */
-/*	str_t activities;*/
-	str_t person_element;
-
-	struct _person_t *next, *prev; /* there can be more person elements in PIDF */
-} person_t;
 
 typedef struct {
 	str_t uri; /* do not modify this !*/
 	presence_tuple_info_t *first_tuple, *last_tuple;
 	presence_note_t *first_note, *last_note;/* published notes */
-	person_t *first_person, *last_person;
+	extension_element_t *first_unknown_element, *last_unknown_element;
 		
 	char presentity_data[1];
 } presentity_info_t;
@@ -99,7 +98,7 @@ typedef struct {
 } presence_info_t;
 
 presentity_info_t *create_presentity_info(const str_t *presentity);
-presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, presence_tuple_status_t status);
+presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, basic_tuple_status_t status);
 void add_tuple_info(presentity_info_t *p, presence_tuple_info_t *t);
 void free_presentity_info(presentity_info_t *p);
 
@@ -110,13 +109,14 @@ presence_note_t *create_presence_note(const str_t *note, const str_t *lang);
 presence_note_t *create_presence_note_zt(const char *note, const char *lang);
 void free_presence_note(presence_note_t *n);
 
-person_t *create_person(const str_t *element, const str_t *id);
+extension_element_t *create_extension_element(const str_t *element);
+void free_extension_element(extension_element_t *p);
 
 /** returns pointer to constant string (do not free it!),
  * the return value is never NULL */
-str_t* tuple_status2str(presence_tuple_status_t status);
+str_t* tuple_status2str(basic_tuple_status_t status);
 
-presence_tuple_status_t str2tuple_status(const str *s);
+basic_tuple_status_t str2tuple_status(const str *s);
 
 /* duplicates presentity info */
 presentity_info_t *dup_presentity_info(presentity_info_t *p);

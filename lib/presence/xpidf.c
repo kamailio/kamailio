@@ -71,7 +71,7 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 	sprintf(tmp, "%1.2f", t->priority);
 	dstr_append_zt(buf, tmp);
 	dstr_append_zt(buf, "\">\r\n");
-	if (t->status == presence_tuple_open) dstr_append_zt(buf, "\t\t\t<status status=\"open\"/>\r\n");
+	if (t->status.basic == presence_tuple_open) dstr_append_zt(buf, "\t\t\t<status status=\"open\"/>\r\n");
 	else dstr_append_zt(buf, "\t\t\t<status status=\"closed\"/>\r\n");
 	dstr_append_zt(buf, "\t\t</address>\r\n");
 

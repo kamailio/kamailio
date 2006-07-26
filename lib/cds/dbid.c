@@ -1,4 +1,5 @@
 #include <cds/dbid.h>
+#include <cds/logger.h>
 #include <time.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -9,7 +10,7 @@ void generate_dbid_ptr(dbid_t dst, void *data_ptr)
 {
 	/* TODO: add cluster distinctive member */
 	/* FIXME: replace sprintf by something more effective */
-	snprintf(dst, sizeof(dst), "%px%xx%x", 
+	snprintf(dst, MAX_DBID_LEN, "%px%xx%x", 
 			data_ptr, (int)time(NULL), rand());
 }
 
@@ -27,7 +28,7 @@ void generate_dbid(dbid_t dst)
 
 	/* TODO: add cluster distinctive member */
 	/* FIXME: replace sprintf by something more effective */
-	snprintf(dst, sizeof(dst), "%xy%xy%xy%x", 
+	snprintf(dst, MAX_DBID_LEN, "%xy%xy%xy%x", 
 			my_pid, cntr++, (int)time(NULL), rand());
 }
 

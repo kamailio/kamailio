@@ -32,7 +32,7 @@ void generate_dbid(dbid_t dst);
 
 /** Copies dbid as string into destination. The destination string
  * data buffer MUST be allocated in needed size! */
-#define dbid_strcpy(dst,id,len) memcpy((dst)->s,id,len)
+#define dbid_strcpy(dst,id,l) do { memcpy((dst)->s,id,l); (dst)->len = l; } while (0)
 
 #ifdef __cplusplus
 }
