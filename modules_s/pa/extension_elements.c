@@ -1,12 +1,12 @@
 #include "presentity.h"
-#include "person_elements.h"
+#include "extension_elements.h"
 #include "pa_mod.h"
 #include <cds/logger.h>
 #include <cds/list.h>
 
 /* DB manipulation */
 
-static int db_add_person_element(presentity_t *p, pa_person_element_t *n)
+static int db_add_extension_element(presentity_t *p, pa_extension_element_t *n)
 {
 	db_key_t cols[20];
 	db_val_t vals[20];
@@ -34,16 +34,10 @@ static int db_add_person_element(presentity_t *p, pa_person_element_t *n)
 	vals[n_updates].val.str_val = n->etag;
 	n_updates++;
 
-	cols[n_updates] = "person_element";
+	cols[n_updates] = "element";
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.blob_val = n->data.person_element;
-	n_updates++;
-	
-	cols[n_updates] = "id";
-	vals[n_updates].type = DB_STR;
-	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->data.id;
+	vals[n_updates].val.blob_val = n->data.element;
 	n_updates++;
 	
 	cols[n_updates] = "expires";
@@ -54,20 +48,20 @@ static int db_add_person_element(presentity_t *p, pa_person_element_t *n)
 	
 	/* run update */
 	
-	if (pa_dbf.use_table(pa_db, person_elements_table) < 0) {
-		LOG(L_ERR, "db_add_person_element: Error in use_table\n");
+	if (pa_dbf.use_table(pa_db, extension_elements_table) < 0) {
+		LOG(L_ERR, "db_add_extension_element: Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.insert(pa_db, cols, vals, n_updates) < 0) {
-		LOG(L_ERR, "db_add_person_element: Can't insert record\n");
+		LOG(L_ERR, "db_add_extension_element: Can't insert record\n");
 		return -1;
 	}
 	
 	return 0;
 }
 
-static int db_remove_person_element(presentity_t *p, pa_person_element_t *n)
+static int db_remove_extension_element(presentity_t *p, pa_extension_element_t *n)
 {
 	db_key_t keys[] = { "pres_id", "etag", "dbid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
@@ -78,20 +72,20 @@ static int db_remove_person_element(presentity_t *p, pa_person_element_t *n)
 	
 	if (!use_db) return 0;
 
-	if (pa_dbf.use_table(pa_db, person_elements_table) < 0) {
-		LOG(L_ERR, "db_remove_person_element: Error in use_table\n");
+	if (pa_dbf.use_table(pa_db, extension_elements_table) < 0) {
+		LOG(L_ERR, "db_remove_extension_element: Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.delete(pa_db, keys, ops, k_vals, 3) < 0) {
-		LOG(L_ERR, "db_remove_person_element: Can't delete record\n");
+		LOG(L_ERR, "db_remove_extension_element: Can't delete record\n");
 		return -1;
 	}
 	
 	return 0;
 }
 
-int db_update_person_element(presentity_t *p, pa_person_element_t *n)
+int db_update_extension_element(presentity_t *p, pa_extension_element_t *n)
 {
 	db_key_t cols[20];
 	db_val_t vals[20];
@@ -106,16 +100,10 @@ int db_update_person_element(presentity_t *p, pa_person_element_t *n)
 	
 	if (!use_db) return 0;
 
-	cols[n_updates] = "person_element";
+	cols[n_updates] = "extension_element";
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.blob_val = n->data.person_element;
-	n_updates++;
-	
-	cols[n_updates] = "id";
-	vals[n_updates].type = DB_STR;
-	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->data.id;
+	vals[n_updates].val.blob_val = n->data.element;
 	n_updates++;
 	
 	cols[n_updates] = "expires";
@@ -124,8 +112,8 @@ int db_update_person_element(presentity_t *p, pa_person_element_t *n)
 	vals[n_updates].val.time_val = n->expires;
 	n_updates++;	
 	
-	if (pa_dbf.use_table(pa_db, person_elements_table) < 0) {
-		LOG(L_ERR, "db_remove_person_element: Error in use_table\n");
+	if (pa_dbf.use_table(pa_db, extension_elements_table) < 0) {
+		LOG(L_ERR, "db_remove_extension_element: Error in use_table\n");
 		return -1;
 	}
 
@@ -138,7 +126,7 @@ int db_update_person_element(presentity_t *p, pa_person_element_t *n)
 	return 0;
 }
 
-int db_read_person_elements(presentity_t *p, db_con_t* db)
+int db_read_extension_elements(presentity_t *p, db_con_t* db)
 {
 	db_key_t keys[] = { "pres_id" };
 	db_op_t ops[] = { OP_EQ };
@@ -148,32 +136,32 @@ int db_read_person_elements(presentity_t *p, db_con_t* db)
 	int r = 0;
 	db_res_t *res = NULL;
 	db_key_t result_cols[] = { "dbid", "etag", 
-		"person_element", "id", "expires"
+		"extension_element", "id", "expires"
 	};
 	
 	if (!use_db) return 0;
 
-	if (pa_dbf.use_table(db, person_elements_table) < 0) {
-		LOG(L_ERR, "db_read_person_elements: Error in use_table\n");
+	if (pa_dbf.use_table(db, extension_elements_table) < 0) {
+		LOG(L_ERR, "db_read_extension_elements: Error in use_table\n");
 		return -1;
 	}
 	
 	if (pa_dbf.query (db, keys, ops, k_vals,
 			result_cols, 1, sizeof(result_cols) / sizeof(db_key_t), 
 			0, &res) < 0) {
-		LOG(L_ERR, "db_read_person_elements(): Error while querying presence person_elements\n");
+		LOG(L_ERR, "db_read_extension_elements(): Error while querying presence extension_elements\n");
 		return -1;
 	}
 
 	if (!res) return 0; /* ? */
 	
 	for (i = 0; i < res->n; i++) {
-		pa_person_element_t *n = NULL;
+		pa_extension_element_t *n = NULL;
 		db_row_t *row = &res->rows[i];
 		db_val_t *row_vals = ROW_VALUES(row);
 		str dbid = STR_NULL; 
 		str etag = STR_NULL;
-		str person_element = STR_NULL;
+		str extension_element = STR_NULL;
 		str id = STR_NULL;
 		time_t expires = 0;
 		
@@ -183,16 +171,16 @@ int db_read_person_elements(presentity_t *p, db_con_t* db)
 
 		get_str_val(0, dbid);
 		get_str_val(1, etag);
-		get_blob_val(2, person_element);
+		get_blob_val(2, extension_element);
 		get_str_val(3, id);
 		get_time_val(4, expires);
 		
 #undef get_str_val		
 #undef get_time_val		
 
-		n = create_person_element(&etag, &person_element, &id, expires, &dbid);
-		if (n) DOUBLE_LINKED_LIST_ADD(p->data.first_person, 
-				p->data.last_person, (person_t*)n);	
+		n = create_pa_extension_element(&etag, &extension_element, expires, &dbid);
+		if (n) DOUBLE_LINKED_LIST_ADD(p->data.first_unknown_element, 
+				p->data.last_unknown_element, (extension_element_t*)n);	
 	}
 	
 	pa_dbf.free_result(db, res);
@@ -200,47 +188,42 @@ int db_read_person_elements(presentity_t *p, db_con_t* db)
 	return r;
 }
 
-/* in memory presence person_elements manipulation */
+/* in memory presence extension_elements manipulation */
 
-void add_person_element(presentity_t *_p, pa_person_element_t *n)
+void add_extension_element(presentity_t *_p, pa_extension_element_t *n)
 {
-	DOUBLE_LINKED_LIST_ADD(_p->data.first_person, 
-		_p->data.last_person, (person_t*)n);	
-	if (use_db) db_add_person_element(_p, n); 
+	DOUBLE_LINKED_LIST_ADD(_p->data.first_unknown_element, 
+		_p->data.last_unknown_element, (extension_element_t*)n);	
+	if (use_db) db_add_extension_element(_p, n); 
 }
 
-void remove_person_element(presentity_t *_p, pa_person_element_t *n)
+void remove_extension_element(presentity_t *_p, pa_extension_element_t *n)
 {
-	DOUBLE_LINKED_LIST_REMOVE(_p->data.first_person, _p->data.last_person, 
-			(person_t*)n);
+	DOUBLE_LINKED_LIST_REMOVE(_p->data.first_unknown_element, 
+			_p->data.last_unknown_element, 
+			(extension_element_t*)n);
 
-	if (use_db) db_remove_person_element(_p, n);
-	free_person_element(n);
+	if (use_db) db_remove_extension_element(_p, n);
+	free_pa_extension_element(n);
 }
 	
-void free_person_element(pa_person_element_t *n)
+void free_pa_extension_element(pa_extension_element_t *n)
 {
-	if (n) {
-		str_free_content(&n->etag);
-		str_free_content(&n->data.person_element);
-		str_free_content(&n->data.id);
-		str_free_content(&n->dbid);
-		mem_free(n);
-	}
+	if (n) mem_free(n);
 }
 
-int remove_person_elements(presentity_t *p, str *etag)
+int remove_extension_elements(presentity_t *p, str *etag)
 {
-	pa_person_element_t *n, *nn;
+	pa_extension_element_t *n, *nn;
 	int found = 0;
 
-	n = (pa_person_element_t*)p->data.first_person;
+	n = (pa_extension_element_t*)p->data.first_unknown_element;
 	while (n) {
-		nn = (pa_person_element_t*)n->data.next;
+		nn = (pa_extension_element_t*)n->data.next;
 		if (str_case_equals(&n->etag, etag) == 0) {
 			/* remove this */
 			found++;
-			remove_person_element(p, n);
+			remove_extension_element(p, n);
 		}
 		n = nn;
 	}
@@ -248,10 +231,11 @@ int remove_person_elements(presentity_t *p, str *etag)
 	return found;
 }
 
-pa_person_element_t *create_person_element(str *etag, str *person_element, str *id, 
+pa_extension_element_t *create_pa_extension_element(str *etag, 
+		str *extension_element, 
 		time_t expires, str *dbid)
 {
-	pa_person_element_t *pan;
+	pa_extension_element_t *pan;
 	int size;
 	
 	if (!dbid) {
@@ -259,11 +243,12 @@ pa_person_element_t *create_person_element(str *etag, str *person_element, str *
 		return NULL;
 	}
 	
-	size = sizeof(pa_person_element_t);
+	size = sizeof(pa_extension_element_t);
 	if (dbid) size += dbid->len;
 	if (etag) size += etag->len;
+	if (extension_element) size += extension_element->len;
 
-	pan = (pa_person_element_t*)mem_alloc(size);
+	pan = (pa_extension_element_t*)mem_alloc(size);
 	if (!pan) {
 		ERR("can't allocate memory: %d\n", size);
 		return pan;
@@ -271,23 +256,22 @@ pa_person_element_t *create_person_element(str *etag, str *person_element, str *
 
 	memset(pan, 0, sizeof(*pan));
 	
-	/* FIXME: don't allocate person_element separately */
-	str_dup(&pan->data.person_element, person_element);
-	str_dup(&pan->data.id, id);
-	
 	pan->expires = expires;
 	
-	pan->dbid.s = (char*)pan + sizeof(pa_person_element_t);
+	pan->dbid.s = (char*)pan + sizeof(pa_extension_element_t);
 	if (dbid) str_cpy(&pan->dbid, dbid);
 	else pan->dbid.len = 0;
 	
 	pan->etag.s = after_str_ptr(&pan->dbid);
 	str_cpy(&pan->etag, etag);
+	
+	pan->data.element.s = after_str_ptr(&pan->etag);
+	str_cpy(&pan->data.element, extension_element);
 
 	return pan;
 }
 
-pa_person_element_t *person_element2pa(person_t *n, str *etag, time_t expires)
+pa_extension_element_t *extension_element2pa(extension_element_t *n, str *etag, time_t expires)
 {
 	dbid_t id;
 	str s;
@@ -295,6 +279,6 @@ pa_person_element_t *person_element2pa(person_t *n, str *etag, time_t expires)
 	generate_dbid(id);
 	s.len = dbid_strlen(id);
 	s.s = dbid_strptr(id);
-	return create_person_element(etag, &n->person_element, &n->id, expires, &s);
+	return create_pa_extension_element(etag, &n->element, expires, &s);
 }
 

@@ -151,7 +151,7 @@ int timer_pdomain(pdomain_t* _d)
 				(!presentity->first_winfo_watcher) && 
 				(!presentity->data.first_tuple) &&
 				(!presentity->data.first_note) &&
-				(!presentity->data.first_person) &&
+				(!presentity->data.first_unknown_element) &&
 				(!presentity->first_qsa_subscription) &&
 				(presentity->ref_cnt == 0)) {
 			LOG(L_DBG, "timer_pdomain(): removing empty presentity\n");

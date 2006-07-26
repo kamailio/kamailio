@@ -52,7 +52,7 @@
 #include "publish.h"
 #include "tuple.h"
 #include "pres_notes.h"
-#include "person_elements.h"
+#include "extension_elements.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/parse_sipifmatch.h"
 
@@ -179,17 +179,17 @@ static void add_presentity_notes(presentity_t *presentity, presentity_info_t *p,
 	}
 }
 
-static void add_person_elements(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
+static void add_extension_elements(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
 {
-	person_t *n;
-	pa_person_element_t *pan;
+	extension_element_t *n;
+	pa_extension_element_t *pan;
 
 	if (!p) return;
 	
-	n = p->first_person;
+	n = p->first_unknown_element;
 	while (n) {
-		pan = person_element2pa(n, etag, expires);
-		if (pan) add_person_element(presentity, pan);
+		pan = extension_element2pa(n, etag, expires);
+		if (pan) add_extension_element(presentity, pan);
 		n = n->next;
 	}
 }
@@ -289,17 +289,17 @@ static int update_pres_notes(presentity_t *p, str *etag, time_t expires)
 	return found;
 }
 
-static int update_person_elements(presentity_t *p, str *etag, time_t expires)
+static int update_extension_elements(presentity_t *p, str *etag, time_t expires)
 {
 	int found = 0;
-	pa_person_element_t *person = get_first_person(p);
-	while (person) {
-		if (str_case_equals(&person->etag, etag) == 0) {
-			person->expires = expires;
-			db_update_person_element(p, person);
+	pa_extension_element_t *e = (pa_extension_element_t *)p->data.first_unknown_element;
+	while (e) {
+		if (str_case_equals(&e->etag, etag) == 0) {
+			e->expires = expires;
+			db_update_extension_element(p, e);
 			found++;
 		}
-		person = get_next_person(person);
+		e = (pa_extension_element_t *)e->data.next;
 	}
 	return found;
 }
@@ -317,26 +317,26 @@ int process_published_presentity_info(presentity_t *presentity, presentity_info_
 		/* add all tuples */
 		add_published_tuples(presentity, p, etag, expires);
 
-		/* add all person elements (RPID) */
-		add_person_elements(presentity, p, etag, expires);
+		/* add all extension elements (RPID) */
+		add_extension_elements(presentity, p, etag, expires);
 	}
 	else {
 		if (p) {
 			/* remove all notes for this etag */
 			remove_pres_notes(presentity, etag);
 			
-			/* remove all person elements (RPID) */
-			remove_person_elements(presentity, etag);
+			/* remove all extension elements (RPID) */
+			remove_extension_elements(presentity, etag);
 		
 			/* add all notes for presentity */
 			add_presentity_notes(presentity, p, etag, expires);
 			update_published_tuples(presentity, p, etag, expires);
-			add_person_elements(presentity, p, etag, expires);
+			add_extension_elements(presentity, p, etag, expires);
 		}
 		else {
 			/* all expirations must be refreshed, nothing cleared */
 			update_all_published_tuples(presentity, etag, expires);
-			update_person_elements(presentity, etag, expires);
+			update_extension_elements(presentity, etag, expires);
 			update_pres_notes(presentity, etag, expires);
 		}
 	}
@@ -383,7 +383,7 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 		etag.s = dbid_strptr(generated_etag);
 		has_etag = 0;
 	}
-				
+
 	if (body_len > 0) {
 		switch (content_type) {
 			case MIMETYPE(APPLICATION,PIDFXML):
@@ -399,8 +399,8 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 				}
 				break;
 			default:
-				LOG(L_ERR, "unsupported Content-Type \'%.*s\' (0x%x) for PUBLISH handling\n", 
-						FMT_STR(_m->content_type->body), content_type);
+				LOG(L_ERR, "unsupported Content-Type 0x%x for PUBLISH handling\n", 
+						content_type);
 				paerrno = PA_UNSUPP_DOC;
 		}
 		

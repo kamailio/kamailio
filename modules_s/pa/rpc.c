@@ -19,12 +19,13 @@ extern dlist_t* root; /* FIXME ugly !!!!! */
 
 static void trace_tuple(presence_tuple_t *t, rpc_t* rpc, void* c) {
 	presence_note_t *n;
+	extension_element_t *ps;
 	
 	rpc->printf(c, "    %.*s contact=\'%.*s\' exp=%u "
 			"status=%d published=%d (id=%.*s)", 
 				FMT_STR(t->data.id), 
 				FMT_STR(t->data.contact), t->expires - time(NULL),
-				(int)t->data.status, 
+				(int)t->data.status.basic, 
 				t->is_published, FMT_STR(t->published_id));
 	rpc_lf(rpc, c);
 	
@@ -34,8 +35,31 @@ static void trace_tuple(presence_tuple_t *t, rpc_t* rpc, void* c) {
 		rpc->printf(c, " \'%.*s\'", FMT_STR(n->value));
 		n = n->next;
 	}
-	rpc->printf(c, "");
 	rpc_lf(rpc, c);
+
+	rpc->printf(c, "      extension elements:");
+	rpc_lf(rpc, c);
+	ps = t->data.first_unknown_element;
+	while (ps) {
+		rpc_lf(rpc, c);
+		rpc->printf(c, "<![CDATA[     %.*s]]>", FMT_STR(ps->element));
+		rpc_lf(rpc, c);
+		ps = ps->next;
+	}
+	rpc_lf(rpc, c);
+
+	rpc->printf(c, "      status extension elements:");
+	rpc_lf(rpc, c);
+	ps = t->data.status.first_unknown_element;
+	while (ps) {
+		rpc_lf(rpc, c);
+		rpc->printf(c, "<![CDATA[     %.*s]]>", FMT_STR(ps->element));
+		rpc_lf(rpc, c);
+		ps = ps->next;
+	}
+	rpc_lf(rpc, c);
+	
+	rpc->printf(c, "");
 }
 
 static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
@@ -44,7 +68,7 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	presence_tuple_t *t;
 	internal_pa_subscription_t *iw;
 	pa_presence_note_t *n;
-	pa_person_element_t *ps;
+	pa_extension_element_t *ps;
 	
 	rpc->printf(c, "* %.*s (uid=%.*s)", FMT_STR(p->data.uri), 
 			FMT_STR(p->uuid));
@@ -99,16 +123,15 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	}
 	rpc_lf(rpc, c);
 	
-	rpc->printf(c, " - person elements:");
+	rpc->printf(c, " - extension elements:");
 	rpc_lf(rpc, c);
-	ps = get_first_person(p);
+	ps = get_first_extension(p);
 	while (ps) {
-		rpc->printf(c, "     %.*s exp=%s %.*s", 
-				FMT_STR(ps->data.id), ctime(&ps->expires));
+		rpc->printf(c, "     exp=%d", (int)(ps->expires - time(NULL)));
 		rpc_lf(rpc, c);
-		rpc->printf(c, "     %.*s", FMT_STR(ps->data.person_element));
+		rpc->printf(c, "<![CDATA[     %.*s]]>", FMT_STR(ps->data.element));
 		rpc_lf(rpc, c);
-		ps = get_next_person(ps);
+		ps = get_next_extension(ps);
 	}
 	rpc_lf(rpc, c);
 }

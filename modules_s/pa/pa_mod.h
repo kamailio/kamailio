@@ -63,10 +63,12 @@ extern str pa_domain;
 extern char *presentity_table;
 extern char *presentity_contact_table;
 extern char *presentity_notes_table;
-extern char *person_elements_table;
+extern char *extension_elements_table;
 extern char *watcherinfo_table;
 extern char *place_table;
 extern char *tuple_notes_table;
+extern char *tuple_extensions_table;
+
 extern int use_bsearch;
 extern int use_location_package;
 extern auth_params_t pa_auth_params;

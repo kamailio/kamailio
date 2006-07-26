@@ -66,19 +66,18 @@ typedef struct {
 	str dbid; /* id for database ops - needed for removing expired notes -> constant for note life */
 } pa_presence_note_t;
 
-/* FIXME: change pa_person_element_t to pa_extension_element_t */
-typedef struct _pa_person_element_t {
-	person_t data;
+typedef struct _pa_extension_element_t {
+	extension_element_t data;
 
 	str etag; /* published via this etag -> constant for structure life */
 	time_t expires; /* expires on ... */
 	str dbid; /* id for database ops - needed for removing expired  -> constant for structure life */
-} pa_person_element_t;
+} pa_extension_element_t;
 
 typedef struct {
 	str user;
 	str contact;
-	presence_tuple_status_t state;
+	basic_tuple_status_t state;
 } tuple_change_info_t;
 
 struct pdomain;
@@ -149,8 +148,8 @@ typedef struct presentity {
 #define get_first_note(p)	((pa_presence_note_t*)(p->data.first_note))
 #define get_next_note(n)	((pa_presence_note_t*)(n->data.next))
 
-#define get_first_person(p)	((pa_person_element_t*)(p->data.first_person))
-#define get_next_person(pe)	((pa_person_element_t*)(pe->data.next))
+#define get_first_extension(p)	((pa_extension_element_t*)(p->data.first_unknown_element))
+#define get_next_extension(pe)	((pa_extension_element_t*)(pe->data.next))
 
 /** Create a new presentity. */
 int new_presentity(struct pdomain *pdomain, str* _uri, str *uid, 

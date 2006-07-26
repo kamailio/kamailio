@@ -4,6 +4,7 @@
 #include "pa_mod.h"
 #include "tuple.h"
 #include "tuple_notes.h"
+#include "tuple_extensions.h"
 
 void add_presence_tuple_no_wb(presentity_t *_p, presence_tuple_t *_t);
 
@@ -49,7 +50,7 @@ int new_presence_tuple(str* _contact, time_t expires,
 	}
 	memset(tuple, 0, sizeof(presence_tuple_t));
 
-	tuple->data.status = presence_tuple_undefined_status;
+	tuple->data.status.basic = presence_tuple_undefined_status;
 	
 	tuple->data.id.s = ((char*)tuple) + sizeof(presence_tuple_t);
 	if (id) str_cpy(&tuple->data.id, id);
@@ -120,7 +121,7 @@ int db_read_tuples(presentity_t *_p, db_con_t* db)
 		db_row_t *row = &res->rows[i];
 		db_val_t *row_vals = ROW_VALUES(row);
 		str contact = STR_NULL;
-		presence_tuple_status_t basic = presence_tuple_undefined_status;
+		basic_tuple_status_t basic = presence_tuple_undefined_status;
 		str status = STR_NULL; 
 		str location = STR_NULL; 
 		str id = STR_NULL; 
@@ -151,7 +152,7 @@ int db_read_tuples(presentity_t *_p, db_con_t* db)
 		r = new_presence_tuple(&contact, expires, &tuple, 1, &id, 
 				&published_id, &etag) | r;
 		if (tuple) {
-			tuple->data.status = basic;
+			tuple->data.status.basic = basic;
 			LOG(L_DBG, "read tuple %.*s\n", id.len, id.s);
 			tuple->data.priority = priority;
 
@@ -186,7 +187,7 @@ static int set_tuple_db_data(presentity_t *_p, presence_tuple_t *tuple,
 	cols[n_updates] = "basic";
 	vals[n_updates].type = DB_INT;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.int_val = tuple->data.status;
+	vals[n_updates].val.int_val = tuple->data.status.basic;
 	n_updates++;
 
 	cols[n_updates] = "contact";
@@ -337,7 +338,7 @@ void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t)
 void free_presence_tuple(presence_tuple_t * _t)
 {
 	if (_t) {
-		if (!_t->is_published) {
+		if (_t->is_published) {
 			/* Warning: not-published tuples have contact allocated
 			 * together with other data => contact can't change! */
 			str_free_content(&_t->data.contact);
@@ -408,49 +409,75 @@ presence_tuple_t *find_published_tuple(presentity_t *presentity, str *etag, str 
 	return NULL;
 }
 
+static inline void dup_tuple_notes(presence_tuple_t *dst, presence_tuple_info_t *src)
+{
+	presence_note_t *n, *nn;
+	n = src->first_note;
+	while (n) {
+		nn = create_presence_note(&n->value, &n->lang);
+		if (nn) add_tuple_note_no_wb(dst, nn);
+		n = n->next;
+	}
+}
+	
+static inline void dup_tuple_extensions(presence_tuple_t *dst, presence_tuple_info_t *src)
+{
+	extension_element_t *e, *ne;
+
+	e = src->first_unknown_element;
+	while (e) {
+		ne = create_extension_element(&e->element);
+		if (ne) add_tuple_extension_no_wb(dst, ne, 0);
+		
+		e = e->next;
+	}
+	
+	/* add new extensions for tuple status */
+	e = src->status.first_unknown_element;
+	while (e) {
+		ne = create_extension_element(&e->element);
+		if (ne) add_tuple_extension_no_wb(dst, ne, 1);
+		
+		e = e->next;
+	}
+}
+
 presence_tuple_t *presence_tuple_info2pa(presence_tuple_info_t *i, str *etag, time_t expires)
 {
 	presence_tuple_t *t = NULL;
-	presence_note_t *n, *nn;
 	int res;
 			
 	/* ID for the tuple is newly generated ! */
 	res = new_presence_tuple(&i->contact, expires, &t, 1, NULL, &i->id, etag);
 	if (res != 0) return NULL;
 	t->data.priority = i->priority;
-	t->data.status = i->status;
+	t->data.status.basic = i->status.basic;
 
 	/* add notes for tuple */
-	n = i->first_note;
-	while (n) {
-		nn = create_presence_note(&n->value, &n->lang);
-		if (nn) add_tuple_note_no_wb(t, nn);
-		n = n->next;
-	}
+	dup_tuple_notes(t, i);
+
+	/* add all extension elements */
+	dup_tuple_extensions(t, i);
+
 	return t;
 }
 
 void update_tuple(presentity_t *p, presence_tuple_t *t, presence_tuple_info_t *i, time_t expires)
 {
-	presence_note_t *n, *nn;
-	
 	t->expires = expires;
 	t->data.priority = i->priority;
-	t->data.status = i->status;
+	t->data.status.basic = i->status.basic;
 	
-	/* FIXME: enable other changes like contact ??? */
+	str_free_content(&t->data.contact);
+	str_dup(&t->data.contact, &i->contact);
 
-	/* remove all old notes for this tuple */
+	/* remove all old notes and extension elements for this tuple */
 	free_tuple_notes(t);
+	free_tuple_extensions(t);
 		
-	/* add new notes for tuple */
-	n = i->first_note;
-	while (n) {
-		nn = create_presence_note(&n->value, &n->lang);
-		if (nn) add_tuple_note_no_wb(t, nn);
-		
-		n = n->next;
-	}
+	/* add new notes and new extension elemens for tuple */
+	dup_tuple_notes(t, i);
+	dup_tuple_extensions(t, i);
 
 	if (use_db) db_update_presence_tuple(p, t, 1);
 }

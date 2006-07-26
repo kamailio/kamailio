@@ -1,3 +1,7 @@
+2006-07-26
+	* first step for PIDF extensions support (storing/loading into/from DB not
+	finished yet)
+
 2006-07-24
 	* litle xcap_params optimization (allocation together with parent
 	structure)

@@ -26,7 +26,7 @@ presence_tuple_t *find_online_tuple(presentity_t *p,
 	else t = get_first_tuple(p);
 	
 	while (t) {
-		switch (t->data.status) {
+		switch (t->data.status.basic) {
 			case presence_tuple_open: return t;
 			/* TODO: what about other state values? */
 			default: break;

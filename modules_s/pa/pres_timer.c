@@ -5,7 +5,7 @@
 #include "async_auth.h"
 #include "tuple.h"
 #include "pres_notes.h"
-#include "person_elements.h"
+#include "extension_elements.h"
 
 static void process_watchers(presentity_t* _p, int *changed)
 {
@@ -141,16 +141,16 @@ static void remove_expired_notes(presentity_t *_p)
 	}
 }
 
-static void remove_expired_person_elements(presentity_t *_p)
+static void remove_expired_extension_elements(presentity_t *_p)
 {
-	pa_person_element_t *n, *nn;
+	pa_extension_element_t *n, *nn;
 
-	n = (pa_person_element_t *)_p->data.first_person;
+	n = (pa_extension_element_t *)_p->data.first_unknown_element;
 	while (n) {
-		nn = (pa_person_element_t *)n->data.next;
+		nn = (pa_extension_element_t *)n->data.next;
 		if (n->expires < act_time) {
-			DBG("Expiring person element %.*s\n", FMT_STR(n->data.id));
-			remove_person_element(_p, n);
+			DBG("Expiring person element %.*s\n", FMT_STR(n->dbid));
+			remove_extension_element(_p, n);
 			_p->flags |= PFLAG_PRESENCE_CHANGED;
 		}
 		n = nn;
@@ -172,7 +172,7 @@ static inline int refresh_auth_rules(presentity_t *p)
 static void process_tuple_change(presentity_t *p, tuple_change_info_t *info)
 {
 	presence_tuple_t *tuple = NULL;
-	presence_tuple_status_t orig;
+	basic_tuple_status_t orig;
 	time_t e;
 
 	DBG("processing tuple change message: %.*s, %.*s, %d\n",
@@ -199,18 +199,18 @@ static void process_tuple_change(presentity_t *p, tuple_change_info_t *info)
 		new_presence_tuple(&info->contact, e, &tuple, 0, NULL, NULL, NULL);
 		if (!tuple) return; /* error */
 		
-		tuple->data.status = info->state;
+		tuple->data.status.basic = info->state;
 		add_presence_tuple(p, tuple);
 		p->flags |= PFLAG_PRESENCE_CHANGED;
 	}
 	else {
 		/* tuple found -> update */
-		orig = tuple->data.status;
-		tuple->data.status = info->state;
+		orig = tuple->data.status.basic;
+		tuple->data.status.basic = info->state;
 		tuple->expires = e;
 		db_update_presence_tuple(p, tuple, 0);
 			
-		if (orig != tuple->data.status) p->flags |= PFLAG_PRESENCE_CHANGED;
+		if (orig != tuple->data.status.basic) p->flags |= PFLAG_PRESENCE_CHANGED;
 	}
 }
 
@@ -264,7 +264,7 @@ int timer_presentity(presentity_t* _p)
 	remove_expired_tuples(_p, NULL);
 	
 	remove_expired_notes(_p);
-	remove_expired_person_elements(_p);
+	remove_expired_extension_elements(_p);
 	
 	/* notify watchers and remove expired */
 	process_watchers(_p, NULL);	
