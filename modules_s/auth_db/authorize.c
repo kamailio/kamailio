@@ -302,7 +302,9 @@ static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_
 	    ret = -1;
 	    break;
 	}
-    }
+    } else {
+		ret = -1;
+	}
     
  end:
     if (result) auth_dbf.free_result(auth_db_handle, result);
