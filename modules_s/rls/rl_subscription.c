@@ -400,6 +400,8 @@ static void rls_notify_cb(struct cell* t, int type, struct tmcb_params* params)
 			TRACE("subscription destroyed!!!\n");
 		}
 	}
+
+	mem_free(cbd);
 }
 
 static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
