@@ -124,15 +124,15 @@ int xcap_query_impl(const char *uri, xcap_query_params_t *params, char **buf, in
 
 	i = 0;
 	if (params) {
-		if (params->auth_user) i += strlen(params->auth_user);
-		if (params->auth_pass) i += strlen(params->auth_pass);
+		i += params->auth_user.len;
+		i += params->auth_pass.len;
 	}
 	if (i > 0) {
 		/* do authentication */
-		auth = (char *)cds_malloc(i + 2);
+		auth = (char *)cds_malloc_pkg(i + 2);
 		if (!auth) return -1;
-		sprintf(auth, "%s:%s", params->auth_user ? params->auth_user: "",
-				params->auth_pass ? params->auth_pass: "");
+		sprintf(auth, "%.*s:%.*s", FMT_STR(params->auth_user),
+				FMT_STR(params->auth_pass));
 	}
 
 	auth_methods = CURLAUTH_BASIC | CURLAUTH_DIGEST;
@@ -193,7 +193,7 @@ int xcap_query_impl(const char *uri, xcap_query_params_t *params, char **buf, in
 	}
 	else TRACE_LOG("curl error: %d\n", res); /* see curl/curl.h for possible values*/
 	dstr_destroy(&data);
-	if (auth) cds_free(auth);
+	if (auth) cds_free_pkg(auth);
 	return res;
 }
 
