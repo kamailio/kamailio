@@ -27,6 +27,9 @@
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
+ * 2006-07-26 added BPCHAROID as a valid type for DB_STRING conversions
+ *            this removes the "unknown type 1042" log messages (norm)
+
  *
  */
 
@@ -104,6 +107,7 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 			break;
 
 			case VARCHAROID:
+			case BPCHAROID:
 			case TEXTOID:
 				RES_TYPES(_r)[i] = DB_STRING;
 			break;
