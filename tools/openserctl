@@ -1686,7 +1686,7 @@ want to proceed? [Y|N] " > /dev/stderr
 			if [ $# -eq 2 ] ; then
 				shift
 				set_user $1
-				$CMDCTL ul_rm $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN"
+				$CTLCMD ul_rm $USRLOC_TABLE "$OSERUSER@$OSERDOMAIN"
 
 			elif [ $# -eq 3 ] ; then
 				shift
