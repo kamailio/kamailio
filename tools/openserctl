@@ -1162,8 +1162,8 @@ rpid() {
 					merr "rpid - invalid user '$2'"
 					exit 1;
 				fi
-				CLAUSE=" WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND \
-$REALM_COLUMN='$SERDOMAIN' "
+				CLAUSE=" WHERE $SUBSCRIBER_COLUMN='$OSERUSER' AND \
+$REALM_COLUMN='$OSERDOMAIN' "
 			elif [ $# -ne 1 ] ; then
 				usage_rpid
 				exit 1
@@ -1202,14 +1202,14 @@ $CLAUSE ; "
 			fi
 
 			QUERY="UPDATE $SUB_TABLE SET $RPID_COLUMN=$RPID_VAL \
-WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN';"
+WHERE $SUBSCRIBER_COLUMN='$OSERUSER' AND $REALM_COLUMN='$OSERDOMAIN';"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "rpid - SQL Error"
 				exit 1
 			fi
 
-			$0 rpid show "$SERUSER@$SERDOMAIN"
+			$0 rpid show "$OSERUSER@$OSERDOMAIN"
 
 			;;
 
