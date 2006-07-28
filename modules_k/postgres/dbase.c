@@ -27,6 +27,9 @@
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
+ * 2006-07-28 within get_result(): added check to immediatly return of no result set was returned 
+ *                                 added check to only execute convert_result() if PGRES_TUPLES_OK
+ *                                 added safety check to avoid double free_result() (norm)
  *
  */
 
@@ -741,21 +744,39 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
  */
 int get_result(db_con_t* _h, db_res_t** _r)
 {
+        ExecStatusType pqresult;
+
 	*_r = new_result_pg(CON_SQLURL(_h));
 
 	if (!CON_RESULT(_h)) {
 		LOG(L_ERR, "get_result(): error");
-		free_result(*_r);
+		if (*_r) free_result(*_r);
 		*_r = 0;
 		return -3;
 	}
 
-        if (convert_result(_h, *_r) < 0) {
-		LOG(L_ERR, "get_result(): Error while converting result\n");
-		free_result(*_r);
-		*_r = 0;
+        pqresult = PQresultStatus(CON_RESULT(_h));
 
-		return -4;
+        if (pqresult == PGRES_COMMAND_OK) {
+                /* Successful completion of a command returning no data (such as INSERT or UPDATE). */
+		return 0;
+        }
+
+        if (pqresult == PGRES_TUPLES_OK) {
+                /* Successful completion of a command returning data (such as a SELECT or SHOW). */
+
+        	if (convert_result(_h, *_r) < 0) {
+			LOG(L_ERR, "get_result(): Error while converting result\n");
+			if (*_r) free_result(*_r);
+			*_r = 0;
+
+			return -4;
+		}
+	} else {
+                LOG(L_ERR, "get_result(): postgres PQresultStatus not handled\n");
+                if (*_r) free_result(*_r);
+                *_r = 0;
+                return -5;
 	}
 
 	return 0;

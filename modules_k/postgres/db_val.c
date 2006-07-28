@@ -302,7 +302,6 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
-		LOG(L_ERR, "val2str(): converting %s, %d\n", VAL_STRING(_v), l);
 		if (*_len < (l + 3)) {
 			LOG(L_ERR, "val2str(): Destination buffer too short for string\n");
 			return -4;
