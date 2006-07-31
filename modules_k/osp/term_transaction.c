@@ -95,9 +95,13 @@ int validateospheader (
 
     if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction) != 0)) {
         LOG(L_ERR, "osp: ERROR: failed to create a new OSP transaction handle (%d)\n", errorcode);
-    } else if (ospGetFromUserpart(msg, dest.calling, sizeof(dest.calling)) != 0) {
+    } else if ((ospGetRpidUserpart(msg, dest.calling, sizeof(dest.calling)) != 0) && 
+        (ospGetFromUserpart(msg, dest.calling, sizeof(dest.calling)) != 0))
+    {
         LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
-    } else if (ospGetUriUserpart(msg, dest.called, sizeof(dest.called)) != 0) {
+    } else if ((ospGetUriUserpart(msg, dest.called, sizeof(dest.called)) != 0) &&
+        (ospGetToUserpart(msg, dest.called, sizeof(dest.called)) != 0))
+    {
         LOG(L_ERR, "osp: ERROR: failed to extract called number\n");
     } else if (ospGetCallId(msg, &callid) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract call id\n");

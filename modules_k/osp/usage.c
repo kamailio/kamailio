@@ -48,7 +48,7 @@
 extern char* _osp_device_ip;
 extern OSPTPROVHANDLE _osp_provider;
 extern str OSP_ORIGDEST_LABEL;
-extern struct rr_binds osp_rrb;
+extern struct rr_binds osp_rr;
 
 static void ospRecordTransaction(struct sip_msg* msg, OSPTTRANHANDLE transaction, char* uac, char* from, char* to, time_t authtime, int isorig);
 static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID* callid, int release, int isorig);
@@ -80,7 +80,7 @@ static void ospRecordTransaction(
 
     LOG(L_DBG, "osp: ospRecordTransaction\n");
 
-    if (osp_rrb.add_rr_param == 0) {
+    if (osp_rr.add_rr_param == 0) {
         LOG(L_WARN,
             "osp: WARN: add_rr_param function is not found, "
             "cannot record information about the "
@@ -107,7 +107,7 @@ static void ospRecordTransaction(
     }
 
     LOG(L_DBG, "osp: adding RR parameter '%s'\n", buffer);
-    osp_rrb.add_rr_param(msg, &s);
+    osp_rr.add_rr_param(msg, &s);
 }
 
 /*
@@ -227,10 +227,11 @@ static int ospReportUsageFromCookie(
 
     ospGetSourceAddress(msg, firstvia, sizeof(firstvia));
     ospGetFromUserpart(msg, from, sizeof(from));
-    ospGetUriUserpart(msg, to, sizeof(to));
+    if (ospGetUriUserpart(msg, to, sizeof(to)) != 0) {
+        ospGetToUserpart(msg, to, sizeof(to));
+    }
     ospGetNextHop(msg, nexthop, sizeof(nexthop));
 
-    
     if (release == OSP_RELEASE_ORIG) {
         LOG(L_INFO,
             "osp: originator '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",

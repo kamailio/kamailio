@@ -39,8 +39,8 @@
 #include "usage.h"
 
 /* Name of AVP item of OSP */
-str OSP_ORIGDEST_LABEL = {"_orig_osp_dests_", 16};
-str OSP_TERMDEST_LABEL = {"_term_osp_dests_", 16};
+str OSP_ORIGDEST_LABEL = {"_osp_orig_dests_", 16};
+str OSP_TERMDEST_LABEL = {"_osp_term_dests_", 16};
 
 static int ospSaveDestination(osp_dest* dest, str* label);
 static osp_dest* ospGetLastOrigDestination(void);

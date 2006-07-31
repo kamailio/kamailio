@@ -33,6 +33,7 @@
 #include "../../dset.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
+#include "../auth/api.h"
 #include "orig_transaction.h"
 #include "destination.h"
 #include "osptoolkit.h"
@@ -43,14 +44,17 @@ extern char* _osp_device_ip;
 extern char* _osp_device_port;
 extern int _osp_max_dests;
 extern OSPTPROVHANDLE _osp_provider;
+extern auth_api_t osp_auth;
 
 const int OSP_FIRST_ROUTE = 1;
 const int OSP_NEXT_ROUTE = 0;
 const int OSP_MAIN_ROUTE = 1;
 const int OSP_BRANCH_ROUTE = 0;
+const str OSP_CALLING_NAME = {"_osp_calling_translated_", 24};
 
 static int ospLoadRoutes(struct sip_msg* msg, OSPTTRANHANDLE transaction, int destcount, char* source, char* sourcedev, time_t authtime);
 static int ospPrepareDestination(struct sip_msg* msg, int isfirst, int type);
+static int ospSetRpid(struct sip_msg* msg, osp_dest* dest);
 
 /*
  * Get routes from AuthRsp
@@ -74,8 +78,8 @@ static int ospLoadRoutes(
     int errorcode;
     osp_dest* dest;
     osp_dest dests[OSP_DEF_DESTS];
-	OSPE_DEST_PROT protocol;
-	OSPE_DEST_OSP_ENABLED enabled;
+    OSPE_DEST_PROT protocol;
+    OSPE_DEST_OSP_ENABLED enabled;
     int result = MODULE_RETURNCODE_TRUE;
     
     LOG(L_DBG, "osp: ospLoadRoutes\n");
@@ -142,30 +146,28 @@ static int ospLoadRoutes(
 
         errorcode = OSPPTransactionGetDestProtocol(transaction, &protocol);
         if (errorcode != 0) {
-            LOG(L_ERR, "osp: ERROR: failed to get dest protocol (%d)\n", errorcode);
-            result = MODULE_RETURNCODE_FALSE;
-            break;
-        } else {
-            switch (protocol) {
-                case OSPE_DEST_PROT_H323_LRQ:
-                case OSPE_DEST_PROT_H323_SETUP:
-                case OSPE_DEST_PROT_IAX:
-                    dest->supported = 0;
-                    break;
-                case OSPE_DEST_PROT_SIP:
-                case OSPE_DEST_PROT_UNDEFINED:
-                case OSPE_DEST_PROT_UNKNOWN:
-                default:
-                    dest->supported = 1;
-                    break;
-            }
+            /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
+            LOG(L_DBG, "osp: cannot get dest protocol (%d)\n", errorcode);
+            protocol = OSPE_DEST_PROT_SIP;
+        }
+        switch (protocol) {
+            case OSPE_DEST_PROT_H323_LRQ:
+            case OSPE_DEST_PROT_H323_SETUP:
+            case OSPE_DEST_PROT_IAX:
+                dest->supported = 0;
+                break;
+            case OSPE_DEST_PROT_SIP:
+            case OSPE_DEST_PROT_UNDEFINED:
+            case OSPE_DEST_PROT_UNKNOWN:
+            default:
+                dest->supported = 1;
+                break;
         }
 
         errorcode = OSPPTransactionIsDestOSPEnabled(transaction, &enabled);
         if (errorcode != 0) {
-            LOG(L_ERR, "osp: ERROR: failed to get dest OSP version (%d)\n", errorcode);
-            result = MODULE_RETURNCODE_FALSE;
-            break;
+            /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
+            LOG(L_DBG, "osp: cannot get dest OSP version (%d)\n", errorcode);
         } else if (enabled == OSPE_OSP_FALSE) {
             /* Destination device does not support OSP. Do not send token to it */
             dest->token[0] = '\0';
@@ -254,9 +256,13 @@ int requestosprouting(
 
     if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction)) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to create new OSP transaction (%d)\n", errorcode);
-    } else if (ospGetFromUserpart(msg, source, sizeof(source)) != 0) {
+    } else if ((ospGetRpidUserpart(msg, source, sizeof(source)) != 0) &&
+        (ospGetFromUserpart(msg, source, sizeof(source)) != 0)) 
+    {
         LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
-    } else if (ospGetUriUserpart(msg, destination, sizeof(destination)) != 0) {
+    } else if ((ospGetUriUserpart(msg, destination, sizeof(destination)) != 0) &&
+        (ospGetToUserpart(msg, destination, sizeof(destination)) != 0)) 
+    {
         LOG(L_ERR, "osp: ERROR: failed to extract called number\n");
     } else if (ospGetCallId(msg, &(callids[0])) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract call id\n");
@@ -347,7 +353,7 @@ int requestosprouting(
 
 /*
  * Check if there is a route
- * param msg ISP message
+ * param msg SIP message
  * param ignore1
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
@@ -367,6 +373,97 @@ int checkosproute(
 }
 
 /*
+ * Create RPID AVP
+ * param msg SIP message
+ * param dest Destination structure
+ * return 0 success, 1 calling number same, -1 failure
+ */
+static int ospSetRpid(
+    struct sip_msg* msg, 
+    osp_dest* dest)
+{
+    str rpid;
+    char calling[OSP_STRBUF_SIZE];
+    char source[OSP_STRBUF_SIZE];
+    char buffer[OSP_STRBUF_SIZE];
+    int result = -1;
+
+    LOG(L_DBG, "osp: ospSetRpid\n");
+
+    if ((ospGetRpidUserpart(msg, calling, sizeof(calling)) != 0) &&
+        (ospGetFromUserpart(msg, calling, sizeof(calling)) !=0))
+    {
+        LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
+        return result;
+    } 
+
+    if (strcmp(calling, dest->calling) == 0) {
+        /* Do nothing for this case */ 
+        result = 1;
+    } else if ((osp_auth.rpid_avp.s.s == NULL) || (osp_auth.rpid_avp.s.len == 0)) {
+        LOG(L_WARN, "osp: WARN: rpid_avp is not foune, cannot set rpid avp\n");
+        result = -1;
+    } else {
+        if (dest->source[0] == '[') {
+            /* Strip "[]" */
+            strncpy(source, &dest->source[1], sizeof(source));
+            source[strlen(source) - 1] = '\0';
+        }
+    
+        snprintf(
+            buffer, 
+            sizeof(buffer), 
+            "\"%s\" <sip:%s@%s>", 
+            dest->calling, 
+            dest->calling, 
+            source);
+
+        rpid.s = buffer;
+        rpid.len = strlen(buffer);
+        add_avp(osp_auth.rpid_avp_type | AVP_VAL_STR, (int_str)osp_auth.rpid_avp, (int_str)rpid);
+
+        result = 0;
+    }
+
+    return result;
+}
+
+/*
+ * Check if the calling number is translated.
+ *     This function checks the avp set by ospPrepareDestination.
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return MODULE_RETURNCODE_TRUE calling number translated MODULE_RETURNCODE_FALSE without transaltion
+ */
+int checkcallingtranslation(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    struct usr_avp* callingavp = NULL;
+    int_str callingval;
+    int result = MODULE_RETURNCODE_FALSE;
+
+    LOG(L_DBG, "osp: checkcallingtranslation\n");
+
+    callingavp = search_first_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, NULL, 0);
+    if (callingavp != NULL) {
+        get_avp_val(callingavp, &callingval);
+        if (callingval.n == 0) {
+            LOG(L_DBG, "osp: the calling number does not been translated\n");
+        } else {
+            LOG(L_DBG, "osp: the calling number is translated\n");
+            result = MODULE_RETURNCODE_TRUE;
+        }
+    } else {
+        LOG(L_ERR, "osp: ERROR: there is not calling translation avp\n");
+    }
+
+    return result;
+}
+
+/*
  * Build SIP message for destination
  * param msg SIP message
  * param isfirst Is first destination
@@ -379,6 +476,8 @@ static int ospPrepareDestination(
     int type)
 {
     str newuri = {NULL, 0};
+    int_str val;
+    int res;
     int result = MODULE_RETURNCODE_TRUE;
 
     LOG(L_DBG, "osp: ospPrepareDestination\n");
@@ -404,9 +503,31 @@ static int ospPrepareDestination(
             }
             /* Do not add route specific OSP information */
         } else if (type == OSP_BRANCH_ROUTE) {
-            rewrite_uri(msg, &newuri);
             /* For branch route, add route specific OSP information */
+
+            /* Update the Request-Line */
+            rewrite_uri(msg, &newuri);
+
+            /* Add OSP token header */
             ospAddOspHeader(msg, dest->token, dest->tokensize);
+
+            /* Add rpid avp for calling number translation */
+            res = ospSetRpid(msg, dest);
+            switch (res) {
+                case 0:
+                    /* Calling number is translated */
+                    val.n = 1;
+                    add_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, val);
+                    break;
+                default:
+                    LOG(L_DBG, "osp: cannot set rpid avp\n");
+                    /* Just like without calling translation */
+                case 1:
+                    /* Calling number does not been translated */
+                    val.n = 0;
+                    add_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, val);
+                    break;
+            }
         } else {
             LOG(L_ERR, "osp: ERROR: unsupported route block type\n");
         }
@@ -428,7 +549,7 @@ static int ospPrepareDestination(
 /*
  * Prepare OSP route
  *     This function only works in branch route block.
- * param msg ISP message
+ * param msg SIP message
  * param ignore1
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
@@ -451,7 +572,7 @@ int prepareosproute(
 /*
  * Prepare all OSP routes
  *     This function does not work in branch route block.
- * param msg ISP message
+ * param msg SIP message
  * param ignore1
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure

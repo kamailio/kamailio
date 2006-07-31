@@ -38,6 +38,7 @@
 #define OSP_HEADER_SIZE         strlen(OSP_TOKEN_HEADER)
 
 int ospGetFromUserpart(struct sip_msg* msg, char* fromuser, int buffersize);
+int ospGetRpidUserpart(struct sip_msg* msg, char* fromuser, int buffersize);
 int ospGetToUserpart(struct sip_msg* msg, char* touser, int buffersize);
 int ospGetUriUserpart(struct sip_msg* msg, char* touser, int buffersize);
 int ospAddOspHeader(struct sip_msg* msg, unsigned char* token, unsigned int tokensize);

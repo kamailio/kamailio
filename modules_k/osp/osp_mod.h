@@ -37,15 +37,16 @@
 
 #define OSP_DEF_SPS                     2
 #define OSP_DEF_WEIGHT                  1000
+#define OSP_DEF_HW                      0
+#define OSP_DEF_CALLID                  1    /* Validate call ids, set to 0 to disable */
+#define OSP_DEF_TOKEN                   2
 #define OSP_DEF_SSLLIFE                 300
 #define OSP_DEF_PERSISTENCE             (60 * 1000)
 #define OSP_DEF_DELAY                   0
 #define OSP_DEF_RETRY                   2
 #define OSP_DEF_TIMEOUT                 (60 * 1000)
 #define OSP_DEF_DESTS                   5
-#define OSP_DEF_TOKEN                   2
-#define OSP_DEF_HW                      0
-#define OSP_DEF_CALLID                  1    /* Validate call ids, set to 0 to disable */
+#define OSP_DEF_USERPID                 1
 
 #define OSP_KEYBUF_SIZE                 256
 #define OSP_STRBUF_SIZE                 256

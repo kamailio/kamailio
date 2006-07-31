@@ -34,6 +34,7 @@
 
 #include <osp/osp.h>
 #include "../rr/api.h"
+#include "../auth/api.h"
 #include "osp_mod.h"
 #include "orig_transaction.h"
 #include "term_transaction.h"
@@ -45,26 +46,28 @@ MODULE_VERSION
 
 extern char* _osp_sp_uris[];
 extern unsigned long _osp_sp_weights[];
+extern char* _osp_device_ip;
+extern char* _osp_device_port;
 extern unsigned char* _osp_private_key;
 extern unsigned char* _osp_local_certificate;
 extern unsigned char* _osp_ca_certificate;
-extern char* _osp_device_ip;
-extern char* _osp_device_port;
+extern int _osp_crypto_hw;
+extern int _osp_validate_callid;
+extern int _osp_token_format;
 extern int _osp_ssl_lifetime;
 extern int _osp_persistence;
 extern int _osp_retry_delay;
 extern int _osp_retry_limit;
 extern int _osp_timeout;
 extern int _osp_max_dests;
-extern int _osp_token_format;
-extern int _osp_crypto_hw;
-extern int _osp_validate_callid;
+extern int _osp_use_rpid;
 extern char _osp_PRIVATE_KEY[];
 extern char _osp_LOCAL_CERTIFICATE[];
 extern char _osp_CA_CERTIFICATE[];
 extern OSPTPROVHANDLE _osp_provider;
 
-struct rr_binds osp_rrb;
+struct rr_binds osp_rr;
+auth_api_t osp_auth;
 
 static int ospInitMod(void);
 static void ospDestMod(void);
@@ -73,13 +76,14 @@ static int  ospVerifyParameters(void);
 static void ospDumpParameters(void);
 
 static cmd_export_t cmds[]={
-    {"checkospheader",       checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"validateospheader",    validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"requestosprouting",    requestosprouting,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"checkosproute",        checkosproute,        0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"prepareosproute",      prepareosproute,      0, 0, BRANCH_ROUTE}, 
-    {"prepareallosproutes",  prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"reportospusage",       reportospusage,       1, 0, REQUEST_ROUTE}, 
+    {"checkospheader",          checkospheader,             0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"validateospheader",       validateospheader,          0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"requestosprouting",       requestosprouting,          0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"checkosproute",           checkosproute,              0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"prepareosproute",         prepareosproute,            0, 0, BRANCH_ROUTE}, 
+    {"checkcallingtranslation", checkcallingtranslation,    0, 0, BRANCH_ROUTE}, 
+    {"prepareallosproutes",     prepareallosproutes,        0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"reportospusage",          reportospusage,             1, 0, REQUEST_ROUTE}, 
     {0, 0, 0, 0, 0}
 };
 
@@ -102,6 +106,7 @@ static param_export_t params[]={
     {"retry_limit",                    INT_PARAM, &_osp_retry_limit},
     {"timeout",                        INT_PARAM, &_osp_timeout},
     {"max_destinations",               INT_PARAM, &_osp_max_dests},
+    {"use_rpid_for_calling_number",    INT_PARAM, &_osp_use_rpid},
     {0,0,0} 
 };
 
@@ -122,6 +127,8 @@ struct module_exports exports = {
  */
 static int ospInitMod(void)
 {
+    bind_auth_t bind_auth;
+
     LOG(L_DBG, "osp: ospInitMod\n");
 
     if (ospVerifyParameters() != 0) {
@@ -130,10 +137,18 @@ static int ospInitMod(void)
     }
 
     /* Load the RR API */
-    if (load_rr_api(&osp_rrb) != 0) {
+    if (load_rr_api(&osp_rr) != 0) {
         LOG(L_WARN, "osp: WARN: failed to load RR API\n");
         LOG(L_WARN, "osp: WARN: add_rr_param is required for reporting duration for OSP transactions\n");
-        memset(&osp_rrb, 0, sizeof(osp_rrb));
+        memset(&osp_rr, 0, sizeof(osp_rr));
+    }
+
+    /* Load the AUTH API */
+    bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+    if ((bind_auth == NULL) || (bind_auth(&osp_auth) != 0)) {
+        LOG(L_WARN, "osp: WARN: failed to load AUTH API\n");
+        LOG(L_WARN, "osp: WARN: rpid_avp & rpid_avp_type is required for calling number translation\n");
+        memset(&osp_auth, 0, sizeof(osp_auth));
     }
 
     if (ospInitTm() < 0) {
@@ -257,6 +272,7 @@ static void ospDumpParameters(void)
         "retry_limit '%d' "
         "timeout '%d' "
         "validate_call_id '%d' "
+        "use_rpid_for_calling_number '%d' "
         "max_destinations '%d'\n",
         _osp_sp_uris[0],
         _osp_sp_weights[0],
@@ -275,6 +291,7 @@ static void ospDumpParameters(void)
         _osp_retry_limit,
         _osp_timeout,
         _osp_validate_callid,
+        _osp_use_rpid,
         _osp_max_dests);
 }
 

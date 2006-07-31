@@ -31,13 +31,16 @@
 #include <osp/osp.h>
 #include <osp/ospb64.h>
 #include "../../forward.h"
-#include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_rpid.h"
 #include "../../parser/parse_rr.h"
+#include "../../parser/parse_uri.h"
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
 #include "osp_mod.h"
 #include "sipheader.h"
+
+extern int _osp_use_rpid;
 
 static void ospCopyStrToBuffer(str* source, char* buffer, int buffersize);
 static void ospSkipPlus(char* e164);
@@ -123,6 +126,50 @@ int ospGetFromUserpart(
         }
     } else {
         LOG(L_ERR, "osp: ERROR: failed to find From header\n");
+    }
+
+    return result;
+}
+
+/* 
+ * Get calling number from Remote-Party-ID header
+ * param msg SIP message
+ * param rpiduser User part of Remote-Party-ID header
+ * param buffersize Size of fromuser buffer
+ * return 0 success, 1 failure
+ */
+int ospGetRpidUserpart(
+    struct sip_msg* msg, 
+    char* rpiduser, 
+    int buffersize)
+{
+    struct to_body* rpid;
+    struct sip_uri uri;
+    int result = 1;
+
+    LOG(L_DBG, "osp: ospGetRpidUserpart\n");
+
+    rpiduser[0] = '\0';
+
+    if (_osp_use_rpid != 0) {
+        if (msg->rpid != NULL) {
+            if (parse_rpid_header(msg) == 0) {
+                rpid = (struct to_body*)msg->rpid->parsed;
+                if (parse_uri(rpid->uri.s, rpid->uri.len, &uri) == 0) {
+                    ospCopyStrToBuffer(&uri.user, rpiduser, buffersize);
+                    ospSkipPlus(rpiduser);
+                    result = 0;
+                } else {
+                    LOG(L_ERR, "osp: ERROR: failed to parse RPID uri\n");
+                }
+            } else {
+                LOG(L_ERR, "osp: ERROR: failed to parse RPID header\n");
+            }
+        } else {
+            LOG(L_DBG, "osp: without RPID header\n");
+        }
+    } else {
+        LOG(L_DBG, "osp: do not use RPID header\n");
     }
 
     return result;
