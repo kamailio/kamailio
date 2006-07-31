@@ -233,7 +233,7 @@ static int ospReportUsageFromCookie(
     ospGetNextHop(msg, nexthop, sizeof(nexthop));
 
     if (release == OSP_RELEASE_ORIG) {
-        LOG(L_INFO,
+        LOG(L_DBG,
             "osp: originator '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
@@ -244,7 +244,7 @@ static int ospReportUsageFromCookie(
         terminator = nexthop;
     } else {
         release = OSP_RELEASE_TERM;
-        LOG(L_INFO,
+        LOG(L_DBG,
             "osp: terminator '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
