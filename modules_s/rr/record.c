@@ -207,10 +207,9 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 	from = 0; /* Makes gcc happy */
 	user.len = 0;
 
-	if (add_username) {
-		if (get_username(_m, &user) < 0) {
-			LOG(L_ERR, "insert_RR(): Error while extracting username\n");
-			return -1;
+ 	if (fparam_username) {
+ 		if (get_str_fparam(&user, _m, fparam_username) < 0) {
+ 			ERR("insert_RR(): Error while getting username (fparam '%s')\n", fparam_username->orig);
 		}
 	}
 
@@ -312,10 +311,12 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 	int hdr_len;
 
 	from = 0;
+	user.len = 0;
 
-	if (get_username(_m, &user) < 0) {
-		LOG(L_ERR, "record_route_preset(): Error while extracting username\n");
-		return -1;
+	if (fparam_username) {
+		if (get_str_fparam(&user, _m, fparam_username) < 0) {
+			ERR("record_route_preset(): Error while getting username (fparam '%s')\n", fparam_username->orig);
+		}
 	}
 
 	if (append_fromtag) {

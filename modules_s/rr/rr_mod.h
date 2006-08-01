@@ -38,6 +38,7 @@
 
 #include "../../usr_avp.h"
 #include "../domain/domain.h"
+#include "../../sr_module.h"
 
 extern avp_ident_t user_part_avp_ident;
 extern avp_ident_t next_route_avp_ident;
@@ -45,9 +46,9 @@ extern avp_ident_t next_route_avp_ident;
 extern int append_fromtag;
 extern int enable_double_rr;
 extern int enable_full_lr;
-extern int add_username;
 
 extern domain_get_did_t dm_get_did;
+extern fparam_t* fparam_username;
 
 #define AVP_FLAG_DIALOG_COOKIE "dialog_cookie"
 

@@ -57,13 +57,15 @@
 int append_fromtag = 1;
 int enable_double_rr = 1; /* Enable using of 2 RR by default */
 int enable_full_lr = 0;   /* Disabled by default */
-int add_username = 0;     /* Do not add username by default */
-char *cookie_filter = 0;  /* filter cookies restored in loose_route, potential security problem */
+str add_username = STR_NULL;   /* Do not add username by default */
+char *cookie_filter = 0;       /* filter cookies restored in loose_route, potential security problem */
 str user_part_avp = STR_NULL;  /* AVP identification where user part of Route URI is stored after loose/strict routing */
 str next_route_avp = STR_NULL; /* AVP identification where next route (if exists) would be stored after loose/strict routing */
 static str crc_secret_str = STR_NULL;
 avp_ident_t user_part_avp_ident;
 avp_ident_t next_route_avp_ident;
+
+fparam_t* fparam_username = NULL;
 
 MODULE_VERSION
 
@@ -101,7 +103,7 @@ static param_export_t params[] ={
 #ifdef ENABLE_USER_CHECK
 	{"ignore_user",      PARAM_STR,    &i_user     },
 #endif
-	{"add_username",     PARAM_INT,    &add_username    },
+	{"add_username",     PARAM_STR,    &add_username    },
 	{"cookie_filter",    PARAM_STRING, &cookie_filter   },
 	{"cookie_secret",    PARAM_STR,    &crc_secret_str  },
 	{"user_part_avp",    PARAM_STR,    &user_part_avp   },
@@ -138,6 +140,8 @@ static select_row_t rr_select_table[] = {
 
 static int mod_init(void)
 {
+	void* param;
+
 	DBG("rr - initializing\n");
 	crc_secret = crcitt_string(crc_secret_str.s, crc_secret_str.len);
 	if (cookie_filter && strlen(cookie_filter)) {
@@ -174,6 +178,15 @@ static int mod_init(void)
 	dm_get_did = (domain_get_did_t)find_export("get_did", 0, 0);
 	if (!dm_get_did) {
 	    DBG("Domain module not found, rr support for multidomain disabled\n");
+	}
+	
+	if (add_username.s) {
+		param=(void*)add_username.s;
+		if (fixup_var_str_12(&param,1)<0) {
+			ERR("rr:mod_init:can't fixup add_username parameter\n");
+			return E_CFG;
+		}
+		fparam_username=(fparam_t*)param;
 	}
 
 	return 0;
