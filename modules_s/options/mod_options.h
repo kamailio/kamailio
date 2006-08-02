@@ -27,31 +27,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef OPT_RPL_H
-#define OPT_RPL_H
+#ifndef _MOD_OPTIONS_H
+#define _MOD_OPTIONS_H
+
+#define OPTIONS "OPTIONS"
+#define OPTIONS_LEN (sizeof(OPTIONS) - 1)
 
 #define ACPT_STR "Accept: "
-#define ACPT_STR_LEN 8
+#define ACPT_STR_LEN (sizeof(ACPT_STR) - 1)
+
 #define ACPT_ENC_STR "Accept-Encoding: "
-#define ACPT_ENC_STR_LEN 17
+#define ACPT_ENC_STR_LEN (sizeof(ACPT_ENC_STR) - 1)
+
 #define ACPT_LAN_STR "Accept-Language: "
-#define ACPT_LAN_STR_LEN 17
+#define ACPT_LAN_STR_LEN (sizeof(ACPT_LAN_STR) - 1)
+
 #define SUPT_STR "Supported: "
-#define SUPT_STR_LEN 9
-#define HF_SEP_STR "\r\n"
-#define HF_SEP_STR_LEN 2
+#define SUPT_STR_LEN (sizeof(SUPT_STR) - 1)
 
-/* 
- * I think RFC3261 is not precise if a proxy should accept any
- * or no body (because it is not the endpoint of the media)
- */
-#define ACPT_DEF "*/*"
-#define ACPT_DEF_LEN 3
-#define ACPT_ENC_DEF ""
-#define ACPT_ENC_DEF_LEN 0
-#define ACPT_LAN_DEF "en"
-#define ACPT_LAN_DEF_LEN 2
-#define SUPT_DEF ""
-#define SUPT_DEF_LEN 0
-
-#endif /* OPT_RPL_H */
+#endif /* _MOD_OPTIONS_H */
