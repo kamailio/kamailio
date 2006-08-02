@@ -1,3 +1,6 @@
+2006-08-02
+	* added xcap_query_params_t serialization
+
 2006-04-01 (?)
 	* xcap queries goes through xcap module if compiled with SER (removes
 	dependency on libcurl3 for PA module)

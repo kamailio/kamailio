@@ -31,6 +31,7 @@
 #include <cds/dstring.h>
 #include <cds/memory.h>
 #include <cds/logger.h>
+#include <cds/serialize.h>
 
 static const str_t *get_xcap_doc_dir(xcap_document_type_t doc_type)
 {
@@ -364,15 +365,56 @@ int dup_xcap_params_inline(xcap_query_params_t *dst, xcap_query_params_t *src, c
 	return res;
 }
 
-int str2xcap_params(xcap_query_params_t *dst, const str_t *src)
+int serialize_xcap_params(sstream_t *ss, xcap_query_params_t *xp)
 {
-	ERR("BUG: unimplemented yet");
-	return -1;
+	int res = 0;
+	
+	if (is_input_sstream(ss)) {
+		memset(xp, 0, sizeof(*xp));
+	}
+	res = serialize_str(ss, &xp->xcap_root) | res;
+	res = serialize_str(ss, &xp->auth_user) | res;
+	res = serialize_str(ss, &xp->auth_pass) | res;
+
+	return res;
 }
 
-int xcap_params2str(str_t *dst, const xcap_query_params_t *src)
+int str2xcap_params(xcap_query_params_t *dst, const str_t *src)
 {
-	ERR("BUG: unimplemented yet");
-	return -1;
+	int res = 0;
+	sstream_t store;
+
+	if (!src) return -1;
+	
+	init_input_sstream(&store, src->s, src->len);
+	if (serialize_xcap_params(&store, dst) != 0) {
+		ERROR_LOG("can't de-serialize xcap_params\n");
+		res = -1;
+	}	
+	destroy_sstream(&store);
+	
+	return res;
+}
+
+int xcap_params2str(str_t *dst, xcap_query_params_t *src)
+{
+	int res = 0;
+	sstream_t store;
+	
+	init_output_sstream(&store, 256);
+	
+	if (serialize_xcap_params(&store, src) != 0) {
+		ERROR_LOG("can't serialize dialog\n");
+		res = -1;
+	}
+	else {
+		if (get_serialized_sstream(&store, dst) != 0) {
+			ERROR_LOG("can't get serialized data\n");
+			res = -1;
+		}
+	}
+
+	destroy_sstream(&store);
+	return res;
 }
 

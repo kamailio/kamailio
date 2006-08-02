@@ -80,6 +80,6 @@ int get_inline_xcap_buf_len(xcap_query_params_t *params);
 int dup_xcap_params_inline(xcap_query_params_t *dst, xcap_query_params_t *src, char *data_buffer);
 
 int str2xcap_params(xcap_query_params_t *dst, const str_t *src);
-int xcap_params2str(str_t *dst, const xcap_query_params_t *src);
+int xcap_params2str(str_t *dst, xcap_query_params_t *src);
 
 #endif

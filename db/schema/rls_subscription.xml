@@ -67,9 +67,8 @@
 	</column>
 	
 	<column>
-		<name>xcap_root</name>
-		<type>string</type>
-		<size>255</size>
+		<name>xcap_params</name>
+		<type>binary</type>
 	</column>
 	
     <index>
