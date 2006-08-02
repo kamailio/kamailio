@@ -38,6 +38,20 @@
 	</description>
     </column>
 
+    <column id="uri.scheme">
+        <name>scheme</name>
+	<type>int</type>
+	<default>0</default>
+	<description>
+	    URI scheme:
+	     - SIP  = 1
+	     - SIPS = 2
+	     - TEL  = 3
+	     - TELS = 4
+	</description>
+    </column>
+														    
+
     <index>
 	<name>uri_idx1</name>
 	<colref linkend="uri.username"/>

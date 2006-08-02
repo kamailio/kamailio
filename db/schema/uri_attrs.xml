@@ -51,6 +51,19 @@
 	</description>
     </column>
 
+    <column id="uriattrs.scheme">
+        <name>scheme</name>
+        <type>int</type>
+        <default>0</default>
+        <description>
+            URI scheme:
+              - SIP  = 1
+              - SIPS = 2
+              - TEL  = 3
+              - TELS = 4
+        </description>
+    </column>
+
     <index>
 	<unique/>
 	<name>uriattrs_idx</name>
