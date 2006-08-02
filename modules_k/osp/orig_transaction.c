@@ -284,7 +284,7 @@ int requestosprouting(
             transaction,
             _osp_device_ip,
             _osp_device_port,
-            sourcedev,
+            tmp,                        /* sourcedev in "[x.x.x.x]" or host.domain format */
             source,
             destination,
             callids[0]->ospmCallIdLen,

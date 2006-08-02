@@ -227,10 +227,14 @@ static int ospReportUsageFromCookie(
 
     ospGetSourceAddress(msg, firstvia, sizeof(firstvia));
     ospGetFromUserpart(msg, from, sizeof(from));
-    if (ospGetUriUserpart(msg, to, sizeof(to)) != 0) {
-        ospGetToUserpart(msg, to, sizeof(to));
-    }
+    ospGetToUserpart(msg, to, sizeof(to));
     ospGetNextHop(msg, nexthop, sizeof(nexthop));
+
+    LOG(L_DBG, "osp: first via '%s' from '%s' to '%s' next hop '%s'\n",
+        firstvia,
+        from,
+        to,
+        nexthop);
 
     if (release == OSP_RELEASE_ORIG) {
         LOG(L_DBG,
