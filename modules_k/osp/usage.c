@@ -298,7 +298,7 @@ static int ospReportUsageFromCookie(
 
     LOG(L_DBG, "osp: built usage handle '%d' (%d)\n", transaction, errorcode);
 
-    ospReportUsage(
+    ospReportUsageWrapper(
         transaction,
         10016,
         endtime - authtime,
@@ -318,7 +318,7 @@ static int ospReportUsageFromCookie(
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
-int reportospusage(
+int ospReportUsage(
     struct sip_msg* msg, 
     char* whorelease, 
     char* ignore2)
@@ -331,7 +331,7 @@ int reportospusage(
     OSPTCALLID* callid = NULL;
     int result = MODULE_RETURNCODE_FALSE;
 
-    LOG(L_DBG, "osp: reportospusage\n");
+    LOG(L_DBG, "osp: ospReportUsage\n");
 
     ospGetCallId(msg, &callid);
 
@@ -441,7 +441,7 @@ static int ospReportUsageFromDestination(
     OSPTTRANHANDLE transaction, 
     osp_dest* dest)
 {
-    ospReportUsage(
+    ospReportUsageWrapper(
         transaction,                                          /* In - Transaction handle */
         dest->lastcode,                                       /* In - Release Code */    
         0,                                                    /* In - Length of call */

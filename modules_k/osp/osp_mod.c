@@ -76,14 +76,14 @@ static int  ospVerifyParameters(void);
 static void ospDumpParameters(void);
 
 static cmd_export_t cmds[]={
-    {"checkospheader",          checkospheader,             0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"validateospheader",       validateospheader,          0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"requestosprouting",       requestosprouting,          0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"checkosproute",           checkosproute,              0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"prepareosproute",         prepareosproute,            0, 0, BRANCH_ROUTE}, 
-    {"checkcallingtranslation", checkcallingtranslation,    0, 0, BRANCH_ROUTE}, 
-    {"prepareallosproutes",     prepareallosproutes,        0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-    {"reportospusage",          reportospusage,             1, 0, REQUEST_ROUTE}, 
+    {"checkospheader",          ospCheckHeader,      0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"validateospheader",       ospValidateHeader,   0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"requestosprouting",       ospRequestRouting,   0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"checkosproute",           ospCheckRoute,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"prepareosproute",         ospPrepareRoute,     0, 0, BRANCH_ROUTE}, 
+    {"checkcallingtranslation", ospCheckTranslation, 0, 0, BRANCH_ROUTE}, 
+    {"prepareallosproutes",     ospPrepareAllRoutes, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+    {"reportospusage",          ospReportUsage,      1, 0, REQUEST_ROUTE}, 
     {0, 0, 0, 0, 0}
 };
 

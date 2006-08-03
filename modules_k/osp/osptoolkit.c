@@ -89,7 +89,7 @@ unsigned long long ospGetTransactionId(
  * param ospvPostDialDelay Post dial delay information
  * param ospvReleaseSource Which side release the call
  */
-void ospReportUsage(
+void ospReportUsageWrapper(
     OSPTTRANHANDLE ospvTransaction,
     unsigned ospvReleaseCode,
     unsigned ospvDuration,
@@ -106,7 +106,7 @@ void ospReportUsage(
     OSPTTHRATTR threadattr;
     int errorcode;
 
-    LOG(L_DBG, "osp: ospReportUsage\n");
+    LOG(L_DBG, "osp: ospReportUsageWrapper\n");
     LOG(L_DBG, "osp: schedule usage report for '%lld'\n", ospGetTransactionId(ospvTransaction));
 
     usage = (osp_usage*)malloc(sizeof(osp_usage));

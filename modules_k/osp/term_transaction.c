@@ -47,7 +47,7 @@ extern OSPTPROVHANDLE _osp_provider;
  * param ignore2
  * return 0 success, others failure
  */
-int checkospheader(
+int ospCheckHeader(
     struct sip_msg* msg, 
     char* ignore1, 
     char* ignore2)
@@ -55,7 +55,7 @@ int checkospheader(
     unsigned char buffer[OSP_TOKENBUF_SIZE];
     unsigned int  buffersize = sizeof(buffer);
 
-    LOG(L_DBG, "osp: checkospheader\n");
+    LOG(L_DBG, "osp: ospCheckHeader\n");
 
     if (ospGetOspHeader(msg, buffer, &buffersize) != 0) {
         return MODULE_RETURNCODE_FALSE;
@@ -70,7 +70,7 @@ int checkospheader(
  * param ignore2
  * return 0 success, others failure
  */
-int validateospheader (
+int ospValidateHeader (
     struct sip_msg* msg, 
     char* ignore1, 
     char* ignore2)
@@ -89,7 +89,7 @@ int validateospheader (
     osp_dest dest;
     int result = MODULE_RETURNCODE_FALSE;
 
-    LOG(L_DBG, "osp: validateospheader\n");
+    LOG(L_DBG, "osp: ospValidateHeader\n");
 
     ospInitDestination(&dest);
 

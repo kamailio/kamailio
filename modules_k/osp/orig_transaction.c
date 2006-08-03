@@ -228,7 +228,7 @@ static int ospLoadRoutes(
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
-int requestosprouting(
+int ospRequestRouting(
     struct sip_msg* msg, 
     char* ignore1, 
     char* ignore2)
@@ -248,7 +248,7 @@ int requestosprouting(
     OSPTTRANHANDLE transaction = -1;
     int result = MODULE_RETURNCODE_FALSE;
 
-    LOG(L_DBG, "osp: requestosprouting\n");
+    LOG(L_DBG, "osp: ospRequestRouting\n");
 
     authtime = time(NULL);
 
@@ -358,12 +358,12 @@ int requestosprouting(
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
-int checkosproute(
+int ospCheckRoute(
     struct sip_msg* msg, 
     char* ignore1, 
     char* ignore2)
 {
-    LOG(L_DBG, "osp: checkosproute\n");
+    LOG(L_DBG, "osp: ospCheckRoute\n");
 
     if (ospCheckOrigDestination() == 0) {
         return MODULE_RETURNCODE_TRUE;
@@ -436,7 +436,7 @@ static int ospSetRpid(
  * param ignore2
  * return MODULE_RETURNCODE_TRUE calling number translated MODULE_RETURNCODE_FALSE without transaltion
  */
-int checkcallingtranslation(
+int ospCheckTranslation(
     struct sip_msg* msg, 
     char* ignore1, 
     char* ignore2)
@@ -445,7 +445,7 @@ int checkcallingtranslation(
     int_str callingval;
     int result = MODULE_RETURNCODE_FALSE;
 
-    LOG(L_DBG, "osp: checkcallingtranslation\n");
+    LOG(L_DBG, "osp: ospCheckTranslation\n");
 
     callingavp = search_first_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, NULL, 0);
     if (callingavp != NULL) {
@@ -554,14 +554,14 @@ static int ospPrepareDestination(
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
-int prepareosproute(
+int ospPrepareRoute(
     struct sip_msg* msg, 
     char* ignore1, 
     char* ignore2)
 {
     int result = MODULE_RETURNCODE_TRUE;
 
-    LOG(L_DBG, "osp: prepareosproute\n");
+    LOG(L_DBG, "osp: ospPrepareRoute\n");
 
     /* The isfirst parameter will be ignored */
     result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_BRANCH_ROUTE);
@@ -577,14 +577,14 @@ int prepareosproute(
  * param ignore2
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
-int prepareallosproutes(
+int ospPrepareAllRoutes(
     struct sip_msg* msg, 
     char* ignore1, 
     char* ignore2)
 {
     int result = MODULE_RETURNCODE_TRUE;
 
-    LOG(L_DBG, "osp: prepareallosproute\n");
+    LOG(L_DBG, "osp: ospPrepareAllRoutes\n");
 
     for(result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE);
         result == MODULE_RETURNCODE_TRUE;

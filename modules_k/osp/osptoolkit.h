@@ -43,7 +43,7 @@
  * returned in the Authorization Response and also packaged in the token.
  */
 unsigned long long ospGetTransactionId(OSPTTRANHANDLE transaction);
-void ospReportUsage(
+void ospReportUsageWrapper(
     OSPTTRANHANDLE ospvTransaction,     /* In - Transaction handle */
     unsigned ospvReleaseCode,           /* In - Release code */
     unsigned ospvDuration,              /* In - Length of call */
