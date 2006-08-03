@@ -31,7 +31,7 @@ Daniel-Constantin Mierla
 
         1.4. Exported Functions
 
-              1.4.1. siptrace()
+              1.4.1. sip_trace()
 
         1.5. sip_trace table definition
         1.6. Known issues
@@ -45,7 +45,7 @@ Daniel-Constantin Mierla
    1-3. Set trace_flag parameter
    1-4. Set trace_on parameter
    1-5. Set duplicate_uri parameter
-   1-6. siptrace() usage
+   1-6. sip_trace() usage
    1-7. sip_trace sql
      _________________________________________________________
 
@@ -158,7 +158,7 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 
 1.4. Exported Functions
 
-1.4.1. siptrace()
+1.4.1. sip_trace()
 
    Store current processed SIP message in database. It is stored
    in the form prior applying chages made to it.
@@ -166,9 +166,9 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1-6. siptrace() usage
+   Example 1-6. sip_trace() usage
 ...
-siptrace();
+sip_trace();
 ...
      _________________________________________________________
 

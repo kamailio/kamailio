@@ -187,7 +187,7 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">siptrace()</function>
+		<function moreinfo="none">sip_trace()</function>
 		</title>
 		<para>
 		Store current processed SIP message in database. It is stored in the
@@ -197,10 +197,10 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
-		<title><function>siptrace()</function> usage</title>
+		<title><function>sip_trace()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-siptrace();
+sip_trace();
 ...
 </programlisting>
 		</example>
