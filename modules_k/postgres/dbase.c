@@ -741,7 +741,37 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 
 /*
  * Retrieve result set
+ *
+ * Input:
+ *   db_con_t*  _h Structure representing the database connection
+ *   db_res_t** _r pointer to a structure represending the result set
+ *
+ * Output:
+ *   return 0: If the status of the last command produced a result set and,
+ *   If the result set contains data or the convert_result() routine
+ *   completed successfully.
+ *
+ *   return < 0: If the status of the last command was not handled or if the
+ *   convert_result() returned an error.
+ *
+ * Notes:
+ *   A new result structure is allocated on every call to this routine.
+ *
+ *   If this routine returns 0, it is the callers responsbility to free the
+ *   result structure. If this routine returns < 0, then the result structure
+ *   is freed before returning to the caller.
+ *
+ * Todo:
+ *   If the last command completed without returning any data, then the
+ *   overhead of allocating a new result structure (and subsequently freeing
+ *   it) is wasted effort.
+ *
+ *   Calling routines should be modified to handle a
+ *   condition where no data was returned and not expect an allocated result
+ *   structure in this case.
+ *
  */
+
 int get_result(db_con_t* _h, db_res_t** _r)
 {
         ExecStatusType pqresult;
@@ -757,29 +787,34 @@ int get_result(db_con_t* _h, db_res_t** _r)
 
         pqresult = PQresultStatus(CON_RESULT(_h));
 
-        if (pqresult == PGRES_COMMAND_OK) {
-                /* Successful completion of a command returning no data (such as INSERT or UPDATE). */
-		return 0;
+        switch(pqresult) {
+                case PGRES_COMMAND_OK:
+                        /* Successful completion of a command returning no data (such as INSERT or UPDATE). */
+                        return 0;
+                case PGRES_TUPLES_OK:
+                        /* Successful completion of a command returning data (such as a SELECT or SHOW). */
+                        if (convert_result(_h, *_r) < 0) {
+                                LOG(L_ERR, "get_result(): Error returned from convert_result()\n");
+                                if (*_r) free_result(*_r);
+                                *_r = 0;
+                                return  -4;
+                        }
+                        return 0;
+                case PGRES_EMPTY_QUERY:
+                case PGRES_COPY_OUT:
+                case PGRES_COPY_IN:
+                case PGRES_BAD_RESPONSE:
+                case PGRES_NONFATAL_ERROR:
+                case PGRES_FATAL_ERROR:
+                default:
+                        break;
         }
 
-        if (pqresult == PGRES_TUPLES_OK) {
-                /* Successful completion of a command returning data (such as a SELECT or SHOW). */
-
-        	if (convert_result(_h, *_r) < 0) {
-			LOG(L_ERR, "get_result(): Error while converting result\n");
-			if (*_r) free_result(*_r);
-			*_r = 0;
-
-			return -4;
-		}
-	} else {
-                LOG(L_ERR, "get_result(): postgres PQresultStatus not handled\n");
-                if (*_r) free_result(*_r);
-                *_r = 0;
-                return -5;
-	}
-
-	return 0;
+        LOG(L_WARN, "get_result(): Warning unhandled status: %s %s\n", PQresStatus(pqresult), PQresultErrorMessage(CON_RESULT(
+_h)));
+        if (*_r) free_result(*_r);
+        *_r = 0;
+        return -5;
 }
 
 /*
