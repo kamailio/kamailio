@@ -54,3 +54,17 @@
 
 2005 November 7
    o Copied files from cvs.berlios.de:/cvsroot/osp-module
+
+2006 August 3
+   o Using BRAND_ROUTE approach to add route specific header to avoid sending 
+     an OSP token to a non-OSP destination.
+     For bug 1524046 on OpenSER tracker.
+   o Using called number in Request-Line for token validation and auth request.
+     For bug 1524070 on OpenSER tracker.
+   o Using RPID approach for calling number translation.
+     For bug 1524079 on OpenSER tracker.
+   o Sending DeviceInfo in "[x.x.x.x]" format in OSP AuthReq messages.
+     For bug 1524085 on OpenSER tracker.
+   o Using fromtag in RR to report who releases the call first.
+     For bug 1527940 on OpenSER tracker.
+
