@@ -103,7 +103,7 @@ int get_user_script(str *username, str *domain, str *script, const char* key)
 	db_key_t   keys_cmp[2];
 	db_key_t   keys_ret[1];
 	db_val_t   vals[2];
-	db_res_t   *res = 0 ;
+	db_res_t   *res = NULL;
 	int n;
 
 	keys_cmp[0] = cpl_username_col;
@@ -175,7 +175,7 @@ int write_to_db(str *username, str *domain, str *xml, str *bin)
 {
 	db_key_t   keys[4];
 	db_val_t   vals[4];
-	db_res_t   *res;
+	db_res_t   *res = NULL;
 	int n;
 
 	/* lets see if the user is already in database */

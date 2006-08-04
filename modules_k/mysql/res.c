@@ -193,7 +193,7 @@ static inline int db_mysql_free_columns(db_res_t* _r)
  */
 db_res_t* db_mysql_new_result(void)
 {
-	db_res_t* r;
+	db_res_t* r = NULL;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
 	if (!r) {
 		LOG(L_ERR, "new_result: No memory left\n");

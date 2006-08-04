@@ -234,7 +234,7 @@ int pa_location_init(void)
 	  db_val_t query_vals[2];
 
 	  db_key_t result_cols[4];
-	  db_res_t *res;
+	  db_res_t *res = NULL;
 	  int n_query_cols = 0;
 	  int n_result_cols = 0;
 	  int room_col, placeid_col;

@@ -134,7 +134,7 @@ int dbt_use_table(db_con_t* _h, const char* _t)
  */
 db_res_t* dbt_new_result(void)
 {
-	db_res_t* r;
+	db_res_t* r = NULL;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
 	if (!r) {
 		LOG(L_ERR, "dbt_new_result(): No memory left\n");

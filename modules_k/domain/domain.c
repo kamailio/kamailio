@@ -106,7 +106,7 @@ int is_domain_local(str* _host)
 		db_key_t keys[1];
 		db_val_t vals[1];
 		db_key_t cols[1]; 
-		db_res_t* res;
+		db_res_t* res = NULL;
 
 		keys[0]=domain_col.s;
 		cols[0]=domain_col.s;
@@ -252,7 +252,7 @@ int reload_domain_table ( void )
 /*	db_key_t keys[] = {domain_col}; */
 	db_val_t vals[1];
 	db_key_t cols[1];
-	db_res_t* res;
+	db_res_t* res = NULL;
 	db_row_t* row;
 	db_val_t* val;
 

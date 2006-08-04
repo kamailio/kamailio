@@ -294,7 +294,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
 {
 	struct sip_uri   uri;
-	db_res_t         *res;
+	db_res_t         *res = NULL;
 	str              uuid;
 	int  i, n, sh_flg;
 	str *s0, *s1, *s2;

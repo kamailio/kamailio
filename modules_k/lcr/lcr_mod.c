@@ -645,7 +645,7 @@ int reload_gws ( void )
     uri_transport transport;
     db_con_t* dbh;
     char *prefix, *from_uri;
-    db_res_t* res;
+    db_res_t* res = NULL;
     db_row_t* row;
     db_key_t gw_cols[7];
     db_key_t lcr_cols[4];
@@ -971,7 +971,7 @@ void print_gws (FILE *reply_file)
  */
 static int do_load_gws(struct sip_msg* _m, int grp_id)
 {
-    db_res_t* res;
+    db_res_t* res = NULL;
     db_row_t *row, *r;
     unsigned int q_len;
 

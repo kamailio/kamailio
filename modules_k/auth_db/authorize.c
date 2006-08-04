@@ -255,7 +255,7 @@ static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
 	auth_body_t* cred;
 	auth_result_t ret;
 	str domain;
-	db_res_t* result;
+	db_res_t* result = NULL;
 
 	if (_realm) {
 		if (xl_printf_s(_m, _realm, &domain)!=0) {

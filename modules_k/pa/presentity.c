@@ -148,7 +148,7 @@ int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	  db_val_t query_vals[4];
 
 	  db_key_t result_cols[4];
-	  db_res_t *res;
+	  db_res_t *res = NULL;
 	  int n_query_cols = 0;
 	  int n_result_cols = 0;
 	  int presid_col;
@@ -915,7 +915,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	  db_val_t query_vals[1];
 
 	  db_key_t result_cols[4];
-	  db_res_t *res;
+	  db_res_t *res = NULL;
 	  int n_query_cols = 0;
 	  int n_result_cols = 0;
 	  int uri_col;

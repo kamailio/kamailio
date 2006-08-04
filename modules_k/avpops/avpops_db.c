@@ -244,7 +244,7 @@ db_res_t *db_load_avp( str *uuid, str *username, str *domain,
 	static db_key_t   keys_ret[3];
 	unsigned int      nr_keys_cmp;
 	unsigned int      nr_keys_ret;
-	db_res_t          *res;
+	db_res_t          *res = NULL;
 
 	/* prepare DB query */
 	nr_keys_cmp = prepare_selection( uuid, username, domain, attr, scheme);

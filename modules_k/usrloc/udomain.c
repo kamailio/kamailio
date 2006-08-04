@@ -367,7 +367,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	ucontact_info_t *ci;
 	db_row_t *row;
 	db_key_t columns[14];
-	db_res_t* res = 0;
+	db_res_t* res = NULL;
 	str user, contact;
 	char* domain;
 	int i;
@@ -396,10 +396,10 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
-#ifdef EXTRA_DEBUG
+//#ifdef EXTRA_DEBUG
 	LOG(L_ERR, "usrloc:preload_udomain(): load start time [%d]\n",
 			(int)time(NULL));
-#endif
+//#endif
 
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
 		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
@@ -503,10 +503,10 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 	ul_dbf.free_result(_c, res);
 
-#ifdef EXTRA_DEBUG
+//#ifdef EXTRA_DEBUG
 	LOG(L_ERR, "usrloc:preload_udomain(): load end time [%d]\n",
 			(int)time(NULL));
-#endif
+//#endif
 	return 0;
 error1:
 	free_ucontact(c);
@@ -526,7 +526,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	db_key_t columns[12];
 	db_key_t keys[2];
 	db_val_t vals[2];
-	db_res_t* res;
+	db_res_t* res = NULL;
 	str contact;
 	char *domain;
 	int i;
@@ -647,7 +647,7 @@ int testdb_udomain(db_con_t* con, udomain_t* d)
 {
 	db_key_t key[1], col[1];
 	db_val_t val[1];
-	db_res_t* res;
+	db_res_t* res = NULL;
 
 	if (ul_dbf.use_table(con, d->name->s) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:testdb_udomain: failed to change table\n");

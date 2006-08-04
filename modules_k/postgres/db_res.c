@@ -51,7 +51,7 @@ int str2valp(db_type_t _t, db_val_t* _v, const char* _s, int _l, void *_p);
  */
 db_res_t* new_result_pg(char *parent)
 {
-	db_res_t* r;
+	db_res_t* r = NULL;
 
 	r = (db_res_t*)aug_alloc(sizeof(db_res_t), parent);
 

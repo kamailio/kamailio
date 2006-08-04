@@ -77,7 +77,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 	static char query_buf[512];
 	struct socket_info *sock;
 	unsigned int dbflags;
-	db_res_t* res;
+	db_res_t* res = NULL;
 	db_row_t *row;
 	dlist_t *dom;
 	char *p;

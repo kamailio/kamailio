@@ -77,7 +77,7 @@ error:
 int load_re( str *table )
 {
 	db_key_t cols[2];
-	db_res_t* res;
+	db_res_t* res = NULL;
 	db_row_t* row;
 	int n;
 

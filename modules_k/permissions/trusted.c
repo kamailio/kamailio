@@ -335,7 +335,7 @@ found:
 int allow_trusted(struct sip_msg* _msg, char* str1, char* str2) 
 {
 	int result;
-	db_res_t* res;
+	db_res_t* res = NULL;
 	
 	db_key_t keys[1];
 	db_val_t vals[1];
@@ -392,7 +392,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 int reload_trusted_table(void)
 {
 	db_key_t cols[4];
-	db_res_t* res;
+	db_res_t* res = NULL;
 	db_row_t* row;
 	db_val_t* val;
 

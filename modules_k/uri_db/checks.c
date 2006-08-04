@@ -56,7 +56,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t cols[1];
-	db_res_t* res;
+	db_res_t* res = NULL;
 
 	if (!_uri) {
 		LOG(L_ERR, "check_username(): Bad parameter\n");
@@ -191,7 +191,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_key_t cols[1];
-	db_res_t* res;
+	db_res_t* res = NULL;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LOG(L_ERR, "does_uri_exist(): Error while parsing URI\n");

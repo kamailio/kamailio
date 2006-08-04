@@ -183,7 +183,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t col[1];
-	db_res_t* res;
+	db_res_t* res = NULL;
 
 	keys[0] = user_column.s;
 	keys[1] = group_column.s;

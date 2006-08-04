@@ -244,7 +244,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	  db_val_t query_vals[11];
 
 	  db_key_t result_cols[5];
-	  db_res_t *res;
+	  db_res_t *res = NULL;
 	  int n_query_cols = 0;
 	  int n_result_cols = 0;
 	  int s_id_col, status_col, display_name_col, event_col;
@@ -404,7 +404,7 @@ int db_read_watcherinfo(presentity_t *_p)
 	  db_val_t query_vals[5];
 
 	  db_key_t result_cols[9];
-	  db_res_t *res;
+	  db_res_t *res = NULL;
 	  int n_query_cols = 1;
 	  int n_result_cols = 0;
 	  int w_uri_col, s_id_col, event_package_col, status_col, watcher_event_col, display_name_col, accepts_col, expires_col;

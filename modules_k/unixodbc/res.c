@@ -261,7 +261,7 @@ static inline int free_columns(db_res_t* _r)
  */
 db_res_t* new_result(void)
 {
-	db_res_t* r;
+	db_res_t* r = NULL;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
 	if (!r)
 	{
