@@ -158,7 +158,7 @@ int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 {
 	db_key_t key[1], col[1];
 	db_val_t val[1];
-	db_res_t* res = 0;
+	db_res_t* res = NULL;
 	db_val_t* ver = 0;
 	int ret;
 

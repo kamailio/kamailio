@@ -600,7 +600,7 @@ int db_fifo( FILE *fifo, char *response_file )
 	static db_key_t keys2[MAX_ARRAY];
 	static db_op_t  ops2[MAX_ARRAY];
 	static db_val_t vals2[MAX_ARRAY];
-	static db_res_t *select_res;
+	static db_res_t *select_res = NULL;
 	str   line;
 	int   db_cmd;
 	int   nr1, nr2;

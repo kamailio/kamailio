@@ -167,7 +167,7 @@ struct module_exports* mod_register()
 	};
 
 	db_con_t* h;
-	db_res_t* res;
+	db_res_t* res = NULL;
 
 	fprintf(stderr, "DBExample - registering...\n");
 
