@@ -12,7 +12,6 @@
 # adapted for openser by Daniel-Constantin Mierla <daniel@voice-system.ro>
 # $Id$
 
-
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/openser
 NAME=openser
@@ -21,6 +20,16 @@ HOMEDIR=/var/run/openser
 PIDFILE=$HOMEDIR/$NAME.pid
 DEFAULTS=/etc/default/openser
 RUN_OPENSER=no
+
+# Do not start openser if fork=no is set in the config file
+# otherwise the boot process will just stop
+check_fork ()
+{
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/openser/openser.cfg; then
+	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/openser debug instead"
+	exit 1
+    fi
+}
 
 check_openser_config ()
 {
@@ -87,9 +96,13 @@ else
 fi
 
 case "$1" in
-  start)
+  start|debug)
 	check_openser_config
 	create_radius_seqfile
+
+	if [ "$1" != "debug" ]; then
+	    check_fork
+	fi
 
 	echo -n "Starting $DESC: $NAME"
 	start-stop-daemon --start --quiet --pidfile $PIDFILE \
@@ -116,7 +129,7 @@ case "$1" in
 	;;
   *)
 	N=/etc/init.d/$NAME
-	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	echo "Usage: $N {start|stop|restart|force-reload|debug}" >&2
 	exit 1
 	;;
 esac

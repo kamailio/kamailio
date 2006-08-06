@@ -1,0 +1,24 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 11_always_smp.dpatch by  <jblache@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Always build for SMP.
+
+@DPATCH@
+diff -urNad openser-1.1.0~/Makefile.defs openser-1.1.0/Makefile.defs
+--- openser-1.1.0~/Makefile.defs	2006-07-12 14:32:06.141906366 +0200
++++ openser-1.1.0/Makefile.defs	2006-07-12 14:32:43.037330136 +0200
+@@ -77,12 +77,7 @@
+ 	endif
+ endif
+ 
+-SMP_STR = $(shell uname -v | grep -i "SMP")
+-ifeq (,$(SMP_STR))
+-	ISSMP=no
+-else
+-	ISSMP=yes
+-endif
++ISSMP=yes
+ 
+ OSREL = $(shell uname -r)
+ # numerical version (good for comparisons: A.B.C => A*1000000+B*1000+C)
