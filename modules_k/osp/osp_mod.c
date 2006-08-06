@@ -87,7 +87,7 @@ static cmd_export_t cmds[]={
     {0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={ 
+static param_export_t params[]={
     {"sp1_uri",                        STR_PARAM, &_osp_sp_uris[0]},
     {"sp1_weight",                     INT_PARAM, &(_osp_sp_weights[0])},
     {"sp2_uri",                        STR_PARAM, &_osp_sp_uris[1]},
@@ -111,7 +111,7 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-    "osp", 
+    "osp",
     cmds,
     params,
     0,            /* exported statistics */
@@ -165,7 +165,7 @@ static int ospInitMod(void)
 static void ospDestMod(void)
 {
     LOG(L_DBG, "osp: ospDestMod\n");
-}    
+}
 
 /*
  * Initializeild process of OSP module

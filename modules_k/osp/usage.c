@@ -475,8 +475,8 @@ void ospReportOrigSetupUsage(void)
 
     for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
         destavp != NULL;
-        destavp = search_next_avp(destavp, NULL)) {
-
+        destavp = search_next_avp(destavp, NULL))
+    {
         get_avp_val(destavp, &destval);
 
         /* OSP destination is wrapped in a string */

@@ -113,7 +113,7 @@ int ospGetFromUserpart(
 
     if (msg->from != NULL) {
         if (parse_from_header(msg) == 0) {
-            from = (struct to_body*)msg->from->parsed;
+            from = get_from(msg);
             if (parse_uri(from->uri.s, from->uri.len, &uri) == 0) {
                 ospCopyStrToBuffer(&uri.user, fromuser, buffersize);
                 ospSkipPlus(fromuser);
@@ -154,7 +154,7 @@ int ospGetRpidUserpart(
     if (_osp_use_rpid != 0) {
         if (msg->rpid != NULL) {
             if (parse_rpid_header(msg) == 0) {
-                rpid = (struct to_body*)msg->rpid->parsed;
+                rpid = get_rpid(msg);
                 if (parse_uri(rpid->uri.s, rpid->uri.len, &uri) == 0) {
                     ospCopyStrToBuffer(&uri.user, rpiduser, buffersize);
                     ospSkipPlus(rpiduser);
@@ -196,7 +196,7 @@ int ospGetToUserpart(
     touser[0] = '\0';
 
     if (msg->to != NULL) {
-        to = (struct to_body*)msg->to->parsed;
+        to = get_to(msg);
         if (parse_uri(to->uri.s, to->uri.len, &uri) == 0) {
             ospCopyStrToBuffer(&uri.user, touser, buffersize);
             ospSkipPlus(touser);

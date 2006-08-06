@@ -79,10 +79,10 @@ static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps)
 
     /* install addaitional handlers */
     tmcb_types =
-//        TMCB_REQUEST_FWDED | 
-//        TMCB_RESPONSE_FWDED | 
+//        TMCB_REQUEST_FWDED |
+//        TMCB_RESPONSE_FWDED |
         TMCB_ON_FAILURE | 
-//        TMCB_LOCAL_COMPLETED  |
+//        TMCB_LOCAL_COMPLETED |
         /* report on completed transactions */
         TMCB_RESPONSE_OUT |
         /* account e2e acks if configured to do so */
@@ -90,7 +90,7 @@ static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps)
         /* report on missed calls */
         TMCB_ON_FAILURE_RO |
         /* get incoming replies ready for processing */
-//        TMCB_RESPONSE_IN
+//        TMCB_RESPONSE_IN |
         0;
 
     if (osp_tmb.register_tmcb(0, t, tmcb_types, ospTmcbFunc, 0) <= 0) {

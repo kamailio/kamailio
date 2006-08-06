@@ -1,5 +1,5 @@
 /*
- * openser osp module.
+ * openser osp module. 
  *
  * This module enables openser to communicate with an Open Settlement
  * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI
@@ -46,7 +46,7 @@ static int ospSaveDestination(osp_dest* dest, str* label);
 static osp_dest* ospGetLastOrigDestination(void);
 static void ospRecordCode(int code, osp_dest* dest);
 static int ospIsToReportUsage(int code);
-    
+
 /*
  * Initialize destination structure
  * param dest Destination data structure
