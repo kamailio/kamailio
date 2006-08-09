@@ -238,7 +238,6 @@ static int rtpp_test(struct rtpp_node*, int, int);
 static char *send_rtpp_command(struct rtpp_node*, struct iovec *, int);
 static int unforce_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
@@ -280,6 +279,7 @@ static int rtpproxy_tout = 1;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 
+
 struct rtpp_head {
 	struct rtpp_node	*rn_first;
 	struct rtpp_node	*rn_last;
@@ -304,10 +304,10 @@ static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"fix_nated_sdp",      fix_nated_sdp_f,        1, fixup_int_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"unforce_rtp_proxy",  unforce_rtp_proxy0_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-	{"unforce_rtp_proxy",  unforce_rtp_proxy1_f,   1, fixup_int_1,   REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-	{"force_rtp_proxy",    force_rtp_proxy0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"force_rtp_proxy",    force_rtp_proxy1_f,     1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"unforce_rtp_proxy",  unforce_rtp_proxy1_f,   1, fixup_var_str_1,   REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"force_rtp_proxy",    force_rtp_proxy1_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",    force_rtp_proxy1_f,     1, fixup_var_str_1,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, fixup_var_str_12,            REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"nat_uac_test",       nat_uac_test_f,         1, fixup_int_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"fix_nated_register", fix_nated_register_f,   0, 0,             REQUEST_ROUTE },
 	{"ping_contact",       ping_contact_f,         1, fixup_ping_contact,  REQUEST_ROUTE },
@@ -447,6 +447,7 @@ mod_init(void)
 				pnode->rn_umode = 0;
 				pnode->rn_address += 5;
 			}
+			 LOG(L_ERR, "DEB: IP address of RTPPROXY is %s", pnode->rn_address);
 		}
 	}
 	register_select_table(sel_declaration);
@@ -460,6 +461,7 @@ child_init(int rank)
 	char *cp;
 	struct addrinfo hints, *res;
 	struct rtpp_node *pnode;
+	
 
 	/* Iterate known RTP proxies - create sockets */
 	mypid = getpid();
@@ -683,8 +685,12 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 
 	if (get_contact_uri(msg, &uri, &c) == -1)
 		return -1;
+	/* for UAs behind NAT we have to hope that they will reuse the
+	 * TCP connection, otherwise they are lost any way. So this check
+	 * does not make too much sense.
 	if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
 		return -1;
+	*/
 	if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
 		LOG(L_ERR, "ERROR: you can't call fix_nated_contact twice, "
 		    "check your config!\n");
@@ -1641,8 +1647,15 @@ static int
 unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	int node_idx;
+	str rtpnode;
 
-	if (get_int_fparam(&node_idx, msg, (fparam_t*) str1) < -1) return -1;
+	if (get_str_fparam(&rtpnode, msg, (fparam_t*) str1) < -1) {
+		 ERR("force_rtp_proxy(): Error while getting rtp_proxy node (fparam '%s')\n", ((fparam_t*)str1)->orig);
+		
+		return -1;
+	}
+
+	str2int(&rtpnode, &node_idx);
 	return unforce_rtp_proxy_f(msg, node_idx);
 }
 
@@ -1697,12 +1710,13 @@ find_next_sdp_line(char* p, char* plimit, char linechar, char* defptr)
 }
 
 static int
-force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
+force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 {
-	str body, body1, oldport, oldip, newport, newip;
+	str body, body1, oldport, oldip, newport, newip, str1, str2, s;
 	str callid, from_tag, to_tag, tmp;
-	int create, port, len, asymmetric, flookup, argc, proxied, real;
-	int oidx, pf, pf1, force, node_idx;
+	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
+	int oidx, pf, pf1, force;
+	unsigned int node_idx;
 	char opts[16];
 	char *cp, *cp1;
 	char  *cpend, *next;
@@ -1731,12 +1745,28 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	str medianum_str, tmpstr1;
 	int c1p_altered;
 
+	if (param1) {
+		if (get_str_fparam(&str1, msg, (fparam_t*)param1) < 0) {
+			LOG(L_ERR, "force_rtp_proxy(): Error while parsing 1st param ('%s')\n", 
+			    ((fparam_t*)param1)->orig);
+			return -1;
+		}
+	}
+	else 
+		str1.len = 0;
+	
+	if (get_str_fparam(&str2, msg, (fparam_t*)param2) < 0) {
+		LOG(L_ERR, "force_rtp_proxy(): Error while parsing 2nd param ('%s')\n", 
+		    ((fparam_t*)param2)->orig);
+		return -1;
+	}
+
 	v[1].iov_base=opts;
 	asymmetric = flookup = force = real = 0;
 	oidx = 1;
 	node_idx = -1;
-	for (cp = str1; *cp != '\0'; cp++) {
-		switch (*cp) {
+	for (i=0; i<str1.len; i++) {
+		switch (str1.s[i]) {
 		case ' ':
 		case '\t':
 			break;
@@ -1775,20 +1805,20 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 
 		case 'n':
 		case 'N':
-			cp++;
-			for (len = 0; isdigit(cp[len]); len++)
+			i++;
+			s.s = str1.s+i; 
+			for (s.len = 0; i<str1.len && isdigit(str1.s[i]); i++, s.len++)
 				continue;
-			if (len == 0) {
+			if (s.len == 0) {
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: non-negative integer"
-				    "should follow N option\n");
+					"should follow N option\n");
 				return -1;
 			}
-			node_idx = strtoul(cp, NULL, 10);
-			cp += len - 1;
+			str2int(&s, &node_idx);
 			break;
-
+			
 		default:
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", *cp);
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", str1.s[i]);
 			return -1;
 		}
 	}
@@ -1985,8 +2015,13 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 					newip.len = 7;
 				}
 			} else {
-				newip.s = (argc < 2) ? str2 : argv[1];
-				newip.len = strlen(newip.s);
+				if (argc < 2) {
+					newip = str2;
+				}
+				else {
+					newip.s = argv[1];
+					newip.len = strlen(newip.s);
+				}
 			}
 			newport.s = int2str(port, &newport.len); /* beware static buffer */
 			/* Alter port. */
@@ -2036,20 +2071,18 @@ static int
 force_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	char *cp;
+	fparam_t param2;
+	
 	char newip[IP_ADDR_MAX_STR_SIZE];
 
 	cp = ip_addr2a(&msg->rcv.dst_ip);
 	strcpy(newip, cp);
-	return force_rtp_proxy2_f(msg, str1, newip);
+	param2.type = FPARAM_STRING;
+	param2.orig = param2.v.asciiz = newip;
+	return force_rtp_proxy2_f(msg, str1, (char*)&param2);
 }
 
-static int
-force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
-{
-	char arg[1] = {'\0'};
 
-	return force_rtp_proxy1_f(msg, arg, NULL);
-}
 
 #define DSTIP_PARAM ";dstip="
 #define DSTIP_PARAM_LEN (sizeof(DSTIP_PARAM) - 1)
