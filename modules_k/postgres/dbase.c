@@ -30,7 +30,20 @@
  * 2006-07-28 within get_result(): added check to immediatly return of no result set was returned 
  *                                 added check to only execute convert_result() if PGRES_TUPLES_OK
  *                                 added safety check to avoid double free_result() (norm)
- *
+ * 2006-08-07 Rewrote get_result().
+ *            Additional debugging lines have been placed through out the code.
+ *            Added Asynchronous Command Processing (PQsendQuery/PQgetResult) instead of PQexec.
+ *            this was done in preparation of adding FETCH support.  Note that PQexec returns a
+ *            result pointer while PQsendQuery does not.  The result set pointer is obtained from
+ *            a call (or multiple calls) to PQgetResult. 
+ *            Removed transaction processing calls (BEGIN/COMMIT/ROLLBACK) as they added uneeded 
+ *            overhead.  Klaus' testing showed in excess of 1ms gain by removing each command.  In
+ *            addition, OpenSER only issues single queries and is not, at this time transaction aware.
+ *            The transaction processing routines have been left in place should this support be needed
+ *            in the future. 
+ *            Updated logic in db_query / db_raw_query to accept a (0) result set (_r) parameter.  In 
+ *            this case, control is returned immediately after submitting the query and no call to 
+ *            get_results() is performed.  This is a requirement for FETCH support. (norm) 
  */
 
 #define MAXCOLUMNS	512
@@ -48,7 +61,7 @@
 
 long getpid();
 
-static char sql_buf[SQL_BUF_LEN];
+static char _s[SQL_BUF_LEN];
 
 static int submit_query(db_con_t* _h, const char* _s);
 static int connect_db(db_con_t* _h);
@@ -225,9 +238,8 @@ static int disconnect_db(db_con_t* _h)
 
 db_con_t *db_init(const char* _sqlurl)
 {
-	db_con_t* res;
+	db_con_t* _h;
 
-	DLOG("db_init", "entry");
 	if (strlen(_sqlurl)>(SQLURL_LEN-1)) 
 	{
 		PLOG("db_init","ERROR: sql url too long");
@@ -237,21 +249,23 @@ db_con_t *db_init(const char* _sqlurl)
 	/*
 	** this is the root memory for this database connection.
 	*/
-	res = aug_alloc(sizeof(db_con_t), 0);
-	memset(res, 0, sizeof(db_con_t));
-	res->tail = (unsigned long)aug_alloc
-		(sizeof(struct con_postgres), (char*)res);
-	memset((struct con_postgres*)res->tail, 0, sizeof(struct con_postgres));
-	CON_SQLURL(res)=aug_strdup((char*)_sqlurl,(char *)res);
+	_h = aug_alloc(sizeof(db_con_t), 0);
+	memset(_h, 0, sizeof(db_con_t));
+	_h->tail = (unsigned long)aug_alloc
+		(sizeof(struct con_postgres), (char*)_h);
+	memset((struct con_postgres*)_h->tail, 0, sizeof(struct con_postgres));
+	CON_SQLURL(_h)=aug_strdup((char*)_sqlurl,(char *)_h);
 
-	if (connect_db(res) < 0)
+	if (connect_db(_h) < 0)
 	{
 		PLOG("db_init", "Error while trying to open database, FATAL\n");
-		aug_free(res);
+		aug_free(_h);
 		return((db_con_t *) 0);
 	}
 
-	return res;
+	LOG(L_DBG, "db_init: %p\n", _h);
+
+	return _h;
 }
 
 
@@ -270,7 +284,7 @@ db_con_t *db_init(const char* _sqlurl)
 
 void db_close(db_con_t* _h)
 {
-	DLOG("db_close", "entry");
+	LOG(L_DBG, "db_init: %p\n", _h);
 	if(! _h)
 	{
 		PLOG("db_close", "no handle passed, ignored");
@@ -305,18 +319,28 @@ void db_close(db_con_t* _h)
 
 static int submit_query(db_con_t* _h, const char* _s)
 {	
-	int rv;
 
 	/*
 	** this bit of nonsense in case our connection get screwed up 
 	*/
-	switch(rv = PQstatus(CON_CONNECTION(_h)))
+	switch(PQstatus(CON_CONNECTION(_h)))
 	{
-		case CONNECTION_OK: break;
+		case CONNECTION_OK: 
+			break;
 		case CONNECTION_BAD:
 			PLOG("submit_query", "connection reset");
 			PQreset(CON_CONNECTION(_h));
-		break;
+			break;
+		case CONNECTION_STARTED:
+		case CONNECTION_MADE:
+		case CONNECTION_AWAITING_RESPONSE:
+		case CONNECTION_AUTH_OK:
+		case CONNECTION_SETENV:
+		case CONNECTION_SSL_STARTUP:
+		case CONNECTION_NEEDED:
+		default:
+                	LOG(L_ERR, "submit_query: %p PQstatus(%s) invalid: %s\n", _h, PQerrorMessage(CON_CONNECTION(_h)), _s);
+			return -1;
 	}
 
 	/*
@@ -330,47 +354,15 @@ static int submit_query(db_con_t* _h, const char* _s)
 	/*
 	** exec the query
 	*/
-	CON_RESULT(_h) = PQexec(CON_CONNECTION(_h), _s);
 
-	rv = 0;
-	if(PQresultStatus(CON_RESULT(_h)) == 0)
-	{
-		PLOG("submit_query", "initial failure, FATAL");
-		/* 
-		** terrible error??
-		*/
-		rv = -3;
-	}
-	else
-	{
-		/*
-		** the query ran, get the status
-		*/
-		switch(PQresultStatus(CON_RESULT(_h)))
-		{
-			case PGRES_EMPTY_QUERY: rv = -9; break;
-			case PGRES_COMMAND_OK: rv = 0; break;
-			case PGRES_TUPLES_OK: rv = 0; break;
-			case PGRES_COPY_OUT: rv = -4; break;
-			case PGRES_COPY_IN: rv = -5; break;
-			case PGRES_BAD_RESPONSE: rv = -6; break;
-			case PGRES_NONFATAL_ERROR: rv = -7; break;
-			case PGRES_FATAL_ERROR: rv = -8; break;
-			default: rv = -2; break;
-		}
-	}
-	if(rv < 0)
-	{
-		/*
-		** log the error
-		*/
-		char buf[SQL_BUF_LEN];
-		snprintf(buf, SQL_BUF_LEN, "query '%s', result '%s'\n",
-			_s, PQerrorMessage(CON_CONNECTION(_h)));
-		PLOG("submit_query", buf);
-	}
+        if (PQsendQuery(CON_CONNECTION(_h), _s)) {
+                LOG(L_DBG, "submit_query: %p PQsendQuery(%s)\n", _h, _s);
+        } else {
+                LOG(L_ERR, "submit_query: %p PQsendQuery Error: %s Query: %s\n", _h, PQerrorMessage(CON_CONNECTION(_h)), _s);
+		return -1;
+        }
+	return 0;
 
-	return(rv);
 }
 
 /*
@@ -388,6 +380,7 @@ static int free_query(db_con_t* _h)
 {
 	if(CON_RESULT(_h))
 	{
+		LOG(L_DBG, "free_query: %p PQclear(%p) result set\n", _h, CON_RESULT(_h));
 		PQclear(CON_RESULT(_h));
 		CON_RESULT(_h) = 0;
 	}
@@ -410,7 +403,8 @@ static int free_query(db_con_t* _h)
 int db_free_query(db_con_t* _h, db_res_t* _r)
 {
 	free_query(_h);
-	free_result(_r);
+        if (_r) free_result(_r);
+        _r = 0;
 
 	return 0;
 }
@@ -473,6 +467,7 @@ static int begin_transaction(db_con_t * _h, char *_s)
 				** this is the normal way out.
 				** the transaction ran fine.
 				*/
+				LOG(L_DBG, "begin_transaction: %p PQclear(%p) result set\n", _h, mr);
 				PQclear(mr);
 				return(0);
 			}
@@ -523,6 +518,7 @@ static int begin_transaction(db_con_t * _h, char *_s)
 
 	DLOG("begin_transaction", "db channel reset successful");
 
+	LOG(L_DBG, "begin_transaction: %p PQclear(%p) result set\n", _h, mr);
 	PQclear(mr);
 	return(0);
 }
@@ -548,6 +544,7 @@ static int commit_transaction(db_con_t * _h)
 		PLOG("commit_transaction", "error");
 		return -1;
 	}
+	LOG(L_DBG, "commit_transaction: %p PQclear(%p) result set\n", _h, mr);
 	PQclear(mr);
 	return(0);
 }
@@ -573,6 +570,7 @@ static int rollback_transaction(db_con_t * _h)
 		PLOG("rollback_transaction", "error");
 		return -1;
 	}
+	LOG(L_DBG, "rollback_transaction: %p PQclear(%p) result set\n", _h, mr);
 	PQclear(mr);
 	return(0);
 }
@@ -689,34 +687,44 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 {
 	int off, rv;
 	if (!_c) {
-		off = snprintf(sql_buf, SQL_BUF_LEN,
+		off = snprintf(_s, SQL_BUF_LEN,
 			"select * from %s ", CON_TABLE(_h));
 	} else {
-		off = snprintf(sql_buf, SQL_BUF_LEN, "select ");
-		off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off,
+		off = snprintf(_s, SQL_BUF_LEN, "select ");
+		off += print_columns(_s + off, SQL_BUF_LEN - off, _c, _nc);
+		off += snprintf(_s + off, SQL_BUF_LEN - off,
 			"from %s ", CON_TABLE(_h));
 	}
 	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off,
+		off += snprintf(_s + off, SQL_BUF_LEN - off, "where ");
+		off += print_where(_s + off, SQL_BUF_LEN - off,
 			_k, _op, _v, _n);
 	}
 	if (_o) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off,
+		off += snprintf(_s + off, SQL_BUF_LEN - off,
 			"order by %s", _o);
 	}
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_query(): Error while submitting query, executing ROLLBACK\n");
-		rollback_transaction(_h);
-		return -2;
+	LOG (L_DBG, "db_query: %p %p %s\n", _h, _r, _s);
+
+        if(_r) {
+		/* if(begin_transaction(_h, _s)) return(-1); */
+		if (submit_query(_h, _s) < 0) {
+			LOG(L_ERR, "db_query(): Error while submitting query\n");
+			/* rollback_transaction(_h); */
+			return -2;
+		}
+		rv = get_result(_h, _r);
+		/* commit_transaction(_h); */
+		return(rv);
+	} else {
+		if (submit_query(_h, _s) < 0) {
+			LOG(L_ERR, "db_query(): Error while submitting query\n");
+			return -2;
+		}
 	}
-	rv = get_result(_h, _r);
-	free_query(_h);
-	commit_transaction(_h);
-	return(rv);
+
+	return 0;
 }
 
 
@@ -726,17 +734,28 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {
 	int rv;
+	
+	LOG (L_DBG, "db_raw_query: %p %p %s\n", _h, _r, _s);
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, _s) < 0) {
-		LOG(L_ERR, "db_raw_query(): Error while submitting query, executing ROLLBACK\n");
-		rollback_transaction(_h);
-		return -2;
-	}
-	rv = get_result(_h, _r);
-	free_query(_h);
-	commit_transaction(_h);
-	return(rv);
+        if(_r) {
+                /* if(begin_transaction(_h, _s)) return(-1); */
+                if (submit_query(_h, _s) < 0) {
+                        LOG(L_ERR, "db_raw_query(): Error while submitting query\n");
+                        /* rollback_transaction(_h); */
+                        return -2;
+                }
+                rv = get_result(_h, _r);
+                /* commit_transaction(_h); */
+                return(rv);
+        } else {
+                if (submit_query(_h, _s) < 0) {
+                        LOG(L_ERR, "db_raw_query(): Error while submitting query\n");
+                        return -2;
+                }
+        }
+
+        return 0;
+
 }
 
 /*
@@ -761,60 +780,59 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
  *   result structure. If this routine returns < 0, then the result structure
  *   is freed before returning to the caller.
  *
- * Todo:
- *   If the last command completed without returning any data, then the
- *   overhead of allocating a new result structure (and subsequently freeing
- *   it) is wasted effort.
- *
- *   Calling routines should be modified to handle a
- *   condition where no data was returned and not expect an allocated result
- *   structure in this case.
- *
  */
 
 int get_result(db_con_t* _h, db_res_t** _r)
 {
+	PGresult *res = NULL;
         ExecStatusType pqresult;
+	int rc = 0;
 
 	*_r = new_result_pg(CON_SQLURL(_h));
 
-	if (!CON_RESULT(_h)) {
-		LOG(L_ERR, "get_result(): error");
-		if (*_r) free_result(*_r);
-		*_r = 0;
-		return -3;
+	while (1) {
+		if ((res = PQgetResult(CON_CONNECTION(_h)))) {
+			CON_RESULT(_h) = res;
+		} else {
+			break;
+		}
 	}
 
         pqresult = PQresultStatus(CON_RESULT(_h));
+	
+	LOG(L_DBG, "get_result: %p PQresultStatus(%s) PQgetResult(%p)\n", _h, PQresStatus(pqresult), CON_RESULT(_h));
 
         switch(pqresult) {
                 case PGRES_COMMAND_OK:
                         /* Successful completion of a command returning no data (such as INSERT or UPDATE). */
-                        return 0;
+                        rc = 0;
+			break;
                 case PGRES_TUPLES_OK:
                         /* Successful completion of a command returning data (such as a SELECT or SHOW). */
                         if (convert_result(_h, *_r) < 0) {
-                                LOG(L_ERR, "get_result(): Error returned from convert_result()\n");
-                                if (*_r) free_result(*_r);
-                                *_r = 0;
-                                return  -4;
+                                LOG(L_ERR, "get_result(): %p Error returned from convert_result()\n", _h);
+       				if (*_r) free_result(*_r);
+        			*_r = 0;
+                                rc = -4;
                         }
-                        return 0;
+                        rc =  0;
+                        break;
                 case PGRES_EMPTY_QUERY:
                 case PGRES_COPY_OUT:
                 case PGRES_COPY_IN:
                 case PGRES_BAD_RESPONSE:
                 case PGRES_NONFATAL_ERROR:
                 case PGRES_FATAL_ERROR:
+        		LOG(L_WARN, "get_result(): %p Warning: probable invalid query\n", _h);
                 default:
+        		LOG(L_WARN, "get_result(): %p Warning: PQresultStatus(%s)\n", _h, PQresStatus(pqresult));
+       			if (*_r) free_result(*_r);
+        		*_r = 0;
                         break;
         }
 
-        LOG(L_WARN, "get_result(): Warning unhandled status: %s %s\n", PQresStatus(pqresult), PQresultErrorMessage(CON_RESULT(
-_h)));
-        if (*_r) free_result(*_r);
-        *_r = 0;
-        return -5;
+	free_query(_h);
+        return (rc);
 }
 
 /*
@@ -826,22 +844,28 @@ _h)));
  */
 int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 {
+	PGresult* res = NULL;
 	int off;
-	off = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
-	off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
-	off += snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	off += print_values(sql_buf + off, SQL_BUF_LEN - off, _v, _n);
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_insert(): Error while inserting, executing ROLLBACK\n");
-		rollback_transaction(_h);
+	off = snprintf(_s, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
+	off += print_columns(_s + off, SQL_BUF_LEN - off, _k, _n);
+	off += snprintf(_s + off, SQL_BUF_LEN - off, ") values (");
+	off += print_values(_s + off, SQL_BUF_LEN - off, _v, _n);
+	*(_s + off++) = ')';
+	*(_s + off) = '\0';
+
+	LOG (L_DBG, "db_insert: %p %s\n", _h, _s);
+
+	/* if(begin_transaction(_h, _s)) return(-1); */
+	if (submit_query(_h, _s) < 0) {
+		LOG(L_ERR, "db_insert(): Error while inserting\n");
+		/* rollback_transaction(_h); */
 		return -2;
 	}
-	free_query(_h);
-	commit_transaction(_h);
+        while ( (res = PQgetResult(CON_CONNECTION(_h))) ) {
+                PQclear(res);
+        }
+	/* commit_transaction(_h); */
 	return(0);
 }
 
@@ -856,21 +880,28 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
  */
 int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
+	PGresult* res = NULL;
 	int off;
-	off = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
+
+	off = snprintf(_s, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
 	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k,
+		off += snprintf(_s + off, SQL_BUF_LEN - off, " where ");
+		off += print_where(_s + off, SQL_BUF_LEN - off, _k,
 			_o, _v, _n);
 	}
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_delete(): Error while deleting, executing ROLLBACK\n");
-		rollback_transaction(_h);
+
+	LOG (L_DBG, "db_delete: %p %s\n", _h, _s);
+
+	/* if(begin_transaction(_h, _s)) return(-1); */
+	if (submit_query(_h, _s) < 0) {
+		LOG(L_ERR, "db_delete(): Error while deleting\n");
+		/* rollback_transaction(_h); */
 		return -2;
 	}
-	free_query(_h);
-	commit_transaction(_h);
+        while ( (res = PQgetResult(CON_CONNECTION(_h))) ) {
+                PQclear(res);
+        }
+	/* commit_transaction(_h); */
 	return(0);
 }
 
@@ -889,23 +920,29 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
+	PGresult* res = NULL;
 	int off;
-	off = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
-	off += print_set(sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
+
+	off = snprintf(_s, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
+	off += print_set(_s + off, SQL_BUF_LEN - off, _uk, _uv, _un);
 	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k,
+		off += snprintf(_s + off, SQL_BUF_LEN - off, " where ");
+		off += print_where(_s + off, SQL_BUF_LEN - off, _k,
 			_o, _v, _n);
-		*(sql_buf + off) = '\0';
+		*(_s + off) = '\0';
 	}
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_update(): Error while updating, executing ROLLBACK\n");
-		rollback_transaction(_h);
+	LOG (L_DBG, "db_update: %p %s\n", _h, _s);
+
+	/* if(begin_transaction(_h, _s)) return(-1); */
+	if (submit_query(_h, _s) < 0) {
+		LOG(L_ERR, "db_update(): Error while updating\n");
+		/* rollback_transaction(_h); */
 		return -2;
 	}
-	free_query(_h);
-	commit_transaction(_h);
+	while ( (res = PQgetResult(CON_CONNECTION(_h))) ) {
+		PQclear(res);
+	}
+	/* commit_transaction(_h); */
 	return(0);
 }
