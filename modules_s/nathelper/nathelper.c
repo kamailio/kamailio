@@ -909,9 +909,13 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	ADD_ADIRECTION	0x01
 #define	FIX_MEDIP	0x02
 #define	ADD_ANORTPPROXY	0x04
+#define ADD_ADIRECTIONP 0x08
 
 #define	ADIRECTION	"a=direction:active\r\n"
 #define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
+
+#define ADIRECTIONP     "a=direction:passive\r\n"
+#define ADIRECTIONP_LEN (sizeof(ADIRECTIONP) - 1)
 
 #define	AOLDMEDIP	"a=oldmediaip:"
 #define	AOLDMEDIP_LEN	(sizeof(AOLDMEDIP) - 1)
@@ -940,7 +944,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 
-	if (level & (ADD_ADIRECTION | ADD_ANORTPPROXY)) {
+	if (level & (ADD_ADIRECTION | ADD_ANORTPPROXY | ADD_ADIRECTIONP)) {
 		msg->msg_flags |= FL_FORCE_ACTIVE;
 		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
 		if (anchor == NULL) {
@@ -955,6 +959,19 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 			}
 			memcpy(buf, ADIRECTION, ADIRECTION_LEN);
 			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0) == NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
+				pkg_free(buf);
+				return -1;
+			}
+		}
+		if (level & ADD_ADIRECTIONP) {
+			buf = pkg_malloc(ADIRECTIONP_LEN * sizeof(char));
+			if (buf == NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
+				return -1;
+			}
+			memcpy(buf, ADIRECTIONP, ADIRECTIONP_LEN);
+			if (insert_new_lump_after(anchor, buf, ADIRECTIONP_LEN, 0) == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
