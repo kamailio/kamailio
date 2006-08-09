@@ -164,6 +164,10 @@ void free_cell( struct cell* dead_cell )
 		destroy_avp_list_unsafe( &dead_cell->user_avps_from );
 	if (dead_cell->user_avps_to)
 		destroy_avp_list_unsafe( &dead_cell->user_avps_to );
+	if (dead_cell->uri_avps_from)
+		destroy_avp_list_unsafe( &dead_cell->uri_avps_from );
+	if (dead_cell->uri_avps_to)
+		destroy_avp_list_unsafe( &dead_cell->uri_avps_to );
 
 	/* the cell's body */
 	shm_free_unsafe( dead_cell );
@@ -292,6 +296,8 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 error:
 	destroy_avp_list(&new_cell->user_avps_from);
 	destroy_avp_list(&new_cell->user_avps_to);
+	destroy_avp_list(&new_cell->uri_avps_from);
+	destroy_avp_list(&new_cell->uri_avps_to);
 	shm_free(new_cell);
 	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
 	reset_avps();
