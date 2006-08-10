@@ -1,3 +1,6 @@
+2006-08-08
+	* added functions for rr_t serialization/deserialization
+
 2006-06-29
 	* added function has_to_tag common for more presence modules
 

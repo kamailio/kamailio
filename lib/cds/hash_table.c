@@ -228,4 +228,3 @@ unsigned int rshash(const char* str, unsigned int len)
 	return (hash & 0x7FFFFFFF);
 }
 
-
