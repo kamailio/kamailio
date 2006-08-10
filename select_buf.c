@@ -67,6 +67,7 @@ static int active_buffer=-1;
 #define ALLOC_SIZE(req_size) (((req_size/BUFFER_GRANULARITY)+1)*BUFFER_GRANULARITY)
 
 int allocate_buffer(int req_size) {
+	void *b;
 	int size=ALLOC_SIZE(req_size);
 	
 	if (buffer[active_buffer].b == NULL) {
@@ -83,7 +84,8 @@ int allocate_buffer(int req_size) {
 		return 1;
 	}
 	
-	if (pkg_realloc(buffer[active_buffer].b,size)) {
+	if ((b=pkg_realloc(buffer[active_buffer].b,size))) {
+		buffer[active_buffer].b=b;
 		buffer[active_buffer].size=size;
 		buffer[active_buffer].offset=0;
 		return 1;
