@@ -4,6 +4,7 @@
  * PERMISSIONS module
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,12 +27,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ *   2006-08-10: parse_config_file() can return error value (Miklos)
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "../../sr_module.h"
 #include "rule.h"
+#include "permissions.h"
 #include "parse_config.h"
 
 
@@ -150,13 +153,14 @@ static int parse_expression(char *str, expression **e, expression **e_exceptions
  * parse one line of the config file
  * return the rule according to line
  */
-static rule *parse_config_line(char *line) 
+static rule *parse_config_line(char *line, int *err) 
 {
 	rule	*rule1;
 	expression *left, *left_exceptions, *right, *right_exceptions;
 	int	i=-1, exit=0, apost=0, colon=-1, eval=0;
 	static char	str1[LINE_LENGTH], str2[LINE_LENGTH+1];
 
+	*err = 0;
 	if (!line) return 0;
 
 	rule1 = 0;
@@ -222,6 +226,7 @@ static rule *parse_config_line(char *line)
 		} else {
 			/* error */
 			LOG(L_ERR, "ERROR parsing line: %s\n", line);
+			goto error;
 		}
 	}
 	return 0;
@@ -232,7 +237,8 @@ static rule *parse_config_line(char *line)
 
 	if (right) free_expression(right);
 	if (right_exceptions) free_expression(right_exceptions);
-	
+
+	*err = 1;	
 	return 0;
 }
 
@@ -241,20 +247,27 @@ static rule *parse_config_line(char *line)
  * parse a config file
  * return a list of rules
  */
-rule *parse_config_file(char *filename) 
+rule *parse_config_file(char *filename, int *err) 
 {
 	FILE	*file;
 	char	line[LINE_LENGTH+1];
 	rule	*start_rule = NULL, *rule1 = NULL, *rule2 = NULL;
 
+	*err = 0;
 	file = fopen(filename,"r");
 	if (!file) {
-		LOG(L_WARN, "WARNING: File not found: %s\n", filename);
+		if (safe_file_load) {
+			LOG(L_ERR, "ERROR: File not found: %s\n", filename);
+			*err = 1;
+		} else {
+			LOG(L_WARN, "WARNING: File not found: %s\n", filename);
+		}
 		return NULL;
 	}
 	
 	while (fgets(line, LINE_LENGTH, file)) {
-		rule2 = parse_config_line(line);
+		rule2 = parse_config_line(line, err);
+		if (*err) goto error;
 		if (rule2) {
 			if (rule1) {
 				/* it is not the first rule */
@@ -266,7 +279,8 @@ rule *parse_config_file(char *filename)
 			rule1 = rule2;
 		}
 	}
-	
+
+error:
 	fclose(file);
 	return start_rule;	/* returns the linked list */
 }

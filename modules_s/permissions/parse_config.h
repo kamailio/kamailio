@@ -4,6 +4,7 @@
  * PERMISSIONS module
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -33,6 +34,6 @@
 
 #include "rule.h"
 
-rule *parse_config_file(char *filename);
+rule *parse_config_file(char *filename, int *err);
 
 #endif /* PARSE_CONFIG_H */

@@ -4,6 +4,7 @@
  * PERMISSIONS module
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -53,6 +54,12 @@ typedef struct rule_file {
  * at any time
  */
 #define MAX_RULE_FILES 64
+
+extern rule_file_t	*allow;	/* Parsed allow files */
+extern rule_file_t	*deny;	/* Parsed deny files */
+extern int		max_rule_files;
+extern int check_all_branches;
+extern int safe_file_load;
 
 extern char* db_url;        /* Database URL */
 extern int db_mode;	    /* Database usage mode: 0=no cache, 1=cache */
