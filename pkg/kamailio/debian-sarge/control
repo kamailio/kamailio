@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Debian VoIP Maintainers <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Julien BLACHE <jblache@debian.org>
-Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius1-dev, flex, bison, zlib1g-dev, unixodbc-dev
+Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev
 Standards-Version: 3.7.2
 
 Package: openser
