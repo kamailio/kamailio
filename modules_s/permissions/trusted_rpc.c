@@ -23,12 +23,17 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *   2006-08-14: db_mode is checked
+ *               trusted_reload() connects to the DB -- child processes
+ *               do not keep the connection open (Miklos)
  */
 
 #include "../../dprint.h"
 #include "../../db/db.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
+#include "permissions.h"
 #include "hash.h"
 #include "trusted.h"
 #include "trusted_rpc.h"
@@ -45,9 +50,27 @@ static const char* trusted_reload_doc[2] = {
  */
 static void trusted_reload(rpc_t* rpc, void* ctx)
 {
+	if (db_mode != ENABLE_CACHE) {
+		rpc->fault(ctx, 400, "Database cache is not enabled");
+		return;
+	}
+
+	/* connect to the DB */
+	db_handle = perm_dbf.init(db_url);
+	if (!db_handle) {
+		LOG(L_ERR, "ERROR: Unable to connect to database\n");
+		rpc->fault(ctx, 400, "Trusted Table Reload Failed");
+		return;
+	}
+
+	/* reload cache */
 	if (reload_trusted_table() < 0) {
 		rpc->fault(ctx, 400, "Trusted Table Reload Failed");
 	}
+
+	/* close DB connection */
+	perm_dbf.close(db_handle);
+	db_handle = 0;
 }
 
 
@@ -62,6 +85,11 @@ static const char* trusted_dump_doc[2] = {
  */
 static void trusted_dump(rpc_t* rpc, void* ctx)
 {
+	if (db_mode != ENABLE_CACHE) {
+		rpc->fault(ctx, 400, "Database cache is not enabled");
+		return;
+	}
+
 	if (hash_table) {
 		hash_table_print(*hash_table, rpc, ctx);
 	}

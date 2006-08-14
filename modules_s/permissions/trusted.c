@@ -28,6 +28,7 @@
  * History:
  * --------
  *  2004-06-07  updated to the new DB api, moved reload_trusted_table (andrei)
+ *  2006-08-14: DB handlers are moved to permission.c (Miklos)
  */
 
 #include <sys/types.h>
@@ -44,66 +45,19 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 
-#define TABLE_VERSION 1
-
 struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
 struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
 struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
-
-
-static db_con_t* db_handle = 0;
-static db_func_t perm_dbf;
 
 /*
  * Initialize data structures
  */
 int init_trusted(void)
 {
-	int ver;
-	str name;
-	     /* Check if hash table needs to be loaded from trusted table */
-
-	if (!db_url) {
-		LOG(L_INFO, "db_url parameter of permissions module not set, disabling allow_trusted\n");
-		return 0;
-	} else {
-		if (bind_dbmod(db_url, &perm_dbf) < 0) {
-			LOG(L_ERR, "ERROR: permissions: init_trusted: "
-					"load a database support module\n");
-			return -1;
-		}
-
-		if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
-			LOG(L_ERR, "ERROR: permissions: init_trusted: "
-			    "Database module does not implement 'query' function\n");
-			return -1;
-		}
-	}
-
 	hash_table_1 = hash_table_2 = 0;
 	hash_table = 0;
 
 	if (db_mode == ENABLE_CACHE) {
-		db_handle = perm_dbf.init(db_url);
-		if (!db_handle) {
-			LOG(L_ERR, "ERROR: permissions: init_trusted():"
-					" Unable to connect database\n");
-			return -1;
-		}
-
-		name.s = trusted_table;
-		name.len = strlen(trusted_table);
-		ver = table_version(&perm_dbf, db_handle, &name);
-
-		if (ver < 0) {
-			LOG(L_ERR, "permissions:init_trusted(): Error while querying table version\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "permissions:init_trusted(): Invalid table version (use ser_mysql.sh reinstall)\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		}
 
 		hash_table_1 = new_hash_table();
 		if (!hash_table_1) return -1;
@@ -120,8 +74,6 @@ int init_trusted(void)
 			LOG(L_CRIT, "init_trusted(): Reload of trusted table failed\n");
 			goto error;
 		}
-
-		perm_dbf.close(db_handle);
 	}
 	return 0;
 
@@ -131,49 +83,6 @@ int init_trusted(void)
 	if (hash_table) shm_free(hash_table);
 	return -1;
 }
-
-
-/*
- * Open database connections if necessary
- */
-int init_child_trusted(int rank)
-{
-	str name;
-	int ver;
-
-	if (!db_url) {
-		return 0;
-	}
-
-	if (rank > 0 || rank == PROC_FIFO || rank == PROC_UNIXSOCK) {
-		db_handle = perm_dbf.init(db_url);
-		if (!db_handle) {
-			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
-					" Unable to connect database\n");
-			return -1;
-		}
-
-		name.s = trusted_table;
-		name.len = strlen(trusted_table);
-		ver = table_version(&perm_dbf, db_handle, &name);
-
-		if (ver < 0) {
-			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
-					" Error while querying table version\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
-					" Invalid table version (use ser_mysql.sh reinstall)\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		}
-
-	}
-
-	return 0;
-}
-
 
 /*
  * Close connections and release memory

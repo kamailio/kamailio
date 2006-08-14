@@ -34,6 +34,8 @@
  *   2006-08-10: file operation functions are moved to allow_files.c
  *               memory is not allocated for file containers if not needed
  *               safe_file_load module parameter introduced (Miklos)
+ *   2006-08-14: child processes do not keep the DB connection open
+ *               if cache is enabled (Miklos)
  */
 
 #include <stdio.h>
@@ -70,6 +72,11 @@ char* source_col = "src_ip";       /* Name of source address column */
 char* proto_col = "proto";         /* Name of protocol column */
 char* from_col = "from_pattern";   /* Name of from pattern column */
 
+/* Database API */
+db_func_t	perm_dbf;
+db_con_t	*db_handle = 0;
+
+#define TRUSTED_TABLE_VERSION	1
 
 /* fixup function prototypes */
 static int fixup_files_1(void** param, int param_no);
@@ -214,6 +221,9 @@ static int fixup_files_1(void** param, int param_no)
  */
 static int mod_init(void)
 {
+	str	db_table;
+	int	ver;
+
 	LOG(L_INFO, "permissions - initializing\n");
 
 	/* do not load the files if not necessary */
@@ -222,20 +232,63 @@ static int mod_init(void)
 		if (load_file(default_deny_file, &deny, &deny_rules_num, 1) != 0) return -1;
 	}
 
-	if (init_trusted() != 0) {
-		LOG(L_ERR, "Error while initializing allow_trusted function\n");
-		return -1;
+	if (db_url) {
+		/* database backend is enabled */
+		if (bind_dbmod(db_url, &perm_dbf)) {
+			LOG(L_ERR, "ERROR: unable to bind database module, load it first!\n");
+			return -1;
+		}
+		db_handle = perm_dbf.init(db_url);
+		if (!db_handle) {
+			LOG(L_ERR, "ERROR: Unable to connect to database\n");
+			return -1;
+		}
+
+		/* check table version */
+		db_table.s = trusted_table;
+		db_table.len = strlen(trusted_table);
+		ver = table_version(&perm_dbf, db_handle, &db_table);
+
+		if (ver <= 0) {
+			LOG(L_ERR, "ERROR: Error while quering version for sql table '%s'\n", trusted_table);
+			perm_dbf.close(db_handle);
+			return -1;
+		}
+		if (ver < TRUSTED_TABLE_VERSION) {
+			LOG(L_ERR, "ERROR: version of sql table '%s' is invalid (%d instead of %d)" \
+				", update table structure!\n", trusted_table, ver, TRUSTED_TABLE_VERSION);
+			perm_dbf.close(db_handle);
+			return -1;
+		}
+
+		/* init trusted tables */
+		if (init_trusted() != 0) {
+			LOG(L_ERR, "Error while initializing allow_trusted function\n");
+			perm_dbf.close(db_handle);
+			return -1;
+		}
+
+		perm_dbf.close(db_handle);
+		db_handle = 0;
 	}
 
 	return 0;
 }
 
-
 static int child_init(int rank)
 {
-	return init_child_trusted(rank);
-}
+	if (rank <= 0) return 0;
 
+	if (db_url && (db_mode == DISABLE_CACHE)) {
+		/* we need DB connection for each child */
+		db_handle = perm_dbf.init(db_url);
+		if (!db_handle) {
+			LOG(L_CRIT, "ERROR: Unable to connect to database\n");
+			return -1;
+		}
+	}
+	return 0;
+}
 
 /*
  * destroy function

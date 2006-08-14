@@ -44,12 +44,6 @@ int init_trusted(void);
 
 
 /*
- * Open database connections if necessary
- */
-int init_child_trusted(int rank);
-
-
-/*
  * Close connections and release memory
  */
 void clean_trusted(void);
