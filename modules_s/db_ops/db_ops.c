@@ -865,7 +865,10 @@ static int mod_init(void) {
 	}
 
 	for (p=dbops_actions; p; p=p->next) {
-		init_action(p);
+		int res;
+		res = init_action(p);
+		if (res < 0)
+			return res;
 	}
 
 	register_script_cb(dbops_pre_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| PRE_SCRIPT_CB, 0);
