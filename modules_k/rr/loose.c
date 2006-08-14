@@ -407,17 +407,67 @@ static inline int save_ruri(struct sip_msg* _m)
 
 
 /*
+ * input: uri - uri to be checked if has maddr
+ * input: puri - parsed uri
+ * outpu: uri - the uri to be used further
+ */
+#define RH_MADDR_PARAM_MAX_LEN 127 /* The max length of the maddr uri*/
+static inline int get_maddr_uri(str *uri, struct sip_uri *puri)
+{
+	static char builturi[RH_MADDR_PARAM_MAX_LEN+1];
+	struct sip_uri turi;
+
+	if(uri==NULL || uri->s==NULL)
+		return RR_ERROR;
+	if(puri==NULL)
+	{
+		if (parse_uri(uri->s, uri->len, &turi) < 0)
+		{
+			LOG(L_ERR, "get_maddr_uri: Error while parsing the URI\n");
+			return RR_ERROR;
+		}
+		puri = &turi;
+	}
+
+	if(puri->maddr.s==NULL)
+		return 0;
+
+	/* sip: + maddr + : + port */
+	if( (puri->maddr_val.len) > ( RH_MADDR_PARAM_MAX_LEN - 10 ) )
+	{
+		LOG(L_ERR, "after_loose: Too long maddr parameter\n");
+		return RR_ERROR;
+	}
+	memcpy( builturi, "sip:", 4 );
+	memcpy( builturi+4, puri->maddr_val.s, puri->maddr_val.len );
+		
+	if( puri->port.len > 0 )
+	{
+		builturi[4+puri->maddr_val.len] =':';
+		memcpy(builturi+5+puri->maddr_val.len, puri->port.s,
+				puri->port.len);			
+	}
+
+	uri->len = 4+puri->maddr_val.len
+					+ ((puri->port.len>0)?(1+puri->port.len):0);
+	builturi[uri->len]='\0';
+	uri->s = builturi;
+
+	DBG("rr:get_maddr_uri: uri is %s\n", builturi );
+	return 0;
+}
+
+
+/*
  * Logic necessary to forward request to strict routers
  *
  * Returns 0 on success, negative number on an error
  */
 static inline int handle_sr(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r)
 {
-	str* uri;
+	str uri;
 	char* rem_off;
 	int rem_len;
-
-	uri = &_r->nameaddr.uri;
 
 	     /* Next hop is strict router, save R-URI here */
 	if (save_ruri(_m) < 0) {
@@ -426,7 +476,12 @@ static inline int handle_sr(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r
 	}
 	
 	     /* Put the first Route in Request-URI */
-	if (rewrite_uri(_m, uri) < 0) {
+	uri = _r->nameaddr.uri;
+	if(get_maddr_uri(&uri, 0)!=0) {
+		LOG(L_ERR, "after_strict: Error while checking maddr\n");
+		return RR_ERROR;
+	}
+	if (rewrite_uri(_m, &uri) < 0) {
 		LOG(L_ERR, "handle_sr: Error while rewriting request URI\n");
 		return -2;
 	}
@@ -490,7 +545,6 @@ static inline int find_rem_target(struct sip_msg* _m, struct hdr_field** _h, rr_
 	}
 }
 
-
 /*
  * Previous hop was a strict router, handle this case
  */
@@ -501,14 +555,14 @@ static inline int after_strict(struct sip_msg* _m)
 	struct sip_uri puri;
 	rr_t* rt, *prev;
 	char* rem_off;
-	str* uri;
+	str uri;
 	struct socket_info *si;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
-	uri = &rt->nameaddr.uri;
+	uri = rt->nameaddr.uri;
 
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+	if (parse_uri(uri.s, uri.len, &puri) < 0) {
 		LOG(L_ERR, "after_strict: Error while parsing the first route URI\n");
 		return RR_ERROR;
 	}
@@ -551,8 +605,8 @@ static inline int after_strict(struct sip_msg* _m)
 		} else rt = rt->next;
 
 		/* parse the new found uri */
-		uri = &rt->nameaddr.uri;
-		if (parse_uri(uri->s, uri->len, &puri) < 0) {
+		uri = rt->nameaddr.uri;
+		if (parse_uri(uri.s, uri.len, &puri) < 0) {
 			LOG(L_ERR, "after_strict: Error while parsing URI\n");
 			return RR_ERROR;
 		}
@@ -566,7 +620,7 @@ static inline int after_strict(struct sip_msg* _m)
 
 	if (is_strict(&puri.params)) {
 		DBG("after_strict: Next hop: '%.*s' is strict router\n",
-			uri->len, ZSW(uri->s));
+			uri.len, ZSW(uri.s));
 		/* Previous hop was a strict router and the next hop is strict
 		 * router too. There is no need to save R-URI again because it
 		 * is saved already. In fact, in this case we will behave exactly
@@ -576,7 +630,11 @@ static inline int after_strict(struct sip_msg* _m)
 		 * always be a strict router because endpoints don't use ;lr parameter
 		 * In this case we will simply put the URI in R-URI and forward it, 
 		 * which will work perfectly */
-		if (rewrite_uri(_m, uri) < 0) {
+		if(get_maddr_uri(&uri, &puri)!=0) {
+			LOG(L_ERR, "after_strict: Error while checking maddr\n");
+			return RR_ERROR;
+		}
+		if (rewrite_uri(_m, &uri) < 0) {
 			LOG(L_ERR, "after_strict: Error while rewriting request URI\n");
 			return RR_ERROR;
 		}
@@ -594,9 +652,13 @@ static inline int after_strict(struct sip_msg* _m)
 		}
 	} else {
 		DBG("after_strict: Next hop: '%.*s' is loose router\n",
-			uri->len, ZSW(uri->s));
+			uri.len, ZSW(uri.s));
 
-		if (set_dst_uri(_m, uri) < 0) {
+		if(get_maddr_uri(&uri, &puri)!=0) {
+			LOG(L_ERR, "after_strict: Error while checking maddr\n");
+			return RR_ERROR;
+		}
+		if (set_dst_uri(_m, &uri) < 0) {
 			LOG(L_ERR, "after_strict: Error while setting dst_uri\n");
 			return RR_ERROR;
 		}
@@ -627,8 +689,12 @@ static inline int after_strict(struct sip_msg* _m)
 			return RR_ERROR;
 		}
 
-		uri = &rt->nameaddr.uri;
-		if (rewrite_uri(_m, uri) < 0) {
+		uri = rt->nameaddr.uri;
+		if(get_maddr_uri(&uri, 0)!=0) {
+			LOG(L_ERR, "after_strict: Error while checking maddr\n");
+			return RR_ERROR;
+		}
+		if (rewrite_uri(_m, &uri) < 0) {
 			LOG(L_ERR, "after_strict: Can't rewrite R-URI\n");
 			return RR_ERROR;
 		}
@@ -669,14 +735,14 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 #ifdef ENABLE_USER_CHECK
 	int ret;
 #endif
-	str* uri;
+	str uri;
 	struct socket_info *si;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
-	uri = &rt->nameaddr.uri;
+	uri = rt->nameaddr.uri;
 
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+	if (parse_uri(uri.s, uri.len, &puri) < 0) {
 		LOG(L_ERR, "after_loose: Error while parsing the first route URI\n");
 		return RR_ERROR;
 	}
@@ -690,7 +756,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 #endif
 	{
 		DBG("after_loose: Topmost route URI: '%.*s' is me\n",
-			uri->len, ZSW(uri->s));
+			uri.len, ZSW(uri.s));
 		/* set the hooks for the params -bogdan */
 		routed_msg_id = _m->id;
 		routed_params = puri.params;
@@ -753,8 +819,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			} else rt = rt->next;
 		}
 		
-		uri = &rt->nameaddr.uri;
-		if (parse_uri(uri->s, uri->len, &puri) < 0) {
+		uri = rt->nameaddr.uri;
+		if (parse_uri(uri.s, uri.len, &puri) < 0) {
 			LOG(L_ERR, "after_loose: Error while parsing the first route URI\n");
 			return RR_ERROR;
 		}
@@ -767,7 +833,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		DBG("after_loose: Topmost URI is NOT myself\n");
 	}
 
-	DBG("after_loose: URI to be processed: '%.*s'\n", uri->len, ZSW(uri->s));
+	DBG("after_loose: URI to be processed: '%.*s'\n", uri.len, ZSW(uri.s));
 	if (is_strict(&puri.params)) {
 		DBG("after_loose: Next URI is a strict router\n");
 		if (handle_sr(_m, hdr, rt) < 0) {
@@ -778,7 +844,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* Next hop is loose router */
 		DBG("after_loose: Next URI is a loose router\n");
 
-		if (set_dst_uri(_m, uri) < 0) {
+		if(get_maddr_uri(&uri, &puri)!=0) {
+			LOG(L_ERR, "after_loose: Error while checking maddr\n");
+			return RR_ERROR;
+		}
+		if (set_dst_uri(_m, &uri) < 0) {
 			LOG(L_ERR, "after_loose: Error while setting dst_uri\n");
 			return RR_ERROR;
 		}
