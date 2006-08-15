@@ -116,7 +116,7 @@ fifo_openser_monitor() {
 	fi
 	clear
 	while [ $loops -ne $attempt ] ; do
-		attempt=$(($attempt + 1))
+		attempt=`$EXPR $attempt + 1`
 		#clear
 		tput cup 0 0
 		

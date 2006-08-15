@@ -20,6 +20,9 @@ fi
 if [ -z "$LAST_LINE" ] ; then
 	LAST_LINE='tail -1'
 fi
+if [ -z "$EXPR" ] ; then
+	EXPR="expr"
+fi
 
 ##### ------------------------------------------------ #####
 ### configuration for starting/stopping openser
@@ -132,8 +135,8 @@ get_my_host() {
 # calculate name and domain of current user
 set_user() {
 
-	OSERUSER=`echo $1|$AWK -F @ '{print $1}'`
-	OSERDOMAIN=`echo $1|$AWK -F @ '{print $2}'`
+	OSERUSER=`echo $1|$AWK -F@ '{print $1}'`
+	OSERDOMAIN=`echo $1|$AWK -F@ '{print $2}'`
 
 	if [ -z "$OSERDOMAIN" ] ; then
 		OSERDOMAIN="$SIP_DOMAIN"
