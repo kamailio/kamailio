@@ -1,9 +1,7 @@
-/* 
+/*
  * $Id$
  *
- * allow_trusted related functions
- *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -22,28 +20,27 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
-#ifndef _TRUSTED_RPC_H
-#define _TRSUTED_RPC_H
+#ifndef _IPMATCH_H
+#define _IPMATCH_H
 
-#include "../../rpc.h"
+/* initialize ipmatch table */
+int init_ipmatch(void);
 
-extern const char* trusted_reload_doc[];
+/* destroy function */
+void clean_ipmatch(void);
 
-/*
- * Fifo function to reload trusted table
- */
-void trusted_reload(rpc_t* rpc, void* ctx);
+/* wrapper functions for ipmatch */
+int ipmatch_2(struct sip_msg *msg, char *str1, char *str2);
+int ipmatch_1(struct sip_msg *msg, char *str1, char *str2);
+int ipmatch_onsend(struct sip_msg *msg, char *str1, char *str2);
 
-extern const char* trusted_dump_doc[];
+/* set IM_FILTER */
+int ipmatch_filter(struct sip_msg *msg, char *str1, char *str2);
 
-/*
- * Fifo function to print entries from current hash table
- */
-void trusted_dump(rpc_t* rpc, void* ctx);
-
-#endif /* _TRUSTED_RPC_H */
+#endif /* _IPMATCH_H */

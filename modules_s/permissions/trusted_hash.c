@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Hash functions for cached trusted table
  *
  * Copyright (C) 2003 Juha Heinanen
@@ -30,7 +32,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
-#include "hash.h"
+#include "trusted_hash.h"
 
 
 /*

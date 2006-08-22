@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Header file for allow_trusted hash table functions
  *
  * Copyright (C) 2003 Juha Heinanen
@@ -25,8 +27,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef HASH_H
-#define HASH_H
+#ifndef _TRUSTED_HASH_H
+#define _TRUSTED_HASH_H
 
 #include <stdio.h>
 #include "../../parser/msg_parser.h"
@@ -90,4 +92,4 @@ void hash_table_print(struct trusted_list** hash_table, rpc_t* rpc, void* ctx);
 void empty_hash_table(struct trusted_list** hash_table);
 
 
-#endif /* HASH_H */
+#endif /* _TRUSTED_HASH_H */

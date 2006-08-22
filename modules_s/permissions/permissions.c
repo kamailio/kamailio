@@ -42,8 +42,9 @@
 #include "../../mem/mem.h"
 #include "permissions.h"
 #include "trusted.h"
-#include "trusted_rpc.h"
 #include "allow_files.h"
+#include "ipmatch.h"
+#include "permissions_rpc.h"
 
 MODULE_VERSION
 
@@ -72,15 +73,21 @@ char* source_col = "src_ip";       /* Name of source address column */
 char* proto_col = "proto";         /* Name of protocol column */
 char* from_col = "from_pattern";   /* Name of from pattern column */
 
+/* parameters for ipmatch functions */
+char	*ipmatch_table = "ipmatch";
+
 /* Database API */
 db_func_t	perm_dbf;
 db_con_t	*db_handle = 0;
 
 #define TRUSTED_TABLE_VERSION	1
+#define IPMATCH_TABLE_VERSION	1
 
 /* fixup function prototypes */
 static int fixup_files_1(void** param, int param_no);
 static int fixup_files_2(void** param, int param_no);
+static int fixup_w_im(void **, int);
+static int fixup_w_im_onsend(void **, int);
 
 /* module function prototypes */
 static int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
@@ -90,6 +97,11 @@ static int allow_register_1(struct sip_msg* msg, char* basename, char* s);
 static int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file);
 static int allow_refer_to_1(struct sip_msg* msg, char* basename, char* s);
 static int allow_refer_to_2(struct sip_msg* msg, char* allow_file, char* deny_file);
+int w_im_2(struct sip_msg *msg, char *str1, char *str2);
+int w_im_1(struct sip_msg *msg, char *str1, char *str2);
+int w_im_onsend(struct sip_msg *msg, char *str1, char *str2);
+int w_im_filter(struct sip_msg *msg, char *str1, char *str2);
+
 
 /* module interface function prototypes */
 static int mod_init(void);
@@ -107,6 +119,10 @@ static cmd_export_t cmds[] = {
 	{"allow_refer_to", allow_refer_to_1, 1, fixup_files_1,  REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_refer_to", allow_refer_to_2, 2, fixup_files_2,  REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_trusted",  allow_trusted,    0, 0,              REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ipmatch",        w_im_1,           1, fixup_w_im,     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"ipmatch",        w_im_2,           2, fixup_w_im,     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"ipmatch_onsend", w_im_onsend,      1, fixup_w_im_onsend, ONSEND_ROUTE },
+	{"ipmatch_filter", w_im_filter,      1, fixup_int_1,     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | ONSEND_ROUTE},
         {0, 0, 0, 0, 0}
 };
 
@@ -125,6 +141,7 @@ static param_export_t params[] = {
 	{"source_col",         PARAM_STRING, &source_col        },
 	{"proto_col",          PARAM_STRING, &proto_col         },
 	{"from_col",           PARAM_STRING, &from_col          },
+	{"ipmatch_table",      PARAM_STRING, &ipmatch_table     },
         {0, 0, 0}
 };
 
@@ -132,7 +149,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
         "permissions",
         cmds,      /* Exported functions */
-	trusted_rpc, /* RPC methods */
+	permissions_rpc, /* RPC methods */
         params,    /* Exported parameters */
         mod_init,  /* module initialization function */
         0,         /* response function */
@@ -216,14 +233,32 @@ static int fixup_files_1(void** param, int param_no)
 	return 0;
 }
 
+/* checks if the DB table is up-to-date */
+static int check_table_version(char *_name, int _version) {
+	str	db_table;
+	int	ver;
+
+	db_table.s = _name;
+	db_table.len = strlen(_name);
+	ver = table_version(&perm_dbf, db_handle, &db_table);
+
+	if (ver <= 0) {
+		LOG(L_ERR, "ERROR: Error while quering version for sql table '%s'\n", _name);
+		return -1;
+	}
+	if (ver < _version) {
+		LOG(L_ERR, "ERROR: version of sql table '%s' is invalid (%d instead of %d)" \
+			", update table structure!\n", _name, ver, _version);
+		return -1;
+	}
+	return 0;
+}
+
 /*
  * module initialization function
  */
 static int mod_init(void)
 {
-	str	db_table;
-	int	ver;
-
 	LOG(L_INFO, "permissions - initializing\n");
 
 	/* do not load the files if not necessary */
@@ -244,19 +279,14 @@ static int mod_init(void)
 			return -1;
 		}
 
-		/* check table version */
-		db_table.s = trusted_table;
-		db_table.len = strlen(trusted_table);
-		ver = table_version(&perm_dbf, db_handle, &db_table);
-
-		if (ver <= 0) {
-			LOG(L_ERR, "ERROR: Error while quering version for sql table '%s'\n", trusted_table);
+		/* check trusted table version */
+		if (check_table_version(trusted_table, TRUSTED_TABLE_VERSION)) {
 			perm_dbf.close(db_handle);
 			return -1;
 		}
-		if (ver < TRUSTED_TABLE_VERSION) {
-			LOG(L_ERR, "ERROR: version of sql table '%s' is invalid (%d instead of %d)" \
-				", update table structure!\n", trusted_table, ver, TRUSTED_TABLE_VERSION);
+
+		/* check ipmatch table version */
+		if (check_table_version(ipmatch_table, IPMATCH_TABLE_VERSION)) {
 			perm_dbf.close(db_handle);
 			return -1;
 		}
@@ -268,6 +298,13 @@ static int mod_init(void)
 			return -1;
 		}
 
+		/* init ipmatch table */
+		if (init_ipmatch() != 0) {
+			LOG(L_ERR, "Error while initializing ipmatch table\n");
+			perm_dbf.close(db_handle);
+			return -1;
+		}
+		
 		perm_dbf.close(db_handle);
 		db_handle = 0;
 	}
@@ -300,6 +337,7 @@ static void mod_exit(void)
 	delete_files(&deny, deny_rules_num);
 
 	clean_trusted();
+	clean_ipmatch();
 }
 
 
@@ -347,4 +385,103 @@ int allow_refer_to_1(struct sip_msg* msg, char* basename, char* s)
 int allow_refer_to_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 {
 	return check_refer_to(msg, (int)(long)allow_file);
+}
+
+/* fixup function for w_ipmatch_* */
+static int fixup_w_im(void **param, int param_no)
+{
+	int	ret;
+	str	*s;
+
+	if (param_no == 1) {
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;
+		ret = fix_param(FPARAM_SELECT, param);
+		if (ret <= 0) return ret;
+		ret = fix_param(FPARAM_STR, param);
+		if (ret == 0) {
+			s = &((fparam_t *)*param)->v.str;
+			if ((s->len == 3) && (memcmp(s->s, "src", 3) == 0)) return 0;
+			if ((s->len == 4) && (memcmp(s->s, "via2", 4) == 0)) return 0;
+
+			LOG(L_ERR, "ERROR: fixup_w_im(): unknown string parameter\n");
+			return -1;
+
+		} else if (ret < 0) {
+			return ret;
+		}
+
+		LOG(L_ERR, "ERROR: fixup_w_im(): unknown parameter type\n");
+		return -1;
+
+	} else if (param_no == 2) {
+		if (fix_param(FPARAM_AVP, param) != 0) {
+			LOG(L_ERR, "ERROR: fixup_w_im(): unknown AVP identifier: %s\n", (char*)*param);
+			return -1;
+		}
+		return 0;
+	}
+
+	return 0;
+}
+
+/* fixup function for w_ipmatch_onsend */
+static int fixup_w_im_onsend(void **param, int param_no)
+{
+	char	*ch;
+
+	if (param_no == 1) {
+		ch = (char *)*param;
+		if ((ch[0] != 'd') && (ch[0] != 'r')) {
+			LOG(L_ERR, "ERROR: fixup_w_im_onsend(): unknown string parameter\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	return 0;
+}
+
+/* wrapper function for ipmatch */
+int w_im_2(struct sip_msg *msg, char *str1, char *str2)
+{
+	if (db_mode != ENABLE_CACHE) {
+		LOG(L_ERR, "ERROR: w_im_2(): ipmatch function supports only cache mode, set db_mode module parameter!\n");
+		return -1;
+	}
+
+	return ipmatch_2(msg, str1, str2);
+}
+
+/* wrapper function for ipmatch */
+int w_im_1(struct sip_msg *msg, char *str1, char *str2)
+{
+	if (db_mode != ENABLE_CACHE) {
+		LOG(L_ERR, "ERROR: w_im_1(): ipmatch function supports only cache mode, set db_mode module parameter!\n");
+		return -1;
+	}
+
+	return ipmatch_1(msg, str1, str2);
+}
+
+/* wrapper function for ipmatch */
+int w_im_onsend(struct sip_msg *msg, char *str1, char *str2)
+{
+	if (db_mode != ENABLE_CACHE) {
+		LOG(L_ERR, "ERROR: w_im_onsend(): ipmatch function supports only cache mode, set db_mode module parameter!\n");
+		return -1;
+	}
+
+	return ipmatch_onsend(msg, str1, str2);
+}
+
+/* wrapper function for ipmatch_filter */
+int w_im_filter(struct sip_msg *msg, char *str1, char *str2)
+{
+	if (db_mode != ENABLE_CACHE) {
+		LOG(L_ERR, "ERROR: w_im_filter(): ipmatch function supports only cache mode, set db_mode module parameter!\n");
+		return -1;
+	}
+
+	return ipmatch_filter(msg, str1, str2);
 }

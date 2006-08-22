@@ -1,9 +1,7 @@
-/* 
+/*
  * $Id$
  *
- * allow_trusted related functions
- *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -22,28 +20,31 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
-#ifndef _TRUSTED_RPC_H
-#define _TRSUTED_RPC_H
+#ifndef _IM_LOCKS_H
+#define _IM_LOCKS_H
 
-#include "../../rpc.h"
+#include "../../locking.h"
+#include "im_hash.h"
 
-extern const char* trusted_reload_doc[];
+/* reader lock for ipmatch cache */
+#define reader_init_imhash_lock()	lock_init(&(IM_HASH->read_lock))
+void reader_lock_imhash(void);
+void reader_release_imhash(void);
 
-/*
- * Fifo function to reload trusted table
- */
-void trusted_reload(rpc_t* rpc, void* ctx);
+/* writer lock for ipmatch cache */
+#define writer_init_imhash_lock()	lock_init(&(IM_HASH)->write_lock);
+#define writer_lock_imhash(void)	lock_get(&(IM_HASH)->write_lock);
+#define writer_release_imhash(void)	lock_release(&(IM_HASH)->write_lock);
 
-extern const char* trusted_dump_doc[];
+/* set writer demand on ipmatch cache */
+void set_wd_imhash(void);
+/* delete writer demand on ipmatch cache */
+void del_wd_imhash(void);
 
-/*
- * Fifo function to print entries from current hash table
- */
-void trusted_dump(rpc_t* rpc, void* ctx);
-
-#endif /* _TRUSTED_RPC_H */
+#endif	/* _IM_LOCKS_H */

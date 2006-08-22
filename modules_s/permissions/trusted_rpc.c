@@ -1,4 +1,6 @@
 /* 
+ * $Id$
+ *
  * allow_trusted related functions
  *
  * Copyright (C) 2003 Juha Heinanen
@@ -34,12 +36,12 @@
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "permissions.h"
-#include "hash.h"
+#include "trusted_hash.h"
 #include "trusted.h"
 #include "trusted_rpc.h"
 
 
-static const char* trusted_reload_doc[2] = {
+const char* trusted_reload_doc[2] = {
 	"Reload trusted table from database.",
 	0
 };
@@ -48,7 +50,7 @@ static const char* trusted_reload_doc[2] = {
 /*
  * Fifo function to reload trusted table
  */
-static void trusted_reload(rpc_t* rpc, void* ctx)
+void trusted_reload(rpc_t* rpc, void* ctx)
 {
 	if (db_mode != ENABLE_CACHE) {
 		rpc->fault(ctx, 400, "Database cache is not enabled");
@@ -75,7 +77,7 @@ static void trusted_reload(rpc_t* rpc, void* ctx)
 
 
 
-static const char* trusted_dump_doc[2] = {
+const char* trusted_dump_doc[2] = {
 	"Return the contents of trusted table",
 	0
 };
@@ -83,7 +85,7 @@ static const char* trusted_dump_doc[2] = {
 /*
  * Fifo function to print entries from current hash table
  */
-static void trusted_dump(rpc_t* rpc, void* ctx)
+void trusted_dump(rpc_t* rpc, void* ctx)
 {
 	if (db_mode != ENABLE_CACHE) {
 		rpc->fault(ctx, 400, "Database cache is not enabled");
@@ -94,10 +96,3 @@ static void trusted_dump(rpc_t* rpc, void* ctx)
 		hash_table_print(*hash_table, rpc, ctx);
 	}
 }
-
-
-rpc_export_t trusted_rpc[] = {
-	{"trusted.reload", trusted_reload, trusted_reload_doc, 0},
-	{"trusted.dump",   trusted_dump,   trusted_dump_doc,   RET_ARRAY},
-	{0, 0, 0, 0}
-};
