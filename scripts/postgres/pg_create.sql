@@ -68,7 +68,7 @@ CREATE INDEX mc_cid_key ON missed_calls (sip_callid);
 
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
-    did VARCHAR(64) NOT NULL,
+    did VARCHAR(64) NOT NULL DEFAULT '_none',
     realm VARCHAR(64) NOT NULL,
     password VARCHAR(28) NOT NULL DEFAULT '',
     flags INTEGER NOT NULL DEFAULT '0',
@@ -129,6 +129,7 @@ CREATE TABLE uri_attrs (
     value VARCHAR(255),
     type INTEGER NOT NULL DEFAULT '0',
     flags INTEGER NOT NULL DEFAULT '0',
+    scheme INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT uriattrs_idx UNIQUE (username, did, name, value)
 );
 
@@ -173,6 +174,14 @@ CREATE TABLE trusted (
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) NOT NULL,
     CONSTRAINT trusted_idx UNIQUE (src_ip, proto, from_pattern)
+);
+
+CREATE TABLE ipmatch (
+    ip VARCHAR(50) NOT NULL DEFAULT '',
+    avp_val VARCHAR(30) DEFAULT NULL,
+    mark INTEGER NOT NULL DEFAULT '1',
+    flags INTEGER NOT NULL DEFAULT '0',
+    CONSTRAINT ipmatch_idx UNIQUE (ip, mark)
 );
 
 CREATE TABLE phonebook (
@@ -240,7 +249,8 @@ CREATE TABLE uri (
     uid VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL,
     username VARCHAR(64) NOT NULL,
-    flags INTEGER NOT NULL DEFAULT '0'
+    flags INTEGER NOT NULL DEFAULT '0',
+    scheme INTEGER NOT NULL DEFAULT '0'
 );
 
 CREATE INDEX uri_idx1 ON uri (username, did);
@@ -368,7 +378,7 @@ CREATE TABLE rls_subscription (
     uri VARCHAR(255) NOT NULL,
     package VARCHAR(128) NOT NULL,
     w_uri VARCHAR(255) NOT NULL,
-    xcap_root VARCHAR(255) NOT NULL,
+    xcap_params BYTEA NOT NULL,
     CONSTRAINT rls_subscription_key UNIQUE (id)
 );
 

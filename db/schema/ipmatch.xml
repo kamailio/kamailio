@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table role="permissions"
+	xmlns:db="http://docbook.org/ns/docbook"
+	xmlns:my="http://iptel.org/dbschema/mysql"
+	xmlns:pg="http://iptel.org/dbschema/postgres"
+	xmlns:dt="http://iptel.org/dbschema/dbtext">
+	<name>ipmatch</name>
+	<version>1</version>
+
+	<column id="ipmatch.ip">
+	    <name>ip</name>
+	    <type>string</type>
+	    <size>50</size>
+	    <default></default>
+	</column>
+
+	<column id="ipmatch.avp_val">
+	    <name>avp_val</name>
+	    <type>string</type>
+	    <size>30</size>
+	    <default><null/></default>
+	    <null/>
+	</column>
+
+	<column id="ipmatch.mark">
+	    <name>mark</name>
+	    <type>unsigned int</type>
+	    <size>10</size>
+	    <default>1</default>
+	</column>
+
+	<column id="ipmatch.flags">
+	    <name>flags</name>
+	    <type>unsigned int</type>
+	    <size>10</size>
+	    <default>0</default>
+	</column>
+
+	<index>
+	    <unique/>
+	    <name>ipmatch_idx</name>
+	    <colref linkend="ipmatch.ip"/>
+	    <colref linkend="ipmatch.mark"/>
+	</index>
+
+</table>

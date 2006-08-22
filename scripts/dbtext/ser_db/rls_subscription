@@ -1,1 +1,1 @@
-id(str) doc_version(int) dialog(str) expires(int) status(int) contact(str) uri(str) package(str) w_uri(str) xcap_root(str) 
+id(str) doc_version(int) dialog(str) expires(int) status(int) contact(str) uri(str) package(str) w_uri(str) xcap_params(str) 

@@ -68,7 +68,7 @@ CREATE TABLE missed_calls (
 INSERT INTO version (table_name, table_version) values ('credentials','7');
 CREATE TABLE credentials (
     auth_username string(64) NOT NULL,
-    did string(64) NOT NULL,
+    did string(64) NOT NULL DEFAULT '_none',
     realm string(64) NOT NULL,
     password string(28) NOT NULL DEFAULT '',
     flags int NOT NULL DEFAULT '0',
@@ -130,6 +130,7 @@ CREATE TABLE uri_attrs (
     value string(255),
     type int NOT NULL DEFAULT '0',
     flags int NOT NULL DEFAULT '0',
+    scheme int NOT NULL DEFAULT '0',
     uriattrs_idx UNIQUE (username, did, name, value, )
 );
 
@@ -176,6 +177,15 @@ CREATE TABLE trusted (
     proto string(4) NOT NULL,
     from_pattern string(64) NOT NULL,
     trusted_idx UNIQUE (src_ip, proto, from_pattern, )
+);
+
+INSERT INTO version (table_name, table_version) values ('ipmatch','1');
+CREATE TABLE ipmatch (
+    ip string(50) NOT NULL DEFAULT '',
+    avp_val string(30) DEFAULT NULL,
+    mark int(10) NOT NULL DEFAULT '1',
+    flags int(10) NOT NULL DEFAULT '0',
+    ipmatch_idx UNIQUE (ip, mark, )
 );
 
 INSERT INTO version (table_name, table_version) values ('phonebook','1');
@@ -242,7 +252,8 @@ CREATE TABLE uri (
     uid string(64) NOT NULL,
     did string(64) NOT NULL,
     username string(64) NOT NULL,
-    flags int NOT NULL DEFAULT '0'
+    flags int NOT NULL DEFAULT '0',
+    scheme int NOT NULL DEFAULT '0'
 );
 
 INSERT INTO version (table_name, table_version) values ('speed_dial','2');
@@ -368,7 +379,7 @@ CREATE TABLE rls_subscription (
     uri string(255) NOT NULL,
     package string(128) NOT NULL,
     w_uri string(255) NOT NULL,
-    xcap_root string(255) NOT NULL,
+    xcap_params binary NOT NULL,
     rls_subscription_key UNIQUE (id, )
 );
 

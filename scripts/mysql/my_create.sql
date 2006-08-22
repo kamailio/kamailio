@@ -68,7 +68,7 @@ CREATE TABLE missed_calls (
 INSERT INTO version (table_name, table_version) values ('credentials','7');
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
-    did VARCHAR(64) NOT NULL default '_none',
+    did VARCHAR(64) NOT NULL DEFAULT '_none',
     realm VARCHAR(64) NOT NULL,
     password VARCHAR(28) NOT NULL DEFAULT '',
     flags INT NOT NULL DEFAULT '0',
@@ -132,6 +132,7 @@ CREATE TABLE uri_attrs (
     value VARCHAR(255),
     type INT NOT NULL DEFAULT '0',
     flags INT UNSIGNED NOT NULL DEFAULT '0',
+    scheme INT NOT NULL DEFAULT '0',
     UNIQUE KEY uriattrs_idx (username, did, name, value)
 );
 
@@ -178,6 +179,15 @@ CREATE TABLE trusted (
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) NOT NULL,
     UNIQUE KEY trusted_idx (src_ip, proto, from_pattern)
+);
+
+INSERT INTO version (table_name, table_version) values ('ipmatch','1');
+CREATE TABLE ipmatch (
+    ip VARCHAR(50) NOT NULL DEFAULT '',
+    avp_val VARCHAR(30) DEFAULT NULL,
+    mark INT(10) UNSIGNED NOT NULL DEFAULT '1',
+    flags INT(10) UNSIGNED NOT NULL DEFAULT '0',
+    UNIQUE KEY ipmatch_idx (ip, mark)
 );
 
 INSERT INTO version (table_name, table_version) values ('phonebook','1');
@@ -249,6 +259,7 @@ CREATE TABLE uri (
     did VARCHAR(64) NOT NULL,
     username VARCHAR(64) NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
+    scheme INT NOT NULL DEFAULT '0',
     KEY uri_idx1 (username, did),
     KEY uri_uid (uid)
 );
@@ -380,7 +391,7 @@ CREATE TABLE rls_subscription (
     uri VARCHAR(255) NOT NULL,
     package VARCHAR(128) NOT NULL,
     w_uri VARCHAR(255) NOT NULL,
-    xcap_root VARCHAR(255) NOT NULL,
+    xcap_params BLOB NOT NULL,
     UNIQUE KEY rls_subscription_key (id)
 );
 

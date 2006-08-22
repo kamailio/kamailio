@@ -42,8 +42,9 @@
     <!-- User location database -->
     <xi:include href="location.xml"/>
 
-    <!-- Table containing list of trusted peers -->
+    <!-- Permissions module -->
     <xi:include href="trusted.xml"/>
+    <xi:include href="ipmatch.xml"/>
 
     <!-- Table containing phonebook (used by serweb -->
     <xi:include href="phonebook.xml"/>
