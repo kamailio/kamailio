@@ -8,6 +8,7 @@ Edited by
 Miklos Tirpak
 
    Copyright © 2003 Miklos Tirpak
+   Copyright (C) 2006 iptelorg GmbH
      _________________________________________________________
 
    Table of Contents
@@ -18,6 +19,7 @@ Miklos Tirpak
               1.1.1. Call Routing
               1.1.2. Registration Permissions
               1.1.3. Refer-To Permissions
+              1.1.4. Messages catching
 
         1.2. Dependencies
 
@@ -31,6 +33,10 @@ Miklos Tirpak
               1.3.3. check_all_branches (integer)
               1.3.4. allow_suffix (string)
               1.3.5. deny_suffix (string)
+              1.3.6. max_rule_files (int)
+              1.3.7. safe_file_load (int)
+              1.3.8. db_url (string)
+              1.3.9. db_mode (int)
 
         1.4. Exported Functions
 
@@ -41,6 +47,12 @@ Miklos Tirpak
               1.4.5. allow_register(allow_file, deny_file)
               1.4.6. allow_refer_to(basename)
               1.4.7. allow_refer_to(allow_file, deny_file)
+              1.4.8. ipmatch (string/AVP/select, [avp])
+              1.4.9. ipmatch_onsend (string)
+
+        1.5. XML-RPC interface
+
+              1.5.1. ipmatch.reload
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -151,13 +163,25 @@ Chapter 1. User's Guide
    same as described in Section 1.1.1.
      _________________________________________________________
 
+1.1.4. Messages catching
+
+   The module can be also used for catching messages coming from
+   or going to specific network elements, for example gateways or
+   peering partners.
+
+   Users can register or forward the calls to the address of
+   a gateway resulting unauthorized access to them. Such calls
+   must be catched and dropped, see ipmatch functions for details.
+     _________________________________________________________
+
 1.2. Dependencies
 
 1.2.1. SER Modules
 
    The following modules must be loaded before this module:
 
-     * No dependencies on other SER modules.
+     * database module
+     * xmlrpc module
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -197,6 +221,9 @@ modparam("permissions", "default_allow_file", "/etc/permissions.allow")
 ...
 modparam("permissions", "default_deny_file", "/etc/permissions.deny")
 ...
+
+   If both of the default file parameters are set to "" the module
+   does not try to load them.
      _________________________________________________________
 
 1.3.3. check_all_branches (integer)
@@ -253,6 +280,44 @@ modparam("permissions", "allow_suffix", ".allow")
 modparam("permissions", "deny_suffix", ".deny")
 ...
      _________________________________________________________
+
+1.3.6. max_rule_files (int)
+
+   Maximum number of allow/deny file pairs.
+
+   Default value is 64.
+     _________________________________________________________
+
+1.3.7. safe_file_load (int)
+
+   Module initialization fails in case of a missing config file if
+   safe_file_load is true.
+
+   Default value is 0 (false).
+     _________________________________________________________
+
+1.3.8. db_url (string)
+
+   URL of the database to be used.
+     _________________________________________________________
+
+1.3.9. db_mode (int)
+
+   Disables/enables database cache.
+
+   Default value is 0 (cache is disabled)
+
+   NOTE: ipmatch functions can operate only in cache mode, set db_mode
+         to 1 if you want to use them.
+     _________________________________________________________
+
+1.3.10. ipmatch_table (string)
+
+   Name of the table containing ipmatch entries.
+
+   Default value is "ipmatch".
+     _________________________________________________________
+
 
 1.4. Exported Functions
 
@@ -404,7 +469,7 @@ if (method=="REFER") {
 ...
      _________________________________________________________
 
-1.4.5. allow_refer_to(allow_file, deny_file)
+1.4.7. allow_refer_to(allow_file, deny_file)
 
    The function returns true if all pairs constructed as
    described in Section 1.1.2 have appropriate permissions
@@ -432,6 +497,113 @@ if (method=="REFER") {
 };
 ...
      _________________________________________________________
+
+1.4.8. ipmatch (string/AVP/select, [avp])
+
+   The function tries to find an IP address and port pair
+   (defined by the first function parameter) in the cached
+   database table. Port is optional, it is compared only if
+   both the function parameter and the database entry contain it. 
+
+   The first parameter can be:
+   - string:
+        "src": the source address of the packet is used
+        "via2": the ip address of the 2nd via line is used
+        other values are not defined currently
+   - AVP:
+        e.g. "$myavp"
+   - Select call:
+        e.g. "@via[0].host"
+
+   The second parameter is optional, it is used to set an AVP
+   value from the database. Suitable for assigning logical
+   identifiers to gateways.
+
+
+   Note that IPv6 addresses must be enclosed in square brackets
+   in case of port is defined: [1111:2222::3333]:5060
+
+     _________________________________________________________
+
+1.4.9. ipmatch_onsend (string)
+
+   ipmatch() function replacement for onsend_route block.
+
+   The function accepts only string parameter, because even AVP
+   reading is unsafe in onsend_route.
+
+   the parameter can be:
+   - "dst":
+        the destination address is used
+   - "ruri":
+        the ip:port pair is extracted from the Request URI
+
+   The function can be used for example to catch unauthorized requests
+   going to gateways: Use a flag to mark the call as PSTN either
+   in request or in failure_route, and do not touch it in onreply_route.
+   See the examples below.
+     _________________________________________________________
+
+1.4.10. ipmatch_filter (unsigned int)
+
+   Entries in the database can be marked to group the different kind
+   of network elements. The function sets the filter which is used on
+   the mark while comparing the IP addresses. The mark must be the
+   power of 2 in the database!
+
+   Note that ipmatch() and ipmatch_onsend() functions reset the filter!
+
+Example:
+
++-----------------+-------------------+------+------+
+| ip              | avp_val           | mark | flag |
++-----------------+-------------------+------+------+
+| 1111:2222::1001 | first_gw          |    1 |    1 |
+| 10.38.2.10:5060 | second_gw         |    1 |    1 |
+| 10.0.0.10       | first_peering     |    2 |    1 |
++-----------------+-------------------+------+------+
+
+
+route[0] {
+  # is this a request from a GW?
+  ipmatch_filter("1");
+  if (ipmatch("src", "$gw_id")) {
+    # yes, it is from a GW
+    ...
+  } else {
+    # is this a request from a peering partner?
+    ipmatch_filter("2");
+    if (ipmatch("src", "$peering_id")) {
+       # yes, it is from a peering partner
+       ...
+    };
+  }
+  ...
+  # request goes to PSTN
+  setflag(PSTN);
+}
+
+onsend_route[0] {
+  if (method == "INVITE" && (!isflagset(PSTN))) {
+     # is this a request to a GW?
+     ipmatch_filter("1");
+     if (ipmatch_onsend("dst")) {
+        # request is not marked with PSTN flag, but it goes to a gateway
+        drop;
+     }
+  }
+  ...
+}
+     _________________________________________________________
+
+1.5. XML-RPC interface
+
+1.5.1. ipmatch.reload
+
+   Reloads the cached ipmatch table. The original table remains
+   active in case of any failure.
+     _________________________________________________________
+
 
 Chapter 2. Developer's Guide
 
