@@ -906,10 +906,12 @@ static int find_next_value(char** start, char* end, str* val, str* lump_val) {
 	}
 	val->len = *start - val->s;
 	while (val->len > 0 && is_space(val->s[val->len-1])) val->len--;
+/* we cannot automatically strip quotes!!! an example why: "name" <sip:ssss>;param="bar" 
 	if (val->len >= 2 && val->s[0] == '\"' && val->s[val->len-1] == '\"') {
 		val->s++;
 		val->len -= 2;
 	}
+*/
 	while (*start < end && **start != ',') (*start)++;
 	if (*start < end) {
 		(*start)++;
