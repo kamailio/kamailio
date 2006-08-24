@@ -542,15 +542,15 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 		vals[1].type = DB_STR;
 		vals[1].nul = 0;
 		domain = q_memchr(_aor->s, '@', _aor->len);
-		if (domain==0) {
-			LOG(L_CRIT,"BUG:usrloc:db_load_urecord: AOR has no @ while "
-				"use_domain is enabled\n");
-			return 0;
-		}
 		vals[0].val.str_val.s   = _aor->s;
-		vals[0].val.str_val.len = domain - _aor->s;
-		vals[1].val.str_val.s   = domain+1;
-		vals[1].val.str_val.len = _aor->s + _aor->len - domain - 1;
+		if (domain==0) {
+			vals[0].val.str_val.len = 0;
+			vals[1].val.str_val = *_aor;
+		} else {
+			vals[0].val.str_val.len = domain - _aor->s;
+			vals[1].val.str_val.s   = domain+1;
+			vals[1].val.str_val.len = _aor->s + _aor->len - domain - 1;
+		}
 	} else {
 		vals[0].val.str_val = *_aor;
 	}

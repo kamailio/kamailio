@@ -483,13 +483,18 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[12].val.time_val = _c->last_modified;
 
 	if (use_domain) {
-		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
-		vals[0].val.str_val.len = dom - _c->aor->s;
-
 		vals[13].type = DB_STR;
 		vals[13].nul = 0;
-		vals[13].val.str_val.s = dom + 1;
-		vals[13].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+
+		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		if (dom==0) {
+			vals[0].val.str_val.len = 0;
+			vals[13].val.str_val = *_c->aor;
+		} else {
+			vals[0].val.str_val.len = dom - _c->aor->s;
+			vals[13].val.str_val.s = dom + 1;
+			vals[13].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		}
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
