@@ -666,7 +666,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 	else
 		send_address_str=&(send_sock->address_str);
 	if (msg->set_global_port.len)
-		send_port_str=&(msg->set_global_address);
+		send_port_str=&(msg->set_global_port);
 	else
 		send_port_str=&(send_sock->port_no_str);
 	
@@ -1018,7 +1018,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 	else
 		send_address_str=&(send_sock->address_str);
 	if (msg->set_global_port.len)
-		send_port_str=&(msg->set_global_address);
+		send_port_str=&(msg->set_global_port);
 	else
 		send_port_str=&(send_sock->port_no_str);
 	
