@@ -32,6 +32,8 @@
 
 #include <syslog.h>
 
+/* define non existing facility to disable logging */
+#define LOG_NONE (~LOG_FACMASK)
 
 #define L_ALERT -3
 #define L_CRIT  -2
@@ -91,7 +93,7 @@ int str2facility(char *s);
 					if (log_stderr){ \
 						dprint (__VA_ARGS__); \
 					}else{ \
-						syslog(DPRINT_LEV|log_facility,  __VA_ARGS__); \
+						if (log_facility!=LOG_NONE) syslog(DPRINT_LEV|log_facility,  __VA_ARGS__); \
 					}\
 				} \
 			}while(0)
@@ -102,7 +104,7 @@ int str2facility(char *s);
 					if (log_stderr){ \
 						dprint (fmt, ## args); \
 					}else{ \
-						syslog(DPRINT_LEV|log_facility, fmt, ## args); \
+						if (log_facility!=LOG_NONE) syslog(DPRINT_LEV|log_facility, fmt, ## args); \
 					}\
 				} \
 			}while(0)
@@ -126,7 +128,7 @@ int str2facility(char *s);
 			do { \
 				if (debug>=(lev)){ \
 					if (log_stderr) dprint (__VA_ARGS__); \
-					else { \
+					else if (log_facility!=LOG_NONE) { \
 						switch(lev){ \
 							case L_CRIT: \
 								syslog(LOG_CRIT|log_facility, __VA_ARGS__); \
@@ -158,7 +160,7 @@ int str2facility(char *s);
 			do { \
 				if (debug>=(lev)){ \
 					if (log_stderr) dprint (fmt, ## args); \
-					else { \
+					else if (log_facility!=LOG_NONE) { \
 						switch(lev){ \
 							case L_CRIT: \
 								syslog(LOG_CRIT|log_facility, fmt, ##args); \

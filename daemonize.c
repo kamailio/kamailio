@@ -198,7 +198,8 @@ int daemonize(char*  name)
 	}
 	
 	if (log_stderr==0)
-		openlog(name, LOG_PID|LOG_CONS, log_facility);
+		if (log_facility!=LOG_NONE)
+			openlog(name, LOG_PID|LOG_CONS, log_facility);
 		/* LOG_CONS, LOG_PERRROR ? */
 
 	return  0;
