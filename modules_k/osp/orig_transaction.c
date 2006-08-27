@@ -549,6 +549,7 @@ static int ospPrepareDestination(
 /*
  * Prepare OSP route
  *     This function only works in branch route block.
+ *     This function is only for OpenSER.
  * param msg SIP message
  * param ignore1
  * param ignore2

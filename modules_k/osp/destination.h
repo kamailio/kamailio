@@ -66,6 +66,7 @@ int ospSaveOrigDestination(osp_dest* dest);
 int ospSaveTermDestination(osp_dest* dest);
 int ospCheckOrigDestination(void);
 osp_dest* ospGetNextOrigDestination(void);
+osp_dest* ospGetLastOrigDestination(void);
 osp_dest* ospGetTermDestination(void);
 void ospRecordEvent(int clientcode, int servercode);
 void ospDumpDestination(osp_dest* dest);

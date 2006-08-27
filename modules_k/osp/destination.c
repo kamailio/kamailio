@@ -43,7 +43,6 @@ str OSP_ORIGDEST_LABEL = {"_osp_orig_dests_", 16};
 str OSP_TERMDEST_LABEL = {"_osp_term_dests_", 16};
 
 static int ospSaveDestination(osp_dest* dest, str* label);
-static osp_dest* ospGetLastOrigDestination(void);
 static void ospRecordCode(int code, osp_dest* dest);
 static int ospIsToReportUsage(int code);
 
@@ -225,6 +224,44 @@ osp_dest* ospGetNextOrigDestination(void)
     return result;
 }
 
+/*
+ * Retrieved the last used originate destination from an AVP
+ *    name - OSP_ORIGDEST_LABEL
+ *    value - osp_dest wrapped in a string
+ *    There can be 0, 1 or more destinations. 
+ *    Find the last used destination (used==1),
+ *    and return it.
+ *  return NULL on failure
+ */
+osp_dest* ospGetLastOrigDestination(void)
+{
+    struct usr_avp* destavp = NULL;
+    int_str destval;
+    osp_dest* dest = NULL;
+    osp_dest* lastdest = NULL;
+
+    LOG(L_DBG, "osp: ospGetLastOrigDesintaion\n");
+
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
+        destavp != NULL;
+        destavp = search_next_avp(destavp, NULL))
+    {
+        get_avp_val(destavp, &destval);
+
+        /* OSP destination is wrapped in a string */
+        dest = (osp_dest*)destval.s.s;
+
+        if (dest->used == 1) {
+            lastdest = dest;
+            LOG(L_DBG, "osp: curent destination '%s'\n", lastdest->host);
+        } else {
+            break;
+        }
+    }
+
+    return lastdest;
+}
+
 /* 
  * Retrieved the terminate destination from an AVP
  *     name - OSP_TERMDEST_LABEL
@@ -252,44 +289,6 @@ osp_dest* ospGetTermDestination(void)
     }
 
     return dest;
-}
-
-/*
- * Retrieved the last used originate destination from an AVP
- *    name - OSP_ORIGDEST_LABEL
- *    value - osp_dest wrapped in a string
- *    There can be 0, 1 or more destinations. 
- *    Find the last used destination (used==1),
- *    and return it.
- *  return NULL on failure
- */
-static osp_dest* ospGetLastOrigDestination(void)
-{
-    struct usr_avp* destavp = NULL;
-    int_str destval;
-    osp_dest* dest = NULL;
-    osp_dest* lastdest = NULL;
-
-    LOG(L_DBG, "osp: ospGetLastOrigDesintaion\n");
-
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
-        destavp != NULL;
-        destavp = search_next_avp(destavp, NULL))
-    {
-        get_avp_val(destavp, &destval);
-
-        /* OSP destination is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
-
-        if (dest->used == 1) {
-            lastdest = dest;
-            LOG(L_DBG, "osp: curent destination '%s'\n", lastdest->host);
-        } else {
-            break;
-        }
-    }
-
-    return lastdest;
 }
 
 /*
