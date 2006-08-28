@@ -75,9 +75,9 @@
 
 struct tm_binds {
 	register_tmcb_f  register_tmcb;
-	cmd_function     t_relay_to_udp;
-	cmd_function     t_relay_to_tcp;
-	cmd_function     t_relay;
+	cmd_function     t_relay_to_udp; /* WARNING: failure_route unsafe */
+	cmd_function     t_relay_to_tcp; /* WARNING: failure_route unsafe */ 
+	cmd_function     t_relay;        /* WARNING: failure_route unsafe */
 	tnewtran_f       t_newtran;
 	treply_f         t_reply;
 	treply_wb_f      t_reply_with_body;
