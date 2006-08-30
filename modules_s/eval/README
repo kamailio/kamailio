@@ -23,18 +23,11 @@ Example:
   modparam("eval", "declare_register", "cx");
   modparam("eval", "declare_register", "dx");
 
-
-buf_size: integer;
-Default: 255
-
-Size of static buffer used for selects. It's used when converting int to str.
-Using single static buffer is not clear because it fails: @eval.reg.ax==@eval.reg.bx when
-both ax and bx are integers.
-
 xlbuf_size: int;
-Default: 256
+Default: 4096
 
 Size of buffer for xlib formating.
+
 
 Module functions:
 ----------------

@@ -41,6 +41,7 @@
 #include "../../select.h"
 #include "../../ut.h"
 #include "../xlog/xl_lib.h"
+#include "../../select_buf.h"
 
 #include "../../globals.h"
 #include "../../route.h"
@@ -84,9 +85,6 @@ static struct stack_item *stack_head = 0;
 static struct stack_item *stack_tail = 0;
 
 static struct register_item* registers = 0;
-static int sel_buf_size = 255;
-static char *sel_buf = 0;
-static char *sel_buf_head, *sel_buf_tail;
 
 
 #define destroy_value(val) { \
@@ -362,8 +360,6 @@ static int declare_register(modparam_t type, char* param) {
 }
 
 static int mod_pre_script_cb(struct sip_msg *msg, void *param) {
-	sel_buf_head = sel_buf;
-	sel_buf_tail = sel_buf+sel_buf_size;
 	destroy_stack();
 	destroy_register_values();
 	return 1;
@@ -433,14 +429,14 @@ static int eval_dump_func(struct sip_msg *msg, char *param1, char *param2) {
 }
 
 
-static int xlbuf_size = 256;
+static int xlbuf_size = 4096;
 static xl_print_log_f* xl_print = NULL;
 static xl_parse_format_f* xl_parse = NULL;
 #define NO_SCRIPT -1
 
 
 enum {esotAdd, esotInsert, esotXchg, esotPut, esotGet, esotPop, esotAddValue, esotInsertValue};
-enum {esovtInt, esovtStr, esovtAvp, esovtXStr, esovtRegister, esovtFunc};
+enum {esovtInt, esovtStr, esovtAvp, esovtXStr, esovtRegister, esovtFunc, esovtSelect};
 enum {esofNone=0, esofTime, esofUuid, esofStackNo};
 
 struct eval_location_func {
@@ -464,6 +460,7 @@ struct eval_location {
 		xl_elog_t* xl;
 		struct register_item *reg;
 		avp_ident_t avp;
+		select_t* select;
 		struct eval_location_func *func;
 	} u;
 };
@@ -487,7 +484,6 @@ static int parse_location(str s, struct eval_location *p) {
 			case 'x':
 				if (!xl_print) {
 					xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
-
 					if (!xl_print) {
 						LOG(L_CRIT,"ERROR: eval: cannot find \"xprint\", is module xlog loaded?\n");
 						return E_UNSPEC;
@@ -552,6 +548,12 @@ static int parse_location(str s, struct eval_location *p) {
 			}
 			s.s--;
 			s.len++;
+		}
+		else if (s.len > 1 && s.s[0]=='@') {
+			if (parse_select(&s.s, &p->u.select) >= 0) {
+				p->value_type = esovtSelect;
+				return 1;
+			}
 		}
 		p->u.n = strtol(s.s, &err, 10);
 		if (*err) {
@@ -661,6 +663,25 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 			}
 			break;
 		}
+		case esovtSelect: {
+			str s;
+			int ret = run_select(&s, so->u.select, msg);
+			if (ret < 0 || ret > 0) return -1;
+			if (get_static_str) {
+				ss.s = s;
+				ss.cnt = 0;
+				v->u.s = &ss;
+			}
+			else {
+				v->u.s = eval_str_malloc(&s);
+				if (!v->u.s) {
+					LOG(L_ERR, "ERROR: out of memory to allocate select string\n");
+					return E_OUT_OF_MEM;
+				}
+			}
+			v->type = evtStr;
+			break;
+		}
 		case esovtFunc: {
 			switch (so->u.func->type) {
 			        case esofTime: {
@@ -739,7 +760,7 @@ static int fixup_stack_oper(void **param, int param_no, int oper_type) {
 
 	switch (p->oper_type) {
 		case esotXchg:
-			if (p->loc.value_type == esovtAvp) {
+			if (p->loc.value_type == esovtAvp || p->loc.value_type == esovtSelect) {
 				LOG(L_ERR, "ERROR: eval: avp non supported for xchg\n");
 				return E_CFG;
 			}
@@ -1142,6 +1163,7 @@ static int eval_stack_func_fixup( void** param, int param_no) {
 			case esovtAvp:
 			case esovtXStr:
 			case esovtRegister:
+			case esovtSelect:
 			case esovtFunc:
 				(*p)->oper.loc = so;
 				(*p)->resolved = 0;
@@ -1881,19 +1903,25 @@ static int eval_while_stack_func(struct sip_msg *msg, char *route_no, char *para
 static int sel_value2str(str* res, struct eval_value *v, int force_copy) {
 	res->len = 0;
 	switch (v->type) {
-		case evtInt:
-			res->s = sel_buf_head;
-			res->len = snprintf(res->s, sel_buf_tail-sel_buf_head, "%ld", v->u.n);
-			sel_buf_head += res->len;
+		case evtInt: {
+			char buf[30];
+			res->len = snprintf(buf, sizeof(buf)-1, "%ld", v->u.n);
+			res->s = get_static_buffer(res->len);
+			if (res->s) 
+				memcpy(res->s, buf, res->len);
+			else
+				res->len = 0;
 			break;
+		}
 		case evtStr:
 			if (v->u.s) {
 				*res = v->u.s->s;
 				if (force_copy && res->len) {
-					if (sel_buf_tail-sel_buf_head >= res->len) {
-						memcpy(sel_buf_head, res->s, res->len);
-						sel_buf_head += res->len;
-					}
+					res->s = get_static_buffer(res->len);
+					if (res->s)
+						memcpy(res->s, v->u.s->s.s, res->len);
+					else
+						res->len = 0;
 				}
 			}
 			break;
@@ -1975,11 +2003,6 @@ select_row_t sel_declaration[] = {
 
 static int mod_init() {
 
-	sel_buf = pkg_malloc(sel_buf_size);
-	if (!sel_buf) {
-		LOG(L_ERR, "ERROR: eval: init_mod: not enough memory for sel_buf\n");
-		return E_CFG;
-	}
 	register_script_cb(mod_pre_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| PRE_SCRIPT_CB, 0);
 	register_select_table(sel_declaration);
 	return 0;
@@ -2047,7 +2070,6 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"declare_register", PARAM_STRING|PARAM_USE_FUNC, (void*) declare_register},
-	{"buf_size",         PARAM_INT,                   &sel_buf_size},
 	{"xlbuf_size",       PARAM_INT, &xlbuf_size},
 	{0, 0, 0}
 };
