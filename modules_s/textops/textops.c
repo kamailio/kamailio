@@ -97,7 +97,7 @@ MODULE_VERSION
 static int retbuf_size = 4096;
 static char *retbuf = 0;
 static char *retbuf_tail;
-
+static int xlbuf_size = 4096;
 
 
 static int search_f(struct sip_msg*, char*, char*);
@@ -191,6 +191,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"buf_size", PARAM_INT, &retbuf_size},
+	{"xlbuf_size", PARAM_INT, &xlbuf_size},
 
 	{0,0,0}
 	}; /* no params */
@@ -269,10 +270,17 @@ static int fixup_xlstr(void** param, int param_no) {
 }
 
 static int eval_xlstr(struct sip_msg* msg, struct xlstr* val, str* s) {
-	static char xlbuf[1024];
+	static char *xlbuf = NULL;
 	if (val) {
 		if (val->xlfmt) {
-			s->len = sizeof(xlbuf)-1;
+			if (!xlbuf) {
+				xlbuf = pkg_malloc(xlbuf_size);
+				if (!xlbuf) {
+					LOG(L_ERR, "ERROR: out of memory\n");
+					return E_OUT_OF_MEM;
+				}
+			}
+			s->len = xlbuf_size-1;
 			if (xl_print(msg, val->xlfmt, xlbuf, &s->len) < 0) {
 				LOG(L_ERR, "ERROR: textops: eval_xlstr: Error while formating result '%.*s'\n", val->s.len, val->s.s);
 				s->len = 0;
