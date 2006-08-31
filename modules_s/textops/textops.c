@@ -56,6 +56,7 @@
  *  2004-07-06  subst_user added (like subst_uri but only for user) (sobomax)
  *  2004-11-12  subst_user changes (old serdev mails) (andrei)
  *  2006-02-23  xl_lib formating, multi-value support (tma)
+ *  2006-08-30  added static buffer support (tma)
  */
 
 
@@ -75,6 +76,7 @@
 #include "../../select.h"
 #include "../xlog/xl_lib.h"
 #include "../../script_cb.h"
+#include "../../select_buf.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,9 +96,6 @@ MODULE_VERSION
 #define TIME_FORMAT "Date: %a, %d %b %Y %H:%M:%S GMT"
 #define MAX_TIME 64
 
-static int retbuf_size = 4096;
-static char *retbuf = 0;
-static char *retbuf_tail;
 static int xlbuf_size = 4096;
 
 
@@ -190,7 +189,6 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"buf_size", PARAM_INT, &retbuf_size},
 	{"xlbuf_size", PARAM_INT, &xlbuf_size},
 
 	{0,0,0}
@@ -208,22 +206,10 @@ struct module_exports exports= {
 	0, /* per-child init function */
 };
 
-static int pre_script_cb(struct sip_msg *msg, void *param) {
-	retbuf_tail = retbuf;
-	return 1;
-}
-
 static int mod_init(void)
 {
 	DBG("%s - initializing\n", exports.name);
 	register_select_table(sel_declaration);
-	register_script_cb(pre_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| PRE_SCRIPT_CB, 0);
-
-	retbuf = pkg_malloc((retbuf_size+1)*sizeof(char));
-	if (!retbuf) {
-		LOG(L_ERR, "ERROR: textops: out of memory, cannot create retbuf\n");
-		return E_OUT_OF_MEM;
-	}
 	return 0;
 }
 
@@ -1709,6 +1695,8 @@ static int sel_hf_value(str* res, select_t* s, struct sip_msg* msg) {  /* dummy 
 	return 0;
 }
 
+#define _ALLOC_INC_SIZE 1024
+
 static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 	struct hname_data* hname;
 	struct hdr_field* hf;
@@ -1775,13 +1763,15 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 	}
 
 	res->len = 0;
-	res->s = retbuf_tail;
+	res->s = 0;
 	hname = s->params[1].v.p;
 
 	switch (hname->oper) {
 		case hnoGetValueUri:
 			if (hname->flags & HNF_ALL || (hname->flags & HNF_IDX) == 0) {
-				res->s = retbuf_tail;
+				char *buf = NULL;
+				int buf_len = 0;
+				
 				hf = 0;
 				do {
 					r = find_next_hf(msg, hname, &hf);
@@ -1794,25 +1784,65 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 						do {
 							r = find_next_value(&p, hf->body.s+hf->body.len, &hval1, &hval2);
 							get_uri_and_skip_until_params(&hval1, &dummy_name, &huri);
-							if (retbuf_tail+huri.len+1 > retbuf+retbuf_size) goto brk;
-							if (retbuf_tail != res->s) {
-								*retbuf_tail = ',';
-								retbuf_tail++;
-							}
 							if (huri.len) {
 							/* TODO: normalize uri, lowercase except quoted params, add/strip < > */
 								if (*huri.s == '<') {
 									huri.s++;
 									huri.len -= 2;
 								}
-								memcpy(retbuf_tail, huri.s, huri.len);
-								retbuf_tail+= huri.len;
+							}							
+							if (res->len == 0) {  
+								*res = huri; /* first value, if is also last value then we don't need any buffer */
 							}
+							else {
+								if (buf) {
+									if (res->len+huri.len+1 > buf_len) {
+										buf_len = res->len+huri.len+1+_ALLOC_INC_SIZE;
+										res->s = pkg_realloc(buf, buf_len);
+										if (!res->s) {
+											pkg_free(buf);
+											LOG(L_ERR, "ERROR: textops: cannot realloc buffer\n");
+											res->len = 0;
+											return E_OUT_OF_MEM;
+										}
+										buf = res->s;
+									}
+								}
+								else {
+									/* 2nd value */
+									buf_len = res->len+huri.len+1+_ALLOC_INC_SIZE;
+									buf = pkg_malloc(buf_len);
+									if (!buf) { 
+										LOG(L_ERR, "ERROR: testops: out of memory\n");
+										res->len = 0;
+										return E_OUT_OF_MEM;
+									}
+									/* copy 1st value */
+									memcpy(buf, res->s, res->len);								
+									res->s = buf;
+								}
+								res->s[res->len] = ',';
+								res->len++;
+								if (huri.len) {
+									memcpy(res->s+res->len, huri.s, huri.len);
+									res->len += huri.len;
+								}
+							}
+						
 						} while (r);
 					}
 				} while (hf);
-			brk:
-				res->len = retbuf_tail-res->s;
+				if (buf) {
+					res->s = get_static_buffer(res->len);
+					if (!res->s) {
+						pkg_free(buf);
+						res->len = 0;
+						LOG(L_ERR, "ERROR: testops: cannot allocate static buffer\n");
+						return E_OUT_OF_MEM;
+					}
+					memcpy(res->s, buf, res->len);
+					pkg_free(buf);
+				}
 			}
 			else {
 				r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
@@ -1839,7 +1869,9 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 			break;
 		case hnoGetValue:
 			if (hname->flags & HNF_ALL || (hname->flags & HNF_IDX) == 0) {
-				res->s = retbuf_tail;
+				char *buf = NULL;
+				int buf_len = 0;
+
 				hf = 0;
 				do {
 					r = find_next_hf(msg, hname, &hf);
@@ -1851,20 +1883,57 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 						p = hf->body.s;
 						do {
 							r = find_next_value(&p, hf->body.s+hf->body.len, &hval1, &hval2);
-							if (retbuf_tail+hval1.len+1 > retbuf+retbuf_size) goto brk2;
-							if (retbuf_tail != res->s) {
-								*retbuf_tail = ',';
-								retbuf_tail++;
+							if (res->len == 0) {  
+								*res = hval1; /* first value, if is also last value then we don't need any buffer */
 							}
-							if (hval1.len) {
-								memcpy(retbuf_tail, hval1.s, hval1.len);
-								retbuf_tail+= hval1.len;
+							else {
+								if (buf) {
+									if (res->len+hval1.len+1 > buf_len) {
+										buf_len = res->len+hval1.len+1+_ALLOC_INC_SIZE;
+										res->s = pkg_realloc(buf, buf_len);
+										if (!res->s) {
+											pkg_free(buf);
+											LOG(L_ERR, "ERROR: textops: cannot realloc buffer\n");
+											res->len = 0;
+											return E_OUT_OF_MEM;
+										}
+										buf = res->s;
+									}
+								}
+								else {
+									/* 2nd value */
+									buf_len = res->len+hval1.len+1+_ALLOC_INC_SIZE;
+									buf = pkg_malloc(buf_len);
+									if (!buf) { 
+										LOG(L_ERR, "ERROR: testops: out of memory\n");
+										res->len = 0;
+										return E_OUT_OF_MEM;
+									}
+									/* copy 1st value */
+									memcpy(buf, res->s, res->len);								
+									res->s = buf;
+								}
+								res->s[res->len] = ',';
+								res->len++;
+								if (hval1.len) {
+									memcpy(res->s+res->len, hval1.s, hval1.len);
+									res->len += hval1.len;
+								}
 							}
 						} while (r);
 					}
 				} while (hf);
-			brk2:
-				res->len = retbuf_tail-res->s;
+				if (buf) {
+					res->s = get_static_buffer(res->len);
+					if (!res->s) {
+						pkg_free(buf);
+						res->len = 0;
+						LOG(L_ERR, "ERROR: testops: cannot allocate static buffer\n");
+						return E_OUT_OF_MEM;
+					}
+					memcpy(res->s, buf, res->len);
+					pkg_free(buf);
+				}
 			}
 			else {
 				r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
