@@ -66,6 +66,7 @@ int serialize_uint(sstream_t *ss, unsigned int *num);
 int serialize_char(sstream_t *ss, char *c);
 int serialize_uchar(sstream_t *ss, unsigned char *c);
 int serialize_str(sstream_t *ss, str_t *s);
+int serialize_str_ex(sstream_t *ss, str_t *s); /* doesn't duplicate read strings */
 
 #ifdef __cplusplus
 }

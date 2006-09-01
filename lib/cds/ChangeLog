@@ -1,3 +1,8 @@
+2006-09-01
+	* corrected memory leaks in route serialization
+	* str_dup separated to macro and implementation function -> better for
+	debugging and memory leak search
+
 2006-08-08
 	* added functions for rr_t serialization/deserialization
 

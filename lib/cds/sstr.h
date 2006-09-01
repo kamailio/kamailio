@@ -60,7 +60,11 @@ str_t zt2str(char *str);
 int is_str_empty(const str_t *s);
 
 /** duplicate string into given destination (data region is newly allocated) */
-int str_dup(str_t* dst, const str_t* src);
+int str_dup_impl(str_t* dst, const str_t* src);
+int str_dup_dbg(str_t* dst, const str_t* src, const char *file, int line);
+/*#define str_dup(dst,src)	str_dup_dbg(dst,src,__FILE__,__LINE__)*/
+#define str_dup(dst,src)	str_dup_impl(dst,src)
+
 
 /** duplicate string into newly allocated destination (data and str structure are newly allocated) */
 str_t *str_dup_new(const str_t* src);
@@ -140,7 +144,6 @@ int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *
         memcpy((str)->s + (str)->len, (app), (app_len)); \
         (str)->len += (app_len);                         \
     } while(0)
-
 
 #ifdef __cplusplus
 }

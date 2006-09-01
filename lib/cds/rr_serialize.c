@@ -40,9 +40,10 @@ int serialize_route(sstream_t *ss, rr_t **_r)
 			s.len = (*_r)->len;
 		}
 
-		res = serialize_str(ss, &s) | res;
+		res = serialize_str_ex(ss, &s) | res;
 		if (is_input_sstream(ss)) {
 			rr_t *pkg_rr = NULL;
+			
 			parse_rr_body(s.s, s.len, &pkg_rr);
 			rr_dup(_r, pkg_rr);
 		}

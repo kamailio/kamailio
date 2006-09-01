@@ -210,6 +210,22 @@ int serialize_str(sstream_t *ss, str_t *s)
 	return res;
 }
 
+int serialize_str_ex(sstream_t *ss, str_t *s)
+{
+	int res = 0;
+	
+	if (!s) return -1; 
+	
+	if (serialize_int(ss, &s->len) != 0) return -1;
+	if (is_input_sstream(ss)) {
+		if (s->len == 0) s->s = NULL;
+		else res = sstream_get_str_ex(ss, s->len, s); /* doesn't duplicate read string */
+	}
+	else res = sstream_put(ss, s->s, s->len);
+
+	return res;
+}
+
 int serialize_char(sstream_t *ss, char *c)
 {
 	if (!c) return -1;

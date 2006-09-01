@@ -79,7 +79,28 @@ str_t zt2str(char *str)
 	return s;
 }
 
-int str_dup(str_t* dst, const str_t* src)
+int str_dup_dbg(str_t* dst, const str_t* src, const char *file, int line)
+{
+	if (!dst) return -1;
+
+	dst->len = 0;
+	dst->s = NULL;
+	if (!src) return 0;
+	if ( (!src->s) || (src->len < 1)) return 0;
+
+		/* ERROR_LOG("can't allocate memory (%d bytes)\n", src->len); */
+	INFO("str_dup called from %s:%d\n", file, line);
+	dst->s = cds_malloc(src->len);
+	if (!dst->s) {
+		/* ERROR_LOG("can't allocate memory (%d bytes)\n", src->len); */
+		return -1;
+	}
+	memcpy(dst->s, src->s, src->len);
+	dst->len = src->len;
+	return 0;
+}
+
+int str_dup_impl(str_t* dst, const str_t* src)
 {
 	if (!dst) return -1;
 
