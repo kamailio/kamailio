@@ -4,6 +4,7 @@
  * PERMISSIONS module
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2006 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -54,6 +55,10 @@ extern char* source_col;    /* Name of source address column */
 extern char* proto_col;     /* Name of protocol column */
 extern char* from_col;      /* Name of from pattern column */
 extern char* tag_col;       /* Name of tag column */
+extern char* address_table; /* Name of address table */
+extern char* grp_col;       /* Name of address group column */
+char* ip_addr_col;          /* Name of ip address column */
+char* port_col;             /* Name of port column */
 
 
 #define DISABLE_CACHE 0

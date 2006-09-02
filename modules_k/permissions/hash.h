@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Header file for allow_trusted hash table functions
+ * Header file for trusted and address hash table functions
  *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2003-2006 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -33,7 +33,7 @@
 #define PERM_HASH_SIZE 128
 
 /*
- * Structure stored in the hash table
+ * Structure stored in trusted hash table
  */
 struct trusted_list {
 	str src_ip;                 /* Source IP of SIP message */
@@ -100,5 +100,60 @@ void hash_table_print(struct trusted_list** hash_table, FILE* reply_file);
  */
 void empty_hash_table(struct trusted_list** hash_table);
 
+
+/*
+ * Structure stored in address hash table
+ */
+struct addr_list {
+    unsigned int grp;
+    unsigned int ip_addr;
+    unsigned int port;
+    struct addr_list *next;  /* Next element in the list */
+};
+
+
+/*
+ * Create and initialize a hash table
+ */
+struct addr_list** new_addr_hash_table(void);
+
+
+/*
+ * Release all memory allocated for a hash table
+ */
+void free_addr_hash_table(struct addr_list** table);
+
+
+/*
+ * Destroy a hash table
+ */
+void destroy_addr_hash_table(struct addr_list** table);
+
+
+/* 
+ * Add <group, ip_addr, port> into hash table
+ */
+int addr_hash_table_insert(struct addr_list** hash_table, unsigned int grp,
+			   unsigned int ip_addr, unsigned int port);
+
+
+/* 
+ * Check if an entry exists in hash table that has given group, ip_addr, and
+ * port.  Port 0 in hash table matches any port.
+ */
+int match_addr_hash_table(struct addr_list** table, unsigned int grp,
+			  unsigned int ip_addr, unsigned int port);
+
+
+/* 
+ * Print addresses stoed in hash table
+ */
+void addr_hash_table_print(struct addr_list** hash_table, FILE* reply_file);
+
+
+/* 
+ * Empty hash table
+ */
+void empty_addr_hash_table(struct addr_list** hash_table);
 
 #endif /* _PERM_HASH_H_ */

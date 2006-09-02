@@ -3,7 +3,7 @@
  *
  * UNIX Domain Socket Interface
  *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2003-2006 Juha Heinanen
  * Copyright (C) 2004 FhG FOKUS
  *
  * This file is part of openser, a free SIP server.
@@ -28,9 +28,15 @@
 #define _UNIXSOCK_H 1
 
 /*
- * Register domain fifo functions
+ * Register trusted unixsocket functions
  */
 int init_trusted_unixsock(void);
+
+
+/*
+ * Register address unixsocket functions
+ */
+int init_address_unixsock(void);
 
 
 #endif /* _UNIXSOCK_H */

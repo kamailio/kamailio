@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Header file for allow_trusted fifo functions
+ * Header file for allow_trusted and allow_address fifo functions
  *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2003-2006 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -28,7 +28,7 @@
 
 
 /*
- * Register domain fifo functions
+ * Register trusted fifo functions
  */
 int init_trusted_fifo(void);
 
@@ -38,6 +38,19 @@ int init_trusted_fifo(void);
  * current one.
  */
 int reload_trusted_table(void);
+
+
+/*
+ * Register address fifo functions
+ */
+int init_address_fifo(void);
+
+
+/*
+ * Reload trusted table to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_address_table(void);
 
 
 #endif /* FIFO_H */

@@ -1,5 +1,5 @@
 /*
- * Hash functions for cached trusted table
+ * Hash functions for cached trusted and address tables
  *
  * Copyright (C) 2003-2006 Juha Heinanen
  *
@@ -27,8 +27,10 @@
 #include "../../ut.h"
 #include "../../hash_func.h"
 #include "../../usr_avp.h"
+#include "../../ip_addr.h"
 #include "hash.h"
 #include "trusted.h"
+#include "address.h"
 
 #define perm_hash(_s)  core_hash( &(_s), 0, PERM_HASH_SIZE)
 
@@ -103,7 +105,7 @@ void free_hash_table(struct trusted_list** table)
  * Add <src_ip, proto, pattern, tag> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_list** hash_table, char* src_ip, 
+int hash_table_insert(struct trusted_list** table, char* src_ip, 
 		      char* proto, char* pattern, char* tag)
 {
 	struct trusted_list *np;
@@ -179,8 +181,8 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip,
 	}
 
 	hash_val = perm_hash(np->src_ip);
-	np->next = hash_table[hash_val];
-	hash_table[hash_val] = np;
+	np->next = table[hash_val];
+	table[hash_val] = np;
 
 	return 1;
 }
@@ -245,13 +247,13 @@ found:
 /* 
  * Print domains stored in hash table 
  */
-void hash_table_print(struct trusted_list** hash_table, FILE* reply_file)
+void hash_table_print(struct trusted_list** table, FILE* reply_file)
 {
 	int i;
 	struct trusted_list *np;
 
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
-		np = hash_table[i];
+		np = table[i];
 		while (np) {
 			fprintf(reply_file, "%4d <%.*s, %d, %s, %s>\n", i,
 				np->src_ip.len, ZSW(np->src_ip.s), np->proto,
@@ -266,21 +268,154 @@ void hash_table_print(struct trusted_list** hash_table, FILE* reply_file)
  * Free contents of hash table, it doesn't destroy the
  * hash table itself
  */
-void empty_hash_table(struct trusted_list **hash_table)
+void empty_hash_table(struct trusted_list **table)
 {
-	int i;
-	struct trusted_list *np, *next;
-
-	for (i = 0; i < PERM_HASH_SIZE; i++) {
-		np = hash_table[i];
-		while (np) {
-			if (np->src_ip.s) shm_free(np->src_ip.s);
-			if (np->pattern) shm_free(np->pattern);
-			if (np->tag.s) shm_free(np->tag.s);
-			next = np->next;
-			shm_free(np);
-			np = next;
-		}
-		hash_table[i] = 0;
+    int i;
+    struct trusted_list *np, *next;
+    
+    for (i = 0; i < PERM_HASH_SIZE; i++) {
+	np = table[i];
+	while (np) {
+	    if (np->src_ip.s) shm_free(np->src_ip.s);
+	    if (np->pattern) shm_free(np->pattern);
+	    if (np->tag.s) shm_free(np->tag.s);
+	    next = np->next;
+	    shm_free(np);
+	    np = next;
 	}
+	table[i] = 0;
+    }
+}
+
+
+/*
+ * Create and initialize an address hash table
+ */
+struct addr_list** new_addr_hash_table(void)
+{
+    struct addr_list** ptr;
+
+    /* Initializing hash tables and hash table variable */
+    ptr = (struct addr_list **)shm_malloc
+	(sizeof(struct addr_list*) * PERM_HASH_SIZE);
+    if (!ptr) {
+	LOG(L_ERR, "permissions:new_addr_hash_table(): "
+	    "No memory for hash table\n");
+	return 0;
+    }
+
+    memset(ptr, 0, sizeof(struct addr_list*) * PERM_HASH_SIZE);
+    return ptr;
+}
+
+
+/*
+ * Release all memory allocated for a hash table
+ */
+void free_addr_hash_table(struct addr_list** table)
+{
+    if (!table)
+	return;
+
+    empty_addr_hash_table(table);
+    shm_free(table);
+}
+
+
+/* 
+ * Add <grp, ip_addr, port> into hash table
+ */
+int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
+			   unsigned int ip_addr, unsigned int port)
+{
+    struct addr_list *np;
+    unsigned int hash_val;
+    str addr_str;
+	
+    np = (struct addr_list *) shm_malloc(sizeof(*np));
+    if (np == NULL) {
+	LOG(L_CRIT, "permissions:addr_hash_table_insert(): "
+	    "Cannot allocate shm memory for table entry\n");
+	return -1;
+    }
+
+    np->grp = grp;
+    np->ip_addr = ip_addr;
+    np->port = port;
+    
+    addr_str.s = (char *)(&ip_addr);
+    addr_str.len = 4;
+    hash_val = perm_hash(addr_str);
+    np->next = table[hash_val];
+    table[hash_val] = np;
+
+    return 1;
+}
+
+
+/* 
+ * Check if an entry exists in hash table that has given group, ip_addr, and
+ * port.  Port 0 in hash table matches any port.
+ */
+int match_addr_hash_table(struct addr_list** table, unsigned int group,
+			  unsigned int ip_addr, unsigned int port)
+{
+	struct addr_list *np;
+	str addr_str;
+
+	addr_str.s = (char *)(&ip_addr);
+	addr_str.len = 4;
+
+	for (np = table[perm_hash(addr_str)]; np != NULL; np = np->next) {
+	    if ((np->ip_addr == ip_addr) && (np->grp == group) &&
+		((np->port == 0) || (np->port == port))) {
+		return 1;
+	    }
+	}
+
+	return -1;
+}
+
+
+/* 
+ * Print addresses stored in hash table 
+ */
+void addr_hash_table_print(struct addr_list** table, FILE* reply_file)
+{
+    int i;
+    struct addr_list *np;
+    struct ip_addr addr;
+    
+    for (i = 0; i < PERM_HASH_SIZE; i++) {
+	np = table[i];
+	while (np) {
+	    addr.af = AF_INET;
+	    addr.len = 4;
+	    addr.u.addr32[0] = np->ip_addr;
+	    fprintf(reply_file, "%4d <%u, %s, %u>\n",
+		    i, np->grp, ip_addr2a(&addr), np->port);
+	    np = np->next;
+	}
+    }
+}
+
+
+/* 
+ * Free contents of hash table, it doesn't destroy the
+ * hash table itself
+ */
+void empty_addr_hash_table(struct addr_list **table)
+{
+    int i;
+    struct addr_list *np, *next;
+
+    for (i = 0; i < PERM_HASH_SIZE; i++) {
+	np = table[i];
+	while (np) {
+	    next = np->next;
+	    shm_free(np);
+	    np = next;
+	}
+	table[i] = 0;
+    }
 }

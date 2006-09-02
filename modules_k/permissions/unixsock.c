@@ -3,7 +3,7 @@
  *
  * UNIX Domain Socket Interface
  *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2003-2006 Juha Heinanen
  * Copyright (C) 2004 FhG FOKUS
  *
  * This file is part of openser, a free SIP server.
@@ -29,6 +29,7 @@
 #include "../../ut.h"
 #include "hash.h"
 #include "trusted.h"
+#include "address.h"
 #include "unixsock.h"
 
 
@@ -50,7 +51,7 @@ static int trusted_reload(str* msg)
 
 
 /* 
- * Print domains stored in hash table 
+ * Print trusted entries stored in hash table 
  */
 static int hash_table_print_unixsock(struct trusted_list** hash_table)
 {
@@ -92,7 +93,7 @@ static int trusted_dump(str* msg)
 
 
 /*
- * Register domain fifo functions
+ * Register trusted unixsocket functions
  */
 int init_trusted_unixsock(void) 
 {
@@ -107,4 +108,85 @@ int init_trusted_unixsock(void)
 	}
 
 	return 0;
+}
+
+
+/*
+ * unixsocket function to reload address table
+ */
+static int address_reload(str* msg)
+{
+    if (reload_address_table () == 1) {
+	unixsock_reply_asciiz("200 OK\n");
+	unixsock_reply_send();
+	return 0;
+    } else {
+	unixsock_reply_asciiz("400 Address table reload failed\n");
+	unixsock_reply_send();
+	return -1;
+    }
+}
+
+
+/* 
+ * Print address entries stored in hash table 
+ */
+static int addr_hash_table_print_unixsock(struct addr_list** hash_table)
+{
+    int i;
+    struct addr_list *np;
+    struct ip_addr addr;
+
+    for (i = 0; i < PERM_HASH_SIZE; i++) {
+	np = hash_table[i];
+	while (np) {
+	    addr.af = AF_INET;
+	    addr.len = 4;
+	    addr.u.addr32[0] = np->ip_addr;	    
+	    if (unixsock_reply_printf("%4d <%u, %s, %u>\n", i,
+				      np->grp, ip_addr2a(&addr),
+				      np->port) < 0) {
+		LOG(L_ERR, "addr_hash_table_print: No memory left\n");
+		return -1;
+	    }
+	    np = np->next;
+	}
+    }
+    return 0;
+}
+
+
+/*
+ * Fifo function to print address entries from current hash table
+ */
+static int address_dump(str* msg)
+{
+    unixsock_reply_asciiz("200 OK\n");
+    if (addr_hash_table_print_unixsock(*addr_hash_table) < 0) {
+	unixsock_reply_reset();
+	unixsock_reply_asciiz("500 Error while creating reply\n");
+	unixsock_reply_send();
+	return -1;
+    }
+    unixsock_reply_send();
+    return 1;
+}
+
+
+/*
+ * Register address unixsocket functions
+ */
+int init_address_unixsock(void) 
+{
+    if (unixsock_register_cmd("address_reload", address_reload) < 0) {
+	LOG(L_CRIT, "init_trusted_unixsock: Cannot register trusted_reload\n");
+	return -1;
+    }
+
+    if (unixsock_register_cmd("address_dump", address_dump) < 0) {
+	LOG(L_CRIT, "init_trusted_unixsock: Cannot register trusted_dump\n");
+	return -1;
+    }
+
+    return 0;
 }

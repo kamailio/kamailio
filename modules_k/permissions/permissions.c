@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
  * Copyright (C) 2003 iptel.org
- * Copyright (C) 2003 Juha Heinanen (jh@tutpro.com)
+ * Copyright (C) 2003-2006 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -29,6 +29,7 @@
 #include "permissions.h"
 #include "parse_config.h"
 #include "trusted.h"
+#include "address.h"
 #include "hash.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_from.h"
@@ -39,6 +40,7 @@
 #include "../../dset.h"
 #include "../../globals.h"
 #include "../../items.h"
+#include "../../ut.h"
 
 MODULE_VERSION
 
@@ -54,8 +56,10 @@ static char* allow_suffix = ".allow";
 static char* deny_suffix = ".deny";
 
 
-/* for allow_trusted function */
+/* for allow_trusted and allow_address function */
 char* db_url = 0;                  /* Don't connect to the database by default */
+
+/* for allow_trusted function */
 int db_mode = DISABLE_CACHE;	   /* Database usage mode: 0=no cache, 1=cache */
 char* trusted_table = "trusted";   /* Name of trusted table */
 char* source_col = "src_ip";       /* Name of source address column */
@@ -63,6 +67,12 @@ char* proto_col = "proto";         /* Name of protocol column */
 char* from_col = "from_pattern";   /* Name of from pattern column */
 char* tag_col = "tag";             /* Name of tag column */
 char* tag_avp_param = 0;           /* Peer tag AVP spec */
+
+/* for allow_address function */
+char* address_table = "address";   /* Name of address table */
+char* grp_col = "grp";             /* Name of address group column */
+char* ip_addr_col = "ip_addr";     /* Name of ip address column */
+char* port_col = "port";           /* Name of port column */
 
 
 /*
@@ -82,6 +92,17 @@ static int load_fixup(void** param, int param_no);
  * to and and the rest is same as in load_fixup
  */
 static int single_fixup(void** param, int param_no);
+
+/*
+ * Fixes up allow_addess() parameters
+ */
+static int address_fixup(void** param, int param_no);
+
+/*
+ * Converts string argument to unsigned int
+ */
+static int str2int_fixup( void** param, int param_no);
+
 
 /*
  * Parse pseudo variable parameter
@@ -116,6 +137,12 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_uri", allow_uri, 2, double_fixup,
 		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"set_address_group", set_address_group, 1, str2int_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_address", allow_address, 2, address_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_source_address", allow_source_address, 1, str2int_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -134,6 +161,10 @@ static param_export_t params[] = {
 	{"from_col",           STR_PARAM, &from_col          },
 	{"tag_col",            STR_PARAM, &tag_col           },
 	{"peer_tag_avp",       STR_PARAM, &tag_avp_param     },
+	{"address_table",      STR_PARAM, &address_table     },
+	{"grp_col",            STR_PARAM, &grp_col           },
+	{"ip_addr_col",        STR_PARAM, &ip_addr_col       },
+	{"port_col",           STR_PARAM, &port_col          },
 	{0, 0, 0}
 };
 
@@ -524,6 +555,70 @@ static int double_fixup(void** param, int param_no)
 
 
 /*
+ * Converts str to unsigned int
+ */
+static int str2int_fixup(void** param, int param_no)
+{
+    str str_param;
+    unsigned int i;
+    int result;
+
+    if (param_no != 1) return 0;
+    str_param.s = (char*)*param;
+    str_param.len = strlen((char*)*param);
+    result = str2int(&str_param, &i);
+    if (result == 1) {
+	LOG(L_ERR, "permissions:str2int_fixup: bad integer <%s>\n",
+	    (char *)*param);
+	return -1;
+    } else {
+	*param = (void *)i;
+	return 0;
+    }
+}
+    
+
+/*
+ * Convert pvars into parsed pseudo variable specifications
+ */
+static int address_fixup(void** param, int param_no)
+{
+    xl_spec_t *sp;
+
+    if ((param_no == 1) || (param_no == 2)) { /* pseudo variables */
+	
+	sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+	if (sp == 0) {
+	    LOG(L_ERR,"permissions:single_pvar_fixup(): no pkg memory left\n");
+	    return -1;
+	}
+
+	if (xl_parse_spec((char*)*param, sp, XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS) == 0) {
+	    LOG(L_ERR,"permissions:single_pvar_fixup(): parsing of "
+		"pseudo variable %s failed!\n", (char*)*param);
+	    pkg_free(sp);
+	    return -1;
+	}
+
+	if (sp->type == XL_NULL) {
+	    LOG(L_ERR,"permissions:single_pvap_fixup(): bad pseudo "
+		"variable\n");
+	    pkg_free(sp);
+	    return -1;
+	}
+
+	*param = (void*)sp;
+
+	return 0;
+    }
+
+    *param = (void *)0;
+
+    return 0;
+}
+
+
+/*
  * module initialization function 
  */
 static int mod_init(void)
@@ -558,6 +653,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (init_addresses() != 0) {
+		LOG(L_ERR, "Error while initializing allow_address function\n");
+		return -1;
+	}
+
 	rules_num = 1;
 	return 0;
 }
@@ -565,7 +665,8 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	return init_child_trusted(rank);
+    if (init_child_trusted(rank) == -1) return -1;
+    return init_child_addresses(rank);
 }
 
 
@@ -585,6 +686,8 @@ static void mod_exit(void)
 	}
 
 	clean_trusted();
+
+	clean_addresses();
 }
 
 

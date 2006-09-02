@@ -37,10 +37,21 @@
 			<email>bogdan@voice-system.ro</email>
 		</address>
 		</editor>
+		<editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<address>
+			<email>jh@tutpro.com</email>
+		</address>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2003</year>
 		<holder>Miklos Tirpak</holder>
+	</copyright>
+	<copyright>
+		<year>2006</year>
+		<holder>Juha Heinanen</holder>
 	</copyright>
 	<revhistory>
 		<revision>

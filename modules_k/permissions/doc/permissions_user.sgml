@@ -162,6 +162,26 @@
 		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
 	</section>
+	<section id="sec-address-permissions">
+		<title>Address Permissions</title>
+		<para>
+		The module can be used to determine if an address (IP
+		address and port) matches any of addresses stored in
+		cached database table.  Port 0 in cached database table
+		matches any port.  IP address and port to be matched can
+		be either taken from the request (allow_source_address)
+		or given as pseudo value arguments (allow_address).
+		</para>
+		<para>
+		Addresses stored in cached database table can be grouped
+		together into one or more groups specified by a group
+		identifier (unsigned integer).  Group
+		identifier is given as argument to
+		allow_source_address function or assigned separately
+		for subsequent allow_address function calls using
+		set_address_group function.
+		</para>
+	</section>
 	<section id="sec-trusted-requests">
 		<title>Trusted Requests</title>
 		<para>
@@ -385,9 +405,92 @@ modparam("permissions", "db_url", "mysql://openser:pass@db_host/openser")
 		</example>
 	</section>
 	<section>
+		<title><varname>address_table</varname> (string)</title>
+		<para>
+		Name of database table containing address information used by
+		<function moreinfo="none">allow_address</function> and
+                <function moreinfo="none">allow_source_address</function>
+                functions.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>address</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>address_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "address_table", "addr")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>grp_col</varname> (string)</title>
+		<para>
+		Name of address table column containing group
+		identifier of the address.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>grp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>grp_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "grp_col", "group_id")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>ip_addr_col</varname> (string)</title>
+		<para>
+		Name of address table column containing IP address
+		part of the address.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>ip_addr</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ip_addr_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "ip_addr_col", "ip_address")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>port_col</varname> (string)</title>
+		<para>
+		Name of address table column containing port
+		part of the address.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>port</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>port_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "port_col", "prt")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
 		Database mode. 0 means non-caching, 1 means caching.
+		Valid only for allow_trusted function.
 		</para>
 		<para>
 		<emphasis>
@@ -783,6 +886,83 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 	</section>
 	<section>
 		<title>
+		<function moreinfo="none">set_address_group(group_id)</function>
+		</title>
+		<para>
+		Sets address group to be used in subsequent allow_address
+		function calls to an unsigned integer value given as argument.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>set_address_group(group_id)</function> usage</title>
+		<programlisting format="linespecific">
+...
+
+// Set address group identifier to 1.
+set_address_group("1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">allow_address(ip_addr_pv, port_pv)</function>
+		</title>
+		<para>
+		Returns true if IP address and port given as values of pseudo
+		variable arguments and belonging to an earlier
+		assigned address group is found in cached address
+		table.  Cached address table entry containing port value
+		0 matches any port.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>allow_address(ip_addr_pv, port_pv)</function> usage</title>
+		<programlisting format="linespecific">
+...
+
+// Check source address/port of request
+if (!allow_address("$si", "$sp")) {
+	sl_send_reply("403", "Forbidden");
+};
+// Check IP address/port stored in AVPs i:704/i:705
+if (!allow_address("$avp(i:704)", "$avp(i:705)") {
+	sl_send_reply("403", "Forbidden");
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">allow_source_address(group_id)</function>
+		</title>
+		<para>
+		Equal to set_address_group(group_id);
+		allow_address("$si", "$sp"), but faster.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>allow_source_address(group_id)</function> usage</title>
+		<programlisting format="linespecific">
+...
+
+// Check source address/port of request
+if (!allow_source_address("0")) {
+	sl_send_reply("403", "Forbidden");
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
 		<function moreinfo="none">allow_trusted()</function>
 		</title>
 		<para>
@@ -812,6 +992,24 @@ if (allow_trusted()) {
 	</section>
 	<section>
 	<title>FIFO Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">address_reload</function>
+		</title>
+		<para>
+				Causes permissions module to re-read the contents of
+				address table into cache memory.
+				</para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">address_dump</function>
+		</title>
+		<para>
+				Causes permissions module to dump contents of address
+				table from cache memory.
+				</para>
+	</section>
 	<section>
 		<title>
 		<function moreinfo="none">trusted_reload</function>
