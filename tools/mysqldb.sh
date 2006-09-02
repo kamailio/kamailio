@@ -25,6 +25,7 @@
 #             fixed the reinstall functionality (bogdan)
 # 2006-05-16  added ability to specify MD5 from a configuration file
 #             FreeBSD does not have the md5sum function (norm)
+# 2006-09-02  Added address table (juhe)
 
 PATH=$PATH:/usr/local/sbin
 
@@ -300,6 +301,7 @@ INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'sip_trace', '1');
+INSERT INTO version VALUES ( 'address', '1');
 
 
 
@@ -618,6 +620,17 @@ CREATE TABLE sip_trace (
   INDEX ip_idx (fromip),
   KEY call_id (callid)
 ) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'address'
+#
+CREATE TABLE address (
+  grp smallint(5) unsigned NOT NULL default '0',
+  ip_addr varchar(15) NOT NULL,
+  port smallint(5) unsigned NOT NULL default '0'
+) $TABLE_TYPE;
+
 
 # add an admin user "admin" with password==$DEFAULT_PW,
 # so that one can try it out on quick start
