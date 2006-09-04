@@ -317,6 +317,21 @@ static inline int get_callid(struct sip_msg* _m, str* _cid)
 	return 0;
 }
 
+static rr_t *revert_route(rr_t *r)
+{
+	rr_t *a, *b;
+
+	a = NULL;
+
+	while (r) {
+		b = r->next;
+		r->next = a;
+		a = r;
+		r = b;
+	}
+
+	return a;
+}
 
 /*
  * Create a copy of route set either in normal or reverse order
@@ -337,31 +352,27 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 			}
 
 			p = (rr_t*)ptr->parsed;
-			while(p) {
-				if (shm_duplicate_rr(&t, p) < 0) {
-					LOG(L_ERR, "get_route_set(): Error while duplicating rr_t\n");
-					goto error;
-				}
-				if (_order == NORMAL_ORDER) {
-					if (!*_rs) *_rs = t;
-					if (last) last->next = t;
-					last = t;
-				} else {
-					t->next = *_rs;
-					*_rs = t;
-				}
-
-				p = p->next;
+			if (shm_duplicate_rr(&t, p) < 0) {
+				LOG(L_ERR, "get_route_set(): Error while duplicating rr_t\n");
+				goto error;
 			}
-			
+			if (!*_rs) *_rs = t;
+			if (last) last->next = t;
+			last = t;
+			while (last->next) last = last->next; /* !!! there may be more routes in one hdr field !!! */
+
 		}
 		ptr = ptr->next;
+	}
+	if ((*_rs) && (_order != NORMAL_ORDER)) {
+		/* better to revert the route outside of cycle above */
+		*_rs = revert_route(*_rs);
 	}
 	
 	return 0;
 
  error:
-        shm_free_rr(_rs);
+	shm_free_rr(_rs);
 	return -1;
 }
 
