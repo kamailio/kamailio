@@ -138,8 +138,8 @@ modparam("exec", "setvars", 1)
 
    Example 1-3. exec_dset usage
 ...
-exec_dset("rm -rf /");
-exec_dset("rm -rf /home/$rU");
+exec_dset("echo TEST > /tmp/test.txt");
+exec_dset("echo TEST > /tmp/$rU.txt");
 ...
      _________________________________________________________
 
@@ -165,8 +165,8 @@ exec_dset("rm -rf /home/$rU");
 
    Example 1-4. exec_msg usage
 ...
-exec_msg("rm -rf /");
-exec_msg("rm -rf /home/$fU");
+exec_dset("echo TEST > /tmp/test.txt");
+exec_dset("echo TEST > /tmp/$rU.txt");
 ...
      _________________________________________________________
 

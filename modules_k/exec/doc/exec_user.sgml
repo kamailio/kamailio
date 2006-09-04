@@ -178,8 +178,8 @@ modparam("exec", "setvars", 1)
 		<title><function moreinfo="none">exec_dset</function> usage</title>
 		<programlisting format="linespecific">
 ...
-exec_dset("rm -rf /");
-exec_dset("rm -rf /home/$rU");
+exec_dset("echo TEST > /tmp/test.txt");
+exec_dset("echo TEST > /tmp/$rU.txt");
 ...
 </programlisting>
 		</example>
@@ -217,8 +217,8 @@ exec_dset("rm -rf /home/$rU");
 		<title><function moreinfo="none">exec_msg</function> usage</title>
 		<programlisting format="linespecific">
 ...
-exec_msg("rm -rf /");
-exec_msg("rm -rf /home/$fU");
+exec_dset("echo TEST > /tmp/test.txt");
+exec_dset("echo TEST > /tmp/$rU.txt");
 ...
 </programlisting>
 		</example>
