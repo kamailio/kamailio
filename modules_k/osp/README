@@ -3,13 +3,15 @@ OSP Module for Secure, Multi-Lateral Peering
 
 Ulrich Abend
 
-   FhG Fokus
+   FhG FOKUS
+
+   <ullstar@iptel.org>
 
 Edited by
 
 Di-Shi Sun
 
-   Copyright © 2003 FhG Fokus
+   Copyright © 2003 FhG FOKUS
      _________________________________________________________
 
    Table of Contents
@@ -35,16 +37,18 @@ Di-Shi Sun
               1.3.12. timeout
               1.3.13. max_destinations
               1.3.14. validate_call_id
+              1.3.15. use_rpid_for_calling_number
 
         1.4. Exported Functions
 
               1.4.1. checkospheader()
               1.4.2. validateospheader()
               1.4.3. requestosprouting()
-              1.4.4. preparefirstosproute()
-              1.4.5. preparenextosproute()
-              1.4.6. prepareallosproute()
-              1.4.7. reportospusage()
+              1.4.4. checkosproute()
+              1.4.5. prepareosproute()
+              1.4.6. checkcallingtranslation()
+              1.4.7. prepareallosproute()
+              1.4.8. reportospusage()
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -64,13 +68,17 @@ Di-Shi Sun
    1-12. Setting the timeout
    1-13. Setting the number of destination
    1-14. Instructing the module to validate call id
-   1-15. checkospheader usage
-   1-16. validateospheader usage
-   1-17. requestosprouting usage
-   1-18. preparefirstosproute usage
-   1-19. preparenextosproute usage
-   1-20. prepareallosproute usage
-   1-21. reportospusage usage
+   1-15. Instructing the module to use calling number in
+          Remote-Party-ID
+
+   1-16. checkospheader usage
+   1-17. validateospheader usage
+   1-18. requestosprouting usage
+   1-19. checkosproute usage
+   1-20. prepareosproute usage
+   1-21. checkcallingtranslation usage
+   1-22. prepareallosproute usage
+   1-23. reportospusage usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -92,13 +100,17 @@ Chapter 1. User's Guide
    The OSP module depends on the following modules which must be
    loaded before the OSP module.
 
+     * sl -- stateless replier
+     * tm -- stateful processing
+     * rr -- Record-Route/Route operation
      * textops -- text based operation
+     * auth -- Remote-Party-ID operattion
      * OSP Toolkit -- The OSP Toolkit, available from
        www.sipfoundry.org/OSP, must be built before building
-       OpenSER with the OSP Module. See the document
-       "Multi-lateral Peering with OpenSER", located at
-       http://developer.berlios.de/docman/?group_id=3799 for
-       build instructions.
+       OpenSER with the OSP Module. See the document "Secure,
+       Multi-lateral Peering with OpenSER", located at
+       http://www.openser.org/docs/osp/Multi-Lateral_VoIP_Peering
+       _with_OpenSER_V1.1.pdf for build instructions.
      _________________________________________________________
 
 1.3. Exported Parameters
@@ -129,9 +141,9 @@ Chapter 1. User's Guide
        included.
 
    Example 1-1. Setting the OSP servers
-modparam ("osp", "sp1_uri", "http://osptestserver.transnexus.com:1080/o
-sp")
-modparam ("osp", "sp2_uri", "https://[1.2.3.4]:1443/osp")
+modparam("osp","sp1_uri","http://osptestserver.transnexus.com:1080/osp"
+)
+modparam("osp","sp2_uri","https://[1.2.3.4]:1443/osp")
 
      _________________________________________________________
 
@@ -143,7 +155,7 @@ modparam ("osp", "sp2_uri", "https://[1.2.3.4]:1443/osp")
    must be in brackets as shown in the example below.
 
    Example 1-2. Setting the device IP address
-modparam ("osp", "device_ip", "[1.1.1.1]")
+modparam("osp","device_ip","[1.1.1.1]")
 
      _________________________________________________________
 
@@ -167,7 +179,7 @@ modparam ("osp", "device_ip", "[1.1.1.1]")
    Calls with valid tokens are allowed.
 
    Example 1-3. Setting the token format
-modparam ("osp", "token_format", 2)
+modparam("osp","token_format",2)
 
      _________________________________________________________
 
@@ -188,11 +200,10 @@ modparam ("osp", "token_format", 2)
 
    If the default CFG_DIR value was used at compile time, the
    files will be loaded from:
-modparam ("osp", "private_key", "/usr/local/etc/openser/pkey.pem")
-modparam ("osp", "local_certificate", "/usr/local/etc/openser/localcert
-.pem")
-modparam ("osp", "ca_certificates", "/usr/local/etc/openser/cacert.pem"
-)
+modparam("osp","private_key","/usr/local/etc/openser/pkey.pem")
+modparam("osp","local_certificate","/usr/local/etc/openser/localcert.pe
+m")
+modparam("osp","ca_certificates","/usr/local/etc/openser/cacert.pem")
 
      _________________________________________________________
 
@@ -210,7 +221,7 @@ modparam ("osp", "ca_certificates", "/usr/local/etc/openser/cacert.pem"
    The default values for sp1_weight and sp2_weight are 1000.
 
    Example 1-5. Setting the OSP server weights
-modparam ("osp", "sp1_weight", 1000)
+modparam("osp","sp1_weight",1000)
 
      _________________________________________________________
 
@@ -226,7 +237,7 @@ modparam ("osp", "sp1_weight", 1000)
    policies based on different SIP proxies.
 
    Example 1-6. Setting the device port
-modparam ("osp", "device_port", "5060")
+modparam("osp","device_port","5060")
 
      _________________________________________________________
 
@@ -239,7 +250,7 @@ modparam ("osp", "device_port", "5060")
    to 1.
 
    Example 1-7. Setting the hardware support
-modparam ("osp", "enable_crypto_hardware_support", 0)
+modparam("osp","enable_crypto_hardware_support",0)
 
      _________________________________________________________
 
@@ -253,7 +264,7 @@ modparam ("osp", "enable_crypto_hardware_support", 0)
    default value is 200 seconds.
 
    Example 1-8. Setting the ssl lifetime
-modparam ("osp", "ssl_lifetime", 200)
+modparam("osp","ssl_lifetime",200)
 
      _________________________________________________________
 
@@ -267,7 +278,7 @@ modparam ("osp", "ssl_lifetime", 200)
    peering server.
 
    Example 1-9. Setting the persistence
-modparam ("osp", "persistence", 1000)
+modparam("osp","persistence",1000)
 
      _________________________________________________________
 
@@ -281,7 +292,7 @@ modparam ("osp", "persistence", 1000)
    value is 1 second.
 
    Example 1-10. Setting the retry delay
-modparam ("osp", "retry_delay", 1)
+modparam("osp","retry_delay",1)
 
      _________________________________________________________
 
@@ -297,7 +308,7 @@ modparam ("osp", "retry_delay", 1)
    attempts to every peering server. The default value is 2.
 
    Example 1-11. Setting the retry limit
-modparam ("osp", "retry_limit", 2)
+modparam("osp","retry_limit",2)
 
      _________________________________________________________
 
@@ -310,7 +321,7 @@ modparam ("osp", "retry_limit", 2)
    the next peering server. The default value is 10 seconds.
 
    Example 1-12. Setting the timeout
-modparam ("osp", "timeout", 10)
+modparam("osp","timeout",10)
 
      _________________________________________________________
 
@@ -322,7 +333,7 @@ modparam ("osp", "timeout", 10)
    5.
 
    Example 1-13. Setting the number of destination
-modparam ("osp", "max_destinations", 5)
+modparam("osp","max_destinations",5)
 
      _________________________________________________________
 
@@ -337,7 +348,24 @@ modparam ("osp", "max_destinations", 5)
    peering token. The default value is 1
 
    Example 1-14. Instructing the module to validate call id
-modparam ("osp", "validate_call_id", 1)
+modparam("osp","validate_call_id",1)
+
+     _________________________________________________________
+
+1.3.15. use_rpid_for_calling_number
+
+   The use_rpid_for_calling_number(integer) parameter instructs
+   the OSP module to use the calling number in the
+   Remote-Party-ID of the SIP INVITE message. If this value is
+   set to 1, the OSP Module uses the calling number in the
+   Reomte-Party-ID header of the INVITE message when a
+   Remote-Party-ID exists. If this value is set to 0, the OSP
+   Module will use the calling number in the From header of the
+   INVITE message. The default value is 1
+
+   Example 1-15. Instructing the module to use calling number in
+   Remote-Party-ID
+modparam("osp","use_rpid_calling_number",1)
 
      _________________________________________________________
 
@@ -348,7 +376,10 @@ modparam ("osp", "validate_call_id", 1)
    This function checks for the existence of the OSP-Auth-Token
    header field.
 
-   Example 1-15. checkospheader usage
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1-16. checkospheader usage
 ...
 if (checkospheader()) {
   log("OSP header field found.\n");
@@ -367,7 +398,10 @@ if (checkospheader()) {
    header is found or the header token is invalid or expired, -1
    is returned; on successful validation 1 is returned.
 
-   Example 1-16. validateospheader usage
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1-17. validateospheader usage
 ...
 if (validateospheader()) {
   log("valid OSP header found\n");
@@ -396,7 +430,10 @@ if (validateospheader()) {
    authentication failed or there is no route to destination or
    the route is blocked) -1 is returned.
 
-   Example 1-17. requestosprouting usage
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1-18. requestosprouting usage
 ...
 if (requestosprouting()) {
   log("successfully queried OSP server, now relaying call\n");
@@ -407,48 +444,79 @@ if (requestosprouting()) {
 
      _________________________________________________________
 
-1.4.4. preparefirstosproute()
+1.4.4. checkosproute()
 
-   This function tries to prepare the INVITE to be forwarded or
-   redirected using the first destination in the list returned by
-   the peering server. If the route could not be prepared, the
-   function returns 'FALSE' back to the script, which can then
-   decide how to handle the failure.
+   This function is used to check if there is any route for the
+   call.
 
-   Example 1-18. preparefirstosproute usage
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1-19. checkosproute usage
 ...
-if (preparefirstosproute ()) {
-  log("successfully prepared the first route, now relaying call\n");
+if (checkosproute()) {
+  log("There is at least one route for the call\n");
 } else {
-  log("could not prepare the route. The first destination was blocked\n
-");
+  log("There is not any route for the call\n");
 };
 ...
 
      _________________________________________________________
 
-1.4.5. preparenextosproute()
+1.4.5. prepareosproute()
 
-   Once the call could not be completed through the first
-   destination, this function tries to prepare the INVITE message
-   using the next destination in the list returned by the peering
-   Server. If it succeeds in preparing the route, the message is
-   either redirected or relayed on (using the t_relay call), or
-   else the function returns 'FALSE' back to the script, which
-   can then decide how to handle the failure.
+   This function tries to prepare the INVITE to be forwarded
+   using the destination in the list returned by the peering
+   server. If the calling number is translated, a RPID value for
+   the RPID AVP will be set. If the route could not be prepared,
+   the function returns 'FALSE' back to the script, which can
+   then decide how to handle the failure. Note, if checkosproute
+   has been called and returns 'TRUE' before calling
+   prepareosproute, prepareosproute should not return 'FALSE'
+   because checkosproute has confirmed that there is at least one
+   route.
 
-   Example 1-19. preparenextosproute usage
+   This function can be used from BRANCH_ROUTE.
+
+   Example 1-20. prepareosproute usage
 ...
-if (preparenextosproute ()) {
-  log("successfully prepared the next route, now relaying call\n");
+if (prepareosproute()) {
+  log("successfully prepared the route, now relaying call\n");
 } else {
-  log("could not prepare the route. No next destination available\n");
+  log("could not prepare the route, there is not route\n");
 };
 ...
 
      _________________________________________________________
 
-1.4.6. prepareallosproute()
+1.4.6. checkcallingtranslation()
+
+   This function is used to check if the calling number is
+   translated. Before calling checkcallingtranslation,
+   prepareosproute should be called. If the calling number does
+   been translated, the original Remote-Party-ID, if it exists,
+   should be removed from the INVITE message. And a new
+   Remote-Party-ID header should be added (a RPID value for the
+   RPID AVP has been set by prepareosproute). If the calling
+   number is not translated, nothing should be done.
+
+   This function can be used from BRANCH_ROUTE.
+
+   Example 1-21. checkcallingtranslation usage
+...
+if (checkcallingtranslation()) {
+  # Remove the Remote_Party-ID from the received message
+  # Otherwise it will be forwarded on to the next hop
+  remove_hf("Remote-Party-ID");
+
+  # Append a new Remote_Party
+  append_rpid_hf();
+}
+...
+
+     _________________________________________________________
+
+1.4.7. prepareallosproute()
 
    This function tries to prepare all the routes in the list
    returned by the peering server. The message is then either
@@ -456,19 +524,22 @@ if (preparenextosproute ()) {
    in preparing the routes a SIP 500 is sent back and a trace
    message is logged.
 
-   Example 1-20. prepareallosproute usage
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1-22. prepareallosproute usage
 ...
-if (prepareallosproute ()) {
-  log("successfully prepared the routes, now either forking or redirect
-ing the call\n");
+if (prepareallosproute()) {
+  log("Routes are prepared, now either forking or redirecting the call\
+n");
 } else {
-  log("could not prepare the route. No destination available\n");
+  log("Could not prepare the routes. No destination available\n");
 };
 ...
 
      _________________________________________________________
 
-1.4.7. reportospusage()
+1.4.8. reportospusage()
 
    This function should be called after receiving a BYE message.
    If the message contains an OSP cookie, the function will
@@ -479,14 +550,29 @@ ing the call\n");
    processing. The function should be called before relaying the
    message.
 
-   Example 1-21. reportospusage usage
+   Meaning of the parameter is as follows:
+
+     * "0" - Source device releases the call.
+     * "1" - Destination device releases the call.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-23. reportospusage usage
 ...
-if (reportospusage ()) {
-  log("OSP call duration usage will be reported\n");
+if (is_direction("downstream")) {
+  log(1,"-----------------ROUTE: This BYE message is from SOURCE\n");
+  if (!reportospusage("0")) {
+    log(1,"-----------------ROUTE: This BYE message does not include OS
+P usage information\n");
+  }
 } else {
-  log("The BYE message does not include OSP information, it was not aut
-horized by an OSP server\n");
-};
+  log(1,"-----------------ROUTE: This BYE message is from DESTINATION\n
+");
+  if (!reportospusage("1")) {
+    log(1,"-----------------ROUTE: This BYE message does not include OS
+P usage information\n");
+  }
+}
 ...
 
      _________________________________________________________
@@ -515,10 +601,11 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I get more information on this module?
 
-   Please see the document "Multi-Lateral Peering with OpenSER"
-   located at http://developer.berlios.de/docman/?group_id=3799
-   or post a message on the OpenSER mailing list. You may also
-   send an e-mail to support@transnexus.com.
+   Please see the document "Secure, Multi-lateral Peering with
+   OpenSER", located at
+   http://www.openser.org/docs/osp/Multi-Lateral_VoIP_Peering_wit
+   h_OpenSER_V1.1.pdf or post a message on the OpenSER mailing
+   list. You may also send an e-mail to support@transnexus.com.
 
    3.3. Where can I get more information on OSP?
 
