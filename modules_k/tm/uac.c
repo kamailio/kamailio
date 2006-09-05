@@ -51,10 +51,7 @@
 #include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
-#include "../../globals.h"
 #include "../../md5.h"
-#include "../../crc.h"
-#include "../../ip_addr.h"
 #include "../../socket_info.h"
 #include "ut.h"
 #include "h_table.h"

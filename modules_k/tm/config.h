@@ -28,9 +28,13 @@
 */
 #include "../../hash_func.h"
 #include "../../config.h"
+
+
+/* size of TM hash table */
+#define TM_TABLE_ENTRIES     (1<<16)
+
 /* always use a power of 2 for hash table size */
 #define tm_hash( s1, s2 )     core_hash( &s1, &s2, TM_TABLE_ENTRIES)
-
 
 /* maximum length of localy generated acknowledgment */
 #define MAX_ACK_LEN   1024
