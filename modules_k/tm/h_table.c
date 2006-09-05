@@ -46,7 +46,6 @@
 #include "../../dprint.h"
 #include "../../md5utils.h"
 #include "../../ut.h"
-#include "../../globals.h"
 #include "../../error.h"
 #include "../../fifo_server.h"
 #include "../../unixsock_server.h"
@@ -64,6 +63,7 @@ static enum kill_reason kr;
    lives */
 static struct s_table*  tm_table;
 
+int syn_branch = 1;
 
 
 void set_kr( enum kill_reason _kr )

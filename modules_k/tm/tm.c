@@ -221,6 +221,8 @@ static param_export_t params[]={
 		&tm_enable_stats },
 	{ "pass_provisional_replies", INT_PARAM,
 		&pass_provisional_replies },
+	{ "syn_branch",               INT_PARAM,
+		&syn_branch },
 	{0,0,0}
 };
 

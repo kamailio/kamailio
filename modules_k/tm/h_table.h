@@ -249,7 +249,7 @@ typedef struct cell
 	/* the branch_route to be processed separately for each branch */
 	unsigned int on_branch;
 
-	/* MD5checksum  (meaningful only if syn_branch=0 */
+	/* MD5checksum  (meaningful only if syn_branch=0) */
 	char md5[MD5_LEN];
 
 #ifdef	EXTRA_DEBUG
@@ -318,6 +318,9 @@ struct s_table
 #define has_noisy_ctimer(_t_)    ((_t_)->flags&T_NOISY_CTIMER_FLAG)
 #define was_cancelled(_t_)       ((_t_)->flags&T_WAS_CANCELLED_FLAG)
 #define is_hopbyhop_cancel(_t_)  ((_t_)->flags&T_HOPBYHOP_CANCEL_FLAG)
+
+
+extern int syn_branch;
 
 
 void set_kr( enum kill_reason kr );

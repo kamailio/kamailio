@@ -590,6 +590,27 @@ modparam("tm", "pass_provisional_replies", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>syn_branch</varname> (integer)</title>
+		<para>
+		Enable/disable the usage of stateful synonym branch IDs in the 
+		generated Via headers. They are faster but not reboot-safe.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (use synonym branches).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>syn_branch</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "syn_branch", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 

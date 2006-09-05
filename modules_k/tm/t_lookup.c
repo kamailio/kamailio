@@ -74,15 +74,12 @@
  * SYNONYMS off: hash.md5.branch
  */
 
-#include <assert.h>
 #include "../../dprint.h"
-#include "../../config.h"
 #include "../../parser/parser_f.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../hash_func.h"
-#include "../../globals.h"
 #include "../../forward.h"
 #include "t_funcs.h"
 #include "config.h"
