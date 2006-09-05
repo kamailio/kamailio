@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table>
+    <name>contact_attrs</name>
+    <version>1</version>
+
+    <column id="contactattrs.uid">
+	<name>uid</name>
+	<type>string</type>
+	<size>&id_len;</size>
+    </column>
+    
+	<column id="contactattrs.contact">
+	<name>contact</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+    </column>
+
+    <column id="contactattrs.name">
+	<name>name</name>
+	<type>string</type>
+	<size>&avp_name_len;</size>
+    </column>
+
+    <column id="contactattrs.value">
+	<name>value</name>
+	<type>string</type>
+	<null/>
+	<size>&avp_val_len;</size>
+    </column>
+
+    <column>
+	<name>type</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+
+    <column id="contactattrs.flags">
+	<name>flags</name>
+	<type>unsigned int</type>
+	<default>0</default>
+	<description>
+	    Various flags (SER_LOAD and such).
+	</description>
+    </column>
+
+    <index>
+	<unique/>
+	<name>contactattrs_idx</name>
+        <colref linkend="contactattrs.uid"/>
+        <colref linkend="contactattrs.contact"/>
+		<colref linkend="contactattrs.name"/>
+    </index>
+
+</table>
