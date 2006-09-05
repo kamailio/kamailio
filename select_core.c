@@ -968,7 +968,10 @@ int select_nameaddr_uri(str* res, select_t* s, struct sip_msg* msg)
 	
 	p=find_not_quoted(res, '<');
 	if (!p) {
-		DBG("select_nameaddr_uri: no < found, whole string is uri\n");
+		DBG("select_nameaddr_uri: no < found, string up to first semicolon is uri\n");
+		p = q_memchr(res->s, ';', res->len);
+		if (p)
+			res->len = p-res->s;
 		return 0;
 	}
 
