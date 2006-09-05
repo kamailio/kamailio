@@ -47,7 +47,7 @@
 #include "../../socket_info.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "notify.h"
-
+#include "reg_avps.h"
 
 /*
  * Hash function
@@ -432,6 +432,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			unlock_udomain(_d);
 			return -3;
 		}
+
+		db_read_reg_avps(_c, c);
 
 		     /* We have to do this, because insert_ucontact sets state to CS_NEW
 		      * and we have the contact in the database already

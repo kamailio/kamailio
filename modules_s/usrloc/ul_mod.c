@@ -54,6 +54,7 @@
 #include "notify.h"
 #include "ul_rpc.h"
 #include "usrloc.h"
+#include "reg_avps.h"
 
 MODULE_VERSION
 
@@ -104,6 +105,7 @@ int desc_time_order = 0;              /* By default do not enable timestamp orde
 db_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
+static char *reg_avp_flag_name = NULL;
 
 /*
  * Exported functions
@@ -126,6 +128,7 @@ static cmd_export_t cmds[] = {
 	{"ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0, 0},
 	{"ul_bind_usrloc",        (cmd_function)bind_usrloc,        1, 0, 0},
 	{"ul_register_ulcb",      (cmd_function)register_ulcb,      1, 0, 0},
+	{"read_reg_avps",         read_reg_avps,                    2, read_reg_avps_fixup, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE }, 
 	{0, 0, 0, 0, 0}
 };
 
@@ -150,6 +153,15 @@ static param_export_t params[] = {
 	{"received_column",   PARAM_STR, &received_col   },
 	{"instance_column",   PARAM_STR, &instance_col   },
 	{"aor_column",        PARAM_STR, &aor_col        },
+	{"reg_avp_table",     PARAM_STRING, &reg_avp_table  },
+	{"reg_avp_column",       PARAM_STRING, &serialized_reg_avp_column  },	
+	{"regavp_uid_column", PARAM_STRING, &regavp_uid_column  },
+	{"regavp_contact_column", PARAM_STRING, &regavp_contact_column  },
+	{"regavp_name_column",    PARAM_STRING, &regavp_name_column  },
+	{"regavp_value_column",   PARAM_STRING, &regavp_value_column  },
+	{"regavp_type_column",    PARAM_STRING, &regavp_type_column  },
+	{"regavp_flags_column",   PARAM_STRING, &regavp_flags_column  },
+	{"reg_avp_flag",          PARAM_STRING, &reg_avp_flag_name },
 	{0, 0, 0}
 };
 
@@ -196,6 +208,7 @@ static int mod_init(void)
 		}
 	}
 
+	set_reg_avpflag_name(reg_avp_flag_name);
 
 	return 0;
 }
