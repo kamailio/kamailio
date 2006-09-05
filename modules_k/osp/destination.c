@@ -38,11 +38,11 @@
 #include "destination.h"
 #include "usage.h"
 
-/* Name of AVP item of OSP */
-str OSP_ORIGDEST_LABEL = {"_osp_orig_dests_", 16};
-str OSP_TERMDEST_LABEL = {"_osp_term_dests_", 16};
+/* Name of AVP of OSP destination list */
+const str OSP_ORIGDEST_NAME = {"_osp_orig_dests_", 16};
+const str OSP_TERMDEST_NAME = {"_osp_term_dests_", 16};
 
-static int ospSaveDestination(osp_dest* dest, str* label);
+static int ospSaveDestination(osp_dest* dest, const str* name);
 static void ospRecordCode(int code, osp_dest* dest);
 static int ospIsToReportUsage(int code);
 
@@ -68,15 +68,15 @@ osp_dest* ospInitDestination(
 
 /* 
  * Save destination as an AVP
- *     name - OSP_ORIGDEST_LABEL / OSP_TERMDEST_LABEL
+ *     name - OSP_ORIGDEST_NAME / OSP_TERMDEST_NAME
  *     value - osp_dest wrapped in a string
  * param dest Destination structure
- * param label Name
+ * param name Name of AVP
  * return 0 success, -1 failure
  */
 static int ospSaveDestination(
     osp_dest* dest, 
-    str* label)
+    const str* name)
 {
     str wrapper;
     int result = -1;
@@ -90,9 +90,9 @@ static int ospSaveDestination(
      * add_avp will make a private copy of both the name and value in shared memory 
      * which will be released by TM at the end of the transaction
      */
-    if (add_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)*label, (int_str)wrapper) == 0) {
+    if (add_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)*name, (int_str)wrapper) == 0) {
         result = 0;
-        LOG(L_DBG, "osp: saved\n");
+        LOG(L_DBG, "osp: destination saved\n");
     } else {
         LOG(L_ERR, "osp: ERROR: failed to save destination\n");
     }
@@ -111,7 +111,7 @@ int ospSaveOrigDestination(
 {
     LOG(L_DBG, "osp: ospSaveOrigDestination\n");
 
-    return ospSaveDestination(dest, &OSP_ORIGDEST_LABEL);
+    return ospSaveDestination(dest, &OSP_ORIGDEST_NAME);
 }
 
 /*
@@ -124,12 +124,12 @@ int ospSaveTermDestination(
 {
     LOG(L_DBG, "osp: ospSaveTermDestination\n");
 
-    return ospSaveDestination(dest, &OSP_TERMDEST_LABEL);
+    return ospSaveDestination(dest, &OSP_TERMDEST_NAME);
 }
 
 /* 
  * Check if there is an unused and supported originate destination from an AVP
- *     name - OSP_ORIGDEST_LABEL
+ *     name - OSP_ORIGDEST_NAME
  *     value - osp_dest wrapped in a string
  *     search unused (used==0) & supported (support==1)
  * return 0 success, -1 failure
@@ -143,7 +143,7 @@ int ospCheckOrigDestination(void)
 
     LOG(L_DBG, "osp: ospCheckOrigDestination\n");
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
         destavp != NULL;
         destavp = search_next_avp(destavp, NULL))
     {
@@ -154,14 +154,14 @@ int ospCheckOrigDestination(void)
 
         if (dest->used == 0) {
             if (dest->supported == 1) {
-                LOG(L_DBG, "osp: found\n");
+                LOG(L_DBG, "osp: orig dest exist\n");
                 result = 0;
                 break;
             } else {
-                LOG(L_DBG, "osp: this destination does not been supported\n");
+                LOG(L_DBG, "osp: destination does not been supported\n");
             }
         } else {
-            LOG(L_DBG, "osp: this destination has already been used\n");
+            LOG(L_DBG, "osp: destination has already been used\n");
         }
     }
 
@@ -173,12 +173,12 @@ int ospCheckOrigDestination(void)
 }
 
 /* 
- * Retrieved an unused originate destination from an AVP
- *     name - OSP_ORIGDEST_LABEL
+ * Retrieved an unused and supported originate destination from an AVP
+ *     name - OSP_ORIGDEST_NAME
  *     value - osp_dest wrapped in a string
  *     There can be 0, 1 or more originate destinations. 
- *     Find the 1st unused destination (used==0), return it, 
- *     and mark it as used (used==1).
+ *     Find the 1st unused destination (used==0) & supported (support==1),
+ *     return it, and mark it as used (used==1).
  * return NULL on failure
  */
 osp_dest* ospGetNextOrigDestination(void)
@@ -190,7 +190,7 @@ osp_dest* ospGetNextOrigDestination(void)
 
     LOG(L_DBG, "osp: ospGetNextOrigDestination\n");
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
         destavp != NULL;
         destavp = search_next_avp(destavp, NULL))
     {
@@ -201,7 +201,7 @@ osp_dest* ospGetNextOrigDestination(void)
 
         if (dest->used == 0) {
             if (dest->supported == 1) {
-                LOG(L_DBG, "osp: found\n");
+                LOG(L_DBG, "osp: orig dest found\n");
                 dest->used = 1;
                 result = dest;
                 break;
@@ -210,10 +210,10 @@ osp_dest* ospGetNextOrigDestination(void)
                 dest->used = 1;
                 /* 111 means wrong protocol */
                 dest->lastcode = 111;
-                LOG(L_DBG, "osp: this destination does not been supported\n");
+                LOG(L_DBG, "osp: destination does not been supported\n");
             }
         } else {
-            LOG(L_DBG, "osp: this destination has already been used\n");
+            LOG(L_DBG, "osp: destination has already been used\n");
         }
     }
 
@@ -226,11 +226,13 @@ osp_dest* ospGetNextOrigDestination(void)
 
 /*
  * Retrieved the last used originate destination from an AVP
- *    name - OSP_ORIGDEST_LABEL
+ *    name - OSP_ORIGDEST_NAME
  *    value - osp_dest wrapped in a string
  *    There can be 0, 1 or more destinations. 
- *    Find the last used destination (used==1),
+ *    Find the last used destination (used==1) & supported (support==1),
  *    and return it.
+ *    In normal condition, this one is the current destination. But it may
+ *    be wrong for loop condition.
  *  return NULL on failure
  */
 osp_dest* ospGetLastOrigDestination(void)
@@ -242,7 +244,7 @@ osp_dest* ospGetLastOrigDestination(void)
 
     LOG(L_DBG, "osp: ospGetLastOrigDesintaion\n");
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
         destavp != NULL;
         destavp = search_next_avp(destavp, NULL))
     {
@@ -252,8 +254,10 @@ osp_dest* ospGetLastOrigDestination(void)
         dest = (osp_dest*)destval.s.s;
 
         if (dest->used == 1) {
-            lastdest = dest;
-            LOG(L_DBG, "osp: curent destination '%s'\n", lastdest->host);
+            if (dest->supported == 1) {
+                lastdest = dest;
+                LOG(L_DBG, "osp: curent destination '%s'\n", lastdest->host);
+            }
         } else {
             break;
         }
@@ -264,7 +268,7 @@ osp_dest* ospGetLastOrigDestination(void)
 
 /* 
  * Retrieved the terminate destination from an AVP
- *     name - OSP_TERMDEST_LABEL
+ *     name - OSP_TERMDEST_NAME
  *     value - osp_dest wrapped in a string
  *     There can be 0 or 1 term destinations. Find and return it.
  *  return NULL on failure (no terminate destination)
@@ -277,7 +281,7 @@ osp_dest* ospGetTermDestination(void)
 
     LOG(L_DBG, "osp: ospGetTermDestination\n");
 
-    destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_LABEL, NULL, 0);
+    destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, NULL, 0);
 
     if (destavp) {
         get_avp_val(destavp, &destval);
@@ -285,7 +289,7 @@ osp_dest* ospGetTermDestination(void)
         /* OSP destination is wrapped in a string */
         dest = (osp_dest*)destval.s.s;
 
-        LOG(L_DBG, "osp: found\n");
+        LOG(L_DBG, "osp: term dest found\n");
     }
 
     return dest;
@@ -301,8 +305,8 @@ static void ospRecordCode(
     osp_dest* dest)
 {
     LOG(L_DBG, "osp: ospRecordCode\n");
-    LOG(L_DBG, "osp: code '%d'\n", code);
 
+    LOG(L_DBG, "osp: code '%d'\n", code);
     dest->lastcode = code;
 
     switch (code) {
@@ -310,7 +314,7 @@ static void ospRecordCode(
             if (!dest->time100) {
                 dest->time100 = time(NULL);
             } else {
-                LOG(L_DBG, "osp: 100 has already been recorded\n");
+                LOG(L_DBG, "osp: 100 already recorded\n");
             }
             break;
         case 180:
@@ -320,7 +324,7 @@ static void ospRecordCode(
             if (!dest->time180) {
                 dest->time180 = time(NULL);
             } else {
-                LOG(L_DBG, "osp: 180, 181, 182 or 183 has allready been recorded\n");
+                LOG(L_DBG, "osp: 180, 181, 182 or 183 allready recorded\n");
             }
             break;
         case 200:
@@ -328,7 +332,7 @@ static void ospRecordCode(
             if (!dest->time200) {
                 dest->time200 = time(NULL);
             } else {
-                LOG(L_DBG, "osp: 200 or 202 has allready been recorded\n");
+                LOG(L_DBG, "osp: 200 or 202 allready recorded\n");
             }
             break;
         default:
@@ -339,18 +343,18 @@ static void ospRecordCode(
 /*
  * Check destination status for reporting usage
  * param code Destination status
- * return 
+ * return 1 should report, 0 should not report
  */
 static int ospIsToReportUsage(
     int code)
 {
-    int istime = -1;
+    int istime = 0;
 
     LOG(L_DBG, "osp: ospIsToReportUsage\n");
-    LOG(L_DBG, "osp: code '%d'\n", code);
 
+    LOG(L_DBG, "osp: code '%d'\n", code);
     if (code >= 200) {
-        istime = 0;
+        istime = 1;
     }
 
     return istime;
@@ -368,20 +372,21 @@ void ospRecordEvent(
     osp_dest* dest;
 
     LOG(L_DBG, "osp: ospRecordEvent\n");
-    LOG(L_DBG, "osp: client status '%d' server status '%d'\n", clientcode, servercode);
 
+    LOG(L_DBG, "osp: client status '%d'\n", clientcode);
     if ((clientcode != 0) && (dest = ospGetLastOrigDestination())) {
         ospRecordCode(clientcode, dest);
 
-        if (ospIsToReportUsage(servercode) == 0) {
+        if (ospIsToReportUsage(servercode) == 1) {
             ospReportOrigSetupUsage();
         }
     }
 
+    LOG(L_DBG, "osp: server status '%d'\n", servercode);
     if ((servercode != 0) && (dest = ospGetTermDestination())) {
         ospRecordCode(servercode, dest);
 
-        if (ospIsToReportUsage(servercode) == 0) {
+        if (ospIsToReportUsage(servercode) == 1) {
             ospReportTermSetupUsage();
         }
     }
@@ -413,7 +418,7 @@ void ospDumpAllDestination(void)
 
     LOG(L_DBG, "osp: ospDumpAllDestination\n");
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_LABEL, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
         destavp != NULL;
         destavp = search_next_avp(destavp,NULL))
     {
@@ -430,7 +435,7 @@ void ospDumpAllDestination(void)
         LOG(L_DBG, "osp: there is not originate destination AVP\n");
     }
 
-    destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_LABEL, NULL, 0);
+    destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, NULL, 0);
 
     if (destavp) {
         get_avp_val(destavp, &destval);
@@ -438,7 +443,7 @@ void ospDumpAllDestination(void)
         /* OSP destination is wrapped in a string */
         dest = (osp_dest*)destval.s.s;
 
-        LOG(L_DBG, "osp: ....destination....\n");
+        LOG(L_DBG, "osp: ....terminate....\n");
 
         ospDumpDestination(dest);
     } else {

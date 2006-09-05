@@ -42,7 +42,6 @@
 
 extern int _osp_use_rpid;
 
-static void ospCopyStrToBuffer(str* source, char* buffer, int buffersize);
 static void ospSkipPlus(char* e164);
 static int ospAppendHeader(struct sip_msg* msg, str* header); 
 
@@ -52,7 +51,7 @@ static int ospAppendHeader(struct sip_msg* msg, str* header);
  * param buffer Buffer
  * param buffersize Size of buffer
  */
-static void ospCopyStrToBuffer(
+void ospCopyStrToBuffer(
     str* source, 
     char* buffer, 
     int buffersize)
@@ -96,7 +95,7 @@ static void ospSkipPlus(
  * param msg SIP message
  * param fromuser User part of From header
  * param buffersize Size of fromuser buffer
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetFromUserpart(
     struct sip_msg* msg, 
@@ -105,7 +104,7 @@ int ospGetFromUserpart(
 {
     struct to_body* from;
     struct sip_uri uri;
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetFromUserpart\n");
 
@@ -136,7 +135,7 @@ int ospGetFromUserpart(
  * param msg SIP message
  * param rpiduser User part of Remote-Party-ID header
  * param buffersize Size of fromuser buffer
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetRpidUserpart(
     struct sip_msg* msg, 
@@ -145,7 +144,7 @@ int ospGetRpidUserpart(
 {
     struct to_body* rpid;
     struct sip_uri uri;
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetRpidUserpart\n");
 
@@ -180,7 +179,7 @@ int ospGetRpidUserpart(
  * param msg SIP message
  * param touser User part of To header
  * param buffersize Size of touser buffer
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetToUserpart(
     struct sip_msg* msg, 
@@ -189,20 +188,24 @@ int ospGetToUserpart(
 {
     struct to_body* to;
     struct sip_uri uri;
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetToUserpart\n");
 
     touser[0] = '\0';
 
     if (msg->to != NULL) {
-        to = get_to(msg);
-        if (parse_uri(to->uri.s, to->uri.len, &uri) == 0) {
-            ospCopyStrToBuffer(&uri.user, touser, buffersize);
-            ospSkipPlus(touser);
-            result = 0;
+        if (parse_headers(msg, HDR_TO_F, 0) == 0) {
+            to = get_to(msg);
+            if (parse_uri(to->uri.s, to->uri.len, &uri) == 0) {
+                ospCopyStrToBuffer(&uri.user, touser, buffersize);
+                ospSkipPlus(touser);
+                result = 0;
+            } else {
+                LOG(L_ERR, "osp: ERROR: failed to parse To uri\n");
+            }
         } else {
-            LOG(L_ERR, "osp: ERROR: failed to parse To uri\n");
+            LOG(L_ERR, "osp: ERROR: failed to parse To header\n");
         }
     } else {
         LOG(L_ERR, "osp: ERROR: failed to find To header\n");
@@ -216,14 +219,14 @@ int ospGetToUserpart(
  * param msg SIP message
  * param touser User part of To header
  * param buffersize Size of touser buffer
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetUriUserpart(
     struct sip_msg* msg, 
     char* uriuser, 
     int buffersize)
 {
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetUriUserpart\n");
 
@@ -293,7 +296,7 @@ static int ospAppendHeader(
  * param msg SIP message
  * param token OSP authorization token
  * param tokensize Size of OSP authorization token
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospAddOspHeader(
     struct sip_msg* msg, 
@@ -304,7 +307,7 @@ int ospAddOspHeader(
     char buffer[OSP_HEADERBUF_SIZE];
     unsigned char encodedtoken[OSP_TOKENBUF_SIZE];
     unsigned int encodedtokensize = sizeof(encodedtoken);
-    int  result = 1;
+    int  result = -1;
 
     LOG(L_DBG, "osp: ospAddOspHeader\n");
 
@@ -343,7 +346,7 @@ int ospAddOspHeader(
  * param msg SIP message
  * param token OSP authorization token
  * param tokensize Size of OSP authorization token
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetOspHeader(
     struct sip_msg* msg, 
@@ -352,11 +355,11 @@ int ospGetOspHeader(
 {
     struct hdr_field* hf;
     int errorcode;
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetOspHeader\n");
 
-    parse_headers(msg, HDR_EOH_T, 0);
+    parse_headers(msg, HDR_EOH_F, 0);
 
     for (hf = msg->headers; hf; hf = hf->next) {
         if ((hf->type == HDR_OTHER_T) && (hf->name.len == OSP_HEADER_SIZE - 2)) {
@@ -381,7 +384,7 @@ int ospGetOspHeader(
  * param msg SIP message
  * param sourceaddress Source address
  * param buffersize Size of sourceaddress
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetSourceAddress(
     struct sip_msg* msg, 
@@ -390,7 +393,7 @@ int ospGetSourceAddress(
 {
     struct hdr_field* hf;
     struct via_body* via;
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetSourceAddress\n");
 
@@ -418,19 +421,18 @@ int ospGetSourceAddress(
  * Get Call-ID header from SIP message
  * param msg SIP message
  * param callid Call ID
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetCallId(
     struct sip_msg* msg, 
     OSPTCALLID** callid)
 {
     struct hdr_field* hf;
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetCallId\n");
 
     hf = (struct hdr_field*)msg->callid;
-
     if (hf != NULL) {
         *callid = OSPPCallIdNew(hf->body.len, (unsigned char*)hf->body.s);
         if (*callid) {
@@ -450,7 +452,7 @@ int ospGetCallId(
  * param msg SIP message
  * param routeparameters Route parameters
  * param buffersize Size of routeparameters
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospGetRouteParameters(
     struct sip_msg* msg, 
@@ -460,7 +462,7 @@ int ospGetRouteParameters(
     struct hdr_field* hf;
     rr_t* rt;
     struct sip_uri uri;
-    int result = 1;
+    int result = -1;
 
     LOG(L_DBG, "osp: ospGetRouterParameters\n");
     LOG(L_DBG, "osp: parsed uri host '%.*s' port '%d' vars '%.*s'\n",
@@ -487,7 +489,7 @@ int ospGetRouteParameters(
         result = 0;
     }
 
-    if ((result == 1) && (msg->parsed_uri.params.len > 0)) {
+    if ((result == -1) && (msg->parsed_uri.params.len > 0)) {
         LOG(L_DBG, "osp: using route parameters from Request-Line uri\n");
         ospCopyStrToBuffer(&msg->parsed_uri.params, routeparameters, buffersize);
         routeparameters[msg->parsed_uri.params.len] = '\0';
@@ -503,7 +505,7 @@ int ospGetRouteParameters(
  * param called Called number
  * param dest Destination IP
  * param port Destination port
- * return 0 success, 1 failure
+ * return 0 success, -1 failure
  */
 int ospRebuildDestionationUri(
     str* newuri, 
@@ -511,8 +513,7 @@ int ospRebuildDestionationUri(
     char* dest, 
     char* port) 
 {
-#define TRANS       ";transport=tcp" 
-#define TRANS_LEN   14
+    static const str TRANS = {";transport=tcp", 14};
     char* buffer;
     int calledsize;
     int destsize;
@@ -533,10 +534,10 @@ int ospRebuildDestionationUri(
         portsize); 
 
     /* "sip:" + called + "@" + dest + : + port + " SIP/2.0" */
-    newuri->s = (char*)pkg_malloc(4 + calledsize + 1 + destsize + 1 + portsize + 1 + 16 + TRANS_LEN);
+    newuri->s = (char*)pkg_malloc(4 + calledsize + 1 + destsize + 1 + portsize + 1 + 16 + TRANS.len);
     if (newuri == NULL) {
         LOG(L_ERR, "osp: ERROR: no memory\n");
-        return 1;
+        return -1;
     }    
     buffer = newuri->s;
 
@@ -574,8 +575,8 @@ int ospRebuildDestionationUri(
     *buffer++ = '.';
     *buffer++ = '0';
 
-    memcpy(buffer, TRANS, TRANS_LEN);
-    buffer += TRANS_LEN;
+    memcpy(buffer, TRANS.s, TRANS.len);
+    buffer += TRANS.len;
     *buffer = '\0';
 */
 
@@ -635,7 +636,6 @@ void ospGetNextHop(
              msg->parsed_uri.port_no);
 
         ospCopyStrToBuffer(&msg->parsed_uri.host, nexthop, buffersize);
-        found =1;
+        found = 1;
     }
 }
-

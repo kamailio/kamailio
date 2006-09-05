@@ -475,10 +475,10 @@ static int ospPrepareDestination(
     int isfirst,
     int type)
 {
-    str newuri = {NULL, 0};
     int_str val;
     int res;
-    int result = MODULE_RETURNCODE_TRUE;
+    str newuri = {NULL, 0};
+    int result = MODULE_RETURNCODE_FALSE;
 
     LOG(L_DBG, "osp: ospPrepareDestination\n");
 
@@ -528,15 +528,14 @@ static int ospPrepareDestination(
                     add_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, val);
                     break;
             }
+
+            result = MODULE_RETURNCODE_TRUE;
         } else {
             LOG(L_ERR, "osp: ERROR: unsupported route block type\n");
         }
     } else {
         LOG(L_DBG, "osp: there is no more routes\n");
-
         ospReportOrigSetupUsage();
-
-        result = MODULE_RETURNCODE_FALSE;
     }
 
     if (newuri.len > 0) {
@@ -564,7 +563,7 @@ int ospPrepareRoute(
 
     LOG(L_DBG, "osp: ospPrepareRoute\n");
 
-    /* The isfirst parameter will be ignored */
+    /* The first parameter will be ignored */
     result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_BRANCH_ROUTE);
 
     return result;

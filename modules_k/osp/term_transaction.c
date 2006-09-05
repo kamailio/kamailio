@@ -45,7 +45,7 @@ extern OSPTPROVHANDLE _osp_provider;
  * param msg SIP message
  * param ignore1
  * param ignore2
- * return 0 success, others failure
+ * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospCheckHeader(
     struct sip_msg* msg, 
@@ -68,7 +68,7 @@ int ospCheckHeader(
  * Validate OSP token
  * param ignore1
  * param ignore2
- * return 0 success, others failure
+ * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospValidateHeader (
     struct sip_msg* msg, 

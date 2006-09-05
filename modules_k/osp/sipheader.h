@@ -34,9 +34,10 @@
 #include <osp/osp.h>
 #include "../../parser/msg_parser.h"
 
-#define OSP_TOKEN_HEADER        "P-OSP-Auth-Token: "
-#define OSP_HEADER_SIZE         strlen(OSP_TOKEN_HEADER)
+#define OSP_TOKEN_HEADER    "P-OSP-Auth-Token: "
+#define OSP_HEADER_SIZE     strlen(OSP_TOKEN_HEADER)
 
+void ospCopyStrToBuffer(str* source, char* buffer, int buffersize);
 int ospGetFromUserpart(struct sip_msg* msg, char* fromuser, int buffersize);
 int ospGetRpidUserpart(struct sip_msg* msg, char* fromuser, int buffersize);
 int ospGetToUserpart(struct sip_msg* msg, char* touser, int buffersize);
