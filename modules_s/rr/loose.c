@@ -756,6 +756,7 @@ static inline int find_rem_target(struct sip_msg* _m, struct hdr_field** _h, rr_
 			return -2;
 		}
 
+		*_h = last;
 		*_p = 0;
 		*_l = (rr_t*)last->parsed;
 		while ((*_l)->next) {
