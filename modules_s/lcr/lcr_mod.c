@@ -69,7 +69,8 @@ MODULE_VERSION
 #define LCR_TABLE_VERSION 1
 
 /* usr_avp flag for sequential forking */
-#define Q_FLAG      (1<<4)
+#define DEF_Q_FLAG	"q_flag"
+avp_flags_t	Q_FLAG = 0;
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
@@ -105,7 +106,7 @@ int reload_gws ( void );
 /* Default avp names */
 #define DEF_GW_URI_AVP "1400"
 #define DEF_CONTACT_AVP "1401"
-#define DEF_FR_INV_TIMER_AVP "fr_inv_timer_avp"
+#define DEF_FR_INV_TIMER_AVP "$t.callee_fr_inv_timer"
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
 #define DEF_RPID_AVP "rpid"
@@ -136,6 +137,8 @@ str contact_avp      = STR_STATIC_INIT(DEF_CONTACT_AVP);
 str inv_timer_avp    = STR_STATIC_INIT(DEF_FR_INV_TIMER_AVP);
 int inv_timer        = DEF_FR_INV_TIMER;
 int inv_timer_next   = DEF_FR_INV_TIMER_NEXT;
+str inv_timer_ps     = STR_STATIC_INIT("");
+str inv_timer_next_ps = STR_STATIC_INIT("");
 str rpid_avp         = STR_STATIC_INIT(DEF_RPID_AVP);
 
 /*
@@ -149,16 +152,21 @@ struct contact {
     struct contact *next;
 };
 
-int_str gw_uri_name, contact_name, rpid_name, inv_timer_name;
+int_str gw_uri_name, contact_name, rpid_name;
 unsigned short gw_uri_avp_name_str;
 unsigned short contact_avp_name_str;
 unsigned short rpid_avp_name_str;
+
+static avp_ident_t tm_timer_param;	/* TM module's invite timer avp */
 
 struct gw_info **gws;	/* Pointer to current gw table pointer */
 struct gw_info *gws_1;	/* Pointer to gw table 1 */
 struct gw_info *gws_2;	/* Pointer to gw table 2 */
 struct tm_binds tmb;
 
+/* AVPs overwriting the module parameters */
+static avp_ident_t *inv_timer_param = NULL;
+static avp_ident_t *inv_timer_next_param = NULL;
 
 /*
  * Module functions that are defined later
@@ -206,6 +214,8 @@ static param_export_t params[] = {
         {"fr_inv_timer_avp",         PARAM_STR, &inv_timer_avp  },
         {"fr_inv_timer",             PARAM_INT, &inv_timer      },
         {"fr_inv_timer_next",        PARAM_INT, &inv_timer_next },
+        {"fr_inv_timer_param",       PARAM_STR, &inv_timer_ps },
+        {"fr_inv_timer_next_param",  PARAM_STR, &inv_timer_next_ps },
 	{"rpid_avp",                 PARAM_STR, &rpid_avp     },
 	{0, 0, 0}
 };
@@ -312,6 +322,25 @@ static int child_init(int rank)
 	return 0;
 }
 
+/* get AVP module parameter */
+static int get_avp_modparam(str *s, avp_ident_t *avp)
+{
+	if (!s->s || (s->len < 2)) return -1;
+
+	if (s->s[0] != '$') {
+		LOG(L_ERR, "ERROR: lcr: get_avp_modparam(): "
+			"unknown AVP identifier: %.*s\n", s->len, s->s);
+		return -1;
+	}
+	s->s++;
+	s->len--;
+	if (parse_avp_ident(s, avp)) {
+		LOG(L_ERR, "ERROR: lcr: get_avp_modparam(): "
+			"cannot parse AVP identifier: %.*s\n", s->len, s->s);
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * Module initialization function that is called before the main process forks
@@ -323,6 +352,12 @@ static int mod_init(void)
 	unsigned int par;
 
 	DBG("lcr - initializing\n");
+
+	Q_FLAG = register_avpflag(DEF_Q_FLAG);
+	if (Q_FLAG == 0) {
+		LOG(L_ERR, "ERROR: lcr:mod_init(): cannot regirser AVP flag: %s\n", DEF_Q_FLAG);
+		return -1;
+	}
 
 	/* import the TM auto-loading function */
 	if (!(load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
@@ -410,7 +445,29 @@ static int mod_init(void)
 	    rpid_name.s = rpid_avp;
 	    rpid_avp_name_str = AVP_NAME_STR;
 	}
-	inv_timer_name.s = inv_timer_avp;
+
+	if (get_avp_modparam(&inv_timer_avp, &tm_timer_param))
+		goto err;
+
+	if (inv_timer_ps.len) {
+		inv_timer_param = (avp_ident_t*)pkg_malloc(sizeof(avp_ident_t));
+		if (!inv_timer_param) {
+			LOG(L_ERR, "ERROR: lcr: mod_init(): not enough memory\n");
+			return -1;
+		}
+		if (get_avp_modparam(&inv_timer_ps, inv_timer_param)) 
+			goto err;
+	}
+
+	if (inv_timer_next_ps.len) {
+		inv_timer_next_param = (avp_ident_t*)pkg_malloc(sizeof(avp_ident_t));
+		if (!inv_timer_next_param) {
+			LOG(L_ERR, "ERROR: lcr: mod_init(): not enough memory\n");
+			return -1;
+		}
+		if (get_avp_modparam(&inv_timer_next_ps, inv_timer_next_param)) 
+			goto err;
+	}
 
 	return 0;
 
@@ -422,6 +479,9 @@ err:
 static void destroy(void)
 {
 	lcr_db_close();
+
+	if (inv_timer_param) pkg_free(inv_timer_param);
+	if (inv_timer_next_param) pkg_free(inv_timer_next_param);
 }
 
 
@@ -967,6 +1027,39 @@ rest:
 	return 1;
 }
 
+/*
+ * Returns the value of the given AVP.
+ * The default value is returned in case of missing AVP
+ */
+static int get_timer_value(avp_ident_t *avp, int def_value)
+{
+	struct usr_avp	*ret_avp;
+	avp_value_t	avp_val;
+	unsigned int	i;
+
+	/* avp is not defined, use the default value */
+	if (!avp) return def_value;
+
+	ret_avp = search_avp_by_index(	avp->flags,
+					avp->name,
+					&avp_val,
+					avp->index);
+	/* avp is missing, use the default value */
+	if (!ret_avp) return def_value;
+
+	if (ret_avp->flags & AVP_VAL_STR) {
+		if (str2int(&avp_val.s, &i)) {
+			LOG(L_WARN, "get_timer_value(): WARNING: "
+				"cannot convert AVP string value to int: %.*s\n",
+				avp_val.s.len, avp_val.s.s);
+
+			return def_value;
+		}
+		return (int)i;
+	} else {
+		return avp_val.n;
+	}
+}
 
 /*
  * Adds to request a destination set that includes all highest priority
@@ -1006,8 +1099,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	if (avp->flags & Q_FLAG) {
 	    destroy_avp(avp);
 	    /* Set fr_inv_timer */
-	    val.n = inv_timer_next;
-	    if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+	    val.n = get_timer_value(inv_timer_next_param, inv_timer_next);
+	    if (add_avp(tm_timer_param.flags, tm_timer_param.name, val) != 0) {
 		LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
 		return -1;
 	    }
@@ -1033,8 +1126,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    DBG("next_contacts(): DEBUG: Branch is <%s>\n", val.s.s);
 	    if (avp->flags & Q_FLAG) {
 		destroy_avp(avp);
-		val.n = inv_timer_next;
-		if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+		val.n = get_timer_value(inv_timer_next_param, inv_timer_next);
+		if (add_avp(tm_timer_param.flags, tm_timer_param.name, val) != 0) {
 		    LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
 		    return -1;
 		}
@@ -1072,8 +1165,16 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	} while (avp);
 
 	/* Restore fr_inv_timer */
-	val.n = inv_timer;
-	if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+	/* delete previous value */
+	if ((avp = search_first_avp(tm_timer_param.flags, tm_timer_param.name, 0, 0))) {
+		destroy_avp(avp);
+	}
+
+	/* add new value */
+	val.n = get_timer_value(inv_timer_param, inv_timer);
+	DBG("next_contacts(): val.n=%d!\n", val.n);
+
+	if (add_avp(tm_timer_param.flags, tm_timer_param.name, val) != 0) {
 	    LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
 	    return -1;
 	}

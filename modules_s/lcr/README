@@ -103,15 +103,19 @@ Chapter 1. User's Guide
    If string value of an AVP parameter contains only digits, the name of
    the AVP is int value of the string.
 
-   Finally, there are two parameters used by sequential forwarding:
+   Finally, the parameters used by sequential forwarding:
 
-     * fr_inv_timer	  (default 90)
-     * fr_inv_timer_next  (default 30)
+     * fr_inv_timer		(default 90)
+     * fr_inv_timer_next	(default 30)
+     * fr_inv_timer_param	(default "")
+     * fr_inv_timer_next_param	(default "")
 
    Function next_contacts() sets tm fr_inv_timer to fr_inv_timer_next
    value if, after next contacts, there are still lower qvalue
    contacts available, and to fr_inv_timer value if next contacts are
-   the last ones left.
+   the last ones left. fr_inv_timer_param can define an AVP
+   overwriting fr_inv_timer value, and similarly, AVP defined by
+   fr_inv_timer_next_param can overwrite fr_inv_timer_next value.
     _________________________________________________________
 
 1.4. Exported Functions
