@@ -3,21 +3,16 @@
  *
  * ALIAS_DB Module
  *
- * Copyright (C) 2004 Voice Sistem
+ * Copyright (C) 2004 Voice Sistem SRL
  *
- * This file is part of a module for SER, a free SIP server.
+ * This file is part of a module for openser, a free SIP server.
  *
- * ALIAS_DB module is free software; you can redistribute it and/or modify
+ * openser is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use this software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact Voice Sistem by e-mail at the following address:
- *    office@voice-sistem.ro
- *
- * ALIAS_DB module is distributed in the hope that it will be useful,
+ * openser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
