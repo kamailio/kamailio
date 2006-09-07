@@ -733,11 +733,13 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			*should_store=1;
 			*should_relay=-1;
 			picked_branch=-1;
+			Trans->uac[branch].reply = 0;
 			return RPS_STORE;
 		}
 		if (picked_branch==-1) {
 			LOG(L_CRIT, "ERROR:tm:t_should_relay_response: pick_branch failed "
 				"(lowest==-1) for code %d\n",new_code);
+			Trans->uac[branch].reply = 0;
 			goto discard;
 		}
 
