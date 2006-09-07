@@ -761,9 +761,10 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			DBG("DEBUG: final reply retransmission\n");
 			goto discard;
 		}
-		/* if you FR-timed-out, faked a local 408 and 487 came, don't
+		/* if you FR-timed-out, faked a local 408 or 480 and 487 came, don't
 		 * report on it either */
-		if (Trans->uac[branch].last_received==408 && new_code==487) {
+		if ((Trans->uac[branch].last_received==408 ||
+				Trans->uac[branch].last_received==480) && new_code==487) {
 			DBG("DEBUG: 487 came for a timed-out branch\n");
 			goto discard;
 		}
