@@ -1,4 +1,5 @@
 01_sourced_scripts
+02_openser.cfg
 10_no_lib64_on_64_bits
 11_always_smp
 

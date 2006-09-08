@@ -1,16 +1,19 @@
 #! /bin/sh
 #
-# skeleton	example file to build /etc/init.d/ scripts.
-#		This file should be used to construct scripts for /etc/init.d.
+### BEGIN INIT INFO
+# Provides:          openser
+# Required-Start:    $syslog $network $local_fs $time
+# Required-Stop:     $syslog $network $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start the OpenSER SIP proxy server
+# Description:       Start the OpenSER SIP proxy server
+### END INIT INFO
 #
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian GNU/Linux
-#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#
-# Version:	@(#)skeleton  1.8  03-Mar-1998  miquels@cistron.nl
-#
-# adapted for openser by Daniel-Constantin Mierla <daniel@voice-system.ro>
-# $Id$
+# TODO:
+# The following fields should be added (and completed):
+# Should-Start:      postgresql mysql radius
+# Should-Stop:       postgresql mysql radius
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/openser

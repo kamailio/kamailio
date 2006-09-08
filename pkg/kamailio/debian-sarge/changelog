@@ -1,8 +1,27 @@
-openser (1.1.0-2cvs) UNRELEASED; urgency=low
+openser (1.1.0-3cvs) UNRELEASED; urgency=low
 
   * OpenSER CVS (Sarge).
 
- -- Julien BLACHE <jblache@debian.org>  Sun,  6 Aug 2006 10:07:31 +0200
+ -- Julien BLACHE <jblache@debian.org>  Fri,  8 Sep 2006 15:27:39 +0200
+
+openser (1.1.0-3) unstable; urgency=low
+
+  * debian/rules:
+    + Remove DH_COMPAT 4 compatibility code which was introduced only for
+      Sarge backward-compatiblity in the upstream CVS; there's now a
+      packaging directory dedicated to Sarge.
+  * debian/control:
+    + Build-Depends cleanup.
+  * debian/patches/02_openser.cfg.dpatch:
+    + Remove the C-style comment block containing fork=no, otherwise the
+      default config file will trigger the test for fork=no in the
+      initscript (closes: #386464).
+  * debian/openser.README.Debian:
+    + Document initscript behaviour wrt fork=no.
+  * debian/openser.init:
+    + Add LSB header.
+
+ -- Julien BLACHE <jblache@debian.org>  Fri,  8 Sep 2006 15:04:58 +0200
 
 openser (1.1.0-2) unstable; urgency=low
 
