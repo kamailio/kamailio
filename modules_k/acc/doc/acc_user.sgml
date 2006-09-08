@@ -285,64 +285,64 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 		<section>
 			<title>Configuration</title>
 			<para>
-			First how it works? The idea is to store in several &ser; AVP 
-			pairs the originator and destination for each call-leg. For the
-			A call B and B forwards to C example, the AVP pairs are (A,B) and
-			(B,C). There are two type of AVPs -source and destination- which
-			refined a call-leg. The administator must take care and to 
-			properly insert these AVP from the script (in proper order and 
-			with correct type).
+			First how it works? The idea is to have a set of AVPs and for each
+			call leg to store another set of values of the AVPs. The meaning 
+			the AVP content is stricly decided by the script writter - it can
+			be the origin and source of the leg, its status or any other 
+			related imformation. If you have a set of 4 AVPS (AVP1, AVP2, AVP3,
+			AVP4), then, for the A call B and B forwards to C example, the for
+			each leg ([A,B] and [B,C]) you need to set a different set of 
+			values for the AVPs.
+			The script writer must take care and properly insert all 
+			these AVP from the script (in proper order and with correct type).
 			</para>
 			<para>
 			When the accouning infomation for the call will be written/sent, 
-			all the call-leg pairs will be added (based on found AVP pairs).
+			all the call-leg pairs will be added (based on found AVP sets).
 			</para>
 			<para>
 			By default, the multiple call-legs support is disable - it can be
-			enabled via the <varname>multi_leg_enabled</varname> module
-			parameter. By enabling it, you will have also to define the AVPs
-			to be used for source and destination (which define one call-leg).
-			From performance reasons, the AVPs may be specified only via IDs.
+			enabled just be setting the per-leg set of AVPs via the 
+			<varname>multi_leg_info</varname> module parameter.
 			</para>
 		</section>
 		<section>
 			<title>Logged data</title>
 			<para>
-			For each call, all the source-destination pairs (which defined a 
+			For each call, all the values of the AVP set (which defines a 
 			call-leg) will be looged. How the information will be actually
 			logged, depends of the data backend:
 			</para>
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>syslog</emphasis> -- all pairs will be added
-				to one record string as src_leg=xxx, dst_leg=xxxx pairs.
+				<para><emphasis>syslog</emphasis> -- all leg-sets will be added
+				to one record string as AVP1=xxx, AVP2=xxxx ,... sets.
 				</para>
 				</listitem>
 				<listitem>
 				<para><emphasis>database</emphasis> -- each pair will be 
 				separatly logged (due DB data structure constraints); several
 				records will be written, the difference between them being 
-				only the source & destination of the corresponding call-leg.
-				with database support.</para>
-				<note><para>You will need to add in your DB (all acc related
-				tables) the two colums for call-leg definition (source and
-				destination).
-				</para></note>
-				</listitem>
-				<listitem>
-				<para><emphasis>Radius</emphasis> -- all pairs will be added
-				to same Radius accounting message as RADIUS AVPs - for each
-				call-leg two RADIUS AVPs will be added: source and 
-				destination
+				only the fields corresponding to the call-leg info.
 				</para>
-				<note><para>You will need to add in your dictionaty the two 
-				RADIUS AVPs used for call-leg definition (source and
-				destination): Sip-Leg-Source and Sip-Leg-Destination
+				<note><para>You will need to add in your DB (all acc related
+				tables) the colums for call-leg info (a column for each AVP
+				for the set).
 				</para></note>
 				</listitem>
 				<listitem>
-				<para><emphasis>Diameter</emphasis> -- not supported.
-				with database support.</para>
+				<para><emphasis>Radius</emphasis> -- all sets will be added
+				to same Radius accounting message as RADIUS AVPs - for each
+				call-leg a set of RADIUS AVPs will be added (corresponding
+				to the per-leg AVP set)
+				</para>
+				<note><para>You will need to add in your dictionaty the
+				RADIUS AVPs used in call-leg AVP set definition.
+				</para></note>
+				</listitem>
+				<listitem>
+				<para><emphasis>Diameter</emphasis> same as for RADIUS.
+				</para>
 				</listitem>
 			</itemizedlist>
 		</section>
@@ -459,53 +459,33 @@ modparam("acc", "report_cancels", 1)
 		</example>
 	</section>
 	<section>
-		<title><varname>multi_leg_enabled</varname> (integer)</title>
+		<title><varname>multi_leg_info</varname> (string)</title>
 		<para>
-		If set to a non 0 value, it will enables the logging of the 
-		call-legs. See <xref linkend="multi-call-legs"> for a 
+		Defines the AVP set to be used in per-call-leg accoutning.
+		See <xref linkend="multi-call-legs"> for a 
 		detailed description of the Multi Call-Legs accounting.
+		</para>
+		<para>
+		If empty, the multi-leg accouting support will be disabled.
 		</para>
 		<para>
 		Default value is 0 (disabled).
 		</para>
 		<example>
-		<title>multi_leg_enabled example</title>
+		<title>multi_leg_info example</title>
 		<programlisting format="linespecific">
-modparam("acc", "multi_leg_enabled", 1)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>src_leg_avp_id</varname> (integer)</title>
-		<para>
-		Defines the AVP (ID AVP) which contains the source URI part of a 
-		call-leg. See <xref linkend="multi-call-legs"> for a 
-		detailed description of the Multi Call-Legs accounting.
-		</para>
-		<para>
-		Default value is 0 (undefined).
-		</para>
-		<example>
-		<title>src_leg_avp_id example</title>
-		<programlisting format="linespecific">
-modparam("acc", "src_leg_avp_id", 110)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>dst_leg_avp_id</varname> (integer)</title>
-		<para>
-		Defines the AVP (ID AVP) which contains the destination URI part of a 
-		call-leg. See <xref linkend="multi-call-legs"> for a 
-		detailed description of the Multi Call-Legs accounting.
-		</para>
-		<para>
-		Default value is 0 (undefined).
-		</para>
-		<example>
-		<title>dst_leg_avp_id example</title>
-		<programlisting format="linespecific">
-modparam("acc", "dst_leg_avp_id", 110)
+# for syslog-based accouting, use any text you want to be printed
+modparam("acc", "multi_leg_info",
+    "text1=$avp(src);text2=$avp(dst)")
+# for mysql-based accouting, use the names of the columns
+modparam("acc", "multi_leg_info",
+    "leg_src=$avp(src);leg_dst=$avp(dst)")
+# for RADIUS-based accouting, use the names of the RADIUS AVPs
+modparam("acc", "multi_leg_info",
+    "RAD_LEG_SRC=$avp(src);RAD_LEG_SRC=$avp(dst)")
+# for DIAMETER-based accouting, use the DIAMETER AVP ID (as integer)
+modparam("acc", "multi_leg_info",
+    "2345=$avp(src);2346=$avp(dst)")
 </programlisting>
 		</example>
 	</section>
@@ -736,7 +716,7 @@ modparam("acc", "diameter_client_port", 3000)
 		</example>
 	</section>
 	<section>
-		<title><varname>diamter_extra</varname> (string)</title>
+		<title><varname>diameter_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via DIAMETER - DIAMETER specific.
 		</para>
@@ -1061,38 +1041,6 @@ modparam("acc", "acc_fromtag_column", "fromtag")
 		<title>acc_domain_column example</title>
 		<programlisting format="linespecific">
 modparam("acc", "acc_domain_column", "domain")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>acc_src_leg_column</varname> (string)</title>
-		<para>
-		Column name in accouting table to store the 
-		<quote>source_leg</quote> value in case of multi-leg accouting.
-		</para>
-		<para>
-		Default value is <quote>src_leg</quote>.
-		</para>
-		<example>
-		<title>acc_src_leg_column example</title>
-		<programlisting format="linespecific">
-modparam("acc", "acc_src_leg_column", "src_leg")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>acc_dst_leg_column</varname> (string)</title>
-		<para>
-		Column name in accouting table to store the 
-		<quote>destination_leg</quote> value in case of multi-leg accouting.
-		</para>
-		<para>
-		Default value is <quote>dst_leg</quote>.
-		</para>
-		<example>
-		<title>acc_dst_leg_column example</title>
-		<programlisting format="linespecific">
-modparam("acc", "acc_dst_leg_column", "dst_leg")
 </programlisting>
 		</example>
 	</section>

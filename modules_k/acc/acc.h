@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -24,6 +25,8 @@
  * 2003-04-04  grand acc cleanup (jiri)
  * 2003-11-04  multidomain support for mysql introduced (jiri)
  * 2004-06-06  cleanup: acc_db_{bind,init,close} added (andrei)
+ * 2006-09-08  flexible multi leg accounting support added,
+ *             code cleanup for low level functions (bogdan)
  */
 
 #ifndef _ACC_H
@@ -32,17 +35,16 @@
 /* what is printed if value unknown */
 #define NA "n/a"
 #define NA_LEN (sizeof(NA)-1)
-/* syslog prefix */
-#define ACC "ACC: "
-#define ACC_LEN (sizeof(ACC)-1)
+
 /* leading text for a request accounted from a script */
-#define ACC_REQUEST "request accounted: "
+#define ACC "ACC: "
+#define ACC_REQUEST ACC"request accounted: "
 #define ACC_REQUEST_LEN (sizeof(ACC_REQUEST)-1)
-#define ACC_MISSED "call missed: "
+#define ACC_MISSED ACC"call missed: "
 #define ACC_MISSED_LEN (sizeof(ACC_MISSED)-1)
-#define ACC_ANSWERED "transaction answered: "
+#define ACC_ANSWERED ACC"transaction answered: "
 #define ACC_ANSWERED_LEN (sizeof(ACC_ANSWERED)-1)
-#define ACC_ACKED "request acknowledged: "
+#define ACC_ACKED ACC"request acknowledged: "
 #define ACC_ACKED_LEN (sizeof(ACC_ACKED)-1)
 
 /* syslog attribute names */
@@ -87,12 +89,10 @@
 #define A_RURI_DOMAIN "domain"
 #define A_RURI_DOMAIN_LEN (sizeof(A_RURI_DOMAIN)-1)
 
-#define A_SEPARATOR ", " /* must be shorter than ACC! */
-#define A_SEPARATOR_LEN (sizeof(A_SEPARATOR)-1)
-#define A_EQ "="
-#define A_EQ_LEN (sizeof(A_EQ)-1)
-#define A_EOL "\n\0"
-#define A_EOL_LEN (sizeof(A_EOL)-1)
+#define A_SEPARATOR_CHR ';'
+#define A_EQ_CHR '='
+
+#define MAX_SYSLOG_SIZE  65536
 
 
 #ifdef RAD_ACC

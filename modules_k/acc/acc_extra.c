@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2004 Voice Sistem SRL
+ * Copyright (C) 2004-2006 Voice Sistem SRL
  *
  * This file is part of SIP Express Router.
  *
@@ -25,6 +25,8 @@
  *  2004-10-28  first version (ramona)
  *  2005-05-30  acc_extra patch commited (ramona)
  *  2005-07-13  acc_extra specification moved to use pseudo-variables (bogdan)
+ *  2006-09-08  flexible multi leg accounting support added,
+ *              code cleanup for low level functions (bogdan)
  */
 
 
@@ -35,20 +37,21 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../items.h"
+#include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "acc_extra.h"
 
 #define EQUAL '='
 #define SEPARATOR ';'
 
-/* static arrays used for faster and simpler int to str conversion */
 
+#if MAX_ACC_EXTRA<MAX_ACC_LEG
+	#define MAX_ACC_INT_BUF MAX_ACC_LEG
+#else
+	#define MAX_ACC_INT_BUF MAX_ACC_EXTRA
+#endif
 /* here we copy the strings returned by int2str (which uses a static buffer) */
-static char int_buf[INT2STR_MAX_LEN*MAX_ACC_EXTRA];
-/* str's with all extra values; first MAX_ACC_EXTRA elements point into 
- * int_buf[] and are used for int2str vals; second MAX_ACC_EXTRA are just 
- * containers for the normal str vals */
-static str  str_buf[2*MAX_ACC_EXTRA];
+static char int_buf[INT2STR_MAX_LEN*MAX_ACC_INT_BUF];
 
 static char *static_detector = 0;
 
@@ -57,18 +60,41 @@ static str na = {"n/a", 3};
 void init_acc_extra()
 {
 	int i;
-	for (i=0; i<MAX_ACC_EXTRA; i++)
-	{
-		str_buf[i].s = int_buf + i*INT2STR_MAX_LEN;
-		str_buf[i].len = 0;
-	}
-	for (i=MAX_ACC_EXTRA;i<2*MAX_ACC_EXTRA; i++)
-	{
-		str_buf[i].s = 0;
-		str_buf[i].len = 0;
-	}
 	/* ugly trick to get the address of the static buffer */
 	static_detector = int2str( (unsigned long)3, &i) + i;
+}
+
+
+struct acc_extra *parse_acc_leg(char *extra_str)
+{
+	struct acc_extra *legs;
+	struct acc_extra *it;
+	int n;
+
+	legs = parse_acc_extra(extra_str);
+	if (legs==0) {
+		LOG(L_ERR,"ERROR:acc:parse_acc_leg: failed to parse extra leg\n");
+		return 0;
+	}
+
+	/* check the type and len */
+	for( it=legs,n=0 ; it ; it=it->next ) {
+		if (it->spec.type!=XL_AVP) {
+			LOG(L_ERR,"ERROR:acc:parse_acc_leg: only AVP are accepted as "
+				"leg info\n");
+			destroy_extras(legs);
+			return 0;
+		}
+		n++;
+		if (n>MAX_ACC_LEG) {
+			LOG(L_ERR,"ERROR:acc:parse_acc_leg: too many leg info; MAX=%d\n",
+				MAX_ACC_LEG);
+			destroy_extras(legs);
+			return 0;
+		}
+	}
+
+	return legs;
 }
 
 
@@ -89,35 +115,30 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 	s = extra_str;
 	xl_flags = XL_THROW_ERROR | XL_DISABLE_COLORS;
 
-	if (s==0)
-	{
+	if (s==0) {
 		LOG(L_ERR,"ERROR:acc:parse_acc_extra: null string received\n");
 		goto error;
 	}
 
-	while (*s)
-	{
+	while (*s) {
 		/* skip white spaces */
 		while (*s && isspace((int)*s))  s++;
 		if (*s==0)
 			goto parse_error;
-		if (n==MAX_ACC_EXTRA)
-		{
+		if (n==MAX_ACC_EXTRA) {
 			LOG(L_ERR,"ERROR:acc:parse_acc_extra: too many extras -> please "
 				"increase the internal buffer\n");
 			goto error;
 		}
 		extra = (struct acc_extra*)pkg_malloc(sizeof(struct acc_extra));
-		if (extra==0)
-		{
+		if (extra==0) {
 			LOG(L_ERR,"ERROR:acc:parse_acc_extra: no more pkg mem 1\n");
 			goto error;
 		}
 		memset( extra, 0, sizeof(struct acc_extra));
 
 		/* link the new extra at the end */
-		if (tail==0)
-		{
+		if (tail==0) {
 			head = extra;
 		} else {
 			tail->next = extra;
@@ -130,8 +151,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 		while (*s && !isspace((int)*s) && EQUAL!=*s)  s++;
 		if (*s==0)
 			goto parse_error;
-		if (*s==EQUAL)
-		{
+		if (*s==EQUAL) {
 			extra->name.len = (s++) - foo;
 		} else {
 			extra->name.len = (s++) - foo;
@@ -177,8 +197,7 @@ void destroy_extras( struct acc_extra *extra)
 {
 	struct acc_extra *foo;
 
-	while (extra)
-	{
+	while (extra) {
 		foo = extra;
 		extra = extra->next;
 		pkg_free(foo);
@@ -193,8 +212,7 @@ int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset)
 {
 	int i;
 
-	for(i=0 ; extra && i<MAX_ACC_EXTRA ; i++, extra=extra->next)
-	{
+	for(i=0 ; extra ; i++, extra=extra->next) {
 		attrs[offset+i].n = extra->name.s;
 		extra->name.s =0;
 		extra->name.len = offset + i;
@@ -211,11 +229,9 @@ int extra2int( struct acc_extra *extra )
 	unsigned int ui;
 	int i;
 
-	for( i=0 ; extra&&i<MAX_ACC_EXTRA ; i++,extra=extra->next )
-	{
-		if (str2int( &extra->name, &ui)!=0)
-		{
-			LOG(L_ERR,"ERROR:acc:extra2int: <%s> is not number\n",
+	for( i=0 ; extra ; i++,extra=extra->next ) {
+		if (str2int( &extra->name, &ui)!=0) {
+			LOG(L_ERR,"ERROR:acc:extra2int: <%s> is not a number\n",
 				extra->name.s);
 			return -1;
 		}
@@ -228,66 +244,46 @@ int extra2int( struct acc_extra *extra )
 
 
 
-#define set_acc( _n, _name, _vals) \
-	do {\
-		attr_arr[_n] = _name; \
-		val_arr[_n] = _vals; \
-		*attr_len += attr_arr[_n].len; \
-		*val_len += val_arr[_n]->len; \
-		(_n)++; \
-	} while(0)
-
-int extra2strar( struct acc_extra *extra, /* extra list to account */
-		struct sip_msg *rq, /* accounted message */
-		int *attr_len,  /* total length of accounted attribute names */
-		int *val_len, /* total length of accounted values */
-		str *attr_arr,
-		str **val_arr)
+int extra2strar( struct acc_extra *extra, struct sip_msg *rq,
+												str *attr_arr, str *val_arr)
 {
 	xl_value_t value;
-	int    n;
-	int    p;
-	int    r;
+	int n;
+	int r;
 
 	n = 0;
-	p = 0;
-	r = MAX_ACC_EXTRA;
+	r = 0;
 
-	while (extra) 
-	{
+	while (extra) {
 		/* get the value */
-		if (xl_get_spec_value( rq, &extra->spec, &value, 0)!=0)
-		{
+		if (xl_get_spec_value( rq, &extra->spec, &value, 0)!=0) {
 			LOG(L_ERR,"ERROR:acc:extra2strar: failed to get '%.*s'\n",
 				extra->name.len,extra->name.s);
 		}
 
 		/* check for overflow */
-		if (n==MAX_ACC_EXTRA) 
-		{
+		if (n==MAX_ACC_EXTRA) {
 			LOG(L_WARN,"WARNING:acc:extra2strar: array to short "
 				"-> ommiting extras for accounting\n");
 			goto done;
 		}
-		if(value.flags&XL_VAL_NULL)
-		{ /* convert <null> to <n/a> to have consistency */
-			str_buf[r] = na;
-			set_acc( n, extra->name, &str_buf[r] );
-			r++;
+
+		attr_arr[n] = extra->name;
+		if(value.flags&XL_VAL_NULL){
+			/* convert <null> to <n/a> to have consistency */
+			val_arr[n] = na;
 		} else {
 			/* set the value into the acc buffer */
-			if (value.rs.s+value.rs.len==static_detector)
-			{
-				memcpy(str_buf[p].s, value.rs.s, value.rs.len);
-				str_buf[p].len = value.rs.len;
-				set_acc( n, extra->name, &str_buf[p] );
-				p++;
-			} else {
-				str_buf[r] = value.rs;
-				set_acc( n, extra->name, &str_buf[r] );
+			if (value.rs.s+value.rs.len==static_detector) {
+				val_arr[n].s = int_buf + r*INT2STR_MAX_LEN;
+				val_arr[n].len = value.rs.len;
+				memcpy(val_arr[n].s, value.rs.s, value.rs.len);
 				r++;
+			} else {
+				val_arr[n] = value.rs;
 			}
 		}
+		n++;
 
 		extra = extra->next;
 	}
@@ -295,4 +291,59 @@ int extra2strar( struct acc_extra *extra, /* extra list to account */
 done:
 	return n;
 }
+
+
+int legs2strar( struct acc_extra *legs, struct sip_msg *rq,
+												str *attr_arr, str *val_arr)
+{
+	static int start = 0;
+	static struct usr_avp *avp[MAX_ACC_EXTRA];
+	unsigned short name_type;
+	int_str name;
+	int_str value;
+	int    n;
+	int    found;
+	int    r;
+
+	found = 0;
+	r = 0;
+
+	for( n=0 ; legs ; legs=legs->next,n++ ) {
+		/* search for the AVP */
+		if (start==0) {
+			if ( xl_get_avp_name( rq, &legs->spec, &name, &name_type)<0 )
+				goto exit;
+			avp[n] = search_first_avp( name_type, name, &value, 0);
+		} else {
+			avp[n] = search_next_avp( avp[n], &value);
+		}
+
+		/* set new leg record */
+		attr_arr[n] = legs->name;
+		if (avp[n]) {
+			found = 1;
+			/* get its value */
+			if(avp[n]->flags & AVP_VAL_STR) {
+				val_arr[n] = value.s;
+			} else {
+				val_arr[n].s = int_buf + r*INT2STR_MAX_LEN;
+				memcpy(val_arr[n].s, int2str(value.n,&val_arr[n].len),
+					val_arr[n].len);
+				r++;
+			}
+		} else {
+			val_arr[n] = na;
+		}
+
+	}
+
+	if (found || !start) {
+		start=1;
+		return n;
+	}
+exit:
+	start = 0;
+	return 0;
+}
+
 

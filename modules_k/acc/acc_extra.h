@@ -25,6 +25,8 @@
  *  2004-10-28  first version (ramona)
  *  2005-05-30  acc_extra patch commited (ramona)
  *  2005-07-13  acc_extra specification moved to use pseudo-variables (bogdan)
+ *  2006-09-08  flexible multi leg accounting support added,
+ *              code cleanup for low level functions (bogdan)
  */
 
 
@@ -45,17 +47,22 @@ struct acc_extra
 
 
 #define MAX_ACC_EXTRA 64
-
+#define MAX_ACC_LEG   16
 
 
 void init_acc_extra();
 
 struct acc_extra *parse_acc_extra(char *extra);
 
+struct acc_extra *parse_acc_leg(char *extra);
+
 void destroy_extras( struct acc_extra *extra);
 
 int extra2strar( struct acc_extra *extra, struct sip_msg *rq,
-	int *val_len, int *attr_len, str *attrs_arr, str **val_arr);
+	str *attrs_arr, str *val_arr);
+
+int legs2strar( struct acc_extra *legs, struct sip_msg *rq,
+	str *attrs_arr, str *val_arr);
 
 int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset);
 

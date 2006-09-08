@@ -39,6 +39,7 @@
  * 2005-05-30  acc_extra patch commited (ramona)
  * 2005-06-28  multi leg call support added (bogdan)
  * 2006-01-13  detect_direction (for sequential requests) added (bogdan)
+ * 2006-09-08  flexible multi leg accounting support added (bogdan)
  */
 
 #include <stdio.h>
@@ -47,17 +48,16 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/parse_from.h"
 #include "../tm/t_hooks.h"
 #include "../tm/tm_load.h"
 #include "../tm/h_table.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
-
+#include "../tm/tm_load.h"
+#include "../rr/api.h"
 #include "acc_mod.h"
 #include "acc.h"
 #include "acc_extra.h"
-#include "../tm/tm_load.h"
-#include "../rr/api.h"
 
 #ifdef RAD_ACC
 #include <radiusclient-ng.h>
@@ -69,7 +69,7 @@
 #include "dict.h"
 #include "diam_tcp.h"
 
-#define M_NAME	"acc"
+#define M_NAME "acc"
 #endif
 
 MODULE_VERSION
@@ -111,9 +111,8 @@ char *log_fmt=DEFAULT_LOG_FMT;
 static char *log_extra_str = 0;
 struct acc_extra *log_extra = 0;
 /* multi call-leg support */
-int multileg_enabled = 0;
-int src_avp_id = 0;
-int dst_avp_id = 0;
+static char* leg_info_str = 0;
+struct acc_extra *leg_info = 0;
 /* detect and correct direction in the sequential requests */
 int detect_direction = 0;
 
@@ -124,7 +123,7 @@ int radius_flag = 0;
 int radius_missed_flag = 0;
 static int service_type = -1;
 void *rh;
-struct attr attrs[A_MAX+MAX_ACC_EXTRA];
+struct attr attrs[A_MAX+MAX_ACC_EXTRA+MAX_ACC_LEG];
 struct val vals[V_MAX];
 /* rad extra variables */
 static char *rad_extra_str = 0;
@@ -172,8 +171,6 @@ char* acc_to_uri         = "to_uri";
 char* acc_sip_callid_col = "sip_callid";
 char* acc_user_col       = "username";
 char* acc_time_col       = "time";
-char* acc_src_col        = "src_leg";
-char* acc_dst_col        = "dst_leg";
 
 /* db extra variables */
 static char *db_extra_str = 0;
@@ -222,9 +219,7 @@ static param_export_t params[] = {
 	{"failed_transaction_flag", INT_PARAM, &failed_transaction_flag },
 	{"report_ack",              INT_PARAM, &report_ack              },
 	{"report_cancels",          INT_PARAM, &report_cancels          },
-	{"multi_leg_enabled",       INT_PARAM, &multileg_enabled        },
-	{"src_leg_avp_id",          INT_PARAM, &src_avp_id              },
-	{"dst_leg_avp_id",          INT_PARAM, &dst_avp_id              },
+	{"multi_leg_info",          STR_PARAM, &leg_info_str            },
 	{"detect_direction",        INT_PARAM, &detect_direction        },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
@@ -269,8 +264,6 @@ static param_export_t params[] = {
 	{"acc_totag_column",     STR_PARAM, &acc_totag_col        },
 	{"acc_fromtag_column",   STR_PARAM, &acc_fromtag_col      },
 	{"acc_domain_column",    STR_PARAM, &acc_domain_col       },
-	{"acc_src_leg_column",   STR_PARAM, &acc_src_col          },
-	{"acc_dst_leg_column",   STR_PARAM, &acc_dst_col          },
 	{"db_extra",             STR_PARAM, &db_extra_str         },
 #endif
 	{0,0,0}
@@ -374,9 +367,8 @@ static int mod_init( void )
 		return -1;
 	}
 
-	if (multileg_enabled && (dst_avp_id==0 || src_avp_id==0) ) {
-		LOG(L_ERR,"ERROR:acc:mod_init: multi call-leg enabled but no src "
-			" and dst avp IDs defined!\n");
+	if (leg_info_str && (leg_info=parse_acc_leg(leg_info_str))==0 ) {
+		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse multileg_info param\n");
 		return -1;
 	}
 
@@ -428,16 +420,14 @@ static int mod_init( void )
 	attrs[A_SIP_METHOD].n			= "Sip-Method";
 	attrs[A_USER_NAME].n			= "User-Name";
 	attrs[A_TIME_STAMP].n			= "Event-Timestamp";
-	if (multileg_enabled) {
-		attrs[A_SRC_LEG].n			= "Sip-Leg-Source";
-		attrs[A_DST_LEG].n			= "Sip-Leg-Destination";
-	}
 	vals[V_STATUS_START].n			= "Start";
 	vals[V_STATUS_STOP].n			= "Stop";
 	vals[V_STATUS_FAILED].n			= "Failed";
 	vals[V_SIP_SESSION].n			= "Sip-Session";
 	/* add and count the extras as attributes */
 	nr_extra_rad = extra2attrs( rad_extra, attrs, A_MAX);
+	/* add and count the legs as attributes */
+	nr_extra_rad += extra2attrs( leg_info, attrs, A_MAX+nr_extra_rad);
 
 	/* read config */
 	if ((rh = rc_read_config(radius_config)) == NULL) {
@@ -465,10 +455,17 @@ static int mod_init( void )
 	}
 
 	if (extra2int(dia_extra)!=0) {
-		LOG(L_ERR,"ERROR:acc:mod_init: extar names for DIAMTER must be "
+		LOG(L_ERR,"ERROR:acc:mod_init: extra names for DIAMTER must be "
 			" integer AVP codes\n");
 		return -1;
 	}
+
+	if (extra2int(leg_info)!=0) {
+		LOG(L_ERR,"ERROR:acc:mod_init: leg info names for DIAMTER must be "
+			" integer AVP codes\n");
+		return -1;
+	}
+
 #endif
 	return 0;
 }
@@ -777,7 +774,7 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 #ifdef DIAM_ACC
 	if (is_diam_acc_on(req)) {
 		acc_preparse_req(ack);
-		acc_diam_ack(t,ack);
+		acc_diam_ack(t,req,ack);
 	}
 #endif
 	

@@ -46,10 +46,6 @@ extern int report_cancels;
 extern int log_flag;
 extern int log_missed_flag;
 
-extern int multileg_enabled;
-extern int src_avp_id;
-extern int dst_avp_id;
-
 extern int detect_direction;
 
 
