@@ -36,6 +36,7 @@
  *             is computed (dcm)
  * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
  * 2004-06-07 updated to the new DB api (andrei)
+ * 2006-09-10 m_dump now checks if registering UA supports MESSAGE method
  */
 
 #include <stdio.h>
@@ -56,6 +57,8 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_allow.h"
+#include "../../parser/parse_methods.h"
 #include "../../resolve.h"
 #include "../../usr_avp.h"
 
@@ -135,6 +138,7 @@ int  ms_clean_period=10;
 int  ms_use_contact=1;
 int  ms_userid_avp=0;
 int  ms_snd_time_avp = 0;
+int  ms_add_date = 1;
 
 str msg_type = { "MESSAGE", 7 };
 
@@ -155,6 +159,8 @@ void m_clean_silo(unsigned int ticks, void *);
 void m_send_ontimer(unsigned int ticks, void *);
 
 int ms_reset_stime(int mid);
+
+int check_message_support(struct sip_msg* msg);
 
 /** TM callback function */
 static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
@@ -189,6 +195,7 @@ static param_export_t params[]={
 	{ "sc_snd_time",  STR_PARAM, &sc_snd_time     },
 	{ "userid_avp",   INT_PARAM, &ms_userid_avp   },
 	{ "snd_time_avp", INT_PARAM, &ms_snd_time_avp },
+	{ "add_date",     INT_PARAM, &ms_add_date     },
 	{ 0,0,0 }
 };
 
@@ -830,6 +837,11 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 
+	if (check_message_support(msg)!=0) {
+	    DBG("MSILO:m_dump: MESSAGE method not supported\n");
+	    return -1;
+	}
+	 
 	if(parse_uri(pto->uri.s, pto->uri.len, &puri)!=0)
 	{
 		LOG(L_ERR, "MSILO:m_dump: bad R-URI!\n");
@@ -1075,6 +1087,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	static char uri_buf[1024];
 	static char body_buf[1024];
 	str puri;
+	time_t ttime;
 
 	str str_vals[4], hdr_str , body_str;
 	time_t stime;
@@ -1111,7 +1124,8 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	
 	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
-	db_vals[1].val.int_val = (int)time(NULL);
+	ttime = time(NULL);
+	db_vals[1].val.int_val = (int)ttime;
 	
 	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
 	{
@@ -1123,12 +1137,13 @@ void m_send_ontimer(unsigned int ticks, void *param)
 				db_no_cols, NULL,&db_res)!=0) || (RES_ROW_N(db_res) <= 0))
 	{
 		DBG("MSILO:m_send_ontimer: no message for <%.*s>!\n",
-				24, ctime((time_t*)(&db_vals[1].val.int_val)));
+				24, ctime((const time_t*)&ttime));
 		goto done;
 	}
 		
 	DBG("MSILO:m_send_ontimer: dumping [%d] messages for <%.*s>!!!\n", 
-			RES_ROW_N(db_res), 24, ctime((time_t*)(&db_vals[1].val.int_val)));
+			RES_ROW_N(db_res), 24,
+			ctime((const time_t*)&ttime));
 
 	for(i = 0; i < RES_ROW_N(db_res); i++) 
 	{
@@ -1240,3 +1255,90 @@ int ms_reset_stime(int mid)
 	return 0;
 }
 
+/*
+ * Check if REGISTER request has contacts that support MESSAGE method or
+ * if MESSAGE method is listed in Allow header and contact does not have 
+ * methods parameter.
+ */
+int check_message_support(struct sip_msg* msg)
+{
+	contact_t* c;
+	unsigned int allow_message = 0;
+	unsigned int allow_hdr = 0;
+	str *methods_body;
+	unsigned int methods;
+
+	/* Parse all headers in order to see all Allow headers */
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1)
+	{
+		LOG(L_ERR, "MSILO:check_message_method: Error while parsing headers\n");
+		return -1;
+	}
+
+	if (parse_allow(msg) == 0)
+	{
+		allow_hdr = 1;
+		allow_message = get_allow_methods(msg) & METHOD_MESSAGE;
+	}
+	DBG("MSILO:check_message_method: Allow message: %u\n", allow_message);
+
+	if (!msg->contact)
+	{
+		DBG("MSILO:check_message_method: No Contact found\n");
+		return -1;
+	}
+	if (parse_contact(msg->contact) < 0)
+	{
+		LOG(L_ERR,
+			"MSILO:check_message_method: Error while parsing Contact HF\n");
+		return -1;
+	}
+	if (((contact_body_t*)msg->contact->parsed)->star)
+	{
+		DBG("MSILO:check_message_method: * Contact found\n");
+		return -1;
+	}
+
+	if (contact_iterator(&c, msg, 0) < 0)
+		return -1;
+
+	/* 
+	 * Check contacts for MESSAGE method in methods parameter list
+	 * If contact does not have methods parameter, use Allow header methods,
+	 * if any.  Stop if MESSAGE method is found.
+	 */
+	while(c)
+	{
+		if (c->methods)
+		{
+			methods_body = &(c->methods->body);
+			if (parse_methods(methods_body, &methods) < 0)
+			{
+				LOG(L_ERR, "MSILO:check_message_method: failed to parse "
+					"contact methods\n");
+				return -1;
+			}
+			if (methods & METHOD_MESSAGE)
+			{
+				DBG("MSILO:check_message_method: MESSAGE contact found\n");
+				return 0;
+			}
+		} else {
+			if (allow_message)
+			{
+				DBG("MSILO:check_message_method: MESSAGE found in "
+					"Allow Header\n");
+				return 0;
+			}
+		}
+		if (contact_iterator(&c, msg, c) < 0)
+		{
+			DBG("MSILO:check_message_method: MESSAGE contact not found\n");
+			return -1;
+		}
+	}
+	/* no Allow header and no methods in Contact => dump MESSAGEs */
+	if(allow_hdr==0)
+		return 0;
+	return -1;
+}

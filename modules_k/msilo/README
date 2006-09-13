@@ -34,6 +34,7 @@ Daniel-Constantin Mierla
               1.3.9. use_contact (int)
               1.3.10. userid_avp (int)
               1.3.11. snd_time_avp (int)
+              1.3.12. add_date (int)
 
         1.4. Exported Functions
 
@@ -60,8 +61,9 @@ Daniel-Constantin Mierla
    1-9. Set the "use_contact" parameter
    1-10. Set the "userid_avp" parameter
    1-11. Set the "snd_time_avp" parameter
-   1-12. msilo sql script
-   1-13. OpenSER config script - sample msilo usage
+   1-12. Set the "add_date" parameter
+   1-13. msilo sql script
+   1-14. OpenSER config script - sample msilo usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -283,6 +285,18 @@ modparam("msilo", "snd_time_avp", 35)
 ...
      _________________________________________________________
 
+1.3.12. add_date (int)
+
+   Wheter to add as prefix the date when the message was stored.
+
+   Default value is "1" (1==on/0==off). 
+
+   Example 1-12. Set the "add_date" parameter
+...
+modparam("msilo", "add_date", "0")
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. m_store(mode)
@@ -332,7 +346,7 @@ modparam("msilo", "snd_time_avp", 35)
    they can be changed, but the name of the columns must be as
    they are in the next SQL script.
 
-   Example 1-12. msilo sql script
+   Example 1-13. msilo sql script
 ...
 
 -- SQL script for MSILO module
@@ -378,7 +392,7 @@ CREATE TABLE silo(
 
    Next picture displays a sample usage of msilo.
 
-   Example 1-13. OpenSER config script - sample msilo usage
+   Example 1-14. OpenSER config script - sample msilo usage
 ...
 # $Id$
 #

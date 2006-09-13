@@ -41,6 +41,7 @@
 #define CONTACT_PREFIX_LEN (sizeof(CONTACT_PREFIX)-1)
 #define CONTACT_SUFFIX_LEN  (sizeof(CONTACT_SUFFIX)-1)
 
+extern int ms_add_date;
 
 /**
  * apostrophes escaping
@@ -199,37 +200,37 @@ int m_build_body(str *body, time_t date, str msg, time_t sdate)
 {
 	char *p;
 	
-	if(!body || !(body->s) || body->len <= 0 ||
-			date < 0 || msg.len < 0 || (46+msg.len > body->len) )
+	if(!body || !(body->s) || body->len <= 0 || msg.len <= 0
+			|| date < 0 || msg.len < 0 || (46+msg.len > body->len) )
 		goto error;
 	
 	p = body->s;
 
-	if(sdate!=0)
+	if(ms_add_date!=0)
 	{
-		strncpy(p, "[Reminder message - ", 20);
-		p += 20;
-	
-		strncpy(p, ctime(&sdate), 24);
-		p += 24;
+		if(sdate!=0)
+		{
+			strncpy(p, "[Reminder message - ", 20);
+			p += 20;
+		
+			strncpy(p, ctime(&sdate), 24);
+			p += 24;
 
-		*p++ = ']';
-	} else {
-		strncpy(p, "[Offline message - ", 19);
-		p += 19;
+			*p++ = ']';
+		} else {
+			strncpy(p, "[Offline message - ", 19);
+			p += 19;
 	
-		strncpy(p, ctime(&date), 24);
-		p += 24;
+			strncpy(p, ctime(&date), 24);
+			p += 24;
 
-		*p++ = ']';
-	}
-	
-	if(msg.len > 0)
-	{
+			*p++ = ']';
+		}
 		*p++ = ' ';
-		strncpy(p, msg.s, msg.len);
-		p += msg.len;
 	}
+	
+	strncpy(p, msg.s, msg.len);
+	p += msg.len;
 
 	body->len = p - body->s;
 	
