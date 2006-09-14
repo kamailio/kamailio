@@ -462,7 +462,7 @@ modparam("lcr","db_mode",0)
 if (!load_gws()) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
 ays");
-        break;
+        exit;
 };
 ...
 
@@ -471,7 +471,7 @@ ays");
 if (!load_gws("1")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
 ays from group 1");
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -501,7 +501,7 @@ ays from group 1");
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
-        break;
+        exit;
 };
 ...
 
@@ -509,7 +509,7 @@ if (!next_gw()) {
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -527,7 +527,7 @@ if (!next_gw()) {
 ...
 if (from_gw()) {
         ...
-        break;
+        exit;
 };
 ...
 
@@ -535,7 +535,7 @@ if (from_gw()) {
 ...
 if (from_gw("1")) {
         ...
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -552,7 +552,7 @@ if (from_gw("1")) {
 ...
 if (to_gw()) {
         ...
-        break;
+        exit;
 };
 ...
 
@@ -560,7 +560,7 @@ if (to_gw()) {
 ...
 if (to_gw("1")) {
         ...
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -582,7 +582,7 @@ if (to_gw("1")) {
 if (!load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load conta
 cts");
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -611,7 +611,7 @@ cts");
 ...
 if (!next_contacts()) {
         sl_send_reply("500", "Server Internal Error");
-        break;
+        exit;
 } else {
         t_relay();
 };

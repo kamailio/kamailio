@@ -587,7 +587,7 @@ modparam("lcr","db_mode",0)
 ...
 if (!load_gws()) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -598,7 +598,7 @@ if (!load_gws()) {
 ...
 if (!load_gws("1")) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -637,7 +637,7 @@ if (!load_gws("1")) {
 ...
 if (!next_gw()) {
 	sl_send_reply("503", "Service not available - No gateways");
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -649,7 +649,7 @@ if (!next_gw()) {
 ...
 if (!next_gw()) {
 	t_reply("503", "Service not available - No more gateways");
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -674,7 +674,7 @@ if (!next_gw()) {
 ...
 if (from_gw()) {
 	...
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -685,7 +685,7 @@ if (from_gw()) {
 ...
 if (from_gw("1")) {
 	...
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -709,7 +709,7 @@ if (from_gw("1")) {
 ...
 if (to_gw()) {
 	...
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -720,7 +720,7 @@ if (to_gw()) {
 ...
 if (to_gw("1")) {
 	...
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -747,7 +747,7 @@ if (to_gw("1")) {
 ...
 if (!load_contacts()) {
 	sl_send_reply("500", "Server Internal Error - Cannot load contacts");
-	break;
+	exit;
 };
 ...
 </programlisting>
@@ -784,7 +784,7 @@ if (!load_contacts()) {
 ...
 if (!next_contacts()) {
 	sl_send_reply("500", "Server Internal Error");
-	break;
+	exit;
 } else {
 	t_relay();
 };
