@@ -58,6 +58,7 @@ fi
 ##### ----------------------------------------------- #####
 #### Defined values
 ALL_METHODS=4294967295
+USERNAME_RE="[a-zA-Z0-9&=\+\$,;\?/-_\.\!~\*'\(\)]+"
 
 ##### ----------------------------------------------- #####
 #### Common functions
@@ -149,10 +150,9 @@ in SIP_DOMAIN"
 	fi
 }
 
-
 # check the parameter if it is a valid address of record (user@domain)
 check_aor() {
-	echo "$1" | $EGREP "^[a-zA-Z0-9_\.]+@.*\..*" >/dev/null
+	echo "$1" | $EGREP "^$USERNAME_RE@.*\..*" >/dev/null
 	if [ $? -ne 0 ] ; then 
 		echo "error: invalid AoR: $1" > /dev/stderr
 		exit 1
@@ -161,7 +161,7 @@ check_aor() {
 
 # check the parameter if it is a valid address of record (user@domain)
 is_aor() {
-	echo "$1" | $EGREP "^[a-zA-Z0-9_\.]+@.*\..*" >/dev/null
+	echo "$1" | $EGREP "^$USERNAME_RE@.*\..*" >/dev/null
 	if [ $? -ne 0 ] ; then 
 		false
 	else
@@ -171,7 +171,7 @@ is_aor() {
 
 # check the parameter if it is a valid SIP address of record (sip:user@domain)
 check_sipaor() {
-	echo "$1" | $EGREP "^sip(s)?:[a-zA-Z0-9_\.]+@.*\..*" >/dev/null
+	echo "$1" | $EGREP "^sip(s)?:$USERNAME_RE@.*\..*" >/dev/null
 	if [ $? -ne 0 ] ; then 
 		echo "error: invalid SIP AoR: $1" > /dev/stderr
 		exit 1
@@ -182,7 +182,7 @@ check_sipaor() {
 # quite simplified now -- it captures just very basic
 # errors
 check_uri() {
-	echo "$1" | $EGREP "^sip(s)?:([a-zA-Z0-9_]+@)?.*\..*"  > /dev/null
+	echo "$1" | $EGREP "^sip(s)?:($USERNAME_RE@)?.*\..*"  > /dev/null
 	if [ $? -ne 0 ] ; then 
 		echo "error: invalid SIP URI: $1" > /dev/stderr
 		exit 1
