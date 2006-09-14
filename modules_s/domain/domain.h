@@ -66,6 +66,11 @@ typedef struct domain {
  */
 int load_domains(domain_t** dest);
 
+/* 
+ * Load domain attributes from database 
+ */
+int db_load_domain_attrs(domain_t* dest);
+
 
 /*
  * Release all memory allocated for entire domain list

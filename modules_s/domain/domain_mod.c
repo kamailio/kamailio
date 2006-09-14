@@ -87,7 +87,7 @@ MODULE_VERSION
 #define DOMATTR_FLAGS "flags"
 #define DOMAIN_COL    "domain"
 
-int db_mode = 0;  /* Database usage mode: 0 = no cache, 1 = cache */
+int db_mode = 1;  /* Enable/disable domain cache */
 
 /*
  * Module parameter variables
@@ -118,6 +118,11 @@ struct hash_entry** hash_2 = 0;       /* Pointer to hash table 2 */
 domain_t** domains_1 = 0;    /* List of domains 1 */
 domain_t** domains_2 = 0;    /* List of domains 2 */
 
+/* Global domain structure, this one is used to store data retrieved from
+ * database when memory cache is disabled. There is one buffer for from
+ * and one buffer for to track.
+ */
+static domain_t dom_buf[2];
 
 /*
  * Exported functions
@@ -261,11 +266,6 @@ static void destroy_tables(void)
 
 static int mod_init(void)
 {
-    if (load_domain_attrs && !db_mode) {
-	ERR("Domain attributes only work when domain cache is enabled (set db_mode to 1)\n");
-	return -1;
-    }
-    
     if (bind_dbmod(db_url.s, &db )) {
 	LOG(L_CRIT, "Cannot bind to database module! "
 	     "Did you forget to load a database module ?\n");
@@ -273,7 +273,7 @@ static int mod_init(void)
     }
     
 	 /* Check if cache needs to be loaded from domain table */
-    if (db_mode != 0) {
+    if (db_mode) {
 	if (connect_db() < 0) goto error;
 	if (check_version() < 0) goto error;
 	if (allocate_tables() < 0) goto error;
@@ -299,12 +299,44 @@ static int child_init(int rank)
 }
 
 
+static void free_old_domain(domain_t* d)
+{
+    int i;
+    if (!d) return;
+    if (d->did.s) {
+	pkg_free(d->did.s);
+	d->did.s = NULL;
+    }
+    
+    if (d->domain) {
+	for(i = 0; i < d->n; i++) {
+	    if (d->domain[i].s) pkg_free(d->domain[i].s);
+	}
+	pkg_free(d->domain);
+	d->domain = NULL;
+    }
+    
+    if (d->flags) {
+	pkg_free(d->flags);
+	d->flags = NULL;
+    }
+
+    if (d->attrs) {
+	destroy_avp_list(&d->attrs);
+    }
+}
+
+
 static void destroy(void)
 {
 	 /* Destroy is called from the main process only,
 	  * there is no need to close database here because
 	  * it is closed in mod_init already
 	  */
+    if (!db_mode) {
+	free_old_domain(&dom_buf[0]);
+	free_old_domain(&dom_buf[1]);
+    }
     destroy_tables();
 }
 
@@ -315,6 +347,8 @@ static void destroy(void)
  * if you only want to know whether the entry is in the
  * database. The function returns 1 if there is such
  * entry, 0 if not, and -1 on error.
+ * The result is allocated using pkg_malloc and must be
+ * freed.
  */
 static int db_get_did(str* did, str* domain)
 {
@@ -323,18 +357,19 @@ static int db_get_did(str* did, str* domain)
     db_res_t* res;
     str t;
     
-    keys[0]=domain_col.s;
-    cols[0]=did_col.s;
-    cols[1]=flags_col.s;
+    keys[0] = domain_col.s;
+    cols[0] = did_col.s;
+    cols[1] = flags_col.s;
+    res = 0;
     
     if (!domain) {
 	ERR("BUG:Invalid parameter value\n");
-	return -1;
+	goto err;
     }
     
     if (db.use_table(con, domain_table.s) < 0) {
 	ERR("Error while trying to use domain table\n");
-	return -1;
+	goto err;
     }
     
     vals[0].type = DB_STR;
@@ -343,7 +378,7 @@ static int db_get_did(str* did, str* domain)
     
     if (db.query(con, keys, 0, vals, cols, 1, 2, 0, &res) < 0) {
 	ERR("Error while querying database\n");
-	return -1;
+	goto err;
     }
     
     if (res->n > 0) {
@@ -360,19 +395,34 @@ static int db_get_did(str* did, str* domain)
 	if (did) {
 	    if (val[0].nul) {
 		did->len = 0;
+		did->s = 0;
+		WARN("Domain '%.*s' has NULL did\n", domain->len, ZSW(domain->s));
 	    } else {
 		t.s = (char*)val[0].val.string_val;
 		t.len = strlen(t.s);
-		if (did->len < t.len) t.len = did->len;
+		did->s = pkg_malloc(t.len);
+		if (!did->s) {
+		    ERR("No memory left\n");
+		    goto err;
+		}
 		memcpy(did->s, t.s, t.len);
+		did->len = t.len;
 	    }
 	}
+
 	db.free_result(con, res);
 	return 1;
     } else {
 	db.free_result(con, res);
 	return 0;
     }
+
+ err:
+    if (res) {
+	db.free_result(con, res);
+	res = 0;
+    }
+    return -1;
 }
 
 
@@ -397,7 +447,7 @@ static int is_local(struct sip_msg* msg, char* fp, char* s2)
     tmp.len = domain.len;
     strlower(&tmp);
     
-    if (db_mode == 0) {
+    if (!db_mode) {
 	switch(db_get_did(0, &tmp)) {
 	case 1:  goto found;
 	default: goto not_found;
@@ -415,18 +465,46 @@ static int is_local(struct sip_msg* msg, char* fp, char* s2)
     return -1;
 }
 
+
+static int db_load_domain(domain_t** d, unsigned long flags, str* domain)
+{
+    int ret;
+    int_str name, val;
+    domain_t* p;
+    str name_s = STR_STATIC_INIT(AVP_DID);
+
+    if (flags & AVP_TRACK_FROM) {
+	p = &dom_buf[0];
+    } else {
+	p = &dom_buf[1];
+    }
+
+    free_old_domain(p);
+
+    ret = db_get_did(&p->did, domain);
+    if (ret != 1) return ret;
+    if (load_domain_attrs) {
+	if (db_load_domain_attrs(p) < 0) return -1;
+    }
+
+	 /* Create an attribute containing did of the domain */
+    name.s = name_s;
+    val.s = p->did;
+    if (add_avp_list(&p->attrs, AVP_CLASS_DOMAIN | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) return -1;
+
+    *d = p;
+    return 0;
+}
+
+
 static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
 {
     str domain, tmp;
     domain_t* d;
     unsigned int track;
+    int ret = -1;
     
     track = 0;
-    
-    if (db_mode == 0) {
-	ERR("lookup_domain only works in cache mode\n");
-	return -1;
-    }
     
     if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
 	ERR("Cannot get domain name to lookup\n");
@@ -441,15 +519,21 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
     memcpy(tmp.s, domain.s, domain.len);
     tmp.len = domain.len;
     strlower(&tmp);
-    
-    if (hash_lookup(&d, *active_hash, &tmp) == 1) {
-	set_avp_list((unsigned long)flags, &d->attrs);
-	pkg_free(tmp.s);
-	return 1;
+
+    if (db_mode) {
+	if (hash_lookup(&d, *active_hash, &tmp) == 1) {
+	    set_avp_list((unsigned long)flags, &d->attrs);
+	    ret = 1;
+	}
     } else {
-	pkg_free(tmp.s);
-	return -1;
+	if (db_load_domain(&d, (unsigned long)flags, &tmp) == 0) {
+	    set_avp_list((unsigned long)flags, &d->attrs);
+	    ret = 1;
+	}
     }
+
+    pkg_free(tmp.s);
+    return ret;
 }
 
 
@@ -461,7 +545,7 @@ static int get_did(str* did, str* domain)
     
     track = 0;
     
-    if (db_mode == 0) {
+    if (!db_mode) {
 	ERR("lookup_domain only works in cache mode\n");
 	return -1;
     }
@@ -555,4 +639,3 @@ static int lookup_domain_fixup(void** param, int param_no)
     
     return 0;
 }
-

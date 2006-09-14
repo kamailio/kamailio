@@ -175,91 +175,90 @@ void free_domain_list(domain_t* list)
 /*
  * Load attributes from domain_attrs table
  */
-static int load_attrs(domain_t* d)
+int db_load_domain_attrs(domain_t* d)
 {
-	int_str name, v;
-
-	str avp_name, avp_val;
-	int i, type, n;
-	db_key_t keys[1], cols[4];
-	db_res_t* res;
-	db_val_t kv[1], *val;
-	unsigned short flags;
-
-	if (!con) {
-		LOG(L_ERR, "domain:load_attrs: Invalid database handle\n");
+    int_str name, v;
+    str avp_name, avp_val;
+    int i, type, n;
+    db_key_t keys[1], cols[4];
+    db_res_t* res;
+    db_val_t kv[1], *val;
+    unsigned short flags;
+    
+    if (!con) {
+	LOG(L_ERR, "domain:db_load_domain_attrs: Invalid database handle\n");
 		return -1;
+    }
+    
+    keys[0] = domattr_did.s;
+    kv[0].type = DB_STR;
+    kv[0].nul = 0;
+    kv[0].val.str_val = d->did;
+    
+    cols[0] = domattr_name.s;
+    cols[1] = domattr_type.s;
+    cols[2] = domattr_value.s;
+    cols[3] = domattr_flags.s;
+    
+    if (db.use_table(con, domattr_table.s) < 0) {
+	LOG(L_ERR, "domain:db_load_domain_attrs Error in use_table\n");
+	return -1;
+    }
+    
+    if (db.query(con, keys, 0, kv, cols, 1, 4, 0, &res) < 0) {
+	LOG(L_ERR, "domain:db_load_domain_attrs: Error while quering database\n");
+	return -1;
+    }
+    
+    n = 0;
+    for(i = 0; i < res->n; i++) {
+	val = res->rows[i].values;
+	
+	if (val[0].nul || val[1].nul || val[3].nul) {
+	    LOG(L_ERR, "domain:db_load_domain_attrs: Skipping row containing NULL entries\n");
+	    continue;
 	}
 	
-	keys[0] = domattr_did.s;
-	kv[0].type = DB_STR;
-	kv[0].nul = 0;
-	kv[0].val.str_val = d->did;
-
-	cols[0] = domattr_name.s;
-	cols[1] = domattr_type.s;
-	cols[2] = domattr_value.s;
-	cols[3] = domattr_flags.s;
-
-	if (db.use_table(con, domattr_table.s) < 0) {
-		LOG(L_ERR, "domain:load_attrs Error in use_table\n");
-		return -1;
+	if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
+	
+	n++;
+	     /* Get AVP name */
+	avp_name.s = (char*)val[0].val.string_val;
+	avp_name.len = strlen(avp_name.s);
+	name.s = avp_name;
+	
+	     /* Get AVP type */
+	type = val[1].val.int_val;
+	
+	     /* Test for NULL value */
+	if (val[2].nul) {
+	    avp_val.s = 0;
+	    avp_val.len = 0;
+	} else {
+	    avp_val.s = (char*)val[2].val.string_val;
+	    avp_val.len = strlen(avp_val.s);
+	}
+	
+	flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
+	if (type == AVP_VAL_STR) {
+		 /* String AVP */
+	    v.s = avp_val;
+	    flags |= AVP_VAL_STR;
+	} else {
+		 /* Integer AVP */
+	    str2int(&avp_val, (unsigned*)&v.n);
 	}
 
-	if (db.query(con, keys, 0, kv, cols, 1, 4, 0, &res) < 0) {
-		LOG(L_ERR, "domain:load_attrs: Error while quering database\n");
-		return -1;
+	if (add_avp_list(&d->attrs, flags, name, v) < 0) {
+	    LOG(L_ERR, "domain:db_load_domain_attrs: Error while adding domain attribute %.*s to domain %.*s, skipping\n",
+		avp_name.len, ZSW(avp_name.s),
+		d->did.len, ZSW(d->did.s));
+	    continue;
 	}
-
-	n = 0;
-	for(i = 0; i < res->n; i++) {
-		val = res->rows[i].values;
-
-		if (val[0].nul || val[1].nul || val[3].nul) {
-			LOG(L_ERR, "domain:load_attrs: Skipping row containing NULL entries\n");
-			continue;
-		}
-
-		if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
-
-		n++;
-		     /* Get AVP name */
-		avp_name.s = (char*)val[0].val.string_val;
-		avp_name.len = strlen(avp_name.s);
-		name.s = avp_name;
-
-		     /* Get AVP type */
-		type = val[1].val.int_val;
-
-		     /* Test for NULL value */
-		if (val[2].nul) {
-			avp_val.s = 0;
-			avp_val.len = 0;
-		} else {
-			avp_val.s = (char*)val[2].val.string_val;
-			avp_val.len = strlen(avp_val.s);
-		}
-
-		flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
-		if (type == AVP_VAL_STR) {
-			     /* String AVP */
-			v.s = avp_val;
-			flags |= AVP_VAL_STR;
-		} else {
-			     /* Integer AVP */
-			str2int(&avp_val, (unsigned*)&v.n);
-		}
-
-		if (add_avp_list(&d->attrs, flags, name, v) < 0) {
-			LOG(L_ERR, "domain:load_attrs: Error while adding domain attribute %.*s to domain %.*s, skipping\n",
-			    avp_name.len, ZSW(avp_name.s),
-			    d->did.len, ZSW(d->did.s));
-			continue;
-		}
-	}
-	DBG("domain:load_attrs: %d domain attributes found, %d loaded\n", res->n, n);
-	db.free_result(con, res);
-	return 0;	
+    }
+    DBG("domain:db_load_domain_attrs: %d domain attributes found, %d loaded\n", res->n, n);
+    db.free_result(con, res);
+    return 0;
 }
 
 
@@ -340,7 +339,7 @@ int load_domains(domain_t** dest)
 	if (load_domain_attrs) {
 		d = list;
 		while(d) {
-			if (load_attrs(d) < 0) goto error;
+			if (db_load_domain_attrs(d) < 0) goto error;
 			d = d->next;
 		}
 	}
