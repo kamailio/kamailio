@@ -54,6 +54,8 @@
  *              t_forward_non_ack won't start retransmission on send errors
  *               anymore (WARNING: callers should release/kill the transaction
  *               if error is returned) (andrei)
+ *  2006-09-15  e2e_cancel uses t_reply_unsafe when called from the 
+ *               failure_route and replying to a cancel (andrei)
  */
 
 #include "defs.h"
@@ -517,19 +519,40 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	*/
 	if (lowest_error<0) {
 		LOG(L_ERR, "ERROR: cancel error\n");
-		t_reply( t_cancel, cancel_msg, 500, "cancel error");
-	/* if there are pending branches, let upstream know we
-	   are working on it
-	*/
+		/* if called from failure_route, make sure that the unsafe version
+		 * is called (we are already hold the reply mutex for the cancel
+		 * transaction).
+		 */
+		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
+			t_reply_unsafe( t_cancel, cancel_msg, 500, "cancel error");
+		else
+			t_reply( t_cancel, cancel_msg, 500, "cancel error");
 	} else if (cancel_bm) {
+		/* if there are pending branches, let upstream know we
+		   are working on it
+		*/
 		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
-		t_reply( t_cancel, cancel_msg, 200, CANCELING );
-	/* if the transaction exists, but there is no more pending
-	   branch, tell upstream we're done
-	*/
+		/* if called from failure_route, make sure that the unsafe version
+		 * is called (we are already hold the reply mutex for the cancel
+		 * transaction).
+		 */
+		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
+			t_reply_unsafe( t_cancel, cancel_msg, 200, CANCELING );
+		else
+			t_reply( t_cancel, cancel_msg, 200, CANCELING );
 	} else {
+		/* if the transaction exists, but there is no more pending
+		   branch, tell upstream we're done
+		*/
 		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
-		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
+		/* if called from failure_route, make sure that the unsafe version
+		 * is called (we are already hold the reply mutex for the cancel
+		 * transaction).
+		 */
+		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
+			t_reply_unsafe( t_cancel, cancel_msg, 200, CANCEL_DONE );
+		else
+			t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
 	}
 }
 
@@ -798,6 +821,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	return 1;
 }
 
+
+
+/* WARNING: doesn't work from failure route (deadlock, uses t_relay_to which
+ *  is failure route unsafe) */
 int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy, int proto )
 {
 	/* this is a quite horrible hack -- we just take the message

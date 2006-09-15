@@ -169,6 +169,8 @@ void put_on_wait(  struct cell  *Trans  )
 
 
 
+/* WARNING: doesn't work from failure route (deadlock, uses t_reply =>
+ *  tries to get the reply lock again) */
 static int kill_transaction( struct cell *trans )
 {
 	char err_buffer[128];
@@ -196,6 +198,8 @@ static int kill_transaction( struct cell *trans )
 
 
 
+/* WARNING: doesn't work from failure route (deadlock, uses t_reply => tries
+ *  to get the reply lock again */
 int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 				int replicate)
 {
