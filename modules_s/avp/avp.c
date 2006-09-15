@@ -211,7 +211,7 @@ static int get_avp_id(avp_ident_t* id, fparam_t* p, struct sip_msg* msg)
 	if (ret < 0 || ret > 0) return -1;
 	break;
 
-    case FPARAM_STRING:
+	case FPARAM_STR:
 	str_id = p->v.str;
 	break;
 
