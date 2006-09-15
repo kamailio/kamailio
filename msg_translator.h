@@ -46,7 +46,7 @@
 #define WARNING_PHRASE " \"Noisy feedback tells: "
 #define WARNING_PHRASE_LEN (sizeof(WARNING_PHRASE)-1)
 
-//#define MAX_CONTENT_LEN_BUF INT2STR_MAX_LEN /* see ut.h/int2str() */
+/*#define MAX_CONTENT_LEN_BUF INT2STR_MAX_LEN *//* see ut.h/int2str() */
 
 #include "parser/msg_parser.h"
 #include "ip_addr.h"

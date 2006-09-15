@@ -36,6 +36,8 @@
  *  2003-07-07  get_proto takes now two protos as arguments (andrei)
  *              tls/sips support for get_proto & uri2proxy (andrei)
  *  2006-04-13  added uri2dst(), simplified uri2sock() (andrei)
+ *  2006-08-11  dns failover support: uri2dst uses the dns cache and tries to 
+ *               get the first ip for which there is a send sock. (andrei)
  */
 
 
@@ -54,6 +56,9 @@
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
 #include "../../resolve.h"
+#ifdef USE_DNS_FAILOVER
+#include "../../dns_cache.h"
+#endif
 
 /* a forced_proto takes precedence if != PROTO_NONE */
 inline static enum sip_protos get_proto(enum sip_protos force_proto,
@@ -146,22 +151,93 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 
 
 /*
+ * parse uri and return send related information
+ * params: uri - uri in string form
+ *         host - filled with the uri host part
+ *         port - filled with the uri port
+ *         proto - if != PROTO_NONE, this protocol will be forced over the
+ *                 uri_proto, otherwise the uri proto will be used 
+ *                 (value/return)
+ *         comp - compression (if used)
+ * returns 0 on success, < 0 on error
+ */
+inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
+									short* proto, short* comp)
+{
+	struct sip_uri parsed_uri;
+	enum sip_protos uri_proto;
+	
+	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
+		LOG(L_ERR, "ERROR: get_uri_send_info: bad_uri: %.*s\n",
+					uri->len, uri->s );
+		return -1;
+	}
+	
+	if (parsed_uri.type==SIPS_URI_T){
+		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
+			LOG(L_ERR, "ERROR: get_uri_send_info: bad transport  for"
+						" sips uri: %d\n", parsed_uri.proto);
+			return -1;
+		}else
+			uri_proto=PROTO_TLS;
+	}else
+		uri_proto=parsed_uri.proto;
+	
+	*proto= get_proto(*proto, uri_proto);
+#ifdef USE_COMP
+	*comp=parsed_uri.comp;
+#endif
+#ifdef HONOR_MADDR
+	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
+		*host=parsed_uri.maddr;
+		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len, 
+				parsed_uri.maddr_val.s, parsed_uri.port_no);
+	} else
+#endif
+		*host=parsed_uri.host;
+	*port=parsed_uri.port_no;
+	return 0;
+}
+
+
+
+/*
  * Convert a URI into a dest_info structure
- * params: msg - sip message used to set dst->send_sock, if 0 dst->send_sock
- *               will be set to the default w/o using msg->force_send_socket 
- *               (see get_send_socket()) 
- *         dst - will be filled
- *         uri - uri in str form
+ * If the uri host resolves to multiple ips and dns_h!=0 the first ip for 
+ *  which a send socket is found will be used. If no send_socket are found,
+ *  the first ip is selected.
+ *
+ * params: dns_h - pointer to a valid dns_srv_handle structure (intialized!) or
+ *                 null. If null or use_dns_failover==0 normal dns lookup will
+ *                 be performed (no failover).
+ *         dst   - will be filled
+ *         msg   -  sip message used to set dst->send_sock, if 0 dst->send_sock
+ *                 will be set to the default w/o using msg->force_send_socket 
+ *                 (see get_send_socket()) 
+ *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
  *                 uri_proto, otherwise the uri proto will be used
  * returns 0 on error, dst on success
  */
+#ifdef USE_DNS_FAILOVER
+inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
+										struct dest_info* dst,
+										struct sip_msg *msg, str *uri, 
+											int proto )
+#else
 inline static struct dest_info *uri2dst(struct dest_info* dst,
 										struct sip_msg *msg, str *uri, 
 											int proto )
+#endif
 {
 	struct sip_uri parsed_uri;
 	enum sip_protos uri_proto;
+	str* host;
+#ifdef USE_DNS_FAILOVER
+	int ip_found;
+	union sockaddr_union to;
+	int err;
+#endif
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
 		LOG(L_ERR, "ERROR: uri2dst: bad_uri: %.*s\n",
@@ -186,16 +262,53 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 #endif
 #ifdef HONOR_MADDR
 	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
-		sip_hostport2su(&dst->to, &parsed_uri.maddr_val, parsed_uri.port_no, dst->proto);
-		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len, parsed_uri.maddr_val.s, parsed_uri.port_no);
+		host=&parsed_uri.maddr_val;
+		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len, 
+								parsed_uri.maddr_val.s, parsed_uri.port_no);
 	} else
 #endif
-	sip_hostport2su(&dst->to, &parsed_uri.host, parsed_uri.port_no,
-						dst->proto);
+		host=&parsed_uri.host;
+#ifdef USE_DNS_FAILOVER
+	if (use_dns_failover && dns_h){
+		ip_found=0;
+		do{
+			/* try all the ips until we find a good send socket */
+			err=dns_sip_resolve2su(dns_h, &to, host,
+									parsed_uri.port_no, dst->proto, dns_flags);
+			if (err!=0){
+				if (ip_found==0){
+					LOG(L_ERR, "ERROR: uri2dst: failed to resolve \"%.*s\" :"
+								"%s (%d)\n", host->len, ZSW(host->s),
+									dns_strerror(err), err);
+					return 0; /* error, no ip found */
+				}
+				break;
+			}
+			if (ip_found==0){
+				dst->to=to;
+				ip_found=1;
+			}
+			dst->send_sock = get_send_socket(msg, &to, dst->proto);
+			if (dst->send_sock){
+				dst->to=to;
+				return dst; /* found a good one */
+			}
+		}while(dns_srv_handle_next(dns_h, err));
+		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for \"%.*s\" "
+					"af %d\n", host->len, ZSW(host->s), dst->to.s.sa_family);
+		/* try to continue */
+		return dst;
+	}
+#endif
+	if (sip_hostport2su(&dst->to, host, parsed_uri.port_no, dst->proto)!=0){
+		LOG(L_ERR, "ERROR: uri2dst: failed to resolve \"%.*s\"\n",
+					host->len, ZSW(host->s));
+		return 0;
+	}
 	dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
 	if (dst->send_sock==0) {
 		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
-				dst->to.s.sa_family);
+					dst->to.s.sa_family);
 		/* ser_error = E_NO_SOCKET;*/
 		/* try to continue */
 	}
@@ -203,7 +316,7 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 }
 
 
-
+#if 0
 /*
  * Convert a URI into the corresponding sockaddr_union (address to send to) and
  *  send socket_info (socket/address from which to send)
@@ -233,6 +346,6 @@ static inline struct socket_info *uri2sock(struct sip_msg* msg, str *uri,
 	}
 	return dst.send_sock;
 }
-
+#endif
 
 #endif /* _TM_UT_H */

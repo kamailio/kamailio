@@ -32,6 +32,9 @@
  *  2005-07-11  added resolv_init (timeouts a.s.o) (andrei)
  *  2006-04-13  added sip_hostport2su()  (andrei)
  *  2006-07-13  rdata structures put on diet (andrei)
+ *  2006-07-17  rdata contains now also the record name (andrei)
+ *  2006-08-18  get_record can append also the additional records to the
+ *               returned list (andrei)
  */ 
 
 
@@ -47,13 +50,21 @@
 #include "ip_addr.h"
 #include "error.h"
 
+#ifdef USE_DNS_CACHE
+#include "dns_cache.h"
+#endif
+
 
 
 /* mallocs for local stuff */
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
 
+#ifdef USE_IPV6
 int dns_try_ipv6=1; /* default on */
+#else
+int dns_try_ipv6=0; /* off, if no ipv6 support */
+#endif
 /* declared in globals.h */
 int dns_retr_time=-1;
 int dns_retr_no=-1;
@@ -118,7 +129,7 @@ unsigned char* dns_skipname(unsigned char* p, unsigned char* end)
 		/* normal label */
 		p+=*p+1;
 	}
-	return (p>=end)?0:p;
+	return (p>end)?0:p;
 }
 
 
@@ -154,7 +165,7 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	char name[MAX_DNS_NAME];
 	
 	srv=0;
-	if ((rdata+6)>=end) goto error;
+	if ((rdata+6+1)>end) goto error;
 	
 	memcpy((void*)&priority, rdata, 2);
 	memcpy((void*)&weight,   rdata+2, 2);
@@ -227,20 +238,20 @@ struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
 	char repl[MAX_DNS_NAME];
 	
 	naptr = 0;
-	if ((rdata + 7) >= end) goto error;
+	if ((rdata + 7 + 1)>end) goto error;
 	
 	memcpy((void*)&order, rdata, 2);
 	memcpy((void*)&pref, rdata + 2, 2);
 	flags_len = rdata[4];
-	if ((rdata + 7 +  flags_len) >= end)
+	if ((rdata + 7 + 1 +  flags_len) > end)
 		goto error;
 	flags=rdata+5;
 	services_len = rdata[5 + flags_len];
-	if ((rdata + 7 + flags_len + services_len) >= end)
+	if ((rdata + 7 + 1 + flags_len + services_len) > end)
 		goto error;
 	services=rdata + 6 + flags_len;
 	regexp_len = rdata[6 + flags_len + services_len];
-	if ((rdata + 7 + flags_len + services_len + regexp_len) >= end)
+	if ((rdata + 7 +1 + flags_len + services_len + regexp_len) > end)
 		goto error;
 	regexp=rdata + 7 + flags_len + services_len;
 	rdata = rdata + 7 + flags_len + services_len + regexp_len;
@@ -318,7 +329,7 @@ struct a_rdata* dns_a_parser(unsigned char* rdata, unsigned char* end)
 {
 	struct a_rdata* a;
 	
-	if (rdata+4>=end) goto error;
+	if (rdata+4>end) goto error;
 	a=(struct a_rdata*)local_malloc(sizeof(struct a_rdata));
 	if (a==0){
 		LOG(L_ERR, "ERROR: dns_a_parser: out of memory\n");
@@ -338,7 +349,7 @@ struct aaaa_rdata* dns_aaaa_parser(unsigned char* rdata, unsigned char* end)
 {
 	struct aaaa_rdata* aaaa;
 	
-	if (rdata+16>=end) goto error;
+	if (rdata+16>end) goto error;
 	aaaa=(struct aaaa_rdata*)local_malloc(sizeof(struct aaaa_rdata));
 	if (aaaa==0){
 		LOG(L_ERR, "ERROR: dns_aaaa_parser: out of memory\n");
@@ -369,17 +380,17 @@ void free_rdata_list(struct rdata* head)
  * returns a dyn. alloc'ed struct rdata linked list with the parsed responses
  * or 0 on error
  * see rfc1035 for the query/response format */
-struct rdata* get_record(char* name, int type)
+struct rdata* get_record(char* name, int type, int flags)
 {
 	int size;
+	int skip;
 	int qno, answers_no;
 	int r;
-	int ans_len;
 	static union dns_query buff;
 	unsigned char* p;
-	unsigned char* t;
 	unsigned char* end;
-	static unsigned char answer[ANS_SIZE];
+	static char rec_name[MAX_DNS_NAME]; /* placeholder for the record name */
+	int rec_name_len;
 	unsigned short rtype, class, rdlength;
 	unsigned int ttl;
 	struct rdata* head;
@@ -414,26 +425,35 @@ struct rdata* get_record(char* name, int type)
 		for (;(p<end && (*p)); p++);
 		p+=1+2+2; /* skip the ending  '\0, QCODE and QCLASS */
 	#endif
-		if (p>=end) {
+		if (p>end) {
 			LOG(L_ERR, "ERROR: get_record: p>=end\n");
 			goto error;
 		}
 	};
 	answers_no=ntohs((unsigned short)buff.hdr.ancount);
-	ans_len=ANS_SIZE;
-	t=answer;
+again:
 	for (r=0; (r<answers_no) && (p<end); r++){
+#if 0
 		/*  ignore it the default domain name */
 		if ((p=dns_skipname(p, end))==0) {
 			LOG(L_ERR, "ERROR: get_record: skip_name=0 (#2)\n");
 			goto error;
 		}
-		/*
-		skip=dn_expand(buff.buff, end, p, t, ans_len);
+#else
+		if ((skip=dn_expand(buff.buff, end, p, rec_name, MAX_DNS_NAME-1))==-1){
+			LOG(L_ERR, "ERROR: get_record: dn_expand(rec_name) failed\n");
+			goto error;
+		}
+#endif
 		p+=skip;
-		*/
+		rec_name_len=strlen(rec_name);
+		if (rec_name_len>255){
+			LOG(L_ERR, "ERROR: get_record: dn_expand(rec_name): name too"
+					" long  (%d)\n", rec_name_len);
+			goto error;
+		}
 		/* check if enough space is left for type, class, ttl & size */
-		if ((p+2+2+4+2)>=end) goto error_boundary;
+		if ((p+2+2+4+2)>end) goto error_boundary;
 		/* get type */
 		memcpy((void*) &rtype, (void*)p, 2);
 		rtype=ntohs(rtype);
@@ -450,18 +470,14 @@ struct rdata* get_record(char* name, int type)
 		memcpy((void*)&rdlength, (void*)p, 2);
 		rdlength=ntohs(rdlength);
 		p+=2;
-		/* check for type */
-		/*
-		if (rtype!=type){
-			LOG(L_ERR, "WARNING: get_record: wrong type in answer (%d!=%d)\n",
-					rtype, type);
+		if ((flags & RES_ONLY_TYPE) && (rtype!=type)){
+			/* skip */
 			p+=rdlength;
 			continue;
 		}
-		*/
 		/* expand the "type" record  (rdata)*/
 		
-		rd=(struct rdata*) local_malloc(sizeof(struct rdata));
+		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+rec_name_len+1-1);
 		if (rd==0){
 			LOG(L_ERR, "ERROR: get_record: out of memory\n");
 			goto error;
@@ -470,6 +486,9 @@ struct rdata* get_record(char* name, int type)
 		rd->class=class;
 		rd->ttl=ttl;
 		rd->next=0;
+		memcpy(rd->name, rec_name, rec_name_len);
+		rd->name[rec_name_len]=0;
+		rd->name_len=rec_name_len;
 		switch(rtype){
 			case T_SRV:
 				srv_rd= dns_srv_parser(buff.buff, end, p);
@@ -529,13 +548,36 @@ struct rdata* get_record(char* name, int type)
 		p+=rdlength;
 		
 	}
+	if (flags & RES_AR){
+		flags&=~RES_AR;
+		answers_no=ntohs((unsigned short)buff.hdr.nscount);
+		DBG("get_record: skipping %d NS (p=%p, end=%p)\n", answers_no, p, end);
+		for (r=0; (r<answers_no) && (p<end); r++){
+			/* skip over the ns records */
+			if ((p=dns_skipname(p, end))==0) {
+				LOG(L_ERR, "ERROR: get_record: skip_name=0 (#3)\n");
+				goto error;
+			}
+			/* check if enough space is left for type, class, ttl & size */
+			if ((p+2+2+4+2)>end) goto error_boundary;
+			memcpy((void*)&rdlength, (void*)p+2+2+4, 2);
+			p+=2+2+4+2+ntohs(rdlength);
+		}
+		answers_no=ntohs((unsigned short)buff.hdr.arcount);
+		DBG("get_record: parsing %d ARs (p=%p, end=%p)\n", answers_no, p, end);
+		goto again; /* add also the additional records */
+	}
+			
 	return head;
 error_boundary:
 		LOG(L_ERR, "ERROR: get_record: end of query buff reached\n");
 		if (head) free_rdata_list(head);
 		return 0;
 error_parse:
-		LOG(L_ERR, "ERROR: get_record: rdata parse error \n");
+		LOG(L_ERR, "ERROR: get_record: rdata parse error (%s, %d), %p-%p"
+						" rtype=%d, class=%d, ttl=%d, rdlength=%d \n",
+				name, type,
+				p, end, rtype, class, ttl, rdlength);
 		if (rd) local_free(rd); /* rd->rdata=0 & rd is not linked yet into
 								   the list */
 error:
@@ -547,6 +589,8 @@ not_found:
 
 
 
+
+
 /* resolves a host name trying SRV lookup if *port==0 or normal A/AAAA lookup
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
@@ -554,14 +598,14 @@ not_found:
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
+struct hostent* _sip_resolvehost(str* name, unsigned short* port, int proto)
 {
 	struct hostent* he;
+	struct ip_addr* ip;
+	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
 	struct rdata* head;
 	struct rdata* l;
 	struct srv_rdata* srv;
-	struct ip_addr* ip;
-	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
 
 	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
 	if ((port)&&(*port==0)){
@@ -604,8 +648,7 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
 							proto);
 					return 0;
 			}
-
-			head=get_record(tmp, T_SRV);
+			head=get_record(tmp, T_SRV, RES_ONLY_TYPE);
 			for(l=head; l; l=l->next){
 				if (l->type!=T_SRV) continue; /*should never happen*/
 				srv=(struct srv_rdata*) l->rdata;

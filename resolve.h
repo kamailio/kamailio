@@ -31,6 +31,8 @@
  *  2003-04-12  support for resolving ipv6 address references added (andrei)
  *  2004-07-28  darwin needs nameser_compat.h (andrei)
  *  2006-07-13  rdata structures put on diet (andrei)
+ *  2006-07-17  rdata contains now also the record name (andrei)
+ *  2006-08-18  get_record uses flags (andrei)
  */
 
 
@@ -48,6 +50,9 @@
 #endif
 
 #include "ip_addr.h"
+#ifdef USE_DNS_CACHE
+#include "dns_wrappers.h"
+#endif
 
 
 #define MAX_QUERY_SIZE 8192
@@ -57,6 +62,9 @@
 #define MAX_DNS_STRING 255
 
 
+/* get_record flags */
+#define RES_ONLY_TYPE 1   /* return only the specified type records */
+#define RES_AR		  2   /* return also the additional records */
 
 /* query union*/
 union dns_query{
@@ -72,7 +80,11 @@ struct rdata {
 	unsigned int   ttl;
 	void* rdata;
 	struct rdata* next;
+	unsigned char name_len; /* name length w/o the terminating 0 */
+	char name[1]; /* null terminated name (len=name_len+1) */
 };
+/* real size of the structure */
+#define RDATA_SIZE(s) (sizeof(struct rdata)+(s).name_len) /* +1-1 */
 
 
 /* srv rec. struct*/
@@ -86,7 +98,7 @@ struct srv_rdata {
 
 
 /* real size of the structure */
-#define SRV_RDATA_SIZE (s) (sizeof(struct srv_rdata)+(s).name_len)
+#define SRV_RDATA_SIZE(s) (sizeof(struct srv_rdata)+(s).name_len)
 
 /* naptr rec. struct*/
 struct naptr_rdata {
@@ -107,7 +119,7 @@ struct naptr_rdata {
 };
 
 /* real size of the structure */
-#define NAPTR_RDATA_SIZE (s) (sizeof(struct naptr_rdata) \
+#define NAPTR_RDATA_SIZE(s) (sizeof(struct naptr_rdata) \
 								+ (s).flags_len \
 								+ (s).services_len \
 								+ (s).regexp_len \
@@ -130,11 +142,11 @@ struct cname_rdata {
 };
 
 /* real size of the structure */
-#define CNAME_RDATA_SIZE (s) (sizeof(struct cname_rdata)+(s).name_len)
+#define CNAME_RDATA_SIZE(s) (sizeof(struct cname_rdata)+(s).name_len)
 
 
 
-struct rdata* get_record(char* name, int type);
+struct rdata* get_record(char* name, int type, int flags);
 void free_rdata_list(struct rdata* head);
 
 
@@ -299,14 +311,12 @@ error_char:
 
 
 
-struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto);
+struct hostent* _sip_resolvehost(str* name, unsigned short* port, int proto);
 
 
 
-/* gethostbyname wrappers
- * use this, someday they will use a local cache */
-
-static inline struct hostent* resolvehost(char* name)
+/* gethostbyname wrapper, handles ip/ipv6 automatically */
+static inline struct hostent* _resolvehost(char* name)
 {
 	static struct hostent* he=0;
 #ifdef HAVE_GETIPNODEBYNAME 
@@ -381,4 +391,17 @@ int resolv_init();
 
 int sip_hostport2su(union sockaddr_union* su, str* host, unsigned short port,
 						int proto);
+
+
+
+/* wrappers */
+#ifdef USE_DNS_CACHE
+#define resolvehost dns_resolvehost
+#define sip_resolvehost dns_sip_resolvehost
+#else
+#define resolvehost _resolvehost
+#define sip_resolvehost _sip_resolvehost
+#endif
+
+
 #endif

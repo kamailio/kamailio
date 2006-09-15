@@ -1,0 +1,173 @@
+# $Id$
+#
+# History:
+# --------
+# 2006-09-08  created by andrei
+#
+
+Overview
+
+ The dns subsystem in ser can either directly use libresolv and a combination
+  of the locally configured dns server, /etc/hosts and the local Network 
+  Information Service (NIS/YP a.s.o) or cache the query results (both positive
+  and negative) and look first in its internal cache.
+ When its internal dns cache is enabled, ser can also use dns failover: if
+  one destination resolves to multiple addresses ser can try all of them until
+  it finds one to which it can succesfully send the packet or it exhausts all 
+  of them. ser (tm to be more precise) uses the dns failover also when the
+  destination host doesn't send any reply to a forwarded invite within the
+  sip timeout interval (whose value can be configured using the tm fr_timer
+   parameter).
+
+
+DNS Cache and Failover Drawbacks
+
+ Using the dns cache and the dns failover has also some drawbacks: 
+
+  1. only the locally configured dns server (usually in /etc/resolv.conf) is
+  used for the requests (/etc/hosts and the local Network Information Service
+  are ignored). 
+     Workarround: disable the dns cache (use_dns_cache=off or
+  compile without -DUSE_DNS_CACHE).
+
+  2. the dns cache uses extra memory
+      Workarround: disable the dns cache.
+
+  3. the dns failover introduces a very small performance penalty 
+     Workarround: disable the dns failover (use_dns_failover=off).
+
+  4. the dns failover increases the memory usage (the internal structures
+  used to represent the transaction are bigger when the dns failover support is
+  compiled).
+     Workarround: compile without dns failover support (-DUSE_DNS_FAILOVER).
+  Turning it off from the config file is not enough in this case (the extra
+   memory will still be used).
+
+
+DNS Resolver Options
+
+ The DNS resolver options control how ser will interact with the external
+ DNS servers. These options (with the dns_try_ipv6 exception) are passed to
+ libresolv and are used each time a dns request is made.
+ The default values are system specific and generally depend on the
+ /etc/resolv.conf content. For servers doing a lot of DNS requests it is
+ highly recommended to change the default values in the ser config file
+  (even if using ser's internal dns cache).
+
+   dns_try_ipv6 = on | off - if on and ser listens on at least one ipv6 socket,
+      ipv6 (AAAA) lookups will be performed if the ipv4 (A) lookups fail. 
+      If off only ipv4 (A) lookups will be used.
+      Default: on if ser is compiled with ipv6 support.
+
+   dns_retr_time = time - time in s before retrying a dns request.
+      Default: system specific, depends also on the/etc/resolv.conf content
+      (usually 5 s).
+
+   dns_retr_no = no. - number of dns retransmissions before giving up.
+      Default: see above (usually 4)
+
+   dns_servers_no = no. - how many dns servers from the ones defined in 
+      /etc/resolv.conf will be used. Default: all of them.
+
+   dns_use_search_list= yes/no - if no, the search list in /etc/resolv.conf
+      will be ignored (=> fewer lookups => gives up faster).
+      Default: yes.
+      HINT: even if you don't have a search list defined, setting this option
+      to "no" will still be "faster", because an empty search list is in 
+      fact search "" (so even if the search list is empty/missing there will
+      still be 2 dns queries, eg. foo+'.' and foo+""+'.')
+
+ The maximum time a dns request can take (before failing) is:
+ (dns_retr_time*dns_retr_no)*(search_list_domains) If dns_try_ipv6 is yes,
+ mutliply it again by 2.
+
+ The option combination that produces the "fastest" dns resolver config
+  (the "faster" in the sense that it gives up the quickest) is:
+
+      dns_try_ipv6=no
+      dns_retr_time=1
+      dns_retr_no=1
+      dns_servers_no=1
+      dns_use_search_list=no
+
+ The recommended dns configuration is to have a "close" dns caching recursive
+ server configured in /etc/resolv.conf, set the dns resolver options in ser's
+ config as in the above example and enable the dns cache (in ser).
+ Pay particular attention to dns_servers_no and dns_use_search_list. It's a
+ good ideea to make sure you don't need / use the search list or more then one
+ dns server (to avoid unnecessary extra lookups).
+
+
+DNS Cache and Failover Config Variables
+
+   use_dns_cache = on | off - if off the dns cache won't be used (all dns
+      lookups will result into a dns request).  When on all the dns request
+      results will be cached.
+      WARNING: when enabled /etc/hosts will be completely bypassed, all the dns
+      request will go directly to the system configured (resolv.conf) dns
+      server.
+      Default: on.
+
+   use_dns_failover = on |off - if on and sending a request fails (due to not
+      being allowed from an onsend_route, send failure, blacklisted destination
+      or, when using tm, invite timeout), and the destination resolves to
+      multiple ip addresses and/or multiple SRV records, the send will be
+      re-tried using the next ip/record. In tm's case a new branch will be
+      created for each new send attempt.
+      Default: off.
+   Depends on use_dns_cache being on. If tm is used along with dns failover is
+   recommended to also turn on dst_blacklist.
+
+   dns_cache_flags = dns cache specific resolver flags, used for overriding
+     the default behaviour (low level).
+      Possible values:
+         1 - ipv4 only: only DNS A requests are performed, even if ser listens
+                        also on ipv6 addresses.
+         2 - ipv6 only: only DNS AAAA requests are performed. Ignored if
+                        dns_try_ipv6 is off or ser doesn't listen on any ipv6
+                        address.
+         4 - prefer ipv6: try first to resolve a host name to an ipv6 address
+                          (DNS AAAA request) and only if this fails try an ipv4
+                          address (DNS A request).
+                          By default the ipv4 addresses are preferred.
+      Default: 0
+
+   dns_cache_negative_ttl = time to live for negative results ("not found") in
+      seconds. Use 0 to disable.
+      Default: 60 s.
+
+   dns_cache_min_ttl = minimum accepted time to live for a record, in seconds.
+      If a record has a lower ttl, its value will be discarded and
+      dns_cache_min_ttl will be used instead.
+      Default: 0
+
+   dns_cache_max_ttl = maximum accepted time to live for a record, in seconds.
+      If a record has a higher ttl, its value will be discarded and
+      dns_cache_max_ttl will be used instead.
+      Default: MAXINT
+
+   dns_cache_mem = maximum memory used for the dns cache in Kb.
+      Default: 500 Kb
+
+   dns_cache_gc_interval = how often (in s) the dns cache will be garbage 
+      collected.
+      Default:  120 s.
+
+
+DNS Cache Compile Options
+
+   USE_DNS_CACHE - if defined the dns cache support will be compiled in 
+      (default). If not needed/wanted the dns_cache can be disabled from the
+      ser's config file. The only advantages for not compiling the dns cache
+      support is a slight decrease of the executable size and an extremely 
+      small performance increase (1 less comparison per dns request).
+
+   USE_DNS_FAILOVER - if defined the dns failover support will be compiled in.
+      (default). Compiling the dns failover support has a few disadvantages,
+      see the "Drawbacks" section.
+ 
+ Note: To remove a compile options,  edit ser's Makefile.defs and remove it 
+   form DEFS list. To add a compile options add it to the make command line,
+     e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
+   or for a permanent solution, edit Makefile.defs and add it to DEFS 
+   (don't foget to prefix it with -D).

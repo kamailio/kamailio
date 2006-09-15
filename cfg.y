@@ -72,6 +72,8 @@
  * 2006-02-02  named flags support (andrei)
  * 2006-02-06  named routes support (andrei)
  * 2006-05-30  avp flags (tma)
+ * 2006-09-11  added dns cache (use, flags, ttls, mem ,gc) & dst blacklist
+ *              options (andrei)
  */
 
 %{
@@ -116,6 +118,26 @@
 	do{\
 		if (rt!=ONSEND_ROUTE) yyerror( s " allowed only in onsend_routes");\
 	}while(0)
+
+
+#ifdef USE_DNS_CACHE
+	#define IF_DNS_CACHE(x) x
+#else
+	#define IF_DNS_CACHE(x) warn("dns cache support not compiled in")
+#endif
+
+#ifdef USE_DNS_FAILOVER
+	#define IF_DNS_FAILOVER(x) x
+#else
+	#define IF_DNS_FAILOVER(x) warn("dns failover support not compiled in")
+#endif
+
+#ifdef USE_DST_BLACKLIST
+	#define IF_DST_BLACKLIST(x) x
+#else
+	#define IF_DST_BLACKLIST(x) warn("dst blacklist support not compiled in")
+#endif
+
 
 extern int yylex();
 static void yyerror(char* s);
@@ -234,6 +256,20 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token DNS_RETR_NO
 %token DNS_SERVERS_NO
 %token DNS_USE_SEARCH
+%token DNS_USE_CACHE
+%token DNS_USE_FAILOVER
+%token DNS_CACHE_FLAGS
+%token DNS_CACHE_NEG_TTL
+%token DNS_CACHE_MIN_TTL
+%token DNS_CACHE_MAX_TTL
+%token DNS_CACHE_MEM
+%token DNS_CACHE_GC_INT
+/*blacklist*/
+%token USE_DST_BLST
+%token DST_BLST_MEM
+%token DST_BLST_TTL
+%token DST_BLST_GC_INT
+
 %token PORT
 %token STAT
 %token CHILDREN
@@ -512,6 +548,30 @@ assign_stm:
 	| DNS_SERVERS_NO error { yyerror("number expected"); }
 	| DNS_USE_SEARCH EQUAL NUMBER   { dns_search_list=$3; }
 	| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
+	| DNS_USE_CACHE EQUAL NUMBER   { IF_DNS_CACHE(use_dns_cache=$3); }
+	| DNS_USE_CACHE error { yyerror("boolean value expected"); }
+	| DNS_USE_FAILOVER EQUAL NUMBER   { IF_DNS_FAILOVER(use_dns_failover=$3);}
+	| DNS_USE_FAILOVER error { yyerror("boolean value expected"); }
+	| DNS_CACHE_FLAGS EQUAL NUMBER   { IF_DNS_CACHE(dns_flags=$3); }
+	| DNS_CACHE_FLAGS error { yyerror("boolean value expected"); }
+	| DNS_CACHE_NEG_TTL EQUAL NUMBER   { IF_DNS_CACHE(dns_neg_cache_ttl=$3); }
+	| DNS_CACHE_NEG_TTL error { yyerror("boolean value expected"); }
+	| DNS_CACHE_MAX_TTL EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_max_ttl=$3); }
+	| DNS_CACHE_MAX_TTL error { yyerror("boolean value expected"); }
+	| DNS_CACHE_MIN_TTL EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_min_ttl=$3); }
+	| DNS_CACHE_MIN_TTL error { yyerror("boolean value expected"); }
+	| DNS_CACHE_MEM EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_max_mem=$3); }
+	| DNS_CACHE_MEM error { yyerror("boolean value expected"); }
+	| DNS_CACHE_GC_INT EQUAL NUMBER   { IF_DNS_CACHE(dns_timer_interval=$3); }
+	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
+	| USE_DST_BLST EQUAL NUMBER   { IF_DST_BLACKLIST(use_dst_blacklist=$3); }
+	| USE_DST_BLST error { yyerror("boolean value expected"); }
+	| DST_BLST_MEM EQUAL NUMBER   { IF_DST_BLACKLIST(blst_max_mem=$3); }
+	| DST_BLST_MEM error { yyerror("boolean value expected"); }
+	| DST_BLST_TTL EQUAL NUMBER   { IF_DST_BLACKLIST(blst_timeout=$3); }
+	| DST_BLST_TTL error { yyerror("boolean value expected"); }
+	| DST_BLST_GC_INT EQUAL NUMBER { IF_DST_BLACKLIST(blst_timer_interval=$3);}
+	| DST_BLST_GC_INT error { yyerror("boolean value expected"); }
 	| PORT EQUAL NUMBER   { port_no=$3; }
 	| STAT EQUAL STRING {
 		#ifdef STATS
@@ -1828,7 +1888,7 @@ static void warn(char* s)
 {
 	LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", line, startcolumn,
 			column, s);
-	cfg_errors++;
+	cfg_warnings++;
 }
 
 static void yyerror(char* s)

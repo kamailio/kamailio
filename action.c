@@ -41,6 +41,7 @@
  *  2005-12-12  return & drop/exit differentiation (andrei)
  *  2005-12-19  select framework (mma)
  *  2006-04-12  updated *_send() calls to use a struct dest_info (andrei)
+ *  2006-07-27  dns cache and dns based send address failover support (andrei)
  */
 
 
@@ -107,6 +108,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	unsigned short port;
 	unsigned short flags;
 	int_str name, value;
+	str* dst_host;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with error (status<0) and not setting it
@@ -208,32 +210,24 @@ int do_action(struct action* a, struct sip_msg* msg)
 #endif
 				}
 
-#ifdef HONOR_MADDR
-				if (u->maddr_val.s && u->maddr_val.len) {
-					if (sip_hostport2su(&dst.to, &u->maddr_val, port, dst.proto)<0){
-						LOG(L_ERR, "ERROR:  bad maddr param in uri,"
-								" dropping packet\n");
-						ret=E_BAD_ADDRESS;
-						goto error_fwd_uri;
-					}
-				} else
+#ifdef HONOR_MADDR				
+				if (u->maddr_val.s && u->maddr_val.len)
+					dst_host=&u->maddr_val;
+				else
 #endif
-				if (sip_hostport2su(&dst.to, &u->host, port, dst.proto)<0){
-					LOG(L_ERR, "ERROR:  bad host name in uri,"
-							" dropping packet\n");
-					ret=E_BAD_ADDRESS;
-					goto error_fwd_uri;
-				}
+					dst_host=&u->host;
 #ifdef USE_COMP
 				dst.comp=u->comp;
 #endif
-				ret=forward_request(msg, &dst);
-				if (ret>=0) ret=1;
+				ret=forward_request(msg, dst_host, port, &dst);
+				if (ret>=0){
+					ret=1;
+				}
 			}else if ((a->val[0].type==PROXY_ST) && (a->val[1].type==NUMBER_ST)){
 				if (dst.proto==PROTO_NONE)
 					dst.proto=msg->rcv.proto;
 				proxy2su(&dst.to,  (struct proxy_l*)a->val[0].u.data);
-				ret=forward_request(msg, &dst);
+				ret=forward_request(msg, 0, 0, &dst);
 				if (ret>=0){
 					ret=1;
 					proxy_mark((struct proxy_l*)a->val[0].u.data, ret);

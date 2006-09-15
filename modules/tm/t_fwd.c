@@ -50,6 +50,10 @@
  *  2006-02-07  named routes support (andrei)
  *  2006-04-18  add_uac simplified + switched to struct dest_info (andrei)
  *  2006-04-20  pint_uac_request uses now struct dest_info (andrei)
+ *  2006-08-11  dns failover support (andrei)
+ *              t_forward_non_ack won't start retransmission on send errors
+ *               anymore (WARNING: callers should release/kill the transaction
+ *               if error is returned) (andrei)
  */
 
 #include "defs.h"
@@ -76,6 +80,14 @@
 #include "t_fwd.h"
 #include "fix_lumps.h"
 #include "config.h"
+#ifdef USE_DNS_FAILOVER
+#include "../../dns_cache.h"
+#endif
+#ifdef USE_DST_BLACKLIST
+#include "../../dst_blacklist.h"
+#endif
+
+
 
 static int goto_on_branch = 0, branch_route = 0;
 
@@ -105,8 +117,14 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	char *buf, *shbuf;
 	str* msg_uri;
 	struct lump* add_rm_backup, *body_lumps_backup;
+	struct sip_uri parsed_uri_bak;
+	int parsed_uri_ok_bak;
+	str msg_uri_bak;
 
 	shbuf=0;
+	msg_uri_bak.s=0; /* kill warnings */
+	msg_uri_bak.len=0;
+	parsed_uri_ok_bak=0;
 
 	/* ... we calculate branch ... */	
 	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
@@ -119,6 +137,9 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	/* ... update uri ... */
 	msg_uri=GET_RURI(i_req);
 	if ((msg_uri->s!=uri->s) || (msg_uri->len!=uri->len)){
+		msg_uri_bak=i_req->new_uri;
+		parsed_uri_ok_bak=i_req->parsed_uri_ok;
+		parsed_uri_bak=i_req->parsed_uri;
 		i_req->new_uri=*uri;
 		i_req->parsed_uri_ok=0;
 	}
@@ -173,6 +194,12 @@ error01:
 	     /* Restore the lists from backups */
 	i_req->add_rm = add_rm_backup;
 	i_req->body_lumps = body_lumps_backup;
+	/* restore the new_uri from the backup */
+	if ((msg_uri->s!=uri->s) || (msg_uri->len!=uri->len)){
+		i_req->new_uri=msg_uri_bak;
+		i_req->parsed_uri=parsed_uri_bak;
+		i_req->parsed_uri_ok=parsed_uri_ok_bak;
+	}
 
  error00:
 	return shbuf;
@@ -257,9 +284,15 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		get_send_socket( request, &t->uac[branch].request.dst.to,
 								t->uac[branch].request.dst.proto);
 	}else {
+#ifdef USE_DNS_FAILOVER
+		if (uri2dst(&t->uac[branch].dns_h, &t->uac[branch].request.dst,
+					request, next_hop?next_hop:uri, proto) == 0)
+#else
 		/* dst filled from the uri & request (send_socket) */
 		if (uri2dst(&t->uac[branch].request.dst, request,
-						next_hop ? next_hop: uri, proto)==0){
+						next_hop ? next_hop: uri, proto)==0)
+#endif
+		{
 			ret=E_BAD_ADDRESS;
 			goto error;
 		}
@@ -295,13 +328,69 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	if (proxy){
 		proxy_mark(proxy, 1);
 	}
-	/* done! */	
+	/* done! */
 	ret=branch;
 		
 error01:
 error:
 	return ret;
 }
+
+
+
+#ifdef USE_DNS_FAILOVER
+/* introduce a new uac to transaction, based on old_uac and a possible
+ *  new ip address (if the dns name resolves to more ips). If no more
+ *   ips are found => returns -1.
+ *  returns its branch id (>=0)
+   or error (<0); it doesn't send a message yet -- a reply to it
+   might interfere with the processes of adding multiple branches
+   if lock_replies is 1 replies will be locked for t until the new branch
+   is added (to prevent add branches races). Use 0 if the reply lock is
+   already held, e.g. in failure route/handlers (WARNING: using 1 in a 
+   failure route will cause a deadlock).
+*/
+int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg, 
+									struct ua_client* old_uac,
+									int lock_replies)
+{
+	int ret;
+	
+	ret=-1;
+	if (use_dns_failover && dns_srv_handle_next(&old_uac->dns_h, 0)){
+			if (lock_replies){
+				/* use reply lock to guarantee nobody is adding a branch
+				 * in the same time */
+				LOCK_REPLIES(t);
+			}
+			if (t->nr_of_outgoings >= MAX_BRANCHES){
+				LOG(L_ERR, "ERROR: add_uac_dns_fallback: maximum number of "
+							"branches exceeded\n");
+				if (lock_replies)
+					UNLOCK_REPLIES(t);
+				return E_CFG;
+			}
+			/* copy the dns handle into the new uac */
+			dns_srv_handle_cpy(&t->uac[t->nr_of_outgoings].dns_h,
+								&old_uac->dns_h);
+			/* add_uac will use dns_h => next_hop will be ignored.
+			 * Unfortunately we can't reuse the old buffer, the branch id
+			 *  must be changed and the send_socket might be different =>
+			 *  re-create the whole uac */
+			ret=add_uac(t,  msg, &old_uac->uri, 0, 0, 
+							old_uac->request.dst.proto);
+			if (ret<0){
+				/* failed, delete the copied dns_h */
+				dns_srv_handle_put(&t->uac[t->nr_of_outgoings].dns_h);
+			}
+			if (lock_replies){
+				UNLOCK_REPLIES(t);
+			}
+	}
+	return ret;
+}
+
+#endif
 
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel, 
 	struct cell *t_invite, int branch )
@@ -310,11 +399,16 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	char *shbuf;
 	unsigned int len;
 
+	ret=-1;
 	if (t_cancel->uac[branch].request.buffer) {
 		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
-	}	
+	}
+	if (t_invite->uac[branch].request.buffer==0){
+		/* inactive / deleted  branch */
+		goto error;
+	}
 
 	/* note -- there is a gap in proxy stats -- we don't update 
 	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.)
@@ -440,6 +534,134 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 }
 
 
+
+/* sends one uac/branch buffer and fallbacks to other ips if
+ *  the destination resolves to several addresses
+ *  Takes care of starting timers a.s.o. (on send success)
+ *  returns: -2 on error, -1 on drop,  current branch id on success,
+ *   new branch id on send error/blacklist, when failover is possible
+ *    (ret>=0 && ret!=branch)
+ *    if lock_replies is 1, the replies for t will be locked when adding
+ *     new branches (to prevent races). Use 0 from failure routes or other
+ *     places where the reply lock is already held, to avoid deadlocks. */
+int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
+					struct proxy_l * proxy, int lock_replies)
+{
+	struct ip_addr ip; /* debugging */
+	int ret;
+	struct ua_client* uac;
+	
+	uac=&t->uac[branch];
+	ret=branch;
+	if (run_onsend(p_msg,	&uac->request.dst, uac->request.buffer,
+					uac->request.buffer_len)==0){
+		/* disable the current branch: set a "fake" timeout
+		 *  reply code but don't set uac->reply, to avoid overriding 
+		 *  a higly unlikely, perfectly timed fake reply (to a message
+		 *   we never sent).
+		 * (code=final reply && reply==0 => t_pick_branch won't ever pick it)*/
+			uac->last_received=408;
+			su2ip_addr(&ip, &uac->request.dst.to);
+			DBG("t_send_branch: onsend_route dropped msg. to %s:%d (%d)\n",
+							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
+							uac->request.dst.proto);
+#ifdef USE_DNS_FAILOVER
+			/* if the destination resolves to more ips, add another
+			 *  branch/uac */
+			if (use_dns_failover){
+				ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
+				if (ret>=0){
+					su2ip_addr(&ip, &uac->request.dst.to);
+					DBG("t_send_branch: send on branch %d failed "
+							"(onsend_route), trying another ip %s:%d (%d)\n",
+							branch, ip_addr2a(&ip),
+							su_getport(&uac->request.dst.to),
+							uac->request.dst.proto);
+					/* success, return new branch */
+					return ret;
+				}
+			}
+#endif /* USE_DNS_FAILOVER*/
+		return -1; /* drop, try next branch */
+	}
+#ifdef USE_DST_BLACKLIST
+	if (use_dst_blacklist){
+		if (dst_is_blacklisted(&uac->request.dst)){
+			su2ip_addr(&ip, &uac->request.dst.to);
+			DBG("t_send_branch: blacklisted destination: %s:%d (%d)\n",
+							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
+							uac->request.dst.proto);
+			/* disable the current branch: set a "fake" timeout
+			 *  reply code but don't set uac->reply, to avoid overriding 
+			 *  a higly unlikely, perfectly timed fake reply (to a message
+			 *   we never sent).  (code=final reply && reply==0 => 
+			 *   t_pick_branch won't ever pick it)*/
+			uac->last_received=408;
+#ifdef USE_DNS_FAILOVER
+			/* if the destination resolves to more ips, add another
+			 *  branch/uac */
+			if (use_dns_failover){
+				ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
+				if (ret>=0){
+					su2ip_addr(&ip, &uac->request.dst.to);
+					DBG("t_send_branch: send on branch %d failed (blacklist),"
+							" trying another ip %s:%d (%d)\n", branch,
+							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
+							uac->request.dst.proto);
+					/* success, return new branch */
+					return ret;
+				}
+			}
+#endif /* USE_DNS_FAILOVER*/
+			return -1; /* don't send */
+		}
+	}
+#endif /* USE_DST_BLACKLIST */
+	if (SEND_BUFFER( &uac->request)==-1) {
+		/* disable the current branch: set a "fake" timeout
+		 *  reply code but don't set uac->reply, to avoid overriding 
+		 *  a higly unlikely, perfectly timed fake reply (to a message
+		 *  we never sent).
+		 * (code=final reply && reply==0 => t_pick_branch won't ever pick it)*/
+		uac->last_received=408;
+		su2ip_addr(&ip, &uac->request.dst.to);
+		DBG("t_send_branch: send to %s:%d (%d) failed\n",
+							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
+							uac->request.dst.proto);
+#ifdef USE_DST_BLACKLIST
+		if (use_dst_blacklist)
+			dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst);
+#endif
+#ifdef USE_DNS_FAILOVER
+		/* if the destination resolves to more ips, add another
+		 *  branch/uac */
+		if (use_dns_failover){
+			ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
+			if (ret>=0){
+				/* success, return new branch */
+				DBG("t_send_branch: send on branch %d failed, adding another"
+						" branch with another ip\n", branch);
+				return ret;
+			}
+		}
+#endif
+		LOG(L_ERR, "ERROR: t_send_branch: sending request on branch %d "
+				"failed\n", branch);
+		if (proxy) { proxy->errors++; proxy->ok=0; }
+		return -2;
+	} else {
+		/* start retr. only if the send succeeded */
+		if (start_retr( &uac->request )!=0){
+			LOG(L_CRIT, "BUG: t_send_branch: retr. already started for %p\n",
+					&uac->request);
+			return -2;
+		}
+	}
+	return ret;
+}
+
+
+
 /* function returns:
  *       1 - forward successful
  *      -1 - error during forward
@@ -458,6 +680,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	struct cell *t_invite;
 	int success_branch;
 	int try_new;
+	int lock_replies;
 	str dst_uri;
 	struct socket_info* si, *backup_si;
 
@@ -545,7 +768,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
 		if (try_new==0) {
-			LOG(L_ERR, "ERROR: t_forward_nonack: no branched for forwarding\n");
+			LOG(L_ERR, "ERROR: t_forward_nonack: no branches for forwarding\n");
 			return -1;
 		}
 		LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
@@ -554,30 +777,26 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	/* send them out now */
 	success_branch=0;
+	lock_replies= ! ((rmode==MODE_ONFAILURE) && (t==get_t()));
 	for (i=first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
-			if (run_onsend(p_msg,	&t->uac[i].request.dst,
-									t->uac[i].request.buffer,
-									t->uac[i].request.buffer_len)==0)
-				continue; /* if onsend drop, try next branch */
 			
-			if (SEND_BUFFER( &t->uac[i].request)==-1) {
-				LOG(L_ERR, "ERROR: t_forward_nonack: sending request failed\n");
-				if (proxy) { proxy->errors++; proxy->ok=0; }
-			} else {
-				success_branch++;
+			branch_ret=t_send_branch(t, i, p_msg , proxy, lock_replies);
+			if (branch_ret>=0){ /* some kind of success */
+				if (branch_ret==i) /* success */
+					success_branch++;
+				else /* new branch added */
+					added_branches |= 1<<branch_ret;
 			}
-			if (start_retr( &t->uac[i].request )!=0)
-				LOG(L_CRIT, "BUG: t_forward_non_ack: "
-						"failed to start retr. for %p\n", &t->uac[i].request);
 		}
 	}
 	if (success_branch<=0) {
 		ser_error=E_SEND;
+		/* the caller should take care and delete the transaction */
 		return -1;
 	}
 	return 1;
-}	
+}
 
 int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy, int proto )
 {

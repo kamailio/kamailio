@@ -60,6 +60,8 @@
  *              to_{ip,port} (andrei)
  *  2005-12-12  separated drop, exit, break, return, added RETCODE (andrei)
  *  2005-12-19  select framework (mma)
+ * 2006-09-11  added dns cache (use, flags, ttls, mem ,gc) & dst blacklist
+ *              options (andrei)
  */
 
 
@@ -228,6 +230,22 @@ DNS_RETR_TIME	dns_retr_time
 DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
 DNS_USE_SEARCH	dns_use_search_list
+/* dns cache */
+DNS_USE_CACHE	use_dns_cache
+DNS_USE_FAILOVER	use_dns_failover
+DNS_CACHE_FLAGS		dns_cache_flags
+DNS_CACHE_NEG_TTL	dns_cache_negative_ttl
+DNS_CACHE_MIN_TTL	dns_cache_min_ttl
+DNS_CACHE_MAX_TTL	dns_cache_max_ttl
+DNS_CACHE_MEM		dns_cache_mem
+DNS_CACHE_GC_INT	dns_cache_gc_interval
+/* blacklist */
+USE_DST_BLST		use_dst_blacklist
+DST_BLST_MEM		dst_blacklist_mem
+DST_BLST_TTL		dst_blacklist_expire|dst_blacklist_ttl
+DST_BLST_GC_INT		dst_blacklist_gc_interval
+
+
 PORT	port
 STAT	statistics
 MAXBUFFER maxbuffer
@@ -422,6 +440,30 @@ EAT_ABLE	[\ \t\b\r]
 								return DNS_SERVERS_NO; }
 <INITIAL>{DNS_USE_SEARCH}	{ count(); yylval.strval=yytext;
 								return DNS_USE_SEARCH; }
+<INITIAL>{DNS_USE_CACHE}	{ count(); yylval.strval=yytext;
+								return DNS_USE_CACHE; }
+<INITIAL>{DNS_USE_FAILOVER}	{ count(); yylval.strval=yytext;
+								return DNS_USE_FAILOVER; }
+<INITIAL>{DNS_CACHE_FLAGS}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_FLAGS; }
+<INITIAL>{DNS_CACHE_NEG_TTL}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_NEG_TTL; }
+<INITIAL>{DNS_CACHE_MIN_TTL}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_MIN_TTL; }
+<INITIAL>{DNS_CACHE_MAX_TTL}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_MAX_TTL; }
+<INITIAL>{DNS_CACHE_MEM}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_MEM; }
+<INITIAL>{DNS_CACHE_GC_INT}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_GC_INT; }
+<INITIAL>{USE_DST_BLST}	{ count(); yylval.strval=yytext;
+								return USE_DST_BLST; }
+<INITIAL>{DST_BLST_MEM}	{ count(); yylval.strval=yytext;
+								return DST_BLST_MEM; }
+<INITIAL>{DST_BLST_TTL}	{ count(); yylval.strval=yytext;
+								return DST_BLST_TTL; }
+<INITIAL>{DST_BLST_GC_INT}	{ count(); yylval.strval=yytext;
+								return DST_BLST_GC_INT; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }

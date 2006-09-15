@@ -52,6 +52,7 @@
  *  2004-08-23  avp support in t_uac (bogdan)
  *  2005-12-16  t_uac will set the new_cell timers to the default values,
  *               fixes 0 fr_timer bug (andrei)
+ *  2006-08-11  t_uac uses dns failover until it finds a send socket (andrei)
  */
 
 #include <string.h>
@@ -173,6 +174,9 @@ static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dia
 	char* buf;
         int buf_len, ret, flags;
 	unsigned int hi;
+#ifdef USE_DNS_FAILOVER
+	struct dns_srv_handle dns_h;
+#endif
 
 	ret=-1;
 	/*if (dst_req) *dst_req = NULL;*/
@@ -186,13 +190,36 @@ static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dia
 	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
 			dialog->hooks.next_hop->s);
 	/* it's a new message, so we will take the default socket */
+#ifdef USE_DNS_FAILOVER
+	if (use_dns_failover){
+		dns_srv_handle_init(&dns_h);
+		if ((uri2dst(&dns_h, &dst, 0, dialog->hooks.next_hop, PROTO_NONE)==0)
+				|| (dst.send_sock==0)){
+			dns_srv_handle_put(&dns_h);
+			ser_error = E_NO_SOCKET;
+			ret=ser_error;
+			LOG(L_ERR, "t_uac: no socket found\n");
+			goto error2;
+		}
+		dns_srv_handle_put(&dns_h); /* not needed anymore */
+	}else{
+		if ((uri2dst(0, &dst, 0, dialog->hooks.next_hop, PROTO_NONE)==0) ||
+				(dst.send_sock==0)){
+			ser_error = E_NO_SOCKET;
+			ret=ser_error;
+			LOG(L_ERR, "t_uac: no socket found\n");
+			goto error2;
+		}
+	}
+#else
 	if ((uri2dst(&dst, 0, dialog->hooks.next_hop, PROTO_NONE)==0) ||
 			(dst.send_sock==0)){
 		ser_error = E_NO_SOCKET;
 		ret=ser_error;
 		LOG(L_ERR, "t_uac: no socket found\n");
 		goto error2;
-	}	
+	}
+#endif
 
 	new_cell = build_cell(0); 
 	if (!new_cell) {
@@ -254,6 +281,7 @@ static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dia
 	new_cell->nr_of_outgoings++;
 	
 	if (dst_req) *dst_req = request;
+	
 	return 1;
 
  error1:

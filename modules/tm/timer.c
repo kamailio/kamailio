@@ -101,6 +101,8 @@
  *  2005-10-03  almost completely rewritten to use the new timers (andrei)
  *  2005-12-12  on final response marked the rb as removed to avoid deleting
  *              it from the timer handle; timer_allow_del()  (andrei)
+ *  2006-08-11  final_response_handler dns failover support for timeout-ed
+ *              invites (andrei)
  */
 
 #include "defs.h"
@@ -123,6 +125,12 @@
 #include "t_funcs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
+#ifdef USE_DNS_FAILOVER
+#include "t_fwd.h" /* t_send_branch */
+#endif
+#ifdef USE_DST_BLACKLIST
+#include "../../dst_blacklist.h"
+#endif
 
 
 
@@ -221,6 +229,9 @@ inline static ticks_t  delete_cell( struct cell *p_cell, int unlock )
 
 
 
+
+/* generate a fake reply
+ * it assumes the REPLY_LOCK is already held and returns unlocked */
 static void fake_reply(struct cell *t, int branch, int code )
 {
 	branch_bm_t cancel_bitmap;
@@ -311,6 +322,13 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 {
 	int silent;
 	int reply_code;
+#ifdef USE_DNS_FAILOVER
+	/*int i; 
+	int added_branches;
+	*/
+	int branch_ret;
+	int prev_branch;
+#endif
 
 #	ifdef EXTRA_DEBUG
 	if (t->flags & T_IN_AGONY) 
@@ -380,11 +398,45 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 	if (is_invite(t) && 
 	    r_buf->branch < MAX_BRANCHES && /* r_buf->branch is always >=0 */
 	    t->uac[r_buf->branch].last_received > 0) {
-		reply_code = 480; /* Request Terminated */
+		reply_code = 480; /* Temporarily Unavailable */
 	} else {
 		reply_code = 408; /* Request Timeout */
+#ifdef USE_DST_BLACKLIST
+		if (use_dst_blacklist)
+			dst_blacklist_add( BLST_ERR_TIMEOUT, &r_buf->dst);
+#endif
+#ifdef USE_DNS_FAILOVER
+		/* if this is an invite, the destination resolves to more ips, and
+		 *  it still hasn't passed more than fr_inv_timeout since we
+		 *  started, add another branch/uac */
+		if (is_invite(t) && use_dns_failover &&
+				((get_ticks_raw()-(r_buf->fr_expire-t->fr_timeout)) <
+				 	t->fr_inv_timeout)){
+			branch_ret=add_uac_dns_fallback(t, t->uas.request,
+												&t->uac[r_buf->branch], 0);
+			prev_branch=-1;
+			while((branch_ret>=0) &&(branch_ret!=prev_branch)){
+				prev_branch=branch_ret;
+				branch_ret=t_send_branch(t, branch_ret, t->uas.request , 0, 0);
+			}
+#if 0
+			if (branch_ret>=0){
+				added_branches=1<<branch_ret;
+				/* success */
+				for (i=branch_ret; i<t->nr_of_outgoings; i++) {
+					if (added_branches & (1<<i)) {
+						branch_ret=t_send_branch(t, i, t->uas.request , 0, 0);
+						if ((branch_ret>=0) && (branch_ret!=i)){
+							/* no send, but new branch */
+							added_branches |= 1<<branch_ret;
+						}
+					}
+				}
+			}
+#endif
+		}
+#endif
 	}
-
 	fake_reply(t, r_buf->branch, reply_code );
 }
 

@@ -213,6 +213,15 @@ static struct cmd_alias cmd_aliases[]={
 	{	"serversion",	"core.version",			0			},
 	{	"who",			"ctl.who",				"[%v] %v: %v %v -> %v %v\n"},
 	{	"listen",		"ctl.listen",			"[%v] %v: %v %v\n"},
+	{	"dns_mem_info",		"dns.mem_info",			"%v / %v\n"},
+	{	"dns_debug",	"dns.debug",			
+					"%v (%v): size=%v ref=%v expire=%vs last=%vs ago f=%v\n"},
+	{	"dns_debug_all",	"dns.debug_all",			
+			"%v (%v) [%v]: size=%v ref=%v expire=%vs last=%vs ago f=%v\n"
+			"\t\t%v:%v expire=%vs f=%v\n"},
+	{	"dst_blacklist_mem_info",	"dst_blacklist.mem_info",	"%v / %v\n"},
+	{	"dst_blacklist_debug",		"dst_blacklist.debug",	
+		"%v:%v:%v expire:%v flags: %v\n"},
 	{0,0,0}
 };
 

@@ -36,6 +36,7 @@
  *             with flags (bogdan)
  * 2004-08-23  avp support added - avp list linked in transaction (bogdan)
  * 2005-11-03  updated to the new timer interface (dropped tm timers) (andrei)
+ * 2006-08-11  dns failover support (andrei)
  */
 
 #include "defs.h"
@@ -65,7 +66,9 @@ struct retr_buf;
 #include "sip_msg.h"
 #include "t_reply.h"
 #include "t_hooks.h"
-#include "../../timer.h"
+#ifdef USE_DNS_FAILOVER
+#include "../../dns_cache.h"
+#endif
 
 #define LOCK_HASH(_h) lock_hash((_h))
 #define UNLOCK_HASH(_h) unlock_hash((_h))
@@ -146,6 +149,8 @@ typedef struct ua_server
 
 typedef struct ua_client
 {
+	/* if we store a reply (branch picking), this is where it is */
+	struct sip_msg  *reply;
 	struct retr_buf  request;
 	/* we maintain a separate copy of cancel rather than
 	   reuse the structure for original request; the 
@@ -156,9 +161,10 @@ typedef struct ua_client
 	struct retr_buf local_cancel;
 	/* pointer to retransmission buffer where uri is printed;
 	   good for generating ACK/CANCEL */
+#ifdef USE_DNS_FAILOVER
+	struct dns_srv_handle dns_h;
+#endif
 	str              uri;
-	/* if we store a reply (branch picking), this is where it is */
-	struct sip_msg  *reply;
 	/* if we don't store, we at least want to know the status */
 	int             last_received;
 }ua_client_type;

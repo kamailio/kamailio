@@ -61,6 +61,7 @@
  *               parent & once in the child to avoid a short window when one
  *               of them might use it "unset" (andrei)
  *  2005-07-25  use sigaction for setting the signal handlers (andrei)
+ *  2006-07-13  added dns cache/failover init. (andrei)
  */
 
 
@@ -129,6 +130,12 @@
 #include "core_cmd.h"
 #include "flags.h"
 #include "atomic_ops_init.h"
+#ifdef USE_DNS_CACHE
+#include "dns_cache.h"
+#endif
+#ifdef USE_DST_BLACKLIST
+#include "dst_blacklist.h"
+#endif
 
 #include "stats.h"
 
@@ -299,6 +306,13 @@ int reply_to_via=0;
 int mcast_loopback = 0;
 int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 #endif /* USE_MCAST */
+#ifdef USE_DNS_CACHE
+int use_dns_cache=1; /* 1 if the cache is enabled, 0 otherwise */
+int use_dns_failover=0; /* 1 if failover is enabled, 0 otherwise */
+#endif
+#ifdef USE_DST_BLACKLIST
+int use_dst_blacklist=0; /* 1 if the blacklist is enabled */
+#endif
 
 int tos = IPTOS_LOWDELAY;
 
@@ -355,6 +369,8 @@ int process_count = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
+int cfg_warnings=0;
+
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
@@ -386,6 +402,12 @@ void cleanup(show_status)
 					 some process crashed and let it locked; this will
 					 allow an almost gracious shutdown */
 	destroy_modules();
+#ifdef USE_DNS_CACHE
+	destroy_dns_cache();
+#endif
+#ifdef USE_DST_BLACKLIST
+	destroy_dst_blacklist();
+#endif
 #ifdef USE_TCP
 	destroy_tcp();
 #endif
@@ -1210,13 +1232,16 @@ int main(int argc, char** argv)
 	int ret;
 	unsigned int seed;
 	int rfd;
-	int debug_save, debug_flag = 0;
-	int dont_fork_cnt = 0;
+	int debug_save, debug_flag;
+	int dont_fork_cnt;
+	int socket_types;
 
 	/*init*/
 	creator_pid = getpid();
 	ret=-1;
 	my_argc=argc; my_argv=argv;
+	debug_flag=0;
+	dont_fork_cnt=0;
 
 	/*init pkg mallocs (before parsing cfg or cmd line !)*/
 	if (init_pkg_mallocs()==-1)
@@ -1360,6 +1385,9 @@ try_again:
 	if ((yyparse()!=0)||(cfg_errors)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		goto error;
+	}
+	if (cfg_warnings){
+		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
 	if (debug_flag) debug = debug_save;
 	print_rls();
@@ -1517,9 +1545,14 @@ try_again:
 			goto error;
 		}
 	}
-	if (fix_all_socket_lists()!=0){
+	if (fix_all_socket_lists(&socket_types)!=0){
 		fprintf(stderr,  "failed to initialize list addresses\n");
 		goto error;
+	}
+	if (dns_try_ipv6 && !(socket_types & SOCKET_T_IPV6)){
+		/* if we are not listening on any ipv6 address => no point
+		 * to try to resovle ipv6 addresses */
+		dns_try_ipv6=0;
 	}
 	/* print all the listen addresses */
 	printf("Listening on \n");
@@ -1560,7 +1593,20 @@ try_again:
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");
 		goto error;
 	}
-
+#ifdef USE_DNS_CACHE
+	if (init_dns_cache()<0){
+		LOG(L_CRIT, "could not initialize the dns cache, exiting...\n");
+		goto error;
+	}
+	if (use_dns_cache==0)
+		use_dns_failover=0; /* cannot work w/o dns_cache support */
+#endif
+#ifdef USE_DST_BLACKLIST
+	if (init_dst_blacklist()<0){
+		LOG(L_CRIT, "could not initialize the dst blacklist, exiting...\n");
+		goto error;
+	}
+#endif
 	if (init_avps()<0) goto error;
 	if (rpc_init_time() < 0) goto error;
 

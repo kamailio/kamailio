@@ -39,6 +39,40 @@
 #include "tcp_info.h"
 #include "core_cmd.h"
 
+#ifdef USE_DNS_CACHE
+void dns_cache_debug(rpc_t* rpc, void* ctx);
+void dns_cache_debug_all(rpc_t* rpc, void* ctx);
+void dns_cache_mem_info(rpc_t* rpc, void* ctx);
+
+static const char* dns_cache_mem_info_doc[] = {
+	"dns cache memory info.",    /* Documentation string */
+	0                      /* Method signature(s) */
+};
+static const char* dns_cache_debug_doc[] = {
+	"dns debug  info.",    /* Documentation string */
+	0                      /* Method signature(s) */
+};
+
+static const char* dns_cache_debug_all_doc[] = {
+	"complete dns debug  dump",    /* Documentation string */
+	0                              /* Method signature(s) */
+};
+#endif
+#ifdef USE_DST_BLACKLIST
+void dst_blst_debug(rpc_t* rpc, void* ctx);
+void dst_blst_mem_info(rpc_t* rpc, void* ctx);
+
+static const char* dst_blst_mem_info_doc[] = {
+	"dst blacklist memory usage info.",  /* Documentation string */
+	0                                    /* Method signature(s) */
+};
+static const char* dst_blst_debug_doc[] = {
+	"dst blacklist  debug  info.",  /* Documentation string */
+	0                               /* Method signature(s) */
+};
+#endif
+
+
 
 #define MAX_CTIME_LEN 128
 
@@ -312,6 +346,15 @@ rpc_export_t core_rpc_methods[] = {
 	{"core.kill",              core_kill,              core_kill_doc,              0        },
 	{"core.shmmem",            core_shmmem,            core_shmmem_doc,            0	},
 	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,          0	},
+#ifdef USE_DNS_CACHE
+	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
+	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,        0	},
+	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,        0	},
+#endif
+#ifdef USE_DST_BLACKLIST
+	{"dst_blacklist.mem_info",  dst_blst_mem_info,     dst_blst_mem_info_doc,     0	},
+	{"dst_blacklist.debug",    dst_blst_debug,         dst_blst_debug_doc,        0	},
+#endif
 	{0, 0, 0, 0}
 };
 

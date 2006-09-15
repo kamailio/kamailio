@@ -50,6 +50,8 @@
  *              pkg_malloc'ed (andrei)
  *  2006-04-12  forward_{request,reply} use now struct dest_info (andrei)
  *  2006-04-21  basic comp via param support (andrei)
+ *  2006-07-31  forward_request can resolve destination on its own, uses the 
+ *              dns cache and falls back on send error to other ips (andrei)
  */
 
 
@@ -80,6 +82,13 @@
 #include "name_alias.h"
 #include "socket_info.h"
 #include "onsend.h"
+#include "resolve.h"
+#ifdef USE_DNS_FAILOVER
+#include "dns_cache.h"
+#endif
+#ifdef USE_DST_BLACKLIST
+#include "dst_blacklist.h"
+#endif
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -265,32 +274,64 @@ found:
 /* forwards a request to dst
  * parameters:
  *   msg       - sip msg
+ *   dst       - destination name, if non-null it will be resolved and
+ *               send_info updated with the ip/port. Even if dst is non
+ *               null send_info must contain the protocol and if a non
+ *               default port or non srv. lookup is desired, the port must
+ *               be !=0 
+ *   port      - used only if dst!=0 (else the port in send_info->to is used)
  *   send_info - filled dest_info structure:
  *               if the send_socket memeber is null, a send_socket will be 
  *               choosen automatically
- * WARNING: don' forget to zero-fill all the  unused members (a non-zero 
+ * WARNING: don't forget to zero-fill all the  unused members (a non-zero 
  * random id along with proto==PROTO_TCP can have bad consequences, same for
- *   a bogus send_socket vaule)
+ *   a bogus send_socket value)
  */
-int forward_request(struct sip_msg* msg, struct dest_info* send_info)
+int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
+							struct dest_info* send_info)
 {
 	unsigned int len;
 	char* buf;
 	char md5[MD5_LEN];
+	struct socket_info* orig_send_sock; /* initial send_sock */
+	int ret;
+	struct ip_addr ip; /* debugging only */
+#ifdef USE_DNS_FAILOVER
+	struct socket_info* prev_send_sock;
+	int err;
+	struct dns_srv_handle dns_srv_h;
+	
+	prev_send_sock=0;
+	err=0;
+#endif
+	
 	
 	buf=0;
-	
-	if (send_info->send_sock==0)
-		send_info->send_sock=get_send_socket(msg, &send_info->to,
-												send_info->proto);
-	if (send_info->send_sock==0){
-		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
-				"no corresponding listening socket\n",
-				send_info->to.s.sa_family, send_info->proto);
-		ser_error=E_NO_SOCKET;
-		goto error;
-	}
+	orig_send_sock=send_info->send_sock;
+	ret=0;
 
+	if(dst){
+#ifdef USE_DNS_FAILOVER
+		if (use_dns_failover){
+			dns_srv_handle_init(&dns_srv_h);
+			err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
+									send_info->proto, dns_flags);
+			if (err!=0){
+				LOG(L_ERR, "ERROR: forward_request: resolving \"%.*s\""
+						" failed: %s [%d]\n", dst->len, ZSW(dst->s),
+						dns_strerror(err), err);
+				ret=E_BAD_ADDRESS;
+				goto error;
+			}
+		}else
+#endif
+		if (sip_hostport2su(&send_info->to, dst, port, send_info->proto)<0){
+			LOG(L_ERR, "ERROR: forward_request: bad host name %.*s,"
+						" dropping packet\n", dst->len, ZSW(dst->s));
+			ret=E_BAD_ADDRESS;
+			goto error;
+		}
+	}/* dst */
 	/* calculate branch for outbound request;  if syn_branch is turned off,
 	   calculate is from transaction key, i.e., as an md5 of From/To/CallID/
 	   CSeq exactly the same way as TM does; good for reboot -- than messages
@@ -306,48 +347,130 @@ int forward_request(struct sip_msg* msg, struct dest_info* send_info)
 	} else {
 		if (!char_msg_val( msg, md5 )) 	{ /* parses transaction key */
 			LOG(L_ERR, "ERROR: forward_request: char_msg_val failed\n");
+			ret=E_UNSPEC;
 			goto error;
 		}
 		msg->hash_index=hash( msg->callid->body, get_cseq(msg)->number);
 		if (!branch_builder( msg->hash_index, 0, md5, 0 /* 0-th branch */,
 					msg->add_to_branch_s, &msg->add_to_branch_len )) {
 			LOG(L_ERR, "ERROR: forward_request: branch_builder failed\n");
+			ret=E_UNSPEC;
 			goto error;
 		}
 	}
-
-	buf = build_req_buf_from_sip_req(msg, &len, send_info);
-	if (!buf){
-		LOG(L_ERR, "ERROR: forward_request: building failed\n");
+	/* try to send the message until success or all the ips are exhausted
+	 *  (if dns lookup is peformed && the dns cache used ) */
+#ifdef USE_DNS_FAILOVER
+	do{
+#endif
+		if (orig_send_sock==0) /* no forced send_sock => find it **/
+			send_info->send_sock=get_send_socket(msg, &send_info->to,
+												send_info->proto);
+		if (send_info->send_sock==0){
+			LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
+						"no corresponding listening socket\n",
+						send_info->to.s.sa_family, send_info->proto);
+			ret=ser_error=E_NO_SOCKET;
+#ifdef USE_DNS_FAILOVER
+			/* continue, maybe we find a socket for some other ip */
+			continue;
+#else
+			goto error;
+#endif
+		}
+	
+#ifdef USE_DNS_FAILOVER
+		if (prev_send_sock!=send_info->send_sock){
+			/* rebuild the message only if the send_sock changed */
+			prev_send_sock=send_info->send_sock;
+#endif
+			if (buf) pkg_free(buf);
+			buf = build_req_buf_from_sip_req(msg, &len, send_info);
+			if (!buf){
+				LOG(L_ERR, "ERROR: forward_request: building failed\n");
+				ret=E_OUT_OF_MEM; /* most probable */
+				goto error;
+			}
+#ifdef USE_DNS_FAILOVER
+		}
+#endif
+		 /* send it! */
+		DBG("Sending:\n%.*s.\n", (int)len, buf);
+		DBG("orig. len=%d, new_len=%d, proto=%d\n",
+				msg->len, len, send_info->proto );
+	
+		if (run_onsend(msg, send_info, buf, len)==0){
+			su2ip_addr(&ip, &send_info->to);
+			LOG(L_INFO, "forward_request: request to %s:%d(%d) dropped"
+					" (onsend_route)\n", ip_addr2a(&ip),
+						su_getport(&send_info->to), send_info->proto);
+			ser_error=E_OK; /* no error */
+			ret=E_ADM_PROHIBITED;
+#ifdef USE_DNS_FAILOVER
+			continue; /* try another ip */
+#else
+			goto error; /* error ? */
+#endif
+		}
+#ifdef USE_DST_BLACKLIST
+		if (use_dst_blacklist){
+			if (dst_is_blacklisted(send_info)){
+				su2ip_addr(&ip, &send_info->to);
+				LOG(L_ERR, "ERROR: blacklisted destination:%s:%d (%d)\n",
+							ip_addr2a(&ip), su_getport(&send_info->to),
+							send_info->proto);
+				ret=ser_error=E_SEND;
+#ifdef USE_DNS_FAILOVER
+				continue; /* try another ip */
+#else
+				goto error;
+#endif
+			}
+		}
+#endif
+		if (msg_send(send_info, buf, len)<0){
+			ret=ser_error=E_SEND;
+#ifdef USE_DST_BLACKLIST
+			if (use_dst_blacklist)
+				dst_blacklist_add(BLST_ERR_SEND, send_info);
+#endif
+#ifdef USE_DNS_FAILOVER
+			continue; /* try another ip */
+#else
+			goto error;
+#endif
+		}else{
+			ret=ser_error=E_OK;
+			/* sent requests stats */
+			STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
+			/* exit succcesfully */
+			goto end;
+		}
+#ifdef USE_DNS_FAILOVER
+	}while(dst && use_dns_failover && dns_srv_handle_next(&dns_srv_h, err) && 
+			((err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
+								  send_info->proto, dns_flags))==0));
+	if ((err!=0) && (err!=-E_DNS_EOR)){
+		LOG(L_ERR, "ERROR:  resolving %.*s host name in uri"
+							" failed: %s [%d] (dropping packet)\n",
+									dst->len, ZSW(dst->s),
+									dns_strerror(err), err);
+		ret=ser_error=E_BAD_ADDRESS;
 		goto error;
 	}
-	 /* send it! */
-	DBG("Sending:\n%.*s.\n", (int)len, buf);
-	DBG("orig. len=%d, new_len=%d, proto=%d\n",
-			msg->len, len, send_info->proto );
+#endif
 	
-	if (run_onsend(msg, send_info, buf, len)==0){
-		LOG(L_INFO, "forward_request: request dropped (onsend_route)\n");
-		STATS_TX_DROPS;
-		ser_error=E_OK; /* no error */
-		goto error; /* error ? */
-	}
-	if (msg_send(send_info, buf, len)<0){
-		ser_error=E_SEND;
-		STATS_TX_DROPS;
-		goto error;
-	}
-	
-	/* sent requests stats */
-	STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
-	
-	pkg_free(buf);
-	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
-	return 0;
-
 error:
+	STATS_TX_DROPS;
+end:
+#ifdef USE_DNS_FAILOVER
+	if (dst && use_dns_failover){
+				dns_srv_handle_put(&dns_srv_h);
+	}
+#endif
 	if (buf) pkg_free(buf);
-	return -1;
+	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
+	return ret;
 }
 
 

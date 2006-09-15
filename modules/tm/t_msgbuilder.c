@@ -40,6 +40,8 @@
  * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  * 2006-04-21  build_uac_req, assemble_via use struct dest_info now;
  *              uri2sock replaced with uri2dst (andrei)
+ * 2006-08-11  build_dlg_ack: use the first dns ip for which a send_sock
+ *              is found (andrei)
  */
 
 #include "defs.h"
@@ -57,6 +59,9 @@
 #include "../../parser/contact/parse_contact.h"
 #include "t_msgbuilder.h"
 #include "uac.h"
+#ifdef USE_DNS_FAILOVER
+#include "../../dns_cache.h"
+#endif
 
 
 #define ROUTE_PREFIX "Route: "
@@ -359,7 +364,7 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
       * The function creates an ACK to 200 OK. Route set will be created
       * and parsed and next_hop parameter will contain the uri to which the
       * request should be send. The function is used by tm when it generates
-      * local ACK to 200 OK (on behalf of applications using uac
+      * local ACK to 200 OK (on behalf of applications using uac)
       */
 char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch,
 		    str* to, unsigned int *len, str *next_hop)
@@ -373,6 +378,9 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	struct rte* list;
 	str contact, ruri, *cont;
 	struct dest_info dst;
+#ifdef USE_DNS_FAILOVER
+	struct dns_srv_handle dns_h;
+#endif
 	
 	if (get_contact_uri(rpl, &contact) < 0) {
 		return 0;
@@ -399,11 +407,30 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	*len += ruri.len;
 	
 	
-	     /* via */
-	if ((uri2dst(&dst, rpl, next_hop, PROTO_NONE)==0) || (dst.send_sock==0)){
+	 /* via */
+#ifdef USE_DNS_FAILOVER
+	if (use_dns_failover){
+		dns_srv_handle_init(&dns_h);
+		if ((uri2dst(&dns_h , &dst, rpl, next_hop, PROTO_NONE)==0) ||
+				(dst.send_sock==0)){
+			dns_srv_handle_put(&dns_h);
+			LOG(L_ERR, "build_dlg_ack: no socket found\n");
+			goto error;
+		}
+		dns_srv_handle_put(&dns_h); /* not needed any more */
+	}else{
+		if ((uri2dst(0 , &dst, rpl, next_hop, PROTO_NONE)==0) ||
+				(dst.send_sock==0)){
+			LOG(L_ERR, "build_dlg_ack: no socket found\n");
+			goto error;
+		}
+	}
+#else
+	if ( (uri2dst( &dst, rpl, next_hop, PROTO_NONE)==0) || (dst.send_sock==0)){
 			LOG(L_ERR, "build_dlg_ack: no socket found\n");
 		goto error;
 	}
+#endif
 	
 	if (!t_calc_branch(Trans,  branch, branch_buf, &branch_len)) goto error;
 	branch_str.s = branch_buf;

@@ -517,8 +517,9 @@ error:
 
 
 /* fixes a socket list => resolve addresses, 
- * interface names, fills missing members, remove duplicates */
-static int fix_socket_list(struct socket_info **list)
+ * interface names, fills missing members, remove duplicates
+ * fills type_flags if not null with SOCKET_T_IPV4 and/or SOCKET_T_IPV6*/
+static int fix_socket_list(struct socket_info **list, int* type_flags)
 {
 	struct socket_info* si;
 	struct socket_info* l;
@@ -528,9 +529,10 @@ static int fix_socket_list(struct socket_info **list)
 	struct hostent* he;
 	char** h;
 	
+	if (type_flags)
+		*type_flags=0;
 	/* try to change all the interface names into addresses
 	 *  --ugly hack */
-	
 	for (si=*list;si;){
 		next=si->next;
 		if (add_interfaces(si->name.s, AF_INET, si->port_no,
@@ -598,6 +600,9 @@ static int fix_socket_list(struct socket_info **list)
 			}
 		hostent2ip_addr(&si->address, he, 0); /*convert to ip_addr 
 														 format*/
+		if (type_flags){
+			*type_flags|=(si->address.af==AF_INET)?SOCKET_T_IPV4:SOCKET_T_IPV6;
+		}
 		if ((tmp=ip_addr2a(&si->address))==0) goto error;
 		si->address_str.s=(char*)pkg_malloc(strlen(tmp)+1);
 		if (si->address_str.s==0){
@@ -707,11 +712,15 @@ error:
 
 
 
-/* fix all 3 socket lists
+/* fix all 3 socket lists, fills socket_types if non-null
  * return 0 on success, -1 on error */
-int fix_all_socket_lists()
+int fix_all_socket_lists(int* socket_types)
 {
 	struct utsname myname;
+	int flags;
+	
+	if (socket_types)
+		*socket_types=0;
 	
 	if ((udp_listen==0)
 #ifdef USE_TCP
@@ -752,22 +761,31 @@ int fix_all_socket_lists()
 			}
 		}
 	}
-	if (fix_socket_list(&udp_listen)!=0){
+	if (fix_socket_list(&udp_listen, &flags)!=0){
 		LOG(L_ERR, "ERROR: fix_all_socket_lists: fix_socket_list"
 				" udp failed\n");
 		goto error;
 	}
+	if (flags && socket_types){
+		*socket_types|=flags|SOCKET_T_UDP;
+	}
 #ifdef USE_TCP
-	if (!tcp_disable && (fix_socket_list(&tcp_listen)!=0)){
+	if (!tcp_disable && (fix_socket_list(&tcp_listen, &flags)!=0)){
 		LOG(L_ERR, "ERROR: fix_all_socket_lists: fix_socket_list"
 				" tcp failed\n");
 		goto error;
 	}
+	if (flags && socket_types){
+		*socket_types|=flags|SOCKET_T_TCP;
+	}
 #ifdef USE_TLS
-	if (!tls_disable && (fix_socket_list(&tls_listen)!=0)){
+	if (!tls_disable && (fix_socket_list(&tls_listen, &flags)!=0)){
 		LOG(L_ERR, "ERROR: fix_all_socket_lists: fix_socket_list"
 				" tls failed\n");
 		goto error;
+	}
+	if (flags && socket_types){
+		*socket_types|=flags|SOCKET_T_TLS;
 	}
 #endif
 #endif

@@ -41,6 +41,7 @@
  *             timer_link.payload removed (bogdan)
  * 2004-08-23  avp support added - move and remove avp list to/from
  *             transactions (bogdan)
+ * 2006-08-11  dns failover support (andrei)
  */
 
 #include <stdlib.h>
@@ -148,6 +149,22 @@ void free_cell( struct cell* dead_cell )
 		if (rpl && rpl!=FAKED_REPLY && rpl->msg_flags&FL_SHM_CLONE) {
 			sip_msg_free_unsafe( rpl );
 		}
+#ifdef USE_DNS_FAILOVER
+		if (dead_cell->uac[i].dns_h.a){
+			DBG("branch %d -> dns_h.srv (%.*s) ref=%d,"
+							" dns_h.a (%.*s) ref=%d\n", i,
+					dead_cell->uac[i].dns_h.srv?
+								dead_cell->uac[i].dns_h.srv->name_len:0,
+					dead_cell->uac[i].dns_h.srv?
+								dead_cell->uac[i].dns_h.srv->name:"",
+					dead_cell->uac[i].dns_h.srv?
+								dead_cell->uac[i].dns_h.srv->refcnt.val:0,
+					dead_cell->uac[i].dns_h.a->name_len,
+					dead_cell->uac[i].dns_h.a->name,
+					dead_cell->uac[i].dns_h.a->refcnt.val);
+		}
+		dns_srv_handle_put_shm_unsafe(&dead_cell->uac[i].dns_h);
+#endif
 	}
 
 	/* collected to tags */
@@ -220,6 +237,9 @@ static void inline init_branches(struct cell *t)
 		uac->request.branch = i;
 		init_rb_timers(&uac->request);
 		uac->local_cancel=uac->request;
+#ifdef USE_DNS_FAILOVER
+		dns_srv_handle_init(&uac->dns_h);
+#endif
 	}
 }
 

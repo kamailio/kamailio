@@ -44,6 +44,9 @@
  *              desable variable timer feature (bogdan)
  *  2005-12-11  t_relay doesn't return 0 (stop script) on send error 
  *              anymore (andrei)
+ *  2006-08-11  updated forward_request usage (andrei)
+ *              t_relay_to releases the transaction if t_forward_non_ack
+ *              fails and t_kill fails or this is a failed replication (andrei)
  */
 
 #include <limits.h>
@@ -198,11 +201,13 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 {
 	int ret;
 	int new_tran;
-	str *uri;
 	int reply_ret;
 	/* struct hdr_field *hdr; */
 	struct cell *t;
 	struct dest_info dst;
+	unsigned short port;
+	str host;
+	short comp;
 
 	ret=0;
 	
@@ -233,19 +238,26 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
 		DBG( "SER: forwarding ACK  statelessly \n");
 		if (proxy==0) {
-			uri = GET_RURI(p_msg);
-			if (uri2dst(&dst, p_msg, GET_NEXT_HOP(p_msg), proto)==0){
+			init_dest_info(&dst);
+			dst.proto=proto;
+			if (get_uri_send_info(GET_NEXT_HOP(p_msg), &host, &port,
+									&dst.proto, &comp)!=0){
 				ret=E_BAD_ADDRESS;
 				goto done;
 			}
-			ret=forward_request( p_msg , &dst) ;
+#ifdef USE_COMP
+			dst.comp=comp;
+#endif
+			/* dst->send_sock not set, but forward_request will take care
+			 * of it */
+			ret=forward_request(p_msg, &host, port, &dst);
 		} else {
 			init_dest_info(&dst);
 			dst.proto=get_proto(proto, proxy->proto);
 			proxy2su(&dst.to, proxy);
 			/* dst->send_sock not set, but forward_request will take care
 			 * of it */
-			ret=forward_request( p_msg , &dst) ;
+			ret=forward_request( p_msg , 0, 0, &dst) ;
 		}
 		goto done;
 	}
@@ -282,7 +294,10 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			}  else {
 				DBG("ERROR: generation of a stateful reply "
 					"on error failed\n");
+				t_release_transaction(t);
 			}
+		}else{
+			t_release_transaction(t); /* kill it  silently */
 		}
 	} else {
 		DBG( "SER: new transaction fwd'ed\n");

@@ -46,6 +46,10 @@
 
 /* adds an entire sublist { s,e } (including s & e )
  * after head
+ * WARNING: clist_insert_sublist(head, n, n->prev) won't work,
+ *          same for clist_insert_sublist(head, n->next, n)
+ *  (macro!), use  e=n->prev; clist_insert_sublist(head, n, e, ...)
+ *  instead!
  */
 #define clist_insert_sublist(head, s, e, next, prev) \
 	do{ \
@@ -59,6 +63,9 @@
 
 /* appends an entire sublist { s,e } (including s & e )
  * at the end of the list
+ * WARNING: clist_append_sublist(head, n, n->prev, ...) won't work,
+ *  (macro!), use  e=n->prev; clist_append_sublist(head, n, e, ...)
+ *  instead!
  */
 #define clist_append_sublist(head, s, e, next, prev) \
 	do{ \
@@ -70,9 +77,13 @@
 
 
 
+
 /* remove sublist { s,e } (including s & e )
  * always, if start is the beginning of the list use
- * clist_rm_sublist(head->next, e, next, prev ) */
+ * clist_rm_sublist(head->next, e, next, prev )
+ * WARNING: clist_rm_sublist(n, n->prev, ...) won't work,
+ *  (macro!), use  e=n->prev; clist_rm_sublist(n, e, ...)
+ *  instead! */
 #define clist_rm_sublist(s, e, next, prev) \
 	do{\
 		(s)->prev->next=(e)->next;  \

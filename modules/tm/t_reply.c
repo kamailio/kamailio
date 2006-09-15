@@ -68,6 +68,9 @@
  *               in t_retransmit_reply & reply_light (andrei)
  *  2005-11-09  updated to the new timers interface (andrei)
  *  2006-02-07  named routes support (andrei)
+ *  2006-09-13  t_pick_branch will skip also over branches with empty reply 
+ *              t_should_relay_response will re-pick the branch if failure 
+ *               route /handlers added new branches (andrei)
  */
 
 
@@ -317,15 +320,37 @@ static int send_local_ack(struct sip_msg* msg, str* next_hop,
 							char* ack, int ack_len)
 {
 	struct dest_info dst;
+#ifdef USE_DNS_FAILOVER
+	struct dns_srv_handle dns_h;
+#endif
 
 	if (!next_hop) {
 		LOG(L_ERR, "send_local_ack: Invalid parameter value\n");
 		return -1;
 	}
+#ifdef USE_DNS_FAILOVER
+	if (use_dns_failover){
+		dns_srv_handle_init(&dns_h);
+		if ((uri2dst(&dns_h, &dst, msg,  next_hop, PROTO_NONE)==0) || 
+				(dst.send_sock==0)){
+			dns_srv_handle_put(&dns_h);
+			LOG(L_ERR, "send_local_ack: no socket found\n");
+			return -1;
+		}
+		dns_srv_handle_put(&dns_h); /* not needed anymore */
+	}else{
+		if ((uri2dst(0, &dst, msg,  next_hop, PROTO_NONE)==0) || 
+				(dst.send_sock==0)){
+			LOG(L_ERR, "send_local_ack: no socket found\n");
+			return -1;
+		}
+	}
+#else
 	if ((uri2dst(&dst, msg,  next_hop, PROTO_NONE)==0) || (dst.send_sock==0)){
 		LOG(L_ERR, "send_local_ack: no socket found\n");
 		return -1;
 	}
+#endif
 	return msg_send(&dst, ack, ack_len);
 }
 
@@ -701,7 +726,8 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 		/* there is still an unfinished UAC transaction; wait now! */
 		if ( t->uac[b].last_received<200 )
 			return -2;
-		if ( t->uac[b].last_received<lowest_s ) {
+		/* if reply is null => t_send_branch "faked" reply, skip over it */
+		if ( t->uac[b].last_received<lowest_s && t->uac[b].reply ) {
 			lowest_b =b;
 			lowest_s = t->uac[b].last_received;
 		}
@@ -729,6 +755,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int branch_cnt;
 	int picked_branch;
 	int picked_code;
+	int new_branch;
 	int inv_through;
 
 	/* note: this code never lets replies to CANCEL go through;
@@ -807,9 +834,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 		|| Trans->on_negative ) {
-			run_failure_handlers( Trans,
-				Trans->uac[picked_branch].reply,
-				picked_code);
+			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
+									picked_code);
 		}
 
 		/* now reset it; after the failure logic, the reply may
@@ -834,11 +860,21 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			return RPS_COMPLETED;
 		}
 		/* look if the callback/failure_route introduced new branches ... */
-		if (branch_cnt<Trans->nr_of_outgoings)  {
-			/* await then result of new branches */
-			*should_store=1;
-			*should_relay=-1;
-			return RPS_STORE;
+		if (branch_cnt<Trans->nr_of_outgoings){
+			/* the new branches might be already "finished" => we
+			 * must use t_pick_branch again */
+			new_branch=t_pick_branch(branch, new_code, Trans, &picked_code);
+			if (new_branch<0){
+				if (new_branch==-2) { /* branches open yet */
+					*should_store=1;
+					*should_relay=-1;
+					return RPS_STORE;
+				}
+				/* error, use the old picked_branch */
+			}else{
+				/* found a new_branch */
+				picked_branch=new_branch;
+			}
 		}
 
 		/* really no more pending branches -- return lowest code */

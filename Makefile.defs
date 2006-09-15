@@ -66,7 +66,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev42
+EXTRAVERSION = -dev43-dns_cache
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -339,6 +339,14 @@ endif
 #		compiles in checks and use for maddr parameter in uri.
 #		Required to support Windows Messenger 5.x over TCP connection
 #		which (mis)uses this parameter.
+# -DUSE_DNS_CACHE
+#		use an internal dns cache instead of making dns requests each time
+# -DUSE_DNS_FAILOVER
+#		if the destination resolves to multiple ips, on send error fall back
+#		to the others
+# -DUSE_DST_BLACKLIST
+#		blacklist bad destination (timeout, failed to connect, error sending
+#        a.s.o)
 
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
@@ -356,6 +364,9 @@ DEFS+= $(extra_defs) \
 	 -DDISABLE_NAGLE \
 	 -DHAVE_RESOLV_RES \
 	 -DDBG_QM_MALLOC \
+	 -DUSE_DNS_CACHE \
+	 -DUSE_DNS_FAILOVER \
+	 -DUSE_DST_BLACKLIST \
 	 #-DF_MALLOC \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
@@ -1092,7 +1103,6 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, ppc 
 
-CFLAGS+= $(CC_EXTRA_OPTS)
 
 
 # setting LDFLAGS
@@ -1122,6 +1132,7 @@ endif
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align $(PROFILE)
+		DEFS+=-DCC_GCC_LIKE_ASM
 ifeq		($(ARCH), sparc64)
 			DEFS+=SPARC64_MODE
 			CFLAGS+= -mcpu=ultrasparc -m64
@@ -1138,6 +1149,7 @@ else
 endif
 endif
 ifeq	($(CC_NAME), icc)
+		DEFS+=-DCC_GCC_LIKE_ASM
 		CFLAGS=-g  $(PROFILE)
 		LDFLAGS+=-g -Wl,-E $(PROFILE)
 		MOD_LDFLAGS=-shared $(LDFLAGS)
@@ -1150,6 +1162,7 @@ endif
 
 endif #mode=release
 
+CFLAGS+= $(CC_EXTRA_OPTS)
 
 #*FLAGS used for compiling the modules
 ifeq	($(CC_NAME), gcc)

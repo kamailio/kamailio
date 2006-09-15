@@ -38,6 +38,7 @@
 #include "defs.h"
 
 #include "../../proxy.h"
+#include "h_table.h"
 
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
 typedef int (*taddblind_f)( /*struct cell *t */ );
@@ -53,10 +54,17 @@ void e2e_cancel( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell 
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell *t_invite, int branch );
 int add_uac(	struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 				struct proxy_l *proxy, int proto );
+#ifdef USE_DNS_FAILOVER
+int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg, 
+									struct ua_client* old_uac,
+									int lock_replies);
+#endif
 int add_blind_uac( /* struct cell *t */ );
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 						struct proxy_l * p, int proto);
 int t_forward_ack( struct sip_msg* p_msg );
+int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
+					struct proxy_l * proxy, int lock_replies);
 
 
 #endif
