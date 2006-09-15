@@ -75,8 +75,6 @@ esac
 
 if [ $DBENGINELOADED -eq 1 ] ; then 
 	mdbg "database engine '$DBENGINE' loaded"
-else
-	mwarn "no database engine found - tried '$DBENGINE'"
 fi
 
 #

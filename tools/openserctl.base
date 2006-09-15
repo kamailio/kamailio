@@ -87,9 +87,9 @@ mdbg() {
 
 mwarn() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e '\E[37;32m'"\033[1mWARINIG: $1\033[0m"
+		echo -e '\E[37;32m'"\033[1mWARNING: $1\033[0m"
 	else
-		echo "** WARINIG: $1"
+		echo "** WARNING: $1"
 	fi
 }
 
