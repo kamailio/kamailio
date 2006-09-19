@@ -645,15 +645,16 @@ avp_delete("a3");
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>name</emphasis> - which AVP(s) should be pushed
+				<para><emphasis>name</emphasis> - which AVP(s)/pseudo-variable
+				should be pushed
 				into the SIP message.
 				Parameter syntax is:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					name = ( avp_name | avp_alias )['/'flags]
+					name = ( avp_name | avp_alias | pvar_name )['/'flags]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					flags = 'g'
+					flags = 'g' - effective only with AVPs
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -666,6 +667,7 @@ avp_delete("a3");
 				<title><function>avp_pushto</function> usage</title>
 				<programlisting format="linespecific">
 ...
+avp_pushto("$ru/domain","$fd");
 avp_pushto("$ru","$avp(i:678)");
 avp_pushto("$ru/domain","$avp(s:backup_domains)/g");
 avp_pushto("$du","$avp(i:679)");

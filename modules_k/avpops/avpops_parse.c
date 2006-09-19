@@ -661,7 +661,8 @@ struct fis_param* parse_op_value(char *s)
 		ops |= AVPOPS_OP_MUL;
 	} else if (strncasecmp(s,"div",3)==0) {
 		ops |= AVPOPS_OP_DIV;
-		ops |= AVPOPS_OP_FM;
+	} else if (strncasecmp(s,"mod",3)==0) {
+		ops |= AVPOPS_OP_MOD;
 	} else if (strncasecmp(s,"and",3)==0) {
 		ops |= AVPOPS_OP_BAND;
 	} else if (strncasecmp(s,"or",2)==0) {

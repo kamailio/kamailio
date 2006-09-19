@@ -477,16 +477,17 @@ avp_delete("a3");
           + $du - write the AVP in 'dst_uri' field 
           + $br - write the AVP directly as a new branch (does
             not affect RURI) 
-     * name - which AVP(s) should be pushed into the SIP message.
-       Parameter syntax is:
-          + name = ( avp_name | avp_alias )['/'flags] 
-          + flags = 'g' 
+     * name - which AVP(s)/pseudo-variable should be pushed into
+       the SIP message. Parameter syntax is:
+          + name = ( avp_name | avp_alias | pvar_name )['/'flags]
+          + flags = 'g' - effective only with AVPs 
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
    Example 1-19. avp_pushto usage
 ...
+avp_pushto("$ru/domain","$fd");
 avp_pushto("$ru","$avp(i:678)");
 avp_pushto("$ru/domain","$avp(s:backup_domains)/g");
 avp_pushto("$du","$avp(i:679)");
