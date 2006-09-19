@@ -1,0 +1,51 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "sst_user.sgml">
+<!ENTITY devel SYSTEM "sst_devel.sgml">
+<!ENTITY faq SYSTEM "sst_faq.sgml">
+
+<!-- Include general OpenSER documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>SST Module (SIP Session Timer)</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Ron</firstname>
+		<surname>Winacott</surname>
+		<affiliation><orgname>SOMA Networks, Inc.</orgname></affiliation>
+		<address>
+			<email>ronw@somanetworks.com</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Ron</firstname>
+		<surname>Winacott</surname>
+		<address>
+			<email>ronw@somanetworks.com</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2006</year>
+		<holder>SOMA Networks, Inc.</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&devel;
+	&faq;
+	
+</book>
