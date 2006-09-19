@@ -82,7 +82,7 @@ static int mod_init(void)
 	     /* Signal to the core that we will be creating one
 	      * additional process
 	      */
-	if (fifo) process_count++;
+	if (fifo) register_procs(1);
 	return 0;
 }
 

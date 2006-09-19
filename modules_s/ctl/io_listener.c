@@ -193,7 +193,7 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 	clist_init(&stream_conn_lst, next, prev);
 	type=UNKNOWN_SOCK;
 	/* estimate used fd numbers -- FIXME: broken, make it a function in pt.h */
-	max_fd_no=process_count*3 -1 /* timer */ +3; /* stdin/out/err*/;
+	max_fd_no=get_max_procs()*3 -1 /* timer */ +3; /* stdin/out/err*/;
 	max_fd_no+=fd_no+MAX_IO_READ_CONNECTIONS; /*our listen fds + max.
 												allowed tmp. fds */
 	

@@ -79,9 +79,12 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 void tls_free_domain(tls_domain_t* d)
 {
 	int i;
+	int procs_no;
+	
 	if (!d) return;
 	if (d->ctx) {
-		for(i = 0; i < process_count; i++) {
+		procs_no=get_max_procs();
+		for(i = 0; i < procs_no; i++) {
 			if (d->ctx[i]) SSL_CTX_free(d->ctx[i]);
 		}
 		shm_free(d->ctx);
@@ -188,13 +191,15 @@ static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 static int load_cert(tls_domain_t* d)
 {
 	int i;
+	int procs_no;
 
 	if (!d->cert_file) {
 		DBG("%s: No certificate configured\n", tls_domain_str(d));
 		return 0;
 	}
 
-	for(i = 0; i < process_count; i++) {
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
 		if (!SSL_CTX_use_certificate_chain_file(d->ctx[i], d->cert_file)) {
 			ERR("%s: Unable to load certificate file '%s'\n",
 			    tls_domain_str(d), d->cert_file);
@@ -213,13 +218,15 @@ static int load_cert(tls_domain_t* d)
 static int load_ca_list(tls_domain_t* d)
 {
 	int i;
+	int procs_no;
 
 	if (!d->ca_file) {
 		DBG("%s: No CA list configured\n", tls_domain_str(d));
 		return 0;
 	}
 
-	for(i = 0; i < process_count; i++) {
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
 		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file, 0) != 1) {
 			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d), d->ca_file);
 			TLS_ERR("load_ca_list:");
@@ -242,9 +249,11 @@ static int load_ca_list(tls_domain_t* d)
 static int set_cipher_list(tls_domain_t* d)
 {
 	int i;
+	int procs_no;
 
 	if (!d->cipher_list) return 0;
-	for(i = 0; i < process_count; i++) {
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
 		if (SSL_CTX_set_cipher_list(d->ctx[i], d->cipher_list) == 0 ) {
 			ERR("%s: Failure to set SSL context cipher list\n", tls_domain_str(d));
 			return -1;
@@ -260,6 +269,7 @@ static int set_cipher_list(tls_domain_t* d)
 static int set_verification(tls_domain_t* d)
 {
 	int verify_mode, i;
+	int procs_no;
 
 	if (d->require_cert) {
 		verify_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
@@ -287,7 +297,8 @@ static int set_verification(tls_domain_t* d)
 		}
 	}
 	
-	for(i = 0; i < process_count; i++) {
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
 		SSL_CTX_set_verify(d->ctx[i], verify_mode, 0);
 		SSL_CTX_set_verify_depth(d->ctx[i], d->verify_depth);
 		
@@ -302,7 +313,10 @@ static int set_verification(tls_domain_t* d)
 static int set_ssl_options(tls_domain_t* d)
 {
 	int i;
-	for(i = 0; i < process_count; i++) {
+	int procs_no;
+	
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
 #if OPENSSL_VERSION_NUMBER >= 0x000907000
 		SSL_CTX_set_options(d->ctx[i], 
 				    SSL_OP_ALL | SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION | SSL_OP_CIPHER_SERVER_PREFERENCE);
@@ -321,7 +335,10 @@ static int set_ssl_options(tls_domain_t* d)
 static int set_session_cache(tls_domain_t* d)
 {
 	int i;
-	for(i = 0; i < process_count; i++) {
+	int procs_no;
+	
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
 		     /* janakj: I am not sure if session cache makes sense in ser, session 
 		      * cache is stored in SSL_CTX and we have one SSL_CTX per process, thus 
 		      * sessions among processes will not be reused
@@ -342,16 +359,18 @@ static int set_session_cache(tls_domain_t* d)
 static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 {
 	int i;
+	int procs_no;
 
 	if (fill_missing(d, def) < 0) return -1;
 
-	d->ctx = (SSL_CTX**)shm_malloc(sizeof(SSL_CTX*) * process_count);
+	procs_no=get_max_procs();
+	d->ctx = (SSL_CTX**)shm_malloc(sizeof(SSL_CTX*) * procs_no);
 	if (!d->ctx) {
 		ERR("%s: Cannot allocate shared memory\n", tls_domain_str(d));
 		return -1;
 	}
-	memset(d->ctx, 0, sizeof(SSL_CTX*) * process_count);
-	for(i = 0; i < process_count; i++) {
+	memset(d->ctx, 0, sizeof(SSL_CTX*) * procs_no);
+	for(i = 0; i < procs_no; i++) {
 		d->ctx[i] = SSL_CTX_new(ssl_methods[d->method - 1]);
 		if (d->ctx[i] == NULL) {
 			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
@@ -410,13 +429,15 @@ static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 static int load_private_key(tls_domain_t* d)
 {
 	int idx, ret_pwd, i;
+	int procs_no;
 	
 	if (!d->pkey_file) {
 		DBG("%s: No private key specified\n", tls_domain_str(d));
 		return 0;
 	}
 
-	for(i = 0; i < process_count; i++) {
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
 		SSL_CTX_set_default_passwd_cb(d->ctx[i], passwd_cb);
 		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file);
 		

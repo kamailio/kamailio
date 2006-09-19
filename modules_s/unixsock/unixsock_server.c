@@ -261,56 +261,19 @@ int init_unixsock_children(void)
 	}
 
 	for(i = 0; i < unixsock_children; i++) {
-		last_process++;
-#ifdef USE_TCP
-		if(!tcp_disable){
- 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-				ERR("socketpair failed: %s\n", strerror(errno));
-				return -1;
-			}
-		}
-#endif
-		pid = fork();
+		pid = fork_process(PROC_UNIXSOCK,"unix domain socket",1);
 		if (pid < 0) {
 			ERR("Unable to fork: %s\n", strerror(errno));
 			close(rx_sock);
 			close(tx_sock);
 			return -1;
 		} else if (pid == 0) { /* child */
-			process_no = last_process;
-			is_main = 0;
-#ifdef USE_TCP
-			if (!tcp_disable){
-				close(sockfd[0]);
-				unix_tcp_sock=sockfd[1];
-			}
-#endif
-			/* record pid twice to avoid the child using it, before
-			 * parent gets a chance to set it*/
-			pt[process_no].pid=getpid();
-			if (init_child(PROC_UNIXSOCK) < 0) {
-				ERR("Error in init_child\n");
-				close(rx_sock);
-				close(tx_sock);
-				return -1;
-			}
 			unix_server_loop(); /* Never returns */
 		}
-
-		     /* Parent */
-		pt[last_process].pid = pid;
+		/* Parent */
 		snprintf(pt[last_process].desc, MAX_PT_DESC, 
 			"unix domain socket server @ %s", 
 			 unixsock_name);
-#ifdef USE_TCP
-		if (!tcp_disable){
-			close(sockfd[1]);
-			pt[last_process].unix_sock=sockfd[0];
-			pt[last_process].idx=-1; /* this is not a "tcp"
-									  process*/
-		}
-#endif
-
 	}
 
 	DBG("Unix domain socket server successfully initialized @ %s\n", unixsock_name);

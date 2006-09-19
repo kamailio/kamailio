@@ -8,4 +8,6 @@
 /* port used by default for tcp/udp if no port is explicitely specified */
 #define DEFAULT_CTL_PORT 2049
 
+#define PROC_CTL -32
+
 #endif

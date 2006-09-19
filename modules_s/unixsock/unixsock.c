@@ -80,7 +80,7 @@ static int mod_init(void)
 	     /* Signal to the core that we will be
 	      * creating additional processes
 	      */
-	if (unixsock_name) process_count += unixsock_children;
+	if (unixsock_name) register_procs(unixsock_children);
 	return 0;
 }
 

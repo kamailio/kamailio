@@ -262,7 +262,7 @@ static int mod_init(void)
 	}
 	if (ctrl_sock_lst){
 		/* we will fork */
-		process_count++; /* we will be creating an extra process */
+		register_procs(1); /* we will be creating an extra process */
 	}
 #ifdef USE_FIFO
 	fifo_rpc_init();
@@ -278,41 +278,24 @@ static int mod_child(int rank)
 {
 	int pid;
 	struct ctrl_socket* cs;
-#ifdef USE_TCP
-	int sockfd[2];
-#endif
 	
 	/* we want to fork(), but only from one process */
 	if ((rank == PROC_MAIN ) && (ctrl_sock_lst)){ /* FIXME: no fork ?? */
-#ifdef USE_TCP
-		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-			
-			goto error;
-		}
-#endif
-		last_process++;
-		pid=fork();
-		if (pid<0){
-			
+		DBG("ctl: mod_child(%d), ctrl_sock_lst=%p\n", rank, ctrl_sock_lst);
+		/* fork, but  don't call init_child, we don't want all the module
+		 * to know about us */
+		pid=fork_process(PROC_NOCHLDINIT, "ctl handler",1);
+		DBG("ctl: mod_child(%d), fork_process=%d, csl=%p\n",
+				rank, pid, ctrl_sock_lst);
+		if (pid<0){			
 			goto error;
 		}
 		if (pid == 0){ /* child */
-			process_no=last_process;
 			is_main=0;
-			pt[process_no].pid=getpid();
-#ifdef USE_TCP
-			close(sockfd[0]);
-			unix_tcp_sock=sockfd[1];
-#endif
+			DBG("ctl: %d io_listen_loop(%d, %p)\n",
+					rank, fd_no, ctrl_sock_lst);
 			io_listen_loop(fd_no, ctrl_sock_lst);
 		}else{ /* parent */
-			pt[last_process].pid=pid;
-			snprintf(pt[last_process].desc, MAX_PT_DESC, "ctl handler");
-#ifdef USE_TCP
-			close(sockfd[1]);
-			pt[last_process].unix_sock=sockfd[0];
-			pt[last_process].idx=-1; /* mark it as non-tcp */
-#endif
 		}
 	}
 	/* close all the opened fds, we don't need them here */

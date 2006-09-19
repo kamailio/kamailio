@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 
+
 #define CMD_SEPARATOR ':'
 
 extern char* fifo;

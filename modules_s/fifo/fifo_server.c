@@ -931,56 +931,25 @@ int init_fifo_server(void)
  */
 int start_fifo_server(void)
 {
-#ifdef USE_TCP
-	int sockfd[2];
-#endif
 	if (fifo_stream == 0) return 1; /* no error, we just don't start it */
 
-#ifdef USE_TCP
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-		ERR("socketpair failed: %s\n", strerror(errno));
-		return -1;
-	}
-#endif
-	last_process++;
-	fifo_pid = fork();
+	fifo_pid = fork_process(PROC_FIFO,"fifo server",1);
 	if (fifo_pid < 0) {
 		ERR("Failed to fork: %s\n", strerror(errno));
 		return -1;
 	}
 	if (fifo_pid == 0) { /* child == FIFO server */
-		     /* record pid twice to avoid the child using it, before
-		      * parent gets a chance to set it*/
-		process_no = last_process; /* Initialize process_no to our process number */
 		is_main = 0;
-		pt[process_no].pid = getpid();
 		INFO("fifo process starting: %d\n", getpid());
-		     /* call per-child module initialization too -- some
-		      * FIFO commands may need it
-		      */
-#ifdef USE_TCP
-		close(sockfd[0]);
-		unix_tcp_sock = sockfd[1];
-#endif
-		if (init_child(PROC_FIFO) < 0 ) {
-			ERR("init_child failed\n");
-			return -1;
-		}
-		     /* a real server doesn't die if writing to reply fifo fails */
-    		signal(SIGPIPE, SIG_IGN);
+		/* a real server doesn't die if writing to reply fifo fails */
+    	signal(SIGPIPE, SIG_IGN);
 		INFO("fifo server up at %s...\n",
 		     fifo);
 		fifo_server(fifo_stream); /* never returns */
 	}
 	     /* dad process */
-	pt[last_process].pid=fifo_pid;
-	snprintf(pt[last_process].desc, MAX_PT_DESC, 
+	snprintf(pt[process_no].desc, MAX_PT_DESC, 
 		 "fifo server @ %s", fifo);
-#ifdef USE_TCP
-	close(sockfd[1]);
-	pt[last_process].unix_sock = sockfd[0];
-	pt[last_process].idx = -1; /* this is not "tcp" process*/
-#endif
 	return 1;
 }
 
