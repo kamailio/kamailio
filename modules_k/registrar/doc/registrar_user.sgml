@@ -342,6 +342,31 @@ modparam("registrar", "use_domain", 1)
 	</section>
 
 	<section>
+		<title><varname>aor_avp_id</varname> (integer)</title>
+		<para>
+		If set, the module will try first to get the AOR from the AVP ID 
+		instead of fetching it form the processed request.
+		</para>
+		<para>
+		The AVP must contain a valid SIP URI. If no AVP is found, it will be
+		tried to get the AOR from the message (standard behaviour).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>aor_avp_id</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "aor_avp_id", 3223)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>case_sensitive</varname> (integer)</title>
 		<para>
 		If set to 1 then <acronym>AOR</acronym> comparison will be case 

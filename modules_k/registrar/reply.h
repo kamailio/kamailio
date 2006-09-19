@@ -27,7 +27,7 @@
 #define REPLY_H
 
 #include "../../parser/msg_parser.h"
-#include "ucontact.h"
+#include "../usrloc/ucontact.h"
 
 /*
  * Send a reply

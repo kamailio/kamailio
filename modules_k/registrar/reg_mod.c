@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$
  *
  * Registrar module interface
@@ -29,6 +29,8 @@
  *              <sobomax@portaone.com> (janakj)
  *  2005-07-11  added sip_natping_flag for nat pinging with SIP method
  *              instead of UDP package (bogdan)
+ *  2006-09-19  AOR may be provided via an AVP instead of being fetched
+ *              from URI (bogdan)
  */
 
 #include <stdio.h>
@@ -95,6 +97,9 @@ int path_mode = PATH_MODE_STRICT;
 /* if the received- and nat-parameters of last Path uri should be used
  * to determine if UAC is nat'ed */
 int path_use_params = 0;
+/* if instead of extacting the AOR from the request, it should be 
+ * fetched via this AVP ID */
+int aor_avp_id=0;
 
 
 int use_domain = 0;
@@ -155,6 +160,7 @@ static param_export_t params[] = {
 	{"received_param",     STR_PARAM, &rcv_param           },
 	{"received_avp",       INT_PARAM, &rcv_avp_no          },
 	{"use_domain",         INT_PARAM, &use_domain          },
+	{"aor_avp_id",         INT_PARAM, &aor_avp_id          },
 	{"max_contacts",       INT_PARAM, &max_contacts        },
 	{"retry_after",        INT_PARAM, &retry_after         },
 	{"sock_flag",          INT_PARAM, &sock_flag           },

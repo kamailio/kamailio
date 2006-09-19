@@ -24,8 +24,8 @@
  * History
  * ------
  * 2003-02-14 un-escaping added (janakj)
- *       
-
+ * 2006-09-19 AOR may be provided via an AVP instead of being fetched
+ *            from URI (bogdan)
 */
 
 #include <string.h> 
@@ -48,8 +48,24 @@ int extract_aor(str* _uri, str* _a)
 	str tmp;
 	struct sip_uri puri;
 	int user_len;
+	int_str avp_name;
+	int_str avp_val;
+	struct usr_avp *avp;
+	str *uri;
 
-	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
+	if (aor_avp_id>0) {
+		avp_name.n = aor_avp_id;
+		avp = search_first_avp( 0, avp_name, &avp_val, 0);
+		if (avp && is_avp_str_val(avp)) {
+			uri = &avp_val.s;
+		} else {
+			uri = _uri;
+		}
+	} else {
+		uri=_uri;
+	}
+
+	if (parse_uri(uri->s, uri->len, &puri) < 0) {
 		rerrno = R_AOR_PARSE;
 		LOG(L_ERR, "extract_aor(): Error while parsing Address of Record\n");
 		return -1;
