@@ -32,6 +32,7 @@
  * History:
  * --------
  *  2003-04-15  added tcp_disable support (andrei)
+ *  2006-06-14	added process table in shared mem (dragos)
  */
 
 
@@ -40,33 +41,53 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "globals.h"
 #include "timer.h"
 #include "socket_info.h"
+#include "locking.h"
 
-#define MAX_PT_DESC	128
+#define MAX_PT_DESC			128
 
 struct process_table {
 	int pid;
 #ifdef USE_TCP
-	int unix_sock; /* unix socket on which tcp main listens */
-	int idx; /* tcp child index, -1 for other processes */
+	int unix_sock; 	/* unix socket on which tcp main listens	*/
+	int idx; 		/* tcp child index, -1 for other processes 	*/
 #endif
 	char desc[MAX_PT_DESC];
 };
 
 extern struct process_table *pt;
+extern gen_lock_t* process_lock;
+extern int *process_count;
 extern int process_no;
-extern int process_count;
-extern int last_process;
 
+extern struct tcp_child* tcp_children;
+
+inline int init_pt();
+int get_max_procs();
+int register_procs(int no);
 
 /* return processes pid */
-inline static int my_pid()
-{
-	return pt ? pt[process_no].pid : getpid();
-}
+inline int my_pid();
 
+/**
+ * Forks a new process.
+ * @param desc - text description for the process table
+ * @param make_sock - if to create a unix socket pair for it
+ * @returns the pid of the new process
+ */
+inline int fork_process(int child_id,char *desc,int make_sock);
+
+/**
+ * Forks a new TCP process.
+ * @param desc - text description for the process table
+ * @param r - index in the tcp_children array
+ * @param *reader_fd_1 - pointer to return the reader_fd[1]
+ * @returns the pid of the new process
+ */
+inline int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1);
 
 #endif

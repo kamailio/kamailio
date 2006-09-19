@@ -216,7 +216,7 @@ static void core_ps(rpc_t* rpc, void* c)
 {
 	int p;
 
-	for (p=0; p<process_count;p++) {
+	for (p=0; p<*process_count;p++) {
 		rpc->add(c, "d", pt[p].pid);
 		rpc->add(c, "s", pt[p].desc);
 	}

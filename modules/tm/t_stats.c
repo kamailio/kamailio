@@ -58,7 +58,7 @@ int init_tm_stats(void)
 	     /* Delay initialization of tm_stats structures to
 	      * init_tm_stats_child which gets called from child_init,
 	      * in mod_init function other modules can increase the value of
-	      * process_count and thus we do not know about processes created
+	      * estimated_process_count and thus we do not know about processes created
 	      * from modules which get loaded after tm and thus their mod_init
 	      * functions will be called after tm mod_init function finishes
 	      */
@@ -70,10 +70,10 @@ int init_tm_stats_child(void)
 {
 	int size;
 
-	     /* We are called from child_init, process_count has definitive
+	     /* We are called from child_init, estimated_process_count has definitive
 	      * value now and thus we can safely allocate the variables
 	      */
-	size = sizeof(stat_counter) * process_count;
+	size = sizeof(stat_counter) * get_max_procs();
 	tm_stats->s_waiting = shm_malloc(size);
 	if (tm_stats->s_waiting == 0) {
 		ERR("No mem for stats\n");
@@ -135,7 +135,7 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 	unsigned long total, current, waiting, total_local;
 	int i, pno;
 
-	pno = process_count;
+	pno = get_max_procs();
 	for(i = 0, total = 0, waiting = 0, total_local = 0; i < pno; i++) {
 		total += tm_stats->s_transactions[i];
 		waiting += tm_stats->s_waiting[i];

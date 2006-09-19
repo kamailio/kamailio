@@ -13,7 +13,7 @@ Overview
   and negative) and look first in its internal cache.
  When its internal dns cache is enabled, ser can also use dns failover: if
   one destination resolves to multiple addresses ser can try all of them until
-  it finds one to which it can succesfully send the packet or it exhausts all 
+  it finds one to which it can successfully send the packet or it exhausts all 
   of them. ser (tm to be more precise) uses the dns failover also when the
   destination host doesn't send any reply to a forwarded invite within the
   sip timeout interval (whose value can be configured using the tm fr_timer
@@ -27,19 +27,19 @@ DNS Cache and Failover Drawbacks
   1. only the locally configured dns server (usually in /etc/resolv.conf) is
   used for the requests (/etc/hosts and the local Network Information Service
   are ignored). 
-     Workarround: disable the dns cache (use_dns_cache=off or
+     Workaround: disable the dns cache (use_dns_cache=off or
   compile without -DUSE_DNS_CACHE).
 
   2. the dns cache uses extra memory
-      Workarround: disable the dns cache.
+      Workaround: disable the dns cache.
 
   3. the dns failover introduces a very small performance penalty 
-     Workarround: disable the dns failover (use_dns_failover=off).
+     Workaround: disable the dns failover (use_dns_failover=off).
 
   4. the dns failover increases the memory usage (the internal structures
   used to represent the transaction are bigger when the dns failover support is
   compiled).
-     Workarround: compile without dns failover support (-DUSE_DNS_FAILOVER).
+     Workaround: compile without dns failover support (-DUSE_DNS_FAILOVER).
   Turning it off from the config file is not enough in this case (the extra
    memory will still be used).
 
@@ -94,7 +94,7 @@ DNS Resolver Options
  server configured in /etc/resolv.conf, set the dns resolver options in ser's
  config as in the above example and enable the dns cache (in ser).
  Pay particular attention to dns_servers_no and dns_use_search_list. It's a
- good ideea to make sure you don't need / use the search list or more then one
+ good idea to make sure you don't need / use the search list or more then one
  dns server (to avoid unnecessary extra lookups).
 
 

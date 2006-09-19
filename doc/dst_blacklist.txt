@@ -22,7 +22,7 @@ Drawbacks
  Using the destination blacklist will cause some performance degradation,
  especially on multi cpu machines. If you don't need it you can easily
   disable it, either in ser's config or at compile time. Disabling it at
-  compile time is sligthly better (but not in a "measurable" way) then
+  compile time is slightly better (but not in a "measurable" way) then
    disabling it at runtime, from the config file.
  Whether the destination blacklist is better to be on or off depends a lot
   on the setup. In general is better to turn it on when:
@@ -47,7 +47,7 @@ Config Variables
   Note: using the blacklist incurs a small performance penalty.
 
  dst_blacklist_mem = size in Kb (default 250 Kb) - maximum
-  shared memory ammount used for keeping the blacklisted destinations.
+  shared memory amount used for keeping the blacklisted destinations.
 
  dst_blacklist_expire = time in s (default 60 s) - how much time a 
   blacklisted destination will be kept in the blacklist (w/o any update).
@@ -66,4 +66,4 @@ Compile Options
    form DEFS list. To add a compile options add it to the make command line,
      e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
    or for a permanent solution, edit Makefile.defs and add it to DEFS 
-   (don't foget to prefix it with -D).
+   (don't forget to prefix it with -D).

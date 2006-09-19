@@ -246,8 +246,14 @@ int tcp_disable = 0; /* 1 if tcp is disabled */
 #ifdef USE_TLS
 int tls_disable = 0; /* 1 if tls is disabled */
 #endif
+
 struct process_table *pt=0;		/*array with children pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
+int *process_count = 0;			/* Total number of SER processes currently 
+								   running */
+gen_lock_t* process_lock;		/* lock on the process table */
+int process_no = 0;				/* index of process in the pt */
+
 int sig_flag = 0;              /* last signal received */
 int debug = L_DEFAULT; /* print only msg. < L_WARN */
 int dont_fork = 0;
@@ -349,19 +355,8 @@ unsigned short tls_port_no=0; /* default port */
 
 struct host_alias* aliases=0; /* name aliases list */
 
-/* ipc related globals */
-int process_no = 0;
-
 /* Parameter to child_init */
 int child_rank = 0;
-
-/* Last filled entry in process table before calling
- * child_init of loaded modules
- */
-int last_process = 0;
-
-/* Total number of SER processes with given configuration */
-int process_count = 0;
 
 /* process_bm_t process_bit = 0; */
 #ifdef ROUTE_SRV
@@ -456,9 +451,17 @@ static void kill_all_children(int signum)
 	int r;
 
 	if (own_pgid) kill(0, signum);
-	else if (pt)
-		for (r=1; r<process_count; r++)
-			if (pt[r].pid) kill(pt[r].pid, signum);
+	else if (pt){
+		lock_get(process_lock);
+		for (r=1; r<*process_count; r++){
+			if (pt[r].pid) {
+				kill(pt[r].pid, signum);
+			}
+			else LOG(L_CRIT, "BUG: killing: %s > %d no pid!!!\n",
+							pt[r].desc, pt[r].pid);
+		}
+		lock_release(process_lock);
+	}
 }
 
 
@@ -803,9 +806,6 @@ int main_loop()
 	int  i;
 	pid_t pid;
 	struct socket_info* si;
-#ifdef USE_TCP
-	int sockfd[2];
-#endif
 #ifdef EXTRA_DEBUG
 	int r;
 #endif
@@ -838,53 +838,34 @@ int main_loop()
 
 #ifdef USE_SLOW_TIMER
 		/* we need another process to act as the "slow" timer*/
-				process_no++;
-				if ((pid=fork())<0){
+				pid = fork_process(PROC_TIMER, "slow timer", 0);
+				if (pid<0){
 					LOG(L_CRIT,  "ERROR: main_loop: Cannot fork\n");
 					goto error;
 				}
 				if (pid==0){
 					/* child */
-					pt[process_no].pid=getpid();
 					/* timer!*/
 					/* process_bit = 0; */
-					if (init_child(PROC_TIMER) < 0) {
-						LOG(L_ERR, "slow timer: init_child failed\n");
-						goto error;
-					}
-
 					if (arm_slow_timer()<0) goto error;
 					slow_timer_main();
 				}else{
-					pt[process_no].pid=pid; /*should be shared mem anyway*/
-					strncpy(pt[process_no].desc, "slow timer", MAX_PT_DESC );
 					slow_timer_pid=pid;
-
 				}
 #endif
 				/* we need another process to act as the "main" timer*/
-				process_no++;
-				if ((pid=fork())<0){
+				pid = fork_process(PROC_TIMER, "timer", 0);
+				if (pid<0){
 					LOG(L_CRIT,  "ERROR: main_loop: Cannot fork\n");
 					goto error;
 				}
 				if (pid==0){
 					/* child */
-					/* record pid twice to avoid the child using it, before
-					 * parent gets a chance to set it*/
-					pt[process_no].pid=getpid();
 					/* timer!*/
 					/* process_bit = 0; */
-					if (init_child(PROC_TIMER) < 0) {
-						LOG(L_ERR, "timer: init_child failed\n");
-						goto error;
-					}
-
 					if (arm_timer()<0) goto error;
 					timer_main();
 				}else{
-						pt[process_no].pid=pid; /*should be shared mem anyway*/
-						strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
 				}
 
 		/* main process, receive loop */
@@ -910,9 +891,6 @@ int main_loop()
 
 		return udp_rcv_loop();
 	}else{
-		/* process_no now initialized to zero -- increase from now on
-		   as new processes are forked (while skipping 0 reserved for main )
-		*/
 
 		for(si=udp_listen;si;si=si->next){
 			/* create the listening socket (for each address)*/
@@ -967,53 +945,22 @@ int main_loop()
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
-				process_no++;
 				child_rank++;
-#ifdef USE_TCP
-				if(!tcp_disable){
-		 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-						LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
-							strerror(errno));
-						goto error;
-					}
-				}
-#endif
-				if ((pid=fork())<0){
+				pid = fork_process(child_rank, "udp", 1);
+				if (pid<0){
 					LOG(L_CRIT,  "main_loop: Cannot fork\n");
 					goto error;
 				}else if (pid==0){
-					     /* child */
-#ifdef USE_TCP
-					if (!tcp_disable){
-						close(sockfd[0]);
-						unix_tcp_sock=sockfd[1];
-					}
-#endif
-					/* record pid twice to avoid the child using it, before
-					 * parent gets a chance to set it*/
-					pt[process_no].pid=getpid();
+					/* child */
 					bind_address=si; /* shortcut */
-					if (init_child(child_rank) < 0) {
-						LOG(L_ERR, "init_child failed\n");
-						goto error;
-					}
 #ifdef STATS
 					setstats( i+r*children_no );
 #endif
 					return udp_rcv_loop();
 				}else{
-						pt[process_no].pid=pid; /*should be in shared mem.*/
 						snprintf(pt[process_no].desc, MAX_PT_DESC,
 							"receiver child=%d sock= %s:%s", i,
 							si->name.s, si->port_no_str.s );
-#ifdef USE_TCP
-						if (!tcp_disable){
-							close(sockfd[1]);
-							pt[process_no].unix_sock=sockfd[0];
-							pt[process_no].idx=-1; /* this is not a "tcp"
-													  process*/
-						}
-#endif
 				}
 			}
 			/*parent*/
@@ -1027,94 +974,32 @@ int main_loop()
 
 	{
 #ifdef USE_SLOW_TIMER
-#ifdef USE_TCP
-		if (!tcp_disable){
- 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-				LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
-					strerror(errno));
-				goto error;
-			}
-		}
-#endif
 		/* fork again for the "slow" timer process*/
-		process_no++;
-		if ((pid=fork())<0){
+		pid = fork_process(PROC_TIMER, "slow timer", 1);
+		if (pid<0){
 			LOG(L_CRIT, "main_loop: cannot fork \"slow\" timer process\n");
 			goto error;
 		}else if (pid==0){
 			/* child */
 			/* is_main=0; */
-#ifdef USE_TCP
-			if (!tcp_disable){
-				close(sockfd[0]);
-				unix_tcp_sock=sockfd[1];
-			}
-#endif
-			/* record pid twice to avoid the child using it, before
-			 * parent gets a chance to set it*/
-			pt[process_no].pid=getpid();
-			if (init_child(PROC_TIMER) < 0) {
-				LOG(L_ERR, "slow timer: init_child failed\n");
-				goto error;
-			}
 			if (arm_slow_timer()<0) goto error;
 			slow_timer_main();
 		}else{
-			pt[process_no].pid=pid;
-			strncpy(pt[process_no].desc, "slow timer", MAX_PT_DESC );
 			slow_timer_pid=pid;
-#ifdef USE_TCP
-			if(!tcp_disable){
-						close(sockfd[1]);
-						pt[process_no].unix_sock=sockfd[0];
-						pt[process_no].idx=-1; /* this is not a "tcp" process*/
-			}
-#endif
 		}
 #endif /* USE_SLOW_TIMER */
 
 		/* fork again for the "main" timer process*/
-#ifdef USE_TCP
-		if (!tcp_disable){
- 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-				LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
-					strerror(errno));
-				goto error;
-			}
-		}
-#endif
-		process_no++;
-		if ((pid=fork())<0){
+		pid = fork_process(PROC_TIMER, "timer", 1);
+		if (pid<0){
 			LOG(L_CRIT, "main_loop: cannot fork timer process\n");
 			goto error;
 		}else if (pid==0){
 			/* child */
 			/* is_main=0; */
-#ifdef USE_TCP
-			if (!tcp_disable){
-				close(sockfd[0]);
-				unix_tcp_sock=sockfd[1];
-			}
-#endif
-			/* record pid twice to avoid the child using it, before
-			 * parent gets a chance to set it*/
-			pt[process_no].pid=getpid();
-			if (init_child(PROC_TIMER) < 0) {
-				LOG(L_ERR, "timer: init_child failed\n");
-				goto error;
-			}
 			if (arm_timer()<0) goto error;
 			timer_main();
 		}else{
-			pt[process_no].pid=pid;
-			strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
-#ifdef USE_TCP
-			if(!tcp_disable){
-						close(sockfd[1]);
-						pt[process_no].unix_sock=sockfd[0];
-						pt[process_no].idx=-1; /* this is not a "tcp" process*/
-			}
-#endif
 		}
 	}
 #ifdef USE_TCP
@@ -1122,33 +1007,20 @@ int main_loop()
 				/* start tcp  & tls receivers */
 			if (tcp_init_children()<0) goto error;
 				/* start tcp+tls master proc */
-			process_no++;
-			if ((pid=fork())<0){
+			pid = fork_process(PROC_TCP_MAIN, "tcp main process", 0);
+			if (pid<0){
 				LOG(L_CRIT, "main_loop: cannot fork tcp main process: %s\n",
 							strerror(errno));
 				goto error;
 			}else if (pid==0){
 				/* child */
-				/* is_main=0; */
-				/* record pid twice to avoid the child using it, before
-				 * parent gets a chance to set it*/
-				pt[process_no].pid=getpid();
-				if (init_child(PROC_TCP_MAIN) < 0) {
-					LOG(L_ERR, "tcp_main: error in init_child\n");
-					goto error;
-				}
 				tcp_main_loop();
 			}else{
-				pt[process_no].pid=pid;
-				strncpy(pt[process_no].desc, "tcp main process", MAX_PT_DESC );
-				pt[process_no].unix_sock=-1;
-				pt[process_no].idx=-1; /* this is not a "tcp" process*/
 				unix_tcp_sock=-1;
 			}
 		}
 #endif
 	/* main */
-	pt[0].pid=getpid();
 	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
 #ifdef USE_TCP
 	if(!tcp_disable){
@@ -1159,11 +1031,6 @@ int main_loop()
 #endif
 	/*DEBUG- remove it*/
 
-	/* Modules need to know the last value of process_no to fill in
-	 * process table properly
-	 */
-	last_process = process_no;
-	process_no=0;
 	/* process_bit = 0; */
 	is_main=1;
 
@@ -1174,7 +1041,7 @@ int main_loop()
 
 	/*DEBUG- remove it*/
 #ifdef EXTRA_DEBUG
-	for (r=0; r<process_count; r++){
+	for (r=0; r<*process_count; r++){
 		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
 	}
 #endif
@@ -1326,15 +1193,15 @@ int main(int argc, char** argv)
 					break;
 			case '?':
 					if (isprint(optopt))
-						fprintf(stderr, "Unknown option `-%c´. Use -h for help.\n", optopt);
+						fprintf(stderr, "Unknown option `-%c. Use -h for help.\n", optopt);
 					else
 						fprintf(stderr,
-								"Unknown option character `\\x%x´. Use -h for help.\n",
+								"Unknown option character `\\x%x. Use -h for help.\n",
 								optopt);
 					goto error;
 			case ':':
 					fprintf(stderr,
-								"Option `-%c´ requires an argument. Use -h for help.\n",
+								"Option `-%c requires an argument. Use -h for help.\n",
 								optopt);
 					goto error;
 			default:
@@ -1645,32 +1512,22 @@ try_again:
 			goto error;
 		}
 	}
-	     /* Calculate initial process count, mod_init functions called
-	      * below can add to it
-	      */
-	process_count = calc_proc_no();
+	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
-
-	     /* The total number of processes is know now, note that no
-	      * function being called before this point may rely on the
-	      * number of processes !
-	      */
-	DBG("Expect %d SER processes in your process list\n", process_count);
-
-	/*alloc pids*/
-#ifdef SHM_MEM
-	pt=shm_malloc(sizeof(struct process_table)*process_count);
-#else
-	pt=pkg_malloc(sizeof(struct process_table)*process_count);
-#endif
-	if (pt==0){
-		fprintf(stderr, "ERROR: out  of memory\n");
+	/* initialize process_table, add core process no. (calc_proc_no()) to the 
+	 * processes registered from the modules*/
+	if (init_pt(calc_proc_no())==-1)
 		goto error;
-	}
-	memset(pt, 0, sizeof(struct process_table)*process_count);
+	
+	/* The total number of processes is now known, note that no
+	 * function being called before this point may rely on the
+	 * number of processes !
+	 */
+	DBG("Expect (at least) %d SER processes in your process list\n",
+			get_max_procs());
 
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){

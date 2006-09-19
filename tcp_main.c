@@ -149,14 +149,6 @@
 enum fd_types { F_NONE, F_SOCKINFO /* a tcp_listen fd */,
 				F_TCPCONN, F_TCPCHILD, F_PROC };
 
-struct tcp_child{
-	pid_t pid;
-	int proc_no; /* ser proc_no, for debugging */
-	int unix_sock; /* unix "read child" sock fd */
-	int busy;
-	int n_reqs; /* number of requests serviced so far */
-};
-
 
 
 int tcp_accept_aliases=0; /* by default don't accept aliases */
@@ -175,7 +167,7 @@ struct tcp_conn_alias** tcpconn_aliases_hash=0;
 struct tcp_connection** tcpconn_id_hash=0;
 gen_lock_t* tcpconn_lock=0;
 
-static struct tcp_child* tcp_children;
+struct tcp_child* tcp_children;
 static int* connection_id=0; /*  unique for each connection, used for 
 								quickly finding the corresponding connection
 								for a reply */
@@ -1919,7 +1911,7 @@ error:
 }
 
 
-
+#ifdef TCP_CHILD_NON_BLOCKING
 /* returns -1 on error */
 static int set_non_blocking(int s)
 {
@@ -1941,14 +1933,28 @@ error:
 	return -1;
 }
 
+#endif
+
+
+/*  returns -1 on error, 0 on success */
+int tcp_fix_child_sockets(int* fd)
+{
+#ifdef TCP_CHILD_NON_BLOCKING
+	if ((set_non_blocking(fd[0])<0) ||
+		(set_non_blocking(fd[1])<0)){
+		return -1;
+	}
+#endif
+	return 0;
+}
+
 
 
 /* starts the tcp processes */
 int tcp_init_children()
 {
 	int r;
-	int sockfd[2];
-	int reader_fd[2]; /* for comm. with the tcp children read  */
+	int reader_fd_1; /* for comm. with the tcp children read  */
 	pid_t pid;
 	struct socket_info *si;
 	
@@ -1962,11 +1968,11 @@ int tcp_init_children()
 		for (si=tls_listen; si; si=si->next, r++);
 #endif
 	
-	tcp_max_fd_no=process_count*2 +r-1 /* timer */ +3; /* stdin/out/err*/
-	/* max connections can be temporarily exceeded with process_count
+	tcp_max_fd_no=get_max_procs()*2 +r-1 /* timer */ +3; /* stdin/out/err*/
+	/* max connections can be temporarily exceeded with estimated_process_count
 	 * - tcp_main (tcpconn_connect called simultaneously in all all the 
 	 *  processes) */
-	tcp_max_fd_no+=tcp_max_connections+process_count-1 /* tcp main */;
+	tcp_max_fd_no+=tcp_max_connections+get_max_procs()-1 /* tcp main */;
 	
 	/* alloc the children array */
 	tcp_children=pkg_malloc(sizeof(struct tcp_child)*tcp_children_no);
@@ -1979,60 +1985,19 @@ int tcp_init_children()
 	
 	/* fork children & create the socket pairs*/
 	for(r=0; r<tcp_children_no; r++){
-		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-			LOG(L_ERR, "ERROR: tcp_main: socketpair failed: %s\n",
-					strerror(errno));
-			goto error;
-		}
-		if (socketpair(AF_UNIX, SOCK_STREAM, 0, reader_fd)<0){
-			LOG(L_ERR, "ERROR: tcp_main: socketpair failed: %s\n",
-					strerror(errno));
-			goto error;
-		}
-#ifdef TCP_CHILD_NON_BLOCKING
-		if ((set_non_blocking(reader_fd[0])<0) || 
-			(set_non_blocking(reader_fd[1])<0)){
-			LOG(L_ERR, "ERROR: tcp_main: failed to set non blocking"
-						"on child sockets\n");
-			/* continue, it's not critical (it will go slower under
-			 * very high connection rates) */
-		}
-#endif
-		
-		process_no++;
 		child_rank++;
-		pid=fork();
+		pid=fork_tcp_process(child_rank,"tcp receiver",1,&reader_fd_1);
 		if (pid<0){
 			LOG(L_ERR, "ERROR: tcp_main: fork failed: %s\n",
 					strerror(errno));
 			goto error;
 		}else if (pid>0){
 			/* parent */
-			close(sockfd[1]);
-			close(reader_fd[1]);
-			tcp_children[r].pid=pid;
-			tcp_children[r].proc_no=process_no;
-			tcp_children[r].busy=0;
-			tcp_children[r].n_reqs=0;
-			tcp_children[r].unix_sock=reader_fd[0];
-			pt[process_no].pid=pid;
-			pt[process_no].unix_sock=sockfd[0];
-			pt[process_no].idx=r;
-			strncpy(pt[process_no].desc, "tcp receiver", MAX_PT_DESC);
 		}else{
 			/* child */
-			close(sockfd[0]);
-			unix_tcp_sock=sockfd[1];
 			bind_address=0; /* force a SEGFAULT if someone uses a non-init.
 							   bind address on tcp */
-			/* record pid twice to avoid the child using it, before
-			 * parent gets a chance to set it*/
-			pt[process_no].pid=getpid();
-			if (init_child(child_rank) < 0) {
-				LOG(L_ERR, "init_children failed\n");
-				goto error;
-			}
-			tcp_receive_loop(reader_fd[1]);
+			tcp_receive_loop(reader_fd_1);
 		}
 	}
 	return 0;
