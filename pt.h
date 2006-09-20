@@ -66,12 +66,12 @@ extern int process_no;
 
 extern struct tcp_child* tcp_children;
 
-inline int init_pt();
+int init_pt();
 int get_max_procs();
 int register_procs(int no);
 
 /* return processes pid */
-inline int my_pid();
+int my_pid();
 
 /**
  * Forks a new process.
@@ -79,7 +79,7 @@ inline int my_pid();
  * @param make_sock - if to create a unix socket pair for it
  * @returns the pid of the new process
  */
-inline int fork_process(int child_id,char *desc,int make_sock);
+int fork_process(int child_id,char *desc,int make_sock);
 
 /**
  * Forks a new TCP process.
@@ -89,7 +89,7 @@ inline int fork_process(int child_id,char *desc,int make_sock);
  * @returns the pid of the new process
  */
 #ifdef USE_TCP
-inline int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1);
+int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1);
 #endif
 
 #endif

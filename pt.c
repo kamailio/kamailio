@@ -32,6 +32,7 @@
  * History:
  * --------
  *  2006-06-14	added process table in shared mem (dragos)
+ *  2006-09-20	added profile support (-DPROFILING) (hscholz)
  */
 
 
@@ -39,7 +40,13 @@
 #include "tcp_init.h"
 #include "sr_module.h"
 
-#include "stdio.h"
+#include <stdio.h>
+#ifdef PROFILING
+#include <sys/gmon.h>
+
+	extern void _start(void);
+	extern void etext(void);
+#endif
 
 
 static int estimated_proc_no=0;
@@ -96,7 +103,7 @@ int get_max_procs()
 
 
 /* return processes pid */
-inline int my_pid()
+int my_pid()
 {
 	return pt ? pt[process_no].pid : getpid();
 }
@@ -109,7 +116,7 @@ inline int my_pid()
  * @param make_sock - if to create a unix socket pair for it
  * @returns the pid of the new process
  */
-inline int fork_process(int child_id, char *desc, int make_sock)
+int fork_process(int child_id, char *desc, int make_sock)
 {
 	int pid,old_process_no;
 #ifdef USE_TCP
@@ -143,6 +150,9 @@ inline int fork_process(int child_id, char *desc, int make_sock)
 	}
 	if (pid==0){
 		/* child */
+#ifdef PROFILING
+		monstartup((u_long) &_start, (u_long) &etext);
+#endif
 		/* wait for parent to get out of critical zone.
 		 * this is actually relevant as the parent updates
 		 * the pt & process_count. */
@@ -189,7 +199,7 @@ inline int fork_process(int child_id, char *desc, int make_sock)
  * @returns the pid of the new process
  */
 #ifdef USE_TCP
-inline int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1)
+int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1)
 {
 	int pid,old_process_no;
 	int sockfd[2];
@@ -230,6 +240,9 @@ inline int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1)
 		return pid;
 	}
 	if (pid==0){
+#ifdef PROFILING
+		monstartup((u_long) &_start, (u_long) &etext);
+#endif
 		/* wait for parent to get out of critical zone */
 		lock_get(process_lock);
 			close(sockfd[0]);

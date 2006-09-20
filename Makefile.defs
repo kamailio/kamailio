@@ -50,6 +50,7 @@
 #              sparc <= v8 support (andrei)
 #  2006-03-31  armv6 & mips64 support added
 #              mips and arm set to NOSMP by default (andrei)
+#  2006-07-10  added -DPROFILING (hscholz)
 
 
 # check if already included/exported
@@ -347,6 +348,9 @@ endif
 # -DUSE_DST_BLACKLIST
 #		blacklist bad destination (timeout, failed to connect, error sending
 #        a.s.o)
+# -DPROFILING
+#		if enabled profiling will be enabled for child processes
+#		Don't forget to set PROFILE (see below)
 
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
@@ -376,9 +380,11 @@ DEFS+= $(extra_defs) \
 	 #-DNOSMP \
 	 #-DUSE_SHM_MEM \
 	 #-DSTATS \
-	 #-DNO_LOG
+	 #-DNO_LOG \
+	 #-DPROFILING
 
-#PROFILE=  -pg #set this if you want profiling
+#PROFILE=  -pg	# set this if you want profiling
+				# you may also want to set -DPROFILING
 
 # WARNING: do not add mode=debug or mode=release anymore in the Makefile,
 # use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
