@@ -63,10 +63,6 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	 * struct contact *next;
 	 * I just have to visit each uri and encode each uri according to a scheme
 	 */
-#ifdef DEBUG
-	fprintf (stdout,"---START--------ENCODE CONTACT-----------------\n");
-        fprintf (stdout,"%.*s\n",50,msg->buf);
-#endif
 	
 	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT_F,0) == -1) ||
 				(msg->contact == NULL) ))
@@ -81,11 +77,6 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 		if (strlen(contact_flds_separator)>=1)
 			separator = contact_flds_separator[0];
 
-#ifdef DEBUG
-	fprintf (stdout,"Using separator %c\n",separator);
-#endif
-		
-	
 	if (msg->contact->parsed == NULL)	parse_contact (msg->contact);
 	if (msg->contact->parsed != NULL)
 	{
@@ -95,17 +86,11 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 		if (c != NULL)
 		{
 			uri = c->uri;
-#ifdef DEBUG
-			fprintf (stdout, "olduri.s=[%.*s]\n", uri.len, uri.s);
-#endif
 			res = encode_uri (uri, encoding_prefix, public_ip,separator, &newUri);
 			
 			if (res != 0)
 				{
 				LOG (L_ERR,"ERROR: encode_contact: Failed encoding contact.Code %d\n", res);
-#ifdef DEBUG
-				fprintf (stdout, "Encoding uri failed with code %d\n",res);
-#endif
 #ifdef STRICT_CHECK
 				return res;
 #endif
@@ -117,9 +102,6 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 					return -2;
 				}
 			
-	#ifdef DEBUG
-			if (res == 0) fprintf (stdout, "newuri.s=[%.*s]\nnewlen=%d\n", newUri.len, newUri.s,newUri.len);
-	#endif
 			/* encoding next contacts too?*/
 #ifdef ENCODE_ALL_CONTACTS
 			while (c->next != NULL)
@@ -149,14 +131,8 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	else /* after parsing still NULL */
 		{
 			LOG(L_ERR,"ERROR: encode_contact: Unable to parse Contact header\n");
-#ifdef DEBUG
-    			printf("ERROR: encode_contact: Unable to parse Contact header\n");
-#endif                        
 			return -4;
 		}
-#ifdef DEBUG
-	fprintf (stdout,"---END--------ENCODE CONTACT-----------------\n");
-#endif
 	return 1;
 }
 
