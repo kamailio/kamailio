@@ -188,6 +188,7 @@ inline int fork_process(int child_id, char *desc, int make_sock)
  * @param *reader_fd_1 - pointer to return the reader_fd[1]
  * @returns the pid of the new process
  */
+#ifdef USE_TCP
 inline int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1)
 {
 	int pid,old_process_no;
@@ -267,6 +268,4 @@ inline int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1)
 		return pid;
 	}
 }
-
-
-
+#endif
