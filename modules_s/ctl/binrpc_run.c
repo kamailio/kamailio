@@ -136,6 +136,7 @@ error:
 
 
 
+#if 0 /* not used yet */
 /* doubles the size */
 static struct rpc_struct_l* grow_rpc_struct(struct rpc_struct_l *rs)
 {
@@ -153,6 +154,7 @@ static struct rpc_struct_l* grow_rpc_struct(struct rpc_struct_l *rs)
 	}
 	return new_rs;
 }
+#endif
 
 
 

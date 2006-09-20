@@ -1672,7 +1672,7 @@ unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 
-	str2int(&rtpnode, &node_idx);
+	str2int(&rtpnode, (unsigned int*)&node_idx);
 	return unforce_rtp_proxy_f(msg, node_idx);
 }
 

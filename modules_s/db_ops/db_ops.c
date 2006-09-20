@@ -134,7 +134,7 @@ static int get_next_part(char** s, char** part, char delim, int read_only) {
 	while (!(((*c2 == delim) && !flag) || *c2==0)) {
 		if (*c2=='\'')
 			flag = !flag;
-		*c2++;
+		c2++;
 	}
 	if ((*c2)==0 && flag) {
 		LOG(L_ERR, "ERROR: db_ops: string '%s' is not terminated\n", *s);

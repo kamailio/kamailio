@@ -106,9 +106,9 @@ char *get_nums(char *buf, int *_name_len, int *_value_len, int *_flags)
 			value_len.len, value_len.s,
 			flags.len, flags.s);*/
 
-	str2int(&name_len, _name_len);
-	str2int(&value_len, _value_len);
-	str2int(&flags, _flags);
+	str2int(&name_len, (unsigned int*)_name_len);
+	str2int(&value_len, (unsigned int*)_value_len);
+	str2int(&flags, (unsigned int*)_flags);
 	
 	return last + 1;
 }
@@ -130,7 +130,7 @@ avp_t *deserialize_avps(str *serialized_avps)
 		name.s.s = get_nums(serialized_avps->s + i, &name.s.len, &value.len, &flags);
 		value.s = name.s.s + name.s.len;
 		switch (serialized_avps->s[i]) {
-			case TYPE_NUM: str2int(&value, &val.n); break;
+			case TYPE_NUM: str2int(&value, (unsigned int*)&val.n); break;
 			case TYPE_STRING: val.s = value; break;
 		}
 /*		INFO("I read: name=%.*s, value=%.*s, flags=%d\n",
@@ -258,7 +258,7 @@ int db_read_reg_avps_et(db_con_t* con, struct ucontact *c)
 		get_int_val(row_vals[3], flags);
 
 		if (type == AVP_VAL_STR) val.s = value;
-		else str2int(&value, &val.n);
+		else str2int(&value, (unsigned int*)&val.n);
 		avp = create_avp(flags, name, val);
 
 		if (last) last->next = avp;
