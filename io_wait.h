@@ -835,8 +835,8 @@ again:
 		 *  On newer kernels this is fixed (si_band is long in the kernel too).
 		 * -- andrei */
 		if  ((_os_ver<0x020605) && (sizeof(siginfo.si_band)>sizeof(int))){
-			sigio_band=*((int*)&siginfo.si_band);
-			sigio_fd=*(((int*)&siginfo.si_band)+1);
+			sigio_band=*((int*)(void*)&siginfo.si_band);
+			sigio_fd=*(((int*)(void*)&siginfo.si_band)+1);
 		}else
 #endif
 		{

@@ -236,6 +236,7 @@ static inline int get_contact_uri(struct sip_msg* _m, str* _uri)
 	contact_t* c;
 
 	_uri->len = 0;
+	_uri->s = 0;
 
 	if (!_m->contact) return 1;
 
