@@ -51,6 +51,7 @@
 #include "../../db/db.h"
 #include "uridb_mod.h"
 #include "../../usr_avp.h"
+#include "../domain/domain.h"
 
 MODULE_VERSION
 
@@ -70,8 +71,10 @@ static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
 static int mod_init(void);       /* Module initialization function */
 static int lookup_user(struct sip_msg* msg, char* s1, char* s2);
+static int lookup_user_2(struct sip_msg* msg, char* s1, char* s2);
 static int check_uri(struct sip_msg* msg, char* s1, char* s2);
 static int header_fixup(void** param, int param_no);
+static int lookup_user_fixup(void** param, int param_no);
 
 #define URI_TABLE    "uri"
 #define UID_COL      "uid"
@@ -97,13 +100,15 @@ str canonical_avp_val = STR_STATIC_INIT(CANONICAL_AVP_VAL);
 db_con_t* con = 0;
 db_func_t db;
 
+static domain_get_did_t dm_get_did = NULL;
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"lookup_user", lookup_user, 1, header_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"check_uri",   check_uri,   1, header_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_user", lookup_user,   1, header_fixup,      REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_user", lookup_user_2, 2, lookup_user_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"check_uri",   check_uri,     1, header_fixup,      REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -349,6 +354,104 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 }
 
 
+static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
+{
+    db_key_t keys[2], cols[2];
+    db_val_t vals[2], *val;
+    db_res_t* res;
+    str uri, did, uid;
+    struct sip_uri puri;
+    avp_ident_t* avp;
+    int_str avp_val;
+    int i, flag, ret;
+
+    avp = &((fparam_t*)attr)->v.avp;
+
+    if (!avp) {
+	ERR("lookup_user: Invalid parameter 1, attribute name expected\n");
+	return -1;
+    }
+
+    if (avp->flags & AVP_TRACK_TO) {
+	flag = DB_IS_TO;
+    } else {
+	flag = DB_IS_FROM;
+    }
+
+    if (get_str_fparam(&uri, msg, (fparam_t*)select) != 0) {
+	ERR("lookup_user: Unable to get SIP URI from %s\n", ((fparam_t*)select)->orig);
+	return -1;
+    }
+
+    if (parse_uri(uri.s, uri.len, &puri) < 0) {
+	ERR("Error while parsing URI '%.*s'\n", uri.len, ZSW(uri.s));
+	return -1;
+    }
+
+    if (dm_get_did(&did, &puri.host) < 0) {
+	DBG("Cannot lookup DID for domain '%.*s'\n", puri.host.len, ZSW(puri.host.s));
+	return -1;
+    }
+
+    keys[0] = username_col.s;
+    keys[1] = did_col.s;
+    cols[0] = uid_col.s;
+    cols[1] = flags_col.s;
+    
+    vals[0].type = DB_STR;
+    vals[0].nul = 0;
+    vals[0].val.str_val = puri.user;
+
+    vals[1].type = DB_STR;
+    vals[1].nul = 0;
+    vals[1].val.str_val = did;
+
+    if (db.use_table(con, uri_table.s) < 0) {
+	LOG(L_ERR, "lookup_user: Error in use_table\n");
+	return -1;
+    }
+
+    if (db.query(con, keys, 0, vals, cols, 2, 2, 0, &res) < 0) {
+	LOG(L_ERR, "lookup_user: Error in db_query\n");
+	return -1;
+    }
+
+    for(i = 0; i < res->n; i++) {
+	val = res->rows[i].values;
+	
+	if (val[0].nul || val[1].nul) {
+	    LOG(L_ERR, "lookup_user: Bogus line in %s table\n", uri_table.s);
+	    continue;
+	}
+	
+	if ((val[1].val.int_val & DB_DISABLED)) continue; /* Skip disabled entries */
+	if ((val[1].val.int_val & DB_LOAD_SER) == 0) continue; /* Not for SER */
+	if ((val[1].val.int_val & flag) == 0) continue;        /* Not allowed in the header we are interested in */
+	goto found;
+    }
+
+    DBG("lookup_user: UID not found for '%.*s'\n", uri.len, ZSW(uri.s));
+    ret = -1;
+    goto freeres;
+
+ found:
+    uid.s = (char*)val[0].val.string_val;
+    uid.len = strlen(uid.s);
+    avp_val.s = uid;
+
+    if (add_avp(avp->flags | AVP_VAL_STR, avp->name, avp_val) < 0) {
+	ERR("lookup_user: Error while creating attribute\n");
+	ret = -1;
+    } else {
+	ret = 1;
+    }
+
+ freeres:
+    db.free_result(con, res);
+    return ret;
+}
+
+
 
 static int header_fixup(void** param, int param_no)
 {
@@ -370,4 +473,25 @@ static int header_fixup(void** param, int param_no)
 	pkg_free(*param);
 	*param=(void*)id;
 	return 0;
+}
+
+
+static int lookup_user_fixup(void** param, int param_no)
+{
+    int ret;
+    
+    if (param_no == 1) {
+	if ((ret = fix_param(FPARAM_AVP, param)) != 0) {
+	    ERR("lookup_user: Invalid parameter 1, attribute expected\n");
+	    return -1;
+	}
+	dm_get_did = (domain_get_did_t)find_export("get_did", 0, 0);
+	if (!dm_get_did) {
+	    ERR("lookup_user: Could not find domain module\n");
+	    return -1;
+	}
+	return 0;
+    } else if (param_no == 2) {
+	return fixup_var_str_12(param, 2);
+    }
 }
