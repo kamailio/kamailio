@@ -145,6 +145,17 @@
 	</row>
     
 	<row vendor-controlled="1">
+		<value col="at.name">datetime_created</value>        
+		<value col="at.type">2</value>
+		<value col="at.rich_t">string</value>
+		<value col="at.desc">creation time</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.prior">0</value>
+		<value col="at.order">0</value>
+		<value col="at.access">1</value>
+	</row>
+	
+	<row vendor-controlled="1">
 		<value col="at.name">asserted_id</value>        
 		<value col="at.type">2</value>
 		<value col="at.rich_t">string</value>
