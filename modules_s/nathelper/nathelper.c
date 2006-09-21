@@ -267,6 +267,7 @@ static str sup_ptypes[] = {
 	{.s = "udp", .len = 3},
 	{.s = "udptl", .len = 5},
 	{.s = "rtp/avp", .len = 7},
+	{.s = "rtp/savpf", .len = 9},
 	{.s = NULL, .len = 0}
 };
 
