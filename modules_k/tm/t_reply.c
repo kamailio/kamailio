@@ -306,6 +306,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	struct retr_buf *rb;
 	unsigned int buf_len;
 	branch_bm_t cancel_bitmap;
+	str cb_s;
 
 	if (!buf)
 	{
@@ -362,7 +363,9 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			}
 		} else {
 			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_OUT) ) {
-				set_extra_tmcb_params( &rb->buffer, &rb->dst);
+				cb_s.s = buf;
+				cb_s.len = buf_len;
+				set_extra_tmcb_params( &cb_s, &rb->dst);
 				run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
 					trans->uas.request, FAKED_REPLY, code);
 			}
@@ -951,6 +954,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	enum rps reply_status;
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
+	str cb_s;
 
 	/* keep compiler warnings about use of uninit vars silent */
 	res_len=0;
@@ -1073,7 +1077,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		DBG("DEBUG:tm:relay_reply: sent buf=%p: %.9s..., shmem=%p: %.9s\n", 
 			buf, buf, uas_rb->buffer.s, uas_rb->buffer.s );
 		if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
-			set_extra_tmcb_params( &uas_rb->buffer, &uas_rb->dst);
+			cb_s.s = buf;
+			cb_s.len = res_len;
+			set_extra_tmcb_params( &cb_s, &uas_rb->dst);
 			run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
 				relayed_msg, relayed_code);
 		}
@@ -1089,7 +1095,7 @@ error02:
 	if (save_clone) {
 		if (t->uac[branch].reply!=FAKED_REPLY)
 			sip_msg_free( t->uac[branch].reply );
-		t->uac[branch].reply = NULL;	
+		t->uac[branch].reply = NULL;
 	}
 error01:
 	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
