@@ -364,7 +364,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		} else {
 			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_OUT) ) {
 				cb_s.s = buf;
-				cb_s.len = buf_len;
+				cb_s.len = len;
 				set_extra_tmcb_params( &cb_s, &rb->dst);
 				run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
 					trans->uas.request, FAKED_REPLY, code);
