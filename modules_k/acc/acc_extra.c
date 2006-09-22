@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2004-2006 Voice Sistem SRL
  *
- * This file is part of SIP Express Router.
+ * This file is part of openser, a free SIP server.
  *
  * openser is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@
  *  2005-07-13  acc_extra specification moved to use pseudo-variables (bogdan)
  *  2006-09-08  flexible multi leg accounting support added,
  *              code cleanup for low level functions (bogdan)
+ *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
 
@@ -54,8 +55,6 @@
 static char int_buf[INT2STR_MAX_LEN*MAX_ACC_INT_BUF];
 
 static char *static_detector = 0;
-
-static str na = {"n/a", 3};
 
 void init_acc_extra()
 {
@@ -214,8 +213,6 @@ int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset)
 
 	for(i=0 ; extra ; i++, extra=extra->next) {
 		attrs[offset+i].n = extra->name.s;
-		extra->name.s =0;
-		extra->name.len = offset + i;
 	}
 	return i;
 }
@@ -224,7 +221,7 @@ int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset)
 /* converts the name of the extra from str to integer 
  * and stores it over str.len ; str.s is freed and made zero
  */
-int extra2int( struct acc_extra *extra )
+int extra2int( struct acc_extra *extra, int *attrs )
 {
 	unsigned int ui;
 	int i;
@@ -235,17 +232,14 @@ int extra2int( struct acc_extra *extra )
 				extra->name.s);
 			return -1;
 		}
-		pkg_free( extra->name.s );
-		extra->name.s = 0;
-		extra->name.len = (int)ui;
+		attrs[i] = (int)ui;
 	}
-	return 0;
+	return i;
 }
 
 
 
-int extra2strar( struct acc_extra *extra, struct sip_msg *rq,
-												str *attr_arr, str *val_arr)
+int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 {
 	xl_value_t value;
 	int n;
@@ -268,10 +262,10 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq,
 			goto done;
 		}
 
-		attr_arr[n] = extra->name;
-		if(value.flags&XL_VAL_NULL){
-			/* convert <null> to <n/a> to have consistency */
-			val_arr[n] = na;
+		if(value.flags&XL_VAL_NULL) {
+			/* convert <null> to empty to have consistency */
+			val_arr[n].s = 0;
+			val_arr[n].len = 0;
 		} else {
 			/* set the value into the acc buffer */
 			if (value.rs.s+value.rs.len==static_detector) {
@@ -293,8 +287,7 @@ done:
 }
 
 
-int legs2strar( struct acc_extra *legs, struct sip_msg *rq,
-												str *attr_arr, str *val_arr)
+int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr)
 {
 	static int start = 0;
 	static struct usr_avp *avp[MAX_ACC_EXTRA];
@@ -319,20 +312,19 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq,
 		}
 
 		/* set new leg record */
-		attr_arr[n] = legs->name;
 		if (avp[n]) {
 			found = 1;
 			/* get its value */
 			if(avp[n]->flags & AVP_VAL_STR) {
 				val_arr[n] = value.s;
 			} else {
-				val_arr[n].s = int_buf + r*INT2STR_MAX_LEN;
-				memcpy(val_arr[n].s, int2str(value.n,&val_arr[n].len),
-					val_arr[n].len);
+				val_arr[n].s = int2bstr( value.n, int_buf+r*INT2STR_MAX_LEN,
+					&val_arr[n].len);
 				r++;
 			}
 		} else {
-			val_arr[n] = na;
+			val_arr[n].s = 0;
+			val_arr[n].len = 0;
 		}
 
 	}

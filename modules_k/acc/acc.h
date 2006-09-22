@@ -27,14 +27,13 @@
  * 2004-06-06  cleanup: acc_db_{bind,init,close} added (andrei)
  * 2006-09-08  flexible multi leg accounting support added,
  *             code cleanup for low level functions (bogdan)
+ * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
-#ifndef _ACC_H
-#define _ACC_H
+#ifndef _ACC_ACC_H_
+#define _ACC_ACC_H_
 
-/* what is printed if value unknown */
-#define NA "n/a"
-#define NA_LEN (sizeof(NA)-1)
+#define ACC_CORE_LEN 9
 
 /* leading text for a request accounted from a script */
 #define ACC "ACC: "
@@ -48,108 +47,48 @@
 #define ACC_ACKED_LEN (sizeof(ACC_ACKED)-1)
 
 /* syslog attribute names */
-#define A_CALLID "call_id"
-#define A_CALLID_LEN (sizeof(A_CALLID)-1)
-#define A_CSEQ "cseq"
-#define A_CSEQ_LEN (sizeof(A_CSEQ)-1)
-#define A_TOTAG "totag"
-#define A_TOTAG_LEN (sizeof(A_TOTAG)-1)
-#define A_FROM "from"
-#define A_FROM_LEN (sizeof(A_FROM)-1)
-#define A_FROMUSER "fromuser"
-#define A_FROMUSER_LEN (sizeof(A_FROMUSER)-1)
-#define A_FROMDOMAIN "fromdomain"
-#define A_FROMDOMAIN_LEN (sizeof (A_FROMDOMAIN)-1)
-#define A_IURI "i-uri"
-#define A_IURI_LEN (sizeof(A_IURI)-1)
 #define A_METHOD "method"
 #define A_METHOD_LEN (sizeof(A_METHOD)-1)
-#define A_OURI "o-uri"
-#define A_OURI_LEN (sizeof(A_OURI)-1)
-#define A_FROMTAG "fromtag"
-#define A_FROMTAG_LEN (sizeof(A_FROMTAG)-1)
-#define A_FROMURI "fromuri"
+#define A_FROMURI "from_uri"
 #define A_FROMURI_LEN (sizeof(A_FROMURI)-1)
-#define A_STATUS "code"
-#define A_STATUS_LEN (sizeof(A_STATUS)-1)
-#define A_TO "to"
-#define A_TO_LEN (sizeof(A_TO)-1)
-#define A_TOURI "touri"
+#define A_FROMTAG "from_tag"
+#define A_FROMTAG_LEN (sizeof(A_FROMTAG)-1)
+#define A_TOURI "to_uri"
 #define A_TOURI_LEN (sizeof(A_TOURI)-1)
-#define A_TOUSER "touser"
-#define A_TOUSER_LEN (sizeof(A_TOUSER)-1)
-#define A_UID "uid"
-#define A_UID_LEN (sizeof(A_UID)-1)
-#define A_UP_IURI "userpart"
-#define A_UP_IURI_LEN (sizeof(A_UP_IURI)-1)
+#define A_TOTAG "to_tag"
+#define A_TOTAG_LEN (sizeof(A_TOTAG)-1)
+#define A_CSEQ "cseq"
+#define A_CSEQ_LEN (sizeof(A_CSEQ)-1)
+#define A_CALLID "call_id"
+#define A_CALLID_LEN (sizeof(A_CALLID)-1)
 #define A_CODE "code"
 #define A_CODE_LEN (sizeof(A_CODE)-1)
-#define A_REALM "realm"
-#define A_REALM_LEN (sizeof(A_REALM)-1)
-#define A_RURI_DOMAIN "domain"
-#define A_RURI_DOMAIN_LEN (sizeof(A_RURI_DOMAIN)-1)
+#define A_STATUS "reason"
+#define A_STATUS_LEN (sizeof(A_STATUS)-1)
 
 #define A_SEPARATOR_CHR ';'
 #define A_EQ_CHR '='
 
 #define MAX_SYSLOG_SIZE  65536
 
-
-#ifdef RAD_ACC
-#include "dict.h"
-extern struct attr attrs[];
-extern struct val vals[];
-#endif
-
-
-int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
-		str *txt, str* phrase);
-void acc_log_missed( struct cell* t, struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code );
-void acc_log_ack( struct cell* t, struct sip_msg *req,
-		struct sip_msg *ack );
-void acc_log_reply( struct cell* t, struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code);
+void acc_log_init();
+int  acc_log_request( struct sip_msg *req);
 
 #ifdef SQL_ACC
-int acc_db_bind(char* db_url);
-int acc_db_init(char* db_url);
+int  acc_db_init(char* db_url);
+int  acc_db_init_child(char* db_url);
 void acc_db_close();
-int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
-		str* phrase,  char *table, char *fmt);
-void acc_db_missed( struct cell* t,  struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code );
-void acc_db_ack( struct cell* t, struct sip_msg *req,
-		struct sip_msg *ack );
-void acc_db_reply( struct cell* t,  struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code);
+int  acc_db_request( struct sip_msg *req);
 #endif
 
 #ifdef RAD_ACC
-int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
-		str* phrase);
-void acc_rad_missed( struct cell* t, struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code );
-void acc_rad_ack( struct cell* t, struct sip_msg *req,
-		struct sip_msg *ack );
-void acc_rad_reply( struct cell* t, struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code);
+int  init_acc_rad(char *rad_cfg, int srv_type);
+int  acc_rad_request( struct sip_msg *req );
 #endif
 
 #ifdef DIAM_ACC
-int acc_diam_request( struct sip_msg *rq, struct hdr_field *to,
-		str* phrase);
-void acc_diam_missed( struct cell* t, struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code );
-void acc_diam_ack( struct cell* t, struct sip_msg *req,
-		struct sip_msg *ack );
-void acc_diam_reply( struct cell* t, struct sip_msg *req,
-		struct sip_msg *reply, unsigned int code);
+int  acc_diam_init();
+int  acc_diam_request( struct sip_msg *req );
 #endif
-
-inline static int skip_cancel(struct sip_msg *msg)
-{
-	return (msg->REQ_METHOD==METHOD_CANCEL) && report_cancels==0;
-}
 
 #endif

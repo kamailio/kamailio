@@ -26,7 +26,15 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
-#include "defs.h"
+
+/* information needed for reading messages from tcp connection */
+typedef struct rd_buf
+{
+	unsigned int first_4bytes;
+	unsigned int buf_len;
+	unsigned char *buf;
+} rd_buf_t;
+
 
 #define AAA_ERROR			-1
 #define AAA_CONN_CLOSED		-2

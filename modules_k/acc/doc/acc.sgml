@@ -22,6 +22,12 @@
 		<email>jiri@iptel.org</email>
 		</author>
 		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<email>bogdan@voice-system.ro</email>
+		</author>
+		<author>
 		<firstname>Ramona-Elena</firstname>
 		<surname>Modroiu</surname>
 		<affiliation><orgname>&voicesystem;</orgname></affiliation>
@@ -41,7 +47,7 @@
 	</copyright>
 	<copyright>
 		<year>2004</year>
-		<year>2005</year>
+		<year>2006</year>
 		<holder>&voicesystem;</holder>
 	</copyright>
 	<revhistory>

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2004 Voice Sistem SRL
  *
- * This file is part of SIP Express Router.
+ * This file is part of openser, a free SIP server.
  *
  * openser is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@
  *  2005-07-13  acc_extra specification moved to use pseudo-variables (bogdan)
  *  2006-09-08  flexible multi leg accounting support added,
  *              code cleanup for low level functions (bogdan)
+ *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
 
@@ -58,15 +59,13 @@ struct acc_extra *parse_acc_leg(char *extra);
 
 void destroy_extras( struct acc_extra *extra);
 
-int extra2strar( struct acc_extra *extra, struct sip_msg *rq,
-	str *attrs_arr, str *val_arr);
+int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr);
 
-int legs2strar( struct acc_extra *legs, struct sip_msg *rq,
-	str *attrs_arr, str *val_arr);
+int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr);
 
 int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset);
 
-int extra2int( struct acc_extra *extra );
+int extra2int( struct acc_extra *extra, int *attrs );
 
 #endif
 

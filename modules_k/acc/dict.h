@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef _DICT_H
-#define _DICT_H
+#ifndef _ACC_DICT_H
+#define _ACC_DICT_H
 
 struct attr {
 	const char *n;
@@ -49,25 +49,24 @@ struct val {
 #define	A_SIP_CSEQ						8
 #define	A_SIP_TO_TAG					9
 #define	A_SIP_FROM_TAG					10
-#define	A_SIP_TRANSLATED_REQUEST_URI	11
-#define	A_DIGEST_RESPONSE				12
-#define	A_DIGEST_ATTRIBUTES				13
-#define	A_SIP_URI_USER					14
-#define	A_DIGEST_REALM					15
-#define	A_DIGEST_NONCE					16
-#define	A_DIGEST_METHOD					17
-#define	A_DIGEST_URI					18
-#define	A_DIGEST_QOP					19
-#define	A_DIGEST_ALGORITHM				20
-#define	A_DIGEST_BODY_DIGEST			21
-#define	A_DIGEST_CNONCE					22
-#define	A_DIGEST_NONCE_COUNT			23
-#define	A_DIGEST_USER_NAME				24
-#define	A_SIP_GROUP						25
-#define	A_CISCO_AVPAIR					26
-#define	A_SIP_AVP						27
-#define	A_TIME_STAMP					28
-#define	A_MAX							29
+#define	A_DIGEST_RESPONSE				11
+#define	A_DIGEST_ATTRIBUTES				12
+#define	A_SIP_URI_USER					13
+#define	A_DIGEST_REALM					14
+#define	A_DIGEST_NONCE					15
+#define	A_DIGEST_METHOD					16
+#define	A_DIGEST_URI					17
+#define	A_DIGEST_QOP					18
+#define	A_DIGEST_ALGORITHM				19
+#define	A_DIGEST_BODY_DIGEST			20
+#define	A_DIGEST_CNONCE					21
+#define	A_DIGEST_NONCE_COUNT			22
+#define	A_DIGEST_USER_NAME				23
+#define	A_SIP_GROUP						24
+#define	A_CISCO_AVPAIR					25
+#define	A_SIP_AVP						26
+#define	A_TIME_STAMP					27
+#define	A_MAX							28
 
 #define	V_STATUS_START			0
 #define	V_STATUS_STOP			1
