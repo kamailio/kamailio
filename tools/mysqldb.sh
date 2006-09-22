@@ -284,12 +284,12 @@ CREATE TABLE version (
 #
 
 INSERT INTO version VALUES ( 'subscriber', '5');
-INSERT INTO version VALUES ( 'missed_calls', '2');
+INSERT INTO version VALUES ( 'missed_calls', '3');
 INSERT INTO version VALUES ( 'location', '1003');
 INSERT INTO version VALUES ( 'aliases', '1003');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
-INSERT INTO version VALUES ( 'acc', '2');
+INSERT INTO version VALUES ( 'acc', '3');
 INSERT INTO version VALUES ( 'silo', '4');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
@@ -340,25 +340,19 @@ CREATE TABLE subscriber (
 # Table structure for table 'acc' -- accounted calls
 #
 CREATE TABLE acc (
-  sip_from varchar(128) NOT NULL default '',
-  sip_to varchar(128) NOT NULL default '',
-  sip_status varchar(128) NOT NULL default '',
-  sip_method varchar(16) NOT NULL default '',
-  i_uri varchar(128) NOT NULL default '',
-  o_uri varchar(128) NOT NULL default '',
-  from_uri varchar(128) NOT NULL default '',
-  to_uri varchar(128) NOT NULL default '',
-  sip_callid varchar(128) NOT NULL default '',
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  fromtag varchar(128) NOT NULL default '',
-  totag varchar(128) NOT NULL default '',
-  time datetime NOT NULL default '0000-00-00 00:00:00',
-  timestamp timestamp(14) NOT NULL,
-  src_leg varchar(128) default NULL,
-  dst_leg varchar(128) default NULL,
-  INDEX acc_user ($USERCOL, domain),
-  KEY sip_callid (sip_callid)
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `method` varchar(16) NOT NULL default '',
+  `from_uri` varchar(64) NOT NULL default '',
+  `from_tag` varchar(64) NOT NULL default '',
+  `to_uri` varchar(64) NOT NULL default '',
+  `to_tag` varchar(64) NOT NULL default '',
+  `callid` varchar(64) NOT NULL default '',
+  `cseq_no` varchar(32) NOT NULL default '',
+  `sip_code` varchar(3) NOT NULL default '',
+  `sip_reason` varchar(32) NOT NULL default '',
+  `time` datetime NOT NULL,
+  INDEX acc_callid (`callid`),
+  PRIMARY KEY  (`id`)
 ) $TABLE_TYPE;
 
 
@@ -367,24 +361,19 @@ CREATE TABLE acc (
 # for keeping track of missed calls
 #
 CREATE TABLE missed_calls (
-  sip_from varchar(128) NOT NULL default '',
-  sip_to varchar(128) NOT NULL default '',
-  sip_status varchar(128) NOT NULL default '',
-  sip_method varchar(16) NOT NULL default '',
-  i_uri varchar(128) NOT NULL default '',
-  o_uri varchar(128) NOT NULL default '',
-  from_uri varchar(128) NOT NULL default '',
-  to_uri varchar(128) NOT NULL default '',
-  sip_callid varchar(128) NOT NULL default '',
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  fromtag varchar(128) NOT NULL default '',
-  totag varchar(128) NOT NULL default '',
-  time datetime NOT NULL default '0000-00-00 00:00:00',
-  timestamp timestamp(14) NOT NULL,
-  src_leg varchar(128) default NULL,
-  dst_leg varchar(128) default NULL,
-  INDEX mc_user ($USERCOL, domain)
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `method` varchar(16) NOT NULL default '',
+  `from_uri` varchar(64) NOT NULL default '',
+  `from_tag` varchar(64) NOT NULL default '',
+  `to_uri` varchar(64) NOT NULL default '',
+  `to_tag` varchar(64) NOT NULL default '',
+  `callid` varchar(64) NOT NULL default '',
+  `cseq_no` varchar(32) NOT NULL default '',
+  `sip_code` varchar(3) NOT NULL default '',
+  `sip_reason` varchar(32) NOT NULL default '',
+  `time` datetime NOT NULL,
+  INDEX acc_callid (`callid`),
+  PRIMARY KEY  (`id`)
 ) $TABLE_TYPE;
 
 
