@@ -1,0 +1,53 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "xmpp_user.sgml">
+<!ENTITY devel SYSTEM "xmpp_devel.sgml">
+<!ENTITY faq SYSTEM "xmpp_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>xmpp Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Andreea</firstname>
+		<surname>Spirea</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Andreea</firstname>
+		<surname>Spirea</surname>
+		<address>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2006</year>
+	    <holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>

@@ -1,0 +1,171 @@
+/*
+ * $Id$
+ *
+ * XMPP Module
+ * This file is part of openser, a free SIP server.
+ *
+ * Copyright (C) 2006 Voice Sistem S.R.L.
+ *
+ * openser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * openser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Andreea Spirea
+ *
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <errno.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#include "../../sr_module.h"
+
+int net_listen(char *server, int port)
+{
+	int fd;
+	struct sockaddr_in sin;
+	int on = 1;
+	
+	memset(&sin, 0, sizeof(struct sockaddr_in));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(port);
+	
+	if (!inet_aton(server, &sin.sin_addr)) {
+		struct hostent *host;
+		
+		DBG("xmpp: resolving %s...\n", server);
+		
+		if (!(host = gethostbyname(server))) {
+			LOG(L_ERR, "xmpp: resolving %s failed (%s).\n", server, hstrerror(h_errno));
+			return -1;
+		}
+		memcpy(&sin.sin_addr, host->h_addr_list[0], host->h_length);
+	}
+	
+	if ((fd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+		LOG(L_ERR, "xmpp: cannot socket(): %s\n", strerror(errno));
+		return -1;
+	}
+	
+	DBG("xmpp: listening on %s:%d\n", inet_ntoa(sin.sin_addr), port);
+	
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
+		LOG(L_WARN, "xmpp: cannot setsockopt(SO_REUSEADDR): %s\n", strerror(errno));
+	}
+
+	if (bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)) < 0) {
+		LOG(L_ERR, "xmpp: cannot bind(): %s\n", strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	if (listen(fd, 1) < 0) {
+		LOG(L_ERR, "xmpp: cannot listen(): %s\n", strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+
+int net_connect(char *server, int port)
+{
+	int fd;
+	struct sockaddr_in sin;
+	
+	memset(&sin, 0, sizeof(struct sockaddr_in));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(port);
+	
+	if (!inet_aton(server, &sin.sin_addr)) {
+		struct hostent *host;
+		
+		DBG("xmpp: resolving %s...\n", server);
+		
+		if (!(host = gethostbyname(server))) {
+			LOG(L_ERR, "xmpp: resolving %s failed (%s).\n", server, hstrerror(h_errno));
+			return -1;
+		}
+		memcpy(&sin.sin_addr, host->h_addr_list[0], host->h_length);
+	}
+	
+	if ((fd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+		LOG(L_ERR, "xmpp: cannot socket(): %s\n", strerror(errno));
+		return -1;
+	}
+	
+	DBG("xmpp: connecting to %s:%d...\n", inet_ntoa(sin.sin_addr), port);
+	
+	if (connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)) < 0) {
+		LOG(L_ERR, "xmpp: cannot connect(): %s\n", strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	DBG("xmpp: connected to %s:%d...\n", inet_ntoa(sin.sin_addr), port);
+	return fd;
+}
+
+int net_send(int fd, const char *buf, int len)
+{
+	const char *p = buf;
+	int res;
+
+	do {
+		res = send(fd, p, len, 0);
+		if (res <= 0)
+			return res;
+		len -= res;
+		p += res;
+	} while (len);
+
+	return (p - buf);
+}
+
+int net_printf(int fd, char *format, ...)
+{
+	va_list args;
+	char buf[4096];
+	
+	va_start(args, format);
+	vsnprintf(buf, sizeof(buf) - 1, format, args);
+	va_end(args);
+
+	DBG("xmpp: net_printf: [%s]\n", buf);
+	
+	return net_send(fd, buf, strlen(buf));
+}
+
+char *net_read_static(int fd)
+{
+	static char buf[4096];
+	int res;
+
+	res = recv(fd, buf, sizeof(buf) - 1, 0);
+	if (res < 0) {
+		LOG(L_ERR, "xmpp: recv() error: %s\n", strerror(errno));
+		return NULL;
+	}
+	if (!res)
+		return NULL;
+	buf[res] = 0;
+	return buf;
+}
