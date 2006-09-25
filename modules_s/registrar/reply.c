@@ -42,6 +42,7 @@
 #include "rerrno.h"
 #include "reg_mod.h"
 #include "regtime.h"
+#include "common.h"
 #include "reply.h"
 
 
@@ -77,14 +78,15 @@ static struct {
  * Calculate the length of buffer needed to
  * print contacts
  */
-static inline unsigned int calc_buf_len(ucontact_t* c)
+static inline unsigned int calc_buf_len(ucontact_t* c, str* aor_filter)
 {
 	unsigned int len;
 	int qlen;
+	str ab;
 
 	len = 0;
 	while(c) {
-		if (VALID_CONTACT(c, act_time)) {
+		if (VALID_CONTACT(c, act_time) && (!aor_filter->s || VALID_AOR(c, (*aor_filter)))) {
 			if (len) len += CONTACT_SEP_LEN;
 			len += 2 /* < > */ + c->c.len;
 			qlen = len_q(c->q);
@@ -112,12 +114,12 @@ static inline unsigned int calc_buf_len(ucontact_t* c)
  * Allocate a memory buffer and print Contact
  * header fields into it
  */
-int build_contact(ucontact_t* c)
+int build_contact(ucontact_t* c, str* aor_filter)
 {
 	char *p, *cp;
 	int fl, len;
 
-	contact.data_len = calc_buf_len(c);
+	contact.data_len = calc_buf_len(c, aor_filter);
 	if (!contact.data_len) return 0;
 
 	if (!contact.buf || (contact.buf_len < contact.data_len)) {
@@ -140,7 +142,7 @@ int build_contact(ucontact_t* c)
 
 	fl = 0;
 	while(c) {
-		if (VALID_CONTACT(c, act_time)) {
+		if (VALID_CONTACT(c, act_time) && (!aor_filter->s || VALID_AOR(c, (*aor_filter)))) {
 			if (fl) {
 				memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
 				p += CONTACT_SEP_LEN;

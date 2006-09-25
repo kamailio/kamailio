@@ -76,7 +76,7 @@ void remove_cont(urecord_t* _r, ucontact_t* _c)
  * we will remove all bindings with the given username 
  * from the usrloc and return 200 OK response
  */
-static inline int star(udomain_t* _d, str* _u)
+static inline int star(udomain_t* _d, str* _u, str* aor_filter)
 {
 	urecord_t* r;
 	ucontact_t* c;
@@ -104,7 +104,7 @@ static inline int star(udomain_t* _d, str* _u)
 		      */
 		rerrno = R_UL_DEL_R;
 		if (!ul.get_urecord(_d, _u, &r)) {
-			build_contact(r->contacts);
+			build_contact(r->contacts, aor_filter);
 		}
 		ul.unlock_udomain(_d);
 		return -1;
@@ -118,9 +118,9 @@ static inline int star(udomain_t* _d, str* _u)
  * Process request that contained no contact header
  * field, it means that we have to send back a response
  * containing a list of all existing bindings for the
- * given username (in To HF)
+ * given aor
  */
-static inline int no_contacts(udomain_t* _d, str* _u)
+static inline int no_contacts(udomain_t* _d, str* _u, str* aor_filter)
 {
 	urecord_t* r;
 	int res;
@@ -135,7 +135,7 @@ static inline int no_contacts(udomain_t* _d, str* _u)
 	}
 	
 	if (res == 0) {  /* Contacts found */
-		build_contact(r->contacts);
+		build_contact(r->contacts, aor_filter);
 	}
 	ul.unlock_udomain(_d);
 	return 0;
@@ -260,7 +260,7 @@ static int create_rcv_uri(str** uri, struct sip_msg* m)
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t* _d, str* _u, str *ua)
+static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t* _d, str* _u, str *ua, str* aor_filter)
 {
 	urecord_t* r = 0;
 	ucontact_t* c;
@@ -353,7 +353,7 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 		if (!r->contacts) {
 			ul.delete_urecord(_d, _u);
 		} else {
-			build_contact(r->contacts);
+			build_contact(r->contacts, aor_filter);
 		}
 	}
 	
@@ -414,7 +414,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t* _c, str* _ua)
+static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t* _c, str* _ua, str* aor_filter)
 {
 	ucontact_t* c, *c2;
 	str callid;
@@ -433,7 +433,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 	if (max_contacts) {
 		ret = test_max_contacts(_m, _r, _c);
 		if (ret != 0) {
-			build_contact(_r->contacts);
+			build_contact(_r->contacts, aor_filter);
 			return -1;
 		}
 	}
@@ -442,7 +442,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
-			build_contact(_r->contacts);
+			build_contact(_r->contacts, aor_filter);
 			LOG(L_ERR, "update(): Error while calculating expires\n");
 			return -1;
 		}
@@ -560,7 +560,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
  * This function will process request that
  * contained some contact header fields
  */
-static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _u, str* _ua)
+static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _u, str* _ua, str* aor_filter)
 {
 	int res;
 	urecord_t* r;
@@ -585,17 +585,17 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	}
 
 	if (res == 0) { /* Contacts found */
-		if (update(_m, r, aor, _c, _ua) < 0) {
+		if (update(_m, r, aor, _c, _ua, aor_filter) < 0) {
 			LOG(L_ERR, "contacts(): Error while updating record\n");
-			build_contact(r->contacts);
+			build_contact(r->contacts, aor_filter);
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d);
 			return -3;
 		}
-		build_contact(r->contacts);
+		build_contact(r->contacts, aor_filter);
 		ul.release_urecord(r);
 	} else {
-		if (insert(_m, aor, _c, _d, _u, _ua) < 0) {
+		if (insert(_m, aor, _c, _d, _u, _ua, aor_filter) < 0) {
 			LOG(L_ERR, "contacts(): Error while inserting record\n");
 			ul.unlock_udomain(_d);
 			return -4;
@@ -613,11 +613,11 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 /*
  * Process REGISTER request and save it's contacts
  */
-static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int doreply)
+static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* aor_filt, int doreply)
 {
 	contact_t* c;
 	int st;
-	str uid, ua;
+	str uid, ua, aor_filter;
 
 	rerrno = R_FINE;
 
@@ -629,6 +629,16 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 		goto error;
 	}
 	
+	if (aor_filt) {
+	    if (get_str_fparam(&aor_filter, _m, (fparam_t*)aor_filt) != 0) {
+		ERR("registrar:save: Unable to get the AOR value\n");
+		return -1;
+	    }
+	} else {
+	    aor_filter.s = 0;
+	    aor_filter.len = 0;
+	}
+
 	get_act_time();
 	c = get_first_contact(_m);
 
@@ -647,12 +657,12 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 
 	if (c == 0) {
 		if (st) {
-			if (star(_t, &uid) < 0) goto error;
+			if (star(_t, &uid, &aor_filter) < 0) goto error;
 		} else {
-			if (no_contacts(_t, &uid) < 0) goto error;
+			if (no_contacts(_t, &uid, &aor_filter) < 0) goto error;
 		}
 	} else {
-		if (contacts(_m, c, _t, &uid, &ua) < 0) goto error;
+		if (contacts(_m, c, _t, &uid, &ua, &aor_filter) < 0) goto error;
 	}
 
 	if (doreply) {
@@ -677,28 +687,28 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 /*
  * Process REGISTER request and save it's contacts
  */
-int save(struct sip_msg* _m, char* _t, char* _s)
+int save(struct sip_msg* _m, char* table, char* aor_filter)
 {
 	mem_only = FL_NONE;
-	return save_real(_m, (udomain_t*)_t, _s, 1);
+	return save_real(_m, (udomain_t*)table, aor_filter, 1);
 }
 
 
 /*
  * Process REGISTER request and save it's contacts, do not send any replies
  */
-int save_noreply(struct sip_msg* _m, char* _t, char* _s)
+int save_noreply(struct sip_msg* _m, char* table, char* aor_filter)
 {
 	mem_only = FL_NONE;
-	return save_real(_m, (udomain_t*)_t, _s, 0);
+	return save_real(_m, (udomain_t*)table, aor_filter, 0);
 }
 
 
 /*
  * Update memory cache only
  */
-int save_memory(struct sip_msg* _m, char* _t, char* _s)
+int save_memory(struct sip_msg* _m, char* table, char* aor_filter)
 {
 	mem_only = FL_MEM;
-	return save_real(_m, (udomain_t*)_t, _s, 1);
+	return save_real(_m, (udomain_t*)table, aor_filter, 1);
 }

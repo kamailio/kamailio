@@ -33,4 +33,8 @@
 
 #include "../../str.h"
 
+#define VALID_AOR(contact, aor_filter) \
+    ((aor_filter).len == (contact)->aor.len && \
+     !strncasecmp((aor_filter).s, (contact)->aor.s, (aor_filter.len)))
+
 #endif /* COMMON_H */

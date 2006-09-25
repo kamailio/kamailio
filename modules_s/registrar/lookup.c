@@ -233,10 +233,6 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	return -1;
 }
 
-#define VALID_AOR(contact, aor) \
-    ((aor).len == (contact)->aor.len && \
-     !strncasecmp((aor).s, (contact)->aor.s, (aor.len)))
-
 /*
  * Lookup contact in the database and rewrite Request-URI,
  * and filter them by aor

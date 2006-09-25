@@ -43,19 +43,19 @@
 /*
  * Process REGISTER request and save it's contacts
  */
-int save(struct sip_msg* _m, char* _t, char* _s);
+int save(struct sip_msg* _m, char* _t, char* aor_filter);
 
 
 /*
  * Process REGISTER request and save it's contacts, do not send any replies
  */
-int save_noreply(struct sip_msg* _m, char* _t, char* _s);
+int save_noreply(struct sip_msg* _m, char* _t, char* aor_filter);
 
 
 /*
  * Process REGISTER request and save it's contacts, do not send any replies
  */
-int save_memory(struct sip_msg* _m, char* _t, char* _s);
+int save_memory(struct sip_msg* _m, char* _t, char* aor_filter);
 
 
 #endif /* SAVE_H */

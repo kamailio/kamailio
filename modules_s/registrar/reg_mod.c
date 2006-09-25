@@ -55,7 +55,7 @@ static int mod_init(void);                           /* Module init function */
 static int fix_save_nat_flag( modparam_t type, void* val);
 static int fix_load_nat_flag( modparam_t type, void* val);
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
-static int lookup2_fixup(void** param, int param_no); /* Fixup that converts domain name */
+static int domain2_fixup(void** param, int param_no); /* Fixup that converts domain name */
 static void mod_destroy(void);
 
 usrloc_api_t ul;            /* Structure containing pointers to usrloc functions */
@@ -94,17 +94,22 @@ sl_api_t sl;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save_contacts",         save,         1, domain_fixup, REQUEST_ROUTE                },
-	{"save",                  save,         1, domain_fixup, REQUEST_ROUTE                },
-	{"save_contacts_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
-	{"save_noreply",          save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
-	{"save_memory",           save_memory,  1, domain_fixup, REQUEST_ROUTE                },
-	{"lookup_contacts",       lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"lookup_contacts",       lookup2,      2, lookup2_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"lookup",                lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"lookup",                lookup2,      2, lookup2_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"registered",            registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"registered",            registered2,  2, lookup2_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"save_contacts",         save,         1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save_contacts",         save,         2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save",                  save,         1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save",                  save,         2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save_contacts_noreply", save_noreply, 1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save_contacts_noreply", save_noreply, 2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save_noreply",          save_noreply, 1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save_noreply",          save_noreply, 2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save_memory",           save_memory,  1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"save_memory",           save_memory,  2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"lookup_contacts",       lookup,       1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"lookup_contacts",       lookup2,      2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"lookup",                lookup,       1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"lookup",                lookup2,      2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"registered",            registered,   1, domain_fixup,  REQUEST_ROUTE | FAILURE_ROUTE },
+	{"registered",            registered2,  2, domain2_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -281,7 +286,7 @@ static int domain_fixup(void** param, int param_no)
 /*
  * Convert char* parameter to udomain_t* pointer
  */
-static int lookup2_fixup(void** param, int param_no)
+static int domain2_fixup(void** param, int param_no)
 {
 	if (param_no == 1) {
 	    return domain_fixup(param, param_no);
