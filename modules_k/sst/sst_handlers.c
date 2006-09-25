@@ -70,7 +70,15 @@ static xl_spec_t *timeout_avp = 0;
 
 static unsigned int sst_minSE = 0;
 
-void sstHandlerInit(xl_spec_t *timeout_avp_p, unsigned int minSE) {
+/**
+ * This is not a public API. This function is called when the module is loaded
+ * to initialize the callback handlers.
+ * 
+ * @param timeout_avp_p - The pointer to the dialog modules timeout AVP.
+ * @param minSE - The miniumum session expire value allowed by this PROXY. 
+ */
+void sstHandlerInit(xl_spec_t *timeout_avp_p, unsigned int minSE) 
+{
 	timeout_avp = timeout_avp_p;
 	sst_minSE = minSE;
 }
@@ -101,11 +109,12 @@ void sstHandlerInit(xl_spec_t *timeout_avp_p, unsigned int minSE) {
  *
  */
 void sstDialogCreatedCB(struct dlg_cell *did, int type, 
-			struct sip_msg* msg, void** param) {
+		struct sip_msg* msg, void** param) 
+{
 	int rtn = 0;
 
 	if (msg->first_line.type == SIP_REQUEST && 
-	msg->first_line.u.request.method_value == METHOD_INVITE) {
+			msg->first_line.u.request.method_value == METHOD_INVITE) {
 		if ((rtn = sstUpdateSST(msg)) == 0) {
 			/*
 			 * Register for the other callbacks from the dialog.
@@ -119,15 +128,13 @@ void sstDialogCreatedCB(struct dlg_cell *did, int type,
 				"DLGCB_REQ_WITHIN\n");
 			dlg_binds->register_dlgcb(did, DLGCB_REQ_WITHIN, 
 				sstDialogUpdate, did);
-		} else {
-			LOG(L_ERR, "No callbacks setup");
 		}
 	}
 	return;
 }
 
 /**
- * The sst_checkMin() script command handler. Return 1 (true) is the
+ * The sst_checkMin() script command handler. Return 1 (true) if the
  * MIN-SE: of the message is too small compared to the passed in
  * value. This will allow the script to reply to this INVITE with a
  * "422 Session Timer Too Small" response.
@@ -142,7 +149,8 @@ void sstDialogCreatedCB(struct dlg_cell *did, int type,
  *         1 if message MIN-SE is greater then the str1 value. (too
  *           small for us)
  */
-int sstCheckMinHandler(struct sip_msg *msg, char *str1, char *str2) {
+int sstCheckMinHandler(struct sip_msg *msg, char *str1, char *str2) 
+{
 	enum parse_sst_result result;
 	unsigned minse = 0;
 	int rtn = 0;
@@ -154,10 +162,10 @@ int sstCheckMinHandler(struct sip_msg *msg, char *str1, char *str2) {
 	 *        be looked at. (need to check the spec for this)
 	 */
 	if ((msg->first_line.type == SIP_REQUEST && 
-	msg->first_line.u.request.method_value == METHOD_INVITE)
-	|| (msg->first_line.type == SIP_REPLY && 
-	msg->first_line.u.reply.statuscode > 199 && 
-	msg->first_line.u.reply.statuscode < 300)) {
+		msg->first_line.u.request.method_value == METHOD_INVITE)
+		|| (msg->first_line.type == SIP_REPLY && 
+		msg->first_line.u.reply.statuscode > 199 && 
+		msg->first_line.u.reply.statuscode < 300)) {
 		/*
 		 * The message is an INVITE request, or a 2XX response so look for
 		 * the MIN-SE header.
@@ -178,10 +186,13 @@ int sstCheckMinHandler(struct sip_msg *msg, char *str1, char *str2) {
 				rtn = -1;
 			}
 		} else {
-			/*
-			 * log the error
-			 */
-			LOG(L_ERR, "Error parsing min_se header.");
+			if (result != parse_sst_header_not_found) {
+				/*
+			 	 * log the error if the header was found.
+			 	 */
+				LOG(L_ERR, "ERROR:sst:sstCheckMin: Error parsing "
+					"min_se header.");
+			}
 			rtn = -1;
 		}
 	} else {
@@ -195,34 +206,55 @@ int sstCheckMinHandler(struct sip_msg *msg, char *str1, char *str2) {
 	return(rtn);
 }
 
-
+/**
+ * This callback is called when ever a dialog is terminated. The cause of the
+ * termination can be normal, failed call, or expired. It is the expired dialog
+ * we are really interested in.
+ * 
+ * @param did - The Dialog ID / structure pointer. Used as an ID only.
+ * @param type - The termination cause/reason.
+ * @param msg - The pointer to the SIP message. On an DLGCB_EXPIRED type, the 
+ *              message is a FAKED_REPLY (-1) and cannot be looked at safely.
+ * @param param - Not used
+ */
 static void sstDialogTerminate(struct dlg_cell* did, int type, 
-										struct sip_msg* msg, void** param) {
+		struct sip_msg* msg, void** param) 
+{
 	switch (type) {
 		case DLGCB_FAILED:
 			DBG("DEBUG:sst:sstDialogTerminate: DID %p failed (canceled). "
-				"Terminating session.\n", did);
+					"Terminating session.\n", did);
 			break;
 		case DLGCB_EXPIRED:
-			/* In the case of expired, the msg is pointing at a FAKED_REPLY
-			 * (-1) */
+			/* In the case of expired, the msg is pointing at a
+			 * FAKED_REPLY (-1)
+			 */
 			LOG(L_ERR, "ERROR:sst:sstDialogTerminate: DID %p expired. "
-				"Terminating session.\n", did);
+					"Terminating session.\n", did);
 			break;
 		default: /* Normal termination. */
 			DBG("DEBUG:sst:sstDialogTerminate:Terminating DID %p session\n",
-				did);
+					did);
 			break;
 	}
 	return;
 }
 
 
-/*
+/**
  * Simple callback wrapper around the sstUpdateSST() function below.
+ * This callback is called on any SIP message that will update the state of
+ * the dialog. This includes the reINVITE that will have the new expire:
+ * header value.
+ * 
+ * @param did - The dialog structure. The pointer is used as an ID.
+ * @param type - The reason for the callback. Not used.
+ * @param msg - The SIP message that causes the callback.
+ * @param param - Not used.
  */
 static void sstDialogUpdate(struct dlg_cell* did, int type, 
-										struct sip_msg* msg, void** param) {
+		struct sip_msg* msg, void** param) 
+{
 	int rtn = 0;
 
 	if ((rtn = sstUpdateSST(msg)) == 0) {
@@ -236,9 +268,11 @@ static void sstDialogUpdate(struct dlg_cell* did, int type,
  * is created or when a diualog is updated (with an INVITE) to reset
  * the dialog expire timer to the new SST value.
  * 
+ * @param msg - The SIP message that could cause a SST update.
  * @return 0 on sucess. none zero on failure.
  */
-static int sstUpdateSST(struct sip_msg *msg) {
+static int sstUpdateSST(struct sip_msg *msg) 
+{
 	int rtn = 0;
 	struct session_expires *se = NULL;
 	unsigned int min_se = 0;
@@ -247,7 +281,7 @@ static int sstUpdateSST(struct sip_msg *msg) {
 	if ((rtn = parse_session_expires(msg, se)) != parse_sst_success) {
 		if (rtn != parse_sst_header_not_found) {
 			LOG(L_ERR, "ERROR:sst:sstUpdateSST: Could not parse expire "
-				"message header on INVITE.\n");
+					"message header on INVITE.\n");
 		}
 		return(-1);
 	}
@@ -255,7 +289,7 @@ static int sstUpdateSST(struct sip_msg *msg) {
 	if ((rtn = parse_min_se(msg, &min_se)) != parse_sst_success) {
 		if (rtn != parse_sst_header_not_found) {
 			LOG(L_ERR, "ERROR:sst:sstUpdateSST: Could not parse min_se "
-				"message header on INVITE.\n");
+					"message header on INVITE.\n");
 		}
 		return(-2);
 	}
@@ -265,7 +299,7 @@ static int sstUpdateSST(struct sip_msg *msg) {
 	 */
 	if (dlg_binds->register_dlgcb == NULL) {
 		LOG(L_ERR, "ERROR:sst:sstUpdateSST: Dialog bind registration "
-			"function pointer is NULL\n");
+				"function pointer is NULL\n");
 		return(-3);
 	}
 
@@ -273,10 +307,10 @@ static int sstUpdateSST(struct sip_msg *msg) {
 	if (min_se < sst_minSE) {
 		/* Rewrite the min_se header */
 		LOG(L_ERR, "ERROR:sst:sstUpdateSST: NS-min_SE %d is less then "
-			"(<) configured minSE %d.\n", min_se, sst_minSE);
+				"(<) configured minSE %d.\n", min_se, sst_minSE);
 	}
 #endif /* PROXY_MIN_SE_REWITE_ALLOWED */
-
+	
 	/*
 	 * Set the dialog timeout value to expire $avp(id[N])
 	 * timeout_avp. We set the value here then when this callback
@@ -284,15 +318,15 @@ static int sstUpdateSST(struct sip_msg *msg) {
 	 * timeout expire time to the value we just stored in the AVP.
 	 */
 	if (timeout_avp && xl_get_spec_value(msg, timeout_avp, &xl_val, 0) == 0
-	&& xl_val.flags & XL_VAL_INT 
-	&& xl_val.ri > 0 ) {
+			&& xl_val.flags & XL_VAL_INT 
+			&& xl_val.ri > 0 ) {
 		/* We now hold a reference to the AVP int value */
 		DBG("DEBUG:sst:sstUpdateSST: Current timeout value is %d, setting "
-			"it to %d\n", xl_val.ri, se->interval);
+				"it to %d\n", xl_val.ri, se->interval);
 		xl_val.ri = (time(NULL) + se->interval);
 	} else {
 		LOG(L_ERR, "ERROR:sst:sstUpdateSST: No timeout AVP or could not "
-			"locate it. SST not reset.\n");
+				"locate it. SST not reset.\n");
 		return(-4); /* do not setup the callbacks */
 	}
 	return(0);
