@@ -1339,9 +1339,8 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
 
 
 #define MSG_UNKNOWN 0
-#define MSG_INVITE  1
-#define MSG_ACK     2
-#define MSG_REPLY   3
+#define MSG_REQUEST 1
+#define MSG_REPLY   2
 
 
 static int
@@ -1350,26 +1349,13 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     str sdp, sessionIP, callId, fromDomain, toDomain, userAgent, tokens[64];
     str fromAddr, toAddr, fromTag, toTag;
     char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType, *info;
-    int streamCount, i, port, count, portCount, cmdlen, infolen, status, type;
+    int streamCount, i, port, count, portCount, cmdlen, infolen, status;
     StreamInfo streams[64], stream;
     Bool request;
 
     if (msg->first_line.type == SIP_REQUEST) {
-        if (msg->first_line.u.request.method_value == METHOD_INVITE)
-            type = MSG_INVITE;
-        else if (msg->first_line.u.request.method_value == METHOD_ACK)
-            type = MSG_ACK;
-        else
-            type = MSG_UNKNOWN;
-    } else if (msg->first_line.type == SIP_REPLY) {
-        type = MSG_REPLY;
-    } else {
-        type = MSG_UNKNOWN;
-    }
-
-    if (type==MSG_INVITE || type==MSG_ACK) {
         request = True;
-    } else if (type==MSG_REPLY) {
+    } else if (msg->first_line.type == SIP_REPLY) {
         request = False;
     } else {
         return -1;
