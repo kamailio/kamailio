@@ -1338,11 +1338,6 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
 }
 
 
-#define MSG_UNKNOWN 0
-#define MSG_REQUEST 1
-#define MSG_REPLY   2
-
-
 static int
 UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 {
