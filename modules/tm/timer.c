@@ -103,6 +103,10 @@
  *              it from the timer handle; timer_allow_del()  (andrei)
  *  2006-08-11  final_response_handler dns failover support for timeout-ed
  *              invites (andrei)
+ *  2006-09-28  removed the 480 on fr_inv_timeout reply: on timeout always 
+ *               return a 408
+ *              set the corresponding "faked" failure route sip_msg->msg_flags 
+ *               on timeout or if the branch received a reply (andrei)
  */
 
 #include "defs.h"
@@ -321,7 +325,6 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 											struct cell* t)
 {
 	int silent;
-	int reply_code;
 #ifdef USE_DNS_FAILOVER
 	/*int i; 
 	int added_branches;
@@ -395,12 +398,9 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 #ifdef EXTRA_DEBUG
 	DBG("DEBUG: final_response_handler:stop retr. and send CANCEL (%p)\n", t);
 #endif
-	if (is_invite(t) && 
-	    r_buf->branch < MAX_BRANCHES && /* r_buf->branch is always >=0 */
-	    t->uac[r_buf->branch].last_received > 0) {
-		reply_code = 480; /* Temporarily Unavailable */
-	} else {
-		reply_code = 408; /* Request Timeout */
+	if ((r_buf->branch < MAX_BRANCHES) && /* r_buf->branch is always >=0 */
+			(t->uac[r_buf->branch].last_received==0)){
+		/* no reply received */
 #ifdef USE_DST_BLACKLIST
 		if (use_dst_blacklist)
 			dst_blacklist_add( BLST_ERR_TIMEOUT, &r_buf->dst);
@@ -419,25 +419,10 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 				prev_branch=branch_ret;
 				branch_ret=t_send_branch(t, branch_ret, t->uas.request , 0, 0);
 			}
-#if 0
-			if (branch_ret>=0){
-				added_branches=1<<branch_ret;
-				/* success */
-				for (i=branch_ret; i<t->nr_of_outgoings; i++) {
-					if (added_branches & (1<<i)) {
-						branch_ret=t_send_branch(t, i, t->uas.request , 0, 0);
-						if ((branch_ret>=0) && (branch_ret!=i)){
-							/* no send, but new branch */
-							added_branches |= 1<<branch_ret;
-						}
-					}
-				}
-			}
-#endif
 		}
 #endif
 	}
-	fake_reply(t, r_buf->branch, reply_code );
+	fake_reply(t, r_buf->branch, 408);
 }
 
 
@@ -477,6 +462,7 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 							 (both timers disabled)
 							  a little race risk, but
 							  nothing bad would happen */
+		rbuf->flags|=F_RB_TIMEOUT;
 		timer_allow_del(); /* [optional] allow timer_dels, since we're done
 							  and there is no race risk */
 		final_response_handler(rbuf, t);

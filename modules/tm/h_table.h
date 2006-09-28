@@ -107,6 +107,8 @@ enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8 };
 #define F_RB_T2				0x02
 #define F_RB_RETR_DISABLED	0x04 /* retransmission disabled */
 #define F_RB_FR_INV	0x08 /* timer switched to FR_INV */
+#define F_RB_TIMEOUT	0x10 /* timeout */
+#define F_RB_REPLIED	0x20 /* reply received */
 
 
 typedef struct retr_buf

@@ -565,7 +565,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 
 
 static inline int fake_req(struct sip_msg *faked_req,
-				struct sip_msg *shmem_msg)
+							struct sip_msg *shmem_msg, int extra_flags)
 {
 	/* on_negative_reply faked msg now copied from shmem msg (as opposed
 	 * to zero-ing) -- more "read-only" actions (exec in particular) will
@@ -580,7 +580,8 @@ static inline int fake_req(struct sip_msg *faked_req,
 	/* msg->parsed_uri_ok must be reset since msg_parsed_uri is
 	 * not cloned (and cannot be cloned) */
 	faked_req->parsed_uri_ok = 0;
-
+	
+	faked_req->msg_flags|=extra_flags; /* set the extra tm flags */
 	/* new_uri can change -- make a private copy */
 	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
 		faked_req->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
@@ -648,7 +649,7 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 
 /* return 1 if a failure_route processes */
 static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
-																	int code)
+											int code, int extra_flags)
 {
 	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
@@ -670,7 +671,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	if (!fake_req(&faked_req, shmem_msg)) {
+	if (!fake_req(&faked_req, shmem_msg, extra_flags)) {
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
@@ -757,6 +758,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int picked_code;
 	int new_branch;
 	int inv_through;
+	int extra_flags;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -834,8 +836,13 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 		|| Trans->on_negative ) {
+			extra_flags=
+				((Trans->uac[picked_branch].request.flags & F_RB_TIMEOUT)?
+							FL_TIMEOUT:0) | 
+				((Trans->uac[picked_branch].request.flags & F_RB_REPLIED)?
+						 	FL_REPLIED:0);
 			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
-									picked_code);
+									picked_code, extra_flags);
 		}
 
 		/* now reset it; after the failure logic, the reply may
@@ -1437,8 +1444,8 @@ int reply_received( struct sip_msg  *p_msg )
 			 * retransmissions comes before retransmission timer is set.*/
 			/* set_final_timer(t) */
 		}
-
 	}
+	uac->request.flags|=F_RB_REPLIED;
 
 	if (reply_status==RPS_ERROR)
 		goto done;

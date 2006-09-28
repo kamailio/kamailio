@@ -77,6 +77,8 @@
  *              when fixing param #2
  *  2005-12-09  added t_set_fr() (andrei)
  *  2006-02-07  named routes support (andrei)
+ *  2006-09-28  added t_branch_replied, t_branch_timeout, t_any_replied, 
+ *               t_any_timeout, t_is_canceled (andrei)
  */
 
 
@@ -181,6 +183,11 @@ inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo);
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
+static int t_branch_timeout(struct sip_msg* msg, char*, char*);
+static int t_branch_replied(struct sip_msg* msg, char*, char*);
+static int t_any_timeout(struct sip_msg* msg, char*, char*);
+static int t_any_replied(struct sip_msg* msg, char*, char*);
+static int t_is_canceled(struct sip_msg* msg, char*, char*);
 
 
 static char *fr_timer_param = FR_TIMER_AVP;
@@ -264,6 +271,14 @@ static cmd_export_t cmds[]={
 	{"t_set_fr",          t_set_fr_inv,             1, fixup_var_int_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_fr",          t_set_fr_all,             2, fixup_var_int_12,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_branch_timeout",  t_branch_timeout,         0, 0,  FAILURE_ROUTE},
+	{"t_branch_replied",  t_branch_replied,         0, 0,  FAILURE_ROUTE},
+	{"t_any_timeout",     t_any_timeout,            0, 0, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_any_replied",     t_any_replied,            0, 0, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_is_canceled",     t_is_canceled,            0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 
 	/* not applicable from the script */
@@ -1106,6 +1121,94 @@ static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo)
 {
 	return t_set_fr_all(msg, fr_inv, (char*)0);
 }
+
+
+
+/* script function, FAILURE_ROUTE only, returns true if the 
+ * choosed "failure" branch failed because of a timeout, 
+ * -1 otherwise */
+int t_branch_timeout(struct sip_msg* msg, char* foo, char* bar)
+{
+	return (msg->msg_flags & FL_TIMEOUT)?1:-1;
+}
+
+
+
+/* script function, FAILURE_ROUTE only, returns true if the 
+ * choosed "failure" branch ever received a reply, -1 otherwise */
+int t_branch_replied(struct sip_msg* msg, char* foo, char* bar)
+{
+	return (msg->msg_flags & FL_REPLIED)?1:-1;
+}
+
+
+
+/* script function, returns: 1 if the transaction was canceled, -1 if not */
+int t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
+{
+	struct cell *t;
+	int ret;
+	
+	
+	if (t_check( msg , 0 )==-1) return -1;
+	t=get_t();
+	if ((t==0) || (t==T_UNDEFINED)){
+		LOG(L_ERR, "ERROR: t_is_canceled: cannot check a message "
+			"for which no T-state has been established\n");
+		ret=-1;
+	}else{
+		ret=(t->flags & T_CANCELED)?1:-1;
+	}
+	return ret;
+}
+
+
+
+/* script function, returns: 1 if any of the branches did timeout, -1 if not */
+int t_any_timeout(struct sip_msg* msg, char* foo, char* bar)
+{
+	struct cell *t;
+	int r;
+	
+	if (t_check( msg , 0 )==-1) return -1;
+	t=get_t();
+	if ((t==0) || (t==T_UNDEFINED)){
+		LOG(L_ERR, "ERROR: t_any_timeout: cannot check a message "
+			"for which no T-state has been established\n");
+		return -1;
+	}else{
+		for (r=0; r<t->nr_of_outgoings; r++){
+			if (t->uac[r].request.flags & F_RB_TIMEOUT)
+				return 1;
+		}
+	}
+	return -1;
+}
+
+
+
+/* script function, returns: 1 if any of the branches received at leat one
+ * reply, -1 if not */
+int t_any_replied(struct sip_msg* msg, char* foo, char* bar)
+{
+	struct cell *t;
+	int r;
+	
+	if (t_check( msg , 0 )==-1) return -1;
+	t=get_t();
+	if ((t==0) || (t==T_UNDEFINED)){
+		LOG(L_ERR, "ERROR: t_any_replied: cannot check a message "
+			"for which no T-state has been established\n");
+		return -1;
+	}else{
+		for (r=0; r<t->nr_of_outgoings; r++){
+			if (t->uac[r].request.flags & F_RB_REPLIED)
+				return 1;
+		}
+	}
+	return -1;
+}
+
 
 
 static rpc_export_t tm_rpc[] = {

@@ -24,10 +24,12 @@ modules:
                 hashing after an uri (to, from or request uri)
               - improved uri hashing (password is ignored, port is used only
                 if != 5060 or 5061)
- - tm        - dns failover and dst blacklist support
+ - tm        - special functions for checking for timeout, if a reply was
+               received or if the current transaction was canceled
+             - dns failover and dst blacklist support
              - migrated to the new timers (tm timers completely rewritten)
              - improved speed and less memory usage
-             - much more precise reptransmissions timing
+             - much more precise retransmissions timing
              - params: - retr_timer1p1, retr_timer1p2, retr_timer1p3 removed
                          and replaced by retr_timer1 and retr_timer2
                        - all timer values are now expressed in milliseconds
@@ -39,6 +41,22 @@ modules:
                        - unix_tx_timeout expressed now in milliseconds; default
                          value changed to 500 ms
              - functions:
+                       - t_branch_timeout() -- returns true if the failure
+                         route is executed for a branch that did timeout
+                         (failure_route only).
+                       - t_branch_replied() -- returns true if the failure 
+                         route is executed for a branch that did receive at
+                         least one reply (failure_route only).. It can be used
+                         together with t_branch_timeout() to distinguish 
+                         between a remote side that doesn't respond (some 
+                         provisional reply received) and one that is completely
+                          dead.
+                       - t_any_timeout() -- returns true if any of the current
+                         transaction branches did timeout.
+                       - t_any_replied() -- returns true if at least one branch
+                          of the current transaction received one reply.
+                       - t_is_canceled() -- returns true if the current 
+                         transaction  has been canceled.
                        - new t_set_fr(timeout_fr_inv, timeout_fr) -- allows
                          changing the transaction timer from script, even if
                          the transaction was already created (see tm docs for
@@ -182,6 +200,13 @@ tools:
                  reply formating (see -f, e.g. sercmd -f "pid:%v %v\n" core.ps)
                  , interactive mode, command line completion (if compiled with 
                  libreadline) a.s.o.
+
+WARNING: - older 0.10.99-dev version (< 0.10.99-dev46) returned a 480 reply
+ on invite transaction timeout, if a provisional reply was received. Newer
+ versions reverted to returning 408 on all timeouts (one can use 
+  t_branch_timeout() and t_branch_replied() to distinguish between the two
+  timeout types)
+
 
 
 0.9.4 fixes/improvements (0.9.4 is a bug fix release for 0.9.3)
