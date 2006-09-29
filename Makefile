@@ -11,7 +11,7 @@
 #              created by andrei
 #  2003-02-24  make install no longer overwrites ser.cfg  - patch provided
 #               by Maxim Sobolev   <sobomax@FreeBSD.org> and 
-#                  Tomas Björklund <tomas@webservices.se>
+#                  Tomas BjÃ¶rklund <tomas@webservices.se>
 #  2003-03-11  PREFIX & LOCALBASE must also be exported (andrei)
 #  2003-04-07  hacked to work with solaris install (andrei)
 #  2003-04-17  exclude modules overwritable from env. or cmd. line,
@@ -31,6 +31,7 @@
 #               referred in the man pages
 #  2006-02-14  added utils & install-utils (andrei)
 #  2006-03-15  added nodeb parameter for make tar (andrei)
+#  2006-09-29  added modules-doc as target and doc_format= as make option (greger)
 #
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
@@ -46,6 +47,10 @@ skip_cfg_install?=
 
 #extra modules to exclude
 skip_modules?=
+
+# Set document format
+# Alternatives are txt, html, xhtml, and pdf (see Makefile.doc)
+doc_format?=html
 
 # if not set on the cmd. line or the env, exclude this modules:
 exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm\
@@ -188,7 +193,7 @@ utils:
 		fi ; \
 	done 
 
-	
+
 dbg: ser
 	gdb -command debug.gdb
 
@@ -261,6 +266,15 @@ sunpkg:
 	rm -rf tmp/ser
 	rm -rf tmp/ser_sun_pkg
 
+.PHONY: modules-doc
+modules-doc:
+	-@for r in $(modules) "" ; do \
+		if [ -n "$$r" ]; then \
+			echo  "" ; \
+			echo  "" ; \
+			$(MAKE) -C $$r/doc $(doc_format) ; \
+		fi ; \
+	done 
 
 .PHONY: install
 install: all mk-install-dirs install-cfg install-bin install-modules \
