@@ -384,18 +384,18 @@ CREATE INDEX user_2_subs_indx ON subscriber ($USERCOL);
  */
 CREATE TABLE acc (
   id $AUTO_INCREMENT,
-  `method` varchar(16) NOT NULL default '',
-  `from_uri` varchar(64) NOT NULL default '',
-  `from_tag` varchar(64) NOT NULL default '',
-  `to_uri` varchar(64) NOT NULL default '',
-  `to_tag` varchar(64) NOT NULL default '',
-  `callid` varchar(64) NOT NULL default '',
-  `cseq_no` varchar(32) NOT NULL default '',
-  `sip_code` varchar(3) NOT NULL default '',
-  `sip_reason` varchar(32) NOT NULL default '',
-  `time` datetime NOT NULL
+  method varchar(16) NOT NULL default '',
+  from_uri varchar(64) NOT NULL default '',
+  from_tag varchar(64) NOT NULL default '',
+  to_uri varchar(64) NOT NULL default '',
+  to_tag varchar(64) NOT NULL default '',
+  callid varchar(64) NOT NULL default '',
+  cseq_no varchar(32) NOT NULL default '',
+  sip_code varchar(3) NOT NULL default '',
+  sip_reason varchar(32) NOT NULL default '',
+  time datetime NOT NULL
 ) $TABLE_TYPE;
-CREATE INDEX acc_callid_indx ON acc (`callid`);
+CREATE INDEX acc_callid_indx ON acc (callid);
 
 
 /* 
@@ -404,18 +404,18 @@ CREATE INDEX acc_callid_indx ON acc (`callid`);
  */ 
 CREATE TABLE missed_calls (
   id $AUTO_INCREMENT,
-  `method` varchar(16) NOT NULL default '',
-  `from_uri` varchar(64) NOT NULL default '',
-  `from_tag` varchar(64) NOT NULL default '',
-  `to_uri` varchar(64) NOT NULL default '',
-  `to_tag` varchar(64) NOT NULL default '',
-  `callid` varchar(64) NOT NULL default '',
-  `cseq_no` varchar(32) NOT NULL default '',
-  `sip_code` varchar(3) NOT NULL default '',
-  `sip_reason` varchar(32) NOT NULL default '',
-  `time` datetime NOT NULL
+  method varchar(16) NOT NULL default '',
+  from_uri varchar(64) NOT NULL default '',
+  from_tag varchar(64) NOT NULL default '',
+  to_uri varchar(64) NOT NULL default '',
+  to_tag varchar(64) NOT NULL default '',
+  callid varchar(64) NOT NULL default '',
+  cseq_no varchar(32) NOT NULL default '',
+  sip_code varchar(3) NOT NULL default '',
+  sip_reason varchar(32) NOT NULL default '',
+  time datetime NOT NULL
 ) $TABLE_TYPE;
-CREATE INDEX mc_callid_indx ON missed_calls (`callid`);
+CREATE INDEX mc_callid_indx ON missed_calls (callid);
 
 
 

@@ -340,19 +340,19 @@ CREATE TABLE subscriber (
 # Table structure for table 'acc' -- accounted calls
 #
 CREATE TABLE acc (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `method` varchar(16) NOT NULL default '',
-  `from_uri` varchar(64) NOT NULL default '',
-  `from_tag` varchar(64) NOT NULL default '',
-  `to_uri` varchar(64) NOT NULL default '',
-  `to_tag` varchar(64) NOT NULL default '',
-  `callid` varchar(64) NOT NULL default '',
-  `cseq_no` varchar(32) NOT NULL default '',
-  `sip_code` varchar(3) NOT NULL default '',
-  `sip_reason` varchar(32) NOT NULL default '',
-  `time` datetime NOT NULL,
-  INDEX acc_callid (`callid`),
-  PRIMARY KEY  (`id`)
+  id int(10) unsigned NOT NULL auto_increment,
+  method varchar(16) NOT NULL default '',
+  from_uri varchar(64) NOT NULL default '',
+  from_tag varchar(64) NOT NULL default '',
+  to_uri varchar(64) NOT NULL default '',
+  to_tag varchar(64) NOT NULL default '',
+  callid varchar(64) NOT NULL default '',
+  cseq_no varchar(32) NOT NULL default '',
+  sip_code varchar(3) NOT NULL default '',
+  sip_reason varchar(32) NOT NULL default '',
+  time datetime NOT NULL,
+  INDEX acc_callid (callid),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -361,19 +361,19 @@ CREATE TABLE acc (
 # for keeping track of missed calls
 #
 CREATE TABLE missed_calls (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `method` varchar(16) NOT NULL default '',
-  `from_uri` varchar(64) NOT NULL default '',
-  `from_tag` varchar(64) NOT NULL default '',
-  `to_uri` varchar(64) NOT NULL default '',
-  `to_tag` varchar(64) NOT NULL default '',
-  `callid` varchar(64) NOT NULL default '',
-  `cseq_no` varchar(32) NOT NULL default '',
-  `sip_code` varchar(3) NOT NULL default '',
-  `sip_reason` varchar(32) NOT NULL default '',
-  `time` datetime NOT NULL,
-  INDEX acc_callid (`callid`),
-  PRIMARY KEY  (`id`)
+  id int(10) unsigned NOT NULL auto_increment,
+  method varchar(16) NOT NULL default '',
+  from_uri varchar(64) NOT NULL default '',
+  from_tag varchar(64) NOT NULL default '',
+  to_uri varchar(64) NOT NULL default '',
+  to_tag varchar(64) NOT NULL default '',
+  callid varchar(64) NOT NULL default '',
+  cseq_no varchar(32) NOT NULL default '',
+  sip_code varchar(3) NOT NULL default '',
+  sip_reason varchar(32) NOT NULL default '',
+  time datetime NOT NULL,
+  INDEX acc_callid (callid),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
