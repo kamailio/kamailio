@@ -283,12 +283,14 @@ static int acc_fixup(void** param, int param_no)
 			accp->reason.len = strlen(accp->reason.s);
 		}
 		*param = (void*)accp;
+#ifdef SQL_ACC
 	} else if (param_no == 2) {
 		/* only for db acc - the table name */
 		if (db_url==0) {
 			pkg_free(p);
 			*param = 0;
 		}
+#endif
 	}
 	return 0;
 }
