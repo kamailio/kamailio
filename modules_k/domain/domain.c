@@ -37,6 +37,7 @@
 #include "../../ut.h"
 #include "../../dset.h"
 #include "../../route.h"
+#include "../../items.h"
 
 static db_con_t* db_handle=0;
 static db_func_t domain_dbf;
@@ -209,37 +210,25 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
  * Check if domain given by parameter is local
  *
  * parameter can be one of:
- * - $ruri             - check domain from request uri
- * - $from             - check domain from From header
- * - avp name or alias - check the domain given by the value
- *                       pointed by the avp name/alias
+ * - Pseudo variable
+ * - AVP or AVP alias
+ * - A string representing a domain name
  */
 int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2)
 {
-    struct param_source *ps;
-    struct usr_avp *avp;
-    int_str avp_value;
+    str domain;
 
-    ps = (struct param_source*) _s1;
-
-    switch (ps->source) {
-    case PARAM_SOURCE_RURI:
-        return is_uri_host_local(_msg, _s1, _s2);
-    case PARAM_SOURCE_FROM:
-        return is_from_local(_msg, _s1, _s2);
-    case PARAM_SOURCE_AVP:
-        avp = search_first_avp(ps->avp_type, ps->avp_name, &avp_value, 0);
-        if (!avp || !(avp->flags & AVP_VAL_STR) || !avp_value.s.s 
-				|| !avp_value.s.len) {
-            DBG("domain/w_is_domain_local(): Undefined, empty or non-string"
-					" avp, nothing to check\n");
-            return -1;
-        }
-        return is_domain_local(&avp_value.s);
-    default:
-        LOG(L_ERR, "domain/w_is_domain_local(): invalid input parameter\n");
-        return 0;
+    if (xl_printf_s(_msg, (xl_elem_t*)_s1, &domain) < 0) {
+        LOG(L_ERR, "error: domain/w_is_domain_local: failed to parse domain parameter\n");
+        return -1;
     }
+
+    if (domain.len == 0 || domain.s == NULL) {
+        DBG("domain/w_is_domain_local(): Missing domain name\n");
+        return -1;
+    }
+
+    return is_domain_local(&domain);
 }
 
 

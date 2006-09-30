@@ -169,35 +169,23 @@ if (is_uri_host_local()) {
 		<title><function moreinfo="none">is_domain_local(variable)</function></title>
 		<para>
 		This function checks if the domain contained in the
-		variable is local. The variable can be an avp_name, an
-		avp_alias or a special keyword pointing to certain SIP
-		headers from where the domain should be taken.
+		variable is local. The variable can be a pseudo variable,
+                an AVP or AVP alias, or a fixed string containing a
+                domain name.
 		</para>
-		<para>The input variable can be one of the following:</para>
-		<itemizedlist>
-		<listitem><para>
-			<emphasis>$ruri</emphasis> - take the domain part of the request URI
-		</para></listitem>
-		<listitem><para>
-			<emphasis>$from</emphasis> - take the domain part of the From header
-		</para></listitem>
-		<listitem><para>
-			<emphasis>avp</emphasis> - the domain is given by the value of the avp
-			which is either an avp_name or an avp_alias
-		</para></listitem>
-		</itemizedlist>
 		<para>
 		This function is a generalized form of the is_from_local()
 		and is_uri_host_local() functions, being able to completely
 		replace them and also extends them by allowing the domain to
-		be taken from an avp. The following equivalences exist:
+		be taken from any of the above mentioned sources.
+                The following equivalences exist:
 		</para>
 		<itemizedlist>
 		<listitem><para>
-			is_domain_local("$ruri") is same as is_uri_host_local()
+			is_domain_local("$rd") is same as is_uri_host_local()
 		</para></listitem>
 		<listitem><para>
-			is_domain_local("$from") is same as is_from_local()
+			is_domain_local("$fd") is same as is_from_local()
 		</para></listitem>
 		</itemizedlist>
 		<para>
@@ -208,19 +196,22 @@ if (is_uri_host_local()) {
 		<title>is_domain_local usage</title>
 		<programlisting format="linespecific">
 ...
-if (is_domain_local("$ruri")) {
+if (is_domain_local("$rd")) {
 	...
 };
-if (is_domain_local("$from")) {
+if (is_domain_local("$fd")) {
 	...
 };
-if (is_domain_local("$some_avp_alias")) {
+if (is_domain_local("$avp(some_avp_alias)")) {
 	...
 };
-if (is_domain_local("i:850")) {
+if (is_domain_local("$avp(i:850)")) {
 	...
 };
-if (is_domain_local("s:some_avp")) {
+if (is_domain_local("$avp(s:some_avp)")) {
+	...
+};
+if (is_domain_local("mydomain.com")) {
 	...
 };
 ...
