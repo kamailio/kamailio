@@ -161,11 +161,10 @@ if (is_uri_host_local()) {
 ...
      _________________________________________________________
 
-1.4.3. is_domain_local(variable)
+1.4.3. is_domain_local(pseudo_variable)
 
-   This function checks if the domain contained in the variable
-   is local. The variable can be a pseudo variable, an AVP or AVP
-   alias, or a fixed string containing a domain name.
+   This function checks if the domain contained in the pseudo_variable
+   is local.
 
    This function is a generalized form of the is_from_local() and
    is_uri_host_local() functions, being able to completely
@@ -194,9 +193,6 @@ if (is_domain_local("$avp(i:850)")) {
         ...
 };
 if (is_domain_local("$avp(s:some_avp)")) {
-        ...
-};
-if (is_domain_local("mydomain.com")) {
         ...
 };
 ...

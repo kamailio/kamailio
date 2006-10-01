@@ -207,28 +207,31 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
 
 
 /*
- * Check if domain given by parameter is local
- *
- * parameter can be one of:
- * - Pseudo variable
- * - AVP or AVP alias
- * - A string representing a domain name
+ * Check if domain given as value of pseudo variable parameter is local
  */
-int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2)
+int w_is_domain_local(struct sip_msg* _msg, char* _sp, char* _s2)
 {
-    str domain;
+    xl_spec_t *sp;
+    xl_value_t xl_val;
 
-    if (xl_printf_s(_msg, (xl_elem_t*)_s1, &domain) < 0) {
-        LOG(L_ERR, "error: domain/w_is_domain_local: failed to parse domain parameter\n");
-        return -1;
+    sp = (xl_spec_t *)_sp;
+
+    if (sp && (xl_get_spec_value(_msg, sp, &xl_val, 0) == 0)) {
+	if (xl_val.flags & XL_VAL_STR) {
+	    if (xl_val.rs.len == 0 || xl_val.rs.s == NULL) {
+		DBG("domain:w_is_domain_local(): Missing domain name\n");
+		return -1;
+	    }
+	    return is_domain_local(&(xl_val.rs));
+	} else {
+	   DBG("domain:w_is_domain_local(): pseudo variable value is "
+	       "not string\n");
+	   return -1;
+	}
+    } else {
+	DBG("domain:w_is_domain_local(): cannot get pseudo variable value\n");
+	return -1;
     }
-
-    if (domain.len == 0 || domain.s == NULL) {
-        DBG("domain/w_is_domain_local(): Missing domain name\n");
-        return -1;
-    }
-
-    return is_domain_local(&domain);
 }
 
 

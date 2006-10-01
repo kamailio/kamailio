@@ -166,12 +166,10 @@ if (is_uri_host_local()) {
 		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">is_domain_local(variable)</function></title>
+		<title><function moreinfo="none">is_domain_local(pseudo_variable)</function></title>
 		<para>
 		This function checks if the domain contained in the
-		variable is local. The variable can be a pseudo variable,
-                an AVP or AVP alias, or a fixed string containing a
-                domain name.
+		pseudo_variable is local.
 		</para>
 		<para>
 		This function is a generalized form of the is_from_local()
@@ -209,9 +207,6 @@ if (is_domain_local("$avp(i:850)")) {
 	...
 };
 if (is_domain_local("$avp(s:some_avp)")) {
-	...
-};
-if (is_domain_local("mydomain.com")) {
 	...
 };
 ...

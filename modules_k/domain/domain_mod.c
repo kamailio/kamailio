@@ -239,21 +239,34 @@ static void destroy(void)
 }
 
 
-/* convert input parameter to xl_elem_t (to handle AVPs and pseudo variables) */
-static int
-parameter_fixup(void **param, int param_no)
+/*
+ * convert pvar parameter into parsed speudo variable specification
+ */
+static int parameter_fixup(void **param, int param_no)
 {
-    xl_elem_t *model;
+    xl_spec_t *sp;
 
-    if (*param && param_no==1) {
-        if (xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS) < 0) {
-            LOG(L_ERR, "error: domain/parameter_fixup: wrong format `%s'\n", (char*)(*param));
-            return E_UNSPEC;
-        }
-        *param = (void*)model;
+    if (*param && (param_no == 1)) {
+	sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+	if (sp == 0) {
+	    LOG(L_ERR,"domain:parameter_fixup(): no pkg memory left\n");
+	    return -1;
+	}
+	if (xl_parse_spec((char*)*param, sp, 
+			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)
+	    == 0) {
+	    LOG(L_ERR,"domain:parameter_fixup(): parsing of "
+		"pseudo variable %s failed!\n", (char*)*param);
+	    pkg_free(sp);
+	    return -1;
+	}
+	if (sp->type == XL_NULL) {
+	    LOG(L_ERR, "permissions:double_fixup(): bad pseudo variable\n");
+	    pkg_free(sp);
+	    return -1;
+	}
+	*param = (void*)sp;
     }
 
     return 0;
 }
-
-
