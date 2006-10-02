@@ -1,0 +1,65 @@
+/* 
+ * $Id$
+ *
+ * Copyright (C) 2006 Voice Sistem SRL
+ *
+ * This file is part of a module for openser, a free SIP server.
+ *
+ * openser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * openser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2006-09-25: first version (bogdan)
+ */
+
+
+
+#ifndef _FIFO_FNC_H_
+#define _FIFO_FNC_H_
+
+#include <stdio.h>
+#include <stdarg.h>
+#include <errno.h>
+
+FILE* mi_init_fifo_server(char *fifo_name, int mode, int uid, int gid,
+		char* fifo_reply_dir);
+
+void  mi_fifo_server(FILE *fifostream);
+
+int   mi_read_line( char *b, int max, FILE *stream, int *read);
+
+static inline int mi_fifo_reply( FILE *stream, char *reply_fmt, ... )
+{
+	int r;
+	va_list ap;
+
+retry:
+	va_start(ap, reply_fmt);
+	r = vfprintf( stream, reply_fmt, ap);
+	va_end(ap);
+	if (r<=0) {
+		if ((errno==EINTR)||(errno==EAGAIN)||(errno==EWOULDBLOCK)) {
+			goto retry;
+		}
+		LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_reply: fifo_error: write error "
+			": %s\n", strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
+
+#endif /* _FIFO_FNC_H */
+
