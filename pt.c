@@ -41,6 +41,12 @@
 #include "sr_module.h"
 
 #include <stdio.h>
+
+#define FORK_DONT_WAIT  /* child doesn't wait for parent before starting 
+						   => faster startup, but the child should not assume
+						   the parent fixed the pt[] entry for it */
+
+
 #ifdef PROFILING
 #include <sys/gmon.h>
 
@@ -108,6 +114,8 @@ int my_pid()
 	return pt ? pt[process_no].pid : getpid();
 }
 
+
+
 /**
  * Forks a new process.
  * @param child_id - rank, if equal to PROC_NOCHLDINIT init_child will not be
@@ -118,77 +126,100 @@ int my_pid()
  */
 int fork_process(int child_id, char *desc, int make_sock)
 {
-	int pid,old_process_no;
+	int pid, child_process_no;
+	int ret;
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
 
-	lock_get(process_lock);	
+	ret=-1;
+	#ifdef USE_TCP
+		sockfd[0]=sockfd[1]=-1;
+		if(make_sock && !tcp_disable){
+			 if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
+				LOG(L_ERR, "ERROR: fork_process(): socketpair failed: %s\n",
+							strerror(errno));
+				goto error;
+			}
+		}
+	#endif
+	lock_get(process_lock);
 	if (*process_count>=estimated_proc_no) {
 		LOG(L_CRIT, "ERROR: fork_process(): Process limit of %d exceeded."
 					" Will simulate fork fail.\n", estimated_proc_no);
 		lock_release(process_lock);
-		return -1;
+		goto error;
 	}	
 	
-	#ifdef USE_TCP
-		if(make_sock && !tcp_disable){
-			 if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-				LOG(L_ERR, "ERROR: fork_process(): socketpair failed: %s\n",
-					strerror(errno));
-				return -1;
-			}
-		}
-	#endif
 	
-	old_process_no = process_no;
-	process_no = *process_count;
+	child_process_no = *process_count;
 	pid = fork();
 	if (pid<0) {
 		lock_release(process_lock);
-		return pid;
-	}
-	if (pid==0){
+		ret=pid;
+		goto error;
+	}else if (pid==0){
 		/* child */
+		process_no=child_process_no;
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);
 #endif
+#ifdef FORK_DONT_WAIT
+		/* record pid twice to avoid the child using it, before
+		 * parent gets a chance to set it*/
+		pt[process_no].pid=getpid();
+#else
 		/* wait for parent to get out of critical zone.
 		 * this is actually relevant as the parent updates
 		 * the pt & process_count. */
 		lock_get(process_lock);
+		lock_release(process_lock);	
+#endif
 		#ifdef USE_TCP
 			if (make_sock && !tcp_disable){
 				close(sockfd[0]);
 				unix_tcp_sock=sockfd[1];
 			}
 		#endif		
-		lock_release(process_lock);	
 		if ((child_id!=PROC_NOCHLDINIT) && (init_child(child_id) < 0)) {
-			LOG(L_ERR, "ERROR: fork_process(): init_child failed for %s\n",
-						pt[process_no].desc);
+			LOG(L_ERR, "ERROR: fork_process(): init_child failed for "
+					" process %d, pid %d, \"%s\"\n", process_no,
+					pt[process_no].pid, pt[process_no].desc);
 			return -1;
 		}
 		return pid;
 	} else {
 		/* parent */
-		process_no = old_process_no;
+		(*process_count)++;
+#ifdef FORK_DONT_WAIT
+		lock_release(process_lock);
+#endif
 		/* add the process to the list in shm */
-		pt[*process_count].pid=pid;
+		pt[child_process_no].pid=pid;
 		if (desc){
-			strncpy(pt[*process_count].desc, desc, MAX_PT_DESC);
+			strncpy(pt[child_process_no].desc, desc, MAX_PT_DESC);
 		}
 		#ifdef USE_TCP
 			if (make_sock && !tcp_disable){
 				close(sockfd[1]);
-				pt[*process_count].unix_sock=sockfd[0];
-				pt[*process_count].idx=-1; /* this is not "tcp" process*/
+				pt[child_process_no].unix_sock=sockfd[0];
+				pt[child_process_no].idx=-1; /* this is not "tcp" process*/
 			}
-		#endif		
-		*process_count = (*process_count) +1;
+		#endif
+#ifdef FORK_DONT_WAIT
+#else
 		lock_release(process_lock);
-		return pid;
+#endif
+		ret=pid;
+		goto end;
 	}
+error:
+#ifdef USE_TCP
+	if (sockfd[0]!=-1) close(sockfd[0]);
+	if (sockfd[1]!=-1) close(sockfd[1]);
+#endif
+end:
+	return ret;
 }
 
 /**
@@ -199,31 +230,27 @@ int fork_process(int child_id, char *desc, int make_sock)
  * @returns the pid of the new process
  */
 #ifdef USE_TCP
-int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1)
+int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 {
-	int pid,old_process_no;
+	int pid, child_process_no;
 	int sockfd[2];
 	int reader_fd[2]; /* for comm. with the tcp children read  */
-
-
+	int ret;
 	
-	lock_get(process_lock);
-	/* set the local process_no */
-	if (*process_count>=estimated_proc_no) {
-		LOG(L_CRIT, "ERROR: fork_tcp_process(): Process limit of %d exceeded."
-					" Simulating fork fail\n", estimated_proc_no);
-		return -1;
-	}	
+	/* init */
+	sockfd[0]=sockfd[1]=-1;
+	reader_fd[0]=reader_fd[1]=-1;
+	ret=-1;
 	
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 		LOG(L_ERR, "ERROR: fork_tcp_process(): socketpair failed: %s\n",
 					strerror(errno));
-		return -1;
+		goto error;
 	}
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, reader_fd)<0){
 		LOG(L_ERR, "ERROR: fork_tcp_process(): socketpair failed: %s\n",
 					strerror(errno));
-		return -1;
+		goto error;
 	}
 	if (tcp_fix_child_sockets(reader_fd)<0){
 		LOG(L_ERR, "ERROR: fork_tcp_process(): failed to set non blocking"
@@ -231,54 +258,85 @@ int fork_tcp_process(int child_id,char *desc,int r,int *reader_fd_1)
 		/* continue, it's not critical (it will go slower under
 		 * very high connection rates) */
 	}
+	lock_get(process_lock);
+	/* set the local process_no */
+	if (*process_count>=estimated_proc_no) {
+		LOG(L_CRIT, "ERROR: fork_tcp_process(): Process limit of %d exceeded."
+					" Simulating fork fail\n", estimated_proc_no);
+		lock_release(process_lock);
+		goto error;
+	}
 	
-	old_process_no = process_no;
-	process_no = *process_count;
+	
+	child_process_no = *process_count;
 	pid = fork();
 	if (pid<0) {
 		lock_release(process_lock);
-		return pid;
+		ret=pid;
+		goto end;
 	}
 	if (pid==0){
+		process_no=child_process_no;
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);
 #endif
+#ifdef FORK_DONT_WAIT
+		/* record pid twice to avoid the child using it, before
+-		 * parent gets a chance to set it*/
+		pt[process_no].pid=getpid();
+#else
 		/* wait for parent to get out of critical zone */
 		lock_get(process_lock);
-			close(sockfd[0]);
-			unix_tcp_sock=sockfd[1];
-			if (reader_fd_1) *reader_fd_1=reader_fd[1];
 		lock_release(process_lock);
-		if (init_child(child_id) < 0) {
+#endif
+		close(sockfd[0]);
+		unix_tcp_sock=sockfd[1];
+		close(reader_fd[0]);
+		if (reader_fd_1) *reader_fd_1=reader_fd[1];
+		if ((child_id!=PROC_NOCHLDINIT) && (init_child(child_id) < 0)) {
 			LOG(L_ERR, "ERROR: fork_tcp_process(): init_child failed for "
-					"%s\n", pt[process_no].desc);
+					"process %d, pid %d, \"%s\"\n", process_no, 
+					pt[process_no].pid, pt[process_no].desc);
 			return -1;
 		}
 		return pid;
 	} else {
-		/* parent */		
-		process_no = old_process_no;
+		/* parent */
+		(*process_count)++;
+#ifdef FORK_DONT_WAIT
+		lock_release(process_lock);
+#endif
 		/* add the process to the list in shm */
-		pt[*process_count].pid=pid;
-		pt[*process_count].unix_sock=sockfd[0];
-		pt[*process_count].idx=r; 	
+		pt[child_process_no].pid=pid;
+		pt[child_process_no].unix_sock=sockfd[0];
+		pt[child_process_no].idx=r;
 		if (desc){
-			snprintf(pt[*process_count].desc, MAX_PT_DESC, "%s child=%d", 
+			snprintf(pt[child_process_no].desc, MAX_PT_DESC, "%s child=%d", 
 						desc, r);
 		}
+#ifdef FORK_DONT_WAIT
+#else
+		lock_release(process_lock);
+#endif
 		
 		close(sockfd[1]);
 		close(reader_fd[1]);
 		
 		tcp_children[r].pid=pid;
-		tcp_children[r].proc_no=process_no;
+		tcp_children[r].proc_no=child_process_no;
 		tcp_children[r].busy=0;
 		tcp_children[r].n_reqs=0;
 		tcp_children[r].unix_sock=reader_fd[0];
 		
-		*process_count = (*process_count) +1;
-		lock_release(process_lock);
-		return pid;
+		ret=pid;
+		goto end;
 	}
+error:
+	if (sockfd[0]!=-1) close(sockfd[0]);
+	if (sockfd[1]!=-1) close(sockfd[1]);
+	if (reader_fd[0]!=-1) close(reader_fd[0]);
+	if (reader_fd[1]!=-1) close(reader_fd[1]);
+end:
+	return ret;
 }
 #endif

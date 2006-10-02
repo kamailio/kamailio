@@ -441,7 +441,8 @@ failure_route[0]{
 	</title>
 	<para>
 		Returns true if the failure route is executed for a branch that did
-		receive at least one reply. It can be used only from the 
+		receive at least one reply in the past (the "current" reply is not 
+		taken into account). It can be used only from the 
 		<emphasis>failure_route</emphasis>.
 	</para>
 	<example>
@@ -491,7 +492,8 @@ failure_route[0]{
 	</title>
 	<para>
 		Returns true if at least one of the current transactions branches
-		did receive some reply.
+		did receive some reply in the past. If called from a failure or
+		onreply route, the "current" reply is not taken into account.
 	</para>
 	<example>
 	    <title><function>t_any_replied</function> usage</title>

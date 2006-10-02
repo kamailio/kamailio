@@ -1986,7 +1986,7 @@ int tcp_init_children()
 	/* fork children & create the socket pairs*/
 	for(r=0; r<tcp_children_no; r++){
 		child_rank++;
-		pid=fork_tcp_process(child_rank,"tcp receiver",1,&reader_fd_1);
+		pid=fork_tcp_process(child_rank, "tcp receiver", r, &reader_fd_1);
 		if (pid<0){
 			LOG(L_ERR, "ERROR: tcp_main: fork failed: %s\n",
 					strerror(errno));

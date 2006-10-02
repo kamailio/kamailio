@@ -46,15 +46,19 @@ modules:
                          (failure_route only).
                        - t_branch_replied() -- returns true if the failure 
                          route is executed for a branch that did receive at
-                         least one reply (failure_route only).. It can be used
+                         least one reply in the past (the current reply 
+                          is not taken into account). It can be used
                          together with t_branch_timeout() to distinguish 
                          between a remote side that doesn't respond (some 
                          provisional reply received) and one that is completely
-                          dead.
+                          dead. (failure_route only)
                        - t_any_timeout() -- returns true if any of the current
                          transaction branches did timeout.
                        - t_any_replied() -- returns true if at least one branch
-                          of the current transaction received one reply.
+                          of the current transaction received one reply in the
+                          past. If called from a failure_route or an
+                          onreply_route, the "current" reply is not taken into
+                          account.
                        - t_is_canceled() -- returns true if the current 
                          transaction  has been canceled.
                        - new t_set_fr(timeout_fr_inv, timeout_fr) -- allows
