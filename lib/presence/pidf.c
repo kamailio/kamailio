@@ -1,4 +1,8 @@
 /* 
+ * PIDF parser
+ *
+ * $Id$
+ * 
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -305,8 +309,6 @@ static int read_extension(xmlNode *ex, extension_element_t **dst, xmlDocPtr doc)
 	memset(e, 0, sizeof(*e));
 	*dst = e;
 
-	TRACE_LOG("reading extension element ()\n");
-	
 	/* do not care about internals - take whole element ! */
 	if (get_whole_node_content(ex, &e->element, doc) != 0) {
 		cds_free(e);
@@ -448,7 +450,7 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	char *ns = ignore_ns ? NULL: pidf_ns;
 	extension_element_t *ex;
 	
-	TRACE_LOG("read_presentity(ns=%s)\n", ns ? ns : "");
+	/* TRACE_LOG("read_presentity(ns=%s)\n", ns ? ns : ""); */
 	if (cmp_node(root, "presence", ns) < 0) {
 		ERROR_LOG("document is not presence \n");
 		return -1;
@@ -499,13 +501,11 @@ int parse_pidf_document_ex(presentity_info_t **dst, const char *data, int data_l
 	if ((!data) || (data_len < 1)) return -2;
 
 	*dst = NULL;
-	TRACE_LOG("parsing document\n");
 	doc = xmlReadMemory(data, data_len, NULL, NULL, xml_parser_flags);
 	if (doc == NULL) {
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	TRACE_LOG("document parsed\n");
 
 	res = read_presentity(xmlDocGetRootElement(doc), dst, ignore_ns, doc);
 	if (res != 0) {
