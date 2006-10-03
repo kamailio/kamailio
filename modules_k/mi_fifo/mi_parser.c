@@ -235,6 +235,9 @@ struct mi_node * mi_parse_tree(FILE *stream) {
 		goto error;
 	}
 
+	name.s = value.s = 0;
+	name.len = value.len = 0;
+
 	/* every tree for a command ends with a \n that is alone on its line */
 	while ( (ret=mi_parse_node(stream, &buf, &name, &value))>=0 ) {
 		if (ret==1)
