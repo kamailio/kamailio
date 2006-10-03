@@ -393,7 +393,7 @@ CREATE TABLE acc (
   cseq_no varchar(32) NOT NULL default '',
   sip_code varchar(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
-  time datetime NOT NULL
+  time $DATETIME
 ) $TABLE_TYPE;
 CREATE INDEX acc_callid_indx ON acc (callid);
 
@@ -413,7 +413,7 @@ CREATE TABLE missed_calls (
   cseq_no varchar(32) NOT NULL default '',
   sip_code varchar(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
-  time datetime NOT NULL
+  time $DATETIME
 ) $TABLE_TYPE;
 CREATE INDEX mc_callid_indx ON missed_calls (callid);
 
