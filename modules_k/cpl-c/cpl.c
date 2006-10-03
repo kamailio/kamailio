@@ -56,6 +56,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_disposition.h"
 #include "../../db/db.h"
+#include "../../mi/mi.h"
 #include "cpl_run.h"
 #include "cpl_env.h"
 #include "cpl_db.h"
@@ -343,6 +344,20 @@ static int cpl_init(void)
 	}
 	if (register_fifo_cmd( cpl_get, "GET_CPL", 0)!=1) {
 		LOG(L_CRIT,"ERROR:cpl_init: cannot register GET_CPL fifo cmd!\n");
+		goto error;
+	}
+
+	/* register MI commands */
+	if (register_mi_cmd( mi_cpl_load, "LOAD_CPL", 0)!=0) {
+		LOG(L_ERR,"ERROR:cpl_init: failed to register MI command\n");
+		goto error;
+	}
+	if (register_mi_cmd( mi_cpl_load, "REMOVE_CPL", 0)!=0) {
+		LOG(L_ERR,"ERROR:cpl_init: failed to register MI command\n");
+		goto error;
+	}
+	if (register_mi_cmd( mi_cpl_load, "GET_CPL", 0)!=0) {
+		LOG(L_ERR,"ERROR:cpl_init: failed to register MI command\n");
 		goto error;
 	}
 

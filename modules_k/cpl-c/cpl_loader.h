@@ -27,11 +27,15 @@
 
 #ifndef _CPL_LOADER_H
 #define _CPL_LOADER_H
-
+#include "../../mi/mi.h"
 
 int cpl_load( FILE *fifo_stream, char *response_file );
 int cpl_remove( FILE *fifo_stream, char *response_file );
 int cpl_get( FILE *fifo_stream, char *response_file );
+
+struct mi_node *mi_cpl_load(struct mi_node *cmd, void *param);
+struct mi_node *mi_cpl_remove(struct mi_node *cmd, void *param);
+struct mi_node *mi_cpl_get(struct mi_node *cmd, void *param);
 
 #endif
 

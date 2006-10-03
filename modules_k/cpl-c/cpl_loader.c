@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006 Voice-Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -44,6 +45,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
+#include "../../mi/mi.h"
 #include "cpl_db.h"
 #include "cpl_env.h"
 #include "cpl_parser.h"
@@ -435,7 +437,158 @@ error:
 	return -1;
 }
 
-
-
 #undef MAX_STATIC_BUF
 
+/**************************** MI ****************************/
+#define BAD_PARAM_ERR_S   "400 Too few or too many arguments"
+#define BAD_PARAM_ERR_LEN (sizeof(BAD_PARAM_ERR_S)-1)
+#define FILE_LOAD_ERR_S   "500 Cannot read CPL file"
+#define FILE_LOAD_ERR_LEN (sizeof(FILE_LOAD_ERR_S)-1)
+#define DB_SAVE_ERR_S     "500 Cannot save CPL to database"
+#define DB_SAVE_ERR_LEN   (sizeof(DB_SAVE_ERR_S)-1)
+#define CPLFILE_ERR_S     "400 Bad CPL file"
+#define CPLFILE_ERR_LEN   (sizeof(CPLFILE_ERR_S)-1)
+#define USRHOST_ERR_S     "400 Bad user@host"
+#define USRHOST_ERR_LEN   (sizeof(USRHOST_ERR_S)-1)
+#define DB_RMV_ERR_S      "500 Database remove failed"
+#define DB_RMV_ERR_LEN    (sizeof(DB_RMV_ERR_S)-1)
+#define DB_GET_ERR_S      "500 Database query failed"
+#define DB_GET_ERR_LEN    (sizeof(DB_GET_ERR_S)-1)
+
+struct mi_node* mi_cpl_load(struct mi_node *cmd, void *param)
+{
+	struct mi_node *rpl;
+	struct sip_uri uri;
+	str xml = {0,0};
+	str bin = {0,0};
+	str enc_log = {0,0};
+	str val;
+	char *file;
+
+	DBG("DEBUG:cpl-c:mi_cpl_load: \"LOAD_CPL\" FIFO command received!\n");
+
+	/* check user+host */
+	if((cmd->kids==NULL) ||(cmd->kids->next==NULL) || (cmd->kids->next->next))
+		return init_mi_tree( BAD_PARAM_ERR_S, BAD_PARAM_ERR_LEN);
+
+	val = cmd->kids->value;
+	if (parse_uri( val.s, val.len, &uri)!=0){
+		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_load: invalid sip URI [%.*s]\n",
+			val.len, val.s);
+		return init_mi_tree( USRHOST_ERR_S, USRHOST_ERR_LEN );
+	}
+	DBG("DEBUG:cpl-c:mi_cpl_load: user@host=%.*s@%.*s\n",
+		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
+
+	/* second argument is the cpl file */
+	val = cmd->kids->next->value;
+	file = pkg_malloc(val.len+1);
+	if (file==NULL) {
+		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_load: no more pkg mem\n");
+		return 0;
+	}
+	memcpy( file, val.s, val.len);
+	file[val.len]= '\0';
+
+	/* load the xml file - this function will allocated a buff for the loading
+	 * the cpl file and attach it to xml.s -> don't forget to free it! */
+	if (load_file( file, &xml)!=1) {
+		pkg_free(file);
+		return init_mi_tree( FILE_LOAD_ERR_S, FILE_LOAD_ERR_LEN );
+	}
+	DBG("DEBUG:cpl-c:mi_cpl_load: cpl file=%s loaded\n",file);
+	pkg_free(file);
+
+	/* get the binary coding for the XML file */
+	if (encodeCPL( &xml, &bin, &enc_log)!=1) {
+		rpl = init_mi_tree( CPLFILE_ERR_S, CPLFILE_ERR_LEN );
+		goto error;
+	}
+
+	/* write both the XML and binary formats into database */
+	if (write_to_db( &uri.user,cpl_env.use_domain?&uri.host:0, &xml, &bin)!=1){
+		rpl = init_mi_tree( DB_SAVE_ERR_S, DB_SAVE_ERR_LEN );
+		goto error;
+	}
+
+	/* everything was OK */
+	rpl = init_mi_tree( MI_200_OK_S, MI_200_OK_LEN);
+
+error:
+	if (rpl && enc_log.len)
+		add_mi_node_child(rpl,MI_DUP_VALUE,"Log",3,enc_log.s,enc_log.len);
+	if (enc_log.s)
+		pkg_free ( enc_log.s );
+	if (xml.s)
+		pkg_free ( xml.s );
+	return rpl;
+}
+
+
+
+struct mi_node * mi_cpl_remove(struct mi_node *cmd, void *param)
+{
+	struct sip_uri uri;
+	str user;
+
+	DBG("DEBUG:cpl-c:mi_cpl_remove: \"REMOVE_CPL\" FIFO command received!\n");
+
+	/* check if there is only one parameter*/
+	if(!(cmd->kids && cmd->kids->next== NULL))
+		return init_mi_tree( BAD_PARAM_ERR_S, BAD_PARAM_ERR_LEN);
+
+	user = cmd->kids->value;
+
+	/* check user+host */
+	if (parse_uri( user.s, user.len, &uri)!=0){
+		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_remove: invalid SIP uri [%.*s]\n",
+			user.len,user.s);
+		return init_mi_tree( USRHOST_ERR_S, USRHOST_ERR_LEN );
+	}
+	DBG("DEBUG:mi_cpl_remove: user@host=%.*s@%.*s\n",
+		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
+
+	if (rmv_from_db( &uri.user, cpl_env.use_domain?&uri.host:0)!=1)
+		return init_mi_tree( DB_RMV_ERR_S, DB_RMV_ERR_LEN );
+
+	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+}
+
+
+
+struct mi_node * mi_cpl_get(struct mi_node *cmd, void *param)
+{
+	struct sip_uri uri;
+	struct mi_node* rpl;
+	str script = {0,0};
+	str user;
+
+	/* check if there is only one parameter*/
+	if(!(cmd->kids && cmd->kids->next== NULL))
+		return init_mi_tree( BAD_PARAM_ERR_S, BAD_PARAM_ERR_LEN);
+
+	/* check user+host */
+	user = cmd->kids->value;
+	if (parse_uri( user.s, user.len, &uri)!=0) {
+		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_load: invalid user@host [%.*s]\n",
+			user.len,user.s);
+		return init_mi_tree( USRHOST_ERR_S, USRHOST_ERR_LEN );
+	}
+	DBG("DEBUG:mi_cpl_get: user@host=%.*s@%.*s\n",
+		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
+
+	/* get the script for this user */
+	if (get_user_script( &uri.user, cpl_env.use_domain?&uri.host:0,
+	&script, "cpl_xml")==-1)
+		return init_mi_tree( DB_GET_ERR_S, DB_GET_ERR_LEN );
+
+	/* write the response into response file - even if script is null */
+	rpl = init_mi_tree( MI_200_OK_S, MI_200_OK_LEN);
+	if (rpl!=NULL)
+		add_mi_node_child(rpl, MI_DUP_VALUE, 0, 0, script.s, script.len);
+
+	if (script.s)
+		shm_free( script.s );
+
+	return rpl;
+}
