@@ -31,8 +31,8 @@
 #include "../../ut.h"
 #include "../../hash_func.h"
 #include "../../fifo_server.h"
+#include "../../mi/mi.h"
 #include "dlg_hash.h"
-
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -361,4 +361,77 @@ int fifo_print_dlgs(FILE *fifo, char *response_file )
 
 	fclose(rpl);
 	return 0;
+}
+
+
+struct mi_node * mi_print_dlgs(struct mi_node *cmd, void *param )
+{
+	struct dlg_cell *dlg;
+	struct mi_node* rpl = NULL, *node= NULL;
+	struct mi_attr* attr= NULL;
+	int i, len;
+	char* p;
+
+	rpl = init_mi_tree( MI_200_OK_S, MI_200_OK_LEN);
+	if (rpl==0)
+		return 0;
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		dlg_lock( d_table, &(d_table->entries[i]) );
+
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			node = add_mi_node_child(rpl, 0, "dialog",6 , 0, 0 );
+			if (node==0)
+				goto error;
+
+			attr = addf_mi_attr( node, 0, "hash", 4, "%u:%u",
+					dlg->h_entry, dlg->h_id );
+			if (attr==0)
+				goto error;
+
+			p= int2str((unsigned long)dlg->state, &len);
+			attr = add_mi_attr( node, MI_DUP_VALUE, "state", 5, p, len);
+			if (attr==0)
+				goto error;
+
+			p= int2str((unsigned long)dlg->state, &len);
+			attr = add_mi_attr( node, MI_DUP_VALUE, "timeout", 7, p, len);
+			if (attr==0)
+				goto error;
+
+			attr = add_mi_attr(node, MI_DUP_VALUE, "callid", 6,
+					dlg->callid.s, dlg->callid.len);
+			if(attr == 0)
+				goto error;
+
+			attr = add_mi_attr(node, MI_DUP_VALUE, "from_uri", 8,
+					dlg->from_uri.s, dlg->from_uri.len);
+			if(attr == 0)
+				goto error;
+
+			attr = addf_mi_attr(node, MI_DUP_VALUE, "from_tag", 8,
+					dlg->from_tag.s, dlg->from_tag.len);
+			if(attr == 0)
+				goto error;
+	
+			attr = addf_mi_attr(node, MI_DUP_VALUE, "to_uri", 6,
+					dlg->to_uri.s, dlg->to_uri.len);
+			if(attr == 0)
+				goto error;
+
+			attr = addf_mi_attr(node, MI_DUP_VALUE, "to_tag", 6,
+					dlg->to_tag.s, dlg->to_uri.len);
+			if(attr == 0)
+				goto error;
+
+		}
+		dlg_unlock( d_table, &(d_table->entries[i]) );
+	}
+	return rpl;
+
+error:
+	LOG(L_ERR,"ERROR:mi_ps: failed to add node\n");
+	free_mi_tree(rpl);
+	return 0;
+
 }

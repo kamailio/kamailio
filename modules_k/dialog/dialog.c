@@ -41,6 +41,7 @@
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
 #include "../rr/api.h"
+#include "../../mi/mi.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"
 #include "dlg_handlers.h"
@@ -253,6 +254,11 @@ static int mod_init(void)
 
 	if ( register_fifo_cmd( fifo_print_dlgs, "dlg_list",0)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register fifo\n");
+		return -1;
+	}
+
+	if ( register_mi_cmd( mi_print_dlgs, "dlg_list",0)<0 ) {
+		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register MI\n");
 		return -1;
 	}
 

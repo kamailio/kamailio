@@ -101,4 +101,6 @@ void unref_dlg(struct dlg_cell *dlg, int n, int deleted);
 
 int fifo_print_dlgs(FILE *fifo, char *response_file );
 
+struct mi_node * mi_print_dlgs(struct mi_node *cmd, void *param );
+
 #endif
