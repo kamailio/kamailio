@@ -73,11 +73,14 @@ int register_rrcb( rr_cb_t f, void *param )
 
 void run_rr_callbacks( struct sip_msg *req, str *rr_params )
 {
+	str l_param;
 	struct rr_callback *cbp;
 
 	for ( cbp=rrcb_hl ; cbp ; cbp=cbp->next ) {
-		DBG("DBG:rr:run_rr_callbacks: callback id %d entered\n", cbp->id );
-			cbp->callback( req, rr_params, cbp->param );
+		l_param = *rr_params;
+		DBG("DBG:rr:run_rr_callbacks: callback id %d entered with <%.*s>\n",
+			cbp->id , l_param.len,l_param.s);
+		cbp->callback( req, &l_param, cbp->param );
 	}
 }
 

@@ -435,7 +435,7 @@ static inline int get_maddr_uri(str *uri, struct sip_uri *puri)
 	/* sip: + maddr + : + port */
 	if( (puri->maddr_val.len) > ( RH_MADDR_PARAM_MAX_LEN - 10 ) )
 	{
-		LOG(L_ERR, "after_loose: Too long maddr parameter\n");
+		LOG(L_ERR, "get_maddr_uri: Too long maddr parameter\n");
 		return RR_ERROR;
 	}
 	memcpy( builturi, "sip:", 4 );
@@ -580,7 +580,7 @@ static inline int after_strict(struct sip_msg* _m)
 		if (si) {
 			_m->force_send_socket = si;
 		} else {
-			LOG(L_WARN,"WARNING:rr:after_loose: no socket found for "
+			LOG(L_WARN,"WARNING:rr:after_strict: no socket found for "
 				"match second RR\n");
 		}
 
