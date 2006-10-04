@@ -362,7 +362,11 @@ modparam("msilo", "add_date", "0")
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>mode</emphasis> - specifies what to save as R-URI.
+			<emphasis>mode</emphasis> - specifies what to
+			save as R-URI.  Ignored if
+			<quote>userid_avp</quote> module parameter has
+			been set and the AVP contains a non-NULL string
+			value.
 			</para>
 			<itemizedlist>
 			<listitem>

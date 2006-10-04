@@ -311,7 +311,9 @@ modparam("msilo", "add_date", "0")
 
    Meaning of the parameters is as follows:
 
-     * mode - specifies what to save as R-URI.
+     * mode - specifies what to save as R-URI. Ignored if
+       "userid_avp" module parameter has been set and the AVP
+       contains a non-NULL string value.
           + "0" - first check if new_uri is an address of record.
             If yes, then use it and store it as R-URI, otherwise
             look at R-URI and, if necessary, at URI from "To"
