@@ -409,17 +409,17 @@ struct mi_node * mi_print_dlgs(struct mi_node *cmd, void *param )
 			if(attr == 0)
 				goto error;
 
-			attr = addf_mi_attr(node, MI_DUP_VALUE, "from_tag", 8,
+			attr = add_mi_attr(node, MI_DUP_VALUE, "from_tag", 8,
 					dlg->from_tag.s, dlg->from_tag.len);
 			if(attr == 0)
 				goto error;
 	
-			attr = addf_mi_attr(node, MI_DUP_VALUE, "to_uri", 6,
+			attr = add_mi_attr(node, MI_DUP_VALUE, "to_uri", 6,
 					dlg->to_uri.s, dlg->to_uri.len);
 			if(attr == 0)
 				goto error;
 
-			attr = addf_mi_attr(node, MI_DUP_VALUE, "to_tag", 6,
+			attr = add_mi_attr(node, MI_DUP_VALUE, "to_tag", 6,
 					dlg->to_tag.s, dlg->to_uri.len);
 			if(attr == 0)
 				goto error;
