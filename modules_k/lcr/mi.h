@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Various lcr related functions
+ * Header file for lcr MI functions
  *
- * Copyright (C) 2005 Juha Heinanen
+ * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,18 +23,16 @@
  *
  * History:
  * --------
- * 2005-02-06: created by jh
+ *  2006-10-05  created (bogdan)
  */
 
 
-#ifndef LCR_MOD_H
-#define LCR_MOD_H
+#ifndef _LCR_MI_H_
+#define _LCR_MI_H_
 
-#include <stdio.h>
-#include "../../mi/mi.h"
+#define MI_LCR_RELOAD "lcr_reload"
+#define MI_LCR_DUMP "lcr_dump"
 
-void print_gws (FILE *reply_file);
-int  mi_print_gws (struct mi_node* rpl);
-int  reload_gws (void);
+int init_lcr_mi( void );
 
-#endif /* LCR_MOD_H */
+#endif

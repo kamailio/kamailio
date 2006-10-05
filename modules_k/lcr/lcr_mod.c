@@ -4,6 +4,7 @@
  * Least Cost Routing module (also implements sequential forking)
  *
  * Copyright (C) 2005 Juha Heinanen
+ * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -55,6 +56,7 @@
 #include "../../qvalue.h"
 #include "../../dset.h"
 #include "../../ip_addr.h"
+#include "../../mi/mi.h"
 #include "fifo.h"
 
 MODULE_VERSION
@@ -964,6 +966,88 @@ void print_gws (FILE *reply_file)
 	    fprintf(reply_file, ":%u", (*lcrs)[i].grp_id);
 	    fprintf(reply_file, ":%u\n", (*lcrs)[i].priority);
 	}
+}
+
+
+int mi_print_gws (struct mi_node* rpl)
+{
+	unsigned int i;
+	struct mi_attr* attr;
+	uri_transport transport;
+	char *transp;
+	struct mi_node* node;
+	char* p;
+	int len;
+
+	for (i = 0; i < MAX_NO_OF_GWS; i++) {
+
+		if ((*gws)[i].ip_addr == 0) 
+			break;
+
+		node= addf_mi_node_child(rpl,0 ,"GW", 2, 0, 0);
+		if(node == NULL)
+			return -1;
+
+		p = int2str((unsigned long)(*gws)[i].grp_id, &len );
+		attr = add_mi_attr(node, MI_DUP_VALUE, "GRP_ID", 6, p, len );
+		if(attr == NULL)
+			return -1;
+
+		transport = (*gws)[i].transport;
+		if (transport == PROTO_UDP)
+			transp= ";transport=udp";
+		else  if (transport == PROTO_TCP)
+			transp= ";transport=tcp";
+		else  if (transport == PROTO_TLS)
+			transp= ";transport=tls";
+		else
+			transp= "";
+
+		attr= addf_mi_attr(node,0 ,"URI", 3,"%s:%d.%d.%d.%d:%d%s",
+				((*gws)[i].scheme == SIP_URI_T)?"sip":"sips",
+				((*gws)[i].ip_addr << 24) >> 24,
+				(((*gws)[i].ip_addr >> 8) << 24) >> 24,
+				(((*gws)[i].ip_addr >> 16) << 24) >> 24,
+				(*gws)[i].ip_addr >> 24,
+				((*gws)[i].port == 0)?5060:(*gws)[i].port,transp
+				);
+		if(attr == NULL)
+			return -1;
+
+		p = int2str((unsigned long)(*gws)[i].prefix, &len );
+		attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6, p, len );
+		if(attr == NULL)
+			return -1;
+	}
+
+	for (i = 0; i < MAX_NO_OF_LCRS; i++) {
+		if ((*lcrs)[i].end_record != 0)
+			break;
+
+		node= addf_mi_node_child(rpl, 0, "RULE", 4, 0, 0);
+		attr = add_mi_attr(node, 0, "PREFIX", 6, (*lcrs)[i].prefix,
+				(*lcrs)[i].prefix_len );
+		if(attr== 0)
+			return -1;
+
+		attr = add_mi_attr(node, 0, "FROM_URI", 8, (*lcrs)[i].from_uri,
+				(*lcrs)[i].from_uri_len );
+		if(attr== 0)
+			return -1;
+
+		p = int2str((unsigned long)(*lcrs)[i].grp_id, &len );
+		attr = add_mi_attr(node, MI_DUP_VALUE, "GRP_ID", 6, p, len );
+		if(attr == NULL)
+			return -1;
+
+		p = int2str((unsigned long)(*lcrs)[i].priority, &len );
+		attr = add_mi_attr(node, MI_DUP_VALUE, "PRIORITY", 8, p, len );
+		if(attr == NULL)
+			return -1;
+
+	}
+
+	return 0;
 }
 
 /*
