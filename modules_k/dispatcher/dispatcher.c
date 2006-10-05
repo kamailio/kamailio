@@ -3,7 +3,8 @@
  *
  * dispatcher module -- stateless load balancing
  *
- * Copyright (C) 2004-2006 FhG Fokus
+ * Copyright (C) 2004-2005 FhG Fokus
+ * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -33,6 +34,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "../../mi/mi.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
@@ -71,6 +73,8 @@ static int ds_fixup(void** param, int param_no);
 
 static int ds_fifo_set(FILE *stream, char *response_file);
 static int ds_fifo_list(FILE *stream, char *response_file);
+struct mi_node* ds_mi_set(struct mi_node* cmd, void* param);
+struct mi_node* ds_mi_list(struct mi_node* cmd, void* param);
 
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    w_ds_select_dst,    2, ds_fixup, REQUEST_ROUTE},
@@ -127,7 +131,21 @@ static int mod_init(void)
 			"DISPATCHER:mod_init:ERROR: cannot register fifo command!!\n");
 		return -1;
 	}
+
+	if(register_mi_cmd(ds_mi_set, "ds_set_state", 0)<0)
+	{
+		LOG(L_ERR,
+			"DISPATCHER:mod_init:ERROR: cannot register MI command!\n");
+		return -1;
+	}
 	
+	if(register_mi_cmd(ds_mi_list, "ds_list", 0)<0)
+	{
+		LOG(L_ERR,
+			"DISPATCHER:mod_init:ERROR: cannot register MI command!!\n");
+		return -1;
+	}
+
 	if(ds_load_list(dslistfile)!=0)
 	{
 		LOG(L_ERR, "DISPATCHER:mod_init:ERROR -- couldn't load list file\n");
@@ -390,5 +408,88 @@ static int ds_fifo_list(FILE *stream, char *response_file)
 
 	fclose(freply);
 	return 0;
+}
+
+
+
+/************************** MI STUFF ************************/
+
+struct mi_node* ds_mi_set(struct mi_node* cmd, void* param)
+{
+	str sp;
+	int ret;
+	unsigned int group, state;
+	struct mi_node* node;
+
+	node = cmd->kids;
+	if(node == NULL)
+		return init_mi_tree("Too few parameters", 18);
+	sp = node->value;
+	if(sp.len<=0 || sp.s == NULL)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_mi_set: bad state value\n");
+		return init_mi_tree("500 bad state value", 19);
+	}
+
+	state = 1;
+	if(sp.s[0]=='0' || sp.s[0]=='I' || sp.s[0]=='i')
+		state = 0;
+	node = node->next;
+	if(node == NULL)
+		return init_mi_tree("Too few parameters", 18);
+	sp = node->value;
+	if(sp.s == NULL)
+	{
+		return init_mi_tree("500 group not found", 19);
+	}
+
+	if(str2int(&sp, &group))
+	{
+		LOG(L_ERR, "DISPATCHER:ds_mi_set: bad group value\n");
+		return init_mi_tree("500 bad group value", 20);
+	}
+
+	node= node->next;
+	if(node == NULL)
+		return init_mi_tree("Too few parameters", 18);
+
+	sp = node->value;
+	if(sp.s == NULL)
+	{
+		return init_mi_tree("500 address not found", 22 );
+	}
+
+	if(state==1)
+		ret = ds_set_state(group, &sp, DS_INACTIVE_DST, 0);
+	else
+		ret = ds_set_state(group, &sp, DS_INACTIVE_DST, 1);
+
+	if(ret!=0)
+	{
+		return init_mi_tree( "404 destination not found", 25);
+	}
+
+	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+}
+
+
+
+
+struct mi_node* ds_mi_list(struct mi_node* cmd, void* param)
+{
+	struct mi_node* rpl;
+
+	rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	if (rpl==NULL)
+		return 0;
+
+	if( ds_print_mi_list(rpl)< 0 )
+	{
+		LOG(L_ERR,"ERROR:mi_ps: failed to add node\n");
+		free_mi_tree(rpl);
+		return 0;
+	}
+
+	return rpl;
 }
 

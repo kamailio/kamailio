@@ -42,6 +42,7 @@
 #include "../../items.h"
 #include "domain.h"
 #include "fifo.h"
+#include "mi.h"
 #include "unixsock.h"
 #include "hash.h"
 
@@ -155,6 +156,9 @@ static int mod_init(void)
 
 		/* Initialize fifo interface */
 		(void)init_domain_fifo();
+
+		/* Initialize MI interface */
+		(void)init_domain_mi();
 
 		if (init_domain_unixsock() < 0) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): error while initializing"

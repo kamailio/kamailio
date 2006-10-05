@@ -60,6 +60,7 @@ int ds_next_dst(struct sip_msg *msg, int mode);
 int ds_set_state(int group, str *address, int state, int type);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
+int ds_print_mi_list(struct mi_node* rpl);
 
 #endif
 

@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Header file for hash table functions
+ * Header file for domain MI functions
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,17 +23,12 @@
  */
 
 
-#ifndef _DOM_HASH_H_
-#define _DOM_HASH_H_
+#ifndef _DOMAIN_MI_H_
+#define _DOMAIN_MI_H_
 
-#include <stdio.h>
-#include "domain_mod.h"
-#include "../../mi/mi.h"
+#define MI_DOMAIN_RELOAD "domain_reload"
+#define MI_DOMAIN_DUMP "domain_dump"
 
-int hash_table_install (struct domain_list **hash_table, char *domain);
-int hash_table_lookup (str *domain);
-void hash_table_print (struct domain_list **hash_table, FILE *reply_file);
-int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl);
-void hash_table_free (struct domain_list **hash_table);
+int init_domain_mi( void );
 
 #endif

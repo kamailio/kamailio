@@ -23,11 +23,12 @@
  */
 
 
-#include "domain_mod.h"
 #include "../../dprint.h"
-#include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
+#include "../../mem/shm_mem.h"
+#include "../../mi/mi.h"
+#include "domain_mod.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -95,6 +96,25 @@ void hash_table_print (struct domain_list **hash_table, FILE *reply_file)
 	}
 }
 
+int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl)
+{
+	int i;
+	struct domain_list *np;
+	struct mi_node* node;
+
+	for (i = 0; i < DOM_HASH_SIZE; i++) {
+		np = hash_table[i];
+		while (np) {
+			node = add_mi_node_child(rpl, 0, 0, 0, 
+					np->domain.s, np->domain.len);
+			if(node == 0)
+				return -1;
+
+			np = np->next;
+		}
+	}
+	return 0;
+}
 
 /* Free contents of hash table */
 void hash_table_free (struct domain_list **hash_table)

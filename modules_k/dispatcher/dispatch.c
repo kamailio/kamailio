@@ -34,6 +34,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../../ut.h"
 #include "../../trim.h"
 #include "../../dprint.h"
 #include "../../action.h"
@@ -43,6 +44,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../usr_avp.h"
+#include "../../mi/mi.h"
 
 #include "dispatch.h"
 
@@ -1010,3 +1012,49 @@ int ds_print_list(FILE *fout)
 	return 0;
 }
 
+
+int ds_print_mi_list(struct mi_node* rpl)
+{
+	int i, j, len;
+	char* p;
+	char c;
+	struct mi_node* node = NULL;
+	struct mi_node* set_node = NULL;
+	struct mi_attr* attr = NULL;
+
+	if(_ds_list==NULL || _ds_list_nr<=0)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_mi_print_list: the list is null\n");
+		return  0;
+	}
+
+	p= int2str(_ds_list_nr, &len); 
+	node = add_mi_node_child(rpl, MI_DUP_VALUE, "SET_NO",6, p,
+			len);
+	if(node== NULL)
+		return -1;
+
+	for(i=0; i<_ds_list_nr; i++)
+	{
+		p = int2str(_ds_list[i].id, &len);
+		set_node= add_mi_node_child(rpl, MI_DUP_VALUE,"SET", 3, p, len);
+		if(set_node == NULL)
+			return -1;
+
+		for(j=0; j<_ds_list[i].nr; j++)
+		{
+			node= add_mi_node_child(set_node, 0, "URI", 3,
+					_ds_list[i].dlist[j].uri.s, _ds_list[i].dlist[j].uri.len);
+			if(node == NULL)
+				return -1;
+
+			c =  (_ds_list[i].dlist[j].flags&DS_INACTIVE_DST)?'I':'A';
+			attr = add_mi_attr(node,0, "flag",4, &c, 1);
+			if(attr == 0)
+				return -1;
+
+		}
+	}
+
+	return 0;
+}
