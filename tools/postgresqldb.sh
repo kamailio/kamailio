@@ -335,7 +335,7 @@ INSERT INTO version VALUES ( 'aliases', '1003');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
 INSERT INTO version VALUES ( 'acc', '3');
-INSERT INTO version VALUES ( 'silo', '4');
+INSERT INTO version VALUES ( 'silo', '5');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'trusted', '3');
@@ -509,14 +509,14 @@ CREATE TABLE silo(
     mid $AUTO_INCREMENT,
     src_addr varchar(255) NOT NULL DEFAULT '',
     dst_addr varchar(255) NOT NULL DEFAULT '',
-    r_uri varchar(255) NOT NULL DEFAULT '',
     $USERCOL varchar(64) NOT NULL DEFAULT '',
     domain varchar(128) NOT NULL DEFAULT '',
     inc_time INTEGER NOT NULL DEFAULT 0,
     exp_time INTEGER NOT NULL DEFAULT 0,
     snd_time INTEGER NOT NULL DEFAULT 0,
     ctype varchar(32) NOT NULL DEFAULT 'text/plain',
-    body TEXT NOT NULL DEFAULT ''
+    body TEXT NOT NULL DEFAULT '',
+    KEY ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 
