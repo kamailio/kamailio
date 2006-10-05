@@ -36,7 +36,8 @@
  *             is computed (dcm)
  * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
  * 2004-06-07 updated to the new DB api (andrei)
- * 2006-09-10 m_dump now checks if registering UA supports MESSAGE method
+ * 2006-09-10 m_dump now checks if registering UA supports MESSAGE method (jh)
+ * 2006-10-05 added max_messages module variable (jh)
  */
 
 #include <stdio.h>
@@ -139,6 +140,7 @@ int  ms_use_contact=1;
 int  ms_userid_avp=0;
 int  ms_snd_time_avp = 0;
 int  ms_add_date = 1;
+int  ms_max_messages = 0;
 
 str msg_type = { "MESSAGE", 7 };
 
@@ -149,8 +151,6 @@ static int mod_init(void);
 static int child_init(int);
 
 static int m_store(struct sip_msg*, char*, char*);
-static int m_store_1(struct sip_msg*, char*, char*);
-static int m_store_2(struct sip_msg*, char*, char*);
 static int m_dump(struct sip_msg*, char*, char*);
 
 void destroy(void);
@@ -166,8 +166,7 @@ int check_message_support(struct sip_msg* msg);
 static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
-	{"m_store",  m_store_1, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_store",  m_store_2, 2, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store",  m_store, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"m_dump",   m_dump,  0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
@@ -196,6 +195,7 @@ static param_export_t params[]={
 	{ "userid_avp",   INT_PARAM, &ms_userid_avp   },
 	{ "snd_time_avp", INT_PARAM, &ms_snd_time_avp },
 	{ "add_date",     INT_PARAM, &ms_add_date     },
+	{ "max_messages", INT_PARAM, &ms_max_messages },
 	{ 0,0,0 }
 };
 
@@ -341,17 +341,7 @@ static int child_init(int rank)
  * 		= "2" -- look for outgoing URI only at to header
  */
 
-static int m_store_1(struct sip_msg* msg, char* mode, char* str2)
-{
-	return m_store(msg, mode, NULL);
-}
-
-static int m_store_2(struct sip_msg* msg, char* mode, char* flags)
-{
-	return m_store(msg, mode, flags);
-}
-
-static int m_store(struct sip_msg* msg, char* mode, char* flags)
+static int m_store(struct sip_msg* msg, char* mode, char* s2)
 {
 	str body, str_hdr, ctaddr;
 	struct to_body to, *pto, *pfrom;
@@ -359,6 +349,8 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 
 	db_key_t db_keys[NR_KEYS-1];
 	db_val_t db_vals[NR_KEYS-1];
+	db_key_t db_cols[1]; 
+	db_res_t* res = NULL;
 	
 	int nr_keys = 0, val, lexpire;
 	content_type_t ctype;
@@ -398,10 +390,10 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 	/* get TO URI */
 	if(!msg->to || !msg->to->body.s)
 	{
-		DBG("MSILO:m_store: cannot find 'to' header!\n");
-		goto error;
+	    DBG("MSILO:m_store: cannot find 'to' header!\n");
+	    goto error;
 	}
-
+	
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
@@ -432,52 +424,6 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 		DBG("MSILO:m_store: message to MSILO REGISTRAR!\n");
 		goto error;
 	}
-
-	db_keys[nr_keys] = sc_to;
-	
-	db_vals[nr_keys].type = DB_STR;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = pto->uri.s;
-	db_vals[nr_keys].val.str_val.len = pto->uri.len;
-
-	nr_keys++;
-
-	/* check FROM URI */
-	if(!msg->from || !msg->from->body.s)
-	{
-		DBG("MSILO:m_store: ERROR cannot find 'from' header!\n");
-		goto error;
-	}
-
-	if(msg->from->parsed == NULL)
-	{
-		DBG("MSILO:m_store: 'From' header not parsed\n");
-		/* parsing from header */
-		if ( parse_from_header( msg )<0 ) 
-		{
-			DBG("MSILO:m_store: ERROR cannot parse From header\n");
-			goto error;
-		}
-	}
-	pfrom = (struct to_body*)msg->from->parsed;
-	DBG("MSILO:m_store: 'From' header: <%.*s>\n", pfrom->uri.len,
-			pfrom->uri.s);	
-	
-	if(reg_addr.s && pfrom->uri.len == reg_addr.len && 
-			!strncasecmp(pfrom->uri.s, reg_addr.s, reg_addr.len))
-	{
-		DBG("MSILO:m_store: message from MSILO REGISTRAR!\n");
-		goto error;
-	}
-
-	db_keys[nr_keys] = sc_from;
-	
-	db_vals[nr_keys].type = DB_STR;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
-	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
-
-	nr_keys++;
 
 	/* get the R-URI */
 	memset(&puri, 0, sizeof(struct sip_uri));
@@ -574,6 +520,75 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 
 	nr_keys++;
 
+	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
+	{
+		LOG(L_ERR, "MSILO:m_store: Error in use_table\n");
+		goto error;
+	}
+
+	if (ms_max_messages > 0) {
+	    db_cols[0] = sc_inc_time;
+	    if (msilo_dbf.query(db_con, db_keys, 0, db_vals, db_cols,
+				2, 1, 0, &res) < 0 ) {
+		LOG(L_ERR, "m_store(): Error while querying database\n");
+		return -1;
+	    }
+	    if (RES_ROW_N(res) >= ms_max_messages) {
+		LOG(L_INFO, "MSILO:m_store: Too many messages for AoR '%.*s@%.*s'\n",
+		    puri.user.len, puri.user.s, puri.host.len, puri.host.s);
+ 	        msilo_dbf.free_result(db_con, res);
+		return -1;
+	    }
+	    msilo_dbf.free_result(db_con, res);
+	}
+
+	/* Set To key */
+	db_keys[nr_keys] = sc_to;
+	
+	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val.s = pto->uri.s;
+	db_vals[nr_keys].val.str_val.len = pto->uri.len;
+
+	nr_keys++;
+
+	/* check FROM URI */
+	if(!msg->from || !msg->from->body.s)
+	{
+		DBG("MSILO:m_store: ERROR cannot find 'from' header!\n");
+		goto error;
+	}
+
+	if(msg->from->parsed == NULL)
+	{
+		DBG("MSILO:m_store: 'From' header not parsed\n");
+		/* parsing from header */
+		if ( parse_from_header( msg )<0 ) 
+		{
+			DBG("MSILO:m_store: ERROR cannot parse From header\n");
+			goto error;
+		}
+	}
+	pfrom = (struct to_body*)msg->from->parsed;
+	DBG("MSILO:m_store: 'From' header: <%.*s>\n", pfrom->uri.len,
+			pfrom->uri.s);	
+	
+	if(reg_addr.s && pfrom->uri.len == reg_addr.len && 
+			!strncasecmp(pfrom->uri.s, reg_addr.s, reg_addr.len))
+	{
+		DBG("MSILO:m_store: message from MSILO REGISTRAR!\n");
+		goto error;
+	}
+
+	db_keys[nr_keys] = sc_from;
+	
+	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
+	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
+
+	nr_keys++;
+
 	/* add the message's body in SQL query */
 	
 	db_keys[nr_keys] = sc_body;
@@ -644,7 +659,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 	db_vals[nr_keys].type = DB_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = 0;
-	if(ms_userid_avp!=0)
+	if(ms_snd_time_avp!=0)
 	{
 		avp = NULL;
 		avp_name.n = ms_snd_time_avp;
@@ -656,12 +671,6 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 		}
 	}
 	nr_keys++;
-
-	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
-	{
-		LOG(L_ERR, "MSILO:m_store: Error in use_table\n");
-		goto error;
-	}
 
 	if(msilo_dbf.insert(db_con, db_keys, db_vals, nr_keys) < 0)
 	{
@@ -679,9 +688,6 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 			|| reg_addr.len+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN+1>=1024)
 		goto done;
 
-	if(flags!=NULL && flags[0]=='0')
-		goto done;
-	
 	DBG("MSILO:m_store: sending info message.\n");
 	strcpy(buf1, CONTACT_PREFIX);
 	strncat(buf1,reg_addr.s,reg_addr.len);

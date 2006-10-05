@@ -344,6 +344,26 @@ modparam("msilo", "add_date", "0")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>max_messages</varname> (int)</title>
+		<para>
+		Maximum number of stored message for an AoR.  Value 0
+		equals to no limit.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>max_messages</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "max_messages", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
