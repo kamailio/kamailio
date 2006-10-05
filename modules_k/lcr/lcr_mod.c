@@ -51,13 +51,14 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/msg_parser.h"
-#include "../mysql/dbase.h"
 #include "../../action.h"
 #include "../../qvalue.h"
 #include "../../dset.h"
 #include "../../ip_addr.h"
 #include "../../mi/mi.h"
+#include "../mysql/dbase.h"
 #include "fifo.h"
+#include "mi.h"
 
 MODULE_VERSION
 
@@ -439,9 +440,12 @@ static int mod_init(void)
 				" lcr table (use openser_mysql.sh reinstall)\n");
 		goto err;
 	}		
-	
+
 	/* Initialize fifo interface */
 	(void)init_lcr_fifo();
+
+	/* Initialize MI interface */
+	(void)init_lcr_mi();
 
 	/* Initializing gw tables and gw table pointer variable */
 	gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) * (MAX_NO_OF_GWS + 1));
