@@ -59,6 +59,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../fifo_server.h"
+#include "../../mi/mi.h"
 #include <stdio.h>
 
 MODULE_VERSION
@@ -134,6 +135,31 @@ static int fixup_str2int( void** param, int param_no)
 }
 
 
+
+/**************************** module functions ******************************/
+
+static int set_gflag(struct sip_msg *bar, char *flag, char *foo) 
+{
+	(*gflags) |= (unsigned int)(long)flag;
+	return 1;
+}
+
+
+static int reset_gflag(struct sip_msg *bar, char *flag, char *foo)
+{
+	(*gflags) &= ~ ((unsigned int)(long)flag);
+	return 1;
+}
+
+
+static int is_gflag(struct sip_msg *bar, char *flag, char *foo)
+{
+	return ( (*gflags) & ((unsigned int)(long)flag)) ? 1 : -1;
+}
+
+
+
+/**************************** FIFO functions ******************************/
 static unsigned int read_flag(FILE *pipe, char *response_file)
 {
 	char flag_str[MAX_FLAG_LEN];
@@ -221,24 +247,117 @@ static int fifo_get_gflags( FILE* pipe, char* response_file )
 }
 
 
-static int set_gflag(struct sip_msg *bar, char *flag, char *foo) 
+
+/************************* MI functions *******************************/
+#define MI_BAD_PARM_S    "Bad parameter"
+#define MI_BAD_PARM_LEN  (sizeof(MI_BAD_PARM_S)-1)
+static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
 {
-	(*gflags) |= (unsigned int)(long)flag;
-	return 1;
+	unsigned int flag;
+	struct mi_node* node;
+
+	node = cmd->kids;
+	if(node == NULL)
+		goto error;
+
+	if(str2int(&node->value, &flag) <0)
+		goto error;
+	if (!flag) {
+		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
+		goto error;
+	}
+
+	(*gflags) |= flag;
+
+	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+error:
+	return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
 }
 
 
-static int reset_gflag(struct sip_msg *bar, char *flag, char *foo)
+
+struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
 {
-	(*gflags) &= ~ ((unsigned int)(long)flag);
-	return 1;
+	unsigned int flag;
+	struct mi_node* node = NULL;
+	 
+	node = cmd->kids;
+	if(node == NULL)
+		goto error;
+
+	if(str2int(&node->value, &flag) <0)
+		goto error;
+	if (!flag) {
+		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
+		goto error;
+	}
+
+	(*gflags) &= ~ flag;
+
+	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+error:
+	return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
 }
 
 
-static int is_gflag(struct sip_msg *bar, char *flag, char *foo)
+
+struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
 {
-	return ( (*gflags) & ((unsigned int)(long)flag)) ? 1 : -1;
+	unsigned int flag;
+	struct mi_node* rpl= NULL;
+	struct mi_node* node = NULL;
+
+	node = cmd->kids;
+	if(node == NULL)
+		goto error_param;
+
+	if(str2int(&node->value, &flag) <0)
+		goto error_param;
+	if (!flag) {
+		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
+		goto error_param;
+	}
+
+	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+
+	if((*gflags) & flag) 
+		node = add_mi_node_child(rpl, 0, 0, 0, "TRUE", 4);
+	else
+		node = add_mi_node_child(rpl, 0, 0, 0, "FALSE", 5);
+
+	if(node ==0)
+		goto error;
+
+	return rpl;
+
+error:
+	LOG(L_ERR, "gflags:mi_set_gflag:ERROR while adding node\n");
+	free_mi_tree(rpl);
+	return 0;
+error_param:
+	return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
 }
+
+
+struct mi_node*  mi_get_gflags(struct mi_node* cmd, void* param )
+{
+	struct mi_node* rpl= NULL;
+	struct mi_node* node= NULL;
+	
+	rpl= init_mi_tree( MI_200_OK_S, MI_200_OK_LEN );
+
+	node = addf_mi_node_child(rpl,0, 0, 0, "%X\n%u\n", (*gflags),(*gflags));
+	if(node == NULL)
+	{
+		free_mi_tree(rpl);
+		return 0;
+	}
+
+	return rpl;
+
+}
+
+
 
 
 static int mod_init(void)
@@ -263,6 +382,23 @@ static int mod_init(void)
 	}
 	if (register_fifo_cmd(fifo_get_gflags, FIFO_GET_GFLAGS, 0) < 0) {
 		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
+		return -1;
+	}
+
+	if (register_mi_cmd(mi_set_gflag, FIFO_SET_GFLAG, 0) < 0) {
+		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_SET_GFLAG);
+		return -1;
+	}
+	if (register_mi_cmd(mi_reset_gflag, FIFO_RESET_GFLAG, 0) < 0) {
+		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_RESET_GFLAG);
+		return -1;
+	}
+	if (register_mi_cmd(mi_is_gflag, FIFO_IS_GFLAG, 0) < 0) {
+		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_SET_GFLAG);
+		return -1;
+	}
+	if (register_mi_cmd(mi_get_gflags, FIFO_GET_GFLAGS, 0) < 0) {
+		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_SET_GFLAG);
 		return -1;
 	}
 
