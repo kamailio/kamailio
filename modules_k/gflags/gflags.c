@@ -280,7 +280,7 @@ struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
 {
 	unsigned int flag;
 	struct mi_node* node = NULL;
-	 
+
 	node = cmd->kids;
 	if(node == NULL)
 		goto error;
@@ -319,21 +319,22 @@ struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
 	}
 
 	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	if(rpl ==0)
+		return 0;
 
-	if((*gflags) & flag) 
+	if((*gflags) & flag)
 		node = add_mi_node_child(rpl, 0, 0, 0, "TRUE", 4);
 	else
 		node = add_mi_node_child(rpl, 0, 0, 0, "FALSE", 5);
 
-	if(node ==0)
-		goto error;
+	if(node == NULL)
+	{
+		LOG(L_ERR, "gflags:mi_set_gflag:ERROR while adding node\n");
+		free_mi_tree(rpl);
+		return 0;
+	}
 
 	return rpl;
-
-error:
-	LOG(L_ERR, "gflags:mi_set_gflag:ERROR while adding node\n");
-	free_mi_tree(rpl);
-	return 0;
 error_param:
 	return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
 }
@@ -343,10 +344,12 @@ struct mi_node*  mi_get_gflags(struct mi_node* cmd, void* param )
 {
 	struct mi_node* rpl= NULL;
 	struct mi_node* node= NULL;
-	
-	rpl= init_mi_tree( MI_200_OK_S, MI_200_OK_LEN );
 
-	node = addf_mi_node_child(rpl,0, 0, 0, "%X\n%u\n", (*gflags),(*gflags));
+	rpl= init_mi_tree( MI_200_OK_S, MI_200_OK_LEN );
+	if(rpl == NULL)
+		return 0;
+
+	node = addf_mi_node_child(rpl,0, 0, 0, "0x%X %u",(*gflags),(*gflags));
 	if(node == NULL)
 	{
 		free_mi_tree(rpl);
