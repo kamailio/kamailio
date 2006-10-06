@@ -350,7 +350,7 @@ struct fis_param* parse_intstr_value(char *p, int len)
 		/* convert the value to integer */
 		if(val_str.len>2 && p[0]=='0' && (p[1]=='x' || p[1]=='X'))
 		{
-			if(hexstr2int(val_str.s+2, val_str.len-2, &uint))
+			if(hexstr2int(val_str.s+2, val_str.len-2, (unsigned int*)&uint))
 			{
 				LOG(L_ERR,"ERROR:avpops:parse_intstr_value: value is not hex"
 					" int as type says <%.*s>\n", val_str.len, val_str.s);
