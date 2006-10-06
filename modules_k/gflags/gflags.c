@@ -54,13 +54,13 @@
 #define FIFO_RESET_GFLAG "reset_gflag"
 #define FIFO_GET_GFLAGS "get_gflags"
 
+#include <stdio.h>
 #include "../../sr_module.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../fifo_server.h"
 #include "../../mi/mi.h"
-#include <stdio.h>
 
 MODULE_VERSION
 
@@ -251,6 +251,19 @@ static int fifo_get_gflags( FILE* pipe, char* response_file )
 /************************* MI functions *******************************/
 #define MI_BAD_PARM_S    "Bad parameter"
 #define MI_BAD_PARM_LEN  (sizeof(MI_BAD_PARM_S)-1)
+
+static inline int mi_get_mask( str *val, unsigned int *mask )
+{
+	/* hexa or decimal*/
+	if (val->len>2 && val->s[0]=='0' && val->s[1]=='x') {
+		return hexstr2int( val->s+2, val->len-2, mask);
+	} else {
+		return str2int( val, mask);
+	}
+}
+
+
+
 static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
 {
 	unsigned int flag;
@@ -260,7 +273,7 @@ static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
 	if(node == NULL)
 		goto error;
 
-	if(str2int(&node->value, &flag) <0)
+	if( mi_get_mask( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
 		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
@@ -285,7 +298,7 @@ struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
 	if(node == NULL)
 		goto error;
 
-	if(str2int(&node->value, &flag) <0)
+	if( mi_get_mask( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
 		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
@@ -311,7 +324,7 @@ struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
 	if(node == NULL)
 		goto error_param;
 
-	if(str2int(&node->value, &flag) <0)
+	if( mi_get_mask( &node->value, &flag) <0)
 		goto error_param;
 	if (!flag) {
 		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
@@ -349,15 +362,18 @@ struct mi_node*  mi_get_gflags(struct mi_node* cmd, void* param )
 	if(rpl == NULL)
 		return 0;
 
-	node = addf_mi_node_child(rpl,0, 0, 0, "0x%X %u",(*gflags),(*gflags));
+	node = addf_mi_node_child(rpl,0, 0, 0, "0x%X",(*gflags));
 	if(node == NULL)
-	{
-		free_mi_tree(rpl);
-		return 0;
-	}
+		goto error;
+
+	node = addf_mi_node_child(rpl,0, 0, 0, "%u",(*gflags));
+	if(node == NULL)
+		goto error;
 
 	return rpl;
-
+error:
+	free_mi_tree(rpl);
+	return 0;
 }
 
 
