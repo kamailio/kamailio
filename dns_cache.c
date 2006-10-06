@@ -29,6 +29,7 @@
 /* History:
  * --------
  *  2006-07-13  created by andrei
+ *  2006-10-06  port fix (andrei)
  */
 
 #ifdef USE_DNS_CACHE
@@ -2188,69 +2189,73 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 	if ((h->srv==0) && (h->a==0)){
 		h->port=(proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
 														don't find another */
-		if ((port) && (*port==0)){
-			/* try SRV if initial call & no port specified
-			 * (draft-ietf-sip-srv-06) */
-			*port=h->port;
-			if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
-				LOG(L_WARN, "WARNING: dns_sip_resolvehost: domain name too"
-							" long (%d), unable to perform SRV lookup\n",
-							name->len);
-			}else{
-				/* check if it's an ip address */
-				if ( ((tmp_ip=str2ip(name))!=0)
+		if (port){
+			if (*port==0){
+				/* try SRV if initial call & no port specified
+				 * (draft-ietf-sip-srv-06) */
+				if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
+					LOG(L_WARN, "WARNING: dns_sip_resolvehost: domain name too"
+								" long (%d), unable to perform SRV lookup\n",
+								name->len);
+				}else{
+					/* check if it's an ip address */
+					if ( ((tmp_ip=str2ip(name))!=0)
 #ifdef	USE_IPV6
-					  || ((tmp_ip=str2ip6(name))!=0)
+						  || ((tmp_ip=str2ip6(name))!=0)
 #endif
-					){
-					/* we are lucky, this is an ip address */
+						){
+						/* we are lucky, this is an ip address */
 #ifdef	USE_IPV6
-					if (((flags&DNS_IPV4_ONLY) && (tmp_ip->af==AF_INET6)) ||
-						((flags&DNS_IPV6_ONLY) && (tmp_ip->af==AF_INET))){
-						return -E_DNS_AF_MISMATCH;
+						if (((flags&DNS_IPV4_ONLY) && (tmp_ip->af==AF_INET6))||
+							((flags&DNS_IPV6_ONLY) && (tmp_ip->af==AF_INET))){
+							return -E_DNS_AF_MISMATCH;
+						}
+#endif
+						*ip=*tmp_ip;
+						return 0;
 					}
-#endif
-					*ip=*tmp_ip;
-					return 0;
+					
+					switch(proto){
+						case PROTO_NONE: /* no proto specified, use udp */
+							goto skip_srv;
+						case PROTO_UDP:
+							memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
+							memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
+							tmp[SRV_UDP_PREFIX_LEN + name->len] = '\0';
+							len=SRV_UDP_PREFIX_LEN + name->len;
+							break;
+						case PROTO_TCP:
+							memcpy(tmp, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
+							memcpy(tmp+SRV_TCP_PREFIX_LEN, name->s, name->len);
+							tmp[SRV_TCP_PREFIX_LEN + name->len] = '\0';
+							len=SRV_TCP_PREFIX_LEN + name->len;
+							break;
+						case PROTO_TLS:
+							memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
+							memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
+							tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
+							len=SRV_TLS_PREFIX_LEN + name->len;
+							break;
+						default:
+							LOG(L_CRIT, "BUG: sip_resolvehost: "
+									"unknown proto %d\n", proto);
+							return -E_DNS_CRITICAL;
+					}
+					srv_name.s=tmp;
+					srv_name.len=len;
+					
+					if ((ret=dns_srv_resolve_ip(h, &srv_name, ip,
+															port, flags))>=0)
+					{
+						DBG("dns_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n", 
+							name->len, name->s, h->srv_no, h->ip_no, ret);
+						return ret;
+					}
 				}
-				
-				switch(proto){
-					case PROTO_NONE: /* no proto specified, use udp */
-						goto skip_srv;
-					case PROTO_UDP:
-						memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
-						memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
-						tmp[SRV_UDP_PREFIX_LEN + name->len] = '\0';
-						len=SRV_UDP_PREFIX_LEN + name->len;
-						break;
-					case PROTO_TCP:
-						memcpy(tmp, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
-						memcpy(tmp+SRV_TCP_PREFIX_LEN, name->s, name->len);
-						tmp[SRV_TCP_PREFIX_LEN + name->len] = '\0';
-						len=SRV_TCP_PREFIX_LEN + name->len;
-						break;
-					case PROTO_TLS:
-						memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
-						memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
-						tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
-						len=SRV_TLS_PREFIX_LEN + name->len;
-						break;
-					default:
-						LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
-									proto);
-						return -E_DNS_CRITICAL;
-				}
-				srv_name.s=tmp;
-				srv_name.len=len;
-				
-				if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0)
-				{
-					DBG("dns_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n", 
-						name->len, name->s, h->srv_no, h->ip_no, ret);
-					return ret;
-				}
+			}else{ /* if (*port==0) */
+				h->port=*port; /* store initial port */
 			}
-		}
+		} /* if (port) */
 	}else if (h->srv){
 			srv_name.s=h->srv->name;
 			srv_name.len=h->srv->name_len;
