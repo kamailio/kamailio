@@ -31,6 +31,8 @@
  *              instead of UDP package (bogdan)
  *  2006-09-19  AOR may be provided via an AVP instead of being fetched
  *              from URI (bogdan)
+ *  2006-10-04  removed the "desc_time_order" parameter, as its functionality
+ *              was moved to usrloc (Carsten Bock, BASIS AudioNet GmbH)
  */
 
 #include <stdio.h>
@@ -65,8 +67,6 @@ qvalue_t default_q  = Q_UNSPECIFIED;
 int append_branches = 1;
 /* If set to 1, username in aor will be case sensitive */
 int case_sensitive  = 0;
-/* By default do not order according to the descending modification time */
-int desc_time_order = 0;
 /* flag marking contacts behind NAT */
 int nat_flag        = -1;
 /* if the TCP connection should be kept open */
@@ -150,7 +150,6 @@ static param_export_t params[] = {
 	{"default_q",          INT_PARAM, &default_q           },
 	{"append_branches",    INT_PARAM, &append_branches     },
 	{"case_sensitive",     INT_PARAM, &case_sensitive      },
-	{"desc_time_order",    INT_PARAM, &desc_time_order     },
 	{"nat_flag",           INT_PARAM, &nat_flag            },
 	{"sip_natping_flag",   INT_PARAM, &sip_natping_flag    },
 	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag },

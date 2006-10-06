@@ -1,42 +1,42 @@
 <!-- Module FAQ -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>Frequently Asked Questions</title>
-    <qandaset defaultlabel="number">
+	</chapterinfo>
+	<title>Frequently Asked Questions</title>
+	<qandaset defaultlabel="number">
 	<qandaentry>
-	    <question>
+		<question>
 		<para>Where can I find more about OpenSER?</para>
-	    </question>
-	    <answer>
+		</question>
+		<answer>
 		<para>
 			Take a look at &serhomelink;.
 		</para>
-	    </answer>
+		</answer>
 	</qandaentry>
 	<qandaentry>
-	    <question>
+		<question>
 		<para>Where can I post a question about this module?</para>
-	    </question>
-	    <answer>
+		</question>
+		<answer>
 		<para>
 			First at all check if your question was already answered on one of
 			our mailing lists: 
 		</para>
 		<itemizedlist>
-		    <listitem>
+			<listitem>
 			<para>User Mailing List - &seruserslink;</para>
-		    </listitem>
-		    <listitem>
+			</listitem>
+			<listitem>
 			<para>Developer Mailing List - &serdevlink;</para>
-		    </listitem>
+			</listitem>
 		</itemizedlist>
 		<para>
 			E-mails regarding any stable &ser; release should be sent to 
@@ -47,20 +47,31 @@
 			If you want to keep the mail private, send it to 
 			&serhelpmail;.
 		</para>
-	    </answer>
+		</answer>
 	</qandaentry>
 	<qandaentry>
-	    <question>
+		<question>
 		<para>How can I report a bug?</para>
-	    </question>
-	    <answer>
+		</question>
+		<answer>
 		<para>
 			Please follow the guidelines provided at:
 			&serbugslink;.
 		</para>
-	    </answer>
+		</answer>
 	</qandaentry>
-    </qandaset>
+	<qandaentry>
+		<question>
+		<para>What happened to the desc_time_order parameter?</para>
+		</question>
+		<answer>
+		<para>
+			It was removed, as its functionality was mmigrate into usrloc
+			module, were there is a parameter with the same name.
+		</para>
+		</answer>
+	</qandaentry>
+	</qandaset>
 </chapter>
 
 <!-- Keep this element at the end of the file

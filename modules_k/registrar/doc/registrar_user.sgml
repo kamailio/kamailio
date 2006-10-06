@@ -389,28 +389,6 @@ modparam("registrar", "case_sensitive", 1)
 	</section>
 
 	<section>
-		<title><varname>desc_time_order</varname> (integer)</title>
-		<para>
-		If set to 1 then all contacts will be ordered in descending 
-		modification time order. In this case the most recently 
-		updated/created contact will be used.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>desc_time_order</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "desc_time_order", 1)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>received_avp</varname> (integer)</title>
 		<para>
 		Registrar will store the value of the AVP configured by this 

@@ -54,7 +54,6 @@ extern int default_expires;
 extern qvalue_t default_q;
 extern int append_branches;
 extern int case_sensitive;
-extern int desc_time_order;
 extern int nat_flag;
 extern int sip_natping_flag;
 extern int tcp_persistent_flag;
