@@ -40,6 +40,7 @@
 #include "../../db/db.h"
 #include "ul_mod.h"
 #include "ul_callback.h"
+#include "urecord.h"
 
 
 /*
@@ -684,10 +685,72 @@ int db_delete_ucontact(ucontact_t* _c)
 }
 
 
+
+static inline void unlink_contact(struct urecord* _r, ucontact_t* _c)
+{
+	if (_c->prev) {
+		_c->prev->next = _c->next;
+		if (_c->next) {
+			_c->next->prev = _c->prev;
+		}
+	} else {
+		_r->contacts = _c->next;
+		if (_c->next) {
+			_c->next->prev = 0;
+		}
+	}
+}
+
+
+
+static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
+{
+	ucontact_t *pos, *ppos;
+
+	if (desc_time_order) {
+		/* order by time - first the newest */
+		if (_c->prev==0)
+			return;
+		unlink_contact(_r, _c);
+		/* insert it at the beginning */
+		_c->next = _r->contacts;
+		_c->prev = 0;
+		_r->contacts->prev = _c;
+		_r->contacts = _c;
+	} else {
+		/* order by q - first the smaller q */
+		if ( (_c->prev==0 || _c->q<=_c->prev->q)
+		&& (_c->next==0 || _c->q>=_c->next->q)  )
+			return;
+		/* need to move , but where? */
+		unlink_contact(_r, _c);
+		_c->next = _c->prev = 0;
+		for(pos=_r->contacts,ppos=0;pos&&pos->q<_c->q;ppos=pos,pos=pos->next);
+		if (pos) {
+			if (!pos->prev) {
+				pos->prev = _c;
+				_c->next = pos;
+				_r->contacts = _c;
+			} else {
+				_c->next = pos;
+				_c->prev = pos->prev;
+				pos->prev->next = _c;
+				pos->prev = _c;
+			}
+		} else if (ppos) {
+			ppos->next = _c;
+			_c->prev = ppos;
+		} else {
+			_r->contacts = _c;
+		}
+	}
+}
+
+
 /*
  * Update ucontact with new values
  */
-int update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
+int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 {
 	/* run callbacks for UPDATE event */
 	if (exists_ulcb_type(UL_CONTACT_UPDATE)) {
@@ -700,7 +763,12 @@ int update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 		LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update memory\n");
 		return -1;
 	}
+
+	if (_r && db_mode!=DB_ONLY)
+		update_contact_pos( _r, _c);
+
 	st_update_ucontact(_c);
+
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_update_ucontact(_c) < 0) {
 			LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update "

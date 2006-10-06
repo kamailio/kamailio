@@ -323,8 +323,9 @@ modparam("usrloc", "use_domain", 1)
 
 1.3.14. desc_time_order (integer)
 
-   If the user location records should be kept timestamp ordered.
-   Non 0 value means true.
+   If the user's contacts should be kept timestamp ordered;
+   otherwise the contact will be ordered based on q value. Non 0
+   value means true.
 
    Default value is "0 (false)". 
 

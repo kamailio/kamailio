@@ -360,7 +360,8 @@ modparam("usrloc", "use_domain", 1)
 	<section>
 		<title><varname>desc_time_order</varname> (integer)</title>
 		<para>
-		If the user location records should be kept timestamp ordered.
+		If the user's contacts should be kept timestamp ordered; otherwise the
+		contact will be ordered based on q value.
 		Non 0 value means true.
 		</para>
 		<para>

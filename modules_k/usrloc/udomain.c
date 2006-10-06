@@ -525,6 +525,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	ucontact_info_t *ci;
 	db_key_t columns[12];
 	db_key_t keys[2];
+	db_key_t order;
 	db_val_t vals[2];
 	db_res_t* res = NULL;
 	str contact;
@@ -568,12 +569,17 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	columns[10] = methods_col.s;
 	columns[11] = last_mod_col.s;
 
+	if (desc_time_order)
+		order = last_mod_col.s;
+	else
+		order = q_col.s;
+
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:db_load_urecord: failed to use_table\n");
 		return 0;
 	}
 
-	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 12, 0,
+	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 12, order,
 				&res) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:db_load_urecord: db_query failed\n");
 		return 0;

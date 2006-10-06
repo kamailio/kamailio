@@ -134,7 +134,7 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 	_ci->expires += act_time;
 	
 	if (c) {
-		if (update_ucontact(c, _ci) < 0) {
+		if (update_ucontact( r, c, _ci) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
 			goto error1;
 		}

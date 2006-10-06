@@ -450,7 +450,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 				goto error;
 			}
 		} else {
-			if (ul.update_ucontact( c, ci) < 0) {
+			if (ul.update_ucontact( r, c, ci) < 0) {
 				rerrno = R_UL_UPD_C;
 				LOG(L_ERR, "ERROR:registrar:insert_contacts: failed to update "
 					"contact\n");
@@ -664,7 +664,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 					goto error;
 				}
 
-				if (ul.update_ucontact(c, ci) < 0) {
+				if (ul.update_ucontact(_r, c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
 						"update contact\n");
