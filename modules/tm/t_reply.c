@@ -71,6 +71,10 @@
  *  2006-09-13  t_pick_branch will skip also over branches with empty reply 
  *              t_should_relay_response will re-pick the branch if failure 
  *               route /handlers added new branches (andrei)
+ * 2006-10-05  better final reply selection: t_pick_branch will prefer 6xx,
+ *              if no 6xx reply => lowest class/code; if class==4xx =>
+ *              prefer 401, 407, 415, 420 and 484   (andrei)
+ *
  */
 
 
@@ -122,6 +126,22 @@ char *tm_tag_suffix;
 static int goto_on_negative=0;
 /* where to go on receipt of reply */
 static int goto_on_reply=0;
+
+
+/* responses priority (used by t_pick_branch)
+ *  0xx is used only for the initial value (=> should have no chance to be
+ *  selected => the highest value); 1xx is not used */
+static unsigned short resp_class_prio[]={
+			32000, /* 0-99, special */
+			11000, /* 1xx, special, should never be used */
+				0,  /* 2xx, high priority (not used, 2xx are immediately 
+				       forwarded and t_pick_branch will never be called if
+					   a 2xx was received) */
+			3000,  /* 3xx */
+			4000,  /* 4xx */
+			5000,  /* 5xx */
+			1000   /* 6xx, highest priority */
+};
 
 
 
@@ -703,6 +723,52 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 }
 
 
+
+/* 401, 407, 415, 420, and 484 have priority over the other 4xx*/
+inline static short int get_4xx_prio(unsigned char xx)
+{
+	switch(xx){
+		case  1:
+		case  7:
+		case 15:
+		case 20:
+		case 84:
+			return xx;
+			break;
+	}
+	return 100+xx;
+}
+
+
+
+/* returns response priority, lower number => highest prio
+ *
+ * responses                    priority val
+ *  0-99                        32000+reponse         (special)
+ *  1xx                         11000+reponse         (special)
+ *  700-999                     10000+response        (very low)
+ *  5xx                          5000+xx              (low)
+ *  4xx                          4000+xx
+ *  3xx                          3000+xx
+ *  6xx                          1000+xx              (high)
+ *  2xx                          0000+xx              (highest) 
+ */
+inline static short int get_prio(unsigned int resp)
+{
+	int class;
+	int xx;
+	
+	class=resp/100;
+
+	if (class<7){
+		xx=resp%100;
+		return resp_class_prio[class]+((class==4)?get_4xx_prio(xx):xx);
+	}
+	return 10000+resp; /* unknown response class => return very low prio */
+}
+
+
+
 /* select a branch for forwarding; returns:
  * 0..X ... branch number
  * -1   ... error
@@ -710,15 +776,15 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
  */
 int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 {
-	int lowest_b, lowest_s, b;
+	int best_b, best_s, b;
 
-	lowest_b=-1; lowest_s=999;
+	best_b=-1; best_s=0;
 	for ( b=0; b<t->nr_of_outgoings ; b++ ) {
 		/* "fake" for the currently processed branch */
 		if (b==inc_branch) {
-			if (inc_code<lowest_s) {
-				lowest_b=b;
-				lowest_s=inc_code;
+			if (get_prio(inc_code)<get_prio(best_s)) {
+				best_b=b;
+				best_s=inc_code;
 			}
 			continue;
 		}
@@ -728,15 +794,18 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 		if ( t->uac[b].last_received<200 )
 			return -2;
 		/* if reply is null => t_send_branch "faked" reply, skip over it */
-		if ( t->uac[b].last_received<lowest_s && t->uac[b].reply ) {
-			lowest_b =b;
-			lowest_s = t->uac[b].last_received;
+		if ( t->uac[b].reply && 
+				get_prio(t->uac[b].last_received)<get_prio(best_s) ) {
+			best_b =b;
+			best_s = t->uac[b].last_received;
 		}
 	} /* find lowest branch */
-
-	*res_code=lowest_s;
-	return lowest_b;
+	
+	*res_code=best_s;
+	return best_b;
 }
+
+
 
 /* This is the neurological point of reply processing -- called
  * from within a REPLY_LOCK, t_should_relay_response decides

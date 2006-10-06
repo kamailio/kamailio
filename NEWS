@@ -24,7 +24,11 @@ modules:
                 hashing after an uri (to, from or request uri)
               - improved uri hashing (password is ignored, port is used only
                 if != 5060 or 5061)
- - tm        - special functions for checking for timeout, if a reply was
+ - tm        - better final reply selection: 6xx is preferred over other 
+               negative replies; from several 4xx prefer 401, 407, 415, 420,
+               484 (in this order). For all the other cases, return the lowest
+               code (as before)
+             - special functions for checking for timeout, if a reply was
                received or if the current transaction was canceled
              - dns failover and dst blacklist support
              - migrated to the new timers (tm timers completely rewritten)
