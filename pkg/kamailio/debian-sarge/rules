@@ -2,6 +2,8 @@
 # Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
 
+DH_COMPAT=$(shell cat $(CURDIR)/debian/compat)
+
 ALL_PACKAGES = openser openser-mysql-module openser-postgres-module \
 	openser-jabber-module openser-cpl-module openser-radius-modules \
 	openser-unixodbc-module
@@ -194,7 +196,17 @@ binary-arch: build install
 	dh_installinfo
 	dh_installchangelogs
 	dh_link
+# Emulate debhelper v5 behaviour for Sarge backports with debhelper v4
+ifeq ($(DH_COMPAT),4)
+	dh_strip --keep-debug
+	mkdir -p $(CURDIR)/debian/openser-dbg/usr/lib/debug
+	for p in $(ALL_PACKAGES); do \
+		tar cf - -C $(CURDIR)/debian/$$p/usr/lib/debug . | tar xf - -C $(CURDIR)/debian/openser-dbg/usr/lib/debug \
+			&& rm -rf $(CURDIR)/debian/$$p/usr/lib/debug; \
+	done
+else
 	dh_strip --dbg-package=openser-dbg
+endif
 	dh_compress 
 	dh_fixperms
 	dh_installdeb
