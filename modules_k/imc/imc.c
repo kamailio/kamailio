@@ -45,6 +45,7 @@
 #include "../../resolve.h"
 #include "../../hash_func.h"
 #include "../../fifo_server.h"
+#include "../../mi/mi.h"
 
 #include "../tm/tm_load.h"
 
@@ -86,6 +87,9 @@ static int child_init(int);
 static int imc_manager(struct sip_msg*, char *, char *);
 static int imc_list_rooms(FILE *stream, char *response_file);
 static int imc_list_members(FILE *stream, char *response_file);
+
+struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param);
+struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param);
 
 void destroy(void);
 int imc_list_randm(FILE *stream);
@@ -396,6 +400,21 @@ static int mod_init(void)
 			"'imc_list_members'\n");
 		return -1;
 	}
+
+	if(register_mi_cmd(imc_mi_list_rooms, "imc_list_rooms", 0)<0)
+	{
+		LOG(L_ERR, "IMC:mod_init: error - unable to register MI cmd" 
+			" 'imc_list_rooms'\n");
+		return -1;
+	}
+
+	if(register_mi_cmd(imc_mi_list_members, "imc_list_members", 0)<0)
+	{
+		LOG(L_ERR,"IMC:mod_init: error - unable to register MI cmd"
+			"'imc_list_members'\n");
+		return -1;
+	}
+
 	if(imc_cmd_start_str)
 		imc_cmd_start_char = imc_cmd_start_str[0];
 	
@@ -1485,6 +1504,142 @@ int imc_list_rooms(FILE *stream, char *response_file){
 	return 0;	
 
 }
+/************************* MI ***********************/
+struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param){
+
+	int i, len;
+	struct mi_node* rpl= NULL;
+	struct mi_node* node= NULL;
+	struct mi_attr* attr= NULL;
+	imc_room_p irp = NULL;
+	char* p = NULL;
+	// irp_temp=NULL;
+	
+	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	if(rpl == NULL)
+		return 0;
+
+	for(i=0; i<imc_hash_size; i++) 
+	{
+		irp = _imc_htable[i].rooms;
+			while(irp){
+				node = add_mi_node_child(rpl, 0, "ROOM", 4, 0, 0);
+				if( node == NULL)
+					goto error;
+
+				attr= add_mi_attr(node, 0, "URI", 3, irp->uri.s, irp->uri.len);
+				if(attr == NULL)
+					goto error;
+
+				p = int2str(irp->nr_of_members, &len);	
+				attr= add_mi_attr(node, 0, "MEMBERS", 7,p, len );
+				if(attr == NULL)
+					goto error;
+
+				attr= add_mi_attr(node, 0, "OWNER", 5, irp->uri.s, irp->uri.len);
+				if(attr == NULL)
+					goto error;
+					
+				irp = irp->next;
+			}
+	}
+		
+	return rpl;
+
+error:
+	free_mi_tree(rpl);
+	return 0;
+
+}
+
+struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param){
+	
+	int i, len;
+	struct mi_node* rpl = NULL;
+	struct mi_node* node= NULL;
+	struct mi_node* node_r= NULL;
+	struct mi_attr* attr= NULL;
+	char rnbuf[256];
+	str room_name;
+	imc_room_p room;
+	struct sip_uri inv_uri, *pinv_uri;
+	imc_member_p imp=NULL;
+	int room_released=0;	
+	char* p = NULL;
+
+	node= cmd->kids;
+	if(node == NULL|| node->next!=NULL)
+		return 0;
+	
+	/* room name */
+	room_name.s = rnbuf;
+	room_name.len= node->value.len;
+	memcpy(room_name.s, node->value.s, node->value.len);
+	if(room_name.s == NULL || room_name.len == 0)
+	{
+		LOG(L_ERR, "IMC:imc_mi_list_members: error - no room name!\n");
+		free_mi_tree(rpl);
+		return init_mi_tree("400 room name not found", 23);
+	}
+	rnbuf[room_name.len] = '\0';
+	if(*room_name.s=='\0' || *room_name.s=='.')
+	{
+		LOG(L_INFO, "IMC:imc_mi_list_members: empty room name\n");
+		return init_mi_tree( "400 empty param", 15);
+	}
+
+	/* find room */
+	parse_uri(room_name.s,room_name.len, &inv_uri);
+	pinv_uri=&inv_uri;
+	room=imc_get_room(&pinv_uri->user, &pinv_uri->host);
+
+	if(room==NULL)
+	{
+		LOG(L_ERR,"IMC:imc_mi_list_members: no such room!\n");
+		return init_mi_tree("404 no such room", 16);
+	}
+
+	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	if(rpl == NULL)
+		return 0;
+
+	node_r = add_mi_node_child(rpl, 0, "ROOM", 4, room_name.s, room_name.len);
+	if(node_r == NULL)
+		goto error;
+	
+
+	imp = room->members;
+	i=0;
+	while(imp)
+	{
+		i++;
+		node = add_mi_node_child(node_r, 0, "MEMBER",6, imp->uri.s, imp->uri.len);
+		if(node == NULL)
+			goto error;
+		imp = imp->next;
+	}
+	
+	p = int2str(i, &len);
+	attr= add_mi_attr(node_r, MI_DUP_VALUE, "NR_OF_MEMBERS", 13, p, len);
+	if(attr == 0)	
+		goto error;
+
+
+	if(room!=NULL)
+	{
+		room_released = imc_release_room(room);
+	}
+
+	return rpl;
+
+error:
+	free_mi_tree(rpl);
+	return 0;
+
+}
+
+
+/******************** FIFO ****************************/
 
 int imc_list_members(FILE *stream, char *response_file){
 	int i;
