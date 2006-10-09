@@ -303,7 +303,7 @@ void free_hash_list(hash_list_t* hl)
 
 	if(hl->hash!=NULL)
 		free_hash(hl->hash);
-	lock_destroy(&hash->hl_lock);
+	lock_destroy(&hl->hl_lock);
 	shm_free(hl);
 }
 
