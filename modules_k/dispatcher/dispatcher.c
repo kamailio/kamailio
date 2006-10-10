@@ -99,12 +99,20 @@ static param_export_t params[]={
 };
 
 
+static mi_export_t mi_cmds[] = {
+	{ "ds_set_state",   ds_mi_set,   0,  0 },
+	{ "ds_list",        ds_mi_list,  0,  0 },
+	{ 0, 0, 0, 0}
+};
+
+
 /** module exports */
 struct module_exports exports= {
 	"dispatcher",
 	cmds,
 	params,
 	0,          /* exported statistics */
+	mi_cmds,    /* exported MI functions */
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,
@@ -129,20 +137,6 @@ static int mod_init(void)
 	{
 		LOG(L_ERR,
 			"DISPATCHER:mod_init:ERROR: cannot register fifo command!!\n");
-		return -1;
-	}
-
-	if(register_mi_cmd(ds_mi_set, "ds_set_state", 0)<0)
-	{
-		LOG(L_ERR,
-			"DISPATCHER:mod_init:ERROR: cannot register MI command!\n");
-		return -1;
-	}
-	
-	if(register_mi_cmd(ds_mi_list, "ds_list", 0)<0)
-	{
-		LOG(L_ERR,
-			"DISPATCHER:mod_init:ERROR: cannot register MI command!!\n");
 		return -1;
 	}
 

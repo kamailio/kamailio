@@ -100,14 +100,15 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth_diameter", 
-	cmds,       	/* Exported functions */
-	params,     	/* Exported parameters */
-	0,          	/* exported statistics */
-	mod_init,   	/* module initialization function */
-	0,          	/* response function */
-	0,          	/* destroy function */
-	mod_child_init	/* child initialization function */
+	"auth_diameter",
+	cmds,          /* Exported functions */
+	params,        /* Exported parameters */
+	0,             /* exported statistics */
+	0,             /* exported MI functions */
+	mod_init,      /* module initialization function */
+	0,             /* response function */
+	0,             /* destroy function */
+	mod_child_init /* child initialization function */
 };
 
 

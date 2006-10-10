@@ -100,12 +100,18 @@ static stat_export_t mod_stats[] = {
 };
 
 
+static mi_export_t mi_cmds[] = {
+	{ "dlg_list",  mi_print_dlgs,   0,  0},
+	{ 0, 0, 0, 0}
+};
+
 
 struct module_exports exports= {
 	"dialog",        /* module's name */
 	cmds,            /* exported functions */
 	mod_params,      /* param exports */
 	mod_stats,       /* exported statistics */
+	mi_cmds,         /* exported MI functions */
 	mod_init,        /* module initialization function */
 	0,               /* reply processing function */
 	mod_destroy,
@@ -254,11 +260,6 @@ static int mod_init(void)
 
 	if ( register_fifo_cmd( fifo_print_dlgs, "dlg_list",0)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register fifo\n");
-		return -1;
-	}
-
-	if ( register_mi_cmd( mi_print_dlgs, "dlg_list",0)<0 ) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register MI\n");
 		return -1;
 	}
 

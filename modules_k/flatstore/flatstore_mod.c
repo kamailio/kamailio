@@ -31,6 +31,7 @@
 #include "../../mem/shm_mem.h"
 #include "flatstore.h"
 #include "flat_fifo.h"
+#include "flat_mi.h"
 #include "flatstore_mod.h"
 
 MODULE_VERSION
@@ -63,7 +64,7 @@ char* flat_delimiter = "|";
  * Timestamp of the last log rotation request from
  * the FIFO interface
  */
-time_t* flat_rotate;	
+time_t* flat_rotate;
 
 time_t local_timestamp;
 
@@ -88,11 +89,20 @@ static param_export_t params[] = {
 };
 
 
-struct module_exports exports = {	
+/*
+ * Exported parameters
+ */
+static mi_export_t mi_cmds[] = {
+	{ MI_FLAT_ROTATE, mi_flat_rotate_cmd,   0,  0 },
+	{ 0, 0, 0, 0}
+};
+
+struct module_exports exports = {
 	"flatstore",
 	cmds,
 	params,      /*  module parameters */
 	0,           /* exported statistics */
+	mi_cmds,     /* exported MI functions */
 	mod_init,    /* module initialization function */
 	0,           /* response function*/
 	mod_destroy, /* destroy function */

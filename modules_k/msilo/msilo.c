@@ -228,6 +228,7 @@ struct module_exports exports= {
 #else
 	0,          /* exported statistics */
 #endif
+	0,          /* exported MI functions */
 	mod_init,   /* module initialization function */
 	(response_function) 0,       /* response handler */
 	(destroy_function) destroy,  /* module destroy function */

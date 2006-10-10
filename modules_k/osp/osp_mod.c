@@ -115,6 +115,7 @@ struct module_exports exports = {
     cmds,
     params,
     0,            /* exported statistics */
+    0,            /* exported MI functions */
     ospInitMod,   /* module initialization function */
     0,            /* response function*/
     ospDestMod,   /* destroy function */

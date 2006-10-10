@@ -252,6 +252,7 @@ struct module_exports exports= {
 	cmds,      /* exported functions */
 	params,    /* exported variables */
 	mod_stats, /* exported statistics */
+	0,         /* exported MI functions */
 	mod_init,  /* module initialization function */
 	(response_function) reply_received,
 	(destroy_function) tm_shutdown,

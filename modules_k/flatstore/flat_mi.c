@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Header file for domain MI functions
+ * Flatstore module MI interface
  *
  * Copyright (C) 2006 Voice Sistem SRL
  *
@@ -22,19 +22,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#ifndef _DOMAIN_MI_H_
-#define _DOMAIN_MI_H_
-
-#include "../../mi/mi.h"
-
-#define MI_DOMAIN_RELOAD "domain_reload"
-#define MI_DOMAIN_DUMP "domain_dump"
+#include "flatstore_mod.h"
+#include "flat_mi.h"
 
 
-struct mi_node* mi_domain_reload(struct mi_node *cmd, void *param);
+struct mi_node*  mi_flat_rotate_cmd(struct mi_node* cmd, void* param)
+{
+	struct mi_node *rpl;
 
-struct mi_node* mi_domain_dump(struct mi_node *cmd, void *param);
+	rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	if(rpl == NULL)
+		return rpl;
 
+	*flat_rotate = time(0);
 
-#endif
+	return rpl;
+}

@@ -106,6 +106,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0,          /* exported statistics */
+	0,          /* exported MI functions */
 	sms_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) sms_exit,   /* module exit function */

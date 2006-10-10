@@ -52,6 +52,7 @@
 static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
+static int mi_child_init();
 static int parameter_fixup(void** param, int param_no);
 
 MODULE_VERSION
@@ -112,6 +113,16 @@ static param_export_t params[] = {
 
 
 /*
+ * Exported MI functions
+ */
+static mi_export_t mi_cmds[] = {
+	{ MI_DOMAIN_RELOAD,   mi_domain_reload,   0,  mi_child_init },
+	{ MI_DOMAIN_DUMP,     mi_domain_dump,     0,  0 },
+	{ 0, 0, 0, 0}
+};
+
+
+/*
  * Module interface
  */
 struct module_exports exports = {
@@ -119,6 +130,7 @@ struct module_exports exports = {
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */
+	mi_cmds,   /* exported MI functions */
 	mod_init,  /* module initialization function */
 	0,         /* response function*/
 	destroy,   /* destroy function */
@@ -156,9 +168,6 @@ static int mod_init(void)
 
 		/* Initialize fifo interface */
 		(void)init_domain_fifo();
-
-		/* Initialize MI interface */
-		(void)init_domain_mi();
 
 		if (init_domain_unixsock() < 0) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): error while initializing"
@@ -217,6 +226,12 @@ static int child_init(int rank)
 		}
 	}
 	return 0;
+}
+
+
+static int mi_child_init()
+{
+	return domain_db_init(db_url.s);
 }
 
 

@@ -1,9 +1,9 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Header file for domain MI functions
+ * Flatstore module MI interface
  *
- * Copyright (C) 2006 Voice Sistem SRL
+ * Copyright (C) 2006 Voice Sistem RL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -22,19 +22,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#ifndef _DOMAIN_MI_H_
-#define _DOMAIN_MI_H_
+#ifndef _FLATSTORE_MI_H_
+#define _FLATSTORE_MI_H_
 
 #include "../../mi/mi.h"
 
-#define MI_DOMAIN_RELOAD "domain_reload"
-#define MI_DOMAIN_DUMP "domain_dump"
+#define MI_FLAT_ROTATE "flat_rotate"
 
+struct mi_node*  mi_flat_rotate_cmd(struct mi_node* cmd, void* param);
 
-struct mi_node* mi_domain_reload(struct mi_node *cmd, void *param);
+#endif /* _FLATSTORE_MI_H_ */
 
-struct mi_node* mi_domain_dump(struct mi_node *cmd, void *param);
-
-
-#endif

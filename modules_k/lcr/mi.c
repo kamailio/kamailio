@@ -30,14 +30,13 @@
 #include "lcr_mod.h"
 #include "../../dprint.h"
 #include "../../db/db.h"
-#include "../../mi/mi.h"
 #include "mi.h"
 
 
 /*
  * MI function to reload lcr table(s)
  */
-static struct mi_node*  mi_lcr_reload(struct mi_node* cmd, void* param)
+struct mi_node*  mi_lcr_reload(struct mi_node* cmd, void* param)
 {
 	if (reload_gws () == 1) 
 		return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
@@ -49,7 +48,7 @@ static struct mi_node*  mi_lcr_reload(struct mi_node* cmd, void* param)
 /*
  * MI function to print gws from current gw table
  */
-static struct mi_node* mi_lcr_dump(struct mi_node* cmd, void* param)
+struct mi_node* mi_lcr_dump(struct mi_node* cmd, void* param)
 {
 	struct mi_node* rpl= NULL;
 
@@ -65,20 +64,3 @@ static struct mi_node* mi_lcr_dump(struct mi_node* cmd, void* param)
 	return rpl;
 }
 
-/*
- * Register lcr MI functions
- */
-int init_lcr_mi( void )
-{
-	if (register_mi_cmd(mi_lcr_reload, MI_LCR_RELOAD, 0) < 0) {
-		LOG(L_CRIT, "Cannot register MI %s\n",MI_LCR_RELOAD);
-		return -1;
-	}
-
-	if (register_mi_cmd(mi_lcr_dump, MI_LCR_DUMP, 0) < 0) {
-		LOG(L_CRIT, "Cannot register MI %s\n",MI_LCR_DUMP);
-		return -1;
-	}
-
-	return 0;
-}

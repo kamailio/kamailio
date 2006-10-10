@@ -85,6 +85,7 @@ struct module_exports exports = {
 	0,                             /* exported functions */
 	mi_params,                     /* exported parameters */
 	0,                             /* exported statistics */
+	0,                             /* exported MI functions */
 	mi_mod_init,                   /* module initialization function */
 	(response_function) 0,         /* response handling function */
 	(destroy_function) mi_destroy, /* destroy function */
@@ -203,6 +204,12 @@ static int mi_child_init(int rank)
 	if ( fifo_stream==NULL ) {
 		LOG(L_CRIT, "CRITICAL:mi_fifo:mi_child_init: The function "
 			"mi_init_fifo_server returned with error!!!\n");
+		exit(-1);
+	}
+
+	if( init_mi_child()!=0) {
+		LOG(L_CRIT,"CRITICAL:mi_fifo:mi_child_init: faild to init the "
+			"mi process\n");
 		exit(-1);
 	}
 

@@ -107,6 +107,7 @@ static int w_process_register_norpl(struct sip_msg* msg, char* str,char* str2);
 static int cpl_process_register(struct sip_msg* msg, int no_rpl);
 static int fixup_cpl_run_script(void** param, int param_no);
 static int cpl_init(void);
+static int mi_child_init();
 static int cpl_child_init(int rank);
 static int cpl_exit(void);
 
@@ -115,12 +116,12 @@ static int cpl_exit(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"cpl_run_script",            cpl_invoke_script,   2,  fixup_cpl_run_script,
-			REQUEST_ROUTE},
-	{"cpl_process_register",      w_process_register,  0,  0,
-			REQUEST_ROUTE},
-	{"cpl_process_register_norpl",w_process_register_norpl,0,0,
-			REQUEST_ROUTE},
+	{"cpl_run_script",            cpl_invoke_script,        2,
+			fixup_cpl_run_script, REQUEST_ROUTE},
+	{"cpl_process_register",      w_process_register,       0,
+			0,                    REQUEST_ROUTE},
+	{"cpl_process_register_norpl",w_process_register_norpl, 0,
+			0,                    REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -150,11 +151,25 @@ static param_export_t params[] = {
 };
 
 
+/*
+ * Exported MI functions
+ */
+static mi_export_t mi_cmds[] = {
+	{ "LOAD_CPL",   mi_cpl_load,     0,  mi_child_init },
+	{ "REMOVE_CPL", mi_cpl_remove,   0,  0             },
+	{ "GET_CPL",    mi_cpl_get,      0,  0             },
+	{ 0, 0, 0, 0}
+};
+
+
+
+
 struct module_exports exports = {
 	"cpl-c",
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
 	0,        /* exported statistics */
+	mi_cmds,  /* exported MI functions */
 	cpl_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) cpl_exit,
@@ -347,20 +362,6 @@ static int cpl_init(void)
 		goto error;
 	}
 
-	/* register MI commands */
-	if (register_mi_cmd( mi_cpl_load, "LOAD_CPL", 0)!=0) {
-		LOG(L_ERR,"ERROR:cpl_init: failed to register MI command\n");
-		goto error;
-	}
-	if (register_mi_cmd( mi_cpl_load, "REMOVE_CPL", 0)!=0) {
-		LOG(L_ERR,"ERROR:cpl_init: failed to register MI command\n");
-		goto error;
-	}
-	if (register_mi_cmd( mi_cpl_load, "GET_CPL", 0)!=0) {
-		LOG(L_ERR,"ERROR:cpl_init: failed to register MI command\n");
-		goto error;
-	}
-
 	/* build a pipe for sending commands to aux process */
 	if ( pipe( cpl_env.cmd_pipe )==-1 ) {
 		LOG(L_CRIT,"ERROR:cpl_init: cannot create command pipe: %s!\n",
@@ -414,8 +415,8 @@ static int cpl_child_init(int rank)
 {
 	pid_t pid;
 
-	/* don't do anything for main process and TCP manager process */
-	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	/* don't do anything for non-worker process */
+	if (rank<1 && rank!=PROC_FIFO)
 		return 0;
 
 	/* only child 1 will fork the aux process */
@@ -441,6 +442,11 @@ error:
 	return -1;
 }
 
+
+static int mi_child_init()
+{
+	return cpl_db_init(DB_URL, DB_TABLE);
+}
 
 
 static int cpl_exit(void)

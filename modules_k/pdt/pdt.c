@@ -86,17 +86,22 @@ str prefix = {"", 0};
 int sync_time = 600;
 int clean_time = 900;
 
-static int w_prefix2domain(struct sip_msg* msg, char* str1, char* str2);
-static int w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2);
-static int mod_init(void);
+static int  w_prefix2domain(struct sip_msg* msg, char* str1, char* str2);
+static int  w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2);
+static int  mod_init(void);
 static void mod_destroy(void);
-static int  child_init(int r);
+static int  child_init();
+static int  mod_child_init(int r);
 
 static int prefix2domain(struct sip_msg*, int mode);
 static int get_domainprefix_unixsock(str* msg);
 static int pdt_fifo_add(FILE *stream, char *response_file);
 static int pdt_fifo_delete(FILE *stream, char *response_file);
 static int pdt_fifo_list(FILE *stream, char *response_file);
+
+static struct mi_node* pdt_mi_add(struct mi_node*, void* param);
+static struct mi_node* pdt_mi_delete(struct mi_node*, void* param);
+static struct mi_node* pdt_mi_list(struct mi_node*, void* param);
 
 int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 int pdt_load_db();
@@ -122,16 +127,25 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
+static mi_export_t mi_cmds[] = {
+	{ "pdt_add",     pdt_mi_add,     0,  child_init },
+	{ "pdt_delete",  pdt_mi_delete,  0,  0 },
+	{ "pdt_list",    pdt_mi_list,    0,  0 },
+	{ 0, 0, 0, 0}
+};
+
+
 struct module_exports exports = {
 	"pdt",
 	cmds,
 	params,
-	0,	
-	mod_init,		/* module initialization function */
-	0,				/* response function */
-	mod_destroy,	/* destroy function */
-	child_init		/* per child init function */
-};	
+	0,
+	mi_cmds,        /* exported MI functions */
+	mod_init,       /* module initialization function */
+	0,              /* response function */
+	mod_destroy,    /* destroy function */
+	mod_child_init  /* per child init function */
+};
 
 
 
@@ -251,18 +265,35 @@ error1:
 		db_con = 0;
 	}
 	return -1;
-}	
+}
+
+
+static int child_init()
+{
+	db_con = pdt_dbf.init(db_url);
+	if(db_con==NULL)
+	{
+		LOG(L_ERR,"ERROR:PDT:child_init: failed to connect to database\n");
+		return -1;
+	}
+
+	if (pdt_dbf.use_table(db_con, db_table) < 0)
+	{
+		LOG(L_ERR, "ERROR:PDT:child_init: use_table failed\n");
+		return -1;
+	}
+	return 0;
+}
+
 
 /* each child get a new connection to the database */
-static int child_init(int r)
+static int mod_child_init(int r)
 {
-	DBG("PDT:child_init #%d / pid <%d>\n", r, getpid());
-
 	if(r>0)
 	{
 		if(_dhash==NULL)
 		{
-			LOG(L_ERR,"PDT:child_init #%d: ERROR no domain hash\n", r);
+			LOG(L_ERR,"ERROR:PDT:mod_child_init #%d: no domain hash\n", r);
 			return -1;
 		}
 	
@@ -276,27 +307,19 @@ static int child_init(int r)
 			_ptree = 0;
 		}
 	}
-	
-	db_con = pdt_dbf.init(db_url);
-	if(db_con==NULL)
-	{
-	  LOG(L_ERR,"PDT:child_init #%d: Error while connecting database\n",r);
-	  return -1;
-	}
-	
-	if (pdt_dbf.use_table(db_con, db_table) < 0)
-	{
-		LOG(L_ERR, "PDT:child_init #%d: Error in use_table\n", r);
+
+	if ( child_init()!=0 )
 		return -1;
-	}
+
 	if(sync_time<=0)
 		sync_time = 300;
 	sync_time += r%60;
 
-	DBG("PDT:child_init #%d: Database connection opened successfully\n",r);
-	
+	DBG("PDT:mod_child_init #%d: Database connection opened successfully\n",r);
+
 	return 0;
 }
+
 
 static void mod_destroy(void)
 {
@@ -1013,6 +1036,376 @@ static int pdt_fifo_list(FILE *stream, char *response_file)
 
 	return 0;
 }
+
+
+/**************************** MI ***************************/
+
+
+/**
+ * "pdt_add" syntax :
+ *   sdomain
+ *   prefix
+ *   domain
+ */
+struct mi_node* pdt_mi_add(struct mi_node* cmd, void* param)
+{
+	db_key_t db_keys[NR_KEYS] = {sdomain_column, prefix_column, domain_column};
+	db_val_t db_vals[NR_KEYS];
+	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
+	int i= 0;
+	str sd, sp, sdomain;
+	struct mi_node* node= NULL;
+
+	if(_dhash==NULL)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_add: strange situation\n");
+		return init_mi_tree( "500 server error",16);
+	}
+
+	/* read sdomain */
+	node = cmd->kids;
+	if(node == NULL)
+		goto error1;
+
+	sdomain = node->value;
+	if(sdomain.s == NULL || sdomain.len== 0)
+		return init_mi_tree( "400 domain not found", 20);
+
+	if(*sdomain.s=='.' )
+		 return init_mi_tree("400 empty param",15);
+
+	/* read prefix */
+	node = node->next;
+	if(node == NULL)
+		goto error1;
+
+	sp= node->value;
+	if(sp.s== NULL || sp.len==0)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_add: could not read prefix\n");
+		return init_mi_tree("400 prefix not found", 20);
+	}
+
+	if(*sp.s=='.')
+		 return init_mi_tree("400 empty param",15);
+
+	while(i< sp.len)
+	{
+		if(sp.s[i] < '0' || sp.s[i] > '9')
+			return init_mi_tree("400 bad prefix", 14);
+		i++;
+	}
+
+	/* read domain */
+	node= node->next;
+	if(node == NULL || node->next!=NULL)
+		goto error1;
+
+	sd= node->value;	
+	if(sd.s== NULL || sd.len==0)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_add: could not read domain\n");
+		return init_mi_tree("400 domain not found", 20);
+	}
+
+	if(*sd.s=='.')
+		 return init_mi_tree("400 empty param",15);	
+
+	
+	if(pdt_check_pd(_dhash, &sdomain, &sp, &sd)==1)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_add: (sdomain,prefix,domain) exists\n");
+		return init_mi_tree(
+			"400 (sdomain,prefix,domain) exists already", 42);
+	}
+	db_vals[0].type = DB_STR;
+	db_vals[0].nul = 0;
+	db_vals[0].val.str_val.s = sdomain.s;
+	db_vals[0].val.str_val.len = sdomain.len;
+
+	db_vals[1].type = DB_STR;
+	db_vals[1].nul = 0;
+	db_vals[1].val.str_val.s = sp.s;
+	db_vals[1].val.str_val.len = sp.len;
+
+	db_vals[2].type = DB_STR;
+	db_vals[2].nul = 0;
+	db_vals[2].val.str_val.s = sd.s;
+	db_vals[2].val.str_val.len = sd.len;
+	
+	/* insert a new domain into database */
+	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
+	{
+		LOG(L_ERR, "PDT:pdt_fifo_add: error storing new prefix/domain\n");
+		return init_mi_tree("430 Cannot store prefix/domain", 30);
+	}
+	
+	if(pdt_add_to_hash(_dhash, &sdomain, &sp, &sd)!=0)
+	{
+		LOG(L_ERR, "PDT:pdt_fifo_add: could not add to cache\n");
+		goto error;
+	}
+	
+	return init_mi_tree("200 OK", 6);
+
+	
+error:
+	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
+		LOG(L_ERR,"PDT:pdt_mi_add: database/cache are inconsistent\n");
+	return init_mi_tree("431 could not add to cache", 27 );
+
+error1:
+	return init_mi_tree("400 Too few or too many arguments", 33 );
+
+}
+
+/**
+ * "pdt_delete" syntax:
+ *    sdomain
+ *    domain
+ */
+struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
+{
+	str sd, sdomain;
+	int ret;
+	struct mi_node* node= NULL;
+	db_key_t db_keys[2] = {sdomain_column, domain_column};
+	db_val_t db_vals[2];
+	db_op_t  db_ops[2] = {OP_EQ, OP_EQ};
+
+	if(_dhash==NULL)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
+		return init_mi_tree( "500 server error",16);
+	}
+
+	/* read sdomain */
+	node = cmd->kids;
+	if(node == NULL)
+		goto error;
+
+	sdomain = node->value;
+	if(sdomain.s == NULL || sdomain.len== 0)
+		return init_mi_tree( "400 domain not found", 20);
+
+	if( *sdomain.s=='.' )
+		 return init_mi_tree("400 empty param",15);
+
+	/* read domain */
+	node= node->next;
+	if(node == NULL || node->next!=NULL)
+		goto error;
+
+	sd= node->value;
+	if(sd.s== NULL || sd.len==0)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_delete: could not read domain\n");
+		return init_mi_tree("400 domain not found", 20);
+	}
+
+	if(*sd.s=='.')
+		 return init_mi_tree("400 empty param",15);	
+
+
+	if((ret = pdt_remove_from_hash_list(_dhash, &sdomain, &sd))<0)
+	{
+		DBG("PDT:pdt_mi_delete: error encountered when deleting domain\n");
+		return 0;
+	}
+
+	if(ret==1)
+	{
+		DBG("PDT:pdt_mi_delete: prefix for sdomain [%.*s]domain [%.*s] "
+			"not found\n", sdomain.len, sdomain.s, sd.len, sd.s);
+		return init_mi_tree("404 domain not found",20 );
+	}
+	
+
+	db_vals[0].type = DB_STR;
+	db_vals[0].nul = 0;
+	db_vals[0].val.str_val.s = sdomain.s;
+	db_vals[0].val.str_val.len = sdomain.len;
+	
+	db_vals[1].type = DB_STR;
+	db_vals[1].nul = 0;
+	db_vals[1].val.str_val.s = sd.s;
+	db_vals[1].val.str_val.len = sd.len;
+
+	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, 2)<0)
+	{
+		LOG(L_ERR,"PDT:pdt_mi_delete: database/cache are inconsistent\n");
+		return init_mi_tree("602 database/cache are inconsistent", 35 );
+	} 
+
+	return init_mi_tree("200 domain removed", 18);
+
+error:
+	return init_mi_tree("400 Too few or too many arguments", 33 );
+}
+
+
+/**
+ * "pdt_list" syntax :
+ *    sdomain
+ *    prefix
+ *    domain
+ *
+ * 	- '.' (dot) means NULL value 
+ * 	- the comparison operation is 'START WITH' -- if domain is 'a' then
+ * 	  all domains starting with 'a' are listed
+ */
+
+struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
+{
+	str sd, sp, sdomain;
+	pd_t *it;
+	int i= 0;
+	hash_t *h;
+	struct mi_node* rpl = NULL;
+	struct mi_node* node = NULL;
+	struct mi_attr* attr= NULL;
+
+	if(_dhash==NULL)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
+		return init_mi_tree( "500 server error",16);
+	}
+
+	/* read sdomain */
+	node = cmd->kids;
+	if(node == NULL)
+		goto error1;
+
+	sdomain = node->value;
+	if(sdomain.s == NULL || sdomain.len== 0)
+		return init_mi_tree( "400 domain not found", 20);
+
+	if(*sdomain.s=='.' )
+		 return init_mi_tree("400 empty param",15);
+
+	/* read prefix */
+	node = node->next;
+	if(node == NULL)
+		goto error1;
+
+	sp= node->value;
+	if(sp.s== NULL || sp.len==0)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_add: could not read prefix\n");
+		return init_mi_tree("400 prefix not found", 20);
+	}
+
+	if( *sp.s!='.')
+	{
+		while(sp.s!=NULL && i!=sp.len)
+		{
+			if(sp.s[i] < '0' || sp.s[i] > '9')
+			{
+				LOG(L_ERR, "PDT:pdt_mi_list: bad prefix [%.*s]\n",
+					sp.len, sp.s);
+				return init_mi_tree("400 bad prefix", 14);
+			}
+			i++;
+		}
+	} else {
+		sp.s   = NULL;
+		sp.len = 0;
+	}
+
+	/* read domain */
+	node= node->next;
+	if(node == NULL || node->next!=NULL)
+		goto error1;
+
+	sd= node->value;
+	if(sd.s== NULL || sd.len==0)
+	{
+		LOG(L_ERR, "PDT:pdt_mi_add: could not read domain\n");
+		return init_mi_tree("400 domain not found", 20);
+	}
+	
+	if( *sd.s=='.')
+	{
+		sd.s   = NULL;
+		sd.len = 0;
+	}
+
+	rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN );
+	if(rpl == NULL)
+		return 0;
+
+	lock_get(&_dhash->hl_lock);
+	h = _dhash->hash;
+
+	while(h!=NULL)
+	{
+		if(sdomain.s==NULL || 
+			(sdomain.s!=NULL && h->sdomain.len>=sdomain.len && 
+			 strncmp(h->sdomain.s, sdomain.s, sdomain.len)==0))
+		{
+			for(i=0; i<h->hash_size; i++)
+			{
+				it = h->dhash[i];
+				while(it!=NULL)
+				{
+					if((sp.s==NULL && sd.s==NULL)
+						|| (sp.s!=NULL && it->prefix.len>=sp.len &&
+							strncmp(it->prefix.s, sp.s, sp.len)==0)
+						|| (sd.s!=NULL && it->domain.len>=sd.len &&
+							strncasecmp(it->domain.s, sd.s, sd.len)==0))
+					{
+						node = add_mi_node_child(rpl, 0 ,"PDT", 3, 0, 0);
+						if(node == NULL)
+							goto error;
+
+						attr = add_mi_attr(node, MI_DUP_VALUE, "SDOMAIN", 7,
+							h->sdomain.s, h->sdomain.len);
+						if(attr == NULL)
+							goto error;
+						attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6,
+							it->prefix.s, it->prefix.len);
+						if(attr == NULL)
+							goto error;
+						
+						attr = add_mi_attr(node, MI_DUP_VALUE,"DOMAIN", 6,
+							it->domain.s, it->domain.len);
+						if(attr == NULL)
+							goto error;
+
+					}
+					it = it->n;
+				}
+			}
+		}
+			h = h->next;
+	}
+
+	lock_release(&_dhash->hl_lock);
+	
+	return rpl;
+
+error:
+	free_mi_tree(rpl);
+	return 0;
+
+error1:
+	return init_mi_tree("400 Too few or too many arguments", 33 );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static int get_domainprefix_unixsock(str* msg)
 {

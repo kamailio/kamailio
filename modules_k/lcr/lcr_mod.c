@@ -75,8 +75,9 @@ MODULE_VERSION
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
+static int mi_child_init(void);
 static int mod_init(void);       /* Module initialization function */
-static int fixstring2int(void **param, int param_count); /* string to int fixup */
+static int fixstring2int(void **param, int param_count);
 
 int reload_gws ( void );
 
@@ -238,15 +239,24 @@ int next_contacts (struct sip_msg*, char*, char*);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"load_gws",      load_gws,      0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"load_gws",      load_gws_grp,  1, fixstring2int, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"next_gw",       next_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"from_gw",       from_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw",       from_gw_grp,   1, fixstring2int, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"to_gw",         to_gw,         0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"to_gw",         to_gw_grp,     1, fixstring2int, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"load_contacts", load_contacts, 0, 0, REQUEST_ROUTE},
-	{"next_contacts", next_contacts, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws",      load_gws,      0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws",      load_gws_grp,  1, fixstring2int,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"next_gw",       next_gw,       0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"from_gw",       from_gw,       0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_gw",       from_gw_grp,   1, fixstring2int,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"to_gw",         to_gw,         0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"to_gw",         to_gw_grp,     1, fixstring2int,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_contacts", load_contacts, 0, 0,
+		REQUEST_ROUTE},
+	{"next_contacts", next_contacts, 0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -281,13 +291,24 @@ static param_export_t params[] = {
 
 
 /*
+ * Exported MI functions
+ */
+static mi_export_t mi_cmds[] = {
+	{ MI_LCR_RELOAD,  mi_lcr_reload,   0,  mi_child_init },
+	{ MI_LCR_DUMP,    mi_lcr_dump,     0,  0 },
+	{ 0, 0, 0, 0}
+};
+
+
+/*
  * Module interface
  */
 struct module_exports exports = {
 	"lcr", 
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
-	0,          /* exported statistics */
+	0,         /* exported statistics */
+	mi_cmds,   /* exported MI functions */
 	mod_init,  /* module initialization function */
 	0,         /* response function */
 	destroy,   /* destroy function */
@@ -371,13 +392,23 @@ int lcr_db_ver(char* db_url, str* name)
  */
 static int child_init(int rank)
 {
+	/* don't do anything for non-worker process */
+	if (rank<1 && rank!=PROC_FIFO)
+		return 0;
+
 	if (lcr_db_init(db_url.s) < 0) {
 		LOG(L_ERR, "ERROR: lcr:child_init():"
 		    " Unable to connect to the database\n");
 		return -1;
 	}
-      
+
 	return 0;
+}
+
+
+static int mi_child_init()
+{
+	return lcr_db_init(db_url.s);
 }
 
 
@@ -443,9 +474,6 @@ static int mod_init(void)
 
 	/* Initialize fifo interface */
 	(void)init_lcr_fifo();
-
-	/* Initialize MI interface */
-	(void)init_lcr_mi();
 
 	/* Initializing gw tables and gw table pointer variable */
 	gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) * (MAX_NO_OF_GWS + 1));

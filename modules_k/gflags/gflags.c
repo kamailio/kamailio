@@ -68,6 +68,11 @@ static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
 
+static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param );
+static struct mi_node* mi_reset_gflag(struct mi_node* cmd, void* param );
+static struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param );
+static struct mi_node* mi_get_gflags(struct mi_node* cmd, void* param );
+
 static int fixup_str2int( void** param, int param_no);
 
 static int  mod_init(void);
@@ -86,9 +91,17 @@ static cmd_export_t cmds[]={
 	{0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={ 
+static param_export_t params[]={
 	{"initial", INT_PARAM, &initial},
 	{0,0,0} 
+};
+
+static mi_export_t mi_cmds[] = {
+	{ FIFO_SET_GFLAG,   mi_set_gflag,   0,  0 },
+	{ FIFO_RESET_GFLAG, mi_reset_gflag, 0,  0 },
+	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,  0 },
+	{ FIFO_GET_GFLAGS,  mi_get_gflags,  0,  0 },
+	{ 0, 0, 0, 0}
 };
 
 struct module_exports exports = {
@@ -96,6 +109,7 @@ struct module_exports exports = {
 	cmds,        /* exported functions */
 	params,      /* exported parameters */
 	0,           /* exported statistics */
+	mi_cmds,     /* exported MI functions */
 	mod_init,    /* module initialization function */
 	0,           /* response function*/
 	mod_destroy, /* destroy function */
@@ -289,7 +303,7 @@ error:
 
 
 
-struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
+static struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
 {
 	unsigned int flag;
 	struct mi_node* node = NULL;
@@ -314,7 +328,7 @@ error:
 
 
 
-struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
+static struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
 {
 	unsigned int flag;
 	struct mi_node* rpl= NULL;
@@ -353,7 +367,7 @@ error_param:
 }
 
 
-struct mi_node*  mi_get_gflags(struct mi_node* cmd, void* param )
+static struct mi_node*  mi_get_gflags(struct mi_node* cmd, void* param )
 {
 	struct mi_node* rpl= NULL;
 	struct mi_node* node= NULL;
@@ -375,7 +389,6 @@ error:
 	free_mi_tree(rpl);
 	return 0;
 }
-
 
 
 
@@ -401,23 +414,6 @@ static int mod_init(void)
 	}
 	if (register_fifo_cmd(fifo_get_gflags, FIFO_GET_GFLAGS, 0) < 0) {
 		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
-		return -1;
-	}
-
-	if (register_mi_cmd(mi_set_gflag, FIFO_SET_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_SET_GFLAG);
-		return -1;
-	}
-	if (register_mi_cmd(mi_reset_gflag, FIFO_RESET_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_RESET_GFLAG);
-		return -1;
-	}
-	if (register_mi_cmd(mi_is_gflag, FIFO_IS_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_SET_GFLAG);
-		return -1;
-	}
-	if (register_mi_cmd(mi_get_gflags, FIFO_GET_GFLAGS, 0) < 0) {
-		LOG(L_CRIT, "Cannot register MI %s\n",FIFO_SET_GFLAG);
 		return -1;
 	}
 

@@ -94,6 +94,7 @@ struct module_exports exports = {
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
 	0,        /* exported statistics */
+	0,        /* exported MI functions */
 	redirect_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) 0,

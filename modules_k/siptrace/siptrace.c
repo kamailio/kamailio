@@ -151,6 +151,7 @@ struct module_exports exports = {
 #else
 	0,          /* exported statistics */
 #endif
+	0,          /* exported MI functions */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */

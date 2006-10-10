@@ -91,8 +91,8 @@ static int imc_manager(struct sip_msg*, char *, char *);
 static int imc_list_rooms(FILE *stream, char *response_file);
 static int imc_list_members(FILE *stream, char *response_file);
 
-struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param);
-struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param);
+static struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param);
+static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param);
 
 void destroy(void);
 int imc_list_randm(FILE *stream);
@@ -102,7 +102,6 @@ int imc_list_members2(FILE* stream, imc_room_p room);
 struct tm_binds tmb;
 
 /** TM callback function */
-//static void imc_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 void inv_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
@@ -112,7 +111,7 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{ "db_url",				STR_PARAM, &db_url.s},
+	{"db_url",				STR_PARAM, &db_url.s},
 	{"hash_size",			INT_PARAM, &imc_hash_size},
 	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str},	
 	{0,0,0}
@@ -130,10 +129,17 @@ stat_export_t imc_stats[] = {
 
 #endif
 
+static mi_export_t mi_cmds[] = {
+	{ "imc_list_rooms",    imc_mi_list_rooms,    0,  0 },
+	{ "imc_list_members",  imc_mi_list_members,  0,  0 },
+	{ 0, 0, 0, 0}
+};
+
+
 
 /** module exports */
 struct module_exports exports= {
-	"imc",		/* module name */
+	"imc",      /* module name */
 	cmds,       /* exported commands */
 	params,     /* exported parameters */
 #ifdef STATISTICS
@@ -141,6 +147,7 @@ struct module_exports exports= {
 #else
 	0,          /* exported statistics */
 #endif
+	mi_cmds,    /* exported MI functions */
 	mod_init,   /* mod init */
 	(response_function) 0,       /* response handler */
 	(destroy_function) destroy,  /* destroy function */
@@ -400,20 +407,6 @@ static int mod_init(void)
 	if(register_fifo_cmd(imc_list_members, "imc_list_members", 0)<0)
 	{
 		LOG(L_ERR,"IMC:mod_init: error - unable to register fifo cmd"
-			"'imc_list_members'\n");
-		return -1;
-	}
-
-	if(register_mi_cmd(imc_mi_list_rooms, "imc_list_rooms", 0)<0)
-	{
-		LOG(L_ERR, "IMC:mod_init: error - unable to register MI cmd" 
-			" 'imc_list_rooms'\n");
-		return -1;
-	}
-
-	if(register_mi_cmd(imc_mi_list_members, "imc_list_members", 0)<0)
-	{
-		LOG(L_ERR,"IMC:mod_init: error - unable to register MI cmd"
 			"'imc_list_members'\n");
 		return -1;
 	}
@@ -1428,7 +1421,7 @@ void destroy(void)
 
 	}
 
-	imc_htable_destroy();	
+	imc_htable_destroy();
 }
 
 int imc_list_randm(FILE *stream)
@@ -1467,7 +1460,8 @@ int imc_list_members2(FILE* stream, imc_room_p room)
 	while(member)
 	{
 		DBG("Member: name= %.*s\ndomain= %.*s\nflag= %d\n",member->user.len,
-				member->user.s, member->domain.len, member->domain.s, member->flags);
+				member->user.s, member->domain.len, member->domain.s,
+				member->flags);
 		member = member->next;
 	}
 
@@ -1479,9 +1473,7 @@ int imc_list_rooms(FILE *stream, char *response_file){
 	int i;
 	FILE *freply=NULL;
 	imc_room_p irp = NULL;
-	// irp_temp=NULL;
 
-	
 	freply = open_reply_pipe(response_file);
 	if(freply==NULL)
 	{
@@ -1489,7 +1481,7 @@ int imc_list_rooms(FILE *stream, char *response_file){
 				response_file);
 		return -1;
 	}
-	
+
 	for(i=0; i<imc_hash_size; i++) 
 	{
 		irp = _imc_htable[i].rooms;
@@ -1504,59 +1496,66 @@ int imc_list_rooms(FILE *stream, char *response_file){
 	if(freply!=NULL)
 		fclose(freply);
 
-	return 0;	
-
+	return 0;
 }
-/************************* MI ***********************/
-struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param){
 
+
+
+/************************* MI ***********************/
+static struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param)
+{
 	int i, len;
 	struct mi_node* rpl= NULL;
 	struct mi_node* node= NULL;
 	struct mi_attr* attr= NULL;
 	imc_room_p irp = NULL;
 	char* p = NULL;
-	// irp_temp=NULL;
-	
+
 	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
 	if(rpl == NULL)
 		return 0;
 
 	for(i=0; i<imc_hash_size; i++) 
 	{
+		lock_get(&_imc_htable[i].lock);
 		irp = _imc_htable[i].rooms;
 			while(irp){
 				node = add_mi_node_child(rpl, 0, "ROOM", 4, 0, 0);
 				if( node == NULL)
 					goto error;
 
-				attr= add_mi_attr(node, 0, "URI", 3, irp->uri.s, irp->uri.len);
+				attr= add_mi_attr(node, MI_DUP_VALUE, "URI", 3, irp->uri.s,
+					irp->uri.len);
 				if(attr == NULL)
 					goto error;
 
-				p = int2str(irp->nr_of_members, &len);	
+				p = int2str(irp->nr_of_members, &len);
 				attr= add_mi_attr(node, 0, "MEMBERS", 7,p, len );
 				if(attr == NULL)
 					goto error;
 
-				attr= add_mi_attr(node, 0, "OWNER", 5, irp->uri.s, irp->uri.len);
+				attr= add_mi_attr(node, MI_DUP_VALUE, "OWNER", 5, irp->uri.s,
+					irp->uri.len);
 				if(attr == NULL)
 					goto error;
 					
 				irp = irp->next;
 			}
+		lock_release(&_imc_htable[i].lock);
 	}
-		
+
 	return rpl;
 
 error:
+	lock_release(&_imc_htable[i].lock);
 	free_mi_tree(rpl);
 	return 0;
 
 }
 
-struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param){
-	
+
+static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param)
+{
 	int i, len;
 	struct mi_node* rpl = NULL;
 	struct mi_node* node= NULL;
@@ -1567,7 +1566,6 @@ struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param){
 	imc_room_p room;
 	struct sip_uri inv_uri, *pinv_uri;
 	imc_member_p imp=NULL;
-	int room_released=0;	
 	char* p = NULL;
 
 	node= cmd->kids;
@@ -1581,7 +1579,6 @@ struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param){
 	if(room_name.s == NULL || room_name.len == 0)
 	{
 		LOG(L_ERR, "IMC:imc_mi_list_members: error - no room name!\n");
-		free_mi_tree(rpl);
 		return init_mi_tree("400 room name not found", 23);
 	}
 	rnbuf[room_name.len] = '\0';
@@ -1606,7 +1603,8 @@ struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param){
 	if(rpl == NULL)
 		return 0;
 
-	node_r = add_mi_node_child(rpl, 0, "ROOM", 4, room_name.s, room_name.len);
+	node_r = add_mi_node_child(rpl, MI_DUP_VALUE, "ROOM", 4, room_name.s,
+		room_name.len);
 	if(node_r == NULL)
 		goto error;
 	
@@ -1616,7 +1614,8 @@ struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param){
 	while(imp)
 	{
 		i++;
-		node = add_mi_node_child(node_r, 0, "MEMBER",6, imp->uri.s, imp->uri.len);
+		node = add_mi_node_child(node_r, MI_DUP_VALUE, "MEMBER",6, imp->uri.s,
+			imp->uri.len);
 		if(node == NULL)
 			goto error;
 		imp = imp->next;
@@ -1624,18 +1623,15 @@ struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param){
 	
 	p = int2str(i, &len);
 	attr= add_mi_attr(node_r, MI_DUP_VALUE, "NR_OF_MEMBERS", 13, p, len);
-	if(attr == 0)	
+	if(attr == 0)
 		goto error;
 
-
-	if(room!=NULL)
-	{
-		room_released = imc_release_room(room);
-	}
+	imc_release_room(room);
 
 	return rpl;
 
 error:
+	imc_release_room(room);
 	free_mi_tree(rpl);
 	return 0;
 
@@ -1652,7 +1648,6 @@ int imc_list_members(FILE *stream, char *response_file){
 	imc_room_p room;
 	struct sip_uri inv_uri, *pinv_uri;
 	imc_member_p imp=NULL;
-	int room_released=0;	
 	
 	freply = open_reply_pipe(response_file);
 	if(freply==NULL)
@@ -1704,15 +1699,12 @@ int imc_list_members(FILE *stream, char *response_file){
 	
 	fprintf(freply, "Number of members:  %d\n",i);
 	
-	if(room!=NULL)
-	{
-		room_released = imc_release_room(room);
-	}
+	imc_release_room(room);
 
 	if(freply!=NULL)
 		fclose(freply);
 
-	return 0;	
+	return 0;
 
 }
 
@@ -1791,7 +1783,7 @@ send_message:
 	to_uri_s.s = to_uri_buf;
 	to_uri_s.len = ((del_member_t *)(*ps->param))->inv_uri.len;
 	strncpy(to_uri_s.s,((del_member_t *)(*ps->param))->inv_uri.s ,
-			((del_member_t *)(*ps->param))->inv_uri.len);				
+			((del_member_t *)(*ps->param))->inv_uri.len);
 
 	DBG("to: %.*s\nfrom: %.*s\nbody: %.*s\n",
 		to_uri_s.len, to_uri_s.s , from_uri_s.len, from_uri_s.s,
@@ -1823,10 +1815,5 @@ error:
 		if((del_member_t *)(*ps->param))
 			shm_free(*ps->param);
 	return; 
+}
 
-}	
-
-
-
-	
-		

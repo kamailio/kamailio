@@ -29,7 +29,6 @@
 
 #include "../../dprint.h"
 #include "../../db/db.h"
-#include "../../mi/mi.h"
 #include "domain_mod.h"
 #include "domain.h"
 #include "hash.h"
@@ -39,7 +38,7 @@
 /*
  * MI function to reload domain table
  */
-static struct mi_node* mi_domain_reload(struct mi_node *cmd, void *param)
+struct mi_node* mi_domain_reload(struct mi_node *cmd, void *param)
 {
 	if (reload_domain_table () == 1) {
 		return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
@@ -52,7 +51,7 @@ static struct mi_node* mi_domain_reload(struct mi_node *cmd, void *param)
 /*
  * MI function to print domains from current hash table
  */
-static struct mi_node* mi_domain_dump(struct mi_node *cmd, void *param)
+struct mi_node* mi_domain_dump(struct mi_node *cmd, void *param)
 {
 	struct mi_node* rpl;
 
@@ -68,23 +67,4 @@ static struct mi_node* mi_domain_dump(struct mi_node *cmd, void *param)
 	}
 
 	return rpl;
-}
-
-
-/*
- * Register domain MI functions
- */
-int init_domain_mi( void )
-{
-	if (register_mi_cmd(mi_domain_reload, MI_DOMAIN_RELOAD, 0) < 0) {
-		LOG(L_CRIT, "Cannot register %s\n",MI_DOMAIN_RELOAD);
-		return -1;
-	}
-
-	if (register_mi_cmd(mi_domain_dump, MI_DOMAIN_DUMP, 0) < 0) {
-		LOG(L_CRIT, "Cannot register %s\n",MI_DOMAIN_DUMP);
-		return -1;
-	}
-
-	return 1;
 }
