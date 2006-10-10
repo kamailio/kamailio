@@ -1,142 +1,191 @@
-/*
- * $Id$
- */
-
+/* Inspired by docbook.css from Phorum.org */
 body {
-	font-size: 12px;
-	background-color: #fff;
-        color: #036;
-        font-family: serif;
-        font-weight: normal;
-	margin-top: 2%;
-	margin-left: 5%;
-	margin-right: 5%;
-	margin-botton: 2%;
+    font-family: arial,helvetica,sans-serif;
+    color: #345;
+    line-height: 1.3em;
+    padding: 20px;
+    margin: 10px 50px 10px 50px;
 }
 
-h2 {
-	text-align: center;
+a:link,a:visited,a:active {
+    color: #3D6F3D;
 }
-
-/* 1em lines are hard to read, let's
- * use taller lines
- */
-p {
-	line-height: 1.3em;
-	text-align: justify;
+a:hover {
+    color: #5C5CA6;
 }
-
-pre.programlisting {
-	background-color: #D0D0D0;
-	color: #000000;
-	align: center;
+h1,h2,h3,h4 {
+    color: black;
+    padding-top: 20px;
 }
-
-
-/*
-* Emphasized text at the beginning of paragraphs
-* gets larger font
-*/
-p > span.emphasis:first-child {
-	font-size: larger;
-}
-
-
-/*
- * Emphasised text withing pre-formatted sections
- * will be bold
- */
-pre em {
-	font-weight: bold;
-	font-style: normal;
-}
-
-div.abstract {
-	width: 70%
-	font-style: italic;
-	padding-left: 15%;
-	padding-right: 15%;
-}
-
-
-div.toc {
-	text-align: right;
-}
-
-div.toc p {
-	text-align: right;
-}
-
-
-/* ---------------- Links ---------------- */
-
-/*
- * :link and :visited are mutualy exclusive,
- * settings that should apply to both must be
- * present in both of them.
- *
- * Links are not underlined unless they are active
- * or cursor is over them.
- *
- * These are general settings, they apply unless there
- * is no other more specific setting.
- */
-
-a:link {
-	text-decoration: none; 	/* Links are not underlined */
-	color: #0073c7;
-	background-color: inherit;
-}
-
-a:visited {
-	text-decoration: none; /* Visited links are not underlined */
-	color: #5A88B5;
-	background-color: inherit;
-}
-
-a:link:hover,
-a:visited:hover,
-a:link:active,
-a:visited:active {
-	text-decoration: underline;
-}
-
-/* ---------------- Headings ---------------- */
-
-/* 
- * Sessings that apply to all headings 
- */
-
-/*
-h1, h2, h3, h4, h5, h6 {
-	background-color: inherit;
-        color: #000000; 
-	text-decoration: none;
-	font-weight: bold;
-}
-
 h1 {
-        padding: 0.2em;
-        margin: 0.7em 0 0 0;
- 	font-size: 22px;
+    border: 3px solid black;
+    padding: 5px;
+    background-color: #ccf;
+    color: black;
 }
 
-h2 {
-        padding: 0.2em 0 0.2em 0.7em;
-        margin: 0 0 0.5em 0;
+h2.title {
+	border: 3px solid black;
+	padding: 8px;
+	background-color: #ccf;
+	color: black;
+}
+
+h3.title {
+    border: 2px solid black;
+    padding: 5px;
+    background-color: #ccf;
+    color: black;
+}
+
+h3.author {
+    font-size: 20px;
+    padding-top: 0px;
+}
+
+h4.title {
+	margin: 15px;
+	padding: 2px;
+	background-color: #ddd;
+	color: black;
+	font-size: 20px;
+}
+
+.programlisting {
+    background-color: #f5f5f5;
+    border: 1px solid black;
+    padding: 10px;
+    margin: 5px 40px;
+}
+
+.screen {
+    background-color: #f5f5f5;
+    color: black;
+    border: 1px solid black;
+    padding: 10px;
+    margin: 5px 40px;
+}
+.screen .literal {
+    font-size: inherit;
+    color: darkgreen;
+}
+
+p {
+    padding-left: 30px;
+}
+
+.itemizedlist {
+    margin-left: 30px;
+}
+
+li p {
+    padding: 0px;
+}
+
+.copyright,.toc {
+    padding-left: 0px;
+}
+
+.toc {
+    color: black;
+}
+.toc p,
+.list-of-examples p {
+    padding-left: 0px;
+}
+
+.example .title {
+    font-size: 14px;
+    margin: 0px;
+}
+
+.variablelist .term {
+    font-weight: bold;
+    padding-left: 40px;
+}
+
+
+.filename {
+    white-space: nowrap;
+    font-size: 16px;
+    color: darkred;
+}
+
+.literal {
+    white-space: nowrap;
+    font-size: 16px;
+    color: darkblue;
+}
+
+.note {
+    border: 1px solid #ddd;
+    padding: 15px;
+    padding-left: 70px;
+	/*
+    background-image: url(&quot;images/note.png&quot;);
+    background-position: 10px 15px;
+    background-repeat: no-repeat;
+	*/
+}
+.note h3 {
+    padding: 0px 0px 10px 0px;
+    margin: 0px;
+    color: black;
+}
+
+.important {
+    border: 1px solid #ddd;
+    padding: 15px;
+    padding-left: 70px;
+	/*
+    background-image: url(&quot;images/important.gif&quot;);
+    background-position: 10px 15px;
+    background-repeat: no-repeat;
+	*/
+}
+.important h3 {
+    padding: 0px 0px 10px 0px;
+    margin: 0px;
+    color: black;
+}
+.important p {
+    padding: 0px;
+    margin: 0px;
+}
+.important .programlisting {
+    margin: 10px 0px 10px 0px;
+}
+
+.remark {
+    background-color: darkred;
+    color: white;
+    border: 1px solid black;
+    padding: 5px;
+    margin: 10px 10px 10px 0px;
+    display: block; /* Change to &quot;none&quot; in production */
+}
+
+.navheader th,td,tr {
+	background-color: #D5D0D2;
 	font-size: 18px;
+	padding: 5px;
+	margin: 40px 40px 40px 40px;
+	display: block;
+	border: 1px solid black;
 }
 
-h3 {
-	font-size: 16px;
-        margin: 1.3em 0 0.4em 0;
-        padding: 0;
+.revhistory th,td,tr {
+    background-color: #f5f5f5;
+    font-size: 10px;    
+    padding: 5px;
+    margin: 40px 40px 40px 40px;
+    display: block;
 }
 
-h4 {
-	font-size: 14px;
-        margin: 1.3em 0 0.2em 0;
-        padding: 0;
+.varname {
+	padding: 0px 0px 10px 0px;
+	margin: 0px;
+	color: black;
+	font-style: italic;
+	font-size: x-small;
 }
-
-*/
