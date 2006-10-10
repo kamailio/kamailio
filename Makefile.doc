@@ -102,6 +102,7 @@ pdf: $(pdf_files)
         --stringparam base.dir "$(OUTPUT_DIR)/" \
         --stringparam root.filename "$(basename $<)" \
         --stringparam html.ext ".html" \
+	--stringparam html.stylesheet ser.css \
         $(HTML_XSL) $<
 
 %.fo: %.xml $(alldep) $(FO_XSL)
