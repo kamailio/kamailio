@@ -24,7 +24,12 @@ modules:
                 hashing after an uri (to, from or request uri)
               - improved uri hashing (password is ignored, port is used only
                 if != 5060 or 5061)
- - tm        - better final reply selection: 6xx is preferred over other 
+ - tm        - on 6xx immediately cancel all the branches for which a 
+               provisional response was received and wait for all the 
+               branches to finish (either timeout, the 487 from the CANCEL
+               or a final response still on the wire in the moment the
+               CANCEL was sent)
+             - better final reply selection: 6xx is preferred over other 
                negative replies; from several 4xx prefer 401, 407, 415, 420,
                484 (in this order). For all the other cases, return the lowest
                code (as before)

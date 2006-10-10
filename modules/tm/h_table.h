@@ -190,8 +190,10 @@ struct totag_elem {
 #define T_NOISY_CTIMER_FLAG  (1<<2)
 /* transaction canceled */
 #define T_CANCELED           (1<<3)
+/* 6xx received => stop forking */
+#define T_6xx                (1<<4) 
 
-#define T_IN_AGONY (1<<4) /* set if waiting to die (delete timer)
+#define T_IN_AGONY (1<<5) /* set if waiting to die (delete timer)
                              TODO: replace it with del on unref */
 
 /* transaction context */

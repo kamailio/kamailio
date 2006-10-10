@@ -406,7 +406,6 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		goto error2;
 	}
 
-
 	rb = & trans->uas.response;
 	rb->activ_type=code;
 
@@ -445,7 +444,8 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		}
 
 		cleanup_uac_timers( trans );
-		if (is_invite(trans)) cancel_uacs( trans, cancel_bitmap );
+		if (is_invite(trans)) 
+			cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
 		set_final_timer(  trans );
 	}
 
@@ -478,7 +478,8 @@ error2:
 error:
 	/* do UAC cleanup */
 	cleanup_uac_timers( trans );
-	if ( is_invite(trans) ) cancel_uacs( trans, cancel_bitmap );
+	if ( is_invite(trans) )
+		cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL);
 	/* we did not succeed -- put the transaction on wait */
 	put_on_wait(trans);
 	return -1;
@@ -859,11 +860,13 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			DBG("DEBUG: final reply retransmission\n");
 			goto discard;
 		}
-		/* if you FR-timed-out, faked a local 408 or 480 and 487 came, don't
+		/* if you FR-timed-out, faked a local 408  and 487 came or
+		 *  faked a CANCEL on a non-replied branch don't
 		 * report on it either */
-		if ((Trans->uac[branch].last_received==408 ||
-				Trans->uac[branch].last_received==480) && new_code==487) {
-			DBG("DEBUG: 487 came for a timed-out branch\n");
+		if ((Trans->uac[branch].last_received==487) || 
+				(Trans->uac[branch].last_received==408 && new_code==487)) {
+			DBG("DEBUG: %d came for a %d branch (ignored)\n",
+					new_code, Trans->uac[branch].last_received);
 			goto discard;
 		}
 		/* this looks however how a very strange status rewrite attempt;
@@ -886,6 +889,13 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		if (picked_branch==-2) { /* branches open yet */
 			*should_store=1;
 			*should_relay=-1;
+			if (new_code>=600 && new_code<=699){
+				if (!(Trans->flags & T_6xx)){
+					/* cancel only the first time we get a 6xx */
+					which_cancel(Trans, cancel_bitmap);
+					Trans->flags|=T_6xx;
+				}
+			}
 			return RPS_STORE;
 		}
 		if (picked_branch==-1) {
@@ -901,6 +911,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		 * make it available in failure routes - a kind of "fake"
 		 * save of the final reply per branch */
 		Trans->uac[branch].reply = reply;
+		Trans->flags&=~T_6xx; /* clear the 6xx flag , we want to 
+								 allow new branches from the failure route */
 
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
@@ -1282,7 +1294,7 @@ error02:
 error01:
 	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
 	UNLOCK_REPLIES(t);
-	if (is_invite(t)) cancel_uacs( t, *cancel_bitmap );
+	if (is_invite(t)) cancel_uacs( t, *cancel_bitmap, 0);
 	/* a serious error occurred -- attempt to send an error reply;
 	   it will take care of clean-ups  */
 
@@ -1364,7 +1376,7 @@ error:
 	cleanup_uac_timers(t);
 	if ( get_cseq(p_msg)->method.len==INVITE_LEN
 		&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN)==0)
-		cancel_uacs( t, *cancel_bitmap );
+		cancel_uacs( t, *cancel_bitmap, F_CANCEL_B_KILL);
 	put_on_wait(t);
 	return RPS_ERROR;
 }
@@ -1493,10 +1505,15 @@ int reply_received( struct sip_msg  *p_msg )
 			      * be still pending branches ...
 			      */
 			cleanup_uac_timers( t );
-			if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
+			if (is_invite(t)) cancel_uacs(t, cancel_bitmap, F_CANCEL_B_KILL);
 			/* There is no need to call set_final_timer because we know
->--->--->--- * that the transaction is local */
+			 * that the transaction is local */
 			put_on_wait(t);
+		}else if (cancel_bitmap){
+			/* cancel everything, even non-INVITEs (e.g in case of 6xx), wait
+			 * for the cancel replies if a provisional response was received
+			 *  or generate a fake reply if not */
+			cancel_uacs(t, cancel_bitmap, F_CANCEL_B_FAKE_REPLY);
 		}
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
@@ -1506,12 +1523,20 @@ int reply_received( struct sip_msg  *p_msg )
 				be still pending branches ...
 			     */
 			cleanup_uac_timers( t );
-			if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
+			/* 2xx is a special case: we can have a COMPLETED request
+			 * with branches still open => we have to cancel them */
+			if (is_invite(t) && cancel_bitmap) 
+				cancel_uacs( t, cancel_bitmap,  F_CANCEL_B_KILL);
 			/* FR for negative INVITES, WAIT anything else */
 			/* Call to set_final_timer is embedded in relay_reply to avoid
 			 * race conditions when reply is sent out and an ACK to stop
 			 * retransmissions comes before retransmission timer is set.*/
 			/* set_final_timer(t) */
+		}else if (cancel_bitmap){
+			/* cancel everything, even non-INVITEs (e.g in case of 6xx), wait
+			 * for the cancel replies if a provisional response was received
+			 *  or generate a fake reply if not */
+			cancel_uacs(t, cancel_bitmap, F_CANCEL_B_FAKE_REPLY);
 		}
 	}
 	uac->request.flags|=F_RB_REPLIED;

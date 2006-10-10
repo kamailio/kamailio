@@ -56,6 +56,8 @@
  *               if error is returned) (andrei)
  *  2006-09-15  e2e_cancel uses t_reply_unsafe when called from the 
  *               failure_route and replying to a cancel (andrei)
+ *  2006-10-10  e2e_cancel update for the new/modified 
+ *               which_cancel()/should_cancel() (andrei)
  */
 
 #include "defs.h"
@@ -477,7 +479,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	t_cancel->label=t_invite->label;
 	/* ... and install CANCEL UACs */
 	for (i=0; i<t_invite->nr_of_outgoings; i++)
-		if (cancel_bm & (1<<i)) {
+		if ((cancel_bm & (1<<i)) && (t_invite->uac[i].last_received>=100)) {
 			ret=e2e_cancel_branch(cancel_msg, t_cancel, t_invite, i);
 			if (ret<0) cancel_bm &= ~(1<<i);
 			if (ret<lowest_error) lowest_error=ret;
@@ -489,16 +491,17 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	/* send them out */
 	for (i = 0; i < t_cancel->nr_of_outgoings; i++) {
 		if (cancel_bm & (1 << i)) {
-			     /* Provisional reply received on this branch, send CANCEL */
-			     /* No need to stop timers as they have already been stopped by the reply */
-			if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
-				LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
-			}
-			if (start_retr( &t_cancel->uac[i].request )!=0)
-				LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr. for %p\n",
-							&t_cancel->uac[i].request);
-		} else {
-			if (t_invite->uac[i].last_received < 100) {
+			if (t_invite->uac[i].last_received>=100){
+				/* Provisional reply received on this branch, send CANCEL */
+				/* No need to stop timers as they have already been stopped 
+				 * by the reply */
+				if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
+					LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
+				}
+				if (start_retr( &t_cancel->uac[i].request )!=0)
+					LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr."
+							" for %p\n", &t_cancel->uac[i].request);
+			} else {
 				/* No provisional response received, stop
 				 * retransmission timers */
 				stop_rb_retr(&t_invite->uac[i].request);
