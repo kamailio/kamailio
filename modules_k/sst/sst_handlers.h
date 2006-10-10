@@ -2,7 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2006 SOMA Networks, Inc.
- * Written By Ron Winacott
+ * Written By Ron Winacott (karwin)
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,9 +23,9 @@
  *
  * History:
  * --------
- * 2006-05-11  initial version (ronw)
+ * 2006-05-11 initial version (karwin)
+ * 2006-10-10 Code cleanup of this header file. (karwin)
  */
-
 
 #ifndef _SST_HANDLERS_H_
 #define _SST_HANDLERS_H_
@@ -33,48 +33,23 @@
 #include "../../sr_module.h" /* Needed for find_export() */
 #include "../../items.h"
 #include "../../parser/msg_parser.h"
-#include "../../str.h"
 #include "../dialog/dlg_load.h"
-
-/**
- * The sst_cb is the prototype for any callback functions you want to
- * register with the sst module via the register_sstcb() function
- * call. (see below.)
- *
- * @param did - The Dialog ID
- * @param type - The event that triggered the callback.
- * @param msg - The SIP message (request/response)
- * @param param - The pointer to the optional parameter you passed to
- *                the register_sstcb() function.
- */
-typedef void (sst_cb)(struct dlg_cell *did, int type, 
-		struct sip_msg *msg, void **param);
-
-typedef int (*register_sst_f)(struct dlg_cell *did, int cb_types,
-		sst_cb func, void *param);
-
-/**
- * Called from other modules that want to register a callback with us.
- *
- * @param sst - The sst ID 
- * @param type - The call back type. See cbtype_t
- * @param func - The sst callback function that should be called on
- *               the type of event.
- * @param param - Any parameters you would like passed into the
- *                callback when the event triggers. it.
- *
- * @return 0 on success, non-zero on an error.
- */
-int register_sstcb(struct dlg_cell *did, int type, sst_cb func, void *param);
 
 /**
  * The static (opening) callback function for all dialog creations
  */
-void sstDialogCreatedCB(struct dlg_cell *did, int type, 
+void sst_dialog_created_CB(struct dlg_cell *did, int type, 
 		struct sip_msg* msg, void** param);
 
-int sstCheckMinHandler(struct sip_msg *msg, char *str1, char *str2);
+/**
+ * The script function
+ */
+int sst_check_min(struct sip_msg *msg, char *str1, char *str2);
 
-void sstHandlerInit(xl_spec_t *timeout_avp, unsigned int minSE);
+/**
+ * The handlers initializer function
+ */
+void sst_handler_init(xl_spec_t *timeout_avp, unsigned int minSE, 
+		int flag, unsigned int reject);
 
-#endif /* _SST_HANDLERSZ_H_ */
+#endif /* _SST_HANDLERS_H_ */

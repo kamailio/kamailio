@@ -5,7 +5,7 @@
  * SIP Session Timers.
  *
  * Copyright (C) 2006 SOMA Networks, INC.
- * Written by: Ron Winacott
+ * Written by: Ron Winacott (karwin)
  *
  * This file is part of openser, a free SIP server.
  *
@@ -26,9 +26,9 @@
  *
  * History:
  * --------
- *  2006-05-11  initial version (ronw)
+ * 2006-05-11 initial version (karwin)
+ * 2006-10-10 RFC compilent changes. Added the other flags (karwin)
  */
-
 
 #include <stdio.h>
 #include <string.h>
@@ -39,7 +39,13 @@
 
 MODULE_VERSION
 
-static int modInit(void);
+static int mod_init(void);
+
+
+/*
+ * Pointer to reply function in stateless module
+ */
+int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
 
 /*
  * statistic variables 
@@ -62,7 +68,17 @@ static char* timeout_spec = 0; /* Place holder for the passed in name */
  * proxy will except any value from the UAC as its min-SE value. If
  * the value is NOT set then the default will be asserted.
  */
-unsigned int sst_minSE = 1600; 
+unsigned int sst_minSE = 90; 
+
+/*
+ * Should the PROXY (us) reject (with a 422 reply) and SE < sst_minSE
+ * requests is it can. Default is YES.
+ */
+unsigned int sst_reject = 1;
+
+/* The sst message flag value */
+static int sst_flag = -1;
+
 
 /*
  * Binding to the dialog module
@@ -74,7 +90,7 @@ struct dlg_binds *dlg_binds = &dialog_st;
  * Script commands we export.
  */
 static cmd_export_t cmds[]={
-	{"sstCheckMin", sstCheckMinHandler , 1, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"sstCheckMin", sst_check_min, 1, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{0,0,0,0,0}
 };
 
@@ -82,10 +98,11 @@ static cmd_export_t cmds[]={
  * Script parameters
  */
 static param_export_t mod_params[]={
-	{ "enable_stats", INT_PARAM, &sst_enable_stats},
-	/* This Proxy's min-SE value. see above */
-	{ "min_se", INT_PARAM, &sst_minSE},
-	{ "timeout_avp", STR_PARAM, &timeout_spec },
+	{ "enable_stats", INT_PARAM, &sst_enable_stats		},
+	{ "min_se", INT_PARAM, &sst_minSE					},
+	{ "timeout_avp", STR_PARAM, &timeout_spec			},
+	{ "reject_to_small",		INT_PARAM, &sst_reject 	},
+	{ "sst_flag",				INT_PARAM, &sst_flag	},
 	{ 0,0,0 }
 };
 
@@ -102,7 +119,7 @@ struct module_exports exports= {
 	cmds,         /* exported functions */
 	mod_params,   /* param exports */
 	mod_stats,    /* exported statistics */
-	modInit,      /* module initialization function */
+	mod_init,     /* module initialization function */
 	0,            /* reply processing function */
 	0,            /* Destroy function */
 	0             /* per-child init function */
@@ -118,12 +135,23 @@ struct module_exports exports= {
  * @return 0 to continue to load the OpenSER, -1 to stop the loading
  * and abort OpenSER.
  */
-static int modInit(void) {
+static int mod_init(void) 
+{
+	LOG(L_INFO,"SIP Session Timer module - initializing\n");
 	/*
 	 * if statistics are disabled, prevent their registration to core.
 	 */
 	if (sst_enable_stats==0) {
 		exports.stats = 0;
+	}
+
+	if (sst_flag == -1) {
+		LOG(L_ERR,"ERROR:sst:mod_init: no sst flag set!!\n");
+		return -1;
+	} 
+	else if (sst_flag >= 8*sizeof(int)) {
+		LOG(L_ERR,"ERROR:sst:mod_init: invalid sst flag %d!!\n", sst_flag);
+		return -1;
 	}
 
 	if (timeout_spec != NULL) {
@@ -137,10 +165,16 @@ static int modInit(void) {
 		}
 	}
 
+	if ((sl_reply = find_export("sl_send_reply", 2, 0)) == 0) {
+		LOG(L_ERR, "ERROR:sst:modInit: This module requires sl module\n");
+		return -1;
+	}
+	
 	/*
 	 * Init the handlers
 	 */
-	sstHandlerInit((timeout_spec?&timeout_avp:0), sst_minSE);
+	sst_handler_init((timeout_spec?&timeout_avp:0), sst_minSE, 
+			sst_flag, sst_reject);
 
 	/*
 	 * Register the main (static) dialog call back.
@@ -151,7 +185,7 @@ static int modInit(void) {
 	}
 
 	/* Load dialog hooks */
-	dialog_st.register_dlgcb(NULL, DLGCB_CREATED, sstDialogCreatedCB, NULL);
+	dialog_st.register_dlgcb(NULL, DLGCB_CREATED, sst_dialog_created_CB, NULL);
 
 	/*
 	 * We are GOOD-TO-GO.

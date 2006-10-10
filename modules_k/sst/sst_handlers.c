@@ -2,7 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2006 SOMA Networks, Inc.
- * Written by Ron Winacott
+ * Written by Ron Winacott (karwin)
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,13 +23,13 @@
  *
  * History:
  * --------
- * 2006-05-11  initial version (ronw)
+ * 2006-05-11 initial version (karwin)
+ * 2006-10-10 RFC complient changes (karwin)
  */
-
 
 /**
  * SST support:
- * 
+ *
  * The Session-Expires header conveys the session interval for a SIP
  * call. It is placed in an INVITE request and is allowed in any 2xx
  * class response to an INVITE. Its presence indicates that the UAC
@@ -44,43 +44,164 @@
  * proxy, the session expiration is 30 minutes after the time when the
  * 2xx was received or sent. For the UAC, the expiration time is 30
  * minutes after the receipt of the final response.
+ *
  */
 
+#include <stdio.h>  /* for snprintf() */
+#include <string.h> /* for memset() */
 #include <stdlib.h> /* For atoi() */
-#include <time.h>   /* For time() */
 
+#include "../../items.h"
 #include "../../parser/parse_sst.h"
+#include "../../parser/parse_supported.h"
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+#include "../../data_lump.h"
+#include "../../data_lump_rpl.h"
 
 #include "sst_handlers.h"
 
+/*
+ * My own LOG() macros to add the correct message prefix and
+ * file/function/line number information to all LOG messages.
+ */
+#define DLOG(format, ...) LOG(L_DBG, "DEBUG:%s:%s:%d: "format,	\
+			__FILE__, __FUNCTION__, __LINE__,					\
+			##__VA_ARGS__)
+#define WLOG(format, ...) LOG(L_WARN, "WARNING:%s:%s:%d: "format,	\
+			__FILE__, __FUNCTION__, __LINE__,						\
+			##__VA_ARGS__)
+#define ELOG(format, ...) LOG(L_ERR, "ERROR:%s:%s:%d: "format,	\
+			__FILE__, __FUNCTION__, __LINE__,					\
+			##__VA_ARGS__)
+
+#define DLOGMSG(msg) {									   \
+		if (msg->first_line.type == SIP_REQUEST) {		   \
+			LOG(L_INFO, "REQUEST: %.*s\n",				   \
+					msg->first_line.u.request.method.len,  \
+					msg->first_line.u.request.method.s);   \
+		}												   \
+		else {											   \
+			LOG(L_INFO, "RESPONSE: %d %.*s\n",			   \
+					msg->first_line.u.reply.statuscode,	   \
+					msg->first_line.u.reply.reason.len,	   \
+					msg->first_line.u.reply.reason.s);	   \
+		}												   \
+}
+
+#ifndef MIN
+#define MIN(a, b) (a<b?a:b)
+#endif
+#ifndef MAX
+#define MAX(a, b) (a>b?a:b)
+#endif
+
+
+/**
+ * The binding to the dialog module functions. Most importantly the
+ * register_dlgcb function.
+ */
 extern struct dlg_binds *dlg_binds;
 
 /**
- * Look inside the msg for SST support.
+ * Fag values used in the sst_info_t See below.
  */
-static void sstDialogTerminate(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param);
-
-static void sstDialogUpdate(struct dlg_cell* did, int type, 
-		struct sip_msg* msg, void** param);
-
-static int sstUpdateSST(struct sip_msg *msg);
-
-static xl_spec_t *timeout_avp = 0;
-
-static unsigned int sst_minSE = 0;
+enum sst_flags {
+	SST_UNDF=0,		/* 0 - --- */
+	SST_UAC=1,		/* 1 - 2^0 */
+	SST_UAS=2,		/* 2 - 2^1 */
+	SST_PXY=4,		/* 4 - 2^2 */
+	SST_NSUP=8		/* 8 - 2^3 */
+};
 
 /**
- * This is not a public API. This function is called when the module is loaded
- * to initialize the callback handlers.
- * 
- * @param timeout_avp_p - The pointer to the dialog modules timeout AVP.
- * @param minSE - The miniumum session expire value allowed by this PROXY. 
+ * The local state required to figure out if and who supports SST and
+ * if and who will be the refresher.
  */
-void sstHandlerInit(xl_spec_t *timeout_avp_p, unsigned int minSE) 
+typedef struct sst_info_st {
+	enum sst_flags requester;
+	enum sst_flags supported;
+	int interval;
+} sst_info_t;
+
+/**
+ * A collection of information about SST in the current SIP message
+ * being processed.
+ */
+typedef struct sst_msg_info_st {
+	int supported; 		   	/* supported = timer in message */
+	unsigned int min_se;   	/* The Min-SE: value or zero    */
+	unsigned int se;		/* The Sesion-Expires: header   */
+	enum sst_refresher refresher;/* The refresher (parse_sst.h)  */
+} sst_msg_info_t;
+
+/**
+ * Local function prototypes See function definition for
+ * documentation.
+ */
+#ifdef USE_CONFIRM_CALLBACK
+static void sst_dialog_confirmed_CB(struct dlg_cell* did, int type,
+		struct sip_msg* msg, void** param);
+#endif /* USE_CONFIRM_CALLBACK */
+static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
+		struct sip_msg* msg, void** param);
+static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
+		struct sip_msg* msg, void** param);
+static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
+		struct sip_msg* msg, void** param);
+static int send_response(struct sip_msg *request, int code, char *reason,
+		char *header, int header_len);
+static int append_header(struct sip_msg *msg, const char *header);
+static int remove_header(struct sip_msg *msg, const char *header);
+static int set_timeout_avp(struct sip_msg *msg, unsigned int value);
+static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo);
+static int send_reject(struct sip_msg *msg, unsigned int min_se);
+static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info);
+
+/**
+ * The pointer to the stateless reply function This is used to send a
+ * 422 reply if asked to with a Min-SE: header value to small.
+ */
+extern int (*sl_reply)(struct sip_msg *msg, char *str1, char *str2);
+
+/**
+ * The dialog modules timeout AVP spac.
+ */
+static xl_spec_t *timeout_avp = 0;
+
+/**
+ * Our Min-SE: header field value and test.
+ */
+static unsigned int sst_min_se = 0;
+
+/**
+ * Should the SE < sst_min_se be rehected with a 422 reply?
+ */
+static unsigned int sst_reject = 1;
+
+/**
+ * The value of the message flag to flag an INVITE we want to process
+ * through the SST module.
+ */
+static int sst_flag = 0;
+
+/**
+ * This is not a public API. This function is called when the module
+ * is loaded from the mod_init() function in sst.c to initialize the
+ * callback handlers and local variables.
+ *
+ * @param timeout_avp_p - The pointer to the dialog modules timeout
+ *                        AVP.
+ * @param minSE - The minimum session expire value allowed by this
+ *                PROXY.
+ */
+void sst_handler_init(xl_spec_t *timeout_avp_p, unsigned int min_se, 
+		int flag, unsigned int reject)
 {
 	timeout_avp = timeout_avp_p;
-	sst_minSE = minSE;
+	sst_min_se = min_se;
+	sst_flag = 1 << flag;
+	sst_reject = reject;
 }
 
 /**
@@ -88,246 +209,795 @@ void sstHandlerInit(xl_spec_t *timeout_avp_p, unsigned int minSE)
  * module will call this callback function. We need to track the
  * dialogs lifespan from this point forward until it is terminated
  * with a BYE, CANCEL, etc. In the process, we will see if either or
- * both ends of the dialog support SIP Session Timers and setup the
- * dialog timeout to expire at the session timer expire time. Each
+ * both ends of the conversation supports SIP Session Timers and setup
+ * the dialog timeout to expire at the session timer expire time. Each
  * time the new re-INVITE is seen to update the SST, we will reset the
  * life span of the dialog to match it.
  *
- * If the dialog expires, we will send a BYE to both ends of the
- * conversation to PROXY terminate the dialog. 
- * FIXME: Need to check if this is legial or not.
- *
  * This function will setup the other types of dialog callbacks
- * required to track the lifespan of the dialog. It will also call any
- * sst created registered callbacks.
+ * required to track the lifespan of the dialog. It will also start
+ * the state tracking to figure out if and who supports SST.
+ *
+ * As per RFC4028: Request handling:
+ * 
+ * - The proxy may insert a SE header if none found.
+ * - The SE value can be anything >= Min-SE (if found)
+ * - The proxy MUST NOT add a refresher parameter to the SE.
+ *
+ * - If SE is already there, the Proxy can reduce its value but no
+ *   lower then the Min-SE value if present.
+ * - If the SE value is >= Min-SE the proxy MUST NOT increase it!
+ * - If the SE value is < Min-SE (settable by the proxy) the proxy
+ *   MUST increase the SE value to >= the new Min-SE.
+ * - The proxy MUST NOT insert or change the refresher parameter.
+ *
+ * - If the supported=timer is found, the proxy may reject the request
+ *   with a 422 if the SE value is smaller then the local policy. The
+ *   422 MUST hold the proxies Min-SE value >= 90.
+ * - If support=timer is NOT indecated, the proxy can't reject with a
+ *   422 but can include/increase the MIN-SE: to be = to local policy.
+ *   and increase the SE to match the new Min-SE value.
+ * - the proxy MUST NOT insert/change the Min-SE header if
+ *   supported=timer is present. (DoS attacks)
  *
  * @param did - The dialog ID
  * @param type - The trigger event type (CREATED)
  * @param msg - The SIP message that triggered the callback (INVITE)
  * @param param - The pointer to nothing. As we did not attach
  *                anything to this callback in the dialog module.
- *
  */
-void sstDialogCreatedCB(struct dlg_cell *did, int type, 
-		struct sip_msg* msg, void** param) 
+void sst_dialog_created_CB(struct dlg_cell *did, int type,
+		struct sip_msg* msg, void** param)
 {
 	int rtn = 0;
+	struct session_expires se = {0};
+	unsigned int min_se = 0;
+	sst_info_t *info = NULL;
+	sst_msg_info_t minfo = {0};
 
-	if (msg->first_line.type == SIP_REQUEST && 
-			msg->first_line.u.request.method_value == METHOD_INVITE) {
-		if ((rtn = sstUpdateSST(msg)) == 0) {
-			/*
-			 * Register for the other callbacks from the dialog.
+	/*
+	 * Only deal with messages flaged as SST interested.
+	 */
+	if ((msg->flags & sst_flag) != sst_flag) {
+		DLOG("SST flag was not set for this request\n");
+		return;
+	}
+
+	/* 
+	 * look only at INVITE
+	 */
+	if (msg->first_line.type != SIP_REQUEST ||
+			msg->first_line.u.request.method_value != METHOD_INVITE) {
+		WLOG("Dialog create callback called with a non-INVITE request.\n");
+		return;
+	}
+
+	/*
+	 * Gather all he information about SST for this message
+	 */
+	if (parse_msg_for_sst_info(msg, &minfo)) {
+		ELOG("Failed to parse sst information\n");
+		return;
+	}
+
+	info = (sst_info_t *)shm_malloc(sizeof(sst_info_t));
+	memset(info, 0, sizeof(sst_info_t));
+	info->requester = (minfo.se?SST_UAC:SST_UNDF);
+	info->supported = (minfo.supported?SST_UAC:SST_UNDF);
+	info->interval = MAX(sst_min_se, 90); /* For now, will set for real
+										  * later */
+
+	if (minfo.se != 0) {
+		/* 
+		 * There is a SE already there, this is good, we just need to
+		 * check the values out a little before passing it along.
+		 */
+		if (minfo.se < sst_min_se) {
+			/* 
+			 * Problem, the requested Session-Expires is too small for
+			 * our local policy. We need to fix it, or reject it or
+			 * ignore it.
 			 */
-			DBG("DEBUG:sst:sstDialogCreatedCB: Adding callback registrations "
-				"DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED\n");
-			dlg_binds->register_dlgcb(did,
-				DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED,
-				sstDialogTerminate, did);
-			DBG("DEBUG:sst:sstDialogCreatedCB: Adding callback registrations "
-				"DLGCB_REQ_WITHIN\n");
-			dlg_binds->register_dlgcb(did, DLGCB_REQ_WITHIN, 
-				sstDialogUpdate, did);
+			if (!minfo.supported) {
+				/* 
+				 * Increase the Min-SE: value in the request and
+				 * forward it.
+				 */
+				char buf[80];
+				if (minfo.min_se) {
+					/* We need to update, which means, remove +
+					 * insert */
+					remove_header(msg, "Min-SE");
+				}
+				info->interval = MAX(sst_min_se, minfo.min_se);
+				snprintf(buf, 80, "Min-SE: %d\r\n", info->interval);
+				if (append_header(msg, buf)) {
+					ELOG("Could not append modified Min-SE: header\n");
+				}
+			}
+			else if (sst_reject) {
+				/* Make sure that that all are at least 90 */
+				send_reject(msg, MAX(MAX(sst_min_se, minfo.min_se), 90));
+				shm_free(info);
+				return;
+			}
+		}  /* end of se < sst_min_se */
+		else {
+			/* Use the INVITE SE: value */
+			info->interval = minfo.se;
 		}
 	}
+	else {
+		/* 
+		 * No Session-Expire: stated in request.
+		 */
+		char buf[80];
+
+		info->interval = MAX(minfo.min_se, sst_min_se);
+
+		if (minfo.min_se && minfo.min_se < sst_min_se) {
+			remove_header(msg, "Min-SE");
+			snprintf(buf, 80, "Min-SE: %d\r\n", info->interval);
+			if (append_header(msg, buf)) {
+				ELOG("Could not append modified Min-SE: header\n");
+				/* What to do? Let is slide, we can still work */
+			}
+		}
+		
+		info->requester = SST_PXY;
+		snprintf(buf, 80, "Session-Expires: %d\r\n", info->interval);
+		if (append_header(msg, buf)) {
+			ELOG("Error appending Session-Expires header to proxy "
+					"requested SST.\n");
+			shm_free(info);
+			return; /* Nothing we can do! */
+		}
+	}
+	setup_dialog_callbacks(did, info);
+	set_timeout_avp(msg, info->interval);
 	return;
 }
 
+#ifdef USE_CONFIRM_CALLBACK
 /**
- * The sst_checkMin() script command handler. Return 1 (true) if the
- * MIN-SE: of the message is too small compared to the passed in
- * value. This will allow the script to reply to this INVITE with a
- * "422 Session Timer Too Small" response.
- *
- * @param msg - The sip message from the script
- * @param str1 - The first function argument, the minimum time in
- *               seconds.
- * @param str2 - Not used.
- *
- * @return 0  if message MIN-SE is less then or equal to str1.
- *         -1 on an error, like no MIN-SE: header found.
- *         1 if message MIN-SE is greater then the str1 value. (too
- *           small for us)
+ * Play time. Please ignore this call.
  */
-int sstCheckMinHandler(struct sip_msg *msg, char *str1, char *str2) 
+static void sst_dialog_confirmed_CB(struct dlg_cell *did, int type,
+		struct sip_msg* msg, void** param)
 {
-	enum parse_sst_result result;
-	unsigned minse = 0;
-	int rtn = 0;
-
-	/*
-	 * Only look in INVITES or 2XX messages for the MIN-SE header.
-	 *
-	 * FIXME: Doe we care about SIP responses here? Only INVITEs should
-	 *        be looked at. (need to check the spec for this)
-	 */
-	if ((msg->first_line.type == SIP_REQUEST && 
-		msg->first_line.u.request.method_value == METHOD_INVITE)
-		|| (msg->first_line.type == SIP_REPLY && 
-		msg->first_line.u.reply.statuscode > 199 && 
-		msg->first_line.u.reply.statuscode < 300)) {
-		/*
-		 * The message is an INVITE request, or a 2XX response so look for
-		 * the MIN-SE header.
-		 */
-		if ((result = parse_min_se(msg, &minse)) == parse_sst_success) {
-			if (str1 != 0) {
-				if (minse < atoi(str1)) {
-	 				DBG("DEBUG:sst:sstCheckMin: MINSE is too small. "
-						"Returning true!\n");
-					rtn = 1; /* Too small! */
-				}
-			} else {
-				/*
-				 * Did not pass in the correct and complet information.
-				 */
-				LOG(L_ERR, "ERROR:sst:sstCheckMin: Call to sstCheckMin() "
-					"made with insufficient arguments.\n");
-				rtn = -1;
-			}
-		} else {
-			if (result != parse_sst_header_not_found) {
-				/*
-			 	 * log the error if the header was found.
-			 	 */
-				LOG(L_ERR, "ERROR:sst:sstCheckMin: Error parsing "
-					"min_se header.");
-			}
-			rtn = -1;
-		}
-	} else {
-		/*
-		 * Log it, and return
-		 */
-		LOG(L_WARN, "WARMING:sst:sstCheckMin: The SIP message would not "
-			"carry a MIN_SE header. Calling sstCheckMin() out of context.\n");
-		rtn = -1;
-	}
-	return(rtn);
+	DLOG("confirmed dialog CB %p\n", did);
+	DLOGMSG(msg);
 }
+#endif /* USE_CONFIRM_CALLBACK */
 
 /**
- * This callback is called when ever a dialog is terminated. The cause of the
- * termination can be normal, failed call, or expired. It is the expired dialog
- * we are really interested in.
- * 
+ * This callback is called when ever a dialog is terminated. The cause
+ * of the termination can be normal, failed call, or expired. It is
+ * the expired dialog we are really interested in.
+ *
  * @param did - The Dialog ID / structure pointer. Used as an ID only.
  * @param type - The termination cause/reason.
- * @param msg - The pointer to the SIP message. On an DLGCB_EXPIRED type, the 
+ * @param msg - The pointer to the SIP message. On an DLGCB_EXPIRED type, the
  *              message is a FAKED_REPLY (-1) and cannot be looked at safely.
  * @param param - Not used
  */
-static void sstDialogTerminate(struct dlg_cell* did, int type, 
-		struct sip_msg* msg, void** param) 
+static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
+		struct sip_msg* msg, void** param)
 {
 	switch (type) {
 		case DLGCB_FAILED:
-			DBG("DEBUG:sst:sstDialogTerminate: DID %p failed (canceled). "
+			DLOG("DID %p failed (canceled). "
 					"Terminating session.\n", did);
 			break;
 		case DLGCB_EXPIRED:
 			/* In the case of expired, the msg is pointing at a
 			 * FAKED_REPLY (-1)
 			 */
-			LOG(L_ERR, "ERROR:sst:sstDialogTerminate: DID %p expired. "
-					"Terminating session.\n", did);
+			ELOG("Terminating session.\n", did);
 			break;
 		default: /* Normal termination. */
-			DBG("DEBUG:sst:sstDialogTerminate:Terminating DID %p session\n",
+			DLOG("Terminating DID %p session\n",
 					did);
 			break;
+	}
+	/*
+	 * Free the param sst_info_t memory
+	 */
+	if (*param) {
+		DLOG("Freeing the sst_info_t from dialog %p\n", did);
+		shm_free(*param);
+		*param = '\0';
 	}
 	return;
 }
 
-
 /**
- * Simple callback wrapper around the sstUpdateSST() function below.
- * This callback is called on any SIP message that will update the state of
- * the dialog. This includes the reINVITE that will have the new expire:
- * header value.
- * 
+ * Callback from the dialog module when the dialog is being updated in
+ * its life span. We are only interested in the INVITE or UPDATE if
+ * SST is supported and active for this dialog. In this case, we need
+ * to update the expire time for the dialog based on the
+ * Session-Expires: header in the reINVITE/UPDATE request.
+ *
+ * When this callback returns control to the dialog module it WILL
+ * reset the timeout of the dialog. We need to make sure we set the
+ * AVP here or the dialog timeout will be reset to the DEFAULT value
+ * if this is a different transaction. (so the AVP value is gone)
+ *
  * @param did - The dialog structure. The pointer is used as an ID.
- * @param type - The reason for the callback. Not used.
+ * @param type - The reason for the callback. DLGCB_REQ_WITHIN
  * @param msg - The SIP message that causes the callback.
- * @param param - Not used.
+ * @param param - The sst information
  */
-static void sstDialogUpdate(struct dlg_cell* did, int type, 
-		struct sip_msg* msg, void** param) 
+static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
+		struct sip_msg* msg, void** param)
 {
 	int rtn = 0;
+	struct session_expires se = {0};
+	sst_info_t *info = (sst_info_t *)*param;
+	sst_msg_info_t minfo = {0};
 
-	if ((rtn = sstUpdateSST(msg)) == 0) {
-		/* all Okay */
+	if (msg->first_line.type == SIP_REQUEST) {
+		if ((msg->first_line.u.request.method_value == METHOD_INVITE ||
+						msg->first_line.u.request.method_value == METHOD_UPDATE)) {
+
+			DLOG("Update by a REQUEST. %.*s\n", 
+					msg->first_line.u.request.method.len, 
+					msg->first_line.u.request.method.s);
+			if (parse_msg_for_sst_info(msg, &minfo)) {
+				// FIXME: need an error message here
+				return;
+			}
+			/* Early resetting of the value here */
+			set_timeout_avp(msg, minfo.se);
+			info->interval = minfo.se;
+		}
+		else if (msg->first_line.u.request.method_value == METHOD_PRACK) {
+			/* Special case here. The PRACK will cause the dialog
+			 * module to reset the timeout value to the ldg->lifetime
+			 * value and look for the new AVP value bound to the
+			 * 1XX/PRACK/200OK/ACK transaction and not to the
+			 * INVITE/200OK avp value. So we need to set the AVP
+			 * again! I think this is a bug in the dialog module,
+			 * either it should ignore PRACK like it ignored ACK, or
+			 * the setting of the timeout value when returning to the
+			 * confiremed callback code should look for the new AVP
+			 * value, which is does not.
+			 */
+			DLOG("PRACK workaround applied!\n");
+			set_timeout_avp(msg, info->interval);
+		}
+	}
+	else if (msg->first_line.type == SIP_REPLY) {
+		if ((msg->first_line.u.reply.statuscode > 199 &&
+						msg->first_line.u.reply.statuscode < 300)) {
+			/*
+			 * To spec (RFC) the internal time out value so not be reset
+			 * until here.
+			 */
+			DLOG("Update by a REPLY %d %.*s\n", 
+					msg->first_line.u.reply.statuscode,
+					msg->first_line.u.reply.reason.len, 
+					msg->first_line.u.reply.reason.s);
+			if (parse_msg_for_sst_info(msg, &minfo)) {
+				// FIXME: need an error message here
+				return;
+			}
+			set_timeout_avp(msg, minfo.se);
+			info->interval = minfo.se;
+		}
 	}
 }
 
+/**
+ * This callback is called on any response message in the lifespan of
+ * the dialog. The callback is called just before the message is
+ * copied to pkg memory so it is still mutable.
+ *
+ * @param did - The dialog structure. The pointer is used as an ID.
+ * @param type - The reason for the callback. DLGCB_CONFIRMED
+ * @param msg - The SIP message that causes the callback.
+ * @param param - The sst information
+ */
+static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
+		struct sip_msg* msg, void** param) 
+{
+	/*
+	 * This test to see if the message is a response sould ALWAYS be
+	 * true. This callback should not get called for requests. But
+	 * lets be safe.
+	 */
+	if (msg->first_line.type == SIP_REPLY) {
+		sst_msg_info_t minfo = {0};
+		sst_info_t *info = (sst_info_t *)*param;
+
+		DLOG("Dialog seen REPLY %d %.*s\n", 
+				msg->first_line.u.reply.statuscode,
+				msg->first_line.u.reply.reason.len, 
+				msg->first_line.u.reply.reason.s);
+		/*
+		 * Need to check to see if it is a 422 response. If it is,
+		 * make sure our Min-SE: for this dialog is set at least as
+		 * large as in the Min-SE: in the reply 422 message. If not,
+		 * we will create an INVITE, 422 loop.
+		 */
+		if (msg->first_line.u.reply.statuscode == 422) {
+			if (parse_msg_for_sst_info(msg, &minfo)) {
+				ELOG("Could not prase sst information for thr 422 reply\n");
+				return;
+			}
+			/* Make sure we do not try to use anything smaller */
+			info->interval = MAX(info->interval, minfo.min_se);
+			return; /* There is nothing else to do with this */
+		}
+		/*
+		 * We need to get the method this reply is for from the CSEQ
+		 * body. The RFC states we can only play with 2XX from the
+		 * INVITE or reINVTE/UPDATE.
+		 */
+		if (!msg->cseq && ((parse_headers(msg, HDR_CSEQ_F, 0) == -1) || !msg->cseq)) {
+			ELOG("Error while parsing CSeq\n");
+			return;
+		}
+		
+		/* 2XX replies to INVITES only !*/
+		if (msg->first_line.u.reply.statuscode > 199 &&
+				msg->first_line.u.reply.statuscode < 300 &&
+				(get_cseq(msg)->method_id == METHOD_INVITE ||
+						get_cseq(msg)->method_id == METHOD_UPDATE)) {
+			if (parse_msg_for_sst_info(msg, &minfo)) {
+				ELOG("Could not parse sst information for the 2XX reply\n");
+				return;
+			}
+
+			if (minfo.se != 0) {
+				if (set_timeout_avp(msg, info->interval)) {
+					// FIXME: need an error message here
+					return;
+				}
+			}
+			else {
+				/* no se header found, we want to resquest it. */
+				if (info->requester == SST_PXY || info->supported == SST_UAC) {
+					char se_buf[80];
+					
+					DLOG("Appending the Session-Expires: header to the 2XX reply."
+							" UAC will deal with it.\n");
+					/*
+					 * GOOD! we can just insert the Session-Expires:
+					 * header and forward back to the UAC and it will
+					 * deal with refreshing the session.
+					 */
+					snprintf(se_buf, 80, "Session-Expires: %d;refresher=uac\r\n", 
+							info->interval);
+					if (append_header(msg, se_buf)) {
+						ELOG("Error appending Session-Expires header\n");
+						return;
+					}
+					/* Set the dialog timeout HERE */
+					if (set_timeout_avp(msg, info->interval)) {
+						return;
+					}
+				}
+				else {
+					/* We are sunk, uac did not request it, and it
+					 * does not support it */
+					DLOG("UAC and UAS do not support timers!"
+							" No session timers for this session.\n");
+				}
+			}
+		} /* End of 2XX for an INVITE */
+	} /* If the msg is a repsonse and not a request */
+}
 
 /**
- * The heart of the SST module. This function is called when a dialog
- * is created or when a diualog is updated (with an INVITE) to reset
- * the dialog expire timer to the new SST value.
- * 
- * @param msg - The SIP message that could cause a SST update.
- * @return 0 on sucess. none zero on failure.
+ * The sstCheckMin() script command handler. Return 1 (true) if the
+ * MIN-SE: of the message is too small compared to the sst_min_se
+ * value. This will allow the script to reply to this INVITE with a
+ * "422 Session Timer Too Small" response. if sst_min_se was never set
+ * the recommended value of 1800 seconds will be used.
+ *
+ * If the flag (str1) is set to 1, the 422 reply will be sent with the
+ * sst MIN_SE value in the header. If the flag is not set or is NULL,
+ * no reply is sent.
+
+ * @param msg  - The sip message from the script (INVITE only)
+ * @param flag - Reply mode Flag. 0/NULL do not send reply, 1 send 422
+ *               reply if Session-Expires is to small with the MIN-SE
+ *               header in the reply
+ * @param str2 - Not used.
+ *
+ * @return 1 if the MIN-SE is too small, -1 if it is OK, or It could
+ *         not be checked.
+ *
+ * NOTE: returning 0 == drop message, 1 == true, -1 == false in the
+ *       script.
  */
-static int sstUpdateSST(struct sip_msg *msg) 
+int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 {
-	int rtn = 0;
-	struct session_expires *se = NULL;
-	unsigned int min_se = 0;
-	xl_value_t xl_val;
-
-	if ((rtn = parse_session_expires(msg, se)) != parse_sst_success) {
-		if (rtn != parse_sst_header_not_found) {
-			LOG(L_ERR, "ERROR:sst:sstUpdateSST: Could not parse expire "
-					"message header on INVITE.\n");
-		}
-		return(-1);
-	}
-
-	if ((rtn = parse_min_se(msg, &min_se)) != parse_sst_success) {
-		if (rtn != parse_sst_header_not_found) {
-			LOG(L_ERR, "ERROR:sst:sstUpdateSST: Could not parse min_se "
-					"message header on INVITE.\n");
-		}
-		return(-2);
-	}
+	enum parse_sst_result result;
+	struct session_expires se = {0};
+	unsigned minse = 0;
 
 	/*
-	 * We have an expire. See if we are bound to the dialog module.
+	 * Only look in INVITES. We can't reply with a 422 to a 2xx reply
+	 * now can we. This check can ONLY be done on the INVITE/UPDATE.
 	 */
-	if (dlg_binds->register_dlgcb == NULL) {
-		LOG(L_ERR, "ERROR:sst:sstUpdateSST: Dialog bind registration "
-				"function pointer is NULL\n");
-		return(-3);
-	}
+	if (msg->first_line.type == SIP_REQUEST &&
+			msg->first_line.u.request.method_value == METHOD_INVITE) {
+		/*
+		 * First see if there is an Session-Expires: header.  If there
+		 * is, also look for a MIN-SE: header. If there is, use the
+		 * minimum value of the two to compare with srt1. All MUST not
+		 * be less then 90 and 1800 is recomended. See RCF section 4.
+		 */
+		if ((result = parse_session_expires(msg, &se)) != parse_sst_success) {
+			if (result != parse_sst_header_not_found) {
+				ELOG("error parsing Session-Expires headers.\n");
+				return 0; /* Error drop the message */
+			}
+			/* Session-Expires not supported/stated */
+			DLOG("No Session-Expires header "
+					"found. retuning false (-1)\n");
+			/*
+			 * NOTE: 0 == drop message, 1 == true, -1 == false
+			 */
+			return -1;
+		}
 
-#ifdef PROXY_MIN_SE_REWITE_ALLOWED
-	if (min_se < sst_minSE) {
-		/* Rewrite the min_se header */
-		LOG(L_ERR, "ERROR:sst:sstUpdateSST: NS-min_SE %d is less then "
-				"(<) configured minSE %d.\n", min_se, sst_minSE);
+		/*
+		 * We have a Session_expire header. Now look for the MIN-SE.
+		 */
+		if ((result = parse_min_se(msg, &minse)) != parse_sst_success) {
+			if (result != parse_sst_header_not_found) {
+				/*
+				 * This is an error. The header was found but could
+				 * not parse it.
+				 */
+				ELOG("Error parsing MIN-SE header.\n");
+				return -1; 
+			}
+			/*
+			 * If not stated, use the value from the session-expires
+			 * header
+			 */
+			DLOG("No MIN-SE header found.\n");
+			minse = se.interval;
+		}
+		
+		DLOG("Session-Expires: %d; MIN-SE: %d\n",
+				se.interval, minse);
+
+		/*
+		 * Now compare our MIN-SE with the messages and see if it is
+		 * too small. We will take the smaller of the messages
+		 * Session-expires and min-se if stated.
+		 */
+		if (sst_min_se < MIN(minse, se.interval)) {
+			/*
+			 * Too small. See if we need to send the 422 and are able
+			 * to send it.
+			 */
+			if (flag) {
+				char tmp[2]; /* to find the length */
+				int hdr_len = snprintf(tmp, 2, "%s %d", "MIN-SE:", sst_min_se);
+				char *minse_hdr = pkg_malloc(hdr_len+1);
+				memset(minse_hdr, 0, hdr_len+1);
+				snprintf(minse_hdr, hdr_len+1, "%s%d", "MIN-SE:", sst_min_se);
+				DLOG("Sending 422: %.*s\n",
+						hdr_len, minse_hdr);
+				if (send_response(msg, 422, "Session Timer Too Small",
+								minse_hdr, hdr_len)) {
+					ELOG("Error sending 422 reply.\n");
+				}
+				
+				if (minse_hdr) {
+					pkg_free(minse_hdr);
+				}
+			}
+			DLOG("Done returning true (1)\n");
+			return 1; /* return true */
+		}
 	}
-#endif /* PROXY_MIN_SE_REWITE_ALLOWED */
-	
+	DLOG("Done returning false (-1)\n");
 	/*
-	 * Set the dialog timeout value to expire $avp(id[N])
-	 * timeout_avp. We set the value here then when this callback
-	 * returns control to the dialog module it will update the dialog
-	 * timeout expire time to the value we just stored in the AVP.
+	 * All is good.
 	 */
-	if (timeout_avp && xl_get_spec_value(msg, timeout_avp, &xl_val, 0) == 0
-			&& xl_val.flags & XL_VAL_INT 
-			&& xl_val.ri > 0 ) {
-		/* We now hold a reference to the AVP int value */
-		DBG("DEBUG:sst:sstUpdateSST: Current timeout value is %d, setting "
-				"it to %d\n", xl_val.ri, se->interval);
-		xl_val.ri = (time(NULL) + se->interval);
-	} else {
-		LOG(L_ERR, "ERROR:sst:sstUpdateSST: No timeout AVP or could not "
-				"locate it. SST not reset.\n");
-		return(-4); /* do not setup the callbacks */
+	return -1; /* return false */
+}
+
+/**
+ * Send a reply (response) to the passed in SIP request messsage with
+ * the code and reason. If the header is not NULL (and header_len !=
+ * 0) the add the header to the reply message.
+ *
+ * @param request The SIP request message to build the reply from.
+ * @param code The response code. i.e 200
+ * @param reason The response reason. i.e. "OK"
+ * @param header the header block to add to the reply.
+ * @param header_len The length of the header block. (header)
+ *
+ * @return 0 on success, none-zero on an error.
+ */
+static int send_response(struct sip_msg *request, int code, char *reason,
+		char *header, int header_len) 
+{
+
+	if (sl_reply != 0) {
+		/* Add new headers if not null or zero length */
+		if ((header) && (header_len)) {
+			if (add_lump_rpl(request, header, header_len, LUMP_RPL_HDR) == 0) {
+				/* An error with adding the lump */
+				ELOG("unable to append header.\n");
+				return -1;
+			}
+		}
+		/* Now using the sl function, send the reply/response */
+		if (sl_reply(request, (char*)(long)code, reason) < 0) {
+			ELOG("Unable to sent reply.\n");
+			return -1;
+		}
+	}
+	else {
+		return -1;
 	}
 	return(0);
+}
+
+/**
+ * Given some header text, append it to the passed in message.
+ *
+ * @param msg The message to append the header text to.
+ * @param header The header text to append.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static int append_header(struct sip_msg *msg, const char *header)
+{
+	struct lump* anchor = NULL;
+	struct hdr_field *hf = NULL;
+	char *s = NULL;
+	int len = 0;
+
+	DLOG("Appending header: %s", header);
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		ELOG("Error while parsing headers in message.\n");
+		return(1);
+	}
+
+	if ((anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0)) == 0) {
+		ELOG("Error getting anchor to append header\n");
+		return(1);
+	}
+	len = strlen(header);
+	if ((s = (char *)pkg_malloc(len)) == 0) {
+		ELOG("No memory. (size requested = %d)\n", len);
+		return(1);
+	}
+	memcpy(s, header, len);
+	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
+		ELOG("Can't insert lump\n");
+		pkg_free(s);
+		return(1);
+	}
+	DLOG("Done appending header successfully.\n");
+	return(0);
+}
+
+/**
+ * Remove a header from a message if found.
+ *
+ * @param msg The message to look for the header to remove.
+ * @param header The header name: text.
+ *
+ * @return 0 if the header was not found, >0 is successful, -1 on an
+ *         error.
+ */
+static int remove_header(struct sip_msg *msg, const char *header)
+{
+	struct lump* anchor = NULL;
+	struct hdr_field *hf = NULL;
+	int cnt = 0;
+	int len = strlen(header);
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		ELOG("Error while parsing headers in message.\n");
+		return(-1);
+	}
+	
+	for (hf = msg->headers; hf; hf = hf->next) {
+		if (hf->name.len != len) {
+			continue;
+		}
+		if (strncasecmp(hf->name.s, header, hf->name.len) != 0) {
+			continue;
+		}
+
+		anchor = del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
+		if (anchor == 0) {
+			ELOG("no memory\n");
+			return -1;
+		}
+		cnt++;
+	}
+	return cnt;
+}
+
+/**
+ * Set the dialog's AVP value so the dialog module will use this value
+ * and not the default when erturning from the daialog callback.
+ *
+ * @param msg The current message to bind the AVP to.
+ * @param value The value you want to set the AVP to.
+ *
+ * @return 0 on success, -1 on an error.
+ */
+static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
+{
+	int rtn = -1; /* assume failure */
+	xl_value_t xl_val;
+	
+	/* Set the dialog timeout HERE */
+	if (timeout_avp) {
+		int result = 0;
+		if ((result = xl_get_spec_value(msg, timeout_avp, &xl_val, 0)) == 0) {
+			if (xl_val.flags & XL_VAL_INT) {
+				/* We now hold a reference to the AVP int value */
+				DLOG("Found current timeout value is %d, setting it to %d\n",
+						xl_val.ri, value);
+				xl_val.ri = value;
+				rtn = 0;
+			}
+			else {
+				/* Never set so it was never added */
+				if (xl_val.flags == XL_VAL_NULL) {
+					int_str avp_name;
+					int_str avp_value;
+					unsigned short name_type = 0;
+
+					memset(&avp_value, 0, sizeof(int_str));
+					memset(&avp_name, 0, sizeof(int_str));
+
+					xl_get_avp_name(msg, timeout_avp, &avp_name, &name_type);
+					avp_value.n = value;
+					add_avp(name_type, avp_name, avp_value);
+					DLOG("Added the avp and set the value to %d\n", value);
+					rtn = 0;
+				}
+				else {
+					ELOG("AVP wrong type %d. Not an integer.\n", xl_val.flags);
+				}
+			}
+		}
+		else {
+			ELOG("SST not reset. get avp result is %d\n", result);
+		}
+	}
+	else {
+		ELOG("SST needs to know the name of the dialog timeout AVP!\n");
+	}
+	return(rtn);
+}
+
+/**
+ * Gether the message information about SST from the current message
+ * being processed.
+ *
+ * @param msg The current message to parse.
+ * @param minfo The SST information found in the message.
+ *
+ * @return 0 on success, -1 on a parsing error.
+ */
+static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
+{
+	int rtn = 0;
+	struct session_expires se = {0};
+
+	if (!msg || !minfo) {
+		return (-1);
+	}
+	
+	/* 
+	 * parse the supported infor
+	 */
+	minfo->supported = 0; /*Clear it */
+	minfo->se = 0;
+	minfo->refresher = sst_refresher_unspecified;
+	minfo->min_se = 0;
+
+	/*
+	 * The parse_supported() will return 0 if found and parsed OK, -1
+	 * if not found or an error parsing the one it did find! So assume
+	 * it is not found if unsuccessfull.
+	 */
+	if ((rtn = parse_supported(msg)) == 0) {
+		if ((((struct supported_body*)msg->supported->parsed)->supported_all
+						& F_SUPPORTED_TIMER)) {
+			minfo->supported = 1;
+		}
+	}
+	/*
+	 * Parse the Min-SE: header next.
+	 */
+	minfo->min_se = 0;
+	if ((rtn = parse_min_se(msg, &minfo->min_se)) != parse_sst_success) {
+		minfo->min_se = 0; /* Make sure it statys clean */
+	}
+	minfo->se = 0;
+	if ((rtn = parse_session_expires(msg, &se)) == parse_sst_success) {
+		minfo->se = se.interval;
+		minfo->refresher = se.refresher;
+	}
+	return(0);
+}
+
+/**
+ * Add the Min-SE: header and send a reply 422.
+ *
+ * @param msg The message to opperate on.
+ * @param min_se The Min-SE: value to use in the heaader.
+ *
+ * @return 0 on success, -1 on error.
+ */
+static int send_reject(struct sip_msg *msg, unsigned int min_se) 
+{
+	char tmp[2]; /* to find the length */
+	int hdr_len = 0;
+	char *minse_hdr = NULL;
+
+	hdr_len = snprintf(tmp, 2, "%s %d", "MIN-SE:", min_se);
+	if ((minse_hdr = pkg_malloc(hdr_len+1)) != NULL) {
+		memset(minse_hdr, 0, hdr_len+1);
+		snprintf(minse_hdr, hdr_len+1, "%s %d", "MIN-SE:", min_se);
+		if (send_response(msg, 422, "Session Timer Too Small",
+						minse_hdr, hdr_len)) {
+			ELOG("Error sending 422 reply.\n");
+			return(-1);
+		}
+		pkg_free(minse_hdr);
+		DLOG("Send reject reply 422 with Min-SE: %d\n", min_se);
+		return(0);
+	}
+	return(-1);
+}
+
+/**
+ * A helper function to setup all the callbacks from the dialog module
+ * after we find intrest in the dialog.
+ *
+ * @param did The Dialog ID.
+ * @param info The sst information.
+ *
+ */
+static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
+{
+	/*
+	 * Register for the other callbacks from the dialog.
+	 */
+
+#ifdef USE_CONFIRM_CALLBACK
+	DLOG("Adding callback "
+			"DLGCB_CONFIRMED\n");
+	dlg_binds->register_dlgcb(did,
+			DLGCB_CONFIRMED, sst_dialog_confirmed_CB, info);
+#endif /* USE_CONFIRM_CALLBACK */
+
+	DLOG("Adding callback "
+			"DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED\n");
+	dlg_binds->register_dlgcb(did,
+			DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED,
+			sst_dialog_terminate_CB, info);
+	DLOG("Adding callback DLGCB_REQ_WITHIN\n");
+	/* This is for the reINVITE/UPDATE requests */
+	dlg_binds->register_dlgcb(did, DLGCB_REQ_WITHIN,
+			sst_dialog_request_within_CB, info);
+	/* 
+	 * This is for the final configuration of who will do SST for
+	 * us. In the DLGCB_CONFIRMED callback the message is
+	 * immutable! we must do all the real work in the DLGCB_FRD
+	 * callback were we can change the message.
+	 */
+	DLOG("Adding callback DLGCB_RESPONSE_FWDED\n");
+	dlg_binds->register_dlgcb(did, DLGCB_RESPONSE_FWDED,
+			sst_dialog_response_fwded_CB, info);
 }
