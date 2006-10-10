@@ -249,9 +249,6 @@ void sst_handler_init(xl_spec_t *timeout_avp_p, unsigned int min_se,
 void sst_dialog_created_CB(struct dlg_cell *did, int type,
 		struct sip_msg* msg, void** param)
 {
-	int rtn = 0;
-	struct session_expires se = {0};
-	unsigned int min_se = 0;
 	sst_info_t *info = NULL;
 	sst_msg_info_t minfo = {0};
 
@@ -393,7 +390,7 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 			/* In the case of expired, the msg is pointing at a
 			 * FAKED_REPLY (-1)
 			 */
-			ELOG("Terminating session.\n", did);
+			ELOG("Terminating session.\n");
 			break;
 		default: /* Normal termination. */
 			DLOG("Terminating DID %p session\n",
@@ -431,8 +428,6 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 		struct sip_msg* msg, void** param)
 {
-	int rtn = 0;
-	struct session_expires se = {0};
 	sst_info_t *info = (sst_info_t *)*param;
 	sst_msg_info_t minfo = {0};
 
@@ -754,7 +749,6 @@ static int send_response(struct sip_msg *request, int code, char *reason,
 static int append_header(struct sip_msg *msg, const char *header)
 {
 	struct lump* anchor = NULL;
-	struct hdr_field *hf = NULL;
 	char *s = NULL;
 	int len = 0;
 
