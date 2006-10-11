@@ -118,19 +118,22 @@ li p {
 }
 
 .note {
-    border: 1px solid #ddd;
-    padding: 15px;
-    padding-left: 70px;
-	/*
+    border: 1px solid #ccc;
+    padding: 10px;
+    padding-left: 20px;
+/*
     background-image: url(&quot;images/note.png&quot;);
     background-position: 10px 15px;
     background-repeat: no-repeat;
-	*/
+*/
 }
-.note h3 {
-    padding: 0px 0px 10px 0px;
-    margin: 0px;
-    color: black;
+.note h3.title {
+    border: 1px solid #ccc;
+    background-color: #ddd;
+    padding: 3px;
+    padding-left: 10px;
+    margin: 5px;
+    font-size: 14px;
 }
 
 .important {
@@ -169,7 +172,6 @@ li p {
 	background-color: #D5D0D2;
 	font-size: 18px;
 	padding: 5px;
-	margin: 40px 40px 40px 40px;
 	display: block;
 	border: 1px solid black;
 }
@@ -178,8 +180,7 @@ li p {
     background-color: #f5f5f5;
     font-size: 10px;    
     padding: 5px;
-    margin: 40px 40px 40px 40px;
-    display: block;
+    display: none;
 }
 
 .varname {
