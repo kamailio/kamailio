@@ -75,7 +75,9 @@ void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
  *          cancel_bm - bitmap with the branches that are supposed to be 
  *                       canceled 
  *          flags     - how_to_cancel flags, see cancel_branch()
- * returns: bitmap with the still active branches (on fr timer) */
+ * returns: bitmap with the still active branches (on fr timer)
+ * WARNING: always fill cancel_bm using which_cancel(), supplying values
+ *          in any other way is a bug*/
 int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
 {
 	int i;
@@ -242,7 +244,7 @@ void rpc_cancel(rpc_t* rpc, void* c)
 	i=cancel_uacs(trans, cancel_bm, 0); /* don't fake 487s, 
 										 just wait for timeout */
 	
-	     /* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
+	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
 	UNREF(trans);
 	j=0;
 	while(i){

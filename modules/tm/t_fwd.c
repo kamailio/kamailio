@@ -58,6 +58,9 @@
  *               failure_route and replying to a cancel (andrei)
  *  2006-10-10  e2e_cancel update for the new/modified 
  *               which_cancel()/should_cancel() (andrei)
+ *  2006-10-11  don't fork a new branch if the transaction or branch was
+ *               canceled, or a 6xx was received
+ *              stop retr. timers fix on cancel for non-invites     (andrei)
  */
 
 #include "defs.h"
@@ -361,11 +364,20 @@ int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg,
 	int ret;
 	
 	ret=-1;
-	if (use_dns_failover && dns_srv_handle_next(&old_uac->dns_h, 0)){
+	if (use_dns_failover && 
+			!((t->flags & T_DONT_FORK) || uac_dont_fork(old_uac)) &&
+			dns_srv_handle_next(&old_uac->dns_h, 0)){
 			if (lock_replies){
 				/* use reply lock to guarantee nobody is adding a branch
 				 * in the same time */
 				LOCK_REPLIES(t);
+				/* check again that we can fork */
+				if ((t->flags & T_DONT_FORK) || uac_dont_fork(old_uac)){
+					UNLOCK_REPLIES(t);
+					DBG("add_uac_dns_fallback: no forking on => no new"
+							" branches\n");
+					return ret;
+				}
 			}
 			if (t->nr_of_outgoings >= MAX_BRANCHES){
 				LOG(L_ERR, "ERROR: add_uac_dns_fallback: maximum number of "
@@ -493,8 +505,10 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		if (cancel_bm & (1 << i)) {
 			if (t_invite->uac[i].last_received>=100){
 				/* Provisional reply received on this branch, send CANCEL */
-				/* No need to stop timers as they have already been stopped 
-				 * by the reply */
+				/* we do need to stop the retr. timers if the request is not 
+				 * an invite and since the stop_rb_retr() cost is lower then
+				 * the invite check we do it always --andrei */
+				stop_rb_retr(&t_invite->uac[i].request);
 				if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
 					LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
 				}

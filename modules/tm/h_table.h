@@ -111,6 +111,10 @@ enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8 };
 #define F_RB_REPLIED	0x20 /* reply received */
 
 
+/* if canceled or intended to be canceled, return true */
+#define uac_dont_fork(uac)	((uac)->local_cancel.buffer)
+
+
 typedef struct retr_buf
 {
 	short activ_type;
@@ -191,10 +195,14 @@ struct totag_elem {
 /* transaction canceled */
 #define T_CANCELED           (1<<3)
 /* 6xx received => stop forking */
-#define T_6xx                (1<<4) 
+#define T_6xx            (1<<4) 
 
 #define T_IN_AGONY (1<<5) /* set if waiting to die (delete timer)
                              TODO: replace it with del on unref */
+
+#define T_DONT_FORK   (T_CANCELED|T_6xx)
+
+
 
 /* transaction context */
 
