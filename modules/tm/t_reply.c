@@ -74,6 +74,8 @@
  * 2006-10-05  better final reply selection: t_pick_branch will prefer 6xx,
  *              if no 6xx reply => lowest class/code; if class==4xx =>
  *              prefer 401, 407, 415, 420 and 484   (andrei)
+ * 2006-10-12  dns failover when a 503 is received
+*              replace a 503 final relayed reply by a 500 (andrei)
  *
  */
 
@@ -1213,13 +1215,25 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 		} else {
 			relayed_code=relayed_msg->REPLY_STATUS;
-			buf = build_res_buf_from_sip_res( relayed_msg, &res_len );
-			/* if we build a message from shmem, we need to remove
-			   via delete lumps which are now stirred in the shmem-ed
-			   structure
-			*/
-			if (branch!=relay) {
-				free_via_clen_lump(&relayed_msg->add_rm);
+			if (relayed_code==503){
+				/* replace a final 503 with a 500:
+				 * generate a "FAKE" reply and a new to_tag (for easier
+				 *  debugging)*/
+				relayed_msg=FAKED_REPLY;
+				calc_crc_suffix( t->uas.request, tm_tag_suffix );
+				/* don't relay a 503, replace it w/ 500 (rfc3261) */
+				buf=build_res_buf_from_sip_req(500, error_text(relayed_code),
+								&tm_tag, t->uas.request, &res_len, &bm);
+				relayed_code=500;
+			}else{
+				buf = build_res_buf_from_sip_res( relayed_msg, &res_len );
+				/* if we build a message from shmem, we need to remove
+				   via delete lumps which are now stirred in the shmem-ed
+				   structure
+				*/
+				if (branch!=relay) {
+					free_via_clen_lump(&relayed_msg->add_rm);
+				}
 			}
 		}
 		update_reply_stats( relayed_code );
@@ -1407,6 +1421,10 @@ int reply_received( struct sip_msg  *p_msg )
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
 	avp_list_t* backup_uri_from, *backup_uri_to;
+#ifdef USE_DNS_FAILOVER
+	int branch_ret;
+	int prev_branch;
+#endif
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -1497,6 +1515,24 @@ int reply_received( struct sip_msg  *p_msg )
 		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 	}
+#ifdef USE_DNS_FAILOVER
+		/* if this is a 503 reply, the destination resolves to more ips, and
+		 *  it still hasn't passed more than fr_inv_timeout since we
+		 *  started, add another branch/uac
+		 *  this code is out of LOCK_REPLIES() to minimize the time the
+		 *  reply lock is held (the lock won't be held while sending the
+		 *   message)*/
+		if (use_dns_failover && (msg_status==503) &&
+				((get_ticks_raw()-(uac->request.fr_expire-t->fr_timeout)) <
+				 	t->fr_inv_timeout)){
+			branch_ret=add_uac_dns_fallback(t, t->uas.request, uac, 1);
+			prev_branch=-1;
+			while((branch_ret>=0) &&(branch_ret!=prev_branch)){
+				prev_branch=branch_ret;
+				branch_ret=t_send_branch(t, branch_ret, t->uas.request , 0, 1);
+			}
+		}
+#endif
 	LOCK_REPLIES( t );
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_bitmap );

@@ -147,7 +147,7 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 	if (rpc->add(c, "{", &st) < 0) return;
 
 	rpc->struct_add(st, "dd", "current", current, "waiting", waiting);
-	rpc->struct_add(st, "dd", "waiting", waiting, "total", total);
+	rpc->struct_add(st, "d", "total", total);
 	rpc->struct_add(st, "d", "total_local", total_local);
 	rpc->struct_add(st, "d", "replied_localy", tm_stats->replied_localy);
 	rpc->struct_add(st, "ddddd", 
