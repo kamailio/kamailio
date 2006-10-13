@@ -53,7 +53,7 @@ static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
 static int fixup_sl_send_reply(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy();
-
+extern int totag_avpid;
 /* module parameter */
 int sl_enable_stats = 1;
 
@@ -81,6 +81,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t mod_params[]={
 	{ "enable_stats",  INT_PARAM, &sl_enable_stats },
+	{ "totag_avpid",   INT_PARAM, &totag_avpid     },
 	{ 0,0,0 }
 };
 

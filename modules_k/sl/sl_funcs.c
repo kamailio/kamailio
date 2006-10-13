@@ -55,8 +55,8 @@
 #include "sl.h"
 #include "sl_funcs.h"
 #include "sl_cb.h"
-
-
+#include "../../usr_avp.h"
+#include <string.h>
 /* to-tag including pre-calculated and fixed part */
 static char           sl_tag_buf[TOTAG_VALUE_LEN];
 static str            sl_tag = {sl_tag_buf,TOTAG_VALUE_LEN};
@@ -65,7 +65,8 @@ static char           *tag_suffix;
 /* if we for this time did not send any stateless reply,
    we do not filter */
 static unsigned int  *sl_timeout;
-
+/*var used for avp name exported*/
+int totag_avpid=0;
 
 int sl_startup()
 {
@@ -99,6 +100,8 @@ int sl_shutdown()
 
 int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 {
+	int_str avp_name,avp_value;
+	struct usr_avp *tavp = 0;
 	str buf;
 	union sockaddr_union to;
 	char *dset;
@@ -134,9 +137,25 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 		(msg->to || (parse_headers(msg,HDR_TO_F, 0)!=-1 && msg->to))
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
-		calc_crc_suffix( msg, tag_suffix );
-		buf.s = build_res_buf_from_sip_req( code, text, &sl_tag, msg,
-			(unsigned int*)&buf.len, &dummy_bm);
+
+		if(totag_avpid>0) {
+			avp_name.n=totag_avpid;
+			tavp = search_first_avp(0,avp_name,&avp_value,NULL);
+			if(tavp!=0 && is_avp_str_val(tavp))
+			{
+				DBG("DEBUG:sl_send_reply: constructing message with to_tag"
+						" from avp [%.*s/%d]\n",
+					avp_value.s.len, avp_value.s.s, avp_value.s.len);
+				buf.s = build_res_buf_from_sip_req( code, text, &avp_value.s,
+						msg, (unsigned int*)&buf.len, &dummy_bm);
+			}
+		}
+		if(tavp==0)	{
+			DBG("DEBUG:sl_send_reply: can't find avp\n");
+			calc_crc_suffix( msg, tag_suffix );
+			buf.s = build_res_buf_from_sip_req( code, text, &sl_tag, msg,
+				(unsigned int*)&buf.len, &dummy_bm);
+		}
 	} else {
 		buf.s = build_res_buf_from_sip_req( code, text, 0, msg,
 			(unsigned int*)&buf.len, &dummy_bm);

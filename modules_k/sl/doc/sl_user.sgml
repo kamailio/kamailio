@@ -97,6 +97,21 @@ modparam("sl", "enable_stats", 0)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>totag_avpid</varname> (integer)</title>
+		<para>
+		The ID of AVP storing the To tag to be used in replies.
+		</para>
+		<para>
+		Default value is 0 (do not search for AVP).
+		</para>
+		<example>
+		<title>totag_avpid example</title>
+		<programlisting format="linespecific">
+modparam("sl", "totag_avpid", 25)
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
