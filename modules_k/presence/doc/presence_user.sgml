@@ -1,0 +1,305 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The modules implements a presence server. It handles PUBLISH and
+		SUBSCRIBE messages and generates NOTIFY messages. It offeres 
+		support for agregation of published presence information for the same
+		presentity using more divices. It can also filter the 
+		information provided to watchers according to privacy rules.
+	</para>
+	<para>
+	The modules works with database storage. It stores published information and 
+	Subscribe -Notify dialog characteristics. There is also an extra table
+	which stores xcap documents with permission rules. 
+	</para>
+	<para>
+	The server follows the specifications in: RFC3256, RFC3856, RFC3857.
+	</para>
+	</section>
+
+	<section>
+	<title>To-do</title>
+		<para>
+		Provide support for clients which implement 
+		end-to-end presence. 
+		</para>
+	</section>
+	
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>mysql</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname>(str)</title>
+		<para>
+		The database url.
+		</para>
+		<para>
+		<emphasis>	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "db_url", 
+	"mysql://openser:openserrw@192.168.2.132/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>clean_period</varname> (str)</title>
+		<para>
+		The period at which to verify if there are expired messages stored in
+		database.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>clean_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "clean_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>to_tag_pref</varname> (str)</title>
+		<para>
+		The prefix used when generating to_tag when sending replies for
+		SUBSCRIBE requests.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>to_tag_pref</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "to_tag_pref", 'a')
+...
+	</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>totag_avpid</varname> (int)</title>
+		<para>
+		The id of the avp variable used for storing to_tag value.
+		It must be the same as for sl module parameter.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>totag_avpid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "totag_avpid", 987)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>lock_set_size</varname> (str)</title>
+		<para>
+		The size of the lock used for synchronizing updating information from database.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>lock_set_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "lock_set_size", 8)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>expires_offset</varname> (str)</title>
+		<para>
+		The value that should be substracted from the expires value when
+		sending a 200OK for a publish to force the client cu send an update
+		before the old publish expires
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expires_offset</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "expires_offset", 10)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>force_active</varname> (str)</title>
+		<para>
+		This parameter offers the possibility to set either the first Notify
+		sent for a new subscribe should have the Subscribtions-State value
+		'pending' or 'active'. If it is different than 0, 
+		the Subscribtion-State value is 'active'.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>force_active</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "force_active", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>max_expires</varname> (str)</title>
+		<para>
+		The value at which to reduce the validity of PUBLISH/SUBSCRIBE 
+		if the Expires in request is greater.	
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "max_expires", 3600)
+...
+		</programlisting>
+		</example>
+	</section>
+
+
+</section>
+
+<section>
+	<title>Exported Functions</title>
+		<section>
+				<title>
+				<function moreinfo="none">handle_publish()</function>
+				</title>
+			<para>
+				The function handles PUBLISH requests. It stores and updates presence
+				information in database and calls functions to send NOTIFY messages 
+				when changes in presence information occur.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
+		<example>
+		<title><function>handle_publish</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(method=="PUBLISH")
+    handle_publish();
+...
+</programlisting>
+		</example>
+
+		</section>
+		
+		<section>
+			<title>
+			<function moreinfo="none">handle_subscribe()</function>
+			</title>
+			<para>
+			The function which handles SUBSCRIBE requests. It stores or updates 
+			information in database and calls functions to send Notify messages 
+			when a Subscribe which initiate a dialog is received
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
+		<example>
+		<title><function>handle_subscribe</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(method=="SUBSCRIBE")
+    handle_subscribe();
+...
+</programlisting>
+		</example>
+		</section>	
+</section>		
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("publish.sgml" "Book" "chapter")
+End:
+-->
+

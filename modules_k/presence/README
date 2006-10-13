@@ -1,0 +1,264 @@
+
+Presence Module
+
+Anca-Maria Vamanu
+
+   voice-system.ro
+
+Edited by
+
+Anca-Maria Vamanu
+
+   Copyright © 2006 voice-system.ro
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. To-do
+        1.3. Dependencies
+
+              1.3.1. OpenSER Modules
+              1.3.2. External Libraries or Applications
+
+        1.4. Exported Parameters
+
+              1.4.1. db_url(str)
+              1.4.2. clean_period (str)
+              1.4.3. to_tag_pref (str)
+              1.4.4. totag_avpid (int)
+              1.4.5. lock_set_size (str)
+              1.4.6. expires_offset (str)
+              1.4.7. force_active (str)
+              1.4.8. max_expires (str)
+
+        1.5. Exported Functions
+
+              1.5.1. handle_publish()
+              1.5.2. handle_subscribe()
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set db_url parameter
+   1-2. Set clean_period parameter
+   1-3. Set to_tag_pref parameter
+   1-4. Set totag_avpid parameter
+   1-5. Set lock_set_size parameter
+   1-6. Set expires_offset parameter
+   1-7. Set force_active parameter
+   1-8. Set max_expires parameter
+   1-9. handle_publish usage
+   1-10. handle_subscribe usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   The modules implements a presence server. It handles PUBLISH
+   and SUBSCRIBE messages and generates NOTIFY messages. It
+   offeres support for agregation of published presence
+   information for the same presentity using more divices. It can
+   also filter the information provided to watchers according to
+   privacy rules.
+
+   The modules works with database storage. It stores published
+   information and Subscribe -Notify dialog characteristics.
+   There is also an extra table which stores xcap documents with
+   permission rules.
+
+   The server follows the specifications in: RFC3256, RFC3856,
+   RFC3857.
+     _________________________________________________________
+
+1.2. To-do
+
+   Provide support for clients which implement end-to-end
+   presence.
+     _________________________________________________________
+
+1.3. Dependencies
+
+1.3.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * mysql.
+     * sl.
+     * tm.
+     _________________________________________________________
+
+1.3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * libxml.
+     _________________________________________________________
+
+1.4. Exported Parameters
+
+1.4.1. db_url(str)
+
+   The database url.
+
+   Example 1-1. Set db_url parameter
+...
+modparam("presence", "db_url",
+        "mysql://openser:openserrw@192.168.2.132/openser")
+...
+     _________________________________________________________
+
+1.4.2. clean_period (str)
+
+   The period at which to verify if there are expired messages
+   stored in database.
+
+   Example 1-2. Set clean_period parameter
+...
+modparam("presence", "clean_period", 100)
+...
+     _________________________________________________________
+
+1.4.3. to_tag_pref (str)
+
+   The prefix used when generating to_tag when sending replies
+   for SUBSCRIBE requests.
+
+   Example 1-3. Set to_tag_pref parameter
+...
+modparam("presence", "to_tag_pref", 'a')
+...
+     _________________________________________________________
+
+1.4.4. totag_avpid (int)
+
+   The id of the avp variable used for storing to_tag value. It
+   must be the same as for sl module parameter.
+
+   Example 1-4. Set totag_avpid parameter
+...
+modparam("presence", "totag_avpid", 987)
+...
+     _________________________________________________________
+
+1.4.5. lock_set_size (str)
+
+   The size of the lock used for synchronizing updating
+   information from database.
+
+   Example 1-5. Set lock_set_size parameter
+...
+modparam("presence", "lock_set_size", 8)
+...
+     _________________________________________________________
+
+1.4.6. expires_offset (str)
+
+   The value that should be substracted from the expires value
+   when sending a 200OK for a publish to force the client cu send
+   an update before the old publish expires
+
+   Example 1-6. Set expires_offset parameter
+...
+modparam("presence", "expires_offset", 10)
+...
+     _________________________________________________________
+
+1.4.7. force_active (str)
+
+   This parameter offers the possibility to set either the first
+   Notify sent for a new subscribe should have the
+   Subscribtions-State value 'pending' or 'active'. If it is
+   different than 0, the Subscribtion-State value is 'active'.
+
+   Example 1-7. Set force_active parameter
+...
+modparam("presence", "force_active", 1)
+...
+     _________________________________________________________
+
+1.4.8. max_expires (str)
+
+   The value at which to reduce the validity of PUBLISH/SUBSCRIBE
+   if the Expires in request is greater.
+
+   Example 1-8. Set max_expires parameter
+...
+modparam("presence", "max_expires", 3600)
+...
+     _________________________________________________________
+
+1.5. Exported Functions
+
+1.5.1. handle_publish()
+
+   The function handles PUBLISH requests. It stores and updates
+   presence information in database and calls functions to send
+   NOTIFY messages when changes in presence information occur.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-9. handle_publish usage
+...
+if(method=="PUBLISH")
+    handle_publish();
+...
+     _________________________________________________________
+
+1.5.2. handle_subscribe()
+
+   The function which handles SUBSCRIBE requests. It stores or
+   updates information in database and calls functions to send
+   Notify messages when a Subscribe which initiate a dialog is
+   received
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-10. handle_subscribe usage
+...
+if(method=="SUBSCRIBE")
+    handle_subscribe();
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://sourceforge.net/tracker/?group_id=139143.
