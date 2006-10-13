@@ -62,6 +62,8 @@
  *               of them might use it "unset" (andrei)
  *  2005-07-25  use sigaction for setting the signal handlers (andrei)
  *  2006-07-13  added dns cache/failover init. (andrei)
+ *  2006-10-13  added global variables stun_refresh_interval, stun_allow_stun
+ *              and stun_allow_fp (vlada)
  */
 
 
@@ -351,6 +353,15 @@ struct socket_info* sendipv6_tls;
 unsigned short port_no=0; /* default port*/
 #ifdef USE_TLS
 unsigned short tls_port_no=0; /* default port */
+#endif
+
+#ifdef USE_STUN
+/* refresh interval in miliseconds */
+unsigned int stun_refresh_interval=0;
+/* stun can be switch off even if it is compiled */
+int stun_allow_stun=1;
+/* use or don't use fingerprint */
+int stun_allow_fp=1;
 #endif
 
 struct host_alias* aliases=0; /* name aliases list */

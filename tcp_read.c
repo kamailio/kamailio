@@ -35,6 +35,7 @@
  * 2003-07-04  fixed tcp EOF handling (possible infinite loop) (andrei)
  * 2005-07-05  migrated to the new io_wait code (andrei)
  * 2006-02-03  use tsend_stream instead of send_all (andrei)
+ * 2006-10-13  added STUN support - state machine for TCP (vlada)
  */
 
 #ifdef USE_TCP
@@ -68,6 +69,13 @@
 #include "io_wait.h"
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
 #include "tsend.h"
+
+#ifdef USE_STUN
+#include "ser_stun.h"
+
+int is_msg_complete(struct tcp_req* r);
+
+#endif /* USE_STUN */
 
 /* types used in io_wait* */
 enum fd_types { F_NONE, F_TCPMAIN, F_TCPCONN };
@@ -137,6 +145,11 @@ int tcp_read_headers(struct tcp_connection *c)
 	int bytes, remaining;
 	char *p;
 	struct tcp_req* r;
+	
+#ifdef USE_STUN
+	unsigned int mc;   /* magic cookie */
+	unsigned short body_len;
+#endif
 	
 	#define crlf_default_skip_case \
 					case '\n': \
@@ -296,11 +309,98 @@ int tcp_read_headers(struct tcp_connection *c)
 						r->start=p;
 						break;
 					default:
+#ifdef USE_STUN
+						/* STUN support can be switched off even if it's compiled */
+						/* stun test */						
+						if (stun_allow_stun && (unsigned char)*p == 0x00) {
+							r->state=H_STUN_MSG;
+						/* body will used as pointer to the last used byte */
+							r->body=p;
+							body_len = 0;
+							DBG("stun msg detected\n");
+						}else
+#endif
 						r->state=H_SKIP;
 						r->start=p;
 				};
 				p++;
 				break;
+#ifdef USE_STUN
+			case H_STUN_MSG:
+				if ((r->pos - r->body) >= sizeof(struct stun_hdr)) {
+					r->content_len = 0;
+					/* copy second short from buffer where should be body 
+					 * length 
+					 */
+					memcpy(&body_len, &r->start[sizeof(unsigned short)], 
+						sizeof(unsigned short));
+					
+					body_len = ntohs(r->content_len);
+					
+					/* check if there is valid magic cookie */
+					memcpy(&mc, &r->start[sizeof(unsigned int)], 
+						sizeof(unsigned int));
+					mc = ntohl(mc);
+					/* using has_content_len as a flag if there should be
+					 * fingerprint or no
+					 */
+					r->has_content_len = (mc == MAGIC_COOKIE) ? 1 : 0;
+					
+					r->body += sizeof(struct stun_hdr);
+					p = r->body; 
+					
+					if (body_len > 0) {
+						r->state = H_STUN_READ_BODY;
+					}
+					else {
+						if (is_msg_complete(r) != 0) {
+							goto skip;
+						}
+						else {
+							/* set content_len to length of fingerprint */
+							body_len = sizeof(struct stun_attr) + 
+									   SHA_DIGEST_LENGTH;
+						}
+					}
+				}
+				else {
+					p = r->pos; 
+				}
+				break;
+				
+			case H_STUN_READ_BODY:
+				/* check if the whole body was read */
+				if ((r->pos - r->body) >= body_len) {
+					r->body += body_len;
+					p = r->body;
+					if (is_msg_complete(r) != 0) {
+						goto skip;
+					}
+					else {
+						/* set content_len to length of fingerprint */
+						body_len = sizeof(struct stun_attr)+SHA_DIGEST_LENGTH;
+					}
+				}
+				else {
+					p = r->pos;
+				}
+				break;
+				
+			case H_STUN_FP:
+				/* content_len contains length of fingerprint in this place! */
+				if ((r->pos - r->body) >= body_len) {
+					r->body += body_len;
+					p = r->body;
+					r->state = H_STUN_END;
+					r->complete = 1;
+					r->has_content_len = 1; /* hack to avoid error check */
+					goto skip;
+				}
+				else {
+					p = r->pos;
+				}
+				break;
+#endif /* USE_STUN */
 			change_state_case(H_CONT_LEN1,  'O', 'o', H_CONT_LEN2);
 			change_state_case(H_CONT_LEN2,  'N', 'n', H_CONT_LEN3);
 			change_state_case(H_CONT_LEN3,  'T', 't', H_CONT_LEN4);
@@ -408,6 +508,7 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read)
 	struct tcp_req* req;
 	int s;
 	char c;
+	int ret;
 		
 		bytes=-1;
 		total_bytes=0;
@@ -505,7 +606,16 @@ again:
 							   previous char, req->parsed should be ok
 							   because we always alloc BUF_SIZE+1 */
 			*req->parsed=0;
-			if (receive_msg(req->start, req->parsed-req->start, &con->rcv)<0){
+#ifdef USE_STUN
+			if (req->state==H_STUN_END){
+				/* stun request */
+				ret = stun_process_msg(req->start, req->parsed-req->start,
+									 &con->rcv);
+			}else
+#endif
+				ret = receive_msg(req->start, req->parsed-req->start, &con->rcv);
+				
+			if (ret < 0) {
 				*req->parsed=c;
 				resp=CONN_ERROR;
 				goto end_req;
@@ -924,5 +1034,22 @@ error:
 }
 
 #endif /* DEBUG_TCP_RECEIVE */
+
+#ifdef USE_STUN
+int is_msg_complete(struct tcp_req* r)
+{
+	if (r->has_content_len == 1) {
+		r->state = H_STUN_FP;
+		return 0;
+	}
+	else {
+		/* STUN message is complete */
+		r->state = H_STUN_END;
+		r->complete = 1;
+		r->has_content_len = 1; /* hack to avoid error check */
+		return 1;
+	}
+}
+#endif
 
 #endif /* USE_TCP */

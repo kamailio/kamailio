@@ -351,6 +351,8 @@ endif
 # -DPROFILING
 #		if enabled profiling will be enabled for child processes
 #		Don't forget to set PROFILE (see below)
+# -DUSE_STUN
+#		compiles in stun support
 
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
@@ -392,6 +394,10 @@ DEFS+= $(extra_defs) \
 
 ifneq ($(TLS),)
 	DEFS+= -DUSE_TLS
+endif
+
+ifneq ($(STUN),)
+	DEFS+= -DUSE_STUN
 endif
 
 ifeq ($(mode),)
@@ -1386,6 +1392,11 @@ endif
 ifneq ($(TLS),)
 DEFS+= -I$(LOCALBASE)/ssl/include
 LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
+endif
+
+ifneq ($(STUN),)
+DEFS+= -I$(LOCALBASE)/ssl/include
+LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lcrypto
 endif
 
 ifneq ($(found_lock_method), yes)

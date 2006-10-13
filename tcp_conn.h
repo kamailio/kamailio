@@ -30,6 +30,7 @@
  *  2003-01-29  tcp buffer size ++-ed to allow for 0-terminator
  *  2003-06-30  added tcp_connection flags & state (andrei) 
  *  2003-10-27  tcp port aliases support added (andrei)
+ *  2006-10-13  added tcp_req_states for STUN (vlada)
  */
 
 
@@ -67,7 +68,8 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN1, H_CONT_LEN2, H_CONT_LEN3, H_CONT_LEN4, H_CONT_LEN5,
 		H_CONT_LEN6, H_CONT_LEN7, H_CONT_LEN8, H_CONT_LEN9, H_CONT_LEN10,
 		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
-		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE 
+		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE,
+		H_STUN_MSG, H_STUN_READ_BODY, H_STUN_FP, H_STUN_END 
 	};
 
 enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0, 

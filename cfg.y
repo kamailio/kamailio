@@ -74,6 +74,8 @@
  * 2006-05-30  avp flags (tma)
  * 2006-09-11  added dns cache (use, flags, ttls, mem ,gc) & dst blacklist
  *              options (andrei)
+ * 2006-10-13  added STUN_ALLOW_STUN, STUN_ALLOW_FP, STUN_REFRESH_INTERVAL
+ *              (vlada)
  */
 
 %{
@@ -334,6 +336,10 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token ATTR_TODOMAIN
 %token ATTR_GLOBAL
 %token ADDEQ
+
+%token STUN_REFRESH_INTERVAL
+%token STUN_ALLOW_STUN
+%token STUN_ALLOW_FP
 
 /* operators */
 %nonassoc EQUAL
@@ -863,6 +869,25 @@ assign_stm:
 	| MCAST_TTL EQUAL error { yyerror("number expected"); }
 	| TOS EQUAL NUMBER { tos=$3; }
 	| TOS EQUAL error { yyerror("number expected"); }
+	| error EQUAL { yyerror("unknown config variable"); }
+	| STUN_REFRESH_INTERVAL EQUAL NUMBER { 
+		#ifdef USE_STUN
+			stun_refresh_interval=$3;
+		#endif
+		}
+	| STUN_REFRESH_INTERVAL EQUAL error{ yyerror("number expected"); }
+	| STUN_ALLOW_STUN EQUAL NUMBER { 
+		#ifdef USE_STUN
+			stun_allow_stun=$3;
+		#endif
+		}
+	| STUN_ALLOW_STUN EQUAL error{ yyerror("number expected"); }
+	| STUN_ALLOW_FP EQUAL NUMBER { 
+		#ifdef USE_STUN
+			stun_allow_fp=$3;
+		#endif
+		}
+	| STUN_ALLOW_FP EQUAL error{ yyerror("number expected"); }
 	| error EQUAL { yyerror("unknown config variable"); }
 	;
 module_stm:

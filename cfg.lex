@@ -60,8 +60,10 @@
  *              to_{ip,port} (andrei)
  *  2005-12-12  separated drop, exit, break, return, added RETCODE (andrei)
  *  2005-12-19  select framework (mma)
- * 2006-09-11  added dns cache (use, flags, ttls, mem ,gc) & dst blacklist
+ *  2006-09-11  added dns cache (use, flags, ttls, mem ,gc) & dst blacklist
  *              options (andrei)
+ *  2006-10-13  added STUN_ALLOW_STUN, STUN_ALLOW_FP, STUN_REFRESH_INTERVAL
+ *              (vlada)
  */
 
 
@@ -288,6 +290,11 @@ OPEN_FD_LIMIT		"open_files_limit"
 MCAST_LOOPBACK		"mcast_loopback"
 MCAST_TTL		"mcast_ttl"
 TOS			"tos"
+
+/* stun config variables */
+STUN_REFRESH_INTERVAL "stun_refresh_interval"
+STUN_ALLOW_STUN "stun_allow_stun"
+STUN_ALLOW_FP "stun_allow_fp"
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -527,6 +534,10 @@ EAT_ABLE	[\ \t\b\r]
 									return TOS; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
+
+<INITIAL>{STUN_REFRESH_INTERVAL} { count(); yylval.strval=yytext; return STUN_REFRESH_INTERVAL;}
+<INITIAL>{STUN_ALLOW_STUN} { count(); yylval.strval=yytext; return STUN_ALLOW_STUN;}
+<INITIAL>{STUN_ALLOW_FP} { count(); yylval.strval=yytext; return STUN_ALLOW_FP;}
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }

@@ -37,6 +37,7 @@
  *  2005-03-10  multicast options are now set for all the udp sockets (andrei)
  *  2005-06-26  failure to set mcast options is not an error anymore (andrei)
  *  2006-04-12  udp_send() switched to struct dest_info (andrei)
+ *  2006-10-13  added STUN support (vlada)
  */
 
 
@@ -63,6 +64,9 @@
 #include "mem/mem.h"
 #include "ip_addr.h"
 
+#ifdef USE_STUN
+  #include "ser_stun.h"
+#endif
 
 #ifdef DBG_MSG_QA
 /* message quality assurance -- frequently, bugs in ser have
@@ -442,12 +446,20 @@ int udp_rcv_loop()
 		ri.src_port=su_getport(from);
 
 #ifndef NO_ZERO_CHECKS
-		if (len<MIN_UDP_PACKET) {
-			tmp=ip_addr2a(&ri.src_ip);
-			DBG("udp_rcv_loop: probing packet received from %s %d\n",
-					tmp, htons(ri.src_port));
-			continue;
+#ifdef USE_STUN
+		/* STUN support can be switched off even if it's compiled */
+		if (stun_allow_stun == 0 || (unsigned char)*buf != 0x00) {
+#endif
+		  if (len<MIN_UDP_PACKET) {
+			  tmp=ip_addr2a(&ri.src_ip);
+			  DBG("udp_rcv_loop: probing packet received from %s %d\n",
+				  	tmp, htons(ri.src_port));
+			  continue;
+		  }
+#ifdef USE_STUN
 		}
+#endif
+#ifndef USE_STUN
 		if (buf[len-1]==0) {
 			tmp=ip_addr2a(&ri.src_ip);
 			LOG(L_WARN, "WARNING: udp_rcv_loop: "
@@ -455,6 +467,7 @@ int udp_rcv_loop()
 					tmp, htons(ri.src_port));
 			len--;
 		}
+#endif
 #endif
 #ifdef DBG_MSG_QA
 		if (!dbg_msg_qa(buf, len)) {
@@ -469,7 +482,15 @@ int udp_rcv_loop()
 			continue;
 		}
 		
-		
+#ifdef USE_STUN
+			/* STUN support can be switched off even if it's compiled */
+			if (stun_allow_stun && (unsigned char)*buf == 0x00) {
+			    /* stun_process_msg releases buf memory if necessary */
+				if ((stun_process_msg(buf, len, &ri)) != 0) {
+					continue; /* some error occurred */
+				}
+			} else
+#endif
 		/* receive_msg must free buf too!*/
 		receive_msg(buf, len, &ri);
 		
