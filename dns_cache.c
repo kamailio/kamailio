@@ -2212,6 +2212,7 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 						}
 #endif
 						*ip=*tmp_ip;
+						*port=h->port;
 						return 0;
 					}
 					
