@@ -30,6 +30,9 @@
  * 2003-09-11 : lump_rpl type added - LUMP_RPL_BODY & LUMP_RPL_HDR (bogdan)
  * 2003-11-11 : build_lump_rpl merged into add_lump_rpl; types -> flags ;
  *              flags LUMP_RPL_NODUP and LUMP_RPL_NOFREE added (bogdan)
+ * 2006-10-16   add_lump_rpl2 added: same as the old add_lump_rpl, but
+ *               returns a lump_rpl**, making a specific lump removal much
+ *               more easy (andrei)
  */
 
 
@@ -40,10 +43,12 @@
 
 
 
-struct lump_rpl* add_lump_rpl(struct sip_msg *msg, char *s, int len, int flags)
+struct lump_rpl** add_lump_rpl2(struct sip_msg *msg, char *s, 
+									int len, int flags)
 {
 	struct lump_rpl *lump = 0;
 	struct lump_rpl *foo;
+	struct lump_rpl** ret;
 
 	/* some checking */
 	if ( (flags&(LUMP_RPL_HDR|LUMP_RPL_BODY))==(LUMP_RPL_HDR|LUMP_RPL_BODY)
@@ -77,6 +82,7 @@ struct lump_rpl* add_lump_rpl(struct sip_msg *msg, char *s, int len, int flags)
 	/* add the lump to the msg */
 	if (!msg->reply_lump) {
 		msg->reply_lump = lump;
+		ret=&msg->reply_lump;
 	}else{
 		if (!(flags&LUMP_RPL_BODY))
 			for(foo=msg->reply_lump;foo->next;foo=foo->next);
@@ -92,9 +98,10 @@ struct lump_rpl* add_lump_rpl(struct sip_msg *msg, char *s, int len, int flags)
 					break;
 			}
 		foo->next = lump;
+		ret= &(foo->next);
 	}
 
-	return lump;
+	return ret;
 error:
 	return 0;
 }

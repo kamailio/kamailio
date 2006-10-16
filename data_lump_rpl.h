@@ -31,6 +31,9 @@
  * 2003-11-11 : build_lump_rpl merged into add_lump_rpl; type removed;
  *              flags LUMP_RPL_BODY, LUMP_RPL_NODUP and LUMP_RPL_NOFREE
  *              added (bogdan)
+ * 2006-10-16   add_lump_rpl2 added: same as the old add_lump_rpl, but
+ *               returns a lump_rpl**, making a specific lump removal much
+ *               more easy (andrei)
  */
 
 
@@ -53,7 +56,19 @@ struct lump_rpl
 	struct lump_rpl* next;
 };
 
-struct lump_rpl* add_lump_rpl(struct sip_msg *, char *, int , int );
+struct lump_rpl** add_lump_rpl2(struct sip_msg *, char *, int , int );
+
+
+/* compatibility wrapper for the old add_lump_rpl version */
+inline static struct lump_rpl* add_lump_rpl(struct sip_msg* msg,
+												char* s, int len , int flags )
+{
+	struct lump_rpl** l;
+	
+	l=add_lump_rpl2(msg, s, len, flags);
+	return l?(*l):0;
+}
+
 
 void free_lump_rpl(struct lump_rpl* );
 
