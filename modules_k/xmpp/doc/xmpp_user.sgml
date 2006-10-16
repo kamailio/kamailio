@@ -46,7 +46,7 @@
 		</listitem>	
 	</itemizedlist>
 	<programlisting format="linespecific"> <emphasis>	<![CDATA[ ### ---8<--- cut here ---8<--- ###
-	if (search("To:.*@sip-xmpp\.openser\.org")) {
+	if (avp_check("$rd", "eq/s:sip-xmpp.openser.org")) {
 		if (!t_newtran()) {
 			sl_reply_error();
 	...........]]>	</emphasis> </programlisting> 	

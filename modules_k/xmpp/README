@@ -89,7 +89,7 @@ Chapter 1. User's Guide
        to your gateway domain:
 
          ### ---8<--- cut here ---8<--- ###
-        if (search("To:.*@sip-xmpp\.openser\.org")) {
+        if (avp_check("$rd", "eq/s:sip-xmpp.openser.org")) {
                 if (!t_newtran()) {
                         sl_reply_error();
         ...........     
