@@ -79,6 +79,7 @@
  *  2006-02-07  named routes support (andrei)
  *  2006-09-28  added t_branch_replied, t_branch_timeout, t_any_replied, 
  *               t_any_timeout, t_is_canceled (andrei)
+ *  2006-10-16  added a new param.: aggregate challenges (andrei)
  */
 
 
@@ -320,8 +321,10 @@ static param_export_t params[]={
 	{"restart_fr_on_each_reply", PARAM_INT, &restart_fr_on_each_reply        },
 	{"fr_timer_avp",        PARAM_STRING, &fr_timer_param                    },
 	{"fr_inv_timer_avp",    PARAM_STRING, &fr_inv_timer_param                },
-	{"tw_append",           PARAM_STRING|PARAM_USE_FUNC, (void*)parse_tw_append },
-        {"pass_provisional_replies", PARAM_INT, &pass_provisional_replies        },
+	{"tw_append",           PARAM_STRING|PARAM_USE_FUNC, 
+													(void*)parse_tw_append   },
+	{"pass_provisional_replies", PARAM_INT, &pass_provisional_replies        },
+	{"aggregate_challenges", PARAM_INT, &tm_aggregate_auth                   },
 	{"default_code",        PARAM_INT, &default_code                         },
 	{"default_reason",      PARAM_STR, &default_reason                       },
 	{0,0,0}

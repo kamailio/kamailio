@@ -24,7 +24,15 @@ modules:
                 hashing after an uri (to, from or request uri)
               - improved uri hashing (password is ignored, port is used only
                 if != 5060 or 5061)
- - tm        - on 6xx immediately cancel all the branches for which a 
+ - tm        - aggregate challenges (WWW/Proxy-Authenticate) from all the
+               401 & 407 if the final reply is a 401/407. To turn this off
+               and fall back to the old behaviour set tm aggregate_challenges
+               parameter to 0.
+             - if a relayed 503 is the final reply, replace it by a 500
+             - if a 503 reply is received try the dns based failover
+               (forward to another ip if the original destination uri 
+                resolved to several SRV, A or AAAA records)
+             - on 6xx immediately cancel all the branches for which a 
                provisional response was received and wait for all the 
                branches to finish (either timeout, the 487 from the CANCEL
                or a final response still on the wire in the moment the

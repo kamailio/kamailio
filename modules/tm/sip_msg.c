@@ -47,6 +47,7 @@
  *  2003-11-11  updated cloning of lump_rpl (bogdan)
  *  2004-03-31  alias shortcuts are also translated (andrei)
  *  2006-04-20  via->comp is also translated (andrei)
+ *  2006-10-16  HDR_{PROXY,WWW}_AUTHENTICATE_T cloned (andrei)
  */
 
 #include "defs.h"
@@ -387,7 +388,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_REFERREDBY_T:
 		case HDR_REJECTCONTACT_T:
 		case HDR_REQUESTDISPOSITION_T:
-/* we ignore them for now even if they have something parsed*/
+		case HDR_WWW_AUTHENTICATE_T:
+		case HDR_PROXY_AUTHENTICATE_T:
+			/* we ignore them for now even if they have something parsed*/
 			break;
 		}/*switch*/
 	}/*for all headers*/
@@ -525,6 +528,8 @@ do { \
 		case HDR_REFERREDBY_T:
 		case HDR_REJECTCONTACT_T:
 		case HDR_REQUESTDISPOSITION_T:
+		case HDR_WWW_AUTHENTICATE_T:
+		case HDR_PROXY_AUTHENTICATE_T:
 			break;
 
 		case HDR_VIA_T:

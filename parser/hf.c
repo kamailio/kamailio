@@ -183,6 +183,8 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_REFERREDBY_T:
 		case HDR_REJECTCONTACT_T:
 		case HDR_REQUESTDISPOSITION_T:
+		case HDR_WWW_AUTHENTICATE_T:
+		case HDR_PROXY_AUTHENTICATE_T:
 			break;
 		default:
 			LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",

@@ -91,11 +91,14 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_min.h"      /* Min-SE */
 #include "case_subs.h"     /* Subscription-State */
 #include "case_requ.h"     /* Require */
+#include "case_www.h"      /* WWW-Authenticate */
 
 
 #define READ(val) \
 (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 
+#define READ3(val) \
+(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16))
 
 #define FIRST_QUATERNIONS       \
         case _via1_: via1_CASE; \
@@ -129,6 +132,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _reje_: reje_CASE; \
 	case _min__: min_CASE;  \
 	case _requ_: requ_CASE;  \
+	case _www__: www_CASE; \
 
 
 

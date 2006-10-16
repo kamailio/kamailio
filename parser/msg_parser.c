@@ -218,6 +218,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_REFERREDBY_T:
 		case HDR_REJECTCONTACT_T:
 		case HDR_REQUESTDISPOSITION_T:
+		case HDR_WWW_AUTHENTICATE_T:
+		case HDR_PROXY_AUTHENTICATE_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -300,7 +302,7 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 		}
 		memset(hf,0, sizeof(struct hdr_field));
 		hf->type=HDR_ERROR_T;
-		rest=get_hdr_field(tmp, msg->buf+msg->len, hf);
+		rest=get_hdr_field(tmp, end, hf);
 		switch (hf->type){
 			case HDR_ERROR_T:
 				LOG(L_INFO,"ERROR: bad header  field\n");
@@ -316,6 +318,8 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_REFERREDBY_T:
 			case HDR_REJECTCONTACT_T:
 			case HDR_REQUESTDISPOSITION_T:
+			case HDR_WWW_AUTHENTICATE_T:
+			case HDR_PROXY_AUTHENTICATE_T:
 			case HDR_OTHER_T: /*do nothing*/
 				break;
 			case HDR_CALLID_T:

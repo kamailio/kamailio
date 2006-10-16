@@ -38,6 +38,7 @@
 
 
 extern int restart_fr_on_each_reply;
+extern int tm_aggregate_auth; /* aggregate authorization header value */
 
 /* reply processing status */
 enum rps {

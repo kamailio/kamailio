@@ -177,4 +177,30 @@ modparam("tm", "unix_tx_timeout", 250)
 	    </programlisting>
 	</example>
 	</section>
+
+    <section id="aggregate_challenges">
+	<title><varname>aggregate_challenges</varname> (integer)</title>
+	<para>
+		If set (default), the final reply is a 401 or a 407 and more then
+		one branch received a 401 or 407, then all the WWW-Authenticate and 
+		Proxy-Authenticate headers from all the 401 and 407 replies will 
+		be aggregated in a new final reply. If only one branch received the
+		 winning 401 or 407 then this reply will be forwarded (no new one
+		 will be built).
+		If 0 only the first 401, or if no 401 was received the first 407,  will
+		be forwarded (no header aggregation).
+	</para>
+	<para>
+	    Default value is 1 (required by rfc3261).
+	</para>
+	<example>
+	    <title>Set <varname>aggregate_challenges</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "aggregate_challenges", 0)
+...
+	    </programlisting>
+	</example>
+    </section>
+
 </section>

@@ -82,6 +82,8 @@
  * 2005-12-09  added t_set_fr()  (andrei)
  * 2006-01-27  transaction lookup function will set up a cancel flag
  *             if the searched transaction was pre-canceled (andrei)
+ * 2006-10-16  401 & 407 replies are completely parsed if tm_aggregate_auth is
+ *              set (andrei)
  */
 
 #include "defs.h"
@@ -936,13 +938,24 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 		} else {
 			/* we need Via for branch and Cseq method to distinguish
 			   replies with the same branch/cseqNr (CANCEL)
+			   and we need all the WWW/Proxy Authenticate headers for
+			   401 & 407 replies
 			*/
-			if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F, 0 )==-1
-			|| !p_msg->via1 || !p_msg->cseq ) {
+			if (tm_aggregate_auth && 
+					(p_msg->REPLY_STATUS==401 || p_msg->REPLY_STATUS==407)){
+				if (parse_headers(p_msg, HDR_EOH_F,0)==-1){
+					LOG(L_WARN, "WARNING: the reply cannot be "
+								"completely parsed\n");
+					/* try to continue, via1 & cseq are checked below */
+				}
+			}else if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F, 0 )==-1) {
 				LOG(L_ERR, "ERROR: reply cannot be parsed\n");
 				return -1;
 			}
-
+			if ((p_msg->via1==0) || (p_msg->cseq==0)){
+				LOG(L_ERR, "ERROR: reply doesn't have a via or cseq header\n");
+				return -1;
+			}
 			/* if that is an INVITE, we will also need to-tag
 			   for later ACK matching
 			*/

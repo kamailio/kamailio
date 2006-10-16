@@ -49,11 +49,12 @@
  *  - update clean_hdr_field (in hf.c)
  *  - update sip_msg_cloner (modules/tm/sip_msg.c)
  *  - update parse_headers (msg_parser.c)
+ *  - update get_hdr_field (msg_parser.c)
  */
 
 enum _hdr_types_t {
 	HDR_ERROR_T					= -1   /* Error while parsing */,
-	HDR_OTHER_T                                     =  0   /* Some other header field */,
+	HDR_OTHER_T					=  0   /* Some other header field */,
 	HDR_VIA_T					=  1   /* Via header field */,
 	HDR_VIA1_T					=  1   /* First Via header field */,
 	HDR_VIA2_T					=  2   /* only used as flag */,
@@ -71,7 +72,7 @@ enum _hdr_types_t {
 	HDR_EXPIRES_T				       /* Expires header field */,
 	HDR_PROXYAUTH_T				       /* Proxy-Authorization hdr field */,
 	HDR_SUPPORTED_T				       /* Supported  header field */,
-	HDR_REQUIRE_T					   /* Require header */,
+	HDR_REQUIRE_T				       /* Require header */,
 	HDR_PROXYREQUIRE_T			       /* Proxy-Require header field */,
 	HDR_UNSUPPORTED_T			       /* Unsupported header field */,
 	HDR_ALLOW_T					       /* Allow header field */,
@@ -87,18 +88,20 @@ enum _hdr_types_t {
 	HDR_DIVERSION_T				       /* Diversion header field */,
 	HDR_RPID_T					       /* Remote-Party-ID header field */,
 	HDR_REFER_TO_T				       /* Refer-To header fiels */,
-	HDR_SIPIFMATCH_T                   /* SIP-If-Match header field */,
-	HDR_SESSIONEXPIRES_T                           /* Session-Expires header */,
-	HDR_MIN_SE_T                                   /* Min-SE */,
-	HDR_SUBSCRIPTION_STATE_T                       /* Subscription-State */,
-	HDR_ACCEPTCONTACT_T                            /* Accept-Contact header */,
-	HDR_ALLOWEVENTS_T                              /* Allow-Events header */,
-	HDR_CONTENTENCODING_T                          /* Content-Encoding header */,
-	HDR_REFERREDBY_T                               /* Referred-By header */,
-	HDR_REJECTCONTACT_T                            /* Reject-Contact header */,
-	HDR_REQUESTDISPOSITION_T                       /* Request-Disposition header */,
+	HDR_SIPIFMATCH_T			       /* SIP-If-Match header field */,
+	HDR_SESSIONEXPIRES_T		       /* Session-Expires header */,
+	HDR_MIN_SE_T				       /* Min-SE */,
+	HDR_SUBSCRIPTION_STATE_T	       /* Subscription-State */,
+	HDR_ACCEPTCONTACT_T			       /* Accept-Contact header */,
+	HDR_ALLOWEVENTS_T			       /* Allow-Events header */,
+	HDR_CONTENTENCODING_T		       /* Content-Encoding header */,
+	HDR_REFERREDBY_T			       /* Referred-By header */,
+	HDR_REJECTCONTACT_T			       /* Reject-Contact header */,
+	HDR_REQUESTDISPOSITION_T	       /* Request-Disposition header */,
+	HDR_WWW_AUTHENTICATE_T		       /* WWW-Authenticate header field */,
+	HDR_PROXY_AUTHENTICATE_T	       /* Proxy-Authenticate header field */,
 
-	HDR_EOH_T				       /* End of message header */
+	HDR_EOH_T					       /* End of message header */
 };
 
 
@@ -149,15 +152,17 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_RPID_F					HDR_F_DEF(RPID)
 #define HDR_REFER_TO_F				HDR_F_DEF(REFER_TO)
 #define HDR_SIPIFMATCH_F			HDR_F_DEF(SIPIFMATCH)
-#define HDR_SESSIONEXPIRES_F			HDR_F_DEF(SESSIONEXPIRES)
+#define HDR_SESSIONEXPIRES_F		HDR_F_DEF(SESSIONEXPIRES)
 #define HDR_MIN_SE_F				HDR_F_DEF(MIN_SE)
 #define HDR_SUBSCRIPTION_STATE_F	HDR_F_DEF(SUBSCRIPTION_STATE)
 #define HDR_ACCEPTCONTACT_F			HDR_F_DEF(HDR_ACCEPTCONTACT_T)
 #define HDR_ALLOWEVENTS_F			HDR_F_DEF(HDR_ALLOWEVENTS_T)
-#define HDR_CONTENTENCODING_F			HDR_F_DEF(HDR_CONTENTENCODING_T)
+#define HDR_CONTENTENCODING_F		HDR_F_DEF(HDR_CONTENTENCODING_T)
 #define HDR_REFERREDBY_F			HDR_F_DEF(HDR_REFERREDBY_T)
 #define HDR_REJECTCONTACT_F			HDR_F_DEF(HDR_REJECTCONTACT_T)
-#define HDR_REQUESTDISPOSITION_F		HDR_F_DEF(HDR_REQUESTDISPOSITION_T)
+#define HDR_REQUESTDISPOSITION_F	HDR_F_DEF(HDR_REQUESTDISPOSITION_T)
+#define HDR_WWW_AUTHENTICATE_F		HDR_F_DEF(HDR_WWW_AUTHENTICATE_T)
+#define HDR_PROXY_AUTHENTICATE_F	HDR_F_DEF(HDR_PROXY_AUTHENTICATE_T)
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 

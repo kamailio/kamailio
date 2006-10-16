@@ -62,12 +62,40 @@
         }
 
 
-#define THOR_CASE                  \
+#define TE_CASE                    \
+        switch(LOWER_DWORD(val)&0xffffff) { \
+        case _te1_:     /* "te:"*/            \
+	        hdr->type = HDR_PROXY_AUTHENTICATE_T; \
+	        hdr->name.len = 18;        \
+	        return (p + 3);            \
+        case _te2_: /* "te " */ \
+	        hdr->type = HDR_PROXY_AUTHENTICATE_T; \
+	        p+=3; \
+            goto dc_end;        \
+        }
+
+
+#define TICA_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _tica_:               \
+                p += 4;            \
+                val = READ3(p);    \
+                TE_CASE;           \
+                goto other;        \
+        }
+
+
+#define THOR_THEN_CASE             \
         switch(LOWER_DWORD(val)) { \
         case _thor_:               \
                 p += 4;            \
                 val = READ(p);     \
                 IZAT_CASE;         \
+                goto other;        \
+        case _then_:               \
+                p += 4;            \
+                val = READ(p);     \
+                TICA_CASE;         \
                 goto other;        \
         }
 
@@ -91,7 +119,7 @@
         case _y_au_:               \
                 p += 4;            \
                 val = READ(p);     \
-                THOR_CASE;         \
+                THOR_THEN_CASE;    \
                 goto other;        \
                                    \
         case _y_re_:               \

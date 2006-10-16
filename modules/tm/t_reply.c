@@ -75,7 +75,9 @@
  *              if no 6xx reply => lowest class/code; if class==4xx =>
  *              prefer 401, 407, 415, 420 and 484   (andrei)
  * 2006-10-12  dns failover when a 503 is received
-*              replace a 503 final relayed reply by a 500 (andrei)
+ *              replace a 503 final relayed reply by a 500 (andrei)
+ * 2006-10-16  aggregate all the authorization headers/challenges when
+ *               the final response is 401 or 407 (andrei)
  *
  */
 
@@ -112,6 +114,9 @@
 
 /* restart fr timer on each provisional reply, default yes */
 int restart_fr_on_each_reply=1;
+/* if the final reponse is a 401 or a 407, aggregate all the 
+ * authorization headers (challenges) (rfc3261 requires this to be on) */
+int tm_aggregate_auth=1;
 
 /* are we processing original or shmemed request ? */
 enum route_mode rmode=MODE_REQUEST;
@@ -1133,6 +1138,87 @@ static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 		return 1;
 }
 
+
+
+/* returns the number of authenticate replies (401 and 407) received so far
+ *  (FAKED_REPLYes are excluded)
+ *  It must be called with the REPLY_LOCK held */
+inline static int auth_reply_count(struct cell *t, struct sip_msg* crt_reply)
+{
+	int count;
+	int r;
+
+	count=0;
+	if (crt_reply && (crt_reply!=FAKED_REPLY) && 
+			(crt_reply->REPLY_STATUS ==401 || crt_reply->REPLY_STATUS ==407))
+		count=1;
+	for (r=0; r<t->nr_of_outgoings; r++){
+		if (t->uac[r].reply && (t->uac[r].reply!=FAKED_REPLY) &&
+				(t->uac[r].last_received==401 || t->uac[r].last_received==407))
+			count++;
+	}
+	return count;
+}
+
+
+
+/* must be called with the REPY_LOCK held */
+inline static char* reply_aggregate_auth(int code, char* txt, str* new_tag, 
+									struct cell* t, unsigned int* res_len, 
+									struct bookmark* bm)
+{
+	int r;
+	struct hdr_field* hdr;
+	struct lump_rpl** first;
+	struct lump_rpl** crt;
+	struct lump_rpl* lst;
+	struct lump_rpl*  lst_end;
+	struct sip_msg* req;
+	char* buf;
+	
+	first=0;
+	lst_end=0;
+	req=t->uas.request;
+	
+	for (r=0; r<t->nr_of_outgoings; r++){
+		if (t->uac[r].reply && (t->uac[r].reply!=FAKED_REPLY) &&
+			(t->uac[r].last_received==401 || t->uac[r].last_received==407)){
+			for (hdr=t->uac[r].reply->headers; hdr; hdr=hdr->next){
+				if (hdr->type==HDR_WWW_AUTHENTICATE_T ||
+						hdr->type==HDR_PROXY_AUTHENTICATE_T){
+					crt=add_lump_rpl2(req, hdr->name.s, hdr->len,
+							LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
+					if (crt==0){
+						/* some kind of error, better stop */
+						LOG(L_ERR, "ERROR: tm:reply_aggregate_auth:"
+									" add_lump_rpl2 failed\n");
+						goto skip;
+					}
+					lst_end=*crt;
+					if (first==0) first=crt;
+				}
+			}
+		}
+	}
+skip:
+	buf=build_res_buf_from_sip_req(code, txt, new_tag, req, res_len, bm);
+	/* clean the added lumps */
+	if (first){
+		lst=*first;
+		*first=lst_end->next; /* "detach" the list of added rpl_lumps */
+		lst_end->next=0; /* terminate lst */
+		del_nonshm_lump_rpl(&lst);
+		if (lst){
+			LOG(L_CRIT, "BUG: tm: repply_aggregate_auth: rpl_lump list"
+					    "contains shm alloc'ed lumps\n");
+			abort();
+		}
+	}
+	return buf;
+}
+
+
+
 /* this is the code which decides what and when shall be relayed
    upstream; note well -- it assumes it is entered locked with
    REPLY_LOCK and it returns unlocked!
@@ -1147,11 +1233,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	unsigned int res_len;
 	int relayed_code;
 	struct sip_msg *relayed_msg;
+	struct sip_msg *reply_bak;
 	struct bookmark bm;
 	int totag_retr;
 	enum rps reply_status;
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
+	str* to_tag;
 
 	/* keep compiler warnings about use of uninit vars silent */
 	res_len=0;
@@ -1197,22 +1285,34 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			tm_stats->replied_localy++;
 			relayed_code = branch==relay
 				? msg_status : t->uac[relay].last_received;
-
+			/* use to_tag from the original request, or if not present,
+			 * generate a new one */
 			if (relayed_code>=180 && t->uas.request->to
 					&& (get_to(t->uas.request)->tag_value.s==0
 			    		|| get_to(t->uas.request)->tag_value.len==0)) {
 				calc_crc_suffix( t->uas.request, tm_tag_suffix );
-				buf = build_res_buf_from_sip_req(
-						relayed_code,
-						error_text(relayed_code),
-						&tm_tag,
-						t->uas.request, &res_len, &bm );
+				to_tag=&tm_tag;
 			} else {
-				buf = build_res_buf_from_sip_req( relayed_code,
-					error_text(relayed_code), 0/* no to-tag */,
-					t->uas.request, &res_len, &bm );
+				to_tag=0;
 			}
-
+			if (tm_aggregate_auth && 
+						(relayed_code==401 || relayed_code==407) &&
+						(auth_reply_count(t, p_msg)>1)){
+				/* aggregate 401 & 407 www & proxy authenticate headers in
+				 *  a "FAKE" reply*/
+				
+				/* temporarily "store" the current reply */
+				reply_bak=t->uac[branch].reply;
+				t->uac[branch].reply=p_msg;
+				buf=reply_aggregate_auth(relayed_code, 
+						error_text(relayed_code), to_tag, t, &res_len, &bm);
+				/* revert the temporary "store" reply above */
+				t->uac[branch].reply=reply_bak;
+			}else{
+				buf = build_res_buf_from_sip_req( relayed_code,
+						error_text(relayed_code), to_tag,
+						t->uas.request, &res_len, &bm );
+			}
 		} else {
 			relayed_code=relayed_msg->REPLY_STATUS;
 			if (relayed_code==503){
@@ -1220,11 +1320,37 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				 * generate a "FAKE" reply and a new to_tag (for easier
 				 *  debugging)*/
 				relayed_msg=FAKED_REPLY;
-				calc_crc_suffix( t->uas.request, tm_tag_suffix );
+				if ((get_to(t->uas.request)->tag_value.s==0 ||
+					 get_to(t->uas.request)->tag_value.len==0)) {
+					calc_crc_suffix( t->uas.request, tm_tag_suffix );
+					to_tag=&tm_tag;
+				} else {
+					to_tag=0;
+				}
 				/* don't relay a 503, replace it w/ 500 (rfc3261) */
 				buf=build_res_buf_from_sip_req(500, error_text(relayed_code),
-								&tm_tag, t->uas.request, &res_len, &bm);
+									to_tag, t->uas.request, &res_len, &bm);
 				relayed_code=500;
+			}else if (tm_aggregate_auth && 
+						(relayed_code==401 || relayed_code==407) &&
+						(auth_reply_count(t, p_msg)>1)){
+				/* aggregate 401 & 407 www & proxy authenticate headers in
+				 *  a "FAKE" reply*/
+				if ((get_to(t->uas.request)->tag_value.s==0 ||
+					 get_to(t->uas.request)->tag_value.len==0)) {
+					calc_crc_suffix( t->uas.request, tm_tag_suffix );
+					to_tag=&tm_tag;
+				} else {
+					to_tag=0;
+				}
+				/* temporarily "store" the current reply */
+				reply_bak=t->uac[branch].reply;
+				t->uac[branch].reply=p_msg;
+				buf=reply_aggregate_auth(relayed_code, 
+						error_text(relayed_code), to_tag, t, &res_len, &bm);
+				/* revert the temporary "store" reply above */
+				t->uac[branch].reply=reply_bak;;
+				relayed_msg=FAKED_REPLY; /* mark the relayed_msg as a "FAKE" */
 			}else{
 				buf = build_res_buf_from_sip_res( relayed_msg, &res_len );
 				/* if we build a message from shmem, we need to remove

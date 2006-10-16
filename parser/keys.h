@@ -74,6 +74,10 @@
 #define _izat_ 0x74617a69   /* "izat" */
 #define _ion2_ 0x206e6f69   /* "ion " */
 #define _ion1_ 0x3a6e6f69   /* "ion:" */
+#define _then_ 0x6e656874   /* "then" */
+#define _tica_ 0x61636974   /* "tica" */
+#define _te1_  0x003a6574   /* "te:" */
+#define _te2_  0x00206574   /* "te " */
 #define _y_re_ 0x65722d79   /* "y-re" */
 #define _quir_ 0x72697571   /* "quir" */
 #define _reco_ 0x6f636572   /* "reco" */

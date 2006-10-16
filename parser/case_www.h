@@ -35,7 +35,7 @@
 #define CATE_CASE                        \
         switch(LOWER_DWORD(val)) {       \
         case _cate_:                     \
-                hdr->type = HDR_WWWAUTH_T; \
+                hdr->type = HDR_WWW_AUTHENTICATE_T; \
                 p += 4;                  \
 	        goto dc_end;             \
         }
