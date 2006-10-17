@@ -127,7 +127,7 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
     }
     
     if (i == (*res)->n) {
-	DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found",
+	DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found\n",
 	    username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
 	return 1;
     }		
