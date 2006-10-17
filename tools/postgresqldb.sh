@@ -516,7 +516,7 @@ CREATE TABLE silo(
     snd_time INTEGER NOT NULL DEFAULT 0,
     ctype varchar(32) NOT NULL DEFAULT 'text/plain',
     body TEXT NOT NULL DEFAULT '',
-    KEY ($USERCOL, domain)
+    PRIMARY KEY ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 
