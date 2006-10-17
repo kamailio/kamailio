@@ -1643,14 +1643,11 @@ int reply_received( struct sip_msg  *p_msg )
 	}
 #ifdef USE_DNS_FAILOVER
 		/* if this is a 503 reply, the destination resolves to more ips, and
-		 *  it still hasn't passed more than fr_inv_timeout since we
-		 *  started, add another branch/uac
-		 *  this code is out of LOCK_REPLIES() to minimize the time the
+		 *  the branch is still active (no timeout), add another branch/uac.
+		 *  This code is out of LOCK_REPLIES() to minimize the time the
 		 *  reply lock is held (the lock won't be held while sending the
 		 *   message)*/
-		if (use_dns_failover && (msg_status==503) &&
-				((get_ticks_raw()-(uac->request.fr_expire-t->fr_timeout)) <
-				 	t->fr_inv_timeout)){
+		if (use_dns_failover && (msg_status==503) && uac->request.t_active){
 			branch_ret=add_uac_dns_fallback(t, t->uas.request, uac, 1);
 			prev_branch=-1;
 			while((branch_ret>=0) &&(branch_ret!=prev_branch)){
