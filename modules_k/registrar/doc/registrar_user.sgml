@@ -419,7 +419,7 @@ modparam("registrar", "received_avp", 43)
 	</section>
 
 	<section>
-		<title><varname>received_param</varname> (integer)</title>
+		<title><varname>received_param</varname> (string)</title>
 		<para>
 		The name of the parameter that will be appended to Contacts of 
 		200 OK when the received URI was set by nathelper module.

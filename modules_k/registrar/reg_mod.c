@@ -76,7 +76,7 @@ int sip_natping_flag  = -1;
 /* Minimum expires the phones are allowed to use in seconds
  * use 0 to switch expires checking off */
 int min_expires     = 60;
-/* Minimum expires the phones are allowed to use in seconds,
+/* Maximum expires the phones are allowed to use in seconds,
  * use 0 to switch expires checking off */
 int max_expires     = 0;
 /* Maximum number of contacts per AOR */
