@@ -269,7 +269,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_
     } else {
 	ret = get_from_did(&did, msg);
     }
-    if (ret != 0) did = default_did;
+    if (ret != 1) did = default_did;
     
     res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
     if (res < 0) {
