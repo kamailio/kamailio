@@ -869,7 +869,6 @@ assign_stm:
 	| MCAST_TTL EQUAL error { yyerror("number expected"); }
 	| TOS EQUAL NUMBER { tos=$3; }
 	| TOS EQUAL error { yyerror("number expected"); }
-	| error EQUAL { yyerror("unknown config variable"); }
 	| STUN_REFRESH_INTERVAL EQUAL NUMBER { 
 		#ifdef USE_STUN
 			stun_refresh_interval=$3;
