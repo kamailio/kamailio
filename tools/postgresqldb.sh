@@ -39,7 +39,7 @@
 #             split GRANTs for SERWeb tables so that it is only executed 
 #                  if SERWeb tables are created
 #             added GRANTs for re_grp table
-#             added CREATE pd_multidomain table (from PDT module)
+#             added CREATE pdt table (from PDT module)
 #             corrected comments to indicate Postgres as opposed to MySQL
 #             made last_modified/created stamps consistent to now() using 
 #                  local TIMESTAMP
@@ -296,12 +296,12 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 	CREATE USER $DBROUSER WITH PASSWORD '$RO_PW';
 	GRANT ALL PRIVILEGES ON TABLE version, acc, aliases, dbaliases, grp,
 		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
-		uri, usr_preferences, trusted, re_grp, pd_multidomain,
+		uri, usr_preferences, trusted, re_grp, pdt,
 		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
 		sip_trace TO $DBRWUSER;
 	GRANT SELECT ON TABLE version, acc, aliases, dbaliases, grp,
 		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
-		uri, usr_preferences, trusted, re_grp, pd_multidomain,
+		uri, usr_preferences, trusted, re_grp, pdt,
 		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
 		sip_trace TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
