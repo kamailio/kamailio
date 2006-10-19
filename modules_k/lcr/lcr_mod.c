@@ -1016,7 +1016,7 @@ int mi_print_gws (struct mi_node* rpl)
 		if ((*gws)[i].ip_addr == 0) 
 			break;
 
-		node= addf_mi_node_child(rpl,0 ,"GW", 2, 0, 0);
+		node= add_mi_node_child(rpl,0 ,"GW", 2, 0, 0);
 		if(node == NULL)
 			return -1;
 
@@ -1056,7 +1056,7 @@ int mi_print_gws (struct mi_node* rpl)
 		if ((*lcrs)[i].end_record != 0)
 			break;
 
-		node= addf_mi_node_child(rpl, 0, "RULE", 4, 0, 0);
+		node= add_mi_node_child(rpl, 0, "RULE", 4, 0, 0);
 		attr = add_mi_attr(node, 0, "PREFIX", 6, (*lcrs)[i].prefix,
 				(*lcrs)[i].prefix_len );
 		if(attr== 0)
