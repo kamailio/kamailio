@@ -135,7 +135,7 @@ int stun_process_msg(char* buf, unsigned len, struct receive_info* ri)
 	su2ip_addr(&ip, &dst.to);
 	char *ipp = ip_addr2a(&ip);
 	int porttt = su_getport(&dst.to);
-	LOG(L_DBG, "DEBUG: ser_stun: %s:%d):\n", ip_addr2a(&ip), 
+	LOG(L_DBG, "DEBUG: stun_process_msg: decoded request from (%s:%d)\n", ip_addr2a(&ip), 
 		su_getport(&dst.to));
 #endif
 	
@@ -144,10 +144,16 @@ int stun_process_msg(char* buf, unsigned len, struct receive_info* ri)
 		goto error;
 	}
 	
+#ifdef EXTRA_DEBUG
+	LOG(L_DBG, "DEBUG: stun_process_msg: send response\n");
+#endif
 	clean_memory(&msg_req, &msg_res, unknown);
 	return 0;
 	
 error:
+#ifdef EXTRA_DEBUG
+	LOG(L_DBG, "DEBUG: stun_process_msg: failed to decode request\n");
+#endif
 	clean_memory(&msg_req, &msg_res, unknown);
 	return FATAL_ERROR;
 }
@@ -169,7 +175,7 @@ int stun_parse_header(struct stun_msg* req, USHORT_T* error_code)
 	
 	if (sizeof(req->hdr) > req->msg.buf.len) {
 		/* the received message does not contain whole header */
-		LOG(L_INFO, "INFO: incomplete header of STUN message\n");
+		LOG(L_INFO, "INFO: stun_parse_header: incomplete header of STUN message\n");
 		/* Any better solution? IMHO it's not possible to send error response
 		 * because the transaction ID is not available.
 		 */
@@ -181,7 +187,7 @@ int stun_parse_header(struct stun_msg* req, USHORT_T* error_code)
 	
 	/* the SER supports only Binding Request right now */ 
 	if (req->hdr.type != BINDING_REQUEST) {
-		LOG(L_INFO, "INFO: unsupported type of STUN message: %x\n", 
+		LOG(L_INFO, "INFO: stun_parse_header: unsupported type of STUN message: %x\n", 
 					req->hdr.type);
 		/* resending of same message is not welcome */
 		*error_code = GLOBAL_FAILURE_ERR;
@@ -192,6 +198,9 @@ int stun_parse_header(struct stun_msg* req, USHORT_T* error_code)
 	/* check if there is correct magic cookie */
 	req->old = (req->hdr.id.magic_cookie == htonl(MAGIC_COOKIE)) ? 0 : 1;
 
+#ifdef EXTRA_DEBUG
+	LOG(L_DBG, "DEBUG: stun_parse_header: request is old: %i\n", req->old);
+#endif
 	return 0;
 }
 
@@ -233,6 +242,9 @@ int stun_parse_body(
 	
 	if (req->old) {
 		if (not_parsed != req->hdr.len) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_parse_body: body too short to be valid\n");
+#endif
 			*error_code = BAD_REQUEST_ERR;
 			return 0;
 		} 
@@ -240,6 +252,9 @@ int stun_parse_body(
 	else {
 		if (not_parsed != 
 		    req->hdr.len + SHA_DIGEST_LENGTH + sizeof(struct stun_attr)) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_parse_body: body too short to be valid\n");
+#endif
 			*error_code = BAD_REQUEST_ERR;
 			return 0;
 		}
@@ -253,6 +268,9 @@ int stun_parse_body(
 		
 		/* check if there are 4 bytes for attribute type and its value */
 		if (not_parsed < 4) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_parse_body: attribute header short to be valid\n");
+#endif
 			*error_code = BAD_REQUEST_ERR;
 			continue;
 		}
@@ -264,6 +282,9 @@ int stun_parse_body(
 		
 		/* check if there is enought unparsed space for attribute's value */
 		if (not_parsed < ntohs(attr.len)) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_parse_body: remaining message is shorter then attribute length\n");
+#endif
 			*error_code = BAD_REQUEST_ERR;
 			continue;
 		}
@@ -295,11 +316,17 @@ int stun_parse_body(
 
 			/* MESSAGE_INTEGRITY must be padded to sixty four bytes*/
 			case MESSAGE_INTEGRITY_ATTR:
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_parse_body: message integrity attribute found\n");
+#endif
 				padded_len = PADDED_TO_SIXTYFOUR(ntohs(attr.len));
 				break;
 			
 			case FINGERPRINT_ATTR:
-				fp_present = 1;			
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_parse_body: fingerprint attribute found\n");
+#endif
+				fp_present = 1;
 				if (ntohs(attr.len) != SHA_DIGEST_LENGTH) {
 					LOG(L_WARN, 
 						"WARNING: STUN: Incorrect fingerprint of request.\n");
@@ -319,6 +346,9 @@ int stun_parse_body(
 
 				padded_len = SHA_DIGEST_LENGTH;
 				if (not_parsed > SHA_DIGEST_LENGTH) {
+#ifdef EXTRA_DEBUG
+					LOG(L_DBG, "DEBUG: stun_parse_body: fingerprint is not the last attribute\n");
+#endif
 					/* fingerprint must be last parameter in request */
 					*error_code = BAD_REQUEST_ERR;
 					continue;
@@ -330,6 +360,9 @@ int stun_parse_body(
 				 * the attribute is uknnown to the server
 				 * let see if it's necessary to generate error response 
 				 */
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_parse_body: unknown attribute found\n");
+#endif
 				if (attr.type <= htons(MANDATORY_ATTR)) {
 					tmp_unknown = stun_alloc_unknown_attr(attr.type);
 					if (tmp_unknown == NULL) {
@@ -359,6 +392,9 @@ int stun_parse_body(
 	} 
 	
 	if (fp_present == 0 && req->old == 0) {
+#ifdef EXTRA_DEBUG
+		LOG(L_DBG, "DEBUG: stun_parse_body: fingerprint is missing is this new request\n");
+#endif
 		/* missing mandatory attribute fingerprint */
 		*error_code = BAD_REQUEST_ERR;
 	}
@@ -410,11 +446,17 @@ int stun_create_response(
 	res->hdr.len = htons(0);
 	
 	if (error_code == RESPONSE_OK) {
+#ifdef EXTRA_DEBUG
+		LOG(L_DBG, "DEBUG: stun_create_response: creating normal response\n");
+#endif
 		res->hdr.type = htons(BINDING_RESPONSE);
 		
 		/* copy header into msg buffer */
 		if (buf_copy(&res->msg, (void *) &res->hdr, 
 					sizeof(struct stun_hdr)) != 0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_create_response: failed to copy buffer\n");
+#endif
 			return FATAL_ERROR;
 		}
 
@@ -427,35 +469,56 @@ int stun_create_response(
 			if (stun_add_address_attr(res, ri->src_ip.af, ri->src_port, 
 						  ri->src_ip.u.addr32, XOR_MAPPED_ADDRESS_ATTR, 
 						  XOR) != 0) {
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_create_response: failed to add address\n");
+#endif
 				return FATAL_ERROR;
 			}
 			
 			if (stun_add_common_integer_attr(res, REFRESH_INTERVAL_ATTR, 
 						stun_refresh_interval) != 0) {
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_create_response: failed to common attributes\n");
+#endif
 				return FATAL_ERROR;
 			}
 		}
 		else {
 			if (stun_add_address_attr(res, ri->src_ip.af, ri->src_port, 
 						ri->src_ip.u.addr32, MAPPED_ADDRESS_ATTR, !XOR) != 0) {
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_create_response: failed to add address\n");
+#endif
 				return FATAL_ERROR;
 			}
 		}
 	}
 	else {
+#ifdef EXTRA_DEBUG
+		LOG(L_DBG, "DEBUG: stun_create_response: creating error response\n");
+#endif
 		res->hdr.type = htons(BINDING_ERROR_RESPONSE);
 		
 		if (buf_copy(&res->msg, (void *) &res->hdr, 
 								sizeof(struct stun_hdr)) != 0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_create_response: failed to copy buffer\n");
+#endif
 			return FATAL_ERROR;
 		}
 		
 		if (add_error_code(res, error_code) != 0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_create_response: failed to add error code\n");
+#endif
 			return FATAL_ERROR;
 		}
 		
 		if (unknown != NULL) {
 			if (add_unknown_attr(res, unknown) != 0) {
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_create_response: failed to add unknown attribute\n");
+#endif
 				return FATAL_ERROR;
 			}
 		} 
@@ -471,11 +534,17 @@ int stun_create_response(
 	if (req->old == 0) {
 		/* add optional information about server */
 		if (stun_add_common_text_attr(res, SERVER_ATTR, SERVER_HDR, PAD4)!=0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: stun_create_response: failed to add common text attribute\n");
+#endif
 			return FATAL_ERROR;
 		}
 		
 		if (stun_allow_fp) {	
 			if (add_fingerprint(&res->msg) != 0) {
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_create_response: failed to add fingerprint\n");
+#endif
 				return FATAL_ERROR;
 			}
 		}
@@ -512,12 +581,18 @@ int add_unknown_attr(struct stun_msg* res, struct stun_unknown_att* unknown)
 	attr.len = htons(0);
 	
 	if (buf_copy(&res->msg, (void *) &attr, sizeof(struct stun_attr)) != 0) {
+#ifdef EXTRA_DEBUG
+		LOG(L_DBG, "DEBUG: add_unknown_attr: failed to copy buffer\n");
+#endif
 		return FATAL_ERROR;
 	}
 	
 	while (tmp_unknown != NULL) {
 		if (buf_copy(&res->msg, (void *)&tmp_unknown->type, 
 								sizeof(USHORT_T)) != 0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: add_unknown_attr: failed to copy unknown attribute\n");
+#endif
 			return FATAL_ERROR;
 		}
 		tmp_unknown = tmp_unknown->next;
@@ -532,6 +607,9 @@ int add_unknown_attr(struct stun_msg* res, struct stun_unknown_att* unknown)
 	 */
 	if (counter/2 != 0 && unknown != NULL) {
 		if (buf_copy(&res->msg, (void *)&unknown->type, sizeof(USHORT_T))!=0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: add_unknown_attr: failed to padd\n");
+#endif
 			return FATAL_ERROR;
 		}
 	}	
@@ -565,6 +643,9 @@ int add_error_code(struct stun_msg* res, USHORT_T error_code)
 	/* the type and length will be copy as last one because of unknown length*/
 	if (res->msg.buf.len < sizeof(struct stun_attr)) {
 		if (reallock_buffer(&res->msg, sizeof(struct stun_attr)) != 0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: add_error_code: failed to reallocate buffer\n");
+#endif
 			return FATAL_ERROR;
 		}
 	}
@@ -575,6 +656,9 @@ int add_error_code(struct stun_msg* res, USHORT_T error_code)
 	two_bytes = 0x0000;
 	
 	if (buf_copy(&res->msg, (void *) &two_bytes, sizeof(USHORT_T)) != 0) {
+#ifdef EXTRA_DEBUG
+		LOG(L_DBG, "DEBUG: add_error_code: failed to copy buffer\n");
+#endif
 		return FATAL_ERROR;
 	}
 	
@@ -632,6 +716,9 @@ int add_error_code(struct stun_msg* res, USHORT_T error_code)
 			break;
 	}
 	if (text_pad < 0) {
+#ifdef EXTRA_DEBUG
+		LOG(L_DBG, "DEBUG: add_error_code: text_pad is negative\n");
+#endif
 		goto error;
 	}
 	attr.type = htons(ERROR_CODE_ATTR);
@@ -672,11 +759,17 @@ int copy_str_to_buffer(struct stun_msg* res, const char* data, UINT_T pad)
 	pad_len = pad - data_len%pad;
 	
 	if (buf_copy(&res->msg, (void *) data, sizeof(UCHAR_T)*data_len) != 0) {
+#ifdef EXTRA_DEBUG
+		LOG(L_DBG, "DEBUG: copy_str_to_buffer: failed to copy buffer\n");
+#endif
 		return FATAL_ERROR;
 	}
 	
 	if (pad_len != 0) {
 		if (buf_copy(&res->msg, &empty, pad_len) != 0) {
+#ifdef EXTRA_DEBUG
+			LOG(L_DBG, "DEBUG: copy_str_to_buffer: failed to pad\n");
+#endif
 			return FATAL_ERROR;
 		}	
 	}
@@ -1037,44 +1130,3 @@ int stun_add_common_text_attr(struct stun_msg* res,
 }
 
 #endif  /* USE_STUN */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
