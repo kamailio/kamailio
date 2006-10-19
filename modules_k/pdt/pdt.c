@@ -76,7 +76,7 @@ static db_func_t pdt_dbf;
 
 /** parameters */
 static char *db_url = "mysql://root@127.0.0.1/pdt";
-char *db_table = "pd_multidomain";
+char *db_table = "pdt";
 char *sdomain_column = "sdomain";
 char *prefix_column  = "prefix";
 char *domain_column  = "domain";

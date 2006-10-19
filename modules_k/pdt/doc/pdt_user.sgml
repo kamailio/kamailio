@@ -131,7 +131,7 @@ modparam("pdt", "db_url", "mysql://user:xxx@127.0.0.1/ser")
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>prefix_domain</quote>.
+		    Default value is <quote>pdt</quote>.
 		</emphasis>
 	    </para>
 	    <example>
