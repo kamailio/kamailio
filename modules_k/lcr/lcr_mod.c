@@ -1046,8 +1046,8 @@ int mi_print_gws (struct mi_node* rpl)
 		if(attr == NULL)
 			return -1;
 
-		p = int2str((unsigned long)(*gws)[i].prefix, &len );
-		attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6, p, len );
+		attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6,
+			(*gws)[i].prefix, (*gws)[i].prefix_len );
 		if(attr == NULL)
 			return -1;
 	}
