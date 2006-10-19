@@ -114,7 +114,7 @@ char *sc_snd_time = "snd_time";  /* 9 */
 
 MODULE_VERSION
 
-#define S_TABLE_VERSION 4
+#define S_TABLE_VERSION 5
 
 /** database connection */
 static db_con_t *db_con = NULL;
