@@ -128,6 +128,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
 	pkg_free(hf.s);
 	return -1;
     }
+	pkg_free(hf.s);
 
     return 0;
 }
