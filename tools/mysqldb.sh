@@ -623,6 +623,18 @@ CREATE TABLE address (
 ) $TABLE_TYPE;
 
 
+/*
+ * Table structure for table 'pdt'
+ */
+CREATE TABLE pdt (
+  sdomain varchar(255) NOT NULL,
+  prefix varchar(32) NOT NULL,
+  domain varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (sdomain, prefix)
+) $TABLE_TYPE;
+
+
+
 # add an admin user "admin" with password==$DEFAULT_PW,
 # so that one can try it out on quick start
 $INITIAL_USER

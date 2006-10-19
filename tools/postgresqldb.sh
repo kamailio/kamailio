@@ -677,12 +677,12 @@ CREATE TABLE address (
 /*
  * Table structure for table 'pdt'
  */
-CREATE TABLE pd_multidomain (
+CREATE TABLE pdt (
         sdomain varchar(255) NOT NULL,
         prefix varchar(32) NOT NULL,
         domain varchar(255) NOT NULL DEFAULT '',
         PRIMARY KEY (sdomain, prefix)
-);
+) $TABLE_TYPE;
 
 
 /* add an admin user "admin" with password==$DEFAULT_PW,
