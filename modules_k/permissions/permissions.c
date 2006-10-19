@@ -31,6 +31,7 @@
 #include "trusted.h"
 #include "address.h"
 #include "hash.h"
+#include "mi.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -119,6 +120,8 @@ static int allow_uri(struct sip_msg* msg, char* basename, char* uri);
 static int mod_init(void);
 static void mod_exit(void);
 static int child_init(int rank);
+static int mi_trusted_child_init();
+static int mi_addr_child_init();
 
 
 /* Exported functions */
@@ -168,13 +171,24 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+/*
+ * Exported MI functions
+ */
+static mi_export_t mi_cmds[] = {
+	{ MI_TRUSTED_RELOAD,  mi_trusted_reload,  0,  mi_trusted_child_init },
+	{ MI_TRUSTED_DUMP,    mi_trusted_dump,    0,  0 },
+	{ MI_ADDRESS_RELOAD,  mi_address_reload,  0,  mi_addr_child_init },
+	{ MI_ADDRESS_DUMP,    mi_address_dump,    0,  0 },
+	{ 0, 0, 0, 0 }
+};
+
 /* Module interface */
 struct module_exports exports = {
 	"permissions",
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */
-	0,         /* exported MI functions */
+	mi_cmds,   /* exported MI functions */
 	mod_init,  /* module initialization function */
 	0,         /* response function */
 	mod_exit,  /* destroy function */
@@ -668,6 +682,18 @@ static int child_init(int rank)
 {
     if (init_child_trusted(rank) == -1) return -1;
     return init_child_addresses(rank);
+}
+
+
+static int mi_trusted_child_init()
+{
+    return mi_init_trusted();
+}
+
+
+static int mi_addr_child_init()
+{
+    return mi_init_addresses();
 }
 
 

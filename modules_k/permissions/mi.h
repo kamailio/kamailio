@@ -1,9 +1,8 @@
 /*
- * $Id$
  *
- * Header file for allow_trusted and allow_address fifo functions
+ * Header file for permissions MI functions
  *
- * Copyright (C) 2003-2006 Juha Heinanen
+ * Copyright (C) 2006 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,20 +22,27 @@
  */
 
 
-#ifndef FIFO_H
-#define FIFO_H
+#ifndef _PERMISSIONS_MI_H_
+#define _PERMISSIONS_MI_H_
 
 
-/*
- * Register trusted fifo functions
- */
-int init_trusted_fifo(void);
+#include "../../mi/mi.h"
 
 
-/*
- * Register address fifo functions
- */
-int init_address_fifo(void);
+#define MI_TRUSTED_RELOAD "trusted_reload"
+#define MI_TRUSTED_DUMP "trusted_dump"
+
+#define MI_ADDRESS_RELOAD "address_reload"
+#define MI_ADDRESS_DUMP "address_dump"
 
 
-#endif /* FIFO_H */
+struct mi_node* mi_trusted_reload(struct mi_node *cmd, void *param);
+
+struct mi_node* mi_trusted_dump(struct mi_node *cmd, void *param);
+
+struct mi_node* mi_address_reload(struct mi_node *cmd, void *param);
+
+struct mi_node* mi_address_dump(struct mi_node *cmd, void *param);
+
+
+#endif

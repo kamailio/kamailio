@@ -245,7 +245,7 @@ found:
 
 
 /* 
- * Print domains stored in hash table 
+ * Print trusted entries stored in hash table 
  */
 void hash_table_print(struct trusted_list** table, FILE* reply_file)
 {
@@ -261,6 +261,33 @@ void hash_table_print(struct trusted_list** table, FILE* reply_file)
 			np = np->next;
 		}
 	}
+}
+
+
+/* 
+ * Print trusted entries stored in hash table 
+ */
+int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
+{
+    int i;
+    struct trusted_list *np;
+    
+    for (i = 0; i < PERM_HASH_SIZE; i++) {
+	np = table[i];
+	while (np) {
+	    if (addf_mi_node_child(rpl, 0, 0, 0,
+				   "%4d <%.*s, %d, %s, %s>",
+				   i,
+				   np->src_ip.len, ZSW(np->src_ip.s),
+				   np->proto,
+				   np->pattern?np->pattern:"NULL",
+				   np->tag.len?np->tag.s:"NULL") == 0) {
+		return -1;
+	    }
+	    np = np->next;
+	}
+    }
+    return 0;
 }
 
 
@@ -397,6 +424,33 @@ void addr_hash_table_print(struct addr_list** table, FILE* reply_file)
 	    np = np->next;
 	}
     }
+}
+
+
+/* 
+ * Print addresses stored in hash table 
+ */
+int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
+{
+    int i;
+    struct addr_list *np;
+    struct ip_addr addr;
+    
+    for (i = 0; i < PERM_HASH_SIZE; i++) {
+	np = table[i];
+	while (np) {
+	    addr.af = AF_INET;
+	    addr.len = 4;
+	    addr.u.addr32[0] = np->ip_addr;
+	    if (addf_mi_node_child(rpl, 0, 0, 0,
+				   "%4d <%u, %s, %u>",
+				   i, np->grp, ip_addr2a(&addr),
+				   np->port) == 0)
+		return -1;
+	    np = np->next;
+	}
+    }
+    return 0;
 }
 
 

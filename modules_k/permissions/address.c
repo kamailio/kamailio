@@ -56,6 +56,88 @@ static unsigned int addr_group = 0;
 static db_con_t* db_handle = 0;
 static db_func_t perm_dbf;
 
+
+/*
+ * Reload addr table to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_address_table(void)
+{
+    db_key_t cols[3];
+    db_res_t* res = NULL;
+    db_row_t* row;
+    db_val_t* val;
+
+    struct addr_list **new_hash_table;
+    int i;
+    struct in_addr ip_addr;
+
+    cols[0] = grp_col;
+    cols[1] = ip_addr_col;
+    cols[2] = port_col;
+
+    if (perm_dbf.use_table(db_handle, address_table) < 0) {
+	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
+	    " Error while trying to use address table\n");
+	return -1;
+    }
+    
+    if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
+	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
+	    " Error while querying database\n");
+	return -1;
+    }
+
+    /* Choose new hash table and free its old contents */
+    if (*addr_hash_table == addr_hash_table_1) {
+	empty_addr_hash_table(addr_hash_table_2);
+	new_hash_table = addr_hash_table_2;
+    } else {
+	empty_addr_hash_table(addr_hash_table_1);
+	new_hash_table = addr_hash_table_1;
+    }
+
+    row = RES_ROWS(res);
+
+    DBG("Number of rows in address table: %d\n", RES_ROW_N(res));
+		
+    for (i = 0; i < RES_ROW_N(res); i++) {
+	val = ROW_VALUES(row + i);
+	if ((ROW_N(row + i) == 3) &&
+	    (VAL_TYPE(val) == DB_INT) && !VAL_NULL(val) &&
+	    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
+	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
+	    (VAL_TYPE(val + 2) == DB_INT) && !VAL_NULL(val + 2)) {
+	    if (addr_hash_table_insert(new_hash_table,
+				       (unsigned int)VAL_INT(val),
+				       (unsigned int)ip_addr.s_addr,
+				       (unsigned int)VAL_INT(val + 2)) == -1) {
+		LOG(L_ERR, "ERROR: permissions: "
+		    "address_reload(): Hash table problem\n");
+		perm_dbf.free_result(db_handle, res);
+		return -1;
+	    }
+            DBG("Tuple <%u, %s, %u> inserted into address hash "
+		"table\n", (unsigned int)VAL_INT(val),
+		(char *)VAL_STRING(val + 1), (unsigned int)VAL_INT(val + 2));
+	} else {
+	    LOG(L_ERR, "ERROR: permissions: address_reload():"
+		" Database problem\n");
+	    perm_dbf.free_result(db_handle, res);
+	    return -1;
+	}
+    }
+
+    perm_dbf.free_result(db_handle, res);
+
+    *addr_hash_table = new_hash_table;
+
+    DBG("Address table reloaded successfully.\n");
+	
+    return 1;
+}
+
+
 /*
  * Initialize data structures
  */
@@ -204,6 +286,22 @@ int init_child_addresses(int rank)
 
 
 /*
+ * Open database connection if necessary
+ */
+int mi_init_addresses()
+{
+    if (!db_url || db_handle) return 0;
+    db_handle = perm_dbf.init(db_url);
+    if (!db_handle) {
+	LOG(L_ERR, "ERROR: permissions: init_mi_addresses():"
+	    " Unable to connect database\n");
+	return -1;
+    }
+    return 0;
+}
+
+
+/*
  * Close connections and release memory
  */
 void clean_addresses(void)
@@ -299,85 +397,4 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
     return match_addr_hash_table(*addr_hash_table, addr_group,
 				 _msg->rcv.src_ip.u.addr32[0],
 				 _msg->rcv.src_port);
-}
-
-
-/*
- * Reload addr table to new hash table and when done, make new hash table
- * current one.
- */
-int reload_address_table(void)
-{
-    db_key_t cols[3];
-    db_res_t* res = NULL;
-    db_row_t* row;
-    db_val_t* val;
-
-    struct addr_list **new_hash_table;
-    int i;
-    struct in_addr ip_addr;
-
-    cols[0] = grp_col;
-    cols[1] = ip_addr_col;
-    cols[2] = port_col;
-
-    if (perm_dbf.use_table(db_handle, address_table) < 0) {
-	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
-	    " Error while trying to use address table\n");
-	return -1;
-    }
-    
-    if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
-	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
-	    " Error while querying database\n");
-	return -1;
-    }
-
-    /* Choose new hash table and free its old contents */
-    if (*addr_hash_table == addr_hash_table_1) {
-	empty_addr_hash_table(addr_hash_table_2);
-	new_hash_table = addr_hash_table_2;
-    } else {
-	empty_addr_hash_table(addr_hash_table_1);
-	new_hash_table = addr_hash_table_1;
-    }
-
-    row = RES_ROWS(res);
-
-    DBG("Number of rows in address table: %d\n", RES_ROW_N(res));
-		
-    for (i = 0; i < RES_ROW_N(res); i++) {
-	val = ROW_VALUES(row + i);
-	if ((ROW_N(row + i) == 3) &&
-	    (VAL_TYPE(val) == DB_INT) && !VAL_NULL(val) &&
-	    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
-	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
-	    (VAL_TYPE(val + 2) == DB_INT) && !VAL_NULL(val + 2)) {
-	    if (addr_hash_table_insert(new_hash_table,
-				       (unsigned int)VAL_INT(val),
-				       (unsigned int)ip_addr.s_addr,
-				       (unsigned int)VAL_INT(val + 2)) == -1) {
-		LOG(L_ERR, "ERROR: permissions: "
-		    "address_reload(): Hash table problem\n");
-		perm_dbf.free_result(db_handle, res);
-		return -1;
-	    }
-            DBG("Tuple <%u, %s, %u> inserted into address hash "
-		"table\n", (unsigned int)VAL_INT(val),
-		(char *)VAL_STRING(val + 1), (unsigned int)VAL_INT(val + 2));
-	} else {
-	    LOG(L_ERR, "ERROR: permissions: address_reload():"
-		" Database problem\n");
-	    perm_dbf.free_result(db_handle, res);
-	    return -1;
-	}
-    }
-
-    perm_dbf.free_result(db_handle, res);
-
-    *addr_hash_table = new_hash_table;
-
-    DBG("Address table reloaded successfully.\n");
-	
-    return 1;
 }

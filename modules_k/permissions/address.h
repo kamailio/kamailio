@@ -37,9 +37,22 @@ int init_addresses(void);
 
 
 /*
- * Open database connections if necessary
+ * Open database connection if necessary
  */
 int init_child_addresses(int rank);
+
+
+/*
+ * Open database connection if necessary
+ */
+int mi_init_addresses();
+
+
+/*
+ * Reload address table to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_address_table(void);
 
 
 /*

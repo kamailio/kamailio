@@ -54,6 +54,101 @@ static db_func_t perm_dbf;
 
 
 /*
+ * Reload trusted table to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_trusted_table(void)
+{
+	db_key_t cols[4];
+	db_res_t* res = NULL;
+	db_row_t* row;
+	db_val_t* val;
+
+	struct trusted_list **new_hash_table;
+	int i;
+
+	cols[0] = source_col;
+	cols[1] = proto_col;
+	cols[2] = from_col;
+	cols[3] = tag_col;
+
+	char *pattern, *tag;
+
+	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
+		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
+				" Error while trying to use trusted table\n");
+		return -1;
+	}
+
+	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
+		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
+				" Error while querying database\n");
+		return -1;
+	}
+
+	/* Choose new hash table and free its old contents */
+	if (*hash_table == hash_table_1) {
+		empty_hash_table(hash_table_2);
+		new_hash_table = hash_table_2;
+	} else {
+		empty_hash_table(hash_table_1);
+		new_hash_table = hash_table_1;
+	}
+
+	row = RES_ROWS(res);
+
+	DBG("Number of rows in trusted table: %d\n", RES_ROW_N(res));
+		
+	for (i = 0; i < RES_ROW_N(res); i++) {
+	    val = ROW_VALUES(row + i);
+	    if ((ROW_N(row + i) == 4) &&
+		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
+		(VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
+		(VAL_NULL(val + 2) ||
+		 ((VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2))) &&
+		(VAL_NULL(val + 3) ||
+		 ((VAL_TYPE(val + 3) == DB_STRING) && !VAL_NULL(val + 3)))) {
+		if (VAL_NULL(val + 2)) {
+		    pattern = 0;
+		} else {
+		    pattern = (char *)VAL_STRING(val + 2);
+		}
+		if (VAL_NULL(val + 3)) {
+		    tag = 0;
+		} else {
+		    tag = (char *)VAL_STRING(val + 3);
+		}
+		if (hash_table_insert(new_hash_table,
+				      (char *)VAL_STRING(val),
+				      (char *)VAL_STRING(val + 1),
+				      pattern, tag) == -1) {
+		    LOG(L_ERR, "ERROR: permissions: "
+			"trusted_reload(): Hash table problem\n");
+		    perm_dbf.free_result(db_handle, res);
+		    return -1;
+		}
+		DBG("Tuple <%s, %s, %s, %s> inserted into trusted hash "
+		    "table\n", VAL_STRING(val), VAL_STRING(val + 1),
+		    pattern, tag);
+	    } else {
+		LOG(L_ERR, "ERROR: permissions: trusted_reload():"
+		    " Database problem\n");
+		perm_dbf.free_result(db_handle, res);
+		return -1;
+	    }
+	}
+
+	perm_dbf.free_result(db_handle, res);
+
+	*hash_table = new_hash_table;
+
+	DBG("Trusted table reloaded successfully.\n");
+	
+	return 1;
+}
+
+
+/*
  * Initialize data structures
  */
 int init_trusted(void)
@@ -201,6 +296,22 @@ int init_child_trusted(int rank)
 	}
 
 	return 0;
+}
+
+
+/*
+ * Open database connection if necessary
+ */
+int mi_init_trusted()
+{
+    if (!db_url || db_handle) return 0;
+    db_handle = perm_dbf.init(db_url);
+    if (!db_handle) {
+	LOG(L_ERR, "ERROR: permissions: init_mi_trusted():"
+	    " Unable to connect database\n");
+	return -1;
+    }
+    return 0;
 }
 
 
@@ -381,100 +492,4 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		LOG(L_ERR, "allow_trusted(): Error - set db_mode parameter of permissions module properly\n");
 		return -1;
 	}
-}
-
-
-
-/*
- * Reload trusted table to new hash table and when done, make new hash table
- * current one.
- */
-int reload_trusted_table(void)
-{
-	db_key_t cols[4];
-	db_res_t* res = NULL;
-	db_row_t* row;
-	db_val_t* val;
-
-	struct trusted_list **new_hash_table;
-	int i;
-
-	cols[0] = source_col;
-	cols[1] = proto_col;
-	cols[2] = from_col;
-	cols[3] = tag_col;
-
-	char *pattern, *tag;
-
-	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
-		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
-				" Error while trying to use trusted table\n");
-		return -1;
-	}
-
-	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
-		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
-				" Error while querying database\n");
-		return -1;
-	}
-
-	/* Choose new hash table and free its old contents */
-	if (*hash_table == hash_table_1) {
-		empty_hash_table(hash_table_2);
-		new_hash_table = hash_table_2;
-	} else {
-		empty_hash_table(hash_table_1);
-		new_hash_table = hash_table_1;
-	}
-
-	row = RES_ROWS(res);
-
-	DBG("Number of rows in trusted table: %d\n", RES_ROW_N(res));
-		
-	for (i = 0; i < RES_ROW_N(res); i++) {
-	    val = ROW_VALUES(row + i);
-	    if ((ROW_N(row + i) == 4) &&
-		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
-		(VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
-		(VAL_NULL(val + 2) ||
-		 ((VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2))) &&
-		(VAL_NULL(val + 3) ||
-		 ((VAL_TYPE(val + 3) == DB_STRING) && !VAL_NULL(val + 3)))) {
-		if (VAL_NULL(val + 2)) {
-		    pattern = 0;
-		} else {
-		    pattern = (char *)VAL_STRING(val + 2);
-		}
-		if (VAL_NULL(val + 3)) {
-		    tag = 0;
-		} else {
-		    tag = (char *)VAL_STRING(val + 3);
-		}
-		if (hash_table_insert(new_hash_table,
-				      (char *)VAL_STRING(val),
-				      (char *)VAL_STRING(val + 1),
-				      pattern, tag) == -1) {
-		    LOG(L_ERR, "ERROR: permissions: "
-			"trusted_reload(): Hash table problem\n");
-		    perm_dbf.free_result(db_handle, res);
-		    return -1;
-		}
-		DBG("Tuple <%s, %s, %s, %s> inserted into trusted hash "
-		    "table\n", VAL_STRING(val), VAL_STRING(val + 1),
-		    pattern, tag);
-	    } else {
-		LOG(L_ERR, "ERROR: permissions: trusted_reload():"
-		    " Database problem\n");
-		perm_dbf.free_result(db_handle, res);
-		return -1;
-	    }
-	}
-
-	perm_dbf.free_result(db_handle, res);
-
-	*hash_table = new_hash_table;
-
-	DBG("Trusted table reloaded successfully.\n");
-	
-	return 1;
 }

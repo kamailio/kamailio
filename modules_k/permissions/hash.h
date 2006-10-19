@@ -29,6 +29,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
 #include "../../usr_avp.h"
+#include "../../mi/mi.h"
 
 #define PERM_HASH_SIZE 128
 
@@ -93,7 +94,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg);
  * Print domains stored in hash table 
  */
 void hash_table_print(struct trusted_list** hash_table, FILE* reply_file);
-
+int hash_table_mi_print(struct trusted_list **hash_table, struct mi_node* rpl);
 
 /* 
  * Empty hash table
@@ -149,6 +150,8 @@ int match_addr_hash_table(struct addr_list** table, unsigned int grp,
  * Print addresses stoed in hash table
  */
 void addr_hash_table_print(struct addr_list** hash_table, FILE* reply_file);
+int addr_hash_table_mi_print(struct addr_list** hash_table,
+			     struct mi_node* rpl);
 
 
 /* 
