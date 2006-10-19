@@ -86,7 +86,7 @@ Chapter 1. User's Guide
 
    The following modules must be loaded before this module:
 
-     * mysql.
+     * a database module.
      * sl.
      * tm.
      _________________________________________________________
