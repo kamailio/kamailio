@@ -515,10 +515,10 @@ CREATE TABLE silo(
     exp_time INTEGER NOT NULL DEFAULT 0,
     snd_time INTEGER NOT NULL DEFAULT 0,
     ctype varchar(32) NOT NULL DEFAULT 'text/plain',
-    body TEXT NOT NULL DEFAULT '',
-    PRIMARY KEY ($USERCOL, domain)
+    body TEXT NOT NULL DEFAULT ''
 ) $TABLE_TYPE;
 
+CREATE INDEX silo_idx ON silo($USERCOL, domain);
 
 /*
  * Table structure for table 'domain' -- domains proxy is responsible for
