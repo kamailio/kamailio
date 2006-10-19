@@ -43,6 +43,7 @@
 #             corrected comments to indicate Postgres as opposed to MySQL
 #             made last_modified/created stamps consistent to now() using 
 #                  local TIMESTAMP
+# 2006-10-19  Added address table (bogdan)
 #
 
 
@@ -296,11 +297,13 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 	GRANT ALL PRIVILEGES ON TABLE version, acc, aliases, dbaliases, grp,
 		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
 		uri, usr_preferences, trusted, re_grp, pd_multidomain,
-		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBRWUSER;
+		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
+		sip_trace TO $DBRWUSER;
 	GRANT SELECT ON TABLE version, acc, aliases, dbaliases, grp,
 		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
 		uri, usr_preferences, trusted, re_grp, pd_multidomain,
-		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, sip_trace TO $DBROUSER;"
+		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
+		sip_trace TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
 DATETIME="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DUMMY_DATE'"
 DATETIMEALIAS="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_ALIASES_EXPIRES'"
@@ -346,6 +349,7 @@ INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'sip_trace', '1');
+INSERT INTO version VALUES ( 'address', '2');
 
 
 /*
@@ -657,6 +661,18 @@ CREATE INDEX user_idx ON sip_trace (traced_user);
 CREATE INDEX date_idx ON sip_trace (date);
 CREATE INDEX fromip_idx ON sip_trace (fromip);
 CREATE INDEX callid_idx ON sip_trace (callid);
+
+
+/*
+* Table structure for table 'address'
+*/
+CREATE TABLE address (
+ id $AUTO_INCREMENT,
+ grp smallint NOT NULL default '0',
+ ip_addr varchar(15) NOT NULL default '',
+ port smallint NOT NULL default '0'
+) $TABLE_TYPE; 
+
 
 /*
  * Table structure for table 'pdt'
