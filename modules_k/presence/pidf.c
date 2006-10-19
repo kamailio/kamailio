@@ -317,7 +317,7 @@ str* agregate_xmls(str** body_array, int n)
 			}
 		}
 	}
-	xmlDocDumpFormatMemory(xml_array[j],(const char**) &body->s, 
+	xmlDocDumpFormatMemory(xml_array[j],(xmlChar**) &body->s, 
 			&body->len, 1);	
 	for(i=0;i<j;i++)
 	{
@@ -565,7 +565,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 		goto error;
 	}
 
-	xmlDocDumpFormatMemory(new_doc,(const char**) &body->s, &body->len, 1);	
+	xmlDocDumpFormatMemory(new_doc,(xmlChar**) &body->s, &body->len, 1);
 
 	DBG("PRESENCE: build_off_nbody:new_body:\n%.*s\n",body->len, body->s);
 
@@ -712,7 +712,7 @@ str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, i
      * Dumping document to stdio or file
      */
     //xmlSaveFormatFileEnc("stdout", doc, "UTF-8", 1);
-	xmlDocDumpFormatMemory(doc,(const char**) &body->s, &body->len, 1);	
+	xmlDocDumpFormatMemory(doc,(xmlChar**) &body->s, &body->len, 1);	
 
     /*free the document */
     if(doc)
@@ -1006,8 +1006,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	
 		}	
 	}
-	xmlDocDumpFormatMemory(doc,(const char**) &new_body->s, &new_body->len,
-			1);	
+	xmlDocDumpFormatMemory(doc,(xmlChar**) &new_body->s, &new_body->len, 1);
 	DBG("PRESENCE:get_final_notify_body: body = \n%.*s\n", new_body->len,
 			new_body->s);
 
