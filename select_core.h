@@ -61,6 +61,16 @@ enum {
 	SEL_AUTH_QOP
 };
 
+enum {
+	SEL_SRC  = 1<<0,
+	SEL_DST  = 1<<1,
+	SEL_RCV  = 1<<2,
+	SEL_PROTO= 1<<5,
+	SEL_IP   = 1<<6,
+	SEL_PORT = 1<<7,
+	SEL_IP_PORT = SEL_IP | SEL_PORT,
+};
+
 SELECT_F(select_method)
 SELECT_F(select_ruri)
 SELECT_F(select_from)
@@ -122,6 +132,11 @@ SELECT_F(select_auth)
 SELECT_F(select_auth_param)
 SELECT_F(select_auth_username)
 SELECT_F(select_auth_username_comp)
+
+SELECT_F(select_src)
+SELECT_F(select_dst)
+SELECT_F(select_rcv)
+SELECT_F(select_ip_port)
 
 static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
@@ -213,6 +228,21 @@ static select_row_t select_core[] = {
 	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("qop"), select_auth_param, DIVERSION | SEL_AUTH_QOP},
 	{ select_auth_username, SEL_PARAM_STR, STR_STATIC_INIT("user"), select_auth_username_comp, DIVERSION | SEL_AUTH_USER},
 	{ select_auth_username, SEL_PARAM_STR, STR_STATIC_INIT("domain"), select_auth_username_comp, DIVERSION | SEL_AUTH_DOMAIN},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("src"), select_src, SEL_PARAM_EXPECTED},
+	{ select_src, SEL_PARAM_STR, STR_STATIC_INIT("ip"), select_ip_port, DIVERSION | SEL_SRC | SEL_IP},
+	{ select_src, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_ip_port, DIVERSION | SEL_SRC | SEL_PORT},
+	{ select_src, SEL_PARAM_STR, STR_STATIC_INIT("ip_port"), select_ip_port, DIVERSION | SEL_SRC | SEL_IP_PORT},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("dst"), select_dst, SEL_PARAM_EXPECTED},
+	{ select_dst, SEL_PARAM_STR, STR_STATIC_INIT("ip"), select_ip_port, DIVERSION | SEL_DST | SEL_IP},
+	{ select_dst, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_ip_port, DIVERSION | SEL_DST | SEL_PORT},
+	{ select_dst, SEL_PARAM_STR, STR_STATIC_INIT("ip_port"), select_ip_port, DIVERSION | SEL_DST | SEL_IP_PORT},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("received"), select_rcv, SEL_PARAM_EXPECTED},
+	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("proto"), select_ip_port, DIVERSION | SEL_RCV | SEL_PROTO},
+	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("ip"), select_ip_port, DIVERSION | SEL_RCV | SEL_IP},
+	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_ip_port, DIVERSION | SEL_RCV | SEL_PORT},
+	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("ip_port"), select_ip_port, DIVERSION | SEL_RCV | SEL_IP_PORT},
+	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("proto_ip_port"), select_ip_port, DIVERSION | SEL_RCV | SEL_PROTO | SEL_IP_PORT},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };

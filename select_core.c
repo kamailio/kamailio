@@ -51,6 +51,7 @@
 #include "parser/digest/digest.h"
 #include "mem/mem.h"
 #include "parser/parse_hname2.h"
+#include "ip_addr.h"
 
 #define RETURN0_res(x) {*res=x;return 0;}
 #define TRIM_RET0_res(x) {*res=x;trim(res);return 0;} 
@@ -1017,5 +1018,100 @@ int select_nameaddr_params(str* res, select_t* s, struct sip_msg* msg)
 		return (res->len ? 0 : 1);
 
 	return select_any_params(res, s, msg);
+}
+
+ABSTRACT_F(select_src)
+ABSTRACT_F(select_dst)
+ABSTRACT_F(select_rcv)
+int select_ip_port(str* res, select_t* s, struct sip_msg* msg)
+{
+	str ip_str=STR_NULL, port_str=STR_NULL, proto_str=STR_NULL;
+	int param, pos;
+	
+
+	if ((s->n != 2) || (s->params[1].type != SEL_PARAM_DIV)) return -1;
+	param=s->params[1].v.i;
+
+	if (param & SEL_SRC) {
+		if (param & SEL_IP) {
+			ip_str.s = ip_addr2a(&msg->rcv.src_ip);
+			ip_str.len = strlen(ip_str.s);
+		}
+		if (param & SEL_PORT) {
+			port_str.s = int2str(msg->rcv.src_port, &port_str.len);
+		}
+	} else if (param & SEL_DST) {
+		if (param & SEL_IP) {
+			ip_str.s = ip_addr2a(&msg->rcv.dst_ip);
+			ip_str.len = strlen(ip_str.s);
+		}
+		if (param & SEL_PORT) {
+			port_str.s = int2str(msg->rcv.dst_port, &port_str.len);
+		}
+	} else if (param & SEL_RCV) {
+		if (param & SEL_IP) {
+			ip_str = msg->rcv.bind_address->address_str;
+		}
+		if (param & SEL_PORT) {
+			port_str = msg->rcv.bind_address->port_no_str;
+		}
+		if (param & SEL_PROTO) {
+			switch (msg->rcv.proto) {
+			case PROTO_NONE:
+				proto_str.s = 0;
+				proto_str.len = 0;
+				break;
+
+			case PROTO_UDP:
+				proto_str.s = "udp";
+				proto_str.len = 3;
+				break;
+
+			case PROTO_TCP:
+				proto_str.s = "tcp";
+				proto_str.len = 3;
+				break;
+
+			case PROTO_TLS:
+				proto_str.s = "tls";
+				proto_str.len = 3;
+				break;
+
+			case PROTO_SCTP:
+				proto_str.s = "sctp";
+				proto_str.len = 4;
+				break;
+
+			default:
+				ERR("BUG: select_ip_port: Unknown transport protocol\n");
+				return -1;
+			}
+		}
+	} else {
+		return -1;
+	}
+
+	res->s = get_static_buffer(ip_str.len+port_str.len+proto_str.len+3);
+	if (!res->s) return -1;
+
+	pos=0;
+	if (param & SEL_PROTO) {
+		memcpy(res->s, proto_str.s, proto_str.len);
+		pos += proto_str.len;
+	}
+	if (param & SEL_IP) {
+		if (pos) res->s[pos++] = ':';
+		memcpy(res->s+pos, ip_str.s, ip_str.len);
+		pos += ip_str.len;
+	}
+	if (param & SEL_PORT) {
+		if (pos) res->s[pos++] = ':';
+		memcpy(res->s+pos, port_str.s, port_str.len);
+		pos += port_str.len;
+	}
+	res->s[pos] = 0;
+	res->len = pos;
+	return (pos==0 ? 1 : 0);
+
 }
 
