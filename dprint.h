@@ -47,7 +47,12 @@
 extern int debug;
 extern int log_stderr;
 extern int log_facility;
+extern volatile int dprint_crit; /* protection against "simultaneous"
+									printing from signal handlers */
 
+#define DPRINT_NON_CRIT		(dprint_crit==0)
+#define DPRINT_CRIT_ENTER	(dprint_crit++)
+#define DPRINT_CRIT_EXIT	(dprint_crit--)
 
 #define DPRINT_LEV	1
 /* priority at which we log */
@@ -87,23 +92,27 @@ int str2facility(char *s);
 	#ifdef __SUNPRO_C
 		#define DPrint( ...) \
 			do{ \
-				if (debug>=DPRINT_LEV){ \
+				if ((debug>=DPRINT_LEV) && DPRINT_NON_CRIT){ \
+					DPRINT_CRIT_ENTER; \
 					if (log_stderr){ \
 						dprint (__VA_ARGS__); \
 					}else{ \
 						syslog(DPRINT_LEV|log_facility,  __VA_ARGS__); \
 					}\
+					DPRINT_CRIT_EXIT; \
 				} \
 			}while(0)
 	#else
 			#define DPrint(fmt,args...) \
 			do{ \
-				if (debug>=DPRINT_LEV){ \
+				if ((debug>=DPRINT_LEV) && DPRINT_NON_CRIT){ \
+					DPRINT_CRIT_ENTER; \
 					if (log_stderr){ \
 						dprint (fmt, ## args); \
 					}else{ \
 						syslog(DPRINT_LEV|log_facility, fmt, ## args); \
 					}\
+					DPRINT_CRIT_EXIT; \
 				} \
 			}while(0)
 	#endif
@@ -124,7 +133,8 @@ int str2facility(char *s);
 	#ifdef __SUNPRO_C
 		#define LOG(lev, ...) \
 			do { \
-				if (debug>=(lev)){ \
+				if ((debug>=(lev)) && DPRINT_NON_CRIT){ \
+					DPRINT_CRIT_ENTER; \
 					if (log_stderr) dprint (__VA_ARGS__); \
 					else { \
 						switch(lev){ \
@@ -151,12 +161,14 @@ int str2facility(char *s);
 								break; \
 						} \
 					} \
+					DPRINT_CRIT_EXIT; \
 				} \
 			}while(0)
 	#else
 		#define LOG(lev, fmt, args...) \
 			do { \
-				if (debug>=(lev)){ \
+				if ((debug>=(lev)) && DPRINT_NON_CRIT){ \
+					DPRINT_CRIT_ENTER; \
 					if (log_stderr) dprint (fmt, ## args); \
 					else { \
 						switch(lev){ \
@@ -183,6 +195,7 @@ int str2facility(char *s);
 								break; \
 						} \
 					} \
+					DPRINT_CRIT_EXIT; \
 				} \
 			}while(0)
 	#endif /*SUN_PRO_C*/

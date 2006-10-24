@@ -37,6 +37,9 @@
 #include <stdio.h>
 #include <strings.h>
 
+volatile int dprint_crit=0; /* signal protection: !=0 when dprint/LOG/DBG are
+								printing */
+
 static char* str_fac[]={"LOG_AUTH","LOG_CRON","LOG_DAEMON",
 					"LOG_KERN","LOG_LOCAL0","LOG_LOCAL1",
 					"LOG_LOCAL2","LOG_LOCAL3","LOG_LOCAL4","LOG_LOCAL5",
