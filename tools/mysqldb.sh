@@ -302,7 +302,7 @@ INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'sip_trace', '1');
 INSERT INTO version VALUES ( 'address', '2');
-
+INSERT INTO version VALUES ( 'domainpolicy', '2');
 
 
 #
@@ -633,6 +633,20 @@ CREATE TABLE pdt (
   PRIMARY KEY (sdomain, prefix)
 ) $TABLE_TYPE;
 
+
+#
+# domainpolicy table (see README domainpolicy module)
+#
+CREATE TABLE domainpolicy (
+ id             INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+ rule           VARCHAR(255) NOT NULL,
+ type           VARCHAR(255) NOT NULL,
+ att            VARCHAR(255),
+ val            VARCHAR(255),
+ comment        VARCHAR(255),
+ UNIQUE         (rule, att, val),
+ INDEX          rule_idx (rule)
+) $TABLE_TYPE;
 
 
 # add an admin user "admin" with password==$DEFAULT_PW,

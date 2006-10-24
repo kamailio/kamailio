@@ -298,12 +298,12 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
 		uri, usr_preferences, trusted, re_grp, pdt,
 		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
-		sip_trace TO $DBRWUSER;
+		sip_trace, domainpolicy TO $DBRWUSER;
 	GRANT SELECT ON TABLE version, acc, aliases, dbaliases, grp,
 		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
 		uri, usr_preferences, trusted, re_grp, pdt,
 		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
-		sip_trace TO $DBROUSER;"
+		sip_trace, domainpolicy TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
 DATETIME="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DUMMY_DATE'"
 DATETIMEALIAS="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_ALIASES_EXPIRES'"
@@ -350,7 +350,7 @@ INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'sip_trace', '1');
 INSERT INTO version VALUES ( 'address', '2');
-
+INSERT INTO version VALUES ( 'domainpolicy', '2');
 
 /*
  * Table structure for table 'subscriber' -- user database
@@ -683,6 +683,21 @@ CREATE TABLE pdt (
         domain varchar(255) NOT NULL DEFAULT '',
         PRIMARY KEY (sdomain, prefix)
 ) $TABLE_TYPE;
+
+
+/*
+ * domainpolicy table (see README domainpolicy module)
+ */
+CREATE TABLE domainpolicy (
+ id             SERIAL PRIMARY KEY ,
+ rule           VARCHAR(255) NOT NULL,
+ type           VARCHAR(255) NOT NULL,
+ att            VARCHAR(255),
+ val            VARCHAR(255),
+ comment        VARCHAR(255),
+ UNIQUE ( rule, att, val )
+);
+CREATE INDEX domainpolicy_rule_idx ON domainpolicy(rule);
 
 
 /* add an admin user "admin" with password==$DEFAULT_PW,
