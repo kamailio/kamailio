@@ -63,7 +63,7 @@ struct ip_node
 	unsigned short    hits[2];
 	unsigned char     byte;
 	unsigned char     branch;
-	unsigned short    flags;
+	volatile unsigned short    flags;
 	struct list_link  timer_ll;
 	struct ip_node    *prev;
 	struct ip_node    *next;
