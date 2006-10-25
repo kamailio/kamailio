@@ -26,7 +26,7 @@ BuildPrereq:  make flex bison
 
 
 %description
-OpenSER or Open SIP Express Router is a very fast and flexible SIP (RFC3621)
+OpenSER or Open SIP Express Router is a very fast and flexible SIP (RFC3261)
 proxy server. Written entirely in C, openser can handle thousands calls
 per second even on low-budget hardware. A C Shell like scripting language
 provides full control over the server's behaviour. It's modular

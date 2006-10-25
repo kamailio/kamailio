@@ -11,7 +11,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
 Suggests: openser-mysql-module, openser-postgres-module, openser-unixodbc-module, openser-jabber-module, openser-cpl-module, openser-radius-modules
 Description: very fast and configurable SIP proxy
- OpenSER is a very fast and flexible SIP (RFC3621)
+ OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
@@ -32,7 +32,7 @@ Architecture: any
 Depends: openser (= ${Source-Version})
 Conflicts: openser (<< ${Source-Version})
 Description: very fast and configurable SIP proxy [debug symbols]
- OpenSER is a very fast and flexible SIP (RFC3621)
+ OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
@@ -43,7 +43,7 @@ Package: openser-mysql-module
 Architecture: any
 Depends: ${shlibs:Depends}, openser (= ${Source-Version}), mysql-client
 Description: MySQL database connectivity module for OpenSER
- OpenSER is a very fast and flexible SIP (RFC3621)
+ OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
@@ -53,7 +53,7 @@ Package: openser-postgres-module
 Architecture: any
 Depends: ${shlibs:Depends}, openser (= ${Source-Version}), postgresql-client
 Description: PostgreSQL database connectivity module for OpenSER
- OpenSER is a very fast and flexible SIP (RFC3621)
+ OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
@@ -63,7 +63,7 @@ Package: openser-jabber-module
 Architecture: any
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: Jabber module (SIP-Jabber message translation) for OpenSER
- OpenSER is a very fast and flexible SIP (RFC3621)
+ OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
@@ -73,7 +73,7 @@ Package: openser-cpl-module
 Architecture: any
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: CPL module (CPL interpreter engine) for OpenSER
- OpenSER is a very fast and flexible SIP (RFC3621)
+ OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
@@ -84,7 +84,7 @@ Package: openser-radius-modules
 Architecture: any
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: radius modules for OpenSER
- OpenSER is a very fast and flexible SIP (RFC3621)
+ OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
@@ -96,7 +96,7 @@ Package: openser-unixodbc-module
 Architecture: any 
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: unixODBC database connectivity module for OpenSER 
- OpenSER is a very fast and flexible SIP (RFC3621) 
+ OpenSER is a very fast and flexible SIP (RFC3261) 
  proxy server. Written entirely in C, OpenSER can handle thousands calls 
  per second even on low-budget hardware. 
  . 
