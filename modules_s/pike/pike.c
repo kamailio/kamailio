@@ -72,8 +72,36 @@ gen_lock_t*             timer_lock=0;
 struct list_link*       timer = 0;
 
 
+static int fixup_str2int( void** param, int param_no)
+{
+	unsigned long go_to;
+	int err;
+
+	if (param_no == 1) {
+		go_to = str2s(*param, strlen(*param), &err);
+		if (err == 0) {
+			pkg_free(*param);
+			*param = (void *)go_to;
+			return 0;
+		} else {
+			LOG(L_ERR, "ERROR: fixup_str2int: bad number <%s>\n",
+				(char *)(*param));
+			return E_CFG;
+		}
+	}
+	return 0;
+}
+
+
+static int pike_check_req_0(struct sip_msg* msg, char* foo, char* bar)
+{
+	return pike_check_req(msg, (char*)(long)0,bar);
+}
+
+
 static cmd_export_t cmds[]={
-	{"pike_check_req",  pike_check_req,  0,  0, REQUEST_ROUTE},
+	{"pike_check_req",  pike_check_req_0,  0,  0, REQUEST_ROUTE},
+	{"pike_check_req",  pike_check_req,  1,  fixup_str2int, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 

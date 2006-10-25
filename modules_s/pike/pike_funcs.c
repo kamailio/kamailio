@@ -76,7 +76,8 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	struct ip_node *father;
 	unsigned char flags;
 	struct ip_addr* ip;
-
+	int update_timer;
+	
 
 #ifdef _test
 	/* get the ip address from second via */
@@ -92,7 +93,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	ip = &(msg->rcv.src_ip);
 #endif
 
-
+	update_timer=(int)(long)foo;
 	/* first lock the proper tree branch and mark the IP with one more hit*/
 	lock_tree_branch( ip->u.addr[0] );
 	node = mark_node( ip->u.addr, ip->len, &father, &flags);
@@ -145,7 +146,8 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 				&& (node->flags&(NODE_EXPIRED_FLAG|NODE_INTIMER_FLAG)) );
 			/* if node exprired, ignore the current hit and let is
 			 * expire in timer process */
-			if ( !(flags&NO_UPDATE) && !(node->flags&NODE_EXPIRED_FLAG) ) {
+			if (!update_timer && !(flags&NO_UPDATE) &&
+							!(node->flags&NODE_EXPIRED_FLAG) ) {
 				node->expires = get_ticks() + timeout;
 				update_in_timer( timer, &(node->timer_ll) );
 			}
