@@ -27,7 +27,8 @@
  *
  * History:
  * --------
- *
+ *  2005-05-02  flags field added to node stucture -better sync between timer
+ *              and worker processes; some races eliminated (bogdan)
  */
 
 
@@ -80,6 +81,7 @@ void check_and_split_timer(struct list_link *head, int time,
 							struct list_link *split, unsigned char *mask)
 {
 	struct list_link *ll;
+	struct ip_node   *node;
 	unsigned char b;
 	int i;
 
@@ -87,10 +89,13 @@ void check_and_split_timer(struct list_link *head, int time,
 	for(i=0;i<32;mask[i++]=0);
 
 	ll = head->next;
-	while( ll!=head && ll2ipnode(ll)->expires<=time) {
+	while( ll!=head && (node=ll2ipnode(ll))->expires<=time) {
 		DBG("DEBUG:pike:check_and_split_timer: splitting %p(%p,%p)node=%p\n",
-			ll,ll->prev,ll->next,ll2ipnode(ll));
-		b = ll2ipnode(ll)->branch;
+			ll,ll->prev,ll->next, node);
+		/* mark the node as expired and un-mark it as being in timer list */
+		node->flags |= NODE_EXPIRED_FLAG;
+		node->flags &= ~NODE_INTIMER_FLAG;
+		b = node->branch;
 		ll=ll->next;
 		/*DBG("DEBUG:pike:check_and_split_timer: b=%d; [%d,%d]\n",
 				b,b>>3,1<<(b&0x07));*/

@@ -24,13 +24,13 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-/*
+ *
  * History:
  * --------
  *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
  *              on darwin (andrei)
- *  2004-11-05: adaptiv init lock (bogdan)
+ *  2004-11-05  adaptiv init lock (bogdan)
+ *  2005-06-02  flags added to ip_node structure (bogdan)
  */
 
 #ifndef _IP_TREE_H
@@ -43,15 +43,18 @@
 
 
 #define NEW_NODE   (1<<0)
-#define LEAF_NODE  (1<<1)
-#define RED_NODE   (1<<2)
-#define NO_UPDATE  (1<<3)
+#define RED_NODE   (1<<1)
+#define NO_UPDATE  (1<<2)
 
 #define MAX_IP_BRANCHES 256
 
 #define PREV_POS 0
 #define CURR_POS 1
 
+
+#define NODE_EXPIRED_FLAG  (1<<0)
+#define NODE_INTIMER_FLAG  (1<<1)
+#define NODE_IPLEAF_FLAG   (1<<2)
 
 struct ip_node
 {
@@ -60,6 +63,7 @@ struct ip_node
 	unsigned short    hits[2];
 	unsigned char     byte;
 	unsigned char     branch;
+	unsigned short    flags;
 	struct list_link  timer_ll;
 	struct ip_node    *prev;
 	struct ip_node    *next;
