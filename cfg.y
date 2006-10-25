@@ -1680,7 +1680,7 @@ static void warn(char* s)
 {
 	LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", line, startcolumn, 
 			column, s);
-	cfg_errors++;
+	cfg_warnings++;
 }
 
 static void yyerror(char* s)

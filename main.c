@@ -324,6 +324,7 @@ int process_no = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
+int cfg_warnings=0;
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
@@ -1435,6 +1436,9 @@ try_again:
 	if ((yyparse()!=0)||(cfg_errors)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		goto error;
+	}
+	if (cfg_warnings){
+		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
 	
 	
