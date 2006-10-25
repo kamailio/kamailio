@@ -166,6 +166,9 @@ extern str default_global_address;
 /* pre-ser ports */
 extern str default_global_port;
 
+/* how much time to allow for shutdown, before killing everything */
+int ser_kill_timeout;
+
 /* core dump and file limits */
 extern int disable_core_dump;
 extern int open_files_limit;

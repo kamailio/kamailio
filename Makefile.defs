@@ -67,7 +67,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev53-tm_fixes
+EXTRAVERSION = -dev54-tm_fixes
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -353,6 +353,9 @@ endif
 #		Don't forget to set PROFILE (see below)
 # -DUSE_STUN
 #		compiles in stun support
+# -DNO_SIG_DEBUG
+#        turns off debugging messages in signal handlers (which might be 
+#         unsafe)
 
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
@@ -383,7 +386,8 @@ DEFS+= $(extra_defs) \
 	 #-DUSE_SHM_MEM \
 	 #-DSTATS \
 	 #-DNO_LOG \
-	 #-DPROFILING
+	 #-DPROFILING \
+	 #-DNO_SIG_DEBUG
 
 #PROFILE=  -pg	# set this if you want profiling
 				# you may also want to set -DPROFILING

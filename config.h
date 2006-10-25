@@ -180,7 +180,7 @@
 								+ 1 /*sep*/ + 8 /*int2hex*/ + \
 								1 /*extra space, needed by t_calc_branch*/)
 
-
+#define DEFAULT_SER_KILL_TIMEOUT 60 /* seconds */
 
 /* maximum path length */
 #define PATH_MAX_GUESS	1024

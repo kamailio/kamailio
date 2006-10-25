@@ -63,7 +63,9 @@
  *  2005-07-25  use sigaction for setting the signal handlers (andrei)
  *  2006-07-13  added dns cache/failover init. (andrei)
  *  2006-10-13  added global variables stun_refresh_interval, stun_allow_stun
- *              and stun_allow_fp (vlada)
+ *               and stun_allow_fp (vlada)
+ *  2006-10-25  don't log messages from signal hanlders if NO_SIG_DEBUG is
+ *               defined; improved exit kill timeout (andrei)
  */
 
 
@@ -145,6 +147,13 @@
 #include <dmalloc.h>
 #endif
 #include "version.h"
+
+/* define SIG_DEBUG by default */
+#ifdef NO_SIG_DEBUG
+#undef SIG_DEBUG
+#else
+#define SIG_DEBUG
+#endif
 
 static char id[]="@(#) $Id$";
 static char* version=SER_FULL_VERSION;
@@ -369,6 +378,9 @@ struct host_alias* aliases=0; /* name aliases list */
 /* Parameter to child_init */
 int child_rank = 0;
 
+/* how much to wait for children to terminate, before taking extreme measures*/
+int ser_kill_timeout=DEFAULT_SER_KILL_TIMEOUT;
+
 /* process_bm_t process_bit = 0; */
 #ifdef ROUTE_SRV
 #endif
@@ -523,11 +535,17 @@ void handle_sigs()
 
 			/* first of all, kill the children also */
 			kill_all_children(SIGTERM);
-
-			     /* Wait for all the children to die */
-			while(wait(0) > 0);
-
+			if (set_sig_h(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
+				LOG(L_ERR, "ERROR: could not install SIGALARM handler\n");
+				/* continue, the process will die anyway if no
+				 * alarm is installed which is exactly what we want */
+			}
+			alarm(ser_kill_timeout);
+			/* Wait for all the children to die */
+			while((wait(0) > 0) || (errno==EINTR));
+			set_sig_h(SIGALRM, sig_alarm_abort);
 			cleanup(1); /* cleanup & show status*/
+			alarm(0);
 			dprint("Thank you for flying " NAME "\n");
 			exit(0);
 			break;
@@ -578,8 +596,9 @@ void handle_sigs()
 				/* continue, the process will die anyway if no
 				 * alarm is installed which is exactly what we want */
 			}
-			alarm(60); /* 1 minute close timeout */
-			while(wait(0) > 0); /* wait for all the children to terminate*/
+			alarm(ser_kill_timeout);
+			while((wait(0) > 0) || (errno==EINTR)); /* wait for all the 
+													   children to terminate*/
 			set_sig_h(SIGALRM, sig_alarm_abort);
 			cleanup(1); /* cleanup & show status*/
 			alarm(0);
@@ -621,16 +640,20 @@ static void sig_usr(int signo)
 		/* process the important signals */
 		switch(signo){
 			case SIGPIPE:
+#ifdef SIG_DEBUG /* signal unsafe stuff follows */
 					LOG(L_INFO, "INFO: signal %d received\n", signo);
+#endif
 				break;
 			case SIGINT:
 			case SIGTERM:
+#ifdef SIG_DEBUG /* signal unsafe stuff follows */
 					LOG(L_INFO, "INFO: signal %d received\n", signo);
 					/* print memory stats for non-main too */
 					#ifdef PKG_MALLOC
 					LOG(memlog, "Memory status (pkg):\n");
 					pkg_status();
 					#endif
+#endif
 					exit(0);
 					break;
 			case SIGUSR1:
@@ -642,11 +665,14 @@ static void sig_usr(int signo)
 					break;
 			case SIGCHLD:
 #ifndef 			STOP_JIRIS_CHANGES
+#ifdef SIG_DEBUG /* signal unsafe stuff follows */
 					DBG("SIGCHLD received: "
 						"we do not worry about grand-children\n");
+#endif
 #else
 					exit(0); /* terminate if one child died */
 #endif
+					break;
 		}
 	}
 }

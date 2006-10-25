@@ -177,9 +177,14 @@ core:
    are available (see tm docs)
 - avps directly accessible from script with %avp_name (variable style)
 new config variables:
-   stun_refresh_interval = number in milisecond (default 0); value for attribute
-       REFRESH INTERVAL
-   stun_allow_stun = 0 | 1 (off | on - defaul 1); use STUN or not if compiled
+   exit_timeout = seconds - how much time ser will wait for all the shutdown
+       procedures to complete. If this time is exceeded, all the remaining
+       processes are immediately killed and ser exits immediately (it might
+       also generate a core dump if the cleanup part takes too long).
+       Default: 60 s. Use 0 to disable.
+   stun_refresh_interval = number in millisecond (default 0); value for 
+      attribute REFRESH INTERVAL
+   stun_allow_stun = 0 | 1 (off | on - default 1); use STUN or not if compiled
    stun_allow_fp = 0 | 1 (off | on - default 1); use FINGERPRINT attribute
    use_dns_cache = on | off  (default on)  
    use_dns_failover = on | off (default off)
