@@ -140,6 +140,12 @@
 	#define IF_DST_BLACKLIST(x) warn("dst blacklist support not compiled in")
 #endif
 
+#ifdef USE_STUN
+	#define IF_STUN(x) x
+#else 
+	#define IF_STUN(x) warn("stun support not compiled in")
+#endif
+
 
 extern int yylex();
 static void yyerror(char* s);
@@ -872,23 +878,11 @@ assign_stm:
 	| TOS EQUAL error { yyerror("number expected"); }
 	| KILL_TIMEOUT EQUAL NUMBER { ser_kill_timeout=$3; }
 	| KILL_TIMEOUT EQUAL error { yyerror("number expected"); }
-	| STUN_REFRESH_INTERVAL EQUAL NUMBER { 
-		#ifdef USE_STUN
-			stun_refresh_interval=$3;
-		#endif
-		}
+	| STUN_REFRESH_INTERVAL EQUAL NUMBER { IF_STUN(stun_refresh_interval=$3); }
 	| STUN_REFRESH_INTERVAL EQUAL error{ yyerror("number expected"); }
-	| STUN_ALLOW_STUN EQUAL NUMBER { 
-		#ifdef USE_STUN
-			stun_allow_stun=$3;
-		#endif
-		}
+	| STUN_ALLOW_STUN EQUAL NUMBER { IF_STUN(stun_allow_stun=$3); }
 	| STUN_ALLOW_STUN EQUAL error{ yyerror("number expected"); }
-	| STUN_ALLOW_FP EQUAL NUMBER { 
-		#ifdef USE_STUN
-			stun_allow_fp=$3;
-		#endif
-		}
+	| STUN_ALLOW_FP EQUAL NUMBER { IF_STUN(stun_allow_fp=$3) ; }
 	| STUN_ALLOW_FP EQUAL error{ yyerror("number expected"); }
 	| error EQUAL { yyerror("unknown config variable"); }
 	;
