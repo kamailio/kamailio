@@ -64,8 +64,10 @@
  *  2006-07-13  added dns cache/failover init. (andrei)
  *  2006-10-13  added global variables stun_refresh_interval, stun_allow_stun
  *               and stun_allow_fp (vlada)
- *  2006-10-25  don't log messages from signal hanlders if NO_SIG_DEBUG is
+ *  2006-10-25  don't log messages from signal handlers if NO_SIG_DEBUG is
  *               defined; improved exit kill timeout (andrei)
+ *              init_childs(PROC_MAIN) before starting tcp_main, to allow
+ *               tcp usage for module started processes (andrei)
  */
 
 
@@ -341,6 +343,7 @@ int addresses_no=0;                   /* number of names/ips */
 #endif
 struct socket_info* udp_listen=0;
 #ifdef USE_TCP
+int tcp_main_pid=0; /* set after the tcp main process is started */
 struct socket_info* tcp_listen=0;
 #endif
 #ifdef USE_TLS
@@ -489,7 +492,7 @@ static void kill_all_children(int signum)
 
 
 
-/* if this handler is called, a critical timeout has occured while
+/* if this handler is called, a critical timeout has occurred while
  * waiting for the children to finish => we should kill everything and exit */
 static void sig_alarm_kill(int signo)
 {
@@ -501,7 +504,7 @@ static void sig_alarm_kill(int signo)
 }
 
 
-/* like sig_alarm_kill, but the timeout has occured when cleaning up
+/* like sig_alarm_kill, but the timeout has occurred when cleaning up
  * => try to leave a core for future diagnostics */
 static void sig_alarm_abort(int signo)
 {
@@ -848,8 +851,6 @@ int main_loop()
 #endif
 
 	/* one "main" process and n children handling i/o */
-
-	is_main=0;
 	if (dont_fork){
 #ifdef STATS
 		setstats( 0 );
@@ -922,10 +923,6 @@ int main_loop()
 			LOG(L_ERR, "main_dontfork: init_child failed\n");
 			goto error;
 		}
-
-		is_main=1; /* hack 42: call init_child with is_main=0 in case
-					 some modules wants to fork a child */
-
 		return udp_rcv_loop();
 	}else{
 
@@ -1018,7 +1015,6 @@ int main_loop()
 			goto error;
 		}else if (pid==0){
 			/* child */
-			/* is_main=0; */
 			if (arm_slow_timer()<0) goto error;
 			slow_timer_main();
 		}else{
@@ -1033,12 +1029,20 @@ int main_loop()
 			goto error;
 		}else if (pid==0){
 			/* child */
-			/* is_main=0; */
 			if (arm_timer()<0) goto error;
 			timer_main();
 		}else{
 		}
 	}
+
+/* init childs with rank==MAIN before starting tcp main (in case they want to 
+ *  fork  a tcp capable process, the corresponding tcp. comm. fds in pt[] must
+ *  be set before calling tcp_main_loop()) */
+	if (init_child(PROC_MAIN) < 0) {
+		LOG(L_ERR, "main: error in init_child\n");
+		goto error;
+	}
+
 #ifdef USE_TCP
 		if (!tcp_disable){
 				/* start tcp  & tls receivers */
@@ -1053,6 +1057,7 @@ int main_loop()
 				/* child */
 				tcp_main_loop();
 			}else{
+				tcp_main_pid=pid;
 				unix_tcp_sock=-1;
 			}
 		}
@@ -1061,20 +1066,10 @@ int main_loop()
 	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
 #ifdef USE_TCP
 	if(!tcp_disable){
-		pt[process_no].unix_sock=-1;
-		pt[process_no].idx=-1; /* this is not a "tcp" process*/
+		/* main's tcp sockets are disabled by default from init_pt() */
 		unix_tcp_sock=-1;
 	}
 #endif
-	/*DEBUG- remove it*/
-
-	/* process_bit = 0; */
-	is_main=1;
-
-	if (init_child(PROC_MAIN) < 0) {
-		LOG(L_ERR, "main: error in init_child\n");
-		goto error;
-	}
 
 	/*DEBUG- remove it*/
 #ifdef EXTRA_DEBUG
@@ -1091,7 +1086,7 @@ int main_loop()
 
 	/*return 0; */
  error:
-	is_main=1;  /* if we are here, we are the "main process",
+				 /* if we are here, we are the "main process",
 				  any forked children should exit with exit(-1) and not
 				  ever use return */
 	return -1;

@@ -33,6 +33,8 @@
  * --------
  *  2006-06-14	added process table in shared mem (dragos)
  *  2006-09-20	added profile support (-DPROFILING) (hscholz)
+ *  2006-10-25	sanity check before allowing forking w/ tcp support (is_main
+ *               & tcp not started yet); set is_main=0 in childs (andrei)
  */
 
 
@@ -60,6 +62,10 @@ static int estimated_proc_no=0;
 /* returns 0 on success, -1 on error */
 int init_pt(int proc_no)
 {
+#ifdef USE_TCP
+	int r;
+#endif
+	
 	estimated_proc_no+=proc_no;
 	/*alloc pids*/
 #ifdef SHM_MEM
@@ -76,10 +82,15 @@ int init_pt(int proc_no)
 		return -1;
 	}
 	memset(pt, 0, sizeof(struct process_table)*estimated_proc_no);
-
+#ifdef USE_TCP
+	for (r=0; r<estimated_proc_no; r++){
+		pt[r].unix_sock=-1;
+		pt[r].idx=-1;
+	}
+#endif
 	process_no=0; /*main process number*/
 	pt[process_no].pid=getpid();
-	memcpy(pt[*process_count].desc,"main",5);
+	memcpy(pt[process_no].desc,"main",5);
 	*process_count=1;
 	return 0;
 }
@@ -136,6 +147,18 @@ int fork_process(int child_id, char *desc, int make_sock)
 	#ifdef USE_TCP
 		sockfd[0]=sockfd[1]=-1;
 		if(make_sock && !tcp_disable){
+			 if (!is_main){
+				 LOG(L_CRIT, "BUG: fork_process(..., 1) called from a non "
+						 "\"main\" process! If forking from a module's "
+						 "child_init() fork only if rank==PROC_MAIN or"
+						 " give up tcp send support (use 0 for make_sock)\n");
+				 goto error;
+			 }
+			 if (tcp_main_pid){
+				 LOG(L_CRIT, "BUG: fork_process(..., 1) called, but tcp main "
+						 " is already started\n");
+				 goto error;
+			 }
 			 if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 				LOG(L_ERR, "ERROR: fork_process(): socketpair failed: %s\n",
 							strerror(errno));
@@ -160,6 +183,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 		goto error;
 	}else if (pid==0){
 		/* child */
+		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);
@@ -173,7 +197,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 		 * this is actually relevant as the parent updates
 		 * the pt & process_count. */
 		lock_get(process_lock);
-		lock_release(process_lock);	
+		lock_release(process_lock);
 #endif
 		#ifdef USE_TCP
 			if (make_sock && !tcp_disable){
@@ -203,7 +227,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 			if (make_sock && !tcp_disable){
 				close(sockfd[1]);
 				pt[child_process_no].unix_sock=sockfd[0];
-				pt[child_process_no].idx=-1; /* this is not "tcp" process*/
+				pt[child_process_no].idx=-1; /* this is not a "tcp" process*/
 			}
 		#endif
 #ifdef FORK_DONT_WAIT
@@ -242,6 +266,16 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	reader_fd[0]=reader_fd[1]=-1;
 	ret=-1;
 	
+	if (!is_main){
+		 LOG(L_CRIT, "BUG: fork_tcp_process() called from a non \"main\" "
+				 	"process\n");
+		 goto error;
+	 }
+	 if (tcp_main_pid){
+		 LOG(L_CRIT, "BUG: fork_tcp_process(..., 1) called _after_ starting"
+				 	" tcp main\n");
+		 goto error;
+	 }
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 		LOG(L_ERR, "ERROR: fork_tcp_process(): socketpair failed: %s\n",
 					strerror(errno));
@@ -276,6 +310,7 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 		goto end;
 	}
 	if (pid==0){
+		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);

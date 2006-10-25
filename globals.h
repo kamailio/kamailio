@@ -76,6 +76,7 @@ extern struct socket_info* sendipv6_tls; /* same as above for ipv6 */
 extern unsigned int maxbuffer;
 extern int children_no;
 #ifdef USE_TCP
+extern int tcp_main_pid;
 extern int tcp_children_no;
 extern int tcp_disable;
 extern int tcp_accept_aliases;
