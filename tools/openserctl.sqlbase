@@ -208,6 +208,10 @@ usage_db_ops() {
 	echo
 cat <<EOF
  db exec <query> ..................... execute SQL query
+ db roexec <roquery> ................. execute read-only SQL query
+ db run <id> ......................... execute SQL query from \$id variable
+ db rorun <id> ....................... execute read-only SQL query from 
+                                       \$id variable
  db show <table> ..................... display table content
 EOF
 }

@@ -6,7 +6,7 @@
 #
 #===================================================================
 
-PATH=$PATH:/usr/local/sbin
+PATH=$PATH:/usr/local/openser-1.1.0/sbin/
 
 
 ### include resource files, if any
@@ -75,6 +75,8 @@ esac
 
 if [ $DBENGINELOADED -eq 1 ] ; then 
 	mdbg "database engine '$DBENGINE' loaded"
+else
+	mwarn "no database engine found - tried '$DBENGINE'"
 fi
 
 #
@@ -830,13 +832,47 @@ cisco_restart() {
 db_ops() {
 	require_dbengine
 	case $1 in
-		exec)
+		exec|query)
 			shift
 			if [ $# -ne 1 ] ; then
 				merr "missing query parameter"
 				exit 1
 			fi
 			$DBCMD "$1"
+			;;
+		roexec|roquery)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing query parameter"
+				exit 1
+			fi
+			$DBROCMD "$1"
+			;;
+		run)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing query parameter"
+				exit 1
+			fi
+			eval QUERY=\$$1
+			if [ -z "$QUERY" ] ; then
+				merr "missing query value"
+				exit 1
+			fi
+			$DBCMD "$QUERY"
+			;;
+		rorun)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing query parameter"
+				exit 1
+			fi
+			eval QUERY=\$$1
+			if [ -z "$QUERY" ] ; then
+				merr "missing query value"
+				exit 1
+			fi
+			$DBROCMD "$QUERY"
 			;;
 		show)
 			shift
