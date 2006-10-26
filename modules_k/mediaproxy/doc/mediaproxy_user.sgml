@@ -260,6 +260,37 @@ modparam("mediaproxy", "natping_interval", 20)
 </programlisting>
 			</example>
 		</section>
+		<section>
+		<title><varname>signaling_ip_avp</varname> (string)</title>
+			<para>
+				The name of the AVP which holds the IP address from where the
+                                SIP signaling originated. If this AVP is set it will be used
+                                to get the signaling IP address, else the source IP address
+                                from where the SIP message was received will be used.
+                                This AVP is meant to be used in cases where there are more than
+                                one proxy in the call setup path and the proxy that actually
+                                starts mediaproxy doesn't receive the SIP messages directly
+                                from the UA and it cannot determine the NAT IP address from
+                                where the signaling originated. In such a case attaching a
+                                SIP header at the first proxy and then copying that header's
+                                value into the signaling_ip_avp on the proxy that starts
+                                mediaproxy will allow it to get the correct NAT IP address
+                                from where the SIP signaling originated.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>s:signaling_ip</quote>.
+				</emphasis>
+			</para>
+			<example>
+			<title>Setting <varname>signaling_ip_avp</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("mediaproxy", "signaling_ip_avp", "s:nat_ip")
+...
+</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>

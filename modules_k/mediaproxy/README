@@ -23,6 +23,7 @@ Dan Pascu
               1.5.2. sip_asymmetrics (string)
               1.5.3. rtp_asymmetrics (string)
               1.5.4. natping_interval (integer)
+              1.5.5. signaling_ip_avp (string)
 
         1.6. Exported Functions
 
@@ -42,11 +43,12 @@ Dan Pascu
    1-2. Setting sip_asymmetrics parameter
    1-3. Setting rtp_asymmetrics parameter
    1-4. Setting natping_interval parameter
-   1-5. client_nat_test usage
-   1-6. fix_contact usage
-   1-7. use_media_proxy usage
-   1-8. end_media_session usage
-   1-9. Pinging exmaple configuration
+   1-5. Setting signaling_ip_avp parameter
+   1-6. client_nat_test usage
+   1-7. fix_contact usage
+   1-8. use_media_proxy usage
+   1-9. end_media_session usage
+   1-10. Pinging exmaple configuration
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -259,6 +261,28 @@ modparam("mediaproxy", "natping_interval", 20)
 ...
      _________________________________________________________
 
+1.5.5. signaling_ip_avp (string)
+
+   The name of the AVP which holds the IP address from where the
+   SIP signaling originated. If this AVP is set it will be used
+   to get the signaling IP address, else the source IP address
+   from where the SIP message was received will be used. This AVP
+   is meant to be used in cases where there are more than one
+   proxy in the call setup path and the proxy that actually
+   starts mediaproxy doesn't receive the SIP messages directly
+   from the UA and it cannot determine the NAT IP address from
+   where the signaling originated. In such a case attaching a SIP
+   header at the first proxy and then copying that header's value
+   into the signaling_ip_avp on the proxy that starts mediaproxy
+   will allow it to get the correct NAT IP address from where the
+   SIP signaling originated.
+
+   Default value is "s:signaling_ip". 
+
+   Example 1-5. Setting signaling_ip_avp parameter
+...modparam("mediaproxy", "signaling_ip_avp", "s:nat_ip")...
+     _________________________________________________________
+
 1.6. Exported Functions
 
 1.6.1. client_nat_test(type)
@@ -282,7 +306,7 @@ modparam("mediaproxy", "natping_interval", 20)
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-5. client_nat_test usage
+   Example 1-6. client_nat_test usage
 ...
 if (client_nat_test("3")) {
     .....
@@ -304,7 +328,7 @@ if (client_nat_test("3")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-6. fix_contact usage
+   Example 1-7. fix_contact usage
 ...
 if (client_nat_test("3")) {
     fix_contact();
@@ -332,7 +356,7 @@ if (client_nat_test("3")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-7. use_media_proxy usage
+   Example 1-8. use_media_proxy usage
 ...
 if (method==INVITE) {
         use_media_proxy();
@@ -352,7 +376,7 @@ if (method==INVITE) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-8. end_media_session usage
+   Example 1-9. end_media_session usage
 ...
 if (method==BYE) {
         end_media_session();
@@ -412,7 +436,7 @@ if (method==BYE) {
    traffic from the inside won't close the pinholes (the 4 zero
    byte ping doesn't have a reply from inside the NAT).
 
-   Example 1-9. Pinging exmaple configuration
+   Example 1-10. Pinging exmaple configuration
 ...
 loadmodule "/lib/openser/modules/mediaproxy.so"
 loadmodule "/lib/openser/modules/nathelper.so"

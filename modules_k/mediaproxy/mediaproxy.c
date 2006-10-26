@@ -28,6 +28,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../str.h"
+#include "../../usr_avp.h"
 #include "../../error.h"
 #include "../../data_lump.h"
 #include "../../forward.h"
@@ -58,6 +59,8 @@
 
 
 MODULE_VERSION
+
+#define SIGNALING_IP_AVP_NAME  "s:signaling_ip"
 
 
 // Although `AF_LOCAL' is mandated by POSIX.1g, `AF_UNIX' is portable to
@@ -125,6 +128,12 @@ typedef struct {
     int count;         // how many clients are in array above
 } AsymmetricClients;
 
+typedef struct AVP_Param {
+    str name;
+    int type;
+    int_str avp;
+} AVP_Param;
+
 
 /* Function prototypes */
 static int ClientNatTest(struct sip_msg *msg, char *str1, char *str2);
@@ -144,6 +153,9 @@ static Bool testPrivateVia(struct sip_msg* msg);
 static char *mediaproxySocket = "/var/run/proxydispatcher.sock";
 
 static int natpingInterval = 60; // 60 seconds
+
+/* The AVP where the caller signaling IP is stored (if defined) */
+static AVP_Param signaling_ip_avp = {{SIGNALING_IP_AVP_NAME, sizeof(SIGNALING_IP_AVP_NAME)-1}, 0, {0}};
 
 static usrloc_api_t userLocation;
 
@@ -165,7 +177,6 @@ static AsymmetricClients rtpAsymmetrics = {
 };
 
 static CheckLocalPartyProc isFromLocal;
-//static CheckLocalPartyProc isToLocal;
 static CheckLocalPartyProc isDestinationLocal;
 
 NetInfo rfc1918nets[] = {
@@ -199,6 +210,7 @@ static param_export_t parameters[] = {
     {"sip_asymmetrics",   STR_PARAM, &(sipAsymmetrics.file)},
     {"rtp_asymmetrics",   STR_PARAM, &(rtpAsymmetrics.file)},
     {"natping_interval",  INT_PARAM, &natpingInterval},
+    {"signaling_ip_avp",  STR_PARAM, &(signaling_ip_avp.name.s)},
     {0, 0, 0}
 };
 
@@ -457,6 +469,22 @@ getCallId(struct sip_msg* msg, str *cid)
     return True;
 }
 
+/* Get caller signaling IP */
+static str
+getSignalingIP(struct sip_msg* msg)
+{
+    int_str value;
+
+    if (!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
+                          signaling_ip_avp.avp, &value, NULL) ||
+        !value.s.s || value.s.len==0) {
+
+        value.s.s = ip_addr2a(&msg->rcv.src_ip);
+        value.s.len = strlen(value.s.s);
+    }
+
+    return value.s;
+}
 
 /* Get caller domain */
 static str
@@ -484,31 +512,8 @@ getFromDomain(struct sip_msg* msg)
     return puri.host;
 }
 
-/* Get called domain */
-static str
-getToDomain(struct sip_msg* msg)
-{
-    static char buf[16] = "unknown"; // buf is here for a reason. don't
-    static str notfound = {buf, 7};  // use the constant string directly!
-    static struct sip_uri puri;
-    str uri;
-
-    uri = get_to(msg)->uri;
-
-    if (parse_uri(uri.s, uri.len, &puri) < 0) {
-        LOG(L_ERR, "error: mediaproxy/getToDomain(): error parsing `To' URI\n");
-        return notfound;
-    } else if (puri.host.len == 0) {
-        return notfound;
-    }
-
-    return puri.host;
-
-}
-
 /* Get destination domain */
-// This function only works when called for a request although it's more
-// reliable than the getToDomain function.
+// This function only works when called for a request
 static str
 getDestinationDomain(struct sip_msg* msg)
 {
@@ -1342,9 +1347,9 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
 static int
 UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 {
-    str sdp, sessionIP, callId, fromDomain, toDomain, userAgent, tokens[64];
-    str fromAddr, toAddr, fromTag, toTag;
-    char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType, *info;
+    str sdp, sessionIP, signalingIP, callId, userAgent, tokens[64];
+    str fromDomain, toDomain, fromAddr, toAddr, fromTag, toTag;
+    char *ptr, *command, *result, *agent, *fromType, *toType, *info;
     int streamCount, i, port, count, portCount, cmdlen, infolen, status;
     StreamInfo streams[64], stream;
     Bool request;
@@ -1395,15 +1400,16 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         toDomain = getDestinationDomain(msg); // call only for requests
         toType = (isDestinationLocal(msg, NULL, NULL)>0) ? "local" : "remote";
     } else {
-        toDomain = getToDomain(msg);
-        toType = "unknown"; //there's no function to check if To domain is local
+        toDomain.s = "unknown";
+        toDomain.len = 7;
+        toType = "unknown";
     }
 
-    clientIP = ip_addr2a(&msg->rcv.src_ip);
+    signalingIP = getSignalingIP(msg);
 
     infolen = fromAddr.len + toAddr.len + fromTag.len + toTag.len + 64;
 
-    cmdlen = callId.len + strlen(clientIP) + fromDomain.len + toDomain.len +
+    cmdlen = callId.len + signalingIP.len + fromDomain.len + toDomain.len +
         userAgent.len*3 + infolen + 128;
 
     for (i=0; i<streamCount; i++) {
@@ -1453,9 +1459,9 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         strcat(info, ",asymmetric");
     }
 
-    snprintf(ptr, command + cmdlen - ptr, " %s %.*s %s %.*s %s %s info=%s\n",
-             clientIP, fromDomain.len, fromDomain.s, fromType,
-             toDomain.len, toDomain.s, toType, agent, info);
+    snprintf(ptr, command + cmdlen - ptr, " %.*s %.*s %s %.*s %s %s info=%s\n",
+             signalingIP.len, signalingIP.s, fromDomain.len, fromDomain.s,
+             fromType, toDomain.len, toDomain.s, toType, agent, info);
 
     pkg_free(info);
     pkg_free(agent);
@@ -1530,6 +1536,17 @@ static int
 mod_init(void)
 {
     bind_usrloc_t ul_bind_usrloc;
+
+    // initialize the signaling_ip_avp structure
+    if (signaling_ip_avp.name.s==NULL || *(signaling_ip_avp.name.s)==0) {
+        LOG(L_ERR, "error: mediaproxy/mod_init: missing/empty signaling_ip_avp parameter. using default.\n");
+        signaling_ip_avp.name.s = SIGNALING_IP_AVP_NAME;
+    }
+    signaling_ip_avp.name.len = strlen(signaling_ip_avp.name.s);
+    if (parse_avp_spec(&(signaling_ip_avp.name), &(signaling_ip_avp.type), &(signaling_ip_avp.avp)) < 0) {
+        LOG(L_CRIT, "error: mediaproxy/mod_init: invalid Thor node AVP specification `%s'\n", signaling_ip_avp.name.s);
+        return -1;
+    }
 
     isFromLocal = (CheckLocalPartyProc)find_export("is_from_local", 0, 0);
     isDestinationLocal = (CheckLocalPartyProc)find_export("is_uri_host_local", 0, 0);
