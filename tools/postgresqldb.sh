@@ -44,6 +44,8 @@
 #             made last_modified/created stamps consistent to now() using 
 #                  local TIMESTAMP
 # 2006-10-19  Added address table (bogdan)
+# 2006-10-27  subscriber table cleanup; some columns are created only if
+#             serweb is installed (bogdan)
 #
 
 
@@ -264,29 +266,10 @@ credentials()
 	fi
 }
 
-openser_create () # pars: <database name> [<no_init_user>]
+openser_create () # pars: <database name>
 {
-if [ $# -eq 1 ] ; then
-	if [ -z "$SIP_DOMAIN" ] ; then
-		prompt_realm
-	fi
-	credentials
-	# by default we create initial user
-	INITIAL_USER="INSERT INTO subscriber
-		($USERCOL, password, first_name, last_name, phone,
-		email_address, datetime_created, datetime_modified, confirmation,
-		flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
-		VALUES ( 'admin', '$DEFAULT_PW', 'Initial', 'Admin', '123',
-		'root@localhost', '2002-09-04 19:37:45', '$DUMMY_DATE',
-		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
-		'$HA1', '$SIP_DOMAIN', '$HA1B',
-		'$PHPLIB_ID' );"
-
-elif [ $# -eq 2 ] ; then
-	# if 3rd param set, don't create any initial user
-	INITIAL_USER=""
-else
-	echo "openser_create function takes one or two params"
+if [ $# -ne 1 ] ; then
+	echo "openser_create function takes one param"
 	exit 1
 fi
 
@@ -331,7 +314,7 @@ CREATE TABLE version (
  * Dumping data for table 'version'
  */
 
-INSERT INTO version VALUES ( 'subscriber', '5');
+INSERT INTO version VALUES ( 'subscriber', '6');
 INSERT INTO version VALUES ( 'missed_calls', '3');
 INSERT INTO version VALUES ( 'location', '1003');
 INSERT INTO version VALUES ( 'aliases', '1003');
@@ -356,31 +339,21 @@ INSERT INTO version VALUES ( 'domainpolicy', '2');
  * Table structure for table 'subscriber' -- user database
  */
 CREATE TABLE subscriber (
-  phplib_id varchar(32) NOT NULL default '',
+  id $AUTO_INCREMENT,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
-  phone varchar(15) NOT NULL default '',
   email_address varchar(50) NOT NULL default '',
   datetime_created $TIMESTAMP,
-  datetime_modified $TIMESTAMP,
-  confirmation varchar(64) NOT NULL default '',
-  flag char(1) NOT NULL default 'o',
-  sendnotification varchar(50) NOT NULL default '',
-  greeting varchar(50) NOT NULL default '',
   ha1 varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
-  allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   rpid varchar(128) default NULL,
-  domn int default NULL,
-  uuid varchar(64) default NULL,
-  UNIQUE (phplib_id),
-  PRIMARY KEY ($USERCOL, domain)
+  UNIQUE ($USERCOL, domain)
 ) $TABLE_TYPE;
-CREATE INDEX user_2_subs_indx ON subscriber ($USERCOL);
+CREATE INDEX username_subs_indx ON subscriber ($USERCOL);
 
 
 /*
@@ -694,12 +667,6 @@ CREATE TABLE domainpolicy (
 CREATE INDEX domainpolicy_rule_idx ON domainpolicy(rule);
 
 
-/* add an admin user "admin" with password==$DEFAULT_PW,
- * so that one can try it out on quick start
- */
-
-$INITIAL_USER
-
 /*
  * GRANT permissions
  */
@@ -712,7 +679,7 @@ echo -n "Install SERWEB tables ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
 then
-	serweb_create $1 $2
+	serweb_create $1
 fi
 
 } # openser_create
@@ -720,6 +687,10 @@ fi
 
 serweb_create () # pars: <database name>
 {
+if [ $# -ne 1 ] ; then
+	echo "serweb_create function takes one param"
+	exit 1
+fi
 
 GRANT_SERWEB_CMD="
 	GRANT ALL PRIVILEGES ON TABLE phonebook, pending, active_sessions,
@@ -729,21 +700,26 @@ GRANT_SERWEB_CMD="
 		server_monitoring, server_monitoring_agg,
 		usr_preferences_types, admin_privileges to $DBROUSER;" 
 
-if [ $# -eq 1 ] ; then
+if [ -z "$NO_USER_INIT" ] ; then
 	if [ -z "$SIP_DOMAIN" ] ; then
 		prompt_realm
 	fi
 	INITIAL_INSERT="
+		INSERT INTO subscriber
+			($USERCOL, password, first_name, last_name, phone,
+			email_address, datetime_created, datetime_modified, confirmation,
+			flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
+			VALUES ( 'admin', '$DEFAULT_PW', 'Initial', 'Admin', '123',
+			'root@localhost', '2002-09-04 19:37:45', '$DUMMY_DATE',
+			'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
+			'$HA1', '$SIP_DOMAIN', '$HA1B',
+			'$PHPLIB_ID' );
 		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
 		VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
 		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
 		VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
-elif [ $# -eq 2 ] ; then
-	# if 3rd param set, don't do any initial insert
-	INITIAL_INSERT=""
 else
-	echo "serweb_create function takes one or two params"
-	exit 1
+	INITIAL_INSERT=""
 fi
 
 echo "creating serweb tables into $1 ..."
@@ -752,12 +728,30 @@ sql_query <<EOF
 $USE_CMD $1;
 
 INSERT INTO version VALUES ( 'phonebook', '1');
-INSERT INTO version VALUES ( 'pending', '4');
+INSERT INTO version VALUES ( 'pending', '6');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
+
+#
+# Extend table 'subscriber' with serweb specific columns
+#
+ALTER TABLE subscriber 
+  ADD COLUMN (
+    phplib_id varchar(32) NOT NULL default '',
+    phone varchar(15) NOT NULL default '',
+    datetime_modified $TIMESTAMP,
+    confirmation varchar(64) NOT NULL default '',
+    flag char(1) NOT NULL default 'o',
+    sendnotification varchar(50) NOT NULL default '',
+    greeting varchar(50) NOT NULL default '',
+    allow_find char(1) NOT NULL default '0'
+  ),
+  ADD UNIQUE (phplib_id)
+;
+
 
 
 /*
@@ -778,6 +772,7 @@ CREATE INDEX ch_active_sess_indx ON active_sessions (changed);
  * requests
  */
 CREATE TABLE pending (
+  id $AUTO_INCREMENT,
   phplib_id varchar(32) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
@@ -797,12 +792,10 @@ CREATE TABLE pending (
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   rpid varchar(128) default NULL,
-  domn int default NULL,
-  uuid varchar(64) default NULL,
-  PRIMARY KEY ($USERCOL, domain),
+  UNIQUE ($USERCOL, domain),
   UNIQUE (phplib_id)
 ) $TABLE_TYPE;
-CREATE INDEX user_2_pend_indx ON pending ($USERCOL);
+CREATE INDEX username_pend_indx ON pending ($USERCOL);
 
 
 /*
@@ -933,7 +926,8 @@ case $1 in
 #		fi
 #		#4 change names in table definition and restore
 #		echo "creating new structures"
-#		openser_create $DBNAME no_init_user
+#		NO_USER_INIT="yes"
+#		openser_create $DBNAME
 #		if [ "$?" -ne 0 ] ; then
 #			echo "reinstall: creating new table failed"
 #			rm $tmp_file*
@@ -965,7 +959,8 @@ case $1 in
 #			rm $tmp_file
 #			exit $ret
 #		fi
-#		openser_create $1 no_init_user
+#		NO_USER_INIT="yes"
+#		openser_create $1
 #		ret=$?
 #		if [ "$ret" -ne 0 ]; then
 #			rm $tmp_file
