@@ -738,20 +738,17 @@ INSERT INTO version VALUES ( 'admin_privileges', '1');
 #
 # Extend table 'subscriber' with serweb specific columns
 #
-ALTER TABLE subscriber 
-  ADD COLUMN (
-    phplib_id varchar(32) NOT NULL default '',
-    phone varchar(15) NOT NULL default '',
-    datetime_modified $TIMESTAMP,
-    confirmation varchar(64) NOT NULL default '',
-    flag char(1) NOT NULL default 'o',
-    sendnotification varchar(50) NOT NULL default '',
-    greeting varchar(50) NOT NULL default '',
-    allow_find char(1) NOT NULL default '0'
-  ),
-  ADD UNIQUE (phplib_id)
+ALTER TABLE subscriber
+  ADD COLUMN phplib_id varchar(32) NOT NULL default '',
+  ADD COLUMN phone varchar(15) NOT NULL default '',
+  ADD COLUMN datetime_modified $TIMESTAMP,
+  ADD COLUMN confirmation varchar(64) NOT NULL default '',
+  ADD COLUMN flag char(1) NOT NULL default 'o',
+  ADD COLUMN sendnotification varchar(50) NOT NULL default '',
+  ADD COLUMN greeting varchar(50) NOT NULL default '',
+  ADD COLUMN allow_find char(1) NOT NULL default '0',
+  ADD CONSTRAINT phplib_id_key unique (phplib_id)
 ;
-
 
 
 /*
