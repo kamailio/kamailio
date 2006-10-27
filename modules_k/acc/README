@@ -69,21 +69,18 @@ Bogdan-Andrei Iancu
               1.5.19. db_table_missed_calls (string)
               1.5.20. db_url (string)
               1.5.21. acc_method_column (string)
-              1.5.22. acc_from_uri_column (string)
-              1.5.23. acc_from_tag_column (string)
-              1.5.24. acc_to_uri_column (string)
-              1.5.25. acc_to_tag_column (string)
-              1.5.26. acc_cseqno_column (string)
-              1.5.27. acc_callid_column (string)
-              1.5.28. acc_sip_code_column (string)
-              1.5.29. acc_sip_reason_column (string)
-              1.5.30. acc_time_column (string)
-              1.5.31. db_extra (string)
-              1.5.32. diameter_flag (integer)
-              1.5.33. diameter_missed_flag (integer)
-              1.5.34. diameter_client_host (string)
-              1.5.35. diameter_client_port (int)
-              1.5.36. diameter_extra (string)
+              1.5.22. acc_from_tag_column (string)
+              1.5.23. acc_to_tag_column (string)
+              1.5.24. acc_callid_column (string)
+              1.5.25. acc_sip_code_column (string)
+              1.5.26. acc_sip_reason_column (string)
+              1.5.27. acc_time_column (string)
+              1.5.28. db_extra (string)
+              1.5.29. diameter_flag (integer)
+              1.5.30. diameter_missed_flag (integer)
+              1.5.31. diameter_client_host (string)
+              1.5.32. diameter_client_port (int)
+              1.5.33. diameter_extra (string)
 
         1.6. Exported Functions
 
@@ -117,25 +114,22 @@ Bogdan-Andrei Iancu
    1-19. db_table_missed_calls example
    1-20. db_url example
    1-21. acc_method_column example
-   1-22. acc_from_uri_column example
-   1-23. acc_from_tag_column example
-   1-24. acc_to_uri_column example
-   1-25. acc_to_tag_column example
-   1-26. acc_cseqno_column example
-   1-27. acc_callid_column example
-   1-28. acc_sip_code_column example
-   1-29. acc_sip_reason_column example
-   1-30. acc_time_column example
-   1-31. db_extra example
-   1-32. diameter_flag example
-   1-33. diameter_missed_flag example
-   1-34. diameter_client_host example
-   1-35. diameter_client_host example
-   1-36. diameter_extra example
-   1-37. acc_log_request usage
-   1-38. acc_db_request usage
-   1-39. acc_rad_request usage
-   1-40. acc_diam_request usage
+   1-22. acc_from_tag_column example
+   1-23. acc_to_tag_column example
+   1-24. acc_callid_column example
+   1-25. acc_sip_code_column example
+   1-26. acc_sip_reason_column example
+   1-27. acc_time_column example
+   1-28. db_extra example
+   1-29. diameter_flag example
+   1-30. diameter_missed_flag example
+   1-31. diameter_client_host example
+   1-32. diameter_client_host example
+   1-33. diameter_extra example
+   1-34. acc_log_request usage
+   1-35. acc_db_request usage
+   1-36. acc_rad_request usage
+   1-37. acc_diam_request usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -166,11 +160,8 @@ Chapter 1. User's Guide
    The fixed minimal accouting information is:
 
      * Request Method name
-     * From header URI
      * From header TAG parameter
-     * To header URI
      * To header TAG parameter
-     * Cseq number
      * Call-Id
      * 3-digit Status code from final reply
      * Reason phrase from final reply
@@ -232,7 +223,6 @@ if (uri=~"sip:+40") /* calls to Romania */ {
     if (method=="INVITE" & !check_from()) {
         log("from!=digest\n");
         sl_send_reply("403","Forbidden");
-        break;
     }
 
     setflag(1); /* set for accounting (the same value as in log_flag!)
@@ -640,165 +630,134 @@ modparam("acc", "db_url", "mysql://user:password@localhost/openser")
 modparam("acc", "acc_method_column", "method")
      _________________________________________________________
 
-1.5.22. acc_from_uri_column (string)
-
-   Column name in accouting table to store the From header URI.
-
-   Default value is "from_uri".
-
-   Example 1-22. acc_from_uri_column example
-modparam("acc", "acc_from_uri_column", "from_uri")
-     _________________________________________________________
-
-1.5.23. acc_from_tag_column (string)
+1.5.22. acc_from_tag_column (string)
 
    Column name in accouting table to store the From header TAG
    parameter.
 
    Default value is "from_tag".
 
-   Example 1-23. acc_from_tag_column example
+   Example 1-22. acc_from_tag_column example
 modparam("acc", "acc_from_tag_column", "from_tag")
      _________________________________________________________
 
-1.5.24. acc_to_uri_column (string)
-
-   Column name in accouting table to store the To header URI.
-
-   Default value is "to_uri".
-
-   Example 1-24. acc_to_uri_column example
-modparam("acc", "acc_to_uri_column", "to_uri")
-     _________________________________________________________
-
-1.5.25. acc_to_tag_column (string)
+1.5.23. acc_to_tag_column (string)
 
    Column name in accouting table to store the To header TAG
    parameter.
 
    Default value is "to_tag".
 
-   Example 1-25. acc_to_tag_column example
+   Example 1-23. acc_to_tag_column example
 modparam("acc", "acc_to_tag_column", "to_tag")
      _________________________________________________________
 
-1.5.26. acc_cseqno_column (string)
-
-   Column name in accouting table to store the request's Cseq
-   number in string format.
-
-   Default value is "cseq_no".
-
-   Example 1-26. acc_cseqno_column example
-modparam("acc", "acc_cseqno_column", "cseq_no")
-     _________________________________________________________
-
-1.5.27. acc_callid_column (string)
+1.5.24. acc_callid_column (string)
 
    Column name in accouting table to store the request's Callid
    value.
 
    Default value is "callid".
 
-   Example 1-27. acc_callid_column example
+   Example 1-24. acc_callid_column example
 modparam("acc", "acc_callid_column", "callid")
      _________________________________________________________
 
-1.5.28. acc_sip_code_column (string)
+1.5.25. acc_sip_code_column (string)
 
    Column name in accouting table to store the final reply's
    numric code value in string format.
 
    Default value is "sip_code".
 
-   Example 1-28. acc_sip_code_column example
+   Example 1-25. acc_sip_code_column example
 modparam("acc", "acc_sip_code_column", "sip_code")
      _________________________________________________________
 
-1.5.29. acc_sip_reason_column (string)
+1.5.26. acc_sip_reason_column (string)
 
    Column name in accouting table to store the final reply's
    reason phrase value.
 
    Default value is "sip_reason".
 
-   Example 1-29. acc_sip_reason_column example
+   Example 1-26. acc_sip_reason_column example
 modparam("acc", "acc_sip_reason_column", "sip_reason")
      _________________________________________________________
 
-1.5.30. acc_time_column (string)
+1.5.27. acc_time_column (string)
 
    Column name in accouting table to store the time stamp of the
    transaction completion in date-time format.
 
    Default value is "time".
 
-   Example 1-30. acc_time_column example
+   Example 1-27. acc_time_column example
 modparam("acc", "acc_time_column", "time")
      _________________________________________________________
 
-1.5.31. db_extra (string)
+1.5.28. db_extra (string)
 
    Extra values to be logged into database - DB specific.
 
    Default value is NULL.
 
-   Example 1-31. db_extra example
+   Example 1-28. db_extra example
 modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)
 ")
      _________________________________________________________
 
-1.5.32. diameter_flag (integer)
+1.5.29. diameter_flag (integer)
 
    Request flag which needs to be set to account a transaction --
    DIAMETER specific.
 
    Default value is not-set (no flag).
 
-   Example 1-32. diameter_flag example
+   Example 1-29. diameter_flag example
 modparam("acc", "diameter_flag", 2)
      _________________________________________________________
 
-1.5.33. diameter_missed_flag (integer)
+1.5.30. diameter_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls --
    DIAMETER specific.
 
    Default value is not-set (no flag).
 
-   Example 1-33. diameter_missed_flag example
+   Example 1-30. diameter_missed_flag example
 modparam("acc", "diameter_missed_flag", 3)
      _________________________________________________________
 
-1.5.34. diameter_client_host (string)
+1.5.31. diameter_client_host (string)
 
    Hostname of the machine where the DIAMETER Client is running
    -- DIAMETER specific.
 
    Default value is "localhost".
 
-   Example 1-34. diameter_client_host example
+   Example 1-31. diameter_client_host example
 modparam("acc", "diameter_client_host", "3a_server.net")
      _________________________________________________________
 
-1.5.35. diameter_client_port (int)
+1.5.32. diameter_client_port (int)
 
    Port number where the Diameter Client is listening -- DIAMETER
    specific.
 
    Default value is 3000.
 
-   Example 1-35. diameter_client_host example
+   Example 1-32. diameter_client_host example
 modparam("acc", "diameter_client_port", 3000)
      _________________________________________________________
 
-1.5.36. diameter_extra (string)
+1.5.33. diameter_extra (string)
 
    Extra values to be logged via DIAMETER - DIAMETER specific.
 
    Default value is NULL.
 
-   Example 1-36. diameter_extra example
+   Example 1-33. diameter_extra example
 modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:
 email)")
      _________________________________________________________
@@ -819,7 +778,7 @@ email)")
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-37. acc_log_request usage
+   Example 1-34. acc_log_request usage
 ...
 acc_log_request("Some comment");
 ...
@@ -838,7 +797,7 @@ acc_log_request("Some comment");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-38. acc_db_request usage
+   Example 1-35. acc_db_request usage
 ...
 acc_log_request("Some comment", "Some table");
 ...
@@ -855,7 +814,7 @@ acc_log_request("Some comment", "Some table");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-39. acc_rad_request usage
+   Example 1-36. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
@@ -872,7 +831,7 @@ acc_rad_request("Some comment");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-40. acc_diam_request usage
+   Example 1-37. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 ...

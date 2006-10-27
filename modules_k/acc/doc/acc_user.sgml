@@ -44,19 +44,10 @@
 			<para>Request Method name</para>
 		</listitem>
 		<listitem>
-			<para>From header URI</para>
-		</listitem>
-		<listitem>
 			<para>From header TAG parameter</para>
 		</listitem>
 		<listitem>
-			<para>To header URI</para>
-		</listitem>
-		<listitem>
 			<para>To header TAG parameter</para>
-		</listitem>
-		<listitem>
-			<para>Cseq number</para>
 		</listitem>
 		<listitem>
 			<para>Call-Id</para>
@@ -148,7 +139,6 @@ if (uri=~"sip:+40") /* calls to Romania */ {
     if (method=="INVITE" & !check_from()) {
         log("from!=digest\n");
         sl_send_reply("403","Forbidden");
-        break;
     }
 
     setflag(1); /* set for accounting (the same value as in log_flag!)
@@ -724,21 +714,6 @@ modparam("acc", "acc_method_column", "method")
 		</example>
 	</section>
 	<section>
-		<title><varname>acc_from_uri_column</varname> (string)</title>
-		<para>
-		Column name in accouting table to store the From header URI.
-		</para>
-		<para>
-		Default value is <quote>from_uri</quote>.
-		</para>
-		<example>
-		<title>acc_from_uri_column example</title>
-		<programlisting format="linespecific">
-modparam("acc", "acc_from_uri_column", "from_uri")
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>acc_from_tag_column</varname> (string)</title>
 		<para>
 		Column name in accouting table to store the From header TAG parameter.
@@ -754,21 +729,6 @@ modparam("acc", "acc_from_tag_column", "from_tag")
 		</example>
 	</section>
 	<section>
-		<title><varname>acc_to_uri_column</varname> (string)</title>
-		<para>
-		Column name in accouting table to store the To header URI.
-		</para>
-		<para>
-		Default value is <quote>to_uri</quote>.
-		</para>
-		<example>
-		<title>acc_to_uri_column example</title>
-		<programlisting format="linespecific">
-modparam("acc", "acc_to_uri_column", "to_uri")
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>acc_to_tag_column</varname> (string)</title>
 		<para>
 		Column name in accouting table to store the To header TAG parameter.
@@ -780,22 +740,6 @@ modparam("acc", "acc_to_uri_column", "to_uri")
 		<title>acc_to_tag_column example</title>
 		<programlisting format="linespecific">
 modparam("acc", "acc_to_tag_column", "to_tag")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>acc_cseqno_column</varname> (string)</title>
-		<para>
-		Column name in accouting table to store the request's Cseq number in
-		string format.
-		</para>
-		<para>
-		Default value is <quote>cseq_no</quote>.
-		</para>
-		<example>
-		<title>acc_cseqno_column example</title>
-		<programlisting format="linespecific">
-modparam("acc", "acc_cseqno_column", "cseq_no")
 </programlisting>
 		</example>
 	</section>
