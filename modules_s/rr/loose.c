@@ -61,31 +61,30 @@
 
 
 /*
- * Test whether we are processing pre-loaded route set
- * by looking at the To tag
+ * Check if the To-tag is set in the message
  */
-static int is_preloaded(struct sip_msg* msg)
+static int has_to_tag(struct sip_msg* msg)
 {
 	str tag;
 
 	if (!msg->to && parse_headers(msg, HDR_TO_F, 0) == -1) {
-		LOG(L_ERR, "is_preloaded: Cannot parse To header field\n");
+		LOG(L_ERR, "has_to_tag: Cannot parse To header field\n");
 		return -1;
 	}
 
 	if (!msg->to) {
-		LOG(L_ERR, "is_preloaded: To header field not found\n");
+		LOG(L_ERR, "has_to_tag: To header field not found\n");
 		return -1;
 	}
 
 	tag = get_to(msg)->tag_value;
 	if (tag.s == 0 || tag.len == 0) {
-		DBG("is_preloaded: Yes\n");
-		return 1;
+		DBG("has_to_tag: No\n");
+		return 0;
 	}
 
-	DBG("is_preloaded: No\n");
-	return 0;
+	DBG("has_to_tag: Yes\n");
+	return 1;
 }
 
 
@@ -774,11 +773,10 @@ static inline int find_rem_target(struct sip_msg* _m, struct hdr_field** _h, rr_
 /*
  * Previous hop was a strict router, handle this case
  */
-static inline int after_strict(struct sip_msg* _m)
+static inline int after_strict(struct sip_msg* _m, struct sip_uri* _pru, int _route_myself)
 {
 	int res, rem_len;
 	struct hdr_field* hdr;
-	struct sip_uri puri;
 	rr_t* rt, *prev;
 	char* rem_off;
 	str* uri;
@@ -790,19 +788,11 @@ static inline int after_strict(struct sip_msg* _m)
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
-	uri = &rt->nameaddr.uri;
 
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		LOG(L_ERR, "after_strict: Error while parsing the first route URI\n");
-		return RR_ERROR;
-	}
+	if (_route_myself == 1) {
+		store_user_in_avps(&(_pru->user));
 
-	if (is_myself(&puri.host, puri.port_no)) {
-		store_user_in_avps(&puri.user);
-
-		     /*	if (enable_double_rr && is_2rr(&_ruri->params)) { */
-	      /* DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s)); */
- 		if (!rt->next) {
+		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
 			      */
@@ -823,14 +813,18 @@ static inline int after_strict(struct sip_msg* _m)
 		} else rt = rt->next;
 	}
 
-	uri = &rt->nameaddr.uri;
-	if (parse_uri(uri->s, uri->len, &puri) == -1) {
-		LOG(L_ERR, "after_strict: Error while parsing URI\n");
-		return RR_ERROR;
+	if (rt != _m->route->parsed) {
+		uri = &rt->nameaddr.uri;
+		if (parse_uri(uri->s, uri->len, _pru) == -1) {
+			LOG(L_ERR, "after_strict: Error while parsing URI\n");
+			return RR_ERROR;
+		}
+	} else {
+		uri = &rt->nameaddr.uri;
 	}
-	
+
 	store_next_route_in_avps(uri);
-	if (is_strict(&puri.params)) {
+	if (is_strict(&(_pru->params))) {
 		DBG("after_strict: Next hop: '%.*s' is strict router\n", uri->len, ZSW(uri->s));
 		     /* Previous hop was a strict router and the next hop is strict
 		      * router too. There is no need to save R-URI again because it
@@ -923,10 +917,9 @@ static inline int after_strict(struct sip_msg* _m)
 }
 
 
-static inline int after_loose(struct sip_msg* _m, int preloaded)
+static inline int after_loose(struct sip_msg* _m, struct sip_uri* _pru, int _route_myself, int _ruri_myself)
 {
 	struct hdr_field* hdr;
-	struct sip_uri puri;
 	rr_t* rt;
 	int res;
 #ifdef ENABLE_USER_CHECK
@@ -939,19 +932,14 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	rt = (rr_t*)hdr->parsed;
 	uri = &rt->nameaddr.uri;
 
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		LOG(L_ERR, "after_loose: Error while parsing the first route URI\n");
-		return RR_ERROR;
-	}
-
 	     /* IF the URI was added by me, remove it */
-	if (is_myself(&puri.host, puri.port_no)) {
-		store_user_in_avps(&puri.user);
+	if (_route_myself == 1) {
+		store_user_in_avps(&(_pru->user));
 
 		DBG("after_loose: Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
-		get_avp_cookie_from_uri(&puri.params, &avp_cookie);
+		get_avp_cookie_from_uri(&(_pru->params), &avp_cookie);
 		if (avp_cookie.len > 0)
-			rr_set_avp_cookies(&avp_cookie, get_direction(_m, &puri.params));
+			rr_set_avp_cookies(&avp_cookie, get_direction(_m, &(_pru->params)));
 		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
@@ -967,12 +955,19 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 			if (res > 0) { /* No next route found */
 				DBG("after_loose: No next URI found\n");
-				return (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+				if (_ruri_myself == 1) {
+					/* this a preloaded request. we do not check for the To-tag
+					 * because the ACK for a negative reply will contain such
+					 * a tag but the original INVITE not */
+					return NOT_RR_DRIVEN;
+				} else {
+					return RR_DRIVEN;
+				}
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
 
-		if (enable_double_rr && is_2rr(&puri.params)) {
+		if (enable_double_rr && is_2rr(&(_pru->params))) {
 			if (!rt->next) {
 				     /* No next route in the same header, remove the whole header
 				      * field immediately
@@ -988,16 +983,20 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				}
 				if (res > 0) { /* No next route found */
 					DBG("after_loose: No next URI found\n");
-					return (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+					/* preloaded routes can not happen with double_rr, so
+					 * we were just the last hop with double_rr */
+					return RR_DRIVEN;
 				}
 				rt = (rr_t*)hdr->parsed;
 			} else rt = rt->next;
 		}
 
-		uri = &rt->nameaddr.uri;
-		if (parse_uri(uri->s, uri->len, &puri) < 0) {
-			LOG(L_ERR, "after_loose: Error while parsing the first route URI\n");
-			return RR_ERROR;
+		if(rt != _m->route->parsed) {
+			uri = &rt->nameaddr.uri;
+			if (parse_uri(uri->s, uri->len, _pru) < 0) {
+				LOG(L_ERR, "after_loose: Error while parsing the next route URI\n");
+				return RR_ERROR;
+			}
 		}
 	} else {
 #ifdef ENABLE_USER_CHECK
@@ -1010,7 +1009,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	
 	store_next_route_in_avps(uri);
 	DBG("after_loose: URI to be processed: '%.*s'\n", uri->len, ZSW(uri->s));
-	if (is_strict(&puri.params)) {
+	if (is_strict(&(_pru->params))) {
 		DBG("after_loose: Next URI is a strict router\n");
 		if (handle_sr(_m, hdr, rt) < 0) {
 			LOG(L_ERR, "after_loose: Error while handling strict router\n");
@@ -1045,7 +1044,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
  */
 int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
+	struct hdr_field* hdr;
+	struct sip_uri puri;
+	rr_t* rt;
 	int ret;
+	str* uri;
 
 	if (find_first_route(_m) != 0) {
 		DBG("loose_route: There is no Route HF\n");
@@ -1057,16 +1060,36 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 		return -1;
 	}
 
-	ret = is_preloaded(_m);
-	if (ret < 0) {
+	hdr = _m->route;
+	rt = (rr_t*)hdr->parsed;
+	uri = &rt->nameaddr.uri;
+
+	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+		LOG(L_ERR, "loose_route: Error while parsing the first route URI\n");
 		return -1;
-	} else if (ret == 1) {
-		return after_loose(_m, 1);
-	} else {
-		if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no)) {
-			return after_strict(_m);
+	}
+
+	if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no)) {
+		DBG("loose_route: RURI is myself\n");
+		if ((ret = is_myself(&puri.host, puri.port_no)) == 1 &&
+			!(enable_double_rr && is_2rr(&puri.params))) {
+			DBG("loose_route: found preloaded loose route\n");
+			return after_loose(_m, &puri, ret, 1);
 		} else {
-			return after_loose(_m, 0);
+			if (has_to_tag(_m) == 1) {
+				return after_strict(_m, &puri, ret);
+			} else {
+				LOG(L_WARN, "loose_route: pre-loaded strict routing?!\n");
+				return -1;
+			}
+		}
+	} else {
+		DBG("loose_route: RURI is NOT myself\n");
+		if (is_myself(&puri.host, puri.port_no)) {
+			return after_loose(_m, &puri, 1, 0);
+		} else {
+			LOG(L_WARN, "loose_route: no routing target is local\n");
+			return -1;
 		}
 	}
 }
