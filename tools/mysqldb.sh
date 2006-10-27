@@ -289,7 +289,7 @@ INSERT INTO version VALUES ( 'location', '1003');
 INSERT INTO version VALUES ( 'aliases', '1003');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
-INSERT INTO version VALUES ( 'acc', '3');
+INSERT INTO version VALUES ( 'acc', '4');
 INSERT INTO version VALUES ( 'silo', '5');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
@@ -342,12 +342,9 @@ CREATE TABLE subscriber (
 CREATE TABLE acc (
   id int(10) unsigned NOT NULL auto_increment,
   method varchar(16) NOT NULL default '',
-  from_uri varchar(64) NOT NULL default '',
   from_tag varchar(64) NOT NULL default '',
-  to_uri varchar(64) NOT NULL default '',
   to_tag varchar(64) NOT NULL default '',
   callid varchar(64) NOT NULL default '',
-  cseq_no varchar(32) NOT NULL default '',
   sip_code varchar(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
   time datetime NOT NULL,
@@ -363,12 +360,9 @@ CREATE TABLE acc (
 CREATE TABLE missed_calls (
   id int(10) unsigned NOT NULL auto_increment,
   method varchar(16) NOT NULL default '',
-  from_uri varchar(64) NOT NULL default '',
   from_tag varchar(64) NOT NULL default '',
-  to_uri varchar(64) NOT NULL default '',
   to_tag varchar(64) NOT NULL default '',
   callid varchar(64) NOT NULL default '',
-  cseq_no varchar(32) NOT NULL default '',
   sip_code varchar(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
   time datetime NOT NULL,

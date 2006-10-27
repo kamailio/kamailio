@@ -337,7 +337,7 @@ INSERT INTO version VALUES ( 'location', '1003');
 INSERT INTO version VALUES ( 'aliases', '1003');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
-INSERT INTO version VALUES ( 'acc', '3');
+INSERT INTO version VALUES ( 'acc', '4');
 INSERT INTO version VALUES ( 'silo', '5');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
@@ -389,12 +389,9 @@ CREATE INDEX user_2_subs_indx ON subscriber ($USERCOL);
 CREATE TABLE acc (
   id $AUTO_INCREMENT,
   method varchar(16) NOT NULL default '',
-  from_uri varchar(64) NOT NULL default '',
   from_tag varchar(64) NOT NULL default '',
-  to_uri varchar(64) NOT NULL default '',
   to_tag varchar(64) NOT NULL default '',
   callid varchar(64) NOT NULL default '',
-  cseq_no varchar(32) NOT NULL default '',
   sip_code varchar(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
   time $DATETIME
@@ -409,12 +406,9 @@ CREATE INDEX acc_callid_indx ON acc (callid);
 CREATE TABLE missed_calls (
   id $AUTO_INCREMENT,
   method varchar(16) NOT NULL default '',
-  from_uri varchar(64) NOT NULL default '',
   from_tag varchar(64) NOT NULL default '',
-  to_uri varchar(64) NOT NULL default '',
   to_tag varchar(64) NOT NULL default '',
   callid varchar(64) NOT NULL default '',
-  cseq_no varchar(32) NOT NULL default '',
   sip_code varchar(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
   time $DATETIME
