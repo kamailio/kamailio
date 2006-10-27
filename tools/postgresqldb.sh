@@ -735,9 +735,9 @@ INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 
-#
-# Extend table 'subscriber' with serweb specific columns
-#
+/*
+ * Extend table 'subscriber' with serweb specific columns
+ */
 ALTER TABLE subscriber
   ADD COLUMN phplib_id varchar(32) NOT NULL default '',
   ADD COLUMN phone varchar(15) NOT NULL default '',
