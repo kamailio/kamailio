@@ -104,11 +104,8 @@ static str val_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
 
 /* returns:
  * 		method name
- * 		from URI
  * 		from TAG
- * 		to URI
  * 		to TAG
- * 		cseq no
  * 		callid
  * 		sip_code
  * 		sip_status
@@ -118,12 +115,10 @@ static inline int core2strar( struct sip_msg *req, str *c_vals)
 	struct to_body *ft_body;
 	struct hdr_field *from;
 	struct hdr_field *to;
-	struct cseq_body *cseq;
 
 	/* method */
 	c_vals[0] = req->first_line.u.request.method;
 
-	/* FIXME - preparse??? */
 	/* from/to URI and TAG */
 	if (req->msg_flags&FL_REQ_UPSTREAM) {
 		DBG("DBUG:acc:core2strar: UPSTREAM flag set -> swap F/T\n"); \
@@ -134,51 +129,29 @@ static inline int core2strar( struct sip_msg *req, str *c_vals)
 		to = acc_env.to;
 	}
 
-	if (from && (ft_body=get_ft_body(from))) {
-		if (ft_body->uri.len)
-			c_vals[1] = ft_body->uri;
-		else
-			SET_EMPTY_VAL(1);
-		if (ft_body->tag_value.len)
-			c_vals[2] = ft_body->tag_value;
-		else
-			SET_EMPTY_VAL(2);
+	if (from && (ft_body=get_ft_body(from)) && ft_body->tag_value.len) {
+		c_vals[1] = ft_body->tag_value;
 	} else {
 		SET_EMPTY_VAL(1);
+	}
+
+	if (to && (ft_body=get_ft_body(to)) && ft_body->tag_value.len) {
+		c_vals[2] = ft_body->tag_value;
+	} else {
 		SET_EMPTY_VAL(2);
 	}
 
-	if (to && (ft_body=get_ft_body(to))) {
-		if (ft_body->uri.len)
-			c_vals[3] = ft_body->uri;
-		else
-			SET_EMPTY_VAL(3);
-		if (ft_body->tag_value.len)
-			c_vals[4] = ft_body->tag_value;
-		else
-			SET_EMPTY_VAL(4);
-	} else {
-		SET_EMPTY_VAL(3);
-		SET_EMPTY_VAL(4);
-	}
-
-	/* CSeq number */
-	if (req->cseq && (cseq=get_cseq(req)) && cseq->number.len)
-		c_vals[5] = cseq->number;
-	else
-		SET_EMPTY_VAL(5);
-
 	/* Callid */
 	if (req->callid && req->callid->body.len)
-		c_vals[6] = req->callid->body;
+		c_vals[3] = req->callid->body;
 	else
-		SET_EMPTY_VAL(6);
+		SET_EMPTY_VAL(3);
 
 	/* SIP code */
-	c_vals[7] = acc_env.code_s;
+	c_vals[4] = acc_env.code_s;
 
 	/* SIP status */
-	c_vals[8] = acc_env.reason;
+	c_vals[5] = acc_env.reason;
 
 	acc_env.ts = time(NULL);
 	return ACC_CORE_LEN;
@@ -207,11 +180,8 @@ void acc_log_init()
 
 	/* fixed core attributes */
 	SET_LOG_ATTR(n,METHOD);
-	SET_LOG_ATTR(n,FROMURI);
 	SET_LOG_ATTR(n,FROMTAG);
-	SET_LOG_ATTR(n,TOURI);
 	SET_LOG_ATTR(n,TOTAG);
-	SET_LOG_ATTR(n,CSEQ);
 	SET_LOG_ATTR(n,CALLID);
 	SET_LOG_ATTR(n,CODE);
 	SET_LOG_ATTR(n,STATUS);
@@ -309,11 +279,8 @@ static void acc_db_init_keys()
 	n = 0;
 	/* caution: keys need to be aligned to core format */
 	db_keys[n++] = acc_method_col;
-	db_keys[n++] = acc_fromuri_col;
 	db_keys[n++] = acc_fromtag_col;
-	db_keys[n++] = acc_touri_col;
 	db_keys[n++] = acc_totag_col;
-	db_keys[n++] = acc_cseqno_col;
 	db_keys[n++] = acc_callid_col;
 	db_keys[n++] = acc_sipcode_col;
 	db_keys[n++] = acc_sipreason_col;
@@ -450,92 +417,6 @@ inline static UINT4 phrase2code(str *phrase)
 	}
 	return code;
 }
-
-
-static inline str *cred_user(struct sip_msg *rq)
-{
-	struct hdr_field* h;
-	auth_body_t* cred;
-
-	get_authorized_cred(rq->proxy_auth, &h);
-	if (!h) get_authorized_cred(rq->authorization, &h);
-	if (!h) return 0;
-	cred=(auth_body_t*)(h->parsed);
-	if (!cred || !cred->digest.username.user.len) 
-			return 0;
-	return &cred->digest.username.user;
-}
-
-
-static inline str *cred_realm(struct sip_msg *rq)
-{
-	str* realm;
-	struct hdr_field* h;
-	auth_body_t* cred;
-
-	get_authorized_cred(rq->proxy_auth, &h);
-	if (!h) get_authorized_cred(rq->authorization, &h);
-	if (!h) return 0;
-	cred=(auth_body_t*)(h->parsed);
-	if (!cred) return 0;
-	realm = GET_REALM(&cred->digest);
-	if (!realm->len || !realm->s) {
-		return 0;
-	}
-	return realm;
-}
-
-
-inline static str* get_rd_username(struct sip_msg *rq)
-{
-	static char buf[MAX_URI_SIZE];
-	static str user_name;
-	str* user;
-	str* realm;
-	struct sip_uri puri;
-	struct to_body* from;
-
-	/* try to take it from credentials */
-	user = cred_user(rq);
-	if (user) {
-		realm = cred_realm(rq);
-		if (realm) {
-			user_name.len = user->len+1+realm->len;
-			if (user_name.len>MAX_URI_SIZE) {
-				LOG(L_ERR, "ERROR:acc:get_rd_username: URI too long\n");
-				return 0;
-			}
-			user_name.s = buf;
-			memcpy(user_name.s, user->s, user->len);
-			user_name.s[user->len] = '@';
-			memcpy(user_name.s+user->len+1, realm->s, realm->len);
-		} else {
-			user_name.len = user->len;
-			user_name.s = user->s;
-		}
-	} else {
-		/* from from uri */
-		if (rq->from && (from=get_from(rq)) && from->uri.len) {
-			if (parse_uri(from->uri.s, from->uri.len, &puri) < 0 ) {
-				LOG(L_ERR, "ERROR:acc:get_rd_username: Bad From URI\n");
-				return 0;
-			}
-			user_name.len = puri.user.len+1+puri.host.len;
-			if (user_name.len>MAX_URI_SIZE) {
-				LOG(L_ERR, "ERROR:acc:get_rd_username: URI too long\n");
-				return 0;
-			}
-			user_name.s = buf;
-			memcpy(user_name.s, puri.user.s, puri.user.len);
-			user_name.s[puri.user.len] = '@';
-			memcpy(user_name.s+puri.user.len+1, puri.host.s, puri.host.len);
-		} else {
-			user_name.len = 0;
-			user_name.s = 0;
-		}
-	}
-	return &user_name;
-}
 #endif
 
 
@@ -544,7 +425,7 @@ inline static str* get_rd_username(struct sip_msg *rq)
  ********************************************/
 #ifdef RAD_ACC
 enum { RA_ACCT_STATUS_TYPE=0, RA_SERVICE_TYPE, RA_SIP_RESPONSE_CODE,
-	RA_SIP_METHOD, RA_USER_NAME, RA_TIME_STAMP, RA_STATIC_MAX};
+	RA_SIP_METHOD, RA_TIME_STAMP, RA_STATIC_MAX};
 enum {RV_STATUS_START=0, RV_STATUS_STOP, RV_STATUS_FAILED,
 	RV_SIP_SESSION, RV_STATIC_MAX};
 static struct attr
@@ -561,15 +442,11 @@ int init_acc_rad(char *rad_cfg, int srv_type)
 	rd_attrs[RA_SERVICE_TYPE].n      = "Service-Type";
 	rd_attrs[RA_SIP_RESPONSE_CODE].n = "Sip-Response-Code";
 	rd_attrs[RA_SIP_METHOD].n        = "Sip-Method";
-	rd_attrs[RA_USER_NAME].n         = "User-Name";
 	rd_attrs[RA_TIME_STAMP].n        = "Event-Timestamp";
 	n = RA_STATIC_MAX;
 	/* caution: keep these aligned to core acc output */
-	rd_attrs[n++].n                  = "Calling-Station-Id";
 	rd_attrs[n++].n                  = "Sip-From-Tag";
-	rd_attrs[n++].n                  = "Called-Station-Id";
 	rd_attrs[n++].n                  = "Sip-To-Tag";
-	rd_attrs[n++].n                  = "Sip-CSeq";
 	rd_attrs[n++].n                  = "Acct-Session-Id";
 
 	rd_vals[RV_STATUS_START].n        = "Start";
@@ -629,7 +506,6 @@ int acc_rad_request( struct sip_msg *req )
 	int attr_cnt;
 	VALUE_PAIR *send;
 	UINT4 av_type;
-	str* user;
 	int offset;
 	int i;
 
@@ -650,11 +526,6 @@ int acc_rad_request( struct sip_msg *req )
 
 	av_type = req->REQ_METHOD; /* method */
 	ADD_RAD_AVPAIR( RA_SIP_METHOD, &av_type, -1);
-
-	user = get_rd_username(req);
-	if (user==0)
-		goto error;
-	ADD_RAD_AVPAIR( RA_USER_NAME, user->s, user->len);
 
 	/* unix time */
 	av_type = (UINT4)acc_env.ts;
@@ -714,11 +585,8 @@ int acc_diam_init()
 	n = 0;
 	/* caution: keep these aligned to core acc output */
 	diam_attrs[n++] = AVP_SIP_METHOD;
-	diam_attrs[n++] = AVP_SIP_FROM_URI;
 	diam_attrs[n++] = AVP_SIP_FROM_TAG;
-	diam_attrs[n++] = AVP_SIP_TO_URI;
 	diam_attrs[n++] = AVP_SIP_TO_TAG;
-	diam_attrs[n++] = AVP_SIP_CSEQ;
 	diam_attrs[n++] = AVP_SIP_CALLID;
 	diam_attrs[n++] = AVP_SIP_STATUS;
 
@@ -745,14 +613,13 @@ inline unsigned long diam_status(struct sip_msg *rq, int code)
 	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
 				&& code>=200 && code<300) 
 		return AAA_ACCT_START;
-	
-	if ((rq->REQ_METHOD==METHOD_BYE 
-					|| rq->REQ_METHOD==METHOD_CANCEL)) 
+
+	if ((rq->REQ_METHOD==METHOD_BYE || rq->REQ_METHOD==METHOD_CANCEL))
 		return AAA_ACCT_STOP;
-	
+
 	if (code>=200 && code <=300)  
 		return AAA_ACCT_EVENT;
-	
+
 	return -1;
 }
 
@@ -764,7 +631,6 @@ int acc_diam_request( struct sip_msg *req )
 	AAAMessage *send = NULL;
 	AAA_AVP *avp;
 	struct sip_uri puri;
-	str* user;
 	str *uri;
 	int ret;
 	int i;
@@ -815,20 +681,6 @@ int acc_diam_request( struct sip_msg *req )
 	/* SIP Service AVP */
 	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_ACCOUNTING, 
 	SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0) {
-		LOG(L_ERR,"ERROR:acc:acc_diam_request: no more free memory!\n");
-		goto error;
-	}
-	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: avp not added \n");
-		AAAFreeAVP(&avp);
-		goto error;
-	}
-
-	user = get_rd_username(req);
-	if (user==0)
-		goto error;
-	if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user->s, user->len,
-	AVP_DUPLICATE_DATA)) == 0) {
 		LOG(L_ERR,"ERROR:acc:acc_diam_request: no more free memory!\n");
 		goto error;
 	}
@@ -896,7 +748,6 @@ int acc_diam_request( struct sip_msg *req )
 		AAAFreeAVP(&avp);
 		goto error;
 	}
-
 
 	/* prepare the message to be sent over the network */
 	if(AAABuildMsgBuffer(send) != AAA_ERR_SUCCESS) {

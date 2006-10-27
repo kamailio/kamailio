@@ -33,7 +33,7 @@
 #ifndef _ACC_ACC_H_
 #define _ACC_ACC_H_
 
-#define ACC_CORE_LEN 9
+#define ACC_CORE_LEN 6
 
 /* leading text for a request accounted from a script */
 #define ACC "ACC: "
@@ -49,16 +49,10 @@
 /* syslog attribute names */
 #define A_METHOD "method"
 #define A_METHOD_LEN (sizeof(A_METHOD)-1)
-#define A_FROMURI "from_uri"
-#define A_FROMURI_LEN (sizeof(A_FROMURI)-1)
 #define A_FROMTAG "from_tag"
 #define A_FROMTAG_LEN (sizeof(A_FROMTAG)-1)
-#define A_TOURI "to_uri"
-#define A_TOURI_LEN (sizeof(A_TOURI)-1)
 #define A_TOTAG "to_tag"
 #define A_TOTAG_LEN (sizeof(A_TOTAG)-1)
-#define A_CSEQ "cseq"
-#define A_CSEQ_LEN (sizeof(A_CSEQ)-1)
 #define A_CALLID "call_id"
 #define A_CALLID_LEN (sizeof(A_CALLID)-1)
 #define A_CODE "code"

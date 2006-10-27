@@ -37,14 +37,10 @@
 enum{
 	/*Accounting*/
 	AVP_SIP_CALLID				= 550,	/* string */
-	AVP_SIP_FROM_URI			= 551,	/* string */
-	AVP_SIP_TO_URI				= 552,	/* string */
-	AVP_SIP_METHOD				= 553,	/* string */
-	AVP_SIP_STATUS				= 554,	/* string */
-	AVP_SIP_FROM_TAG			= 555,	/* string */
-	AVP_SIP_TO_TAG				= 556,	/* string */
-	AVP_SIP_CSEQ				= 557,	/* string */
-	AVP_SIP_IURI				= 558,  /* string */
+	AVP_SIP_METHOD				= 551,	/* string */
+	AVP_SIP_STATUS				= 552,	/* string */
+	AVP_SIP_FROM_TAG			= 553,	/* string */
+	AVP_SIP_TO_TAG				= 554,	/* string */
 	AVP_SIP_CODE				= 564   /* string */
 };
 

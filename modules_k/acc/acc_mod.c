@@ -151,12 +151,9 @@ char *db_table_acc = "acc";
 char *db_table_mc = "missed_calls";
 /* names of columns in tables acc/missed calls*/
 char* acc_method_col     = "method";
-char* acc_fromuri_col    = "from_uri";
 char* acc_fromtag_col    = "from_tag";
-char* acc_touri_col      = "to_uri";
 char* acc_totag_col      = "to_tag";
 char* acc_callid_col     = "callid";
-char* acc_cseqno_col     = "cseq_no";
 char* acc_sipcode_col    = "sip_code";
 char* acc_sipreason_col  = "sip_reason";
 char* acc_time_col       = "time";
@@ -222,12 +219,9 @@ static param_export_t params[] = {
 	{"db_table_acc",         STR_PARAM, &db_table_acc         },
 	{"db_table_missed_calls",STR_PARAM, &db_table_mc          },
 	{"acc_method_column",    STR_PARAM, &acc_method_col       },
-	{"acc_from_uri_column",  STR_PARAM, &acc_fromuri_col      },
 	{"acc_from_tag_column",  STR_PARAM, &acc_fromtag_col      },
-	{"acc_to_uri_column",    STR_PARAM, &acc_touri_col        },
 	{"acc_totag_column",     STR_PARAM, &acc_totag_col        },
 	{"acc_callid_column",    STR_PARAM, &acc_callid_col       },
-	{"acc_cseqno_column",    STR_PARAM, &acc_cseqno_col       },
 	{"acc_sip_code_column",  STR_PARAM, &acc_sipcode_col      },
 	{"acc_sip_reason_column",STR_PARAM, &acc_sipreason_col    },
 	{"acc_time_column",      STR_PARAM, &acc_time_col         },
