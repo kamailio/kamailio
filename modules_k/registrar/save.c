@@ -547,6 +547,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	/* nat type flag */
 	if (_m->flags&sip_natping_flag)
 		flags |= FL_NAT_SIPPING;
+	/* mem flag */
+	flags |= mem_only;
 
 	/* pack the contact_info */
 	if ( (ci=pack_ci( _m, 0, 0, 0, 0))==0 ) {
