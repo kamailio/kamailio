@@ -308,6 +308,14 @@ str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 
 	while(itn!=NULL && l < sp->len && l < PDT_MAX_DEPTH)
 	{
+		/* check validity */
+		if(sp->s[l]<'0' || sp->s[l]>'9')
+		{
+			LOG(L_ERR, "pdt_get_domain:ERROR: invalid char at %d in [%.*s]\n",
+					l, sp->len, sp->s);
+			return NULL;
+		}
+
 		if(itn[(sp->s[l]-'0')%PDT_NODE_SIZE].domain.s!=NULL)
 		{
 			domain = &itn[(sp->s[l]-'0')%PDT_NODE_SIZE].domain;
