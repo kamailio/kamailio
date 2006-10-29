@@ -369,12 +369,26 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 			return -1;
 		}
 
-	/* if the user part begin with the prefix for PSTN users, extract the code*/
+    /* if the user part begin with the prefix for PSTN users, extract the code*/
 	if (msg->parsed_uri.user.len<=0)
 	{
 		DBG("PDT:prefix2domain: user part of the message is empty\n");
-		return 1;
-	}
+		return -1;
+	}   
+    
+	if(prefix.len>0)
+	{
+		if (msg->parsed_uri.user.len<=prefix.len)
+		{
+			DBG("PDT:prefix2domain: user part is less than prefix\n");
+			return -1;
+		}   
+		if(strncasecmp(prefix.s, msg->parsed_uri.user.s, prefix.len)!=0)
+		{
+			DBG("PDT:prefix2domain: PSTN prefix did not matched\n");
+			return -1;
+		}
+	}   
 	
 	if(prefix.len>0 && prefix.len < msg->parsed_uri.user.len
 			&& strncasecmp(prefix.s, msg->parsed_uri.user.s, prefix.len)!=0)
@@ -396,8 +410,9 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 		last_sync = crt_time;
 		if(pdt_sync_cache())
 		{
+			/* keep reporting but continue */
 			LOG(L_ERR, "PDT:prefix2domain: cannot update the cache\n");
-			return -1;
+			/* return -1; */
 		}
 	}
 
