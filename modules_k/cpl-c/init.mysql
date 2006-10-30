@@ -1,4 +1,4 @@
-USE ser;
+USE openser;
 
 CREATE TABLE `cpl` (
   `username` varchar(64) NOT NULL,
@@ -6,4 +6,4 @@ CREATE TABLE `cpl` (
   `cpl_xml` blob,
   `cpl_bin` blob,
   PRIMARY KEY  (`username`,`domain`)
-) ENGINE=MyISAM
+) ENGINE=MyISAM;
