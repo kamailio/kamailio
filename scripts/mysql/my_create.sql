@@ -253,13 +253,13 @@ CREATE TABLE silo (
     UNIQUE KEY silo_idx1 (mid)
 );
 
-INSERT INTO version (table_name, table_version) values ('uri','2');
+INSERT INTO version (table_name, table_version) values ('uri','3');
 CREATE TABLE uri (
     uid VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL,
     username VARCHAR(64) NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
-    scheme INT NOT NULL DEFAULT '0',
+    scheme VARCHAR(8) NOT NULL DEFAULT 'sip',
     KEY uri_idx1 (username, did),
     KEY uri_uid (uid)
 );

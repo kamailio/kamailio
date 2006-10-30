@@ -1,1 +1,1 @@
-uid(str) did(str) username(str) flags(int) scheme(int) 
+uid(str) did(str) username(str) flags(int) scheme(str) 

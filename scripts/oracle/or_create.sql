@@ -247,13 +247,13 @@ CREATE TABLE silo (
     silo_idx1 UNIQUE (mid, )
 );
 
-INSERT INTO version (table_name, table_version) values ('uri','2');
+INSERT INTO version (table_name, table_version) values ('uri','3');
 CREATE TABLE uri (
     uid string(64) NOT NULL,
     did string(64) NOT NULL,
     username string(64) NOT NULL,
     flags int NOT NULL DEFAULT '0',
-    scheme int NOT NULL DEFAULT '0'
+    scheme string(8) NOT NULL DEFAULT 'sip'
 );
 
 INSERT INTO version (table_name, table_version) values ('speed_dial','2');

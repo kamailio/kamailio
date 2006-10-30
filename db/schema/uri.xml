@@ -9,7 +9,7 @@
 
 <table>
     <name>uri</name>
-    <version>2</version>
+    <version>3</version>
 
     <column id="uri.uid">
 	<name>uid</name>
@@ -40,14 +40,15 @@
 
     <column id="uri.scheme">
         <name>scheme</name>
-	<type>int</type>
-	<default>0</default>
+	<type>string</type>
+	<size>8</size>
+	<default>sip</default>
 	<description>
 	    URI scheme:
-	     - SIP  = 1
-	     - SIPS = 2
-	     - TEL  = 3
-	     - TELS = 4
+	     - SIP  
+	     - SIPS 
+	     - TEL  
+	     - TELS 
 	</description>
     </column>
 														    

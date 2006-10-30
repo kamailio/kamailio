@@ -250,7 +250,7 @@ CREATE TABLE uri (
     did VARCHAR(64) NOT NULL,
     username VARCHAR(64) NOT NULL,
     flags INTEGER NOT NULL DEFAULT '0',
-    scheme INTEGER NOT NULL DEFAULT '0'
+    scheme VARCHAR(8) NOT NULL DEFAULT 'sip'
 );
 
 CREATE INDEX uri_idx1 ON uri (username, did);
