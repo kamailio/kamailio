@@ -290,7 +290,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 			{
 				LOG(L_INFO,"PRESENCE:update_subscribtion: expires =0 ->"
 						" deleting from database\n");
-			
+
 				if(pa_dbf.delete(pa_db, query_cols, query_ops, query_vals,
 							n_query_cols)< 0 )
 				{
@@ -359,68 +359,72 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 		}
 		else
 		{
-			query_cols[n_query_cols] = "contact";
-			query_vals[n_query_cols].type = DB_STR;
-			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.str_val.s = subs->contact.s;
-			query_vals[n_query_cols].val.str_val.len = subs->contact.len;
-			n_query_cols++;
-	
-			query_cols[n_query_cols] = "status";
-			query_vals[n_query_cols].type = DB_STR;
-			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.str_val.s = subs->status.s;
-			query_vals[n_query_cols].val.str_val.len = subs->status.len;
-			n_query_cols++;
-
-			query_cols[n_query_cols] = "cseq";
-			query_vals[n_query_cols].type = DB_INT;
-			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.int_val = subs->cseq;
-			n_query_cols++;
-
-			DBG("expires: %d\n", subs->expires);
-			query_cols[n_query_cols] = "expires";
-			query_vals[n_query_cols].type = DB_INT;
-			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.int_val = subs->expires +
-				(int)time(NULL);
-			n_query_cols++;
-
-
-			if(subs->record_route.s!=NULL && subs->record_route.len!=0)
-			{
-				query_cols[n_query_cols] = "record_route";
+			if(subs->expires!= 0)  /* if Subscribe with expires 0
+									  do not save in database */
+			{		
+				query_cols[n_query_cols] = "contact";
 				query_vals[n_query_cols].type = DB_STR;
 				query_vals[n_query_cols].nul = 0;
-				query_vals[n_query_cols].val.str_val.s = subs->record_route.s;
-				query_vals[n_query_cols].val.str_val.len = 
-					subs->record_route.len;
+				query_vals[n_query_cols].val.str_val.s = subs->contact.s;
+				query_vals[n_query_cols].val.str_val.len = subs->contact.len;
 				n_query_cols++;
-			}
+	
+				query_cols[n_query_cols] = "status";
+				query_vals[n_query_cols].type = DB_STR;
+				query_vals[n_query_cols].nul = 0;
+				query_vals[n_query_cols].val.str_val.s = subs->status.s;
+				query_vals[n_query_cols].val.str_val.len = subs->status.len;
+				n_query_cols++;
+
+				query_cols[n_query_cols] = "cseq";
+				query_vals[n_query_cols].type = DB_INT;
+				query_vals[n_query_cols].nul = 0;
+				query_vals[n_query_cols].val.int_val = subs->cseq;
+				n_query_cols++;
+
+				DBG("expires: %d\n", subs->expires);
+				query_cols[n_query_cols] = "expires";
+				query_vals[n_query_cols].type = DB_INT;
+				query_vals[n_query_cols].nul = 0;
+				query_vals[n_query_cols].val.int_val = subs->expires +
+					(int)time(NULL);
+				n_query_cols++;
 
 
-			DBG("PRESENCE:update_subscribtion:Inserting into database:"		
+				if(subs->record_route.s!=NULL && subs->record_route.len!=0)
+				{
+					query_cols[n_query_cols] = "record_route";
+					query_vals[n_query_cols].type = DB_STR;
+					query_vals[n_query_cols].nul = 0;
+					query_vals[n_query_cols].val.str_val.s = subs->record_route.s;
+					query_vals[n_query_cols].val.str_val.len = 
+						subs->record_route.len;
+					n_query_cols++;
+				}
+
+
+				DBG("PRESENCE:update_subscribtion:Inserting into database:"		
 					"\nn_query_cols:%d\n",n_query_cols);
 			
-			for(i = 0;i< n_query_cols-2; i++)
-			{
-				if(query_vals[i].type==DB_STR)
-					DBG("[%d] = %s %.*s\n",i, query_cols[i], 
-						query_vals[i].val.str_val.len,query_vals[i].val.str_val.s );
-				if(query_vals[i].type==DB_INT)
-					DBG("[%d] = %s %d\n",i, query_cols[i], 
-						query_vals[i].val.int_val);
-			}
+				for(i = 0;i< n_query_cols-2; i++)
+				{
+					if(query_vals[i].type==DB_STR)
+						DBG("[%d] = %s %.*s\n",i, query_cols[i], 
+							query_vals[i].val.str_val.len,query_vals[i].val.str_val.s );
+					if(query_vals[i].type==DB_INT)
+						DBG("[%d] = %s %d\n",i, query_cols[i], 
+							query_vals[i].val.int_val);
+				}
 	
-			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while storing"
-						" new subscribtion\n");
-				goto error;
-			}
+				if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
+				{
+					LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while storing"
+							" new subscribtion\n");
+					goto error;
+				}
 		
-			
+			}
+
 			if(subs->event.len == strlen("presence"))
 			{	
 				if( send_202ok(msg, subs->expires) <0)
@@ -435,7 +439,6 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 				{
 					LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
 							" notify for presence.winfo\n");
-				//	goto error;
 				}
 
 				if(subs->reason.len!= 100)
@@ -451,17 +454,17 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 			}
 			else /* if a new subscribe for winfo */
 			{
-				if(notify(subs, NULL, NULL )< 0)
-				{
-					LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while"
-							" sending notify\n");
-				//`	goto error;
-				}
 				if( send_200ok(msg, subs->expires) <0)
 				{
 					LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 							" sending 200 OK\n");
 					goto error;
+				}
+				
+				if(notify(subs, NULL, NULL )< 0)
+				{
+					LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while"
+							" sending notify\n");
 				}
 
 			}

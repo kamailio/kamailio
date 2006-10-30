@@ -469,8 +469,9 @@ str* get_p_notify_body(str user, str host, str* etag)
 	
 	if (result && result->n <=0 )
 	{
-		LOG(L_ERR, "PRESENCE: get_p_notify_body: The query returned no"
-				" result\n");
+		DBG("PRESENCE: get_p_notify_body: The query returned no"
+				" result\nThere is no presence information recorded for"
+				"the user\n");
 		pa_dbf.free_result(pa_db, result);
 		return NULL;
 	}
@@ -568,140 +569,6 @@ static inline int pkg_strdup(str* dst, str* src)
 	dst->len = src->len;
 	return 0;
 }
-
-#if 0
-
-int free_tm_dlg(dlg_t *td)
-{
-	if(td == NULL)
-		return -1;
-	if(td->id.call_id.s!=NULL)
-		shm_free(td->id.call_id.s);
-	if(td->id.rem_tag.s!=NULL)
-		shm_free(td->id.rem_tag.s);
-	if(td->id.loc_tag.s!=NULL)
-		shm_free(td->id.loc_tag.s);
-	if(td->loc_uri.s!=NULL)
-		shm_free(td->loc_uri.s);
-	if(td->rem_uri.s!=NULL)
-		shm_free(td->rem_uri.s);
-	if(td->rem_target.s!=NULL)
-		shm_free(td->rem_target.s);
-
-	shm_free(td);
-	
-	return 0;
-}
-
-dlg_t* build_dlg_t (str p_uri, subs_t* subs)
-{
-	dlg_t* td =NULL;
-	str w_uri;
-	int found_contact = 1;
-
-	td = (dlg_t*)shm_malloc(sizeof(dlg_t));
-	if(td == NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_dlg_t: No memory left\n");
-		return NULL;
-	}
-	memset(td, 0, sizeof(dlg_t));
-
-	td->loc_seq.value = subs->cseq ;
-	td->loc_seq.is_set = 1;
-
-	if(shm_strdup(&td->id.call_id, &subs->callid)!=0)
-	{
-		LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating callid\n");
-		goto error;
-	}
-
-	if(shm_strdup(&td->id.rem_tag, &subs->from_tag)!=0)
-	{
-		LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating rem_tag\n");
-		goto error;
-	}
-
-	if(shm_strdup(&td->id.loc_tag, &subs->to_tag)!=0)
-	{
-		LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating loc_tag\n");
-		goto error;
-	}
-
-	if(shm_strdup(&td->loc_uri, &p_uri)!=0)
-	{
-		LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating loc_uri\n");
-		goto error;
-	}
-	if(subs->contact.len ==0 || subs->contact.s == NULL )
-	{
-		found_contact = 0;
-	}
-	else
-	{
-		DBG("CONTACT = %.*s\n", subs->contact.len , subs->contact.s);
-
-		if(shm_strdup(&td->rem_target, &subs->contact)!=0)
-		{
-			LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating rem_target\n");
-			goto error;
-		}
-	}
-
-	if(subs->event.len == PRES_LEN)
-	{
-		uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
-		if(w_uri.s ==NULL)
-		{
-			LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR while creating uri\n");
-			goto error;
-		}
-	
-		if(shm_strdup(&td->rem_uri, &w_uri)!=0)
-		{
-			LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating rem_uri\n");
-			goto error;
-		}
-		if(found_contact == 0)
-		{
-			if(shm_strdup(&td->rem_target, &w_uri)!=0)
-			{
-				LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating rem_uri\n");
-				goto error;
-			}
-		}
-		pkg_free(w_uri.s);		
-		
-	}
-	else
-	{
-		if(shm_strdup(&td->rem_uri, &p_uri)!=0)
-		{
-			LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating rem_uri\n");
-			goto error;
-		}
-		if(found_contact == 0)
-		{
-			if(shm_strdup(&td->rem_target, &p_uri)!=0)
-			{
-				LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR duplicating rem_uri\n");
-				goto error;
-			}
-		}
-
-	}
-	td->state= DLG_CONFIRMED ;
-	
-	return td;
-
-error:
-	if(td!=NULL)
-		free_tm_dlg(td);
-	return NULL;
-}
-
-
-#endif
 
 int free_tm_dlg(dlg_t *td)
 {
@@ -986,7 +853,7 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 		{
 			LOG(L_DBG, "PRESENCE:query_db_notify: Could not get the"
 					" notify_body\n");
-			goto error;
+			/* goto error; */
 		}
 	}	
 
@@ -1476,7 +1343,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 					{
 						LOG(L_DBG, "PRESENCE:notify: Could not get the"
 								" notify_body\n");
-						goto error;
+						/* goto error; */
 					}
 				}	
 			}		
