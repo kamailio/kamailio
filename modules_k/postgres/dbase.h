@@ -41,75 +41,92 @@
 #include "../../db/db_val.h"
 
 
-/*
+/**
  * Initialize database connection
  */
-db_con_t* db_init(const char* _sqlurl);
+db_con_t* pg_init(const char* _url);
 
-/*
+/**
  * Close a database connection
  */
-void db_close(db_con_t* _h);
+void pg_close(db_con_t* _h);
 
-/*
+/**
  * Return result of previous query
  */
-int get_result(db_con_t* _h, db_res_t** _r);
+int pg_get_result(db_con_t* _h, db_res_t** _r);
 
-/*
- * create a new result anchored on parent memory
+/**
+ * create a new result set structure
  */
-db_res_t* new_result_pg(char *parent);
+db_res_t* pg_new_result(void);
 
 
-/*
+/**
  * Free all memory allocated by get_result
  */
-int db_free_query(db_con_t* _h, db_res_t* _r);
+int pg_free_query(db_con_t* _h, db_res_t* _r);
 
 
-/*
+/**
  * Do a query
  */
-int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
+int pg_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
 	     db_key_t _o, db_res_t** _r);
 
-
-/*
+/**
  * Raw SQL query
  */
-int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
+int pg_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
 
 
-/*
+/**
  * Insert a row into table
  */
-int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int pg_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
 
-/*
+/**
  * Delete a row from table
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+int pg_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
 
 
-/*
+/**
  * Update a row in table
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+int pg_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+
+/**
+ * fetch rows from a result
+ */
+int pg_fetch_result(db_con_t* _h, db_res_t** _r, int nrows);
 
 
-/*
+/**
  * Store name of table that will be used by
  * subsequent database functions
  */
-int use_table(db_con_t* _h, const char* _t);
+int pg_use_table(db_con_t* _h, const char* _t);
 
 int val2str(db_val_t* _v, char* _s, int* _len);
 
-int free_result(db_res_t* _r);
+int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l);
 
-int convert_result(db_con_t* _h, db_res_t* _r);
+int pg_convert_result(db_con_t* _h, db_res_t* _r);
+
+int pg_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, char **row_buf);
+
+int pg_get_columns(db_con_t* _h, db_res_t* _r);
+
+int pg_convert_rows(db_con_t* _h, db_res_t* _r, int row_start, int row_count);
+
+int pg_free_rows(db_res_t* _r);
+
+int pg_free_row(db_row_t* _r);
+
+int pg_free_columns(db_res_t* _r);
+
+int pg_free_result(db_res_t* _r);
 
 #endif /* DBASE_H */

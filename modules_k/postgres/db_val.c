@@ -15,7 +15,7 @@
  *
  * openser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License 
@@ -42,13 +42,15 @@
 #include "../../dprint.h"
 #include "defs.h"
 #include "db_utils.h"
-#include "con_postgres.h"
-#include "aug_std.h"
+#include "pg_con.h"
+
+#include "../../mem/mem.h"
+#include "dbase.h"
 
 
 char *strptime(const char *s, const char *format, struct tm *tm);
 
-/*
+/**
  * Convert a string to integer
  */
 static inline int str2int(const char* _s, int* _v)
@@ -57,7 +59,7 @@ static inline int str2int(const char* _s, int* _v)
 
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "str2int(): Invalid parameter value\n");
+		LOG(L_ERR, "PG[str2int]: Invalid parameter value\n");
 		return -1;
 	}
 #endif
@@ -65,7 +67,7 @@ static inline int str2int(const char* _s, int* _v)
 	tmp = strtoul(_s, 0, 10);
 	if ((tmp == ULONG_MAX && errno == ERANGE) || 
 	    (tmp < INT_MIN) || (tmp > UINT_MAX)) {
-		printf("str2int: Value out of range\n");
+		LOG(L_ERR, "PG[str2int]: Value out of range\n");
 		return -1;
 	}
 
@@ -82,7 +84,7 @@ static inline int str2double(const char* _s, double* _v)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "str2double(): Invalid parameter value\n");
+		LOG(L_ERR, "PG[str2double]: Invalid parameter value\n");
 		return -1;
 	}
 #endif
@@ -96,24 +98,24 @@ static inline int str2double(const char* _s, double* _v)
  */
 static inline int str2time(const char* _s, time_t* _v)
 {
-	struct tm t;
+	struct tm time;
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "str2time(): Invalid parameter value\n");
+		LOG(L_ERR, "PG[str2time]: Invalid parameter value\n");
 		return -1;
 	}
 #endif
 
-	memset(&t, '\0', sizeof(struct tm));
-	strptime(_s,"%Y-%m-%d %H:%M:%S %z",&t);
+	memset(&time, '\0', sizeof(struct tm));
+	strptime(_s,"%Y-%m-%d %H:%M:%S",&time);
 
 	     /* Daylight saving information got lost in the database
 	      * so let mktime to guess it. This eliminates the bug when
 	      * contacts reloaded from the database have different time
 	      * of expiration by one hour when daylight saving is used
 	      */ 
-	t.tm_isdst = -1;   
-	*_v = mktime(&t);
+	time.tm_isdst = -1;   
+	*_v = mktime(&time);
 
 	return 0;
 }
@@ -126,7 +128,7 @@ static inline int int2str(int _v, char* _s, int* _l)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
-		LOG(L_ERR, "int2str(): Invalid parameter value\n");
+		LOG(L_ERR, "PG[int2str]: Invalid parameter value\n");
 		return -1;
 	}
 #endif
@@ -142,7 +144,7 @@ static inline int double2str(double _v, char* _s, int* _l)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
-		LOG(L_ERR, "double2str(): Invalid parameter value\n");
+		LOG(L_ERR, "PG[double2str]: Invalid parameter value\n");
 		return -1;
 	}
 #endif
@@ -160,7 +162,7 @@ static inline int time2str(time_t _v, char* _s, int* _l)
 	int bl;
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (*_l < 2))  {
-		LOG(L_ERR, "Invalid parameter value\n");
+		LOG(L_ERR, "PG[time2str]: Invalid parameter value\n");
 		return -1;
 	}
 #endif
@@ -176,79 +178,101 @@ static inline int time2str(time_t _v, char* _s, int* _l)
 /*
  * Does not copy strings
  */
-int str2valp(db_type_t _t, db_val_t* _v, char* _s, int _l, void *_p)
+int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 {
+
+	static str dummy_string = {"", 0};
+
 #ifdef PARANOID
 	if (!_v) {
-		LOG(L_ERR, "str2valp(): Invalid parameter value\n");
-		return -1;
+		LOG(L_ERR, "PG[str2val]: db_val_t parameter cannot be NULL\n");
 	}
 #endif
 
 	if (!_s) {
-		DLOG("str2valp", "got a null value");
+		memset(_v, 0, sizeof(db_val_t));
+		/* Initialize the string pointers to a dummy empty
+		 * string so that we do not crash when the NULL flag
+		 * is set but the module does not check it properly
+		 */
+		VAL_STRING(_v) = dummy_string.s;
+		VAL_STR(_v) = dummy_string;
+		VAL_BLOB(_v) = dummy_string;
 		VAL_TYPE(_v) = _t;
 		VAL_NULL(_v) = 1;
 		return 0;
 	}
+	VAL_NULL(_v) = 0;
 
 	switch(_t) {
 	case DB_INT:
-	case DB_BITMAP:
-		DBG("DEBUG:postgres:str2valp: got int %s \n", _s);
+		LOG(L_DBG, "PG[str2val]: Converting INT [%s]\n", _s);
 		if (str2int(_s, &VAL_INT(_v)) < 0) {
-			LOG(L_ERR, "str2valp(): Error while converting integer value "
-				"from string\n");
+			LOG(L_ERR, "PG[str2val]: Error while converting INT value from string\n");
 			return -2;
 		} else {
 			VAL_TYPE(_v) = DB_INT;
 			return 0;
 		}
+		break;
+
+	case DB_BITMAP:
+		LOG(L_DBG, "PG[str2val]: Converting BITMAP [%s]\n", _s);
+		if (str2int(_s, &VAL_INT(_v)) < 0) {
+			LOG(L_ERR, "PG[str2val]: Error while converting BITMAP value from string\n");
+			return -3;
+		} else {
+			VAL_TYPE(_v) = DB_BITMAP;
+			return 0;
+		}
+		break;
 	
 	case DB_DOUBLE:
-		DBG("DEBUG:postgres:str2valp: got double %s \n", _s);
+		LOG(L_DBG, "PG[str2val]: Converting DOUBLE [%s]\n", _s);
 		if (str2double(_s, &VAL_DOUBLE(_v)) < 0) {
-			LOG(L_ERR, "str2valp(): Error while converting double value "
-				"from string\n");
-			return -3;
+			LOG(L_ERR, "PG[str2val]: Error while converting DOUBLE value from string\n");
+			return -4;
 		} else {
 			VAL_TYPE(_v) = DB_DOUBLE;
 			return 0;
 		}
+		break;
 
 	case DB_STRING:
-		DBG("DEBUG:postgres:str2valp: got string %s \n", _s);
-		VAL_STRING(_v) = aug_strdup(_s, _p);
+		LOG(L_DBG, "PG[str2val]: Converting STRING [%s]\n", _s);	
+		VAL_STRING(_v) = _s;
 		VAL_TYPE(_v) = DB_STRING;
 		return 0;
 
 	case DB_STR:
-		VAL_STR(_v).s = aug_alloc(_l + 1, _p);
-		memcpy( _s, VAL_STR(_v).s, _l);
-		VAL_STR(_v).s[_l] = (char) 0;
+		LOG(L_DBG, "PG[str2val]: Convertingg STR [%s]\n", _s);
+		VAL_STR(_v).s = (char*)_s;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
-		DBG("DEBUG:postgres:str2valp: got len string %d %s\n", _l, _s);
 		return 0;
 
 	case DB_DATETIME:
-		DBG("DEBUG:postgres:str2valp: got time %s \n", _s);
+		LOG(L_DBG, "PG[str2val]: Converting DATETIME [%s]\n", _s);
 		if (str2time(_s, &VAL_TIME(_v)) < 0) {
-			LOG(L_ERR,"str2valp(): Error converting datetime\n");
-			return -4;
+			LOG(L_ERR, "PG[str2val]: Error converting datetime\n");
+			return -5;
 		} else {
 			VAL_TYPE(_v) = DB_DATETIME;
 			return 0;
 		}
+		break;
 
 	case DB_BLOB:
-		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s,
-				(size_t*)&(VAL_BLOB(_v).len) );
+		LOG(L_DBG, "PG[str2val]: Converting BLOB [%s]\n", _s);
+		/* PQunescapeBytea:  Converts a string representation of binary data into binary data — the reverse of PQescapeBytea.
+		 * This is needed when retrieving bytea data in text format, but not when retrieving it in binary format.
+		 */
+		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s, (size_t*)&(VAL_BLOB(_v).len) );
 		VAL_TYPE(_v) = DB_BLOB;
-		DBG("DEBUG:postgres:str2valp: got blob len %d\n", _l);
+		LOG(L_DBG, "PG[str2val]: got blob len %d\n", _l);
 		return 0;
 	}
-	return -5;
+	return -6;
 }
 
 
@@ -263,7 +287,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 #ifdef PARANOID
 	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
-		LOG(L_ERR, "val2str(): Invalid parameter value\n");
+		LOG(L_ERR, "PG[val2str]: Invalid parameter value\n");
 		return -1;
 	}
 #endif
@@ -275,7 +299,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	switch(VAL_TYPE(_v)) {
 	case DB_INT:
 		if (int2str(VAL_INT(_v), _s, _len) < 0) {
-			LOG(L_ERR, "val2str(): Error while converting string to int\n");
+			LOG(L_ERR, "PG[val2str]: Error while converting string to int\n");
 			return -2;
 		} else {
 			return 0;
@@ -284,7 +308,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_BITMAP:
 		if (int2str(VAL_BITMAP(_v), _s, _len) < 0) {
-			LOG(L_ERR, "val2str: Error while converting string to int\n");
+			LOG(L_ERR, "PG[val2str]: Error while converting string to int\n");
 			return -3;
 		} else {
 			return 0;
@@ -293,7 +317,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_DOUBLE:
 		if (double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
-			LOG(L_ERR, "val2str(): Error while converting string to double\n");
+			LOG(L_ERR, "PG[val2str]: Error while converting string to double\n");
 			return -3;
 		} else {
 			return 0;
@@ -303,7 +327,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l + 3)) {
-			LOG(L_ERR, "val2str(): Destination buffer too short for string\n");
+			LOG(L_ERR, "PG[val2str]: Destination buffer too short for string\n");
 			return -4;
 		} else {
 			*_s++ = '\'';
@@ -318,7 +342,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	case DB_STR:
 		l = VAL_STR(_v).len;
 		if (*_len < (l + 3)) {
-			LOG(L_ERR, "val2str(): Destination buffer too short for str\n");
+			LOG(L_ERR, "PG[val2str]: Destination buffer too short for str\n");
 			return -5;
 		} else {
 			*_s++ = '\'';
@@ -332,7 +356,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_DATETIME:
 		if (time2str(VAL_TIME(_v), _s, _len) < 0) {
-			LOG(L_ERR, "val2str(): Error while converting string to time_t\n");
+			LOG(L_ERR, "PG[val2str]: Error while converting string to time_t\n");
 			return -6;
 		} else {
 			return 0;
@@ -342,12 +366,11 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	case DB_BLOB:
 		l = VAL_BLOB(_v).len;
 		if (*_len < (l * 2 + 3)) {
-			LOG(L_ERR, "val2str(): Destination buffer too short for blob\n");
+			LOG(L_ERR, "PG[val2str]: Destination buffer too short for blob\n");
 			return -7;
 		} else {
 			*_s++ = '\'';
-			tmp_s = (char*)PQescapeBytea((unsigned char*)VAL_STRING(_v),
-					(size_t)l, (size_t*)&tmp_len);
+			tmp_s = (char*)PQescapeBytea((unsigned char*)VAL_STRING(_v), (size_t)l, (size_t*)&tmp_len);
 			memcpy(_s, tmp_s, tmp_len);
 			PQfreemem(tmp_s);
 			tmp_len = strlen(_s);
@@ -359,7 +382,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 		break;
 
 	default:
-		DBG("val2str(): Unknown data type\n");
+		LOG(L_DBG, "PG[val2str]: Unknown data type\n");
 		return -7;
 	}
 	return -8;
