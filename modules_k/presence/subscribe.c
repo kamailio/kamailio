@@ -825,7 +825,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs.to_tag.s = to_tag.s;
 	subs.to_tag.len = to_tag.len;
 
-printf("\n\n subs->to_tag = %.*s\n\n", subs.to_tag.len, subs.to_tag.s )	;
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
 		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse callid"
@@ -992,9 +991,7 @@ printf("\n\n subs->to_tag = %.*s\n\n", subs.to_tag.len, subs.to_tag.s )	;
 			subs.reason.len = strlen(subs.reason.s);
 		}	
 	}
-	printf("PRESENCE:  in handle_subscribe:\n");
 	printf_subs(&subs);	
-printf("\n");
 	if( update_subscribtion(msg, &subs, to_tag_gen) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
