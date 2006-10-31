@@ -234,6 +234,22 @@ if(is_method("MESSAGE)
 </programlisting>
 		</example>
 	</section>
+	<section>
+	<title>Installation</title>
+		<para>
+		Before running IMC you have to create two new tables in database.
+		Use the next SQL statements for that.
+		</para>
+		<example>
+		<title>IMC tables</title>
+		<programlisting format="linespecific">
+...
+&sql;
+...
+</programlisting>
+		</example>
+	</section>
+
 </chapter>
 
 <!-- Keep this element at the end of the file

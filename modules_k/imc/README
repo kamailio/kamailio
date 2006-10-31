@@ -34,6 +34,7 @@ Anca-Maria Vamanu
               1.4.1. imc_manager()
 
         1.5. IMC Commands
+        1.6. Installation
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -44,6 +45,7 @@ Anca-Maria Vamanu
    1-3. Set imc_cmd_start_char parameter
    1-4. Usage of imc_manager() function
    1-5. List of commands
+   1-6. IMC tables
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -212,6 +214,33 @@ if(is_method("MESSAGE)
   -removing a room
   -the parameter is the same as for exit
   -only the owner of a room has the right to destroy it
+...
+     _________________________________________________________
+
+1.6. Installation
+
+   Before running IMC you have to create two new tables in
+   database. Use the next SQL statements for that.
+
+   Example 1-6. IMC tables
+...
+use openser;
+
+CREATE TABLE `imc_members` (
+  `user` varchar(128) NOT NULL,
+  `domain` varchar(128) NOT NULL,
+  `room` varchar(64) NOT NULL,
+  `flag` int(11) NOT NULL,
+  PRIMARY KEY  (`user`,`domain`,`room`)
+) ENGINE=MyISAM;
+
+CREATE TABLE `imc_rooms` (
+  `name` varchar(128) NOT NULL,
+  `domain` varchar(128) NOT NULL,
+  `flag` int(11) NOT NULL,
+  PRIMARY KEY  (`name`,`domain`)
+) ENGINE=MyISAM;
+
 ...
      _________________________________________________________
 
