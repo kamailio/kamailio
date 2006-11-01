@@ -37,7 +37,7 @@ JABBER_MODULES = jabber
 # cpl related modules
 CPL_MODULES = cpl-c
 # module depending on radiusclient
-RADIUS_MODULES = auth_radius group_radius uri_radius
+RADIUS_MODULES = avp_radius auth_radius group_radius uri_radius
 
 ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES)
 
