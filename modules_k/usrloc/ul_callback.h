@@ -78,9 +78,11 @@ static inline void run_ul_callbacks( int type , ucontact_t *c)
 	struct ul_callback    *cbp;
 
 	for (cbp=ulcb_list->first; cbp; cbp=cbp->next)  {
-		DBG("DBG:usrloc: contact=%p, callback type %d, id %d entered\n",
-			c, cbp->types, cbp->id );
-		cbp->callback( c, type, cbp->param );
+		if(cbp->types&type) {
+			DBG("DBG:usrloc: contact=%p, callback type %d/%d, id %d entered\n",
+				c, type, cbp->types, cbp->id );
+			cbp->callback( c, type, cbp->param );
+		}
 	}
 }
 
