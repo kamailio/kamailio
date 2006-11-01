@@ -282,14 +282,10 @@ static int mi_destroy(void)
 	/* freeing the shm shared memory */
 	shm_free(mi_fifo_pid);
 
-	/* destroying the mi parser data structures */
-	mi_parser_destroy();
-
 	return 0;
 error:
 	/* freeing the shm shared memory */
 	shm_free(mi_fifo_pid);
-
 	return -1;
 }
 

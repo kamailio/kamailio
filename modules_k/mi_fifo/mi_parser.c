@@ -57,12 +57,6 @@ int mi_parser_init( unsigned int size )
 }
 
 
-void mi_parser_destroy(void)
-{
-	pkg_free(mi_parse_buffer);
-}
-
-
 
 /* returns -1 = error
  *          0 = ok

@@ -32,7 +32,6 @@
 #include <stdio.h>
 
 int  mi_parser_init( unsigned int size );
-void mi_parser_destroy(void);
 
 struct mi_node *mi_parse_tree(FILE *stream);
 
