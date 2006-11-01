@@ -191,7 +191,7 @@ int xcap_query_impl(const char *uri, xcap_query_params_t *params, char **buf, in
 			else dstr_get_data(&data, *buf);
 		}
 	}
-	else TRACE_LOG("curl error: %d\n", res); /* see curl/curl.h for possible values*/
+	else DBG("curl error: %d\n", res); /* see curl/curl.h for possible values*/
 	dstr_destroy(&data);
 	if (auth) cds_free_pkg(auth);
 	return res;
