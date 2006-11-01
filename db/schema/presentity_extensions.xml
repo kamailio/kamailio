@@ -12,49 +12,49 @@
     xmlns:my="http://iptel.org/dbschema/mysql"
     xmlns:pg="http://iptel.org/dbschema/postgres"
     xmlns:dt="http://iptel.org/dbschema/dbtext">
-    <name>presentity_persons</name>
-    <version>1</version>
+
+	<name>presentity_extensions</name>
     
-    <column id="prespersons.dbid">
+	<!-- related to the version of presence snapshot -->
+	<version>5</version>
+    
+	<column id="presextensions.dbid">
 		<name>dbid</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-	
+	</column>
+
 	<!-- foreign key (presentity) -->
-    <column>
-		<name>presid</name>
-		<type>unsigned int</type>
-		<size>10</size>
-    </column>
-    
+	<column>
+		<name>pres_id</name>
+		<type>string</type>
+		<size>64</size>
+	</column>
+
+	<!-- received in PUBLISH with this entity tag -->
 	<column>
 		<name>etag</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-    
-	<column>
-		<name>person_element</name>
-		<type>binary</type>
-    </column>
-	
-	<column>
-		<name>id</name>
-		<type>string</type>
-		<size>128</size>
-    </column>
+	</column>
 
-    <column>
+	<!-- serialized XML element -->
+	<column>
+		<name>element</name>
+		<type>binary</type>
+	</column>
+
+	<!-- expiration time -->
+	<column>
 		<name>expires</name>
 		<type>datetime</type>
 		<default>2005-12-07 08:13:15</default>
-    </column>
+	</column>
 
-    <index>
-		<name>prespersons_idx1</name>
-		<colref linkend="prespersons.dbid"/>
+	<index>
+		<name>presextensions_idx1</name>
+		<colref linkend="presextensions.dbid"/>
 		<unique/>
-    </index>
+	</index>
     
 </table>

@@ -12,53 +12,56 @@
     xmlns:my="http://iptel.org/dbschema/mysql"
     xmlns:pg="http://iptel.org/dbschema/postgres"
     xmlns:dt="http://iptel.org/dbschema/dbtext">
-    <name>offline_winfo</name>
-    <version>1</version>
-    
+	
+	<name>offline_winfo</name>
+	
+	<!-- related to the version of presence snapshot -->
+	<version>5</version>
+
 	<column id="offline_winfo.uid">
 		<name>uid</name>
 		<type>string</type>
 		<size>&id_len;</size>
-    </column>
-    
+	</column>
+
 	<column>
 		<name>watcher</name>
 		<type>string</type>
 		<size>&uri_len;</size>
-    </column>
-    
+	</column>
+
 	<column>
 		<name>events</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-	
+	</column>
+
 	<column>
 		<name>domain</name>
 		<type>string</type>
 		<size>&domain_len;</size>
 		<null/>
-    </column>
-	
+	</column>
+
 	<column>
 		<name>status</name>
 		<type>string</type>
 		<size>32</size>
 		<null/>
-    </column>
-	
-    <column>
+	</column>
+
+	<column>
 		<name>created_on</name>
 		<type>datetime</type>
 		<default>2006-01-31 13:13:13</default>
-    </column>
-    
+	</column>
+
 	<column>
 		<name>expires_on</name>
 		<type>datetime</type>
 		<default>2006-01-31 13:13:13</default>
-    </column>
-    
+	</column>
+
 	<column id="offline_winfo.dbid">
 		<name>dbid</name>
 		<type>unsigned int</type>
@@ -66,11 +69,11 @@
 		<my:type>INT(10) UNSIGNED AUTO_INCREMENT</my:type>
 		<pg:type>SERIAL</pg:type>
 		<dt:type>int,auto</dt:type>
-    </column>
-    
+	</column>
+
 	<index>
 		<name>offline_winfo_key</name>
 		<colref linkend="offline_winfo.dbid"/>
-    </index>
+	</index>
 
 </table>

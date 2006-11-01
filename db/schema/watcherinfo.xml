@@ -9,97 +9,99 @@
 
 <table role="presence">
     <name>watcherinfo</name>
-    <version>1</version>
-    
-    <column id="watcherinfo.r_uri">
-	<name>r_uri</name>
-	<type>string</type>
-	<size>&uri_len;</size>
-    </column>
-	
-    <column id="watcherinfo.w_uri">
-	<name>w_uri</name>
-	<type>string</type>
-	<size>&uri_len;</size>
-    </column>
 
+	<!-- related to the version of presence snapshot -->
+	<version>5</version>
+
+	<!-- watcher's URI -->
+	<column id="watcherinfo.w_uri">
+		<name>w_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+	</column>
+
+	<!-- displayname information taken from From header -->
+	<column>
+		<name>display_name</name>
+		<type>string</type>
+		<size>128</size>
+	</column>
+
+	<!-- watcher's identification -->
+	<column id="watcherinfo.s_id">
+		<name>s_id</name>
+		<type>string</type>
+		<size>64</size>
+	</column>
+
+	<!-- event package: presence or presence.winfo -->
+	<column>
+		<name>package</name>
+		<type>string</type>
+		<size>32</size>
+		<default>presence</default>
+	</column>
+
+	<column>
+		<name>status</name>
+		<type>string</type>
+		<size>32</size>
+		<default>pending</default>
+	</column>
+
+	<column>
+		<name>event</name>
+		<type>string</type>
+		<size>32</size>
+	</column>
+
+	<column>
+		<name>expires</name>
+		<type>datetime</type>
+		<default>2005-12-07 08:13:15</default>
+	</column>
+
+	<column>
+		<name>accepts</name>
+		<type>int</type>
+	</column>
+
+	<!-- foreign key (presentity) -->
     <column>
-	<name>display_name</name>
-	<type>string</type>
-	<size>128</size>
+		<name>pres_id</name>
+		<type>string</type>
+		<size>64</size>
     </column>
 
-    <column id="watcherinfo.s_id">
-	<name>s_id</name>
-	<type>string</type>
-	<size>64</size>
-    </column>
+	<column>
+		<name>server_contact</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+	</column>
 
-    <column>
-	<name>package</name>
-	<type>string</type>
-	<size>32</size>
-	<default>presence</default>
-    </column>
+	<column>
+		<name>dialog</name>
+		<type>binary</type>
+	</column>
 
-    <column>
-	<name>status</name>
-	<type>string</type>
-	<size>32</size>
-	<default>pending</default>
-    </column>
+	<column>
+		<name>doc_index</name>
+		<type>int</type>
+	</column>
 
-    <column>
-	<name>event</name>
-	<type>string</type>
-	<size>32</size>
-    </column>
+	<index>
+		<name>wi_idx1</name>
+		<colref linkend="watcherinfo.s_id"/>
+		<unique/>
+	</index>
 
-    <column>
-	<name>expires</name>
-	<type>int</type>
-    </column>
-
-    <column>
-	<name>accepts</name>
-	<type>int</type>
-    </column>
-
-    <column>
-	<name>presid</name>
-	<type>unsigned int</type>
-	<size>10</size>
-    </column>
-
-    <column>
-	<name>server_contact</name>
-	<type>string</type>
-	<size>&uri_len;</size>
-    </column>
-
-    <column>
-	<name>dialog</name>
-	<type>binary</type>
-    </column>
-
-    <column>
-	<name>doc_index</name>
-	<type>int</type>
-    </column>
-
-    <index>
-	<name>wi_idx1</name>
-	<colref linkend="watcherinfo.s_id"/>
-	<unique/>
-    </index>
-
-    <index>
-	<name>wi_ruri_idx</name>
-	<colref linkend="watcherinfo.r_uri"/>
-    </index>
-
-    <index>
-	<name>wi_wuri_idx</name>
-	<colref linkend="watcherinfo.w_uri"/>
-    </index>
+	<!-- this index may help when reading from the database, 
+	but it is done only on startup thus this index is probably 
+	not needed -->
+	<!--
+	<index>
+		<name>wi_pres_idx</name>
+		<colref linkend="watcherinfo.pres_id"/>
+	</index>
+	-->
 </table>

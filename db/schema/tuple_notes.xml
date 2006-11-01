@@ -12,33 +12,35 @@
     xmlns:my="http://iptel.org/dbschema/mysql"
     xmlns:pg="http://iptel.org/dbschema/postgres"
     xmlns:dt="http://iptel.org/dbschema/dbtext">
-    <name>tuple_notes</name>
-    <version>1</version>
-    
-	<!-- foreign key (presid, tupleid -> presentity_contant) -->
-	
-    <column>
-		<name>presid</name>
-		<type>unsigned int</type>
-		<size>10</size>
-    </column>
-    
-	<column>
+
+	<name>tuple_notes</name>
+
+	<!-- related to the version of presence snapshot -->
+	<version>5</version>
+
+	<!-- presentity ID -->
+	<column id="tuple_notes.pres_id">
+		<name>pres_id</name>
+		<type>string</type>
+		<size>64</size>
+	</column>
+
+	<column id="tuple_notes.tupleid">
 		<name>tupleid</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-    
+	</column>
+
 	<column>
 		<name>note</name>
 		<type>string</type>
 		<size>128</size>
-    </column>
-	
+	</column>
+
 	<column>
 		<name>lang</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
+	</column>
     
 </table>

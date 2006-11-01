@@ -12,111 +12,72 @@
     xmlns:my="http://iptel.org/dbschema/mysql"
     xmlns:pg="http://iptel.org/dbschema/postgres"
     xmlns:dt="http://iptel.org/dbschema/dbtext">
-    <name>presentity_contact</name>
-    <version>1</version>
-    
-    <column id="prescontact.contactid">
-	<name>contactid</name>
-	<type>unsigned int</type>
-	<size>10</size>
-	<my:type>INT(10) UNSIGNED AUTO_INCREMENT</my:type>
-	<pg:type>SERIAL</pg:type>
-	<dt:type>int,auto</dt:type>
-    </column>
+
+	<name>presentity_contact</name>
 	
-    <column id="prescontact.presid">
-	<name>presid</name>
-	<type>unsigned int</type>
-	<size>10</size>
-    </column>
+	<!-- related to the version of presence snapshot -->
+	<version>5</version>
+    
+	<!-- presentity ID -->
+	<column id="prescontact.pres_id">
+		<name>pres_id</name>
+		<type>string</type>
+		<size>64</size>
+	</column>
 
-    <column>
-	<name>basic</name>
-	<type>string</type>
-	<size>32</size>
-	<default>offline</default>
-    </column>
+	<!-- basic status -->
+	<column>
+		<name>basic</name>
+		<type>int</type>
+		<size>3</size>
+	</column>
 
-    <column>
-	<name>status</name>
-	<type>string</type>
-	<size>32</size>
-    </column>
+	<column>
+		<name>expires</name>
+		<type>datetime</type>
+		<default>2004-05-28 21:32:15</default>
+	</column>
 
-    <column id="prescontact.location">
-	<name>location</name>
-	<type>string</type>
-	<size>128</size>
-    </column>
+	<column>
+		<name>priority</name>
+		<type>float</type>
+		<default>0.5</default>
+	</column>
 
-    <column>
-	<name>expires</name>
-	<type>datetime</type>
-	<default>2004-05-28 21:32:15</default>
-    </column>
+	<column>
+		<name>contact</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<null/>
+	</column>
 
-    <column id="prescontact.placeid">
-	<name>placeid</name>
-	<type>int</type>
-	<size>10</size>
-	<null/>
-    </column>
+	<!-- tuple ID -->
+	<column id="prescontact.tupleid">
+		<name>tupleid</name>
+		<type>string</type>
+		<size>64</size>
+	</column>
 
-    <column>
-	<name>priority</name>
-	<type>float</type>
-	<default>0.5</default>
-    </column>
-
-    <column>
-	<name>contact</name>
-	<type>string</type>
-	<size>&uri_len;</size>
-	<null/>
-    </column>
-
-    <column>
-	<name>tupleid</name>
-	<type>string</type>
-	<size>64</size>
-    </column>
-
-    <column>
-	<name>prescaps</name>
-	<type>int</type>
-	<size>10</size>
-    </column>
-
-    <column>
+	<!-- published with this entity tag (only published tuples are stored
+	into database) -->
+	<column>
 		<name>etag</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-    
+	</column>
+
+	<!-- tuple must published with ID (see PIDF spec.) -->
 	<column>
 		<name>published_id</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-	
-    <index>
-	<name>pc_idx1</name>
-	<colref linkend="prescontact.contactid"/>
-	<unique/>
-    </index>
+	</column>
 
-    <index>
-	<name>presid_index</name>
-	<colref linkend="prescontact.presid"/>
-    </index>
+	<index>
+		<name>presid_index</name>
+		<colref linkend="prescontact.pres_id"/>
+		<colref linkend="prescontact.tupleid"/>
+		<unique/>
+	</index>
 
-    <index>
-	<name>location_index</name>
-	<colref linkend="prescontact.location"/>
-    </index>
-
-    <index>
-	<name>placeid_index</name>
-	<colref linkend="prescontact.placeid"/>
-    </index>
 </table>

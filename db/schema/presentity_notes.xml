@@ -12,50 +12,53 @@
     xmlns:my="http://iptel.org/dbschema/mysql"
     xmlns:pg="http://iptel.org/dbschema/postgres"
     xmlns:dt="http://iptel.org/dbschema/dbtext">
-    <name>presentity_notes</name>
-    <version>1</version>
+
+	<name>presentity_notes</name>
     
-    <column id="presnotes.dbid">
+	<!-- related to the version of presence snapshot -->
+	<version>5</version>
+    
+	<column id="presnotes.dbid">
 		<name>dbid</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-	
+	</column>
+
 	<!-- foreign key (presentity) -->
-    <column>
-		<name>presid</name>
-		<type>unsigned int</type>
-		<size>10</size>
-    </column>
-    
+	<column>
+		<name>pres_id</name>
+		<type>string</type>
+		<size>64</size>
+	</column>
+
 	<column>
 		<name>etag</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
-    
+	</column>
+
 	<column>
 		<name>note</name>
 		<type>string</type>
 		<size>128</size>
-    </column>
-	
+	</column>
+
 	<column>
 		<name>lang</name>
 		<type>string</type>
 		<size>64</size>
-    </column>
+	</column>
 
-    <column>
+	<column>
 		<name>expires</name>
 		<type>datetime</type>
 		<default>2005-12-07 08:13:15</default>
-    </column>
+	</column>
 
-    <index>
+	<index>
 		<name>pnotes_idx1</name>
 		<colref linkend="presnotes.dbid"/>
 		<unique/>
-    </index>
-    
+	</index>
+
 </table>

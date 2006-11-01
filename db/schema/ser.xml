@@ -41,6 +41,7 @@
 
     <!-- User location database -->
     <xi:include href="location.xml"/>
+    <xi:include href="contact_attrs.xml"/>
 
     <!-- Permissions module -->
     <xi:include href="trusted.xml"/>
@@ -69,10 +70,11 @@
     <!-- Presence related tables -->
     <xi:include href="presentity.xml"/>
     <xi:include href="presentity_notes.xml"/>
-    <xi:include href="presentity_persons.xml"/>
+    <xi:include href="presentity_extensions.xml"/>
     <xi:include href="presentity_contact.xml"/>
     <xi:include href="watcherinfo.xml"/>
     <xi:include href="tuple_notes.xml"/>
+    <xi:include href="tuple_extensions.xml"/>
     <xi:include href="offline_winfo.xml"/>
     
 	<!-- Resource-lists related tables -->
