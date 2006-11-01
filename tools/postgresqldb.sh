@@ -364,8 +364,8 @@ CREATE TABLE acc (
   method varchar(16) NOT NULL default '',
   from_tag varchar(64) NOT NULL default '',
   to_tag varchar(64) NOT NULL default '',
-  callid varchar(64) NOT NULL default '',
-  sip_code varchar(3) NOT NULL default '',
+  callid varchar(128) NOT NULL default '',
+  sip_code char(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
   time $DATETIME
 ) $TABLE_TYPE;
@@ -381,8 +381,8 @@ CREATE TABLE missed_calls (
   method varchar(16) NOT NULL default '',
   from_tag varchar(64) NOT NULL default '',
   to_tag varchar(64) NOT NULL default '',
-  callid varchar(64) NOT NULL default '',
-  sip_code varchar(3) NOT NULL default '',
+  callid varchar(128) NOT NULL default '',
+  sip_code char(3) NOT NULL default '',
   sip_reason varchar(32) NOT NULL default '',
   time $DATETIME
 ) $TABLE_TYPE;
