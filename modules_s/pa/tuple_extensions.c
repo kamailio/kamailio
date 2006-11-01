@@ -22,16 +22,16 @@ static int db_add_tuple_extension(presentity_t *p, presence_tuple_t *t, extensio
 	vals[n_updates].val.str_val = p->pres_id;
 	n_updates++;
 	
-	cols[n_updates] = "tuple_id";
+	cols[n_updates] = "tupleid";
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = t->data.id;
 	n_updates++;
 
 	cols[n_updates] = "element";
-	vals[n_updates].type = DB_STR;
+	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
-	vals[n_updates].val.str_val = n->element;
+	vals[n_updates].val.blob_val = n->element;
 	n_updates++;
 	
 	cols[n_updates] = "status_extension";

@@ -85,7 +85,7 @@
 		<listitem><para>PIDF - see <xref linkend="pres_rfc_pidf"/></para></listitem>
 		<listitem><para>CPIM-PIDF (last version which differs from PIDF only in
 		namespaces and MIME type name)</para></listitem>
-		<listitem><para>RPID - only &lt;person&gt; elements - see <xref linkend="pres_rpid"/></para></listitem>
+		<listitem><para>PIDF extensions (like RPID <xref linkend="pres_rpid"/>)</para></listitem>
 	</itemizedlist>
 	</para>
 	
@@ -96,7 +96,7 @@
 		namespaces and MIME type name)</para></listitem>
 		<listitem><para>LPIDF</para></listitem>
 		<listitem><para>XPIDF (MS variant used by Windows Messenger 4.7)</para></listitem>
-		<listitem><para>RPID - only &lt;person&gt; elements - see <xref linkend="pres_rpid"/></para></listitem>
+		<listitem><para>PIDF extensions (like RPID <xref linkend="pres_rpid"/>)</para></listitem>
 	</itemizedlist>
 	</para>
 	</section>
@@ -128,8 +128,10 @@
 <para>Short notes to be remembered...
 </para>
 
-<para>Re-authorization is done for every re-subscription (renewal SUBSCRIBE
-request). This is due to absence of notification mechanism for XCAP server data
+<para>Authorization and re-authorization is done by timer - authorization document
+queries for each presentity are sent time after time and all presentity's
+watchers are reauthorized.
+This is due to absence of notification mechanism for XCAP server data
 changes (might be implemented in the future).
 </para>
 
@@ -166,9 +168,9 @@ only.
 	tuples published with the same entity tag (see Sip-If-Match and SIP-ETag
 	header fields).</para>
 	<para>Not only tuples can be published. You can publish whatever PIDF
-	documents including &lt;note&gt; elements etc. But only PIDF (and
-	&lt;person&gt; elements from RPID) data are hold internaly and present
-	in sent NOTIFYs.
+	documents including &lt;note&gt; elements etc. But only basic PIDF is
+	understood; extension elements like RPID elements are remembered and
+	present in sent NOTIFYs but PA doesn't try to understand them.
 	</para>
 	<para>You can control this source by PUBLISH request handling in config
 	script.

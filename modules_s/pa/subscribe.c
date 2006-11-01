@@ -531,7 +531,7 @@ int handle_new_subscription(struct sip_msg* _m, struct pdomain *d)
 	
 	if (prepare_notify(&req, p, w) < 0) {
 		ERR("can't send notify\n");
-		goto err3;
+		goto err4;
 	}
 
 	set_last_subscription_status(w->status);
@@ -551,6 +551,9 @@ int handle_new_subscription(struct sip_msg* _m, struct pdomain *d)
 	}
 
 	return 1;
+	
+err4:
+	remove_watcher(p, w);
 
 err3:
 	unlock_pdomain(d);

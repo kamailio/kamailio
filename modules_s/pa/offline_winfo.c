@@ -410,7 +410,7 @@ static void get_status_str(str *dst)
 	str s;
 	
 	switch(get_last_subscription_status()) {
-		case WS_ACTIVE: ;
+		case WS_ACTIVE:
 			s = watcher_status_names[WS_ACTIVE];
 			break;
 		case WS_REJECTED:

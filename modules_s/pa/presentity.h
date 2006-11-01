@@ -128,8 +128,7 @@ typedef struct presentity {
 	xcap_query_params_t xcap_params; /* doesn't change for the presentity's life (FIXME: rewrite) */
 	time_t auth_rules_refresh_time;
 	
-	msg_queue_t mq;	/* message queue supplying direct usrloc callback processing */
-	
+	msg_queue_t mq;	/* message queue supplying direct usrloc callback processing */	
 
 	/* data for internal subscriptions to presence 
 	 * (reduces memory allocation count) */
@@ -178,13 +177,6 @@ int set_auth_rules(presentity_t *p, presence_rules_t *new_auth_rules);
 int timer_presentity(presentity_t* _p);
 
 /********** UTILITY functions **********/
-
-/** Fills destination parameter by newly generated subid (part of ID, second
- * part MUST be pres_id of presentity). It is quicker than generate_dbid and
- * contains less bytes of data.
- * Can be called from section locked by pdomain mutex only!
- * TODO */
-void generate_pres_subid_unsafe(dbid_t dst, presentity_t *_p);
 
 /* Gets UID from message (using get_to_uid) 
  * (it never allocates memory !!!) */

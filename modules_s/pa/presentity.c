@@ -135,6 +135,7 @@ static inline int new_presentity_no_wb(struct pdomain *pdomain, str* _uri,
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "No memory left: size=%d\n", size);
+		*_p = NULL;
 		return -1;
 	}
 
@@ -186,9 +187,11 @@ static inline int new_presentity_no_wb(struct pdomain *pdomain, str* _uri,
 
 static inline int db_add_presentity(presentity_t* presentity)
 {
-	db_key_t query_cols[5];
-	db_val_t query_vals[5];
+	db_key_t query_cols[6];
+	db_val_t query_vals[6];
 	int n_query_cols = 0;
+	int res;
+	str str_xcap_params;
 	
 	query_cols[0] = "uri";
 	query_vals[0].type = DB_STR;
@@ -214,24 +217,39 @@ static inline int db_add_presentity(presentity_t* presentity)
 	query_vals[n_query_cols].val.str_val = presentity->pres_id;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "id_cntr";
+	/*query_cols[n_query_cols] = "id_cntr";
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val = presentity->id_cntr;
-	n_query_cols++;
+	n_query_cols++;*/
 
+	/* store XCAP parameters with presentity */
+	if (xcap_params2str(&str_xcap_params, &presentity->xcap_params) != 0) {
+		LOG(L_ERR, "Error while serializing xcap params\n");
+		return -1;
+	}
+	query_cols[n_query_cols] = "xcap_params";
+	query_vals[n_query_cols].type = DB_BLOB;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.blob_val = str_xcap_params;
+	n_query_cols++;
+	
+	res = 0;
+	
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) {
 		ERR("Error in use_table\n");
-		return -1;
+		res = -1;
 	}
 
 	/* insert new record into database */
-	if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
-			< 0) {
-		ERR("Error while inserting presentity into DB\n");
-		return -1;
+	if (res == 0) {
+		if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
+			ERR("Error while inserting presentity into DB\n");
+			res = -1;
+		}
 	}
-	return 0;
+	str_free_content(&str_xcap_params);
+	return res;
 }
 
 /*
@@ -250,6 +268,7 @@ int new_presentity(struct pdomain *pdomain, str* _uri, str *uid,
 		if (db_add_presentity(*_p) != 0) { 
 			paerrno = PA_INTERNAL_ERROR;
 			free_presentity(*_p);
+			*_p = NULL;
 			return -1;
 		}
 	}
@@ -379,6 +398,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	int uri_col;
 	int presid_col;
 	int uid_col;
+	int xcap_col;
 	int i;
 	presentity_t *presentity = NULL;
 	db_con_t* db = create_pa_db_connection(); /* must create its own connection (called before child init)! */
@@ -400,6 +420,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	result_cols[uri_col = n_result_cols++] = "uri";
 	result_cols[presid_col = n_result_cols++] = "pres_id";
 	result_cols[uid_col = n_result_cols++] = "uid";
+	result_cols[xcap_col = n_result_cols++] = "xcap_params";
 
 	if (pa_dbf.use_table(db, presentity_table) < 0) {
 		LOG(L_ERR, "pdomain_load_presentities: Error in use_table\n");
@@ -421,6 +442,8 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 			str uri = STR_NULL;
 			str pres_id = STR_NULL;
 			str uid = STR_NULL;
+			str serialized_xcap_params = STR_NULL;
+			xcap_query_params_t xcap_params;
 			
 			if (!row_vals[uri_col].nul) {
 				uri.s = (char *)row_vals[uri_col].val.string_val;
@@ -434,13 +457,18 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 				pres_id.s = (char *)row_vals[presid_col].val.string_val;
 				pres_id.len = strlen(pres_id.s);
 			}
+			if (!row_vals[xcap_col].nul) {
+				serialized_xcap_params.s = (char *)row_vals[xcap_col].val.string_val;
+				serialized_xcap_params.len = strlen(serialized_xcap_params.s);
+			}
 
 			DBG("pdomain_load_presentities: pdomain=%.*s presentity uri=%.*s presid=%.*s\n",
 					pdomain->name->len, pdomain->name->s, uri.len, uri.s, 
 					pres_id.len, pres_id.s);
 
-			/* TODO: loading and storing XCAP parameters */
-			new_presentity_no_wb(pdomain, &uri, &uid, NULL, &pres_id, &presentity);
+			str2xcap_params(&xcap_params, &serialized_xcap_params);
+			new_presentity_no_wb(pdomain, &uri, &uid, &xcap_params, &pres_id, &presentity);
+			free_xcap_params_content(&xcap_params);
 		}
 		pa_dbf.free_result(db, res);
 	}

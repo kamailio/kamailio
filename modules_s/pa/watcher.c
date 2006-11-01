@@ -221,12 +221,6 @@ static int set_watcher_db_data(presentity_t *_p, watcher_t *watcher,
 		return -1;
 	}
 	
-	cols[n_cols] = "r_uri";
-	vals[n_cols].type = DB_STR;
-	vals[n_cols].nul = 0;
-	vals[n_cols].val.str_val = _p->data.uri;
-	n_cols++;
-
 	cols[n_cols] = "w_uri";
 	vals[n_cols].type = DB_STR;
 	vals[n_cols].nul = 0;
@@ -272,9 +266,9 @@ static int set_watcher_db_data(presentity_t *_p, watcher_t *watcher,
 	n_cols++;
 
 	cols[n_cols] = "expires";
-	vals[n_cols].type = DB_INT;
+	vals[n_cols].type = DB_DATETIME;
 	vals[n_cols].nul = 0;
-	vals[n_cols].val.int_val = watcher->expires;
+	vals[n_cols].val.time_val = watcher->expires;
 	n_cols++;
 
 	cols[n_cols] = "dialog";
@@ -467,7 +461,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 			str watcher_event_str = STR_NULL;
 			watcher_event_t watcher_event = WE_SUBSCRIBE;
 			int accepts = row_vals[accepts_col].val.int_val;
-			int expires = row_vals[expires_col].val.int_val;
+			time_t expires = row_vals[expires_col].val.time_val;
 			int doc_index = row_vals[doc_index_col].val.int_val;
 			str status = STR_NULL;
 			str display_name = STR_NULL;
@@ -620,67 +614,6 @@ void set_watcher_terminated_status(watcher_t *w)
 			break;
 	}
 }
-
-#if 0
-/* Remove a watcher from the list */
-static inline int _remove_watcher(presentity_t* _p, watcher_t* _w)
-{
-	watcher_t* watcher, *prev;
-
-	watcher = _p->watchers;
-	prev = 0;
-			
-	LOG(L_DBG, "removing watcher %p (pres %p)\n", _w, _p);
-	
-	while(watcher) {
-		if (watcher == _w) {
-			if (prev) {
-				prev->next = watcher->next;
-			} else {
-				_p->watchers = watcher->next;
-			}
-			LOG(L_DBG, "removed watcher %p (pres %p)\n", _w, _p);
-			return 0;
-		}
-
-		prev = watcher;
-		watcher = watcher->next;
-	}
-	
-	     /* Not found */
-	DBG("remove_watcher(): Watcher not found in the list\n");
-	return 1;
-}
-
-/*
- * Remove a watcher from the list
- */
-int _remove_winfo_watcher(presentity_t* _p, watcher_t* _w)
-{
-	watcher_t* watcher, *prev;
-
-	watcher = _p->winfo_watchers;
-	prev = 0;
-	
-	while(watcher) {
-		if (watcher == _w) {
-			if (prev) {
-				prev->next = watcher->next;
-			} else {
-				_p->winfo_watchers = watcher->next;
-			}
-			return 0;
-		}
-
-		prev = watcher;
-		watcher = watcher->next;
-	}
-	
-	     /* Not found */
-	DBG("remove_winfo_watcher(): Watcher not found in the list\n");
-	return 1;
-}
-#endif
 
 int append_watcher(presentity_t *_p, watcher_t *_w, int add_to_db)
 {

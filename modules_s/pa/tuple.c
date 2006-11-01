@@ -94,23 +94,22 @@ int db_read_tuples(presentity_t *_p, db_con_t* db)
 	int i;
 	int r = 0;
 	db_res_t *res = NULL;
-	db_key_t result_cols[] = { "contactid", "basic", "status", 
-		"location", "expires", "placeid", 
-		"priority", "contact", "tupleid",
-		"etag", "published_id"
+	db_key_t result_cols[] = { "basic", "expires", "priority", 
+		"contact", "tupleid", "etag", 
+		"published_id"
 	} ;
 	
 	if (!use_db) return 0;
 
 	if (pa_dbf.use_table(db, presentity_contact_table) < 0) {
-		LOG(L_ERR, "db_read_tuples: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 	
 	if (pa_dbf.query (db, keys, ops, k_vals,
 			result_cols, 1, sizeof(result_cols) / sizeof(db_key_t), 
 			0, &res) < 0) {
-		LOG(L_ERR, "db_read_tuples(): Error while querying watcherinfo\n");
+		ERR("Error while querying DB\n");
 		return -1;
 	}
 
@@ -122,29 +121,23 @@ int db_read_tuples(presentity_t *_p, db_con_t* db)
 		db_val_t *row_vals = ROW_VALUES(row);
 		str contact = STR_NULL;
 		basic_tuple_status_t basic = presence_tuple_undefined_status;
-		str status = STR_NULL; 
-		str location = STR_NULL; 
 		str id = STR_NULL; 
 		str etag = STR_NULL;
 		str published_id = STR_NULL;
 		
-		/* int contactid = row_vals[0].val.int_val; */
 		time_t expires = 0;
-		/* int placeid = row_vals[5].val.int_val; */
-		double priority = row_vals[6].val.double_val;
+		double priority = row_vals[2].val.double_val;
 		
 #define get_str_val(i,dst)	do{if(!row_vals[i].nul){dst.s=(char*)row_vals[i].val.string_val;dst.len=strlen(dst.s);}}while(0)
 #define get_int_val(i,dst)	do{if(!row_vals[i].nul){dst=row_vals[i].val.int_val;}}while(0)
 #define get_time_val(i,dst)	do{if(!row_vals[i].nul){dst=row_vals[i].val.time_val;}}while(0)
 
-		get_int_val(1, basic);
-		get_str_val(2, status);
-		get_str_val(3, location);
-		get_time_val(4, expires);
-		get_str_val(7, contact);
-		get_str_val(8, id);
-		get_str_val(9, etag);
-		get_str_val(10, published_id);
+		get_int_val(0, basic);
+		get_time_val(1, expires);
+		get_str_val(3, contact);
+		get_str_val(4, id);
+		get_str_val(5, etag);
+		get_str_val(6, published_id);
 		
 #undef get_str_val		
 #undef get_time_val		
@@ -264,6 +257,7 @@ static int db_remove_presence_tuple(presentity_t *_p, presence_tuple_t *t)
 	if (!t->is_published) return 0; /* store only published tuples */
 
 	db_remove_tuple_notes(_p, t);
+	db_remove_tuple_extensions(_p, t);
 	
 	if (pa_dbf.use_table(pa_db, presentity_contact_table) < 0) {
 		LOG(L_ERR, "db_remove_presence_tuple: Error in use_table\n");
@@ -338,6 +332,8 @@ void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t)
 void free_presence_tuple(presence_tuple_t * _t)
 {
 	if (_t) {
+		free_tuple_notes(_t);
+		free_tuple_extensions(_t);
 		if (_t->is_published) {
 			/* Warning: not-published tuples have contact allocated
 			 * together with other data => contact can't change! */

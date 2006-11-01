@@ -100,7 +100,7 @@ int db_update_extension_element(presentity_t *p, pa_extension_element_t *n)
 	
 	if (!use_db) return 0;
 
-	cols[n_updates] = "extension_element";
+	cols[n_updates] = "element";
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.blob_val = n->data.element;
@@ -136,7 +136,7 @@ int db_read_extension_elements(presentity_t *p, db_con_t* db)
 	int r = 0;
 	db_res_t *res = NULL;
 	db_key_t result_cols[] = { "dbid", "etag", 
-		"extension_element", "id", "expires"
+		"element", "dbid", "expires"
 	};
 	
 	if (!use_db) return 0;
