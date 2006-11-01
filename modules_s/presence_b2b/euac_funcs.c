@@ -142,23 +142,31 @@ const char *proto2uri_param(int proto)
 /* returns length of added string */
 static int get_contact_hdr(char *dst, int max_size, dlg_t *dialog)
 {
-	struct socket_info *send_sock;
-	union sockaddr_union to_su;
+	struct dest_info dst_info;
 	int port = 5060;
 	const char *proto;
 	int len;
 	
-	send_sock = uri2sock(0, dialog->hooks.next_hop, 
-			&to_su, PROTO_NONE);
-	if (!send_sock) { /* error */
+#ifdef USE_DNS_FAILOVER
+	if (!uri2dst(NULL, &dst_info, NULL /* msg */, 
+			dialog->hooks.next_hop, PROTO_NONE)) {
+		return 0;	/* error */
+	}
+#else
+	if (!uri2dst(&dst_info, 0 /* msg */, 
+			dialog->hooks.next_hop, PROTO_NONE)) {
+		return 0;	/* error */
+	}
+#endif
+	if (!dst_info.send_sock) { /* error */
 		return 0;
 	}
 	/* send_sock = get_send_socket(NULL, to, proto); */
 
-	proto = proto2uri_param(send_sock->proto);
-	if (send_sock->port_no) port = send_sock->port_no;
+	proto = proto2uri_param(dst_info.send_sock->proto);
+	if (dst_info.send_sock->port_no) port = dst_info.send_sock->port_no;
 	len = snprintf(dst, max_size, "Contact: <sip:%.*s:%d%s>\r\n", 
-			FMT_STR(send_sock->address_str), port, proto);
+			FMT_STR(dst_info.send_sock->address_str), port, proto);
 
 	/* DBG("%.*s (len = %d)\n", len, dst, len); */
 	return len;
