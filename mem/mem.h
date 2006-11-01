@@ -124,7 +124,7 @@
 #	include "memdbg.h"
 #	define pkg_malloc(s) \
 	(  { void *v; v=malloc((s)); \
-	   MDBG("malloc %p size %d end %p\n", v, s, (char*)v+(s));\
+	   MDBG("malloc %p size %d end %p\n", v, (s), (char*)v+(s));\
 	   v; } )
 #	define pkg_free(p)  do{ MDBG("free %p\n", (p)); free((p)); }while(0);
 #	define pkg_status()
