@@ -19,7 +19,7 @@ static void rr_dup(rr_t **dst, rr_t *pkg_rr)
 	if (tmp) free_rr(&tmp);
 }
 
-int serialize_route(sstream_t *ss, rr_t **_r)
+static int serialize_route(sstream_t *ss, rr_t **_r)
 {
 	int do_it = 0;
 	int res = 0;
