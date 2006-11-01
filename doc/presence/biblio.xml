@@ -52,8 +52,8 @@ Data Format</ulink></title>
 
 <biblioentry id="pres_rpid">
 <abbrev>rpid</abbrev>
-<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-rpid-09.txt"
->draft-ietf-simple-rpid-09.txt</ulink></title>
+<title><ulink url="http://www.ietf.org/rfc/rfc4480.txt"
+>RFC 4480 - Rich Presence Extensions to the Presence Information Data Format</ulink></title>
 </biblioentry>
 
 <biblioentry id="pres_rfc_publish">
