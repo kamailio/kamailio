@@ -173,13 +173,6 @@ install: build
 		cfg-target=/etc/ser/ \
 		doc-dir=share/doc/ser-xmlrpc-module
 	
-	# Install serctl only
-	cd $(SERCTL_PATH); \
-	$(MAKE) install \
-		prefix=$(CURDIR)/debian/ser-ctl \
-		'usr_prefix=$$(prefix)/usr' \
-		'var_prefix=$$(prefix)/var' \
-		'DOC_DIR=$$(docdir)/ser-ctl'
 	#dh_movefiles
 
 
