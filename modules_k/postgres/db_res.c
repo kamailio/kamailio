@@ -5,6 +5,7 @@
  * the mysql module, thus it's similarity.
  *
  * Copyright (C) 2003 August.Net Services, LLC
+ * Copyright (C) 2006 Norman Brandinger
  *
  * This file is part of openser, a free SIP server.
  *
