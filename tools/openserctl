@@ -6,7 +6,7 @@
 #
 #===================================================================
 
-PATH=$PATH:/usr/local/openser-1.1.0/sbin/
+PATH=$PATH:/usr/local/sbin/
 
 
 ### include resource files, if any
