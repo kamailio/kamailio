@@ -1786,6 +1786,11 @@ error:
 void destroy_tcp()
 {
 		if (tcpconn_id_hash){
+			if (tcpconn_lock)
+				TCPCONN_UNLOCK; /* hack: force-unlock the tcp lock in case
+								   some process was terminated while holding 
+								   it; this will allow an almost gracious 
+								   shutdown */
 			tcpconn_timeout(1); /* force close/expire for all active tcpconns*/
 			shm_free(tcpconn_id_hash);
 			tcpconn_id_hash=0;
