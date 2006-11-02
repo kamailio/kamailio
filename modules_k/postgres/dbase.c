@@ -53,6 +53,11 @@
  *            Removed dependency on aug_* memory routines (norm)
  *            Added connection pooling support (norm)
  *            Standardized API routines to pg_* names (norm)
+ * 2006-11-01 Updated pg_insert(), pg_delete(), pg_update() and pg_get_result() to
+ * 	      handle failed queries.  Detailed warnings along with the text of the
+ * 	      failed query is now displayed in the log.  
+ * 	      Callers of these routines can now assume that a non-zero rc indicates
+ * 	      the query failed and that remedial action may need to be taken. (norm)
  *
  */
 
@@ -1008,12 +1013,14 @@ int pg_get_result(db_con_t* _con, db_res_t** _r)
                 case PGRES_BAD_RESPONSE:
                 case PGRES_NONFATAL_ERROR:
                 case PGRES_FATAL_ERROR:
-        		LOG(L_WARN, "PG[get_result]: %p Warning: probable invalid query\n", _con);
+        		LOG(L_WARN, "PG[get_result]: %p Warning: Probable invalid query\n", _con);
                 default:
-        		LOG(L_WARN, "PG[get_result]: %p Warning: PQresultStatus(%s)\n", _con, PQresStatus(pqresult));
+        		LOG(L_WARN, "PG[get_result]: %p Warning: %s\n", _con, PQresStatus(pqresult));
+        		LOG(L_WARN, "PG[get_result]: %p Warning: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
        			if (*_r) pg_free_result(*_r);
         		*_r = 0;
-                        break;
+			rc = (int)pqresult;
+			break;
         }
 
 	free_query(_con);
@@ -1029,8 +1036,9 @@ int pg_get_result(db_con_t* _con, db_res_t** _r)
  */
 int pg_insert(db_con_t* _con, db_key_t* _k, db_val_t* _v, int _n)
 {
-	PGresult* res = NULL;
+	db_res_t* _r = NULL;
 	int off;
+	int rv = 0;
 
 	off = snprintf(_s, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_con));
 	off += print_columns(_s + off, SQL_BUF_LEN - off, _k, _n);
@@ -1039,19 +1047,22 @@ int pg_insert(db_con_t* _con, db_key_t* _k, db_val_t* _v, int _n)
 	*(_s + off++) = ')';
 	*(_s + off) = '\0';
 
-	LOG (L_DBG, "PG[pg_insert]: %p %s\n", _con, _s);
+	LOG(L_DBG, "PG[insert]: %p %s\n", _con, _s);
 
 	/* if(begin_transaction(_con, _s)) return(-1); */
 	if (submit_query(_con, _s) < 0) {
-		LOG(L_ERR, "PG[pg_insert]: Error while inserting\n");
+		LOG(L_ERR, "PG[insert]: Error while inserting\n");
 		/* rollback_transaction(_con); */
 		return -2;
 	}
-        while ( (res = PQgetResult(CON_CONNECTION(_con))) ) {
-                PQclear(res);
-        }
+	rv = pg_get_result(_con,&_r);	
+	if (rv != 0) {
+		LOG(L_WARN, "PG[insert]: Warning: %p Query: %s\n", _con, _s);
+	}
+	if (_r) 
+		pg_free_result(_r);
 	/* commit_transaction(_con); */
-	return(0);
+	return(rv);
 }
 
 
@@ -1065,8 +1076,9 @@ int pg_insert(db_con_t* _con, db_key_t* _k, db_val_t* _v, int _n)
  */
 int pg_delete(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
-	PGresult* res = NULL;
+	db_res_t* _r = NULL;
 	int off;
+	int rv = 0;
 
 	off = snprintf(_s, SQL_BUF_LEN, "delete from %s", CON_TABLE(_con));
 	if (_n) {
@@ -1075,17 +1087,20 @@ int pg_delete(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 			_o, _v, _n);
 	}
 
-	LOG (L_DBG, "pg_delete: %p %s\n", _con, _s);
+	LOG(L_DBG, "pg_delete: %p %s\n", _con, _s);
 
 	/* if(begin_transaction(_con, _s)) return(-1); */
 	if (submit_query(_con, _s) < 0) {
-		LOG(L_ERR, "PG[pg_delete]: Error while deleting\n");
+		LOG(L_ERR, "PG[delete]: Error while deleting\n");
 		/* rollback_transaction(_con); */
 		return -2;
 	}
-        while ( (res = PQgetResult(CON_CONNECTION(_con))) ) {
-                PQclear(res);
-        }
+	rv = pg_get_result(_con,&_r);	
+	if (rv != 0) {
+		LOG(L_WARN, "PG[delete]: Warning: %p Query: %s\n", _con, _s);
+	}
+	if (_r) 
+		pg_free_result(_r);
 	/* commit_transaction(_con); */
 	return(0);
 }
@@ -1105,8 +1120,9 @@ int pg_delete(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 int pg_update(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
-	PGresult* res = NULL;
+	db_res_t* _r = NULL;
 	int off;
+	int rv = 0;
 
 	off = snprintf(_s, SQL_BUF_LEN, "update %s set ", CON_TABLE(_con));
 	off += print_set(_s + off, SQL_BUF_LEN - off, _uk, _uv, _un);
@@ -1117,17 +1133,20 @@ int pg_update(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		*(_s + off) = '\0';
 	}
 
-	LOG (L_DBG, "PG[pg_update]: %p %s\n", _con, _s);
+	LOG(L_DBG, "PG[update]: %p %s\n", _con, _s);
 
 	/* if(begin_transaction(_con, _s)) return(-1); */
 	if (submit_query(_con, _s) < 0) {
-		LOG(L_ERR, "PG[pg_update]: Error while updating\n");
+		LOG(L_ERR, "PG[update]: Error while updating\n");
 		/* rollback_transaction(_con); */
 		return -2;
 	}
-	while ( (res = PQgetResult(CON_CONNECTION(_con))) ) {
-		PQclear(res);
+	rv = pg_get_result(_con,&_r);	
+	if (rv != 0) {
+		LOG(L_WARN, "PG[update]: Warning: %p Query: %s\n", _con, _s);
 	}
+	if (_r) 
+		pg_free_result(_r);
 	/* commit_transaction(_con); */
 	return(0);
 }
