@@ -123,9 +123,13 @@
 #	include <stdlib.h>
 #	include "memdbg.h"
 #	define pkg_malloc(s) \
-	(  { void *v; v=malloc((s)); \
-	   MDBG("malloc %p size %d end %p\n", v, (s), (char*)v+(s));\
-	   v; } )
+	(  { void *____v123; ____v123=malloc((s)); \
+	   MDBG("malloc %p size %lu end %p\n", ____v123, (unsigned long)(s), (char*)____v123+(s));\
+	   ____v123; } )
+#	define pkg_realloc(p, s) \
+	(  { void *____v123; ____v123=realloc(p, s); \
+	   MDBG("realloc %p size %lu end %p\n", ____v123, (unsigned long)(s), (char*)____v123+(s));\
+	    ____v123; } )
 #	define pkg_free(p)  do{ MDBG("free %p\n", (p)); free((p)); }while(0);
 #	define pkg_status()
 #endif
