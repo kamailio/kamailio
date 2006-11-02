@@ -69,6 +69,8 @@
  *  2006-02-06  better tcp_max_connections checks, tcp_connections_no moved to
  *              shm (andrei)
  *  2006-04-12  tcp_send() changed to use struct dest_info (andrei)
+ *  2006-11-02  switched to atomic ops for refcnt, locking improvements 
+ *               (andrei)
  */
 
 
@@ -415,7 +417,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	
 	c->rcv.src_su=*su;
 	
-	c->refcnt=0;
+	atomic_set(&c->refcnt, 0);
 	su2ip_addr(&c->rcv.src_ip, su);
 	c->rcv.src_port=su_getport(su);
 	c->rcv.bind_address=ba;
@@ -522,25 +524,22 @@ error:
 
 struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 {
-	unsigned hash;
 
 	if (c){
+		c->id_hash=tcp_id_hash(c->id);
+		c->con_aliases[0].hash=tcp_addr_hash(&c->rcv.src_ip, c->rcv.src_port);
 		TCPCONN_LOCK;
 		/* add it at the begining of the list*/
-		hash=tcp_id_hash(c->id);
-		c->id_hash=hash;
-		tcpconn_listadd(tcpconn_id_hash[hash], c, id_next, id_prev);
-		
-		hash=tcp_addr_hash(&c->rcv.src_ip, c->rcv.src_port);
+		tcpconn_listadd(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
 		/* set the first alias */
 		c->con_aliases[0].port=c->rcv.src_port;
-		c->con_aliases[0].hash=hash;
 		c->con_aliases[0].parent=c;
-		tcpconn_listadd(tcpconn_aliases_hash[hash], &c->con_aliases[0],
-						next, prev);
+		tcpconn_listadd(tcpconn_aliases_hash[c->con_aliases[0].hash],
+							&c->con_aliases[0], next, prev);
 		c->aliases++;
 		TCPCONN_UNLOCK;
-		DBG("tcpconn_add: hashes: %d, %d\n", hash, c->id_hash);
+		DBG("tcpconn_add: hashes: %d, %d\n", c->con_aliases[0].hash,
+												c->id_hash);
 		return c;
 	}else{
 		LOG(L_CRIT, "tcpconn_add: BUG: null connection pointer\n");
@@ -634,7 +633,7 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 	TCPCONN_LOCK;
 	c=_tcpconn_find(id, ip, port);
 	if (c){ 
-			c->refcnt++;
+			atomic_inc(&c->refcnt);
 			c->timeout=get_ticks()+timeout;
 	}
 	TCPCONN_UNLOCK;
@@ -704,24 +703,6 @@ error_sec:
 
 
 
-void tcpconn_ref(struct tcp_connection* c)
-{
-	TCPCONN_LOCK;
-	c->refcnt++; /* FIXME: atomic_dec */
-	TCPCONN_UNLOCK;
-}
-
-
-
-void tcpconn_put(struct tcp_connection* c)
-{
-	TCPCONN_LOCK;
-	c->refcnt--; /* FIXME: atomic_dec */
-	TCPCONN_UNLOCK;
-}
-
-
-
 /* finds a tcpconn & sends on it
  * uses the dst members to, proto (TCP|TLS) and id
  * returns: number of bytes written (>=0) on success
@@ -768,8 +749,7 @@ no_id:
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;
 			}
-			c->refcnt++; /* safe to do it w/o locking, it's not yet
-							available to the rest of the world */
+			atomic_set(&c->refcnt, 1); /* ref. only from here for now */
 			fd=c->s;
 			
 			/* send the new tcpconn to "tcp main" */
@@ -811,8 +791,8 @@ get_fd:
 				LOG(L_CRIT, "BUG: tcp_send: get_fd: got different connection:"
 						"  %p (id= %d, refcnt=%d state=%d != "
 						"  %p (id= %d, refcnt=%d state=%d (n=%d)\n",
-						  c,   c->id,   c->refcnt,   c->state,
-						  tmp, tmp->id, tmp->refcnt, tmp->state, n
+						  c,   c->id,   atomic_get(&c->refcnt),   c->state,
+						  tmp, tmp->id, atomic_get(&tmp->refcnt), tmp->state, n
 				   );
 				n=-1; /* fail */
 				goto end;
@@ -963,8 +943,7 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 	int fd;
 
 	TCPCONN_LOCK; /*avoid races w/ tcp_send*/
-	tcpconn->refcnt--;
-	if (tcpconn->refcnt==0){ 
+	if (atomic_dec_and_test(&tcpconn->refcnt)){ 
 		DBG("tcpconn_destroy: destroying connection %p, flags %04x\n",
 				tcpconn, tcpconn->flags);
 		fd=tcpconn->s;
@@ -1209,7 +1188,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			tcpconn->flags&=~F_CONN_REMOVED;
 			DBG("handle_tcp_child: CONN_RELEASE  %p refcnt= %d\n", 
-											tcpconn, tcpconn->refcnt);
+							tcpconn, atomic_get(&tcpconn->refcnt));
 			break;
 		case CONN_ERROR:
 		case CONN_DESTROY:
@@ -1480,8 +1459,8 @@ static inline int handle_new_connect(struct socket_info* si)
 		tcpconn->flags&=~F_CONN_REMOVED;
 		tcpconn_add(tcpconn);
 #else
-		tcpconn->refcnt++; /* safe, not yet available to the
-							  outside world */
+		atomic_set(&tcpconn->refcnt, 1); /* safe, not yet available to the
+											outside world */
 		tcpconn_add(tcpconn);
 		DBG("handle_new_connect: new connection: %p %d flags: %04x\n",
 			tcpconn, tcpconn->s, tcpconn->flags);
@@ -1623,7 +1602,8 @@ static inline void tcpconn_timeout(int force)
 		c=tcpconn_id_hash[h];
 		while(c){
 			next=c->id_next;
-			if (force ||((c->refcnt==0) && ((int)(ticks-c->timeout)>=0))){
+			if (force ||((atomic_get(&c->refcnt)==0) &&
+						((int)(ticks-c->timeout)>=0))){
 				if (!force)
 					DBG("tcpconn_timeout: timeout for hash=%d - %p"
 							" (%d > %d)\n", h, c, ticks, c->timeout);
@@ -1633,7 +1613,7 @@ static inline void tcpconn_timeout(int force)
 					tls_close(c, fd);
 #endif
 				_tcpconn_rm(c);
-				if ((fd>0)&&(c->refcnt==0)) {
+				if ((fd>0)&&(atomic_get(&c->refcnt)==0)) {
 					if (!(c->flags & F_CONN_REMOVED)){
 						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
 						c->flags|=F_CONN_REMOVED;

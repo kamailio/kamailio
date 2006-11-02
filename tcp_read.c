@@ -754,7 +754,7 @@ void tcp_receive_loop(int unix_sock)
 					LOG(L_CRIT, "BUG: tcp_receive_loop: duplicate"
 							" connection received: %p, id %d, fd %d, refcnt %d"
 							" state %d (n=%d)\n", con, con->id, con->fd,
-							con->refcnt, con->state, n);
+							atomic_get(&con->refcnt), con->state, n);
 					resp=CONN_ERROR;
 					release_tcpconn(con, resp, unix_sock);
 					goto skip; /* try to recover */
@@ -767,7 +767,8 @@ skip:
 				c_next=con->c_next; /* safe for removing*/
 #ifdef EXTRA_DEBUG
 				DBG("tcp receive: list fd=%d, id=%d, timeout=%d, refcnt=%d\n",
-						con->fd, con->id, con->timeout, con->refcnt);
+						con->fd, con->id, con->timeout,
+						atomic_get(&con->refcnt));
 #endif
 				if (con->state<0){
 					/* S_CONN_BAD or S_CONN_ERROR, remove it */
@@ -869,7 +870,7 @@ again:
 				LOG(L_CRIT, "BUG: tcp_receive: handle_io: duplicate"
 							" connection received: %p, id %d, fd %d, refcnt %d"
 							" state %d (n=%d)\n", con, con->id, con->fd,
-							con->refcnt, con->state, n);
+							atomic_get(&con->refcnt), con->state, n);
 				release_tcpconn(con, CONN_ERROR, tcpmain_sock);
 				break; /* try to recover */
 			}

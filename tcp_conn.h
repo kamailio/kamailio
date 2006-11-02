@@ -40,6 +40,7 @@
 
 #include "ip_addr.h"
 #include "locking.h"
+#include "atomic_ops.h"
 
 
 #define TCP_CON_MAX_ALIASES 4 /* maximum number of port aliases */
@@ -123,7 +124,7 @@ struct tcp_connection{
 	           reply-ing*/
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
 	struct tcp_req req; /* request data */
-	volatile int refcnt;
+	atomic_t refcnt;
 	enum sip_protos type; /* PROTO_TCP or a protocol over it, e.g. TLS */
 	int flags; /* connection related flags */
 	enum tcp_conn_states state; /* connection state */
@@ -141,6 +142,9 @@ struct tcp_connection{
 
 
 
+
+#define tcpconn_ref(c) atomic_inc(&((c)->refcnt))
+#define tcpconn_put(c) atomic_dec(&((c)->refcnt))
 
 
 #define init_tcp_req( r) \
