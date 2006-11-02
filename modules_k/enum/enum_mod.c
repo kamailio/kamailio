@@ -57,6 +57,10 @@ static int enum_fixup(void** param, int param_no);
 char* domain_suffix = "e164.arpa.";
 char* tel_uri_params = "";
 
+char* branchlabel = "i";
+char* i_enum_suffix = "e164.arpa.";
+char* bl_algorithm = "cc";
+
 
 /*
  * Internal module variables
@@ -64,6 +68,10 @@ char* tel_uri_params = "";
 str suffix;
 str param;
 str service;
+
+str i_suffix;
+str i_branchlabel;
+str i_bl_alg;
 
 
 /*
@@ -79,6 +87,9 @@ static cmd_export_t cmds[] = {
 	{"is_from_user_enum", is_from_user_enum_0, 0, 0,         REQUEST_ROUTE},
 	{"is_from_user_enum", is_from_user_enum_1, 1, str_fixup, REQUEST_ROUTE},
 	{"is_from_user_enum", is_from_user_enum_2, 2, enum_fixup,REQUEST_ROUTE},
+	{"i_enum_query",      i_enum_query_0,   0, 0,            REQUEST_ROUTE},
+	{"i_enum_query",      i_enum_query_1,   1, str_fixup,    REQUEST_ROUTE},
+	{"i_enum_query",      i_enum_query_2,   2, enum_fixup,   REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -89,6 +100,9 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"domain_suffix", STR_PARAM, &domain_suffix},
 	{"tel_uri_params", STR_PARAM, &tel_uri_params},
+	{"branchlabel", STR_PARAM, &branchlabel},
+	{"i_enum_suffix", STR_PARAM, &i_enum_suffix},
+	{"bl_algorithm", STR_PARAM, &bl_algorithm},
 	{0, 0, 0}
 };
 
@@ -120,6 +134,15 @@ static int mod_init(void)
 	param.len = strlen(param.s);
 
 	service.len = 0;
+
+	i_suffix.s = i_enum_suffix;
+	i_suffix.len = strlen(i_enum_suffix);
+
+	i_branchlabel.s = branchlabel;
+	i_branchlabel.len = strlen(branchlabel);
+
+	i_bl_alg.s = bl_algorithm;
+	i_bl_alg.len = strlen(bl_algorithm);
 
 	return 0;
 }

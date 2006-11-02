@@ -31,6 +31,7 @@
 
 
 #define MAX_DOMAIN_SIZE 256
+#define MAX_COMPONENT_SIZE 32  /* separator, apex, ... This simplifies checks */
 		
 
 /*
@@ -56,6 +57,13 @@ int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service);
 int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2);
 int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2);
 int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service);
+
+/*
+ * Infrastructure ENUM versions.
+ */
+int i_enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2);
+int i_enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2);
+int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service);
 
 
 #endif /* ENUM_H */

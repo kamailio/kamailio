@@ -14,9 +14,9 @@
 	<section id="sec-overview">
 	<title>Overview</title>
 	<para>
-		Enum module implements enum_query function that makes an enum query 
-		based on the user part of the current Request-URI. The function 
-		assumes that the user part consists of an international phone number 
+		Enum module implements [i_]enum_query functions that make an enum query 
+		based on the user part of the current Request-URI. These functions
+		assume that the user part consists of an international phone number 
 		of the form +decimal-digits, where the number of digits is at
 		least 2 and at most 15. Out of this number 
 		<function moreinfo="none">enum_query</function> forms a domain name, 
@@ -24,6 +24,9 @@
 		domain suffix that by default is <quote>e164.arpa.</quote>. For example, 
 		if the user part is +35831234567, the domain
 		name will be <quote>7.6.5.4.3.2.1.3.8.5.3.e164.arpa.</quote>.
+		<function moreinfo="none">i_enum_query</function> operates in a similar
+		fashion. The only difference is that it adds a label (default "i")
+		to branch off from the default, user-ENUM tree to an infrastructure ENUM tree.
 	</para>
 	<para>
 		After forming the domain name, 
@@ -141,6 +144,91 @@ modparam("enum", "tel_uri_params", ";npdi")
 </programlisting>
 		</example>
 	</section>
+        <section>
+                <title><varname>i_enum_suffix</varname> (string)</title>
+                <para>
+                The domain suffix to be used for i_enum_query() lookups.
+                Can be overridden by a parameter to i_enum_query.
+                </para>
+                <para>
+                Default value is <quote>e164.arpa.</quote>
+                </para>
+                <example>
+                <title>Setting i_enum_suffix module parameter</title>
+                <programlisting format="linespecific">
+modparam("enum", "i_enum_suffix", "e1234.arpa.")
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>branchlabel</varname> (string)</title>
+                <para>
+                This parameter determines which label i_enum_query() will use
+                to branch off to the infrastructure ENUM tree.
+                </para>
+                <para>
+                Default value is <quote>"i"</quote>
+                </para>
+                <example>
+                <title>Setting brachlabel module parameter</title>
+                <programlisting format="linespecific">
+modparam("enum", "branchlabel", "i")
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>bl_algorithm</varname> (string)</title>
+                <para>
+                This parameter determines which algorithm i_enum_query() will use
+                to select the position in the DNS tree where the infrastructure tree
+                branches off the user ENUM tree.
+                </para>
+                <para>
+                If set to "cc", i_enum_query() will always inserts the
+                label at the country-code level.
+                Examples: i.1.e164.arpa, i.3.4.e164.arpa, i.2.5.3.e164.arpa
+                </para>
+                <para>
+                If set to "txt", i_enum_query() will look for a TXT record at
+                [branchlabel].[reverse-country-code].[i_enum_suffix] to indicate after how many digits the
+                label should in inserted.
+                <example>
+                <title>Zone file example</title>
+                <programlisting format="linespecific">
+i.1.e164.arpa.                     IN TXT   "4"
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234 5678 999"
+</programlisting>
+                </example>
+                </para>
+                <para>
+                If set to "ebl", i_enum_query() will look for an EBL (ENUM Branch Label) record at
+                [branchlabel].[reverse-country-code].[i_enum_suffix]. See http://www.ietf.org/internet-drafts/draft-lendl-enum-branch-location-record-00.txt for a description of that record and the
+                meaning of the fields. The RR type for the EBL has not been allocated yet.
+                This version of the code uses 65300. See resolve.h.
+                <example>
+                <title>Zone file example</title>
+                <programlisting format="linespecific">
+i.1.e164.arpa.     TYPE65300  \# 14 (
+                              04    ; position
+                              01 69 ; separator
+                              04 65 31 36 34 04 61 72 70 61 00 ; e164.arpa
+;                               )
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234 5678 999"
+</programlisting>
+                </example>
+                </para>
+
+                <para>
+                Default value is <quote>cc</quote>
+                </para>
+                <example>
+                <title>Setting the bl_algorithm module parameter</title>
+                <programlisting format="linespecific">
+modparam("enum", "bl_algorithm", "txt")
+</programlisting>
+                </example>
+        </section>
+
 	</section>
 
 	<section>
@@ -249,6 +337,22 @@ enum_fquery("e164.arpa.","+sip+voice:sip");
 </programlisting>
 		</example>
 	</section>
+
+        <section>
+                <title>
+                <function moreinfo="none">i_enum_query(),i_enum_query("suffix"), i_enum_query("suffix", "service")</function>
+                </title>
+                <para>
+                The function performs an enum query and rewrites the Request-URI with
+                the result of the query. This the Infrastructure-ENUM version of enum_query().
+                The only difference to enum_query() is in the calculation of the
+                FQDN where NAPTR records are looked for.
+                </para>
+                <para>
+                See ftp://ftp.rfc-editor.org/in-notes/internet-drafts/draft-haberler-carrier-enum-01.txt
+                for the rationale behind this function.
+                </para>
+        </section>
 
 	<section>
 		<title><function moreinfo="none">is_from_user_enum()</function></title>
