@@ -1102,7 +1102,7 @@ int pg_delete(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	if (_r) 
 		pg_free_result(_r);
 	/* commit_transaction(_con); */
-	return(0);
+	return(rv);
 }
 
 
@@ -1148,5 +1148,5 @@ int pg_update(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	if (_r) 
 		pg_free_result(_r);
 	/* commit_transaction(_con); */
-	return(0);
+	return(rv);
 }
