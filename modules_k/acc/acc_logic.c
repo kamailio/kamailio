@@ -389,7 +389,7 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 
 	/* set env variables */
 	env_set_to( ack->to?ack->to:req->to );
-	env_set_code_status( code, 0 );
+	env_set_code_status( t->uas.status, 0 );
 
 	if (is_log_acc_on(req)) {
 		env_set_text( ACC_ACKED, ACC_ACKED_LEN);
