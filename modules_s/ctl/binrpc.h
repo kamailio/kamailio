@@ -27,6 +27,7 @@
 /* History:
  * --------
  *  2006-02-08  created by andrei
+ *  2006-11-03  replies with no payload are allowed (andrei)
  */
 /* binrpc is  supposed to be a minimalist binary rpc implementation */
 
@@ -116,8 +117,8 @@
 #define BINRPC_MIN_HDR_SIZE	(BINRPC_FIXED_HDR_SIZE+2)
 #define BINRPC_MAX_HDR_SIZE	(BINRPC_FIXED_HDR_SIZE+4+4)
 #define BINRPC_MIN_RECORD_SIZE	1
-/* min pkt size: min header + min. len (1) + min. cookie (1) + min record */
-#define BINRPC_MIN_PKT_SIZE	(BINRPC_MIN_HDR_SIZE+BINRPC_MIN_RECORD_SIZE)
+/* min pkt size: min header + min. len (1) + min. cookie (1)*/
+#define BINRPC_MIN_PKT_SIZE	BINRPC_MIN_HDR_SIZE
 
 /* message types */
 #define BINRPC_REQ   0
@@ -590,10 +591,11 @@ static inline unsigned char* binrpc_parse_init(	struct binrpc_parse_ctx* ctx,
 	}
 	p=binrpc_read_int((int*)&ctx->tlen, len_len, &buf[BINRPC_TLEN_OFFSET],
 						&buf[len], err);
-	if (ctx->tlen==0){
+	/* empty packets (replies) are allowed
+	   if (ctx->tlen==0){
 		*err=E_BINRPC_BADPKT;
 		goto error;
-	}
+	} */
 	p=binrpc_read_int((int*)&ctx->cookie, c_len, p, &buf[len], err);
 	ctx->offset=0;
 	ctx->flags|=BINRPC_F_INIT;

@@ -527,13 +527,14 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 	f_ctx.method=val.u.strval.s;
 	rpc_e->function(&binrpc_callbacks, &f_ctx);
 	if (f_ctx.replied==0){
-		if (binrpc_pkt_len(&f_ctx.out.pkt)==0){
+		/* to get an error reply if the rpc handlers hasn't replied
+		 *  uncomment the following code:
+		 * if (binrpc_pkt_len(&f_ctx.out.pkt)==0){
 			rpc_fault(&f_ctx, 500, "internal server error: no reply");
 			LOG(L_ERR, "ERROR: rpc method %s hasn't replied\n",
 					val.u.strval.s);
-		}else{
+		}else  */
 			rpc_send(&f_ctx);
-		}
 	}
 end:
 	*bytes_needed=0; /* full read */
