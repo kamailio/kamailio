@@ -548,9 +548,15 @@ binrpc_err:
 }
 
 
+static int binrpc_errno=0;
 
 /* reads the whole reply
- * returns < 0 on error, reply size on success + initializes in_pkt */
+ * returns < 0 on error, reply size on success + initializes in_pkt
+ * if ret==-2 (parse error), sets binrpc_errno to the binrpc error
+ * error returns: -1 - read error (check errno)
+ *                -2 - binrpc parse error (chekc binrpc_errno) 
+ *                -3 - cookie error (the cookied doesn't match)
+ *                -4 - message too big */
 static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 						int cookie, struct binrpc_parse_ctx* in_pkt,
 						unsigned char** body)
@@ -564,6 +570,7 @@ static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 	
 	hdr_end=crt=reply_buf;
 	msg_end=reply_buf+max_reply_size;
+	binrpc_errno=0;
 	do{
 		n=read(s, crt, (int)(msg_end-crt));
 		if (n<0){
@@ -607,6 +614,7 @@ static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 error_read:
 	return -1;
 error_parse:
+	binrpc_errno=ret;
 	return -2;
 error:
 	return -3;
@@ -817,11 +825,11 @@ static int run_binrpc_cmd(int s, struct binrpc_cmd * cmd, char* fmt)
 			case -1:
 				goto error_read;
 			case -2:
+				goto error_parse;
 			case -3:
+				goto error_cookie;
 			case -4:
-				goto error_parse;
-				goto error_parse;
-				goto error_parse;
+				goto error_toobig;
 		}
 		goto error;
 	}
@@ -849,8 +857,13 @@ binrpc_err:
 	goto error;
 error_parse:
 	fprintf(stderr, "ERROR while parsing the reply: %s\n", 
-				binrpc_error(ret));
+				binrpc_error(binrpc_errno));
 	goto error;
+error_cookie:
+	fprintf(stderr, "ERROR: cookie does not match\n");
+	goto error;
+error_toobig:
+	fprintf(stderr, "ERROR: reply too big\n");
 error_send:
 	fprintf(stderr, "ERROR: send packet failed: %s (%d)\n",
 			strerror(errno), errno);
