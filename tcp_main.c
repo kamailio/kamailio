@@ -71,6 +71,8 @@
  *  2006-04-12  tcp_send() changed to use struct dest_info (andrei)
  *  2006-11-02  switched to atomic ops for refcnt, locking improvements 
  *               (andrei)
+ *  2006-11-04  switched to raw ticks (to fix conversion errors which could
+ *               result in inf. lifetime) (andrei)
  */
 
 
@@ -147,11 +149,15 @@
 #define SEND_FD_QUEUE_TIMEOUT	MS_TO_TICKS(2000)  /* 2 s */
 #endif
 
+/* maximum accepted lifetime (maximum possible is  ~ MAXINT/2) */
+#define MAX_TCP_CON_LIFETIME	(1U<<(sizeof(ticks_t)*8-1))
+/* minimum interval tcpconn_timeout() is allowed to run, in ticks */
+#define TCPCONN_TIMEOUT_MIN_RUN S_TO_TICKS(1)  /* once per s */
 
 enum fd_types { F_NONE, F_SOCKINFO /* a tcp_listen fd */,
 				F_TCPCONN, F_TCPCHILD, F_PROC };
 
-
+static int is_tcp_main=0;
 
 int tcp_accept_aliases=0; /* by default don't accept aliases */
 int tcp_connect_timeout=DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -441,7 +447,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	{
 		c->type=PROTO_TCP;
 		c->rcv.proto=PROTO_TCP;
-		c->timeout=get_ticks()+tcp_con_lifetime;
+		c->timeout=get_ticks_raw()+tcp_con_lifetime;
 	}
 	c->flags|=F_CONN_REMOVED;
 	
@@ -522,6 +528,8 @@ error:
 
 
 
+/* adds a tcp connection to the tcpconn hashes
+ * Note: it's called _only_ from the tcp_main process */
 struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 {
 
@@ -627,14 +635,14 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 
 /* _tcpconn_find with locks and timeout */
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
-									int timeout)
+									ticks_t timeout)
 {
 	struct tcp_connection* c;
 	TCPCONN_LOCK;
 	c=_tcpconn_find(id, ip, port);
 	if (c){ 
 			atomic_inc(&c->refcnt);
-			c->timeout=get_ticks()+timeout;
+			c->timeout=get_ticks_raw()+timeout;
 	}
 	TCPCONN_UNLOCK;
 	return c;
@@ -818,7 +826,7 @@ send_it:
 		LOG(L_ERR, "ERROR: tcp_send: failed to send\n");
 		/* error on the connection , mark it as bad and set 0 timeout */
 		c->state=S_CONN_BAD;
-		c->timeout=0;
+		c->timeout=get_ticks_raw();
 		/* tell "main" it should drop this (optional it will t/o anyway?)*/
 		response[0]=(long)c;
 		response[1]=CONN_ERROR;
@@ -937,7 +945,9 @@ error:
 
 
 
-/* used internally by tcp_main_loop() */
+/* used internally by tcp_main_loop()
+ * tries to destroy a tcp connection (if it cannot it will force a timeout)
+ * Note: it's called _only_ from the tcp_main process */
 static void tcpconn_destroy(struct tcp_connection* tcpconn)
 {
 	int fd;
@@ -957,7 +967,7 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 		(*tcp_connections_no)--;
 	}else{
 		/* force timeout */
-		tcpconn->timeout=0;
+		tcpconn->timeout=get_ticks_raw();
 		tcpconn->state=S_CONN_BAD;
 		DBG("tcpconn_destroy: delaying (%p, flags %04x) ...\n",
 				tcpconn, tcpconn->flags);
@@ -1182,7 +1192,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				break;
 			}
 			/* update the timeout*/
-			tcpconn->timeout=get_ticks()+tcp_con_lifetime;
+			tcpconn->timeout=get_ticks_raw()+tcp_con_lifetime;
 			tcpconn_put(tcpconn);
 			/* must be after the de-ref*/
 			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
@@ -1322,7 +1332,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			/* add tcpconn to the list*/
 			tcpconn_add(tcpconn);
 			/* update the timeout*/
-			tcpconn->timeout=get_ticks()+tcp_con_lifetime;
+			tcpconn->timeout=get_ticks_raw()+tcp_con_lifetime;
 			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			tcpconn->flags&=~F_CONN_REMOVED;
 			break;
@@ -1519,16 +1529,6 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
 	if (send2child(tcpconn)<0){
 		LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
 		tcpconn_destroy(tcpconn);
-#if 0
-		TCPCONN_LOCK;
-		tcpconn->refcnt--;
-		if (tcpconn->refcnt==0){
-			fd=tcpconn->s;
-			_tcpconn_rm(tcpconn);
-			close(fd);
-		}else tcpconn->timeout=0; /* force expire*/
-		TCPCONN_UNLOCK;
-#endif
 	}
 	return 0; /* we are not interested in possibly queued io events, 
 				 the fd was either passed to a child, or closed */
@@ -1584,18 +1584,22 @@ error:
 
 /* very inefficient for now - FIXME
  * keep in sync with tcpconn_destroy, the "delete" part should be
- * the same except for io_watch_del..*/
+ * the same except for io_watch_del..
+ * Note: this function is called only from the tcp_main process with 1 
+ * exception: on shutdown it's called also by the main ser process via
+ * cleanup() => with the ser shutdown exception, it cannot execute in parallel
+ * with tcpconn_add() or tcpconn_destroy()*/
 static inline void tcpconn_timeout(int force)
 {
-	static int prev_ticks=0;
+	static ticks_t prev_ticks=0;
 	struct tcp_connection *c, *next;
-	unsigned int ticks;
+	ticks_t ticks;
 	unsigned h;
 	int fd;
 	
 	
-	ticks=get_ticks();
-	if ((ticks==prev_ticks) && !force) return;
+	ticks=get_ticks_raw();
+	if (((ticks-prev_ticks)<TCPCONN_TIMEOUT_MIN_RUN) && !force) return;
 	prev_ticks=ticks;
 	TCPCONN_LOCK; /* fixme: we can lock only on delete IMO */
 	for(h=0; h<TCP_ID_HASH_SIZE; h++){
@@ -1603,21 +1607,27 @@ static inline void tcpconn_timeout(int force)
 		while(c){
 			next=c->id_next;
 			if (force ||((atomic_get(&c->refcnt)==0) &&
-						((int)(ticks-c->timeout)>=0))){
+						((s_ticks_t)(ticks-c->timeout)>=0))){
 				if (!force)
 					DBG("tcpconn_timeout: timeout for hash=%d - %p"
 							" (%d > %d)\n", h, c, ticks, c->timeout);
-				fd=c->s;
+				if (c->s>0 && is_tcp_main){
+					/* we cannot close or remove the fd if we are not in the
+					 * tcp main proc.*/
+					fd=c->s;
+					if (!(c->flags & F_CONN_REMOVED)){
+						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
+						c->flags|=F_CONN_REMOVED;
+					}
+				}else{
+					fd=-1;
+				}
 #ifdef USE_TLS
 				if (c->type==PROTO_TLS)
 					tls_close(c, fd);
 #endif
 				_tcpconn_rm(c);
-				if ((fd>0)&&(atomic_get(&c->refcnt)==0)) {
-					if (!(c->flags & F_CONN_REMOVED)){
-						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
-						c->flags|=F_CONN_REMOVED;
-					}
+				if (fd>0) {
 					close(fd);
 				}
 				(*tcp_connections_no)--;
@@ -1637,6 +1647,8 @@ void tcp_main_loop()
 	struct socket_info* si;
 	int r;
 	
+	is_tcp_main=1; /* mark this process as tcp main */
+	
 	/* init send fd queues (here because we want mem. alloc only in the tcp
 	 *  process */
 #ifdef SEND_FD_QUEUE
@@ -1648,12 +1660,11 @@ void tcp_main_loop()
 	/* init io_wait (here because we want the memory allocated only in
 	 * the tcp_main process) */
 	
-	/* FIXME: TODO: make tcp_max_fd_no a config param */
 	if  (init_io_wait(&io_h, tcp_max_fd_no, tcp_poll_method)<0)
 		goto error;
 	/* init: start watching all the fds*/
 	
-	/* add all the sockets we listens on for connections */
+	/* add all the sockets we listen on for connections */
 	for (si=tcp_listen; si; si=si->next){
 		if ((si->proto==PROTO_TCP) &&(si->socket!=-1)){
 			if (io_watch_add(&io_h, si->socket, F_SOCKINFO, si)<0){
@@ -1869,11 +1880,28 @@ int init_tcp()
 			TCP_ID_HASH_SIZE * sizeof(struct tcp_connection*));
 	
 	/* fix config variables */
-	/* they can have only positive values due the config parser so we can
-	 * ignore most of them */
+	if (tcp_connect_timeout<0)
+		tcp_connect_timeout=DEFAULT_TCP_CONNECT_TIMEOUT;
+	if (tcp_send_timeout<0)
+		tcp_send_timeout=DEFAULT_TCP_SEND_TIMEOUT;
+	if (tcp_con_lifetime<0){
+		/* set to max value (~ 1/2 MAX_INT) */
+		tcp_con_lifetime=MAX_TCP_CON_LIFETIME;
+	}else{
+		if ((unsigned)tcp_con_lifetime > 
+				(unsigned)TICKS_TO_S(MAX_TCP_CON_LIFETIME)){
+			LOG(L_WARN, "init_tcp: tcp_con_lifetime too big (%u s), "
+					" the maximum value is %u\n", tcp_con_lifetime,
+					TICKS_TO_S(MAX_TCP_CON_LIFETIME));
+			tcp_con_lifetime=MAX_TCP_CON_LIFETIME;
+		}else{
+			tcp_con_lifetime=S_TO_TICKS(tcp_con_lifetime);
+		}
+	}
+	
 		poll_err=check_poll_method(tcp_poll_method);
 	
-	/* set an appropiate poll method */
+	/* set an appropriate poll method */
 	if (poll_err || (tcp_poll_method==0)){
 		tcp_poll_method=choose_poll_method();
 		if (poll_err){
