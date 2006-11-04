@@ -657,7 +657,7 @@ static void sig_usr(int signo)
 					pkg_status();
 					#endif
 #endif
-					exit(0);
+					_exit(0);
 					break;
 			case SIGUSR1:
 				/* statistics, do nothing, printed only from the main proc */
@@ -673,7 +673,7 @@ static void sig_usr(int signo)
 						"we do not worry about grand-children\n");
 #endif
 #else
-					exit(0); /* terminate if one child died */
+					_exit(0); /* terminate if one child died */
 #endif
 					break;
 		}
