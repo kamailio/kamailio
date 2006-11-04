@@ -1,11 +1,9 @@
-Index: cfg.y
-===================================================================
-RCS file: /cvsroot/ser/sip_router/cfg.y,v
-retrieving revision 1.112
-diff -u -r1.112 cfg.y
---- cfg.y	20 Jan 2006 15:24:28 -0000	1.112
-+++ cfg.y	27 Jan 2006 11:01:37 -0000
-@@ -97,7 +97,7 @@
+diff -prNU5 cfg.y
+--- cfg.y	2006-10-25 16:54:32.000000000 +0000
++++ cfg.y	2006-11-04 01:18:08.000000000 +0000
+@@ -103,11 +103,11 @@
+ #include "select.h"
+ #include "flags.h"
  
  #include "config.h"
  #ifdef USE_TLS
@@ -14,7 +12,11 @@ diff -u -r1.112 cfg.y
  #endif
  
  #ifdef DEBUG_DMALLOC
-@@ -583,7 +583,7 @@
+ #include <dmalloc.h>
+ #endif
+@@ -713,11 +713,11 @@ assign_stm:
+ 		#endif
+ 	}
  	| DISABLE_TLS EQUAL error { yyerror("boolean value expected"); }
  	| TLSLOG EQUAL NUMBER {
  		#ifdef USE_TLS
@@ -23,7 +25,11 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-@@ -599,28 +599,28 @@
+ 	}
+ 	| TLSLOG EQUAL error { yyerror("int value expected"); }
+@@ -729,32 +729,32 @@ assign_stm:
+ 		#endif
+ 	}
  	| TLS_PORT_NO EQUAL error { yyerror("number expected"); }
  	| TLS_METHOD EQUAL SSLv23 {
  		#ifdef USE_TLS
@@ -56,7 +62,11 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-@@ -634,7 +634,7 @@
+ 	}
+ 	| TLS_METHOD EQUAL error {
+@@ -764,59 +764,59 @@ assign_stm:
+ 			warn("tls support not compiled in");
+ 		#endif
  	}
  	| TLS_VERIFY EQUAL NUMBER {
  		#ifdef USE_TLS
@@ -65,7 +75,7 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-@@ -642,7 +642,7 @@
+ 	}
  	| TLS_VERIFY EQUAL error { yyerror("boolean value expected"); }
  	| TLS_REQUIRE_CERTIFICATE EQUAL NUMBER {
  		#ifdef USE_TLS
@@ -74,7 +84,7 @@ diff -u -r1.112 cfg.y
  		#else
  			warn( "tls support not compiled in");
  		#endif
-@@ -650,7 +650,7 @@
+ 	}
  	| TLS_REQUIRE_CERTIFICATE EQUAL error { yyerror("boolean value expected"); }
  	| TLS_CERTIFICATE EQUAL STRING {
  		#ifdef USE_TLS
@@ -83,7 +93,7 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-@@ -658,7 +658,7 @@
+ 	}
  	| TLS_CERTIFICATE EQUAL error { yyerror("string value expected"); }
  	| TLS_PRIVATE_KEY EQUAL STRING {
  		#ifdef USE_TLS
@@ -92,7 +102,7 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-@@ -666,7 +666,7 @@
+ 	}
  	| TLS_PRIVATE_KEY EQUAL error { yyerror("string value expected"); }
  	| TLS_CA_LIST EQUAL STRING {
  		#ifdef USE_TLS
@@ -101,7 +111,7 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-@@ -674,7 +674,7 @@
+ 	}
  	| TLS_CA_LIST EQUAL error { yyerror("string value expected"); }
  	| TLS_HANDSHAKE_TIMEOUT EQUAL NUMBER {
  		#ifdef USE_TLS
@@ -110,7 +120,7 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-@@ -682,7 +682,7 @@
+ 	}
  	| TLS_HANDSHAKE_TIMEOUT EQUAL error { yyerror("number expected"); }
  	| TLS_SEND_TIMEOUT EQUAL NUMBER {
  		#ifdef USE_TLS
@@ -119,14 +129,14 @@ diff -u -r1.112 cfg.y
  		#else
  			warn("tls support not compiled in");
  		#endif
-Index: globals.h
-===================================================================
-RCS file: /cvsroot/ser/sip_router/globals.h,v
-retrieving revision 1.60
-diff -u -r1.60 globals.h
---- globals.h	27 Jan 2006 09:52:58 -0000	1.60
-+++ globals.h	27 Jan 2006 11:01:56 -0000
-@@ -37,6 +37,7 @@
+ 	}
+ 	| TLS_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
+diff -prNU5 globals.h
+--- globals.h	2006-10-25 18:44:36.000000000 +0000
++++ globals.h	2006-11-04 01:18:25.000000000 +0000
+@@ -35,10 +35,11 @@
+ 
+ #include "types.h"
  #include "ip_addr.h"
  #include "str.h"
  #include "poll_types.h"
@@ -134,47 +144,60 @@ diff -u -r1.60 globals.h
  
  #define NO_DNS     0
  #define DO_DNS     1
-@@ -164,5 +165,7 @@
- extern int dns_retr_no;
- extern int dns_servers_no;
- extern int dns_search_list;
-+
-+extern transport_t* tls;
+ #define DO_REV_DNS 2
  
+@@ -195,6 +196,8 @@ extern int use_dst_blacklist; /* 1 if th
+ unsigned int  blst_max_mem; /* maximum memory used for the blacklist entries*/
+ unsigned int blst_timeout; /* blacklist entry ttl */
+ unsigned int blst_timer_interval; /* blacklist gc timer interval (in s)*/
  #endif
-Index: main.c
-===================================================================
-RCS file: /cvsroot/ser/sip_router/main.c,v
-retrieving revision 1.210
-diff -u -r1.210 main.c
---- main.c	27 Jan 2006 09:52:58 -0000	1.210
-+++ main.c	27 Jan 2006 11:02:08 -0000
-@@ -122,13 +122,13 @@
+ 
++extern transport_t* tls;
++
+ #endif
+diff -prNU5 main.c
+--- main.c	2006-10-25 18:44:36.000000000 +0000
++++ main.c	2006-11-04 01:18:15.000000000 +0000
+@@ -127,11 +127,11 @@
+ #include "signals.h"
+ #ifdef USE_TCP
  #include "poll_types.h"
  #include "tcp_init.h"
  #ifdef USE_TLS
 -#include "tls/tls_init.h"
-+/*#include "tls/tls_init.h"*/
++/* #include "tls/tls_init.h" */
  #endif
  #endif
  #include "usr_avp.h"
  #include "core_cmd.h"
  #include "flags.h"
--
+@@ -141,10 +141,11 @@
+ #endif
+ #ifdef USE_DST_BLACKLIST
+ #include "dst_blacklist.h"
+ #endif
+ 
 +#include "transport.h"
  #include "stats.h"
  
  #ifdef DEBUG_DMALLOC
-@@ -350,6 +350,8 @@
+ #include <dmalloc.h>
+ #endif
+@@ -390,10 +391,11 @@ int ser_kill_timeout=DEFAULT_SER_KILL_TI
+ 
  /* cfg parsing */
  int cfg_errors=0;
+ int cfg_warnings=0;
  
 +transport_t* tls = 0;
-+
+ 
  /* shared memory (in MB) */
  unsigned long shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
  
-@@ -384,7 +386,7 @@
+ /* export command-line to anywhere else */
+@@ -431,11 +433,11 @@ void cleanup(show_status)
+ #endif
+ #ifdef USE_TCP
  	destroy_tcp();
  #endif
  #ifdef USE_TLS
@@ -183,7 +206,11 @@ diff -u -r1.210 main.c
  #endif
  	destroy_timer();
  	destroy_script_cb();
-@@ -916,14 +918,20 @@
+ 	destroy_routes();
+ 	destroy_atomic_ops();
+@@ -956,18 +958,24 @@ int main_loop()
+ 		}
+ #ifdef USE_TLS
  		if (!tls_disable){
  			for(si=tls_listen; si; si=si->next){
  				/* same as for tcp*/
@@ -204,7 +231,11 @@ diff -u -r1.210 main.c
  		#endif
  			}
  		}
-@@ -1551,10 +1559,12 @@
+ #endif /* USE_TLS */
+ #endif /* USE_TCP */
+@@ -1518,14 +1526,16 @@ try_again:
+ 		}
+ 	}
  #ifdef USE_TLS
  	if (!tls_disable){
  		/* init tls*/
@@ -217,23 +248,27 @@ diff -u -r1.210 main.c
  	}
  #endif /* USE_TLS */
  #endif /* USE_TCP */
-Index: tcp_main.c
-===================================================================
-RCS file: /cvsroot/ser/sip_router/tcp_main.c,v
-retrieving revision 1.75
-diff -u -r1.75 tcp_main.c
---- tcp_main.c	27 Jan 2006 09:52:58 -0000	1.75
-+++ tcp_main.c	27 Jan 2006 11:02:25 -0000
-@@ -107,7 +107,7 @@
+ 	/* init_daemon? */
+ 	if (!dont_fork){
+diff -prNU5 tcp_main.c
+--- tcp_main.c	2006-11-02 23:35:32.000000000 +0000
++++ tcp_main.c	2006-11-04 01:18:20.000000000 +0000
+@@ -117,11 +117,11 @@
+ #include "tcp_server.h"
  #include "tcp_init.h"
  #include "tsend.h"
+ #include "timer_ticks.h"
  #ifdef USE_TLS
 -#include "tls/tls_server.h"
-+/*#include "tls/tls_server.h"*/
++/* #include "tls/tls_server.h" */
  #endif 
+ #include "tcp_info.h"
  
  #define local_malloc pkg_malloc
-@@ -416,7 +416,7 @@
+ #define local_free   pkg_free
+@@ -433,11 +433,11 @@ struct tcp_connection* tcpconn_new(int s
+ 	c->rcv.proto_reserved2=0;
+ 	c->state=state;
  	c->extra_data=0;
  #ifdef USE_TLS
  	if (type==PROTO_TLS){
@@ -242,7 +277,11 @@ diff -u -r1.75 tcp_main.c
  	}else
  #endif /* USE_TLS*/
  	{
-@@ -536,7 +536,8 @@
+ 		c->type=PROTO_TCP;
+ 		c->rcv.proto=PROTO_TCP;
+@@ -557,11 +557,12 @@ void _tcpconn_rm(struct tcp_connection* 
+ 	for (r=0; r<c->aliases; r++)
+ 		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash], 
  						&c->con_aliases[r], next, prev);
  	lock_destroy(&c->write_lock);
  #ifdef USE_TLS
@@ -252,7 +291,11 @@ diff -u -r1.75 tcp_main.c
  #endif
  	shm_free(c);
  }
-@@ -555,7 +556,8 @@
+ 
+ 
+@@ -576,11 +577,12 @@ void tcpconn_rm(struct tcp_connection* c
+ 		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash], 
+ 						&c->con_aliases[r], next, prev);
  	TCPCONN_UNLOCK;
  	lock_destroy(&c->write_lock);
  #ifdef USE_TLS
@@ -262,7 +305,11 @@ diff -u -r1.75 tcp_main.c
  #endif
  	shm_free(c);
  }
-@@ -801,7 +803,11 @@
+ 
+ 
+@@ -804,11 +806,15 @@ get_fd:
+ send_it:
+ 	DBG("tcp_send: sending...\n");
  	lock_get(&c->write_lock);
  #ifdef USE_TLS
  	if (c->type==PROTO_TLS)
@@ -275,7 +322,11 @@ diff -u -r1.75 tcp_main.c
  	else
  #endif
  		/* n=tcp_blocking_write(c, fd, buf, len); */
-@@ -1051,7 +1057,7 @@
+ 		n=tsend_stream(fd, buf, len, tcp_send_timeout*1000); 
+ 	lock_release(&c->write_lock);
+@@ -948,11 +954,11 @@ static void tcpconn_destroy(struct tcp_c
+ 				tcpconn, tcpconn->flags);
+ 		fd=tcpconn->s;
  #ifdef USE_TLS
  		/*FIXME: lock ->writelock ? */
  		if (tcpconn->type==PROTO_TLS)
@@ -284,7 +335,11 @@ diff -u -r1.75 tcp_main.c
  #endif
  		_tcpconn_rm(tcpconn);
  		close(fd);
-@@ -1425,7 +1431,7 @@
+ 		(*tcp_connections_no)--;
+ 	}else{
+@@ -1608,11 +1614,11 @@ static inline void tcpconn_timeout(int f
+ 					DBG("tcpconn_timeout: timeout for hash=%d - %p"
+ 							" (%d > %d)\n", h, c, ticks, c->timeout);
  				fd=c->s;
  #ifdef USE_TLS
  				if (c->type==PROTO_TLS)
@@ -292,15 +347,15 @@ diff -u -r1.75 tcp_main.c
 +					if (tls) tls->u.tcp.close(c, fd);
  #endif
  				_tcpconn_rm(c);
- 				if ((fd>0)&&(c->refcnt==0)) {
-Index: tcp_read.c
-===================================================================
-RCS file: /cvsroot/ser/sip_router/tcp_read.c,v
-retrieving revision 1.31
-diff -u -r1.31 tcp_read.c
---- tcp_read.c	28 Oct 2005 20:59:37 -0000	1.31
-+++ tcp_read.c	27 Jan 2006 11:02:36 -0000
-@@ -60,7 +60,7 @@
+ 				if ((fd>0)&&(atomic_get(&c->refcnt)==0)) {
+ 					if (!(c->flags & F_CONN_REMOVED)){
+ 						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
+diff -prNU5 tcp_read.c
+--- tcp_read.c	2006-11-02 22:55:56.000000000 +0000
++++ tcp_read.c	2006-11-04 01:18:08.000000000 +0000
+@@ -60,11 +60,11 @@
+ #include "globals.h"
+ #include "receive.h"
  #include "timer.h"
  #include "ut.h"
  #ifdef USE_TLS
@@ -309,7 +364,11 @@ diff -u -r1.31 tcp_read.c
  #endif
  
  #define HANDLE_IO_INLINE
-@@ -184,7 +184,8 @@
+ #include "io_wait.h"
+ #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
+@@ -197,11 +197,12 @@ int tcp_read_headers(struct tcp_connecti
+ 	if (r->parsed<r->pos){
+ 		bytes=0;
  	}else{
  #ifdef USE_TLS
  		if (c->type==PROTO_TLS)
@@ -319,7 +378,11 @@ diff -u -r1.31 tcp_read.c
  		else
  #endif
  			bytes=tcp_read(c);
-@@ -414,10 +415,11 @@
+ 		if (bytes<=0) return bytes;
+ 	}
+@@ -515,14 +516,15 @@ int tcp_read_req(struct tcp_connection* 
+ 		resp=CONN_RELEASE;
+ 		s=con->fd;
  		req=&con->req;
  #ifdef USE_TLS
  		if (con->type==PROTO_TLS){
@@ -332,8 +395,11 @@ diff -u -r1.31 tcp_read.c
  			if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
  		}
  #endif
---- transport.h.orig	2006-01-27 12:11:43.000000000 +0100
-+++ transport.h	2006-01-27 11:10:37.000000000 +0100
+ 
+ again:
+diff -prNU5 transport.h
+--- transport.h	1970-01-01 00:00:00.000000000 +0000
++++ transport.h	2006-11-04 01:18:08.000000000 +0000
 @@ -0,0 +1,77 @@
 +/*
 + * $Id$
