@@ -537,8 +537,7 @@ ifeq	($(ARCH), i386)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
-					-Wall  
+				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= athlon64
@@ -599,8 +598,7 @@ ifeq	($(ARCH), x86_64)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
-					-Wall 
+				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= opteron
@@ -662,7 +660,6 @@ ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM -DSPARC64_MODE
 				#common stuff
 				CFLAGS=-m64 -g -O9 -funroll-loops  $(PROFILE) \
-					-Wall\
 					#-Wcast-align \
 					#-Wmissing-prototypes 
 				# use -m64 to force 64 bit (but add it also to LDFLAGS and
@@ -740,7 +737,6 @@ ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
-					-Wall\
 					#-Wcast-align \
 					#-Wmissing-prototypes 
 				#if gcc 4.x
@@ -797,8 +793,7 @@ ifeq	($(ARCH), arm)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-O9 -funroll-loops $(PROFILE) \
-					-Wall   
+				CFLAGS=-O9 -funroll-loops $(PROFILE)
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+= -ftree-vectorize
@@ -841,7 +836,7 @@ ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-march=armv6 -O9 -funroll-loops \
-						$(PROFILE) -Wall   
+						$(PROFILE)
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+= -ftree-vectorize
@@ -882,8 +877,7 @@ ifeq	($(ARCH), mips)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  $(PROFILE) \
-					-Wall 
+				CFLAGS=-O9 -funroll-loops  $(PROFILE)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+=-march=r3000 -minline-all-stringops \
@@ -924,8 +918,7 @@ ifeq	($(ARCH), mips2)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE) \
-					-Wall 
+				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+=-minline-all-stringops -ftree-vectorize
@@ -964,8 +957,7 @@ ifeq	($(ARCH), mips64)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -mips64 -O9 -funroll-loops $(PROFILE) \
-					-Wall 
+				CFLAGS= -mips64 -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+=-minline-all-stringops -ftree-vectorize
@@ -1004,7 +996,7 @@ ifeq	($(ARCH), alpha)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
+				CFLAGS= -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+= 
@@ -1044,7 +1036,7 @@ ifeq	($(ARCH), ppc)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
+				CFLAGS= -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= powerpc
@@ -1085,7 +1077,7 @@ ifeq	($(ARCH), ppc64)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
+				CFLAGS= -O9 -funroll-loops $(PROFILE)
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= powerpc64
 					CFLAGS+=-ftree-vectorize \
@@ -1119,6 +1111,7 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, ppc 
 
+CFLAGS+= $(CC_EXTRA_OPTS)
 
 
 # setting LDFLAGS
@@ -1178,7 +1171,20 @@ endif
 
 endif #mode=release
 
-CFLAGS+= $(CC_EXTRA_OPTS)
+
+# set pedantic compiler options
+ifeq ($(CC_NAME), gcc)
+		CFLAGS+= -Wall
+else # no gcc
+ifeq ($(CC_NAME), icc)
+		CFLAGS+= -Wall
+else # no icc
+ifeq ($(CC_NAME), suncc)
+		# FIXME: is the default (-Xa ?) enough?
+endif # CC_NAME=suncc
+endif # CC_NAME=icc
+endif # CC_NAME=gcc
+
 
 #*FLAGS used for compiling the modules
 ifeq	($(CC_NAME), gcc)
