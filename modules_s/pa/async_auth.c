@@ -93,10 +93,10 @@ int async_auth_timer_init()
 
 int ask_auth_rules(presentity_t *p)
 {
-	int len;
+	int len, res;
 	mq_message_t *msg;
 	async_auth_query_t *params;
-	presence_rules_t *rules;
+	presence_rules_t *rules = NULL;
 
 	/* ! call from critical section locked by pdomain mutex ! */
 	
@@ -107,9 +107,10 @@ int ask_auth_rules(presentity_t *p)
 	if (!async_auth_queries) {
 		/* do synchronous query - it is called from locked section,
 		 * thus it is not good for performance! */
-		xcap_get_pres_rules(&p->uuid, &rules, &p->xcap_params);
-		set_auth_rules(p, rules);
-		return 0;
+		res = xcap_get_pres_rules(&p->uuid, &rules, &p->xcap_params);
+		if (res == RES_OK)
+			set_auth_rules(p, rules);
+		return res;
 	}
 	
 	/* Ask for authorization rules (only XCAP now). This should be done 
