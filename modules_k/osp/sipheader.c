@@ -607,24 +607,28 @@ void ospGetNextHop(
 
     for (hf = msg->headers; hf; hf = hf->next) {
         if (hf->type == HDR_ROUTE_T) {
-            rt = (rr_t*)hf->parsed;    
-            if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len, &uri) == 0) {
-                LOG(L_DBG, "osp: host '%.*s' port '%d'\n", uri.host.len, uri.host.s, uri.port_no);
+            for (rt = (rr_t*)hf->parsed; rt; rt = rt->next) {
+                if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len, &uri) == 0) {
+                    LOG(L_DBG, "osp: host '%.*s' port '%d'\n", uri.host.len, uri.host.s, uri.port_no);
 
-                if (check_self(&uri.host, uri.port_no ? uri.port_no : SIP_PORT, PROTO_NONE) != 1) {
-                    LOG(L_DBG, "osp: it is NOT me, FOUND!\n");
+                    if (check_self(&uri.host, uri.port_no ? uri.port_no : SIP_PORT, PROTO_NONE) != 1) {
+                        LOG(L_DBG, "osp: it is NOT me, FOUND!\n");
 
-                    ospCopyStrToBuffer(&uri.host, nexthop, buffersize);
-                    found = 1;
-                    break;
+                        ospCopyStrToBuffer(&uri.host, nexthop, buffersize);
+                        found = 1;
+                        break;
+                    } else {
+                        LOG(L_DBG, "osp: it IS me, keep looking\n");
+                    }
                 } else {
-                    LOG(L_DBG, "osp: it IS me, keep looking\n");
+                    LOG(L_ERR, 
+                        "osp: ERROR: failed to parsed route uri '%.*s'\n", 
+                        rt->nameaddr.uri.len, 
+                        rt->nameaddr.uri.s);
                 }
-            } else {
-                LOG(L_ERR, 
-                    "osp: ERROR: failed to parsed route uri '%.*s'\n", 
-                    rt->nameaddr.uri.len, 
-                    rt->nameaddr.uri.s);
+            }
+            if (found == 1) {
+                break;
             }
         }
     }
