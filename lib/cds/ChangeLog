@@ -1,3 +1,6 @@
+2006-11-06
+	* bug correction - output of get_pres_rules initialized - reported by Bogdan
+
 2006-09-01
 	* corrected memory leaks in route serialization
 	* str_dup separated to macro and implementation function -> better for

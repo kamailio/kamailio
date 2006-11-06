@@ -41,6 +41,8 @@ int get_pres_rules(const str_t *username, const str_t *filename,
 	char *uri = NULL;
 	int res = RES_OK;
 	
+	if (dst) *dst = NULL;
+
 	uri = xcap_uri_for_users_document(xcap_doc_pres_rules,
 				username, filename, xcap_params);
 	if (!uri) {
