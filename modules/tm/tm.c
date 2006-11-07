@@ -658,10 +658,6 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 {
 	struct cell *ret;
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
-		if (t_check( msg , 0 )==-1) {
-			LOG(L_WARN, "WARNING: t_lookup_cancel() failed to find transaction\n");
-			return -1;
-		}
 		ret = t_lookupOriginalT( msg );
 		DBG("lookup_original: t_lookupOriginalT returned: %p\n", ret);
 		if (ret != T_NULL_CELL) {

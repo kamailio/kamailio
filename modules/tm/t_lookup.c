@@ -616,7 +616,6 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	 */
 	if (!p_msg->via1) {
 		LOG(L_ERR, "ERROR: t_lookupOriginalT: no via\n");
-		set_t(0);
 		return 0;
 	}
 	branch=p_msg->via1->branch;
