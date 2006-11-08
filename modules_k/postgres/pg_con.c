@@ -47,10 +47,10 @@ struct pg_con* pg_new_conn(struct db_id* id)
 
 	ptr = (struct pg_con*)pkg_malloc(sizeof(struct pg_con));
 	if (!ptr) {
-		LOG(L_ERR, "PG[new_conn]: Failed trying to allocated %d bytes for connection structure.\n", sizeof(struct pg_con));
+		LOG(L_ERR, "PG[new_conn]: Failed trying to allocated %lu bytes for connection structure.\n", (unsigned long)sizeof(struct pg_con));
 		return 0;
 	}
-	LOG(L_DBG, "PG[new_conn]: pkg_malloc(%d)=%p\n", sizeof(struct pg_con), ptr);
+	LOG(L_DBG, "PG[new_conn]: %p=pkg_malloc(%lu)\n", ptr, (unsigned long)sizeof(struct pg_con));
 
 	memset(ptr, 0, sizeof(struct pg_con));
 	ptr->ref = 1;

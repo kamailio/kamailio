@@ -69,9 +69,9 @@ db_res_t* pg_new_result(void)
 	db_res_t* _res = NULL;
 
 	_res = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	LOG(L_DBG, "PG[new_result]: %p=pkg_malloc(%d) _res\n", _res, sizeof(db_res_t));
+	LOG(L_DBG, "PG[new_result]: %p=pkg_malloc(%lu) _res\n", _res, (unsigned long)sizeof(db_res_t));
         if (!_res) {
-                LOG(L_ERR, "PG[new_result]: Failed to allocate %d bytes for result structure\n", sizeof(db_res_t));
+                LOG(L_ERR, "PG[new_result]: Failed to allocate %lu bytes for result structure\n", (unsigned long)sizeof(db_res_t));
                 return NULL;
         }
 	
@@ -147,17 +147,17 @@ int pg_get_columns(db_con_t* _con, db_res_t* _res)
 
 	/* Allocate storage to hold a pointer to each column name */
         RES_NAMES(_res) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * cols);
-	LOG(L_DBG, "PG[get_columns]: %p=pkg_malloc(%d) RES_NAMES\n", RES_NAMES(_res), (sizeof(db_key_t) * cols));
+	LOG(L_DBG, "PG[get_columns]: %p=pkg_malloc(%lu) RES_NAMES\n", RES_NAMES(_res), (unsigned long)(sizeof(db_key_t) * cols));
 	if (!RES_NAMES(_res)) {
-                LOG(L_ERR, "PG[get_columns]: Failed to allocate %d bytes for column names\n", (sizeof(db_key_t) * cols));
+                LOG(L_ERR, "PG[get_columns]: Failed to allocate %lu bytes for column names\n", (unsigned long)(sizeof(db_key_t) * cols));
                 return -3;
         }
 
 	/* Allocate storage to hold the type of each column */
         RES_TYPES(_res) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * cols);
-	LOG(L_DBG, "PG[get_columns]: %p=pkg_malloc(%d) RES_TYPES\n", RES_TYPES(_res), (sizeof(db_type_t) * cols));
+	LOG(L_DBG, "PG[get_columns]: %p=pkg_malloc(%lu) RES_TYPES\n", RES_TYPES(_res), (unsigned long)(sizeof(db_type_t) * cols));
         if (!RES_TYPES(_res)) {
-                LOG(L_ERR, "PG[get_columns]: Failed to allocate %d bytes for column types\n", (sizeof(db_type_t) * cols));
+                LOG(L_ERR, "PG[get_columns]: Failed to allocate %lu bytes for column types\n", (unsigned long)(sizeof(db_type_t) * cols));
 		/* Free previously allocated storage that was to hold column names */
 		LOG(L_DBG, "PG[get_columns]: %p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
 		pkg_free(RES_NAMES(_res));
