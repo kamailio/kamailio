@@ -660,22 +660,6 @@ void free_sip_msg(struct sip_msg* msg)
 }
 
 
-/* make sure all HFs needed for transaction identification have been
-   parsed; return 0 if those HFs can't be found
-*/
-
-int check_transaction_quadruple( struct sip_msg* msg )
-{
-	if ( parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F,0)!=-1
-		&& msg->from && msg->to && msg->callid && msg->cseq ) {
-		return 1;
-	} else {
-		ser_error=E_BAD_TUPEL;
-		return 0;
-	}
-}
-
-
 /*
  * Make a private copy of the string and assign it to dst_uri
  */

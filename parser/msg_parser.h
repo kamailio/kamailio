@@ -39,11 +39,13 @@
  *  2004-11-08  added force_send_socket (andrei)
  *  2005-02-25  uri types added (sip, sips & tel)  (andrei)
  *  2006-04-20  uri comp member (only if USE_COMP is defined) (andrei)
+ *  2006-11-10  check_transaction_quadruple inlined (andrei)
  */
 
 
 #ifndef msg_parser_h
 #define msg_parser_h
+
 
 #include "../comp_defs.h"
 #include "../str.h"
@@ -58,6 +60,7 @@
 #include "parse_via.h"
 #include "parse_fline.h"
 #include "hf.h"
+#include "../error.h"
 
 
 /* convenience short-cut macros */
@@ -80,6 +83,7 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
                                (for failure route use) */
 #define FL_REPLIED     64  /* message branch received at least one reply
                                 (for failure route use) */
+#define FL_HASH_INDEX  128 /* msg->hash_index contains a valid value (tm use)*/
 
 
 #define IFISMETHOD(methodname,firstchar)                                  \
@@ -286,7 +290,22 @@ void free_sip_msg(struct sip_msg* msg);
    parsed; return 0 if those HFs can't be found
  */
 
-int check_transaction_quadruple( struct sip_msg* msg );
+
+/* make sure all HFs needed for transaction identification have been
+   parsed; return 0 if those HFs can't be found
+*/
+inline static int check_transaction_quadruple( struct sip_msg* msg )
+{
+	if ( parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F,0)!=-1
+		&& msg->from && msg->to && msg->callid && msg->cseq ) {
+		return 1;
+	} else {
+		ser_error=E_BAD_TUPEL;
+		return 0;
+	}
+}
+
+
 
 /* calculate characteristic value of a message -- this value
    is used to identify a transaction during the process of
