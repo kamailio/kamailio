@@ -241,6 +241,12 @@ struct db_id* new_db_id(const char* url)
 }
 
 
+/* compare s1 & s2  with a function f (which should return 0 if ==);
+ * s1 & s2 can be null
+ * return 0 if match, 1 if not */
+#define cmpstr(s1, s2, f) \
+	((s1)!=(s2)) && ((s1)==0 || (s2)==0 || (f)((s1), (s2))!=0)
+
 /*
  * Compare two connection identifiers
  */
@@ -249,11 +255,11 @@ unsigned char cmp_db_id(struct db_id* id1, struct db_id* id2)
 	if (!id1 || !id2) return 0;
 	if (id1->port != id2->port) return 0;
 
-	if (strcmp(id1->scheme, id2->scheme)) return 0;
-	if (strcmp(id1->username, id2->username)) return 0;
-	if (strcmp(id1->password, id2->password)) return 0;
-	if (strcasecmp(id1->host, id2->host)) return 0;
-	if (strcmp(id1->database, id2->database)) return 0;
+	if (cmpstr(id1->scheme, id2->scheme, strcmp)) return 0;
+	if (cmpstr(id1->username, id2->username, strcmp)) return 0;
+	if (cmpstr(id1->password, id2->password, strcmp)) return 0;
+	if (cmpstr(id1->host, id2->host, strcasecmp)) return 0;
+	if (cmpstr(id1->database, id2->database, strcmp)) return 0;
 	return 1;
 }
 
