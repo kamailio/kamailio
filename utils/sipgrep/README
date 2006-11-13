@@ -1,0 +1,15 @@
+sipgrep was created by Alexandr Dubovikov <shurik@start4.info>
+
+It is a wrapper on ngrep which
+ * filters SIP messages according number in To or From header fields
+ * displays From tag, To tag, Call-ID and branch in
+   different colours, thus it is possible to trace dialogs or transactions 
+   by "one look into message" ... this is really great! ;-)
+ * It can store received messages into a file and show them (together)
+
+Known "issues":
+ * you might need to change "path to ngrep", for example I changed it to
+      $ngrep="sudo ngrep -d any";
+   which runs ngrep on all interfaces under sudo for me
+
+[ README written by Vaclav ]
