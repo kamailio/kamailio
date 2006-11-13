@@ -494,7 +494,7 @@ static inline int build_user_AOR(str *username, str *domain, str *uh, int sip)
 		/* do we need to strip realm prefix? */
 		if (cpl_env.realm_prefix.len && cpl_env.realm_prefix.len<domain->len){
 			for( i=cpl_env.realm_prefix.len-1 ; i>=0 ; i-- )
-				if ( cpl_env.realm_prefix.s[i]!=((domain->s[i])|(0x20)) )
+				if ( cpl_env.realm_prefix.s[i]!=tolower(domain->s[i]) )
 					break;
 			if (i==-1)
 				do_strip = 1;
@@ -520,13 +520,13 @@ static inline int build_user_AOR(str *username, str *domain, str *uh, int sip)
 		p += username->len;
 	} else {
 		for(i=0;i<username->len;i++)
-			*(p++) = (0x20)|(username->s[i]);
+			*(p++) = tolower(username->s[i]);
 	}
 	if (sip || cpl_env.use_domain) {
 		*(p++) = '@';
 		/* host part in lower cases */
 		for( i=do_strip*cpl_env.realm_prefix.len ; i< domain->len ; i++ )
-			*(p++) = (0x20)|(domain->s[i]);
+			*(p++) = tolower(domain->s[i]);
 	}
 	*(p++) = 0;
 
