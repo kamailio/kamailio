@@ -49,12 +49,12 @@ static int db_add_extension_element(presentity_t *p, pa_extension_element_t *n)
 	/* run update */
 	
 	if (pa_dbf.use_table(pa_db, extension_elements_table) < 0) {
-		LOG(L_ERR, "db_add_extension_element: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.insert(pa_db, cols, vals, n_updates) < 0) {
-		LOG(L_ERR, "db_add_extension_element: Can't insert record\n");
+		ERR("Can't insert record\n");
 		return -1;
 	}
 	
@@ -73,12 +73,12 @@ static int db_remove_extension_element(presentity_t *p, pa_extension_element_t *
 	if (!use_db) return 0;
 
 	if (pa_dbf.use_table(pa_db, extension_elements_table) < 0) {
-		LOG(L_ERR, "db_remove_extension_element: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.delete(pa_db, keys, ops, k_vals, 3) < 0) {
-		LOG(L_ERR, "db_remove_extension_element: Can't delete record\n");
+		ERR("Can't delete record\n");
 		return -1;
 	}
 	
@@ -113,7 +113,7 @@ int db_update_extension_element(presentity_t *p, pa_extension_element_t *n)
 	n_updates++;	
 	
 	if (pa_dbf.use_table(pa_db, extension_elements_table) < 0) {
-		LOG(L_ERR, "db_remove_extension_element: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 
@@ -142,14 +142,14 @@ int db_read_extension_elements(presentity_t *p, db_con_t* db)
 	if (!use_db) return 0;
 
 	if (pa_dbf.use_table(db, extension_elements_table) < 0) {
-		LOG(L_ERR, "db_read_extension_elements: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 	
 	if (pa_dbf.query (db, keys, ops, k_vals,
 			result_cols, 1, sizeof(result_cols) / sizeof(db_key_t), 
 			0, &res) < 0) {
-		LOG(L_ERR, "db_read_extension_elements(): Error while querying presence extension_elements\n");
+		ERR("Error while querying presence extension_elements\n");
 		return -1;
 	}
 

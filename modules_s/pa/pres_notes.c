@@ -54,12 +54,12 @@ static int db_add_pres_note(presentity_t *p, pa_presence_note_t *n)
 	/* run update */
 	
 	if (pa_dbf.use_table(pa_db, presentity_notes_table) < 0) {
-		LOG(L_ERR, "db_add_pres_note: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.insert(pa_db, cols, vals, n_updates) < 0) {
-		LOG(L_ERR, "db_add_pres_note: Can't insert record\n");
+		ERR("Can't insert record\n");
 		return -1;
 	}
 	
@@ -100,7 +100,7 @@ int db_update_pres_note(presentity_t *p, pa_presence_note_t *n)
 	n_updates++;	
 
 	if (pa_dbf.use_table(pa_db, presentity_notes_table) < 0) {
-		LOG(L_ERR, "db_remove_pres_note: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 	
@@ -125,12 +125,12 @@ static int db_remove_pres_note(presentity_t *p, pa_presence_note_t *n)
 	if (!use_db) return 0;
 
 	if (pa_dbf.use_table(pa_db, presentity_notes_table) < 0) {
-		LOG(L_ERR, "db_remove_pres_note: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 
 	if (pa_dbf.delete(pa_db, keys, ops, k_vals, 3) < 0) {
-		LOG(L_ERR, "db_remove_pres_note: Can't delete record\n");
+		ERR("Can't delete record\n");
 		return -1;
 	}
 	
@@ -153,14 +153,14 @@ int db_read_notes(presentity_t *p, db_con_t* db)
 	if (!use_db) return 0;
 
 	if (pa_dbf.use_table(db, presentity_notes_table) < 0) {
-		LOG(L_ERR, "db_read_notes: Error in use_table\n");
+		ERR("Error in use_table\n");
 		return -1;
 	}
 	
 	if (pa_dbf.query (db, keys, ops, k_vals,
 			result_cols, 1, sizeof(result_cols) / sizeof(db_key_t), 
 			0, &res) < 0) {
-		LOG(L_ERR, "db_read_notes(): Error while querying presence notes\n");
+		ERR("Error while querying presence notes\n");
 		return -1;
 	}
 
