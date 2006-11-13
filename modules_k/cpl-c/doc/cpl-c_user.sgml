@@ -361,14 +361,14 @@ modparam("cpl_c","timer_avp","i:14")
 			</para>
 			<para>
 				<emphasis>
-					Default value of this parameter is 6.
+					Default value is -1 (disabled).
 				</emphasis>
 			</para>
 			<example>
 				<title>Set <varname>nat_flag</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","nat_flag",4)
+modparam("cpl_c","nat_flag",6)
 ...
 </programlisting>
 			</example>

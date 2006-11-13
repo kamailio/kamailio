@@ -30,9 +30,9 @@
 
 
 /* forwards the msg to the given location set; if flags has set the
- * CPL_PROXY_DONE, all locations will be added as branches, otherwise, the first
- * one will set as RURI (this is ha case when this is the first proxy of the
- * message)
+ * CPL_PROXY_DONE, all locations will be added as branches, otherwise, the 
+ * first one will set as RURI (this is ha case when this is the first proxy 
+ * of the message)
  * The given list of location will be freed, returning 0 instead.
  * Returns:  0 - OK
  *          -1 - error */
@@ -81,7 +81,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		/* is the location NATED? */
 		if ((*locs)->flags&CPL_LOC_NATED)
 			/* for RURI branch, the nat flag goes into msg */
-			setflag(msg,cpl_env.nat_flag);
+			msg->flags |= cpl_env.nat_flag;
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );
@@ -100,8 +100,6 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 				"appending branch <%s>\n",(*locs)->addr.uri.s);
 			goto error;
 		}
-		/* is the location NATED? */
-		if (bflags) setflag(msg,bflags);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );

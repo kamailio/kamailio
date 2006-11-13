@@ -304,11 +304,11 @@ modparam("cpl_c","timer_avp","i:14")
    tag when retrieving a contact behind a NAT (this flag will be
    set).
 
-   Default value of this parameter is 6. 
+   Default value is -1 (disabled). 
 
    Example 1-14. Set nat_flag parameter
 ...
-modparam("cpl_c","nat_flag",4)
+modparam("cpl_c","nat_flag",6)
 ...
      _________________________________________________________
 

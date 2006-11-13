@@ -83,7 +83,7 @@ struct cpl_enviroment    cpl_env = {
 		0, /* no cpl logging */
 		0, /* recurse proxy level is 0 */
 		0, /* no script route to be run before proxy */
-		6, /* nat flag */
+		-1,/* nat mask */
 		0, /* user part is not case sensitive */
 		{0,0},   /* no domain prefix to be ignored */
 		{-1,-1}, /* communication pipe to aux_process */
@@ -403,6 +403,9 @@ static int cpl_init(void)
 		/* convert the realm_prefix to lower cases */
 		strlower( &cpl_env.realm_prefix );
 	}
+
+	/* fix the flags */
+	cpl_env.nat_flag = (cpl_env.nat_flag>-1)?(1<<cpl_env.nat_flag):0;
 
 	return 0;
 error:
