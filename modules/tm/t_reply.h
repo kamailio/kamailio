@@ -87,6 +87,11 @@ int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt);
  */
 int reply_received( struct sip_msg  *p_msg ) ;
 
+/* return 1 if a failure_route processes */
+int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
+					int code, int extra_flags);
+typedef int (*run_failure_handlers_f)(struct cell*, struct sip_msg*, int, int);
+
 
 /* Retransmits the last sent inbound reply.
  * Returns  -1 - error

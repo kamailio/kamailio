@@ -140,7 +140,9 @@ static inline int calculate_hooks(dlg_t* _d)
 	} else {
 		if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
 		else _d->hooks.request_uri = &_d->rem_uri;
-		_d->hooks.next_hop = _d->hooks.request_uri;
+		
+		if (_d->dst_uri.s) _d->hooks.next_hop = &_d->dst_uri;
+		else _d->hooks.next_hop = _d->hooks.request_uri;
 	}
 
 	if ((_d->hooks.request_uri) && (_d->hooks.request_uri->s) && (_d->hooks.request_uri->len)) {
@@ -446,6 +448,11 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 		_d->rem_target.s = 0; 
 		_d->rem_target.len = 0;
 	}
+	if (_d->dst_uri.s) {
+		shm_free(_d->dst_uri.s);
+		_d->dst_uri.s = 0; 
+		_d->dst_uri.len = 0;
+	}
 	if (contact.len && str_duplicate(&_d->rem_target, &contact) < 0) return -3;
 	
 	if (get_to_tag(_m, &rtag) < 0) goto err1;
@@ -601,8 +608,14 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m,
 		if (get_contact_uri(_m, &contact) < 0) return -3;
 		     /* If there is a contact URI */
 		if (contact.len) {
-			     /* Free old remote target if any */
+			     /* Free old remote target and destination uri if any */
 			if (_d->rem_target.s) shm_free(_d->rem_target.s);
+			if (_d->dst_uri.s) {
+				shm_free(_d->dst_uri.s);
+				_d->dst_uri.s = 0;
+				_d->dst_uri.len = 0;
+			}
+				
 			     /* Duplicate new remote target */
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -4;
 		}
@@ -637,7 +650,7 @@ int dlg_response_uac(dlg_t* _d, struct sip_msg* _m,
 		return dlg_confirmed_resp_uac(_d, _m, is_target_refresh);
 
 	case DLG_DESTROYED:
-		LOG(L_ERR, "dlg_response_uac(): Cannot handle destroyed dialog\n");
+		LOG(L_DBG, "dlg_response_uac(): Cannot handle destroyed dialog\n");
 		return -2;
 	}
 
@@ -749,7 +762,15 @@ static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 	}
 
 	if (get_contact_uri(_m, &contact) < 0) return -2;
-	if (contact.len && str_duplicate(&_d->rem_target, &contact) < 0) return -3;
+	if (contact.len) {
+		if (_d->rem_target.s) shm_free(_d->rem_target.s);
+		if (_d->dst_uri.s) {
+			shm_free(_d->dst_uri.s);
+			_d->dst_uri.s = 0;
+			_d->dst_uri.len = 0;
+		}
+		if (str_duplicate(&_d->rem_target, &contact) < 0) return -3;
+	}
 	
 	if (get_from_tag(_m, &rtag) < 0) goto err1;
 	if (rtag.len && str_duplicate(&_d->id.rem_tag, &rtag) < 0) goto err1;
@@ -803,9 +824,8 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 		return -1;
 	}
 
-	if ((_code < 200) || (_code > 299)) {
-		DBG("new_dlg_uas(): Not a 2xx, no dialog created\n");
-		return -2;
+	if (_code > 299) {
+		DBG("new_dlg_uas(): Status code >= 300, no dialog created\n");
 	}
 
 	res = (dlg_t*)shm_malloc(sizeof(dlg_t));
@@ -822,22 +842,70 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 		return -4;
 	}
 
-	tag.s = tm_tags;
-	tag.len = TOTAG_VALUE_LEN;
-	calc_crc_suffix(_req, tm_tag_suffix);
-	if (str_duplicate(&res->id.loc_tag, &tag) < 0) {
-		free_dlg(res);
-		return -5;
+	if (_code > 100) {
+		tag.s = tm_tags;
+		tag.len = TOTAG_VALUE_LEN;
+		calc_crc_suffix(_req, tm_tag_suffix);
+		if (str_duplicate(&res->id.loc_tag, &tag) < 0) {
+			free_dlg(res);
+			return -5;
+		}
 	}
 	
 	*_d = res;
 
-	(*_d)->state = DLG_CONFIRMED;
+	if (_code < 100)
+		(*_d)->state = DLG_NEW;
+	else if (_code < 200)
+		(*_d)->state = DLG_EARLY;
+	else
+		(*_d)->state = DLG_CONFIRMED;
+
 	if (calculate_hooks(*_d) < 0) {
 		LOG(L_ERR, "new_dlg_uas(): Error while calculating hooks\n");
 		free_dlg(res);
 		return -6;
 	}
+
+	return 0;
+}
+
+/*
+ * UAS side - update dialog state and to tag
+ */
+int update_dlg_uas(dlg_t *_d, int _code, str* _tag)
+{
+	if (_d->state == DLG_CONFIRMED) {
+		LOG(L_ERR, "update_dlg_uas(): Dialog is already confirmed\n");
+		return -1;
+	} else if (_d->state == DLG_DESTROYED) {
+		LOG(L_ERR, "update_dlg_uas(): Dialog is already destroyed\n");
+		return -2;
+	}
+
+	if (_tag && _tag->s) {
+		if (_d->id.loc_tag.s) {
+			if ((_tag->len == _d->id.loc_tag.len)
+			&& (!memcmp(_tag->s, _d->id.loc_tag.s, _tag->len))) {
+				LOG(L_DBG, "update_dlg_uas(): Local tag is already set\n");
+			} else {
+				LOG(L_ERR, "update_dlg_uas(): ERROR: trying to rewrite local tag\n");
+				return -3;
+			}
+		} else {
+			if (str_duplicate(&_d->id.loc_tag, _tag) < 0) {
+				LOG(L_ERR, "update_dlg_uas(): Not enough memory\n");
+				return -4;
+			}
+		}
+	}
+
+	if ((100 < _code) && (_code < 200))
+		_d->state = DLG_EARLY;
+	else if (_code < 300)
+		_d->state = DLG_CONFIRMED;
+	else
+		_d->state = DLG_DESTROYED;
 
 	return 0;
 }
@@ -881,6 +949,11 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_re
 		if (get_contact_uri(_m, &contact) < 0) return -5;
 		if (contact.len) {
 			if (_d->rem_target.s) shm_free(_d->rem_target.s);
+			if (_d->dst_uri.s) {
+				shm_free(_d->dst_uri.s);
+				_d->dst_uri.s = 0;
+				_d->dst_uri.len = 0;
+			}
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -6;
 		}
 
@@ -985,6 +1058,7 @@ void free_dlg(dlg_t* _d)
 	if (_d->loc_uri.s) shm_free(_d->loc_uri.s);
 	if (_d->rem_uri.s) shm_free(_d->rem_uri.s);
 	if (_d->rem_target.s) shm_free(_d->rem_target.s);
+	if (_d->dst_uri.s) shm_free(_d->dst_uri.s);
 
 	     /* Free all routes in the route set */
 	shm_free_rr(&_d->route_set);
@@ -1008,6 +1082,7 @@ void print_dlg(FILE* out, dlg_t* _d)
 	fprintf(out, "loc_uri       : '%.*s'\n", _d->loc_uri.len, _d->loc_uri.s);
 	fprintf(out, "rem_uri       : '%.*s'\n", _d->rem_uri.len, _d->rem_uri.s);
 	fprintf(out, "rem_target    : '%.*s'\n", _d->rem_target.len, _d->rem_target.s);
+	fprintf(out, "dst_uri       : '%.*s'\n", _d->dst_uri.len, _d->dst_uri.s);
 	fprintf(out, "secure:       : %d\n", _d->secure);
 	fprintf(out, "state         : ");
 	switch(_d->state) {
@@ -1027,4 +1102,34 @@ void print_dlg(FILE* out, dlg_t* _d)
 		fprintf(out, "hooks.last_route : '%.*s'\n", _d->hooks.last_route->len, _d->hooks.last_route->s);
 	
 	fprintf(out, "====dlg_t====\n");
+}
+
+/*
+ * set dialog's request uri and destination uri (optional)
+ */
+int set_dlg_target(dlg_t* _d, str* _ruri, str* _duri) {
+
+	if (!_d || !_ruri) {
+		LOG(L_ERR, "set_dlg_target(): Invalid parameter value\n");
+		return -1;
+	}
+
+	if (_d->rem_target.s) shm_free(_d->rem_target.s);
+	if (_d->dst_uri.s) {
+		shm_free(_d->dst_uri.s);
+		_d->dst_uri.s = 0;
+		_d->dst_uri.len = 0;
+	}
+
+	if (str_duplicate(&_d->rem_target, _ruri)) return -1;
+	if (_duri && _duri->len) {
+		if (str_duplicate(&_d->dst_uri, _duri)) return -1;
+	}
+
+	if (calculate_hooks(_d)) {
+		LOG(L_ERR, "set_dlg_target(): Error while calculating hooks\n");
+		return -1;
+	}
+
+	return 0;
 }

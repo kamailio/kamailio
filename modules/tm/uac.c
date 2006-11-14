@@ -165,8 +165,9 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 	return hashid;
 }
 
-static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dialog,
-	  transaction_cb cb, void* cbp, struct retr_buf **dst_req)
+static inline int t_uac_prepare(str* method, str* headers, str* body, 
+		dlg_t* dialog, transaction_cb cb, void* cbp, struct retr_buf **dst_req,
+		struct cell **dst_cell)
 {
 	struct dest_info dst;
 	struct cell *new_cell;
@@ -174,18 +175,28 @@ static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dia
 	char* buf;
         int buf_len, ret, flags;
 	unsigned int hi;
+	int is_ack;
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
 
 	ret=-1;
+	hi=0; /* make gcc happy */
 	/*if (dst_req) *dst_req = NULL;*/
+	is_ack = (((method->len == 3) && (memcmp("ACK", method->s, 3)==0)) ? 1 : 0);
 	
 	/*** added by dcm 
 	 * - needed by external ua to send a request within a dlg
 	 */
-	if(!dialog->hooks.next_hop && w_calculate_hooks(dialog)<0)
+	if (w_calculate_hooks(dialog)<0 && !dialog->hooks.next_hop)
 		goto error2;
+
+	if (!dialog->loc_seq.is_set) {
+		/* this is the first request in the dialog,
+		set cseq to default value now - Miklos */
+		dialog->loc_seq.value = DEFAULT_CSEQ;
+		dialog->loc_seq.is_set = 1;
+	}
 
 	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
 			dialog->hooks.next_hop->s);
@@ -260,10 +271,12 @@ static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dia
 	
 	request->dst = dst;
 
-	hi=dlg2hash(dialog);
-	LOCK_HASH(hi);
-	insert_into_hash_table_unsafe(new_cell, hi);
-	UNLOCK_HASH(hi);
+	if (!is_ack) {
+		hi=dlg2hash(dialog);
+		LOCK_HASH(hi);
+		insert_into_hash_table_unsafe(new_cell, hi);
+		UNLOCK_HASH(hi);
+	}
 
 	buf = build_uac_req(method, headers, body, dialog, 0, new_cell,
 		&buf_len, &dst);
@@ -281,13 +294,16 @@ static inline int t_uac_prepare(str* method, str* headers, str* body, dlg_t* dia
 	new_cell->nr_of_outgoings++;
 	
 	if (dst_req) *dst_req = request;
+	if (dst_cell) *dst_cell = new_cell;
 	
 	return 1;
 
  error1:
-	LOCK_HASH(hi);
-	remove_from_hash_table_unsafe(new_cell);
-	UNLOCK_HASH(hi);
+ 	if (!is_ack) {
+		LOCK_HASH(hi);
+		remove_from_hash_table_unsafe(new_cell);
+		UNLOCK_HASH(hi);
+	}
 	free_cell(new_cell);
 error2:
 	return ret;
@@ -314,7 +330,7 @@ int prepare_req_within(str* method, str* headers,
 	if ((method->len == 6) && (!memcmp("CANCEL", method->s, 6))) goto send;
 	dialog->loc_seq.value++; /* Increment CSeq */
  send:
-	return t_uac_prepare(method, headers, body, dialog, completion_cb, cbp, dst_req);
+	return t_uac_prepare(method, headers, body, dialog, completion_cb, cbp, dst_req, 0);
 
  err:
 	/* if (cbp) shm_free(cbp); */
@@ -323,19 +339,19 @@ int prepare_req_within(str* method, str* headers,
 	return -1;
 }
 
-static inline void send_prepared_request_impl(struct retr_buf *request)
+static inline void send_prepared_request_impl(struct retr_buf *request, int retransmit)
 {
 	if (SEND_BUFFER(request) == -1) {
 		LOG(L_ERR, "t_uac: Attempt to send to precreated request failed\n");
 	}
 	
-	if (start_retr(request)!=0)
+	if (retransmit && (start_retr(request)!=0))
 		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", request);
 }
 
 void send_prepared_request(struct retr_buf *request)
 {
-	send_prepared_request_impl(request);
+	send_prepared_request_impl(request, 1 /* retransmit */);
 }
 
 /*
@@ -345,14 +361,48 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	  transaction_cb cb, void* cbp)
 {
 	struct retr_buf *request;
+	struct cell *cell;
 	int ret;
+	int is_ack;
 
-	ret = t_uac_prepare(method, headers, body, dialog, cb, cbp, &request);
+	ret = t_uac_prepare(method, headers, body, dialog, cb, cbp, &request, &cell);
 	if (ret < 0) return ret;
-	send_prepared_request_impl(request);
+	is_ack = (method->len == 3) && (memcmp("ACK", method->s, 3)==0) ? 1 : 0;
+	send_prepared_request_impl(request, !is_ack /* retransmit */);
+	if (cell && is_ack)
+		free_cell(cell);
 	return ret;
 }
 
+/*
+ * Send a request using data from the dialog structure
+ * ret_index and ret_label will identify the new cell
+ */
+int t_uac_with_ids(str* method, str* headers, str* body, dlg_t* dialog,
+	transaction_cb cb, void* cbp,
+	unsigned int *ret_index, unsigned int *ret_label)
+{
+	struct retr_buf *request;
+	struct cell *cell;
+	int ret;
+	int is_ack;
+
+	ret = t_uac_prepare(method, headers, body, dialog, cb, cbp, &request, &cell);
+	if (ret < 0) return ret;
+	is_ack = (method->len == 3) && (memcmp("ACK", method->s, 3)==0) ? 1 : 0;
+	send_prepared_request_impl(request, !is_ack /* retransmit */);
+	if (is_ack) {
+		if (cell) free_cell(cell);
+		if (ret_index && ret_label)
+			*ret_index = *ret_label = 0;
+	} else {
+		if (ret_index && ret_label) {
+			*ret_index = cell->hash_index;
+			*ret_label = cell->label;
+		}
+	}
+	return ret;
+}
 
 /*
  * Send a message within a dialog
@@ -361,11 +411,6 @@ int req_within(str* method, str* headers, str* body, dlg_t* dialog, transaction_
 {
 	if (!method || !dialog) {
 		LOG(L_ERR, "req_within: Invalid parameter value\n");
-		goto err;
-	}
-
-	if (dialog->state != DLG_CONFIRMED) {
-		LOG(L_ERR, "req_within: Dialog is not confirmed yet\n");
 		goto err;
 	}
 

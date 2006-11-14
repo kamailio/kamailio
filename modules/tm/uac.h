@@ -51,6 +51,8 @@ typedef int (*reqwith_t)(str* m, str* h, str* b, dlg_t* d, transaction_cb c, voi
 typedef int (*reqout_t)(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
 typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, str *next_hop, transaction_cb c, void* cp);
 typedef int (*t_uac_t)(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp);
+typedef int (*t_uac_with_ids_t)(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp,
+		unsigned int *ret_index, unsigned int *ret_label);
 typedef int (*prepare_request_within_f)(str* method, str* headers, 
 		str* body, dlg_t* dialog, transaction_cb cb, void* cbp,
 		struct retr_buf **request_dst);
@@ -74,7 +76,12 @@ int uac_init(void);
  */
 int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp);
 
-
+/*
+ * Send a request
+ * ret_index and ret_label will identify the new cell
+ */
+int t_uac_with_ids(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp,
+			unsigned int *ret_index, unsigned int *ret_label);
 /*
  * Send a message within a dialog
  */

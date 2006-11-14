@@ -133,9 +133,19 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'new_dlg_uas' not found\n");
 		return -1;
 	}
+	if (!(tmb->update_dlg_uas=(update_dlg_uas_f)find_export
+	("update_dlg_uas", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'update_dlg_uas' not found\n");
+		return -1;
+	}
 	if (!(tmb->dlg_request_uas=(dlg_request_uas_f)find_export
 	("dlg_request_uas", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'dlg_request_uas' not found\n");
+		return -1;
+	}
+	if (!(tmb->set_dlg_target=(set_dlg_target_f)find_export
+	("set_dlg_target", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'set_dlg_target' not found\n");
 		return -1;
 	}
 	if (!(tmb->free_dlg=(free_dlg_f)find_export("free_dlg", NO_SCRIPT, 0)) ) {
@@ -158,6 +168,28 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_uac' not found\n");
 		return -1;
 	}
+	if (!(tmb->t_uac_with_ids=(t_uac_with_ids_t)find_export("t_uac_with_ids", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_uac_with_ids' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_release=(trelease_f)find_export("t_release",0,0))) {
+		LOG( L_ERR, LOAD_ERROR "'t_release' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_unref=(tunref_f)find_export("t_unref",NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'t_unref' not found\n");
+		return -1;
+	}
+	if (!(tmb->run_failure_handlers=
+	    (run_failure_handlers_f)find_export("run_failure_handlers",NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'run_failure_handlers' not found\n");
+		return -1;
+	}
+	if (!(tmb->cancel_uacs=(cancel_uacs_f)find_export("cancel_uacs",NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'cancel_uacs' not found\n");
+		return -1;
+	}
+
 	tmb->prepare_request_within = prepare_req_within;
 	tmb->send_prepared_request = send_prepared_request;
 	

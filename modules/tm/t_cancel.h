@@ -67,6 +67,9 @@ void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
 int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags );
 int cancel_branch( struct cell *t, int branch, int flags );
 
+typedef int(*cancel_uacs_f)( struct cell *t, branch_bm_t cancel_bm,
+								int flags );
+
 
 
 /* should be called either with the REPLY_LOCK held or if its known

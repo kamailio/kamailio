@@ -96,6 +96,7 @@ typedef struct dlg {
 	str loc_uri;            /* Local URI */
 	str rem_uri;            /* Remote URI */
 	str rem_target;         /* Remote target URI */
+	str dst_uri;		/* Destination URI */
 	unsigned char secure;   /* Secure flag -- currently not used */
 	dlg_state_t state;      /* State of the dialog */
 	rr_t* route_set;        /* Route set */
@@ -130,6 +131,11 @@ typedef int (*dlg_response_uac_f)(dlg_t* _d, struct sip_msg* _m, target_refresh_
 int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d);
 typedef int (*new_dlg_uas_f)(struct sip_msg* _req, int _code, dlg_t** _d);
 
+/*
+ * UAS side - update dialog state and to tag
+ */
+int update_dlg_uas(dlg_t *_d, int _code, str* _tag);
+typedef int (*update_dlg_uas_f)(dlg_t *_d, int _code, str* _tag);
 
 /*
  * UAS side - update a dialog from a request
@@ -170,5 +176,11 @@ char* print_routeset(char* buf, dlg_t* _d);
  */
 int w_calculate_hooks(dlg_t* _d);
 typedef int (*calculate_hooks_f)(dlg_t* _d);
+
+/*
+ * set dialog's request uri and destination uri (optional)
+ */
+int set_dlg_target(dlg_t* _d, str* _ruri, str* _duri);
+typedef int (*set_dlg_target_f)(dlg_t* _d, str* _ruri, str* _duri);
 
 #endif /* DLG_H */

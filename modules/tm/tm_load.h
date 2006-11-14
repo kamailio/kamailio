@@ -46,6 +46,7 @@
 #include "t_lookup.h"
 #include "t_reply.h"
 #include "dlg.h"
+#include "t_cancel.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -94,12 +95,19 @@ struct tm_binds {
 	new_dlg_uac_f      new_dlg_uac;
 	dlg_response_uac_f dlg_response_uac;
 	new_dlg_uas_f      new_dlg_uas;
+	update_dlg_uas_f   update_dlg_uas;
 	dlg_request_uas_f  dlg_request_uas;
+	set_dlg_target_f   set_dlg_target;
 	free_dlg_f         free_dlg;
 	print_dlg_f        print_dlg;
 	tgett_f            t_gett;
 	calculate_hooks_f  calculate_hooks;
 	t_uac_t            t_uac;
+	t_uac_with_ids_t   t_uac_with_ids;
+	trelease_f         t_release;
+	tunref_f           t_unref;
+	run_failure_handlers_f run_failure_handlers;
+	cancel_uacs_f      cancel_uacs;
 	prepare_request_within_f  prepare_request_within;
 	send_prepared_request_f   send_prepared_request;
 	enum route_mode*   route_mode;

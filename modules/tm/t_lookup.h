@@ -66,6 +66,7 @@ int add_branch_label( struct cell *trans,
 
 /* releases T-context */
 int t_unref( struct sip_msg *p_msg);
+typedef int (*tunref_f)( struct sip_msg *p_msg);
 
 /* function returns:
  *      -1 - transaction wasn't found
@@ -89,6 +90,7 @@ typedef int (*tislocal_f)(struct sip_msg*);
 typedef int (*tnewtran_f)(struct sip_msg*);
 typedef int (*tget_ti_f)(struct sip_msg*, unsigned int*, unsigned int*);
 typedef int (*tlookup_ident_f)(struct cell**, unsigned int, unsigned int);
+typedef int (*trelease_f)(struct sip_msg*);
 
 int t_is_local(struct sip_msg*);
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label);

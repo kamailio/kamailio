@@ -114,6 +114,7 @@
 #include "t_cancel.h"
 #include "t_fifo.h"
 #include "timer.h"
+#include "t_msgbuilder.h"
 
 MODULE_VERSION
 
@@ -296,12 +297,18 @@ static cmd_export_t cmds[]={
 	{"new_dlg_uac",        (cmd_function)new_dlg_uac,       NO_SCRIPT,   0, 0},
 	{"dlg_response_uac",   (cmd_function)dlg_response_uac,  NO_SCRIPT,   0, 0},
 	{"new_dlg_uas",        (cmd_function)new_dlg_uas,       NO_SCRIPT,   0, 0},
+	{"update_dlg_uas",     (cmd_function)update_dlg_uas,    NO_SCRIPT,   0, 0},
 	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,   0, 0},
+	{"set_dlg_target",     (cmd_function)set_dlg_target,    NO_SCRIPT,   0, 0},
 	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,   0, 0},
 	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,   0, 0},
 	{T_GETT,               (cmd_function)get_t,             NO_SCRIPT,   0, 0},
 	{"calculate_hooks",    (cmd_function)w_calculate_hooks, NO_SCRIPT,   0, 0},
 	{"t_uac",              (cmd_function)t_uac,             NO_SCRIPT,   0, 0},
+	{"t_uac_with_ids",     (cmd_function)t_uac_with_ids,    NO_SCRIPT,   0, 0},
+	{"t_unref",            (cmd_function)t_unref,           NO_SCRIPT,   0, 0},
+	{"run_failure_handlers", (cmd_function)run_failure_handlers, NO_SCRIPT,   0, 0},
+	{"cancel_uacs",        (cmd_function)cancel_uacs,       NO_SCRIPT,   0, 0},
 	{0,0,0,0,0}
 };
 
@@ -664,8 +671,10 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 			/* The cell is reffed by t_lookupOriginalT, but T is not set.
 			So we must unref it before returning. */
 			UNREF(ret);
+			set_t(T_UNDEFINED);
 			return 1;
 		}
+		set_t(T_UNDEFINED);
 	} else {
 		LOG(L_WARN, "WARNING: script error t_lookup_cancel() called for non-CANCEL request\n");
 	}
@@ -896,10 +905,15 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 {
 	struct cell *t;
+	int ret;
+	
 	if (t_check( msg  , 0  )==-1) return -1;
 	t=get_t();
-	if ( t && t!=T_UNDEFINED )
-		return t_release_transaction( t );
+	if ( t && t!=T_UNDEFINED ) {
+		ret = t_release_transaction( t );
+		t_unref(msg);
+		return ret;
+	}
 	return 1;
 }
 
