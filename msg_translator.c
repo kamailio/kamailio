@@ -397,7 +397,8 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 
 
 
-char* clen_builder(struct sip_msg* msg, int *clen_len, int diff)
+char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff, 
+					int body_only)
 {
 	char* buf;
 	int len;
@@ -418,16 +419,26 @@ char* clen_builder(struct sip_msg* msg, int *clen_len, int diff)
 	value_s=int2str(value, &value_len);
 	DBG("clen_builder: content-length: %d (%s)\n", value, value_s);
 
-	len=CONTENT_LENGTH_LEN+value_len+CRLF_LEN;
+	if (body_only) {
+		len=value_len;
+	}
+	else {
+		len=CONTENT_LENGTH_LEN+value_len+CRLF_LEN;
+	}
 	buf=pkg_malloc(sizeof(char)*(len+1));
 	if (buf==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: clen_builder: out of memory\n");
 		return 0;
 	}
-	memcpy(buf, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-	memcpy(buf+CONTENT_LENGTH_LEN, value_s, value_len);
-	memcpy(buf+CONTENT_LENGTH_LEN+value_len, CRLF, CRLF_LEN);
+	if (body_only) {
+		memcpy(buf, value_s, value_len);
+	}
+	else {
+		memcpy(buf, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		memcpy(buf+CONTENT_LENGTH_LEN, value_s, value_len);
+		memcpy(buf+CONTENT_LENGTH_LEN+value_len, CRLF, CRLF_LEN);
+	}
 	buf[len]=0; /* null terminate it */
 	*clen_len=len;
 	return buf;
@@ -1308,7 +1319,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 {
 	struct lump* anchor;
 	char* clen_buf;
-	int clen_len;
+	int clen_len, body_only;
 
 	/* Calculate message length difference caused by lumps modifying message
 	 * body, from this point on the message body must not be modified. Zero
@@ -1317,6 +1328,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 
 	clen_buf = 0;
 	anchor=0;
+	body_only=1;
 
 	/* check to see if we need to add clen */
 #ifdef USE_TCP
@@ -1340,6 +1352,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 				LOG(L_ERR, "adjust_clen: cannot set clen anchor\n");
 				goto error;
 			}
+			body_only=0;
 		}
 	}
 #endif
@@ -1368,13 +1381,14 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 					LOG(L_ERR, "adjust_clen: cannot set clen anchor\n");
 					goto error;
 				}
+				body_only=0;
 			}else{
-				DBG("add_clen: UDP packet with no clen => not adding one \n");
+				DBG("adjust_clen: UDP packet with no clen => not adding one \n");
 			}
 		}else{
 			/* Content-Length has been found, remove it */
-			anchor = del_lump(	msg, msg->content_length->name.s - msg->buf,
-								msg->content_length->len, HDR_CONTENTLENGTH_T);
+			anchor = del_lump(	msg, msg->content_length->body.s - msg->buf,
+								msg->content_length->body.len, HDR_CONTENTLENGTH_T);
 			if (anchor==0) {
 				LOG(L_ERR, "adjust_clen: Can't remove original"
 							" Content-Length\n");
@@ -1384,7 +1398,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 	}
 
 	if (anchor){
-		clen_buf = clen_builder(msg, &clen_len, body_delta);
+		clen_buf = clen_builder(msg, &clen_len, body_delta, body_only);
 		if (!clen_buf) goto error;
 		if (insert_new_lump_after(anchor, clen_buf, clen_len,
 					HDR_CONTENTLENGTH_T) == 0)
