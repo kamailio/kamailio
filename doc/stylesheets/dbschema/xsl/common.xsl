@@ -1,5 +1,7 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version='1.0'>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:db="#"
+	version='1.0'>
     
     <xsl:key name="column_id" match="column" use="@id|xml:id"/>
 
