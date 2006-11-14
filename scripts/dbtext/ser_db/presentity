@@ -1,1 +1,1 @@
-presid(int,auto) uri(str) uid(str) pdomain(str) 
+pres_id(str) uri(str) uid(str) pdomain(str) xcap_params(str) 

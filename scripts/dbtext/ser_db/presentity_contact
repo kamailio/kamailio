@@ -1,1 +1,1 @@
-contactid(int,auto) presid(int) basic(str) status(str) location(str) expires(int) placeid(int,null) priority(double) contact(str,null) tupleid(str) prescaps(int) etag(str) published_id(str) 
+pres_id(str) basic(int) expires(int) priority(double) contact(str,null) tupleid(str) etag(str) published_id(str) 

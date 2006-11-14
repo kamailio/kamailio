@@ -1,1 +1,1 @@
-presid(int) tupleid(str) note(str) lang(str) 
+pres_id(str) tupleid(str) note(str) lang(str) 

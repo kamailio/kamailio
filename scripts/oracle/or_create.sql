@@ -171,6 +171,17 @@ CREATE TABLE location (
 
 );
 
+INSERT INTO version (table_name, table_version) values ('contact_attrs','1');
+CREATE TABLE contact_attrs (
+    uid string(64) NOT NULL,
+    contact string(255) NOT NULL,
+    name string(32) NOT NULL,
+    value string(255),
+    type int NOT NULL DEFAULT '0',
+    flags int NOT NULL DEFAULT '0',
+    contactattrs_idx UNIQUE (uid, contact, name, )
+);
+
 INSERT INTO version (table_name, table_version) values ('trusted','1');
 CREATE TABLE trusted (
     src_ip string(39) NOT NULL,
@@ -278,20 +289,20 @@ CREATE TABLE sd_attrs (
     sd_idx UNIQUE (id, name, value, )
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity','1');
+INSERT INTO version (table_name, table_version) values ('presentity','5');
 CREATE TABLE presentity (
-    presid int(10) NOT NULL,
+    pres_id string(64) NOT NULL,
     uri string(255) NOT NULL,
     uid string(64) NOT NULL,
     pdomain string(128) NOT NULL,
-    presentity_key UNIQUE (presid, ),
-
+    xcap_params binary NOT NULL,
+    presentity_key UNIQUE (pres_id, )
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity_notes','1');
+INSERT INTO version (table_name, table_version) values ('presentity_notes','5');
 CREATE TABLE presentity_notes (
     dbid string(64) NOT NULL,
-    presid int(10) NOT NULL,
+    pres_id string(64) NOT NULL,
     etag string(64) NOT NULL,
     note string(128) NOT NULL,
     lang string(64) NOT NULL,
@@ -299,64 +310,63 @@ CREATE TABLE presentity_notes (
     pnotes_idx1 UNIQUE (dbid, )
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity_persons','1');
-CREATE TABLE presentity_persons (
+INSERT INTO version (table_name, table_version) values ('presentity_extensions','5');
+CREATE TABLE presentity_extensions (
     dbid string(64) NOT NULL,
-    presid int(10) NOT NULL,
+    pres_id string(64) NOT NULL,
     etag string(64) NOT NULL,
-    person_element binary NOT NULL,
-    id string(128) NOT NULL,
+    element binary NOT NULL,
     expires datetime NOT NULL DEFAULT '2005-12-07 08:13:15',
-    prespersons_idx1 UNIQUE (dbid, )
+    presextensions_idx1 UNIQUE (dbid, )
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity_contact','1');
+INSERT INTO version (table_name, table_version) values ('presentity_contact','5');
 CREATE TABLE presentity_contact (
-    contactid int(10) NOT NULL,
-    presid int(10) NOT NULL,
-    basic string(32) NOT NULL DEFAULT 'offline',
-    status string(32) NOT NULL,
-    location string(128) NOT NULL,
+    pres_id string(64) NOT NULL,
+    basic int(3) NOT NULL,
     expires datetime NOT NULL DEFAULT '2004-05-28 21:32:15',
-    placeid int(10),
     priority float NOT NULL DEFAULT '0.5',
     contact string(255),
     tupleid string(64) NOT NULL,
-    prescaps int(10) NOT NULL,
     etag string(64) NOT NULL,
     published_id string(64) NOT NULL,
-    pc_idx1 UNIQUE (contactid, ),
-
+    presid_index UNIQUE (pres_id, tupleid, )
 );
 
-INSERT INTO version (table_name, table_version) values ('watcherinfo','1');
+INSERT INTO version (table_name, table_version) values ('watcherinfo','5');
 CREATE TABLE watcherinfo (
-    r_uri string(255) NOT NULL,
     w_uri string(255) NOT NULL,
     display_name string(128) NOT NULL,
     s_id string(64) NOT NULL,
     package string(32) NOT NULL DEFAULT 'presence',
     status string(32) NOT NULL DEFAULT 'pending',
     event string(32) NOT NULL,
-    expires int NOT NULL,
+    expires datetime NOT NULL DEFAULT '2005-12-07 08:13:15',
     accepts int NOT NULL,
-    presid int(10) NOT NULL,
+    pres_id string(64) NOT NULL,
     server_contact string(255) NOT NULL,
     dialog binary NOT NULL,
     doc_index int NOT NULL,
-    wi_idx1 UNIQUE (s_id, ),
-
+    wi_idx1 UNIQUE (s_id, )
 );
 
-INSERT INTO version (table_name, table_version) values ('tuple_notes','1');
+INSERT INTO version (table_name, table_version) values ('tuple_notes','5');
 CREATE TABLE tuple_notes (
-    presid int(10) NOT NULL,
+    pres_id string(64) NOT NULL,
     tupleid string(64) NOT NULL,
     note string(128) NOT NULL,
     lang string(64) NOT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('offline_winfo','1');
+INSERT INTO version (table_name, table_version) values ('tuple_extensions','5');
+CREATE TABLE tuple_extensions (
+    pres_id string(64) NOT NULL,
+    tupleid string(64) NOT NULL,
+    element binary NOT NULL,
+    status_extension int(1) NOT NULL
+);
+
+INSERT INTO version (table_name, table_version) values ('offline_winfo','5');
 CREATE TABLE offline_winfo (
     uid string(64) NOT NULL,
     watcher string(255) NOT NULL,
