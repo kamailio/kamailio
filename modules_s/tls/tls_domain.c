@@ -66,10 +66,10 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 	d->verify_depth = -1;
 	d->require_cert = -1;
 	return d;
-
+/*
  error:
 	shm_free(d);
-	return 0;
+	return 0; */
 }
 
 
@@ -599,8 +599,6 @@ static int domain_exists(tls_cfg_t* cfg, tls_domain_t* d)
  */
 int tls_add_domain(tls_cfg_t* cfg, tls_domain_t* d)
 {
-	tls_domain_t* p;
-
 	if (!cfg) {
 		ERR("TLS configuration structure missing\n");
 		return -1;

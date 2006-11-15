@@ -36,6 +36,7 @@
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../ut.h"
+#include "../../resolve.h"
 #include "tls_config.h"
 #include "tls_util.h"
 #include "tls_domain.h"
@@ -119,9 +120,9 @@ enum st {
  * Test for alphanumeric characters
  */
 #define IS_ALPHA(c) \
-    ((c) >= 'a' && (c) <= 'z' || \
-     (c) >= 'A' && (c) <= 'Z' || \
-     (c) >= '0' && (c) <= '9' || \
+    (((c) >= 'a' && (c) <= 'z') || \
+     ((c) >= 'A' && (c) <= 'Z') || \
+     ((c) >= '0' && (c) <= '9') || \
      (c) == '_')
 
 
@@ -427,8 +428,8 @@ int tls_lex(token_t* token, unsigned int flags)
 		RETURN(TOKEN_ALPHA);
 
 	case ST_Q:
-		ERR("%s:%d:%d: Premature end of file, missing closing quote in string constant\n", 
-		    pstate.file, pstate.line, pstate.col, c);
+		ERR("%s:%d:%d: Premature end of file, missing closing quote in"
+				" string constant\n", pstate.file, pstate.line, pstate.col);
 		return -1;
 
 	case ST_QE:
@@ -438,6 +439,9 @@ int tls_lex(token_t* token, unsigned int flags)
 		    pstate.file, pstate.line, pstate.col);
 		return -1;
 	}
+	BUG("%s:%d:%d: invalid state %d\n",
+			pstate.file, pstate.line, pstate.col, state);
+		return -1;
 }
 
 
@@ -453,6 +457,7 @@ static struct parser_tab* lookup_token(struct parser_tab* table, str* token)
 		}
 		ptr++;
 	}
+	return 0;
 }
 
 static int parse_string_val(str* res, token_t* token)
@@ -723,26 +728,23 @@ static int parse_cipher_list_opt(token_t* token)
 
 static int parse_ipv6(struct ip_addr* ip, token_t* token)
 {
-	char buf[IP_ADDR_MAX_STR_SIZE];
-	int len, ret;
+	int ret;
 	token_t t;
+	struct ip_addr* ipv6;
+	str ip6_str;
 
-	ip->af = AF_INET6;
-	ip->len = 16;
-	len = 0;
-
+	ip6_str.s=t.val.s;
 	while(1) {
 		ret = tls_lex(&t, 0);
 		if (ret <= 0) goto err;
 		if (t.type == ']') break;
 		if (t.type != TOKEN_ALPHA && t.type != ':') goto err;
-		if (len + t.val.len >= IP_ADDR_MAX_STR_SIZE) goto err;
-		memcpy(buf + len, t.val.s, t.val.len);
-		len += t.val.len;
 	}
-	buf[len] = '\0';
+	ip6_str.len=(int)(long)(t.val.s-ip6_str.s);
 
-	if (inet_pton(ip->af, buf, ip->u.addr) <= 0)  goto err;
+	ipv6=str2ip6(&ip6_str);
+	if (ipv6==0)  goto err;
+	*ip=*ipv6;
 	return 0;
  err:
 	LOG(L_ERR, "ERROR:%s:%d:%d: Invalid IPv6 address\n", 
@@ -889,6 +891,7 @@ static int parse_domain(token_t* token)
 		return -1;
 	}	
 
+	port=0;
 	if (parse_hostport(&type, &ip, &port, &t) < 0) return -1;
 
 	ret = tls_lex(&t, 0);
@@ -989,9 +992,7 @@ static int parse_config(void)
  */
 tls_cfg_t* tls_load_config(str* filename)
 {
-	str val;
 	char* file;
-	struct token token;
 
 	file = get_pathname(filename);
 	if (!file) return 0;

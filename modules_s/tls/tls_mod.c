@@ -73,6 +73,7 @@
  * Module management function prototypes
  */
 static int mod_init(void);
+static int mod_child(int rank);
 static void destroy(void);
 
 MODULE_VERSION
@@ -203,7 +204,7 @@ struct module_exports exports = {
 	0,          /* response function*/
 	destroy,    /* destroy function */
 	0,          /* cancel function */
-	0           /* per-child init function */
+	mod_child   /* per-child init function */
 };
 
 
@@ -226,6 +227,7 @@ transport_t tls_transport = {
 };
 
 
+#if 0
 /*
  * Create TLS configuration from modparams
  */
@@ -238,6 +240,7 @@ static tls_cfg_t* tls_use_modparams(void)
 
 	
 }
+#endif
 
 
 static int mod_init(void)
@@ -278,15 +281,30 @@ static int mod_init(void)
 	if (tls_cfg_file.s) {
 		*tls_cfg = tls_load_config(&tls_cfg_file);
 		if (!(*tls_cfg)) return -1;
-		if (tls_fix_cfg(*tls_cfg, &srv_defaults, &cli_defaults) < 0) return -1;
 	} else {
 		*tls_cfg = tls_new_cfg();
 		if (!(*tls_cfg)) return -1;
-		if (tls_fix_cfg(*tls_cfg, &mod_params, &mod_params) < 0) return -1;
 	}
 
 	if (tls_check_sockets(*tls_cfg) < 0) return -1;
 
+	return 0;
+}
+
+
+static int mod_child(int rank)
+{
+	/* fix tls config only from the main proc., when we know 
+	 * the exact process number */
+	if (rank == PROC_MAIN){
+		if (tls_cfg_file.s){
+			if (tls_fix_cfg(*tls_cfg, &srv_defaults, &cli_defaults) < 0) 
+				return -1;
+		}else{
+			if (tls_fix_cfg(*tls_cfg, &mod_params, &mod_params) < 0) 
+				return -1;
+		}
+	}
 	return 0;
 }
 

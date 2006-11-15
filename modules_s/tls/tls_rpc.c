@@ -99,15 +99,18 @@ static void tls_list(rpc_t* rpc, void* c)
 	struct tcp_connection* con;
 	int i, len, timeout;
 
+	ssl=0;
 	TCPCONN_LOCK;
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
 		if (tcpconn_id_hash[i] == NULL) continue;
 		con = tcpconn_id_hash[i];
 		while(con) {
 			if (con->rcv.proto != PROTO_TLS) goto skip;
-			if (con->extra_data) ssl = ((struct tls_extra_data*)con->extra_data)->ssl;
+			if (con->extra_data) 
+				ssl = ((struct tls_extra_data*)con->extra_data)->ssl;
 			if (ssl) {
-				tls_info = SSL_CIPHER_description(SSL_get_current_cipher(ssl), buf, 128);
+				tls_info = SSL_CIPHER_description(SSL_get_current_cipher(ssl),
+													buf, 128);
 				len = strlen(buf);
 				if (len && buf[len - 1] == '\n') buf[len - 1] = '\0';
 			} else {
