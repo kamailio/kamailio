@@ -337,19 +337,18 @@ diff -prNU5 tcp_main.c
  		close(fd);
  		(*tcp_connections_no)--;
  	}else{
-@@ -1608,11 +1614,11 @@ static inline void tcpconn_timeout(int f
- 					DBG("tcpconn_timeout: timeout for hash=%d - %p"
- 							" (%d > %d)\n", h, c, ticks, c->timeout);
- 				fd=c->s;
+@@ -1608,10 +1614,10 @@ static inline void tcpconn_timeout(int f
+				}else{
+					fd=-1;
+				}
  #ifdef USE_TLS
  				if (c->type==PROTO_TLS)
 -					tls_close(c, fd);
 +					if (tls) tls->u.tcp.close(c, fd);
  #endif
- 				_tcpconn_rm(c);
- 				if ((fd>0)&&(atomic_get(&c->refcnt)==0)) {
- 					if (!(c->flags & F_CONN_REMOVED)){
- 						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
+				_tcpconn_rm(c);
+				if (fd>0) {
+					close(fd);
 diff -prNU5 tcp_read.c
 --- tcp_read.c	2006-11-02 22:55:56.000000000 +0000
 +++ tcp_read.c	2006-11-04 01:18:08.000000000 +0000
