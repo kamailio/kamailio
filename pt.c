@@ -115,6 +115,11 @@ int register_procs(int no)
 /* returns the maximum number of processes */
 int get_max_procs()
 {
+	if (pt==0){
+		LOG(L_CRIT, "BUG: get_max_procs() called too early "
+				"(it must _not_ be called from mod_init())\n");
+		abort(); /* crash to quickly catch offenders */
+	}
 	return estimated_proc_no;
 }
 
