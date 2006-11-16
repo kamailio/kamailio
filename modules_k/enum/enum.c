@@ -23,6 +23,7 @@
  *
  */
 
+#include <stdlib.h>
 
 #include "enum.h"
 #include "../../parser/parse_uri.h"
