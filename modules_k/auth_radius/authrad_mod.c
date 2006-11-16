@@ -160,7 +160,7 @@ static int mod_init(void)
 		return -4;
 	}
 
-	INIT_AV(rh, attrs, A_MAX, vals, "auth_radius", -5, -6);
+	INIT_AV(rh, attrs, A_MAX, vals, V_MAX, "auth_radius", -5, -6);
 
 	if (service_type != -1) {
 		vals[V_SIP_SESSION].v = service_type;

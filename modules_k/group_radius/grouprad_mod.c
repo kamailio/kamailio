@@ -113,7 +113,7 @@ static int mod_init(void)
 		return -2;
 	}
 
-	INIT_AV(rh, attrs, A_MAX, vals, "group_radius", -3, -4);
+	INIT_AV(rh, attrs, A_MAX, vals, V_MAX, "group_radius", -3, -4);
 
 	return 0;
 }

@@ -132,7 +132,7 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	INIT_AV(rh, attrs, A_MAX, vals, "avp", -1, -1);
+	INIT_AV(rh, attrs, A_MAX, vals, V_MAX, "avp", -1, -1);
 
 	if (caller_service_type != -1) {
 		vals[V_SIP_CALLER_AVPS].v = caller_service_type;

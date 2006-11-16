@@ -107,7 +107,7 @@ static int mod_init(void)
 		return -2;
 	}
 
-	INIT_AV(rh, attrs, A_MAX, vals, "uri_radius", -3, -4);
+	INIT_AV(rh, attrs, A_MAX, vals, V_MAX, "uri_radius", -3, -4);
 
 	if (service_type != -1)
 		vals[V_CALL_CHECK].v = service_type;

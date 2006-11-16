@@ -79,7 +79,7 @@ struct val {
 #define	V_SIP_CALLEE_AVPS		8
 #define	V_MAX				9
 
-#define	INIT_AV(rh, at, nr_at, vl, fn, e1, e2)					\
+#define INIT_AV(rh, at, nr_at, vl, nr_vl, fn, e1, e2) \
 {									\
 	int i;								\
 	DICT_ATTR *da;							\
@@ -96,7 +96,7 @@ struct val {
 		}							\
 		at[i].v = da->value;					\
 	}								\
-	for (i = 0; i < V_MAX; i++) {					\
+	for (i = 0; i < nr_vl; i++) {					\
 		if (vl[i].n == NULL)					\
 			continue;					\
 		dv = rc_dict_findval(rh, vl[i].n);			\
