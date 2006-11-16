@@ -34,6 +34,7 @@
 #include "../../ip_addr.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../mi/mi.h"
 #include "../../db/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
@@ -60,6 +61,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_sl_onreply_out(struct sip_msg* req,
 									struct sl_cb_param *sl_param);
 static int sip_trace_fifo(FILE *stream, char *file);
+static struct mi_node* sip_trace_mi(struct mi_node* cmd, void* param );
 
 char* db_url       = DEFAULT_RODB_URL;
 
@@ -127,6 +129,11 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+static mi_export_t mi_cmds[] = {
+	{ "sip_trace", sip_trace_mi,   0,  0 },
+	{ 0, 0, 0, 0}
+};
+
 
 #ifdef STATISTICS
 #include "../../statistics.h"
@@ -151,7 +158,7 @@ struct module_exports exports = {
 #else
 	0,          /* exported statistics */
 #endif
-	0,          /* exported MI functions */
+	mi_cmds,    /* exported MI functions */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */
@@ -1172,6 +1179,43 @@ static int sip_trace_fifo(FILE *stream, char *file)
 
 	return 0;
 }
+
+
+/**
+ * MI command format:
+ * name: sip_trace
+ * attribute: name=none, value=[on|off]
+ */
+static struct mi_node* sip_trace_mi(struct mi_node* cmd, void* param )
+{
+	struct mi_node* node;
+
+	node = cmd->kids;
+	if(node == NULL)
+		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+
+	if(trace_on_flag==NULL)
+		return init_mi_tree(MI_INTERNAL_ERR_S,MI_INTERNAL_ERR_LEN);
+
+	if ( node->value.len==2 &&
+	(node->value.s[0]=='o'|| node->value.s[0]=='O') &&
+	(node->value.s[1]=='n'|| node->value.s[1]=='N'))
+	{
+		*trace_on_flag = 1;
+		return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	} else if ( node->value.len==3 &&
+	(node->value.s[0]=='o'|| node->value.s[0]=='O') &&
+	(node->value.s[1]=='f'|| node->value.s[1]=='F') &&
+	(node->value.s[2]=='f'|| node->value.s[2]=='F'))
+	{
+		*trace_on_flag = 0;
+		return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	} else {
+		return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
+	}
+}
+
+
 
 
 static int trace_send_duplicate(char *buf, int len)
