@@ -243,16 +243,16 @@ static int mod_init(void)
 	*gflags=initial;
 
 	global_avps = 0;
-	if (bind_dbmod(db_url, &db) < 0) { /* Find database module */
-		LOG(L_ERR, "gflags:mod_init: Can't bind database module\n");
-		return -1;
-	}
-	if (!DB_CAPABILITY(db, DB_CAP_ALL)) {
-		LOG(L_ERR, "gflags:mod_init: Database module does not implement"
-		    " all functions needed by the module\n");
-		return -1;
-	}
 	if (load_global_attrs) {
+		if (bind_dbmod(db_url, &db) < 0) { /* Find database module */
+			LOG(L_ERR, "gflags:mod_init: Can't bind database module\n");
+			return -1;
+		}
+		if (!DB_CAPABILITY(db, DB_CAP_ALL)) {
+			LOG(L_ERR, "gflags:mod_init: Database module does not implement"
+			    " all functions needed by the module\n");
+			return -1;
+		}
 		con = db.init(db_url); /* Get a new database connection */
 		if (!con) {
 			LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");
@@ -274,10 +274,12 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	con = db.init(db_url);
-	if (!con) {
-		LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");
-		return -1;
+	if (load_global_attrs) {
+		con = db.init(db_url);
+		if (!con) {
+			LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");
+			return -1;
+		}
 	}
 	return 0;
 }
