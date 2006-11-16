@@ -1074,7 +1074,7 @@ struct mi_node* pdt_mi_add(struct mi_node* cmd, void* param)
 	if(_dhash==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_add: strange situation\n");
-		return init_mi_tree( "500 server error",16);
+		return init_mi_tree( MI_INTERNAL_ERR_S,MI_INTERNAL_ERR_LEN);
 	}
 
 	/* read sdomain */
@@ -1170,7 +1170,7 @@ error:
 	return init_mi_tree("431 could not add to cache", 27 );
 
 error1:
-	return init_mi_tree("400 Too few or too many arguments", 33 );
+	return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 
 }
 
@@ -1191,7 +1191,7 @@ struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
 	if(_dhash==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
-		return init_mi_tree( "500 server error",16);
+		return init_mi_tree( MI_INTERNAL_ERR_S,MI_INTERNAL_ERR_LEN);
 	}
 
 	/* read sdomain */
@@ -1252,10 +1252,9 @@ struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
 		return init_mi_tree("602 database/cache are inconsistent", 35 );
 	} 
 
-	return init_mi_tree("200 domain removed", 18);
-
+	return init_mi_tree(MI_200_OK_S,MI_200_OK_LEN);
 error:
-	return init_mi_tree("400 Too few or too many arguments", 33 );
+	return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 }
 
 
@@ -1283,7 +1282,7 @@ struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
 	if(_dhash==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
-		return init_mi_tree( "500 server error",16);
+		return init_mi_tree( MI_INTERNAL_ERR_S,MI_INTERNAL_ERR_LEN);
 	}
 
 	/* read sdomain */
@@ -1404,7 +1403,7 @@ error:
 	return 0;
 
 error1:
-	return init_mi_tree("400 Too few or too many arguments", 33 );
+	return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 }
 
 

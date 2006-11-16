@@ -417,7 +417,7 @@ struct mi_node* ds_mi_set(struct mi_node* cmd, void* param)
 
 	node = cmd->kids;
 	if(node == NULL)
-		return init_mi_tree("Too few parameters", 18);
+		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 	sp = node->value;
 	if(sp.len<=0 || sp.s == NULL)
 	{
@@ -430,7 +430,7 @@ struct mi_node* ds_mi_set(struct mi_node* cmd, void* param)
 		state = 0;
 	node = node->next;
 	if(node == NULL)
-		return init_mi_tree("Too few parameters", 18);
+		return init_mi_tree(MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 	sp = node->value;
 	if(sp.s == NULL)
 	{
@@ -445,7 +445,7 @@ struct mi_node* ds_mi_set(struct mi_node* cmd, void* param)
 
 	node= node->next;
 	if(node == NULL)
-		return init_mi_tree("Too few parameters", 18);
+		return init_mi_tree(MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	sp = node->value;
 	if(sp.s == NULL)

@@ -263,9 +263,6 @@ static int fifo_get_gflags( FILE* pipe, char* response_file )
 
 
 /************************* MI functions *******************************/
-#define MI_BAD_PARM_S    "Bad parameter"
-#define MI_BAD_PARM_LEN  (sizeof(MI_BAD_PARM_S)-1)
-
 static inline int mi_get_mask( str *val, unsigned int *mask )
 {
 	/* hexa or decimal*/
@@ -285,7 +282,7 @@ static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
 
 	node = cmd->kids;
 	if(node == NULL)
-		goto error;
+		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 
 	if( mi_get_mask( &node->value, &flag) <0)
 		goto error;
@@ -310,7 +307,7 @@ static struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
 
 	node = cmd->kids;
 	if(node == NULL)
-		goto error;
+		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 
 	if( mi_get_mask( &node->value, &flag) <0)
 		goto error;
@@ -336,7 +333,7 @@ static struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
 
 	node = cmd->kids;
 	if(node == NULL)
-		goto error_param;
+		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 
 	if( mi_get_mask( &node->value, &flag) <0)
 		goto error_param;

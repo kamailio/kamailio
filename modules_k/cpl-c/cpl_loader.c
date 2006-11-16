@@ -440,8 +440,6 @@ error:
 #undef MAX_STATIC_BUF
 
 /**************************** MI ****************************/
-#define BAD_PARAM_ERR_S   "400 Too few or too many arguments"
-#define BAD_PARAM_ERR_LEN (sizeof(BAD_PARAM_ERR_S)-1)
 #define FILE_LOAD_ERR_S   "500 Cannot read CPL file"
 #define FILE_LOAD_ERR_LEN (sizeof(FILE_LOAD_ERR_S)-1)
 #define DB_SAVE_ERR_S     "500 Cannot save CPL to database"
@@ -469,7 +467,7 @@ struct mi_node* mi_cpl_load(struct mi_node *cmd, void *param)
 
 	/* check user+host */
 	if((cmd->kids==NULL) ||(cmd->kids->next==NULL) || (cmd->kids->next->next))
-		return init_mi_tree( BAD_PARAM_ERR_S, BAD_PARAM_ERR_LEN);
+		return init_mi_tree( MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	val = cmd->kids->value;
 	if (parse_uri( val.s, val.len, &uri)!=0){
@@ -535,7 +533,7 @@ struct mi_node * mi_cpl_remove(struct mi_node *cmd, void *param)
 
 	/* check if there is only one parameter*/
 	if(!(cmd->kids && cmd->kids->next== NULL))
-		return init_mi_tree( BAD_PARAM_ERR_S, BAD_PARAM_ERR_LEN);
+		return init_mi_tree( MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	user = cmd->kids->value;
 
@@ -565,7 +563,7 @@ struct mi_node * mi_cpl_get(struct mi_node *cmd, void *param)
 
 	/* check if there is only one parameter*/
 	if(!(cmd->kids && cmd->kids->next== NULL))
-		return init_mi_tree( BAD_PARAM_ERR_S, BAD_PARAM_ERR_LEN);
+		return init_mi_tree( MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	/* check user+host */
 	user = cmd->kids->value;
