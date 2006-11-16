@@ -53,6 +53,8 @@ struct mi_node* mi_lcr_dump(struct mi_node* cmd, void* param)
 	struct mi_node* rpl= NULL;
 
 	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	if (rpl==0)
+		return 0;
 
 	if(mi_print_gws(rpl)<0)
 	{
