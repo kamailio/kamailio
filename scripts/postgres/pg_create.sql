@@ -68,7 +68,7 @@ CREATE INDEX mc_cid_key ON missed_calls (sip_callid);
 
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
-    did VARCHAR(64) NOT NULL DEFAULT '_none',
+    did VARCHAR(64) NOT NULL DEFAULT '_default',
     realm VARCHAR(64) NOT NULL,
     password VARCHAR(28) NOT NULL DEFAULT '',
     flags INTEGER NOT NULL DEFAULT '0',
