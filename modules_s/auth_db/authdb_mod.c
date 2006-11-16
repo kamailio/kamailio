@@ -107,7 +107,7 @@ db_func_t auth_dbf;
 auth_api_t auth_api;
 
 str credentials_list        = STR_STATIC_INIT(DEFAULT_CRED_LIST);
-str default_did             = STR_STATIC_INIT("_none");
+str default_did             = STR_STATIC_INIT("_default");
 
 str* credentials;          /* Parsed list of credentials to load */
 int credentials_n;         /* Number of credentials in the list */
