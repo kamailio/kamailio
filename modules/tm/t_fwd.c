@@ -61,6 +61,8 @@
  *  2006-10-11  don't fork a new branch if the transaction or branch was
  *               canceled, or a 6xx was received
  *              stop retr. timers fix on cancel for non-invites     (andrei)
+ *  2006-11-20  new_uri is no longer saved/restore across add_uac calls, since
+ *              print_uac_request is now uri safe (andrei)
  */
 
 #include "defs.h"
@@ -202,7 +204,7 @@ error01:
 	i_req->add_rm = add_rm_backup;
 	i_req->body_lumps = body_lumps_backup;
 	/* restore the new_uri from the backup */
-	if ((msg_uri->s!=uri->s) || (msg_uri->len!=uri->len)){
+	if (msg_uri_bak.s){
 		i_req->new_uri=msg_uri_bak;
 		i_req->parsed_uri=parsed_uri_bak;
 		i_req->parsed_uri_ok=parsed_uri_ok_bak;
@@ -463,9 +465,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	branch_bm_t cancel_bm, tmp_bm;
 	int i;
 	int lowest_error;
-	str backup_uri;
-	struct sip_uri backup_parsed_uri;
-	int backup_parsed_uri_ok;
 	int ret;
 
 	cancel_bm=0;
@@ -481,9 +480,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		return;
 	}
 	
-	backup_uri=cancel_msg->new_uri;
-	backup_parsed_uri_ok=cancel_msg->parsed_uri_ok;
-	backup_parsed_uri=cancel_msg->parsed_uri;
 	/* determine which branches to cancel ... */
 	which_cancel( t_invite, &cancel_bm );
 	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
@@ -496,9 +492,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (ret<0) cancel_bm &= ~(1<<i);
 			if (ret<lowest_error) lowest_error=ret;
 		}
-	cancel_msg->new_uri=backup_uri;
-	cancel_msg->parsed_uri_ok=backup_parsed_uri_ok;
-	cancel_msg->parsed_uri=backup_parsed_uri;
 
 	/* send them out */
 	for (i = 0; i < t_cancel->nr_of_outgoings; i++) {
@@ -709,9 +702,6 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg , 
 	struct proxy_l * proxy, int proto)
 {
-	str          backup_uri;
-	struct sip_uri backup_parsed_uri;
-	int backup_parsed_uri_ok;
 	int branch_ret, lowest_ret;
 	str current_uri;
 	branch_bm_t	added_branches;
@@ -743,10 +733,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		return -1;
 	}
 
-	/* backup current uri ... add_uac changes it */
-	backup_uri = p_msg->new_uri;
-	backup_parsed_uri_ok=p_msg->parsed_uri_ok;
-	backup_parsed_uri=p_msg->parsed_uri;
 	backup_si = p_msg->force_send_socket;
 	/* if no more specific error code is known, use this */
 	lowest_ret=E_BUG;
@@ -798,10 +784,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	clear_branches();
 
 	p_msg->force_send_socket = backup_si;
-	/* restore original URI */
-	p_msg->new_uri=backup_uri;
-	p_msg->parsed_uri_ok=backup_parsed_uri_ok;
-	p_msg->parsed_uri=backup_parsed_uri;
 
 	/* don't forget to clear all branches processed so far */
 
