@@ -502,7 +502,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 				if( (etags.len == etag->len) && (strncmp(etags.s, etag->s,
 								etags.len)==0 ) )
 				{
-					DBG("PRESENCE:get_p_notify_bodyfound etag  \n");
+					DBG("PRESENCE:get_p_notify_body found etag  \n");
 
 					body_array[i] = build_off_nbody(user, host, etag);
 					if(body_array[i] == NULL)

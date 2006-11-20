@@ -13,13 +13,13 @@
 	
 	<section>
 	<title>Overview</title>
-	<para>
-		The modules implements a presence server. It handles PUBLISH and
-		SUBSCRIBE messages and generates NOTIFY messages. It offeres 
-		support for agregation of published presence information for the same
-		presentity using more divices. It can also filter the 
-		information provided to watchers according to privacy rules.
-	</para>
+	<para> The modules implements a presence server. It handles PUBLISH
+   and SUBSCRIBE messages and generates NOTIFY messages. It
+   offers support for aggregation of published presence
+   information for the same presentity using more devices. It can
+   also filter the information provided to watchers according to
+   privacy rules.
+			</para>
 	<para>
 	The modules works with database storage. It stores published information and 
 	Subscribe -Notify dialog characteristics. There is also an extra table
@@ -204,11 +204,11 @@ modparam("presence", "expires_offset", 10)
 	<section>
 		<title><varname>force_active</varname> (str)</title>
 		<para>
-		This parameter offers the possibility to set either the first Notify
-		sent for a new subscribe should have the Subscribtions-State value
-		'pending' or 'active'. If it is different than 0, 
-		the Subscribtion-State value is 'active'.
-		</para>
+		This parameter offers the possibility to set either the first
+   Notify sent for a new subscribe should have the
+   Subscriptions-State value 'pending' or 'active'. If it is
+   different than 0, the Subscription-State value is 'active'.	
+   </para>
 		<para>
 		<emphasis>
 		</emphasis>

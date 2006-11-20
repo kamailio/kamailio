@@ -60,8 +60,8 @@ Chapter 1. User's Guide
 
    The modules implements a presence server. It handles PUBLISH
    and SUBSCRIBE messages and generates NOTIFY messages. It
-   offeres support for agregation of published presence
-   information for the same presentity using more divices. It can
+   offers support for aggregation of published presence
+   information for the same presentity using more devices. It can
    also filter the information provided to watchers according to
    privacy rules.
 
@@ -172,8 +172,8 @@ modparam("presence", "expires_offset", 10)
 
    This parameter offers the possibility to set either the first
    Notify sent for a new subscribe should have the
-   Subscribtions-State value 'pending' or 'active'. If it is
-   different than 0, the Subscribtion-State value is 'active'.
+   Subscriptions-State value 'pending' or 'active'. If it is
+   different than 0, the Subscription-State value is 'active'.
 
    Example 1-7. Set force_active parameter
 ...

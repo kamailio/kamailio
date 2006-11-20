@@ -521,7 +521,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 	tuple_node =xmlNewChild(root_node, NULL, BAD_CAST "tuple", NULL) ;
 	if( tuple_node ==NULL)
 	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: ERRPR while adding child\n");
+		LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
 		goto error;
 	}
 	xmlNewProp(tuple_node, BAD_CAST "id", BAD_CAST tuple_id);
@@ -529,7 +529,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 	status_node = xmlNewChild(tuple_node, NULL, BAD_CAST "status", NULL) ;
 	if( status_node ==NULL)
 	{
-		LOG(L_ERR, "PRESENCE: build_off_nbody: ERRPR while adding child\n");
+		LOG(L_ERR, "PRESENCE: build_off_nbody: ERROR while adding child\n");
 		goto error;
 	}
 	
@@ -537,34 +537,35 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 			BAD_CAST "closed") ;
 	if( basic_node ==NULL)
 	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: ERRPR while adding child\n");
+		LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
 		goto error;
 	}
+	if(person_id)
+	{	
+		person_node= xmlNewChild(root_node, NULL, BAD_CAST "dm:person", NULL) ;
+		if( person_node ==NULL)
+		{
+			LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
+			goto error;
+		}
+		xmlNewProp(person_node, BAD_CAST "id", BAD_CAST person_id);
 
-	person_node= xmlNewChild(root_node, NULL, BAD_CAST "dm:person", NULL) ;
-	if( person_node ==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: ERRPR while adding child\n");
-		goto error;
-	}
-	xmlNewProp(person_node, BAD_CAST "id", BAD_CAST person_id);
-
-	activities_node = xmlNewChild(person_node, NULL,
+		activities_node = xmlNewChild(person_node, NULL,
 			BAD_CAST "rpid:activities", NULL) ;
-	if( activities_node ==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: ERRPR while adding child\n");
-		goto error;
-	}
+		if( activities_node ==NULL)
+		{
+			LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
+			goto error;
+		}
 
-	unknown_node = xmlNewChild(activities_node, NULL,
-			BAD_CAST "rpid:unknown", NULL) ;
-	if( unknown_node ==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: ERRPR while adding child\n");
-		goto error;
+		unknown_node = xmlNewChild(activities_node, NULL,
+				BAD_CAST "rpid:unknown", NULL) ;
+		if( unknown_node ==NULL)
+		{
+			LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
+			goto error;
+		}
 	}
-
 	xmlDocDumpFormatMemory(new_doc,(xmlChar**) &body->s, &body->len, 1);
 
 	DBG("PRESENCE: build_off_nbody:new_body:\n%.*s\n",body->len, body->s);
@@ -681,7 +682,7 @@ str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, i
 				BAD_CAST content) ;
 		if( node ==NULL)
 		{
-			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERRPR while adding"
+			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding"
 					" child\n");
 			goto error;
 		}
