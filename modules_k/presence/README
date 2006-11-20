@@ -70,8 +70,8 @@ Chapter 1. User's Guide
    There is also an extra table which stores xcap documents with
    permission rules.
 
-   The server follows the specifications in: RFC3256, RFC3856,
-   RFC3857.
+   The server follows the specifications in: RFC3265, RFC3856,
+   RFC3857, RFC3858.
      _________________________________________________________
 
 1.2. To-do
