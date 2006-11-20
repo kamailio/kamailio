@@ -179,7 +179,7 @@ int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 		return -1;
 	env_set_to( rq->to );
 	env_set_comment((struct acc_param*)comment);
-	env_set_text( db_table_acc, 0);
+	env_set_text( table, 0);
 	return acc_db_request(rq);
 }
 #endif
