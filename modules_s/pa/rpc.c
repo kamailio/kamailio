@@ -174,6 +174,7 @@ static void rpc_trace(rpc_t* rpc, void* c)
 	if (rpc->scan(c, "d", &detailed) <= 0) {
 		detailed = 0;
 		rpc->fault(c, 400, "Invalid argument - number needed");
+		return;
 	}
 	
 	dl = root;
