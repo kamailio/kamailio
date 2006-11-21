@@ -147,7 +147,7 @@ static int sort_contacts(contact_t *ct_list, contact_t **ct_array,
 		/*insert the contact into the sorted array */
 		for(i=0;i<n;i++) {
 			/* keep in mind that the contact list is reversts */
-			if (q_array[i]<q)
+			if (q_array[i]<=q)
 				continue;
 			break;
 		}
@@ -260,6 +260,11 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		goto restore;
 	}
 	n = sort_contacts( contacts, scontacts, sqvalues);
+	if (n==0) {
+		DBG("DEBUG:uac_redirect:shmcontact2dset: no contacts left "
+			"after filtering\n");
+		goto restore;
+	}
 
 	/* to many branches ? */
 	if (max!=-1 && n>max)
