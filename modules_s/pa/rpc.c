@@ -171,10 +171,10 @@ static void rpc_trace(rpc_t* rpc, void* c)
 	dlist_t *dl;
 	int detailed = 0;
 
-	if (rpc->scan(c, "d", &detailed) <= 0)
+	if (rpc->scan(c, "d", &detailed) <= 0) {
 		detailed = 0;
-	
-	rpc->fault(c, 200, "OK");
+		rpc->fault(c, 400, "Invalid argument - number needed");
+	}
 	
 	dl = root;
 	while (dl) {
