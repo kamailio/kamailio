@@ -623,9 +623,9 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 
 int db_timer_udomain(udomain_t* _d)
 {
-	db_key_t keys[1];
-	db_op_t  ops[1];
-	db_val_t vals[1];
+	db_key_t keys[2];
+	db_op_t  ops[2];
+	db_val_t vals[2];
 
 	keys[0] = expires_col.s;
 	ops[0] = "<";
@@ -633,12 +633,18 @@ int db_timer_udomain(udomain_t* _d)
 	vals[0].nul = 0;
 	vals[0].val.time_val = act_time + 1;
 
+	keys[1] = expires_col.s;
+	ops[1] = "!=";
+	vals[1].type = DB_DATETIME;
+	vals[1].nul = 0;
+	vals[1].val.time_val = 0;
+
 	if (ul_dbf.use_table(ul_dbh, _d->name->s) < 0) {
 		LOG(L_ERR, "ERROR:usrloc: db_timer_udomain: use_table failed\n");
 		return -1;
 	}
 
-	if (ul_dbf.delete(ul_dbh, keys, ops, vals, 1) < 0) {
+	if (ul_dbf.delete(ul_dbh, keys, ops, vals, 2) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:db_timer_udomain: failed to delete from "
 			"table %s\n",_d->name->s);
 		return -1;

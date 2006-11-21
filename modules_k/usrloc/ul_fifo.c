@@ -105,14 +105,6 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 	urecord_t* r;
 	ucontact_t* c = 0;
 	int res;
-	
-	if (_ci->expires == 0 && !(_ci->flags1 & FL_PERMANENT)) {
-		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not "
-			"persistent contact, giving up\n");
-		return -1;
-	}
-
-	get_act_time();
 
 	res = get_urecord(_d, _u, &r);
 	if (res >  0) { /* Record not found */
@@ -127,12 +119,16 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 			goto error0;
 		}
 	}
-	
+
+	get_act_time();
+
 	_ci->callid = &fifo_cid;
 	_ci->user_agent = &fifo_ua;
 	_ci->cseq = FIFO_CSEQ;
-	_ci->expires += act_time;
-	
+	/* 0 expires means permanent contact */
+	if (_ci->expires!=0)
+		_ci->expires += act_time;
+
 	if (c) {
 		if (update_ucontact( r, c, _ci) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
@@ -175,7 +171,7 @@ static int ul_add(FILE* pipe, char* response_file)
 		LOG(L_ERR, "ERROR: ul_add: table name expected\n");
 		return 1;
 	}
-	
+
 	if (!read_line(user_s, MAX_USER, pipe, &user.len) || user.len  == 0) {
 		fifo_reply(response_file, "400 ul_add: aor name expected\n");
 		LOG(L_ERR, "ERROR: ul_add: aor expected\n");

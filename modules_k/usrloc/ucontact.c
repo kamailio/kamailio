@@ -41,6 +41,7 @@
 #include "ul_mod.h"
 #include "ul_callback.h"
 #include "urecord.h"
+#include "ucontact.h"
 
 
 /*
@@ -139,16 +140,14 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "aor       : '%.*s'\n", _c->aor->len, ZSW(_c->aor->s));
 	fprintf(_f, "Contact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
 	fprintf(_f, "Expires   : ");
-	if (_c->flags & FL_PERMANENT) {
+	if (_c->expires == 0) {
 		fprintf(_f, "Permanent\n");
+	} else if (_c->expires == UL_EXPIRED_TIME) {
+		fprintf(_f, "Deleted\n");
+	} else if (t > _c->expires) {
+		fprintf(_f, "Expired\n");
 	} else {
-		if (_c->expires == 0) {
-			fprintf(_f, "Deleted\n");
-		} else if (t > _c->expires) {
-			fprintf(_f, "Expired\n");
-		} else {
-			fprintf(_f, "%u\n", (unsigned int)(_c->expires - t));
-		}
+		fprintf(_f, "%u\n", (unsigned int)(_c->expires - t));
 	}
 	fprintf(_f, "q         : %s\n", q2str(_c->q, 0));
 	fprintf(_f, "Call-ID   : '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
@@ -296,9 +295,7 @@ int st_delete_ucontact(ucontact_t* _c)
 		      * from the database
 		      */
 		if (db_mode == WRITE_BACK) {
-			/* Reset permanent flag */
-			_c->flags &= ~FL_PERMANENT;
-			_c->expires = 0;
+			_c->expires = UL_EXPIRED_TIME;
 			return 0;
 		} else {
 			     /* WRITE_THROUGH or NO_DB -- we can

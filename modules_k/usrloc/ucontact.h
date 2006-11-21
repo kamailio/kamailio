@@ -53,15 +53,8 @@ typedef enum cstate {
 typedef enum flags {
 	FL_NONE        = 0,          /* No flags set */
 	FL_NAT         = 1 << 0,     /* Contact is behind NAT */
-	FL_INVITE      = 1 << 1,     /* Contact supports INVITE and related methods */
-	FL_N_INVITE    = 1 << 2,     /* Contact doesn't support INVITE and related methods */
-	FL_MESSAGE     = 1 << 3,     /* Contact supports MESSAGE */
-	FL_N_MESSAGE   = 1 << 4,     /* Contact doesn't support MESSAGE */
-	FL_SUBSCRIBE   = 1 << 5,     /* Contact supports SUBSCRIBE and NOTIFY */
-	FL_N_SUBSCRIBE = 1 << 6,     /* Contact doesn't support SUBSCRIBE and NOTIFY */
-	FL_PERMANENT   = 1 << 7,     /* Permanent contact (does not expire) */
-	FL_MEM         = 1 << 8,     /* Update memory only -- used for REGISTER replication */
-	FL_NAT_SIPPING = 1 << 9,     /* Use SIP ping if nated */
+	FL_MEM         = 1 << 1,     /* Update memory only -- used for REGISTER replication */
+	FL_NAT_SIPPING = 1 << 2,     /* Use SIP ping if nated */
 	FL_ALL         = 0xFFFFFFFF  /* All flags set */
 } flags_t;
 
@@ -102,10 +95,14 @@ typedef struct ucontact_info {
 } ucontact_info_t;
 
 /*
+ * ancient time used for marking the contacts forced to expired
+ */
+#define UL_EXPIRED_TIME 10
+
+/*
  * Valid contact is a contact that either didn't expire yet or is permanent
  */
-#define VALID_CONTACT(c, t) \
-	(((c->expires > t) || (c->flags & FL_PERMANENT)))
+#define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
 
 
 /*

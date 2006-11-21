@@ -49,14 +49,6 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 	ucontact_t* c = 0;
 	int res;
 
-	if (_ci->expires == 0 && !(_ci->flags1 & FL_PERMANENT)) {
-		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not persistent "
-			"contact, giving up\n");
-		goto error0;
-	}
-
-	get_act_time();
-
 	res = get_urecord(_d, _u, &r);
 	if (res < 0) {
 		LOG(L_ERR, "fifo_add_contact(): Error while getting record\n");
@@ -75,12 +67,16 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 			goto error0;
 		}
 	}
-	
+
+	get_act_time();
+
 	_ci->callid = &unix_cid;
 	_ci->user_agent = &unix_ua;
 	_ci->cseq = UNIXSOCK_CSEQ;
-	_ci->expires += act_time;
-	
+	/* 0 expires means permanent contact */
+	if (_ci->expires!=0)
+		_ci->expires += act_time;
+
 	if (c) {
 		if (update_ucontact( r, c, _ci) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
