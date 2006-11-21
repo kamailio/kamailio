@@ -1675,9 +1675,9 @@ want to proceed? [Y|N] " > /dev/stderr
 			;;
 		add)
 			if [ $# -eq 3 ] ; then
+				# expires 0 means persistent contact
 				UL_EXPIRES=0
-				# 128 means FL_PERSISTENT is on
-				UL_FLAGS=128
+				UL_FLAGS=0
 			elif [ $# -eq 4 ] ; then
 				UL_EXPIRES=$4
 				UL_FLAGS=0
