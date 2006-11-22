@@ -1032,7 +1032,7 @@ static int set_destination(struct sip_msg* msg, str* dest)
 	return set_dst_uri(msg, &nameaddr.uri);
     } else {
 	     /* it is just URI, pass it through */
-	return set_dst_uri(msg, dest);
+	return set_dst_urig(msg, dest);
     }
 }
 
@@ -1064,7 +1064,7 @@ static int xlset_destination(struct sip_msg* msg, char* format, char* p2)
     
     if (xl_printstr(msg, (xl_elog_t*) format, &val.s, &val.len) > 0) {
 	DBG("Setting dest to: '%.*s'\n", val.len, val.s);
-	if (set_destination(msg, &val)) {
+	if (set_destination(msg, &val) == 0) {
 	    return 1;
 	}
     }
