@@ -114,7 +114,7 @@ str last_mod_col     = str_init(LAST_MOD_COL);
 str db_url          = str_init(DEFAULT_DB_URL);
 /* Timer interval in seconds */
 int timer_interval  = 60;
-/* Database sync scheme: 0-no db, 1-write through, 2-write back */
+/* Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
 int db_mode         = 0;
 /* Whether usrloc should use domain part of aor */
 int use_domain      = 0;

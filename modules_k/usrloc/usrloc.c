@@ -140,6 +140,7 @@ int bind_usrloc(usrloc_api_t* api)
 	}
 
 	api->use_domain = use_domain;
+	api->db_mode = db_mode;
 
 	return 0;
 }
