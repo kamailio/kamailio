@@ -181,6 +181,27 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>trace_local_ip</varname> (str)</title>
+		<para>
+		The address to be used in fromip field for local generated
+		messages. If not set, the module sets it to the address
+		of the socket that will be used to send the message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "NULL".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trace_local_ip</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	
 	<section>

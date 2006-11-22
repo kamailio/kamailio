@@ -88,6 +88,7 @@ struct sip_uri *dup_uri = 0;
 int   *trace_on_flag = NULL;      
 
 int traced_user_avp = 6843;
+char* trace_local_ip = NULL;
 
 /** database connection */
 db_con_t *db_con = NULL;
@@ -126,6 +127,7 @@ static param_export_t params[] = {
 	{"trace_on",           INT_PARAM, &trace_on           },
 	{"traced_user_avp",    INT_PARAM, &traced_user_avp    },
 	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s      },
+	{"trace_local_ip",     STR_PARAM, &trace_local_ip     },
 	{0, 0, 0}
 };
 
@@ -267,6 +269,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 {
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
+	static char toip_buff[IP_ADDR_MAX_STR_SIZE+6];
 	static char fromip_buff[IP_ADDR_MAX_STR_SIZE+6];
 	int_str        avp_name;
 	int_str        avp_value;
@@ -349,7 +352,17 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
 	// db_vals[5].val.string_val = ip_addr2a(&msg->rcv.dst_ip);;
-	db_vals[5].val.string_val = "255.255.255.255";
+	if(msg->rcv.proto==PROTO_TCP) {
+		memcpy(toip_buff, "tcp:", 4);
+	} else if(msg->rcv.proto==PROTO_TLS) {
+		memcpy(toip_buff, "tls:", 4);
+	} else {
+		memcpy(toip_buff, "udp:", 4);
+	}
+	strcpy(toip_buff+4, ip_addr2a(&msg->rcv.dst_ip));
+	strcat(toip_buff+4,":");
+	strcat(toip_buff+4, int2str(msg->rcv.dst_port, NULL));
+	db_vals[5].val.string_val = toip_buff;
 	
 	db_keys[6] = date_column;
 	db_vals[6].type = DB_DATETIME;
@@ -432,7 +445,6 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 	int_str        avp_value;
 	struct usr_avp *avp;
 
-	DBG("trace_onreq_in: =================================\n");
 	if(t==NULL || ps==NULL)
 	{
 		DBG("trace_onreq_in: no uas request, local transaction\n");
@@ -510,7 +522,6 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	str *sbuf;
 	struct dest_info *dst;
 	
-	DBG("trace_onreq_out: =================================\n");
 	if(t==NULL || ps==NULL)
 	{
 		DBG("trace_onreq_out: no uas request, local transaction\n");
@@ -703,7 +714,6 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg;
 
-	DBG("trace_onreply_in: =================================\n");
 	if(t==NULL || t->uas.request==0 || ps==NULL)
 	{
 		DBG("trace_onreply_in: no uas request, local transaction\n");
@@ -733,6 +743,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	static char fromip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	static char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	struct sip_msg* msg;
+	struct sip_msg* req;
 	int_str        avp_name;
 	int_str        avp_value;
 	struct usr_avp *avp;
@@ -742,8 +753,6 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	str *sbuf;
 	struct dest_info *dst;
 
-	DBG("trace_onreply_out: =================================\n");
-	
 	if (t==NULL || t->uas.request==0 || ps==NULL)
 	{
 		DBG("trace_onreply_out: no uas request, local transaction\n");
@@ -761,6 +770,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		return;
 	}
 	
+	req = ps->req;
 	msg = ps->rpl;
 	if(msg==NULL || msg==FAKED_REPLY)
 	{
@@ -836,7 +846,14 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[4].nul = 0;
 	if(faked==1)
 	{
-		db_vals[4].val.string_val = "127.0.0.1";
+		if(trace_local_ip)
+			db_vals[4].val.string_val = trace_local_ip;
+		else {
+			strcpy(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
+			strcat(fromip_buff,":");
+			strcat(fromip_buff, int2str(req->rcv.dst_port, NULL));
+			db_vals[4].val.string_val = fromip_buff;
+		}
 	} else {
 		strcpy(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
 		strcat(fromip_buff,":");
@@ -952,6 +969,7 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 {
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
+	static char fromip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	static char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	int faked = 0;
 	struct sip_msg* msg;
@@ -967,7 +985,6 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 		LOG(L_ERR, "trace_sl_onreply_out: bad parameters\n");
 		goto error;
 	}
-	DBG("trace_sl_onreply_out: =================================\n");
 	
 	avp = NULL;
 	avp_name.n = traced_user_avp;
@@ -1023,8 +1040,15 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 	db_keys[4] = fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
-	db_vals[4].val.string_val = "127.0.0.1";
-	
+	if(trace_local_ip)
+		db_vals[4].val.string_val = trace_local_ip;
+	else {
+		strcpy(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
+		strcat(fromip_buff,":");
+		strcat(fromip_buff, int2str(req->rcv.dst_port, NULL));
+		db_vals[4].val.string_val = fromip_buff;
+	}
+
 	db_keys[3] = status_column;
 	db_vals[3].type = DB_STRING;
 	db_vals[3].nul = 0;
