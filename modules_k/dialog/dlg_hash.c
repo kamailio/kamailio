@@ -156,7 +156,7 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	memset( dlg, 0, len);
 	dlg->state = DLG_STATE_UNCONFIRMED;
 
-	dlg->h_entry = core_hash( from_tag, callid, d_table->size);
+	dlg->h_entry = core_hash( callid, from_tag->len?from_tag:0, d_table->size);
 	DBG("DEBUG:dialog:build_new_dlg: new dialog on hash %u\n",dlg->h_entry);
 
 	p = (char*)(dlg+1);
