@@ -33,6 +33,9 @@
  *              from URI (bogdan)
  *  2006-10-04  removed the "desc_time_order" parameter, as its functionality
  *              was moved to usrloc (Carsten Bock, BASIS AudioNet GmbH)
+ *  2006-11-22  save_noreply and save_memory merged into save();
+ *              removed the module parameter "use_domain" - now it is
+ *              imported from usrloc module (bogdan)
  */
 
 #include <stdio.h>
@@ -41,6 +44,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../socket_info.h"
+#include "../usrloc/ul_mod.h"
 #include "save.h"
 #include "lookup.h"
 #include "reply.h"
@@ -50,11 +54,15 @@
 MODULE_VERSION
 
 
-static int mod_init(void);                           /* Module init function */
-static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
-static int str_fixup(void** param, int param_no);
-static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
+/* Module init & destroy function */
+static int  mod_init(void);
 static void mod_destroy(void);
+/* Fixup functions */
+static int domain_fixup(void** param, int param_no);
+static int save_fixup(void** param, int param_no);
+static int str_fixup(void** param, int param_no);
+/* Functions */
+static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
 /* Structure containing pointers to usrloc functions */
 usrloc_api_t ul;
@@ -110,9 +118,8 @@ int sock_flag = -1;
 str sock_hdr_name = {0,0};
 
 #define RCV_NAME "received"
-#define RCV_NAME_LEN (sizeof(RCV_NAME) - 1)
 
-str rcv_param = {RCV_NAME, RCV_NAME_LEN};
+str rcv_param = str_init(RCV_NAME);
 int rcv_avp_no = 42;
 
 
@@ -126,11 +133,9 @@ int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save",         save,         1,  domain_fixup,
+	{"save",         save,         1,    save_fixup,
 			REQUEST_ROUTE },
-	{"save_noreply", save_noreply, 1,  domain_fixup,
-			REQUEST_ROUTE },
-	{"save_memory",  save_memory,  1,  domain_fixup,
+	{"save",         save,         2,    save_fixup,
 			REQUEST_ROUTE },
 	{"lookup",       lookup,       1,  domain_fixup,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -158,7 +163,6 @@ static param_export_t params[] = {
 	{"max_expires",        INT_PARAM, &max_expires         },
 	{"received_param",     STR_PARAM, &rcv_param           },
 	{"received_avp",       INT_PARAM, &rcv_avp_no          },
-	{"use_domain",         INT_PARAM, &use_domain          },
 	{"aor_avp_id",         INT_PARAM, &aor_avp_id          },
 	{"max_contacts",       INT_PARAM, &max_contacts        },
 	{"retry_after",        INT_PARAM, &retry_after         },
@@ -210,7 +214,7 @@ static int mod_init(void)
 
 	realm_prefix.s = realm_pref;
 	realm_prefix.len = strlen(realm_pref);
-	
+
 	rcv_param.len = strlen(rcv_param.s);
 	rcv_avp.n = rcv_avp_no;
 
@@ -239,16 +243,9 @@ static int mod_init(void)
 	}
 
 	/*
-	 * Test if use_domain parameters of usrloc and registrar
-	 * module are equal
+	 * Import use_domain parameter from usrloc
 	 */
-	if (ul.use_domain != use_domain) {
-		LOG(L_ERR, "ERROR: 'use_domain' parameters of 'usrloc' and "
-			"'registrar' modules must have the same value !\n");
-		LOG(L_ERR, "(Hint: Did you forget to use modparam(\"registrar\","
-			" \"use_domain\", 1) in in your ser.cfg ?)\n");
-		return -1;
-	}
+	use_domain = ul.use_domain;
 
 	if (sock_hdr_name.s) {
 		sock_hdr_name.len = strlen(sock_hdr_name.s);
@@ -293,6 +290,38 @@ static int domain_fixup(void** param, int param_no)
 	}
 	return 0;
 }
+
+
+/*
+ * Fixup for "save" function - both domain and flags
+ */
+static int save_fixup(void** param, int param_no)
+{
+	unsigned int flags;
+	str s;
+
+	if (param_no == 1) {
+		return domain_fixup(param,param_no);
+	} else {
+		s.s = (char*)*param;
+		s.len = strlen(s.s);
+		if ( (strno2int(&s, &flags )<0) || (flags>REG_SAVE_ALL_FL) ) {
+			LOG(L_ERR, "ERROR:registrar:save_fixup: bad flags <%s>\n",
+				(char *)(*param));
+			return E_CFG;
+		}
+		if (ul.db_mode==DB_ONLY && flags&REG_SAVE_MEM_FL) {
+			LOG(L_ERR, "ERROR:registrar:save_fixup: MEM flag set while "
+				"using the DB_ONLY mode in USRLOC\n");
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param = (void*)(unsigned long int)flags;
+		return 0;
+	}
+}
+
+
 
 /*
  * Convert char* parameter to str*

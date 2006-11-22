@@ -13,6 +13,31 @@
 	<qandaset defaultlabel="number">
 	<qandaentry>
 		<question>
+		<para>What happend with the old <quote>use_domain</quote> module parameter?</para>
+		</question>
+		<answer>
+		<para>
+			In was removed, as the module internally loads this option from the
+			<quote>USRLOC<quote> module. This was done in order to simplify the
+			configuration.
+		</para>
+		</answer>
+	</qandaentry>
+	<qandaentry>
+		<question>
+		<para>What happend with the old <quote>save_noreply</quote> and <quote>save_memory</quote> functions?</para>
+		</question>
+		<answer>
+		<para>
+			There functions were merged into the new 
+			<quote>save(domain,flags)<quote> functions. If a reply should be
+			sent or if the DB should be updated also is controlled via the
+			flags.
+		</para>
+		</answer>
+	</qandaentry>
+	<qandaentry>
+		<question>
 		<para>Where can I find more about OpenSER?</para>
 		</question>
 		<answer>

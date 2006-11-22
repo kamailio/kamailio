@@ -50,6 +50,10 @@
 #define PATH_MODE_LAZY		1
 #define PATH_MODE_OFF		0
 
+#define REG_SAVE_MEM_FL     (1<<0)
+#define REG_SAVE_NORPL_FL   (1<<1)
+#define REG_SAVE_ALL_FL     ((1<<2)-1)
+
 extern int default_expires;
 extern qvalue_t default_q;
 extern int append_branches;

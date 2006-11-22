@@ -26,6 +26,7 @@
  * -------
  * 2003-03-21  save_noreply added, provided by Maxim Sobolev 
  *             <sobomax@portaone.com> (janakj)
+ * 2006-11-22  save_noreply and save_memory merged into save() (bogdan)
  */
 
 
@@ -39,19 +40,7 @@
 /*
  * Process REGISTER request and save it's contacts
  */
-int save(struct sip_msg* _m, char* _t, char* _s);
-
-
-/*
- * Process REGISTER request and save it's contacts, do not send any replies
- */
-int save_noreply(struct sip_msg* _m, char* _t, char* _s);
-
-
-/*
- * Process REGISTER request and save it's contacts, do not send any replies
- */
-int save_memory(struct sip_msg* _m, char* _t, char* _s);
+int save(struct sip_msg* _m, char* _d, char* _cflags);
 
 
 #endif /* SAVE_H */

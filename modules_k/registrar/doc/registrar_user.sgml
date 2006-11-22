@@ -14,7 +14,7 @@
 	<section>
 	<title>Overview</title>
 	<para>The module contains REGISTER processing logic.</para>
-		<section>
+	<section>
 		<title>PATH support</title>
 		<para>
 		Register module includes Path support (according to RFC 3327) 
@@ -66,7 +66,7 @@
 		registrar-parameters <quote>use_path</quote> and 
 		<quote>path_mode</quote>.
 		</para>
-		</section>
+	</section>
 	</section>
 
 
@@ -314,28 +314,6 @@ modparam("registrar", "realm_prefix", "sip.")
 		<programlisting format="linespecific">
 ...
 modparam("registrar", "append_branches", 0)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>use_domain</varname> (integer)</title>
-		<para>
-		If set to 1 then the registrar will use username@domain as address 
-		of record. If the variable is set to 0 then only username will be 
-		used as the address of record.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>use_domain</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "use_domain", 1)
 ...
 </programlisting>
 		</example>
@@ -720,10 +698,11 @@ save("location");
 
 	<section>
 		<title>
-		<function moreinfo="none">save_noreply(domain)</function>
+		<function moreinfo="none">save(domain,flags)</function>
 		</title>
 		<para>
-		Same as <function>save()</function> but it doesn't send a reply.
+		Same as <function>save()</function> but it accepts a set of flags for
+		controlling its behaviour.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -734,6 +713,24 @@ save("location");
 			stores the contacts.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+			<emphasis>flags</emphasis> - the value may be a bitwise OR of 
+			the following flags:
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>0x01</emphasis> - save the contacts only
+					in memory cache without no DB operation;
+					</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>0x02</emphasis> - do not generate a SIP 
+					reply to the current REGISTER request.
+				</listitem>
+			</itemizedlist>
+			<para>The flags may be given in decimal or hexa format.</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -742,37 +739,7 @@ save("location");
 		<title><function>save_noreply</function> usage</title>
 		<programlisting format="linespecific">
 ...
-save_noreply("location");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">save_memory(domain)</function>
-		</title>
-		<para>
-		Same as <function>save()</function> but it updates only the memory 
-		cache, even if DB support (any type) is enabled.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para>
-			<emphasis>domain</emphasis> - Logical domain within registrar 
-			(Ex: <quote>location</quote>).
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>save_memory</function> usage</title>
-		<programlisting format="linespecific">
-...
-save_memory("location");
+save_noreply("location","0x01");
 ...
 </programlisting>
 		</example>

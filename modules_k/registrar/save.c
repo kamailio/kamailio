@@ -4,6 +4,7 @@
  * Process REGISTER request and send reply
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -31,6 +32,7 @@
  *            instead of UDP package (bogdan)
  * 2006-04-13 added tcp_persistent_flag for keeping the TCP connection as long
  *            as a TCP contact is registered (bogdan)
+ * 2006-11-22 save_noreply and save_memory merged into save() (bogdan)
  */
 
 
@@ -715,7 +717,8 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 /*
  * Process REGISTER request and save it's contacts
  */
-static inline int save_real(struct sip_msg* _m, udomain_t* _t, int doreply)
+#define is_cflag_set(_name) (((unsigned int)(unsigned long)_cflags)&(_name))
+int save(struct sip_msg* _m, char* _d, char* _cflags)
 {
 	contact_t* c;
 	int st;
@@ -740,50 +743,25 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, int doreply)
 		goto error;
 	}
 
+	mem_only = is_cflag_set(REG_SAVE_MEM_FL)?FL_MEM:FL_NONE;
+
 	if (c == 0) {
 		if (st) {
-			if (star(_t, &aor) < 0) goto error;
+			if (star((udomain_t*)_d, &aor) < 0) goto error;
 		} else {
-			if (no_contacts(_t, &aor) < 0) goto error;
+			if (no_contacts((udomain_t*)_d, &aor) < 0) goto error;
 		}
 	} else {
-		if (add_contacts(_m, c, _t, &aor) < 0) goto error;
+		if (add_contacts(_m, c, (udomain_t*)_d, &aor) < 0) goto error;
 	}
 
-	if (doreply && (send_reply(_m) < 0)) return -1;
-	else return 1;
+	if ( !is_cflag_set(REG_SAVE_NORPL_FL) && (send_reply(_m) < 0))
+		return -1;
 
+	return 1;
 error:
-	if (doreply) send_reply(_m);
+	if ( !is_cflag_set(REG_SAVE_NORPL_FL) )
+		send_reply(_m);
 	return 0;
 }
 
-
-/*
- * Process REGISTER request and save it's contacts
- */
-int save(struct sip_msg* _m, char* _t, char* _s)
-{
-	mem_only = FL_NONE;
-	return save_real(_m, (udomain_t*)_t, 1);
-}
-
-
-/*
- * Process REGISTER request and save it's contacts, do not send any replies
- */
-int save_noreply(struct sip_msg* _m, char* _t, char* _s)
-{
-	mem_only = FL_NONE;
-	return save_real(_m, (udomain_t*)_t, 0);
-}
-
-
-/*
- * Update memory cache only
- */
-int save_memory(struct sip_msg* _m, char* _t, char* _s)
-{
-	mem_only = FL_MEM;
-	return save_real(_m, (udomain_t*)_t, 1);
-}
