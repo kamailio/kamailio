@@ -1544,7 +1544,7 @@ mod_init(void)
     }
     signaling_ip_avp.name.len = strlen(signaling_ip_avp.name.s);
     if (parse_avp_spec(&(signaling_ip_avp.name), &(signaling_ip_avp.type), &(signaling_ip_avp.avp)) < 0) {
-        LOG(L_CRIT, "error: mediaproxy/mod_init: invalid Thor node AVP specification `%s'\n", signaling_ip_avp.name.s);
+        LOG(L_CRIT, "error: mediaproxy/mod_init: invalid signaling IP AVP specification `%s'\n", signaling_ip_avp.name.s);
         return -1;
     }
 

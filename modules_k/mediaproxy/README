@@ -436,7 +436,7 @@ if (method==BYE) {
    traffic from the inside won't close the pinholes (the 4 zero
    byte ping doesn't have a reply from inside the NAT).
 
-   Example 1-10. Pinging exmaple configuration
+   Example 1-10. Pinging example configuration
 ...
 loadmodule "/lib/openser/modules/mediaproxy.so"
 loadmodule "/lib/openser/modules/nathelper.so"

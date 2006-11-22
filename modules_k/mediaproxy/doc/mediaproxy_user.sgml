@@ -491,7 +491,7 @@ if (method==BYE) {
 			the NAT).
 		</para>
 		<example>
-		<title>Pinging exmaple configuration</title>
+		<title>Pinging example configuration</title>
 				<programlisting format="linespecific">
 ...
 loadmodule "/lib/openser/modules/mediaproxy.so"
