@@ -491,7 +491,7 @@ static int lookup_user_fixup(void** param, int param_no)
 	    return -1;
 	}
 	return 0;
-    } else if (param_no == 2) {
+    } else {
 	return fixup_var_str_12(param, 2);
     }
 }

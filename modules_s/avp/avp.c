@@ -1032,7 +1032,7 @@ static int set_destination(struct sip_msg* msg, str* dest)
 	return set_dst_uri(msg, &nameaddr.uri);
     } else {
 	     /* it is just URI, pass it through */
-	return set_dst_urig(msg, dest);
+	return set_dst_uri(msg, dest);
     }
 }
 
