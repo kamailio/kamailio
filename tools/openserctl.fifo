@@ -118,7 +118,7 @@ fifo_openser_monitor() {
 	while [ $loops -ne $attempt ] ; do
 		attempt=`$EXPR $attempt + 1`
 		#clear
-		tput cup 0 0
+		tput clear
 		
 		# print_stats $name $path $attempt
 		mecho "[cycle #: $attempt; if constant make sure server lives]"
