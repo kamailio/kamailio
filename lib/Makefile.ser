@@ -2,7 +2,7 @@ include ../Makefile.defs
 
 # variables to change
 
-CFLAGS   += -g -Wall
+CFLAGS   :=${MOD_CFLAGS} -Wall
 DEFS     += -DSER
 ser      = $(CURDIR)/..
 
