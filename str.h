@@ -40,4 +40,7 @@ typedef struct _str str;
 #define STR_STATIC_INIT(v) {(v), sizeof(v) - 1}
 #define STR_NULL {NULL, 0}
 
+#define STR_FMT(_pstr_)	\
+  ((_pstr_) ? (_pstr_)->len : 0), ((_pstr_) ? (_pstr_)->s : "")
+
 #endif
