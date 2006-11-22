@@ -42,7 +42,10 @@
  *  2005-06-06  ppc locking code enabled also for ppc64, note however
  *               that the version in HEAD might be more reliable (andrei)
  *  2006-04-05 early clobber fixes for ppc, alpha; reverted unlock on x86
-                to xchg (andrei)
+ *              to xchg (andrei)
+ *  2006-11-22  arm early clobber added: according to the swp instruction 
+ *              specification the address register must be != from the other 2
+ *              (Julien Blache <jblache@debian.org>)
  *
  *
  *
@@ -102,7 +105,7 @@ inline static int tsl(fl_lock_t* lock)
 	asm volatile(
 			"# here \n\t"
 			"swpb %0, %1, [%2] \n\t"
-			: "=r" (val)
+			: "=&r" (val)
 			: "r"(1), "r" (lock) : "memory"
 	);
 	
