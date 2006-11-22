@@ -204,9 +204,9 @@ sql_query()
     if [ $# -gt 1 ] ; then
 	DB=$1
 	shift
-	$CMD $PW $MYSQL_OPTS "$DB" -e "$@"
+	$CMD "$PW" $MYSQL_OPTS "$DB" -e "$@"
     else
-	$CMD $PW $MYSQL_OPTS "$@"
+	$CMD "$PW" $MYSQL_OPTS "$@"
     fi
 }
 
@@ -367,10 +367,10 @@ case $1 in
 	shift
 	if [ $# -eq 1 ] ; then
 	    prompt_pw
-	    $DUMP_CMD $PW $MYSQL_OPTS ${DBNAME} > $1
+	    $DUMP_CMD "$PW" $MYSQL_OPTS ${DBNAME} > $1
 	elif [ $# -eq 0 ] ; then
 	    prompt_pw
-	    $DUMP_CMD $PW $MYSQL_OPTS ${DBNAME}
+	    $DUMP_CMD "$PW" $MYSQL_OPTS ${DBNAME}
 	else
 	    usage
 	    exit 1
