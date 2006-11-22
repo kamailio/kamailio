@@ -350,6 +350,78 @@ static inline int parse_param_body(str* _s, param_t* _c)
 }
 
 
+/**
+ * Only parse one parameter
+ * Returns:
+ * 	t: out parameter
+ * 	-1: on error
+ * 	0: success, but expect a next paramter
+ * 	1: success and exepect no more parameters
+ */
+inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t)
+{
+	memset(t, 0, sizeof(param_t));
+
+	parse_param_name(_s, _c, _h, t);
+	trim_leading(_s);
+	
+	if (_s->len == 0) { /* The last parameter without body */
+		t->len = t->name.len;
+		goto ok;
+	}
+	
+	if (_s->s[0] == '=') {
+		_s->s++;
+		_s->len--;
+		trim_leading(_s);
+
+		if (_s->len == 0) {
+			LOG(L_ERR, "parse_params(): Body missing\n");
+			goto error;
+		}
+
+		if (parse_param_body(_s, t) < 0) {
+			LOG(L_ERR, "parse_params(): Error while parsing param body\n");
+			goto error;
+		}
+
+		t->len = _s->s - t->name.s;
+
+		trim_leading(_s);
+		if (_s->len == 0) {
+			goto ok;
+		}
+	} else {
+		t->len = t->name.len;
+	}
+
+	if (_s->s[0] == ',') goto ok; /* To be able to parse header parameters */
+	if (_s->s[0] == '>') goto ok; /* To be able to parse URI parameters */
+
+	if (_s->s[0] != ';') {
+		LOG(L_ERR, "parse_params(): Invalid character, ; expected\n");
+		goto error;
+	}
+
+	_s->s++;
+	_s->len--;
+	trim_leading(_s);
+	
+	if (_s->len == 0) {
+		LOG(L_ERR, "parse_params(): Param name missing after ;\n");
+		goto error;
+	}
+
+	return 0; /* expect more params */
+
+ok:
+	return 1; /* done with parsing for params */
+error:
+	return -1;
+}
+
+
+
 /*
  * Parse parameters
  * _s is string containing parameters, it will be updated to point behind the parameters
@@ -383,55 +455,11 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 			LOG(L_ERR, "parse_params(): No memory left\n");
 			goto error;
 		}
-		memset(t, 0, sizeof(param_t));
 
-		parse_param_name(_s, _c, _h, t);
-		trim_leading(_s);
-		
-		if (_s->len == 0) { /* The last parameter without body */
-			goto ok;
-		}
-		
-		if (_s->s[0] == '=') {
-			_s->s++;
-			_s->len--;
-			trim_leading(_s);
-
-			if (_s->len == 0) {
-				LOG(L_ERR, "parse_params(): Body missing\n");
-				goto error;
-			}
-
-			if (parse_param_body(_s, t) < 0) {
-				LOG(L_ERR, "parse_params(): Error while parsing param body\n");
-				goto error;
-			}
-
-			t->len = _s->s - t->name.s;
-
-			trim_leading(_s);
-			if (_s->len == 0) {
-				goto ok;
-			}
-		} else {
-			t->len = t->name.len;
-		}
-
-		if (_s->s[0] == ',') goto ok; /* To be able to parse header parameters */
-		if (_s->s[0] == '>') goto ok; /* To be able to parse URI parameters */
-
-		if (_s->s[0] != ';') {
-			LOG(L_ERR, "parse_params(): Invalid character, ; expected\n");
-			goto error;
-		}
-
-		_s->s++;
-		_s->len--;
-		trim_leading(_s);
-		
-		if (_s->len == 0) {
-			LOG(L_ERR, "parse_params(): Param name missing after ;\n");
-			goto error;
+		switch(parse_param(_s, _c, _h, t)) {
+		case 0: break;
+		case 1: goto ok;
+		default: goto error;
 		}
 
 		t->next = *_p;

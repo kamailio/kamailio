@@ -117,6 +117,16 @@ typedef union param_hooks {
 	struct uri_hooks uri;         /* URI hooks */
 } param_hooks_t;
 
+/**
+ * Only parse one parameter
+ * @Return:
+ * 	t: out parameter
+ * 	-1: on error
+ * 	0: success, but expect a next paramter
+ * 	1: success and exepect no more parameters
+ */
+inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t);
+
 
 /*
  * Parse parameters
