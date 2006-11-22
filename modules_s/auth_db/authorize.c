@@ -264,13 +264,18 @@ static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_
     
     cred = (auth_body_t*)h->parsed;
 
-    if (msg->REQ_METHOD == METHOD_REGISTER) {
-	ret = get_to_did(&did, msg);
+    if (use_did) {
+	if (msg->REQ_METHOD == METHOD_REGISTER) {
+	    ret = get_to_did(&did, msg);
+	} else {
+	    ret = get_from_did(&did, msg);
+	}
+	if (ret == 0) did = default_did;
     } else {
-	ret = get_from_did(&did, msg);
+	did.len = 0;
+	did.s = 0;
     }
-    if (ret != 1) did = default_did;
-    
+
     res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
     if (res < 0) {
 	ret = -2;
