@@ -37,7 +37,7 @@
 /*
  * Set From UID
  */
-void set_from_uid(str* uid);
+int set_from_uid(str* uid);
 
 
 /*
@@ -48,7 +48,7 @@ int get_from_uid(str* uid, struct sip_msg* msg);
 /*
  * Set To UID
  */
-void set_to_uid(str* uid);
+int set_to_uid(str* uid);
 
 
 /*

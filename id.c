@@ -38,7 +38,7 @@ static str did_name = STR_STATIC_INIT(AVP_DID);
 /*
  * Set From UID
  */
-void set_from_uid(str* uid)
+int set_from_uid(str* uid)
 {
 	struct search_state s;
 	int_str val, name;
@@ -52,7 +52,7 @@ void set_from_uid(str* uid)
 	}
 
 	val.s = *uid;
-	add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, val);
+	return add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, val);
 }
 
 
@@ -122,7 +122,7 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 /*
  * Set To UID
  */
-void set_to_uid(str* uid)
+int set_to_uid(str* uid)
 {
 	struct search_state s;
 	int_str val, name;
@@ -136,7 +136,7 @@ void set_to_uid(str* uid)
 	}
 
 	val.s = *uid;
-	add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, name, val);
+	return add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, name, val);
 }
 
 
