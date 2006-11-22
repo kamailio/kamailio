@@ -97,6 +97,8 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 			case SQL_INTEGER:
 			case SQL_TINYINT:
 			case SQL_BIGINT:
+			case SQL_DECIMAL:
+			case SQL_NUMERIC:
 				RES_TYPES(_r)[i] = DB_INT;
 				break;
 
@@ -107,6 +109,11 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 				break;
 
 			case SQL_TYPE_TIMESTAMP:
+			case SQL_DATE:
+			case SQL_TIME:
+			case SQL_TIMESTAMP:
+			case SQL_TYPE_DATE:
+			case SQL_TYPE_TIME:
 				RES_TYPES(_r)[i] = DB_DATETIME;
 				break;
 
