@@ -37,6 +37,7 @@
 #include "../../str.h"
 #include "../../dprint.h"               /* Debugging */
 #include "../../mem/mem.h"
+#include "../../sr_module.h"
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -79,11 +80,14 @@ int has_totag(struct sip_msg* _m, char* _foo, char* _bar)
  */
 int is_user(struct sip_msg* _m, char* _user, char* _str2)
 {
-	str* s;
+	str s;
 	struct hdr_field* h;
 	auth_body_t* c;
 
-	s = (str*)_user;
+	if (get_str_fparam(&s, _m, (fparam_t *)_user) < 0) {
+		ERR("is_user: failed to recover parameter.\n");
+		return -1;
+	}
 
 	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
@@ -102,12 +106,12 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 		return -1;
 	}
 
-	if (s->len != c->digest.username.user.len) {
+	if (s.len != c->digest.username.user.len) {
 		DBG("is_user(): Username length does not match\n");
 		return -1;
 	}
 
-	if (!memcmp(s->s, c->digest.username.user.s, s->len)) {
+	if (!memcmp(s.s, c->digest.username.user.s, s.len)) {
 		DBG("is_user(): Username matches\n");
 		return 1;
 	} else {
@@ -131,13 +135,24 @@ int uri_param_1(struct sip_msg* _msg, char* _param, char* _str2)
  */
 int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 {
-	str *param, *value, t;
+	str param, value, t;
 
 	param_hooks_t hooks;
 	param_t* params;
 
-	param = (str*)_param;
-	value = (str*)_value;
+
+	if (get_str_fparam(&param, _msg, (fparam_t *)_param) < 0) {
+		ERR("is_user: failed to recover 1st parameter.\n");
+		return -1;
+	}
+	if (_value) {
+		if (get_str_fparam(&value, _msg, (fparam_t *)_value) < 0) {
+			ERR("is_user: failed to recover 1st parameter.\n");
+			return -1;
+		}
+	} else {
+	    value.s = 0;
+	}
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 	        LOG(L_ERR, "uri_param(): ruri parsing failed\n");
@@ -152,11 +167,11 @@ int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 	}
 
 	while (params) {
-		if ((params->name.len == param->len) &&
-		    (strncmp(params->name.s, param->s, param->len) == 0)) {
-			if (value) {
-				if ((value->len == params->body.len) &&
-				    strncmp(value->s, params->body.s, value->len) == 0) {
+		if ((params->name.len == param.len) &&
+		    (strncmp(params->name.s, param.s, param.len) == 0)) {
+			if (value.s) {
+				if ((value.len == params->body.len) &&
+				    strncmp(value.s, params->body.s, value.len) == 0) {
 					goto ok;
 				} else {
 					goto nok;
@@ -189,13 +204,16 @@ ok:
  */
 int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 {
-	str *param, *cur_uri, new_uri;
+	str param, *cur_uri, new_uri;
 	struct sip_uri *parsed_uri;
 	char *at;
 
-	param = (str*)_param;
+	if (get_str_fparam(&param, _msg, (fparam_t *)_param) < 0) {
+	    ERR("add_uri_param: failed to recover parameter.\n");
+	    return -1;
+	}
 
-	if (param->len == 0) {
+	if (param.len == 0) {
 		return 1;
 	}
 
@@ -209,7 +227,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 	/* if current ruri has no headers, pad param at the end */
 	if (parsed_uri->headers.len == 0) {
 		cur_uri =  GET_RURI(_msg);
-		new_uri.len = cur_uri->len + param->len + 1;
+		new_uri.len = cur_uri->len + param.len + 1;
 		if (new_uri.len > MAX_URI_SIZE) {
 			LOG(L_ERR, "add_uri_param(): new ruri too long\n");
 			return -1;
@@ -221,7 +239,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 		}
 		memcpy(new_uri.s, cur_uri->s, cur_uri->len);
 		*(new_uri.s + cur_uri->len) = ';';
-		memcpy(new_uri.s + cur_uri->len + 1, param->s, param->len);
+		memcpy(new_uri.s + cur_uri->len + 1, param.s, param.len);
 		if (rewrite_uri(_msg, &new_uri ) == 1) {
 			goto ok;
 		} else {
@@ -235,7 +253,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 		(parsed_uri->passwd.len ? parsed_uri->passwd.len + 1 : 0) +
 		parsed_uri->host.len +
 		(parsed_uri->port.len ? parsed_uri->port.len + 1 : 0) +
-		parsed_uri->params.len + param->len + 1 +
+		parsed_uri->params.len + param.len + 1 +
 		parsed_uri->headers.len + 1;
 	if (new_uri.len > MAX_URI_SIZE) {
 	        LOG(L_ERR, "add_uri_param(): new ruri too long\n");
@@ -274,8 +292,8 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 	at = at + parsed_uri->params.len;
 	*at = ';';
 	at = at + 1;
-	memcpy(at, param->s, param->len);
-	at = at + param->len;
+	memcpy(at, param.s, param.len);
+	at = at + param.len;
 	*at = '?';
 	at = at + 1;
 	memcpy(at, parsed_uri->headers.s, parsed_uri->headers.len);
