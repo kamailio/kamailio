@@ -82,7 +82,6 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str* aor_filter)
 {
 	unsigned int len;
 	int qlen;
-	str ab;
 
 	len = 0;
 	while(c) {
