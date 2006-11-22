@@ -23,7 +23,12 @@ fi
 ##### ----------------------------------------------- #####
 ### binaries
 if [ -z "$PGSQL" ] ; then
-	PGSQL='psql'
+	locate_tool psql
+	if [ -z "$TOOLPATH" ] ; then
+		echo "error: 'psql' tool not found: set PGSQL variable to correct tool path"
+		exit
+	fi
+	PGSQL="$TOOLPATH"'
 fi
 
 ##### ----------------------------------------------- #####

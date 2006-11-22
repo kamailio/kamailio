@@ -23,7 +23,12 @@ fi
 ##### ----------------------------------------------- #####
 ### binaries
 if [ -z "$MYSQL" ] ; then
-	MYSQL='mysql'
+	locate_tool mysql
+	if [ -z "$TOOLPATH" ] ; then
+		echo "error: 'mysql' tool not found: set MYSQL variable to correct tool path"
+		exit
+	fi
+	MYSQL="$TOOLPATH"
 fi
 
 # input: sql query, optional mysql command-line params

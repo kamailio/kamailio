@@ -8,20 +8,74 @@
 
 ##### ----------------------------------------------- #####
 ### path to useful tools
+locate_tool() {
+	TOOLPATH=""
+	if [ -x /usr/bin/which ] ; then
+		TOOLPATH=`which $1`
+		if [ -n "$TOOLPATH" ]; then
+			return
+		fi
+	fi
+	# look in common locations
+	if [ -x "/usr/bin/$1" ] ; then
+		TOOLPATH="/usr/bin/$1"
+		return
+	fi
+	if [ -x "/bin/$1" ] ; then
+		TOOLPATH="/bin/$1"
+		return
+	fi
+	if [ -x "/usr/local/bin/$1" ] ; then
+		TOOLPATH="/usr/local/bin/$1"
+		return
+	fi
+	return
+}
+
 if [ -z "$EGREP" ] ; then
-	EGREP="egrep"
+	locate_tool egrep
+	if [ -z "$TOOLPATH" ] ; then
+		# now error, but we can look for alternative names if it is the case
+		echo "error: 'egrep' tool not found: set EGREP variable to correct tool path"
+		exit
+	fi
+	EGREP="$TOOLPATH"
 fi
 if [ -z "$AWK" ] ; then
-	AWK="awk"
+	locate_tool awk
+	if [ -z "$TOOLPATH" ] ; then
+		# now error, but we can look for alternative names if it is the case
+		echo "error: 'awk' tool not found: set AWK variable to correct tool path"
+		exit
+	fi
+	AWK="$TOOLPATH"
 fi
 if [ -z "$MD5" ]; then
-	MD5="md5sum"
+	locate_tool md5sum
+	if [ -z "$TOOLPATH" ] ; then
+		# now error, but we can look for alternative names if it is the case
+		echo "error: 'md5sum' tool not found: set MD5 variable to correct tool path"
+		exit
+	fi
+	MD5="$TOOLPATH"
 fi
 if [ -z "$LAST_LINE" ] ; then
-	LAST_LINE='tail -1'
+	locate_tool tail
+	if [ -z "$TOOLPATH" ] ; then
+		# now error, but we can look for alternative names if it is the case
+		echo "error: 'TAIL' tool not found: set TAIL variable to correct tool path"
+		exit
+	fi
+	LAST_LINE="$TOOLPATH -1"
 fi
 if [ -z "$EXPR" ] ; then
-	EXPR="expr"
+	locate_tool expr
+	if [ -z "$TOOLPATH" ] ; then
+		# now error, but we can look for alternative names if it is the case
+		echo "error: 'expr' tool not found: set EXPR variable to correct tool path"
+		exit
+	fi
+	EXPR="$TOOLPATH"
 fi
 
 ##### ------------------------------------------------ #####
