@@ -263,17 +263,6 @@ static int fifo_get_gflags( FILE* pipe, char* response_file )
 
 
 /************************* MI functions *******************************/
-static inline int mi_get_mask( str *val, unsigned int *mask )
-{
-	/* hexa or decimal*/
-	if (val->len>2 && val->s[0]=='0' && val->s[1]=='x') {
-		return hexstr2int( val->s+2, val->len-2, mask);
-	} else {
-		return str2int( val, mask);
-	}
-}
-
-
 
 static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
 {
@@ -284,7 +273,7 @@ static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
 	if(node == NULL)
 		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 
-	if( mi_get_mask( &node->value, &flag) <0)
+	if( strno2int( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
 		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
@@ -309,7 +298,7 @@ static struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
 	if(node == NULL)
 		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 
-	if( mi_get_mask( &node->value, &flag) <0)
+	if( strno2int( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
 		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
@@ -335,7 +324,7 @@ static struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
 	if(node == NULL)
 		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
 
-	if( mi_get_mask( &node->value, &flag) <0)
+	if( strno2int( &node->value, &flag) <0)
 		goto error_param;
 	if (!flag) {
 		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
