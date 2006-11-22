@@ -736,10 +736,10 @@ save("location");
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
-		<title><function>save_noreply</function> usage</title>
+		<title><function>save</function> usage</title>
 		<programlisting format="linespecific">
 ...
-save_noreply("location","0x01");
+save("location","0x01");
 ...
 </programlisting>
 		</example>

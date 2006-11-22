@@ -86,7 +86,7 @@ Bogdan-Andre Iancu
    1-21. Set path_mode parameter
    1-22. Set path_use_received parameter
    1-23. save usage
-   1-24. save_noreply usage
+   1-24. save usage
    1-25. lookup usage
    1-26. registered usage
    1-27. add_sock_hdr usage
@@ -564,9 +564,9 @@ save("location");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-24. save_noreply usage
+   Example 1-24. save usage
 ...
-save_noreply("location","0x01");
+save("location","0x01");
 ...
      _________________________________________________________
 
