@@ -116,7 +116,7 @@ void free_extension_element(extension_element_t *p);
  * the return value is never NULL */
 str_t* tuple_status2str(basic_tuple_status_t status);
 
-basic_tuple_status_t str2tuple_status(const str *s);
+basic_tuple_status_t str2tuple_status(const str_t *s);
 
 /* duplicates presentity info */
 presentity_info_t *dup_presentity_info(presentity_info_t *p);

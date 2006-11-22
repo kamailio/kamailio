@@ -221,15 +221,15 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 
 	i = 0;
 	if (params) {
-		if (params->auth_user) i += params->auth_user->len;
-		if (params->auth_pass) i += params->auth_pass->len;
+		if (params->auth_user.s) i += params->auth_user.len;
+		if (params->auth_pass.s) i += params->auth_pass.len;
 	}
 	if (i > 0) {
 		/* do authentication */
 		auth = (char *)cds_malloc(i + 2);
 		if (!auth) return -1;
-		sprintf(auth, "%s:%s", params->auth_user ? params->auth_user: "",
-				params->auth_pass ? params->auth_pass: "");
+		sprintf(auth, "%s:%s", params->auth_user.s ? params->auth_user.s: "",
+				params->auth_pass.s ? params->auth_pass.s: "");
 	}
 
 	auth_methods = CURLAUTH_BASIC | CURLAUTH_DIGEST;
@@ -332,7 +332,7 @@ int get_inline_xcap_buf_len(xcap_query_params_t *params)
 	/* counts the length for data buffer storing values of
 	 * xcap parameter members */
 	if (!params) {
-		ERR("BUG: empty params given\n");
+		ERROR_LOG("BUG: empty params given\n");
 		return 0;
 	}
 

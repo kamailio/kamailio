@@ -89,7 +89,7 @@ int str_dup_dbg(str_t* dst, const str_t* src, const char *file, int line)
 	if ( (!src->s) || (src->len < 1)) return 0;
 
 		/* ERROR_LOG("can't allocate memory (%d bytes)\n", src->len); */
-	INFO("str_dup called from %s:%d\n", file, line);
+	DEBUG_LOG("str_dup called from %s:%d\n", file, line);
 	dst->s = cds_malloc(src->len);
 	if (!dst->s) {
 		/* ERROR_LOG("can't allocate memory (%d bytes)\n", src->len); */

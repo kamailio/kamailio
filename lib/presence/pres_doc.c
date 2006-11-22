@@ -47,7 +47,7 @@ str_t* tuple_status2str(basic_tuple_status_t status)
 	return &unknown;
 }
 
-basic_tuple_status_t str2tuple_status(const str *s)
+basic_tuple_status_t str2tuple_status(const str_t *s)
 {
 	if (str_nocase_equals(s, &open) == 0) return presence_tuple_open;
 	if (str_nocase_equals(s, &closed) == 0) return presence_tuple_closed;
@@ -306,7 +306,7 @@ static int copy_tuple_notes(presence_tuple_info_t *dst_info,
 	while (n) {
 		nn = create_presence_note(&n->value, &n->lang);
 		if (!nn) {
-			ERR("can't create presence note\n");
+			ERROR_LOG("can't create presence note\n");
 			return -1;
 		}
 		DOUBLE_LINKED_LIST_ADD(dst_info->first_note, dst_info->last_note, nn);
