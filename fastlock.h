@@ -53,6 +53,9 @@
  *              ppc, mips*, alpha optimizations (andrei)
  * 2006-04-05  ppc fixes (s/stw/stwx/, s/lwz/lwzx), early clobber added
  *             where needed (andrei)
+ * 2006-11-22  arm early clobber added: according to the swp instruction 
+ *              specification the address register must be != from the other 2
+ *              (Julien Blache <jblache@debian.org>)
  *
  */
 
@@ -222,7 +225,7 @@ inline static int tsl(fl_lock_t* lock)
 #elif defined __CPU_arm 
 	asm volatile(
 			"swp %0, %2, [%3] \n\t"
-			: "=r" (val), "=m"(*lock) : "r"(1), "r" (lock) : "memory"
+			: "=&r" (val), "=m"(*lock) : "r"(1), "r" (lock) : "memory"
 	);
 #elif defined __CPU_arm6
 	asm volatile(
