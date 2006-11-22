@@ -145,7 +145,7 @@ static int is_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 
 
 /*
- * Load attributes from domain_attrs table
+ * Load attributes from global_attrs table
  */
 static int load_attrs(void)
 {
