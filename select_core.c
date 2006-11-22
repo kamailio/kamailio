@@ -705,7 +705,7 @@ int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 	}
 	free_params(list);
 
-	DBG("SELECT ...uri.params.%s NOT FOUND !", wanted->s);
+	DBG("SELECT ...uri.params.%s NOT FOUND !\n", wanted->s);
 	return -1;
 }
 

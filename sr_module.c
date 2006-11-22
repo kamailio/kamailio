@@ -854,7 +854,7 @@ int fixup_str_12(void** param, int param_no)
     int ret;
 
     if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
-    ERR("Cannot function parameter to integer\n");
+    ERR("Cannot function parameter to string\n");
     return -1;
 }
 
