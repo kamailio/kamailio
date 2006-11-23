@@ -848,20 +848,13 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_keys[4] = fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
-	if(faked==1)
-	{
-		if(trace_local_ip)
-			db_vals[4].val.string_val = trace_local_ip;
-		else {
-			strcpy(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
-			strcat(fromip_buff,":");
-			strcat(fromip_buff, int2str(req->rcv.dst_port, NULL));
-			db_vals[4].val.string_val = fromip_buff;
-		}
-	} else {
-		strcpy(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
+	
+	if(trace_local_ip)
+		db_vals[4].val.string_val = trace_local_ip;
+	else {
+		strcpy(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
 		strcat(fromip_buff,":");
-		strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
+		strcat(fromip_buff, int2str(req->rcv.dst_port, NULL));
 		db_vals[4].val.string_val = fromip_buff;
 	}
 	
