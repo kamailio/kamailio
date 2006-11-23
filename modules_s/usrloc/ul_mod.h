@@ -44,6 +44,13 @@
  * Module parameters
  */
 
+enum ul_db_type {
+    NO_DB = 0,     /* No DB access */
+    WRITE_THROUGH, /* Propagate changes to DB immediately */
+    WRITE_BACK,    /* Propagate changes with delay */
+    READONLY,      /* Perform initial raad and don't update */
+    UL_DB_MAX 
+};
 
 #define NO_DB         0
 #define WRITE_THROUGH 1
