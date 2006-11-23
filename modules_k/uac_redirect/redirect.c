@@ -95,6 +95,7 @@ struct module_exports exports = {
 	params,   /* Exported parameters */
 	0,        /* exported statistics */
 	0,        /* exported MI functions */
+	0,        /* exported pseudo-variables */
 	redirect_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) 0,

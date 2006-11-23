@@ -87,6 +87,7 @@ struct module_exports exports= {
 	params,
 	0,           /* exported statistics */
 	0,           /* exported MI functions */
+	0,           /* exported pseudo-variables */
 	pike_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) pike_exit,   /* module exit function */

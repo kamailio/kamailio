@@ -41,6 +41,7 @@
 #include "../../tcp_conn.h"    /* struct tcp_connection */
 #include "../../tcp_server.h"  /* tcpconn_get() */
 #include "../../sr_module.h"
+#include "../../items.h"
 
 MODULE_VERSION
 
@@ -76,75 +77,126 @@ static param_export_t params[] = {
 /*
  *  pseudo variables
  */
-static pseudo_export_t pseudos[] = {
+static item_export_t mod_items[] = {
 	/* TLS session parameters */
-	{"tls_version",      tlsops_version  , 0},
-	{"tls_description",  tlsops_desc     , 0},
-	{"tls_cipher_info",  tlsops_cipher   , 0},
-	{"tls_cipher_bits",  tlsops_bits     , 0},
+	{"tls_version",      tlsops_version,           0,
+		{{0, 0}, 0} },
+	{"tls_description",  tlsops_desc,              0,
+		{{0, 0}, 0} },
+	{"tls_cipher_info",  tlsops_cipher,            0,
+		{{0, 0}, 0} },
+	{"tls_cipher_bits",  tlsops_bits,              0,
+		{{0, 0}, 0} },
 	/* general certificate parameters for peer and local */
-	{"tls_peer_version", tlsops_cert_version, CERT_PEER  },
-	{"tls_my_version",   tlsops_cert_version, CERT_LOCAL },
-	{"tls_peer_serial",  tlsops_sn, CERT_PEER  },
-	{"tls_my_serial",    tlsops_sn, CERT_LOCAL },
+	{"tls_peer_version", tlsops_cert_version,      0,
+		{{0, 0}, CERT_PEER}  },
+	{"tls_my_version",   tlsops_cert_version,      0,
+		{{0, 0}, CERT_LOCAL} },
+	{"tls_peer_serial",  tlsops_sn,                0,
+		{{0, 0}, CERT_PEER}  },
+	{"tls_my_serial",    tlsops_sn,                0,
+		{{0, 0}, CERT_LOCAL} },
 	/* certificate parameters for peer and local, for subject and issuer*/	
-	{"tls_peer_subject", tlsops_comp     , CERT_PEER  | CERT_SUBJECT },
-	{"tls_peer_issuer",  tlsops_comp     , CERT_PEER  | CERT_ISSUER  },
-	{"tls_my_subject",   tlsops_comp     , CERT_LOCAL | CERT_SUBJECT },
-	{"tls_my_issuer",    tlsops_comp     , CERT_LOCAL | CERT_ISSUER  },
-	{"tls_peer_subject_cn", tlsops_comp     , CERT_PEER  | CERT_SUBJECT | COMP_CN },
-	{"tls_peer_issuer_cn",  tlsops_comp     , CERT_PEER  | CERT_ISSUER  | COMP_CN },
-	{"tls_my_subject_cn",   tlsops_comp     , CERT_LOCAL | CERT_SUBJECT | COMP_CN },
-	{"tls_my_issuer_cn",    tlsops_comp     , CERT_LOCAL | CERT_ISSUER  | COMP_CN },
-	{"tls_peer_subject_locality", tlsops_comp     , CERT_PEER  | CERT_SUBJECT | COMP_L },
-	{"tls_peer_issuer_locality",  tlsops_comp     , CERT_PEER  | CERT_ISSUER  | COMP_L },
-	{"tls_my_subject_locality",   tlsops_comp     , CERT_LOCAL | CERT_SUBJECT | COMP_L },
-	{"tls_my_issuer_locality",    tlsops_comp     , CERT_LOCAL | CERT_ISSUER  | COMP_L },
-	{"tls_peer_subject_country", tlsops_comp     , CERT_PEER  | CERT_SUBJECT | COMP_C },
-	{"tls_peer_issuer_country",  tlsops_comp     , CERT_PEER  | CERT_ISSUER  | COMP_C },
-	{"tls_my_subject_country",   tlsops_comp     , CERT_LOCAL | CERT_SUBJECT | COMP_C },
-	{"tls_my_issuer_country",    tlsops_comp     , CERT_LOCAL | CERT_ISSUER  | COMP_C },
-	{"tls_peer_subject_state", tlsops_comp     , CERT_PEER  | CERT_SUBJECT | COMP_ST },
-	{"tls_peer_issuer_state",  tlsops_comp     , CERT_PEER  | CERT_ISSUER  | COMP_ST },
-	{"tls_my_subject_state",   tlsops_comp     , CERT_LOCAL | CERT_SUBJECT | COMP_ST },
-	{"tls_my_issuer_state",    tlsops_comp     , CERT_LOCAL | CERT_ISSUER  | COMP_ST },
-	{"tls_peer_subject_organization", tlsops_comp     , CERT_PEER  | CERT_SUBJECT | COMP_O },
-	{"tls_peer_issuer_organization",  tlsops_comp     , CERT_PEER  | CERT_ISSUER  | COMP_O },
-	{"tls_my_subject_organization",   tlsops_comp     , CERT_LOCAL | CERT_SUBJECT | COMP_O },
-	{"tls_my_issuer_organization",    tlsops_comp     , CERT_LOCAL | CERT_ISSUER  | COMP_O },
-	{"tls_peer_subject_unit", tlsops_comp     , CERT_PEER  | CERT_SUBJECT | COMP_OU },
-	{"tls_peer_issuer_unit",  tlsops_comp     , CERT_PEER  | CERT_ISSUER  | COMP_OU },
-	{"tls_my_subject_unit",   tlsops_comp     , CERT_LOCAL | CERT_SUBJECT | COMP_OU },
-	{"tls_my_issuer_unit",    tlsops_comp     , CERT_LOCAL | CERT_ISSUER  | COMP_OU },
+	{"tls_peer_subject", tlsops_comp,              0,
+		{{0, 0}, CERT_PEER  | CERT_SUBJECT} },
+	{"tls_peer_issuer",  tlsops_comp,              0,
+		{{0, 0}, CERT_PEER  | CERT_ISSUER}  },
+	{"tls_my_subject",   tlsops_comp,              0,
+		{{0, 0}, CERT_LOCAL | CERT_SUBJECT} },
+	{"tls_my_issuer",    tlsops_comp,              0,
+		{{0, 0}, CERT_LOCAL | CERT_ISSUER}  },
+	{"tls_peer_subject_cn", tlsops_comp,           0,
+		{{0, 0}, CERT_PEER  | CERT_SUBJECT | COMP_CN} },
+	{"tls_peer_issuer_cn",  tlsops_comp,           0,
+		{{0, 0}, CERT_PEER  | CERT_ISSUER  | COMP_CN} },
+	{"tls_my_subject_cn",   tlsops_comp,           0,
+		{{0, 0}, CERT_LOCAL | CERT_SUBJECT | COMP_CN} },
+	{"tls_my_issuer_cn",    tlsops_comp,           0,
+		{{0, 0}, CERT_LOCAL | CERT_ISSUER  | COMP_CN} },
+	{"tls_peer_subject_locality", tlsops_comp,     0,
+		{{0, 0}, CERT_PEER  | CERT_SUBJECT | COMP_L} },
+	{"tls_peer_issuer_locality",  tlsops_comp,     0,
+		{{0, 0}, CERT_PEER  | CERT_ISSUER  | COMP_L} },
+	{"tls_my_subject_locality",   tlsops_comp,     0,
+		{{0, 0}, CERT_LOCAL | CERT_SUBJECT | COMP_L} },
+	{"tls_my_issuer_locality",    tlsops_comp,     0,
+		{{0, 0}, CERT_LOCAL | CERT_ISSUER  | COMP_L} },
+	{"tls_peer_subject_country", tlsops_comp,      0,
+		{{0, 0}, CERT_PEER  | CERT_SUBJECT | COMP_C} },
+	{"tls_peer_issuer_country",  tlsops_comp,      0,
+		{{0, 0}, CERT_PEER  | CERT_ISSUER  | COMP_C} },
+	{"tls_my_subject_country",   tlsops_comp,      0,
+		{{0, 0}, CERT_LOCAL | CERT_SUBJECT | COMP_C} },
+	{"tls_my_issuer_country",    tlsops_comp,      0,
+		{{0, 0}, CERT_LOCAL | CERT_ISSUER  | COMP_C} },
+	{"tls_peer_subject_state", tlsops_comp,        0,
+		{{0, 0}, CERT_PEER  | CERT_SUBJECT | COMP_ST} },
+	{"tls_peer_issuer_state",  tlsops_comp,        0,
+		{{0, 0}, CERT_PEER  | CERT_ISSUER  | COMP_ST} },
+	{"tls_my_subject_state",   tlsops_comp,        0,
+		{{0, 0}, CERT_LOCAL | CERT_SUBJECT | COMP_ST} },
+	{"tls_my_issuer_state",    tlsops_comp,        0,
+		{{0, 0}, CERT_LOCAL | CERT_ISSUER  | COMP_ST} },
+	{"tls_peer_subject_organization", tlsops_comp, 0,
+		{{0, 0}, CERT_PEER  | CERT_SUBJECT | COMP_O} },
+	{"tls_peer_issuer_organization",  tlsops_comp, 0,
+		{{0, 0}, CERT_PEER  | CERT_ISSUER  | COMP_O} },
+	{"tls_my_subject_organization",   tlsops_comp, 0,
+		{{0, 0}, CERT_LOCAL | CERT_SUBJECT | COMP_O} },
+	{"tls_my_issuer_organization",    tlsops_comp, 0,
+		{{0, 0}, CERT_LOCAL | CERT_ISSUER  | COMP_O} },
+	{"tls_peer_subject_unit", tlsops_comp,         0,
+		{{0, 0}, CERT_PEER  | CERT_SUBJECT | COMP_OU} },
+	{"tls_peer_issuer_unit",  tlsops_comp,         0,
+		{{0, 0}, CERT_PEER  | CERT_ISSUER  | COMP_OU} },
+	{"tls_my_subject_unit",   tlsops_comp,         0,
+		{{0, 0}, CERT_LOCAL | CERT_SUBJECT | COMP_OU} },
+	{"tls_my_issuer_unit",    tlsops_comp,         0,
+		{{0, 0}, CERT_LOCAL | CERT_ISSUER  | COMP_OU} },
 	/* subject alternative name parameters for peer and local */	
-	{"tls_peer_san_email",    tlsops_alt, CERT_PEER  | COMP_E },
-	{"tls_my_san_email",      tlsops_alt, CERT_LOCAL | COMP_E },
-	{"tls_peer_san_hostname", tlsops_alt, CERT_PEER  | COMP_HOST },
-	{"tls_my_san_hostname",   tlsops_alt, CERT_LOCAL | COMP_HOST },
-	{"tls_peer_san_uri",      tlsops_alt, CERT_PEER  | COMP_URI },
-	{"tls_my_san_uri",        tlsops_alt, CERT_LOCAL | COMP_URI },
-	{"tls_peer_san_ip",       tlsops_alt, CERT_PEER  | COMP_IP },
-	{"tls_my_san_ip",         tlsops_alt, CERT_LOCAL | COMP_IP },
+	{"tls_peer_san_email",    tlsops_alt,          0,
+		{{0, 0}, CERT_PEER  | COMP_E} },
+	{"tls_my_san_email",      tlsops_alt,          0,
+		{{0, 0}, CERT_LOCAL | COMP_E} },
+	{"tls_peer_san_hostname", tlsops_alt,          0,
+		{{0, 0}, CERT_PEER  | COMP_HOST} },
+	{"tls_my_san_hostname",   tlsops_alt,          0,
+		{{0, 0}, CERT_LOCAL | COMP_HOST} },
+	{"tls_peer_san_uri",      tlsops_alt,          0,
+		{{0, 0}, CERT_PEER  | COMP_URI} },
+	{"tls_my_san_uri",        tlsops_alt,          0,
+		{{0, 0}, CERT_LOCAL | COMP_URI} },
+	{"tls_peer_san_ip",       tlsops_alt,          0,
+		{{0, 0}, CERT_PEER  | COMP_IP} },
+	{"tls_my_san_ip",         tlsops_alt,          0,
+		{{0, 0}, CERT_LOCAL | COMP_IP} },
 	/* peer certificate validation parameters */		
-	{"tls_peer_verified",   tlsops_check_cert, CERT_VERIFIED },
-	{"tls_peer_revoked",    tlsops_check_cert, CERT_REVOKED },
-	{"tls_peer_expired",    tlsops_check_cert, CERT_EXPIRED },
-	{"tls_peer_selfsigned", tlsops_check_cert, CERT_SELFSIGNED },
-	{"tls_peer_notBefore", tlsops_validity, CERT_NOTBEFORE },
-	{"tls_peer_notAfter",  tlsops_validity, CERT_NOTAFTER },
+	{"tls_peer_verified",   tlsops_check_cert,     0,
+		{{0, 0}, CERT_VERIFIED} },
+	{"tls_peer_revoked",    tlsops_check_cert,     0,
+		{{0, 0}, CERT_REVOKED} },
+	{"tls_peer_expired",    tlsops_check_cert,     0,
+		{{0, 0}, CERT_EXPIRED} },
+	{"tls_peer_selfsigned", tlsops_check_cert,     0,
+		{{0, 0}, CERT_SELFSIGNED} },
+	{"tls_peer_notBefore", tlsops_validity,        0,
+		{{0, 0}, CERT_NOTBEFORE} },
+	{"tls_peer_notAfter",  tlsops_validity,        0,
+		{{0, 0}, CERT_NOTAFTER} },
 
-	{0,0,0}
+	{0,0,0,{{0, 0},0}}
 }; 
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"tls", 
+	"tlsops", 
 	cmds,        /* Exported functions */
 	params,      /* Exported parameters */
 	0,           /* exported statistics */
 	0,           /* exported MI functions */
+	mod_items,   /* exported pseudo-variables */
 	mod_init,    /* module initialization function */
 	0,           /* response function */
 	mod_destroy, /* destroy function */
@@ -153,22 +205,8 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	pseudo_export_t *pseudo;
 	DBG("%s module - initializing...\n", exports.name);
 	
-	pseudo = &pseudos[0];
-	while (pseudo->name) {
-		xl_param_t param;
-		param.ind = pseudo->flags;
-		if(xl_add_extra(pseudo->name, pseudo->function, 0, &param)!=0) {
-			LOG(L_ERR,"ERROR:tlsops:mod_init: failed to register pvar '%s'\n",
-					pseudo->name);
-			return -1;
-		}
-		pseudo++;
-	}
-	
-	DBG("%s module - initializing...done\n", exports.name);
 	return 0;
 }
 
@@ -176,7 +214,6 @@ static int mod_init(void)
 static void mod_destroy(void)
 {
 	DBG("%s module - shutting down...\n", exports.name);
-	DBG("%s module - shutting down...done\n", exports.name);
 }
 
 

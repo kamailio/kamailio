@@ -220,6 +220,7 @@ struct module_exports exports = {
     parameters,   // module exported parameters
     NULL,         // exported statistics
     NULL,         /* exported MI functions */
+	NULL,         /* exported pseudo-variables */
     mod_init,     // module init (before any kid is created. kids will inherit)
     NULL,         // reply processing
     NULL,         // destroy function

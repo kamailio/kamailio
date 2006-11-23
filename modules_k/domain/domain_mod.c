@@ -131,6 +131,7 @@ struct module_exports exports = {
 	params,    /* Exported parameters */
 	0,         /* exported statistics */
 	mi_cmds,   /* exported MI functions */
+	0,         /* exported pseudo-variables */
 	mod_init,  /* module initialization function */
 	0,         /* response function*/
 	destroy,   /* destroy function */

@@ -3,9 +3,10 @@
  *
  * TLS module - select interface
  *
- * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * Copyright (C) 2006 enum.at
+ * Copyright (C)  2001-2003 FhG FOKUS
+ * Copyright (C)  2004,2005 Free Software Foundation, Inc.
+ * Copyright (C)  2005 iptelorg GmbH
+ * Copyright (C)  2006 enum.at
  *
  * This file is part of openser, a free SIP server.
  *

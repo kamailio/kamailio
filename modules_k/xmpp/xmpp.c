@@ -160,6 +160,7 @@ struct module_exports exports = {
 	params,          /* Exported parameters */
 	0,               /* exported statistics */
 	0,               /* exported MI functions */
+	0,               /* exported pseudo-variables */
 	mod_init,        /* Initialization function */
 	0,               /* Response function */
 	destroy,         /* Destroy function */

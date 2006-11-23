@@ -26,15 +26,4 @@
 #include "../../parser/msg_parser.h"
 #include "tls_select.h"
 
-typedef  int (*pseudo_function)(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags);
-
-
-struct pseudo_export_ {
-	char *name;
-	pseudo_function function;
-	int flags;
-};
-
-typedef struct pseudo_export_ pseudo_export_t;
-
 #endif

@@ -120,6 +120,7 @@ struct module_exports exports= {
 	mod_params,   /* param exports */
 	mod_stats,    /* exported statistics */
 	0,            /* exported MI functions */
+	0,            /* exported pseudo-variables */
 	mod_init,     /* module initialization function */
 	0,            /* reply processing function */
 	0,            /* Destroy function */

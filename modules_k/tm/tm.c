@@ -243,6 +243,17 @@ stat_export_t mod_stats[] = {
 };
 
 
+/**
+ * pseudo-variables exported by TM module
+ *   { name, function, type, xl_param_t}
+ *   type: can be 0 if you do not want to use it in identifying the PV
+ *   xl_param_t: is given as parameter to 'function'
+ */
+item_export_t mod_items[] = {
+	{ "T_branch_idx", it_get_tm_branch_idx, 100, {{0, 0}, 0} },
+	{ 0, 0, 0, {{0, 0}, 0} }
+};
+
 #ifdef STATIC_TM
 struct module_exports tm_exports = {
 #else
@@ -253,6 +264,7 @@ struct module_exports exports= {
 	params,    /* exported variables */
 	mod_stats, /* exported statistics */
 	0,         /* exported MI functions */
+	mod_items, /* exported pseudo-variables */
 	mod_init,  /* module initialization function */
 	(response_function) reply_received,
 	(destroy_function) tm_shutdown,
@@ -630,12 +642,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(xl_add_extra("T_branch_idx", it_get_tm_branch_idx, 100, NULL)!=0)
-	{
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to register pvar "
-			"[T_branch_idx]\n");
-		return -1;
-	}
 	return 0;
 }
 
