@@ -605,10 +605,14 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_keys[4] = fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
-	strcpy(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
-	strcat(fromip_buff,":");
-	strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
-	db_vals[4].val.string_val = fromip_buff;
+	if (trace_local_ip)
+		db_vals[4].val.string_val = trace_local_ip;
+	else {
+		strcpy(fromip_buff, ip_addr2a(&msg->rcv.dst_ip));
+		strcat(fromip_buff,":");
+		strcat(fromip_buff, int2str(msg->rcv.dst_port, NULL));
+		db_vals[4].val.string_val = fromip_buff;
+	}
 	
 	db_keys[5] = toip_column;
 	db_vals[5].type = DB_STRING;
