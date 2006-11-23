@@ -124,7 +124,7 @@ CREATE TABLE user_attrs (
     UNIQUE KEY userattrs_idx (uid, name, value)
 );
 
-INSERT INTO version (table_name, table_version) values ('uri_attrs','1');
+INSERT INTO version (table_name, table_version) values ('uri_attrs','2');
 CREATE TABLE uri_attrs (
     username VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL,
@@ -132,8 +132,8 @@ CREATE TABLE uri_attrs (
     value VARCHAR(255),
     type INT NOT NULL DEFAULT '0',
     flags INT UNSIGNED NOT NULL DEFAULT '0',
-    scheme INT NOT NULL DEFAULT '0',
-    UNIQUE KEY uriattrs_idx (username, did, name, value)
+    scheme VARCHAR(8) NOT NULL DEFAULT 'sip',
+    UNIQUE KEY uriattrs_idx (username, did, name, value, scheme)
 );
 
 INSERT INTO version (table_name, table_version) values ('domain','2');
@@ -271,7 +271,7 @@ CREATE TABLE uri (
     username VARCHAR(64) NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     scheme VARCHAR(8) NOT NULL DEFAULT 'sip',
-    KEY uri_idx1 (username, did),
+    KEY uri_idx1 (username, did, scheme),
     KEY uri_uid (uid)
 );
 

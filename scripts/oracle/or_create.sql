@@ -122,7 +122,7 @@ CREATE TABLE user_attrs (
     userattrs_idx UNIQUE (uid, name, value, )
 );
 
-INSERT INTO version (table_name, table_version) values ('uri_attrs','1');
+INSERT INTO version (table_name, table_version) values ('uri_attrs','2');
 CREATE TABLE uri_attrs (
     username string(64) NOT NULL,
     did string(64) NOT NULL,
@@ -130,8 +130,8 @@ CREATE TABLE uri_attrs (
     value string(255),
     type int NOT NULL DEFAULT '0',
     flags int NOT NULL DEFAULT '0',
-    scheme int NOT NULL DEFAULT '0',
-    uriattrs_idx UNIQUE (username, did, name, value, )
+    scheme string(8) NOT NULL DEFAULT 'sip',
+    uriattrs_idx UNIQUE (username, did, name, value, scheme, )
 );
 
 INSERT INTO version (table_name, table_version) values ('domain','2');

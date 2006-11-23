@@ -9,7 +9,7 @@
 
 <table>
     <name>uri_attrs</name>
-    <version>1</version>
+    <version>2</version>
 
     <column id="uriattrs.username">
 	<name>username</name>
@@ -53,14 +53,15 @@
 
     <column id="uriattrs.scheme">
         <name>scheme</name>
-        <type>int</type>
-        <default>0</default>
+        <type>string</type>
+	<size>8</size>
+        <default>sip</default>
         <description>
             URI scheme:
-              - SIP  = 1
-              - SIPS = 2
-              - TEL  = 3
-              - TELS = 4
+              - SIP  
+              - SIPS 
+              - TEL  
+              - TELS 
         </description>
     </column>
 
@@ -71,6 +72,7 @@
 	<colref linkend="uriattrs.did"/>
 	<colref linkend="uriattrs.name"/>
 	<colref linkend="uriattrs.value"/>
+	<colref linkend="uriattrs.scheme"/>
     </index>
 
 </table>

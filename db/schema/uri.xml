@@ -57,6 +57,7 @@
 	<name>uri_idx1</name>
 	<colref linkend="uri.username"/>
 	<colref linkend="uri.did"/>
+	<colref linkend="uri.scheme"/>
     </index>
 
     <index>

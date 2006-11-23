@@ -129,8 +129,8 @@ CREATE TABLE uri_attrs (
     value VARCHAR(255),
     type INTEGER NOT NULL DEFAULT '0',
     flags INTEGER NOT NULL DEFAULT '0',
-    scheme INTEGER NOT NULL DEFAULT '0',
-    CONSTRAINT uriattrs_idx UNIQUE (username, did, name, value)
+    scheme VARCHAR(8) NOT NULL DEFAULT 'sip',
+    CONSTRAINT uriattrs_idx UNIQUE (username, did, name, value, scheme)
 );
 
 CREATE TABLE domain (
@@ -263,7 +263,7 @@ CREATE TABLE uri (
     scheme VARCHAR(8) NOT NULL DEFAULT 'sip'
 );
 
-CREATE INDEX uri_idx1 ON uri (username, did);
+CREATE INDEX uri_idx1 ON uri (username, did, scheme);
 CREATE INDEX uri_uid ON uri (uid);
 
 CREATE TABLE speed_dial (

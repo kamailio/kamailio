@@ -1,1 +1,1 @@
-username(str) did(str) name(str) value(str,null) type(int) flags(int) scheme(int) 
+username(str) did(str) name(str) value(str,null) type(int) flags(int) scheme(str) 
