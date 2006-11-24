@@ -26,6 +26,8 @@
 #ifndef HSLOT_H
 #define HSLOT_H
 
+#include "../../locking.h"
+
 #include "udomain.h"
 #include "urecord.h"
 
@@ -39,13 +41,14 @@ typedef struct hslot {
 	struct urecord* first;  /* First element in the list */
 	struct urecord* last;   /* Last element in the list */
 	struct udomain* d;      /* Domain we belong to */
+	gen_lock_t *lock;       /* Lock for hash entry */
 } hslot_t;
 
 
 /*
  * Initialize slot structure
  */
-int init_slot(struct udomain* _d, hslot_t* _s);
+int init_slot(struct udomain* _d, hslot_t* _s, int n);
 
 
 /*
@@ -65,5 +68,7 @@ void slot_add(hslot_t* _s, struct urecord* _r);
  */
 void slot_rem(hslot_t* _s, struct urecord* _r);
 
+int ul_init_locks();
+void ul_destroy_locks();
 
 #endif /* HSLOT_H */

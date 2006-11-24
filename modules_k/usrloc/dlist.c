@@ -202,63 +202,70 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
 	void *cp;
 	int shortage;
 	int needed;
-
+	int i = 0;
 	cp = buf;
 	shortage = 0;
 	/* Reserve space for terminating 0000 */
 	len -= sizeof(c->c.len);
+
 	for (p = root; p != NULL; p = p->next) {
-		lock_udomain(p->d);
-		if (p->d->d_ll.n <= 0) {
-			unlock_udomain(p->d);
-			continue;
-		}
-		for (r = p->d->d_ll.first; r != NULL; r = r->d_ll.next) {
-			for (c = r->contacts; c != NULL; c = c->next) {
-				if (c->c.len <= 0)
-					continue;
-				/*
-				 * List only contacts that have all requested
-				 * flags set
-				 */
-				if ((c->flags & flags) != flags)
-					continue;
-				if (c->received.s) {
-					needed = (int)(sizeof(c->received.len) + c->received.len +
-						sizeof(c->sock) + sizeof(c->flags));
-					if (len >= needed) {
-						memcpy(cp, &c->received.len, sizeof(c->received.len));
-						cp = (char*)cp + sizeof(c->received.len);
-						memcpy(cp, c->received.s, c->received.len);
-						cp = (char*)cp + c->received.len;
-						memcpy(cp, &c->sock, sizeof(c->sock));
-						cp = (char*)cp + sizeof(c->sock);
-						memcpy(cp, &c->flags, sizeof(c->flags));
-						cp = (char*)cp + sizeof(c->flags);
-						len -= needed;
+
+		for(i=0; i<p->d->size; i++) {
+
+			lock_ulslot(p->d, i);
+			if(p->d->table[i].n<=0)
+			{
+				unlock_ulslot(p->d, i);
+				continue;
+			}
+			for (r = p->d->table[i].first; r != NULL; r = r->next) {
+				for (c = r->contacts; c != NULL; c = c->next) {
+					if (c->c.len <= 0)
+						continue;
+					/*
+					 * List only contacts that have all requested
+					 * flags set
+					 */
+					if ((c->flags & flags) != flags)
+						continue;
+					if (c->received.s) {
+						needed = (int)(sizeof(c->received.len)
+								+ c->received.len
+								+ sizeof(c->sock) + sizeof(c->flags));
+						if (len >= needed) {
+							memcpy(cp, &c->received.len, sizeof(c->received.len));
+							cp = (char*)cp + sizeof(c->received.len);
+							memcpy(cp, c->received.s, c->received.len);
+							cp = (char*)cp + c->received.len;
+							memcpy(cp, &c->sock, sizeof(c->sock));
+							cp = (char*)cp + sizeof(c->sock);
+							memcpy(cp, &c->flags, sizeof(c->flags));
+							cp = (char*)cp + sizeof(c->flags);
+							len -= needed;
+						} else {
+							shortage += needed;
+						}
 					} else {
-						shortage += needed;
-					}
-				} else {
-					needed = (int)(sizeof(c->c.len) + c->c.len +
-						sizeof(c->sock) + sizeof(c->flags));
-					if (len >= needed) {
-						memcpy(cp, &c->c.len, sizeof(c->c.len));
-						cp = (char*)cp + sizeof(c->c.len);
-						memcpy(cp, c->c.s, c->c.len);
-						cp = (char*)cp + c->c.len;
-						memcpy(cp, &c->sock, sizeof(c->sock));
-						cp = (char*)cp + sizeof(c->sock);
-						memcpy(cp, &c->flags, sizeof(c->flags));
-						cp = (char*)cp + sizeof(c->flags);
-						len -= needed;
-					} else {
-						shortage += needed;
+						needed = (int)(sizeof(c->c.len) + c->c.len +
+							sizeof(c->sock) + sizeof(c->flags));
+						if (len >= needed) {
+							memcpy(cp, &c->c.len, sizeof(c->c.len));
+							cp = (char*)cp + sizeof(c->c.len);
+							memcpy(cp, c->c.s, c->c.len);
+							cp = (char*)cp + c->c.len;
+							memcpy(cp, &c->sock, sizeof(c->sock));
+							cp = (char*)cp + sizeof(c->sock);
+							memcpy(cp, &c->flags, sizeof(c->flags));
+							cp = (char*)cp + sizeof(c->flags);
+							len -= needed;
+						} else {
+							shortage += needed;
+						}
 					}
 				}
 			}
+			unlock_ulslot(p->d, i);
 		}
-		unlock_udomain(p->d);
 	}
 	/* len < 0 is possible, if size of the buffer < sizeof(c->c.len) */
 	if (len >= 0)

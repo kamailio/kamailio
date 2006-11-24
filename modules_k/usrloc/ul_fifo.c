@@ -268,10 +268,10 @@ static int ul_add(FILE* pipe, char* response_file)
 			return 1;
 		}
 
-		lock_udomain(d);
+		lock_udomain(d, &user);
 		
 		if (add_contact(d, &user, &contact, &ci) < 0) {
-			unlock_udomain(d);
+			unlock_udomain(d, &user);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') "
 				"in table '%.*s'\n", user.len, ZSW(user.s), contact.len, 
 				ZSW(contact.s), table.len, ZSW(table.s));
@@ -280,7 +280,7 @@ static int ul_add(FILE* pipe, char* response_file)
 				contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			return 1;
 		}
-		unlock_udomain(d);
+		unlock_udomain(d, &user);
 
 		fifo_reply(response_file, "200 Added to table\n"
 			"('%.*s','%.*s') to '%.*s'\n", user.len, ZSW(user.s), 
@@ -343,14 +343,14 @@ int static ul_rm( FILE *pipe, char *response_file )
 	    table, user );
 	
 	if (d) {
-		lock_udomain(d);
+		lock_udomain(d, &aor);
 		if (delete_urecord(d, &aor, 0) < 0) {
 			LOG(L_ERR, "ul_rm(): Error while deleting user %s\n", user);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			fifo_reply(response_file, "500 Error while deleting user %s\n", user);
 			return 1;
 		}
-		unlock_udomain(d);
+		unlock_udomain(d, &aor);
 		fifo_reply(response_file, "200 user (%s, %s) deleted\n", 
 			table, user);
 		return 1;
@@ -422,7 +422,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 
 
 	if (d) {
-		lock_udomain(d);
+		lock_udomain(d, &aor);
 
 		res = get_urecord(d, &aor, &r);
 		if (res < 0) {
@@ -430,14 +430,14 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 				"username %s in table %s\n", user, table);
 			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for "
 				"username %s in table %s\n", user, table);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}
 		
 		if (res > 0) {
 			fifo_reply(response_file, "404 Username %s in table %s "
 				"not found\n", user, table);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}
 
@@ -447,26 +447,26 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 				"contact %s\n", contact);
 			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for "
 				"contact %s\n", contact);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}			
 
 		if (res > 0) {
 			fifo_reply(response_file, "404 Contact %s in table %s "
 				"not found\n", contact, table);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}
 
 		if (delete_ucontact(r, con) < 0) {
 			fifo_reply(response_file, "500 ul_rm_contact: Error while "
 				"deleting contact %s\n", contact);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}
 
 		release_urecord(r);
-		unlock_udomain(d);
+		unlock_udomain(d, &aor);
 		fifo_reply(response_file, "200 Contact (%s, %s) deleted from "
 			"table %s\n", user, contact, table);
 		return 1;
@@ -564,19 +564,19 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 	fifo_find_domain(&t, &d);
 
 	if (d) {
-		lock_udomain(d);
+		lock_udomain(d, &aor);
 
 		res = get_urecord(d, &aor, &r);
 		if (res < 0) {
 			fifo_reply(response_file, "500 Error while looking for username %s in table %s\n", user, table);
 			LOG(L_ERR, "ERROR: ul_show_contact: Error while looking for username %s in table %s\n", user, table);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}
 		
 		if (res > 0) {
 			fifo_reply(response_file, "404 Username %s in table %s not found\n", user, table);
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}
 		
@@ -585,19 +585,19 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 		reply_file=open_reply_pipe(response_file);
 		if (reply_file==0) {
 			LOG(L_ERR, "ERROR: ul_show_contact: file not opened\n");
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			return 1;
 		}
 
 		if (!print_contacts(reply_file, r->contacts)) {
-			unlock_udomain(d);
+			unlock_udomain(d, &aor);
 			fprintf(reply_file, "404 No registered contacts found\n");
 			fclose(reply_file);
 			return 1;
 		}
 
 		fclose(reply_file);
-		unlock_udomain(d);
+		unlock_udomain(d, &aor);
 		return 1;
 	} else {
 		fifo_reply(response_file, "400 table (%s) not found\n", table);

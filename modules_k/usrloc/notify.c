@@ -101,11 +101,11 @@ int register_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 		return -1;
 	}
 
-	lock_udomain(d);
+	lock_udomain(d, _t);
 
 	if (get_urecord(d, _t, &r) > 0) {
 		if (insert_urecord(d, _t, &r) < 0) {
-			unlock_udomain(d);
+			unlock_udomain(d, _t);
 			LOG(L_ERR,
 				"register_watcher(): Error while creating a new record\n");
 			return -2;
@@ -115,11 +115,11 @@ int register_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 	if (add_watcher(r, _c, _data) < 0) {
 		LOG(L_ERR, "register_watcher(): Error while adding a watcher\n");
 		release_urecord(r);
-		unlock_udomain(d);
+		unlock_udomain(d, _t);
 		return -3;
 	}
 
-	unlock_udomain(d);
+	unlock_udomain(d, _t);
 
 	return 0;
 }
@@ -138,10 +138,10 @@ int unregister_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 		return -1;
 	}
 	
-	lock_udomain(d);
+	lock_udomain(d, _t);
 	
 	if (get_urecord(d, _t, &r) > 0) {
-		unlock_udomain(d);
+		unlock_udomain(d, _t);
 		DBG("unregister_watcher(): Record not found\n");
 		return 0;
 	}
@@ -149,7 +149,7 @@ int unregister_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 	remove_watcher(r, _c, _data);
 	release_urecord(r);
 
-	unlock_udomain(d);
+	unlock_udomain(d, _t);
 
 	return 0;
 }

@@ -72,7 +72,7 @@ static inline int star(udomain_t* _d, str* _a)
 	urecord_t* r;
 	ucontact_t* c;
 	
-	ul.lock_udomain(_d);
+	ul.lock_udomain(_d, _a);
 
 	if (!ul.get_urecord(_d, _a, &r)) {
 		c = r->contacts;
@@ -97,10 +97,10 @@ static inline int star(udomain_t* _d, str* _a)
 		if (!ul.get_urecord(_d, _a, &r)) {
 			build_contact(r->contacts);
 		}
-		ul.unlock_udomain(_d);
+		ul.unlock_udomain(_d, _a);
 		return -1;
 	}
-	ul.unlock_udomain(_d);
+	ul.unlock_udomain(_d, _a);
 	return 0;
 }
 
@@ -167,20 +167,20 @@ static inline int no_contacts(udomain_t* _d, str* _a)
 	urecord_t* r;
 	int res;
 	
-	ul.lock_udomain(_d);
+	ul.lock_udomain(_d, _a);
 	res = ul.get_urecord(_d, _a, &r);
 	if (res < 0) {
 		rerrno = R_UL_GET_R;
 		LOG(L_ERR, "ERROR:registrar:no_contacts: failed to retrieve record "
 			"from usrloc\n");
-		ul.unlock_udomain(_d);
+		ul.unlock_udomain(_d, _a);
 		return -1;
 	}
 	
 	if (res == 0) {  /* Contacts found */
 		build_contact(r->contacts);
 	}
-	ul.unlock_udomain(_d);
+	ul.unlock_udomain(_d, _a);
 	return 0;
 }
 
@@ -684,13 +684,13 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 	int res;
 	urecord_t* r;
 
-	ul.lock_udomain(_d);
+	ul.lock_udomain(_d, _a);
 	res = ul.get_urecord(_d, _a, &r);
 	if (res < 0) {
 		rerrno = R_UL_GET_R;
 		LOG(L_ERR, "ERROR:registrar:add_contacts: failed to retrieve record "
 			"from usrloc\n");
-		ul.unlock_udomain(_d);
+		ul.unlock_udomain(_d, _a);
 		return -2;
 	}
 
@@ -698,18 +698,18 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 		if (update_contacts(_m, r, _c) < 0) {
 			build_contact(r->contacts);
 			ul.release_urecord(r);
-			ul.unlock_udomain(_d);
+			ul.unlock_udomain(_d, _a);
 			return -3;
 		}
 		build_contact(r->contacts);
 		ul.release_urecord(r);
 	} else {
 		if (insert_contacts(_m, _c, _d, _a) < 0) {
-			ul.unlock_udomain(_d);
+			ul.unlock_udomain(_d, _a);
 			return -4;
 		}
 	}
-	ul.unlock_udomain(_d);
+	ul.unlock_udomain(_d, _a);
 	return 0;
 }
 

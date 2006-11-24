@@ -52,15 +52,8 @@ typedef struct urecord {
 
 	struct hslot* slot;            /* Collision slot in the hash table 
                                     * array we belong to */
-	struct {
-		struct urecord* prev;      /* Next item in the linked list */
-		struct urecord* next;      /* Previous item in the linked list */
-	} d_ll;
-	struct {                       /* Linked list of all elements in 
-                                    * hash table */
-		struct urecord* prev;      /* Previous item in the list */
-		struct urecord* next;      /* Next item in the list */
-	} s_ll;
+	struct urecord* prev;          /* Next item in the hash entry */
+	struct urecord* next;          /* Previous item in the hash entry */
 
 	struct notify_cb* watchers;    /* List of watchers */
 } urecord_t;

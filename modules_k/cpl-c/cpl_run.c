@@ -267,17 +267,17 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 	if (cpl_env.lu_domain) {
 		/* fetch user's contacts via usrloc */
 		tc = time(0);
-		cpl_fct.ulb.lock_udomain( cpl_env.lu_domain );
+		cpl_fct.ulb.lock_udomain( cpl_env.lu_domain, &intr->user );
 		i = cpl_fct.ulb.get_urecord( cpl_env.lu_domain, &intr->user, &r);
 		if (i < 0) {
 			/* failure */
 			LOG(L_ERR, "ERROR:run_lookup: Error while querying usrloc\n");
-			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
+			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
 		} else if (i > 0) {
 			/* not found */
 			DBG("DBG:cpl-c:run_lookup: '%.*s' Not found in usrloc\n",
 				intr->user.len, intr->user.s);
-			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
+			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
 			kid = notfound_kid;
 		} else {
 			contact = r->contacts;
@@ -299,7 +299,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 					)==-1) {
 						LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
 							"location to set :-(\n");
-						cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
+						cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
 						goto runtime_error;
 					}
 					contact = contact->next;
@@ -312,7 +312,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 				/* no valid contact found */
 				kid = notfound_kid;
 			}
-			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
+			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
 		}
 
 	}

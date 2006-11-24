@@ -157,14 +157,14 @@ static int ul_rm(str* msg)
 	    table.len, ZSW(table.s), user.len, ZSW(user.s));
 	
 	if (d) {
-		lock_udomain(d);
+		lock_udomain(d, &user);
 		if (delete_urecord(d, &user, 0) < 0) {
 			LOG(L_ERR, "ul_rm(): Error while deleting user %.*s\n", user.len, ZSW(user.s));
-			unlock_udomain(d);
+			unlock_udomain(d, &user);
 			unixsock_reply_printf("500 Error while deleting user %.*s\n", user.len, ZSW(user.s));
 			goto err;
 		}
-		unlock_udomain(d);
+		unlock_udomain(d, &user);
 		unixsock_reply_printf("200 user (%.*s, %.*s) deleted\n",
 				      table.len, ZSW(table.s), user.len, ZSW(user.s));
 		unixsock_reply_send();
@@ -226,41 +226,46 @@ static int ul_rm_contact(str* msg)
 	    contact.len, ZSW(contact.s));
 
 	if (d) {
-		lock_udomain(d);
+		lock_udomain(d, &user);
 
 		res = get_urecord(d, &user, &r);
 		if (res < 0) {
 			unixsock_reply_printf("500 Error while looking for username %.*s in table %.*s\n",
 					      user.len, ZSW(user.s), table.len, ZSW(table.s));
-			goto err_unlock;
+			unlock_udomain(d, &user);
+			goto err;
 		}
 		
 		if (res > 0) {
 			unixsock_reply_printf("404 Username %.*s in table %.*s not found\n",
 					      user.len, ZSW(user.s), table.len, ZSW(table.s));
-			goto err_unlock;
+			unlock_udomain(d, &user);
+			goto err;
 		}
 
 		res = get_ucontact(r, &contact, &unix_cid, UNIXSOCK_CSEQ+1, &con);
 		if (res < 0) {
 			unixsock_reply_printf("500 Error while looking for contact %.*s\n", contact.len, ZSW(contact.s));
-			goto err_unlock;
+			unlock_udomain(d, &user);
+			goto err;
 		}			
 
 		if (res > 0) {
 			unixsock_reply_printf("404 Contact %.*s in table %.*s not found\n", 
 					      contact.len, ZSW(contact.s), table.len, ZSW(table.s));
-			goto err_unlock;
+			unlock_udomain(d, &user);
+			goto err;
 		}
 
 		if (delete_ucontact(r, con) < 0) {
 			unixsock_reply_printf("500 ul_rm_contact: Error while deleting contact %.*s\n", 
 					      contact.len, ZSW(contact.s));
-			goto err_unlock;
+			unlock_udomain(d, &user);
+			goto err;
 		}
 
 		release_urecord(r);
-		unlock_udomain(d);
+		unlock_udomain(d, &user);
 		unixsock_reply_printf("200 Contact (%.*s, %.*s) deleted from table %.*s\n", 
 				      user.len, ZSW(user.s), 
 				      contact.len, ZSW(contact.s), 
@@ -272,9 +277,7 @@ static int ul_rm_contact(str* msg)
 		goto err;
 	}
 
- err_unlock:
-	unlock_udomain(d);
- err:
+err:
 	unixsock_reply_send();
 	return -1;
 }
@@ -386,10 +389,10 @@ static int ul_add(str* msg)
 			goto err;
 		}
 		
-		lock_udomain(d);
+		lock_udomain(d, &user);
 		
 		if (add_contact(d, &user, &contact, &ci) < 0) {
-			unlock_udomain(d);
+			unlock_udomain(d, &user);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') "
 				"in table '%.*s'\n", user.len, ZSW(user.s), contact.len, 
 				ZSW(contact.s), table.len, ZSW(table.s));
@@ -398,7 +401,7 @@ static int ul_add(str* msg)
 				contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			goto err;
 		}
-		unlock_udomain(d);
+		unlock_udomain(d, &user);
 		
 		unixsock_reply_printf("200 Added to table\n"
 			"('%.*s','%.*s') to '%.*s'\n", user.len, ZSW(user.s), 
@@ -495,19 +498,21 @@ static inline int ul_show_contact(str* msg)
 	unixsock_find_domain(&table, &d);
 
 	if (d) {
-		lock_udomain(d);	
+		lock_udomain(d, &aor);	
 
 		res = get_urecord(d, &aor, &r);
 		if (res < 0) {
+			unlock_udomain(d, &aor);
 			unixsock_reply_printf("500 Error while looking for username %.*s in table %.*s\n", 
 					      aor.len, ZSW(aor.s), table.len, ZSW(table.s));
-			goto err_unlock;
+			goto err;
 		}
 		
 		if (res > 0) {
+			unlock_udomain(d, &aor);
 			unixsock_reply_printf("404 Username %.*s in table %.*s not found\n", 
 					      aor.len, ZSW(aor.s), table.len, ZSW(table.s));
-			goto err_unlock;
+			goto err;
 		}
 		
 		get_act_time();
@@ -517,14 +522,15 @@ static inline int ul_show_contact(str* msg)
 			unixsock_reply_asciiz("404 No registered contacts found\n");
 			res = 1;
 		} else if (res < 0) {
+			unlock_udomain(d, &aor);
 			unixsock_reply_reset();
 			unixsock_reply_asciiz("500 Buffer too small\n");
-			goto err_unlock;
+			goto err;
 		} else {
 			res = 0;
 		}
 
-		unlock_udomain(d);
+		unlock_udomain(d, &aor);
 		unixsock_reply_send();
 		return res;
 	} else {
@@ -532,8 +538,6 @@ static inline int ul_show_contact(str* msg)
 		goto err;
 	}
 
- err_unlock:
-	unlock_udomain(d);
  err:
 	unixsock_reply_send();
 	return -1;

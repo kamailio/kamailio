@@ -74,7 +74,7 @@ static void timer(unsigned int ticks, void* param); /* Timer handler */
 static int child_init(int rank);                    /* Per-child init function */
 
 extern int bind_usrloc(usrloc_api_t* api);
-
+extern int ul_locks_no;
 /*
  * Module parameters and their default values
  */
@@ -223,6 +223,12 @@ static int mod_init(void)
 	last_mod_col.len = strlen(last_mod_col.s);
 	db_url.len = strlen(db_url.s);
 
+	if(ul_hash_size<=1)
+		ul_hash_size = 512;
+	else
+		ul_hash_size = 1<<ul_hash_size;
+	ul_locks_no = ul_hash_size;
+
 	/* check matching mode */
 	switch (matching_mode) {
 		case CONTACT_ONLY:
@@ -231,6 +237,12 @@ static int mod_init(void)
 		default:
 			LOG(L_ERR,"ERROR:usrloc:mod_init: invalid matching mode %d\n",
 				matching_mode);
+	}
+
+	if(ul_init_locks()!=0)
+	{
+		LOG(L_ERR, "ERROR: usrloc: locks array initialization failed\n");
+		return -1;
 	}
 
 	/* Register cache timer */
@@ -270,11 +282,6 @@ static int mod_init(void)
 			return -1;
 		}
 	}
-
-	if(ul_hash_size<=1)
-		ul_hash_size = 512;
-	else
-		ul_hash_size = 1<<ul_hash_size;
 
 	return 0;
 }
@@ -323,6 +330,7 @@ static void destroy(void)
 			LOG(L_ERR, "timer(): Error while flushing cache\n");
 		}
 		free_all_udomains();
+		ul_destroy_locks();
 	}
 	
 	/* All processes close database connection */

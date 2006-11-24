@@ -25,16 +25,59 @@
 
 #include "hslot.h"
 
+int ul_locks_no=4;
+gen_lock_set_t* ul_locks=0;
+
+/*
+ * Initialize locks
+ */
+int ul_init_locks()
+{
+	int i;
+	i = ul_locks_no;
+	do {
+		if ((( ul_locks=lock_set_alloc(i))!=0)&&
+				(lock_set_init(ul_locks)!=0))
+		{
+			ul_locks_no = i;
+			LOG(L_INFO, "INFO:ul_init_locks: locks array size %d\n", ul_locks_no);
+			return 0;
+
+		}
+		if (ul_locks){
+			lock_set_dealloc(ul_locks);
+			ul_locks=0;
+		}
+		i--;
+		if(i==0)
+		{
+			LOG(L_ERR, "INFO:ul_init_locks: error - cannot allocate locks\n");
+			return -1;
+		}
+	} while (1);
+
+	/* shouldn't be here */
+	return -1;
+}
+
+void ul_destroy_locks()
+{
+	if (ul_locks !=0){
+		lock_set_destroy(ul_locks);
+		lock_set_dealloc(ul_locks);
+	};
+}
 
 /*
  * Initialize cache slot structure
  */
-int init_slot(struct udomain* _d, hslot_t* _s)
+int init_slot(struct udomain* _d, hslot_t* _s, int n)
 {
 	_s->n = 0;
 	_s->first = 0;
 	_s->last = 0;
 	_s->d = _d;
+	_s->lock = &ul_locks->locks[n%ul_locks_no];
 	return 0;
 }
 
@@ -49,13 +92,13 @@ void deinit_slot(hslot_t* _s)
 	     /* Remove all elements */
 	while(_s->first) {
 		ptr = _s->first;
-		_s->first = _s->first->s_ll.next;
+		_s->first = _s->first->next;
 		free_urecord(ptr);
 	}
 	
 	_s->n = 0;
 	_s->last = 0;
-        _s->d = 0;
+    _s->d = 0;
 }
 
 
@@ -67,8 +110,8 @@ void slot_add(hslot_t* _s, struct urecord* _r)
 	if (_s->n == 0) {
 		_s->first = _s->last = _r;
 	} else {
-		_r->s_ll.prev = _s->last;
-		_s->last->s_ll.next = _r;
+		_r->prev = _s->last;
+		_s->last->next = _r;
 		_s->last = _r;
 	}
 	_s->n++;
@@ -81,19 +124,19 @@ void slot_add(hslot_t* _s, struct urecord* _r)
  */
 void slot_rem(hslot_t* _s, struct urecord* _r)
 {
-	if (_r->s_ll.prev) {
-		_r->s_ll.prev->s_ll.next = _r->s_ll.next;
+	if (_r->prev) {
+		_r->prev->next = _r->next;
 	} else {
-		_s->first = _r->s_ll.next;
+		_s->first = _r->next;
 	}
 
-	if (_r->s_ll.next) {
-		_r->s_ll.next->s_ll.prev = _r->s_ll.prev;
+	if (_r->next) {
+		_r->next->prev = _r->prev;
 	} else {
-		_s->last = _r->s_ll.prev;
+		_s->last = _r->prev;
 	}
 
-	_r->s_ll.prev = _r->s_ll.next = 0;
+	_r->prev = _r->next = 0;
 	_r->slot = 0;
 	_s->n--;
 }

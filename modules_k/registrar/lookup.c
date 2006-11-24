@@ -71,11 +71,11 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	
 	get_act_time();
 
-	ul.lock_udomain((udomain_t*)_t);
+	ul.lock_udomain((udomain_t*)_t, &aor);
 	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
 	if (res > 0) {
 		DBG("lookup(): '%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul.unlock_udomain((udomain_t*)_t);
+		ul.unlock_udomain((udomain_t*)_t, &aor);
 		return -1;
 	}
 
@@ -167,7 +167,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 done:
 	ul.release_urecord(r);
-	ul.unlock_udomain((udomain_t*)_t);
+	ul.unlock_udomain((udomain_t*)_t, &aor);
 	return ret;
 }
 
@@ -192,11 +192,11 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 		return -1;
 	}
 	
-	ul.lock_udomain((udomain_t*)_t);
+	ul.lock_udomain((udomain_t*)_t, &aor);
 	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
 
 	if (res < 0) {
-		ul.unlock_udomain((udomain_t*)_t);
+		ul.unlock_udomain((udomain_t*)_t, &aor);
 		LOG(L_ERR, "registered(): Error while querying usrloc\n");
 		return -1;
 	}
@@ -208,13 +208,13 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 		}
 
 		if (ptr) {
-			ul.unlock_udomain((udomain_t*)_t);
+			ul.unlock_udomain((udomain_t*)_t, &aor);
 			DBG("registered(): '%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 			return 1;
 		}
 	}
 
-	ul.unlock_udomain((udomain_t*)_t);
+	ul.unlock_udomain((udomain_t*)_t, &aor);
 	DBG("registered(): '%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
 	return -1;
 }

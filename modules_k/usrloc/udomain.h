@@ -52,12 +52,6 @@ typedef struct udomain {
 	str* name;                 /* Domain name (NULL terminated) */
 	int size;                  /* Hash table size */
 	struct hslot* table;       /* Hash table - array of collision slots */
-	struct {                   /* Linked list of all elements in the domain */
-		int n;                 /* Number of element in the linked list */
-		struct urecord* first; /* First element in the list */
-		struct urecord* last;  /* Last element in the list */
-	} d_ll;
-	gen_lock_t lock;                /* lock variable */
 	/* statistics */
 	stat_var *users;           /* no of registered users */
 	stat_var *contacts;        /* no of registered contacts */
@@ -128,16 +122,19 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r);
 /*
  * Get lock
  */
-typedef void (*lock_udomain_t)(udomain_t* _d);
-void lock_udomain(udomain_t* _d);
+typedef void (*lock_udomain_t)(udomain_t* _d, str *_aor);
+void lock_udomain(udomain_t* _d, str *_aor);
 
 
 /*
  * Release lock
  */
-typedef void (*unlock_udomain_t)(udomain_t* _d);
-void unlock_udomain(udomain_t* _d);
+typedef void (*unlock_udomain_t)(udomain_t* _d, str *_aor);
+void unlock_udomain(udomain_t* _d, str *_aor);
 
+
+void lock_ulslot(udomain_t* _d, int i);
+void unlock_ulslot(udomain_t* _d, int i);
 
 /* ===== module interface ======= */
 

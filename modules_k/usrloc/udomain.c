@@ -44,47 +44,6 @@
 
 
 
-/*
- * Add a record to list of all records in a domain
- */
-static inline void udomain_add(udomain_t* _d, urecord_t* _r)
-{
-	if (_d->d_ll.n == 0) {
-		_d->d_ll.first = _r;
-		_d->d_ll.last = _r;
-	} else {
-		_r->d_ll.prev = _d->d_ll.last;
-		_d->d_ll.last->d_ll.next = _r;
-		_d->d_ll.last = _r;
-	}
-	_d->d_ll.n++;
-}
-
-
-/*
- * Remove a record from list of all records in a domain
- */
-static inline void udomain_remove(udomain_t* _d, urecord_t* _r)
-{
-	if (_d->d_ll.n == 0) return;
-
-	if (_r->d_ll.prev) {
-		_r->d_ll.prev->d_ll.next = _r->d_ll.next;
-	} else {
-		_d->d_ll.first = _r->d_ll.next;
-	}
-
-	if (_r->d_ll.next) {
-		_r->d_ll.next->d_ll.prev = _r->d_ll.prev;
-	} else {
-		_d->d_ll.last = _r->d_ll.prev;
-	}
-
-	_r->d_ll.prev = _r->d_ll.next = 0;
-	_d->d_ll.n--;
-}
-
-
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
 {
@@ -144,14 +103,13 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	(*_d)->name = _n;
 	
 	for(i = 0; i < _s; i++) {
-		if (init_slot(*_d, &((*_d)->table[i])) < 0) {
+		if (init_slot(*_d, &((*_d)->table[i]), i) < 0) {
 			LOG(L_ERR, "new_udomain(): Error while initializing hash table\n");
 			goto error2;
 		}
 	}
 
 	(*_d)->size = _s;
-	lock_init(&(*_d)->lock);
 
 #ifdef STATISTICS
 	/* register the statistics */
@@ -190,15 +148,14 @@ void free_udomain(udomain_t* _d)
 {
 	int i;
 	
-	lock_udomain(_d);
 	if (_d->table) {
 		for(i = 0; i < _d->size; i++) {
+			lock_ulslot(_d, i);
 			deinit_slot(_d->table + i);
+			unlock_ulslot(_d, i);
 		}
 		shm_free(_d->table);
 	}
-	unlock_udomain(_d);
-	lock_destroy(&_d->lock);/* destroy the lock (required for SYSV sems!)*/
 	shm_free(_d);
 }
 
@@ -223,29 +180,23 @@ static inline void get_static_urecord(udomain_t* _d, str* _aor,
  */
 void print_udomain(FILE* _f, udomain_t* _d)
 {
+	int i;
 	struct urecord* r;
 	fprintf(_f, "---Domain---\n");
 	fprintf(_f, "name : '%.*s'\n", _d->name->len, ZSW(_d->name->s));
 	fprintf(_f, "size : %d\n", _d->size);
 	fprintf(_f, "table: %p\n", _d->table);
-	fprintf(_f, "d_ll {\n");
-	fprintf(_f, "    n    : %d\n", _d->d_ll.n);
-	fprintf(_f, "    first: %p\n", _d->d_ll.first);
-	fprintf(_f, "    last : %p\n", _d->d_ll.last);
-	fprintf(_f, "}\n");
 	/*fprintf(_f, "lock : %d\n", _d->lock); -- can be a structure --andrei*/
-	if (_d->d_ll.n > 0) {
-		fprintf(_f, "\n");
-		r = _d->d_ll.first;
+	fprintf(_f, "\n");
+	for(i=0; i<_d->size; i++)
+	{
+		r = _d->table[i].first;
 		while(r) {
 			print_urecord(_f, r);
-			r = r->d_ll.next;
+			r = r->next;
 		}
-
-
-		fprintf(_f, "\n");
 	}
-	fprintf(_f, "---/Domain---\n");
+	fprintf(_f, "\n---/Domain---\n");
 }
 
 
@@ -429,7 +380,6 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	n = 0;
 	do {
 		DBG("preload_udomain(): loading records - cycle [%d]\n", ++n);
-		lock_udomain(_d);
 		for(i = 0; i < RES_ROW_N(res); i++) {
 			row = RES_ROWS(res) + i;
 
@@ -468,9 +418,11 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			}
 
 		
+			lock_udomain(_d, &user);
 			if (get_urecord(_d, &user, &r) > 0) {
 				if (mem_insert_urecord(_d, &user, &r) < 0) {
 					LOG(L_ERR, "ul:preload_udomain(): Can't create a record\n");
+					unlock_udomain(_d, &user);
 					goto error;
 				}
 			}
@@ -478,14 +430,15 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			if ( (c=mem_insert_ucontact(r, &contact, ci)) < 0) {
 				LOG(L_ERR,
 					"ul:preload_udomain(): Error while inserting contact\n");
+				unlock_udomain(_d, &user);
 				goto error1;
 			}
 
 			/* We have to do this, because insert_ucontact sets state to CS_NEW
 			 * and we have the contact in the database already */
 			c->state = CS_SYNC;
+			unlock_udomain(_d, &user);
 		}
-		unlock_udomain(_d);
 		
 		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
 			/* give a bigger chance to other processes to access usrloc
@@ -512,7 +465,6 @@ error1:
 	free_ucontact(c);
 error:
 	ul_dbf.free_result(_c, res);
-	unlock_udomain(_d);
 	return -1;
 }
 
@@ -697,7 +649,6 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 
 	sl = core_hash(_aor, 0, _d->size);
 	slot_add(&_d->table[sl], *_r);
-	udomain_add(_d, *_r);
 	update_stat( _d->users, 1);
 	return 0;
 }
@@ -709,7 +660,6 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 {
 	if (_r->watchers == 0) {
-		udomain_remove(_d, _r);
 		slot_rem(_r->slot, _r);
 		free_urecord(_r);
 		update_stat( _d->users, -1);
@@ -720,29 +670,32 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 int mem_timer_udomain(udomain_t* _d)
 {
 	struct urecord* ptr, *t;
+	int i;
 
-	lock_udomain(_d);
+	for(i=0; i<_d->size; i++)
+	{
+		lock_ulslot(_d, i);
 
-	ptr = _d->d_ll.first;
+		ptr = _d->table[i].first;
 
-	while(ptr) {
-		if (timer_urecord(ptr) < 0) {
-			LOG(L_ERR, "timer_udomain(): Error in timer_urecord\n");
-			unlock_udomain(_d);
-			return -1;
-		}
+		while(ptr) {
+			if (timer_urecord(ptr) < 0) {
+				LOG(L_ERR, "timer_udomain(): Error in timer_urecord\n");
+				unlock_ulslot(_d, i);
+				return -1;
+			}
 		
-		/* Remove the entire record if it is empty */
-		if (ptr->contacts == 0) {
-			t = ptr;
-			ptr = ptr->d_ll.next;
-			mem_delete_urecord(_d, t);
-		} else {
-			ptr = ptr->d_ll.next;
+			/* Remove the entire record if it is empty */
+			if (ptr->contacts == 0) {
+				t = ptr;
+				ptr = ptr->next;
+				mem_delete_urecord(_d, t);
+			} else {
+				ptr = ptr->next;
+			}
 		}
+		unlock_ulslot(_d, i);
 	}
-	
-	unlock_udomain(_d);
 	return 0;
 }
 
@@ -750,21 +703,49 @@ int mem_timer_udomain(udomain_t* _d)
 /*
  * Get lock
  */
-void lock_udomain(udomain_t* _d)
+void lock_udomain(udomain_t* _d, str* _aor)
 {
+	int sl;
 	if (db_mode!=DB_ONLY)
-		lock_get(&_d->lock);
+	{
+		sl = core_hash(_aor, 0, _d->size);
+		lock_get(_d->table[sl].lock);
+	}
 }
 
 
 /*
  * Release lock
  */
-void unlock_udomain(udomain_t* _d)
+void unlock_udomain(udomain_t* _d, str* _aor)
+{
+	int sl;
+	if (db_mode!=DB_ONLY)
+	{
+		sl = core_hash(_aor, 0, _d->size);
+		lock_release(_d->table[sl].lock);
+	}
+}
+
+/*
+ * Get lock
+ */
+void lock_ulslot(udomain_t* _d, int i)
 {
 	if (db_mode!=DB_ONLY)
-		lock_release(&_d->lock);
+		lock_get(_d->table[i].lock);
 }
+
+
+/*
+ * Release lock
+ */
+void unlock_ulslot(udomain_t* _d, int i)
+{
+	if (db_mode!=DB_ONLY)
+		lock_release(_d->table[i].lock);
+}
+
 
 
 /*
@@ -803,7 +784,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 				return 0;
 			}
 
-			r = r->s_ll.next;
+			r = r->next;
 		}
 	} else {
 		/* search in DB */
