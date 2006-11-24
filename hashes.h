@@ -3,31 +3,23 @@
  *
  * Copyright (C) 2006 iptelorg GmbH 
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * History:
  * --------
  *  2006-02-02  created by andrei
+ *  2006-11-24  added numeric string optimized hash function (andrei)
  */
 
 
@@ -93,6 +85,58 @@ inline static unsigned int get_hash1_raw(char* s, int len)
 	h=0;
 	
 	hash_update_str(s, s+len, p, v, h);
+	return hash_finish(h);
+}
+
+
+
+/* a little slower than hash_* , but better distribution for 
+ * numbers and about the same for strings */
+#define hash_update_str2(s, end, p, v, h) \
+	do{ \
+		for ((p)=(s); (p)<=((end)-4); (p)+=4){ \
+			(v)=(*(p)*16777213)+((p)[1]*65537)+((p)[2]*257)+(p)[3]; \
+			(h)=16777259*(h)+((v)^((v)<<17)); \
+		} \
+		(v)=0; \
+		for (;(p)<(end); (p)++){ (v)*=251; (v)+=*(p);} \
+		(h)=16777259*(h)+((v)^((v)<<17)); \
+	}while(0)
+
+/* internal use: call it to adjust the h from hash_update_str */
+#define hash_finish2(h) (((h)+((h)>>7))+(((h)>>13)+((h)>>23)))
+
+
+
+/* a little slower than get_hash1_raw() , but better distribution for 
+ * numbers and about the same for strings */
+inline static unsigned int get_hash1_raw2(char* s, int len)
+{
+	char* p;
+	register unsigned v;
+	register unsigned h;
+	
+	h=0;
+	
+	hash_update_str2(s, s+len, p, v, h);
+	return hash_finish2(h);
+}
+
+
+
+/* "raw" 2 strings hash optimized for numeric strings (see above)
+ * returns an unsigned int (which you can use modulo table_size as hash value)
+ */
+inline static unsigned int get_hash2_raw2(str* key1, str* key2)
+{
+	char* p;
+	register unsigned v;
+	register unsigned h;
+	
+	h=0;
+	
+	hash_update_str2(key1->s, key1->s+key1->len, p, v, h);
+	hash_update_str2(key2->s, key2->s+key2->len, p, v, h);
 	return hash_finish(h);
 }
 
