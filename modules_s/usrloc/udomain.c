@@ -32,6 +32,7 @@
  * 2004-08-23  hash function changed to process characters as unsigned
  *             -> no negative results occur (jku)
  * 2005-02-25 incoming socket is saved in ucontact record (bogdan)
+ * 2006-11-23 switched to better hash functions and fixed hash size (andrei)
  *   
  */
 
@@ -48,19 +49,23 @@
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "notify.h"
 #include "reg_avps.h"
+#include "../../hashes.h"
+
+/* #define HASH_STRING_OPTIMIZE */
+
+
+
 
 /*
  * Hash function
  */
 static inline int hash_func(udomain_t* _d, unsigned char* _s, int _l)
 {
-	int res = 0, i;
-	
-	for(i = 0; i < _l; i++) {
-		res += _s[i];
-	}
-	
-	return res % _d->size;
+#ifdef HASH_STRING_OPTIMIZE
+	return get_hash1_raw((char*)_s, _l) % UDOMAIN_HASH_SIZE;
+#else
+	return get_hash1_raw2((char*)_s, _l) % UDOMAIN_HASH_SIZE;
+#endif
 }
 
 
@@ -111,9 +116,8 @@ static inline void udomain_remove(udomain_t* _d, urecord_t* _r)
  * name of the domain, the string is
  * not copied, it should point to str
  * structure stored in domain list
- * _s is hash table size
  */
-int new_udomain(str* _n, int _s, udomain_t** _d)
+int new_udomain(str* _n, udomain_t** _d)
 {
 	int i;
 	
@@ -128,7 +132,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	}
 	memset(*_d, 0, sizeof(udomain_t));
 	
-	(*_d)->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
+	(*_d)->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * UDOMAIN_HASH_SIZE);
 	if (!(*_d)->table) {
 		LOG(L_ERR, "new_udomain(): No memory left 2\n");
 		shm_free(*_d);
@@ -137,7 +141,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 
 	(*_d)->name = _n;
 	
-	for(i = 0; i < _s; i++) {
+	for(i = 0; i < UDOMAIN_HASH_SIZE; i++) {
 		if (init_slot(*_d, &((*_d)->table[i])) < 0) {
 			LOG(L_ERR, "new_udomain(): Error while initializing hash table\n");
 			shm_free((*_d)->table);
@@ -146,7 +150,6 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 		}
 	}
 
-	(*_d)->size = _s;
 	lock_init(&(*_d)->lock);
 	(*_d)->users = 0;
 	(*_d)->expired = 0;
@@ -165,7 +168,7 @@ void free_udomain(udomain_t* _d)
 	
 	lock_udomain(_d);
 	if (_d->table) {
-		for(i = 0; i < _d->size; i++) {
+		for(i = 0; i < UDOMAIN_HASH_SIZE; i++) {
 			deinit_slot(_d->table + i);
 		}
 		shm_free(_d->table);
@@ -185,7 +188,7 @@ void print_udomain(FILE* _f, udomain_t* _d)
 	struct urecord* r;
 	fprintf(_f, "---Domain---\n");
 	fprintf(_f, "name : '%.*s'\n", _d->name->len, ZSW(_d->name->s));
-	fprintf(_f, "size : %d\n", _d->size);
+	fprintf(_f, "size : %d\n", UDOMAIN_HASH_SIZE);
 	fprintf(_f, "table: %p\n", _d->table);
 	fprintf(_f, "d_ll {\n");
 	fprintf(_f, "    n    : %d\n", _d->d_ll.n);

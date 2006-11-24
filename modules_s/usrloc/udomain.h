@@ -30,6 +30,7 @@
  * History:
  * --------
  *  2003-03-11  changed to new locking scheme: locking.h (andrei)
+ *  2006-11-23 switched to fixed hash size (andrei)
  */
 
 
@@ -45,6 +46,11 @@
 #include "hslot.h"
 
 
+/* udomain hash size, for best performance always use a 2^k value
+ * good values 8192: 9% increase over 4096, 16384: 5% inc. over 8192,
+ *  32768 4-5% inc over 16384 */
+#define UDOMAIN_HASH_SIZE	16384
+
 struct hslot;   /* Hash table slot */
 struct urecord; /* Usrloc record */
 
@@ -54,7 +60,6 @@ struct urecord; /* Usrloc record */
  */
 typedef struct udomain {
 	str* name;                     /* Domain name */
-	int size;                      /* Hash table size */
 	int users;                     /* Number of registered users */
 	int expired;                   /* Number of expired contacts */
 	struct hslot* table;           /* Hash table - array of collision slots */
@@ -73,9 +78,8 @@ typedef struct udomain {
  * name of the domain, the string is
  * not copied, it should point to str
  * structure stored in domain list
- * _s is hash table size
  */
-int new_udomain(str* _n, int _s, udomain_t** _d);
+int new_udomain(str* _n, udomain_t** _d);
 
 
 /*
