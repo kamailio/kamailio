@@ -302,7 +302,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	ci.flags1  = VAL_BITMAP(vals+5);
 
 	ua.s  = (char*)VAL_STRING(vals+6);
-	if (VAL_NULL(vals+6) || !ua.s || !ua.s[0]==0) {
+	if (VAL_NULL(vals+6) || !ua.s || !ua.s[0]) {
 		ua.s = 0;
 		ua.len = 0;
 	} else {
