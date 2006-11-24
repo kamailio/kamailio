@@ -463,13 +463,13 @@ static int sel_comp(str* res, select_t* s, struct sip_msg* msg)
 	index = X509_NAME_get_index_by_NID(name, nid, -1);
 	if (index == -1) {
 		switch(nid) {
-		case COMP_CN: elem = "CommonName";              break;
-		case COMP_O:  elem = "OrganizationName";        break;
-		case COMP_OU: elem = "OrganizationalUnitUname"; break;
-		case COMP_C:  elem = "CountryName";             break;
-		case COMP_ST: elem = "StateOrProvinceName";     break;
-		case COMP_L:  elem = "LocalityName";            break;
-		default:      elem = "Unknown";                 break;
+		case NID_commonName:             elem = "CommonName";              break;
+		case NID_organizationName:       elem = "OrganizationName";        break;
+		case NID_organizationalUnitName: elem = "OrganizationalUnitUname"; break;
+		case NID_countryName:            elem = "CountryName";             break;
+		case NID_stateOrProvinceName:    elem = "StateOrProvinceName";     break;
+		case NID_localityName:           elem = "LocalityName";            break;
+		default:                         elem = "Unknown";                 break;
 		}
 		DBG("Element %s not found in certificate subject/issuer\n", elem);
 		goto err;

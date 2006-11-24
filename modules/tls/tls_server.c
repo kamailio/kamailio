@@ -55,7 +55,6 @@ static int tls_complete_init(struct tcp_connection* c)
 	tls_domain_t* dom;
 	struct tls_extra_data* data = 0;
 	tls_cfg_t* cfg;
-	SSL* ssl;
 
 	     /* Get current TLS configuration and increate reference
 	      * count immediately. There is no need to lock the structure
