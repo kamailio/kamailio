@@ -82,7 +82,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	     /* Check credentials correctness here */
 	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
 		LOG(L_ERR, "auth:pre_auth: Credentials are not filled properly\n");
-		return ERROR;
+		return BAD_CREDENTIALS;
 	}
 
 	if (check_nonce(&c->digest.nonce, &secret, msg) != 0) {

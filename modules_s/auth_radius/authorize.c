@@ -90,7 +90,9 @@ static inline int authorize(struct sip_msg* _msg, str* _realm,
 	ret = auth_api.pre_auth(_msg, &domain, _hftype, &h);
 	
 	switch(ret) {
-	case ERROR:             return 0;
+	case ERROR:             
+	case BAD_CREDENTIALS:
+	    return 0;
 	case NOT_AUTHENTICATED: return -1;
 	case DO_AUTHENTICATION: break;
 	case AUTHENTICATED:     return 1;
@@ -121,7 +123,10 @@ static inline int authorize(struct sip_msg* _msg, str* _realm,
 	if (res == 1) {
 		ret = auth_api.post_auth(_msg, h);
 		switch(ret) {
-		case ERROR:             return 0;
+		case ERROR:             
+		case BAD_CREDENTIALS:
+		    return 0;
+		case BAD_CREDENTIALS:   return 0;
 		case NOT_AUTHENTICATED: return -1;
 		case AUTHENTICATED:     return 1;
 		default:                return -1;
