@@ -102,6 +102,9 @@ db_func_t db;
 
 static domain_get_did_t dm_get_did = NULL;
 
+/* default did value */
+str default_did	= STR_STATIC_INIT("_default");
+
 /*
  * Exported functions
  */
@@ -283,11 +286,12 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 	}
 
 	vals[1].type = DB_STR;
+	vals[1].nul = 0;
 	if (did.s && did.len) {
-		vals[1].nul = 0;
 		vals[1].val.str_val = did;
 	} else {
-		vals[1].nul = 1;
+		LOG(L_DBG, "uri_db:lookup_uid: DID not found, using default value\n");
+		vals[1].val.str_val = default_did;
 	}
 
 	if (db.use_table(con, uri_table.s) < 0) {
@@ -388,9 +392,16 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 	return -1;
     }
 
-    if (dm_get_did(&did, &puri.host) < 0) {
-	DBG("Cannot lookup DID for domain '%.*s'\n", puri.host.len, ZSW(puri.host.s));
-	return -1;
+    if (puri.host.len) {
+	/* domain name is present */
+	if (dm_get_did(&did, &puri.host) < 0) {
+		DBG("Cannot lookup DID for domain '%.*s', using default value\n", puri.host.len, ZSW(puri.host.s));
+		did = default_did;
+	}
+    } else {
+	/* domain name is missing -- can be caused by Tel: URI */
+	DBG("There is no domain name, using default value\n");
+	did = default_did;
     }
 
     keys[0] = username_col.s;
