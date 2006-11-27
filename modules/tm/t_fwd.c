@@ -127,13 +127,14 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	str* msg_uri;
 	struct lump* add_rm_backup, *body_lumps_backup;
 	struct sip_uri parsed_uri_bak;
-	int parsed_uri_ok_bak;
+	int parsed_uri_ok_bak, uri_backed_up;
 	str msg_uri_bak;
 
 	shbuf=0;
 	msg_uri_bak.s=0; /* kill warnings */
 	msg_uri_bak.len=0;
 	parsed_uri_ok_bak=0;
+	uri_backed_up=0;
 
 	/* ... we calculate branch ... */	
 	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
@@ -151,6 +152,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		parsed_uri_bak=i_req->parsed_uri;
 		i_req->new_uri=*uri;
 		i_req->parsed_uri_ok=0;
+		uri_backed_up=1;
 	}
 
 	add_rm_backup = i_req->add_rm;
@@ -204,7 +206,7 @@ error01:
 	i_req->add_rm = add_rm_backup;
 	i_req->body_lumps = body_lumps_backup;
 	/* restore the new_uri from the backup */
-	if (msg_uri_bak.s){
+	if (uri_backed_up){
 		i_req->new_uri=msg_uri_bak;
 		i_req->parsed_uri=parsed_uri_bak;
 		i_req->parsed_uri_ok=parsed_uri_ok_bak;
