@@ -216,8 +216,33 @@ modparam("rr", "add_username", 1)
 
 1.5.1. loose_route()
 
-   The function performs loose routing as defined in RFC3261. See
-   the RFC3261 for more details.
+   The function performs routing of SIP requests which contain a
+   route set. The name is a little bit confusing, as this
+   function also routes requests which are in the "strict router"
+   format.
+
+   This function is usually used to route in-dialog requests
+   (like ACK, BYE, reINVITE). Nevertheless also out-of-dialog
+   requests can have a "pre-loaded route set" and my be routed
+   with loose_route. It also takes care of translating between
+   strict-routers and loose-router.
+
+   The loose_route function analyzes the Route: headers in the
+   requests. If there is no Route: header, the function returns
+   FALSE and routing should be done with normal lookup functions.
+   If a Route: header is found, the function returns 1 and
+   behaves as described in section 16.12 of RFC 3261. There is
+   only one exception: If the request is out-of-dialog (no
+   to-tag) and there is only one Route: header indicating the
+   local proxy, then the Route: header is removed and the
+   function returns FALSE.
+
+   Make sure your loose_routing function can't be used by
+   attackers to bypass proxy authorization.
+
+   The loose_routing topic is very complex. See the RFC3261 for
+   more details (grep for "route set" is a good starting point in
+   this comprehensive RFC).
 
    This function can be used from REQUEST_ROUTE.
 
