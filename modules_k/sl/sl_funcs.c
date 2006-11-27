@@ -64,7 +64,7 @@ static str            sl_tag = {sl_tag_buf,TOTAG_VALUE_LEN};
 static char           *tag_suffix;
 /* if we for this time did not send any stateless reply,
    we do not filter */
-static unsigned int  *sl_timeout;
+static unsigned int  *sl_timeout = 0;
 /*var used for avp name exported*/
 int totag_avpid=0;
 
