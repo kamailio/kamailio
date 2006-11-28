@@ -1271,6 +1271,7 @@ try_again:
 	seed+=getpid()+time(0);
 	DBG("seeding PRNG with %u\n", seed);
 	srand(seed);
+	srandom(rand()+time(0));
 	DBG("test random number %u\n", rand());
 
 	/*register builtin  modules*/

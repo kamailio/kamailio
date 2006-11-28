@@ -43,6 +43,7 @@
 #include "sr_module.h"
 
 #include <stdio.h>
+#include <time.h> /* time(), used to initialize random numbers */
 
 #define FORK_DONT_WAIT  /* child doesn't wait for parent before starting 
 						   => faster startup, but the child should not assume
@@ -144,6 +145,8 @@ int fork_process(int child_id, char *desc, int make_sock)
 {
 	int pid, child_process_no;
 	int ret;
+	unsigned int new_seed1;
+	unsigned int new_seed2;
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
@@ -181,6 +184,8 @@ int fork_process(int child_id, char *desc, int make_sock)
 	
 	
 	child_process_no = *process_count;
+	new_seed1=rand();
+	new_seed2=random();
 	pid = fork();
 	if (pid<0) {
 		lock_release(process_lock);
@@ -190,6 +195,8 @@ int fork_process(int child_id, char *desc, int make_sock)
 		/* child */
 		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
+		srand(new_seed1);
+		srandom(new_seed2+time(0));
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);
 #endif
@@ -265,6 +272,8 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	int sockfd[2];
 	int reader_fd[2]; /* for comm. with the tcp children read  */
 	int ret;
+	unsigned int new_seed1;
+	unsigned int new_seed2;
 	
 	/* init */
 	sockfd[0]=sockfd[1]=-1;
@@ -308,6 +317,8 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	
 	
 	child_process_no = *process_count;
+	new_seed1=rand();
+	new_seed2=random();
 	pid = fork();
 	if (pid<0) {
 		lock_release(process_lock);
@@ -317,6 +328,8 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	if (pid==0){
 		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
+		srand(new_seed1);
+		srandom(new_seed2+time(0));
 #ifdef PROFILING
 		monstartup((u_long) &_start, (u_long) &etext);
 #endif
