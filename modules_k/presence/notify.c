@@ -142,7 +142,6 @@ str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 	
-	/* must put server's address  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 	strncpy(str_hdr->s+str_hdr->len ,"Contact: <", 10);
 	str_hdr->len += 10;
 	strncpy(str_hdr->s+str_hdr->len, p_uri.s, p_uri.len);
@@ -169,10 +168,6 @@ str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
 
-		strncpy(str_hdr->s+str_hdr->len,"Content-Length: 0", 17);
-		str_hdr->len += 17;
-		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-		str_hdr->len += CRLF_LEN;
 	}
 	else
 	{	
