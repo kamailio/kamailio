@@ -35,6 +35,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../hash_func.h"
 #include "ul_mod.h"
 #include "utime.h"
 #include "notify.h"
@@ -66,6 +67,7 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 	memcpy((*_r)->aor.s, _aor->s, _aor->len);
 	(*_r)->aor.len = _aor->len;
 	(*_r)->domain = _dom;
+	(*_r)->aorhash = core_hash(_aor, 0, 0);
 	return 0;
 }
 
@@ -108,8 +110,10 @@ void print_urecord(FILE* _f, urecord_t* _r)
 	ucontact_t* ptr;
 
 	fprintf(_f, "...Record(%p)...\n", _r);
-	fprintf(_f, "domain: '%.*s'\n", _r->domain->len, ZSW(_r->domain->s));
-	fprintf(_f, "aor   : '%.*s'\n", _r->aor.len, ZSW(_r->aor.s));
+	fprintf(_f, "domain : '%.*s'\n", _r->domain->len, ZSW(_r->domain->s));
+	fprintf(_f, "aor    : '%.*s'\n", _r->aor.len, ZSW(_r->aor.s));
+	fprintf(_f, "aorhash: '%u'\n", (unsigned)_r->aorhash);
+	fprintf(_f, "slot:    '%d'\n", _r->aorhash&(_r->slot->d->size-1));
 	
 	if (_r->contacts) {
 		ptr = _r->contacts;

@@ -181,6 +181,7 @@ static inline void get_static_urecord(udomain_t* _d, str* _aor,
 void print_udomain(FILE* _f, udomain_t* _d)
 {
 	int i;
+	int max=0, slot=0, n=0;
 	struct urecord* r;
 	fprintf(_f, "---Domain---\n");
 	fprintf(_f, "name : '%.*s'\n", _d->name->len, ZSW(_d->name->s));
@@ -191,11 +192,17 @@ void print_udomain(FILE* _f, udomain_t* _d)
 	for(i=0; i<_d->size; i++)
 	{
 		r = _d->table[i].first;
+		n += _d->table[i].n;
+		if(max<_d->table[i].n){
+			max= _d->table[i].n;
+			slot = i;
+		}
 		while(r) {
 			print_urecord(_f, r);
 			r = r->next;
 		}
 	}
+	fprintf(_f, "\nMax slot: %d (%d/%d)\n", max, slot, n);
 	fprintf(_f, "\n---/Domain---\n");
 }
 
@@ -647,7 +654,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 		return -1;
 	}
 
-	sl = core_hash(_aor, 0, _d->size);
+	sl = ((*_r)->aorhash)&(_d->size-1);
 	slot_add(&_d->table[sl], *_r);
 	update_stat( _d->users, 1);
 	return 0;
@@ -770,16 +777,18 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
  */
 int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
-	int sl, i;
+	int sl, i, aorhash;
 	urecord_t* r;
 
 	if (db_mode!=DB_ONLY) {
 		/* search in cache */
-		sl = core_hash(_aor, 0, _d->size);
+		aorhash = core_hash(_aor, 0, 0);
+		sl = aorhash&(_d->size-1);
 		r = _d->table[sl].first;
 
 		for(i = 0; i < _d->table[sl].n; i++) {
-			if((r->aor.len==_aor->len) && !memcmp(r->aor.s,_aor->s,_aor->len)){
+			if((r->aorhash==aorhash) && (r->aor.len==_aor->len)
+						&& !memcmp(r->aor.s,_aor->s,_aor->len)){
 				*_r = r;
 				return 0;
 			}
