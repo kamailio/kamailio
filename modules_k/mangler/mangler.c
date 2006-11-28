@@ -108,6 +108,7 @@ static cmd_export_t cmds[] =
  */
 struct module_exports exports = {
 	"mangler",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,			/* Exported functions */
 	params,			/* Exported parameters */
 	0,				/* exported statistics */

@@ -99,6 +99,7 @@ static mi_export_t mi_cmds[] = {
 
 struct module_exports exports = {
 	"flatstore",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,      /*  module parameters */
 	0,           /* exported statistics */

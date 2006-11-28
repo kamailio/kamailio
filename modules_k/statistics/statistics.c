@@ -63,6 +63,7 @@ static param_export_t mod_params[]={
 
 struct module_exports exports= {
 	"statistics", /* module's name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,         /* exported functions */
 	mod_params,   /* param exports */
 	0,            /* exported statistics */

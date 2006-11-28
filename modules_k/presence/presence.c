@@ -121,7 +121,8 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"presence",    /* module name */
+	"presence",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* exported functions */
 	params,     /* exported parameters */
 	0,          /* exported statistics */

@@ -135,6 +135,7 @@ static param_export_t params[] = {
  */
 struct module_exports exports = {
 	"domainpolicy", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,      /* exported functions */
 	params,    /* exported parameters */
 	0,         /* exported statistics */

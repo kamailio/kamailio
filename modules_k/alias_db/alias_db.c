@@ -96,6 +96,7 @@ static param_export_t params[] = {
 /* Module interface */
 struct module_exports exports = {
 	"alias_db", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
 	0,          /* exported statistics */

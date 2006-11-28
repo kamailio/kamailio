@@ -127,6 +127,7 @@ static mi_export_t mi_cmds[] = {
  */
 struct module_exports exports = {
 	"domain",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */

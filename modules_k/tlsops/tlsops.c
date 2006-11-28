@@ -192,6 +192,7 @@ static item_export_t mod_items[] = {
  */
 struct module_exports exports = {
 	"tlsops", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,        /* Exported functions */
 	params,      /* Exported parameters */
 	0,           /* exported statistics */

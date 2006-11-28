@@ -137,6 +137,7 @@ static mi_export_t mi_cmds[] = {
 
 struct module_exports exports = {
 	"pdt",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,

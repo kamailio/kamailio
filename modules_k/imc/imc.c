@@ -140,6 +140,7 @@ static mi_export_t mi_cmds[] = {
 /** module exports */
 struct module_exports exports= {
 	"imc",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* exported commands */
 	params,     /* exported parameters */
 #ifdef STATISTICS

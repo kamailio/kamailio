@@ -31,6 +31,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
@@ -108,6 +109,7 @@ static mi_export_t mi_cmds[] = {
 
 struct module_exports exports= {
 	"dialog",        /* module's name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	mod_params,      /* param exports */
 	mod_stats,       /* exported statistics */

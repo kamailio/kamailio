@@ -232,6 +232,7 @@ static param_export_t params[] = {
 
 struct module_exports exports= {
 	"acc",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* exported functions */
 	params,     /* exported params */
 	0,          /* exported statistics */

@@ -58,6 +58,7 @@ static cmd_export_t cmds[]={
 
 struct module_exports exports = {	
 	"postgres",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	0,   /*  module parameters */
 	0,   /* exported statistics */

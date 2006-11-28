@@ -82,6 +82,7 @@ static param_export_t mi_params[] = {
 
 struct module_exports exports = {
 	"mi_fifo",                     /* module name */
+	DEFAULT_DLFLAGS,               /* dlopen flags */
 	0,                             /* exported functions */
 	mi_params,                     /* exported parameters */
 	0,                             /* exported statistics */

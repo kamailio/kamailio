@@ -106,6 +106,7 @@ static mi_export_t mi_cmds[] = {
 
 struct module_exports exports = {
 	"gflags",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,        /* exported functions */
 	params,      /* exported parameters */
 	0,           /* exported statistics */

@@ -149,6 +149,7 @@ static param_export_t params[] = {
  */
 struct module_exports exports = {
 	"auth", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,          /* exported statistics */

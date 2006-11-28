@@ -185,6 +185,7 @@ static mi_export_t mi_cmds[] = {
 /* Module interface */
 struct module_exports exports = {
 	"permissions",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */

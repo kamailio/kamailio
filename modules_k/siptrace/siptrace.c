@@ -153,6 +153,7 @@ stat_export_t siptrace_stats[] = {
 /* module exports */
 struct module_exports exports = {
 	"siptrace", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
 #ifdef STATISTICS

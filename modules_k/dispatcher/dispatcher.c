@@ -109,6 +109,7 @@ static mi_export_t mi_cmds[] = {
 /** module exports */
 struct module_exports exports= {
 	"dispatcher",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,          /* exported statistics */

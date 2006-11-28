@@ -216,6 +216,7 @@ static param_export_t parameters[] = {
 
 struct module_exports exports = {
     "mediaproxy", // module name
+	DEFAULT_DLFLAGS, /* dlopen flags */
     commands,     // module exported functions
     parameters,   // module exported parameters
     NULL,         // exported statistics

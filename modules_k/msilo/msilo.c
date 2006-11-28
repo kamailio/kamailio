@@ -221,6 +221,7 @@ stat_export_t msilo_stats[] = {
 /** module exports */
 struct module_exports exports= {
 	"msilo",    /* module id */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* module's exported functions */
 	params,     /* module's exported parameters */
 #ifdef STATISTICS

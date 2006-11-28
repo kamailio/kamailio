@@ -80,6 +80,7 @@ struct module_exports exec_exports = {
 struct module_exports exports= {
 #endif
 	"exec",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,           /* Exported functions */
 	params,         /* Exported parameters */
 	0,              /* exported statistics */

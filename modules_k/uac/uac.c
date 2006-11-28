@@ -109,6 +109,7 @@ static param_export_t params[] = {
 
 struct module_exports exports= {
 	"uac",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* exported functions */
 	params,     /* param exports */
 	0,          /* exported statistics */

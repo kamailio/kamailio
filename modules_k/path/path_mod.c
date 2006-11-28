@@ -94,6 +94,7 @@ static param_export_t params[] = {
  */
 struct module_exports exports = {
 	"path", 
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
 	0,          /* exported statistics */

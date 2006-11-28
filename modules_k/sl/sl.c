@@ -108,6 +108,7 @@ struct module_exports sl_exports = {
 struct module_exports exports= {
 #endif
 	"sl",         /* module's name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,         /* exported functions */
 	mod_params,   /* param exports */
 	mod_stats,    /* exported statistics */

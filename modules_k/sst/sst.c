@@ -116,6 +116,7 @@ static stat_export_t mod_stats[] = {
 
 struct module_exports exports= {
 	"sst",        /* module's name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,         /* exported functions */
 	mod_params,   /* param exports */
 	mod_stats,    /* exported statistics */

@@ -260,6 +260,7 @@ struct module_exports tm_exports = {
 struct module_exports exports= {
 #endif
 	"tm",      /* module name*/
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,      /* exported functions */
 	params,    /* exported variables */
 	mod_stats, /* exported statistics */

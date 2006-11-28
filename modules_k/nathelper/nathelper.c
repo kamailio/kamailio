@@ -352,6 +352,7 @@ static param_export_t params[] = {
 
 struct module_exports exports = {
 	"nathelper",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0, /* exported statistics */

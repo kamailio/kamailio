@@ -78,6 +78,7 @@ struct module_exports maxfwd_exports = {
 struct module_exports exports= {
 #endif
 	"maxfwd",
+	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,          /* exported statistics */
