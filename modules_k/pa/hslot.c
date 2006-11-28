@@ -70,8 +70,7 @@ void slot_add(hslot_t* _s, struct presentity* _p, struct presentity** _f, struct
 		else *_f = _p;
 	} else {
 		if (*_l) {
-			(*_l)
-->next = _p;
+			(*_l)->next = _p;
 			_p->prev = *_l;
 			*_l = _p;
 		} else {
