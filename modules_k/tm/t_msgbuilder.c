@@ -611,23 +611,16 @@ error:
  */
 static inline int print_content_length(str* dest, str* body)
 {
-	static char content_length[10];
+	static char content_length[INT2STR_MAX_LEN];
 	int len;
-	char* tmp;
 
-	     /* Print Content-Length */
-	if (body) {
-		tmp = int2str(body->len, &len);
-		if (len >= sizeof(content_length)) {
-			LOG(L_ERR, "ERROR: print_content_length: content_len too big\n");
-			return -1;
-		}
-		memcpy(content_length, tmp, len); 
-		dest->s = content_length;
+	/* Print Content-Length */
+	if (body && body->len) {
+		dest->s = int2bstr(body->len, content_length, &len);
 		dest->len = len;
 	} else {
-		dest->s = 0;
-		dest->len = 0;
+		dest->s = "0";
+		dest->len = 1;
 	}
 	return 0;
 }
@@ -639,17 +632,9 @@ static inline int print_content_length(str* dest, str* body)
 static inline int print_cseq_num(str* _s, dlg_t* _d)
 {
 	static char cseq[INT2STR_MAX_LEN];
-	char* tmp;
 	int len;
 
-	tmp = int2str(_d->loc_seq.value, &len);
-	if (len > sizeof(cseq)) {
-		LOG(L_ERR, "print_cseq_num: cseq too big\n");
-		return -1;
-	}
-	
-	memcpy(cseq, tmp, len);
-	_s->s = cseq;
+	_s->s = int2bstr(_d->loc_seq.value, cseq, &len);
 	_s->len = len;
 	return 0;
 }
@@ -705,7 +690,7 @@ static inline char* print_request_uri(char* w, str* method, dlg_t* dialog, struc
 
 	append_string(w, dialog->hooks.request_uri->s, dialog->hooks.request_uri->len); 
 	append_string(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
-
+	DBG("print_request_uri: %.*s\n",dialog->hooks.request_uri->len, dialog->hooks.request_uri->s );
 	return w;
 }
 
@@ -844,7 +829,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 	/* Route set */
 	*len += calculate_routeset_length(dialog);
 	/* Content-Length */
-	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);
+	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN;
 	/* Signature */
 	*len += (server_signature ? (user_agent_header.len + CRLF_LEN) : 0);
 	/* Additional headers */
@@ -870,14 +855,12 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 	w = print_callid(w, dialog, t);                       /* Call-ID */
 	w = print_routeset(w, dialog);                        /* Route set */
 
-	     /* Content-Length */
-	if (body) {
-		append_string(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		append_string(w, content_length.s, content_length.len);
-		append_string(w, CRLF, CRLF_LEN);
-	}
-	
-	     /* Server signature */
+	/* Content-Length */
+	append_string(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+	append_string(w, content_length.s, content_length.len);
+	append_string(w, CRLF, CRLF_LEN);
+
+	/* Server signature */
 	if (server_signature) {
 		append_string(w, user_agent_header.s, user_agent_header.len);
 		append_string(w, CRLF, CRLF_LEN);
