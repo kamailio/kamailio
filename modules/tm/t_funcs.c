@@ -133,7 +133,7 @@ int t_release_transaction( struct cell *trans )
 {
 	set_kr(REQ_RLSD);
 
-	reset_timer( & trans->uas.response.fr_timer );
+	del_fr_timer( & trans->uas.response.fr_timer );
 	reset_timer( & trans->uas.response.retr_timer );
 
 	cleanup_uac_timers( trans );

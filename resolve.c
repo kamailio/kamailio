@@ -264,10 +264,14 @@ error:
 void free_rdata_list(struct rdata* head)
 {
 	struct rdata* l;
-	for(l=head; l; l=l->next){
+	struct rdata* next_l;
+	l=head;
+	while (l != 0) {
+		next_l = l->next;
 		/* free the parsed rdata*/
 		if (l->rdata) local_free(l->rdata);
 		local_free(l);
+		l = next_l;
 	}
 }
 
