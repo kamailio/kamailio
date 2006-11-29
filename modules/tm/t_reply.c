@@ -66,7 +66,6 @@
  *              the request (bogdan)
  *  2005-09-01  reverted to the old way of checking response.dst.send_sock
  *               in t_retransmit_reply & reply_light (andrei)
- *  2006-12-27  replaced reset(fr_timer) with del_fr_timer(...)  (andrei)
  */
 
 
@@ -955,7 +954,7 @@ void cleanup_uac_timers( struct cell *t )
 	/* reset FR/retransmission timers */
 	for (i=0; i<t->nr_of_outgoings; i++ )  {
 		reset_timer( &t->uac[i].request.retr_timer );
-		del_fr_timer( &t->uac[i].request.fr_timer );
+		reset_timer( &t->uac[i].request.fr_timer );
 	}
 	DBG("DEBUG: cleanup_uac_timers: RETR/FR timers reset\n");
 }
@@ -1283,7 +1282,7 @@ int reply_received( struct sip_msg  *p_msg )
 		     /* ... then just stop timers */
 		reset_timer( &uac->local_cancel.retr_timer);
 		if ( msg_status >= 200 ) {
-				del_fr_timer( &uac->local_cancel.fr_timer);
+				reset_timer( &uac->local_cancel.fr_timer);
 		}
 		DBG("DEBUG: reply to local CANCEL processed\n");
 		goto done;
@@ -1295,7 +1294,7 @@ int reply_received( struct sip_msg  *p_msg )
 	
 	     /* stop final response timer only if I got a final response */
 	if ( msg_status >= 200 ) {
-		del_fr_timer(&uac->request.fr_timer);
+		reset_timer( &uac->request.fr_timer);
 	}
 
 	     /* acknowledge negative INVITE replies (do it before detailed

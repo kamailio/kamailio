@@ -349,7 +349,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				      * retransmission timers
 				      */
 				reset_timer(&t_invite->uac[i].request.retr_timer);
-				del_fr_timer(&t_invite->uac[i].request.fr_timer);
+				reset_timer(&t_invite->uac[i].request.fr_timer);
 
 				/* Generate faked reply */
 				LOCK_REPLIES(t_invite);

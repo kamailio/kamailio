@@ -109,8 +109,6 @@ struct timer_link  *check_and_split_time_list( struct timer*, int);
 */
 
 void reset_timer( struct timer_link* tl );
-/* remove a timer from FR_TIMER_LIST or FR_INV_TIMER_LIST */
-void del_fr_timer( struct timer_link *tl);
 /* determine timer length and put on a correct timer list */
 void set_timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext_timeout );
 /* similar to set_timer, except it allows only one-time

@@ -147,7 +147,7 @@ static void cancel_all_branches(struct cell *t)
 	    
 	    /* stop_rb_timers(&t->uac[i].request); */
 	    reset_timer( &t->uac[i].request.retr_timer );
-	    del_fr_timer( &t->uac[i].request.fr_timer );
+	    reset_timer( &t->uac[i].request.fr_timer );
 	}
 	else {
 
