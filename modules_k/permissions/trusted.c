@@ -267,8 +267,8 @@ int init_child_trusted(int rank)
 	}
 	
 	/* Check if database is needed by child */
-	if (((db_mode == DISABLE_CACHE) && (rank > 0)) || 
-	    ((db_mode == ENABLE_CACHE) && (rank == PROC_FIFO))
+	if ((db_mode==DISABLE_CACHE && rank>0) ||
+	    (db_mode==ENABLE_CACHE  && (rank==PROC_FIFO || rank==PROC_UNIXSOCK))
 	   ) {
 		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
