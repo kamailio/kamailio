@@ -28,6 +28,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "flat_pool.h"
@@ -149,6 +150,8 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 {
 	FILE* f;
 	int i;
+	int l;
+	char *s, *p;
 
 	f = CON_FILE(h);
 	if (!f) {
@@ -184,7 +187,17 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 			break;
 
 		case DB_BLOB:
-			LOG(L_ERR, "flastore: Blobs not supported\n");
+			l = VAL_BLOB(v+i).len;
+			s = p = VAL_BLOB(v+i).s;
+			while (l--) {
+				if ( !(isprint(*s) && *s != '\\' && *s != '|')) {
+					fprintf(f,"%.*s\\x%02X",s-p,p,(*s & 0xff));
+					p = s+1;
+				}
+				++s;
+			}
+			if (p!=s)
+				fprintf(f,"%.*s",s-p,p);
 			break;
 
 		case DB_BITMAP:
