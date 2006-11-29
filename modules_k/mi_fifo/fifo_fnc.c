@@ -328,8 +328,8 @@ static char *get_reply_filename( char * file, int len )
 
 void mi_fifo_server(FILE *fifo_stream)
 {
-	struct mi_node *mi_cmd;
-	struct mi_node *mi_rpl;
+	struct mi_root *mi_cmd;
+	struct mi_root *mi_rpl;
 	int line_len;
 	char *file_sep, *command, *file;
 	struct mi_cmd *f;

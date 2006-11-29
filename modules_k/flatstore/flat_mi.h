@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$ 
  *
  * Flatstore module MI interface
@@ -29,7 +29,7 @@
 
 #define MI_FLAT_ROTATE "flat_rotate"
 
-struct mi_node*  mi_flat_rotate_cmd(struct mi_node* cmd, void* param);
+struct mi_root*  mi_flat_rotate_cmd(struct mi_root* cmd, void* param);
 
 #endif /* _FLATSTORE_MI_H_ */
 

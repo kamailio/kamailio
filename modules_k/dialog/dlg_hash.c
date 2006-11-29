@@ -364,17 +364,19 @@ int fifo_print_dlgs(FILE *fifo, char *response_file )
 }
 
 
-struct mi_node * mi_print_dlgs(struct mi_node *cmd, void *param )
+struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 {
 	struct dlg_cell *dlg;
 	struct mi_node* rpl = NULL, *node= NULL;
 	struct mi_attr* attr= NULL;
+	struct mi_root* rpl_tree= NULL;
 	int i, len;
 	char* p;
 
-	rpl = init_mi_tree( MI_200_OK_S, MI_200_OK_LEN);
-	if (rpl==0)
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==0)
 		return 0;
+	rpl = &rpl_tree->node;
 
 	for( i=0 ; i<d_table->size ; i++ ) {
 		dlg_lock( d_table, &(d_table->entries[i]) );
@@ -427,11 +429,11 @@ struct mi_node * mi_print_dlgs(struct mi_node *cmd, void *param )
 		}
 		dlg_unlock( d_table, &(d_table->entries[i]) );
 	}
-	return rpl;
+	return rpl_tree;
 
 error:
 	LOG(L_ERR,"ERROR:mi_ps: failed to add node\n");
-	free_mi_tree(rpl);
+	free_mi_tree(rpl_tree);
 	return 0;
 
 }

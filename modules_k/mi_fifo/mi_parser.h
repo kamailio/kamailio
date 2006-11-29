@@ -33,7 +33,7 @@
 
 int  mi_parser_init( unsigned int size );
 
-struct mi_node *mi_parse_tree(FILE *stream);
+struct mi_root *mi_parse_tree(FILE *stream);
 
 #endif /* _MI_PARSER_H_ */
 

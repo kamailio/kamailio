@@ -68,10 +68,10 @@ static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
 
-static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param );
-static struct mi_node* mi_reset_gflag(struct mi_node* cmd, void* param );
-static struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param );
-static struct mi_node* mi_get_gflags(struct mi_node* cmd, void* param );
+static struct mi_root* mi_set_gflag(struct mi_root* cmd, void* param );
+static struct mi_root* mi_reset_gflag(struct mi_root* cmd, void* param );
+static struct mi_root* mi_is_gflag(struct mi_root* cmd, void* param );
+static struct mi_root* mi_get_gflags(struct mi_root* cmd, void* param );
 
 static int fixup_str2int( void** param, int param_no);
 
@@ -266,14 +266,14 @@ static int fifo_get_gflags( FILE* pipe, char* response_file )
 
 /************************* MI functions *******************************/
 
-static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
+static struct mi_root* mi_set_gflag(struct mi_root* cmd_tree, void* param )
 {
 	unsigned int flag;
 	struct mi_node* node;
 
-	node = cmd->kids;
+	node = cmd_tree->node.kids;
 	if(node == NULL)
-		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	if( strno2int( &node->value, &flag) <0)
 		goto error;
@@ -284,21 +284,21 @@ static struct mi_node* mi_set_gflag(struct mi_node* cmd, void* param )
 
 	(*gflags) |= flag;
 
-	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
-	return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
+	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
 
 
 
-static struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
+static struct mi_root*  mi_reset_gflag(struct mi_root* cmd_tree, void* param )
 {
 	unsigned int flag;
 	struct mi_node* node = NULL;
 
-	node = cmd->kids;
+	node = cmd_tree->node.kids;
 	if(node == NULL)
-		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	if( strno2int( &node->value, &flag) <0)
 		goto error;
@@ -309,22 +309,22 @@ static struct mi_node*  mi_reset_gflag(struct mi_node* cmd, void* param )
 
 	(*gflags) &= ~ flag;
 
-	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
-	return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
+	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
 
 
 
-static struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
+static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
 {
 	unsigned int flag;
-	struct mi_node* rpl= NULL;
+	struct mi_root* rpl_tree = NULL;
 	struct mi_node* node = NULL;
 
-	node = cmd->kids;
+	node = cmd_tree->node.kids;
 	if(node == NULL)
-		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	if( strno2int( &node->value, &flag) <0)
 		goto error_param;
@@ -333,48 +333,48 @@ static struct mi_node* mi_is_gflag(struct mi_node* cmd, void* param )
 		goto error_param;
 	}
 
-	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-	if(rpl ==0)
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if(rpl_tree ==0)
 		return 0;
 
 	if((*gflags) & flag)
-		node = add_mi_node_child(rpl, 0, 0, 0, "TRUE", 4);
+		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "TRUE", 4);
 	else
-		node = add_mi_node_child(rpl, 0, 0, 0, "FALSE", 5);
+		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "FALSE", 5);
 
 	if(node == NULL)
 	{
 		LOG(L_ERR, "gflags:mi_set_gflag:ERROR while adding node\n");
-		free_mi_tree(rpl);
+		free_mi_tree(rpl_tree);
 		return 0;
 	}
 
-	return rpl;
+	return rpl_tree;
 error_param:
-	return init_mi_tree(MI_BAD_PARM_S,MI_BAD_PARM_LEN);
+	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
 
 
-static struct mi_node*  mi_get_gflags(struct mi_node* cmd, void* param )
+static struct mi_root*  mi_get_gflags(struct mi_root* cmd_tree, void* param )
 {
-	struct mi_node* rpl= NULL;
+	struct mi_root* rpl_tree= NULL;
 	struct mi_node* node= NULL;
 
-	rpl= init_mi_tree( MI_200_OK_S, MI_200_OK_LEN );
-	if(rpl == NULL)
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+	if(rpl_tree == NULL)
 		return 0;
 
-	node = addf_mi_node_child(rpl,0, 0, 0, "0x%X",(*gflags));
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "0x%X",(*gflags));
 	if(node == NULL)
 		goto error;
 
-	node = addf_mi_node_child(rpl,0, 0, 0, "%u",(*gflags));
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%u",(*gflags));
 	if(node == NULL)
 		goto error;
 
-	return rpl;
+	return rpl_tree;
 error:
-	free_mi_tree(rpl);
+	free_mi_tree(rpl_tree);
 	return 0;
 }
 

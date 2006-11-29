@@ -73,8 +73,8 @@ static int ds_fixup(void** param, int param_no);
 
 static int ds_fifo_set(FILE *stream, char *response_file);
 static int ds_fifo_list(FILE *stream, char *response_file);
-struct mi_node* ds_mi_set(struct mi_node* cmd, void* param);
-struct mi_node* ds_mi_list(struct mi_node* cmd, void* param);
+struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
+struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
 
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    w_ds_select_dst,    2, ds_fixup, REQUEST_ROUTE},
@@ -410,21 +410,21 @@ static int ds_fifo_list(FILE *stream, char *response_file)
 
 /************************** MI STUFF ************************/
 
-struct mi_node* ds_mi_set(struct mi_node* cmd, void* param)
+struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 {
 	str sp;
 	int ret;
 	unsigned int group, state;
 	struct mi_node* node;
 
-	node = cmd->kids;
+	node = cmd_tree->node.kids;
 	if(node == NULL)
-		return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 	sp = node->value;
 	if(sp.len<=0 || sp.s == NULL)
 	{
 		LOG(L_ERR, "DISPATCHER:ds_mi_set: bad state value\n");
-		return init_mi_tree("500 bad state value", 19);
+		return init_mi_tree( 500, "bad state value", 15);
 	}
 
 	state = 1;
@@ -432,27 +432,27 @@ struct mi_node* ds_mi_set(struct mi_node* cmd, void* param)
 		state = 0;
 	node = node->next;
 	if(node == NULL)
-		return init_mi_tree(MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 	sp = node->value;
 	if(sp.s == NULL)
 	{
-		return init_mi_tree("500 group not found", 19);
+		return init_mi_tree(500, "group not found", 15);
 	}
 
 	if(str2int(&sp, &group))
 	{
 		LOG(L_ERR, "DISPATCHER:ds_mi_set: bad group value\n");
-		return init_mi_tree("500 bad group value", 20);
+		return init_mi_tree( 500, "bad group value", 16);
 	}
 
 	node= node->next;
 	if(node == NULL)
-		return init_mi_tree(MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	sp = node->value;
 	if(sp.s == NULL)
 	{
-		return init_mi_tree("500 address not found", 22 );
+		return init_mi_tree(500,"address not found", 18 );
 	}
 
 	if(state==1)
@@ -462,30 +462,30 @@ struct mi_node* ds_mi_set(struct mi_node* cmd, void* param)
 
 	if(ret!=0)
 	{
-		return init_mi_tree( "404 destination not found", 25);
+		return init_mi_tree( 404, "destination not found", 21);
 	}
 
-	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 
 
 
 
-struct mi_node* ds_mi_list(struct mi_node* cmd, void* param)
+struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
 {
-	struct mi_node* rpl;
+	struct mi_root* rpl_tree;
 
-	rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-	if (rpl==NULL)
+	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==NULL)
 		return 0;
 
-	if( ds_print_mi_list(rpl)< 0 )
+	if( ds_print_mi_list(&rpl_tree->node)< 0 )
 	{
 		LOG(L_ERR,"ERROR:mi_ps: failed to add node\n");
-		free_mi_tree(rpl);
+		free_mi_tree(rpl_tree);
 		return 0;
 	}
 
-	return rpl;
+	return rpl_tree;
 }
 

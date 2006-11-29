@@ -212,8 +212,9 @@ parse_err:
 
 
 
-struct mi_node * mi_parse_tree(FILE *stream) {
-	struct mi_node *mi_root;
+struct mi_root * mi_parse_tree(FILE *stream) {
+	struct mi_root *root;
+	struct mi_node *node;
 	str name;
 	str value;
 	str buf;
@@ -222,12 +223,13 @@ struct mi_node * mi_parse_tree(FILE *stream) {
 	buf.s = mi_parse_buffer;
 	buf.len= mi_parse_buffer_len;
 
-	mi_root = init_mi_tree(0,0);
-	if (!mi_root) {
+	root = init_mi_tree(0,0,0);
+	if (!root) {
 		LOG(L_ERR, "ERROR:mi_fifo:mi_parse_tree: the MI tree cannot be "
 			"initialized!\n");
 		goto error;
 	}
+	node = &root->node;
 
 	name.s = value.s = 0;
 	name.len = value.len = 0;
@@ -235,12 +237,12 @@ struct mi_node * mi_parse_tree(FILE *stream) {
 	/* every tree for a command ends with a \n that is alone on its line */
 	while ( (ret=mi_parse_node(stream, &buf, &name, &value))>=0 ) {
 		if (ret==1)
-			return mi_root;
+			return root;
 
 		DBG("DEBUG:mi_fifo:mi_parse_tree: adding node <%.*s> ; val <%.*s>\n",
 			name.len,name.s, value.len,value.s);
 
-		if(!add_mi_node_child(mi_root,0,name.s,name.len,value.s,value.len)){
+		if(!add_mi_node_child(node,0,name.s,name.len,value.s,value.len)){
 			LOG(L_ERR, "ERROR:mi_fifo:mi_parse_tree: cannot add the child "
 				"node to the tree\n");
 			goto error;
@@ -256,8 +258,8 @@ struct mi_node * mi_parse_tree(FILE *stream) {
 	}
 
 error:
-	if (mi_root)
-		free_mi_tree(mi_root);
+	if (root)
+		free_mi_tree(root);
 	return 0;
 }
 

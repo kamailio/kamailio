@@ -36,12 +36,12 @@
 /*
  * MI function to reload trusted table
  */
-struct mi_node* mi_trusted_reload(struct mi_node *cmd, void *param)
+struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
 {
     if (reload_trusted_table () == 1) {
-	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
     } else {
-	return init_mi_tree("400 Trusted table reload failed", 30);
+	return init_mi_tree( 400, "Trusted table reload failed", 26);
     }
 }
 
@@ -49,32 +49,32 @@ struct mi_node* mi_trusted_reload(struct mi_node *cmd, void *param)
 /*
  * MI function to print trusted entries from current hash table
  */
-struct mi_node* mi_trusted_dump(struct mi_node *cmd, void *param)
+struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
 {
-    struct mi_node* rpl;
+    struct mi_root* rpl_tree;
     
-    rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-    if (rpl==NULL) return 0;
+    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    if (rpl_tree==NULL) return 0;
     
-    if(hash_table_mi_print(*hash_table, rpl)< 0) {
+    if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0) {
 	LOG(L_ERR,"permissions:mi_trusted_dump: Error while adding node\n");
-	free_mi_tree(rpl);
+	free_mi_tree(rpl_tree);
 	return 0;
     }
 
-    return rpl;
+    return rpl_tree;
 }
 
 
 /*
  * MI function to reload address table
  */
-struct mi_node* mi_address_reload(struct mi_node *cmd, void *param)
+struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
 {
     if (reload_address_table () == 1) {
-	return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
     } else {
-	return init_mi_tree("400 Address table reload failed", 30);
+	return init_mi_tree( 400, "Address table reload failed", 36);
     }
 }
 
@@ -82,18 +82,18 @@ struct mi_node* mi_address_reload(struct mi_node *cmd, void *param)
 /*
  * MI function to print address entries from current hash table
  */
-struct mi_node* mi_address_dump(struct mi_node *cmd, void *param)
+struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
 {
-    struct mi_node* rpl;
+    struct mi_root* rpl_tree;
     
-    rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-    if (rpl==NULL) return 0;
+    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    if (rpl_tree==NULL) return 0;
     
-    if(addr_hash_table_mi_print(*addr_hash_table, rpl) <  0) {
+    if(addr_hash_table_mi_print(*addr_hash_table, &rpl_tree->node) <  0) {
 	LOG(L_ERR,"permissions:mi_address_dump: Error while adding node\n");
-	free_mi_tree(rpl);
+	free_mi_tree(rpl_tree);
 	return 0;
     }
 
-    return rpl;
+    return rpl_tree;
 }

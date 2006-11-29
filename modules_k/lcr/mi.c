@@ -36,33 +36,33 @@
 /*
  * MI function to reload lcr table(s)
  */
-struct mi_node*  mi_lcr_reload(struct mi_node* cmd, void* param)
+struct mi_root*  mi_lcr_reload(struct mi_root* cmd_tree, void* param)
 {
 	if (reload_gws () == 1) 
-		return init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
+		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	else
-		return init_mi_tree("400 Reload of gateways failed",29 );
+		return init_mi_tree( 400, "Reload of gateways failed", 25);
 }
 
 
 /*
  * MI function to print gws from current gw table
  */
-struct mi_node* mi_lcr_dump(struct mi_node* cmd, void* param)
+struct mi_root* mi_lcr_dump(struct mi_root* cmd_tree, void* param)
 {
-	struct mi_node* rpl= NULL;
+	struct mi_root* rpl_tree = NULL;
 
-	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-	if (rpl==0)
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==0)
 		return 0;
 
-	if(mi_print_gws(rpl)<0)
+	if(mi_print_gws( &rpl_tree->node )<0)
 	{
 		LOG(L_ERR, "lcr:mi_lcr_reload: ERROR while adding node\n");
-		free_mi_tree(rpl);
+		free_mi_tree(rpl_tree);
 		return 0;
 	}
 
-	return rpl;
+	return rpl_tree;
 }
 

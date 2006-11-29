@@ -91,8 +91,8 @@ static int imc_manager(struct sip_msg*, char *, char *);
 static int imc_list_rooms(FILE *stream, char *response_file);
 static int imc_list_members(FILE *stream, char *response_file);
 
-static struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param);
-static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param);
+static struct mi_root* imc_mi_list_rooms(struct mi_root* cmd, void* param);
+static struct mi_root* imc_mi_list_members(struct mi_root* cmd, void* param);
 
 void destroy(void);
 int imc_list_randm(FILE *stream);
@@ -1504,18 +1504,20 @@ int imc_list_rooms(FILE *stream, char *response_file){
 
 
 /************************* MI ***********************/
-static struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param)
+static struct mi_root* imc_mi_list_rooms(struct mi_root* cmd_tree, void* param)
 {
 	int i, len;
+	struct mi_root* rpl_tree= NULL;
 	struct mi_node* rpl= NULL;
 	struct mi_node* node= NULL;
 	struct mi_attr* attr= NULL;
 	imc_room_p irp = NULL;
 	char* p = NULL;
 
-	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-	if(rpl == NULL)
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if(rpl_tree == NULL)
 		return 0;
+	rpl = &rpl_tree->node;
 
 	for(i=0; i<imc_hash_size; i++) 
 	{
@@ -1546,20 +1548,21 @@ static struct mi_node* imc_mi_list_rooms(struct mi_node* cmd, void* param)
 		lock_release(&_imc_htable[i].lock);
 	}
 
-	return rpl;
+	return rpl_tree;
 
 error:
 	lock_release(&_imc_htable[i].lock);
-	free_mi_tree(rpl);
+	free_mi_tree(rpl_tree);
 	return 0;
 
 }
 
 
-static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param)
+static struct mi_root* imc_mi_list_members(struct mi_root* cmd_tree,
+																void* param)
 {
 	int i, len;
-	struct mi_node* rpl = NULL;
+	struct mi_root* rpl_tree = NULL;
 	struct mi_node* node= NULL;
 	struct mi_node* node_r= NULL;
 	struct mi_attr* attr= NULL;
@@ -1570,7 +1573,7 @@ static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param)
 	imc_member_p imp=NULL;
 	char* p = NULL;
 
-	node= cmd->kids;
+	node= cmd_tree->node.kids;
 	if(node == NULL|| node->next!=NULL)
 		return 0;
 	
@@ -1581,13 +1584,13 @@ static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param)
 	if(room_name.s == NULL || room_name.len == 0)
 	{
 		LOG(L_ERR, "IMC:imc_mi_list_members: error - no room name!\n");
-		return init_mi_tree("400 room name not found", 23);
+		return init_mi_tree( 404, "room name not found", 19);
 	}
 	rnbuf[room_name.len] = '\0';
 	if(*room_name.s=='\0' || *room_name.s=='.')
 	{
 		LOG(L_INFO, "IMC:imc_mi_list_members: empty room name\n");
-		return init_mi_tree( "400 empty param", 15);
+		return init_mi_tree( 400, "empty param", 11);
 	}
 
 	/* find room */
@@ -1598,15 +1601,15 @@ static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param)
 	if(room==NULL)
 	{
 		LOG(L_ERR,"IMC:imc_mi_list_members: no such room!\n");
-		return init_mi_tree("404 no such room", 16);
+		return init_mi_tree( 404, "no such room", 14);
 	}
 
-	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-	if(rpl == NULL)
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if(rpl_tree == NULL)
 		return 0;
 
-	node_r = add_mi_node_child(rpl, MI_DUP_VALUE, "ROOM", 4, room_name.s,
-		room_name.len);
+	node_r = add_mi_node_child( &rpl_tree->node, MI_DUP_VALUE, "ROOM", 4,
+		room_name.s, room_name.len);
 	if(node_r == NULL)
 		goto error;
 	
@@ -1630,11 +1633,11 @@ static struct mi_node* imc_mi_list_members(struct mi_node* cmd, void* param)
 
 	imc_release_room(room);
 
-	return rpl;
+	return rpl_tree;
 
 error:
 	imc_release_room(room);
-	free_mi_tree(rpl);
+	free_mi_tree(rpl_tree);
 	return 0;
 
 }

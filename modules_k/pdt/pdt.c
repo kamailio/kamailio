@@ -99,9 +99,9 @@ static int pdt_fifo_add(FILE *stream, char *response_file);
 static int pdt_fifo_delete(FILE *stream, char *response_file);
 static int pdt_fifo_list(FILE *stream, char *response_file);
 
-static struct mi_node* pdt_mi_add(struct mi_node*, void* param);
-static struct mi_node* pdt_mi_delete(struct mi_node*, void* param);
-static struct mi_node* pdt_mi_list(struct mi_node*, void* param);
+static struct mi_root* pdt_mi_add(struct mi_root*, void* param);
+static struct mi_root* pdt_mi_delete(struct mi_root*, void* param);
+static struct mi_root* pdt_mi_list(struct mi_root*, void* param);
 
 int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 int pdt_load_db();
@@ -1064,7 +1064,7 @@ static int pdt_fifo_list(FILE *stream, char *response_file)
  *   prefix
  *   domain
  */
-struct mi_node* pdt_mi_add(struct mi_node* cmd, void* param)
+struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 {
 	db_key_t db_keys[NR_KEYS] = {sdomain_column, prefix_column, domain_column};
 	db_val_t db_vals[NR_KEYS];
@@ -1076,20 +1076,20 @@ struct mi_node* pdt_mi_add(struct mi_node* cmd, void* param)
 	if(_dhash==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_add: strange situation\n");
-		return init_mi_tree( MI_INTERNAL_ERR_S,MI_INTERNAL_ERR_LEN);
+		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
 	/* read sdomain */
-	node = cmd->kids;
+	node = cmd_tree->node.kids;
 	if(node == NULL)
 		goto error1;
 
 	sdomain = node->value;
 	if(sdomain.s == NULL || sdomain.len== 0)
-		return init_mi_tree( "400 domain not found", 20);
+		return init_mi_tree( 404, "domain not found", 16);
 
 	if(*sdomain.s=='.' )
-		 return init_mi_tree("400 empty param",15);
+		 return init_mi_tree( 400, "empty param",11);
 
 	/* read prefix */
 	node = node->next;
@@ -1100,16 +1100,16 @@ struct mi_node* pdt_mi_add(struct mi_node* cmd, void* param)
 	if(sp.s== NULL || sp.len==0)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_add: could not read prefix\n");
-		return init_mi_tree("400 prefix not found", 20);
+		return init_mi_tree( 404, "prefix not found", 16);
 	}
 
 	if(*sp.s=='.')
-		 return init_mi_tree("400 empty param",15);
+		 return init_mi_tree(400, "empty param", 11);
 
 	while(i< sp.len)
 	{
 		if(sp.s[i] < '0' || sp.s[i] > '9')
-			return init_mi_tree("400 bad prefix", 14);
+			return init_mi_tree( 400, "bad prefix", 10);
 		i++;
 	}
 
@@ -1118,22 +1118,22 @@ struct mi_node* pdt_mi_add(struct mi_node* cmd, void* param)
 	if(node == NULL || node->next!=NULL)
 		goto error1;
 
-	sd= node->value;	
+	sd= node->value;
 	if(sd.s== NULL || sd.len==0)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_add: could not read domain\n");
-		return init_mi_tree("400 domain not found", 20);
+		return init_mi_tree( 400, "domain not found", 16);
 	}
 
 	if(*sd.s=='.')
-		 return init_mi_tree("400 empty param",15);	
+		 return init_mi_tree( 400, "empty param", 11);
 
 	
 	if(pdt_check_pd(_dhash, &sdomain, &sp, &sd)==1)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_add: (sdomain,prefix,domain) exists\n");
-		return init_mi_tree(
-			"400 (sdomain,prefix,domain) exists already", 42);
+		return init_mi_tree( 400,
+			"(sdomain,prefix,domain) exists already", 38);
 	}
 	db_vals[0].type = DB_STR;
 	db_vals[0].nul = 0;
@@ -1153,26 +1153,26 @@ struct mi_node* pdt_mi_add(struct mi_node* cmd, void* param)
 	/* insert a new domain into database */
 	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
 	{
-		LOG(L_ERR, "PDT:pdt_fifo_add: error storing new prefix/domain\n");
-		return init_mi_tree("430 Cannot store prefix/domain", 30);
+		LOG(L_ERR, "PDT:pdt_mi_add: error storing new prefix/domain\n");
+		return init_mi_tree( 500,"Cannot store prefix/domain", 26);
 	}
 	
 	if(pdt_add_to_hash(_dhash, &sdomain, &sp, &sd)!=0)
 	{
-		LOG(L_ERR, "PDT:pdt_fifo_add: could not add to cache\n");
+		LOG(L_ERR, "PDT:pdt_mi_add: could not add to cache\n");
 		goto error;
 	}
 	
-	return init_mi_tree("200 OK", 6);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 
 	
 error:
 	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
 		LOG(L_ERR,"PDT:pdt_mi_add: database/cache are inconsistent\n");
-	return init_mi_tree("431 could not add to cache", 27 );
+	return init_mi_tree( 500, "could not add to cache", 23 );
 
 error1:
-	return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+	return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 }
 
@@ -1181,7 +1181,7 @@ error1:
  *    sdomain
  *    domain
  */
-struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
+struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 {
 	str sd, sdomain;
 	int ret;
@@ -1193,20 +1193,20 @@ struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
 	if(_dhash==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
-		return init_mi_tree( MI_INTERNAL_ERR_S,MI_INTERNAL_ERR_LEN);
+		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
 	/* read sdomain */
-	node = cmd->kids;
+	node = cmd_tree->node.kids;
 	if(node == NULL)
 		goto error;
 
 	sdomain = node->value;
 	if(sdomain.s == NULL || sdomain.len== 0)
-		return init_mi_tree( "400 domain not found", 20);
+		return init_mi_tree( 404, "domain not found", 16);
 
 	if( *sdomain.s=='.' )
-		 return init_mi_tree("400 empty param",15);
+		 return init_mi_tree( 400, "400 empty param",11);
 
 	/* read domain */
 	node= node->next;
@@ -1217,11 +1217,11 @@ struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
 	if(sd.s== NULL || sd.len==0)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_delete: could not read domain\n");
-		return init_mi_tree("400 domain not found", 20);
+		return init_mi_tree(404, "domain not found", 16);
 	}
 
 	if(*sd.s=='.')
-		 return init_mi_tree("400 empty param",15);	
+		 return init_mi_tree( 400, "empty param", 11);
 
 
 	if((ret = pdt_remove_from_hash_list(_dhash, &sdomain, &sd))<0)
@@ -1234,7 +1234,7 @@ struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
 	{
 		DBG("PDT:pdt_mi_delete: prefix for sdomain [%.*s]domain [%.*s] "
 			"not found\n", sdomain.len, sdomain.s, sd.len, sd.s);
-		return init_mi_tree("404 domain not found",20 );
+		return init_mi_tree( 404, "domain not found", 16);
 	}
 	
 
@@ -1251,12 +1251,12 @@ struct mi_node* pdt_mi_delete(struct mi_node* cmd, void* param)
 	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, 2)<0)
 	{
 		LOG(L_ERR,"PDT:pdt_mi_delete: database/cache are inconsistent\n");
-		return init_mi_tree("602 database/cache are inconsistent", 35 );
+		return init_mi_tree( 500, "database/cache are inconsistent", 31 );
 	} 
 
-	return init_mi_tree(MI_200_OK_S,MI_200_OK_LEN);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
-	return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+	return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 }
 
 
@@ -1271,12 +1271,13 @@ error:
  * 	  all domains starting with 'a' are listed
  */
 
-struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
+struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 {
 	str sd, sp, sdomain;
 	pd_t *it;
 	int i= 0;
 	hash_t *h;
+	struct mi_root* rpl_tree = NULL;
 	struct mi_node* rpl = NULL;
 	struct mi_node* node = NULL;
 	struct mi_attr* attr= NULL;
@@ -1284,20 +1285,20 @@ struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
 	if(_dhash==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
-		return init_mi_tree( MI_INTERNAL_ERR_S,MI_INTERNAL_ERR_LEN);
+		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
 	/* read sdomain */
-	node = cmd->kids;
+	node = cmd_tree->node.kids;
 	if(node == NULL)
 		goto error1;
 
 	sdomain = node->value;
 	if(sdomain.s == NULL || sdomain.len== 0)
-		return init_mi_tree( "400 domain not found", 20);
+		return init_mi_tree( 404, "domain not found", 16);
 
 	if(*sdomain.s=='.' )
-		 return init_mi_tree("400 empty param",15);
+		 return init_mi_tree( 400, "empty param", 11);
 
 	/* read prefix */
 	node = node->next;
@@ -1307,8 +1308,8 @@ struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
 	sp= node->value;
 	if(sp.s== NULL || sp.len==0)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_add: could not read prefix\n");
-		return init_mi_tree("400 prefix not found", 20);
+		LOG(L_ERR, "PDT:pdt_mi_list: could not read prefix\n");
+		return init_mi_tree( 404, "prefix not found", 16);
 	}
 
 	if( *sp.s!='.')
@@ -1319,7 +1320,7 @@ struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
 			{
 				LOG(L_ERR, "PDT:pdt_mi_list: bad prefix [%.*s]\n",
 					sp.len, sp.s);
-				return init_mi_tree("400 bad prefix", 14);
+				return init_mi_tree( 400, "bad prefix", 10);
 			}
 			i++;
 		}
@@ -1336,8 +1337,8 @@ struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
 	sd= node->value;
 	if(sd.s== NULL || sd.len==0)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_add: could not read domain\n");
-		return init_mi_tree("400 domain not found", 20);
+		LOG(L_ERR, "PDT:pdt_mi_list: could not read domain\n");
+		return init_mi_tree( 400, "domain not found", 16);
 	}
 	
 	if( *sd.s=='.')
@@ -1346,9 +1347,10 @@ struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
 		sd.len = 0;
 	}
 
-	rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN );
-	if(rpl == NULL)
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+	if(rpl_tree == NULL)
 		return 0;
+	rpl = &rpl_tree->node;
 
 	lock_get(&_dhash->hl_lock);
 	h = _dhash->hash;
@@ -1398,14 +1400,14 @@ struct mi_node* pdt_mi_list(struct mi_node* cmd, void* param)
 
 	lock_release(&_dhash->hl_lock);
 	
-	return rpl;
+	return rpl_tree;
 
 error:
-	free_mi_tree(rpl);
+	free_mi_tree(rpl_tree);
 	return 0;
 
 error1:
-	return init_mi_tree(MI_MISSING_PARM_S,MI_MISSING_PARM_LEN);
+	return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 }
 
 

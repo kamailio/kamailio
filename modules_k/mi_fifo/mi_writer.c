@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "../../str.h"
+#include "../../ut.h"
 #include "../../dprint.h"
 #include "../../mi/tree.h"
 #include "../../mem/mem.h"
@@ -165,27 +166,32 @@ static int recur_write_tree(FILE *stream, struct mi_node *tree, str *buf,
 
 
 
-int mi_write_tree(FILE *stream, struct mi_node *tree)
+int mi_write_tree(FILE *stream, struct mi_root *tree)
 {
 	str buf;
+	str code;
 
 	buf.s = mi_write_buffer;
 	buf.len = mi_write_buffer_len;
 
-	/* any reason in the root node? */
-	if (tree->value.s) {
-		if (tree->value.len+1>buf.len) {
-			LOG(L_ERR,"ERROR:mi_fifo:mi_write_tree: failed to write - "
-				"reason too long!!!\n");
-			return -1;
-		}
-		memcpy( buf.s, tree->value.s, tree->value.len);
-		buf.s += tree->value.len;
-		*(buf.s++) = '\n';
-		buf.len -= tree->value.len+1;
+	/* write the root node */
+	code.s = int2str((unsigned long)tree->code, &code.len);
+	if (code.len+tree->reason.len+1>buf.len) {
+		LOG(L_ERR,"ERROR:mi_fifo:mi_write_tree: failed to write - "
+			"reason too long!!!\n");
+		return -1;
 	}
+	memcpy( buf.s, code.s, code.len);
+	buf.s += code.len;
+	*(buf.s++) = ' ';
+	if (tree->reason.len) {
+		memcpy( buf.s, tree->reason.s, tree->reason.len);
+		buf.s += tree->reason.len;
+	}
+	*(buf.s++) = '\n';
+	buf.len -= code.len + 1 + tree->reason.len+1;
 
-	if (recur_write_tree(stream, tree->kids, &buf, 0)!=0)
+	if (recur_write_tree(stream, tree->node.kids, &buf, 0)!=0)
 		return -1;
 
 	if (mi_fifo_reply(stream,"%.*s",buf.s-mi_write_buffer,mi_write_buffer)!=0)

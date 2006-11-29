@@ -35,8 +35,8 @@
 #define MI_LCR_RELOAD "lcr_reload"
 #define MI_LCR_DUMP "lcr_dump"
 
-struct mi_node*  mi_lcr_reload(struct mi_node* cmd, void* param);
+struct mi_root*  mi_lcr_reload(struct mi_root* cmd, void* param);
 
-struct mi_node* mi_lcr_dump(struct mi_node* cmd, void* param);
+struct mi_root* mi_lcr_dump(struct mi_root* cmd, void* param);
 
 #endif

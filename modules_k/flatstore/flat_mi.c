@@ -26,15 +26,15 @@
 #include "flat_mi.h"
 
 
-struct mi_node*  mi_flat_rotate_cmd(struct mi_node* cmd, void* param)
+struct mi_root*  mi_flat_rotate_cmd(struct mi_root* cmd_tree, void* param)
 {
-	struct mi_node *rpl;
+	struct mi_root *rpl_tree;
 
-	rpl = init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-	if(rpl == NULL)
-		return rpl;
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if(rpl_tree == NULL)
+		return rpl_tree;
 
 	*flat_rotate = time(0);
 
-	return rpl;
+	return rpl_tree;
 }

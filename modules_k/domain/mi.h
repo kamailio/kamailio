@@ -29,12 +29,12 @@
 #include "../../mi/mi.h"
 
 #define MI_DOMAIN_RELOAD "domain_reload"
-#define MI_DOMAIN_DUMP "domain_dump"
+#define MI_DOMAIN_DUMP   "domain_dump"
 
 
-struct mi_node* mi_domain_reload(struct mi_node *cmd, void *param);
+struct mi_root* mi_domain_reload(struct mi_root *cmd, void *param);
 
-struct mi_node* mi_domain_dump(struct mi_node *cmd, void *param);
+struct mi_root* mi_domain_dump(struct mi_root *cmd, void *param);
 
 
 #endif

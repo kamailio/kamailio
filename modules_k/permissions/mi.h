@@ -36,13 +36,13 @@
 #define MI_ADDRESS_DUMP "address_dump"
 
 
-struct mi_node* mi_trusted_reload(struct mi_node *cmd, void *param);
+struct mi_root* mi_trusted_reload(struct mi_root *cmd, void *param);
 
-struct mi_node* mi_trusted_dump(struct mi_node *cmd, void *param);
+struct mi_root* mi_trusted_dump(struct mi_root *cmd, void *param);
 
-struct mi_node* mi_address_reload(struct mi_node *cmd, void *param);
+struct mi_root* mi_address_reload(struct mi_root *cmd, void *param);
 
-struct mi_node* mi_address_dump(struct mi_node *cmd, void *param);
+struct mi_root* mi_address_dump(struct mi_root *cmd, void *param);
 
 
 #endif
