@@ -19,7 +19,7 @@
 	</revhistory>
 	<abstract>
 	    <para>
-		A compilation of questions and answers from <email>serhelp@iptel.org</email>,
+		A compilation of questions and answers from 
 		<email>serusers@iptel.org</email>, and <email>serdev@iptel.org</email> mailing
 		lists.
 	    </para>
@@ -222,7 +222,7 @@
 		    </listitem>
 		</itemizedlist>
 		<simpara>
-		    Please send it to <email>serhelp@iptel.org</email>.
+		    Please send it to <email>serusers@lists.iptel.org</email>.
 		</simpara>
 	    </answer>
 	</qandaentry>

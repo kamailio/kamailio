@@ -9,17 +9,14 @@
 
 <!ENTITY serhome "http://iptel.org/ser">
 <!ENTITY serbugs "http://iptel.org/ser/bugs">
-<!ENTITY serhelp "http://mail.iptel.org/mailman/listinfo/serhelp">
 <!ENTITY serusers "http://mail.iptel.org/mailman/listinfo/serusers">
 <!ENTITY serdev "http://mail.iptel.org/mailman/listinfo/serdev">
 
 <!ENTITY serhomelink "<ulink url='&serhome;'>&serhome</ulink>">
 <!ENTITY serbugslink "<ulink url='&serbugs;'>&serbugs</ulink>">
-<!ENTITY serhelplink "<ulink url='&serhelp;'>&serhelp</ulink>">
 <!ENTITY seruserslink "<ulink url='&serusers;'>&serusers</ulink>">
 <!ENTITY serdevlink "<ulink url='&serdev;'>&serdev</ulink>">
 
-<!ENTITY serhelpmail "<email>serhelp@iptel.org</email>">
 <!ENTITY serusersmail "<email>serusers@iptel.org</email>">
 <!ENTITY serdevmail "<email>serdev@iptel.org</email>">
 
