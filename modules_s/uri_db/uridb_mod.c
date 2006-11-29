@@ -81,6 +81,7 @@ static int lookup_user_fixup(void** param, int param_no);
 #define DID_COL      "did"
 #define USERNAME_COL "username"
 #define FLAGS_COL    "flags"
+#define SCHEME_COL   "scheme"
 
 #define CANONICAL_AVP "ruri_canonical"
 #define CANONICAL_AVP_VAL "1"
@@ -94,6 +95,7 @@ str uid_col      = STR_STATIC_INIT(UID_COL);
 str did_col      = STR_STATIC_INIT(DID_COL);
 str username_col = STR_STATIC_INIT(USERNAME_COL);
 str flags_col    = STR_STATIC_INIT(FLAGS_COL);
+str scheme_col   = STR_STATIC_INIT(SCHEME_COL);
 str canonical_avp = STR_STATIC_INIT(CANONICAL_AVP);
 str canonical_avp_val = STR_STATIC_INIT(CANONICAL_AVP_VAL);
 
@@ -126,6 +128,7 @@ static param_export_t params[] = {
 	{"did_column",      PARAM_STR, &did_col      },
 	{"username_column", PARAM_STR, &username_col },
 	{"flags_column",    PARAM_STR, &flags_col    },
+	{"scheme_column",   PARAM_STR, &scheme_col   },
 	{0, 0, 0}
 };
 
@@ -217,6 +220,22 @@ static void destroy(void)
 	}
 }
 
+static void uri_type_to_str(uri_type type, str *s) {
+	static str	s_sip  = STR_STATIC_INIT("sip");
+	static str	s_sips = STR_STATIC_INIT("sips");
+	static str	s_tel  = STR_STATIC_INIT("tel");
+	static str	s_tels = STR_STATIC_INIT("tels");
+	static str	s_null = STR_STATIC_INIT("");
+
+	switch (type) {
+
+	case SIP_URI_T:		*s = s_sip;	break;
+	case SIPS_URI_T:	*s = s_sips;	break;
+	case TEL_URI_T:		*s = s_tel;	break;
+	case TELS_URI_T:	*s = s_tels;	break;
+	default:		*s = s_null;
+	}
+}
 
 /*
  * Lookup UID from uri table. If store parameter is non-zero then
@@ -228,8 +247,8 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 	struct to_body* from, *to;
 	struct sip_uri puri;
 	str did, uid;
-	db_key_t keys[2], cols[2];
-	db_val_t vals[2], *val;
+	db_key_t keys[3], cols[2];
+	db_val_t vals[3], *val;
 	db_res_t* res;
 	int flag, i, ret;
 
@@ -238,11 +257,15 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 
 	keys[0] = username_col.s;
 	keys[1] = did_col.s;
+	keys[2] = scheme_col.s;
 	cols[0] = uid_col.s;
 	cols[1] = flags_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
+
+	vals[2].type = DB_STR;
+	vals[2].nul = 0;
 
 	did.s = 0; did.len = 0;
 
@@ -264,6 +287,7 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			return -1;
 		}
 		vals[0].val.str_val = puri.user;
+		uri_type_to_str(puri.type, &(vals[2].val.str_val));
 	} else if (id == USE_TO) {
 		get_to_did(&did, msg);
 		to = get_to(msg);
@@ -276,6 +300,7 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			return -1;
 		}
 		vals[0].val.str_val = puri.user;
+		uri_type_to_str(puri.type, &(vals[2].val.str_val));
 		flag = DB_IS_TO;
 	} else {
 		get_to_did(&did, msg);
@@ -283,6 +308,7 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 
 		if (parse_sip_msg_uri(msg) < 0) return -1;
 		vals[0].val.str_val = msg->parsed_uri.user;
+		uri_type_to_str(msg->parsed_uri.type, &(vals[2].val.str_val));
 	}
 
 	vals[1].type = DB_STR;
@@ -299,7 +325,7 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 		return -1;
 	}
 
-	if (db.query(con, keys, 0, vals, cols, 2, 2, 0, &res) < 0) {
+	if (db.query(con, keys, 0, vals, cols, 3, 2, 0, &res) < 0) {
 		LOG(L_ERR, "uri_db:lookup_uid: Error in db_query\n");
 		return -1;
 	}
@@ -360,8 +386,8 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 
 static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 {
-    db_key_t keys[2], cols[2];
-    db_val_t vals[2], *val;
+    db_key_t keys[3], cols[2];
+    db_val_t vals[3], *val;
     db_res_t* res;
     str uri, did, uid;
     struct sip_uri puri;
@@ -406,6 +432,7 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 
     keys[0] = username_col.s;
     keys[1] = did_col.s;
+    keys[2] = scheme_col.s;
     cols[0] = uid_col.s;
     cols[1] = flags_col.s;
     
@@ -417,12 +444,16 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
     vals[1].nul = 0;
     vals[1].val.str_val = did;
 
+    vals[2].type = DB_STR;
+    vals[2].nul = 0;
+    uri_type_to_str(puri.type, &(vals[2].val.str_val));
+
     if (db.use_table(con, uri_table.s) < 0) {
 	LOG(L_ERR, "lookup_user: Error in use_table\n");
 	return -1;
     }
 
-    if (db.query(con, keys, 0, vals, cols, 2, 2, 0, &res) < 0) {
+    if (db.query(con, keys, 0, vals, cols, 3, 2, 0, &res) < 0) {
 	LOG(L_ERR, "lookup_user: Error in db_query\n");
 	return -1;
     }
