@@ -1,0 +1,141 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		 The pua_mi sends offer the possibility to publish presence
+		 information via MI transports. Future improvement may be
+		 ability to subscribe for presence status via MI.
+	</para>
+	<para>
+		Using this module you can create independent applications/scripts to
+		publish not sip-related information (e.g., system resources like
+		CPU-usage, memory, number of active subscribers ...)
+	</para>
+	<para>
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>mi_fifo</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+			</listitem>
+
+			</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+		<title>Exported Parameters</title>
+		<para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>	
+		</para>
+	</section>	
+
+<section>
+	<title>Exported Functions</title>
+	<para>The module does not export functions to be used
+	in configuration script.</para>
+	<section>
+		<title>Exported MI functions</title>
+		<section>
+				<title>
+				<function moreinfo="none">mi_pua_publish</function>
+				</title>
+			<para>
+				Command parameters:
+			<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>presentity_uri<emphasis> - like 'sip:system@openser.org'
+				<para>	
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>expires<emphasis>
+					<para>The relative time in seconds (eg: 3600 )</para> 
+				<para>	
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>body<emphasis>
+					<para>The body of the publish message; the only format
+					accepted is xml. For FIFO MI transport, it has to be
+					on a single line.</para>
+				<para>	
+			</listitem>
+
+
+
+			</para>
+			<para>
+			</para>
+		<example>
+		<title><function>mi_pua_publish</function> FIFO example</title>
+	<programlisting format="linespecific">
+...
+<![CDATA[
+:mi_pua_publish:fifo_test_reply
+sip:system@openser.org
+10
+<?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='system@openser.org'><tuple id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presence>
+]]>
+...
+</programlisting>
+		</example>
+
+		</section>
+	</section>	
+
+</section>		
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pua.sgml" "Book" "chapter")
+End:
+-->
+
+

@@ -1,0 +1,218 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module offer the functionality of a presence user agent client,
+		sending Subscribe and Publish messages. 
+	</para>
+	<para>
+		 Now it can be used with the following modules: pua_mi and pua_usrloc.
+		 The pua_mi offer the possiblity to publish any kind of information
+		 or subscribing to a resource through fifo. The pua_usrloc module calls
+		 a function exported by pua modules to publish elementary presence
+		 information, such as basic status "open" or "closed", for clients that
+		 do not implement client-to-server presence.  
+	</para>
+	<para>
+		The module use cache to store presentity list and writes to database
+		on timer to be able to recover upon restart.
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a database modules</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>hash_size</varname> (int)</title>
+		<para>
+		The size of the hash table used for storing Subscribe and 
+		Publish information. 
+		</para>
+		<para>
+		<emphasis>	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "hash_size", 9)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		Database url.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_url" 
+		"mysql://openser:openserrw@192.168.2.132/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		Database url.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_url" 
+		"mysql://openser:openserrw@192.168.2.132/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_table</varname> (str)</title>
+		<para>
+		The name of the database table.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_table", "pua")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>min_expires</varname> (int)</title>
+		<para>
+		The inferior expires limit for both Publish and Subscribe.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>min_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "min_expires", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>default_expires</varname> (int)</title>
+		<para>
+		The default expires value used in case this information is not provisioned.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "default_expires", 3600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>update_period</varname> (int)</title>
+		<para>
+		The interval at which the information in database and hash table
+		should be updated. In the case of the hash table updating is 
+		deleting expired messages.
+		</para>
+		<para>
+		<emphasis>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>update_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "update_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+<section>
+	<title>Exported Functions</title>
+	<para>
+	No function exported to be used in configuration script.
+	</para>
+</section>		
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pua.sgml" "Book" "chapter")
+End:
+-->
+
+
