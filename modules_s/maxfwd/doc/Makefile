@@ -6,7 +6,7 @@ DOCUMENTS = maxfwd
 #
 # The root directory containing Makefile.doc
 #
-ROOT_DIR=../..
+ROOT_DIR=../../..
 
 #
 # Validate docbook documents before generating output
