@@ -57,7 +57,11 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 	for (i=0 ; i< size ; i++) {
 
 		item = xmlrpc_array_get_item(env, paramArray, i);
-    	
+    	if ( env->fault_occurred ) {
+       			LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to get array item: %s\n", env->fault_string);
+				goto error;
+		}
+	
 	    switch ( xmlrpc_value_type(item) ) {
 		
 		case (XMLRPC_TYPE_INT):
@@ -70,7 +74,10 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 			}
 
 			intValue = item->_value.i;
-			addf_mi_node_child(&mi_root->node, 0, 0, 0, "%d", intValue);
+			if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%d", intValue) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+				goto error;
+			}
 			break;
 			
 		case (XMLRPC_TYPE_BOOL):
@@ -83,7 +90,11 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 			}
 
 			boolValue = item->_value.b;
-			addf_mi_node_child(&mi_root->node, 0, 0, 0, "%u", boolValue);
+			if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%u", boolValue) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+				goto error;
+
+			}
 			break;
 
 		case (XMLRPC_TYPE_DOUBLE):
@@ -96,7 +107,10 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 			}
 
 			doubleValue = item->_value.d;
-        	addf_mi_node_child(&mi_root->node, 0, 0, 0, "%lf", doubleValue);
+        	if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%lf", doubleValue) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+				goto error;
+			}
         	break;
 
     	case (XMLRPC_TYPE_STRING):
@@ -110,7 +124,10 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 					goto error;
 			}
 
-			add_mi_node_child(&mi_root->node, 0, 0, 0, stringValueW, strlen(stringValueW));
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValueW, strlen(stringValueW)) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+				goto error;
+			}
 		#else
 			xmlrpc_read_string(env, item, &stringValue);
 
@@ -119,7 +136,10 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 					goto error;
 			}
 
-			add_mi_node_child(&mi_root->node, 0, 0, 0, stringValue, strlen(stringValue));
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValue, strlen(stringValue)) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+				goto error;
+			}
     	#endif
 
          	break;
@@ -144,7 +164,10 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 			} else 
 				memcpy(byteStringValue, contents, length);
     		
-			add_mi_node_child(&mi_root->node, 0, 0, 0, byteStringValue, length);
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, byteStringValue, length) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+				goto error;
+			}
          	break;
 
     	case (XMLRPC_TYPE_C_PTR):
@@ -157,7 +180,10 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 			}
 
 			cptrValue = item->_value.c_ptr;
-	  		add_mi_node_child(&mi_root->node, 0, 0, 0, (char*)cptrValue, strlen((char*)cptrValue));
+	  		if ( add_mi_node_child(&mi_root->node, 0, 0, 0, (char*)cptrValue, strlen((char*)cptrValue)) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+				goto error;
+			}
 			break;
 		}
 	}
