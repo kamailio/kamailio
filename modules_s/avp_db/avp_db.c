@@ -60,6 +60,10 @@ static char* name_column      = "name";
 static char* type_column      = "type";
 static char* val_column       = "value";
 static char* flags_column     = "flags";
+static char* scheme_column    = "scheme";
+
+/* default did value */
+static str default_did	= STR_STATIC_INIT("_default");
 
 db_con_t* con = 0;
 db_func_t db;
@@ -95,6 +99,7 @@ static param_export_t params[] = {
     {"type_column",      PARAM_STRING, &type_column     },
     {"value_column",     PARAM_STRING, &val_column      },
     {"flags_column",     PARAM_STRING, &flags_column    },
+    {"scheme_column",    PARAM_STRING, &scheme_column   },
     {0, 0, 0}
 };
 
@@ -138,24 +143,43 @@ static int child_init(int rank)
     return 0;
 }
 
+static void uri_type_to_str(uri_type type, str *s) {
+	static str	s_sip  = STR_STATIC_INIT("sip");
+	static str	s_sips = STR_STATIC_INIT("sips");
+	static str	s_tel  = STR_STATIC_INIT("tel");
+	static str	s_tels = STR_STATIC_INIT("tels");
+	static str	s_null = STR_STATIC_INIT("");
+
+	switch (type) {
+
+	case SIP_URI_T:		*s = s_sip;	break;
+	case SIPS_URI_T:	*s = s_sips;	break;
+	case TEL_URI_T:		*s = s_tel;	break;
+	case TELS_URI_T:	*s = s_tels;	break;
+	default:		*s = s_null;
+	}
+}
 
 static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp)
 {
     int_str name, v;
     str avp_name, avp_val;
     int i, type, n;
-    db_key_t keys[2], cols[4];
+    db_key_t keys[3], cols[4];
     db_res_t* res;
-    db_val_t kv[2], *val;
+    db_val_t kv[3], *val;
     str uri;
     struct sip_uri puri;
 
     keys[0] = username_column;
     keys[1] = did_column;
+    keys[2] = scheme_column;
     kv[0].type = DB_STR;
     kv[0].nul = 0;
     kv[1].type = DB_STR;
     kv[1].nul = 0;
+    kv[2].type = DB_STR;
+    kv[2].nul = 0;
 
     if (get_str_fparam(&uri, msg, (fparam_t*)fp) != 0) {
 	ERR("Unable to get URI\n");
@@ -169,10 +193,19 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
 
     kv[0].val.str_val = puri.user;
 
-    if (dm_get_did(&kv[1].val.str_val, &puri.host) < 0) {
-	DBG("Cannot lookup DID for domain %.*s\n", puri.host.len, ZSW(puri.host.s));
-	kv[1].val.str_val = puri.host;
+    if (puri.host.len) {
+	/* domain name is present */
+	if (dm_get_did(&kv[1].val.str_val, &puri.host) < 0) {
+		DBG("Cannot lookup DID for domain %.*s, using default value\n", puri.host.len, ZSW(puri.host.s));
+		kv[1].val.str_val = default_did;
+	}
+    } else {
+	/* domain name is missing -- can be caused by tel: URI */
+	DBG("There is no domain name, using default value\n");
+	kv[1].val.str_val = default_did;
     }
+
+    uri_type_to_str(puri.type, &(kv[2].val.str_val));
 
     cols[0] = name_column;
     cols[1] = type_column;
@@ -184,7 +217,7 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
 	return -1;
     }
     
-    if (db.query(con, keys, 0, kv, cols, 2, 4, 0, &res) < 0) {
+    if (db.query(con, keys, 0, kv, cols, 3, 4, 0, &res) < 0) {
 	ERR("Error while quering database\n");
 	return -1;
     }
