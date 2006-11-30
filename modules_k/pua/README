@@ -32,6 +32,7 @@ Anca-Maria Vamanu
               1.3.7. update_period (int)
 
         1.4. Exported Functions
+        1.5. Installation
 
    2. Developer's Guide
 
@@ -49,6 +50,7 @@ Anca-Maria Vamanu
    1-5. Set min_expires parameter
    1-6. Set default_expires parameter
    1-7. Set update_period parameter
+   1-8. Create pua database table
    2-1. pua_api structure
      _________________________________________________________
 
@@ -170,6 +172,31 @@ modparam("pua", "update_period", 100)
 1.4. Exported Functions
 
    No function exported to be used in configuration script.
+     _________________________________________________________
+
+1.5. Installation
+
+   The module requires a new table in OpenSER database. Next SQL
+   statement shows the syntax to create it.
+
+   Example 1-8. Create pua database table
+...
+CREATE TABLE pua (
+  id int(10) unsigned NOT NULL auto_increment,
+  pres_uri varchar(128) NOT NULL,
+  pres_id varchar(128) NOT NULL,
+  expires int(11) NOT NULL,
+  flag int(11) NOT NULL,
+  etag varchar(128) NOT NULL,
+  tuple_id varchar(128) NOT NULL,
+  watcher_uri varchar(128) NOT NULL,
+  call_id varchar(128) NOT NULL,
+  to_tag varchar(128) NOT NULL,
+  from_tag` varchar(128) NOT NULL,
+  cseq int(11) NOT NULL,
+  PRIMARY KEY  (`id`)
+)
+...
      _________________________________________________________
 
 Chapter 2. Developer's Guide
