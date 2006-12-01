@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="acc.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="secret">
+	<title><varname>sp1_uri, sp2_uri</varname> (string)</title>
+	<para>
+	    These string parameters define peering servers to be used for requesting
+   peering authorization and routing information. sp1_uri must be configured.
+   sp2_uri is required only if there are two peering servers. Each peering
+   server address takes the form of a standard URL, and consists of up to
+   four components:
+      <itemizedlist>
+		<listitem>
+		    <para>An optional indication of the protocol to be used for communicating
+                      with the peering server. Both HTTP and HTTP secured with SSL/TLS are
+                      supported and are indicated by "http://" and "https://" respectively.
+                      If the protocol is not explicitly indicated, the SER defaults to HTTP
+                      secured with SSL.
+                </para>
+		</listitem>
+		<listitem>
+		    <para> The Internet domain name for the peering server. An IP address may
+                       also be used, provided it is enclosed in square brackets such as
+                       [172.16.1.1]
+                </para>
+		</listitem>
+		<listitem>
+		    <para>An optional TCP port number for communicating with the peering server.
+                      If the port number is omitted, the SER defaults to port 1080 (for
+                      HTTP) or port 1443 (for HTTP secured with SSL).
+                </para>
+		</listitem>
+		<listitem>
+		    <para>The uniform resource identifier for requests to the peering server.
+                      This component is not optional and must be included.
+                </para>
+		</listitem>       
+	    </itemizedlist>
+
+	</para>
+	<example>
+	    <title>Setting the OSP servers</title>
+	    <programlisting>
+            modparam ("osp", "sp1_uri", "http://osptestserver.transnexus.com:1080/osp") 
+            modparam ("osp", "sp2_uri", "https://[1.2.3.4]:1443/osp")
+	    </programlisting>
+	</example>
+
+    </section>
+
+    <section id="device_ip">
+	<title><varname>device_ip</varname> (string)</title>
+	<para>device_ip (string) is a recommended parameter that explicitly defines the
+            IP address of SER in an peering request message (as SourceAlternate
+            type=transport). The IP address must be in brackets as shown in the
+            example below
+	</para>
+	<example>
+	    <title>Setting the device IP address</title>
+	    <programlisting>
+            modparam ("osp", "device_ip", "[1.1.1.1]")
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="token_format">
+	<title><varname>token_format</varname> (string)</title>
+	<para>When SER receives a SIP INVITE with a peering token, the OSP Module will
+            validate the token to determine whether or not the call has been
+            authorized by a peering server. Peering tokens may, or may not, be
+            digitally signed. The token format (integer) parameter defines if SER will
+            validate signed or unsigned tokens or both. The values for token format
+            are defined below. The default value is 2.
+          <itemizedlist>
+		<listitem>
+		    <para>0 - Validate only signed tokens. Calls with valid signed tokens are allowed.
+                </para>
+		</listitem>
+		<listitem>
+		    <para>1 - Validate only unsigned tokens. Calls with valid unsigned tokens are allowed.
+                </para>
+		</listitem>
+		<listitem>
+		    <para>2 - Validate both signed and unsigned tokens are allowed. Calls with valid tokens are allowed.
+                </para>
+		</listitem>
+	    </itemizedlist>
+
+	</para>
+	<example>
+	    <title>Setting the token format</title>
+	    <programlisting>
+            modparam ("osp", "token_format", 2)
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="private_key, local_certificate, ca_certificates">
+	<title><varname>private_key, local_certificate, ca_certificates</varname> (string)</title>
+	<para>These parameters identify files are used for validating peering authorization tokens and 
+            establishing a secure channel between SER and a peering server using SSL. The files are 
+            generated using the 'Enroll' utility from the OSP Toolkit. By default, the proxy will look for
+            pkey.pem, localcert.pem, and cacart_0.pem in the default configuration directory. The default 
+            config directory is set at compile time using CFG_DIR and defaults to /usr/local/etc/ser/. The 
+            files may be copied to the expected file location or the parameters below may be changed.
+	</para>
+	<example>
+	    <title>Set authorization files</title>
+	    <programlisting>
+            If the default CFG_DIR value was used at compile time, the files will be
+            loaded from:
+
+            modparam ("osp", "private_key", "/usr/local/etc/ser/pkey.pem")             
+            modparam ("osp", "local_certificate", "/usr/local/etc/ser/localcert.pem")  
+            modparam ("osp", "ca_certificates", "/usr/local/etc/ser/cacert.pem")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="sp1_weight, sp2_weight">
+	<title><varname>sp1_weight, sp2_weight</varname> (integer)</title>
+	<para>These sp_weight (integer) parameters are used for load balancing peering
+            requests to peering servers. These parameters are most effective when
+            configured as factors of 1000. For example, if sp1_uri should manage twice
+            the traffic load of sp2_uri, then set sp1_weight to 2000 and sp2_weight to
+            1000. Shared load balancing between peering servers is recommended.
+            However, peering servers can be configured as primary and backup by
+            assigning a sp_weight of 0 to the primary server and a non-zero sp_weight
+            to the back-up server. The default values for sp1_weight and sp2_weight
+            are 1000.
+	</para>
+	<example>
+	    <title>Setting the OSP server weights</title>
+	    <programlisting>
+            modparam ("osp", "sp1_weight", 1000)
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="device_port">
+	<title><varname>device_port</varname> (string)</title>
+	<para>The device_port (string) parameter is an optional field which includes the
+            SIP port being used by SER in the peering request (as SourceAlternate
+            type=network) to the peering server. If is not configured, this
+            information is not included in the peering request. This field is useful
+            if multiple SERs are running on the same Linux computer since it enables
+            the peering server to administer different peering policies based on
+            different SIP proxies.
+	</para>
+	<example>
+	    <title>Setting the device port</title>
+	    <programlisting>
+            modparam ("osp", "device_port", "5060")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="enable_crypto_hardware_support">
+	<title><varname>enable_crypto_hardware_support</varname> (integer)</title>
+	<para>The enable_crypto_hardware_support (integer) parameter is used to set the
+           cryptographic hardware acceleration engine in the openssl library. The
+           default value is 0 (no crypto hardware is present). If crypto hardware is
+           used, the value should be set to 1.
+	</para>
+	<example>
+	    <title>Setting the hardware support</title>
+	    <programlisting>
+            modparam ("osp", "enable_crypto_hardware_support", 0)
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="ssl_lifetime">
+	<title><varname>ssl_lifetime</varname> (integer)</title>
+	<para>The ssl_lifetime (integer) parameter defines the lifetime, in seconds, of
+            a single SSL session key. Once this time limit is exceeded, the OSP Module
+            will negotiate a new session key. Communication exchanges in progress will
+            not be interrupted when this time limit expires. This is an optional field
+            with default value is 200 seconds.
+	</para>
+	<example>
+	    <title>Setting the ssl lifetime</title>
+	    <programlisting>
+            modparam ("osp", "ssl_lifetime", 200)
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="persistence">
+	<title><varname>persistence</varname> (integer)</title>
+	<para>The persistence (integer) parameter defines the time, in seconds, that an
+            HTTP connection should be maintained after the completion of a
+            communication exchange. The OSP Module will maintain the connection for
+            this time period in anticipation of future communication exchanges to the
+            same peering server.
+	</para>
+	<example>
+	    <title>Setting the persistence</title>
+	    <programlisting>
+            modparam ("osp", "persistence", 1000)
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="retry_delay">
+	<title><varname>retry_delay</varname> (integer)</title>
+	<para>The retry_delay (integer) parameter defines the time, in seconds, between
+            retrying connection attempts to an OSP peering server. After exhausting
+            all peering servers the OSP Module will delay for this amount of time
+            before resuming connection attempts. This is an optional field with
+            default value is 1 second.
+	</para>
+	<example>
+	    <title>Setting the retry delay</title>
+	    <programlisting>
+            modparam ("osp", "retry_delay", 1)   
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="retry_limit">
+	<title><varname>retry_limit</varname> (integer)</title>
+	<para>The retry_limit (integer) parameter defines the maximum number of retries
+            for connection attempts to an peering server. If no connection is
+            established after this many retry attempts to all peering servers, the OSP
+            Module will cease connection attempts and return appropriate error codes.
+            This number does not count the initial connection attempt, so that a
+            retry_limit of 1 will result in a total of two connection attempts to
+            every peering server. The default value is 2.
+	</para>
+	<example>
+	    <title>Setting the retry limit</title>
+	    <programlisting>
+            modparam ("osp", "retry_limit", 2)
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="timeout">
+	<title><varname>timeout</varname> (integer)</title>
+	<para>The timeout (integer) parameter defines the maximum time in milliseconds,
+            to wait for a response from an peering server. If no response is received
+            within this time, the current connection is aborted and the OSP Module
+            attempts to contact the next peering server. The default value is 10
+            seconds.
+	</para>
+	<example>
+	    <title>Setting the timeout</title>
+	    <programlisting>
+            modparam ("osp", "timeout", 10)
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="max_destinations">
+	<title><varname>max_destinations</varname> (integer)</title>
+	<para>The max_destinations (integer) parameter defines the maximum number of
+            destinations that SER requests the peering server to return in a peering
+            response. The default value is 5.
+	</para>
+	<example>
+	    <title>Setting the number of destination</title>
+	    <programlisting>
+            modparam ("osp", "max_destinations", 5) 
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="validate_call_id">
+	<title><varname>validate_call_id</varname> (integer)</title>
+	<para>The validate_call_id (integer) parameter instructs the OSP module to
+            validate call id in the peering token. If this value is set to 1, the OSP
+            Module validates that the call id in the SIP INVITE message matches the
+            call id in the peering token. If they do not match the INVITE is rejected.
+            If this value is set to 0, the OSP Module will not validate the call id in
+            the peering token. The default value is 1
+	</para>
+	<example>
+	    <title>Instructing the module to validate call id</title>
+	    <programlisting>
+            modparam ("osp", "validate_call_id", 1)            
+	    </programlisting>
+	</example>
+    </section>
+
+    </section>
+ 

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="acc" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Ullrich</firstname>
+		<surname>Abend</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>ullstar@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Di-Shi</firstname>
+		<surname>Sun</surname>
+		<affiliation><orgname>TransNexus, Inc.</orgname></affiliation>
+		<email>support@transnexus.com</email>
+	    </author>
+	</authorgroup>
+
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>OSP Module</title>
+    
+    <section id="overview">
+	<title>Overview</title>
+	<para>
+	    The osp module enables SER to support secure, multi-lateral peering using the OSP standard defined
+          by European Telecommunications Standards Institute (ETSI) (TS 101 321 V4.1.1). Open Settlement 
+          Protocol uses Public Key Infrastructure (PKI) services to enable, secure peering among anonymous 
+          peers. OSP is an ETSI standard and enables VOIP networks to exchange billing, Quality of Service 
+         (QoS), and routing information. 
+	</para>
+	<para>
+	    The SER osp module will enable your SER to:
+	    <itemizedlist>
+		<listitem>
+		    <para>Send a peering authorization request to a peering server</para>
+		</listitem>
+		<listitem>
+		    <para>Validate a digitally signed peering authorization token received in a SIP INVITE message</para>
+		</listitem>
+		<listitem>
+		    <para>Report usage information to a peering server</para>
+		</listitem>
+	    </itemizedlist>
+	    
+	</para>
+      <para>
+	    Dependencies:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			The OSP module depends on the following modules which must be loaded before the OSP module.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			textops -- text based operation
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			OSP Toolkit -- The OSP Toolkit, available from www.sipfoundry.org/OSP, must be built 
+                  before building SER with the OSP Module
+		    </para>
+		</listitem>
+	    </itemizedlist>
+      </para>
+    </section>
+
+    <section id="dependencies">
+	<title>Dependencies</title>
+	<para>
+	    The OSP module depends on the following modules which must be loaded before the OSP module.
+	    <itemizedlist>
+		<listitem>
+		    <formalpara>
+			<title>textops</title>
+			<para>text based operation</para>
+		    </formalpara>
+		</listitem>
+		<listitem>
+		    <formalpara>
+			<title>OSP Toolkit</title>
+			<para>The OSP Toolkit, available from www.sipfoundry.org/OSP, must be built 
+                        before building SER with the OSP Module.
+                  </para>
+		    </formalpara>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    
+</section>
+    

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="acc.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Functions</title>
+    
+
+
+    <section id="checkospheader()">
+	<title><varname>checkospheader()</varname> </title>
+	<para>This function checks for the existence of the OSP-Auth-Token header field.
+	</para>
+	<example>
+	    <title>checkospheader usage</title>
+	    <programlisting>
+            ...                                                                        
+            if (checkospheader()) {                                                    
+              log("OSP header field found.\n");                                        
+            } else {                                                                   
+              log("no OSP header field present\n");                                    
+            };                                                                         
+            ...                                                                        
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="validateospheader()">
+	<title><varname>validateospheader()</varname></title>
+	<para>This function validates an OSP-Token specified in the OSP-Auth-Tokenheader
+            field of the SIP message. If a peering token is present, it will be
+            validated locally. If no OSP header is found or the header token is
+            invalid or expired, -1 is returned; on successful validation 1 is
+            returned.
+	</para>
+	<example>
+	    <title>validateospheader usage</title>
+	    <programlisting>
+           ...                                                                        
+           if (validateospheader()) {                                                 
+              log("valid OSP header found\n");                                         
+           } else {                                                                   
+              log("OSP header not found, invalid or expired\n");                       
+           };                                                                         
+           ...                                                                        
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="requestosprouting()">
+	<title><varname>requestosprouting()</varname></title>
+	<para>This function launches a query to the peering server requesting the IP
+            address of one or more destination peers serving the called party. If
+            destination peers are available, the peering server will return the IP
+            address and a peering authorization token for each destination peer. The
+            OSP-Auth-Token Header field is inserted into the SIP message and the SIP
+            uri is rewritten to the IP address of destination peer provided by the
+            peering server.
+
+            The address of the called party must be a valid E164 number, otherwise
+            this function returns -1. If the transaction was accepted by the peering
+            server, the uri is being rewritten and 1 returned, on errors (peering
+            servers are not available, authentication failed or there is no route to
+            destination or the route is blocked) -1 is returned.
+	</para>
+	<example>
+	    <title>requestosprouting usage</title>
+	    <programlisting>
+            ...                                                                        
+            if (requestosprouting()) {                                                 
+              log("successfully queried OSP server, now relaying call\n");             
+            } else {                                                                   
+              log("Authorization request was rejected from OSP server\n");             
+            };                                                                         
+            ...                                                                        
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="preparefirstosproute()">
+	<title><varname>preparefirstosproute()</varname></title>
+	<para>This function tries to prepare the INVITE to be forwarded or redirected
+            using the first destination in the list returned by the peering server. If
+            the route could not be prepared, the function returns 'FALSE' back to the
+            script, which can then decide how to handle the failure.
+	</para>
+	<example>
+	    <title>preparefirstosproute usage</title>
+	    <programlisting>
+           ...                                                                        
+           if (preparefirstosproute ()) {                                             
+             log("successfully prepared the first route, now relaying call\n");       
+           } else {                                                                   
+             log("could not prepare the route. The first destination was blocked\n"); 
+           };                                                                         
+           ...                                                                        
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="preparenextosproute()">
+	<title><varname>preparenextosproute()</varname></title>
+	<para>Once the call could not be completed through the first destination, this
+            function tries to prepare the INVITE message using the next destination in
+            the list returned by the peering Server. If it succeeds in preparing the
+            route, the message is either redirected or relayed on (using the t_relay
+            call), or else the function returns 'FALSE' back to the script, which can
+            then decide how to handle the failure.
+	</para>
+	<example>
+	    <title>preparenextosproute usage</title>
+	    <programlisting>
+            ...                                                                        
+            if (preparenextosproute ()) {                                              
+              log("successfully prepared the next route, now relaying call\n");        
+            } else {                                                                   
+              log("could not prepare the route. No next destination available\n");     
+            };                                                                         
+            ...                                                                        
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="prepareallosproute()">
+	<title><varname>prepareallosproute()</varname></title>
+	<para>This function tries to prepare all the routes in the list returned by the
+           peering server. The message is then either forked off or redirected to the
+           destination. If unsuccessful in preparing the routes a SIP 500 is sent
+           back and a trace message is logged.
+	</para>
+	<example>
+	    <title>prepareallosproute usage</title>
+	    <programlisting>
+            ...
+            if (prepareallosproute ()) {                                                             
+               log("successfully prepared the routes, now either forking or redirecting the call\n"); 
+            } else {                                                                                 
+               log("could not prepare the route. No destination available\n");                        
+            };                                                                                       
+            ...                                                                                      
+	    </programlisting>
+	</example>
+    </section>
+
+
+    <section id="reportospusage()">
+	<title><varname>reportospusage()</varname></title>
+	<para>This function should be called after receiving a BYE message. If the
+            message contains an OSP cookie, the function will forward originating
+            and/or terminating duration usage information to a peering server. The
+            function returns TRUE if the BYE includes an OSP cookie. The actual usage
+            message will be send on a different thread and will not delay BYE
+            processing. The function should be called before relaying the message.
+	</para>
+	<example>
+	    <title>reportospusage usage</title>
+	    <programlisting>
+           ...                                                                                                  
+           if (reportospusage ()) {                                                                             
+             log("OSP call duration usage will be reported\n");                                                 
+           } else {                                                                                             
+             log("The BYE message does not include OSP information, it was not authorized by an OSP server\n"); 
+           };                                                                                                   
+           ...                                                                                                  
+	    </programlisting>
+	</example>
+    </section>
+
+
+
+    </section>
