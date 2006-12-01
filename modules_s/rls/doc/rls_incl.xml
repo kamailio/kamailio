@@ -8,9 +8,5 @@
 
 &base;
 
-<!-- bibliography needed for standalone compilation -->
-<include xmlns="http://www.w3.org/2001/XInclude" 
-	href="../../../doc/presence/biblio.xml"/>
-
 </section>
 

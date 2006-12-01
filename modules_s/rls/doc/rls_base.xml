@@ -1,0 +1,33 @@
+<para>Resource lists server is a server which allows subscriptions to lists of
+users. Its behaviour is defined in <xref linkend="pres_draft_rls"/> and
+<xref linkend="pres_draft_rls_sip"/>. As described there, it uses XCAP server
+for storing data about lists of users. These data can be manipulated in any way
+by user's client software.
+</para>
+
+<section id="rls.dependencies"><title>Dependencies</title>
+<itemizedlist><title>Modules</title>
+	<listitem><para><application>tm</application></para></listitem>
+	<listitem><para><application>pa</application></para></listitem>
+	<listitem><para><application>dialog</application></para></listitem> 
+	<listitem><para>optionaly database module
+	(<application>mysql</application>, ...)</para></listitem>
+</itemizedlist>
+<itemizedlist><title>Libraries</title>
+		<listitem><para><application>libcds (internal)</application></para></listitem>
+		<listitem><para><application>libxcap (internal)</application> - XCAP queries</para></listitem>
+		<listitem><para><application>libpresence (internal)</application> - used for
+		internal subscriptions ta PA/presence_b2b</para></listitem>
+</itemizedlist>
+</section>
+
+<!-- DB storage -->
+<!--<section><title>Persistence</title>
+<para>TODO: describe tables</para>
+</section>-->
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
+
+
