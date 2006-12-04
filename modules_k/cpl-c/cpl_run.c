@@ -37,6 +37,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../str.h"
+#include "../../ut.h"
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
 #include "../../data_lump_rpl.h"
@@ -61,6 +62,8 @@
 #define UNDEF_CHAR           (0xff)
 
 
+static str cpl_301_reason = str_init("Moved permanently");
+static str cpl_302_reason = str_init("Moved temporarily");
 
 #define check_overflow_by_ptr(_ptr_,_intr_,_error_) \
 	do {\
@@ -525,11 +528,11 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 	unsigned short attr_name;
 	unsigned short status;
 	unsigned short n;
-	char *reason_s;
+	str reason;
 	char *p;
 	int i;
 
-	reason_s = (char*)UNDEF_CHAR;
+	reason.s = (char*)UNDEF_CHAR;
 	status = UNDEF_CHAR;
 
 	/* sanity check */
@@ -546,7 +549,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 				status = n;
 				break;
 			case REASON_ATTR:
-				get_str_attr( p, reason_s, n, intr, script_error,1);
+				get_str_attr( p, reason.s, reason.len, intr, script_error,1);
 				break;
 			default:
 				LOG(L_ERR,"ERROR:cpl_c:run_reject: unknown attribute "
@@ -566,22 +569,27 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 		goto script_error;
 	}
 
-	if (reason_s==(char*)UNDEF_CHAR ) {
+	if (reason.s==(char*)UNDEF_CHAR ) {
 		switch (status) {
 			case 486:
-				reason_s = "Busy Here";
+				reason.s = "Busy Here";
+				reason.len = 9;
 				break;
 			case 404:
-				reason_s = "Not Found";
+				reason.s = "Not Found";
+				reason.len = 9;
 				break;
 			case 603:
-				reason_s = "Decline";
+				reason.s = "Decline";
+				reason.len = 7;
 				break;
 			case 500:
-				reason_s = "Internal Server Error";
+				reason.s = "Internal Server Error";
+				reason.len = 21;
 				break;
 			default:
-				reason_s = "Generic Error";
+				reason.s = "Generic Error";
+				reason.len = 13;
 		}
 	}
 
@@ -605,10 +613,10 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 	/* send the reply */
 	if ( intr->flags&CPL_IS_STATEFUL ) {
 		/* reply statefully */
-		i = cpl_fct.tmb.t_reply(intr->msg, (int)status, reason_s );
+		i = cpl_fct.tmb.t_reply(intr->msg, (int)status, &reason );
 	} else {
 		/* reply statelessly */
-		i = cpl_fct.sl_reply(intr->msg, (char*)(long)status, reason_s );
+		i = cpl_fct.sl_reply(intr->msg, (char*)(long)status, (char*)&reason );
 	}
 
 	if ( i!=1 ) {
@@ -729,15 +737,15 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	if ( intr->flags&CPL_IS_STATEFUL ) {
 		/* reply statefully */
 		if (permanent)
-			i = cpl_fct.tmb.t_reply( intr->msg, (int)301, "Moved permanently");
+			i = cpl_fct.tmb.t_reply( intr->msg, (int)301, &cpl_301_reason);
 		else
-			i = cpl_fct.tmb.t_reply( intr->msg, (int)302, "Moved temporarily");
+			i = cpl_fct.tmb.t_reply( intr->msg, (int)302, &cpl_302_reason);
 	} else {
 		/* reply statelessly */
 		if (permanent)
-			i = cpl_fct.sl_reply( intr->msg, (char*)301, "Moved permanently");
+			i = cpl_fct.sl_reply( intr->msg,(char*)301,(char*)&cpl_301_reason);
 		else
-			i = cpl_fct.sl_reply( intr->msg, (char*)302, "Moved temporarily");
+			i = cpl_fct.sl_reply( intr->msg,(char*)302,(char*)&cpl_302_reason);
 	}
 
 	/* msg which I'm working on can be in private memory or is a clone into

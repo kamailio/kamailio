@@ -101,6 +101,7 @@ int send_reply(struct sip_msg* _m)
 {
 	int code;
 	char* msg = MSG_200; /* makes gcc shut up */
+	str reason;
 
 	code = codes[paerrno];
 	switch(code) {
@@ -117,7 +118,9 @@ int send_reply(struct sip_msg* _m)
 		}
 	}
 
-	if (tmb.t_reply(_m, code, msg) == -1) {
+	reson.s = msg;
+	reason.len = strlen(msg);
+	if (tmb.t_reply(_m, code, &reason) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %d %s\n", code, msg);
 		return -1;
 	} else return 0;	

@@ -96,6 +96,7 @@ struct cpl_enviroment    cpl_env = {
 };
 
 struct cpl_functions  cpl_fct;
+static str cpl_ok_rpl = str_init("OK");
 
 
 MODULE_VERSION
@@ -698,12 +699,12 @@ error0:
 
 struct cpl_error {
 	int   err_code;
-	char *err_msg;
+	str   err_msg;
 };
 
-static struct cpl_error bad_req = {400,"Bad request"};
-static struct cpl_error intern_err = {500,"Internal server error"};
-static struct cpl_error bad_cpl = {400,"Bad CPL script"};
+static struct cpl_error bad_req = {400,str_init("Bad request")};
+static struct cpl_error intern_err = {500,str_init("Internal server error")};
+static struct cpl_error bad_cpl = {400,str_init("Bad CPL script")};
 
 static struct cpl_error *cpl_err = &bad_req;
 
@@ -916,7 +917,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 			goto resume_script;
 
 		/* send a 200 OK reply back */
-		cpl_fct.sl_reply( msg, (char*)200, "OK");
+		cpl_fct.sl_reply( msg, (char*)200, (char*)&cpl_ok_rpl);
 		/* I send the reply and I don't want to return to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -952,7 +953,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		goto resume_script;
 
 	/* send a 200 OK reply back */
-	cpl_fct.sl_reply( msg, (char*)200, "OK");
+	cpl_fct.sl_reply( msg, (char*)200, (char*)&cpl_ok_rpl);
 
 stop_script:
 	return 0;
@@ -960,7 +961,8 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_fct.sl_reply( msg, (char*)(long)cpl_err->err_code, cpl_err->err_msg);
+	cpl_fct.sl_reply( msg,
+		(char*)(long)cpl_err->err_code, (char*)&cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }
