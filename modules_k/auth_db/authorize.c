@@ -49,7 +49,7 @@
 #include "rfc2617.h"
 
 
-#define MESSAGE_500 "Server Internal Error"
+static str auth_500_err = str_init("Server Internal Error");
 
 
 static inline int get_ha1(struct username* _username, str* _domain,
@@ -281,7 +281,7 @@ static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
 	res = get_ha1(&cred->digest.username, &domain, _table, ha1, &result);
 	if (res < 0) {
 		/* Error while accessing the database */
-		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
+		if (sl_reply(_m, (char*)500, (char*)&auth_500_err) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
 		}
 		return 0;

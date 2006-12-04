@@ -30,6 +30,7 @@
 #include "../../dprint.h"
 #include "../../action.h"
 #include "../../config.h"
+#include "../../ut.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../db/db.h"
@@ -39,6 +40,8 @@
 
 #define MAX_USERURI_SIZE	256
 
+static str sd_500_rpl = str_init("Server Internal Error");
+static str sd_400_rpl = str_init("Bad Request");
 
 char useruri_buf[MAX_USERURI_SIZE];
 
@@ -218,13 +221,13 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	return 1;
 
 err_server:
-	if (sl_reply(_msg, (char*)500, "Server Internal Error") == -1)
+	if (sl_reply(_msg, (char*)500, (char*)&sd_500_rpl) == -1)
 	{
 		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
 	}
 	return 0;
 err_badreq:
-	if (sl_reply(_msg, (char*)400, "Bad Request") == -1)
+	if (sl_reply(_msg, (char*)400, (char*)&sd_400_rpl ) == -1)
 	{
 		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
 	}

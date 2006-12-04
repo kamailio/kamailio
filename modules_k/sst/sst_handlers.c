@@ -58,6 +58,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
+#include "../../ut.h"
 
 #include "sst_handlers.h"
 
@@ -149,7 +150,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 		struct sip_msg* msg, void** param);
 static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		struct sip_msg* msg, void** param);
-static int send_response(struct sip_msg *request, int code, char *reason,
+static int send_response(struct sip_msg *request, int code, str *reason,
 		char *header, int header_len);
 static int append_header(struct sip_msg *msg, const char *header);
 static int remove_header(struct sip_msg *msg, const char *header);
@@ -184,6 +185,10 @@ static unsigned int sst_reject = 1;
  * through the SST module.
  */
 static int sst_flag = 0;
+
+
+static str sst_422_rpl = str_init("Session Timer Too Small");
+
 
 /**
  * This is not a public API. This function is called when the module
@@ -680,8 +685,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 				snprintf(minse_hdr, hdr_len+1, "%s%d", "MIN-SE:", sst_min_se);
 				DLOG("Sending 422: %.*s\n",
 						hdr_len, minse_hdr);
-				if (send_response(msg, 422, "Session Timer Too Small",
-								minse_hdr, hdr_len)) {
+				if (send_response(msg, 422, &sst_422_rpl, minse_hdr, hdr_len)){
 					ELOG("Error sending 422 reply.\n");
 				}
 				
@@ -713,7 +717,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
  *
  * @return 0 on success, none-zero on an error.
  */
-static int send_response(struct sip_msg *request, int code, char *reason,
+static int send_response(struct sip_msg *request, int code, str *reason,
 		char *header, int header_len) 
 {
 
@@ -727,7 +731,7 @@ static int send_response(struct sip_msg *request, int code, char *reason,
 			}
 		}
 		/* Now using the sl function, send the reply/response */
-		if (sl_reply(request, (char*)(long)code, reason) < 0) {
+		if (sl_reply(request, (char*)(long)code, (char*)reason) < 0) {
 			ELOG("Unable to sent reply.\n");
 			return -1;
 		}
@@ -943,8 +947,7 @@ static int send_reject(struct sip_msg *msg, unsigned int min_se)
 	if ((minse_hdr = pkg_malloc(hdr_len+1)) != NULL) {
 		memset(minse_hdr, 0, hdr_len+1);
 		snprintf(minse_hdr, hdr_len+1, "%s %d", "MIN-SE:", min_se);
-		if (send_response(msg, 422, "Session Timer Too Small",
-						minse_hdr, hdr_len)) {
+		if (send_response(msg, 422, &sst_422_rpl, minse_hdr, hdr_len)) {
 			ELOG("Error sending 422 reply.\n");
 			return(-1);
 		}

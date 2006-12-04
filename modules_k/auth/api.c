@@ -26,11 +26,16 @@
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h"
 #include "../../sr_module.h"
+#include "../../str.h"
+#include "../../ut.h"
 #include "auth_mod.h"
 #include "nonce.h"
 #include "common.h"
 #include "api.h"
 #include "rpid.h"
+
+static str auth_400_err = str_init(MESSAGE_400);
+static str auth_500_err = str_init(MESSAGE_500);
 
 
 /*
@@ -161,7 +166,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 	if (_realm->len == 0) {
 		if (get_realm(_m, _hftype, &uri) < 0) {
 			LOG(L_ERR, "pre_auth(): Error while extracting realm\n");
-			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
+			if (send_resp(_m, 400, &auth_400_err, 0, 0) == -1) {
 				LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
 			}
 			return ERROR;
@@ -179,7 +184,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 	if (ret < 0) {
 		LOG(L_ERR, "pre_auth(): Error while looking for credentials\n");
 		if (send_resp(_m, (ret == -2) ? 500 : 400, 
-			      (ret == -2) ? MESSAGE_500 : MESSAGE_400, 0, 0) == -1) {
+			      (ret == -2) ? &auth_500_err : &auth_400_err, 0, 0) == -1) {
 			LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
 		}
 		return ERROR;
@@ -194,7 +199,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 	/* Check credentials correctness here */
 	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
 		LOG(L_ERR, "pre_auth(): Credentials received are not filled properly\n");
-		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
+		if (send_resp(_m, 400, &auth_400_err, 0, 0) == -1) {
 			LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
 		}
 		return ERROR;
@@ -238,7 +243,7 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 
 	if (mark_authorized_cred(_m, _h) < 0) {
 		LOG(L_ERR, "post_auth(): Error while marking parsed credentials\n");
-		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
+		if (send_resp(_m, 500, &auth_400_err, 0, 0) == -1) {
 			LOG(L_ERR, "post_auth(): Error while sending 500 reply\n");
 		}
 		res = ERROR;

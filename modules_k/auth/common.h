@@ -41,6 +41,7 @@ int get_realm(struct sip_msg* _m, int _hftype, struct sip_uri* _u);
  * Create a response with given code and reason phrase
  * Optionally add new headers specified in _hdr
  */
-int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr_len);
+int send_resp(struct sip_msg* _m, int _code, str* _reason,
+	char* _hdr, int _hdr_len);
 
 #endif /* COMMON_H */

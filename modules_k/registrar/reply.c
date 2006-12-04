@@ -363,7 +363,7 @@ int send_reply(struct sip_msg* _m)
 {
 	str unsup = str_init(SUPPORTED_PATH_STR);
 	long code;
-	char* msg = MSG_200; /* makes gcc shut up */
+	str msg = str_init(MSG_200); /* makes gcc shut up */
 	char* buf;
 
 	if (contact.data_len > 0) {
@@ -395,11 +395,11 @@ int send_reply(struct sip_msg* _m)
 
 	code = codes[rerrno];
 	switch(code) {
-	case 200: msg = MSG_200; break;
-	case 400: msg = MSG_400; break;
-	case 420: msg = MSG_420; break;
-	case 500: msg = MSG_500; break;
-	case 503: msg = MSG_503; break;
+	case 200: msg.s = MSG_200; msg.len = sizeof(MSG_200)-1; break;
+	case 400: msg.s = MSG_400; msg.len = sizeof(MSG_400)-1;break;
+	case 420: msg.s = MSG_420; msg.len = sizeof(MSG_420)-1;break;
+	case 500: msg.s = MSG_500; msg.len = sizeof(MSG_500)-1;break;
+	case 503: msg.s = MSG_503; msg.len = sizeof(MSG_503)-1;break;
 	}
 	
 	if (code != 200) {
@@ -421,8 +421,9 @@ int send_reply(struct sip_msg* _m)
 		} 
 	}
 	
-	if (sl_reply(_m, (char*)code, msg) == -1) {
-		LOG(L_ERR, "send_reply(): Error while sending %ld %s\n", code, msg);
+	if (sl_reply(_m, (char*)code, (char*)&msg) == -1) {
+		LOG(L_ERR, "send_reply(): Error while sending %ld %.*s\n",
+			code, msg.len,msg.s);
 		return -1;
 	} else return 0;
 }

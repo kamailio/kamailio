@@ -61,6 +61,13 @@
 #include "authorize.h"
 #include "tcp_comm.h"
 
+static str dia_401_err = str_init(MESSAGE_401);
+static str dia_403_err = str_init("Forbidden");
+static str dia_407_err = str_init(MESSAGE_407);
+static str dia_400_err = str_init(MESSAGE_400);
+static str dia_500_err = str_init(MESSAGE_500);
+
+
 
 /* Extract URI depending on the request from To or From header */
 int get_uri(struct sip_msg* m, str** uri)
@@ -240,7 +247,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 		if (get_realm(_m, _hftype, &uri) < 0) 
 		{
 			LOG(L_ERR, M_NAME":pre_auth(): Error while extracting realm\n");
-			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) 
+			if (send_resp(_m, 400, &dia_400_err, 0, 0) == -1) 
 			{
 				LOG(L_ERR, M_NAME":pre_auth(): Error while sending 400 reply\n");
 			}
@@ -255,7 +262,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 	{
 		LOG(L_ERR, M_NAME":pre_auth(): Error while looking for credentials\n");
 		if (send_resp(_m, (ret == -2) ? 500 : 400, 
-			      (ret == -2) ? MESSAGE_500 : MESSAGE_400, 0, 0) == -1) 
+			      (ret == -2) ? &dia_500_err : &dia_400_err, 0, 0) == -1) 
 		{
 			LOG(L_ERR, M_NAME":pre_auth(): Error while sending 400 reply\n");
 		}
@@ -353,7 +360,7 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, hdr_types_t hftype)
 	if( diameter_authorize(cred?h:NULL, &msg->first_line.u.request.method,
 					puri, msg->parsed_uri, msg->id, rb) != 1)
 	{
-		send_resp(msg, 500, "Internal Server Error", NULL, 0);	
+		send_resp(msg, 500, &dia_500_err, NULL, 0);
 		return -1;
 	}
 	
@@ -690,11 +697,11 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 			return 1;
 			
 		case AAA_NOT_AUTHORIZED:
-			send_resp(msg, 403, "Forbidden", NULL, 0);	
+			send_resp(msg, 403, &dia_403_err, NULL, 0);
 			return -1;
 
 		case AAA_SRVERR:
-			send_resp(msg, 500, "Internal Server Error", NULL, 0);	
+			send_resp(msg, 500, &dia_500_err, NULL, 0);
 			return -1;
 				
 		case AAA_CHALENGE:
@@ -707,7 +714,7 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 				memcpy(auth_hf+WWW_AUTH_CHALLENGE_LEN, rb->chall,
 					rb->chall_len);
 		
-				ret = send_resp(msg, 401, MESSAGE_401, auth_hf, auth_hf_len);
+				ret = send_resp(msg, 401, &dia_401_err, auth_hf, auth_hf_len);
 
 			}
 			else	/* Proxy Server */
@@ -718,7 +725,7 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 				memcpy(auth_hf, PROXY_AUTH_CHALLENGE, PROXY_AUTH_CHALLENGE_LEN);
 				memcpy(auth_hf + PROXY_AUTH_CHALLENGE_LEN, rb->chall, 
 						rb->chall_len);
-				ret = send_resp(msg, 407, MESSAGE_407, auth_hf, auth_hf_len);
+				ret = send_resp(msg, 407, &dia_407_err, auth_hf, auth_hf_len);
 			}
 
 			if (auth_hf) pkg_free(auth_hf);
@@ -741,7 +748,7 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
  * Create a response with given code and reason phrase
  * Optionally add new headers specified in _hdr
  */
-int send_resp(struct sip_msg* m, int code, char* reason,
+int send_resp(struct sip_msg* m, int code, str* reason,
 					char* hdr, int hdr_len)
 {
 	/* Add new headers if there are any */
@@ -752,7 +759,7 @@ int send_resp(struct sip_msg* m, int code, char* reason,
 		}
 	}
 
-	return sl_reply(m, (char*)(long)code, reason);
+	return sl_reply(m, (char*)(long)code, (char*)reason);
 }
 
 

@@ -34,6 +34,7 @@
 #include "../../parser/digest/digest_parser.h"
 #include "../../parser/hf.h"
 #include "../../items.h"
+#include "../../str.h"
 #include "defs.h"
 
 int get_uri(struct sip_msg* m, str** uri);
@@ -54,7 +55,7 @@ int diameter_authorize(struct hdr_field* cred, str* p_method,
 
 int srv_response(struct sip_msg* msg, rd_buf_t* rb, int hftype);
 
-int send_resp(struct sip_msg* _m, int _code, char* _reason,
+int send_resp(struct sip_msg* _m, int _code, str* _reason,
 					char* _hdr, int _hdr_len);
 
 #endif /* DIAMETER_AUTHORIZE_H */

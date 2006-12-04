@@ -28,6 +28,7 @@
 
 
 #include <ctype.h>
+#include "../../ut.h"
 #include "../../usr_avp.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/parse_expires.h"
@@ -36,6 +37,10 @@
 #include "subscribe.h"
 #include "utils_func.h"
 #include "notify.h"
+
+
+static str su_200_rpl  = str_init("OK");
+
 
 int process_rr(	struct hdr_field *i_route, str *o_route)
 {
@@ -117,7 +122,7 @@ int send_202ok(struct sip_msg * msg, int lexpire)
 		return -1;
 	}
 
-	if( sl_reply( msg, (char*)202, "OK")== -1)
+	if( sl_reply( msg, (char*)202, (char*)&su_200_rpl)== -1)
 	{
 		LOG(L_ERR,"PRESENCE:append_to_reply: ERORR while sending reply\n");
 		return -1;
@@ -146,7 +151,7 @@ int send_200ok(struct sip_msg * msg, int lexpire)
 		return -1;
 	}
 
-	if( sl_reply( msg, (char*)200, "OK")== -1)
+	if( sl_reply( msg, (char*)200, (char*)&su_200_rpl)== -1)
 	{
 		LOG(L_ERR,"PRESENCE:send_200ok : ERORR while sending reply\n");
 		return -1;

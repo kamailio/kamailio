@@ -33,11 +33,16 @@
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest.h"
 #include "../../items.h"
+#include "../../str.h"
+#include "../../ut.h"
 #include "auth_mod.h"
 #include "common.h"
 #include "challenge.h"
 #include "nonce.h"
 #include "api.h"
+
+static str auth_400_err = str_init(MESSAGE_400);
+static str auth_500_err = str_init(MESSAGE_500);
 
 
 /*
@@ -136,6 +141,7 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
 	hdr_types_t hftype = 0; /* Makes gcc happy */
 	struct sip_uri uri;
 	str realm;
+	str reason;
 
 	switch(_code) {
 	case 401:
@@ -153,7 +159,7 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
 	if (_realm == 0) {
 		if (get_realm(_msg, hftype, &uri) < 0) {
 			LOG(L_ERR, "challenge(): Error while extracting URI\n");
-			if (send_resp(_msg, 400, MESSAGE_400, 0, 0) == -1) {
+			if (send_resp(_msg, 400, &auth_400_err, 0, 0) == -1) {
 				LOG(L_ERR, "challenge(): Error while sending response\n");
 				return -1;
 			}
@@ -165,7 +171,7 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
 	} else {
 		if(xl_printf_s(_msg, _realm, &realm)!=0) {
 			LOG(L_ERR, "ERROR:auth:challenge: xl_printf_s failed\n");
-			if (send_resp(_msg, 500, MESSAGE_500, 0, 0)==-1)
+			if (send_resp(_msg, 500, &auth_500_err, 0, 0)==-1)
 				return -1;
 			else
 				return 0;
@@ -178,8 +184,10 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
 		LOG(L_ERR, "ERROR: challenge: no mem w/cred\n");
 		return -1;
 	}
-	
-	ret = send_resp(_msg, _code, _message, auth_hf, auth_hf_len);
+
+	reason.s = _message;
+	reason.len = strlen(_message);
+	ret = send_resp(_msg, _code, &reason, auth_hf, auth_hf_len);
 	if (auth_hf) pkg_free(auth_hf);
 	if (ret == -1) {
 		LOG(L_ERR, "challenge(): Error while sending response\n");

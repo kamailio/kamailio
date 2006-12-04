@@ -31,6 +31,7 @@
 #include "../../dprint.h"
 #include "../../action.h"
 #include "../../config.h"
+#include "../../ut.h"
 #include "../../parser/parse_uri.h"
 #include "../../db/db.h"
 
@@ -42,6 +43,8 @@
 extern db_func_t adbf;  /* DB functions */
 
 char useruri_buf[MAX_USERURI_SIZE];
+
+static str err_reason = str_init("Server Internal Error");
 
 /**
  * Rewrite Request-URI
@@ -205,7 +208,7 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	return 1;
 
 err_server:
-	if (sl_reply(_msg, (char*)500, "Server Internal Error") == -1)
+	if (sl_reply(_msg, (char*)(long)500, (char*)&err_reason) == -1)
 	{
 		LOG(L_ERR, "alias_db_lookup: Error while sending reply\n");
 	}
