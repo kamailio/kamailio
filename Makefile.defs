@@ -671,8 +671,7 @@ ifeq		($(CC_NAME), gcc)
 					-Wall   
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-mcpu=strongarm1100 -minline-all-stringops \
-							-ftree-vectorize
+					CFLAGS+=-mcpu=strongarm1100 -ftree-vectorize
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
@@ -794,7 +793,7 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-minline-all-stringops
+					CFLAGS+=
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
