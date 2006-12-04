@@ -46,6 +46,7 @@
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_fifo.h"
 #include "ul_unixsock.h"
+#include "ul_mi.h"
 #include "ul_callback.h"
 #include "notify.h"
 #include "usrloc.h"
@@ -72,6 +73,7 @@ static int mod_init(void);                          /* Module initialization fun
 static void destroy(void);                          /* Module destroy function */
 static void timer(unsigned int ticks, void* param); /* Timer handler */
 static int child_init(int rank);                    /* Per-child init function */
+static int mi_child_init();
 
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
@@ -184,13 +186,24 @@ static param_export_t params[] = {
 };
 
 
+static mi_export_t mi_cmds[] = {
+	{ MI_USRLOC_RM,           mi_usrloc_rm_aor,       0,  mi_child_init },
+	{ MI_USRLOC_RM_CONTACT,   mi_usrloc_rm_contact,   0,  mi_child_init },
+	{ MI_USRLOC_DUMP,         mi_usrloc_dump,         0,  0             },
+	{ MI_USRLOC_FLUSH,        mi_usrloc_flush,        0,  mi_child_init },
+	{ MI_USRLOC_ADD,          mi_usrloc_add,          0,  mi_child_init },
+	{ MI_USRLOC_SHOW_CONTACT, mi_usrloc_show_contact, 0,  mi_child_init },
+	{ 0, 0, 0, 0}
+};
+
+
 struct module_exports exports = {
 	"usrloc",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */
 	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	mi_cmds,    /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */
@@ -314,6 +327,28 @@ static int child_init(int _rank)
 			}
 		}
 	}
+
+	return 0;
+}
+
+
+/* */
+static int mi_child_init()
+{
+	static int done = 0;
+
+	if (done)
+		return 0;
+
+	if (db_mode != NO_DB) {
+		ul_dbh = ul_dbf.init(db_url.s);
+		if (!ul_dbh) {
+			LOG(L_ERR, "ERROR:ul:mi_child_init: "
+					"Error while connecting database\n");
+			return -1;
+		}
+	}
+	done = 1;
 
 	return 0;
 }
