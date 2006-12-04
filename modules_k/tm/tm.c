@@ -55,6 +55,7 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../script_cb.h"
+#include "../../mi/mi.h"
 #include "../../fifo_server.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
@@ -72,6 +73,7 @@
 #include "callid.h"
 #include "t_cancel.h"
 #include "t_fifo.h"
+#include "mi.h"
 #include "tm_load.h"
 
 MODULE_VERSION
@@ -227,7 +229,7 @@ static param_export_t params[]={
 };
 
 
-stat_export_t mod_stats[] = {
+static stat_export_t mod_stats[] = {
 	{"received_replies" ,    0,              &tm_rcv_rpls    },
 	{"relayed_replies" ,     0,              &tm_rld_rpls    },
 	{"local_replies" ,       0,              &tm_loc_rpls    },
@@ -249,10 +251,20 @@ stat_export_t mod_stats[] = {
  *   type: can be 0 if you do not want to use it in identifying the PV
  *   xl_param_t: is given as parameter to 'function'
  */
-item_export_t mod_items[] = {
+static item_export_t mod_items[] = {
 	{ "T_branch_idx", it_get_tm_branch_idx, 100, {{0, 0}, 0} },
 	{ 0, 0, 0, {{0, 0}, 0} }
 };
+
+
+static mi_export_t mi_cmds [] = {
+	{MI_TM_UAC,     mi_tm_uac_dlg,   0,  0 },
+	{MI_TM_CANCEL,  mi_tm_cancel,    0,  0 },
+	{MI_TM_HASH,    mi_tm_hash,      0,  0 },
+	{MI_TM_REPLY,   mi_tm_reply,     0,  0 },
+	{0,0,0,0}
+};
+
 
 #ifdef STATIC_TM
 struct module_exports tm_exports = {
@@ -264,7 +276,7 @@ struct module_exports exports= {
 	cmds,      /* exported functions */
 	params,    /* exported variables */
 	mod_stats, /* exported statistics */
-	0,         /* exported MI functions */
+	mi_cmds,   /* exported MI functions */
 	mod_items, /* exported pseudo-variables */
 	mod_init,  /* module initialization function */
 	(response_function) reply_received,
@@ -356,6 +368,7 @@ static int fixup_t_send_reply(void** param, int param_no)
 {
 	unsigned long code;
 	int err;
+	str *s;
 
 	if (param_no==1){
 		code=str2s(*param, strlen(*param), &err);
@@ -364,12 +377,21 @@ static int fixup_t_send_reply(void** param, int param_no)
 			*param=(void*)code;
 			return 0;
 		}else{
-			LOG(L_ERR, "TM module:fixup_t_send_reply: bad  number <%s>\n",
+			LOG(L_ERR, "ERROR:tm:fixup_t_send_reply: bad  number <%s>\n",
 					(char*)(*param));
 			return E_UNSPEC;
 		}
+	} else if (param_no==2) {
+		s = (str*)pkg_malloc(sizeof(str));
+		if (s==0) {
+			LOG(L_ERR, "ERROR:sl:fixup_t_send_reply: no more pkg mem\n");
+			return E_OUT_OF_MEM;
+		}
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
 	}
-	/* second param => no conversion*/
+
 	return 0;
 }
 
@@ -847,7 +869,7 @@ inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 }
 
 
-inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
+inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct cell *t;
 
@@ -869,9 +891,9 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 	switch (route_type) {
 		case FAILURE_ROUTE:
 			DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
-			return t_reply_unsafe(t, msg, (unsigned int)(long) str, str2);
+			return t_reply_unsafe(t, msg, (unsigned int)(long)str1,(str*)str2);
 		case REQUEST_ROUTE:
-			return t_reply( t, msg, (unsigned int)(long) str, str2);
+			return t_reply( t, msg, (unsigned int)(long) str1, (str*)str2);
 		default:
 			LOG(L_CRIT, "BUG:tm:w_t_reply: unsupported route_type (%d)\n",
 				route_type);

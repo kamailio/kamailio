@@ -72,7 +72,7 @@ int register_slcb( sl_cb_t f, void *param )
 
 
 void run_sl_callbacks( struct sip_msg *req, str *buffer, int code,
-									char *reason, union sockaddr_union *to )
+									str *reason, union sockaddr_union *to )
 {
 	static struct sl_cb_param cb_params;
 	struct sl_callback *cbp;

@@ -98,7 +98,7 @@ int sl_shutdown()
 }
 
 
-int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
+int sl_send_reply(struct sip_msg *msg ,int code ,str *text)
 {
 	int_str avp_name,avp_value;
 	struct usr_avp *tavp = 0;
@@ -211,6 +211,7 @@ int sl_reply_error(struct sip_msg *msg )
 {
 	char err_buf[MAX_REASON_LEN];
 	int sip_error;
+	str text;
 	int ret;
 
 	ret = err2reason_phrase( prev_ser_error, &sip_error, 
@@ -219,9 +220,11 @@ int sl_reply_error(struct sip_msg *msg )
 		LOG(L_ERR, "ERROR: sl_reply_error: err2reason failed\n");
 		return -1;
 	}
-	DBG("DEBUG:sl:sl_reply_error: error text is %s\n", err_buf );
+	text.len = ret;
+	text.s = err_buf;
+	DBG("DEBUG:sl:sl_reply_error: error text is %.*s\n",text.len,text.s);
 
-	ret = sl_send_reply( msg, sip_error, err_buf);
+	ret = sl_send_reply( msg, sip_error, &text);
 	if (ret==-1)
 		return -1;
 	if_update_stat( sl_enable_stats, sent_err_rpls , 1);

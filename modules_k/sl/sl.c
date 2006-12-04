@@ -167,6 +167,7 @@ static int fixup_sl_send_reply(void** param, int param_no)
 {
 	unsigned long code;
 	int err;
+	str *s;
 
 	if (param_no==1){
 		code=str2s(*param, strlen(*param), &err);
@@ -175,10 +176,19 @@ static int fixup_sl_send_reply(void** param, int param_no)
 			*param=(void*)code;
 			return 0;
 		}else{
-			LOG(L_ERR, "SL module:fixup_sl_send_reply: bad  number <%s>\n",
+			LOG(L_ERR, "ERROR:sl:fixup_sl_send_reply: bad  number <%s>\n",
 					(char*)(*param));
 			return E_UNSPEC;
 		}
+	} else if (param_no==2) {
+		s = (str*)pkg_malloc(sizeof(str));
+		if (s==0) {
+			LOG(L_ERR, "ERROR:sl:fixup_sl_send_reply: no more pkg mem\n");
+			return E_OUT_OF_MEM;
+		}
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
 	}
 	return 0;
 }
@@ -188,9 +198,9 @@ static int fixup_sl_send_reply(void** param, int param_no)
 
 
 
-static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2)
+static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 {
-	return sl_send_reply( msg, (unsigned int)(unsigned long)str, str2);
+	return sl_send_reply( msg, (unsigned int)(unsigned long)str1, (str*)str2);
 }
 
 

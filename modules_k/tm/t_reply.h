@@ -58,10 +58,9 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack);
 typedef unsigned int branch_bm_t;
 
 /* reply export types */
-typedef int (*treply_f)(struct sip_msg * , unsigned int , char * );
-typedef int (*treply_wb_f)( struct cell* trans,
-	unsigned int code, char * text, char * body, 
-	char * new_header, char * to_tag);
+typedef int (*treply_f)(struct sip_msg * , unsigned int , str * );
+typedef int (*treply_wb_f)( struct cell* trans, unsigned int code, str *text,
+	str *body, str *new_header, str *to_tag);
 
 #define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
 #define UNLOCK_REPLIES(_t) unlock(&(_t)->reply_mutex )
@@ -93,18 +92,18 @@ int t_reply_light( struct cell *trans, char* buf, unsigned int len,
 #endif
 
 int t_reply_with_body( struct cell *trans, unsigned int code, 
-		       char * text, char * body, char * new_header, char * to_tag );
+		       str *text, str *body, str *new_header, str *to_tag );
 
 
 /* send a UAS reply
  * returns 1 if everything was OK or -1 for error
  */
-int t_reply( struct cell *t, struct sip_msg * , unsigned int , char * );
+int t_reply( struct cell *t, struct sip_msg * , unsigned int , str * );
 /* the same as t_reply, except it does not claim
    REPLY_LOCK -- useful to be called within reply
    processing
 */
-int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
+int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , str * );
 
 
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 

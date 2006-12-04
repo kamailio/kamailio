@@ -299,9 +299,8 @@ error:
 
 
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
-			 unsigned int code, char * text, 
-			 char *to_tag, unsigned int to_tag_len, int lock,
-			 struct bookmark *bm	)
+			 unsigned int code, char *to_tag, unsigned int to_tag_len,
+			 int lock, struct bookmark *bm)
 {
 	struct retr_buf *rb;
 	unsigned int buf_len;
@@ -409,7 +408,7 @@ error:
  * returns 1 if everything was OK or -1 for error
  */
 static int _reply( struct cell *trans, struct sip_msg* p_msg, 
-	unsigned int code, char * text, int lock )
+									unsigned int code, str *text, int lock )
 {
 	unsigned int len;
 	char * buf, *dset;
@@ -433,14 +432,14 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 			    || get_to(p_msg)->tag_value.len==0)) {
 		calc_crc_suffix( p_msg, tm_tag_suffix );
 		buf = build_res_buf_from_sip_req(code,text, &tm_tag, p_msg, &len, &bm);
-		return _reply_light( trans, buf, len, code, text,
+		return _reply_light( trans, buf, len, code,
 			tm_tag.s, TOTAG_VALUE_LEN, lock, &bm);
 	} else {
 		buf = build_res_buf_from_sip_req(code,text, 0 /*no to-tag*/,
 			p_msg, &len, &bm);
 
-		return _reply_light(trans,buf,len,code,text,
-			0, 0, /* no to-tag */lock, &bm);
+		return _reply_light(trans,buf,len,code, 0, 0 /* no to-tag */,
+			lock, &bm);
 	}
 }
 
@@ -861,13 +860,13 @@ error:
 
 
 int t_reply( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
-	char * text )
+	str * text )
 {
 	return _reply( t, p_msg, code, text, 1 /* lock replies */ );
 }
 
 int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
-	char * text )
+	str * text )
 {
 	return _reply( t, p_msg, code, text, 0 /* don't lock replies */ );
 }
@@ -955,6 +954,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
 	str cb_s;
+	str text;
 
 	/* keep compiler warnings about use of uninit vars silent */
 	res_len=0;
@@ -1000,18 +1000,21 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			relayed_code = branch==relay
 				? msg_status : t->uac[relay].last_received;
 
+			text.s = error_text(relayed_code);
+			text.len = strlen(text.s); /* FIXME - bogdan*/
+
 			if (relayed_code>=180 && t->uas.request->to 
 					&& (get_to(t->uas.request)->tag_value.s==0 
 					|| get_to(t->uas.request)->tag_value.len==0)) {
 				calc_crc_suffix( t->uas.request, tm_tag_suffix );
 				buf = build_res_buf_from_sip_req(
 						relayed_code,
-						error_text(relayed_code),
+						&text,
 						&tm_tag,
 						t->uas.request, &res_len, &bm );
 			} else {
 				buf = build_res_buf_from_sip_req( relayed_code,
-					error_text(relayed_code), 0/* no to-tag */,
+					&text, 0/* no to-tag */,
 					t->uas.request, &res_len, &bm );
 			}
 
@@ -1098,7 +1101,9 @@ error02:
 		t->uac[branch].reply = NULL;
 	}
 error01:
-	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
+	text.s = "Reply processing error";
+	text.len = sizeof("Reply processing error")-1;
+	t_reply_unsafe( t, t->uas.request, 500, &text );
 	UNLOCK_REPLIES(t);
 	if (is_invite(t)) cancel_uacs( t, *cancel_bitmap );
 	/* a serious error occurred -- attempt to send an error reply;
@@ -1355,27 +1360,22 @@ done:
 
 
 
-int t_reply_with_body( struct cell *trans, unsigned int code, 
-		char * text, char * body, char * new_header, char * to_tag )
+int t_reply_with_body( struct cell *trans, unsigned int code, str *text,
+									str *body, str *new_header, str *to_tag )
 {
 	struct lump_rpl *hdr_lump;
 	struct lump_rpl *body_lump;
-	str  s_to_tag;
 	str  rpl;
 	int  ret;
 	struct bookmark bm;
-
-	s_to_tag.s = to_tag;
-	if(to_tag)
-		s_to_tag.len = strlen(to_tag);
 
 	/* mark the transaction as replied */
 	if (code>=200) set_kr(REQ_RPLD);
 
 	/* add the lumps for new_header and for body (by bogdan) */
-	if (new_header && strlen(new_header)) {
-		hdr_lump = add_lump_rpl( trans->uas.request, new_header,
-					 strlen(new_header), LUMP_RPL_HDR );
+	if (new_header && new_header->len) {
+		hdr_lump = add_lump_rpl( trans->uas.request, new_header->s,
+			new_header->len, LUMP_RPL_HDR );
 		if ( !hdr_lump ) {
 			LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add hdr lump\n");
 			goto error;
@@ -1385,8 +1385,8 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	}
 
 	/* body lump */
-	if(body && strlen(body)) {
-		body_lump = add_lump_rpl( trans->uas.request, body, strlen(body),
+	if(body && body->len) {
+		body_lump = add_lump_rpl( trans->uas.request, body->s, body->len,
 			LUMP_RPL_BODY );
 		if (body_lump==0) {
 			LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add body lump\n");
@@ -1397,7 +1397,7 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	}
 
 	rpl.s = build_res_buf_from_sip_req(
-			code, text, &s_to_tag,
+			code, text, to_tag,
 			trans->uas.request, (unsigned int*)&rpl.len, &bm);
 
 	/* since the msg (trans->uas.request) is a clone into shm memory, to avoid
@@ -1419,8 +1419,8 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	}
 
 	DBG("DEBUG:tm:t_reply_with_body: buffer computed\n");
-	ret=_reply_light( trans, rpl.s, rpl.len, code, text, 
-		s_to_tag.s, s_to_tag.len, 1 /* lock replies */, &bm );
+	ret=_reply_light( trans, rpl.s, rpl.len, code, to_tag->s, to_tag->len,
+			1 /* lock replies */, &bm );
 
 	/* unref since this it's used only internaly */
 	UNREF(trans);
@@ -1547,7 +1547,7 @@ int fifo_t_reply( FILE *stream, char *response_file )
 
 	/* it's refcounted now, t_reply_with body unrefs for me -- I can 
 	 * continue but may not use T anymore  */
-	ret = t_reply_with_body(trans,icode,reason,body,new_headers,to_tag);
+	ret = t_reply_with_body( trans, icode, &sr, &sb, &snh, &sttag);
 
 	if (ret<0) {
 		LOG(L_ERR, "ERROR: fifo_t_reply: reply failed\n");
@@ -1627,10 +1627,7 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 		body_lump = 0;
 	}
 
-	/* We can safely zero-terminate the text here, because it is followed
-	 * by next line in the received message */
-	text->s[text->len] = '\0';
-	rpl.s = build_res_buf_from_sip_req(code, text->s, to_tag, 
+	rpl.s = build_res_buf_from_sip_req(code, text, to_tag, 
 		trans->uas.request, (unsigned int*)&rpl.len, &bm);
 
 	/* since the msg (trans->uas.request) is a clone into shm memory, to avoid
@@ -1650,8 +1647,8 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 		goto sr_error;
 	}
 
-	ret = _reply_light(trans, rpl.s, rpl.len, code, text->s,  
-		to_tag->s, to_tag->len, 1 /* lock replies */, &bm);
+	ret = _reply_light(trans, rpl.s, rpl.len, code, to_tag->s, to_tag->len,
+			1 /* lock replies */, &bm);
 
 	/* unref since this it's used only internaly */
 	UNREF(trans);

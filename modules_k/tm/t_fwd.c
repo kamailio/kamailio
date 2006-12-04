@@ -444,6 +444,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	int i;
 	int lowest_error;
 	str backup_uri;
+	str reason;
 	int rurib_flags;
 	int ret;
 
@@ -522,20 +523,26 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	*/
 	if (lowest_error<0) {
 		LOG(L_ERR, "ERROR: cancel error\n");
-		t_reply( t_cancel, cancel_msg, 500, "cancel error");
+		reason.s = "cancel error";
+		reason.len = 12;
+		t_reply( t_cancel, cancel_msg, 500, &reason);
 	/* if there are pending branches, let upstream know we
 	   are working on it
 	*/
 	} else if (cancel_bm) {
 		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
 		t_cancel->flags |= T_HOPBYHOP_CANCEL_FLAG;
-		t_reply( t_cancel, cancel_msg, 200, CANCELING );
+		reason.s = CANCELING;
+		reason.len = sizeof(CANCELING)-1;
+		t_reply( t_cancel, cancel_msg, 200, &reason );
 	/* if the transaction exists, but there is no more pending
 	   branch, tell upstream we're done
 	*/
 	} else {
 		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
-		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
+		reason.s = CANCEL_DONE;
+		reason.len = sizeof(CANCEL_DONE)-1;
+		t_reply( t_cancel, cancel_msg, 200, &reason );
 	}
 
 #ifdef LOCAL_487

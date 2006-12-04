@@ -36,7 +36,7 @@
 struct sl_cb_param {
 	str  *buffer;
 	int  code;
-	char *reason;
+	str  *reason;
 	union sockaddr_union *dst;
 	void *param;
 };
@@ -65,7 +65,7 @@ int register_slcb(sl_cb_t f, void *param );
 
 /* run SL transaction callbacks */
 void run_sl_callbacks( struct sip_msg *req, str *buffer, int code,
-		char *reason, union sockaddr_union *to);
+		str *reason, union sockaddr_union *to);
 
 
 #endif

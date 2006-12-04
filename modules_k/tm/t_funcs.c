@@ -164,6 +164,7 @@ static int kill_transaction( struct cell *trans )
 	int sip_err;
 	int reply_ret;
 	int ret;
+	str reason;
 
 	/*  we reply statefully and enter WAIT state since error might
 		have occurred in middle of forking and we do not
@@ -173,8 +174,9 @@ static int kill_transaction( struct cell *trans )
 	ret=err2reason_phrase( ser_error, &sip_err,
 		err_buffer, sizeof(err_buffer), "TM" );
 	if (ret>0) {
-		reply_ret=t_reply( trans, trans->uas.request, 
-			sip_err, err_buffer);
+		reason.s = err_buffer;
+		reason.len = ret;
+		reply_ret=t_reply( trans, trans->uas.request, sip_err, &reason);
 		/* t_release_transaction( T ); */
 		return reply_ret;
 	} else {
@@ -193,6 +195,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 	int reply_ret;
 	/* struct hdr_field *hdr; */
 	struct cell *t;
+	str reason;
 
 	ret=0;
 
@@ -246,9 +249,9 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 	if (p_msg->REQ_METHOD==METHOD_INVITE )
 	{
 		DBG("DEBUG:tm:t_relay: new INVITE\n");
-		if (!t_reply( t, p_msg , 100 ,
-			"trying -- your call is important to us"))
-				DBG("SER: ERROR: t_reply (100)\n");
+		reason.s = "Giving a try";
+		reason.len = 12;
+		t_reply( t, p_msg , 100 , &reason);
 	}
 
 	/* now go ahead and forward ... */
