@@ -118,7 +118,7 @@ int send_reply(struct sip_msg* _m)
 		}
 	}
 
-	reson.s = msg;
+	reason.s = msg;
 	reason.len = strlen(msg);
 	if (tmb.t_reply(_m, code, &reason) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %d %s\n", code, msg);
