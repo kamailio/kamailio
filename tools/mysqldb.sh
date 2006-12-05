@@ -286,7 +286,7 @@ INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'sip_trace', '1');
-INSERT INTO version VALUES ( 'address', '2');
+INSERT INTO version VALUES ( 'address', '3');
 INSERT INTO version VALUES ( 'domainpolicy', '2');
 
 
@@ -588,6 +588,7 @@ CREATE TABLE address (
   id bigint(20) NOT NULL auto_increment,
   grp smallint(5) unsigned NOT NULL default '0',
   ip_addr varchar(15) NOT NULL,
+  mask tinyint NOT NULL default 32,
   port smallint(5) unsigned NOT NULL default '0',
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
