@@ -193,6 +193,7 @@ static int mod_init(void)
 
 	register_timer(db_update, 0, update_period);
 
+
 	if(pua_db)
 		pua_dbf.close(pua_db);
 	pua_db = NULL;
@@ -266,6 +267,12 @@ int db_restore(htable_t* H)
 	result_cols[8] ="to_tag";
 	result_cols[9] ="from_tag";
 	result_cols[10]="cseq";
+
+	if(!pua_db)
+	{
+		LOG(L_ERR,"PUA: db_restore: ERROR null database connection\n");
+		return -1;
+	}
 
 	if(pua_dbf.use_table(pua_db, db_table)< 0)
 	{
@@ -456,7 +463,7 @@ void hashT_clean(unsigned int ticks,void *param)
 void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
-	db_key_t q_cols[12];
+	db_key_t q_cols[13];
 	db_res_t *res= NULL;
 	db_key_t db_cols[3];
 	db_val_t q_vals[13], db_vals[3];
@@ -465,8 +472,6 @@ void db_update(unsigned int ticks,void *param)
 	int n_update_cols= 0;
 	int i;
 	
-	DBG("PUA:db_update ...\n");
-
 	/* cols and values used for insert */
 	q_cols[0] ="pres_uri";
 	q_vals[0].type = DB_STR;
@@ -520,6 +525,14 @@ void db_update(unsigned int ticks,void *param)
 	db_cols[1]= "cseq";
 	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
+
+	DBG("PUA:db_update ...\n");
+	
+	if(pua_db== NULL)
+	{
+		LOG(L_ERR,"PUA: db_update: ERROR null database connection\n");
+		return;
+	}
 
 	if(pua_dbf.use_table(pua_db, db_table)< 0)
 	{
