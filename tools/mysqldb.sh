@@ -234,6 +234,24 @@ credentials()
 	fi
 }
 
+db_charset_test()
+{
+	CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | awk '{print $2}' | sed -e 1d`
+	ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | awk '{print $1}' | sed -e 1d | grep -ivE utf8\|ucs2`
+	while [ `echo "$ALLCHARSETS" | grep -icw $CURRCHARSET`  = "0" ]
+	do
+		echo "Your current default mysql characters set cannot be used to create DB. Please choice another one from the following list:"
+		echo "$ALLCHARSETS"
+		echo -n "Enter character set name: "
+		read CURRCHARSET
+		if [ `echo $CURRCHARSET | grep -cE "\w+"` = "0" ]; then
+			echo "can't continue: user break"
+			exit 1
+		fi
+	done
+	export CHARSET=$CURRCHARSET
+}
+
 
 openser_create () # pars: <database name>
 {
@@ -242,10 +260,12 @@ if [ $# -ne 1 ] ; then
 	exit 1
 fi
 
+db_charset_test
+
 echo "creating database $1 ..."
 
 sql_query <<EOF
-create database $1;
+create database $1 character set $CHARSET;
 use $1;
 
 # Users: ser is the regular user, serro only for reading
