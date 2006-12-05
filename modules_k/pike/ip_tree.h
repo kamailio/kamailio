@@ -81,13 +81,12 @@ struct ip_tree
 		(unsigned long)(&((struct ip_node*)0)->timer_ll)))
 
 
-int   init_ip_tree(int);
-void  destroy_ip_tree();
+int    init_ip_tree(int);
+void   destroy_ip_tree();
 struct ip_node* mark_node( unsigned char *ip, int ip_len,
-		struct ip_node **father, unsigned char *flag);
-void  remove_node(struct ip_node *node);
-
-void print_tree( FILE *f);
+			struct ip_node **father, unsigned char *flag);
+void   remove_node(struct ip_node *node);
+int    is_red_leaf(struct ip_node *node);
 
 void lock_tree_branch(unsigned char b);
 void unlock_tree_branch(unsigned char b);

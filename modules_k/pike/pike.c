@@ -43,11 +43,10 @@
 #include "../../mem/shm_mem.h"
 #include "../../timer.h"
 #include "../../locking.h"
-#include "../../fifo_server.h"
 #include "ip_tree.h"
 #include "timer.h"
+#include "pike_mi.h"
 #include "pike_funcs.h"
-#include "pike_fifo.h"
 
 MODULE_VERSION
 
@@ -81,13 +80,19 @@ static param_export_t params[]={
 };
 
 
+static mi_export_t mi_cmds [] = {
+	{MI_PIKE_LIST,   mi_pike_list,   0,  0 },
+	{0,0,0,0}
+};
+
+
 struct module_exports exports= {
 	"pike",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,           /* exported statistics */
-	0,           /* exported MI functions */
+	mi_cmds,     /* exported MI functions */
 	0,           /* exported pseudo-variables */
 	pike_init,   /* module initialization function */
 	(response_function) 0,
@@ -132,22 +137,7 @@ static int pike_init(void)
 	register_timer( clean_routine , 0, 1 );
 	register_timer( swap_routine , 0, time_unit );
 
-	/* register fifo commands */
-	if (register_fifo_cmd( fifo_print_ip_tree, PIKE_PRINT_IP_TREE, 0)!=1) {
-		LOG(L_ERR,"ERROR:pike_init: cannot register fifo cmd %s\n",
-			PIKE_PRINT_IP_TREE);
-		goto error4;
-	}
-	/* register fifo commands */
-	if (register_fifo_cmd( fifo_print_timer_list, PIKE_PRINT_TIMER, 0)!=1) {
-		LOG(L_ERR,"ERROR:pike_init: cannot register fifo cmd %s\n",
-			PIKE_PRINT_IP_TREE);
-		goto error4;
-	}
-
 	return 0;
-error4:
-	shm_free( timer );
 error3:
 	destroy_ip_tree();
 error2:

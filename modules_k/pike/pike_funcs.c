@@ -52,18 +52,6 @@ extern int               timeout;
 
 
 
-void print_timer_list(struct list_link *head)
-{
-	struct list_link *ll;
-
-	DBG("DEBUG:pike:print_timer_list --->\n");
-	for ( ll=head->next ; ll!=head; ll=ll->next) {
-		DBG("\t %p [byte=%x](expires=%d)\n",
-			ll, ll2ipnode(ll)->byte, ll2ipnode(ll)->expires);
-	}
-}
-
-
 int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 {
 	struct ip_node *node;

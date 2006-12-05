@@ -137,8 +137,6 @@ int init_ip_tree(int maximum_hits)
 	for(i=0;i<MAX_IP_BRANCHES;i++) {
 		root->entries[i].node = 0;
 		root->entries[i].lock_idx = i % size;
-		/*DBG("DEBUG:pike:pike_ip_tree: branch %d takes lock index %d\n",
-			i, root->entries[i].lock_idx);*/
 	}
 
 	root->max_hits = maximum_hits;
@@ -333,6 +331,11 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 }
 
 
+int is_red_leaf(struct ip_node *node)
+{
+	return is_hot_leaf( node );
+}
+
 
 /* remove and destroy a IP node along with its subtree */
 void remove_node(struct ip_node *node)
@@ -357,51 +360,5 @@ void remove_node(struct ip_node *node)
 	/* destroy the node */
 	node->next = node->prev = 0;
 	destroy_ip_node(node);
-}
-
-
-
-void print_node(struct ip_node *node,int sp, FILE *f)
-{
-	struct ip_node *foo;
-
-	/* print current node */
-	if (!f) {
-		DBG("[l%d] node %p; brh=%d byte=%d flags=%d, hits={%d,%d} , "
-			"leaf_hits={%d,%d]\n",
-			sp, node, node->branch, node->byte, node->flags,
-			node->hits[PREV_POS],node->hits[CURR_POS],
-			node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS]);
-	} else {
-		fprintf(f,"[l%d] node %p; brh=%d byte=%d flags=%d, hits={%d,%d} , "
-			"leaf_hits={%d,%d]\n",
-			sp, node, node->branch, node->byte, node->flags,
-			node->hits[PREV_POS],node->hits[CURR_POS],
-			node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS]);
-	}
-
-	/* print all the kids */
-	foo = node->kids;
-	while(foo){
-		print_node(foo,sp+1,f);
-		foo = foo->next;
-	}
-}
-
-
-
-void print_tree(  FILE *f )
-{
-	int i;
-
-	DBG("DEBUG:pike:print_tree: printing IP tree\n");
-	for(i=0;i<MAX_IP_BRANCHES;i++) {
-		if (prv_get_tree_branch(i)==0)
-			continue;
-		prv_lock_tree_branch(i);
-		if (prv_get_tree_branch(i))
-			print_node( prv_get_tree_branch(i), 0, f);
-		prv_unlock_tree_branch(i);
-	}
 }
 
