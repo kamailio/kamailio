@@ -90,6 +90,8 @@ Chapter 1. User's Guide
 
    The following modules must be loaded before this module:
 
+     * any DB module- a DB module for interfacing the DB
+       operations (modules like mysql, postgres, dbtext, etc) 
      * TM (Transaction) module- used for proxying/forking
        requests 
      * SL (StateLess) module - used for sending stateless reply

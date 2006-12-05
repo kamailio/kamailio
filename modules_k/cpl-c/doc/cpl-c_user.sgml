@@ -28,6 +28,13 @@
 			<itemizedlist>
 			<listitem>
 			<para>
+				<emphasis>any DB module- a DB module for interfacing the DB 
+				operations (modules like mysql, postgres, dbtext, etc)
+				</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
 				<emphasis>TM (Transaction) module- used for proxying/forking 
 				requests
 				</emphasis>
