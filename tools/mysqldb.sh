@@ -640,6 +640,7 @@ if [ -z "$NO_USER_INIT" ] ; then
 	if [ -z "$SIP_DOMAIN" ] ; then
 		prompt_realm
 	fi
+	credentials
 	INITIAL_INSERT="
 		INSERT INTO subscriber
 			($USERCOL, password, first_name, last_name, phone,
