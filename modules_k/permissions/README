@@ -43,14 +43,15 @@ Juha Heinanen
               1.3.7. address_table (string)
               1.3.8. grp_col (string)
               1.3.9. ip_addr_col (string)
-              1.3.10. port_col (string)
-              1.3.11. db_mode (integer)
-              1.3.12. trusted_table (string)
-              1.3.13. source_col (string)
-              1.3.14. proto_col (string)
-              1.3.15. from_col (string)
-              1.3.16. tag_col (string)
-              1.3.17. peer_tag_avp (string)
+              1.3.10. mask_col (string)
+              1.3.11. port_col (string)
+              1.3.12. db_mode (integer)
+              1.3.13. trusted_table (string)
+              1.3.14. source_col (string)
+              1.3.15. proto_col (string)
+              1.3.16. from_col (string)
+              1.3.17. tag_col (string)
+              1.3.18. peer_tag_avp (string)
 
         1.4. Exported Functions
 
@@ -69,8 +70,9 @@ Juha Heinanen
 
               1.5.1. address_reload
               1.5.2. address_dump
-              1.5.3. trusted_reload
-              1.5.4. trusted_dump
+              1.5.3. subnet_dump
+              1.5.4. trusted_reload
+              1.5.5. trusted_dump
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -85,24 +87,25 @@ Juha Heinanen
    1-7. Set address_table parameter
    1-8. Set grp_col parameter
    1-9. Set ip_addr_col parameter
-   1-10. Set port_col parameter
-   1-11. Set db_mode parameter
-   1-12. Set trusted_table parameter
-   1-13. Set source_col parameter
-   1-14. Set proto_col parameter
-   1-15. Set from_col parameter
-   1-16. Set tag_col parameter
-   1-17. Set peer_tag_avp parameter
-   1-18. allow_routing usage
-   1-19. allow_routing(basename) usage
-   1-20. allow_routing(allow_file, deny_file) usage
-   1-21. allow_register(basename) usage
-   1-22. allow_register(allow_file, deny_file) usage
-   1-23. allow_uri(basename, pseudo-variable) usage
-   1-24. set_address_group(group_id) usage
-   1-25. allow_address(ip_addr_pv, port_pv) usage
-   1-26. allow_source_address(group_id) usage
-   1-27. allow_trusted() usage
+   1-10. Set mask_col parameter
+   1-11. Set port_col parameter
+   1-12. Set db_mode parameter
+   1-13. Set trusted_table parameter
+   1-14. Set source_col parameter
+   1-15. Set proto_col parameter
+   1-16. Set from_col parameter
+   1-17. Set tag_col parameter
+   1-18. Set peer_tag_avp parameter
+   1-19. allow_routing usage
+   1-20. allow_routing(basename) usage
+   1-21. allow_routing(allow_file, deny_file) usage
+   1-22. allow_register(basename) usage
+   1-23. allow_register(allow_file, deny_file) usage
+   1-24. allow_uri(basename, pseudo-variable) usage
+   1-25. set_address_group(group_id) usage
+   1-26. allow_address(ip_addr_pv, port_pv) usage
+   1-27. allow_source_address(group_id) usage
+   1-28. allow_trusted() usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -207,11 +210,11 @@ Chapter 1. User's Guide
 1.1.4. Address Permissions
 
    The module can be used to determine if an address (IP address
-   and port) matches any of addresses stored in cached database
-   table. Port 0 in cached database table matches any port. IP
-   address and port to be matched can be either taken from the
-   request (allow_source_address) or given as pseudo value
-   arguments (allow_address).
+   and port) matches any of the IP subnets stored in cached
+   openser database table. Port 0 in cached database table
+   matches any port. IP address and port to be matched can be
+   either taken from the request (allow_source_address) or given
+   as pseudo value arguments (allow_address).
 
    Addresses stored in cached database table can be grouped
    together into one or more groups specified by a group
@@ -366,8 +369,8 @@ modparam("permissions", "db_url", "mysql://openser:pass@db_host/openser
 
 1.3.7. address_table (string)
 
-   Name of database table containing address information used by
-   allow_address and allow_source_address functions.
+   Name of database table containing IP subnet information used
+   by allow_address and allow_source_address functions.
 
    Default value is "address". 
 
@@ -403,59 +406,72 @@ modparam("permissions", "ip_addr_col", "ip_address")
 ...
      _________________________________________________________
 
-1.3.10. port_col (string)
+1.3.10. mask_col (string)
+
+   Name of address table column containing network mask of the
+   address. Possible values are 0-32.
+
+   Default value is "mask". 
+
+   Example 1-10. Set mask_col parameter
+...
+modparam("permissions", "mask_col", "subnet_length")
+...
+     _________________________________________________________
+
+1.3.11. port_col (string)
 
    Name of address table column containing port part of the
    address.
 
    Default value is "port". 
 
-   Example 1-10. Set port_col parameter
+   Example 1-11. Set port_col parameter
 ...
 modparam("permissions", "port_col", "prt")
 ...
      _________________________________________________________
 
-1.3.11. db_mode (integer)
+1.3.12. db_mode (integer)
 
    Database mode. 0 means non-caching, 1 means caching. Valid
    only for allow_trusted function.
 
    Default value is 0 (non-caching). 
 
-   Example 1-11. Set db_mode parameter
+   Example 1-12. Set db_mode parameter
 ...
 modparam("permissions", "db_mode", 1)
 ...
      _________________________________________________________
 
-1.3.12. trusted_table (string)
+1.3.13. trusted_table (string)
 
    Name of database table containing matching rules used by
    allow_register function.
 
    Default value is "trusted". 
 
-   Example 1-12. Set trusted_table parameter
+   Example 1-13. Set trusted_table parameter
 ...
 modparam("permissions", "trusted_table", "pbx")
 ...
      _________________________________________________________
 
-1.3.13. source_col (string)
+1.3.14. source_col (string)
 
    Name of trusted table column containing source IP address that
    is matched against source IP address of received request.
 
    Default value is "src_ip". 
 
-   Example 1-13. Set source_col parameter
+   Example 1-14. Set source_col parameter
 ...
 modparam("permissions", "source_col", "source_ip_address")
 ...
      _________________________________________________________
 
-1.3.14. proto_col (string)
+1.3.15. proto_col (string)
 
    Name of trusted table column containing transport protocol
    that is matched against transport protocol of received
@@ -465,26 +481,26 @@ modparam("permissions", "source_col", "source_ip_address")
 
    Default value is "proto". 
 
-   Example 1-14. Set proto_col parameter
+   Example 1-15. Set proto_col parameter
 ...
 modparam("permissions", "proto_col", "transport")
 ...
      _________________________________________________________
 
-1.3.15. from_col (string)
+1.3.16. from_col (string)
 
    Name of trusted table column containing regular expression
    that is matched against From URI.
 
    Default value is "from_pattern". 
 
-   Example 1-15. Set from_col parameter
+   Example 1-16. Set from_col parameter
 ...
 modparam("permissions", "from_col", "regexp")
 ...
      _________________________________________________________
 
-1.3.16. tag_col (string)
+1.3.17. tag_col (string)
 
    Name of trusted table column containing a string that is added
    as value to peer_tag AVP if peer_tag AVP has been defined and
@@ -492,13 +508,13 @@ modparam("permissions", "from_col", "regexp")
 
    Default value is "tag". 
 
-   Example 1-16. Set tag_col parameter
+   Example 1-17. Set tag_col parameter
 ...
 modparam("permissions", "tag_col", "peer_tag")
 ...
      _________________________________________________________
 
-1.3.17. peer_tag_avp (string)
+1.3.18. peer_tag_avp (string)
 
    AVP spec of peer tag AVP. If defined, the AVP will be set as
    side effect of allow_trusted() call to not NULL tag column
@@ -506,7 +522,7 @@ modparam("permissions", "tag_col", "peer_tag")
 
    Default value is "undefined". 
 
-   Example 1-17. Set peer_tag_avp parameter
+   Example 1-18. Set peer_tag_avp parameter
 ...
 modparam("permissions", "peer_tag_avp", "i:707")
 ...
@@ -523,7 +539,7 @@ modparam("permissions", "peer_tag_avp", "i:707")
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-18. allow_routing usage
+   Example 1-19. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
@@ -548,7 +564,7 @@ if (allow_routing()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-19. allow_routing(basename) usage
+   Example 1-20. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
@@ -575,7 +591,7 @@ if (allow_routing("basename")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-20. allow_routing(allow_file, deny_file) usage
+   Example 1-21. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
@@ -600,7 +616,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-21. allow_register(basename) usage
+   Example 1-22. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -632,7 +648,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-22. allow_register(allow_file, deny_file) usage
+   Example 1-23. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -663,7 +679,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-23. allow_uri(basename, pseudo-variable) usage
+   Example 1-24. allow_uri(basename, pseudo-variable) usage
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
         t_relay();
@@ -682,7 +698,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-24. set_address_group(group_id) usage
+   Example 1-25. set_address_group(group_id) usage
 ...
 
 // Set address group identifier to 1.
@@ -694,12 +710,13 @@ set_address_group("1");
 
    Returns true if IP address and port given as values of pseudo
    variable arguments and belonging to an earlier assigned
-   address group is found in cached address table. Cached address
-   table entry containing port value 0 matches any port.
+   address group matches an IP subnet found in cached address
+   table. Cached address table entry containing port value 0
+   matches any port.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-25. allow_address(ip_addr_pv, port_pv) usage
+   Example 1-26. allow_address(ip_addr_pv, port_pv) usage
 ...
 
 // Check source address/port of request
@@ -720,7 +737,7 @@ if (!allow_address("$avp(i:704)", "$avp(i:705)") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-26. allow_source_address(group_id) usage
+   Example 1-27. allow_source_address(group_id) usage
 ...
 
 // Check source address/port of request
@@ -741,7 +758,7 @@ if (!allow_source_address("0")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-27. allow_trusted() usage
+   Example 1-28. allow_trusted() usage
 ...
 if (allow_trusted()) {
         t_relay();
@@ -754,22 +771,31 @@ if (allow_trusted()) {
 1.5.1. address_reload
 
    Causes permissions module to re-read the contents of address
-   table into cache memory.
+   database table into cache memory. In cache memory the entries
+   are for performance reasons stored in two different tables:
+   address table and subnet table depending on the value of the
+   mask field (32 or smaller).
      _________________________________________________________
 
 1.5.2. address_dump
 
-   Causes permissions module to dump contents of address table
-   from cache memory.
+   Causes permissions module to dump contents of cache memory
+   address table.
      _________________________________________________________
 
-1.5.3. trusted_reload
+1.5.3. subnet_dump
+
+   Causes permissions module to dump contents of cache memory
+   subnet table.
+     _________________________________________________________
+
+1.5.4. trusted_reload
 
    Causes permissions module to re-read the contents of trusted
    table into cache memory.
      _________________________________________________________
 
-1.5.4. trusted_dump
+1.5.5. trusted_dump
 
    Causes permissions module to dump contents of trusted table
    from cache memory.

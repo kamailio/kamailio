@@ -30,6 +30,10 @@
 extern struct addr_list ***addr_hash_table; 
 
 
+/* Pointer to current subnet table */
+extern struct subnet **subnet_table; 
+
+
 /*
  * Initialize data structures
  */

@@ -97,3 +97,23 @@ struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
 
     return rpl_tree;
 }
+
+
+/*
+ * MI function to print subnets from current subnet table
+ */
+struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
+{
+    struct mi_root* rpl_tree;
+    
+    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    if (rpl_tree==NULL) return 0;
+    
+    if(subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
+	LOG(L_ERR,"permissions:mi_subnet_dump: Error while adding node\n");
+	free_mi_tree(rpl_tree);
+	return 0;
+    }
+
+    return rpl_tree;
+}

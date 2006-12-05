@@ -58,6 +58,7 @@ extern char* tag_col;       /* Name of tag column */
 extern char* address_table; /* Name of address table */
 extern char* grp_col;       /* Name of address group column */
 char* ip_addr_col;          /* Name of ip address column */
+char* mask_col;             /* Name of mask column */
 char* port_col;             /* Name of port column */
 
 

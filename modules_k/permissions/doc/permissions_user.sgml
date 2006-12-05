@@ -166,11 +166,12 @@
 		<title>Address Permissions</title>
 		<para>
 		The module can be used to determine if an address (IP
-		address and port) matches any of addresses stored in
-		cached database table.  Port 0 in cached database table
-		matches any port.  IP address and port to be matched can
-		be either taken from the request (allow_source_address)
-		or given as pseudo value arguments (allow_address).
+		address and port) matches any of the IP subnets
+		stored in cached openser database table.
+		Port 0 in cached database table matches any port.  IP
+		address and port to be matched can be either taken from
+		the request (allow_source_address) or given as pseudo
+		value arguments (allow_address).
 		</para>
 		<para>
 		Addresses stored in cached database table can be grouped
@@ -407,7 +408,7 @@ modparam("permissions", "db_url", "mysql://openser:pass@db_host/openser")
 	<section>
 		<title><varname>address_table</varname> (string)</title>
 		<para>
-		Name of database table containing address information used by
+		Name of database table containing IP subnet information used by
 		<function moreinfo="none">allow_address</function> and
                 <function moreinfo="none">allow_source_address</function>
                 functions.
@@ -462,6 +463,26 @@ modparam("permissions", "grp_col", "group_id")
 		<programlisting format="linespecific">
 ...
 modparam("permissions", "ip_addr_col", "ip_address")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>mask_col</varname> (string)</title>
+		<para>
+		Name of address table column containing network mask of
+		the address.  Possible values are 0-32.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>mask</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mask_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "mask_col", "subnet_length")
 ...
 </programlisting>
 		</example>
@@ -913,9 +934,9 @@ set_address_group("1");
 		<para>
 		Returns true if IP address and port given as values of pseudo
 		variable arguments and belonging to an earlier
-		assigned address group is found in cached address
-		table.  Cached address table entry containing port value
-		0 matches any port.
+		assigned address group matches an IP subnet found in
+		cached address table.  Cached address table entry
+		containing port value 0 matches any port.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -998,7 +1019,13 @@ if (allow_trusted()) {
 		</title>
 		<para>
 				Causes permissions module to re-read the contents of
-				address table into cache memory.
+				address database table into cache
+				memory.  In cache memory the entries are
+				for performance reasons stored in two
+                                different tables:  address table and
+				subnet table depending on the value of
+				the mask field (32 or smaller).
+
 				</para>
 	</section>
 	<section>
@@ -1006,8 +1033,19 @@ if (allow_trusted()) {
 		<function moreinfo="none">address_dump</function>
 		</title>
 		<para>
-				Causes permissions module to dump contents of address
-				table from cache memory.
+				Causes permissions module to dump
+                   contents of cache memory address table.
+
+				</para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">subnet_dump</function>
+		</title>
+		<para>
+				Causes permissions module to dump
+                   contents of cache memory subnet table.
+
 				</para>
 	</section>
 	<section>

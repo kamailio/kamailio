@@ -473,3 +473,162 @@ void empty_addr_hash_table(struct addr_list **table)
 	table[i] = 0;
     }
 }
+
+
+/*
+ * Create and initialize a subnet table
+ */
+struct subnet* new_subnet_table(void)
+{
+    struct subnet* ptr;
+
+    /* subnet record [PERM_MAX_SUBNETS] contains in its grp field 
+       the number of subnet records in the subnet table */
+    ptr = (struct subnet *)shm_malloc
+	(sizeof(struct subnet) * (PERM_MAX_SUBNETS + 1));
+    if (!ptr) {
+	LOG(L_ERR, "permissions:new_subnet_table(): "
+	    "No memory for subnet table\n");
+	return 0;
+    }
+    ptr[PERM_MAX_SUBNETS].grp = 0;
+    return ptr;
+}
+
+    
+/* 
+ * Add <grp, subnet, mask, port> into subnet table so that table is
+ * kept in increasing ordered according to grp.
+ */
+int subnet_table_insert(struct subnet* table, unsigned int grp,
+			unsigned int subnet, unsigned int mask,
+			unsigned int port)
+{
+    int i;
+    unsigned int count;
+
+    count = table[PERM_MAX_SUBNETS].grp;
+
+    if (count == PERM_MAX_SUBNETS) {
+	LOG(L_CRIT, "permissions:subnet_table_insert(): "
+	    "Subnet table is full\n");
+	return 0;
+    }
+
+    mask = 32 - mask;
+    subnet = subnet << mask;
+
+    i = count - 1;
+
+    while ((i >= 0) && (table[i].grp > grp)) {
+	table[i + 1] = table[i];
+	i--;
+    }
+    
+    table[i + 1].grp = grp;
+    table[i + 1].subnet = subnet;
+    table[i + 1].port = port;
+    table[i + 1].mask = mask;
+
+    table[PERM_MAX_SUBNETS].grp = count + 1;
+
+    return 1;
+}
+
+
+/* 
+ * Check if an entry exists in subnet table that matches given group, ip_addr,
+ * and port.  Port 0 in subnet table matches any port.
+ */
+int match_subnet_table(struct subnet* table, unsigned int grp,
+		       unsigned int ip_addr, unsigned int port)
+{
+    unsigned int count, i, subnet;
+
+    LOG(L_INFO, "Looking for <%u, %x, %u>\n", grp, ip_addr, port);
+
+    count = table[PERM_MAX_SUBNETS].grp;
+
+    i = 0;
+    while ((i < count) && (table[i].grp < grp))
+	i++;
+    
+    if (i == count) return -1;
+
+    while ((i < count) && (table[i].grp == grp)) {
+	subnet = ip_addr << table[i].mask;
+	if ((table[i].subnet == subnet) &&
+	    ((table[i].port == port) || (table[i].port == 0)))
+	    return 1;
+	i++;
+    }
+
+    return -1;
+}
+
+
+/* 
+ * Print subnets stored in subnet table 
+ */
+void subnet_table_print(struct subnet* table, FILE* reply_file)
+{
+    unsigned int count, i;
+    struct ip_addr addr;
+    
+    count = table[PERM_MAX_SUBNETS].grp;
+
+    for (i = 0; i < count; i++) {
+	addr.af = AF_INET;
+	addr.len = 4;
+	addr.u.addr32[0] = table[i].subnet >> table[i].mask;
+	fprintf(reply_file, "%4d <%u, %s, %u, %u>\n",
+		i, table[i].grp, ip_addr2a(&addr),
+		32 - table[i].mask, table[i].port);
+    }
+}
+
+
+/* 
+ * Print subnets stored in subnet table 
+ */
+int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
+{
+    unsigned int count, i;
+    struct ip_addr addr;
+    
+    count = table[PERM_MAX_SUBNETS].grp;
+
+    for (i = 0; i < count; i++) {
+	addr.af = AF_INET;
+	addr.len = 4;
+	addr.u.addr32[0] = table[i].subnet >> table[i].mask;
+	if (addf_mi_node_child(rpl, 0, 0, 0,
+			       "%4d <%u, %s, %u, %u>",
+			       i, table[i].grp, ip_addr2a(&addr),
+			       32 - table[i].mask, table[i].port) == 0) {
+	    return -1;
+	}
+    }
+    return 0;
+}
+
+
+/* 
+ * Empty contents of subnet table
+ */
+void empty_subnet_table(struct subnet *table)
+{
+    table[PERM_MAX_SUBNETS].grp = 0;
+}
+
+
+/*
+ * Release memory allocated for a subnet table
+ */
+void free_subnet_table(struct subnet* table)
+{
+    if (!table)
+	return;
+
+    shm_free(table);
+}

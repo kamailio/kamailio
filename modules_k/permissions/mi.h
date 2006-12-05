@@ -34,6 +34,7 @@
 
 #define MI_ADDRESS_RELOAD "address_reload"
 #define MI_ADDRESS_DUMP "address_dump"
+#define MI_SUBNET_DUMP "subnet_dump"
 
 
 struct mi_root* mi_trusted_reload(struct mi_root *cmd, void *param);
@@ -44,5 +45,6 @@ struct mi_root* mi_address_reload(struct mi_root *cmd, void *param);
 
 struct mi_root* mi_address_dump(struct mi_root *cmd, void *param);
 
+struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param);
 
 #endif

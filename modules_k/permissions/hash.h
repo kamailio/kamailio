@@ -91,7 +91,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg);
 
 
 /* 
- * Print domains stored in hash table 
+ * Print entries stored in hash table 
  */
 void hash_table_print(struct trusted_list** hash_table, FILE* reply_file);
 int hash_table_mi_print(struct trusted_list **hash_table, struct mi_node* rpl);
@@ -158,5 +158,62 @@ int addr_hash_table_mi_print(struct addr_list** hash_table,
  * Empty hash table
  */
 void empty_addr_hash_table(struct addr_list** hash_table);
+
+
+#define PERM_MAX_SUBNETS 128 
+
+
+/*
+ * Structure used to store a subnet
+ */
+struct subnet {
+    unsigned int grp;        /* address group, subnet count in last record */
+    unsigned int subnet;     /* IP subnet in host byte order with host bits shifted out */
+    unsigned int port;       /* port or 0 */
+    unsigned int mask;       /* how many bits belong to network part */
+};
+
+
+/*
+ * Create a subnet table
+ */
+struct subnet* new_subnet_table(void);
+
+
+/* 
+ * Check if an entry exists in subnet table that matches given group, ip_addr,
+ * and port.  Port 0 in subnet table matches any port.
+ */
+int match_subnet_table(struct subnet* table, unsigned int group,
+		       unsigned int ip_addr, unsigned int port);
+
+
+/* 
+ * Empty contents of subnet table
+ */
+void empty_subnet_table(struct subnet *table);
+
+
+/*
+ * Release memory allocated for a subnet table
+ */
+void free_subnet_table(struct subnet* table);
+
+
+/* 
+ * Add <grp, subnet, mask, port> into subnet table so that table is
+ * kept ordered according to subnet, port, grp.
+ */
+int subnet_table_insert(struct subnet* table, unsigned int grp,
+			unsigned int subnet, unsigned int mask,
+			unsigned int port);
+
+
+/* 
+ * Print subnets stored in subnet table
+ */
+void subnet_table_print(struct subnet* table, FILE* reply_file);
+int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl);
+
 
 #endif /* _PERM_HASH_H_ */

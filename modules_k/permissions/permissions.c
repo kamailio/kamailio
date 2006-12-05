@@ -73,6 +73,7 @@ char* tag_avp_param = 0;           /* Peer tag AVP spec */
 char* address_table = "address";   /* Name of address table */
 char* grp_col = "grp";             /* Name of address group column */
 char* ip_addr_col = "ip_addr";     /* Name of ip address column */
+char* mask_col = "mask";           /* Name of mask column */
 char* port_col = "port";           /* Name of port column */
 
 
@@ -167,6 +168,7 @@ static param_export_t params[] = {
 	{"address_table",      STR_PARAM, &address_table     },
 	{"grp_col",            STR_PARAM, &grp_col           },
 	{"ip_addr_col",        STR_PARAM, &ip_addr_col       },
+	{"mask_col",           STR_PARAM, &mask_col          },
 	{"port_col",           STR_PARAM, &port_col          },
 	{0, 0, 0}
 };
@@ -179,6 +181,7 @@ static mi_export_t mi_cmds[] = {
 	{ MI_TRUSTED_DUMP,    mi_trusted_dump,    0,  0 },
 	{ MI_ADDRESS_RELOAD,  mi_address_reload,  0,  mi_addr_child_init },
 	{ MI_ADDRESS_DUMP,    mi_address_dump,    0,  0 },
+	{ MI_SUBNET_DUMP,     mi_subnet_dump,     0,  0 },
 	{ 0, 0, 0, 0 }
 };
 

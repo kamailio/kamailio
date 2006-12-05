@@ -42,6 +42,7 @@
 
 #define ADDRESS_RELOAD "address_reload"
 #define ADDRESS_DUMP "address_dump"
+#define SUBNET_DUMP "subnet_dump"
 
 
 /*
@@ -132,6 +133,25 @@ static int address_dump(FILE* pipe, char* response_file)
 
 
 /*
+ * Fifo function to print subnet entries from current subnet table
+ */
+static int subnet_dump(FILE* pipe, char* response_file)
+{
+    FILE *reply_file;
+	
+    reply_file = open_reply_pipe(response_file);
+    if (reply_file == 0) {
+	LOG(L_ERR, "subnet_dump(): Opening of response file failed\n");
+	return -1;
+    }
+    fputs("200 OK\n", reply_file);
+    subnet_table_print(*subnet_table, reply_file);
+    fclose(reply_file);
+    return 1;
+}
+
+
+/*
  * Register address fifo functions
  */
 int init_address_fifo(void) 
@@ -143,6 +163,11 @@ int init_address_fifo(void)
 
     if (register_fifo_cmd(address_dump, ADDRESS_DUMP, 0) < 0) {
 	LOG(L_CRIT, "Cannot register address_dump\n");
+	return -1;
+    }
+
+    if (register_fifo_cmd(subnet_dump, SUBNET_DUMP, 0) < 0) {
+	LOG(L_CRIT, "Cannot register subnet_dump\n");
 	return -1;
     }
 

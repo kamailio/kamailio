@@ -44,11 +44,15 @@
 #include "../../items.h"
 #include "../../ut.h"
 
-#define TABLE_VERSION 2
+#define TABLE_VERSION 3
 
 struct addr_list ***addr_hash_table; /* Ptr to current hash table ptr */
 struct addr_list **addr_hash_table_1;     /* Pointer to hash table 1 */
 struct addr_list **addr_hash_table_2;     /* Pointer to hash table 2 */
+
+struct subnet **subnet_table;        /* Ptr to current subnet table */
+struct subnet *subnet_table_1;       /* Ptr to subnet table 1 */
+struct subnet *subnet_table_2;       /* Ptr to subnet table 2 */
 
 /* Address group of allow_address queries */
 static unsigned int addr_group = 0;               
@@ -63,18 +67,20 @@ static db_func_t perm_dbf;
  */
 int reload_address_table(void)
 {
-    db_key_t cols[3];
+    db_key_t cols[4];
     db_res_t* res = NULL;
     db_row_t* row;
     db_val_t* val;
 
     struct addr_list **new_hash_table;
+    struct subnet *new_subnet_table;
     int i;
     struct in_addr ip_addr;
 
     cols[0] = grp_col;
     cols[1] = ip_addr_col;
-    cols[2] = port_col;
+    cols[2] = mask_col;
+    cols[3] = port_col;
 
     if (perm_dbf.use_table(db_handle, address_table) < 0) {
 	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
@@ -82,7 +88,7 @@ int reload_address_table(void)
 	return -1;
     }
     
-    if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
+    if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
 	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
 	    " Error while querying database\n");
 	return -1;
@@ -97,29 +103,62 @@ int reload_address_table(void)
 	new_hash_table = addr_hash_table_1;
     }
 
+    /* Choose new subnet table */
+    if (*subnet_table == subnet_table_1) {
+	empty_subnet_table(subnet_table_2);
+	new_subnet_table = subnet_table_2;
+    } else {
+	empty_subnet_table(subnet_table_1);
+	new_subnet_table = subnet_table_1;
+    }
+
     row = RES_ROWS(res);
 
     DBG("Number of rows in address table: %d\n", RES_ROW_N(res));
 		
     for (i = 0; i < RES_ROW_N(res); i++) {
 	val = ROW_VALUES(row + i);
-	if ((ROW_N(row + i) == 3) &&
+	if ((ROW_N(row + i) == 4) &&
 	    (VAL_TYPE(val) == DB_INT) && !VAL_NULL(val) &&
 	    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
 	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
-	    (VAL_TYPE(val + 2) == DB_INT) && !VAL_NULL(val + 2)) {
-	    if (addr_hash_table_insert(new_hash_table,
-				       (unsigned int)VAL_INT(val),
-				       (unsigned int)ip_addr.s_addr,
-				       (unsigned int)VAL_INT(val + 2)) == -1) {
-		LOG(L_ERR, "ERROR: permissions: "
-		    "address_reload(): Hash table problem\n");
-		perm_dbf.free_result(db_handle, res);
-		return -1;
+	    (VAL_TYPE(val + 2) == DB_INT) && !VAL_NULL(val + 2) && 
+	    ((unsigned int)VAL_INT(val + 2) >= 0) && 
+	    ((unsigned int)VAL_INT(val + 2) <= 32) &&
+	    (VAL_TYPE(val + 3) == DB_INT) && !VAL_NULL(val + 3)) {
+	    if ((unsigned int)VAL_INT(val + 2) == 32) {
+		if (addr_hash_table_insert(new_hash_table,
+					   (unsigned int)VAL_INT(val),
+					   (unsigned int)ip_addr.s_addr,
+					   (unsigned int)VAL_INT(val + 3))
+		    == -1) {
+		    LOG(L_ERR, "ERROR: permissions: "
+			"address_reload(): Hash table problem\n");
+		    perm_dbf.free_result(db_handle, res);
+		    return -1;
+		}
+		DBG("Tuple <%u, %s, %u> inserted into address hash "
+		    "table\n", (unsigned int)VAL_INT(val),
+		    (char *)VAL_STRING(val + 1),
+		    (unsigned int)VAL_INT(val + 2));
+	    } else {
+		if (subnet_table_insert(new_subnet_table,
+					(unsigned int)VAL_INT(val),
+					(unsigned int)ip_addr.s_addr,
+					(unsigned int)VAL_INT(val + 2),
+					(unsigned int)VAL_INT(val + 3))
+		    == -1) {
+		    LOG(L_ERR, "ERROR: permissions: "
+			"address_reload(): subnet table problem\n");
+		    perm_dbf.free_result(db_handle, res);
+		    return -1;
+		}
+		DBG("Tuple <%u, %s, %u, %u> inserted into subnet "
+		    "table\n", (unsigned int)VAL_INT(val),
+		    (char *)VAL_STRING(val + 1),
+		    (unsigned int)VAL_INT(val + 2),
+		    (unsigned int)VAL_INT(val + 3));
 	    }
-            DBG("Tuple <%u, %s, %u> inserted into address hash "
-		"table\n", (unsigned int)VAL_INT(val),
-		(char *)VAL_STRING(val + 1), (unsigned int)VAL_INT(val + 2));
 	} else {
 	    LOG(L_ERR, "ERROR: permissions: address_reload():"
 		" Database problem\n");
@@ -131,6 +170,7 @@ int reload_address_table(void)
     perm_dbf.free_result(db_handle, res);
 
     *addr_hash_table = new_hash_table;
+    *subnet_table = new_subnet_table;
 
     DBG("Address table reloaded successfully.\n");
 	
@@ -213,6 +253,17 @@ int init_addresses(void)
     
     *addr_hash_table = addr_hash_table_1;
 
+    subnet_table_1 = new_subnet_table();
+    if (!subnet_table_1) goto error;
+
+    subnet_table_2 = new_subnet_table();
+    if (!subnet_table_2) goto error;
+
+    subnet_table = (struct subnet **)shm_malloc(sizeof(struct subnet *));
+    if (!subnet_table) goto error;
+
+    *subnet_table = subnet_table_1;
+
     if (reload_address_table() == -1) {
 	LOG(L_CRIT, "permissions:init_addresses(): "
 	    "Reload of address table failed\n");
@@ -236,6 +287,18 @@ error:
     if (addr_hash_table) {
 	shm_free(addr_hash_table);
 	addr_hash_table = 0;
+    }
+    if (subnet_table_1) {
+	free_subnet_table(subnet_table_1);
+	subnet_table_1 = 0;
+    }
+    if (subnet_table_2) {
+	free_subnet_table(subnet_table_2);
+	subnet_table_2 = 0;
+    }
+    if (subnet_table) {
+	shm_free(subnet_table);
+	subnet_table = 0;
     }
     perm_dbf.close(db_handle);
     db_handle = 0;
@@ -309,6 +372,9 @@ void clean_addresses(void)
     if (addr_hash_table_1) free_addr_hash_table(addr_hash_table_1);
     if (addr_hash_table_2) free_addr_hash_table(addr_hash_table_2);
     if (addr_hash_table) shm_free(addr_hash_table);
+    if (subnet_table_1) free_subnet_table(subnet_table_1);
+    if (subnet_table_2) free_subnet_table(subnet_table_2);
+    if (subnet_table) shm_free(subnet_table);
 }
 
 
@@ -317,7 +383,7 @@ void clean_addresses(void)
  */
 int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
-    LOG(L_ERR, "Setting addr_group to <%u>\n", (unsigned int)_addr_group);
+    DBG("Setting addr_group to <%u>\n", (unsigned int)_addr_group);
     addr_group = (unsigned int)_addr_group;
     return 1;
 }
@@ -364,16 +430,15 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
     if (port_sp && (xl_get_spec_value(_msg, port_sp, &xl_val, 0) == 0)) {
 	if (xl_val.flags & XL_VAL_INT) {
 	    port = xl_val.ri;
-	    if (xl_val.flags & XL_VAL_STR) {
-		if (str2int(&(xl_val.rs), &port) == -1) {
-		    LOG(L_ERR, "allow_address(): Error while converting "
-			"port string to int\n");
-		    return -1;
-		}
+	} else if (xl_val.flags & XL_VAL_STR) {
+	    if (str2int(&(xl_val.rs), &port) == -1) {
+		LOG(L_ERR, "allow_address(): Error while converting "
+		    "port string to int\n");
+		return -1;
 	    }
 	} else {
 	    LOG(L_ERR, "allow_address(): Error while converting "
-		"port string to in_addr\n");
+		"port string to int\n");
 	    return -1;
 	}
     } else {
@@ -381,7 +446,10 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 	return -1;
     }
 
-    return match_addr_hash_table(*addr_hash_table, addr_group, addr, port);
+    if (match_addr_hash_table(*addr_hash_table, addr_group, addr, port) == 1)
+	return 1;
+    else
+	return match_subnet_table(*subnet_table, addr_group, addr, port);
 }
 
 
@@ -394,7 +462,12 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
 {
     unsigned int addr_group = (unsigned int)_addr_group;
 
-    return match_addr_hash_table(*addr_hash_table, addr_group,
-				 _msg->rcv.src_ip.u.addr32[0],
-				 _msg->rcv.src_port);
+    if (match_addr_hash_table(*addr_hash_table, addr_group,
+			      _msg->rcv.src_ip.u.addr32[0],
+			      _msg->rcv.src_port) == 1)
+	return 1;
+    else
+	return match_subnet_table(*subnet_table, addr_group,
+				  _msg->rcv.src_ip.u.addr32[0],
+				  _msg->rcv.src_port);
 }
