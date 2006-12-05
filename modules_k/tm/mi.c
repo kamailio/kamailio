@@ -3,6 +3,7 @@
  *
  * Header file for TM MI functions
  *
+ * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
@@ -27,24 +28,402 @@
  */
 
 #include <stdlib.h>
+#include "../../parser/parse_from.h"
 #include "mi.h"
 #include "h_table.h"
 #include "t_lookup.h"
 #include "t_reply.h"
+#include "t_cancel.h"
+#include "dlg.h"
+#include "callid.h"
+#include "uac.h"
 
 
+struct str_list {
+	str s;
+	struct str_list *next;
+};
+
+
+#define skip_hf(_hf) \
+	(((_hf)->type == HDR_FROM_T)  || \
+	((_hf)->type == HDR_TO_T)     || \
+	((_hf)->type == HDR_CALLID_T) || \
+	((_hf)->type == HDR_CSEQ_T))
+
+
+/************** Helper functions (from previous FIFO impl) *****************/
+
+/*
+ * check if the request pushed via MI is correctly formed
+ */
+static inline struct mi_root* mi_check_msg(struct sip_msg* msg, str* method,
+										str* body, int* cseq, str* callid)
+{
+	struct cseq_body *parsed_cseq;
+
+	if (body && body->len && !msg->content_type)
+		return init_mi_tree( 400, "Content-Type missing", 19);
+
+	if (body && body->len && msg->content_length)
+		return init_mi_tree( 400, "Content-Length disallowed", 24);
+
+	if (!msg->to)
+		return init_mi_tree( 400, "To missing", 10);
+
+	if (!msg->from)
+		return init_mi_tree( 400, "From missing", 12);
+
+	/* we also need to know if there is from-tag and add it otherwise */
+	if (parse_from_header(msg) < 0)
+		return init_mi_tree( 400, "Error in From", 13);
+
+	if (msg->cseq && (parsed_cseq = get_cseq(msg))) {
+		if (str2int( &parsed_cseq->number, (unsigned int*)cseq)!=0)
+			return init_mi_tree( 400, "Bad CSeq number", 15);
+
+		if (parsed_cseq->method.len != method->len
+		|| memcmp(parsed_cseq->method.s, method->s, method->len) !=0 )
+			return init_mi_tree( 400, "CSeq method mismatch", 20);
+	} else {
+		*cseq = -1;
+	}
+
+	if (msg->callid) {
+		callid->s = msg->callid->body.s;
+		callid->len = msg->callid->body.len;
+	} else {
+		callid->s = 0;
+		callid->len = 0;
+	}
+
+	return 0;
+}
+
+
+static inline struct str_list *new_str(char *s, int len,
+											struct str_list **last, int *total)
+{
+	struct str_list *new;
+	new=pkg_malloc(sizeof(struct str_list));
+	if (!new) {
+		LOG(L_ERR, "ERROR:TM:new_str: not enough pkg mem\n");
+		return 0;
+	}
+	new->s.s=s;
+	new->s.len=len;
+	new->next=0;
+
+	(*last)->next=new;
+	*last=new;
+	*total+=len;
+
+	return new;
+}
+
+
+static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l,
+											struct socket_info** send_sock)
+{
+	struct str_list sl, *last, *new, *i, *foo;
+	int hf_avail, frag_len, total_len;
+	char *begin, *needle, *dst, *ret, *d;
+	str *sock_name, *portname;
+	union sockaddr_union to_su;
+
+	ret=0; /* pessimist: assume failure */
+	total_len=0;
+	last=&sl;
+	last->next=0;
+	portname=sock_name=0;
+
+	for (; hf; hf=hf->next) {
+		if (skip_hf(hf)) continue;
+
+		begin=needle=hf->name.s; 
+		hf_avail=hf->len;
+
+		/* substitution loop */
+		while(hf_avail) {
+			d=memchr(needle, SUBST_CHAR, hf_avail);
+			if (!d || d+1>=needle+hf_avail) { /* nothing to substitute */
+				new=new_str(begin, hf_avail, &last, &total_len); 
+				if (!new) goto error;
+				break;
+			} else {
+				frag_len=d-begin;
+				d++; /* d not at the second substitution char */
+				switch(*d) {
+					case SUBST_CHAR:	/* double SUBST_CHAR: IP */
+						/* string before substitute */
+						new=new_str(begin, frag_len, &last, &total_len); 
+						if (!new) goto error;
+						/* substitute */
+						if (!sock_name) {
+							if (*send_sock==0){
+								*send_sock=uri2sock(0, uri, &to_su,PROTO_NONE);
+								if (!*send_sock) {
+									LOG(L_ERR, "ERROR:tm:get_hfblock: "
+										"send_sock failed\n");
+									goto error;
+								}
+							}
+							sock_name=&(*send_sock)->address_str;
+							portname=&(*send_sock)->port_no_str;
+						}
+						new=new_str(sock_name->s, sock_name->len,
+								&last, &total_len );
+						if (!new) goto error;
+						/* inefficient - FIXME --andrei*/
+						new=new_str(":", 1, &last, &total_len);
+						if (!new) goto error;
+						new=new_str(portname->s, portname->len,
+								&last, &total_len );
+						if (!new) goto error;
+						/* keep going ... */
+						begin=needle=d+1;hf_avail-=frag_len+2;
+						continue;
+					default:
+						/* no valid substitution char -- keep going */
+						hf_avail-=frag_len+1;
+						needle=d;
+				}
+			} /* possible substitute */
+		} /* substitution loop */
+		/* proceed to next header */
+		/* new=new_str(CRLF, CRLF_LEN, &last, &total_len );
+		if (!new) goto error; */
+		DBG("DEBUG: get_hfblock: one more hf processed\n");
+	} /* header loop */
+
+
+	/* construct a single header block now */
+	ret=pkg_malloc(total_len);
+	if (!ret) {
+		LOG(L_ERR, "ERROR: get_hf:block no pkg mem for hf block\n");
+		goto error;
+	}
+	i=sl.next;
+	dst=ret;
+	while(i) {
+		foo=i;
+		i=i->next;
+		memcpy(dst, foo->s.s, foo->s.len);
+		dst+=foo->s.len;
+		pkg_free(foo);
+	}
+	*l=total_len;
+	return ret;
+
+error:
+	i=sl.next;
+	while(i) {
+		foo=i;
+		i=i->next;
+		pkg_free(foo);
+	}
+	*l=0;
+	return 0;
+}
+
+
+
+/**************************** MI functions ********************************/
+
+
+/*
+  Syntax of "t_uac_dlg" :
+    method
+    RURI
+    NEXT_HOP
+    socket
+    headers
+    [Body]
+*/
 struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 {
-	return 0;
+	static char err_buf[MAX_REASON_LEN];
+	static struct sip_msg tmp_msg;
+	static dlg_t dlg;
+	struct mi_root *rpl_tree;
+	struct mi_node *node;
+	struct sip_uri pruri;
+	struct sip_uri pnexthop;
+	struct socket_info* sock;
+	str *method;
+	str *ruri;
+	str *nexthop;
+	str *socket;
+	str *hdrs;
+	str *body;
+	str s;
+	str callid = {0,0};
+	int sip_error;
+	int proto;
+	int port;
+	int cseq;
+	int n;
+
+	for( n=0,node = cmd_tree->node.kids; n<6 && node ; n++,node=node->next );
+	if ( !(n==5 || n==6) || node!=0)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+
+	/* method name (param 1) */
+	node = cmd_tree->node.kids;
+	method = &node->value;
+
+	/* RURI (param 2) */
+	node = node->next;
+	ruri = &node->value;
+	if (parse_uri( ruri->s, ruri->len, &pruri) < 0 )
+		return init_mi_tree( 400, "Invalid RURI", 11);
+
+	/* nexthop RURI (param 3) */
+	node = node->next;
+	nexthop = &node->value;
+	if (nexthop->len==1 && nexthop->s[0]=='.') {
+		nexthop = 0;
+	} else {
+		if (parse_uri( nexthop->s, nexthop->len, &pnexthop) < 0 )
+			return init_mi_tree( 400, "Invalid NEXTHOP", 15);
+	}
+
+	/* socket (param 4) */
+	node = node->next;
+	socket = &node->value;
+	if (socket->len==1 && socket->s[0]=='.' ) {
+		sock = 0;
+	} else {
+		if (parse_phostport( socket->s, socket->len, &s.s, &s.len,
+		&port,&proto)!=0)
+			return init_mi_tree( 404, "Invalid local socket", 20);
+		sock = grep_sock_info( &s, (unsigned short)port, proto);
+		if (sock==0)
+			return init_mi_tree( 404, "Local socket not found", 22);
+	}
+
+	/* new headers (param 5) */
+	node = node->next;
+	if (node->value.len==1 && node->value.s[0]=='.')
+		hdrs = 0;
+	else {
+		hdrs = &node->value;
+		/* use SIP parser to look at what is in the FIFO request */
+		memset( &tmp_msg, 0, sizeof(struct sip_msg));
+		tmp_msg.len = hdrs->len; 
+		tmp_msg.buf = tmp_msg.unparsed = hdrs->s;
+		if (parse_headers( &tmp_msg, HDR_EOH_F, 0) == -1 )
+			return init_mi_tree( 400, "Bad headers", 11);
+	}
+
+	/* body (param 5 - optional) */
+	node = node->next;
+	if (node)
+		body = &node->value;
+	else
+		body = 0;
+
+	/* at this moment, we collected all the things we got, let's
+	 * verify user has not forgotten something */
+	rpl_tree = mi_check_msg( &tmp_msg, method, body, &cseq, &callid);
+	if (rpl_tree) {
+		if (tmp_msg.headers) free_hdr_field_lst(tmp_msg.headers);
+		return rpl_tree;
+	}
+
+	s.s = get_hfblock( nexthop ? nexthop : ruri,
+			tmp_msg.headers, &s.len, &sock);
+	if (s.s==0) {
+		if (tmp_msg.headers) free_hdr_field_lst(tmp_msg.headers);
+		return 0;
+	}
+
+	memset( &dlg, 0, sizeof(dlg_t));
+	/* Fill in Call-ID, use given Call-ID if
+	 * present and generate it if not present */
+	if (callid.s && callid.len)
+		dlg.id.call_id = callid;
+	else
+		generate_callid(&dlg.id.call_id);
+
+	/* We will not fill in dlg->id.rem_tag because
+	 * if present it will be printed within To HF */
+
+	/* Generate fromtag if not present */
+	if (!(get_from(&tmp_msg)->tag_value.len&&get_from(&tmp_msg)->tag_value.s))
+		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
+
+	/* Fill in CSeq */
+	if (cseq!=-1)
+		dlg.loc_seq.value = cseq;
+	else
+		dlg.loc_seq.value = DEFAULT_CSEQ;
+	dlg.loc_seq.is_set = 1;
+
+	dlg.loc_uri = tmp_msg.from->body;
+	dlg.rem_uri = tmp_msg.to->body;
+	dlg.hooks.request_uri = ruri;
+	dlg.hooks.next_hop = (nexthop ? nexthop : ruri);
+	dlg.send_sock = sock;
+
+	n = t_uac( method, &s, body, &dlg, 0, 0);
+
+	pkg_free(s.s);
+	if (tmp_msg.headers) free_hdr_field_lst(tmp_msg.headers);
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==0)
+		return 0;
+
+	if (n<=0) {
+		n = err2reason_phrase( n, &sip_error, err_buf, sizeof(err_buf),
+			"MI/UAC") ;
+		if (n > 0 )
+			addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%d %.*s",
+				sip_error, n, err_buf);
+		else
+			add_mi_node_child( &rpl_tree->node, 0, 0, 0,
+				"500 MI/UAC failed", 17);
+	} else {
+		add_mi_node_child( &rpl_tree->node, 0, 0, 0, "202 Accepted", 12);
+	}
+
+	return rpl_tree;
 }
 
 
+/*
+  Syntax of "t_uac_cancel" :
+    callid
+    cseq
+*/
 struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 {
-	return 0;
+	struct mi_node *node;
+	struct cell *trans;
+
+	node =  cmd_tree->node.kids;
+	if ( !node || !node->next || node->next->next)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+
+	if( t_lookup_callid( &trans, node->value, node->next->value) < 0 )
+		return init_mi_tree( 481, "No such transaction", 19);
+
+	/* cancel the call */
+	DBG("DEBUG:TM:mi_tm_cancel: cancelling transaction %p\n",trans);
+
+	cancel_uacs( trans, ~0/*all branches*/);
+
+	UNREF(trans);
+
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 
 
+/*
+  Syntax of "t_hash" :
+    no nodes
+*/
 struct mi_root* mi_tm_hash(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_root* rpl_tree= NULL;
@@ -150,7 +529,7 @@ struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param)
 
 	/* new headers (param 5) */
 	node = node->next;
-	if (node->value.len==1 && (node->value.s[0]=='.' || node->value.s[0]==' '))
+	if (node->value.len==1 && node->value.s[0]=='.')
 		new_hdrs = 0;
 	else 
 		new_hdrs = &node->value;
