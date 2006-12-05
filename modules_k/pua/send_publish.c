@@ -180,9 +180,33 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		LOG(L_ERR, "PUA:publ_cback_func: Error NULL callback parameter\n");
 		goto done;
 	}
+
+	if( ps->code>= 300 )
+	{
+		if( *ps->param== NULL ) 
+		{
+			DBG("PUA publ_cback_func: NULL callback parameter\n");
+			return;
+		}
+
+		hash_code= core_hash(((hentity_t*)(*ps->param))->pres_uri, NULL, HASH_SIZE);
+		lock_get(&HashT->p_records[hash_code].lock);
+
+		presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, NULL,
+				((hentity_t*)(*ps->param))->id,
+				((hentity_t*)(*ps->param))->flag, HashT);
+		if(presentity)
+		{
+			delete_htable(presentity, HashT);
+			DBG("PUA:publ_cback_func: ***Delete from table\n");
+		}
+		lock_release(&HashT->p_records[hash_code].lock);
+		goto done;	
+	}
+
 	
 	msg= ps->rpl;
-	if(msg == NULL)
+	if(msg == NULL || msg== FAKED_REPLY)
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: ERROR no reply message found\n ");
 		goto done;
@@ -232,8 +256,6 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				((hentity_t*)(*ps->param))->flag, HashT);
 	if(presentity)
 	{
-		if(ps->code >= 200 && ps->code<300)
-		{
 			DBG("PUA:publ_cback_func: update record\n");
 			if(lexpire == 0)
 			{
@@ -243,89 +265,80 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				goto done;	
 			}
 			hash_update(presentity, lexpire, HashT);
-		}
-		else
-		{
-			delete_htable(presentity, HashT);
-			DBG("PUA:publ_cback_func: ***Delete from table\n");
-		}
-		lock_release(&HashT->p_records[hash_code].lock);
-		goto done;
+			lock_release(&HashT->p_records[hash_code].lock);
+			goto done;
 	}
+
 	lock_release(&HashT->p_records[hash_code].lock);
 
-	if(ps->code >= 200 && ps->code<300)
+	if(lexpire== 0)
 	{
-		if(lexpire== 0)
+		LOG(L_ERR, "PUA:publ_cback_func:expires= 0: no not insert\n");
+		goto done;
+	}
+	hdr = msg->headers;
+	while (hdr!= NULL)
+	{
+		if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
 		{
-			LOG(L_ERR, "PUA:publ_cback_func:expires= 0: no not insert\n");
-			goto done;
+			found = 1;
+			break;
 		}
-		hdr = msg->headers;
-		while (hdr!= NULL)
-		{
-			if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
-			{
-				found = 1;
-				break;
-			}
-			hdr = hdr->next;
-		}
-		if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
-		{	
-			LOG(L_ERR, "PUA:publ_cback_func:no SIP-ETag header field found\n");
-			goto done;
-		}
-		etag= hdr->body;
-
-		size= sizeof(ua_pres_t)+ sizeof(str)+ 
-			(((hentity_t*)(*ps->param))->pres_uri->len+etag.len+ 
-			 ((hentity_t*)(*ps->param))->tuple_id.len + 
-			 ((hentity_t*)(*ps->param))->id.len+ 1)* sizeof(char);
-		presentity= (ua_pres_t*)shm_malloc(size);
-		if(presentity== NULL)
-		{
-			LOG(L_ERR,"PUA:publ_cback_func: ERROR no more share memory\n");
-			goto done;
-		}	
-		memset(presentity, 0, size);
-		size= sizeof(ua_pres_t);
-
-		presentity->pres_uri= (str*)((char*)presentity+ size);
-		size+= sizeof(str);
-
-		presentity->pres_uri->s= (char*)presentity+ size;
-		memcpy(presentity->pres_uri->s,
-				((hentity_t*)(*ps->param))->pres_uri->s,
-				((hentity_t*)(*ps->param))->pres_uri->len);
-		presentity->pres_uri->len= 
-			((hentity_t*)(*ps->param))->pres_uri->len;
-		size+= ((hentity_t*)(*ps->param))->pres_uri->len;
-		presentity->etag.s= (char*)presentity+ size;
-		memcpy(presentity->etag.s, etag.s, etag.len);
-		presentity->etag.len= etag.len;
-		size+= etag.len;
-
-		presentity->tuple_id.s= (char*)presentity+ size;
-		memcpy(presentity->tuple_id.s,
-				((hentity_t*)(*ps->param))->tuple_id.s,
-				((hentity_t*)(*ps->param))->tuple_id.len);
-		presentity->tuple_id.len= ((hentity_t*)(*ps->param))->tuple_id.len;
-		size+= presentity->tuple_id.len;
-
-		presentity->id.s=(char*)presentity+ size;
-		memcpy(presentity->id.s, ((hentity_t*)(*ps->param))->id.s, 
-				((hentity_t*)(*ps->param))->id.len);
-		presentity->id.len= ((hentity_t*)(*ps->param))->id.len; 
-		size+= presentity->id.len;
-			
-		presentity->expires= lexpire +(int)time(NULL);
-		presentity->flag|= ((hentity_t*)(*ps->param))->flag;
-		presentity->db_flag|= INSERTDB_FLAG;
-
-		insert_htable( presentity, HashT);
-		DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		
+		hdr = hdr->next;
+	}
+	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
+	{	
+		LOG(L_ERR, "PUA:publ_cback_func:no SIP-ETag header field found\n");
+		goto done;
+	}
+	etag= hdr->body;
+	size= sizeof(ua_pres_t)+ sizeof(str)+ 
+		(((hentity_t*)(*ps->param))->pres_uri->len+etag.len+ 
+		 ((hentity_t*)(*ps->param))->tuple_id.len + 
+		 ((hentity_t*)(*ps->param))->id.len+ 1)* sizeof(char);
+	presentity= (ua_pres_t*)shm_malloc(size);
+	if(presentity== NULL)
+	{
+		LOG(L_ERR,"PUA:publ_cback_func: ERROR no more share memory\n");
+		goto done;
 	}	
+	memset(presentity, 0, size);
+	size= sizeof(ua_pres_t);
+	presentity->pres_uri= (str*)((char*)presentity+ size);
+	size+= sizeof(str);
+
+	presentity->pres_uri->s= (char*)presentity+ size;
+	memcpy(presentity->pres_uri->s,
+			((hentity_t*)(*ps->param))->pres_uri->s,
+			((hentity_t*)(*ps->param))->pres_uri->len);
+	presentity->pres_uri->len= 
+		((hentity_t*)(*ps->param))->pres_uri->len;
+	size+= ((hentity_t*)(*ps->param))->pres_uri->len;
+	presentity->etag.s= (char*)presentity+ size;
+	memcpy(presentity->etag.s, etag.s, etag.len);
+	presentity->etag.len= etag.len;
+	size+= etag.len;
+
+	presentity->tuple_id.s= (char*)presentity+ size;
+	memcpy(presentity->tuple_id.s,
+			((hentity_t*)(*ps->param))->tuple_id.s,
+			((hentity_t*)(*ps->param))->tuple_id.len);
+	presentity->tuple_id.len= ((hentity_t*)(*ps->param))->tuple_id.len;
+	size+= presentity->tuple_id.len;
+
+	presentity->id.s=(char*)presentity+ size;
+	memcpy(presentity->id.s, ((hentity_t*)(*ps->param))->id.s, 
+			((hentity_t*)(*ps->param))->id.len);
+	presentity->id.len= ((hentity_t*)(*ps->param))->id.len; 
+	size+= presentity->id.len;
+		
+	presentity->expires= lexpire +(int)time(NULL);
+	presentity->flag|= ((hentity_t*)(*ps->param))->flag;
+	presentity->db_flag|= INSERTDB_FLAG;
+
+	insert_htable( presentity, HashT);
+	DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		
+		
 
 done:
 	if(*ps->param)
