@@ -89,6 +89,8 @@ static int fixup_str2int( void** param, int param_no);
 static int fixup_phostport2proxy(void** param, int param_no);
 static int fixup_str2regexp(void** param, int param_no);
 static int fixup_local_replied(void** param, int param_no);
+static int fixup_t_relay1(void** param, int param_no);
+static int fixup_t_relay2(void** param, int param_no);
 
 
 /* init functions */
@@ -102,7 +104,7 @@ inline static int w_t_release(struct sip_msg* msg, char* , char* );
 inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* ,char* );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* , char* );
 inline static int w_t_reply(struct sip_msg *msg, char* code, char* text);
-inline static int w_t_relay(struct sip_msg *p_msg , char *proxy, char* );
+inline static int w_t_relay(struct sip_msg *p_msg , char *proxy, char* flags);
 inline static int w_t_replicate(struct sip_msg *p_msg, char *dst,char* );
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* proxy, char* );
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char* );
@@ -150,13 +152,17 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_replicate",          w_t_replicate,           1, fixup_str,
 			REQUEST_ROUTE},
+	{"t_replicate",          w_t_replicate,           2, fixup_str,
+			REQUEST_ROUTE},
 	{"t_relay",              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay",              w_t_relay,               1,fixup_phostport2proxy,
+	{"t_relay",              w_t_relay,               1, fixup_t_relay1,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_relay",              w_t_relay,               2, fixup_t_relay2,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_forward_nonack",     w_t_forward_nonack,      0, 0,
 			REQUEST_ROUTE},
-	{"t_forward_nonack",     w_t_forward_nonack,      1,fixup_phostport2proxy,
+	{"t_forward_nonack",     w_t_forward_nonack,      1, fixup_phostport2proxy,
 			REQUEST_ROUTE},
 	{"t_on_failure",         w_t_on_negative,         1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
@@ -359,6 +365,56 @@ static int fixup_phostport2proxy(void** param, int param_no)
 		return ser_error;
 	}
 	*(param)=proxy;
+	return 0;
+}
+
+static int flag_fixup(void** param, int param_no)
+{
+	unsigned int flags;
+	str s;
+
+	if (param_no == 1) {
+		s.s = (char*)*param;
+		s.len = strlen(s.s);
+		if ( strno2int(&s, &flags )<0 ) {
+			return -1;
+		}
+		pkg_free(*param);
+		*param = (void*)(unsigned long int)(flags<<1);
+	}
+	return 0;
+}
+
+
+static int fixup_t_relay1(void** param, int param_no)
+{
+	if (flag_fixup( param, 1)==0) {
+		/* param is flag -> move it as second param */
+		*(param+1) = *param;
+		*param = 0;
+		return 0;
+	} else if (fixup_phostport2proxy( param, 1)==0 ) {
+		/* param is OBP -> nothing else to do */
+		return 0;
+	} else {
+		LOG(L_ERR,"ERROR:TM:fixup_t_relay1: param is neither flag, nor OBP "
+			"<%s>\n",(char *)(*param));
+		return E_CFG;
+	}
+}
+
+
+static int fixup_t_relay2(void** param, int param_no)
+{
+	if (param_no==1) {
+		return fixup_phostport2proxy( param, param_no);
+	} else if (param_no==2) {
+		if (flag_fixup( param, 1)!=0) {
+			LOG(L_ERR, "ERROR:TM:fixup_t_relay2: bad flags <%s>\n",
+				(char *)(*param));
+			return E_CFG;
+		}
+	}
 	return 0;
 }
 
@@ -967,7 +1023,7 @@ inline static int w_t_replicate(struct sip_msg *p_msg, char *dst, char *_bar)
 }
 
 
-inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *foo)
+inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 {
 	struct cell *t;
 
@@ -986,7 +1042,7 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *foo)
 
 	if (route_type==REQUEST_ROUTE) {
 		return t_relay_to( p_msg, (struct proxy_l *)proxy,
-			0 /* no replication */ );
+			(int)(long)flags /* no replication */ );
 	}
 
 	LOG(L_CRIT, "ERROR:tm:w_t_relay: unsupported route type: %d\n",

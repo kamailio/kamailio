@@ -58,8 +58,8 @@ Bogdan-Andrei Iancu
 
               1.4.1. t_newtran()
               1.4.2. t_lookup_request()
-              1.4.3. t_relay(proto:host:port),
-              1.4.4. t_relay()
+              1.4.3. t_relay([flags])
+              1.4.4. t_relay(proto:host:port,[flags]),
               1.4.5. t_forward_nonack()
                       t_forward_nonack(proto:host:port)
 
@@ -149,14 +149,10 @@ Chapter 1. User's Guide
    in more processes blocked by DNS resolution. The price is more
    memory consumption and higher processing latency.
 
-   From user's perspective, there are these major functions :
-   t_relay, t_relay_to_udp and t_relay_to_tcp. All of them setup
-   transaction state, absorb retransmissions from upstream,
+   From user's perspective, the major function is t_relay(). It
+   setup transaction state, absorb retransmissions from upstream,
    generate downstream retransmissions and correlate replies to
-   requests. t_relay forwards to current URI; (be it original
-   request's URI or a URI changed by some of URI-modifying
-   functions, such as sethost). t_relay_to_udp and t_relay_to_tcp
-   forward to a specific address over UDP or TCP respectively.
+   requests.
 
    In general, if TM is used, it copies clones of received SIP
    messages in shared memory. That costs the memory and also CPU
@@ -579,22 +575,7 @@ if (t_lookup_request()) {
 ...
      _________________________________________________________
 
-1.4.3. t_relay(proto:host:port),
-
-   Relay a message statefully to a fixed destination. The
-   destination is specified as "[proto:]host[:port]".
-
-   This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-
-   Example 1-22. t_relay usage
-...
-t_relay("tcp:192.168.1.10:5060");
-t_relay("mydomain.com:5070");
-t_relay("udp:mydomain.com");
-...
-     _________________________________________________________
-
-1.4.4. t_relay()
+1.4.3. t_relay([flags])
 
    Relay a message statefully to destination indicated in current
    URI. (If the original URI was rewritten by UsrLoc, RR,
@@ -603,11 +584,44 @@ t_relay("udp:mydomain.com");
    negative reply upstream statelessly not to leave upstream UAC
    in lurch.
 
+   The function may take as parameter an optional set of flags
+   for controlling the internal behaviour. The flags may be given
+   in decimal or hexa format; supported flags are:
+
+     * 0x01 - do not generate an 100 trying provisional reply
+       before relay. By default one is generated. Useful if you
+       already pushed an stateless 100 reply from script.
+     * 0x02 - do not internally send a negative reply in case of
+       failure. By default one is sent. Useful if you want to
+       implement a serial forking in case of failure.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1-22. t_relay usage
+...
+if (!t_relay()) {
+    sl_reply_error();
+    exit;
+}
+...
+     _________________________________________________________
+
+1.4.4. t_relay(proto:host:port,[flags]),
+
+   Relay a message statefully to a fixed destination. The
+   destination is specified as "[proto:]host[:port]".
+
+   The function may take as parameter an optional set of flags
+   for controlling the internal behaviour - for details see the
+   above "t_relay([flags])" function.
+
+   This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-23. t_relay usage
 ...
-if (!t_relay()) { sl_reply_error(); break; };
+t_relay("tcp:192.168.1.10:5060");
+t_relay("mydomain.com:5070","0x1");
+t_relay("udp:mydomain.com");
 ...
      _________________________________________________________
 

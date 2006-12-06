@@ -1276,10 +1276,12 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	LOCK_HASH(hash_index);
 
 	/* all the transactions from the entry are compared */
-	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
-	  p_cell; p_cell = p_cell->next_cell ) {
+	p_cell = get_tm_table()->entrys[hash_index].first_cell;
+	for ( ; p_cell; p_cell = p_cell->next_cell ) {
 
 		/* compare complete header fields, casecmp to make sure invite=INVITE */
+		DBG(" <%.*s>  <%.*s>\n", p_cell->callid.len, p_cell->callid.s,
+			p_cell->cseq_n.len,p_cell->cseq_n.s);
 		if ( (strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
 			&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len) == 0) ) {
 			DBG("DEBUG:tm:t_lookup_callid: we have a match: "

@@ -62,6 +62,8 @@ static int     fr_inv_timer_avp_type = 0;
 static int_str fr_inv_timer_avp = (int_str)0;
 static str     fr_inv_timer_str;
 
+static str relay_reason_100 = str_init("Giving a try");
+
 
 
 /* ----------------------------------------------------- */
@@ -187,15 +189,13 @@ static int kill_transaction( struct cell *trans )
 
 
 
-int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
+int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int flags)
 {
 	int ret;
 	int new_tran;
 	str *uri;
 	int reply_ret;
-	/* struct hdr_field *hdr; */
 	struct cell *t;
-	str reason;
 
 	ret=0;
 
@@ -242,26 +242,21 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 	/* if replication flag is set, mark the transaction as local
 	   so that replies will not be relaied */
 	t=get_t();
-	if (replicate) t->flags|=T_IS_LOCAL_FLAG;
+	if (flags&TM_T_REPLY_repl_FLAG) t->flags|=T_IS_LOCAL_FLAG;
 
 	/* INVITE processing might take long, particularly because of DNS
 	   look-ups -- let upstream know we're working on it */
-	if (p_msg->REQ_METHOD==METHOD_INVITE )
-	{
-		DBG("DEBUG:tm:t_relay: new INVITE\n");
-		reason.s = "Giving a try";
-		reason.len = 12;
-		t_reply( t, p_msg , 100 , &reason);
-	}
+	if ( p_msg->REQ_METHOD==METHOD_INVITE && !(flags&TM_T_REPLY_no100_FLAG) )
+		t_reply( t, p_msg , 100 , &relay_reason_100);
 
 	/* now go ahead and forward ... */
 	ret=t_forward_nonack( t, p_msg, proxy);
 	if (ret<=0) {
-		DBG( "ERROR:tm:t_relay_to:  t_forward_nonack returned error \n");
+		DBG( "ERROR:tm:t_relay_to: t_forward_nonack returned error \n");
 		/* we don't want to pass upstream any reply regarding replicating
 		 * a request; replicated branch must stop at us*/
-		if (!replicate) {
-			reply_ret=kill_transaction( t );
+		if (!(flags&(TM_T_REPLY_repl_FLAG|TM_T_REPLY_noerr_FLAG))) {
+			reply_ret = kill_transaction( t );
 			if (reply_ret>0) {
 				/* we have taken care of all -- do nothing in
 				script */
@@ -274,7 +269,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 			}
 		}
 	} else {
-		DBG( "SER: new transaction fwd'ed\n");
+		DBG( "DEBUG:tm:t_relay_to: new transaction fwd'ed\n");
 	}
 
 done:

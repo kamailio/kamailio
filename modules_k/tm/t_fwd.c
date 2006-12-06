@@ -737,5 +737,5 @@ int t_replicate(struct sip_msg *p_msg, str *dst)
 		return -1;
 	}
 
-	return t_relay_to( p_msg, 0, 1/* replicate */);
+	return t_relay_to( p_msg, 0, TM_T_REPLY_repl_FLAG);
 }

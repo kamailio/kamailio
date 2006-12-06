@@ -69,6 +69,11 @@ extern int noisy_ctimer;
 #define FR_TIMER_AVP      "s:callee_fr_timer"
 #define FR_INV_TIMER_AVP  "s:callee_fr_inv_timer"
 
+/* t_reply_to flags */
+#define TM_T_REPLY_repl_FLAG    (1<<0)
+#define TM_T_REPLY_no100_FLAG   (1<<1)
+#define TM_T_REPLY_noerr_FLAG   (1<<2)
+
 
 /* send a private buffer: utilize a retransmission structure
    but take a separate buffer not referred by it; healthy
