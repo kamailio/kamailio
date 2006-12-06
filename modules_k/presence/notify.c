@@ -70,6 +70,7 @@ void printf_subs(subs_t* subs)
 
 }
 
+#if 0
 void PRINT_DLG(FILE* out, dlg_t* _d)
 {
 	fprintf(out, "====dlg_t===\n");
@@ -86,7 +87,6 @@ void PRINT_DLG(FILE* out, dlg_t* _d)
 	fprintf(out, "rem_uri       : '%.*s'\n", _d->rem_uri.len, _d->rem_uri.s);
 	fprintf(out, "rem_target    : '%.*s'\n", _d->rem_target.len, 
 			_d->rem_target.s);
-	fprintf(out, "secure:       : %d\n", _d->secure);
 	fprintf(out, "state         : ");
 	switch(_d->state) {
 	case DLG_NEW:       fprintf(out, "DLG_NEW\n");       break;
@@ -110,7 +110,7 @@ void PRINT_DLG(FILE* out, dlg_t* _d)
 	
 	fprintf(out, "====dlg_t====\n");
 }
-
+#endif
 
 
 str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
@@ -1425,10 +1425,11 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 		LOG(L_ERR, "+++++++++++++++++++++++++++++++++++++++\n");
 		printf_subs(cb_param->wi_subs);
 	}
-	
+#if 0	
 	DBG("dlg_t:\n");
 	PRINT_DLG(stdout,td);
 	DBG("\n");
+#endif
 	if(final_body != NULL)
 		DBG("body :\n:%.*s\n", final_body->len, final_body->s);	
 			
