@@ -200,14 +200,18 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		goto error2;
 	}
 
+	/* pass the transaction flags from dialog to transaction */
+	new_cell->flags |= dialog->T_flags;
+
 	/* better reset avp list now - anyhow, it's useless from
 	 * this point (bogdan) */
 	reset_avps();
 
 	/* add the callback the the transaction for LOCAL_COMPLETED event */
 	flags = TMCB_LOCAL_COMPLETED;
-	/* Add also TMCB_LOCAL_REPLY_OUT if provisional replies are desired */
-	if (pass_provisional_replies) flags |= TMCB_LOCAL_RESPONSE_OUT;
+	/* Add also TMCB_LOCAL_RESPONSE_OUT if provisional replies are desired */
+	if (pass_provisional_replies || pass_provisional(new_cell))
+		flags |= TMCB_LOCAL_RESPONSE_OUT;
 	if(cb && insert_tmcb(&(new_cell->tmcb_hl),flags,cb,cbp)!=1){
 		ret=E_OUT_OF_MEM;
 		LOG(L_ERR, "t_uac: short of tmcb shmem\n");

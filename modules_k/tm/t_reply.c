@@ -1164,13 +1164,11 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	if ( local_winner >= 0 ) {
 		if (winning_code < 200) {
-			if ( pass_provisional_replies ) {
-				if (!totag_retr && has_tran_tmcbs(t,TMCB_LOCAL_RESPONSE_OUT)) {
-					DBG("DEBUG: Passing provisional reply %d to FIFO "
-						"application\n", winning_code);
-					run_trans_callbacks( TMCB_LOCAL_RESPONSE_OUT, t, 0,
-						winning_msg, winning_code);
-				}
+			if (!totag_retr && has_tran_tmcbs(t,TMCB_LOCAL_RESPONSE_OUT)) {
+				DBG("DEBUG: Passing provisional reply %d to FIFO "
+					"application\n", winning_code);
+				run_trans_callbacks( TMCB_LOCAL_RESPONSE_OUT, t, 0,
+					winning_msg, winning_code);
 			}
 		} else {
 			DBG("DEBUG:tm:local_reply: local transaction completed\n");
@@ -1254,11 +1252,11 @@ int reply_received( struct sip_msg  *p_msg )
 	/* acknowledge negative INVITE replies (do it before detailed
 	 * on_reply processing, which may take very long, like if it
 	 * is attempted to establish a TCP connection to a fail-over dst */
-	if (is_invite(t) &&
-	((msg_status >= 300) || (is_local(t) && msg_status >= 200) )) {
+	if (is_invite(t) && ((msg_status >= 300) ||
+	(is_local(t) && !no_autoack(t) && msg_status >= 200) )) {
 		if (send_ack(p_msg, t, branch)!=0)
-			LOG(L_ERR, "ERROR:tm:reply_received: failed to send ACK (local=%s)\n",
-				is_local(t)?"yes":"no");
+			LOG(L_ERR, "ERROR:tm:reply_received: failed to send ACK "
+				"(local=%s)\n", is_local(t)?"yes":"no");
 	}
 
 	/* processing of on_reply block */

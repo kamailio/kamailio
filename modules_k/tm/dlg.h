@@ -91,7 +91,7 @@ typedef struct dlg {
 	str loc_uri;            /* Local URI */
 	str rem_uri;            /* Remote URI */
 	str rem_target;         /* Remote target URI */
-	unsigned char secure;   /* Secure flag -- currently not used */
+	unsigned int T_flags;   /* Flags to be passed to transaction */
 	dlg_state_t state;      /* State of the dialog */
 	rr_t* route_set;        /* Route set */
 	dlg_hooks_t hooks;      /* Various hooks used to store information that

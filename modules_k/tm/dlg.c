@@ -929,7 +929,6 @@ void print_dlg(FILE* out, dlg_t* _d)
 	fprintf(out, "loc_uri       : '%.*s'\n", _d->loc_uri.len, _d->loc_uri.s);
 	fprintf(out, "rem_uri       : '%.*s'\n", _d->rem_uri.len, _d->rem_uri.s);
 	fprintf(out, "rem_target    : '%.*s'\n", _d->rem_target.len, _d->rem_target.s);
-	fprintf(out, "secure:       : %d\n", _d->secure);
 	fprintf(out, "state         : ");
 	switch(_d->state) {
 	case DLG_NEW:       fprintf(out, "DLG_NEW\n");       break;
