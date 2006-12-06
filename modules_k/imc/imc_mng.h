@@ -37,19 +37,11 @@
 #include "../../str.h"
 #include "../../parser/parse_from.h"
 
-#define IMC_CMD_MAX_PARAM   5
-typedef struct _imc_cmd
-{
-	str name;
-	str param[IMC_CMD_MAX_PARAM];
-} imc_cmd_t, *imc_cmd_p;
-
-int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd);
-
 #define IMC_MEMBER_OWNER	1<<0
 #define IMC_MEMBER_ADMIN	1<<1
 #define IMC_MEMBER_INVITED	1<<2
 #define IMC_MEMBER_DELETED  1<<3
+#define IMC_MEMBER_SKIP     1<<4
 
 typedef struct _imc_member
 {
@@ -58,7 +50,6 @@ typedef struct _imc_member
 	str user;
 	str domain;
 	int flags;
-	str inviting_muri ;
 	struct _imc_member * next;
 	struct _imc_member * prev;
 } imc_member_t, *imc_member_p;

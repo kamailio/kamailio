@@ -248,7 +248,8 @@ int imc_del_room(str* name, str* domain)
 	hashid = core_case_hash(name, domain, 0);
 	
 	hidx = imc_get_hentry(hashid, imc_hash_size);
-
+	
+	lock_get(&_imc_htable[hidx].lock);
 	irp = _imc_htable[hidx].rooms;
 	while(irp)
 	{
@@ -418,70 +419,4 @@ int imc_del_member(imc_room_p room, str* user, str* domain)
 	return 0;
 }
 
-/**
- * parse cmd
- */
-int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
-{
-	char *p;
-	int i;
-	if(buf==NULL || len<=0 || cmd==NULL)
-	{
-		LOG(L_ERR, "imc:imc_parse_cmd:ERROR Invalid parameters\n");
-		return -1;
-	}
-
-	memset(cmd, 0, sizeof(imc_cmd_t));
-	if(buf[0]!=imc_cmd_start_char)
-	{
-		LOG(L_ERR, "imc:imc_parse_cmd:ERROR Invalid command [%.*s]\n", len, buf);
-		return -1;
-	}
-	p = &buf[1];
-	cmd->name.s = p;
-	while(*p && p<buf+len)
-	{
-		if(*p==' ' || *p=='\t' || *p=='\r' || *p=='\n')
-			break;
-		p++;
-	}
-	if(cmd->name.s == p)
-	{
-		LOG(L_ERR, "imc:imc_parse_cmd:ERROR no command in [%.*s]\n", len, buf);
-		return -1;
-	}
-	cmd->name.len = p - cmd->name.s;
-	if(*p=='\0' || p>=buf+len)
-		goto done;
-	
-	i=0;
-	do {
-		while(p<buf+len && (*p==' ' || *p=='\t'))
-			p++;
-		if(p>=buf+len || *p=='\0' || *p=='\r' || *p=='\n')
-			goto done;
-		cmd->param[i].s = p;
-		while(p<buf+len)
-		{
-			if(*p=='\0' || *p==' ' || *p=='\t' || *p=='\r' || *p=='\n')
-				break;
-			p++;
-		}
-		cmd->param[i].len =  p - cmd->param[i].s;
-		i++;
-		if(i>=IMC_CMD_MAX_PARAM)
-			break;
-	} while(1);
-	
-done:
-	DBG("imc:imc_parse_cmd: command: [%.*s]\n", cmd->name.len, cmd->name.s);
-	for(i=0; i<IMC_CMD_MAX_PARAM; i++)
-	{
-		if(cmd->param[i].len<=0)
-			break;
-		DBG("imc:imc_parse_cmd: parameter %d=[%.*s]\n", i, cmd->param[i].len,
-				cmd->param[i].s);
-	}
-	return 0;
-}
 
