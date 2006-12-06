@@ -117,8 +117,9 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
 						1, 3, 0, &result )< 0)
 	{
-		LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while querying database"
-				" for expired messages\n");
+		LOG(L_ERR,
+			"PRESENCE:msg_presentity_clean: ERROR while querying database"
+			" for expired messages\n");
 		return;
 	}
 	if(result->n<= 0)

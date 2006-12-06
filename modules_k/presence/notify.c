@@ -736,12 +736,13 @@ DBG("**************************In get_subs_dialog ***************\n\n");
 
 	}
 	
-	subs_array = (subs_t**)pkg_malloc(res->n * sizeof( subs_t*));
+	subs_array = (subs_t**)pkg_malloc(res->n*sizeof(subs_t*));
 	if(subs_array == NULL)
 	{
 		LOG(L_ERR,"PRESENCE: get_subs_dialog: ERROR while allocating memory\n");
 		return NULL;
 	}
+	memset(subs_array, 0, res->n*sizeof(subs_t*));
 	
 	for(i=0; i<res->n; i++)
 	{
@@ -755,7 +756,7 @@ DBG("**************************In get_subs_dialog ***************\n\n");
 					" memory\n");
 			return NULL;
 		}	
-		memset(subs_array[i], sizeof(subs_t), 0);
+		memset(subs_array[i], 0, sizeof(subs_t));
 		subs_array[i]->to_user.s = p_user->s;
 		subs_array[i]->to_user.len = p_user->len;
 
@@ -1293,7 +1294,6 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 	
 	}
 	
-			
 	if(n_body!= NULL && strncmp( subs->status.s, "active", 6) == 0 )
 		notify_body = n_body;
 	else
@@ -1318,8 +1318,8 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 			}
 			else
 			{
-				if(strncmp(subs->status.s, "active", 6) == 0 &&subs->reason.s&& 
-					strncmp( subs->reason.s, "polite-block", 12) == 0 )
+				if(strncmp(subs->status.s, "active", 6)==0 && subs->reason.s
+					&& strncmp(subs->reason.s, "polite-block", 12)==0)
 				{
 					notify_body = build_off_nbody(subs->to_user,subs->to_domain,
 							NULL);
