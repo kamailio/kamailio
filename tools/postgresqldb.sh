@@ -738,19 +738,42 @@ INSERT INTO version VALUES ( 'admin_privileges', '1');
 
 /*
  * Extend table 'subscriber' with serweb specific columns
+ * It would be easier to drop the table and create a new one,
+ * but in case someone want to add serweb and has already
+ * a populated subscriber table, we show here how this
+ * can be done without deleting the existing data.
+ * Tested with postgres 7.4.7
  */
-ALTER TABLE subscriber
-  ADD COLUMN phplib_id varchar(32) NOT NULL default '',
-  ADD COLUMN phone varchar(15) NOT NULL default '',
-  ADD COLUMN datetime_modified $TIMESTAMP,
-  ADD COLUMN confirmation varchar(64) NOT NULL default '',
-  ADD COLUMN flag char(1) NOT NULL default 'o',
-  ADD COLUMN sendnotification varchar(50) NOT NULL default '',
-  ADD COLUMN greeting varchar(50) NOT NULL default '',
-  ADD COLUMN allow_find char(1) NOT NULL default '0',
-  ADD CONSTRAINT phplib_id_key unique (phplib_id)
-;
+ALTER TABLE subscriber ADD COLUMN phplib_id varchar(32);
+ALTER TABLE subscriber ADD COLUMN phone varchar(15);
+ALTER TABLE subscriber ADD COLUMN datetime_modified timestamp;
+ALTER TABLE subscriber ADD COLUMN confirmation varchar(64);
+ALTER TABLE subscriber ADD COLUMN flag char(1);
+ALTER TABLE subscriber ADD COLUMN sendnotification varchar(50);
+ALTER TABLE subscriber ADD COLUMN greeting varchar(50);
+ALTER TABLE subscriber ADD COLUMN allow_find char(1);
+ALTER TABLE subscriber ADD CONSTRAINT phplib_id_key unique (phplib_id);
 
+ALTER TABLE subscriber ALTER phplib_id SET NOT NULL;
+ALTER TABLE subscriber ALTER phplib_id SET DEFAULT '';
+ALTER TABLE subscriber ALTER phone SET NOT NULL;
+ALTER TABLE subscriber ALTER phone SET DEFAULT '';
+ALTER TABLE subscriber ALTER datetime_modified SET NOT NULL;
+ALTER TABLE subscriber ALTER datetime_modified SET DEFAULT NOW();
+ALTER TABLE subscriber ALTER confirmation SET NOT NULL;
+ALTER TABLE subscriber ALTER confirmation SET DEFAULT '';
+ALTER TABLE subscriber ALTER flag SET NOT NULL;
+ALTER TABLE subscriber ALTER flag SET DEFAULT 'o';
+ALTER TABLE subscriber ALTER sendnotification SET NOT NULL;
+ALTER TABLE subscriber ALTER sendnotification SET DEFAULT '';
+ALTER TABLE subscriber ALTER greeting SET NOT NULL;
+ALTER TABLE subscriber ALTER greeting SET DEFAULT '';
+ALTER TABLE subscriber ALTER allow_find SET NOT NULL;
+ALTER TABLE subscriber ALTER allow_find SET DEFAULT '0';
+
+UPDATE subscriber SET phplib_id = DEFAULT, phone = DEFAULT, datetime_modified = DEFAULT, 
+                      confirmation = DEFAULT, flag = DEFAULT, sendnotification = DEFAULT, 
+                      greeting = DEFAULT, allow_find = DEFAULT ;
 
 /*
  * Table structure for table 'active_sessions' -- web stuff
@@ -883,6 +906,21 @@ $INITIAL_INSERT
 $GRANT_SERWEB_CMD
 
 EOF
+
+	if [ $? -eq 0 ] ; then
+		echo "...serweb tables created"
+		echo ""
+		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+		echo "!                                                 !"
+		echo "! NOTE: There was a default admin user created:   !"
+		echo "!    username: admin@$SIP_DOMAIN "
+		echo "!    password: $DEFAULT_PW       "
+		echo "!                                                 !"
+		echo "! Please change this password or remove this user !"
+		echo "! from the subscriber and admin_privileges table. !"
+		echo "!                                                 !"
+		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	fi
 
 }  # end serweb_create
 

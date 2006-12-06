@@ -831,6 +831,22 @@ CREATE TABLE admin_privileges (
 $INITIAL_INSERT
 EOF
 
+
+	if [ $? -eq 0 ] ; then
+		echo "...serweb tables created"
+		echo ""
+		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+		echo "!                                                 !"
+		echo "! NOTE: There was a default admin user created:   !"
+		echo "!    username: admin@$SIP_DOMAIN "
+		echo "!    password: $DEFAULT_PW       "
+		echo "!                                                 !"
+		echo "! Please change this password or remove this user !"
+		echo "! from the subscriber and admin_privileges table. !"
+		echo "!                                                 !"
+		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	fi
+
 }  # end serweb_create
 
 
