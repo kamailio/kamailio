@@ -61,10 +61,11 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	pres_uri = node->value;
 	if(pres_uri.s == NULL || pres_uri.s== 0)
 	{
-		if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
-		{
-			LOG(L_ERR, "pua_mi: pua_mi_publish: bad uri\n");	
-		}
+		return init_mi_tree(404, "Bad uri", 7);
+	}
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
+	{
+		LOG(L_ERR, "pua_mi: pua_mi_publish: bad uri\n");	
 		return init_mi_tree(404, "Bad uri", 7);
 	}
 
@@ -102,12 +103,14 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		body= node->value;
 		if(body.s == NULL || body.s== 0)
 		{
-			if(xmlParseMemory(body.s, body.len)== 0)
-			{
-				LOG(L_ERR, "pua_mi: pua_mi_publish: bad body\n");	
-			}
 			return init_mi_tree(400, "Bad body", 8);
 		}
+		if(xmlParseMemory(body.s, body.len)== 0)
+		{
+			LOG(L_ERR, "pua_mi: pua_mi_publish: bad body\n");	
+			return init_mi_tree(400, "Bad body", 8);
+		}
+
 	}
 
 	/* creating the publ_info_t structure */
@@ -195,10 +198,11 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	pres_uri= node->value;
 	if(pres_uri.s == NULL || pres_uri.s== 0)
 	{
-		if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
-		{
-			LOG(L_ERR, "pua_mi:mi_pua_subscribe: ERROR bad uri\n");	
-		}
+		return init_mi_tree(400, "Bad uri", 7);
+	}
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
+	{
+		LOG(L_ERR, "pua_mi:mi_pua_subscribe: ERROR bad uri\n");	
 		return init_mi_tree(400, "Bad uri", 7);
 	}
 
@@ -209,10 +213,11 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	watcher_uri= node->value;
 	if(watcher_uri.s == NULL || watcher_uri.s== 0)
 	{
-		if(parse_uri(watcher_uri.s, watcher_uri.len, &uri)<0 )
-		{
-			LOG(L_ERR, "pua_mi:pua_mi_subscribe: ERROR bad uri\n");	
-		}
+		return init_mi_tree(400, "Bad uri", 7);
+	}
+	if(parse_uri(watcher_uri.s, watcher_uri.len, &uri)<0 )
+	{
+		LOG(L_ERR, "pua_mi:pua_mi_subscribe: ERROR bad uri\n");	
 		return init_mi_tree(400, "Bad uri", 7);
 	}
 
