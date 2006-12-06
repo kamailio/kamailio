@@ -40,7 +40,9 @@
 
 
 static str su_200_rpl  = str_init("OK");
-
+static str pu_481_rpl  = str_init("Subscription does not exist");
+static str pu_400_rpl  = str_init("Bad request");
+static str pu_489_rpl  = str_init("Bad Event");
 
 int process_rr(	struct hdr_field *i_route, str *o_route)
 {
@@ -164,7 +166,6 @@ int send_200ok(struct sip_msg * msg, int lexpire)
 
 int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 {	
-	
 	if( !use_db )
 		return 0;
 	DBG("***************update_subscribtion:\n");
@@ -278,8 +279,8 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion: The query returned"
 						" no result\n");
-							
-				if (sl_reply(msg, (char*)481, "Subscribtion does not exist") == -1)
+				
+				if (sl_reply(msg, (char*)481, (char*)&pu_481_rpl) == -1)
 				{
 					LOG(L_ERR, "Pprintf_subs(subs);	RESENCE: update_subscribtion: ERROR while"
 							" sending reply\n");
@@ -636,7 +637,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing headers\n");
 
-		if (sl_reply(msg, (char*)400, "Bad Request") == -1)
+		if (sl_reply(msg, (char*)400, (char*)&pu_400_rpl) == -1)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
 					" 400 reply\n");
@@ -653,7 +654,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "PRESENCE: handle_subscribe:Missing or unsupported event"
 				" header field value\n");
 
-		if (sl_reply(msg, (char*)489, "Bad Event") == -1)
+		if (sl_reply(msg, (char*)489, (char*)&pu_489_rpl) == -1)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
 					" reply\n");
