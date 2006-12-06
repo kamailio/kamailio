@@ -49,7 +49,7 @@
 MODULE_VERSION
 
 str default_domain= {NULL, 0};
-int pua_ul_publish= 1;
+int pua_ul_publish= 0;
 pua_api_t pua;
 
 /* Structure containing pointers to usrloc functions */
