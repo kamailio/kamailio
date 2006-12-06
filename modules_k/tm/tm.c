@@ -81,6 +81,8 @@ MODULE_VERSION
 /* item functions */
 static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
 		xl_param_t *param, int flags);
+static int it_get_tm_reply_code(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags);
 
 /* fixup functions */
 static int fixup_t_send_reply(void** param, int param_no);
@@ -259,6 +261,7 @@ static stat_export_t mod_stats[] = {
  */
 static item_export_t mod_items[] = {
 	{ "T_branch_idx", it_get_tm_branch_idx, 100, {{0, 0}, 0} },
+	{ "T_reply_code", it_get_tm_reply_code, 100, {{0, 0}, 0} },
 	{ 0, 0, 0, {{0, 0}, 0} }
 };
 
@@ -1074,4 +1077,55 @@ static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
 	return 0;
 }
 
+static int it_get_tm_reply_code(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags)
+{
+	struct cell *t;
+	int code;
+	int branch;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	/* first get the transaction */
+	if (t_check( msg , 0 )==-1) return -1;
+	if ( (t=get_t())==0) {
+		/* no T */
+		code = 0;
+	} else {
+		switch (route_type) {
+			case REQUEST_ROUTE:
+				/* use the status of the last sent reply */
+				code = t->uas.status;
+				break;
+			case ONREPLY_ROUTE:
+				/* use the status of the current reply */
+				code = msg->first_line.u.reply.statuscode;
+				break;
+			case FAILURE_ROUTE:
+				/* use the status of the winning reply */
+				if ( (branch=t_get_picked_branch())<0 ) {
+					LOG(L_CRIT,"BUG:tm:it_get_tm_reply_code: no picked "
+						"branch (%d) for a final response in MODE_ONFAILURE\n",
+						branch);
+					code = 0;
+				} else {
+					code = t->uac[branch].last_received;
+				}
+				break;
+			default:
+				LOG(L_ERR,"ERROR:tm:it_get_tm_reply_code: unsupported "
+					"route_type %d\n", route_type);
+				code = 0;
+		}
+	}
+
+	DBG("DEBUG:it_get_tm_reply_code: reply code is <%d>\n",code);
+
+	res->rs.s = int2str( code, &res->rs.len);
+
+	res->ri = code;
+	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	return 0;
+}
 

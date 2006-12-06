@@ -1256,6 +1256,15 @@ branch_route[1] {
 			is '0'.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+			<emphasis>$T_reply_code</emphasis> - the code of the reply, as 
+			follows: in request_route will be the last stateful sent reply;
+			in reply_route will be the current processed reply; in 
+			failure_route will be the negative winning reply. In case of 
+			no-reply or error, '0' value is returned.
+			</para>
+		</listitem>
 	</itemizedlist>
 	</section>
 </chapter>
