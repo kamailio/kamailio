@@ -294,8 +294,8 @@ static param_export_t params[] = {
  * Exported MI functions
  */
 static mi_export_t mi_cmds[] = {
-	{ MI_LCR_RELOAD,  mi_lcr_reload,   0,  mi_child_init },
-	{ MI_LCR_DUMP,    mi_lcr_dump,     0,  0 },
+	{ MI_LCR_RELOAD,  mi_lcr_reload,   0,  0,  mi_child_init },
+	{ MI_LCR_DUMP,    mi_lcr_dump,     0,  0,  0 },
 	{ 0, 0, 0, 0}
 };
 

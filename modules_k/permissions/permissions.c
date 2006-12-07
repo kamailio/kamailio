@@ -177,11 +177,11 @@ static param_export_t params[] = {
  * Exported MI functions
  */
 static mi_export_t mi_cmds[] = {
-	{ MI_TRUSTED_RELOAD,  mi_trusted_reload,  0,  mi_trusted_child_init },
-	{ MI_TRUSTED_DUMP,    mi_trusted_dump,    0,  0 },
-	{ MI_ADDRESS_RELOAD,  mi_address_reload,  0,  mi_addr_child_init },
-	{ MI_ADDRESS_DUMP,    mi_address_dump,    0,  0 },
-	{ MI_SUBNET_DUMP,     mi_subnet_dump,     0,  0 },
+	{ MI_TRUSTED_RELOAD,  mi_trusted_reload,  0,  0,  mi_trusted_child_init },
+	{ MI_TRUSTED_DUMP,    mi_trusted_dump,    0,  0,  0 },
+	{ MI_ADDRESS_RELOAD,  mi_address_reload,  0,  0,  mi_addr_child_init },
+	{ MI_ADDRESS_DUMP,    mi_address_dump,    0,  0,  0 },
+	{ MI_SUBNET_DUMP,     mi_subnet_dump,     0,  0,  0 },
 	{ 0, 0, 0, 0 }
 };
 

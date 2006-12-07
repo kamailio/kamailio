@@ -116,8 +116,8 @@ static param_export_t params[] = {
  * Exported MI functions
  */
 static mi_export_t mi_cmds[] = {
-	{ MI_DOMAIN_RELOAD,   mi_domain_reload,   0,  mi_child_init },
-	{ MI_DOMAIN_DUMP,     mi_domain_dump,     0,  0 },
+	{ MI_DOMAIN_RELOAD,   mi_domain_reload,   0,  0,  mi_child_init },
+	{ MI_DOMAIN_DUMP,     mi_domain_dump,     0,  0,  0 },
 	{ 0, 0, 0, 0}
 };
 

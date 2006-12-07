@@ -102,7 +102,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"db_url",				STR_PARAM, &db_url.s},
 	{"hash_size",			INT_PARAM, &imc_hash_size},
-	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str},	
+	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str},
 	{0,0,0}
 };
 
@@ -119,8 +119,8 @@ stat_export_t imc_stats[] = {
 #endif
 
 static mi_export_t mi_cmds[] = {
-	{ "imc_list_rooms",    imc_mi_list_rooms,    0,  0 },
-	{ "imc_list_members",  imc_mi_list_members,  0,  0 },
+	{ "imc_list_rooms",    imc_mi_list_rooms,    0,  0,  0 },
+	{ "imc_list_members",  imc_mi_list_members,  0,  0,  0 },
 	{ 0, 0, 0, 0}
 };
 

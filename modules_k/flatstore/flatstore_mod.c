@@ -93,7 +93,7 @@ static param_export_t params[] = {
  * Exported parameters
  */
 static mi_export_t mi_cmds[] = {
-	{ MI_FLAT_ROTATE, mi_flat_rotate_cmd,   0,  0 },
+	{ MI_FLAT_ROTATE, mi_flat_rotate_cmd,   0,  0,  0 },
 	{ 0, 0, 0, 0}
 };
 
