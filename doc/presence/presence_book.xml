@@ -15,7 +15,7 @@ http://www.sagehill.net/docbookxsl/ValidXinclude.htm -->
 	<include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="install.xml"/>
 <!--	<section><title>Presence modules</title> -->
-	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/pa/doc/pa.xml"/>
+	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/pa/doc/pa_incl.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/rls/doc/rls_incl.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/presence_b2b/doc/presence_b2b.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/xcap/doc/xcap.xml"/>
