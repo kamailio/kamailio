@@ -4,7 +4,7 @@
 
 ALL_PACKAGES = openser openser-mysql-module openser-postgres-module \
 	openser-jabber-module openser-cpl-module openser-radius-modules \
-	openser-unixodbc-module
+	openser-unixodbc-module openser-presence-modules openser-xmlrpc-module
 
 DEBVERSION:=$(shell head -n 1 debian/changelog \
                     | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
