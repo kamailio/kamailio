@@ -695,6 +695,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp
 
    Sets address group to be used in subsequent allow_address
    function calls to an unsigned integer value given as argument.
+   Argument can be an integer string or a pseudo variable.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -703,6 +704,8 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp
 
 // Set address group identifier to 1.
 set_address_group("1");
+// Set address group identifier to value of pseudo variable i:100.
+set_address_group("$avp(i:100)");
 ...
      _________________________________________________________
 

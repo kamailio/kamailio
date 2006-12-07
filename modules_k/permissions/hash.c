@@ -545,8 +545,6 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
 {
     unsigned int count, i, subnet;
 
-    LOG(L_INFO, "Looking for <%u, %x, %u>\n", grp, ip_addr, port);
-
     count = table[PERM_MAX_SUBNETS].grp;
 
     i = 0;

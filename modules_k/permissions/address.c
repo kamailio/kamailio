@@ -383,8 +383,37 @@ void clean_addresses(void)
  */
 int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
-    DBG("Setting addr_group to <%u>\n", (unsigned int)_addr_group);
-    addr_group = (unsigned int)_addr_group;
+    int_or_pvar_t *i_or_p;
+    xl_value_t xl_val;
+
+    i_or_p = (int_or_pvar_t *)_addr_group;
+
+    if (i_or_p->pvar) {
+	if (xl_get_spec_value(_msg, i_or_p->pvar, &xl_val, 0) == 0) {
+	    if (xl_val.flags & XL_VAL_INT) {
+		addr_group = xl_val.ri;
+	    } else if (xl_val.flags & XL_VAL_STR) {
+		if (str2int(&(xl_val.rs), &addr_group) == -1) {
+		    LOG(L_ERR, "set_address_group(): Error while "
+			"converting group string to int\n");
+		    return -1;
+		}
+	    } else {
+		LOG(L_ERR, "set_address_group(): Error while converting "
+		    "group string to int\n");
+		return -1;
+	    }
+	} else {
+	    LOG(L_ERR, "set_address_group(): cannot get pseudo variable "
+		"value\n");
+	    return -1;
+	}
+    } else {
+	addr_group = i_or_p->i;
+    }
+
+    DBG("Set addr_group to <%u>\n", addr_group);
+
     return 1;
 }
 
@@ -456,18 +485,49 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 /*
  * allow_source_address(group) equals to
  * set_address_group(group); allow_address("$si", "$sp");
- * but is faster.
+ * but is faster.  group can be an integer string or pseudo variable.
  */
 int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
-    unsigned int addr_group = (unsigned int)_addr_group;
+    int_or_pvar_t *i_or_p;
+    xl_value_t xl_val;
+    unsigned int group;
 
-    if (match_addr_hash_table(*addr_hash_table, addr_group,
+    i_or_p = (int_or_pvar_t *)_addr_group;
+
+    if (i_or_p->pvar) {
+	if (xl_get_spec_value(_msg, i_or_p->pvar, &xl_val, 0) == 0) {
+	    if (xl_val.flags & XL_VAL_INT) {
+		group = xl_val.ri;
+	    } else if (xl_val.flags & XL_VAL_STR) {
+		if (str2int(&(xl_val.rs), &group) == -1) {
+		    LOG(L_ERR, "allow_source_address(): Error while "
+			"converting group string to int\n");
+		    return -1;
+		}
+	    } else {
+		LOG(L_ERR, "allow_source_address(): Error while converting "
+		    "group string to int\n");
+		return -1;
+	    }
+	} else {
+	    LOG(L_ERR, "allow_source_address(): cannot get pseudo variable "
+		"value\n");
+	    return -1;
+	}
+    } else {
+	group = i_or_p->i;
+    }
+
+    DBG("allow_source_address(): looking for <%u, %x, %u>\n",
+	group, _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
+
+    if (match_addr_hash_table(*addr_hash_table, group,
 			      _msg->rcv.src_ip.u.addr32[0],
 			      _msg->rcv.src_port) == 1)
 	return 1;
     else
-	return match_subnet_table(*subnet_table, addr_group,
+	return match_subnet_table(*subnet_table, group,
 				  _msg->rcv.src_ip.u.addr32[0],
 				  _msg->rcv.src_port);
 }
