@@ -76,7 +76,7 @@
 		<title>Set <varname>default_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("default_domain", "default_domain", "siphub.net");
+modparam("default_domain", "default_domain", "openser.org");
 ...
 
 <section>
@@ -96,7 +96,7 @@ modparam("default_domain", "default_domain", "siphub.net");
 		<title><function>pua_set_publish</function> usage</title>
 	<programlisting format="linespecific">
 ...
-if(is_method("REGISTER") && from_uri=~"john@domain.net") 
+if(is_method("REGISTER") && from_uri=~"john@openser.org") 
 	pua_set_publish();		
 ...
 </programlisting>

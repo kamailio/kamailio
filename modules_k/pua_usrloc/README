@@ -74,7 +74,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set default_domain parameter
 ...
-modparam("default_domain", "default_domain", "siphub.net");
+modparam("default_domain", "default_domain", "openser.org");
 ...
      _________________________________________________________
 
