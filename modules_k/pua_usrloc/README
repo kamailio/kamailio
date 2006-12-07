@@ -88,7 +88,7 @@ modparam("default_domain", "default_domain", "openser.org");
 
    Example 1-2. pua_set_publish usage
 ...
-if(is_method("REGISTER") && from_uri=~"john@domain.net")
+if(is_method("REGISTER") && from_uri=~"john@openser.org")
         pua_set_publish();
 ...
      _________________________________________________________
