@@ -130,10 +130,6 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	DBG("PRESENCE:msg_presentity_clean: found n= %d expires messages\n ",
 			result->n);
 
-	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
-		LOG(L_ERR,"PRESENCE:msg_presentity_clean: ERROR cleaning expired"
-				" messages\n");
-
 	for(i = 0; i<result->n; i++)
 	{	
 		row = &result->rows[i];
@@ -151,6 +147,10 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 				domain.len, domain.s);
 		query_db_notify( &user, &domain, "presence", NULL, &etag);
 	}
+
+	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
+		LOG(L_ERR,"PRESENCE:msg_presentity_clean: ERROR cleaning expired"
+				" messages\n");
 
 	pa_dbf.free_result(pa_db, result);
 	
