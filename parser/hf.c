@@ -56,7 +56,10 @@
  */
 void clean_hdr_field(struct hdr_field* hf)
 {
+	void** h_parsed;
+	
 	if (hf->parsed){
+		h_parsed=&hf->parsed; /*strict aliasing warnings workarround */
 		switch(hf->type){
 		case HDR_VIA_T:
 			free_via_list(hf->parsed);
@@ -78,22 +81,22 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_SIPIFMATCH_T:
-			free_sipifmatch((str **)(&(hf->parsed)));
+			free_sipifmatch((str **)h_parsed);
 			break;
 
 		case HDR_CONTACT_T:
-			free_contact((contact_body_t**)(&(hf->parsed)));
+			free_contact((contact_body_t**)h_parsed);
 			break;
 
 		case HDR_MAXFORWARDS_T:
 			break;
 
 		case HDR_ROUTE_T:
-			free_rr((rr_t**)(&hf->parsed));
+			free_rr((rr_t**)h_parsed);
 			break;
 
 		case HDR_RECORDROUTE_T:
-			free_rr((rr_t**)(&hf->parsed));
+			free_rr((rr_t**)h_parsed);
 			break;
 
 		case HDR_CONTENTTYPE_T:
@@ -103,15 +106,15 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_AUTHORIZATION_T:
-			free_credentials((auth_body_t**)(&(hf->parsed)));
+			free_credentials((auth_body_t**)h_parsed);
 			break;
 
 		case HDR_EXPIRES_T:
-			free_expires((exp_body_t**)(&(hf->parsed)));
+			free_expires((exp_body_t**)h_parsed);
 			break;
 
 		case HDR_PROXYAUTH_T:
-			free_credentials((auth_body_t**)(&(hf->parsed)));
+			free_credentials((auth_body_t**)h_parsed);
 			break;
 
 		case HDR_SUPPORTED_T:
@@ -130,7 +133,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_EVENT_T:
-			free_event((event_t**)(&(hf->parsed)));
+			free_event((event_t**)h_parsed);
 			break;
 
 		case HDR_ACCEPT_T:
@@ -156,7 +159,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_CONTENTDISPOSITION_T:
-			free_disposition( ((struct disposition**)(&hf->parsed)) );
+			free_disposition( ((struct disposition**)h_parsed));
 			break;
 
 		case HDR_DIVERSION_T:
@@ -172,7 +175,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 		
 		case HDR_SUBSCRIPTION_STATE_T:
-			free_subscription_state((subscription_state_t**)(&hf->parsed));
+			free_subscription_state((subscription_state_t**)h_parsed);
 			break;
 
 		case HDR_SESSIONEXPIRES_T:
