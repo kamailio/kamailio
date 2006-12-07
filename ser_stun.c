@@ -103,7 +103,6 @@ int stun_process_msg(char* buf, unsigned len, struct receive_info* ri)
 	struct dest_info			dst;
 	struct stun_unknown_att*	unknown;
 	USHORT_T					error_code;
-	int ii;
 	 
 	memset(&msg_req, 0, sizeof(msg_req));
 	memset(&msg_res, 0, sizeof(msg_res));
