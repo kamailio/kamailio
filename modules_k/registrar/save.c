@@ -33,6 +33,8 @@
  * 2006-04-13 added tcp_persistent_flag for keeping the TCP connection as long
  *            as a TCP contact is registered (bogdan)
  * 2006-11-22 save_noreply and save_memory merged into save() (bogdan)
+ * 2006-11-28 Added statistic support for the number of accepted/rejected 
+ *            registrations. (Jeffrey Magder - SOMA Networks) 
  */
 
 
@@ -755,13 +757,18 @@ int save(struct sip_msg* _m, char* _d, char* _cflags)
 		if (add_contacts(_m, c, (udomain_t*)_d, &aor) < 0) goto error;
 	}
 
+	update_stat(accepted_registrations, 1);
+
 	if ( !is_cflag_set(REG_SAVE_NORPL_FL) && (send_reply(_m) < 0))
 		return -1;
 
 	return 1;
 error:
+	update_stat(rejected_registrations, 1);
+
 	if ( !is_cflag_set(REG_SAVE_NORPL_FL) )
 		send_reply(_m);
+
 	return 0;
 }
 

@@ -24,6 +24,8 @@
  * History:
  * --------
  *  2006-04-14  initial version (bogdan)
+ *  2006-11-28  Added statistic support for the number of early and failed
+ *              dialogs. (Jeffrey Magder - SOMA Networks) 
  */
 
 
@@ -68,6 +70,8 @@ int dlg_enable_stats = 1;
 stat_var *active_dlgs = 0;
 stat_var *processed_dlgs = 0;
 stat_var *expired_dlgs = 0;
+stat_var *failed_dlgs = 0;
+stat_var *early_dlgs  = 0;
 
 struct tm_binds d_tmb;
 struct rr_binds d_rrb;
@@ -95,8 +99,10 @@ static param_export_t mod_params[]={
 
 static stat_export_t mod_stats[] = {
 	{"active_dialogs" ,     STAT_NO_RESET,  &active_dlgs       },
+	{"early_dialogs",       STAT_NO_RESET,  &early_dlgs        },
 	{"processed_dialogs" ,  0,              &processed_dlgs    },
 	{"expired_dialogs" ,    0,              &expired_dlgs      },
+	{"failed_dialogs",      0,              &failed_dlgs       },
 	{0,0,0}
 };
 

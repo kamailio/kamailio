@@ -29,6 +29,9 @@
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
+ * 2006-11-28  Added support for tracking the number of early dialogs, and the
+ *             number of failed dialogs. This involved updates to dlg_onreply().
+ *             (Jeffrey Magder - SOMA Networks)
  */
 
 
@@ -58,9 +61,10 @@ extern struct rr_binds d_rrb;
 /* statistic variables */
 extern int dlg_enable_stats;
 extern stat_var *active_dlgs;
+extern stat_var *early_dlgs;
 extern stat_var *processed_dlgs;
 extern stat_var *expired_dlgs;
-
+extern stat_var *failed_dlgs;
 
 #define RR_DLG_PARAM_SIZE  (2*2*sizeof(int)+3+MAX_DLG_RR_PARAM_NAME)
 #define DLG_SEPARATOR      '.'
@@ -155,7 +159,25 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	if (param->code<200) {
 		DBG("DEBUG:dialog:dlg_onreply: dialog %p goes into Early state "
 			"with code %d\n", dlg, param->code);
+
+		/* We only want to update the 'early' statistics if this is the
+		* first provisional response. */
+		if (dlg->state != DLG_STATE_EARLY) {
+		
+			/* We have received a provisional response, so we are
+			* officially in an 'early state'.  Update the stats
+			* accordingly. */
+			if_update_stat(dlg_enable_stats, early_dlgs, 1);
+
+			/* We need to keep track of the number of 1xx responses.
+			* If there is at least one, we'll need to decrement the
+			* counter later when we get a 2xx response. */
+			dlg->num_100s++;
+
+		}
+
 		dlg->state = DLG_STATE_EARLY;
+
 		/* Early state, the message is immutable here */
 		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl);
 		return;
@@ -167,6 +189,15 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 
 	DBG("DEBUG:dialog:dlg_onreply: dialog %p confirmed\n",dlg);
+
+	/* We need to handle the case that the dialog received a provisional
+	 * response at some point, but then that there was an error at some
+	 * other point before the call could receive a 2xx response.  This means
+	 * we have to decrement the early_dlgs counter. */
+	if (dlg->state == DLG_STATE_EARLY && param->code >= 300) {
+		if_update_stat(dlg_enable_stats, early_dlgs, -1);
+	}
+
 	dlg->state = DLG_STATE_CONFIRMED;
 
 	if (param->code>=300) {
@@ -177,6 +208,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl);
 
 		unref_dlg(dlg,1,1);
+
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		return;
 	}
@@ -191,6 +223,26 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 			 * sent out */
 			dlg_set_totag( dlg, &tag);
 	}
+
+	
+	/* We have received a non-provisional response, so the dialog is no
+ 	 * longer in the early state.  However, we need to check two things:
+	 *
+	 * 1) We can get more than one 2xx response.  We only want to decrement
+	 *    for the first one.
+	 * 
+	 * 2) It is possible to receive a 2xx response without ever receiving a
+	 *    1xx response.  If this has happened, we don't want to decrement.
+	 */
+
+	if ((dlg->num_200s == 0) && (dlg->num_100s > 0)) {
+		if_update_stat(dlg_enable_stats, early_dlgs, -1);
+	}
+
+	/* Increment the number of 2xx's we've gotten so we don't update our
+	* counters more than once */
+	dlg->num_200s++;
+
 
 	/* dialog confirmed */
 	run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl);
@@ -283,6 +335,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 
 	return;
 error:
+	update_stat(failed_dlgs, 1);
 	unref_dlg(dlg,2,1);
 	return;
 }

@@ -36,6 +36,10 @@
  *  2006-11-22  save_noreply and save_memory merged into save();
  *              removed the module parameter "use_domain" - now it is
  *              imported from usrloc module (bogdan)
+ *  2006-11-28  Added statistics tracking for the number of accepted/rejected
+ *              registrations, as well as for the max expiry time, max contacts,
+ *              and default expiry time. (Jeffrey Magder - SOMA Networks)
+ *
  */
 
 #include <stdio.h>
@@ -122,6 +126,11 @@ str sock_hdr_name = {0,0};
 str rcv_param = str_init(RCV_NAME);
 int rcv_avp_no = 42;
 
+stat_var *accepted_registrations;
+stat_var *rejected_registrations;
+stat_var *max_expires_stat;
+stat_var *max_contacts_stat;
+stat_var *default_expire_stat;
 
 /*
  * sl_send_reply function pointer
@@ -177,6 +186,20 @@ static param_export_t params[] = {
 };
 
 
+/* We expose internal variables via the statistic framework below.  Since these
+ * variables are meant to be set through only exported module parameters, we
+ * implement the statistic collection as a function.  This way it can be set up
+ * to be read only. */
+stat_export_t mod_stats[] = {
+	{"max_expires",       STAT_NO_RESET, &max_expires_stat        },
+	{"max_contacts",      STAT_NO_RESET, &max_contacts_stat       },
+	{"default_expire",    STAT_NO_RESET, &default_expire_stat     },
+	{"accepted_regs",                 0, &accepted_registrations  },
+	{"rejected_regs",                 0, &rejected_registrations  },
+	{0, 0, 0}
+};
+
+
 /*
  * Module exports structure
  */
@@ -185,7 +208,7 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,        /* Exported functions */
 	params,      /* Exported parameters */
-	0,           /* exported statistics */
+	mod_stats,   /* exported statistics */
 	0,           /* exported MI functions */
 	0,           /* exported pseudo-variables */
 	mod_init,    /* module initialization function */
@@ -270,6 +293,11 @@ static int mod_init(void)
 	nat_flag = (nat_flag!=-1)?(1<<nat_flag):0;
 	sip_natping_flag = (sip_natping_flag!=-1)?(1<<sip_natping_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
+
+	/* init stats */
+	update_stat( max_expires_stat, max_expires );
+	update_stat( max_contacts_stat, max_contacts );
+	update_stat( default_expire_stat, default_expires );
 
 	return 0;
 }

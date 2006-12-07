@@ -26,6 +26,9 @@
  *
  * 2005-07-11  added sip_natping_flag for nat pinging with SIP method
  *             instead of UDP package (bogdan)
+ * 2006-11-28  Added statistics tracking for the number of accepted/rejected
+ *             registrations, as well as for the max expiry time, max contacts,
+ *             and default expiry time. (Jeffrey Magder - SOMA Networks)
  */
 
 
@@ -85,5 +88,8 @@ extern int sock_flag;
 usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
 extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+
+extern stat_var *accepted_registrations;
+extern stat_var *rejected_registrations;
 
 #endif /* REG_MOD_H */

@@ -22,7 +22,8 @@
  * History:
  * --------
  *  2006-02-07  initial version (bogdan)
-
+ *  2006-11-28  modified stats_trans_rpl to track individual message codes
+ *              (Jeffrey Magder - SOMA Networks)
  */
 
 
@@ -50,6 +51,9 @@ extern stat_var *tm_trans_inuse;
 
 #ifdef STATISTICS
 inline static void stats_trans_rpl( int code, int local ) {
+
+	stat_var *numerical_stat;
+
 	if (tm_enable_stats) {
 		if (code>=700) {
 			return;
@@ -68,6 +72,14 @@ inline static void stats_trans_rpl( int code, int local ) {
 			update_stat( tm_loc_rpls, 1);
 		else
 			update_stat( tm_rld_rpls, 1);
+
+		numerical_stat = 
+			get_stat_var_from_num_code(code, 1);
+
+		/* Increment the status code. */
+		if (numerical_stat != NULL)
+			update_stat(numerical_stat, 0);
+
 	}
 }
 

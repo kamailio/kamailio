@@ -34,6 +34,9 @@
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  * 2004-10-10: use of mhomed disabled for replies (jiri)
  * 2006-03-29: callbacks for sending replies added (bogdan)
+ * 2006-11-28: Moved numerical code tracking out of sl_send_reply() and into
+ *             update_sl_reply_stat(). Also added more detail stat collection.
+ *             (Jeffrey Magder - SOMA Networks)
  */
 
 
@@ -88,13 +91,46 @@ int sl_startup()
 }
 
 
-
-
 int sl_shutdown()
 {
 	if (sl_timeout)
 		shm_free(sl_timeout);
 	return 1;
+}
+
+
+/* Take care of the statistics associated with numerical codes and replies */
+void update_sl_reply_stat(int code) 
+{
+	stat_var *numerical_stat;
+
+	/* If stats aren't enabled, just skip over this. */
+	if (!sl_enable_stats) 
+		return;
+
+	/* OpenSER already kept track of the total number of 1xx, 2xx, replies.
+	* There may be setups that still expect these variables to exist, so we
+	* don't touch them */
+	if (code < 200 ) {
+		update_stat( tx_1xx_rpls , 1);
+	} else if (code<300) {
+		update_stat( tx_2xx_rpls , 1);
+	} else if (code<400) {
+		update_stat( tx_3xx_rpls , 1);
+	} else if (code<500) {
+		update_stat( tx_4xx_rpls , 1);
+	} else if (code<600) {
+		update_stat( tx_5xx_rpls , 1);
+	} else {
+		update_stat( tx_6xx_rpls , 1);
+	}
+
+	update_stat( sent_rpls , 1);
+
+	numerical_stat = get_stat_var_from_num_code(code, 1);
+
+	if (numerical_stat != NULL)
+		update_stat(numerical_stat, 1);
 }
 
 
@@ -184,22 +220,8 @@ int sl_send_reply(struct sip_msg *msg ,int code ,str *text)
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 	pkg_free(buf.s);
 
-	if (sl_enable_stats) {
-		if (code < 200 ) {
-			update_stat( tx_1xx_rpls , 1);
-		} else if (code<300) {
-			update_stat( tx_2xx_rpls , 1);
-		} else if (code<400) {
-			update_stat( tx_3xx_rpls , 1);
-		} else if (code<500) {
-			update_stat( tx_4xx_rpls , 1);
-		} else if (code<600) {
-			update_stat( tx_5xx_rpls , 1);
-		} else {
-			update_stat( tx_6xx_rpls , 1);
-		}
-		update_stat( sent_rpls , 1);
-	}
+	update_sl_reply_stat(code);
+
 	return 1;
 
 error:

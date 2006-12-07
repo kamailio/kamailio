@@ -22,6 +22,9 @@
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
+ * 2006-11-28  Added num_100s and num_200s to dlg_cell, to aid in adding 
+ *             statistics tracking of the number of early, and active dialogs.
+ *             (Jeffrey Magder - SOMA Networks)
  */
 
 
@@ -57,6 +60,8 @@ struct dlg_cell
 	str                  from_tag;
 	str                  to_tag;
 	struct dlg_head_cbl  cbs;
+	int                  num_200s;
+	int                  num_100s;
 };
 
 
