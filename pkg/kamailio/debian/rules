@@ -31,16 +31,21 @@ POSTGRES_MODULES = postgres
 # modules depending on unixODBC
 UNIXODBC_MODULES=unixodbc
 # jabber related modules
-JABBER_MODULES = jabber
+JABBER_MODULES = jabber xmpp
 # cpl related modules
 CPL_MODULES = cpl-c
 # module depending on radiusclient
 RADIUS_MODULES = avp_radius auth_radius group_radius uri_radius
+# presence related modules
+PRESENCE_MODULES = presence pua pua_mi pua_usrloc
+# XMLRPC module
+XMLRPC_MODULES = mi_xmlrpc
 
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES)
+
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES)
 
 # modules not in the "main" package or unstable modules
-EXCLUDED_MODULES = $(ALL_MODULES) pa
+EXCLUDED_MODULES = $(ALL_MODULES) pa osp
 
 # the same but with path prepended (needed for modules="...")
 MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
@@ -49,6 +54,8 @@ UNIXODBC_MOD_PATH=$(addprefix modules/, $(UNIXODBC_MODULES))
 JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
 CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
 RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
+PRESENCE_MOD_PATH=$(addprefix modules/, $(PRESENCE_MODULES))
+XMLRPC_MOD_PATH=$(addprefix modules/, $(XMLRPC_MODULES))
 
 ifeq (cc, $(CC))
 CC = gcc
@@ -86,6 +93,8 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PRESENCE_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMLRPC_MOD_PATH)" cfg-target=/etc/openser/
 
 	touch build-stamp
 
@@ -177,6 +186,23 @@ install: build
 
 	mkdir -p $(CURDIR)/debian/openser-radius-modules/etc/openser/
 	mv $(CURDIR)/debian/openser/etc/openser/dictionary.radius $(CURDIR)/debian/openser-radius-modules/etc/openser/
+
+	#install only the presence modules
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PRESENCE_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-presence-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-presence-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-presence-module
+
+	#install only the xmlrpc module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-xmlrpc-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-xmlrpc-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-xmlrpc-module
+
 
 # This single target is used to build all the packages, all at once, or
 # one at a time. So keep in mind: any options passed to commands here will
