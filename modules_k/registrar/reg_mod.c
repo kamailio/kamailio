@@ -60,6 +60,7 @@ MODULE_VERSION
 
 /* Module init & destroy function */
 static int  mod_init(void);
+static int  child_init(int);
 static void mod_destroy(void);
 /* Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -214,7 +215,7 @@ struct module_exports exports = {
 	mod_init,    /* module initialization function */
 	0,
 	mod_destroy, /* destroy function */
-	0            /* Per-child init function */
+	child_init,  /* Per-child init function */
 };
 
 
@@ -294,10 +295,18 @@ static int mod_init(void)
 	sip_natping_flag = (sip_natping_flag!=-1)?(1<<sip_natping_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
 
-	/* init stats */
-	update_stat( max_expires_stat, max_expires );
-	update_stat( max_contacts_stat, max_contacts );
-	update_stat( default_expire_stat, default_expires );
+	return 0;
+}
+
+
+static int child_init(int rank)
+{
+	if (rank==1) {
+		/* init stats */
+		update_stat( max_expires_stat, max_expires );
+		update_stat( max_contacts_stat, max_contacts );
+		update_stat( default_expire_stat, default_expires );
+	}
 
 	return 0;
 }
