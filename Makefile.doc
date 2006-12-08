@@ -33,6 +33,11 @@ DEP_XSL ?= $(ROOT_DIR)/doc/stylesheets/dep.xsl
 XHTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/xhtml.xsl
 
 #
+# Default stylesheet used to generate Drupal HTML without html headers
+#
+DRUPAL_XSL ?= $(ROOT_DIR)/doc/stylesheets/drupal.xsl
+
+#
 # Default stylesheet used to generate HTML
 #
 HTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/html.chunked.xsl
@@ -87,6 +92,9 @@ xhtml: $(xhtml_files)
 html: $(html_files)
 txt: $(txt_files)
 pdf: $(pdf_files)
+drupal: override HTML_XSL := $(DRUPAL_XSL)
+drupal: $(html_files)
+
 
 %.xhtml: %.xml %.d $(alldep) $(XHTML_XSL)
 	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
@@ -137,6 +145,7 @@ clean:
 	rm -f $(txt_files)
 	rm -f $(xhtml_files)
 	rm -f $(pdf_files)
+	rm -f $(html_files)
 
 .PHONY: proper realclean distclean
 proper realclean distclean: clean
