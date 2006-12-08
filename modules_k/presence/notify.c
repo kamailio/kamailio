@@ -69,7 +69,7 @@ void printf_subs(subs_t* subs)
 str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 {
 
-	char buf[3000];
+	static 	char buf[3000];
 	str* str_hdr = NULL;	
 	char* subs_expires = NULL;
 	int len = 0;
@@ -369,7 +369,13 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 error:
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
-	
+
+	if(notify_body)
+	{
+		if(notify_body->s)
+			xmlFree(notify_body->s);
+		pkg_free(notify_body);
+	}
 	if(watchers!=NULL) 
 	{
 		for(i = 0; i<result->n; i++)
@@ -734,7 +740,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 		return NULL;
 
 	}
-	DBG("n= %d\n", res->n);
+	DBG("PRESENCE: get_subs_dialog:n= %d\n", res->n);
 	
 	subs_array = (subs_t**)pkg_malloc(res->n*sizeof(subs_t*));
 	if(subs_array == NULL)
@@ -1419,7 +1425,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 	printf_subs(subs);
 	str_hdr = build_str_hdr(p_uri, subs->event,subs->status, subs->expires,
 			subs->reason );
-	if(str_hdr == NULL)
+	if(str_hdr == NULL|| str_hdr->s== NULL|| str_hdr->len==0)
 	{
 		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
 		goto error;

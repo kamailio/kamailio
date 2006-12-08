@@ -280,8 +280,7 @@ str* agregate_xmls(str** body_array, int n)
 					node = xmlNodeGetChildByName(p_root, "person");
 					if(node == NULL)
 					{
-						LOG(L_ERR, "PRESENCE:agregate_xmls: ERROR couldn't "
-							"extract person node\n");
+						LOG(L_ERR, "PRESENCE:agregate_xmls: No person node found\n");
 						append = 1;
 					}
 					else
@@ -313,7 +312,7 @@ str* agregate_xmls(str** body_array, int n)
 					LOG(L_ERR,"PRESENCE:agregate_xmls:Error while adding child\n");
 					goto error;
 				}
-				DBG("PRESENCE:agregate_xmls: added node:(new_node->name= %s",
+				DBG("PRESENCE:agregate_xmls: added node:(new_node->name= %s)\n",
 						new_node->name);
 								
 			}
@@ -321,13 +320,8 @@ str* agregate_xmls(str** body_array, int n)
 	}
 	xmlDocDumpFormatMemory(xml_array[j],(xmlChar**) &body->s, 
 			&body->len, 1);	
-	for(i=0;i<j;i++)
-	{
-		if(xml_array[i]!=NULL)
-			xmlFreeDoc( xml_array[i]);
-	}
-	if(xml_array!=NULL)
-		pkg_free(xml_array);
+
+	p_root->last= last_child;
 
 	if(last_child->next)  /* if nodes added */
 	{	
@@ -337,9 +331,22 @@ str* agregate_xmls(str** body_array, int n)
 			node= last_child;
 			last_child= last_child->next;
 			pkg_free(node);
+			node= NULL;
 		}
-	}	
-  
+	}
+	p_root->last->next= NULL;
+
+	DBG("PRESENCE:agregate_xmls: body= %.*s\n", body->len, body->s);
+	DBG("PRESENCE:agregate_xmls: j= %d\n", j);
+  	for(i=0; i<=j; i++)
+	{
+		DBG("PRESENCE:agregate_xmls: free %d\n", i);
+		if(xml_array[i]!=NULL)
+			xmlFreeDoc( xml_array[i]);
+	}
+	DBG("now the array\n");
+	if(xml_array!=NULL)
+		pkg_free(xml_array);
     /*
      *Free the global variables that may
      *have been allocated by the parser.
@@ -354,13 +361,8 @@ str* agregate_xmls(str** body_array, int n)
 	return body;
 
 error:
-	for(i=1;i<j;i++)
-	{
-		if(xml_array[i]!=NULL)
-			xmlFreeDoc( xml_array[i]);
-	}
-	if(xml_array!=NULL)
-		pkg_free(xml_array);
+	p_root->last= last_child;
+
 	if(last_child->next)  /* if nodes added */
 	{	
 		last_child= last_child->next;
@@ -371,6 +373,15 @@ error:
 			pkg_free(last_child);
 		}
 	}	
+	p_root->last->next= NULL;
+	
+	for(i=0; i<=j; i++)
+	{
+		if(xml_array[i]!=NULL)
+			xmlFreeDoc( xml_array[i]);
+	}
+	if(xml_array!=NULL)
+		pkg_free(xml_array);
 	return NULL;
 }
 

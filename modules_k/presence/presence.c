@@ -85,6 +85,7 @@ static int mod_init(void);
 static int child_init(int);
 int handle_publish(struct sip_msg*, char*, char*);
 int handle_subscribe(struct sip_msg*, char*, char*);
+int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 
 //int handle_notify(struct sip_msg*, char*, char*);
 
@@ -103,9 +104,10 @@ int max_expires ;
 void destroy(void);
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",		handle_publish,		0,0,	REQUEST_ROUTE},
-	{"handle_subscribe",	handle_subscribe,	0,0,	REQUEST_ROUTE},
-//	{"handle_notify",		handle_notify,		0,0,	REQUEST_ROUTE},
+	{"handle_publish",	  handle_publish,		0,0, REQUEST_ROUTE},
+	{"handle_subscribe",  handle_subscribe,		0,0, REQUEST_ROUTE},
+//	{"handle_notify",	  handle_notify,		0,0, REQUEST_ROUTE},
+	{"stored_pres_info",  stored_pres_info,		1,0,   0          },
 	{0,0,0,0,0} 
 };
 
@@ -299,5 +301,54 @@ void destroy(void)
 	lock_set_destroy(set);
 }
 
+
+int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s)
+{
+	db_key_t keys[2];
+	db_val_t vals[13];
+	db_res_t* result= NULL;
+	struct sip_uri uri;
+	
+	
+	if(parse_uri(pres_uri, strlen(pres_uri), &uri)!=0)
+	{
+		LOG(L_ERR, "PRESENCE: stored_pres_info: bad URI!\n");
+		return -1;
+	}
+
+	if(uri.user.len<=0 || uri.user.s==NULL || uri.host.len<=0 ||
+			uri.host.s==NULL)
+	{
+		LOG(L_ERR, "PRESENCE: stored_pres_uri: bad URI in To header!\n");
+		return -1;
+	}
+
+	keys[0]= "username";
+	vals[0].type= DB_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val=uri.user;
+
+	keys[1]= "domain";
+	vals[1].type= DB_STR;
+	vals[1].nul = 0;
+	vals[1].val.str_val=uri.host;
+
+	if(pa_dbf.query(pa_db, keys, 0, vals, 0, 2, 0, 0, &result )< 0)
+	{
+		LOG(L_ERR, "PRESENCE:stored_pres_uri: Error while querrying database\n");
+		return -1;
+	}
+
+	if(result && result->n > 0)
+	{
+		pa_dbf.free_result(pa_db, result);
+		return 1;
+	}
+
+	if(result)
+		pa_dbf.free_result(pa_db, result);
+
+	return -1;
+}
 
 
