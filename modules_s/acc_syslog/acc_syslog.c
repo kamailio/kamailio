@@ -163,7 +163,7 @@ static cmd_export_t cmds[] = {
 	{"acc_syslog_log",    acc_log_request0, 0, 0,               REQUEST_ROUTE | FAILURE_ROUTE},
 	{"acc_syslog_missed", acc_log_missed0,  0, 0,               REQUEST_ROUTE | FAILURE_ROUTE},
 	{"acc_syslog_log",    acc_log_request1, 1, fixup_var_str_1, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"acc_syslog_missed", acc_log_missed1,  1, fixup_var_str_2, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_syslog_missed", acc_log_missed1,  1, fixup_var_str_1, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -397,7 +397,8 @@ static inline struct hdr_field* valid_to(struct cell* t, struct sip_msg* reply)
  */
 static int fmt2strar(char *fmt,             /* what would you like to account ? */
 		     struct sip_msg *rq,    /* accounted message */
-		     struct hdr_field *to,
+		     str* ouri,             /* Outbound Request-URI */
+		     struct hdr_field *to,  /* To header field (used to extract tag) */
 		     str *phrase,
 		     int *total_len,        /* total length of accounted values */
 		     int *attr_len,         /* total length of accounted attribute names */
@@ -480,8 +481,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			break;
 
 		case 'o': /* outbound_ruri */
-			if (rq->new_uri.len) val_arr[cnt] = &rq->new_uri;
-			else val_arr[cnt] = &rq->first_line.u.request.uri;
+		        val_arr[cnt] = ouri;
 			ATR(OURI);
 			break;
 
@@ -616,12 +616,8 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 }
 
 
-/* skip leading text and begin with first item's
- * separator ", " which will be overwritten by the
- * leading text later
- *
- */
-static int log_request(struct sip_msg* rq, struct hdr_field* to, str* txt, str* phrase, time_t req_time)
+
+static int log_request(struct sip_msg* rq, str* ouri, struct hdr_field* to, str* txt, str* phrase, time_t req_time)
 {
 	static str* val_arr[ALL_LOG_FMT_LEN];
 	static str atr_arr[ALL_LOG_FMT_LEN];
@@ -631,7 +627,7 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, str* txt, str* 
 
 	if (skip_cancel(rq)) return 1;
 
-	attr_cnt = fmt2strar(log_fmt, rq, to, phrase, &len, &attr_len, val_arr, atr_arr, req_time);
+	attr_cnt = fmt2strar(log_fmt, rq, ouri, to, phrase, &len, &attr_len, val_arr, atr_arr, req_time);
 	if (!attr_cnt) {
 		LOG(L_ERR, "ERROR:acc:log_request: fmt2strar failed\n");
 		return -1;
@@ -675,7 +671,7 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, str* txt, str* 
 
 static void log_reply(struct cell* t , struct sip_msg* reply, unsigned int code, time_t req_time)
 {
-	str code_str;
+	str code_str, *ouri;
 	static str lead = STR_STATIC_INIT(ACC_ANSWERED);
 	static char code_buf[INT2STR_MAX_LEN];
 	char* p;
@@ -683,7 +679,14 @@ static void log_reply(struct cell* t , struct sip_msg* reply, unsigned int code,
 	p = int2str(code, &code_str.len);
 	memcpy(code_buf, p, code_str.len);
 	code_str.s = code_buf;
-	log_request(t->uas.request, valid_to(t,reply), &lead, &code_str, req_time);
+
+	if (t->relayed_reply_branch >= 0) {
+	    ouri = &t->uac[t->relayed_reply_branch].uri;
+	} else {
+	    ouri = GET_NEXT_HOP(t->uas.request);
+	}
+
+	log_request(t->uas.request, ouri, valid_to(t,reply), &lead, &code_str, req_time);
 }
 
 
@@ -702,13 +705,13 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 	p = int2str(t->uas.status, &code_str.len);
 	memcpy(code_buf, p, code_str.len);
 	code_str.s = code_buf;
-	log_request(ack, to, &lead, &code_str, req_time);
+	log_request(ack, GET_RURI(ack), to, &lead, &code_str, req_time);
 }
 
 
 static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code, time_t req_time)
 {
-        str acc_text;
+        str acc_text, *ouri;
         static str leading_text = STR_STATIC_INIT(ACC_MISSED);
 
         get_reply_status(&acc_text, reply, code);
@@ -717,7 +720,13 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
                 return;
         }
 
-        log_request(t->uas.request, valid_to(t, reply), &leading_text, &acc_text, req_time);
+	if (t->relayed_reply_branch >= 0) {
+	    ouri = &t->uac[t->relayed_reply_branch].uri;
+	} else {
+	    ouri = GET_NEXT_HOP(t->uas.request);
+	}
+
+        log_request(t->uas.request, ouri, valid_to(t, reply), &leading_text, &acc_text, req_time);
         pkg_free(acc_text.s);
 }
 
@@ -736,7 +745,7 @@ static int acc_log_request1(struct sip_msg *rq, char* p1, char* p2)
 	    phrase.len = 0;
 	}
 	preparse_req(rq);
-	return log_request(rq, rq->to, &txt, &phrase, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, &txt, &phrase, time(0));
 }
 
 
@@ -754,7 +763,7 @@ static int acc_log_missed1(struct sip_msg *rq, char* p1, char* p2)
 	    phrase.len = 0;
 	}
 	preparse_req(rq);
-	return log_request(rq, rq->to, &txt, &phrase, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, &txt, &phrase, time(0));
 }
 
 
@@ -767,7 +776,7 @@ static int acc_log_request0(struct sip_msg *rq, char* p1, char* p2)
 {
 	static str phrase = STR_NULL;
 	str txt = STR_STATIC_INIT(ACC_REQUEST);
-	return log_request(rq, rq->to, &txt, &phrase, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, &txt, &phrase, time(0));
 }
 
 
@@ -780,7 +789,7 @@ static int acc_log_missed0(struct sip_msg *rq, char* p1, char* p2)
 	static str phrase = STR_NULL;
 	str txt = STR_STATIC_INIT(ACC_MISSED);
 	preparse_req(rq);
-	return log_request(rq, rq->to, &txt, &phrase, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, &txt, &phrase, time(0));
 }
 
 

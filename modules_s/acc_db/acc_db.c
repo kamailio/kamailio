@@ -563,6 +563,7 @@ static int init_data(char* fmt)
  */
 static int fmt2strar(char *fmt,             /* what would you like to account ? */
 		     struct sip_msg *rq,    /* accounted message */
+		     str* ouri,             /* Outbound Request-URI */
 		     struct hdr_field *to,
 		     unsigned int code,
 		     time_t req_time)       /* Timestamp of the request */
@@ -641,8 +642,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			break;
 
 		case 'o': /* outbound_ruri */
-			if (rq->new_uri.len) vals[cnt].val.str_val = rq->new_uri;
-			else vals[cnt].val.str_val = rq->first_line.u.request.uri;
+		        vals[cnt].val.str_val = *ouri;
 			break;
 
 		case 'p':
@@ -736,12 +736,12 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 }
 
 
-int log_request(struct sip_msg *rq, struct hdr_field *to, char *table, unsigned int code, time_t req_timestamp)
+int log_request(struct sip_msg *rq, str* ouri, struct hdr_field *to, char *table, unsigned int code, time_t req_timestamp)
 {
 	int cnt;
 	if (skip_cancel(rq)) return 1;
 
-        cnt = fmt2strar(log_fmt, rq, to, code, req_timestamp);
+        cnt = fmt2strar(log_fmt, rq, ouri, to, code, req_timestamp);
 	if (cnt == 0) {
 		LOG(L_ERR, "ERROR:acc:log_request: fmt2strar failed\n");
 		return -1;
@@ -768,7 +768,15 @@ int log_request(struct sip_msg *rq, struct hdr_field *to, char *table, unsigned 
 
 static void log_reply(struct cell* t , struct sip_msg* reply, unsigned int code, time_t req_time)
 {
-	log_request(t->uas.request, valid_to(t,reply), acc_table.s, code, req_time);
+        str* ouri;
+
+	if (t->relayed_reply_branch >= 0) {
+	    ouri = &t->uac[t->relayed_reply_branch].uri;
+	} else {
+	    ouri = GET_NEXT_HOP(t->uas.request);
+	}
+
+	log_request(t->uas.request, ouri, valid_to(t,reply), acc_table.s, code, req_time);
 }
 
 
@@ -780,13 +788,22 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 	rq = t->uas.request;
 	if (ack->to) to = ack->to;
 	else to = rq->to;
-	log_request(ack, to, acc_table.s, t->uas.status, req_time);
+
+	log_request(ack, GET_RURI(ack), to, acc_table.s, t->uas.status, req_time);
 }
 
 
 static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code, time_t req_time)
 {
-        log_request(t->uas.request, valid_to(t, reply), mc_table.s, code, req_time);
+        str* ouri;
+
+	if (t->relayed_reply_branch >= 0) {
+	    ouri = &t->uac[t->relayed_reply_branch].uri;
+	} else {
+	    ouri = GET_NEXT_HOP(t->uas.request);
+	}
+	
+        log_request(t->uas.request, ouri, valid_to(t, reply), mc_table.s, code, req_time);
 }
 
 
@@ -797,7 +814,7 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
 static int acc_db_request0(struct sip_msg *rq, char* s1, char* s2)
 {
 	preparse_req(rq);
-	return log_request(rq, rq->to, acc_table.s, 0, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, acc_table.s, 0, time(0));
 }
 
 
@@ -808,7 +825,7 @@ static int acc_db_request0(struct sip_msg *rq, char* s1, char* s2)
 static int acc_db_missed0(struct sip_msg *rq, char* s1, char* s2)
 {
 	preparse_req(rq);
-	return log_request(rq, rq->to, mc_table.s, 0, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, mc_table.s, 0, time(0));
 }
 
 
@@ -824,7 +841,7 @@ static int acc_db_request1(struct sip_msg *rq, char* p1, char* p2)
 	code = 0;
     }
     preparse_req(rq);
-    return log_request(rq, rq->to, acc_table.s, code, time(0));
+    return log_request(rq, GET_RURI(rq), rq->to, acc_table.s, code, time(0));
 }
 
 
@@ -840,7 +857,7 @@ static int acc_db_missed1(struct sip_msg *rq, char* p1, char* p2)
 	code = 0;
     }
     preparse_req(rq);
-    return log_request(rq, rq->to, mc_table.s, code, time(0));
+    return log_request(rq, GET_RURI(rq), rq->to, mc_table.s, code, time(0));
 }
 
 

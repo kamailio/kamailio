@@ -419,6 +419,7 @@ static inline struct hdr_field* valid_to(struct cell* t, struct sip_msg* reply)
  */
 static int fmt2rad(char *fmt,
 		   struct sip_msg *rq,
+		   str* ouri,
 		   struct hdr_field *to,
 		   unsigned int code,
 		   VALUE_PAIR** send,
@@ -513,11 +514,7 @@ static int fmt2rad(char *fmt,
 
 		case 'o': /* outbound_ruri */
 			attr = &attrs[A_SIP_TRANSLATED_REQUEST_ID];
-			if (rq->new_uri.len) {
-				val = rq->new_uri;
-			} else {
-				val = rq->first_line.u.request.uri;
-			}
+			val = *ouri;
 			break;
 
 		case 'p': /* Source IP address */
@@ -746,7 +743,7 @@ static inline int add_user_name(struct sip_msg* rq, void* rh, VALUE_PAIR** send)
  * leading text later
  *
  */
-static int log_request(struct sip_msg* rq, struct hdr_field* to, unsigned int code, time_t req_time)
+static int log_request(struct sip_msg* rq, str* ouri, struct hdr_field* to, unsigned int code, time_t req_time)
 {
 	VALUE_PAIR *send;
 	UINT4 av_type;
@@ -754,7 +751,7 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, unsigned int co
 	send = NULL;
 	if (skip_cancel(rq)) return 1;
 
-	if (fmt2rad(log_fmt, rq, to, code, &send, req_time) < 0) goto error;
+	if (fmt2rad(log_fmt, rq, ouri, to, code, &send, req_time) < 0) goto error;
 
 	     /* Add Acct-Status-Type attribute */
 	av_type = rad_status(rq, code);
@@ -790,7 +787,15 @@ error:
 
 static void log_reply(struct cell* t , struct sip_msg* reply, unsigned int code, time_t req_time)
 {
-	log_request(t->uas.request, valid_to(t, reply), code, req_time);
+        str* ouri;
+
+	if (t->relayed_reply_branch >= 0) {
+	    ouri = &t->uac[t->relayed_reply_branch].uri;
+	} else {
+	    ouri = GET_NEXT_HOP(t->uas.request);
+	}
+
+	log_request(t->uas.request, ouri, valid_to(t, reply), code, req_time);
 }
 
 
@@ -802,13 +807,21 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 	rq = t->uas.request;
 	if (ack->to) to = ack->to;
 	else to = rq->to;
-	log_request(ack, to, t->uas.status, req_time);
+	log_request(ack, GET_RURI(ack), to, t->uas.status, req_time);
 }
 
 
 static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code, time_t req_time)
 {
-        log_request(t->uas.request, valid_to(t, reply), code, req_time);
+        str* ouri;
+
+	if (t->relayed_reply_branch >= 0) {
+	    ouri = &t->uac[t->relayed_reply_branch].uri;
+	} else {
+	    ouri = GET_NEXT_HOP(t->uas.request);
+	}
+
+        log_request(t->uas.request, ouri , valid_to(t, reply), code, req_time);
 }
 
 
@@ -819,7 +832,7 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
 static int acc_rad_request0(struct sip_msg *rq, char* p1, char* p2)
 {
 	preparse_req(rq);
-	return log_request(rq, rq->to, 0, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, 0, time(0));
 }
 
 
@@ -830,7 +843,7 @@ static int acc_rad_request0(struct sip_msg *rq, char* p1, char* p2)
 static int acc_rad_missed0(struct sip_msg *rq, char* p1, char* p2)
 {
 	preparse_req(rq);
-	return log_request(rq, rq->to, 0, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, 0, time(0));
 }
 
 /* these wrappers parse all what may be needed; they don't care about
@@ -844,7 +857,7 @@ static int acc_rad_request1(struct sip_msg *rq, char* p1, char* p2)
     if (get_int_fparam(&code, rq, (fparam_t*)p1) < 0) {
 	code = 0;
     }
-    return log_request(rq, rq->to, code, time(0));
+    return log_request(rq, GET_RURI(rq), rq->to, code, time(0));
 }
 
 
@@ -859,7 +872,7 @@ static int acc_rad_missed1(struct sip_msg *rq, char* p1, char* p2)
     if (get_int_fparam(&code, rq, (fparam_t*)p1) < 0) {
 	code = 0;
     }
-    return log_request(rq, rq->to, code, time(0));
+    return log_request(rq, GET_RURI(rq), rq->to, code, time(0));
 }
 
 
