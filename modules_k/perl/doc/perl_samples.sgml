@@ -1,0 +1,140 @@
+<!-- Module Sample descriptions -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>Perl samples</title>
+	
+	<section>
+		<title>sample directory</title>
+		<para>
+		There are a number of example scripts in the <quote>samples/</quote>. They are
+		documented well. Read them, it will explain a lot to you :)
+		</para>
+		<para>
+		If you want to use any of these scripts directly in your implementation, you
+		can use Perl's <quote>require</quote> mechanism to import them (just remember
+		that you need to use quotes when require'ing .pl files).
+		</para>
+		<section>
+			<title>Script descriptions</title>
+			<para>
+			The included sample scripts are described below:
+			</para>
+			<section>
+				<title>branches.pl</title>
+				<para>
+				The minimal function in branches.pl demonstrates that you can access the "append_branch"
+				function from within perl, just as you would have done from your normal configuration file.
+				You'll find documentation on the concepts of branching in the OpenSER documentation.
+				</para>
+			</section>
+			<section>
+				<title>flags.pl</title>
+				<para>
+				The perl module provides access to OpenSER's flagging mechanism. The flag names available
+				for OpenSER modules are made available through the OpenSER::Constants package, so you can
+				flag messages as "green", "magenta" etc.
+				</para>
+				<para>
+				The first function, setflag, demonstrates how the "green" flag is set. In the second function,
+				readflag, the "green" and "magenta" flags are evaluated.
+			</section>
+			<section>
+				<title>functions.pl</title>
+				<para>
+				This sample script demonstrates different things related to calling functions from within perl,
+				and the different types of functions you can offer for OpenSER access.
+				</para>
+				<para>
+				<quote>exportedfuncs</quote> simply demonstrates that you can use the moduleFunction method
+				to call functions offered by other modules. The results are equivalent to calling these
+				functions from your config file. In the demonstrated case, telephone calls with a destination
+				number beginning with 555... are rejected with an internal server error. Other destination
+				addresses are passed to the alias_db module.
+				</para>
+				<para>
+				<quote>paramfunc</quote> shows that you can pass arbitrary strings to perl functions. Do with
+				them whatever you want :)
+				</para>
+				<para>
+				<quote>autotest</quote> demonstrates that unknown functions in OpenSER::Message objects are
+				automatically transformed into calls to module functions.
+				</para>
+				<para>
+				The <quote>diefunc</quote>s show that dying perl scripts - by "manual" dying, or because of script
+				errors - are handled by the OpenSER package. The error message is logged through OpenSER's logging
+				mechanism. Please note that this only works correctly if you do NOT overwrite the default die handler.
+				Oh, yes, that works for warnings, too.
+				</para>
+			</section>
+			<section>
+				<title>headers.pl</title>
+				<para>
+				This is about headers.pl
+				</para>
+			</section>
+			<section>
+				<title>ldapdemos.pl</title>
+				<para>
+				This is about ldapdemos.pl
+				</para>
+			</section>
+			<section>
+				<title>logging.pl</title>
+				<para>
+				This is about logging.pl
+				</para>
+			</section>
+			<section>
+				<title>messagedump.pl</title>
+				<para>
+				This is about messagedump.pl
+				</para>
+			</section>
+			<section>
+				<title>persistence.pl</title>
+				<para>
+				This is about persistence.pl
+				</para>
+			</section>
+			<section>
+				<title>phonenumbers.pl</title>
+				<para>
+				This is about phonenumbers.pl
+				</para>
+			</section>
+			<section>
+				<title>pseudovars.pl</title>
+				<para>
+				This is about pseudovars.pl
+				</para>
+			</section>
+		</section>
+	</section>
+	<!-- section>
+		<title>Other examples</title>
+		<para>
+<programlisting format="linespecific">
+...
+if (perl_exec_msg("ldap_alias")) {
+	route[1];
+}	
+...
+</programlisting>
+		</para>
+	</section -->
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("group.sgml" "Book" "chapter")
+End:
+-->

@@ -1,0 +1,340 @@
+/*
+ * $Id$
+ *
+ * Perl module for OpenSER
+ *
+ * Copyright (C) 2006 Collax GmbH
+ *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
+ *
+ * This file is part of openser, a free SIP server.
+ *
+ * openser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * openser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+#define DEFAULTMODULE "OpenSER"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dlfcn.h>
+
+#include "../../sr_module.h"
+#include "../../mem/mem.h"
+#include "../rr/api.h"
+#include "../../fifo_server.h"
+
+#include "perlfunc.h"
+#include "perl.h"
+
+/* #include "perlxsi.h" function is in here... */
+
+MODULE_VERSION
+
+/* Full path to the script including executed functions */
+char *filename;
+
+/* Path to an arbitrary directory where the OpenSER Perl modules are
+ * installed */
+char *modpath;
+
+/* Reference to the running Perl interpreter instance */
+PerlInterpreter *my_perl;
+
+
+/* sl_send_reply function from sl module */
+int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+
+
+/*
+ * Module destroy function prototype
+ */
+static void destroy(void);
+
+/*
+ * Module child-init function prototype
+ */
+static int child_init(int rank);
+
+/*
+ * Module initialization function prototype
+ */
+static int mod_init(void);
+
+/*
+ * Reload perl interpreter - reload perl script. Forward declaration.
+ */
+int perl_reload(struct sip_msg *m, char *a, char *b);
+
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{ "perl_exec_simple", perl_exec_simple1, 1,  NULL, REQUEST_ROUTE
+							   | FAILURE_ROUTE
+							   | ONREPLY_ROUTE
+							   | BRANCH_ROUTE },
+	{ "perl_exec_simple", perl_exec_simple2, 2,  NULL, REQUEST_ROUTE
+							   | FAILURE_ROUTE
+							   | ONREPLY_ROUTE
+							   | BRANCH_ROUTE },
+	{ "perl_exec", perl_exec1, 1,  NULL, REQUEST_ROUTE | FAILURE_ROUTE
+		                             | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{ "perl_exec", perl_exec2, 2, NULL, REQUEST_ROUTE | FAILURE_ROUTE
+					    | ONREPLY_ROUTE | BRANCH_ROUTE },
+	/*{ "perl_reload", perl_reload, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE
+	 *| ONREPLY_ROUTE | BRANCH_ROUTE },
+	 *  Functions are executed in _one_ instance only... 
+	 *  Not really working */
+	{ 0, 0, 0, 0, 0 }
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"filename", STR_PARAM, &filename},
+	{"modpath", STR_PARAM, &modpath},
+	{ 0, 0, 0 }
+};
+
+/*
+ * Module info
+ */
+
+#ifndef RTLD_NOW
+/* for openbsd */
+#define RTLD_NOW DL_LAZY
+#endif
+
+#ifndef RTLD_GLOBAL
+/* Unsupported! */
+#define RTLD_GLOBAL 0
+#endif
+
+/*
+ * Module interface
+ */
+struct module_exports exports = {
+	"perl", 
+	RTLD_NOW | RTLD_GLOBAL,
+	cmds,       /* Exported functions */
+	params,     /* Exported parameters */
+	0,          /* exported statistics */
+	0,          /* exported MI functions */
+	0,	    /* exported pseudo-variables */
+	mod_init,   /* module initialization function */
+	0,          /* response function */
+	destroy,    /* destroy function */
+	child_init  /* child initialization function */
+};
+
+
+static int child_init(int rank)
+{
+	return 0;
+}
+
+
+EXTERN_C void boot_DynaLoader (pTHX_ CV* cv);
+EXTERN_C void boot_OpenSER(pTHX_ CV* cv);
+
+
+/*
+ * This is output by perl -MExtUtils::Embed -e xsinit
+ * and complemented by the OpenSER bootstrapping
+ */
+EXTERN_C void xs_init(pTHX) {
+        char *file = __FILE__;
+        dXSUB_SYS;
+
+        newXS("OpenSER::bootstrap", boot_OpenSER, file);
+
+        newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+}
+
+
+/*
+ * Initialize the perl interpreter.
+ * This might later be used to reinit the module.
+ */
+PerlInterpreter *parser_init() {
+	int argc = 0;
+	char *argv[9];
+	PerlInterpreter *new_perl = NULL;
+	int modpathset = 0;
+
+	new_perl = perl_alloc();
+
+	if (!new_perl) {
+		LOG(L_ERR, "Could not allocate perl.\n");
+		return NULL;
+	}
+
+	perl_construct(new_perl);
+
+	argv[0] = ""; argc++; /* First param _needs_ to be empty */
+	
+	 /* Possible Include path extension by modparam */
+	if (modpath && (strlen(modpath) > 0)) {
+		modpathset = argc;
+		LOG(L_INFO, "perl: Setting lib path: '%s'\n", modpath);
+		argv[argc] = pkg_malloc(strlen(modpath)+20);
+		sprintf(argv[argc], "-I%s", modpath);
+		argc++;
+	}
+
+	argv[argc] = "-M"DEFAULTMODULE; argc++; /* Always "use" Openser.pm */
+
+	argv[argc] = filename; /* The script itself */
+	argc++;
+
+	if (perl_parse(new_perl, xs_init, argc, argv, NULL)) {
+		LOG(L_ERR, "Error loading perl file \"%s\".\n", argv[argc-1]);
+		if (modpathset) pkg_free(argv[modpathset]);
+		return NULL;
+	} else {
+		LOG(L_INFO, "perl: Successfully loaded perl file \"%s\"\n",
+				argv[argc-1]);
+	}
+
+	if (modpathset) pkg_free(argv[modpathset]);
+
+	return new_perl;
+
+}
+
+/*
+ *
+ */
+int unload_perl(PerlInterpreter *p) {
+	perl_destruct(p);
+	perl_free(p);
+
+	return 0;
+}
+
+
+/*
+ * reload function.
+ * Reinitializes the interpreter. Works, but execution for _all_
+ * children is difficult.
+ */
+int perl_reload(struct sip_msg *m, char *a, char *b) {
+
+	PerlInterpreter *new_perl;
+
+	new_perl = parser_init();
+
+	if (new_perl) {
+		unload_perl(my_perl);
+		my_perl = new_perl;
+		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+		return 1;
+	} else {
+		return 0;
+	}
+
+}
+
+
+/*
+ * Reinit through fifo.
+ * Currently does not seem to work :((
+ */
+int perl_fifo_reload(FILE *stream, char *response_file){
+        FILE *freply=NULL;
+
+        freply = open_reply_pipe(response_file);
+        if(freply==NULL)
+        {
+                LOG(L_ERR, "perl:perl_fifo_reload: error -cannot open fifo"
+				" reply '%s'\n",
+                                response_file);
+                return -1;
+        }
+
+	if (perl_reload(NULL, NULL, NULL))
+		fprintf(freply, "Reload successful.\n");
+	else
+		fprintf(freply, "Reload unsuccessful.\n");
+		
+
+        if(freply!=NULL)
+                fclose(freply);
+
+        return 0;
+}
+
+
+/*
+ * mod_init
+ * Called by openser at init time
+ */
+static int mod_init() {
+
+	int ret = 0;
+
+	LOG(L_INFO, "perl module - initializing\n");
+
+	if (!filename) {
+		LOG(L_ERR, "Insufficient module parameters."
+				" Module not loaded.\n");
+		return -1;
+	}
+
+	/**
+	 * We will need sl_send_reply from stateless
+	 * module for sending replies
+	 */
+
+
+	sl_reply = find_export("sl_send_reply", 2, 0);
+	if (!sl_reply)
+	{
+		LOG(L_ERR, "perl: This module requires sl module\n");
+		return -1;
+	}
+
+	/* FIXME This does not yet work... 
+	if(register_fifo_cmd(perl_fifo_reload, "perl_reload", 0)<0) {
+		LOG(L_ERR, "perl: Could not register fifo command.\n");
+		return -1;
+	}
+	*/
+
+	PERL_SYS_INIT3(&argc, &argv, &environ);
+
+	if ((my_perl = parser_init())) {
+		ret = 0;
+		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+	} else {
+		ret = -1;
+	}
+
+	return ret;
+}
+
+/*
+ * destroy
+ * called by openser at exit time
+ */
+static void destroy(void)
+{
+	unload_perl(my_perl);
+	PERL_SYS_TERM();
+	my_perl = NULL;
+}
