@@ -387,6 +387,17 @@ static inline struct mi_handler* build_async_handler( char *name, int len)
 }
 
 
+#define mi_do_consume() \
+	do { \
+		DBG("DEBUG:mi_fifo:mi_fifo_server: entered consume\n"); \
+		/* consume the rest of the fifo request */ \
+		do { \
+			mi_read_line(mi_buf,MAX_MI_FIFO_BUFFER,fifo_stream,&line_len); \
+		} while(line_len>1); \
+		DBG("DEBUG:mi_fifo:mi_fifo_server: **** done consume\n"); \
+	} while(0)
+
+
 #define mi_open_reply(_name,_file,_err) \
 	do { \
 		_file = mi_open_reply_pipe( _name ); \
@@ -492,17 +503,22 @@ void mi_fifo_server(FILE *fifo_stream)
 			mi_open_reply( file, reply_stream, consume1);
 		}
 
-		mi_cmd = mi_parse_tree(fifo_stream);
-		if (mi_cmd==NULL){
-			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server:error parsing mi tree\n");
-			if (!reply_stream)
-				mi_open_reply( file, reply_stream, consume3);
-			mi_fifo_reply( reply_stream, "400 parse error in command '%s'\n",
-				command);
-			goto consume3;
+		if (f->flags&MI_NO_INPUT_FLAG) {
+			mi_cmd = 0;
+			mi_do_consume();
+		} else {
+			mi_cmd = mi_parse_tree(fifo_stream);
+			if (mi_cmd==NULL){
+				LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server:error parsing "
+					"MI tree\n");
+				if (!reply_stream)
+					mi_open_reply( file, reply_stream, consume3);
+				mi_fifo_reply( reply_stream, "400 parse error in "
+					"command '%s'\n", command);
+				goto consume3;
+			}
+			mi_cmd->async_hdl = hdl;
 		}
-
-		mi_cmd->async_hdl = hdl;
 
 		DBG("DEBUG:mi_fifo:mi_fifo_server: done parsing the mi tree\n");
 
@@ -518,7 +534,7 @@ void mi_fifo_server(FILE *fifo_stream)
 			mi_write_tree( reply_stream, mi_rpl);
 			free_mi_tree( mi_rpl );
 		} else {
-			free_mi_tree( mi_cmd );
+			if (mi_cmd) free_mi_tree( mi_cmd );
 			continue;
 		}
 
@@ -526,13 +542,13 @@ void mi_fifo_server(FILE *fifo_stream)
 		/* close reply fifo */
 		fclose(reply_stream);
 		/* destroy request tree */
-		free_mi_tree( mi_cmd );
+		if (mi_cmd) free_mi_tree( mi_cmd );
 		continue;
 
 failure:
 		free_async_handler(hdl);
 		/* destroy request tree */
-		free_mi_tree( mi_cmd );
+		if (mi_cmd) free_mi_tree( mi_cmd );
 		/* destroy the reply tree */
 		if (mi_rpl) free_mi_tree(mi_rpl);
 		continue;
@@ -543,12 +559,7 @@ consume3:
 consume2:
 		fclose(reply_stream);
 consume1:
-		DBG("DEBUG:mi_fifo:mi_fifo_server: entered consume\n");
-		/* consume the rest of the fifo request */
-		do {
-			mi_read_line(mi_buf,MAX_MI_FIFO_BUFFER,fifo_stream,&line_len);
-		} while(line_len>1);
-		DBG("DEBUG:mi_fifo:mi_fifo_server: **** done consume\n");
+		mi_do_consume();
 	}
 }
 
