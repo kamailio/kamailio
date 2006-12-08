@@ -227,6 +227,159 @@ error:
 }
 
 
+static inline void mi_print_routes( struct mi_node *node, dlg_t* dlg)
+{
+#define MI_ROUTE_PREFIX_S       "Route: "
+#define MI_ROUTE_PREFIX_LEN     (sizeof(MI_ROUTE_PREFIX_S)-1)
+#define MI_ROUTE_SEPARATOR_S    ", "
+#define MI_ROUTE_SEPARATOR_LEN  (sizeof(MI_ROUTE_SEPARATOR_S)-1)
+	rr_t* ptr;
+	int len;
+	char *p, *s;
+
+	ptr = dlg->hooks.first_route;
+
+	if (ptr==NULL) {
+		add_mi_node_child( node, 0, 0, 0, ".",1);
+		return;
+	}
+
+	len = MI_ROUTE_PREFIX_LEN;
+	for( ; ptr ; ptr=ptr->next)
+		len += ptr->len + MI_ROUTE_SEPARATOR_LEN*(ptr->next!=NULL);
+	if (dlg->hooks.last_route)
+		len += dlg->hooks.last_route->len + 2;
+
+
+	s = pkg_malloc( len );
+	if (s==0) {
+		LOG(L_ERR,"ERROR:tm:mi_print_routes: no more pkg mem\n");
+		return;
+	}
+
+
+	p = s;
+	memcpy( p, MI_ROUTE_PREFIX_S, MI_ROUTE_PREFIX_LEN);
+	p += MI_ROUTE_PREFIX_LEN;
+
+	for( ptr = dlg->hooks.first_route ; ptr ; ptr=ptr->next) {
+		memcpy( p, ptr->nameaddr.name.s, ptr->len);
+		p += ptr->len;
+		if (ptr->next) {
+			memcpy( p, MI_ROUTE_SEPARATOR_S, MI_ROUTE_SEPARATOR_LEN);
+			p += MI_ROUTE_SEPARATOR_LEN;
+		}
+	}
+
+	if (dlg->hooks.last_route) {
+		*(p++) = '<';
+		memcpy( p, dlg->hooks.last_route->s, dlg->hooks.last_route->len);
+		p += dlg->hooks.last_route->len;
+		*(p++) = '>';
+	}
+
+	add_mi_node_child( node, MI_DUP_VALUE, 0, 0, s, len);
+	pkg_free(s);
+}
+
+
+static inline int mi_print_uris( struct mi_node *node, struct sip_msg* reply)
+{
+	dlg_t* dlg;
+
+	if (reply==0)
+		goto empty;
+
+	dlg = (dlg_t*)shm_malloc(sizeof(dlg_t));
+	if (!dlg) {
+		LOG(L_ERR, "ERROR:tm:mi_print_uris: no shm memory left\n");
+		return -1;
+	}
+
+	memset(dlg, 0, sizeof(dlg_t));
+	if (dlg_response_uac(dlg, reply) < 0) {
+		LOG(L_ERR, "ERROR:tm:mi_print_uris: failed to create dialog\n");
+		free_dlg(dlg);
+		return -1;
+	}
+
+	if (dlg->state != DLG_CONFIRMED) {
+		free_dlg(dlg);
+		goto empty;
+	}
+
+	if (dlg->hooks.request_uri->s) {
+		add_mi_node_child( node, MI_DUP_VALUE, 0, 0,
+			dlg->hooks.request_uri->s, dlg->hooks.request_uri->len);
+	} else {
+		add_mi_node_child( node, 0, 0, 0, ".",1);
+	}
+	if (dlg->hooks.next_hop->s) {
+		add_mi_node_child( node, MI_DUP_VALUE, 0, 0,
+			dlg->hooks.next_hop->s, dlg->hooks.next_hop->len);
+	} else {
+		add_mi_node_child( node, 0, 0, 0, ".",1);
+	}
+
+	mi_print_routes( node, dlg);
+
+	free_dlg(dlg);
+	return 0;
+empty:
+	add_mi_node_child( node, 0, 0, 0, ".",1);
+	add_mi_node_child( node, 0, 0, 0, ".",1);
+	add_mi_node_child( node, 0, 0, 0, ".",1);
+	return 0;
+}
+
+
+
+static void mi_uac_dlg_hdl( struct cell *t, int type, struct tmcb_params *ps )
+{
+	struct mi_handler *mi_hdl;
+	struct mi_root *rpl_tree;
+	str text;
+
+	DBG("DEBUG: MI UAC generated status %d\n", ps->code);
+	if (!*ps->param)
+		return;
+
+	mi_hdl = (struct mi_handler *)(*ps->param);
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==0)
+		goto done;
+
+	if (ps->rpl==FAKED_REPLY) {
+		get_reply_status( &text, ps->rpl, ps->code);
+		if (text.s==0) {
+			LOG(L_ERR, "ERROR:tm:mi_uac_dlg_hdl: get_reply_status failed\n");
+			rpl_tree = 0;
+			goto done;
+		}
+		add_mi_node_child( &rpl_tree->node, MI_DUP_VALUE, 0, 0,
+			text.s, text.len);
+		pkg_free(text.s);
+		mi_print_uris( &rpl_tree->node, 0 );
+	} else { 
+		addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%d %.*s",
+			ps->rpl->first_line.u.reply.statuscode,
+			ps->rpl->first_line.u.reply.reason.len,
+			ps->rpl->first_line.u.reply.reason.s);
+		mi_print_uris( &rpl_tree->node, ps->rpl);
+	}
+
+	DBG("DEBUG:tm: mi_callback successfully completed\n");
+done:
+	if (ps->code >= 200) {
+		mi_hdl->handler_f( rpl_tree, mi_hdl, 1 /*done*/ );
+		*ps->param = 0;
+	} else {
+		mi_hdl->handler_f( rpl_tree, mi_hdl, 0 );
+	}
+}
+
+
 
 /**************************** MI functions ********************************/
 
@@ -366,16 +519,21 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 	dlg.hooks.next_hop = (nexthop ? nexthop : ruri);
 	dlg.send_sock = sock;
 
-	n = t_uac( method, &s, body, &dlg, 0, 0);
+	if (cmd_tree->async_hdl==NULL)
+		n = t_uac( method, &s, body, &dlg, 0, 0);
+	else
+		n = t_uac( method, &s, body, &dlg, mi_uac_dlg_hdl,
+				(void*)cmd_tree->async_hdl);
 
 	pkg_free(s.s);
 	if (tmp_msg.headers) free_hdr_field_lst(tmp_msg.headers);
 
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		return 0;
-
 	if (n<=0) {
+		/* error */
+		rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+		if (rpl_tree==0)
+			return 0;
+
 		n = err2reason_phrase( n, &sip_error, err_buf, sizeof(err_buf),
 			"MI/UAC") ;
 		if (n > 0 )
@@ -384,11 +542,14 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 		else
 			add_mi_node_child( &rpl_tree->node, 0, 0, 0,
 				"500 MI/UAC failed", 17);
-	} else {
-		add_mi_node_child( &rpl_tree->node, 0, 0, 0, "202 Accepted", 12);
-	}
 
-	return rpl_tree;
+		return rpl_tree;
+	} else {
+		if (cmd_tree->async_hdl==NULL)
+			return init_mi_tree( 202, "Accepted", 8);
+		else
+			return MI_ROOT_ASYNC_RPL;
+	}
 }
 
 

@@ -74,7 +74,7 @@ static param_export_t mi_params[] = {
 	{"fifo_user",        STR_PARAM, &mi_fifo_uid_s},
 	{"fifo_user",        INT_PARAM, &mi_fifo_uid},
 	{"reply_dir",        STR_PARAM, &mi_fifo_reply_dir},
-	{"reply_indent",      STR_PARAM, &mi_reply_indent},
+	{"reply_indent",     STR_PARAM, &mi_reply_indent},
 	{0,0,0}
 };
 
@@ -183,6 +183,14 @@ static int mi_child_init(int rank)
 {
 	FILE *fifo_stream;
 
+	if (rank==PROC_TIMER || rank>0 ) {
+		if ( mi_writer_init(read_buf_size, mi_reply_indent)!=0 ) {
+			LOG(L_CRIT, "CRITICAL:mi_fifo:mi_child_init: failed to init "
+				"the reply writer\n");
+			return -1;
+		}
+	}
+
 	if(rank != 1)
 		return 0;
 
@@ -218,12 +226,6 @@ static int mi_child_init(int rank)
 	if ( mi_parser_init(read_buf_size)!=0 ) {
 		LOG(L_CRIT, "CRITICAL:mi_fifo:mi_child_init: failed to init "
 			"the command parser\n");
-		exit(-1);
-	}
-
-	if ( mi_writer_init(read_buf_size, mi_reply_indent)!=0 ) {
-		LOG(L_CRIT, "CRITICAL:mi_fifo:mi_child_init: failed to init "
-			"the reply writer\n");
 		exit(-1);
 	}
 

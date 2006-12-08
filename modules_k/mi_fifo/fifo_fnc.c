@@ -41,6 +41,7 @@
 #include "../../ut.h"
 #include "../../mi/mi.h"
 #include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "mi_fifo.h"
 #include "fifo_fnc.h"
 #include "mi_parser.h"
@@ -304,7 +305,7 @@ retry:
 
 
 
-static char *get_reply_filename( char * file, int len )
+static inline char *get_reply_filename( char * file, int len )
 {
 	if ( strchr(file,'.') || strchr(file,'/') || strchr(file, '\\') ) {
 		LOG(L_ERR, "ERROR:mi_fifo:get_reply_filename: forbidden filename: "
@@ -325,11 +326,84 @@ static char *get_reply_filename( char * file, int len )
 }
 
 
+static inline void free_async_handler( struct mi_handler *hdl )
+{
+	if (hdl)
+		shm_free(hdl);
+}
+
+
+static void fifo_close_async( struct mi_root *mi_rpl, struct mi_handler *hdl,
+																	int done)
+{
+	FILE *reply_stream;
+	char *name;
+
+	name = (char*)hdl->param;
+
+	if ( mi_rpl!=0 || done ) {
+		/*open fifo reply*/
+		reply_stream = mi_open_reply_pipe( name );
+		if (reply_stream==NULL) {
+			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: cannot open reply pipe "
+				"%s\n", name );
+			return;
+		}
+
+		if (mi_rpl!=0) {
+			mi_write_tree( reply_stream, mi_rpl);
+			free_mi_tree( mi_rpl );
+		} else {
+			mi_fifo_reply( reply_stream, "500 command failed\n");
+		}
+
+		fclose(reply_stream);
+	}
+
+	if (done)
+		free_async_handler( hdl );
+	return;
+}
+
+
+static inline struct mi_handler* build_async_handler( char *name, int len)
+{
+	struct mi_handler *hdl;
+	char *p;
+
+	hdl = (struct mi_handler*)shm_malloc( sizeof(struct mi_handler) + len + 1);
+	if (hdl==0) {
+		LOG(L_ERR,"ERROR:mi_fifo:build_async_handler: no more shm mem\n");
+		return 0;
+	}
+
+	p = (char*)(hdl) + sizeof(struct mi_handler);
+	memcpy( p, name, len+1 );
+
+	hdl->handler_f = fifo_close_async;
+	hdl->param = (void*)p;
+
+	return hdl;
+}
+
+
+#define mi_open_reply(_name,_file,_err) \
+	do { \
+		_file = mi_open_reply_pipe( _name ); \
+		if (_file==NULL) { \
+			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: cannot open reply pipe "\
+				"%s\n", _name); \
+			goto _err; \
+		} \
+	} while(0)
+
+
 
 void mi_fifo_server(FILE *fifo_stream)
 {
 	struct mi_root *mi_cmd;
 	struct mi_root *mi_rpl;
+	struct mi_handler *hdl;
 	int line_len;
 	char *file_sep, *command, *file;
 	struct mi_cmd *f;
@@ -342,7 +416,7 @@ void mi_fifo_server(FILE *fifo_stream)
 		if (mi_read_line(mi_buf,MAX_MI_FIFO_BUFFER,fifo_stream, &line_len)) {
 			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: failed to read "
 				"command\n");
-			goto consume;
+			goto consume1;
 		}
 
 		/* trim from right */
@@ -356,28 +430,28 @@ void mi_fifo_server(FILE *fifo_stream)
 
 		if (line_len==0) {
 			LOG(L_DBG, "INFO:mi_fifo:mi_fifo_server: command empty\n");
-			continue;
+			goto consume1;
 		}
 		if (line_len<3) {
 			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: command must have "
 				"at least 3 chars\n");
-			goto consume;
+			goto consume1;
 		}
 		if (*mi_buf!=MI_CMD_SEPARATOR) {
 			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: command must begin "
 				"with %c: %.*s\n", MI_CMD_SEPARATOR, line_len, mi_buf );
-			goto consume;
+			goto consume1;
 		}
 		command = mi_buf+1;
 		file_sep=strchr(command, MI_CMD_SEPARATOR );
 		if (file_sep==NULL) {
 			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: file separator "
 				"missing\n");
-			goto consume;
+			goto consume1;
 		}
 		if (file_sep==command) {
 			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: empty command\n");
-			goto consume;
+			goto consume1;
 		}
 		if (*(file_sep+1)==0) {
 			file = NULL;
@@ -387,58 +461,89 @@ void mi_fifo_server(FILE *fifo_stream)
 			if (file==NULL) {
 				LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: trimming "
 					"filename\n");
-				goto consume;
+				goto consume1;
 			}
 		}
 		/* make command zero-terminated */
 		*file_sep=0;
 
-		reply_stream = mi_open_reply_pipe( file );
-		if (reply_stream==NULL) {
-			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: cannot open reply pipe "
-				"%s\n", file);
-			goto consume;
-		}
-
 		f=lookup_mi_cmd( command, strlen(command) );
 		if (f==0) {
 			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: command %s is not "
 				"available\n", command);
+			mi_open_reply( file, reply_stream, consume1);
 			mi_fifo_reply( reply_stream, "500 command '%s' not available\n",
 				command);
-			goto consume;
+			goto consume2;
+		}
+
+		/* if asyncron cmd, build the async handler */
+		if (f->flags&MI_ASYNC_RPL_FLAG) {
+			hdl = build_async_handler( file, strlen(file) );
+			if (hdl==0) {
+				LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: failed to build "
+					"async handler\n");
+				mi_open_reply( file, reply_stream, consume1);
+				mi_fifo_reply( reply_stream, "500 Internal server error\n");
+				goto consume2;
+			}
+		} else {
+			hdl = 0;
+			mi_open_reply( file, reply_stream, consume1);
 		}
 
 		mi_cmd = mi_parse_tree(fifo_stream);
 		if (mi_cmd==NULL){
+			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server:error parsing mi tree\n");
+			if (!reply_stream)
+				mi_open_reply( file, reply_stream, consume3);
 			mi_fifo_reply( reply_stream, "400 parse error in command '%s'\n",
 				command);
-			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server:error parsing mi tree\n");
-			continue;
+			goto consume3;
 		}
+
+		mi_cmd->async_hdl = hdl;
 
 		DBG("DEBUG:mi_fifo:mi_fifo_server: done parsing the mi tree\n");
 
 		if ( (mi_rpl=run_mi_cmd(f, mi_cmd))==0 ){
+			if (!reply_stream)
+				mi_open_reply( file, reply_stream, failure);
 			mi_fifo_reply(reply_stream, "500 command '%s' failed\n", command);
 			LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_server: command (%s) "
 				"processing failed\n", command );
-		} else {
+		} else if (mi_rpl!=MI_ROOT_ASYNC_RPL) {
+			if (!reply_stream)
+				mi_open_reply( file, reply_stream, failure);
 			mi_write_tree( reply_stream, mi_rpl);
 			free_mi_tree( mi_rpl );
+		} else {
+			free_mi_tree( mi_cmd );
+			continue;
 		}
 
+		free_async_handler(hdl);
 		/* close reply fifo */
 		fclose(reply_stream);
 		/* destroy request tree */
 		free_mi_tree( mi_cmd );
-
 		continue;
 
-consume:
-		DBG("DEBUG:mi_fifo:mi_fifo_server: entered consume\n");
+failure:
+		free_async_handler(hdl);
+		/* destroy request tree */
+		free_mi_tree( mi_cmd );
+		/* destroy the reply tree */
+		if (mi_rpl) free_mi_tree(mi_rpl);
+		continue;
+
+consume3:
+		free_async_handler(hdl);
 		if (reply_stream)
-			fclose(reply_stream);
+consume2:
+		fclose(reply_stream);
+consume1:
+		DBG("DEBUG:mi_fifo:mi_fifo_server: entered consume\n");
 		/* consume the rest of the fifo request */
 		do {
 			mi_read_line(mi_buf,MAX_MI_FIFO_BUFFER,fifo_stream,&line_len);
