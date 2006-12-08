@@ -41,6 +41,8 @@ Anca-Maria Vamanu
               1.5.1. handle_publish()
               1.5.2. handle_subscribe()
 
+        1.6. Installation
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -58,6 +60,10 @@ Anca-Maria Vamanu
    1-11. Set max_expires parameter
    1-12. handle_publish usage
    1-13. handle_subscribe usage
+   1-14. Create presentity database table
+   1-15. Create active_watchers database table
+   1-16. Create watchers database table
+   1-17. Create xcap_xml database table
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -259,6 +265,72 @@ if(method=="PUBLISH")
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
+...
+     _________________________________________________________
+
+1.6. Installation
+
+   The module requires 4 table in OpenSER database. Next SQL
+   statements shows the syntax to create them.
+
+   Example 1-14. Create presentity database table
+...
+CREATE TABLE `presentity` (
+  `username` varchar(64) NOT NULL,
+  `domain` varchar(124) NOT NULL,
+  `event` varchar(64) NOT NULL,
+  `etag` varchar(64) NOT NULL,
+  `expires` int(11) NOT NULL,
+  `received_time` int(11) NOT NULL,
+  `body` text NOT NULL,
+  PRIMARY KEY  (`username`,`domain`,`event`,`etag`)
+) ENGINE=MyISAM;
+...
+
+   Example 1-15. Create active_watchers database table
+...
+CREATE TABLE `active_watchers` (
+  `to_user` varchar(64) NOT NULL,
+  `to_domain` varchar(128) NOT NULL,
+  `from_user` varchar(64) NOT NULL,
+  `from_domain` varchar(128) NOT NULL,
+  `event` varchar(64) NOT NULL default 'presence',
+  `event_id` varchar(64) NOT NULL,
+  `to_tag` varchar(128) NOT NULL,
+  `from_tag` varchar(128) NOT NULL,
+  `callid` varchar(128) NOT NULL,
+  `cseq` int(11) NOT NULL,
+  `contact` varchar(128) NOT NULL,
+  `record_route` varchar(255) NOT NULL,
+  `expires` int(11) NOT NULL,
+  `status` varchar(32) NOT NULL default 'pending',
+  `version` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`from_tag`)
+) ENGINE=MyISAM;
+...
+
+   Example 1-16. Create watchers database table
+...
+CREATE TABLE `watchers` (
+  `p_user` varchar(64) NOT NULL,
+  `p_domain` varchar(128) NOT NULL,
+  `w_user` varchar(64) NOT NULL,
+  `w_domain` varchar(128) NOT NULL,
+  `subs_status` varchar(64) NOT NULL,
+  `reason` varchar(64) NOT NULL,
+  `inserted_time` int(11) NOT NULL,
+  PRIMARY KEY  (`p_user`,`p_domain`,`w_user`,`w_domain`)
+) ENGINE=MyISAM;
+...
+
+   Example 1-17. Create xcap_xml database table
+...
+CREATE TABLE `xcap_xml` (
+  `user` varchar(64) NOT NULL,
+  `domain` varchar(128) NOT NULL,
+  `xcap` text NOT NULL,
+  PRIMARY KEY  (`user`,`domain`)
+) ENGINE=MyISAM;
 ...
      _________________________________________________________
 
