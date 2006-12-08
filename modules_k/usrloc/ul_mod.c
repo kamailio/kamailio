@@ -187,12 +187,18 @@ static param_export_t params[] = {
 
 
 static mi_export_t mi_cmds[] = {
-	{ MI_USRLOC_RM,           mi_usrloc_rm_aor,       0,  0,  mi_child_init },
-	{ MI_USRLOC_RM_CONTACT,   mi_usrloc_rm_contact,   0,  0,  mi_child_init },
-	{ MI_USRLOC_DUMP,         mi_usrloc_dump,         0,  0,  0             },
-	{ MI_USRLOC_FLUSH,        mi_usrloc_flush,        0,  0,  mi_child_init },
-	{ MI_USRLOC_ADD,          mi_usrloc_add,          0,  0,  mi_child_init },
-	{ MI_USRLOC_SHOW_CONTACT, mi_usrloc_show_contact, 0,  0,  mi_child_init },
+	{ MI_USRLOC_RM,           mi_usrloc_rm_aor,       0,                 0,
+				mi_child_init },
+	{ MI_USRLOC_RM_CONTACT,   mi_usrloc_rm_contact,   0,                 0,
+				mi_child_init },
+	{ MI_USRLOC_DUMP,         mi_usrloc_dump,         MI_NO_INPUT_FLAG,  0,
+				0             },
+	{ MI_USRLOC_FLUSH,        mi_usrloc_flush,        MI_NO_INPUT_FLAG,  0,
+				mi_child_init },
+	{ MI_USRLOC_ADD,          mi_usrloc_add,          0,                 0,
+				mi_child_init },
+	{ MI_USRLOC_SHOW_CONTACT, mi_usrloc_show_contact, 0,                 0,
+				mi_child_init },
 	{ 0, 0, 0, 0}
 };
 

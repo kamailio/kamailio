@@ -97,10 +97,10 @@ static param_export_t params[]={
 };
 
 static mi_export_t mi_cmds[] = {
-	{ FIFO_SET_GFLAG,   mi_set_gflag,   0,  0,  0 },
-	{ FIFO_RESET_GFLAG, mi_reset_gflag, 0,  0,  0 },
-	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,  0,  0 },
-	{ FIFO_GET_GFLAGS,  mi_get_gflags,  0,  0,  0 },
+	{ FIFO_SET_GFLAG,   mi_set_gflag,   0,                 0,  0 },
+	{ FIFO_RESET_GFLAG, mi_reset_gflag, 0,                 0,  0 },
+	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,                 0,  0 },
+	{ FIFO_GET_GFLAGS,  mi_get_gflags,  MI_NO_INPUT_FLAG,  0,  0 },
 	{ 0, 0, 0, 0}
 };
 

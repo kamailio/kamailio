@@ -269,7 +269,7 @@ static item_export_t mod_items[] = {
 static mi_export_t mi_cmds [] = {
 	{MI_TM_UAC,     mi_tm_uac_dlg,   MI_ASYNC_RPL_FLAG,  0,  0 },
 	{MI_TM_CANCEL,  mi_tm_cancel,    0,                  0,  0 },
-	{MI_TM_HASH,    mi_tm_hash,      0,                  0,  0 },
+	{MI_TM_HASH,    mi_tm_hash,      MI_NO_INPUT_FLAG,   0,  0 },
 	{MI_TM_REPLY,   mi_tm_reply,     0,                  0,  0 },
 	{0,0,0,0}
 };

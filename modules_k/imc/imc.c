@@ -119,8 +119,8 @@ stat_export_t imc_stats[] = {
 #endif
 
 static mi_export_t mi_cmds[] = {
-	{ "imc_list_rooms",    imc_mi_list_rooms,    0,  0,  0 },
-	{ "imc_list_members",  imc_mi_list_members,  0,  0,  0 },
+	{ "imc_list_rooms",    imc_mi_list_rooms,    MI_NO_INPUT_FLAG,  0,  0 },
+	{ "imc_list_members",  imc_mi_list_members,  0,                 0,  0 },
 	{ 0, 0, 0, 0}
 };
 
