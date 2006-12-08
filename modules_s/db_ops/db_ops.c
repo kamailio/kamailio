@@ -736,9 +736,9 @@ select_row_t sel_declaration[] = {
 
 static int dbops_close_query_func(struct sip_msg* m, char* query_no, char* dummy) {
 
-	if (open_queries[(int) query_no].result) {
-		open_queries[(int) query_no].action->dbf.free_result(open_queries[(int) query_no].action->dbh, open_queries[(int) query_no].result);
-		open_queries[(int) query_no].result = 0;
+	if (open_queries[(long) query_no].result) {
+		open_queries[(long) query_no].action->dbf.free_result(open_queries[(long) query_no].action->dbh, open_queries[(long) query_no].result);
+		open_queries[(long) query_no].result = 0;
 	}
 	return 1;
 }
@@ -751,7 +751,7 @@ static int dbops_pre_script_cb(struct sip_msg *msg, void *param) {
 static int dbops_post_script_cb(struct sip_msg *msg, void *param) {
 	int i;
 	for (i=0; i<max_queries; i++) {
-		dbops_close_query_func(msg, (char*) i, 0);
+		dbops_close_query_func(msg, (char*)(long) i, 0);
 	}
 	return 1;
 }
@@ -911,7 +911,7 @@ static int dbops_close_query_fixup(void** param, int param_no) {
 		return E_CFG;
 	}
 	pkg_free (*param);
-	*param=(void*) (unsigned int) n;
+	*param=(void*) (unsigned long) n;
 	return 0;
 }
 
@@ -945,9 +945,9 @@ static int dbops_query_func(struct sip_msg* m, char* dbops_action, char* query_n
 		dbops_close_query_func(m, query_no, 0);
 		res = dbops_func(m, (void*) dbops_action);
 		if (res < 0) return res;
-		open_queries[(int) query_no].action = (struct dbops_action*) dbops_action;
-		open_queries[(int) query_no].cur_row_no = 0;
-		open_queries[(int) query_no].result = ((struct dbops_action*) dbops_action)->result;
+		open_queries[(long) query_no].action = (struct dbops_action*) dbops_action;
+		open_queries[(long) query_no].cur_row_no = 0;
+		open_queries[(long) query_no].result = ((struct dbops_action*) dbops_action)->result;
 		return 1;
 	}
 	else
@@ -967,7 +967,7 @@ static int dbops_foreach_fixup(void** param, int param_no) {
 			return E_CFG;
 		}
 		pkg_free(*param);
-		*param=(void*)(unsigned int) n;
+		*param=(void*)(unsigned long) n;
 	}
 	else if (param_no == 2) {
 		int n;
@@ -977,7 +977,7 @@ static int dbops_foreach_fixup(void** param, int param_no) {
 			return E_CFG;
 		}
 		pkg_free(*param);
-		*param=(void*) (unsigned int) n;
+		*param=(void*) (unsigned long) n;
 	}
 	return 0;
 }
@@ -985,27 +985,27 @@ static int dbops_foreach_fixup(void** param, int param_no) {
 
 static int dbops_foreach_func(struct sip_msg* m, char* query_no, char* route_no) {
 	int save_row_no, res;
-	if ((int)route_no >= main_rt.idx) {
-		BUG("invalid routing table number #%d of %d\n", (int) route_no, main_rt.idx);
+	if ((long)route_no >= main_rt.idx) {
+		BUG("invalid routing table number #%ld of %d\n", (long) route_no, main_rt.idx);
 		return -1;
 	}
-	if (!main_rt.rlist[(int) route_no]) {
-		LOG(L_WARN, "WARN: route not declared (hash:%d)\n", (int) route_no);
+	if (!main_rt.rlist[(long) route_no]) {
+		LOG(L_WARN, "WARN: route not declared (hash:%ld)\n", (long) route_no);
 		return -1;
 	}
-	if (!open_queries[(int) query_no].result) {
-		LOG(L_ERR, "ERROR: db_ops: fetch: query (%d) is not opened. Use db_query() first\n", (int) query_no);
+	if (!open_queries[(long) query_no].result) {
+		LOG(L_ERR, "ERROR: db_ops: fetch: query (%ld) is not opened. Use db_query() first\n", (long) query_no);
 		return -1;
 	}
 	res = -1;
-	save_row_no = open_queries[(int) query_no].cur_row_no;
-	for (open_queries[(int) query_no].cur_row_no=0; open_queries[(int) query_no].cur_row_no < RES_ROW_N(open_queries[(int) query_no].result); open_queries[(int) query_no].cur_row_no++) {
+	save_row_no = open_queries[(long) query_no].cur_row_no;
+	for (open_queries[(long) query_no].cur_row_no=0; open_queries[(long) query_no].cur_row_no < RES_ROW_N(open_queries[(long) query_no].result); open_queries[(long) query_no].cur_row_no++) {
 		/* exec the routing script */
-		res = run_actions(main_rt.rlist[(int) route_no], m);
+		res = run_actions(main_rt.rlist[(long) route_no], m);
 		run_flags &= ~RETURN_R_F; /* absorb returns */
 		if (res <= 0) break;
 	}
-	open_queries[(int) query_no].cur_row_no = save_row_no;
+	open_queries[(long) query_no].cur_row_no = save_row_no;
 	return res;
 }
 

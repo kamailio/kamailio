@@ -193,13 +193,13 @@ static int timer_enable_fixup(void** param, int param_no) {
 		case 1:
 			for (a = timer_actions /*, n=(int) *param*/; a && n!=0; a=a->next, n--);
 			if (!a) {
-				LOG(L_ERR, "ERROR: timer: timer_enable_fixup: timer #%d not declared\n", (int) *param);
+				LOG(L_ERR, "ERROR: timer: timer_enable_fixup: timer #%ld not declared\n", (long) *param);
 				return E_CFG;
 			}
 			*param = a;
 			break;
 		case 2:
-			*param = (void*) (/*(int) *param*/n != 0);
+			*param = (void*)(long)(/*(int) *param*/n != 0);
 			break;
 		default: ;
 	}
@@ -210,7 +210,7 @@ static int timer_enable_func(struct sip_msg* m, char* timer_act, char* enable) {
 	struct timer_action* a;
 	int en;
 	a = (void*) timer_act;
-	en = (int) enable;
+	en = (int)(long) enable;
 	/* timer is not deleted immediately but is removed from handler by itself because timer_del may be slow blocking procedure
 	 * Disable and enable in sequence may be tricky
 	 */
