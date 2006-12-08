@@ -27,7 +27,6 @@
  */
 
 
-#include <ctype.h>
 #include "../../ut.h"
 #include "../../usr_avp.h"
 #include "../../data_lump_rpl.h"
@@ -121,19 +120,24 @@ int send_202ok(struct sip_msg * msg, int lexpire)
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
-		return -1;
+		goto error;
 	}
 
 	if( sl_reply( msg, (char*)202, (char*)&su_200_rpl)== -1)
 	{
 		LOG(L_ERR,"PRESENCE:append_to_reply: ERORR while sending reply\n");
-		return -1;
+		goto error;
 	}
 	
 	pkg_free(hdr_append.s);
 	return 0;
 
+error:
+
+	pkg_free(hdr_append.s);
+	return -1;
 }
+
 int send_200ok(struct sip_msg * msg, int lexpire)
 {
 	str hdr_append;
@@ -150,17 +154,20 @@ int send_200ok(struct sip_msg * msg, int lexpire)
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"ERROR:send_200ok: unable to add lump_rl\n");
-		return -1;
+		goto error;
 	}
 
 	if( sl_reply( msg, (char*)200, (char*)&su_200_rpl)== -1)
 	{
 		LOG(L_ERR,"PRESENCE:send_200ok : ERORR while sending reply\n");
-		return -1;
+		goto error;
 	}
 	
 	pkg_free(hdr_append.s);
 	return 0;
+error:
+	pkg_free(hdr_append.s);
+	return -1;
 
 }
 
@@ -168,7 +175,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 {	
 	if( !use_db )
 		return 0;
-	DBG("***************update_subscribtion:\n");
+	DBG("PRESENCE: update_subscribtion ...\n");
 	printf_subs(subs);	
 		db_key_t query_cols[15];
 		db_op_t  query_ops[15];
@@ -282,10 +289,12 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 				
 				if (sl_reply(msg, (char*)481, (char*)&pu_481_rpl) == -1)
 				{
-					LOG(L_ERR, "Pprintf_subs(subs);	RESENCE: update_subscribtion: ERROR while"
+					LOG(L_ERR, "PRESENCE: update_subscribtion: ERROR while"
 							" sending reply\n");
+					pa_dbf.free_result(pa_db, result);
 					goto error;
 				}
+				pa_dbf.free_result(pa_db, result);
 				return 0;
 			}
 			if(result != NULL)
@@ -327,7 +336,6 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 					}
 				}
 				
-								
 				return 1;
 			}			
 
@@ -485,8 +493,40 @@ error:
 
 }
 
-
 void msg_watchers_clean(unsigned int ticks,void *param)
+{
+	db_key_t db_keys[3];
+	db_val_t db_vals[3];
+	db_op_t  db_ops[3] ;
+
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR in use_table\n");
+		return ;
+	}
+	
+	DBG("PRESENCE: msg_watchers_clean:cleaning pending subscriptions\n");
+	
+	db_keys[0] ="inserted_time";
+	db_ops[0] = OP_LT;
+	db_vals[0].type = DB_INT;
+	db_vals[0].nul = 0;
+	db_vals[0].val.int_val = (int)time(NULL)- 24*3600 ;
+
+	db_keys[1] = "subs_status";
+	db_ops [1] = OP_EQ;
+	db_vals[1].type = DB_STR;
+	db_vals[1].nul = 0;
+	db_vals[1].val.str_val.s = "pending";
+	db_vals[1].val.str_val.len = 7;
+
+	
+	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
+		LOG(L_ERR,"PRESENCE:msg_watchers_clean: ERROR cleaning pending "
+				" subscriptions\n");
+}
+
+void msg_active_watchers_clean(unsigned int ticks,void *param)
 {
 	db_key_t db_keys[1];
 	db_val_t db_vals[1];
@@ -505,11 +545,11 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR in use_table\n");
+		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR in use_table\n");
 		return ;
 	}
 	
-	DBG("PRESENCE: msg_watchers_clean:cleaning expired watcher information\n");
+	DBG("PRESENCE: msg_active_watchers_clean:cleaning expired watcher information\n");
 	
 	db_keys[0] ="expires";
 	db_ops[0] = OP_LT;
@@ -534,12 +574,17 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
 						1, n_result_cols, 0, &result )< 0)
 	{
-		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR while querying database"
+		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR while querying database"
 				" for expired messages\n");
 		return;
 	}
-	if(result->n <= 0)
+	if(result == NULL)
 		return;
+	if(result && result->n <= 0)
+	{
+		pa_dbf.free_result(pa_db, result);
+		return;
+	}
 
 	for(i=0 ; i< result->n; i++)
 	{
@@ -596,8 +641,11 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	}
 	
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
-		LOG(L_ERR,"PRESENCE:msg_watchers_clean: ERROR cleaning expired"
+		LOG(L_ERR,"PRESENCE:msg_active_watchers_clean: ERROR cleaning expired"
 				" messages\n");
+
+	pa_dbf.free_result(pa_db, result);
+	return;
 }
 
 
@@ -618,8 +666,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 //	str hdr_append;
 	int error_ret = -1;
 	int rt  = 0;
-	db_key_t db_keys[6];
-	db_val_t db_vals[6];
+	db_key_t db_keys[7];
+	db_val_t db_vals[7];
 	db_key_t result_cols[2];
 	db_res_t *result = NULL;
 	db_row_t *row ;	
@@ -942,7 +990,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		result_cols[0] = "subs_status";
 		result_cols[1] = "reason";
 
-		if(pa_dbf.use_table(pa_db, "watchers")< 0)
+		if(pa_dbf.use_table(pa_db, watchers_table)< 0)
 		{
 			LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR in use table\n");
 			goto error;
@@ -951,8 +999,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols,
 						4, 2, 0, &result )< 0)
 		{
-			LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR while querying table"
-				" watchers\n");
+			LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR while querying"
+					" watchers table\n");
 			goto error;
 		}
 
@@ -978,10 +1026,17 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 				db_vals[4].val.str_val.s = "active";
 				db_vals[4].val.str_val.len = 6;
 			}
-			if(pa_dbf.insert(pa_db, db_keys, db_vals, 5)< 0)
+		
+			db_keys[5] = "inserted_time";
+			db_vals[5].type = DB_INT;
+			db_vals[5].nul = 0;
+			db_vals[5].val.int_val= (int)time(NULL);
+
+
+			if(pa_dbf.insert(pa_db, db_keys, db_vals, 6)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR while inserting into"
-						" table watchers\n");
+						" watchers table\n");
 				goto error;
 			}
 		}

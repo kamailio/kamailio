@@ -102,6 +102,61 @@ modparam("presence", "db_url",
 		</example>
 	</section>
 	<section>
+		<title><varname>presentity_table</varname>(str)</title>
+		<para>
+		The name of the db table where Publish information are stored.
+		</para>
+		<para>
+		<emphasis>	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>presentity_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "presentity_table", "presentity");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>active_watchers_table</varname>(str)</title>
+		<para>
+		The name of the db table where active subscription information are stored. 
+		</para>
+		<para>
+		<emphasis>	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>active_watchers_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "active_watchers_table", "active_watchers")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>watchers_table</varname>(str)</title>
+		<para>
+		The name of the db table where subscription states are stored.
+		</para>
+		<para>
+		<emphasis>	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>watchers_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "watchers_table", "watchers")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>clean_period</varname> (str)</title>
 		<para>
 		The period at which to verify if there are expired messages stored in
@@ -183,7 +238,7 @@ modparam("presence", "lock_set_size", 8)
 	<section>
 		<title><varname>expires_offset</varname> (str)</title>
 		<para>
-		The value that should be substracted from the expires value when
+		The value that should be subtracted from the expires value when
 		sending a 200OK for a publish to force the client cu send an update
 		before the old publish expires
 		</para>

@@ -157,7 +157,7 @@ xmlNodePtr addChild (xmlNodePtr new_node, xmlDocPtr doc, xmlNodePtr p_root )
 	add_node = (xmlNodePtr)pkg_malloc(sizeof(struct _xmlNode));
 	if( add_node == NULL) 
 	{
-		LOG(L_ERR,"Error while allocating memory\n");
+		LOG(L_ERR,"PRESENCE:addChild: Error while allocating memory\n");
 		return NULL;
 	}
 	memset(add_node, 0, sizeof(xmlNodePtr));
@@ -192,6 +192,7 @@ str* agregate_xmls(str** body_array, int n)
 	xmlDocPtr* xml_array ;
 	xmlNodePtr node = NULL;
 	xmlNodePtr new_node = NULL, add_node = NULL ;
+	xmlNodePtr last_child= NULL;
 	str *body;
 	char* old_id= NULL, *new_id = NULL;
 
@@ -200,7 +201,7 @@ str* agregate_xmls(str** body_array, int n)
 	if(!xml_array)
 	{
 	
-		LOG(L_ERR,"agregate_xmls: Error while alocating memory");
+		LOG(L_ERR,"PRESENCE:agregate_xmls: Error while alocating memory");
 		return NULL;
 	}
 	
@@ -209,7 +210,7 @@ str* agregate_xmls(str** body_array, int n)
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		LOG(L_ERR,"agregate_xmls:Error while allocating memory\n");
+		LOG(L_ERR,"PRESENCE:agregate_xmls:Error while allocating memory\n");
 		goto error;
 	}
 
@@ -223,7 +224,7 @@ str* agregate_xmls(str** body_array, int n)
 		
 		if( xml_array[j]== NULL)
 		{
-			LOG(L_ERR,"agregate_xmls: ERROR while parsing xml body message\n");
+			LOG(L_ERR,"PRESENCE:agregate_xmls: ERROR while parsing xml body message\n");
 			goto error;
 		}
 		j++;
@@ -232,18 +233,19 @@ str* agregate_xmls(str** body_array, int n)
 
 	j--;
 	p_root = xmlDocGetNodeByName( xml_array[j], "presence", NULL);
-	
 	if(p_root ==NULL)
 	{
-		LOG(L_ERR,"agregate_xmls: ERROR while geting the xml_tree root\n");
+		LOG(L_ERR,"PRESENCE:agregate_xmls: ERROR while geting the xml_tree root\n");
 		goto error;
 	}
+	last_child= p_root->last;
+
 	for(i= j; i>=0; i--)
 	{
 		new_p_root= xmlDocGetNodeByName( xml_array[i], "presence", NULL);
 		if(new_p_root ==NULL)
 		{
-			LOG(L_ERR,"agregate_xmls: ERROR while geting the xml_tree root\n");
+			LOG(L_ERR,"PRESENCE:agregate_xmls: ERROR while geting the xml_tree root\n");
 			goto error;
 		}
 
@@ -308,7 +310,7 @@ str* agregate_xmls(str** body_array, int n)
 				add_node = addChild(new_node,xml_array[j],p_root);
 				if( add_node == NULL) 
 				{
-					LOG(L_ERR,"Error while adding child\n");
+					LOG(L_ERR,"PRESENCE:agregate_xmls:Error while adding child\n");
 					goto error;
 				}
 				DBG("PRESENCE:agregate_xmls: added node:(new_node->name= %s",
@@ -326,8 +328,17 @@ str* agregate_xmls(str** body_array, int n)
 	}
 	if(xml_array!=NULL)
 		pkg_free(xml_array);
-	if(add_node != NULL)
-		pkg_free(add_node);
+
+	if(last_child->next)  /* if nodes added */
+	{	
+		last_child= last_child->next;
+		while(last_child)
+		{
+			node= last_child;
+			last_child= last_child->next;
+			pkg_free(node);
+		}
+	}	
   
     /*
      *Free the global variables that may
@@ -350,8 +361,16 @@ error:
 	}
 	if(xml_array!=NULL)
 		pkg_free(xml_array);
-	if(add_node != NULL)
-		pkg_free(add_node);
+	if(last_child->next)  /* if nodes added */
+	{	
+		last_child= last_child->next;
+		while(last_child)
+		{
+			node= last_child;
+			last_child= last_child->next;
+			pkg_free(last_child);
+		}
+	}	
 	return NULL;
 }
 
@@ -380,7 +399,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		LOG(L_ERR," build_off_nbody:Error while allocating memory\n");
+		LOG(L_ERR,"PRESENCE: build_off_nbody:Error while allocating memory\n");
 		return NULL;
 	}
 	memset(body, 0, sizeof(str));
@@ -949,7 +968,6 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 							(unsigned char*)"occurence-id")== 0&& occurence_ID)
 				{
 					content = (char*)xmlNodeGetContent(provide_node);
-					printf("found occurence-id = %s\n", content);
 					if(content && xmlStrcasecmp ((unsigned char*)content,
 								(unsigned char*)occurence_ID) == 0)
 					{

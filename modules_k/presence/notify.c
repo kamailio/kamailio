@@ -26,27 +26,23 @@
  *  2006-08-15  initial version (anca)
  */
 
-#include "notify.h"
-#include "pidf.h"
-#include "utils_func.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../../globals.h"
 #include "../../parser/contact/parse_contact.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "../../str.h"
 #include "../../db/db.h"
 #include "../../db/db_val.h"
 #include "../tm/tm_load.h"
+
 #include "presence.h"
-#include "../../ut.h"
-
-
-// char p_event[10]="presence";
-// char "wi_event"[16]="presence.winfo";
+#include "notify.h"
+#include "pidf.h"
+#include "utils_func.h"
 
 extern struct tm_binds tmb;
 db_res_t *res = 0;
@@ -69,49 +65,6 @@ void printf_subs(subs_t* subs)
 			subs->to_tag.len, subs->to_tag.s,	subs->from_tag.len, subs->from_tag.s);
 
 }
-
-#if 0
-void PRINT_DLG(FILE* out, dlg_t* _d)
-{
-	fprintf(out, "====dlg_t===\n");
-	fprintf(out, "id.callid    : '%.*s'\n", _d->id.call_id.len, _d->id.call_id.s);
-	fprintf(out, "id.rem_tag    : '%.*s'\n", _d->id.rem_tag.len,
-			_d->id.rem_tag.s);
-	fprintf(out, "id.loc_tag    : '%.*s'\n", _d->id.loc_tag.len, 
-			_d->id.loc_tag.s);
-	fprintf(out, "loc_seq.value : %d\n", _d->loc_seq.value);
-	fprintf(out, "loc_seq.is_set: %s\n", _d->loc_seq.is_set ? "YES" : "NO");
-	fprintf(out, "rem_seq.value : %d\n", _d->rem_seq.value);
-	fprintf(out, "rem_seq.is_set: %s\n", _d->rem_seq.is_set ? "YES" : "NO");
-	fprintf(out, "loc_uri       : '%.*s'\n", _d->loc_uri.len, _d->loc_uri.s);
-	fprintf(out, "rem_uri       : '%.*s'\n", _d->rem_uri.len, _d->rem_uri.s);
-	fprintf(out, "rem_target    : '%.*s'\n", _d->rem_target.len, 
-			_d->rem_target.s);
-	fprintf(out, "state         : ");
-	switch(_d->state) {
-	case DLG_NEW:       fprintf(out, "DLG_NEW\n");       break;
-	case DLG_EARLY:     fprintf(out, "DLG_EARLY\n");     break;
-	case DLG_CONFIRMED: fprintf(out, "DLG_CONFIRMED\n"); break;
-	case DLG_DESTROYED: fprintf(out, "DLG_DESTROYED\n"); break;
-	}
-	print_rr(out, _d->route_set);
-	if (_d->hooks.request_uri) 
-		fprintf(out, "hooks.request_uri: '%.*s'\n",_d->hooks.request_uri->len, 
-				_d->hooks.request_uri->s);
-	if (_d->hooks.next_hop) 
-		fprintf(out, "hooks.next_hop   : '%.*s'\n", _d->hooks.next_hop->len, 
-				_d->hooks.next_hop->s);
-	if (_d->hooks.first_route) 
-		fprintf(out, "hooks.first_route: '%.*s'\n", _d->hooks.first_route->len,
-				_d->hooks.first_route->nameaddr.name.s);
-	if (_d->hooks.last_route)
-		fprintf(out, "hooks.last_route : '%.*s'\n", _d->hooks.last_route->len, 
-				_d->hooks.last_route->s);
-	
-	fprintf(out, "====dlg_t====\n");
-}
-#endif
-
 
 str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 {
@@ -192,8 +145,8 @@ str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 			return NULL;
 		}
 
-		DBG("build_str_hdr: expires = %d\n", expires_t);
-		DBG("build_str_hdr: subs_expires : %.*s\n", len , subs_expires);
+		DBG("PRESENCE:build_str_hdr: expires = %d\n", expires_t);
+		DBG("PRESENCE:build_str_hdr: subs_expires : %.*s\n", len , subs_expires);
 
 		strncpy(str_hdr->s+str_hdr->len,subs_expires ,len );
 		str_hdr->len += len;
@@ -217,7 +170,7 @@ str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 	}
 
 	str_hdr->s[str_hdr->len] = '\0';
-	DBG("************headers:\n%.*s\n", str_hdr->len, str_hdr->s);
+	DBG("PRESENCE: build_str_hdr: headers:\n%.*s\n", str_hdr->len, str_hdr->s);
 		
 	return str_hdr;
 
@@ -230,17 +183,17 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	db_val_t query_vals[6];
 	db_key_t result_cols[6];
 	db_res_t *result = NULL;
-	int status_col, expires_col, from_user_col, from_domain_col;
-	str* notify_body = NULL;
-	watcher_t *watchers = NULL;
-	watcher_t swatchers;
 	db_row_t *row = NULL ;	
 	db_val_t *row_vals = NULL;
+	str* notify_body = NULL;
+	str p_uri;
+	char* version_str;
+	watcher_t *watchers = NULL;
+	watcher_t swatchers;
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	int i , len = 0;
-	char* version_str;
-	str p_uri;
+	int status_col, expires_col, from_user_col, from_domain_col;
 	
 	uandd_to_uri(subs->to_user, subs->to_domain, &p_uri);
 	if(p_uri.s == NULL)
@@ -256,7 +209,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	{
 		LOG(L_ERR,"PRESENCE:get_wi_notify_body: ERROR while converting int"
 				" to str\n ");
-		return NULL;
+		goto error;
 	}
 
 	if(watcher_subs != NULL) /*no need to query data base */
@@ -265,11 +218,15 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		swatchers.status= watcher_subs->status;
 		uandd_to_uri( watcher_subs->from_user,watcher_subs->from_domain,
 						&swatchers.uri);
+		if(swatchers.uri.s== NULL)
+			goto error;
+
 		swatchers.id.s = (char *)pkg_malloc(swatchers.uri.len *2 +1);
 		if(swatchers.id.s==0)
 		{
 			LOG(L_ERR,"PRESENCE:get_wi_notify_body: ERROR no more pkg mem\n");
-			return NULL;
+			pkg_free(swatchers.uri.s);
+			goto error;
 		}
 		to64frombits((unsigned char *)swatchers.id.s,
 				(const unsigned char*) swatchers.uri.s, swatchers.uri.len );
@@ -286,7 +243,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		if(swatchers.id.s !=NULL)
 			pkg_free(swatchers.id.s );
 
-					
+		pkg_free(p_uri.s);			
 		return notify_body;
 	}
 
@@ -323,7 +280,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_wi_notify_body: Error in use_table\n");
-		return NULL;
+		goto error;
 	}
 
 	LOG(L_INFO,"PRESENCE:get_wi_notify_body: querying database  \n");
@@ -332,15 +289,14 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	{
 		LOG(L_ERR, "PRESENCE:get_wi_notify_body: Error while querying"
 				" presentity\n");
-		return NULL;
+		goto error;
 	}
 
 	if (!result )
 	{
 		LOG(L_ERR, "PRESENCE: get_wi_notify_body:The query returned no"
 				" result\n");
-		pa_dbf.free_result(pa_db, result);
-		return NULL;
+		goto error;
 	}
 	else
 		if(result->n >0)			
@@ -350,7 +306,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			{
 				LOG(L_ERR, "PRESENCE:get_wi_notify_body:ERROR while allocating"
 						" memory\n");
-				return NULL;
+				goto error;
 			}
 			for(i=0;i<result->n;i++)
 			{
@@ -370,7 +326,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 				{
 					LOG(L_ERR, "PRESENCE:get_wi_notify_body:ERROR while creating"
 						" memory\n");
-					return NULL;
+					goto error;
 
 				}	
 			
@@ -403,10 +359,33 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		pkg_free(watchers);
 	}
 
-	
+	if(p_uri.s)
+		pkg_free(p_uri.s);
+
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
 	return notify_body;
+
+error:
+	if(result!=NULL)
+		pa_dbf.free_result(pa_db, result);
+	
+	if(watchers!=NULL) 
+	{
+		for(i = 0; i<result->n; i++)
+		{
+			if(watchers[i].uri.s !=NULL)
+				pkg_free(watchers[i].uri.s );
+			if(watchers[i].id.s !=NULL)
+				pkg_free(watchers[i].id.s );
+		}
+		pkg_free(watchers);
+	}
+	if(p_uri.s)
+		pkg_free(p_uri.s);
+
+	return NULL;
+
 }
 
 
@@ -425,6 +404,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	int i;
+	int build_off_n= -1; 
 	str etags;
 
 	query_cols[n_query_cols] = "domain";
@@ -449,11 +429,11 @@ str* get_p_notify_body(str user, str host, str* etag)
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:get_p__notify_body: Error in use_table\n");
+		LOG(L_ERR, "PRESENCE:get_p_notify_body: Error in use_table\n");
 		return NULL;
 	}
 
-	LOG(L_INFO,"PRESENCE:get_p_notify_body: querying presentity  \n");
+	LOG(L_INFO,"PRESENCE:get_p_notify_body: querying presentity\n");
 	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 		 result_cols, n_query_cols, n_result_cols, "received_time",  &result) < 0) 
 	{
@@ -498,7 +478,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 								etags.len)==0 ) )
 				{
 					DBG("PRESENCE:get_p_notify_body found etag  \n");
-
+					build_off_n= i;
 					body_array[i] = build_off_nbody(user, host, etag);
 					if(body_array[i] == NULL)
 					{
@@ -518,13 +498,21 @@ str* get_p_notify_body(str user, str host, str* etag)
 				row = &result->rows[i];
 				row_vals = ROW_VALUES(row);
 				body_array[i] =&row_vals[body_col].val.str_val;
-			}	
-		
+			}			
 		notify_body = agregate_xmls(body_array, result->n);
 	}
 
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
+	if(build_off_n > 0)
+	{
+		if(body_array[build_off_n])
+		{
+			if(body_array[build_off_n]->s)
+				xmlFree(body_array[build_off_n]->s);
+			pkg_free(body_array[build_off_n]);
+		}
+	}	
 	if(body_array!=NULL)
 		pkg_free(body_array);
 	return notify_body;
@@ -532,6 +520,16 @@ str* get_p_notify_body(str user, str host, str* etag)
 error:
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
+	if(build_off_n > 0)
+	{
+		if(body_array[build_off_n])
+		{
+			if(body_array[build_off_n]->s)
+				xmlFree(body_array[build_off_n]->s);
+			pkg_free(body_array[build_off_n]);
+		}
+	}	
+
 	if(body_array!=NULL)
 		pkg_free(body_array);
 	return NULL;
@@ -556,7 +554,7 @@ static inline int pkg_strdup(str* dst, str* src)
 	dst->s = pkg_malloc(src->len);
 	if (dst->s==NULL)
 	{
-		LOG(L_ERR, "PRESENCE:shm_strdup: No memory left\n");
+		LOG(L_ERR, "PRESENCE:pkg_strdup: No memory left\n");
 		return -1;
 	}
 	
@@ -644,6 +642,11 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 	return td;
 
 error:
+	if(w_uri.s ==NULL)
+	{
+		pkg_free(w_uri.s);
+		w_uri.s= NULL;
+	}
 	if(td!=NULL)
 		free_tm_dlg(td);
 	return NULL;
@@ -653,7 +656,7 @@ error:
 subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 {
 
-	subs_t** subs_array;
+	subs_t** subs_array= NULL;
 	db_key_t query_cols[6];
 	db_op_t  query_ops[6];
 	db_val_t query_vals[6];
@@ -664,8 +667,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
 	int expires_col= 0,callid_col, cseq_col, i, status_col =0, event_id_col = 0;
 	int version_col = 0, record_route_col = 0, contact_col = 0;
-	
-	
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
@@ -674,7 +675,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	}
 
 	LOG(L_INFO,"PRESENCE:get_subs_dialog:querying database table = watchers\n");
-DBG("**************************In get_subs_dialog ***************\n\n");
 	query_cols[n_query_cols] = "to_domain";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
@@ -722,7 +722,6 @@ DBG("**************************In get_subs_dialog ***************\n\n");
 		LOG(L_ERR, "PRESENCE:get_subs_dialog:Error while querying database\n");
 		return NULL;
 	}
-	DBG("n= %d\n", res->n);
 
 	if (res && res->n <=0 )
 	{
@@ -735,12 +734,13 @@ DBG("**************************In get_subs_dialog ***************\n\n");
 		return NULL;
 
 	}
+	DBG("n= %d\n", res->n);
 	
 	subs_array = (subs_t**)pkg_malloc(res->n*sizeof(subs_t*));
 	if(subs_array == NULL)
 	{
 		LOG(L_ERR,"PRESENCE: get_subs_dialog: ERROR while allocating memory\n");
-		return NULL;
+		goto error;
 	}
 	memset(subs_array, 0, res->n*sizeof(subs_t*));
 	
@@ -754,7 +754,7 @@ DBG("**************************In get_subs_dialog ***************\n\n");
 		{
 			LOG(L_ERR,"PRESENCE: get_subs_dialog: ERROR while allocating"
 					" memory\n");
-			return NULL;
+			goto error;
 		}	
 		memset(subs_array[i], 0, sizeof(subs_t));
 		subs_array[i]->to_user.s = p_user->s;
@@ -819,10 +819,25 @@ DBG("**************************In get_subs_dialog ***************\n\n");
 			subs_array[i]->version = row_vals[version_col].val.int_val;
 		}
 	} 
-
 	*n = res->n;
 	
 	return subs_array;
+
+error:
+	if(res)
+		pa_dbf.free_result(pa_db, res);
+	res= NULL;
+	
+	if(subs_array)
+	{
+		for(i=0; i<res->n; i++)
+			if(subs_array[i])
+				pkg_free(subs_array[i]);
+		pkg_free(subs_array);
+	}
+
+	return NULL;
+	
 }
 
 
@@ -861,14 +876,16 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 					"%s\n", event);
 		}
 	}
-			
-	for(i =0; i<n; i++)
-	{
-		if(subs_array[i]!=NULL)
-			pkg_free(subs_array[i]);
-	}
+
 	if(subs_array!=NULL)
+	{	
+		for(i =0; i<n; i++)
+		{
+			if(subs_array[i]!=NULL)
+				pkg_free(subs_array[i]);
+		}
 		pkg_free(subs_array);
+	}
 	if(res!=NULL)
 	{	
 		pa_dbf.free_result(pa_db, res);
@@ -884,13 +901,15 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 	return 1;
 
 error:
-	for(i =0; i<n; i++)
-	{
-		if(subs_array[i]!=NULL)
-			pkg_free(subs_array[i]);
-	}
 	if(subs_array!=NULL)
+	{
+		for(i =0; i<n; i++)
+		{
+			if(subs_array[i]!=NULL)
+				pkg_free(subs_array[i]);
+		}
 		pkg_free(subs_array);
+	}
 	if(res!=NULL)
 	{
 		pa_dbf.free_result(pa_db, res);
@@ -933,7 +952,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 	if(ruleset_node == NULL)
 	{
 		LOG(L_INFO, "PRESENCE:is_watcher_allowed: ruleset_node NULL\n");
-		return NULL;
+		goto error;
 
 	}	
 	for(node1 = ruleset_node->children ; node1; node1 = node1->next)
@@ -948,7 +967,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		if(cond_node == NULL)
 		{	
 			LOG(L_INFO, "PRESENCE:is_watcher_allowed:cond node NULL\n");
-			return NULL;
+			goto error;
 		}
 		DBG("PRESENCE:is_watcher_allowed:cond_node->name= %s\n",
 				cond_node->name);
@@ -966,7 +985,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		{
 			LOG(L_ERR, "PRESENCE:is_watcher_allowed:ERROR didn't found"
 					" identity tag\n");
-			return NULL;
+			goto error;
 		}	
 		id = NULL;
 		
@@ -1123,6 +1142,9 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 
 		return node1;
 	}	
+error:
+	pkg_free(w_uri.s);
+	return NULL;
 }
 
 xmlDocPtr get_xcap_tree(str user, str domain)
@@ -1164,7 +1186,7 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	{
 		LOG(L_ERR, "PRESENCE:get_xcap_tree:Error while querying table xcap for"
 		" [user]=%.*s , domain=%.*s\n",user.len, user.s, domain.len, domain.s);
-		return NULL;
+		goto error;
 	}	
 
 	if(result && result->n<=0)
@@ -1172,7 +1194,7 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 		LOG(L_ERR, "PRESENCE:get_xcap_tree:The query in table xcap for"
 				" [user]=%.*s , domain=%.*s returned no result\n",
 				user.len, user.s, domain.len, domain.s);
-		return NULL;
+		goto error;
 	}
 	LOG(L_ERR, "PRESENCE:get_xcap_tree:The query in table xcap for"
 			" [user]=%.*s , domain=%.*s returned result",	user.len, user.s, domain.len, domain.s );
@@ -1189,9 +1211,18 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	if(xcap_tree == NULL)
 	{
 		LOG(L_ERR,"PRESENCE:get_xcap_tree: ERROR while parsing memory\n");
+		goto error;
 	}
-	
+
+	if(result!=NULL)
+		pa_dbf.free_result(pa_db, result);
+
 	return xcap_tree;
+
+error:
+	if(result!=NULL)
+		pa_dbf.free_result(pa_db, result);
+	return NULL;
 }
 
 
@@ -1277,15 +1308,15 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 					w_up_vals[wn_update_keys].val.str_val = subs->reason;
 					wn_update_keys++;
 				}
-				if(pa_dbf.use_table(pa_db, "watchers")< 0)
+				if(pa_dbf.use_table(pa_db, watchers_table)< 0)
 				{	
-					LOG(L_ERR, "PRESENCE: notify:ERROR in use table watchers\n");
+					LOG(L_ERR, "PRESENCE: notify:ERROR in use watchers table\n");
 					goto error;
 				}
 				if(pa_dbf.update(pa_db, w_keys, 0, w_vals, w_up_keys,w_up_vals,
 							4,wn_update_keys++)< 0)
 				{
-					LOG(L_ERR, "PRESENCE: notify:ERROR while updating table watchers\n");
+					LOG(L_ERR, "PRESENCE: notify:ERROR while updating watchers table\n");
 					goto error;
 				}
 			}	
@@ -1422,14 +1453,9 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 	printf_subs(subs);	
 	if(send_on_cback)
 	{
-		LOG(L_ERR, "+++++++++++++++++++++++++++++++++++++++\n");
 		printf_subs(cb_param->wi_subs);
 	}
-#if 0	
-	DBG("dlg_t:\n");
-	PRINT_DLG(stdout,td);
-	DBG("\n");
-#endif
+	
 	if(final_body != NULL)
 		DBG("body :\n:%.*s\n", final_body->len, final_body->s);	
 			
@@ -1494,7 +1520,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 		pkg_free(p_uri.s);
 	if(td!=NULL)
 	{
-		if(subs->event.len == PRES_LEN)
+		if(subs->event.len == PRES_LEN && td->rem_uri.s)
 			pkg_free(td->rem_uri.s);
 		free_tm_dlg(td);
 	}
@@ -1530,7 +1556,7 @@ error:
 		pkg_free(p_uri.s);
 	if(td!=NULL)
 	{
-		if(subs->event.len == PRES_LEN)
+		if(subs->event.len == PRES_LEN && td->rem_uri.s)
 			pkg_free(td->rem_uri.s);
 		free_tm_dlg(td);
 	}
@@ -1569,6 +1595,9 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			((c_back_param*)(*ps->param))->w_id == NULL)
 	{
 		DBG("PRESENCE p_tm_callback: message id not received\n");
+		if(*ps->param !=NULL  )
+			shm_free(*ps->param);
+
 		return;
 	}
 	

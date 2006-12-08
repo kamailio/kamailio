@@ -67,6 +67,7 @@ db_func_t pa_dbf;
 gen_lock_set_t* set;
 char *presentity_table="presentity";
 char *active_watchers_table = "active_watchers";
+char *watchers_table= "watchers";  
 int use_db=1;
 
 /* to tag prefix */
@@ -109,27 +110,30 @@ static cmd_export_t cmds[]=
 };
 
 static param_export_t params[]={
-	{ "db_url",				STR_PARAM, &db_url.s},
-	{ "clean_period",		INT_PARAM, &clean_period },
-	{ "to_tag_pref",		STR_PARAM, &to_tag_pref },
-	{ "totag_avpid",		INT_PARAM, &reply_tag_avp_id },
-	{ "lock_set_size",		INT_PARAM, &lock_set_size },
-	{ "expires_offset",		INT_PARAM, &expires_offset },
-	{ "force_active",		INT_PARAM, &force_active },
-	{ "max_expires",        INT_PARAM, &max_expires  },
+	{ "db_url",					STR_PARAM, &db_url.s},
+	{ "presentity_table",		STR_PARAM, &presentity_table},
+	{ "active_watchers_table", 	STR_PARAM, &active_watchers_table},
+	{ "watchers_table",			STR_PARAM, &watchers_table},
+	{ "clean_period",			INT_PARAM, &clean_period },
+	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
+	{ "totag_avpid",			INT_PARAM, &reply_tag_avp_id },
+	{ "lock_set_size",			INT_PARAM, &lock_set_size },
+	{ "expires_offset",			INT_PARAM, &expires_offset },
+	{ "force_active",			INT_PARAM, &force_active },
+	{ "max_expires",			INT_PARAM, &max_expires  },
 	{0,0,0}
 };
 
 /** module exports */
 struct module_exports exports= {
-	"presence",      /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* exported functions */
-	params,     /* exported parameters */
-	0,          /* exported statistics */
-	0  ,        /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	mod_init,   /* module initialization function */
+	"presence",					/* module name */
+	DEFAULT_DLFLAGS,			/* dlopen flags */
+	cmds,						/* exported functions */
+	params,						/* exported parameters */
+	0,							/* exported statistics */
+	0  ,						/* exported MI functions */
+	0,							/* exported pseudo-variables */
+	mod_init,					/* module initialization function */
 	(response_function) 0,      /* response handling function */
 	(destroy_function) destroy, /* destroy function */
 	child_init                  /* per-child init function */
@@ -140,7 +144,7 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	str _s;
+//	str _s;
 //	int ver = 0;
 	load_tm_f  load_tm;
 
@@ -220,9 +224,11 @@ static int mod_init(void)
 		LOG(L_ERR,"PRESENCE:mod_init: Error while connecting database\n");
 		return -1;
 	}
+
+	/*
 	_s.s = presentity_table;
 	_s.len = strlen(presentity_table);
-	/*
+	
 	 * ver =  table_version(&pa_dbf, pa_db, &_s);
 	if(ver!=S_TABLE_VERSION)
 	{
@@ -241,8 +247,9 @@ static int mod_init(void)
 	
 	register_timer(msg_presentity_clean, 0, clean_period);
 	
-	register_timer(msg_watchers_clean, 0, clean_period);
+	register_timer(msg_active_watchers_clean, 0, clean_period);
 
+	register_timer(msg_watchers_clean, 0, clean_period);
 
 	if(pa_db)
 		pa_dbf.close(pa_db);

@@ -26,10 +26,6 @@
  *  2006-08-15  initial version (anca)
  */
 
-#include "publish.h"
-#include "presence.h"
-#include "presentity.h"
-
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <time.h>
@@ -44,8 +40,11 @@
 #include "../../hash_func.h"
 #include "../../db/db.h"
 #include "../../data_lump_rpl.h"
+#include "presence.h"
 #include "notify.h"
 #include "utils_func.h"
+#include "publish.h"
+#include "presentity.h"
 
 extern db_con_t* pa_db;
 extern db_func_t pa_dbf;
@@ -169,7 +168,6 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 	int i;
 	struct to_body *pto, TO;
 	int lexpire;
-	xmlDocPtr xml_tree= NULL ;
 	presentity_t* presentity = 0;
 	struct hdr_field* hdr;
 	int found= 0, etag_gen = 0, update_p = 0;
@@ -333,9 +331,8 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		/* content-length (if present) must be already parsed */
 
 		body.len = get_content_length( msg );
-		xml_tree = xmlParseMemory( body.s , body.len );
 
-		if(xml_tree == NULL)
+		if(xmlParseMemory( body.s , body.len )== NULL)
 		{
 			LOG(L_ERR, "PRESENCE: handle_publish: Bad body format\n");
 			if( sl_reply( msg, (char*)415, (char*)&pu_415_rpl)== -1)
@@ -347,8 +344,6 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}	
 	}	
-	
-
 	
 	/* now we have all the necessary values */
 	/* fill in the filds of the structure */
@@ -447,8 +442,6 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 
 	if(presentity)
 		free_presentity(presentity);
-	if(xml_tree!=NULL)
-		xmlFreeDoc(xml_tree);
 	if(etag_gen)
 		pkg_free(etag.s);
 	
@@ -458,8 +451,6 @@ error:
 	LOG(L_ERR, "PRESENCE: handle_publish: ERROR occured\n");
 	if(presentity)
 		free_presentity(presentity);
-	if(xml_tree!=NULL)
-		xmlFreeDoc(xml_tree);
 	if(etag_gen )
 		pkg_free(etag.s);
 	return error_ret;

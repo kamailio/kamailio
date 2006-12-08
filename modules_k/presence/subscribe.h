@@ -23,6 +23,7 @@ typedef struct subscribtion
 	str reason;
 	int version;
 }subs_t;
+void msg_active_watchers_clean(unsigned int ticks,void *param);
 
 void msg_watchers_clean(unsigned int ticks,void *param);
 
