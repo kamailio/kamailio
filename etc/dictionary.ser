@@ -84,6 +84,7 @@ ATTRIBUTE SER-Service-Type             15   string   iptelorg  # SER, avp_radius
 ATTRIBUTE SER-DID                      16   string   iptelorg  # SER, ?
 ATTRIBUTE SER-UID                      17   string   iptelorg  # SER, ?
 ATTRIBUTE SER-Domain                   18   string   iptelorg  # SER, ?
+ATTRIBUTE SER-Uri-User                 19   string   iptelorg  # SER, auth_radius
 
 
 ### Acct-Status-Type Values ###
