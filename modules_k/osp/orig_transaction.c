@@ -174,7 +174,13 @@ static int ospLoadRoutes(
             dest->tokensize = 0;
         }
 
-        OSPPTransactionGetDestNetworkId(transaction, dest->networkid);
+        errorcode = OSPPTransactionGetDestNetworkId(transaction, dest->networkid);
+        if (errorcode != 0) {
+            /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
+            LOG(L_DBG, "osp: cannot get dest network ID (%d)\n", errorcode);
+            dest->networkid[0] = '\0';
+        }
+
         strcpy(dest->source, source);
         strcpy(dest->srcdev, sourcedev);
         dest->type = OSPC_SOURCE;
@@ -292,9 +298,12 @@ int ospRequestRouting(
             destcount
         );    
 
+/* Do not use network ID as port */
+#if 0
         if (strlen(_osp_device_port) > 0) {
             OSPPTransactionSetNetworkIds(transaction, _osp_device_port, "");
         }
+#endif
 
         /* try to request authorization */
         errorcode = OSPPTransactionRequestAuthorisation(
@@ -485,7 +494,7 @@ static int ospPrepareDestination(
     osp_dest* dest = ospGetNextOrigDestination();
 
     if (dest != NULL) {
-        ospRebuildDestionationUri(&newuri, dest->called, dest->host, dest->networkid);
+        ospRebuildDestionationUri(&newuri, dest->called, dest->host, "");
 
         LOG(L_INFO, 
             "osp: prepare route to URI '%.*s' for call_id '%.*s' transaction_id '%lld'\n",
