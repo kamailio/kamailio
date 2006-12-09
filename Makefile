@@ -32,7 +32,10 @@
 #  2006-02-14  added utils & install-utils (andrei)
 #  2006-03-15  added nodeb parameter for make tar (andrei)
 #  2006-09-29  added modules-doc as target and doc_format= as make option (greger)
-#
+#  2006-12-09  added new group_include as make option and defined groups defining
+#		which modules to include
+#		Also added new target print-modules that you can use to check which
+#		modules will be compiled (greger)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -52,8 +55,54 @@ skip_modules?=
 # Alternatives are txt, html, xhtml, and pdf (see Makefile.doc)
 doc_format?=html
 
-# if not set on the cmd. line or the env, exclude this modules:
-exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm\
+# Module group definitions, default only include the standard group
+# Make backwards compatible, don't set group_include default...
+#group_include?="standard"
+
+# Modules in this group are considered a standard part of SER (due to widespread usage)
+# but they have no dependencies (note that some of these interplay with external systems.
+# However, they don't have compile or link dependencies)
+module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum \
+				eval exec fifo flatstore gflags maxfwd mediaproxy \
+				nathelper options pdt permissions pike print ratelimit \
+				registrar rr sanity sl textops timer tm uac unixsock uri \
+				usrloc xlog
+
+# Modules in this group are considered a standard part of SER (due to widespread usage)
+# but they have dependencies that most be satisfied for compilation
+# acc_radius, auth_radius, avp_radius, uri_radius => radiusclient-ng
+# acc_db, auth_db, avp_db, db_ops, domain, lcr, msilo, mysql, dialog, postgres, speeddial
+# uri_db
+#      => mysql server, postgres server or other database back-end (ex. mysql-devel)
+# pa, xmlrpc => libxml2
+# rls => pa
+#
+# NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
+# group due to interdependencies
+module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db avp_radius \
+				db_ops domain lcr msilo mysql dialog pa postgres \
+				presence_b2b rls speeddial uri_db xmlrpc
+
+# Modules in this group satisfy specific or niche applications, but are considered
+# stable for production use. They may or may not have dependencies
+# cpl-c => libxml2
+# jabber => expat (library)
+# osp => OSP Toolkit (sipfoundry)
+# sms => none (external modem)
+module_group_stable=cpl-c dbtext jabber osp sms
+
+# Modules in this group are either not complete, untested, or without enough reports
+# of usage to allow the module into the stable group. They may or may not have dependencies
+module_group_experimental=tls
+
+# if not set on the cmd. line or the env, exclude the below modules.
+ifneq ($(group_include),)
+	# The defaults are modules that are obsolete.
+	exclude_modules?= 			acc cpl ext extcmd vm group mangler auth_diameter \
+						snmp im 
+else
+	# Old defaults for backwards compatibility
+	exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm\
 							group mangler auth_diameter \
 							postgres snmp \
 							im \
@@ -63,11 +112,30 @@ exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm\
 							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
 							osp tls \
 							unixsock eval
+endif
+
 # always exclude the CVS dir
 override exclude_modules+= CVS $(skip_modules)
 
 #always include this modules
 include_modules?=
+
+# Test for the groups and add to include_modules
+ifneq (,$(findstring standard,$(group_include)))
+	override include_modules+= $(module_group_standard)
+endif
+
+ifneq (,$(findstring standard-dep,$(group_include)))
+	override include_modules+= $(module_group_standard_dep)
+endif
+
+ifneq (,$(findstring stable,$(group_include)))
+	override include_modules+= $(module_group_stable)
+endif
+
+ifneq (,$(findstring experimental,$(group_include)))
+	override include_modules+= $(module_group_experimental)
+endif
 
 # first 2 lines are excluded because of the experimental or incomplete
 # status of the modules
@@ -161,7 +229,11 @@ cfg.tab.c cfg.tab.h: cfg.y  $(ALLDEP)
 .PHONY: all
 all: $(NAME) modules
 
-
+.PHONY: print-modules
+print-modules:
+	@echo The following modules will be included: $(include_modules) ; \
+	echo ---------------------------------------------------------- ; \
+	echo The following modules will be excluded: $(exclude_modules) ; \
 
 .PHONY: modules
 modules:

@@ -146,23 +146,65 @@ OS Notes:
 2. Howto Build ser From Source Distribution
 -------------------------------------------
 
-
 (NOTE: if make doesn't work try gmake  instead)
 
-- compile with default options:
+SER is split in four main parts: The core, the modules, the utilties, and scripts/examples
+When you build, you can decide to build only the core, the modules, both, or all.
 
+Compile SER core only:
 make   #builds only ser core, equivalent to make ser
-make modules
 
-or make all #builds everything
+Compile modules except some explicitly excepted (see below)
+make modules  
 
+Compile all:
+make all
+
+Explicitly excepted modules (default in <=0.9.x):
 By default make all will not build modules that require external libraries or
 that are considered to be "experimental". The modules that have external
-dependecies are: mysql, jabber, cpl-c, auth_radius, group_radius, uri_radius,
+dependencies are: mysql, jabber, cpl-c, auth_radius, group_radius, uri_radius,
 avp_radius, postgres, pa.
-To build all of them (provided you have all the required libraries installed) 
-use:
-    make all include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius avp_radius postgres pa"
+
+Including groups of modules (available in >0.9.x):
+Instead of compiling the default modules only, you can specify groups of
+modules to include, according to their status:
+standard - Modules in this group are considered a standard part of SER (due to widespread usage)
+    but they have no dependencies (note that some of these interplay with external systems.
+    However, they don't have compile or link dependencies).
+
+standard-dep -  Modules in this group are considered a standard part of SER (due to widespread usage)
+    but they have dependencies that most be satisfied for compilation.
+    NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
+    group due to interdependencies
+
+stable - Modules in this group satisfy specific or niche applications, but are considered
+    stable for production use. They may or may not have dependencies
+
+experimental - Modules in this group are either not complete, untested, or without enough reports
+    of usage to allow the module into the stable group. They may or may not have dependencies.
+
+To compile core with standard modules:
+make group_include="standard" all
+
+To compile all modules (provided you have all the required libraries installed) use:
+make group_include="standard standard-dep stable experimental" all
+
+In addition to group_include (or instead), you can use 
+include_modules="modA modB"
+to specify exactly the modules you want to include, ex.
+make include_modules="mymodule" modules
+
+You can also explicitly skip modules using skip_modules. Let's say you want all the standard
+ and standard-dep modules except domain:
+make group_include="standard standard-dep" skip_modules="domain" all
+
+NOTE!!! As this mechanism is very powerful, you may be uncertain which modules wwill be included.
+Just replace all (or modules) with print-modules and you will see which modules will be included
+and excluded, ex:
+make print-modules
+will show which modules are excluded by default.
+
 If you want to install or to build a binary package (a tar.gz with ser and
  the modules), substitute "all" in the above command with "install" or "bin".
 
