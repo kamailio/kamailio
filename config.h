@@ -201,4 +201,6 @@
 
 #define DEFAULT_RADIUS_CONFIG "/usr/local/etc/radiusclient/radiusclient.conf"
 
+#define DEFAULT_DID "_default"
+
 #endif
