@@ -229,6 +229,51 @@ struct module_exports exports = {
 
 /* XML-RPC reply helper functions */
 
+#define ESC_LT "&lt;"
+#define ESC_AMP "&amp;"
+
+static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
+{
+    char* p;
+    int i;
+
+    for(i = 0; i < text->len; i++) {
+	     /* 10 must be bigger than size of longest escape sequence */
+	if (reply->body.len >= reply->buf.len - 10) { 
+	    p = pkg_malloc(reply->buf.len + 1024);
+	    if (!p) {
+		set_fault(reply, 500, "Internal Server Error (No memory left)");
+		ERR("No memory left: %d\n", reply->body.len + 1024);
+		return -1;
+	    }
+	    memcpy(p, reply->body.s, reply->body.len);
+	    pkg_free(reply->buf.s);
+	    reply->buf.s = p;
+	    reply->buf.len += 1024;
+	    reply->body.s = p;
+	}
+
+	switch(text->s[i]) {
+	case '<':
+	    memcpy(reply->body.s + reply->body.len, ESC_LT, sizeof(ESC_LT) - 1);
+	    reply->body.len += sizeof(ESC_LT) - 1;
+	    break;
+
+	case '&':
+	    memcpy(reply->body.s + reply->body.len, ESC_AMP, sizeof(ESC_AMP) - 1);
+	    reply->body.len += sizeof(ESC_AMP) - 1;
+	    break;
+
+	default:
+	    reply->body.s[reply->body.len] = text->s[i];
+	    reply->body.len++;
+	    break;
+	}
+    }
+    return 0;
+}
+
+
 static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
 {
 	char* p;
@@ -321,9 +366,9 @@ static int build_fault_reply(struct xmlrpc_reply* reply)
 	code_s.s = int2str(reply->code, &code_s.len);
 	reset_xmlrpc_reply(reply);
 	if (add_xmlrpc_reply(reply, &fault_prefix) < 0) return -1;
-	if (add_xmlrpc_reply(reply, &code_s) < 0) return -1;
+	if (add_xmlrpc_reply_esc(reply, &code_s) < 0) return -1;
 	if (add_xmlrpc_reply(reply, &fault_body) < 0) return -1;
-	if (add_xmlrpc_reply(reply, &reason_s) < 0) return -1;
+	if (add_xmlrpc_reply_esc(reply, &reason_s) < 0) return -1;
 	if (add_xmlrpc_reply(reply, &fault_suffix) < 0) return -1;
 	return 0;
 }
@@ -573,7 +618,7 @@ static int print_value(struct xmlrpc_reply* res, struct xmlrpc_reply* err_reply,
 	}
 
 	if (add_xmlrpc_reply(res, &prefix) < 0) goto err;
-	if (add_xmlrpc_reply(res, &body) < 0) goto err;
+	if (add_xmlrpc_reply_esc(res, &body) < 0) goto err;
 	if (add_xmlrpc_reply(res, &suffix) < 0) goto err;
 	return 0;
  err:
@@ -832,7 +877,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 			s.len = n;
 			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_prefix) < 0) goto err;
-			if (add_xmlrpc_reply(reply, &s) < 0) goto err;
+			if (add_xmlrpc_reply_esc(reply, &s) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
 			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
@@ -929,7 +974,7 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 
 		if (add_xmlrpc_reply(reply, &member_prefix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &name_prefix) < 0) goto err;
-		if (add_xmlrpc_reply(reply, &member_name) < 0) goto err;
+		if (add_xmlrpc_reply_esc(reply, &member_name) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &name_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 		if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
@@ -980,12 +1025,12 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name, char* fmt,
 
 			if (add_xmlrpc_reply(out, &member_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(out, &name_prefix) < 0) goto err;
-			if (add_xmlrpc_reply(out, &name) < 0) goto err;
+			if (add_xmlrpc_reply_esc(out, &name) < 0) goto err;
 			if (add_xmlrpc_reply(out, &name_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(out, &value_prefix) < 0) goto err;
 
 			if (add_xmlrpc_reply(out, &string_prefix) < 0) goto err;
-			if (add_xmlrpc_reply(out, &st) < 0) goto err;
+			if (add_xmlrpc_reply_esc(out, &st) < 0) goto err;
 			if (add_xmlrpc_reply(out, &string_suffix) < 0) goto err;
 
 			if (add_xmlrpc_reply(out, &value_suffix) < 0) goto err;
@@ -1232,7 +1277,7 @@ static int xmlrpc_reply(struct sip_msg* msg, char* p1, char* p2)
 	} else {
 		if (add_xmlrpc_reply(&reply, &success_prefix) < 0) goto error;
 		if (add_xmlrpc_reply(&reply, &int_prefix) < 0) goto error;
-		if (add_xmlrpc_reply(&reply, &succ) < 0) goto error;
+		if (add_xmlrpc_reply_esc(&reply, &succ) < 0) goto error;
 		if (add_xmlrpc_reply(&reply, &int_suffix) < 0) goto error;
 		if (add_xmlrpc_reply(&reply, &success_suffix) < 0) return -1;
 	}
