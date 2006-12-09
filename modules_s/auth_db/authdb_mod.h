@@ -61,7 +61,6 @@ extern auth_api_t auth_api;
 extern str* credentials;
 extern int credentials_n;
 
-extern str default_did;
 
 /*
  * Pointer to reply function in stateless module

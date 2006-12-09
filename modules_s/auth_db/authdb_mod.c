@@ -107,7 +107,6 @@ db_func_t auth_dbf;
 auth_api_t auth_api;
 
 str credentials_list        = STR_STATIC_INIT(DEFAULT_CRED_LIST);
-str default_did             = STR_STATIC_INIT("_default");
 
 str* credentials;          /* Parsed list of credentials to load */
 int credentials_n;         /* Number of credentials in the list */
@@ -138,7 +137,6 @@ static param_export_t params[] = {
     {"flags_column",      PARAM_STR,    &flags_column    },
     {"calculate_ha1",     PARAM_INT,    &calc_ha1        },
     {"load_credentials",  PARAM_STR,    &credentials_list},
-    {"default_did",       PARAM_STR,    &default_did     },
     {"use_did",           PARAM_INT,    &use_did         },
     {0, 0, 0}
 };
