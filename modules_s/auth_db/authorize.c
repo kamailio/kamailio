@@ -211,7 +211,7 @@ static int generate_avps(db_res_t* result, unsigned int row)
 	value.len = strlen(value.s);
 	ivalue.s = value;
 	
-	if (add_avp(AVP_NAME_STR | AVP_VAL_STR, iname, ivalue) < 0) {
+	if (add_avp(AVP_NAME_STR | AVP_VAL_STR | AVP_CLASS_USER, iname, ivalue) < 0) {
 	    LOG(L_ERR, "auth_db:generate_avps: Error while creating AVPs\n");
 	    return -1;
 	}
