@@ -266,6 +266,7 @@ filter_fl()
 	$AWK 'BEGIN {line=0;IGNORECASE=1;}
 		{line++}
 		line==1 && /^200 ok/ { next }
+		/^$/ { next }
 		{ print }'
 }
 
