@@ -1378,9 +1378,6 @@ static int process_xmlrpc(struct sip_msg* msg)
 		 * 1st 4 bytes from method, even if method is shorter*/
 		n_method=method[0]+(method[1]<<8)+(method[2]<<16)+(method[3]<<24);
 		n_method|=0x20202020;
-		DBG("process_rpc: %x, %d, mask1 %x (GET=%x, POST=%x, %d)\n", n_method,
-				method_len, (method_len<4)*(1U<<method_len*8)-1,
-				N_HTTP_GET, N_HTTP_POST, HTTP_POST_LEN);
 		n_method&= ((method_len<4)*(1U<<method_len*8)-1);
 		/* accept only GET or POST */
 		if ((n_method==N_HTTP_GET) || 
