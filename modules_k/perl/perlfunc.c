@@ -97,21 +97,21 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	dSP;
 
 	if (!perl_checkfnc(fnc)) {
-		LOG(L_ERR, "perl_call_string: Unknown perl function called.\n");
+		LOG(L_ERR, "perl:perl_exec: Unknown perl function called.\n");
 		if (sl_reply(_msg, (char*)500, "Internal error") == -1)
 		{
-			LOG(L_ERR, "perl_call_string: Error while"
+			LOG(L_ERR, "perl:perl_exec: Error while"
 					" sending reply\n");
 		}
 		return -1;
 	}
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-		LOG(L_ERR, "perl_call_string: Error while"
+		LOG(L_ERR, "perl:perl_exec: Error while"
 				" parsing Request-URI\n");
 
 		if (sl_reply(_msg, (char*)400, "Bad Request-URI") == -1) {
-			LOG(L_ERR, "perl_call_string: Error while"
+			LOG(L_ERR, "perl:perl_exec: Error while"
 					" sending reply\n");
 		}
 		return -1;
