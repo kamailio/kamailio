@@ -109,8 +109,9 @@ void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	}
 }
 
-#define MAX_AVP_DIALOG_LISTS 2
-static unsigned short avp_dialog_lists[MAX_AVP_DIALOG_LISTS] = {AVP_CLASS_URI|AVP_TRACK_FROM, AVP_CLASS_URI|AVP_TRACK_TO};
+#define MAX_AVP_DIALOG_LISTS 4
+static unsigned short avp_dialog_lists[MAX_AVP_DIALOG_LISTS] = {AVP_CLASS_URI|AVP_TRACK_FROM, AVP_CLASS_URI|AVP_TRACK_TO,
+                                                                AVP_CLASS_USER|AVP_TRACK_FROM, AVP_CLASS_USER|AVP_TRACK_TO};
 typedef char rr_avp_flags_t;
 
 str *rr_get_avp_cookies(void) {
