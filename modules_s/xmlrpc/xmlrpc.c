@@ -54,7 +54,12 @@
 #include "../../data_lump_rpl.h"
 #include "../../msg_translator.h"
 #include "../../select.h"
+#include "../../receive.h" /* needed by process_rpc / receive_msg() */
 #include "../sl/sl.h"
+#include "../../nonsip_hooks.h"
+#include "../../action.h" /* run_actions */
+#include "../../script_cb.h" /* exec_*_req_cb */
+#include "../../route.h" /* route_get */
 #include "http.h"
 
 /*
@@ -67,9 +72,21 @@ MODULE_VERSION
 int snprintf(char *str, size_t size, const char *format, ...);
 int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 
+static int process_xmlrpc(struct sip_msg* msg);
 static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2);
 static int xmlrpc_reply(struct sip_msg* msg, char* code, char* reason);
 static int mod_init(void);
+
+/* first line (w/o the version) of the sip msg created from the http xmlrpc */
+#define XMLRPC_URI "sip:127.0.0.1:9"
+#define XMLRPC_URI_LEN (sizeof(XMLRPC_URI)-1)
+
+#define HTTP_GET		"GET"
+#define HTTP_GET_LEN	(sizeof(HTTP_GET)-1)
+#define HTTP_POST		"POST"
+#define HTTP_POST_LEN	(sizeof(HTTP_POST)-1)
+#define N_HTTP_GET		0x00746567U
+#define N_HTTP_POST		0x74736f70U
 
 #define LF "\n"
 
@@ -192,14 +209,16 @@ static int fixup_xmlrpc_reply(void** param, int param_no);
 static rpc_t func_param;
 
 int enable_introspection = 1;
+static char* xmlrpc_route=0; /* default is the main route */
 sl_api_t sl;
+
+static int xmlrpc_route_no=DEFAULT_RT;
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"create_via",   create_via,   0, 0,                  REQUEST_ROUTE},
 	{"dispatch_rpc", dispatch_rpc, 0, 0,                  REQUEST_ROUTE},
 	{"xmlrpc_reply", xmlrpc_reply, 2, fixup_xmlrpc_reply, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
@@ -211,6 +230,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"enable_instrospection", PARAM_INT, &enable_introspection},
+	{"route", PARAM_STRING, &xmlrpc_route},
 	{0, 0, 0}
 };
 
@@ -1143,7 +1163,7 @@ static int open_doc(rpc_ctx_t* ctx, struct sip_msg* msg)
 
 	if (!ctx->doc) {
 		set_fault(reply, 400, "Invalid XML-RPC Document");
-		ERR("Invalid XML-RPC document\n");
+		ERR("Invalid XML-RPC document: \n[%.*s]\n", doc.len, doc.s);
 		goto err;
 	}
 
@@ -1225,12 +1245,193 @@ static void clean_context(rpc_ctx_t* ctx)
 }
 
 
+
+/* creates a sip msg (in "buffer" form) from a http xmlrpc request)
+ *  returns 0 on error and a pkg_malloc'ed message buffer on success
+ * NOTE: the result must be pkg_free()'ed when not needed anymore */
+static char* http_xmlrpc2sip(struct sip_msg* msg, int* new_msg_len)
+{
+	unsigned int len;
+	char* via;
+	char* new_msg;
+	char* p;
+	unsigned int via_len;
+	str ip, port;
+	struct hostport hp;
+	struct dest_info dst;
+	
+	/* create a via */
+	ip.s = ip_addr2a(&msg->rcv.src_ip);
+	ip.len = strlen(ip.s);
+	port.s = int2str(msg->rcv.src_port, &port.len);
+	hp.host = &ip;
+	hp.port = &port;
+	init_dst_from_rcv(&dst, &msg->rcv);
+	via = via_builder(&via_len, &dst, 0, 0, &hp);
+	if (via==0){
+		DEBUG("failed to build via\n");
+		return 0;
+	}
+	len=msg->first_line.u.request.method.len+1 /* space */+XMLRPC_URI_LEN+
+			1 /* space */ + msg->first_line.u.request.version.len+
+			CRLF_LEN+via_len+(msg->len-msg->first_line.len);
+	p=new_msg=pkg_malloc(len+1);
+	if (new_msg==0){
+		DEBUG("memory allocation failure (%d bytes)\n", len);
+		pkg_free(via);
+		return 0;
+	}
+	/* new message:
+	 * <orig_http_method> sip:127.0.0.1:9 HTTP/1.x 
+	 * Via: <faked via>
+	 * <orig. http message w/o the first line>
+	 */
+	memcpy(p, msg->first_line.u.request.method.s, 
+				msg->first_line.u.request.method.len);
+	p+=msg->first_line.u.request.method.len;
+	*p=' ';
+	p++;
+	memcpy(p, XMLRPC_URI, XMLRPC_URI_LEN);
+	p+=XMLRPC_URI_LEN;
+	*p=' ';
+	p++;
+	memcpy(p, msg->first_line.u.request.version.s,
+				msg->first_line.u.request.version.len);
+	p+=msg->first_line.u.request.version.len;
+	memcpy(p, CRLF, CRLF_LEN);
+	p+=CRLF_LEN;
+	memcpy(p, via, via_len);
+	p+=via_len;
+	memcpy(p, &msg->buf[msg->first_line.len], msg->len - msg->first_line.len);
+	new_msg[len]=0; /* null terminate, required by receive_msg() */
+	pkg_free(via);
+	*new_msg_len=len;
+	return new_msg;
+}
+
+
+
+/* emulate receive_msg for an xmlrpc request */
+static int em_receive_request(struct sip_msg* orig_msg, 
+								char* new_buf, unsigned int new_len)
+{
+	struct sip_msg tmp_msg;
+	struct sip_msg* msg;
+	
+	if (new_buf && new_len){
+		memset(&tmp_msg, 0, sizeof(struct sip_msg));
+		tmp_msg.buf=new_buf;
+		tmp_msg.len=new_len;
+		tmp_msg.rcv=orig_msg->rcv;
+		tmp_msg.id=orig_msg->id;
+		tmp_msg.set_global_address=orig_msg->set_global_address;
+		tmp_msg.set_global_port=orig_msg->set_global_port;
+		if (parse_msg(new_buf, new_len, &tmp_msg)!=0){
+			ERR("xmlrpc: parse_msg failed\n");
+			goto error;
+		}
+		msg=&tmp_msg;
+	}else{
+		msg=orig_msg;
+	}
+	
+	/* not needed, performed by the "real" receive_msg()
+	clear_branches();
+	reset_static_buffer();
+	*/
+	if ((msg->first_line.type!=SIP_REQUEST) || (msg->via1==0) ||
+		(msg->via1->error!=PARSE_OK)){
+		BUG("xmlrpc: strange message: %.*s\n", msg->len, msg->buf);
+		goto error;
+	}
+	if (exec_pre_req_cb(msg)==0)
+		goto end; /* drop request */
+	/* exec routing script */
+	if (run_actions(main_rt.rlist[xmlrpc_route_no], msg)<0){
+		WARN("xmlrpc: error while trying script\n");
+		goto end;
+	}
+end:
+	exec_post_req_cb(msg); /* needed for example if tm is used */
+	/* reset_avps(); non needed, performed by the real receive_msg */
+	if (msg!=orig_msg) /* avoid double free (freed from receive_msg too) */
+		free_sip_msg(msg);
+	return 0;
+error:
+	return -1;
+}
+
+
+
+static int process_xmlrpc(struct sip_msg* msg)
+{
+	char* fake_msg;
+	int fake_msg_len;
+	unsigned char* method;
+	unsigned int method_len;
+	unsigned int n_method;
+	
+	if (IS_HTTP(msg)){
+		method=(unsigned char*)msg->first_line.u.request.method.s;
+		method_len=msg->first_line.u.request.method.len;
+		/* first line is always > 4, so it's always safe to try to read the
+		 * 1st 4 bytes from method, even if method is shorter*/
+		n_method=method[0]+(method[1]<<8)+(method[2]<<16)+(method[3]<<24);
+		n_method|=0x20202020;
+		DBG("process_rpc: %x, %d, mask1 %x (GET=%x, POST=%x, %d)\n", n_method,
+				method_len, (method_len<4)*(1U<<method_len*8)-1,
+				N_HTTP_GET, N_HTTP_POST, HTTP_POST_LEN);
+		n_method&= ((method_len<4)*(1U<<method_len*8)-1);
+		/* accept only GET or POST */
+		if ((n_method==N_HTTP_GET) || 
+			((n_method==N_HTTP_POST) && (method_len==HTTP_POST_LEN))){
+			if (msg->via1==0){
+				/* create a fake sip message */
+				fake_msg=http_xmlrpc2sip(msg, &fake_msg_len);
+				if (fake_msg==0){
+					ERR("xmlrpc: out of memory\n");
+				}else{
+					/* send it */
+					DBG("new fake xml msg created (%d bytes):\n<%.*s>\n",
+							fake_msg_len, fake_msg_len, fake_msg);
+					em_receive_request(msg, fake_msg, fake_msg_len);
+					/* ignore the return code */
+					pkg_free(fake_msg);
+				}
+				return NONSIP_MSG_DROP; /* we "ate" the message, 
+										   stop processing */
+			}else{ /* the message has a via */
+				DBG("http xml msg unchanged (%d bytes):\n<%.*s>\n",
+						msg->len, msg->len, msg->buf);
+				em_receive_request(msg, 0, 0);
+				return NONSIP_MSG_DROP;
+			}
+		}else{
+			ERR("xmlrpc: bad HTTP request method: \"%.*s\"\n",
+					msg->first_line.u.request.method.len,
+					msg->first_line.u.request.method.s);
+			/* the message was for us, but it is an error */
+			return NONSIP_MSG_ERROR; 
+#if 0
+			/* FIXME: temporary test only, remove when non-sip hook available*/
+			DEBUG("xmlrpc:  HTTP request method not recognized: \"%.*s\"\n",
+					msg->first_line.u.request.method.len,
+					msg->first_line.u.request.method.s);
+			return 1;
+#endif
+		}
+	}
+	return NONSIP_MSG_PASS; /* message not for us, maybe somebody 
+								   else needs it */
+}
+
+
+
 static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2)
 {
 	rpc_export_t* exp;
 	int ret = 1;
 
-	if (create_via(msg, s1, s2) < 0) return -1;
 	if (init_context(&ctx, msg) < 0) goto skip;
 
 	exp = find_rpc_export(ctx.method, 0);
@@ -1343,6 +1544,23 @@ select_row_t tls_sel[] = {
 static int mod_init(void)
 {
 	bind_sl_t bind_sl;
+	struct nonsip_hook nsh;
+	int route_no;
+	
+	/* try to fix the xmlrpc route */
+	if (xmlrpc_route){
+		route_no=route_get(&main_rt, xmlrpc_route);
+		if (route_no==-1){
+			ERR("xmlrpc: failed to fix route \"%s\": route_get() failed\n",
+					xmlrpc_route);
+			return -1;
+		}
+		if (main_rt.rlist[route_no]==0){
+			WARN("xmlrpc: xmlrpc route \"%s\" is empty / doesn't exist\n",
+					xmlrpc_route);
+		}
+		xmlrpc_route_no=route_no;
+	}
 
              /*
               * We will need sl_send_reply from stateless
@@ -1364,6 +1582,16 @@ static int mod_init(void)
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	register_select_table(tls_sel);
+	
+	/* register non-sip hooks */
+	memset(&nsh, 0, sizeof(nsh));
+	nsh.name="xmlrpc";
+	nsh.destroy=0;
+	nsh.on_nonsip_req=process_xmlrpc;
+	if (register_nonsip_msg_hook(&nsh)<0){
+		ERR("Failed to register non sip msg hooks\n");
+		return -1;
+	}
 	return 0;
 }
 
