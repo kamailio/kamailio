@@ -44,6 +44,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../msg_translator.h"
+#include "../../id.h"
 #include "../registrar/sip_msg.h"
 #include "../usrloc/usrloc.h"
 
@@ -168,9 +169,7 @@ static AsymmetricClients rtpAsymmetrics = {
     0
 };
 
-static CheckLocalPartyProc isFromLocal;
 //static CheckLocalPartyProc isToLocal;
-static CheckLocalPartyProc isDestinationLocal;
 
 NetInfo rfc1918nets[] = {
     {"10.0.0.0",    0x0a000000UL, 0xff000000UL},
@@ -460,12 +459,19 @@ getCallId(struct sip_msg* msg, str *cid)
 
 /* Get caller domain */
 static str
-getFromDomain(struct sip_msg* msg)
+getFromDomain(char** type, struct sip_msg* msg)
 {
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
     static struct sip_uri puri;
-    str uri;
+    str uri, did;
+
+    if (get_from_did(&did, msg) == 0) {
+	*type = "local";
+	return did;
+    }
+
+    *type = "remote";
 
     if (parse_from_header(msg) < 0) {
         LOG(L_ERR, "error: mediaproxy/getFromDomain(): error parsing `From' header\n");
@@ -486,12 +492,19 @@ getFromDomain(struct sip_msg* msg)
 
 /* Get called domain */
 static str
-getToDomain(struct sip_msg* msg)
+getToDomain(char** type, struct sip_msg* msg)
 {
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
     static struct sip_uri puri;
-    str uri;
+    str uri, did;
+
+    if (get_to_did(&did, msg) == 0) {
+	*type = "local";
+	return did;
+    }
+
+    *type = "remote";
 
     uri = get_to(msg)->uri;
 
@@ -510,10 +523,18 @@ getToDomain(struct sip_msg* msg)
 // This function only works when called for a request although it's more
 // reliable than the getToDomain function.
 static str
-getDestinationDomain(struct sip_msg* msg)
+getDestinationDomain(char** type, struct sip_msg* msg)
 {
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
+    str did;
+
+    if (get_to_did(&did, msg) == 0) {
+	*type = "local";
+	return did;
+    }
+
+    *type = "remote";
 
     if (parse_sip_msg_uri(msg) < 0) {
         LOG(L_ERR, "error: mediaproxy/getDestinationDomain(): error parsing destination URI\n");
@@ -1408,19 +1429,16 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         return 1;
     }
 
-    fromDomain = getFromDomain(msg);
-    fromType   = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
+    fromDomain = getFromDomain(&fromType, msg);
     fromAddr   = getFromAddress(msg);
     toAddr     = getToAddress(msg);
     fromTag    = getFromTag(msg);
     toTag      = getToTag(msg);
     userAgent  = getUserAgent(msg);
     if (request) {
-        toDomain = getDestinationDomain(msg); // call only for requests
-        toType = (isDestinationLocal(msg, NULL, NULL)>0) ? "local" : "remote";
+        toDomain = getDestinationDomain(&toType, msg); // call only for requests
     } else {
-        toDomain = getToDomain(msg);
-        toType = "unknown"; //there's no function to check if To domain is local
+        toDomain = getToDomain(&toType, msg);
     }
 
     clientIP = ip_addr2a(&msg->rcv.src_ip);
@@ -1557,14 +1575,6 @@ static int
 mod_init(void)
 {
     bind_usrloc_t ul_bind_usrloc;
-
-    isFromLocal = (CheckLocalPartyProc)find_export("is_from_local", 0, 0);
-    isDestinationLocal = (CheckLocalPartyProc)find_export("is_uri_host_local", 0, 0);
-    if (!isFromLocal || !isDestinationLocal) {
-        LOG(L_ERR, "error: mediaproxy/mod_init(): can't find is_from_local "
-            "and/or is_uri_host_local functions. Check if domain.so is loaded\n");
-        return -1;
-    }
 
     if (natpingInterval > 0) {
         ul_bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
