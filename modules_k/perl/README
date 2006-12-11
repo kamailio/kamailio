@@ -874,37 +874,68 @@ Chapter 4. Perl samples
 
 4.1.1.4. headers.pl
 
-   This is about headers.pl
+   Header extraction is among the most crucial functionalities
+   while processing SIP messages. This sample script demonstrates
+   access to header names and values within two sample functions.
+
+   "headernames" extracts all header names and logs their names.
+
+   "someheaders" logs the contents of the two headers, "To" and
+   "WWW-Contact". As you can see, headers that occur more than
+   once are retrieved as an array, which may be accessed by
+   Perl's array accessing methods.
      _________________________________________________________
 
-4.1.1.5. ldapdemos.pl
+4.1.1.5. logging.pl
 
-   This is about ldapdemos.pl
+   For debugging purposes, you probably want to write messages to
+   the syslog. The "logdemo" shows three ways to access the
+   OpenSER log function: it is available through the OpenSER
+   class as well as through the OpenSER::Message class.
+
+   Remember that you can use exported functions from other
+   modules. You may thus as well use the "xlog" module and it's
+   xlog function.
+
+   The L_INFO, L_DBG, L_ERR, L_CRIT... constants are available
+   through the OpenSER::Constants package.
      _________________________________________________________
 
-4.1.1.6. logging.pl
+4.1.1.6. messagedump.pl
 
-   This is about logging.pl
+   This script demonstrates how to access the whole message
+   header of the current message. Please note that modifications
+   on the message made by earlier function calls in your
+   configuration script may NOT be reflected in this dump.
      _________________________________________________________
 
-4.1.1.7. messagedump.pl
+4.1.1.7. persistence.pl
 
-   This is about messagedump.pl
+   When processing SIP messages, you may want to use persistent
+   data across multiple calls to your Perl functions. Your first
+   option is to use global variables in your script.
+   Unfortunately, these globals are not visible from the mulitple
+   instances of OpenSER. You may want to use a mechanism such as
+   the IPC::Shareable shared memory access package to correct
+   this.
      _________________________________________________________
 
-4.1.1.8. persistence.pl
+4.1.1.8. phonenumbers.pl
 
-   This is about persistence.pl
+   The OpenSER::Utils::PhoneNumbers package provides two methods
+   for the transformation of local to canonical telephone
+   numbers, and vice versa. This script demonstrates it's use.
      _________________________________________________________
 
-4.1.1.9. phonenumbers.pl
+4.1.1.9. pseudovars.pl
 
-   This is about phonenumbers.pl
-     _________________________________________________________
+   This script demonstrates the Perl module's "pseudoVar" method.
+   It may be used to retrieve the values of current pseudo
+   variables.
 
-4.1.1.10. pseudovars.pl
-
-   This is about pseudovars.pl
+   You might notice that there is no particular function for
+   setting pseudo variables; you may use the exported functions
+   from the avpops module, though.
      _________________________________________________________
 
 Chapter 5. Frequently Asked Questions

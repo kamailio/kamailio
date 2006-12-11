@@ -77,43 +77,66 @@
 			<section>
 				<title>headers.pl</title>
 				<para>
-				This is about headers.pl
+				Header extraction is among the most crucial functionalities while processing SIP messages. This
+				sample script demonstrates access to header names and values within two sample functions.
 				</para>
-			</section>
-			<section>
-				<title>ldapdemos.pl</title>
 				<para>
-				This is about ldapdemos.pl
+				<quote>headernames</quote> extracts all header names and logs their names.
+				</para>
+				<para>
+				<quote>someheaders</quote> logs the contents of the two headers, <quote>To</quote> and
+				<quote>WWW-Contact</quote>. As you can see, headers that occur more than once are retrieved
+				as an array, which may be accessed by Perl's array accessing methods.
 				</para>
 			</section>
 			<section>
 				<title>logging.pl</title>
 				<para>
-				This is about logging.pl
+				For debugging purposes, you probably want to write messages to the syslog. The <quote>logdemo</quote>
+				shows three ways to access the OpenSER log function: it is available through the OpenSER class as well
+				as through the OpenSER::Message class.
+				</para>
+				<para>
+				Remember that you can use exported functions from other modules. You may thus as well use the
+				<quote>xlog</quote> module and it's xlog function.
+				</para>
+				<para>
+				The L_INFO, L_DBG, L_ERR, L_CRIT... constants are available through the OpenSER::Constants package.
 				</para>
 			</section>
 			<section>
 				<title>messagedump.pl</title>
 				<para>
-				This is about messagedump.pl
+				This script demonstrates how to access the whole message header of the current message. Please note that
+				modifications on the message made by earlier function calls in your configuration script may NOT be
+				reflected in this dump.
 				</para>
 			</section>
 			<section>
 				<title>persistence.pl</title>
 				<para>
-				This is about persistence.pl
+				When processing SIP messages, you may want to use persistent data across multiple calls to your
+				Perl functions. Your first option is to use global variables in your script. Unfortunately,
+				these globals are not visible from the mulitple instances of OpenSER. You may want to use a
+				mechanism such as the IPC::Shareable shared memory access package to correct this.
 				</para>
 			</section>
 			<section>
 				<title>phonenumbers.pl</title>
 				<para>
-				This is about phonenumbers.pl
+				The OpenSER::Utils::PhoneNumbers package provides two methods for the transformation of local to
+				canonical telephone numbers, and vice versa. This script demonstrates it's use.
 				</para>
 			</section>
 			<section>
 				<title>pseudovars.pl</title>
 				<para>
-				This is about pseudovars.pl
+				This script demonstrates the Perl module's <quote>pseudoVar</quote> method. It may be used to
+				retrieve the values of current pseudo variables.
+				</para>
+				<para>
+				You might notice that there is no particular function for setting pseudo variables; you may use
+				the exported functions from the avpops module, though.
 				</para>
 			</section>
 		</section>
