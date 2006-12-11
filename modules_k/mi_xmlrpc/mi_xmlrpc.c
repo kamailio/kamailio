@@ -116,14 +116,14 @@ static void xmlrpc_sigchld( int sig )
 
 		/* none left */
 		if ( pid == 0 )
-    		break;
+			break;
 
 		if (pid<0) {
-    		/* because of ptrace */
-    		if ( errno == EINTR )
-        		continue;
+			/* because of ptrace */
+			if ( errno == EINTR )
+				continue;
 
-    		break;
+			break;
 		}
 	}
 }
@@ -136,67 +136,77 @@ static int mod_child_init( int rank )
 	*mi_xmlrpc_pid = fork();
 	
 	if ( *mi_xmlrpc_pid < 0 ){
-		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: The process cannot fork!\n");
+		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: The process cannot "
+			"fork!\n");
 		return -1;
 	} else if ( *mi_xmlrpc_pid ) {
-		LOG(L_INFO, "INFO: mi_xmlrpc: mod_child_init: XMLRPC listener process created (pid: %d)\n", *mi_xmlrpc_pid);
+		LOG(L_INFO, "INFO: mi_xmlrpc: mod_child_init: XMLRPC listener "
+			"process created (pid: %d)\n", *mi_xmlrpc_pid);
 		return 0;
 	}
 
 	/* install handler to catch termination of child processes */
 	if (signal(SIGCHLD, xmlrpc_sigchld)==SIG_ERR) {
-		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to install signal handler for SIGCHLD\n");
+		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to install "
+			"signal handler for SIGCHLD\n");
 		return -1;
 	}
 
 	/* Server Abyss init */
 	xmlrpc_server_abyss_init_registry();
-    DateInit();
-    MIMETypeInit();
+	DateInit();
+	MIMETypeInit();
 
-  	if (!ServerCreate(&srv, "XmlRpcServer", port, "", log_file)) {
-		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to create XMLRPC server\n");
+	if (!ServerCreate(&srv, "XmlRpcServer", port, "", log_file)) {
+		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to create XMLRPC "
+			"server\n");
 		return -1;
 	}
 
 	if (!ServerAddHandler(&srv, xmlrpc_server_abyss_rpc2_handler)) {
-		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to add handler to server\n");
+		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to add handler "
+			"to server\n");
 		return -1;
 	}
 
-    ServerDefaultHandler(&srv, xmlrpc_server_abyss_default_handler);
- 	ServerInit(&srv);
+	ServerDefaultHandler(&srv, xmlrpc_server_abyss_default_handler);
+	ServerInit(&srv);
 
 	if( init_mi_child() != 0 ) {
-		LOG(L_CRIT, "CRITICAL: mi_xmlrpc: mod_child_init: Failed to init the mi process\n");
+		LOG(L_CRIT, "CRITICAL: mi_xmlrpc: mod_child_init: Failed to init "
+			"the mi process\n");
 		return -1;
 	}
-	
+
 	if ( xr_writer_init(read_buf_size) != 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to init the reply writer\n");
+		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to init the "
+			"reply writer\n");
 		return -1;
 	}
-	
+
 	xmlrpc_env_init(&env);
-	   	
+
 	if ( rpl_opt == 1 ) {
- 		xr_response = xmlrpc_build_value(&env, "()");
+		xr_response = xmlrpc_build_value(&env, "()");
 		if ( env.fault_occurred ){
-			LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to create and emtpy array: %s\n", env.fault_string);
+			LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to create "
+				"and emtpy array: %s\n", env.fault_string);
 			goto cleanup;
 		}
 	}
-	
+
 	if ( set_default_method(&env) != 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to set up the default method!\n");
+		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to set up the "
+			"default method!\n");
 		goto cleanup;
 	}
 
 	/* Run server abyss */
-	LOG(L_INFO, "INFO: mi_xmlrpc: mod_child_init: Starting xmlrpc server on (%d)\n", getpid());
-	
+	LOG(L_INFO, "INFO: mi_xmlrpc: mod_child_init: Starting xmlrpc server "
+		"on (%d)\n", getpid());
+
 	ServerRun(&srv); 
-   	
+
 	LOG(L_CRIT, "CRITICAL: mi_xmlrpc: mod_child_init: Server terminated!!!\n");
 
 cleanup:
@@ -210,17 +220,21 @@ int destroy(void)
 	DBG("DBG: mi_xmlrpc: destroy: Destroying module ...\n");
 
 	if ( mi_xmlrpc_pid == 0 ) {
-		LOG(L_INFO, "INFO: mi_xmlrpc: destroy: Process hasn't been created -> nothing to kill\n");
+		LOG(L_INFO, "INFO: mi_xmlrpc: destroy: Process hasn't been created "
+			"-> nothing to kill\n");
 	} else {
 		if ( *mi_xmlrpc_pid != 0 ) {
 			if ( kill(*mi_xmlrpc_pid, SIGKILL) != 0 ) {
 				if ( errno == ESRCH ) {
-					LOG(L_INFO, "INFO: mi_xmlrpc: destroy: seems that xmlrpc process is already dead!\n");
+					LOG(L_INFO, "INFO: mi_xmlrpc: destroy: seems that xmlrpc"
+						" process is already dead!\n");
 				} else {
-					LOG(L_ERR, "ERROR: mi_xmlrpc: destroy: killing the aux. process failed! kill said: %s\n", strerror(errno));
+					LOG(L_ERR, "ERROR: mi_xmlrpc: destroy: killing the aux. "
+						"process failed! kill said: %s\n", strerror(errno));
 				}
 			} else {
-				LOG(L_INFO, "INFO: mi_xmlrpc: destroy: xmlrpc child successfully killed!");
+				LOG(L_INFO, "INFO: mi_xmlrpc: destroy: xmlrpc child "
+					"successfully killed!");
 			}
 		}
 		shm_free(mi_xmlrpc_pid);
