@@ -194,6 +194,14 @@ int mi_write_tree(FILE *stream, struct mi_root *tree)
 	if (recur_write_tree(stream, tree->node.kids, &buf, 0)!=0)
 		return -1;
 
+	if (buf.len<=0) {
+		LOG(L_ERR,"ERROR:mi_fifo:mi_write_tree: failed to write - "
+			"EOC does not fit in!!!\n");
+		return -1;
+	}
+	*(buf.s++)='\n';
+	buf.len--;
+
 	if (mi_fifo_reply(stream,"%.*s",buf.s-mi_write_buffer,mi_write_buffer)!=0)
 		return -1;
 
