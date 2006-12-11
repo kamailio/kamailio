@@ -44,6 +44,7 @@
 
 MODULE_VERSION
 
+extern unsigned int _osp_sp_number;
 extern char* _osp_sp_uris[];
 extern unsigned long _osp_sp_weights[];
 extern char* _osp_device_ip;
@@ -89,9 +90,37 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
     {"sp1_uri",                        STR_PARAM, &_osp_sp_uris[0]},
-    {"sp1_weight",                     INT_PARAM, &(_osp_sp_weights[0])},
     {"sp2_uri",                        STR_PARAM, &_osp_sp_uris[1]},
+    {"sp3_uri",                        STR_PARAM, &_osp_sp_uris[2]},
+    {"sp4_uri",                        STR_PARAM, &_osp_sp_uris[3]},
+    {"sp5_uri",                        STR_PARAM, &_osp_sp_uris[4]},
+    {"sp6_uri",                        STR_PARAM, &_osp_sp_uris[5]},
+    {"sp7_uri",                        STR_PARAM, &_osp_sp_uris[6]},
+    {"sp8_uri",                        STR_PARAM, &_osp_sp_uris[7]},
+    {"sp9_uri",                        STR_PARAM, &_osp_sp_uris[8]},
+    {"sp10_uri",                       STR_PARAM, &_osp_sp_uris[9]},
+    {"sp11_uri",                       STR_PARAM, &_osp_sp_uris[10]},
+    {"sp12_uri",                       STR_PARAM, &_osp_sp_uris[11]},
+    {"sp13_uri",                       STR_PARAM, &_osp_sp_uris[12]},
+    {"sp14_uri",                       STR_PARAM, &_osp_sp_uris[13]},
+    {"sp15_uri",                       STR_PARAM, &_osp_sp_uris[14]},
+    {"sp16_uri",                       STR_PARAM, &_osp_sp_uris[15]},
+    {"sp1_weight",                     INT_PARAM, &(_osp_sp_weights[0])},
     {"sp2_weight",                     INT_PARAM, &(_osp_sp_weights[1])},
+    {"sp3_weight",                     INT_PARAM, &(_osp_sp_weights[2])},
+    {"sp4_weight",                     INT_PARAM, &(_osp_sp_weights[3])},
+    {"sp5_weight",                     INT_PARAM, &(_osp_sp_weights[4])},
+    {"sp6_weight",                     INT_PARAM, &(_osp_sp_weights[5])},
+    {"sp7_weight",                     INT_PARAM, &(_osp_sp_weights[6])},
+    {"sp8_weight",                     INT_PARAM, &(_osp_sp_weights[7])},
+    {"sp9_weight",                     INT_PARAM, &(_osp_sp_weights[8])},
+    {"sp10_weight",                    INT_PARAM, &(_osp_sp_weights[9])},
+    {"sp11_weight",                    INT_PARAM, &(_osp_sp_weights[10])},
+    {"sp12_weight",                    INT_PARAM, &(_osp_sp_weights[11])},
+    {"sp13_weight",                    INT_PARAM, &(_osp_sp_weights[12])},
+    {"sp14_weight",                    INT_PARAM, &(_osp_sp_weights[13])},
+    {"sp15_weight",                    INT_PARAM, &(_osp_sp_weights[14])},
+    {"sp16_weight",                    INT_PARAM, &(_osp_sp_weights[15])},
     {"device_ip",                      STR_PARAM, &_osp_device_ip},
     {"device_port",                    STR_PARAM, &_osp_device_port},
     {"private_key",                    STR_PARAM, &_osp_private_key},
@@ -237,13 +266,15 @@ static int ospVerifyParameters(void)
             OSP_DEF_TOKEN);
     }
 
-    if (_osp_sp_uris[1] == NULL) {
-        _osp_sp_uris[1] = _osp_sp_uris[0];
-    }
-
     if (_osp_sp_uris[0] == NULL) {
         LOG(L_ERR, "osp: ERROR: sp1_uri must be configured\n");
         result = -1;
+    }
+
+    for (_osp_sp_number = 1; _osp_sp_number < OSP_DEF_SPS; _osp_sp_number++) {
+        if (_osp_sp_uris[_osp_sp_number] == NULL) {
+            break;
+        }
     }
 
     ospDumpParameters();
@@ -256,45 +287,25 @@ static int ospVerifyParameters(void)
  */
 static void ospDumpParameters(void) 
 {
-    LOG(L_INFO, 
-        "osp: module configuration: "
-        "sp1_uri '%s' "
-        "sp1_weight '%ld' "
-        "sp2_uri '%s' "
-        "sp2_weight '%ld' "
-        "device_ip '%s' "
-        "device_port '%s' "
-        "private_key '%s' "
-        "local_certificate '%s' "
-        "ca_certificates '%s' "
-        "enable_crypto_hardware_support '%d' "
-        "token_format '%d' "
-        "ssl_lifetime '%d' "
-        "persistence '%d' "
-        "retry_delay '%d' "
-        "retry_limit '%d' "
-        "timeout '%d' "
-        "validate_call_id '%d' "
-        "use_rpid_for_calling_number '%d' "
-        "max_destinations '%d'\n",
-        _osp_sp_uris[0],
-        _osp_sp_weights[0],
-        _osp_sp_uris[1],
-        _osp_sp_weights[1],
-        _osp_device_ip,
-        _osp_device_port,
-        _osp_private_key,
-        _osp_local_certificate,
-        _osp_ca_certificate,
-        _osp_crypto_hw,
-        _osp_token_format,
-        _osp_ssl_lifetime,
-        _osp_persistence,
-        _osp_retry_delay,
-        _osp_retry_limit,
-        _osp_timeout,
-        _osp_validate_callid,
-        _osp_use_rpid,
-        _osp_max_dests);
+    int i;
+
+    LOG(L_INFO, "osp: module configuration: ");
+    for (i = 0; i < _osp_sp_number; i++) {
+        LOG(L_INFO, "    sp%d_uri '%s' sp%d_weight '%ld' ", i + 1, _osp_sp_uris[i], i + 1, _osp_sp_weights[i]);
+    }
+    LOG(L_INFO, "    device_ip '%s' device_port '%s' ", _osp_device_ip, _osp_device_port);
+    LOG(L_INFO, "    private_key '%s' ", _osp_private_key);
+    LOG(L_INFO, "    local_certificate '%s' ", _osp_local_certificate);
+    LOG(L_INFO, "    ca_certificates '%s' ", _osp_ca_certificate);
+    LOG(L_INFO, "    enable_crypto_hardware_support '%d' ", _osp_crypto_hw);
+    LOG(L_INFO, "    token_format '%d' ", _osp_token_format);
+    LOG(L_INFO, "    ssl_lifetime '%d' ", _osp_ssl_lifetime);
+    LOG(L_INFO, "    persistence '%d' ", _osp_persistence);
+    LOG(L_INFO, "    retry_delay '%d' ", _osp_retry_delay);
+    LOG(L_INFO, "    retry_limit '%d' ", _osp_retry_limit);
+    LOG(L_INFO, "    timeout '%d' ", _osp_timeout);
+    LOG(L_INFO, "    validate_call_id '%d' ", _osp_validate_callid);
+    LOG(L_INFO, "    use_rpid_for_calling_number '%d' ", _osp_use_rpid);
+    LOG(L_INFO, "    max_destinations '%d'\n", _osp_max_dests);
 }
 

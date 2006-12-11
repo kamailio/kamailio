@@ -33,6 +33,7 @@
 #include "../../dprint.h"
 #include "provider.h"
 
+extern unsigned int _osp_sp_number;
 extern char* _osp_sp_uris[];
 extern unsigned long _osp_sp_weights[];
 extern unsigned char* _osp_private_key;
@@ -72,7 +73,7 @@ int ospSetupProvider(void)
         LOG(L_ERR, "osp: ERROR: failed to load CA certificate from '%s'\n", _osp_ca_certificate);
     } else {
         result = OSPPProviderNew(
-            2,
+            _osp_sp_number,
             (const char**)_osp_sp_uris,
             _osp_sp_weights,
             "http://localhost:1234",

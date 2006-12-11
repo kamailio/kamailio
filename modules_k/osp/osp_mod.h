@@ -35,7 +35,7 @@
 #define MODULE_RETURNCODE_STOPROUTE     0
 #define MODULE_RETURNCODE_FALSE         -1
 
-#define OSP_DEF_SPS                     2
+#define OSP_DEF_SPS                     16
 #define OSP_DEF_WEIGHT                  1000
 #define OSP_DEF_HW                      0
 #define OSP_DEF_CALLID                  1    /* Validate call ids, set to 0 to disable */

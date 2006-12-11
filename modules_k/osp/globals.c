@@ -32,8 +32,14 @@
 #include <osp/osp.h>
 #include "osp_mod.h"
 
+unsigned int _osp_sp_number;
 char* _osp_sp_uris[OSP_DEF_SPS];
-unsigned long _osp_sp_weights[OSP_DEF_SPS] = {OSP_DEF_WEIGHT, OSP_DEF_WEIGHT};
+unsigned long _osp_sp_weights[OSP_DEF_SPS] = {
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT
+};
 char* _osp_device_ip = NULL;
 char* _osp_device_port = NULL;
 unsigned char* _osp_private_key = NULL;
