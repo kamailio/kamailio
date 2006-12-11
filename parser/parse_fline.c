@@ -42,6 +42,8 @@
 #include "../mem/mem.h"
 #include "../ut.h"
 
+#define HTTP_REPLY_HACK /* allow HTTP replies */
+
 /* grammar:
 	request  =  method SP uri SP version CRLF
 	response =  version SP status  SP reason  CRLF

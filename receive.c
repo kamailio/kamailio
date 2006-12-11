@@ -37,6 +37,7 @@
  * 2004-04-30 exec_pre_cb is called after basic sanity checks (at least one
  *            via present & parsed ok)  (andrei)
  * 2004-08-23 avp core changed - destroy_avp-> reset_avps (bogdan)
+ * 2006-11-29 nonsip_msg hooks called for non-sip msg (e.g HTTP) (andrei)
  */
 
 
@@ -55,6 +56,7 @@
 #include "stats.h"
 #include "ip_addr.h"
 #include "script_cb.h"
+#include "nonsip_hooks.h"
 #include "dset.h"
 #include "usr_avp.h"
 #include "select_buf.h"
@@ -122,9 +124,12 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	reset_static_buffer();
 
 	if (msg->first_line.type==SIP_REQUEST){
+		if (!IS_SIP(msg)){
+			if (nonsip_msg_run_hooks(msg)!=NONSIP_MSG_ACCEPT);
+				goto end; /* drop the message */
+		}
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
-			if (IS_HTTP(msg)) goto skip; /* Skip Via tests for HTTP requests */
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
 			goto error02;
@@ -147,7 +152,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		}
 #endif
 			
-		skip:
+	/*	skip: */
 		DBG("preparing to run routing scripts...\n");
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
@@ -209,7 +214,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 				LOG(L_WARN, "WARNING: receive_msg: "
 						"error while trying onreply script\n");
 				goto error_rpl;
-			}else if (ret==0) goto skip_send_reply; /* drop the message, no error */
+			}else if (ret==0) goto skip_send_reply; /* drop the message, 
+													   no error */
 		}
 		/* send the msg */
 		forward_reply(msg);

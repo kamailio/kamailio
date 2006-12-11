@@ -101,6 +101,11 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
     !strncasecmp((req)->first_line.u.request.version.s,             \
 		HTTP_VERSION, HTTP_VERSION_LEN))
 
+#define IS_SIP(req)                                                \
+    ((req)->first_line.u.request.version.len >= SIP_VERSION_LEN && \
+    !strncasecmp((req)->first_line.u.request.version.s,             \
+		SIP_VERSION, SIP_VERSION_LEN))
+
 /*
  * Return a URI to which the message should be really sent (not what should
  * be in the Request URI. The following fields are tried in this order:
