@@ -510,7 +510,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
-	if(build_off_n > 0)
+	if(build_off_n >= 0)
 	{
 		if(body_array[build_off_n])
 		{
@@ -726,10 +726,18 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 				n_query_cols, n_result_cols, 0, &res) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_subs_dialog:Error while querying database\n");
+		if(res)
+		{
+			pa_dbf.free_result(pa_db, res);
+			res= NULL;
+		}
 		return NULL;
 	}
 
-	if (res && res->n <=0 )
+	if(res== NULL)
+		return NULL;
+
+	if (res->n <=0 )
 	{
 		LOG(L_ERR, "PRESENCE: get_subs_dialog:The query for subscribtion for"
 				" [user]= %.*s,[domain]= %.*s for [event]= %s returned no"
@@ -831,9 +839,10 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 
 error:
 	if(res)
+	{
 		pa_dbf.free_result(pa_db, res);
-	res= NULL;
-	
+		res= NULL;
+	}
 	if(subs_array)
 	{
 		for(i=0; i<res->n; i++)

@@ -176,6 +176,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 	str etag;
 	str hdr_append, hdr_append2 ;
 	int error_ret = -1; /* error return code */
+	xmlDocPtr doc= NULL;
 
 	counter ++;
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
@@ -333,8 +334,8 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		/* content-length (if present) must be already parsed */
 
 		body.len = get_content_length( msg );
-
-		if(xmlParseMemory( body.s , body.len )== NULL)
+		doc= xmlParseMemory( body.s , body.len );
+		if(doc== NULL)
 		{
 			LOG(L_ERR, "PRESENCE: handle_publish: Bad body format\n");
 			if( sl_reply( msg, (char*)415, (char*)&pu_415_rpl)== -1)
@@ -344,7 +345,8 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 			}
 			error_ret = 0;
 			goto error;
-		}	
+		}
+		xmlFreeDoc(doc);
 	}	
 	
 	/* now we have all the necessary values */
@@ -446,15 +448,21 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		free_presentity(presentity);
 	if(etag_gen)
 		pkg_free(etag.s);
+	xmlCleanupParser();
+	xmlMemoryDump();
 	
 	return 1;
 
 error:
 	LOG(L_ERR, "PRESENCE: handle_publish: ERROR occured\n");
+	
 	if(presentity)
 		free_presentity(presentity);
 	if(etag_gen )
 		pkg_free(etag.s);
+	xmlCleanupParser();
+	xmlMemoryDump();
+	
 	return error_ret;
 
 }

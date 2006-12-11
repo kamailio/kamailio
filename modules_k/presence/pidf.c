@@ -188,7 +188,7 @@ str* agregate_xmls(str** body_array, int n)
 
 {
 	int i, j= 0, append ;
-	xmlNodePtr p_root, new_p_root ;
+	xmlNodePtr p_root= NULL, new_p_root= NULL ;
 	xmlDocPtr* xml_array ;
 	xmlNodePtr node = NULL;
 	xmlNodePtr new_node = NULL, add_node = NULL ;
@@ -265,13 +265,26 @@ str* agregate_xmls(str** body_array, int n)
 					goto error;
 				}
 				old_id = xmlNodeGetAttrContentByName(node, "id");
+				if(old_id== NULL)
+				{
+					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting tuple id\n");
+					goto error;
+				}
 				new_id = xmlNodeGetAttrContentByName(new_node, "id");
+				if(new_id== NULL)
+				{
+					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting tuple id\n");
+					xmlFree(old_id);
+					goto error;
+				}
 				
 				if(xmlStrcasecmp((unsigned char*)old_id,
 							(unsigned char*)new_id )== 0)
 				{
 					append = 0;
 				}
+				xmlFree(old_id);
+				xmlFree(new_id);
 			}
 			else
 			{
@@ -286,11 +299,26 @@ str* agregate_xmls(str** body_array, int n)
 					else
 					{	
 						old_id = xmlNodeGetAttrContentByName(node, "id");
+						if(old_id== NULL)
+						{
+							LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting person id\n");
+							goto error;
+						}
 						new_id = xmlNodeGetAttrContentByName(new_node, "id");
-				
+						if(new_id== NULL)
+						{
+							LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting person id\n");
+							xmlFree(old_id);
+							goto error;
+						}
+
 						if(xmlStrcasecmp((unsigned char*)old_id,
 							(unsigned char*)new_id )== 0)
 								append = 0;
+						
+						xmlFree(old_id);
+						xmlFree(new_id);
+
 					}
 				}
 				else
@@ -336,26 +364,15 @@ str* agregate_xmls(str** body_array, int n)
 	}
 	p_root->last->next= NULL;
 
-	DBG("PRESENCE:agregate_xmls: body= %.*s\n", body->len, body->s);
-	DBG("PRESENCE:agregate_xmls: j= %d\n", j);
   	for(i=0; i<=j; i++)
 	{
-		DBG("PRESENCE:agregate_xmls: free %d\n", i);
 		if(xml_array[i]!=NULL)
 			xmlFreeDoc( xml_array[i]);
 	}
-	DBG("now the array\n");
 	if(xml_array!=NULL)
 		pkg_free(xml_array);
-    /*
-     *Free the global variables that may
-     *have been allocated by the parser.
-     */
-    xmlCleanupParser();
-
-    /*
-     * this is to debug memory for regression tests
-     */
+    
+	xmlCleanupParser();
     xmlMemoryDump();
 
 	return body;
@@ -382,6 +399,9 @@ error:
 	}
 	if(xml_array!=NULL)
 		pkg_free(xml_array);
+	if(body)
+		pkg_free(body);
+
 	return NULL;
 }
 
@@ -618,6 +638,11 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
      */
     xmlMemoryDump();
 
+	xmlFree(status);
+	xmlFree(entity);
+	xmlFree(tuple_id);
+	xmlFree(person_id);
+
     return body;
 
 error:
@@ -633,6 +658,14 @@ error:
 			xmlFree(body->s);
 		pkg_free(body);
 	}
+	if(status)
+		xmlFree(status);
+	if(entity)
+		xmlFree(entity);
+	if(tuple_id)
+		xmlFree(tuple_id);
+	if(person_id)
+		xmlFree(person_id);
 	return NULL;
 
 }
@@ -846,28 +879,33 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	
 		content = (char*)xmlNodeGetContent(node);
 		if(content)
+		{
 			DBG("PRESENCE:get_final_notify_body: content = %s\n", content);
 		
-		/* if the permissions refer to person attributes */
-		if(content && xmlStrcasecmp((unsigned char*)content,
+			if(xmlStrcasecmp((unsigned char*)content,
 					(unsigned char*) "FALSE") == 0)
-		{
-			DBG("PRESENCE:get_final_notify_body:found content false\n");
-			while( doc_node )
 			{
-				xmlUnlinkNode(doc_node);	
-				xmlFreeNode(doc_node);
-				doc_node = xmlNodeGetChildByName(doc_root, name);
-			}	
-			continue;
-		}
-		if(content && xmlStrcasecmp((unsigned char*)content,
-					(unsigned char*) "TRUE") == 0)
-		{
-			DBG("PRESENCE:get_final_notify_body:found content true\n");
-			continue;
-		}
+				DBG("PRESENCE:get_final_notify_body:found content false\n");
+				while( doc_node )
+				{
+					xmlUnlinkNode(doc_node);	
+					xmlFreeNode(doc_node);
+					doc_node = xmlNodeGetChildByName(doc_root, name);
+				}
+				xmlFree(content);
+				continue;
+			}
 		
+			if(xmlStrcasecmp((unsigned char*)content,
+					(unsigned char*) "TRUE") == 0)
+			{
+				DBG("PRESENCE:get_final_notify_body:found content true\n");
+				xmlFree(content);
+				continue;
+			}
+			xmlFree(content);
+		}
+
 		while (doc_node )
 		{
 			if (xmlStrcasecmp(doc_node->name,(unsigned char*)"text")==0)
@@ -958,8 +996,11 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 						found = 1;
 						DBG("PRESENCE:get_final_notify_body: found class= %s",
 								class_cont);
+						xmlFree(content);
 						break;
-					}	
+					}
+					if(content)
+						xmlFree(content);
 				}
 				if(xmlStrcasecmp(provide_node->name,
 							(unsigned char*) "deviceID")==0&&deviceID )
@@ -972,8 +1013,12 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 						found = 1;
 						DBG("PRESENCE:get_final_notify_body: found deviceID="
 								" %s", deviceID);
+						xmlFree(content);
 						break;
-					}	
+					}
+					if(content)
+						xmlFree(content);
+
 				}
 				if(xmlStrcasecmp(provide_node->name,
 							(unsigned char*)"occurence-id")== 0&& occurence_ID)
@@ -985,8 +1030,12 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 						found = 1;
 						DBG("PRESENCE:get_final_notify_body:" 
 								" found occurenceID= %s\n", occurence_ID);
+						xmlFree(content);
 						break;
-					}	
+					}
+					if(content)
+						xmlFree(content);
+
 				}
 				if(xmlStrcasecmp(provide_node->name,
 							(unsigned char*)"service-uri")== 0 && service_uri)
@@ -998,8 +1047,12 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 						found = 1;
 						DBG("PRESENCE:get_final_notify_body: found"
 								" service_uri= %s", service_uri);
+						xmlFree(content);
 						break;
-					}	
+					}
+					if(content)
+						xmlFree(content);
+
 				}
 			
 				if(xmlStrcasecmp(provide_node->name,
@@ -1015,8 +1068,12 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 						found = 1;
 						DBG("PRESENCE:get_final_notify_body: found"
 								" service_uri_scheme= %s", service_uri_scheme);
+						xmlFree(content);
 						break;
 					}	
+					if(content)
+						xmlFree(content);
+
 				}
 
 				provide_node = provide_node->next;
@@ -1046,6 +1103,11 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 
     xmlMemoryDump();
 
+	xmlFree(class_cont);
+	xmlFree(occurence_ID);
+	xmlFree(deviceID);
+	xmlFree(service_uri);
+
     return new_body;
 error:
     if(doc)
@@ -1056,6 +1118,15 @@ error:
 			xmlFree(new_body->s);
 		pkg_free(new_body);
 	}
+	if(class_cont)
+		xmlFree(class_cont);
+	if(occurence_ID)
+		xmlFree(occurence_ID);
+	if(deviceID)
+		xmlFree(deviceID);
+	if(service_uri)
+		xmlFree(service_uri);
+
 	return NULL;
 }	
 

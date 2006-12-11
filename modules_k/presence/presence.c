@@ -242,6 +242,9 @@ static int mod_init(void)
 	if(clean_period<=0)
 	{
 		DBG("PRESENCE: ERROR: mod_init: wrong clean_period \n");
+		if(pa_db)
+			pa_dbf.close(pa_db);
+		pa_db = NULL;
 		return -1;
 	}
 
@@ -298,7 +301,12 @@ static int child_init(int rank)
 void destroy(void)
 {
 	DBG("PRESENCE: destroy module ...\n");
+	
 	lock_set_destroy(set);
+	
+	if(pa_db && pa_dbf.close)
+		pa_dbf.close(pa_db);
+
 }
 
 

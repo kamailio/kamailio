@@ -99,7 +99,7 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 	db_op_t  query_ops[7];
 	db_val_t query_vals[7], update_vals[3];
 	db_key_t result_cols[4], update_keys[3];
-	db_res_t *res;
+	db_res_t *res= NULL;
 
 	int n_query_cols = 0;
 	int n_result_cols = 0;
@@ -221,7 +221,6 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 		}
 
 		status = xmlNodeGetNodeContentByName(root_node, "basic", NULL );
-
 	
 		if(status == NULL)
 		{
@@ -245,6 +244,7 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 						" notify for event presence\n");
 			//	goto error;
 			}
+		xmlFree(status);
 		xmlFreeDoc(doc);
 		xmlCleanupParser();
 	}
@@ -265,8 +265,10 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 					" presentity\n");
 			goto error;
 		}
-			
-		if (res && res->n > 0)
+		if(res== NULL)
+			goto error;
+
+		if (res->n > 0)
 		{
 			if(body==NULL || body->s==NULL) /* if there is no body update expires value */
 			{
@@ -288,6 +290,7 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 							" updating presence information\n");
 					goto error;
 				}
+				pa_dbf.free_result(pa_db, res);
 				return 0;
 			}
 
@@ -339,15 +342,23 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 		else  /* if there isn't no registration with those 3 values */
 		{
 			LOG(L_DBG, "PRESENCE:update_presentity: No E_Tag match\n");
+			if(res)
+				pa_dbf.free_result(pa_db, res);
 			return 412;	
 		}
-		pa_dbf.free_result(pa_db, res);
+		if(res)
+			pa_dbf.free_result(pa_db, res);
 	}
-	
+
 	return 0;
 
 error:
 	LOG(L_ERR, "PRESENCE:update_presentity: ERROR occured\n");
+	if(res)
+	{
+		pa_dbf.free_result(pa_db, res);
+		res= NULL;
+	}
 	return -1;
 
 }

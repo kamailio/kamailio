@@ -1003,8 +1003,9 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 					" watchers table\n");
 			goto error;
 		}
-
-		if(result && result->n <=0)
+		if(result== NULL)
+			goto error;
+		if(result->n <=0)
 		{
 			LOG(L_INFO, "PRESENCE:handle_subscribe:The query in table watches "
 				"returned no result\n");
@@ -1059,14 +1060,14 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 
-	if(result!= NULL)
-			pa_dbf.free_result(pa_db, result);
+	if(result)
+		pa_dbf.free_result(pa_db, result);
 
 	return 1;
 
 error:
 	LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR occured\n");
-	if(result!= NULL)
+	if(result)
 			pa_dbf.free_result(pa_db, result);
 	return error_ret;
 
