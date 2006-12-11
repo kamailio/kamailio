@@ -24,7 +24,7 @@
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>username</emphasis> - Username string.
+		<para><emphasis>username</emphasis> - Username string or AVP.
 		</para>
 	    </listitem>
 	</itemizedlist>

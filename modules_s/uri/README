@@ -71,7 +71,7 @@ Chapter 1. User's Guide
 
    Meaning of the parameters is as follows:
 
-     * username - Username string.
+     * username - Username string or AVP.
 
    Example 1-1. is_user usage
 ...
