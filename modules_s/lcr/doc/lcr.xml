@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="lcr" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email></email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>LCR Module</title>
+
+    <section id="lcr.overview">
+	<title>Overview</title>
+	<para>
+         Least cost routing (LCR) module implements two related capabilities:
+       <itemizedlist>
+            <listitem> LCR may sequentially forward requests to one or more gateways using the load_gws 
+            and next_gw functions.
+            </listitem>
+
+            <listitem> LCR may sequentially forward contacts if they don't share the the same qvalues.
+            Use the functions load_contacts and next_contacts to access and select a contact.
+            </listitem>
+        </itemizedlist>
+
+       <para>Gateway selection is based on caller's RPID URI (if available in caller's RPID AVP after 
+        authentication) or From URI and user part of Request-URI (telephone number).  Gateway patterns
+        matching RPID or From URI and telephone number are ordered for forwarding purposes as follows:
+        <itemizedlist>
+            <listitem>According to longest user part match
+            </listitem>
+
+            <listitem>According to priority
+            </listitem>
+
+            <listitem>Randomly
+            </listitem>
+        </itemizedlist>
+
+        Each gateway belongs to a gateway group either alone or among other gateways.  All gateways in a 
+        group share the same priority.  Gateway and routing information is kept in two tables:  
+        gw and lcr.
+        </para>
+
+        <para> When a gateway is selected, Request-URI is rewritten with information from gw table: 
+         URI scheme, prefix, IP address, port, and transport protocol.  Valid URI scheme values are:
+         <itemizedlist>
+            <listitem>NULL = sip
+            </listitem>
+            <listitem>1 = sip 
+            </listitem>
+            <listitem>2 = sips.  
+            </listitem>
+        </itemizedlist>
+        </para>
+
+        <para> If a prefix is specified it will be prepended to the Request-URI user part.
+        </para>
+
+        <para>Currently valid transport protocol values are: 
+         <itemizedlist>
+            <listitem>NULL = none
+            </listitem>
+            <listitem>1 = udp 
+            </listitem>
+            <listitem>2 = tcp  
+            </listitem>
+            <listitem>3 = tls  
+            </listitem>
+        </itemizedlist>
+        </para>
+
+        <para> Table lcr contains any prefix to be applied to the user part of Request-URI, the From URI,
+         the gateway group id, and the priority.  The From URI can contain special characters % and _ 
+         matching any number of any characters and any one character, respectively. 
+        </para>
+
+        <para> In addition to gw and lcr tables there is third table gw_grp that is used for 
+         administrative purposes only. In this table you may map names to the gateway group ids.
+        </para>
+
+	</para>
+    </section>
+
+    <section id="lcr.dependencies">
+	<title>Dependencies</title>
+	<para>The module depends on the following modules. These modules must be loaded before the LCR module
+         <itemizedlist>
+            <listitem>tm module
+            </listitem>
+            <listitem>mysql module
+            </listitem>
+        </itemizedlist>
+	</para>
+    </section>
+
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+
