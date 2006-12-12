@@ -54,6 +54,8 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	str body, int branch,
 	struct cell *t, unsigned int *len);
 
+char *build_uac_cancel(str *headers,str *body,struct cell *Trans,
+	unsigned int branch, unsigned int *len);
 
 /*
  * The function creates an ACK to 200 OK. Route set will be created

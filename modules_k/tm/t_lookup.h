@@ -54,13 +54,18 @@ int add_branch_label( struct cell *trans,
 	struct sip_msg *p_msg, int branch );
 
 /* releases T-context */
-int t_unref( struct sip_msg *p_msg);
+int  t_unref( struct sip_msg *p_msg);
+void t_unref_cell( struct cell *);
+typedef void (*tunrefcell_f)(struct cell *);
+
 
 /* function returns:
  *      -1 - transaction wasn't found
  *       1 - transaction found
  */
 int t_check( struct sip_msg* , int *branch );
+
+typedef struct cell * (*tlookuporiginalt_f)(struct sip_msg*);
 
 typedef struct cell * (*tgett_f)(void);
 struct cell *get_t();
@@ -79,8 +84,11 @@ typedef int (*tget_ti_f)(struct sip_msg*, unsigned int*, unsigned int*);
 typedef int (*tlookup_ident_f)(struct cell**, unsigned int, unsigned int);
 
 int t_is_local(struct sip_msg*);
-int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label);
-int t_lookup_ident(struct cell** trans, unsigned int hash_index, unsigned int label);
+int t_get_trans_ident(struct sip_msg* p_msg, 
+	unsigned int* hash_index, unsigned int* label);
+int t_lookup_ident(struct cell** trans,
+	unsigned int hash_index, unsigned int label);
+
 /* lookup a transaction by callid and cseq */
 int t_lookup_callid(struct cell** trans, str callid, str cseq);
 

@@ -530,6 +530,11 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_gett = get_t;
 	tmb->t_get_picked = t_get_picked_branch;
 
+	tmb->t_lookup_original_t = t_lookupOriginalT;
+	tmb->t_cancel_uac = t_uac_cancel;
+	tmb->unref_cell = t_unref_cell;
+	tmb->t_setkr = set_kr;
+
 	/* tm uac functions */
 	tmb->t_addblind = add_blind_uac;
 	tmb->t_request_within = req_within;
@@ -541,6 +546,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->dlg_request_uas = dlg_request_uas;
 	tmb->free_dlg = free_dlg;
 	tmb->print_dlg = print_dlg;
+
 
 	return 1;
 }

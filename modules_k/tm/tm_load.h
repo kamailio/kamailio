@@ -37,7 +37,9 @@
 #include "t_fwd.h"
 #include "t_reply.h"
 #include "t_lookup.h"
+#include "t_cancel.h"
 #include "dlg.h"
+#include "h_table.h"
 
 
 struct tm_binds {
@@ -64,6 +66,10 @@ struct tm_binds {
 	print_dlg_f        print_dlg;
 	tgett_f            t_gett;
 	tget_picked_f      t_get_picked;
+	tunrefcell_f       unref_cell;
+	tlookuporiginalt_f t_lookup_original_t;
+	tuaccancel_f       t_cancel_uac;
+	setkr_f t_setkr;
 };
 
 

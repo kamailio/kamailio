@@ -896,3 +896,118 @@ int t_calc_branch(struct cell *t,
 			b, branch, branch_len );
 }
 
+char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
+										unsigned int branch, unsigned int *len)
+{
+	char *cancel_buf, *p, *via;
+	unsigned int via_len;
+	char branch_buf[MAX_BRANCH_PARAM_LEN];
+	str branch_str;
+	struct hostport hp;
+	str content_length;
+
+	DBG("DEBUG:tm:build_uac_cancel: using FROM=<%.*s>, TO=<%.*s>, "
+		"CSEQ_N=<%.*s>\n", cancelledT->from.len, cancelledT->from.s,
+		 cancelledT->to.len, cancelledT->to.s, cancelledT->cseq_n.len,
+		 cancelledT->cseq_n.s);
+
+	branch_str.s=branch_buf;
+	if (!t_calc_branch(cancelledT,  branch, branch_str.s, &branch_str.len )){
+		LOG(L_ERR, "ERROR: build_uac_cancel: unable to create branch !\n");
+		goto error;
+	}
+	set_hostport(&hp,0);
+	via=via_builder(&via_len, cancelledT->uac[branch].request.dst.send_sock,
+			&branch_str, 0, cancelledT->uac[branch].request.dst.proto, &hp );
+	if (!via){
+		LOG(L_ERR,"ERROR: build_uac_cancel: no via header got from builder\n");
+		goto error;
+	}
+
+	/* method, separators, version  */
+	*len=CANCEL_LEN + 2 /* spaces */ +SIP_VERSION_LEN + CRLF_LEN;
+	*len+=cancelledT->uac[branch].uri.len;
+	/*via*/
+	*len+= via_len;
+	/*From*/
+	*len+=cancelledT->from.len;
+	/*To*/
+	*len+=cancelledT->to.len;
+	/*CallId*/
+	*len+=cancelledT->callid.len;
+	/*CSeq*/
+	*len+=cancelledT->cseq_n.len+1+CANCEL_LEN+CRLF_LEN;
+	/* User Agent */
+	if (server_signature) {
+		*len += USER_AGENT_LEN + CRLF_LEN;
+	}
+	/* Content Length  */
+	if (print_content_length(&content_length, body) < 0) {
+		LOG(L_ERR, "ERROR:build_uac_cancel(): Error while printing "
+			"content-length\n");
+		return 0;
+	}
+	/* Content-Length */
+	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);
+	/*Additional headers*/
+	*len += (headers ? headers->len : 0);
+	/*EoM*/
+	*len+= CRLF_LEN;
+	/* Message body */
+	*len += (body ? body->len : 0);
+
+	cancel_buf=shm_malloc( *len+1 );
+	if (!cancel_buf)
+	{
+		LOG(L_ERR, "ERROR: build_uac_cancel: cannot allocate memory\n");
+		goto error01;
+	}
+	p = cancel_buf;
+
+	append_string( p, CANCEL, CANCEL_LEN );
+	*(p++) = ' ';
+	append_string( p, cancelledT->uac[branch].uri.s,
+		cancelledT->uac[branch].uri.len);
+	append_string( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
+
+	/* insert our via */
+	append_string(p,via,via_len);
+
+	/*other headers*/
+	append_string( p, cancelledT->from.s, cancelledT->from.len );
+	append_string( p, cancelledT->callid.s, cancelledT->callid.len );
+	append_string( p, cancelledT->to.s, cancelledT->to.len );
+
+	append_string( p, cancelledT->cseq_n.s, cancelledT->cseq_n.len );
+	*(p++) = ' ';
+	append_string( p, CANCEL, CANCEL_LEN );
+	append_string( p, CRLF, CRLF_LEN );
+
+	/* User Agent header */
+	if (server_signature) {
+		append_string(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
+	}
+	/* Content Length*/
+	if (body) {
+		append_string(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		append_string(p, content_length.s, content_length.len);
+		append_string(p, CRLF, CRLF_LEN);
+	}
+	if(headers && headers->len){
+		append_string(p,headers->s,headers->len);
+	}
+	/*EoM*/
+	append_string(p,CRLF,CRLF_LEN);
+	if(body && body->len){
+		append_string(p,body->s,body->len);
+	}
+	*p=0;
+	pkg_free(via);
+	return cancel_buf;
+error01:
+	pkg_free(via);
+error:
+	return NULL;
+}
+
+

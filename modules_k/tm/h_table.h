@@ -89,6 +89,7 @@ void unlock_hash(int i);
 */
 enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8 };
 
+typedef void (*setkr_f)(enum kill_reason mykr);
 
 typedef struct retr_buf
 {

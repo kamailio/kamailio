@@ -50,6 +50,13 @@ int fifo_uac_cancel( FILE* stream, char *response_file );
 
 int unixsock_uac_cancel(str* msg);
 
+unsigned int t_uac_cancel(str *headers,str *body,
+	unsigned int cancelledIdx,unsigned int cancelledLabel,
+	transaction_cb cb, void* cbp);
+typedef unsigned int (*tuaccancel_f)( str *headers,str *body,
+	unsigned int cancelledIdx,unsigned int cancelledLabel,
+	transaction_cb cb, void* cbp);
+
 char *build_cancel(struct cell *Trans,unsigned int branch,
 	unsigned int *len );
 

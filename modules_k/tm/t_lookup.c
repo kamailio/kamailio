@@ -1158,6 +1158,11 @@ int t_unref( struct sip_msg* p_msg  )
 }
 
 
+void t_unref_cell(struct cell *c)
+{
+	UNREF(c);
+}
+
 
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index,
 															unsigned int* label)
