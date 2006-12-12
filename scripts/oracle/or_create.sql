@@ -89,7 +89,7 @@ CREATE TABLE attr_types (
     default_flags INT NOT NULL DEFAULT '0',
     flags INT NOT NULL DEFAULT '0',
     priority INT NOT NULL DEFAULT '0',
-    access INT NOT NULL DEFAULT '0',
+    attr_access INT NOT NULL DEFAULT '0',
     ordering INT NOT NULL DEFAULT '0',
     UNIQUE KEY upt_idx1 (name)
 );
