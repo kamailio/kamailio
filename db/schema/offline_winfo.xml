@@ -7,11 +7,7 @@
 
 ]>
 
-<table role="presence"
-    xmlns:db="http://docbook.org/ns/docbook"
-    xmlns:my="http://iptel.org/dbschema/mysql"
-    xmlns:pg="http://iptel.org/dbschema/postgres"
-    xmlns:dt="http://iptel.org/dbschema/dbtext">
+<table role="presence" xmlns:db="http://docbook.org/ns/docbook">
 	
 	<name>offline_winfo</name>
 	
@@ -20,6 +16,7 @@
 
 	<column id="offline_winfo.uid">
 		<name>uid</name>
+		<name db="oracle">uuid</name>
 		<type>string</type>
 		<size>&id_len;</size>
 	</column>
@@ -66,9 +63,9 @@
 		<name>dbid</name>
 		<type>unsigned int</type>
 		<size>10</size>
-		<my:type>INT(10) UNSIGNED AUTO_INCREMENT</my:type>
-		<pg:type>SERIAL</pg:type>
-		<dt:type>int,auto</dt:type>
+		<type db="mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
+		<type db="postgres">SERIAL</type>
+		<type db="dbtext">int,auto</type>
 	</column>
 
 	<index>

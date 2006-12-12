@@ -7,7 +7,7 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql">
+<table>
     <name>aliases</name>
     <version>6</version>
     <description>

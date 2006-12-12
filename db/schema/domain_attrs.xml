@@ -7,8 +7,7 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql"
-    xmlns:db="http://docbook.org/ns/docbook">
+<table xmlns:db="http://docbook.org/ns/docbook">
     <name>domain_attrs</name>
     <version>1</version>
     <description>

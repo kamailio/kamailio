@@ -7,12 +7,13 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql">
+<table>
     <name>grp</name>
     <version>3</version>
     
     <column id="grp.uid">
 	<name>uid</name>
+	<name db="oracle">uuid</name>
 	<type>string</type>
 	<default></default>
 	<size>&user_len;</size>

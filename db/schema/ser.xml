@@ -7,12 +7,7 @@
 
 ]>
 
-<database xmlns:my="http://iptel.org/dbschema/mysql"
-          xmlns:pg="http://iptel.org/dbschema/postgres"
-          xmlns:or="http://iptel.org/dbschema/oracle"
-          xmlns:dt="http://iptel.org/dbschema/dbtext"
-          xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>ser</name>
 
     <xi:include href="version.xml"/>

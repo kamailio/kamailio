@@ -7,10 +7,7 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql"
-    xmlns:dt="http://iptel.org/dbschema/dbtext"
-    xmlns:db="http://docbook.org/ns/docbook"
-    xmlns:pg="http://iptel.org/dbschema/postgres">
+<table xmlns:db="http://docbook.org/ns/docbook">
     <name>domain</name>
     <version>2</version>
 

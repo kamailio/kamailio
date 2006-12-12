@@ -7,18 +7,16 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql"
-    xmlns:pg="http://iptel.org/dbschema/postgres"
-    xmlns:dt="http://iptel.org/dbschema/dbtext">
+<table>
     <name>silo</name>
     <version>4</version>
 
     <column id="silo.mid">
 	<name>mid</name>
 	<type>int</type>
-	<my:type>INT AUTO_INCREMENT</my:type>
-	<pg:type>SERIAL</pg:type>
-	<dt:type>int,auto</dt:type>
+	<type db="mysql">INT AUTO_INCREMENT</type>
+	<type db="postgres">SERIAL</type>
+	<type db="dbtext">int,auto</type>
     </column>
 
     <column>
@@ -41,6 +39,7 @@
 
     <column>
 	<name>uid</name>
+	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
     </column>

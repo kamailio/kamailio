@@ -7,11 +7,7 @@
 
 ]>
 
-<table role="presence"
-    xmlns:db="http://docbook.org/ns/docbook"
-    xmlns:my="http://iptel.org/dbschema/mysql"
-    xmlns:pg="http://iptel.org/dbschema/postgres"
-    xmlns:dt="http://iptel.org/dbschema/dbtext">
+<table role="presence" xmlns:db="http://docbook.org/ns/docbook">
 	
 	<name>presentity</name>
 
@@ -32,6 +28,7 @@
 
 	<column id="presentity.uid">
 		<name>uid</name>
+		<name db="oracle">uuid</name>
 		<type>string</type>
 		<size>&id_len;</size>
 	</column>

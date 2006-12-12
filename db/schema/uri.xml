@@ -13,6 +13,7 @@
 
     <column id="uri.uid">
 	<name>uid</name>
+	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
     </column>

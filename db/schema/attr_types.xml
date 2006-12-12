@@ -7,7 +7,7 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql" role="serweb">
+<table role="serweb">
     <name>attr_types</name>
     <version>3</version>
     <description>

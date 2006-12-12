@@ -7,13 +7,13 @@
 
 ]>
 
-<table id="cpl" xmlns:xi="http://www.w3.org/2001/XInclude"
-   xmlns:pg="http://iptel.org/dbschema/postgres">
+<table id="cpl" xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>cpl</name>
     <version>2</version>
 
     <column id="cpl.uid">
 	<name>uid</name>
+	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
     </column>

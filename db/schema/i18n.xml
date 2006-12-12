@@ -7,8 +7,7 @@
 
 ]>
 
-<table xmlns:xi="http://www.w3.org/2001/XInclude" 
-    xmlns:my="http://iptel.org/dbschema/mysql">
+<table xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>i18n</name>
     <version>1</version>
     

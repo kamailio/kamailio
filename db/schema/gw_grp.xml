@@ -7,18 +7,16 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql"
-    xmlns:pg="http://iptel.org/dbschema/postgres"
-    xmlns:dt="http://iptel.org/dbschema/dbtext">
+<table>
     <name>gw_grp</name>
     <version>2</version>
 
     <column id="gw_grp.id">
 	<name>grp_id</name>
 	<type>int</type>
-	<my:type>INT AUTO_INCREMENT</my:type>
-	<pg:type>SERIAL</pg:type>
-	<dt:type>int,auto</dt:type>
+	<type db="mysql">INT AUTO_INCREMENT</type>
+	<type db="postgres">SERIAL</type>
+	<type db="dbtext">int,auto</type>
     </column>
 
     <column>

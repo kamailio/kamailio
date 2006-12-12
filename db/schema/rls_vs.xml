@@ -7,11 +7,7 @@
 
 ]>
 
-<table role="presence"
-    xmlns:db="http://docbook.org/ns/docbook"
-    xmlns:my="http://iptel.org/dbschema/mysql"
-    xmlns:pg="http://iptel.org/dbschema/postgres"
-    xmlns:dt="http://iptel.org/dbschema/dbtext">
+<table role="presence" xmlns:db="http://docbook.org/ns/docbook">
     <name>rls_vs</name>
     <version>1</version>
 	
