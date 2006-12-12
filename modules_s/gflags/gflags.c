@@ -295,15 +295,13 @@ static int child_init(int rank)
 
 static void mod_destroy(void)
 {
-	if (active_global_avps == &avps_1) {
-		if (avps_2 !=0)
-			destroy_avp_list(&avps_2);
-	}
-	else if (avps_1 != 0) {
+	if (avps_1 != 0) {
 		destroy_avp_list(&avps_1);
 	}
-	if (active_global_avps)
-		destroy_avp_list(active_global_avps);
+	if (avps_2 != 0) {
+		destroy_avp_list(&avps_2);
+	}
+	active_global_avps = 0;
 }
 
 
