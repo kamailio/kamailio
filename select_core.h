@@ -73,6 +73,8 @@ enum {
 
 SELECT_F(select_method)
 SELECT_F(select_ruri)
+SELECT_F(select_dst_uri)
+SELECT_F(select_next_hop)
 SELECT_F(select_from)
 SELECT_F(select_from_uri)
 SELECT_F(select_from_tag)
@@ -142,6 +144,10 @@ static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0},
 	{ select_ruri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("dst_uri"), select_dst_uri, 0},
+	{ select_dst_uri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("next_hop"), select_next_hop, 0},
+	{ select_next_hop, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("from"), select_from, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("f"), select_from, 0},
 	{ select_from, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_from_uri, 0},
