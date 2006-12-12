@@ -78,7 +78,7 @@ inline static void stats_trans_rpl( int code, int local ) {
 
 		/* Increment the status code. */
 		if (numerical_stat != NULL)
-			update_stat(numerical_stat, 0);
+			update_stat(numerical_stat, 1);
 
 	}
 }
