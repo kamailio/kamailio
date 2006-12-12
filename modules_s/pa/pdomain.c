@@ -46,9 +46,9 @@
 /*
  * Hash function
  */
-static inline int hash_func(pdomain_t* _d, char* _s, int _l)
+static inline unsigned int hash_func(pdomain_t* _d, unsigned char* _s, int _l)
 {
-	int res = 0, i;
+	unsigned int res = 0, i;
 	
 	for(i = 0; i < _l; i++) {
 		res += _s[i];
@@ -201,13 +201,13 @@ void unlock_pdomain(pdomain_t* _d)
  */
 int find_presentity_uid(pdomain_t* _d, str* uid, struct presentity** _p)
 {
-	int sl, i;
+	unsigned int sl, i;
 	struct presentity* p;
 	int res = 1;
 
 	if ((!uid) || (!_p)) return -1;
 
-	sl = hash_func(_d, uid->s, uid->len);
+	sl = hash_func(_d, (unsigned char *)uid->s, uid->len);
 	
 	p = _d->table[sl].first;
 	
@@ -252,9 +252,9 @@ static void callback(str* _user, str *_contact, int state, void* data)
 
 void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
-	int sl;
+	unsigned int sl;
 
-	sl = hash_func(_d, _p->uuid.s, _p->uuid.len);
+	sl = hash_func(_d, (unsigned char *)_p->uuid.s, _p->uuid.len);
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
 
