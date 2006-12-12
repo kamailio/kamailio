@@ -69,6 +69,7 @@ extern OSPTPROVHANDLE _osp_provider;
 
 struct rr_binds osp_rr;
 auth_api_t osp_auth;
+int osp_index[];
 
 static int ospInitMod(void);
 static void ospDestMod(void);
@@ -141,16 +142,16 @@ static param_export_t params[]={
 
 struct module_exports exports = {
     "osp",
-	DEFAULT_DLFLAGS, /* dlopen flags */
+    DEFAULT_DLFLAGS,    /* dlopen flags */
     cmds,
     params,
-    0,            /* exported statistics */
-    0,            /* exported MI functions */
-	0,            /* exported pseudo-variables */
-    ospInitMod,   /* module initialization function */
-    0,            /* response function*/
-    ospDestMod,   /* destroy function */
-    ospInitChild, /* per-child init function */
+    0,                  /* exported statistics */
+    0,                  /* exported MI functions */
+    0,                  /* exported pseudo-variables */
+    ospInitMod,         /* module initialization function */
+    0,                  /* response function*/
+    ospDestMod,         /* destroy function */
+    ospInitChild,       /* per-child init function */
 };
 
 /*
@@ -224,6 +225,7 @@ static int ospInitChild(
  */
 static int ospVerifyParameters(void)
 {
+    int i;
     int result = 0;
 
     LOG(L_DBG, "osp: ospVerifyParamters\n");
@@ -266,15 +268,23 @@ static int ospVerifyParameters(void)
             OSP_DEF_TOKEN);
     }
 
-    if (_osp_sp_uris[0] == NULL) {
-        LOG(L_ERR, "osp: ERROR: sp1_uri must be configured\n");
-        result = -1;
+    _osp_sp_number = 0;
+    for (i = 0; i < OSP_DEF_SPS; i++) {
+        if (_osp_sp_uris[i] != NULL) {
+            if (_osp_sp_number != i) {
+                _osp_sp_uris[_osp_sp_number] = _osp_sp_uris[i];
+                _osp_sp_weights[_osp_sp_number] = _osp_sp_weights[i];
+                _osp_sp_uris[i] = NULL;
+                _osp_sp_weights[i] = OSP_DEF_WEIGHT;
+            }
+            osp_index[_osp_sp_number] = i + 1;
+            _osp_sp_number++;
+        }
     }
 
-    for (_osp_sp_number = 1; _osp_sp_number < OSP_DEF_SPS; _osp_sp_number++) {
-        if (_osp_sp_uris[_osp_sp_number] == NULL) {
-            break;
-        }
+    if (_osp_sp_number == 0) {
+        LOG(L_ERR, "osp: ERROR: at least one service point uri must be configured\n");
+        result = -1;
     }
 
     ospDumpParameters();
@@ -290,8 +300,11 @@ static void ospDumpParameters(void)
     int i;
 
     LOG(L_INFO, "osp: module configuration: ");
+    LOG(L_INFO, "    number of service points '%d'", _osp_sp_number);
     for (i = 0; i < _osp_sp_number; i++) {
-        LOG(L_INFO, "    sp%d_uri '%s' sp%d_weight '%ld' ", i + 1, _osp_sp_uris[i], i + 1, _osp_sp_weights[i]);
+        LOG(L_INFO,
+            "    sp%d_uri '%s' sp%d_weight '%ld' ", 
+            osp_index[i], _osp_sp_uris[i], osp_index[i], _osp_sp_weights[i]);
     }
     LOG(L_INFO, "    device_ip '%s' device_port '%s' ", _osp_device_ip, _osp_device_port);
     LOG(L_INFO, "    private_key '%s' ", _osp_private_key);

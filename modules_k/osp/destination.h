@@ -1,5 +1,5 @@
 /*
- * openser osp module. 
+ * openser osp module.
  *
  * This module enables openser to communicate with an Open Settlement 
  * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI 
