@@ -2,7 +2,6 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version='1.0'
                 xmlns:xi="http://www.w3.org/2001/XInclude"
-                xmlns:db="http://iptel.org/dbschema/postgres"
 >
 
     <xsl:import href="sql.xsl"/>
@@ -32,8 +31,8 @@
 	</xsl:variable>
 
 	<xsl:choose>
-	    <xsl:when test="db:type">
-		<xsl:value-of select="normalize-space(db:type)"/>
+	    <xsl:when test="type[@db=$db]">
+		<xsl:value-of select="normalize-space(type[@db=$db])"/>
 	    </xsl:when>
 	    <xsl:when test="$type='char'">
 		<xsl:text>SMALLINT</xsl:text>
@@ -162,8 +161,8 @@
 	<xsl:param name="select" select="."/>
 	<xsl:choose>
 	    <!-- override test -->
-	    <xsl:when test="count($select/db:username)='1'">
-		<xsl:value-of select="normalize-space($select/db:username)"/>
+	    <xsl:when test="count($select/username[@db=$db])='1'">
+		<xsl:value-of select="normalize-space($select/username[@db=$db])"/>
 	    </xsl:when>
 	    <!-- No override, use the standard name -->
 	    <xsl:otherwise>
@@ -176,8 +175,8 @@
 	<xsl:param name="select" select="."/>
 	<xsl:choose>
 	    <!-- override test -->
-	    <xsl:when test="count($select/db:privileges)='1'">
-		<xsl:value-of select="normalize-space($select/db:privileges)"/>
+	    <xsl:when test="count($select/privileges[@db=$db])='1'">
+		<xsl:value-of select="normalize-space($select/privileges[@db=$db])"/>
 	    </xsl:when>
 	    <!-- No override, use the standard name -->
 	    <xsl:otherwise>
@@ -198,9 +197,9 @@
 	<xsl:text>CREATE USER </xsl:text>
 	<xsl:call-template name="get-userid"/>
 	<xsl:choose>
-	    <xsl:when test="count(db:password)='1'">
+	    <xsl:when test="count(password[@db=$db])='1'">
 		<xsl:text> PASSWORD '</xsl:text>
-		<xsl:value-of select="normalize-space(db:password)"/>
+		<xsl:value-of select="normalize-space(password[@db=$db])"/>
 		<xsl:text>'</xsl:text>
 	    </xsl:when>
 	    <xsl:when test="count(password)='1'">

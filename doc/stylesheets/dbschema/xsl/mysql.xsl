@@ -1,7 +1,6 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version='1.0'
-                xmlns:db="http://iptel.org/dbschema/mysql"
 >
 
     <xsl:import href="sql.xsl"/>
@@ -12,9 +11,9 @@
     
     <xsl:template name="table.close">
 	<xsl:text>)</xsl:text>
-	<xsl:if test="db:type">
+	<xsl:if test="type[@db=$db]">
 	    <xsl:text> Type=</xsl:text>
-	    <xsl:value-of select="normalize-space(db:type)"/>
+	    <xsl:value-of select="normalize-space(type[@db=$db])"/>
 	</xsl:if>
 	<xsl:text>;&#x0A;&#x0A;</xsl:text>	
     </xsl:template>
@@ -25,8 +24,8 @@
 	</xsl:variable>
 
 	<xsl:choose>
-	    <xsl:when test="db:type">
-		<xsl:value-of select="normalize-space(db:type)"/>
+	    <xsl:when test="type[@db=$db]">
+		<xsl:value-of select="normalize-space(type[@db=$db])"/>
 	    </xsl:when>
 	    <xsl:when test="$type='char'">
 		<xsl:text>TINYINT</xsl:text>
@@ -120,8 +119,8 @@
 	<xsl:text>'</xsl:text>
 	<xsl:choose>
 	    <!-- override test -->
-	    <xsl:when test="count($select/db:username)='1'">
-		<xsl:value-of select="normalize-space($select/db:username)"/>
+	    <xsl:when test="count($select/username[@db=$db])='1'">
+		<xsl:value-of select="normalize-space($select/username[@db=$db])"/>
 	    </xsl:when>
 	    <!-- No override, use the standard name -->
 	    <xsl:otherwise>
@@ -135,8 +134,8 @@
 	    <xsl:when test="count($host)='1'">
 		<xsl:value-of select="normalize-space($host)"/>
 	    </xsl:when>
-	    <xsl:when test="count(db:host)='1'">
-		<xsl:value-of select="normalize-space(db:host)"/>
+	    <xsl:when test="count(host[@db=$db])='1'">
+		<xsl:value-of select="normalize-space(host[@db=$db])"/>
 	    </xsl:when>
 	    <xsl:when test="count(host)='1'">
 		<xsl:value-of select="normalize-space(host)"/>

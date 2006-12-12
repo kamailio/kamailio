@@ -1,8 +1,7 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version='1.0'
-                xmlns:xi="http://www.w3.org/2001/XInclude"
-                xmlns:db="http://iptel.org/dbschema/dbtext">
+                xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <xsl:import href="common.xsl"/>
     <xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
@@ -36,8 +35,8 @@
 	<xsl:call-template name="get-name"/>
 	<xsl:text>(</xsl:text>
 	<xsl:choose>
-	    <xsl:when test="db:type">
-		<xsl:value-of select="normalize-space(db:type)"/>
+	    <xsl:when test="type[@db=$db]">
+		<xsl:value-of select="normalize-space(type[@db=$db])"/>
 	    </xsl:when>
 	    <xsl:when test="$type='char' or 
 		            $type='short' or 
@@ -103,16 +102,16 @@
 		<xsl:with-param name="value">
 		    <xsl:choose>
 			<!-- If we have db-specific value, use it -->
-			<xsl:when test="$row/db:value[@col=$id]">
-			    <xsl:value-of select="normalize-space($row/db:value[@col=$id])"/>
+			<xsl:when test="$row/value[@col=$id and @db=$db]">
+			    <xsl:value-of select="normalize-space($row/value[@col=$id and @db=$db])"/>
 			</xsl:when>
 			<!-- No db-specific value, try generic -->
 			<xsl:when test="$row/value[@col=$id]">
 			    <xsl:value-of select="normalize-space($row/value[@col=$id])"/>
 			</xsl:when>
 			<!-- No value at all, try db-specific default value for the column -->
-			<xsl:when test="db:default">
-			    <xsl:value-of select="normalize-space(db:default)"/>
+			<xsl:when test="default[@db=$db]">
+			    <xsl:value-of select="normalize-space(default[@db=$db])"/>
 			</xsl:when>
 			<!-- Try generic default value for the column -->
 			<xsl:when test="default">

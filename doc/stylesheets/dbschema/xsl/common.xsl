@@ -1,12 +1,12 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:db="#"
 	version='1.0'>
     
     <xsl:key name="column_id" match="column" use="@id|xml:id"/>
 
     <xsl:param name="prefix" select="_"/>
     <xsl:param name="dir" select="mm"/>
+    <xsl:param name="db" select="_"/>
 
     <xsl:variable name="sign-prefix">unsigned </xsl:variable>
     
@@ -22,8 +22,8 @@
 	<xsl:param name="select" select="."/>
 	<xsl:choose>
 	    <!-- override test -->
-	    <xsl:when test="count($select/db:name)='1'">
-		<xsl:value-of select="normalize-space($select/db:name)"/>
+	    <xsl:when test="count($select/name[@db=$db])='1'">
+		<xsl:value-of select="normalize-space($select/name[@db=$db])"/>
 	    </xsl:when>
 	    <!-- No override, use the standard name -->
 	    <xsl:otherwise>
@@ -92,8 +92,8 @@
     <xsl:template name="get-type-string">
 	<xsl:param name="select" select="."/>
 	<xsl:choose>
-	    <xsl:when test="count($select/db:type)='1'">
-		<xsl:value-of select="translate(normalize-space($select/db:type),
+	    <xsl:when test="count($select/type[@db=$db])='1'">
+		<xsl:value-of select="translate(normalize-space($select/type[@db=$db]),
 		  'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
 	    </xsl:when>
 	    <xsl:otherwise>
@@ -136,7 +136,7 @@
     <xsl:template name="get-null">
 	<xsl:param name="select" select="."/>
 	<xsl:choose>
-	    <xsl:when test="count($select/db:null)='1'">1</xsl:when>
+	    <xsl:when test="count($select/null[@db=$db])='1'">1</xsl:when>
 	    <xsl:when test="count($select/null)='1'">1</xsl:when>
 	    <xsl:otherwise>0</xsl:otherwise>
 	</xsl:choose>
@@ -145,8 +145,8 @@
     <xsl:template name="get-size">
 	<xsl:param name="select" select="."/>
 	<xsl:choose>
-	    <xsl:when test="count($select/db:size)='1'">
-		<xsl:value-of select="normalize-space($select/db:size)"/>
+	    <xsl:when test="count($select/size[@db=$db])='1'">
+		<xsl:value-of select="normalize-space($select/size[@db=$db])"/>
 	    </xsl:when>
 	    <xsl:otherwise>
 		<xsl:value-of select="normalize-space($select/size)"/>
