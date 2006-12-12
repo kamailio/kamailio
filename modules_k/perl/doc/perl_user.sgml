@@ -87,13 +87,38 @@ if (perl_exec("ldap_alias")) {
 		<para>
 		The following libraries or applications must be installed before 
 		running &ser; with this module loaded:
-			<itemizedlist>
+		<itemizedlist>
 			<listitem>
 			<para>
 				<emphasis>Perl</emphasis>
 			</para>
 			</listitem>
-			</itemizedlist>
+		</itemizedlist>
+		Additionally, a number of perl modules should be installed. The OpenSER::LDAPUtils package
+		relies on Net::LDAP to be installed. One of the sample scripts needs IPC::Shareable
+		</para>
+		<para>
+		On Debian systems, at least the following packages should be installed:
+		<itemizedlist>
+			<listitem><para>perl</para></listitem>
+			<listitem><para>perl-base</para></listitem>
+			<listitem><para>perl-modules</para></listitem>
+			<listitem><para>libperl5.8</para></listitem>
+			<listitem><para>libperl-dev</para></listitem>
+			<listitem><para>libnet-ldap-perl</para></listitem>
+			<listitem><para>libipc-shareable-perl</para></listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		On SuSE systems, at least the following packages should be installed:
+		<itemizedlist>
+			<listitem><para>perl</para></listitem>
+			<listitem><para>perl-ldap</para></listitem>
+			<listitem><para>IPC::Shareable perl module from CPAN</para></listitem>
+		</itemizedlist>
+		Although SuSE delivers a lot of perl modules, others may have to be fetched
+		from CPAN. Consider using the program <quote>cpan2rpm</quote> - which, in turn,
+		is available on CPAN. It creates RPM files from CPAN.
 		</para>
 	</section>
 	</section>
