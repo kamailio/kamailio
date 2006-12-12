@@ -131,6 +131,7 @@ db_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
 
+
 /*
  * Exported functions
  */
@@ -151,6 +152,7 @@ static cmd_export_t cmds[] = {
 	{"ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0, 0},
 	{"ul_bind_usrloc",        (cmd_function)bind_usrloc,        1, 0, 0},
 	{"ul_register_ulcb",      (cmd_function)register_ulcb,      1, 0, 0},
+	{"ul_get_num_users",      (cmd_function)get_number_of_users,1, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -186,6 +188,12 @@ static param_export_t params[] = {
 };
 
 
+stat_export_t mod_stats[] = {
+	{"registered_users" ,  STAT_IS_FUNC, (stat_var**)get_number_of_users  },
+	{0,0,0}
+};
+
+
 static mi_export_t mi_cmds[] = {
 	{ MI_USRLOC_RM,           mi_usrloc_rm_aor,       0,                 0,
 				mi_child_init },
@@ -208,7 +216,7 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */
-	0,          /* exported statistics */
+	mod_stats,  /* exported statistics */
 	mi_cmds,    /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	mod_init,   /* Module initialization function */

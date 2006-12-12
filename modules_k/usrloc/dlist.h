@@ -20,6 +20,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ========
+ * 2006-11-28 Added get_number_of_users() (Jeffrey Magder - SOMA Networks)
  */
 
 
@@ -76,6 +80,10 @@ int synchronize_all_udomains(void);
  */
 typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags);
 int get_all_ucontacts(void *, int, unsigned int);
+
+
+/* Sums up the total number of users in memory, over all domains. */
+unsigned long get_number_of_users();
 
 
 /*

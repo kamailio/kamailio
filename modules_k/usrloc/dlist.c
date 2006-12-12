@@ -24,6 +24,7 @@
  * History:
  * ========
  * 2005-07-11 get_all_ucontacts returns also the contact's flags (bogdan)
+ * 2006-11-28 added get_number_of_users() (Jeffrey Magder - SOMA Networks)
  */
 
 
@@ -478,6 +479,25 @@ void print_all_udomains(FILE* _f)
 		ptr = ptr->next;
 	}
 	fprintf(_f, "===/Domain list===\n");
+}
+
+
+/* Loops through all domains summing up the number of users. */
+unsigned long get_number_of_users() 
+{
+	int numberOfUsers = 0;
+
+	dlist_t* current_dlist;
+	
+	current_dlist = root;
+
+	while (current_dlist)
+	{
+		numberOfUsers += get_stat_val(current_dlist->d->users); 
+		current_dlist  = current_dlist->next;
+	}
+
+	return numberOfUsers;
 }
 
 
