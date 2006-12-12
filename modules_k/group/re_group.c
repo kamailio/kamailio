@@ -24,6 +24,7 @@
  *  2005-10-06 - created by bogdan
  */
 
+#include <sys/types.h>
 #include <regex.h>
 
 #include "../../str.h"
