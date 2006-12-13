@@ -643,7 +643,7 @@ static int fmt2rad(char *fmt,
 		} /* switch (*fmt) */
 
 		if (attr) {
-			if (!rc_avpair_add(rh, send, attr->v, val.s, val.len, VENDOR(attr->v))) {
+			if (!rc_avpair_add(rh, send, ATTRID(attr->v), val.s, val.len, VENDOR(attr->v))) {
 				LOG(L_ERR, "ERROR:acc:fmt2rad: Failed to add attribute %s\n",
 				    attr->n);
 				return -1;
@@ -723,8 +723,8 @@ static inline int add_user_name(struct sip_msg* rq, void* rh, VALUE_PAIR** send)
 			user_name.s[user->len] = '@';
 			memcpy(user_name.s + user->len + 1, realm->s, realm->len);
 
-			if (!rc_avpair_add(rh, send, attrs[A_USER_NAME].v,
-					   user_name.s, user_name.len, 0)) {
+			if (!rc_avpair_add(rh, send, ATTRID(attrs[A_USER_NAME].v),
+					   user_name.s, user_name.len, VENDOR(attrs[A_USER_NAME].v))) {
 				LOG(L_ERR, "ERROR:acc:add_user_name: Failed to add User-Name attribute\n");
 				pkg_free(user_name.s);
 				return -1;
@@ -755,14 +755,16 @@ static int log_request(struct sip_msg* rq, str* ouri, struct hdr_field* to, unsi
 
 	     /* Add Acct-Status-Type attribute */
 	av_type = rad_status(rq, code);
-	if (!rc_avpair_add(rh, &send, attrs[A_ACCT_STATUS_TYPE].v, &av_type, -1, 0)) {
+	if (!rc_avpair_add(rh, &send, ATTRID(attrs[A_ACCT_STATUS_TYPE].v), &av_type, -1, 
+			   VENDOR(attrs[A_ACCT_STATUS_TYPE].v))) {
 		ERR("Add Status-Type\n");
 		goto error;
 	}
 
 	     /* Add Service-Type attribute */
 	av_type = (service_type != -1) ? service_type : vals[V_SIP_SESSION].v;
-	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &av_type, -1, 0)) {
+	if (!rc_avpair_add(rh, &send, ATTRID(attrs[A_SERVICE_TYPE].v), &av_type, -1, 
+			   VENDOR(attrs[A_SERVICE_TYPE].v))) {
 		ERR("add STATUS_TYPE\n");
 		goto error;
 	}
