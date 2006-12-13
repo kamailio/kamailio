@@ -47,8 +47,8 @@
 #define RPID_HF_NAME_LEN (sizeof(RPID_HF_NAME) - 1)
 
 /* rpid AVP specs */
-static int     rpid_avp_type = 0;
-static int_str rpid_avp = (int_str)0;
+static int     rpid_avp_type;
+static int_str rpid_avp;
 static str     rpid_str;
 
 
@@ -66,6 +66,9 @@ int init_rpid_avp(char *rpid_avp_param)
 				"AVP specs \"%s\"\n", rpid_avp_param);
 			return -1;
 		}
+	} else {
+		rpid_avp.n = 0;
+		rpid_avp_type = 0;
 	}
 	return 0;
 }
