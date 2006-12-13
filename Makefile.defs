@@ -375,8 +375,7 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_CACHE \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
-	 -DF_MALLOC \
-	 #-DDBG_QM_MALLOC \
+	 -DDBG_QM_MALLOC \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DEXTRA_DEBUG \
@@ -1216,6 +1215,10 @@ ifeq ($(OS), linux)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes
+	else
+		ifneq (,$(findstring -DUSE_POSIX_SEM, $(DEFS)))
+			LIBS+=-lpthread
+		endif
 	endif
 	# check for >= 2.5.44
 	ifeq ($(shell [ $(OSREL_N) -ge 2005044 ] && echo has_epoll), has_epoll)
@@ -1284,7 +1287,7 @@ ifeq ($(OS), freebsd)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS= -pthread   #dlopen is in libc
+		LIBS+= -pthread   #dlopen is in libc
 	else
 		LIBS=   #dlopen is in libc
 	endif
