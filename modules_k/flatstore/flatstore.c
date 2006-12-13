@@ -191,13 +191,13 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 			s = p = VAL_BLOB(v+i).s;
 			while (l--) {
 				if ( !(isprint(*s) && *s != '\\' && *s != '|')) {
-					fprintf(f,"%.*s\\x%02X",s-p,p,(*s & 0xff));
+					fprintf(f,"%.*s\\x%02X",(int)(s-p),p,(*s & 0xff));
 					p = s+1;
 				}
 				++s;
 			}
 			if (p!=s)
-				fprintf(f,"%.*s",s-p,p);
+				fprintf(f,"%.*s",(int)(s-p),p);
 			break;
 
 		case DB_BITMAP:

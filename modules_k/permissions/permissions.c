@@ -921,7 +921,7 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 	xl_spec_t *sp;
 	xl_value_t xl_val;
 
-	idx = (int)_idx;
+	idx = (int)(long)_idx;
 	sp = (xl_spec_t *)_sp;
 	
 	/* turn off control, allow any uri */
