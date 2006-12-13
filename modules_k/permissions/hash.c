@@ -35,8 +35,8 @@
 #define perm_hash(_s)  core_hash( &(_s), 0, PERM_HASH_SIZE)
 
 /* tag AVP specs */
-static int     tag_avp_type = 0;
-static int_str tag_avp = (int_str)0;
+static int     tag_avp_type;
+static int_str tag_avp;
 static str     tag_str;
 
 
@@ -53,6 +53,9 @@ int init_tag_avp(char *tag_avp_param)
 				"invalid tag AVP spec \"%s\"\n", tag_avp_param);
 			return -1;
 		}
+	} else {
+		tag_avp.n = 0;
+		tag_avp_type = 0;
 	}
 	return 0;
 }

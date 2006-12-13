@@ -70,9 +70,9 @@ pingClients(unsigned int ticks, void *param)
         contact.s = (char*)ptr + sizeof(contact.len);
         ptr = contact.s + contact.len;
 		memcpy( &sock, ptr, sizeof(sock));
-		ptr += sizeof(sock);
+		ptr = (char*)ptr + sizeof(sock);
 		memcpy( &flags, ptr, sizeof(flags));
-		ptr += sizeof(flags);
+		ptr = (char*)ptr + sizeof(flags);
         if (parse_uri(contact.s, contact.len, &uri) < 0) {
             LOG(L_ERR, "error: mediaproxy/pingClients(): can't parse contact uri\n");
             continue;

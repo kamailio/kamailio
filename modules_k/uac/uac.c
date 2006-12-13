@@ -98,7 +98,7 @@ static param_export_t params[] = {
 	{"rr_store_param",    STR_PARAM,                &rr_param.s            },
 	{"from_restore_mode", STR_PARAM,                &from_restore_mode_str },
 	{"from_passwd",       STR_PARAM,                &uac_passwd.s          },
-	{"credential",        STR_PARAM|USE_FUNC_PARAM, &add_credential        },
+	{"credential",        STR_PARAM|USE_FUNC_PARAM, (void*)&add_credential },
 	{"auth_username_avp", STR_PARAM,                &auth_username_avp     },
 	{"auth_realm_avp",    STR_PARAM,                &auth_realm_avp        },
 	{"auth_password_avp", STR_PARAM,                &auth_password_avp     },

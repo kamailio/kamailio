@@ -842,7 +842,6 @@ inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 				return -1;
 		}
 	}
-	return ret;
 }
 
 

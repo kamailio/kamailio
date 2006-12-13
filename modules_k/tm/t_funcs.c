@@ -55,11 +55,11 @@
 #include "config.h"
 
 /* fr_timer AVP specs */
-static int     fr_timer_avp_type = 0;
-static int_str fr_timer_avp = (int_str)0;
+static int     fr_timer_avp_type;
+static int_str fr_timer_avp;
 static str     fr_timer_str;
-static int     fr_inv_timer_avp_type = 0;
-static int_str fr_inv_timer_avp = (int_str)0;
+static int     fr_inv_timer_avp_type;
+static int_str fr_inv_timer_avp;
 static str     fr_inv_timer_str;
 
 static str relay_reason_100 = str_init("Giving a try");
@@ -293,6 +293,9 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 				"AVP specs \"%s\"\n", fr_timer_param);
 			return -1;
 		}
+	} else {
+		fr_timer_avp.n = 0;
+		fr_timer_avp_type = 0;
 	}
 
 	if (fr_inv_timer_param && *fr_inv_timer_param) {
@@ -304,6 +307,9 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 				"AVP specs \"%s\"\n", fr_inv_timer_param);
 			return -1;
 		}
+	} else {
+		fr_inv_timer_avp.n = 0;
+		fr_inv_timer_avp_type = 0;
 	}
 	return 0;
 }

@@ -264,11 +264,11 @@ static struct {
 };
 
 static str sup_ptypes[] = {
-	{.s = "udp", .len = 3},
-	{.s = "udptl", .len = 5},
-	{.s = "rtp/avp", .len = 7},
-	{.s = "rtp/savpf", .len = 9},
-	{.s = NULL, .len = 0}
+	{ "udp", 3},
+	{ "udptl", 5},
+	{ "rtp/avp", 7},
+	{ "rtp/savpf", 9},
+	{ NULL, 0}
 };
 
 /*
@@ -1380,38 +1380,37 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 		if (node->rn_recheck_ticks > get_ticks())
 			return 1;
 	}
-	do {
-		cp = send_rtpp_command(node, v, 2);
-		if (cp == NULL) {
-			LOG(L_WARN,"WARNING: rtpp_test: can't get version of "
-			    "the RTP proxy\n");
-			break;
-		}
-		rtpp_ver = atoi(cp);
-		if (rtpp_ver != SUP_CPROTOVER) {
-			LOG(L_WARN, "WARNING: rtpp_test: unsupported "
-			    "version of RTP proxy <%s> found: %d supported, "
-			    "%d present\n", node->rn_url,
-			    SUP_CPROTOVER, rtpp_ver);
-			break;
-		}
-		cp = send_rtpp_command(node, vf, 4);
-		if (cp == NULL) {
-			LOG(L_WARN,"WARNING: rtpp_test: RTP proxy went down during "
-				"version query\n");
-				break;
-		}
-		if (cp[0] == 'E' || atoi(cp) != 1) {
-			LOG(L_WARN, "WARNING: rtpp_test: of RTP proxy <%s>"
-			    "doesn't support required protocol version %s\n",
-			    node->rn_url, REQ_CPROTOVER);
-			break;
-		}
-		LOG(L_INFO, "rtpp_test: RTP proxy <%s> found, support for "
-		    "it %senabled\n",
-		    node->rn_url, force == 0 ? "re-" : "");
-		return 0;
-	} while(0);
+	cp = send_rtpp_command(node, v, 2);
+	if (cp == NULL) {
+		LOG(L_WARN,"WARNING: rtpp_test: can't get version of "
+		    "the RTP proxy\n");
+		goto error;
+	}
+	rtpp_ver = atoi(cp);
+	if (rtpp_ver != SUP_CPROTOVER) {
+		LOG(L_WARN, "WARNING: rtpp_test: unsupported "
+		    "version of RTP proxy <%s> found: %d supported, "
+		    "%d present\n", node->rn_url,
+		    SUP_CPROTOVER, rtpp_ver);
+		goto error;
+	}
+	cp = send_rtpp_command(node, vf, 4);
+	if (cp == NULL) {
+		LOG(L_WARN,"WARNING: rtpp_test: RTP proxy went down during "
+			"version query\n");
+		goto error;
+	}
+	if (cp[0] == 'E' || atoi(cp) != 1) {
+		LOG(L_WARN, "WARNING: rtpp_test: of RTP proxy <%s>"
+		    "doesn't support required protocol version %s\n",
+		    node->rn_url, REQ_CPROTOVER);
+		goto error;
+	}
+	LOG(L_INFO, "rtpp_test: RTP proxy <%s> found, support for "
+	    "it %senabled\n",
+	    node->rn_url, force == 0 ? "re-" : "");
+	return 0;
+error:
 	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy <%s>"
 	    "has been disabled%s\n", node->rn_url,
 	    rtpproxy_disable_tout < 0 ? "" : " temporarily");
@@ -1666,8 +1665,6 @@ find_sdp_line(char* p, char* plimit, char linechar)
 			return NULL;
 		cp = cp1 + 2;
 	}
-	/*UNREACHED*/
-	return NULL;
 }
 
 /* This function assumes p points to a line of requested type. */
@@ -2133,9 +2130,9 @@ nh_timer(unsigned int ticks, void *param)
 		c.s = (char*)cp + sizeof(c.len);
 		cp =  (char*)cp + sizeof(c.len) + c.len;
 		memcpy( &send_sock, cp, sizeof(send_sock));
-		cp += sizeof(send_sock);
+		cp = (char*)cp + sizeof(send_sock);
 		memcpy( &flags, cp, sizeof(flags));
-		cp += sizeof(flags);
+		cp = (char*)cp + sizeof(flags);
 		if (parse_uri(c.s, c.len, &curi) < 0) {
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't parse contact uri\n");
 			continue;

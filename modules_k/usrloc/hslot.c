@@ -55,9 +55,6 @@ int ul_init_locks()
 			return -1;
 		}
 	} while (1);
-
-	/* shouldn't be here */
-	return -1;
 }
 
 void ul_destroy_locks()

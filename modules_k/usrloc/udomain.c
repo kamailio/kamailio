@@ -434,7 +434,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 				}
 			}
 
-			if ( (c=mem_insert_ucontact(r, &contact, ci)) < 0) {
+			if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
 				LOG(L_ERR,
 					"ul:preload_udomain(): Error while inserting contact\n");
 				unlock_udomain(_d, &user);
@@ -563,7 +563,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 		if ( r==0 )
 			get_static_urecord( _d, _aor, &r);
 
-		if ( (c=mem_insert_ucontact(r, &contact, ci)) < 0) {
+		if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
 			LOG(L_ERR, "ERROR:usrloc:db_load_urecord: mem_insert failed\n");
 			free_urecord(r);
 			ul_dbf.free_result(_c, res);

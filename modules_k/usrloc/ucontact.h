@@ -55,7 +55,7 @@ typedef enum flags {
 	FL_NAT         = 1 << 0,     /* Contact is behind NAT */
 	FL_MEM         = 1 << 1,     /* Update memory only -- used for REGISTER replication */
 	FL_NAT_SIPPING = 1 << 2,     /* Use SIP ping if nated */
-	FL_ALL         = 0xFFFFFFFF  /* All flags set */
+	FL_ALL         = (int)0xFFFFFFFF  /* All flags set */
 } flags_t;
 
 
