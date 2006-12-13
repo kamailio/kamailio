@@ -84,15 +84,18 @@ char* generate_ETag()
 
 void msg_presentity_clean(unsigned int ticks,void *param)
 {
-	db_key_t db_keys[1];
-	db_val_t db_vals[1];
-	db_op_t  db_ops[1] ;
+	db_key_t db_keys[5];
+	db_val_t db_vals[5];
+	db_op_t  db_ops[5] ;
 	db_key_t result_cols[3];
 	db_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
-	int i =0;
-	str user, domain, etag;
+	int i =0, size= 0;
+	presentity_t** p= NULL;
+	presentity_t* pres= NULL;
+	int user_len, domain_len, etag_len;
+	int n= 0;
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
@@ -123,6 +126,9 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			pa_dbf.free_result(pa_db, result);
 		return;
 	}
+	if(result== NULL)
+		return;
+
 	if(result && result->n<= 0)
 	{
 		pa_dbf.free_result(pa_db, result);	
@@ -130,38 +136,102 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	}
 	DBG("PRESENCE:msg_presentity_clean: found n= %d expires messages\n ",
 			result->n);
-	for(i = 0; i<result->n; i++)
+
+	n= result->n;
+	
+	p= (presentity_t**)pkg_malloc(result->n* sizeof(presentity_t*));
+	if(p== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR while allocating memory\n");
+		goto error;
+	}
+
+	for(i = 0; i< n; i++)
 	{	
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
-		user.s = row_vals[0].val.str_val.s;
-		user.len = strlen(user.s);
-	
-		domain.s = row_vals[1].val.str_val.s;
-		domain.len = strlen(domain.s);
+		
+		user_len = strlen(row_vals[0].val.str_val.s);
+		domain_len = strlen(row_vals[1].val.str_val.s);
+		etag_len= strlen(row_vals[2].val.str_val.s);
+		
+		size= sizeof(presentity_t)+ user_len+ domain_len+ etag_len; 
+		pres= (presentity_t*)pkg_malloc(size);
+		if(pres== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR while allocating memory\n");
+			goto error;
+		}
+		memset(pres, 0, size);
+		size= sizeof(presentity_t);
+		
+		pres->user.s= (char*)pres+ size;	
+		memcpy(pres->user.s, row_vals[0].val.str_val.s, user_len);
+		pres->user.len= user_len;
+		size+= user_len;
 
-		etag.s =  row_vals[2].val.str_val.s;
-		etag.len = strlen(etag.s);
-		LOG(L_INFO, "PRESENCE:msg_presentity_clean:found expired publish"
-				" for [user]=%.*s  [domanin]=%.*s\n",user.len, user.s,
-				domain.len, domain.s);
-		query_db_notify( &user, &domain, "presence", NULL, &etag);
+		pres->domain.s= (char*)pres+ size;
+		memcpy(pres->domain.s, row_vals[1].val.str_val.s, domain_len);
+		pres->domain.len= domain_len;
+		size+= domain_len;
+
+		pres->etag.s= (char*)pres+ size;
+		memcpy(pres->etag.s, row_vals[2].val.str_val.s, etag_len);
+		pres->etag.len= etag_len;
+		size+= etag_len;
+		
+		p[i]= pres;
+
 	}
+
+	pa_dbf.free_result(pa_db, result);
+	result= NULL;
+	
+	for(i= 0; i<n ; i++)
+	{
+
+		LOG(L_INFO, "PRESENCE:msg_presentity_clean:found expired publish"
+				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
+				p[i]->domain.len, p[i]->domain.s);
+		query_db_notify( &p[i]->user, &p[i]->domain, "presence", NULL, &p[i]->etag);
+
+	}
+
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:msg_presentity_clean: Error in use_table\n");
-		return ;
+		goto error;
 	}
 	
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
 		LOG(L_ERR,"PRESENCE:msg_presentity_clean: ERROR cleaning expired"
 				" messages\n");
-
-	pa_dbf.free_result(pa_db, result);
 	
+	for(i= 0; i< n; i++)
+	{
+		if(p[i])
+			pkg_free(p[i]);
+	}
+	pkg_free(p);
+
 	return;
+
+error:
+	if(result)
+		pa_dbf.free_result(pa_db, result);
+	if(p)
+	{
+		for(i= 0; i< n; i++)
+		{
+			if(p[i])
+				pkg_free(p[i]);
+		}
+		pkg_free(p);
+	}
+	return;	
 }
+
 
 
 /**

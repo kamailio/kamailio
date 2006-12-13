@@ -45,7 +45,6 @@
 #include "utils_func.h"
 
 extern struct tm_binds tmb;
-db_res_t *res = NULL;
 c_back_param* shm_dup_subs(subs_t* subs, str to_tag, int is_sec);
 
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
@@ -292,7 +291,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		goto error;
 	}
 
-	if (!result )
+	if (result== NULL )
 	{
 		LOG(L_ERR, "PRESENCE: get_wi_notify_body:The query returned no"
 				" result\n");
@@ -445,9 +444,14 @@ str* get_p_notify_body(str user, str host, str* etag)
 	{
 		LOG(L_ERR, "PRESENCE:get_p_notify_body: Error while querying"
 				" presentity\n");
+		if(result)
+			pa_dbf.free_result(pa_db, result);
 		return NULL;
 	}
 	
+	if(result== NULL)
+		return NULL;
+
 	if (result && result->n <=0 )
 	{
 		DBG("PRESENCE: get_p_notify_body: The query returned no"
@@ -458,7 +462,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 	}
 	else
 	{
-		body_array =(str**)pkg_malloc( (result->n+1)*sizeof(str*));
+		body_array =(str**)pkg_malloc( (result->n)*sizeof(str*));
 		if(body_array == NULL)
 		{
 			LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR while allocating"
@@ -663,6 +667,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 {
 
 	subs_t** subs_array= NULL;
+	subs_t* subs= NULL;
 	db_key_t query_cols[6];
 	db_op_t  query_ops[6];
 	db_val_t query_vals[6];
@@ -670,6 +675,10 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	int n_result_cols = 0, n_query_cols = 0;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
+	db_res_t *result = NULL;
+	int size= 0;
+	str from_user, from_domain, to_tag, from_tag;
+	str event_id, callid, record_route, contact, status;
 	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
 	int expires_col= 0,callid_col, cseq_col, i, status_col =0, event_id_col = 0;
 	int version_col = 0, record_route_col = 0, contact_col = 0;
@@ -680,7 +689,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 		return NULL;
 	}
 
-	LOG(L_INFO,"PRESENCE:get_subs_dialog:querying database table = watchers\n");
+	LOG(L_INFO,"PRESENCE:get_subs_dialog:querying database table = active_watchers\n");
 	query_cols[n_query_cols] = "to_domain";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
@@ -723,134 +732,214 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	}
 
 	if (pa_dbf.query(pa_db, query_cols, 0, query_vals,result_cols,
-				n_query_cols, n_result_cols, 0, &res) < 0) 
+				n_query_cols, n_result_cols, 0, &result) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_subs_dialog:Error while querying database\n");
-		if(res)
+		if(result)
 		{
-			pa_dbf.free_result(pa_db, res);
-			res= NULL;
+			pa_dbf.free_result(pa_db, result);
 		}
 		return NULL;
 	}
 
-	if(res== NULL)
+	if(result== NULL)
 		return NULL;
 
-	if (res->n <=0 )
+	if (result->n <=0 )
 	{
 		LOG(L_ERR, "PRESENCE: get_subs_dialog:The query for subscribtion for"
 				" [user]= %.*s,[domain]= %.*s for [event]= %s returned no"
 				" result\n",p_user->len, p_user->s, p_domain->len, 
 				p_domain->s,event);
-		pa_dbf.free_result(pa_db, res);
-		res = NULL;
+		pa_dbf.free_result(pa_db, result);
+		result = NULL;
 		return NULL;
 
 	}
-	DBG("PRESENCE: get_subs_dialog:n= %d\n", res->n);
+	DBG("PRESENCE: get_subs_dialog:n= %d\n", result->n);
 	
-	subs_array = (subs_t**)pkg_malloc(res->n*sizeof(subs_t*));
+	subs_array = (subs_t**)pkg_malloc(result->n*sizeof(subs_t*));
 	if(subs_array == NULL)
 	{
 		LOG(L_ERR,"PRESENCE: get_subs_dialog: ERROR while allocating memory\n");
 		goto error;
 	}
-	memset(subs_array, 0, res->n*sizeof(subs_t*));
+	memset(subs_array, 0, result->n*sizeof(subs_t*));
 	
-	for(i=0; i<res->n; i++)
+	for(i=0; i<result->n; i++)
 	{
-		row = &res->rows[i];
+		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);		
 		
-		subs_array[i]= (subs_t*)pkg_malloc(sizeof(subs_t));
-		if(subs_array[i] ==NULL)
+		from_user.s= row_vals[from_user_col].val.str_val.s;
+		from_user.len= 	strlen(from_user.s);
+		DBG("PRESENCE: get_subs_dialog: from_user.len = %d\n", from_user.len);
+		from_domain.s= row_vals[from_domain_col].val.str_val.s;
+		from_domain.len= strlen(from_domain.s);
+		DBG("PRESENCE: get_subs_dialog: from_domain.len = %d\n", from_domain.len);
+		event_id.s=row_vals[event_id_col].val.str_val.s;
+		event_id.len= strlen(event_id.s);
+		if(event_id.s== NULL)
+			event_id.len = 0;
+		DBG("PRESENCE: get_subs_dialog: event_id.len = %d\n", event_id.len);
+		to_tag.s= row_vals[to_tag_col].val.str_val.s;
+		to_tag.len= strlen(to_tag.s);
+		DBG("PRESENCE: get_subs_dialog: to_tag.len = %d\n", to_tag.len);
+		from_tag.s= row_vals[from_tag_col].val.str_val.s; 
+		from_tag.len= strlen(from_tag.s);
+		DBG("PRESENCE: get_subs_dialog: from_tag.len = %d\n", from_tag.len);
+		callid.s= row_vals[callid_col].val.str_val.s;
+		callid.len= strlen(callid.s);
+		DBG("PRESENCE: get_subs_dialog: callid.len = %d\n", callid.len);
+		
+		record_route.s=  row_vals[record_route_col].val.str_val.s;
+		record_route.len= strlen(record_route.s);
+		if(record_route.s== NULL )
+			record_route.len= 0;
+		
+		DBG("PRESENCE: get_subs_dialog: record_route.len = %d\n", record_route.len);
+		contact.s= row_vals[contact_col].val.str_val.s;
+		contact.len= strlen(contact.s);
+		DBG("PRESENCE: get_subs_dialog: contact.len = %d\n", contact.len);
+		
+		if(!force_active && row_vals[status_col].val.str_val.s)
+		{
+			status.s=  row_vals[status_col].val.str_val.s;
+			status.len= strlen(status.s);
+		}
+		else
+		{
+			status.s= NULL;
+			status.len= 0;
+		}
+		DBG("PRESENCE: get_subs_dialog: status.len = %d\n", status.len);
+		
+		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
+				from_domain.len+ event_id.len+ + strlen(event)+ to_tag.len+ 
+				from_tag.len+ callid.len+ record_route.len+ contact.len)* sizeof(char);
+
+		DBG("PRESENCE: get_subs_dialog: size = %d\n\n", size);
+
+		if(force_active== 0)
+			size+= status.len* sizeof(char);
+		else
+			size+= 6;
+
+		subs= (subs_t*)pkg_malloc(size);
+		if(subs ==NULL)
 		{
 			LOG(L_ERR,"PRESENCE: get_subs_dialog: ERROR while allocating"
 					" memory\n");
 			goto error;
 		}	
-		memset(subs_array[i], 0, sizeof(subs_t));
-		subs_array[i]->to_user.s = p_user->s;
-		subs_array[i]->to_user.len = p_user->len;
+		memset(subs, 0, size);
+		size= sizeof(subs_t);
 
-		subs_array[i]->to_domain.s = p_domain->s;
-		subs_array[i]->to_domain.len = p_domain->len;
+		subs->to_user.s= (char*)subs+ size;
+		memcpy(subs->to_user.s, p_user->s, p_user->len);
+		subs->to_user.len = p_user->len;
+		size+= p_user->len;
 
-		subs_array[i]->event.s = event;
-		subs_array[i]->event.len = strlen(event);
-
-		subs_array[i]->from_user.s = row_vals[from_user_col].val.str_val.s;
-		subs_array[i]->from_user.len = 
-			strlen(row_vals[from_user_col].val.str_val.s);
+		subs->to_domain.s= (char*)subs+ size;
+		memcpy(subs->to_domain.s, p_domain->s, p_domain->len);
+		subs->to_domain.len = p_domain->len;
+		size+= p_domain->len;
 		
-		subs_array[i]->from_domain.s = row_vals[from_domain_col].val.str_val.s;
-		subs_array[i]->from_domain.len = 
-			strlen(row_vals[from_domain_col].val.str_val.s);
-		
-		subs_array[i]->event_id.s = row_vals[event_id_col].val.str_val.s;
-		subs_array[i]->event_id.len = 
-			strlen(row_vals[event_id_col].val.str_val.s);
-		
-		subs_array[i]->to_tag.s = row_vals[to_tag_col].val.str_val.s;
-		subs_array[i]->to_tag.len =strlen(row_vals[to_tag_col].val.str_val.s);
-		
-		subs_array[i]->from_tag.s = row_vals[from_tag_col].val.str_val.s;
-		subs_array[i]->from_tag.len =
-			strlen(row_vals[from_tag_col].val.str_val.s);
+		subs->event.s= (char*)subs+ size;
+		memcpy(subs->event.s, event, strlen(event));
+		subs->event.len= strlen(event);
+		size+= subs->event.len;
 
-		subs_array[i]->callid.s = row_vals[callid_col].val.str_val.s;
-		subs_array[i]->callid.len = strlen(row_vals[callid_col].val.str_val.s);
-	
-		subs_array[i]->cseq = row_vals[cseq_col].val.int_val;
+		subs->from_user.s= (char*)subs+ size;
+		memcpy(subs->from_user.s, from_user.s, from_user.len);
+		subs->from_user.len = from_user.len;
+		size+= from_user.len;
 
-		subs_array[i]->record_route.s =
-			row_vals[record_route_col].val.str_val.s;
-		subs_array[i]->record_route.len = 
-			strlen(row_vals[record_route_col].val.str_val.s);
-	
-		subs_array[i]->expires = row_vals[expires_col].val.int_val - 
-			(int)time(NULL);
+		subs->from_domain.s= (char*)subs+ size;
+		memcpy(subs->from_domain.s, from_domain.s, from_domain.len);
+		subs->from_domain.len = from_domain.len;
+		size+= from_domain.len;
+		
+		subs->to_tag.s= (char*)subs+ size;
+		memcpy(subs->to_tag.s, to_tag.s, to_tag.len);
+		subs->to_tag.len = to_tag.len;
+		size+= to_tag.len;
 
+		subs->from_tag.s= (char*)subs+ size;
+		memcpy(subs->from_tag.s, from_tag.s, from_tag.len);
+		subs->from_tag.len = from_tag.len;
+		size+= from_tag.len;
+
+		subs->callid.s= (char*)subs+ size;
+		memcpy(subs->callid.s, callid.s, callid.len);
+		subs->callid.len = callid.len;
+		size+= callid.len;
+		
+		if(event_id.s && event_id.len)
+		{
+			subs->event_id.s= (char*)subs+ size;
+			memcpy(subs->event_id.s, event_id.s, event_id.len);
+			subs->event_id.len = event_id.len;
+			size+= event_id.len;
+		}
+
+		if(record_route.s && record_route.len)
+		{	
+			subs->record_route.s =(char*)subs+ size;
+			memcpy(subs->record_route.s, record_route.s, record_route.len);
+			subs->record_route.len = record_route.len;
+			size+= record_route.len;
+		}
+		
+		subs->contact.s =(char*)subs+ size;
+		memcpy(subs->contact.s, contact.s, contact.len);
+		subs->contact.len = contact.len;
+		size+= contact.len;
+		
 		if(force_active!=0)
 		{
-			subs_array[i]->status.s = "active";
-			subs_array[i]->status.len = 6;
+			subs->status.s=(char*)subs+ size;
+			memcpy(subs->status.s, "active", 6);
+			subs->status.len = 6;
+			size+= 6;
 		}
 		else
 		{
-			subs_array[i]->status.s = row_vals[status_col].val.str_val.s;
-			subs_array[i]->status.len = strlen(row_vals[status_col].val.str_val.s);
+			if(status.s && status.len)
+			{
+				subs->status.s= (char*)subs+ size;
+				memcpy(subs->status.s, status.s, status.len);
+				subs->status.len = status.len;
+				size+= status.len;
+			}
 		}
 
-		subs_array[i]->contact.s = row_vals[contact_col].val.str_val.s;
-		subs_array[i]->contact.len = 
-			strlen(row_vals[contact_col].val.str_val.s);
-
+		subs->cseq = row_vals[cseq_col].val.int_val;
+		subs->expires = row_vals[expires_col].val.int_val - 
+			(int)time(NULL);
 
 		if(strlen(event) == PWINFO_LEN)
-		{
-			subs_array[i]->version = row_vals[version_col].val.int_val;
-		}
-	} 
-	*n = res->n;
-	
+			subs->version = row_vals[version_col].val.int_val;
+		
+		subs_array[i]= subs;
+	}
+
+	*n = result->n;
+	pa_dbf.free_result(pa_db, result);
+
 	return subs_array;
 
 error:
 	if(subs_array)
 	{
-		for(i=0; i<res->n; i++)
+		for(i=0; i<result->n; i++)
 			if(subs_array[i])
 				pkg_free(subs_array[i]);
 		pkg_free(subs_array);
 	}
 
-	if(res)
-	{
-		pa_dbf.free_result(pa_db, res);
-		res= NULL;
-	}
+	if(result)
+		pa_dbf.free_result(pa_db, result);
 	
 	return NULL;
 	
@@ -902,11 +991,6 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 		}
 		pkg_free(subs_array);
 	}
-	if(res!=NULL)
-	{	
-		pa_dbf.free_result(pa_db, res);
-		res = NULL;
-	}
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
@@ -925,11 +1009,6 @@ error:
 				pkg_free(subs_array[i]);
 		}
 		pkg_free(subs_array);
-	}
-	if(res!=NULL)
-	{
-		pa_dbf.free_result(pa_db, res);
-		res = NULL;
 	}
 	if(notify_body!=NULL)
 	{
@@ -1203,7 +1282,9 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 		LOG(L_ERR, "PRESENCE:get_xcap_tree:Error while querying table xcap for"
 		" [user]=%.*s , domain=%.*s\n",user.len, user.s, domain.len, domain.s);
 		goto error;
-	}	
+	}
+	if(result== NULL)
+		return NULL;
 
 	if(result && result->n<=0)
 	{

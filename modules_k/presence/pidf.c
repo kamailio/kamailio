@@ -193,7 +193,7 @@ str* agregate_xmls(str** body_array, int n)
 	xmlNodePtr node = NULL;
 	xmlNodePtr new_node = NULL, add_node = NULL ;
 	xmlNodePtr last_child= NULL;
-	str *body;
+	str *body= NULL;
 	char* old_id= NULL, *new_id = NULL;
 
 	xml_array = (xmlDocPtr*)pkg_malloc( (n+1)*sizeof(xmlDocPtr));
@@ -205,14 +205,7 @@ str* agregate_xmls(str** body_array, int n)
 		return NULL;
 	}
 	
-	memset(xml_array, 0, sizeof(xmlDocPtr)) ;
-
-	body = (str*)pkg_malloc(sizeof(str));
-	if(body == NULL)
-	{
-		LOG(L_ERR,"PRESENCE:agregate_xmls:Error while allocating memory\n");
-		goto error;
-	}
+	memset(xml_array, 0, (n+1)*sizeof(xmlDocPtr)) ;
 
 	for(i=0; i<n;i++)
 	{
@@ -344,6 +337,14 @@ str* agregate_xmls(str** body_array, int n)
 			}
 		}
 	}
+
+	body = (str*)pkg_malloc(sizeof(str));
+	if(body == NULL)
+	{
+		LOG(L_ERR,"PRESENCE:agregate_xmls:Error while allocating memory\n");
+		goto error;
+	}
+
 	xmlDocDumpFormatMemory(xml_array[j],(xmlChar**) &body->s, 
 			&body->len, 1);	
 
@@ -482,7 +483,9 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 				" presentity\n");
 		goto error;
 	}
-	
+	if(result== NULL)
+		goto error;
+
 	if (result && result->n <=0 )
 	{
 		LOG(L_ERR, "PRESENCE: build_off_nbody:The query returned no result\n");
@@ -646,7 +649,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 	xmlFree(entity);
 	xmlFree(tuple_id);
 	xmlFree(person_id);
-
+	
     return body;
 
 error:

@@ -330,12 +330,14 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 				goto error;
 			}
 
+			pa_dbf.free_result(pa_db, result);
+			result= NULL;
+
 			/* presentity body is updated so send notify to all watchers */
 			if (query_db_notify(&presentity->user, &presentity->domain,
 						"presence", NULL, NULL)<0)
 			{
-				LOG(L_ERR," PRESENCE:update_presentity:Error in notify()"
-						" function\n");
+				LOG(L_ERR," PRESENCE:update_presentity: Could not send Notify\n");
 		//		goto error;
 			}
 		}  
@@ -349,9 +351,6 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 	
 	}
 	
-	if(result)
-			pa_dbf.free_result(pa_db, result);
-
 	return 0;
 
 error:
