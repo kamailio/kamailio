@@ -306,6 +306,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 {
 	unsigned short attr_name;
 	unsigned short n;
+	int_str is_val;
 	char *kid;
 	char *p;
 	int i;
@@ -321,8 +322,9 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		switch (attr_name) {
 			case TIMEOUT_ATTR:
 				if (cpl_env.timer_avp.n || cpl_env.timer_avp.s.s) {
+					is_val.n = n;
 					if ( add_avp( cpl_env.timer_avp_type,
-					cpl_env.timer_avp, (int_str)(int)n)<0) {
+					cpl_env.timer_avp, is_val)<0) {
 						LOG(L_ERR,"ERROR:run_proxy: unable to set "
 							"timer AVP\n");
 						/* continue */
