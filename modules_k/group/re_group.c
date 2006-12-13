@@ -36,7 +36,7 @@
 
 struct re_grp {
 	regex_t       re;
-	int           gid;
+	int_str       gid;
 	struct re_grp *next;
 };
 
@@ -63,7 +63,7 @@ static int add_re(char *re, int gid)
 		goto error;
 	}
 
-	rg->gid = gid;
+	rg->gid.n = gid;
 
 	rg->next = re_list;
 	re_list = rg;
@@ -166,10 +166,10 @@ int get_user_group(struct sip_msg *req, char *user, char *avp)
 	for( rg=re_list,n=0 ; rg ; rg=rg->next ) {
 		if (regexec( &rg->re, uri_buf, 1, &pmatch, 0)==0) {
 			DBG("DEBUG:group:get_user_group: user matched to group %d!\n",
-				rg->gid);
+				rg->gid.n);
 			/* match -> add the gid as AVP */
 			if ( add_avp( (unsigned short)gs->avp_type, gs->avp_name,
-			(int_str)rg->gid )!= 0 ) {
+			rg->gid )!= 0 ) {
 				LOG(L_ERR, "ERROR:group:get_user_group: failed to add avp\n");
 				goto error;
 			}
