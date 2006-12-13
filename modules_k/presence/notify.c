@@ -45,7 +45,7 @@
 #include "utils_func.h"
 
 extern struct tm_binds tmb;
-db_res_t *res = 0;
+db_res_t *res = NULL;
 c_back_param* shm_dup_subs(subs_t* subs, str to_tag, int is_sec);
 
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
@@ -838,11 +838,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	return subs_array;
 
 error:
-	if(res)
-	{
-		pa_dbf.free_result(pa_db, res);
-		res= NULL;
-	}
 	if(subs_array)
 	{
 		for(i=0; i<res->n; i++)
@@ -851,6 +846,12 @@ error:
 		pkg_free(subs_array);
 	}
 
+	if(res)
+	{
+		pa_dbf.free_result(pa_db, res);
+		res= NULL;
+	}
+	
 	return NULL;
 	
 }

@@ -340,8 +340,6 @@ str* agregate_xmls(str** body_array, int n)
 					LOG(L_ERR,"PRESENCE:agregate_xmls:Error while adding child\n");
 					goto error;
 				}
-				DBG("PRESENCE:agregate_xmls: added node:(new_node->name= %s)\n",
-						new_node->name);
 								
 			}
 		}
@@ -378,27 +376,33 @@ str* agregate_xmls(str** body_array, int n)
 	return body;
 
 error:
-	p_root->last= last_child;
-
-	if(last_child->next)  /* if nodes added */
-	{	
-		last_child= last_child->next;
-		while(last_child)
-		{
-			node= last_child;
-			last_child= last_child->next;
-			pkg_free(last_child);
-		}
-	}	
-	p_root->last->next= NULL;
-	
-	for(i=0; i<=j; i++)
+	if(p_root)
 	{
-		if(xml_array[i]!=NULL)
-			xmlFreeDoc( xml_array[i]);
+		p_root->last= last_child;
+
+		if(last_child->next)  /* if nodes added */
+		{	
+			last_child= last_child->next;
+			while(last_child)
+			{
+				node= last_child;
+				last_child= last_child->next;
+				pkg_free(last_child);
+			}
+		}	
+		p_root->last->next= NULL;
 	}
+
 	if(xml_array!=NULL)
+	{
+		for(i=0; i<=j; i++)
+		{
+			if(xml_array[i]!=NULL)
+				xmlFreeDoc( xml_array[i]);
+		}
 		pkg_free(xml_array);
+	}
+
 	if(body)
 		pkg_free(body);
 

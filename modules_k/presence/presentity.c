@@ -99,7 +99,7 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 	db_op_t  query_ops[7];
 	db_val_t query_vals[7], update_vals[3];
 	db_key_t result_cols[4], update_keys[3];
-	db_res_t *res= NULL;
+	db_res_t *result= NULL;
 
 	int n_query_cols = 0;
 	int n_result_cols = 0;
@@ -259,16 +259,16 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 
 		LOG(L_INFO,"PRESENCE:update_presentity: querying presentity  \n");
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-			 result_cols, 3, n_result_cols, 0, &res) < 0) 
+			 result_cols, 3, n_result_cols, 0, &result) < 0) 
 		{
 			LOG(L_ERR, "PRESENCE:update_presentity: Error while querying"
 					" presentity\n");
 			goto error;
 		}
-		if(res== NULL)
+		if(result== NULL)
 			goto error;
 
-		if (res->n > 0)
+		if (result->n > 0)
 		{
 			if(body==NULL || body->s==NULL) /* if there is no body update expires value */
 			{
@@ -290,11 +290,11 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 							" updating presence information\n");
 					goto error;
 				}
-				pa_dbf.free_result(pa_db, res);
+				pa_dbf.free_result(pa_db, result);
 				return 0;
 			}
 
-			db_row_t *row = &res->rows[0];
+			db_row_t *row = &result->rows[0];
 			db_val_t *row_vals = ROW_VALUES(row);
 		
 			res_body.s = row_vals[body_col].val.str_val.s;	
@@ -342,22 +342,24 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 		else  /* if there isn't no registration with those 3 values */
 		{
 			LOG(L_DBG, "PRESENCE:update_presentity: No E_Tag match\n");
-			if(res)
-				pa_dbf.free_result(pa_db, res);
+			if(result)
+				pa_dbf.free_result(pa_db, result);
 			return 412;	
 		}
-		if(res)
-			pa_dbf.free_result(pa_db, res);
+	
 	}
+	
+	if(result)
+			pa_dbf.free_result(pa_db, result);
 
 	return 0;
 
 error:
 	LOG(L_ERR, "PRESENCE:update_presentity: ERROR occured\n");
-	if(res)
+	if(result)
 	{
-		pa_dbf.free_result(pa_db, res);
-		res= NULL;
+		pa_dbf.free_result(pa_db, result);
+		result= NULL;
 	}
 	return -1;
 

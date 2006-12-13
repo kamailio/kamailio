@@ -499,12 +499,6 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	db_val_t db_vals[3];
 	db_op_t  db_ops[3] ;
 
-	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
-	{
-		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR in use_table\n");
-		return ;
-	}
-	
 	DBG("PRESENCE: msg_watchers_clean:cleaning pending subscriptions\n");
 	
 	db_keys[0] ="inserted_time";
@@ -520,7 +514,12 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	db_vals[1].val.str_val.s = "pending";
 	db_vals[1].val.str_val.len = 7;
 
-	
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR in use_table\n");
+		return ;
+	}
+
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
 		LOG(L_ERR,"PRESENCE:msg_watchers_clean: ERROR cleaning pending "
 				" subscriptions\n");
@@ -542,12 +541,6 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	int to_user_col, to_domain_col, event_col;
 	int callid_col, cseq_col, i, event_id_col = 0;
 	int record_route_col = 0, contact_col;
-
-	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
-	{
-		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR in use_table\n");
-		return ;
-	}
 	
 	DBG("PRESENCE: msg_active_watchers_clean:cleaning expired watcher information\n");
 	
@@ -570,6 +563,12 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	result_cols[cseq_col=n_result_cols++] = "cseq";
 	result_cols[record_route_col=n_result_cols++] = "record_route";
 	result_cols[contact_col=n_result_cols++] = "contact";
+
+	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR in use_table\n");
+		return ;
+	}
 
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
 						1, n_result_cols, 0, &result )< 0)
@@ -640,6 +639,12 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		notify(&subs,  NULL, NULL);
 	}
 	
+	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR in use_table\n");
+		return ;
+	}
+
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
 		LOG(L_ERR,"PRESENCE:msg_active_watchers_clean: ERROR cleaning expired"
 				" messages\n");
@@ -1005,6 +1010,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 		if(result== NULL)
 			goto error;
+		
 		if(result->n <=0)
 		{
 			LOG(L_INFO, "PRESENCE:handle_subscribe:The query in table watches "
