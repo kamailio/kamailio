@@ -93,12 +93,15 @@ int perl_exec1(struct sip_msg* _msg, char* fnc, char *foobar) {
 int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	int retval;
 	SV *m;
+	str reason;
 
 	dSP;
 
 	if (!perl_checkfnc(fnc)) {
 		LOG(L_ERR, "perl:perl_exec: Unknown perl function called.\n");
-		if (sl_reply(_msg, (char*)500, "Internal error") == -1)
+		reason.s = "Internal error";
+		reason.len = sizeof("Internal error")-1;
+		if (sl_reply(_msg, (char*)500, (char*)(&reason)) == -1)
 		{
 			LOG(L_ERR, "perl:perl_exec: Error while"
 					" sending reply\n");
@@ -110,7 +113,9 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 		LOG(L_ERR, "perl:perl_exec: Error while"
 				" parsing Request-URI\n");
 
-		if (sl_reply(_msg, (char*)400, "Bad Request-URI") == -1) {
+		reason.s = "Bad Request-URI";
+		reason.len = sizeof("Bad Request-URI")-1;
+		if (sl_reply(_msg, (char*)400, (char*)(&reason)) == -1) {
 			LOG(L_ERR, "perl:perl_exec: Error while"
 					" sending reply\n");
 		}

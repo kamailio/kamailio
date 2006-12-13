@@ -44,14 +44,14 @@
 MODULE_VERSION
 
 /* Full path to the script including executed functions */
-char *filename;
+char *filename = NULL;
 
 /* Path to an arbitrary directory where the OpenSER Perl modules are
  * installed */
-char *modpath;
+char *modpath = NULL;
 
 /* Reference to the running Perl interpreter instance */
-PerlInterpreter *my_perl;
+PerlInterpreter *my_perl = NULL;
 
 
 /* sl_send_reply function from sl module */
@@ -334,9 +334,9 @@ static int mod_init() {
  */
 static void destroy(void)
 {
-	if (my_perl) {
-		unload_perl(my_perl);
-		PERL_SYS_TERM();
-	}
+	if(my_perl==NULL)
+		return;
+	unload_perl(my_perl);
+	PERL_SYS_TERM();
 	my_perl = NULL;
 }
