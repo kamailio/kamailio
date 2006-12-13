@@ -52,8 +52,8 @@
   <section>
     <title>Exported Parameters</title>
     <section>
-      <title><varname>sp1_uri</varname>, <varname>sp2_uri</varname></title>
-      <para>These string parameters define peering servers to be used for requesting peering authorization and routing information. sp1_uri must be configured. sp2_uri is required only if there are two peering servers. Each peering server address takes the form of a standard URL, and consists of up to four components:</para>
+      <title><varname>sp1_uri</varname>, <varname>sp2_uri</varname>, ..., <varname>sp16_uri</varname></title>
+      <para>These sp_uri (string) parameters define peering servers to be used for requesting peering authorization and routing information. At least one peering server must be configured. Others are required only if there are more than one peering servers. Each peering server address takes the form of a standard URL, and consists of up to four components:</para>
       <itemizedlist>
         <listitem>
           <para>An optional indication of the protocol to be used for communicating with the peering server. Both HTTP and HTTP secured with SSL/TLS are supported and are indicated by "http://" and "https://" respectively. If the protocol is not explicitly indicated, the OpenSER defaults to HTTP secured with SSL.</para>
@@ -76,7 +76,7 @@ modparam("osp","sp2_uri","https://[1.2.3.4]:1443/osp")
     </section>
     <section>
       <title><varname>device_ip</varname></title>
-      <para>device_ip (string) is a recommended parameter that explicitly defines the IP address of OpenSER in an peering request message (as SourceAlternate type=transport).  The IP address must be in brackets as shown in the example below.</para>
+      <para>The device_ip (string) is a recommended parameter that explicitly defines the IP address of OpenSER in a peering request message (as SourceAlternate type=transport).  The IP address must be in brackets as shown in the example below.</para>
       <example>
         <title>Setting the device IP address</title>
         <programlisting format="linespecific">
@@ -86,7 +86,7 @@ modparam("osp","device_ip","[1.1.1.1]")
     </section>
     <section>
       <title><varname>token_format</varname></title>
-      <para>When OpenSER receives a SIP INVITE with a peering token, the OSP Module will validate the token to determine whether or not the call has been authorized by a peering server. Peering tokens may, or may not, be digitally signed. The token format (integer) parameter defines if OpenSER will validate signed or unsigned tokens or both. The values for token format are defined below. The default value is 2.</para>
+      <para>When OpenSER receives a SIP INVITE with a peering token, the OSP Module will validate the token to determine whether or not the call has been authorized by a peering server. Peering tokens may, or may not, be digitally signed. The token_format (integer) parameter defines if OpenSER will validate signed or unsigned tokens or both. The values for token format are defined below. The default value is 2.</para>
       <para>0 - Validate only signed tokens. Calls with valid signed tokens are allowed.</para>
       <para>1 - Validate only unsigned tokens. Calls with valid unsigned tokens are allowed.</para>
       <para>2 - Validate both signed and unsigned tokens are allowed. Calls with valid tokens are allowed.</para>
@@ -111,7 +111,7 @@ modparam("osp","ca_certificates","/usr/local/etc/openser/cacert.pem")
       </example>
     </section>
     <section>
-      <title><varname>sp1_weight</varname>, <varname>sp2_weight</varname></title>
+      <title><varname>sp1_weight</varname>, <varname>sp2_weight</varname>, ..., <varname>sp16_weight</varname></title>
       <para>These sp_weight (integer) parameters are used for load balancing peering requests to peering servers. These parameters are most effective when configured as factors of 1000. For example, if sp1_uri should manage twice the traffic load of sp2_uri, then set sp1_weight to 2000 and sp2_weight to 1000. Shared load balancing between peering servers is recommended. However, peering servers can be configured as primary and backup by assigning a sp_weight of 0 to the primary server and a non-zero sp_weight to the back-up server. The default values for sp1_weight and sp2_weight are 1000.</para>
       <example>
         <title>Setting the OSP server weights</title>
@@ -122,7 +122,7 @@ modparam("osp","sp1_weight",1000)
     </section>
     <section>
       <title><varname>device_port</varname></title>
-      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by OpenSER in the peering request (as SourceAlternate type=network) to the peering server. If is not configured, this information is not included in the peering request. This field is useful if multiple OpenSERs are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies.</para>
+      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by OpenSER in the peering request (as SourceAlternate type=network) to the peering server. If is not configured, this information is not included in the peering request. This field is useful if multiple OpenSERs are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies. This parameter has not been implemented yet.</para>
       <example>
         <title>Setting the device port</title>
         <programlisting format="linespecific">
@@ -172,7 +172,7 @@ modparam("osp","retry_delay",1)
     </section>
     <section>
       <title><varname>retry_limit</varname></title>
-      <para>The retry_limit (integer) parameter defines the maximum number of retries for connection attempts to an peering server. If no connection is established after this many retry attempts to all peering servers, the OSP Module will cease connection attempts and return appropriate error codes. This number does not count the initial connection attempt, so that a retry_limit of 1 will result in a total of two connection attempts to every peering server. The default value is 2.</para> 
+      <para>The retry_limit (integer) parameter defines the maximum number of retries for connection attempts to a peering server. If no connection is established after this many retry attempts to all peering servers, the OSP Module will cease connection attempts and return appropriate error codes. This number does not count the initial connection attempt, so that a retry_limit of 1 will result in a total of two connection attempts to every peering server. The default value is 2.</para> 
       <example>
         <title>Setting the retry limit</title>
         <programlisting format="linespecific">
@@ -182,7 +182,7 @@ modparam("osp","retry_limit",2)
     </section>
     <section>
       <title><varname>timeout</varname></title>
-      <para>The timeout (integer) parameter defines the maximum time in milliseconds, to wait for a response from an peering server. If no response is received within this time, the current connection is aborted and the OSP Module attempts to contact the next peering server. The default value is 10 seconds.</para> 
+      <para>The timeout (integer) parameter defines the maximum time in milliseconds, to wait for a response from a peering server. If no response is received within this time, the current connection is aborted and the OSP Module attempts to contact the next peering server. The default value is 10 seconds.</para> 
       <example>
         <title>Setting the timeout</title>
         <programlisting format="linespecific">
@@ -212,7 +212,7 @@ modparam("osp","validate_call_id",1)
     </section>
     <section>
       <title><varname>use_rpid_for_calling_number</varname></title>
-      <para>The use_rpid_for_calling_number(integer) parameter instructs the OSP module to use the calling number in the Remote-Party-ID of the SIP INVITE message. If this value is set to 1, the OSP Module uses the calling number in the Reomte-Party-ID header of the INVITE message when a Remote-Party-ID exists. If this value is set to 0, the OSP Module will use the calling number in the From header of the INVITE message. The default value is 1</para>
+      <para>The use_rpid_for_calling_number (integer) parameter instructs the OSP module to use the calling number in the Remote-Party-ID of the SIP INVITE message. If this value is set to 1, the OSP Module uses the calling number in the Reomte-Party-ID header of the INVITE message when a Remote-Party-ID exists. If this value is set to 0, the OSP Module will use the calling number in the From header of the INVITE message. The default value is 1</para>
       <example>
         <title>Instructing the module to use calling number in Remote-Party-ID</title>
         <programlisting format="linespecific">
