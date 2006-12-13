@@ -334,7 +334,9 @@ static int mod_init() {
  */
 static void destroy(void)
 {
-	unload_perl(my_perl);
-	PERL_SYS_TERM();
+	if (my_perl) {
+		unload_perl(my_perl);
+		PERL_SYS_TERM();
+	}
 	my_perl = NULL;
 }
