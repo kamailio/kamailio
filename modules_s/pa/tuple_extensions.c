@@ -16,25 +16,25 @@ static int db_add_tuple_extension(presentity_t *p, presence_tuple_t *t, extensio
 	
 	/* set data */
 	
-	cols[n_updates] = "pres_id";
+	cols[n_updates] = col_pres_id;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = p->pres_id;
 	n_updates++;
 	
-	cols[n_updates] = "tupleid";
+	cols[n_updates] = col_tupleid;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = t->data.id;
 	n_updates++;
 
-	cols[n_updates] = "element";
+	cols[n_updates] = col_element;
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.blob_val = n->element;
 	n_updates++;
 	
-	cols[n_updates] = "status_extension";
+	cols[n_updates] = col_status_extension;
 	vals[n_updates].type = DB_INT;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.int_val = is_status_extension;
@@ -75,7 +75,7 @@ int db_add_tuple_extensions(presentity_t *p, presence_tuple_t *t)
 
 int db_remove_tuple_extensions(presentity_t *p, presence_tuple_t *t)
 {
-	db_key_t keys[] = { "pres_id", "tupleid" };
+	db_key_t keys[] = { col_pres_id, col_tupleid };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { 
 		{ DB_STR, 0, { .str_val = p->pres_id } },
@@ -106,7 +106,7 @@ int db_update_tuple_extensions(presentity_t *p, presence_tuple_t *t)
 
 int db_read_tuple_extensions(presentity_t *p, presence_tuple_t *t, db_con_t* db)
 {
-	db_key_t keys[] = { "pres_id", "tupleid" };
+	db_key_t keys[] = { col_pres_id, col_tupleid };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { 
 		{ DB_STR, 0, { .str_val = p->pres_id } },
@@ -116,7 +116,7 @@ int db_read_tuple_extensions(presentity_t *p, presence_tuple_t *t, db_con_t* db)
 	int i;
 	int r = 0;
 	db_res_t *res = NULL;
-	db_key_t result_cols[] = { "element", "status_extension" };
+	db_key_t result_cols[] = { col_element, col_status_extension };
 	
 	if (!use_db) return 0;
 

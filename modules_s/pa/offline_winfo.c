@@ -128,25 +128,25 @@ static int db_store_winfo(offline_winfo_t *info)
 		return -1;
 	}
 	
-	cols[++n] = "uid";
+	cols[++n] = col_uid;
 	string_val(vals[n], info->uid);
 	
-	cols[++n] = "watcher";
+	cols[++n] = col_watcher;
 	string_val(vals[n], info->watcher);
 	
-	cols[++n] = "events";
+	cols[++n] = col_events;
 	string_val(vals[n], info->events);
 	
-	cols[++n] = "domain";
+	cols[++n] = col_domain;
 	string_val(vals[n], info->domain);
 	
-	cols[++n] = "status";
+	cols[++n] = col_status;
 	string_val(vals[n], info->status);
 	
-	cols[++n] = "created_on";
+	cols[++n] = col_created_on;
 	time_val(vals[n], info->created);
 	
-	cols[++n] = "expires_on";
+	cols[++n] = col_expires_on;
 	time_val(vals[n], info->expires);
 
 	/* index ("dbid") is created automaticaly ! */
@@ -204,7 +204,7 @@ static int get_events(struct sip_msg* _m, str* events)
 
 int remove_expired_winfos()
 {
-	db_key_t keys[] = { "expires_on" };
+	db_key_t keys[] = { col_expires_on };
 	db_val_t vals[1] = { 
 		{ DB_DATETIME, 0, { .time_val = time(NULL) } }
 	};
@@ -229,7 +229,7 @@ int remove_expired_winfos()
 
 int db_remove_winfos(offline_winfo_t *info)
 {
-	db_key_t keys[] = { "dbid" };
+	db_key_t keys[] = { col_dbid };
 	db_val_t vals[1];
 	db_op_t ops[] = { OP_EQ };
 	int res = 0;
@@ -311,9 +311,9 @@ int db_load_winfo(str *uid, str *events, str *domain, offline_winfo_t **infos)
 	int i, r = 0;
 	db_res_t *res = NULL;
 	db_key_t result_cols[] = { 
-		"watcher", "created_on", "expires_on", "dbid", "status"
+		col_watcher, col_created_on, col_expires_on, col_dbid, col_status
 	};
-	db_key_t keys[] = { "uid", "events" };
+	db_key_t keys[] = { col_uid, col_events };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { 
 		{ DB_STR, 0, { .str_val = *uid } }
@@ -421,6 +421,7 @@ static void get_status_str(str *dst)
 		case WS_PENDING: 
 			s = watcher_status_names[WS_PENDING];
 			break;
+		default: str_clear(&s); /* throw out gcc complains */
 	}
 	if (dst) *dst = s;
 }

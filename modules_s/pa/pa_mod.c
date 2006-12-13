@@ -88,6 +88,9 @@ int use_place_table = 0;
 #ifdef HAVE_LOCATION_PACKAGE
 str pa_domain = STR_NULL;
 #endif /* HAVE_LOCATION_PACKAGE */
+
+/* DB tables */
+
 char *presentity_table = "presentity";
 char *presentity_contact_table = "presentity_contact";
 char *presentity_notes_table = "presentity_notes";
@@ -97,6 +100,43 @@ char *tuple_notes_table = "tuple_notes";
 char *watcherinfo_table = "watcherinfo";
 char *place_table = "place";
 char *offline_winfo_table = "offline_winfo";
+
+/* columns in DB tables */
+
+char *col_uri = "uri";
+char *col_pdomain = "pdomain";
+char *col_uid = "uid";
+char *col_pres_id = "pres_id"; /* common for more tables */
+char *col_xcap_params = "xcap_params";
+char *col_tupleid = "tupleid"; /* common for more tables */
+char *col_basic = "basic";
+char *col_contact = "contact";
+char *col_etag = "etag"; /* common for more tables */
+char *col_published_id = "published_id";
+char *col_priority = "priority";
+char *col_expires = "expires"; /* common for more tables */
+char *col_dbid = "dbid"; /* common for more tables */
+char *col_note = "note";
+char *col_lang = "lang";
+char *col_element = "element"; /* common for more tables */
+char *col_status_extension = "status_extension";
+
+char *col_s_id = "s_id";
+char *col_w_uri = "w_uri";
+char *col_package = "package";
+char *col_status = "status";
+char *col_display_name = "display_name";
+char *col_accepts = "accepts";
+char *col_event = "event";
+char *col_dialog = "dialog";
+char *col_server_contact = "server_contact";
+char *col_doc_index = "doc_idnex";
+
+char *col_watcher = "watcher";
+char *col_events = "events";
+char *col_domain = "domain";
+char *col_created_on = "created_on";
+char *col_expires_on = "expires_on";
 
 /* authorization parameters */
 char *auth_type_str = NULL; /* type of authorization */
@@ -192,6 +232,84 @@ static param_export_t params[]={
 	{"use_bsearch",          PARAM_INT,    &use_bsearch          },
 	{"use_location_package", PARAM_INT,    &use_location_package },
 	{"offline_winfo_table", PARAM_STRING, &offline_winfo_table }, /* table with offline winfo */
+
+	/* db columns, undocumented */
+
+	/* DB: columns for table "offline_winfo" */
+
+	{"uid_column", PARAM_STRING, &col_uid },
+	{"watcher_column", PARAM_STRING, &col_watcher },
+	{"events_column", PARAM_STRING, &col_events },
+	{"domain_column", PARAM_STRING, &col_domain },
+	{"status_column", PARAM_STRING, &col_status },
+	{"created_on_column", PARAM_STRING, &col_created_on },
+	{"expires_on_column", PARAM_STRING, &col_expires_on },
+	{"dbid_column", PARAM_STRING, &col_dbid },
+
+	/* DB: columns for table "presentity_contact" */
+
+	{"pres_id_column", PARAM_STRING, &col_pres_id },
+	{"basic_column", PARAM_STRING, &col_basic },
+	{"expires_column", PARAM_STRING, &col_expires },
+	{"priority_column", PARAM_STRING, &col_priority },
+	{"contact_column", PARAM_STRING, &col_contact },
+	{"tupleid_column", PARAM_STRING, &col_tupleid },
+	{"etag_column", PARAM_STRING, &col_etag },
+	{"published_id_column", PARAM_STRING, &col_published_id },
+
+	/* DB: columns for table "presentity_extensions" */
+
+	/*{"dbid_column", PARAM_STRING, &col_dbid },*/
+	/*{"pres_id_column", PARAM_STRING, &col_pres_id },*/
+	/*{"etag_column", PARAM_STRING, &col_etag },*/
+	{"element_column", PARAM_STRING, &col_element },
+	/*{"expires_column", PARAM_STRING, &col_expires },*/
+
+	/* DB: columns for table "presentity_notes" */
+
+	/*{"dbid_column", PARAM_STRING, &col_dbid },*/
+	/*{"pres_id_column", PARAM_STRING, &col_pres_id },*/
+	/*{"etag_column", PARAM_STRING, &col_etag },*/
+	{"note_column", PARAM_STRING, &col_note },
+	{"lang_column", PARAM_STRING, &col_lang },
+	/*{"expires_column", PARAM_STRING, &col_expires },*/
+
+	/* DB: columns for table "presentity" */
+
+	/*{"pres_id_column", PARAM_STRING, &col_pres_id },*/
+	{"uri_column", PARAM_STRING, &col_uri },
+	/*{"uid_column", PARAM_STRING, &col_uid },*/
+	{"pdomain_column", PARAM_STRING, &col_pdomain },
+	{"xcap_params_column", PARAM_STRING, &col_xcap_params },
+
+	/* DB: columns for table "tuple_extensions" */
+
+	/*{"pres_id_column", PARAM_STRING, &col_pres_id },*/
+	/*{"tupleid_column", PARAM_STRING, &col_tupleid },*/
+	/*{"element_column", PARAM_STRING, &col_element },*/
+	{"status_extension_column", PARAM_STRING, &col_status_extension },
+
+	/* DB: columns for table "tuple_notes" */
+
+	/*{"pres_id_column", PARAM_STRING, &col_pres_id },*/
+	/*{"tupleid_column", PARAM_STRING, &col_tupleid },*/
+	/*{"note_column", PARAM_STRING, &col_note },*/
+	/*{"lang_column", PARAM_STRING, &col_lang },*/
+
+	/* DB: columns for table "watcherinfo" */
+
+	{"w_uri_column", PARAM_STRING, &col_w_uri },
+	{"display_name_column", PARAM_STRING, &col_display_name },
+	{"s_id_column", PARAM_STRING, &col_s_id },
+	{"package_column", PARAM_STRING, &col_package },
+	/*{"status_column", PARAM_STRING, &col_status },*/
+	{"event_column", PARAM_STRING, &col_event },
+	/*{"expires_column", PARAM_STRING, &col_expires },*/
+	{"accepts_column", PARAM_STRING, &col_accepts },
+	/*{"pres_id_column", PARAM_STRING, &col_pres_id },*/
+	{"server_contact_column", PARAM_STRING, &col_server_contact },
+	{"dialog_column", PARAM_STRING, &col_dialog },
+	{"doc_index_column", PARAM_STRING, &col_doc_index },
 
 	{0, 0, 0}
 };

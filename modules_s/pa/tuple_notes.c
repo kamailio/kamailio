@@ -16,25 +16,25 @@ static int db_add_tuple_note(presentity_t *p, presence_tuple_t *t, presence_note
 	
 	/* set data */
 	
-	cols[n_updates] = "pres_id";
+	cols[n_updates] = col_pres_id;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = p->pres_id;
 	n_updates++;
 	
-	cols[n_updates] = "tuple_id";
+	cols[n_updates] = col_tupleid;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = t->data.id;
 	n_updates++;
 
-	cols[n_updates] = "note";
+	cols[n_updates] = col_note;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = n->value;
 	n_updates++;
 	
-	cols[n_updates] = "lang";
+	cols[n_updates] = col_lang;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = n->lang;
@@ -69,7 +69,7 @@ int db_add_tuple_notes(presentity_t *p, presence_tuple_t *t)
 
 int db_remove_tuple_notes(presentity_t *p, presence_tuple_t *t)
 {
-	db_key_t keys[] = { "pres_id", "tupleid" };
+	db_key_t keys[] = { col_pres_id, col_tupleid };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { 
 		{ DB_STR, 0, { .str_val = p->pres_id } },
@@ -100,7 +100,7 @@ int db_update_tuple_notes(presentity_t *p, presence_tuple_t *t)
 
 int db_read_tuple_notes(presentity_t *p, presence_tuple_t *t, db_con_t* db)
 {
-	db_key_t keys[] = { "pres_id", "tupleid" };
+	db_key_t keys[] = { col_pres_id, col_tupleid };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { 
 		{ DB_STR, 0, { .str_val = p->pres_id } },
@@ -110,7 +110,7 @@ int db_read_tuple_notes(presentity_t *p, presence_tuple_t *t, db_con_t* db)
 	int i;
 	int r = 0;
 	db_res_t *res = NULL;
-	db_key_t result_cols[] = { "note", "lang" };
+	db_key_t result_cols[] = { col_note, col_lang };
 	
 	if (!use_db) return 0;
 

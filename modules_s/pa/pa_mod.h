@@ -60,6 +60,7 @@ extern int use_db;
 extern int use_place_table;
 extern str db_url;
 extern str pa_domain;
+
 extern char *presentity_table;
 extern char *presentity_contact_table;
 extern char *presentity_notes_table;
@@ -68,6 +69,44 @@ extern char *watcherinfo_table;
 extern char *place_table;
 extern char *tuple_notes_table;
 extern char *tuple_extensions_table;
+
+/* columns in DB tables */
+
+extern char *col_uri;
+extern char *col_pdomain;
+extern char *col_uid;
+extern char *col_pres_id;
+extern char *col_xcap_params;
+extern char *col_tupleid;
+extern char *col_basic;
+extern char *col_contact;
+extern char *col_etag;
+extern char *col_published_id;
+extern char *col_priority;
+extern char *col_expires;
+extern char *col_dbid;
+extern char *col_note;
+extern char *col_lang;
+extern char *col_element;
+extern char *col_status_extension;
+
+extern char *col_s_id;
+extern char *col_w_uri;
+extern char *col_package;
+extern char *col_status;
+extern char *col_display_name;
+extern char *col_accepts;
+extern char *col_event;
+extern char *col_dialog;
+extern char *col_server_contact;
+extern char *col_doc_index;
+
+extern char *col_watcher;
+extern char *col_events;
+extern char *col_domain;
+extern char *col_created_on;
+extern char *col_expires_on;
+
 
 extern int use_bsearch;
 extern int use_location_package;

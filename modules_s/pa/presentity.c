@@ -54,7 +54,6 @@
 #include "extension_elements.h"
 
 extern int use_db;
-extern char *presentity_table;
 
 int auth_rules_refresh_time = 300;
 
@@ -193,25 +192,25 @@ static inline int db_add_presentity(presentity_t* presentity)
 	int res;
 	str str_xcap_params;
 	
-	query_cols[0] = "uri";
+	query_cols[0] = col_uri;
 	query_vals[0].type = DB_STR;
 	query_vals[0].nul = 0;
 	query_vals[0].val.str_val = presentity->data.uri;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "pdomain";
+	query_cols[n_query_cols] = col_pdomain;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *presentity->pdomain->name;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "uid";
+	query_cols[n_query_cols] = col_uid;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->uuid;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "pres_id";
+	query_cols[n_query_cols] = col_pres_id;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->pres_id;
@@ -228,7 +227,7 @@ static inline int db_add_presentity(presentity_t* presentity)
 		LOG(L_ERR, "Error while serializing xcap params\n");
 		return -1;
 	}
-	query_cols[n_query_cols] = "xcap_params";
+	query_cols[n_query_cols] = col_xcap_params;
 	query_vals[n_query_cols].type = DB_BLOB;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.blob_val = str_xcap_params;
@@ -281,7 +280,7 @@ int new_presentity(struct pdomain *pdomain, str* _uri, str *uid,
  * common for all tables */
 int db_remove_presentity_data(presentity_t* presentity, const char *table)
 {
-	db_key_t keys[] = { "pres_id" };
+	db_key_t keys[] = { col_pres_id };
 	db_op_t ops[] = { OP_EQ };
 	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = presentity->pres_id } } };
 	
@@ -410,17 +409,17 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 
 	act_time = time(NULL); /* needed for fetching auth rules, ... */
 
-	query_cols[n_query_cols] = "pdomain";
+	query_cols[n_query_cols] = col_pdomain;
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *pdomain->name;
 	n_query_cols++;
 
-	result_cols[uri_col = n_result_cols++] = "uri";
-	result_cols[presid_col = n_result_cols++] = "pres_id";
-	result_cols[uid_col = n_result_cols++] = "uid";
-	result_cols[xcap_col = n_result_cols++] = "xcap_params";
+	result_cols[uri_col = n_result_cols++] = col_uri;
+	result_cols[presid_col = n_result_cols++] = col_pres_id;
+	result_cols[uid_col = n_result_cols++] = col_uid;
+	result_cols[xcap_col = n_result_cols++] = col_xcap_params;
 
 	if (pa_dbf.use_table(db, presentity_table) < 0) {
 		LOG(L_ERR, "pdomain_load_presentities: Error in use_table\n");

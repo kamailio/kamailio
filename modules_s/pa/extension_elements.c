@@ -16,31 +16,31 @@ static int db_add_extension_element(presentity_t *p, pa_extension_element_t *n)
 	
 	/* set data */
 	
-	cols[n_updates] = "dbid";
+	cols[n_updates] = col_dbid;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = n->dbid;
 	n_updates++;
 	
-	cols[n_updates] = "pres_id";
+	cols[n_updates] = col_pres_id;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = p->pres_id;
 	n_updates++;
 	
-	cols[n_updates] = "etag";
+	cols[n_updates] = col_etag;
 	vals[n_updates].type = DB_STR;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = n->etag;
 	n_updates++;
 
-	cols[n_updates] = "element";
+	cols[n_updates] = col_element;
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.blob_val = n->data.element;
 	n_updates++;
 	
-	cols[n_updates] = "expires";
+	cols[n_updates] = col_expires;
 	vals[n_updates].type = DB_DATETIME;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.time_val = n->expires;
@@ -63,7 +63,7 @@ static int db_add_extension_element(presentity_t *p, pa_extension_element_t *n)
 
 static int db_remove_extension_element(presentity_t *p, pa_extension_element_t *n)
 {
-	db_key_t keys[] = { "pres_id", "etag", "dbid" };
+	db_key_t keys[] = { col_pres_id, col_etag, col_dbid };
 	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } },
 		{ DB_STR, 0, { .str_val = n->etag } },
@@ -91,7 +91,7 @@ int db_update_extension_element(presentity_t *p, pa_extension_element_t *n)
 	db_val_t vals[20];
 	int n_updates = 0;
 	
-	db_key_t keys[] = { "pres_id", "etag", "dbid" };
+	db_key_t keys[] = { col_pres_id, col_etag, col_dbid };
 	db_op_t ops[] = { OP_EQ, OP_EQ, OP_EQ };
 	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } },
 		{ DB_STR, 0, { .str_val = n->etag } },
@@ -100,13 +100,13 @@ int db_update_extension_element(presentity_t *p, pa_extension_element_t *n)
 	
 	if (!use_db) return 0;
 
-	cols[n_updates] = "element";
+	cols[n_updates] = col_element;
 	vals[n_updates].type = DB_BLOB;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.blob_val = n->data.element;
 	n_updates++;
 	
-	cols[n_updates] = "expires";
+	cols[n_updates] = col_expires;
 	vals[n_updates].type = DB_DATETIME;
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.time_val = n->expires;
@@ -128,15 +128,15 @@ int db_update_extension_element(presentity_t *p, pa_extension_element_t *n)
 
 int db_read_extension_elements(presentity_t *p, db_con_t* db)
 {
-	db_key_t keys[] = { "pres_id" };
+	db_key_t keys[] = { col_pres_id };
 	db_op_t ops[] = { OP_EQ };
 	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = p->pres_id } } };
 
 	int i;
 	int r = 0;
 	db_res_t *res = NULL;
-	db_key_t result_cols[] = { "dbid", "etag", 
-		"element", "dbid", "expires"
+	db_key_t result_cols[] = { col_dbid, col_etag, 
+		col_element, col_dbid, col_expires
 	};
 	
 	if (!use_db) return 0;
