@@ -124,7 +124,7 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* prot
 	} else if (strcmp(proto, "sctp") == 0) {
 		np->proto = PROTO_SCTP;
 	} else {
-		LOG(L_CRIT, "hash_table_insert(): Unknown protocol\n");
+		LOG(L_CRIT, "hash_table_insert(): Unknown protocol '%s'\n", proto);
 		return -1;
 	}
 		
