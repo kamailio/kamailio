@@ -146,7 +146,7 @@ typedef enum {
 	AAA_APP_NASREQ               = 1,
 	AAA_APP_MOBILE_IP            = 2,
 	AAA_APP_DIAMETER_BASE_ACC    = 3,
-	AAA_APP_RELAY                = 0xffffffff,
+	AAA_APP_RELAY                = (int)0xffffffff,
 }AAA_APP_IDS;
 
 

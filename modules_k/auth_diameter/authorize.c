@@ -282,7 +282,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 
 
 /* Authorize digest credentials */
-int authorize(struct sip_msg* msg, xl_elem_t* realm, hdr_types_t hftype)
+int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 {
 	auth_result_t ret;
 	struct hdr_field* h;
