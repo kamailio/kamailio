@@ -44,64 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef RADIUSCLIENT_NG_4
-#  include <radiusclient.h>
-#else
-#  include <radiusclient-ng.h>
-#endif
-
-static void attr_name_value(VALUE_PAIR* vp, str* name, str* value)
-{
-	int i;
-	
-	for (i = 0; i < vp->lvalue; i++) {
-		if (vp->strvalue[i] == ':') {
-			name->s = vp->strvalue;
-			name->len = i;
-
-			if (i == (vp->lvalue - 1)) {
-				value->s = (char*)0;
-				value->len = 0;
-			} else {
-				value->s = vp->strvalue + i + 1;
-				value->len = vp->lvalue - i - 1;
-			}
-			return;
-		}
-	}
-
-	name->len = value->len = 0;
-	name->s = value->s = (char*)0;
-}
-
-
-/*
- * Generate AVPs from the database result
- */
-static int generate_avps(VALUE_PAIR* received)
-{
-	int_str name, val;
-	VALUE_PAIR *vp;
-
-	vp = received;
-
-	while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTRS].v, 0))) {
-		attr_name_value(vp, &name.s, &val.s);
-		
-		if (add_avp(AVP_TRACK_FROM | AVP_CLASS_USER | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
-			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
-		} else {
-			DBG("generate_avps: AVP '%.*s'='%.*s' has been added\n",
-			    name.s.len, ZSW(name.s.s), 
-			    val.s.len, ZSW(val.s.s));
-		}
-		vp = vp->next;
-	}
-	
-	return 0;
-}
-
-
 static int add_cisco_vsa(VALUE_PAIR** send, struct sip_msg* msg)
 {
 	str callid;
@@ -145,15 +87,15 @@ static int add_cisco_vsa(VALUE_PAIR** send, struct sip_msg* msg)
  * which can be be used as a check item in the request.  Service type of
  * the request is Authenticate-Only.
  */
-int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _method, str* _user) 
+int radius_authorize_sterman(VALUE_PAIR** received, struct sip_msg* _msg, dig_cred_t* _cred, str* _method, str* _user) 
 {
 	static char msg[4096];
-	VALUE_PAIR *send, *received;
+	VALUE_PAIR *send;
 	UINT4 service;
 	str method, user, user_name;
 	int i;
 	
-	send = received = 0;
+	send = 0;
 
 	if (!(_cred && _method && _user)) {
 		LOG(L_ERR, "radius_authorize_sterman(): Invalid parameter value\n");
@@ -277,16 +219,10 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	}
 
 	/* Send request */
-	if ((i = rc_auth(rh, SIP_PORT, send, &received, msg)) == OK_RC) {
+	if ((i = rc_auth(rh, SIP_PORT, send, received, msg)) == OK_RC) {
 		DBG("radius_authorize_sterman(): Success\n");
 		rc_avpair_free(send);
 		send = 0;
-
-		if (generate_avps(received)) {
-			goto err;
-		}
-
-		rc_avpair_free(received);
 		return 1;
 	} else {
 		DBG("radius_authorize_sterman(): Failure\n");
@@ -294,7 +230,6 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	}
 
  err:
-	if (send) rc_avpair_free(send);
-	if (received) rc_avpair_free(received);
+	if (send) rc_avpair_free(send);	
 	return -1;
 }

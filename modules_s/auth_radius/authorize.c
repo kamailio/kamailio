@@ -51,6 +51,75 @@
 #include "authrad_mod.h"
 
 
+static void attr_name_value(str* name, str* value, VALUE_PAIR* vp)
+{
+    int i;
+    
+    for (i = 0; i < vp->lvalue; i++) {
+	if (vp->strvalue[i] == ':' || vp->strvalue[i] == '=') {
+	    name->s = vp->strvalue;
+	    name->len = i;
+	    
+	    if (i == (vp->lvalue - 1)) {
+		value->s = (char*)0;
+		value->len = 0;
+	    } else {
+		value->s = vp->strvalue + i + 1;
+		value->len = vp->lvalue - i - 1;
+	    }
+	    return;
+	}
+    }
+
+    name->len = value->len = 0;
+    name->s = value->s = (char*)0;
+}
+
+
+/*
+ * Generate AVPs from the database result
+ */
+static int generate_avps(VALUE_PAIR* received)
+{
+	int_str name, val;
+	VALUE_PAIR *vp;
+	
+	vp = rc_avpair_get(received, attrs[A_SER_UID].v, VENDOR(attrs[A_SER_UID].v));
+	if (vp == NULL) {
+	    WARN("RADIUS server did not send SER-UID attribute in digest authentication reply\n");
+	    return -1;
+	}
+	val.s.len = vp->lvalue;
+	val.s.s = vp->strvalue;
+	name.s.s = "uid";
+	name.s.len = 3;
+
+	if (add_avp(AVP_TRACK_FROM | AVP_CLASS_USER | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
+	    ERR("Unable to create UID attribute\n");
+	    return -1;
+	}
+
+	vp = received;
+	while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTR].v, VENDOR(attrs[A_SER_ATTR].v)))) {
+		attr_name_value(&name.s, &val.s, vp);
+		
+		if (add_avp(AVP_TRACK_FROM | AVP_CLASS_USER | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
+			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
+			return -1;
+		} else {
+			DBG("generate_avps: AVP '%.*s'='%.*s' has been added\n",
+			    name.s.len, ZSW(name.s.s), 
+			    val.s.len, ZSW(val.s.s));
+		}
+		vp = vp->next;
+	}
+	
+	return 0;
+}
+
+
+
+
 /* 
  * Extract URI depending on the request from To or From header 
  */
@@ -86,10 +155,12 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	str* uri;
 	struct sip_uri puri;
 	str user, did;
+	VALUE_PAIR* received;
 
 	cred = 0;
 	ret = -1;
 	user.s = 0;
+	received = NULL;
 
 	switch(auth_api.pre_auth(msg, realm, hftype, &h)) {
 	case ERROR:
@@ -146,7 +217,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	}
 	un_escape(&(puri.user), &user);
 
-	res = radius_authorize_sterman(msg, &cred->digest, &msg->first_line.u.request.method, &user);
+	res = radius_authorize_sterman(&received, msg, &cred->digest, &msg->first_line.u.request.method, &user);
 	if (res == 1) {
 	    switch(auth_api.post_auth(msg, h)) {
 	    case ERROR:             
@@ -159,7 +230,10 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 		break;
 
 	    case AUTHENTICATED:
-		     /* FIXME: generate avps */
+		if (generate_avps(received) < 0) {
+		    ret = -1;
+		    break;
+		}
 		ret = 1;
 		break;
 
@@ -172,6 +246,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	}
 
  end:
+	if (received) rc_avpair_free(received);
 	if (user.s) pkg_free(user.s);
 	if (ret < 0) {
 	    if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
