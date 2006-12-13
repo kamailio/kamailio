@@ -45,19 +45,20 @@ Bastian Friedrich
               3.2.1. getRURI()
               3.2.2. getMethod()
               3.2.3. getFullHeader()
-              3.2.4. getHeader(name)
-              3.2.5. getHeaderNames()
-              3.2.6. moduleFunction(func,string1,string2)
-              3.2.7. log(level,message) (deprecated type)
-              3.2.8. rewrite_ruri(newruri)
-              3.2.9. setFlag(flag)
-              3.2.10. resetFlag(flag)
-              3.2.11. isFlagSet(flag)
-              3.2.12. pseudoVar(string)
-              3.2.13. append_branch(branch,qval)
-              3.2.14. serialize_branches(clean_before)
-              3.2.15. next_branches()
-              3.2.16. getParsedRURI()
+              3.2.4. getBody()
+              3.2.5. getHeader(name)
+              3.2.6. getHeaderNames()
+              3.2.7. moduleFunction(func,string1,string2)
+              3.2.8. log(level,message) (deprecated type)
+              3.2.9. rewrite_ruri(newruri)
+              3.2.10. setFlag(flag)
+              3.2.11. resetFlag(flag)
+              3.2.12. isFlagSet(flag)
+              3.2.13. pseudoVar(string)
+              3.2.14. append_branch(branch,qval)
+              3.2.15. serialize_branches(clean_before)
+              3.2.16. next_branches()
+              3.2.17. getParsedRURI()
 
         3.3. OpenSER::URI
 
@@ -373,7 +374,12 @@ OpenSER::log(L_INFO, "foobar");
    my $hdr = $m->getFullHeader();
      _________________________________________________________
 
-3.2.4. getHeader(name)
+3.2.4. getBody()
+
+   Returns the message body.
+     _________________________________________________________
+
+3.2.5. getHeader(name)
 
    Returns the body of the first message header with this name.
 
@@ -382,14 +388,14 @@ OpenSER::log(L_INFO, "foobar");
    "John" <sip:john@doe.example>
      _________________________________________________________
 
-3.2.5. getHeaderNames()
+3.2.6. getHeaderNames()
 
    Returns an array of all header names. Duplicates possible!
 
    Call the OpenSER do_action() function. Not yet implemented.
      _________________________________________________________
 
-3.2.6. moduleFunction(func,string1,string2)
+3.2.7. moduleFunction(func,string1,string2)
 
    Search for an arbitrary function in module exports and call it
    with the parameters self, string1, string2.
@@ -407,7 +413,7 @@ $m->sl_send_reply("500", "Internal Error");
 $m->xlog("L_INFO", "foo");
      _________________________________________________________
 
-3.2.7. log(level,message) (deprecated type)
+3.2.8. log(level,message) (deprecated type)
 
    Logs the message with OpenSER's logging facility. The logging
    level is one of the following:
@@ -423,7 +429,7 @@ $m->xlog("L_INFO", "foo");
    variant. This one, located in OpenSER::Message, is deprecated.
      _________________________________________________________
 
-3.2.8. rewrite_ruri(newruri)
+3.2.9. rewrite_ruri(newruri)
 
    Sets a new destination (recipient) URI. Useful for rerouting
    the current message/call.
@@ -432,23 +438,23 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 }
      _________________________________________________________
 
-3.2.9. setFlag(flag)
+3.2.10. setFlag(flag)
 
    Sets a message flag. The constants as known from the C API may
    be used, when Constants.pm is included.
      _________________________________________________________
 
-3.2.10. resetFlag(flag)
+3.2.11. resetFlag(flag)
 
    Resets a message flag.
      _________________________________________________________
 
-3.2.11. isFlagSet(flag)
+3.2.12. isFlagSet(flag)
 
    Returns whether a message flag is set or not.
      _________________________________________________________
 
-3.2.12. pseudoVar(string)
+3.2.13. pseudoVar(string)
 
    Returns a new string where all pseudo variables are
    substituted by their values. Can be used to receive the values
@@ -458,22 +464,22 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
    strings!
      _________________________________________________________
 
-3.2.13. append_branch(branch,qval)
+3.2.14. append_branch(branch,qval)
 
    Append a branch to current message.
      _________________________________________________________
 
-3.2.14. serialize_branches(clean_before)
+3.2.15. serialize_branches(clean_before)
 
    Serialize branches.
      _________________________________________________________
 
-3.2.15. next_branches()
+3.2.16. next_branches()
 
    Next branches.
      _________________________________________________________
 
-3.2.16. getParsedRURI()
+3.2.17. getParsedRURI()
 
    Returns the current destination URI as an OpenSER::URI object.
      _________________________________________________________

@@ -480,6 +480,30 @@ getFullHeader(self)
 	}
 
 
+=head2 getBody()
+
+Returns the message body.
+
+=cut
+
+SV *
+getBody(self)
+    SV *self
+  PREINIT:
+  PREINIT:
+    struct sip_msg *msg = sv2msg(self);
+    SV *ret;
+  INIT:
+  CODE:
+	if (!msg) {
+		LOG(L_ERR, "perl: Invalid message reference\n");
+		ST(0) = &PL_sv_undef;
+	} else {
+		parse_headers(msg, ~0, 0);
+		ST(0) = sv_2mortal(newSVpv(get_body(msg), 0));
+	}
+
+
 =head2 getHeader(name)
 
 Returns the body of the first message header with this name.
