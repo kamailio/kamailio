@@ -66,7 +66,7 @@ ATTRIBUTE Digest-User-Name            1072  string     # Sterman, auth_radius
 ### iptel.org Vendor Specific Attributes ###
 VENDOR iptelorg           24960
 
-ATTRIBUTE SER-Attrs                     1   string   iptelorg  # SER, acc_radius
+ATTRIBUTE SER-Attr                      1   string   iptelorg  # SER, acc_radius, avp_radius, auth_radius
 ATTRIBUTE SER-From                      2   string   iptelorg  # SER, acc_radius
 ATTRIBUTE SER-Flags                     3   integer  iptelorg  # SER, acc_radius
 ATTRIBUTE SER-Original-Request-ID       4   string   iptelorg  # SER, acc_radius
@@ -79,7 +79,7 @@ ATTRIBUTE SER-From-UID                 10   string   iptelorg  # SER, acc_radius
 ATTRIBUTE SER-From-DID                 11   string   iptelorg  # SER, acc_radius
 ATTRIBUTE SER-To-UID                   12   string   iptelorg  # SER, acc_radius
 ATTRIBUTE SER-Response-Timestamp       13   integer  iptelorg  # SER, acc_radius
-ATTRIBUTE SER-Attr                     14   string   iptelorg  # SER, avp_radius
+
 ATTRIBUTE SER-Service-Type             15   string   iptelorg  # SER, avp_radius
 ATTRIBUTE SER-DID                      16   string   iptelorg  # SER, ?
 ATTRIBUTE SER-UID                      17   string   iptelorg  # SER, ?
