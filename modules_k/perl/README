@@ -202,8 +202,8 @@ if (perl_exec("ldap_alias")) {
    The OpenSER::LDAPUtils package relies on Net::LDAP to be
    installed. One of the sample scripts needs IPC::Shareable
 
-   On Debian systems, at least the following packages should be
-   installed:
+   On current Debian systems, at least the following packages
+   should be installed:
 
      * perl
      * perl-base
@@ -212,6 +212,9 @@ if (perl_exec("ldap_alias")) {
      * libperl-dev
      * libnet-ldap-perl
      * libipc-shareable-perl
+
+   It was reported that other Debian-style distributions (such as
+   Ubuntu) need the same packages.
 
    On SuSE systems, at least the following packages should be
    installed:

@@ -98,7 +98,7 @@ if (perl_exec("ldap_alias")) {
 		relies on Net::LDAP to be installed. One of the sample scripts needs IPC::Shareable
 		</para>
 		<para>
-		On Debian systems, at least the following packages should be installed:
+		On current Debian systems, at least the following packages should be installed:
 		<itemizedlist>
 			<listitem><para>perl</para></listitem>
 			<listitem><para>perl-base</para></listitem>
@@ -108,6 +108,8 @@ if (perl_exec("ldap_alias")) {
 			<listitem><para>libnet-ldap-perl</para></listitem>
 			<listitem><para>libipc-shareable-perl</para></listitem>
 		</itemizedlist>
+		It was reported that other Debian-style distributions (such as Ubuntu) need the
+		same packages.
 		</para>
 		<para>
 		On SuSE systems, at least the following packages should be installed:
