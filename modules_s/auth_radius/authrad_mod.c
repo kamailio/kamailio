@@ -145,11 +145,16 @@ static int mod_init(void)
 	attrs[A_SER_URI_USER].n			= "SER-Uri-User";
 	attrs[A_SER_ATTR].n	                = "SER-Attr";
 	attrs[A_SER_UID].n                      = "SER-UID";
+	attrs[A_SER_SERVICE_TYPE].n             = "SER-Service-Type";
+
+	     /* SER-Service-Type */
+	vals[V_DIGEST_AUTHENTICATION].n         = "Digest-Authentication";
 
 	attrs[A_CISCO_AVPAIR].n			= "Cisco-AVPair";
 
 	     /* draft-schulzrinne-sipping-radius-accounting-00 */
 	vals[V_SIP_SESSION].n			= "Sip-Session";
+
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "auth_radius: Error opening configuration file \n");

@@ -84,7 +84,7 @@ static int generate_avps(VALUE_PAIR* received)
 	int_str name, val;
 	VALUE_PAIR *vp;
 	
-	vp = rc_avpair_get(received, attrs[A_SER_UID].v, VENDOR(attrs[A_SER_UID].v));
+	vp = rc_avpair_get(received, ATTRID(attrs[A_SER_UID].v), VENDOR(attrs[A_SER_UID].v));
 	if (vp == NULL) {
 	    WARN("RADIUS server did not send SER-UID attribute in digest authentication reply\n");
 	    return -1;
@@ -100,8 +100,12 @@ static int generate_avps(VALUE_PAIR* received)
 	}
 
 	vp = received;
-	while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTR].v, VENDOR(attrs[A_SER_ATTR].v)))) {
+	while ((vp = rc_avpair_get(vp, ATTRID(attrs[A_SER_ATTR].v), VENDOR(attrs[A_SER_ATTR].v)))) {
 		attr_name_value(&name.s, &val.s, vp);
+		if (name.s.len == 0) {
+		    ERR("Missing attribute name\n");
+		    return -1;
+		}
 		
 		if (add_avp(AVP_TRACK_FROM | AVP_CLASS_USER | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
 			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
