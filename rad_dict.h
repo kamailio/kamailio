@@ -80,12 +80,8 @@ typedef enum rad_attr {
 	A_DIGEST_USER_NAME,
 
 	     /* To be deprecated in the future */
-	A_SER_URI_USER,
-	A_SER_GROUP,
-	A_SER_RPID,
 
 	     /* SER-specific attributes */
-	A_SER_ATTRS,
 	A_SER_FROM,
 	A_SER_FLAGS,
 	A_SER_ORIGINAL_REQUEST_ID,
@@ -98,6 +94,13 @@ typedef enum rad_attr {
 	A_SER_FROM_DID,
 	A_SER_TO_UID,
 	A_SER_RESPONSE_TIMESTAMP,
+	A_SER_ATTR,
+	A_SER_SERVICE_TYPE,
+	A_SER_DID,
+	A_SER_UID,
+	A_SER_DOMAIN,
+	A_SER_URI_USER,
+	A_SER_URI_SCHEME,
 
 	     /* CISCO Vendor Specific Attributes */
 	A_CISCO_AVPAIR,
@@ -106,15 +109,23 @@ typedef enum rad_attr {
 
 
 typedef enum rad_val {
+	 /* Acct-Status-Type */
 	V_START = 0,
 	V_STOP,
 	V_INTERIM_UPDATE,
 	V_FAILED,
-	V_CALL_CHECK,
-	V_SIP_SESSION,
-	V_SER_CALLER_AVPS,
-	V_SER_CALLEE_AVPS,
-	V_SER_GROUP_CHECK,
+
+	     /* Service-Type */
+	V_SIP_SESSION,     
+
+	     /* SER-Service-Type */
+	V_GET_URI_ATTRS,
+	V_GET_USER_ATTRS,
+	V_DIGEST_AUTHENTICATION,
+	V_GET_DOMAIN_ATTRS,
+	V_GET_GLOBAL_ATTRS,
+	V_LOOKUP_DOMAIN,
+
 	V_MAX
 } rad_val_t;
 

@@ -79,12 +79,12 @@ ATTRIBUTE SER-From-UID                 10   string   iptelorg  # SER, acc_radius
 ATTRIBUTE SER-From-DID                 11   string   iptelorg  # SER, acc_radius
 ATTRIBUTE SER-To-UID                   12   string   iptelorg  # SER, acc_radius
 ATTRIBUTE SER-Response-Timestamp       13   integer  iptelorg  # SER, acc_radius
-
-ATTRIBUTE SER-Service-Type             15   string   iptelorg  # SER, avp_radius
+ATTRIBUTE SER-Service-Type             14   integer  iptelorg  # SER, avp_radius
 ATTRIBUTE SER-DID                      16   string   iptelorg  # SER, ?
 ATTRIBUTE SER-UID                      17   string   iptelorg  # SER, ?
 ATTRIBUTE SER-Domain                   18   string   iptelorg  # SER, ?
 ATTRIBUTE SER-Uri-User                 19   string   iptelorg  # SER, auth_radius
+ATTRIBUTE SER-Uri-Scheme               20   string   iptelorg  # SER, avp_radius
 
 
 ### Acct-Status-Type Values ###
@@ -97,8 +97,10 @@ VALUE Acct-Status-Type      Failed          15         # RFC2866, acc_radius
 VALUE Service-Type         Sip-Session      15         # Schulzrinne, acc_radius, auth_radius
 
 ### SER-Service-Type Values ###
-VALUE SER-Service-Type     Get-URI-Attrs     1         # SER, avp_radius
-VALUE SER-Service-Type     Get-User-Attrs    2         # SER, avp_radius
-VALUE SER-Service-Type     Get-Domain-Attrs  3         # SER, ?
-VALUE SER-Service-Type     Get-Global-Attrs  4         # SER, ?
-VALUE SER-Service-Type     Lookup-Domain     5         # SER, ?
+VALUE SER-Service-Type     Get-URI-Attrs          1         # SER, avp_radius
+VALUE SER-Service-Type     Get-User-Attrs         2         # SER, avp_radius
+VALUE SER-Service-Type     Digest-Authentication  3         # SER, auth_radius
+VALUE SER-Service-Type     Get-Domain-Attrs       4         # SER, ?
+VALUE SER-Service-Type     Get-Global-Attrs       5         # SER, ?
+VALUE SER-Service-Type     Lookup-Domain          6         # SER, ?
+
