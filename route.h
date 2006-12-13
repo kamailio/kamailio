@@ -37,7 +37,7 @@
 #include "error.h"
 #include "route_struct.h"
 #include "parser/msg_parser.h"
-#include "hashes.h"
+#include "str_hash.h"
 
 /*#include "cfg_parser.h" */
 

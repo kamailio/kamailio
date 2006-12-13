@@ -20,6 +20,7 @@
  * --------
  *  2006-02-02  created by andrei
  *  2006-11-24  added numeric string optimized hash function (andrei)
+ *  2006-12-13  split into hashes.h (more generic) and str_hash.h (andrei)
  */
 
 
@@ -27,8 +28,6 @@
 #define _hashes_h
 
 #include "str.h"
-#include "mem/mem.h"
-#include "clist.h"
 
 
 
@@ -139,86 +138,6 @@ inline static unsigned int get_hash2_raw2(str* key1, str* key2)
 	hash_update_str2(key2->s, key2->s+key2->len, p, v, h);
 	return hash_finish(h);
 }
-
-
-
-/* generic, simple str keyed hash */
-
-struct str_hash_entry{
-	struct str_hash_entry* next;
-	struct str_hash_entry* prev;
-	str key;
-	unsigned int flags;
-	union{
-		void* p;
-		char* s;
-		int   n;
-		char  data[sizeof(void*)];
-	}u;
-};
-
-
-struct str_hash_head{
-	struct str_hash_entry* next;
-	struct str_hash_entry* prev;
-};
-
-
-struct str_hash_table{
-	struct str_hash_head* table;
-	int size;
-};
-
-
-
-/* returns 0 on success, <0 on failure */
-inline static int str_hash_alloc(struct str_hash_table* ht, int size)
-{
-	ht->table=pkg_malloc(sizeof(struct str_hash_head)*size);
-	if (ht->table==0)
-		return -1;
-	ht->size=size;
-	return 0;
-}
-
-
-
-inline static void str_hash_init(struct str_hash_table* ht)
-{
-	int r;
-	
-	for (r=0; r<ht->size; r++) clist_init(&(ht->table[r]), next, prev);
-}
-
-
-
-inline static void str_hash_add(struct str_hash_table* ht, 
-								struct str_hash_entry* e)
-{
-	int h;
-	
-	h=get_hash1_raw(e->key.s, e->key.len) % ht->size;
-	clist_insert(&ht->table[h], e, next, prev);
-}
-
-
-
-inline static struct str_hash_entry* str_hash_get(struct str_hash_table* ht,
-									char* key, int len)
-{
-	int h;
-	struct str_hash_entry* e;
-	
-	h=get_hash1_raw(key, len) % ht->size;
-	clist_foreach(&ht->table[h], e, next){
-		if ((e->key.len==len) && (memcmp(e->key.s, key, len)==0))
-			return e;
-	}
-	return 0;
-}
-
-
-#define str_hash_del(e) clist_rm(e, next, prev)
 
 
 

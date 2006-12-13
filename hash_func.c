@@ -45,9 +45,9 @@ extern unsigned short int crc_16_tab[];
 #include "ut.h"
 
 
-int new_hash( str call_id, str cseq_nr )
+unsigned int new_hash( str call_id, str cseq_nr )
 {
-	int hash_code = 0;
+	unsigned int hash_code = 0;
 	int i,j, k, third;
 	int ci_len, cs_len;
 	char *ci, *cs;
@@ -71,12 +71,12 @@ int new_hash( str call_id, str cseq_nr )
 	for ( i=ci_len-1, j=2*third, k=third;
 		k>0 ; i--, j--, k-- ) {
 		hash_code+=crc_16_tab[(unsigned char)(*(ci+i)) /*+7*/ ]+
-			ccitt_tab[*(ci+k)+63]+
-			ccitt_tab[*(ci+j)+13];
+			ccitt_tab[(unsigned char)*(ci+k)+63]+
+			ccitt_tab[(unsigned char)*(ci+j)+13];
 	}
 	for( i=0 ; i<cs_len ; i++ )
 		//hash_code+=crc_32_tab[(cseq_nr.s[i]+hash_code)%243];
-		hash_code+=ccitt_tab[*(cs+i)+123];
+		hash_code+=ccitt_tab[(unsigned char)*(cs+i)+123];
 
 	/* hash_code conditioning */
 #ifdef _BUG
@@ -92,11 +92,12 @@ int new_hash( str call_id, str cseq_nr )
 	hash_code &= (TABLE_ENTRIES-1); /* TABLE_ENTRIES = 2^k */
 #endif
 	hash_code=hash_code%(TABLE_ENTRIES-1)+1;
-   	return hash_code;
+	return hash_code;
 }
 
 
 
+#if 0
 int new_hash2( str call_id, str cseq_nr )
 {
 #define h_inc h+=v^(v>>3)
@@ -126,6 +127,7 @@ int new_hash2( str call_id, str cseq_nr )
 	h=((h)+(h>>11))+((h>>13)+(h>>23));
 	return (h)&(TABLE_ENTRIES-1);
 }
+#endif
 
 
 

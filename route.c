@@ -72,7 +72,7 @@
 #include "mem/mem.h"
 #include "select.h"
 #include "onsend.h"
-#include "hashes.h"
+#include "str_hash.h"
 #include "ut.h"
 
 #define RT_HASH_SIZE	8 /* route names hash */

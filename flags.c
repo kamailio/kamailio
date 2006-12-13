@@ -40,6 +40,8 @@
 #include "error.h"
 #include "stdlib.h"
 #include "hashes.h"
+#include "clist.h"
+#include "mem/mem.h"
 
 int setflag( struct sip_msg* msg, flag_t flag ) {
 	msg->flags |= 1 << flag;
