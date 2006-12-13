@@ -475,8 +475,8 @@ getFullHeader(self)
 	} else {
 		parse_headers(msg, ~0, 0);
 		ret = newSVpv((msg->first_line).u.request.method.s,
-			(((int)(msg->eoh))-
-			 ((int)((msg->first_line).u.request.method.s))));
+			(((long)(msg->eoh))-
+			 ((long)((msg->first_line).u.request.method.s))));
 		ST(0) = sv_2mortal(ret);
 	}
 
