@@ -31,6 +31,7 @@
 #undef load_module		/* perl.h #define's load_module. Bug??? */
 #include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_uri.h"
 #include "../../action.h"
 #include "../../flags.h"
 #include "../../items.h"
