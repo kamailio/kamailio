@@ -453,7 +453,7 @@ static int fmt2rad(char *fmt,
 		case 'a': /* attr */
 			at = print_attrs(avps, avps_n, 0);
 			if (at) {
-				attr = &attrs[A_SER_ATTRS];
+				attr = &attrs[A_SER_ATTR];
 				val = *at;
 			}
 			break;
@@ -643,7 +643,7 @@ static int fmt2rad(char *fmt,
 		} /* switch (*fmt) */
 
 		if (attr) {
-			if (!rc_avpair_add(rh, send, attr->v, val.s, val.len, 0)) {
+			if (!rc_avpair_add(rh, send, attr->v, val.s, val.len, VENDOR(attr->v))) {
 				LOG(L_ERR, "ERROR:acc:fmt2rad: Failed to add attribute %s\n",
 				    attr->n);
 				return -1;
@@ -983,6 +983,7 @@ void on_req(struct cell* t, int type, struct tmcb_params *ps)
 
 static int mod_init(void)
 {
+	DICT_VENDOR *vend;
 	load_tm_f load_tm;
 
 	     /* import the TM auto-loading function */
@@ -1021,7 +1022,7 @@ static int mod_init(void)
 	attrs[A_SIP_SOURCE_IP_ADDRESS].n     = "Sip-Source-IP-Address";
 	attrs[A_SIP_SOURCE_PORT].n           = "Sip-Source-Port";
 
-	attrs[A_SER_ATTRS].n                 = "SER-Attrs";
+	attrs[A_SER_ATTR].n                  = "SER-Attr";
 	attrs[A_SER_FROM].n                  = "SER-From";
 	attrs[A_SER_FLAGS].n                 = "SER-Flags";
 	attrs[A_SER_ORIGINAL_REQUEST_ID].n   = "SER-Original-Request-Id";
@@ -1052,6 +1053,12 @@ static int mod_init(void)
 	     /* read dictionary */
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
 		LOG(L_ERR, "ERROR:acc:mod_init: Error reading radius dictionary\n");
+		return -1;
+	}
+
+	vend = rc_dict_findvend(rh, "iptelorg");
+	if (vend == NULL) {
+		ERR("RADIUS dictionary is missing required vendor 'iptelorg'\n");
 		return -1;
 	}
 
