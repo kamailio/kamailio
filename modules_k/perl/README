@@ -242,7 +242,7 @@ if (perl_exec("ldap_alias")) {
 
    Example 1-1. Set filename parameter
 ...
-modparam("perl", "filename", "/home/john/openser/myperl.pl");
+modparam("perl", "filename", "/home/john/openser/myperl.pl")
 ...
      _________________________________________________________
 
@@ -256,7 +256,7 @@ modparam("perl", "filename", "/home/john/openser/myperl.pl");
 
    Example 1-2. Set modpath parameter
 ...
-modparam("perl", "modpath", "/usr/local/lib/openser/perl/");
+modparam("perl", "modpath", "/usr/local/lib/openser/perl/")
 ...
      _________________________________________________________
 
