@@ -504,6 +504,29 @@ getBody(self)
 	}
 
 
+=head2 getMessage()
+
+Returns the whole message including headers and body.
+
+=cut
+
+SV *
+getMessage(self)
+    SV *self
+  PREINIT:
+  PREINIT:
+    struct sip_msg *msg = sv2msg(self);
+    SV *ret;
+  INIT:
+  CODE:
+	if (!msg) {
+		LOG(L_ERR, "perl: Invalid message reference\n");
+		ST(0) = &PL_sv_undef;
+	} else {
+		ST(0) = sv_2mortal(newSVpv(msg->buf, 0));
+	}
+
+
 =head2 getHeader(name)
 
 Returns the body of the first message header with this name.
