@@ -42,7 +42,7 @@ static void trace_tuple(presence_tuple_t *t, rpc_t* rpc, void* c) {
 	ps = t->data.first_unknown_element;
 	while (ps) {
 		rpc_lf(rpc, c);
-		rpc->printf(c, "<![CDATA[     %.*s]]>", FMT_STR(ps->element));
+		rpc->printf(c, "     %.*s", FMT_STR(ps->element));
 		rpc_lf(rpc, c);
 		ps = ps->next;
 	}
@@ -53,7 +53,7 @@ static void trace_tuple(presence_tuple_t *t, rpc_t* rpc, void* c) {
 	ps = t->data.status.first_unknown_element;
 	while (ps) {
 		rpc_lf(rpc, c);
-		rpc->printf(c, "<![CDATA[     %.*s]]>", FMT_STR(ps->element));
+		rpc->printf(c, "     %.*s", FMT_STR(ps->element));
 		rpc_lf(rpc, c);
 		ps = ps->next;
 	}
@@ -129,7 +129,7 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	while (ps) {
 		rpc->printf(c, "     exp=%d", (int)(ps->expires - time(NULL)));
 		rpc_lf(rpc, c);
-		rpc->printf(c, "<![CDATA[     %.*s]]>", FMT_STR(ps->data.element));
+		rpc->printf(c, "     %.*s", FMT_STR(ps->data.element));
 		rpc_lf(rpc, c);
 		ps = get_next_extension(ps);
 	}
