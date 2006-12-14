@@ -58,7 +58,7 @@ static int cclen(const char *number)
 	d1 = number[0];
 	d2 = number[1];
 	
-	if (!isdigit(d2)) 
+	if (!isdigit((int)d2)) 
 		return(0);
 
 	switch(d1) {

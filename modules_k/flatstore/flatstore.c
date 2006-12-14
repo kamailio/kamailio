@@ -190,7 +190,7 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 			l = VAL_BLOB(v+i).len;
 			s = p = VAL_BLOB(v+i).s;
 			while (l--) {
-				if ( !(isprint(*s) && *s != '\\' && *s != '|')) {
+				if ( !(isprint((int)*s) && *s != '\\' && *s != '|')) {
 					fprintf(f,"%.*s\\x%02X",(int)(s-p),p,(*s & 0xff));
 					p = s+1;
 				}

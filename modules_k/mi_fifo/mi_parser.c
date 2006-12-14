@@ -85,7 +85,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 		pmax = buf->s + line_len - 1;
 
 		/* remove leading spaces */
-		for( ; start<pmax && isspace(*start) ; start++ );
+		for( ; start<pmax && isspace((int)*start) ; start++ );
 	} while ( start==pmax );
 
 	/* init */
@@ -100,7 +100,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 		p = mark_nsp = start;
 		while ( p!=pmax && ( (p[0]!=MI_ATTR_VAL_SEP1) || (p+1==pmax)
 		|| p[1]!=MI_ATTR_VAL_SEP2) ) {
-			if (!isspace(*p)) {
+			if (!isspace((int)*p)) {
 				if (*p=='"')
 					goto parse_err;
 				mark_nsp = p;
@@ -123,7 +123,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 				name->len, name->s);
 
 			/* consume the trailing spaces */
-			for( ; p!=pmax && isspace(*p) ; p++);
+			for( ; p!=pmax && isspace((int)*p) ; p++);
 
 			if (p==pmax) {
 				/* empty value.....we are done */
@@ -133,7 +133,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 			/* value (only if not quoted ) */
 			if (*p!='"') {
 				for( start=p ; p!=pmax ; p++ ) {
-					if (!isspace(*p)) {
+					if (!isspace((int)*p)) {
 						if (*p=='"')
 							goto parse_err;
 						mark_nsp = p;
@@ -170,7 +170,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 					/* end of value */
 					value->len = p - value->s;
 					/* is the line ending propely (only spaces) ? */
-					for( p++ ; p!=pmax && isspace(*p) ; p++);
+					for( p++ ; p!=pmax && isspace((int)*p) ; p++);
 					if (p!=pmax)
 						goto parse_err;
 					/* found! */
