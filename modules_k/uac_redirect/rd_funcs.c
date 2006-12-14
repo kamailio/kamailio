@@ -194,6 +194,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	 */
 	dup = 0; /* sh_rpl not duplicated */
 	ret = 0; /* success and no contact added */
+	contact_hdr = 0;
 
 	if (sh_rpl==0 || sh_rpl==FAKED_REPLY)
 		return 0;

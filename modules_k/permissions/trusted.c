@@ -67,12 +67,12 @@ int reload_trusted_table(void)
 	struct trusted_list **new_hash_table;
 	int i;
 
+	char *pattern, *tag;
+
 	cols[0] = source_col;
 	cols[1] = proto_col;
 	cols[2] = from_col;
 	cols[3] = tag_col;
-
-	char *pattern, *tag;
 
 	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
 		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"

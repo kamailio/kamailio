@@ -821,8 +821,8 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 			ebl = (struct ebl_rdata *) head->rdata;
 
 			DBG("enum_query(): EBL record for %s is %d / %.*s / %.*s.\n", name, 
-					ebl->position, ebl->separator_len, ebl->separator,
-					ebl->apex_len, ebl->apex);
+					ebl->position, (int)ebl->separator_len, ebl->separator,
+					(int)ebl->apex_len, ebl->apex);
 
 			if ((ebl->apex_len > MAX_COMPONENT_SIZE) || (ebl->separator_len > MAX_COMPONENT_SIZE)) {
 				LOG(L_ERR, "enum_query(): EBL strings too long\n"); 
@@ -941,6 +941,8 @@ int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 	str pattern, replacement, result, new_result;
 
+	str *suffix, *service;
+
 	char string[17];
 
 	/*
@@ -973,8 +975,6 @@ int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
 		return -1;
 	}
-
-	str *suffix, *service;
 
 	suffix = (str*)_suffix;
 	service = (str*)_service;
