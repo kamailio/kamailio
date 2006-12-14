@@ -39,6 +39,10 @@
 #define PRES_LEN 8
 #define PWINFO_LEN 14
 
+#define PRES_RULES 1;
+#define RESOURCE_LIST 2;
+#define RLS_SERVICE 2;
+
 typedef struct watcher
 {
 	str uri;

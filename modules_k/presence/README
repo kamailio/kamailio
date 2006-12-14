@@ -329,6 +329,7 @@ CREATE TABLE `xcap_xml` (
   `user` varchar(64) NOT NULL,
   `domain` varchar(128) NOT NULL,
   `xcap` text NOT NULL,
+  `doc_type` int(11) NOT NULL,
   PRIMARY KEY  (`user`,`domain`)
 ) ENGINE=MyISAM;
 ...

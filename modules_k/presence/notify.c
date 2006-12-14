@@ -1236,8 +1236,8 @@ error:
 
 xmlDocPtr get_xcap_tree(str user, str domain)
 {
-	db_key_t query_cols[4];
-	db_val_t query_vals[4];
+	db_key_t query_cols[5];
+	db_val_t query_vals[5];
 	db_key_t result_cols[3];
 	int n_query_cols = 0;
 	db_res_t *result = 0;
@@ -1260,6 +1260,12 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	query_vals[n_query_cols].val.str_val.len = domain.len;
 	n_query_cols++;
 	
+	query_cols[n_query_cols] = "doc_type";
+	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= PRES_RULES;
+	n_query_cols++;
+
 	result_cols[0] = "xcap";
 
 	if (pa_dbf.use_table(pa_db, "xcap_xml") < 0) 
