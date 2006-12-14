@@ -150,6 +150,7 @@ int db_read_tuples(presentity_t *_p, db_con_t* db)
 			tuple->data.priority = priority;
 
 			db_read_tuple_notes(_p, tuple, db);
+			db_read_tuple_extensions(_p, tuple, db);
 			
 			add_presence_tuple_no_wb(_p, tuple);
 		}
@@ -224,6 +225,7 @@ static int db_add_presence_tuple(presentity_t *_p, presence_tuple_t *t)
 	db_key_t query_cols[20];
 	db_val_t query_vals[20];
 	int n_query_cols = 0;
+	int res;
 
 	if (!use_db) return 0;
 	if (!t->is_published) return 0; /* store only published tuples */
@@ -243,7 +245,17 @@ static int db_add_presence_tuple(presentity_t *_p, presence_tuple_t *t)
 		return -1;
 	}
 		
-	return db_add_tuple_notes(_p, t);
+	res = 0;
+	if (db_add_tuple_notes(_p, t) < 0) {
+		res = -2;
+		ERR("can't add tuple notes into DB\n");
+	}
+	if (db_add_tuple_extensions(_p, t) < 0) {
+		res = -3;
+		ERR("can't add tuple extensions into DB\n");
+	}
+
+	return res;
 }
 
 static int db_remove_presence_tuple(presentity_t *_p, presence_tuple_t *t)
@@ -272,7 +284,7 @@ static int db_remove_presence_tuple(presentity_t *_p, presence_tuple_t *t)
 	return 0;
 }
 
-int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_notes)
+int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_notes_and_ext)
 {
 	db_key_t keys[] = { col_pres_id, col_tupleid };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
@@ -302,7 +314,10 @@ int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_n
 		return -1;
 	}
 
-	if (update_notes) db_update_tuple_notes(_p, t);
+	if (update_notes_and_ext) {
+		db_update_tuple_notes(_p, t);
+		db_update_tuple_extensions(_p, t);
+	}
 	
 	return 0;
 }

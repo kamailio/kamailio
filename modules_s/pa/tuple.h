@@ -32,7 +32,7 @@ presence_tuple_t *find_published_tuple(presentity_t *presentity, str *etag, str 
 int db_read_tuples(presentity_t *_p, db_con_t* db);
 
 /* update tuple status in database */
-int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_notes);
+int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_notes_and_ext);
 
 /* creates new tuple from given information (needed for publishing */
 presence_tuple_t *presence_tuple_info2pa(presence_tuple_info_t *i, str *etag, time_t expires);
