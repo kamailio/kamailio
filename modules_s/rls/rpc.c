@@ -27,7 +27,7 @@ static void trace_vs(rpc_t *rpc, void *c, virtual_subscription_t *vs, int detail
 	rpc_lf(rpc, c);
 
 	if (details > 0) {
-		rpc->printf(c, " -> document = <![CDATA[%.*s]]>", FMT_STR(vs->state_document));
+		rpc->printf(c, " -> document = %.*s", FMT_STR(vs->state_document));
 		rpc_lf(rpc, c);
 	}
 

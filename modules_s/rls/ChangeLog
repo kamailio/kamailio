@@ -1,3 +1,10 @@
+2006-12-14
+	* removed CDATA wrapping of XML documents in XMLRPC output
+
+2006-12-01
+	* allowed standalone documentation generation - bibliograpy appended in
+	this case
+
 2006-07-12
 	* improved dialog refreshing
 
