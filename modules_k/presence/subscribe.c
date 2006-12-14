@@ -659,7 +659,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	struct sip_uri from_uri;
 	struct to_body *pto, *pfrom = NULL, TO;
 	int lexpire, i;
-	int  to_tag_gen = 0, cseq = 0;
+	int  to_tag_gen = 0;
 	str to_tag;
 	subs_t subs;
 	char buf[50];
@@ -898,13 +898,19 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 				" header\n");
 		goto error;
 	}
-	i= 0;
+	if (str2int( &(get_cseq(msg)->number), &subs.cseq)!=0 )
+	{
+		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse cseq"
+				" number\n");
+		goto error;
+	}
+	/*i= 0;
 	while(msg->cseq->body.s[i]>47 && msg->cseq->body.s[i]<58)
 	{
 		cseq = cseq*10 + msg->cseq->body.s[i] - '0';
 		i++;
 	}
-	subs.cseq = cseq;
+	subs.cseq = cseq;*/
 	if( msg->contact==NULL || msg->contact->body.s==NULL)
 	{
 		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse contact"

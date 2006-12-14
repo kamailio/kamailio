@@ -150,40 +150,6 @@ void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
 
 
 
-xmlNodePtr addChild (xmlNodePtr new_node, xmlDocPtr doc, xmlNodePtr p_root )	
-{
-	xmlNodePtr add_node;
-
-	add_node = (xmlNodePtr)pkg_malloc(sizeof(struct _xmlNode));
-	if( add_node == NULL) 
-	{
-		LOG(L_ERR,"PRESENCE:addChild: Error while allocating memory\n");
-		return NULL;
-	}
-	memset(add_node, 0, sizeof(xmlNodePtr));
-
-	add_node->_private= new_node->_private;
-	add_node->type= new_node->type;
-	add_node->name = new_node->name;
-	add_node->doc = doc;
-	add_node->children = new_node->children;
-	add_node->last = new_node->last;
-	add_node->parent = p_root;
-	add_node->next = NULL;
-	add_node->prev = p_root->last;
-	add_node->ns = new_node->ns;
-	add_node->content = new_node->content;
-	add_node->properties = new_node->properties;
-	add_node->nsDef = new_node->nsDef;
-	add_node->psvi = new_node->psvi;
-	add_node->line = new_node->line;
-	add_node->extra = new_node->extra;
-	p_root->last->next = add_node;
-	p_root->last= add_node;
-
-	return add_node;
-}
-
 str* agregate_xmls(str** body_array, int n)
 
 {
@@ -192,7 +158,6 @@ str* agregate_xmls(str** body_array, int n)
 	xmlDocPtr* xml_array ;
 	xmlNodePtr node = NULL;
 	xmlNodePtr new_node = NULL, add_node = NULL ;
-	xmlNodePtr last_child= NULL;
 	str *body= NULL;
 	char* old_id= NULL, *new_id = NULL;
 
@@ -231,7 +196,6 @@ str* agregate_xmls(str** body_array, int n)
 		LOG(L_ERR,"PRESENCE:agregate_xmls: ERROR while geting the xml_tree root\n");
 		goto error;
 	}
-	last_child= p_root->last;
 
 	for(i= j; i>=0; i--)
 	{
@@ -294,19 +258,19 @@ str* agregate_xmls(str** body_array, int n)
 						old_id = xmlNodeGetAttrContentByName(node, "id");
 						if(old_id== NULL)
 						{
-							LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting person id\n");
-							goto error;
+							LOG(L_ERR, "PRESENCE:agregate_xmls: No person id found\n");
+						//	goto error;
 						}
 						new_id = xmlNodeGetAttrContentByName(new_node, "id");
 						if(new_id== NULL)
 						{
-							LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting person id\n");
+							LOG(L_ERR, "PRESENCE:agregate_xmls: No person id found\n");
 							xmlFree(old_id);
-							goto error;
+						//	goto error;
 						}
-
-						if(xmlStrcasecmp((unsigned char*)old_id,
-							(unsigned char*)new_id )== 0)
+						if(old_id && new_id)
+							if(xmlStrcasecmp((unsigned char*)old_id,
+								(unsigned char*)new_id )== 0)
 								append = 0;
 						
 						xmlFree(old_id);
@@ -327,8 +291,13 @@ str* agregate_xmls(str** body_array, int n)
 
 			if(append) /* if the tag does not exist in the old body, append it */
 			{
-				add_node = addChild(new_node,xml_array[j],p_root);
-				if( add_node == NULL) 
+				add_node= xmlCopyNode(new_node, 1);
+				if(add_node== NULL)
+				{
+					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while copying node\n");
+					goto error;
+				}
+				if(xmlAddChild(p_root, add_node)== NULL)
 				{
 					LOG(L_ERR,"PRESENCE:agregate_xmls:Error while adding child\n");
 					goto error;
@@ -348,21 +317,6 @@ str* agregate_xmls(str** body_array, int n)
 	xmlDocDumpFormatMemory(xml_array[j],(xmlChar**) &body->s, 
 			&body->len, 1);	
 
-	p_root->last= last_child;
-
-	if(last_child->next)  /* if nodes added */
-	{	
-		last_child= last_child->next;
-		while(last_child)
-		{
-			node= last_child;
-			last_child= last_child->next;
-			pkg_free(node);
-			node= NULL;
-		}
-	}
-	p_root->last->next= NULL;
-
   	for(i=0; i<=j; i++)
 	{
 		if(xml_array[i]!=NULL)
@@ -377,23 +331,6 @@ str* agregate_xmls(str** body_array, int n)
 	return body;
 
 error:
-	if(p_root)
-	{
-		p_root->last= last_child;
-
-		if(last_child->next)  /* if nodes added */
-		{	
-			last_child= last_child->next;
-			while(last_child)
-			{
-				node= last_child;
-				last_child= last_child->next;
-				pkg_free(last_child);
-			}
-		}	
-		p_root->last->next= NULL;
-	}
-
 	if(xml_array!=NULL)
 	{
 		for(i=0; i<=j; i++)
@@ -409,13 +346,92 @@ error:
 
 	return NULL;
 }
+str* offline_nbody(str* body)
+{
+	xmlDocPtr doc= NULL;
+	xmlDocPtr new_doc= NULL;
+	xmlNodePtr node, tuple_node= NULL;
+	xmlNodePtr root_node, add_node, pres_node;
+	str* new_body;
+
+	doc= xmlParseMemory(body->s, body->len);
+	if(doc==  NULL)
+	{
+		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while parsing xml memory\n");
+		return NULL;
+	}
+	node= xmlDocGetNodeByName(doc, "basic", NULL);
+	if(node== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while extracting basic node\n");
+		goto error;
+	}
+	xmlNodeSetContent(node, (const unsigned char*)"closed");
+
+	tuple_node= xmlDocGetNodeByName(doc, "tuple", NULL);
+	if(node== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while extracting tuple node\n");
+		goto error;
+	}
+	pres_node= xmlDocGetNodeByName(doc, "presence", NULL);
+	if(node== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while extracting presence node\n");
+		goto error;
+	}
+
+
+    new_doc = xmlNewDoc(BAD_CAST "1.0");
+    if(new_doc==0)
+		goto error;
+	root_node= xmlCopyNode(pres_node, 2);
+	if(root_node== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:offline_nbody: Error while copying node\n");
+		goto error;
+	}
+    xmlDocSetRootElement(new_doc, root_node);
+
+  	add_node= xmlCopyNode(tuple_node, 1);
+	if(add_node== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:offline_nbody: Error while copying node\n");
+		goto error;
+	}
+	xmlAddChild(root_node, add_node);
+
+	new_body = (str*)pkg_malloc(sizeof(str));
+	if(new_body == NULL)
+	{
+		LOG(L_ERR,"PRESENCE: build_off_nbody:Error while allocating memory\n");
+		goto error;
+	}
+	memset(new_body, 0, sizeof(str));
+
+	xmlDocDumpFormatMemory(new_doc,(xmlChar**) &new_body->s, &new_body->len, 1);
+
+	xmlFreeDoc(doc);
+	xmlFreeDoc(new_doc);
+	xmlCleanupParser();
+	xmlMemoryDump();
+
+	return new_body;
+
+error:
+	if(doc)
+		xmlFreeDoc(doc);
+	if(new_doc)
+		xmlFreeDoc(new_doc);
+	return NULL;
+
+}		
 
 str* build_off_nbody(str p_user, str p_domain, str* etag)
 {	
 	xmlDocPtr doc = NULL, new_doc = NULL; 
 	xmlNodePtr root_node = NULL, node = NULL, p_root= NULL;
 	xmlNodePtr tuple_node = NULL, status_node = NULL, basic_node = NULL;
-	xmlNodePtr person_node = NULL, activities_node = NULL, unknown_node = NULL;
 
 	db_key_t query_cols[4];
 	db_op_t  query_ops[4];
@@ -428,7 +444,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	str old_body ;
-	char * tuple_id = NULL, * entity = NULL, *person_id = NULL;
+	char * tuple_id = NULL, * entity = NULL;
 	str* body;
 	char* status = NULL;
 
@@ -538,18 +554,6 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 						" entity attribute\n");
 				goto error;
 			}
-		}
-
-		if(xmlStrcasecmp (node->name, (unsigned char*)"person") == 0)
-		{
-			person_id = xmlNodeGetAttrContentByName(node, "id");
-			if(person_id == NULL)
-			{
-				LOG(L_ERR, "PRESENCE:build_off_nbody: error while getting"
-						" entity attribute\n");
-				goto error;
-			}
-
 		}	
 	}
 
@@ -597,32 +601,6 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 		LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
 		goto error;
 	}
-	if(person_id)
-	{	
-		person_node= xmlNewChild(root_node, NULL, BAD_CAST "dm:person", NULL) ;
-		if( person_node ==NULL)
-		{
-			LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
-			goto error;
-		}
-		xmlNewProp(person_node, BAD_CAST "id", BAD_CAST person_id);
-
-		activities_node = xmlNewChild(person_node, NULL,
-			BAD_CAST "rpid:activities", NULL) ;
-		if( activities_node ==NULL)
-		{
-			LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
-			goto error;
-		}
-
-		unknown_node = xmlNewChild(activities_node, NULL,
-				BAD_CAST "rpid:unknown", NULL) ;
-		if( unknown_node ==NULL)
-		{
-			LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
-			goto error;
-		}
-	}
 	xmlDocDumpFormatMemory(new_doc,(xmlChar**) &body->s, &body->len, 1);
 
 	DBG("PRESENCE: build_off_nbody:new_body:\n%.*s\n",body->len, body->s);
@@ -648,7 +626,6 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 	xmlFree(status);
 	xmlFree(entity);
 	xmlFree(tuple_id);
-	xmlFree(person_id);
 	
     return body;
 
@@ -671,8 +648,6 @@ error:
 		xmlFree(entity);
 	if(tuple_id)
 		xmlFree(tuple_id);
-	if(person_id)
-		xmlFree(person_id);
 	return NULL;
 
 }

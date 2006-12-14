@@ -46,6 +46,7 @@ str* create_winfo_xml(watcher_t*, int n, char* version,char* resource,
 str* agregate_xmls(str** body_array, int n);
 int update_xml (str* body, str * new_body);
 str* build_off_nbody(str p_user, str p_domain, str* etag);
+str* offline_nbody(str* body);
 
 #endif /* PIDF_H */
 

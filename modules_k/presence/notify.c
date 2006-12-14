@@ -408,7 +408,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 	db_val_t *row_vals;
 	int n_result_cols = 0;
 	int n_query_cols = 0;
-	int i;
+	int i, n;
 	int build_off_n= -1; 
 	str etags;
 
@@ -462,6 +462,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 	}
 	else
 	{
+		n= result->n;
 		body_array =(str**)pkg_malloc( (result->n)*sizeof(str*));
 		if(body_array == NULL)
 		{
@@ -489,14 +490,14 @@ str* get_p_notify_body(str user, str host, str* etag)
 				{
 					DBG("PRESENCE:get_p_notify_body found etag  \n");
 					build_off_n= i;
-					body_array[i] = build_off_nbody(user, host, etag);
+					
+					body_array[build_off_n]= offline_nbody(&row_vals[body_col].val.str_val);
 					if(body_array[i] == NULL)
 					{
 						LOG(L_INFO, "PRESENCE: get_p_notify_body:The users's"
 								"status was already offline\n");
 						goto error;
 					}
-
 				}
 				else
 					body_array[i] =&row_vals[body_col].val.str_val;
@@ -773,34 +774,26 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 		
 		from_user.s= row_vals[from_user_col].val.str_val.s;
 		from_user.len= 	strlen(from_user.s);
-		DBG("PRESENCE: get_subs_dialog: from_user.len = %d\n", from_user.len);
 		from_domain.s= row_vals[from_domain_col].val.str_val.s;
 		from_domain.len= strlen(from_domain.s);
-		DBG("PRESENCE: get_subs_dialog: from_domain.len = %d\n", from_domain.len);
 		event_id.s=row_vals[event_id_col].val.str_val.s;
 		event_id.len= strlen(event_id.s);
 		if(event_id.s== NULL)
 			event_id.len = 0;
-		DBG("PRESENCE: get_subs_dialog: event_id.len = %d\n", event_id.len);
 		to_tag.s= row_vals[to_tag_col].val.str_val.s;
 		to_tag.len= strlen(to_tag.s);
-		DBG("PRESENCE: get_subs_dialog: to_tag.len = %d\n", to_tag.len);
 		from_tag.s= row_vals[from_tag_col].val.str_val.s; 
 		from_tag.len= strlen(from_tag.s);
-		DBG("PRESENCE: get_subs_dialog: from_tag.len = %d\n", from_tag.len);
 		callid.s= row_vals[callid_col].val.str_val.s;
 		callid.len= strlen(callid.s);
-		DBG("PRESENCE: get_subs_dialog: callid.len = %d\n", callid.len);
 		
 		record_route.s=  row_vals[record_route_col].val.str_val.s;
 		record_route.len= strlen(record_route.s);
 		if(record_route.s== NULL )
 			record_route.len= 0;
 		
-		DBG("PRESENCE: get_subs_dialog: record_route.len = %d\n", record_route.len);
 		contact.s= row_vals[contact_col].val.str_val.s;
 		contact.len= strlen(contact.s);
-		DBG("PRESENCE: get_subs_dialog: contact.len = %d\n", contact.len);
 		
 		if(!force_active && row_vals[status_col].val.str_val.s)
 		{
@@ -812,7 +805,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 			status.s= NULL;
 			status.len= 0;
 		}
-		DBG("PRESENCE: get_subs_dialog: status.len = %d\n", status.len);
 		
 		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
 				from_domain.len+ event_id.len+ + strlen(event)+ to_tag.len+ 
