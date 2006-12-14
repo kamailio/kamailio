@@ -1219,6 +1219,9 @@ ifeq ($(OS), linux)
 		ifneq (,$(findstring -DUSE_POSIX_SEM, $(DEFS)))
 			LIBS+=-lpthread
 		endif
+		ifneq (,$(findstring -DUSE_PTHREAD_MUTEX, $(DEFS)))
+			LIBS+=-lpthread
+		endif
 	endif
 	# check for >= 2.5.44
 	ifeq ($(shell [ $(OSREL_N) -ge 2005044 ] && echo has_epoll), has_epoll)
