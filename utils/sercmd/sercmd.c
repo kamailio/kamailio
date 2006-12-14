@@ -864,6 +864,7 @@ error_cookie:
 	goto error;
 error_toobig:
 	fprintf(stderr, "ERROR: reply too big\n");
+	goto error;
 error_send:
 	fprintf(stderr, "ERROR: send packet failed: %s (%d)\n",
 			strerror(errno), errno);
