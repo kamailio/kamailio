@@ -130,7 +130,7 @@ char *col_accepts = "accepts";
 char *col_event = "event";
 char *col_dialog = "dialog";
 char *col_server_contact = "server_contact";
-char *col_doc_index = "doc_idnex";
+char *col_doc_index = "doc_index";
 
 char *col_watcher = "watcher";
 char *col_events = "events";
