@@ -148,6 +148,12 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, in
 		    uri_len, uri);
 		return -1;
 	}
+	
+	if (dst_uri_len > MAX_URI_SIZE - 1) {
+		LOG(L_ERR, "ERROR: append_branch: too long dst_uri: %.*s\n",
+		    dst_uri_len, ZSW(dst_uri));
+		return -1;
+	}
 
 	     /* if not parameterized, take current uri */
 	if (uri == 0) {
