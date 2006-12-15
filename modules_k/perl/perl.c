@@ -326,7 +326,12 @@ static int mod_init() {
 
 	if ((my_perl = parser_init())) {
 		ret = 0;
+#ifdef PERL_EXIT_DESTRUCT_END
 		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+#else
+		PL_exit_flags |= PERL_EXIT_EXPECTED;
+#endif
+
 	} else {
 		ret = -1;
 	}
