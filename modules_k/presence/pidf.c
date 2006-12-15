@@ -157,9 +157,9 @@ str* agregate_xmls(str** body_array, int n)
 	xmlNodePtr p_root= NULL, new_p_root= NULL ;
 	xmlDocPtr* xml_array ;
 	xmlNodePtr node = NULL;
-	xmlNodePtr new_node = NULL, add_node = NULL ;
+	xmlNodePtr add_node = NULL ;
 	str *body= NULL;
-	char* old_id= NULL, *new_id = NULL;
+	char* id= NULL, *tuple_id = NULL;
 
 	xml_array = (xmlDocPtr*)pkg_malloc( (n+1)*sizeof(xmlDocPtr));
 
@@ -206,92 +206,52 @@ str* agregate_xmls(str** body_array, int n)
 			goto error;
 		}
 
-		for (new_node = new_p_root->children; new_node!=NULL; new_node = new_node->next)
+		node= xmlNodeGetChildByName(new_p_root, "tuple");
+		if(node== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:agregate_xmls: ERROR couldn't "
+					"extract tuple node\n");
+			goto error;
+		}
+		tuple_id= xmlNodeGetAttrContentByName(node, "id");
+		if(tuple_id== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting tuple id\n");
+			goto error;
+		}
+		append= 1;
+		for (node = p_root->children; node!=NULL; node = node->next)
 		{		
-			if( xmlStrcasecmp(new_node->name,(unsigned char*)"text")==0)
+			if( xmlStrcasecmp(node->name,(unsigned char*)"text")==0)
 				continue;
 			
-			append= 1;
-			if( xmlStrcasecmp(new_node->name,(unsigned char*)"tuple")==0)
+			if( xmlStrcasecmp(node->name,(unsigned char*)"tuple")==0)
 			{
-				node = xmlNodeGetChildByName(p_root, "tuple");
-				if(!node)
-				{
-					LOG(L_ERR, "PRESENCE:agregate_xmls: ERROR couldn't "
-							"extract tuple node\n");
-					goto error;
-				}
-				old_id = xmlNodeGetAttrContentByName(node, "id");
-				if(old_id== NULL)
+				id = xmlNodeGetAttrContentByName(node, "id");
+				if(id== NULL)
 				{
 					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting tuple id\n");
-					goto error;
-				}
-				new_id = xmlNodeGetAttrContentByName(new_node, "id");
-				if(new_id== NULL)
-				{
-					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting tuple id\n");
-					xmlFree(old_id);
 					goto error;
 				}
 				
-				if(xmlStrcasecmp((unsigned char*)old_id,
-							(unsigned char*)new_id )== 0)
+				if(xmlStrcasecmp((unsigned char*)tuple_id,
+							(unsigned char*)id )== 0)
 				{
 					append = 0;
+					xmlFree(id);
+					break;
 				}
-				xmlFree(old_id);
-				xmlFree(new_id);
+				xmlFree(id);
 			}
-			else
-			{
-				if( xmlStrcasecmp(new_node->name,(unsigned char*)"person")==0)
-				{
-					node = xmlNodeGetChildByName(p_root, "person");
-					if(node == NULL)
-					{
-						LOG(L_ERR, "PRESENCE:agregate_xmls: No person node found\n");
-						append = 1;
-					}
-					else
-					{	
-						old_id = xmlNodeGetAttrContentByName(node, "id");
-						if(old_id== NULL)
-						{
-							LOG(L_ERR, "PRESENCE:agregate_xmls: No person id found\n");
-						//	goto error;
-						}
-						new_id = xmlNodeGetAttrContentByName(new_node, "id");
-						if(new_id== NULL)
-						{
-							LOG(L_ERR, "PRESENCE:agregate_xmls: No person id found\n");
-							xmlFree(old_id);
-						//	goto error;
-						}
-						if(old_id && new_id)
-							if(xmlStrcasecmp((unsigned char*)old_id,
-								(unsigned char*)new_id )== 0)
-								append = 0;
-						
-						xmlFree(old_id);
-						xmlFree(new_id);
+		}
+		xmlFree(tuple_id);
+		tuple_id= NULL;
 
-					}
-				}
-				else
-				{
-					node= xmlNodeGetChildByName(p_root,(char*) new_node->name);
-					if(node!=NULL) /* if found in the old body do not 
-											append*/	
-					{
-						append = 0;
-					}
-				}
-			}
-
-			if(append) /* if the tag does not exist in the old body, append it */
-			{
-				add_node= xmlCopyNode(new_node, 1);
+		if(append) 
+		{	
+			for(node= new_p_root->children; node; node= node->next)
+			{	
+				add_node= xmlCopyNode(node, 1);
 				if(add_node== NULL)
 				{
 					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while copying node\n");
@@ -340,7 +300,8 @@ error:
 		}
 		pkg_free(xml_array);
 	}
-
+	if(tuple_id)
+		xmlFree(tuple_id);
 	if(body)
 		pkg_free(body);
 
