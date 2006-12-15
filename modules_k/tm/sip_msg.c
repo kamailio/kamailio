@@ -355,6 +355,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 			case HDR_REFER_TO_T:
 			case HDR_SESSION_EXPIRES_T:
 			case HDR_MIN_SE_T:
+			case HDR_PPI_T:
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
@@ -717,6 +718,11 @@ do { \
 			case HDR_RPID_T:
 				if (!HOOK_SET(rpid)) {
 					new_msg->rpid = new_hdr;
+				}
+				break;
+			case HDR_PPI_T:
+				if (!HOOK_SET(ppi)) {
+					new_msg->ppi = new_hdr;
 				}
 				break;
 			case HDR_REFER_TO_T:
