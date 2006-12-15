@@ -108,23 +108,26 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 		}
 		return -1;
 	}
-
-	if (parse_sip_msg_uri(_msg) < 0) {
-		LOG(L_ERR, "perl:perl_exec: Error while"
-				" parsing Request-URI\n");
-
-		reason.s = "Bad Request-URI";
-		reason.len = sizeof("Bad Request-URI")-1;
-		if (sl_reply(_msg, (char*)400, (char*)(&reason)) == -1) {
+	
+	switch ((_msg->first_line).type) {
+	case SIP_REQUEST:
+		if (parse_sip_msg_uri(_msg) < 0) {
 			LOG(L_ERR, "perl:perl_exec: Error while"
-					" sending reply\n");
-		}
-		return -1;
-	}
+					" parsing Request-URI\n");
 
-	if ((_msg->first_line).type != SIP_REQUEST) {
-		LOG(L_ERR, "perl function called during response transmission."
-				" Invalid call - exiting.");
+			reason.s = "Bad Request-URI";
+			reason.len = sizeof("Bad Request-URI")-1;
+			if (sl_reply(_msg, (char*)400, (char*)(&reason)) == -1) {
+				LOG(L_ERR, "perl:perl_exec: Error while"
+						" sending reply\n");
+			}
+			return -1;
+		}
+		break;
+	case SIP_REPLY:
+		break;
+	default:
+		LOG(L_ERR, "perl:perl_exec: Invalid firstline");
 		return -1;
 	}
 

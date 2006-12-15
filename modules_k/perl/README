@@ -42,24 +42,28 @@ Bastian Friedrich
 
         3.2. OpenSER::Message
 
-              3.2.1. getRURI()
-              3.2.2. getMethod()
-              3.2.3. getFullHeader()
-              3.2.4. getBody()
-              3.2.5. getMessage()
-              3.2.6. getHeader(name)
-              3.2.7. getHeaderNames()
-              3.2.8. moduleFunction(func,string1,string2)
-              3.2.9. log(level,message) (deprecated type)
-              3.2.10. rewrite_ruri(newruri)
-              3.2.11. setFlag(flag)
-              3.2.12. resetFlag(flag)
-              3.2.13. isFlagSet(flag)
-              3.2.14. pseudoVar(string)
-              3.2.15. append_branch(branch,qval)
-              3.2.16. serialize_branches(clean_before)
-              3.2.17. next_branches()
-              3.2.18. getParsedRURI()
+              3.2.1. getType()
+              3.2.2. getStatus()
+              3.2.3. getReason()
+              3.2.4. getVersion()
+              3.2.5. getRURI()
+              3.2.6. getMethod()
+              3.2.7. getFullHeader()
+              3.2.8. getBody()
+              3.2.9. getMessage()
+              3.2.10. getHeader(name)
+              3.2.11. getHeaderNames()
+              3.2.12. moduleFunction(func,string1,string2)
+              3.2.13. log(level,message) (deprecated type)
+              3.2.14. rewrite_ruri(newruri)
+              3.2.15. setFlag(flag)
+              3.2.16. resetFlag(flag)
+              3.2.17. isFlagSet(flag)
+              3.2.18. pseudoVar(string)
+              3.2.19. append_branch(branch,qval)
+              3.2.20. serialize_branches(clean_before)
+              3.2.21. next_branches()
+              3.2.22. getParsedRURI()
 
         3.3. OpenSER::URI
 
@@ -352,7 +356,30 @@ OpenSER::log(L_INFO, "foobar");
    possible to fully configure alternative routing decisions.
      _________________________________________________________
 
-3.2.1. getRURI()
+3.2.1. getType()
+
+   Returns one of the constants SIP_REQUEST, SIP_REPLY,
+   SIP_INVALID stating the type of the current message.
+     _________________________________________________________
+
+3.2.2. getStatus()
+
+   Returns the status code of the current Reply message. This
+   function is invalid in Request context!
+     _________________________________________________________
+
+3.2.3. getReason()
+
+   Returns the reason of the current Reply message. This function
+   is invalid in Request context!
+     _________________________________________________________
+
+3.2.4. getVersion()
+
+   Returns the version string of the current SIP message.
+     _________________________________________________________
+
+3.2.5. getRURI()
 
    This function returns the recipient URI of the present SIP
    message:
@@ -361,17 +388,21 @@ OpenSER::log(L_INFO, "foobar");
 
    getRURI returns a string. See "getParsedRURI()" below how to
    receive a parsed structure.
+
+   This function is valid in request messages only.
      _________________________________________________________
 
-3.2.2. getMethod()
+3.2.6. getMethod()
 
    Returns the current method, such as INVITE, REGISTER, ACK and
    so on.
 
    my $method = $m->getMethod();
+
+   This function is valid in request messages only.
      _________________________________________________________
 
-3.2.3. getFullHeader()
+3.2.7. getFullHeader()
 
    Returns the full message header as present in the current
    message. You might use this header to further work with it
@@ -380,17 +411,17 @@ OpenSER::log(L_INFO, "foobar");
    my $hdr = $m->getFullHeader();
      _________________________________________________________
 
-3.2.4. getBody()
+3.2.8. getBody()
 
    Returns the message body.
      _________________________________________________________
 
-3.2.5. getMessage()
+3.2.9. getMessage()
 
    Returns the whole message including headers and body.
      _________________________________________________________
 
-3.2.6. getHeader(name)
+3.2.10. getHeader(name)
 
    Returns the body of the first message header with this name.
 
@@ -399,14 +430,12 @@ OpenSER::log(L_INFO, "foobar");
    "John" <sip:john@doe.example>
      _________________________________________________________
 
-3.2.7. getHeaderNames()
+3.2.11. getHeaderNames()
 
    Returns an array of all header names. Duplicates possible!
-
-   Call the OpenSER do_action() function. Not yet implemented.
      _________________________________________________________
 
-3.2.8. moduleFunction(func,string1,string2)
+3.2.12. moduleFunction(func,string1,string2)
 
    Search for an arbitrary function in module exports and call it
    with the parameters self, string1, string2.
@@ -424,7 +453,7 @@ $m->sl_send_reply("500", "Internal Error");
 $m->xlog("L_INFO", "foo");
      _________________________________________________________
 
-3.2.9. log(level,message) (deprecated type)
+3.2.13. log(level,message) (deprecated type)
 
    Logs the message with OpenSER's logging facility. The logging
    level is one of the following:
@@ -440,7 +469,7 @@ $m->xlog("L_INFO", "foo");
    variant. This one, located in OpenSER::Message, is deprecated.
      _________________________________________________________
 
-3.2.10. rewrite_ruri(newruri)
+3.2.14. rewrite_ruri(newruri)
 
    Sets a new destination (recipient) URI. Useful for rerouting
    the current message/call.
@@ -449,23 +478,23 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 }
      _________________________________________________________
 
-3.2.11. setFlag(flag)
+3.2.15. setFlag(flag)
 
    Sets a message flag. The constants as known from the C API may
    be used, when Constants.pm is included.
      _________________________________________________________
 
-3.2.12. resetFlag(flag)
+3.2.16. resetFlag(flag)
 
    Resets a message flag.
      _________________________________________________________
 
-3.2.13. isFlagSet(flag)
+3.2.17. isFlagSet(flag)
 
    Returns whether a message flag is set or not.
      _________________________________________________________
 
-3.2.14. pseudoVar(string)
+3.2.18. pseudoVar(string)
 
    Returns a new string where all pseudo variables are
    substituted by their values. Can be used to receive the values
@@ -475,22 +504,22 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
    strings!
      _________________________________________________________
 
-3.2.15. append_branch(branch,qval)
+3.2.19. append_branch(branch,qval)
 
    Append a branch to current message.
      _________________________________________________________
 
-3.2.16. serialize_branches(clean_before)
+3.2.20. serialize_branches(clean_before)
 
    Serialize branches.
      _________________________________________________________
 
-3.2.17. next_branches()
+3.2.21. next_branches()
 
    Next branches.
      _________________________________________________________
 
-3.2.18. getParsedRURI()
+3.2.22. getParsedRURI()
 
    Returns the current destination URI as an OpenSER::URI object.
      _________________________________________________________
@@ -878,7 +907,15 @@ Chapter 4. Perl samples
    OpenSER documentation.
      _________________________________________________________
 
-4.1.1.2. flags.pl
+4.1.1.2. firstline.pl
+
+   Message's first_line structure may be evaluated. Message can
+   be either of SIP_REQUEST or SIP_REPLY. Depending on that,
+   different information can be received. This script
+   demonstrates these functions.
+     _________________________________________________________
+
+4.1.1.3. flags.pl
 
    The perl module provides access to OpenSER's flagging
    mechanism. The flag names available for OpenSER modules are
@@ -890,7 +927,7 @@ Chapter 4. Perl samples
    "magenta" flags are evaluated.
      _________________________________________________________
 
-4.1.1.3. functions.pl
+4.1.1.4. functions.pl
 
    This sample script demonstrates different things related to
    calling functions from within perl, and the different types of
@@ -919,7 +956,7 @@ Chapter 4. Perl samples
    works for warnings, too.
      _________________________________________________________
 
-4.1.1.4. headers.pl
+4.1.1.5. headers.pl
 
    Header extraction is among the most crucial functionalities
    while processing SIP messages. This sample script demonstrates
@@ -933,7 +970,7 @@ Chapter 4. Perl samples
    Perl's array accessing methods.
      _________________________________________________________
 
-4.1.1.5. logging.pl
+4.1.1.6. logging.pl
 
    For debugging purposes, you probably want to write messages to
    the syslog. The "logdemo" shows three ways to access the
@@ -948,7 +985,7 @@ Chapter 4. Perl samples
    through the OpenSER::Constants package.
      _________________________________________________________
 
-4.1.1.6. messagedump.pl
+4.1.1.7. messagedump.pl
 
    This script demonstrates how to access the whole message
    header of the current message. Please note that modifications
@@ -956,7 +993,7 @@ Chapter 4. Perl samples
    configuration script may NOT be reflected in this dump.
      _________________________________________________________
 
-4.1.1.7. persistence.pl
+4.1.1.8. persistence.pl
 
    When processing SIP messages, you may want to use persistent
    data across multiple calls to your Perl functions. Your first
@@ -967,14 +1004,14 @@ Chapter 4. Perl samples
    this.
      _________________________________________________________
 
-4.1.1.8. phonenumbers.pl
+4.1.1.9. phonenumbers.pl
 
    The OpenSER::Utils::PhoneNumbers package provides two methods
    for the transformation of local to canonical telephone
    numbers, and vice versa. This script demonstrates it's use.
      _________________________________________________________
 
-4.1.1.9. pseudovars.pl
+4.1.1.10. pseudovars.pl
 
    This script demonstrates the Perl module's "pseudoVar" method.
    It may be used to retrieve the values of current pseudo

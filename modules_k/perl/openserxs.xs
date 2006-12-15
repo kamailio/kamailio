@@ -108,6 +108,22 @@ struct action * sv2action(SV *sv) {
 	return NULL; /* In case of error above... */
 }
 
+/*
+ * We have a private function for two reasons:
+ * a) Return SIP_INVALID even if type was sth different
+ * b) easy access
+ */
+
+inline static int getType(struct sip_msg *msg) {
+	int t = SIP_INVALID;
+	switch ((msg->first_line).type) {
+		case SIP_REQUEST:	t = SIP_REQUEST; break;
+		case SIP_REPLY:		t = SIP_REPLY; break;
+	}
+	return t;
+}
+		
+
 SV *getStringFromURI(SV *self, enum uri_members what) {
 	struct sip_uri *myuri = sv2uri(self);
 	str *ret = NULL;
@@ -398,6 +414,113 @@ alternative routing decisions.
 
 =cut
 
+=head2 getType()
+
+Returns one of the constants SIP_REQUEST, SIP_REPLY, SIP_INVALID stating the
+type of the current message.
+
+=cut
+
+int
+getType(self)
+    SV *self
+  PREINIT:
+    struct sip_msg *msg = sv2msg(self);
+  INIT:
+  CODE:
+  	RETVAL = getType(msg);
+  OUTPUT:
+  	RETVAL
+	
+	
+
+=head2 getStatus()
+
+Returns the status code of the current Reply message. This function is invalid
+in Request context!
+
+=cut
+
+SV *
+getStatus(self)
+    SV *self
+  PREINIT:
+    struct sip_msg *msg = sv2msg(self);
+    str *ret;
+  INIT:
+  CODE:
+	if (!msg) {
+		LOG(L_ERR, "perl: Invalid message reference\n");
+		ST(0) = &PL_sv_undef;
+	} else {
+		if (getType(msg) != SIP_REPLY) {
+			LOG(L_ERR, "perl:getStatus: Status not available in"
+				" non-reply messages.");
+			ST(0) = &PL_sv_undef;
+		} else {
+			ret = &((msg->first_line).u.reply.status);
+			ST(0) = sv_2mortal(newSVpv(ret->s, ret->len));
+		}
+	}
+
+
+=head2 getReason()
+
+Returns the reason of the current Reply message. This function is invalid
+in Request context!
+
+=cut
+
+SV *
+getReason(self)
+    SV *self
+  PREINIT:
+    struct sip_msg *msg = sv2msg(self);
+    str *ret;
+  INIT:
+  CODE:
+	if (!msg) {
+		LOG(L_ERR, "perl: Invalid message reference\n");
+		ST(0) = &PL_sv_undef;
+	} else {
+		if (getType(msg) != SIP_REPLY) {
+			LOG(L_ERR, "perl:getReason: Reason not available in"
+				" non-reply messages.");
+			ST(0) = &PL_sv_undef;
+		} else {
+			ret = &((msg->first_line).u.reply.reason);
+			ST(0) = sv_2mortal(newSVpv(ret->s, ret->len));
+		}
+	}
+
+
+=head2 getVersion()
+
+Returns the version string of the current SIP message.
+
+=cut
+
+SV *
+getVersion(self)
+    SV *self
+  PREINIT:
+    struct sip_msg *msg = sv2msg(self);
+    str *ret;
+  INIT:
+  CODE:
+	if (!msg) {
+		LOG(L_ERR, "perl: Invalid message reference\n");
+		ST(0) = &PL_sv_undef;
+	} else {
+		if (getType(msg) == SIP_REQUEST) {
+			ret = &((msg->first_line).u.request.version);
+		} else { /* SIP_REPLY */
+			ret = &((msg->first_line).u.reply.version);
+		}
+		ST(0) = sv_2mortal(newSVpv(ret->s, ret->len));
+	}
+
+
 =head2 getRURI()
 
 This function returns the recipient URI of the present SIP message:
@@ -406,6 +529,8 @@ C<< my $ruri = $m->getRURI(); >>
 
 getRURI returns a string. See L</"getParsedRURI()"> below how to receive a
 parsed structure.
+
+This function is valid in request messages only.
 
 =cut
 
@@ -421,8 +546,14 @@ getRURI(self)
 		LOG(L_ERR, "perl: Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
-		ret = &((msg->first_line).u.request.uri);
-		ST(0) = sv_2mortal(newSVpv(ret->s, ret->len));
+		if (getType(msg) != SIP_REQUEST) {
+			LOG(L_ERR, "perl: Not a request message - "
+				"no RURI available.\n");
+			ST(0) = &PL_sv_undef;
+		} else {
+			ret = &((msg->first_line).u.request.uri);
+			ST(0) = sv_2mortal(newSVpv(ret->s, ret->len));
+		}
 	}
 
 
@@ -431,6 +562,8 @@ getRURI(self)
 Returns the current method, such as C<INVITE>, C<REGISTER>, C<ACK> and so on.
 
 C<< my $method = $m->getMethod(); >>
+
+This function is valid in request messages only.
 
 =cut
 
@@ -446,8 +579,14 @@ getMethod(self)
 		LOG(L_ERR, "perl: Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
-		ret = &((msg->first_line).u.request.method);
-		ST(0) = sv_2mortal(newSVpv(ret->s, ret->len));
+		if (getType(msg) != SIP_REQUEST) {
+			LOG(L_ERR, "perl: Not a request message - "
+				"no method available.\n");
+			ST(0) = &PL_sv_undef;
+		} else {
+			ret = &((msg->first_line).u.request.method);
+			ST(0) = sv_2mortal(newSVpv(ret->s, ret->len));
+		}
 	}
 
 
@@ -467,17 +606,29 @@ getFullHeader(self)
   PREINIT:
     struct sip_msg *msg = sv2msg(self);
     SV *ret;
+    char *firsttoken;
   INIT:
   CODE:
 	if (!msg) {
 		LOG(L_ERR, "perl: Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
-		parse_headers(msg, ~0, 0);
-		ret = newSVpv((msg->first_line).u.request.method.s,
-			(((long)(msg->eoh))-
-			 ((long)((msg->first_line).u.request.method.s))));
-		ST(0) = sv_2mortal(ret);
+		if (getType(msg) == SIP_INVALID) {
+			LOG(L_ERR, "perl:getFullHeader: Invalid message type.\n");
+			ST(0)  = &PL_sv_undef;
+		} else {
+			if (getType(msg) == SIP_REQUEST) {
+				parse_headers(msg, ~0, 0);
+				firsttoken = (msg->first_line).u.request.method.s;
+			} else { /* SIP_REPLY */
+				firsttoken = (msg->first_line).u.reply.version.s;
+			}
+
+			ret = newSVpv(firsttoken,
+				(((long)(msg->eoh))-
+				 ((long)(firsttoken))));
+			ST(0) = sv_2mortal(ret);
+		}
 	}
 
 
@@ -603,25 +754,6 @@ getHeaderNames(self)
 	}
 
 
-	
-=comment head2 doAction(action)
-
-Call the OpenSER C<do_action()> function.
-Not yet implemented.
-
-=cut
-
-SV *
-doAction(self, action)
-    SV *self;
-    SV *action;
-  PREINIT:
-    struct sip_msg *msg = sv2msg(self);
-  INIT:
-  CODE:
-	ST(0) = &PL_sv_undef;
-	
-
 =head2 moduleFunction(func,string1,string2)
 
 Search for an arbitrary function in module exports and call it with the
@@ -724,8 +856,14 @@ rewrite_ruri(self, newruri)
 		LOG(L_ERR, "perl: Invalid message reference\n");
 		RETVAL = -1;
 	} else {
-		DBG("perl:rewrite_ruri: New R-URI is [%s]\n", newruri);
-		RETVAL = rewrite_ruri(msg, newruri);
+		if (getType(msg) != SIP_REQUEST) {
+			LOG(L_ERR, "perl:rewrite_ruri: Not a Request. "
+				"RURI rewrite unavailable.\n");
+			RETVAL = -1;
+		} else {
+			DBG("perl:rewrite_ruri: New R-URI is [%s]\n", newruri);
+			RETVAL = rewrite_ruri(msg, newruri);
+		}
 	}
   OUTPUT:
 	RETVAL

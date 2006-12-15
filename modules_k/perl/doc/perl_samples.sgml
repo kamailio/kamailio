@@ -36,6 +36,14 @@
 				</para>
 			</section>
 			<section>
+				<title>firstline.pl</title>
+				<para>
+				Message's first_line structure may be evaluated. Message can be either of
+				SIP_REQUEST or SIP_REPLY. Depending on that, different information can be received.
+				This script demonstrates these functions.
+				</para>
+			</section>
+			<section>
 				<title>flags.pl</title>
 				<para>
 				The perl module provides access to OpenSER's flagging mechanism. The flag names available
@@ -45,6 +53,7 @@
 				<para>
 				The first function, setflag, demonstrates how the "green" flag is set. In the second function,
 				readflag, the "green" and "magenta" flags are evaluated.
+				</para>
 			</section>
 			<section>
 				<title>functions.pl</title>
