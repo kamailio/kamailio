@@ -74,6 +74,8 @@ int db_mysql_get_columns(db_con_t* _h, db_res_t* _r)
 		case FIELD_TYPE_SHORT:
 		case FIELD_TYPE_LONG:
 		case FIELD_TYPE_INT24:
+		case FIELD_TYPE_LONGLONG:
+		case FIELD_TYPE_DECIMAL:
 		case FIELD_TYPE_TIMESTAMP:
 			RES_TYPES(_r)[i] = DB_INT;
 			break;
