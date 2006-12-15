@@ -274,13 +274,50 @@ modparam("dialog", "use_tight_match", 1)
 
 	<section>
 	<title>Exported pseudo-variables</title>
+
 		<section>
-			<title><varname>$dlg_count</varname></title>
+			<title><varname>$DLG_count</varname></title>
 			<para>
 			Returns the number of current active dialogs (may be confirmed or
 			not).
 			</para>
 		</section>
+
+		<section>
+			<title><varname>$DLG_status</varname></title>
+			<para>
+			Returns the status of the dialog corresponding to the processed 
+			sequential request. This PV will be available only for sequential
+			requests, after doing loose_route().
+			</para>
+			<para>
+			Value may be:
+			</para>
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>3</emphasis> - Confirmed by a final reply but 
+					no ACK received yet.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>4</emphasis> - Confirmed by a final reply and
+					ACK received.
+				</para></listitem>
+				<listitem><para>
+					<emphasis>5</emphasis> - Dialog ended.
+				</para></listitem>
+			</itemizedlist>
+		</section>
+
+		<section>
+			<title><varname>$DLG_lifetime</varname></title>
+			<para>
+			Returns the duration (in seconds) of the dialog corresponding to 
+			the processed sequential request. The duration is calculated from 
+			the dialog confirmation and the current moment. This PV will be 
+			available only for sequential requests, after doing loose_route().
+			</para>
+		</section>
+
 	</section>
 
 

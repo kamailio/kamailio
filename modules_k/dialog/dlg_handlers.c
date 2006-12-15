@@ -39,6 +39,7 @@
 
 #include "../../trim.h"
 #include "../../items.h"
+#include "../../timer.h"
 #include "../../statistics.h"
 #include "../../parser/parse_from.h"
 #include "../tm/tm_load.h"
@@ -65,6 +66,11 @@ extern stat_var *early_dlgs;
 extern stat_var *processed_dlgs;
 extern stat_var *expired_dlgs;
 extern stat_var *failed_dlgs;
+
+
+static unsigned int CURR_DLG_LIFETIME = 0;
+static unsigned int CURR_DLG_STATUS = 0;
+static unsigned int CURR_DLG_ID  = 0xffffffff;
 
 #define RR_DLG_PARAM_SIZE  (2*2*sizeof(int)+3+MAX_DLG_RR_PARAM_NAME)
 #define DLG_SEPARATOR      '.'
@@ -194,11 +200,12 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	 * response at some point, but then that there was an error at some
 	 * other point before the call could receive a 2xx response.  This means
 	 * we have to decrement the early_dlgs counter. */
-	if (dlg->state == DLG_STATE_EARLY && param->code >= 300) {
-		if_update_stat(dlg_enable_stats, early_dlgs, -1);
+	if (dlg->state == DLG_STATE_EARLY) {
+		if (param->code >= 300)
+			if_update_stat(dlg_enable_stats, early_dlgs, -1);
+		dlg->state = DLG_STATE_CONFIRMED_NA;
 	}
 
-	dlg->state = DLG_STATE_CONFIRMED;
 
 	if (param->code>=300) {
 		DBG("DEBUG:dialog:dlg_onreply: destroying dialog "
@@ -224,9 +231,10 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 			dlg_set_totag( dlg, &tag);
 	}
 
-	
+	dlg->start_ts = get_ticks();
+
 	/* We have received a non-provisional response, so the dialog is no
- 	 * longer in the early state.  However, we need to check two things:
+	 * longer in the early state.  However, we need to check two things:
 	 *
 	 * 1) We can get more than one 2xx response.  We only want to decrement
 	 *    for the first one.
@@ -412,7 +420,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		}
 	}
 
+	CURR_DLG_ID = req->id;
+	CURR_DLG_LIFETIME = get_ticks()-dlg->start_ts;
+
 	if (req->first_line.u.request.method_value==METHOD_BYE) {
+		CURR_DLG_STATUS = DLG_STATE_DELETED;
 		if (remove_dlg_timer(&dlg->tl)!=0) {
 			unref_dlg( dlg , 1, 0);
 			return;
@@ -435,7 +447,17 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	if (req->first_line.u.request.method_value!=METHOD_ACK) {
 		dlg->lifetime = get_dlg_timeout(req);
 		update_dlg_timer( &dlg->tl, dlg->lifetime );
+	} else {
+		if (dlg->state==DLG_STATE_CONFIRMED_NA ||
+		dlg->state==DLG_STATE_CONFIRMED) {
+			dlg->state=DLG_STATE_CONFIRMED;
+		} else {
+			LOG(L_WARN, "WARNING:dialog:dlg_onroute: ACK for "
+				"unconfirmed or unconfirmed_NA dialog ?!\n");
+		}
 	}
+
+	CURR_DLG_STATUS = dlg->state;
 
 	unref_dlg( dlg , 1, 0);
 	return;
@@ -464,5 +486,54 @@ void dlg_ontimeout( struct dlg_tl *tl)
 	if_update_stat( dlg_enable_stats, active_dlgs, -1);
 
 	return;
+}
+
+
+/* item/pseudo-variables functions */
+int it_get_dlg_lifetime(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags)
+{
+	int l = 0;
+	char *ch = NULL;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if (CURR_DLG_ID!=msg->id)
+		return -1;
+
+	res->ri = CURR_DLG_LIFETIME;
+	ch = int2str( (unsigned long)res->ri, &l);
+
+	res->rs.s = ch;
+	res->rs.len = l;
+
+	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+
+	return 0;
+}
+
+
+int it_get_dlg_status(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags)
+{
+	int l = 0;
+	char *ch = NULL;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if (CURR_DLG_ID!=msg->id)
+		return -1;
+
+	res->ri = CURR_DLG_STATUS;
+	ch = int2str( (unsigned long)res->ri, &l);
+
+	res->rs.s = ch;
+	res->rs.len = l;
+
+	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+
+	return 0;
 }
 

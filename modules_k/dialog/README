@@ -41,7 +41,9 @@ Bogdan-Andrei Iancu
 
         1.7. Exported pseudo-variables
 
-              1.7.1. $dlg_count
+              1.7.1. $DLG_count
+              1.7.2. $DLG_status
+              1.7.3. $DLG_lifetime
 
    2. Developer's Guide
 
@@ -235,10 +237,32 @@ modparam("dialog", "use_tight_match", 1)
 
 1.7. Exported pseudo-variables
 
-1.7.1. $dlg_count
+1.7.1. $DLG_count
 
    Returns the number of current active dialogs (may be confirmed
    or not).
+     _________________________________________________________
+
+1.7.2. $DLG_status
+
+   Returns the status of the dialog corresponding to the
+   processed sequential request. This PV will be available only
+   for sequential requests, after doing loose_route().
+
+   Value may be:
+
+     * 3 - Confirmed by a final reply but no ACK received yet.
+     * 4 - Confirmed by a final reply and ACK received.
+     * 5 - Dialog ended.
+     _________________________________________________________
+
+1.7.3. $DLG_lifetime
+
+   Returns the duration (in seconds) of the dialog corresponding
+   to the processed sequential request. The duration is
+   calculated from the dialog confirmation and the current
+   moment. This PV will be available only for sequential
+   requests, after doing loose_route().
      _________________________________________________________
 
 Chapter 2. Developer's Guide

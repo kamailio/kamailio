@@ -47,4 +47,10 @@ void dlg_onroute(struct sip_msg* req, str *rr_param, void *param);
 
 void dlg_ontimeout( struct dlg_tl *tl);
 
+/* item/pseudo-variables functions */
+int it_get_dlg_lifetime(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags);
+
+int it_get_dlg_status(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags);
 #endif

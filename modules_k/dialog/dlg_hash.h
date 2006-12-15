@@ -40,8 +40,9 @@
 
 #define DLG_STATE_UNCONFIRMED  1
 #define DLG_STATE_EARLY        2
-#define DLG_STATE_CONFIRMED    3
-#define DLG_STATE_DELETED      4
+#define DLG_STATE_CONFIRMED_NA 3
+#define DLG_STATE_CONFIRMED    4
+#define DLG_STATE_DELETED      5
 
 
 struct dlg_cell
@@ -51,8 +52,9 @@ struct dlg_cell
 	struct dlg_cell      *prev;
 	unsigned int         h_id;
 	unsigned int         h_entry;
-	int                  state;
-	int                  lifetime;
+	unsigned int         state;
+	unsigned int         lifetime;
+	unsigned int         start_ts;
 	struct dlg_tl        tl;
 	str                  callid;
 	str                  from_uri;

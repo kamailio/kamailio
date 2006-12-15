@@ -78,6 +78,8 @@ struct rr_binds d_rrb;
 xl_spec_t timeout_avp;
 
 
+static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags);
 
 
 static cmd_export_t cmds[]={
@@ -113,6 +115,13 @@ static mi_export_t mi_cmds[] = {
 };
 
 
+static item_export_t mod_items[] = {
+	{ "DLG_count",    it_get_dlg_count,    100, {{0, 0}, 0} },
+	{ "DLG_lifetime", it_get_dlg_lifetime, 100, {{0, 0}, 0} },
+	{ "DLG_status",   it_get_dlg_status  , 100, {{0, 0}, 0} },
+	{ 0, 0, 0, {{0, 0}, 0} }
+};
+
 struct module_exports exports= {
 	"dialog",        /* module's name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -120,7 +129,7 @@ struct module_exports exports= {
 	mod_params,      /* param exports */
 	mod_stats,       /* exported statistics */
 	mi_cmds,         /* exported MI functions */
-	0,               /* exported pseudo-variables */
+	mod_items,       /* exported pseudo-variables */
 	mod_init,        /* module initialization function */
 	0,               /* reply processing function */
 	mod_destroy,
@@ -137,8 +146,8 @@ int load_dlg( struct dlg_binds *dlgb )
 
 
 
-int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags)
+static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
+												xl_param_t *param, int flags)
 {
 	int n;
 	int l;
@@ -269,12 +278,6 @@ static int mod_init(void)
 
 	if ( register_fifo_cmd( fifo_print_dlgs, "dlg_list",0)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register fifo\n");
-		return -1;
-	}
-
-	if(xl_add_extra("dlg_count", it_get_dlg_count, 100, 0 )!=0) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register pvar "
-			"[dlg_no]\n");
 		return -1;
 	}
 

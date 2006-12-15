@@ -29,7 +29,7 @@
 
 #include "../../parser/msg_parser.h"
 
-struct dlg_cell* dlg;
+struct dlg_cell;
 
 /* callback function prototype */
 typedef void (dialog_cb) (struct dlg_cell* dlg, int type, struct sip_msg* msg,
