@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef MOD_PERL_H
-#define MOD_PERL_H
+#ifndef PERL_FUNC_H
+#define PERL_FUNC_H
 
 #include "../../parser/msg_parser.h"
 
@@ -42,4 +42,4 @@ int perl_exec_simple2(struct sip_msg* _msg, char* fnc, char* str2);
 int perl_exec1(struct sip_msg* _msg, char* fnc, char *foobar);
 int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr);
 
-#endif /* MOD_PERL_H */
+#endif /* PERL_FUNC_H */
