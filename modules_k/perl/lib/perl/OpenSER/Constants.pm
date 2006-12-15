@@ -37,7 +37,7 @@ use Exporter;
 
 # Constants from route_struct.h
 
-@ISA = qw(Exporter);
+our @ISA = qw(Exporter);
 
 our @EXPORT;
 
@@ -56,6 +56,12 @@ BEGIN {
 ## Unfortunately, there are no "enum"s in Perl. The following blocks reflect
 ## some C headers from OpenSER.
 ## UPDATE THIS FILE WHEN THESE HEADER FILES CHANGE!
+
+#####################
+# From parse_fline.h
+	const( SIP_REQUEST	=> 1);
+	const( SIP_REPLY	=> 2);
+	const( SIP_INVALID	=> 0);
 
 #####################
 # From route_struct.h
@@ -181,9 +187,18 @@ BEGIN {
 	const( FL_BLACK		=> 8);
 	const( FL_ACC		=> 9);
 	const( FL_MAX		=> 10);
+
+
+#####################
+# From db/db_val.h:
+# Value types for virtual database classes
+	const( DB_INT		=> 0 );
+	const( DB_DOUBLE	=> 1 );
+	const( DB_STRING	=> 2 );
+	const( DB_STR		=> 3 );
+	const( DB_DATETIME	=> 4 );
+	const( DB_BLOB		=> 5 );
+	const( DB_BITMAP	=> 6 );
 }
-
-
-
 
 1;
