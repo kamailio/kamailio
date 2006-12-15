@@ -198,11 +198,16 @@ if (perl_exec("ldap_alias")) {
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
 
-     * Perl
+     * Perl 5.8.x or later
 
    Additionally, a number of perl modules should be installed.
    The OpenSER::LDAPUtils package relies on Net::LDAP to be
    installed. One of the sample scripts needs IPC::Shareable
+
+   This module has been developed and tested with Perl 5.8.8, but
+   should work with any 5.8.x release. Compilation is possible
+   with 5.6.x, but it's behavior is unsupported. Earlier versions
+   do not work.
 
    On current Debian systems, at least the following packages
    should be installed:

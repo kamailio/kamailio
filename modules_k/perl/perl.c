@@ -242,7 +242,13 @@ int perl_reload(struct sip_msg *m, char *a, char *b) {
 	if (new_perl) {
 		unload_perl(my_perl);
 		my_perl = new_perl;
+#ifdef PERL_EXIT_DESTRUCT_END
 		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+#else
+#warning Perl 5.8.x should be used. Please upgrade.
+#warning This binary will be unsupported.
+		PL_exit_flags |= PERL_EXIT_EXPECTED;
+#endif
 		return 1;
 	} else {
 		return 0;
