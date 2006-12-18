@@ -1,0 +1,853 @@
+-- ***********************************************************************
+--
+-- This MIB provides information related to the OpenSER SIP Router.
+-- 
+-- Copyright (c) The Internet Society (2006)
+-- Ammendments (c) Soma Networks, Inc. (2006)
+--
+-- All rights reserved.
+-- *****************************************************************
+
+
+
+OPENSER-SIP-COMMON-MIB DEFINITIONS ::= BEGIN
+
+   IMPORTS
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        OBJECT-IDENTITY,
+        Counter32,
+        Gauge32,
+        TimeTicks,
+        Unsigned32
+             FROM SNMPv2-SMI
+
+        RowStatus
+             FROM SNMPv2-TC
+
+        MODULE-COMPLIANCE,
+        OBJECT-GROUP
+             FROM SNMPv2-CONF
+
+        SnmpAdminString
+             FROM SNMP-FRAMEWORK-MIB
+
+        OpenSERSIPTransportProtocol,
+        OpenSERSIPMethodIdentifier,
+        OpenSERSIPEntityRole
+             FROM OPENSER-TC
+
+        openserModules, openserSIPCommonMIB
+             FROM OPENSER-REG-MIB
+
+        InetPortNumber, 
+        InetAddressType,
+        InetAddress
+             FROM INET-ADDRESS-MIB;
+
+   openserSIPCommonModule MODULE-IDENTITY
+        LAST-UPDATED "200603221200Z"
+        ORGANIZATION "OpenSER"
+        CONTACT-INFO
+                "http://www.openser.org"
+        DESCRIPTION
+             "Originally taken from the IETF Session Initiation Protocol 
+              Working Group (sip@ietf.org). The description is pulled from 
+              there:
+              
+              Session Initiation Protocol (SIP) Common MIB module.
+              This module defines objects which MAY be common to all
+              SIP entities.
+
+              SIP is an application-layer signalling protocol for
+              creating, modifying and terminating multimedia
+              sessions with one or more participants. These sessions
+              include Internet multimedia conferences and Internet
+              telephone calls.  SIP is defined in RFC 3261 (June
+
+              2002).
+
+              This MIB is defined for managing objects which are
+              common to SIP User Agents (UAs), Proxy, Redirect
+              and Registrar servers.  Objects specific to each of
+              these entities MAY be managed using entity specific
+              MIBs defined in other modules.
+
+              User Agent (UA): A logical entity that can act as both
+              a user agent client and user agent server.
+              User Agent Client (UAC): A logical entity that creates
+              a new request, and then uses the client
+              transaction state machinery to send it.  The role of UAC
+              lasts only for the duration of that transaction.  In
+              other words, if a piece of software initiates a
+              request, it acts as a UAC for the duration of that
+              transaction.  If it receives a request later, it
+              assumes the role of a user agent server for the
+              processing of that transaction.
+              User Agent Server (UAS): a logical entity that
+              generates a response to a SIP request.  The
+              response accepts, rejects, or redirects the request.
+              This role lasts only for the duration of that
+              transaction.  In other words, if a piece of software
+              responds to a request, it acts as a UAS for the
+              duration of that transaction.  If it generates a
+              request later, it assumes the role of a user
+              agent client for the processing of that
+              transaction.
+
+              Proxy, Proxy Server: An intermediary entity that acts
+              as both a server and a client for the purpose of making
+              requests on behalf of other clients.  A proxy server
+              primarily plays the role of routing, which means its
+              job is to ensure that a request is sent to another
+              entity 'closer' to the targeted user.
+              Proxies are also useful for enforcing policy.  A proxy
+               interprets, and, if necessary, rewrites specific parts
+               of a request message before forwarding it.
+
+              Redirect Server: A redirect server is a user agent
+              server that generates 3xx responses to requests it
+              receives, directing the client to contact an alternate
+              set of URIs.
+
+              Registrar: A registrar is a server that accepts
+              REGISTER requests and places the information it
+              receives in those requests into the location service
+
+              for the domain it handles.
+
+              Copyright (C) The Internet Society (2005). This version
+              of this MIB module is part of RFC XXXX; see the RFC
+              itself for full legal notices."
+        REVISION        "200501281700Z"
+        DESCRIPTION
+             "Initial version of the IETF SOMA-SIP-COMMON-MIB module.
+              This version published as part of RFC XXXX."
+        ::= { openserModules 3 }
+
+--
+-- Top-Level Components of this MIB.
+--
+
+   openserSIPCommonObjects  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for accessible objects in the MIB."  
+        ::= { openserSIPCommonMIB 1 }
+        
+   openserSIPCommonConform     OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for conformance specifications."  
+        ::= { openserSIPCommonMIB 2 }
+
+--
+-- This MIB contains objects that are common to all SIP entities.
+--
+
+--
+-- Common basic configuration
+--
+   openserSIPCommonCfgBase OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for common basic configurations." 
+        ::= { openserSIPCommonObjects 1 }
+
+   openserSIPCommonCfgTimer OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Protocol timer configuration group." 
+        ::= { openserSIPCommonObjects 2 }
+
+   openserSIPCommonStatsSummary OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "SIP message summary statistics group."
+        ::= { openserSIPCommonObjects 3 }
+
+   openserSIPCommonStatsMethod OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Per method statistics group."
+        ::= { openserSIPCommonObjects 4 }
+
+   openserSIPCommonStatusCode OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Per Status code or status code class statistics group."
+        ::= { openserSIPCommonObjects 5 }
+
+   openserSIPCommonStatsTrans OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Transaction statistics group."
+        ::= { openserSIPCommonObjects 6 }
+
+   openserSIPCommonStatsRetry   OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Method retry statistics group."
+        ::= { openserSIPCommonObjects 7 }
+
+   openserSIPCommonStatsOther   OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Other statistics group."
+        ::= { openserSIPCommonObjects 8 }
+
+   openserSIPCommonNotifObjects  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Accessible-for-notify objects group."
+        ::= { openserSIPCommonObjects 9 }
+
+--
+-- Common Configuration Objects
+--
+   openserSIPProtocolVersion OBJECT-TYPE
+       SYNTAX      SnmpAdminString
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object will reflect the version of SIP supported by
+             this SIP entity.  It will follow the same format as SIP
+             version information contained in the SIP messages
+             generated by this SIP entity.  For example, entities
+             supporting SIP version 2 will return 'SIP/2.0' as
+             dictated by the standard."
+       REFERENCE
+             "RFC 3261, Section 7.1"
+       ::= { openserSIPCommonCfgBase 1 }
+
+   openserSIPServiceStartTime OBJECT-TYPE
+       SYNTAX     TimeTicks
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "The value of sysUpTime at the time the SIP entity was last
+             started. If started prior to the last re-initialization of
+             the local network management subsystem, then this object
+             contains a zero value."
+       ::= { openserSIPCommonCfgBase 2 }
+
+    openserSIPEntityType OBJECT-TYPE
+          SYNTAX     OpenSERSIPEntityRole
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               " This object identifies the list of SIP entities this
+                 row is related to. It is defined as a bit map.  Each
+                 bit represents a type of SIP entity.
+
+                 If a bit has value 1, the SIP entity represented by
+                 this row plays the role of this entity type.
+
+                 If a bit has value 0, the SIP entity represented by
+                 this row does not act as this entity type
+                 
+                 Combinations of bits can be set when the SIP entity
+                 plays multiple SIP roles.  The bits can be:
+		 
+                 other(0), userAgent(1), proxyServer(2), 
+                 redirectServer(3), registrarServer(4)"
+       ::= { openserSIPCommonCfgBase 4 }
+
+--
+-- Support for multiple ports
+--
+   openserSIPPortTable OBJECT-TYPE
+       SYNTAX     SEQUENCE OF OpenSERSIPPortEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "This table contains the list of ports that each SIP entity
+             in this system is allowed to use.  These ports can be
+             advertised using the Contact header in a REGISTER request
+             or response."
+       ::= { openserSIPCommonCfgBase 5 }
+
+   openserSIPPortEntry OBJECT-TYPE
+       SYNTAX     OpenSERSIPPortEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "Specification of a particular port.
+
+             Each row represents those objects for a particular SIP
+             entity present in this system."
+       INDEX {
+           openserSIPIPType,
+           openserSIPIPAddress,
+           openserSIPPort
+           }
+       ::= { openserSIPPortTable 1 }
+
+   OpenSERSIPPortEntry ::=
+       SEQUENCE {
+                openserSIPIPType               InetAddressType, 
+                openserSIPIPAddress            InetAddress,
+		openserSIPPort                 InetPortNumber,
+                openserSIPTransportRcv         OpenSERSIPTransportProtocol
+       }
+
+   
+   openserSIPIPType    OBJECT-TYPE
+       SYNTAX     InetAddressType
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION 
+           "This object tells us what the address format is for the next
+	    column"
+       ::= { openserSIPPortEntry 1 }
+
+   openserSIPIPAddress OBJECT-TYPE 
+       SYNTAX     InetAddress
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "This object shows which IP Address the row pertains to"
+       ::= { openserSIPPortEntry 2 } 
+
+   openserSIPPort OBJECT-TYPE
+       SYNTAX     InetPortNumber
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "This object reflects a particular port that can be used by
+             the SIP application."
+       ::= { openserSIPPortEntry 3 }
+
+   openserSIPTransportRcv OBJECT-TYPE
+       SYNTAX     OpenSERSIPTransportProtocol
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "This object will specify the transport protocol the SIP
+             entity will use to receive SIP messages.
+
+             This object is a bit map.  Each bit represents a transport
+             protocol.  If a bit has value 1, then that transport protocol
+             is currently being used.  If a bit has value 0, then that
+             transport protocol is currently not being used. 
+	     
+             The bits are assigned as follows:
+             
+             other(0), udp(1), tcp(2), sctp(3), tls(4)"
+       ::= { openserSIPPortEntry 4 }
+
+   --
+   -- Supported SIP Methods
+   --
+   openserSIPMethodSupportedTable OBJECT-TYPE
+       SYNTAX     SEQUENCE OF OpenSERSIPMethodSupportedEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "This table contains a list of methods supported
+             by each SIP entity in this system. This MAY include,
+             but is not limited to, the standard set of SIP methods
+             discussed in Section 7.1 of RFC 3261.  Any additional
+             methods that MAY be incorporated into the SIP protocol
+             can be represented by this table without any requirement
+             to update this MIB.
+
+             The table is informational in nature; conveying to the NMS
+             capabilities of the managed system.
+
+             From a protocol point of view, the list of methods
+             advertised by the SIP entity in the Allow header (Section
+             20.5 of RFC 3261) MUST be consistent with the methods
+             reflected in this table."
+       ::= { openserSIPCommonCfgBase 7 }
+
+   openserSIPMethodSupportedEntry OBJECT-TYPE
+       SYNTAX     OpenSERSIPMethodSupportedEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "A particular method supported by the SIP entity.
+
+             Each row represents those objects for a particular SIP
+             entity present in this system.  
+
+             The objects in this table entry SHOULD be non-volatile
+             and their value SHOULD be kept at reboot."
+       INDEX { openserSIPMethodSupportedIndex }
+       ::= { openserSIPMethodSupportedTable 1 }
+
+   OpenSERSIPMethodSupportedEntry ::=
+       SEQUENCE {
+                openserSIPMethodSupportedIndex     OpenSERSIPMethodIdentifier,
+                openserSIPMethodName               SnmpAdminString
+       }
+
+   openserSIPMethodSupportedIndex OBJECT-TYPE
+       SYNTAX     OpenSERSIPMethodIdentifier
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "This object uniquely identifies a conceptual row
+             in the table and reflects an assigned number used
+             to identifier a specific SIP method.
+
+             This identifier is suitable for referenceing the
+             associated method throughout this and other MIBs
+             supported by this managed system."
+       ::= { openserSIPMethodSupportedEntry 1 }
+
+   openserSIPMethodName OBJECT-TYPE
+       SYNTAX SnmpAdminString
+       MAX-ACCESS read-only
+       STATUS current
+       DESCRIPTION
+            "This object reflects the supported method's name.
+             The method name MUST be all upper case (eg, 'FOO')."
+       ::= { openserSIPMethodSupportedEntry 2 }
+
+
+--
+-- Summary Statistics
+--
+   openserSIPSummaryInRequests OBJECT-TYPE
+       SYNTAX     Counter32
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "This object indicates the total number of SIP request
+             messages received by the SIP entity including
+             retransmissions."
+       ::= { openserSIPCommonStatsSummary 1 }
+
+   openserSIPSummaryOutRequests OBJECT-TYPE
+       SYNTAX     Counter32
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "This object contains the total number of SIP request
+             messages sent out (originated and relayed) by the SIP
+             entity.  Where a particular message is sent more than
+             once, for example as a retransmission, or as a result of
+             forking, each transmission is counted separately."
+       ::= { openserSIPCommonStatsSummary 2 }
+
+   openserSIPSummaryInResponses OBJECT-TYPE
+       SYNTAX     Counter32
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "This object contains the total number of SIP response
+             messages received by the SIP entity including
+             retransmissions."
+       ::= { openserSIPCommonStatsSummary 3 }
+
+   openserSIPSummaryOutResponses OBJECT-TYPE
+       SYNTAX     Counter32
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "This object contains the total number of SIP response
+             messages sent (originated and relayed) by the SIP entity
+             including retransmissions."
+       ::= { openserSIPCommonStatsSummary 4 }
+
+   openserSIPSummaryTotalTransactions OBJECT-TYPE
+       SYNTAX Counter32
+       MAX-ACCESS read-only
+       STATUS current
+       DESCRIPTION
+            "This object contains a count of the number of transactions
+             that are in progress and transactions that have reached the
+             terminated state.  It is not applicable to stateless
+             SIP Proxy Servers.
+
+             A SIP transaction occurs between a client and a server and
+             comprises all messages from the first request sent from
+             the client to the server up to a final (non-1xx) response
+             sent from the server to the client.
+
+             If the request is INVITE and the final response is a non-2xx,
+             the transaction also include an ACK to the response.  The ACK
+             for a 2xx response to an INVITE request is a separate
+             transaction.
+
+             The branch ID parameter in the Via header field values
+             serves as a transaction identifier.
+
+             A transaction is identified by the CSeq sequence number
+             within a single call leg.  The ACK request has the same
+             CSeq number as the corresponding INVITE request, but
+             comprises a transaction of its own.
+
+             In the case of a forked request, each branch counts as a
+             single transaction.
+
+             For a transaction stateless Proxy Server, this counter
+             is always 0."
+       ::= { openserSIPCommonStatsSummary 5 }
+
+--
+-- SIP Method Statistics
+-- Total counts for each SIP method.
+--
+   openserSIPMethodStatsTable OBJECT-TYPE
+       SYNTAX     SEQUENCE OF OpenSERSIPMethodStatsEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "This table contains the method statistics objects
+             for SIP entities.  Each row represents those objects
+             for a particular SIP entity present in this system."
+       ::= { openserSIPCommonStatsMethod 1 }
+
+   openserSIPMethodStatsEntry OBJECT-TYPE
+       SYNTAX     OpenSERSIPMethodStatsEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "A row of per entity method statistics.
+
+             Each row represents those objects for a particular SIP
+             entity present in this system."
+       INDEX { openserSIPStatsMethod }
+       ::= { openserSIPMethodStatsTable 1 }
+
+   OpenSERSIPMethodStatsEntry ::=
+       SEQUENCE {
+                openserSIPStatsMethod       OpenSERSIPMethodIdentifier,
+                openserSIPStatsOutbounds    Counter32,
+                openserSIPStatsInbounds     Counter32
+       }
+
+   openserSIPStatsMethod OBJECT-TYPE
+       SYNTAX      OpenSERSIPMethodIdentifier
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+            "This object uniquely identifies the SIP method
+             related to the objects in a particular row."
+       ::= { openserSIPMethodStatsEntry 1 }
+
+   openserSIPStatsOutbounds OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object reflects the total number of requests
+             sent by the SIP entity, excluding retransmissions.
+             Retransmissions are counted separately and are not
+             reflected in this counter."
+       REFERENCE
+            "RFC 3261, Section 7.1"
+       ::= { openserSIPMethodStatsEntry 2 }
+
+   openserSIPStatsInbounds OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object reflects the total number of requests
+             received by the SIP entity. Retransmissions are
+             counted separately and are not reflected in this
+             counter."
+       REFERENCE
+            "RFC 3261, Section 7.1"
+       ::= { openserSIPMethodStatsEntry 3 }
+
+--
+-- Support for specific status codes
+--
+   openserSIPStatusCodesTable OBJECT-TYPE
+       SYNTAX      SEQUENCE OF OpenSERSIPStatusCodesEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+            "This table contains the list of SIP status codes which
+             each SIP entity in this system has been requested to
+             monitor. It is the mechanism by which specific status
+             codes are monitored."
+       ::= { openserSIPCommonStatusCode 1 }
+
+   openserSIPStatusCodesEntry OBJECT-TYPE
+       SYNTAX      OpenSERSIPStatusCodesEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+            "This row contains information on a particular SIP status
+
+             code that the SIP entity has been requested to monitor.
+
+             Each row represents those objects for a particular SIP
+             entity present in this system."
+       INDEX { openserSIPStatusCodeMethod, openserSIPStatusCodeValue }
+       ::= { openserSIPStatusCodesTable 1 }
+
+   OpenSERSIPStatusCodesEntry ::=
+       SEQUENCE {
+          openserSIPStatusCodeMethod     OpenSERSIPMethodIdentifier,
+          openserSIPStatusCodeValue      Unsigned32,
+          openserSIPStatusCodeIns        Counter32,
+          openserSIPStatusCodeOuts       Counter32,
+          openserSIPStatusCodeRowStatus  RowStatus
+       }
+
+   openserSIPStatusCodeMethod OBJECT-TYPE
+       SYNTAX      OpenSERSIPMethodIdentifier
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+            "This object uniquely identifies a conceptual row
+             in the table and reflects an assigned number used
+             to identifier a specific SIP method."
+       ::= { openserSIPStatusCodesEntry 1 }
+
+   openserSIPStatusCodeValue OBJECT-TYPE
+       SYNTAX      Unsigned32 (100..999)
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+            "This object contains a SIP status code value that the SIP
+             entity has been requested to monitor.  All of the other
+             information in the row is related to this value."
+       ::= { openserSIPStatusCodesEntry 2 }
+
+   openserSIPStatusCodeIns OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object reflects the total number of response messages
+             received by the SIP entity with the status code value
+             contained in the sipStatusCodeValue column."
+       ::= { openserSIPStatusCodesEntry 3 }
+
+   openserSIPStatusCodeOuts OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object reflects the total number of response messages
+             sent by the SIP entity with the status code value
+             contained in the sipStatusCodeValue column."
+       ::= { openserSIPStatusCodesEntry 4 }
+
+   openserSIPStatusCodeRowStatus OBJECT-TYPE
+       SYNTAX      RowStatus
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+            "The row augmentation in sipStatusCodeNotifTable
+             will be governed by the value of this RowStatus.
+
+             This object is REQUIRED to create or delete rows
+             by a manager.
+
+             The values 'createAndGo' and 'destroy' are the
+             only valid values allowed for this object.
+             If a row exists, it will reflect a status of
+             'active' when queried."
+       ::= { openserSIPStatusCodesEntry 5 }
+
+--
+-- Transaction Statistics
+--
+   openserSIPCurrentTransactions OBJECT-TYPE
+       SYNTAX     Gauge32 (0..4294967295)
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "This object contains the number of transactions awaiting
+             definitive (non-1xx) response.  In the case of a forked
+             request, each branch counts as a single transaction
+             corresponding to the entity identified by applIndex."
+   ::= { openserSIPCommonStatsTrans 1 }
+
+--
+-- SIP Retry Statistics
+--
+-- This group contains various statistic objects about
+-- retransmission counts.
+--
+   openserSIPCommonStatsRetryTable OBJECT-TYPE
+       SYNTAX     SEQUENCE OF OpenSERSIPCommonStatsRetryEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "This table contains retry statistics objects applicable
+             to each SIP entity in this system."
+       ::= { openserSIPCommonStatsRetry 1 }
+
+   openserSIPCommonStatsRetryEntry OBJECT-TYPE
+       SYNTAX     OpenSERSIPCommonStatsRetryEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+            "A row of retry statistics.
+
+             Each row represents those objects for a particular SIP
+             entity present in this system."
+       INDEX { openserSIPStatsRetryMethod }
+       ::= { openserSIPCommonStatsRetryTable 1 }
+
+   OpenSERSIPCommonStatsRetryEntry ::=
+       SEQUENCE {
+                openserSIPStatsRetryMethod           OpenSERSIPMethodIdentifier,
+                openserSIPStatsRetries                Counter32,
+                openserSIPStatsRetryFinalResponses    Counter32,
+                openserSIPStatsRetryNonFinalResponses Counter32
+       }
+
+   openserSIPStatsRetryMethod OBJECT-TYPE
+       SYNTAX      OpenSERSIPMethodIdentifier
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+            "This object uniquely identifies the SIP method
+             related to the objects in a row."
+       ::= { openserSIPCommonStatsRetryEntry 1 }
+
+   openserSIPStatsRetries OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object reflects the total number of request
+             retransmissions that have been sent by the SIP
+             entity. Note that there could be multiple
+             retransmissions per request."
+       ::= { openserSIPCommonStatsRetryEntry 2 }
+
+   openserSIPStatsRetryFinalResponses OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object reflects the total number of Final Response
+             retries that have been sent by the SIP entity.
+             Note that there could be multiple retransmissions
+             per request."
+       ::= { openserSIPCommonStatsRetryEntry 3 }
+
+   openserSIPStatsRetryNonFinalResponses OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+            "This object reflects the total number of non-Final Response
+             retries that have been sent by the SIP entity."
+       ::= { openserSIPCommonStatsRetryEntry 4 }
+
+--
+-- Other Common Statistics
+--
+   openserSIPNumUnsupportedUris OBJECT-TYPE
+       SYNTAX     Counter32
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "Number of RequestURIs received with unsupported scheme.
+             A server normally responds to such requests with a 400 Bad
+             Request status code."
+       ::= { openserSIPCommonStatsOther 1 }
+
+   openserSIPNumUnsupportedMethods OBJECT-TYPE
+       SYNTAX     Counter32
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "Number of SIP requests received with unsupported methods.
+             A server normally responds to such requests with a
+             501 (Not Implemented) or 405 (Method Not Allowed)."
+       ::= { openserSIPCommonStatsOther 2 }
+
+   openserSIPOtherwiseDiscardedMsgs OBJECT-TYPE
+       SYNTAX     Counter32
+       MAX-ACCESS read-only
+       STATUS     current
+       DESCRIPTION
+            "Number of SIP messages received that for any number
+             of reasons was discarded without a response."
+       ::= { openserSIPCommonStatsOther 3 }
+
+--
+-- Conformance
+--
+
+--
+-- Compliance Statements
+--
+   openserSIPCommonCompliance MODULE-COMPLIANCE
+       STATUS     current
+       DESCRIPTION
+            "The compliance statement for SIP entities."
+
+       MODULE -- this module
+            MANDATORY-GROUPS { openserSIPCommonConfigGroup,
+                               openserSIPCommonStatsGroup }
+
+
+       GROUP openserSIPCommonStatsRetryGroup
+       DESCRIPTION
+            "This group is OPTIONAL.  A SIP entity can elect to
+             not provide any retry statistics."
+       ::= { openserSIPCommonConform 1 }
+
+   openserSIPCommonGroups
+     OBJECT IDENTIFIER ::= { openserSIPCommonConform 2 }
+
+
+--
+-- Units of Conformance
+--
+   openserSIPCommonConfigGroup OBJECT-GROUP
+       OBJECTS {
+               openserSIPProtocolVersion,
+               openserSIPServiceStartTime,
+	       openserSIPPort,
+               openserSIPTransportRcv,
+	       openserSIPIPType,
+	       openserSIPIPAddress,
+               openserSIPEntityType,
+               openserSIPMethodName
+       }
+       STATUS  current
+       DESCRIPTION
+            "A collection of objects providing configuration common
+             to all SIP enities."
+       ::= { openserSIPCommonGroups 1 }
+
+   openserSIPCommonStatsGroup OBJECT-GROUP
+       OBJECTS {
+               openserSIPSummaryInRequests,
+               openserSIPSummaryOutRequests,
+               openserSIPSummaryInResponses,
+               openserSIPSummaryOutResponses,
+               openserSIPSummaryTotalTransactions,
+               openserSIPStatsOutbounds,
+               openserSIPStatsInbounds,
+               openserSIPStatusCodeIns,
+               openserSIPStatusCodeOuts,
+               openserSIPStatusCodeRowStatus,
+               openserSIPCurrentTransactions,
+               openserSIPNumUnsupportedUris,
+               openserSIPNumUnsupportedMethods,
+               openserSIPOtherwiseDiscardedMsgs
+       }
+       STATUS  current
+       DESCRIPTION
+            "A collection of objects providing statistics common
+             to all SIP entities."
+       ::= { openserSIPCommonGroups 3 }
+
+   openserSIPCommonStatsRetryGroup OBJECT-GROUP
+       OBJECTS {
+                openserSIPStatsRetries,
+                openserSIPStatsRetryFinalResponses,
+                openserSIPStatsRetryNonFinalResponses
+       }
+       STATUS  current
+       DESCRIPTION
+            "A collection of objects providing retry statistics."
+       ::= { openserSIPCommonGroups 4 }
+
+   END

@@ -1,0 +1,648 @@
+-- ***********************************************************************
+-- OPENSER-MIB:  OPENSER MIB
+--
+-- Date of Creation: Januay 2006
+--
+-- This MIB provides information related to the OpenSER SIP Router.
+-- 
+-- Copyright (c) The Internet Society (2006)
+-- Ammendments (c) Soma Networks, Inc. (2006)
+--
+-- All rights reserved.
+-- *****************************************************************
+
+OPENSER-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        MODULE-IDENTITY,
+        OBJECT-TYPE, 
+        OBJECT-IDENTITY,
+        NOTIFICATION-TYPE,
+        Integer32,
+        Unsigned32,
+        Counter32,
+        Counter64,
+        Gauge32
+            FROM SNMPv2-SMI
+            
+        DateAndTime
+            FROM SNMPv2-TC
+
+        SnmpAdminString
+            FROM SNMP-FRAMEWORK-MIB
+
+        X731UsageState,
+        X731AlarmStatus,
+        X731AlarmState
+            FROM OPENSER-TC
+            
+        MODULE-COMPLIANCE,
+        OBJECT-GROUP,
+        NOTIFICATION-GROUP
+            FROM SNMPv2-CONF
+
+        openserModules, openserMIB
+            FROM OPENSER-REG-MIB;
+
+    openserModule MODULE-IDENTITY
+        LAST-UPDATED "200603231200Z"
+        ORGANIZATION "OpenSER"
+        CONTACT-INFO 
+            "http://www.openser.org"
+        DESCRIPTION
+            "OpenSER MIB module.
+             This module defines objects which are neceesary to monitor an
+             instance of OpenSER.
+             
+             The objects in this MIB are intended to be used in conjunction
+             with those rovided in OPENSER-SIP-COMMON-MIB and
+             OPENSER-SIP-SERVER-MIB.  In particular, this MIB defines the X.731
+             attributes required to monitor the OpenSER subsystems and the
+             OpenSER core itself."
+        REVISION   "200605021200Z"
+        DESCRIPTION
+            "clarified some of the statisitcs collected, added the alarm 
+            states and notifications."
+        REVISION   "200603231200Z"
+        DESCRIPTION
+           "changed ownership to OpenSER group, and made it SMIv2 compliant."
+        REVISION   "200601061200Z"
+        DESCRIPTION
+           "Initial version of the OPENSER-MIB module."
+        ::= { openserModules 5 }
+
+--
+-- Top-Level Components of this MIB.
+--
+    openserObjects OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for accessible objects in the MIB."
+        ::= { openserMIB 1 } 
+
+    openserMIBEvents OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION
+        "A sub-tree for all the OPENSER-MIB related events and traps."
+        ::= {openserMIB 2 }
+
+    openserConform OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Conformance specifications."
+        ::= { openserMIB 3 }
+                                
+
+--
+-- openserObjects sub-components
+--
+    openserServer  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Server state, alarms, and management."
+        ::= { openserObjects 1 }
+
+    openserMsgs  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for tracking of individual SIP messages processed by OpenSER."
+        ::= { openserObjects 2 }
+
+   openserDialog  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for tracking of SIP Dialogs being processed by OpenSER."
+    ::= { openserObjects 3 }
+
+-- 
+-- OpenSER Server Objects
+--
+
+
+--
+-- OpenSER Message Objects
+--
+
+--
+-- Message Statistics 
+--
+    openserMsgStats OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Message Statistics." 
+        ::= { openserMsgs 3 }
+
+    openserMsgQueueDepth       OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of packets (udp or tcp) waiting in the OS network queue, 
+             waiting to be processed."
+        ::= { openserMsgStats 1 }
+
+    openserMsgQueueMinorThreshold    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "When the openserMsgQueueDepth reaches this point, a minor alarm 
+             will be generated. This value reflects the configured value; if it
+             is set to -1, then the alarm is never sent."
+        ::= { openserMsgStats 2 }
+        
+    openserMsgQueueMajorThreshold    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "When the openserMsgQueueDepth reaches this point, a major alarm 
+             will be generated. This value reflects the configured value; if it
+             is set to -1, then the alarm is never sent."
+        ::= { openserMsgStats 3 }
+--
+-- Message Alarms
+--
+    openserMsgAlarms OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Message Alarms."
+        ::= { openserMsgs 4 }
+
+    openserMsgQueueDepthAlarmStatus   OBJECT-TYPE
+        SYNTAX      X731AlarmStatus
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This status variable reports the alarm levels that have been
+             generated for the message queue depth.
+               
+             The thresholds are defined in the OpenSER configuration; if they 
+             are not configured, this alarm status will always be clear. 
+             Specifically, in this case no bits will be toggled, and therefore
+             this scalar will return 00.
+             
+             This scalar follows the X731AlarmStatus specs, and can take on
+             the following values:
+             
+             underRepair(0), critical(1), major(2), minor(3), 
+             alarmOutstanding(4), unknown(5)"
+        ::= { openserMsgAlarms 1 }
+
+    openserMsgQueueDepthMinorAlarm  OBJECT-TYPE
+        SYNTAX      X731AlarmState
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This variable indicates whether the minor message queue depth 
+             threshold has been surpassed.
+                clear(0) the queue depth is below the configured threshold.
+                minor(1) the queue depth has exceeded the configured threshold."
+        ::= { openserMsgAlarms 2 }
+    
+    openserMsgQueueDepthMajorAlarm  OBJECT-TYPE
+        SYNTAX      X731AlarmState
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This variable indicates whether the major message queue depth 
+             threshold has been surpassed.               
+                clear(0) the queue depth is below the configured threshold.
+                major(2) the queue depth has exceeded the configured threshold."
+        ::= { openserMsgAlarms 3 }
+--
+-- OpenSER Dialog Objects
+--
+
+--
+-- The Dialog Table: 
+--    contains information about currently active calls.
+--
+
+    openserDialogTable   OBJECT-TYPE
+          SYNTAX      SEQUENCE OF  OpenSERDialogTableEntry
+          MAX-ACCESS  not-accessible
+          STATUS      current
+          DESCRIPTION
+              "This table contains information on all active calls in
+               the system."
+          ::= { openserDialog 1 }
+  
+    openserDialogTableEntry   OBJECT-TYPE
+          SYNTAX      OpenSERDialogTableEntry
+          MAX-ACCESS  not-accessible
+          STATUS      current
+          DESCRIPTION
+             "This entry contains information for a single active call in the
+              system."
+          INDEX { openserDialogIndex }
+          ::= { openserDialogTable 1 }
+
+    OpenSERDialogTableEntry ::= 
+        SEQUENCE {
+            openserDialogIndex              Unsigned32,
+            openserDialogType               INTEGER,
+            openserDialogToUri              SnmpAdminString,
+            openserDialogFromUri            SnmpAdminString,
+            openserDialogState              INTEGER,
+            openserDialogStartTime          DateAndTime,
+            openserDialogLastUpdateTime     DateAndTime,
+            openserDialogExpiryTime         DateAndTime
+        }
+
+    openserDialogIndex OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS current
+        DESCRIPTION 
+        "The index of this dialog."
+        ::= { openserDialogTableEntry 1 }
+
+   openserDialogType OBJECT-TYPE
+        SYNTAX      INTEGER {
+            invite(1),
+            subscribe(2)
+        }
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The type of Dialog:
+            invite(1)     - the dialog was created with a SIP INVITE.
+            subscribe(2)  - the dialog was created with a SIP SUBSCRIBE."
+        ::= { openserDialogTableEntry 2 }
+                
+    openserDialogToUri OBJECT-TYPE
+        SYNTAX      SnmpAdminString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The URI of the To header."
+        ::= { openserDialogTableEntry 3 }
+        
+    openserDialogFromUri OBJECT-TYPE
+        SYNTAX      SnmpAdminString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The URI of the From header."
+        ::= { openserDialogTableEntry 4 }
+        
+    openserDialogState OBJECT-TYPE
+        SYNTAX  INTEGER {
+            unconfirmed(0),
+            early(1),
+            confirmed(2),
+            terminalted(3)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+        "The Dialogue state:
+            unconfirmed (0)  - we do not yet have a dialog, but a request has
+                               been made and we may create one in the future. 
+                               All calls begin in this state.
+            early (1)        - dialog migrates to this state when we receive a 
+                               101-199 response.
+            confirmed (2)    - dialog migrates from unconfirmed OR early to this 
+                               state when we received a 200-299 response.
+            terminated (3)   - dialog migrates from unconfirmed OR early to this 
+                               state when a final 3xx-4xx-5xx-6xx is message is
+                               received.
+              
+          terminated dialogs stay present in the system for only a short period 
+          of time, and then are cleared by OpenSER."
+        ::= { openserDialogTableEntry 5 }
+        
+    openserDialogStartTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The time this dialog was started."
+        ::= { openserDialogTableEntry 6 }
+        
+    openserDialogLastUpdateTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The last time this dialog was updated; ie, when the last SIP
+         message for this dialog was seen."
+        ::= { openserDialogTableEntry 7 }        
+
+    openserDialogExpiryTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The time at which this dialog will automatically expire."
+        ::= { openserDialogTableEntry 8 }        
+
+
+    openserDialogStats OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-section for Dialog counters and statistics."
+        ::= { openserDialog 2 }
+
+    openserCurNumDialogs     OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The current number of dialogs either in EARLY or CONFIRMED 
+             state."
+        ::= { openserDialogStats 1 }
+        
+    openserCurNumDialogsInProgress     OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The current number of CONFIRMED dialogs."
+        ::= { openserDialogStats 2 }
+        
+    openserCurNumDialogsInSetup     OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The current number of EARLY dialogs."
+        ::= { openserDialogStats 3 }
+        
+    openserTotalNumFailedDialogSetups     OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of calls that failed with an error. 
+             The following codes define a failed call:"
+        ::= { openserDialogStats 4 }
+
+    openserDialogLimitMinorThreshold    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The configured minor threshold indicating the openser system has 
+             reached a high level of dialogs. -1 indicates the value
+             is not configured, and the alarm will never be set."
+        ::= { openserDialogStats 5 }
+
+    openserDialogLimitMajorThreshold    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The configured threshold indicating the openser system has reached
+             a maximum number of dialogs, and perhaps performace will suffer.
+             -1 indicates the value is not configured, and alarms will never be 
+             set, and the usage state will never be reported as 'busy'."
+        ::= { openserDialogStats 6 }
+--
+-- Dialog State
+--
+
+    openserDialogStates  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION
+        "a sub-tree for OpenSER's dialog tracking states."
+        ::= { openserDialog 3 }
+    
+    openserDialogUsageState     OBJECT-TYPE
+        SYNTAX      X731UsageState
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+        "The current usage state of OpenSER's dialog tracking:
+            idle(0)   - no dialogs are currently being tracked.
+            active(1) - at least 1 dialog is being tracked.
+            busy(2)   - the maximum number of dialogs are being tracked.
+                        
+         The 'busy' point is based on a configuration variable (the same as
+         openserDialogMajorLimitThreshold): if this value is -1, then the server
+         is never considered 'busy'."
+    ::= { openserDialogStates 1 }
+
+--
+-- Dialog Alarms
+--
+    openserDialogAlarms   OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for call alarms." 
+    ::= { openserDialog 4 }
+
+    openserDialogLimitAlarmStatus  OBJECT-TYPE
+        SYNTAX      X731AlarmStatus
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+           "This alarm status reports the overall alarm status of the dialog
+            sub-system. If the thresholds are not configured, then this status
+            will always be 'clear'.
+
+            This scalar follows the X731AlarmStatus specs, and can take on
+            the following values:
+             
+            underRepair(0), critical(1), major(2), minor(3), 
+            alarmOutstanding(4), unknown(5)"
+        ::= { openserDialogAlarms 1 }
+
+   openserDialogLimitMinorAlarm  OBJECT-TYPE
+        SYNTAX      X731AlarmState
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+           "The OpenSER system is approaching or has reached its configured 
+            minor dialog limit threshold.
+                clear(0) - the current number of dialogs is below the configured
+                           threshold.
+                minor(1) - the current number of dialogs has reached or exceeded
+                           the configured threshold.
+                           
+            The threshold is defined in the OpenSER configuration; if it 
+             is not configured, this alarm will not be sent."
+        ::= { openserDialogAlarms 2 }
+
+   openserDialogLimitMajorAlarm  OBJECT-TYPE
+        SYNTAX      X731AlarmState
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+           "The OpenSER system is approaching or has reached its configured 
+            dialog limit.
+                clear(0) - the current number of dialogs is below the configured
+                           threshold.
+                major(2) - the current number of dialogs has reached or exceeded
+                           the configured threshold.
+            
+            The threshold is defined in the OpenSER configuration; if it 
+             is not configured, this alarm will not be sent."
+        ::= { openserDialogAlarms 3 }
+
+-- 
+-- Notifications
+--
+
+--
+-- This section defines the SNMP traps, or notifications, that the OPENSER-MIB
+-- supports.
+--
+
+    openserMIBNotifications  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "A sub-section for reverse-mapping between SNMPv1 and SNMPv2 events."
+        ::= { openserMIBEvents 0 } 
+        
+    openserMsgQueueDepthMinorEvent NOTIFICATION-TYPE
+        OBJECTS {
+          openserMsgQueueDepth, openserMsgQueueMinorThreshold
+        }
+        STATUS  current
+        DESCRIPTION
+        "The message queue depth (as reported by openserMsgQueueDepth) has 
+         exceeded the minor configured threshold openserMsgQueueMinorThreshold."
+        ::= { openserMIBNotifications 1 }
+        
+    openserMsgQueueDepthMajorEvent NOTIFICATION-TYPE
+        OBJECTS {
+            openserMsgQueueDepth, openserMsgQueueMajorThreshold
+        }
+        STATUS  current
+        DESCRIPTION
+        "The message queue depth (as reported by openserMsgQueueDepth) has 
+         exceeded the minor configured threshold openserMsgQueueMinorThreshold."
+        ::= { openserMIBNotifications 2 }
+        
+    openserDialogLimitMinorEvent NOTIFICATION-TYPE
+        OBJECTS {
+            openserCurNumDialogs, openserDialogLimitMinorThreshold
+        }
+        STATUS  current
+        DESCRIPTION
+        "The number of dialogs being tracked in the system (as reported by
+         openserCurNumDialogs) has exceeded the minor configured threshold 
+         openserDialogLimitMinorThreshold."
+        ::= { openserMIBNotifications 3 }
+
+    openserDialogLimitMajorEvent NOTIFICATION-TYPE
+        OBJECTS {
+            openserCurNumDialogs, openserDialogLimitMajorThreshold
+        }
+        STATUS  current
+        DESCRIPTION
+        "The number of dialogs being tracked in the system (as reported by
+         openserCurNumDialogs) has exceeded the major configured threshold 
+         openserDialogLimitMajorThreshold."
+        ::= { openserMIBNotifications 4 }
+
+
+--
+-- Conformance
+--
+
+--
+-- Compliance Statements
+--
+    openserCompliance   MODULE-COMPLIANCE
+        STATUS      current
+        DESCRIPTION
+            "The compliance statement for OpenSER in the SOMAvoice product."
+
+        MODULE -- this module
+            MANDATORY-GROUPS { openserX731Group,
+                               openserStatsGroup,
+                               openserAlarmsGroup,
+                               openserMsgQueueEvents,
+                               openserDialogLimitEvents }
+        ::= { openserConform 1 }
+
+    openserGroups  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for defining the conformance groups."
+        ::= { openserConform 2 }
+        
+    openserNotifications OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION
+        "Sub-tree for defining the conformance notifications."
+        ::= { openserConform 3 }
+
+--
+-- Units of Conformance
+--
+    openserX731Group    OBJECT-GROUP
+        OBJECTS {
+            openserDialogUsageState
+        }
+        STATUS  current
+        DESCRIPTION
+            "A collection of objects providing X.731 state and alarm status
+             information in OpenSER."
+        ::= { openserGroups 1 }
+
+    openserStatsGroup   OBJECT-GROUP
+        OBJECTS {
+            openserMsgQueueDepth,
+            openserMsgQueueMinorThreshold,
+            openserMsgQueueMajorThreshold,
+            openserDialogType,
+            openserDialogToUri,
+            openserDialogFromUri,
+            openserDialogState,
+            openserDialogStartTime,
+            openserDialogLastUpdateTime,
+            openserDialogExpiryTime,
+            openserCurNumDialogs,
+            openserCurNumDialogsInProgress,
+            openserCurNumDialogsInSetup,
+            openserTotalNumFailedDialogSetups,
+            openserDialogLimitMinorThreshold,
+            openserDialogLimitMajorThreshold           
+        }
+        STATUS  current
+        DESCRIPTION
+            "A collection of objects providing statistics in OpenSER."
+        ::= { openserGroups 2 }
+
+    openserAlarmsGroup   OBJECT-GROUP
+        OBJECTS {
+            openserMsgQueueDepthAlarmStatus,
+            openserMsgQueueDepthMinorAlarm,
+            openserMsgQueueDepthMajorAlarm,
+            openserDialogLimitAlarmStatus,
+            openserDialogLimitMinorAlarm,
+            openserDialogLimitMajorAlarm
+        }
+        STATUS  current
+        DESCRIPTION
+            "A collection of objects providing stateful alarm information in
+             OpenSER."
+        ::= { openserGroups 3 }
+    
+    openserMsgQueueEvents   NOTIFICATION-GROUP
+        NOTIFICATIONS {
+            openserMsgQueueDepthMinorEvent,
+            openserMsgQueueDepthMajorEvent
+        }
+        STATUS current
+        DESCRIPTION
+            "A collection of events for the message queue depth."
+        ::= { openserNotifications 1 }
+
+    openserDialogLimitEvents   NOTIFICATION-GROUP
+        NOTIFICATIONS {
+            openserDialogLimitMinorEvent,
+            openserDialogLimitMajorEvent
+        }
+        STATUS current
+        DESCRIPTION
+            "A collection of events for dialog tracking."
+        ::= { openserNotifications 2 }
+
+END
+
+-- vim:ts=4:et:sw=4:si:ai:tw=78

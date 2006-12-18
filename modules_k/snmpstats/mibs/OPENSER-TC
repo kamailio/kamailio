@@ -1,0 +1,370 @@
+-- *******************************************************************
+-- OPENSER-TC: OpenSER MIB Textual Conventions
+--
+-- Date of Creation: March 2006
+-- Mike Varley
+--
+-- Copyright (c) The Internet Society (2006)
+-- Ammendments (c) Soma Networks, Inc. (2006)
+--
+-- *******************************************************************
+
+
+OPENSER-TC DEFINITIONS ::= BEGIN
+
+IMPORTS
+	MODULE-IDENTITY,
+	Unsigned32
+		FROM SNMPv2-SMI
+	TEXTUAL-CONVENTION
+		FROM SNMPv2-TC
+	openserModules
+		FROM OPENSER-REG-MIB;
+
+
+openserTcModule MODULE-IDENTITY
+	LAST-UPDATED	"200603211200Z"
+	ORGANIZATION	"OpenSER"
+	CONTACT-INFO
+		"http://www.openser.org"
+	DESCRIPTION
+		"OpenSER Global Textual Conventions."
+	::={ openserModules 2 }
+
+
+--
+-- SIP type descriptions, taken from SIP-TC in drafts-ietf-sip-mib-10.txt
+--
+
+OpenSERSIPTransportProtocol ::= TEXTUAL-CONVENTION
+           STATUS current
+           DESCRIPTION
+                "This convention is a bit map.  Each bit represents a
+                 transport protocol.  If a bit has value 1, then that
+                 selected transport protocol is in some way dependent
+                 on the context of the object using this convention.
+                 If a bit has value 0, then that transport protocol
+                 is not selected.  Combinations of bits can be
+                 set when multiple transport protocols are selected.
+
+                 bit 0   : a protocol other than those defined here.
+                 bit 1   : User Datagram Protocol.
+                 bit 2   : Transmission Control Protocol.
+                 bit 3   : Stream Control Transmission Protocol.
+                 bit 4   : Transport Layer Security Protocol."
+           SYNTAX     BITS {
+                            other(0),  -- none of the following
+
+                            udp(1),
+                            tcp(2),
+                            sctp(3),
+                            tls(4)
+           }
+--         REFERENCE "RFC 3261, Section 18"
+
+OpenSERSIPEntityRole ::= TEXTUAL-CONVENTION
+           STATUS current
+           DESCRIPTION
+                "This convention defines the role of a SIP entity.
+                 Examples of SIP entities are proxies, user agents,
+                 redirect servers, registrars or combinations of
+                 the above."
+           SYNTAX BITS {
+                            other(0),
+                            userAgent(1),
+                            proxyServer(2),
+                            redirectServer(3),
+                            registrarServer(4)
+           }
+
+
+OpenSERSIPMethodIdentifier ::= TEXTUAL-CONVENTION
+       STATUS current
+       DESCRIPTION
+            "This is an IETF Assigned Numbers Authority (IANA)
+             assigned number that uniquely identifies a SIP
+             method.  The scope of uniqueness is the context
+             of all defined SIP methods.
+
+             Experimental support of extension methods is
+
+             acceptable and expected.  Extention methods are
+             those defined in Internet-Draft documents but
+             not yet allocated an official number by IANA.
+
+             To support experimental extension methods, any
+             object using this textual convention as syntax
+             MAY return/accept a method identifier value other
+             than those defined by IANA.  That system MUST
+             ensure no collisions with officially assigned
+             method identifier values and MUST provide a
+             identifier to method name mapping via a mechanism
+             like sipMethodSupportedTable."
+       SYNTAX Unsigned32 (1..4294967295)
+
+
+--
+-- ITU X.731 state definitions.
+--
+
+
+X731AdminState ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION
+		"Represents the various possible administrative states.
+
+		A value of 'locked' means the resource is administratively
+		prohibited from use. A value of 'shuttingDown' means that
+		usage is administratively limited to current instances of
+		use. A value of 'unlocked' means the resource is not
+		administratively prohibited from use. A value of
+		'unknown' means that this resource is unable to
+		report administrative state."
+	SYNTAX INTEGER {
+		locked (0),
+		shuttingDown (1),
+		unlocked (2),
+		unknown (3)
+	}
+
+X731OperState  ::=  TEXTUAL-CONVENTION
+	STATUS         current
+	DESCRIPTION
+		"Represents the possible values of operational states.
+
+		A value of 'disabled' means the resource is totally
+		inoperable. A value of 'enabled' means the resource
+		is partially or fully operable. A value of 'testing'
+		means the resource is currently being tested
+		and cannot therefore report whether it is operational
+		or not. A value of 'unknown' means that this
+		resource is unable to report operational state. "
+
+	SYNTAX INTEGER {
+		disabled (0),
+		enabled (1),
+		unknown (2)
+	}
+
+X731UsageState  ::=  TEXTUAL-CONVENTION
+	STATUS         current
+	DESCRIPTION
+		"Represents the possible values of usage states.
+		A value of 'idle' means the resource is servicing no
+		users. A value of 'active' means the resource is
+		currently in use and it has sufficient spare capacity
+		to provide for additional users. A value of 'busy'
+		means the resource is currently in use, but it
+		currently has no spare capacity to provide for
+		additional users. A value of 'unknown' means
+		that this resource is unable to report usage state."
+		
+	SYNTAX INTEGER {
+		idle (0),
+		active (1),
+		busy (2),
+		unknown (3)
+	}
+
+X731AlarmState   ::=  TEXTUAL-CONVENTION
+    STATUS         current
+    DESCRIPTION
+        "Represents whether a particular sub-system is
+        in an alarm state, and its severity. This value
+        is either reported as 'clear', or one of the alarm
+        severities. An object of this type represents one
+        alarm in the sub-system; the alarm status (below) 
+        can be looked at as a collection of AlarmStates.
+        
+        A value of unknown means the object cannot report 
+        its alarm state."
+
+    SYNTAX INTEGER {
+        clear(0),
+        critical(1),
+        major(2),
+        minor(3),
+        unknown(4)
+    }
+    
+X731AlarmStatus  ::=  TEXTUAL-CONVENTION
+	STATUS         current
+	DESCRIPTION
+		"Represents the possible values of alarm status.
+		An Alarm is a persistent indication
+		of an error condition.
+
+		When no bits of this attribute are set, then no active
+		alarms are known against this entity and it is not under
+		repair.
+
+		When the 'value of underRepair' is set, the resource is
+		currently being repaired, which, depending on the
+		implementation, may make the other values in this bit
+		string not meaningful.
+
+		When the value of 'critical' is set, one or more critical
+		alarms are active against the resource. When the value
+		of 'major' is set, one or more major alarms are active
+		against the resource. When the value of 'minor' is set,
+		one or more minor alarms are active against the resource.
+
+		A value of 'unknown' means that this resource is
+		unable to report alarm state."
+
+	SYNTAX BITS {
+		underRepair (0),
+		critical(1),
+		major(2),
+		minor(3),
+		alarmOutstanding(4),
+		unknown(5)
+	}
+
+X731ProceduralStatus ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION
+		"Represents the possible values fo the procedural status.
+
+		A value of initialization required means the resource
+		requires initialization to be invoked by the manager.
+		The operational state should be disabled.
+
+		A value of not initialized means the resource requires
+		initialization and this procedure has not been initiatated.
+		The resource initializes itself autonomously. The operational
+		state may be enabled or disabled.
+
+		A value of initializing means the resource requires
+		initialization and initialization procedure has started
+		but is not yet complete.
+
+		A value of reporting means the resource has completed some
+		processing operation and is notifying the results of the
+		operation, e.g. a test process is sending its results. The
+		operational state should be enabled.
+
+		A value of terminating means the resource is in a termination
+		phase."
+
+	SYNTAX BITS {
+		initializationRequired(0),
+		notInitialized(1),
+		initializing(2),
+		reporting(3),
+		terminating(4),
+		unknown(5)
+	}
+
+X731AvailabilityStatus ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION
+		"Represents the possible values of availability status.
+
+		A value of in test means the resource is undergoing
+		a test procedure.
+
+		A value of failed means the resource has an internal
+		fault that prevents if from operating. The operational
+		state should be disabled.
+
+		A value of power off means the resource requires power
+		to be applied and is not powered on. The operational
+		state should be disabled.
+
+		A value of off line means the resource requires a
+		routine operation to be performed to place it online
+		and make it available for use. The operation may
+		be manual or automatic or both. The operational
+		state should be disabled.
+
+		A value of off duty means the resource has been made inactive
+		by an internal control process that is expect to reactivate
+		the resource at some scheduled time.
+
+		A value of dependency mens the resource cannot operate because
+		some other resource on which it depends is unavailable. The
+		operational state should be disabled.
+
+		A value of degraded means the resource is providing a
+		service that is degraded in some respect. The operational
+		state should be enabled.
+
+		A value of not installed means the resource is not present or
+		is incomplete. The operational state should be disabled.
+
+		A value of log full indicates that a a log full condition
+		exists."
+
+	SYNTAX BITS {
+		inTest(0),
+		failed(1),
+		powerOff(2),
+		offLine(3),
+		offDuty(4),
+		dependency(5),
+		degraded(6),
+		notInstalled(7),
+		logFull(8),
+		unknown(9)
+	}			
+
+X731ControlStatus ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION
+		"Represents the possible values of control status.
+
+		A value of subject to test means the resource is
+		available to normal users but tests may be conducted
+		on it simultaneously.
+
+		A value of part of services locked means the resource is
+		in a state where a manager has administratively restricted
+		a part of the service from the user(s) of a resource. The
+		administrative state should be unlocked.
+
+		A value of reserved for test means the resource has been
+		made administratively unavailable since it is undergoing
+		a test procedure. The administrative state should be locked.
+
+		A value of suspended means the resource has had its service
+		administratively suspended. The administrative state should be
+		unlocked."
+
+	SYNTAX BITS {
+		subjectToTest(0),
+		partOfServicesLocked(1),
+		reservedForTest(2),
+		suspended(3),
+		unknown(4)
+	}
+
+X731StandbyStatus  ::=  TEXTUAL-CONVENTION
+		STATUS         current
+		DESCRIPTION
+		"Represents the possible values of standby status.
+
+		A value of 'hotStandby' means the resource is not
+		providing service, but it will be immediately able to
+		take over the role of the resource to be backed-up,
+		without the need for initialization activity, and will
+		contain the same information as the resource to be
+		backed up. A value of 'coldStandy' means that the
+		resource is to back-up another resource, but will not
+		be immediately able to take over the role of a resource
+		to be backed up, and will require some initialization
+		activity. A value of 'providingService' means the
+		resource is providing service. A value of
+		'unknown' means that this resource is unable to
+		report standby state."
+
+	SYNTAX INTEGER {
+		hotStandby(0),
+		coldStandby(1),
+		providingService(2),
+		unknown(3)
+	}
+
+
+
+END
