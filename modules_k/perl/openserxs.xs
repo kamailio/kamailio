@@ -28,7 +28,7 @@
 #include <perl.h>
 #include <XSUB.h>
 #include <unistd.h>
-#undef load_module		/* perl.h #define's load_module. Bug??? */
+#undef load_module
 #include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_uri.h"
@@ -116,6 +116,9 @@ struct action * sv2action(SV *sv) {
 
 inline static int getType(struct sip_msg *msg) {
 	int t = SIP_INVALID;
+
+	if (!msg) return SIP_INVALID;
+
 	switch ((msg->first_line).type) {
 		case SIP_REQUEST:	t = SIP_REQUEST; break;
 		case SIP_REPLY:		t = SIP_REPLY; break;
@@ -890,7 +893,6 @@ setFlag(self, flag)
 		RETVAL = -1;
 	} else {
 		RETVAL = setflag(msg, flag);
-		/* RETVAL = sv_2mortal(newSViv(setflag(msg, flag))); */
 	}
   OUTPUT:
 	RETVAL
@@ -915,7 +917,6 @@ resetFlag(self, flag)
 		RETVAL = -1;
 	} else {
 		RETVAL = resetflag(msg, flag);
-		/* RETVAL = sv_2mortal(newSViv(resetflag(msg, flag))); */
 	}
   OUTPUT:
 	RETVAL
@@ -968,7 +969,7 @@ pseudoVar(self, varstring)
 		ret = xl_sprintf(msg, varstring);
 		if (ret) {
 			ST(0) = sv_2mortal(newSVpv(ret, strlen(ret)));
-			free(ret);
+			pkg_free(ret);
 		} else {
 			ST(0) = &PL_sv_undef;
 		}
