@@ -66,7 +66,7 @@
         <description>
 	    Flags which describes some special meanings of rows. Meaning of flags is summarized in the table below.
             <db:table>
-                <db:tgroup>
+                <db:tgroup cols="4">
                     <db:thead>
                         <db:row>
                            <db:entry>Bit</db:entry>
