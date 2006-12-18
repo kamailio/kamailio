@@ -1153,7 +1153,7 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 	int_str           avp_val;
 	int_str           check_val;
 	int               check_flags;
-	int               n;
+	int               n, rt;
 	int            flags;
 	xl_value_t     xvalue;
 	char           backup;
@@ -1261,10 +1261,11 @@ cycle2:
 	if (flags&AVP_VAL_STR)
 	{
 		/* string values to check */
-		DBG("DEBUG:avpops:check_avp: check <%.*s> against <%.*s> as str\n",
+		DBG("DEBUG:avpops:check_avp: check <%.*s> against <%.*s> as str /%d\n",
 			avp_val.s.len,avp_val.s.s,
 			(val->ops&AVPOPS_OP_RE)?6:check_val.s.len,
-			(val->ops&AVPOPS_OP_RE)?"REGEXP":check_val.s.s);
+			(val->ops&AVPOPS_OP_RE)?"REGEXP":check_val.s.s,
+			val->ops);
 		/* do check */
 		if (val->ops&AVPOPS_OP_EQ)
 		{
@@ -1293,7 +1294,10 @@ cycle2:
 			}
 		} else if (val->ops&AVPOPS_OP_LT) {
 			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
-			if (strncasecmp(avp_val.s.s,check_val.s.s,n)==-1)
+			rt = strncasecmp(avp_val.s.s,check_val.s.s,n);
+			if (rt<0)
+				return 1;
+			if(rt==0 && avp_val.s.len<check_val.s.len)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_LE) {
 			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
@@ -1301,7 +1305,10 @@ cycle2:
 				return 1;
 		} else if (val->ops&AVPOPS_OP_GT) {
 			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
-			if (strncasecmp(avp_val.s.s,check_val.s.s,n)==1)
+			rt = strncasecmp(avp_val.s.s,check_val.s.s,n);
+			if (rt>0)
+				return 1;
+			if(rt==0 && avp_val.s.len>check_val.s.len)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_GE) {
 			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
@@ -1331,8 +1338,8 @@ cycle2:
 		}
 	} else {
 		/* int values to check -> do check */
-		DBG("DEBUG:avpops:check_avp: check <%d> against <%d> as int\n",
-				avp_val.n, check_val.n);
+		DBG("DEBUG:avpops:check_avp: check <%d> against <%d> as int /%d\n",
+				avp_val.n, check_val.n, val->ops);
 		if (val->ops&AVPOPS_OP_EQ)
 		{
 			if ( avp_val.n==check_val.n)
