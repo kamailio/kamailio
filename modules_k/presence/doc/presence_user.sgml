@@ -416,12 +416,12 @@ CREATE TABLE `watchers` (
 		<programlisting format="linespecific">
 ...
 CREATE TABLE `xcap_xml` (
-  `user` varchar(64) NOT NULL,
-  `domain` varchar(128) NOT NULL,
+  `user` varchar(256) NOT NULL,
+  `domain` varchar(256) NOT NULL,
   `xcap` text NOT NULL,
-  `doc_type` int(11) NOT NULL,
-  PRIMARY KEY  (`user`,`domain`)
-) ENGINE=MyISAM;
+  `doc_type` varchar(64) NOT NULL,
+  PRIMARY KEY  (`user`,`domain`,`doc_type`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 ...
 </programlisting>
 
