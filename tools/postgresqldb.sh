@@ -117,6 +117,9 @@ fi
 if [ -z "$MD5" ]; then
 	MD5="md5sum"
 fi
+if [ -z "$AWK" ]; then
+	AWK="awk"
+fi
 
 DUMMY_DATE="1900-01-01 00:00:01"
 FOREVER="2020-05-28 21:32:15"
@@ -246,12 +249,12 @@ prompt_realm()
 # calculate credentials for admin
 credentials()
 {
-	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | awk '{ print $1 }'`
+	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | awk '{ print $1 }'`
+	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -259,7 +262,7 @@ credentials()
 
 	#PHPLIB_ID of users should be difficulty to guess for security reasons
 	NOW=`date`;
-	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | awk '{ print $1 }'`
+	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "PHPLIB_ID calculation failed"
 		exit 1

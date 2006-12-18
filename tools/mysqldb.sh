@@ -92,13 +92,22 @@ fi
 if [ -z "$MD5" ]; then
 	MD5="md5sum"
 fi
+if [ -z "$AWK" ]; then
+	AWK="awk"
+fi
+if [ -z "$GREP" ]; then
+	GREP="egrep"
+fi
+if [ -z "$SED" ]; then
+	SED="sed"
+fi
 
 FOREVER="2020-05-28 21:32:15"
 
 DEFAULT_ALIASES_EXPIRES=$FOREVER
 DEFAULT_Q="1.0"
 DEFAULT_CALLID="Default-Call-ID"
-DEFAULT_CSEQ="42"
+DEFAULT_CSEQ="13"
 DEFAULT_LOCATION_EXPIRES=$FOREVER
 
 #################################################################
@@ -214,12 +223,12 @@ prompt_realm()
 # calculate credentials for admin
 credentials()
 {
-	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | awk '{ print $1 }'`
+	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | awk '{ print $1 }'`
+	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -227,29 +236,30 @@ credentials()
 
 	#PHPLIB_ID of users should be difficulty to guess for security reasons
 	NOW=`date`;
-	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | awk '{ print $1 }'`
+	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "PHPLIB_ID calculation failed"
 		exit 1
 	fi
 }
 
+
 db_charset_test()
 {
-	CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | awk '{print $2}' | sed -e 1d`
-	ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | awk '{print $1}' | sed -e 1d | grep -ivE utf8\|ucs2`
-	while [ `echo "$ALLCHARSETS" | grep -icw $CURRCHARSET`  = "0" ]
+	CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | $AWK '{print $2}' | $SED -e 1d`
+	ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv utf8\|ucs2`
+	while [ `echo "$ALLCHARSETS" | $GREP -icw $CURRCHARSET`  = "0" ]
 	do
 		echo "Your current default mysql characters set cannot be used to create DB. Please choice another one from the following list:"
 		echo "$ALLCHARSETS"
 		echo -n "Enter character set name: "
 		read CURRCHARSET
-		if [ `echo $CURRCHARSET | grep -cE "\w+"` = "0" ]; then
+		if [ `echo $CURRCHARSET | $GREP -cE "\w+"` = "0" ]; then
 			echo "can't continue: user break"
 			exit 1
 		fi
 	done
-	export CHARSET=$CURRCHARSET
+	CHARSET=$CURRCHARSET
 }
 
 
