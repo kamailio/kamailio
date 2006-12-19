@@ -1,16 +1,17 @@
 # $Id$
 #
-# example module makefile
-#
-# 
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
 
-BUILDAGENTLIBS=`net-snmp-config --agent-libs`
+BUILDER = $(shell which net-snmp-config)
+ifeq ($(BUILDER),)
+	NAME=
+else
+	BUILDAGENTLIBS = $(shell net-snmp-config --agent-libs)
+endif 
 
-
-CFLAGS+=$(BUILDAGENTLIBS)
+CFLAGS+=
 auto_gen=
 NAME=snmpstats.so
 LIBS=$(BUILDAGENTLIBS)

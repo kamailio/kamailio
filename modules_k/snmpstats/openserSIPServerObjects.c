@@ -310,7 +310,7 @@ int handle_openserSIPRegMaxUsers(netsnmp_mib_handler *handler,
 	/* OpenSER doesn't currently have a parameterized maximum number of
 	 * users.  So we return the maximum value an unsigned32 SNMP datatype
 	 * can hold.  */
-	unsigned int result = 4294967295; 
+	unsigned int result = 0xffffffff; 
 	
 	if (reqinfo->mode==MODE_GET) {
 		snmp_set_var_typed_value(requests->requestvb, ASN_UNSIGNED,
