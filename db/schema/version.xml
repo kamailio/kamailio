@@ -3,9 +3,7 @@
   "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd">
 
 <table id="version" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>
-	version
-    </name>
+    <name>version</name>
 
     <column id="tn">
 	<name>table_name</name>
