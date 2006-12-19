@@ -118,6 +118,44 @@
 		this, NAT traversal per branch may be implemented.
 		</para>
 	</section>
+	<section id="timer-based-failover">
+		<title>Timer-Based Failover</title>
+		<para>
+		Timers can be used to trigger failover behavior. E.g. if we send a call
+		a gateway and the gateway does not send a provisional response within 3
+		seconds, we want to cancel this call and send the call to another gateway.
+		Another example is to ring a SIP client only for 30 seconds and then 
+		redirect the call to the voicebox.
+		</para>
+		<para>
+		There are two timers in &ser; :
+		</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>fr_timer</emphasis> - this timer is used when
+				no response was received yet. If there is no response after
+				<emphasis>fr_timer</emphasis> seconds the timer triggers
+				(and failure route will be executed if t_on_failure() was
+				called). If a provisional response was received, the timer
+				is set to fr_inv_timer for INVITE transactions, and RT_T2
+				for all other transactions. If a final reponse is received, 
+				the transaction has finished.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>fr_inv_timer</emphasis> - this timer is used when 
+				a provisional reponse was received for an INVITE transaction.
+			</para>
+			</listitem>
+			</itemizedlist>
+		<para>
+		For example: You want to have failover if there is no provisional response 
+		after 3 seconds, but you want to ring for 60 seconds. Thuse, set the fr_timer 
+		to 3 and fr_inv_timer to 60.
+		</para>
+	</section>
 	</section>
 
 	<section>
@@ -178,7 +216,11 @@ modparam("tm", "fr_timer", 10)
 		<title><varname>fr_inv_timer</varname> (integer)</title>
 		<para>
 		Timer which hits if no final reply for an INVITE arrives after a 
-		provisional message was received (in seconds).
+		provisional message was received (in seconds). This timer is started
+                after the first provisional response. Thus, fast failover (no 100 
+		trying from gateway) can be achieved by setting fr_timer to low 
+		values. See example below
+
 		</para>
 		<para>
 		<emphasis>

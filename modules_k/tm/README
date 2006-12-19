@@ -26,6 +26,7 @@ Bogdan-Andrei Iancu
         1.1. Overview
 
               1.1.1. Per-Branch flags
+              1.1.2. Timer-Based Failover
 
         1.2. Dependencies
 
@@ -221,6 +222,34 @@ Chapter 1. User's Guide
    implemented.
      _________________________________________________________
 
+1.1.2. Timer-Based Failover
+
+   Timers can be used to trigger failover behavior. E.g. if we
+   send a call a gateway and the gateway does not send a
+   provisional response within 3 seconds, we want to cancel this
+   call and send the call to another gateway. Another example is
+   to ring a SIP client only for 30 seconds and then redirect the
+   call to the voicebox.
+
+   There are two timers in OpenSER :
+
+     * fr_timer - this timer is used when no response was
+       received yet. If there is no response after fr_timer
+       seconds the timer triggers (and failure route will be
+       executed if t_on_failure() was called). If a provisional
+       response was received, the timer is set to fr_inv_timer
+       for INVITE transactions, and RT_T2 for all other
+       transactions. If a final reponse is received, the
+       transaction has finished.
+     * fr_inv_timer - this timer is used when a provisional
+       reponse was received for an INVITE transaction.
+
+   For example: You want to have failover if there is no
+   provisional response after 3 seconds, but you want to ring for
+   60 seconds. Thuse, set the fr_timer to 3 and fr_inv_timer to
+   60.
+     _________________________________________________________
+
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
@@ -256,7 +285,10 @@ modparam("tm", "fr_timer", 10)
 1.3.2. fr_inv_timer (integer)
 
    Timer which hits if no final reply for an INVITE arrives after
-   a provisional message was received (in seconds).
+   a provisional message was received (in seconds). This timer is
+   started after the first provisional response. Thus, fast
+   failover (no 100 trying from gateway) can be achieved by
+   setting fr_timer to low values. See example below
 
    Default value is 120 seconds. 
 
@@ -973,6 +1005,11 @@ branch_route[1] {
        branch) of the branch for which is executed the
        branch_route[]. If used outside of branch_route[] block,
        the value is '0'.
+     * $T_reply_code - the code of the reply, as follows: in
+       request_route will be the last stateful sent reply; in
+       reply_route will be the current processed reply; in
+       failure_route will be the negative winning reply. In case
+       of no-reply or error, '0' value is returned.
      _________________________________________________________
 
 Chapter 2. Developer's Guide
