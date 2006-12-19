@@ -327,7 +327,7 @@ INSERT INTO version VALUES ( 'acc', '4');
 INSERT INTO version VALUES ( 'silo', '5');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
-INSERT INTO version VALUES ( 'trusted', '3');
+INSERT INTO version VALUES ( 'trusted', '4');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'dbaliases', '1');
@@ -537,6 +537,7 @@ CREATE INDEX uda_idx ON usr_preferences($USERCOL,domain,attribute);
  * Table structure for table trusted
  */
 CREATE TABLE trusted (
+  id $AUTO_INCREMENT,
   src_ip varchar(39) NOT NULL,
   proto varchar(4) NOT NULL,
   from_pattern varchar(64) default NULL,
