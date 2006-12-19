@@ -528,6 +528,7 @@ CREATE TABLE trusted (
   proto varchar(4) NOT NULL,
   from_pattern varchar(64) DEFAULT NULL,
   tag varchar(32) DEFAULT NULL,
+  PRIMARY KEY (id),
   KEY Key1 (src_ip)
 ) $TABLE_TYPE;
 
