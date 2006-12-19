@@ -70,7 +70,7 @@
 		    the database.
 		</db:simpara>
 	    </db:note>
-	    <db:table>
+	    <db:table><db:title>possible domain flags</db:title>
 		<db:tgroup cols="4">
 		    <db:thead>
 			<db:row>

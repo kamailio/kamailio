@@ -65,7 +65,7 @@
 	<default>0</default>
         <description>
 	    Flags which describes some special meanings of rows. Meaning of flags is summarized in the table below.
-            <db:table>
+            <db:table><db:title>possible domain_settings flags</db:title>
                 <db:tgroup cols="4">
                     <db:thead>
                         <db:row>
