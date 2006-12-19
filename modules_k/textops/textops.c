@@ -61,6 +61,7 @@
 #include "../../parser/parse_hname2.h"
 #include "../../parser/parse_methods.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_privacy.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,6 +106,7 @@ static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
+static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
 
 static int fixup_regex(void**, int);
 static int fixup_substre(void**, int);
@@ -114,6 +116,7 @@ static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
 static int it_list_fixup(void** param, int param_no);
 static int fixup_body_type(void** param, int param_no);
+static int fixup_privacy(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -167,6 +170,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"has_body",         has_body_f,        1, fixup_body_type,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"is_privacy",       is_privacy_f,      1, fixup_privacy,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
 	{0,0,0,0,0}
 };
 
@@ -1157,6 +1162,30 @@ static int fixup_method(void** param, int param_no)
 	return 0;
 }
 
+/*
+ * Convert char* privacy value to corresponding bit value
+ */
+static int fixup_privacy(void** param, int param_no)
+{
+    str p;
+    unsigned int val;
+
+    p.s = (char*)*param;
+    p.len = strlen(p.s);
+
+    if (p.len == 0) {
+	LOG(L_ERR,"textops:fixup_privacy: empty privacy value\n");
+	return E_UNSPEC;
+    }
+
+    if (parse_priv_value(p.s, p.len, &val) != p.len) {
+	LOG(L_ERR,"textops:fixup_privacy: invalid privacy value\n");
+	return E_UNSPEC;
+    }
+    
+    *param = (void *)val;
+    return 0;
+}
 
 /*
  * Convert char* parameter to xl_elem parameter
@@ -1265,4 +1294,14 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 		return -1;
 
 	return 1;
+}
+
+
+static int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
+{
+    if (parse_privacy(msg) == -1)
+	return -1;
+
+    return get_privacy_values(msg) & (unsigned int)_privacy ? 1 : -1;
+
 }
