@@ -119,6 +119,8 @@ static void stream_node_callback(int type, xode node, void *arg)
 				encode_uri_xmpp_sip(from),
 				decode_uri_xmpp_sip(to),
 				msg);
+		} else if (!strcmp(tag, "presence")) {
+			/* call presence callbacks */
 		}
 		break;
 	case XODE_STREAM_ERROR:
