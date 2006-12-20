@@ -28,7 +28,10 @@
 #define _MOD_XMPP_H
 
 enum xmpp_pipe_cmd_type {
-	XMPP_PIPE_SEND_MESSAGE = 1,
+	XMPP_PIPE_SEND_PACKET     = 1,
+	XMPP_PIPE_SEND_MESSAGE    = 2,
+	XMPP_PIPE_SEND_PSUBSCRIBE = 4,
+	XMPP_PIPE_SEND_PNOTIFY    = 8
 };
 
 struct xmpp_pipe_cmd {

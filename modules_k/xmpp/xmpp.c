@@ -94,9 +94,10 @@
 #include "../../parser/parse_from.h"
 #include "../tm/tm_load.h"
 
+#include "xode.h"
 #include "xmpp.h"
 #include "network.h"
-#include "xode.h"
+#include "xmpp_api.h"
 
 #include <arpa/inet.h>
 
@@ -134,6 +135,8 @@ char *xmpp_password = "secret";
  */
 static cmd_export_t cmds[] = {
 	{"xmpp_send_message", (cmd_function)cmd_send_message, 0, 0, REQUEST_ROUTE},
+	{"bind_xmpp",         (cmd_function)bind_xmpp,        0, 0, 0},
+
 	{0, 0, 0, 0}
 };
 
@@ -301,6 +304,7 @@ static int xmpp_send_pipe_cmd(enum xmpp_pipe_cmd_type type, str *from, str *to,
 {
 	struct xmpp_pipe_cmd *cmd;
 	
+	/* todo: make shm allocation for one big chunk to include all fields */
 	cmd = (struct xmpp_pipe_cmd *) shm_malloc(sizeof(struct xmpp_pipe_cmd));
 	memset(cmd, 0, sizeof(struct xmpp_pipe_cmd));
 
@@ -381,3 +385,45 @@ static int cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar)
 		return 1;
 	return -1;
 }
+
+
+/**
+ *
+ */
+int xmpp_send_xpacket(str *from, str *to, str *msg, str *id)
+{
+	if(from==NULL || to==NULL || msg==NULL || id==NULL)
+		return -1;
+	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_PACKET, from, to, msg, id);
+}
+
+/**
+ *
+ */
+int xmpp_send_xmessage(str *from, str *to, str *msg, str *id)
+{
+	if(from==NULL || to==NULL || msg==NULL || id==NULL)
+		return -1;
+	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_MESSAGE, from, to, msg, id);
+}
+
+/**
+ *
+ */
+int xmpp_send_xsubscribe(str *from, str *to, str *msg, str *id)
+{
+	if(from==NULL || to==NULL || msg==NULL || id==NULL)
+		return -1;
+	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_PSUBSCRIBE, from, to, msg, id);
+}
+
+/**
+ *
+ */
+int xmpp_send_xnotify(str *from, str *to, str *msg, str *id)
+{
+	if(from==NULL || to==NULL || msg==NULL || id==NULL)
+		return -1;
+	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_PNOTIFY, from, to, msg, id);
+}
+

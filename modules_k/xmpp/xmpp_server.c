@@ -526,6 +526,9 @@ int xmpp_server_child_process(int data_pipe)
 					case XMPP_PIPE_SEND_MESSAGE:
 						do_send_message_server(cmd);
 						break;
+					case XMPP_PIPE_SEND_PSUBSCRIBE:
+					case XMPP_PIPE_SEND_PNOTIFY:
+						break;
 					}
 					xmpp_free_pipe_cmd(cmd);
 				}

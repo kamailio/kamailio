@@ -131,7 +131,10 @@ out:
 	xode_free(node);
 }
 
-static void do_send_message_component(struct xmpp_private_data *priv,
+/**
+ *
+ */
+static int do_send_message_component(struct xmpp_private_data *priv,
 		struct xmpp_pipe_cmd *cmd)
 {
 	xode x;
@@ -148,7 +151,27 @@ static void do_send_message_component(struct xmpp_private_data *priv,
 			
 	xode_send(priv->fd, x);
 	xode_free(x);
+
+	/* missing error handling here ?!?!*/
+	return 0;
 }
+
+static int do_send_bulk_message_component(struct xmpp_private_data *priv,
+		struct xmpp_pipe_cmd *cmd)
+{
+	int len;
+
+	DBG("xmpp: do_send_bulk_message_component from=[%s] to=[%s] body=[%s]\n",
+			cmd->from, cmd->to, cmd->body);
+	len = strlen(cmd->body);
+	if (net_send(priv->fd, cmd->body, len) != len) {
+		LOG(L_ERR, "xmpp: do_send_bulk_message_component: %s\n",
+				strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
 
 int xmpp_component_child_process(int data_pipe)
 {
@@ -200,12 +223,18 @@ int xmpp_component_child_process(int data_pipe)
 				xode_stream_eat(stream, buf, strlen(buf));
 			} else if (FD_ISSET(data_pipe, &fdset)) {
 				if (read(data_pipe, &cmd, sizeof(cmd)) != sizeof(cmd)) {
-					LOG(L_ERR, "xmpp: unable to read from command pipe: %s\n", strerror(errno));
+					LOG(L_ERR, "xmpp: unable to read from command pipe: %s\n",
+							strerror(errno));
 				} else {
 					DBG("xmpp: got pipe cmd %d\n", cmd->type);
 					switch (cmd->type) {
 					case XMPP_PIPE_SEND_MESSAGE:
 						do_send_message_component(&priv, cmd);
+						break;
+					case XMPP_PIPE_SEND_PACKET:
+					case XMPP_PIPE_SEND_PSUBSCRIBE:
+					case XMPP_PIPE_SEND_PNOTIFY:
+						do_send_bulk_message_component(&priv, cmd);
 						break;
 					}
 					xmpp_free_pipe_cmd(cmd);
@@ -219,3 +248,4 @@ int xmpp_component_child_process(int data_pipe)
 	}
 	return 0;
 }
+
