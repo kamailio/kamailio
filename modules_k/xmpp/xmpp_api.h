@@ -89,12 +89,22 @@ int xmpp_send_xsubscribe(str *from, str *to, str *msg, str *id);
 typedef int (*xmpp_send_xnotify_f)(str *from, str *to, str *msg, str *id);
 int xmpp_send_xnotify(str *from, str *to, str *msg, str *id);
 
+typedef char* (*xmpp_translate_uri_f)(char *uri);
+char *decode_uri_sip_xmpp(char *uri);
+char *encode_uri_sip_xmpp(char *uri);
+char *decode_uri_xmpp_sip(char *jid);
+char *encode_uri_xmpp_sip(char *jid);
+
 typedef struct xmpp_api_
 {
 	xmpp_send_xpacket_f xpacket;
 	xmpp_send_xmessage_f xmessage;
 	xmpp_send_xsubscribe_f xsubscribe;
 	xmpp_send_xnotify_f xnotify;
+	xmpp_translate_uri_f decode_uri_sip_xmpp;
+	xmpp_translate_uri_f encode_uri_sip_xmpp;
+	xmpp_translate_uri_f decode_uri_xmpp_sip;
+	xmpp_translate_uri_f encode_uri_xmpp_sip;
 } xmpp_api_t;
 
 typedef int (*bind_xmpp_t)(xmpp_api_t* api);

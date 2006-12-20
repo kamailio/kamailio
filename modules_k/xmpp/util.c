@@ -32,7 +32,7 @@
 #include "../../parser/parse_uri.h"
 
 /* dencode sip:user*domain1@domain2 -> user@domain1 */
-char *decode_sip_uri_to_jid(char *uri)
+char *decode_uri_sip_xmpp(char *uri)
 {
 	struct sip_uri puri;
 	static char buf[512];
@@ -55,7 +55,7 @@ char *decode_sip_uri_to_jid(char *uri)
 }
 
 /* encode sip:user@domain -> user*domain@xmpp_domain */
-char *encode_sip_uri_to_jid(char *uri)
+char *encode_uri_sip_xmpp(char *uri)
 {
 	struct sip_uri puri;
 	static char buf[512];
@@ -75,7 +75,7 @@ char *encode_sip_uri_to_jid(char *uri)
 }
 
 /* decode user*domain1@domain2 -> sip:user@domain1 */
-char *decode_jid_to_sip_uri(char *jid)
+char *decode_uri_xmpp_sip(char *jid)
 {
 	static char buf[512];
 	char *p;
@@ -98,7 +98,7 @@ char *decode_jid_to_sip_uri(char *jid)
 }
 
 /* encode user@domain -> sip:user*domain@gateway_domain */
-char *encode_jid_to_sip_uri(char *jid)
+char *encode_uri_xmpp_sip(char *jid)
 {
 	static char buf[512];
 	char *p;

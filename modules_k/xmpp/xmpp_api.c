@@ -112,6 +112,10 @@ int bind_xmpp(xmpp_api_t* api)
 	api->xmessage   = xmpp_send_xmessage;
 	api->xsubscribe = xmpp_send_xsubscribe;
 	api->xnotify    = xmpp_send_xnotify;
+	api->decode_uri_sip_xmpp = decode_uri_sip_xmpp;
+	api->encode_uri_sip_xmpp = encode_uri_sip_xmpp;
+	api->decode_uri_xmpp_sip = decode_uri_xmpp_sip;
+	api->encode_uri_xmpp_sip = encode_uri_xmpp_sip;
 
 	return 0;
 }

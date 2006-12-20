@@ -54,7 +54,8 @@ int net_listen(char *server, int port)
 		DBG("xmpp: resolving %s...\n", server);
 		
 		if (!(host = gethostbyname(server))) {
-			LOG(L_ERR, "xmpp: resolving %s failed (%s).\n", server, hstrerror(h_errno));
+			LOG(L_ERR, "xmpp: resolving %s failed (%s).\n", server,
+					hstrerror(h_errno));
 			return -1;
 		}
 		memcpy(&sin.sin_addr, host->h_addr_list[0], host->h_length);
@@ -68,7 +69,8 @@ int net_listen(char *server, int port)
 	DBG("xmpp: listening on %s:%d\n", inet_ntoa(sin.sin_addr), port);
 	
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
-		LOG(L_WARN, "xmpp: cannot setsockopt(SO_REUSEADDR): %s\n", strerror(errno));
+		LOG(L_WARN, "xmpp: cannot setsockopt(SO_REUSEADDR): %s\n",
+				strerror(errno));
 	}
 
 	if (bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)) < 0) {
@@ -101,7 +103,8 @@ int net_connect(char *server, int port)
 		DBG("xmpp: resolving %s...\n", server);
 		
 		if (!(host = gethostbyname(server))) {
-			LOG(L_ERR, "xmpp: resolving %s failed (%s).\n", server, hstrerror(h_errno));
+			LOG(L_ERR, "xmpp: resolving %s failed (%s).\n", server,
+					hstrerror(h_errno));
 			return -1;
 		}
 		memcpy(&sin.sin_addr, host->h_addr_list[0], host->h_length);

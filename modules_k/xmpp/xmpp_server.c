@@ -89,6 +89,7 @@
 #include "../../sr_module.h"
 
 #include "xmpp.h"
+#include "xmpp_api.h"
 #include "network.h"
 #include "xode.h"
 
@@ -147,7 +148,7 @@ static struct xmpp_connection *conn_new(int type, int fd, char *domain)
 
 	conn->pool = xode_pool_new();
 	conn->stream = xode_stream_new(conn->pool,
-		(type == CONN_INBOUND) ? in_stream_node_callback : out_stream_node_callback,
+		(type==CONN_INBOUND)?in_stream_node_callback:out_stream_node_callback,
 		conn);
 	
 	conn->next = conn_list;
@@ -185,7 +186,8 @@ static struct xmpp_connection *conn_find_domain(char *domain, int type)
 	struct xmpp_connection *conn;
 	
 	for (conn = conn_list; conn; conn = conn->next)
-		if (conn->domain && !strcasecmp(conn->domain, domain) && conn->type == type)
+		if (conn->domain && !strcasecmp(conn->domain, domain) 
+				&& conn->type == type)
 			return conn;
 	return NULL;
 }
@@ -240,7 +242,8 @@ static void out_stream_node_callback(int type, xode node, void *arg)
 	char *tag;
 	xode x;
 
-	DBG("xmpp: outstream callback: %d: %s\n", type, node ? xode_get_name(node) : "n/a");
+	DBG("xmpp: outstream callback: %d: %s\n", type, 
+			node?xode_get_name(node):"n/a");
 
 	if (conn->domain)
 		in_conn = conn_find_domain(conn->domain, CONN_INBOUND);
@@ -252,7 +255,8 @@ static void out_stream_node_callback(int type, xode node, void *arg)
 		xode_put_attrib(x, "from", xmpp_domain);
 		xode_put_attrib(x, "to", conn->domain);
 		//xode_insert_cdata(x, DB_KEY, -1);
-		xode_insert_cdata(x, db_key(local_secret, conn->domain, xode_get_attrib(node, "id")), -1);
+		xode_insert_cdata(x, db_key(local_secret, conn->domain,
+					xode_get_attrib(node, "id")), -1);
 		xode_send(conn->fd, x);
 		xode_free(x);
 
@@ -278,15 +282,18 @@ static void out_stream_node_callback(int type, xode node, void *arg)
 				if (in_conn)
 					xode_send(in_conn->fd, x);
 				else
-					LOG(L_ERR, "xmpp: need to send reply to domain '%s', but no inbound connection found\n", from);
+					LOG(L_ERR, "xmpp: need to send reply to domain '%s',"
+							" but no inbound connection found\n", from);
 				xode_free(x);
 			}
 		} else if (!strcmp(tag, "db:result")) {
 			char *type = xode_get_attrib(node, "type");
 			
 			if (type && !strcmp(type, "valid")) {
-				/* the remote server has successfully authenticated us, we can now send data */
-				for (x = xode_get_firstchild(conn->todo); x; x = xode_get_nextsibling(x)) {
+				/* the remote server has successfully authenticated us,
+				 * we can now send data */
+				for (x = xode_get_firstchild(conn->todo); x;
+						x = xode_get_nextsibling(x)) {
 					DBG("xmpp: sending todo tag '%s'\n", xode_get_name(x));
 					xode_send(conn->fd, x);
 				}
@@ -311,7 +318,8 @@ static void in_stream_node_callback(int type, xode node, void *arg)
 	char *tag;
 	xode x;
 
-	DBG("xmpp: instream callback: %d: %s\n", type, node ? xode_get_name(node) : "n/a");
+	DBG("xmpp: instream callback: %d: %s\n",
+			type, node ? xode_get_name(node) : "n/a");
 	switch (type) {
 	case XODE_STREAM_ROOT:
 		conn->stream_id = strdup(random_secret());
@@ -333,11 +341,13 @@ static void in_stream_node_callback(int type, xode node, void *arg)
 			
 			if (!type) {
 				if (conn->domain) {
-					DBG("xmpp: warning: connection %d has old domain '%s'\n", conn->fd, conn->domain);
+					DBG("xmpp: warning: connection %d has old domain '%s'\n",
+							conn->fd, conn->domain);
 					free(conn->domain);
 				}
 				conn->domain = strdup(from);
-				DBG("xmpp: connection %d set domain '%s'\n", conn->fd, conn->domain);
+				DBG("xmpp: connection %d set domain '%s'\n", conn->fd,
+						conn->domain);
 
 				/* it's a request; send verification over outgoing connection */
 				x = xode_new_tag("db:verify");
@@ -394,9 +404,11 @@ static void in_stream_node_callback(int type, xode node, void *arg)
 			if (!(msg = xode_get_data(body)))
 				msg = "";
 			xmpp_send_sip_msg(
-				encode_jid_to_sip_uri(from),
-				decode_jid_to_sip_uri(to),
+				encode_uri_xmpp_sip(from),
+				decode_uri_xmpp_sip(to),
 				msg);
+		} else if (!strcmp(tag, "presence")) {
+			/* run presence callbacks */
 		}
 		break;
 
@@ -423,12 +435,12 @@ static void do_send_message_server(struct xmpp_pipe_cmd *cmd)
 	x = xode_new_tag("message");
 	xode_put_attrib(x, "xmlns", "jabber:client");
 	xode_put_attrib(x, "id", cmd->id); // XXX
-	xode_put_attrib(x, "from", encode_sip_uri_to_jid(cmd->from));
-	xode_put_attrib(x, "to", decode_sip_uri_to_jid(cmd->to));
+	xode_put_attrib(x, "from", encode_uri_sip_xmpp(cmd->from));
+	xode_put_attrib(x, "to", decode_uri_sip_xmpp(cmd->to));
 	xode_put_attrib(x, "type", "chat");
 	xode_insert_cdata(xode_insert_tag(x, "body"), cmd->body, -1);
 
-	domain = extract_domain(decode_sip_uri_to_jid(cmd->to));
+	domain = extract_domain(decode_uri_sip_xmpp(cmd->to));
 	xode_send_domain(domain, x);
 }
 
@@ -505,7 +517,7 @@ int xmpp_server_child_process(int data_pipe)
 				unsigned int len = sizeof(sin);
 				int fd;
 
-				if ((fd = accept(listen_fd, (struct sockaddr *) &sin, &len)) < 0) {
+				if ((fd = accept(listen_fd,(struct sockaddr*)&sin, &len))<0) {
 					LOG(L_ERR, "xmpp: cannot accept(): %s\n", strerror(errno));
 				} else {
 					DBG("xmpp: accept()ed connection from %s:%d\n",
@@ -526,6 +538,7 @@ int xmpp_server_child_process(int data_pipe)
 					case XMPP_PIPE_SEND_MESSAGE:
 						do_send_message_server(cmd);
 						break;
+					case XMPP_PIPE_SEND_PACKET:
 					case XMPP_PIPE_SEND_PSUBSCRIBE:
 					case XMPP_PIPE_SEND_PNOTIFY:
 						break;

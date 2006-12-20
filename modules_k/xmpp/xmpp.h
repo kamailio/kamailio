@@ -53,22 +53,22 @@ extern int xmpp_send_sip_msg(char *from, char *to, char *msg);
 extern void xmpp_free_pipe_cmd(struct xmpp_pipe_cmd *cmd);
 
 /* util.c */
-extern char *decode_sip_uri_to_jid(char *uri);
-extern char *encode_sip_uri_to_jid(char *uri);
-extern char *decode_jid_to_sip_uri(char *jid);
-extern char *encode_jid_to_sip_uri(char *jid);
-extern char *extract_domain(char *jid);
-extern char *random_secret(void);
-extern char *db_key(char *secret, char *domain, char *id);
+char *decode_uri_sip_xmpp(char *uri);
+char *encode_uri_sip_xmpp(char *uri);
+char *decode_uri_xmpp_sip(char *jid);
+char *encode_uri_xmpp_sip(char *jid);
+char *extract_domain(char *jid);
+char *random_secret(void);
+char *db_key(char *secret, char *domain, char *id);
  
 
 /* xmpp_server.c */
-extern int xmpp_server_child_process(int data_pipe);
+int xmpp_server_child_process(int data_pipe);
 
 /* xmpp_component.c */
-extern int xmpp_component_child_process(int data_pipe);
+int xmpp_component_child_process(int data_pipe);
 
 /* sha.c */
-extern char *shahash(const char *str);
+char *shahash(const char *str);
 
 #endif
