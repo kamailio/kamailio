@@ -1183,7 +1183,7 @@ static int fixup_privacy(void** param, int param_no)
 	return E_UNSPEC;
     }
     
-    *param = (void *)val;
+    *param = (void *)(long)val;
     return 0;
 }
 
@@ -1302,6 +1302,6 @@ static int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
     if (parse_privacy(msg) == -1)
 	return -1;
 
-    return get_privacy_values(msg) & (unsigned int)_privacy ? 1 : -1;
+    return get_privacy_values(msg) & ((unsigned int)(long)_privacy) ? 1 : -1;
 
 }
