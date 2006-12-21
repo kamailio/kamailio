@@ -79,7 +79,7 @@ CREATE TABLE credentials (
     KEY uid (uid)
 );
 
-INSERT INTO version (table_name, table_version) values ('attr_types','3');
+INSERT INTO version (table_name, table_version) values ('attr_types','4');
 CREATE TABLE attr_types (
     name VARCHAR(32) NOT NULL,
     rich_type VARCHAR(32) NOT NULL DEFAULT 'string',
@@ -91,6 +91,7 @@ CREATE TABLE attr_types (
     priority INT NOT NULL DEFAULT '0',
     access INT NOT NULL DEFAULT '0',
     ordering INT NOT NULL DEFAULT '0',
+    grp VARCHAR(32) NOT NULL DEFAULT 'other',
     UNIQUE KEY upt_idx1 (name)
 );
 

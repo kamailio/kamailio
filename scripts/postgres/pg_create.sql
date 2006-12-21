@@ -91,6 +91,7 @@ CREATE TABLE attr_types (
     priority INTEGER NOT NULL DEFAULT '0',
     access INTEGER NOT NULL DEFAULT '0',
     ordering INTEGER NOT NULL DEFAULT '0',
+    grp VARCHAR(32) NOT NULL DEFAULT 'other',
     CONSTRAINT upt_idx1 UNIQUE (name)
 );
 

@@ -17,19 +17,19 @@ INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_f
 DELETE FROM attr_types WHERE name='acl';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('acl', '2', 'string', 'access control list of user', '33', '1024', '0', '0');
 DELETE FROM attr_types WHERE name='first_name';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('first_name', '2', 'string', '@ff_first_name', '32', '2048', '256', '10');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('first_name', '2', 'string', '@ff_first_name', '32', '2048', '256', '10', 'general');
 DELETE FROM attr_types WHERE name='last_name';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('last_name', '2', 'string', '@ff_last_name', '32', '2048', '256', '20');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('last_name', '2', 'string', '@ff_last_name', '32', '2048', '256', '20', 'general');
 DELETE FROM attr_types WHERE name='email';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('email', '2', 'email_adr', '@ff_email', '33', '6144', '256', '30');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('email', '2', 'email_adr', '@ff_email', '33', '6144', '256', '30', 'general');
 DELETE FROM attr_types WHERE name='timezone';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('timezone', '2', 'timezone', '@ff_timezone', '32', '2048', '1073807616', '60');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('timezone', '2', 'timezone', '@ff_timezone', '32', '2048', '1073807616', '60', 'general');
 DELETE FROM attr_types WHERE name='sw_allow_find';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_allow_find', '0', 'boolean', '@ff_allow_lookup_for_me', '32', '0', '256', '110');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('sw_allow_find', '0', 'boolean', '@ff_allow_lookup_for_me', '32', '0', '256', '110', 'privacy');
 DELETE FROM attr_types WHERE name='lang';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('lang', '2', 'lang', '@ff_language', '33', '0', '1073807616', '50');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('lang', '2', 'lang', '@ff_language', '33', '0', '1073807616', '50', 'general');
 DELETE FROM attr_types WHERE name='sw_show_status';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_show_status', '0', 'boolean', '@ff_status_visibility', '32', '0', '1073742080', '100');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('sw_show_status', '0', 'boolean', '@ff_status_visibility', '32', '0', '1073742080', '100', 'privacy');
 DELETE FROM attr_types WHERE name='sw_admin';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_admin', '2', 'string', 'admin of domain', '32', '1024', '0');
 DELETE FROM attr_types WHERE name='sw_owner';
@@ -39,7 +39,7 @@ INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_f
 DELETE FROM attr_types WHERE name='sw_deleted_ts';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_deleted_ts', '0', 'int', 'deleted timestamp', '32', '0', '0');
 DELETE FROM attr_types WHERE name='phone';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('phone', '2', 'string', '@ff_phone', '32', '2048', '256', '40');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('phone', '2', 'string', '@ff_phone', '32', '2048', '256', '40', 'general');
 DELETE FROM attr_types WHERE name='sw_acl_control';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_acl_control', '2', 'string', 'acl control', '32', '1024', '0');
 DELETE FROM attr_types WHERE name='sw_credential_default_flags';
@@ -63,7 +63,7 @@ INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_f
 DELETE FROM attr_types WHERE name='did_format';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, type_spec) VALUES ('did_format', '2', 'list', '@ff_did_format', '32', '0', '1073741824', '170', 'a:3:{i:0;s:11:"domain name";i:1;s:21:"integer (incremental)";i:2;s:15:"UUID by RFC4122";}');
 DELETE FROM attr_types WHERE name='contact_email';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('contact_email', '2', 'email_adr', '@ff_contact_email', '32', '4096', '1073807360', '0');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering, grp) VALUES ('contact_email', '2', 'email_adr', '@ff_contact_email', '32', '4096', '1073807360', '0', 'general');
 
 DELETE FROM global_attrs WHERE name='sw_domain_default_flags';
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_domain_default_flags', '0', '33', '32');

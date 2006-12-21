@@ -9,7 +9,7 @@
 
 <table role="serweb">
     <name>attr_types</name>
-    <version>3</version>
+    <version>4</version>
     <description>
 	Each attribute, identified by name, has associated set of
 	properties and constraints. This table contains types and
@@ -122,6 +122,16 @@
 	</description>
     </column>
 	
+	<column role="serweb" id="at.grp">
+	<name>grp</name>
+	<type>string</type>
+	<size>32</size>
+	<default>other</default>
+	<description>
+		When attributes are displayed in serweb, they could be grouped together by this field. 
+		This is used by SERWeb only.
+	</description>
+    </column>
 
     <index>
 	<name>upt_idx1</name>
@@ -228,6 +238,7 @@
 		<value col="at.flags">2048</value>
 		<value col="at.prior">256</value>
 		<value col="at.order">10</value>
+		<value col="at.grp">general</value>
 	</row>
 
 	<row vendor-controlled="1">
@@ -239,6 +250,7 @@
 		<value col="at.flags">2048</value>
 		<value col="at.prior">256</value>
 		<value col="at.order">20</value>
+		<value col="at.grp">general</value>
 	</row>
 	
 	<row vendor-controlled="1">
@@ -250,6 +262,7 @@
 		<value col="at.flags">6144</value>
 		<value col="at.prior">256</value>
 		<value col="at.order">30</value>
+		<value col="at.grp">general</value>
 	</row>
 	
 	<row vendor-controlled="1">
@@ -261,6 +274,7 @@
 		<value col="at.flags">2048</value>
 		<value col="at.prior">1073807616</value>
 		<value col="at.order">60</value>
+		<value col="at.grp">general</value>
 	</row>
 	
 	<row vendor-controlled="1">
@@ -272,6 +286,7 @@
 		<value col="at.flags">0</value>
 		<value col="at.prior">256</value>
 		<value col="at.order">110</value>
+		<value col="at.grp">privacy</value>
 	</row>
 	
 	<row vendor-controlled="1">
@@ -283,6 +298,7 @@
 		<value col="at.flags">0</value>
 		<value col="at.prior">1073807616</value>
 		<value col="at.order">50</value>
+		<value col="at.grp">general</value>
 	</row>
 	
 	<row vendor-controlled="1">
@@ -294,6 +310,7 @@
 		<value col="at.flags">0</value>
 		<value col="at.prior">1073742080</value>
 		<value col="at.order">100</value>
+		<value col="at.grp">privacy</value>
 	</row>
 	
 	<row vendor-controlled="1">
@@ -345,6 +362,7 @@
 		<value col="at.flags">2048</value>
 		<value col="at.prior">256</value>
 		<value col="at.order">40</value>
+		<value col="at.grp">general</value>
 	</row>
 	
 	<row vendor-controlled="1">
@@ -472,6 +490,7 @@
 		<value col="at.flags">4096</value>
 		<value col="at.prior">1073807360</value>
 		<value col="at.order">0</value>
+		<value col="at.grp">general</value>
 	</row>
 
 								      
