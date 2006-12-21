@@ -65,7 +65,7 @@ static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
 char* db_url       = DEFAULT_RODB_URL;
 
-char* table              = "sip_trace";
+char* siptrace_table     = "sip_trace";
 char* date_column        = "date";        /* 00 */
 char* callid_column      = "callid";      /* 01 */
 char* traced_user_column = "traced_user"; /* 02 */
@@ -87,7 +87,14 @@ struct sip_uri *dup_uri = 0;
 
 int   *trace_on_flag = NULL;      
 
-int traced_user_avp = 0;
+static int     traced_user_avp_type;
+static int_str traced_user_avp;
+char           *traced_user_avp_str = NULL;
+
+static int     trace_table_avp_type;
+static int_str trace_table_avp;
+char           *trace_table_avp_str = NULL;
+
 char* trace_local_ip = NULL;
 
 /** database connection */
@@ -111,10 +118,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",        STR_PARAM, &db_url         },
-	{"table",         STR_PARAM, &table          },
-	{"date_column",   STR_PARAM, &date_column    },
-	{"callid_column", STR_PARAM, &callid_column  },
+	{"db_url",             STR_PARAM, &db_url         },
+	{"table",              STR_PARAM, &siptrace_table },
+	{"date_column",        STR_PARAM, &date_column    },
+	{"callid_column",      STR_PARAM, &callid_column  },
 	{"traced_user_column", STR_PARAM, &traced_user_column },
 	{"msg_column",         STR_PARAM, &msg_column         },
 	{"method_column",      STR_PARAM, &method_column      },
@@ -125,7 +132,8 @@ static param_export_t params[] = {
 	{"direction_column",   STR_PARAM, &direction_column   },
 	{"trace_flag",         INT_PARAM, &trace_flag         },
 	{"trace_on",           INT_PARAM, &trace_on           },
-	{"traced_user_avp",    INT_PARAM, &traced_user_avp    },
+	{"traced_user_avp",    STR_PARAM, &traced_user_avp_str},
+	{"trace_table_avp",    STR_PARAM, &trace_table_avp_str},
 	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s      },
 	{"trace_local_ip",     STR_PARAM, &trace_local_ip     },
 	{0, 0, 0}
@@ -172,8 +180,17 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
+	str s;
+
 	DBG("siptrace - initializing\n");
 	
+	if(siptrace_table==0 || strlen(siptrace_table)<=0)
+	{
+		LOG(L_ERR,
+			"siptrace:mod_init:ERROR: invalid table name\n");
+		return -1;
+	}
+
    /* Find a database module */
 	if (bind_dbmod(db_url, &db_funcs))
 	{
@@ -242,6 +259,36 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if(traced_user_avp_str && *traced_user_avp_str)
+	{
+		s.s = traced_user_avp_str;
+		s.len = strlen(s.s);
+		if(parse_avp_spec(&s, &traced_user_avp_type, &traced_user_avp)<0)
+		{
+			LOG(L_CRIT,"ERROR:siptrace:mod_init: invalid traced_user "
+				"AVP specs \"%s\"\n", traced_user_avp_str);
+			return -1;
+		}
+	} else {
+		traced_user_avp.n = 0;
+		traced_user_avp_type = 0;
+	}
+	if(trace_table_avp_str && *trace_table_avp_str)
+	{
+		s.s = trace_table_avp_str;
+		s.len = strlen(s.s);
+		if(parse_avp_spec(&s, &trace_table_avp_type, &trace_table_avp)<0)
+		{
+			LOG(L_CRIT,"ERROR:siptrace:mod_init: invalid traced_user "
+				"AVP specs \"%s\"\n", trace_table_avp_str);
+			return -1;
+		}
+	} else {
+		trace_table_avp.n = 0;
+		trace_table_avp_type = 0;
+	}
+
 	return 0;
 }
 
@@ -267,13 +314,31 @@ static void destroy(void)
 		shm_free(trace_on_flag);
 }
 
+static inline char* siptrace_get_table()
+{
+	int_str        avp_value;
+	struct usr_avp *avp;
+
+	if(trace_table_avp.n==0)
+		return siptrace_table;
+
+	avp = NULL;
+	if(trace_table_avp.n!=0)
+		avp=search_first_avp(trace_table_avp_type, trace_table_avp,
+				&avp_value, 0);
+
+	if(avp==NULL || !is_avp_str_val(avp) || avp_value.s.len<=0)
+		return siptrace_table;
+
+	return avp_value.s.s;
+}
+
 static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 {
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 	static char toip_buff[IP_ADDR_MAX_STR_SIZE+6];
 	static char fromip_buff[IP_ADDR_MAX_STR_SIZE+6];
-	int_str        avp_name;
 	int_str        avp_value;
 	struct usr_avp *avp;
 	
@@ -284,11 +349,9 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	}
 
 	avp = NULL;
-	if(traced_user_avp>0)
-	{
-		avp_name.n = traced_user_avp;
-		avp=search_first_avp(0, avp_name, &avp_value, 0);
-	}
+	if(traced_user_avp.n!=0)
+		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
+				&avp_value, 0);
 
 	if((avp==NULL) && (trace_on_flag==NULL || *trace_on_flag==0))
 	{
@@ -385,7 +448,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
 	
-	db_funcs.use_table(db_con, table);
+	db_funcs.use_table(db_con, siptrace_get_table());
 	
 	db_keys[9] = traced_user_column;
 	db_vals[9].type = DB_STR;
@@ -446,7 +509,6 @@ error:
 static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg;
-	int_str        avp_name;
 	int_str        avp_value;
 	struct usr_avp *avp;
 
@@ -464,11 +526,9 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	
 	avp = NULL;
-	if(traced_user_avp>0)
-	{
-		avp_name.n = traced_user_avp;
-		avp=search_first_avp(0, avp_name, &avp_value, 0);
-	}
+	if(traced_user_avp.n!=0)
+		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
+				&avp_value, 0);
 
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL || 
 				*trace_on_flag==0 || isflagset(msg, trace_flag)!=1))
@@ -522,7 +582,6 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	static char fromip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	static char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	struct sip_msg* msg;
-	int_str        avp_name;
 	int_str        avp_value;
 	struct usr_avp *avp;
 	struct ip_addr to_ip;
@@ -543,11 +602,9 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	
 	avp = NULL;
-	if(traced_user_avp>0)
-	{
-		avp_name.n = traced_user_avp;
-		avp=search_first_avp(0, avp_name, &avp_value, 0);
-	}
+	if(traced_user_avp.n!=0)
+		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
+				&avp_value, 0);
 
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL 
 				|| *trace_on_flag==0 || isflagset(msg, trace_flag)!=1))
@@ -666,7 +723,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
 	
-	db_funcs.use_table(db_con, table);
+	db_funcs.use_table(db_con, siptrace_get_table());
 
 	db_keys[9] = traced_user_column;
 	db_vals[9].type = DB_STR;
@@ -759,7 +816,6 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	static char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	struct sip_msg* msg;
 	struct sip_msg* req;
-	int_str        avp_name;
 	int_str        avp_value;
 	struct usr_avp *avp;
 	struct ip_addr to_ip;
@@ -775,11 +831,9 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	
 	avp = NULL;
-	if(traced_user_avp>0)
-	{
-		avp_name.n = traced_user_avp;
-		avp=search_first_avp(0, avp_name, &avp_value, 0);
-	}
+	if(traced_user_avp.n!=0)
+		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
+				&avp_value, 0);
 
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL
 			|| *trace_on_flag==0 || isflagset(t->uas.request, trace_flag)!=1))
@@ -919,7 +973,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
 	
-	db_funcs.use_table(db_con, table);
+	db_funcs.use_table(db_con, siptrace_get_table());
 
 	db_keys[9] = traced_user_column;
 	db_vals[9].type = DB_STR;
@@ -984,7 +1038,6 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 	static char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	int faked = 0;
 	struct sip_msg* msg;
-	int_str        avp_name;
 	int_str        avp_value;
 	struct usr_avp *avp;
 	struct ip_addr to_ip;
@@ -998,11 +1051,9 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 	}
 	
 	avp = NULL;
-	if(traced_user_avp>0)
-	{
-		avp_name.n = traced_user_avp;
-		avp=search_first_avp(0, avp_name, &avp_value, 0);
-	}
+	if(traced_user_avp.n!=0)
+		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
+				&avp_value, 0);
 
 	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL
 				|| *trace_on_flag==0 || isflagset(req, trace_flag)!=1))
@@ -1109,7 +1160,7 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
 	
-	db_funcs.use_table(db_con, table);
+	db_funcs.use_table(db_con, siptrace_get_table());
 
 	db_keys[9] = traced_user_column;
 	db_vals[9].type = DB_STR;
