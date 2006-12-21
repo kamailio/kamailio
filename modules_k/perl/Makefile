@@ -22,7 +22,7 @@ perl.d: openserxs.o
 perl.o: perl.c openserxs.o
 
 openserxs.o: openserxs.c openserxs.d
-	$(CC) $(DEFS) -c -o openserxs.o openserxs.c
+	$(CC) $(MOD_CFLAGS) -Wno-unused $(DEFS) -c -o openserxs.o openserxs.c
 
 openserxs.c: openserxs.xs typemap
 	xsubpp -typemap $(TYPEMAP) -typemap typemap openserxs.xs > openserxs.c
