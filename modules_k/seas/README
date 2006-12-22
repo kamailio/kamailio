@@ -1,0 +1,54 @@
+
+Install
+-------
+
+make
+make modules=modules/tm modules
+make modules=modules/seas modules
+
+Run
+---
+
+./openser -w .
+
+Configuration
+-------------
+
+The Ip and Port where OpenSER is listening MUST be the same as the "addresses"
+parameter in <Connector> tag in server.xml for the JAVA program.
+The listen_sockets IP and Port parameter must be the same as present in
+SER_ADDRESS and SER_PORT properties in the server.xml.
+
+This is some configuration for the openser.cfg file:
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>
+reply_to_via=1
+listen = tcp:127.0.0.1:5060
+listen = udp:127.0.0.1:5060
+
+loadmodule "modules/tm/tm.so"
+loadmodule "modules/seas/seas.so"
+
+modparam("seas", "listen_sockets","192.168.1.207:5080")
+modparam("seas", "stats_socket","192.168.1.207:5088")
+>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+and this is the corresponding server.xml piece of configuration...
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>
+	 <Connector className="com.voztele.sipservlet.connector.SipConnector"
+	 minProcessors="5" maxProcessors="75"
+	 enableLookups="true" acceptCount="10" debug="10"
+	 addresses="127.0.0.1:5060" pathName="com.voztele" >
+		<ExtraProperties>
+			<Property key="com.voztele.javax.sip.SER_ADDRESS" value="192.168.1.207" />
+			<Property key="com.voztele.javax.sip.SER_PORT" value="5080" />
+			<Property key="com.voztele.STATISTICS" value="true" />
+			<Property key="javax.sip.STACK_NAME" value="shootist" />
+			<Property key="javax.sip.THREAD_POOL_SIZE" value="10" />
+			<Property key="com.voztele.javax.sip.THREAD_POOL_SIZE" value="10" />
+			<Property key="com.voztele.javax.sip.REENTRANT_LISTENER" value="true" />
+			<Property key="javax.sip.AUTOMATIC_DIALOG_SUPPORT" value="false" /> 
+		</ExtraProperties>
+	</Connector>
+>>>>>>>>>>>>>>>>>>>>>>>>>>
