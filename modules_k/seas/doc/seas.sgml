@@ -1,0 +1,50 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+<!ENTITY user SYSTEM "seas_user.sgml">
+<!ENTITY devel SYSTEM "seas_devel.sgml">
+<!ENTITY faq SYSTEM "seas_faq.sgml">
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+]>
+<book>
+  <bookinfo>
+    <title>Seas Module</title>
+
+    <productname class="trade">Seas Module</productname>
+
+    <authorgroup>
+      <author>
+        <firstname>Elias</firstname>
+
+        <surname>Baixas</surname>
+
+        <affiliation>
+          <orgname>VozTelecom Sistemas</orgname>
+          <orgdiv><ulink url="http://www.wesip.eu">www.wesip.eu</ulink></orgdiv>
+          <address>Ronda Can Fatjo, 9, 1p Parc Tecnologic del Valles Cerdanyola, 08520 (SPAIN) 
+	  Phone:+34 933968800 
+	  www.voztele.com
+	  <email>elias.baixas@voztele.com</email>
+	  </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+
+    <copyright>
+      <year>2006</year>
+
+      <holder>VozTelecom Sistemas</holder>
+    </copyright>
+  </bookinfo>
+
+  <toc></toc>
+
+  <!-- External Entity Refs -->
+  &user;
+  &devel;
+  &faq;
+</book>
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("seas.sgml" "Book" "chapter")
+End:
+-->
