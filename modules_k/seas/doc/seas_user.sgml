@@ -312,7 +312,7 @@ ServletException, IOException
 
             <mediaobject>
               <imageobject>
-                <imagedata fileref="images/image024.png">
+                <imagedata fileref="./seas/image024.png">
               </imageobject>
             </mediaobject>
           </figure>The Servlet programming language is JAVA, which offers a

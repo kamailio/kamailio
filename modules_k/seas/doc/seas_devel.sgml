@@ -57,7 +57,7 @@
 
           <mediaobject>
             <imageobject>
-              <imagedata fileref="images/image056.gif">
+              <imagedata fileref="./seas/image056.gif">
             </imageobject>
           </mediaobject>
         </figure> Within the SER server, the flowing of SIP Messages and
@@ -68,7 +68,7 @@
 
           <mediaobject>
             <imageobject>
-              <imagedata fileref="images/image058.gif">
+              <imagedata fileref="./seas/image058.gif">
             </imageobject>
           </mediaobject>
         </figure></para>
@@ -243,7 +243,7 @@
 
             <mediaobject>
               <imageobject>
-                <imagedata fileref="images/image100.gif">
+                <imagedata fileref="./seas/image100.gif">
               </imageobject>
             </mediaobject>
           </figure>For example:</para>
@@ -253,7 +253,7 @@
 
             <mediaobject>
               <imageobject>
-                <imagedata fileref="images/image101.gif">
+                <imagedata fileref="./seas/image101.gif">
               </imageobject>
             </mediaobject>
           </figure></para>
@@ -274,7 +274,7 @@
 
               <mediaobject>
                 <imageobject>
-                  <imagedata fileref="images/image102.gif">
+                  <imagedata fileref="./seas/image102.gif">
                 </imageobject>
               </mediaobject>
             </figure></para>
@@ -287,7 +287,7 @@
 
               <mediaobject>
                 <imageobject>
-                  <imagedata fileref="images/image103.gif">
+                  <imagedata fileref="./seas/image103.gif">
                 </imageobject>
               </mediaobject>
             </figure>The first byte in the encoded-URI structure, gives the
@@ -332,7 +332,7 @@
 
               <mediaobject>
                 <imageobject>
-                  <imagedata fileref="images/image104.gif">
+                  <imagedata fileref="./seas/image104.gif">
                 </imageobject>
               </mediaobject>
             </figure></para>
@@ -356,7 +356,7 @@
 
               <mediaobject>
                 <imageobject>
-                  <imagedata fileref="images/image105.gif">
+                  <imagedata fileref="./seas/image105.gif">
                 </imageobject>
               </mediaobject>
             </figure></para>
@@ -376,7 +376,7 @@
 
               <mediaobject>
                 <imageobject>
-                  <imagedata fileref="images/image106.gif">
+                  <imagedata fileref="./seas/image106.gif">
                 </imageobject>
               </mediaobject>
             </figure></para>
@@ -414,7 +414,7 @@
 
               <mediaobject>
                 <imageobject>
-                  <imagedata fileref="images/image107.gif">
+                  <imagedata fileref="./seas/image107.gif">
                 </imageobject>
               </mediaobject>
             </figure></para>
@@ -500,7 +500,7 @@
 
                 <mediaobject>
                   <imageobject>
-                    <imagedata fileref="images/image108.gif">
+                    <imagedata fileref="./seas/image108.gif">
                   </imageobject>
                 </mediaobject>
               </figure></para>
@@ -608,7 +608,7 @@
 
                 <mediaobject>
                   <imageobject>
-                    <imagedata fileref="images/image109.gif">
+                    <imagedata fileref="./seas/image109.gif">
                   </imageobject>
                 </mediaobject>
               </figure>So a SIP message codified by the SEAS protocol, has the
@@ -619,7 +619,7 @@
 
                 <mediaobject>
                   <imageobject>
-                    <imagedata fileref="images/image110.gif">
+                    <imagedata fileref="./seas/image110.gif">
                   </imageobject>
                 </mediaobject>
               </figure></para>
@@ -689,7 +689,7 @@
 
                 <mediaobject>
                   <imageobject>
-                    <imagedata fileref="images/image111.gif">
+                    <imagedata fileref="./seas/image111.gif">
                   </imageobject>
                 </mediaobject>
               </figure></para>
