@@ -181,9 +181,8 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r,
 
 		/* socket */
 		if (c->sock) {
-			node = addf_mi_node_child( cnode, 0, "Socket", 6, "%.*s:%d (%p)",
-				c->sock->address_str.len, c->sock->address_str.s,
-				c->sock->port_no, c->sock);
+			node = add_mi_node_child( cnode, 0, "Socket", 6,
+				c->sock->sock_str.s, c->sock->sock_str.len);
 			if (node==0)
 				return -1;
 		}
