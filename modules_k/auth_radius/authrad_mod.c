@@ -70,7 +70,9 @@ static int service_type = -1;
 static cmd_export_t cmds[] = {
 	{"radius_www_authorize",   radius_www_authorize,   1, auth_fixup,
 			REQUEST_ROUTE},
-	{"radius_proxy_authorize", radius_proxy_authorize, 1, auth_fixup,
+	{"radius_proxy_authorize", radius_proxy_authorize_1, 1, auth_fixup,
+			REQUEST_ROUTE},
+	{"radius_proxy_authorize", radius_proxy_authorize_2, 2, auth_fixup,
 			REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -179,20 +181,45 @@ static int auth_fixup(void** param, int param_no)
 {
 	xl_elem_t *model;
 	char* s;
+	xl_spec_t *sp;
 
-	if (param_no == 1) {
+	if (param_no == 1) { /* realm (string that may contain pvars) */
 		s = (char*)*param;
 		if (s==0 || s[0]==0) {
 			model = 0;
 		} else {
 			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-				LOG(L_ERR, "ERROR:auth_radius:auth_fixup: xl_parse_format "
-					"failed\n");
+				LOG(L_ERR, "ERROR:auth_radius:auth_fixup: "
+				    "xl_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
 		*param = (void*)model;
 	}
+
+	if (param_no == 2) { /* URI user (a pvar) */
+		sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+		if (sp == 0) {
+			LOG(L_ERR, "ERROR:auth_radius:auth_fixup(): "
+			    "no pkg memory left\n");
+			return -1;
+		}
+		if (xl_parse_spec((char*)*param, sp,
+				  XL_THROW_ERROR|XL_DISABLE_MULTI|
+				  XL_DISABLE_COLORS) == 0) {
+			LOG(L_ERR,"ERROR:auth_radius:auth_fixup(): parsing of "
+			    "pseudo variable %s failed!\n", (char*)*param);
+			pkg_free(sp);
+			return -1;
+		}
+		if (sp->type == XL_NULL) {
+			LOG(L_ERR,"ERROR:auth_radius:auth_fixup(): bad pseudo "
+			    "variable\n");
+			pkg_free(sp);
+			return -1;
+		}
+		*param = (void*)sp;
+	}	
 
 	return 0;
 }

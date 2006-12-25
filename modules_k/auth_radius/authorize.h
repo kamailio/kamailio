@@ -33,9 +33,15 @@
 
 
 /*
- * Authorize using Proxy-Authorization header field
+ * Authorize using Proxy-Authorize header field (no from parameter given)
  */
-int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
+int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2);
+
+
+/*
+ * Authorize using Proxy-Authorize header field (from parameter given)
+ */
+int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm, char* _from);
 
 
 /*

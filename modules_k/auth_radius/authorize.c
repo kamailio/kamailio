@@ -51,20 +51,21 @@
  */
 static inline int get_uri(struct sip_msg* _m, str** _uri)
 {
-	if ((REQ_LINE(_m).method.len == 8) && (memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
-		if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || !_m->to)) {
-			LOG(L_ERR, "get_uri(): To header field not found or malformed\n");
-			return -1;
-		}
-		*_uri = &(get_to(_m)->uri);
-	} else {
-		if (parse_from_header(_m)<0) {
-			LOG(L_ERR, "get_uri(): Error while parsing headers\n");
-			return -2;
-		}
-		*_uri = &(get_from(_m)->uri);
+    if ((REQ_LINE(_m).method.len == 8) && 
+	(memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
+	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || !_m->to)) {
+	    LOG(L_ERR, "get_uri(): To header field not found or malformed\n");
+	    return -1;
 	}
-	return 0;
+	*_uri = &(get_to(_m)->uri);
+    } else {
+	if (parse_from_header(_m)<0) {
+	    LOG(L_ERR, "get_uri(): Error while parsing headers\n");
+	    return -2;
+	}
+	*_uri = &(get_from(_m)->uri);
+    }
+    return 0;
 }
 
 
@@ -72,79 +73,112 @@ static inline int get_uri(struct sip_msg* _m, str** _uri)
  * Authorize digest credentials
  */
 static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
-																int _hftype)
+			    xl_spec_t * _uri_user, int _hftype)
 {
-	int res;
-	auth_result_t ret;
-	struct hdr_field* h;
-	auth_body_t* cred;
-	str* uri;
-	struct sip_uri puri;
-	str user, domain;
+    int res;
+    auth_result_t ret;
+    struct hdr_field* h;
+    auth_body_t* cred;
+    str* uri;
+    struct sip_uri puri;
+    str user, domain;
+    xl_value_t xl_val;
 
-	if (_realm) {
-		if (xl_printf_s(_msg, _realm, &domain)!=0) {
-			LOG(L_ERR,"ERROR:auth_radius:authorize: xl_printf_s failed\n");
-			return -1;
-		}
+    /* get pre_auth domain from _realm pvar (if exists) */
+    if (_realm) {
+	if (xl_printf_s(_msg, _realm, &domain)!=0) {
+	    LOG(L_ERR,"ERROR:auth_radius:authorize: xl_printf_s failed\n");
+	    return -1;
+	}
+    } else {
+	/* get pre_auth domain from To/From header */
+	domain.len = 0;
+	domain.s = 0;
+    }
+
+    ret = auth_api.pre_auth(_msg, &domain, _hftype, &h);
+	
+    switch(ret) {
+    case ERROR:            return 0;
+    case NOT_AUTHORIZED:   return -1;
+    case DO_AUTHORIZATION: break;
+    case AUTHORIZED:       return 1;
+    }
+	
+    cred = (auth_body_t*)h->parsed;
+
+    /* get uri_user from _uri_user pvap (if exists) or
+       from To/From URI */
+    if (_uri_user) {
+	if (xl_get_spec_value(_msg, _uri_user, &xl_val, 0) == 0) {
+	    if (xl_val.flags & XL_VAL_STR) {
+		res = radius_authorize_sterman(_msg, &cred->digest, 
+					       &_msg->first_line.u.request.method,
+					       &xl_val.rs);
+	    } else {
+		LOG(L_ERR, "ERROR:auth_radius:authorize: "
+		    "uri_user pvar value is not string\n");
+		return -1;
+	    }
 	} else {
-		domain.len = 0;
-		domain.s = 0;
+	    LOG(L_ERR, "ERROR:auth_radius:authorize: "
+		"cannot get uri_user pvar value\n");
+	    return -1;
 	}
-
-	ret = auth_api.pre_auth(_msg, &domain, _hftype, &h);
-	
-	switch(ret) {
-	case ERROR:            return 0;
-	case NOT_AUTHORIZED:   return -1;
-	case DO_AUTHORIZATION: break;
-	case AUTHORIZED:       return 1;
-	}
-
-	cred = (auth_body_t*)h->parsed;
-
+    } else {
 	if (get_uri(_msg, &uri) < 0) {
-		LOG(L_ERR, "authorize(): From/To URI not found\n");
-		return -1;
+	    LOG(L_ERR, "authorize(): To/From URI not found\n");
+	    return -1;
 	}
-	
 	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		LOG(L_ERR, "authorize(): Error while parsing From/To URI\n");
-		return -1;
+	    LOG(L_ERR, "authorize(): Error while parsing From/To URI\n");
+	    return -1;
 	}
-
 	user.s = (char *)pkg_malloc(puri.user.len);
 	if (user.s == NULL) {
-		LOG(L_ERR, "authorize: No memory left\n");
-		return -1;
+	    LOG(L_ERR, "authorize: No memory left for user \n");
+	    return -1;
 	}
 	un_escape(&(puri.user), &user);
-
 	res = radius_authorize_sterman(_msg, &cred->digest, 
-			&_msg->first_line.u.request.method, &user);
+				       &_msg->first_line.u.request.method,
+				       &user);
 	pkg_free(user.s);
+    }
 
-	if (res == 1) {
-		ret = auth_api.post_auth(_msg, h);
-		switch(ret) {
-		case ERROR:          return 0;
-		case NOT_AUTHORIZED: return -1;
-		case AUTHORIZED:     return 1;
-		default:             return -1;
-		}
+    if (res == 1) {
+	ret = auth_api.post_auth(_msg, h);
+	switch(ret) {
+	case ERROR:          return 0;
+	case NOT_AUTHORIZED: return -1;
+	case AUTHORIZED:     return 1;
+	default:             return -1;
 	}
+    }
 
-	return -1;
+    return -1;
 }
 
 
 /*
- * Authorize using Proxy-Authorize header field
+ * Authorize using Proxy-Authorize header field (no URI user parameter given)
  */
-int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
+int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	/* realm parameter is converted to str* in str_fixup */
-	return authorize(_msg, (xl_elem_t*)_realm, HDR_PROXYAUTH_T);
+    /* realm parameter is converted to str* in str_fixup */
+    return authorize(_msg, (xl_elem_t*)_realm, (xl_spec_t *)0,
+		     HDR_PROXYAUTH_T);
+}
+
+
+/*
+ * Authorize using Proxy-Authorize header field (URI user parameter given)
+ */
+int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm,
+			     char* _uri_user)
+{
+    return authorize(_msg, (xl_elem_t*)_realm, (xl_spec_t *)_uri_user,
+		     HDR_PROXYAUTH_T);
 }
 
 
@@ -153,6 +187,6 @@ int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
  */
 int radius_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	return authorize(_msg, (xl_elem_t*)_realm, HDR_AUTHORIZATION_T);
+	return authorize(_msg, (xl_elem_t*)_realm, (xl_spec_t *)0,
+			 HDR_AUTHORIZATION_T);
 }
-
