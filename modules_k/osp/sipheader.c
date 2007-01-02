@@ -60,13 +60,13 @@ void ospCopyStrToBuffer(
 
     LOG(L_DBG, "osp: ospCopyStrToBuffer\n");
 
-    if (source->len > buffersize) {
+    if (source->len > buffersize - 1) {
         LOG(L_ERR,
             "osp: ERROR: buffer for copying '%.*s' is too small, will copy the first '%d' bytes\n",
             source->len,
             source->s, 
             buffersize);
-        copybytes = buffersize;
+        copybytes = buffersize - 1;
     } else {
         copybytes = source->len;
     }

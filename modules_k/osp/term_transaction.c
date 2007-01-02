@@ -149,8 +149,13 @@ int ospValidateHeader (
             detaillog,
             _osp_token_format);
     
-        memcpy(dest.callid, callid->ospmCallIdVal, callid->ospmCallIdLen);
-        dest.callidsize = callid->ospmCallIdLen;
+        if (callid->ospmCallIdLen > sizeof(dest.callid) - 1) {
+            dest.callidsize = sizeof(dest.callid) - 1;
+        } else {
+            dest.callidsize = callid->ospmCallIdLen;
+        }
+        memcpy(dest.callid, callid->ospmCallIdVal, dest.callidsize);
+        dest.callid[dest.callidsize] = 0;
         dest.tid = ospGetTransactionId(transaction);
         dest.type = OSPC_DESTINATION;
         dest.authtime = time(NULL);
