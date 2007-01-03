@@ -312,7 +312,8 @@ int mem_update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _
 				return -1;
 			}
 			memcpy(ptr, _inst->s, _inst->len);
-			shm_free(_c->instance.s);
+			if (_c->instance.s)
+				shm_free(_c->instance.s);
 			_c->instance.s = ptr;
 		} else {
 			memcpy(_c->instance.s, _inst->s, _inst->len);
