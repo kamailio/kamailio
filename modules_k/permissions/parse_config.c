@@ -58,18 +58,18 @@ static int parse_expression_list(char *str, expression **e)
 					if ((0 < j) && (str[j] == '"')) j--;
 					if (start<=j) {
 						/* valid word */
+						if (j-start+1+1>EXPRESSION_LENGTH) {
+							LOG(L_ERR,"ERROR:permission: expression too long "
+								"<%.*s>(%d)\n",j-start+1,str+start,j-start+1);
+							goto error;
+						}
 						strncpy(str2, str+start, j-start+1);
 						str2[j-start+1] = '\0';
 						
 						e2 = new_expression(str2);
-						if (!e2) {
+						if (!e2)
 							/* memory error */
-							if (*e) {
-								free_expression(*e);
-								*e = NULL;
-							}
-							return -1;
-						}
+							goto error;
 						
 						if (e1) {
 							/* it is not the first */
@@ -81,18 +81,20 @@ static int parse_expression_list(char *str, expression **e)
 						}
 					} else {
 						/* parsing error */
-						if (*e) {
-							free_expression(*e);
-							*e = NULL;
-						}
-						return -1;
+						goto error;
 					}
 					/* for the next word */
 					start = i+1;
 		}
 	} while (str[i] != '\0');
-	
+
 	return 0;
+error:
+	if (*e) {
+		free_expression(*e);
+		*e = NULL;
+	}
+	return -1;
 }
 
 
@@ -103,7 +105,7 @@ static int parse_expression_list(char *str, expression **e)
  */
 static int parse_expression(char *str, expression **e, expression **e_exceptions) 
 {
-	char 	*except, str2[LINE_LENGTH];
+	char 	*except, str2[LINE_LENGTH+1];
 	int	i=0;
 
 	if (!str || !e || !e_exceptions) return -1;
