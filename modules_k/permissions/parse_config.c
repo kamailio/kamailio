@@ -129,7 +129,7 @@ static int parse_expression(char *str, expression **e, expression **e_exceptions
 	
 	while ((str2[i] == ' ') || (str2[i] == '\t')) i++;
 	
-	if (strncmp("ALL", str2+i, 3) == 0) {
+	if (strcmp("ALL", str2+i) == 0) {
 		*e = NULL;
 	} else {
 		if (parse_expression_list(str2+i, e)) {
@@ -192,7 +192,7 @@ static rule *parse_config_line(char *line)
 			str1[colon] = '\0';
 			if (parse_expression(str1, &left, &left_exceptions)) {
 				/* error */
-				LOG(L_ERR, "ERROR parsing line: %s\n", line);
+				LOG(L_ERR, "ERROR parsing line-left: %s\n", line);
 				goto error;
 			}
 			
@@ -201,7 +201,7 @@ static rule *parse_config_line(char *line)
 			str2[i-colon-1] = '\0';
 			if (parse_expression(str2, &right, &right_exceptions)) {
 				/* error */
-				LOG(L_ERR, "ERROR parsing line: %s\n", line);
+				LOG(L_ERR, "ERROR parsing line-right: %s\n", line);
 				goto error;
 			}
 			
