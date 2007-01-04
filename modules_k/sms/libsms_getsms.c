@@ -53,7 +53,7 @@ mailto:s.frings@mail.isis.de
 
 
 /* converts an octet to a 8-Bit value */
-int octet2bin(char* octet)
+static inline int octet2bin(char* octet)
 {
 	int result=0;
 
@@ -74,7 +74,7 @@ int octet2bin(char* octet)
 
 /* converts a PDU-String to Ascii; the first octet is the length
    return the length of ascii */
-int pdu2ascii(char* pdu, char* ascii)
+static int pdu2ascii(char* pdu, char* ascii)
 {
 	int bitposition=0;
 	int byteposition;
@@ -116,7 +116,7 @@ int pdu2ascii(char* pdu, char* ascii)
 
 
 
-int pdu2binary(char* pdu, char* binary)
+static int pdu2binary(char* pdu, char* binary)
 {
 	int count;
 	int octetcounter;
@@ -134,7 +134,7 @@ int pdu2binary(char* pdu, char* binary)
 /* reads a SMS from the SIM-memory 1-10 */
 /* returns number of SIM memory if successful */
 /* on digicom the return value can be != sim */
-int fetchsms(struct modem *mdm, int sim, char* pdu)
+static int fetchsms(struct modem *mdm, int sim, char* pdu)
 {
 	char command[16];
 	char answer[512];
@@ -198,7 +198,7 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 
 
 /* deletes the selected sms from the sim card */
-void deletesms(struct modem *mdm, int sim) {
+static void deletesms(struct modem *mdm, int sim) {
 	char command[32];
 	char answer[128];
 	int  clen;
@@ -276,7 +276,7 @@ int check_memory(struct modem *mdm, int flag)
 
 /* splits an ASCII string into the parts */
 /* returns length of ascii */
-int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
+static int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 {
 	char* start;
 	char* end;
@@ -333,7 +333,7 @@ int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 /* Subroutine for splitpdu() for messages type 0 (SMS-Deliver)
    Returns the length of the ascii string
    In binary mode ascii contains the binary SMS */
-int split_type_0( char* Pointer,struct incame_sms *sms)
+static int split_type_0( char* Pointer,struct incame_sms *sms)
 {
 	int Length;
 	int padding;
@@ -366,7 +366,7 @@ int split_type_0( char* Pointer,struct incame_sms *sms)
 /* Subroutine for splitpdu() for messages type 2 (Staus Report)
    Returns the length of the ascii string. In binary mode ascii 
    contains the binary SMS */
-int split_type_2( char* position, struct incame_sms *sms)
+static int split_type_2( char* position, struct incame_sms *sms)
 {
 	int  length;
 	int  padding;
@@ -407,7 +407,7 @@ int split_type_2( char* position, struct incame_sms *sms)
 
 /* Splits a PDU string into the parts */
 /* Returns the length of the ascii string. In binary mode ascii contains the binary SMS */
-int splitpdu(struct modem *mdm, char* pdu, struct incame_sms *sms)
+static int splitpdu(struct modem *mdm, char* pdu, struct incame_sms *sms)
 {
 	int Length;
 	int Type;
@@ -468,7 +468,8 @@ int splitpdu(struct modem *mdm, char* pdu, struct incame_sms *sms)
 
 
 
-inline int decode_pdu( struct modem *mdm, char *pdu, struct incame_sms *sms)
+static inline int decode_pdu( struct modem *mdm, char *pdu,
+														struct incame_sms *sms)
 {
 	int ret;
 
@@ -491,7 +492,7 @@ inline int decode_pdu( struct modem *mdm, char *pdu, struct incame_sms *sms)
 
 int getsms( struct incame_sms *sms, struct modem *mdm, int sim)
 {
-	char   pdu[500];
+	char   pdu[512];
 	int    found;
 	int    ret;
 
