@@ -25,11 +25,10 @@ Anca-Maria Vamanu
 
               1.3.1. hash_size (int)
               1.3.2. db_url (str)
-              1.3.3. db_url (str)
-              1.3.4. db_table (str)
-              1.3.5. min_expires (int)
-              1.3.6. default_expires (int)
-              1.3.7. update_period (int)
+              1.3.3. db_table (str)
+              1.3.4. min_expires (int)
+              1.3.5. default_expires (int)
+              1.3.6. update_period (int)
 
         1.4. Exported Functions
         1.5. Installation
@@ -45,12 +44,11 @@ Anca-Maria Vamanu
    List of Examples
    1-1. Set hash_size parameter
    1-2. Set db_url parameter
-   1-3. Set db_url parameter
-   1-4. Set db_table parameter
-   1-5. Set min_expires parameter
-   1-6. Set default_expires parameter
-   1-7. Set update_period parameter
-   1-8. Create pua database table
+   1-3. Set db_table parameter
+   1-4. Set min_expires parameter
+   1-5. Set default_expires parameter
+   1-6. Set update_period parameter
+   1-7. Create pua database table
    2-1. pua_api structure
      _________________________________________________________
 
@@ -115,55 +113,44 @@ modparam("pua", "db_url"
 ...
      _________________________________________________________
 
-1.3.3. db_url (str)
-
-   Database url.
-
-   Example 1-3. Set db_url parameter
-...
-modparam("pua", "db_url"
-                "mysql://openser:openserrw@192.168.2.132/openser")
-...
-     _________________________________________________________
-
-1.3.4. db_table (str)
+1.3.3. db_table (str)
 
    The name of the database table.
 
-   Example 1-4. Set db_table parameter
+   Example 1-3. Set db_table parameter
 ...
 modparam("pua", "db_table", "pua")
 ...
      _________________________________________________________
 
-1.3.5. min_expires (int)
+1.3.4. min_expires (int)
 
    The inferior expires limit for both Publish and Subscribe.
 
-   Example 1-5. Set min_expires parameter
+   Example 1-4. Set min_expires parameter
 ...
 modparam("pua", "min_expires", 0)
 ...
      _________________________________________________________
 
-1.3.6. default_expires (int)
+1.3.5. default_expires (int)
 
    The default expires value used in case this information is not
    provisioned.
 
-   Example 1-6. Set default_expires parameter
+   Example 1-5. Set default_expires parameter
 ...
 modparam("pua", "default_expires", 3600)
 ...
      _________________________________________________________
 
-1.3.7. update_period (int)
+1.3.6. update_period (int)
 
    The interval at which the information in database and hash
    table should be updated. In the case of the hash table
    updating is deleting expired messages.
 
-   Example 1-7. Set update_period parameter
+   Example 1-6. Set update_period parameter
 ...
 modparam("pua", "update_period", 100)
 ...
@@ -179,7 +166,7 @@ modparam("pua", "update_period", 100)
    The module requires a new table in OpenSER database. Next SQL
    statement shows the syntax to create it.
 
-   Example 1-8. Create pua database table
+   Example 1-7. Create pua database table
 ...
 CREATE TABLE pua (
   id int(10) unsigned NOT NULL auto_increment,
@@ -192,7 +179,7 @@ CREATE TABLE pua (
   watcher_uri varchar(128) NOT NULL,
   call_id varchar(128) NOT NULL,
   to_tag varchar(128) NOT NULL,
-  from_tag` varchar(128) NOT NULL,
+  from_tag varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
   PRIMARY KEY  (`id`)
 )

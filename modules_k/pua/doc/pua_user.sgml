@@ -106,25 +106,6 @@ modparam("pua", "db_url"
 		</example>
 	</section>
 	<section>
-		<title><varname>db_url</varname> (str)</title>
-		<para>
-		Database url.
-		</para>
-		<para>
-		<emphasis>
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>db_url</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("pua", "db_url" 
-		"mysql://openser:openserrw@192.168.2.132/openser")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>db_table</varname> (str)</title>
 		<para>
 		The name of the database table.
@@ -228,7 +209,7 @@ CREATE TABLE pua (
   watcher_uri varchar(128) NOT NULL,
   call_id varchar(128) NOT NULL,
   to_tag varchar(128) NOT NULL,
-  from_tag` varchar(128) NOT NULL,
+  from_tag varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
   PRIMARY KEY  (`id`)
 )
