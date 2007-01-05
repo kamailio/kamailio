@@ -478,7 +478,8 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
    /* count how many record-route bodies come in the response*/
    for(hf=resp->record_route;hf;hf=hf->sibling,j=0){
       if(!hf->parsed){
-	 parse_rr(hf);
+	 if(0>parse_rr(hf))
+	    goto error;
 	 j=1;
       }
       for(rr1=hf->parsed;rr1;rr1=rr1->next){
@@ -492,7 +493,8 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
    /* count how many record-route bodies were in the orig. request*/
    for(hf=req->record_route;hf;hf=hf->sibling,j=0){
       if(!hf->parsed){
-	 parse_rr(hf);
+	 if(0>parse_rr(hf))
+	    goto error;
 	 j=1;
       }
       for(rr1=hf->parsed;rr1;rr1=rr1->next){
@@ -504,6 +506,8 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
       }
    }
    return i-k;
+error:
+   return -1;
 }
 
 int via_diff(struct sip_msg *req,struct sip_msg *resp)
