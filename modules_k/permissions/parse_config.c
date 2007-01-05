@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "../../sr_module.h"
 #include "rule.h"
 #include "parse_config.h"
@@ -105,8 +106,8 @@ error:
  */
 static int parse_expression(char *str, expression **e, expression **e_exceptions) 
 {
-	char 	*except, str2[LINE_LENGTH+1];
-	int	i=0;
+	char *except, str2[LINE_LENGTH+1];
+	int  i,j;
 
 	if (!str || !e || !e_exceptions) return -1;
 
@@ -126,9 +127,10 @@ static int parse_expression(char *str, expression **e, expression **e_exceptions
 		strcpy(str2, str);
 		*e_exceptions = NULL;
 	}
-	
-	while ((str2[i] == ' ') || (str2[i] == '\t')) i++;
-	
+
+	for( i=0; isspace((int)str2[i]) ; i++);
+	for( j=strlen(str2)-1 ; isspace((int)str2[j]) ; str2[j--]=0);
+
 	if (strcmp("ALL", str2+i) == 0) {
 		*e = NULL;
 	} else {
