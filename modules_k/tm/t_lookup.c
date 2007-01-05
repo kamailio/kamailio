@@ -313,7 +313,8 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 		 */
 
 		/* dialog matching needs to be applied for ACK/200s */
-		if (is_ack && p_cell->uas.status<300 && e2e_ack_trans==0) {
+		if (is_ack && e2e_ack_trans==0 &&
+		p_cell->uas.status>=200 && p_cell->uas.status<300) {
 			/* make sure we have parsed all things we need for dialog
 			 * matching */
 			if (!dlg_parsed) {
