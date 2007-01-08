@@ -52,6 +52,10 @@ modparam("permissions", "default_deny_file", "/etc/permissions.deny")
 ...
 	    </programlisting>
 	</example>
+	<para>
+		If both of the default file parameters are set to "" the module
+		does not try to load them.
+	</para>
     </section>
 
     <section id="check_all_branches">
@@ -131,4 +135,55 @@ modparam("permissions", "deny_suffix", ".deny")
 	</example>
     </section>
 
+    <section id="max_rule_files">
+	<title><varname>max_rule_files</varname> (int)</title>
+	<para>
+		Maximum number of allow/deny file pairs.
+	</para>
+	<para>
+		Default value is 64.
+	</para>
+    </section>
+
+    <section id="safe_file_load">
+	<title><varname>safe_file_load</varname> (int)</title>
+	<para>
+		Module initialization fails in case of a missing config file if
+		safe_file_load is true.
+	</para>
+	<para>
+		Default value is 0 (false).
+	</para>
+    </section>
+
+    <section id="db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+		URL of the database to be used.
+	</para>
+    </section>
+
+    <section id="db_mode">
+	<title><varname>db_mode</varname> (int)</title>
+	<para>
+		Disables/enables database cache.
+	</para>
+	<para>
+		Default value is 0 (cache is disabled)
+	</para>
+	<para>
+		NOTE: ipmatch functions can operate only in cache mode, set db_mode
+		to 1 if you want to use them.
+	</para>
+    </section>
+
+    <section id="ipmatch_table">
+	<title><varname>ipmatch_table</varname> (string)</title>
+	<para>
+		Name of the table containing ipmatch entries.
+	</para>
+	<para>
+		Default value is "ipmatch".
+	</para>
+    </section>
 </section>

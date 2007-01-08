@@ -24,6 +24,8 @@
 	    <year>2003</year>
 	    <holder>Miklos Tirpak</holder>
 	    <holder>Juha Heinanen</holder>
+	    <year>2006</year>
+	    <holder>iptelorg GmbH</holder>
 	</copyright>
 	<revhistory>
 	    <revision>
@@ -133,6 +135,45 @@
 	    </para>
 	    <para>
 		The algorithm of matching is same as described in <xref linkend="call_routing"/>.
+	    </para>
+	</section>
+	<section id="refer_to_permissions">
+	    <title>Refer-To Permissions</title>
+	    <para>
+		In addition to call routing and REGISTER it is also possible to check
+		REFER messages and decide--based on the configuration files--
+		whether or not the message should be accepted for forwarding.
+	    </para>
+	    <para>
+		Main purpose of the function is to prevent referring a SIP UA to
+		"prohibited" IP addresses. One example is user sending a REFER
+		request to PSTN gateway trying to refer it to an expensive phone
+		number.
+	    </para>
+	    <para>
+		Function for Refer-To checking is called allow_refer_to
+		and the algorithm is very similar to the algorithm described
+		in Section 1.1.1. The only difference is in the way how pairs
+		are created.
+	    </para>
+	    <para>
+		Instead of Request-URI the function uses Refer-To header field
+		because Refer-To header field in REFER messages contains the URI
+   		to which the UA is being referred to.  The algorithm of matching is
+		same as described in Section 1.1.1.
+	    </para>
+	</section>
+	<section id="refer_to_permissions">
+	    <title>Refer-To Permissions</title>
+	    <para>
+		The module can be also used for catching messages coming from
+		or going to specific network elements, for example gateways or
+		peering partners.
+	    </para>
+	    <para>
+		Users can register or forward the calls to the address of
+		a gateway resulting unauthorized access to them. Such calls
+		must be catched and dropped, see ipmatch functions for details.
 	    </para>
 	</section>
     </section>

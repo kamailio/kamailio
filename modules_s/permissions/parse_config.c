@@ -66,17 +66,21 @@ static int parse_expression_list(char *str, expression **e)
 					if ((0 < j) && (str[j] == '"')) j--;
 					if (start<=j) {
 						/* valid word */
+						if (j-start+1 >= EXPRESSION_LENGTH) {
+							/* error */
+							LOG(L_ERR, "ERROR: parse_expression_list(): " \
+								"too long expression, increase EXPRESSION_LENGTH\n");
+							goto error;
+						}
 						strncpy(str2, str+start, j-start+1);
 						str2[j-start+1] = '\0';
 						
 						e2 = new_expression(str2);
 						if (!e2) {
 							/* memory error */
-							if (*e) {
-								free_expression(*e);
-								*e = NULL;
-							}
-							return -1;
+							LOG(L_ERR, "ERROR: parse_expression_list(): " \
+								"not enough memory\n");
+							goto error;
 						}
 						
 						if (e1) {
@@ -89,11 +93,9 @@ static int parse_expression_list(char *str, expression **e)
 						}
 					} else {
 						/* parsing error */
-						if (*e) {
-							free_expression(*e);
-							*e = NULL;
-						}
-						return -1;
+						LOG(L_ERR, "ERROR: parse_expression_list(): " \
+							"expression parsing error\n");
+						goto error;
 					}
 					/* for the next word */
 					start = i+1;
@@ -101,6 +103,13 @@ static int parse_expression_list(char *str, expression **e)
 	} while (str[i] != '\0');
 	
 	return 0;
+
+error:
+	if (*e) {
+		free_expression(*e);
+		*e = NULL;
+	}
+	return -1;
 }
 
 
@@ -112,24 +121,38 @@ static int parse_expression_list(char *str, expression **e)
 static int parse_expression(char *str, expression **e, expression **e_exceptions) 
 {
 	char 	*except, str2[LINE_LENGTH];
-	int	i=0;
+	int	i=0, l;
 
 	if (!str || !e || !e_exceptions) return -1;
 
 	except = strstr(str, " EXCEPT ");
 	if (except) {
 		/* exception found */
-		strncpy(str2, str, except-str);
-		str2[except-str] = '\0';
+		l = except-str;
+		if (l >= LINE_LENGTH) {
+			/* error */
+			LOG(L_ERR, "ERROR: parse_expression(): too long config line, increase LINE_LENGTH\n");
+			goto error;
+		}
+
+		strncpy(str2, str, l);
+		str2[l] = '\0';
 		/* except+8 points to the exception */
 		if (parse_expression_list(except+8, e_exceptions)) {
 			/* error */
-			*e = *e_exceptions = NULL;
-			return -1;
+			goto error;
 		}
 	} else {
 		/* no exception */
-		strcpy(str2, str);
+		l = strlen(str);
+		if (l >= LINE_LENGTH) {
+			/* error */
+			LOG(L_ERR, "ERROR: parse_expression(): too long config line, increase LINE_LENGTH\n");
+			goto error;
+		}
+		
+		strncpy(str2, str, l);
+		str2[l] = '\0';
 		*e_exceptions = NULL;
 	}
 	
@@ -141,11 +164,14 @@ static int parse_expression(char *str, expression **e, expression **e_exceptions
 		if (parse_expression_list(str2+i, e)) {
 			/* error */
 			if (*e_exceptions) free_expression(*e_exceptions);
-			*e = *e_exceptions = NULL;
-			return -1;
+			goto error;
 		}
 	}
 	return 0;
+
+error:
+	*e = *e_exceptions = NULL;
+	return -1;
 }
 
 
