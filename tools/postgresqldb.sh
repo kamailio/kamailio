@@ -319,8 +319,8 @@ CREATE TABLE version (
 
 INSERT INTO version VALUES ( 'subscriber', '6');
 INSERT INTO version VALUES ( 'missed_calls', '3');
-INSERT INTO version VALUES ( 'location', '1003');
-INSERT INTO version VALUES ( 'aliases', '1003');
+INSERT INTO version VALUES ( 'location', '1004');
+INSERT INTO version VALUES ( 'aliases', '1004');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
 INSERT INTO version VALUES ( 'acc', '4');
@@ -408,6 +408,7 @@ CREATE TABLE location (
   cseq int NOT NULL default '$DEFAULT_CSEQ',
   last_modified $TIMESTAMP,
   flags int NOT NULL default '0',
+  cflags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   methods int default NULL,
@@ -431,6 +432,7 @@ CREATE TABLE aliases (
   cseq int NOT NULL default '$DEFAULT_CSEQ',
   last_modified $TIMESTAMP,
   flags int NOT NULL default '0',
+  cflags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   methods int default NULL,
