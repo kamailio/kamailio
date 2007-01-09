@@ -1292,7 +1292,7 @@ branch_route[1] {
 	<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>$T_branch_index</emphasis> - the index (starting with 1
+			<emphasis>$T_branch_idx</emphasis> - the index (starting with 1
 			for the first branch) of the branch for which is executed the
 			branch_route[]. If used outside of branch_route[] block, the value
 			is '0'.

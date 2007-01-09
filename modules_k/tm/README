@@ -1001,7 +1001,7 @@ branch_route[1] {
 
    This module exports the follong pseudo-variables:
 
-     * $T_branch_index - the index (starting with 1 for the first
+     * $T_branch_idx - the index (starting with 1 for the first
        branch) of the branch for which is executed the
        branch_route[]. If used outside of branch_route[] block,
        the value is '0'.
