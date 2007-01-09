@@ -298,7 +298,8 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 						contact->c.len,contact->c.s,(int)(10*contact->q));
 					if (add_location( &(intr->loc_set), &contact->c, 
 					&contact->received, (int)(10*contact->q),
-					CPL_LOC_DUPL|((contact->flags & FL_NAT)*CPL_LOC_NATED)
+					CPL_LOC_DUPL|
+						((contact->flags & cpl_fct.ulb.nat_flag)*CPL_LOC_NATED)
 					)==-1) {
 						LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
 							"location to set :-(\n");

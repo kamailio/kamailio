@@ -52,9 +52,8 @@ typedef enum cstate {
  */
 typedef enum flags {
 	FL_NONE        = 0,          /* No flags set */
-	FL_NAT         = 1 << 0,     /* Contact is behind NAT */
-	FL_MEM         = 1 << 1,     /* Update memory only -- used for REGISTER replication */
-	FL_NAT_SIPPING = 1 << 2,     /* Use SIP ping if nated */
+	FL_MEM         = 1 << 0,     /* Update memory only */
+	FL_NAT_SIPPING = 1 << 1,     /* Use SIP ping if nated */
 	FL_ALL         = (int)0xFFFFFFFF  /* All flags set */
 } flags_t;
 
@@ -70,7 +69,8 @@ typedef struct ucontact {
 	str callid;             /* Call-ID header field */
 	int cseq;               /* CSeq value */
 	cstate_t state;         /* State of the contact */
-	unsigned int flags;     /* Various flags (NAT, supported methods etc) */
+	unsigned int flags;     /* Various flags (NAT, ping type, etc) */
+	unsigned int cflags;    /* custom contact flags (from script) */
 	str user_agent;         /* User-Agent header field */
 	struct socket_info *sock; /* received soket */
 	time_t last_modified;   /* when the record was last modified */
@@ -86,8 +86,8 @@ typedef struct ucontact_info {
 	qvalue_t q;
 	str* callid;
 	int cseq;
-	unsigned int flags1;
-	unsigned int flags2;
+	unsigned int flags;
+	unsigned int cflags;
 	str *user_agent;
 	struct socket_info *sock;
 	unsigned int methods;

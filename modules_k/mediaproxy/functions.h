@@ -41,7 +41,7 @@ pingClients(unsigned int ticks, void *param)
         LOG(L_ERR, "error: mediaproxy/pingClients(): out of memory\n");
         return;
     }
-    needed = userLocation.get_all_ucontacts(buf, length, FL_NAT);
+    needed = userLocation.get_all_ucontacts(buf, length,userLocation.nat_flag);
     if (needed > 0) {
         // make sure we alloc more than actually we were told is missing
         // (some clients may register while we are making these calls)
@@ -55,7 +55,8 @@ pingClients(unsigned int ticks, void *param)
             buf = ptr;
         }
         // try again. we may fail again if _many_ clients register in between
-        needed = userLocation.get_all_ucontacts(buf, length, FL_NAT);
+        needed = userLocation.get_all_ucontacts(buf, length ,
+            userLocation.nat_flag);
         if (needed != 0) {
             pkg_free(buf);
             return;

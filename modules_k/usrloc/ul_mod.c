@@ -62,6 +62,7 @@ MODULE_VERSION
 #define CSEQ_COL       "cseq"
 #define METHOD_COL     "method"
 #define FLAGS_COL      "flags"
+#define CFLAGS_COL     "cflags"
 #define USER_AGENT_COL "user_agent"
 #define RECEIVED_COL   "received"
 #define PATH_COL       "path"
@@ -97,8 +98,10 @@ str callid_col      = str_init(CALLID_COL);
 str cseq_col        = str_init(CSEQ_COL);
 /* Name of column containing supported method */
 str method_col      = str_init(METHOD_COL);
-/* Name of column containing flags */
+/* Name of column containing internal flags */
 str flags_col       = str_init(FLAGS_COL);
+/* Name of column containing contact flags */
+str cflags_col      = str_init(CFLAGS_COL);
 /* Name of column containing user agent string */
 str user_agent_col  = str_init(USER_AGENT_COL);
 /* Name of column containing transport info of REGISTER */
@@ -126,6 +129,10 @@ int desc_time_order = 0;
 /* number of rows to fetch from result */
 int ul_fetch_rows = 2000;
 int ul_hash_size = 9;
+
+/* flag */
+unsigned int nat_bflag = (unsigned int)-1;
+unsigned int init_flag = 0;
 
 db_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
@@ -170,6 +177,7 @@ static param_export_t params[] = {
 	{"cseq_column",       STR_PARAM, &cseq_col.s      },
 	{"method_column",     STR_PARAM, &method_col.s    },
 	{"flags_column",      STR_PARAM, &flags_col.s     },
+	{"cflags_column",     STR_PARAM, &cflags_col.s    },
 	{"db_url",            STR_PARAM, &db_url.s        },
 	{"timer_interval",    INT_PARAM, &timer_interval  },
 	{"db_mode",           INT_PARAM, &db_mode         },
@@ -183,7 +191,8 @@ static param_export_t params[] = {
 	{"matching_mode",     INT_PARAM, &matching_mode   },
 	{"cseq_delay",        INT_PARAM, &cseq_delay      },
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
-	{"hash_size",         INT_PARAM, &ul_hash_size   },
+	{"hash_size",         INT_PARAM, &ul_hash_size    },
+	{"nat_bflag",         INT_PARAM, &nat_bflag       },
 	{0, 0, 0}
 };
 
@@ -243,6 +252,7 @@ static int mod_init(void)
 	cseq_col.len = strlen(cseq_col.s);
 	method_col.len = strlen(method_col.s);
 	flags_col.len = strlen(flags_col.s);
+	cflags_col.len = strlen(cflags_col.s);
 	user_agent_col.len = strlen(user_agent_col.s);
 	received_col.len = strlen(received_col.s);
 	path_col.len = strlen(path_col.s);
@@ -310,6 +320,18 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if (nat_bflag==(unsigned int)-1) {
+		nat_bflag = 0;
+	} else if ( nat_bflag>=8*sizeof(nat_bflag) ) {
+		LOG(L_ERR,"ERROR:usrloc:mod_init: bflag index (%d) too big!\n",
+			nat_bflag);
+		return -1;
+	} else {
+		nat_bflag = 1<<nat_bflag;
+	}
+
+	init_flag = 1;
 
 	return 0;
 }

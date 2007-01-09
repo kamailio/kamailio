@@ -36,10 +36,9 @@ Bogdan-Andrei Iancu
               1.3.11. case_sensitive (int)
               1.3.12. realm_prefix (string)
               1.3.13. timer_avp (string)
-              1.3.14. nat_flag (int)
-              1.3.15. lookup_domain (string)
-              1.3.16. lookup_append_branches (int)
-              1.3.17. use_domain (integer)
+              1.3.14. lookup_domain (string)
+              1.3.15. lookup_append_branches (int)
+              1.3.16. use_domain (integer)
 
         1.4. Exported Functions
 
@@ -66,13 +65,12 @@ Bogdan-Andrei Iancu
    1-11. Set case_sensitive parameter
    1-12. Set realm_prefix parameter
    1-13. Set timer_avp parameter
-   1-14. Set nat_flag parameter
-   1-15. Set lookup_domain parameter
-   1-16. Set lookup_append_branches parameter
-   1-17. Set use_domain parameter
-   1-18. cpl_run_script usage
-   1-19. cpl_process_register usage
-   1-20. cpl_process_register_norpl usage
+   1-14. Set lookup_domain parameter
+   1-15. Set lookup_append_branches parameter
+   1-16. Set use_domain parameter
+   1-17. cpl_run_script usage
+   1-18. cpl_process_register usage
+   1-19. cpl_process_register_norpl usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -300,21 +298,7 @@ modparam("cpl_c","timer_avp","i:14")
 ...
      _________________________________________________________
 
-1.3.14. nat_flag (int)
-
-   Sets the flag used for marking calls via NAT. Used by lookup
-   tag when retrieving a contact behind a NAT (this flag will be
-   set).
-
-   Default value is -1 (disabled). 
-
-   Example 1-14. Set nat_flag parameter
-...
-modparam("cpl_c","nat_flag",6)
-...
-     _________________________________________________________
-
-1.3.15. lookup_domain (string)
+1.3.14. lookup_domain (string)
 
    Used by lookup tag to indicate where to perform user location.
    Basically this is the name of the usrloc domain (table) where
@@ -325,13 +309,13 @@ modparam("cpl_c","nat_flag",6)
 
    Default value of this parameter is NULL. 
 
-   Example 1-15. Set lookup_domain parameter
+   Example 1-14. Set lookup_domain parameter
 ...
 modparam("cpl_c","lookup_domain","location")
 ...
      _________________________________________________________
 
-1.3.16. lookup_append_branches (int)
+1.3.15. lookup_append_branches (int)
 
    Tells if the lookup tag should append branches (to do parallel
    forking) if user_location lookup returns more than one
@@ -340,20 +324,20 @@ modparam("cpl_c","lookup_domain","location")
 
    Default value of this parameter is 0. 
 
-   Example 1-16. Set lookup_append_branches parameter
+   Example 1-15. Set lookup_append_branches parameter
 ...
 modparam("cpl_c","lookup_append_branches",1)
 ...
      _________________________________________________________
 
-1.3.17. use_domain (integer)
+1.3.16. use_domain (integer)
 
    Indicates if the domain part of the URI should be used in user
    identification (otherwise only username part will be used).
 
    Default value is "0 (disabled)". 
 
-   Example 1-17. Set use_domain parameter
+   Example 1-16. Set use_domain parameter
 ...
 modparam("cpl_c","use_domain",1)
 ...
@@ -417,7 +401,7 @@ modparam("cpl_c","use_domain",1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-18. cpl_run_script usage
+   Example 1-17. cpl_run_script usage
 ...
 cpl_run_script("incoming","force_stateful");
 ...
@@ -447,7 +431,7 @@ cpl_run_script("incoming","force_stateful");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. cpl_process_register usage
+   Example 1-18. cpl_process_register usage
 ...
 if (method=="REGISTER") {
         cpl_process_register();
@@ -466,7 +450,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-20. cpl_process_register_norpl usage 
+   Example 1-19. cpl_process_register_norpl usage 
 ...
 if (method=="REGISTER") {
         cpl_process_register();

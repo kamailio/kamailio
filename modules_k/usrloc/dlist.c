@@ -386,7 +386,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 		return -1;
 	}
 
-	/* Preload domain with data from database if we are gonna
+	/* Test tables from database if we are gonna
 	 * to use database
 	 */
 	if (db_mode != NO_DB) {
@@ -408,25 +408,12 @@ int register_udomain(const char* _n, udomain_t** _d)
 				"(use openser_mysql.sh reinstall)\n");
 			goto err;
 		}
-#if 0
-		if (db_mode!= DB_ONLY) {
-			/* if cache is used, populate it from DB */
-			if (preload_udomain(con, d->d) < 0) {
-				LOG(L_ERR, "register_udomain(): Error while preloading "
-					"domain '%.*s'\n", s.len, ZSW(s.s));
-				goto err;
-			}
-		} else {
-#endif
-			/* test if DB really exists */
-			if (testdb_udomain(con, d->d) < 0) {
-				LOG(L_ERR, "register_udomain(): Error while testing "
-					"domain '%.*s'\n", s.len, ZSW(s.s));
-				goto err;
-			}
-#if 0
+		/* test if DB really exists */
+		if (testdb_udomain(con, d->d) < 0) {
+			LOG(L_ERR, "register_udomain(): Error while testing "
+				"domain '%.*s'\n", s.len, ZSW(s.s));
+			goto err;
 		}
-#endif
 
 		ul_dbf.close(con);
 	}

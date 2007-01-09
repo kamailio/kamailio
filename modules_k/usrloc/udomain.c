@@ -257,10 +257,16 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: empty flag\n");
 		return 0;
 	}
-	ci.flags1  = VAL_BITMAP(vals+5);
+	ci.flags  = VAL_BITMAP(vals+5);
 
-	ua.s  = (char*)VAL_STRING(vals+6);
-	if (VAL_NULL(vals+6) || !ua.s || !ua.s[0]) {
+	if (VAL_NULL(vals+6)) {
+		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: empty cflag\n");
+		return 0;
+	}
+	ci.cflags  = VAL_BITMAP(vals+6);
+
+	ua.s  = (char*)VAL_STRING(vals+7);
+	if (VAL_NULL(vals+7) || !ua.s || !ua.s[0]) {
 		ua.s = 0;
 		ua.len = 0;
 	} else {
@@ -268,8 +274,8 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	}
 	ci.user_agent = &ua;
 
-	received.s  = (char*)VAL_STRING(vals+7);
-	if (VAL_NULL(vals+7) || !received.s || !received.s[0]) {
+	received.s  = (char*)VAL_STRING(vals+8);
+	if (VAL_NULL(vals+8) || !received.s || !received.s[0]) {
 		received.len = 0;
 		received.s = 0;
 	} else {
@@ -277,8 +283,8 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	}
 	ci.received = received;
 	
-	path.s  = (char*)VAL_STRING(vals+8);
-		if (VAL_NULL(vals+8) || !path.s || !path.s[0]) {
+	path.s  = (char*)VAL_STRING(vals+9);
+		if (VAL_NULL(vals+9) || !path.s || !path.s[0]) {
 			path.len = 0;
 			path.s = 0;
 		} else {
@@ -287,8 +293,8 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	ci.path= &path;
 
 	/* socket name */
-	p  = (char*)VAL_STRING(vals+9);
-	if (VAL_NULL(vals+9) || p==0 || p[0]==0){
+	p  = (char*)VAL_STRING(vals+10);
+	if (VAL_NULL(vals+10) || p==0 || p[0]==0){
 		ci.sock = 0;
 	} else {
 		if (parse_phostport( p, strlen(p), &host.s, &host.len, 
@@ -304,15 +310,15 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	}
 
 	/* supported methods */
-	if (VAL_NULL(vals+10)) {
+	if (VAL_NULL(vals+11)) {
 		ci.methods = ALL_METHODS;
 	} else {
-		ci.methods = VAL_BITMAP(vals+10);
+		ci.methods = VAL_BITMAP(vals+11);
 	}
 
 	/* last modified time */
-	if (!VAL_NULL(vals+11)) {
-		ci.last_modified = VAL_TIME(vals+11);
+	if (!VAL_NULL(vals+12)) {
+		ci.last_modified = VAL_TIME(vals+12);
 	}
 
 	return &ci;
@@ -324,7 +330,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	char uri[MAX_URI_SIZE];
 	ucontact_info_t *ci;
 	db_row_t *row;
-	db_key_t columns[14];
+	db_key_t columns[15];
 	db_res_t* res = NULL;
 	str user, contact;
 	char* domain;
@@ -341,13 +347,14 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[4] = callid_col.s;
 	columns[5] = cseq_col.s;
 	columns[6] = flags_col.s;
-	columns[7] = user_agent_col.s;
-	columns[8] = received_col.s;
-	columns[9] = path_col.s;
-	columns[10] = sock_col.s;
-	columns[11] = methods_col.s;
-	columns[12] = last_mod_col.s;
-	columns[13] = domain_col.s;
+	columns[7] = cflags_col.s;
+	columns[8] = user_agent_col.s;
+	columns[9] = received_col.s;
+	columns[10] = path_col.s;
+	columns[11] = sock_col.s;
+	columns[12] = methods_col.s;
+	columns[13] = last_mod_col.s;
+	columns[14] = domain_col.s;
 
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error in use_table\n");
@@ -360,8 +367,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 #endif
 
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
-				0) < 0) {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
+		0) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while doing db_query (1)\n");
 			return -1;
 		}
@@ -370,8 +377,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			return -1;
 		}
 	} else {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (14) : (13), 0,
-				&res) < 0) {
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
+		&res) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 			return -1;
 		}
@@ -406,8 +413,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			}
 
 			if (use_domain) {
-				domain = (char*)VAL_STRING(ROW_VALUES(row) + 13);
-				if (VAL_NULL(ROW_VALUES(row)+12) || domain==0 || domain[0]==0) {
+				domain = (char*)VAL_STRING(ROW_VALUES(row) + 14);
+				if (VAL_NULL(ROW_VALUES(row)+13) || domain==0 || domain[0]==0){
 					LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty domain "
 					"record for user %.*s...skipping\n", user.len, user.s);
 					continue;
@@ -446,11 +453,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			c->state = CS_SYNC;
 			unlock_udomain(_d, &user);
 		}
-		
+
 		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-			/* give a bigger chance to other processes to access usrloc
-			 *  -- check first if usleep(s) is portable -- */
-			/* usleep(10); */
 			if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
 				LOG(L_ERR, "ul:preload_udomain(): Error fetching rows (1)\n");
 				ul_dbf.free_result(_c, res);
@@ -482,7 +486,7 @@ error:
 urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 {
 	ucontact_info_t *ci;
-	db_key_t columns[12];
+	db_key_t columns[13];
 	db_key_t keys[2];
 	db_key_t order;
 	db_val_t vals[2];
@@ -521,12 +525,13 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	columns[3] = callid_col.s;
 	columns[4] = cseq_col.s;
 	columns[5] = flags_col.s;
-	columns[6] = user_agent_col.s;
-	columns[7] = received_col.s;
-	columns[8] = path_col.s;
-	columns[9] = sock_col.s;
-	columns[10] = methods_col.s;
-	columns[11] = last_mod_col.s;
+	columns[6] = cflags_col.s;
+	columns[7] = user_agent_col.s;
+	columns[8] = received_col.s;
+	columns[9] = path_col.s;
+	columns[10] = sock_col.s;
+	columns[11] = methods_col.s;
+	columns[12] = last_mod_col.s;
 
 	if (desc_time_order)
 		order = last_mod_col.s;
@@ -538,7 +543,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 		return 0;
 	}
 
-	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 12, order,
+	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 13, order,
 				&res) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:db_load_urecord: db_query failed\n");
 		return 0;

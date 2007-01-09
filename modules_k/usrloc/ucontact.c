@@ -88,7 +88,8 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 	c->sock = _ci->sock;
 	c->cseq = _ci->cseq;
 	c->state = CS_NEW;
-	c->flags = _ci->flags1;
+	c->flags = _ci->flags;
+	c->cflags = _ci->cflags;
 	c->methods = _ci->methods;
 	c->last_modified = _ci->last_modified;
 
@@ -225,8 +226,8 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 	_c->cseq = _ci->cseq;
 	_c->methods = _ci->methods;
 	_c->last_modified = _ci->last_modified;
-	_c->flags |= _ci->flags1;
-	_c->flags &= ~_ci->flags2;
+	_c->flags = _ci->flags;
+	_c->cflags = _ci->cflags;
 
 	return 0;
 }
@@ -384,8 +385,8 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[14];
-	db_val_t vals[14];
+	db_key_t keys[15];
+	db_val_t vals[15];
 	
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -398,13 +399,14 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[4] = callid_col.s;
 	keys[5] = cseq_col.s;
 	keys[6] = flags_col.s;
-	keys[7] = user_agent_col.s;
-	keys[8] = received_col.s;
-	keys[9] = path_col.s;
-	keys[10] = sock_col.s;
-	keys[11] = methods_col.s;
-	keys[12] = last_mod_col.s;
-	keys[13] = domain_col.s;
+	keys[7] = cflags_col.s;
+	keys[8] = user_agent_col.s;
+	keys[9] = received_col.s;
+	keys[10] = path_col.s;
+	keys[11] = sock_col.s;
+	keys[12] = methods_col.s;
+	keys[13] = last_mod_col.s;
+	keys[14] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -437,61 +439,65 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[6].nul = 0;
 	vals[6].val.bitmap_val = _c->flags;
 
-	vals[7].type = DB_STR;
+	vals[7].type = DB_INT;
 	vals[7].nul = 0;
-	vals[7].val.str_val.s = _c->user_agent.s;
-	vals[7].val.str_val.len = _c->user_agent.len;
+	vals[7].val.bitmap_val = _c->cflags;
 
 	vals[8].type = DB_STR;
-	if (_c->received.s == 0) {
-		vals[8].nul = 1;
-	} else {
-		vals[8].nul = 0;
-		vals[8].val.str_val.s = _c->received.s;
-		vals[8].val.str_val.len = _c->received.len;
-	}
-	
+	vals[8].nul = 0;
+	vals[8].val.str_val.s = _c->user_agent.s;
+	vals[8].val.str_val.len = _c->user_agent.len;
+
 	vals[9].type = DB_STR;
-	if (_c->path.s == 0) {
+	if (_c->received.s == 0) {
 		vals[9].nul = 1;
 	} else {
 		vals[9].nul = 0;
-		vals[9].val.str_val.s = _c->path.s;
-		vals[9].val.str_val.len = _c->path.len;
+		vals[9].val.str_val.s = _c->received.s;
+		vals[9].val.str_val.len = _c->received.len;
 	}
-
+	
 	vals[10].type = DB_STR;
-	if (_c->sock) {
-		vals[10].val.str_val = _c->sock->sock_str;
-		vals[10].nul = 0;
-	} else {
+	if (_c->path.s == 0) {
 		vals[10].nul = 1;
-	}
-
-	vals[11].type = DB_BITMAP;
-	if (_c->methods == 0xFFFFFFFF) {
-		vals[11].nul = 1;
 	} else {
-		vals[11].val.bitmap_val = _c->methods;
-		vals[11].nul = 0;
+		vals[10].nul = 0;
+		vals[10].val.str_val.s = _c->path.s;
+		vals[10].val.str_val.len = _c->path.len;
 	}
 
-	vals[12].type = DB_DATETIME;
-	vals[12].nul = 0;
-	vals[12].val.time_val = _c->last_modified;
+	vals[11].type = DB_STR;
+	if (_c->sock) {
+		vals[11].val.str_val = _c->sock->sock_str;
+		vals[11].nul = 0;
+	} else {
+		vals[11].nul = 1;
+	}
+
+	vals[12].type = DB_BITMAP;
+	if (_c->methods == 0xFFFFFFFF) {
+		vals[12].nul = 1;
+	} else {
+		vals[12].val.bitmap_val = _c->methods;
+		vals[12].nul = 0;
+	}
+
+	vals[13].type = DB_DATETIME;
+	vals[13].nul = 0;
+	vals[13].val.time_val = _c->last_modified;
 
 	if (use_domain) {
-		vals[13].type = DB_STR;
-		vals[13].nul = 0;
+		vals[14].type = DB_STR;
+		vals[14].nul = 0;
 
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
 			vals[0].val.str_val.len = 0;
-			vals[13].val.str_val = *_c->aor;
+			vals[14].val.str_val = *_c->aor;
 		} else {
 			vals[0].val.str_val.len = dom - _c->aor->s;
-			vals[13].val.str_val.s = dom + 1;
-			vals[13].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+			vals[14].val.str_val.s = dom + 1;
+			vals[14].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 		}
 	}
 
@@ -500,7 +506,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (14) : (13)) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (15) : (14)) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -518,8 +524,8 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[3];
 	db_val_t vals1[3];
 
-	db_key_t keys2[11];
-	db_val_t vals2[11];
+	db_key_t keys2[12];
+	db_val_t vals2[12];
 
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -533,12 +539,13 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[2] = callid_col.s;
 	keys2[3] = cseq_col.s;
 	keys2[4] = flags_col.s;
-	keys2[5] = user_agent_col.s;
-	keys2[6] = received_col.s;
-	keys2[7] = path_col.s;
-	keys2[8] = sock_col.s;
-	keys2[9] = methods_col.s;
-	keys2[10] = last_mod_col.s;
+	keys2[5] = cflags_col.s;
+	keys2[6] = user_agent_col.s;
+	keys2[7] = received_col.s;
+	keys2[8] = path_col.s;
+	keys2[9] = sock_col.s;
+	keys2[10] = methods_col.s;
+	keys2[11] = last_mod_col.s;
 
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
@@ -568,45 +575,49 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[4].nul = 0;
 	vals2[4].val.bitmap_val = _c->flags;
 
-	vals2[5].type = DB_STR;
+	vals2[5].type = DB_INT;
 	vals2[5].nul = 0;
-	vals2[5].val.str_val = _c->user_agent;
+	vals2[5].val.bitmap_val = _c->cflags;
 
 	vals2[6].type = DB_STR;
-	if (_c->received.s == 0) {
-		vals2[6].nul = 1;
-	} else {
-		vals2[6].nul = 0;
-		vals2[6].val.str_val = _c->received;
-	}
-	
+	vals2[6].nul = 0;
+	vals2[6].val.str_val = _c->user_agent;
+
 	vals2[7].type = DB_STR;
-	if (_c->path.s == 0) {
+	if (_c->received.s == 0) {
 		vals2[7].nul = 1;
 	} else {
 		vals2[7].nul = 0;
-		vals2[7].val.str_val = _c->path;
+		vals2[7].val.str_val = _c->received;
 	}
-
+	
 	vals2[8].type = DB_STR;
-	if (_c->sock) {
-		vals2[8].val.str_val = _c->sock->sock_str;
-		vals2[8].nul = 0;
-	} else {
+	if (_c->path.s == 0) {
 		vals2[8].nul = 1;
-	}
-
-	vals2[9].type = DB_BITMAP;
-	if (_c->methods == 0xFFFFFFFF) {
-		vals2[9].nul = 1;
 	} else {
-		vals2[9].val.bitmap_val = _c->methods;
-		vals2[9].nul = 0;
+		vals2[8].nul = 0;
+		vals2[8].val.str_val = _c->path;
 	}
 
-	vals2[10].type = DB_DATETIME;
-	vals2[10].nul = 0;
-	vals2[10].val.time_val = _c->last_modified;
+	vals2[9].type = DB_STR;
+	if (_c->sock) {
+		vals2[9].val.str_val = _c->sock->sock_str;
+		vals2[9].nul = 0;
+	} else {
+		vals2[9].nul = 1;
+	}
+
+	vals2[10].type = DB_BITMAP;
+	if (_c->methods == 0xFFFFFFFF) {
+		vals2[10].nul = 1;
+	} else {
+		vals2[10].val.bitmap_val = _c->methods;
+		vals2[10].nul = 0;
+	}
+
+	vals2[11].type = DB_DATETIME;
+	vals2[11].nul = 0;
+	vals2[11].val.time_val = _c->last_modified;
 
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
@@ -624,7 +635,7 @@ int db_update_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, 
-	(use_domain) ? (3) : (2), 11) < 0) {
+	(use_domain) ? (3) : (2), 12) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}

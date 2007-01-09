@@ -514,8 +514,10 @@ static inline int fake_req(struct sip_msg *faked_req, struct sip_msg *shm_msg,
 	/* dst_set is imposible to restore (since it's not saved),
 	 * so let it set to NULL */
 
-	/* set as flags the global flags and the flags from the elected branch */
-	faked_req->flags = uas->request->flags | uac->br_flags;
+	/* set as flags the global flags and the branch flags from the 
+	 * elected branch */
+	faked_req->flags = uas->request->flags;
+	setb0flags( uac->br_flags);
 
 	return 1;
 error:
@@ -606,7 +608,9 @@ static inline int run_failure_handlers(struct cell *t)
 	free_faked_req(&faked_req,t);
 
 	/* if failure handler changed flag, update transaction context */
-	shmem_msg->flags = faked_req.flags & gflags_mask;
+	shmem_msg->flags = faked_req.flags;
+	/* branch flags do not need to be updated as this branch will be never
+	 * used again */
 	return 1;
 }
 
@@ -1262,8 +1266,8 @@ int reply_received( struct sip_msg  *p_msg )
 	/* processing of on_reply block */
 	if (t->on_reply) {
 		/* transfer transaction flag to branch context */
-		p_msg->flags = ((p_msg->flags | t->uas.request->flags) & gflags_mask) |
-			t->uac[branch].br_flags;
+		p_msg->flags = t->uas.request->flags;
+		setb0flags(t->uac[branch].br_flags);
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(&t->user_avps);
 		/* run block */
@@ -1274,8 +1278,8 @@ int reply_received( struct sip_msg  *p_msg )
 			goto done;
 		}
 		/* transfer current message context back to t */
-		t->uac[branch].br_flags = p_msg->flags & (~gflags_mask);
-		t->uas.request->flags = p_msg->flags & gflags_mask;
+		t->uac[branch].br_flags = getb0flags();
+		t->uas.request->flags = p_msg->flags;
 		/* restore original avp list */
 		set_avp_list( backup_list );
 	}

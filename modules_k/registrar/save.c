@@ -48,6 +48,7 @@
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../../qvalue.h"
+#include "../../dset.h"
 #ifdef USE_TCP
 #include "../../tcp_server.h"
 #endif
@@ -192,7 +193,7 @@ static inline int no_contacts(udomain_t* _d, str* _a)
  * Fills the common part (for all contacts) of the info structure
  */
 static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
-													int _e, int _f1, int _f2)
+											unsigned int _e, unsigned int _f)
 {
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
@@ -261,6 +262,16 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		ci.last_modified = act_time;
 
+		/* set flags */
+		ci.flags  = _f;
+		ci.cflags =  getb0flags();
+
+		/* get received */
+		if (path_received.len && path_received.s) {
+			ci.cflags |= ul.nat_flag;
+			ci.received = path_received;
+		}
+
 		allow_parsed = 0; /* not parsed yet */
 		received_found = 0; /* not found yet */
 		m = _m; /* remember the message */
@@ -276,10 +287,6 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		/* set expire time */
 		ci.expires = _e;
-
-		/* set flags */
-		ci.flags1 = _f1;
-		ci.flags2 = _f2;
 
 		/* Get methods of contact */
 		if (_c->methods) {
@@ -303,30 +310,27 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* get received */
-		if (path_received.len && path_received.s) {
-			ci.flags1 |= FL_NAT;
-			ci.flags2 &= ~FL_NAT;
-			ci.received = path_received;
-		}
-		else if (_c->received) {
-			ci.received = _c->received->body;
-		} else {
-			if (received_found==0) {
-				if (search_first_avp(0, rcv_avp, &val, 0) && val.s.s) {
-					if (val.s.len>RECEIVED_MAX_SIZE) {
-						rerrno = R_CONTACT_LEN;
-						LOG(L_ERR,"ERROR:registrar:pack_ci: received "
-							"too long\n");
-						goto error;
+		if (ci.received.len==0) {
+			if (_c->received) {
+				ci.received = _c->received->body;
+			} else {
+				if (received_found==0) {
+					if (search_first_avp(0, rcv_avp, &val, 0) && val.s.s) {
+						if (val.s.len>RECEIVED_MAX_SIZE) {
+							rerrno = R_CONTACT_LEN;
+							LOG(L_ERR,"ERROR:registrar:pack_ci: received "
+								"too long\n");
+							goto error;
+						}
+						received = val.s;
+					} else {
+						received.s = 0;
+						received.len = 0;
 					}
-					received = val.s;
-				} else {
-					received.s = 0;
-					received.len = 0;
+					received_found = 1;
 				}
-				received_found = 1;
+				ci.received = received;
 			}
-			ci.received = received;
 		}
 
 	}
@@ -359,14 +363,11 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 	struct sip_uri uri;
 #endif
 
-	/* is nated flag */
-	if (_m->flags&nat_flag)
-		flags = FL_NAT;
-	else
-		flags = FL_NONE;
 	/* nat type flag */
 	if (_m->flags&sip_natping_flag)
-		flags |= FL_NAT_SIPPING;
+		flags = FL_NAT_SIPPING;
+	else
+		flags = FL_NONE;
 
 	flags |= mem_only;
 #ifdef USE_TCP
@@ -404,7 +405,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* pack the contact_info */
-		if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 ) {
+		if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags))==0 ) {
 			LOG(L_ERR, "ERROR:registrar:insert_contacts: failed to extract "
 				"contact info\n");
 			goto error;
@@ -534,7 +535,6 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	ucontact_info_t *ci;
 	ucontact_t* c;
 	int e;
-	int set, reset;
 	unsigned int flags;
 	int ret;
 #ifdef USE_TCP
@@ -543,19 +543,16 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	struct sip_uri uri;
 #endif
 
-	/* is nated flag */
-	if (_m->flags&nat_flag)
-		flags = FL_NAT;
-	else
-		flags = FL_NONE;
 	/* nat type flag */
 	if (_m->flags&sip_natping_flag)
-		flags |= FL_NAT_SIPPING;
+		flags = FL_NAT_SIPPING;
+	else
+		flags = FL_NONE;
 	/* mem flag */
 	flags |= mem_only;
 
 	/* pack the contact_info */
-	if ( (ci=pack_ci( _m, 0, 0, 0, 0))==0 ) {
+	if ( (ci=pack_ci( _m, 0, 0, flags))==0 ) {
 		LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
 			"initial pack contact info\n");
 		goto error;
@@ -595,7 +592,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				continue;
 
 			/* pack the contact_info */
-			if ( (ci=pack_ci( 0, _c, e, flags, 0))==0 ) {
+			if ( (ci=pack_ci( 0, _c, e, 0))==0 ) {
 				LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
 					"extract contact info\n");
 				goto error;
@@ -625,11 +622,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				}
 			} else {
 				/* do update */
-				set = flags | mem_only;
-				reset = ~(flags | mem_only) & (FL_NAT|FL_MEM|FL_NAT_SIPPING);
-
 				/* pack the contact specific info */
-				if ( (ci=pack_ci( 0, _c, e, set, reset))==0 ) {
+				if ( (ci=pack_ci( 0, _c, e, 0))==0 ) {
 					LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
 						"pack contact specific info\n");
 					goto error;

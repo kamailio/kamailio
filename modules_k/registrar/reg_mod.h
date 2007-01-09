@@ -76,7 +76,6 @@ extern str rcv_param;
 extern int_str rcv_avp;
 extern int max_contacts;
 extern int retry_after;
-extern int use_branch_flags;
 extern int method_filtering;
 extern int path_enabled;
 extern int path_mode;

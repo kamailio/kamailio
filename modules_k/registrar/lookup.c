@@ -57,7 +57,6 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	str aor, uri;
 	ucontact_t* ptr;
 	int res;
-	int bflags;
 	int ret;
 	str path_dst;
 
@@ -126,9 +125,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 		set_ruri_q(ptr->q);
 
-		/* for RURI branch, the nat flag goes into msg */
-		if ( ptr->flags&FL_NAT )
-			_m->flags |= nat_flag;
+		setbflag( 0, ptr->cflags);
 
 		if (ptr->sock)
 			_m->force_send_socket = ptr->sock;
@@ -141,27 +138,21 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 	for( ; ptr ; ptr = ptr->next ) {
 		if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
-			/* for additional branches, the nat flag goes into dset */
-			bflags = (use_branch_flags && (ptr->flags & FL_NAT))?nat_flag:0;
-
 			path_dst.len = 0;
 			if(ptr->path.s && ptr->path.len 
 			&& get_path_dst_uri(&ptr->path, &path_dst) < 0) {
 				LOG(L_ERR, "lookup(): Failed to get dst_uri for Path\n");
 				continue;
 			}
-		
+
 			/* The same as for the first contact applies for branches 
 			 * regarding path vs. received. */
 			if (append_branch(_m,&ptr->c,path_dst.len?&path_dst:&ptr->received,
-			&ptr->path, ptr->q, bflags, ptr->sock) == -1) {
+			&ptr->path, ptr->q, ptr->cflags, ptr->sock) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				/* Also give a chance to the next branches*/
 				continue;
 			}
-			
-			if (!use_branch_flags && (ptr->flags & FL_NAT))
-				_m->flags |= nat_flag;
 		}
 	}
 

@@ -80,8 +80,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		}
 		/* is the location NATED? */
 		if ((*locs)->flags&CPL_LOC_NATED)
-			/* for RURI branch, the nat flag goes into msg */
-			msg->flags |= cpl_env.nat_flag;
+			setbflag( 0, cpl_fct.ulb.nat_flag );
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );
@@ -90,7 +89,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 
 	/* add the rest of the locations as branches */
 	while(*locs) {
-		bflags = ((*locs)->flags&CPL_LOC_NATED) ? cpl_env.nat_flag : 0 ;
+		bflags = ((*locs)->flags&CPL_LOC_NATED) ? cpl_fct.ulb.nat_flag : 0 ;
 		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: appending branch "
 			"<%.*s>, flags %d\n",
 			(*locs)->addr.uri.len, (*locs)->addr.uri.s, bflags);

@@ -62,7 +62,6 @@
 
 /* route to execute for the branches */
 static int goto_on_branch;
-unsigned int gflags_mask = 0xffffffff;
 int _tm_branch_index = 0;
 
 void t_on_branch( unsigned int go_to )
@@ -199,8 +198,6 @@ static inline void post_print_uac_request(struct sip_msg *request,
 	/* delete inserted branch lumps */
 	del_flaged_lumps( &request->add_rm, LUMPFLAG_BRANCH);
 	del_flaged_lumps( &request->body_lumps, LUMPFLAG_BRANCH);
-	/* reset branch flags */
-	request->flags &= gflags_mask;
 	/* free any potential new uri */
 	if (request->new_uri.s!=org_uri->s) {
 		pkg_free(request->new_uri.s);
@@ -264,8 +261,8 @@ int add_blind_uac( /*struct cell *t*/ )
    or error (<0); it doesn't send a message yet -- a reply to it
    might interfere with the processes of adding multiple branches
 */
-int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop, str* path,
-	struct proxy_l *proxy)
+static int add_uac( struct cell *t, struct sip_msg *request, str *uri, 
+							str* next_hop, str* path, struct proxy_l *proxy)
 {
 	int ret;
 	short temp_proxy;
@@ -349,7 +346,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop, s
 	t->uac[branch].uri.s=t->uac[branch].request.buffer.s+
 		request->first_line.u.request.method.len+1;
 	t->uac[branch].uri.len=request->new_uri.len;
-	t->uac[branch].br_flags = request->flags&(~gflags_mask);
+	t->uac[branch].br_flags = getb0flags();
 	t->nr_of_outgoings++;
 
 	/* update stats */
@@ -421,7 +418,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer.s+
 		cancel_msg->first_line.u.request.method.len+1;
 	t_cancel->uac[branch].uri.len=t_invite->uac[branch].uri.len;
-	t_cancel->uac[branch].br_flags = cancel_msg->flags&(~gflags_mask);
+	t_cancel->uac[branch].br_flags = cancel_msg->flags;
 
 	/* success */
 	ret=1;
@@ -445,7 +442,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	int lowest_error;
 	str backup_uri;
 	str reason;
-	int rurib_flags;
 	int ret;
 
 	cancel_bm=0;
@@ -454,8 +450,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	/* e2e_cancel_branch() makes no RURI parsing, so no need to 
 	 * save the -> parse_uri_ok */
 	backup_uri = cancel_msg->new_uri;
-	/* branch flags specific to RURI */
-	rurib_flags = cancel_msg->flags&(~gflags_mask);
 
 	/* determine which branches to cancel ... */
 	which_cancel( t_invite, &cancel_bm );
@@ -476,8 +470,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	cancel_msg->parsed_uri_ok = 0;
 
 	/* set flags */
-	cancel_msg->flags = (cancel_msg->flags&gflags_mask)|rurib_flags;
-	t_cancel->uas.request->flags = cancel_msg->flags&gflags_mask;
+	t_cancel->uas.request->flags = cancel_msg->flags;
 
 	/* send them out */
 	for (i=t_cancel->first_branch; i<t_cancel->nr_of_outgoings; i++) {
@@ -591,8 +584,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int try_new;
 	str dst_uri;
 	struct socket_info *bk_sock;
-	int rurib_flags;
-	int br_flags;
+	unsigned int br_flags;
+	unsigned int bk_br_flags;
 	int idx;
 	str path;
 
@@ -616,11 +609,11 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		return -1;
 	}
 
-	/* backup current uri, sock and flags ... add_uac changes it */
+	/* backup current uri, sock and flags... add_uac changes it */
 	backup_uri = p_msg->new_uri;
 	backup_dst = p_msg->dst_uri;
 	bk_sock = p_msg->force_send_socket;
-	rurib_flags = p_msg->flags&(~gflags_mask);
+	bk_br_flags = getb0flags();
 
 	/* if no more specific error code is known, use this */
 	lowest_ret=E_BUG;
@@ -646,8 +639,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	for( idx=0; (current_uri.s=get_branch( idx, &current_uri.len, &q,
 	&dst_uri, &path, &br_flags, &p_msg->force_send_socket))!=0 ; idx++ ) {
 		try_new++;
-		p_msg->flags = (p_msg->flags&gflags_mask) | br_flags;
-		branch_ret=add_uac( t, p_msg, &current_uri, &dst_uri, &path, proxy);
+		setb0flags(br_flags);
+		branch_ret = add_uac( t, p_msg, &current_uri, &dst_uri, &path, proxy);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
@@ -665,13 +658,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	p_msg->parsed_uri_ok = 0;/* just to be sure; add_uac may parse other uris*/
 	p_msg->dst_uri = backup_dst;
 	p_msg->force_send_socket = bk_sock;
+	setb0flags(bk_br_flags);
 	/* update on_branch, if modified */
 	t->on_branch = get_on_branch();
-	/* set flags */
-	p_msg->flags = (p_msg->flags&gflags_mask)|rurib_flags;
-	t->uas.request->flags = p_msg->flags&gflags_mask;
-
-	/* don't forget to clear all branches processed so far */
 
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {

@@ -80,8 +80,6 @@ qvalue_t default_q  = Q_UNSPECIFIED;
 int append_branches = 1;
 /* If set to 1, username in aor will be case sensitive */
 int case_sensitive  = 0;
-/* flag marking contacts behind NAT */
-int nat_flag        = -1;
 /* if the TCP connection should be kept open */
 int tcp_persistent_flag = -1;
 /* flag marking nated contacts to be pinged with SIP method  */
@@ -96,8 +94,6 @@ int max_expires     = 0;
 int max_contacts = 0;
 /* The value of Retry-After HF in 5xx replies */
 int retry_after = 0;
-/* if the NAT flag should be pushed in branch flags or msg flags */
-int use_branch_flags = 0;
 /* if the looked up contacts should be filtered based on supported methods */
 int method_filtering = 0;
 /* if the Path HF should be handled */
@@ -165,7 +161,6 @@ static param_export_t params[] = {
 	{"default_q",          INT_PARAM, &default_q           },
 	{"append_branches",    INT_PARAM, &append_branches     },
 	{"case_sensitive",     INT_PARAM, &case_sensitive      },
-	{"nat_flag",           INT_PARAM, &nat_flag            },
 	{"sip_natping_flag",   INT_PARAM, &sip_natping_flag    },
 	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag },
 	{"realm_prefix",       STR_PARAM, &realm_pref          },
@@ -178,7 +173,6 @@ static param_export_t params[] = {
 	{"retry_after",        INT_PARAM, &retry_after         },
 	{"sock_flag",          INT_PARAM, &sock_flag           },
 	{"sock_hdr_name",      STR_PARAM, &sock_hdr_name.s     },
-	{"use_branch_flags",   INT_PARAM, &use_branch_flags    },
 	{"method_filtering",   INT_PARAM, &method_filtering    },
 	{"use_path",           INT_PARAM, &path_enabled        },
 	{"path_mode",          INT_PARAM, &path_mode           },
@@ -187,10 +181,7 @@ static param_export_t params[] = {
 };
 
 
-/* We expose internal variables via the statistic framework below.  Since these
- * variables are meant to be set through only exported module parameters, we
- * implement the statistic collection as a function.  This way it can be set up
- * to be read only. */
+/* We expose internal variables via the statistic framework below.*/
 stat_export_t mod_stats[] = {
 	{"max_expires",       STAT_NO_RESET, &max_expires_stat        },
 	{"max_contacts",      STAT_NO_RESET, &max_contacts_stat       },
@@ -291,7 +282,6 @@ static int mod_init(void)
 
 	/* fix the flags */
 	sock_flag = (sock_flag!=-1)?(1<<sock_flag):0;
-	nat_flag = (nat_flag!=-1)?(1<<nat_flag):0;
 	sip_natping_flag = (sip_natping_flag!=-1)?(1<<sip_natping_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
 

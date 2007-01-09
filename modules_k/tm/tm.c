@@ -124,7 +124,6 @@ static char *fr_timer_param = FR_TIMER_AVP;
 static char *fr_inv_timer_param = FR_INV_TIMER_AVP;
 
 /* module parameteres */
-static char *bf_mask_param = NULL;
 int tm_enable_stats = 1;
 
 /* statistic variables */
@@ -225,8 +224,6 @@ static param_export_t params[]={
 		&fr_inv_timer_param},
 	{"tw_append",                 STR_PARAM|USE_FUNC_PARAM,
 		(void*)parse_tw_append },
-	{"branch_flag_mask",          STR_PARAM,
-		&bf_mask_param },
 	{ "enable_stats",             INT_PARAM,
 		&tm_enable_stats },
 	{ "pass_provisional_replies", INT_PARAM,
@@ -577,38 +574,6 @@ static int script_init( struct sip_msg *foo, void *bar)
 }
 
 
-static int init_gf_mask( char* bf_mask )
-{
-	long long int l;
-	char *end;
-
-	if (bf_mask==0)
-		return 0;
-
-	errno = 0;
-	/* try bases 2, 10 and 16 */
-	if (bf_mask[0]=='b' || bf_mask[0]=='B') {
-		l = strtoll( bf_mask+1, &end, 2);
-		if (*end==0 && errno==0)
-			goto ok;
-	}
-	if (bf_mask[0]=='0' && bf_mask[1]=='x') {
-		l = strtoll( bf_mask+2, &end, 16);
-		if (*end==0 && errno==0)
-			goto ok;
-	}
-	l = strtoll( bf_mask, &end, 10);
-	if (*end==0 && errno==0)
-		goto ok;
-
-	return -1;
-ok:
-	gflags_mask = ~((unsigned int)l);
-	DBG("DEBUG:tm:init_gf_mask: gflags_mask is %x\n",gflags_mask);
-	return 0;
-}
-
-
 static int mod_init(void)
 {
 	LOG(L_INFO,"TM - initializing...\n");
@@ -721,12 +686,6 @@ static int mod_init(void)
 
 	if ( init_avp_params( fr_timer_param, fr_inv_timer_param)<0 ){
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to process timer AVPs\n");
-		return -1;
-	}
-
-	if ( init_gf_mask( bf_mask_param )<0 ) {
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to process "
-			"\"branch_flag_mask\" param\n");
 		return -1;
 	}
 
@@ -858,7 +817,7 @@ static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
 	}
 
 	/* do the flush */
-	t->uas.request->flags = msg->flags&gflags_mask;
+	t->uas.request->flags = msg->flags;
 	return 1;
 }
 

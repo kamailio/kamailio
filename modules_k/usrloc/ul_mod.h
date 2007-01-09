@@ -44,7 +44,7 @@
 #define WRITE_BACK    2
 #define DB_ONLY       3
 
-#define UL_TABLE_VERSION 1003
+#define UL_TABLE_VERSION 1004
 
 extern str user_col;
 extern str domain_col;
@@ -55,6 +55,7 @@ extern str callid_col;
 extern str cseq_col;
 extern str method_col;
 extern str flags_col;
+extern str cflags_col;
 extern str user_agent_col;
 extern str received_col;
 extern str path_col;

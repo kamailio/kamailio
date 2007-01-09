@@ -2102,7 +2102,7 @@ nh_timer(unsigned int ticks, void *param)
 			return;
 		}
 	}
-	rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only ? FL_NAT : 0));
+	rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only?ul.nat_flag:0));
 	if (rval > 0) {
 		if (buf != NULL)
 			pkg_free(buf);
@@ -2112,7 +2112,7 @@ nh_timer(unsigned int ticks, void *param)
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: out of memory\n");
 			return;
 		}
-		rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only ? FL_NAT : 0));
+		rval = ul.get_all_ucontacts(buf,cblen,(ping_nated_only?ul.nat_flag:0));
 		if (rval != 0) {
 			pkg_free(buf);
 			return;

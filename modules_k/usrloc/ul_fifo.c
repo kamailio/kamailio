@@ -258,7 +258,7 @@ static int ul_add(FILE* pipe, char* response_file)
 			return 1;
 		}
 
-		if (str2int(&flags, (unsigned int*)&ci.flags1) < 0) {
+		if (str2int(&flags, (unsigned int*)&ci.flags) < 0) {
 			fifo_reply(response_file, "400 Invalid flags format\n");
 			return 1;
 		}

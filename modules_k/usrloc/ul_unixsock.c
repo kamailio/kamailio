@@ -380,7 +380,7 @@ static int ul_add(str* msg)
 			goto err;
 		}
 		
-		if (str2int(&flags, (unsigned int*)&ci.flags1) < 0) {
+		if (str2int(&flags, (unsigned int*)&ci.flags) < 0) {
 			unixsock_reply_asciiz("400 Invalid flags format\n");
 			goto err;
 		}

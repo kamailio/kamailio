@@ -196,29 +196,6 @@ modparam("registrar", "default_q", 100)
 	</section>
 
 	<section>
-		<title><varname>nat_flag</varname> (integer)</title>
-		<para>
-		The parameter specifies the flag to be used as NAT marker. The idea is
-		to set this flag if a register come behind a NAT; the 
-		<quote>save()</quote> functions will save the flag in the usrloc, flag
-		that will be restore by the <quote>lookup()</quote> function.
-		</para>
-		<para>
-		<emphasis>
-			Default value is -1 (disabled).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>nat_flag</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "nat_flag", 6)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>sip_natping_flag</varname> (integer)</title>
 		<para>
 		The parameter specifies the flat to be used to mark the contacts to 
@@ -514,32 +491,6 @@ modparam("registrar", "sock_flag", 18)
 		<programlisting format="linespecific">
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
-...
-		</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>use_branch_flags</varname> (integer)</title>
-		<para>
-		If enabled (has a non zero value), the NAT flag for the additional
-		branches will be pushed in branch flags (in dset/branch array).
-		Otherwise it will be pushed in the message flags. In both cases, the
-		NAT flag for the RURI will be push into message flags.
-		</para>
-		<para>
-		This make sens to be enabled only if branch route will be used.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0 (disabled).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>use_branch_flags</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "use_branch_flags", 1)
 ...
 		</programlisting>
 		</example>

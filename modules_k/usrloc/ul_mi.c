@@ -442,7 +442,7 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 
 	/* flags value (param 7) */
 	node = node->next;
-	if (str2int( &node->value, (unsigned int*)&ci.flags1) < 0)
+	if (str2int( &node->value, (unsigned int*)&ci.flags) < 0)
 		goto bad_syntax;
 
 	/* flags value (param 8) */

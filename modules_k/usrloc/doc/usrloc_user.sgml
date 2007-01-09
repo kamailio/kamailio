@@ -94,6 +94,28 @@
 	<section>
 	<title>Exported Parameters</title>
 	<section>
+		<title><varname>nat_bflag</varname> (integer)</title>
+		<para>
+		The index of the flag to be used as NAT marker (if the contact is or 
+		not natted). This is a branch flag and it will be imported and used by
+		all other modules depending of usrloc module.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>not set</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>nat_bflag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "nat_bflag", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>user_column</varname> (string)</title>
 		<para>
 		Name of column containing usernames.
