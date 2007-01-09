@@ -40,18 +40,19 @@ Bogdan-Andrei Iancu
               1.3.8. cseq_column (string)
               1.3.9. methods_column (string)
               1.3.10. flags_column (string)
-              1.3.11. user_agent_column (string)
-              1.3.12. received_column (string)
-              1.3.13. socket_column (string)
-              1.3.14. use_domain (integer)
-              1.3.15. desc_time_order (integer)
-              1.3.16. timer_interval (integer)
-              1.3.17. db_url (string)
-              1.3.18. db_mode (integer)
-              1.3.19. matching_mode (integer)
-              1.3.20. cseq_delay (integer)
-              1.3.21. fetch_rows (integer)
-              1.3.22. hash_size (integer)
+              1.3.11. cflags_column (string)
+              1.3.12. user_agent_column (string)
+              1.3.13. received_column (string)
+              1.3.14. socket_column (string)
+              1.3.15. use_domain (integer)
+              1.3.16. desc_time_order (integer)
+              1.3.17. timer_interval (integer)
+              1.3.18. db_url (string)
+              1.3.19. db_mode (integer)
+              1.3.20. matching_mode (integer)
+              1.3.21. cseq_delay (integer)
+              1.3.22. fetch_rows (integer)
+              1.3.23. hash_size (integer)
 
         1.4. Exported Functions
 
@@ -91,18 +92,19 @@ Bogdan-Andrei Iancu
    1-8. Set cseq_column parameter
    1-9. Set methods_column parameter
    1-10. Set flags_column parameter
-   1-11. Set user_agent_column parameter
-   1-12. Set received_column parameter
-   1-13. Set socket_column parameter
-   1-14. Set use_domain parameter
-   1-15. Set desc_time_order parameter
-   1-16. Set timer_interval parameter
-   1-17. Set db_url parameter
-   1-18. Set db_mode parameter
-   1-19. Set matching_mode parameter
-   1-20. Set cseq_delay parameter
-   1-21. Set fetch_rows parameter
-   1-22. Set hash_size parameter
+   1-11. Set cflags_column parameter
+   1-12. Set user_agent_column parameter
+   1-13. Set received_column parameter
+   1-14. Set socket_column parameter
+   1-15. Set use_domain parameter
+   1-16. Set desc_time_order parameter
+   1-17. Set timer_interval parameter
+   1-18. Set db_url parameter
+   1-19. Set db_mode parameter
+   1-20. Set matching_mode parameter
+   1-21. Set cseq_delay parameter
+   1-22. Set fetch_rows parameter
+   1-23. Set hash_size parameter
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -141,7 +143,7 @@ Chapter 1. User's Guide
        how you deal with REGISTER retransmissions in this case.
 
    How to control/select the contact maching algorithm, please
-   see the module parameter matching_mode at Section 1.3.19.
+   see the module parameter matching_mode at Section 1.3.20.
      _________________________________________________________
 
 1.2. Dependencies
@@ -286,45 +288,57 @@ modparam("usrloc", "flags_column", "flags")
 ...
      _________________________________________________________
 
-1.3.11. user_agent_column (string)
+1.3.11. cflags_column (string)
+
+   Name of column to save the branch/contact flags of the record.
+
+   Default value is "cflags". 
+
+   Example 1-11. Set cflags_column parameter
+...
+modparam("usrloc", "cflags_column", "cflags")
+...
+     _________________________________________________________
+
+1.3.12. user_agent_column (string)
 
    Name of column containing user-agent values.
 
    Default value is "user_agent". 
 
-   Example 1-11. Set user_agent_column parameter
+   Example 1-12. Set user_agent_column parameter
 ...
 modparam("usrloc", "user_agent_column", "user_agent")
 ...
      _________________________________________________________
 
-1.3.12. received_column (string)
+1.3.13. received_column (string)
 
    Name of column containing the source IP, port, and protocol
    from the REGISTER message.
 
    Default value is "received". 
 
-   Example 1-12. Set received_column parameter
+   Example 1-13. Set received_column parameter
 ...
 modparam("usrloc", "received_column", "received")
 ...
      _________________________________________________________
 
-1.3.13. socket_column (string)
+1.3.14. socket_column (string)
 
    Name of column containing the received socket information
    (IP:port) for the REGISTER message.
 
    Default value is "socket". 
 
-   Example 1-13. Set socket_column parameter
+   Example 1-14. Set socket_column parameter
 ...
 modparam("usrloc", "socket_column", "socket")
 ...
      _________________________________________________________
 
-1.3.14. use_domain (integer)
+1.3.15. use_domain (integer)
 
    If the domain part of the user should be also saved and used
    for identifing the user (along with the username part). Useful
@@ -332,13 +346,13 @@ modparam("usrloc", "socket_column", "socket")
 
    Default value is "0 (false)". 
 
-   Example 1-14. Set use_domain parameter
+   Example 1-15. Set use_domain parameter
 ...
 modparam("usrloc", "use_domain", 1)
 ...
      _________________________________________________________
 
-1.3.15. desc_time_order (integer)
+1.3.16. desc_time_order (integer)
 
    If the user's contacts should be kept timestamp ordered;
    otherwise the contact will be ordered based on q value. Non 0
@@ -346,13 +360,13 @@ modparam("usrloc", "use_domain", 1)
 
    Default value is "0 (false)". 
 
-   Example 1-15. Set desc_time_order parameter
+   Example 1-16. Set desc_time_order parameter
 ...
 modparam("usrloc", "desc_time_order", 1)
 ...
      _________________________________________________________
 
-1.3.16. timer_interval (integer)
+1.3.17. timer_interval (integer)
 
    Number of seconds between two timer runs. The module uses
    timer to delete expired contacts, synchronize with database
@@ -360,27 +374,27 @@ modparam("usrloc", "desc_time_order", 1)
 
    Default value is 60. 
 
-   Example 1-16. Set timer_interval parameter
+   Example 1-17. Set timer_interval parameter
 ...
 modparam("usrloc", "timer_interval", 120)
 ...
      _________________________________________________________
 
-1.3.17. db_url (string)
+1.3.18. db_url (string)
 
    URL of the database that should be used.
 
    Default value is
    "mysql://openser:openserrw@localhost/openser". 
 
-   Example 1-17. Set db_url parameter
+   Example 1-18. Set db_url parameter
 ...
 modparam("usrloc", "db_url", "mysql://username:password@localhost/opens
 er")
 ...
      _________________________________________________________
 
-1.3.18. db_mode (integer)
+1.3.19. db_mode (integer)
 
    The usrloc module can utilize database for persistent contact
    storage. If you use database, your contacts will survive
@@ -428,13 +442,13 @@ er")
 
    Default value is 0. 
 
-   Example 1-18. Set db_mode parameter
+   Example 1-19. Set db_mode parameter
 ...
 modparam("usrloc", "db_mode", 2)
 ...
      _________________________________________________________
 
-1.3.19. matching_mode (integer)
+1.3.20. matching_mode (integer)
 
    What contact matching algorithm to be used. Refer to section
    Section 1.1.1 for the description of the algorithms.
@@ -446,13 +460,13 @@ modparam("usrloc", "db_mode", 2)
 
    Default value is 0 (CONTACT_ONLY). 
 
-   Example 1-19. Set matching_mode parameter
+   Example 1-20. Set matching_mode parameter
 ...
 modparam("usrloc", "matching_mode", 1)
 ...
      _________________________________________________________
 
-1.3.20. cseq_delay (integer)
+1.3.21. cseq_delay (integer)
 
    Delay (in seconds) for accepting as retransmissions register
    requests with same Call-ID and Cseq. The delay is calculated
@@ -467,13 +481,13 @@ modparam("usrloc", "matching_mode", 1)
 
    Default value is "20 seconds". 
 
-   Example 1-20. Set cseq_delay parameter
+   Example 1-21. Set cseq_delay parameter
 ...
 modparam("usrloc", "cseq_delay", 5)
 ...
      _________________________________________________________
 
-1.3.21. fetch_rows (integer)
+1.3.22. fetch_rows (integer)
 
    The number of the rows to be fetched at once from database
    when loading the location records. This value can be used to
@@ -483,13 +497,13 @@ modparam("usrloc", "cseq_delay", 5)
 
    Default value is "2000". 
 
-   Example 1-21. Set fetch_rows parameter
+   Example 1-22. Set fetch_rows parameter
 ...
 modparam("usrloc", "fetch_rows", 3000)
 ...
      _________________________________________________________
 
-1.3.22. hash_size (integer)
+1.3.23. hash_size (integer)
 
    The number of entries of the hash table used by usrloc to
    store the location records is 2^hash_size. For hash_size=4,
@@ -497,7 +511,7 @@ modparam("usrloc", "fetch_rows", 3000)
 
    Default value is "9". 
 
-   Example 1-22. Set hash_size parameter
+   Example 1-23. Set hash_size parameter
 ...
 modparam("usrloc", "hash_size", 10)
 ...

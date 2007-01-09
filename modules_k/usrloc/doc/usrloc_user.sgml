@@ -296,6 +296,26 @@ modparam("usrloc", "flags_column", "flags")
 	</section>
 
 	<section>
+		<title><varname>cflags_column</varname> (string)</title>
+		<para>
+		Name of column to save the branch/contact flags of the record.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>cflags</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cflags_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "cflags_column", "cflags")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>user_agent_column</varname> (string)</title>
 		<para>
 		Name of column containing user-agent values.
