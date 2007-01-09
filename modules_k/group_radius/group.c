@@ -44,64 +44,6 @@
 
 
 /*
- * Get actual Request-URI
- */
-static inline int get_request_uri(struct sip_msg* _m, str* _u)
-{
-	     /* Use new_uri if present */
-	if (_m->new_uri.s) {
-		_u->s = _m->new_uri.s;
-		_u->len = _m->new_uri.len;
-	} else {
-		_u->s = _m->first_line.u.request.uri.s;
-		_u->len = _m->first_line.u.request.uri.len;
-	}
-
-	return 0;
-}
-
-
-/*
- * Get To header field URI
- */
-static inline int get_to_uri(struct sip_msg* _m, str* _u)
-{
-	     /* Double check that the header field is there
-	      * and is parsed
-	      */
-	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || !_m->to)) {
-		LOG(L_ERR, "get_to_uri(): Can't get To header field\n");
-		return -1;
-	}
-	
-	_u->s = ((struct to_body*)_m->to->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->to->parsed)->uri.len;
-	
-	return 0;
-}
-
-
-/*
- * Get From header field URI
- */
-static inline int get_from_uri(struct sip_msg* _m, str* _u)
-{
-	     /* Double check that the header field is there
-	      * and is parsed
-	      */
-	if (parse_from_header(_m) < 0) {
-		LOG(L_ERR, "get_from_uri(): Error while parsing From body\n");
-		return -1;
-	}
-	
-	_u->s = ((struct to_body*)_m->from->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->from->parsed)->uri.len;
-
-	return 0;
-}
-
-
-/*
  * Check from Radius if a user belongs to a group. User-Name is digest
  * username or digest username@realm, SIP-Group is group, and Service-Type
  * is Group-Check.  SIP-Group is SER specific attribute and Group-Check is
@@ -109,65 +51,65 @@ static inline int get_from_uri(struct sip_msg* _m, str* _u)
  */
 int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 {
-	str *grp, user_name, user, domain, uri;
+	str *grp, user_name, user, domain;
 	dig_cred_t* cred = 0;
 	int hf_type;
 	UINT4 service;
 	VALUE_PAIR *send, *received;
 	static char msg[4096];
 	struct hdr_field* h;
-	struct sip_uri puri;
+	struct sip_uri *turi;
 
 	grp = (str*)_group; /* via fixup */
 	send = received = 0;
 
 	hf_type = (int)(long)_hf;
 
-	uri.s = 0;
-	uri.len = 0;
+	turi = 0;
 
 	switch(hf_type) {
-	case 1: /* Request-URI */
-		if (get_request_uri(_m, &uri) < 0) {
-			LOG(L_ERR, "radius_is_user_in(): Error while extracting Request-URI\n");
-			return -1;
-		}
-		break;
-
-	case 2: /* To */
-		if (get_to_uri(_m, &uri) < 0) {
-			LOG(L_ERR, "radius_is_user_in(): Error while extracting To\n");
-			return -2;
-		}
-		break;
-
-	case 3: /* From */
-		if (get_from_uri(_m, &uri) < 0) {
-			LOG(L_ERR, "radius_is_user_in(): Error while extracting From\n");
-			return -3;
-		}
-		break;
-
-	case 4: /* Credentials */
-		get_authorized_cred(_m->authorization, &h);
-		if (!h) {
-			get_authorized_cred(_m->proxy_auth, &h);
-			if (!h) {
-				LOG(L_ERR, "radius_is_user_in(): No authorized credentials found (error in scripts)\n");
-				return -4;
+		case 1: /* Request-URI */
+			if(parse_sip_msg_uri(_m)<0) {
+				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
+					"Request-URI\n");
+				return -1;
 			}
-		}
-		cred = &((auth_body_t*)(h->parsed))->digest;
-		break;
+			turi = &_m->parsed_uri;
+			break;
+
+		case 2: /* To */
+			if((turi=parse_to_uri(_m))==NULL) {
+				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
+					"To URI\n");
+				return -1;
+			}
+			break;
+
+		case 3: /* From */
+			if((turi=parse_from_uri(_m))==NULL) {
+				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
+					"From URI\n");
+				return -1;
+			}
+			break;
+
+		case 4: /* Credentials */
+			get_authorized_cred(_m->authorization, &h);
+			if (!h) {
+				get_authorized_cred(_m->proxy_auth, &h);
+				if (!h) {
+					LOG(L_ERR, "radius_is_user_in(): No authorized"
+							" credentials found (error in scripts)\n");
+					return -4;
+				}
+			}
+			cred = &((auth_body_t*)(h->parsed))->digest;
+			break;
 	}
 
 	if (hf_type != 4) {
-		if (parse_uri(uri.s, uri.len, &puri) < 0) {
-			LOG(L_ERR, "radius_is_user_in(): Error while parsing URI\n");
-			return -5;
-		}
-		user = puri.user;
-		domain = puri.host;
+		user = turi->user;
+		domain = turi->host;
 	} else {
 		user = cred->username.user;
 		domain = *GET_REALM(cred);

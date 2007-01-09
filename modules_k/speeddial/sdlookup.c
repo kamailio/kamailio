@@ -40,8 +40,6 @@
 
 #define MAX_USERURI_SIZE	256
 
-static str sd_500_rpl = str_init("Server Internal Error");
-static str sd_400_rpl = str_init("Bad Request");
 
 char useruri_buf[MAX_USERURI_SIZE];
 
@@ -72,7 +70,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 {
 	str user_s;
 	int nr_keys;
-	struct sip_uri puri;
+	struct sip_uri *puri;
 	db_key_t db_keys[4];
 	db_val_t db_vals[4];
 	db_key_t db_cols[1];
@@ -83,22 +81,17 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	db_cols[0]=new_uri_column;
 	
 	/* take username@domain from From header */
-	if ( parse_from_header( _msg )<0 )
+	if ( (puri = parse_from_uri(_msg ))==NULL )
 	{
 		LOG(L_ERR, "sd_lookup: ERROR cannot parse FROM header\n");
-		goto err_badreq;
-	}
-	if (parse_uri(get_from(_msg)->uri.s, get_from(_msg)->uri.len, &puri) < 0)
-	{
-		LOG(L_ERR, "sd_lookup: Error while parsing From URI\n");
-		goto err_badreq;
+		goto err_server;
 	}
 		
 	db_keys[nr_keys]=user_column;
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = puri.user.s;
-	db_vals[nr_keys].val.str_val.len = puri.user.len;
+	db_vals[nr_keys].val.str_val.s = puri->user.s;
+	db_vals[nr_keys].val.str_val.len = puri->user.len;
 	nr_keys++;
 
 	if(use_domain>=1)
@@ -106,13 +99,13 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		db_keys[nr_keys]=domain_column;
 		db_vals[nr_keys].type = DB_STR;
 		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val.s = puri.host.s;
-		db_vals[nr_keys].val.str_val.len = puri.host.len;
+		db_vals[nr_keys].val.str_val.s = puri->host.s;
+		db_vals[nr_keys].val.str_val.len = puri->host.len;
 		nr_keys++;
 		
 		if (dstrip_s.s!=NULL && dstrip_s.len>0
-			&& dstrip_s.len<puri.host.len
-			&& strncasecmp(puri.host.s,dstrip_s.s,dstrip_s.len)==0)
+			&& dstrip_s.len<puri->host.len
+			&& strncasecmp(puri->host.s,dstrip_s.s,dstrip_s.len)==0)
 		{
 			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
 			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
@@ -122,7 +115,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	if (parse_sip_msg_uri(_msg) < 0)
 	{
 		LOG(L_ERR, "sd_lookup: Error while parsing Request-URI\n");
-		goto err_badreq;
+		goto err_server;
 	}
 	
 	db_keys[nr_keys]=sd_user_column;
@@ -221,16 +214,6 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	return 1;
 
 err_server:
-	if (sl_reply(_msg, (char*)500, (char*)&sd_500_rpl) == -1)
-	{
-		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
-	}
-	return 0;
-err_badreq:
-	if (sl_reply(_msg, (char*)400, (char*)&sd_400_rpl ) == -1)
-	{
-		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
-	}
-	return 0;
+	return -1;
 }
 

@@ -139,7 +139,7 @@ static cmd_export_t cmds[]={
 	{"replace_body_all", replace_body_all_f,2, fixup_regex, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
 	{"append_to_reply",  append_to_reply_f, 1, it_list_fixup,
-			REQUEST_ROUTE|BRANCH_ROUTE},
+			REQUEST_ROUTE|BRANCH_ROUTE|ERROR_ROUTE},
 	{"append_hf",        append_hf_1,       1, add_header_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"append_hf",        append_hf_2,       2, add_header_fixup,

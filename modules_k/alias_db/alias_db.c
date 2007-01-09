@@ -67,12 +67,6 @@ str   dstrip_s;
 db_con_t* db_handle;   /* Database connection handle */
 db_func_t adbf;  /* DB functions */
 
-/*
- * sl_send_reply function pointer
- */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
-
-
 /* Exported functions */
 static cmd_export_t cmds[] = {
 	{"alias_db_lookup", alias_db_lookup, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -145,18 +139,6 @@ static int mod_init(void)
 		return -1;
 	}
 		
-
-	/**
-	 * We will need sl_send_reply from stateless
-	 * module for sending replies
-	 */
-	
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply)
-	{
-		LOG(L_ERR, "alias_db: This module requires sl module\n");
-		return -1;
-	}
 
 	if(domain_prefix==NULL || strlen(domain_prefix)==0)
 	{

@@ -33,6 +33,7 @@
 #include <string.h>
 #include "../../dprint.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
 #include "auth_mod.h"
@@ -42,10 +43,11 @@
 /* 
  * Return parsed To or From, host part of the parsed uri is realm
  */
-int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri* _u)
+int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri** _u)
 {
-	str uri;
 
+	if(_u==NULL)
+		return -1;
 	if ((REQ_LINE(_m).method.len == 8) 
 	    && !memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) 
 	    && (_hftype == HDR_AUTHORIZATION_T)
@@ -56,19 +58,15 @@ int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri* _u)
 		}
 		
 		/* Body of To header field is parsed automatically */
-		uri = get_to(_m)->uri; 
+		if((*_u = parse_to_uri(_m))==NULL)
+			return -1;
 	} else {
 		if (parse_from_header(_m) < 0) {
 			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
 			return -2;
 		}
-
-		uri = get_from(_m)->uri;
-	}
-
-	if (parse_uri(uri.s, uri.len, _u) < 0) {
-		LOG(L_ERR, "get_realm(): Error while parsing URI\n");
-		return -3;
+		if((*_u = parse_from_uri(_m))==NULL)
+			return -1;
 	}
 	
 	return 0;

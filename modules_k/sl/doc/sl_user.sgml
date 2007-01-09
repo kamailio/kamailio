@@ -138,13 +138,49 @@ modparam("sl", "totag_avpid", 25)
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE, ERROR_ROUTE.
 		</para>
 		<example>
 		<title><function>sl_send_reply</function> usage</title>
 		<programlisting format="linespecific">
 ...
 sl_send_reply("404", "Not found");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">sl_reply(code, reason)</function>
+		</title>
+		<para>
+		For the current request, a reply is sent back having the given code 
+		and text reason. The reply is sent stateless, totally independent of 
+		the Transaction module and with no retransmission for the INVITE's 
+		replies. 'code' and 'reason' can contain pseudo-variables that are
+		replaced at runtime. It is very useful in conjunction with
+		'error_route'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>code</emphasis> - Return code.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>reason</emphasis> - Reason phrase.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ERROR_ROUTE.
+		</para>
+		<example>
+		<title><function>sl_send_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+sl_reply("$err.rcode", "$err.rreason");
 ...
 </programlisting>
 		</example>

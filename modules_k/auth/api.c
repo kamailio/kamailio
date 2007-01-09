@@ -153,7 +153,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 {
 	int ret;
 	auth_body_t* c;
-	struct sip_uri uri;
+	struct sip_uri *uri;
 
 	/* ACK and CANCEL must be always authorized, there is
 	 * no way how to challenge ACK and CANCEL cannot be
@@ -172,7 +172,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 			return ERROR;
 		}
 		
-		*_realm = uri.host;
+		*_realm = uri->host;
 		strip_realm(_realm);
 	}
 

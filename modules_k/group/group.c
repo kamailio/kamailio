@@ -43,80 +43,29 @@
 
 
 
-/*
- * Get Request-URI
- */
-static inline int get_request_uri(struct sip_msg* _m, str* _u)
-{
-	if (_m->new_uri.s) {
-		_u->s = _m->new_uri.s;
-		_u->len = _m->new_uri.len;
-	} else {
-		_u->s = _m->first_line.u.request.uri.s;
-		_u->len = _m->first_line.u.request.uri.len;
-	}
-
-	return 0;
-}
-
-
-/*
- * Get To header field URI
- */
-static inline int get_to_uri(struct sip_msg* _m, str* _u)
-{
-	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
-		LOG(L_ERR, "get_to_uri(): Can't get To header field\n");
-		return -1;
-	}
-	
-	_u->s = ((struct to_body*)_m->to->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->to->parsed)->uri.len;
-
-	return 0;
-}
-
-
-/*
- * Get From header field URI
- */
-static inline int get_from_uri(struct sip_msg* _m, str* _u)
-{
-	if (parse_from_header(_m) < 0) {
-		LOG(L_ERR, "get_from_uri(): Error while parsing From body\n");
-		return -1;
-	}
-	
-	_u->s = ((struct to_body*)_m->from->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->from->parsed)->uri.len;
-
-	return 0;
-}
-
-
 int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 											str *username, str *domain)
 {
 	struct sip_uri puri;
+	struct sip_uri *turi;
 	struct hdr_field* h;
 	struct auth_body* c = 0; /* Makes gcc happy */
 	xl_value_t value;
-	str uri;
 
-	uri.s = 0;
-	uri.len = 0;
+	turi = NULL;
 
 	switch(gcp->id) {
 		case 1: /* Request-URI */
-			if (get_request_uri( msg, &uri) < 0) {
+			if(parse_sip_msg_uri(msg)<0) {
 				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
 					"Request-URI\n");
 				return -1;
 			}
+			turi = &msg->parsed_uri;
 			break;
 
 		case 2: /* To */
-			if (get_to_uri( msg, &uri) < 0) {
+			if((turi=parse_to_uri(msg))==NULL) {
 				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
 					"To URI\n");
 				return -1;
@@ -124,7 +73,7 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 			break;
 
 		case 3: /* From */
-			if (get_from_uri( msg, &uri) < 0) {
+			if((turi=parse_from_uri(msg))==NULL) {
 				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
 					"From URI\n");
 				return -1;
@@ -152,20 +101,18 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 					" (error in scripts)\n");
 				return -1;
 			}
-			uri.s = value.rs.s;
-			uri.len = value.rs.len;
+			if (parse_uri(value.rs.s, value.rs.len, &puri) < 0) {
+				LOG(L_ERR, "ERROR:group:get_username_domain: failed to parse "
+					"URI <%.*s>\n",value.rs.len, value.rs.s);
+				return -1;
+			}
+			turi = &puri;
 			break;
 	}
 
 	if (gcp->id != 4) {
-		if (parse_uri(uri.s, uri.len, &puri) < 0) {
-			LOG(L_ERR, "ERROR:group:get_username_domain: failed to parse "
-				"URI <%.*s>\n",uri.len,uri.s);
-			return -1;
-		}
-
-		*username = puri.user;
-		*domain = puri.host;
+		*username = turi->user;
+		*domain = turi->host;
 	} else {
 		*username = c->digest.username.user;
 		*domain = *(GET_REALM(&c->digest));

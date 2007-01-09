@@ -66,11 +66,6 @@ str   dstrip_s;
 db_func_t db_funcs;      /* Database functions */
 db_con_t* db_handle=0;   /* Database connection handle */
 
-/*
- * sl_send_reply function pointer
- */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
-
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
@@ -145,18 +140,6 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	/**
-	 * We will need sl_send_reply from stateless
-	 * module for sending replies
-	 */
-	
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply)
-	{
-		LOG(L_ERR, "sd: This module requires sl module\n");
-		return -1;
-	}
-
 	if(domain_prefix==NULL || strlen(domain_prefix)==0)
 	{
 		dstrip_s.s   = 0;

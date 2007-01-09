@@ -139,7 +139,7 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
 	char *auth_hf;
 	int ret;
 	hdr_types_t hftype = 0; /* Makes gcc happy */
-	struct sip_uri uri;
+	struct sip_uri *uri;
 	str realm;
 	str reason;
 
@@ -166,7 +166,7 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
 			return 0;
 		}
 
-		realm = uri.host;
+		realm = uri->host;
 		strip_realm(&realm);
 	} else {
 		if(xl_printf_s(_msg, _realm, &realm)!=0) {

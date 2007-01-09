@@ -48,11 +48,10 @@ static db_func_t uridb_dbf;
  * Check if a header field contains the same username
  * as digest credentials
  */
-static inline int check_username(struct sip_msg* _m, str* _uri)
+static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 {
 	struct hdr_field* h;
 	auth_body_t* c;
-	struct sip_uri puri;
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t cols[1];
@@ -79,13 +78,8 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 	c = (auth_body_t*)(h->parsed);
 
 	/* Parse To/From URI */
-	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
-		LOG(L_ERR, "check_username(): Error while parsing URI\n");
-		return -3;
-	}
-	
 	/* Make sure that the URI contains username */
-	if (!puri.user.len) {
+	if (!_uri->user.len) {
 		LOG(L_ERR, "check_username(): Username not found in URI\n");
 		return -4;
 	}
@@ -112,7 +106,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 
 		VAL_STR(vals) = c->digest.username.user;
 		VAL_STR(vals + 1) = *GET_REALM(&c->digest);
-		VAL_STR(vals + 2) = puri.user;
+		VAL_STR(vals + 2) = _uri->user;
 
 		if (uridb_dbf.query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0)
 		{
@@ -127,12 +121,12 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		 */
 		if (RES_ROW_N(res) == 0) {
 			DBG("check_username(): From/To user '%.*s' is spoofed\n", 
-			    puri.user.len, ZSW(puri.user.s));
+			    _uri->user.len, ZSW(_uri->user.s));
 			uridb_dbf.free_result(db_handle, res);
 			return -9;
 		} else {
 			DBG("check_username(): From/To user '%.*s' and auth user match\n", 
-			    puri.user.len, ZSW(puri.user.s));
+			    _uri->user.len, ZSW(_uri->user.s));
 			uridb_dbf.free_result(db_handle, res);
 			return 1;
 		}
@@ -140,9 +134,9 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		/* URI table not used, simply compare digest username and From/To
 		 * username, the comparison is case insensitive
 		 */
-		if (puri.user.len == c->digest.username.user.len) {
-			if (!strncasecmp(puri.user.s, c->digest.username.user.s, 
-			puri.user.len)) {
+		if (_uri->user.len == c->digest.username.user.len) {
+			if (!strncasecmp(_uri->user.s, c->digest.username.user.s, 
+			_uri->user.len)) {
 				DBG("check_username(): Digest username and URI "
 					"username match\n");
 				return 1;
@@ -165,7 +159,12 @@ int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 		LOG(L_ERR, "check_to(): Error while parsing To header field\n");
 		return -1;
 	}
-	return check_username(_m, &get_to(_m)->uri);
+	if(parse_to_uri(_m)==NULL) {
+		LOG(L_ERR, "check_to(): Error while parsing To header URI\n");
+		return -1;
+	}
+
+	return check_username(_m, &get_to(_m)->parsed_uri);
 }
 
 
@@ -178,8 +177,12 @@ int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 		LOG(L_ERR, "check_from(): Error while parsing From header field\n");
 		return -1;
 	}
+	if(parse_from_uri(_m)==NULL) {
+		LOG(L_ERR, "check_from(): Error while parsing From header URI\n");
+		return -1;
+	}
 
-	return check_username(_m, &get_from(_m)->uri);
+	return check_username(_m, &get_from(_m)->parsed_uri);
 }
 
 

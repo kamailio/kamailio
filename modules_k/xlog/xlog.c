@@ -60,11 +60,11 @@ void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"xlog",  xlog_1,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE},
+		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE},
 	{"xlog",  xlog_2,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE},
+		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE},
 	{"xdbg",  xdbg,    1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE | 
-		ONREPLY_ROUTE | BRANCH_ROUTE },
+		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE},
 	{0,0,0,0,0}
 };
 

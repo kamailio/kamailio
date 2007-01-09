@@ -181,6 +181,26 @@ static void uri_trans(char *new_buf, char *org_buf, struct sip_uri *uri)
 	uri->port.s=translate_pointer(new_buf,org_buf,uri->port.s);
 	uri->params.s=translate_pointer(new_buf,org_buf,uri->params.s);
 	uri->headers.s=translate_pointer(new_buf,org_buf,uri->headers.s);
+	/* parameters */
+	uri->transport.s=translate_pointer(new_buf,org_buf,uri->transport.s);
+	uri->ttl.s=translate_pointer(new_buf,org_buf,uri->ttl.s);
+	uri->user_param.s=translate_pointer(new_buf,org_buf,uri->user_param.s);
+	uri->maddr.s=translate_pointer(new_buf,org_buf,uri->maddr.s);
+	uri->method.s=translate_pointer(new_buf,org_buf,uri->method.s);
+	uri->lr.s=translate_pointer(new_buf,org_buf,uri->lr.s);
+	uri->r2.s=translate_pointer(new_buf,org_buf,uri->r2.s);
+		/* ser specific rr parameter */
+	/* values */
+	uri->transport_val.s
+		=translate_pointer(new_buf,org_buf,uri->transport_val.s);
+	uri->ttl_val.s=translate_pointer(new_buf,org_buf,uri->ttl_val.s);
+	uri->user_param_val.s
+		=translate_pointer(new_buf,org_buf,uri->user_param_val.s);
+	uri->maddr_val.s=translate_pointer(new_buf,org_buf,uri->maddr_val.s);
+	uri->method_val.s=translate_pointer(new_buf,org_buf,uri->method_val.s);
+	uri->lr_val.s=translate_pointer(new_buf,org_buf,uri->lr_val.s);
+		/* lr value placeholder for lr=on a.s.o*/
+	uri->r2_val.s=translate_pointer(new_buf,org_buf,uri->r2_val.s);
 }
 
 
@@ -562,6 +582,11 @@ do { \
 					((struct to_body*)new_hdr->parsed)->tag_value.s =
 						translate_pointer( new_msg->buf , org_msg->buf ,
 						((struct to_body*)hdr->parsed)->tag_value.s );
+				if ( (((struct to_body*)hdr->parsed)->parsed_uri.user.s)
+				|| (((struct to_body*)hdr->parsed)->parsed_uri.host.s) )
+					uri_trans(new_msg->buf, org_msg->buf,
+							&((struct to_body*)hdr->parsed)->parsed_uri);
+
 				/*to params*/
 				to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
 				for(;to_prm;to_prm=to_prm->next)

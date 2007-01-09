@@ -42,15 +42,18 @@
 #include "../../ut.h"
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
+#include "../../items.h"
 #include "sl_funcs.h"
 #include "sl_cb.h"
 
 MODULE_VERSION
 
 
-static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
-static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
+static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
+static int w_sl_reply(struct sip_msg* msg, char* str1, char* str2);
+static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
 static int fixup_sl_send_reply(void** param, int param_no);
+static int fixup_sl_reply(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy();
 extern int totag_avpid;
@@ -71,7 +74,9 @@ stat_var *rcv_acks;
 
 static cmd_export_t cmds[]={
 	{"sl_send_reply",   w_sl_send_reply,            2,  fixup_sl_send_reply,
-			REQUEST_ROUTE},
+			REQUEST_ROUTE | ERROR_ROUTE},
+	{"sl_reply",        w_sl_reply,                 2,  fixup_sl_reply,
+			REQUEST_ROUTE | ERROR_ROUTE},
 	{"sl_reply_error",  w_sl_reply_error,           0,  0,
 			REQUEST_ROUTE},
 	{"register_slcb",  (cmd_function)register_slcb, 0,  0,
@@ -193,6 +198,35 @@ static int fixup_sl_send_reply(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_sl_reply(void** param, int param_no)
+{
+	xl_elem_t *model;
+	str s;
+
+	/* convert to str */
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+
+	model=NULL;
+	if (param_no==1 || param_no==2)
+	{
+		if(s.len!=0)
+		{
+			if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0)
+			{
+				LOG(L_ERR, "ERROR:sl:fixup_sl_reply: wrong format [%s] "
+					"for param no %d!\n", s.s, param_no);
+				pkg_free(s.s);
+				return E_UNSPEC;
+			}
+		}
+		*param = (void*)model;
+	}
+
+	return 0;
+}
+
+
 
 
 
@@ -204,9 +238,25 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 }
 
 
-static int w_sl_reply_error( struct sip_msg* msg, char* str, char* str2)
+static int w_sl_reply_error( struct sip_msg* msg, char* str1, char* str2)
 {
 	return sl_reply_error( msg );
 }
 
+
+static int w_sl_reply(struct sip_msg* msg, char* str1, char* str2)
+{
+	str code_s;
+	unsigned int code_i;
+
+	if(str1==NULL || str2==NULL)
+		return -1;
+	if(xl_printf_s(msg, (xl_elem_p)str1, &code_s)!=0)
+		return -1;
+	if(str2int(&code_s, &code_i)!=0 || code_i<100)
+		return -1;
+	if(xl_printf_s(msg, (xl_elem_p)str2, &code_s)!=0 || code_s.len <=0)
+		return -1;
+	return sl_send_reply(msg, code_i, &code_s);
+}
 

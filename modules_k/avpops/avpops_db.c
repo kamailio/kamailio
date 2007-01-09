@@ -272,6 +272,7 @@ db_res_t *db_load_avp( str *uuid, str *username, str *domain,
 
 void db_close_query( db_res_t *res )
 {
+	DBG("close avp query\n");
 	avpops_dbf.free_result( db_hdl, res);
 }
 
@@ -341,8 +342,10 @@ int db_query_avp(struct sip_msg *msg, char *query, avpname_list_t* dest)
 		return 1;
 	}
 
+	DBG("avpops:db_query_avp: rows [%d]\n", RES_ROW_N(db_res));
 	for(i = RES_ROW_N(db_res)-1; i >= 0; i--) 
 	{
+		DBG("avpops:db_query_avp: row [%d]\n", i);
 		crt = dest;
 		for(j = RES_COL_N(db_res)-1; j >= 0; j--) 
 		{

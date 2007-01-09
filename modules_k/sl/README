@@ -29,7 +29,8 @@ Bogdan Iancu
         1.4. Exported Functions
 
               1.4.1. sl_send_reply(code, reason)
-              1.4.2. sl_reply_error()
+              1.4.2. sl_reply(code, reason)
+              1.4.3. sl_reply_error()
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -38,7 +39,8 @@ Bogdan Iancu
    1-1. enable_stats example
    1-2. totag_avpid example
    1-3. sl_send_reply usage
-   1-4. sl_reply_error usage
+   1-4. sl_send_reply usage
+   1-5. sl_reply_error usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -132,7 +134,7 @@ modparam("sl", "totag_avpid", 25)
      * code - Return code.
      * reason - Reason phrase.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE, ERROR_ROUTE.
 
    Example 1-3. sl_send_reply usage
 ...
@@ -140,7 +142,29 @@ sl_send_reply("404", "Not found");
 ...
      _________________________________________________________
 
-1.4.2. sl_reply_error()
+1.4.2. sl_reply(code, reason)
+
+   For the current request, a reply is sent back having the given
+   code and text reason. The reply is sent stateless, totally
+   independent of the Transaction module and with no
+   retransmission for the INVITE's replies. 'code' and 'reason'
+   can contain pseudo-variables that are replaced at runtime. It
+   is very useful in conjunction with 'error_route'.
+
+   Meaning of the parameters is as follows:
+
+     * code - Return code.
+     * reason - Reason phrase.
+
+   This function can be used from REQUEST_ROUTE, ERROR_ROUTE.
+
+   Example 1-4. sl_send_reply usage
+...
+sl_reply("$err.rcode", "$err.rreason");
+...
+     _________________________________________________________
+
+1.4.3. sl_reply_error()
 
    Sends back an error reply describing the nature of the last
    internal error. Usually this function should be used after a
@@ -148,7 +172,7 @@ sl_send_reply("404", "Not found");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-4. sl_reply_error usage
+   Example 1-5. sl_reply_error usage
 ...
 sl_reply_error();
 ...

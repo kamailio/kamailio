@@ -151,22 +151,14 @@ int is_domain_local(str* _host)
  */
 int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2)
 {
-	str uri;
-	struct sip_uri puri;
+	struct sip_uri *puri;
 
-	if (parse_from_header(_msg) < 0) {
+	if ((puri=parse_from_uri(_msg))==NULL) {
 		LOG(L_ERR, "is_from_local(): Error while parsing From header\n");
 		return -2;
 	}
 
-	uri = get_from(_msg)->uri;
-
-	if (parse_uri(uri.s, uri.len, &puri) < 0) {
-		LOG(L_ERR, "is_from_local(): Error while parsing URI\n");
-		return -3;
-	}
-
-	return is_domain_local(&(puri.host));
+	return is_domain_local(&(puri->host));
 
 }
 

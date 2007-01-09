@@ -45,6 +45,4 @@ extern str   dstrip_s;
 
 extern db_con_t* db_handle;   /* Database connection handle */
 
-extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
-
 #endif /* _ALIAS_DB_H_ */

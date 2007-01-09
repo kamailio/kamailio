@@ -394,7 +394,8 @@ if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 
      * txt - String which may contains pseudo-variables.
 
-   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE.
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   ERROR_ROUTE.
 
    Example 1-13. append_to_reply usage
 ...
