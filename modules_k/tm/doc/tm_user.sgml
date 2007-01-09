@@ -74,12 +74,12 @@
 		out - changes in that route should reflect only on that branch.
 		</para>
 		<para>
-		There are two types of flags in &ser; :
+		There are several types of flags in &ser; :
 		</para>
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>global</emphasis> flags - global because they are 
+				<emphasis>message/transaction</emphasis> flags - they are 
 				visible everywhere in the transaction (in all routes and in 
 				all sequential replies/request).
 			</para>
@@ -90,32 +90,35 @@
 				from a specific branch - in all replies and routes connected 
 				to this branch.
 			</para>
+			<para>
+				<emphasis>script</emphasis> flags - flags that exist only
+				during script execution. They are not store anywhere and are
+				lost once the top level route was left.
+			</para>
 			</listitem>
 			</itemizedlist>
 		<para>
 		For example: I have a call parallel forking to GW and to a user. And I 
 		would like to know from which branch I will get the final negative 
 		reply (if so). I will set a branch route before relaying the calls 
-		(with the 2 branches). The branch route will be separately executed for 
-		each branch; in the branch going to GW (I can identified it by looking 
-		to RURI), I will set a branch flag. This flag will appear only in the 
-		onreply route run for replied from GW. It will be also be visible in 
-		failure route if the final elected reply belongs to the GW branch. 
-		This flags will not be visible in the other branch (in routes executing 
-		replies from the other branch).
+		(with the 2 branches). The branch route will be separately executed 
+		for each branch; in the branch going to GW (I can identified it by 
+		looking to RURI), I will set a branch flag. This flag will appear 
+		only in the onreply route run for replied from GW. It will be also be 
+		visible in failure route if the final elected reply belongs to the 
+		GW branch. This flags will not be visible in the other branch 
+		(in routes executing replies from the other branch).
 		</para>
 		<para>
 		For how to define branch flags and use via script, see 
-		<xref linkend="branch-flag-mask"> and <xref linkend="branch-route">.
+		<xref linkend="branch-route"> and the setbflag(), resetbflag() and
+		isbflagset() script functions.
 		</para>
 		<para>
 		Also, modules may set branch flags before transaction creation 
-		(for the moment this feature is not available in script). The REGISTRAR 
-		module is the first to use this feature. If the 
-		<quote>use_branch_flags</quote> param is enabled, the NAT flag will be 
-		push in branch flags instead in message flags - IMPORTANT: be sure that 
-		NAT flag is in the range of the branch flags ad defined in TM. Using 
-		this, NAT traversal per branch may be implemented.
+		(for the moment this feature is not available in script). The 
+		REGISTRAR module was the first to use this type of flags. The NAT flag 
+		is pushed in branch flags instead in message flags
 		</para>
 	</section>
 	<section id="timer-based-failover">
@@ -570,38 +573,6 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
 ...
 modparam("tm", "tw_append",
    "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);$rb;time=$Ts")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section id="branch-flag-mask">
-		<title><varname>branch_flag_mask</varname> (string)</title>
-		<para>
-		Defined which flags shall be as branch flags. The branch flags will be
-		visible only in the messages belonging to that branch (in branch, 
-		onreply and failure route). The global flags are visible for all 
-		messages of the corresponding transaction.
-		</para>
-		<para>
-		The value of the parameter is a 32-bits mask. It may be defined using
-		2, 10 or 16 bases.
-		</para>
-		<para>
-		<emphasis>
-			Default value is NULL (no branch flags, all being global).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>branch_flag_mask</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-# using base 16
-modparam("tm", "branch_flag_mask", "0xff000000")
-# or using base 2
-modparam("tm", "branch_flag_mask", "b11111111000000000000000000000000")
-# or using base 10
-modparam("tm", "branch_flag_mask", "4278190080")
 ...
 </programlisting>
 		</example>
@@ -1238,11 +1209,6 @@ onreply_route[1] {
 		<para>
 		Only one branch_route can be armed for a request. If you use many
 		time t_on_branch(), only the last one has effect.
-		</para>
-		<para>
-		The per-branch flags which are modified in the branch route will be
-		visible only in the replies related to that branch.
-		See <xref linkend="branch-flag-mask"> also.
 		</para>
 		<para>
 		By calling the drop() function (exported by core), the execution of 
