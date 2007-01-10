@@ -93,7 +93,7 @@ error:
 }
 
 ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
-		int FLAG, htable_t* H)
+		int FLAG, int event, htable_t* H)
 {
 	ua_pres_t* p= NULL,* L= NULL;
  
@@ -103,7 +103,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 
 	for(p= L->next; p; p=p->next)
 	{
-		if(p->flag & FLAG)
+		if((p->event== event) && (p->flag & FLAG))
 		{
 			DBG("PUA: search_htable:pres_uri= %.*s len= %d\n",
 					p->pres_uri->len, p->pres_uri->s, p->pres_uri->len);
@@ -113,6 +113,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 			if((p->pres_uri->len==pres_uri->len) &&
 					(strncmp(p->pres_uri->s, pres_uri->s,pres_uri->len)==0))
 			{	
+				DBG("PUA: search_htable:found pres_ur\n");
 				if(watcher_uri)
 				{	
 					if(p->watcher_uri->len==watcher_uri->len &&
@@ -125,7 +126,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 				}
 				else
 				{
-					if(id.s )
+					if(id.s)
 					{	
 						DBG("PUA: search_htable: compare id\n");
 						if(id.len== p->id.len &&
@@ -155,7 +156,7 @@ void hash_update(ua_pres_t* presentity, int expires, htable_t* H)
 	DBG("PUA:hash_update ..\n");
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				presentity->id, presentity->flag, H);
+				presentity->id, presentity->flag,presentity->event, H);
 	if(p== NULL)
 	{
 		DBG("PUA:hash_update : no recod found\n");
@@ -188,7 +189,7 @@ void insert_htable(ua_pres_t* presentity , htable_t* H)
 	lock_get(&H->p_records[hash_code].lock);
 	
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				presentity->id, presentity->flag, H);
+				presentity->id, presentity->flag, presentity->event, H);
 	if(p) 
 	{
 		lock_release(&H->p_records[hash_code].lock);
@@ -211,7 +212,7 @@ void delete_htable(ua_pres_t* presentity , htable_t* H)
 	DBG("PUA:delete_htable...\n");
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-			presentity->id, presentity->flag, H);
+			presentity->id, presentity->flag, presentity->event, H);
 	if(p== NULL)
 	{
 		return;

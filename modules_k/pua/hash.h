@@ -32,9 +32,17 @@
 #include "../../str.h"
 #include "../../lock_ops.h"
 
-#define UL_PUBLISH		1<<1
-#define MI_PUBLISH		1<<2
-#define MI_SUBSCRIBE	1<<3
+#define UL_PUBLISH			1<<0
+#define MI_PUBLISH			1<<1
+#define MI_SUBSCRIBE		1<<2
+#define END2END_PUBLISH		1<<3
+#define END2END_SUBSCRIBE   1<<4
+#define XMPP_PUBLISH		1<<5
+#define XMPP_SUBSCRIBE      1<<6
+
+#define PRESENCE_EVENT      1<<0
+#define PWINFO_EVENT        1<<1
+
 
 #define NO_UPDATEDB_FLAG	1<<0
 #define UPDATEDB_FLAG		1<<1
@@ -46,8 +54,9 @@ typedef struct hentity
 	str* watcher_uri;
 	str id;
 	str tuple_id;
+	int event;
 	int flag;
-	int expires;
+	int desired_expires;
 }hentity_t;
 
 typedef struct ua_pres{
@@ -55,7 +64,9 @@ typedef struct ua_pres{
     /* common*/
     str* pres_uri;
 	str id;
+	int event;
 	time_t expires;
+	time_t desired_expires;
 	int flag;
 	int db_flag;
 	struct ua_pres* next;
@@ -86,7 +97,7 @@ typedef struct htable{
 htable_t* new_htable();
 
 ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id, 
-		int FLAG, htable_t* H);
+		int FLAG, int event, htable_t* H);
 
 void insert_htable(ua_pres_t* presentity , htable_t* H);
 

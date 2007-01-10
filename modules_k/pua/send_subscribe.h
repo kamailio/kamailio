@@ -26,14 +26,18 @@
 #ifndef _PU_SEND_SUBSC_
 #define _PU_SEND_SUBSC_
 
-#include "../../str.h"
 #include <time.h>
+
+#include "../tm/tm_load.h"
+#include "../../str.h"
+#include "hash.h"
 
 typedef struct subs_info
 {
 	str id;
 	str* pres_uri;
 	str* watcher_uri;
+	int event;
 	time_t expires;
 	int flag;
 	int source_flag;
@@ -42,5 +46,8 @@ typedef struct subs_info
 
 typedef int (*send_subscribe_t)(subs_info_t* subs);
 int send_subscribe(subs_info_t* subs);
+void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps);
+str* subs_build_hdr(str* watcher_uri, int expires, int event);
+dlg_t* pua_build_dlg_t(ua_pres_t* presentity);
 
 #endif

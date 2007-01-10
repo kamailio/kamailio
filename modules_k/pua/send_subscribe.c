@@ -54,45 +54,54 @@ void print_subs(subs_info_t* subs)
 
 }
 
-static str* build_hdr(subs_info_t* subs)
+str* subs_build_hdr(str* watcher_uri, int expires, int event)
 {
 	str* str_hdr= NULL;
-	char buf[1000];
+	static char buf[3000];
 	char* subs_expires= NULL;
 	int len= 1;
 
 	str_hdr= (str*)pkg_malloc(sizeof(str));
 	if(str_hdr== NULL)
 	{
-		LOG(L_ERR, "PUA:build_hdr:ERROR while allocating memory\n");
+		LOG(L_ERR, "PUA:subs_build_hdr:ERROR while allocating memory\n");
 		return NULL;
 	}
 	str_hdr->s= buf;
 
-	memcpy(str_hdr->s ,"Event: presence", 15);
-	str_hdr->len = 15;
+	if(event& PRESENCE_EVENT)
+	{	
+		memcpy(str_hdr->s ,"Event: presence", 15);
+		str_hdr->len = 15;
+	}
+	else
+	{	
+		memcpy(str_hdr->s ,"Event: presence.winfo", 21);
+		str_hdr->len = 21;
+	}
+
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 	
 	memcpy(str_hdr->s+ str_hdr->len ,"Contact: ", 9);
 	str_hdr->len += 9;
-	memcpy(str_hdr->s +str_hdr->len, subs->watcher_uri->s, 
-			subs->watcher_uri->len);
-	str_hdr->len+= subs->watcher_uri->len;
+	memcpy(str_hdr->s +str_hdr->len, watcher_uri->s, 
+			watcher_uri->len);
+	str_hdr->len+= watcher_uri->len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 
 	memcpy(str_hdr->s+ str_hdr->len ,"Expires: ", 9);
 	str_hdr->len += 9;
 
-	if( subs->expires<= min_expires)
+	if( expires<= min_expires)
 		subs_expires= int2str(min_expires, &len);  
 	else
-		subs_expires= int2str(subs->expires+ 1, &len);
+		subs_expires= int2str(expires+ 1, &len);
 		
 	if(subs_expires == NULL || len == 0)
 	{
-		LOG(L_ERR, "PUA:build_hdr: ERROR while converting int "
+		LOG(L_ERR, "PUA:subs_build_hdr: ERROR while converting int "
 				" to str\n");
 		pkg_free(str_hdr);
 		return NULL;
@@ -107,7 +116,7 @@ static str* build_hdr(subs_info_t* subs)
 	return str_hdr;
 }	
 
-static dlg_t* build_dlg_t(ua_pres_t* presentity)	
+dlg_t* pua_build_dlg_t(ua_pres_t* presentity)	
 {
 	dlg_t* td =NULL;
 	int size;
@@ -119,7 +128,7 @@ static dlg_t* build_dlg_t(ua_pres_t* presentity)
 	td = (dlg_t*)pkg_malloc(size);
 	if(td == NULL)
 	{
-		LOG(L_ERR, "PUA:build_dlg_t: No memory left\n");
+		LOG(L_ERR, "PUA:pua_build_dlg_t: No memory left\n");
 		return NULL;
 	}
 	memset(td, 0, size);
@@ -167,11 +176,10 @@ static dlg_t* build_dlg_t(ua_pres_t* presentity)
 void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg= NULL;
-	int lexpire= 0, cseq;
+	int lexpire= 0;
+	unsigned int cseq;
 	ua_pres_t* presentity= NULL;
 	struct to_body *pto, *pfrom = NULL, TO;
-	struct cseq_body cseqb;
-	str cseq_nr;
 	int size= 0;
 	int hash_code;
 
@@ -199,7 +207,8 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, 
 				((hentity_t*)(*ps->param))->watcher_uri,
 				((hentity_t*)(*ps->param))->id	,
-				((hentity_t*)(*ps->param))->flag, HashT);
+				((hentity_t*)(*ps->param))->flag, 
+				((hentity_t*)(*ps->param))->event,HashT);
 
 		if(presentity)
 			delete_htable(presentity, HashT);
@@ -254,7 +263,8 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, 
 				((hentity_t*)(*ps->param))->watcher_uri,
 				((hentity_t*)(*ps->param))->id	,
-				((hentity_t*)(*ps->param))->flag, HashT);
+				((hentity_t*)(*ps->param))->flag,
+				((hentity_t*)(*ps->param))->event,HashT);
 
 	if(presentity)
 	{
@@ -295,20 +305,8 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		" header\n");
 		goto done;
 	}
-	if(parse_cseq(msg->cseq->body.s, msg->cseq->body.s+
-				msg->cseq->body.len+2, &cseqb )< 0)
-	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR while parsing cseq\n");
-		goto done;
-	}
-	cseq_nr= cseqb.number;
-	if(cseq_nr.s== NULL || cseq_nr.len== 0)
-	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR while parsing cseq\n");
-		goto done;
-	}
 
-	if( str2int(&cseq_nr,(unsigned int*) &cseq)< 0)
+	if( str2int( &(get_cseq(msg)->number), &cseq)< 0)
 	{
 		LOG(L_ERR, "PUA: subs_cback_func: ERROR while converting str"
 					" to int\n");
@@ -413,10 +411,12 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->from_tag.len= pfrom->tag_value.len;
 	size+= pfrom->tag_value.len;
 	
+	presentity->event|= ((hentity_t*)(*ps->param))->event;
 	presentity->flag|= ((hentity_t*)(*ps->param))->flag;
 	presentity->db_flag|= INSERTDB_FLAG;
 	presentity->etag.s= NULL;
 	presentity->cseq= cseq;
+	presentity->desired_expires= ((hentity_t*)(*ps->param))->desired_expires;
 	presentity->expires= lexpire+ (int)time(NULL);
 	insert_htable(presentity, HashT);
 	
@@ -471,10 +471,11 @@ hentity_t* build_cback_param(subs_info_t* subs)
 		subs->watcher_uri->len ) ;
 	hentity->watcher_uri->len= subs->watcher_uri->len;
 	size+= subs->watcher_uri->len;
-	
-	hentity->expires= subs->expires+ (int)time(NULL);
+
+	hentity->desired_expires= subs->expires+ (int)time(NULL);
 	hentity->flag|= subs->source_flag;
-	
+	hentity->event|= subs->event;
+
 	return hentity;
 
 }	
@@ -491,7 +492,7 @@ int send_subscribe(subs_info_t* subs)
 	DBG("send_subscribe... \n");
 	print_subs(subs);
 
-	str_hdr= build_hdr(subs);
+	str_hdr= subs_build_hdr(subs->watcher_uri, subs->expires, subs->event);
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
 		LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
@@ -503,7 +504,7 @@ int send_subscribe(subs_info_t* subs)
 	lock_get(&HashT->p_records[hash_code].lock);
  
 	presentity= search_htable(subs->pres_uri, subs->watcher_uri,
-				subs->id, subs->source_flag, HashT);
+				subs->id, subs->source_flag, subs->event, HashT);
 
 	if(presentity== NULL )
 	{
@@ -554,7 +555,7 @@ int send_subscribe(subs_info_t* subs)
 				goto done;
 			}
 		}
-		td= build_dlg_t(presentity);
+		td= pua_build_dlg_t(presentity);
 		lock_release(&HashT->p_records[hash_code].lock);
 	
 		if(td== NULL)

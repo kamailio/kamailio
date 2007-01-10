@@ -74,6 +74,8 @@ static void destroy(void);
 int send_subscribe(subs_info_t*);
 int send_publish(publ_info_t*);
 
+int update_pua(ua_pres_t* p);
+
 int db_store(htable_t* H);
 int db_restore(htable_t* H);
 void db_update(unsigned int ticks,void *param);
@@ -240,6 +242,9 @@ static void destroy(void)
 	if(HashT)
 		destroy_htable(HashT);
 
+	if(pua_db)
+		pua_dbf.close(pua_db);
+
 	return ;
 }
 
@@ -283,9 +288,17 @@ int db_restore(htable_t* H)
 	if(pua_dbf.query(pua_db,0, 0, 0, result_cols,0, 11, 0,&res)< 0)
 	{
 		LOG(L_ERR, "PUA: db_restore:ERROR while querrying table\n");
+		if(res)
+		{
+			pua_dbf.free_result(pua_db, res);
+			res = NULL;
+		}
 		return -1;
 	}
-	if(res && res->n<=0)
+	if(res== NULL)
+		return -1;
+
+	if(res->n<=0)
 	{
 		LOG(L_INFO, "PUA: db_restore:the query returned no result\n");
 		pua_dbf.free_result(pua_db, res);
@@ -446,17 +459,146 @@ void hashT_clean(unsigned int ticks,void *param)
 		p= HashT->p_records[i].entity->next;
 		while(p)
 		{	
-			if(p->expires< (int)(time)(NULL))
+			if(p->expires< (int)(time)(NULL)+10)
 			{
-				q= p->next;
-				delete_htable(p, HashT);
-				p= q;
+				if(p->desired_expires> p->expires+ 10)
+				{
+					if(update_pua(p)< 0)
+					{
+						LOG(L_ERR, "PUA: hashT_clean: Error while updating\n");
+						lock_release(&HashT->p_records[i].lock);
+						return;
+					}	
+				}
+				p= p->next;
 			}
 			else
-				p= p->next;
+				if(p->expires< (int)(time)(NULL))
+				{
+					q= p->next;
+					delete_htable(p, HashT);
+					p= q;
+				}
+				else
+					p= p->next;
 		}
 		lock_release(&HashT->p_records[i].lock);
 	}
+
+}
+int update_pua(ua_pres_t* p)
+{
+	int size= 0;
+	hentity_t* hentity= NULL;
+	str* str_hdr= NULL;
+
+	size= sizeof(hentity_t)+ sizeof(str)+ (p->pres_uri->len+ 1)*sizeof(char);
+	
+	if(p->watcher_uri)
+		size+= sizeof(str)+ p->watcher_uri->len;
+	else
+		size+=  p->id.len;
+
+	hentity= (hentity_t*)shm_malloc(size);
+	if(hentity== NULL)
+	{
+		LOG(L_ERR, "PUA: update_pua: ERROR no more share memory\n");
+		goto error;
+	}
+	memset(hentity, 0, size);
+
+	size =  sizeof(hentity_t);
+
+	hentity->pres_uri = (str*)((char*)hentity + size);
+	size+= sizeof(str);
+
+	hentity->pres_uri->s = (char*)hentity+ size;
+	memcpy(hentity->pres_uri->s, p->pres_uri->s ,
+			p->pres_uri->len ) ;
+	hentity->pres_uri->len= p->pres_uri->len;
+	size+= p->pres_uri->len;
+		
+	if(p->watcher_uri)
+	{
+		hentity->watcher_uri=(str*)((char*)hentity+ size);
+		size+= sizeof(str);
+		hentity->watcher_uri->s= (char*)hentity+ size;
+		memcpy(hentity->watcher_uri->s, p->watcher_uri->s,p->watcher_uri->len);
+		hentity->watcher_uri->len= p->watcher_uri->len;
+		size+= p->watcher_uri->len;
+	}	
+	else
+	{	
+		hentity->id.s = ((char*)hentity+ size);
+		memcpy(hentity->id.s, p->id.s, p->id.len);
+		hentity->id.len= p->id.len;
+		size+= p->id.len;
+	}
+
+	hentity->flag|= p->flag;
+	
+
+	if(p->watcher_uri== NULL)
+	{
+		str met= {"PUBLISH", 7};
+		str_hdr = publ_build_hdr(p->expires- (int)time(NULL), &p->etag);
+		if(str_hdr == NULL)
+		{
+			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");
+			goto error;
+		}
+		DBG("PUA: update_pua: str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
+	
+		tmb.t_request(&met,						/* Type of the message */
+				p->pres_uri,					/* Request-URI */
+				p->pres_uri,					/* To */
+				p->pres_uri,					/* From */
+				str_hdr,						/* Optional headers */
+				0,							/* Message body */
+				publ_cback_func,				/* Callback function */
+				(void*)hentity					/* Callback parameter */
+				);
+	}
+	else
+	{	
+		str met= {"SUBSCRIBE", 9};
+		dlg_t* td= NULL;
+		td= pua_build_dlg_t(p);
+		if(td== NULL)
+		{
+			LOG(L_ERR, "PUA:update_pua: Error while building tm dlg_t"
+					"structure");		
+			goto error;
+		}
+		str_hdr= subs_build_hdr(p->watcher_uri, p->expires- (int)time(NULL), p->event);
+		if(str_hdr== NULL || str_hdr->s== NULL)
+		{
+			LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
+			return -1;
+		}
+
+		tmb.t_request_within
+		(&met,
+		str_hdr,                               
+		0,                           
+		td,					                  
+		subs_cback_func,				        
+		(void*)hentity	
+		);
+
+		pkg_free(td);
+		td= NULL;
+	}	
+
+	pkg_free(str_hdr);
+	return 0;
+
+error:
+	if(str_hdr)
+		pkg_free(str_hdr);
+	if(hentity)
+		pkg_free(hentity);
+	return -1;
 
 }
 
@@ -591,6 +733,8 @@ void db_update(unsigned int ticks,void *param)
 						LOG(L_ERR, "PUA: db_update:ERROR while querying"
 								" database");
 						lock_release(&HashT->p_records[i].lock);
+						if(res)
+							pua_dbf.free_result(pua_db, res);	
 						return ;
 					}
 					if(res && res->n> 0)
@@ -601,11 +745,21 @@ void db_update(unsigned int ticks,void *param)
 							LOG(L_ERR, "PUA: db_update: ERROR while updating"
 									" in database");
 							lock_release(&HashT->p_records[i].lock);	
+							pua_dbf.free_result(pua_db, res);
+							res= NULL;
 							return ;
 						}
+						pua_dbf.free_result(pua_db, res);
+						res= NULL;
+
 					}
 					else
 					{
+						if(res)
+						{	
+							pua_dbf.free_result(pua_db, res);
+							res= NULL;
+						}
 						DBG("PUA:db_update: UPDATEDB_FLAG and no record"
 								" found\n");
 					}	

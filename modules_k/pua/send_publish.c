@@ -26,16 +26,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <libxml/parser.h>
 #include <time.h>
 
+#include "../../mem/mem.h"
+#include "../../dprint.h"
 #include "../../parser/parse_expires.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
@@ -98,19 +93,19 @@ void print_hentity(hentity_t* h)
 		DBG("\ttuple_id: %.*s\n", h->tuple_id.len, h->tuple_id.s);
 }	
 
-static str* build_hdr(int expires, str* etag)
+str* publ_build_hdr(int expires, str* etag)
 {
-	char buf[3000];
+	static char buf[3000];
 	str* str_hdr = NULL;	
 	char* expires_s = NULL;
 	int len = 0;
 	int t= 0;
 
-	DBG("PUA: build_hdr ...\n");
+	DBG("PUA: publ_build_hdr ...\n");
 	str_hdr =(str*) pkg_malloc(sizeof(str));
 	if(!str_hdr)
 	{
-		LOG(L_ERR, "PUA: build_hdr:ERROR while allocating memory\n");
+		LOG(L_ERR, "PUA: publ_build_hdr:ERROR while allocating memory\n");
 		return NULL;
 	}
 
@@ -144,7 +139,7 @@ static str* build_hdr(int expires, str* etag)
 	
 	if( etag)
 	{
-		DBG("PUA:build_hdr: UPDATE_TYPE\n");
+		DBG("PUA:publ_build_hdr: UPDATE_TYPE\n");
 		memcpy(str_hdr->s+str_hdr->len,"SIP-If-Match: ", 14);
 		str_hdr->len += 14;
 		memcpy(str_hdr->s+str_hdr->len, etag->s, etag->len);
@@ -194,7 +189,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 		presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, NULL,
 				((hentity_t*)(*ps->param))->id,
-				((hentity_t*)(*ps->param))->flag, HashT);
+				((hentity_t*)(*ps->param))->flag,
+				((hentity_t*)(*ps->param))->event,HashT);
 		if(presentity)
 		{
 			delete_htable(presentity, HashT);
@@ -253,7 +249,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, NULL,
 				((hentity_t*)(*ps->param))->id,
-				((hentity_t*)(*ps->param))->flag, HashT);
+				((hentity_t*)(*ps->param))->flag,
+				((hentity_t*)(*ps->param))->event,HashT);
 	if(presentity)
 	{
 			DBG("PUA:publ_cback_func: update record\n");
@@ -333,7 +330,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= presentity->id.len;
 		
 	presentity->expires= lexpire +(int)time(NULL);
+	presentity->desired_expires= ((hentity_t*)(*ps->param))->desired_expires;
 	presentity->flag|= ((hentity_t*)(*ps->param))->flag;
+	presentity->event= PRESENCE_EVENT;
 	presentity->db_flag|= INSERTDB_FLAG;
 
 	insert_htable( presentity, HashT);
@@ -374,7 +373,7 @@ int send_publish( publ_info_t* publ )
 	lock_get(&HashT->p_records[hash_code].lock);
 
 	presentity= search_htable( publ->pres_uri, NULL,
-				publ->id, publ->source_flag, HashT);
+				publ->id, publ->source_flag, PRESENCE_EVENT, HashT);
 	
 	
 	if(presentity== NULL)
@@ -454,6 +453,15 @@ int send_publish( publ_info_t* publ )
 				goto error;
 			}
 		}
+		else
+		{
+			strcpy(buf, tuple_id);
+			xmlFree(tuple_id);
+			tuple_id= buf;
+			tuple_id_len= strlen(tuple_id);
+		}	
+			
+
 		node= xmlNodeGetNodeByName(doc->children, "person", NULL);
 		if(node)
 		{
@@ -469,6 +477,8 @@ int send_publish( publ_info_t* publ )
 					goto error;
 				}
 			}
+			else
+				xmlFree(person_id);
 		}	
 		body= (str*)pkg_malloc(sizeof(str));
 		if(body== NULL)
@@ -514,24 +524,28 @@ int send_publish( publ_info_t* publ )
 	memcpy(hentity->id.s, publ->id.s, publ->id.len);
 	hentity->id.len= publ->id.len;
 	size+= publ->id.len;
-		
+	
+	hentity->event= PRESENCE_EVENT;
 	hentity->flag|= publ->source_flag;
-	hentity->expires= publ->expires + (int )time(NULL);
+	hentity->desired_expires= publ->expires + (int )time(NULL);
 
 send_publish:
 	
 	if(publ->flag & UPDATE_TYPE)
-		str_hdr = build_hdr(publ->expires, &etag);
+		str_hdr = publ_build_hdr(publ->expires, &etag);
 	else
-		str_hdr= build_hdr(publ->expires, NULL);
+		str_hdr= publ_build_hdr(publ->expires, NULL);
 
 	if(str_hdr == NULL)
 	{
 		LOG(L_ERR, "PUA:send_publish: ERROR while building extra_headers\n");
 		goto error;
 	}
-	DBG("PUA: send_publish: str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
-	
+
+	DBG("PUA: send_publish: publ->pres_uri:\n%.*s\n ", publ->pres_uri->len, publ->pres_uri->s);
+	DBG("PUA: send_publish: str_hdr:\n%.*s %d\n ", str_hdr->len, str_hdr->s, str_hdr->len);
+	DBG("PUA: send_publish: body:\n%.*s\n ", body->len, body->s);
+		
 
 	tmb.t_request(&met,						/* Type of the message */
 			publ->pres_uri,					/* Request-URI */
