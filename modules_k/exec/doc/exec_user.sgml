@@ -126,7 +126,7 @@ modparam("exec", "setvars", 1)
 	</section>
 	<section>
 		<title>
-			<varname>exec_timer</varname> (UNUSED, placeholder only) (integer)
+			<varname>time_to_kill</varname> (integer)
 		</title>
 		<para>
 		Specifies the longest time a program is allowed to execute. If the 
@@ -138,10 +138,10 @@ modparam("exec", "setvars", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <quote>setvars</quote> parameter</title>
+		<title>Set <quote>time_to_kill</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("exec", "setvars", 1)
+modparam("exec", "time_to_kill", 20)
 ...
 </programlisting>
 		</example>

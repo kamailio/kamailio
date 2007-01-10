@@ -155,6 +155,48 @@ if(is_method("MESSAGE)
 		</example>
 	</section>
 	</section>
+
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">imc_list_rooms</function>
+		</title>
+		<para>
+		Command Format:
+        <programlisting  format="linespecific">
+		:imc_list_members:
+		_room_
+		_empty_line_
+		</programlisting>
+		Lists of the IM Conferencing rooms.
+		</para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">imc_list_members</function>
+		</title>
+		<para>
+		Listing of the members in IM Conferencing rooms.
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Exported Statistics</title>
+	<section>
+		<title>
+		<function moreinfo="none">active_rooms</function>
+		</title>
+		<para>
+		Number of active IM Conferencing rooms.
+		</para>
+		
+	</section>
+	</section>
+
+	
 	<section>
 	<title>IMC Commands</title>
 		<para>

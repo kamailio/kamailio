@@ -41,10 +41,15 @@ Daniel-Constantin Mierla
               1.4.4. ds_next_domain()
               1.4.5. ds_mark_dst()
 
-        1.5. Installation & Running
+        1.5. Exported MI Functions
 
-              1.5.1. Destination List File
-              1.5.2. OpenSER config file
+              1.5.1. ds_set_state
+              1.5.2. ds_list
+
+        1.6. Installation & Running
+
+              1.6.1. Destination List File
+              1.6.2. OpenSER config file
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -280,9 +285,37 @@ ds_select_dst("1", "0");
    This function can be used from FAILURE_ROUTE.
      _________________________________________________________
 
-1.5. Installation & Running
+1.5. Exported MI Functions
 
-1.5.1. Destination List File
+1.5.1. ds_set_state
+
+   Command Format:
+                :ds_set_state:
+                _state_
+                _group_
+                _address_
+                _empty_line_
+
+   Sets the status for a destination address (can be use to mark
+   the destination as active or inactive).
+
+   Input parameters semnification is as follows:
+
+     * _state_ : state of the destination address
+          + "a": active
+          + "i": inactive
+     * _group_: destination group id
+     * _address_: address of the destination in the _group_
+     _________________________________________________________
+
+1.5.2. ds_list
+
+   It lists the groups and included destinations.
+     _________________________________________________________
+
+1.6. Installation & Running
+
+1.6.1. Destination List File
 
    Each destination point must be on one line. First token is the
    set id and next is destination address. The set id must be an
@@ -306,7 +339,7 @@ ds_select_dst("1", "0");
 ...
      _________________________________________________________
 
-1.5.2. OpenSER config file
+1.6.2. OpenSER config file
 
    Next picture displays a sample usage of dispatcher.
 

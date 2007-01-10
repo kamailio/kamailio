@@ -29,6 +29,9 @@ Jan Janak
               1.3.1. flush (integer)
 
         1.4. Exported Functions
+        1.5. Exported MI Functions
+
+              1.5.1. MI_FLAT_ROTATE
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -150,6 +153,13 @@ modparam("flatstore", "flush", 0)
 1.4. Exported Functions
 
    There are no function exported to routing script.
+     _________________________________________________________
+
+1.5. Exported MI Functions
+
+1.5.1. MI_FLAT_ROTATE
+
+   It changes the name of the files where it is written.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

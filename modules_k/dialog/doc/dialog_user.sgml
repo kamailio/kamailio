@@ -257,6 +257,11 @@ modparam("dialog", "use_tight_match", 1)
 			</para>
 		</section>
 		<section>
+			<title><varname>early_dialogs</varname></title>
+			<para>
+			Returns the number of early dialogs.
+			</para>
+		</section>		<section>
 			<title><varname>processed_dialogs</varname></title>
 			<para>
 			Returns the total number of processed dialogs (terminated, 
@@ -269,9 +274,27 @@ modparam("dialog", "use_tight_match", 1)
 			Returns the total number of expired dialogs from the startup.
 			</para>
 		</section>
+		<section>
+			<title><varname>failed_dialogs</varname></title>
+			<para>
+			Returns the number of failed dialogs.
+			</para>
+		</section>
 	</section>
 
 
+	<section>
+	<title>Exported MI Functions</title>
+
+		<section>
+			<title><varname>dlg_list</varname></title>
+			<para>
+			It returns a listing of all dialogs (calls).
+			</para>
+		</section>
+    </section>
+
+	
 	<section>
 	<title>Exported pseudo-variables</title>
 

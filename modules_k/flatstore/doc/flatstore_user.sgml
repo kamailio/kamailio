@@ -173,7 +173,18 @@ modparam("flatstore", "flush", 0)
 	There are no function exported to routing script.
 	</para>
 	</section>
-
+	
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">MI_FLAT_ROTATE</function>
+		</title>
+		<para>
+		It changes the name of the files where it is written.
+		</para>
+	</section>	
+    </section>
 </chapter>
 
 <!-- Keep this element at the end of the file

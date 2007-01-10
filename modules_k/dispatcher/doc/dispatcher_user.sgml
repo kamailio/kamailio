@@ -349,6 +349,49 @@ ds_select_dst("1", "0");
 		</para>
  	</section>
 	</section>
+
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">ds_set_state</function>
+		</title>
+		<para>
+		Command Format:
+        <programlisting  format="linespecific">
+		:ds_set_state:
+		_state_
+		_group_
+		_address_
+		_empty_line_
+		</programlisting>
+        Sets the status for a destination address (can be use to mark the destination 
+		as active or inactive).
+        <para>Input parameters semnification is as follows:
+		<itemizedlist>
+			<listitem><para>_state_ : state of the destination address
+			      <itemizedlist>
+	                 <listitem><para> <quote>a</quote>: active </para></listitem> 
+			         <listitem><para> <quote>i</quote>: inactive </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_group_: destination group id</para></listitem>
+			
+			<listitem><para>_address_: address of the destination in the _group_</para></listitem>
+		</itemizedlist>
+		</para>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">ds_list</function>
+		</title>
+		<para>
+		It lists the groups and included destinations.
+		<para>
+    </section>
+    </section>
+	
 	<section>
 	<title>Installation & Running</title>
 	<section>

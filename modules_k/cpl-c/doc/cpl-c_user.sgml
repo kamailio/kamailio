@@ -593,11 +593,62 @@ if (method=="REGISTER") {
 	save("location");
 }
 ...
-</programlisting>
+</programlisting >
 			</example>
 		</section>
 	</section>
 
+	<section>
+		<title>Exported MI Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">LOAD_CPL</function>
+			</title>
+			<para>               
+		  	    Command format:
+            <programlisting format="linespecific">
+                 :LOAD_CPL:
+                 username
+                 cpl_filename
+                 _empty_line_
+            </programlisting>
+                For the given user, loads the XML cpl file, compiles it into binary 
+				format and stores both format into database.			
+			</para>
+        </section>
+
+        <section>
+			<title>
+				<function moreinfo="none">REMOVE_CPL</function>
+			</title>
+			<para>
+			    Command format:
+			<programlisting format="linespecific">
+                 :REMOVE_CPL:
+                 username
+                 _empty_line_
+            </programlisting>
+                 For the given user, removes the entire database record 
+				(XML cpl and binary cpl); user with empty cpl scripts are not accepted.
+			</para>
+        </section>
+
+        <section>
+			<title>
+				<function moreinfo="none">GET_CPL</function>
+			</title>
+			<para>
+                Command format:
+		    <programlisting format="linespecific">
+                 :GET_CPL:
+                 username
+                 _empty_line_
+            </programlisting>
+            For the given user, returns the CPL script in XML format.
+			</para>
+        </section>
+		
+    </section>
 
 	<section>
 		<title>Installation & Running</title>

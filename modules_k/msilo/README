@@ -32,20 +32,38 @@ Daniel-Constantin Mierla
               1.3.7. send_time (int)
               1.3.8. clean_period (int)
               1.3.9. use_contact (int)
-              1.3.10. userid_avp (int)
-              1.3.11. snd_time_avp (int)
-              1.3.12. add_date (int)
-              1.3.13. max_messages (int)
+              1.3.10. sc_mid (string)
+              1.3.11. sc_from (string)
+              1.3.12. sc_to (string)
+              1.3.13. sc_uri_user (string)
+              1.3.14. sc_uri_host (string)
+              1.3.15. sc_body (string)
+              1.3.16. sc_ctype (string)
+              1.3.17. sc_exp_time (string)
+              1.3.18. sc_inc_time (string)
+              1.3.19. sc_snd_time (string)
+              1.3.20. userid_avp (int)
+              1.3.21. snd_time_avp (int)
+              1.3.22. add_date (int)
+              1.3.23. max_messages (int)
 
         1.4. Exported Functions
 
               1.4.1. m_store(mode)
               1.4.2. m_dump()
 
-        1.5. Installation & Running
+        1.5. Exported Statistics
 
-              1.5.1. Database setup
-              1.5.2. OpenSER config file
+              1.5.1. stored_messages
+              1.5.2. dumped_messages
+              1.5.3. failed_messages
+              1.5.4. dumped_reminders
+              1.5.5. failed_reminders
+
+        1.6. Installation & Running
+
+              1.6.1. Database setup
+              1.6.2. OpenSER config file
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -60,12 +78,22 @@ Daniel-Constantin Mierla
    1-7. Set the "send_time" parameter
    1-8. Set the "clean_period" parameter
    1-9. Set the "use_contact" parameter
-   1-10. Set the "userid_avp" parameter
-   1-11. Set the "snd_time_avp" parameter
-   1-12. Set the "add_date" parameter
-   1-13. Set the "max_messages" parameter
-   1-14. msilo sql script
-   1-15. OpenSER config script - sample msilo usage
+   1-10. Set the "sc_mid" parameter
+   1-11. Set the "sc_from" parameter
+   1-12. Set the "sc_to" parameter
+   1-13. Set the "sc_uri_user" parameter
+   1-14. Set the "sc_uri_host" parameter
+   1-15. Set the "sc_body" parameter
+   1-16. Set the "sc_ctype" parameter
+   1-17. Set the "sc_exp_time" parameter
+   1-18. Set the "sc_inc_time" parameter
+   1-19. Set the "sc_snd_time" parameter
+   1-20. Set the "userid_avp" parameter
+   1-21. Set the "snd_time_avp" parameter
+   1-22. Set the "add_date" parameter
+   1-23. Set the "max_messages" parameter
+   1-24. msilo sql script
+   1-25. OpenSER config script - sample msilo usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -246,7 +274,138 @@ modparam("msilo", "use_contact", 0)
 ...
      _________________________________________________________
 
-1.3.10. userid_avp (int)
+1.3.10. sc_mid (string)
+
+   The name of the column in silo table, storing message id.
+
+   Default value is "mid".
+
+   Example 1-10. Set the "sc_mid" parameter
+...
+modparam("msilo", "sc_mid", "other_mid")
+...
+     _________________________________________________________
+
+1.3.11. sc_from (string)
+
+   The name of the column in silo table, storing the source
+   address.
+
+   Default value is "src_addr".
+
+   Example 1-11. Set the "sc_from" parameter
+...
+modparam("msilo", "sc_from", "source_address")
+...
+     _________________________________________________________
+
+1.3.12. sc_to (string)
+
+   The name of the column in silo table, storing the destination
+   address.
+
+   Default value is "dst_addr".
+
+   Example 1-12. Set the "sc_to" parameter
+...
+modparam("msilo", "sc_to", "destination_address")
+...
+     _________________________________________________________
+
+1.3.13. sc_uri_user (string)
+
+   The name of the column in silo table, storing the user name.
+
+   Default value is "username".
+
+   Example 1-13. Set the "sc_uri_user" parameter
+...
+modparam("msilo", "sc_uri_user", "user")
+...
+     _________________________________________________________
+
+1.3.14. sc_uri_host (string)
+
+   The name of the column in silo table, storing the domain.
+
+   Default value is "domain".
+
+   Example 1-14. Set the "sc_uri_host" parameter
+         ...
+         modparam("msilo", "sc_uri_host", "domain")
+         ...
+
+     _________________________________________________________
+
+1.3.15. sc_body (string)
+
+   The name of the column storing the message body in silo table.
+
+   Default value is "body".
+
+   Example 1-15. Set the "sc_body" parameter
+        ...
+        modparam("msilo", "sc_body", "message_body")
+        ...
+
+     _________________________________________________________
+
+1.3.16. sc_ctype (string)
+
+   The name of the column in silo table, storing content type.
+
+   Default value is "ctype".
+
+   Example 1-16. Set the "sc_ctype" parameter
+         ...
+         modparam("msilo", "sc_body", "content_type")
+         ...
+
+     _________________________________________________________
+
+1.3.17. sc_exp_time (string)
+
+   The name of the column in silo table, storing the expire time
+   of the message.
+
+   Default value is "exp_time".
+
+   Example 1-17. Set the "sc_exp_time" parameter
+         ...
+         modparam("msilo", "sc_exp_time", "expire_time")
+         ...
+
+     _________________________________________________________
+
+1.3.18. sc_inc_time (string)
+
+   The name of the column in silo table, storing the incoming
+   time of the message.
+
+   Default value is "inc_time".
+
+   Example 1-18. Set the "sc_inc_time" parameter
+         ...
+         modparam("msilo", "sc_inc_time", "incoming_time")
+         ...
+
+     _________________________________________________________
+
+1.3.19. sc_snd_time (string)
+
+   The name of the column in silo table, storing the send time
+   for the reminder.
+
+   Default value is "snd_time".
+
+   Example 1-19. Set the "sc_snd_time" parameter
+         ...
+         modparam("msilo", "sc_inc_time", "send_reminder_time")
+         ...
+
+     _________________________________________________________
+
+1.3.20. userid_avp (int)
 
    The integer ID of an AVP which may contain the SIP URI of the
    user to whom the message was sent. It is better to store it in
@@ -261,13 +420,13 @@ modparam("msilo", "use_contact", 0)
 
    Default value is "0". 
 
-   Example 1-10. Set the "userid_avp" parameter
+   Example 1-20. Set the "userid_avp" parameter
 ...
 modparam("msilo", "userid_avp", 34)
 ...
      _________________________________________________________
 
-1.3.11. snd_time_avp (int)
+1.3.21. snd_time_avp (int)
 
    The integer ID of an AVP which may contain the time when to
    sent the received message as reminder.The AVP is used ony by
@@ -281,32 +440,32 @@ modparam("msilo", "userid_avp", 34)
 
    Default value is "0". 
 
-   Example 1-11. Set the "snd_time_avp" parameter
+   Example 1-21. Set the "snd_time_avp" parameter
 ...
 modparam("msilo", "snd_time_avp", 35)
 ...
      _________________________________________________________
 
-1.3.12. add_date (int)
+1.3.22. add_date (int)
 
    Wheter to add as prefix the date when the message was stored.
 
    Default value is "1" (1==on/0==off). 
 
-   Example 1-12. Set the "add_date" parameter
+   Example 1-22. Set the "add_date" parameter
 ...
 modparam("msilo", "add_date", "0")
 ...
      _________________________________________________________
 
-1.3.13. max_messages (int)
+1.3.23. max_messages (int)
 
    Maximum number of stored message for an AoR. Value 0 equals to
    no limit.
 
    Default value is 0. 
 
-   Example 1-13. Set the "max_messages" parameter
+   Example 1-23. Set the "max_messages" parameter
 ...
 modparam("msilo", "max_messages", 0)
 ...
@@ -350,9 +509,36 @@ modparam("msilo", "max_messages", 0)
    This function can be used from REQUEST_ROUTE.
      _________________________________________________________
 
-1.5. Installation & Running
+1.5. Exported Statistics
 
-1.5.1. Database setup
+1.5.1. stored_messages
+
+   The number of messages stored by msilo.
+     _________________________________________________________
+
+1.5.2. dumped_messages
+
+   The number of dumped messages.
+     _________________________________________________________
+
+1.5.3. failed_messages
+
+   The number of failed dumped messages.
+     _________________________________________________________
+
+1.5.4. dumped_reminders
+
+   The number of dumped reminder messages.
+     _________________________________________________________
+
+1.5.5. failed_reminders
+
+   The number of failed reminder messages.
+     _________________________________________________________
+
+1.6. Installation & Running
+
+1.6.1. Database setup
 
    Before running OpenSER with msilo, you have to setup the
    database table where the module will store the message. For
@@ -363,7 +549,7 @@ modparam("msilo", "max_messages", 0)
    they can be changed, but the name of the columns must be as
    they are in the next SQL script.
 
-   Example 1-14. msilo sql script
+   Example 1-24. msilo sql script
 ...
 
 -- SQL script for MSILO module
@@ -405,11 +591,11 @@ CREATE TABLE silo(
 ...
      _________________________________________________________
 
-1.5.2. OpenSER config file
+1.6.2. OpenSER config file
 
    Next picture displays a sample usage of msilo.
 
-   Example 1-15. OpenSER config script - sample msilo usage
+   Example 1-25. OpenSER config script - sample msilo usage
 ...
 # $Id$
 #

@@ -33,8 +33,17 @@ Anca-Maria Vamanu
 
               1.4.1. imc_manager()
 
-        1.5. IMC Commands
-        1.6. Installation
+        1.5. Exported MI Functions
+
+              1.5.1. imc_list_rooms
+              1.5.2. imc_list_members
+
+        1.6. Exported Statistics
+
+              1.6.1. active_rooms
+
+        1.7. IMC Commands
+        1.8. Installation
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -142,7 +151,31 @@ if(is_method("MESSAGE)
 ...
      _________________________________________________________
 
-1.5. IMC Commands
+1.5. Exported MI Functions
+
+1.5.1. imc_list_rooms
+
+   Command Format:
+                :imc_list_members:
+                _room_
+                _empty_line_
+
+   Lists of the IM Conferencing rooms.
+     _________________________________________________________
+
+1.5.2. imc_list_members
+
+   Listing of the members in IM Conferencing rooms.
+     _________________________________________________________
+
+1.6. Exported Statistics
+
+1.6.1. active_rooms
+
+   Number of active IM Conferencing rooms.
+     _________________________________________________________
+
+1.7. IMC Commands
 
    A command is identified by the starting character. A command
    must be written in one line. By default, the starting
@@ -217,7 +250,7 @@ if(is_method("MESSAGE)
 ...
      _________________________________________________________
 
-1.6. Installation
+1.8. Installation
 
    Before running IMC you have to create two new tables in
    database. Use the next SQL statements for that.

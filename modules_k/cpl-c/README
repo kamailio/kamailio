@@ -46,7 +46,13 @@ Bogdan-Andrei Iancu
               1.4.2. cpl_process_register()
               1.4.3. cpl_process_register_norpl() 
 
-        1.5. Installation & Running
+        1.5. Exported MI Functions
+
+              1.5.1. LOAD_CPL
+              1.5.2. REMOVE_CPL
+              1.5.3. GET_CPL
+
+        1.6. Installation & Running
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -460,7 +466,46 @@ if (method=="REGISTER") {
 ...
      _________________________________________________________
 
-1.5. Installation & Running
+1.5. Exported MI Functions
+
+1.5.1. LOAD_CPL
+
+   Command format:
+                 :LOAD_CPL:
+                 username
+                 cpl_filename
+                 _empty_line_
+
+
+   For the given user, loads the XML cpl file, compiles it into
+   binary format and stores both format into database.
+     _________________________________________________________
+
+1.5.2. REMOVE_CPL
+
+   Command format:
+                 :REMOVE_CPL:
+                 username
+                 _empty_line_
+
+
+   For the given user, removes the entire database record (XML
+   cpl and binary cpl); user with empty cpl scripts are not
+   accepted.
+     _________________________________________________________
+
+1.5.3. GET_CPL
+
+   Command format:
+                 :GET_CPL:
+                 username
+                 _empty_line_
+
+
+   For the given user, returns the CPL script in XML format.
+     _________________________________________________________
+
+1.6. Installation & Running
 
    Notes about installation and running.
      _________________________________________________________

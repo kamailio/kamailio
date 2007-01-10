@@ -805,16 +805,16 @@ if (next_contacts()) {
 	</section>
 
 	<section>
-	<title>FIFO Commands</title>
+	<title>Exported MI Commands</title>
 		<section>
-		<title><function>lcr_reload</function></title>
+		<title><function>MI_LCR_RELOAD</function></title>
 		<para>
 			Causes lcr module to re-read the contents of gateway table
 			into memory.
 		</para>
 		</section>
 		<section>
-		<title><function>lcr_dump</function></title>
+		<title><function>MI_LCR_DUMP</function></title>
 		<para>
 			Causes lcr module to dump the contents of its in-memory gateway
 			table. 

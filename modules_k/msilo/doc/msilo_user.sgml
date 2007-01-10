@@ -272,7 +272,160 @@ modparam("msilo", "use_contact", 0)
 </programlisting>
 		</example>
 	</section>
+
 	<section>
+		<title><varname>sc_mid</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing message id. 
+		</para>
+		<para>Default value is <quote>mid</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_mid</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "sc_mid", "other_mid")
+...
+</programlisting>
+		</example>
+    </section>
+
+	<section>
+		<title><varname>sc_from</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the source address. 
+		</para>
+		<para>Default value is <quote>src_addr</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_from</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "sc_from", "source_address")
+...
+</programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_to</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the destination address. 
+		</para>
+		<para>Default value is <quote>dst_addr</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_to</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "sc_to", "destination_address")
+...
+</programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_uri_user</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the user name.
+		</para>
+		<para>Default value is <quote>username</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_uri_user</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "sc_uri_user", "user")
+...
+</programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_uri_host</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the domain. 
+		</para>
+		<para>Default value is <quote>domain</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_uri_host</quote> parameter</title>
+         <programlisting format="linespecific">
+         ...
+         modparam("msilo", "sc_uri_host", "domain")
+         ...
+         </programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_body</varname> (string)</title>
+		<para>
+		The name of the column storing the message body in silo table. 
+		</para>
+		<para>Default value is <quote>body</quote>.</para>
+        <example>
+		<title>Set the <quote>sc_body</quote> parameter</title>
+        <programlisting format="linespecific">
+        ...
+        modparam("msilo", "sc_body", "message_body")
+        ...
+        </programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_ctype</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing content type.
+		</para>
+		<para>Default value is <quote>ctype</quote>.</para>
+        <example>
+		<title>Set the <quote>sc_ctype</quote> parameter</title>
+        <programlisting format="linespecific">
+         ...
+         modparam("msilo", "sc_body", "content_type")
+         ...
+        </programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_exp_time</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the expire time of the message. 
+		</para>
+		<para>Default value is <quote>exp_time</quote>.</para>
+        <example>
+		<title>Set the <quote>sc_exp_time</quote> parameter</title>
+        <programlisting format="linespecific">
+         ...
+         modparam("msilo", "sc_exp_time", "expire_time")
+         ...
+        </programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_inc_time</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the incoming time of the message. 
+		</para>
+		<para>Default value is <quote>inc_time</quote>.</para>
+        <example>
+		<title>Set the <quote>sc_inc_time</quote> parameter</title>
+        <programlisting format="linespecific">
+         ...
+         modparam("msilo", "sc_inc_time", "incoming_time")
+         ...
+        </programlisting>
+		</example>
+    </section>
+	<section>
+		<title><varname>sc_snd_time</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing the send time for the reminder. 
+		</para>
+		<para>Default value is <quote>snd_time</quote>.</para>
+        <example>
+		<title>Set the <quote>sc_snd_time</quote> parameter</title>
+        <programlisting format="linespecific">
+         ...
+         modparam("msilo", "sc_inc_time", "send_reminder_time")
+         ...
+        </programlisting>
+		</example>
+    </section>
+
+    <section>
 		<title><varname>userid_avp</varname> (int)</title>
 		<para>
 		The integer ID of an AVP which may contain the SIP URI of the user
@@ -429,6 +582,42 @@ modparam("msilo", "max_messages", 0)
 		</para>
 	</section>
 	</section>
+
+	<section>
+	<title>Exported Statistics</title>
+	<section>
+		<title>stored_messages</title>
+		<para>
+		The number of messages stored by msilo.
+		<para>
+	</section>
+	<section>
+		<title>dumped_messages</title>
+		<para>
+		The number of dumped messages.
+		<para>
+	</section>
+	<section>
+		<title>failed_messages</title>
+		<para>
+		The number of failed dumped messages.
+		<para>
+	</section>
+	<section>
+		<title>dumped_reminders</title>
+		<para>
+		The number of dumped reminder messages.
+		<para>
+	</section>
+	<section>
+		<title>failed_reminders</title>
+		<para>
+		The number of failed reminder messages.
+		<para>
+	</section>
+	</section>
+
+	
 	<section>
 	<title>Installation & Running</title>
 	<section>

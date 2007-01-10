@@ -26,12 +26,12 @@ Juha Heinanen
 
               1.4.1. is_from_local()
               1.4.2. is_uri_host_local()
-              1.4.3. is_domain_local(variable)
+              1.4.3. is_domain_local(pseudo_variable)
 
-        1.5. FIFO Commands
+        1.5. Exported MI Functions
 
-              1.5.1. domain_reload
-              1.5.2. domain_dump
+              1.5.1. MI_DOMAIN_RELOAD
+              1.5.2. MI_DOMAIN_DUMP
 
         1.6. Known Limitations
 
@@ -163,8 +163,8 @@ if (is_uri_host_local()) {
 
 1.4.3. is_domain_local(pseudo_variable)
 
-   This function checks if the domain contained in the pseudo_variable
-   is local.
+   This function checks if the domain contained in the
+   pseudo_variable is local.
 
    This function is a generalized form of the is_from_local() and
    is_uri_host_local() functions, being able to completely
@@ -198,15 +198,15 @@ if (is_domain_local("$avp(s:some_avp)")) {
 ...
      _________________________________________________________
 
-1.5. FIFO Commands
+1.5. Exported MI Functions
 
-1.5.1. domain_reload
+1.5.1. MI_DOMAIN_RELOAD
 
    Causes domain module to re-read the contents of domain table
    into cache memory.
      _________________________________________________________
 
-1.5.2. domain_dump
+1.5.2. MI_DOMAIN_DUMP
 
    Causes domain module to dump hash indexes and domain names in
    its cache memory.

@@ -215,16 +215,16 @@ if (is_domain_local("$avp(s:some_avp)")) {
 	</section>
 	</section>
 	<section>
-	<title><acronym>FIFO</acronym> Commands</title>
+	<title>Exported MI Functions</title>
 	<section>
-		<title><function moreinfo="none">domain_reload</function></title>
+		<title><function moreinfo="none">MI_DOMAIN_RELOAD</function></title>
 		<para>
 		Causes domain module to re-read the contents of domain table
 		into cache memory.
 		</para>
 	</section>
 	<section>
-		<title><function moreinfo="none">domain_dump</function></title>
+		<title><function moreinfo="none">MI_DOMAIN_DUMP</function></title>
 		<para>
 		Causes domain module to dump hash indexes and domain names in
 		its cache memory.
