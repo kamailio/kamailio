@@ -36,6 +36,9 @@
 #		which modules to include
 #		Also added new target print-modules that you can use to check which
 #		modules will be compiled (greger)
+#  2007-01-10   added new group_include targets mysql, radius, and presence 
+#		improved print-modules output
+#		fixed problem in include/exclude logic when using group_include (greger)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -83,6 +86,15 @@ module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db avp_radiu
 				db_ops domain lcr msilo mysql dialog pa postgres \
 				presence_b2b rls speeddial uri_db xmlrpc
 
+# For mysql
+module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql speeddial
+
+# For radius
+module_group_radius=acc_radius auth_radius avp_radius
+
+# For presence
+module_group_presence=dialog pa presence_b2b rls
+
 # Modules in this group satisfy specific or niche applications, but are considered
 # stable for production use. They may or may not have dependencies
 # cpl-c => libxml2
@@ -97,9 +109,8 @@ module_group_experimental=tls
 
 # if not set on the cmd. line or the env, exclude the below modules.
 ifneq ($(group_include),)
-	# The defaults are modules that are obsolete.
-	exclude_modules?= 			acc cpl ext extcmd vm group mangler auth_diameter \
-						snmp im 
+	# For group_include, default all modules are excluded except those in include_modules
+	exclude_modules?=
 else
 	# Old defaults for backwards compatibility
 	exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm\
@@ -117,9 +128,6 @@ endif
 # always exclude the CVS dir
 override exclude_modules+= CVS $(skip_modules)
 
-#always include this modules
-include_modules?=
-
 # Test for the groups and add to include_modules
 ifneq (,$(findstring standard,$(group_include)))
 	override include_modules+= $(module_group_standard)
@@ -127,6 +135,18 @@ endif
 
 ifneq (,$(findstring standard-dep,$(group_include)))
 	override include_modules+= $(module_group_standard_dep)
+endif
+
+ifneq (,$(findstring mysql,$(group_include)))
+	override include_modules+= $(module_group_mysql)
+endif
+
+ifneq (,$(findstring radius,$(group_include)))
+	override include_modules+= $(module_group_radius)
+endif
+
+ifneq (,$(findstring presence,$(group_include)))
+	override include_modules+= $(module_group_presence)
 endif
 
 ifneq (,$(findstring stable,$(group_include)))
@@ -152,11 +172,20 @@ static_defs= $(foreach  mod, $(static_modules), \
 override extra_defs+=$(static_defs) $(EXTRA_DEFS)
 export extra_defs
 
-modules=$(filter-out $(addprefix modules/, \
+# Historically, the resultant set of modules is: modules/* - exclude_modules + include_modules
+# When group_include is used, we want: include_modules (based on group_include) - exclude_modules
+ifneq ($(group_include),)
+	modules=$(filter-out $(addprefix modules/, \
+			$(exclude_modules) $(static_modules)), \
+			$(addprefix modules/, $(include_modules) ))
+else	
+	# Standard, old resultant set
+	modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
 			$(wildcard modules/*))
-modules:=$(filter-out $(modules), $(addprefix modules/, $(include_modules) )) \
+	modules:=$(filter-out $(modules), $(addprefix modules/, $(include_modules) )) \
 			$(modules)
+endif
 modules_names=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1.so/g' )
 modules_basenames=$(shell echo $(modules)| \
@@ -231,9 +260,11 @@ all: $(NAME) modules
 
 .PHONY: print-modules
 print-modules:
-	@echo The following modules will be included: $(include_modules) ; \
+	@echo The following modules was chosen to be included: $(include_modules) ; \
 	echo ---------------------------------------------------------- ; \
 	echo The following modules will be excluded: $(exclude_modules) ; \
+	echo ---------------------------------------------------------- ; \
+	echo The following modules will be made: $(modules_basenames) ; \
 
 .PHONY: modules
 modules:

@@ -190,6 +190,17 @@ make group_include="standard" all
 To compile all modules (provided you have all the required libraries installed) use:
 make group_include="standard standard-dep stable experimental" all
 
+There are also in addition some "convenience" groups:
+
+mysql - Include all modules dependent on mysql
+
+radius - Include all modules on radiusclient
+
+presence - Include all the presence modules
+
+Ex. to make a standard installation with mysql, use:
+make group_include="standard mysql" all
+
 In addition to group_include (or instead), you can use 
 include_modules="modA modB"
 to specify exactly the modules you want to include, ex.
