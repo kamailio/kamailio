@@ -327,7 +327,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
 			if (ret>0) {
 				e2e_ack_trans=p_cell;
-				break;
+				continue;
 			}
 			/* this ACK is neither local "negative" one, nor a proxied
 			 * end-2-end one, nor an end-2-end one for a UAS transaction
