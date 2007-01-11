@@ -88,7 +88,7 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>	
+		<emphasis>	Default value is <quote>NULL</quote>.	
 		</emphasis>
 		</para>
 		<example>
@@ -107,7 +107,7 @@ modparam("presence", "db_url",
 		The name of the db table where Publish information are stored.
 		</para>
 		<para>
-		<emphasis>	
+		<emphasis>	Default value is <quote>presentity</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -125,7 +125,7 @@ modparam("presence", "presentity_table", "presentity");
 		The name of the db table where active subscription information are stored. 
 		</para>
 		<para>
-		<emphasis>	
+		<emphasis>	Default value is <quote>active_watchers</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -143,7 +143,7 @@ modparam("presence", "active_watchers_table", "active_watchers")
 		The name of the db table where subscription states are stored.
 		</para>
 		<para>
-		<emphasis>	
+		<emphasis>	Default value is <quote>watchers</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -157,13 +157,13 @@ modparam("presence", "watchers_table", "watchers")
 	</section>
 
 	<section>
-		<title><varname>clean_period</varname> (str)</title>
+		<title><varname>clean_period</varname> (int)</title>
 		<para>
 		The period at which to verify if there are expired messages stored in
 		database.
 		</para>
 		<para>
-		<emphasis>
+		<emphasis>Default value is <quote>100</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -183,7 +183,7 @@ modparam("presence", "clean_period", 100)
 		SUBSCRIBE requests.
 		</para>
 		<para>
-		<emphasis>
+		<emphasis>Default value is <quote>10</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -203,7 +203,7 @@ modparam("presence", "to_tag_pref", 'a')
 		It must be the same as for sl module parameter.
 		</para>
 		<para>
-		<emphasis>
+		<emphasis>Default value is <quote>0</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -217,12 +217,12 @@ modparam("presence", "totag_avpid", 987)
 	</section>
 
 	<section>
-		<title><varname>lock_set_size</varname> (str)</title>
+		<title><varname>lock_set_size</varname> (int)</title>
 		<para>
 		The size of the lock used for synchronizing updating information from database.
 		</para>
 		<para>
-		<emphasis>
+		<emphasis>Default value is <quote>8</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -236,14 +236,14 @@ modparam("presence", "lock_set_size", 8)
 	</section>
 
 	<section>
-		<title><varname>expires_offset</varname> (str)</title>
+		<title><varname>expires_offset</varname> (int)</title>
 		<para>
 		The value that should be subtracted from the expires value when
 		sending a 200OK for a publish to force the client cu send an update
 		before the old publish expires
 		</para>
 		<para>
-		<emphasis>
+		<emphasis>Default value is <quote>0</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -252,12 +252,12 @@ modparam("presence", "lock_set_size", 8)
 ...
 modparam("presence", "expires_offset", 10)
 ...
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>force_active</varname> (str)</title>
+		<title><varname>force_active</varname> (int)</title>
 		<para>
 		This parameter offers the possibility to set either the first
    Notify sent for a new subscribe should have the
@@ -265,7 +265,7 @@ modparam("presence", "expires_offset", 10)
    different than 0, the Subscription-State value is 'active'.	
    </para>
 		<para>
-		<emphasis>
+		<emphasis>Default value is <quote>0</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -274,17 +274,17 @@ modparam("presence", "expires_offset", 10)
 ...
 modparam("presence", "force_active", 1)
 ...
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>max_expires</varname> (str)</title>
+		<title><varname>max_expires</varname> (int)</title>
 		<para>
 		The value at which to reduce the validity of PUBLISH/SUBSCRIBE 
 		if the Expires in request is greater.	
 		</para>
 		<para>
-		<emphasis>
+		<emphasis>Default value is <quote>3600</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -293,7 +293,7 @@ modparam("presence", "force_active", 1)
 ...
 modparam("presence", "max_expires", 3600)
 ...
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 

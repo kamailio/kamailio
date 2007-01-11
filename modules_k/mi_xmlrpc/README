@@ -91,7 +91,7 @@ Chapter 1. User's Guide
    The port number used by the XMLRPX server to listen for
    incoming requests.
 
-   The default values is 8080. Ports lower than 1024 are not
+   The default value is 8080. Ports lower than 1024 are not
    accepted.
 
    Example 1-1. Set port parameter

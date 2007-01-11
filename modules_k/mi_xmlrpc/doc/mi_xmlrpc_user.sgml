@@ -92,7 +92,7 @@
 		The port number used by the XMLRPX server to listen for incoming requests.
 		</para>
 		<para>
-		<emphasis>The default values is 8080. Ports lower than 1024 are not accepted.</emphasis>
+		<emphasis>The default value is 8080. Ports lower than 1024 are not accepted.</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>port</varname> parameter</title>
@@ -100,7 +100,7 @@
 ...
 modparam("mi_xmlrpc", "port", 8000)
 ...
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 	<section>
@@ -117,7 +117,7 @@ modparam("mi_xmlrpc", "port", 8000)
 ...
 modparam("mi_xmlrpc", "log_file", "/var/log/abyss.log")
 ...
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 	<section>
@@ -141,7 +141,7 @@ modparam("mi_xmlrpc", "log_file", "/var/log/abyss.log")
 ...
 modparam("mi_xmlrpc", "reply_option", 0)
 ...
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 	<section>
@@ -159,7 +159,7 @@ modparam("mi_xmlrpc", "reply_option", 0)
 ...
 modparam("mi_xmlrpc", "buffer_size", 8192)
 ...
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 

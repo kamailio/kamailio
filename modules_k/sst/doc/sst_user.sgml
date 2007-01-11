@@ -364,7 +364,19 @@ route {
 		</example>
 	</section>
 	</section>
+
+
 	<section>
+	<title>Exported Statistics</title>
+	<section>
+		<title><varname>expired_sst</varname></title>
+		<para>
+		Number of dialogs which got expired session timer.
+		</para>
+	</section>
+	</section>
+
+    <section>
 	<title>Installation & Running</title>
 	<para>just load the module and remember to set the timeout_avp value.</para>
 	</section>

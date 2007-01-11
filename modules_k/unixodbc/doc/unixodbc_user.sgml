@@ -62,10 +62,46 @@
 
 	<section>
 	<title>Exported Parameters</title>
+	<section>
+		<title><varname>ping_interval</varname> (int)</title>
 		<para>
-		NONE
+		Sets the ping time interval.
 		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>300</quote> seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ping_interval</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("unixodbc", "ping_interval", 600)
+...
+</programlisting>
+		</example>
 	</section>
+
+    <section>
+		<title><varname>auto_reconnect</varname> (int)</title>
+		<para>
+		Turns on or off the auto_reconnect mode.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>, this means it is enabled.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>auto_reconnect</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("unixodbc", "auto_reconnect", 0)
+...
+</programlisting>
+		</example>
+	</section>
+    </section>
 
 	<section>
 	<title>Exported Functions</title>

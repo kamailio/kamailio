@@ -336,44 +336,113 @@ prefix2domain("2");
 	    </example>
 	</section>
     </section>
+	
+		<section>
+		<title>Exported MI Functions</title>
+		<para>
+		The modules uses only the cache to look up domains. If you want to
+		add or delete a new prefix-domain pair you have to use MI FIFO commands.
+		All changes made via these commands are applied to database, while the database
+		is loaded only at &ser; start up time.
+		</para>
+
+	<section>
+		<title>
+		<function moreinfo="none">pdt_add</function>
+		</title>
+		<para>
+		Adds a new sdomain-prefix-domain entry.
+		</para>
+		<para>
+		Name: <emphasis>pdt_add</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_sdomain_ : source domain</para></listitem>	  
+			<listitem><para>_prefix_: prefix</para></listitem>			
+			<listitem><para>_domain_: domain corresponding to a pair of source domain and prefix</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:pdt_add:_reply_fifo_file_
+		_sdomain_
+		_prefix_
+		_domain_
+		_empty_line_
+		</programlisting>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">pdt_delete</function>
+		</title>
+		<para>
+		Removes a sdomain-prefix-domain entry.
+		</para>
+		<para>
+		Name: <emphasis>pdt_delete</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_sdomain_ : a source domain</para></listitem>	  
+			<listitem><para>_domain_: a domain associated via a prefix with the source domain</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:pdt_delete:_reply_fifo_file_
+		_sdomain_
+		_domain_
+		_empty_line_
+		</programlisting>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">pdt_list</function>
+		</title>
+		<para>
+		Produces a listing of the entries prefixes/domains/sdomains.
+		</para>
+		<para>
+		Name: <emphasis>pdt_list</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_sdomain_ : a source domain value. </para></listitem>	  
+			<listitem><para>_prefix_ : a prefix value</para></listitem>	 
+            <listitem><para>_domain_: a domain value </para></listitem>
+		</itemizedlist>
+		<para>
+		"." (dot) means NULL value
+		</para> 
+		<para>
+		The comparison operation is 'START WITH' -- if domain is 'a' then all domains 
+		starting with 'a' are listed.
+		</para>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:pdt_list:_reply_fifo_file_
+		_sdomain_
+		_prefix_
+		_domain_
+		_empty_line_
+		</programlisting>
+    </section>
+    </section>
+
     <section>
 	<title>Installation & Running</title>
 	<para>Make sure you have created the table needed by this module.</para>
-		<section>
-		<title>FIFO Commands</title>
-		<para>
-		The modules uses only the cache to look up domains. If you want to
-		add or delete a new prefix-domain pair you have to use FIFO commands.
-		All changes made via FIFO are applied to database. The database is
-		loaded only at &ser; start up time.
-		</para>
-		<para>
-		There are three FIFO commands to use with PDT.
-		</para>
-		<itemizedlist>
-	    <listitem>
-		<para>
-		    pdt_add - add a new sdomain-prefix-domain entry
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    pdt_delete - remove a sdomain-prefix-domain entry
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    pdt_list - list the prefixes and the domains/sdomains
-		</para>
-	    </listitem>
-		</itemizedlist>
-		<para>
-		Example shell scripts for these commands are placed in './doc/'
-		(pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh). More about,
-		in the comments before the implementation of the functions, inside
-		the 'pdt.c' file.
-		</para>
-		</section>
+    <para>
+	Example shell scripts for MI FIFO commands are placed in './doc/'
+	(pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh). 
+	</para>
     </section>
 </chapter>
 

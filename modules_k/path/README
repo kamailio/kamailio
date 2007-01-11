@@ -34,6 +34,7 @@ Andreas Granig
               1.4.1. add_path()
               1.4.2. add_path(user)
               1.4.3. add_path_received()
+              1.4.4. add_path_received(user)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -43,6 +44,7 @@ Andreas Granig
    1-2. add_path usage
    1-3. add_path(user) usage
    1-4. add_path_received() usage
+   1-5. add_path_received(user) usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -180,6 +182,25 @@ if (!add_path("loadbalancer")) {
    Example 1-4. add_path_received() usage
 ...
 if (!add_path_received()) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+...
+     _________________________________________________________
+
+1.4.4. add_path_received(user)
+
+   This function adds a Path header in the form "Path:
+   <sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr>", setting
+   'user' as username part of address, it's own outgoing address
+   as domain-part, and the address the request has been received
+   from as received-parameter.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-5. add_path_received(user) usage
+...
+if (!add_path_received("inbound")) {
         sl_send_reply("503", "Internal Path Error");
         ...
 };

@@ -92,16 +92,18 @@ int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 int counter =0;
-int pid;
+int pid = 0;
 char prefix='a';
 int startup_time=0;
-str db_url;
+str db_url = {0, 0};
 int lock_set_size = 8;
 int expires_offset = 0;
 int force_active = 0;
 int default_expires = 3600;
-int max_expires ;
+int max_expires = 3600;
+
 void destroy(void);
+
 static cmd_export_t cmds[]=
 {
 	{"handle_publish",	  handle_publish,		0,0, REQUEST_ROUTE},

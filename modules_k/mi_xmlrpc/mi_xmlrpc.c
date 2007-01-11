@@ -49,7 +49,7 @@
 
 xmlrpc_env env;
 xmlrpc_value * xr_response;
-int rpl_opt;
+int rpl_opt = 0;
 
 /* module functions */
 static int mod_init();
@@ -57,7 +57,7 @@ static int mod_child_init(int rank);
 static int destroy(void);
 
 static pid_t * mi_xmlrpc_pid = 0;
-static int port;
+static int port = 8080;
 static char *log_file = NULL; 
 static int read_buf_size = MAX_READ;
 static TServer srv;

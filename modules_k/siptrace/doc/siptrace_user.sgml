@@ -277,6 +277,39 @@ sip_trace();
 	</section>
 
 	</section>
+
+    <section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">sip_trace</function>
+		</title>
+		<para>
+
+		</para>
+		<para>
+		Name: <emphasis>sip_trace</emphasis>
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+            <listitem><para>trace_mode : turns on/off SIP message tracing. Possible values are:</para>
+			      <itemizedlist>
+	                 <listitem><para> on </para></listitem> 
+			         <listitem><para> off </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+		</itemizedlist>
+
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:sip_trace:_reply_fifo_file_
+		trace_mode
+		_empty_line_
+		</programlisting>
+	</section>
+	</section>
 	
 	<section>
 	<title>sip_trace table definition</title>

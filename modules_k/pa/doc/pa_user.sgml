@@ -75,7 +75,8 @@ modparam("pa", "default_expires", 3600)
 </programlisting>
 	    </example>
 	</section>
-    </section>
+
+</section>
     <section>
 	<title>Exported Functions</title>
 	<section>

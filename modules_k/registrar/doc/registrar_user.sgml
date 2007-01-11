@@ -829,9 +829,43 @@ add_sock_hdr("Sock-Info");
 </programlisting>
 		</example>
 	</section>
-
-
 	</section>
+
+<section>
+	<title>Exported Statistics</title>
+	<section>
+		<title><varname>max_expires</varname></title>
+		<para>
+		Value of max_expires parameter.
+		</para>
+	</section>
+	<section>
+		<title><varname>max_contacts</varname></title>
+		<para>
+		The value of max_contacts parameter.
+		</para>
+	</section>
+	<section>
+		<title><varname>defaults_expires</varname></title>
+		<para>
+		The value of default_expires parameter.
+		</para>
+	</section>
+	<section>
+		<title><varname>accepted_regs</varname></title>
+		<para>
+		Number of accepted registrations.
+		</para>
+	</section>
+	<section>
+		<title><varname>rejected_regs</varname></title>
+		<para>
+		Number of rejected registrations.
+		</para>
+	</section>
+
+</section>
+
 </chapter>
 
 <!-- Keep this element at the end of the file

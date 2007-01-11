@@ -32,6 +32,18 @@ Bogdan Iancu
               1.4.2. sl_reply(code, reason)
               1.4.3. sl_reply_error()
 
+        1.5. Exported Statistics
+
+              1.5.1. 1xx_replies
+              1.5.2. 2xx_replies
+              1.5.3. 3xx_replies
+              1.5.4. 4xx_replies
+              1.5.5. 5xx_replies
+              1.5.6. 6xx_replies
+              1.5.7. sent_replies
+              1.5.8. sent_err_replies
+              1.5.9. received_ACKs
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -176,6 +188,53 @@ sl_reply("$err.rcode", "$err.rreason");
 ...
 sl_reply_error();
 ...
+     _________________________________________________________
+
+1.5. Exported Statistics
+
+1.5.1. 1xx_replies
+
+   The number of 1xx_replies.
+     _________________________________________________________
+
+1.5.2. 2xx_replies
+
+   The number of 2xx_replies.
+     _________________________________________________________
+
+1.5.3. 3xx_replies
+
+   The number of 3xx_replies.
+     _________________________________________________________
+
+1.5.4. 4xx_replies
+
+   The number of 4xx_replies.
+     _________________________________________________________
+
+1.5.5. 5xx_replies
+
+   The number of 5xx_replies.
+     _________________________________________________________
+
+1.5.6. 6xx_replies
+
+   The number of 6xx_replies.
+     _________________________________________________________
+
+1.5.7. sent_replies
+
+   The number of sent_replies.
+     _________________________________________________________
+
+1.5.8. sent_err_replies
+
+   The number of sent_err_replies.
+     _________________________________________________________
+
+1.5.9. received_ACKs
+
+   The number of received_ACKs.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

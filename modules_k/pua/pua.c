@@ -55,11 +55,11 @@ htable_t* HashT= NULL;
 int HASH_SIZE=4;
 extern int bind_pua(pua_api_t* api);
 int min_expires= 0;
-int default_expires;
-str db_url;
+int default_expires=3600;
+str db_url = {0, 0};
 char* db_table= "pua";
 int update_period= 30;
-int startup_time;
+int startup_time = 0;
 
 /* database connection */
 db_con_t *pua_db = NULL;
@@ -91,11 +91,11 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]={
 	{"hash_size" ,		 INT_PARAM, &HASH_SIZE			 },
-	{"db_url" ,			 STR_PARAM, &db_url				 },
+	{"db_url" ,			 STR_PARAM, &db_url.s			 },
 	{"db_table" ,		 STR_PARAM, &db_table			 },
 	{"min_expires",		 INT_PARAM, &min_expires		 },
 	{"default_expires",  INT_PARAM, &default_expires     },
-	{"update_period",	 INT_PARAM, &update_period	 },
+	{"update_period",	 INT_PARAM, &update_period	     },
 	{0,							 0,			0            }
 };
 

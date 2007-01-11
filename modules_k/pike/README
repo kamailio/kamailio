@@ -31,6 +31,10 @@ Bogdan-Andrei Iancu
 
               1.4.1. pike_check_req()
 
+        1.5. Exported MI Functions
+
+              1.5.1. pike_list
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -139,6 +143,21 @@ modparam("pike", "remove_latency", 130)
 ...
 if (!pike_check_req()) { break; };
 ...
+     _________________________________________________________
+
+1.5. Exported MI Functions
+
+1.5.1. pike_list
+
+   Lists the nodes in the pike tree.
+
+   Name: pike_list
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :pike_list:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 Chapter 2. Developer's Guide

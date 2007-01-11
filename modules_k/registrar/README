@@ -57,6 +57,14 @@ Bogdan-Andre Iancu
               1.4.4. registered(domain)
               1.4.5. add_sock_hdr(hdr_name)
 
+        1.5. Exported Statistics
+
+              1.5.1. max_expires
+              1.5.2. max_contacts
+              1.5.3. defaults_expires
+              1.5.4. accepted_regs
+              1.5.5. rejected_regs
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -614,6 +622,33 @@ if (registered("location")) {
 ...
 add_sock_hdr("Sock-Info");
 ...
+     _________________________________________________________
+
+1.5. Exported Statistics
+
+1.5.1. max_expires
+
+   Value of max_expires parameter.
+     _________________________________________________________
+
+1.5.2. max_contacts
+
+   The value of max_contacts parameter.
+     _________________________________________________________
+
+1.5.3. defaults_expires
+
+   The value of default_expires parameter.
+     _________________________________________________________
+
+1.5.4. accepted_regs
+
+   Number of accepted registrations.
+     _________________________________________________________
+
+1.5.5. rejected_regs
+
+   Number of rejected registrations.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

@@ -393,7 +393,7 @@ ds_select_dst("1", "0");
 		</title>
 		<para>
 		It lists the groups and included destinations.
-		<para>
+		</para>
 		<para>
 		Name: <emphasis>ds_list</emphasis>
 		</para>

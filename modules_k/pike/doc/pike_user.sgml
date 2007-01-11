@@ -153,6 +153,31 @@ if (!pike_check_req()) { break; };
 		</example>
 	</section>
 	</section>
+
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">pike_list</function>
+		</title>
+		<para>
+		Lists the nodes in the pike tree.
+		</para>
+		<para>
+		Name: <emphasis>pike_list</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:pike_list:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+    </section>
+
+	
 </chapter>
 
 <!-- Keep this element at the end of the file

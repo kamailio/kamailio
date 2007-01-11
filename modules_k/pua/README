@@ -96,6 +96,8 @@ Chapter 1. User's Guide
    The size of the hash table used for storing Subscribe and
    Publish information.
 
+   Default value is "4". 
+
    Example 1-1. Set hash_size parameter
 ...
 modparam("pua", "hash_size", 9)
@@ -105,6 +107,8 @@ modparam("pua", "hash_size", 9)
 1.3.2. db_url (str)
 
    Database url.
+
+   Default value is "NULL". 
 
    Example 1-2. Set db_url parameter
 ...
@@ -117,6 +121,8 @@ modparam("pua", "db_url"
 
    The name of the database table.
 
+   Default value is "pua". 
+
    Example 1-3. Set db_table parameter
 ...
 modparam("pua", "db_table", "pua")
@@ -126,6 +132,8 @@ modparam("pua", "db_table", "pua")
 1.3.4. min_expires (int)
 
    The inferior expires limit for both Publish and Subscribe.
+
+   Default value is "0". 
 
    Example 1-4. Set min_expires parameter
 ...
@@ -138,6 +146,8 @@ modparam("pua", "min_expires", 0)
    The default expires value used in case this information is not
    provisioned.
 
+   Default value is "3600". 
+
    Example 1-5. Set default_expires parameter
 ...
 modparam("pua", "default_expires", 3600)
@@ -149,6 +159,8 @@ modparam("pua", "default_expires", 3600)
    The interval at which the information in database and hash
    table should be updated. In the case of the hash table
    updating is deleting expired messages.
+
+   Default value is "30". 
 
    Example 1-6. Set update_period parameter
 ...

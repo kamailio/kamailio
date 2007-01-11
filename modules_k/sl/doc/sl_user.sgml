@@ -208,6 +208,65 @@ sl_reply_error();
 		</example>
 	</section>
 	</section>
+
+	<section>
+	<title>Exported Statistics</title>
+	<section>
+		<title><varname>1xx_replies</varname></title>
+		<para>
+		The number of 1xx_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>2xx_replies</varname></title>
+		<para>
+		The number of 2xx_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>3xx_replies</varname></title>
+		<para>
+		The number of 3xx_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>4xx_replies</varname></title>
+		<para>
+		The number of 4xx_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>5xx_replies</varname></title>
+		<para>
+		The number of 5xx_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>6xx_replies</varname></title>
+		<para>
+		The number of 6xx_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>sent_replies</varname></title>
+		<para>
+		The number of sent_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>sent_err_replies</varname></title>
+		<para>
+		The number of sent_err_replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>received_ACKs</varname></title>
+		<para>
+		The number of received_ACKs.
+		</para>
+	</section>
+	</section>
+	
 </chapter>
 
 <!-- Keep this element at the end of the file

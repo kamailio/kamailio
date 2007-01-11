@@ -213,6 +213,32 @@ if (!add_path_received()) {
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">add_path_received(user)</function>
+		</title>
+		<para>
+		This function adds a Path header in the form 
+		<quote>Path: &lt;sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting
+		'user' as username part of address, it's own 
+		outgoing address as domain-part, and the address the request has been received from as
+		received-parameter.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path_received(user)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path_received("inbound")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
 
 
 	</section>

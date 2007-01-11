@@ -312,7 +312,7 @@ modparam("sms", "max_sms_parts", 10)
 	</section>	
 
 	<section>
-		<title><varname>domain_str</varname> (string)</title>
+		<title><varname>domain</varname> (string)</title>
 		<para>
 		Specify a fake domain name to be used by the gateway. The Contact 
 		headers and the From header from request will be construct based on 

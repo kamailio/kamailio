@@ -1015,8 +1015,9 @@ if (allow_trusted()) {
 		</example>
 	</section>
 	</section>
+	
 	<section>
-	<title>FIFO Commands</title>
+	<title>Exported MI Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">address_reload</function>
@@ -1030,8 +1031,24 @@ if (allow_trusted()) {
 				subnet table depending on the value of
 				the mask field (32 or smaller).
 
-				</para>
+		</para>
+		<para>
+		Name: <emphasis>address_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:address_reload:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+
+
+
+		
 	</section>
+	
 	<section>
 		<title>
 		<function moreinfo="none">address_dump</function>
@@ -1041,6 +1058,19 @@ if (allow_trusted()) {
                    contents of cache memory address table.
 
 				</para>
+		<para>
+		Name: <emphasis>address_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:address_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+
+
 	</section>
 	<section>
 		<title>
@@ -1051,6 +1081,17 @@ if (allow_trusted()) {
                    contents of cache memory subnet table.
 
 				</para>
+		<para>
+		Name: <emphasis>subnet_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:subnet_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
 	</section>
 	<section>
 		<title>
@@ -1060,6 +1101,17 @@ if (allow_trusted()) {
 				Causes permissions module to re-read the contents of
 				trusted table into cache memory.
 				</para>
+		<para>
+		Name: <emphasis>trusted_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:trusted_reload:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
 	</section>
 	<section>
 		<title>
@@ -1069,6 +1121,17 @@ if (allow_trusted()) {
 				Causes permissions module to dump contents of trusted
 				table from cache memory.
 				</para>
+		<para>
+		Name: <emphasis>trusted_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:trusted_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
 	</section>
 	</section>
 

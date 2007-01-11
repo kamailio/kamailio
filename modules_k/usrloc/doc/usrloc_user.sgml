@@ -378,6 +378,26 @@ modparam("usrloc", "socket_column", "socket")
 	</section>
 
 	<section>
+		<title><varname>path_column</varname> (string)</title>
+		<para>
+		Name of column containing the Path header.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>path</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>path_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "path_column", "path")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If the domain part of the user should be also saved and used for

@@ -36,8 +36,12 @@ Daniel-Constantin Mierla
 
               1.4.1. sip_trace()
 
-        1.5. sip_trace table definition
-        1.6. Known issues
+        1.5. Exported MI Functions
+
+              1.5.1. sip_trace
+
+        1.6. sip_trace table definition
+        1.7. Known issues
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -226,7 +230,26 @@ sip_trace();
 ...
      _________________________________________________________
 
-1.5. sip_trace table definition
+1.5. Exported MI Functions
+
+1.5.1. sip_trace
+
+   Name: sip_trace
+
+   Parameters:
+
+     * trace_mode : turns on/off SIP message tracing. Possible
+       values are:
+          + on
+          + off
+
+   MI FIFO Command Format:
+                :sip_trace:_reply_fifo_file_
+                trace_mode
+                _empty_line_
+     _________________________________________________________
+
+1.6. sip_trace table definition
 
    Next is presented the definition of sip_trace table
 
@@ -251,7 +274,7 @@ CREATE TABLE `sip_trace` (
 );
      _________________________________________________________
 
-1.6. Known issues
+1.7. Known issues
 
    Stateless forwarded messages (forward()) are not logged if you
    set the flag, use sip_trace().

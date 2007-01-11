@@ -66,7 +66,7 @@ Juha Heinanen
               1.4.9. allow_source_address(group_id)
               1.4.10. allow_trusted()
 
-        1.5. FIFO Commands
+        1.5. Exported MI Functions
 
               1.5.1. address_reload
               1.5.2. address_dump
@@ -769,7 +769,7 @@ if (allow_trusted()) {
 ...
      _________________________________________________________
 
-1.5. FIFO Commands
+1.5. Exported MI Functions
 
 1.5.1. address_reload
 
@@ -778,30 +778,70 @@ if (allow_trusted()) {
    are for performance reasons stored in two different tables:
    address table and subnet table depending on the value of the
    mask field (32 or smaller).
+
+   Name: address_reload
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :address_reload:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.5.2. address_dump
 
    Causes permissions module to dump contents of cache memory
    address table.
+
+   Name: address_dump
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :address_dump:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.5.3. subnet_dump
 
    Causes permissions module to dump contents of cache memory
    subnet table.
+
+   Name: subnet_dump
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :subnet_dump:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.5.4. trusted_reload
 
    Causes permissions module to re-read the contents of trusted
    table into cache memory.
+
+   Name: trusted_reload
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :trusted_reload:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.5.5. trusted_dump
 
    Causes permissions module to dump contents of trusted table
    from cache memory.
+
+   Name: trusted_dump
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :trusted_dump:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 Chapter 2. Developer's Guide

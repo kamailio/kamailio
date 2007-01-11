@@ -28,13 +28,13 @@ Anca-Maria Vamanu
               1.4.2. presentity_table(str)
               1.4.3. active_watchers_table(str)
               1.4.4. watchers_table(str)
-              1.4.5. clean_period (str)
+              1.4.5. clean_period (int)
               1.4.6. to_tag_pref (str)
               1.4.7. totag_avpid (int)
-              1.4.8. lock_set_size (str)
-              1.4.9. expires_offset (str)
-              1.4.10. force_active (str)
-              1.4.11. max_expires (str)
+              1.4.8. lock_set_size (int)
+              1.4.9. expires_offset (int)
+              1.4.10. force_active (int)
+              1.4.11. max_expires (int)
 
         1.5. Exported Functions
 
@@ -117,6 +117,8 @@ Chapter 1. User's Guide
 
    The database url.
 
+   Default value is "NULL". 
+
    Example 1-1. Set db_url parameter
 ...
 modparam("presence", "db_url",
@@ -127,6 +129,8 @@ modparam("presence", "db_url",
 1.4.2. presentity_table(str)
 
    The name of the db table where Publish information are stored.
+
+   Default value is "presentity". 
 
    Example 1-2. Set presentity_table parameter
 ...
@@ -139,6 +143,8 @@ modparam("presence", "presentity_table", "presentity");
    The name of the db table where active subscription information
    are stored.
 
+   Default value is "active_watchers". 
+
    Example 1-3. Set active_watchers_table parameter
 ...
 modparam("presence", "active_watchers_table", "active_watchers")
@@ -149,16 +155,20 @@ modparam("presence", "active_watchers_table", "active_watchers")
 
    The name of the db table where subscription states are stored.
 
+   Default value is "watchers". 
+
    Example 1-4. Set watchers_table parameter
 ...
 modparam("presence", "watchers_table", "watchers")
 ...
      _________________________________________________________
 
-1.4.5. clean_period (str)
+1.4.5. clean_period (int)
 
    The period at which to verify if there are expired messages
    stored in database.
+
+   Default value is "100". 
 
    Example 1-5. Set clean_period parameter
 ...
@@ -171,6 +181,8 @@ modparam("presence", "clean_period", 100)
    The prefix used when generating to_tag when sending replies
    for SUBSCRIBE requests.
 
+   Default value is "10". 
+
    Example 1-6. Set to_tag_pref parameter
 ...
 modparam("presence", "to_tag_pref", 'a')
@@ -182,16 +194,20 @@ modparam("presence", "to_tag_pref", 'a')
    The id of the avp variable used for storing to_tag value. It
    must be the same as for sl module parameter.
 
+   Default value is "0". 
+
    Example 1-7. Set totag_avpid parameter
 ...
 modparam("presence", "totag_avpid", 987)
 ...
      _________________________________________________________
 
-1.4.8. lock_set_size (str)
+1.4.8. lock_set_size (int)
 
    The size of the lock used for synchronizing updating
    information from database.
+
+   Default value is "8". 
 
    Example 1-8. Set lock_set_size parameter
 ...
@@ -199,11 +215,13 @@ modparam("presence", "lock_set_size", 8)
 ...
      _________________________________________________________
 
-1.4.9. expires_offset (str)
+1.4.9. expires_offset (int)
 
    The value that should be subtracted from the expires value
    when sending a 200OK for a publish to force the client cu send
    an update before the old publish expires
+
+   Default value is "0". 
 
    Example 1-9. Set expires_offset parameter
 ...
@@ -211,12 +229,14 @@ modparam("presence", "expires_offset", 10)
 ...
      _________________________________________________________
 
-1.4.10. force_active (str)
+1.4.10. force_active (int)
 
    This parameter offers the possibility to set either the first
    Notify sent for a new subscribe should have the
    Subscriptions-State value 'pending' or 'active'. If it is
    different than 0, the Subscription-State value is 'active'.
+
+   Default value is "0". 
 
    Example 1-10. Set force_active parameter
 ...
@@ -224,10 +244,12 @@ modparam("presence", "force_active", 1)
 ...
      _________________________________________________________
 
-1.4.11. max_expires (str)
+1.4.11. max_expires (int)
 
    The value at which to reduce the validity of PUBLISH/SUBSCRIBE
    if the Expires in request is greater.
+
+   Default value is "3600". 
 
    Example 1-11. Set max_expires parameter
 ...
