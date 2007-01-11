@@ -620,28 +620,6 @@ modparam("msilo", "max_messages", 0)
 	
 	<section>
 	<title>Installation & Running</title>
-	<section>
-		<title>Database setup</title>
-		<para>
-		Before running &ser; with msilo, you have to setup the database table 
-		where the module will store the message. For that, if the table was 
-		not created by the installation script or you choose to install 
-		everything by yourself you can use the following <acronym>SQL</acronym> 
-		script (good for MySQL) as template. Database and table name can be 
-		set with module parameters so they can be changed, but the name of
-		the columns must be as they are in the next <acronym>SQL</acronym> 
-		script.
-		</para>
-		<example>
-		<title>msilo sql script</title>
-		<programlisting format="linespecific">
-...
-&msilosql;
-...
-</programlisting>
-		</example>
-		</section>
-
 		<section>
 		<title>&ser; config file</title>
 		<para>

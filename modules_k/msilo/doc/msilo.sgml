@@ -4,7 +4,6 @@
 <!ENTITY devel SYSTEM "msilo_devel.sgml">
 <!ENTITY faq SYSTEM "msilo_faq.sgml">
 
-<!ENTITY msilosql SYSTEM "msilo.sql">
 <!ENTITY msilocfg SYSTEM "msilo.cfg">
 
 <!-- Include general documentation entities -->
