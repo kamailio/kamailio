@@ -558,7 +558,7 @@ cpl_run_script("incoming","force_stateful");
 				<programlisting format="linespecific">
 ...
 if (method=="REGISTER") {
-	cpl_process_register();
+    cpl_process_register();
 }
 ...
 </programlisting>
@@ -588,9 +588,9 @@ if (method=="REGISTER") {
 				<programlisting format="linespecific">
 ...
 if (method=="REGISTER") {
-	cpl_process_register();
-	# continue with usrloc part
-	save("location");
+    cpl_process_register();
+    # continue with usrloc part
+    save("location");
 }
 ...
 </programlisting >
@@ -604,85 +604,103 @@ if (method=="REGISTER") {
 			<title>
 				<function moreinfo="none">LOAD_CPL</function>
 			</title>
-            <para>
-			For the given user, loads the XML cpl file, compiles it into binary 
-			format and stores both format into database.			
-			</para>			
- 		    <para>
-		     Name: <emphasis>LOAD_CPL</emphasis>
-		    </para>
-	 	    <para>Parameters:</para>
-		    <itemizedlist>
-		    	<listitem><para>username : name of the user</para></listitem>	  
-			    <listitem><para>cpl_filename: file name </para></listitem>
-		    </itemizedlist>
-			
-			<para>               
-		  	    MI FIFO Command format:
+			<para>
+			For the given user, loads the XML cpl file, compiles it into 
+			binary format and stores both format into database.
 			</para>
-            <programlisting format="linespecific">
+			<para>
+			Name: <emphasis>LOAD_CPL</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>username : name of the user</para></listitem>
+			<listitem><para>cpl_filename: file name </para></listitem>
+			</itemizedlist>
+			<para>
+			MI FIFO Command format:
+			</para>
+			<programlisting format="linespecific">
                  :LOAD_CPL:_reply_fifo_file_
                  username
                  cpl_filename
                  _empty_line_
-            </programlisting>
+</programlisting>
+		</section>
 
-        </section>
-
-        <section>
+		<section>
 			<title>
 				<function moreinfo="none">REMOVE_CPL</function>
 			</title>
-            <para>
-			For the given user, removes the entire database record 
-			(XML cpl and binary cpl); user with empty cpl scripts are not accepted.
-			</para>
-		    <para>
-		     Name: <emphasis>REMOVE_CPL</emphasis>
-		    </para>
-	 	    <para>Parameters:</para>
-		    <itemizedlist>
-		    	<listitem><para>username : name of the user</para></listitem>	  
-		    </itemizedlist>
 			<para>
-			    MI FIFO Command format:
+			For the given user, removes the entire database record 
+			(XML cpl and binary cpl); user with empty cpl scripts are not 
+			accepted.
+			</para>
+			<para>
+			Name: <emphasis>REMOVE_CPL</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>username : name of the user</para></listitem>	  
+			</itemizedlist>
+			<para>
+			MI FIFO Command format:
 			</para>
 			<programlisting format="linespecific">
                  :REMOVE_CPL:_reply_fifo_file_
                  username
                  _empty_line_
-            </programlisting>
-        </section>
+</programlisting>
+		</section>
 
-        <section>
+		<section>
 			<title>
 				<function moreinfo="none">GET_CPL</function>
 			</title>
-            <para>
+			<para>
 			For the given user, returns the CPL script in XML format.
 			</para>
-		    <para>
-		     Name: <emphasis>GET_CPL</emphasis>
-		    </para>
-	 	    <para>Parameters:</para>
-		    <itemizedlist>
-		    	<listitem><para>username : name of the user</para></listitem>	  
-		    </itemizedlist>
 			<para>
-			    MI FIFO Command format:
+			Name: <emphasis>GET_CPL</emphasis>
 			</para>
-		    <programlisting format="linespecific">
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>username : name of the user</para></listitem>	  
+			</itemizedlist>
+			<para>
+			MI FIFO Command format:
+			</para>
+			<programlisting format="linespecific">
                  :GET_CPL:_reply_fifo_file_
                  username
                  _empty_line_
-            </programlisting>
-        </section>
-		
-    </section>
+</programlisting>
+		</section>
+	</section>
 
 	<section>
 		<title>Installation & Running</title>
-		<para>Notes about installation and running.</para>
+		<section>
+			<title>Database setup</title>
+			<para>
+			Before running &ser; with cpl-c, you have to setup the database 
+			table where the module will store the CPL scripts. For that, if 
+			the table was not created by the installation script or you choose
+			to install everything by yourself you can use the following 
+			<acronym>SQL</acronym> script (good for MySQL) as template. 
+			Database and table name can be set with module parameters so they 
+			can be changed, but the name of the columns must be as they are 
+			in the next <acronym>SQL</acronym> script.
+			</para>
+			<example>
+			<title>CPL-C sql script</title>
+			<programlisting format="linespecific">
+...
+&cplsql;
+...
+</programlisting>
+			</example>
+		</section>
 	</section>
 </chapter>
 
