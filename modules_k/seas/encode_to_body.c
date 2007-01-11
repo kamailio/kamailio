@@ -53,8 +53,12 @@ int encode_to_body(char *hdrstart,int hdrlen,struct to_body *body,unsigned char 
 
    if(body->display.s && body->display.len){
       flags|=HAS_DISPLAY_F;
+      if(body->display.s[0]=='\"'){
+	 body->display.s++;
+	 body->display.len-=2;
+      }
       where[i++]=(unsigned char)(body->display.s-hdrstart);
-      where[i++]=(unsigned char)body->display.len;
+      where[i++]=(unsigned char)(body->display.len);
    }
    if(body->tag_value.s && body->tag_value.len){
       flags|=HAS_TAG_F;

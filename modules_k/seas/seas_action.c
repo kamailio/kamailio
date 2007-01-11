@@ -476,7 +476,12 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
    int i,j,k;
    i=j=k=0;
    /* count how many record-route bodies come in the response*/
+   /* this does not work, I think because of siblings
    for(hf=resp->record_route;hf;hf=hf->sibling,j=0){
+   */
+   for(hf=resp->headers;hf;hf=hf->next,j=0){
+      if(hf->type != HDR_RECORDROUTE_T)
+	 continue;
       if(!hf->parsed){
 	 if(0>parse_rr(hf))
 	    goto error;
@@ -490,8 +495,12 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
 	 hf->parsed=NULL;
       }
    }
-   /* count how many record-route bodies were in the orig. request*/
+   /*
    for(hf=req->record_route;hf;hf=hf->sibling,j=0){
+      */
+   for(hf=req->headers;hf;hf=hf->next,j=0){
+      if(hf->type != HDR_RECORDROUTE_T)
+	 continue;
       if(!hf->parsed){
 	 if(0>parse_rr(hf))
 	    goto error;
@@ -635,7 +644,9 @@ int ac_reply(as_p the_as,char *action,int len)
    if(0>(i=recordroute_diff(c->uas.request,my_msg))){/*not likely..*/
       LOG(L_DBG,"Seems that request had more RecordRoutes than response...\n");
       goto error;
-   }
+   }else
+      LOG(L_DBG,"Recordroute Diff = %d\n",i);
+
    if(0>(i=extract_allowed_headers(my_msg,0,i,HDR_VIA_F|HDR_TO_F|HDR_FROM_F|HDR_CSEQ_F|HDR_CALLID_F|HDR_CONTENTLENGTH_F,headers,MAX_HEADER))){
       LOG(L_ERR,"ERROR:seas:ac_reply() filtering headers !\n");
       goto error;

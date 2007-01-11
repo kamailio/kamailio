@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_via.h"
@@ -127,13 +128,14 @@ char get_header_code(struct hdr_field *hf)
  */
 int encode_msg(struct sip_msg *msg,char *payload,int len)
 {
-   int i,k,u;
+   int i,j,k,u,request;
    unsigned short int h;
-   short int j;
    struct hdr_field* hf;
    struct msg_start* ms;
+   struct sip_uri miuri;
    unsigned char index[3*MAX_HEADERS];
-   char request,*myerror=NULL;
+   char *myerror=NULL;
+   ptrdiff_t diff;
 
    if(len < MAX_ENCODED_MSG + MAX_MESSAGE_LEN)
       return -1;
@@ -142,7 +144,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
       goto error;
    }
    memset(payload,0,len);
-   memset(index,0,3*MAX_HEADERS);
+   memset(index,0,sizeof(index));
    ms=&msg->first_line;
    if(ms->type == SIP_REQUEST)
       request=1;
@@ -160,7 +162,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
 	 else;
    else
       h=(unsigned short)(ms->u.reply.statuscode);
-   if(h==32){
+   if(h==32){/*statuscode wont be 32...*/
       myerror="ERROR:encode_msg: unknown message type\n";
       goto error;
    }
@@ -169,11 +171,15 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
    memcpy(payload,&h,2);
    h=htons((unsigned short int)msg->len);
    /*then goes the message start idx, but we'll put it later*/
-   /*then goes the message length*/
+   /*then goes the message length (we hope it to be less than 65535 bytes...)*/
    memcpy(&payload[MSG_LEN_IDX],&h,2);
    /*then goes the content start index (starting from SIP MSG START)*/
-   h=htons((unsigned short int)(get_body(msg)-(msg->buf)));
-   memcpy(&payload[CONTENT_IDX],&h,2);
+   if(0>(diff=(get_body(msg)-(msg->buf)))){
+      myerror="ERROR: body starts before the message (uh ?)";
+      goto error;
+   }else
+      h=htons((unsigned short int)diff);
+   memcpy(payload+CONTENT_IDX,&h,2);
    payload[METHOD_CODE_IDX]=(unsigned char)(request?
 	 (ms->u.request.method.s-msg->buf):
 	 (ms->u.reply.status.s-msg->buf));
@@ -190,15 +196,15 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
 	 (ms->u.request.version.s-msg->buf):
 	 (ms->u.reply.version.s-msg->buf));
    if(request){
-      if(!msg->parsed_uri_ok)
-	 if(parse_sip_msg_uri(msg)<0){
-	    myerror="while parsing the R-URI";
-	    goto error;
-	 }
-      if((j=encode_uri2(msg->buf,
+      if (parse_uri(ms->u.request.uri.s,ms->u.request.uri.len, &miuri)<0){
+	 LOG(L_ERR, "ERROR:encode_msg:<%.*s>\n",ms->u.request.uri.len,ms->u.request.uri.s);
+	 myerror="while parsing the R-URI";
+	 goto error;
+      }
+      if(0>(j=encode_uri2(msg->buf,
 		  ms->u.request.method.s-msg->buf+ms->len,
-		  ms->u.request.uri,&msg->parsed_uri,
-		  (unsigned char*)&payload[REQUEST_URI_IDX+1]))<0)
+		  ms->u.request.uri,&miuri,
+		  (unsigned char*)&payload[REQUEST_URI_IDX+1])))
       {
 	    myerror="ENCODE_MSG: ERROR while encoding the R-URI";
 	    goto error;
