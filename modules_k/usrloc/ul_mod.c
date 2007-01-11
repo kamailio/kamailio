@@ -60,7 +60,6 @@ MODULE_VERSION
 #define Q_COL          "q"
 #define CALLID_COL     "callid"
 #define CSEQ_COL       "cseq"
-#define METHOD_COL     "method"
 #define FLAGS_COL      "flags"
 #define CFLAGS_COL     "cflags"
 #define USER_AGENT_COL "user_agent"
@@ -96,8 +95,6 @@ str q_col           = str_init(Q_COL);
 str callid_col      = str_init(CALLID_COL);
 /* Name of column containing cseq values */
 str cseq_col        = str_init(CSEQ_COL);
-/* Name of column containing supported method */
-str method_col      = str_init(METHOD_COL);
 /* Name of column containing internal flags */
 str flags_col       = str_init(FLAGS_COL);
 /* Name of column containing contact flags */
@@ -175,7 +172,6 @@ static param_export_t params[] = {
 	{"q_column",          STR_PARAM, &q_col.s         },
 	{"callid_column",     STR_PARAM, &callid_col.s    },
 	{"cseq_column",       STR_PARAM, &cseq_col.s      },
-	{"method_column",     STR_PARAM, &method_col.s    },
 	{"flags_column",      STR_PARAM, &flags_col.s     },
 	{"cflags_column",     STR_PARAM, &cflags_col.s    },
 	{"db_url",            STR_PARAM, &db_url.s        },
@@ -250,7 +246,6 @@ static int mod_init(void)
 	q_col.len = strlen(q_col.s);
 	callid_col.len = strlen(callid_col.s);
 	cseq_col.len = strlen(cseq_col.s);
-	method_col.len = strlen(method_col.s);
 	flags_col.len = strlen(flags_col.s);
 	cflags_col.len = strlen(cflags_col.s);
 	user_agent_col.len = strlen(user_agent_col.s);

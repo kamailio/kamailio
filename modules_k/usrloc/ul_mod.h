@@ -53,7 +53,6 @@ extern str expires_col;
 extern str q_col;
 extern str callid_col;
 extern str cseq_col;
-extern str method_col;
 extern str flags_col;
 extern str cflags_col;
 extern str user_agent_col;
