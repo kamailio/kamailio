@@ -326,8 +326,8 @@ CREATE TABLE `watchers` (
    Example 1-17. Create xcap_xml database table
 ...
 CREATE TABLE `xcap_xml` (
-  `user` varchar(256) NOT NULL,
-  `domain` varchar(256) NOT NULL,
+  `user` varchar(66) NOT NULL,
+  `domain` varchar(128) NOT NULL,
   `xcap` text NOT NULL,
   `doc_type` varchar(64) NOT NULL,
   PRIMARY KEY  (`user`,`domain`,`doc_type`)
