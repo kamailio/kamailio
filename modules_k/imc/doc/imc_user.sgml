@@ -163,22 +163,43 @@ if(is_method("MESSAGE)
 		<function moreinfo="none">imc_list_rooms</function>
 		</title>
 		<para>
-		Command Format:
-        <programlisting  format="linespecific">
-		:imc_list_members:
-		_room_
-		_empty_line_
-		</programlisting>
 		Lists of the IM Conferencing rooms.
 		</para>
+		<para>
+		Name: <emphasis>imc_list_rooms</emphasis>
+		</para>
+		<para>Parameters: none</para>
+
+        <para>
+		MI FIFO Command Format:
+        <programlisting  format="linespecific">
+		:imc_list_rooms:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
 	</section>
-	<section>
+
+    <section>
 		<title>
 		<function moreinfo="none">imc_list_members</function>
 		</title>
 		<para>
 		Listing of the members in IM Conferencing rooms.
 		</para>
+		<para>
+		Name: <emphasis>imc_list_members</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_room_ : the room for which you want to list the members</para></listitem>
+        </itemizedlist>
+
+        <para>
+		MI FIFO Command Format:
+        <programlisting  format="linespecific">
+		:imc_list_members:_reply_fifo_file_
+		_room_
+		_empty_line_
+		</programlisting>
 	</section>
 	</section>
 

@@ -217,18 +217,41 @@ if (is_domain_local("$avp(s:some_avp)")) {
 	<section>
 	<title>Exported MI Functions</title>
 	<section>
-		<title><function moreinfo="none">MI_DOMAIN_RELOAD</function></title>
+		<title><function moreinfo="none">domain_reload</function></title>
 		<para>
 		Causes domain module to re-read the contents of domain table
 		into cache memory.
 		</para>
+		<para>
+		Name: <emphasis>domain_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:domain_reload:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		
 	</section>
 	<section>
-		<title><function moreinfo="none">MI_DOMAIN_DUMP</function></title>
+		<title><function moreinfo="none">domain_dump</function></title>
 		<para>
 		Causes domain module to dump hash indexes and domain names in
 		its cache memory.
 		</para>
+		<para>
+		Name: <emphasis>domain_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:domain_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
 	</section>
 	</section>
 	<section>

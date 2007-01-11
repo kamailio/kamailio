@@ -54,8 +54,8 @@ Juha Heinanen
 
         1.5. Exported MI Commands
 
-              1.5.1. MI_LCR_RELOAD
-              1.5.2. MI_LCR_DUMP
+              1.5.1. lcr_reload
+              1.5.2. lcr_dump
 
         1.6. Known Limitations
         1.7. TODO
@@ -625,16 +625,32 @@ if (next_contacts()) {
 
 1.5. Exported MI Commands
 
-1.5.1. MI_LCR_RELOAD
+1.5.1. lcr_reload
 
    Causes lcr module to re-read the contents of gateway table
    into memory.
+
+   Name: lcr_reload
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :lcr_reload:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
-1.5.2. MI_LCR_DUMP
+1.5.2. lcr_dump
 
    Causes lcr module to dump the contents of its in-memory
    gateway table.
+
+   Name: lcr_dump
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :lcr_dump:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.6. Known Limitations

@@ -807,18 +807,43 @@ if (next_contacts()) {
 	<section>
 	<title>Exported MI Commands</title>
 		<section>
-		<title><function>MI_LCR_RELOAD</function></title>
+		<title><function>lcr_reload</function></title>
 		<para>
 			Causes lcr module to re-read the contents of gateway table
 			into memory.
 		</para>
+		<para>
+		Name: <emphasis>lcr_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:lcr_reload:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		
 		</section>
+		
 		<section>
-		<title><function>MI_LCR_DUMP</function></title>
+		<title><function>lcr_dump</function></title>
 		<para>
 			Causes lcr module to dump the contents of its in-memory gateway
 			table. 
 		</para>
+		<para>
+		Name: <emphasis>lcr_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:lcr_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		
 		</section>
 	</section>
 	<section>

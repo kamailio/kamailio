@@ -289,28 +289,38 @@ ds_select_dst("1", "0");
 
 1.5.1. ds_set_state
 
-   Command Format:
-                :ds_set_state:
-                _state_
-                _group_
-                _address_
-                _empty_line_
-
    Sets the status for a destination address (can be use to mark
    the destination as active or inactive).
 
-   Input parameters semnification is as follows:
+   Name: ds_set_state
+
+   Parameters:
 
      * _state_ : state of the destination address
           + "a": active
           + "i": inactive
      * _group_: destination group id
      * _address_: address of the destination in the _group_
+
+   MI FIFO Command Format:
+                :ds_set_state:_reply_fifo_file_
+                _state_
+                _group_
+                _address_
+                _empty_line_
      _________________________________________________________
 
 1.5.2. ds_list
 
    It lists the groups and included destinations.
+
+   Name: ds_list
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :ds_list:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.6. Installation & Running

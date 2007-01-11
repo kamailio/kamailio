@@ -30,8 +30,8 @@ Juha Heinanen
 
         1.5. Exported MI Functions
 
-              1.5.1. MI_DOMAIN_RELOAD
-              1.5.2. MI_DOMAIN_DUMP
+              1.5.1. domain_reload
+              1.5.2. domain_dump
 
         1.6. Known Limitations
 
@@ -200,16 +200,32 @@ if (is_domain_local("$avp(s:some_avp)")) {
 
 1.5. Exported MI Functions
 
-1.5.1. MI_DOMAIN_RELOAD
+1.5.1. domain_reload
 
    Causes domain module to re-read the contents of domain table
    into cache memory.
+
+   Name: domain_reload
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :domain_reload:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
-1.5.2. MI_DOMAIN_DUMP
+1.5.2. domain_dump
 
    Causes domain module to dump hash indexes and domain names in
    its cache memory.
+
+   Name: domain_dump
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :domain_dump:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.6. Known Limitations

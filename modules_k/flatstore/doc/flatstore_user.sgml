@@ -178,11 +178,22 @@ modparam("flatstore", "flush", 0)
 	<title>Exported MI Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">MI_FLAT_ROTATE</function>
+		<function moreinfo="none">flat_rotate</function>
 		</title>
 		<para>
 		It changes the name of the files where it is written.
 		</para>
+		<para>
+		Name: <emphasis>flat_rotate</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:flat_rotate:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
 	</section>	
     </section>
 </chapter>

@@ -256,6 +256,14 @@ modparam("dialog", "use_tight_match", 1)
 1.7.1. dlg_list
 
    It returns a listing of all dialogs (calls).
+
+   Name: dlg_list
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :dlg_list:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.8. Exported pseudo-variables

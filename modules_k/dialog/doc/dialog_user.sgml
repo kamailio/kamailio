@@ -291,6 +291,17 @@ modparam("dialog", "use_tight_match", 1)
 			<para>
 			It returns a listing of all dialogs (calls).
 			</para>
+		<para>
+		Name: <emphasis>dlg_list</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:dlg_list:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
 		</section>
     </section>
 

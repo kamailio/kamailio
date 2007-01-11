@@ -31,7 +31,7 @@ Jan Janak
         1.4. Exported Functions
         1.5. Exported MI Functions
 
-              1.5.1. MI_FLAT_ROTATE
+              1.5.1. flat_rotate
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -157,9 +157,17 @@ modparam("flatstore", "flush", 0)
 
 1.5. Exported MI Functions
 
-1.5.1. MI_FLAT_ROTATE
+1.5.1. flat_rotate
 
    It changes the name of the files where it is written.
+
+   Name: flat_rotate
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :flat_rotate:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 Chapter 2. Developer's Guide

@@ -155,17 +155,31 @@ if(is_method("MESSAGE)
 
 1.5.1. imc_list_rooms
 
-   Command Format:
-                :imc_list_members:
-                _room_
-                _empty_line_
-
    Lists of the IM Conferencing rooms.
+
+   Name: imc_list_rooms
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :imc_list_rooms:_reply_fifo_file_
+                _empty_line_
      _________________________________________________________
 
 1.5.2. imc_list_members
 
    Listing of the members in IM Conferencing rooms.
+
+   Name: imc_list_members
+
+   Parameters:
+
+     * _room_ : the room for which you want to list the members
+
+   MI FIFO Command Format:
+                :imc_list_members:_reply_fifo_file_
+                _room_
+                _empty_line_
      _________________________________________________________
 
 1.6. Exported Statistics
