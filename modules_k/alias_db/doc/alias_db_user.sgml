@@ -238,27 +238,6 @@ alias_db_lookup("dbaliases");
 		</example>
 	</section>
 	</section>
-	<section>
-	<title>Installation & Running</title>
-		<section>
-		<title>Database setup</title>
-		<para>
-		The table structure used by alias_db module is defined by next
-		<acronym>SQL</acronym> script (good for MySQL).
-		</para>
-		<example>
-		<title>alias_db sql script</title>
-		<programlisting format="linespecific">
-...
-&aliasdbsql;
-...
-</programlisting>
-		</example>
-		<para>
-		The table <quote>dbaliases</quote> is create by default.
-		</para>
-		</section>
-	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

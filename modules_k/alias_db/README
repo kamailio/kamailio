@@ -35,10 +35,6 @@ Daniel-Constantin Mierla
 
               1.4.1. alias_db_lookup(table_name)
 
-        1.5. Installation & Running
-
-              1.5.1. Database setup
-
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -51,7 +47,6 @@ Daniel-Constantin Mierla
    1-6. Set use_domain parameter
    1-7. Set domain_prefix parameter
    1-8. alias_db_lookup() usage
-   1-9. alias_db sql script
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -197,28 +192,6 @@ modparam("alias_db", "domain_prefix", "sip.")
 ...
 alias_db_lookup("dbaliases");
 ...
-     _________________________________________________________
-
-1.5. Installation & Running
-
-1.5.1. Database setup
-
-   The table structure used by alias_db module is defined by next
-   SQL script (good for MySQL).
-
-   Example 1-9. alias_db sql script
-...
-create table dbaliases (
-  alias_username varchar(64) not null default '',
-  alias_domain varchar(128) not null default '',
-  username varchar(64) not null default '',
-  domain varchar(128) not null default '',
-  unique key alias_key(alias_username, alias_domain)
-);
-
-...
-
-   The table "dbaliases" is create by default.
      _________________________________________________________
 
 Chapter 2. Developer's Guide
