@@ -38,7 +38,6 @@
 #include "../../db/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
-#include "../../fifo_server.h"
 #include "../tm/tm_load.h"
 #include "../sl/sl_cb.h"
 
@@ -60,7 +59,6 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_sl_onreply_out(struct sip_msg* req,
 									struct sl_cb_param *sl_param);
-static int sip_trace_fifo(FILE *stream, char *file);
 static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
 char* db_url       = DEFAULT_RODB_URL;
@@ -223,12 +221,6 @@ static int mod_init(void)
 	if(tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0) <=0)
 	{
 		LOG(L_ERR,"siptrace:mod_init:ERROR: can't register trace_onreq_in\n");
-		return -1;
-	}
-
-	if(register_fifo_cmd(sip_trace_fifo, "sip_trace", 0)<0)
-	{
-		LOG(L_ERR,"siptrace:mod_init:ERROR: cannot register fifo command'\n");
 		return -1;
 	}
 
@@ -1214,59 +1206,6 @@ done:
 	return;
 error:
 	return;
-}
-
-/**
- * Fifo command example:
- * :sip_trace:[response file]\n
- * [on|off]\n
- * \n
- */
-static int sip_trace_fifo(FILE *stream, char *file)
-{
-	char buf[8];
-	int len;
-	
-	if(trace_on_flag==NULL)
-	{
-		LOG(L_ERR, "sip_trace_fifo: server error\n");
-		fifo_reply(file, "500 sip_trace_fifo - server error\n");
-		return -1;
-	}
-	
-	len = 0;
-	if(!read_line(buf, 8, stream, &len) || len < 2)
-	{	
-		LOG(L_ERR, "sip_trace_fifo: error reading command\n");
-		fifo_reply(file, "400 sip_trace_fifo - cannot read command\n");
-		return -1;
-	}
-	
-	if(buf[0]!='o' && buf[0]!='O' && buf[1]!='n' && buf[1]!='N'
-			&& buf[1]!='f' && buf[1]!='F')
-	{
-		LOG(L_ERR, "sip_trace_fifo: bad command\n");
-		fifo_reply(file, "400 sip_trace_fifo - bad command\n");
-		return -1;
-	}
-
-	/* ?? is synchronization needed ?? */
-	switch(buf[1])
-	{
-		case 'n':
-		case 'N':
-				*trace_on_flag = 1;
-				DBG("sip_trace_fifo: trace ON\n");
-			break;
-		case 'f':
-		case 'F':
-				*trace_on_flag = 0;
-				DBG("sip_trace_fifo: trace OFF\n");
-			break;
-	}
-	fifo_reply(file, "200 OK\n");
-
-	return 0;
 }
 
 

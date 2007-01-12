@@ -32,7 +32,6 @@
 
 #include "permissions.h"
 #include "hash.h"
-#include "fifo.h"
 #include "unixsock.h"
 #include "../../config.h"
 #include "../../db/db.h"
@@ -230,10 +229,7 @@ int init_addresses(void)
 	perm_dbf.close(db_handle);
 	return -1;
     }
-		
-    /* Initialize fifo interface */
-    (void)init_address_fifo();
-    
+
     if (init_address_unixsock() < 0) {
 	LOG(L_ERR, "permissions:init_addr(): Error while initializing "
 	    "unixsock interface\n");

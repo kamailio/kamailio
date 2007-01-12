@@ -250,26 +250,6 @@ found:
 /* 
  * Print trusted entries stored in hash table 
  */
-void hash_table_print(struct trusted_list** table, FILE* reply_file)
-{
-	int i;
-	struct trusted_list *np;
-
-	for (i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
-		while (np) {
-			fprintf(reply_file, "%4d <%.*s, %d, %s, %s>\n", i,
-				np->src_ip.len, ZSW(np->src_ip.s), np->proto,
-				np->pattern?np->pattern:"NULL", np->tag.len?np->tag.s:"NULL");
-			np = np->next;
-		}
-	}
-}
-
-
-/* 
- * Print trusted entries stored in hash table 
- */
 int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
 {
     int i;
@@ -410,29 +390,6 @@ int match_addr_hash_table(struct addr_list** table, unsigned int group,
 /* 
  * Print addresses stored in hash table 
  */
-void addr_hash_table_print(struct addr_list** table, FILE* reply_file)
-{
-    int i;
-    struct addr_list *np;
-    struct ip_addr addr;
-    
-    for (i = 0; i < PERM_HASH_SIZE; i++) {
-	np = table[i];
-	while (np) {
-	    addr.af = AF_INET;
-	    addr.len = 4;
-	    addr.u.addr32[0] = np->ip_addr;
-	    fprintf(reply_file, "%4d <%u, %s, %u>\n",
-		    i, np->grp, ip_addr2a(&addr), np->port);
-	    np = np->next;
-	}
-    }
-}
-
-
-/* 
- * Print addresses stored in hash table 
- */
 int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 {
     int i;
@@ -565,27 +522,6 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
     }
 
     return -1;
-}
-
-
-/* 
- * Print subnets stored in subnet table 
- */
-void subnet_table_print(struct subnet* table, FILE* reply_file)
-{
-    unsigned int count, i;
-    struct ip_addr addr;
-    
-    count = table[PERM_MAX_SUBNETS].grp;
-
-    for (i = 0; i < count; i++) {
-	addr.af = AF_INET;
-	addr.len = 4;
-	addr.u.addr32[0] = table[i].subnet >> table[i].mask;
-	fprintf(reply_file, "%4d <%u, %s, %u, %u>\n",
-		i, table[i].grp, ip_addr2a(&addr),
-		32 - table[i].mask, table[i].port);
-    }
 }
 
 

@@ -32,7 +32,6 @@
 
 #include "permissions.h"
 #include "hash.h"
-#include "fifo.h"
 #include "unixsock.h"
 #include "../../config.h"
 #include "../../db/db.h"
@@ -202,9 +201,6 @@ int init_trusted(void)
 			perm_dbf.close(db_handle);
 			return -1;
 		}
-		
-		/* Initialize fifo interface */
-		(void)init_trusted_fifo();
 		
 		if (init_trusted_unixsock() < 0) {
 			LOG(L_ERR, "permissions:init_trusted(): Error while initializing "
