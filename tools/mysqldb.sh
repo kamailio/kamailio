@@ -381,6 +381,7 @@ CREATE TABLE missed_calls (
 # Table structure for table 'location' -- that is persistent UsrLoc
 #
 CREATE TABLE location (
+  id int(10) unsigned NOT NULL auto_increment,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
@@ -396,7 +397,8 @@ CREATE TABLE location (
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   methods int(11) default NULL,
-  PRIMARY KEY($USERCOL, domain, contact)
+  UNIQUE KEY udc_loc ($USERCOL, domain, contact),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -405,6 +407,7 @@ CREATE TABLE location (
 # (aliases_contact index makes lookup of missed calls much faster)
 #
 CREATE TABLE aliases (
+  id int(10) unsigned NOT NULL auto_increment,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
@@ -420,8 +423,8 @@ CREATE TABLE aliases (
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   methods int(11) default NULL,
-  PRIMARY KEY($USERCOL, domain, contact),
-  INDEX aliases_contact (contact)
+  UNIQUE KEY udc_als($USERCOL, domain, contact),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -429,12 +432,14 @@ CREATE TABLE aliases (
 # DB aliases
 #
 CREATE TABLE dbaliases (
+  id int(10) unsigned NOT NULL auto_increment,
   alias_username varchar(64) NOT NULL default '',
   alias_domain varchar(128) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   UNIQUE KEY alias_key (alias_username,alias_domain),
   INDEX alias_user ($USERCOL, domain)
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -443,11 +448,13 @@ CREATE TABLE dbaliases (
 # table; used primarily for ACLs
 #
 CREATE TABLE grp (
+  id int(10) unsigned NOT NULL auto_increment,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY($USERCOL, domain, grp)
+  UNIQUE KEY udg_grp($USERCOL, domain, grp),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -456,9 +463,11 @@ CREATE TABLE grp (
 # based on regular expressions
 #
 CREATE TABLE re_grp (
+  id int(10) unsigned NOT NULL auto_increment,
   reg_exp varchar(128) NOT NULL default '',
   group_id int(11) NOT NULL default '0',
-  UNIQUE KEY reg_exp (reg_exp)
+  INDEX gid_grp (group_id),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -466,17 +475,18 @@ CREATE TABLE re_grp (
 # "instant" message silo
 #
 CREATE TABLE silo(
-    mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    src_addr VARCHAR(255) NOT NULL DEFAULT "",
-    dst_addr VARCHAR(255) NOT NULL DEFAULT "",
-    $USERCOL VARCHAR(64) NOT NULL DEFAULT "",
-    domain VARCHAR(128) NOT NULL DEFAULT "",
-    inc_time INTEGER NOT NULL DEFAULT 0,
-    exp_time INTEGER NOT NULL DEFAULT 0,
-    snd_time INTEGER NOT NULL DEFAULT 0,
-    ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
-    body BLOB NOT NULL DEFAULT "",
-    KEY ($USERCOL, domain)
+  id int(10) unsigned NOT NULL auto_increment,
+  src_addr VARCHAR(255) NOT NULL DEFAULT "",
+  dst_addr VARCHAR(255) NOT NULL DEFAULT "",
+  $USERCOL VARCHAR(64) NOT NULL DEFAULT "",
+  domain VARCHAR(128) NOT NULL DEFAULT "",
+  inc_time INTEGER NOT NULL DEFAULT 0,
+  exp_time INTEGER NOT NULL DEFAULT 0,
+  snd_time INTEGER NOT NULL DEFAULT 0,
+  ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
+  body BLOB NOT NULL DEFAULT "",
+  INDEX ud_silo ($USERCOL, domain),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -484,9 +494,11 @@ CREATE TABLE silo(
 # Table structure for table 'domain' -- domains proxy is responsible for
 #
 CREATE TABLE domain (
+  id int(10) unsigned NOT NULL auto_increment,
   domain varchar(128) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY  (domain)
+  UNIQUE KEY d_domain (domain),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -494,30 +506,31 @@ CREATE TABLE domain (
 # Table structure for table 'uri' -- uri user parts users are allowed to use
 #
 CREATE TABLE uri (
+  id int(10) unsigned NOT NULL auto_increment,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   uri_user varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY ($USERCOL, domain, uri_user)
+  UNIQUE KEY udu_uri ($USERCOL, domain, uri_user),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
 #
 # Table structure for table 'usr_preferences'
 #
-DROP TABLE IF EXISTS usr_preferences;
 CREATE TABLE usr_preferences (
-  id bigint(20) NOT NULL auto_increment,
+  id int(10) NOT NULL auto_increment,
   uuid varchar(64) NOT NULL default '',
-  $USERCOL varchar(100) NOT NULL default '0',
+  $USERCOL varchar(64) NOT NULL default '0',
   domain varchar(128) NOT NULL default '',
   attribute varchar(32) NOT NULL default '',
   type int(11) NOT NULL default '0',
   value varchar(128) NOT NULL default '',
-  modified timestamp(14) NOT NULL,
-  PRIMARY KEY (id),
+  modified timestamp(14) NOT NULL default '0000-00-00 00:00:00',
   INDEX ua_idx  (uuid,attribute),
-  INDEX uda_idx ($USERCOL,domain,attribute)
+  INDEX uda_idx ($USERCOL,domain,attribute),
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 
 
@@ -525,13 +538,13 @@ CREATE TABLE usr_preferences (
 # Table structure for table trusted
 #
 CREATE TABLE trusted (
-  id bigint(20) NOT NULL auto_increment,
+  id int(10) NOT NULL auto_increment,
   src_ip varchar(39) NOT NULL,
   proto varchar(4) NOT NULL,
   from_pattern varchar(64) DEFAULT NULL,
   tag varchar(32) DEFAULT NULL,
-  PRIMARY KEY (id),
-  KEY Key1 (src_ip)
+  KEY Key1 (src_ip),
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 
 
@@ -539,7 +552,7 @@ CREATE TABLE trusted (
 # Table structure for table 'speed_dial'
 #
 CREATE TABLE speed_dial (
-  uuid varchar(64) NOT NULL default '',
+  id int(10) NOT NULL auto_increment,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   sd_username varchar(64) NOT NULL default '',
@@ -548,7 +561,8 @@ CREATE TABLE speed_dial (
   fname varchar(128) NOT NULL default '',
   lname varchar(128) NOT NULL default '',
   description varchar(64) NOT NULL default '',
-  PRIMARY KEY  ($USERCOL,domain,sd_domain,sd_username)
+  UNIQUE KEY udss_sd ($USERCOL,domain,sd_domain,sd_username),
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 
 
@@ -556,6 +570,7 @@ CREATE TABLE speed_dial (
 # Table structure for table 'gw'
 #
 CREATE TABLE gw (
+  id int(10) NOT NULL auto_increment,
   gw_name VARCHAR(128) NOT NULL,
   grp_id INT UNSIGNED NOT NULL,
   ip_addr INT UNSIGNED NOT NULL,
@@ -564,8 +579,9 @@ CREATE TABLE gw (
   transport TINYINT UNSIGNED,
   strip TINYINT UNSIGNED,
   prefix varchar(16) default NULL,
-  PRIMARY KEY (gw_name),
-  KEY (grp_id)
+  UNIQUE KEY name_gw (gw_name),
+  KEY gid_gw (grp_id),
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 
 
@@ -573,8 +589,9 @@ CREATE TABLE gw (
 # Table structure for table 'gw_grp'
 #
 CREATE TABLE gw_grp (
-  grp_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  grp_name VARCHAR(64) NOT NULL
+  grp_id INT UNSIGNED NOT NULL auto_increment,
+  grp_name VARCHAR(64) NOT NULL,
+  PRIMARY KEY (grp_id)
 ) $TABLE_TYPE;
 
 
@@ -582,13 +599,15 @@ CREATE TABLE gw_grp (
 # Table structure for table 'lcr'
 #
 CREATE TABLE lcr (
+  id int(10) NOT NULL auto_increment,
   prefix varchar(16) NOT NULL,
   from_uri varchar(128) DEFAULT NULL,
   grp_id INT UNSIGNED NOT NULL,
   priority TINYINT UNSIGNED NOT NULL,
   KEY (prefix),
   KEY (from_uri),
-  KEY (grp_id)
+  KEY (grp_id),
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 
 
@@ -596,7 +615,7 @@ CREATE TABLE lcr (
 # Table structure for table 'siptrace'
 #
 CREATE TABLE sip_trace (
-  id bigint(20) NOT NULL auto_increment,
+  id int(10) NOT NULL auto_increment,
   date datetime NOT NULL default '0000-00-00 00:00:00',
   callid varchar(254) NOT NULL default '',
   traced_user varchar(128) NOT NULL default '',
@@ -607,11 +626,11 @@ CREATE TABLE sip_trace (
   toip varchar(50) NOT NULL default '',
   fromtag varchar(64) NOT NULL default '',
   direction varchar(4) NOT NULL default '',
-  PRIMARY KEY  (id),
   INDEX user_idx (traced_user),
   INDEX date_id (date),
   INDEX ip_idx (fromip),
-  KEY call_id (callid)
+  KEY call_id (callid),
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
@@ -619,7 +638,7 @@ CREATE TABLE sip_trace (
 # Table structure for table 'address'
 #
 CREATE TABLE address (
-  id bigint(20) NOT NULL auto_increment,
+  id int(10) NOT NULL auto_increment,
   grp smallint(5) unsigned NOT NULL default '0',
   ip_addr varchar(15) NOT NULL,
   mask tinyint NOT NULL default 32,
@@ -632,10 +651,12 @@ CREATE TABLE address (
  * Table structure for table 'pdt'
  */
 CREATE TABLE pdt (
+  id int(10) NOT NULL auto_increment,
   sdomain varchar(255) NOT NULL,
   prefix varchar(32) NOT NULL,
   domain varchar(255) NOT NULL DEFAULT '',
-  PRIMARY KEY (sdomain, prefix)
+  UNIQUE KEY sp_pdt (sdomain, prefix),
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 
 
@@ -643,14 +664,15 @@ CREATE TABLE pdt (
 # domainpolicy table (see README domainpolicy module)
 #
 CREATE TABLE domainpolicy (
- id             INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
- rule           VARCHAR(255) NOT NULL,
- type           VARCHAR(255) NOT NULL,
- att            VARCHAR(255),
- val            VARCHAR(255),
- comment        VARCHAR(255),
- UNIQUE         (rule, att, val),
- INDEX          rule_idx (rule)
+  id INT(10) NOT NULL AUTO_INCREMENT,
+  rule VARCHAR(255) NOT NULL,
+  type VARCHAR(255) NOT NULL,
+  att VARCHAR(255),
+  val VARCHAR(255),
+  comment VARCHAR(255),
+  UNIQUE (rule, att, val),
+  INDEX  rule_idx (rule),
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 EOF
 

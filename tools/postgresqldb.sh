@@ -397,6 +397,7 @@ CREATE INDEX mc_callid_indx ON missed_calls (callid);
  * Table structure for table 'location' -- that is persistent UsrLoc
  */
 CREATE TABLE location (
+  id $AUTO_INCREMENT,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
@@ -411,9 +412,9 @@ CREATE TABLE location (
   cflags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
-  methods int default NULL,
-  PRIMARY KEY($USERCOL, domain, contact)
+  methods int default NULL
 ) $TABLE_TYPE;
+CREATE INDEX location_udc_indx ON location ($USERCOL, domain, contact);
 
 
 /*
@@ -421,6 +422,7 @@ CREATE TABLE location (
  * (aliases_contact index makes lookup of missed calls much faster)
  */
 CREATE TABLE aliases (
+  id $AUTO_INCREMENT,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
@@ -436,15 +438,15 @@ CREATE TABLE aliases (
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   methods int default NULL,
-  PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
-CREATE INDEX aliases_contact_indx ON aliases (contact);
+CREATE INDEX aliases_udc_indx ON aliases ($USERCOL, domain, contact);
 
 
 /*
  * DB aliases
  */
 CREATE TABLE dbaliases (
+  id $AUTO_INCREMENT,
   alias_username varchar(64) NOT NULL default '',
   alias_domain varchar(128) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
@@ -459,11 +461,12 @@ CREATE INDEX alias_user_indx ON dbaliases ($USERCOL, domain);
  * table; used primarily for ACLs
  */
 CREATE TABLE grp (
+  id $AUTO_INCREMENT,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
   last_modified $TIMESTAMP,
-  PRIMARY KEY($USERCOL, domain, grp)
+  UNIQUE ($USERCOL, domain, grp)
 ) $TABLE_TYPE;
 
 
@@ -472,37 +475,38 @@ CREATE TABLE grp (
  * based on regular expressions
  */
 CREATE TABLE re_grp (
+  id $AUTO_INCREMENT,
   reg_exp varchar(128) NOT NULL default '',
   group_id int NOT NULL default '0',
-  UNIQUE (reg_exp)
 ) $TABLE_TYPE;
+CREATE INDEX gid_grp_indx ON re_grp (group_id);
 
 
 /*
  * "instant" message silo
  */
 CREATE TABLE silo(
-    mid $AUTO_INCREMENT,
-    src_addr varchar(255) NOT NULL DEFAULT '',
-    dst_addr varchar(255) NOT NULL DEFAULT '',
-    $USERCOL varchar(64) NOT NULL DEFAULT '',
-    domain varchar(128) NOT NULL DEFAULT '',
-    inc_time INTEGER NOT NULL DEFAULT 0,
-    exp_time INTEGER NOT NULL DEFAULT 0,
-    snd_time INTEGER NOT NULL DEFAULT 0,
-    ctype varchar(32) NOT NULL DEFAULT 'text/plain',
-    body TEXT NOT NULL DEFAULT ''
+  id $AUTO_INCREMENT,
+  src_addr varchar(255) NOT NULL DEFAULT '',
+  dst_addr varchar(255) NOT NULL DEFAULT '',
+  $USERCOL varchar(64) NOT NULL DEFAULT '',
+  domain varchar(128) NOT NULL DEFAULT '',
+  inc_time INTEGER NOT NULL DEFAULT 0,
+  exp_time INTEGER NOT NULL DEFAULT 0,
+  snd_time INTEGER NOT NULL DEFAULT 0,
+  ctype varchar(32) NOT NULL DEFAULT 'text/plain',
+  body TEXT NOT NULL DEFAULT '',
 ) $TABLE_TYPE;
-
 CREATE INDEX silo_idx ON silo($USERCOL, domain);
 
 /*
  * Table structure for table 'domain' -- domains proxy is responsible for
  */
 CREATE TABLE domain (
+  id $AUTO_INCREMENT,
   domain varchar(128) NOT NULL default '',
   last_modified $TIMESTAMP,
-  PRIMARY KEY  (domain)
+  UNIQUE (domain)
 ) $TABLE_TYPE;
 
 
@@ -510,11 +514,12 @@ CREATE TABLE domain (
  * Table structure for table 'uri' -- uri user parts users are allowed to use
  */
 CREATE TABLE uri (
+  id $AUTO_INCREMENT,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   uri_user varchar(50) NOT NULL default '',
   last_modified $TIMESTAMP,
-  PRIMARY KEY ($USERCOL, domain, uri_user)
+  UNIQUE ($USERCOL, domain, uri_user)
 ) $TABLE_TYPE;
 
 
@@ -531,9 +536,9 @@ CREATE TABLE usr_preferences (
   type int NOT NULL default '0',
   modified $TIMESTAMP
 ) $TABLE_TYPE;
-
 CREATE INDEX ua_idx ON usr_preferences(uuid,attribute);
 CREATE INDEX uda_idx ON usr_preferences($USERCOL,domain,attribute);
+
 
 /*
  * Table structure for table trusted
@@ -545,14 +550,14 @@ CREATE TABLE trusted (
   from_pattern varchar(64) default NULL,
   tag varchar(32) default NULL
 ) $TABLE_TYPE;
-
 CREATE INDEX ip_addr ON trusted(src_ip);
+
 
 /*
  * Table structure for table 'speed_dial'
  */
 CREATE TABLE speed_dial (
-  uuid varchar(64) NOT NULL default '',
+  id $AUTO_INCREMENT,
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   sd_username varchar(64) NOT NULL default '',
@@ -561,7 +566,7 @@ CREATE TABLE speed_dial (
   fname varchar(128) NOT NULL default '',
   lname varchar(128) NOT NULL default '',
   description varchar(64) NOT NULL default '',
-  PRIMARY KEY  ($USERCOL,domain,sd_domain,sd_username)
+  UNIQUE ($USERCOL,domain,sd_domain,sd_username)
 ) $TABLE_TYPE;
 
 
@@ -569,6 +574,7 @@ CREATE TABLE speed_dial (
  * Table structure for table 'gw' (lcr module)
  */
 CREATE TABLE gw (
+  id $AUTO_INCREMENT,
   gw_name varchar(128) NOT NULL,
   grp_id INT CHECK (grp_id > 0) NOT NULL,
   ip_addr BIGINT CHECK (ip_addr > 0 AND ip_addr < 4294967296) NOT NULL,
@@ -577,7 +583,7 @@ CREATE TABLE gw (
   transport SMALLINT CHECK (transport >= 0 and transport < 256),
   strip SMALLINT CHECK (strip >= 0),
   prefix varchar(16) default NULL,
-  PRIMARY KEY (gw_name)
+  UNIQUE (gw_name)
 );
 CREATE INDEX gw_grp_id_indx ON gw (grp_id);
 
@@ -595,6 +601,7 @@ CREATE TABLE gw_grp (
  * Table structure for table 'lcr' (lcr module)
  */
 CREATE TABLE lcr (
+  id $AUTO_INCREMENT,
   prefix varchar(16) NOT NULL,
   from_uri varchar(128) DEFAULT NULL,
   grp_id INT CHECK (grp_id > 0) NOT NULL,
@@ -640,10 +647,11 @@ CREATE INDEX callid_idx ON sip_trace (callid);
 * Table structure for table 'address'
 */
 CREATE TABLE address (
- id $AUTO_INCREMENT,
- grp smallint NOT NULL default '0',
- ip_addr varchar(15) NOT NULL default '',
- port smallint NOT NULL default '0'
+  id $AUTO_INCREMENT,
+  grp smallint NOT NULL default '0',
+  ip_addr varchar(15) NOT NULL default '',
+  mask tinyint NOT NULL default 32,
+  port smallint NOT NULL default '0'
 ) $TABLE_TYPE; 
 
 
@@ -651,10 +659,11 @@ CREATE TABLE address (
  * Table structure for table 'pdt'
  */
 CREATE TABLE pdt (
-        sdomain varchar(255) NOT NULL,
-        prefix varchar(32) NOT NULL,
-        domain varchar(255) NOT NULL DEFAULT '',
-        PRIMARY KEY (sdomain, prefix)
+  id $AUTO_INCREMENT,
+  sdomain varchar(255) NOT NULL,
+  prefix varchar(32) NOT NULL,
+  domain varchar(255) NOT NULL DEFAULT '',
+  UNIQUE (sdomain, prefix)
 ) $TABLE_TYPE;
 
 
@@ -662,13 +671,13 @@ CREATE TABLE pdt (
  * domainpolicy table (see README domainpolicy module)
  */
 CREATE TABLE domainpolicy (
- id             SERIAL PRIMARY KEY ,
- rule           VARCHAR(255) NOT NULL,
- type           VARCHAR(255) NOT NULL,
- att            VARCHAR(255),
- val            VARCHAR(255),
- comment        VARCHAR(255),
- UNIQUE ( rule, att, val )
+  id $AUTO_INCREMENT,
+  rule VARCHAR(255) NOT NULL,
+  type VARCHAR(255) NOT NULL,
+  att VARCHAR(255),
+  val VARCHAR(255),
+  comment VARCHAR(255),
+  UNIQUE ( rule, att, val )
 );
 CREATE INDEX domainpolicy_rule_idx ON domainpolicy(rule);
 
