@@ -30,7 +30,6 @@
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
 #include "flatstore.h"
-#include "flat_fifo.h"
 #include "flat_mi.h"
 #include "flatstore_mod.h"
 
@@ -116,12 +115,6 @@ static int mod_init(void)
 {
 	if (strlen(flat_delimiter) != 1) {
 		LOG(L_ERR, "flatstore:mod_init: Delimiter has to be exactly one character\n");
-		return -1;
-	}
-
-	     /* Initialize fifo interface */
-	if (init_flat_fifo() < 0) {
-		LOG(L_ERR, "flatstore: FIFO initialization failed\n");
 		return -1;
 	}
 

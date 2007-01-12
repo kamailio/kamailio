@@ -57,7 +57,6 @@
 #include "../../ip_addr.h"
 #include "../../mi/mi.h"
 #include "../mysql/dbase.h"
-#include "fifo.h"
 #include "mi.h"
 
 MODULE_VERSION
@@ -473,9 +472,6 @@ static int mod_init(void)
 				" lcr table (use openser_mysql.sh reinstall)\n");
 		goto err;
 	}		
-
-	/* Initialize fifo interface */
-	(void)init_lcr_fifo();
 
 	/* Initializing gw tables and gw table pointer variable */
 	gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) * (MAX_NO_OF_GWS + 1));
@@ -937,69 +933,6 @@ int reload_gws ( void )
     }
 
     return 1;
-}
-
-
-/* Print gateways stored in current gw table */
-void print_gws (FILE *reply_file)
-{
-        unsigned int i, prefix_len;
-	uri_transport transport;
-
-	for (i = 0; i < MAX_NO_OF_GWS; i++) {
-		if ((*gws)[i].ip_addr == 0) {
-			break;
-		}
-		fprintf(reply_file, "%d => ", i);
-		fprintf(reply_file, "%d:", (*gws)[i].grp_id);
-		if ((*gws)[i].scheme == SIP_URI_T) {
-		    fprintf(reply_file, "sip:");
-		} else {
-		    fprintf(reply_file, "sips:");
-		}
-		if ((*gws)[i].port == 0) {
-			fprintf(reply_file, "%d.%d.%d.%d",
-				((*gws)[i].ip_addr << 24) >> 24,
-				(((*gws)[i].ip_addr >> 8) << 24) >> 24,
-				(((*gws)[i].ip_addr >> 16) << 24) >> 24,
-				(*gws)[i].ip_addr >> 24);
-		} else {
-			fprintf(reply_file, "%d.%d.%d.%d:%d",
-				((*gws)[i].ip_addr << 24) >> 24,
-				(((*gws)[i].ip_addr >> 8) << 24) >> 24,
-				(((*gws)[i].ip_addr >> 16) << 24) >> 24,
-				(*gws)[i].ip_addr >> 24,
-				(*gws)[i].port);
-		}
-                transport = (*gws)[i].transport;
-                if (transport == PROTO_UDP) {
-		    fprintf(reply_file, ":udp");
-                } else  if (transport == PROTO_TCP) {
-		    fprintf(reply_file, ":tcp");
-                } else  if (transport == PROTO_TLS) {
-		    fprintf(reply_file, ":tls");
-		} else {
-		    fprintf(reply_file, ":");
-		}
-		fprintf(reply_file, ":%d", (*gws)[i].strip);
-		prefix_len = (*gws)[i].prefix_len;
-		if (prefix_len) {
-			fprintf(reply_file, ":%.*s\n",
-				(int)prefix_len, (*gws)[i].prefix);
-		} else {
-		    fprintf(reply_file, ":\n");
-		}
-	}
-	for (i = 0; i < MAX_NO_OF_LCRS; i++) {
-	    if ((*lcrs)[i].end_record != 0) {
-		break;
-	    }
-	    fprintf(reply_file, "%d => ", i);
-	    fprintf(reply_file, "%.*s",	(*lcrs)[i].prefix_len, (*lcrs)[i].prefix);
-	    fprintf(reply_file, ":%.*s", (*lcrs)[i].from_uri_len, (*lcrs)[i].from_uri);
-	    fprintf(reply_file, ":%u", (*lcrs)[i].grp_id);
-	    fprintf(reply_file, ":%u\n", (*lcrs)[i].priority);
-	}
 }
 
 

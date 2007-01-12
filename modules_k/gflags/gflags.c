@@ -59,7 +59,6 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../fifo_server.h"
 #include "../../mi/mi.h"
 
 MODULE_VERSION
@@ -172,96 +171,6 @@ static int is_gflag(struct sip_msg *bar, char *flag, char *foo)
 {
 	return ( (*gflags) & ((unsigned int)(long)flag)) ? 1 : -1;
 }
-
-
-
-/**************************** FIFO functions ******************************/
-static unsigned int read_flag(FILE *pipe, char *response_file)
-{
-	char flag_str[MAX_FLAG_LEN];
-	int flag_len;
-	unsigned int flag;
-	str fs;
-
-	if (!read_line(flag_str, MAX_FLAG_LEN, pipe, &flag_len) 
-			|| flag_len == 0) {
-		fifo_reply(response_file, "400: gflags: invalid flag number\n");
-		LOG(L_ERR, "ERROR:gflags:read_flag: invalid flag number\n");
-		return 0;
-	}
-
-	fs.s=flag_str;fs.len=flag_len;
-	if (str2int(&fs, &flag) < 0) {
-		fifo_reply(response_file, "400: gflags: invalid flag format\n");
-		LOG(L_ERR, "ERROR:gflags:read_flag: invalid flag format\n");
-		return 0;
-	}
-
-	if ( flag >= 8*sizeof(*gflags) ) {
-		fifo_reply(response_file, "400: gflags: flag out of range\n");
-		LOG(L_ERR, "ERROR:gflags:read_flag: flag out of range\n");
-		return 0;
-	}
-	/* convert from flag index to flag bitmap */
-	flag = 1 << flag;
-	return flag;
-}
-
-
-static int fifo_set_gflag( FILE* pipe, char* response_file )
-{
-	unsigned int flag;
-
-	flag=read_flag(pipe, response_file);
-	if (!flag) {
-		LOG(L_ERR, "ERROR:gflags:fifo_set_gflag: failed in read_flag\n");
-		return 1;
-	}
-
-	(*gflags) |= flag;
-	fifo_reply (response_file, "200 OK\n");
-	return 1;
-}
-
-
-static int fifo_reset_gflag( FILE* pipe, char* response_file )
-{
-	unsigned int flag;
-
-	flag=read_flag(pipe, response_file);
-	if (!flag) {
-		LOG(L_ERR, "ERROR:gflags:fifo_reset_gflag: failed in read_flag\n");
-		return 1;
-	}
-
-	(*gflags) &= ~ flag;
-	fifo_reply (response_file, "200 OK\n");
-	return 1;
-}
-
-
-static int fifo_is_gflag( FILE* pipe, char* response_file )
-{
-	unsigned int flag;
-
-	flag=read_flag(pipe, response_file);
-	if (!flag) {
-		LOG(L_ERR, "ERROR:gflags:fifo_reset_gflag: failed in read_flag\n");
-		return 1;
-	}
-
-	fifo_reply (response_file, "200 OK\n%s\n", 
-			((*gflags) & flag) ? "TRUE" : "FALSE" );
-	return 1;
-}
-
-
-static int fifo_get_gflags( FILE* pipe, char* response_file )
-{
-	fifo_reply (response_file, "200 OK\n0x%X\n%u\n", (*gflags),(*gflags));
-	return 1;
-}
-
 
 
 /************************* MI functions *******************************/
@@ -388,23 +297,6 @@ static int mod_init(void)
 		return -1;
 	}
 	*gflags=initial;
-	if (register_fifo_cmd(fifo_set_gflag, FIFO_SET_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
-		return -1;
-	}
-	if (register_fifo_cmd(fifo_reset_gflag, FIFO_RESET_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_RESET_GFLAG\n");
-		return -1;
-	}
-	if (register_fifo_cmd(fifo_is_gflag, FIFO_IS_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
-		return -1;
-	}
-	if (register_fifo_cmd(fifo_get_gflags, FIFO_GET_GFLAGS, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
-		return -1;
-	}
-
 	return 0;
 }
 
