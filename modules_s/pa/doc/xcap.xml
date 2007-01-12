@@ -51,17 +51,26 @@ actions for them.)
 </section>
 
 <section><title>Presence authorization document URI</title>
+
 <para>Authorization documents are read for presentities according to their presentity
-URIs. Presentity URI is AOR of SUBSCRIBE request. Resulting URI will be:</para>
+URIs (presentity URI is URI in To header of SUBSCRIBE request). Resulting XCAP URI with
+authorization document is:</para>
 <para>
-<filename>&lt;xcap-root&gt;/pres-rules/users/&lt;username&gt;/presence-rules.xml</filename>
+<filename>&lt;xcap-root&gt;/pres-rules/users/&lt;username&gt;/presence-rules.xml</filename>,
+</para>
+<para>
 where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration of XCAP
 module and
 <parameter>&lt;username&gt;</parameter> is UUID (unique user identification used
-in SER everywhere) discovered from presentity URI. If you need to use other
+in SER everywhere) discovered from presentity URI.</para> 
+
+<para>If you need to use other
 filename than default <quote>presence-rules.xml</quote>, you can redefine it by
-parameter <parameter>pres_rules_file</parameter>.
+parameter <parameter>pres_rules_file</parameter>. Problem can be, that
+<parameter>pres_rules_file</parameter> is specified as module parameter and thus
+common for all users.
 </para>
+
 <example><title>presence authorization document uri</title>
 <para>For example for presentity <literal>sip:joe@iptel.org</literal> with
 UUID <quote>joe</quote> and <parameter>xcap-root</parameter>
@@ -70,6 +79,7 @@ authorization document
 <filename>http://localhost/xcap-root/pres-rules/users/joe/presence-rules.xml</filename>
 </para>
 </example>
+
 </section>
 
 <section><title>Message authorization documents</title>
@@ -138,6 +148,18 @@ incompliances now:
 	<listitem><para>ignored sphere</para></listitem>
 	<listitem><para>ignored date and time conditions</para></listitem>
 	<listitem><para>ignored transformations</para></listitem>
+	<listitem><para>Presentity URI is taken from To header field instead of AOR
+	because AOR in consequent SUBSCRIBE requests is set to "contact to server
+	URI" instead of user's URI (RFCs contradict themselves).</para></listitem>
+	<listitem><para>We use UUID instead of whole presentity URI as
+	<parameter>&lt;username&gt;</parameter> due to possibility of using 
+	the same authorization document for more user's aliases (TODO: control this by module
+	parameter?).</para></listitem>
+	<listitem><para>According to current presence authorization draft should
+	presence server look for ALL authorization documents within user's directory
+	on XCAP server, but listing documents on XCAP server is NOT
+	defined. This will be partialy solved in future by possibility of having
+	list of authorization documents as user's attributes.</para></listitem>
 </itemizedlist>
 </para>
 </section>

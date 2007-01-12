@@ -60,7 +60,7 @@
 	</section>
 	
 	<section><title>Presence status</title>
-	<para>User's presence status is hold internaly; it can be taken from:
+	<para>User's presence status is hold internaly (in memory); it can be taken from:
 	<itemizedlist>
 		<listitem><para>registrar - online/offline information with
 		contact</para></listitem>
@@ -70,6 +70,10 @@
 		<listitem><para>to be done: from subscriptions to users</para></listitem>
 	</itemizedlist>
 	</para>
+	<para>TODO: cache mode needed by large setups, when the presence status
+	will be in memory only cached, not fully stored (limited size of cache,
+	possibility to switch it off). [status: design in progress, coding will
+	start after	Ottendorf will be branched]</para>
 	</section>
 
 	<section><title>Supported document formats</title>
@@ -121,12 +125,51 @@
 <para>Short notes to be remembered...
 </para>
 
-<para>Authorization and re-authorization is done by timer - authorization document
-queries for each presentity are sent time after time and all presentity's
-watchers are reauthorized.
-This is due to absence of notification mechanism for XCAP server data
-changes (might be implemented in the future).
+<!--
+
+<para>Authorization and re-authorization can be done in two ways:
+<itemizedlist>
+	<listitem><para>asynchronously by timer - recommended for higher performance</para></listitem>
+	<listitem><para>synchronously - always when processing SUBSCRIBE request.
+	This can slow down the processing of SUBSCRIBE request quite much and
+	watcher reauthorization is done only when resubscribing which can be
+	insufficient.</para></listitem>
+</itemizedlist>
+
+-->
+
+<para>There are two possibilities how to get authorization rules from XCAP when
+creating new presentity (controled by module parameter
+<parameter>async_auth_queries</parameter>):
+<itemizedlist>
+	<listitem><para>asynchronously - XCAP is not queried when processing SUBSCRIBE
+	request which created presentity what results into 202 response and delayed
+	authorization of such first watcher. First NOTIFY in this case will carry no
+	information and "pending" status; later (as soon as will be authorization
+	rules got from XCAP) will be generated
+	other NOTIFY with correct authorization status.</para></listitem>
+	<listitem><para>synchronously - XCAP is queried for presence rules immediately,
+	but this slows down processing of such SUBSCRIBE request and may bring
+	problems under heavy load so it is not recommended. In this case first
+	NOTIFY contains correct subscription status and data.</para></listitem>
+</itemizedlist>
 </para>
+
+<para>Other SUBSCRIBE requests than the first one which creates the presentity
+already have authorization document which is stored within presentity's data and
+don't need to wait for XCAP. But this can consume lots of memory [TODO: this
+will be solved by intelligent document caching within XCAP module only].</para> 
+
+<para>Re-authorization is done by timer - authorization document queries for
+each presentity are sent time after time and all presentity's watchers are
+reauthorized.  This is due to missing implementation of notification mechanism
+for XCAP server data changes (might be implemented in the future, but XCAP
+server able to do it is needed!).</para>
+
+<para>One of reasons which lead to timer-based reauthorization was that previous
+method, when reauthorization was done only when watcher is resubscribing, was
+not acceptable for users which want to propagate changes in authorization
+document immediately.</para>
 
 <para>When a non-2xx final response to a NOTIFY comes, the subscription is
 destroyed (really needed under high load). It is possible to say that 408
@@ -154,20 +197,24 @@ only.
 	<listitem><para>State published by clients using PUBLISH request according
 	to RFC 3903. There can be more published tuples, each of them is identified
 	by its id in PIDF document. This id is used for tuple identification in
-	re-publications, but it is NOT used as identification in internal state and thus
-	in NOTIFYs sent to watchers too! It is NOT possible to replace existing tuple with
+	re-publications, but it is NOT used as id in NOTIFYs sent from PA. Instead
+	of it is used newly generated tuple id because this id must be
+	unique (across all presentity's UACs).</para>
+	<para>It is NOT possible to replace existing tuple with
 	publishing information for tuple with the same id - this would be against
 	RFC 3903! When publishing status it is only possible to have influence on
 	tuples published with the same entity tag (see Sip-If-Match and SIP-ETag
 	header fields).</para>
-	<para>Not only tuples can be published. You can publish whatever PIDF
-	documents including &lt;note&gt; elements etc. But only basic PIDF is
-	understood; extension elements like RPID elements are remembered and
-	present in sent NOTIFYs but PA doesn't try to understand them.
-	</para>
+	
+	<para>PA understoods only basic PIDF, but it can handle PIDF extensions like
+	RPID too. PIDF extensions are hold as whole XML elements without knowing
+	about their definition and thus publishing client is responsible for correct
+	content of them. PA ignores "mustUnderstand" attribute (see <xref
+	linkend="pres_rfc_pidf"/>). [Are there any problems with it?]</para>
+	
 	<para>You can control this source by PUBLISH request handling in config
-	script.
-	</para>
+	script (function <function>handle_publish</function>).</para>
+	
 	</listitem></varlistentry>
 
 <!--
@@ -186,7 +233,9 @@ only.
     <include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
     <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
-	
+
+<!--
 <section><title>Development</title>
 <include xmlns="http://www.w3.org/2001/XInclude" href="auth.xml"/>
 </section>
+-->

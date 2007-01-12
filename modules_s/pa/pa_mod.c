@@ -215,14 +215,15 @@ static param_export_t params[]={
 	
 	{"default_priority_percentage", PARAM_INT,    &default_priority_percentage  },
 	
+	{"auth_rules_refresh_time", PARAM_INT, &auth_rules_refresh_time },
+	{"async_auth_queries", PARAM_INT, &async_auth_queries },
+	{"max_auth_requests_per_tick", PARAM_INT, &max_auth_requests_per_tick },
+	
 	/* experimental, undocumented */
 	{"subscribe_to_users",   PARAM_INT,    &subscribe_to_users },
 	{"pa_subscription_uri",  PARAM_STR,    &pa_subscription_uri },
 	
 	/* undocumented still (TODO) */
-	{"auth_rules_refresh_time", PARAM_INT, &auth_rules_refresh_time },
-	{"async_auth_queries", PARAM_INT, &async_auth_queries },
-	{"max_auth_requests_per_tick", PARAM_INT, &max_auth_requests_per_tick },
 	{"presentity_table",     PARAM_STRING, &presentity_table     },
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },

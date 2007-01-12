@@ -26,4 +26,22 @@ ROOT_DIR=../../..
 #
 #TXT_XSL=$(XHTML_XSL)
 
+# all:	pa_base.xml
+# 
+# #pa.xhtml: pa_base.xml
+# pa.xhtml: pa.xml
+# 
+# pa.xml: pa_base.xml
+# 		@touch pa.xml
+# 
+
+EXTRA_DEPS = pa_base.xml
+
 include $(ROOT_DIR)/Makefile.doc
+
+
+
+
+
+all:	pa_base.xml
+

@@ -1,3 +1,6 @@
+2006-01-12
+	* updated module documentation
+
 2006-12-14
 	* corrected typing error in column name
 	* corrected bug - tuple extensions were not stored into database

@@ -145,7 +145,7 @@ modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 			<term>xcap</term>
 			<listitem><para>This type of authorization means, that authorization rules
 			are read from XCAP server and processed <xref linkend="pres_draft_auth"/>.
-			In this case the <varname>auth_xcap_root</varname> must be set.</para></listitem>
+			In this case the <application>xcap</application> module must be loaded.</para></listitem>
 		</varlistentry>
 		</variablelist>
 		</para>
@@ -182,15 +182,21 @@ modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 <varlistentry>
 	<term>pres_rules_file</term>
 	<listitem><para>Name of the file with presence rules on XCAP server. The filename is
-	by default <quote>presence-rules.xml</quote>.
+	by default <quote>presence-rules.xml</quote>. It is common for all
+	subscriptions/users which seems to be insufficient. It will be replaced by
+	holding this information for each user separately in user attributes (TODO).
 	</para></listitem>
 </varlistentry>
 
 <varlistentry>
 	<term>ignore_408_on_notify</term>
 	<listitem><para>If set to 1 the 408 response to NOTIFY is ignored, otherwise
-	all 4xx responses including 408 destroys the subscription. Default value is 0.
-	</para></listitem>
+	all 4xx responses including 408 destroys the subscription.</para>
+	<para>Reason for this parameter is that some clients are not able to process
+	two NOTIFY requests received shortly in sequence and unresponded NOTIFY
+	resulting in generated 408 response destroyed subscription created by
+	them.</para>
+	<para>Default value is 0.</para></listitem>
 </varlistentry>
 
 <varlistentry>
@@ -205,6 +211,29 @@ modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 	<listitem><para>Priority value used for tuples created by registration in
 	percents. Default value is 0.
 	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>auth_rules_refresh_time</term>
+	<listitem><para>Time interval specifying amount of time between re-reading
+	of authorization documents stored on XCAP server. In other words it means
+	the time interval of subscription reauthorization.</para>
+	<para>Default value is 300.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>async_auth_queries</term>
+	<listitem><para>Set to 1 if you want to use asynchronous XCAP queries
+	(recommended), 0 otherwise.</para>
+	<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>max_auth_requests_per_tick</term>
+	<listitem><para>Maximum number of asynchronous XCAP requests done at once
+	(within one second).</para>
+	<para>Default value is 600.</para></listitem>
 </varlistentry>
 
 </variablelist>

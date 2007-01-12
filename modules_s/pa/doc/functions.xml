@@ -32,6 +32,12 @@ handle_subscription("registrar");
 </varlistentry>
 
 <varlistentry>
+	<term><varname>handle_publish(domain)</varname></term>
+	<listitem><para>Processes PUBLISH request and generates response to it.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
 	<term><varname>target_online(domain)</varname></term>
 	<listitem><para>This function returns 1 if the target (using get_to_uid on
 	current message) is online, -1 otherwise.
