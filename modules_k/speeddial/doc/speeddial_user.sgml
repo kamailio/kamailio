@@ -250,26 +250,6 @@ if(uri=~"sip:[0-9]{2}@.*")
 	</section>
 	<section>
 	<title>Installation & Running</title>
-	<section>
-		<title>Database setup</title>
-		<para>
-		Before using speeddial module, you have to create the database table 
-		where the short dial addresses are stored. If the table was not 
-		created at the installation time, you can use the following 
-		<acronym>SQL</acronym> script (tested with MySQL) as template. 
-		Database, the table name, and column names can be set with module 
-		parameters so they can be changed.
-		</para>
-		<example>
-		<title>speeddial sql script</title>
-		<programlisting format="linespecific">
-...
-&speeddialsql;
-...
-</programlisting>
-		</example>
-		</section>
-
 		<section>
 		<title>&ser; config file</title>
 		<para>

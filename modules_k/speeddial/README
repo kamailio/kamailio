@@ -38,8 +38,7 @@ Elena-Ramona Modroiu
 
         1.5. Installation & Running
 
-              1.5.1. Database setup
-              1.5.2. OpenSER config file
+              1.5.1. OpenSER config file
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -54,8 +53,7 @@ Elena-Ramona Modroiu
    1-7. Set domain_prefix parameter
    1-8. Set use_domain parameter
    1-9. sd_lookup usage
-   1-10. speeddial sql script
-   1-11. OpenSER config script - sample speeddial usage
+   1-10. OpenSER config script - sample speeddial usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -221,35 +219,11 @@ if(uri=~"sip:[0-9]{2}@.*")
 
 1.5. Installation & Running
 
-1.5.1. Database setup
-
-   Before using speeddial module, you have to create the database
-   table where the short dial addresses are stored. If the table
-   was not created at the installation time, you can use the
-   following SQL script (tested with MySQL) as template.
-   Database, the table name, and column names can be set with
-   module parameters so they can be changed.
-
-   Example 1-10. speeddial sql script
-...
-CREATE TABLE speed_dial (
-  username varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  sd_username varchar(64) NOT NULL default '',
-  sd_domain varchar(128) NOT NULL default '',
-  new_uri varchar(192) NOT NULL default '',
-  description varchar(64) NOT NULL default '',
-  PRIMARY KEY (username, domain, sd_domain, sd_username)
-);
-
-...
-     _________________________________________________________
-
-1.5.2. OpenSER config file
+1.5.1. OpenSER config file
 
    Next picture displays a sample usage of speeddial.
 
-   Example 1-11. OpenSER config script - sample speeddial usage
+   Example 1-10. OpenSER config script - sample speeddial usage
 ...
 #
 # $Id$
