@@ -214,11 +214,12 @@ int sl_send_reply(struct sip_msg *msg ,int code ,str *text)
 	ret = msg_send( msg->rcv.bind_address, msg->rcv.proto, &to,
 			msg->rcv.proto_reserved1, buf.s, buf.len);
 	mhomed=backup_mhomed;
-	if (ret<0) 
+	pkg_free(buf.s);
+
+	if (ret<0)
 		goto error;
 
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
-	pkg_free(buf.s);
 
 	update_sl_reply_stat(code);
 
