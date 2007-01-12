@@ -77,7 +77,7 @@ ifeq ($(VALIDATE), 0)
 	override XSLTPROC_FLAGS := $(XSLTPROC_FLAGS) --novalid
 endif
 
-alldep = Makefile $(ROOT_DIR)/Makefile.doc $(DEP_XSL)
+alldep = Makefile $(ROOT_DIR)/Makefile.doc $(DEP_XSL) $(EXTRA_DEPS)
 
 all: xhtml
 
