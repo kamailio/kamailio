@@ -60,10 +60,7 @@ Anca-Maria Vamanu
    1-11. Set max_expires parameter
    1-12. handle_publish usage
    1-13. handle_subscribe usage
-   1-14. Create presentity database table
-   1-15. Create active_watchers database table
-   1-16. Create watchers database table
-   1-17. Create xcap_xml database table
+   1-14. PRESENCE tables
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -295,9 +292,13 @@ if(method=="SUBSCRIBE")
    The module requires 4 table in OpenSER database. Next SQL
    statements shows the syntax to create them.
 
-   Example 1-14. Create presentity database table
+   Example 1-14. PRESENCE tables
 ...
+
+use openser;
+
 CREATE TABLE `presentity` (
+  `id` int(10) NOT NULL auto_increment,
   `username` varchar(64) NOT NULL,
   `domain` varchar(124) NOT NULL,
   `event` varchar(64) NOT NULL,
@@ -305,13 +306,13 @@ CREATE TABLE `presentity` (
   `expires` int(11) NOT NULL,
   `received_time` int(11) NOT NULL,
   `body` text NOT NULL,
-  PRIMARY KEY  (`username`,`domain`,`event`,`etag`)
+  UNIQUE KEY udee_presentity (`username`,`domain`,`event`,`etag`),
+  PRIMARY KEY (id)
 ) ENGINE=MyISAM;
-...
 
-   Example 1-15. Create active_watchers database table
-...
+
 CREATE TABLE `active_watchers` (
+  `id` int(10) NOT NULL auto_increment,
   `to_user` varchar(64) NOT NULL,
   `to_domain` varchar(128) NOT NULL,
   `from_user` varchar(64) NOT NULL,
@@ -327,13 +328,13 @@ CREATE TABLE `active_watchers` (
   `expires` int(11) NOT NULL,
   `status` varchar(32) NOT NULL default 'pending',
   `version` int(11) NOT NULL default '0',
-  PRIMARY KEY  (`from_tag`)
+  UNIQUE KEY ft_watchers (`from_tag`),
+  PRIMARY KEY (id)
 ) ENGINE=MyISAM;
-...
 
-   Example 1-16. Create watchers database table
-...
+
 CREATE TABLE `watchers` (
+  `id` int(10) NOT NULL auto_increment,
   `p_user` varchar(64) NOT NULL,
   `p_domain` varchar(128) NOT NULL,
   `w_user` varchar(64) NOT NULL,
@@ -341,19 +342,22 @@ CREATE TABLE `watchers` (
   `subs_status` varchar(64) NOT NULL,
   `reason` varchar(64) NOT NULL,
   `inserted_time` int(11) NOT NULL,
-  PRIMARY KEY  (`p_user`,`p_domain`,`w_user`,`w_domain`)
+  UNIQUE KEY udud_watchers (`p_user`,`p_domain`,`w_user`,`w_domain`),
+  PRIMARY KEY (id)
 ) ENGINE=MyISAM;
-...
 
-   Example 1-17. Create xcap_xml database table
-...
+
+
 CREATE TABLE `xcap_xml` (
+  `id` int(10) NOT NULL auto_increment,
   `user` varchar(66) NOT NULL,
   `domain` varchar(128) NOT NULL,
   `xcap` text NOT NULL,
   `doc_type` varchar(64) NOT NULL,
-  PRIMARY KEY  (`user`,`domain`,`doc_type`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+  UNIQUE KEY udd_xcap (`user`,`domain`,`doc_type`),
+  PRIMARY KEY (id)
+) ENGINE=MyISAM;
+
 ...
      _________________________________________________________
 

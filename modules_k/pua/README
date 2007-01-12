@@ -48,7 +48,7 @@ Anca-Maria Vamanu
    1-4. Set min_expires parameter
    1-5. Set default_expires parameter
    1-6. Set update_period parameter
-   1-7. Create pua database table
+   1-7. PUA tables
    2-1. pua_api structure
      _________________________________________________________
 
@@ -178,8 +178,11 @@ modparam("pua", "update_period", 100)
    The module requires a new table in OpenSER database. Next SQL
    statement shows the syntax to create it.
 
-   Example 1-7. Create pua database table
+   Example 1-7. PUA tables
 ...
+
+use openser;
+
 CREATE TABLE pua (
   id int(10) unsigned NOT NULL auto_increment,
   pres_uri varchar(128) NOT NULL,
@@ -194,7 +197,9 @@ CREATE TABLE pua (
   from_tag varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
   PRIMARY KEY  (`id`)
-)
+) ENGINE=MyISAM;
+
+
 ...
      _________________________________________________________
 

@@ -14,19 +14,20 @@
 	<section>
 	<title>Overview</title>
 	<para> The modules implements a presence server. It handles PUBLISH
-   and SUBSCRIBE messages and generates NOTIFY messages. It
-   offers support for aggregation of published presence
-   information for the same presentity using more devices. It can
-   also filter the information provided to watchers according to
-   privacy rules.
-			</para>
+	and SUBSCRIBE messages and generates NOTIFY messages. It
+	offers support for aggregation of published presence
+	information for the same presentity using more devices. It can
+	also filter the information provided to watchers according to
+	privacy rules.
+	</para>
 	<para>
-	The modules works with database storage. It stores published information and 
-	Subscribe -Notify dialog characteristics. There is also an extra table
+	The modules works with database storage. It stores published information 
+	and Subscribe -Notify dialog characteristics. There is also an extra table
 	which stores xcap documents with permission rules. 
 	</para>
 	<para>
-	The server follows the specifications in: RFC3265, RFC3856, RFC3857, RFC3858.
+	The server follows the specifications in: RFC3265, RFC3856, RFC3857, 
+	RFC3858.
 	</para>
 	</section>
 
@@ -122,7 +123,8 @@ modparam("presence", "presentity_table", "presentity");
 	<section>
 		<title><varname>active_watchers_table</varname>(str)</title>
 		<para>
-		The name of the db table where active subscription information are stored. 
+		The name of the db table where active subscription information are 
+		stored. 
 		</para>
 		<para>
 		<emphasis>	Default value is <quote>active_watchers</quote>.
@@ -219,7 +221,8 @@ modparam("presence", "totag_avpid", 987)
 	<section>
 		<title><varname>lock_set_size</varname> (int)</title>
 		<para>
-		The size of the lock used for synchronizing updating information from database.
+		The size of the lock used for synchronizing updating information 
+		from database.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>8</quote>.
@@ -260,10 +263,10 @@ modparam("presence", "expires_offset", 10)
 		<title><varname>force_active</varname> (int)</title>
 		<para>
 		This parameter offers the possibility to set either the first
-   Notify sent for a new subscribe should have the
-   Subscriptions-State value 'pending' or 'active'. If it is
-   different than 0, the Subscription-State value is 'active'.	
-   </para>
+		Notify sent for a new subscribe should have the
+		Subscriptions-State value 'pending' or 'active'. If it is
+		different than 0, the Subscription-State value is 'active'.	
+		</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
 		</emphasis>
@@ -281,7 +284,7 @@ modparam("presence", "force_active", 1)
 		<title><varname>max_expires</varname> (int)</title>
 		<para>
 		The value at which to reduce the validity of PUBLISH/SUBSCRIBE 
-		if the Expires in request is greater.	
+		if the Expires in request is greater.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>3600</quote>.
@@ -302,18 +305,18 @@ modparam("presence", "max_expires", 3600)
 
 <section>
 	<title>Exported Functions</title>
-		<section>
-				<title>
-				<function moreinfo="none">handle_publish()</function>
-				</title>
-			<para>
-				The function handles PUBLISH requests. It stores and updates presence
-				information in database and calls functions to send NOTIFY messages 
-				when changes in presence information occur.
-			</para>
-			<para>
-			This function can be used from REQUEST_ROUTE.
-			</para>
+	<section>
+		<title>
+		<function moreinfo="none">handle_publish()</function>
+		</title>
+		<para>
+		The function handles PUBLISH requests. It stores and updates 
+		presence information in database and calls functions to send 
+		NOTIFY messages when changes in presence information occur.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>handle_publish</function> usage</title>
 		<programlisting format="linespecific">
@@ -323,21 +326,20 @@ if(method=="PUBLISH")
 ...
 </programlisting>
 		</example>
+	</section>
 
-		</section>
-		
-		<section>
-			<title>
-			<function moreinfo="none">handle_subscribe()</function>
-			</title>
-			<para>
-			The function which handles SUBSCRIBE requests. It stores or updates 
-			information in database and calls functions to send Notify messages 
-			when a Subscribe which initiate a dialog is received
-			</para>
-			<para>
-			This function can be used from REQUEST_ROUTE.
-			</para>
+	<section>
+		<title>
+		<function moreinfo="none">handle_subscribe()</function>
+		</title>
+		<para>
+		The function which handles SUBSCRIBE requests. It stores or 
+		updates information in database and calls functions to send Notify 
+		messages when a Subscribe which initiate a dialog is received
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>handle_subscribe</function> usage</title>
 		<programlisting format="linespecific">
@@ -347,84 +349,23 @@ if(method=="SUBSCRIBE")
 ...
 </programlisting>
 		</example>
-		</section>	
-</section>		
+	</section>
+</section>
+
 <section>
 	<title>Installation</title>
 	<para>
 	The module requires 4 table in OpenSER database. Next SQL statements
 	shows the syntax to create them.
 	</para>
-		<example>
-		<title>Create <varname>presentity</varname> database table</title>
-		<programlisting format="linespecific">
-...
-CREATE TABLE `presentity` (
-  `username` varchar(64) NOT NULL,
-  `domain` varchar(124) NOT NULL,
-  `event` varchar(64) NOT NULL,
-  `etag` varchar(64) NOT NULL,
-  `expires` int(11) NOT NULL,
-  `received_time` int(11) NOT NULL,
-  `body` text NOT NULL,
-  PRIMARY KEY  (`username`,`domain`,`event`,`etag`)
-) ENGINE=MyISAM;
-...
-</programlisting>
 	<example>
-		<title>Create <varname>active_watchers</varname> database table</title>
-		<programlisting format="linespecific">
+	<title>PRESENCE tables</title>
+	<programlisting format="linespecific">
 ...
-CREATE TABLE `active_watchers` (
-  `to_user` varchar(64) NOT NULL,
-  `to_domain` varchar(128) NOT NULL,
-  `from_user` varchar(64) NOT NULL,
-  `from_domain` varchar(128) NOT NULL,
-  `event` varchar(64) NOT NULL default 'presence',
-  `event_id` varchar(64) NOT NULL,
-  `to_tag` varchar(128) NOT NULL,
-  `from_tag` varchar(128) NOT NULL,
-  `callid` varchar(128) NOT NULL,
-  `cseq` int(11) NOT NULL,
-  `contact` varchar(128) NOT NULL,
-  `record_route` varchar(255) NOT NULL,
-  `expires` int(11) NOT NULL,
-  `status` varchar(32) NOT NULL default 'pending',
-  `version` int(11) NOT NULL default '0',
-  PRIMARY KEY  (`from_tag`)
-) ENGINE=MyISAM;
+&sql;
 ...
 </programlisting>
-	<example>
-		<title>Create <varname>watchers</varname> database table</title>
-		<programlisting format="linespecific">
-...
-CREATE TABLE `watchers` (
-  `p_user` varchar(64) NOT NULL,
-  `p_domain` varchar(128) NOT NULL,
-  `w_user` varchar(64) NOT NULL,
-  `w_domain` varchar(128) NOT NULL,
-  `subs_status` varchar(64) NOT NULL,
-  `reason` varchar(64) NOT NULL,
-  `inserted_time` int(11) NOT NULL,
-  PRIMARY KEY  (`p_user`,`p_domain`,`w_user`,`w_domain`)
-) ENGINE=MyISAM;
-...
-</programlisting>
-	<example>
-		<title>Create <varname>xcap_xml</varname> database table</title>
-		<programlisting format="linespecific">
-...
-CREATE TABLE `xcap_xml` (
-  `user` varchar(66) NOT NULL,
-  `domain` varchar(128) NOT NULL,
-  `xcap` text NOT NULL,
-  `doc_type` varchar(64) NOT NULL,
-  PRIMARY KEY  (`user`,`domain`,`doc_type`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-...
-</programlisting>
-
+	</example>
 </section>
 
 </chapter>
