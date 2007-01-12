@@ -44,7 +44,6 @@
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
-#include "ul_fifo.h"
 #include "ul_unixsock.h"
 #include "ul_mi.h"
 #include "ul_callback.h"
@@ -280,12 +279,6 @@ static int mod_init(void)
 
 	/* Register cache timer */
 	register_timer( timer, 0, timer_interval);
-
-	/* Initialize fifo interface */
-	if (init_ul_fifo() < 0) {
-		LOG(L_ERR, "ERROR: usrloc/fifo initialization failed\n");
-		return -1;
-	}
 
 	if (init_ul_unixsock() < 0) {
 		LOG(L_ERR, "ERROR: usrloc/unixsock initialization failed\n");

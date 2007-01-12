@@ -27,7 +27,6 @@
 #include "../../qvalue.h"
 #include "dlist.h"
 #include "ul_mod.h"
-#include "ul_fifo.h"
 #include "utime.h"
 #include "ul_unixsock.h"
 

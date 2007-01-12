@@ -47,7 +47,6 @@
 #include "../../parser/contact/parse_contact.h"
 #include "../../resolve.h"
 #include "../../hash_func.h"
-#include "../../fifo_server.h"
 #include "../../mi/mi.h"
 
 #include "../tm/tm_load.h"
@@ -77,15 +76,11 @@ static int mod_init(void);
 static int child_init(int);
 
 static int imc_manager(struct sip_msg*, char *, char *);
-static int imc_list_rooms(FILE *stream, char *response_file);
-static int imc_list_members(FILE *stream, char *response_file);
 
 static struct mi_root* imc_mi_list_rooms(struct mi_root* cmd, void* param);
 static struct mi_root* imc_mi_list_members(struct mi_root* cmd, void* param);
 
 void destroy(void);
-int imc_list_randm(FILE *stream);
-int imc_list_members2(FILE* stream, imc_room_p room);
 
 /** TM bind */
 struct tm_binds tmb;
@@ -380,25 +375,10 @@ static int mod_init(void)
 		LOG(L_ERR, "IMC:mod_init: error while getting information from db\n");
 		return -1;
 	}
-	imc_list_randm(stdout);
 	
 	/* incarcare TM API */
 	if (load_tm_api(&tmb)!=0) {
 		LOG(L_ERR, "ERROR:imc:mod_init: error - unable to load tm api\n");
-		return -1;
-	}
-
-	if(register_fifo_cmd(imc_list_rooms, "imc_list_rooms", 0)<0)
-	{
-		LOG(L_ERR, "IMC:mod_init: error - unable to register fifo cmd" 
-			" 'imc_list_rooms'\n");
-		return -1;
-	}
-
-	if(register_fifo_cmd(imc_list_members, "imc_list_members", 0)<0)
-	{
-		LOG(L_ERR,"IMC:mod_init: error - unable to register fifo cmd"
-			"'imc_list_members'\n");
 		return -1;
 	}
 
@@ -700,83 +680,6 @@ done:
 	imc_htable_destroy();
 }
 
-int imc_list_randm(FILE *stream)
-{
-	int i;
-	imc_room_p irp = NULL;
-	// irp_temp=NULL;
-	
-	for(i=0; i<imc_hash_size; i++) 
-	{
-		irp = _imc_htable[i].rooms;
-			while(irp)
-			{
-
-				fprintf(stdout, "\n\nRoom: %.*s\nMembers: %d\nOwner: %.*s\n",
-						irp->uri.len, irp->uri.s+4,
-						irp->nr_of_members, irp->uri.len, irp->uri.s);
-				imc_list_members2(stdout, irp);
-				irp = irp->next;
-			}
-	}
-	return 0;	
-
-}
-int imc_list_members2(FILE* stream, imc_room_p room)
-{
-
-	imc_member_p member= NULL;
-	member = room->members;
-	if(member ==  NULL)
-	{
-		DBG("imc:imc_list_members2: no members found\n");
-		return -1;
-	}
-
-	while(member)
-	{
-		DBG("Member: name= %.*s\ndomain= %.*s\nflag= %d\n",member->user.len,
-				member->user.s, member->domain.len, member->domain.s,
-				member->flags);
-		member = member->next;
-	}
-
-	return 0;
-
-}
-
-int imc_list_rooms(FILE *stream, char *response_file){
-	int i;
-	FILE *freply=NULL;
-	imc_room_p irp = NULL;
-
-	freply = open_reply_pipe(response_file);
-	if(freply==NULL)
-	{
-		LOG(L_ERR, "IMC:imc_list_rooms: error -cannot open fifo reply '%s'\n",
-				response_file);
-		return -1;
-	}
-
-	for(i=0; i<imc_hash_size; i++) 
-	{
-		irp = _imc_htable[i].rooms;
-			while(irp){
-				fprintf(freply, "Room: %.*s\nMembers: %d\nOwner: %.*s\n",
-						irp->uri.len, irp->uri.s+4,
-						irp->nr_of_members, irp->members->uri.len,
-						irp->members->uri.s);
-				irp = irp->next;
-			}
-	}
-		
-	if(freply!=NULL)
-		fclose(freply);
-
-	return 0;
-}
-
-
 
 /************************* MI ***********************/
 static struct mi_root* imc_mi_list_rooms(struct mi_root* cmd_tree, void* param)
@@ -914,77 +817,6 @@ error:
 	imc_release_room(room);
 	free_mi_tree(rpl_tree);
 	return 0;
-
 }
 
-
-/******************** FIFO ****************************/
-
-int imc_list_members(FILE *stream, char *response_file){
-	int i;
-	FILE *freply=NULL;
-	char rnbuf[256];
-	str room_name;
-	imc_room_p room;
-	struct sip_uri inv_uri, *pinv_uri;
-	imc_member_p imp=NULL;
-	
-	freply = open_reply_pipe(response_file);
-	if(freply==NULL)
-	{
-		LOG(L_ERR, "IMC:imc_list_members: error - cannot open fifo" 
-				" reply '%s'\n",response_file);
-		return -1;
-	}
-	
-	/* room name */
-	room_name.s = rnbuf;
-	if(!read_line(room_name.s, 255, stream, &room_name.len) ||
-			room_name.len==0)	
-	{
-		LOG(L_ERR, "IMC:imc_list_members: error - no room name!\n");
-		fifo_reply(response_file, "400 imc_list_members -room name not found\n");
-		return 1;
-	}
-	rnbuf[room_name.len] = '\0';
-	if(*room_name.s=='\0' || *room_name.s=='.')
-	{
-		LOG(L_INFO, "IMC:imc_list_members: empty room name\n");
-		fifo_reply(response_file, "400 imc_list_members - empty param\n");
-		return 1;
-	}
-
-	/* find room */
-	parse_uri(room_name.s,room_name.len, &inv_uri);
-	pinv_uri=&inv_uri;
-	room=imc_get_room(&pinv_uri->user, &pinv_uri->host);
-
-	if(room==NULL)
-	{
-		LOG(L_ERR,"IMC:imc_list_members: no such room!\n");
-		fifo_reply(response_file, "404 imc_list_members - no such room\n");
-		return 1;
-	}
-
-	fprintf(freply, "Room:  %.*s\nMembers:\n", room_name.len, room_name.s);
-	imp = room->members;
-	i=0;
-	while(imp)
-	{
-		i++;
-		fprintf(freply, "  #%d:  %.*s \n",i, 
-						imp->uri.len, imp->uri.s+4);
-		imp = imp->next;
-	}
-	
-	fprintf(freply, "Number of members:  %d\n",i);
-	
-	imc_release_room(room);
-
-	if(freply!=NULL)
-		fclose(freply);
-
-	return 0;
-
-}
 

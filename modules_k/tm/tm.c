@@ -56,7 +56,6 @@
 #include "../../ut.h"
 #include "../../script_cb.h"
 #include "../../mi/mi.h"
-#include "../../fifo_server.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../unixsock_server.h"
@@ -66,7 +65,6 @@
 #include "h_table.h"
 #include "ut.h"
 #include "t_reply.h"
-#include "uac_fifo.h"
 #include "uac_unixsock.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
@@ -596,26 +594,6 @@ static int mod_init(void)
 
 	if (init_callid() < 0) {
 		LOG(L_CRIT, "Error while initializing Call-ID generator\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_uac, "t_uac_dlg", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo t_uac\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_uac_cancel, "t_uac_cancel", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo t_uac_cancel\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_hash, "t_hash", 0)<0) {
-		LOG(L_CRIT, "cannot register hash\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_t_reply, "t_reply", 0)<0) {
-		LOG(L_CRIT, "cannot register t_reply\n");
 		return -1;
 	}
 
