@@ -221,7 +221,8 @@ static int print_values(SQLHDBC* _c, char* _b, int _l, db_val_t* _v, int _n)
 		l = _l - res;
 		if (val2str(_c, _v + i, _b + res, &l) < 0)
 		{
-			LOG(L_ERR, "print_values: Error while converting value to string\n");
+			LOG(L_ERR,
+				"print_values: Error while converting value to string\n");
 			return -1;
 		}
 		res += l;

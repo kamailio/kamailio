@@ -38,6 +38,79 @@
 #include "val.h"
 
 /*
+ * add backslashes to special characters
+ */
+int sql_escape(char *dst, char *src, int src_len)
+{
+	int i, j;
+
+	if(dst==0 || src==0 || src_len<=0)
+		return 0;
+	j = 0;
+	for(i=0; i<src_len; i++)
+	{
+		switch(src[i])
+		{
+			case '\'':
+				dst[j++] = '\\';
+				dst[j++] = src[i];
+				break;
+			case '\\':
+				dst[j++] = '\\';
+				dst[j++] = src[i];
+				break;
+			case '\0':
+				dst[j++] = '\\';
+				dst[j++] = '0';
+				break;
+			default:
+				dst[j++] = src[i];
+		}
+	}
+	return j;
+}
+/*
+ * remove backslashes to special characters
+ */
+int sql_unescape(char *dst, char *src, int src_len)
+{
+	int i, j;
+
+	if(dst==0 || src==0 || src_len<=0)
+		return 0;
+	j = 0;
+	i = 0;
+	while(i<src_len)
+	{
+		if(src[i]=='\\' && i+1<src_len)
+		{
+			switch(src[i+1])
+			{
+				case '\'':
+					dst[j++] = '\'';
+					i++;
+					break;
+				case '\\':
+					dst[j++] = '\\';
+					i++;
+					break;
+				case '\0':
+					dst[j++] = '\0';
+					i++;
+					break;
+				default:
+					dst[j++] = src[i];
+			}
+		} else {
+			dst[j++] = src[i];
+		}
+		i++;
+	}
+	return j;
+}
+
+
+/*
  * Convert a string to integer
  */
 static inline int str2int(const char* _s, int* _v)
@@ -317,7 +390,8 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 		case DB_DOUBLE:
 			if (double2str(VAL_DOUBLE(_v), _s, _len) < 0)
 			{
-				LOG(L_ERR, "val2str: Error while converting string to double\n");
+				LOG(L_ERR,
+					"val2str: Error while converting string to double\n");
 				return -4;
 			}
 			else
@@ -336,7 +410,7 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			else
 			{
 				*_s++ = '\'';
-				memcpy(_s, VAL_STRING(_v), l);
+				_s += sql_escape(_s, (char*)VAL_STRING(_v), l);
 				*(_s + l) = '\'';
 				*(_s + l + 1) = '\0';					   /* FIXME */
 				*_len = l + 2;
@@ -354,7 +428,7 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			else
 			{
 				*_s++ = '\'';
-				memcpy(_s, VAL_STR(_v).s, l);
+				_s += sql_escape(_s, VAL_STR(_v).s, l);
 				*(_s + l) = '\'';
 				*(_s + l + 1) = '\0';					   /* FIXME */
 				*_len = l + 2;
@@ -384,7 +458,7 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			else
 			{
 				*_s++ = '\'';
-				memcpy(_s, VAL_STR(_v).s, l);
+				_s += sql_escape(_s, VAL_BLOB(_v).s, l);
 				*(_s + l) = '\'';
 				*(_s + l + 1) = '\0';					   /* FIXME */
 				*_len = l + 2;
