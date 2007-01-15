@@ -36,15 +36,25 @@ can not use xsl:copy because in such case are always included namespaces
 defined in compiled document (ser.xml for example uses 
 xmlns:xi="http://www.w3.org/2001/XInclude") but Docbook DTD (version less 
 than 5) doesn't allow "xmlns" attributes -->
-<xsl:template name="copy_without_namespaces">
-<!--	<xsl:message>Name: <xsl:value-of select="name(.)"/></xsl:message>-->
-	<xsl:element name="{name()}" namespace="">
-		<xsl:copy-of select="@*"/> <!-- copy attributes -->
-		<xsl:value-of select="text()"/>
-		<xsl:for-each select="*">
-			<xsl:call-template name="copy_without_namespaces"/>
-		</xsl:for-each>
-	</xsl:element>
+
+
+<xsl:template match="@*|node()" mode="copying">
+	<xsl:choose>	
+		<xsl:when test="local-name() and node()"> <!-- it is probably an element ;-) -->
+					<xsl:element name="{local-name()}">
+						<xsl:apply-templates select="@*|node()" mode="copying"/>
+					</xsl:element>
+		</xsl:when>
+		<xsl:otherwise> <!-- anything else - copy it -->
+			<xsl:copy>
+				<xsl:apply-templates select="@*|node()" mode="copying"/>
+			</xsl:copy>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:template>
+
+<xsl:template name="copy_content_without_namespaces">
+	<xsl:apply-templates select="@*|node()" mode="copying"/>
 </xsl:template>
 
 <!-- Common processing <description> node within <table> and within <column>:
@@ -55,27 +65,27 @@ than 5) doesn't allow "xmlns" attributes -->
 <xsl:template name="process_description">
 	<xsl:choose>
 		<xsl:when test="description/*">
-			<!-- add text in description element if not empty as para -->
-			<xsl:if test="string-length(description/text()) > 0">
-				<para><xsl:value-of select="description/text()"/></para>
-			</xsl:if>
-			<!-- there are some nested elements - copy all of them -->
-			<xsl:for-each select="description/*">
-				<xsl:choose>
-					<xsl:when test="local-name()!='para'"> <!-- we can't use name here because of namespaces -->
-						<!-- warning
-						<xsl:message>Warning: <xsl:value-of select="local-name(.)"/> is not para. Wrapping all non-para elements into para is recommended.</xsl:message>
-						-->
-						<!-- nested element is not a para, we include "para" envelope for it 
-						this is hack for existing docbook tables put directly in description -->
-						<para><xsl:call-template name="copy_without_namespaces"/></para>
-					</xsl:when>
-					<xsl:otherwise>
-						<!-- the element is nested directly -->
-						<xsl:call-template name="copy_without_namespaces"/>
-					</xsl:otherwise>
-				</xsl:choose>
-			</xsl:for-each>
+			<xsl:choose>
+				<xsl:when test="description/para"> <!-- there are some para elements -->
+					<xsl:for-each select="description"><xsl:call-template
+					name="copy_content_without_namespaces"/></xsl:for-each>
+				</xsl:when>
+				
+				<xsl:when test="description/*[local-name()='para']"> <!-- there are some para elements -->
+<!--					<xsl:message>copying description X: '<xsl:value-of select="description/text()"/>'</xsl:message>-->
+					<xsl:for-each select="description"><xsl:call-template
+					name="copy_content_without_namespaces"/></xsl:for-each>
+				</xsl:when>
+				
+				<!-- if text of description is not empty add description
+				internals into a para element -->
+				<xsl:otherwise>
+<!--					<xsl:message>copying description into para: '<xsl:value-of select="description/text()"/>'</xsl:message>-->
+					<para><xsl:for-each select="description">
+					<xsl:call-template name="copy_content_without_namespaces"/></xsl:for-each></para>
+				</xsl:otherwise>
+
+			</xsl:choose>
 		</xsl:when>
 		<xsl:otherwise>
 			<!-- use text within description element (may be empty) -->
