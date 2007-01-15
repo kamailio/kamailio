@@ -43,12 +43,6 @@ int init_addresses(void);
 /*
  * Open database connection if necessary
  */
-int init_child_addresses(int rank);
-
-
-/*
- * Open database connection if necessary
- */
 int mi_init_addresses();
 
 

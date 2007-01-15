@@ -730,8 +730,9 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-    if (init_child_trusted(rank) == -1) return -1;
-    return init_child_addresses(rank);
+	if (init_child_trusted(rank) == -1)
+		return -1;
+	return 0;
 }
 
 

@@ -302,38 +302,6 @@ error:
 }
 
 
-/*
- * Open database connections if necessary
- */
-int init_child_addresses(int rank)
-{
-    str name;
-    int ver;
-
-    if (!db_url) {
-	return 0;
-    }
-
-	name.s = address_table;
-	name.len = strlen(address_table);
-	ver = table_version(&perm_dbf, db_handle, &name);
-	
-	if (ver < 0) {
-	    LOG(L_ERR, "ERROR: permissions: init_child_addr():"
-		" Error while querying table version\n");
-	    perm_dbf.close(db_handle);
-	    return -1;
-	} else if (ver < TABLE_VERSION) {
-	    LOG(L_ERR, "ERROR: permissions: init_child_addr():"
-		" Invalid table version\n");
-	    perm_dbf.close(db_handle);
-	    return -1;
-	}	
-    }
-
-    return 0;
-}
-
 
 /*
  * Open database connection if necessary
