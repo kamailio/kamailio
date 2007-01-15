@@ -31,8 +31,6 @@
 #ifndef _DIALOG_DLG_HASH_H_
 #define _DIALOG_DLG_HASH_H_
 
-#include <stdio.h>
-
 #include "../../locking.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
@@ -105,8 +103,6 @@ void link_dlg(struct dlg_cell *dlg, int n);
 void ref_dlg(struct dlg_cell *dlg);
 
 void unref_dlg(struct dlg_cell *dlg, int n, int deleted);
-
-int fifo_print_dlgs(FILE *fifo, char *response_file );
 
 struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
 

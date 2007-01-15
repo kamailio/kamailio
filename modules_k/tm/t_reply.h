@@ -135,8 +135,6 @@ int t_retransmit_reply( struct cell *t );
 
 void tm_init_tags();
 
-int fifo_t_reply( FILE *stream, char *response_file );
-
 int unixsock_t_reply(str* msg);
 
 #endif

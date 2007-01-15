@@ -47,7 +47,6 @@
 #include "../../md5utils.h"
 #include "../../ut.h"
 #include "../../error.h"
-#include "../../fifo_server.h"
 #include "../../unixsock_server.h"
 #include "t_reply.h"
 #include "t_cancel.h"
@@ -417,29 +416,6 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	if_update_stat(tm_enable_stats, tm_trans_inuse , -1 );
 }
 
-
-
-/* print accumulated distribution of the hash table */
-int fifo_hash( FILE *stream, char *response_file )
-{
-	FILE *reply_file;
-	unsigned int i;
-
-	reply_file=open_reply_pipe(response_file);
-	if (reply_file==0) {
-		LOG(L_ERR, "ERROR: fifo_hash: file '%s' not opened\n", 
-			response_file);
-		return -1;
-	}
-	fputs( "200 ok\n\tcurrent\ttotal\n", reply_file);
-	for (i=0; i<TM_TABLE_ENTRIES; i++) {
-		fprintf(reply_file, "%d.\t%lu\t%lu\n", 
-			i, tm_table->entrys[i].cur_entries ,
-			tm_table->entrys[i].acc_entries );
-	}
-	fclose(reply_file);
-	return 1;
-}
 
 
 int unixsock_hash(str* msg)

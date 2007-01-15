@@ -81,21 +81,6 @@ int hash_table_lookup (str *domain)
 }
 
 
-/* Print domains stored in hash table */
-void hash_table_print (struct domain_list **hash_table, FILE *reply_file)
-{
-	int i;
-	struct domain_list *np;
-
-	for (i = 0; i < DOM_HASH_SIZE; i++) {
-		np = hash_table[i];
-		while (np) {
-			fprintf(reply_file, "%4d %.*s\n", i, np->domain.len, ZSW(np->domain.s));
-			np = np->next;
-		}
-	}
-}
-
 int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl)
 {
 	int i;

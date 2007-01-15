@@ -28,7 +28,6 @@
 #include "../../db/db.h"
 #include "../../ut.h"
 #include "unixsock.h"
-#include "fifo.h" /* Because of reload_domain_table */
 
 
 /*

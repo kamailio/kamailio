@@ -32,7 +32,6 @@
 
 int hash_table_install (struct domain_list **hash_table, char *domain);
 int hash_table_lookup (str *domain);
-void hash_table_print (struct domain_list **hash_table, FILE *reply_file);
 int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl);
 void hash_table_free (struct domain_list **hash_table);
 

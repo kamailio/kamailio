@@ -33,8 +33,8 @@
 
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
+#include "../../mi/mi.h"
 #include "../rr/api.h"
-#include "../../fifo_server.h"
 
 #include "perlfunc.h"
 #include "perl.h"
@@ -73,10 +73,13 @@ static int child_init(int rank);
  */
 static int mod_init(void);
 
+
 /*
  * Reload perl interpreter - reload perl script. Forward declaration.
  */
-int perl_reload(struct sip_msg *m, char *a, char *b);
+struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param);
+
+
 
 /*
  * Exported functions
@@ -91,13 +94,9 @@ static cmd_export_t cmds[] = {
 							   | ONREPLY_ROUTE
 							   | BRANCH_ROUTE },
 	{ "perl_exec", perl_exec1, 1,  NULL, REQUEST_ROUTE | FAILURE_ROUTE
-		                             | ONREPLY_ROUTE | BRANCH_ROUTE },
+							   | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{ "perl_exec", perl_exec2, 2, NULL, REQUEST_ROUTE | FAILURE_ROUTE
-					    | ONREPLY_ROUTE | BRANCH_ROUTE },
-	/*{ "perl_reload", perl_reload, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE
-	 *| ONREPLY_ROUTE | BRANCH_ROUTE },
-	 *  Functions are executed in _one_ instance only... 
-	 *  Not really working */
+							   | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -110,6 +109,19 @@ static param_export_t params[] = {
 	{"modpath", STR_PARAM, &modpath},
 	{ 0, 0, 0 }
 };
+
+
+/*
+ * Exported MI functions
+ */
+static mi_export_t mi_cmds[] = {
+	/* FIXME This does not yet work... 
+	{ "perl_reload",  perl_mi_reload, MI_NO_INPUT_FLAG,  0,  0  },*/
+	{ 0, 0, 0, 0}
+};
+
+
+
 
 /*
  * Module info
@@ -134,8 +146,8 @@ struct module_exports exports = {
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
 	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,	    /* exported pseudo-variables */
+	mi_cmds,    /* exported MI functions */
+	0,          /* exported pseudo-variables */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */
@@ -261,28 +273,14 @@ int perl_reload(struct sip_msg *m, char *a, char *b) {
  * Reinit through fifo.
  * Currently does not seem to work :((
  */
-int perl_fifo_reload(FILE *stream, char *response_file){
-        FILE *freply=NULL;
+struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param)
+{
+	if (perl_reload(NULL, NULL, NULL)) {
+		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	} else {
+		return init_mi_tree( 500, "Perl reload failed", 18);
+	}
 
-        freply = open_reply_pipe(response_file);
-        if(freply==NULL)
-        {
-                LOG(L_ERR, "perl:perl_fifo_reload: error -cannot open fifo"
-				" reply '%s'\n",
-                                response_file);
-                return -1;
-        }
-
-	if (perl_reload(NULL, NULL, NULL))
-		fprintf(freply, "Reload successful.\n");
-	else
-		fprintf(freply, "Reload unsuccessful.\n");
-		
-
-        if(freply!=NULL)
-                fclose(freply);
-
-        return 0;
 }
 
 
@@ -314,13 +312,6 @@ static int mod_init() {
 		LOG(L_ERR, "perl: This module requires sl module\n");
 		return -1;
 	}
-
-	/* FIXME This does not yet work... 
-	if(register_fifo_cmd(perl_fifo_reload, "perl_reload", 0)<0) {
-		LOG(L_ERR, "perl: Could not register fifo command.\n");
-		return -1;
-	}
-	*/
 
 	PERL_SYS_INIT3(&argc, &argv, &environ);
 

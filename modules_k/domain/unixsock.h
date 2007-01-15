@@ -22,9 +22,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _UNIXSOCK_H
-#define _UNIXSOCK_H 1
+#ifndef _DOMAIN_UNIXSOCK_H
+#define _DOMAIN_UNIXSOCK_H 1
 
+
+#define DOMAIN_RELOAD "domain_reload"
+#define DOMAIN_DUMP "domain_dump"
+
+
+int reload_domain_table( void );
 /*
  * Register domain unixsock functions
  */

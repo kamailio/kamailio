@@ -481,7 +481,7 @@ static void callback(struct cell *t, int type, struct tmcb_params *ps)
 	str text;
 
 	if (!*ps->param) {
-		LOG(L_INFO, "INFO: fifo UAC completed with status %d\n", ps->code);
+		LOG(L_INFO, "INFO: unixsock UAC completed with status %d\n", ps->code);
 		return;
 	}
 

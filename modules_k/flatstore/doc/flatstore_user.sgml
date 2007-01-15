@@ -68,7 +68,8 @@ modparam("acc", "db_url", "flatstore:/var/log/acc")
 	<section id="rotating">
 		<title>Rotating Log Files</title>
 		<para>
-		There is a new &ser; FIFO interface command called flat_rotate.
+		There is a new &ser; MI (management interface) command called 
+		flat_rotate.
 		When &ser; receives the command then it will close and reopen all
 		files used by flatstore module. The rotation itself has to be
 		done by another application (such as logrotate). Follow these
@@ -91,8 +92,8 @@ mv acc_4.log acc_3.log.20050605
 		</listitem>
 		<listitem>
 			<para>
-			Send &ser; the fifo command to close and reopen the
-			renamed files:
+			Send &ser; the MI command to close and reopen the
+			renamed files. For example, using FIFO:
 			<screen>
 openserctl fifo flat_rotate
 			</screen>

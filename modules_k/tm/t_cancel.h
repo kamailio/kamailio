@@ -28,8 +28,6 @@
 #ifndef _CANCEL_H
 #define _CANCEL_H
 
-#include <stdio.h> /* just for FILE* for fifo_uac_cancel */
-
 /* a buffer is empty but cannot be used by anyone else;
    particularly, we use this value in the buffer pointer
    in local_buffer to tell "a process is already scheduled
@@ -45,8 +43,6 @@
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
 void cancel_uacs( struct cell *t, branch_bm_t cancel_bm );
 void cancel_branch( struct cell *t, int branch );
-
-int fifo_uac_cancel( FILE* stream, char *response_file );
 
 int unixsock_uac_cancel(str* msg);
 

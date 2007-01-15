@@ -40,7 +40,6 @@
 #include "../../ut.h"
 #include "../../items.h"
 #include "../../script_cb.h"
-#include "../../fifo_server.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
 #include "../rr/api.h"
@@ -273,11 +272,6 @@ static int mod_init(void)
 	}
 	if ( init_dlg_table(dlg_hash_size)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: failed to create hash table\n");
-		return -1;
-	}
-
-	if ( register_fifo_cmd( fifo_print_dlgs, "dlg_list",0)<0 ) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register fifo\n");
 		return -1;
 	}
 

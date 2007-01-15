@@ -30,7 +30,6 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
-#include "../../fifo_server.h"
 #include "../../mi/mi.h"
 #include "dlg_hash.h"
 
@@ -324,43 +323,6 @@ void unref_dlg(struct dlg_cell *dlg, int n, int delete)
 	}
 
 	dlg_unlock( d_table, d_entry);
-}
-
-
-int fifo_print_dlgs(FILE *fifo, char *response_file )
-{
-	struct dlg_cell *dlg;
-	FILE *rpl;
-	int i;
-
-	rpl = open_reply_pipe( response_file );
-	if (rpl==0) {
-		LOG(L_ERR,"ERROR:dialog:fifo_print_dlgs: failed to open reply fifo\n");
-		return -1;
-	}
-
-	fprintf(rpl,"200 OK\n");
-	for( i=0 ; i<d_table->size ; i++ ) {
-		dlg_lock( d_table, &(d_table->entries[i]) );
-		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
-			fprintf(rpl, "hash=%u, label=%u, ptr=%p\n"
-					"\tstate=%d, timeout=%d\n"
-					"\tcallid='%.*s'\n"
-					"\tfrom uri='%.*s', tag='%.*s'\n"
-					"\tto uri='%.*s', tag='%.*s'\n",
-					dlg->h_entry, dlg->h_id, dlg,
-					dlg->state, dlg->tl.timeout,
-					dlg->callid.len, dlg->callid.s,
-					dlg->from_uri.len, dlg->from_uri.s,
-					dlg->from_tag.len, dlg->from_tag.s,
-					dlg->to_uri.len, dlg->to_uri.s,
-					dlg->to_tag.len, ZSW(dlg->to_tag.s) );
-		}
-		dlg_unlock( d_table, &(d_table->entries[i]) );
-	}
-
-	fclose(rpl);
-	return 0;
 }
 
 

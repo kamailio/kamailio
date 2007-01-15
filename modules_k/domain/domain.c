@@ -234,7 +234,6 @@ int w_is_domain_local(struct sip_msg* _msg, char* _sp, char* _s2)
  */
 int reload_domain_table ( void )
 {
-/*	db_key_t keys[] = {domain_col}; */
 	db_val_t vals[1];
 	db_key_t cols[1];
 	db_res_t* res = NULL;

@@ -41,7 +41,6 @@
 #include "../../sr_module.h"
 #include "../../items.h"
 #include "domain.h"
-#include "fifo.h"
 #include "mi.h"
 #include "unixsock.h"
 #include "hash.h"
@@ -167,9 +166,6 @@ static int mod_init(void)
 					" version (use openser_mysql.sh reinstall)\n");
 			goto error;
 		}
-
-		/* Initialize fifo interface */
-		(void)init_domain_fifo();
 
 		if (init_domain_unixsock() < 0) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): error while initializing"

@@ -41,7 +41,6 @@
 #include "../../ut.h"
 #include "../../route.h"
 #include "../../mem/mem.h"
-#include "../../fifo_server.h"
 
 #include "dispatch.h"
 
@@ -71,8 +70,6 @@ void destroy(void);
 
 static int ds_fixup(void** param, int param_no);
 
-static int ds_fifo_set(FILE *stream, char *response_file);
-static int ds_fifo_list(FILE *stream, char *response_file);
 struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
 struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
 
@@ -127,20 +124,6 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	DBG("DISPATCHER: initializing ...\n");
-
-	if(register_fifo_cmd(ds_fifo_set, "ds_set_state", 0)<0)
-	{
-		LOG(L_ERR,
-			"DISPATCHER:mod_init:ERROR: cannot register fifo command!\n");
-		return -1;
-	}
-	
-	if(register_fifo_cmd(ds_fifo_list, "ds_list", 0)<0)
-	{
-		LOG(L_ERR,
-			"DISPATCHER:mod_init:ERROR: cannot register fifo command!!\n");
-		return -1;
-	}
 
 	if(ds_load_list(dslistfile)!=0)
 	{
@@ -319,93 +302,6 @@ static int ds_fixup(void** param, int param_no)
 	}
 	return 0;
 }
-
-/**
- *
- */
-static int ds_fifo_set(FILE *stream, char *response_file)
-{
-	static char tbuf[256];
-	str sp;
-	int ret;
-	unsigned int group, state;
-	
-	sp.s = tbuf;
-	
-	if(!read_line(sp.s, 255, stream, &sp.len) || sp.len==0)	
-	{
-		LOG(L_ERR, "DISPATCHER:ds_fifo_set: could not read state\n");
-		fifo_reply(response_file, "500 ds_fifo_set - state not found\n");
-		return 1;
-	}
-
-	if(sp.len<=0)
-	{
-		LOG(L_ERR, "DISPATCHER:ds_fifo_set: bad state value\n");
-		fifo_reply(response_file, "500 ds_fifo_set - bad state value\n");
-		return 1;
-	}
-
-	state = 1;
-	if(sp.s[0]=='0' || sp.s[0]=='I' || sp.s[0]=='i')
-		state = 0;
-
-	if(!read_line(sp.s, 255, stream, &sp.len) || sp.len==0)	
-	{
-		LOG(L_ERR, "DISPATCHER:ds_fifo_set: could not read group\n");
-		fifo_reply(response_file, "500 ds_fifo_set - group not found\n");
-		return 1;
-	}
-
-	if(str2int(&sp, &group))
-	{
-		LOG(L_ERR, "DISPATCHER:ds_fifo_set: bad group value\n");
-		fifo_reply(response_file, "500 ds_fifo_set - bad group value\n");
-		return 1;
-	}
-
-	if(!read_line(sp.s, 255, stream, &sp.len) || sp.len==0)	
-	{
-		LOG(L_ERR, "DISPATCHER:ds_fifo_set: could not read dst address\n");
-		fifo_reply(response_file, "500 ds_fifo_set - address not found\n");
-		return 1;
-	}
-
-	if(state==1)
-		ret = ds_set_state(group, &sp, DS_INACTIVE_DST, 0);
-	else
-		ret = ds_set_state(group, &sp, DS_INACTIVE_DST, 1);
-
-	if(ret!=0)
-	{
-		fifo_reply(response_file, "404 ds_fifo_set - destination not found\n");
-		return 1;
-	}
-	
-	fifo_reply(response_file, "200 ds_fifo_set - state updated\n");
-	return 0;
-}
-
-/**
- *
- */
-static int ds_fifo_list(FILE *stream, char *response_file)
-{
-	FILE *freply=NULL;
-	
-	freply = open_reply_pipe(response_file);
-	if(freply == NULL)
-	{
-		LOG(L_ERR, "DISPATCHER:ds_fifo_list: can't open reply fifo\n");
-		return -1;
-	}
-	
-	ds_print_list(freply);
-
-	fclose(freply);
-	return 0;
-}
-
 
 
 /************************** MI STUFF ************************/

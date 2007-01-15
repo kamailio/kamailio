@@ -29,7 +29,6 @@
 
 #include <signal.h>
 
-#include "../../fifo_server.h"
 #include "../../db/db.h"
 #include "../../sr_module.h"
 #include "../../error.h"
@@ -195,31 +194,6 @@ static int pa_mod_init(void)
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
 		LOG(L_ERR, "ERROR:acc:mod_init: can't load TM API\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_publish, "pa_publish", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_publish\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_presence, "pa_presence", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_presence\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_location, "pa_location", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_location\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_location_contact, "pa_location_contact", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_location_contact\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_watcherinfo, "pa_watcherinfo", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_watcherinfo\n");
 		return -1;
 	}
 
