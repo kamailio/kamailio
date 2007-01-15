@@ -394,7 +394,7 @@ int lcr_db_ver(char* db_url, str* name)
 static int child_init(int rank)
 {
 	/* don't do anything for non-worker process */
-	if (rank<1 && rank!=PROC_FIFO)
+	if (rank<1)
 		return 0;
 
 	if (lcr_db_init(db_url.s) < 0) {

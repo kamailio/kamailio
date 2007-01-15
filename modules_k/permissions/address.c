@@ -313,15 +313,6 @@ int init_child_addresses(int rank)
     if (!db_url) {
 	return 0;
     }
-	
-    /* Check if database is needed by child */
-    if (rank == PROC_FIFO) {
-	db_handle = perm_dbf.init(db_url);
-	if (!db_handle) {
-	    LOG(L_ERR, "ERROR: permissions: init_child_addresses():"
-		" Unable to connect database\n");
-	    return -1;
-	}
 
 	name.s = address_table;
 	name.len = strlen(address_table);

@@ -401,7 +401,7 @@ static int cpl_child_init(int rank)
 	pid_t pid;
 
 	/* don't do anything for non-worker process */
-	if (rank<1 && rank!=PROC_FIFO)
+	if (rank<1)
 		return 0;
 
 	/* only child 1 will fork the aux process */
