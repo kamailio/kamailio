@@ -236,7 +236,6 @@ if(uri=~"sip:[0-9]{2}@.*")
 check_via=no    # (cmd. line: -v)
 dns=no          # (cmd. line: -r)
 rev_dns=no      # (cmd. line: -R)
-fifo="/tmp/ser_fifo"
 
 # ------------------ module loading ----------------------------------
 
@@ -249,8 +248,13 @@ loadmodule "/usr/local/lib/openser/modules/registrar.so"
 loadmodule "/usr/local/lib/openser/modules/textops.so"
 loadmodule "/usr/local/lib/openser/modules/mysql.so"
 loadmodule "/usr/local/lib/openser/modules/speeddial.so"
+loadmodule "/usr/local/lib/openser/modules/mi_fifo.so"
 
 # ----------------- setting module-specific parameters ---------------
+
+# -- mi_fifo params --
+
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 
 # -- usrloc params --
 
@@ -269,12 +273,12 @@ route{
         if (!mf_process_maxfwd_header("10"))
         {
                 sl_send_reply("483","Too Many Hops");
-                break;
+                exit;
         };
         if (msg:len >=  max_len )
         {
                 sl_send_reply("513", "Message too big");
-                break;
+                exit;
         };
 
         if (!method=="REGISTER") record_route();
@@ -285,7 +289,7 @@ route{
                 {
                         sl_reply_error();
                 };
-                break;
+                exit;
         };
 
         if (!uri==myself)
@@ -294,7 +298,7 @@ route{
                 {
                         sl_reply_error();
                 };
-                break;
+                exit;
         };
 
         if (uri==myself)
@@ -302,7 +306,7 @@ route{
                 if (method=="REGISTER")
                 {
                         save("location");
-                        break;
+                        exit;
                 };
 
                 if(uri=~"sip:[0-9]{2}@.*")
@@ -315,13 +319,13 @@ route{
                         {
                                 sl_reply_error();
                         };
-                        break;
+                        exit;
                 };
 
                 if (!lookup("location"))
                 {
                         sl_send_reply("404", "Not Found");
-                        break;
+                        exit;
                 };
         };
 

@@ -4,7 +4,7 @@
 <!ENTITY devel SYSTEM "dbtext_devel.sgml">
 <!ENTITY faq SYSTEM "dbtext_faq.sgml">
 
-<!ENTITY dbtextsercfg SYSTEM "dbtext-ser.cfg">
+<!ENTITY dbtextsercfg SYSTEM "dbtext.cfg">
 
 <!ENTITY developeremail "daniel@voice-system.ro">
 

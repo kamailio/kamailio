@@ -680,7 +680,6 @@ dns=no          # (cmd. line: -r)
 rev_dns=no      # (cmd. line: -R)
 port=5060
 children=4
-fifo="/tmp/openser_fifo"
 loadmodule "/usr/local/lib/openser/modules/sl.so"
 loadmodule "/usr/local/lib/openser/modules/tm.so"
 loadmodule "/usr/local/lib/openser/modules/rr.so"
@@ -689,7 +688,9 @@ loadmodule "/usr/local/lib/openser/modules/usrloc.so"
 loadmodule "/usr/local/lib/openser/modules/registrar.so"
 loadmodule "/usr/local/lib/openser/modules/textops.so"
 loadmodule "/usr/local/lib/openser/modules/seas.so"
+loadmodule "/usr/local/lib/openser/modules/mi_fifo.so"
 
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 modparam("usrloc", "db_mode",   0)
 modparam("rr", "enable_full_lr", 1)
 modparam("seas", "listen_sockets", "127.0.0.1:5080");
@@ -746,7 +747,6 @@ dns=no          # (cmd. line: -r)
 rev_dns=no      # (cmd. line: -R)
 port=5060
 children=4
-fifo="/tmp/openser_fifo"
 
 reply_to_via=1
 listen = tcp:localhost:5060 
@@ -756,7 +756,9 @@ mpath="/home/elias/src/sipservlet/seas"
 
 loadmodule "modules/tm/tm.so"
 loadmodule "modules/seas/seas.so"
+loadmodule "modules/mi_fifo/mi_fifo.so"
 
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 modparam("seas", "listen_sockets","127.0.0.1:5080")
 
 route{

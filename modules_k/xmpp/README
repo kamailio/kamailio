@@ -276,6 +276,7 @@ xmpp_send_massage();
    different port with the following config, and have the main
    SIP server configured to forward all SIP requests for XMPP
    world to it.
+....
 #
 # $Id$
 #
@@ -300,7 +301,6 @@ check_via=no    # (cmd. line: -v)
 dns=no          # (cmd. line: -r)
 rev_dns=no      # (cmd. line: -R)
 children=4
-fifo="/tmp/openser_fifo_xmpp"
 
 listen=udp:10.10.10.10:5076
 alias=sip-xmpp.openser.org
@@ -313,6 +313,7 @@ loadmodule "tm.so"
 loadmodule "rr.so"
 loadmodule "maxfwd.so"
 loadmodule "textops.so"
+loadmodule "mi_fifo.so"
 
 
 # XMPP
@@ -327,6 +328,10 @@ modparam("xmpp", "backend", "server")
 # modparam("xmpp", "backend", "component")
 
 # ----------------- setting module-specific parameters ---------------
+
+# -- mi_fifo params --
+
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo_xmpp")
 
 # -- usrloc params --
 
@@ -371,6 +376,9 @@ route{
         t_reply("503", "Service unavailable");
         return;
 }
+
+
+....
      _________________________________________________________
 
 Chapter 2. Developer's Guide
