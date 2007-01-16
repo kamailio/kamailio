@@ -438,7 +438,7 @@ CREATE TABLE dbaliases (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   UNIQUE KEY alias_key (alias_username,alias_domain),
-  INDEX alias_user ($USERCOL, domain)
+  INDEX alias_user ($USERCOL, domain),
   PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
