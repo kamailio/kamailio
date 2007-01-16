@@ -27,12 +27,10 @@
  * 2003-03-16 - flags export parameter added (janakj)
  */
 
-#include <radiusclient-ng.h>
-
 #include "../../dprint.h"
 #include "../../config.h"
+#include "../../radius.h"
 #include "../../sr_module.h"
-#include "../acc/dict.h"
 #include "urirad_mod.h"
 #include "checks.h"
 

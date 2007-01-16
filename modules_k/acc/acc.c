@@ -55,8 +55,7 @@
 #include "acc_logic.h"
 
 #ifdef RAD_ACC
-#include "dict.h"
-#include <radiusclient-ng.h>
+#include "../../radius.h"
 #endif
 
 #ifdef DIAM_ACC

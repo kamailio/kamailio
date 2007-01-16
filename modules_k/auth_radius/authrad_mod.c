@@ -34,15 +34,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <radiusclient-ng.h>
 
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../items.h"
+#include "../../radius.h"
 #include "../../mem/mem.h"
-#include "../acc/dict.h"
 #include "authrad_mod.h"
 #include "authorize.h"
 

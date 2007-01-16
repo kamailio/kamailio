@@ -36,8 +36,8 @@
 
 #include "../../str.h"
 #include "../../items.h"
+#include "../../radius.h"
 #include "../../parser/msg_parser.h"
-#include "dict.h"
 
 struct acc_extra
 {

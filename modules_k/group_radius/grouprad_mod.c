@@ -30,13 +30,12 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <radiusclient-ng.h>
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../sr_module.h"
 #include "../../config.h"
+#include "../../radius.h"
 #include "../../mem/mem.h"
-#include "../../modules/acc/dict.h"
 #include "grouprad_mod.h"
 #include "group.h"
 

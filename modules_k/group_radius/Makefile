@@ -1,6 +1,6 @@
 # $Id$
 #
-# Group Membeship checking over Radius
+# Group Membership checking over Radius
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile
@@ -9,6 +9,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=group_radius.so
 DEFS+=-I$(LOCALBASE)/include
-LIBS=-L$(LOCALBASE)/lib -lradiusclient-ng
+LIBS=-L$(LOCALBASE)/lib $(RADIUS_LIB)
 
 include ../../Makefile.modules

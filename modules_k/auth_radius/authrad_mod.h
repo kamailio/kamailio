@@ -31,7 +31,7 @@
 #define AUTHRAD_MOD_H
 
 #include "../auth/api.h"
-#include "../acc/dict.h"
+#include "../../radius.h"
 
 extern struct attr attrs[];
 extern struct val vals[];

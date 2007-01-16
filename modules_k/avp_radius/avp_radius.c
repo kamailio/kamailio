@@ -28,7 +28,6 @@
 
 
 #include <radiusclient-ng.h>
-#include "../acc/dict.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest_parser.h"
@@ -38,6 +37,7 @@
 #include "../../usr_avp.h"
 #include "../../ut.h"
 #include "../../config.h"
+#include "../../radius.h"
 
 
 MODULE_VERSION

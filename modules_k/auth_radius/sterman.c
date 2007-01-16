@@ -32,10 +32,10 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../auth/api.h"
-#include "../../modules/acc/dict.h"
 #include "../../usr_avp.h"
+#include "../../radius.h"
 #include "../../ut.h"
+#include "../auth/api.h"
 #include "sterman.h"
 #include "authrad_mod.h"
 

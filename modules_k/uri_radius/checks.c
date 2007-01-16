@@ -30,12 +30,11 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../dprint.h"
+#include "../../radius.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"
-#include "../../modules/acc/dict.h"
 #include "checks.h"
 #include "urirad_mod.h"
-#include <radiusclient-ng.h>
 
 
  /*

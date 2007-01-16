@@ -38,8 +38,8 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/hf.h"
 #include "../../parser/digest/digest.h"
+#include "../../radius.h"
 #include "group.h"
-#include "../../modules/acc/dict.h"
 #include "grouprad_mod.h"
 
 

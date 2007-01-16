@@ -52,14 +52,13 @@
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
 #include "../rr/api.h"
-#include "acc_mod.h"
 #include "acc.h"
+#include "acc_mod.h"
 #include "acc_extra.h"
 #include "acc_logic.h"
 
 #ifdef RAD_ACC
-#include <radiusclient-ng.h>
-#include "dict.h"
+#include "../../radius.h"
 #endif
 
 #ifdef DIAM_ACC
