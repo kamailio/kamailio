@@ -78,7 +78,7 @@
 #define MAX_DEL_KEYS	1	
 #define NR_KEYS			10
 
-char *sc_mid      = "mid";       /* 0 */
+char *sc_mid      = "id";        /* 0 */
 char *sc_from     = "src_addr";  /* 1 */
 char *sc_to       = "dst_addr";  /* 2 */
 char *sc_uri_user = "username";  /* 3 */
