@@ -20,12 +20,12 @@ ATTRIBUTE Sip-Rpid             213  string     # Proprietary, auth_radius
 ATTRIBUTE SIP-AVP              225  string     # Proprietary, avp_radius
 
 ### Acct-Status-Type Values ###
-VALUE Acct-Status-Type   Failed           15   # RFC2866, acc
+#VALUE Acct-Status-Type   Failed           15   # RFC2866, acc
 
 ### Service-Type Values ###
-VALUE Service-Type       Call-Check       10   # RFC2865, uri_radius
+#VALUE Service-Type       Call-Check       10   # RFC2865, uri_radius
 VALUE Service-Type       Group-Check      12   # Proprietary, group_radius
-VALUE Service-Type       Sip-Session      15   # Schulzrinne, acc, auth_radius
+##VALUE Service-Type       Sip-Session      15   # Schulzrinne, acc, auth_radius
 VALUE Service-Type       SIP-Caller-AVPs  30   # Proprietary, avp_radius
 VALUE Service-Type       SIP-Callee-AVPs  31   # Proprietary, avp_radius
 
