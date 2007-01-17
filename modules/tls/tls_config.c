@@ -463,7 +463,7 @@ static struct parser_tab* lookup_token(struct parser_tab* table, str* token)
 static int parse_string_val(str* res, token_t* token)
 {
 	int ret;
-	token_t t;
+	static token_t t;
 
 	ret = tls_lex(&t, 0);
 	if (ret < 0) return -1;
@@ -679,7 +679,7 @@ static char* parse_file_val(token_t* token)
 {
 	char* file, *res;
 	str val;
-        if (parse_string_val(&val, token) < 0) return 0;
+	if (parse_string_val(&val, token) < 0) return 0;
 	file = get_pathname(&val);
 	if (!file) return 0;
 	if (shm_asciiz_dup(&res, file) < 0) {
