@@ -179,6 +179,12 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r,
 		if (node==0)
 			return -1;
 
+		/* cflags */
+		p = int2str((unsigned long)c->cflags, &len);
+		node = add_mi_node_child( cnode, MI_DUP_VALUE, "Cflags", 5, p, len);
+		if (node==0)
+			return -1;
+
 		/* socket */
 		if (c->sock) {
 			node = add_mi_node_child( cnode, 0, "Socket", 6,
@@ -544,12 +550,14 @@ struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)
 			}
 
 			node = addf_mi_node_child( rpl, 0, "Contact", 7,
-				"<%.*s>;q=%s;expires=%d;flags=0x%X;socket=<%.*s>;methods=0x%X"
+				"<%.*s>;q=%s;expires=%d;flags=0x%X;cflags=0x%X;socket=<%.*s>;"
+				"methods=0x%X"
 				"%s%.*s%s" /*received*/
 				"%s%.*s%s" /*user-agent*/
 				"%s%.*s%s", /*path*/
 				con->c.len, ZSW(con->c.s),
-				q2str(con->q, 0), (int)(con->expires - act_time), con->flags,
+				q2str(con->q, 0), (int)(con->expires - act_time),
+				con->flags, con->cflags,
 				con->sock?con->sock->sock_str.len:3,
 					con->sock?con->sock->sock_str.s:"NULL",
 				con->methods,
