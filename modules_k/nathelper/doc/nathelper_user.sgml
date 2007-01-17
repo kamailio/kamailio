@@ -344,6 +344,32 @@ modparam("nathelper", "sipping_method", "INFO")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>nortpproxy_str</varname> (string)</title>
+		<para>
+		The parameter sets the SDP attribute used by nathelper to mark
+		the packet SDP informations have already been mangled.
+		</para>
+		<para>
+		If empty string, no marker will be added or checked.
+		</para>
+		<note><para>
+		The string must be a complete SDP line, including the EOH (\r\n).
+		</para></note>
+		<para>
+		<emphasis>
+			Default value is <quote>a=nortpproxy:yes\r\n</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>nortpproxy_str</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 

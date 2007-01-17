@@ -286,6 +286,7 @@ static int rtpproxy_tout = 1;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 static int rcv_avp_no = 42;
+static str nortpproxy_str = str_init("a=nortpproxy:yes\r\n");
 
 
 struct rtpp_head {
@@ -337,6 +338,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"natping_interval",      INT_PARAM, &natping_interval      },
 	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
+	{"nortpproxy_str",        STR_PARAM, &nortpproxy_str.s      },
 	{"rtpproxy_sock",         STR_PARAM, &rtpproxy_sock         },
 	{"rtpproxy_disable",      INT_PARAM, &rtpproxy_disable      },
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
@@ -346,7 +348,6 @@ static param_export_t params[] = {
 	{"force_socket",          STR_PARAM, &force_socket_str      },
 	{"sipping_from",          STR_PARAM, &sipping_from.s        },
 	{"sipping_method",        STR_PARAM, &sipping_method.s      },
-
 	{0, 0, 0}
 };
 
@@ -402,6 +403,13 @@ mod_init(void)
 		socket_str.s=force_socket_str;
 		socket_str.len=strlen(socket_str.s);
 		force_socket=grep_sock_info(&socket_str,0,0);
+	}
+
+	if (nortpproxy_str.s==NULL || nortpproxy_str.s[0]==0) {
+		nortpproxy_str.len = 0;
+		nortpproxy_str.s = NULL;
+	} else {
+		nortpproxy_str.len = strlen(nortpproxy_str.s);
 	}
 
 	if (natping_interval > 0) {
@@ -940,9 +948,6 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	AOLDMEDPRT	"a=oldmediaport:"
 #define	AOLDMEDPRT_LEN	(sizeof(AOLDMEDPRT) - 1)
 
-#define	ANORTPPROXY	"a=nortpproxy:yes\r\n"
-#define	ANORTPPROXY_LEN	(sizeof(ANORTPPROXY) - 1)
-
 
 static inline int 
 replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
@@ -1034,14 +1039,14 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 				return -1;
 			}
 		}
-		if (level & ADD_ANORTPPROXY) {
-			buf = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
+		if ((level & ADD_ANORTPPROXY) && nortpproxy_str.len) {
+			buf = pkg_malloc(nortpproxy_str.len * sizeof(char));
 			if (buf == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
 				return -1;
 			}
-			memcpy(buf, ANORTPPROXY, ANORTPPROXY_LEN);
-			if (insert_new_lump_after(anchor, buf, ANORTPPROXY_LEN, 0)==NULL) {
+			memcpy(buf, nortpproxy_str.s, nortpproxy_str.len);
+			if (insert_new_lump_after(anchor, buf, nortpproxy_str.len, 0)==NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after "
 					"failed\n");
 				pkg_free(buf);
@@ -1812,15 +1817,17 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		to_tag = tmp;
 	}
 	proxied = 0;
-	for (cp = body.s; (len = body.s + body.len - cp) >= ANORTPPROXY_LEN;) {
-		cp1 = ser_memmem(cp, ANORTPPROXY, len, ANORTPPROXY_LEN);
-		if (cp1 == NULL)
-			break;
-		if (cp1[-1] == '\n' || cp1[-1] == '\r') {
-			proxied = 1;
-			break;
+	if (nortpproxy_str.len) {
+		for ( cp=body.s ; (len=body.s+body.len-cp) >= nortpproxy_str.len ; ) {
+			cp1 = ser_memmem(cp, nortpproxy_str.s, len, nortpproxy_str.len);
+			if (cp1 == NULL)
+				break;
+			if (cp1[-1] == '\n' || cp1[-1] == '\r') {
+				proxied = 1;
+				break;
+			}
+			cp = cp1 + nortpproxy_str.len;
 		}
-		cp = cp1 + ANORTPPROXY_LEN;
 	}
 	if (proxied != 0 && force == 0)
 		return -1;
@@ -2037,8 +2044,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		} /* Iterate medias in session */
 	} /* Iterate sessions */
 
-	if (proxied == 0) {
-		cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
+	if (proxied == 0 && nortpproxy_str.len) {
+		cp = pkg_malloc(nortpproxy_str.len * sizeof(char));
 		if (cp == NULL) {
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: out of memory\n");
 			return -1;
@@ -2049,8 +2056,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			pkg_free(cp);
 			return -1;
 		}
-		memcpy(cp, ANORTPPROXY, ANORTPPROXY_LEN);
-		if (insert_new_lump_after(anchor, cp, ANORTPPROXY_LEN, 0) == NULL) {
+		memcpy(cp, nortpproxy_str.s, nortpproxy_str.len);
+		if (insert_new_lump_after(anchor, cp, nortpproxy_str.len, 0) == NULL) {
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: insert_new_lump_after failed\n");
 			pkg_free(cp);
 			return -1;
