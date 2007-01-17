@@ -7,30 +7,37 @@
 
 ]>
 
-<table role="presence" xmlns:db="http://docbook.org/ns/docbook">
+<table role="presence">
 	
 	<name>offline_winfo</name>
 	
 	<!-- related to the version of presence snapshot -->
 	<version>5</version>
+	<description>Table used to store information about subscriptions to
+	"offline presentities". Data here can be manipulated using
+	functions <function>store_winfo</function> and
+	<function>dump_stored_winfo</function>.</description>
 
 	<column id="offline_winfo.uid">
 		<name>uid</name>
 		<name db="oracle">uuid</name>
 		<type>string</type>
 		<size>&id_len;</size>
+		<description>UID of presentity.</description>
 	</column>
 
 	<column>
 		<name>watcher</name>
 		<type>string</type>
 		<size>&uri_len;</size>
+		<description>Watcher's URI.</description>
 	</column>
 
 	<column>
 		<name>events</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Subscription event header (presence).</description>
 	</column>
 
 	<column>
@@ -38,6 +45,8 @@
 		<type>string</type>
 		<size>&domain_len;</size>
 		<null/>
+		<description>Presence domain (<emphasis>registrar</emphasis> or
+		<emphasis>jabber</emphasis>).</description>
 	</column>
 
 	<column>
@@ -45,18 +54,23 @@
 		<type>string</type>
 		<size>32</size>
 		<null/>
+		<description>Subscription status.</description>
 	</column>
 
 	<column>
 		<name>created_on</name>
 		<type>datetime</type>
 		<default>2006-01-31 13:13:13</default>
+		<description>Time of row creation used to discard expired rows. Row
+		expires when its creation time is older than configured
+		value.</description>
 	</column>
 
 	<column>
 		<name>expires_on</name>
 		<type>datetime</type>
 		<default>2006-01-31 13:13:13</default>
+		<description>Time when row expires.</description>
 	</column>
 
 	<column id="offline_winfo.dbid">
@@ -66,6 +80,7 @@
 		<type db="mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
 		<type db="postgres">SERIAL</type>
 		<type db="dbtext">int,auto</type>
+		<description>Auto-generated key.</description>
 	</column>
 
 	<index>

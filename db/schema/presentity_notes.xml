@@ -7,9 +7,12 @@
 
 ]>
 
-<table role="presence" xmlns:db="http://docbook.org/ns/docbook">
+<table role="presence">
 
 	<name>presentity_notes</name>
+	<description>Table holding &lt;note&gt; elements published directly in
+	&lt;presence&gt; element i.e. notes related to whole presentity not only for
+	tuples.</description>
     
 	<!-- related to the version of presence snapshot -->
 	<version>5</version>
@@ -18,6 +21,7 @@
 		<name>dbid</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Generated ID used for unique identification.</description>
 	</column>
 
 	<!-- foreign key (presentity) -->
@@ -25,30 +29,36 @@
 		<name>pres_id</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Presentity ID for which is given note.</description>
 	</column>
 
 	<column>
 		<name>etag</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Entity tag used for note publication.</description>
 	</column>
 
 	<column>
 		<name>note</name>
 		<type>string</type>
 		<size>128</size>
+		<description>String value of note element.</description>
 	</column>
 
 	<column>
 		<name>lang</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Lang attribute value of note element.</description>
 	</column>
 
 	<column>
 		<name>expires</name>
 		<type>datetime</type>
 		<default>2005-12-07 08:13:15</default>
+		<description>Expiration value of note element i.e. value of Expires
+		header used in PUBLISH.</description>
 	</column>
 
 	<index>

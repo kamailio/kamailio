@@ -7,9 +7,11 @@
 
 ]>
 
-<table role="presence" xmlns:db="http://docbook.org/ns/docbook">
+<table role="presence">
 
 	<name>presentity_extensions</name>
+	<description>Table holding extension elements (non-PIDF) published directly in
+	&lt;presence&gt;.</description>
     
 	<!-- related to the version of presence snapshot -->
 	<version>5</version>
@@ -18,6 +20,7 @@
 		<name>dbid</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Generated ID used for unique identification.</description>
 	</column>
 
 	<!-- foreign key (presentity) -->
@@ -25,6 +28,7 @@
 		<name>pres_id</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Presentity ID for which is given extension element.</description>
 	</column>
 
 	<!-- received in PUBLISH with this entity tag -->
@@ -32,12 +36,14 @@
 		<name>etag</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Entity tag used for note publication.</description>
 	</column>
 
 	<!-- serialized XML element -->
 	<column>
 		<name>element</name>
 		<type>binary</type>
+		<description>Whole extension element in serialized form.</description>
 	</column>
 
 	<!-- expiration time -->
@@ -45,6 +51,8 @@
 		<name>expires</name>
 		<type>datetime</type>
 		<default>2005-12-07 08:13:15</default>
+		<description>Expiration value of extension element i.e. value of Expires
+		header used in PUBLISH.</description>
 	</column>
 
 	<index>

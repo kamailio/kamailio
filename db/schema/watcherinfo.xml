@@ -9,6 +9,8 @@
 
 <table role="presence">
     <name>watcherinfo</name>
+	<description>Table holding information about watchers. Here are both
+	presence and presence.winfo watchers.</description>
 
 	<!-- related to the version of presence snapshot -->
 	<version>5</version>
@@ -18,6 +20,8 @@
 		<name>w_uri</name>
 		<type>string</type>
 		<size>&uri_len;</size>
+		<description>Watcher's URI (From header uri used in first SUBSCRIBE
+		request).</description>
 	</column>
 
 	<!-- displayname information taken from From header -->
@@ -32,6 +36,7 @@
 		<name>s_id</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Generated watcher's identification.</description>
 	</column>
 
 	<!-- event package: presence or presence.winfo -->
@@ -40,6 +45,8 @@
 		<type>string</type>
 		<size>32</size>
 		<default>presence</default>
+		<description>Watcher's event package - presence or
+		presence.winfo.</description>
 	</column>
 
 	<column>
@@ -47,23 +54,29 @@
 		<type>string</type>
 		<size>32</size>
 		<default>pending</default>
+		<description>Watcher's status as string (pending, active,
+		rejected, terminated or pending_terminated).</description>
 	</column>
 
 	<column>
 		<name>event</name>
 		<type>string</type>
 		<size>32</size>
+		<description>Event which lead to watcher's status (subscribe,
+		...).</description>
 	</column>
 
 	<column>
 		<name>expires</name>
 		<type>datetime</type>
 		<default>2005-12-07 08:13:15</default>
+		<description>Subscription expiration value.</description>
 	</column>
 
 	<column>
 		<name>accepts</name>
 		<type>int</type>
+		<description>MIME type used in NOTIFYs.</description>
 	</column>
 
 	<!-- foreign key (presentity) -->
@@ -71,22 +84,27 @@
 		<name>pres_id</name>
 		<type>string</type>
 		<size>64</size>
+		<description>Watched presentity identification.</description>
     </column>
 
 	<column>
 		<name>server_contact</name>
 		<type>string</type>
 		<size>&uri_len;</size>
+		<description>Contact address used for resubscriptions.</description>
 	</column>
 
 	<column>
 		<name>dialog</name>
 		<type>binary</type>
+		<description>Serialized subscription dialog.</description>
 	</column>
 
 	<column>
 		<name>doc_index</name>
 		<type>int</type>
+		<description>Last index used in NOTIFY (some document formats use
+		numbers incremented in each NOTIFY).</description>
 	</column>
 
 	<index>
