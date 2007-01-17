@@ -73,10 +73,10 @@ case $DBENGINE in
 		;;
 esac
 
-if [ $DBENGINELOADED -eq 1 ] ; then 
+if [ $DBENGINELOADED -eq 1 ] ; then
 	mdbg "database engine '$DBENGINE' loaded"
-else
-	mwarn "no database engine found - tried '$DBENGINE'"
+elif [ -n "$DBENGINE" ] ; then
+	mwarn "database engine not found - tried '$DBENGINE'"
 fi
 
 #
@@ -1640,12 +1640,21 @@ usrloc() {
 
 	if [ "$1" = "alias" ] ; then
 		USRLOC_TABLE="$ALS_TABLE"
+		if [ -z "$USRLOC_TABLE" ] ; then
+			USRLOC_TABLE=aliases
+		fi
 		CHECK_SUB=1
 	elif [ "$1" = "ul" ] ; then
 		USRLOC_TABLE="$UL_TABLE"
+		if [ -z "$USRLOC_TABLE" ] ; then
+			USRLOC_TABLE=location
+		fi
 		CHECK_SUB=0
 	elif [ "$1" = "usrloc" ] ; then
 		USRLOC_TABLE="$UL_TABLE"
+		if [ -z "$USRLOC_TABLE" ] ; then
+			USRLOC_TABLE=location
+		fi
 		CHECK_SUB=0
 	else
 		merr "usrloc - unknown subcommand '$1'"
