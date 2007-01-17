@@ -47,6 +47,8 @@
 #include "../../trim.h"
 #include "../../transport.h"
 #include "../../globals.h"
+#include "../../timer_ticks.h"
+#include "../../timer.h" /* ticks_t */
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
@@ -54,6 +56,13 @@
 #include "tls_config.h"
 #include "tls_rpc.h"
 #include "tls_mod.h"
+
+
+/* maximum accepted lifetime (maximum possible is  ~ MAXINT/2)
+ *  (it should be kept in sync w/ MAX_TCP_CON_LIFETIME from tcp_main.c:
+ *   MAX_TLS_CON_LIFETIME <= MAX_TCP_CON_LIFETIME )*/
+#define MAX_TLS_CON_LIFETIME	(1U<<(sizeof(ticks_t)*8-1))
+
 
 
 /*
@@ -147,7 +156,7 @@ static str tls_method = STR_STATIC_INIT("TLSv1");
 
 int tls_handshake_timeout = 120;
 int tls_send_timeout = 120;
-int tls_conn_timeout = 600;
+int tls_con_lifetime = 600; /* this value will be adjusted to ticks later */
 int tls_log = 3;
 int tls_session_cache = 0;
 str tls_session_id = STR_STATIC_INIT("ser-tls-0.9.0");
@@ -183,7 +192,7 @@ static param_export_t params[] = {
 	{"cipher_list",         PARAM_STRING, &mod_params.cipher_list },
 	{"handshake_timeout",   PARAM_INT,    &tls_handshake_timeout  },
 	{"send_timeout",        PARAM_INT,    &tls_send_timeout       },
-	{"connection_timeout",  PARAM_INT,    &tls_conn_timeout       },
+	{"connection_timeout",  PARAM_INT,    &tls_con_lifetime       },
 	{"tls_log",             PARAM_INT,    &tls_log                },
 	{"session_cache",       PARAM_INT,    &tls_session_cache      },
 	{"session_id",          PARAM_STR,    &tls_session_id         },
@@ -287,6 +296,24 @@ static int mod_init(void)
 	}
 
 	if (tls_check_sockets(*tls_cfg) < 0) return -1;
+
+	/* fix the timeouts from s to ticks */
+	if (tls_con_lifetime<0){
+		/* set to max value (~ 1/2 MAX_INT) */
+		tls_con_lifetime=MAX_TLS_CON_LIFETIME;
+	}else{
+		if ((unsigned)tls_con_lifetime > 
+				(unsigned)TICKS_TO_S(MAX_TLS_CON_LIFETIME)){
+			LOG(L_WARN, "tls: mod_init: tls_con_lifetime too big (%u s), "
+					" the maximum value is %u\n", tls_con_lifetime,
+					TICKS_TO_S(MAX_TLS_CON_LIFETIME));
+			tls_con_lifetime=MAX_TLS_CON_LIFETIME;
+		}else{
+			tls_con_lifetime=S_TO_TICKS(tls_con_lifetime);
+		}
+	}
+	
+
 
 	return 0;
 }

@@ -39,7 +39,7 @@
 
 extern int tls_handshake_timeout;
 extern int tls_send_timeout;
-extern int tls_conn_timeout;
+extern int tls_con_lifetime;
 extern int tls_log;
 extern int tls_session_cache;
 extern str tls_session_id;
