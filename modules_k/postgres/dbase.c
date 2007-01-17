@@ -787,7 +787,7 @@ static int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 /*
  * Print list of values separated by comma
  */
-static int print_values(char* _b, int _l, db_val_t* _v, int _n)
+static int print_values(db_con_t* _con, char* _b, int _l, db_val_t* _v, int _n)
 {
 	int i, res = 0, l;
 
@@ -795,7 +795,7 @@ static int print_values(char* _b, int _l, db_val_t* _v, int _n)
 		l = _l - res;
 /*		LOG(L_ERR, "%d sizes l = _l - res %d = %d - %d\n", i, l,_l,res);
 */
-		if (val2str(_v + i, _b + res, &l) < 0) {
+		if (val2str(_con, _v + i, _b + res, &l) < 0) {
 			LOG(L_ERR, "PG[print_values]: Error converting value to string\n");
 			return 0;
 		}
@@ -812,7 +812,7 @@ static int print_values(char* _b, int _l, db_val_t* _v, int _n)
 /*
  * Print where clause of SQL statement
  */
-static int print_where(char* _b, int _l, db_key_t* _k,
+static int print_where(db_con_t* _con, char* _b, int _l, db_key_t* _k,
 	db_op_t* _o, db_val_t* _v, int _n)
 {
 	int i;
@@ -826,7 +826,7 @@ static int print_where(char* _b, int _l, db_key_t* _k,
 			res += snprintf(_b + res, _l - res, "%s=", _k[i]);
 		}
 		l = _l - res;
-		val2str(&(_v[i]), _b + res, &l);
+		val2str(_con, &(_v[i]), _b + res, &l);
 		res += l;
 		if (i != (_n - 1)) {
 			res += snprintf(_b + res, _l - res, " AND ");
@@ -839,7 +839,7 @@ static int print_where(char* _b, int _l, db_key_t* _k,
 /*
  * Print set clause of update SQL statement
  */
-static int print_set(char* _b, int _l, db_key_t* _k,
+static int print_set(db_con_t* _con, char* _b, int _l, db_key_t* _k,
 	db_val_t* _v, int _n)
 {
 	int i;
@@ -848,7 +848,7 @@ static int print_set(char* _b, int _l, db_key_t* _k,
 	for(i = 0; i < _n; i++) {
 		res += snprintf(_b + res, _l - res, "%s=", _k[i]);
 		l = _l - res;
-		val2str(&(_v[i]), _b + res, &l);
+		val2str(_con, &(_v[i]), _b + res, &l);
 		res += l;
 		if (i != (_n - 1)) {
 			if ((_l - res) >= 1) {
@@ -887,7 +887,7 @@ int pg_query(db_con_t* _con, db_key_t* _k, db_op_t* _op,
 	}
 	if (_n) {
 		off += snprintf(_s + off, SQL_BUF_LEN - off, "where ");
-		off += print_where(_s + off, SQL_BUF_LEN - off,
+		off += print_where(_con, _s + off, SQL_BUF_LEN - off,
 			_k, _op, _v, _n);
 	}
 	if (_o) {
@@ -1043,7 +1043,7 @@ int pg_insert(db_con_t* _con, db_key_t* _k, db_val_t* _v, int _n)
 	off = snprintf(_s, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_con));
 	off += print_columns(_s + off, SQL_BUF_LEN - off, _k, _n);
 	off += snprintf(_s + off, SQL_BUF_LEN - off, ") values (");
-	off += print_values(_s + off, SQL_BUF_LEN - off, _v, _n);
+	off += print_values(_con, _s + off, SQL_BUF_LEN - off, _v, _n);
 	*(_s + off++) = ')';
 	*(_s + off) = '\0';
 
@@ -1083,7 +1083,7 @@ int pg_delete(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	off = snprintf(_s, SQL_BUF_LEN, "delete from %s", CON_TABLE(_con));
 	if (_n) {
 		off += snprintf(_s + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(_s + off, SQL_BUF_LEN - off, _k,
+		off += print_where(_con, _s + off, SQL_BUF_LEN - off, _k,
 			_o, _v, _n);
 	}
 
@@ -1125,10 +1125,10 @@ int pg_update(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	int rv = 0;
 
 	off = snprintf(_s, SQL_BUF_LEN, "update %s set ", CON_TABLE(_con));
-	off += print_set(_s + off, SQL_BUF_LEN - off, _uk, _uv, _un);
+	off += print_set(_con, _s + off, SQL_BUF_LEN - off, _uk, _uv, _un);
 	if (_n) {
 		off += snprintf(_s + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(_s + off, SQL_BUF_LEN - off, _k,
+		off += print_where(_con, _s + off, SQL_BUF_LEN - off, _k,
 			_o, _v, _n);
 		*(_s + off) = '\0';
 	}

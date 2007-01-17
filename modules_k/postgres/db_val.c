@@ -279,11 +279,12 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int val2str(db_val_t* _v, char* _s, int* _len)
+int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 {
-	int l;
+	int l, ret;
 	char *tmp_s;
 	size_t tmp_len;
+	char* old_s;
 
 #ifdef PARANOID
 	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
@@ -326,30 +327,36 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
-		if (*_len < (l + 3)) {
+		if (*_len < (l * 2 + 3)) {
 			LOG(L_ERR, "PG[val2str]: Destination buffer too short for string\n");
 			return -4;
 		} else {
+			old_s = _s;
 			*_s++ = '\'';
-			memcpy(_s, VAL_STRING(_v), l);
-			*(_s + l) = '\'';
-			*(_s + l + 1) = '\0'; /* FIXME */
-			*_len = l + 2;
+			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v), l, 0);
+	                LOG(L_DBG, "PG[val2str:DB_STRING]: PQescapeStringConn: in: %d chars, out: %d chars\n", l, ret);
+			_s += ret;
+			*_s++ = '\'';
+			*_s = '\0'; /* FIXME */
+			*_len = _s - old_s;
 			return 0;
 		}
 		break;
 
 	case DB_STR:
 		l = VAL_STR(_v).len;
-		if (*_len < (l + 3)) {
+		if (*_len < (l * 2 + 3)) {
 			LOG(L_ERR, "PG[val2str]: Destination buffer too short for str\n");
 			return -5;
 		} else {
+			old_s = _s;
 			*_s++ = '\'';
-			memcpy(_s, VAL_STR(_v).s, l);
-			*(_s + l) = '\'';
-			*(_s + l + 1) = '\0';
-			*_len = l + 2;
+			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v), l, 0);
+	                LOG(L_DBG, "PG[val2str:DB_STR]: PQescapeStringConn: in: %d chars, out: %d chars\n", l, ret);
+			_s += ret;
+			*_s++ = '\'';
+			*_s = '\0'; /* FIXME */
+			*_len = _s - old_s;
 			return 0;
 		}
 		break;
