@@ -169,11 +169,13 @@ int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 #endif
 	ret = msg_send(&dst, buf, len);
 	mhomed=backup_mhomed;
-	if (ret<0) 
+	pkg_free(buf);
+
+	if (ret<0) {
 		goto error;
+	}
 	
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
-	pkg_free(buf);
 
 	update_sl_stats(code);
 	return 1;
