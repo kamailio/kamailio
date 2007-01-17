@@ -87,12 +87,6 @@ void cancel_branch( struct cell *t, int branch )
 	}
 #	endif
 
-	if (t->uac[branch].last_received<100) {
-		DBG("DEBUG: cancel_branch: no response ever received: "
-		    "giving up on cancel\n");
-		return;
-	}
-
 	cancel=build_cancel(t, branch, &len);
 	if (!cancel) {
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");

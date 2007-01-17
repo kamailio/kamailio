@@ -59,17 +59,22 @@ char *build_cancel(struct cell *Trans,unsigned int branch,
 inline short static should_cancel_branch( struct cell *t, int b )
 {
 	int last_received;
-	short should;
 
-	last_received=t->uac[b].last_received;
-	/* cancel only if provisional received and noone else
+	last_received = t->uac[b].last_received;
+	/* cancel only if provisional received and no one else
 	   attempted to cancel yet */
-	should=last_received>=100 && last_received<200
-		&& t->uac[b].local_cancel.buffer.s==0;
-	/* we'll cancel -- label it so that noone else
-		(e.g. another 200 branch) will try to do the same */
-	if (should) t->uac[b].local_cancel.buffer.s=BUSY_BUFFER;
-	return should;
+	if ( t->uac[b].local_cancel.buffer.s==NULL ) {
+		if ( last_received>=100 && last_received<200 ) {
+			/* we'll cancel -- label it so that noone else
+			(e.g. another 200 branch) will try to do the same */
+			t->uac[b].local_cancel.buffer.s=BUSY_BUFFER;
+			return 1;
+		} else if (last_received==0) {
+			/* set flag to catch the delaied replies */
+			t->uac[b].flags |= T_UAC_TO_CANCEL_FLAG;
+		}
+	}
+	return 0;
 }
 
 

@@ -491,8 +491,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	/* internally cancel branches with no received reply */
 	for (i=t_invite->first_branch; i<t_invite->nr_of_outgoings; i++) {
 		if (t_invite->uac[i].last_received==0){
-			/* mark as cancelled */
-			t_invite->uac[i].flags |= T_UAC_TO_CANCEL_FLAG;
 			/* reset the "request" timers */
 			reset_timer(&t_invite->uac[i].request.retr_timer);
 			reset_timer(&t_invite->uac[i].request.fr_timer);
