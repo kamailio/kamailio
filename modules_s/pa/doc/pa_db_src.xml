@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" >
+
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>PA</name>
+
+    <!-- Presence related tables -->
+    <xi:include href="../../../db/schema/presentity.xml"/>
+    <xi:include href="../../../db/schema/presentity_notes.xml"/>
+    <xi:include href="../../../db/schema/presentity_extensions.xml"/>
+    <xi:include href="../../../db/schema/presentity_contact.xml"/>
+    <xi:include href="../../../db/schema/watcherinfo.xml"/>
+    <xi:include href="../../../db/schema/tuple_notes.xml"/>
+    <xi:include href="../../../db/schema/tuple_extensions.xml"/>
+    <xi:include href="../../../db/schema/offline_winfo.xml"/>
+</database>
+

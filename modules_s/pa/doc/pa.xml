@@ -10,6 +10,10 @@
 
 <!-- bibliography needed for standalone compilation -->
 <include xmlns="http://www.w3.org/2001/XInclude" 
+	href="pa_db.xml"/>
+
+<!-- bibliography needed for standalone compilation -->
+<include xmlns="http://www.w3.org/2001/XInclude" 
 	href="../../../doc/presence/biblio.xml"/>
 
 <!-- our im-rules draft -->

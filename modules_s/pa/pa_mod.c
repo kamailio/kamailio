@@ -212,7 +212,7 @@ static param_export_t params[]={
 	{"pres_rules_file",      PARAM_STR,    &pres_rules_file },
 	
 	{"ignore_408_on_notify", PARAM_INT, &ignore_408_on_notify }, /* ignore 408 responses on NOTIFY */
-	
+	{"timer_interval",       PARAM_INT,    &timer_interval       },
 	{"default_priority_percentage", PARAM_INT,    &default_priority_percentage  },
 	
 	{"auth_rules_refresh_time", PARAM_INT, &auth_rules_refresh_time },
@@ -227,12 +227,13 @@ static param_export_t params[]={
 	{"presentity_table",     PARAM_STRING, &presentity_table     },
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
+	{"offline_winfo_table", PARAM_STRING, &offline_winfo_table }, /* table with offline winfo */
+
+	/* deprecated (undocumented, remove) */
 	{"place_table",          PARAM_STRING, &place_table          },
-	{"timer_interval",       PARAM_INT,    &timer_interval       },
 	{"use_place_table",      PARAM_INT,    &use_place_table      },
 	{"use_bsearch",          PARAM_INT,    &use_bsearch          },
 	{"use_location_package", PARAM_INT,    &use_location_package },
-	{"offline_winfo_table", PARAM_STRING, &offline_winfo_table }, /* table with offline winfo */
 
 	/* db columns, undocumented */
 
