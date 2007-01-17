@@ -580,7 +580,7 @@ int tls_tcpconn_init(struct tcp_connection *c, int sock)
 {
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
-	c->timeout = get_ticks() + tls_conn_timeout;
+	c->timeout = get_ticks_raw() + tls_con_lifetime;
 	c->extra_data = 0;
 	return 0;
 }
