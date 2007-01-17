@@ -95,7 +95,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set fifo_name parameter
 ...
-modparam("mi_fifo", "fifo_name", "/tmp/openser_mi_fifo")
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 ...
      _________________________________________________________
 

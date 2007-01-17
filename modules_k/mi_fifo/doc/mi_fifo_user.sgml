@@ -95,7 +95,7 @@
 		<title>Set <varname>fifo_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mi_fifo", "fifo_name", "/tmp/openser_mi_fifo")
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 ...
 </programlisting>
 		</example>
