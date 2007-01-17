@@ -89,23 +89,6 @@
     
     <section id="install_and_run">
 	<title>Installation And Running</title>
-	<section>
-	    <title>Database setup</title>
-	    <para>
-		Before running SER with msilo, you have to setup the database table where the
-		module will store the message. For that, if the table was not created by the
-		installation script or you choose to install everything by yourself you can use the
-		following <acronym>SQL</acronym> script (good for MySQL) as template. Database and
-		table name can be set with module parameters so they can be changed, but the name of
-		the columns must be as they are in the next <acronym>SQL</acronym> script.
-	    </para>
-	    <example>
-		<title>Msilo SQL Script</title>
-		<programlisting>
-<xi:include href="msilo.sql" parse="text"/>
-		</programlisting>
-	    </example>
-    	</section>
     	<section>
 	    <title>SER Configuration File</title>
 	    <para>Configuration example for msilo module.</para>
