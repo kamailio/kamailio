@@ -84,7 +84,8 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 /* Macros - used as rank in child_init function */
 #define PROC_MAIN      0  /* Main ser process */
 #define PROC_TIMER    -1  /* Timer attendant process */
-#define PROC_FIFO     -2  /* FIFO attendant process */
+#define PROC_RPC      -2  /* RPC type process */
+#define PROC_FIFO      PROC_RPC  /* FIFO attendant process */
 #define PROC_TCP_MAIN -4  /* TCP main process */
 #define PROC_UNIXSOCK -5  /* Unix socket server */
 #define PROC_NOCHLDINIT -128 /* no child init functions will be called
