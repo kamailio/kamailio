@@ -27,6 +27,7 @@
 /* History:
  * --------
  *  2006-02-08  created by andrei
+ *  2007-01-18  use PROC_RPC rank when forking (andrei)
  */
 
 
@@ -278,13 +279,15 @@ static int mod_child(int rank)
 {
 	int pid;
 	struct ctrl_socket* cs;
+	static int rpc_handler=0;
 	
 	/* we want to fork(), but only from one process */
 	if ((rank == PROC_MAIN ) && (ctrl_sock_lst)){ /* FIXME: no fork ?? */
 		DBG("ctl: mod_child(%d), ctrl_sock_lst=%p\n", rank, ctrl_sock_lst);
-		/* fork, but  don't call init_child, we don't want all the module
-		 * to know about us */
-		pid=fork_process(PROC_NOCHLDINIT, "ctl handler",1);
+		/* fork, but make sure we know not to close our own sockets when
+		 * ctl child_init will be called for the new child */
+		rpc_handler=1;
+		pid=fork_process(PROC_RPC, "ctl handler", 1);
 		DBG("ctl: mod_child(%d), fork_process=%d, csl=%p\n",
 				rank, pid, ctrl_sock_lst);
 		if (pid<0){			
@@ -296,24 +299,27 @@ static int mod_child(int rank)
 					rank, fd_no, ctrl_sock_lst);
 			io_listen_loop(fd_no, ctrl_sock_lst);
 		}else{ /* parent */
+			rpc_handler=0;
 		}
 	}
-	/* close all the opened fds, we don't need them here */
-	for (cs=ctrl_sock_lst; cs; cs=cs->next){
-		close(cs->fd);
-		cs->fd=-1;
-		if (cs->write_fd!=-1){
-			close(cs->write_fd);
-			cs->write_fd=-1;
+	if (rank!=PROC_RPC || !rpc_handler){
+		/* close all the opened fds, we don't need them here */
+		for (cs=ctrl_sock_lst; cs; cs=cs->next){
+			close(cs->fd);
+			cs->fd=-1;
+			if (cs->write_fd!=-1){
+				close(cs->write_fd);
+				cs->write_fd=-1;
+			}
 		}
-	}
-	if (rank!=PROC_MAIN){ /* we need the lists in main for on_exit cleanup,
-							 see mod_destroy */
-		/* free memory, we don't need the lists anymore */
-		free_ctrl_socket_list(ctrl_sock_lst);
-		ctrl_sock_lst=0;
-		free_id_list(listen_lst);
-		listen_lst=0;
+		if (rank!=PROC_MAIN){ /* we need the lists in main for on_exit cleanup,
+								 see mod_destroy */
+			/* free memory, we don't need the lists anymore */
+			free_ctrl_socket_list(ctrl_sock_lst);
+			ctrl_sock_lst=0;
+			free_id_list(listen_lst);
+			listen_lst=0;
+		}
 	}
 	return 0;
 error:
