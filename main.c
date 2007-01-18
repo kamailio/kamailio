@@ -68,6 +68,8 @@
  *               defined; improved exit kill timeout (andrei)
  *              init_childs(PROC_MAIN) before starting tcp_main, to allow
  *               tcp usage for module started processes (andrei)
+ * 2007-01-18  children shutdown procedure moved into shutdown_children;
+*               safer shutdown on start-up error (andrei)
  */
 
 
@@ -480,15 +482,20 @@ static void kill_all_children(int signum)
 
 	if (own_pgid) kill(0, signum);
 	else if (pt){
-		lock_get(process_lock);
+		 /* lock processes table only if this is a child process
+		  * (only main can add processes, so from main is safe not to lock
+		  *  and moreover it avoids the lock-holding suicidal children problem)
+		  */
+		if (!is_main) lock_get(process_lock); 
 		for (r=1; r<*process_count; r++){
+			if (r==process_no) continue; /* try not to be suicidal */
 			if (pt[r].pid) {
 				kill(pt[r].pid, signum);
 			}
 			else LOG(L_CRIT, "BUG: killing: %s > %d no pid!!!\n",
 							pt[r].desc, pt[r].pid);
 		}
-		lock_release(process_lock);
+		if (!is_main) lock_release(process_lock);
 	}
 }
 
@@ -517,6 +524,25 @@ static void sig_alarm_abort(int signo)
 
 
 
+static void shutdown_children(int sig, int show_status)
+{
+	kill_all_children(sig);
+	if (set_sig_h(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
+		LOG(L_ERR, "ERROR: shutdown: could not install SIGALARM handler\n");
+		/* continue, the process will die anyway if no
+		 * alarm is installed which is exactly what we want */
+	}
+	alarm(ser_kill_timeout);
+	while((wait(0) > 0) || (errno==EINTR)); /* wait for all the 
+											   children to terminate*/
+	set_sig_h(SIGALRM, sig_alarm_abort);
+	cleanup(show_status); /* cleanup & show status*/
+	alarm(0);
+	set_sig_h(SIGALRM, SIG_IGN);
+}
+
+
+
 void handle_sigs()
 {
 	pid_t	chld;
@@ -537,20 +563,8 @@ void handle_sigs()
 				DBG("INT received, program terminates\n");
 			else
 				DBG("SIGTERM received, program terminates\n");
-
-			/* first of all, kill the children also */
-			kill_all_children(SIGTERM);
-			if (set_sig_h(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
-				LOG(L_ERR, "ERROR: could not install SIGALARM handler\n");
-				/* continue, the process will die anyway if no
-				 * alarm is installed which is exactly what we want */
-			}
-			alarm(ser_kill_timeout);
-			/* Wait for all the children to die */
-			while((wait(0) > 0) || (errno==EINTR));
-			set_sig_h(SIGALRM, sig_alarm_abort);
-			cleanup(1); /* cleanup & show status*/
-			alarm(0);
+			/* shutdown/kill all the children */
+			shutdown_children(SIGTERM, 1);
 			dprint("Thank you for flying " NAME "\n");
 			exit(0);
 			break;
@@ -595,19 +609,7 @@ void handle_sigs()
 			LOG(L_INFO, "INFO: terminating due to SIGCHLD\n");
 #endif
 			/* exit */
-			kill_all_children(SIGTERM);
-			if (set_sig_h(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
-				LOG(L_ERR, "ERROR: could not install SIGALARM handler\n");
-				/* continue, the process will die anyway if no
-				 * alarm is installed which is exactly what we want */
-			}
-			alarm(ser_kill_timeout);
-			while((wait(0) > 0) || (errno==EINTR)); /* wait for all the 
-													   children to terminate*/
-			set_sig_h(SIGALRM, sig_alarm_abort);
-			cleanup(1); /* cleanup & show status*/
-			alarm(0);
-			set_sig_h(SIGALRM, SIG_IGN);
+			shutdown_children(SIGTERM, 1);
 			DBG("terminating due to SIGCHLD\n");
 			exit(0);
 			break;
@@ -1081,8 +1083,8 @@ int main_loop()
 #endif
 
 	for(;;){
-			pause();
 			handle_sigs();
+			pause();
 	}
 
 
@@ -1578,16 +1580,13 @@ try_again:
 
 	ret=main_loop();
 	/*kill everything*/
-	kill_all_children(SIGTERM);
-	/*clean-up*/
-	cleanup(0);
+	if (is_main) shutdown_children(SIGTERM, 0);
+	/* else terminate process */
 	return ret;
 
 error:
 	/*kill everything*/
-	kill_all_children(SIGTERM);
-	/*clean-up*/
-	cleanup(0);
+	if (is_main) shutdown_children(SIGTERM, 0);
 	return -1;
 
 }
