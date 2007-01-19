@@ -204,6 +204,7 @@ void destroy_extras( struct acc_extra *extra)
 }
 
 
+#ifdef RAD_ACC
 /* extra name is moved as string part of an attribute; str.len will contain an
  * index to the corresponding attribute
  */
@@ -216,6 +217,7 @@ int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset)
 	}
 	return i;
 }
+#endif
 
 
 /* converts the name of the extra from str to integer 

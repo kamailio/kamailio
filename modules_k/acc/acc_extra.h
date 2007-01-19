@@ -36,7 +36,6 @@
 
 #include "../../str.h"
 #include "../../items.h"
-#include "../../radius.h"
 #include "../../parser/msg_parser.h"
 
 struct acc_extra
@@ -63,9 +62,12 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr);
 
 int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr);
 
-int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset);
-
 int extra2int( struct acc_extra *extra, int *attrs );
+
+#ifdef RAD_ACC
+#include "../../radius.h"
+int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset);
+#endif
 
 #endif
 
