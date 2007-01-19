@@ -49,8 +49,10 @@ static int mod_init( void );
 
 inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo);
 inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo);
+inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl);
 
 static int it_list_fixup(void** param, int param_no);
+static int exec_avp_fixup(void** param, int param_no);
 
 inline static void exec_shutdown();
 
@@ -58,8 +60,10 @@ inline static void exec_shutdown();
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"exec_dset", w_exec_dset, 1, it_list_fixup, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"exec_msg",  w_exec_msg,  1, it_list_fixup, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_dset", w_exec_dset, 1, it_list_fixup,  REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_msg",  w_exec_msg,  1, it_list_fixup,  REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_avp",  w_exec_avp,  1, it_list_fixup,  REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_avp",  w_exec_avp,  2, exec_avp_fixup, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -193,6 +197,42 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 	return ret;
 }
 
+inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
+{
+	environment_t *backup;
+	int ret;
+	str command;
+	xl_elem_t *model;
+	
+	if(msg==0 || cmd==0)
+		return -1;
+	
+	backup=0;
+	if (setvars) {
+		backup=set_env(msg);
+		if (!backup) {
+			LOG(L_ERR, "ERROR: w_exec_avp: no env created\n");
+			return -1;
+		}
+	}
+
+	model = (xl_elem_t*)cmd;
+	if(xl_printf_s(msg, model, &command)<0)
+	{
+		LOG(L_ERR,
+			"exec:w_exec_avp: error - cannot print the format\n");
+		return -1;
+	}
+	
+	DBG("exec:w_exec_avp: executing [%s]\n", command.s);
+
+	ret=exec_avp(msg, command.s, (itemname_list_p)avpl);
+	if (setvars) {
+		unset_env(backup);
+	}
+	return ret;
+}
+
 /*
  * Convert char* parameter to xl_elem parameter
  */
@@ -218,4 +258,52 @@ static int it_list_fixup(void** param, int param_no)
 	}
 	return 0;
 }
+
+static int exec_avp_fixup(void** param, int param_no)
+{
+	xl_elem_t *model = NULL;
+	itemname_list_t *anlist = NULL;
+	char *s;
+
+	s = (char*)(*param);
+	if (param_no==1)
+	{
+		if(s==NULL)
+		{
+			LOG(L_ERR, "ERROR:exec:exec_avp_fixup: null format in P%d\n",
+					param_no);
+			return E_UNSPEC;
+		}
+		if(xl_parse_format(s, &model, XL_DISABLE_COLORS|XL_THROW_ERROR)<0)
+		{
+			LOG(L_ERR,
+				"ERROR:exec:exec_avp_fixup: wrong format[%s]\n",
+				s);
+			return E_UNSPEC;
+		}
+			
+		*param = (void*)model;
+		return 0;
+	} else if(param_no==2) {
+		if(s==NULL)
+		{
+			LOG(L_ERR, "ERROR:exec:exec_avp_fixup: null format in P%d\n",
+					param_no);
+			return E_UNSPEC;
+		}
+		anlist = parse_itemname_list(s, XL_AVP);
+		if(anlist==NULL)
+		{
+			LOG(L_ERR,
+				"ERROR:exec_avp_fixup: bad format in P%d [%s]\n",
+				param_no, s);
+			return E_UNSPEC;
+		}
+		*param = (void*)anlist;
+		return 0;
+	}
+
+	return 0;
+}
+
 

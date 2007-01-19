@@ -337,7 +337,7 @@ static int fixup_db_store_avp(void** param, int param_no)
 static int fixup_db_query_avp(void** param, int param_no)
 {
 	xl_elem_t *model = NULL;
-	avpname_list_t *anlist = NULL;
+	itemname_list_t *anlist = NULL;
 	char *s;
 
 	s = (char*)(*param);
@@ -366,7 +366,7 @@ static int fixup_db_query_avp(void** param, int param_no)
 					param_no);
 			return E_UNSPEC;
 		}
-		anlist = parse_avpname_list(s);
+		anlist = parse_itemname_list(s, XL_AVP);
 		if(anlist==NULL)
 		{
 			LOG(L_ERR,
@@ -1202,7 +1202,7 @@ static int w_dbquery1_avps(struct sip_msg* msg, char* query, char* param)
 
 static int w_dbquery2_avps(struct sip_msg* msg, char* query, char* dest)
 {
-	return ops_dbquery_avps ( msg, (xl_elem_t*)query, (avpname_list_t*)dest);
+	return ops_dbquery_avps ( msg, (xl_elem_t*)query, (itemname_list_t*)dest);
 }
 
 static int w_write_avps(struct sip_msg* msg, char* source, char* param)

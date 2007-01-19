@@ -223,6 +223,46 @@ exec_dset("echo TEST > /tmp/$rU.txt");
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">exec_avp(command [, avplist])</function>
+		</title>
+		<para>
+		Executes an external command. Each line from output of the command
+		is saved in an AVP from 'avplist'. If 'avplist' is missing, the
+		AVP are named 1, 2, 3, ...
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>command</emphasis> - Command to be executed. It can
+			include pseudo- variabes;
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>avplist</emphasis> - comma separated list with AVP 
+			names to store the result in;
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for ex:
+		exec_msg("print-contact.sh '$ct'");
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">exec_avp</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_avp("echo TEST");
+exec_avp("echo TEST", "$avp(s:test)");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Known Issues</title>

@@ -314,14 +314,14 @@ int db_delete_avp( str *uuid, str *username, str *domain, char *attr,
 	return 0;
 }
 
-int db_query_avp(struct sip_msg *msg, char *query, avpname_list_t* dest)
+int db_query_avp(struct sip_msg *msg, char *query, itemname_list_t* dest)
 {
 	int_str avp_val;
 	int_str avp_name;
 	unsigned short avp_type;
 	db_res_t* db_res = NULL;
 	int i, j;
-	avpname_list_t* crt;
+	itemname_list_t* crt;
 	
 	if(query==NULL)
 	{

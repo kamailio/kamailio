@@ -755,7 +755,7 @@ error:
 }
 
 int ops_dbquery_avps(struct sip_msg* msg, xl_elem_t* query,
-		avpname_list_t* dest)
+		itemname_list_t* dest)
 {
 	int printbuf_len;
 

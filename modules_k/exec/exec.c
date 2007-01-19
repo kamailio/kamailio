@@ -45,6 +45,9 @@
 #include "../../dprint.h"
 #include "../../dset.h"
 #include "../../action.h"
+#include "../../usr_avp.h"
+
+#include "exec.h"
 
 int exec_msg(struct sip_msg *msg, char *cmd )
 {
@@ -190,3 +193,98 @@ error01:
 error00:
 	return ret;
 }
+
+
+int exec_avp(struct sip_msg *msg, char *cmd, itemname_list_p avpl)
+{
+	int_str avp_val;
+	int_str avp_name;
+	unsigned short avp_type;
+	FILE *pipe;	
+	int ret;
+	char res_line[MAX_URI_SIZE+1];
+	str res;
+	int exit_status;
+	int i;
+	itemname_list_t* crt;
+
+	/* pessimist: assume error by default */
+	ret=-1;
+	
+	pipe=popen( cmd, "r" );
+	if (pipe==NULL) {
+		LOG(L_ERR, "ERROR: exec_avp: cannot open pipe: %s\n",
+			cmd);
+		ser_error=E_EXEC;
+		return ret;
+	}
+
+	/* read now line by line */
+	i=0;
+	crt = avpl;
+	while( fgets(res_line, MAX_URI_SIZE, pipe)!=NULL){
+		res.s = res_line;
+		res.len=strlen(res.s);
+		/* trim from right */
+		while(res.len && (res.s[res.len-1]=='\r' 
+				|| res.s[res.len-1]=='\n' 
+				|| res.s[res.len-1]=='\t'
+				|| res.s[res.len-1]==' ' )) {
+			res.len--;
+		}
+		/* skip empty line */
+		if (res.len==0) continue;
+		/* ZT */
+		res.s[res.len]=0;
+
+		avp_type = 0;
+		if(crt==NULL)
+		{
+			avp_name.n = i+1;
+		} else {
+			if(xl_get_avp_name(msg, &crt->sname, &avp_name, &avp_type)!=0)
+			{
+				LOG(L_ERR,"exec:exec_avp:error - cant get item name [%d]\n",i);
+				goto error;
+			}
+		}
+
+		avp_type |= AVP_VAL_STR;
+		avp_val.s = res;
+	
+		if(add_avp(avp_type, avp_name, avp_val)!=0)
+		{
+			LOG(L_ERR,"exec:exec_avp:error - unable to add avp\n");
+			goto error;
+		}
+	
+		if(crt)
+			crt = crt->next;
+
+		i++;
+	}
+	if (i==0)
+		DBG("ERROR:exec_avp: no result from %s\n", cmd);
+	/* success */
+	ret=1;
+
+error:
+	if (ferror(pipe)) {
+		LOG(L_ERR, "ERROR: exec_avp: error in pipe: %d/%s\n",
+			errno, strerror(errno));
+		ser_error=E_EXEC;
+		ret=-1;
+	}
+	exit_status=pclose(pipe);
+	if (WIFEXITED(exit_status)) { /* exited properly .... */
+		/* return false if script exited with non-zero status */
+		if (WEXITSTATUS(exit_status)!=0) ret=-1;
+	} else { /* exited erroneously */
+		LOG(L_ERR, "ERROR: exec_avp: cmd %s failed. "
+			"exit_status=%d, errno=%d: %s\n",
+			cmd, exit_status, errno, strerror(errno) );
+		ret=-1;
+	}
+	return ret;
+}
+

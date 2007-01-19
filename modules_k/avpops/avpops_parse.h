@@ -50,7 +50,5 @@ struct fis_param*  parse_check_value(char *s);
 
 struct fis_param*  parse_op_value(char *s);
 
-avpname_list_t* parse_avpname_list(char *s);
-
 #endif
 
