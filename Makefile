@@ -84,7 +84,7 @@ module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum \
 # group due to interdependencies
 module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db avp_radius \
 				db_ops domain lcr msilo mysql dialog pa postgres \
-				presence_b2b rls speeddial uri_db xmlrpc
+				presence_b2b rls speeddial uri_db xcap xmlrpc
 
 # For mysql
 module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql speeddial
@@ -93,7 +93,7 @@ module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql sp
 module_group_radius=acc_radius auth_radius avp_radius
 
 # For presence
-module_group_presence=dialog pa presence_b2b rls
+module_group_presence=dialog pa presence_b2b rls xcap
 
 # Modules in this group satisfy specific or niche applications, but are considered
 # stable for production use. They may or may not have dependencies
@@ -504,3 +504,45 @@ install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 			-e "s#/usr/share/doc/ser/#$(doc-target)#g" \
 			< ser.cfg.5 >  $(man-prefix)/$(man-dir)/man5/ser.cfg.5
 		chmod 644  $(man-prefix)/$(man-dir)/man5/ser.cfg.5
+
+
+##################
+# making libraries
+# 
+# you can use:
+#    make libs all include_modules=... install prefix=...
+#    make libs proper
+#
+# but libs should be compiled/installed automaticaly when there are any modules which need them
+
+lib_dependent_modules = dialog pa rls presence_b2b xcap
+
+# exports for libs
+export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
+export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
+export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
+export INSTALL-TOUCH
+
+dep_mods = $(filter $(addprefix modules/, $(lib_dependent_modules)), $(modules))
+dep_mods += $(filter $(lib_dependent_modules), $(static_modules))
+
+# make 'modules' dependent on libraries if there are modules which need them (experimental)
+ifneq ($(strip $(dep_mods)),)
+modules:	libs
+
+endif
+
+.PHONY: clean_libs libs
+
+clean_libs:
+			$(MAKE) -f Makefile.ser -C lib proper
+
+# cleaning in libs always when cleaning ser
+clean:	clean_libs
+
+# remove 'libs' target from targets
+lib_goals = $(patsubst libs,,$(MAKECMDGOALS))
+
+libs:	
+		$(MAKE) -C lib -f Makefile.ser $(lib_goals)
+

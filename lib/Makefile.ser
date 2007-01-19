@@ -38,8 +38,12 @@ SUBDIRS=cds xcap presence
 
 subdirs:	$(SUBDIRS)
 
+# we need sub_goals without 'all' target
+#sub_goals = $(MAKECMDGOALS:all=)
+sub_goals = $(patsubst all,,$(MAKECMDGOALS))
+
 $(SUBDIRS):	
-			-@echo "Making $(MAKECMDGOALS) in $@" ; $(MAKE) -f Makefile.ser $(MAKECMDGOALS) -C $@
+			-@echo "Making $(sub_goals) in $@" ; $(MAKE) -f Makefile.ser $(sub_goals) -C $@
 
 all:	subdirs
 
