@@ -1381,6 +1381,11 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 				lst_end=t->prev;
 				clist_append_sublist(l, t, lst_end, next, prev);
 			}else{
+				/* if no more recs, but we found the orig. target anyway,
+				 *  return it (e.g. recs are only CNAME x & x A 1.2.3.4 or 
+				 *  CNAME & SRV) */
+				if (t->type==type)
+					ret=t; 
 				clist_append(l, t, next, prev);
 			}
 		}
