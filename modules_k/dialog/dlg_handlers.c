@@ -204,8 +204,9 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		if (param->code >= 300)
 			if_update_stat(dlg_enable_stats, early_dlgs, -1);
 		dlg->state = DLG_STATE_CONFIRMED_NA;
+	} else if (dlg->state == DLG_STATE_UNCONFIRMED) {
+		dlg->state = DLG_STATE_CONFIRMED_NA;
 	}
-
 
 	if (param->code>=300) {
 		DBG("DEBUG:dialog:dlg_onreply: destroying dialog "
