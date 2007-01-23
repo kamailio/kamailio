@@ -358,7 +358,7 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 			if (attr==0)
 				goto error;
 
-			p= int2str((unsigned long)dlg->state, &len);
+			p= int2str((unsigned long)dlg->lifetime, &len);
 			attr = add_mi_attr( node, MI_DUP_VALUE, "timeout", 7, p, len);
 			if (attr==0)
 				goto error;
