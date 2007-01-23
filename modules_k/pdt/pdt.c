@@ -86,12 +86,13 @@ int clean_time = 900;
 
 static int  w_prefix2domain(struct sip_msg* msg, char* str1, char* str2);
 static int  w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2);
+static int  w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sd_en);
 static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init();
 static int  mod_child_init(int r);
 
-static int prefix2domain(struct sip_msg*, int mode);
+static int prefix2domain(struct sip_msg*, int mode, int sd_en);
 
 static struct mi_root* pdt_mi_add(struct mi_root*, void* param);
 static struct mi_root* pdt_mi_delete(struct mi_root*, void* param);
@@ -105,6 +106,7 @@ void pdt_clean_cache(unsigned int ticks, void *param);
 static cmd_export_t cmds[]={
 	{"prefix2domain", w_prefix2domain,   0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"prefix2domain", w_prefix2domain_1, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prefix2domain", w_prefix2domain_2, 2, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -303,22 +305,42 @@ static void mod_destroy(void)
 
 static int w_prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 {
-	return prefix2domain(msg, 0);
+	return prefix2domain(msg, 0, 0);
 }
 
 static int w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2)
 {
 	if(mode!=NULL && *mode=='1')
-		return prefix2domain(msg, 1);
+		return prefix2domain(msg, 1, 0);
 	else if(mode!=NULL && *mode=='2')
-			return prefix2domain(msg, 2);
-	else return prefix2domain(msg, 0);
+			return prefix2domain(msg, 2, 0);
+	else return prefix2domain(msg, 0, 0);
+}
+
+static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sd_en)
+{
+	int tmp=0;
+	
+	if((sd_en==NULL) || ((sd_en!=NULL) && (*sd_en!='0') && (*sd_en!='1') && (*sd_en!='2')))
+			return -1;
+	
+    if (*sd_en=='1')
+		tmp = 1;
+    if (*sd_en=='2')
+		tmp = 2;
+	
+		
+	if(mode!=NULL && *mode=='1')
+		return prefix2domain(msg, 1, tmp);
+	else if(mode!=NULL && *mode=='2')
+			return prefix2domain(msg, 2, tmp);
+	else return prefix2domain(msg, 0, tmp);
 }
 
 /* change the r-uri if it is a PSTN format */
-static int prefix2domain(struct sip_msg* msg, int mode)
+static int prefix2domain(struct sip_msg* msg, int mode, int sd_en)
 {
-	str *d, p;
+	str *d, p, all={"*",1};
 	time_t crt_time;
 	int plen;
 	struct sip_uri uri;
@@ -384,29 +406,72 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 		}
 	}
 
-	/* take the domain from  FROM uri as sdomain */
-	if(parse_from_header(msg)<0 ||  msg->from == NULL || get_from(msg)==NULL)
-	{
-		LOG(L_ERR,
-			"prefix_to_domain: ERROR cannot parse FROM header\n");
-		return -1;
-	}	
+	if(sd_en==2)
+	{	
+		/* take the domain from  FROM uri as sdomain */
+		if(parse_from_header(msg)<0 ||  msg->from == NULL || get_from(msg)==NULL)
+		{
+			LOG(L_ERR,
+				"prefix_to_domain: ERROR cannot parse FROM header\n");
+			return -1;
+		}	
 		
-	memset(&uri, 0, sizeof(struct sip_uri));
-	if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len , &uri)<0)
-	{
-		LOG(L_ERR,"prefix_to_domain: failed to parse From uri\n");
-		return -1;
-	}
-//	pdt_print_tree(_ptree);
+		memset(&uri, 0, sizeof(struct sip_uri));
+		if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len , &uri)<0)
+		{
+			LOG(L_ERR,"prefix_to_domain: failed to parse From uri\n");
+			return -1;
+		}
 	
-	/* find the domain that corresponds to this prefix */
-	plen = 0;
-	if((d=pdt_get_domain(_ptree, &uri.host, &p, &plen))==NULL)
-	{
-		LOG(L_INFO, "PDT:prefix2domain: no prefix found in [%.*s]\n",
+		/* find the domain that corresponds to this prefix */
+		plen = 0;
+		if((d=pdt_get_domain(_ptree, &uri.host, &p, &plen))==NULL)
+		{
+			plen = 0;
+			if((d=pdt_get_domain(_ptree, &all, &p, &plen))==NULL)
+			{
+				LOG(L_INFO, "PDT:prefix2domain: no prefix found in [%.*s]\n",
+					p.len, p.s);
+				return -1;
+			}
+		}
+	}
+	else if(sd_en==1)
+	{	
+		/* take the domain from  FROM uri as sdomain */
+		if(parse_from_header(msg)<0 ||  msg->from == NULL || get_from(msg)==NULL)
+		{
+			LOG(L_ERR,
+				"prefix_to_domain: ERROR cannot parse FROM header\n");
+			return -1;
+		}	
+		
+		memset(&uri, 0, sizeof(struct sip_uri));
+		if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len , &uri)<0)
+		{
+			LOG(L_ERR,"prefix_to_domain: failed to parse From uri\n");
+			return -1;
+		}
+	
+		/* find the domain that corresponds to this prefix */
+		plen = 0;
+		if((d=pdt_get_domain(_ptree, &uri.host, &p, &plen))==NULL)
+		{
+			LOG(L_INFO, "PDT:prefix2domain: no prefix found in [%.*s]\n",
 				p.len, p.s);
-		return -1;
+			return -1;
+		}
+	}
+	else
+	{
+		/* find the domain that corresponds to this prefix */
+		plen = 0;
+		if((d=pdt_get_domain(_ptree, &all, &p, &plen))==NULL)
+		{
+			LOG(L_INFO, "PDT:prefix2domain: no prefix found in [%.*s]\n",
+				p.len, p.s);
+			return -1;
+		}
 	}
 	
 	/* update the new uri */
@@ -501,7 +566,7 @@ int pdt_load_db()
 					p.len<=0 || d.len<=0 || sdomain.len<=0)
 			{
 				LOG(L_ERR, "PDT:pdt_load_db: Error - bad values in db\n");
-				goto error;
+				continue;
 			}
 		
 			if(pdt_check_pd(_dhash, &sdomain, &p, &d)==1)
@@ -509,7 +574,7 @@ int pdt_load_db()
 				LOG(L_ERR,
 				"PDT:pdt_load_db:sdomain [%.*s]: prefix [%.*s] or domain <%.*s> duplicated\n",
 					sdomain.len, sdomain.s, p.len, p.s, d.len, d.s);
-				goto error;
+				continue;
 			}
 
 			if(pdt_add_to_tree(&_ptree, &sdomain, &p, &d)<0)
@@ -864,9 +929,16 @@ error:
  *    prefix
  *    domain
  *
- * 	- '.' (dot) means NULL value 
+ * 	- '.' (dot) means NULL value and will match anything
  * 	- the comparison operation is 'START WITH' -- if domain is 'a' then
  * 	  all domains starting with 'a' are listed
+ *
+ * 	  Examples
+ * 	  pdt_list o 2 .    - lists the entries where sdomain is starting with 'o', 
+ * 	                      prefix is starting with '2' and domain is anything
+ * 	  
+ * 	  pdt_list . 2 open - lists the entries where sdomain is anything, prefix 
+ * 	                      starts with '2' and domain starts with 'open'
  */
 
 struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
@@ -880,69 +952,59 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 	struct mi_node* node = NULL;
 	struct mi_attr* attr= NULL;
 
+	DBG("PDT:pdt_mi_list ...\n");
 	if(_dhash==NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
+		LOG(L_ERR, "PDT:pdt_mi_list: empty domain list\n");
 		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
 	/* read sdomain */
+	sdomain.s = 0;
+	sdomain.len = 0;
+	sp.s = 0;
+	sp.len = 0;
+	sd.s = 0;
+	sd.len = 0;
 	node = cmd_tree->node.kids;
-	if(node == NULL)
-		goto error1;
-
-	sdomain = node->value;
-	if(sdomain.s == NULL || sdomain.len== 0)
-		return init_mi_tree( 404, "domain not found", 16);
-
-	if(*sdomain.s=='.' )
-		 return init_mi_tree( 400, "empty param", 11);
-
-	/* read prefix */
-	node = node->next;
-	if(node == NULL)
-		goto error1;
-
-	sp= node->value;
-	if(sp.s== NULL || sp.len==0)
+	if(node != NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_list: could not read prefix\n");
-		return init_mi_tree( 404, "prefix not found", 16);
-	}
+		sdomain = node->value;
+		if(sdomain.s == NULL || sdomain.len== 0)
+			return init_mi_tree( 404, "domain not found", 16);
 
-	if( *sp.s!='.')
-	{
-		while(sp.s!=NULL && i!=sp.len)
+		if(*sdomain.s=='.')
+			sdomain.s = 0;
+
+		/* read prefix */
+		node = node->next;
+		if(node != NULL)
 		{
-			if(sp.s[i] < '0' || sp.s[i] > '9')
-			{
-				LOG(L_ERR, "PDT:pdt_mi_list: bad prefix [%.*s]\n",
-					sp.len, sp.s);
-				return init_mi_tree( 400, "bad prefix", 10);
+			sp= node->value;
+			if(sp.s== NULL || sp.len==0 || *sp.s=='.')
+				sp.s = NULL;
+			else {
+				while(sp.s!=NULL && i!=sp.len)
+				{
+					if(sp.s[i] < '0' || sp.s[i] > '9')
+					{
+						LOG(L_ERR, "PDT:pdt_mi_list: bad prefix [%.*s]\n",
+							sp.len, sp.s);
+						return init_mi_tree( 400, "bad prefix", 10);
+					}
+					i++;
+				}
 			}
-			i++;
+
+			/* read domain */
+			node= node->next;
+			if(node != NULL)
+			{
+				sd= node->value;
+				if(sd.s== NULL || sd.len==0 || *sd.s=='.')
+					sd.s = NULL;
+			}
 		}
-	} else {
-		sp.s   = NULL;
-		sp.len = 0;
-	}
-
-	/* read domain */
-	node= node->next;
-	if(node == NULL || node->next!=NULL)
-		goto error1;
-
-	sd= node->value;
-	if(sd.s== NULL || sd.len==0)
-	{
-		LOG(L_ERR, "PDT:pdt_mi_list: could not read domain\n");
-		return init_mi_tree( 400, "domain not found", 16);
-	}
-	
-	if( *sd.s=='.')
-	{
-		sd.s   = NULL;
-		sd.len = 0;
 	}
 
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
@@ -965,10 +1027,14 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 				while(it!=NULL)
 				{
 					if((sp.s==NULL && sd.s==NULL)
-						|| (sp.s!=NULL && it->prefix.len>=sp.len &&
+						||(sp.s==NULL && (sd.s!=NULL && it->domain.len>=sd.len &&
+							strncasecmp(it->domain.s, sd.s, sd.len)==0)) 
+						|| ( sd.s==NULL && (sp.s!=NULL && it->prefix.len>=sp.len &&
+							strncmp(it->prefix.s, sp.s, sp.len)==0))
+						|| ((sp.s!=NULL && it->prefix.len>=sp.len &&
 							strncmp(it->prefix.s, sp.s, sp.len)==0)
-						|| (sd.s!=NULL && it->domain.len>=sd.len &&
-							strncasecmp(it->domain.s, sd.s, sd.len)==0))
+						&& (sd.s!=NULL && it->domain.len>=sd.len &&
+							strncasecmp(it->domain.s, sd.s, sd.len)==0)))
 					{
 						node = add_mi_node_child(rpl, 0 ,"PDT", 3, 0, 0);
 						if(node == NULL)
@@ -1001,10 +1067,8 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 	return rpl_tree;
 
 error:
+	lock_release(&_dhash->hl_lock);
 	free_mi_tree(rpl_tree);
 	return 0;
-
-error1:
-	return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 }
 

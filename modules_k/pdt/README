@@ -37,7 +37,11 @@ Elena-Ramona Modroiu
 
         1.4. Exported Functions
 
-              1.4.1. prefix2domain(mode)
+              1.4.1. prefix2domain(rewrite_mode,
+                      multidomain_mode)
+
+              1.4.2. prefix2domain(rewrite_mode)
+              1.4.3. prefix2domain()
 
         1.5. Exported MI Functions
 
@@ -247,7 +251,7 @@ modparam("pdt", "clean_time", 600)
 
 1.4. Exported Functions
 
-1.4.1. prefix2domain(mode)
+1.4.1. prefix2domain(rewrite_mode, multidomain_mode)
 
    Build a new URI if it is necessary. Returns 1 when the
    translation was made or there was nothing to translate (user
@@ -261,20 +265,50 @@ modparam("pdt", "clean_time", 600)
    If such an entry is found, then the domain in RURI is updated
    with the domain of this entry (sdomain, prefix, domain).
 
-   The "mode" parameter specifies whether to strip or not the
-   prefix from user part. If the parameter is missing or it has
-   the value "0", then the prefix is removed along with the
+   There is also the possibility to have the translation of URI
+   regardless of source domain. This can be achieved inserting in
+   the database entries where sdomain has the value "*".
+
+   The "rewrite_mode" parameter specifies whether to strip or not
+   the prefix from user part. If the parameter is missing or it
+   has the value "0", then the prefix is removed along with the
    leading prefix. If the value is "1", only the leading prefix
    is removed. If the values is "2" the user part of the URI is
    not changed.
+
+   The "multidomain_mode" parameter specifies the kind of
+   multidomain support to use. There are three possible values:
+
+     * 0 : Translation of URI regardless of source domain.
+     * 1 : Translation of URI using as source domain the domain
+       in From-URI.
+     * 2 : Translation of URI using as source domain the domain
+       in From-URI. In case there is no entry for the required
+       sdomain, it tries the translation using "*" as sdomain.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-11. prefix2domain usage
 ...
-prefix2domain();
+prefix2domain("2", "2");
+...
+     _________________________________________________________
+
+1.4.2. prefix2domain(rewrite_mode)
+
+   The same as prefix2domain(rewrite_mode, "0"), that is without
+   multidomain support, translation of URI being done regardless
+   of the source domain.
 ...
 prefix2domain("2");
+...
+     _________________________________________________________
+
+1.4.3. prefix2domain()
+
+   The same as prefix2domain("0", "0").
+...
+prefix2domain();
 ...
      _________________________________________________________
 
@@ -350,6 +384,18 @@ prefix2domain("2");
                 _prefix_
                 _domain_
                 _empty_line_
+
+   Examples:
+
+     * "pdt_list siph 2 ." : Lists the entries where sdomain is
+       starting with 'siph', prefix is starting with '2' and
+       domain is anything
+     * "pdt_list siph 2" : Lists the entries where sdomain is
+       starting with 'siph', prefix is starting with '2' and
+       domain is anything
+     * "pdt_list . 2 open" : Lists the entries where sdomain is
+       anything, prefix starts with '2' and domain starts with
+       'open'.
      _________________________________________________________
 
 1.6. Installation & Running

@@ -293,11 +293,12 @@ modparam("pdt", "clean_time", 600)
 	</section>
 
     </section>
+	
     <section>
 	<title>Exported Functions</title>
-	<section>
+ 	<section>
 	    <title>
-		<function moreinfo="none">prefix2domain(mode)</function>
+		<function moreinfo="none">prefix2domain(rewrite_mode, multidomain_mode)</function>
 	    </title>
 	    <para>
 		Build a new &uri; if it is necessary. Returns 1 when the translation
@@ -314,12 +315,30 @@ modparam("pdt", "clean_time", 600)
 		(sdomain, prefix, domain).
 		</para>
 		<para>
-		The <quote>mode</quote> parameter specifies whether to strip or not
+		There is also the possibility to have the translation of &uri; regardless of
+		source domain. This can be achieved inserting in the database entries where
+		sdomain has the value "*".
+		</para>
+		<para>
+		The <quote>rewrite_mode</quote> parameter specifies whether to strip or not
 		the prefix from user part. If the parameter is missing or it has the
 		value <quote>0</quote>, then the prefix is removed along with the 
 		leading prefix. If the value is <quote>1</quote>, only the leading
 		prefix is removed. If the values is <quote>2</quote> the user part
 		of the URI is not changed.
+		</para>
+		<para>
+		The  <quote>multidomain_mode</quote> parameter specifies the kind of multidomain
+		support to use. There are three possible values:
+		<itemizedlist>
+			<listitem><para>0 : Translation of &uri; regardless of source domain.</para>
+			</listitem>	  
+			<listitem><para>1 :  Translation of &uri; using as source domain the domain
+			in From-URI.</para></listitem>			
+			<listitem><para>2 :  Translation of &uri; using as source domain the domain
+			in From-URI. In case there is no entry for the required sdomain, it tries 
+			the translation using "*" as sdomain.</para></listitem>
+		</itemizedlist>		
 		</para>
 	    <para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -328,13 +347,38 @@ modparam("pdt", "clean_time", 600)
 		<title><function>prefix2domain</function> usage</title>
 		<programlisting format="linespecific">
 ...
-prefix2domain();
-...
-prefix2domain("2");
+prefix2domain("2", "2");
 ...
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">prefix2domain(rewrite_mode)</function>
+	    </title>
+		<para>The same as prefix2domain(rewrite_mode, "0"), that is without 
+		multidomain support, translation of  &uri; being done regardless of 
+		the source domain.
+		</para>
+		<programlisting format="linespecific">
+...
+prefix2domain("2");
+...
+</programlisting>
+    </section>
+	
+	<section>
+	    <title>
+		<function moreinfo="none">prefix2domain()</function>
+	    </title>
+		<para>The same as prefix2domain("0", "0").</para>
+		<programlisting format="linespecific">
+...
+prefix2domain();
+...
+</programlisting>
+    </section>
+	
     </section>
 	
 		<section>
@@ -433,6 +477,22 @@ prefix2domain("2");
 		_domain_
 		_empty_line_
 		</programlisting>
+		<para>
+		 Examples:
+		 <itemizedlist>
+			<listitem><para><quote>pdt_list siph 2 .</quote>  : Lists the entries where sdomain is 
+			starting with 'siph', prefix is starting with '2' and domain is anything
+			</para></listitem>	
+
+			<listitem><para><quote>pdt_list siph 2</quote>  : Lists the entries where sdomain is 
+			starting with 'siph', prefix is starting with '2' and domain is anything
+			</para></listitem>	
+	 
+			 <listitem><para><quote>pdt_list . 2 open</quote>  : Lists the entries where sdomain 
+			 is anything, prefix starts with '2' and domain starts with 'open'.
+			</para></listitem>	
+		</itemizedlist>
+		<para>
     </section>
     </section>
 
