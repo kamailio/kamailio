@@ -221,7 +221,8 @@ int init_tls(void)
 		ERR("Unable to set the memory allocation functions\n");
 		return -1;
 	}
-
+	if (tls_init_locks()<0)
+		return -1;
 	init_tls_compression();
 	SSL_library_init();
 	SSL_load_error_strings();
@@ -274,4 +275,6 @@ int tls_check_sockets(tls_cfg_t* cfg)
 void destroy_tls(void)
 {
 	ERR_free_strings();
+	/* TODO: free all the ctx'es */
+	tls_destroy_locks();
 }
