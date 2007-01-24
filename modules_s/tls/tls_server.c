@@ -660,7 +660,8 @@ again:
 			     /* not all the contents was written => try again w/ the rest
 			      * (possible when SSL_MODE_ENABLE_PARTIAL_WRITE is set)
 			      */
-			DBG("%d bytes still need to be written\n", len - n);
+			DBG("%ld bytes still need to be written\n", 
+				(long)(len - n));
 			buf += n; 
 			len -= n;
 		} else {
