@@ -87,8 +87,8 @@ void free_hash(hash_t* hash);
 hash_list_t* init_hash_list(int hash_size);
 void free_hash_list(hash_list_t* hl);
 
-int add_to_hash(hash_t *ph, str *sp, str *sd);
-int pdt_add_to_hash(hash_list_t *hash, str* sdomain, str *sp, str *sd);
+int add_to_hash(hash_t *hash, str *sp, str *sd, int mode);
+int pdt_add_to_hash(hash_list_t *hash, str* sdomain, str *sp, str *sd, int mode);
 
 hash_t* pdt_search_hash(hash_list_t*, str *d);
 

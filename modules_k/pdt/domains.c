@@ -308,7 +308,7 @@ void free_hash_list(hash_list_t* hl)
 }
 
 
-int add_to_hash(hash_t *hash, str *sp, str *sd)
+int add_to_hash(hash_t *hash, str *sp, str *sd, int mode)
 {
 	int hash_entry=0;
 	unsigned int dhash;
@@ -351,6 +351,9 @@ int add_to_hash(hash_t *hash, str *sp, str *sd)
 	if(it)
 		it->p=cell;
 
+	if(mode == 0)
+		return 0;
+
 	/* mark the changes for the sync with pdtree */
 	tmp = new_pd_op(cell, 0, PDT_ADD);
 	if(tmp==NULL)
@@ -377,7 +380,7 @@ int add_to_hash(hash_t *hash, str *sp, str *sd)
 }
 
 
-int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd)
+int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd, int mode)
 {
 	hash_t *it, *prev, *ph;
 	
@@ -409,7 +412,7 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 			goto error1;
 		}
 		
-		if(add_to_hash(ph, sp, sd)<0)
+		if(add_to_hash(ph, sp, sd, mode)<0)
 		{
 			LOG(L_ERR, "PDT: pdt_add_to_hash: could not add to hash\n");
 			goto error;
@@ -426,7 +429,7 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 	else 
 		/* it is the entry of sdomain, just add a new prefix/domain pair to its hash */
 	{
-		if(add_to_hash(it, sp, sd)<0)
+		if(add_to_hash(it, sp, sd, mode)<0)
 		{
 			LOG(L_ERR, "PDT: pdt_add_to_hash: could not add to hash\n");
 			goto error1;

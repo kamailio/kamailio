@@ -583,7 +583,7 @@ int pdt_load_db()
 				goto error;
 			}
 			
-			if(pdt_add_to_hash(_dhash, &sdomain, &p, &d)!=0)
+			if(pdt_add_to_hash(_dhash, &sdomain, &p, &d, 0)!=0)
 			{
 				LOG(L_ERR, "PDT:pdt_load_db: Error adding info to hash\n");
 				goto error;
@@ -619,7 +619,10 @@ int pdt_sync_cache()
 	{
 		itree = pdt_get_tree(_ptree, &it->sdomain);
 		if(itree!=NULL && itree->idsync >= it->max_id)
-			continue; 
+		{
+			it = it->next;
+			continue;
+		}
 
 		ito = it->diff;
 		while(ito!=NULL && itree->idsync >= ito->id)
@@ -627,16 +630,19 @@ int pdt_sync_cache()
 		
 		while(ito!=NULL && itree->idsync<ito->id)
 		{
-			DBG("PDT:pdt_sync_cache: sync op[%d]=%d...\n",
-				ito->id, ito->op);
 			switch(ito->op)
 			{
 				case PDT_ADD:
+					LOG(L_ERR,
+						"PDT:pdt_sync_cache: add (%d) [%.*s-%.*s => %.*s]\n",
+						ito->id, it->sdomain.len, it->sdomain.s,
+						ito->cell->prefix.len, ito->cell->prefix.s,
+						ito->cell->domain.len, ito->cell->domain.s);
 					if(pdt_add_to_tree(&_ptree, &it->sdomain, &ito->cell->prefix,
 								&ito->cell->domain)<0)
 					{
 						LOG(L_ERR, "PDT:pdt_sync_cache: Error to insert into tree\n");
-						goto error;
+						break;
 					}
 					break;
 				case PDT_DELETE:
@@ -646,15 +652,20 @@ int pdt_sync_cache()
 							"PDT:pdt_sync_cache: Error to remove from tree, tree does not exist\n");
 						goto error;
 					}
+					LOG(L_ERR,
+						"PDT:pdt_sync_cache: adel (%d) [%.*s-%.*s]\n",
+						ito->id, it->sdomain.len, it->sdomain.s,
+						ito->cell->prefix.len, ito->cell->prefix.s);
 					if(pdt_remove_prefix_from_tree(itree, &it->sdomain, &ito->cell->prefix)!=0)
 					{
 						LOG(L_ERR,
 							"PDT:pdt_sync_cache: Error to remove from tree\n");
-						goto error;
+						break;
 					}
 					break;
 				default:
-					LOG(L_ERR, "PDT:pdt_sync_cache: unknown operation\n");
+					LOG(L_ERR, "PDT:pdt_sync_cache: unknown operation %d (%d)\n",
+							ito->op, ito->id);
 			}
 			ito->count++;
 			ito = ito->n;
@@ -820,12 +831,14 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree( 500,"Cannot store prefix/domain", 26);
 	}
 	
-	if(pdt_add_to_hash(_dhash, &sdomain, &sp, &sd)!=0)
+	if(pdt_add_to_hash(_dhash, &sdomain, &sp, &sd, 1)!=0)
 	{
 		LOG(L_ERR, "PDT:pdt_mi_add: could not add to cache\n");
 		goto error;
 	}
 	
+	DBG("PDT:pdt_mi_add: new prefix added %.*s-%.*s => %.*s\n",
+			sdomain.len, sdomain.s, sp.len, sp.s, sd.len, sd.s);
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 
 	
@@ -917,6 +930,8 @@ struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree( 500, "database/cache are inconsistent", 31 );
 	} 
 
+	DBG("PDT:pdt_mi_delete: prefix for sdomain [%.*s] domain [%.*s] "
+			"removed\n", sdomain.len, sdomain.s, sd.len, sd.s);
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
 	return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);

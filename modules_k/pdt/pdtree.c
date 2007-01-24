@@ -124,7 +124,9 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 
 	if(itn0[(sp->s[l]-'0')%PDT_NODE_SIZE].domain.s!=NULL)
 	{
-		LOG(L_ERR, "pdt_add_to_tree:ERROR: prefix alredy allocated\n");
+		LOG(L_ERR,
+			"pdt_add_to_tree:ERROR: prefix already allocated [%.*s/[%.*s]\n",
+			sp->len, sp->s, sd->len, sd->s);
 		return -1;
 	}
 
