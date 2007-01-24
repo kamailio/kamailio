@@ -41,7 +41,6 @@ Juha Heinanen
               1.3.18. fr_inv_timer (integer)
               1.3.19. fr_inv_timer_next (integer)
               1.3.20. rpid_avp (string)
-              1.3.21. db_mode (integer)
 
         1.4. Exported Functions
 
@@ -84,18 +83,17 @@ Juha Heinanen
    1-18. Setting fr_inv_timer module parameter
    1-19. Setting fr_inv_timer_next module parameter
    1-20. Setting rpid_avp module parameter
-   1-21. Setting db_mode module parameter
-   1-22. load_gws usage
-   1-23. load_gws usage with group-id
-   1-24. next_gw usage from a route block
-   1-25. next_gw usage from a failure route block
-   1-26. from_gw usage
-   1-27. from_gw usage with group-id
-   1-28. to_gw usage
-   1-29. to_gw usage with group-id
-   1-30. load_contacts usage
-   1-31. next_contacts usage from route block
-   1-32. next_contacts usage from failure route block
+   1-21. load_gws usage
+   1-22. load_gws usage with group-id
+   1-23. next_gw usage from a route block
+   1-24. next_gw usage from a failure route block
+   1-25. from_gw usage
+   1-26. from_gw usage with group-id
+   1-27. to_gw usage
+   1-28. to_gw usage with group-id
+   1-29. load_contacts usage
+   1-30. next_contacts usage from route block
+   1-31. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -137,11 +135,8 @@ Chapter 1. User's Guide
    values are NULL = none, 1 = udp, 2 = tcp, and 3 = tls.
 
    Table lcr contains prefix of user part of Request-URI, From
-   URI, gateway group id, and priority. From URI can contain
-   special characters % and _ matching any number of any
-   characters and any one character, respectively, if db_mod
-   parameter is set to 0. If db_mod parameter is set to 1, then
-   From URI is a regular expression.
+   URI, gateway group id, and priority. From URI is a regular
+   expression.
 
    In addition to gw and lcr tables there is third table gw_grp
    that is used to associate names with gateway group ids.
@@ -427,24 +422,6 @@ modparam("lcr","rpid_avp","rpid")
 ...
      _________________________________________________________
 
-1.3.21. db_mode (integer)
-
-   Sets the database mode of operating:
-
-     * 0 : no-caching - a db lookup is performed during each
-       load_gws()
-     * 1 : regexp are used for from_uri; no db lookup is
-       performed during load_gws(), the DB content is cached into
-       memory;
-
-   Default value is "1". 
-
-   Example 1-21. Setting db_mode module parameter
-...
-modparam("lcr","db_mode",0)
-...
-     _________________________________________________________
-
 1.4. Exported Functions
 
 1.4.1. load_gws(), load_gws(group-id)
@@ -457,7 +434,7 @@ modparam("lcr","db_mode",0)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-22. load_gws usage
+   Example 1-21. load_gws usage
 ...
 if (!load_gws()) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -466,7 +443,7 @@ ays");
 };
 ...
 
-   Example 1-23. load_gws usage with group-id
+   Example 1-22. load_gws usage with group-id
 ...
 if (!load_gws("1")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -497,7 +474,7 @@ ays from group 1");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-24. next_gw usage from a route block
+   Example 1-23. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -505,7 +482,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1-25. next_gw usage from a failure route block 
+   Example 1-24. next_gw usage from a failure route block 
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -523,7 +500,7 @@ if (!next_gw()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-26. from_gw usage
+   Example 1-25. from_gw usage
 ...
 if (from_gw()) {
         ...
@@ -531,7 +508,7 @@ if (from_gw()) {
 };
 ...
 
-   Example 1-27. from_gw usage with group-id
+   Example 1-26. from_gw usage with group-id
 ...
 if (from_gw("1")) {
         ...
@@ -548,7 +525,7 @@ if (from_gw("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-28. to_gw usage
+   Example 1-27. to_gw usage
 ...
 if (to_gw()) {
         ...
@@ -556,7 +533,7 @@ if (to_gw()) {
 };
 ...
 
-   Example 1-29. to_gw usage with group-id
+   Example 1-28. to_gw usage with group-id
 ...
 if (to_gw("1")) {
         ...
@@ -577,7 +554,7 @@ if (to_gw("1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-30. load_contacts usage
+   Example 1-29. load_contacts usage
 ...
 if (!load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load conta
@@ -607,7 +584,7 @@ cts");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-31. next_contacts usage from route block 
+   Example 1-30. next_contacts usage from route block 
 ...
 if (!next_contacts()) {
         sl_send_reply("500", "Server Internal Error");
@@ -617,7 +594,7 @@ if (!next_contacts()) {
 };
 ...
 
-   Example 1-32. next_contacts usage from failure route block 
+   Example 1-31. next_contacts usage from failure route block 
 if (next_contacts()) {
         t_relay();
 };
