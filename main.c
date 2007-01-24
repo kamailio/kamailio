@@ -1523,15 +1523,6 @@ try_again:
 			goto error;
 		}
 	}
-#ifdef USE_TLS
-	if (!tls_disable){
-		/* init tls*/
-		if (init_tls()<0){
-			LOG(L_CRIT, "could not initialize tls, exiting...\n");
-			goto error;
-		}
-	}
-#endif /* USE_TLS */
 #endif /* USE_TCP */
 	/* init_daemon? */
 	if (!dont_fork){
@@ -1559,6 +1550,17 @@ try_again:
 	 * processes registered from the modules*/
 	if (init_pt(calc_proc_no())==-1)
 		goto error;
+#ifdef USE_TCP
+#ifdef USE_TLS
+	if (!tls_disable){
+		/* init tls*/
+		if (init_tls()<0){
+			LOG(L_CRIT, "could not initialize tls, exiting...\n");
+			goto error;
+		}
+	}
+#endif /* USE_TLS */
+#endif /* USE_TCP */
 	
 	/* The total number of processes is now known, note that no
 	 * function being called before this point may rely on the
