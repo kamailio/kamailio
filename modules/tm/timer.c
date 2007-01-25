@@ -98,6 +98,8 @@
  *  2003-06-27  timers are not unlinked if timerlist is 0 (andrei)
  *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced;
  *              timer_link.payload removed (bogdan)
+ *  2006-11-27  added del_fr_timer(): fr timers are immediately removed
+ *              from the FR* lists (andrei)
  */
 
 #include "defs.h"
@@ -130,7 +132,8 @@ static struct timer detached_timer; /* just to have a value to compare with*/
 									((_tl)->timer_list!=DETACHED_LIST) )
 
 int noisy_ctimer=0;
-
+int var_timers=1; /* set to 0 to disable variable timers &&
+					timer loading from avps */
 
 int timer_group[NR_OF_TIMER_LISTS] = 
 {
@@ -322,7 +325,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 				"request resending (t=%p, %.9s ... )\n", 
 				r_buf->my_T, r_buf->buffer);
 			if (SEND_BUFFER( r_buf )==-1) {
-				reset_timer( &r_buf->fr_timer );
+				del_fr_timer( &r_buf->fr_timer );
 				fake_reply(r_buf->my_T, r_buf->branch, 503 );
 				return;
 			}
@@ -436,7 +439,17 @@ void cleanup_localcancel_timers( struct cell *t )
 	int i;
 	for (i=0; i<t->nr_of_outgoings; i++ )  {
 		reset_timer(  &t->uac[i].local_cancel.retr_timer );
-		reset_timer(  &t->uac[i].local_cancel.fr_timer );
+	}
+	if (var_timers){
+		lock(timertable->timers[FR_TIMER_LIST].mutex);
+			for (i=0; i<t->nr_of_outgoings; i++ )  {
+				del_fr_timer_unsafe(&t->uac[i].local_cancel.fr_timer);
+			}
+		unlock(timertable->timers[FR_TIMER_LIST].mutex);
+	}else{
+		for (i=0; i<t->nr_of_outgoings; i++ )  {
+			del_fr_timer(&t->uac[i].local_cancel.fr_timer);
+		}
 	}
 }
 
@@ -508,6 +521,21 @@ struct timer_table *get_timertable()
 {
 	return timertable;
 }
+
+
+
+void lock_fr_timers()
+{
+	lock(timertable->timers[FR_TIMER_LIST].mutex);
+}
+
+
+
+void unlock_fr_timers()
+{
+	unlock(timertable->timers[FR_TIMER_LIST].mutex);
+}
+
 
 
 void unlink_timer_lists()
@@ -776,6 +804,54 @@ void reset_timer( struct timer_link* tl )
 #endif
 }
 
+
+
+/* removes a timer from the FR_TIMER_LIST or FR_INV_TIMER_LIST, unsafe version,
+ *  (it allows immediate delete of a fr timer => solves the race with
+ *   variables timers inserted after longer deleted timers)
+ * WARNING: - don't try to use it to "move" a timer from one list
+ *            to another, you'll run into races
+ *          - must be calles with FR_TIMER lock held!
+ * see del_fr_timer()
+ */
+void del_fr_timer_unsafe( struct timer_link *tl)
+{
+	/* check first if var. timers are really used and we  are on  the
+	 * "detached" timer_routine list (the fr
+	 * handle is executing or  timer_routine prepares to execute it).
+	 * if so do nothing, except reseting the timer to TIMER_DELETED
+	 *  (just to give us a change at racing with timer_routine, if 
+	 *  TIMER_DELETED is set and the fr handle is not already executing =>
+	 *   it will not be called anymore)
+	 */
+	if (var_timers && tl->timer_list!=DETACHED_LIST){
+		remove_timer_unsafe(tl); /* safe to call for null list */
+	}else{
+		reset_timer(tl);
+	}
+}
+
+
+
+/* removes a timer from the FR_TIMER_LIST or FR_INV_TIMER_LIST
+ *  (it allows immediate delete of a fr timer => solves the race with
+ *   variables timers inserted after longer deleted timers)
+ * WARNING: - don't try to use it to "move" a timer from one list
+ *            to another, you'll run into races
+ */
+void del_fr_timer( struct timer_link *tl)
+{
+	if (var_timers){
+		/* the FR lock is common/shared by both FR_INV_TIMER_LIST 
+		 * and FR_TIMER_LIST, so we must lock only one of them */
+		lock(timertable->timers[FR_TIMER_LIST].mutex);
+			del_fr_timer_unsafe(tl);
+		unlock(timertable->timers[FR_TIMER_LIST].mutex);
+	}else{
+		/* use the older faster method */
+		reset_timer(tl);
+	}
+}
 
 
 

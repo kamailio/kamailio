@@ -95,7 +95,7 @@ struct timer_table
 
 extern int timer_group[NR_OF_TIMER_LISTS];
 extern unsigned int timer_id2timeout[NR_OF_TIMER_LISTS];
-
+extern int var_timers;
 
 
 struct timer_table * tm_init_timers();
@@ -109,6 +109,9 @@ struct timer_link  *check_and_split_time_list( struct timer*, int);
 */
 
 void reset_timer( struct timer_link* tl );
+/* remove a timer from FR_TIMER_LIST or FR_INV_TIMER_LIST */
+void del_fr_timer( struct timer_link *tl);
+void del_fr_timer_unsafe( struct timer_link *tl);
 /* determine timer length and put on a correct timer list */
 void set_timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext_timeout );
 /* similar to set_timer, except it allows only one-time
@@ -117,6 +120,8 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ex
 /*void unlink_timers( struct cell *t );*/
 void timer_routine(unsigned int, void*);
 
+void lock_fr_timers();
+void unlock_fr_timers();
 
 struct timer_table *get_timertable();
 

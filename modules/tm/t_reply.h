@@ -125,6 +125,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 void set_final_timer( /* struct s_table *h_table,*/ struct cell *t );
 
 void cleanup_uac_timers( struct cell *t );
+void cleanup_uac_timers_unsafe( struct cell *t );
 
 void on_negative_reply( struct cell* t, struct sip_msg* msg,
 	int code, void *param  );

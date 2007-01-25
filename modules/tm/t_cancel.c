@@ -138,7 +138,9 @@ static void cancel_all_branches(struct cell *t)
 {
     int i;
     int reply_recved=0;
-    
+    int fr_locked;
+   
+    fr_locked=0;
     /* cancel pending client transactions, if any */
     for( i=0 ; i<t->nr_of_outgoings ; i++ ){
 
@@ -147,13 +149,23 @@ static void cancel_all_branches(struct cell *t)
 	    
 	    /* stop_rb_timers(&t->uac[i].request); */
 	    reset_timer( &t->uac[i].request.retr_timer );
-	    reset_timer( &t->uac[i].request.fr_timer );
+	    if (var_timers){
+	    	if (fr_locked==0){
+			lock_fr_timers();
+			fr_locked=1;
+	    	}
+	    	del_fr_timer_unsafe( &t->uac[i].request.fr_timer );
+	    }else{
+	    	del_fr_timer( &t->uac[i].request.fr_timer );
+	    }
 	}
 	else {
 
 	    reply_recved++;
 	}
     }
+    if (fr_locked)
+	unlock_fr_timers();
 
     if(!reply_recved){
 	

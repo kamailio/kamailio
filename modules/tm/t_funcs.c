@@ -133,10 +133,16 @@ int t_release_transaction( struct cell *trans )
 {
 	set_kr(REQ_RLSD);
 
-	reset_timer( & trans->uas.response.fr_timer );
 	reset_timer( & trans->uas.response.retr_timer );
-
-	cleanup_uac_timers( trans );
+	if (var_timers){
+		lock_fr_timers();
+			del_fr_timer_unsafe( & trans->uas.response.fr_timer );
+			cleanup_uac_timers_unsafe( trans );
+		unlock_fr_timers();
+	}else{
+		del_fr_timer( & trans->uas.response.fr_timer );
+		cleanup_uac_timers( trans );
+	}
 	
 	put_on_wait( trans );
 	return 1;
@@ -395,7 +401,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 
 int fr_avp2timer(unsigned int* timer)
 {
-	if (fr_timer_avp.n!=0)
+	if (var_timers && fr_timer_avp.n!=0)
 		return avp2timer( timer, fr_timer_avp_type, fr_timer_avp);
 	else
 		return 1;
@@ -404,7 +410,7 @@ int fr_avp2timer(unsigned int* timer)
 
 int fr_inv_avp2timer(unsigned int* timer)
 {
-	if (fr_inv_timer_avp.n!=0)
+	if (var_timers && fr_inv_timer_avp.n!=0)
 		return avp2timer( timer, fr_inv_timer_avp_type, fr_inv_timer_avp);
 	else
 		return 1;
