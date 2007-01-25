@@ -268,7 +268,8 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_INT:
 			if (str2int(_s, &VAL_INT(_v)) < 0)
 			{
-				LOG(L_ERR, "str2val: Error while converting integer value from string\n");
+				LOG(L_ERR,
+				"str2val: Error while converting integer value from string\n");
 				return -2;
 			}
 			else
@@ -281,7 +282,8 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_BITMAP:
 			if (str2int(_s, &VAL_INT(_v)) < 0)
 			{
-				LOG(L_ERR, "str2val: Error while converting bitmap value from string\n");
+				LOG(L_ERR,
+				"str2val: Error while converting bitmap value from string\n");
 				return -3;
 			}
 			else
@@ -294,7 +296,8 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_DOUBLE:
 			if (str2double(_s, &VAL_DOUBLE(_v)) < 0)
 			{
-				LOG(L_ERR, "str2val: Error while converting double value from string\n");
+				LOG(L_ERR,
+				"str2val: Error while converting double value from string\n");
 				return -4;
 			}
 			else
@@ -318,7 +321,8 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_DATETIME:
 			if (str2time(_s, &VAL_TIME(_v)) < 0)
 			{
-				LOG(L_ERR, "str2val: Error while converting datetime value from string\n");
+				LOG(L_ERR,
+				"str2val: Error while converting datetime value from string\n");
 				return -5;
 			}
 			else
