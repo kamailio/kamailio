@@ -1252,6 +1252,7 @@ static int trace_send_duplicate(char *buf, int len)
 	struct socket_info* send_sock;
 	struct proxy_l * p;
 	int proto;
+	int ret;
 	
 	if(buf==NULL || len <= 0)
 		return -1;
@@ -1275,43 +1276,33 @@ static int trace_send_duplicate(char *buf, int len)
 		return -1;
 	}
 	
-	/* if error try next ip address if possible */
-	if (p->ok==0){
-		if (p->host.h_addr_list[p->addr_idx+1])
-			p->addr_idx++;
-		else p->addr_idx=0;
-		p->ok=1;
-	}
-	
 	hostent2su(to, &p->host, p->addr_idx, 
 				(p->port)?p->port:SIP_PORT);
-	p->tx++;
-	p->tx_bytes+=len;
 	
-	send_sock=get_send_socket(0, to, proto);
-	if (send_sock==0){
-		LOG(L_ERR,
-			"trace_send_duplicate:ERROR: cannot forward to af %d, proto %d "
-			"no corresponding listening socket\n", to->s.sa_family, proto);
-		goto error;
-	}
+	ret = -1;
+	
+	do {
+		send_sock=get_send_socket(0, to, proto);
+		if (send_sock==0){
+			LOG(L_ERR,
+				"trace_send_duplicate:ERROR: cannot forward to af %d, proto %d"
+				" no corresponding listening socket\n", to->s.sa_family,proto);
+			continue;
+		}
 
-	if (msg_send(send_sock, proto, to, 0, buf, len)<0){
-		LOG(L_ERR,
-			"trace_send_duplicate:ERROR: cannot send duplicate message\n");
-		goto error;
-	}
+		if (msg_send(send_sock, proto, to, 0, buf, len)<0){
+			LOG(L_ERR,
+				"trace_send_duplicate:ERROR: cannot send duplicate message\n");
+			continue;
+		}
+		ret = 0;
+		break;
+	}while( get_next_su( p, to)==0 );
 	
 	free_proxy(p); /* frees only p content, not p itself */
 	pkg_free(p);
 	pkg_free(to);
 
-	return 0;
-	
-error:
-	free_proxy(p);
-	pkg_free(p);
-	pkg_free(to);
-	return -1;
+	return ret;
 }
 

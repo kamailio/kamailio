@@ -36,6 +36,7 @@
  *  2004-02-13  t->is_invite and t->local replaced with flags (bogdan)
  *  2005-02-16  fr_*_timer acceps full AVP specifications; empty AVP
  *              desable variable timer feature (bogdan)
+ *  2007-01-25  DNS failover at transaction level added (bogdan) 
  */
 
 #include <limits.h>
@@ -243,10 +244,12 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int flags)
 	   so that replies will not be relaied */
 	t=get_t();
 	if (flags&TM_T_REPLY_repl_FLAG) t->flags|=T_IS_LOCAL_FLAG;
+	if (flags&TM_T_REPLY_nodnsfo_FLAG) t->flags|=T_NO_DNS_FAILOVER_FLAG;
 
 	/* INVITE processing might take long, particularly because of DNS
 	   look-ups -- let upstream know we're working on it */
-	if ( p_msg->REQ_METHOD==METHOD_INVITE && !(flags&TM_T_REPLY_no100_FLAG) )
+	if ( p_msg->REQ_METHOD==METHOD_INVITE &&
+	!(flags&(TM_T_REPLY_no100_FLAG|TM_T_REPLY_repl_FLAG)) )
 		t_reply( t, p_msg , 100 , &relay_reason_100);
 
 	/* now go ahead and forward ... */

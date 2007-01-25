@@ -35,6 +35,7 @@
  *  2003-12-04  global TM callbacks switched to per transaction callbacks
  *              (bogdan)
  *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
+ *  2007-01-25  DNS failover at transaction level added (bogdan)
  */
 
 #include "../../dprint.h"
@@ -216,6 +217,49 @@ static inline void post_print_uac_request(struct sip_msg *request,
 }
 
 
+static inline struct proxy_l* shm_clone_proxy(struct proxy_l *sp,
+													unsigned int move_dn)
+{
+	struct proxy_l *dp;
+
+	dp = (struct proxy_l*)shm_malloc(sizeof(struct proxy_l));
+	if (dp==NULL) {
+		LOG(L_ERR,"ERROR:tm:shm_clone_proxy:no more shm memory\n");
+		return 0;
+	}
+	memset( dp , 0 , sizeof(struct proxy_l));
+
+	dp->port = sp->port;
+	dp->proto = sp->proto;
+	dp->addr_idx = sp->addr_idx;
+	dp->flags = PROXY_SHM_FLAG;
+
+	/* clone the hostent */
+	if (hostent_shm_cpy( &dp->host, &sp->host)!=0)
+		goto error0;
+
+	/* clone the dns resolver */
+	if (sp->dn) {
+		if (move_dn) {
+			dp->dn = sp->dn;
+			sp->dn = 0;
+		} else {
+			dp->dn = dns_res_copy(sp->dn);
+			if (dp->dn==NULL)
+				goto error1;
+		}
+	}
+
+	return dp;
+error1:
+	free_shm_hostent(&dp->host);
+error0:
+	shm_free(dp);
+	return 0;
+}
+
+
+
 /* introduce a new uac, which is blind -- it only creates the
    data structures and starts FR timer, but that's it; it does
    not print messages and send anything anywhere; that is good
@@ -256,6 +300,45 @@ int add_blind_uac( /*struct cell *t*/ )
 }
 
 
+static inline int update_uac_dst( struct sip_msg *request,
+													struct ua_client *uac )
+{
+	struct socket_info* send_sock;
+	char *shbuf;
+	unsigned int len;
+
+	send_sock = get_send_socket( request, &uac->request.dst.to ,
+			uac->request.dst.proto );
+	if (send_sock==0) {
+		LOG(L_ERR, "ERROR:tm:update_uac_dst: can't fwd to af %d, proto %d "
+			" (no corresponding listening socket)\n",
+			uac->request.dst.to.s.sa_family, uac->request.dst.proto );
+		ser_error=E_NO_SOCKET;
+		return -1;
+	}
+
+	if (send_sock!=uac->request.dst.send_sock) {
+		/* rebuild */
+		shbuf = print_uac_request( request, &len, send_sock,
+			uac->request.dst.proto);
+		if (!shbuf) {
+			ser_error=E_OUT_OF_MEM;
+			return -1;
+		}
+
+		if (uac->request.buffer.s)
+			shm_free(uac->request.buffer.s);
+
+		/* things went well, move ahead and install new buffer! */
+		uac->request.dst.send_sock = send_sock;
+		uac->request.dst.proto_reserved1 = 0;
+		uac->request.buffer.s = shbuf;
+		uac->request.buffer.len = len;
+	}
+
+	return 0;
+}
+
 
 /* introduce a new uac to transaction; returns its branch id (>=0)
    or error (<0); it doesn't send a message yet -- a reply to it
@@ -264,13 +347,9 @@ int add_blind_uac( /*struct cell *t*/ )
 static int add_uac( struct cell *t, struct sip_msg *request, str *uri, 
 							str* next_hop, str* path, struct proxy_l *proxy)
 {
-	int ret;
-	short temp_proxy;
-	union sockaddr_union to;
 	unsigned short branch;
-	struct socket_info* send_sock;
-	char *shbuf;
-	unsigned int len;
+	int do_free_proxy;
+	int ret;
 
 	branch=t->nr_of_outgoings;
 	if (branch==MAX_BRANCHES) {
@@ -299,7 +378,7 @@ static int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 
 	/* check DNS resolution */
 	if (proxy){
-		temp_proxy=0;
+		do_free_proxy = 0;
 	}else {
 		proxy=uri2proxy( request->dst_uri.len ?
 			&request->dst_uri:&request->new_uri, PROTO_NONE );
@@ -307,57 +386,39 @@ static int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 			ret=E_BAD_ADDRESS;
 			goto error01;
 		}
-		temp_proxy=1;
+		do_free_proxy = 1;
 	}
 
-	if (proxy->ok==0) {
-		if (proxy->host.h_addr_list[proxy->addr_idx+1])
-			proxy->addr_idx++;
-		else proxy->addr_idx=0;
-		proxy->ok=1;
+	if ( !(t->flags&T_NO_DNS_FAILOVER_FLAG) ) {
+		t->uac[branch].proxy = shm_clone_proxy( proxy , do_free_proxy );
+		if (t->uac[branch].proxy==NULL) {
+			ret = E_OUT_OF_MEM;
+			goto error02;
+		}
 	}
 
-	hostent2su( &to, &proxy->host, proxy->addr_idx, 
-		proxy->port ? proxy->port:SIP_PORT);
+	/* use the first address */
+	hostent2su( &t->uac[branch].request.dst.to,
+		&proxy->host, proxy->addr_idx, proxy->port ? proxy->port:SIP_PORT);
+	t->uac[branch].request.dst.proto = proxy->proto;
 
-	send_sock=get_send_socket( request, &to , proxy->proto);
-	if (send_sock==0) {
-		LOG(L_ERR, "ERROR:tm:add_uac: can't fwd to af %d, proto %d "
-			" (no corresponding listening socket)\n",
-			to.s.sa_family, proxy->proto );
-		ret=ser_error=E_NO_SOCKET;
+	if ( update_uac_dst( request, &t->uac[branch] )!=0) {
+		ret = E_OUT_OF_MEM;
 		goto error02;
 	}
 
-	/* now message printing starts ... */
-	shbuf=print_uac_request( request, &len, send_sock, proxy->proto );
-	if (!shbuf) {
-		ret=ser_error=E_OUT_OF_MEM;
-		goto error02;
-	}
-
-	/* things went well, move ahead and install new buffer! */
-	t->uac[branch].request.dst.to=to;
-	t->uac[branch].request.dst.send_sock=send_sock;
-	t->uac[branch].request.dst.proto=proxy->proto;
-	t->uac[branch].request.dst.proto_reserved1=0;
-	t->uac[branch].request.buffer.s=shbuf;
-	t->uac[branch].request.buffer.len=len;
+	/* things went well, move ahead */
 	t->uac[branch].uri.s=t->uac[branch].request.buffer.s+
 		request->first_line.u.request.method.len+1;
 	t->uac[branch].uri.len=request->new_uri.len;
 	t->uac[branch].br_flags = getb0flags();
 	t->nr_of_outgoings++;
 
-	/* update stats */
-	proxy->tx++;
-	proxy->tx_bytes+=len;
-
 	/* done! */
 	ret=branch;
 
 error02:
-	if (temp_proxy) {
+	if(do_free_proxy) {
 		free_proxy( proxy );
 		pkg_free( proxy );
 	}
@@ -621,7 +682,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	t->first_branch=t->nr_of_outgoings;
 
 	/* on first-time forwarding, use current uri, later only what
-	   is in additional branches (which may be continuously refilled)
+)	   is in additional branches (which may be continuously refilled)
 	*/
 	if (t->first_branch==0) {
 		try_new=1;
@@ -675,19 +736,37 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	success_branch=0;
 	for (i=t->first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
+			do {
+				if (SEND_BUFFER( &t->uac[i].request)==0) {
+					ser_error = 0;
+					break;
+				}
+				ser_error=E_SEND;
+				LOG(L_ERR, "ERROR:tm:t_forward_nonack: sending request "
+					"failed\n");
+				/* get next dns entry */
+				if ( t->uac[i].proxy &&
+				get_next_su( t->uac[i].proxy, &t->uac[i].request.dst.to)!=0 )
+					break;
+				t->uac[i].request.dst.proto = t->uac[i].proxy->proto;
+				/* update branch */
+				if ( update_uac_dst( p_msg, &t->uac[i] )!=0)
+					break;
+			}while(1);
+
+			if (ser_error)
+				continue;
+
+			success_branch++;
+
+			/* successfully sent out -> run callbacks */
 			if ( has_tran_tmcbs( t, TMCB_REQUEST_BUILT) ) {
 				set_extra_tmcb_params( &t->uac[i].request.buffer,
 					&t->uac[i].request.dst);
 				run_trans_callbacks( TMCB_REQUEST_BUILT, t, p_msg,0,
 					-p_msg->REQ_METHOD);
 			}
-			if (SEND_BUFFER( &t->uac[i].request)==-1) {
-				LOG(L_ERR, "ERROR:tm:t_forward_nonack: sending request "
-					"failed\n");
-				if (proxy) { proxy->errors++; proxy->ok=0; }
-			} else {
-				success_branch++;
-			}
+
 			start_retr( &t->uac[i].request );
 			set_kr(REQ_FWDED);
 		}
@@ -700,7 +779,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 }
 
 
-int t_replicate(struct sip_msg *p_msg, str *dst)
+int t_replicate(struct sip_msg *p_msg, str *dst, int flags)
 {
 	/* this is a quite horrible hack -- we just take the message
 	   as is, including Route-s, Record-route-s, and Vias ,
@@ -724,5 +803,5 @@ int t_replicate(struct sip_msg *p_msg, str *dst)
 		return -1;
 	}
 
-	return t_relay_to( p_msg, 0, TM_T_REPLY_repl_FLAG);
+	return t_relay_to( p_msg, 0, flags|TM_T_REPLY_repl_FLAG);
 }

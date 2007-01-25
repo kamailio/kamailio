@@ -83,7 +83,7 @@ pingClients(unsigned int ticks, void *param)
         if (uri.port_no == 0)
             uri.port_no = SIP_PORT;
 		proto = uri.proto;
-        hostent = sip_resolvehost(&uri.host, &uri.port_no, &proto, 0);
+        hostent = sip_resolvehost(&uri.host, &uri.port_no, &proto, 0, 0);
         if (hostent == NULL){
             LOG(L_ERR, "error: mediaproxy/pingClients(): can't resolve host\n");
             continue;

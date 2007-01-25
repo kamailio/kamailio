@@ -2151,7 +2151,7 @@ nh_timer(unsigned int ticks, void *param)
 		proto = curi.proto;
 		/* we sholud get rid of this resolve (to ofen and to slow); for the
 		 * moment we are lucky since the curi is an IP -bogdan */
-		he = sip_resolvehost(&curi.host, &curi.port_no, &proto, 0);
+		he = sip_resolvehost(&curi.host, &curi.port_no, &proto, 0, 0);
 		if (he == NULL){
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't resolve_host\n");
 			continue;

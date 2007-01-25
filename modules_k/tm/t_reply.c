@@ -61,6 +61,7 @@
  *  2005-03-01  local ACK sent to same address as INVITE ->
  *              all [build|send]_[local]_ack functions merged into 
  *              send_ack() (bogdan)
+ *  2007-01-25  DNS failover at transaction level added (bogdan)
  */
 
 
@@ -614,6 +615,40 @@ static inline int run_failure_handlers(struct cell *t)
 }
 
 
+static inline void do_dns_failover(struct cell *t)
+{
+	static struct sip_msg faked_req;
+	struct sip_msg *shmem_msg;
+	struct ua_client *uac;
+
+	shmem_msg = t->uas.request;
+	uac = &t->uac[picked_branch];
+
+	/* check if the DNS resolver can get at least one new IP */
+	if ( get_next_su( uac->proxy, &uac->request.dst.to)!=0 )
+		return;
+
+	if (!fake_req(&faked_req, shmem_msg, &t->uas, uac)) {
+		LOG(L_ERR, "ERROR:tm:do_dns_failover: fake_req failed\n");
+		return;
+	}
+	/* fake also the env. conforming to the fake msg */
+	faked_env( t, &faked_req);
+
+	if (append_branch( &faked_req, &uac->uri, 0, 0, 0, uac->br_flags,
+	shmem_msg->force_send_socket)!=1 )
+		goto done;
+
+	t_forward_nonack( t, &faked_req, uac->proxy);
+
+done:
+	/* restore original environment and free the fake msg */
+	faked_env( t, 0);
+	free_faked_req(&faked_req,t);
+	return;
+}
+
+
 /* select a branch for forwarding; returns:
  * 0..X ... branch number
  * -1   ... error
@@ -753,8 +788,20 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		 * later if new branches were initiated */
 		branch_cnt=Trans->nr_of_outgoings;
 
+		if ( !(Trans->flags&T_NO_DNS_FAILOVER_FLAG) &&
+		Trans->uac[picked_branch].proxy!=NULL ) {
+			/* is is a DNS failover scenario? - according to RFC 3263
+			 * this means 503 reply or timeout with no reply */
+			if (Trans->uac[picked_branch].last_received==503 ||
+			(new_code==408 || Trans->uac[picked_branch].last_received==-1) ) {
+				/* do DNS failover -> add new branches */
+				do_dns_failover( Trans );
+			}
+		}
+
 		/* run ON_FAILURE handlers ( route and callbacks) */
-		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE) || Trans->on_negative ) {
+		if ( branch_cnt==Trans->nr_of_outgoings &&
+		(has_tran_tmcbs( Trans, TMCB_ON_FAILURE) || Trans->on_negative) ) {
 			run_failure_handlers( Trans );
 		}
 

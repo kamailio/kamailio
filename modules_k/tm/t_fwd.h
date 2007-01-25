@@ -31,7 +31,6 @@
 #include "../../proxy.h"
 #include "../../str.h"
 
-typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
 typedef int (*taddblind_f)( /*struct cell *t */ );
 
 void e2e_cancel( struct sip_msg *cancel_msg, struct cell *t_cancel,
@@ -42,7 +41,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 
 int add_blind_uac( );
 
-int t_replicate(struct sip_msg *p_msg, str *dst);
+int t_replicate(struct sip_msg *p_msg, str *dst, int flags);
 
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		struct proxy_l * p);

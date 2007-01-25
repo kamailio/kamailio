@@ -112,19 +112,9 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 	}
 
 	/* do t_forward */
-	if ( flag&CPL_IS_STATEFUL ) {
-		/* transaction exists */
-		if (cpl_fct.tmb.t_forward_nonack(msg, 0/*no proxy*/)==-1) {
-			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_forward_nonack "
-				"failed !\n");
-			goto error;
-		}
-	} else {
-		/* no transaction -> build & fwd */
-		if (cpl_fct.tmb.t_relay(msg, 0, 0)==-1) {
-			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_relay failed !\n");
-			goto error;
-		}
+	if (cpl_fct.tmb.t_relay(msg, 0, 0)==-1) {
+		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_relay failed !\n");
+		goto error;
 	}
 
 	return 0;

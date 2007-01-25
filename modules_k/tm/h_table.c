@@ -36,6 +36,7 @@
  *             timer_link.payload removed (bogdan)
  * 2004-08-23  avp support added - move and remove avp list to/from
  *             transactions (bogdan)
+ * 2007-01-25  DNS failover at transaction level added (bogdan)
  */
 
 #include <stdlib.h>
@@ -114,6 +115,7 @@ void free_cell( struct cell* dead_cell )
 	struct sip_msg *rpl;
 	struct totag_elem *tt, *foo;
 	struct tm_callback *cbs, *cbs_tmp;
+	struct proxy_l *p;
 
 	if ( has_tran_tmcbs( dead_cell, TMCB_TRANS_DELETED) )
 		run_trans_callbacks( TMCB_TRANS_DELETED, dead_cell, 0, 0, 0);
@@ -146,6 +148,16 @@ void free_cell( struct cell* dead_cell )
 		rpl=dead_cell->uac[i].reply;
 		if (rpl && rpl!=FAKED_REPLY && rpl->msg_flags&FL_SHM_CLONE) {
 			sip_msg_free_unsafe( rpl );
+		}
+		if ( (p=dead_cell->uac[i].proxy)!=NULL ) {
+			if ( p->host.h_addr_list )
+				shm_free_unsafe( p->host.h_addr_list );
+			if ( p->dn ) {
+				if ( p->dn->kids )
+					shm_free_unsafe( p->dn->kids );
+				shm_free_unsafe( p->dn );
+			}
+			shm_free_unsafe(p);
 		}
 	}
 

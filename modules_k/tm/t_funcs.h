@@ -27,6 +27,7 @@
  *  2003-03-13  now send_pr_buffer will be called w/ function/line info
  *               only when compiling w/ -DEXTRA_DEBUG (andrei)
  *  2003-03-31  200 for INVITE/UAS resent even for UDP (jiri) 
+ *  2007-01-25  DNS failover at transaction level added (bogdan) 
  */
 
 
@@ -70,9 +71,10 @@ extern int noisy_ctimer;
 #define FR_INV_TIMER_AVP  "s:callee_fr_inv_timer"
 
 /* t_reply_to flags */
-#define TM_T_REPLY_repl_FLAG    (1<<0)
-#define TM_T_REPLY_no100_FLAG   (1<<1)
-#define TM_T_REPLY_noerr_FLAG   (1<<2)
+#define TM_T_REPLY_repl_FLAG     (1<<0)
+#define TM_T_REPLY_no100_FLAG    (1<<1)
+#define TM_T_REPLY_noerr_FLAG    (1<<2)
+#define TM_T_REPLY_nodnsfo_FLAG  (1<<3)
 
 
 /* send a private buffer: utilize a retransmission structure

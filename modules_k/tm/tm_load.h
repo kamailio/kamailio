@@ -24,7 +24,9 @@
  * --------
  * 2003-03-06  voicemail changes accepted
  * 2005-05-30  light version of tm_load() - no find_export() (bogdan)
- *
+ * 2007-01-25  t_forward_nonack removed as it merged into t_relay,
+ *             t_replicate completely removed (bogdan)
+*
  */
 
 
@@ -44,7 +46,6 @@
 
 struct tm_binds {
 	register_tmcb_f  register_tmcb;
-	cmd_function     t_replicate;
 	cmd_function     t_relay;
 	tnewtran_f       t_newtran;
 	treply_f         t_reply;
@@ -54,7 +55,6 @@ struct tm_binds {
 	tlookup_ident_f  t_lookup_ident;
 	taddblind_f      t_addblind;
 	treply_f         t_reply_unsafe;
-	tfwd_f           t_forward_nonack;
 	reqwith_t        t_request_within;
 	reqout_t         t_request_outside;
 	req_t            t_request;

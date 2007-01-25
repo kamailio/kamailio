@@ -811,34 +811,35 @@ static inline void free_sip_msg_lite(struct sip_msg *my_msg)
 
 int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto)
 {
-   union sockaddr_union *to;
-   struct socket_info *send_sock;
-   to=0;
-   if (proxy->ok==0){
-      if(proxy->host.h_addr_list[proxy->addr_idx+1])
-	 proxy->addr_idx++;
-      else 
-	 proxy->addr_idx=0;
-      proxy->ok=1;
-   }
-   to=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
-   hostent2su(to, &proxy->host, proxy->addr_idx,(proxy->port)?proxy->port:SIP_PORT);
-   send_sock=get_send_socket(msg, to, proto);
-   if (send_sock==0){
-      LOG(L_ERR, "ERROR:seas:forward_msg: cannot forward to af %d, proto %d "
-	    "no corresponding listening socket\n", to->s.sa_family, proto);
-      goto error;
-   }
-   DBG("seas:sl_msg:Sending:\n%.*s.\n", (int)msg->len,msg->buf);
-   if (msg_send(send_sock, proto, to, 0, msg->buf,msg->len)<0){
-      LOG(L_ERR,"ERROR:seas:forward_msg: Error sending message !!\n");
-      goto error;
-   }
-   pkg_free(to);
-   return 0;
-error:
-   pkg_free(to);
-   return -1;
+	union sockaddr_union *to;
+	struct socket_info *send_sock;
+	int ret;
+
+	to = (union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
+	ret = -1;
+
+	hostent2su(to, &proxy->host, proxy->addr_idx,
+		(proxy->port)?proxy->port:SIP_PORT);
+
+	do {
+		send_sock=get_send_socket(msg, to, proto);
+		if (send_sock==0){
+			LOG(L_ERR, "ERROR:seas:forward_msg: cannot forward to af %d, "
+				"proto %d no corresponding listening socket\n",
+				to->s.sa_family, proto);
+			continue;
+		}
+		DBG("seas:sl_msg:Sending:\n%.*s.\n", (int)msg->len,msg->buf);
+		if (msg_send(send_sock, proto, to, 0, msg->buf,msg->len)<0){
+			LOG(L_ERR,"ERROR:seas:forward_msg: Error sending message !!\n");
+			continue;
+		}
+		ret = 0;
+		break;
+	}while( get_next_su( proxy, to)==0 );
+
+	pkg_free(to);
+	return ret;
 }
 
 /*Actions are composed as follows:

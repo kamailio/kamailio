@@ -30,6 +30,7 @@
  * 2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced
  *             with flags (bogdan)
  * 2004-08-23  avp support added - avp list linked in transaction (bogdan)
+ * 2007-01-25  DNS failover at transaction level added (bogdan) 
  */
 
 #ifndef _H_TABLE_H
@@ -40,6 +41,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../types.h"
+#include "../../proxy.h"
 #include "../../md5utils.h"
 #include "../../usr_avp.h"
 #include "config.h"
@@ -134,6 +136,7 @@ typedef struct ua_server
 typedef struct ua_client
 {
 	struct retr_buf  request;
+	struct proxy_l   *proxy;
 	/* we maintain a separate copy of cancel rather than
 	   reuse the structure for original request; the 
 	   original request is no longer needed but its delayed
@@ -179,6 +182,8 @@ struct totag_elem {
 #define T_NO_AUTOACK_FLAG       (1<<5)
 /* provisional replies must trigger callbacks for local transaction */
 #define T_PASS_PROVISIONAL_FLAG (1<<6)
+/* do auto DNS failover  */
+#define T_NO_DNS_FAILOVER_FLAG  (1<<7)
 
 /* transaction UAC's flags */
 /* is the UAC pending for CANCEL ?  */

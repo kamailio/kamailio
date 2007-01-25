@@ -126,9 +126,9 @@
 		<para>
 		Timers can be used to trigger failover behavior. E.g. if we send a call
 		a gateway and the gateway does not send a provisional response within 3
-		seconds, we want to cancel this call and send the call to another gateway.
-		Another example is to ring a SIP client only for 30 seconds and then 
-		redirect the call to the voicebox.
+		seconds, we want to cancel this call and send the call to another 
+		gateway. Another example is to ring a SIP client only for 30 seconds 
+		and then redirect the call to the voicemail.
 		</para>
 		<para>
 		There are two timers in &ser; :
@@ -154,9 +154,41 @@
 			</listitem>
 			</itemizedlist>
 		<para>
-		For example: You want to have failover if there is no provisional response 
-		after 3 seconds, but you want to ring for 60 seconds. Thuse, set the fr_timer 
-		to 3 and fr_inv_timer to 60.
+		For example: You want to have failover if there is no provisional 
+		response after 3 seconds, but you want to ring for 60 seconds. 
+		Thuse, set the fr_timer to 3 and fr_inv_timer to 60.
+		</para>
+	</section>
+	<section>
+		<title>DNS Failover</title>
+		<para>
+		DNS based failover can be use when relaying stateful requests. 
+		According to RFC 3263, DNS failover should be done on transport level
+		or transaction level. TM module supports them both.
+		</para>
+		<para>
+		Failover at transport level may be triggered by a failure of sending
+		out the request message. A failure occures if the coresponding 
+		interface was found for sending the request, if the TCP connection
+		was refused ot if a geenric internal error happend during send. There
+		is ICMP error report support.
+		</para>
+		<para>
+		Failover at transaction level may be triggered when the transaction
+		completed either with a 503 reply, either with a timeout without
+		any received reply. In such a case, automatically, a new branch will
+		be forked if any other destination IPs can be used to deliver the 
+		requests. The new branch will be a clone of the winning branch.
+		</para>
+		<para>
+		The set of destinations IPs is step-by-step build (on demand) based on
+		the NAPTR, SRV and A records available for the destination domain.
+		</para>
+		<para>
+		DNS-based failover is by default applied excepting when this failover
+		is globally disabled (see the core parameter disable_dns_failover) or
+		when the relay flag (per transaction) is set (see the t_relay()
+		function).
 		</para>
 	</section>
 	</section>
@@ -693,6 +725,10 @@ if (t_lookup_request()) {
 		leave upstream UAC in lurch.
 		</para>
 		<para>
+		The coresponding transaction may or may not be already created. If not
+		yet created, the function will automatically create it.
+		</para>
+		<para>
 		The function may take as parameter an optional set of flags for 
 		controlling the internal behaviour. The flags may be given in decimal 
 		or hexa format; supported flags are:
@@ -700,16 +736,22 @@ if (t_lookup_request()) {
 		<itemizedlist>
 			<listitem>
 				<para><emphasis>0x01</emphasis> - do not generate an 100 trying
-				provisional reply before relay. By default one is generated.
-				Useful if you already pushed an stateless 100 reply from 
-				script.
+				provisional reply when building the transaction. By default 
+				one is generated. Useful if you already pushed an 
+				stateless 100 reply from script.
 				</para>
 			</listitem>
 			<listitem>
 				<para><emphasis>0x02</emphasis> - do not internally send a 
-				negative reply in case of failure. By default one is sent.
+				negative reply in case of failure. It applies only when the
+				transaction is created. By default one is sent.
 				Useful if you want to implement a serial forking in case of
 				failure.
+			</listitem>
+			<listitem>
+				<para><emphasis>0x04</emphasis> - disable the DNS failover
+				for the transaction. Only first IP will be used. It disable
+				the failover both at transaport and transaction level.
 			</listitem>
 		</itemizedlist>
 		<para>
@@ -751,36 +793,6 @@ if (!t_relay()) {
 t_relay("tcp:192.168.1.10:5060");
 t_relay("mydomain.com:5070","0x1");
 t_relay("udp:mydomain.com");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section id="tforwardnonack">
-		<title>
-		<function moreinfo="none">t_forward_nonack()</function>
-		<function moreinfo="none">t_forward_nonack(proto:host:port)</function>
-		</title>
-		<para>
-		Similar to t_relay() but it expects the transaction to be already
-		created - this why it cannot handle ACK (which are statelessly
-		forwarded). It should be used along with t_newtran().
-		</para>
-		<para>
-		The destination is specified either as parameter ( in 
-		<quote>[proto:]host[:port]</quote> format), either is taken from
-		the current URI.
-		</para>
-		<para>
-		This functions can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_forward_nonack</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_forward_nonack("tcp:1.2.3.4:5060");
-t_forward_nonack("udp:1.2.3.4");
-t_forward_nonack();         # use RURI for destination
 ...
 </programlisting>
 		</example>
@@ -841,7 +853,7 @@ t_retransmit_reply();
 
 	<section id="treplicate">
 		<title>
-		<function moreinfo="none">t_replicate(URI)</function>
+		<function moreinfo="none">t_replicate(URI,[flags])</function>
 		</title>
 		<para>
 		Replicates a request to another destination. No information due the
@@ -853,6 +865,12 @@ t_retransmit_reply();
 		to be used, the additional SIP URIs have to be set as branches.
 		</para>
 		<para>
+		The function may take as parameter an optional set of flags for 
+		controlling the internal behaviour - for description see the above 
+		<quote>t_relay([flags])</quote> function. Note that only 0x4 is 
+		applicable here.
+		</para>
+		<para>
 		This functions can be used from REQUEST_ROUTE.
 		</para>
 		<example>
@@ -861,7 +879,7 @@ t_retransmit_reply();
 ...
 t_replicate("sip:1.2.3.4:5060");
 t_replicate("sip:1.2.3.4:5060;transport=tcp");
-t_replicate("sip:1.2.3.4");
+t_replicate("sip:1.2.3.4","0x4");
 ...
 </programlisting>
 		</example>
