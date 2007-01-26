@@ -189,11 +189,11 @@ install: build
 
 	#install only the presence modules
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PRESENCE_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/openser-presence-module \
+		basedir=$(CURDIR)/debian/openser-presence-modules \
 		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/openser-presence-module \
+		cfg-prefix=$(CURDIR)/debian/openser-presence-modules \
 		cfg-target=/etc/openser/ \
-		doc-dir=share/doc/openser-presence-module
+		doc-dir=share/doc/openser-presence-modules
 
 	#install only the xmlrpc module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)"  \
