@@ -175,10 +175,10 @@ static int init_tls_compression(void)
 			    " fix\n");
 			sk_SSL_COMP_zero(comp_methods); /* delete compression */
 		} else {
-			     /* the above SSL_COMP_get_compression_methods() call has the side
-			      * effect of initializing the compression stack (if not already
-			      * initialized) => after it zlib is initialized and in the stack */
-			     /* find zlib_comp (cannot use ssl3_comp_find, not exported) */
+			/* the above SSL_COMP_get_compression_methods() call has the side
+			 * effect of initializing the compression stack (if not already
+			 * initialized) => after it zlib is initialized and in the stack */
+			/* find zlib_comp (cannot use ssl3_comp_find, not exported) */
 			n = sk_SSL_COMP_num(comp_methods);
 			zlib_comp = 0;
 			for (r = 0; r < n; r++) {
@@ -191,9 +191,10 @@ static int init_tls_compression(void)
 			}
 			if (zlib_comp == 0) {
 				LOG(L_INFO, "init_tls: no openssl zlib compression found\n");
+			}else{
+				/* "fix" it */
+				zlib_comp->method = &zlib_method;
 			}
-			     /* "fix" it */
-			zlib_comp->method = &zlib_method;
 		}
 #endif
 	}
