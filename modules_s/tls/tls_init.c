@@ -45,6 +45,7 @@
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_init.h"
+#include "tls_locking.h"
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 #    warning ""
@@ -225,6 +226,10 @@ int init_tls(void)
 	if (tls_init_locks()<0)
 		return -1;
 	init_tls_compression();
+	#ifdef TLS_KSSL_WORKARROUND
+		LOG(L_INFO, "init_tls: kerberos malloc bug workarround "
+			"(krb disabled)...\n");
+	#endif
 	SSL_library_init();
 	SSL_load_error_strings();
 	init_ssl_methods();
