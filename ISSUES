@@ -8,6 +8,23 @@ ordered by numbers of ser versions to which they relate,
 beginning with the newest release. Issues related to
 operating systems are summarized in the bottom.
 --------------------------------------------------------------
+Desc: tls triggered crash on system with kerberos enabled openssl libs
+Ser version:  0.10.x, 0.9.x
+Reason:  there is a bug in the openssl kerberos code (kssl.c): 
+         libc malloc/free/calloc are used instead of the OPENSSL
+         versions. In ser ssl connections move between processes and
+         if normal mallocs are used (instead of ser shm versions) a
+         crash will occur eventually.
+         Quick openssl kerberos support check: 
+             grep OPENSSL_NO_KRB5 openssl/opensslconf.h
+         If the above command returns no result => openssl is compiled with
+         kerberos support.
+Workaround: use openssl versions not compiled with kerberos support or
+            try a late ser 0.10.x version compiled on the target machine
+            (its very important to compile against the same openssl library
+             as the one on the target machine)
+CVS status: fixed / workarround enabled
+--------------------------------------------------------------
 Desc: ser crashes on startup if a group is specified (-g or group=)
 Ser version:  <=0.8.12
 Reason:  bad copy & paste :-)
