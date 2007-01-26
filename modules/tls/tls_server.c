@@ -28,6 +28,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2007-01-26  openssl kerberos malloc bug detection/workarround (andrei)
+ */
 
 #include <sys/poll.h>
 #include <openssl/err.h>
@@ -95,6 +100,12 @@ static int tls_complete_init(struct tcp_connection* c)
 		TLS_ERR("Failed to create SSL structure:");
 		goto error;
 	}
+#ifdef TLS_KSSL_WORKARROUND
+	if (data->ssl->kssl_ctx){
+		kssl_ctx_free(data->ssl->kssl_ctx);
+		data->ssl->kssl_ctx=0;
+	}
+#endif
 	c->extra_data = data;
 	return 0;
 
