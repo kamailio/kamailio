@@ -275,6 +275,11 @@ int load_domains(domain_t** dest)
 	str did, domain;
 	domain_t* d, *list;
 
+	if (!con) {
+		LOG(L_ERR, "domain:load_domains: Invalid database handle\n");
+		return -1;
+	}
+
 	list = 0;
 	cols[0] = did_col.s;
 	cols[1] = domain_col.s;
