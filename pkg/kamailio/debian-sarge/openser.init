@@ -38,11 +38,12 @@ check_openser_config ()
 {
 	# Check if openser configuration is valid before starting the server
 	set +e
-	out=$($DAEMON -c > /dev/null 2>&1)
+	out=$(($DAEMON -c > /dev/null) 2>&1)
 	retcode=$?
 	set -e
 	if [ "$retcode" != '0' ]; then
 	    echo "Not starting $DESC: invalid configuration file!"
+	    echo -e "\n$out\n"
 	    exit 1
 	fi
 }
