@@ -787,8 +787,7 @@ get_fd:
 				goto release_c;
 			}
 			DBG("tcp_send, c= %p, n=%d\n", c, n);
-			tmp=c;
-			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &fd, MSG_WAITALL);
+			n=receive_fd(unix_tcp_sock, &tmp, sizeof(tmp), &fd, MSG_WAITALL);
 			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(receive_fd):"
 							" %s (%d)\n", strerror(errno), errno);
@@ -797,10 +796,10 @@ get_fd:
 			}
 			if (c!=tmp){
 				LOG(L_CRIT, "BUG: tcp_send: get_fd: got different connection:"
-						"  %p (id= %d, refcnt=%d state=%d != "
-						"  %p (id= %d, refcnt=%d state=%d (n=%d)\n",
+						"  %p (id= %d, refcnt=%d state=%d) != "
+						"  %p (n=%d)\n",
 						  c,   c->id,   atomic_get(&c->refcnt),   c->state,
-						  tmp, tmp->id, atomic_get(&tmp->refcnt), tmp->state, n
+						  tmp, n
 				   );
 				n=-1; /* fail */
 				goto end;
