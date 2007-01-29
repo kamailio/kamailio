@@ -226,16 +226,19 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 	query_vals[n_query_cols].val.str_val.len = subs->event.len;
 	n_query_cols++;
 
+	query_cols[n_query_cols] = "event_id";
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
 	if( subs->event_id.s != NULL)
 	{
-		query_cols[n_query_cols] = "event_id";
-		query_ops[n_query_cols] = OP_EQ;
-		query_vals[n_query_cols].type = DB_STR;
-		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val.s = subs->event_id.s;
 		query_vals[n_query_cols].val.str_val.len = subs->event_id.len;
-		n_query_cols++;
-	}	
+	} else {
+		query_vals[n_query_cols].val.str_val.s = "";
+		query_vals[n_query_cols].val.str_val.len = 0;
+	}
+	n_query_cols++;
 	
 	query_cols[n_query_cols] = "callid";
 	query_ops[n_query_cols] = OP_EQ;
