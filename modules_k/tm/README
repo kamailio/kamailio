@@ -256,7 +256,7 @@ Chapter 1. User's Guide
    sending out the request message. A failure occures if the
    coresponding interface was found for sending the request, if
    the TCP connection was refused ot if a geenric internal error
-   happend during send. There is ICMP error report support.
+   happend during send. There is no ICMP error report support.
 
    Failover at transaction level may be triggered when the
    transaction completed either with a 503 reply, either with a
