@@ -210,6 +210,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 	struct action *act;
 	char *argv[2];
 	int argc = 0;
+	action_elem_t elems[MAX_ACTION_ELEMS];
 
 	if (!func) {
 		LOG(L_ERR, "moduleFunc called with null function name. Error.");
@@ -246,13 +247,15 @@ int moduleFunc(struct sip_msg *m, char *func,
 		return -1;
 	}
 
-	act = mk_action_3p(	MODULE_T,
-				CMD_ST,
-				STRING_ST,
-				STRING_ST,
-				exp_func_struct,
-				argv[0],
-				argv[1],
+	elems[0].type = CMD_ST;
+	elems[0].u.data = exp_func_struct;
+	elems[1].type = STRING_ST;
+	elems[1].u.data = argv[0];
+	elems[2].type = STRING_ST;
+	elems[2].u.data = argv[1];
+	act = mk_action(	MODULE_T,
+				3,
+				elems,
 				0);
 
 
@@ -266,23 +269,23 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	if (exp_func_struct->fixup) {
 		if (argc>=2) {
-			*retval = exp_func_struct->fixup(&(act->p3.data), 2);
+			*retval = exp_func_struct->fixup(&(act->elem[2].u.data), 2);
 			if (*retval < 0) {
 				LOG(L_ERR, "Error in fixup (2)\n");
 				return -1;
 			}
-			act->p3_type = MODFIXUP_ST;
+			act->elem[2].type = MODFIXUP_ST;
 		}
 		if (argc>=1) {
-			*retval = exp_func_struct->fixup(&(act->p2.data), 1);
+			*retval = exp_func_struct->fixup(&(act->elem[1].u.data), 1);
 			if (*retval < 0) {
 				LOG(L_ERR, "Error in fixup (1)\n");
 				return -1;
 			}
-			act->p2_type = MODFIXUP_ST;
+			act->elem[1].type = MODFIXUP_ST;
 		}
 		if (argc==0) {
-			*retval = exp_func_struct->fixup(&(act->p1.data), 0);
+			*retval = exp_func_struct->fixup(&(act->elem[0].u.data), 0);
 			if (*retval < 0) {
 				LOG(L_ERR, "Error in fixup (0)\n");
 				return -1;
@@ -292,12 +295,12 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	*retval = do_action(act, m);
 
-	if ((act->p3_type == STRING_ST) && (act->p3.string)) {
-		pkg_free(act->p3.string);
+	if ((act->elem[2].type == STRING_ST) && (act->elem[2].u.string)) {
+		pkg_free(act->elem[2].u.string);
 	}
 	
-	if ((act->p2_type == STRING_ST) && (act->p2.string)) {
-		pkg_free(act->p2.string);
+	if ((act->elem[1].type == STRING_ST) && (act->elem[1].u.string)) {
+		pkg_free(act->elem[1].u.string);
 	}
 	pkg_free(act);
 	
@@ -313,8 +316,8 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 	struct action act;
 
 	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = _s;
+	act.elem[0].type = STRING_ST;
+	act.elem[0].u.string = _s;
 	act.next = 0;
 	
 	if (do_action(&act, _m) < 0)
@@ -990,6 +993,7 @@ append_branch(self, branch = NULL, qval = NULL)
 	char *qval;
   PREINIT:
 	struct sip_msg *msg = sv2msg(self);
+	action_elem_t elems[MAX_ACTION_ELEMS];
 	qvalue_t q;
 	int err = 0;
 	struct action *act = NULL;
@@ -1003,25 +1007,34 @@ append_branch(self, branch = NULL, qval = NULL)
 			if (str2q(&q, qval, strlen(qval)) < 0) {
 				LOG(L_ERR, "perl:append_branch: Bad q value.");
 			} else { /* branch and qval set */
-				act = mk_action_2p(APPEND_BRANCH_T,
-						STRING_ST,
-						NUMBER_ST,
-						branch,
-						(void *)(long)q, 0);
+				elems[0].type = STRING_ST;
+				elems[0].u.data = branch;
+				elems[1].type = NUMBER_ST;
+				elems[1].u.data = (void *)(long)q;
+				act = mk_action(APPEND_BRANCH_T,
+						2,
+						elems,
+						0);
 			}
 		} else {
 			if (branch) { /* branch set, qval unset */
-				act = mk_action_2p(APPEND_BRANCH_T,
-						STRING_ST,
-						NUMBER_ST,
-						branch,
-						(void *)Q_UNSPECIFIED, 0);
+				elems[0].type = STRING_ST;
+				elems[0].u.data = branch;
+				elems[1].type = NUMBER_ST;
+				elems[1].u.data = (void *)Q_UNSPECIFIED;
+				act = mk_action(APPEND_BRANCH_T,
+						2,
+						elems,
+						0);
 			} else { /* neither branch nor qval set */
-				act = mk_action_2p(APPEND_BRANCH_T,
-						STRING_ST,
-						NUMBER_ST,
-						NULL,
-						(void *)Q_UNSPECIFIED, 0);
+				elems[0].type = STRING_ST;
+				elems[0].u.data = NULL;
+				elems[1].type = NUMBER_ST;
+				elems[1].u.data = (void *)Q_UNSPECIFIED;
+				act = mk_action(APPEND_BRANCH_T,
+						2,
+						elems,
+						0);
 			}
 		}
 

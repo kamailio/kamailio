@@ -636,8 +636,8 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 	/* result->s[result->len] = '\0';  --subst_str returns 0-term strings */
 	memset(&act, 0, sizeof(act)); /* be on the safe side */
 	act.type = SET_USER_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = result->s;
+	act.elem[0].type = STRING_ST;
+	act.elem[0].u.string = result->s;
 	rval = do_action(&act, msg);
 	pkg_free(result);
 	return rval;

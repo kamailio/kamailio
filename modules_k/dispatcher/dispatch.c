@@ -646,12 +646,12 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 	{
 		case 1:
 			act.type = SET_HOSTPORT_T;
-			act.p1_type = STRING_ST;
+			act.elem[0].type = STRING_ST;
 			if(uri->len>4 
 					&& strncasecmp(uri->s,"sip:",4)==0)
-				act.p1.string = uri->s+4;
+				act.elem[0].u.string = uri->s+4;
 			else
-				act.p1.string = uri->s;
+				act.elem[0].u.string = uri->s;
 			act.next = 0;
 	
 			if (do_action(&act, msg) < 0) {

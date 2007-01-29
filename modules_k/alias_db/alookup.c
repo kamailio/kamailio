@@ -52,8 +52,8 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 	struct action act;
 
 	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = _s;
+	act.elem[0].type = STRING_ST;
+	act.elem[0].u.string = _s;
 	act.next = 0;
 	
 	if (do_action(&act, _m) < 0)

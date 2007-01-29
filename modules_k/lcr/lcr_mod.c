@@ -1399,8 +1399,8 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    val.s.len, val.s.s);
 	/* Rewrite Request URI */
 	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = new_ruri.s;
+	act.elem[0].type = STRING_ST;
+	act.elem[0].u.string = new_ruri.s;
 	rval = do_action(&act, _m);
 	pkg_free(new_ruri.s);
 	destroy_avp(gw_uri_avp);
@@ -1457,10 +1457,10 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 	*at = '\0';
 	act.type = APPEND_BRANCH_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = new_ruri.s;
-	act.p2_type = NUMBER_ST;
-	act.p2.number = 0;
+	act.elem[0].type = STRING_ST;
+	act.elem[0].u.string = new_ruri.s;
+	act.elem[1].type = NUMBER_ST;
+	act.elem[1].u.number = 0;
 	rval = do_action(&act, _m);
 	pkg_free(new_ruri.s);
 	destroy_avp(gw_uri_avp);
@@ -1729,8 +1729,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
 		/* Set Request-URI */
 		act.type = SET_URI_T;
-		act.p1_type = STRING_ST;
-		act.p1.string = val.s.s;
+		act.elem[0].type = STRING_ST;
+		act.elem[0].u.string = val.s.s;
 		rval = do_action(&act, msg);
 		if (rval != 1) {
 			destroy_avp(avp);
@@ -1753,10 +1753,10 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		while ((avp = search_next_avp(avp, &val))) {
 			destroy_avp(prev);
 			act.type = APPEND_BRANCH_T;
-			act.p1_type = STRING_ST;
-			act.p1.string = val.s.s;
-			act.p2_type = NUMBER_ST;
-			act.p2.number = 0;
+			act.elem[0].type = STRING_ST;
+			act.elem[0].u.string = val.s.s;
+			act.elem[1].type = NUMBER_ST;
+			act.elem[1].u.number = 0;
 			rval = do_action(&act, msg);
 			if (rval != 1) {
 				destroy_avp(avp);
@@ -1785,10 +1785,10 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		prev = avp;
 		do {
 			act.type = APPEND_BRANCH_T;
-			act.p1_type = STRING_ST;
-			act.p1.string = val.s.s;
-			act.p2_type = NUMBER_ST;
-			act.p2.number = 0;
+			act.elem[0].type = STRING_ST;
+			act.elem[0].u.string = val.s.s;
+			act.elem[1].type = NUMBER_ST;
+			act.elem[1].u.number = 0;
 			rval = do_action(&act, msg);
 			if (rval != 1) {
 				destroy_avp(avp);

@@ -55,8 +55,8 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			"<%s>\n",(*locs)->addr.uri.s);
 		/* build a new action for setting the URI */
 		act.type = SET_URI_T;
-		act.p1_type = STRING_ST;
-		act.p1.string = (*locs)->addr.uri.s;
+		act.elem[0].type = STRING_ST;
+		act.elem[0].u.string = (*locs)->addr.uri.s;
 		act.next = 0;
 		/* push the action */
 		if (do_action(&act, msg) < 0) {
@@ -68,8 +68,8 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Destination URI "
 				"with <%s>\n",(*locs)->addr.received.s);
 			act.type = SET_DSTURI_T;
-			act.p1_type = STRING_ST;
-			act.p1.string = (*locs)->addr.received.s;
+			act.elem[0].type = STRING_ST;
+			act.elem[0].u.string = (*locs)->addr.received.s;
 			act.next = 0;
 			/* push the action */
 			if (do_action(&act, msg) < 0) {

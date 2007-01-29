@@ -496,11 +496,11 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	if(mode==0 || (mode==1 && prefix.len>0))
 	{
 		act.type = STRIP_T;
-		act.p1_type = NUMBER_ST;
+		act.elem[0].type = NUMBER_ST;
 		if(mode==0)
-			act.p1.number = plen + prefix.len;
+			act.elem[0].u.number = plen + prefix.len;
 		else
-			act.p1.number = prefix.len;
+			act.elem[0].u.number = prefix.len;
 		act.next = 0;
 
 		if (do_action(&act, msg) < 0)
@@ -511,8 +511,8 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	}
 	
 	act.type = SET_HOSTPORT_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = d->s;
+	act.elem[0].type = STRING_ST;
+	act.elem[0].u.string = d->s;
 	act.next = 0;
 
 	if (do_action(&act, msg) < 0)

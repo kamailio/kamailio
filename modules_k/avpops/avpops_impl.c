@@ -1096,8 +1096,8 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 				}
 			}
 			memset(&act, 0, sizeof(act));
-			act.p1_type = STRING_ST;
-			act.p1.string = val.s;
+			act.elem[0].type = STRING_ST;
+			act.elem[0].u.string = val.s;
 			act.type = act_type;
 			if (do_action(&act, msg)<0)
 			{

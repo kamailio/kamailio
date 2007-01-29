@@ -148,8 +148,8 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 		if (uri_cnt==0) {
 			memset(&act, 0, sizeof(act));
 			act.type = SET_URI_T;
-			act.p1_type = STRING_ST;
-			act.p1.string = uri.s;
+			act.elem[0].type = STRING_ST;
+			act.elem[0].u.string = uri.s;
 			if (do_action(&act, msg)<0) {
 				LOG(L_ERR,"ERROR:exec_str : SET_URI_T action failed\n");
 				ser_error=E_OUT_OF_MEM;
