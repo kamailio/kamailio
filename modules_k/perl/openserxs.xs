@@ -302,6 +302,25 @@ int moduleFunc(struct sip_msg *m, char *func,
 	if ((act->elem[1].type == STRING_ST) && (act->elem[1].u.string)) {
 		pkg_free(act->elem[1].u.string);
 	}
+
+
+
+	if ((act->elem[2].type == MODFIXUP_ST) && (act->elem[2].u.data)) {
+		pkg_free(act->elem[2].u.data);
+	}
+
+	if ((act->elem[1].type == MODFIXUP_ST) && (act->elem[1].u.data)) {
+		pkg_free(act->elem[1].u.data);
+	}
+
+	if (argc >= 1) {
+		if (argc >= 2) {
+			pkg_free(argv[1]);
+		}
+		pkg_free(argv[0]);
+	}
+
+
 	pkg_free(act);
 	
 	return 1;
@@ -650,7 +669,6 @@ getBody(self)
   PREINIT:
   PREINIT:
     struct sip_msg *msg = sv2msg(self);
-    SV *ret;
   INIT:
   CODE:
 	if (!msg) {
@@ -674,7 +692,6 @@ getMessage(self)
   PREINIT:
   PREINIT:
     struct sip_msg *msg = sv2msg(self);
-    SV *ret;
   INIT:
   CODE:
 	if (!msg) {
