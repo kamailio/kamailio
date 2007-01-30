@@ -1297,7 +1297,7 @@ static int trace_send_duplicate(char *buf, int len)
 		}
 		ret = 0;
 		break;
-	}while( get_next_su( p, to)==0 );
+	}while( get_next_su( p, to, 0)==0 );
 	
 	free_proxy(p); /* frees only p content, not p itself */
 	pkg_free(p);

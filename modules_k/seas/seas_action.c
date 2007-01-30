@@ -836,7 +836,7 @@ int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto)
 		}
 		ret = 0;
 		break;
-	}while( get_next_su( proxy, to)==0 );
+	}while( get_next_su( proxy, to, 0)==0 );
 
 	pkg_free(to);
 	return ret;

@@ -625,7 +625,7 @@ static inline void do_dns_failover(struct cell *t)
 	uac = &t->uac[picked_branch];
 
 	/* check if the DNS resolver can get at least one new IP */
-	if ( get_next_su( uac->proxy, &uac->request.dst.to)!=0 )
+	if ( get_next_su( uac->proxy, &uac->request.dst.to, 1)!=0 )
 		return;
 
 	if (!fake_req(&faked_req, shmem_msg, &t->uas, uac)) {

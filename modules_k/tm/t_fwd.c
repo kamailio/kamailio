@@ -47,6 +47,7 @@
 #include "../../globals.h"
 #include "../../action.h"
 #include "../../data_lump.h"
+#include "../../blacklists.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../parser/parser_f.h"
@@ -737,16 +738,26 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	for (i=t->first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
 			do {
-				if (SEND_BUFFER( &t->uac[i].request)==0) {
-					ser_error = 0;
-					break;
+				if (check_blacklists( t->uac[i].proxy->port,
+				(unsigned short)t->uac[i].proxy->proto,
+				&t->uac[i].request.dst.to,
+				t->uac[i].request.buffer.s,
+				t->uac[i].request.buffer.len)) {
+					DBG("DEBUG:tm:t_forward_nonack: blocked by blacklists\n");
+					ser_error=E_IP_BLOCKED;
+				} else {
+					if (SEND_BUFFER( &t->uac[i].request)==0) {
+						ser_error = 0;
+						break;
+					}
+					LOG(L_ERR, "ERROR:tm:t_forward_nonack: sending request "
+						"failed\n");
+					ser_error=E_SEND;
 				}
-				ser_error=E_SEND;
-				LOG(L_ERR, "ERROR:tm:t_forward_nonack: sending request "
-					"failed\n");
 				/* get next dns entry */
 				if ( t->uac[i].proxy &&
-				get_next_su( t->uac[i].proxy, &t->uac[i].request.dst.to)!=0 )
+				get_next_su( t->uac[i].proxy, &t->uac[i].request.dst.to,
+				(ser_error==E_IP_BLOCKED)?0:1)!=0 )
 					break;
 				t->uac[i].request.dst.proto = t->uac[i].proxy->proto;
 				/* update branch */
