@@ -1049,7 +1049,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 				return -1;
 
 			c =  (_ds_list[i].dlist[j].flags&DS_INACTIVE_DST)?'I':'A';
-			attr = add_mi_attr(node,0, "flag",4, &c, 1);
+			attr = add_mi_attr (node, MI_DUP_VALUE, "flag",4, &c, 1);
 			if(attr == 0)
 				return -1;
 
