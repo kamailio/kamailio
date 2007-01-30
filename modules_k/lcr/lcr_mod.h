@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include "../../mi/mi.h"
 
-void print_gws (FILE *reply_file);
 int  mi_print_gws (struct mi_node* rpl);
 int  reload_gws (void);
 
