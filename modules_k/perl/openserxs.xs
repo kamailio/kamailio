@@ -244,6 +244,8 @@ int moduleFunc(struct sip_msg *m, char *func,
 	if (!exp_func_struct) {
 		LOG(L_ERR, "function '%s' called, but not available.", func);
 		*retval = -1;
+		if (argv[0]) pkg_free(argv[0]);
+		if (argv[1]) pkg_free(argv[1]);
 		return -1;
 	}
 
@@ -295,31 +297,20 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	*retval = do_action(act, m);
 
-	if ((act->elem[2].type == STRING_ST) && (act->elem[2].u.string)) {
-		pkg_free(act->elem[2].u.string);
-	}
-	
-	if ((act->elem[1].type == STRING_ST) && (act->elem[1].u.string)) {
-		pkg_free(act->elem[1].u.string);
-	}
-
-
-
 	if ((act->elem[2].type == MODFIXUP_ST) && (act->elem[2].u.data)) {
-		pkg_free(act->elem[2].u.data);
+		/* pkg_free(act->elem[2].u.data); */
+		LOG(L_WARN, "perl:moduleFunction: A fixup function was called. "
+				"This currently creates a memory leak.\n");
 	}
 
 	if ((act->elem[1].type == MODFIXUP_ST) && (act->elem[1].u.data)) {
-		pkg_free(act->elem[1].u.data);
+		/* pkg_free(act->elem[1].u.data); */
+		LOG(L_WARN, "perl:moduleFunction: A fixup function was called. "
+				"This currently creates a memory leak.\n");
 	}
 
-	if (argc >= 1) {
-		if (argc >= 2) {
-			pkg_free(argv[1]);
-		}
-		pkg_free(argv[0]);
-	}
-
+	if (argv[0]) pkg_free(argv[0]);
+	if (argv[1]) pkg_free(argv[1]);
 
 	pkg_free(act);
 	
