@@ -582,10 +582,10 @@ do { \
 					((struct to_body*)new_hdr->parsed)->tag_value.s =
 						translate_pointer( new_msg->buf , org_msg->buf ,
 						((struct to_body*)hdr->parsed)->tag_value.s );
-				if ( (((struct to_body*)hdr->parsed)->parsed_uri.user.s)
-				|| (((struct to_body*)hdr->parsed)->parsed_uri.host.s) )
+				if ( (((struct to_body*)new_hdr->parsed)->parsed_uri.user.s)
+				|| (((struct to_body*)new_hdr->parsed)->parsed_uri.host.s) )
 					uri_trans(new_msg->buf, org_msg->buf,
-							&((struct to_body*)hdr->parsed)->parsed_uri);
+							&((struct to_body*)new_hdr->parsed)->parsed_uri);
 
 				/*to params*/
 				to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
