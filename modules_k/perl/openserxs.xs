@@ -375,6 +375,8 @@ char *xl_sprintf(struct sip_msg *m, char *fmt) {
 	} else {
 		ret = strdup(out);
 	}
+
+	xl_elem_free_all(model);
 	pkg_free(out);
 
 	return ret;
@@ -989,7 +991,7 @@ pseudoVar(self, varstring)
 		ret = xl_sprintf(msg, varstring);
 		if (ret) {
 			ST(0) = sv_2mortal(newSVpv(ret, strlen(ret)));
-			pkg_free(ret);
+			free(ret);
 		} else {
 			ST(0) = &PL_sv_undef;
 		}
