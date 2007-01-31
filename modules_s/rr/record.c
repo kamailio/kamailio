@@ -305,6 +305,7 @@ int record_route(struct sip_msg* _m, char* _s1, char* _s2)
 int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 {
 	str user;
+	str data;
 	struct to_body* from;
 	struct lump* l;
 	char* hdr, *p;
@@ -316,7 +317,13 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 	if (fparam_username) {
 		if (get_str_fparam(&user, _m, fparam_username) < 0) {
 			ERR("record_route_preset(): Error while getting username (fparam '%s')\n", fparam_username->orig);
+			return -1;
 		}
+	}
+
+	if (get_str_fparam(&data, _m, (fparam_t*)_data) <0) {
+		ERR("record_route_preset(): Error while getting header value (fparam '%s')\n", ((fparam_t*)_data)->orig);
+		return -1;
 	}
 
 	if (append_fromtag) {
@@ -336,7 +343,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 	hdr_len = RR_PREFIX_LEN;
 	hdr_len += user.len;
 	if (user.len) hdr_len += 1; /* @ */
-	hdr_len += ((str*)_data)->len;
+	hdr_len += data.len;
 
 	if (append_fromtag && from->tag_value.len) {
 		hdr_len += RR_FROMTAG_LEN + from->tag_value.len;
@@ -367,8 +374,8 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 		p++;
 	}
 
-	memcpy(p, ((str*)_data)->s, ((str*)_data)->len);
-	p += ((str*)_data)->len;
+	memcpy(p, data.s, data.len);
+	p += data.len;
 
 	if (append_fromtag && from->tag_value.len) {
 		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN);
