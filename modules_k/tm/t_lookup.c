@@ -478,15 +478,18 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 				get_to(t_msg)->uri.len)!=0) continue;
 
 			/* it is e2e ACK/200 */
-			if (p_cell->uas.status<300 && e2e_ack_trans==0) {
-				/* all criteria for proxied ACK are ok */
-				if (p_cell->relaied_reply_branch!=-2) {
-					e2e_ack_trans=p_cell;
+			if (p_cell->uas.status<300) {
+				if (e2e_ack_trans==0) {
+					/* all criteria for proxied ACK are ok */
+					if (p_cell->relaied_reply_branch!=-2) {
+						e2e_ack_trans=p_cell;
+						continue;
+					}
+					/* it's a local UAS transaction */
+					if (dlg_matching(p_cell, p_msg))
+						goto found;
 					continue;
 				}
-				/* it's a local UAS transaction */
-				if (dlg_matching(p_cell, p_msg))
-					goto found;
 				continue;
 			}
 
