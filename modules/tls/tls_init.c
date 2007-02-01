@@ -33,6 +33,7 @@
 #include <netinet/tcp.h>
 #include <netinet/ip.h>
 #include <unistd.h>
+#include <string.h>
 #include <openssl/ssl.h>
  
 #include "../../dprint.h"
@@ -58,15 +59,42 @@
 
 #if OPENSSL_VERSION_NUMBER >= 0x00908000L  /* 0.9.8*/
 #    ifndef OPENSSL_NO_COMP
-#        warning "openssl zlib compression not supported, replacing with our version"
-/*       #define TLS_DISABLE_COMPRESSION */
-#        define TLS_FIX_ZLIB_COMPRESSION
-#        include "fixed_c_zlib.h"
+#        warning "openssl zlib compression bug workarround enabled"
 #    endif
+#    define TLS_FIX_ZLIB_COMPRESSION
+#    include "fixed_c_zlib.h"
+#endif
+
+#ifdef TLS_KSSL_WORKARROUND
+
+#	warning openssl lib compiled with kerberos support which introduces a bug \
+(wrong malloc/free used in kssl.c) -- attempting workarround
+#	warning NOTE: if you don't link libssl staticaly don't try running the \
+compiled code on a system with a differently compiled openssl (it's safer \
+to compile on the  _target_ system)
+
 #endif
 
 
-SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
+
+#ifndef OPENSSL_NO_COMP
+#define TLS_COMP_SUPPORT
+#else
+#undef TLS_COMP_SUPPORT
+#endif
+
+#ifndef OPENSSL_NO_KRB5
+#define TLS_KERBEROS_SUPPORT
+#else
+#undef TLS_KERBEROS_SUPPORT
+#endif
+
+
+int tls_disable_compression = 0; /* by default enabled */
+int tls_force_run = 0; /* ignore some start-up sanity checks, use it
+						  at your own risk */
+
+const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
 
 
 /*
@@ -148,34 +176,27 @@ static void init_ssl_methods(void)
  */
 static int init_tls_compression(void)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x00908000L
 	int n, r;
-#if defined(TLS_DISABLE_COMPRESSION) || defined(TLS_FIX_ZLIB_COMPRESSION)
 	STACK_OF(SSL_COMP)* comp_methods;
-#    ifdef TLS_FIX_ZLIB_COMPRESSION
 	SSL_COMP* zlib_comp;
-#    endif
-#endif
-
-	     /* disabling compression */
-#if defined(TLS_DISABLE_COMPRESSION) || defined(TLS_FIX_ZLIB_COMPRESSION)
-#    ifndef SSL_COMP_ZLIB_IDX
-#        define SSL_COMP_ZLIB_IDX 1 /* openssl/ssl/ssl_ciph.c:84 */
-#    endif 
-	LOG(L_INFO, "init_tls: fixing compression problems...\n");
+	long ssl_version;
+	
+	/* disabling compression */
+#	ifndef SSL_COMP_ZLIB_IDX
+#		define SSL_COMP_ZLIB_IDX 1 /* openssl/ssl/ssl_ciph.c:84 */
+#	endif 
 	comp_methods = SSL_COMP_get_compression_methods();
 	if (comp_methods == 0) {
-		LOG(L_CRIT, "init_tls: BUG: null openssl compression methods\n");
-	} else {
-#ifdef TLS_DISABLE_COMPRESSION
-		LOG(L_INFO, "init_tls: disabling compression...\n");
+		LOG(L_INFO, "tls: init_tls: compression support disabled in the"
+					" openssl lib\n");
+		goto end; /* nothing to do, exit */
+	} else if (tls_disable_compression){
+		LOG(L_INFO, "tls: init_tls: disabling compression...\n");
 		sk_SSL_COMP_zero(comp_methods);
-#else
-		LOG(L_INFO, "init_tls: fixing zlib compression...\n");
-		if (fixed_c_zlib_init() != 0) {
-			LOG(L_CRIT, "init_tls: BUG: failed to initialize zlib compression"
-			    " fix\n");
-			sk_SSL_COMP_zero(comp_methods); /* delete compression */
-		} else {
+	}else{
+		ssl_version=SSLeay();
+		if (ssl_version >= 0x00908000L){
 			/* the above SSL_COMP_get_compression_methods() call has the side
 			 * effect of initializing the compression stack (if not already
 			 * initialized) => after it zlib is initialized and in the stack */
@@ -184,22 +205,57 @@ static int init_tls_compression(void)
 			zlib_comp = 0;
 			for (r = 0; r < n; r++) {
 				zlib_comp = sk_SSL_COMP_value(comp_methods, r);
+				DBG("tls: init_tls: found compression method %p id %d\n",
+						zlib_comp, zlib_comp->id);
 				if (zlib_comp->id == SSL_COMP_ZLIB_IDX) {
+					DBG("tls: init_tls: found zlib compression (%d)\n", 
+							SSL_COMP_ZLIB_IDX);
 					break /* found */;
 				} else {
 					zlib_comp = 0;
 				}
 			}
 			if (zlib_comp == 0) {
-				LOG(L_INFO, "init_tls: no openssl zlib compression found\n");
+				LOG(L_INFO, "tls: init_tls: no openssl zlib compression "
+							"found\n");
 			}else{
+				LOG(L_WARN, "tls: init_tls: detected openssl lib with "
+							"known zlib compression bug: \"%s\" (0x%08lx)\n",
+							SSLeay_version(SSLEAY_VERSION), ssl_version);
+#	ifdef TLS_FIX_ZLIB_COMPRESSION
+				LOG(L_WARN, "tls: init_tls: enabling openssl zlib compression "
+							"bug workaround (replacing zlib COMP method with "
+							"our own version)\n");
+				/* hack: make sure that the CRYPTO_EX_INDEX_COMP class is empty
+				 * and it does not contain any free_ex_data from the 
+				 * built-in zlib. This can happen if the current openssl
+				 * zlib malloc fix patch is used (CRYPTO_get_ex_new_index() in
+				 * COMP_zlib()). Unfortunately the only way
+				 * to do this it to cleanup all the ex_data stuff.
+				 * It should be safe if this is executed before SSL_init()
+				 * (only the COMP class is initialized before).
+				 */
+				CRYPTO_cleanup_all_ex_data();
+				
+				if (fixed_c_zlib_init() != 0) {
+					LOG(L_CRIT, "tls: init_tls: BUG: failed to initialize zlib"
+							" compression fix, disabling compression...\n");
+					sk_SSL_COMP_zero(comp_methods); /* delete compression */
+					goto end;
+				}
 				/* "fix" it */
 				zlib_comp->method = &zlib_method;
+#	else
+				LOG(L_WARN, "tls: init_tls: disabling openssl zlib "
+							"compression \n");
+				zlib_comp=sk_SSL_COMP_delete(comp_methods, r);
+				OPENSSL_free(zlib_comp);
+#	endif
 			}
 		}
-#endif
 	}
-#endif
+end:
+#endif /* OPENSSL_VERSION_NUMBER >= 0.9.8 */
 	return 0;
 }
 
@@ -210,11 +266,91 @@ static int init_tls_compression(void)
 int init_tls(void)
 {
 	struct socket_info* si;
+	long ssl_version;
+	int lib_kerberos;
+	int lib_zlib;
+	int kerberos_support;
+	int comp_support;
+	const char* lib_cflags;
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 	WARN("You are using an old version of OpenSSL (< 0.9.7). Upgrade!\n");
 #endif
-
+	ssl_version=SSLeay();
+	/* check if version have the same major minor and fix level
+	 * (e.g. 0.9.8a & 0.9.8c are ok, but 0.9.8 and 0.9.9x are not) */
+	if ((ssl_version>>8)!=(OPENSSL_VERSION_NUMBER>>8)){
+		LOG(L_CRIT, "ERROR: tls: tls_init: installed openssl library version "
+				"is too different from the library the ser tls module was "
+				"compiled with: installed \"%s\" (0x%08lx), compiled \"%s\" "
+				"(0x%08lx).\n"
+				" Please make sure a compatible version is used"
+				" (tls_force_run in ser.cfg will override this check)\n",
+				SSLeay_version(SSLEAY_VERSION), ssl_version,
+				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER);
+		if (tls_force_run)
+			LOG(L_WARN, "tls: tls_init: tls_force_run turned on, ignoring "
+						" openssl version mismatch\n");
+		else
+			return -1; /* safer to exit */
+	}
+#ifdef TLS_KERBEROS_SUPPORT
+	kerberos_support=1;
+#else
+	kerberos_support=0;
+#endif
+#ifdef TLS_COMP_SUPPORT
+	comp_support=1;
+#else
+	comp_support=0;
+#endif
+	/* attempt to guess if the library was compiled with kerberos or
+	 * compression support from the cflags */
+	lib_cflags=SSLeay_version(SSLEAY_CFLAGS);
+	lib_kerberos=0;
+	lib_zlib=0;
+	if ((lib_cflags==0) || strstr(lib_cflags, "not available")){ 
+		lib_kerberos=-1;
+		lib_zlib=-1;
+	}else{
+		if (strstr(lib_cflags, "-DZLIB"))
+			lib_zlib=1;
+		if (strstr(lib_cflags, "-DKRB5_"))
+			lib_kerberos=1;
+	}
+	LOG(L_INFO, "tls: tls_init:  compiled  with  openssl  version " 
+				"\"%s\" (0x%08lx), kerberos support: %s, compression: %s\n",
+				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER,
+				kerberos_support?"on":"off", comp_support?"on":"off");
+	LOG(L_INFO, "tls: tls_init: installed openssl library version "
+				"\"%s\" (0x%08lx), kerberos support: %s, "
+				" zlib compression: %s"
+				"\n %s\n",
+				SSLeay_version(SSLEAY_VERSION), ssl_version,
+				(lib_kerberos==1)?"on":(lib_kerberos==0)?"off":"unkown",
+				(lib_zlib==1)?"on":(lib_zlib==0)?"off":"unkown",
+				SSLeay_version(SSLEAY_CFLAGS));
+	if (lib_kerberos!=kerberos_support){
+		if (lib_kerberos!=-1){
+			LOG(L_CRIT, "ERROR: tls: tls_init: openssl compile options"
+						" mismatch: library has kerberos support"
+						" %s and ser tls %s (unstable configuration)\n"
+						" (tls_force_run in ser.cfg will override this"
+						" check)\n",
+						lib_kerberos?"enabled":"disabled",
+						kerberos_support?"enabled":"disabled"
+				);
+			if (tls_force_run)
+				LOG(L_WARN, "tls: tls_init: tls_force_run turned on, ignoring "
+						" kerberos support mismatch\n");
+			else
+				return -1; /* exit, is safer */
+		}else{
+			LOG(L_WARN, "WARNING: tls: tls_init: openssl  compile options"
+						" missing -- cannot detect if kerberos support is"
+						" enabled. Possible unstable configuration\n");
+		}
+	}
 	     /*
 	      * this has to be called before any function calling CRYPTO_malloc,
 	      * CRYPTO_malloc will set allow_customize in openssl to 0 
@@ -227,8 +363,8 @@ int init_tls(void)
 		return -1;
 	init_tls_compression();
 	#ifdef TLS_KSSL_WORKARROUND
-		LOG(L_INFO, "init_tls: kerberos malloc bug workarround "
-			"(krb disabled)...\n");
+		LOG(L_WARN, "tls: init_tls: openssl kerberos malloc bug detected, "
+			" kerberos support will be disabled...\n");
 	#endif
 	SSL_library_init();
 	SSL_load_error_strings();

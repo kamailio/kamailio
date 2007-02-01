@@ -32,6 +32,7 @@
 #include "../../rpc.h"
 #include "../../tcp_conn.h"
 #include "../../timer.h"
+#include "tls_init.h"
 #include "tls_mod.h"
 #include "tls_domain.h"
 #include "tls_config.h"
