@@ -41,7 +41,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <radiusclient-ng.h>
 
 
 static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,

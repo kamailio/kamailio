@@ -27,7 +27,6 @@
  */
 
 
-#include <radiusclient-ng.h>
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest_parser.h"
