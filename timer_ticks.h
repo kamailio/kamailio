@@ -54,5 +54,7 @@
 #define TICKS_TO_MS(t) (((t)*1000U)/TIMER_TICKS_HZ)
 
 
+typedef unsigned int ticks_t;/* type used to keep the ticks (must be 32 bits)*/
+typedef signed   int s_ticks_t; /* signed ticks type */
 
 #endif

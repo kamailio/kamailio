@@ -41,7 +41,7 @@
 #include "ip_addr.h"
 #include "locking.h"
 #include "atomic_ops.h"
-
+#include "timer_ticks.h"
 
 #define TCP_CON_MAX_ALIASES 4 /* maximum number of port aliases */
 
@@ -198,6 +198,8 @@ static inline unsigned tcp_addr_hash(struct ip_addr* ip, unsigned short port)
 
 #define tcp_id_hash(id) (id&(TCP_ID_HASH_SIZE-1))
 
+struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
+									ticks_t timeout);
 
 #endif
 
