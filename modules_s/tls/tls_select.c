@@ -433,9 +433,10 @@ static int sel_comp(str* res, select_t* s, struct sip_msg* msg)
 	ASN1_STRING* asn1;
 	int nid = NID_commonName, index, my = 0, issuer = 0, i;
 	char* elem;
-	str text;
+	unsigned char* text_s;
+	int text_len;
 	       
-	text.s = 0;
+	text_s = 0;
 
 	for(i = 1; i <= s->n - 1; i++) {
 		switch(s->params[i].v.i) {
@@ -480,22 +481,22 @@ static int sel_comp(str* res, select_t* s, struct sip_msg* msg)
 
 	e = X509_NAME_get_entry(name, index);
 	asn1 = X509_NAME_ENTRY_get_data(e);
-	text.len = ASN1_STRING_to_UTF8((unsigned char**)&text.s, asn1);
-	if (text.len < 0 || text.len >= 1024) {
+	text_len = ASN1_STRING_to_UTF8(&text_s, asn1);
+	if (text_len < 0 || text_len >= 1024) {
 		ERR("Error converting ASN1 string\n");
 		goto err;
 	}
-	memcpy(buf, text.s, text.len);
+	memcpy(buf, text_s, text_len);
 	res->s = buf;
-	res->len = text.len;
+	res->len = text_len;
 
-	OPENSSL_free(text.s);
+	OPENSSL_free(text_s);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
  err:
-	if (text.s) OPENSSL_free(text.s);
+	if (text_s) OPENSSL_free(text_s);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
 	return -1;

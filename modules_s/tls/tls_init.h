@@ -37,11 +37,6 @@
 #include "tls_domain.h"
 
 #ifndef OPENSSL_NO_KRB5
-#warning openssl lib compiled with kerberos support which introduces a bug \
- (wrong malloc/free used in kssl.c) -- attempting workarround
-#warning NOTE: if you don't link libssl staticaly don't try running the \
- compiled code on a system with a differently compiled openssl (it's safer \
- to compile on the  _target_ system)
 /* enable workarround for openssl kerberos wrong malloc bug
  * (kssl code uses libc malloc/free/calloc instead of OPENSSL_malloc & 
  * friends)*/
@@ -49,8 +44,10 @@
 #endif
 
 
+extern int tls_disable_compression; /* by default enabled */
+extern int tls_force_run; /* by default disabled */
 
-extern SSL_METHOD* ssl_methods[];
+extern const SSL_METHOD* ssl_methods[];
 
 
 /*
