@@ -962,7 +962,7 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 	    if (xl_val.flags & XL_VAL_STR) {
 		if (xl_val.rs.len > EXPRESSION_LENGTH) {
 		    LOG(L_ERR, "allow_uri(): pseudo variable value is too "
-			"long: %d chars\n", len);
+			"long: %d chars\n", xl_val.rs.len);
 		    return -1;
 		}
 		strncpy(uri_str, xl_val.rs.s, xl_val.rs.len);

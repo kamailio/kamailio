@@ -28,7 +28,7 @@
 
 #include <regex.h>
 
-#define EXPRESSION_LENGTH 100	/* maximum length of an expression */
+#define EXPRESSION_LENGTH 256	/* maximum length of an expression */
 #define LINE_LENGTH 500		/* maximum length of lines in the config file */
 
 
