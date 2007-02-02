@@ -67,11 +67,11 @@
 
 #ifdef TLS_KSSL_WORKARROUND
 
-#	warning openssl lib compiled with kerberos support which introduces a bug \
-(wrong malloc/free used in kssl.c) -- attempting workarround
-#	warning NOTE: if you don't link libssl staticaly don't try running the \
+#	warning "openssl lib compiled with kerberos support which introduces a bug\
+ (wrong malloc/free used in kssl.c) -- attempting workarround"
+#	warning "NOTE: if you don't link libssl staticaly don't try running the \
 compiled code on a system with a differently compiled openssl (it's safer \
-to compile on the  _target_ system)
+to compile on the  _target_ system)"
 
 #endif
 
