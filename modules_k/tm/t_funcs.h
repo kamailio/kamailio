@@ -132,6 +132,7 @@ int fr_inv_avp2timer(unsigned int* timer);
 
 static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 {
+	utime_t utimer;
 	unsigned int timer;
 
 	if (retr) {
@@ -140,8 +141,9 @@ static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 	}
 
 	if (!fr_avp2timer(&timer)) {
-		DBG("DEBUG:tm:_set_fr_retr: FR_TIMER = %d\n", timer);
-		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
+		DBG("DEBUG:tm:_set_fr_retr: FR_TIMER = %u\n", timer);
+		utimer = timer;
+		set_timer(&rb->fr_timer, FR_TIMER_LIST, &utimer);
 		/* Automatically enable noisy_ctimer for the transaction */
 		rb->my_T->flags |= T_NOISY_CTIMER_FLAG;
 	} else {

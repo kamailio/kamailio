@@ -1254,7 +1254,7 @@ int reply_received( struct sip_msg  *p_msg )
 	int last_uac_status;
 	int branch;
 	int reply_status;
-	unsigned int timer;
+	utime_t timer;
 	/* has the transaction completed now and we need to clean-up? */
 	branch_bm_t cancel_bitmap;
 	struct ua_client *uac;
@@ -1293,7 +1293,7 @@ int reply_received( struct sip_msg  *p_msg )
 	/* *** stop timers *** */
 	/* stop retransmission */
 	reset_timer(&uac->request.retr_timer);
-	
+
 	/* stop final response timer only if I got a final response */
 	if ( msg_status >= 200 ) {
 		reset_timer( &uac->request.fr_timer);
@@ -1379,8 +1379,8 @@ int reply_received( struct sip_msg  *p_msg )
 			 * attempt to restart retransmission any more
 			 */
 			backup_list = set_avp_list(&t->user_avps);
-			if (!fr_inv_avp2timer(&timer)) {
-				DBG("DEBUG:tm:reply_received: FR_INV_TIMER = %d\n", timer);
+			if (!fr_inv_avp2timer((unsigned int*)&timer)) {
+				DBG("DEBUG:tm:reply_received: FR_INV_TIMER = %lld\n", timer);
 				set_timer(&uac->request.fr_timer,
 					FR_INV_TIMER_LIST, &timer);
 				t->flags |= T_NOISY_CTIMER_FLAG;

@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -24,6 +25,8 @@
  *  2003-06-27  timers are not unlinked if timerlist is 0 (andrei)
  *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced;
  *              timer_link.payload removed (bogdan)
+ *  2007-02-02  retransmission timers have milliseconds resolution;
+ *              adde faster timers (shortcuts based on timeout) (bogdan)
  */
 
 
@@ -122,7 +125,7 @@ static struct timer detached_timer; /* just to have a value to compare with*/
 int noisy_ctimer=0;
 
 
-int timer_group[NR_OF_TIMER_LISTS] = 
+int timer_group[NR_OF_TIMER_LISTS] =
 {
 	TG_FR, TG_FR,
 	TG_WT,
@@ -139,11 +142,26 @@ unsigned int timer_id2timeout[NR_OF_TIMER_LISTS] = {
 	WT_TIME_OUT, 		/* WT_TIMER_LIST */
 	DEL_TIME_OUT,		/* DELETE_LIST */
 	RETR_T1, 			/* RT_T1_TO_1 */
-	RETR_T1 << 1, 		/* RT_T1_TO_2 */
-	RETR_T1 << 2, 		/* RT_T1_TO_3 */
+	0, 					/* RT_T1_TO_2 */
+	0, 					/* RT_T1_TO_3 */
 	RETR_T2 			/* RT_T2 */
 						/* NR_OF_TIMER_LISTS */
 };
+
+#define UTIME_TYPE 1
+
+static unsigned int timer_id2type[NR_OF_TIMER_LISTS] = {
+	0, 				/* FR_TIMER_LIST */
+	0, 				/* FR_INV_TIMER_LIST */
+	0, 				/* WT_TIMER_LIST */
+	0, 				/* DELETE_LIST */
+	UTIME_TYPE, 	/* RT_T1_TO_1 */
+	UTIME_TYPE, 	/* RT_T1_TO_2 */
+	UTIME_TYPE, 	/* RT_T1_TO_3 */
+	UTIME_TYPE  	/* RT_T2 */
+					/* NR_OF_TIMER_LISTS */
+};
+
 
 /******************** handlers ***************************/
 
@@ -152,7 +170,6 @@ static void unlink_timers( struct cell *t );
 
 static void delete_cell( struct cell *p_cell, int unlock )
 {
-
 #ifdef EXTRA_DEBUG
 	int i;
 #endif
@@ -165,6 +182,7 @@ static void delete_cell( struct cell *p_cell, int unlock )
 	unlink_timers( p_cell );
 
 #ifdef EXTRA_DEBUG
+	int i;
 
 	if (is_in_timer_list2(& p_cell->wait_tl )) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
@@ -453,7 +471,7 @@ inline static void delete_handler( struct timer_link *dele_tl )
 	   zero safely without locking
 	*/
 	delete_cell( p_cell, 0 /* don't unlock on return */ );
-    DBG("DEBUG: delete_handler : done\n");
+	DBG("DEBUG: delete_handler : done\n");
 }
 
 
@@ -488,6 +506,8 @@ void unlink_timer_lists()
 	
 }
 
+
+
 struct timer_table *tm_init_timers()
 {
 	enum lists i;
@@ -498,13 +518,57 @@ struct timer_table *tm_init_timers()
 		goto error0;
 	}
 	memset(timertable, 0, sizeof (struct timer_table));
-		
+
+	/* check the timeout values */
+	if ( timer_id2timeout[FR_TIMER_LIST]<MIN_TIMER_VALUE ) {
+		LOG(L_ERR, "ERROR:tm_init_timers: FR_TIMER must be at least %d\n",
+			MIN_TIMER_VALUE);
+		goto error0;
+	}
+
+	if ( timer_id2timeout[FR_INV_TIMER_LIST]<MIN_TIMER_VALUE ) {
+		LOG(L_ERR, "ERROR:tm_init_timers: FR_INV_TIMER must be at least %d\n",
+			MIN_TIMER_VALUE);
+		goto error0;
+	}
+
+	if ( timer_id2timeout[WT_TIMER_LIST]<MIN_TIMER_VALUE ) {
+		LOG(L_ERR, "ERROR:tm_init_timers: WT_TIMER must be at least %d\n",
+			MIN_TIMER_VALUE);
+		goto error0;
+	}
+
+	if ( timer_id2timeout[DELETE_LIST]<MIN_TIMER_VALUE ) {
+		LOG(L_ERR, "ERROR:tm_init_timers: DELETE_TIMER must be at least %d\n",
+			MIN_TIMER_VALUE);
+		goto error0;
+	}
+
+	if ( timer_id2timeout[RT_T2]<=timer_id2timeout[RT_T1_TO_1] ) {
+		LOG(L_ERR, "ERROR:tm_init_timers: T2 must be greater than T1\n");
+		goto error0;
+	}
+
+	/* generate timeouts for retransmissions */
+	timer_id2timeout[RT_T1_TO_1] *=1000;
+	timer_id2timeout[RT_T2] *=1000;
+
+	if ( (timer_id2timeout[RT_T1_TO_1]<<1) < timer_id2timeout[RT_T2] )
+		timer_id2timeout[RT_T1_TO_2] = timer_id2timeout[RT_T1_TO_1]<<1;
+	else
+		timer_id2timeout[RT_T1_TO_2] = timer_id2timeout[RT_T2];
+
+	if ( (timer_id2timeout[RT_T1_TO_1]<<2) < timer_id2timeout[RT_T2] )
+		timer_id2timeout[RT_T1_TO_3] = timer_id2timeout[RT_T1_TO_1]<<2;
+	else
+		timer_id2timeout[RT_T1_TO_3] = timer_id2timeout[RT_T2];
+
 
 	/* inits the timers*/
 	for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
-        init_timer_list( i );
-    
-    /* init. timer lists */
+		init_timer_list( i );
+
+	/* init. timer lists */
 	timertable->timers[RT_T1_TO_1].id = RT_T1_TO_1;
 	timertable->timers[RT_T1_TO_2].id = RT_T1_TO_2;
 	timertable->timers[RT_T1_TO_3].id = RT_T1_TO_3;
@@ -547,10 +611,10 @@ void reset_timer_list( enum lists list_id)
 
 
 
-void init_timer_list( /* struct s_table* ht, */ enum lists list_id)
+void init_timer_list( enum lists list_id)
 {
-	reset_timer_list( /* ht, */ list_id );
-	init_timerlist_lock( /* ht, */ list_id );
+	reset_timer_list( list_id );
+	init_timerlist_lock( list_id );
 }
 
 
@@ -572,6 +636,70 @@ void print_timer_list( enum lists list_id)
 
 
 
+#ifdef TM_TIMER_DEBUG
+static void check_timer_list(enum lists list_id, char *txt )
+{
+	struct timer* timer_list=&(timertable->timers[ list_id ]);
+	struct timer_link *tl ;
+	struct timer_link *tl1 ;
+
+	if (list_id<0 || list_id>=NR_OF_TIMER_LISTS) {
+			LOG(L_CRIT,"------- list [%d] bug [%s]\n",
+				list_id, txt);
+			abort(0);
+	}
+
+	tl = timer_list->last_tl.prev_tl;
+	while (tl!=&timer_list->first_tl) {
+		if (tl->prev_tl==0) {
+			LOG(L_CRIT,"------- list [%d] prev_tl==0 [%s]\n",
+				list_id, txt);
+			abort(0);
+		}
+		tl = tl->prev_tl;
+	}
+
+	tl = timer_list->first_tl.next_tl;
+	while (tl!=&timer_list->last_tl) {
+		if (tl->next_tl==0) {
+			LOG(L_CRIT,"------- list [%d] next_tl==0 [%s]\n",
+				list_id, txt);
+			abort(0);
+		}
+		tl = tl->next_tl;
+	}
+
+	tl = timer_list->first_tl.next_tl;
+	while (tl!=&timer_list->last_tl) {
+		if (tl->ld_tl==0) {
+			LOG(L_CRIT,"------- list [%d] currupted - ld=0 [%s]\n",
+				list_id, txt);
+			abort(0);
+		}
+		if (tl->ld_tl->ld_tl!=tl) {
+			LOG(L_CRIT,"------- list [%d] currupted - ld cycle broken [%s]\n",
+				list_id, txt);
+			abort(0);
+		}
+
+		if (tl->ld_tl!=tl) {
+			tl1 = tl->next_tl;
+			while(tl1!=tl->ld_tl) {
+				if (tl1->ld_tl) {
+					LOG(L_CRIT,"------- list [%d] currupted - ld!=0 inside "
+						"cycle [%s]\n", list_id, txt);
+					abort(0);
+				}
+				tl1 = tl1->next_tl;
+			}
+		}
+
+		tl = tl->ld_tl->next_tl;
+	}
+}
+#endif
+
+
 static void remove_timer_unsafe(  struct timer_link* tl )
 {
 #ifdef EXTRA_DEBUG
@@ -587,75 +715,75 @@ static void remove_timer_unsafe(  struct timer_link* tl )
 		DBG("DEBUG: unlinking timer: tl=%p, timeout=%d, group=%d\n", 
 			tl, tl->time_out, tl->tg);
 #endif
+#ifdef TM_TIMER_DEBUG
+		check_timer_list( tl->timer_list->id, "before remove" );
+#endif
+		if (tl->ld_tl && tl->ld_tl!=tl) {
+			if (tl->time_out==tl->prev_tl->time_out) {
+				tl->prev_tl->ld_tl = tl->ld_tl;
+				tl->ld_tl->ld_tl = tl->prev_tl;
+			} else {
+				tl->next_tl->ld_tl = tl->ld_tl;
+				tl->ld_tl->ld_tl = tl->next_tl;
+			}
+		}
 		tl->prev_tl->next_tl = tl->next_tl;
 		tl->next_tl->prev_tl = tl->prev_tl;
+#ifdef TM_TIMER_DEBUG
+		check_timer_list( tl->timer_list->id, "after remove" );
+#endif
 		tl->next_tl = 0;
 		tl->prev_tl = 0;
+		tl->ld_tl = 0;
 		tl->timer_list = NULL;
 	}
 }
 
 
 /* put a new cell into a list nr. list_id */
-static void insert_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
-	unsigned int time_out )
+static void insert_timer_unsafe( struct timer *timer_list,
+								struct timer_link *tl, unsigned int time_out )
 {
 	struct timer_link* ptr;
 
 	tl->time_out = time_out;
 	tl->timer_list = timer_list;
+	tl->deleted = 0;
 
-	for(ptr = timer_list->last_tl.prev_tl; 
-	ptr != &timer_list->first_tl; 
-	ptr = ptr->prev_tl) {
-		if ((ptr->time_out != TIMER_DELETED) && (ptr->time_out <= time_out))
+#ifdef TM_TIMER_DEBUG
+	check_timer_list( timer_list->id, "before insert" );
+#endif
+	ptr = timer_list->last_tl.prev_tl;
+	for( ; ptr != &timer_list->first_tl ; ptr = ptr->ld_tl->prev_tl) {
+		if ( ptr->time_out<=time_out )
 			break;
 	}
 
+	/* insert "tl" after "ptr" */
 	tl->prev_tl = ptr;
 	tl->next_tl = ptr->next_tl;
 	tl->prev_tl->next_tl = tl;
 	tl->next_tl->prev_tl = tl;
+
+	if (tl->time_out==ptr->time_out) {
+		tl->ld_tl = ptr->ld_tl;
+		ptr->ld_tl = 0;
+		tl->ld_tl->ld_tl = tl;
+	} else {
+		tl->ld_tl = tl;
+	}
+#ifdef TM_TIMER_DEBUG
+	check_timer_list( timer_list->id, "after insert" );
+#endif
 
 	DBG("DEBUG: add_to_tail_of_timer[%d]: %p\n",timer_list->id,tl);
 }
 
 
 
-#if 0  /* not used anymore */
-/* put a new cell into a list nr. list_id */
-static void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
-	unsigned int time_out )
-{
-#ifdef EXTRA_DEBUG
-	if (timer_list->last_tl.prev_tl==0) {
-	LOG( L_CRIT,
-		"CRITICAL : Oh no, zero link in trailing timer element\n");
-		abort();
-	};
-#endif
-
-	tl->time_out = time_out;
-	tl->prev_tl = timer_list->last_tl.prev_tl;
-	tl->next_tl = & timer_list->last_tl;
-	timer_list->last_tl.prev_tl = tl;
-	tl->prev_tl->next_tl = tl;
-	tl->timer_list = timer_list;
-#ifdef EXTRA_DEBUG
-	if ( tl->tg != timer_group[ timer_list->id ] ) {
-		LOG( L_CRIT, "CRITICAL error: changing timer group\n");
-		abort();
-	}
-#endif
-	DBG("DEBUG: add_timer_unsafe[%d]: %p\n",timer_list->id,tl);
-}
-#endif
-
-
-
 /* detach items passed by the time from timer list */
 static struct timer_link  *check_and_split_time_list( struct timer *timer_list,
-	int time )
+		utime_t time )
 {
 	struct timer_link *tl , *end, *ret;
 
@@ -669,12 +797,13 @@ static struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 	/* the entire timer list is locked now -- noone else can manipulate it */
 	lock(timer_list->mutex);
 
+#ifdef TM_TIMER_DEBUG
+	check_timer_list( timer_list->id, "before split" );
+#endif
 	end = &timer_list->last_tl;
 	tl = timer_list->first_tl.next_tl;
-	while( tl!=end && tl->time_out <= time) {
-		tl->timer_list = DETACHED_LIST;
-		tl=tl->next_tl;
-	}
+	while( tl!=end && tl->time_out <= time)
+		tl=tl->ld_tl->next_tl;
 
 	/* nothing to delete found */
 	if (tl->prev_tl==&(timer_list->first_tl)) {
@@ -685,9 +814,16 @@ static struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 		/* and we mark the end of the split list */
 		tl->prev_tl->next_tl = NULL;
 		/* the shortened list starts from where we suspended */
-		timer_list->first_tl.next_tl = tl;	
+		timer_list->first_tl.next_tl = tl;
 		tl->prev_tl = & timer_list->first_tl;
+
+		for( tl=ret ; tl ; tl=tl->next_tl )
+			tl->timer_list = DETACHED_LIST;
 	}
+#ifdef TM_TIMER_DEBUG
+	check_timer_list( timer_list->id, "after split" );
+#endif
+
 #ifdef EXTRA_DEBUG
 	if (timer_list->last_tl.prev_tl==0) {
 		LOG( L_CRIT,
@@ -695,6 +831,7 @@ static struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 		abort();
 	};
 #endif
+
 	/* give the list lock away */
 	unlock(timer_list->mutex);
 
@@ -716,7 +853,7 @@ void reset_timer( struct timer_link* tl )
 	   but not execute; there is a race condition, though -- see
 	   timer.c for more details
 	*/
-	tl->time_out = TIMER_DELETED;
+	tl->deleted = 1;
 #ifdef EXTRA_DEBUG
 	DBG("DEBUG: reset_timer (group %d, tl=%p)\n", tl->tg, tl );
 #endif
@@ -733,9 +870,10 @@ void reset_timer( struct timer_link* tl )
  *             same for an expired timer: only it's handler can
  *             set it again, an external set_timer has no guarantee
  */
-void set_timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext_timeout )
+void set_timer( struct timer_link *new_tl, enum lists list_id,
+												utime_t* ext_timeout )
 {
-	unsigned int timeout;
+	utime_t timeout;
 	struct timer* list;
 
 	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
@@ -766,19 +904,21 @@ void set_timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext
 	}
 	/* make sure I'm not already on a list */
 	remove_timer_unsafe( new_tl );
-	/*
-	  add_timer_unsafe( list, new_tl, get_ticks()+timeout);
-	 */
-	insert_timer_unsafe( list, new_tl, get_ticks()+timeout);
+
+	insert_timer_unsafe( list, new_tl, timeout +
+			((timer_id2type[list_id]==UTIME_TYPE)?get_uticks():get_ticks()));
 end:
 	unlock(list->mutex);
 }
 
+
+
 /* similar to set_timer, except it allows only one-time
    timer setting and all later attempts are ignored */
-void set_1timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext_timeout )
+void set_1timer( struct timer_link *new_tl, enum lists list_id,
+												utime_t* ext_timeout )
 {
-	unsigned int timeout;
+	utime_t timeout;
 	struct timer* list;
 
 
@@ -799,18 +939,9 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ex
 	list= &(timertable->timers[ list_id ]);
 
 	lock(list->mutex);
-	if (!(new_tl->time_out>TIMER_DELETED)) {
-		/* make sure I'm not already on a list */
-		/* remove_timer_unsafe( new_tl ); */
-		/*
-		add_timer_unsafe( list, new_tl, get_ticks()+timeout);
-		*/
-		insert_timer_unsafe( list, new_tl, get_ticks()+timeout);
-
-		/* set_1timer is used only by WAIT -- that's why we can
-		   afford updating wait statistics; I admit its not nice
-		   but it greatly utilizes existing lock 
-		*/
+	if (!new_tl->time_out) {
+		insert_timer_unsafe( list, new_tl, timeout +
+			((timer_id2type[list_id]==UTIME_TYPE)?get_uticks():get_ticks()));
 	}
 	unlock(list->mutex);
 }
@@ -886,9 +1017,9 @@ static void unlink_timers( struct cell *t )
 		/* reset the timer list linkage */\
 		tmp_tl = (_tl)->next_tl;\
 		(_tl)->next_tl = (_tl)->prev_tl = 0;\
-		DBG("DEBUG: timer routine:%d,tl=%p next=%p\n",\
-			id,(_tl),tmp_tl);\
-		if ((_tl)->time_out>TIMER_DELETED) \
+		DBG("DEBUG: timer routine:%d,tl=%p next=%p, timeout=%lld\n",\
+			id,(_tl),tmp_tl,(_tl)->time_out);\
+		if ( !(_tl)->deleted ) \
 			(_handler)( _tl );\
 		(_tl) = tmp_tl;\
 	}
@@ -898,11 +1029,10 @@ static void unlink_timers( struct cell *t )
 
 void timer_routine(unsigned int ticks , void * attr)
 {
-	/* struct timer_table *tt= (struct timer_table*)attr; */
 	struct timer_link *tl, *tmp_tl;
 	int                id;
 
-	for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
+	for( id=0 ; id<RT_T1_TO_1 ; id++ )
 	{
 		/* to waste as little time in lock as possible, detach list
 		   with expired items and process them after leaving the lock */
@@ -914,17 +1044,36 @@ void timer_routine(unsigned int ticks , void * attr)
 			case FR_INV_TIMER_LIST:
 				run_handler_for_each(tl,final_response_handler);
 				break;
-			case RT_T1_TO_1:
-			case RT_T1_TO_2:
-			case RT_T1_TO_3:
-			case RT_T2:
-				run_handler_for_each(tl,retransmission_handler);
-				break;
 			case WT_TIMER_LIST:
 				run_handler_for_each(tl,wait_handler);
 				break;
 			case DELETE_LIST:
 				run_handler_for_each(tl,delete_handler);
+				break;
+		}
+	}
+}
+
+
+
+void utimer_routine(utime_t uticks , void * attr)
+{
+	struct timer_link *tl, *tmp_tl;
+	int                id;
+
+	for( id=RT_T1_TO_1 ; id<NR_OF_TIMER_LISTS ; id++ )
+	{
+		/* to waste as little time in lock as possible, detach list
+		   with expired items and process them after leaving the lock */
+		tl=check_and_split_time_list( &timertable->timers[ id ], uticks);
+		/* process items now */
+		switch (id)
+		{
+			case RT_T1_TO_1:
+			case RT_T1_TO_2:
+			case RT_T1_TO_3:
+			case RT_T2:
+				run_handler_for_each(tl,retransmission_handler);
 				break;
 		}
 	}

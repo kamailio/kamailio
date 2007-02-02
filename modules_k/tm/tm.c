@@ -199,13 +199,9 @@ static param_export_t params[]={
 		&(timer_id2timeout[WT_TIMER_LIST])},
 	{"delete_timer",              INT_PARAM,
 		&(timer_id2timeout[DELETE_LIST])},
-	{"retr_timer1p1",             INT_PARAM,
+	{"T1_timer",                  INT_PARAM,
 		&(timer_id2timeout[RT_T1_TO_1])},
-	{"retr_timer1p2",             INT_PARAM,
-		&(timer_id2timeout[RT_T1_TO_2])},
-	{"retr_timer1p3",             INT_PARAM,
-		&(timer_id2timeout[RT_T1_TO_3])},
-	{"retr_timer2",               INT_PARAM,
+	{"T2_timer",                  INT_PARAM,
 		&(timer_id2timeout[RT_T2])},
 	{"noisy_ctimer",              INT_PARAM,
 		&noisy_ctimer},
@@ -622,7 +618,7 @@ static int mod_init(void)
 
 	/* building the hash table*/
 	if (!init_hash_table()) {
-		LOG(L_ERR, "ERROR: mod_init: initializing hash_table failed\n");
+		LOG(L_ERR, "ERROR:tm:mod_init: initializing hash_table failed\n");
 		return -1;
 	}
 
@@ -630,14 +626,22 @@ static int mod_init(void)
 	init_t();
 
 	if (!tm_init_timers()) {
-		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
+		LOG(L_ERR, "ERROR:tm:mod_init: timer init failed\n");
 		return -1;
 	}
-	/* register the timer function */
-	register_timer( timer_routine , 0 /* empty attr */, 1 );
+
+	/* register the timer functions */
+	if (register_timer( timer_routine , 0, 1 )<0) {
+		LOG(L_ERR, "ERROR:tm:mod_init: failed to register timer\n");
+		return -1;
+	}
+	if (register_utimer( utimer_routine , 0, 100*1000 )<0) {
+		LOG(L_ERR, "ERROR:tm:mod_init: failed to register utimer\n");
+		return -1;
+	}
 
 	if (uac_init()==-1) {
-		LOG(L_ERR, "ERROR: mod_init: uac_init failed\n");
+		LOG(L_ERR, "ERROR:tm:mod_init: uac_init failed\n");
 		return -1;
 	}
 

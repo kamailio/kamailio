@@ -318,80 +318,40 @@ modparam("tm", "delete_timer", 5)
 	</section>
 
 	<section>
-		<title><varname>retr_timer1p1</varname> (integer)</title>
+		<title><varname>T1_timer</varname> (integer)</title>
 		<para>
-		Retransmission period.
+		Retransmission T1 period, in milliseconds.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1 second.
+			Default value is 500 milliseconds.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>retr_timer1p1</varname> parameter</title>
+		<title>Set <varname>T1_timer</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("tm", "retr_timer1p1", 2)
+modparam("tm", "T1_timer", 700)
 ...
 </programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>retr_timer1p2</varname> (integer)</title>
+		<title><varname>T2_timer</varname> (integer)</title>
 		<para>
-		Retransmission period.
+		Maximum retransmission period, in milliseconds.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 2 * <varname>retr_timer1p1</varname> second.
+			Default value is 4000 milliseconds.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>retr_timer1p2</varname> parameter</title>
+		<title>Set <varname>T2_timer</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("tm", "retr_timer1p2", 4)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>retr_timer1p3</varname> (integer)</title>
-		<para>
-		Retransmission period.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 4 * <varname>retr_timer1p1</varname> second.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>retr_timer1p4</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("tm", "retr_timer1p3", 8)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>retr_timer2</varname> (integer)</title>
-		<para>
-		Maximum retransmission period.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 4 seconds.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>retr_timer2</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("tm", "retr_timer2", 8)
+modparam("tm", "T2_timer", 8000)
 ...
 </programlisting>
 		</example>

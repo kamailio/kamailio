@@ -53,8 +53,8 @@
 #define DEL_TIME_OUT      2
  
 /* retransmission timers */
-#define RETR_T1           1
-#define RETR_T2           4
+#define RETR_T1           500        /* in milliseconds */
+#define RETR_T2           4000       /* in milliseconds */
 
 /* when first reply is sent, this additional space is allocated so that
    one does not have to reallocate share memory when the message is
