@@ -779,75 +779,6 @@ int ops_dbquery_avps(struct sip_msg* msg, xl_elem_t* query,
 	return 1;
 }
 
-int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
-													struct fis_param *dst)
-{
-	struct sip_uri uri;
-	int_str avp_val;
-	int_str avp_name;
-	unsigned short flags;
-	xl_value_t xvalue;
-	unsigned short name_type;
-	
-	flags = 0;
-	if (src->opd&AVPOPS_VAL_PVAR)
-	{
-		if(xl_get_spec_value(msg, &(src->sval), &xvalue, 0)!=0)
-		{
-			LOG(L_ERR,"ERROR:avpops:write_avp: cannot get value\n");
-			goto error;
-		}
-		if(xvalue.flags&XL_VAL_NULL)
-			return -1;
-		if(xvalue.flags&XL_TYPE_INT)
-		{
-			avp_val.n = xvalue.ri;
-		} else {
-			flags = AVP_VAL_STR;
-			avp_val.s = xvalue.rs;
-		}
-	} else {
-		avpops_str2int_str(src->sval.p.val, avp_val);
-		if(src->sval.p.val.s!=NULL)
-			flags = AVP_VAL_STR;
-	}
-	/* check flags */
-	if ((flags&AVP_VAL_STR)
-			&&(src->opd&(AVPOPS_FLAG_USER0|AVPOPS_FLAG_DOMAIN0)))
-	{
-		if (parse_uri(avp_val.s.s, avp_val.s.len, &uri)!=0 )
-		{
-				LOG(L_ERR,"ERROR:avpops:write_avp: cannot parse uri\n");
-				goto error;
-		}
-		if (src->opd&AVPOPS_FLAG_DOMAIN0)
-			avp_val.s = uri.host;
-		else {
-			if(uri.user.len<=0)
-				return -1;
-			avp_val.s = uri.user;
-		}
-	}
-
-	/* get dst avp name */
-	if(avpops_get_aname(msg, dst, &avp_name, &name_type)!=0)
-	{
-		LOG(L_ERR,
-			"avpops:write_avp: error getting dst AVP name\n");
-		goto error;
-	}
-
-	flags |=  name_type;
-
-	/* added the avp */
-	if (add_avp(flags, avp_name, avp_val)<0)
-		goto error;
-
-	return 1;
-error:
-	return -1;
-}
-
 
 int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 {
@@ -867,7 +798,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 		if(avpops_get_aname(msg, ap, &avp_name, &name_type)!=0)
 		{
 			LOG(L_ERR,
-				"avpops:write_avp: error getting dst AVP name\n");
+				"avpops:delete_avp: error getting dst AVP name\n");
 			return -1;
 		}
 		n = destroy_avps( name_type, avp_name, ap->ops&AVPOPS_FLAG_ALL );
@@ -1800,7 +1731,7 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 	if(avpops_get_aname(msg, ap, &avp_name, &name_type)!=0)
 	{
 		LOG(L_ERR,
-			"avpops:write_avp: error getting AVP name\n");
+			"avpops:is_avp_set: error getting AVP name\n");
 		return -1;
 	}
 
@@ -1808,7 +1739,7 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 	if(xl_get_spec_index(&ap->sval, &index)!=0)
 	{
 		LOG(L_ERR,
-			"avpops:write_avp: error getting AVP index\n");
+			"avpops:is_avp_set: error getting AVP index\n");
 		return -1;
 	}
 	

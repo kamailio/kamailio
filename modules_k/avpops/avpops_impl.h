@@ -127,9 +127,6 @@ int ops_dbstore_avps(struct sip_msg* msg, struct fis_param *sp,
 int ops_dbquery_avps(struct sip_msg* msg, xl_elem_t* query,
 								itemname_list_t* dest);
 
-int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
-								struct fis_param *ap);
-
 int ops_delete_avp(struct sip_msg* msg,
 								struct fis_param *ap);
 

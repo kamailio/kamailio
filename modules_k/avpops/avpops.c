@@ -61,12 +61,10 @@ static char *db_columns[6] = {"uuid","attribute","value",
 static int avpops_init(void);
 static int avpops_child_init(int rank);
 
-static int register_galiases( modparam_t type, void* val);
 static int fixup_db_load_avp(void** param, int param_no);
 static int fixup_db_delete_avp(void** param, int param_no);
 static int fixup_db_store_avp(void** param, int param_no);
 static int fixup_db_query_avp(void** param, int param_no);
-static int fixup_write_avp(void** param, int param_no);
 static int fixup_delete_avp(void** param, int param_no);
 static int fixup_copy_avp(void** param, int param_no);
 static int fixup_printf(void** param, int param_no);
@@ -82,7 +80,6 @@ static int w_dbdelete_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbquery1_avps(struct sip_msg* msg, char* query, char* param);
 static int w_dbquery2_avps(struct sip_msg* msg, char* query, char* dest);
-static int w_write_avps(struct sip_msg* msg, char* source, char* param);
 static int w_delete_avps(struct sip_msg* msg, char* param, char *foo);
 static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
 static int w_printf(struct sip_msg* msg, char* dest, char *format);
@@ -107,8 +104,6 @@ static cmd_export_t cmds[] = {
 	{"avp_db_query",  w_dbquery1_avps, 1, fixup_db_query_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_db_query",  w_dbquery2_avps, 2, fixup_db_query_avp,
-							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"avp_write",  w_write_avps,  2, fixup_write_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_delete", w_delete_avps, 1, fixup_delete_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
@@ -137,7 +132,6 @@ static param_export_t params[] = {
 	{"db_url",            STR_PARAM, &DB_URL         },
 	{"avp_url",           STR_PARAM, &DB_URL         },
 	{"avp_table",         STR_PARAM, &DB_TABLE       },
-	{"avp_aliases",       STR_PARAM|USE_FUNC_PARAM, (void*)register_galiases },
 	{"use_domain",        INT_PARAM, &use_domain     },
 	{"uuid_column",       STR_PARAM, &db_columns[0]  },
 	{"attribute_column",  STR_PARAM, &db_columns[1]  },
@@ -163,20 +157,6 @@ struct module_exports exports = {
 	(destroy_function) 0,
 	(child_init_function) avpops_child_init /* per-child init function */
 };
-
-
-
-static int register_galiases( modparam_t type, void* val)
-{
-	
-	if (val!=0 && ((char*)val)[0]!=0)
-	{
-		if ( add_avp_galias_str((char*)val)!=0 )
-			return -1;
-	}
-
-	return 0;
-}
 
 
 static int avpops_init(void)
@@ -378,91 +358,6 @@ static int fixup_db_query_avp(void** param, int param_no)
 		return 0;
 	}
 
-	return 0;
-}
-
-
-static int fixup_write_avp(void** param, int param_no)
-{
-	struct fis_param *ap;
-	int  flags;
-	char *s;
-	char *p;
-
-	flags=0;
-	s = (char*)*param;
-	ap = 0 ;
-	
-	if (param_no==1) /* source */
-	{
-		/* flags */
-		if ( (p=strchr(s,'/'))!=0)
-		{
-			*(p++) = '\0';
-			if (!strcasecmp("username",p))
-			{
-				flags|=AVPOPS_FLAG_USER0;
-			} else if(!strcasecmp("domain", p)) {
-				flags|=AVPOPS_FLAG_DOMAIN0;
-			} else {
-				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: flag \"%s\""
-					" unknown!\n", p);
-				return E_UNSPEC;
-			}
-		}
-		
-		if ( *s=='$' )
-		{
-			/* is variable */
-			ap = avpops_parse_pvar(s, XL_THROW_ERROR|XL_DISABLE_COLORS);
-			if (ap==0)
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
-						" pseudo-variable [%s]\n", s);
-				return E_OUT_OF_MEM;
-			}
-			if (ap->sval.type==XL_NULL)
-			{
-				LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 1; "
-					"expected : $pseudo-variable or int/str value\n");
-				return E_UNSPEC;
-			}
-		} else {
-			/* is value */
-			if ( (ap=parse_intstr_value(s,strlen(s)))==0 )
-			{
-				LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 1; "
-					"expected : $[from|to|ruri] or int/str value\n");
-				return E_UNSPEC;
-			}
-		}
-		ap->opd |= flags;
-	} else if (param_no==2) {
-		if(s==0 || *s!='$')
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: bad attribute name"
-				" in param 2 <%s>\n", s);
-			return E_UNSPEC;
-		}
-		
-		/* is variable */
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
-		if (ap==0)
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
-					" pseudo-variable in param 2 [%s]\n", s);
-			return E_OUT_OF_MEM;
-		}
-		if (ap->sval.type!=XL_AVP)
-		{
-			LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 2 [%s]; "
-				"expected : $avp(name)\n", s);
-			return E_UNSPEC;
-		}
-	}
-
-	*param=(void*)ap;
 	return 0;
 }
 
@@ -1203,12 +1098,6 @@ static int w_dbquery1_avps(struct sip_msg* msg, char* query, char* param)
 static int w_dbquery2_avps(struct sip_msg* msg, char* query, char* dest)
 {
 	return ops_dbquery_avps ( msg, (xl_elem_t*)query, (itemname_list_t*)dest);
-}
-
-static int w_write_avps(struct sip_msg* msg, char* source, char* param)
-{
-	return ops_write_avp ( msg, (struct fis_param*)source, 
-								(struct fis_param*)param);
 }
 
 static int w_delete_avps(struct sip_msg* msg, char* param, char* foo)

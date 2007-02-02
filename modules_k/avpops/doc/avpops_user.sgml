@@ -173,21 +173,17 @@ modparam("avpops","avp_table","avptable")
 			</example>
 		</section>
 		<section>
-			<title><varname>avp_aliases</varname> (string)</title>
+			<title><varname>avp_aliases</varname> (string) - removed</title>
 			<para>
-			Contains a multiple definition of aliases for AVP names.
-			</para>
-			<para>
-			<para>
-				<emphasis>
-					This parameter is optional.
-				</emphasis>
+			This is no longer a parameter of 'avpops' module. AVP aliases can
+			be defined directly in configuration script, in global parameters
+			section.
 			</para>
 			<example>
-				<title>Set <varname>avp_aliases</varname> parameter</title>
+				<title>Set <varname>avp_aliases</varname> in config file</title>
 				<programlisting format="linespecific">
 ...
-modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:753")
+avp_aliases="uuid=I:660;email=s:email_addr;fwd=i:753"
 ...
 				</programlisting>
 			</example>
@@ -506,63 +502,24 @@ avp_db_query("delete from subscriber");
 		</section>
 		<section>
 			<title>
-				<function moreinfo="none">avp_write(value,name)</function>
+				<function moreinfo="none">avp_write(value,name) - removed</function>
 			</title>
 			<para>
-			The function writes some value (given) or some information from
-			the SIP message into a new AVP.
-			<para>Meaning of the parameters is as follows:</para>
-			<itemizedlist>
-			<listitem>
-				<para><emphasis>value</emphasis> - the value to be written into
-				the AVP.
-				Parameter syntax:
-				<itemizedlist>
-					<listitem><para><emphasis>
-					value = (variable) | (fix_value)
-					</emphasis></para></listitem>
-					<listitem><para><emphasis>
-					variable = pvar ['/'('username'|'domain')])
-					</emphasis></para></listitem>
-					<listitem><para><emphasis>
-					pvar = any pseudo-variable defined in &openser;
-					</emphasis></para></listitem>
-					<listitem><para><emphasis>
-					fix_value = 'i:'integer | 's:'string | string
-					</emphasis></para></listitem>
-				</itemizedlist>
-				</para>
-				<para>
-				Integer values can be given in hexadecimal using notation
-				'i:0xhex_number' (e.g.,: 'i:0xabcd');
-				</para>
-			</listitem>
-			<listitem>
-				<para><emphasis>name</emphasis> - the name of the new written
-				AVP.
-				Parameter syntax is:
-				<itemizedlist>
-					<listitem><para><emphasis>
-					name = avp_name | avp_alias
-					</emphasis></para></listitem>
-				</itemizedlist>
-				</para>
-			</listitem>
-			</itemizedlist>
-			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
-			BRANCH_ROUTE.
+			The function has been removed from 'avpops' module. Same
+			functionality can be achived directly in configuration script
+			via assignement operator.
 			</para>
 			<example>
-				<title><function>avp_write</function> usage</title>
+				<title><function>avp_write</function> migration</title>
 				<programlisting format="linespecific">
 ...
-avp_write("$tu","$avp(i:678)");
-avp_write("$ru/username","$avp(email)");
-avp_write("$si","$avp(s:ip)");
-avp_write("$du","$avp(s:next_hop)");
-avp_write("$hdr(call-id)","$avp(i:11)");
-avp_write("i:333","$avp(i:6)");
+avp_write("$tu","$avp(i:678)");           => $avp(i:678) = $tu;
+avp_write("$ru/username","$avp(email)");  => $avp(email) = $rU;
+avp_write("$si","$avp(s:ip)");            => $avp(s:ip) = $si;
+avp_write("$du","$avp(s:next_hop)");      => $avp(s:next_hop) = $du;
+avp_write("$hdr(call-id)","$avp(i:11)");  => $avp(i:11) = $hdr(call-id);
+avp_write("i:333","$avp(i:6)");           => $avp(i:6) = 333;
+avp_write("s:abc","$avp(i:7)");           => $avp(i:7) = "abc";
 ...
 				</programlisting>
 			</example>

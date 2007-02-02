@@ -27,7 +27,7 @@ Ramona-Elena Modroiu
               1.4.1. avp_url (string)
               1.4.2. db_url (string)
               1.4.3. avp_table (string)
-              1.4.4. avp_aliases (string)
+              1.4.4. avp_aliases (string) - removed
               1.4.5. use_domain (integer)
               1.4.6. uuid_column (string)
               1.4.7. username_column (string)
@@ -43,7 +43,7 @@ Ramona-Elena Modroiu
               1.5.2. avp_db_store(source,name)
               1.5.3. avp_db_delete(source,name)
               1.5.4. avp_db_query(query[,dest])
-              1.5.5. avp_write(value,name)
+              1.5.5. avp_write(value,name) - removed
               1.5.6. avp_delete(name) 
               1.5.7. avp_pushto(destination,name) 
               1.5.8. avp_check(name,op_value) 
@@ -61,7 +61,7 @@ Ramona-Elena Modroiu
    1-1. AVP naming examples
    1-2. Set avp_url parameter
    1-3. Set avp_table parameter
-   1-4. Set avp_aliases parameter
+   1-4. Set avp_aliases in config file
    1-5. Set use_domain parameter
    1-6. Set uuid_column parameter
    1-7. Set username_column parameter
@@ -74,7 +74,7 @@ Ramona-Elena Modroiu
    1-14. avp_db_store usage
    1-15. avp_db_delete usage
    1-16. avp_db_query usage
-   1-17. avp_write usage
+   1-17. avp_write migration
    1-18. avp_delete usage
    1-19. avp_pushto usage
    1-20. avp_check usage
@@ -189,16 +189,15 @@ modparam("avpops","avp_table","avptable")
 ...
      _________________________________________________________
 
-1.4.4. avp_aliases (string)
+1.4.4. avp_aliases (string) - removed
 
-   Contains a multiple definition of aliases for AVP names.
+   This is no longer a parameter of 'avpops' module. AVP aliases
+   can be defined directly in configuration script, in global
+   parameters section.
 
-   This parameter is optional. 
-
-   Example 1-4. Set avp_aliases parameter
+   Example 1-4. Set avp_aliases in config file
 ...
-modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:75
-3")
+avp_aliases="uuid=I:660;email=s:email_addr;fwd=i:753"
 ...
      _________________________________________________________
 
@@ -404,36 +403,22 @@ avp_db_query("delete from subscriber");
 ...
      _________________________________________________________
 
-1.5.5. avp_write(value,name)
+1.5.5. avp_write(value,name) - removed
 
-   The function writes some value (given) or some information
-   from the SIP message into a new AVP.
+   The function has been removed from 'avpops' module. Same
+   functionality can be achived directly in configuration script
+   via assignement operator.
 
-   Meaning of the parameters is as follows:
-
-     * value - the value to be written into the AVP. Parameter
-       syntax:
-          + value = (variable) | (fix_value) 
-          + variable = pvar ['/'('username'|'domain')]) 
-          + pvar = any pseudo-variable defined in OpenSER 
-          + fix_value = 'i:'integer | 's:'string | string 
-       Integer values can be given in hexadecimal using notation
-       'i:0xhex_number' (e.g.,: 'i:0xabcd');
-     * name - the name of the new written AVP. Parameter syntax
-       is:
-          + name = avp_name | avp_alias 
-
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE.
-
-   Example 1-17. avp_write usage
+   Example 1-17. avp_write migration
 ...
-avp_write("$tu","$avp(i:678)");
-avp_write("$ru/username","$avp(email)");
-avp_write("$si","$avp(s:ip)");
-avp_write("$du","$avp(s:next_hop)");
-avp_write("$hdr(call-id)","$avp(i:11)");
-avp_write("i:333","$avp(i:6)");
+avp_write("$tu","$avp(i:678)");           => $avp(i:678) = $tu;
+avp_write("$ru/username","$avp(email)");  => $avp(email) = $rU;
+avp_write("$si","$avp(s:ip)");            => $avp(s:ip) = $si;
+avp_write("$du","$avp(s:next_hop)");      => $avp(s:next_hop) = $du;
+avp_write("$hdr(call-id)","$avp(i:11)");  => $avp(i:11) = $hdr(call-id)
+;
+avp_write("i:333","$avp(i:6)");           => $avp(i:6) = 333;
+avp_write("s:abc","$avp(i:7)");           => $avp(i:7) = "abc";
 ...
      _________________________________________________________
 
