@@ -59,6 +59,7 @@ static str pu_400b_rpl = str_init("Invalid request");
 static str pu_489_rpl  = str_init("Bad Event");
 static str pu_415_rpl  = str_init("Unsupported media type");
 static str pu_200_rpl  = str_init("OK");
+static str pu_412_rpl  = str_init("Conditional request failed");
 
 
 char* generate_ETag()
@@ -257,7 +258,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LOG(L_ERR, "PRESENCE:handle_publish: error parsing headers\n");
-		sl_reply(msg, (char*)400, (char*)&pu_400a_rpl);
+		slb.reply(msg, 400, &pu_400a_rpl);
 		return 0;
 	}
 	memset(&body, 0, sizeof(str));
@@ -269,7 +270,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 				" header field value [%.*s]\n", msg->event->body.len,
 				msg->event->body.s);
 
-		if (sl_reply(msg, (char*)489, (char*)&pu_489_rpl) == -1)
+		if (slb.reply(msg, 489, &pu_489_rpl) == -1)
 		{
 			LOG(L_ERR, "PRESENCE: handle_publish: Error while sending reply\n");
 		}
@@ -388,7 +389,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 			LOG(L_ERR, "PRESENCE: handle_publish: No E-Tag and no body"
 					" present\n");
 
-			if (sl_reply(msg, (char*)400, (char*)&pu_400b_rpl) == -1)
+			if (slb.reply(msg, 400, &pu_400b_rpl) == -1)
 			{
 				LOG(L_ERR, "PRESENCE: handle_publish: Error while sending"
 						" reply\n");
@@ -413,7 +414,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		if(doc== NULL)
 		{
 			LOG(L_ERR, "PRESENCE: handle_publish: Bad body format\n");
-			if( sl_reply( msg, (char*)415, (char*)&pu_415_rpl)== -1)
+			if( slb.reply( msg, 415, &pu_415_rpl)== -1)
 			{
 				LOG(L_ERR,"PRESENCE: handle_publish: ERORR while sending"
 						" reply\n");
@@ -502,7 +503,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		}
 		pkg_free(hdr_append2.s);
 
-		if( sl_reply( msg, (char*)200, (char*)&pu_200_rpl)== -1)
+		if( slb.reply( msg, 200, &pu_200_rpl)== -1)
 		{
 			LOG(L_ERR,"PRESENCE: handle_publish: ERORR while sending reply\n");
 			goto error;
@@ -511,7 +512,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 
 	if(update_p == 412)
 	{
-		if (sl_reply(msg, (char*)412, "Conditional request Faild") == -1)
+		if (slb.reply(msg, 412, &pu_412_rpl) == -1)
 		{
 			LOG(L_ERR, "PRESENCE:PRESENCE:handle_publish: ERROR while sending"
 					"reply\n");

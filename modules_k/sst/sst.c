@@ -34,6 +34,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../sl/sl_api.h"
 #include "sst_handlers.h" /* also includes sr_module.h needed by
                              handlers */
 
@@ -42,10 +43,8 @@ MODULE_VERSION
 static int mod_init(void);
 
 
-/*
- * Pointer to reply function in stateless module
- */
-int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
+/** SL binds */
+struct sl_binds slb;
 
 /*
  * statistic variables 
@@ -168,11 +167,12 @@ static int mod_init(void)
 		}
 	}
 
-	if ((sl_reply = find_export("sl_send_reply", 2, 0)) == 0) {
-		LOG(L_ERR, "ERROR:sst:modInit: This module requires sl module\n");
+	/* load the SL API */
+	if (load_sl_api(&slb)!=0) {
+		LOG(L_ERR, "ERROR:sst:modInit: can't load SL API\n");
 		return -1;
 	}
-	
+
 	/*
 	 * Init the handlers
 	 */

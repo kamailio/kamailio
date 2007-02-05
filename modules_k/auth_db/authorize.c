@@ -281,7 +281,7 @@ static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
 	res = get_ha1(&cred->digest.username, &domain, _table, ha1, &result);
 	if (res < 0) {
 		/* Error while accessing the database */
-		if (sl_reply(_m, (char*)500, (char*)&auth_500_err) == -1) {
+		if (slb.reply(_m, 500, &auth_500_err) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
 		}
 		return 0;

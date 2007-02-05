@@ -32,6 +32,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../tm/tm_load.h"
+#include "../sl/sl_api.h"
 #include "../../db/db.h"
 #include "../../parser/parse_from.h"
 #include <libxml/parser.h>
@@ -59,5 +60,5 @@ extern int default_expires;
 extern int lock_set_size;
 extern int force_active;
 extern int max_expires;
-extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+extern struct sl_binds slb;
 #endif /* PA_MOD_H */

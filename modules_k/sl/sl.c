@@ -44,19 +44,17 @@
 #include "../../mem/mem.h"
 #include "../../items.h"
 #include "sl_funcs.h"
+#include "sl_api.h"
 #include "sl_cb.h"
 
 MODULE_VERSION
 
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
-static int w_sl_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
 static int fixup_sl_send_reply(void** param, int param_no);
-static int fixup_sl_reply(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy();
-extern int totag_avpid;
 /* module parameter */
 int sl_enable_stats = 1;
 
@@ -75,18 +73,17 @@ stat_var *rcv_acks;
 static cmd_export_t cmds[]={
 	{"sl_send_reply",   w_sl_send_reply,            2,  fixup_sl_send_reply,
 			REQUEST_ROUTE | ERROR_ROUTE},
-	{"sl_reply",        w_sl_reply,                 2,  fixup_sl_reply,
-			REQUEST_ROUTE | ERROR_ROUTE},
 	{"sl_reply_error",  w_sl_reply_error,           0,  0,
 			REQUEST_ROUTE},
 	{"register_slcb",  (cmd_function)register_slcb, 0,  0,
+			0},
+	{"load_sl",        (cmd_function)load_sl,       0,  0,
 			0},
 	{0,0,0,0,0}
 };
 
 static param_export_t mod_params[]={
 	{ "enable_stats",  INT_PARAM, &sl_enable_stats },
-	{ "totag_avpid",   INT_PARAM, &totag_avpid     },
 	{ 0,0,0 }
 };
 
@@ -166,39 +163,7 @@ static void mod_destroy()
 }
 
 
-
-
 static int fixup_sl_send_reply(void** param, int param_no)
-{
-	unsigned long code;
-	int err;
-	str *s;
-
-	if (param_no==1){
-		code=str2s(*param, strlen(*param), &err);
-		if (err==0){
-			pkg_free(*param);
-			*param=(void*)code;
-			return 0;
-		}else{
-			LOG(L_ERR, "ERROR:sl:fixup_sl_send_reply: bad  number <%s>\n",
-					(char*)(*param));
-			return E_UNSPEC;
-		}
-	} else if (param_no==2) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (s==0) {
-			LOG(L_ERR, "ERROR:sl:fixup_sl_send_reply: no more pkg mem\n");
-			return E_OUT_OF_MEM;
-		}
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	return 0;
-}
-
-static int fixup_sl_reply(void** param, int param_no)
 {
 	xl_elem_t *model;
 	str s;
@@ -228,23 +193,13 @@ static int fixup_sl_reply(void** param, int param_no)
 
 
 
-
-
-
-
-static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
-{
-	return sl_send_reply( msg, (unsigned int)(unsigned long)str1, (str*)str2);
-}
-
-
 static int w_sl_reply_error( struct sip_msg* msg, char* str1, char* str2)
 {
 	return sl_reply_error( msg );
 }
 
 
-static int w_sl_reply(struct sip_msg* msg, char* str1, char* str2)
+static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 {
 	str code_s;
 	unsigned int code_i;
@@ -260,3 +215,13 @@ static int w_sl_reply(struct sip_msg* msg, char* str1, char* str2)
 	return sl_send_reply(msg, code_i, &code_s);
 }
 
+int load_sl( struct sl_binds *slb)
+{
+	if(slb==NULL)
+		return -1;
+
+	slb->reply      = sl_send_reply;
+	slb->reply_dlg  = sl_send_reply_dlg;
+
+	return 1;
+}

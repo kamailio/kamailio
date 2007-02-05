@@ -49,6 +49,8 @@
 #include "../../error.h"
 #include "../../socket_info.h"
 #include "../usrloc/ul_mod.h"
+#include "../sl/sl_api.h"
+
 #include "save.h"
 #include "lookup.h"
 #include "reply.h"
@@ -129,10 +131,8 @@ stat_var *max_expires_stat;
 stat_var *max_contacts_stat;
 stat_var *default_expire_stat;
 
-/*
- * sl_send_reply function pointer
- */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+/** SL binds */
+struct sl_binds slb;
 
 
 /*
@@ -219,13 +219,9 @@ static int mod_init(void)
 
 	DBG("registrar - initializing\n");
 
-	/*
-	 * We will need sl_send_reply from stateless
-	 * module for sending replies
-	 */
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR, "registrar: This module requires sl module\n");
+	/* load the SL API */
+	if (load_sl_api(&slb)!=0) {
+		LOG(L_ERR, "ERROR:registrar:mod_init: can't load SL API\n");
 		return -1;
 	}
 

@@ -759,7 +759,7 @@ int send_resp(struct sip_msg* m, int code, str* reason,
 		}
 	}
 
-	return sl_reply(m, (char*)(long)code, (char*)reason);
+	return slb.reply(m, code, reason);
 }
 
 

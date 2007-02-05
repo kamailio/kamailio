@@ -104,14 +104,14 @@ error:
 	return -1;
 } 
 
-int send_202ok(struct sip_msg * msg, int lexpire)
+int send_202ok(struct sip_msg * msg, int lexpire, str *rtag)
 {
 	str hdr_append;
 
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*50);
 	if(hdr_append.s == NULL)
 	{
-		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
+		LOG(L_ERR,"ERROR:send_202ok : no more pkg memory\n");
 		return -1;
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
@@ -119,13 +119,13 @@ int send_202ok(struct sip_msg * msg, int lexpire)
 	
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
+		LOG(L_ERR,"ERROR:send_202oky : unable to add lump_rl\n");
 		goto error;
 	}
 
-	if( sl_reply( msg, (char*)202, (char*)&su_200_rpl)== -1)
+	if( slb.reply_dlg( msg, 202, &su_200_rpl, rtag)== -1)
 	{
-		LOG(L_ERR,"PRESENCE:append_to_reply: ERORR while sending reply\n");
+		LOG(L_ERR,"PRESENCE:send_202ok: ERORR while sending reply\n");
 		goto error;
 	}
 	
@@ -138,7 +138,7 @@ error:
 	return -1;
 }
 
-int send_200ok(struct sip_msg * msg, int lexpire)
+int send_200ok(struct sip_msg * msg, int lexpire, str *rtag)
 {
 	str hdr_append;
 
@@ -157,7 +157,7 @@ int send_200ok(struct sip_msg * msg, int lexpire)
 		goto error;
 	}
 
-	if( sl_reply( msg, (char*)200, (char*)&su_200_rpl)== -1)
+	if( slb.reply_dlg( msg, 200, &su_200_rpl, rtag)== -1)
 	{
 		LOG(L_ERR,"PRESENCE:send_200ok : ERORR while sending reply\n");
 		goto error;
@@ -171,7 +171,8 @@ error:
 
 }
 
-int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
+int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
+		int to_tag_gen)
 {	
 	db_key_t query_cols[15];
 	db_op_t  query_ops[15];
@@ -292,7 +293,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 			LOG(L_ERR, "PRESENCE:update_subscribtion: The query returned"
 					" no result\n");
 			
-			if (sl_reply(msg, (char*)481, (char*)&pu_481_rpl) == -1)
+			if (slb.reply(msg, 481, &pu_481_rpl) == -1)
 			{
 				LOG(L_ERR, "PRESENCE: update_subscribtion: ERROR while"
 						" sending reply\n");
@@ -316,7 +317,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 						" unsubscribed messages\n");	
 			}
 			
-			if( send_200ok(msg, subs->expires) <0)
+			if( send_200ok(msg, subs->expires, rtag) <0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 						" sending 200 OK\n");
@@ -356,7 +357,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 		}
 		if(PRES_LEN == subs->event.len)
 		{
-			if( send_202ok(msg, subs->expires) <0)
+			if( send_202ok(msg, subs->expires, rtag) <0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 						" sending 202 OK\n");
@@ -365,7 +366,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 		}
 		else
 		{
-			if( send_200ok(msg, subs->expires) <0)
+			if( send_200ok(msg, subs->expires, rtag) <0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 						" sending 200 OK\n");
@@ -443,7 +444,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 
 		if(subs->event.len == strlen("presence"))
 		{	
-			if( send_202ok(msg, subs->expires) <0)
+			if( send_202ok(msg, subs->expires, rtag) <0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 						" sending 202 OK\n");
@@ -470,7 +471,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 		}
 		else /* if a new subscribe for winfo */
 		{
-			if( send_200ok(msg, subs->expires) <0)
+			if( send_200ok(msg, subs->expires, rtag) <0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 						" sending 200 OK\n");
@@ -663,13 +664,10 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	struct to_body *pto, *pfrom = NULL, TO;
 	int lexpire, i;
 	int  to_tag_gen = 0;
-	str to_tag;
+	str rtag_value;
 	subs_t subs;
 	char buf[50];
 	str rec_route;
-	int_str avp_value;
-	int_str avp_name; 
-	extern int reply_tag_avp_id;
 	int error_ret = -1;
 	int rt  = 0;
 	db_key_t db_keys[7];
@@ -693,7 +691,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing headers\n");
 
-		if (sl_reply(msg, (char*)400, (char*)&pu_400_rpl) == -1)
+		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
 					" 400 reply\n");
@@ -710,7 +708,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "PRESENCE: handle_subscribe:Missing or unsupported event"
 				" header field value\n");
 
-		if (sl_reply(msg, (char*)489, (char*)&pu_489_rpl) == -1)
+		if (slb.reply(msg, 489, &pu_489_rpl) == -1)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
 					" reply\n");
@@ -859,32 +857,22 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		to_tag_gen = 1;
 		/*generate to_tag then insert it in avp*/
 		
-		avp_value.s.s = buf;
-		avp_value.s.len = sprintf(avp_value.s.s,"%s.%d.%d.%d", to_tag_pref,
+		rtag_value.s = buf;
+		rtag_value.len = sprintf(rtag_value.s,"%s.%d.%d.%d", to_tag_pref,
 				pid, (int)time(NULL), counter);
-		if(avp_value.s.len<= 0)
+		if(rtag_value.len<= 0)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while creating"
 					" from_tag\n");
 			goto error;
 		}
-		avp_name.n=reply_tag_avp_id;
-		if(add_avp(AVP_VAL_STR,avp_name,avp_value) != 0)
-		{
-			LOG(L_ERR, "PRESENCE:handle_subscribe:can't add avp\n");
-			DBG("PRESENCE:handle_subscribe:can't add avp\n");
-			goto error;
-		}
-		to_tag = avp_value.s;
 	}
 
 	else
 	{
-		avp_value.s.s = 0;
-		to_tag=pto->tag_value;
+		rtag_value=pto->tag_value;
 	}
-	subs.to_tag.s = to_tag.s;
-	subs.to_tag.len = to_tag.len;
+	subs.to_tag = rtag_value;
 
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
@@ -1097,7 +1085,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	printf_subs(&subs);	
-	if( update_subscribtion(msg, &subs, to_tag_gen) <0 )
+	if( update_subscribtion(msg, &subs, &rtag_value, to_tag_gen) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
 		goto error;

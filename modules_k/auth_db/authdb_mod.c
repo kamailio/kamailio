@@ -44,6 +44,7 @@
 #include "../../mem/mem.h"
 #include "../auth/aaa_avps.h"
 #include "../auth/api.h"
+#include "../sl/sl_api.h"
 #include "authorize.h"
 
 MODULE_VERSION
@@ -70,12 +71,8 @@ static int mod_init(void);
 
 static int auth_fixup(void** param, int param_no);
 
-
-/*
- * Pointer to reply function in stateless module
- */
-int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
-
+/** SL binds */
+struct sl_binds slb;
 
 #define USER_COL "username"
 #define USER_COL_LEN (sizeof(USER_COL) - 1)
@@ -199,10 +196,10 @@ static int mod_init(void)
 		return -3;
 	}
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR,"ERROR:auth_db:mod_init: This module requires sl module\n");
-		return -4;
+	/* load the SL API */
+	if (load_sl_api(&slb)!=0) {
+		LOG(L_ERR, "ERROR:auth_db:mod_init: can't load SL API\n");
+		return -1;
 	}
 
 	/* process additional list of credentials */

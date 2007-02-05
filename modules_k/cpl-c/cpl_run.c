@@ -617,7 +617,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 		i = cpl_fct.tmb.t_reply(intr->msg, (int)status, &reason );
 	} else {
 		/* reply statelessly */
-		i = cpl_fct.sl_reply(intr->msg, (char*)(long)status, (char*)&reason );
+		i = cpl_fct.slb.reply(intr->msg, (int)status, &reason );
 	}
 
 	if ( i!=1 ) {
@@ -744,9 +744,9 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	} else {
 		/* reply statelessly */
 		if (permanent)
-			i = cpl_fct.sl_reply( intr->msg,(char*)301,(char*)&cpl_301_reason);
+			i = cpl_fct.slb.reply( intr->msg,301,&cpl_301_reason);
 		else
-			i = cpl_fct.sl_reply( intr->msg,(char*)302,(char*)&cpl_302_reason);
+			i = cpl_fct.slb.reply( intr->msg,302,&cpl_302_reason);
 	}
 
 	/* msg which I'm working on can be in private memory or is a clone into

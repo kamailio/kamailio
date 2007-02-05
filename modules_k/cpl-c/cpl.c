@@ -56,6 +56,7 @@
 #include "../../parser/parse_disposition.h"
 #include "../../db/db.h"
 #include "../../mi/mi.h"
+#include "../sl/sl_api.h"
 #include "cpl_run.h"
 #include "cpl_env.h"
 #include "cpl_db.h"
@@ -315,11 +316,9 @@ static int cpl_init(void)
 		LOG(L_ERR, "ERROR:cpl-c:mod_init: can't load TM API\n");
 		goto error;
 	}
-
-	/* load the send_reply function from sl module */
-	if ((cpl_fct.sl_reply=find_export("sl_send_reply", 2, 0))==0) {
-		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import sl_send_reply; maybe "
-			"you forgot to load the sl module\n");
+	/* load SL API */
+	if (load_sl_api(&cpl_fct.slb)!=0) {
+		LOG(L_ERR, "ERROR:cpl-c:mod_init: can't load SL API\n");
 		goto error;
 	}
 
@@ -896,7 +895,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 			goto resume_script;
 
 		/* send a 200 OK reply back */
-		cpl_fct.sl_reply( msg, (char*)200, (char*)&cpl_ok_rpl);
+		cpl_fct.slb.reply( msg, 200, &cpl_ok_rpl);
 		/* I send the reply and I don't want to return to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -932,7 +931,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		goto resume_script;
 
 	/* send a 200 OK reply back */
-	cpl_fct.sl_reply( msg, (char*)200, (char*)&cpl_ok_rpl);
+	cpl_fct.slb.reply( msg, 200, &cpl_ok_rpl);
 
 stop_script:
 	return 0;
@@ -940,8 +939,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_fct.sl_reply( msg,
-		(char*)(long)cpl_err->err_code, (char*)&cpl_err->err_msg);
+	cpl_fct.slb.reply( msg, cpl_err->err_code, &cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }

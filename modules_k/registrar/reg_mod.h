@@ -39,6 +39,7 @@
 #include "../../qvalue.h"
 #include "../../usr_avp.h"
 #include "../usrloc/usrloc.h"
+#include "../sl/sl_api.h"
 
 /* if DB support is used, this values must not exceed the 
  * storage capacity of the DB columns! See scripts/mysqldb.sh */
@@ -86,7 +87,7 @@ extern int sock_flag;
 
 usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
-extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+extern struct sl_binds slb;
 
 extern stat_var *accepted_registrations;
 extern stat_var *rejected_registrations;

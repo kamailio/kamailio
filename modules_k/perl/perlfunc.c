@@ -101,7 +101,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 		LOG(L_ERR, "perl:perl_exec: Unknown perl function called.\n");
 		reason.s = "Internal error";
 		reason.len = sizeof("Internal error")-1;
-		if (sl_reply(_msg, (char*)500, (char*)(&reason)) == -1)
+		if (slb.reply(_msg, 500, &reason) == -1)
 		{
 			LOG(L_ERR, "perl:perl_exec: Error while"
 					" sending reply\n");
@@ -117,7 +117,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 
 			reason.s = "Bad Request-URI";
 			reason.len = sizeof("Bad Request-URI")-1;
-			if (sl_reply(_msg, (char*)400, (char*)(&reason)) == -1) {
+			if (slb.reply(_msg, 400, &reason) == -1) {
 				LOG(L_ERR, "perl:perl_exec: Error while"
 						" sending reply\n");
 			}

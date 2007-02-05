@@ -88,5 +88,5 @@ int send_resp(struct sip_msg* _m, int _code, str* _reason,
 		}
 	}
 
-	return sl_reply(_m, (char*)(long)_code, (char*)_reason);
+	return slb.reply(_m, _code, _reason);
 }

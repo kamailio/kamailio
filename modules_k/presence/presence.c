@@ -51,6 +51,7 @@
 #include "../../usr_avp.h"
 #include "../../lock_ops.h"
 #include "../tm/tm_load.h"
+#include "../sl/sl_api.h"
 #include "../../pt.h"
 #include "publish.h"
 #include "subscribe.h"
@@ -78,6 +79,8 @@ int reply_tag_avp_id = 25;
 
 /* TM bind */
 struct tm_binds tmb;
+/* SL bind */
+struct sl_binds slb;
 
 /** module functions */
 
@@ -88,8 +91,6 @@ int handle_subscribe(struct sip_msg*, char*, char*);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 
 //int handle_notify(struct sip_msg*, char*, char*);
-
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 int counter =0;
 int pid = 0;
@@ -150,7 +151,6 @@ static int mod_init(void)
 {
 //	str _s;
 //	int ver = 0;
-	load_tm_f  load_tm;
 
 	DBG("PRESENCE: initializing module ...\n");
 
@@ -166,15 +166,17 @@ static int mod_init(void)
 	if(max_expires<= 0)
 		max_expires = 3600;
 
-	/**
-	 * We will need sl_send_reply from stateless
-	 * module for sending replies
-	 */
-	
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply)
+	/* load SL API */
+	if(load_sl_api(&slb)==-1)
 	{
-		LOG(L_ERR, "PRESENCE:mod_init: This module requires sl module\n");
+		LOG(L_ERR, "PRESENCE:mod_init:ERROR can't load sl functions\n");
+		return -1;
+	}
+
+	/* load all TM stuff */
+	if(load_tm_api(&tmb)==-1)
+	{
+		LOG(L_ERR, "PRESENCE:mod_init:ERROR can't load tm functions\n");
 		return -1;
 	}
 
@@ -192,7 +194,8 @@ static int mod_init(void)
 	}
 
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	DBG("presence:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
+	DBG("presence:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,
+			db_url.s);
 	
 	/* binding to mysql module  */
 	if (bind_dbmod(db_url.s, &pa_dbf))
@@ -201,20 +204,6 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	/* import the TM auto-loading function */
-	if((load_tm=(load_tm_f)find_export("load_tm", 0, 0))==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:mod_init:ERROR:can't import load_tm\n");
-		return -1;
-	}
-	/* let the auto-loading function load all TM stuff */
-
-	if(load_tm(&tmb)==-1)
-	{
-		LOG(L_ERR, "PRESENCE:mod_init:ERROR can't load tm functions\n");
-		return -1;
-	}
-
 
 	if (!DB_CAPABILITY(pa_dbf, DB_CAP_ALL)) {
 		LOG(L_ERR,"PRESENCE:mod_init: ERROR Database module does not implement "

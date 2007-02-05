@@ -36,22 +36,22 @@
 #include "../../mem/mem.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/msg_parser.h"
+#include "../sl/sl_api.h"
 
 MODULE_VERSION
 
 char *acpt_c, *acpt_enc_c, *acpt_lan_c, *supt_c;
 str acpt_s, acpt_enc_s, acpt_lan_s, supt_s;
 
-/*
- * sl_send_reply function pointer
- */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+/** SL binds */
+struct sl_binds slb;
+
 static str opt_200_rpl = str_init("OK");
 static str opt_500_rpl = str_init("Server internal error");
 
 static int mod_init(void);
-static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
 
+static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
 /*
  * Exported functions
  */
@@ -95,9 +95,9 @@ static int mod_init(void) {
 
 	DBG("options initializing\n");
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR, "options: this module requires sl module\n");
+	/* load the SL API */
+	if (load_sl_api(&slb)!=0) {
+		LOG(L_ERR, "ERROR:options:mod_init: can't load SL API\n");
 		return -1;
 	}
 
@@ -200,7 +200,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 
 	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
 	LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
-		if (sl_reply(_msg, (char*)200, (char*)&opt_200_rpl) == -1) {
+		if (slb.reply(_msg, 200, &opt_200_rpl) == -1) {
 			LOG(L_ERR, "options_reply(): failed to send 200 via send_reply\n");
 			return -1;
 		}
@@ -212,7 +212,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	}
 
 error:
-	if (sl_reply(_msg, (char*)500, (char*)&opt_500_rpl) == -1) {
+	if (slb.reply(_msg, 500, &opt_500_rpl) == -1) {
 		LOG(L_ERR, "options_reply(): failed to send 500 via send_reply\n");
 		return -1;
 	}

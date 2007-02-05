@@ -59,6 +59,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
+#include "../sl/sl_api.h"
 
 #include "sst_handlers.h"
 
@@ -163,7 +164,7 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info);
  * The pointer to the stateless reply function This is used to send a
  * 422 reply if asked to with a Min-SE: header value to small.
  */
-extern int (*sl_reply)(struct sip_msg *msg, char *str1, char *str2);
+extern struct sl_binds slb;
 
 /**
  * The dialog modules timeout AVP spac.
@@ -721,7 +722,7 @@ static int send_response(struct sip_msg *request, int code, str *reason,
 		char *header, int header_len) 
 {
 
-	if (sl_reply != 0) {
+	if (slb.reply != 0) {
 		/* Add new headers if not null or zero length */
 		if ((header) && (header_len)) {
 			if (add_lump_rpl(request, header, header_len, LUMP_RPL_HDR) == 0) {
@@ -731,7 +732,7 @@ static int send_response(struct sip_msg *request, int code, str *reason,
 			}
 		}
 		/* Now using the sl function, send the reply/response */
-		if (sl_reply(request, (char*)(long)code, (char*)reason) < 0) {
+		if (slb.reply(request, code, reason) < 0) {
 			ELOG("Unable to sent reply.\n");
 			return -1;
 		}

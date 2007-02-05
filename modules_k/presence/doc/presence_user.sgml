@@ -199,26 +199,6 @@ modparam("presence", "to_tag_pref", 'a')
 	</section>
 
 	<section>
-		<title><varname>totag_avpid</varname> (int)</title>
-		<para>
-		The id of the avp variable used for storing to_tag value.
-		It must be the same as for sl module parameter.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>0</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>totag_avpid</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "totag_avpid", 987)
-...
-		</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>lock_set_size</varname> (int)</title>
 		<para>
 		The size of the lock used for synchronizing updating information 

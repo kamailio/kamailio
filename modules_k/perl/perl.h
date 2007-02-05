@@ -30,13 +30,13 @@
 #include <EXTERN.h>
 #include <perl.h>
 
-#include "../sl/sl.h"
+#include "../sl/sl_api.h"
 
 extern char *filename;
 extern char *modpath;
 
 extern PerlInterpreter *my_perl;
 
-extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+extern struct sl_binds slb;
 
 #endif /* PERL_MOD_H */

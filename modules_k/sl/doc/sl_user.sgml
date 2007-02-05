@@ -97,21 +97,6 @@ modparam("sl", "enable_stats", 0)
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title><varname>totag_avpid</varname> (integer)</title>
-		<para>
-		The ID of AVP storing the To tag to be used in replies.
-		</para>
-		<para>
-		Default value is 0 (do not search for AVP).
-		</para>
-		<example>
-		<title>totag_avpid example</title>
-		<programlisting format="linespecific">
-modparam("sl", "totag_avpid", 25)
-</programlisting>
-		</example>
-	</section>
 	</section>
 
 	<section>
@@ -124,7 +109,8 @@ modparam("sl", "totag_avpid", 25)
 		For the current request, a reply is sent back having the given code 
 		and text reason. The reply is sent stateless, totally independent of 
 		the Transaction module and with no retransmission for the INVITE's 
-		replies.
+		replies. 'code' and 'reason' can contain pseudo-variables that are
+		replaced at runtime.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -145,40 +131,6 @@ modparam("sl", "totag_avpid", 25)
 		<programlisting format="linespecific">
 ...
 sl_send_reply("404", "Not found");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">sl_reply(code, reason)</function>
-		</title>
-		<para>
-		For the current request, a reply is sent back having the given code 
-		and text reason. The reply is sent stateless, totally independent of 
-		the Transaction module and with no retransmission for the INVITE's 
-		replies. 'code' and 'reason' can contain pseudo-variables that are
-		replaced at runtime. It is very useful in conjunction with
-		'error_route'.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>code</emphasis> - Return code.
-			</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>reason</emphasis> - Reason phrase.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE, ERROR_ROUTE.
-		</para>
-		<example>
-		<title><function>sl_send_reply</function> usage</title>
-		<programlisting format="linespecific">
 ...
 sl_reply("$err.rcode", "$err.rreason");
 ...

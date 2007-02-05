@@ -42,6 +42,7 @@
 #include "../../error.h"
 #include "../../items.h"
 #include "../../ut.h"
+#include "../sl/sl_api.h"
 #include "auth_mod.h"
 #include "challenge.h"
 #include "rpid.h"
@@ -82,10 +83,8 @@ static int str_fixup(void** param, int param_no);
 static int rpid_fixup(void** param, int param_no);
 
 
-/*
- * Pointer to reply function in stateless module
- */
-int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
+/** SL binds */
+struct sl_binds slb;
 
 
 /*
@@ -195,11 +194,10 @@ static int mod_init(void)
 {
 	LOG(L_INFO,"AUTH module - initializing\n");
 	
-	sl_reply = find_export("sl_send_reply", 2, 0);
-
-	if (!sl_reply) {
-		LOG(L_ERR, "ERROR:auth:mod_init: This module requires sl module\n");
-		return -2;
+	/* load the SL API */
+	if (load_sl_api(&slb)!=0) {
+		LOG(L_ERR, "ERROR:auth:mod_init: can't load SL API\n");
+		return -1;
 	}
 
 	/* If the parameter was not used */

@@ -31,6 +31,7 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
+#include "../sl/sl_api.h"
 
 
 /*
@@ -42,8 +43,7 @@ extern str rpid_prefix;       /* Remote-Party-ID prefix */
 extern str rpid_suffix;       /* Remote-Party-ID suffix */
 extern str realm_prefix;      /* strip off auto-generated realm */
 
-
-/* Stateless reply function pointer */
-extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
+/** SL binds */
+extern struct sl_binds slb;
 
 #endif /* AUTH_MOD_H */

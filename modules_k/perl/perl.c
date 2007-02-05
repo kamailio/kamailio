@@ -35,6 +35,7 @@
 #include "../../mem/mem.h"
 #include "../../mi/mi.h"
 #include "../rr/api.h"
+#include "../sl/sl_api.h"
 
 #include "perlfunc.h"
 #include "perl.h"
@@ -53,10 +54,8 @@ char *modpath = NULL;
 /* Reference to the running Perl interpreter instance */
 PerlInterpreter *my_perl = NULL;
 
-
-/* sl_send_reply function from sl module */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
-
+/** SL binds */
+struct sl_binds slb;
 
 /*
  * Module destroy function prototype
@@ -306,10 +305,9 @@ static int mod_init() {
 	 */
 
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply)
-	{
-		LOG(L_ERR, "perl: This module requires sl module\n");
+	/* load the SL API */
+	if (load_sl_api(&slb)!=0) {
+		LOG(L_ERR, "ERROR:perl:mod_init: can't load SL API\n");
 		return -1;
 	}
 
