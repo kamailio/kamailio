@@ -180,7 +180,7 @@ static int mod_init(void)
 	if (dlg_flag==-1) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: no dlg flag set!!\n");
 		return -1;
-	} else if (dlg_flag>=8*sizeof(int)) {
+	} else if (dlg_flag>MAX_FLAG) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: invalid dlg flag %d!!\n",dlg_flag);
 		return -1;
 	}

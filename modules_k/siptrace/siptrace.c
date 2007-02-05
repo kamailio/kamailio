@@ -77,8 +77,8 @@ char* direction_column   = "direction";   /* 09 */
 
 #define NR_KEYS 10
 
-int   trace_flag    = 0;
-int   trace_on      = 0;      
+int   trace_flag    = -1;
+int   trace_on      = 0;
 
 str    dup_uri_str      = {0, 0};
 struct sip_uri *dup_uri = 0;
@@ -189,7 +189,10 @@ static int mod_init(void)
 		return -1;
 	}
 
-   /* Find a database module */
+	if (flag_idx2mask(&trace_flag)<0)
+		return -1;
+
+	/* Find a database module */
 	if (bind_dbmod(db_url, &db_funcs))
 	{
 		LOG(L_ERR, "siptrace:mod_init: Unable to bind database module\n");
@@ -498,6 +501,10 @@ error:
 	return -1;
 }
 
+#define trace_is_off(_msg) \
+	(trace_on_flag==NULL || *trace_on_flag==0 || \
+		((_msg)->flags&trace_flag)==0)
+
 static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg;
@@ -522,8 +529,7 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
 				&avp_value, 0);
 
-	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL || 
-				*trace_on_flag==0 || isflagset(msg, trace_flag)!=1))
+	if((avp==NULL) && trace_is_off(msg))
 	{
 		DBG("trace_onreq_in: trace off...\n");
 		return;
@@ -598,8 +604,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
 				&avp_value, 0);
 
-	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL 
-				|| *trace_on_flag==0 || isflagset(msg, trace_flag)!=1))
+	if((avp==NULL) && trace_is_off(msg) )
 	{
 		DBG("trace_onreq_out: trace off...\n");
 		return;
@@ -721,8 +726,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
-	if(trace_flag!=0 && trace_on_flag!=NULL 
-				&& *trace_on_flag!=0 && isflagset(msg, trace_flag)==1) {
+	if( !trace_is_off(msg) ) {
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
@@ -791,8 +795,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 		return;
 	}
 	
-	if(trace_flag==0 || trace_on_flag==NULL || *trace_on_flag==0 ||
-			isflagset(msg, trace_flag)!=1)
+	if( trace_is_off(msg) )
 	{
 		DBG("trace_onreply_in: trace off...\n");
 		return;
@@ -827,8 +830,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
 				&avp_value, 0);
 
-	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL
-			|| *trace_on_flag==0 || isflagset(t->uas.request, trace_flag)!=1))
+	if((avp==NULL) &&  trace_is_off(t->uas.request))
 	{
 		DBG("trace_onreply_out: trace off...\n");
 		return;
@@ -971,8 +973,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
-	if(trace_flag!=0 && trace_on_flag!=NULL 
-				&& *trace_on_flag!=0 && isflagset(msg, trace_flag)==1) {
+	if( !trace_is_off(msg) ) {
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
@@ -1047,8 +1048,7 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
 				&avp_value, 0);
 
-	if((avp==NULL) && (trace_flag==0 || trace_on_flag==NULL
-				|| *trace_on_flag==0 || isflagset(req, trace_flag)!=1))
+	if((avp==NULL) && trace_is_off(req))
 	{
 		DBG("trace_sl_onreply_out: trace off...\n");
 		return;
@@ -1158,8 +1158,7 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
-	if(trace_flag!=0 && trace_on_flag!=NULL 
-				&& *trace_on_flag!=0 && isflagset(msg, trace_flag)==1) {
+	if( !trace_is_off(msg) ) {
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	

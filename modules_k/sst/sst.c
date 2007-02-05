@@ -152,7 +152,7 @@ static int mod_init(void)
 		LOG(L_ERR,"ERROR:sst:mod_init: no sst flag set!!\n");
 		return -1;
 	} 
-	else if (sst_flag >= 8*sizeof(int)) {
+	else if (sst_flag > MAX_FLAG) {
 		LOG(L_ERR,"ERROR:sst:mod_init: invalid sst flag %d!!\n", sst_flag);
 		return -1;
 	}

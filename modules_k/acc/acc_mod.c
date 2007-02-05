@@ -109,7 +109,7 @@ struct acc_extra *log_extra = 0;
 /* ----- RADIUS acc variables ----------- */
 
 #ifdef RAD_ACC
-static char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static char *radius_config = DEFAULT_RADIUSCLEINT_CONF;
 int radius_flag = -1;
 int radius_missed_flag = -1;
 static int service_type = -1;
@@ -138,8 +138,8 @@ int diameter_client_port=3000;
 /* ----- SQL acc variables ----------- */
 
 #ifdef SQL_ACC
-int db_flag = 0;
-int db_missed_flag = 0;
+int db_flag = -1;
+int db_missed_flag = -1;
 /* db extra variables */
 static char *db_extra_str = 0;
 struct acc_extra *db_extra = 0;
@@ -292,21 +292,6 @@ static int acc_fixup(void** param, int param_no)
 }
 
 
-/* converts from index to mask */
-static int acc_fix_flag(int *flag)
-{
-	if (*flag<0) {
-		*flag = 0;
-	} else if (*flag>MAX_FLAG) {
-		LOG(L_ERR,"ERROR:acc:acc_fix_flag: flag %d out of range\n",*flag);
-		return -1;
-	} else {
-		*flag = 1<<(*flag);
-	}
-	return 0;
-}
-
-
 
 /************************** INTERFACE functions ****************************/
 
@@ -316,7 +301,7 @@ static int mod_init( void )
 
 	/* ----------- GENERIC INIT SECTION  ----------- */
 
-	if (acc_fix_flag(&failed_transaction_flag)<0)
+	if (flag_idx2mask(&failed_transaction_flag)<0)
 		return -1;
 
 	/* load the TM API */
@@ -355,10 +340,10 @@ static int mod_init( void )
 		return -1;
 	}
 
-	if (acc_fix_flag(&log_flag)<0)
+	if (flag_idx2mask(&log_flag)<0)
 		return -1;
 
-	if (acc_fix_flag(&log_missed_flag)<0)
+	if (flag_idx2mask(&log_missed_flag)<0)
 		return -1;
 
 	acc_log_init();
@@ -378,9 +363,9 @@ static int mod_init( void )
 			return -1;
 		}
 		/* fix the flags */
-		if (acc_fix_flag(&db_flag)<0)
+		if (flag_idx2mask(&db_flag)<0)
 			return -1;
-		if (acc_fix_flag(&db_missed_flag)<0)
+		if (flag_idx2mask(&db_missed_flag)<0)
 			return -1;
 	} else {
 		db_url = 0;
@@ -400,9 +385,9 @@ static int mod_init( void )
 		}
 
 		/* fix the flags */
-		if (acc_fix_flag(&radius_flag)<0)
+		if (flag_idx2mask(&radius_flag)<0)
 			return -1;
-		if (acc_fix_flag(&radius_missed_flag)<0)
+		if (flag_idx2mask(&radius_missed_flag)<0)
 			return -1;
 		if (init_acc_rad( radius_config, service_type)!=0 ) {
 			LOG(L_ERR,"ERROR:acc:mod_init: failed to init radius\n");
@@ -419,9 +404,9 @@ static int mod_init( void )
 
 #ifdef DIAM_ACC
 	/* fix the flags */
-	if (acc_fix_flag(&diameter_flag)<0)
+	if (flag_idx2mask(&diameter_flag)<0)
 		return -1;
-	if (acc_fix_flag(&diameter_missed_flag)<0)
+	if (flag_idx2mask(&diameter_missed_flag)<0)
 		return -1;
 
 	/* parse the extra string, if any */
