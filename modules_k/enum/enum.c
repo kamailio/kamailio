@@ -283,8 +283,9 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	struct ip_addr addr;
 	struct hostent* he;
 	unsigned short zp;
+	unsigned short proto;
 	char *user_s;
-	int user_len, i, j, proto;
+	int user_len, i, j;
 	char name[MAX_DOMAIN_SIZE];
 	char uri[MAX_URI_SIZE];
 	struct to_body* body;

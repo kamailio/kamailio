@@ -2098,7 +2098,7 @@ nh_timer(unsigned int ticks, void *param)
 	struct hostent* he;
 	struct socket_info* send_sock;
 	unsigned int flags;
-	int proto;
+	unsigned short proto;
 	str opt;
 
 	buf = NULL;

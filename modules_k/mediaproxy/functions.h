@@ -30,11 +30,11 @@ pingClients(unsigned int ticks, void *param)
     struct hostent* hostent;
     union sockaddr_union to;
     unsigned int flags;
+    unsigned short proto;
     struct sip_uri uri;
     void *buf, *ptr;
     str contact;
     int needed;
-    int proto;
 
     buf = pkg_malloc(length);
     if (buf == NULL) {
