@@ -1531,7 +1531,7 @@ static int select_method(str* res, struct select* s, struct sip_msg* msg)
 
 ABSTRACT_F(select_xmlrpc);
 
-select_row_t tls_sel[] = {
+select_row_t xmlrpc_sel[] = {
         { NULL,          SEL_PARAM_STR, STR_STATIC_INIT("xmlrpc"), select_xmlrpc, 0},
         { select_xmlrpc, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
         { NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
@@ -1578,7 +1578,7 @@ static int mod_init(void)
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
-	register_select_table(tls_sel);
+	register_select_table(xmlrpc_sel);
 	
 	/* register non-sip hooks */
 	memset(&nsh, 0, sizeof(nsh));
