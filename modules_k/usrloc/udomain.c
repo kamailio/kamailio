@@ -717,7 +717,7 @@ int mem_timer_udomain(udomain_t* _d)
  */
 void lock_udomain(udomain_t* _d, str* _aor)
 {
-	int sl;
+	unsigned int sl;
 	if (db_mode!=DB_ONLY)
 	{
 		sl = core_hash(_aor, 0, _d->size);
@@ -731,7 +731,7 @@ void lock_udomain(udomain_t* _d, str* _aor)
  */
 void unlock_udomain(udomain_t* _d, str* _aor)
 {
-	int sl;
+	unsigned int sl;
 	if (db_mode!=DB_ONLY)
 	{
 		sl = core_hash(_aor, 0, _d->size);
@@ -782,7 +782,7 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
  */
 int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
-	int sl, i, aorhash;
+	unsigned int sl, i, aorhash;
 	urecord_t* r;
 
 	if (db_mode!=DB_ONLY) {

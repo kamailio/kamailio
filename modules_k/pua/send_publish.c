@@ -168,8 +168,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	int size= 0;
 	int lexpire= 0;
 	str etag;
-	int hash_code;
-	
+	unsigned int hash_code;
+
 	if(ps->param== NULL)
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: Error NULL callback parameter\n");
@@ -184,7 +184,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			return;
 		}
 
-		hash_code= core_hash(((hentity_t*)(*ps->param))->pres_uri, NULL, HASH_SIZE);
+		hash_code= core_hash(((hentity_t*)(*ps->param))->pres_uri, NULL,
+				HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
 
 		presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, NULL,
@@ -197,7 +198,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			DBG("PUA:publ_cback_func: ***Delete from table\n");
 		}
 		lock_release(&HashT->p_records[hash_code].lock);
-		goto done;	
+		goto done;
 	}
 
 	
@@ -258,8 +259,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			{
 				DBG("PUA:publ_cback_func: expires= 0- delete from htable\n"); 
 				delete_htable(presentity, HashT);
-				lock_release(&HashT->p_records[hash_code].lock);	
-				goto done;	
+				lock_release(&HashT->p_records[hash_code].lock);
+				goto done;
 			}
 			hash_update(presentity, lexpire, HashT);
 			lock_release(&HashT->p_records[hash_code].lock);
@@ -362,43 +363,42 @@ int send_publish( publ_info_t* publ )
 	char* tuple_id= NULL, *person_id= NULL;
 	int tuple_id_len= 0;
 	hentity_t* hentity= NULL;
-	int hash_code;	
+	unsigned int hash_code;
 	str etag= {0, 0};
 
 	DBG("PUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
 			publ->pres_uri->s );
 
 	hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
-	
+
 	lock_get(&HashT->p_records[hash_code].lock);
 
 	presentity= search_htable( publ->pres_uri, NULL,
 				publ->id, publ->source_flag, PRESENCE_EVENT, HashT);
-	
-	
+
 	if(presentity== NULL)
-	{	
+	{
 		lock_release(&HashT->p_records[hash_code].lock);
 
 		if(publ->expires== 0)
-		{	
+		{
 			DBG("PUA: send_publish: request for a publish with expires 0 and"
 					" no record found\n");
 			return 0;
-		}	
+		}
 		if(publ->flag & UPDATE_TYPE )
 		{
 			DBG("PUA: send_publish: UPDATE_TYPE and no record found \n");
 			publ->flag= INSERT_TYPE;
 		}
-		if(publ->body== NULL)	
+		if(publ->body== NULL)
 		{
 			LOG(L_INFO, "PUA: send_publish: New PUBLISH and no body found\n");
 			return -1;
 		}
 	}
 	else
-	{	
+	{
 		DBG("UPDATE TYPE\n");
 		etag.s= (char*)pkg_malloc(presentity->etag.len* sizeof(char));
 		if(etag.s== NULL)
@@ -424,9 +424,8 @@ int send_publish( publ_info_t* publ )
 	}
 
 	if(publ->body && publ->body->s)
-	{	
+	{
 		DBG("PUA: send_publish: completing the body with tuple id if needed\n");
-
 		doc= xmlParseMemory(publ->body->s, publ->body->len );
 		if(doc== NULL)
 		{

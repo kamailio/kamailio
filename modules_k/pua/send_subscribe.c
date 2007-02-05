@@ -181,7 +181,7 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	ua_pres_t* presentity= NULL;
 	struct to_body *pto, *pfrom = NULL, TO;
 	int size= 0;
-	int hash_code;
+	unsigned int hash_code;
 
 	if( ps->param== NULL )
 	{
@@ -217,7 +217,7 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 		goto done;
 	}
-		
+
 	msg= ps->rpl;
 	if(msg == NULL || msg== FAKED_REPLY)
 	{
@@ -262,7 +262,7 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, 
 				((hentity_t*)(*ps->param))->watcher_uri,
-				((hentity_t*)(*ps->param))->id	,
+				((hentity_t*)(*ps->param))->id,
 				((hentity_t*)(*ps->param))->flag,
 				((hentity_t*)(*ps->param))->event,HashT);
 
@@ -486,7 +486,7 @@ int send_subscribe(subs_info_t* subs)
 	str met= {"SUBSCRIBE", 9};
 	str* str_hdr= NULL;
 	int ret= 0;
-	int hash_code;
+	unsigned int hash_code;
 	hentity_t* hentity= NULL;
 
 	DBG("send_subscribe... \n");
@@ -498,11 +498,11 @@ int send_subscribe(subs_info_t* subs)
 		LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
 		return -1;
 	}
-	
+
 	hash_code=core_hash(subs->pres_uri, subs->watcher_uri, HASH_SIZE);
-	
+
 	lock_get(&HashT->p_records[hash_code].lock);
- 
+
 	presentity= search_htable(subs->pres_uri, subs->watcher_uri,
 				subs->id, subs->source_flag, subs->event, HashT);
 
@@ -512,9 +512,9 @@ int send_subscribe(subs_info_t* subs)
 
 		if(subs->flag & UPDATE_TYPE)
 		{
-			LOG(L_ERR, "PUA:send_subscribe: UNSUBS_FLAG and no record found\n");
+			LOG(L_ERR,"PUA:send_subscribe: UNSUBS_FLAG and no record found\n");
 			goto done;
-		}	
+		}
 
 		hentity= build_cback_param(subs);
 		if(hentity== NULL)
@@ -563,17 +563,17 @@ int send_subscribe(subs_info_t* subs)
 			LOG(L_ERR, "PUA:send_subscribe: Error while building tm dlg_t"
 					"structure");
 			ret= -1;
-			shm_free(hentity);			
+			shm_free(hentity);
 			goto done;
 		}
 
 		tmb.t_request_within
 		(&met,
-		str_hdr,                               
-		0,                           
-		td,					                  
-		subs_cback_func,				        
-		(void*)hentity	
+		str_hdr,
+		0,
+		td,
+		subs_cback_func,
+		(void*)hentity
 		);
 
 		pkg_free(td);
@@ -583,5 +583,5 @@ int send_subscribe(subs_info_t* subs)
 done:
 
 	pkg_free(str_hdr);
-	return ret;		
+	return ret;
 }

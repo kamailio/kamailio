@@ -98,7 +98,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 	ua_pres_t* p= NULL,* L= NULL;
  
 	L= H->p_records[core_hash(pres_uri, watcher_uri, HASH_SIZE)].entity;
-	DBG("PUA: search_htable: core_hash= %d\n",
+	DBG("PUA: search_htable: core_hash= %u\n",
 			core_hash(pres_uri, watcher_uri, HASH_SIZE) );
 
 	for(p= L->next; p; p=p->next)
@@ -112,17 +112,16 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 
 			if((p->pres_uri->len==pres_uri->len) &&
 					(strncmp(p->pres_uri->s, pres_uri->s,pres_uri->len)==0))
-			{	
+			{
 				DBG("PUA: search_htable:found pres_ur\n");
 				if(watcher_uri)
-				{	
+				{
 					if(p->watcher_uri->len==watcher_uri->len &&
 						(strncmp(p->watcher_uri->s, watcher_uri->s,
 								 watcher_uri->len )==0))
 					{
 						break;
 					}
-
 				}
 				else
 				{
@@ -136,10 +135,8 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 					else
 						break;
 				}
-
 			}
 		}
-
 	}
 	if(p)
 		DBG("PUA:search_htable: found record\n");
@@ -170,13 +167,13 @@ void hash_update(ua_pres_t* presentity, int expires, htable_t* H)
 	if(p->watcher_uri)
 		p->cseq ++;
 
-}	
+}
 
 void insert_htable(ua_pres_t* presentity , htable_t* H)
 {
 	ua_pres_t* p= NULL;
-	int hash_code= 0;
-	
+	unsigned int hash_code;
+
 	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, 
 			HASH_SIZE);
 
@@ -184,10 +181,10 @@ void insert_htable(ua_pres_t* presentity , htable_t* H)
 	{
 		LOG(L_ERR, "PUA: insert_htable: expired information- do not insert\n");
 		return;
-	}	
+	}
 
 	lock_get(&H->p_records[hash_code].lock);
-	
+
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
 				presentity->id, presentity->flag, presentity->event, H);
 	if(p) 
@@ -208,7 +205,7 @@ void insert_htable(ua_pres_t* presentity , htable_t* H)
 void delete_htable(ua_pres_t* presentity , htable_t* H)
 { 
 	ua_pres_t* p= NULL, *q= NULL;
-	
+
 	DBG("PUA:delete_htable...\n");
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
@@ -220,7 +217,7 @@ void delete_htable(ua_pres_t* presentity , htable_t* H)
 
 	q=H->p_records[core_hash(presentity->pres_uri, 
 			presentity->watcher_uri, HASH_SIZE)].entity;
-	
+
 	while(q->next!=p)
 		q= q->next;
 	q->next=p->next;

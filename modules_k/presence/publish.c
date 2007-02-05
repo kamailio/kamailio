@@ -243,7 +243,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct sip_uri uri;
 	str body;
-	int i;
+	unsigned int idx;
 	struct to_body *pto, TO;
 	int lexpire;
 	presentity_t* presentity = 0;
@@ -434,12 +434,12 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 
-	i = core_hash( &pto->uri, NULL, lock_set_size ) ;
+	idx = core_hash( &pto->uri, NULL, lock_set_size ) ;
 
-	lock_set_get( set, i );
+	lock_set_get( set, idx );
 	/* querry the database and update or insert */
 	update_p= update_presentity(presentity, &body, etag_gen);
-    lock_set_release( set, i );
+	lock_set_release( set, idx );
 
 	if(update_p <0)
 	{
@@ -526,7 +526,7 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		pkg_free(etag.s);
 	xmlCleanupParser();
 	xmlMemoryDump();
-	
+
 	return 1;
 
 error:

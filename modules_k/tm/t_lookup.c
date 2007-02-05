@@ -1249,7 +1249,7 @@ int t_is_local(struct sip_msg* p_msg)
  */
 int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	struct cell* p_cell;
-	unsigned hash_index;
+	unsigned int hash_index;
 
 	/* I use MAX_HEADER, not sure if this is a good choice... */
 	char callid_header[MAX_HEADER];
