@@ -141,7 +141,7 @@ str* build_pidf(ucontact_t* c)
 	}
 	memset(body, 0, sizeof(str));
 
-	xmlDocDumpFormatMemory(doc,(unsigned char**) &body->s, &body->len, 1);	
+	xmlDocDumpFormatMemory(doc,(unsigned char**)(void*)&body->s,&body->len,1);
 
 	DBG("pua_usrloc:build_pidf: new_body:\n%.*s\n",body->len, body->s);
 

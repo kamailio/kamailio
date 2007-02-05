@@ -491,7 +491,7 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
 	 i++;
       }
       if(j){
-	 free_rr((rr_t**)&hf->parsed);
+	 free_rr((rr_t**)(void*)&hf->parsed);
 	 hf->parsed=NULL;
       }
    }
@@ -510,7 +510,7 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
 	 k++;
       }
       if(j){
-	 free_rr((rr_t**)&hf->parsed);
+	 free_rr((rr_t**)(void*)&hf->parsed);
 	 hf->parsed=NULL;
       }
    }
@@ -1268,7 +1268,7 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 	    }
 	 }
 	 if(hf->parsed){
-	    free_rr((rr_t **)(&hf->parsed));
+	    free_rr((rr_t **)(void*)(&hf->parsed));
 	    hf->parsed=NULL;
 	 }
       }else{

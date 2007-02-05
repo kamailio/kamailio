@@ -485,7 +485,7 @@ int send_publish( publ_info_t* publ )
 			LOG(L_ERR, "PUA: send_publish: ERROR NO more memory left\n");
 			goto error;
 		}
-		xmlDocDumpFormatMemory(doc,(unsigned char**) &body->s,
+		xmlDocDumpFormatMemory(doc,(unsigned char**)(void*)&body->s,
 				&body->len, 1);	
 
 		xmlFreeDoc(doc);

@@ -274,7 +274,7 @@ str* agregate_xmls(str** body_array, int n)
 		goto error;
 	}
 
-	xmlDocDumpFormatMemory(xml_array[j],(xmlChar**) &body->s, 
+	xmlDocDumpFormatMemory(xml_array[j],(xmlChar**)(void*)&body->s, 
 			&body->len, 1);	
 
   	for(i=0; i<=j; i++)
@@ -370,7 +370,8 @@ str* offline_nbody(str* body)
 	}
 	memset(new_body, 0, sizeof(str));
 
-	xmlDocDumpFormatMemory(new_doc,(xmlChar**) &new_body->s, &new_body->len, 1);
+	xmlDocDumpFormatMemory(new_doc,(xmlChar**)(void*)&new_body->s,
+		&new_body->len, 1);
 
 	xmlFreeDoc(doc);
 	xmlFreeDoc(new_doc);
@@ -562,7 +563,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 		LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
 		goto error;
 	}
-	xmlDocDumpFormatMemory(new_doc,(xmlChar**) &body->s, &body->len, 1);
+	xmlDocDumpFormatMemory(new_doc,(xmlChar**)(void*)&body->s, &body->len, 1);
 
 	DBG("PRESENCE: build_off_nbody:new_body:\n%.*s\n",body->len, body->s);
 
@@ -719,7 +720,7 @@ str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, i
      * Dumping document to stdio or file
      */
     //xmlSaveFormatFileEnc("stdout", doc, "UTF-8", 1);
-	xmlDocDumpFormatMemory(doc,(xmlChar**) &body->s, &body->len, 1);	
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);
 
     /*free the document */
     if(doc)
@@ -1034,9 +1035,10 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 			else
 				doc_node = doc_node->next;
 	
-		}	
+		}
 	}
-	xmlDocDumpFormatMemory(doc,(xmlChar**) &new_body->s, &new_body->len, 1);
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&new_body->s,
+			&new_body->len, 1);
 	DBG("PRESENCE:get_final_notify_body: body = \n%.*s\n", new_body->len,
 			new_body->s);
 

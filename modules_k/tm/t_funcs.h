@@ -125,15 +125,14 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param);
 /*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
-int fr_avp2timer(unsigned int* timer);
-int fr_inv_avp2timer(unsigned int* timer);
+int fr_avp2timer( utime_t* timer);
+int fr_inv_avp2timer( utime_t* timer);
 
 
 
 static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 {
-	utime_t utimer;
-	unsigned int timer;
+	utime_t timer;
 
 	if (retr) {
 		rb->retr_list=RT_T1_TO_1;
@@ -141,9 +140,8 @@ static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 	}
 
 	if (!fr_avp2timer(&timer)) {
-		DBG("DEBUG:tm:_set_fr_retr: FR_TIMER = %u\n", timer);
-		utimer = timer;
-		set_timer(&rb->fr_timer, FR_TIMER_LIST, &utimer);
+		DBG("DEBUG:tm:_set_fr_retr: FR_TIMER = %llu\n", timer);
+		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
 		/* Automatically enable noisy_ctimer for the transaction */
 		rb->my_T->flags |= T_NOISY_CTIMER_FLAG;
 	} else {

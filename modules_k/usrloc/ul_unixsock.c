@@ -308,6 +308,7 @@ static int ul_add(str* msg)
 	udomain_t* d;
 	char* at;
 	str table, user, contact, expires, q, rep, flags, methods;
+	unsigned int ui_val;
 
 	if (unixsock_read_line(&table, msg) != 0) {
 		unixsock_reply_asciiz("400 Table name expected\n");
@@ -369,10 +370,11 @@ static int ul_add(str* msg)
 	if (d) {
 		memset( &ci, 0, sizeof(ucontact_info_t));
 		
-		if (str2int(&expires, (unsigned int*)&ci.expires) < 0) {
+		if (str2int(&expires, &ui_val) < 0) {
 			unixsock_reply_asciiz("400 Invalid expires format\n");
 			goto err;
 		}
+		ci.expires = ui_val;
 		
 		if (str2q(&ci.q, q.s, q.len) < 0) {
 			unixsock_reply_asciiz("400 invalid q value\n");

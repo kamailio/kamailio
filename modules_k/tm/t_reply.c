@@ -1379,7 +1379,7 @@ int reply_received( struct sip_msg  *p_msg )
 			 * attempt to restart retransmission any more
 			 */
 			backup_list = set_avp_list(&t->user_avps);
-			if (!fr_inv_avp2timer((unsigned int*)&timer)) {
+			if (!fr_inv_avp2timer(&timer)) {
 				DBG("DEBUG:tm:reply_received: FR_INV_TIMER = %lld\n", timer);
 				set_timer(&uac->request.fr_timer,
 					FR_INV_TIMER_LIST, &timer);

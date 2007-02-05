@@ -293,7 +293,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	ret = (added==0)?-1:added;
 restore:
 	if (dup==1) {
-		free_contact( (contact_body_t**)(&contact_hdr->parsed) );
+		free_contact( (contact_body_t**)(void*)(&contact_hdr->parsed) );
 	} else if (dup==2) {
 		/* are any new headers found? */
 		if (dup_rpl.last_header!=sh_rpl->last_header) {

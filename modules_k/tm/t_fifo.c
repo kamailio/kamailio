@@ -404,7 +404,7 @@ static int inline write_to_fifo(char *fifo, int cnt )
 
 	/* write now (unbuffered straight-down write) */
 repeat:
-	if (writev(fd_fifo, (struct iovec*)lines_eol, 2*cnt)<0) {
+	if (writev(fd_fifo, (struct iovec*)(void*)lines_eol, 2*cnt)<0) {
 		if (errno!=EINTR) {
 			LOG(L_ERR, "ERROR:tm:write_to_fifo: writev failed: %s\n",
 				strerror(errno));
@@ -766,7 +766,8 @@ static int write_to_unixsock(char* sockname, int cnt)
 		return -1;
 	}
 
-	if (tsend_dgram_ev(sock, (struct iovec*)lines_eol, 2 * cnt, tm_unix_tx_timeout * 1000) < 0) {
+	if (tsend_dgram_ev(sock, (struct iovec*)(void*)lines_eol, 2 * cnt,
+	tm_unix_tx_timeout * 1000) < 0) {
 		LOG(L_ERR, "ERROR:tm:write_to_unixsock: writev failed: %s\n",
 			strerror(errno));
 		return -1;

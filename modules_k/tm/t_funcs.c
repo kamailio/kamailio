@@ -321,24 +321,20 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 /*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
-static inline int avp2timer(unsigned int* timer, int type, int_str name)
+static inline int avp2timer(utime_t *timer, int type, int_str name)
 {
 	struct usr_avp *avp;
 	int_str val_istr;
 	int err;
 
 	avp = search_first_avp( type, name, &val_istr, 0);
-	if (!avp) {
-		/*
-		 DBG("avp2timer: AVP '%.*s' not found\n", param.s->len, ZSW(param.s->s));
-		 */
+	if (!avp)
 		return 1;
-	}
-	
+
 	if (avp->flags & AVP_VAL_STR) {
 		*timer = str2s(val_istr.s.s, val_istr.s.len, &err);
 		if (err) {
-			LOG(L_ERR, "avp2timer: Error while converting string to integer\n");
+			LOG(L_ERR,"avp2timer: Error while converting string to integer\n");
 			return -1;
 		}
 	} else {
@@ -349,7 +345,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 }
 
 
-int fr_avp2timer(unsigned int* timer)
+int fr_avp2timer(utime_t* timer)
 {
 	if (fr_timer_avp.n!=0)
 		return avp2timer( timer, fr_timer_avp_type, fr_timer_avp);
@@ -358,7 +354,7 @@ int fr_avp2timer(unsigned int* timer)
 }
 
 
-int fr_inv_avp2timer(unsigned int* timer)
+int fr_inv_avp2timer(utime_t* timer)
 {
 	if (fr_inv_timer_avp.n!=0)
 		return avp2timer( timer, fr_inv_timer_avp_type, fr_inv_timer_avp);

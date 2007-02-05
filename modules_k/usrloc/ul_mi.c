@@ -408,6 +408,7 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 	udomain_t *dom;
 	str *aor;
 	str *contact;
+	unsigned int ui_val;
 	int n;
 
 	for( n=0,node = cmd->node.kids; n<8 && node ; n++,node=node->next );
@@ -435,8 +436,9 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 
 	/* expire (param 4) */
 	node = node->next;
-	if (str2int( &node->value, (unsigned int*)&ci.expires) < 0)
+	if (str2int( &node->value, &ui_val) < 0)
 		goto bad_syntax;
+	ci.expires = ui_val;
 
 	/* q value (param 5) */
 	node = node->next;

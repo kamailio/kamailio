@@ -491,7 +491,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	
 		e = X509_NAME_get_entry(name, index);
 		asn1 = X509_NAME_ENTRY_get_data(e);
-		text.len = ASN1_STRING_to_UTF8((unsigned char**)&text.s, asn1);
+		text.len = ASN1_STRING_to_UTF8((unsigned char**)(void*)&text.s, asn1);
 		if (text.len < 0 || text.len >= 1024) {
 			LOG(L_ERR,"ERROR:tlsops:tlsops_comp: failed to convert "
 				"ASN1 string\n");
