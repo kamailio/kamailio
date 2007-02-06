@@ -182,8 +182,6 @@ static void delete_cell( struct cell *p_cell, int unlock )
 	unlink_timers( p_cell );
 
 #ifdef EXTRA_DEBUG
-	int i;
-
 	if (is_in_timer_list2(& p_cell->wait_tl )) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
 			" still on WAIT, timeout=%d\n", p_cell, p_cell->wait_tl.time_out);
