@@ -28,12 +28,13 @@ Anca-Maria Vamanu
               1.4.2. presentity_table(str)
               1.4.3. active_watchers_table(str)
               1.4.4. watchers_table(str)
-              1.4.5. clean_period (int)
-              1.4.6. to_tag_pref (str)
-              1.4.7. lock_set_size (int)
-              1.4.8. expires_offset (int)
-              1.4.9. force_active (int)
-              1.4.10. max_expires (int)
+              1.4.5. xcap_table(str)
+              1.4.6. clean_period (int)
+              1.4.7. to_tag_pref (str)
+              1.4.8. lock_set_size (int)
+              1.4.9. expires_offset (int)
+              1.4.10. force_active (int)
+              1.4.11. max_expires (int)
 
         1.5. Exported Functions
 
@@ -50,15 +51,16 @@ Anca-Maria Vamanu
    1-2. Set presentity_table parameter
    1-3. Set active_watchers_table parameter
    1-4. Set watchers_table parameter
-   1-5. Set clean_period parameter
-   1-6. Set to_tag_pref parameter
-   1-7. Set lock_set_size parameter
-   1-8. Set expires_offset parameter
-   1-9. Set force_active parameter
-   1-10. Set max_expires parameter
-   1-11. handle_publish usage
-   1-12. handle_subscribe usage
-   1-13. PRESENCE tables
+   1-5. Set xcap_table parameter
+   1-6. Set clean_period parameter
+   1-7. Set to_tag_pref parameter
+   1-8. Set lock_set_size parameter
+   1-9. Set expires_offset parameter
+   1-10. Set force_active parameter
+   1-11. Set max_expires parameter
+   1-12. handle_publish usage
+   1-13. handle_subscribe usage
+   1-14. PRESENCE tables
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -158,46 +160,58 @@ modparam("presence", "watchers_table", "watchers")
 ...
      _________________________________________________________
 
-1.4.5. clean_period (int)
+1.4.5. xcap_table(str)
+
+   The name of the db table where XCAP XMLs are stored.
+
+   Default value is "scap_xml". 
+
+   Example 1-5. Set xcap_table parameter
+...
+modparam("presence", "xcap_table", "xcaps")
+...
+     _________________________________________________________
+
+1.4.6. clean_period (int)
 
    The period at which to verify if there are expired messages
    stored in database.
 
    Default value is "100". 
 
-   Example 1-5. Set clean_period parameter
+   Example 1-6. Set clean_period parameter
 ...
 modparam("presence", "clean_period", 100)
 ...
      _________________________________________________________
 
-1.4.6. to_tag_pref (str)
+1.4.7. to_tag_pref (str)
 
    The prefix used when generating to_tag when sending replies
    for SUBSCRIBE requests.
 
    Default value is "10". 
 
-   Example 1-6. Set to_tag_pref parameter
+   Example 1-7. Set to_tag_pref parameter
 ...
 modparam("presence", "to_tag_pref", 'a')
 ...
      _________________________________________________________
 
-1.4.7. lock_set_size (int)
+1.4.8. lock_set_size (int)
 
    The size of the lock used for synchronizing updating
    information from database.
 
    Default value is "8". 
 
-   Example 1-7. Set lock_set_size parameter
+   Example 1-8. Set lock_set_size parameter
 ...
 modparam("presence", "lock_set_size", 8)
 ...
      _________________________________________________________
 
-1.4.8. expires_offset (int)
+1.4.9. expires_offset (int)
 
    The value that should be subtracted from the expires value
    when sending a 200OK for a publish to force the client cu send
@@ -205,13 +219,13 @@ modparam("presence", "lock_set_size", 8)
 
    Default value is "0". 
 
-   Example 1-8. Set expires_offset parameter
+   Example 1-9. Set expires_offset parameter
 ...
 modparam("presence", "expires_offset", 10)
 ...
      _________________________________________________________
 
-1.4.9. force_active (int)
+1.4.10. force_active (int)
 
    This parameter offers the possibility to set either the first
    Notify sent for a new subscribe should have the
@@ -220,20 +234,20 @@ modparam("presence", "expires_offset", 10)
 
    Default value is "0". 
 
-   Example 1-9. Set force_active parameter
+   Example 1-10. Set force_active parameter
 ...
 modparam("presence", "force_active", 1)
 ...
      _________________________________________________________
 
-1.4.10. max_expires (int)
+1.4.11. max_expires (int)
 
    The value at which to reduce the validity of PUBLISH/SUBSCRIBE
    if the Expires in request is greater.
 
    Default value is "3600". 
 
-   Example 1-10. Set max_expires parameter
+   Example 1-11. Set max_expires parameter
 ...
 modparam("presence", "max_expires", 3600)
 ...
@@ -249,7 +263,7 @@ modparam("presence", "max_expires", 3600)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-11. handle_publish usage
+   Example 1-12. handle_publish usage
 ...
 if(method=="PUBLISH")
     handle_publish();
@@ -265,7 +279,7 @@ if(method=="PUBLISH")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-12. handle_subscribe usage
+   Example 1-13. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -277,7 +291,7 @@ if(method=="SUBSCRIBE")
    The module requires 4 table in OpenSER database. Next SQL
    statements shows the syntax to create them.
 
-   Example 1-13. PRESENCE tables
+   Example 1-14. PRESENCE tables
 ...
 
 use openser;

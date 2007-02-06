@@ -157,6 +157,24 @@ modparam("presence", "watchers_table", "watchers")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>xcap_table</varname>(str)</title>
+		<para>
+		The name of the db table where XCAP XMLs are stored.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>scap_xml</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xcap_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "xcap_table", "xcaps")
+...
+</programlisting>
+		</example>
+	</section>
 
 	<section>
 		<title><varname>clean_period</varname> (int)</title>
