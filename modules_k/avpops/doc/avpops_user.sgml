@@ -351,7 +351,8 @@ modparam("avpops","db_scheme",
 			<para>
 			Loads from DB into memory the AVPs corresponding to the given
 			<emphasis>source</emphasis>. If given, it sets the script flags
-			for loaded AVPs.
+			for loaded AVPs. It returns true if it loaded some values 
+			in AVPs, false otherwise (db error, no avp loaded ...).
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>

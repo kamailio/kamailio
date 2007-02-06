@@ -305,7 +305,9 @@ modparam("avpops","db_scheme",
 1.5.1. avp_db_load(source,name)
 
    Loads from DB into memory the AVPs corresponding to the given
-   source. If given, it sets the script flags for loaded AVPs.
+   source. If given, it sets the script flags for loaded AVPs. It
+   returns true if it loaded some values in AVPs, false otherwise
+   (db error, no avp loaded ...).
 
    Meaning of the parameters is as follows:
 
