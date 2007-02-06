@@ -11,7 +11,7 @@ export LIBS
 export DEFS
 export INCLUDES
 
-SUBDIRS=cds xcap presence
+SUBDIRS=binrpc cds xcap presence
 
 .PHONY: subdirs $(SUBDIRS) 
 

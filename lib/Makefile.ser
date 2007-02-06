@@ -30,7 +30,7 @@ export LIBS
 export CFLAGS
 export DEFS
 
-SUBDIRS=cds xcap presence
+SUBDIRS=binrpc cds xcap presence
 
 .PHONY: subdirs $(SUBDIRS) 
 
