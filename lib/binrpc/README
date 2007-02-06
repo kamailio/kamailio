@@ -1,0 +1,34 @@
+binrcp library
+--------------
+
+prepared by Vladimir Marek
+inspirated by sercmd from Andrei Pelinescu-Onciul
+
+Description:
+------------
+
+This library using binrpc implementation from CTL module of SER and encapsulets
+it for socket communication. It offers simple functional interface for sending
+messages over UNIX sockets, TCP or UDP protocol. The messages are encoded into
+binary RCP format that is much more efficient then standard XMLRPC.
+
+
+Purpose:
+--------
+
+This library offers common interface for communicating with CTL module over UNIX
+socket, TCP and UDP protocol. Binary RCP makes XMLRPC more efficient using 
+binary format for transporting messgae from client to server and vice versa.
+
+
+Description of interface:
+-------------------------
+
+The detail description of interface is a part of binrpc_api.h header file. It is
+also possible generate documentation from this file by using DoxyGen.
+
+Warning
+-------
+
+Double check alignment which is used for compilation to avoid nasty problem with
+structure size (if using libbinrpc library). This may occur e.g. in binrpc_parse_response!!!

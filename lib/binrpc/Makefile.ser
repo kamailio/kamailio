@@ -1,0 +1,8 @@
+LIBNAME  = binrpc
+OUT_NAME = libbinrpc.so
+OUT_TYPE = lib
+
+CFLAGS += -g0 -O9 -fPIC
+
+include ../Makefile.ser.defs
+
