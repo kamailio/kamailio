@@ -69,7 +69,7 @@ extern OSPTPROVHANDLE _osp_provider;
 
 struct rr_binds osp_rr;
 auth_api_t osp_auth;
-int osp_index[];
+int osp_index[OSP_DEF_SPS];
 
 static int ospInitMod(void);
 static void ospDestMod(void);
