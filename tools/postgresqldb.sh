@@ -46,7 +46,9 @@
 # 2006-10-19  Added address table (bogdan)
 # 2006-10-27  subscriber table cleanup; some columns are created only if
 #             serweb is installed (bogdan)
-#
+# 2007-01-26  added seperate installation routine for presence related tables
+#             and fix permissions for the SERIAL sequences.
+
 
 
 PATH=$PATH:/usr/local/sbin
@@ -139,6 +141,7 @@ cat <<EOF
 usage: $COMMAND create
        $COMMAND drop   (!!entirely deletes tables)
        $COMMAND reinit (!!entirely deletes and than re-creates tables
+       $COMMAND presence (adds the presence related tables)
        $COMMAND serweb (adds the SERWEB specific tables)
 
  NOTE: the following commands are not tested with postgresql,
@@ -280,21 +283,60 @@ fi
 USE_CMD='\connect'
 GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 	CREATE USER $DBROUSER WITH PASSWORD '$RO_PW';
-	GRANT ALL PRIVILEGES ON TABLE version, acc, aliases, dbaliases, grp,
-		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
-		uri, usr_preferences, trusted, re_grp, pdt,
-		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
-		sip_trace, domainpolicy TO $DBRWUSER;
-	GRANT SELECT ON TABLE version, acc, aliases, dbaliases, grp,
-		location, missed_calls, subscriber, silo, silo_mid_seq, domain,
-		uri, usr_preferences, trusted, re_grp, pdt,
-		speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr, address,
-		sip_trace, domainpolicy TO $DBROUSER;"
+	GRANT ALL PRIVILEGES ON TABLE 
+		version, 
+		acc, acc_id_seq, 
+		address, address_id_seq, 
+		aliases, aliases_id_seq,
+		dbaliases, dbaliases_id_seq, 
+		domain, domain_id_seq, 
+		domainpolicy, domainpolicy_id_seq, 
+		grp, grp_id_seq,
+		gw, gw_id_seq, 
+		gw_grp, gw_grp_grp_id_seq, 
+		lcr, lcr_id_seq, 
+		location, location_id_seq, 
+		missed_calls, missed_calls_id_seq, 
+		pdt, pdt_id_seq, 
+		re_grp, re_grp_id_seq, 
+		silo, silo_id_seq, 
+		sip_trace, sip_trace_id_seq, 
+		speed_dial, speed_dial_id_seq, 
+		subscriber, subscriber_id_seq, 
+		trusted, trusted_id_seq, 
+		uri, uri_id_seq, 
+		usr_preferences, usr_preferences_id_seq
+		TO $DBRWUSER;
+	GRANT SELECT ON TABLE 
+		version, 
+		acc, 
+		address, 
+		aliases, 
+		dbaliases, 
+		domain, 
+		domainpolicy, 
+		grp, 
+		gw, 
+		gw_grp, 
+		lcr, 
+		location, 
+		missed_calls, 
+		pdt, 
+		re_grp, 
+		silo, 
+		sip_trace, 
+		speed_dial, 
+		subscriber, 
+		trusted, 
+		uri, 
+		usr_preferences
+		TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
 DATETIME="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DUMMY_DATE'"
 DATETIMEALIAS="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_ALIASES_EXPIRES'"
 DATETIMELOCATION="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_LOCATION_EXPIRES'"
 FLOAT="NUMERIC(10,2)"
+TINYINT="NUMERIC(4,0)"
 AUTO_INCREMENT="SERIAL PRIMARY KEY"
 
 echo "creating database $1 ..."
@@ -437,7 +479,7 @@ CREATE TABLE aliases (
   cflags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
-  methods int default NULL,
+  methods int default NULL
 ) $TABLE_TYPE;
 CREATE INDEX aliases_udc_indx ON aliases ($USERCOL, domain, contact);
 
@@ -477,7 +519,7 @@ CREATE TABLE grp (
 CREATE TABLE re_grp (
   id $AUTO_INCREMENT,
   reg_exp varchar(128) NOT NULL default '',
-  group_id int NOT NULL default '0',
+  group_id int NOT NULL default '0'
 ) $TABLE_TYPE;
 CREATE INDEX gid_grp_indx ON re_grp (group_id);
 
@@ -491,11 +533,11 @@ CREATE TABLE silo(
   dst_addr varchar(255) NOT NULL DEFAULT '',
   $USERCOL varchar(64) NOT NULL DEFAULT '',
   domain varchar(128) NOT NULL DEFAULT '',
-  inc_time INTEGER NOT NULL DEFAULT 0,
-  exp_time INTEGER NOT NULL DEFAULT 0,
-  snd_time INTEGER NOT NULL DEFAULT 0,
+  inc_time int NOT NULL DEFAULT 0,
+  exp_time int NOT NULL DEFAULT 0,
+  snd_time int NOT NULL DEFAULT 0,
   ctype varchar(32) NOT NULL DEFAULT 'text/plain',
-  body TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL DEFAULT ''
 ) $TABLE_TYPE;
 CREATE INDEX silo_idx ON silo($USERCOL, domain);
 
@@ -650,7 +692,7 @@ CREATE TABLE address (
   id $AUTO_INCREMENT,
   grp smallint NOT NULL default '0',
   ip_addr varchar(15) NOT NULL default '',
-  mask tinyint NOT NULL default 32,
+  mask $TINYINT NOT NULL default 32,
   port smallint NOT NULL default '0'
 ) $TABLE_TYPE; 
 
@@ -690,6 +732,13 @@ $GRANT_CMD
 
 EOF
 
+echo -n "Install presence related tables ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	presence_create $1
+fi
+
 echo -n "Install SERWEB tables ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
@@ -700,6 +749,129 @@ fi
 } # openser_create
 
 
+presence_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	echo "presence_create function takes one param"
+	exit 1
+fi
+
+GRANT_PRESENCE_CMD="
+	GRANT ALL PRIVILEGES ON TABLE 
+		active_watchers, active_watchers_id_seq, 
+		presentity, presentity_id_seq, 
+		watchers, watchers_id_seq, 
+		xcap_xml, xcap_xml_id_seq
+		TO $DBRWUSER; 
+	GRANT SELECT ON TABLE 
+		active_watchers, 
+		presentity, 
+		watchers, 
+		xcap_xml 
+		TO $DBROUSER;" 
+
+echo "creating presence tables into $1 ..."
+
+sql_query <<EOF
+$USE_CMD $1;
+
+INSERT INTO version VALUES ( 'presentity', '1');
+INSERT INTO version VALUES ( 'active_watchers', '1');
+INSERT INTO version VALUES ( 'watchers', '1');
+INSERT INTO version VALUES ( 'xcap_xml', '1');
+
+/*
+ * Table structure for table 'presentity'
+ * 
+ * used by presence module
+ */
+CREATE TABLE presentity (
+  id $AUTO_INCREMENT,
+  username varchar(64) NOT NULL,
+  domain varchar(124) NOT NULL,
+  event varchar(64) NOT NULL,
+  etag varchar(64) NOT NULL,
+  expires int NOT NULL,
+  received_time int NOT NULL,
+  body text NOT NULL,
+  UNIQUE (username, domain, event, etag)
+) $TABLE_TYPE;
+
+
+
+/*
+ * Table structure for table 'active_watchers'
+ * 
+ * used by presence module
+ */
+CREATE TABLE active_watchers (
+  id $AUTO_INCREMENT,
+  to_user varchar(64) NOT NULL,
+  to_domain varchar(128) NOT NULL,
+  from_user varchar(64) NOT NULL,
+  from_domain varchar(128) NOT NULL,
+  event varchar(64) NOT NULL default 'presence',
+  event_id varchar(64) NOT NULL,
+  to_tag varchar(128) NOT NULL,
+  from_tag varchar(128) NOT NULL,
+  callid varchar(128) NOT NULL,
+  cseq int NOT NULL,
+  contact varchar(128) NOT NULL,
+  record_route varchar(255) NULL,
+  expires int NOT NULL,
+  status varchar(32) NOT NULL default 'pending',
+  version int NOT NULL default '0',
+  UNIQUE (from_tag)
+) $TABLE_TYPE;
+
+
+
+/*
+ * Table structure for table 'watchers'
+ * 
+ * used by presence module
+ */
+CREATE TABLE watchers (
+  id $AUTO_INCREMENT,
+  p_user varchar(64) NOT NULL,
+  p_domain varchar(128) NOT NULL,
+  w_user varchar(64) NOT NULL,
+  w_domain varchar(128) NOT NULL,
+  subs_status varchar(64) NOT NULL,
+  reason varchar(64) NULL,
+  inserted_time int NOT NULL,
+  UNIQUE (p_user, p_domain, w_user, w_domain)
+) $TABLE_TYPE;
+
+
+
+/*
+ * Table structure for table 'xcap_xml'
+ * 
+ * used by presence module
+ */
+CREATE TABLE xcap_xml (
+  id $AUTO_INCREMENT,
+  username varchar(66) NOT NULL,
+  domain varchar(128) NOT NULL,
+  xcap text NOT NULL,
+  doc_type varchar(64) NOT NULL,
+  UNIQUE (username, domain, doc_type)
+) $TABLE_TYPE;
+
+
+
+$GRANT_PRESENCE_CMD
+
+EOF
+
+	if [ $? -eq 0 ] ; then
+		echo "...presence tables created"
+	fi
+
+}  # end presence_create
+
+
 serweb_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
@@ -708,7 +880,8 @@ if [ $# -ne 1 ] ; then
 fi
 
 GRANT_SERWEB_CMD="
-	GRANT ALL PRIVILEGES ON TABLE phonebook, pending, active_sessions,
+	GRANT ALL PRIVILEGES ON TABLE phonebook, phonebook_id_seq, 
+		pending, pending_id_seq, active_sessions,
 		server_monitoring, server_monitoring_agg,
 		usr_preferences_types, admin_privileges to $DBRWUSER; 
 	GRANT SELECT ON TABLE phonebook, pending, active_sessions,
