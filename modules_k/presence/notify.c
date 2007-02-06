@@ -1278,7 +1278,8 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 				n_query_cols, 1, 0, &result)<0)
 	{
 		LOG(L_ERR, "PRESENCE:get_xcap_tree:Error while querying table xcap for"
-		" [user]=%.*s , domain=%.*s\n",user.len, user.s, domain.len, domain.s);
+		" [username]=%.*s , domain=%.*s\n",user.len, user.s, domain.len,
+		domain.s);
 		goto error;
 	}
 	if(result== NULL)
@@ -1287,12 +1288,13 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	if(result && result->n<=0)
 	{
 		LOG(L_ERR, "PRESENCE:get_xcap_tree:The query in table xcap for"
-				" [user]=%.*s , domain=%.*s returned no result\n",
+				" [username]=%.*s , domain=%.*s returned no result\n",
 				user.len, user.s, domain.len, domain.s);
 		goto error;
 	}
 	LOG(L_ERR, "PRESENCE:get_xcap_tree:The query in table xcap for"
-			" [user]=%.*s , domain=%.*s returned result",	user.len, user.s, domain.len, domain.s );
+			" [username]=%.*s , domain=%.*s returned result",	user.len,
+			user.s, domain.len, domain.s );
 
 	row = &result->rows[0];
 	row_vals = ROW_VALUES(row);
