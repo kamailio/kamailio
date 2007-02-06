@@ -83,17 +83,32 @@ A_LAST_MODIFIED_COLUMN=last_modified
 if [ -z "$DOMAIN_TABLE" ] ; then
 	DOMAIN_TABLE=domain
 fi
+DO_DOMAIN_COLUMN=domain
 
 # lcr tables
 if [ -z "$LCR_TABLE" ] ; then
 	LCR_TABLE=lcr
 fi
+LCR_PREFIX_COLUMN=prefix
+LCR_FROMURI_COLUMN=from_uri
+LCR_GRPID_COLUMN=grp_id
+LCR_PRIO_COLUMN=priority
 if [ -z "$GW_TABLE" ] ; then
 	GW_TABLE=gw
 fi
+LCR_GW_GWNAME_COLUMN=gw_name
+LCR_GW_GRPID_COLUMN=grp_id
+LCR_GW_IP_COLUMN=ip_addr
+LCR_GW_PORT_COLUMN=port
+LCR_GW_URIS_COLUMN=uri_scheme
+LCR_GW_PROTO_COLUMN=transport
+LCR_GW_STRIP_COLUMN=strip
+LCR_GW_PREFIX_COLUMN=prefix
 if [ -z "$GW_GRP_TABLE" ] ; then
 	GW_GRP_TABLE=gw_grp
 fi
+LCR_GRP_ID_COLUMN=grp_id
+LCR_GRP_NAME_COLUMN=grp_name
 
 # URI table
 if [ -z "$URI_TABLE" ] ; then

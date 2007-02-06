@@ -279,7 +279,7 @@ $CLAUSE"
 			;;
 
 		*)
-			merr "lcr - invalid commad '$1'"
+			merr "acl - invalid commad '$1'"
 			usage_acl
 			exit 1
 			;;
@@ -915,13 +915,15 @@ domain() {
 				merr "missing domain parameter"
 				exit 1
 			fi
-       		QUERY="insert into $DOMAIN_TABLE (domain) VALUES ('$1');"
+			QUERY="insert into $DOMAIN_TABLE ($DO_DOMAIN_COLUMN) \
+				VALUES ('$1');"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "domain - SQL Error"
 				exit 1
 			fi
-			minfo "execute '$0 domain reload' to synchronoze cache and database"
+			minfo "execute '$0 domain reload' to synchronoze cache and \
+				database"
 			;;
 		rm)
 			require_dbengine
@@ -930,13 +932,14 @@ domain() {
 				merr "missing domain parameter"
 				exit 1
 			fi
-       		QUERY="delete from $DOMAIN_TABLE where domain='$1';"
+			QUERY="delete from $DOMAIN_TABLE where domain='$1';"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "domai - SQL Error"
 				exit 1
 			fi
-			minfo "execute '$0 domain reload' to synchronoze cache and database"
+			minfo "execute '$0 domain reload' to synchronoze cache and \
+				database"
 			;;
 		*)
 			usage_domain
@@ -954,23 +957,30 @@ lcr() {
 	case $1 in
 		show)
 			mecho "lcr routes"
-			QUERY="select * FROM $LCR_TABLE ORDER BY prefix; "
+			QUERY="select * FROM $LCR_TABLE ORDER BY $LCR_PREFIX_COLUMN; "
 			$DBROCMD "$QUERY"
 			mecho "lcr gateway groups"
-			QUERY="select * FROM $GW_GRP_TABLE ORDER BY grp_id; "
+			QUERY="select * FROM $GW_GRP_TABLE ORDER BY $LCR_GRP_ID_COLUMN; "
 			$DBROCMD "$QUERY"
 			mecho "lcr gateways"
 			#QUERY="select * FROM $GW_TABLE ORDER BY grp_id; "
-			QUERY="select gw_name, CONCAT(ip_addr, ' (',\
-CONCAT_WS('.',floor(ip_addr - floor(ip_addr/16777216)*16777216 \
-- floor((ip_addr - floor(ip_addr/16777216)*16777216)/65536)*65536 \
-- floor((ip_addr - floor(ip_addr/16777216)*16777216 - floor((ip_addr \
-- floor(ip_addr/16777216)*16777216)/65536)*65536)/256)*256),\
-floor((ip_addr - floor(ip_addr / 16777216) * 16777216 - floor((ip_addr \
-- floor(ip_addr / 16777216) * 16777216) / 65536) * 65536) / 256),\
-floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536),\
-floor(ip_addr / 16777216) ), ') ') as ip, port, uri_scheme, transport,\
-grp_id, strip, prefix FROM $GW_TABLE ORDER BY grp_id; "
+			QUERY="select $LCR_GW_GWNAME_COLUMN, CONCAT($LCR_GW_IP_COLUMN,\
+' (',CONCAT_WS('.',floor($LCR_GW_IP_COLUMN - \
+floor($LCR_GW_IP_COLUMN/16777216)*16777216 - \
+floor(($LCR_GW_IP_COLUMN - \
+floor($LCR_GW_IP_COLUMN/16777216)*16777216)/65536)*65536 \
+- floor(($LCR_GW_IP_COLUMN - floor($LCR_GW_IP_COLUMN/16777216)*16777216 - \
+floor(($LCR_GW_IP_COLUMN \
+- floor($LCR_GW_IP_COLUMN/16777216)*16777216)/65536)*65536)/256)*256),\
+floor(($LCR_GW_IP_COLUMN - floor($LCR_GW_IP_COLUMN / 16777216) * 16777216 - \
+floor(($LCR_GW_IP_COLUMN - \
+floor($LCR_GW_IP_COLUMN / 16777216) * 16777216) / 65536) * 65536) / 256),\
+floor(($LCR_GW_IP_COLUMN - \
+floor($LCR_GW_IP_COLUMN / 16777216) * 16777216) / 65536),\
+floor($LCR_GW_IP_COLUMN / 16777216) ), ') ') as ip,\
+$LCR_GW_PORT_COLUMN, $LCR_GW_URIS_COLUMN, $LCR_GW_PROTO_COLUMN,\
+$LCR_GW_GRPID_COLUMN, $LCR_GW_STRIP_COLUMN, $LCR_GW_PREFIX_COLUMN \
+FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
 		reload)
@@ -988,7 +998,9 @@ grp_id, strip, prefix FROM $GW_TABLE ORDER BY grp_id; "
 			else
 				GRP_ID=NULL
 			fi
-			QUERY="insert into $GW_GRP_TABLE VALUES ($GRP_ID, '$1');"
+			QUERY="insert into $GW_GRP_TABLE \
+				($LCR_GRP_ID_COLUMN, $LCR_GRP_NAME_COLUMN) \
+				VALUES ($GRP_ID, '$1');"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "lcr - SQL Error"
@@ -1002,7 +1014,7 @@ grp_id, strip, prefix FROM $GW_TABLE ORDER BY grp_id; "
 				merr "missing grp_id to be removed"
 				exit 1
 			fi
-			QUERY="delete from $GW_GRP_TABLE where grp_id=$1;"
+			QUERY="delete from $GW_GRP_TABLE where $LCR_GRP_ID_COLUMN=$1;"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "lcr - SQL Error"
@@ -1017,7 +1029,10 @@ grp_id, strip, prefix FROM $GW_TABLE ORDER BY grp_id; "
 				usage_lcr
 				exit 1
 			fi
-			QUERY="insert into $LCR_TABLE VALUES ('$1', '$2', $3, $4);"
+			QUERY="insert into $LCR_TABLE \
+				($LCR_PREFIX_COLUMN, $LCR_FROMURI_COLUMN, \
+					$LCR_GRPID_COLUMN, $LCR_PRIO_COLUMN) \
+				VALUES ('$1', '$2', $3, $4);"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 			merr "lcr - SQL Error"
@@ -1032,8 +1047,9 @@ grp_id, strip, prefix FROM $GW_TABLE ORDER BY grp_id; "
 				usage_lcr
 				exit 1
 			fi
-			QUERY="delete from $LCR_TABLE where prefix='$1' AND \
-from_uri='$2' AND grp_id=$3 AND priority=$4;"
+			QUERY="delete from $LCR_TABLE where $LCR_PREFIX_COLUMN='$1' AND \
+				$LCR_FROMURI_COLUMN='$2' AND $LCR_GRPID_COLUMN=$3 AND \
+				$LCR_PRIO_COLUMN=$4;"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "lcr - SQL Error"
@@ -1081,9 +1097,14 @@ from_uri='$2' AND grp_id=$3 AND priority=$4;"
 			set -- $2
 			#GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
 			IFS=$oldIFS
-			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_GRP_ID,\
-$1+$2*256+$3*65536+$4*16777216, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT,\
-$STRIP, '$GW_PREFIX');"
+			QUERY="insert into $GW_TABLE \
+				( $LCR_GW_GWNAME_COLUMN, $LCR_GW_GRPID_COLUMN,\
+					$LCR_GW_IP_COLUMN,$LCR_GW_PORT_COLUMN,$LCR_GW_URIS_COLUMN,\
+					$LCR_GW_PROTO_COLUMN,$LCR_GW_STRIP_COLUMN,\
+					$LCR_GW_PREFIX_COLUMN) \
+				VALUES ('$GW_NAME', $GW_GRP_ID,\
+					$1+$2*256+$3*65536+$4*16777216, $GW_PORT, $GW_URI_SCHEME,\
+					$GW_TRANSPORT, $STRIP, '$GW_PREFIX');"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "lcr - SQL Error"
@@ -1097,7 +1118,7 @@ $STRIP, '$GW_PREFIX');"
 				merr "missing gateway to be removed"
 				exit 1
 			fi
-			QUERY="delete from $GW_TABLE where gw_name='$1';"
+			QUERY="delete from $GW_TABLE where $LCR_GW_GWNAME_COLUMN='$1';"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "lcr - SQL Error"
