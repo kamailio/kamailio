@@ -1219,7 +1219,8 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 	    while(strip_top_vias--)
 	       vb=vb->next;
 	    k= (hf->name.s + hf->len) - vb->name.s;
-	    LOG(L_DBG,"Stripping vias [%.*s]\n",vb->name.s-hf->name.s,hf->name.s);
+	    LOG(L_DBG,"Stripping vias [%.*s]\n",(int)(vb->name.s-hf->name.s),
+			hf->name.s);
 	    if(k+VIA_LEN<headers_len){
 	       memcpy(headers+len,VIA,VIA_LEN);
 	       len+=VIA_LEN;

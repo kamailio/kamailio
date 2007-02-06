@@ -322,12 +322,12 @@ int print_uri_junit_tests(char *hdrstart,int hdrlen,unsigned char *payload,int p
       dprintf(fd,"%sgetParameter=(SAVP)",prefix);/*SVP = Attribute Value Pair*/
       for(k=0;k<=m;k++){
 	 if((aux3[k]==';'||(k==m)) && aux2==NULL){/*no parameterValue was found*/
-	    dprintf(fd,"%.*s=;",aux3-aux+k,aux);
+	    dprintf(fd,"%.*s=;",(int)(aux3-aux+k),aux);
 	    aux2=NULL;/*resets the parameterValue-start pointer*/
 	    aux=aux3+1+k;/*points to the next parameter*/
 	 }else 
 	    if((aux3[k]==';'||(k==m)) && aux2!=NULL){
-	       dprintf(fd,"%.*s=%.*s;",aux2-aux,aux,aux3-aux2-1+k,aux2+1);
+	       dprintf(fd,"%.*s=%.*s;",(int)(aux2-aux),aux,(int)(aux3-aux2-1+k),aux2+1);
 	       aux2=NULL;
 	       aux=aux3+1+k;
 	    } else 
@@ -346,12 +346,12 @@ int print_uri_junit_tests(char *hdrstart,int hdrlen,unsigned char *payload,int p
       dprintf(fd,"%sgetHeader=(SAVP)",prefix);
       for(k=0;k<=m;k++){
 	 if((aux3[k]==';'||(k==m)) && aux2==NULL){/*no parameterValue was found*/
-	    dprintf(fd,"%.*s=;",aux3-aux+k,aux);
+	    dprintf(fd,"%.*s=;",(int)(aux3-aux+k),aux);
 	    aux2=NULL;/*resets the parameterValue-start pointer*/
 	    aux=aux3+1+k;/*points to the next parameter*/
 	 }else 
 	    if((aux3[k]==';'||(k==m)) && aux2!=NULL){
-	       dprintf(fd,"%.*s=%.*s;",aux2-aux,aux,aux3-aux2-1+k,aux2+1);
+	       dprintf(fd,"%.*s=%.*s;",(int)(aux2-aux),aux,(int)(aux3-aux2-1+k),aux2+1);
 	       aux2=NULL;
 	       aux=aux3+1+k;
 	    } else 

@@ -307,9 +307,9 @@ inline int init_pingtable(struct ha *table,int timeout,int maxpings)
       goto error;
    }else 
       lock_init(table->mutex);
-   LOG(L_ERR,"alloc'ing %d bytes for %d pings\n",(maxpings*sizeof(struct ping)),maxpings);
+   LOG(L_ERR,"alloc'ing %d bytes for %d pings\n",(int)(maxpings*sizeof(struct ping)),maxpings);
    if (0==(table->pings=shm_malloc(maxpings*sizeof(struct ping)))){
-      LOG(L_ERR,"Unable to shm_malloc %d bytes for %d pings\n",(maxpings*sizeof(struct ping)),maxpings);
+      LOG(L_ERR,"Unable to shm_malloc %d bytes for %d pings\n",(int)(maxpings*sizeof(struct ping)),maxpings);
       goto error;
    }else{
       memset(table->pings,0,(maxpings*sizeof(struct ping)));

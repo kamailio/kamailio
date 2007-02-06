@@ -44,7 +44,7 @@ struct statstable* init_seas_stats_table()
    /*allocs the table*/
    seas_stats_table= (struct statstable*)shm_malloc( sizeof( struct statstable ) );
    if (!seas_stats_table) {
-      LOG(L_ERR, "ERROR:init_seas_stats_table: no shmem for stats table (%d bytes)\n",sizeof(struct statstable));
+      LOG(L_ERR, "ERROR:init_seas_stats_table: no shmem for stats table (%d bytes)\n",(int)sizeof(struct statstable));
       return 0;
    }
    memset(seas_stats_table, 0, sizeof(struct statstable) );
