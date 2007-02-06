@@ -1246,7 +1246,7 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	str body ;
 	xmlDocPtr xcap_tree =NULL;
 
-	query_cols[n_query_cols] = "user";
+	query_cols[n_query_cols] = "username";
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val.s = user.s;
@@ -1268,7 +1268,7 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 
 	result_cols[0] = "xcap";
 
-	if (pa_dbf.use_table(pa_db, "xcap_xml") < 0) 
+	if (pa_dbf.use_table(pa_db, xcap_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_xcap_tree: Error in use_table\n");
 		return NULL;

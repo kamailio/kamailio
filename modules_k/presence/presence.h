@@ -49,6 +49,7 @@ extern str db_url;
 extern char *presentity_table;
 extern char *active_watchers_table;
 extern char *watchers_table; 
+extern char *xcap_table; 
 
 extern int counter;
 extern int pid;

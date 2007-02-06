@@ -69,6 +69,7 @@ gen_lock_set_t* set;
 char *presentity_table="presentity";
 char *active_watchers_table = "active_watchers";
 char *watchers_table= "watchers";  
+char *xcap_table= "xcap_xml";  
 int use_db=1;
 
 /* to tag prefix */
@@ -119,6 +120,7 @@ static param_export_t params[]={
 	{ "presentity_table",		STR_PARAM, &presentity_table},
 	{ "active_watchers_table", 	STR_PARAM, &active_watchers_table},
 	{ "watchers_table",			STR_PARAM, &watchers_table},
+	{ "xcap_table",				STR_PARAM, &xcap_table},
 	{ "clean_period",			INT_PARAM, &clean_period },
 	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
 	{ "totag_avpid",			INT_PARAM, &reply_tag_avp_id },
