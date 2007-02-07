@@ -94,20 +94,20 @@ typedef unsigned long	ULONG_T;
 #define SERVER_ERROR_ERR		500
 #define GLOBAL_FAILURE_ERR		600
 
-#define TRY_ALTERNATE_TXT 		"The client should contact an alternate server for this request."
-#define BAD_REQUEST_TXT			"The request was malformed. The client should not retry the request without modification from the previous attempt."
-#define UNAUTHORIZED_TXT		"The request did not contain a MESSAGE-INTEGRITY attribute."
-#define UNKNOWN_ATTRIBUTE_TXT	"The server did not understand a mandatory attribute in the request."
-#define STALE_CREDENTIALS_TXT	"The request did contain a MESSAGE-INTEGRITY attribute, but it used a shared secret that has expired. The client should obtain a new shared secret and try again."
-#define INTEGRITY_CHECK_TXT		"The request contained a MESSAGE-INTEGRITY attribute, but the HMAC failed verification. This could be a sign of a potential attack, or client implementation error."
-#define MISSING_USERNAME_TXT	"The request contained a MESSAGE-INTEGRITY attribute, but not a USERNAME attribute.  Both USERNAME and MESSAGE-INTEGRITY must be present for integrity checks."
-#define USE_TLS_TXT				"The Shared Secret request has to be sent over TLS, but was not received over TLS."
-#define MISSING_REALM_TXT		"The REALM attribute was not present in the request."
-#define MISSING_NONCE_TXT		"The NONCE attribute was not present in the request."
-#define UNKNOWN_USERNAME_TXT	"The USERNAME supplied in the request is not known or is not known to the server."
-#define STALE_NONCE_TXT			"The NONCE attribute was present in the request but wasn't valid."
-#define SERVER_ERROR_TXT		"The server has suffered a temporary error. The client should try again."
-#define GLOBAL_FAILURE_TXT		"The server is refusing to fulfill the request. The client should not retry."
+#define TRY_ALTERNATE_TXT      "Try Alternate"
+#define BAD_REQUEST_TXT        "Bad Request"
+#define UNAUTHORIZED_TXT       "Unauthorized"
+#define UNKNOWN_ATTRIBUTE_TXT  "Unknown Attribute"
+#define STALE_CREDENTIALS_TXT  "Stale Credentials"
+#define INTEGRITY_CHECK_TXT    "Integrity Check Failure"
+#define MISSING_USERNAME_TXT   "Missing Username"
+#define USE_TLS_TXT            "Use TLS"
+#define MISSING_REALM_TXT      "Missing Realm"
+#define MISSING_NONCE_TXT      "Missing Nonce"
+#define UNKNOWN_USERNAME_TXT   "Unknown Username"
+#define STALE_NONCE_TXT        "Stale Nonce"
+#define SERVER_ERROR_TXT       "Server Error"
+#define GLOBAL_FAILURE_TXT     "Global Failure"
 
 
 /* other stuff */

@@ -133,8 +133,6 @@ int stun_process_msg(char* buf, unsigned len, struct receive_info* ri)
 #ifdef EXTRA_DEBUG	
 	struct ip_addr ip;
 	su2ip_addr(&ip, &dst.to);
-	char *ipp = ip_addr2a(&ip);
-	int porttt = su_getport(&dst.to);
 	LOG(L_DBG, "DEBUG: stun_process_msg: decoded request from (%s:%d)\n", ip_addr2a(&ip), 
 		su_getport(&dst.to));
 #endif
@@ -276,7 +274,7 @@ int stun_parse_body(
 		}
 		
 		/* check if the attribute is known to the server */
-		switch (htons(attr.type)) {			
+		switch (ntohs(attr.type)) {			
 			case REALM_ATTR:
 			case NONCE_ATTR:
 			case MAPPED_ADDRESS_ATTR:
@@ -289,6 +287,9 @@ int stun_parse_body(
 			case CHANGE_REQUEST_ATTR:
 			case CHANGED_ADDRESS_ATTR:
 				padded_len = ntohs(attr.len);
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_parse_body: known attributes\n");
+#endif
 				break;
 			
 			/* following attributes must be padded to 4 bytes */
@@ -298,6 +299,9 @@ int stun_parse_body(
 			case UNKNOWN_ATTRIBUTES_ATTR:
 			case SERVER_ATTR:
 				padded_len = PADDED_TO_FOUR(ntohs(attr.len));
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_parse_body: padded to four\n");
+#endif
 				break;
 
 			/* MESSAGE_INTEGRITY must be padded to sixty four bytes*/
@@ -347,9 +351,13 @@ int stun_parse_body(
 				 * let see if it's necessary to generate error response 
 				 */
 #ifdef EXTRA_DEBUG
-				LOG(L_DBG, "DEBUG: stun_parse_body: unknown attribute found\n");
+				LOG(L_DBG, "DEBUG: low endian: attr - 0x%x   const - 0x%x\n", ntohs(attr.type), MANDATORY_ATTR);
+		    LOG(L_DBG, "DEBUG: big endian: attr - 0x%x   const - 0x%x\n", attr.type, htons(MANDATORY_ATTR));
 #endif
-				if (attr.type <= htons(MANDATORY_ATTR)) {
+				if (ntohs(attr.type) <= MANDATORY_ATTR) {
+#ifdef EXTRA_DEBUG
+				LOG(L_DBG, "DEBUG: stun_parse_body: mandatory unknown attribute found - 0x%x\n", ntohs(attr.type));
+#endif		
 					tmp_unknown = stun_alloc_unknown_attr(attr.type);
 					if (tmp_unknown == NULL) {
 						return FATAL_ERROR;
@@ -362,6 +370,11 @@ int stun_parse_body(
 						body = body->next;
 					}
 				}
+#ifdef EXTRA_DEBUG
+        else {
+				  LOG(L_DBG, "DEBUG: stun_parse_body: optional unknown attribute found - 0x%x\n", ntohs(attr.type));
+        }
+#endif
 				padded_len = ntohs(attr.len);
 				break;
 		}
