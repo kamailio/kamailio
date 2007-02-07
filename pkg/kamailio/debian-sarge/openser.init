@@ -38,7 +38,7 @@ check_openser_config ()
 {
 	# Check if openser configuration is valid before starting the server
 	set +e
-	out=$(($DAEMON -c > /dev/null) 2>&1)
+	out=$($DAEMON -c 2>&1 >/dev/null)
 	retcode=$?
 	set -e
 	if [ "$retcode" != '0' ]; then
