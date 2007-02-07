@@ -648,6 +648,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	unsigned int bk_br_flags;
 	int idx;
 	str path;
+	str bk_path;
 
 	/* make -Wall happy */
 	current_uri.s=0;
@@ -674,6 +675,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	backup_dst = p_msg->dst_uri;
 	bk_sock = p_msg->force_send_socket;
 	bk_br_flags = getb0flags();
+	bk_path = p_msg->path_vec;
 
 	/* if no more specific error code is known, use this */
 	lowest_ret=E_BUG;
@@ -718,6 +720,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	p_msg->parsed_uri_ok = 0;/* just to be sure; add_uac may parse other uris*/
 	p_msg->dst_uri = backup_dst;
 	p_msg->force_send_socket = bk_sock;
+	p_msg->path_vec = bk_path;
 	setb0flags(bk_br_flags);
 	/* update on_branch, if modified */
 	t->on_branch = get_on_branch();
