@@ -1458,7 +1458,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	*at = '\0';
 	act.type = APPEND_BRANCH_T;
 	act.elem[0].type = STRING_ST;
-	act.elem[0].u.string = new_ruri.s;
+	act.elem[0].u.s = new_ruri;
 	act.elem[1].type = NUMBER_ST;
 	act.elem[1].u.number = 0;
 	rval = do_action(&act, _m);
@@ -1754,7 +1754,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 			destroy_avp(prev);
 			act.type = APPEND_BRANCH_T;
 			act.elem[0].type = STRING_ST;
-			act.elem[0].u.string = val.s.s;
+			act.elem[0].u.s = val.s;
 			act.elem[1].type = NUMBER_ST;
 			act.elem[1].u.number = 0;
 			rval = do_action(&act, msg);
@@ -1786,7 +1786,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		do {
 			act.type = APPEND_BRANCH_T;
 			act.elem[0].type = STRING_ST;
-			act.elem[0].u.string = val.s.s;
+			act.elem[0].u.s = val.s;
 			act.elem[1].type = NUMBER_ST;
 			act.elem[1].u.number = 0;
 			rval = do_action(&act, msg);
