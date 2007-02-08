@@ -36,6 +36,7 @@
 #include "../../dprint.h"
 #include "../../strcommon.h"
 #include "utils.h"
+#include "db_mod.h"
 #include "val.h"
 
 
@@ -276,6 +277,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 {
 	int l;
+	char* old_s;
 
 	if (!_c || !_v || !_s || !_len || !*_len)
 	{
@@ -342,11 +344,18 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			}
 			else
 			{
+				old_s = _s;
 				*_s++ = '\'';
-				_s += escape_common(_s, (char*)VAL_STRING(_v), l);
-				*(_s + l) = '\'';
-				*(_s + l + 1) = '\0';					   /* FIXME */
-				*_len = l + 2;
+				if(use_escape_common)
+				{
+					_s += escape_common(_s, (char*)VAL_STRING(_v), l);
+				} else {
+					memcpy(_s, VAL_STRING(_v), l);
+					_s += l;
+				}
+				*_s++ = '\'';
+				*_s = '\0'; /* FIXME */
+				*_len = _s - old_s;
 				return 0;
 			}
 			break;
@@ -360,11 +369,18 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			}
 			else
 			{
+				old_s = _s;
 				*_s++ = '\'';
-				_s += escape_common(_s, VAL_STR(_v).s, l);
-				*(_s + l) = '\'';
-				*(_s + l + 1) = '\0';					   /* FIXME */
-				*_len = l + 2;
+				if(use_escape_common)
+				{
+					_s += escape_common(_s, VAL_STR(_v).s, l);
+				} else {
+					memcpy(_s, VAL_STR(_v).s, l);
+					_s += l;
+				}
+				*_s++ = '\'';
+				*_s = '\0'; /* FIXME */
+				*_len = _s - old_s;
 				return 0;
 			}
 			break;
@@ -391,11 +407,18 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			}
 			else
 			{
+				old_s = _s;
 				*_s++ = '\'';
-				_s += escape_common(_s, VAL_BLOB(_v).s, l);
-				*(_s + l) = '\'';
-				*(_s + l + 1) = '\0';					   /* FIXME */
-				*_len = l + 2;
+				if(use_escape_common)
+				{
+					_s += escape_common(_s, VAL_BLOB(_v).s, l);
+				} else {
+					memcpy(_s, VAL_BLOB(_v).s, l);
+					_s += l;
+				}
+				*_s++ = '\'';
+				*_s = '\0'; /* FIXME */
+				*_len = _s - old_s;
 				return 0;
 			}
 			break;

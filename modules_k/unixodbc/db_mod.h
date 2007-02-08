@@ -32,5 +32,6 @@
 
 extern int ping_interval;
 extern int auto_reconnect;
+extern int use_escape_common;
 
 #endif /* DB_MOD_H */

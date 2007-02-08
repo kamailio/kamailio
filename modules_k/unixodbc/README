@@ -25,6 +25,7 @@ Marco Lorrai
 
               1.3.1. ping_interval (int)
               1.3.2. auto_reconnect (int)
+              1.3.3. use_escape_common (int)
 
         1.4. Exported Functions
         1.5. Installation & Running
@@ -38,6 +39,7 @@ Marco Lorrai
    List of Examples
    1-1. Set the "ping_interval" parameter
    1-2. Set the "auto_reconnect" parameter
+   1-3. Set the "use_escape_common" parameter
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -96,6 +98,25 @@ modparam("unixodbc", "ping_interval", 600)
    Example 1-2. Set the "auto_reconnect" parameter
 ...
 modparam("unixodbc", "auto_reconnect", 0)
+...
+     _________________________________________________________
+
+1.3.3. use_escape_common (int)
+
+   Escape values in query using internal escape_common()
+   function. It escapes single quote ''', double quote '"',
+   backslash '\', and NULL characters.
+
+   You should enable this parameter if you know that the ODBC
+   driver considers the above characters as special (for marking
+   begin and end of a value, escape other characters ...). It
+   prevents against SQL injection.
+
+   Default value is "0" (0 = disabled; 1 = enabled). 
+
+   Example 1-3. Set the "use_escape_common" parameter
+...
+modparam("unixodbc", "use_escape_common", 1)
 ...
      _________________________________________________________
 

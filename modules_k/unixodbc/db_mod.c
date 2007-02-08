@@ -33,6 +33,7 @@
 
 int ping_interval = 5 * 60; /* Default is 5 minutes */
 int auto_reconnect = 1;     /* Default is enabled */
+int use_escape_common = 0;  /* Enable common escaping */
 
 MODULE_VERSION
 
@@ -59,8 +60,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"ping_interval", INT_PARAM, &ping_interval},
-	{"auto_reconnect", INT_PARAM, &auto_reconnect},
+	{"ping_interval",     INT_PARAM, &ping_interval},
+	{"auto_reconnect",    INT_PARAM, &auto_reconnect},
+	{"use_escape_common", INT_PARAM, &use_escape_common},
 	{0, 0, 0}
 };
 

@@ -90,7 +90,7 @@ char *build_conn_str(struct db_id* id, char *buf)
 	*(p++) = ';';
 	*p = 0 ; /* make it null terminated */
 
-	DBG("DEBUG:unixodbc:build_conn_str: connection string is <%s>",buf);
+	DBG("DEBUG:unixodbc:build_conn_str: connection string is <%s>\n",buf);
 	return buf;
 }
 

@@ -101,6 +101,34 @@ modparam("unixodbc", "auto_reconnect", 0)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>use_escape_common</varname> (int)</title>
+		<para>
+		Escape values in query using internal escape_common() function.
+		It escapes single quote ''', double quote '"', backslash '\',
+		and NULL characters.
+		</para>
+		<para>
+		You should enable this parameter if you know that the ODBC driver
+		considers the above characters as special (for marking begin and end
+		of a value, escape other characters ...). It prevents against SQL
+		injection.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (0 = disabled; 1 = enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>use_escape_common</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("unixodbc", "use_escape_common", 1)
+...
+</programlisting>
+		</example>
+	</section>
     </section>
 
 	<section>
