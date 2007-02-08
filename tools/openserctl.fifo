@@ -142,7 +142,9 @@ EOF
 		cat < $path | filter_fl &
 		cat > $OSER_FIFO <<EOF
 :get_statistics:$name
-tm:
+UAS_transactions
+UAC_transactions
+inuse_transactions
 
 EOF
 		wait
@@ -152,7 +154,9 @@ EOF
 		cat < $path | filter_fl &
 		cat > $OSER_FIFO <<EOF
 :get_statistics:$name
-sl:
+sent_replies
+sent_err_replies
+received_ACKs
 
 EOF
 		wait
