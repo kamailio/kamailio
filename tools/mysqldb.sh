@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# Script for adding and dropping ser MySql tables
+# Script for adding and dropping OpenSER MySQL tables
 #
 # TO-DO: update_structures command for migriting to new
 #        table definitons
@@ -59,25 +59,25 @@ if [ -z "$DBRWUSER" ]; then
 	DBRWUSER="openser"
 fi
 # password user with full privileges over DBNAME database
-if [ -z "$DEFAULT_PW" ]; then
-	DEFAULT_PW="openserrw"
+if [ -z "$DBRWPW" ]; then
+	DBRWPW="openserrw"
 fi
 # read-only user
 if [ -z "$DBROUSER" ]; then
 	DBROUSER="openserro"
 fi
 # password for read-only user
-if [ -z "$RO_PW" ]; then
-	RO_PW="openserro"
+if [ -z "$DBROPW" ]; then
+	DBROPW="openserro"
 fi
 # full privileges MySQL user
-if [ -z "$SQL_USER" ]; then
-	SQL_USER="root"
+if [ -z "$DBROOTUSER" ]; then
+	DBROOTUSER="root"
 fi
 
-CMD="mysql -h $DBHOST -u$SQL_USER "
-DUMP_CMD="mysqldump -h $DBHOST -u$SQL_USER -c -t "
-BACKUP_CMD="mysqldump -h $DBHOST -u$SQL_USER -c "
+CMD="mysql -h $DBHOST -u$DBROOTUSER "
+DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
+BACKUP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c "
 
 # type of mysql tables
 if [ -z "$TABLE_TYPE" ]; then
@@ -125,7 +125,7 @@ usage: $COMMAND create
        $COMMAND reinstall (updates to a new OpenSER database)
        $COMMAND serweb (adds the SERWEB specific tables)
 
-       if you want to manipulate database as other MySql user than
+       if you want to manipulate database as other MySQL user than
        root, want to change database name from default value "$DBNAME",
        or want to use other values for users and password, edit the
        "config vars" section of the command $COMMAND
@@ -138,7 +138,7 @@ EOF
 prompt_pw()
 {
 	savetty=`stty -g`
-	printf "MySql password for $SQL_USER: "
+	printf "MySQL password for $DBROOTUSER: "
 	stty -echo
 	read PW
 	stty $savetty
@@ -223,12 +223,12 @@ prompt_realm()
 # calculate credentials for admin
 credentials()
 {
-	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
+	HA1=`echo -n "admin:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
+	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -279,10 +279,10 @@ create database $1 character set $CHARSET;
 use $1;
 
 # Users: ser is the regular user, serro only for reading
-GRANT ALL PRIVILEGES ON $1.* TO $DBRWUSER IDENTIFIED  BY '$DEFAULT_PW';
-GRANT ALL PRIVILEGES ON $1.* TO ${DBRWUSER}@$DBHOST IDENTIFIED BY '$DEFAULT_PW';
-GRANT SELECT ON $1.* TO $DBROUSER IDENTIFIED BY '$RO_PW';
-GRANT SELECT ON $1.* TO ${DBROUSER}@$DBHOST IDENTIFIED BY '$RO_PW';
+GRANT ALL PRIVILEGES ON $1.* TO $DBRWUSER IDENTIFIED  BY '$DBRWPW';
+GRANT ALL PRIVILEGES ON $1.* TO ${DBRWUSER}@$DBHOST IDENTIFIED BY '$DBRWPW';
+GRANT SELECT ON $1.* TO $DBROUSER IDENTIFIED BY '$DBROPW';
+GRANT SELECT ON $1.* TO ${DBROUSER}@$DBHOST IDENTIFIED BY '$DBROPW';
 
 
 #
@@ -702,7 +702,7 @@ if [ -z "$NO_USER_INIT" ] ; then
 			($USERCOL, password, first_name, last_name, phone,
 			email_address, datetime_created, datetime_modified, confirmation,
 			flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
-			VALUES ( 'admin', '$DEFAULT_PW', 'Initial', 'Admin', '123',
+			VALUES ( 'admin', '$DBRWPW', 'Initial', 'Admin', '123',
 			'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00',
 			'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
 			'$HA1', '$SIP_DOMAIN', '$HA1B',
@@ -877,7 +877,7 @@ EOF
 		echo "!                                                 !"
                 echo "! There was a default admin user created:         !"
 		echo "!    username: admin@$SIP_DOMAIN "
-		echo "!    password: $DEFAULT_PW       "
+		echo "!    password: $DBRWPW       "
 		echo "!                                                 !"
 		echo "! Please change this password or remove this user !"
 		echo "! from the subscriber and admin_privileges table. !"

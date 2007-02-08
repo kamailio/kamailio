@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# Script for adding and dropping ser MySql tables
+# Script for adding and dropping OpenSER Postgres tables
 #
 # TO-DO: update_structures command for migriting to new
 #        table definitons
@@ -80,20 +80,20 @@ if [ -z "$DBRWUSER" ]; then
 	DBRWUSER="openser"
 fi
 # password user with full privileges over DBNAME database
-if [ -z "$DEFAULT_PW" ]; then
-	DEFAULT_PW="openserrw"
+if [ -z "$DBRWPW" ]; then
+	DBRWPW="openserrw"
 fi
 # read-only user
 if [ -z "$DBROUSER" ]; then
 	DBROUSER="openserro"
 fi
 # password for read-only user
-if [ -z "$RO_PW" ]; then
-	RO_PW="openserro"
+if [ -z "$DBROPW" ]; then
+	DBROPW="openserro"
 fi
 # full privileges Postgres user
-if [ -z "$SQL_USER" ]; then
-	SQL_USER="postgres"
+if [ -z "$DBROOTUSER" ]; then
+	DBROOTUSER="postgres"
 	if [ ! -r ~/.pgpass ]; then
 		echo "~./pgpass does not exist, please create this file and support proper credentials for user postgres."
 		echo "Note: you need at least postgresql>= 7.3"
@@ -101,10 +101,10 @@ if [ -z "$SQL_USER" ]; then
 	fi
 fi
 
-CMD="psql -h $DBHOST -d template1 -U $SQL_USER "
+CMD="psql -h $DBHOST -d template1 -U $DBROOTUSER "
 # the following commands are untested:
-#   DUMP_CMD="pg_dump -h $DBHOST -u$SQL_USER -c -t "
-#   BACKUP_CMD="mysqldump -h $DBHOST -u$SQL_USER -c "
+#   DUMP_CMD="pg_dump -h $DBHOST -u$DBROOTUSER -c -t "
+#   BACKUP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c "
 
 # type of sql tables
 if [ -z "$TABLE_TYPE" ]; then
@@ -165,7 +165,7 @@ EOF
 #prompt_pw()
 #{
 #	savetty=`stty -g`
-#	printf "MySql password for $SQL_USER: "
+#	printf "Postgres password for $DBROOTUSER: "
 #	stty -echo
 #	read PW
 #	stty $savetty
@@ -252,12 +252,12 @@ prompt_realm()
 # calculate credentials for admin
 credentials()
 {
-	HA1=`echo -n "admin:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
+	HA1=`echo -n "admin:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DEFAULT_PW" | $MD5 | $AWK '{ print $1 }'`
+	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -281,8 +281,8 @@ fi
 
 # define constants for database definition
 USE_CMD='\connect'
-GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
-	CREATE USER $DBROUSER WITH PASSWORD '$RO_PW';
+GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DBRWPW';
+	CREATE USER $DBROUSER WITH PASSWORD '$DBROPW';
 	GRANT ALL PRIVILEGES ON TABLE 
 		version, 
 		acc, acc_id_seq, 
@@ -898,7 +898,7 @@ if [ -z "$NO_USER_INIT" ] ; then
 			($USERCOL, password, first_name, last_name, phone,
 			email_address, datetime_created, datetime_modified, confirmation,
 			flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
-			VALUES ( 'admin', '$DEFAULT_PW', 'Initial', 'Admin', '123',
+			VALUES ( 'admin', '$DBRWPW', 'Initial', 'Admin', '123',
 			'root@localhost', '2002-09-04 19:37:45', '$DUMMY_DATE',
 			'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
 			'$HA1', '$SIP_DOMAIN', '$HA1B',
@@ -1104,7 +1104,7 @@ EOF
 		echo "!                                                 !"
 		echo "! There was a default admin user created:         !"
 		echo "!    username: admin@$SIP_DOMAIN "
-		echo "!    password: $DEFAULT_PW       "
+		echo "!    password: $DBRWPW       "
 		echo "!                                                 !"
 		echo "! Please change this password or remove this user !"
 		echo "! from the subscriber and admin_privileges table. !"
