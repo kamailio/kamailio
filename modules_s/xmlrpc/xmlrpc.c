@@ -1532,7 +1532,7 @@ static int select_method(str* res, struct select* s, struct sip_msg* msg)
 static ABSTRACT_F(select_xmlrpc);
 
 select_row_t xmlrpc_sel[] = {
-        { NULL,          SEL_PARAM_STR, STR_STATIC_INIT("xmlrpc"), select_xmlrpc, 0},
+        { NULL,          SEL_PARAM_STR, STR_STATIC_INIT("xmlrpc"), select_xmlrpc, SEL_PARAM_EXPECTED},
         { select_xmlrpc, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
         { NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
