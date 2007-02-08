@@ -1529,7 +1529,7 @@ static int select_method(str* res, struct select* s, struct sip_msg* msg)
 	return -1;
 }
 
-ABSTRACT_F(select_xmlrpc);
+static ABSTRACT_F(select_xmlrpc);
 
 select_row_t xmlrpc_sel[] = {
         { NULL,          SEL_PARAM_STR, STR_STATIC_INIT("xmlrpc"), select_xmlrpc, 0},
