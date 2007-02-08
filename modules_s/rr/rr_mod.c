@@ -125,8 +125,9 @@ struct module_exports exports = {
 };
 
 
-ABSTRACT_F(select_rrmod)
-int select_rr_avpcookie(str* res, struct select* s, struct sip_msg* msg) {
+static ABSTRACT_F(select_rrmod)
+
+static int select_rr_avpcookie(str* res, struct select* s, struct sip_msg* msg) {
 	*res=*rr_get_avp_cookies();
 	return (res->len==0?1:0);
 }
