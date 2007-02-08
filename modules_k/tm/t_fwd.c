@@ -743,7 +743,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		if (added_branches & (1<<i)) {
 			do {
 				if (check_blacklists( t->uac[i].proxy->port,
-				(unsigned short)t->uac[i].proxy->proto,
+				t->uac[i].proxy->proto,
 				&t->uac[i].request.dst.to,
 				t->uac[i].request.buffer.s,
 				t->uac[i].request.buffer.len)) {
@@ -786,11 +786,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			set_kr(REQ_FWDED);
 		}
 	}
-	if (success_branch<=0) {
-		ser_error=E_SEND;
-		return -1;
-	}
-	return 1;
+
+	return (success_branch>0)?1:-1;
 }
 
 
