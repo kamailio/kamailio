@@ -209,13 +209,7 @@ modparam("mi_fifo", "reply_ident", "    ")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
-		<para>
-		No function exported to be used from configuration file.
-		</para>
-	</section>
 
-	<section>
 	<title>Exported Functions</title>
 		<para>
 		No function exported to be used from configuration file.

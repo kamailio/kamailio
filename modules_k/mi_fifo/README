@@ -32,7 +32,6 @@ Bogdan-Andrei Iancu
               1.4.6. reply_indent (string)
 
         1.5. Exported Functions
-        1.6. Exported Functions
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -165,11 +164,6 @@ modparam("mi_fifo", "reply_ident", "    ")
      _________________________________________________________
 
 1.5. Exported Functions
-
-   No function exported to be used from configuration file.
-     _________________________________________________________
-
-1.6. Exported Functions
 
    No function exported to be used from configuration file.
      _________________________________________________________
