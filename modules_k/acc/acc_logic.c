@@ -289,6 +289,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	/* set as new_uri the last branch */
 	new_uri_bk = req->new_uri;
 	req->new_uri = t->uac[t->nr_of_outgoings-1].uri;
+	req->parsed_uri_ok = 0;
 	/* set env variables */
 	env_set_to( get_rpl_to(t,reply) );
 	env_set_code_status( code, reply);
@@ -324,6 +325,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	}
 #endif
 	req->new_uri = new_uri_bk;
+	req->parsed_uri_ok = 0;
 }
 
 
