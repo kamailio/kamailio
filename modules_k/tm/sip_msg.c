@@ -474,8 +474,10 @@ do { \
 		new_msg->first_line.u.request.version.s =
 			translate_pointer( new_msg->buf , org_msg->buf ,
 			org_msg->first_line.u.request.version.s );
-		uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_orig_ruri);
-		uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_uri);
+		if(new_msg->parsed_orig_ruri_ok)
+			uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_orig_ruri);
+		if(new_msg->parsed_uri_ok)
+			uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_uri);
 	}
 	else if ( org_msg->first_line.type==SIP_REPLY )
 	{

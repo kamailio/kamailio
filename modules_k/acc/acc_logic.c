@@ -347,6 +347,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	if (t->relaied_reply_branch>=0) {
 		new_uri_bk = req->new_uri;
 		req->new_uri = t->uac[t->relaied_reply_branch].uri;
+		req->parsed_uri_ok = 0;
 	} else {
 		new_uri_bk.len = -1;
 		new_uri_bk.s = 0;
@@ -375,8 +376,10 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 		acc_diam_request(req);
 #endif
 
-	if (new_uri_bk.len>=0)
+	if (new_uri_bk.len>=0) {
 		req->new_uri = new_uri_bk;
+		req->parsed_uri_ok = 0;
+	}
 }
 
 

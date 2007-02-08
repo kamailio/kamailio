@@ -134,6 +134,7 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		}
 		memcpy( p, request->new_uri.s, request->new_uri.len);
 		request->new_uri.s = p;
+		request->parsed_uri_ok = 0;
 		/* make available the avp list from transaction */
 		backup_list = set_avp_list( &t->user_avps );
 		/* run branch route */

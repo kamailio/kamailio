@@ -510,6 +510,7 @@ static inline int fake_req(struct sip_msg *faked_req, struct sip_msg *shm_msg,
 	faked_req->new_uri.len = uac->uri.len;
 	memcpy( faked_req->new_uri.s, uac->uri.s, uac->uri.len);
 	faked_req->new_uri.s[faked_req->new_uri.len]=0;
+	faked_req->parsed_uri_ok = 0;
 
 	/* dst_set is imposible to restore (since it's not saved),
 	 * so let it set to NULL */
