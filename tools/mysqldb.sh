@@ -123,6 +123,8 @@ usage: $COMMAND create
        $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
        $COMMAND reinstall (updates to a new OpenSER database)
+       $COMMAND presence (adds the presence related tables)
+       $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
        $COMMAND serweb (adds the SERWEB specific tables)
 
        if you want to manipulate database as other MySQL user than
@@ -315,9 +317,7 @@ INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
-INSERT INTO version VALUES ( 'sip_trace', '1');
 INSERT INTO version VALUES ( 'address', '3');
-INSERT INTO version VALUES ( 'domainpolicy', '2');
 
 
 #
@@ -612,29 +612,6 @@ CREATE TABLE lcr (
 
 
 #
-# Table structure for table 'siptrace'
-#
-CREATE TABLE sip_trace (
-  id int(10) NOT NULL auto_increment,
-  date datetime NOT NULL default '0000-00-00 00:00:00',
-  callid varchar(254) NOT NULL default '',
-  traced_user varchar(128) NOT NULL default '',
-  msg text NOT NULL,
-  method varchar(50) NOT NULL default '',
-  status varchar(254) NOT NULL default '',
-  fromip varchar(50) NOT NULL default '',
-  toip varchar(50) NOT NULL default '',
-  fromtag varchar(64) NOT NULL default '',
-  direction varchar(4) NOT NULL default '',
-  INDEX user_idx (traced_user),
-  INDEX date_id (date),
-  INDEX ip_idx (fromip),
-  KEY call_id (callid),
-  PRIMARY KEY  (id)
-) $TABLE_TYPE;
-
-
-#
 # Table structure for table 'address'
 #
 CREATE TABLE address (
@@ -658,6 +635,245 @@ CREATE TABLE pdt (
   UNIQUE KEY sp_pdt (sdomain, prefix),
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
+EOF
+
+echo -n "Install presence related tables ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	presence_create $1
+fi
+
+echo -n "Install extra tables - imc,cpl,siptrace,domainpolicy ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	extra_create $1
+fi
+
+echo -n "Install SERWEB related tables ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	serweb_create $1
+fi
+} # openser_create
+
+
+presence_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	echo "presence_create function takes one param"
+	exit 1
+fi
+
+echo "creating presence tables into $1 ..."
+
+sql_query <<EOF
+use $1;
+
+INSERT INTO version VALUES ( 'presentity', '1');
+INSERT INTO version VALUES ( 'active_watchers', '1');
+INSERT INTO version VALUES ( 'watchers', '1');
+INSERT INTO version VALUES ( 'xcap_xml', '1');
+INSERT INTO version VALUES ( 'pua', '1');
+
+#
+# Table structure for table 'presentity'
+# 
+# used by presence module
+#
+CREATE TABLE presentity (
+  id int(10) NOT NULL auto_increment,
+  username varchar(64) NOT NULL,
+  domain varchar(124) NOT NULL,
+  event varchar(64) NOT NULL,
+  etag varchar(64) NOT NULL,
+  expires int(11) NOT NULL,
+  received_time int(11) NOT NULL,
+  body text NOT NULL,
+  UNIQUE KEY udee_presentity (username,domain,event,etag),
+  PRIMARY KEY (id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'active_watchers'
+# 
+# used by presence module
+#
+CREATE TABLE active_watchers (
+  id int(10) NOT NULL auto_increment,
+  to_user varchar(64) NOT NULL,
+  to_domain varchar(128) NOT NULL,
+  from_user varchar(64) NOT NULL,
+  from_domain varchar(128) NOT NULL,
+  event varchar(64) NOT NULL default 'presence',
+  event_id varchar(64) NOT NULL,
+  to_tag varchar(128) NOT NULL,
+  from_tag varchar(128) NOT NULL,
+  callid varchar(128) NOT NULL,
+  cseq int(11) NOT NULL,
+  contact varchar(128) NOT NULL,
+  record_route varchar(255) NOT NULL,
+  expires int(11) NOT NULL,
+  status varchar(32) NOT NULL default 'pending',
+  version int(11) NOT NULL default '0',
+  UNIQUE KEY ft_watchers (from_tag),
+  PRIMARY KEY (id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'watchers'
+# 
+# used by presence module
+#
+CREATE TABLE watchers (
+  id int(10) NOT NULL auto_increment,
+  p_user varchar(64) NOT NULL,
+  p_domain varchar(128) NOT NULL,
+  w_user varchar(64) NOT NULL,
+  w_domain varchar(128) NOT NULL,
+  subs_status varchar(64) NOT NULL,
+  reason varchar(64) NOT NULL,
+  inserted_time int(11) NOT NULL,
+  UNIQUE KEY udud_watchers (p_user,p_domain,w_user,w_domain),
+  PRIMARY KEY (id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'xcap_xml'
+# 
+# used by presence module
+#
+CREATE TABLE xcap_xml (
+  id int(10) NOT NULL auto_increment,
+  username varchar(66) NOT NULL,
+  domain varchar(128) NOT NULL,
+  xcap text NOT NULL,
+  doc_type varchar(64) NOT NULL,
+  UNIQUE KEY udd_xcap (user,domain,doc_type),
+  PRIMARY KEY (id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'pua'
+# 
+# used by pua module
+#
+CREATE TABLE pua (
+  id int(10) unsigned NOT NULL auto_increment,
+  pres_uri varchar(128) NOT NULL,
+  pres_id varchar(128) NOT NULL,
+  expires int(11) NOT NULL,
+  flag int(11) NOT NULL,
+  etag varchar(128) NOT NULL,
+  tuple_id varchar(128) NOT NULL,
+  watcher_uri varchar(128) NOT NULL,
+  call_id varchar(128) NOT NULL,
+  to_tag varchar(128) NOT NULL,
+  from_tag varchar(128) NOT NULL,
+  cseq int(11) NOT NULL,
+  PRIMARY KEY  (id)
+) $TABLE_TYPE;
+EOF
+
+	if [ $? -eq 0 ] ; then
+		echo "...presence tables created"
+	fi
+}  # end presence_create
+
+
+extra_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	echo "extra_create function takes one param"
+	exit 1
+fi
+
+echo "creating extra tables into $1 ..."
+
+sql_query <<EOF
+use $1;
+
+INSERT INTO version VALUES ( 'cpl', '1');
+INSERT INTO version VALUES ( 'imc_members', '1');
+INSERT INTO version VALUES ( 'imc_rooms', '1');
+INSERT INTO version VALUES ( 'sip_trace', '1');
+INSERT INTO version VALUES ( 'domainpolicy', '2');
+
+
+#
+# Table structure for table 'cpl'
+#
+# used by cpl-c module
+#
+CREATE TABLE cpl (
+  id int(10) unsigned NOT NULL auto_increment,
+  username varchar(64) NOT NULL,
+  domain varchar(64) NOT NULL default '',
+  cpl_xml text,
+  cpl_bin text,
+  UNIQUE KEY ud_cpl (username, domain),
+  PRIMARY KEY (id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'imc_members'
+#
+# used by imc module
+#
+CREATE TABLE imc_members (
+  id int(10) unsigned NOT NULL auto_increment,
+  user varchar(128) NOT NULL,
+  domain varchar(128) NOT NULL,
+  room varchar(64) NOT NULL,
+  flag int(11) NOT NULL,
+  UNIQUE KEY ndr_imc (user,domain,room),
+  PRIMARY KEY (id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'imc_rooms'
+#
+# used by imc module
+#
+CREATE TABLE imc_rooms (
+  id int(10) unsigned NOT NULL auto_increment,
+  name varchar(128) NOT NULL,
+  domain varchar(128) NOT NULL,
+  flag int(11) NOT NULL,
+  UNIQUE KEY nd_imc (name,domain),
+  PRIMARY KEY (id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'siptrace'
+#
+CREATE TABLE sip_trace (
+  id int(10) NOT NULL auto_increment,
+  date datetime NOT NULL default '0000-00-00 00:00:00',
+  callid varchar(254) NOT NULL default '',
+  traced_user varchar(128) NOT NULL default '',
+  msg text NOT NULL,
+  method varchar(50) NOT NULL default '',
+  status varchar(254) NOT NULL default '',
+  fromip varchar(50) NOT NULL default '',
+  toip varchar(50) NOT NULL default '',
+  fromtag varchar(64) NOT NULL default '',
+  direction varchar(4) NOT NULL default '',
+  INDEX user_idx (traced_user),
+  INDEX date_id (date),
+  INDEX ip_idx (fromip),
+  KEY call_id (callid),
+  PRIMARY KEY  (id)
+) $TABLE_TYPE;
 
 
 #
@@ -674,15 +890,13 @@ CREATE TABLE domainpolicy (
   INDEX  rule_idx (rule),
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
+
 EOF
 
-echo -n "Install SERWEB tables ?(y/n):"
-read INPUT
-if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
-then
-	serweb_create $1
-fi
-} # openser_create
+	if [ $? -eq 0 ] ; then
+		echo "...extra tables created"
+	fi
+}  # end extra_create
 
 
 serweb_create () # pars: <database name>
@@ -997,6 +1211,14 @@ case $1 in
 		;;
 	serweb)
 		serweb_create $DBNAME
+		exit $?
+		;;
+	presence)
+		presence_create $DBNAME
+		exit $?
+		;;
+	extra)
+		extra_create $DBNAME
 		exit $?
 		;;
 	drop)

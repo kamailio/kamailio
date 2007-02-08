@@ -142,6 +142,7 @@ usage: $COMMAND create
        $COMMAND drop   (!!entirely deletes tables)
        $COMMAND reinit (!!entirely deletes and than re-creates tables
        $COMMAND presence (adds the presence related tables)
+       $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
        $COMMAND serweb (adds the SERWEB specific tables)
 
  NOTE: the following commands are not tested with postgresql,
@@ -290,7 +291,6 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DBRWPW';
 		aliases, aliases_id_seq,
 		dbaliases, dbaliases_id_seq, 
 		domain, domain_id_seq, 
-		domainpolicy, domainpolicy_id_seq, 
 		grp, grp_id_seq,
 		gw, gw_id_seq, 
 		gw_grp, gw_grp_grp_id_seq, 
@@ -300,7 +300,6 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DBRWPW';
 		pdt, pdt_id_seq, 
 		re_grp, re_grp_id_seq, 
 		silo, silo_id_seq, 
-		sip_trace, sip_trace_id_seq, 
 		speed_dial, speed_dial_id_seq, 
 		subscriber, subscriber_id_seq, 
 		trusted, trusted_id_seq, 
@@ -314,7 +313,6 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DBRWPW';
 		aliases, 
 		dbaliases, 
 		domain, 
-		domainpolicy, 
 		grp, 
 		gw, 
 		gw_grp, 
@@ -324,7 +322,6 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DBRWPW';
 		pdt, 
 		re_grp, 
 		silo, 
-		sip_trace, 
 		speed_dial, 
 		subscriber, 
 		trusted, 
@@ -376,9 +373,7 @@ INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
-INSERT INTO version VALUES ( 'sip_trace', '1');
 INSERT INTO version VALUES ( 'address', '2');
-INSERT INTO version VALUES ( 'domainpolicy', '2');
 
 /*
  * Table structure for table 'subscriber' -- user database
@@ -664,28 +659,6 @@ CREATE FUNCTION "rand" () RETURNS double precision AS 'SELECT random();' LANGUAG
 
 
 /*
- * Table structure for table 'siptrace'
- */
-CREATE TABLE sip_trace (
-  id $AUTO_INCREMENT,
-  date $TIMESTAMP,
-  callid varchar(254) NOT NULL default '',
-  traced_user varchar(128) NOT NULL default '',
-  msg text NOT NULL,
-  method varchar(50) NOT NULL default '',
-  status varchar(254) NOT NULL default '',
-  fromip varchar(50) NOT NULL default '',
-  toip varchar(50) NOT NULL default '',
-  fromtag varchar(64) NOT NULL default '',
-  direction varchar(4) NOT NULL default ''
-) $TABLE_TYPE;
-CREATE INDEX user_idx ON sip_trace (traced_user);
-CREATE INDEX date_idx ON sip_trace (date);
-CREATE INDEX fromip_idx ON sip_trace (fromip);
-CREATE INDEX callid_idx ON sip_trace (callid);
-
-
-/*
 * Table structure for table 'address'
 */
 CREATE TABLE address (
@@ -710,21 +683,6 @@ CREATE TABLE pdt (
 
 
 /*
- * domainpolicy table (see README domainpolicy module)
- */
-CREATE TABLE domainpolicy (
-  id $AUTO_INCREMENT,
-  rule VARCHAR(255) NOT NULL,
-  type VARCHAR(255) NOT NULL,
-  att VARCHAR(255),
-  val VARCHAR(255),
-  comment VARCHAR(255),
-  UNIQUE ( rule, att, val )
-);
-CREATE INDEX domainpolicy_rule_idx ON domainpolicy(rule);
-
-
-/*
  * GRANT permissions
  */
 
@@ -739,13 +697,19 @@ then
 	presence_create $1
 fi
 
-echo -n "Install SERWEB tables ?(y/n):"
+echo -n "Install extra tables - imc,cpl,siptrace,domainpolicy ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	extra_create $1
+fi
+
+echo -n "Install SERWEB related tables ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
 then
 	serweb_create $1
 fi
-
 } # openser_create
 
 
@@ -761,13 +725,15 @@ GRANT_PRESENCE_CMD="
 		active_watchers, active_watchers_id_seq, 
 		presentity, presentity_id_seq, 
 		watchers, watchers_id_seq, 
-		xcap_xml, xcap_xml_id_seq
-		TO $DBRWUSER; 
+		xcap_xml, xcap_xml_id_seq,
+		pua, pua_id_seq
+		TO $DBRWUSER;
 	GRANT SELECT ON TABLE 
 		active_watchers, 
 		presentity, 
 		watchers, 
-		xcap_xml 
+		xcap_xml,
+		pua
 		TO $DBROUSER;" 
 
 echo "creating presence tables into $1 ..."
@@ -779,6 +745,7 @@ INSERT INTO version VALUES ( 'presentity', '1');
 INSERT INTO version VALUES ( 'active_watchers', '1');
 INSERT INTO version VALUES ( 'watchers', '1');
 INSERT INTO version VALUES ( 'xcap_xml', '1');
+INSERT INTO version VALUES ( 'pua', '1');
 
 /*
  * Table structure for table 'presentity'
@@ -860,6 +827,27 @@ CREATE TABLE xcap_xml (
 ) $TABLE_TYPE;
 
 
+/*
+ * Table structure for table 'pua'
+ * 
+ * used by pua module
+ */
+
+CREATE TABLE pua (
+  id $AUTO_INCREMENT,
+  pres_uri varchar(128) NOT NULL,
+  pres_id varchar(128) NOT NULL,
+  expires int(11) NOT NULL,
+  flag int(11) NOT NULL,
+  etag varchar(128) NOT NULL,
+  tuple_id varchar(128) NOT NULL,
+  watcher_uri varchar(128) NOT NULL,
+  call_id varchar(128) NOT NULL,
+  to_tag varchar(128) NOT NULL,
+  from_tag varchar(128) NOT NULL,
+  cseq int(11) NOT NULL
+) $TABLE_TYPE;
+
 
 $GRANT_PRESENCE_CMD
 
@@ -868,8 +856,131 @@ EOF
 	if [ $? -eq 0 ] ; then
 		echo "...presence tables created"
 	fi
-
 }  # end presence_create
+
+
+extra_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	echo "extra_create function takes one param"
+	exit 1
+fi
+
+GRANT_EXTRA_CMD="
+	GRANT ALL PRIVILEGES ON TABLE 
+		cpl, cpl_id_seq,
+		imc_members, imc_members_id_seq,
+		imc_rooms, imc_rooms_id_seq,
+		sip_trace, sip_trace_id_seq,
+		domainpolicy, domainpolicy_id_seq
+		TO $DBRWUSER;
+	GRANT SELECT ON TABLE 
+		cpl,
+		imc_members,
+		imc_rooms,
+		sip_trace,
+		domainpolicy
+		TO $DBROUSER;"
+
+echo "creating extra tables into $1 ..."
+
+sql_query <<EOF
+$USE_CMD $1;
+
+INSERT INTO version VALUES ( 'cpl', '1');
+INSERT INTO version VALUES ( 'imc_members', '1');
+INSERT INTO version VALUES ( 'imc_rooms', '1');
+INSERT INTO version VALUES ( 'sip_trace', '1');
+INSERT INTO version VALUES ( 'domainpolicy', '2');
+
+/*
+ * Table structure for table 'cpl'
+ * 
+ * used by cpl-c module
+ */
+CREATE TABLE cpl (
+  id $AUTO_INCREMENT,
+  username varchar(64) NOT NULL,
+  domain varchar(64) NOT NULL default '',
+  cpl_xml text,
+  cpl_bin text,
+  UNIQUE (username, domain)
+) $TABLE_TYPE;
+
+
+/*
+ * Table structure for table 'imc_members'
+ * 
+ * used by imc module
+ */
+CREATE TABLE imc_members (
+  id $AUTO_INCREMENT,
+  user varchar(128) NOT NULL,
+  domain varchar(128) NOT NULL,
+  room varchar(64) NOT NULL,
+  flag int NOT NULL,
+  UNIQUE (user,domain,room)
+) $TABLE_TYPE;
+
+
+/*
+ * Table structure for table 'imc_rooms'
+ * 
+ * used by imc module
+ */
+CREATE TABLE imc_rooms (
+  id $AUTO_INCREMENT,
+  name varchar(128) NOT NULL,
+  domain varchar(128) NOT NULL,
+  flag int NOT NULL,
+  UNIQUE (name,domain)
+) $TABLE_TYPE;
+
+
+/*
+ * Table structure for table 'siptrace'
+ */
+CREATE TABLE sip_trace (
+  id $AUTO_INCREMENT,
+  date $TIMESTAMP,
+  callid varchar(254) NOT NULL default '',
+  traced_user varchar(128) NOT NULL default '',
+  msg text NOT NULL,
+  method varchar(50) NOT NULL default '',
+  status varchar(254) NOT NULL default '',
+  fromip varchar(50) NOT NULL default '',
+  toip varchar(50) NOT NULL default '',
+  fromtag varchar(64) NOT NULL default '',
+  direction varchar(4) NOT NULL default ''
+) $TABLE_TYPE;
+CREATE INDEX user_idx ON sip_trace (traced_user);
+CREATE INDEX date_idx ON sip_trace (date);
+CREATE INDEX fromip_idx ON sip_trace (fromip);
+CREATE INDEX callid_idx ON sip_trace (callid);
+
+
+/*
+ * domainpolicy table (see README domainpolicy module)
+ */
+CREATE TABLE domainpolicy (
+  id $AUTO_INCREMENT,
+  rule VARCHAR(255) NOT NULL,
+  type VARCHAR(255) NOT NULL,
+  att VARCHAR(255),
+  val VARCHAR(255),
+  comment VARCHAR(255),
+  UNIQUE ( rule, att, val )
+);
+CREATE INDEX domainpolicy_rule_idx ON domainpolicy(rule);
+
+$GRANT_EXTRA_CMD
+
+EOF
+
+	if [ $? -eq 0 ] ; then
+		echo "...extra tables created"
+	fi
+}  # end extra_create
 
 
 serweb_create () # pars: <database name>
@@ -1219,6 +1330,18 @@ case $1 in
 			DBNAME="$1"
 		fi
 		openser_create $DBNAME
+		exit $?
+		;;
+	serweb)
+		serweb_create $DBNAME
+		exit $?
+		;;
+	presence)
+		presence_create $DBNAME
+		exit $?
+		;;
+	extra)
+		extra_create $DBNAME
 		exit $?
 		;;
 	drop)
