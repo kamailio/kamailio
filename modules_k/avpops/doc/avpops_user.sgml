@@ -395,7 +395,8 @@ modparam("avpops","db_scheme",
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			
 			<example>
@@ -423,7 +424,8 @@ avp_db_load("$ru","$avp(i1:123)/$some_scheme");
 			function. Please refer to its description.
 			</para>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			
 			<example>
@@ -448,7 +450,8 @@ avp_db_store("$ru/username","$avp(email)");
 			function. Please refer to its description.
 			</para>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_db_delete</function> usage</title>
@@ -488,7 +491,8 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_db_query</function> usage</title>
@@ -555,7 +559,8 @@ avp_write("s:abc","$avp(i:7)");           => $avp(i:7) = "abc";
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_delete</function> usage</title>
@@ -619,7 +624,8 @@ avp_delete("a3");
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_pushto</function> usage</title>
@@ -714,8 +720,8 @@ avp_pushto("$br","$avp(i:680)");
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
-			BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_check</function> usage</title>
@@ -767,7 +773,8 @@ avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_copy</function> usage</title>
@@ -813,7 +820,7 @@ avp_copy("$avp(old)","$avp(new)/gd");
 			</itemizedlist>
 			<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE.
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_printf</function> usage</title>
@@ -878,8 +885,8 @@ avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-id)");
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
-			BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_subst</function> usage</title>
@@ -970,7 +977,7 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
 			</itemizedlist>
 			<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE.
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_op</function> usage</title>
@@ -1009,7 +1016,7 @@ avp_op("$avp(number)","sub/$avp(number2)/d");
 			</itemizedlist>
 			<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE.
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>is_avp_set</function> usage</title>
@@ -1032,7 +1039,7 @@ if(is_avp_set("$avp(i:678)"))
 			</para>
 			<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE.
+			BRANCH_ROUTE and ONREPLY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_print</function> usage</title>
