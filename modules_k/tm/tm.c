@@ -221,6 +221,8 @@ static param_export_t params[]={
 		&pass_provisional_replies },
 	{ "syn_branch",               INT_PARAM,
 		&syn_branch },
+	{ "onreply_avp_mode",         INT_PARAM,
+		&onreply_avp_mode },
 	{0,0,0}
 };
 

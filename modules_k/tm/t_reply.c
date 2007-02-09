@@ -95,6 +95,7 @@
 
 /* restart fr timer on each provisional reply, default yes */
 int restart_fr_on_each_reply=1;
+int onreply_avp_mode = 0;
 
 /* private place where we create to-tags for replies */
 char tm_tags[TOTAG_VALUE_LEN];
@@ -1312,14 +1313,24 @@ int reply_received( struct sip_msg  *p_msg )
 
 	/* processing of on_reply block */
 	if (t->on_reply) {
+		if (onreply_avp_mode) {
+			/* lock the reply*/
+			LOCK_REPLIES( t );
+			/* set the as avp_list the one from transaction */
+			backup_list = set_avp_list(&t->user_avps);
+		} else {
+			backup_list = 0;
+		}
 		/* transfer transaction flag to branch context */
 		p_msg->flags = t->uas.request->flags;
 		setb0flags(t->uac[branch].br_flags);
-		/* set the as avp_list the one from transaction */
-		backup_list = set_avp_list(&t->user_avps);
 		/* run block */
 		if ( (run_top_route(onreply_rlist[t->on_reply], p_msg)&ACT_FL_DROP) &&
 		(msg_status<200) ) {
+			if (onreply_avp_mode) {
+				UNLOCK_REPLIES( t );
+				set_avp_list( backup_list );
+			}
 			DBG("DEBUG:tm:reply_received: dropping provisional reply %d\n",
 				msg_status);
 			goto done;
@@ -1327,12 +1338,15 @@ int reply_received( struct sip_msg  *p_msg )
 		/* transfer current message context back to t */
 		t->uac[branch].br_flags = getb0flags();
 		t->uas.request->flags = p_msg->flags;
-		/* restore original avp list */
-		set_avp_list( backup_list );
+		if (onreply_avp_mode)
+			/* restore original avp list */
+			set_avp_list( backup_list );
 	}
 
-	/* lock the reply*/
-	LOCK_REPLIES( t );
+	if (!onreply_avp_mode || !t->on_reply)
+		/* lock the reply*/
+		LOCK_REPLIES( t );
+
 	/* mark that the UAC received replies */
 	uac->flags |= T_UAC_HAS_RECV_REPLY;
 

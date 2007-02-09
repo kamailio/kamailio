@@ -611,6 +611,45 @@ modparam("tm", "syn_branch", 0)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>onreply_avp_mode</varname> (integer)</title>
+		<para>
+		Describes how the AVPs should be handled in reply route:
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>0</emphasis> - the AVPs will be per message only; they 
+			will not interfere with the AVPS stored in transaction; initially
+			there will be an empty list and at the end of the route, all AVPs
+			that were created will be discarded.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>1</emphasis> - the AVPs will be the transaction AVPs;
+			initially the transaction AVPs will be visible; at the end of the
+			route, the list will attached back to transaction (with all the 
+			changes)
+			</para></listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		In mode 1, you can see the AVPs yo set in request route, branch route
+		or failure route. The side efect is performance as more locking is 
+		required in order to keep the AVP's list integrity.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>onreply_avp_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "onreply_avp_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 

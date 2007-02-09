@@ -31,6 +31,7 @@
 
 
 extern int restart_fr_on_each_reply;
+extern int onreply_avp_mode;
 
 /* reply processing status */
 enum rps {
