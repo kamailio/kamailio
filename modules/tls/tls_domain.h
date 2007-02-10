@@ -150,5 +150,9 @@ tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsig
  */
 void tls_free_cfg(tls_cfg_t* cfg);
 
+/*
+ * Destroy all the config data
+ */
+void tls_destroy_cfg(void);
 
 #endif /* _TLS_DOMAIN_H */

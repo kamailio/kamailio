@@ -125,7 +125,7 @@ static void ser_free(void *ptr)
 /*
  * Initialize TLS socket
  */
-int tls_init(struct socket_info *si)
+int tls_h_init_si(struct socket_info *si)
 {
 	int ret;
 	     /*
@@ -266,9 +266,9 @@ end:
 /*
  * First step of TLS initialization
  */
-int init_tls(void)
+int init_tls_h(void)
 {
-	struct socket_info* si;
+	/*struct socket_info* si;*/
 	long ssl_version;
 	int lib_kerberos;
 	int lib_zlib;
@@ -283,16 +283,16 @@ int init_tls(void)
 	/* check if version have the same major minor and fix level
 	 * (e.g. 0.9.8a & 0.9.8c are ok, but 0.9.8 and 0.9.9x are not) */
 	if ((ssl_version>>8)!=(OPENSSL_VERSION_NUMBER>>8)){
-		LOG(L_CRIT, "ERROR: tls: tls_init: installed openssl library version "
-				"is too different from the library the ser tls module was "
-				"compiled with: installed \"%s\" (0x%08lx), compiled \"%s\" "
-				"(0x%08lx).\n"
+		LOG(L_CRIT, "ERROR: tls: init_tls_h: installed openssl library "
+				"version is too different from the library the ser tls module "
+				"was compiled with: installed \"%s\" (0x%08lx), compiled "
+				"\"%s\" (0x%08lx).\n"
 				" Please make sure a compatible version is used"
 				" (tls_force_run in ser.cfg will override this check)\n",
 				SSLeay_version(SSLEAY_VERSION), ssl_version,
 				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER);
 		if (tls_force_run)
-			LOG(L_WARN, "tls: tls_init: tls_force_run turned on, ignoring "
+			LOG(L_WARN, "tls: init_tls_h: tls_force_run turned on, ignoring "
 						" openssl version mismatch\n");
 		else
 			return -1; /* safer to exit */
@@ -321,11 +321,11 @@ int init_tls(void)
 		if (strstr(lib_cflags, "-DKRB5_"))
 			lib_kerberos=1;
 	}
-	LOG(L_INFO, "tls: tls_init:  compiled  with  openssl  version " 
+	LOG(L_INFO, "tls: _init_tls_h:  compiled  with  openssl  version " 
 				"\"%s\" (0x%08lx), kerberos support: %s, compression: %s\n",
 				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER,
 				kerberos_support?"on":"off", comp_support?"on":"off");
-	LOG(L_INFO, "tls: tls_init: installed openssl library version "
+	LOG(L_INFO, "tls: init_tls_h: installed openssl library version "
 				"\"%s\" (0x%08lx), kerberos support: %s, "
 				" zlib compression: %s"
 				"\n %s\n",
@@ -335,7 +335,7 @@ int init_tls(void)
 				SSLeay_version(SSLEAY_CFLAGS));
 	if (lib_kerberos!=kerberos_support){
 		if (lib_kerberos!=-1){
-			LOG(L_CRIT, "ERROR: tls: tls_init: openssl compile options"
+			LOG(L_CRIT, "ERROR: tls: init_tls_h: openssl compile options"
 						" mismatch: library has kerberos support"
 						" %s and ser tls %s (unstable configuration)\n"
 						" (tls_force_run in ser.cfg will override this"
@@ -344,12 +344,12 @@ int init_tls(void)
 						kerberos_support?"enabled":"disabled"
 				);
 			if (tls_force_run)
-				LOG(L_WARN, "tls: tls_init: tls_force_run turned on, ignoring "
-						" kerberos support mismatch\n");
+				LOG(L_WARN, "tls: init_tls_h: tls_force_run turned on, "
+						"ignoring kerberos support mismatch\n");
 			else
 				return -1; /* exit, is safer */
 		}else{
-			LOG(L_WARN, "WARNING: tls: tls_init: openssl  compile options"
+			LOG(L_WARN, "WARNING: tls: init_tls_h: openssl  compile options"
 						" missing -- cannot detect if kerberos support is"
 						" enabled. Possible unstable configuration\n");
 		}
@@ -366,16 +366,17 @@ int init_tls(void)
 		return -1;
 	init_tls_compression();
 	#ifdef TLS_KSSL_WORKARROUND
-		LOG(L_WARN, "tls: init_tls: openssl kerberos malloc bug detected, "
+		LOG(L_WARN, "tls: init_tls_h: openssl kerberos malloc bug detected, "
 			" kerberos support will be disabled...\n");
 	#endif
 	SSL_library_init();
 	SSL_load_error_strings();
 	init_ssl_methods();
-
+#if 0
+	/* OBSOLETE: we are using the tls_h_init_si callback */
 	     /* Now initialize TLS sockets */
 	for(si = tls_listen; si; si = si->next) {
-		if (tls_init(si) < 0)  return -1;
+		if (tls_h_init_si(si) < 0)  return -1;
 		     /* get first ipv4/ipv6 socket*/
 		if ((si->address.af == AF_INET) &&
 		    ((sendipv4_tls == 0) || (sendipv4_tls->flags & SI_IS_LO))) {
@@ -387,6 +388,7 @@ int init_tls(void)
 		}
 #endif
 	}
+#endif
 
 	return 0;
 }
@@ -417,9 +419,11 @@ int tls_check_sockets(tls_cfg_t* cfg)
 /*
  * TLS cleanup when SER exits
  */
-void destroy_tls(void)
+void destroy_tls_h(void)
 {
+	DBG("tls module final tls destroy\n");
 	ERR_free_strings();
 	/* TODO: free all the ctx'es */
+	tls_destroy_cfg();
 	tls_destroy_locks();
 }

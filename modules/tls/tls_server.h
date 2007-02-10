@@ -49,23 +49,23 @@ void tls_print_errstack(void);
 /*
  * Called when new tcp connection is accepted 
  */
-int tls_tcpconn_init(struct tcp_connection *c, int sock);
+int tls_h_tcpconn_init(struct tcp_connection *c, int sock);
 
 /*
  * clean the extra data upon connection shut down 
  */
-void tls_tcpconn_clean(struct tcp_connection *c);
+void tls_h_tcpconn_clean(struct tcp_connection *c);
 
 /*
  * shut down the TLS connection 
  */
-void tls_close(struct tcp_connection *c, int fd);
+void tls_h_close(struct tcp_connection *c, int fd);
 
-size_t tls_blocking_write(struct tcp_connection *c, int fd,
-			  const char *buf, size_t len);
+int tls_h_blocking_write(struct tcp_connection *c, int fd,
+			  const char *buf, unsigned int len);
 
-size_t tls_read(struct tcp_connection *c);
+int tls_h_read(struct tcp_connection *c);
 
-int tls_fix_read_conn(struct tcp_connection *c);
+int tls_h_fix_read_conn(struct tcp_connection *c);
 
 #endif /* _TLS_SERVER_H */
