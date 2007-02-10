@@ -49,22 +49,25 @@
 /* 
  * Extract URI depending on the request from To or From header 
  */
-static inline int get_uri(struct sip_msg* _m, str** _uri)
+static inline int get_uri_user(struct sip_msg* _m, str** _uri_user)
 {
+    struct sip_uri *puri;
+
     if ((REQ_LINE(_m).method.len == 8) && 
 	(memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
-	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || !_m->to)) {
-	    LOG(L_ERR, "get_uri(): To header field not found or malformed\n");
+	if ((puri=parse_to_uri(_m))==NULL) {
+	    LOG(L_ERR, "get_uri_user(): Error while parsing To header\n");
 	    return -1;
 	}
-	*_uri = &(get_to(_m)->uri);
     } else {
-	if (parse_from_header(_m)<0) {
-	    LOG(L_ERR, "get_uri(): Error while parsing headers\n");
-	    return -2;
+	if ((puri=parse_from_uri(_m))==NULL) {
+	    LOG(L_ERR, "get_uri_user(): Error while parsing From header\n");
+	    return -1;
 	}
-	*_uri = &(get_from(_m)->uri);
     }
+
+    *_uri_user = &(puri->user);
+
     return 0;
 }
 
@@ -79,8 +82,7 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
     auth_result_t ret;
     struct hdr_field* h;
     auth_body_t* cred;
-    str* uri;
-    struct sip_uri puri;
+    str *uri_user;
     str user, domain;
     xl_value_t xl_val;
 
@@ -126,20 +128,16 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
 	    return -1;
 	}
     } else {
-	if (get_uri(_msg, &uri) < 0) {
+	if (get_uri_user(_msg, &uri_user) < 0) {
 	    LOG(L_ERR, "authorize(): To/From URI not found\n");
 	    return -1;
 	}
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-	    LOG(L_ERR, "authorize(): Error while parsing From/To URI\n");
-	    return -1;
-	}
-	user.s = (char *)pkg_malloc(puri.user.len);
+	user.s = (char *)pkg_malloc(uri_user->len);
 	if (user.s == NULL) {
-	    LOG(L_ERR, "authorize: No memory left for user \n");
+	    LOG(L_ERR, "authorize: No memory left for user\n");
 	    return -1;
 	}
-	un_escape(&(puri.user), &user);
+	un_escape(uri_user, &user);
 	res = radius_authorize_sterman(_msg, &cred->digest, 
 				       &_msg->first_line.u.request.method,
 				       &user);
