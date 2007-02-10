@@ -36,6 +36,8 @@
  * 2003-04-06: db connection closed in mod_init (janakj)
  * 2004-06-06  updated to the new DB api, cleanup: static dbf & handler,
  *              calls to domain_db_{bind,init,close,ver} (andrei)
+ * 2007-02-09  updated to the new tls_hooks api and renamed tls hooks hanlder
+ *              functions to avoid conflicts: s/tls_/tls_h_/   (andrei)
  */
 
 #include <sys/types.h>
@@ -45,10 +47,10 @@
 #include "../../sr_module.h"
 #include "../../ip_addr.h"
 #include "../../trim.h"
-#include "../../transport.h"
 #include "../../globals.h"
 #include "../../timer_ticks.h"
 #include "../../timer.h" /* ticks_t */
+#include "../../tls_hooks.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
@@ -56,6 +58,13 @@
 #include "tls_config.h"
 #include "tls_rpc.h"
 #include "tls_mod.h"
+
+#ifndef TLS_HOOKS
+	#error "TLS_HOOKS must be defined, or the tls module won't work"
+#endif
+#ifdef CORE_TLS
+	#error "conflict: CORE_TLS must _not_ be defined"
+#endif
 
 
 /* maximum accepted lifetime (maximum possible is  ~ MAXINT/2)
@@ -220,22 +229,18 @@ struct module_exports exports = {
 
 
 
-transport_t tls_transport = {
-	PROTO_TLS,
-	STR_STATIC_INIT("TLS"),
-	TRANSPORT_SECURE | TRANSPORT_STREAM,
-	{ 
-		.tcp = {
-			tls_tcpconn_init,
-			tls_tcpconn_clean,
-			tls_close,
-			tls_blocking_write,
-			tls_read,
-			tls_fix_read_conn,
-		}
-	},
-	0
+static struct tls_hooks tls_h = {
+	tls_h_read,
+	tls_h_blocking_write,
+	tls_h_tcpconn_init,
+	tls_h_tcpconn_clean,
+	tls_h_close,
+	tls_h_fix_read_conn,
+	tls_h_init_si,
+	init_tls_h,
+	destroy_tls_h
 };
+
 
 
 #if 0
@@ -258,6 +263,11 @@ static int mod_init(void)
 {
 	int method;
 
+	if (tls_disable){
+		LOG(L_WARN, "WARNING: tls: mod_init: tls support is disabled "
+				"(set enable_tls=1 in the config to enable it)\n");
+		return 0;
+	}
 	     /* Convert tls_method parameter to integer */
 	method = tls_parse_method(&tls_method);
 	if (method < 0) {
@@ -273,10 +283,10 @@ static int mod_init(void)
 	}
 	*tls_cfg = NULL;
 
-	tls = &tls_transport;
+	register_tls_hooks(&tls_h);
 	register_select_table(tls_sel);
 
-	if (init_tls() < 0) return -1;
+	 /* if (init_tls() < 0) return -1; */
 	
 	tls_cfg_lock = lock_alloc();
 	if (tls_cfg_lock == 0) {
@@ -323,6 +333,8 @@ static int mod_init(void)
 
 static int mod_child(int rank)
 {
+	if (tls_disable || (tls_cfg==0))
+		return 0;
 	/* fix tls config only from the main proc., when we know 
 	 * the exact process number */
 	if (rank == PROC_MAIN){
@@ -340,21 +352,4 @@ static int mod_child(int rank)
 
 static void destroy(void)
 {
-	tls_cfg_t* ptr;
-
-	if (tls_cfg_lock) {
-		lock_destroy(tls_cfg_lock);
-		lock_dealloc(tls_cfg_lock);
-	}
-
-	if (tls_cfg) {
-		while(*tls_cfg) {
-			ptr = *tls_cfg;
-			*tls_cfg = (*tls_cfg)->next;
-			tls_free_cfg(ptr);
-		}
-		
-		shm_free(tls_cfg);
-	}
-	destroy_tls();
 }

@@ -119,6 +119,29 @@ void tls_free_cfg(tls_cfg_t* cfg)
 }
 
 
+
+void tls_destroy_cfg(void)
+{
+	tls_cfg_t* ptr;
+
+	if (tls_cfg_lock) {
+		lock_destroy(tls_cfg_lock);
+		lock_dealloc(tls_cfg_lock);
+	}
+
+	if (tls_cfg) {
+		while(*tls_cfg) {
+			ptr = *tls_cfg;
+			*tls_cfg = (*tls_cfg)->next;
+			tls_free_cfg(ptr);
+		}
+		
+		shm_free(tls_cfg);
+	}
+}
+
+
+
 /*
  * Print TLS domain identifier
  */

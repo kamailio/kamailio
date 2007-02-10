@@ -587,7 +587,7 @@ static int tls_write(struct tcp_connection *c, const void *buf, size_t len, int*
  * access to it yet, this is called before adding the tcp_connection
  * structure into the hash 
  */
-int tls_tcpconn_init(struct tcp_connection *c, int sock)
+int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
 {
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
@@ -600,7 +600,7 @@ int tls_tcpconn_init(struct tcp_connection *c, int sock)
 /*
  * clean the extra data upon connection shut down 
  */
-void tls_tcpconn_clean(struct tcp_connection *c)
+void tls_h_tcpconn_clean(struct tcp_connection *c)
 {
 	struct tls_extra_data* extra;
 	/*
@@ -623,7 +623,7 @@ void tls_tcpconn_clean(struct tcp_connection *c)
 /*
  * perform one-way shutdown, do not wait fro notify from the remote peer 
  */
-void tls_close(struct tcp_connection *c, int fd)
+void tls_h_close(struct tcp_connection *c, int fd)
 {
 	     /*
 	      * runs within global tcp lock 
@@ -643,8 +643,8 @@ void tls_close(struct tcp_connection *c, int fd)
 /*
  * fixme: probably does not work correctly 
  */
-size_t tls_blocking_write(struct tcp_connection *c, int fd, const char *buf,
-			  size_t len)
+int tls_h_blocking_write(struct tcp_connection *c, int fd, const char *buf,
+			  unsigned int len)
 {
 	int err, n, ticks, tout;
 	fd_set sel_set;
@@ -748,7 +748,7 @@ again:
  * connection and attempt write to it which would result in updating the
  * ssl structures 
  */
-size_t tls_read(struct tcp_connection * c)
+int tls_h_read(struct tcp_connection * c)
 {
 	struct tcp_req* r;
 	int bytes_free, bytes_read, err, ssl_err;
@@ -829,7 +829,7 @@ size_t tls_read(struct tcp_connection * c)
  * does not transit a connection into S_CONN_OK then tcp layer would not
  * call tcp_read 
  */
-int tls_fix_read_conn(struct tcp_connection *c)
+int tls_h_fix_read_conn(struct tcp_connection *c)
 {
 	int ret;
 	ret = 0;
