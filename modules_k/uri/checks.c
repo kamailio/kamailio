@@ -297,8 +297,8 @@ ok:
  */
 int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 {
-	str *ruri, furi;
-	struct sip_uri pfuri;
+	str *ruri;
+	struct sip_uri *pfuri;
 	str suri;
 	char* at;
 
@@ -308,17 +308,12 @@ int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 
 	if (strncmp(ruri->s, "tel:", 4) != 0) return 1;
 
-	if (parse_from_header(_msg) < 0) {
+	if ((pfuri=parse_from_uri(_msg))==NULL) {
 		LOG(L_ERR, "tel2sip(): Error while parsing From header\n");
 		return -1;
 	}
-	furi = get_from(_msg)->uri;
-	if (parse_uri(furi.s, furi.len, &pfuri) < 0) {
-		LOG(L_ERR, "tel2sip(): Error while parsing From URI\n");
-		return -1;
-	}
 
-	suri.len = 4 + ruri->len - 4 + 1 + pfuri.host.len + 1 + 10;
+	suri.len = 4 + ruri->len - 4 + 1 + pfuri->host.len + 1 + 10;
 	suri.s = pkg_malloc(suri.len);
 	if (suri.s == 0) {
 		LOG(L_ERR, "tel2sip(): Memory allocation failure\n");
@@ -331,13 +326,11 @@ int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 	at = at + ruri->len - 4;
 	*at = '@';
 	at = at + 1;
-	memcpy(at, pfuri.host.s, pfuri.host.len);
-	at = at + pfuri.host.len;
+	memcpy(at, pfuri->host.s, pfuri->host.len);
+	at = at + pfuri->host.len;
 	*at = ';';
 	at = at + 1;
 	memcpy(at, "user=phone", 10);
-
-	LOG(L_ERR, "tel2sip(): SIP URI is <%.*s>\n", suri.len, suri.s);
 
 	if (rewrite_uri(_msg, &suri) == 1) {
 		pkg_free(suri.s);
