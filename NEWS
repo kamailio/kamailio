@@ -10,6 +10,8 @@ new archs:
 
 
 modules:
+ - tls        - new module that enables tls support (set enable_tls=yes
+                in the config file and load the tls module)
  - ctl        - new  fifo/unixsocket/xmlrpc like module, using a space 
                 efficient binary encoding for the requests.
                 It supports multiple clients on tcp, udp, unix stream or
@@ -89,6 +91,9 @@ modules:
               Vias a.s.o) and not on the original message
  
 core:
+ - compiled by default with tls hooks support (so that no recompile is
+   needed before loading the tls module and enabling the tls support)
+ -  enable_tls config option added (the reverse of disable_tls)
  - added STUN keep-alive functionality in accordance with 
    draft-ietf-behave-rfc3489bis-04.txt
  - dns cache and dns failover support added (see doc/dns.txt)
@@ -177,6 +182,9 @@ core:
    are available (see tm docs)
 - avps directly accessible from script with %avp_name (variable style)
 new config variables:
+   enable_tls/disable_tls = enable/disable tls support, default disable.
+       Note: a tls "engine" is still needed (e.g. the tls module must
+              be loaded, enable_tls by itself is not enough).
    exit_timeout = seconds - how much time ser will wait for all the shutdown
        procedures to complete. If this time is exceeded, all the remaining
        processes are immediately killed and ser exits immediately (it might
