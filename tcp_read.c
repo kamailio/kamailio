@@ -61,8 +61,10 @@
 #include "receive.h"
 #include "timer.h"
 #include "ut.h"
-#ifdef USE_TLS
+#ifdef CORE_TLS
 #include "tls/tls_server.h"
+#else
+#include "tls_hooks.h"
 #endif
 
 #define HANDLE_IO_INLINE

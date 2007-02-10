@@ -120,9 +120,14 @@
 #include "tcp_init.h"
 #include "tsend.h"
 #include "timer_ticks.h"
-#ifdef USE_TLS
+#ifdef CORE_TLS
 #include "tls/tls_server.h"
-#endif 
+#define tls_loaded() 1
+#else
+#include "tls_hooks_init.h"
+#include "tls_hooks.h"
+#endif
+
 #include "tcp_info.h"
 
 #define local_malloc pkg_malloc
@@ -1676,7 +1681,7 @@ void tcp_main_loop()
 		}
 	}
 #ifdef USE_TLS
-	if (!tls_disable){
+	if (!tls_disable && tls_loaded()){
 		for (si=tls_listen; si; si=si->next){
 			if ((si->proto==PROTO_TLS) && (si->socket!=-1)){
 				if (io_watch_add(&io_h, si->socket, F_SOCKINFO, si)<0){

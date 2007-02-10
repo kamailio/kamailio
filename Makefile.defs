@@ -51,6 +51,8 @@
 #  2006-03-31  armv6 & mips64 support added
 #              mips and arm set to NOSMP by default (andrei)
 #  2006-07-10  added -DPROFILING (hscholz)
+#  2007-02-09  added TLS_HOOKS and CORE_TLS support, obsoleted TLS=1
+#              added TLS_EXTRA_LIBS (andrei)
 
 
 # check if already included/exported
@@ -67,7 +69,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev66
+EXTRAVERSION = -dev67
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -102,10 +104,16 @@ OSREL_N= $(shell echo $(OSREL) | sed -e 's/^[^0-9]*//' \
 		[ -n "$$C" ] && R=`expr $$R \* 1000 + $$C`; echo $$R ) )
 
 # TLS support
-TLS ?= 
-ifneq ($(TLS),)
+CORE_TLS ?= 
+TLS_HOOKS ?= 
+ifeq ($(CORE_TLS), 1)
+	RELEASE:=$(RELEASE)-tls
+	TLS_HOOKS:=0
+endif
+ifeq ($(TLS_HOOKS), 1)
 	RELEASE:=$(RELEASE)-tls
 endif
+
 # extra CC command line options (e.g  -march=athlon-mp)
 CC_EXTRA_OPTS ?=
 
@@ -327,8 +335,21 @@ endif
 # -DDISABLE_NAGLE
 #		disable the tcp Nagle algorithm (lower delay)
 # -DUSE_TLS
-#		compiles in tls support, requires -DUSE_TCP. Please use
-#		make TLS=1 instead. (tls support is highly experimental for now)
+#		compiles in tls support, requires -DUSE_TCP. Note: this is only 
+#		generic support (parsing a.s.o.), it does not include the actual
+#		"tls engine". If you really want tls you need also either
+#		-DCORE_TLS and a tls/ subdir with the tls code or -DTLS_HOOKS and
+#		the tls module loaded.
+# -DCORE_TLS
+#		compiles tls in-core support. Requires -DUSE_TLS, conflicts 
+#		-DTLS_HOOKS. Please use make CORE_TLS=1 instead  (it will set all the
+#		needed defines automatically and extra libraries needed for linking).
+# -DTLS_HOOKS
+#		compile tls module support (support for having the "tls engine" in a
+#		module). Requires -DUSE_TLS, conflicts -DCORE_TLS.
+#		Please use make TLS_HOOKS=1 (or TLS_HOOKS=0 to for disabling) instead
+#		of setting -DTLS_HOOKS (it will set all the needed defines 
+#		automatically)
 # -DHAVE_RESOLV_RES
 #		support for changing some of the resolver parameters present
 #		 (_res structure in <resolv.h>)
@@ -395,8 +416,11 @@ DEFS+= $(extra_defs) \
 # use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
 # debugging symbols in all cases (-g). --andrei
 
-ifneq ($(TLS),)
-	DEFS+= -DUSE_TLS
+ifeq ($(CORE_TLS), 1)
+	DEFS+= -DUSE_TLS -DCORE_TLS
+endif
+ifeq ($(TLS_HOOKS), 1)
+	DEFS+= -DUSE_TLS -DTLS_HOOKS
 endif
 
 ifneq ($(STUN),)
@@ -1405,9 +1429,13 @@ ifneq (,$(findstring CYGWIN, $(OS)))
 endif
 
 #add libssl if needed
-ifneq ($(TLS),)
+ifeq ($(CORE_TLS), 1)
 DEFS+= -I$(LOCALBASE)/ssl/include
-LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
+LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl -lcrypto \
+		$(TLS_EXTRA_LIBS)
+# NOTE: depending on the way in which libssl was compiled you might
+#       have to add -lz -lkrb5   (zlib and kerberos5).
+#       E.g.: make CORE_TLS=1 EXTRA_TLS_LIBS="-lz -lkrb5"
 endif
 
 ifneq ($(STUN),)

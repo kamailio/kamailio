@@ -69,7 +69,9 @@
  *              init_childs(PROC_MAIN) before starting tcp_main, to allow
  *               tcp usage for module started processes (andrei)
  * 2007-01-18  children shutdown procedure moved into shutdown_children;
-*               safer shutdown on start-up error (andrei)
+ *               safer shutdown on start-up error (andrei)
+ * 2007-02-09  TLS support split into tls-in-core (CORE_TLS) and generic TLS 
+ *             (USE_TLS)  (andrei)
  */
 
 
@@ -131,10 +133,14 @@
 #ifdef USE_TCP
 #include "poll_types.h"
 #include "tcp_init.h"
-#ifdef USE_TLS
+#ifdef CORE_TLS
 #include "tls/tls_init.h"
-#endif
-#endif
+#define tls_has_init_si() 1
+#define tls_loaded() 1
+#else
+#include "tls_hooks_init.h"
+#endif /* CORE_TLS */
+#endif /* USE_TCP */
 #include "usr_avp.h"
 #include "core_cmd.h"
 #include "flags.h"
@@ -260,8 +266,12 @@ int tcp_children_no = 0;
 int tcp_disable = 0; /* 1 if tcp is disabled */
 #endif
 #ifdef USE_TLS
-int tls_disable = 0; /* 1 if tls is disabled */
-#endif
+#ifdef	CORE_TLS
+int tls_disable = 0;  /* tls enabled by default */
+#else
+int tls_disable = 1;  /* tls disabled by default */
+#endif /* CORE_TLS */
+#endif /* USE_TLS */
 
 struct process_table *pt=0;		/*array with children pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
@@ -959,7 +969,7 @@ int main_loop()
 			}
 		}
 #ifdef USE_TLS
-		if (!tls_disable){
+		if (!tls_disable && tls_has_init_si()){
 			for(si=tls_listen; si; si=si->next){
 				/* same as for tcp*/
 				if (tls_init(si)==-1)  goto error;
@@ -1553,6 +1563,12 @@ try_again:
 #ifdef USE_TCP
 #ifdef USE_TLS
 	if (!tls_disable){
+		if (!tls_loaded()){
+			LOG(L_WARN, "WARNING: tls support enabled, but no tls engine "
+						" available (forgot to load the tls module?)\n");
+			LOG(L_WARN, "WARNING: disabling tls...\n");
+			tls_disable=1;
+		}
 		/* init tls*/
 		if (init_tls()<0){
 			LOG(L_CRIT, "could not initialize tls, exiting...\n");

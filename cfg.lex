@@ -272,7 +272,8 @@ TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
 TCP_CON_LIFETIME	"tcp_connection_lifetime"
 TCP_POLL_METHOD		"tcp_poll_method"
 TCP_MAX_CONNECTIONS	"tcp_max_connections"
-DISABLE_TLS		"disable_tls"
+DISABLE_TLS		"disable_tls"|"tls_disable"
+ENABLE_TLS		"enable_tls"|"tls_enable"
 TLSLOG			"tlslog"|"tls_log"
 TLS_PORT_NO		"tls_port_no"
 TLS_METHOD		"tls_method"
@@ -501,6 +502,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{TCP_MAX_CONNECTIONS}	{ count(); yylval.strval=yytext;
 									return TCP_MAX_CONNECTIONS; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
+<INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_PORT_NO}	{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_METHOD}	{ count(); yylval.strval=yytext; return TLS_METHOD; }

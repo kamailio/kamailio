@@ -14,7 +14,7 @@
 sources=$(filter-out $(auto_gen), $(wildcard *.c) $(wildcard mem/*.c) \
 		$(wildcard parser/*.c) $(wildcard parser/digest/*.c) \
 		$(wildcard parser/contact/*.c) $(wildcard db/*.c) ) $(auto_gen)
-ifneq ($(TLS),)
+ifeq ($(CORE_TLS), 1)
 	sources+= $(wildcard tls/*.c)
 endif
 objs=$(sources:.c=.o)

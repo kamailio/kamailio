@@ -232,7 +232,7 @@ tar_name=$(NAME)-$(RELEASE)_src
 
 tar_extra_args+=$(addprefix --exclude=$(notdir $(CURDIR))/, \
 					$(auto_gen) $(auto_gen_others))
-ifneq ($(TLS),)
+ifeq ($(CORE_TLS), 1)
 	tar_extra_args+=
 else
 	tar_extra_args+=--exclude=$(notdir $(CURDIR))/tls* 
@@ -242,6 +242,12 @@ ifneq ($(nodeb),)
 	tar_extra_args+=--exclude=$(notdir $(CURDIR))/debian 
 	tar_name:=$(tar_name)_nodeb
 endif
+
+# sanity checks
+ifneq ($(TLS),)
+	$(warning "make TLS option is obsoleted, try TLS_HOOKS or CORE_TLS")
+endif
+
 # include the common rules
 include Makefile.rules
 
