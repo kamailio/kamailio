@@ -40,7 +40,7 @@
 #include <errno.h>
 #include <ctype.h> /* isprint */
 #include <time.h> /* time */
-#include <stropts.h>
+/* #include <stropts.h>  - is this really needed? --andrei */
 
 #include "../../modules/ctl/ctl_defaults.h" /* default socket & port */
 #include "../../modules/ctl/init_socks.h"
