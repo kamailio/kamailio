@@ -49,25 +49,25 @@ int bind_usrloc(usrloc_api_t* api)
 		return -1;
 	}
 
-	api->register_udomain = (register_udomain_t)register_udomain;
-	api->get_all_ucontacts = (get_all_ucontacts_t)get_all_ucontacts;
-	api->insert_urecord = (insert_urecord_t)insert_urecord;
-	api->delete_urecord = (delete_urecord_t)delete_urecord;
-	api->get_urecord = (get_urecord_t)get_urecord;
-	api->lock_udomain = (lock_udomain_t)lock_udomain;
-	api->unlock_udomain = (unlock_udomain_t)unlock_udomain;
-	api->release_urecord = (release_urecord_t)release_urecord;
-	api->insert_ucontact = (insert_ucontact_t)insert_ucontact;
-	api->delete_ucontact = (delete_ucontact_t)delete_ucontact;
-	api->get_ucontact = (get_ucontact_t)get_ucontact;
-	api->update_ucontact = (update_ucontact_t)update_ucontact;
-	api->register_watcher = (register_watcher_t)register_watcher;
-	api->unregister_watcher = (unregister_watcher_t)unregister_watcher;
-	api->register_ulcb = (register_ulcb_t)register_ulcb;
+	api->register_udomain   = register_udomain;
+	api->get_all_ucontacts  = get_all_ucontacts;
+	api->insert_urecord     = insert_urecord;
+	api->delete_urecord     = delete_urecord;
+	api->get_urecord        = get_urecord;
+	api->lock_udomain       = lock_udomain;
+	api->unlock_udomain     = unlock_udomain;
+	api->release_urecord    = release_urecord;
+	api->insert_ucontact    = insert_ucontact;
+	api->delete_ucontact    = delete_ucontact;
+	api->get_ucontact       = get_ucontact;
+	api->update_ucontact    = update_ucontact;
+	api->register_watcher   = register_watcher;
+	api->unregister_watcher = unregister_watcher;
+	api->register_ulcb      = register_ulcb;
 
 	api->use_domain = use_domain;
-	api->db_mode = db_mode;
-	api->nat_flag = nat_bflag;
+	api->db_mode    = db_mode;
+	api->nat_flag   = nat_bflag;
 
 	return 0;
 }

@@ -521,6 +521,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
 
 	ptr = 0;
 	no_callid = 0;
+	*_co = 0;
 
 	switch (matching_mode) {
 		case CONTACT_ONLY:
