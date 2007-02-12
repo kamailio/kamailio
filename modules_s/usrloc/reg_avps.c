@@ -295,12 +295,12 @@ int read_reg_avps(struct sip_msg *m, char* _domain, char* fp)
 
 int dup_reg_avps(struct ucontact *dst, struct ucontact *src)
 {
+	struct usr_avp *avp, *dup;
+	avp_t *first, *last;
+	
 	/* no locking here! TODO: do it in package memory !!! */
 
 	if (!use_reg_avps()) return 0; /* don't use reg avps */
-	
-	struct usr_avp *avp, *dup;
-	avp_t *first, *last;
 	
 	/* destroy old AVPs */
 	/* if (dst->avps) db_delete_reg_avps(dst); */

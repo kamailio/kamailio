@@ -395,12 +395,12 @@ mod_init(void)
 			int weight;
 
 			weight = 1;
-			while (*p && isspace(*p))
+			while (*p && isspace((unsigned char)*p))
 				++p;
 			if (p >= plim)
 				break;
 			p1 = p;
-			while (*p && !isspace(*p))
+			while (*p && !isspace((unsigned char)*p))
 				++p;
 			if (p <= p1)
 				break; /* may happen??? */
@@ -1825,7 +1825,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 		case 'N':
 			i++;
 			s.s = str1.s+i; 
-			for (s.len = 0; i<str1.len && isdigit(str1.s[i]); i++, s.len++)
+			for (s.len = 0; i<str1.len && isdigit((unsigned char)str1.s[i]);
+					i++, s.len++)
 				continue;
 			if (s.len == 0) {
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: non-negative integer"

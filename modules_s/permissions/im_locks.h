@@ -39,8 +39,8 @@ void reader_release_imhash(void);
 
 /* writer lock for ipmatch cache */
 #define writer_init_imhash_lock()	lock_init(&(IM_HASH)->write_lock);
-#define writer_lock_imhash(void)	lock_get(&(IM_HASH)->write_lock);
-#define writer_release_imhash(void)	lock_release(&(IM_HASH)->write_lock);
+#define writer_lock_imhash()	lock_get(&(IM_HASH)->write_lock);
+#define writer_release_imhash()	lock_release(&(IM_HASH)->write_lock);
 
 /* set writer demand on ipmatch cache */
 void set_wd_imhash(void);
