@@ -116,7 +116,8 @@ typedef enum rad_val {
 	V_FAILED,
 
 	     /* Service-Type */
-	V_SIP_SESSION,     
+	V_SIP_SESSION,
+	V_CALL_CHECK,
 
 	     /* SER-Service-Type */
 	V_GET_URI_ATTRS,
