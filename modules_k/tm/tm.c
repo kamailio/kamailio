@@ -392,7 +392,7 @@ static int fixup_t_relay1(void** param, int param_no)
 {
 	if (flag_fixup( param, 1)==0) {
 		/* param is flag -> move it as second param */
-		*(param+1) = *param;
+		*((void**)(((char*)param)+sizeof(action_elem_t))) = *param;
 		*param = 0;
 		return 0;
 	} else if (fixup_phostport2proxy( param, 1)==0 ) {
