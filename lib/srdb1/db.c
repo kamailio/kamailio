@@ -117,7 +117,7 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 	dbf.free_result = (db_free_result_f)find_mod_export(tmp, "db_free_result", 2, 0);
 	if ((dbf.cap & (DB_CAP_QUERY | DB_CAP_RAW_QUERY))
 	    && (dbf.free_result == 0)) {
-		LOG(L_ERR, "bind_dbmod: Module %s supports quries but does not export free_result function\n", tmp);
+		LOG(L_ERR, "bind_dbmod: Module %s supports queries but does not export free_result function\n", tmp);
 		goto err;
 	}
 
