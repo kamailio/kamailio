@@ -30,7 +30,7 @@
  * --------
  * 2006-04-14  initial version (bogdan)
  * 2006-11-28  Added support for tracking the number of early dialogs, and the
- *             number of failed dialogs. This involved updates to dlg_onreply().
+ *             number of failed dialogs. This involved updates to dlg_onreply()
  *             (Jeffrey Magder - SOMA Networks)
  */
 
