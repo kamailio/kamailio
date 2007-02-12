@@ -72,13 +72,14 @@ int w_parse_select(char**p, select_t* sel)
 	
 	if (**p=='@') (*p)++;
 	sel->n=0;
-	while (isalpha(*(*p))) {
+	while (isalpha((unsigned char)*(*p))) {
 		if (sel->n > MAX_SELECT_PARAMS -2) {
 			ERR("parse_select: select depth exceeds max\n");
 			goto error;
 		}
 		name.s=(*p);
-		while (isalpha(*(*p)) || isdigit(*(*p)) || (*(*p)=='_')) (*p)++;
+		while (isalpha((unsigned char)*(*p)) || 
+				isdigit((unsigned char)*(*p)) || (*(*p)=='_')) (*p)++;
 		name.len=(*p)-name.s;
 		sel->params[sel->n].type=SEL_PARAM_STR;
 		sel->params[sel->n].v.s=name;
@@ -103,7 +104,7 @@ int w_parse_select(char**p, select_t* sel)
 			} else {
 				name.s=(*p);
 				if (*(*p)=='-') (*p)++;
-				while (isdigit(*(*p))) (*p)++;
+				while (isdigit((unsigned char)*(*p))) (*p)++;
 				name.len=(*p)-name.s;
 				if (*(*p)!=']') {
 					ERR("parse_select: invalid index, no closing ]\n");
@@ -174,7 +175,7 @@ int resolve_select(select_t* s)
 	int nested;
 	int param_idx = 0;
 	int table_idx = 0;
-	select_table_t* t = NULL;;
+	select_table_t* t = NULL;
 	int accept = 0;
 
 	f = NULL;
