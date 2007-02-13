@@ -101,7 +101,8 @@ static int tls_complete_init(struct tcp_connection* c)
 		goto error;
 	}
 #ifdef TLS_KSSL_WORKARROUND
-	if (data->ssl->kssl_ctx){
+	 /* if needed apply workarround for openssl bug #1467 */
+	if (data->ssl->kssl_ctx && openssl_kssl_malloc_bug){
 		kssl_ctx_free(data->ssl->kssl_ctx);
 		data->ssl->kssl_ctx=0;
 	}
