@@ -790,7 +790,7 @@ CREATE TABLE active_watchers (
   version int NOT NULL default '0',
   UNIQUE (from_tag)
 ) $TABLE_TYPE;
-
+CREATE INDEX due_activewatchers ON active_watchers (to_domain,to_user,event);
 
 
 /*

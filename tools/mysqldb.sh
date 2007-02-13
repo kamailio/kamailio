@@ -702,6 +702,7 @@ CREATE TABLE presentity (
 # 
 # used by presence module
 #
+
 CREATE TABLE active_watchers (
   id int(10) NOT NULL auto_increment,
   to_user varchar(64) NOT NULL,
@@ -709,26 +710,26 @@ CREATE TABLE active_watchers (
   from_user varchar(64) NOT NULL,
   from_domain varchar(128) NOT NULL,
   event varchar(64) NOT NULL default 'presence',
-  event_id varchar(64) NOT NULL,
+  event_id varchar(64),
   to_tag varchar(128) NOT NULL,
   from_tag varchar(128) NOT NULL,
   callid varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
   contact varchar(128) NOT NULL,
-  record_route varchar(255) NOT NULL,
+  record_route varchar(255),
   expires int(11) NOT NULL,
   status varchar(32) NOT NULL default 'pending',
-  version int(11) NOT NULL default '0',
+  version int(11) default '0',
+  PRIMARY KEY  (id),
   UNIQUE KEY ft_watchers (from_tag),
-  PRIMARY KEY (id)
+  KEY due_activewatchers (to_domain,to_user,event)
 ) $TABLE_TYPE;
-
-
 #
 # Table structure for table 'watchers'
 # 
 # used by presence module
 #
+
 CREATE TABLE watchers (
   id int(10) NOT NULL auto_increment,
   p_user varchar(64) NOT NULL,
@@ -736,7 +737,7 @@ CREATE TABLE watchers (
   w_user varchar(64) NOT NULL,
   w_domain varchar(128) NOT NULL,
   subs_status varchar(64) NOT NULL,
-  reason varchar(64) NOT NULL,
+  reason varchar(64), 
   inserted_time int(11) NOT NULL,
   UNIQUE KEY udud_watchers (p_user,p_domain,w_user,w_domain),
   PRIMARY KEY (id)
@@ -748,16 +749,16 @@ CREATE TABLE watchers (
 # 
 # used by presence module
 #
+
 CREATE TABLE xcap_xml (
   id int(10) NOT NULL auto_increment,
   username varchar(66) NOT NULL,
   domain varchar(128) NOT NULL,
   xcap text NOT NULL,
-  doc_type varchar(64) NOT NULL,
-  UNIQUE KEY udd_xcap (user,domain,doc_type),
+  doc_type blob NOT NULL,
+  UNIQUE KEY udd_xcap (username,domain,doc_type),
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
-
 
 #
 # Table structure for table 'pua'
