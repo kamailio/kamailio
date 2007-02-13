@@ -106,7 +106,7 @@ error:
 
 int send_202ok(struct sip_msg * msg, int lexpire, str *rtag)
 {
-	str hdr_append;
+	static str hdr_append;
 
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*50);
 	if(hdr_append.s == NULL)
@@ -140,7 +140,7 @@ error:
 
 int send_200ok(struct sip_msg * msg, int lexpire, str *rtag)
 {
-	str hdr_append;
+	static str hdr_append;
 
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*50);
 	if(hdr_append.s == NULL)
@@ -264,7 +264,6 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 	query_vals[n_query_cols].val.str_val.s = subs->from_tag.s;
 	query_vals[n_query_cols].val.str_val.len = subs->from_tag.len;
 	n_query_cols++;
-
 	//	result_cols[status_col=n_result_cols++] = "status" ;
 	result_cols[version_col=n_result_cols++] = "version";
 	
@@ -273,6 +272,9 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 		LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR in use_table\n");
 		goto error;
 	}
+	
+/* update the informations in database*/
+
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
 	{
 		LOG(L_INFO,"PRESENCE:update_subscribtion: querying database  \n");
@@ -316,32 +318,35 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 				LOG(L_ERR,"PRESENCE:update_subscribtion: ERROR cleaning"
 						" unsubscribed messages\n");	
 			}
-			
-			if( send_200ok(msg, subs->expires, rtag) <0)
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
-						" sending 200 OK\n");
-				goto error;
-			}
-	
-			if( subs->event.len == PRES_LEN ) 
-				/*  if unsubscribe from presence information */
+			if(subs->event.len == strlen("presence"))
 			{	
-				LOG(L_INFO, "PRESENCE:update_subscribtion: sending notify"
-					" with winfo when a watcher unsubscribed\n");	
-				if (query_db_notify(&subs->to_user, &subs->to_domain,
-						"presence.winfo", NULL, NULL )<0)
+				if( send_202ok(msg, subs->expires, rtag) <0)
 				{
-					LOG(L_ERR,"PRESENCE:update_subscribtion:Could not"
-						" send notify for event presence.winfo when a"
-						" subscribe for presence with expires 0 was"
-						" received\n");
-					//	goto error;
+					LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+						" sending 202 OK\n");
+					goto error;
+				}
+		
+				if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
+							subs, NULL)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
+							" notify for presence.winfo\n");
+				}
+			}	
+			else /* if unsubscribe for winfo */
+			{
+				if( send_200ok(msg, subs->expires, rtag) <0)
+				{
+					LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+						" sending 202 OK\n");
+					goto error;
 				}
 			}
-				
 			return 1;
-		}			
+		}
+
+		/* otherwise update in database and send Subscribe on refresh */
 
 		update_keys[0] = "expires";
 		update_vals[0].type = DB_INT;
@@ -355,30 +360,10 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 					" presence information\n");
 			goto error;
 		}
-		if(PRES_LEN == subs->event.len)
-		{
-			if( send_202ok(msg, subs->expires, rtag) <0)
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
-						" sending 202 OK\n");
-				goto error;
-			}
-		}
-		else
-		{
-			if( send_200ok(msg, subs->expires, rtag) <0)
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
-						" sending 200 OK\n");
-				goto error;
-			}
-		}	
-			
 	}
 	else
 	{
-		if(subs->expires!= 0)  /* if Subscribe with expires 0
-								  do not save in database */
+		if(subs->expires!= 0)
 		{		
 			query_cols[n_query_cols] = "contact";
 			query_vals[n_query_cols].type = DB_STR;
@@ -407,7 +392,6 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			query_vals[n_query_cols].val.int_val = subs->expires +
 				(int)time(NULL);
 			n_query_cols++;
-
 
 			if(subs->record_route.s!=NULL && subs->record_route.len!=0)
 			{
@@ -441,50 +425,52 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			}
 		
 		}
+		/*otherwise there is a subscription outside a dialog with expires= 0 
+		 * no update in database, but
+		 * should try to send Notify */
+		 
+	}
 
-		if(subs->event.len == strlen("presence"))
-		{	
-			if( send_202ok(msg, subs->expires, rtag) <0)
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
-						" sending 202 OK\n");
-				goto error;
-			}
-			
-			if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
-						subs, NULL)< 0)
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
-						" notify for presence.winfo\n");
-			}
+/* reply_and_notify  */
 
-			if(subs->reason.len!= 100)
-			{
-				subs->reason.len = 0;
-				if(notify(subs, NULL, NULL)< 0)
-				{
-					LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
-						" notify for presence\n");
-				}	
-			}
-				
-		}
-		else /* if a new subscribe for winfo */
+	if(subs->event.len == strlen("presence"))
+	{	
+		if( send_202ok(msg, subs->expires, rtag) <0)
 		{
-			if( send_200ok(msg, subs->expires, rtag) <0)
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
-						" sending 200 OK\n");
-				goto error;
-			}
-			
-			if(notify(subs, NULL, NULL )< 0)
-			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while"
-						" sending notify\n");
-			}
+			LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+					" sending 202 OK\n");
+			goto error;
 		}
-	}	
+		
+		if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
+					subs, NULL)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
+					" notify for presence.winfo\n");
+		}
+		if(notify(subs, NULL, NULL)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
+				" notify for presence\n");
+		}
+			
+	}
+	else /* if a new subscribe for winfo */
+	{
+		if( send_200ok(msg, subs->expires, rtag) <0)
+		{
+			LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+					" sending 202 OK\n");
+			goto error;
+		}		
+
+		if(notify(subs, NULL, NULL )< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while"
+					" sending notify\n");
+		}
+	}
+	
 	return 0;
 	
 error:
@@ -611,8 +597,9 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		subs.from_domain.len = strlen(row_vals[from_domain_col].val.str_val.s);
 		
 		subs.event_id.s = row_vals[event_id_col].val.str_val.s;
-		subs.event_id.len = strlen(row_vals[event_id_col].val.str_val.s);
-		
+		if(subs.event_id.s)
+			subs.event_id.len = strlen(row_vals[event_id_col].val.str_val.s);
+			
 		subs.to_tag.s = row_vals[to_tag_col].val.str_val.s;
 		subs.to_tag.len = strlen(row_vals[to_tag_col].val.str_val.s);
 		
@@ -623,13 +610,15 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		subs.callid.len = strlen(row_vals[callid_col].val.str_val.s);
 	
 		subs.contact.s = row_vals[contact_col].val.str_val.s;
-		subs.contact.len = strlen(row_vals[contact_col].val.str_val.s);
+		if(subs.contact.s)
+			subs.contact.len = strlen(row_vals[contact_col].val.str_val.s);
 
 		subs.cseq = row_vals[cseq_col].val.int_val;
 
 		subs.record_route.s = row_vals[record_route_col].val.str_val.s;
-		subs.record_route.len =
-			strlen(row_vals[record_route_col].val.str_val.s);
+		if(subs.record_route.s )
+			subs.record_route.len =
+				strlen(row_vals[record_route_col].val.str_val.s);
 	
 		subs.expires = 0;
 	
