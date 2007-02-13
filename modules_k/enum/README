@@ -23,15 +23,9 @@ Otmar Lendl
 
         1.4. Exported Functions
 
-              1.4.1. enum_query(),enum_query("suffix"),
-                      enum_query("suffix", "service")
-
-              1.4.2. enum_fquery(),enum_fquery("suffix"),
-                      enum_fquery("suffix", "service")
-
-              1.4.3. i_enum_query(),i_enum_query("suffix"),
-                      i_enum_query("suffix", "service")
-
+              1.4.1. enum_query(["suffix"[,"service"]])
+              1.4.2. enum_fquery(["suffix"[,"service"]])
+              1.4.3. i_enum_query(["suffix"[,"service"]])
               1.4.4. is_from_user_enum()
 
    2. Developer's Guide
@@ -224,8 +218,7 @@ modparam("enum", "bl_algorithm", "txt")
 
 1.4. Exported Functions
 
-1.4.1. enum_query(),enum_query("suffix"), enum_query("suffix",
-"service")
+1.4.1. enum_query(["suffix"[,"service"]])
 
    The function performs an enum query and rewrites the
    Request-URI with the result of the query. See Section 1.1> for
@@ -261,8 +254,7 @@ enum_query("e164.arpa.","+sip+voice:sip");
 ...
      _________________________________________________________
 
-1.4.2. enum_fquery(),enum_fquery("suffix"), enum_fquery("suffix",
-"service")
+1.4.2. enum_fquery(["suffix"[,"service"]])
 
    The function performs an enum query on the user part of the
    From: tag and rewrites the Request-URI with the result of the
@@ -298,8 +290,7 @@ enum_fquery("e164.arpa.","+sip+voice:sip");
 ...
      _________________________________________________________
 
-1.4.3. i_enum_query(),i_enum_query("suffix"), i_enum_query("suffix",
-"service")
+1.4.3. i_enum_query(["suffix"[,"service"]])
 
    The function performs an enum query and rewrites the
    Request-URI with the result of the query. This the

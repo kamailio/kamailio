@@ -532,7 +532,7 @@ modparam("lcr","rpid_avp","rpid")
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">load_gws(), load_gws(group-id)</function>
+		<function moreinfo="none">load_gws([group-id])</function>
 		</title>
 		<para>
 		Loads URI schemes, addresses, ports, and transports of gateways
@@ -620,7 +620,7 @@ if (!next_gw()) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">from_gw(), from_gw(group-id)</function>
+		<function moreinfo="none">from_gw([group-id])</function>
 		</title>
 		<para>
 			Checks if request came from IP address of a gateway. If an
@@ -656,7 +656,7 @@ if (from_gw("1")) {
 		</section>
 		<section>
 		<title>
-		<function moreinfo="none">to_gw(), to_gw(group-id)</function>
+		<function moreinfo="none">to_gw([group-id])</function>
 		</title>
 		<para>
 			Checks if in-dialog request goes to a gateway. If an optional

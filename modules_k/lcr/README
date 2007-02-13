@@ -44,10 +44,10 @@ Juha Heinanen
 
         1.4. Exported Functions
 
-              1.4.1. load_gws(), load_gws(group-id)
+              1.4.1. load_gws([group-id])
               1.4.2. next_gw()
-              1.4.3. from_gw(), from_gw(group-id)
-              1.4.4. to_gw(), to_gw(group-id)
+              1.4.3. from_gw([group-id])
+              1.4.4. to_gw([group-id])
               1.4.5. load_contacts()
               1.4.6. next_contacts()
 
@@ -424,7 +424,7 @@ modparam("lcr","rpid_avp","rpid")
 
 1.4. Exported Functions
 
-1.4.1. load_gws(), load_gws(group-id)
+1.4.1. load_gws([group-id])
 
    Loads URI schemes, addresses, ports, and transports of
    gateways that match user part of Request-URI to gw_uri_avp
@@ -491,7 +491,7 @@ if (!next_gw()) {
 ...
      _________________________________________________________
 
-1.4.3. from_gw(), from_gw(group-id)
+1.4.3. from_gw([group-id])
 
    Checks if request came from IP address of a gateway. If an
    optional group-id is given, only gateways belonging to this
@@ -517,7 +517,7 @@ if (from_gw("1")) {
 ...
      _________________________________________________________
 
-1.4.4. to_gw(), to_gw(group-id)
+1.4.4. to_gw([group-id])
 
    Checks if in-dialog request goes to a gateway. If an optional
    group-id is given, only gateways belonging to this group are

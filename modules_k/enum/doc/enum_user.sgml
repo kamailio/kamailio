@@ -235,7 +235,7 @@ modparam("enum", "bl_algorithm", "txt")
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">enum_query(),enum_query("suffix"), enum_query("suffix", "service")</function>
+		<function moreinfo="none">enum_query(["suffix"[,"service"]])</function>
 		</title>
 		<para>
 		The function performs an enum query and rewrites the Request-URI with 
@@ -287,7 +287,7 @@ enum_query("e164.arpa.","+sip+voice:sip");
 
 	<section>
 		<title>
-		<function moreinfo="none">enum_fquery(),enum_fquery("suffix"), enum_fquery("suffix", "service")</function>
+		<function moreinfo="none">enum_fquery(["suffix"[,"service"]])</function>
 		</title>
 		<para>
 		The function performs an enum query
@@ -340,7 +340,7 @@ enum_fquery("e164.arpa.","+sip+voice:sip");
 
         <section>
                 <title>
-                <function moreinfo="none">i_enum_query(),i_enum_query("suffix"), i_enum_query("suffix", "service")</function>
+                <function moreinfo="none">i_enum_query(["suffix"[,"service"]])</function>
                 </title>
                 <para>
                 The function performs an enum query and rewrites the Request-URI with
