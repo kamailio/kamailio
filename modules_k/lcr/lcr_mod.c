@@ -1029,11 +1029,11 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
     uri_transport transport;
     struct ip_addr address;
     str addr_str, port_str;
-    char *at, *prefix;
+    char *at, *prefix, *strip_string;
     int_str val;
     struct mi matched_gws[MAX_NO_OF_GWS + 1];
-    unsigned short strip_len, prefix_len, priority;
-    int randomizer_start, randomizer_end, randomizer_flag;
+    unsigned short prefix_len, priority;
+    int randomizer_start, randomizer_end, randomizer_flag, strip_len;
     struct lcr_info lcr_rec;
 
     /* Find Request-URI user */
@@ -1224,12 +1224,11 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	scheme = (*gws)[index].scheme;
 	transport = (*gws)[index].transport;
 	strip = (*gws)[index].strip;
-	if (strip<10) strip_len = 1;
-	else
-	    if (strip < 100)
-		strip_len = 2;
-	    else
-		strip_len = 3;
+	if (strip > ruri_user.len) {
+	    LOG(L_ERR, "load_gws(): Strip count of gw is too large\n");
+	    goto skip;
+	}
+	strip_string = int2str(strip, &strip_len);
 	prefix_len = (*gws)[index].prefix_len;
 	prefix = (*gws)[index].prefix;
 
@@ -1253,9 +1252,9 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	}
 	//Add strip in this form |number. For example: |3 means strip first 3 characters
 	*at = '|'; at = at + 1;
-	sprintf(at,"%d", strip);
+	memcpy(at, strip_string, strip_len);
 	at = at + strip_len;
-	
+
 	*at = '@'; at = at + 1;
 	address.af = AF_INET;
 	address.len = 4;
@@ -1340,8 +1339,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     int rval;
     struct usr_avp *gw_uri_avp, *ruri_user_avp;
     str new_ruri;
-    char *at, *at_char;
-    char *strip_char;
+    char *at, *at_char, *strip_char, *endptr;
     unsigned int strip;
 
     gw_uri_avp = search_first_avp(gw_uri_avp_name_str,
@@ -1368,16 +1366,21 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    return -1;
 	}
 	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
-	if (!strip_char || strip_char > at_char) {
+	if (!strip_char || strip_char + 1 >= at_char) {
 	    pkg_free(new_ruri.s);
-	    LOG(L_ERR, "next_gw(): No strip character | "
-		"before @ in gateway URI.\n");
+	    LOG(L_ERR, "next_gw(): No strip character | and at least one "
+		"character before @ in gateway URI.\n");
 	    return -1;
 	}
 	at = new_ruri.s;
 	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
-	sscanf(strip_char+1,"%d",&strip);
 	at = at + (strip_char - gw_uri_val.s.s);
+	strip = strtol(strip_char + 1, &endptr, 10);
+	if (endptr != at_char) {
+	    LOG(L_ERR, "next_gw(): Non-digit character between | "
+		"and @ chars\n");
+	    return -1;
+	}
 	if (_m->parsed_uri.user.len - strip > 0) {
 	    memcpy(at, _m->parsed_uri.user.s + strip,
 		   _m->parsed_uri.user.len - strip);
@@ -1432,16 +1435,21 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    return -1;
 	}
 	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
-	if (!strip_char || strip_char > at_char) {
+	if (!strip_char || strip_char + 1 >= at_char) {
 	    pkg_free(new_ruri.s);
-	    LOG(L_ERR, "next_gw(): No strip character | "
-		"before @ in gateway URI.\n");
+	    LOG(L_ERR, "next_gw(): No strip character | and at least one "
+		"character before @ in gateway URI.\n");
 	    return -1;
 	}
 	at = new_ruri.s;
 	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
-	sscanf(strip_char+1,"%d",&strip);
 	at = at + (strip_char - gw_uri_val.s.s);
+	strip = strtol(strip_char + 1, &endptr, 10);
+	if (endptr != at_char) {
+	    LOG(L_ERR, "next_gw(): Non-digit character between | "
+		"and @ chars\n");
+	    return -1;
+	}
 	if (ruri_user_val.s.len - strip > 0) {
 	    memcpy(at, ruri_user_val.s.s + strip,
 		   ruri_user_val.s.len - strip);
