@@ -28,7 +28,8 @@ Jan Janak
         1.4. Exported Functions
 
               1.4.1. add_diversion(reason)
-              1.4.2. Diversion Example
+
+        1.5. Diversion Example
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -108,7 +109,7 @@ add_diversion("user-busy");
 ...
      _________________________________________________________
 
-1.4.2. Diversion Example
+1.5. Diversion Example
 
    The following example shows a Diversion header field added to
    INVITE message. The original INVITE received by the user agent

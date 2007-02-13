@@ -99,6 +99,7 @@ add_diversion("user-busy");
 </programlisting>
 	</example>
 	</section>
+	</section>
 
 	<section>
 		<title>Diversion Example</title>
@@ -135,7 +136,6 @@ Contact: &lt;sip:mark@1.2.3.4&gt;
 Content-Length: 0
 </programlisting>
 		</section>
-	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file
