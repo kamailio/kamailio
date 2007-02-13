@@ -69,14 +69,14 @@
 #endif
 
 #ifdef TLS_KSSL_WORKARROUND
-
+#if OPENSSL_VERSION_NUMBER < 0x00908050L
 #	warning "openssl lib compiled with kerberos support which introduces a bug\
  (wrong malloc/free used in kssl.c) -- attempting workarround"
 #	warning "NOTE: if you don't link libssl staticaly don't try running the \
 compiled code on a system with a differently compiled openssl (it's safer \
 to compile on the  _target_ system)"
-
-#endif
+#endif /* OPENSSL_VERSION_NUMBER */
+#endif /* TLS_KSSL_WORKARROUND */
 
 
 
@@ -93,6 +93,9 @@ to compile on the  _target_ system)"
 #endif
 
 
+#ifdef TLS_KSSL_WORKARROUND
+int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
+#endif
 int tls_disable_compression = 0; /* by default enabled */
 int tls_force_run = 0; /* ignore some start-up sanity checks, use it
 						  at your own risk */
@@ -366,8 +369,15 @@ int init_tls_h(void)
 		return -1;
 	init_tls_compression();
 	#ifdef TLS_KSSL_WORKARROUND
+	/* if openssl compiled with kerberos support, and openssl < 0.9.8e-dev
+	 * or openssl between 0.9.9-dev and 0.9.9-beta1 apply workarround for
+	 * openssl bug #1467 */
+	if (ssl_version < 0x00908051L || 
+			(ssl_version >= 0x00909000L && ssl_version < 0x00909001L)){
+		openssl_kssl_malloc_bug=1;
 		LOG(L_WARN, "tls: init_tls_h: openssl kerberos malloc bug detected, "
 			" kerberos support will be disabled...\n");
+	}
 	#endif
 	SSL_library_init();
 	SSL_load_error_strings();

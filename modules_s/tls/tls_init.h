@@ -41,6 +41,7 @@
  * (kssl code uses libc malloc/free/calloc instead of OPENSSL_malloc & 
  * friends)*/
 #define TLS_KSSL_WORKARROUND
+extern int openssl_kssl_malloc_bug; /* is openssl bug #1467 present ? */
 #endif
 
 
