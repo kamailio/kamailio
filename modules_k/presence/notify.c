@@ -45,7 +45,7 @@
 #include "utils_func.h"
 
 extern struct tm_binds tmb;
-c_back_param* shm_dup_subs(subs_t* subs, str to_tag, int is_sec);
+c_back_param* shm_dup_subs(subs_t* subs, str to_tag);
 
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
@@ -1331,7 +1331,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 	str met = {"NOTIFY", 6};
 	str* str_hdr = NULL;
 	str* notify_body = NULL, *final_body = NULL;
-	int result= 0, send_on_cback = 0;
+	int result= 0;
 	int n_update_keys = 0, wn_update_keys = 0;
 	db_key_t db_keys[1], update_keys[3];
 	db_val_t db_vals[1], update_vals[3];
@@ -1339,7 +1339,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 	db_val_t  w_vals[5], w_up_vals[2];
 	xmlNodePtr rule_node = NULL;
 	xmlDocPtr xcap_tree = NULL;
-    c_back_param *cb_param;
+    c_back_param *cb_param= NULL;
 
 
 	LOG(L_INFO, "PRESENCE:notify:dialog informations:\n");
@@ -1535,24 +1535,16 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 			watcher_subs->status.len == 7)
 	{
 		DBG("PRESENCE: notify:Send notify for presence on callback");
-		send_on_cback = 1;
+		watcher_subs->send_on_cback = 1;			
 	}
-	printf_subs(subs);	
-
-	cb_param = shm_dup_subs(watcher_subs, subs->to_tag, send_on_cback);
+	cb_param = shm_dup_subs(watcher_subs, subs->to_tag);
 	if(cb_param == NULL)
 	{
 		LOG(L_ERR, "PRESENCE:notify:ERROR while duplicating cb_param in"
-				" share memory\n");
+			" share memory\n");
 		goto error;	
 	}	
-	
-	printf_subs(subs);	
-	if(send_on_cback)
-	{
-		printf_subs(cb_param->wi_subs);
-	}
-	
+
 	if(final_body != NULL)
 		DBG("body :\n:%.*s\n", final_body->len, final_body->s);	
 			
@@ -1608,10 +1600,6 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 	{
 		LOG(L_ERR, "PRESENCE:notify: Error while updating cseq value\n");
 		goto error;
-	}
-	if(send_on_cback)
-	{	
-		subs->reason.len = 100;
 	}
 	if(p_uri.s!=NULL)
 		pkg_free(p_uri.s);
@@ -1723,7 +1711,10 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			LOG(L_ERR,"PRESENCE: p_tm_callback: ERROR cleaning expired"
 					" messages\n");
 	
-	}
+	}/* if an error message is received as a reply for the winfo Notify 
+	  * send a Notify for presence with no body (the stored presence information is 
+	  * not valid ) */
+	  
 	else
 		if(((c_back_param*)(*ps->param))->wi_subs!= NULL)
 		{
@@ -1743,14 +1734,14 @@ done:
 
 		
 	
-c_back_param* shm_dup_subs(subs_t* subs, str to_tag, int is_sec)
+c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 {
 	int size;
 	c_back_param* cb_param = NULL;
 
 	size = sizeof(c_back_param) + to_tag.len +1;
 
-	if(is_sec)
+	if(subs && subs->send_on_cback)
 	{
 		size+= sizeof(subs_t) + (subs->to_user.len+ 
 			subs->to_domain.len+ subs->from_user.len+ subs->from_domain.len+
@@ -1771,9 +1762,9 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag, int is_sec)
 	size =  sizeof(c_back_param);
 	cb_param->w_id = (char*)cb_param + size;
 	strncpy(cb_param->w_id, to_tag.s ,to_tag.len ) ;
-	cb_param->w_id[to_tag.len] = '\0';	
+		cb_param->w_id[to_tag.len] = '\0';	
 	
-	if(!is_sec)
+	if(!(subs&& subs->send_on_cback))
 	{
 		cb_param->wi_subs = NULL;
 		return cb_param;

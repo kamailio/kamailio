@@ -22,7 +22,12 @@ typedef struct subscribtion
 	str status;
 	str reason;
 	int version;
+	int send_on_cback;
+/* flag to check whether the notify for presence is sent on the callback of
+ * the notify for wather info
+ */
 }subs_t;
+
 void msg_active_watchers_clean(unsigned int ticks,void *param);
 
 void msg_watchers_clean(unsigned int ticks,void *param);

@@ -448,10 +448,13 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
 					" notify for presence.winfo\n");
 		}
-		if(notify(subs, NULL, NULL)< 0)
-		{
-			LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
-				" notify for presence\n");
+		if(subs->send_on_cback== 0)
+		{	
+			if(notify(subs, NULL, NULL)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
+					" notify for presence\n");
+			}
 		}
 			
 	}
@@ -463,11 +466,10 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 					" sending 202 OK\n");
 			goto error;
 		}		
-
 		if(notify(subs, NULL, NULL )< 0)
 		{
 			LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while"
-					" sending notify\n");
+				" sending notify\n");
 		}
 	}
 	
@@ -598,7 +600,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		
 		subs.event_id.s = row_vals[event_id_col].val.str_val.s;
 		if(subs.event_id.s)
-			subs.event_id.len = strlen(row_vals[event_id_col].val.str_val.s);
+			subs.event_id.len = strlen(subs.event_id.s);
 			
 		subs.to_tag.s = row_vals[to_tag_col].val.str_val.s;
 		subs.to_tag.len = strlen(row_vals[to_tag_col].val.str_val.s);
@@ -617,8 +619,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 
 		subs.record_route.s = row_vals[record_route_col].val.str_val.s;
 		if(subs.record_route.s )
-			subs.record_route.len =
-				strlen(row_vals[record_route_col].val.str_val.s);
+			subs.record_route.len = strlen(subs.record_route.s);
 	
 		subs.expires = 0;
 	
@@ -913,7 +914,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	subs.contact.s = b->contacts->uri.s;
 	subs.contact.len = b->contacts->uri.len;
-
 	
 /*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
