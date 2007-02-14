@@ -52,6 +52,7 @@
 #include "ip_tree.h"
 #include "timer.h"
 #include "pike_funcs.h"
+#include "rpc.h"
 
 MODULE_VERSION
 
@@ -63,9 +64,9 @@ static int pike_exit(void);
 
 
 /* parameters */
-static int time_unit = 2;
-static int max_reqs  = 30;
-int timeout   = 120;
+static unsigned int time_unit = 2;
+static unsigned int max_reqs  = 30;
+unsigned int timeout   = 120;
 
 /* global variables */
 gen_lock_t*             timer_lock=0;
@@ -116,7 +117,7 @@ static param_export_t params[]={
 struct module_exports exports= {
 	"pike",
 	cmds,
-	0,           /* RPC methods */
+	pike_rpc_methods,           /* RPC methods */
 	params,
 
 	pike_init,   /* module initialization function */

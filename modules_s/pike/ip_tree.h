@@ -54,13 +54,17 @@
 
 #define NODE_EXPIRED_FLAG  (1<<0)
 #define NODE_INTIMER_FLAG  (1<<1)
+/**
+ *   Node marked as IPLEAF is final node for IP address. Does not matter if IPv4 or IPv6.
+ *   This node could not be leaf of tree, it is a leaf node of complete IP address.
+ */
 #define NODE_IPLEAF_FLAG   (1<<2)
 
 struct ip_node
 {
 	unsigned int      expires;
-	unsigned short    leaf_hits[2];
-	unsigned short    hits[2];
+	unsigned int      leaf_hits[2];
+	unsigned int      hits[2];
 	unsigned char     byte;
 	unsigned char     branch;
 	volatile unsigned short    flags;
@@ -70,6 +74,14 @@ struct ip_node
 	struct ip_node    *kids;
 };
 
+typedef enum {
+	NODE_STATUS_OK    = 0,
+	NODE_STATUS_WARM  = 1,
+	NODE_STATUS_HOT   = 2,
+	NODE_STATUS_ALL   = 3	/** used for status matching */
+} node_status_t;
+node_status_t node_status(struct ip_node *node);
+extern char *node_status_array[];
 
 struct ip_tree
 {
@@ -77,7 +89,7 @@ struct ip_tree
 		struct ip_node *node;
 		int            lock_idx;
 	} entries[MAX_IP_BRANCHES];
-	unsigned short   max_hits;
+	unsigned int     max_hits;
 	gen_lock_set_t  *entry_lock_set;
 };
 
@@ -87,8 +99,10 @@ struct ip_tree
 		(unsigned long)(&((struct ip_node*)0)->timer_ll)))
 
 
-int   init_ip_tree(int);
+int   init_ip_tree(unsigned int);
 void  destroy_ip_tree();
+unsigned int get_max_hits();
+
 struct ip_node* mark_node( unsigned char *ip, int ip_len,
 		struct ip_node **father, unsigned char *flag);
 void  remove_node(struct ip_node *node);
