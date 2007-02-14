@@ -754,8 +754,8 @@ CREATE TABLE xcap_xml (
   id int(10) NOT NULL auto_increment,
   username varchar(66) NOT NULL,
   domain varchar(128) NOT NULL,
-  xcap text NOT NULL,
-  doc_type blob NOT NULL,
+  xcap blob NOT NULL,
+  doc_type varchar(64) NOT NULL,
   UNIQUE KEY udd_xcap (username,domain,doc_type),
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
