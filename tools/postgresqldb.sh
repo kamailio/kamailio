@@ -821,7 +821,7 @@ CREATE TABLE xcap_xml (
   id $AUTO_INCREMENT,
   username varchar(66) NOT NULL,
   domain varchar(128) NOT NULL,
-  xcap blob NOT NULL,
+  xcap text NOT NULL,
   doc_type varchar(64) NOT NULL,
   UNIQUE (username, domain, doc_type)
 ) $TABLE_TYPE;
