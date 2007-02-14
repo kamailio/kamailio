@@ -1520,7 +1520,7 @@ jump_over_body:
 			subs->event.s);
 
 	printf_subs(subs);
-	str_hdr = build_str_hdr(subs->event,subs->status, subs->expires,
+	str_hdr = build_str_hdr( subs->event,subs->status, subs->expires,
 			subs->reason );
 	if(str_hdr == NULL|| str_hdr->s== NULL|| str_hdr->len==0)
 	{

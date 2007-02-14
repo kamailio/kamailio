@@ -64,7 +64,7 @@ void PRINT_DLG(FILE* out, dlg_t* _d);
 
 void printf_subs(subs_t* subs);
 
-str* build_str_hdr(str event, str status, int expires_t, str reason);
+//str* build_str_hdr(str event, str status, int expires_t, str reason);
 
 int free_tm_dlg(dlg_t *td);
 
