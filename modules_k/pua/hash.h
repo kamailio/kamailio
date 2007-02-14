@@ -97,15 +97,15 @@ typedef struct htable{
 htable_t* new_htable();
 
 ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id, 
-		int FLAG, int event, htable_t* H);
+		int FLAG, int event, int hash_code);
 
-void insert_htable(ua_pres_t* presentity , htable_t* H);
+void insert_htable(ua_pres_t* presentity );
 
-void hash_update(ua_pres_t* presentity, int expires, htable_t* H);
+void update_htable(ua_pres_t* presentity, int expires, int hash_code);
 
-void delete_htable(ua_pres_t* presentity , htable_t* H);
+void delete_htable(ua_pres_t* presentity );
 
-void destroy_htable(htable_t* H);
+void destroy_htable();
 
 
 #endif

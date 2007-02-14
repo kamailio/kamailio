@@ -191,10 +191,10 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, NULL,
 				((hentity_t*)(*ps->param))->id,
 				((hentity_t*)(*ps->param))->flag,
-				((hentity_t*)(*ps->param))->event,HashT);
+				((hentity_t*)(*ps->param))->event, hash_code);
 		if(presentity)
 		{
-			delete_htable(presentity, HashT);
+			delete_htable(presentity);
 			DBG("PUA:publ_cback_func: ***Delete from table\n");
 		}
 		lock_release(&HashT->p_records[hash_code].lock);
@@ -251,18 +251,18 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, NULL,
 				((hentity_t*)(*ps->param))->id,
 				((hentity_t*)(*ps->param))->flag,
-				((hentity_t*)(*ps->param))->event,HashT);
+				((hentity_t*)(*ps->param))->event, hash_code);
 	if(presentity)
 	{
 			DBG("PUA:publ_cback_func: update record\n");
 			if(lexpire == 0)
 			{
 				DBG("PUA:publ_cback_func: expires= 0- delete from htable\n"); 
-				delete_htable(presentity, HashT);
+				delete_htable(presentity);
 				lock_release(&HashT->p_records[hash_code].lock);
 				goto done;
 			}
-			hash_update(presentity, lexpire, HashT);
+			update_htable(presentity, lexpire, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 	}
@@ -336,7 +336,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->event= PRESENCE_EVENT;
 	presentity->db_flag|= INSERTDB_FLAG;
 
-	insert_htable( presentity, HashT);
+	insert_htable( presentity);
 	DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		
 		
 
@@ -374,7 +374,7 @@ int send_publish( publ_info_t* publ )
 	lock_get(&HashT->p_records[hash_code].lock);
 
 	presentity= search_htable( publ->pres_uri, NULL,
-				publ->id, publ->source_flag, PRESENCE_EVENT, HashT);
+				publ->id, publ->source_flag, PRESENCE_EVENT,hash_code);
 
 	if(presentity== NULL)
 	{
@@ -413,7 +413,7 @@ int send_publish( publ_info_t* publ )
 		if(publ->expires== 0)
 		{
 			DBG("PUA:send_publish: expires= 0- delete from hash table\n");
-			delete_htable(presentity, HashT);
+			delete_htable(presentity);
 			presentity= NULL;
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto send_publish;
@@ -485,7 +485,7 @@ int send_publish( publ_info_t* publ )
 			LOG(L_ERR, "PUA: send_publish: ERROR NO more memory left\n");
 			goto error;
 		}
-		xmlDocDumpFormatMemory(doc,(unsigned char**)(void*)&body->s,
+		xmlDocDumpFormatMemory(doc,(unsigned char**)&body->s,
 				&body->len, 1);	
 
 		xmlFreeDoc(doc);
@@ -543,7 +543,8 @@ send_publish:
 
 	DBG("PUA: send_publish: publ->pres_uri:\n%.*s\n ", publ->pres_uri->len, publ->pres_uri->s);
 	DBG("PUA: send_publish: str_hdr:\n%.*s %d\n ", str_hdr->len, str_hdr->s, str_hdr->len);
-	DBG("PUA: send_publish: body:\n%.*s\n ", body->len, body->s);
+	if(body && body->len && body->s )
+		DBG("PUA: send_publish: body:\n%.*s\n ", body->len, body->s);
 		
 
 	tmb.t_request(&met,						/* Type of the message */

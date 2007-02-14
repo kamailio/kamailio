@@ -93,13 +93,12 @@ error:
 }
 
 ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
-		int FLAG, int event, htable_t* H)
+		int FLAG, int event, int hash_code)
 {
 	ua_pres_t* p= NULL,* L= NULL;
  
-	L= H->p_records[core_hash(pres_uri, watcher_uri, HASH_SIZE)].entity;
-	DBG("PUA: search_htable: core_hash= %u\n",
-			core_hash(pres_uri, watcher_uri, HASH_SIZE) );
+	L= HashT->p_records[hash_code].entity;
+	DBG("PUA: search_htable: core_hash= %u\n", hash_code);
 
 	for(p= L->next; p; p=p->next)
 	{
@@ -146,14 +145,13 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 	return p;
 }
 
-void hash_update(ua_pres_t* presentity, int expires, htable_t* H)
+void update_htable(ua_pres_t* presentity, int expires, int hash_code)
 {
 	ua_pres_t* p= NULL;
-
 	DBG("PUA:hash_update ..\n");
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				presentity->id, presentity->flag,presentity->event, H);
+				presentity->id, presentity->flag,presentity->event, hash_code);
 	if(p== NULL)
 	{
 		DBG("PUA:hash_update : no recod found\n");
@@ -169,7 +167,7 @@ void hash_update(ua_pres_t* presentity, int expires, htable_t* H)
 
 }
 
-void insert_htable(ua_pres_t* presentity , htable_t* H)
+void insert_htable(ua_pres_t* presentity)
 {
 	ua_pres_t* p= NULL;
 	unsigned int hash_code;
@@ -183,40 +181,40 @@ void insert_htable(ua_pres_t* presentity , htable_t* H)
 		return;
 	}
 
-	lock_get(&H->p_records[hash_code].lock);
+	lock_get(&HashT->p_records[hash_code].lock);
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				presentity->id, presentity->flag, presentity->event, H);
+				presentity->id, presentity->flag, presentity->event, hash_code);
 	if(p) 
 	{
-		lock_release(&H->p_records[hash_code].lock);
+		lock_release(& HashT->p_records[hash_code].lock);
 		return; 
 	}
-	p= H->p_records[hash_code].entity;
+	p= HashT->p_records[hash_code].entity;
 
 	presentity->db_flag= INSERTDB_FLAG;
 	presentity->next= p->next;
 	
 	p->next= presentity;
 
-	lock_release(&H->p_records[hash_code].lock);
+	lock_release(&HashT->p_records[hash_code].lock);
 }
 
-void delete_htable(ua_pres_t* presentity , htable_t* H)
+void delete_htable(ua_pres_t* presentity)
 { 
 	ua_pres_t* p= NULL, *q= NULL;
-
+	unsigned int hash_code;
 	DBG("PUA:delete_htable...\n");
 
-	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-			presentity->id, presentity->flag, presentity->event, H);
-	if(p== NULL)
-	{
-		return;
-	}
+	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, 
+			HASH_SIZE);
 
-	q=H->p_records[core_hash(presentity->pres_uri, 
-			presentity->watcher_uri, HASH_SIZE)].entity;
+	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
+			presentity->id, presentity->flag, presentity->event, hash_code);
+	if(p== NULL)
+		return;
+
+	q=HashT->p_records[hash_code].entity;
 
 	while(q->next!=p)
 		q= q->next;
@@ -227,7 +225,7 @@ void delete_htable(ua_pres_t* presentity , htable_t* H)
 
 }
 	
-void destroy_htable(htable_t* H)
+void destroy_htable()
 {
 	ua_pres_t* p= NULL,*q= NULL;
 	int i;
@@ -235,8 +233,8 @@ void destroy_htable(htable_t* H)
 	DBG("PUA: destroy htable.. \n");
 	for(i=0; i<HASH_SIZE; i++)
 	{	
-		lock_destroy(&_imc_htable[i].lock);
-		p=H->p_records[i].entity;
+		lock_destroy(&HashT->p_records[i].lock);
+		p=HashT->p_records[i].entity;
 		while(p->next)
 		{
 			q=p->next;
@@ -246,8 +244,8 @@ void destroy_htable(htable_t* H)
 		}
 		shm_free(p);
 	}
-    shm_free(H->p_records);
-	shm_free(H);
+    shm_free(HashT->p_records);
+	shm_free(HashT);
   
   return;
 }

@@ -208,10 +208,10 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				((hentity_t*)(*ps->param))->watcher_uri,
 				((hentity_t*)(*ps->param))->id	,
 				((hentity_t*)(*ps->param))->flag, 
-				((hentity_t*)(*ps->param))->event,HashT);
+				((hentity_t*)(*ps->param))->event, hash_code);
 
 		if(presentity)
-			delete_htable(presentity, HashT);
+			delete_htable(presentity);
 
 		lock_release(&HashT->p_records[hash_code].lock);
 
@@ -264,19 +264,19 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				((hentity_t*)(*ps->param))->watcher_uri,
 				((hentity_t*)(*ps->param))->id,
 				((hentity_t*)(*ps->param))->flag,
-				((hentity_t*)(*ps->param))->event,HashT);
+				((hentity_t*)(*ps->param))->event, hash_code);
 
 	if(presentity)
 	{
 		if(lexpire == 0 )
 		{
 			DBG("PUA:subs_cback_func: lexpire= 0 Delete from hash table");
-			delete_htable(presentity, HashT);
+			delete_htable(presentity );
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 		}
 		DBG("PUA:subs_cback_func: *** Update expires\n");
-		hash_update(presentity, lexpire, HashT);
+		update_htable(presentity, lexpire, hash_code);
 		
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
@@ -418,7 +418,7 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->cseq= cseq;
 	presentity->desired_expires= ((hentity_t*)(*ps->param))->desired_expires;
 	presentity->expires= lexpire+ (int)time(NULL);
-	insert_htable(presentity, HashT);
+	insert_htable(presentity);
 	
 	
 	shm_free(*ps->param);
@@ -504,7 +504,7 @@ int send_subscribe(subs_info_t* subs)
 	lock_get(&HashT->p_records[hash_code].lock);
 
 	presentity= search_htable(subs->pres_uri, subs->watcher_uri,
-				subs->id, subs->source_flag, subs->event, HashT);
+				subs->id, subs->source_flag, subs->event, hash_code);
 
 	if(presentity== NULL )
 	{
@@ -541,7 +541,7 @@ int send_subscribe(subs_info_t* subs)
 		dlg_t* td= NULL;
 		if(subs->expires== 0)
 		{	
-			delete_htable(presentity, HashT);
+			delete_htable(presentity);
 		}
 		else
 		{

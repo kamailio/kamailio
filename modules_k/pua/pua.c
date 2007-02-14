@@ -76,8 +76,8 @@ int send_publish(publ_info_t*);
 
 int update_pua(ua_pres_t* p);
 
-int db_store(htable_t* H);
-int db_restore(htable_t* H);
+int db_store();
+int db_restore();
 void db_update(unsigned int ticks,void *param);
 void hashT_clean(unsigned int ticks,void *param);
 
@@ -177,7 +177,7 @@ static int mod_init(void)
 		LOG(L_ERR, "PUA:mod_init: ERROR while creating new hash table\n");
 		return -1;
 	}
-	if(db_restore(HashT)< 0)
+	if(db_restore()< 0)
 	{
 		LOG(L_ERR, "PUA:mod_init: ERROR while restoring hash_table\n");
 		return -1;
@@ -240,7 +240,7 @@ static void destroy(void)
 	db_update(0,0);
 	
 	if(HashT)
-		destroy_htable(HashT);
+		destroy_htable();
 
 	if(pua_db)
 		pua_dbf.close(pua_db);
@@ -248,7 +248,7 @@ static void destroy(void)
 	return ;
 }
 
-int db_restore(htable_t* H)
+int db_restore()
 {
 	ua_pres_t* p= NULL;
 	db_key_t result_cols[12]; 
@@ -421,7 +421,7 @@ int db_restore(htable_t* H)
 			p->cseq= row_vals[10].val.int_val;
 		}
 		
-		insert_htable(p, HashT);
+		insert_htable(p);
 	}
 	if(res)
 	{
@@ -476,7 +476,7 @@ void hashT_clean(unsigned int ticks,void *param)
 				if(p->expires< (int)(time)(NULL))
 				{
 					q= p->next;
-					delete_htable(p, HashT);
+					delete_htable(p);
 					p= q;
 				}
 				else
