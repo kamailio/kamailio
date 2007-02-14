@@ -31,6 +31,10 @@ Bogdan Iancu
 
               1.4.1. pike_check_req()
 
+        1.5. RPC calls
+
+              1.5.1. pike.top
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -131,6 +135,24 @@ if (!pike_check_req()) { break; };
 ...
      _________________________________________________________
 
+1.5. RPC calls
+
+1.5.1. pike.top
+
+   Pike.top behaves like a 'top' command and shows source IP
+   addresses of incoming requestes to pike_check_req() function.
+   The IP list is sorted by sum of leaf hits (prev and curr)
+   descending and in second level by hits.
+   Some IPs could be marked as HOT depending on theirs request rates.
+   pike.top command takes one string parameter which specifies what
+   kind of nodes you are interested in. Possible values are HOT or
+   ALL. If no argument is given, it behaves as HOT was used.
+   Marking nodes HOT is done on server side, client only presents
+   given data and make some postprocessing like sorting.
+   Output of this command is a simple dump of ip_tree nodes marked
+   as ip-leafs.
+     _________________________________________________________
+
 Chapter 2. Developer's Guide
 
    One single tree (for both IPv4 and IPv6) is used. Each node
@@ -141,7 +163,7 @@ Chapter 2. Developer's Guide
            / 193 - 175 - 132 - 164
 tree root /                  \ 142
           \ 195 - 37 - 78 - 163
-           \ 79 - 134
+                     \ 79 - 134
 
    To detect the whole address, step by step, from the root to
    the leafs, the nodes corresponding to each byte of the ip
