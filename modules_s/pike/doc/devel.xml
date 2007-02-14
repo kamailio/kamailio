@@ -23,7 +23,7 @@
 	   / 193 - 175 - 132 - 164
 tree root /                  \ 142
 	  \ 195 - 37 - 78 - 163
-	   \ 79 - 134
+	             \ 79 - 134
 	</programlisting>
     </example>
     <para>
@@ -31,8 +31,7 @@ tree root /                  \ 142
 	the nodes corresponding to each byte of the ip address are expanded. In
 	order to be expended a node has to be hit for a given number of times
 	(possible by different addresses; in the previous example, the node
-	"37" was expended by the 195.37.78.163 and 195.37.79.134
-	hits).
+	"37" was expanded by the 195.37.78.163 and 195.37.79.134 hits).
     </para>
     <para>
 	For 193.175.132.164 with x= reqs_density_per_unit:
