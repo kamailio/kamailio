@@ -37,7 +37,7 @@
 #include "imc.h"
 #include "imc_cmd.h"
 
-#define IMC_BUF_SIZE	256
+#define IMC_BUF_SIZE	1024
 
 static char imc_body_buf[IMC_BUF_SIZE];
 
@@ -106,6 +106,9 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} else if(cmd->name.len==(sizeof("exit")-1)
 				&& !strncasecmp(cmd->name.s, "exit", cmd->name.len)) {
 		cmd->type = IMC_CMDID_EXIT;
+	} else if(cmd->name.len==(sizeof("list")-1)
+				&& !strncasecmp(cmd->name.s, "list", cmd->name.len)) {
+		cmd->type = IMC_CMDID_LIST;
 	} else if(cmd->name.len==(sizeof("destroy")-1)
 				&& !strncasecmp(cmd->name.s, "destroy", cmd->name.len)) {
 		cmd->type = IMC_CMDID_DESTROY;
@@ -776,6 +779,80 @@ int imc_handle_deny(struct sip_msg* msg, imc_cmd_t *cmd,
 	imc_del_member(room, &src->user, &src->host);
 	
 	imc_release_room(room);
+
+	return 0;
+error:
+	if(room!=NULL)
+		imc_release_room(room);
+	return -1;
+}
+
+/**
+ *
+ */
+int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
+		struct sip_uri *src, struct sip_uri *dst)
+{
+	imc_room_p room = 0;
+	imc_member_p member = 0;
+	imc_member_p imp = 0;
+	str room_name;
+	str body;
+	char *p;
+	
+	/* the user wants to leave the room */
+	room_name = cmd->param[0].s?cmd->param[0]:dst->user;
+
+	room= imc_get_room(&room_name, &dst->host);
+	if(room== NULL || (room->flags&IMC_ROOM_DELETED))
+	{
+		LOG(L_ERR,"imc:imc_handle_list: room [%.*s] does not exist!\n",
+				room_name.len, room_name.s);
+		goto error;
+	}		
+
+	/* verify if the user is a member of the room */
+	member = imc_get_member(room, &src->user, &src->host);
+
+	if(member == NULL)
+	{
+		LOG(L_ERR,"imc:imc_handle_list: user [%.*s] is not member of"
+				" room [%.*s]!\n", src->user.len, src->user.s,
+				room_name.len, room_name.s);
+		goto error;
+	}
+	p = imc_body_buf;
+	strncpy(p, "Members:\n", 9);
+	p+=9;
+	imp = room->members;
+
+	while(imp)
+	{
+		if((imp->flags&IMC_MEMBER_INVITED)||(imp->flags&IMC_MEMBER_DELETED)
+				|| (imp->flags&IMC_MEMBER_SKIP))
+		{
+			imp = imp->next;
+			continue;
+		}
+		if(imp->flags & IMC_MEMBER_OWNER)
+			*p++ = '*';
+		else if(imp->flags & IMC_MEMBER_ADMIN)
+			*p++ = '~';
+		strncpy(p, imp->uri.s, imp->uri.len);
+		p += imp->uri.len;
+		*p++ = '\n';
+		imp = imp->next;
+	}
+	
+	imc_release_room(room);
+
+	/* write over last '\n' */
+	*(--p) = 0;
+	body.s   = imc_body_buf;
+	body.len = p-body.s;
+	DBG("imc:imc_handle_list: members = [%.*s]\n", body.len, body.s);
+	imc_send_message(&room->uri, &member->uri, &imc_hdr_ctype, &body);
+
 
 	return 0;
 error:

@@ -76,6 +76,7 @@
 		</para>
 		<para>
 		<emphasis>	
+		The default value is NULL.
 		</emphasis>
 		</para>
 		<example>
@@ -89,19 +90,59 @@ modparam("imc", "db_url",
 		</example>
 	</section>
 	<section>
-		<title><varname>hash_size</varname> (integer)</title>
+		<title><varname>rooms_table</varname> (str)</title>
 		<para>
-		The size of the hash table used for storing members and rooms.
+		The name of the table storing IMC rooms.
 		</para>
 		<para>
 		<emphasis>
+		The default value is "imc_rooms".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rooms_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "rooms_table", "rooms")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>members_table</varname> (str)</title>
+		<para>
+		The name of the table storing IMC members.
+		</para>
+		<para>
+		<emphasis>
+		The default value is "imc_members".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>members_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "rooms_table", "members")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>hash_size</varname> (integer)</title>
+		<para>
+		The power of 2 to get the size of the hash table used for storing
+		members and rooms.
+		</para>
+		<para>
+		<emphasis>
+		The default value is 4 (resultimg in hash size 16).
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>hash_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("imc", "hash_size", 50)
+modparam("imc", "hash_size", 8)
 ...
 </programlisting>
 		</example>
@@ -233,6 +274,7 @@ if(is_method("MESSAGE)
 		<title>List of commands</title>
 		<programlisting format="linespecific">
 ...
+
 1.create
   -creates a conference room
   -takes 2 parameters:
@@ -293,6 +335,10 @@ if(is_method("MESSAGE)
   -removing a room
   -the parameter is the same as for exit
   -only the owner of a room has the right to destroy it
+
+9.list
+  -list members in a room
+
 ...
 </programlisting>
 		</example>

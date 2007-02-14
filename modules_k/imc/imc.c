@@ -61,10 +61,10 @@ MODULE_VERSION
 
 db_con_t *imc_db = NULL;
 db_func_t imc_dbf;
-str db_url;
+str db_url = {0, 0};
 
-char* room_table = "imc_rooms";
-char* member_table = "imc_members";
+char* rooms_table = "imc_rooms";
+char* members_table = "imc_members";
 
 imc_hentry_p _imc_htable = NULL;
 int imc_hash_size = 4;
@@ -98,6 +98,8 @@ static param_export_t params[]={
 	{"db_url",				STR_PARAM, &db_url.s},
 	{"hash_size",			INT_PARAM, &imc_hash_size},
 	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str},
+	{"rooms_table",			STR_PARAM, &rooms_table},
+	{"members_table",		STR_PARAM, &members_table},
 	{0,0,0}
 };
 
@@ -162,7 +164,7 @@ int add_from_db(void)
 	rq_result_cols[1] ="domain";	
 	rq_result_cols[2] ="flag";
 
-	mq_result_cols[0] ="user";		
+	mq_result_cols[0] ="username";		
 	mq_result_cols[1] ="domain";
 	mq_result_cols[2] ="flag";
 
@@ -171,7 +173,7 @@ int add_from_db(void)
 	mquery_vals[0].nul = 0;
 
 
-	if(imc_dbf.use_table(imc_db, room_table)< 0)
+	if(imc_dbf.use_table(imc_db, rooms_table)< 0)
 	{
 		LOG(L_ERR, "imc:mod_init:ERROR in use table\n");
 		return -1;
@@ -214,7 +216,7 @@ int add_from_db(void)
 		}	
 	
 		/* add members */
-		if(imc_dbf.use_table(imc_db, member_table)< 0)
+		if(imc_dbf.use_table(imc_db, members_table)< 0)
 		{
 			LOG(L_ERR, "imc:mod_init:ERROR in use table\n ");
 			goto error;
@@ -269,7 +271,7 @@ int add_from_db(void)
 
 	}
 
-	if(imc_dbf.use_table(imc_db, member_table)< 0)
+	if(imc_dbf.use_table(imc_db, members_table)< 0)
 	{
 		LOG(L_ERR, "imc:mod_init:ERROR in use table\n ");
 		goto error;
@@ -281,7 +283,7 @@ int add_from_db(void)
 		goto error;
 	}
 	
-	if(imc_dbf.use_table(imc_db, room_table)< 0)
+	if(imc_dbf.use_table(imc_db, rooms_table)< 0)
 	{
 		LOG(L_ERR, "imc:mod_init:ERROR in use table\n ");
 		goto error;
@@ -411,16 +413,16 @@ static int child_init(int rank)
 	}
 	else
 	{
-		if (imc_dbf.use_table(imc_db, room_table) < 0)  
+		if (imc_dbf.use_table(imc_db, rooms_table) < 0)  
 		{
 			LOG(L_ERR, "imc: child %d: Error in use_table %s\n", rank, 
-					room_table);
+					rooms_table);
 			return -1;
 		}
-		if (imc_dbf.use_table(imc_db, member_table) < 0)  
+		if (imc_dbf.use_table(imc_db, members_table) < 0)  
 		{
 			LOG(L_ERR, "imc: child %d: Error in use_table %s\n", rank, 
-					member_table);
+					members_table);
 			return -1;
 		}
 
@@ -539,6 +541,13 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 				goto error;
 			}
 		break;
+		case IMC_CMDID_LIST:
+			if(imc_handle_list(msg, &cmd, pfrom_uri, pto_uri)<0)
+			{
+				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'list'\n");
+				goto error;
+			}
+		break;
 		case IMC_CMDID_DESTROY:
 			if(imc_handle_destroy(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
@@ -598,7 +607,7 @@ void destroy(void)
 	if(imc_db==NULL)
 		goto done;
 
-	mq_cols[0] ="user";
+	mq_cols[0] ="username";
 	mq_vals[0].type = DB_STR;
 	mq_vals[0].nul = 0;
 			
@@ -637,7 +646,7 @@ void destroy(void)
 			rq_vals[1].val.str_val = irp->domain;
 			rq_vals[2].val.int_val = irp->flags;
 
-			if(imc_dbf.use_table(imc_db, room_table)< 0)
+			if(imc_dbf.use_table(imc_db, rooms_table)< 0)
 			{
 				LOG(L_ERR, "imc:destroy: ERROR in use_table\n");
 				return;
@@ -658,7 +667,7 @@ void destroy(void)
 				mq_vals[2].val.int_val = member->flags;
 				mq_vals[3].val.str_val = irp->uri;
 
-				if(imc_dbf.use_table(imc_db, member_table)< 0)
+				if(imc_dbf.use_table(imc_db, members_table)< 0)
 				{
 					LOG(L_ERR, "imc:destroy: ERROR in use_table\n");
 					return;
