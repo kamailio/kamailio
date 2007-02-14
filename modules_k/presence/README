@@ -35,6 +35,7 @@ Anca-Maria Vamanu
               1.4.9. expires_offset (int)
               1.4.10. force_active (int)
               1.4.11. max_expires (int)
+              1.4.12. server_address (str)
 
         1.5. Exported Functions
 
@@ -58,9 +59,10 @@ Anca-Maria Vamanu
    1-9. Set expires_offset parameter
    1-10. Set force_active parameter
    1-11. Set max_expires parameter
-   1-12. handle_publish usage
-   1-13. handle_subscribe usage
-   1-14. PRESENCE tables
+   1-12. Set server_address parameter
+   1-13. handle_publish usage
+   1-14. handle_subscribe usage
+   1-15. PRESENCE tables
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -253,6 +255,18 @@ modparam("presence", "max_expires", 3600)
 ...
      _________________________________________________________
 
+1.4.12. server_address (str)
+
+   The presence server address which will become the value of
+   Contact header filed for 200OK replyes to Subscribe and
+   Publish and in Notify messages.
+
+   Example 1-12. Set server_address parameter
+...
+modparam("presence", "server_address", "sip:10.10.10.10:5060")
+...
+     _________________________________________________________
+
 1.5. Exported Functions
 
 1.5.1. handle_publish()
@@ -263,7 +277,7 @@ modparam("presence", "max_expires", 3600)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-12. handle_publish usage
+   Example 1-13. handle_publish usage
 ...
 if(method=="PUBLISH")
     handle_publish();
@@ -279,7 +293,7 @@ if(method=="PUBLISH")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-13. handle_subscribe usage
+   Example 1-14. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -291,7 +305,7 @@ if(method=="SUBSCRIBE")
    The module requires 4 table in OpenSER database. Next SQL
    statements shows the syntax to create them.
 
-   Example 1-14. PRESENCE tables
+   Example 1-15. PRESENCE tables
 ...
 
 use openser;

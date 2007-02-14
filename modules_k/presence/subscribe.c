@@ -115,6 +115,15 @@ int send_202ok(struct sip_msg * msg, int lexpire, str *rtag)
 		return -1;
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
+	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
+	hdr_append.len += CRLF_LEN;
+
+	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
+	hdr_append.len += 10;
+	strncpy(hdr_append.s+hdr_append.len, server_address.s, server_address.len);
+	hdr_append.len += server_address.len;
+	strncpy(hdr_append.s+hdr_append.len, ">", 1);
+	hdr_append.len += 1;
 	hdr_append.s[hdr_append.len]= '\0';
 	
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
@@ -142,15 +151,24 @@ int send_200ok(struct sip_msg * msg, int lexpire, str *rtag)
 {
 	static str hdr_append;
 
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*50);
+	hdr_append.s = (char *)pkg_malloc( sizeof(char)*255);
 	if(hdr_append.s == NULL)
 	{
 		LOG(L_ERR,"ERROR:send_200ok : unable to add lump_rl\n");
 		return -1;
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
+	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
+	hdr_append.len += CRLF_LEN;
+
+	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
+	hdr_append.len += 10;
+	strncpy(hdr_append.s+hdr_append.len, server_address.s, server_address.len);
+	hdr_append.len += server_address.len;
+	strncpy(hdr_append.s+hdr_append.len, ">", 1);
+	hdr_append.len += 1;
 	hdr_append.s[hdr_append.len]= '\0';
-	
+
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"ERROR:send_200ok: unable to add lump_rl\n");
@@ -450,7 +468,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 		}
 		if(subs->send_on_cback== 0)
 		{	
-			if(notify(subs, NULL, NULL)< 0)
+			if(notify(subs, NULL, NULL, 0)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
 					" notify for presence\n");
@@ -466,7 +484,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 					" sending 202 OK\n");
 			goto error;
 		}		
-		if(notify(subs, NULL, NULL )< 0)
+		if(notify(subs, NULL, NULL, 0 )< 0)
 		{
 			LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while"
 				" sending notify\n");
@@ -629,7 +647,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		subs.reason.s = "timeout";
 		subs.reason.len = 7;
 	
-		notify(&subs,  NULL, NULL);
+		notify(&subs,  NULL, NULL, 0);
 	}
 	
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 

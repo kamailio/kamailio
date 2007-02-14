@@ -71,6 +71,7 @@ char *active_watchers_table = "active_watchers";
 char *watchers_table= "watchers";  
 char *xcap_table= "xcap_xml";  
 int use_db=1;
+str server_address;
 
 /* to tag prefix */
 char* to_tag_pref = "10";
@@ -128,6 +129,7 @@ static param_export_t params[]={
 	{ "expires_offset",			INT_PARAM, &expires_offset },
 	{ "force_active",			INT_PARAM, &force_active },
 	{ "max_expires",			INT_PARAM, &max_expires  },
+	{ "server_address",         STR_PARAM, &server_address.s},
 	{0,0,0}
 };
 
@@ -167,6 +169,13 @@ static int mod_init(void)
 
 	if(max_expires<= 0)
 		max_expires = 3600;
+
+	if(server_address.s== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:mod_init:ERROR server_address parameter has no value\n");
+		return -1;
+	}
+	server_address.len= strlen(server_address.s);
 
 	/* load SL API */
 	if(load_sl_api(&slb)==-1)

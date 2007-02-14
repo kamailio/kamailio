@@ -64,7 +64,7 @@ void PRINT_DLG(FILE* out, dlg_t* _d);
 
 void printf_subs(subs_t* subs);
 
-str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason);
+str* build_str_hdr(str event, str status, int expires_t, str reason);
 
 int free_tm_dlg(dlg_t *td);
 
@@ -72,6 +72,6 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs);
 
 int query_db_notify(str* p_user, str* p_domain, char* event, subs_t *subs, str* etag);
 
-int notify(subs_t* subs, subs_t* watcher_subs, str* n_body);
+int notify(subs_t* subs, subs_t* watcher_subs, str* n_body, int force_null_body);
 
 #endif

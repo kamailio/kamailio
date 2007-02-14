@@ -297,6 +297,21 @@ modparam("presence", "max_expires", 3600)
 </programlisting>
 		</example>
 	</section>
+<section>
+		<title><varname>server_address</varname> (str)</title>
+		<para>
+		The presence server address which will become the value of Contact header filed 
+		for 200OK replyes to Subscribe and Publish and in Notify messages.
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "server_address", "sip:10.10.10.10:5060")
+...
+</programlisting>
+		</example>
+	</section>
 
 
 </section>

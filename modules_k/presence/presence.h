@@ -62,4 +62,6 @@ extern int lock_set_size;
 extern int force_active;
 extern int max_expires;
 extern struct sl_binds slb;
+extern str server_address;
+
 #endif /* PA_MOD_H */

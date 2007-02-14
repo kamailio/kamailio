@@ -65,7 +65,7 @@ void printf_subs(subs_t* subs)
 
 }
 
-str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
+str* build_str_hdr(str event, str status, int expires_t, str reason)
 {
 
 	static 	char buf[3000];
@@ -82,10 +82,9 @@ str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 
 	str_hdr->s = buf;
 
-	LOG(L_INFO, "PRESENCE: build str_hdr:\n\tp_uri = %.*s\n\tevent="
+	LOG(L_INFO, "PRESENCE: build str_hdr:\n\tevent="
 			"%.*s\n\tstatus= %.*s\n\texpires = %d\n",
-			p_uri.len, p_uri.s, event.len, event.s, status.len, status.s,
-			expires_t);
+			event.len, event.s, status.len, status.s,expires_t);
 
 	strncpy(str_hdr->s ,"Event: ", 7);
 	str_hdr->len = 7;
@@ -96,8 +95,8 @@ str* build_str_hdr(str p_uri, str event, str status, int expires_t, str reason)
 	
 	strncpy(str_hdr->s+str_hdr->len ,"Contact: <", 10);
 	str_hdr->len += 10;
-	strncpy(str_hdr->s+str_hdr->len, p_uri.s, p_uri.len);
-	str_hdr->len += p_uri.len;
+	strncpy(str_hdr->s+str_hdr->len, server_address.s, server_address.len);
+	str_hdr->len += server_address.len;
 	strncpy(str_hdr->s+str_hdr->len, ">", 1);
 	str_hdr->len += 1;
 	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
@@ -967,7 +966,7 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 
 	for(i =0; i<n; i++)
 	{
-		if(notify(subs_array[i], watcher_subs, notify_body)< 0 )
+		if(notify(subs_array[i], watcher_subs, notify_body, 0)< 0 )
 		{
 			LOG(L_DBG, "PRESENCE:query_db_notify: Could not send notify for"
 					"%s\n", event);
@@ -1323,7 +1322,7 @@ error:
 }
 
 
-int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
+int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body )
 {
 
 	str p_uri= {NULL, 0};
@@ -1344,6 +1343,11 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 
 	LOG(L_INFO, "PRESENCE:notify:dialog informations:\n");
 	printf_subs(subs);
+
+	if(force_null_body)
+		goto jump_over_body;
+
+    /* getting the notify body */
 
 	if ( subs->event.len == PRES_LEN)
 	{	
@@ -1500,6 +1504,8 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 	else
 		final_body= notify_body;
 
+jump_over_body:
+
 	/* built extra headers */	
 	uandd_to_uri(subs->to_user, subs->to_domain, &p_uri);
 	
@@ -1514,7 +1520,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body )
 			subs->event.s);
 
 	printf_subs(subs);
-	str_hdr = build_str_hdr(p_uri, subs->event,subs->status, subs->expires,
+	str_hdr = build_str_hdr(subs->event,subs->status, subs->expires,
 			subs->reason );
 	if(str_hdr == NULL|| str_hdr->s== NULL|| str_hdr->len==0)
 	{
@@ -1718,7 +1724,7 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	else
 		if(((c_back_param*)(*ps->param))->wi_subs!= NULL)
 		{
-			if(notify( ((c_back_param*)(*ps->param))->wi_subs, NULL, NULL)< 0)
+			if(notify( ((c_back_param*)(*ps->param))->wi_subs, NULL, NULL, 1)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
 					" notify for presence\n");
