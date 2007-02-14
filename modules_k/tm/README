@@ -59,7 +59,7 @@ Bogdan-Andrei Iancu
               1.4.1. t_newtran()
               1.4.2. t_lookup_request()
               1.4.3. t_relay([flags])
-              1.4.4. t_relay(proto:host:port,[flags]),
+              1.4.4. t_relay(proto:host:port,[flags])
               1.4.5. t_reply(code, reason_phrase)
               1.4.6. t_retransmit_reply()
               1.4.7. t_replicate(URI,[flags])
@@ -649,7 +649,7 @@ if (!t_relay()) {
 ...
      _________________________________________________________
 
-1.4.4. t_relay(proto:host:port,[flags]),
+1.4.4. t_relay(proto:host:port,[flags])
 
    Relay a message statefully to a fixed destination. The
    destination is specified as "[proto:]host[:port]".

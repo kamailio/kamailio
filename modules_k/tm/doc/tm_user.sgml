@@ -771,7 +771,7 @@ if (!t_relay()) {
 
 	<section id="trelay-1">
 		<title>
-		<function moreinfo="none">t_relay(proto:host:port,[flags])</function>,
+		<function moreinfo="none">t_relay(proto:host:port,[flags])</function>
 		</title>
 		<para>
 		Relay a message statefully to a fixed destination. The destination is

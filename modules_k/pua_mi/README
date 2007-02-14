@@ -23,8 +23,9 @@ Anca-Maria Vamanu
 
         1.3. Exported Parameters
         1.4. Exported Functions
+        1.5. Exported MI functions
 
-              1.4.1. Exported MI functions
+              1.5.1. mi_pua_publish
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -76,9 +77,9 @@ Chapter 1. User's Guide
    configuration script.
      _________________________________________________________
 
-1.4.1. Exported MI functions
+1.5. Exported MI functions
 
-1.4.1.1. mi_pua_publish
+1.5.1. mi_pua_publish
 
    Command parameters:
 

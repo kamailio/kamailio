@@ -26,7 +26,8 @@
 	<para>
 	</para>
 	</section>
-		<section>
+
+	<section>
 	<title>Dependencies</title>
 	<section>
 		<title>&ser; Modules</title>
@@ -43,8 +44,8 @@
 				<emphasis>pua</emphasis>.
 			</para>
 			</listitem>
-
-			</section>
+	</section>
+	
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
@@ -60,6 +61,7 @@
 		</para>
 	</section>
 	</section>
+	
 	<section>
 		<title>Exported Parameters</title>
 		<para>
@@ -73,10 +75,11 @@
 		</para>
 	</section>	
 
-<section>
-	<title>Exported Functions</title>
-	<para>The module does not export functions to be used
-	in configuration script.</para>
+	<section>
+		<title>Exported Functions</title>
+		<para>The module does not export functions to be used
+		in configuration script.</para>
+	</section>	
 	<section>
 		<title>Exported MI functions</title>
 		<section>
@@ -124,11 +127,9 @@ sip:system@openser.org
 ...
 </programlisting>
 		</example>
-
 		</section>
-	</section>	
 
-</section>		
+	</section>		
 
 </chapter>
 

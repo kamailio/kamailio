@@ -280,7 +280,9 @@ modparam("mediaproxy", "natping_interval", 20)
    Default value is "s:signaling_ip". 
 
    Example 1-5. Setting signaling_ip_avp parameter
-...modparam("mediaproxy", "signaling_ip_avp", "s:nat_ip")...
+...
+modparam("mediaproxy", "signaling_ip_avp", "s:nat_ip")
+...
      _________________________________________________________
 
 1.6. Exported Functions

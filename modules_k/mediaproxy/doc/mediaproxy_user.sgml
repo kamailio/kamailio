@@ -297,7 +297,7 @@ modparam("mediaproxy", "signaling_ip_avp", "s:nat_ip")
 	<title>Exported Functions</title>
 		<section>
 		<title>
-		<function moreinfo="none">client_nat_test</function>(type)
+		<function moreinfo="none">client_nat_test(type)</function>
 		</title>
 			<para>
 				Tests if the client is behind NAT or not. The types of tests are
@@ -343,7 +343,7 @@ if (client_nat_test("3")) {
 		</section>
 		<section>
 		<title>
-		<function moreinfo="none">fix_contact</function>()
+		<function moreinfo="none">fix_contact()</function>
 		</title>
 			<para>
 				Will replace the IP:Port in the Contact field of the SIP message
@@ -370,7 +370,7 @@ if (client_nat_test("3")) {
 		</section>
 		<section>
 		<title>
-		<function moreinfo="none">use_media_proxy</function>()
+		<function moreinfo="none">use_media_proxy()</function>
 		</title>
 			<para>
 				Will make a call to the proxy server and replace the IPs and ports
@@ -411,7 +411,7 @@ if (method==INVITE) {
 		</section>
 		<section>
 		<title>
-		<function moreinfo="none">end_media_session</function>()
+		<function moreinfo="none">end_media_session()</function>
 		</title>
 			<para>
 				Will call on the proxy server to end the media session for that call
