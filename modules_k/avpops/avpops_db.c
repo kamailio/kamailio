@@ -343,11 +343,12 @@ int db_query_avp(struct sip_msg *msg, char *query, itemname_list_t* dest)
 	}
 
 	DBG("avpops:db_query_avp: rows [%d]\n", RES_ROW_N(db_res));
+	/* reverse order of rows so that first row get's in front of avp list */
 	for(i = RES_ROW_N(db_res)-1; i >= 0; i--) 
 	{
 		DBG("avpops:db_query_avp: row [%d]\n", i);
 		crt = dest;
-		for(j = RES_COL_N(db_res)-1; j >= 0; j--) 
+		for(j = 0; j < RES_COL_N(db_res); j++) 
 		{
 			if(RES_ROWS(db_res)[i].values[j].nul)
 				goto next_avp;
