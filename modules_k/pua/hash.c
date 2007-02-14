@@ -93,7 +93,7 @@ error:
 }
 
 ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
-		int FLAG, int event, int hash_code)
+		int FLAG, int event,unsigned int hash_code)
 {
 	ua_pres_t* p= NULL,* L= NULL;
  
@@ -145,7 +145,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 	return p;
 }
 
-void update_htable(ua_pres_t* presentity, int expires, int hash_code)
+void update_htable(ua_pres_t* presentity, int expires, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL;
 	DBG("PUA:hash_update ..\n");

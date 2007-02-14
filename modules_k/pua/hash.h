@@ -97,11 +97,11 @@ typedef struct htable{
 htable_t* new_htable();
 
 ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id, 
-		int FLAG, int event, int hash_code);
+		int FLAG, int event, unsigned int hash_code);
 
 void insert_htable(ua_pres_t* presentity );
 
-void update_htable(ua_pres_t* presentity, int expires, int hash_code);
+void update_htable(ua_pres_t* presentity, int expires, unsigned int hash_code);
 
 void delete_htable(ua_pres_t* presentity );
 
