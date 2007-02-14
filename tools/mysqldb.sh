@@ -830,11 +830,11 @@ CREATE TABLE cpl (
 #
 CREATE TABLE imc_members (
   id int(10) unsigned NOT NULL auto_increment,
-  user varchar(128) NOT NULL,
+  username varchar(128) NOT NULL,
   domain varchar(128) NOT NULL,
   room varchar(64) NOT NULL,
   flag int(11) NOT NULL,
-  UNIQUE KEY ndr_imc (user,domain,room),
+  UNIQUE KEY ndr_imc (username,domain,room),
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
 

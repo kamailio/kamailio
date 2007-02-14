@@ -457,7 +457,7 @@ INSERT INTO version VALUES ( 'domainpolicy', '2');
 CREATE TABLE cpl (
   id int(10) unsigned NOT NULL auto_increment,
   username varchar(64) NOT NULL,
-  domain varchar(64) NOT NULL default '',
+  domain varchar(64) NOT NULL default '',member_table
   cpl_xml text,
   cpl_bin text,
   UNIQUE KEY ud_cpl (username, domain),
@@ -472,11 +472,11 @@ CREATE TABLE cpl (
 #
 CREATE TABLE imc_members (
   id int(10) unsigned NOT NULL auto_increment,
-  user varchar(128) NOT NULL,
+  username varchar(128) NOT NULL,
   domain varchar(128) NOT NULL,
   room varchar(64) NOT NULL,
   flag int(11) NOT NULL,
-  UNIQUE KEY ndr_imc (user,domain,room),
+  UNIQUE KEY ndr_imc (username,domain,room),
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
 

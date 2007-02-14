@@ -915,11 +915,11 @@ CREATE TABLE cpl (
  */
 CREATE TABLE imc_members (
   id $AUTO_INCREMENT,
-  user varchar(128) NOT NULL,
+  username varchar(128) NOT NULL,
   domain varchar(128) NOT NULL,
   room varchar(64) NOT NULL,
   flag int NOT NULL,
-  UNIQUE (user,domain,room)
+  UNIQUE (username,domain,room)
 ) $TABLE_TYPE;
 
 
