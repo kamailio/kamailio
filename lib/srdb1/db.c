@@ -142,6 +142,7 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 	}
 
 	*mydbf=dbf; /* copy */
+	if (tmp != mod) pkg_free(tmp);
 	return 0;
 
  err:
