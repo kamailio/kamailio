@@ -70,7 +70,7 @@ if [ -z "$LAST_LINE" ] ; then
 		echo "error: 'TAIL' tool not found: set TAIL variable to correct tool path"
 		exit
 	fi
-	LAST_LINE="$TOOLPATH -1"
+	LAST_LINE="$TOOLPATH -n 1"
 fi
 if [ -z "$EXPR" ] ; then
 	locate_tool expr
