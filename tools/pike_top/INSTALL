@@ -1,0 +1,7 @@
+You must not have installed libxmlrpc-c from Debian repo.
+It is very old version with old API.
+
+Prerequisities:
+	libxmlrpc-c ver. 1.03 (http://xmlrpc-c.sourceforge.net/)
+	Makefile suppose that it is installed in /opt/xmlrpc directory,
+	if not customize you should it.
