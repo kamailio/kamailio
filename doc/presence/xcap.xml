@@ -65,7 +65,7 @@ not much client software supporting it.
 
 <section id="xcap.examples"><title>XCAP examples</title>
 <note><para>XCAP documents examples published there doesn't use correct XML
-namespaces due to problems with XCAP server used for tests (probles querying
+namespaces due to problems with XCAP server used for tests (problems querying
 partial documents with namespaces).</para></note>
 
 <example><title>Storing XCAP documents</title>

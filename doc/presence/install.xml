@@ -39,48 +39,34 @@ on common libraries which have their own dependencies as mentioned below.
 with shared libraries into directory /base/ser/directory (if no directory specified - 
 no prefix parameter given - default value is used: /usr/local/)
 <orderedlist>
-	<listitem><para>Download current ser sources:</para>
+	<listitem><para>Download current SER sources:</para>
 	<para><userinput>cvs -d :pserver:anonymous@cvs.berlios.de:/cvsroot/ser checkout sip_router</userinput>
 	</para></listitem>
+	
+	<listitem><para>Download very useful <application>ser_ctl</application> utility
+	(not necessary, but it is handy for adding data into database, running
+	XML-RPC functions etc):</para>
+	<para><userinput>cvs -d :pserver:anonymous@cvs.berlios.de:/cvsroot/ser checkout serctl</userinput>
+	</para></listitem>
 
-	<listitem><para>Compile and install libraries for usage with SER:</para>
-	<para><userinput>cd sip_router/lib</userinput></para>
-	<para><userinput>make -f Makefile.ser install prefix=/base/ser/directory</userinput></para>
-	<para>This procedure may fail in the case of unsatisfied library
-	dependencies. You need to install all external libraries introduced in <xref
-	linkend="pres.dependencies"/></para>
-	</listitem>
-
-	<listitem><para>Compile and install SER with presence modules</para>
-	<para><userinput>cd ..</userinput></para>
-	<para><userinput>make install include_modules="dialog pa rls presence_b2b xcap mysql xmlrpc" prefix=/base/ser/directory</userinput></para>
+	<listitem><para>Compile and install SER with presence modules. Common
+	libraries should be compiled automaticaly - it may fail in the case of
+	unsatisfied library dependencies. You need to install all external libraries
+	introduced in <xref linkend="pres.dependencies"/></para>
+	<para><userinput>cd sip_router</userinput></para>
+	<para><userinput>make install group_include="standard,presence,standard-dep" prefix=/base/ser/directory</userinput></para>
 	</listitem>
 </orderedlist>
 </para>
 </section> <!-- Installation from CVS -->
 
-<section><title>Installation from presence-snapshot</title>
-
-<para>There are snapshots of sources from CVS named "presence snapshots" on our
-FTP server ftp://ftp.iptel.org/pub/ser/presence/.</para>
-
-<para>Presence snapshot contains example config files, has modified Makefiles for
-simplier compilation and installation and it is a bit tested for presence
-functions. Snapshot compiles only modules needed by presence!</para>
-
-<para>There is an example of steps which need to be done while installing SER
-from presence snapshot into directory /base/ser/directory (if no directory specified - 
-no prefix parameter given - default value is used: /usr/local/)
-<orderedlist>
-	<listitem><para>Download last versiom from
-	ftp://ftp.iptel.org/pub/ser/presence/</para></listitem>
-
-	<listitem><para>Compile and install</para>
-	<para><userinput>make install prefix=/base/ser/directory</userinput></para>
-	</listitem>
-</orderedlist>
+<section><title>Presence snapshots</title>
+<para>In past there were published <quote>presence snapshots</quote> with stable
+and tested code and up to date documentation. This will change - tested and
+documented stable features will be probably imported into stable SER branch
+(Ottendorf) and unstable ones will remain in CVS head.
 </para>
-</section> <!-- Installation from snapshot -->
+</section> <!-- snapshots -->
 
 <section><title>Running SER</title>
 <para>Linker used for dynamic linking must know, where to find these libraries.
@@ -90,7 +76,43 @@ startup.</para>
 <para><userinput>/base/ser/directory/sbin/ser -f /base/ser/directory/etc/ser/ser.cfg</userinput></para> 
 
 <warning>If you want to run SER under sudo like <quote>sudo /base/ser/directory/sbin/ser -f
-/base/ser/directory/etc/ser/ser.cfg</quote> it might not work!</warning>
+/base/ser/directory/etc/ser/ser.cfg</quote> it need not work - it is possible
+that LD_LIBRARY_PATH will not be propagated in this case!</warning>
 </section> <!-- running SER -->
+
+<section><title>Database initialization</title>
+<warning>
+<para>This paragraph can be out-of-dated by changes in DB init scripts or in
+ser_ctl. It has only informative value!</para>
+</warning>
+<para>It is very handy to use SER together with database - at least domains and
+users with attributes can be stored there. First must be database created -
+there are scripts to do this in SER's source tree in directory scripts; for
+example "scripts/mysql/ser_mysql.sh create" will create the database for MySQL.
+<note><para>Later MySQL versions can complain with current script, if so, you
+can try to remove qotes around $PW in script to get it into work.</para></note>
+</para>
+
+<para>After database creation you can add data using
+<application>ser_ctl</application> utility:
+<itemizedlist>
+	<listitem><para>add domain:</para>
+	<para><userinput>ser_domain add test test-domain.com</userinput></para></listitem>
+	<listitem><para>add user <quote>parf</quote> with password <quote>parf</quote>:</para>
+	<para><userinput>ser_user add parf</userinput></para>
+	<para><userinput>ser_uri add parf parf@test-domain.com</userinput></para>
+	<para><userinput>ser_cred add parf parf test test-domain.com parf</userinput></para>
+	</listitem>
+</itemizedlist>
+</para>
+
+<note>
+<para>Running ser_xxx without arguments shows help.</para>
+<para>You can specify database URI used by <application>ser_ctl</application>;
+for example you can use <quote>postgres://...</quote> instead of default
+<quote>mysql://...</quote> etc.</para>
+</note>
+
+</section>
 
 </section>
