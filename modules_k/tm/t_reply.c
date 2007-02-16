@@ -798,7 +798,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			/* is is a DNS failover scenario? - according to RFC 3263
 			 * this means 503 reply or timeout with no reply */
 			if (Trans->uac[picked_branch].last_received==503 ||
-			(new_code==408 || Trans->uac[picked_branch].last_received==-1) ) {
+			(new_code==408 && Trans->uac[picked_branch].last_received<0) ) {
 				/* do DNS failover -> add new branches */
 				if (do_dns_failover( Trans )!=0) {
 					/* skip the failed added branches */
