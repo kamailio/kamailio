@@ -162,6 +162,7 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 </programlisting>
 		</example>
 	</section>
+	</section>
 
 	<section>
 	<title>Exported Functions</title>
@@ -169,8 +170,6 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 		No function exported to be used from configuration file.
 		</para>
 	</section>
-	</section>
-
 </chapter>
 
 <!-- Keep this element at the end of the file

@@ -20,7 +20,7 @@
 	</section>
 
 	<section>
-	<title>FIFO syntax</title>
+	<title>FIFO command syntax</title>
 	<para>
 		The external commands issued via FIFO interface must follow the
 		following syntax:

@@ -28,7 +28,8 @@ Lavinia-Andreea Andrei
               1.4.2. log_file(string)
               1.4.3. reply_option (integer)
               1.4.4. buffer_size (integer)
-              1.4.5. Exported Functions
+
+        1.5. Exported Functions
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -147,7 +148,7 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 ...
      _________________________________________________________
 
-1.4.5. Exported Functions
+1.5. Exported Functions
 
    No function exported to be used from configuration file.
      _________________________________________________________
