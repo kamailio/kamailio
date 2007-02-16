@@ -18,26 +18,33 @@ OPENSER-REG-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
     MODULE-IDENTITY,
-    enterprises, experimental, OBJECT-IDENTITY
+    enterprises, OBJECT-IDENTITY
         FROM SNMPv2-SMI;
 
 openserRegMibModule MODULE-IDENTITY
-    LAST-UPDATED    "200603211200Z"
+    LAST-UPDATED    "200702150430Z"
     ORGANIZATION    "OpenSER"
     CONTACT-INFO
         "http://www.openser.org open source project."
     DESCRIPTION
         "OpenSER Global Registration MIB"
+
+    REVISION "200702150430Z"
+    DESCRIPTION
+        "Moved the OpenSER MIBs from the experimental branch to the IANA
+         assigned enterprise branch 27483"       
+
+    REVISION "200603211200Z"
+    DESCRIPTION
+        "Initial OpenSER Mib Release"
     ::= { openserModules 1 }
 
 -- top level enterprise identification
 openser OBJECT-IDENTITY
     STATUS current
-
     DESCRIPTION 
-    "Specification of the openser Private Enterprise Number.
-     Should be under the enterprise branch."
-    ::= { experimental 6736737 }
+    "The IANA has assigned enterprise branch 27483 to OpenSER."
+    ::= { enterprises 27483 }
 
 -- namespace management sub-trees    
 openserReg OBJECT-IDENTITY

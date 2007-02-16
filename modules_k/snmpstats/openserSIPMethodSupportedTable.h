@@ -25,6 +25,8 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
+ * 2007-02-16 Moved all OID registrations from the experimental branch to 
+ *            OpenSER's IANA assigned enterprise branch. (jmagder)
  * 
  * Originally Generated with Mib2c using mib2c.array-user.conf.
  * 
@@ -44,6 +46,8 @@ extern "C" {
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
+
+#include "../../config.h"
 
 /* 
  * This strucutre represents a single row in the SNMP table, and is mostly
@@ -95,7 +99,7 @@ const openserSIPMethodSupportedTable_context *
 extern oid    openserSIPMethodSupportedTable_oid[];
 extern size_t openserSIPMethodSupportedTable_oid_len;
 
-#define openserSIPMethodSupportedTable_TABLE_OID 1,3,6,1,3,6736737,3,1,1,1,1,7
+#define openserSIPMethodSupportedTable_TABLE_OID OPENSER_OID,3,1,1,1,1,7
     
 /*
  * column number definitions for table openserSIPMethodSupportedTable
