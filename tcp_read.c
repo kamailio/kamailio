@@ -856,11 +856,11 @@ again:
 			}
 			if (n==0){
 				LOG(L_ERR, "WARNING: tcp_receive: handle_io: 0 bytes read\n");
-				break;
+				goto error;
 			}
 			if (con==0){
 					LOG(L_CRIT, "BUG: tcp_receive: handle_io null pointer\n");
-					break;
+					goto error;
 			}
 			con->fd=s;
 			if (s==-1) {
