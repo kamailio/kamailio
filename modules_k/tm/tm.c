@@ -480,13 +480,15 @@ static int fixup_local_replied(void** param, int param_no)
 	if (param_no==1) {
 		val = (char*)*param;
 		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"branch")==0) {
 			n = 1;
 		} else if (strcasecmp(val,"last")==0) {
-			n = 0;
+			n = 2;
 		} else {
 			LOG(L_ERR,"ERROR:tm:fixup_local_replied: invalid param \"%s\"\n",
 				val);
-			return E_UNSPEC;
+			return E_CFG;
 		}
 		/* free string */
 		pkg_free(*param);
@@ -801,10 +803,10 @@ static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
 }
 
 
-inline static int t_local_replied(struct sip_msg* msg, char *all, char *bar)
+inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar)
 {
 	struct cell *t;
-	int all_rpls;
+	int branch;
 	int i;
 
 	t = get_t();
@@ -813,20 +815,45 @@ inline static int t_local_replied(struct sip_msg* msg, char *all, char *bar)
 		return -1;
 	}
 
-	all_rpls = (int)(long)all;
-
-	/* is last reply local ? */
-	if (t->relaied_reply_branch!=-2)
-		return -1;
-	/* were all replies local or none  */
-	if (all_rpls) {
-		for( i=t->first_branch ; i<t->nr_of_outgoings ; i++ ) {
-			if (t->uac[i].flags&T_UAC_HAS_RECV_REPLY)
+	switch ( (int)(long)type ) {
+		/* check all */
+		case 0:
+			for( i=t->first_branch ; i<t->nr_of_outgoings ; i++ ) {
+				if (t->uac[i].flags&T_UAC_HAS_RECV_REPLY)
+					return -1;
+			}
+			return 1;
+		/* check branch */
+		case 1:
+			if (route_type==FAILURE_ROUTE) {
+				/* use the the winning reply */
+				if ( (branch=t_get_picked_branch())<0 ) {
+					LOG(L_CRIT,"BUG:t_local_replied: no picked branch (%d) for"
+						" a final response in MODE_ONFAILURE\n", branch);
+					return -1;
+				}
+				if (t->uac[branch].flags&T_UAC_HAS_RECV_REPLY)
+					return -1;
+				return 1;
+			}
+			return -1;
+		/* check last */
+		case 2:
+			if (route_type==FAILURE_ROUTE) {
+				/* use the the winning reply */
+				if ( (branch=t_get_picked_branch())<0 ) {
+					LOG(L_CRIT,"BUG:t_local_replied: no picked branch (%d) for"
+						" a final response in MODE_ONFAILURE\n", branch);
+					return -1;
+				}
+				if (t->uac[branch].reply==FAKED_REPLY)
+					return 1;
 				return -1;
-		}
+			}
+			return (t->relaied_reply_branch==-2)?1:-1;
+		default:
+			return -1;
 	}
-
-	return 1;
 }
 
 
