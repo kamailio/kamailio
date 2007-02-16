@@ -16,7 +16,7 @@
 <varlistentry>
 	<term>RL-URI</term>
 	<listitem><para>Resource list URI. URI which represents a list of resources instead of
-	single user.
+	a single user.
 	</para></listitem>
 </varlistentry>
 </variablelist>
@@ -71,7 +71,7 @@ These reasons lead to separation of resource lists into "global lists" and
 
 <para>Global lists are not stored/modified by regular users; they are
 managed by administrators and they are handled according the draft. Example of
-such lists may be "technical support", ...
+such lists may be "technical support", "human resources", ...
 </para>
 
 <para>Resource lists for users are stored only in their

@@ -112,8 +112,10 @@ modparam("rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 <varlistentry>
 	<term>max_notifications_at_once</term>
 	<listitem><para>Max. number of notifications sent within one timer tick
-	(experimental). It might be used to reduce network traffic. Default value 
-	is 1000000.</para></listitem>
+	(experimental). It might be used to reduce SER's machine load if there are
+	lots of changes in presence status.</para>
+	<para>Default value is 1000000. (Too high number which in praxis means
+	unlimited.)</para></listitem>
 </varlistentry>
 
 <varlistentry>
@@ -126,8 +128,8 @@ modparam("rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 <varlistentry>
 	<term>max_nesting_level</term>
 	<listitem><para>Maximum number of nested lists. For example if set to 2, it
-	it possible to use "list nested in list nested in root list". Default value
-	is -1 what means <quote>unlimited</quote>.</para>
+	it possible to use "list nested in list nested in root list".</para>
+	<para>Default value	is -1 what means <quote>unlimited</quote>.</para>
 	<para>It is possible to use this for speedup - if you know, that you will
 	need only <quote>flat</quote> lists (no nested lists), you can set this to
 	0. In this case RLS doesn't try to query XCAP server for <quote>possibly
@@ -154,9 +156,10 @@ modparam("rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 <varlistentry>
 	<term>init_timer_delay</term>
 	<listitem><para>Delay in seconds of timer which triggers loading data from
-	database. This is needed by dependencies on other modules (pa/presence_b2b).
-	Default value is 3.
-	</para></listitem>
+	database after startup. This is needed due to dependencies on other modules
+	(pa/presence_b2b) - we need that these modules will be successfully
+	initialised before reading data from DB and querying these modules.</para>
+	<para>Default value is 3.</para></listitem>
 </varlistentry>
 
 </variablelist>
