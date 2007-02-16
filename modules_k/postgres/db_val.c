@@ -282,6 +282,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 {
 	int l, ret;
+	int pgret;
 	char *tmp_s;
 	size_t tmp_len;
 	char* old_s;
@@ -318,7 +319,8 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 
 	case DB_DOUBLE:
 		if (double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
-			LOG(L_ERR, "PG[val2str]: Error while converting string to double\n");
+			LOG(L_ERR,
+					"PG[val2str]: Error while converting string to double\n");
 			return -3;
 		} else {
 			return 0;
@@ -328,13 +330,23 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l * 2 + 3)) {
-			LOG(L_ERR, "PG[val2str]: Destination buffer too short for string\n");
+			LOG(L_ERR,
+					"PG[val2str]: Destination buffer too short for string\n");
 			return -4;
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v), l, 0);
-	                LOG(L_DBG, "PG[val2str:DB_STRING]: PQescapeStringConn: in: %d chars, out: %d chars\n", l, ret);
+			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v),
+					l, &pgret);
+			if(pgret!=0)
+			{
+				LOG(L_ERR,
+					"PG[val2str]: error PQescapeStringConn\n");
+				return -4;
+			}
+			LOG(L_DBG,
+				"PG[val2str:DB_STRING]: PQescapeStringConn: in: %d chars,"
+				" out: %d chars\n", l, ret);
 			_s += ret;
 			*_s++ = '\'';
 			*_s = '\0'; /* FIXME */
@@ -351,8 +363,17 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v), l, 0);
-	                LOG(L_DBG, "PG[val2str:DB_STR]: PQescapeStringConn: in: %d chars, out: %d chars\n", l, ret);
+			ret = PQescapeStringConn(CON_CONNECTION(_con), _s, VAL_STRING(_v),
+					l, &pgret);
+			if(pgret!=0)
+			{
+				LOG(L_ERR,
+					"PG[val2str]: error PQescapeStringConn\n");
+				return -5;
+			}
+	        LOG(L_DBG,
+				"PG[val2str:DB_STR]: PQescapeStringConn: in: %d chars,"
+				" out: %d chars\n", l, ret);
 			_s += ret;
 			*_s++ = '\'';
 			*_s = '\0'; /* FIXME */
@@ -363,7 +384,8 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 
 	case DB_DATETIME:
 		if (time2str(VAL_TIME(_v), _s, _len) < 0) {
-			LOG(L_ERR, "PG[val2str]: Error while converting string to time_t\n");
+			LOG(L_ERR,
+				"PG[val2str]: Error while converting string to time_t\n");
 			return -6;
 		} else {
 			return 0;
@@ -377,7 +399,14 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 			return -7;
 		} else {
 			*_s++ = '\'';
-			tmp_s = (char*)PQescapeBytea((unsigned char*)VAL_STRING(_v), (size_t)l, (size_t*)&tmp_len);
+			tmp_s = (char*)PQescapeBytea((unsigned char*)VAL_STRING(_v),
+					(size_t)l, (size_t*)&tmp_len);
+			if(tmp_s==NULL)
+			{
+				LOG(L_ERR,
+					"PG[val2str]: error PQescapeBytea\n");
+				return -7;
+			}
 			memcpy(_s, tmp_s, tmp_len);
 			PQfreemem(tmp_s);
 			tmp_len = strlen(_s);
