@@ -144,13 +144,18 @@ static void tls_dump_cert_info(char* s, X509* cert)
 	char* subj;
 	char* issuer;
 	
+	subj=issuer=0;
 	subj = X509_NAME_oneline(X509_get_subject_name(cert), 0 , 0);
 	issuer = X509_NAME_oneline(X509_get_issuer_name(cert), 0 , 0);
 	
-	LOG(tls_log, "%s subject:%s\n", s ? s : "", subj);
-	LOG(tls_log, "%s issuer:%s\n", s ? s : "", issuer);
-	OPENSSL_free(subj);
-	OPENSSL_free(issuer);
+	if (subj){
+		LOG(tls_log, "%s subject:%s\n", s ? s : "", subj);
+		OPENSSL_free(subj);
+	}
+	if (issuer){
+		LOG(tls_log, "%s issuer:%s\n", s ? s : "", issuer);
+		OPENSSL_free(issuer);
+	}
 }
 
 
@@ -631,8 +636,8 @@ void tls_h_close(struct tcp_connection *c, int fd)
 	      */
 	DBG("Closing SSL connection\n");
 	if (c->extra_data) {
-		tls_update_fd(c, fd);
-		tls_shutdown(c);
+		if (tls_update_fd(c, fd)==0)
+			tls_shutdown(c); /* shudown only on succesfull set fd */
 	}
 }
 
@@ -800,7 +805,7 @@ int tls_h_read(struct tcp_connection * c)
 			TLS_ERR_RET(ssl_err, "tls_read:");
 			if (!ssl_err) {
 				if (bytes_read == 0) {
-					LOG(L_WARN, "WARNING: tls_read: improper EOF on tls"
+					LOG(tls_log, "WARNING: tls_read: improper EOF on tls"
 					    " (harmless)\n");
 					c->state = S_CONN_EOF;
 					return 0;
