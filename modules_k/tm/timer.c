@@ -184,43 +184,43 @@ static void delete_cell( struct cell *p_cell, int unlock )
 #ifdef EXTRA_DEBUG
 	if (is_in_timer_list2(& p_cell->wait_tl )) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-			" still on WAIT, timeout=%d\n", p_cell, p_cell->wait_tl.time_out);
+			" still on WAIT, timeout=%lld\n",p_cell, p_cell->wait_tl.time_out);
 		abort();
 	}
 	if (is_in_timer_list2(& p_cell->uas.response.retr_timer )) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-			" still on RETR (rep), timeout=%d\n",
+			" still on RETR (rep), timeout=%lld\n",
 			p_cell, p_cell->uas.response.retr_timer.time_out);
 		abort();
 	}
 	if (is_in_timer_list2(& p_cell->uas.response.fr_timer )) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-			" still on FR (rep), timeout=%d\n", p_cell,
+			" still on FR (rep), timeout=%lld\n", p_cell,
 			p_cell->uas.response.fr_timer.time_out);
 		abort();
 	}
 	for (i=0; i<p_cell->nr_of_outgoings; i++) {
 		if (is_in_timer_list2(& p_cell->uac[i].request.retr_timer)) {
 			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-				" still on RETR (req %d), timeout %d\n", p_cell, i,
+				" still on RETR (req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.retr_timer.time_out);
 			abort();
 		}
 		if (is_in_timer_list2(& p_cell->uac[i].request.fr_timer)) {
 			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-				" still on FR (req %d), timeout %d\n", p_cell, i,
+				" still on FR (req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.fr_timer.time_out);
 			abort();
 		}
 		if (is_in_timer_list2(& p_cell->uac[i].local_cancel.retr_timer)) {
 			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-				" still on RETR/cancel (req %d), timeout %d\n", p_cell, i,
+				" still on RETR/cancel (req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.retr_timer.time_out);
 			abort();
 		}
 		if (is_in_timer_list2(& p_cell->uac[i].local_cancel.fr_timer)) {
 			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-				" still on FR/cancel (req %d), timeout %d\n", p_cell, i,
+				" still on FR/cancel (req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.fr_timer.time_out);
 			abort();
 		}
@@ -710,7 +710,7 @@ static void remove_timer_unsafe(  struct timer_link* tl )
 #endif
 	if (is_in_timer_list2( tl )) {
 #ifdef EXTRA_DEBUG
-		DBG("DEBUG: unlinking timer: tl=%p, timeout=%d, group=%d\n", 
+		DBG("DEBUG: unlinking timer: tl=%p, timeout=%lld, group=%d\n", 
 			tl, tl->time_out, tl->tg);
 #endif
 #ifdef TM_TIMER_DEBUG
@@ -740,7 +740,7 @@ static void remove_timer_unsafe(  struct timer_link* tl )
 
 /* put a new cell into a list nr. list_id */
 static void insert_timer_unsafe( struct timer *timer_list,
-								struct timer_link *tl, unsigned int time_out )
+									struct timer_link *tl, utime_t time_out )
 {
 	struct timer_link* ptr;
 
@@ -774,7 +774,8 @@ static void insert_timer_unsafe( struct timer *timer_list,
 	check_timer_list( timer_list->id, "after insert" );
 #endif
 
-	DBG("DEBUG: add_to_tail_of_timer[%d]: %p\n",timer_list->id,tl);
+	DBG("DEBUG: add_to_tail_of_timer[%d]: %p (%lld)\n",timer_list->id,
+		tl,tl->time_out);
 }
 
 
@@ -887,6 +888,7 @@ void set_timer( struct timer_link *new_tl, enum lists list_id,
 	} else {
 		timeout = *ext_timeout;
 	}
+	DBG("DEBUG:tm:set_timer: relative timeout is %lld\n",timeout);
 
 	list= &(timertable->timers[ list_id ]);
 
