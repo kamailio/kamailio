@@ -154,12 +154,8 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 				return E_BUG;
 			}
 			/* look for the transaction */
-			if ( t_check(p_msg,0)==1 ){
-				if ( (t=get_t())==0 ) {
-					LOG(L_CRIT,"BUG:tm:register_tmcb: transaction found "
-						"is NULL\n");
-					return E_BUG;
-				}
+			t = get_t();
+			if ( t!=NULL && t!=T_UNDEFINED ){
 				cb_list = &(t->tmcb_hl);
 			} else {
 				/* no transaction found -> link it to waitting list */

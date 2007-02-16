@@ -101,9 +101,7 @@ static int child_init(int rank);
 
 
 /* exported functions */
-inline static int w_t_check(struct sip_msg* msg, char* , char* );
 inline static int w_t_release(struct sip_msg* msg, char* , char* );
-inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* ,char* );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* , char* );
 inline static int w_t_reply(struct sip_msg *msg, char* code, char* text);
 inline static int w_t_relay(struct sip_msg *p_msg , char *proxy, char* flags);
@@ -142,12 +140,8 @@ stat_var *tm_trans_inuse;
 static cmd_export_t cmds[]={
 	{"t_newtran",            w_t_newtran,             0, 0,
 			REQUEST_ROUTE},
-	{"t_lookup_request",     w_t_check,               0, 0,
-			REQUEST_ROUTE},
 	{"t_reply",              w_t_reply,               2, fixup_t_send_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_retransmit_reply",   w_t_retransmit_reply,    0, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
 	{"t_release",            w_t_release,             0, 0,
 			REQUEST_ROUTE},
 	{"t_replicate",          w_t_replicate,           1, fixup_t_replicate,
@@ -705,8 +699,8 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 	int n;
 
 	/* first get the transaction */
-	if (t_check( msg , 0 )==-1) return -1;
-	if ( (t=get_t())==0) {
+	t = get_t();
+	if ( t==0 || t==T_UNDEFINED ) {
 		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
 			"which has no T-state established\n");
 		return -1;
@@ -752,8 +746,6 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 {
 	struct cell *trans;
-	struct cell *bkup;
-	int ret;
 
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
 		/* parse needed hdrs*/
@@ -772,14 +764,14 @@ inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 			return -1;
 		}
 	} else {
-		bkup = get_t();
-		ret = t_lookup_request( msg , 0);
-		if ( (trans=get_t())!=0 ) UNREF(trans);
-		set_t( bkup );
-		switch (ret) {
+		switch ( t_lookup_request( msg , 0) ) {
 			case 1:
-				/* transaction found */
-				return 1;
+				/* transaction found -> retransmission */
+				trans = get_t();
+				t_retransmit_reply(trans);
+				UNREF(trans);
+				set_t(0);
+				return 0;
 			case -2:
 				/* e2e ACK found */
 				return 1;
@@ -815,11 +807,11 @@ inline static int t_local_replied(struct sip_msg* msg, char *all, char *bar)
 	int all_rpls;
 	int i;
 
-	if (t_check( msg , 0 )!=1) {
-		LOG(L_ERR, "ERROR:t_local_replied: no transaction was set up\n");
+	t = get_t();
+	if (t==0 || t==T_UNDEFINED) {
+		LOG(L_ERR,"ERROR:t_local_replied: no trasaction created\n");
 		return -1;
 	}
-	t = get_t();
 
 	all_rpls = (int)(long)all;
 
@@ -843,19 +835,13 @@ static int t_was_cancelled(struct sip_msg* msg, char *foo, char *bar)
 	struct cell *t;
 
 	/* first get the transaction */
-	if (t_check( msg , 0 )==-1) return -1;
-	if ( (t=get_t())==0) {
+	t = get_t();
+	if ( t==0 || t==T_UNDEFINED ) {
 		LOG(L_ERR, "ERROR:tm:t_was_cancelled: cannot check cancel flag for "
 			"a reply without a transaction\n");
 		return -1;
 	}
 	return (t->flags&T_WAS_CANCELLED_FLAG)?1:-1;
-}
-
-
-inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
-{
-	return t_check( msg , 0  ) ? 1 : -1;
 }
 
 
@@ -867,9 +853,8 @@ inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_WARN, "WARNING: t_reply: ACKs are not replied\n");
 		return -1;
 	}
-	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
-	if (!t) {
+	if ( t==0 || t==T_UNDEFINED ) {
 		LOG(L_ERR, "ERROR: t_reply: cannot send a t_reply to a message "
 			"for which no T-state has been established\n");
 		return -1;
@@ -895,30 +880,11 @@ inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 {
 	struct cell *t;
-	if (t_check( msg  , 0  )==-1) return -1;
+
 	t=get_t();
 	if ( t && t!=T_UNDEFINED ) 
 		return t_release_transaction( t );
 	return 1;
-}
-
-
-inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
-{
-	struct cell *t;
-
-
-	if (t_check( p_msg  , 0 )==-1) 
-		return 1;
-	t=get_t();
-	if (t) {
-		if (p_msg->REQ_METHOD==METHOD_ACK) {
-			LOG(L_WARN, "WARNING: : ACKs transmit_replies not replied\n");
-			return -1;
-		}
-		return t_retransmit_reply( t );
-	} else 
-		return -1;
 }
 
 

@@ -359,7 +359,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 
 /* function returns:
  *      negative - transaction wasn't found
- *			(-2 = possibly e2e ACK matched )
+ *      -2       -  possibly e2e ACK matched
  *      positive - transaction found
  */
 
@@ -401,7 +401,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	 */
 	if (!p_msg->via1) {
 		LOG(L_ERR, "ERROR: t_lookup_request: no via\n");
-		set_t(0);	
+		set_t(0);
 		return 0;
 	}
 	branch=p_msg->via1->branch;
@@ -410,8 +410,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		/* huhuhu! the cookie is there -- let's proceed fast */
 		LOCK_HASH(p_msg->hash_index);
 		match_status=matching_3261(p_msg,&p_cell, 
-				/* skip transactions with different method; otherwise CANCEL would 
-	 	 		 * match the previous INVITE trans.  */
+				/* skip transactions with different method; otherwise CANCEL 
+				 * would match the previous INVITE trans.  */
 				isACK ? ~METHOD_INVITE: ~p_msg->REQ_METHOD);
 		switch(match_status) {
 				case 0:	goto notfound;	/* no match */

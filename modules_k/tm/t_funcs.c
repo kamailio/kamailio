@@ -210,9 +210,8 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int flags)
 		ret = (ser_error==E_BAD_VIA && reply_to_via) ? 0 : new_tran;
 		goto done;
 	}
-	/* if that was a retransmission, return we are happily done */
+	/* if that was a retransmission, break from script */
 	if (new_tran==0) {
-		ret = 1;
 		goto done;
 	}
 
