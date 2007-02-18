@@ -40,6 +40,8 @@
 
 #include "dprint.h"
 #include "mem/mem.h"
+#include "str.h"
+#include "ut.h"
 
 /*
  * Placeholder for the buffer
@@ -130,3 +132,50 @@ int reset_static_buffer() {
 	active_buffer=0;
 	return 0;
 }
+
+int str_to_static_buffer(str* res, str* s)
+{
+	res->s = get_static_buffer(s->len);
+	if (!res->s) return -1;
+	memcpy(res->s, s->s, s->len);
+	res->len = s->len;
+	return 0;
+}
+
+int int_to_static_buffer(str* res, int val)
+{
+	char *c;
+	c = int2str(abs(val), &res->len);
+	res->s = get_static_buffer(res->len+(val<0)?1:0);
+	if (!res->s) return -1;
+	if (val < 0) {
+		res->s[0] = '-';	
+		memcpy(res->s+1, c, res->len);
+		res->len++;
+	}
+	else {
+		memcpy(res->s, c, res->len);
+	}
+	return 0;
+}
+
+int uint_to_static_buffer(str* res, unsigned int val)
+{
+	char *c;
+	c = int2str(val, &res->len);
+	res->s = get_static_buffer(res->len);
+	if (!res->s) return -1;
+	memcpy(res->s, c, res->len);
+	return 0;
+}
+
+int uint_to_static_buffer_ex(str* res, unsigned int val, int base, int pad)
+{
+	char *c;
+	c = int2str_base_0pad(val, &res->len, base, pad); 
+	res->s = get_static_buffer(res->len);
+	if (!res->s) return -1;
+	memcpy(res->s, c, res->len);
+	return 0;
+}
+

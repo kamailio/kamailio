@@ -92,7 +92,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 		LOG(L_INFO, "ERROR: parse_first_line: message too short: %d\n", len);
 		goto error1;
 	}
-
+	fl->line.s = buffer;
 	tmp=buffer;
   	/* is it perhaps a reply, ie does it start with "SIP...." ? */
 	if ( 	(*tmp=='S' || *tmp=='s') && 
@@ -212,6 +212,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 		}
 		offset+=tmp-third;
 	}
+	fl->line.len = tmp-fl->line.s;
 	nl=eat_line(tmp,len-offset);
 	if (nl>=end){ /* no crlf in packet or only 1 line > invalid */
 		goto error;

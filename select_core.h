@@ -71,7 +71,17 @@ enum {
 	SEL_IP_PORT = SEL_IP | SEL_PORT,
 };
 
-SELECT_F(select_method)
+enum {
+	SEL_NOW_GMT = 1,
+	SEL_NOW_LOCAL = 2
+};
+
+enum {
+	SEL_BRANCH_URI = 1<<0,
+	SEL_BRANCH_Q = 1<<1,
+	SEL_BRANCH_DST_URI = 1<<2
+};
+
 SELECT_F(select_ruri)
 SELECT_F(select_dst_uri)
 SELECT_F(select_next_hop)
@@ -85,6 +95,16 @@ SELECT_F(select_to_uri)
 SELECT_F(select_to_tag)
 SELECT_F(select_to_name)
 SELECT_F(select_to_params)
+SELECT_F(select_refer_to)
+SELECT_F(select_refer_to_uri)
+SELECT_F(select_refer_to_tag)
+SELECT_F(select_refer_to_name)
+SELECT_F(select_refer_to_params)
+SELECT_F(select_rpid)
+SELECT_F(select_rpid_uri)
+SELECT_F(select_rpid_tag)
+SELECT_F(select_rpid_name)
+SELECT_F(select_rpid_params)
 SELECT_F(select_contact)
 SELECT_F(select_contact_uri)
 SELECT_F(select_contact_name)
@@ -100,9 +120,26 @@ SELECT_F(select_via_comment)
 SELECT_F(select_via_params)
 SELECT_F(select_via_params_spec)
 
-SELECT_F(select_msgheader)
+SELECT_F(select_msg)
+SELECT_F(select_msg_first_line)
+SELECT_F(select_msg_flags)
+SELECT_F(select_msg_type)
+SELECT_F(select_msg_len)
+SELECT_F(select_msg_id)
+SELECT_F(select_msg_id_hex)
+SELECT_F(select_msg_body)
+SELECT_F(select_msg_header)
 SELECT_F(select_anyheader)
 SELECT_F(select_anyheader_params)
+SELECT_F(select_msg_request)
+SELECT_F(select_msg_request_method)
+SELECT_F(select_msg_request_uri)
+SELECT_F(select_msg_request_version)
+SELECT_F(select_msg_response)
+SELECT_F(select_msg_response_version)
+SELECT_F(select_msg_response_status)
+SELECT_F(select_msg_response_reason)
+SELECT_F(select_version)
 
 SELECT_F(select_any_nameaddr)
 SELECT_F(select_nameaddr_name)
@@ -140,9 +177,35 @@ SELECT_F(select_dst)
 SELECT_F(select_rcv)
 SELECT_F(select_ip_port)
 
+SELECT_F(select_call_id)
+SELECT_F(select_expires)
+SELECT_F(select_max_forwards)
+SELECT_F(select_content_type)
+SELECT_F(select_content_length)
+SELECT_F(select_subject)
+SELECT_F(select_organization)
+SELECT_F(select_priority)
+SELECT_F(select_session_expires)
+SELECT_F(select_min_se)
+SELECT_F(select_user_agent)
+SELECT_F(select_sip_if_match)
+
+SELECT_F(select_sys)
+SELECT_F(select_sys_pid)
+SELECT_F(select_sys_unique)
+SELECT_F(select_sys_now)
+SELECT_F(select_sys_now_fmt)
+
+SELECT_F(select_branch)
+SELECT_F(select_branch_count)
+SELECT_F(select_branch_uri)
+SELECT_F(select_branch_dst_uri)
+SELECT_F(select_branch_uriq)
+SELECT_F(select_branch_q)
+
 static select_row_t select_core[] = {
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0}, /* not the same as request.uri because it is involved by new_uri */
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("request_uri"), select_ruri, 0},
 	{ select_ruri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("dst_uri"), select_dst_uri, 0},
 	{ select_dst_uri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
@@ -160,6 +223,17 @@ static select_row_t select_core[] = {
 	{ select_to, SEL_PARAM_STR, STR_STATIC_INIT("tag"), select_to_tag, 0},
 	{ select_to, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_to_name, 0},
 	{ select_to, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_to_params, CONSUME_NEXT_STR},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("refer_to"), select_refer_to, 0},
+	{ select_refer_to, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_refer_to_uri, 0},
+	{ select_refer_to, SEL_PARAM_STR, STR_STATIC_INIT("tag"), select_refer_to_tag, 0},
+	{ select_refer_to, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_refer_to_name, 0},
+	{ select_refer_to, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_refer_to_params, CONSUME_NEXT_STR},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("remote_party_id"), select_rpid, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("rpid"), select_rpid, 0},
+	{ select_rpid, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_rpid_uri, 0},
+	{ select_rpid, SEL_PARAM_STR, STR_STATIC_INIT("tag"), select_rpid_tag, 0},
+	{ select_rpid, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_rpid_name, 0},
+	{ select_rpid, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_rpid_params, CONSUME_NEXT_STR},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("contact"), select_contact, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("m"), select_contact, 0},
 	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_contact_uri, 0},
@@ -187,6 +261,8 @@ static select_row_t select_core[] = {
 	
 	{ select_from_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_to_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ select_refer_to_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ select_rpid_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_contact_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_rr_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("type"), select_uri_type, 0},
@@ -214,11 +290,40 @@ static select_row_t select_core[] = {
 	{ select_any_nameaddr, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_nameaddr_params, OPTIONAL | CONSUME_NEXT_STR},
 	{ select_nameaddr_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msgheader, SEL_PARAM_EXPECTED},
-	{ select_msgheader, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT | FIXUP_CALL},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msg, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("message"), select_msg, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("first_line"), select_msg_first_line, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("flags"), select_msg_flags, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("len"), select_msg_len, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("id"), select_msg_id, 0},
+	{ select_msg_id, SEL_PARAM_STR, STR_STATIC_INIT("hex"), select_msg_id_hex, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("type"), select_msg_type, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("header"), select_msg_header, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("h"), select_msg_header, 0},
+	{ select_msg_header, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT | FIXUP_CALL},
 	{ select_anyheader, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 	{ select_anyheader, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_anyheader_params, NESTED},
 	{ select_anyheader_params, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_any_params, CONSUME_NEXT_STR},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("body"), select_msg_body, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("content"), select_msg_body, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("request"), select_msg_request, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("req"), select_msg_request, 0},
+	{ select_msg_request, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_msg_request_method, 0},
+	{ select_msg_request, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_msg_request_uri, 0},
+	{ select_msg_request_uri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
+	{ select_msg_request, SEL_PARAM_STR, STR_STATIC_INIT("version"), select_msg_request_version, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("response"), select_msg_response, 0},
+	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("res"), select_msg_response, 0},
+	{ select_msg_response, SEL_PARAM_STR, STR_STATIC_INIT("version"), select_msg_response_version, 0},
+	{ select_msg_response, SEL_PARAM_STR, STR_STATIC_INIT("status"), select_msg_response_status, 0},
+	{ select_msg_response, SEL_PARAM_STR, STR_STATIC_INIT("code"), select_msg_response_status, 0},
+	{ select_msg_response, SEL_PARAM_STR, STR_STATIC_INIT("reason"), select_msg_response_reason, 0},
+	/*short aliases*/
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_msg_request_method, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("version"), select_version, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("status"), select_msg_response_status, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("code"), select_msg_response_status, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("reason"), select_msg_response_reason, 0},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("proxy_authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_PROXY},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_WWW}, 
@@ -249,6 +354,37 @@ static select_row_t select_core[] = {
 	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_ip_port, DIVERSION | SEL_RCV | SEL_PORT},
 	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("ip_port"), select_ip_port, DIVERSION | SEL_RCV | SEL_IP_PORT},
 	{ select_rcv, SEL_PARAM_STR, STR_STATIC_INIT("proto_ip_port"), select_ip_port, DIVERSION | SEL_RCV | SEL_PROTO | SEL_IP_PORT},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("call_id"), select_call_id, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("expires"), select_expires, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("max_forwards"), select_max_forwards, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("content_type"), select_content_type, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("content_length"), select_content_length, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("subject"), select_subject, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("organization"), select_organization, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("priority"), select_priority, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("session_expires"), select_session_expires, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("min_se"), select_min_se, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("user_agent"), select_user_agent, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("sip_if_match"), select_sip_if_match, 0},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("sys"), select_sys, SEL_PARAM_EXPECTED},
+	{ select_sys, SEL_PARAM_STR, STR_STATIC_INIT("pid"), select_sys_pid, 0},
+	{ select_sys, SEL_PARAM_STR, STR_STATIC_INIT("unique"), select_sys_unique, 0},
+	{ select_sys, SEL_PARAM_STR, STR_STATIC_INIT("now"), select_sys_now, 0},
+	{ select_sys_now, SEL_PARAM_STR, STR_STATIC_INIT("local"), select_sys_now_fmt, OPTIONAL | CONSUME_NEXT_STR | DIVERSION | SEL_NOW_LOCAL},
+	{ select_sys_now, SEL_PARAM_STR, STR_STATIC_INIT("gmt"), select_sys_now_fmt, OPTIONAL | CONSUME_NEXT_STR | DIVERSION | SEL_NOW_GMT},
+	{ select_sys_now, SEL_PARAM_STR, STR_STATIC_INIT("utc"), select_sys_now_fmt, OPTIONAL | CONSUME_NEXT_STR | DIVERSION | SEL_NOW_GMT},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("branch"), select_branch, SEL_PARAM_EXPECTED},
+	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("count"), select_branch_count, 0},
+	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_branch_uri, OPTIONAL | CONSUME_NEXT_INT | DIVERSION | SEL_BRANCH_URI },
+	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("dst_uri"), select_branch_dst_uri, OPTIONAL | CONSUME_NEXT_INT | DIVERSION | SEL_BRANCH_DST_URI},
+	{ select_branch_uri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
+	{ select_branch_dst_uri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
+	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("uriq"), select_branch_uriq, OPTIONAL | CONSUME_NEXT_INT | DIVERSION | SEL_BRANCH_URI | SEL_BRANCH_Q},
+	{ select_branch_uriq, SEL_PARAM_STR, STR_NULL, select_any_nameaddr, NESTED},
+	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("q"), select_branch_q, OPTIONAL | CONSUME_NEXT_INT | DIVERSION | SEL_BRANCH_Q},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };

@@ -31,7 +31,7 @@
  *  2006-02-17  fixup call for select_anyhdr (mma)
  */
 
- 
+#include <stdlib.h> 
 #include "select.h"
 #include "select_core.h"
 #include "select_buf.h"
@@ -52,18 +52,15 @@
 #include "mem/mem.h"
 #include "parser/parse_hname2.h"
 #include "ip_addr.h"
+#include "parser/parse_expires.h"
+#include "parser/parse_refer_to.h"
+#include "parser/parse_rpid.h"
+#include "dset.h"
 
-#define RETURN0_res(x) {*res=x;return 0;}
-#define TRIM_RET0_res(x) {*res=x;trim(res);return 0;} 
-#define TEST_RET_res_body(x) if (x){*res=x->body;return 0;}else return 1;
-#define TEST_RET_res_value(x) if (x){*res=x->value;return 0;}else return 1;
-
-int select_method(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (msg->first_line.type==SIP_REQUEST) {
-		RETURN0_res(msg->first_line.u.request.method);
-	} else return -1;
-}
+#define RETURN0_res(x) {*res=(x);return 0;}
+#define TRIM_RET0_res(x) {*res=(x);trim(res);return 0;} 
+#define TEST_RET_res_body(x) if (x){*res=(x)->body;return 0;}else return 1;
+#define TEST_RET_res_value(x) if (x){*res=(x)->value;return 0;}else return 1;
 
 int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 {
@@ -101,50 +98,51 @@ int select_next_hop(str* res, select_t* s, struct sip_msg* msg)
 	return -1;
 }
 
-int select_from(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_from_header(msg)<0)
-		return -1;
-	RETURN0_res(msg->from->body);
-}
-
-int select_from_uri(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_from_header(msg)<0)
-		return -1;
-	RETURN0_res(get_from(msg)->uri);
-}
-
-int select_from_tag(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_from_header(msg)<0)
-		return -1;
-	RETURN0_res(get_from(msg)->tag_value);
-}
-
-int select_from_name(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_from_header(msg)<0)
-		return -1;
-	RETURN0_res(get_from(msg)->display);
-}
-
-int select_from_params(str* res, select_t* s, struct sip_msg* msg)
-{
-	struct to_param* p;
-	if (parse_from_header(msg)<0)
-		return -1;
-	
-	p = get_from(msg)->param_lst;
-	while (p) {
-		if ((p->name.len==s->params[s->n-1].v.s.len)
-		    && !strncasecmp(p->name.s, s->params[s->n-1].v.s.s,p->name.len)) {
-			RETURN0_res(p->value);
-		}
-		p = p->next;
-	}
-	return 1;
-}
+#define SELECT_uri_header(_name_) \
+int select_##_name_(str* res, select_t* s, struct sip_msg* msg) \
+{ \
+	if (parse_##_name_##_header(msg)<0) \
+		return -1; \
+	RETURN0_res(msg->_name_->body); \
+} \
+\
+int select_##_name_##_uri(str* res, select_t* s, struct sip_msg* msg) \
+{ \
+	if (parse_##_name_##_header(msg)<0) \
+		return -1; \
+	RETURN0_res(get_##_name_(msg)->uri); \
+} \
+\
+int select_##_name_##_tag(str* res, select_t* s, struct sip_msg* msg) \
+{ \
+	if (parse_##_name_##_header(msg)<0) \
+		return -1; \
+	RETURN0_res(get_##_name_(msg)->tag_value); \
+} \
+\
+int select_##_name_##_name(str* res, select_t* s, struct sip_msg* msg) \
+{ \
+	if (parse_##_name_##_header(msg)<0) \
+		return -1; \
+	RETURN0_res(get_##_name_(msg)->display); \
+} \
+\
+int select_##_name_##_params(str* res, select_t* s, struct sip_msg* msg) \
+{ \
+	struct to_param* p; \
+	if (parse_##_name_##_header(msg)<0) \
+		return -1; \
+	\
+	p = get_##_name_(msg)->param_lst; \
+	while (p) { \
+		if ((p->name.len==s->params[s->n-1].v.s.len) \
+		    && !strncasecmp(p->name.s, s->params[s->n-1].v.s.s,p->name.len)) { \
+			RETURN0_res(p->value); \
+		} \
+		p = p->next; \
+	} \
+	return 1; \
+} 
 
 int parse_to_header(struct sip_msg *msg)
 {
@@ -161,51 +159,10 @@ int parse_to_header(struct sip_msg *msg)
 		return -1;
 }
 
-int select_to(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_to_header(msg)<0)
-		return -1; 
-	RETURN0_res(msg->to->body);
-}
-
-int select_to_uri(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_to_header(msg)<0)
-		return -1;
-	RETURN0_res(get_to(msg)->uri);
-}
-
-int select_to_tag(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_to_header(msg)<0)
-		return -1;
-	RETURN0_res(get_to(msg)->tag_value);
-}
-
-int select_to_name(str* res, select_t* s, struct sip_msg* msg)
-{
-	if (parse_to_header(msg)<0)
-		return -1;
-	RETURN0_res(get_to(msg)->display);
-}
-
-int select_to_params(str* res, select_t* s, struct sip_msg* msg)
-{
-	struct to_param* p;
-
-	if (parse_to_header(msg)<0)
-		return -1;
-	
-	p = get_to(msg)->param_lst;
-	while (p) {
-		if ((p->name.len==s->params[s->n-1].v.s.len)
-		    && !strncasecmp(p->name.s, s->params[s->n-1].v.s.s,p->name.len)) {
-			RETURN0_res(p->value);
-		}
-		p = p->next;
-	}
-	return 1;
-}
+SELECT_uri_header(to)
+SELECT_uri_header(from)
+SELECT_uri_header(refer_to)
+SELECT_uri_header(rpid)
 
 int parse_contact_header( struct sip_msg *msg)
 {
@@ -492,16 +449,53 @@ int select_via_params_spec(str* res, select_t* s, struct sip_msg* msg)
 	return -1;
 }
 
-//ABSTRACT_F(select_msgheader)
-// Instead of ABSTRACT_F(select_msgheader)
-// use function which uses select_core_table
-// to avoid gcc warning about not used 
-int select_msgheader(str* res, select_t* s, struct sip_msg* msg)
+int select_msg(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (select_core_table.next)
-		return -1;
-	else
-		return -1;
+	res->s = msg->buf;
+	res->len = msg->len;
+	return 0;
+}
+
+int select_msg_first_line(str* res, select_t* s, struct sip_msg* msg) 
+{
+	RETURN0_res(msg->first_line.line);
+}
+
+int select_msg_type(str* res, select_t* s, struct sip_msg* msg) {
+	return uint_to_static_buffer(res, msg->first_line.type);
+} 
+
+int select_msg_len(str* res, select_t* s, struct sip_msg* msg) {
+	return uint_to_static_buffer(res, msg->len);
+}
+
+int select_msg_id(str* res, select_t* s, struct sip_msg* msg) {
+	return uint_to_static_buffer(res, msg->id);
+}
+
+int select_msg_id_hex(str* res, select_t* s, struct sip_msg* msg) {
+	return uint_to_static_buffer_ex(res, msg->id, 16, 8);
+}
+
+int select_msg_flags(str* res, select_t* s, struct sip_msg* msg) { 
+	return uint_to_static_buffer(res, msg->flags);
+} 
+
+int select_msg_body(str* res, select_t* s, struct sip_msg* msg)
+{
+	res->s = get_body(msg);
+	res->len = msg->buf+msg->len - res->s;
+	return 0;	
+}
+
+int select_msg_header(str* res, select_t* s, struct sip_msg* msg)
+{
+	/* get all headers */
+	char *c;
+	res->s = msg->first_line.line.s + msg->first_line.len; 
+	c = get_body(msg);
+	res->len = c - res->s;
+	return 0;
 }
 
 int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
@@ -515,22 +509,22 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 		if (res!=NULL) return -1;
 
 		/* "fixup" call, res & msg are NULL */
-		if (s->n <2) return -1;
+		if (s->n <3) return -1;
 
-		if (s->params[1].type==SEL_PARAM_STR) {
+		if (s->params[2].type==SEL_PARAM_STR) {
 				/* replace _ with - (for P-xxx headers) */
-			for (hi=s->params[1].v.s.len-1; hi>0; hi--)
-				if (s->params[1].v.s.s[hi]=='_')
-					s->params[1].v.s.s[hi]='-';
+			for (hi=s->params[2].v.s.len-1; hi>0; hi--)
+				if (s->params[2].v.s.s[hi]=='_')
+					s->params[2].v.s.s[hi]='-';
 				/* if header name is parseable, parse it and set SEL_PARAM_DIV */
-			c=s->params[1].v.s.s[s->params[1].v.s.len];
-			s->params[1].v.s.s[s->params[1].v.s.len]=':';
-			if (parse_hname2(s->params[1].v.s.s,s->params[1].v.s.s+(s->params[1].v.s.len<3?4:s->params[1].v.s.len+1),
+			c=s->params[2].v.s.s[s->params[2].v.s.len];
+			s->params[2].v.s.s[s->params[2].v.s.len]=':';
+			if (parse_hname2(s->params[2].v.s.s,s->params[2].v.s.s+(s->params[2].v.s.len<3?4:s->params[2].v.s.len+1),
 						&hdr)==0) {
 				ERR("select_anyhdr:fixup_call:parse error\n");
 				return -1;
 			}
-			s->params[1].v.s.s[s->params[1].v.s.len]=c;
+			s->params[2].v.s.s[s->params[2].v.s.len]=c;
 			
 			if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
 				/* pkg_free(s->params[1].v.s.s); */
@@ -538,8 +532,8 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 				 * the parsed string can live inside larger string block
 				 * e.g. when xlog's select is parsed
 				 */
-				s->params[1].type = SEL_PARAM_DIV;
-				s->params[1].v.i = hdr.type;
+				s->params[2].type = SEL_PARAM_DIV;
+				s->params[2].v.i = hdr.type;
 			}
 		}
 		return 1;
@@ -548,9 +542,9 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 	hf0 = NULL;
 
 	/* extract header index if present */
-	if (s->param_offset[s->lvl+1] == 3) {
-		if (s->params[2].type == SEL_PARAM_INT) {
-			hi = s->params[2].v.i;
+	if (s->param_offset[s->lvl+1] == 4) {
+		if (s->params[3].type == SEL_PARAM_INT) {
+			hi = s->params[3].v.i;
 		} else {
 			hi = -1;
 		}
@@ -564,11 +558,11 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 	}
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if(s->params[1].type==SEL_PARAM_DIV) {
-			if (s->params[1].v.i!=hf->type)	continue;
-		} else if(s->params[1].type==SEL_PARAM_STR) {
-			if (s->params[1].v.s.len!=hf->name.len)	continue;
-			if (strncasecmp(s->params[1].v.s.s, hf->name.s, hf->name.len)!=0) continue;
+		if(s->params[2].type==SEL_PARAM_DIV) {
+			if (s->params[2].v.i!=hf->type)	continue;
+		} else if(s->params[2].type==SEL_PARAM_STR) {
+			if (s->params[2].v.s.len!=hf->name.len)	continue;
+			if (strncasecmp(s->params[2].v.s.s, hf->name.s, hf->name.len)!=0) continue;
 		}
 		hf0 = hf;
 		hi--;
@@ -582,7 +576,19 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 	return 0;
 }
 
-ABSTRACT_F(select_anyheader_params)
+//ABSTRACT_F(select_anyheader_params)
+// Instead of ABSTRACT_F(select_anyheader_params)
+// use function which uses select_core_table
+// to avoid gcc warning about not used
+ 
+int select_anyheader_params(str* res, select_t* s, struct sip_msg* msg)
+{
+	if (select_core_table.next)
+		return -1;
+	else
+		return -1;
+}
+
 ABSTRACT_F(select_any_uri)
 
 static struct sip_uri uri;
@@ -1138,3 +1144,340 @@ int select_ip_port(str* res, select_t* s, struct sip_msg* msg)
 
 }
 
+
+int select_expires(str* res, select_t* s, struct sip_msg* msg)
+{
+	if (!msg->expires && (parse_headers(msg, HDR_EXPIRES_F, 0) == -1)) {
+		return -1; /* error */
+	}
+
+	if (!msg->expires) {
+		return 1;  /* null */
+	}
+
+	if (msg->expires->parsed == NULL && parse_expires(msg->expires) < 0) {
+		return -1;
+	}
+
+	RETURN0_res(((struct exp_body*)msg->expires->parsed)->text);
+}
+
+#define SELECT_plain_header(_sel_name_,_fld_name_,_hdr_f_) \
+int select_##_sel_name_(str* res, select_t* s, struct sip_msg* msg) \
+{ \
+	if (!msg->_fld_name_ && (parse_headers(msg, _hdr_f_, 0) == -1)) { \
+		return -1; \
+	} \
+	if (!msg->_fld_name_) { \
+		return 1; \
+	} \
+	RETURN0_res(msg->_fld_name_->body); \
+}
+
+SELECT_plain_header(call_id, callid, HDR_CALLID_F)
+SELECT_plain_header(max_forwards, maxforwards, HDR_MAXFORWARDS_F)
+SELECT_plain_header(content_type, content_type, HDR_CONTENTTYPE_F)
+SELECT_plain_header(content_length, content_length, HDR_CONTENTLENGTH_F)
+SELECT_plain_header(user_agent, user_agent, HDR_USERAGENT_F)
+SELECT_plain_header(subject, subject, HDR_SUBJECT_F)
+SELECT_plain_header(organization, organization, HDR_ORGANIZATION_F)
+SELECT_plain_header(priority, priority, HDR_PRIORITY_F)
+SELECT_plain_header(session_expires, session_expires, HDR_SESSIONEXPIRES_F)
+SELECT_plain_header(min_se, min_se, HDR_MIN_SE_F)
+SELECT_plain_header(sip_if_match, sipifmatch, HDR_SIPIFMATCH_F)
+
+int select_msg_request(str* res, select_t* s, struct sip_msg* msg)
+{
+	if (msg->first_line.type==SIP_REQUEST) { 
+		return select_msg(res, s, msg); 
+	}
+	else
+		return -1;	
+}
+
+int select_msg_response(str* res, select_t* s, struct sip_msg* msg)
+{
+	if (msg->first_line.type==SIP_REPLY) {
+		return select_msg(res, s, msg); 
+	}
+	else
+		return -1;	
+}
+
+#define SELECT_first_line(_sel_name_,_type_,_fld_) \
+int select_msg_##_sel_name_(str* res, select_t* s, struct sip_msg* msg) {\
+	if (msg->first_line.type==_type_) { \
+		RETURN0_res(msg->first_line._fld_); \
+	} else return -1; \
+}
+
+SELECT_first_line(request_method,SIP_REQUEST,u.request.method)
+SELECT_first_line(request_uri,SIP_REQUEST,u.request.uri)
+SELECT_first_line(request_version,SIP_REQUEST,u.request.version)
+SELECT_first_line(response_version,SIP_REPLY,u.reply.version)
+SELECT_first_line(response_status,SIP_REPLY,u.reply.status)
+SELECT_first_line(response_reason,SIP_REPLY,u.reply.reason)
+
+
+int select_version(str* res, select_t* s, struct sip_msg* msg)
+{
+	switch (msg->first_line.type) { 
+		case SIP_REQUEST:
+			RETURN0_res(msg->first_line.u.request.version)
+			break;
+		case SIP_REPLY:
+			RETURN0_res(msg->first_line.u.reply.version)
+			break;
+		default:
+			return -1;
+	}
+}
+
+ABSTRACT_F(select_sys)
+
+int select_sys_pid(str* res, select_t* s, struct sip_msg* msg) {
+	return uint_to_static_buffer(res, getpid());
+}
+
+int select_sys_unique(str* res, select_t* s, struct sip_msg* msg) {
+	#define UNIQUE_ID_PID_LEN 4
+	#define UNIQUE_ID_TIME_LEN 8
+	#define UNIQUE_ID_FIX_LEN (UNIQUE_ID_PID_LEN+1+UNIQUE_ID_TIME_LEN+1)
+	#define UNIQUE_ID_RAND_LEN 8
+	static char uniq_id[UNIQUE_ID_FIX_LEN+UNIQUE_ID_RAND_LEN];
+	static int uniq_for_pid = -1;
+	int i;
+
+	if (uniq_for_pid != getpid()) {
+		/* first call for this process */
+		int cb, rb, x, l;
+		char *c;
+		/* init gloabally uniq part */
+		c = int2str_base_0pad(getpid(), &l, 16, UNIQUE_ID_PID_LEN);
+		memcpy(uniq_id, c, UNIQUE_ID_PID_LEN);
+		uniq_id[UNIQUE_ID_PID_LEN] = '-';
+		c = int2str_base_0pad(time(NULL), &l, 16, UNIQUE_ID_TIME_LEN);
+		memcpy(uniq_id+UNIQUE_ID_PID_LEN+1, c, UNIQUE_ID_TIME_LEN);
+		uniq_id[UNIQUE_ID_PID_LEN+1+UNIQUE_ID_TIME_LEN] = '-';
+
+		/* init random part */
+		for (i = RAND_MAX, rb=0; i; rb++, i>>=1);
+		for (i = UNIQUE_ID_FIX_LEN, cb = 0, x = 0; i < UNIQUE_ID_FIX_LEN+UNIQUE_ID_RAND_LEN; i++) {
+			if (!cb) {
+				cb = rb;
+				x = rand();
+			}
+			uniq_id[i] = fourbits2char[x & 0x0F];
+			x >>= rb;
+			cb -= rb;
+		}
+		uniq_for_pid = getpid();
+	}
+        for (i = UNIQUE_ID_FIX_LEN + UNIQUE_ID_RAND_LEN - 1; i >= UNIQUE_ID_FIX_LEN; i--) {
+		switch (uniq_id[i]) {
+			case '9':
+				uniq_id[i]='a';
+				i = 0;
+				break;
+			case 'f':
+				uniq_id[i]='0';
+				/* go on */
+				break;
+			default:
+				uniq_id[i]++;
+				i = 0;
+				break;
+		}
+	}
+	res->s = uniq_id;   /* I think it's not worth copying at static buffer, I hope there is no real meaning of @sys.unique==@sys.unique */
+	res->len = UNIQUE_ID_FIX_LEN+UNIQUE_ID_RAND_LEN;
+	return 0;
+}
+
+
+int select_sys_now(str* res, select_t* s, struct sip_msg* msg) {
+	return uint_to_static_buffer(res, time(NULL));
+}
+
+int select_sys_now_fmt(str* res, select_t* s, struct sip_msg* msg)
+{
+#define SEL_POS 2
+	time_t t;
+	struct tm *tm;
+	
+	t = time(NULL);
+	switch (s->params[SEL_POS].v.i) {
+		case SEL_NOW_GMT:
+			tm = gmtime(&t);
+			break;
+	
+		case SEL_NOW_LOCAL:
+			tm = localtime(&t);
+			break;
+		default:
+			BUG("Unexpected parameter value 'now' \"%d\"\n", s->params[SEL_POS].v.i);
+			return -1;
+	}
+	if (s->n <= SEL_POS+1) {
+		char *c;
+		c = asctime(tm);
+		res->len = strlen(c);
+		while (res->len && c[res->len-1] < ' ') res->len--; /* rtrim */
+		res->s = get_static_buffer(res->len);
+		if (!res->s) return -1;
+		memcpy(res->s, c, res->len);
+	}
+	else {
+		char c, buff[80];
+		c = s->params[SEL_POS+1].v.s.s[s->params[SEL_POS+1].v.s.len];
+		s->params[SEL_POS+1].v.s.s[s->params[SEL_POS+1].v.s.len] = '\0';
+		res->len = strftime(buff, sizeof(buff)-1, s->params[SEL_POS+1].v.s.s, tm);
+		s->params[SEL_POS+1].v.s.s[s->params[SEL_POS+1].v.s.len] = c;
+		res->s = get_static_buffer(res->len);
+		if (!res->s) return -1;
+		memcpy(res->s, buff, res->len);
+	}
+	return 0;
+#undef SEL_POS
+}
+
+ABSTRACT_F(select_branch)
+
+int select_branch_count(str* res, select_t* s, struct sip_msg* msg) {
+	return uint_to_static_buffer(res, nr_branches);
+}
+
+int select_branch_uri(str* res, select_t* s, struct sip_msg* msg) {
+#define SEL_POS 1 
+#define Q_PARAM ">;q="
+#define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
+
+	qvalue_t q;
+	int l, n;
+	str dst_uri;
+	if (s->n <= SEL_POS+1 && nr_branches > 1) { /* get all branches, if nr_branches==1 then use faster algorithm */
+		int len;
+		unsigned l2;
+		char *c;
+		init_branch_iterator();
+		len = 0;
+		while ((c = next_branch(&l, &q, &dst_uri.s, &dst_uri.len, 0))) {
+
+			if (s->params[SEL_POS].v.i & SEL_BRANCH_DST_URI) {
+				l = dst_uri.len;
+				c = dst_uri.s;
+			}
+			if (s->params[SEL_POS].v.i & (SEL_BRANCH_URI|SEL_BRANCH_DST_URI) ) {
+				len += l;
+			}
+	                if (q != Q_UNSPECIFIED && (s->params[SEL_POS].v.i & SEL_BRANCH_Q)) {
+				len += len_q(q);
+				if (s->params[SEL_POS].v.i & SEL_BRANCH_URI) {
+					len += 1 + Q_PARAM_LEN;
+				}
+			}
+ 			len += 1;
+		}
+		if (!len) return 1;
+		res->s = get_static_buffer(len);
+		if (!res->s) return -1;
+		
+		init_branch_iterator();
+		res->len = 0;
+		n = 0;
+		while ((c = next_branch(&l, &q, &dst_uri.s, &dst_uri.len, 0))) {
+			if (s->params[SEL_POS].v.i & SEL_BRANCH_DST_URI) {
+				l = dst_uri.len;
+				c = dst_uri.s;
+			}
+			if (n) {
+				res->s[res->len] = ',';
+				res->len++;
+			}
+			if ((s->params[SEL_POS].v.i & SEL_BRANCH_Q) == 0) {
+				q = Q_UNSPECIFIED;
+			}
+			if ((s->params[SEL_POS].v.i & (SEL_BRANCH_URI|SEL_BRANCH_DST_URI)) && q != Q_UNSPECIFIED) {
+				res->s[res->len] = '<';
+				res->len++;
+				memcpy(res->s+res->len, c, l);
+				res->len += l; 
+				memcpy(res->s+res->len, Q_PARAM, Q_PARAM_LEN);
+				res->len += Q_PARAM_LEN;
+				c = q2str(q, &l2); l = l2;
+				memcpy(res->s+res->len, c, l);
+				res->len += l; 
+			}
+			else if (s->params[SEL_POS].v.i & (SEL_BRANCH_URI|SEL_BRANCH_DST_URI)) {
+				memcpy(res->s+res->len, c, l);
+				res->len += l; 
+			}
+			else if (q != Q_UNSPECIFIED) {
+				c = q2str(q, &l2); l = l2;
+				memcpy(res->s+res->len, c, l);
+				res->len += l; 
+			}
+			n++;
+		}
+	}
+	else {
+		unsigned l2;
+		char *c;
+		n = s->params[SEL_POS+1].v.i;
+		if (n < 0 || n >= nr_branches) 
+			return -1;
+		init_branch_iterator();
+		for (; (c = next_branch(&l, &q, &dst_uri.s, &dst_uri.len, 0)) && n; n--);
+		if (!c) return 1;
+		
+		if (s->params[SEL_POS].v.i & SEL_BRANCH_DST_URI) {
+			l = dst_uri.len;
+			c = dst_uri.s;
+		}
+		if ((s->params[SEL_POS].v.i & SEL_BRANCH_Q) == 0) {
+			q = Q_UNSPECIFIED;
+		}
+		if ((s->params[SEL_POS].v.i & (SEL_BRANCH_URI|SEL_BRANCH_DST_URI)) && q != Q_UNSPECIFIED) {
+
+			res->s = get_static_buffer(l + 1 + Q_PARAM_LEN + len_q(q));
+			if (!res->s) return -1;
+			res->len = 1;
+			res->s[0] = '<';
+			memcpy(res->s+res->len, c, l);
+			res->len += l; 
+			memcpy(res->s+res->len, Q_PARAM, Q_PARAM_LEN);
+			res->len += Q_PARAM_LEN;
+			c = q2str(q, &l2); l = l2;
+			memcpy(res->s+res->len, c, l);
+			res->len += l; 
+		}
+		else if (s->params[SEL_POS].v.i & (SEL_BRANCH_URI|SEL_BRANCH_DST_URI)) {
+			res->s = c;  /* not necessary to copy to static buffer */
+			res->len = l;
+		} 
+		else if (q != Q_UNSPECIFIED) {
+			c = q2str(q, &l2);
+			res->len = l2;
+			res->s = get_static_buffer(res->len);
+			if (!res->s) return -1;
+			memcpy(res->s, c, res->len);
+		}
+		else {
+			res->len = 0;
+		}
+	}
+	return 0;
+#undef SEL_POS
+}
+
+int select_branch_uriq(str* res, select_t* s, struct sip_msg* msg) {
+	return select_branch_uri(res, s, msg);
+}
+
+int select_branch_q(str* res, select_t* s, struct sip_msg* msg) {
+	return select_branch_uri(res, s, msg);
+}
+
+int select_branch_dst_uri(str* res, select_t* s, struct sip_msg* msg) {
+	return select_branch_uri(res, s, msg);
+}

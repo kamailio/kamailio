@@ -61,6 +61,7 @@
 
 struct msg_start {
 	int type;                         /* Type of the Message - Request/Response */
+	str line;                         /* len does not include CRLF, correct way how to point at second line is line.s+len */
 	int len; 						/* length including delimiter */
 	union {
 		struct {
