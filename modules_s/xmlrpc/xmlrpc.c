@@ -1302,7 +1302,7 @@ static char* http_xmlrpc2sip(struct sip_msg* msg, int* new_msg_len)
 	p+=CRLF_LEN;
 	memcpy(p, via, via_len);
 	p+=via_len;
-	memcpy(p, &msg->buf[msg->first_line.len], msg->len - msg->first_line.len);
+	memcpy(p, msg->first_line.line.s + msg->first_line.len, msg->len - msg->first_line.len);
 	new_msg[len]=0; /* null terminate, required by receive_msg() */
 	pkg_free(via);
 	*new_msg_len=len;
