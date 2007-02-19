@@ -384,7 +384,7 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 				goto error;
 
 			attr = add_mi_attr(node, MI_DUP_VALUE, "to_tag", 6,
-					dlg->to_tag.s, dlg->to_uri.len);
+					dlg->to_tag.s, dlg->to_tag.len);
 			if(attr == 0)
 				goto error;
 
