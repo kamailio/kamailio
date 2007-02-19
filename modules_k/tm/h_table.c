@@ -159,6 +159,9 @@ void free_cell( struct cell* dead_cell )
 			}
 			shm_free_unsafe(p);
 		}
+		if (dead_cell->uac[i].path_vec.s) {
+			shm_free_unsafe(dead_cell->uac[i].path_vec.s);
+		}
 	}
 
 	/* collected to tags */

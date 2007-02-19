@@ -107,7 +107,16 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 
 	/* add path vector as Route HF */
 	if (request->path_vec.s && request->path_vec.len) {
-		if (insert_path_as_route(request, &request->path_vec) < 0)
+		t->uac[branch].path_vec.s =
+			shm_resize(t->uac[branch].path_vec.s, request->path_vec.len+1);
+		if (t->uac[branch].path_vec.s==NULL) {
+			LOG(L_ERR,"ERROR:pre_print_uac_request: shm_resize failed\n");
+			goto error;
+		}
+		t->uac[branch].path_vec.len = request->path_vec.len;
+		memcpy( t->uac[branch].path_vec.s, request->path_vec.s,
+			request->path_vec.len+1);
+		if (insert_path_as_route(request, &t->uac[branch].path_vec) < 0)
 			goto error;
 	}
 
@@ -438,6 +447,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	char *shbuf;
 	unsigned int len;
 	str bk_dst_uri;
+	str bk_path_vec;
 
 	if (t_cancel->uac[branch].request.buffer.s) {
 		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");
@@ -445,11 +455,13 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 		goto error;
 	}
 
-	/* note -- there is a gap in proxy stats -- we don't update 
-	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.) */
 	cancel_msg->new_uri = t_invite->uac[branch].uri;
 	cancel_msg->parsed_uri_ok=0;
 	bk_dst_uri = cancel_msg->dst_uri;
+	bk_path_vec = cancel_msg->path_vec;
+
+	/* force same path as for request */
+	cancel_msg->path_vec = t_invite->uac[branch].path_vec;
 
 	if ( pre_print_uac_request( t_cancel, branch, cancel_msg)!= 0 ) {
 		ret = -1;
@@ -490,6 +502,7 @@ error01:
 	post_print_uac_request( cancel_msg, &t_invite->uac[branch].uri,
 		&bk_dst_uri);
 	cancel_msg->dst_uri = bk_dst_uri;
+	cancel_msg->path_vec = bk_path_vec;
 error:
 	return ret;
 }

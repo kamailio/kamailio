@@ -239,6 +239,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		for ( hdr=req->headers ; hdr ; hdr=hdr->next )
 			 if (hdr->type==HDR_ROUTE_T)
 				*len+=hdr->len;
+		if (Trans->uac[branch].path_vec.len)
+			*len+=Trans->uac[branch].path_vec.len+ROUTE_PREFIX_LEN+CRLF_LEN;
 	}
 
 	/* User Agent */
@@ -275,6 +277,14 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_string( p, CRLF, CRLF_LEN );
 
 	if (!is_local(Trans))  {
+		/* Path */
+		if (Trans->uac[branch].path_vec.len) {
+			append_string(p, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
+			append_string(p, Trans->uac[branch].path_vec.s,
+				Trans->uac[branch].path_vec.len);
+			append_string(p, CRLF, CRLF_LEN);
+		}
+		/* Route hdrs */
 		for ( hdr=req->headers ; hdr ; hdr=hdr->next )
 			if(hdr->type==HDR_ROUTE_T) {
 				append_string(p, hdr->name.s, hdr->len );

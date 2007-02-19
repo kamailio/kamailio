@@ -141,12 +141,13 @@ typedef struct ua_client
 	   reuse the structure for original request; the 
 	   original request is no longer needed but its delayed
 	   timer may fire and interfere with whoever tries to
-	   rewrite it
-	*/
+	   rewrite it */
 	struct retr_buf local_cancel;
 	/* pointer to retransmission buffer where uri is printed;
 	   good for generating ACK/CANCEL */
 	str              uri;
+	/* the path vector used for this branch */
+	str              path_vec;
 	/* if we store a reply (branch picking), this is where it is */
 	struct sip_msg  *reply;
 	/* if we don't store, we at least want to know the status */
