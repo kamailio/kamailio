@@ -138,7 +138,6 @@ int  ms_check_time=60;
 int  ms_send_time=0;
 int  ms_clean_period=10;
 int  ms_use_contact=1;
-int  ms_userid_avp=0;
 int  ms_snd_time_avp = 0;
 int  ms_add_date = 1;
 int  ms_max_messages = 0;
@@ -200,7 +199,6 @@ static param_export_t params[]={
 	{ "sc_exp_time",  STR_PARAM, &sc_exp_time     },
 	{ "sc_inc_time",  STR_PARAM, &sc_inc_time     },
 	{ "sc_snd_time",  STR_PARAM, &sc_snd_time     },
-	{ "userid_avp",   INT_PARAM, &ms_userid_avp   },
 	{ "snd_time_avp", INT_PARAM, &ms_snd_time_avp },
 	{ "add_date",     INT_PARAM, &ms_add_date     },
 	{ "max_messages", INT_PARAM, &ms_max_messages },
