@@ -1,3 +1,8 @@
+2007-01-18
+	* added functions to return serialized stream into existing buffer
+
+...
+
 2006-11-06
 	* bug correction - output of get_pres_rules initialized - reported by Bogdan
 

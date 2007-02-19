@@ -55,6 +55,18 @@ int get_serialized_sstream(sstream_t *ss, str_t *dst)
 	else return -1; /* no output for input stream */
 }
 
+int get_serialized_sstream_data(sstream_t *ss, char *dst)
+{
+	if (ss->type == sstream_out) return dstr_get_data(&ss->out, dst);
+	else return -1; /* no output for input stream */
+}
+
+int get_serialized_sstream_len(sstream_t *ss)
+{
+	if (ss->type == sstream_out) return dstr_get_data_length(&ss->out);
+	else return 0; /* no output for input stream */
+}
+
 int sstream_get(sstream_t *ss, char *c)
 {
 	/* if (!is_input_sstream(ss)) return -1;  */ /* optimalization */

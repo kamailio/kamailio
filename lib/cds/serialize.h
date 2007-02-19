@@ -45,7 +45,16 @@ typedef struct {
 
 int init_input_sstream(sstream_t *ss, char *data_in, int data_len);
 int init_output_sstream(sstream_t *ss, int out_buff_resize);
+
+/** returns serialized data as newly allocated string in shared memory */
 int get_serialized_sstream(sstream_t *ss, str_t *dst);
+
+/** returns the length of serialized data */
+int get_serialized_sstream_len(sstream_t *ss);
+
+/** copies serialized data into given buffer */
+int get_serialized_sstream_data(sstream_t *ss, char *dst);
+
 void destroy_sstream(sstream_t *ss);
 
 int sstream_put(sstream_t *ss, const char *s, int len);
