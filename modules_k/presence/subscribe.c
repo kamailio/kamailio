@@ -166,6 +166,9 @@ int send_200ok(struct sip_msg * msg, int lexpire, str *rtag)
 	hdr_append.len += server_address.len;
 	strncpy(hdr_append.s+hdr_append.len, ">", 1);
 	hdr_append.len += 1;
+	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
+	hdr_append.len += CRLF_LEN;
+
 	hdr_append.s[hdr_append.len]= '\0';
 
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
