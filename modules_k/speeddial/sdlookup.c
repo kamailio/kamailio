@@ -39,9 +39,10 @@
 #include "sdlookup.h"
 
 #define MAX_USERURI_SIZE	256
+static char useruri_buf[MAX_USERURI_SIZE];
 
-
-char useruri_buf[MAX_USERURI_SIZE];
+#define SD_PRINTBUF_SIZE 1024
+static char sd_printbuf[SD_PRINTBUF_SIZE];
 
 /**
  * Rewrite Request-URI
@@ -66,25 +67,46 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 /**
  *
  */
-int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
+int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 {
 	str user_s;
 	int nr_keys;
 	struct sip_uri *puri;
+	struct sip_uri turi;
 	db_key_t db_keys[4];
 	db_val_t db_vals[4];
 	db_key_t db_cols[1];
 	db_res_t* db_res = NULL;
+	int printbuf_len;
 
 	/* init */
 	nr_keys = 0;
 	db_cols[0]=new_uri_column;
 	
-	/* take username@domain from From header */
-	if ( (puri = parse_from_uri(_msg ))==NULL )
+	if(_owner)
 	{
-		LOG(L_ERR, "sd_lookup: ERROR cannot parse FROM header\n");
-		goto err_server;
+		memset(&turi, 0, sizeof(struct sip_uri));
+		printbuf_len = SD_PRINTBUF_SIZE-1;
+		if(xl_printf(_msg, (xl_elem_t*)_owner, sd_printbuf, &printbuf_len)<0)
+		{
+			LOG(L_ERR, "sd_lookup: error - cannot print the format\n");
+			return -1;
+		}
+		if(parse_uri(sd_printbuf, printbuf_len, &turi)!=0)
+		{
+			LOG(L_ERR, "sd_lookup: bad owner SIP address!\n");
+			goto err_server;
+		}
+		DBG("sd_lookup: using user id [%.*s]\n", printbuf_len,
+					sd_printbuf);
+		puri = &turi;
+	} else {
+		/* take username@domain from From header */
+		if ( (puri = parse_from_uri(_msg ))==NULL )
+		{
+			LOG(L_ERR, "sd_lookup: ERROR cannot parse FROM header\n");
+			goto err_server;
+		}
 	}
 		
 	db_keys[nr_keys]=user_column;

@@ -62,6 +62,7 @@
 #include "../../parser/parse_methods.h"
 #include "../../resolve.h"
 #include "../../usr_avp.h"
+#include "../../items.h"
 
 #include "../tm/tm_load.h"
 
@@ -146,6 +147,9 @@ str msg_type = { "MESSAGE", 7 };
 
 str reg_addr;
 
+#define MSILO_PRINTBUF_SIZE 1024
+static char msilo_printbuf[MSILO_PRINTBUF_SIZE];
+
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
@@ -154,6 +158,8 @@ static int m_store(struct sip_msg*, char*, char*);
 static int m_dump(struct sip_msg*, char*, char*);
 
 void destroy(void);
+
+static int fixup_msilo(void** param, int param_no);
 
 void m_clean_silo(unsigned int ticks, void *);
 void m_send_ontimer(unsigned int ticks, void *);
@@ -166,8 +172,10 @@ int check_message_support(struct sip_msg* msg);
 static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
-	{"m_store",  m_store, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store",  m_store, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store",  m_store, 1, fixup_msilo, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"m_dump",   m_dump,  0, 0, REQUEST_ROUTE},
+	{"m_dump",   m_dump,  1, fixup_msilo, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -344,7 +352,7 @@ static int child_init(int rank)
  * 		= "2" -- look for outgoing URI only at to header
  */
 
-static int m_store(struct sip_msg* msg, char* mode, char* s2)
+static int m_store(struct sip_msg* msg, char* owner, char* s2)
 {
 	str body, str_hdr, ctaddr;
 	struct to_body to, *pto, *pfrom;
@@ -360,6 +368,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* s2)
 	static char buf[512];
 	static char buf1[1024];
 	int mime;
+	int printbuf_len;
 
 	int_str        avp_name;
 	int_str        avp_value;
@@ -428,83 +437,43 @@ static int m_store(struct sip_msg* msg, char* mode, char* s2)
 		goto error;
 	}
 
-	/* get the R-URI */
+	/* get the owner */
 	memset(&puri, 0, sizeof(struct sip_uri));
-	if(ms_userid_avp!=0)
+	if(owner)
 	{
-		avp = NULL;
-		avp_name.n = ms_userid_avp;
-		avp=search_first_avp(0, avp_name, &avp_value, 0);
-		if(avp!=NULL && is_avp_str_val(avp))
+		printbuf_len = MSILO_PRINTBUF_SIZE-1;
+		if(xl_printf(msg, (xl_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
 		{
-			if(parse_uri(avp_value.s.s, avp_value.s.len, &puri)!=0)
-			{
-				LOG(L_ERR, "MSILO:m_store: bad new URI in userid avp!\n");
-				goto error;
-			} else {
-				DBG("MSILO:m_store: using user id from avp\n");
-			}
+			LOG(L_ERR, "MSILO:m_store: error - cannot print the format\n");
+			return -1;
 		}
-	}
-
-	if(mode && mode[0]=='0' && puri.user.len == 0 && msg->new_uri.len > 0)
-	{
-		DBG("MSILO:m_store: NEW R-URI found - check if is AoR!\n");
-		if(parse_uri(msg->new_uri.s, msg->new_uri.len, &puri)!=0)
+		if(parse_uri(msilo_printbuf, printbuf_len, &puri)!=0)
+		{
+			LOG(L_ERR, "MSILO:m_store: bad owner SIP address!\n");
+			goto error;
+		} else {
+			DBG("MSILO:m_store: using user id [%.*s]\n", printbuf_len,
+					msilo_printbuf);
+		}
+	} else { /* get it from R-URI */
+		if(msg->new_uri.len <= 0)
 		{
 			LOG(L_ERR, "MSILO:m_store: bad new R-URI!\n");
 			goto error;
 		}
-		if(puri.user.len>0 && puri.user.s!=NULL
-				&& puri.host.len>0 && puri.host.s!=NULL)
+		DBG("MSILO:m_store: NEW R-URI found - check if is AoR!\n");
+		if(parse_uri(msg->new_uri.s, msg->new_uri.len, &puri)!=0)
 		{
-			if(str2ip(&puri.host)!=NULL || str2ip6(&puri.host)!=NULL)
-			{ /* it is a IPv4 or IPv6 address */
-				puri.user.len = 0;
-			}
+			LOG(L_ERR, "MSILO:m_store: bad new R-URI!!\n");
+			goto error;
 		}
-		else
-			puri.user.len = 0;
+	}
+	if(puri.user.len<=0)
+	{
+		LOG(L_ERR, "MSILO:m_store: no username for owner\n");
+		goto error;
 	}
 	
-	if(mode && mode[0]<='1' && puri.user.len == 0 
-			&& msg->first_line.u.request.uri.len > 0 )
-	{
-		DBG("MSILO:m_store: R-URI found - check if is AoR!\n");
-		if(parse_uri(msg->first_line.u.request.uri.s,
-			msg->first_line.u.request.uri.len, &puri)!=0)
-		{
-			LOG(L_ERR, "MSILO:m_store: bad R-URI!\n");
-			goto error;
-		}
-		if(puri.user.len>0 && puri.user.s!=NULL
-				&& puri.host.len>0 && puri.host.s!=NULL)
-		{
-			if(str2ip(&puri.host)!=NULL || str2ip6(&puri.host)!=NULL)
-			{ /* it is a IPv4 or IPv6 address */
-				puri.user.len = 0;
-			}
-		}
-		else
-			puri.user.len = 0;
-	}
-	
-	if (puri.user.len == 0)
-	{
-		DBG("MSILO:m_store: TO used as R-URI\n");
-		if(parse_uri(pto->uri.s, pto->uri.len, &puri)!=0)
-		{
-			LOG(L_ERR, "MSILO:m_store: bad R-URI!\n");
-			goto error;
-		}
-		if(puri.user.len<=0 || puri.user.s==NULL
-				|| puri.host.len<=0 || puri.host.s==NULL)
-		{
-			LOG(L_ERR, "MSILO:m_store: bad URI in To header!\n");
-			goto error;
-		}
-	}
-
 	db_keys[nr_keys] = sc_uri_user;
 	
 	db_vals[nr_keys].type = DB_STR;
@@ -754,7 +723,7 @@ error:
 /**
  * dump message
  */
-static int m_dump(struct sip_msg* msg, char* str1, char* str2)
+static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 {
 	struct to_body to, *pto = NULL;
 	db_key_t db_keys[3];
@@ -769,6 +738,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 
 	str str_vals[4], hdr_str , body_str;
 	time_t rtime;
+	int printbuf_len;
 	
 	/* init */
 	db_keys[0]=sc_uri_user;
@@ -851,15 +821,35 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	    return -1;
 	}
 	 
-	if(parse_uri(pto->uri.s, pto->uri.len, &puri)!=0)
+	/* get the owner */
+	memset(&puri, 0, sizeof(struct sip_uri));
+	if(owner)
 	{
-		LOG(L_ERR, "MSILO:m_dump: bad R-URI!\n");
-		goto error;
+		printbuf_len = MSILO_PRINTBUF_SIZE-1;
+		if(xl_printf(msg, (xl_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
+		{
+			LOG(L_ERR, "MSILO:m_dump: error - cannot print the format\n");
+			return -1;
+		}
+		if(parse_uri(msilo_printbuf, printbuf_len, &puri)!=0)
+		{
+			LOG(L_ERR, "MSILO:m_dump: bad owner SIP address!\n");
+			goto error;
+		} else {
+			DBG("MSILO:m_dump: using user id [%.*s]\n", printbuf_len,
+					msilo_printbuf);
+		}
+	} else { /* get it from  To URI */
+		if(parse_uri(pto->uri.s, pto->uri.len, &puri)!=0)
+		{
+			LOG(L_ERR, "MSILO:m_dump: bad owner To URI!\n");
+			goto error;
+		}
 	}
 	if(puri.user.len<=0 || puri.user.s==NULL
 			|| puri.host.len<=0 || puri.host.s==NULL)
 	{
-		LOG(L_ERR, "MSILO:m_dump: bad URI in To header!\n");
+		LOG(L_ERR, "MSILO:m_dump: bad owner URI!\n");
 		goto error;
 	}
 
@@ -936,7 +926,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			DBG("MSILO:m_dump: sending composed body\n");
 		
 			tmb.t_request(&msg_type,  /* Type of the message */
-					&pto->uri,        /* Request-URI */
+					&str_vals[1],     /* Request-URI (To) */
 					&str_vals[1],     /* To */
 					&str_vals[0],     /* From */
 					&hdr_str,         /* Optional headers including CRLF */
@@ -1351,3 +1341,23 @@ int check_message_support(struct sip_msg* msg)
 		return 0;
 	return -1;
 }
+
+static int fixup_msilo(void** param, int param_no)
+{
+	xl_elem_t *model;
+	if(*param)
+	{
+		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		{
+			LOG(L_ERR, "ERROR:msilo:fixup_msilo: wrong format[%s]\n",
+				(char*)(*param));
+			return E_UNSPEC;
+		}
+			
+		*param = (void*)model;
+		return 0;
+	}
+	LOG(L_ERR, "ERROR:msilo:fixup_msilo: null format\n");
+	return E_UNSPEC;
+}
+

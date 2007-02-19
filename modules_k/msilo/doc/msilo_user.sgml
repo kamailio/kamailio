@@ -255,8 +255,8 @@ modparam("msilo", "clean_period", "3")
 	<section>
 		<title><varname>use_contact</varname> (int)</title>
 		<para>
-		Turns on/off the usage of the Contact address to send notification back to sender
-		whose message is stored by MSILO.
+		Turns on/off the usage of the Contact address to send notification
+		back to sender whose message is stored by MSILO.
 		</para>
 		<para>
 		<emphasis>
@@ -425,33 +425,6 @@ modparam("msilo", "sc_uri_user", "user")
 		</example>
     </section>
 
-    <section>
-		<title><varname>userid_avp</varname> (int)</title>
-		<para>
-		The integer ID of an AVP which may contain the SIP URI of the user
-		to whom the message was sent. It is better to store it in an AVP in
-		the case of speed dial or aliases usage, so you do not need second
-		processing of R-URI in failure route. The AVP is used ony by m_store().
-		</para>
-		<para>
-		If the parameter is not set to a value different than 0, the module
-		does not look for this AVP. If the value is set to a number different
-		than 0, then the module expects in the AVP with that ID a SIP URI.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>0</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set the <quote>userid_avp</quote> parameter</title>
-<programlisting format="linespecific">
-...
-modparam("msilo", "userid_avp", 34)
-...
-</programlisting>
-		</example>
-	</section>
 	<section>
 		<title><varname>snd_time_avp</varname> (int)</title>
 		<para>
@@ -522,7 +495,7 @@ modparam("msilo", "max_messages", 0)
 	<section>
 	<title>Exported Functions</title>
 	<section>
-		<title><function moreinfo="none">m_store(mode)</function></title>
+		<title><function moreinfo="none">m_store([owner])</function></title>
 		<para>
 		The method stores certain parts of the current &sip; request (it 
 		should be called when the request type is MESSAGE and the destination 
@@ -535,51 +508,58 @@ modparam("msilo", "max_messages", 0)
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>mode</emphasis> - specifies what to
-			save as R-URI.  Ignored if
-			<quote>userid_avp</quote> module parameter has
-			been set and the AVP contains a non-NULL string
-			value.
+			<emphasis>owner</emphasis> - is a string that must contain
+			a SIP URI in whose inbox the message will be stored. It can have
+			any pseudo variable. If "owner" is missing, the SIP address is
+			taken from R-URI.
 			</para>
-			<itemizedlist>
-			<listitem>
-				<para>
-				<quote>0</quote> - first check if new_uri is an address of
-				record. If yes, then use it and store it as R-URI, otherwise 
-				look at R-URI and, if necessary, at &uri; from 
-				<quote>To</quote> header.
-				</para>
-			</listitem>
-			<listitem>
-				<para>
-				<quote>1</quote> - look first at R-URI and then at &uri; from
-				<quote>To</quote> header.
-				</para>
-			</listitem>
-			<listitem>
-				<para>
-				<quote>2</quote> - look only at &uri; form <quote>To</quote> 
-				header.
-				</para>
-			</listitem>
-			</itemizedlist>
 		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
+		<example>
+		<title><function>m_store</function> usage</title>
+		<programlisting format="linespecific">
+...
+m_store();
+m_store("$tu");
+...
+</programlisting>
+		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">m_dump()</function></title>
+		<title><function moreinfo="none">m_dump([owner])</function></title>
 		<para>
 		The method sends stored messages for the &sip; user that is going to 
 		register to his actual contact address. The method should be called 
 		when a REGISTER request is received and the <quote>Expire</quote> 
 		header has a value greater than zero.
 		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>owner</emphasis> - is a string that must contain
+			a SIP URI whose inbox will be dumped. It can have
+			any pseudo variable. If "owner" is missing, the SIP address is
+			taken from To URI.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
+		<example>
+		<title><function>m_dump</function> usage</title>
+		<programlisting format="linespecific">
+...
+m_store();
+m_store("$fu");
+...
+</programlisting>
+		</example>
 	</section>
 	</section>
 

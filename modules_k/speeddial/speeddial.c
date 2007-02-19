@@ -32,6 +32,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../items.h"
 
 #include "sdlookup.h"
 
@@ -49,6 +50,7 @@ static int child_init(int rank);
 /* Module initialization function prototype */
 static int mod_init(void);
 
+static int fixup_sd(void** param, int param_no);
 
 /* Module parameter variables */
 char* db_url           = DEFAULT_RODB_URL;
@@ -70,6 +72,7 @@ db_con_t* db_handle=0;   /* Database connection handle */
 /* Exported functions */
 static cmd_export_t cmds[] = {
 	{"sd_lookup", sd_lookup, 1, 0, REQUEST_ROUTE},
+	{"sd_lookup", sd_lookup, 2, fixup_sd, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -112,7 +115,7 @@ static int child_init(int rank)
 	db_handle = db_funcs.init(db_url);
 	if (!db_handle)
 	{
-		LOG(L_ERR, "sd:init_child: Unable to connect database\n");
+		LOG(L_ERR, "speeddial:init_child: Unable to connect database\n");
 		return -1;
 	}
 	return 0;
@@ -130,12 +133,12 @@ static int mod_init(void)
     /* Find a database module */
 	if (bind_dbmod(db_url, &db_funcs))
 	{
-		LOG(L_ERR, "sd:mod_init: Unable to bind database module\n");
+		LOG(L_ERR, "speeddial:mod_init: Unable to bind database module\n");
 		return -1;
 	}
 	if (!DB_CAPABILITY(db_funcs, DB_CAP_QUERY))
 	{
-		LOG(L_ERR, "sd:mod_init: Database modules does not "
+		LOG(L_ERR, "speeddial:mod_init: Database modules does not "
 			"provide all functions needed by SPEEDDIAL module\n");
 		return -1;
 	}
@@ -162,5 +165,28 @@ static void destroy(void)
 {
 	if (db_handle)
 		db_funcs.close(db_handle);
+}
+
+static int fixup_sd(void** param, int param_no)
+{
+	xl_elem_t *model;
+
+	if(param_no==1)
+		return 0;
+
+	if(*param)
+	{
+		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		{
+			LOG(L_ERR, "ERROR:speeddial:fixup_sd: wrong format[%s]\n",
+				(char*)(*param));
+			return E_UNSPEC;
+		}
+			
+		*param = (void*)model;
+		return 0;
+	}
+	LOG(L_ERR, "ERROR:speeddial:fixup_sd: null format\n");
+	return E_UNSPEC;
 }
 

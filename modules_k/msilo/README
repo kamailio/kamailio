@@ -42,15 +42,14 @@ Daniel-Constantin Mierla
               1.3.17. sc_exp_time (string)
               1.3.18. sc_inc_time (string)
               1.3.19. sc_snd_time (string)
-              1.3.20. userid_avp (int)
-              1.3.21. snd_time_avp (int)
-              1.3.22. add_date (int)
-              1.3.23. max_messages (int)
+              1.3.20. snd_time_avp (int)
+              1.3.21. add_date (int)
+              1.3.22. max_messages (int)
 
         1.4. Exported Functions
 
-              1.4.1. m_store(mode)
-              1.4.2. m_dump()
+              1.4.1. m_store([owner])
+              1.4.2. m_dump([owner])
 
         1.5. Exported Statistics
 
@@ -87,11 +86,12 @@ Daniel-Constantin Mierla
    1-17. Set the "sc_exp_time" parameter
    1-18. Set the "sc_inc_time" parameter
    1-19. Set the "sc_snd_time" parameter
-   1-20. Set the "userid_avp" parameter
-   1-21. Set the "snd_time_avp" parameter
-   1-22. Set the "add_date" parameter
-   1-23. Set the "max_messages" parameter
-   1-24. OpenSER config script - sample msilo usage
+   1-20. Set the "snd_time_avp" parameter
+   1-21. Set the "add_date" parameter
+   1-22. Set the "max_messages" parameter
+   1-23. m_store usage
+   1-24. m_dump usage
+   1-25. OpenSER config script - sample msilo usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -403,28 +403,7 @@ modparam("msilo", "sc_uri_user", "user")
 
      _________________________________________________________
 
-1.3.20. userid_avp (int)
-
-   The integer ID of an AVP which may contain the SIP URI of the
-   user to whom the message was sent. It is better to store it in
-   an AVP in the case of speed dial or aliases usage, so you do
-   not need second processing of R-URI in failure route. The AVP
-   is used ony by m_store().
-
-   If the parameter is not set to a value different than 0, the
-   module does not look for this AVP. If the value is set to a
-   number different than 0, then the module expects in the AVP
-   with that ID a SIP URI.
-
-   Default value is "0". 
-
-   Example 1-20. Set the "userid_avp" parameter
-...
-modparam("msilo", "userid_avp", 34)
-...
-     _________________________________________________________
-
-1.3.21. snd_time_avp (int)
+1.3.20. snd_time_avp (int)
 
    The integer ID of an AVP which may contain the time when to
    sent the received message as reminder.The AVP is used ony by
@@ -438,32 +417,32 @@ modparam("msilo", "userid_avp", 34)
 
    Default value is "0". 
 
-   Example 1-21. Set the "snd_time_avp" parameter
+   Example 1-20. Set the "snd_time_avp" parameter
 ...
 modparam("msilo", "snd_time_avp", 35)
 ...
      _________________________________________________________
 
-1.3.22. add_date (int)
+1.3.21. add_date (int)
 
    Wheter to add as prefix the date when the message was stored.
 
    Default value is "1" (1==on/0==off). 
 
-   Example 1-22. Set the "add_date" parameter
+   Example 1-21. Set the "add_date" parameter
 ...
 modparam("msilo", "add_date", "0")
 ...
      _________________________________________________________
 
-1.3.23. max_messages (int)
+1.3.22. max_messages (int)
 
    Maximum number of stored message for an AoR. Value 0 equals to
    no limit.
 
    Default value is 0. 
 
-   Example 1-23. Set the "max_messages" parameter
+   Example 1-22. Set the "max_messages" parameter
 ...
 modparam("msilo", "max_messages", 0)
 ...
@@ -471,7 +450,7 @@ modparam("msilo", "max_messages", 0)
 
 1.4. Exported Functions
 
-1.4.1. m_store(mode)
+1.4.1. m_store([owner])
 
    The method stores certain parts of the current SIP request (it
    should be called when the request type is MESSAGE and the
@@ -483,28 +462,40 @@ modparam("msilo", "max_messages", 0)
 
    Meaning of the parameters is as follows:
 
-     * mode - specifies what to save as R-URI. Ignored if
-       "userid_avp" module parameter has been set and the AVP
-       contains a non-NULL string value.
-          + "0" - first check if new_uri is an address of record.
-            If yes, then use it and store it as R-URI, otherwise
-            look at R-URI and, if necessary, at URI from "To"
-            header.
-          + "1" - look first at R-URI and then at URI from "To"
-            header.
-          + "2" - look only at URI form "To" header.
+     * owner - is a string that must contain a SIP URI in whose
+       inbox the message will be stored. It can have any pseudo
+       variable. If "owner" is missing, the SIP address is taken
+       from R-URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1-23. m_store usage
+...
+m_store();
+m_store("$tu");
+...
      _________________________________________________________
 
-1.4.2. m_dump()
+1.4.2. m_dump([owner])
 
    The method sends stored messages for the SIP user that is
    going to register to his actual contact address. The method
    should be called when a REGISTER request is received and the
    "Expire" header has a value greater than zero.
 
+   Meaning of the parameters is as follows:
+
+     * owner - is a string that must contain a SIP URI whose
+       inbox will be dumped. It can have any pseudo variable. If
+       "owner" is missing, the SIP address is taken from To URI.
+
    This function can be used from REQUEST_ROUTE.
+
+   Example 1-24. m_dump usage
+...
+m_store();
+m_store("$fu");
+...
      _________________________________________________________
 
 1.5. Exported Statistics
@@ -540,7 +531,7 @@ modparam("msilo", "max_messages", 0)
 
    Next picture displays a sample usage of msilo.
 
-   Example 1-24. OpenSER config script - sample msilo usage
+   Example 1-25. OpenSER config script - sample msilo usage
 ...
 # $Id$
 #

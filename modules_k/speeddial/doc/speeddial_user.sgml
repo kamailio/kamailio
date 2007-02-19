@@ -220,7 +220,7 @@ modparam("speeddial", "use_domain", 1)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">sd_lookup(table)</function>
+		<function moreinfo="none">sd_lookup(table [, owner])</function>
 		</title>
 		<para>
 		The function lookups the short dial number from R-URI in 'table' and replaces the R-URI with associated address.
@@ -230,6 +230,11 @@ modparam("speeddial", "use_domain", 1)
 		<listitem>
 			<para><emphasis>table</emphasis> - The name of the table storing the
 			speed dial records.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>owner</emphasis> - The SIP URI of the owner of
+			short dialing codes. If not pressent, URI of From header is used.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -243,6 +248,9 @@ modparam("speeddial", "use_domain", 1)
 # 'speed_dial' is the default table name created by openser db script
 if(uri=~"sip:[0-9]{2}@.*")
 	sd_lookup("speed_dial");
+# use auth username
+if(uri=~"sip:[0-9]{2}@.*")
+	sd_lookup("speed_dial", "sip:$au@$fd");
 ...
 </programlisting>
 		</example>
