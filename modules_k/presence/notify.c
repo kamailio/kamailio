@@ -1345,8 +1345,14 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 	printf_subs(subs);
 
 	if(force_null_body)
+	{	
+		if(force_active && subs->status.len ==7)
+		{
+			subs->status.s = "active";
+			subs->status.len = 6;
+		}	
 		goto jump_over_body;
-
+	}
     /* getting the notify body */
 
 	if ( subs->event.len == PRES_LEN)
@@ -1537,8 +1543,7 @@ jump_over_body:
 		goto error;	
 	}
 
-	if(subs->event.len == PWINFO_LEN && watcher_subs && force_active &&
-			watcher_subs->status.len == 7)
+	if(subs->event.len == PWINFO_LEN && watcher_subs )
 	{
 		DBG("PRESENCE: notify:Send notify for presence on callback");
 		watcher_subs->send_on_cback = 1;			
@@ -1717,12 +1722,15 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			LOG(L_ERR,"PRESENCE: p_tm_callback: ERROR cleaning expired"
 					" messages\n");
 	
-	}/* if an error message is received as a reply for the winfo Notify 
+	}	
+	/* send a more accurate Notify for presence depending on the reply for winfo*/
+	if(((c_back_param*)(*ps->param))->wi_subs!= NULL)
+	{
+		/* if an error message is received as a reply for the winfo Notify 
 	  * send a Notify for presence with no body (the stored presence information is 
 	  * not valid ) */
-	  
-	else
-		if(((c_back_param*)(*ps->param))->wi_subs!= NULL)
+
+		if(ps->code >= 300)
 		{
 			if(notify( ((c_back_param*)(*ps->param))->wi_subs, NULL, NULL, 1)< 0)
 			{
@@ -1730,6 +1738,15 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 					" notify for presence\n");
 			}
 		}
+		else
+		{
+			if(notify( ((c_back_param*)(*ps->param))->wi_subs, NULL, NULL, 0)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
+					" notify for presence\n");
+			}
+		}	
+	}
 
 done:
 	if(*ps->param !=NULL  )
@@ -1830,6 +1847,7 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 	
 	cb_param->wi_subs->contact.s = (char*)cb_param + size;
 	strncpy(cb_param->wi_subs->contact.s, subs->contact.s, subs->contact.len);
+	cb_param->wi_subs->contact.len= subs->contact.len;
 	size+= subs->contact.len;
 
 	if(cb_param->wi_subs->record_route.s)

@@ -476,6 +476,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 					" notify for presence\n");
 			}
 		}
+		
 			
 	}
 	else /* if a new subscribe for winfo */
