@@ -1573,7 +1573,8 @@ inline static int handle_io(struct fd_map* fm, int idx)
 			ret=handle_ser_child((struct process_table*)fm->data, idx);
 			break;
 		case F_NONE:
-			LOG(L_CRIT, "BUG: handle_io: empty fd map\n");
+			LOG(L_CRIT, "BUG: handle_io: empty fd map: %p {%d, %d, %p},"
+						" idx %d\n", fm, fm->fd, fm->type, fm->data, idx);
 			goto error;
 		default:
 			LOG(L_CRIT, "BUG: handle_io: uknown fd type %d\n", fm->type); 

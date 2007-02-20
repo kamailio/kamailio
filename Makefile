@@ -203,10 +203,6 @@ utils_install=	utils/gen_ha1/gen_ha1 utils/serunix/serunix \
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
 
-# by default compile with tls hooks support (so that no ser recompile is
-#  needed before the tls module can be used)
-TLS_HOOKS=1
-
 #include general defs (like CC, CFLAGS  a.s.o)
 # hack to force makefile.defs re-inclusion (needed when make calls itself with
 # other options -- e.g. make bin)
@@ -239,7 +235,7 @@ tar_extra_args+=$(addprefix --exclude=$(notdir $(CURDIR))/, \
 ifeq ($(CORE_TLS), 1)
 	tar_extra_args+=
 else
-	tar_extra_args+=--exclude=$(notdir $(CURDIR))/tls* 
+	tar_extra_args+=--exclude=$(notdir $(CURDIR))/tls/* 
 endif
 
 ifneq ($(nodeb),)

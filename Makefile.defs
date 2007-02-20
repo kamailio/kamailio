@@ -113,7 +113,7 @@ ifeq ($(CORE_TLS), 1)
 	TLS_HOOKS:=0
 endif
 ifeq ($(TLS_HOOKS), 1)
-	RELEASE:=$(RELEASE)-tls
+#	RELEASE:=$(RELEASE)-tls
 endif
 
 # extra CC command line options (e.g  -march=athlon-mp)
