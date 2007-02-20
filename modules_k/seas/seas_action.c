@@ -52,12 +52,10 @@ extern char seas_tags[];
 extern int write_pipe;
 extern int server_signature;
 pid_t my_parent;
-extern int fifo_pid;
 extern int process_no;
 
 static inline int shm_str_dup(str* _d, str* _s);
 static inline struct sip_msg *parse_ac_msg(hdr_flags_t flags,char *start,int len);
-static inline void set_process_no();
 static inline void free_sip_msg_lite(struct sip_msg *my_msg);
 static inline int calculate_hooks(dlg_t* _d);
 
@@ -76,7 +74,6 @@ int dispatch_actions()
    struct pollfd fds[1];
    struct timeval last,now;
 
-   set_process_no();
    /* now the process_no is set, I delete the pt (process_table) global var, because it confuses
     * LOG() */
    pt=0;
@@ -220,34 +217,6 @@ static inline int process_pings(struct ha *the_table)
    lock_release(the_table->mutex);
    return 0;
 }
-
-/* Because TransactionModule organizes statistics based on process_no, 
- * and process_no are only assigned to SER processes (not to Action dispatchers like us ;)
- * we have to simulate we are the FIFO process, so TM thinks that the transactions WE put
- * are put by the fifo process...*/
-static inline void set_process_no()
-{
-   int pcnt,i;
-
-   pcnt=process_count();
-   for(i=0;i<pcnt;i++){
-      if(pt[i].pid==fifo_pid){
-	 process_no=i;
-	 LOG(L_DBG,"Setting fake process_no to %d (fifo pid=%d)\n",i,fifo_pid);
-	 return;
-      }
-   }
-   /*no fifo try unixsock*/
-   for(i=0;i<pcnt;i++){
-      if(!memcmp(pt[i].desc,"unix domain socket server",26)){
-	 process_no=i;
-	 LOG(L_DBG,"Setting fake process_no to %d\n",i);
-	 return;
-      }
-   }
-   LOG(L_ERR,"ERROR:seas:set_process_no():unable to fake process_no\n");
-}
-
 
 /**Processes the actions received from the socket.
  * returns
