@@ -36,6 +36,7 @@
  * 2005-07-05  migrated to the new io_wait code (andrei)
  * 2006-02-03  use tsend_stream instead of send_all (andrei)
  * 2006-10-13  added STUN support - state machine for TCP (vlada)
+ * 2007-02-20  fixed timeout calc. bug (andrei)
  */
 
 #ifdef USE_TCP
@@ -799,7 +800,7 @@ skip:
 					}
 				}else{
 					/* timeout */
-					if (con->timeout<=ticks){
+					if ((s_ticks_t)(ticks-con->timeout)>=0){
 						/* expired, return to "tcp main" */
 						DBG("tcp_receive_loop: %p expired (%d, %d)\n",
 								con, con->timeout, ticks);
@@ -943,7 +944,7 @@ static inline void tcp_receive_timeout()
 			release_tcpconn(con, CONN_ERROR, tcpmain_sock);
 			continue;
 		}
-		if (con->timeout<=ticks){
+		if ((s_ticks_t)(ticks-con->timeout)>=0){
 			/* expired, return to "tcp main" */
 			DBG("tcp_receive_loop: %p expired (%d, %d)\n",
 					con, con->timeout, ticks);
