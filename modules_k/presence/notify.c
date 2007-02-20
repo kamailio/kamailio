@@ -82,10 +82,6 @@ str* build_str_hdr(str event, str status, int expires_t, str reason)
 
 	str_hdr->s = buf;
 
-	LOG(L_INFO, "PRESENCE: build str_hdr:\n\tevent="
-			"%.*s\n\tstatus= %.*s\n\texpires = %d\n",
-			event.len, event.s, status.len, status.s,expires_t);
-
 	strncpy(str_hdr->s ,"Event: ", 7);
 	str_hdr->len = 7;
 	strncpy(str_hdr->s+str_hdr->len, event.s, event.len);
@@ -617,33 +613,18 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 		td->rem_target = subs->contact;
 	}
 
-	if(subs->event.len == PRES_LEN)
+	uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
+	if(w_uri.s ==NULL)
 	{
-		uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
-		if(w_uri.s ==NULL)
-		{
-			LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR while creating uri\n");
-			goto error;
-		}
-	
-		td->rem_uri = w_uri;
-		if(found_contact == 0)
-		{
-			td->rem_target = w_uri;
-		}
-		// pkg_free(w_uri.s);		
-		
-	}
-	else
-	{
-		td->rem_uri = p_uri;
-		if(found_contact == 0)
-		{
-			td->rem_target = p_uri;
-		}
-
+		LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR while creating uri\n");
+		goto error;
 	}
 	
+	td->rem_uri = w_uri;
+	if(found_contact == 0)
+	{
+		td->rem_target = w_uri;
+	}
 	parse_rr_body(subs->record_route.s, subs->record_route.len,
 			&td->route_set);
 		
@@ -808,8 +789,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
 				from_domain.len+ event_id.len+ + strlen(event)+ to_tag.len+ 
 				from_tag.len+ callid.len+ record_route.len+ contact.len)* sizeof(char);
-
-		DBG("PRESENCE: get_subs_dialog: size = %d\n\n", size);
 
 		if(force_active== 0)
 			size+= status.len* sizeof(char);
@@ -1616,7 +1595,7 @@ jump_over_body:
 		pkg_free(p_uri.s);
 	if(td!=NULL)
 	{
-		if(subs->event.len == PRES_LEN && td->rem_uri.s)
+		if(td->rem_uri.s)
 			pkg_free(td->rem_uri.s);
 		free_tm_dlg(td);
 	}
@@ -1652,7 +1631,7 @@ error:
 		pkg_free(p_uri.s);
 	if(td!=NULL)
 	{
-		if(subs->event.len == PRES_LEN && td->rem_uri.s)
+		if(td->rem_uri.s)
 			pkg_free(td->rem_uri.s);
 		free_tm_dlg(td);
 	}

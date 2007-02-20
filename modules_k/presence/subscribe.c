@@ -861,10 +861,10 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs.from_domain.s = from_uri.host.s;
 	subs.from_domain.len = from_uri.host.len;
 
-	/*generate to_tag if it's not included in the message*/
+	/*generate to_tag if the message does not have a to_tag*/
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
-		LOG(L_INFO,"PRESENCE:handle_subscribe: generating from_tag\n");
+		LOG(L_INFO,"PRESENCE:handle_subscribe: generating to_tag\n");
 		to_tag_gen = 1;
 		/*generate to_tag then insert it in avp*/
 		
@@ -874,7 +874,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		if(rtag_value.len<= 0)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while creating"
-					" from_tag\n");
+					" to_tag\n");
 			goto error;
 		}
 	}
@@ -906,13 +906,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 				" number\n");
 		goto error;
 	}
-	/*i= 0;
-	while(msg->cseq->body.s[i]>47 && msg->cseq->body.s[i]<58)
-	{
-		cseq = cseq*10 + msg->cseq->body.s[i] - '0';
-		i++;
-	}
-	subs.cseq = cseq;*/
 	if( msg->contact==NULL || msg->contact->body.s==NULL)
 	{
 		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse contact"
