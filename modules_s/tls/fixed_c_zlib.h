@@ -80,11 +80,21 @@ struct zlib_state
 static int* pzlib_stateful_ex_idx = 0; 
 #define zlib_stateful_ex_idx (*pzlib_stateful_ex_idx)
 
+static void zlib_stateful_free_ex_data(void *obj, void *item,
+	CRYPTO_EX_DATA *ad, int ind,long argl, void *argp);
+
 int fixed_c_zlib_init()
 {
 	if (pzlib_stateful_ex_idx==0){
 		if ((pzlib_stateful_ex_idx=OPENSSL_malloc(sizeof(int)))!=0){
-			zlib_stateful_ex_idx=-1;
+			/* good side effect: it makes sure the ex_data hash
+			 * in crypto/ex_data.c is created before fork
+			 * (else each process would have its own copy :-( ) */
+			CRYPTO_w_lock(CRYPTO_LOCK_COMP);
+			zlib_stateful_ex_idx =
+				CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
+					0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+			CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
 			return 0;
 		} else return -1;
 	}
@@ -97,9 +107,13 @@ static void zlib_stateful_free_ex_data(void *obj, void *item,
 	CRYPTO_EX_DATA *ad, int ind,long argl, void *argp)
 	{
 	struct zlib_state *state = (struct zlib_state *)item;
-	inflateEnd(&state->istream);
-	deflateEnd(&state->ostream);
-	OPENSSL_free(state);
+	if (state)
+		{
+			inflateEnd(&state->istream);
+			deflateEnd(&state->ostream);
+			OPENSSL_free(state);
+		}
+	else LOG(L_CRIT, "WARNING: zlib_stateful_free_ex(%p, %p, %p, %d, %ld, %p)" ": cannot free, null item/state\n", obj, item, ad, ind, argl, argp);
 	}
 
 static int zlib_stateful_init(COMP_CTX *ctx)
@@ -107,9 +121,12 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	int err;
 	struct zlib_state *state =
 		(struct zlib_state *)OPENSSL_malloc(sizeof(struct zlib_state));
+	int inflate_init, deflate_init;
 
 	if (state == NULL)
 		goto err;
+	inflate_init=0;
+	deflate_init=0;
 
 	state->istream.zalloc = comp_calloc;
 	state->istream.zfree = comp_free;
@@ -122,6 +139,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 		ZLIB_VERSION, sizeof(z_stream));
 	if (err != Z_OK)
 		goto err;
+	inflate_init=1;
 
 	state->ostream.zalloc = comp_calloc;
 	state->ostream.zfree = comp_free;
@@ -134,8 +152,10 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 		ZLIB_VERSION, sizeof(z_stream));
 	if (err != Z_OK)
 		goto err;
+	deflate_init=1;
 
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data))
+		goto err;
 	if (zlib_stateful_ex_idx == -1)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_COMP);
@@ -145,12 +165,22 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 					0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
 		CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
 		if (zlib_stateful_ex_idx == -1)
-			goto err;
+			goto err_ex_data;
 		}
-	CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state);
+	if (!CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state))
+		goto err_ex_data;
 	return 1;
- err:
-	if (state) OPENSSL_free(state);
+err_ex_data:
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
+err:
+	if (state){
+		/* ctx->ex_data freed from outside */
+		if (inflate_init)
+				inflateEnd(&state->istream);
+		if (deflate_init)
+				deflateEnd(&state->ostream);
+		OPENSSL_free(state);
+	}
 	return 0;
 	}
 
