@@ -239,7 +239,7 @@ tar_extra_args+=$(addprefix --exclude=$(notdir $(CURDIR))/, \
 ifeq ($(CORE_TLS), 1)
 	tar_extra_args+=
 else
-	tar_extra_args+=--exclude=$(notdir $(CURDIR))/tls* 
+	tar_extra_args+=--exclude=$(notdir $(CURDIR))/tls/* 
 endif
 
 ifneq ($(nodeb),)
