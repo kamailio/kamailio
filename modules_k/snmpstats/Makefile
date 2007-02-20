@@ -18,3 +18,6 @@ LIBS=$(BUILDAGENTLIBS)
 
 
 include ../../Makefile.modules
+
+install_module_custom:
+	echo "install mibs!!!"
