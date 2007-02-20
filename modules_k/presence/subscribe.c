@@ -348,7 +348,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 				}
 		
 				if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
-							subs, NULL)< 0)
+							NULL, NULL)< 0)
 				{
 					LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
 							" notify for presence.winfo\n");
