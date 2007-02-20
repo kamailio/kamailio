@@ -145,7 +145,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 	return p;
 }
 
-void update_htable(ua_pres_t* presentity, int expires, unsigned int hash_code)
+void update_htable(ua_pres_t* presentity,time_t desired_expires, int expires, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL;
 	DBG("PUA:hash_update ..\n");
@@ -159,6 +159,7 @@ void update_htable(ua_pres_t* presentity, int expires, unsigned int hash_code)
 	}
 
 	p->expires= expires+ (int)time(NULL);
+	p->desired_expires= desired_expires;
 	if(p->db_flag& NO_UPDATEDB_FLAG)
 		p->db_flag= UPDATEDB_FLAG;
 

@@ -276,7 +276,7 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			goto done;
 		}
 		DBG("PUA:subs_cback_func: *** Update expires\n");
-		update_htable(presentity, lexpire, hash_code);
+		update_htable(presentity, ((hentity_t*)(*ps->param))->desired_expires, lexpire, hash_code);
 		
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
@@ -472,6 +472,11 @@ hentity_t* build_cback_param(subs_info_t* subs)
 	hentity->watcher_uri->len= subs->watcher_uri->len;
 	size+= subs->watcher_uri->len;
 
+	if(subs->expires< 0)
+		hentity->desired_expires= 0;
+	else
+		hentity->desired_expires=subs->expires+ (int)time(NULL);
+
 	hentity->desired_expires= subs->expires+ (int)time(NULL);
 	hentity->flag|= subs->source_flag;
 	hentity->event|= subs->event;
@@ -488,11 +493,17 @@ int send_subscribe(subs_info_t* subs)
 	int ret= 0;
 	unsigned int hash_code;
 	hentity_t* hentity= NULL;
+	int expires;
 
 	DBG("send_subscribe... \n");
 	print_subs(subs);
 
-	str_hdr= subs_build_hdr(subs->watcher_uri, subs->expires, subs->event);
+	if(subs->expires< 0)
+		expires= 3600;
+	else
+		expires= subs->expires;
+
+	str_hdr= subs_build_hdr(subs->watcher_uri, expires, subs->event);
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
 		LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
@@ -539,6 +550,17 @@ int send_subscribe(subs_info_t* subs)
 	else
 	{
 		dlg_t* td= NULL;
+		td= pua_build_dlg_t(presentity);
+		if(td== NULL)
+		{
+			LOG(L_ERR, "PUA:send_subscribe: Error while building tm dlg_t"
+					"structure");
+			ret= -1;
+			lock_release(&HashT->p_records[hash_code].lock);
+			shm_free(hentity);
+			goto done;
+		}
+
 		if(subs->expires== 0)
 		{	
 			delete_htable(presentity);
@@ -555,18 +577,9 @@ int send_subscribe(subs_info_t* subs)
 				goto done;
 			}
 		}
-		td= pua_build_dlg_t(presentity);
 		lock_release(&HashT->p_records[hash_code].lock);
 	
-		if(td== NULL)
-		{
-			LOG(L_ERR, "PUA:send_subscribe: Error while building tm dlg_t"
-					"structure");
-			ret= -1;
-			shm_free(hentity);
-			goto done;
-		}
-
+	
 		tmb.t_request_within
 		(&met,
 		str_hdr,

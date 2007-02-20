@@ -50,7 +50,6 @@ int bind_pua(pua_api_t* api)
 		LOG(L_ERR, "PUA:bind_pua: Can't bind send_subscribe\n");
 		return -1;
 	}
-	
 	return 0;
 }
 

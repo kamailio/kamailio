@@ -58,7 +58,7 @@ int min_expires= 0;
 int default_expires=3600;
 str db_url = {0, 0};
 char* db_table= "pua";
-int update_period= 30;
+int update_period= 100;
 int startup_time = 0;
 
 /* database connection */
@@ -461,7 +461,7 @@ void hashT_clean(unsigned int ticks,void *param)
 		{	
 			if(p->expires< (int)(time)(NULL)+10)
 			{
-				if(p->desired_expires> p->expires+ 10)
+				if(p->desired_expires> p->expires+ 10 || (p->desired_expires && p->watcher_uri))
 				{
 					if(update_pua(p)< 0)
 					{
@@ -541,7 +541,7 @@ int update_pua(ua_pres_t* p)
 	if(p->watcher_uri== NULL)
 	{
 		str met= {"PUBLISH", 7};
-		str_hdr = publ_build_hdr(p->expires- (int)time(NULL), &p->etag);
+		str_hdr = publ_build_hdr(p->desired_expires- (int)time(NULL), &p->etag);
 		if(str_hdr == NULL)
 		{
 			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");
@@ -560,7 +560,8 @@ int update_pua(ua_pres_t* p)
 				);
 	}
 	else
-	{	
+	{
+		int expires;
 		str met= {"SUBSCRIBE", 9};
 		dlg_t* td= NULL;
 		td= pua_build_dlg_t(p);
@@ -570,7 +571,12 @@ int update_pua(ua_pres_t* p)
 					"structure");		
 			goto error;
 		}
-		str_hdr= subs_build_hdr(p->watcher_uri, p->expires- (int)time(NULL), p->event);
+		if(p->desired_expires== 0)
+			expires= 3600;
+		else
+			expires= p->desired_expires- (int)time(NULL);
+
+		str_hdr= subs_build_hdr(p->watcher_uri, expires, p->event);
 		if(str_hdr== NULL || str_hdr->s== NULL)
 		{
 			LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");

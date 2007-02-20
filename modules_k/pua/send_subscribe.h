@@ -38,7 +38,7 @@ typedef struct subs_info
 	str* pres_uri;
 	str* watcher_uri;
 	int event;
-	time_t expires;
+	int expires;
 	int flag;
 	int source_flag;
 

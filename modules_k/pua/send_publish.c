@@ -262,7 +262,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				lock_release(&HashT->p_records[hash_code].lock);
 				goto done;
 			}
-			update_htable(presentity, lexpire, hash_code);
+			update_htable(presentity, ((hentity_t*)(*ps->param))->desired_expires,
+					lexpire, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 	}
