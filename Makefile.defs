@@ -105,7 +105,9 @@ OSREL_N= $(shell echo $(OSREL) | sed -e 's/^[^0-9]*//' \
 
 # TLS support
 CORE_TLS ?= 
-TLS_HOOKS ?= 
+# by default compile with tls hooks support (so that no ser recompile is
+#  needed before the tls module can be used)
+TLS_HOOKS=1
 ifeq ($(CORE_TLS), 1)
 	RELEASE:=$(RELEASE)-tls
 	TLS_HOOKS:=0
