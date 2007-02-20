@@ -887,11 +887,12 @@ error_fwd_uri:
 int run_actions(struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
-	int ret=E_UNSPEC;
+	int ret;
 	static int rec_lev=0;
 	static jmp_buf jmp_env;
 	struct sr_module *mod;
 
+	ret=E_UNSPEC;
 	rec_lev++;
 	if (rec_lev>ROUTE_MAX_REC_LEV){
 		LOG(L_ERR, "WARNING: too many recursive routing table lookups (%d)"
