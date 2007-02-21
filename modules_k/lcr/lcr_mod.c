@@ -66,7 +66,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 3
+#define GW_TABLE_VERSION 4
 #define LCR_TABLE_VERSION 2
 
 /* usr_avp flag for sequential forking */
@@ -668,8 +668,8 @@ int load_from_uri_regex()
  */
 int reload_gws ( void )
 {
-    int i;
-    unsigned int ip_addr, port, strip, prefix_len, from_uri_len, grp_id, priority;
+    unsigned int i, port, strip, prefix_len, from_uri_len, grp_id, priority;
+    struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
@@ -726,13 +726,14 @@ int reload_gws ( void )
     
     for (i = 0; i < RES_ROW_N(res); i++) {
 	row = RES_ROWS(res) + i;
-	if (VAL_NULL(ROW_VALUES(row)) == 1) {
-		LOG(L_ERR, "reload_gws(): IP address of GW is NULL\n");
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+	if (!((VAL_TYPE(ROW_VALUES(row)) == DB_STRING) &&
+	      !VAL_NULL(ROW_VALUES(row)) &&
+	      inet_aton((char *)VAL_STRING(ROW_VALUES(row)), &ip_addr) != 0)) {
+	    LOG(L_ERR, "reload_gws(): Invalid IP address of GW\n");
+	    lcr_dbf.free_result(dbh, res);
+	    lcr_dbf.close(dbh);
+	    return -1;
 	}
-      	ip_addr = (unsigned int)VAL_INT(ROW_VALUES(row));
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
 		port = 0;
 	} else {
@@ -791,7 +792,7 @@ int reload_gws ( void )
 	    grp_id = VAL_INT(ROW_VALUES(row) + 6);
 	}
 	if (*gws == gws_1) {
-		gws_2[i].ip_addr = ip_addr;
+		gws_2[i].ip_addr = (unsigned int)ip_addr.s_addr;
 		gws_2[i].port = port;
 		gws_2[i].grp_id = grp_id;
 		gws_2[i].scheme = scheme;
@@ -801,7 +802,7 @@ int reload_gws ( void )
 		if (prefix_len)
 		    memcpy(&(gws_2[i].prefix[0]), prefix, prefix_len);
 	} else {
-		gws_1[i].ip_addr = ip_addr;
+		gws_1[i].ip_addr = (unsigned int)ip_addr.s_addr;
 		gws_1[i].port = port;
 		gws_1[i].grp_id = grp_id;
 		gws_1[i].scheme = scheme;
