@@ -40,6 +40,7 @@
 #include "../../serialize.h"
 #include "../../qvalue.h"
 
+extern int unsafemodfnc;
 
 enum uri_members {
 	user = 0,
@@ -270,6 +271,14 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 
 	if (exp_func_struct->fixup) {
+		if (!unsafemodfnc) {
+			LOG(L_ERR, "perl: Module function '%s' is unsafe. Call is refused.\n", func);
+			if (argv[0]) pkg_free(argv[0]);
+			if (argv[1]) pkg_free(argv[1]);
+			*retval = -1;
+			return -1;
+		}
+
 		if (argc>=2) {
 			*retval = exp_func_struct->fixup(&(act->elem[2].u.data), 2);
 			if (*retval < 0) {

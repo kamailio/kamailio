@@ -51,6 +51,10 @@ char *filename = NULL;
  * installed */
 char *modpath = NULL;
 
+/* Allow unsafe module functions - functions with fixups. This will create
+ * memory leaks, the variable thus is not documented! */
+int unsafemodfnc = 0;
+
 /* Reference to the running Perl interpreter instance */
 PerlInterpreter *my_perl = NULL;
 
@@ -106,6 +110,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"filename", STR_PARAM, &filename},
 	{"modpath", STR_PARAM, &modpath},
+	{"unsafemodfnc", INT_PARAM, &unsafemodfnc},
 	{ 0, 0, 0 }
 };
 
