@@ -102,7 +102,7 @@ int tls_force_run = 0; /* ignore some start-up sanity checks, use it
 
 const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
 
-#define TLS_MALLOC_DBG /* extra malloc debug info from openssl */
+#undef TLS_MALLOC_DBG /* extra malloc debug info from openssl */
 /*
  * Wrappers around SER shared memory functions
  * (which can be macros)
@@ -110,7 +110,7 @@ const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
 #ifdef TLS_MALLOC_DBG
 #include <execinfo.h>
 
-#define RAND_NULL_MALLOC (1024)
+/*#define RAND_NULL_MALLOC (1024) */
 #define NULL_GRACE_PERIOD 10U
 
 
@@ -172,14 +172,16 @@ inline static int backtrace2str(char* buf, int size)
 static void* ser_malloc(size_t size, const char* file, int line)
 {
 	void  *p;
-	static ticks_t st=0;
 	char bt_buf[1024];
 	int s;
+#ifdef RAND_NULL_MALLOC
+	static ticks_t st=0;
 
 	/* start random null returns only after 
 	 * NULL_GRACE_PERIOD from first call */
 	if (st==0) st=get_ticks();
 	if (((get_ticks()-st)<NULL_GRACE_PERIOD) || (random()%RAND_NULL_MALLOC)){
+#endif
 		s=backtrace2str(bt_buf, sizeof(bt_buf));
 		/* ugly hack: keep the bt inside the alloc'ed fragment */
 		p=_shm_malloc(size+s, file, "via ser_malloc", line);
@@ -191,6 +193,7 @@ static void* ser_malloc(size_t size, const char* file, int line)
 			((struct qm_frag*)((char*)p-sizeof(struct qm_frag)))->func=
 				p+size;
 		}
+#ifdef RAND_NULL_MALLOC
 	}else{
 		p=0;
 		backtrace2str(bt_buf, sizeof(bt_buf));
@@ -198,6 +201,7 @@ static void* ser_malloc(size_t size, const char* file, int line)
 				" returning null - bt: %s\n",
 				size, file, line, bt_buf);
 	}
+#endif
 	return p;
 }
 
@@ -205,14 +209,16 @@ static void* ser_malloc(size_t size, const char* file, int line)
 static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 {
 	void  *p;
-	static ticks_t st=0;
 	char bt_buf[1024];
 	int s;
+#ifdef RAND_NULL_MALLOC
+	static ticks_t st=0;
 
 	/* start random null returns only after 
 	 * NULL_GRACE_PERIOD from first call */
 	if (st==0) st=get_ticks();
 	if (((get_ticks()-st)<NULL_GRACE_PERIOD) || (random()%RAND_NULL_MALLOC)){
+#endif
 		s=backtrace2str(bt_buf, sizeof(bt_buf));
 		p=_shm_realloc(ptr, size+s, file, "via ser_realloc", line);
 		if (p==0){
@@ -223,6 +229,7 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 			((struct qm_frag*)((char*)p-sizeof(struct qm_frag)))->func=
 				p+size;
 		}
+#ifdef RAND_NULL_MALLOC
 	}else{
 		p=0;
 		backtrace2str(bt_buf, sizeof(bt_buf));
@@ -230,10 +237,11 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 					" returning null - bt: %s\n", ptr, size, file, line,
 					bt_buf);
 	}
+#endif
 	return p;
 }
 
-#else
+#else /*TLS_MALLOC_DBG */
 
 static void* ser_malloc(size_t size)
 {
@@ -241,7 +249,7 @@ static void* ser_malloc(size_t size)
 }
 
 
-static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
+static void* ser_realloc(void *ptr, size_t size)
 {
 		return shm_realloc(ptr, size);
 }
@@ -491,7 +499,11 @@ int init_tls_h(void)
 	      * this has to be called before any function calling CRYPTO_malloc,
 	      * CRYPTO_malloc will set allow_customize in openssl to 0 
 	      */
+#ifdef TLS_MALLOC_DBG
 	if (!CRYPTO_set_mem_ex_functions(ser_malloc, ser_realloc, ser_free)) {
+#else
+	if (!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
+#endif
 		ERR("Unable to set the memory allocation functions\n");
 		return -1;
 	}
