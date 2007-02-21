@@ -180,7 +180,7 @@ echo "trusted:4" 			>> version;
 echo "usr_preferences:2" 	>> version;
 echo "speed_dial:2" 		>> version;
 echo "dbaliases:1" 			>> version;
-echo "gw:3" 				>> version;
+echo "gw:4" 				>> version;
 echo "gw_grp:1" 			>> version;
 echo "lcr:2" 				>> version;
 echo "address:3" 			>> version;
@@ -294,7 +294,7 @@ echo "id(int) $USERCOL(str) domain(str) sd_username(str) sd_domain(str) new_uri(
 #
 touch gw;
 echo "DBTEXT Add Table: gw"
-echo "id(int) gw_name(str) grp_id(int) ip_addr(int) port(int) uri_scheme(int) transport(int) strip(int) prefix(str,null)" >> gw;
+echo "id(int) gw_name(str) grp_id(int) ip_addr(str) port(int) uri_scheme(int) transport(int) strip(int) prefix(str,null)" >> gw;
 
 #
 # Table structure for table 'gw_grp'
