@@ -690,7 +690,7 @@ void tcp_receive_loop(int unix_sock)
 	fd_set sel_set;
 	int maxfd;
 	struct timeval timeout;
-	int ticks;
+	ticks_t ticks;
 	
 	
 	/* init */
@@ -750,7 +750,7 @@ void tcp_receive_loop(int unix_sock)
 					release_tcpconn(con, resp, unix_sock);
 					goto skip;
 				}
-				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
+				con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
 				FD_SET(s, &master_set);
 				if (maxfd<s) maxfd=s;
 				if (con==list){
@@ -765,7 +765,7 @@ void tcp_receive_loop(int unix_sock)
 				tcpconn_listadd(list, con, c_next, c_prev);
 			}
 skip:
-			ticks=get_ticks();
+			ticks=get_ticks_raw();
 			for (con=list; con ; con=c_next){
 				c_next=con->c_next; /* safe for removing*/
 #ifdef EXTRA_DEBUG
@@ -882,7 +882,7 @@ again:
 			 * handle_io might decide to del. the new connection =>
 			 * must be in the list */
 			tcpconn_listadd(tcp_conn_lst, con, c_next, c_prev);
-			con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
+			con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
 			if (io_watch_add(&io_w, s, F_TCPCONN, con)<0){
 				LOG(L_CRIT, "ERROR: tcp_receive: handle_io: failed to add"
 						" new socket to the fd list\n");
@@ -901,7 +901,7 @@ again:
 				release_tcpconn(con, resp, tcpmain_sock);
 			}else{
 				/* update timeout */
-				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
+				con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
 			}
 			break;
 		case F_NONE:
@@ -930,9 +930,9 @@ static inline void tcp_receive_timeout()
 {
 	struct tcp_connection* con;
 	struct tcp_connection* next;
-	int ticks;
+	ticks_t ticks;
 	
-	ticks=get_ticks();
+	ticks=get_ticks_raw();
 	for (con=tcp_conn_lst; con; con=next){
 		next=con->c_next; /* safe for removing */
 		if (con->state<0){   /* kill bad connections */ 
