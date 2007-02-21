@@ -449,7 +449,6 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 static inline void faked_env( struct cell *t,struct sip_msg *msg)
 {
 	static struct cell *backup_t;
-	static unsigned int backup_msgid;
 	static struct usr_avp **backup_list;
 	static struct socket_info* backup_si;
 	static int backup_route_type;
@@ -464,9 +463,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		 */
 		/* backup */
 		backup_t = get_t();
-		backup_msgid = global_msg_id;
-		/* fake transaction and message id */
-		global_msg_id = msg->id;
+		/* fake transaction */
 		set_t(t);
 		/* make available the avp list from transaction */
 		backup_list = set_avp_list( &t->user_avps );
@@ -476,7 +473,6 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	} else {
 		/* restore original environment */
 		set_t(backup_t);
-		global_msg_id = backup_msgid;
 		set_route_type( backup_route_type );
 		/* restore original avp list */
 		set_avp_list( backup_list );

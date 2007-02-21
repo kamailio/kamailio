@@ -544,8 +544,18 @@ int load_tm( struct tm_binds *tmb)
 }
 
 
-static int w_t_unref( struct sip_msg *foo, void *bar)
+static int do_t_unref( struct sip_msg *foo, void *bar)
 {
+	struct cell *t;
+
+	t = get_cancelled_t();
+	if (t!=NULL && t!=T_UNDEFINED)
+		t_unref_cell(t);
+
+	t = get_e2eack_t();
+	if (t!=NULL && t!=T_UNDEFINED)
+		t_unref_cell(t);
+
 	return t_unref(foo);
 }
 
@@ -563,6 +573,8 @@ static int script_init( struct sip_msg *foo, void *bar)
 	t_on_reply(0);
 	t_on_branch(0);
 	set_t(T_UNDEFINED);
+	reset_cancelled_t();
+	reset_e2eack_t();
 	/* reset the kr status */
 	set_kr(0);
 	return 1;
@@ -656,7 +668,7 @@ static int mod_init(void)
 	}
 
 	/* register post-script clean-up function */
-	if (register_script_cb( w_t_unref, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
+	if (register_script_cb( do_t_unref, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to register POST request "
 			"callback\n");
 		return -1;
@@ -759,16 +771,19 @@ inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 			msg->hash_index = tm_hash(msg->callid->body,get_cseq(msg)->number);
 		/* performe lookup */
 		trans = t_lookupOriginalT(  msg );
-		if (trans) {
-			UNREF( trans );
-			return 1;
-		} else {
-			return -1;
-		}
+		return trans?1:-1;
 	} else {
+		trans = get_t();
+		if (trans==NULL)
+			return -1;
+		if (trans!=T_UNDEFINED)
+			return 1;
 		switch ( t_lookup_request( msg , 0) ) {
 			case 1:
-				/* transaction found -> retransmission */
+				/* transaction found -> is it local ACK? */
+				if (msg->REQ_METHOD==METHOD_ACK)
+					return 1;
+				/* .... else -> retransmission */
 				trans = get_t();
 				t_retransmit_reply(trans);
 				UNREF(trans);
@@ -971,9 +986,9 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 			goto route_err;
 
 		if (p_msg->REQ_METHOD==METHOD_ACK) {
-			LOG(L_WARN,"WARNING:tm:w_t_relay: you don't really "
-				"want to fwd hbh ACK\n");
-			return -1;
+			/* local ACK*/
+			t_release_transaction(t);
+			return 1;
 		}
 
 		if (((int)(long)flags)&TM_T_REPLY_nodnsfo_FLAG)

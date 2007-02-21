@@ -672,7 +672,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		if (t_invite!=T_NULL_CELL) {
 			t_invite->flags |= T_WAS_CANCELLED_FLAG;
 			e2e_cancel( p_msg, t, t_invite );
-			UNREF(t_invite);
 			return 1;
 		}
 	}

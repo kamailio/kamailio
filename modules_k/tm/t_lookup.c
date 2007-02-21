@@ -128,9 +128,6 @@
 int ruri_matching=1;
 int via1_matching=1;
 
-/* presumably matching transaction for an e2e ACK */
-static struct cell *t_ack;
-
 /* this is a global variable which keeps pointer to
    transaction currently processed by a process; it it
    set by t_lookup_request or t_reply_matching; don't
@@ -140,16 +137,28 @@ static struct cell *t_ack;
 
 static struct cell *T;
 
-/* number of currently processed message; good to know
-   to be able to doublecheck whether we are still working
-   on a current transaction or a new message arrived;
-   don't even think of changing it
-*/
-unsigned int     global_msg_id;
+/* simillar to T, but it is used for the cancelled invite
+ * transaction (when processing a CANCEL)
+ */
+static struct cell *cancelled_T;
+
+/* simillar to T, but it is used for the ack-ed invite
+ * transaction (when processing a end-to-end 200 ACK )
+ */
+static struct cell *e2eack_T;
+
 
 struct cell *get_t() { return T; }
 void set_t(struct cell *t) { T=t; }
-void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
+void init_t() {set_t(T_UNDEFINED);}
+
+struct cell *get_cancelled_t() { return cancelled_T; }
+void reset_cancelled_t() { cancelled_T=T_UNDEFINED; }
+
+struct cell *get_e2eack_t() { return e2eack_T; }
+void reset_e2eack_t() { e2eack_T=T_UNDEFINED; }
+
+
 
 static inline int parse_dlg( struct sip_msg *msg )
 {
@@ -373,11 +382,19 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	int match_status;
 	struct cell *e2e_ack_trans;
 
+	isACK = p_msg->REQ_METHOD==METHOD_ACK;
+
+	if (isACK) {
+		if (e2eack_T==NULL)
+			return -1;
+		if (e2eack_T!=T_UNDEFINED)
+			return -2;
+	}
+
 	/* parse all*/
-	if (check_transaction_quadruple(p_msg)==0)
-	{
+	if (check_transaction_quadruple(p_msg)==0) {
 		LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
-		set_t(0);	
+		set_t(0);
 		/* stop processing */
 		return 0;
 	}
@@ -386,7 +403,6 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	if (!p_msg->hash_index)
 		p_msg->hash_index=tm_hash( p_msg->callid->body , 
 			get_cseq(p_msg)->number ) ;
-	isACK = p_msg->REQ_METHOD==METHOD_ACK;
 	DBG("t_lookup_request: start searching: hash=%d, isACK=%d\n",
 		p_msg->hash_index,isACK);
 
@@ -510,26 +526,25 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	} /* synonym loop */
 
 notfound:
-
 	if (e2e_ack_trans) {
 		p_cell=e2e_ack_trans;
 		goto e2e_ack;
 	}
-		
+
 	/* no transaction found */
 	set_t(0);
-	if (!leave_new_locked) {
+	e2eack_T = NULL;
+	if (!leave_new_locked || isACK) {
 		UNLOCK_HASH(p_msg->hash_index);
 	}
 	DBG("DEBUG: t_lookup_request: no transaction found\n");
 	return -1;
 
 e2e_ack:
-	t_ack=p_cell;	/* e2e proxied ACK */
+	REF_UNSAFE( p_cell );
+	UNLOCK_HASH(p_msg->hash_index);
+	e2eack_T = p_cell;
 	set_t(0);
-	if (!leave_new_locked) {
-		UNLOCK_HASH(p_msg->hash_index);
-	}
 	DBG("DEBUG: t_lookup_request: e2e proxy ACK found\n");
 	return -2;
 
@@ -557,6 +572,9 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	struct via_param *branch;
 	int ret;
 
+	/* already looked for it? */
+	if (cancelled_T!=T_UNDEFINED)
+		return cancelled_T;
 
 	/* start searching in the table */
 	hash_index = p_msg->hash_index;
@@ -569,7 +587,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	 */
 	if (!p_msg->via1) {
 		LOG(L_ERR, "ERROR: t_lookupOriginalT: no via\n");
-		set_t(0);
+		cancelled_T = NULL;
 		return 0;
 	}
 	branch=p_msg->via1->branch;
@@ -653,12 +671,14 @@ notfound:
 	/* no transaction found */
 	DBG("DEBUG: t_lookupOriginalT: no CANCEL matching found! \n" );
 	UNLOCK_HASH(hash_index);
+	cancelled_T = NULL;
 	DBG("DEBUG: t_lookupOriginalT completed\n");
 	return 0;
 
 found:
 	DBG("DEBUG: t_lookupOriginalT: canceled transaction"
 		" found (%p)! \n",p_cell );
+	cancelled_T = p_cell;
 	REF_UNSAFE( p_cell );
 	UNLOCK_HASH(hash_index);
 	DBG("DEBUG: t_lookupOriginalT completed\n");
@@ -850,12 +870,9 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 	int local_branch;
 
 	/* is T still up-to-date ? */
-	DBG("DEBUG: t_check: msg id=%d global id=%d T start=%p\n", 
-		p_msg->id,global_msg_id,T);
-	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
+	DBG("DEBUG: t_check: start=%p\n", T);
+	if ( T==T_UNDEFINED )
 	{
-		global_msg_id = p_msg->id;
-		T = T_UNDEFINED;
 		/* transaction lookup */
 		if ( p_msg->first_line.type==SIP_REQUEST ) {
 			/* force parsing all the needed headers*/
@@ -904,8 +921,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			abort();
 		}
 #endif
-		DBG("DEBUG: t_check: msg id=%d global id=%d T end=%p\n",
-			p_msg->id,global_msg_id,T);
+		DBG("DEBUG: t_check: end=%p\n",T);
 	} else {
 		if (T)
 			DBG("DEBUG: t_check: T already found!\n");
@@ -1018,8 +1034,7 @@ int t_newtran( struct sip_msg* p_msg )
 	int lret, my_err;
 
 	/* is T still up-to-date ? */
-	DBG("DEBUG: t_newtran: msg id=%d , global msg id=%d ,"
-		" T on entrance=%p\n",p_msg->id,global_msg_id,T);
+	DBG("DEBUG: t_newtran:  T on entrance=%p\n",T);
 
 	if ( T && T!=T_UNDEFINED  ) {
 		LOG(L_ERR, "ERROR: t_newtran: "
@@ -1027,7 +1042,6 @@ int t_newtran( struct sip_msg* p_msg )
 		return E_SCRIPT;
 	}
 
-	global_msg_id = p_msg->id;
 	T = T_UNDEFINED;
 	/* first of all, parse everything -- we will store in shared memory 
 	   and need to have all headers ready for generating potential replies 
@@ -1035,7 +1049,7 @@ int t_newtran( struct sip_msg* p_msg )
 	   will be in shmem and applying parse_headers to it would intermix 
 	   shmem with pkg_mem
 	*/
-	
+
 	if (parse_headers(p_msg, HDR_EOH_F, 0 )<0) {
 		LOG(L_ERR, "ERROR: t_newtran: parse_headers failed\n");
 		return E_BAD_REQ;
@@ -1068,7 +1082,6 @@ int t_newtran( struct sip_msg* p_msg )
 	/* from now on, be careful -- hash table is locked */
 
 	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
-		REF_UNSAFE(t_ack);
 		DBG("DEBUG:tm:t_newtran: building branch for end2end ACK\n");
 		/* to ensure unigueness acros time and space, compute the ACK 
 		 * branch in the same maner as for INVITE, but put a t->branch 
@@ -1076,39 +1089,31 @@ int t_newtran( struct sip_msg* p_msg )
 		 * an INVITE, it will not overlapp with other INVITEs or requests.
 		 * But the faked value for t->branch guarantee no overalap with 
 		 * corresponding INVITE  --bogdan */
-		if (!t_calc_branch(t_ack, t_ack->nr_of_outgoings+1,
+		if (!t_calc_branch(e2eack_T, e2eack_T->nr_of_outgoings+1,
 		p_msg->add_to_branch_s, &p_msg->add_to_branch_len )) {
 			LOG(L_ERR,"ERROR:tm:t_newtran: ACK branch computation failed\n");
 		}
 
 		/* no callbacks? complete quickly */
-		if ( !has_tran_tmcbs(t_ack,TMCB_E2EACK_IN) ) {
-			UNREF_UNSAFE(t_ack);
-			UNLOCK_HASH(p_msg->hash_index);
+		if ( !has_tran_tmcbs(e2eack_T,TMCB_E2EACK_IN) )
 			return 1;
-		}
 
-		UNLOCK_HASH(p_msg->hash_index);
 		/* we don't call from within REPLY_LOCK -- that introduces
 		 * a race condition; however, it is so unlikely and the
 		 * impact is so small (callback called multiple times of
 		 * multiple ACK/200s received in parallel), that we do not
 		 * better waste time in locks  */
-		if (unmatched_totag(t_ack, p_msg)) {
-			run_trans_callbacks( TMCB_E2EACK_IN , t_ack, p_msg, 0,
+		if (unmatched_totag(e2eack_T, p_msg)) {
+			run_trans_callbacks( TMCB_E2EACK_IN , e2eack_T, p_msg, 0,
 				-p_msg->REQ_METHOD );
 		}
-		UNREF(t_ack);
 		return 1;
 	}
 
 	/* transaction not found, it's a new request (lret<0, lret!=-2);
 	   establish a new transaction ... */
-	if (p_msg->REQ_METHOD==METHOD_ACK) { /* ... unless it is in ACK */
-		t_ack = 0;
-		my_err=1;
-		goto new_err;
-	}
+	if (p_msg->REQ_METHOD==METHOD_ACK) /* ... unless it is in ACK */
+		return 1;
 
 	my_err=new_t(p_msg);
 	if (my_err<0) {

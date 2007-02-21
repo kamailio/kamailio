@@ -285,7 +285,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 	}	
 #endif
 
-	/*the transaction is already removed from RETRANSMISSION_LIST by timer*/
+	/* the transaction is already removed from RETRANSMISSION_LIST by timer*/
 	/* retransmission */
 	if ( r_buf->activ_type==TYPE_LOCAL_CANCEL 
 		|| r_buf->activ_type==TYPE_REQUEST ) {
