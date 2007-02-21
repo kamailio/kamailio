@@ -370,7 +370,7 @@ INSERT INTO version VALUES ( 'trusted', '4');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'dbaliases', '1');
-INSERT INTO version VALUES ( 'gw', '3');
+INSERT INTO version VALUES ( 'gw', '4');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'address', '2');
@@ -614,7 +614,7 @@ CREATE TABLE gw (
   id $AUTO_INCREMENT,
   gw_name varchar(128) NOT NULL,
   grp_id INT CHECK (grp_id > 0) NOT NULL,
-  ip_addr BIGINT CHECK (ip_addr > 0 AND ip_addr < 4294967296) NOT NULL,
+  ip_addr varchar(15) NOT NULL,
   port INT CHECK (port > 0 AND port < 65536),
   uri_scheme SMALLINT CHECK (uri_scheme >= 0 and uri_scheme < 256),
   transport SMALLINT CHECK (transport >= 0 and transport < 256),

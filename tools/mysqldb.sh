@@ -314,7 +314,7 @@ INSERT INTO version VALUES ( 'trusted', '4');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'dbaliases', '1');
-INSERT INTO version VALUES ( 'gw', '3');
+INSERT INTO version VALUES ( 'gw', '4');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'address', '3');
@@ -573,7 +573,7 @@ CREATE TABLE gw (
   id int(10) NOT NULL auto_increment,
   gw_name VARCHAR(128) NOT NULL,
   grp_id INT UNSIGNED NOT NULL,
-  ip_addr INT UNSIGNED NOT NULL,
+  ip_addr varchar(15) NOT NULL,
   port SMALLINT UNSIGNED,
   uri_scheme TINYINT UNSIGNED,
   transport TINYINT UNSIGNED,
