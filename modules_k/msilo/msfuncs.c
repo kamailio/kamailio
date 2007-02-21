@@ -85,6 +85,40 @@ int m_apo_escape(char* src, int slen, char* dst, int dlen)
 }
 
 /**
+ * Build a RFC 3261 compliant Date string from a time_t value
+ * - date: input of time_t to build the string from
+ * - buf: pointer to string for output
+ * - bufLen: length of buf param
+ *
+ * #return: >0 length of data copied to buf ; <0 error occured
+  */
+int timetToSipDateStr(time_t date, char* buf, int bufLen)
+{
+	struct tm gmt;
+	char* dayArray[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+	char* monthArray[12] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+	int len = 0;
+
+	gmtime_r(&date,&gmt);
+	/* In RFC 3261 the format is always GMT and in the string form like
+	 * "Wkday, Day Month Year HOUR:MIN:SEC GMT"
+	 * "Mon, 19 Feb 2007 18:42:27 GMT"
+	 */
+	len = snprintf(buf,bufLen,"Date: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
+		dayArray[gmt.tm_wday],
+		gmt.tm_mday,
+		monthArray[gmt.tm_mon],
+		1900 + gmt.tm_year,
+		gmt.tm_hour,
+		gmt.tm_min,
+		gmt.tm_sec
+		);
+
+	/* snprintf returns number of chars it should have printed, so you need to bounds check against input*/
+	return (len > bufLen) ? bufLen : len;
+}
+
+/**
  * extract the value of Content-Type header
  * - src: pointer to C-T content
  * - len: length of src
@@ -151,20 +185,29 @@ error:
 
 /** build MESSAGE headers 
  *
- * only Content-Type at this moment
+ * Add Content-Type, Contact and Date headers if they exist
  * expects - max buf len of the resulted body in body->len
  *         - body->s MUST be allocated
  * #return: 0 OK ; -1 error
  * */
-int m_build_headers(str *buf, str ctype, str contact)
+int m_build_headers(str *buf, str ctype, str contact, time_t date)
 {
 	char *p;
+	char strDate[48];
+	int lenDate = 0;
+
 	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0 || contact.len < 0
 			|| buf->len <= ctype.len+contact.len+14 /*Content-Type: */
 				+CRLF_LEN+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN)
 		goto error;
 
 	p = buf->s;
+	if(date > 0)
+	{
+		lenDate = timetToSipDateStr(date,strDate,48);
+		strncpy(p, strDate, lenDate);
+		p += lenDate;
+	}
 	if(ctype.len > 0)
 	{
 		strncpy(p, "Content-Type: ", 14);

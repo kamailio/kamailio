@@ -897,10 +897,12 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		SET_STR_VAL(str_vals[1], db_res, i, 2); /* to */
 		SET_STR_VAL(str_vals[2], db_res, i, 3); /* body */
 		SET_STR_VAL(str_vals[3], db_res, i, 4); /* ctype */
+		rtime = 
+			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
 
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				str_vals[0]/*from*/) < 0)
+				str_vals[0]/*from*/, rtime /*Date*/) < 0)
 		{
 			LOG(L_ERR, "MSILO:m_dump: headers building failed [%d]\n", mid);
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
@@ -915,8 +917,6 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 			
 		/** sending using TM function: t_uac */
 		body_str.len = 1024;
-		rtime = 
-			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
 		n = m_build_body(&body_str, rtime, str_vals[2/*body*/], 0);
 		if(n<0)
 			DBG("MSILO:m_dump: sending simple body\n");
@@ -1160,7 +1160,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				ms_reminder/*from*/) < 0)
+				ms_reminder/*from*/,0/*Date*/) < 0)
 		{
 			LOG(L_ERR, "MSILO:m_send_ontimer: headers building failed [%d]\n",
 					mid);
