@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	<authorgroup>
+		<author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>iptelorg GmbH</orgname></affiliation>
+		<address>
+			<email>andrei@iptel.org</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2007</year>
+		<holder>iptelorg GmbH</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</sectioninfo>
+
+	<title>TLS Module</title>
+
+		<section id="tls.overview">
+		<title>Overview</title>
+		<para>
+			This module implements the TLS transport for ser using the <ulink url="http://www.openssl.org">openssl library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the ser config file 
+		</para>
+		</section>
+		<section id="tls.quick_start">
+		<title>Quick Start</title>
+		<para>
+			Make sure you have a proper certificate and private key and either use the certificate and private_key module parameters, or make sure the certificate and key are in the same PEM file, named cert.pem an placed in [your-cfg-install-prefix]/etc/ser/. Don't forget to load the tls module and to enable tls (add <emphasis>enable_tls=yes</emphasis> to your config).
+		</para>
+		<example>
+		<title>quick start config</title>
+		<programlisting>
+#...
+loadmodule "modules/tls/tls.so"
+
+modparam("tls", "private_key", "./andrei-test.pem")
+modparam("tls", "certificate", "./andrei-test.pem")
+modparam("tls", "ca_list", "./calist.pem")
+
+enable_tls=yes
+
+route{
+	# ....
+}
+		</programlisting>
+		</example>
+		</section>
+
+		<section id="tls.notes">
+		<title>Important Notes</title>
+		<para>
+			The tls module needs some special options enabled when compiling ser. These options are enabled by default, however in case you're using a modified ser version or Makefile, make sure that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care of both options). To quickly check if your ser version was compiled with these options, run ser -V and look for USE_TLS and TLS_HOOKS among the flags.
+		</para>
+		<para>
+			This module includes several workarounds for various openssl bugs (like compression and kerberos using the wrong memory allocations functions, low memory problems a.s.o). On startup it will try to enable the needed workarounds based on the openssl library version. Each time a known problem is detected and a workaround is enabled, a message will be logged. In general it is recommended to compile this module on the same machine or a similar machine to where ser will be run or to link it statically with libssl. For example if on the compile machine openssl does not have the kerberos support enabled, but on the target machine a kerberos enabled openssl library is installed, ser cannot apply the needed workarounds and will refuse to start. The same thing will happen if the openssl versions are too different (to force ser startup anyway, see the <varname>tls_force_run</varname> module parameter).
+		</para>
+		<para>
+			Try to avoid using keys larger then 1024 bytes. Large keys significantly slow down the TLS connection handshake, thus limiting the maximum ser TLS connection rate.
+		</para>
+		<para>
+			Compression is fully supported and used by default, if you have a new enough openssl version (starting with 0.9.8). Although there are some problems with zlib compression in currently deployed openssl versions (up to and including 0.9.8d, see openssl bug #1468), the tls module will automatically switch to its own fixed version. There's no need to force-disable the compression.
+		</para>
+		<para>
+			The tls module includes workarounds for the following known openssl bugs:  openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled, for versions between 0.9.8 and 0.9.8c), openssl #1468 (fix zlib compression memory allocation) and openssl #1467 (kerberos support will be disabled if
+ openssl version less than 0.9.8e-beta1). The bug reports can be viewed at
+  <ulink url="http://rt.openssl.org/">http://rt.openssl.org/</ulink>.
+		</para>
+		</section>
+		<section id="tls.known_limitations">
+		<title>Known Limitations</title>
+		<para>
+			The private key must not encrypted (ser cannot ask you for a password on startup).
+		</para>
+		<para>
+			The tls certificate verifications ignores the certificate name, altname and ip extensions, it just checks if the certificate is signed by a recognized CA. One can use the select framework to try to overcome this limitation (check in the script for the contents of various certificate fields), but this is not only slow, but also not exactly standard conforming (the verification should happen during TLS connection establishment and not after).
+		</para>
+		<para>
+			TLS specific config reloading is not safe, so for now better don't use it, especially under heavy traffic.
+		</para>
+		<para>
+			This documentation is incomplete. The select framework and rpc sections are completely missing.
+		</para>
+		</section>
+
+	<xi:include href="certs_howto.xml"/>
+	<xi:include href="params.xml"/>
+	<xi:include href="functions.xml"/>
+	<xi:include href="history.xml"/>
+
+</section>
+
