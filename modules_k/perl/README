@@ -451,6 +451,109 @@ $m->moduleFunction("xlog", "L_INFO", "foo");
    you may as well write
 $m->sl_send_reply("500", "Internal Error");
 $m->xlog("L_INFO", "foo");
+
+   WARNING
+
+   In OpenSER 1.2, only a limited subset of module functions is
+   available. This restriction will be removed in a later
+   version.
+
+   Here is a list of functions that are expected to be working
+   (not claiming completeness):
+* alias_db_lookup
+* consume_credentials
+* is_rpid_user_e164
+* append_rpid_hf
+* bind_auth
+* avp_print
+* cpl_process_register
+* cpl_process_register_norpl
+* load_dlg
+* ds_next_dst
+* ds_next_domain
+* ds_mark_dst
+* ds_mark_dst
+* is_from_local
+* is_uri_host_local
+* dp_can_connect
+* dp_apply_policy
+* enum_query (without parameters)
+* enum_fquery (without parameters)
+* is_from_user_enum (without parameters)
+* i_enum_query (without parameters)
+* imc_manager
+* jab_* (all functions from the jabber module)
+* load_gws (without parameters)
+* next_gw
+* from_gw (without parameters)
+* to_gw (without parameters)
+* load_contacts
+* next_contacts
+* sdp_mangle_ip
+* sdp_mangle_port
+* encode_contact
+* decode_contact
+* decode_contact_header
+* fix_contact
+* use_media_proxy
+* end_media_session
+* m_store
+* m_dump
+* fix_nated_contact
+* unforce_rtp_proxy
+* force_rtp_proxy
+* fix_nated_register
+* add_rcv_param
+* options_reply
+* checkospheader
+* validateospheader
+* requestosprouting
+* checkosproute
+* prepareosproute
+* prepareallosproutes
+* checkcallingtranslation
+* reportospusage
+* mangle_pidf
+* mangle_message_cpim
+* add_path (without parameters)
+* add_path_received (without parameters)
+* prefix2domain
+* allow_routing (without parameters)
+* allow_trusted
+* pike_check_req
+* handle_publish
+* handle_subscribe
+* stored_pres_info
+* bind_pua
+* send_publish
+* send_subscribe
+* pua_set_publish
+* loose_route
+* record_route
+* load_rr
+* sip_trace
+* sl_reply_error
+* sms_send_msg
+* sd_lookup
+* sstCheckMin
+* append_time
+* has_body (without parameters)
+* is_peer_verified
+* t_newtran
+* t_release
+* t_relay (without parameters)
+* t_flush_flags
+* t_check_trans
+* t_was_cancelled
+* uac_restore_from
+* uac_auth
+* has_totag
+* tel2sip
+* check_to
+* check_from
+* radius_does_uri_exist
+* ul_* (All functions exported by the usrloc module for user access)
+* xmpp_send_message
      _________________________________________________________
 
 3.2.13. log(level,message) (deprecated type)
@@ -940,6 +1043,10 @@ Chapter 4. Perl samples
    calls with a destination number beginning with 555... are
    rejected with an internal server error. Other destination
    addresses are passed to the alias_db module.
+
+   Please note that the moduleFunction method is not fully
+   available in OpenSER 1.2. See the method's documentation for
+   details.
 
    "paramfunc" shows that you can pass arbitrary strings to perl
    functions. Do with them whatever you want :)

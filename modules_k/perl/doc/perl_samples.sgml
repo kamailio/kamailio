@@ -69,6 +69,10 @@
 				addresses are passed to the alias_db module.
 				</para>
 				<para>
+				Please note that the moduleFunction method is not fully available in OpenSER 1.2. See the method's
+				documentation for details.
+				</para>
+				<para>
 				<quote>paramfunc</quote> shows that you can pass arbitrary strings to perl functions. Do with
 				them whatever you want :)
 				</para>
