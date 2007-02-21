@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="tls.certs_howto" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+	<title>History</title>
+		<para>
+			This module was put together by Jan Janak <email>jan@iptel.org</email> from code  from the experimental tls core addon (<ulink url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/">http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/</ulink>), code originally written by Peter Griffiths and later maintained by Cesc Santasusana and from an iptelorg tls code addon, written by Andrei Pelinescu-Onciul <email>andrei@iptel.org</email>. Jan also added support for multiple domains, a tls specific config, config reloading and a tls specific select framework.
+		</para>
+		<para>
+			The code is currently maintained by Andrei Pelinescu-Onciul <email>andrei@iptel.org</email>.
+		</para>
+</section>
