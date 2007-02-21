@@ -18,12 +18,4 @@ MEMORY=64
 # Set this to 'yes' to enable OpenSER to leave a core file when it crashes
 # or 'no' to disable this feature. This option is case sensitive and only
 # accepts 'yes' and 'no' and only in lowercase letters.
-#
-# Please note that when this is enabled, the USER and GROUP options above
-# will be ignored and the root user/group will be used instead. This is
-# because only then OpenSER will be able to leave a core file.
-# If someone knows how this can be made to work even when the server runs as
-# user openser, please let us know. Tests show that if only as much as the
-# group is set to openser, while the user is root for the running server,
-# it will still refuse to write the core file.
 DUMP_CORE=no

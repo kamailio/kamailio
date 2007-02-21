@@ -91,13 +91,10 @@ MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
 [ $MEMORY -le 0 ] && MEMORY=32
 
 if test "$DUMP_CORE" = "yes" ; then
-    # Ignore USER and GROUP in this case and use root,
-    # else it won't write the core file.
-    OPTIONS="-P $PIDFILE -m $MEMORY -u root -g root -w $HOMEDIR"
+    # set proper ulimit
     ulimit -c unlimited
-else
-    OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
 fi
+OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
 
 case "$1" in
   start|debug)
