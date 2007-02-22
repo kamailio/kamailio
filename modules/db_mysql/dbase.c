@@ -37,6 +37,7 @@
 #include "../../dprint.h"
 #include "../../db/db_pool.h"
 #include "../../globals.h"
+#include "../../pt.h"
 #include "utils.h"
 #include "val.h"
 #include "my_con.h"
@@ -256,7 +257,8 @@ db_con_t* db_init(const char* _url)
 	id = 0;
 	res = 0;
 
-	if (is_main){
+	/* if called from PROC_MAIN, allow it only from mod_init( when pt==0)*/
+	if (is_main && pt){
 		LOG(L_ERR, "BUG: mysql: db_init: called from the main process,"
 					" ignoring...\n");
 		return 0;
