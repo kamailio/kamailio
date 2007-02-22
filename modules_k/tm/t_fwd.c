@@ -59,7 +59,6 @@
 #include "t_lookup.h"
 #include "t_fwd.h"
 #include "fix_lumps.h"
-#include "path.h"
 #include "config.h"
 
 /* route to execute for the branches */
@@ -105,8 +104,8 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 	 * be able to remove them later --bogdan */
 	set_init_lump_flags(LUMPFLAG_BRANCH);
 
-	/* add path vector as Route HF */
-	if (request->path_vec.s && request->path_vec.len) {
+	/* copy path vector into branch */
+	if (request->path_vec.len) {
 		t->uac[branch].path_vec.s =
 			shm_resize(t->uac[branch].path_vec.s, request->path_vec.len+1);
 		if (t->uac[branch].path_vec.s==NULL) {
@@ -116,8 +115,6 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		t->uac[branch].path_vec.len = request->path_vec.len;
 		memcpy( t->uac[branch].path_vec.s, request->path_vec.s,
 			request->path_vec.len+1);
-		if (insert_path_as_route(request, &t->uac[branch].path_vec) < 0)
-			goto error;
 	}
 
 	/********** run route & callback ************/
