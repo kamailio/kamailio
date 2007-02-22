@@ -437,50 +437,18 @@ lcr() {
 		show)
 			echo lcr routes
 			lines=`wc -l $LCR_FILE | cut -d " " -f 1`
-			let "lines = $lines - 1"
+			let "lines=$lines-1"
 			tail -n $lines $LCR_FILE
 
 			echo lcr gateway groups
 			lines=`wc -l $GW_GRP_FILE | cut -d " " -f 1`
-			let "lines = $lines - 1"
+			let "lines=$lines-1"
 			tail -n $lines $GW_GRP_FILE
 
 			echo lcr gateways
 			lines=`wc -l $GW_FILE | cut -d " " -f 1`
-			let "lines = $lines - 1"
-			#tail -n $lines $GW_FILE
-
-			IFS=":"
-			tail -n $lines $GW_FILE | ( while read -a chunks; do
-				element_count=${#chunks[@]}
-				let "element_count_max_limit = $element_count - 1"
-				index="0"
-				let "ip_4 = ${chunks[2]} / 16777216"
-
-				let "ip_3 = $ip_4 * 16777216"
-				let "ip_3_tmp = ${chunks[2]} - $ip_3"
-				let "ip_3 = $ip_3_tmp / 65536"
-
-				let "ip_2_tmp = $ip_3_tmp - $ip_3 * 65536"
-				let "ip_2 = $ip_2_tmp / 256"
-
-				let "ip_1 = $ip_2_tmp - $ip_2 * 256"
-
-				#echo ip = $ip_1.$ip_2.$ip_3.$ip_4
-				while [ $index -lt $element_count ]; do
-					field=${chunks[$index]}
-					if [ "$index" -eq "2" ]; then
-						echo -n $ip_1.$ip_2.$ip_3.$ip_4":"
-					elif [ "$index" -eq "$element_count_max_limit" ]; then
-						echo -n $field
-					else
-						echo -n $field":"
-					fi
-					let "index = $index + 1"
-				done
-				echo 
-			done
-			)
+			let "lines=$lines-1"
+			tail -n $lines $GW_FILE
 			;;
 
 		addgw_grp)
@@ -534,6 +502,7 @@ lcr() {
 				STRIP=0
 			fi
 			GW_NAME=$1
+			GW_IP=$2
 			GW_PORT=$3
 			GW_URI_SCHEME=$4
 			if   [ $GW_URI_SCHEME = 'sip' ]; then
@@ -550,18 +519,6 @@ lcr() {
 				GW_TRANSPORT=3
 			fi
 			GW_GRP_ID=$6
-			EXPR_PATH=`which expr`
-			oldIFS=$IFS
-			IFS=.
-			set -- $2
-			if [ -z "$EXPR_PATH" ] ; then
-				GW_IP=`echo "$(($1+$2*256+$3*65536+$4*16777216))"`
-			else
-				GW_IP=`$EXPR_PATH $1 + $2 \* 256 + $3 \* 65536 + $4 \* 16777216`
-			fi
-
-			# GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
-			IFS=$oldIFS
 			echo $GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX >> $GW_FILE
 			chown_openser $GW_FILE
 			#FIXME: lcr_reload command not supported yet
@@ -929,7 +886,7 @@ case $1 in
 		#Group/ACL file
 		echo "username(str) domain(str) grp(str) last_modified(int)" > $ACL_FILE
 		#gw file
-		echo "gw_name(str) grp_id(int) ip_addr(int) port(int,null) uri_scheme(int,null) transport(int,null) strip(int) prefix(str,null)" > $GW_FILE
+		echo "gw_name(str) grp_id(int) ip_addr(str) port(int,null) uri_scheme(int,null) transport(int,null) strip(int) prefix(str,null)" > $GW_FILE
 		#lcr file
 		echo "prefix(str,null) from_uri(str,null) grp_id(int) priority(int,null)" > $LCR_FILE
 		#gw_grp file
@@ -961,7 +918,7 @@ case $1 in
 		echo "calls_forwarding:1" >> $VER_FILE
 		echo "speed_dial:2" >> $VER_FILE
 		echo "dbaliases:1" >> $VER_FILE
-		echo "gw:3" >> $VER_FILE
+		echo "gw:4" >> $VER_FILE
 		echo "gw_grp:1" >> $VER_FILE
 		echo "lcr:2" >> $VER_FILE
 		
