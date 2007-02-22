@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../db/db_pool.h"
+#include "../../globals.h"
 #include "utils.h"
 #include "val.h"
 #include "my_con.h"
@@ -254,6 +255,12 @@ db_con_t* db_init(const char* _url)
 
 	id = 0;
 	res = 0;
+
+	if (is_main){
+		LOG(L_ERR, "BUG: mysql: db_init: called from the main process,"
+					" ignoring...\n");
+		return 0;
+	}
 
 	if (!_url) {
 		LOG(L_ERR, "db_init: Invalid parameter value\n");
