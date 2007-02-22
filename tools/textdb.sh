@@ -68,14 +68,13 @@ cat <<EOF
 usage: $COMMAND create [DBTEXT_PATH]
        $COMMAND drop  [DBTEXT_PATH] (!!entirely deletes tables)
        $COMMAND presence [DBTEXT_PATH] (adds the presence related tables)
+       $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
        $COMMAND reinit [DBTEXT_PATH] (!!entirely deletes and then re-creates tables
 not implemented:
        $COMMAND backup (dumps current database to stdout)
        $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
        $COMMAND reinstall (updates to a new OpenSER database)
-       $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
-       $COMMAND serweb (adds the SERWEB specific tables)
 
 EOF
 } #usage
@@ -338,13 +337,6 @@ then
 	extra_create $1
 fi
 
-echo -n "Install SERWEB related tables ?(y/n):"
-read INPUT
-if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
-then
-	serweb_create $1
-fi
-
 cd $CURRENT_PWD
 
 } # openser_create
@@ -439,30 +431,20 @@ fi
 
 echo "creating extra tables into $1 ..."
 
-sql_query <<EOF
-use $1;
-
-INSERT INTO version VALUES ( 'cpl', '1');
-INSERT INTO version VALUES ( 'imc_members', '1');
-INSERT INTO version VALUES ( 'imc_rooms', '1');
-INSERT INTO version VALUES ( 'sip_trace', '1');
-INSERT INTO version VALUES ( 'domainpolicy', '2');
-
+echo "cpl:1" 			>> version;
+echo "imc_members:1" 	>> version;
+echo "imc_rooms:1" 		>> version;
+echo "sip_trace:1" 		>> version;
+echo "domainpolicy:2" 	>> version;
 
 #
 # Table structure for table 'cpl'
 #
 # used by cpl-c module
 #
-CREATE TABLE cpl (
-  id int(10) unsigned NOT NULL auto_increment,
-  username varchar(64) NOT NULL,
-  domain varchar(64) NOT NULL default '',member_table
-  cpl_xml text,
-  cpl_bin text,
-  UNIQUE KEY ud_cpl (username, domain),
-  PRIMARY KEY (id)
-) $TABLE_TYPE;
+touch cpl;
+echo "DBTEXT Add Table: cpl"
+echo "id(int) username(str) domain(str) cpl_xml(str) cpl_bin(str)" >> cpl;
 
 
 #
@@ -470,15 +452,9 @@ CREATE TABLE cpl (
 #
 # used by imc module
 #
-CREATE TABLE imc_members (
-  id int(10) unsigned NOT NULL auto_increment,
-  username varchar(128) NOT NULL,
-  domain varchar(128) NOT NULL,
-  room varchar(64) NOT NULL,
-  flag int(11) NOT NULL,
-  UNIQUE KEY ndr_imc (username,domain,room),
-  PRIMARY KEY (id)
-) $TABLE_TYPE;
+touch imc_members;
+echo "DBTEXT Add Table: imc_members"
+echo "id(int) username(str) domain(str) room(str) flag(int)" >> imc_members;
 
 
 #
@@ -486,265 +462,30 @@ CREATE TABLE imc_members (
 #
 # used by imc module
 #
-CREATE TABLE imc_rooms (
-  id int(10) unsigned NOT NULL auto_increment,
-  name varchar(128) NOT NULL,
-  domain varchar(128) NOT NULL,
-  flag int(11) NOT NULL,
-  UNIQUE KEY nd_imc (name,domain),
-  PRIMARY KEY (id)
-) $TABLE_TYPE;
+touch imc_rooms;
+echo "DBTEXT Add Table: imc_rooms"
+echo "id(int) name(str) domain(str) flag(int)" >> imc_rooms;
 
 
 #
 # Table structure for table 'siptrace'
 #
-CREATE TABLE sip_trace (
-  id int(10) NOT NULL auto_increment,
-  date datetime NOT NULL default '0000-00-00 00:00:00',
-  callid varchar(254) NOT NULL default '',
-  traced_user varchar(128) NOT NULL default '',
-  msg text NOT NULL,
-  method varchar(50) NOT NULL default '',
-  status varchar(254) NOT NULL default '',
-  fromip varchar(50) NOT NULL default '',
-  toip varchar(50) NOT NULL default '',
-  fromtag varchar(64) NOT NULL default '',
-  direction varchar(4) NOT NULL default '',
-  INDEX user_idx (traced_user),
-  INDEX date_id (date),
-  INDEX ip_idx (fromip),
-  KEY call_id (callid),
-  PRIMARY KEY  (id)
-) $TABLE_TYPE;
+touch sip_trace;
+echo "DBTEXT Add Table: sip_trace"
+echo "id(int) date(int) callid(str) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) direction(str)" >> sip_trace;
 
 
 #
 # domainpolicy table (see README domainpolicy module)
 #
-CREATE TABLE domainpolicy (
-  id INT(10) NOT NULL AUTO_INCREMENT,
-  rule VARCHAR(255) NOT NULL,
-  type VARCHAR(255) NOT NULL,
-  att VARCHAR(255),
-  val VARCHAR(255),
-  comment VARCHAR(255),
-  UNIQUE (rule, att, val),
-  INDEX  rule_idx (rule),
-  PRIMARY KEY (id)
-) $TABLE_TYPE;
-
-EOF
+touch domainpolicy;
+echo "DBTEXT Add Table: domainpolicy"
+echo "id(int) rule(str) type(str) att(str) val(str) comment(str)" >> domainpolicy;
 
 	if [ $? -eq 0 ] ; then
 		echo "...extra tables created"
 	fi
 }  # end extra_create
-
-
-serweb_create () # pars: <database name>
-{
-		echo "serweb_create NOT IMPLEMENTED ... quitting";
-		return 0;
-if [ $# -ne 1 ] ; then
-	echo "serweb_create function takes one param"
-	exit 1
-fi
-
-if [ -z "$NO_USER_INIT" ] ; then
-	if [ -z "$SIP_DOMAIN" ] ; then
-		prompt_realm
-	fi
-	credentials
-	INITIAL_INSERT="
-		INSERT INTO subscriber
-			($USERCOL, password, first_name, last_name, phone,
-			email_address, datetime_created, datetime_modified, confirmation,
-			flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
-			VALUES ( 'admin', '$DBRWPW', 'Initial', 'Admin', '123',
-			'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00',
-			'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
-			'$HA1', '$SIP_DOMAIN', '$HA1B',
-			'$PHPLIB_ID' );
-		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-		VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
-		INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-		VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
-else
-	INITIAL_INSERT=""
-fi
-
-echo "creating serweb tables into $1 ..."
-
-sql_query <<EOF
-use $1;
-
-INSERT INTO version VALUES ( 'phonebook', '1');
-INSERT INTO version VALUES ( 'pending', '6');
-INSERT INTO version VALUES ( 'active_sessions', '1');
-INSERT INTO version VALUES ( 'server_monitoring', '1');
-INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
-INSERT INTO version VALUES ( 'usr_preferences_types', '1');
-INSERT INTO version VALUES ( 'admin_privileges', '1');
-
-
-#
-# Extend table 'subscriber' with serweb specific columns
-#
-ALTER TABLE subscriber 
-  ADD COLUMN (
-    phplib_id varchar(32) NOT NULL default '',
-    phone varchar(15) NOT NULL default '',
-    datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
-    confirmation varchar(64) NOT NULL default '',
-    flag char(1) NOT NULL default 'o',
-    sendnotification varchar(50) NOT NULL default '',
-    greeting varchar(50) NOT NULL default '',
-    allow_find char(1) NOT NULL default '0'
-  ),
-  ADD UNIQUE KEY phplib_id (phplib_id)
-;
-
-
-#
-# Table structure for table 'active_sessions' -- web stuff
-#
-CREATE TABLE active_sessions (
-  sid varchar(32) NOT NULL default '',
-  name varchar(32) NOT NULL default '',
-  val text,
-  changed varchar(14) NOT NULL default '',
-  PRIMARY KEY  (name,sid),
-  KEY changed (changed)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'pending' -- unconfirmed subscribtion
-# requests
-#
-CREATE TABLE pending (
-  id int(10) unsigned NOT NULL auto_increment,
-  phplib_id varchar(32) NOT NULL default '',
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  password varchar(25) NOT NULL default '',
-  first_name varchar(25) NOT NULL default '',
-  last_name varchar(45) NOT NULL default '',
-  phone varchar(15) NOT NULL default '',
-  email_address varchar(50) NOT NULL default '',
-  datetime_created datetime NOT NULL default '0000-00-00 00:00:00',
-  datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  confirmation varchar(64) NOT NULL default '',
-  flag char(1) NOT NULL default 'o',
-  sendnotification varchar(50) NOT NULL default '',
-  greeting varchar(50) NOT NULL default '',
-  ha1 varchar(128) NOT NULL default '',
-  ha1b varchar(128) NOT NULL default '',
-  allow_find char(1) NOT NULL default '0',
-  timezone varchar(128) default NULL,
-  rpid varchar(128) default NULL,
-  PRIMARY KEY (id),
-  UNIQUE KEY user_id ($USERCOL, domain),
-  UNIQUE KEY phplib_id (phplib_id),
-  INDEX username_id ($USERCOL)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'phonebook' -- user's phonebook
-#
-CREATE TABLE phonebook (
-  id int(10) unsigned NOT NULL auto_increment,
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  fname varchar(32) NOT NULL default '',
-  lname varchar(32) NOT NULL default '',
-  sip_uri varchar(128) NOT NULL default '',
-  PRIMARY KEY  (id)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'server_monitoring'
-#
-CREATE TABLE server_monitoring (
-  time datetime NOT NULL default '0000-00-00 00:00:00',
-  id int(10) unsigned NOT NULL default '0',
-  param varchar(32) NOT NULL default '',
-  value int(10) NOT NULL default '0',
-  increment int(10) NOT NULL default '0',
-  PRIMARY KEY  (id,param)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'usr_preferences_type'
-#
-CREATE TABLE usr_preferences_types (
-  att_name varchar(32) NOT NULL default '',
-  att_rich_type varchar(32) NOT NULL default 'string',
-  att_raw_type int NOT NULL default '2',
-  att_type_spec text,
-  default_value varchar(100) NOT NULL default '',
-  PRIMARY KEY  (att_name)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'server_monitoring_agg'
-#
-CREATE TABLE server_monitoring_agg (
-  param varchar(32) NOT NULL default '',
-  s_value int(10) NOT NULL default '0',
-  s_increment int(10) NOT NULL default '0',
-  last_aggregated_increment int(10) NOT NULL default '0',
-  av float NOT NULL default '0',
-  mv int(10) NOT NULL default '0',
-  ad float NOT NULL default '0',
-  lv int(10) NOT NULL default '0',
-  min_val int(10) NOT NULL default '0',
-  max_val int(10) NOT NULL default '0',
-  min_inc int(10) NOT NULL default '0',
-  max_inc int(10) NOT NULL default '0',
-  lastupdate datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY  (param)
-) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'admin_privileges' 
-# for multidomain serweb ACL control
-#
-CREATE TABLE admin_privileges (
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  priv_name varchar(64) NOT NULL default '',
-  priv_value varchar(64) NOT NULL default '',
-  PRIMARY KEY  ($USERCOL,priv_name,priv_value,domain)
-) $TABLE_TYPE;
-$INITIAL_INSERT
-EOF
-
-
-	if [ $? -eq 0 ] ; then
-		echo "...serweb tables created"
-		echo ""
-		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-		echo "!                                                 !"
-		echo "!                  WARNING                        !"
-		echo "!                                                 !"
-                echo "! There was a default admin user created:         !"
-		echo "!    username: admin@$SIP_DOMAIN "
-		echo "!    password: $DBRWPW       "
-		echo "!                                                 !"
-		echo "! Please change this password or remove this user !"
-		echo "! from the subscriber and admin_privileges table. !"
-		echo "!                                                 !"
-		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-	fi
-
-}  # end serweb_create
 
 
 case $1 in
@@ -763,6 +504,14 @@ case $1 in
 			DBTEXT_PATH="$1"
 		fi
 		presence_create $DBTEXT_PATH
+		exit $?
+		;;
+	extra)
+		shift
+		if [ $# -eq 1 ] ; then
+			DBTEXT_PATH="$1"
+		fi
+		extra_create $DBNAME
 		exit $?
 		;;
 	drop)
@@ -872,24 +621,11 @@ case $1 in
 		openser_restore $DBNAME $1
 		exit $?
 		;;
-	serweb)
-		echo "NOT IMPLEMENTED ... quitting";
-		exit 0;
-		serweb_create $DBNAME
-		exit $?
-		;;
-	extra)
-		echo "NOT IMPLEMENTED ... quitting";
-		exit 0;
-		extra_create $DBNAME
-		exit $?
-		;;
 	reinit)
 		shift
 		if [ $# -eq 1 ] ; then
 			DBTEXT_PATH="$1"
 		fi
-
 		# delete database and create a new one
 		openser_drop $DBTEXT_PATH
 		ret=$?
