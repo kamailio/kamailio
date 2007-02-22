@@ -299,6 +299,8 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if (load_global_attrs) {
+		if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+			return 0; /* do nothing for the main or tcp_main processes */
 		con = db.init(db_url);
 		if (!con) {
 			LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");

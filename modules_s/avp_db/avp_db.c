@@ -132,6 +132,8 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
+	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
     con = db.init(db_url);
     if (!con) {
 	LOG(L_ERR, "avp_db:child_init: Could not initialize connection to %s\n", db_url);

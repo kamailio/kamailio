@@ -221,8 +221,10 @@ static int mod_init(void)
 
 static int child_init(int _rank)
 {
- 	     /* Shall we use database ? */
-	if (db_mode != NO_DB) { /* Yes */
+	if (_rank==PROC_MAIN || _rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main or tcp_main processes */
+	     /* Shall we use database ? */
+	if ( db_mode != NO_DB) { /* Yes */
 		ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
 		if (!ul_dbh) {
 			LOG(L_ERR, "ERROR: child_init(%d): "

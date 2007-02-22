@@ -160,6 +160,8 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
+	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
     auth_db_handle = auth_dbf.init(db_url);
     if (auth_db_handle == 0){
 	LOG(L_ERR, "auth_db:child_init: unable to connect to the database\n");
