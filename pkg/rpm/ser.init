@@ -18,6 +18,8 @@ RETVAL=0
 
 start() {
         echo -n $"Starting $prog: "
+	ulimit -c unlimited
+	ulimit -n 16384
         daemon $ser $OPTIONS
         RETVAL=$?
         echo
