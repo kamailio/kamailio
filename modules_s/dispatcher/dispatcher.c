@@ -54,6 +54,7 @@ MODULE_VERSION
 char *dslistfile = CFG_DIR"dispatcher.list";
 int  force_dst = 0;
 int ds_flags   = 0;
+static int ds_hash_no = 0; /* hash function number */
 
 /** module functions */
 static int mod_init(void);
@@ -75,6 +76,7 @@ static param_export_t params[]={
 	{"list_file",      PARAM_STRING, &dslistfile},
 	{"force_dst",      PARAM_INT,    &force_dst},
 	{"flags",          PARAM_INT,    &ds_flags},
+	{"hash",           PARAM_INT,    &ds_hash_no},
 	{0,0,0}
 };
 
@@ -105,7 +107,10 @@ static int mod_init(void)
 		LOG(L_ERR, "DISPATCHER:mod_init:ERROR -- couldn't load list file\n");
 		return -1;
 	}
-
+	if (ds_set_hash_f(ds_hash_no)!=0){
+		LOG(L_WARN, "WARNING: dispatcher: hash algorithm %d not defined, using"
+					" the default\n", ds_hash_no);
+	}
 	return 0;
 }
 

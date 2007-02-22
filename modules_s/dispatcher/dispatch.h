@@ -46,6 +46,8 @@
                                    fallback to host */
 extern int ds_flags; 
 
+int ds_set_hash_f(int n);
+
 int ds_load_list(char *lfile);
 int ds_destroy_list();
 int ds_select_dst(struct sip_msg *msg, char *set, char *alg);

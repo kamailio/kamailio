@@ -34,6 +34,8 @@
  * 2004-07-31  first version, by dcm
  * 2005-04-22  added ruri  & to_uri hashing (andrei)
  * 2005-07-19  fixup_int_12 now returns fparam_t*, updated (mma)
+ * 2007-02-22  switched to core's case insensitive hash
+ *             added 2 selectable hash functions (andrei)
  * 
  */
 
@@ -47,6 +49,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../sr_module.h"
+#include "../../hashes.h"
 
 #include "dispatch.h"
 
@@ -360,57 +363,54 @@ int ds_destroy_list()
 	return 0;
 }
 
-/**
- *
- */
-unsigned int ds_get_hash(str *x, str *y)
+
+
+/* hash function 1, 1 param */
+static unsigned int hash1_f1(str* x)
 {
-	char* p;
-	register unsigned v;
-	register unsigned h;
-
-	if(!x && !y)
-		return 0;
-	h=0;
-	if(x)
-	{
-		p=x->s;
-		if (x->len>=4){
-			for (;p<=(x->s+x->len-4); p+=4){
-				v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-				h+=v^(v>>3);
-			}
-		};
-		v=0;
-		for (;p<(x->s+x->len); p++)
-		{ 
-			v<<=8; 
-			v+=*p;
-		}
-		h+=v^(v>>3);
-	}
-	if(y)
-	{
-		p=y->s;
-		if (y->len>=4){
-			for (;p<=(y->s+y->len-4); p+=4){
-				v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-				h+=v^(v>>3);
-			}
-		};
-		v=0;
-		for (;p<(y->s+y->len); p++)
-		{ 
-			v<<=8; 
-			v+=*p;
-		}
-		h+=v^(v>>3);
-	}
-	h=((h)+(h>>11))+((h>>13)+(h>>23));
-
-	return (h)?h:1;
+	return get_hash1_case_raw(x->s, x->len);
 }
 
+/* hash function 1, 2 params */
+static unsigned int hash2_f1(str* x, str* y)
+{
+	return get_hash2_case_raw(x, y);
+}
+
+/* hash function 2, 1 param */
+static unsigned int hash1_f2(str* x)
+{
+	return get_hash1_case_raw2(x->s, x->len);
+}
+
+/* hash function 2, 2 params */
+static unsigned int hash2_f2(str* x, str* y)
+{
+	return get_hash2_case_raw2(x, y);
+}
+
+
+/* hash function pointers */
+static unsigned int (*ds_get_hash1)(str *x)=hash1_f1;
+static unsigned int (*ds_get_hash2)(str *x, str *y)=hash2_f1;
+
+
+/* use hash function n
+ * if hash n not defined, keep the default one and return -1 */
+int ds_set_hash_f(int n)
+{
+	switch(n){
+		case 0:
+			break;
+		case 1:
+			ds_get_hash1=hash1_f2;
+			ds_get_hash2=hash2_f2;
+			break;
+		default:
+			return -1;
+	}
+	return 0;
+}
 
 /*
  * gets the part of the uri we will use as a key for hashing
@@ -506,7 +506,7 @@ int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 	trim(&from);
 	if (get_uri_hash_keys(&key1, &key2, &from, 0, ds_flags)<0)
 		return -1;
-	*hash = ds_get_hash(&key1, &key2);
+	*hash = ds_get_hash2(&key1, &key2);
 	
 	return 0;
 }
@@ -540,7 +540,7 @@ int ds_hash_touri(struct sip_msg *msg, unsigned int *hash)
 	
 	if (get_uri_hash_keys(&key1, &key2, &to, 0, ds_flags)<0)
 		return -1;
-	*hash = ds_get_hash(&key1, &key2);
+	*hash = ds_get_hash2(&key1, &key2);
 	
 	return 0;
 }
@@ -570,7 +570,7 @@ int ds_hash_callid(struct sip_msg *msg, unsigned int *hash)
 	cid.len = msg->callid->body.len;
 	trim(&cid);
 	
-	*hash = ds_get_hash(&cid, NULL);
+	*hash = ds_get_hash1(&cid);
 	
 	return 0;
 }
@@ -598,7 +598,7 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 	if (get_uri_hash_keys(&key1, &key2, uri, &msg->parsed_uri, ds_flags)<0)
 		return -1;
 	
-	*hash = ds_get_hash(&key1, &key2);
+	*hash = ds_get_hash2(&key1, &key2);
 	return 0;
 }
 
