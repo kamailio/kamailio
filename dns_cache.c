@@ -299,31 +299,12 @@ error:
 }
 
 
-/* hash function, based on get_hash1_raw, but case insensitive
- * type is not used (obsolete)
+/* hash function, type is not used (obsolete)
+ * params: char* s, int len, int type
  * returns the hash value
  */
-inline static unsigned int dns_hash_no(char* s, int len, int type)
-{
-	char* p;
-	char* end;
-	
-	register unsigned v;
-	register unsigned h;
-	
-	h=0;
-	
-	hash_update_str(s, s+len, p, v, h);
-	end=s+len;
-	for (p=s; p<=(end-4); p+=4){
-		v=((p[0]<<24)+(p[1]<<16)+(p[2]<<8)+p[3])|0x20202020;
-		h+=v^(v>>3);
-	}
-	v=0;
-	for (;p<end; p++){ v<<=8; v+=*p|0x20;}
-	h+=v^(v>>3);
-	return hash_finish(h) % DNS_HASH_SIZE;
-}
+#define dns_hash_no(s, len, type) \
+	(get_hash1_case_raw((s),(len)) % DNS_HASH_SIZE)
 
 
 
