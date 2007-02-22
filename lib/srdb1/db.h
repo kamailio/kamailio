@@ -138,7 +138,11 @@ typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
 			    db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 /*
- * Insert a row and replace if one already 
+ * Insert a row and replace if one already exists.
+ * handle: structure representing database connection
+ * keys: key names
+ * vals: values of the keys
+ * n: number of key=value pairs
  */
 typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 
