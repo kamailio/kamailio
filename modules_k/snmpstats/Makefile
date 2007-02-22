@@ -6,7 +6,8 @@ include ../../Makefile.defs
 
 BUILDER = $(shell which net-snmp-config)
 ifeq ($(BUILDER),)
-	NAME=
+	DEFS +=-I$(LOCALBASE)/include
+	BUILDAGENTLIBS =-L$(LOCALBASE)/lib -lnetsnmpmibs -lnetsnmpagent -lnetsnmphelpers -lnetsnmp
 else
 	BUILDAGENTLIBS = $(shell net-snmp-config --agent-libs)
 endif 
