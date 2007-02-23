@@ -258,10 +258,9 @@ db_con_t* db_init(const char* _url)
 	res = 0;
 
 	/* if called from PROC_MAIN, allow it only from mod_init( when pt==0)*/
-	if (is_main && pt){
+	if (is_main && fixup_complete){
 		LOG(L_ERR, "BUG: mysql: db_init: called from the main process,"
 					" ignoring...\n");
-		return 0;
 	}
 
 	if (!_url) {
