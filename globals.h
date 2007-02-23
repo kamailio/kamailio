@@ -146,6 +146,7 @@ extern int process_no;
 extern int reply_to_via;
 
 extern int is_main;
+extern int fixup_complete;
 
 /* debugging level for dumping memory status */
 extern int memlog;
