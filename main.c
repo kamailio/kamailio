@@ -422,6 +422,7 @@ extern int yyparse();
 
 
 int is_main=1; /* flag = is this the  "main" process? */
+int fixup_complete=0; /* flag = is the fixup complete ? */
 
 char* pid_file = 0; /* filename as asked by use */
 char* pgid_file = 0;
@@ -1591,6 +1592,7 @@ try_again:
 						r);
 		goto error;
 	};
+	fixup_complete=1;
 
 #ifdef STATS
 	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
