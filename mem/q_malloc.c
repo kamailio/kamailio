@@ -39,6 +39,7 @@
  *              fixed initial size (andrei)
  *  2006-02-03  fixed realloc out of mem. free bug (andrei)
  *  2006-04-07  s/DBG/MDBG (andrei)
+ *  2007-02-23  added fm_available() (andrei)
  */
 
 
@@ -713,6 +714,13 @@ void qm_info(struct qm_block* qm, struct mem_info* info)
 	info->total_frags=total_frags;
 }
 
+
+/* returns how much free memory is available
+ * it never returns an error (unlike fm_available) */
+unsigned long qm_available(struct qm_block* qm)
+{
+	return qm->size-qm->real_used;
+}
 
 
 #endif

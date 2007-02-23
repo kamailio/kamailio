@@ -33,6 +33,7 @@
  *               (andrei)
  *  2003-03-07  split init_malloc into init_pkg_mallocs & init_shm_mallocs 
  *               (andrei)
+ *  2007-02-23   added pkg_info() and pkg_available() (andrei)
  */
 
 
@@ -110,9 +111,13 @@
 #	ifdef VQ_MALLOC
 #		define pkg_status()  vqm_status(mem_block)
 #	elif defined F_MALLOC
-#		define pkg_status()  fm_status(mem_block)
+#		define pkg_status()    fm_status(mem_block)
+#		define pkg_info(mi)    fm_info(mem_block, mi)
+#		define pkg_available() fm_available(mem_block)
 #	else
-#		define pkg_status()  qm_status(mem_block)
+#		define pkg_status()    qm_status(mem_block)
+#		define pkg_info(mi)    qm_info(mem_block, mi)
+#		define pkg_available() qm_available(mem_block)
 #	endif
 #elif defined(SHM_MEM) && defined(USE_SHM_MEM)
 #	include "shm_mem.h"

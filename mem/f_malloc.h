@@ -139,5 +139,6 @@ void*  fm_realloc(struct fm_block*, void* p, unsigned long size);
 void  fm_status(struct fm_block*);
 void  fm_info(struct fm_block*, struct mem_info*);
 
+unsigned long fm_available(struct fm_block*);
 
 #endif

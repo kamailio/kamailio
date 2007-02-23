@@ -38,6 +38,7 @@
  *              fixed initial size (andrei)
  *  2006-02-03  fixed realloc out of mem. free bug (andrei)
  *  2006-04-07  s/DBG/MDBG (andrei)
+ *  2007-02-23  added fm_available() (andrei)
  */
 
 
@@ -600,5 +601,20 @@ void fm_info(struct fm_block* qm, struct mem_info* info)
 	info->total_frags=total_frags;
 }
 
+
+
+/* returns how much free memory is available
+ * on error (not compiled with bookkeeping code) returns (unsigned long)(-1) */
+unsigned long fm_available(struct fm_block* qm)
+{
+
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
+	return qm->size-qm->real_used;
+#else
+	/* we don't know how much free memory we have and it's to expensive
+	 * to compute it */
+	return ((unsigned long)-1);
+#endif
+}
 
 #endif
