@@ -31,7 +31,8 @@
 /*
  * History:
  * --------
- *  2007-01-26  openssl kerberos malloc bug detection/workarround (andrei)
+ *  2007-01-26  openssl kerberos malloc bug detection/workaround (andrei)
+ *  2007-02-23  openssl low memory bugs workaround (andrei)
  */
 
 #include <sys/poll.h>
@@ -43,12 +44,17 @@
 #include "../../pt.h"
 #include "../../timer.h"
 #include "../../globals.h"
+#include "../../pt.h"
 
 #include "tls_init.h"
 #include "tls_domain.h"
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_server.h"
+
+/* low memory treshold for openssl bug #1491 workaround */
+#define MIN_FREE_MEM_NEW_CONNECTION	(512*1024*get_max_procs()) /* 512k*no*/
+#define MIN_FREE_MEM_CONNECTED		(256*1024*get_max_procs()) /* 128k*no*/
 
 /* 
  * finish the ssl init (creates the SSL and set extra_data to it)
@@ -61,6 +67,11 @@ static int tls_complete_init(struct tcp_connection* c)
 	struct tls_extra_data* data = 0;
 	tls_cfg_t* cfg;
 
+	if (openssl_low_mem_bug && (shm_available()<MIN_FREE_MEM_NEW_CONNECTION)){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		goto error2;
+	}
 	     /* Get current TLS configuration and increate reference
 	      * count immediately. There is no need to lock the structure
 	      * here, because it does not get deleted immediately. When
@@ -101,7 +112,7 @@ static int tls_complete_init(struct tcp_connection* c)
 		goto error;
 	}
 #ifdef TLS_KSSL_WORKARROUND
-	 /* if needed apply workarround for openssl bug #1467 */
+	 /* if needed apply workaround for openssl bug #1467 */
 	if (data->ssl->kssl_ctx && openssl_kssl_malloc_bug){
 		kssl_ctx_free(data->ssl->kssl_ctx);
 		data->ssl->kssl_ctx=0;
@@ -113,6 +124,7 @@ static int tls_complete_init(struct tcp_connection* c)
  error:
 	cfg->ref_count--;
 	if (data) shm_free(data);
+ error2:
 	c->state = S_CONN_BAD;
 	return -1;
 }
@@ -127,8 +139,11 @@ static int tls_update_fd(struct tcp_connection *c, int fd)
 	if (!c->extra_data && tls_complete_init(c) < 0) {
 		ERR("Delayed init failed\n");
 		return -1;
+	}else if (openssl_low_mem_bug && (shm_available()<MIN_FREE_MEM_CONNECTED)){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		return -1;
 	}
-
 	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 	if (SSL_set_fd(ssl, fd) != 1) {
 		TLS_ERR("tls_update_fd:");
@@ -276,6 +291,11 @@ static int tls_accept(struct tcp_connection *c, int* error)
 		     /* Not critical */
 		return 0;
 	}
+	if (openssl_low_mem_bug && (shm_available()<MIN_FREE_MEM_NEW_CONNECTION)){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		goto err;
+	}
 
 	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 	ret = SSL_accept(ssl);
@@ -367,6 +387,11 @@ static int tls_connect(struct tcp_connection *c, int* error)
 		BUG("Invalid connection state\n");
 		     /* Not critical */
 		return 0;
+	}
+	if (openssl_low_mem_bug && (shm_available()<MIN_FREE_MEM_NEW_CONNECTION)){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		goto err;
 	}
 
 	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
@@ -460,6 +485,11 @@ static int tls_shutdown(struct tcp_connection *c)
 		ERR("No SSL data to perform tls_shutdown\n");
 		return -1;
 	}
+	if (openssl_low_mem_bug && (shm_available()<MIN_FREE_MEM_CONNECTED)){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		goto err;
+	}
 	
 	ret = SSL_shutdown(ssl);
 	if (ret == 1) {
@@ -530,6 +560,12 @@ static int tls_write(struct tcp_connection *c, const void *buf, size_t len, int*
 	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 
 	err = 0;
+	if (openssl_low_mem_bug && (shm_available()<MIN_FREE_MEM_CONNECTED)){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		ret=-1;
+		goto err;
+	}
 	ret = SSL_write(ssl, buf, len);
 	if (ret <= 0) {
 		err = SSL_get_error(ssl, ret);
@@ -581,6 +617,7 @@ static int tls_write(struct tcp_connection *c, const void *buf, size_t len, int*
 		}
 	}
 
+err:
 	if (error) *error = err;
 	return ret;
 }
@@ -627,7 +664,7 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
 
 
 /*
- * perform one-way shutdown, do not wait fro notify from the remote peer 
+ * perform one-way shutdown, do not wait for notify from the remote peer 
  */
 void tls_h_close(struct tcp_connection *c, int fd)
 {
@@ -766,6 +803,11 @@ int tls_h_read(struct tcp_connection * c)
 	if (bytes_free == 0) {
 		ERR("Buffer overrun, dropping\n");
 		r->error = TCP_REQ_OVERRUN;
+		return -1;
+	}
+	if (openssl_low_mem_bug && (shm_available()<MIN_FREE_MEM_CONNECTED)){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
 		return -1;
 	}
 	     /* we have to avoid to run in the same time 

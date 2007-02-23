@@ -28,6 +28,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2007-01-26  openssl kerberos malloc bug detection/workaround (andrei)
+ *  2007-02-23  openssl low memory bugs workaround (andrei)
+ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -62,7 +68,7 @@
 
 #if OPENSSL_VERSION_NUMBER >= 0x00908000L  /* 0.9.8*/
 #    ifndef OPENSSL_NO_COMP
-#        warning "openssl zlib compression bug workarround enabled"
+#        warning "openssl zlib compression bug workaround enabled"
 #    endif
 #    define TLS_FIX_ZLIB_COMPRESSION
 #    include "fixed_c_zlib.h"
@@ -71,7 +77,7 @@
 #ifdef TLS_KSSL_WORKARROUND
 #if OPENSSL_VERSION_NUMBER < 0x00908050L
 #	warning "openssl lib compiled with kerberos support which introduces a bug\
- (wrong malloc/free used in kssl.c) -- attempting workarround"
+ (wrong malloc/free used in kssl.c) -- attempting workaround"
 #	warning "NOTE: if you don't link libssl staticaly don't try running the \
 compiled code on a system with a differently compiled openssl (it's safer \
 to compile on the  _target_ system)"
@@ -96,6 +102,7 @@ to compile on the  _target_ system)"
 #ifdef TLS_KSSL_WORKARROUND
 int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
+int openssl_low_mem_bug=0; /* openssl bug #1491 workaround */
 int tls_disable_compression = 0; /* by default enabled */
 int tls_force_run = 0; /* ignore some start-up sanity checks, use it
 						  at your own risk */
@@ -110,8 +117,10 @@ const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
 #ifdef TLS_MALLOC_DBG
 #include <execinfo.h>
 
-/*#define RAND_NULL_MALLOC (1024) */
+/*
+#define RAND_NULL_MALLOC (1024)
 #define NULL_GRACE_PERIOD 10U
+*/
 
 
 inline static char* buf_append(char* buf, char* end, char* str, int str_len)
@@ -339,7 +348,10 @@ static int init_tls_compression(void)
 		sk_SSL_COMP_zero(comp_methods);
 	}else{
 		ssl_version=SSLeay();
-		if (ssl_version >= 0x00908000L){
+		/* replace openssl zlib compression with our version if necessary
+		 * (the openssl zlib compression uses the wrong malloc, see
+		 *  openssl #1468): 0.9.8-dev < version  <0.9.8e-beta1 */
+		if ((ssl_version >= 0x00908000L) && (ssl_version < 0x00908051L)){
 			/* the above SSL_COMP_get_compression_methods() call has the side
 			 * effect of initializing the compression stack (if not already
 			 * initialized) => after it zlib is initialized and in the stack */
@@ -512,15 +524,25 @@ int init_tls_h(void)
 	init_tls_compression();
 	#ifdef TLS_KSSL_WORKARROUND
 	/* if openssl compiled with kerberos support, and openssl < 0.9.8e-dev
-	 * or openssl between 0.9.9-dev and 0.9.9-beta1 apply workarround for
+	 * or openssl between 0.9.9-dev and 0.9.9-beta1 apply workaround for
 	 * openssl bug #1467 */
-	if (ssl_version < 0x00908051L || 
+	if (ssl_version < 0x00908050L || 
 			(ssl_version >= 0x00909000L && ssl_version < 0x00909001L)){
 		openssl_kssl_malloc_bug=1;
 		LOG(L_WARN, "tls: init_tls_h: openssl kerberos malloc bug detected, "
 			" kerberos support will be disabled...\n");
 	}
 	#endif
+	LOG(L_WARN, "tls: init_tls_h: openssl low memory bugs (#1491) workaround"
+				" enabled (on low memory tls operations will fail"
+				" preemptively)\n");
+	openssl_low_mem_bug=1; /* openssl bug #1491 workaround, for now
+								always enabled */
+	if (shm_available()==(unsigned long)(-1)){
+		LOG(L_WARN, "tls: ser compiled without MALLOC_STATS support:"
+				" the workaround for low mem. openssl bugs will _not_ "
+				"work\n");
+	}
 	SSL_library_init();
 	SSL_load_error_strings();
 	init_ssl_methods();
