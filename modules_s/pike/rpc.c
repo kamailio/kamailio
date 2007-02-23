@@ -89,9 +89,10 @@ static char *concat(char *buff, size_t buffsize, const char *first, int second)
 		size = rv > 128 ? rv : 128;
 		buff = (char *)realloc(buff, size);
 		if ( buff == 0 )
-			return concat_err;
+			return (char*)concat_err;
 		buffsize = size;
-		DBG("pike:rpc:concat: new buffer size for %s: %d", first, buffsize);
+		DBG("pike:rpc:concat: new buffer size for %s: %d", first,
+				(int)buffsize);
 	}
 	return buff;
 }

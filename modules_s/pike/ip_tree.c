@@ -263,7 +263,7 @@ struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
 	( (_node)->hits[CURR_POS]>=root->max_hits>>2 )
 
 #define MAX_TYPE_VAL(_x) \
-	(( (1<<(8*sizeof(_x)-1))-1 )|( (1<<(8*sizeof(_x)-1)) ))
+	(( (1U<<(8*sizeof(_x)-1))-1 )|( (1U<<(8*sizeof(_x)-1)) ))
 
 char *node_status_array[] = {"", "WARM", "HOT", "ALL"};
 node_status_t node_status(struct ip_node *node)
