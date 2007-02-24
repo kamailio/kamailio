@@ -252,7 +252,7 @@ modparam("tm", "fr_timer", 10)
 		<para>
 		Timer which hits if no final reply for an INVITE arrives after a 
 		provisional message was received (in seconds). This timer is started
-                after the first provisional response. Thus, fast failover (no 100 
+		after the first provisional response. Thus, fast failover (no 100 
 		trying from gateway) can be achieved by setting fr_timer to low 
 		values. See example below
 
@@ -688,32 +688,6 @@ if (t_newtran()) {
 
 	<section>
 		<title>
-		<function moreinfo="none">t_lookup_request()</function>
-		</title>
-		<para>
-		Checks if a transaction exists. Returns a positive value if so, 
-		negative otherwise. Most likely you will not want to use it, as a 
-		typical application of a looku-up is to introduce a new transaction if 
-		none was found. However this is safely (atomically) done using 
-		<function>t_newtran</function>.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_lookup_request</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (t_lookup_request()) {
-	...
-};
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
 		<function moreinfo="none">t_relay([flags])</function>
 		</title>
 		<para>
@@ -824,27 +798,6 @@ t_relay("udp:mydomain.com");
 		<programlisting format="linespecific">
 ...
 t_reply("404", "Not found");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">t_retransmit_reply()</function>
-		</title>
-		<para>
-		Retransmits a reply sent previously by &uas; transaction.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
-		BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>t_retransmit_reply</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_retransmit_reply();
 ...
 </programlisting>
 		</example>
