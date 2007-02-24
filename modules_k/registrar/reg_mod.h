@@ -29,6 +29,8 @@
  * 2006-11-28  Added statistics tracking for the number of accepted/rejected
  *             registrations, as well as for the max expiry time, max contacts,
  *             and default expiry time. (Jeffrey Magder - SOMA Networks)
+ * 2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
+ *             nathelper module (bogdan)
  */
 
 
@@ -63,7 +65,6 @@ extern qvalue_t default_q;
 extern int append_branches;
 extern int case_sensitive;
 extern int nat_flag;
-extern int sip_natping_flag;
 extern int tcp_persistent_flag;
 extern int min_expires;
 extern int max_expires;

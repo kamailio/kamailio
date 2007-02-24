@@ -37,9 +37,10 @@ Bogdan-Andrei Iancu
               1.4.7. rtpproxy_tout (integer)
               1.4.8. rtpproxy_retr (integer)
               1.4.9. force_socket (string)
-              1.4.10. sipping_from (string)
-              1.4.11. sipping_method (string)
-              1.4.12. nortpproxy_str (string)
+              1.4.10. sipping_flag (integer)
+              1.4.11. sipping_from (string)
+              1.4.12. sipping_method (string)
+              1.4.13. nortpproxy_str (string)
 
         1.5. Exported Functions
 
@@ -66,17 +67,18 @@ Bogdan-Andrei Iancu
    1-7. Set rtpproxy_tout parameter
    1-8. Set rtpproxy_retr parameter
    1-9. Set force_socket parameter
-   1-10. Set sipping_from parameter
-   1-11. Set sipping_method parameter
-   1-12. Set nortpproxy_str parameter
-   1-13. fix_nated_contact usage
-   1-14. fix_nated_sdp usage
-   1-15. force_rtp_proxy usage
+   1-10. Set sipping_flag parameter
+   1-11. Set sipping_from parameter
+   1-12. Set sipping_method parameter
+   1-13. Set nortpproxy_str parameter
+   1-14. fix_nated_contact usage
+   1-15. fix_nated_sdp usage
    1-16. force_rtp_proxy usage
    1-17. force_rtp_proxy usage
-   1-18. unforce_rtp_proxy usage
-   1-19. add_rcv_paramer usage
-   1-20. fix_nated_register usage
+   1-18. force_rtp_proxy usage
+   1-19. unforce_rtp_proxy usage
+   1-20. add_rcv_paramer usage
+   1-21. fix_nated_register usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -271,36 +273,49 @@ modparam("nathelper", "force_socket", "localhost:33333")
 ...
      _________________________________________________________
 
-1.4.10. sipping_from (string)
+1.4.10. sipping_flag (integer)
+
+   What branch flag should be used by the module to identify
+   NATed contacts for which it should perform NAT ping via a SIP
+   request instead if dummy UDP package.
+
+   Default value is -1 (disabled). 
+
+   Example 1-10. Set sipping_flag parameter
+...
+modparam("nathelper", "sipping_flag", 7)
+...
+     _________________________________________________________
+
+1.4.11. sipping_from (string)
 
    The parameter sets the SIP URI to be used in generating the
    SIP requests for NAT ping purposes. To enable the SIP request
    pinging feature, you have to set this parameter. The SIP
-   request pinging will be used only for requests marked so (see
-   registrar module, the "sip_natping_flag" flag).
+   request pinging will be used only for requests marked so.
 
    Default value is "NULL". 
 
-   Example 1-10. Set sipping_from parameter
+   Example 1-11. Set sipping_from parameter
 ...
 modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
 ...
      _________________________________________________________
 
-1.4.11. sipping_method (string)
+1.4.12. sipping_method (string)
 
    The parameter sets the SIP method to be used in generating the
    SIP requests for NAT ping purposes.
 
    Default value is "OPTIONS". 
 
-   Example 1-11. Set sipping_method parameter
+   Example 1-12. Set sipping_method parameter
 ...
 modparam("nathelper", "sipping_method", "INFO")
 ...
      _________________________________________________________
 
-1.4.12. nortpproxy_str (string)
+1.4.13. nortpproxy_str (string)
 
    The parameter sets the SDP attribute used by nathelper to mark
    the packet SDP informations have already been mangled.
@@ -314,7 +329,7 @@ modparam("nathelper", "sipping_method", "INFO")
 
    Default value is "a=nortpproxy:yes\r\n". 
 
-   Example 1-12. Set nortpproxy_str parameter
+   Example 1-13. Set nortpproxy_str parameter
 ...
 modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 ...
@@ -329,7 +344,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-13. fix_nated_contact usage
+   Example 1-14. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
@@ -364,7 +379,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-14. fix_nated_sdp usage
+   Example 1-15. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
@@ -378,7 +393,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-15. force_rtp_proxy usage
+   Example 1-16. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 ...
@@ -425,7 +440,7 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-16. force_rtp_proxy usage
+   Example 1-17. force_rtp_proxy usage
 ...
 if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
 ...
@@ -444,7 +459,7 @@ if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-17. force_rtp_proxy usage
+   Example 1-18. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
 ...
@@ -457,7 +472,7 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-18. unforce_rtp_proxy usage
+   Example 1-19. unforce_rtp_proxy usage
 ...
 unforce_rtp_proxy();
 ...
@@ -483,7 +498,7 @@ unforce_rtp_proxy();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. add_rcv_paramer usage
+   Example 1-20. add_rcv_paramer usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
@@ -501,7 +516,7 @@ add_rcv_param("1"); # add the paramter to the Contact URI
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-20. fix_nated_register usage
+   Example 1-21. fix_nated_register usage
 ...
 fix_nated_register();
 ...

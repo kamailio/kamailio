@@ -35,6 +35,8 @@
  * 2006-11-22 save_noreply and save_memory merged into save() (bogdan)
  * 2006-11-28 Added statistic support for the number of accepted/rejected 
  *            registrations. (Jeffrey Magder - SOMA Networks) 
+ * 2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
+ *             nathelper module (bogdan)
  */
 
 
@@ -363,13 +365,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 	struct sip_uri uri;
 #endif
 
-	/* nat type flag */
-	if (_m->flags&sip_natping_flag)
-		flags = FL_NAT_SIPPING;
-	else
-		flags = FL_NONE;
-
-	flags |= mem_only;
+	flags = mem_only;
 #ifdef USE_TCP
 	if ( (_m->flags&tcp_persistent_flag) &&
 	(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS)) {
@@ -543,13 +539,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	struct sip_uri uri;
 #endif
 
-	/* nat type flag */
-	if (_m->flags&sip_natping_flag)
-		flags = FL_NAT_SIPPING;
-	else
-		flags = FL_NONE;
 	/* mem flag */
-	flags |= mem_only;
+	flags = mem_only;
 
 	/* pack the contact_info */
 	if ( (ci=pack_ci( _m, 0, 0, flags))==0 ) {

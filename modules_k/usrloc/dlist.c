@@ -100,10 +100,10 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 			received_col.len, received_col.s,
 			contact_col.len, contact_col.s,
 			sock_col.len, sock_col.s,
-			flags_col.len, flags_col.s,
-			dom->d->name->s, 
+			cflags_col.len, cflags_col.s,
+			dom->d->name->s,
 			expires_col.len, expires_col.s,
-			flags_col.len, flags_col.s, flags, flags);
+			cflags_col.len, cflags_col.s, flags, flags);
 		if ( i>=sizeof(query_buf) ) {
 			LOG(L_ERR,"ERROR:usrloc:get_all_db_ucontacts: DB query "
 				"too long\n");
@@ -227,12 +227,12 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
 					 * List only contacts that have all requested
 					 * flags set
 					 */
-					if ((c->flags & flags) != flags)
+					if ((c->cflags & flags) != flags)
 						continue;
 					if (c->received.s) {
 						needed = (int)(sizeof(c->received.len)
 								+ c->received.len
-								+ sizeof(c->sock) + sizeof(c->flags));
+								+ sizeof(c->sock) + sizeof(c->cflags));
 						if (len >= needed) {
 							memcpy(cp, &c->received.len, sizeof(c->received.len));
 							cp = (char*)cp + sizeof(c->received.len);
@@ -240,15 +240,15 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
 							cp = (char*)cp + c->received.len;
 							memcpy(cp, &c->sock, sizeof(c->sock));
 							cp = (char*)cp + sizeof(c->sock);
-							memcpy(cp, &c->flags, sizeof(c->flags));
-							cp = (char*)cp + sizeof(c->flags);
+							memcpy(cp, &c->cflags, sizeof(c->cflags));
+							cp = (char*)cp + sizeof(c->cflags);
 							len -= needed;
 						} else {
 							shortage += needed;
 						}
 					} else {
 						needed = (int)(sizeof(c->c.len) + c->c.len +
-							sizeof(c->sock) + sizeof(c->flags));
+							sizeof(c->sock) + sizeof(c->cflags));
 						if (len >= needed) {
 							memcpy(cp, &c->c.len, sizeof(c->c.len));
 							cp = (char*)cp + sizeof(c->c.len);
@@ -256,8 +256,8 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
 							cp = (char*)cp + c->c.len;
 							memcpy(cp, &c->sock, sizeof(c->sock));
 							cp = (char*)cp + sizeof(c->sock);
-							memcpy(cp, &c->flags, sizeof(c->flags));
-							cp = (char*)cp + sizeof(c->flags);
+							memcpy(cp, &c->cflags, sizeof(c->cflags));
+							cp = (char*)cp + sizeof(c->cflags);
 							len -= needed;
 						} else {
 							shortage += needed;

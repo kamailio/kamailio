@@ -37,8 +37,10 @@
  *              removed the module parameter "use_domain" - now it is
  *              imported from usrloc module (bogdan)
  *  2006-11-28  Added statistics tracking for the number of accepted/rejected
- *              registrations, as well as for the max expiry time, max contacts,
- *              and default expiry time. (Jeffrey Magder - SOMA Networks)
+ *              registrations, as well as for the max expiry time, max 
+ *              contacts and default expiry time(Jeffrey Magder-SOMA Networks)
+ *  2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
+ *              nathelper module (bogdan)
  *
  */
 
@@ -84,8 +86,6 @@ int append_branches = 1;
 int case_sensitive  = 0;
 /* if the TCP connection should be kept open */
 int tcp_persistent_flag = -1;
-/* flag marking nated contacts to be pinged with SIP method  */
-int sip_natping_flag  = -1;
 /* Minimum expires the phones are allowed to use in seconds
  * use 0 to switch expires checking off */
 int min_expires     = 60;
@@ -161,7 +161,6 @@ static param_export_t params[] = {
 	{"default_q",          INT_PARAM, &default_q           },
 	{"append_branches",    INT_PARAM, &append_branches     },
 	{"case_sensitive",     INT_PARAM, &case_sensitive      },
-	{"sip_natping_flag",   INT_PARAM, &sip_natping_flag    },
 	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag },
 	{"realm_prefix",       STR_PARAM, &realm_pref          },
 	{"min_expires",        INT_PARAM, &min_expires         },
@@ -278,7 +277,6 @@ static int mod_init(void)
 
 	/* fix the flags */
 	sock_flag = (sock_flag!=-1)?(1<<sock_flag):0;
-	sip_natping_flag = (sip_natping_flag!=-1)?(1<<sip_natping_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
 
 	return 0;

@@ -302,13 +302,33 @@ modparam("nathelper", "force_socket", "localhost:33333")
 		</example>
 	</section>
 	<section>
+		<title><varname>sipping_flag</varname> (integer)</title>
+		<para>
+		What branch flag should be used by the module to identify NATed 
+		contacts for which it should perform NAT ping via a SIP request 
+		instead if dummy UDP package.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sipping_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "sipping_flag", 7)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>sipping_from</varname> (string)</title>
 		<para>
 		The parameter sets the SIP URI to be used in generating the SIP
 		requests for NAT ping purposes. To enable the SIP request pinging
 		feature, you have to set this parameter. The SIP request pinging 
-		will be used only for requests marked so (see registrar module,
-		the "sip_natping_flag" flag).
+		will be used only for requests marked so.
 		</para>
 		<para>
 		<emphasis>

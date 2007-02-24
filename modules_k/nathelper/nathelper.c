@@ -287,6 +287,7 @@ static pid_t mypid;
 static unsigned int myseqn = 0;
 static int rcv_avp_no = 42;
 static str nortpproxy_str = str_init("a=nortpproxy:yes\r\n");
+static int sipping_flag = -1;
 
 
 struct rtpp_head {
@@ -348,6 +349,7 @@ static param_export_t params[] = {
 	{"force_socket",          STR_PARAM, &force_socket_str      },
 	{"sipping_from",          STR_PARAM, &sipping_from.s        },
 	{"sipping_method",        STR_PARAM, &sipping_method.s      },
+	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
 	{0, 0, 0}
 };
 
@@ -423,10 +425,17 @@ mod_init(void)
 			return -1;
 		}
 
+		sipping_flag = (sipping_flag==-1)?0:(1<<sipping_flag);
+
 		/* set reply function if SIP natping is enabled */
-		if (sipping_from.s && sipping_from.s[0]) {
+		if (sipping_flag) {
+			if (sipping_from.s==0 || sipping_from.s[0]==0) {
+				LOG(L_ERR,"ERROR:nathelper:mod_init: SIP ping enabled, but "
+					"SIP ping FROM is empty!\n");
+				return -1;
+			}
 			if (sipping_method.s==0 || sipping_method.s[0]==0) {
-				LOG(L_ERR,"ERROR:nathelper:mod_init: SIP ping FROM set, but "
+				LOG(L_ERR,"ERROR:nathelper:mod_init: SIP ping enabled, but "
 					"SIP ping method is empty!\n");
 				return -1;
 			}
@@ -434,8 +443,6 @@ mod_init(void)
 			sipping_from.len = strlen(sipping_from.s);
 			exports.response_f = sipping_rpl_filter;
 			init_sip_ping();
-		} else {
-			sipping_from.s = 0;
 		}
 
 		register_timer(nh_timer, NULL, natping_interval);
@@ -2165,7 +2172,7 @@ nh_timer(unsigned int ticks, void *param)
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't get sending socket\n");
 			continue;
 		}
-		if ( (sipping_from.s!=0) && (flags&FL_NAT_SIPPING)!=0 &&
+		if ( (flags&sipping_flag)!=0 &&
 		(opt.s=build_sipping( &c, send_sock, &opt.len))!=0 ) {
 			if (udp_send(send_sock, opt.s, opt.len, &to)<0){
 				LOG(L_ERR, "ERROR:nathelper:nh_timer: sip udp_send failed\n");

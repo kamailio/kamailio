@@ -96,9 +96,9 @@
 	<section>
 		<title><varname>nat_bflag</varname> (integer)</title>
 		<para>
-		The index of the flag to be used as NAT marker (if the contact is or 
-		not natted). This is a branch flag and it will be imported and used by
-		all other modules depending of usrloc module.
+		The index of the branch flag to be used as NAT marker (if the contact 
+		is or not natted). This is a branch flag and it will be imported and 
+		used by all other modules depending of usrloc module.
 		</para>
 		<para>
 		<emphasis>
