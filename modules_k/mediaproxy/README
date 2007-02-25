@@ -55,7 +55,7 @@ Chapter 1. User's Guide
 
 1.1. Overview
 
-   Mediaproxy is a OpenSER module that is designed to allow
+   Mediaproxy is an OpenSER module that is designed to allow
    automatic NAT traversal for the majority of existing SIP
    clients. This means that there will be no need to configure
    anything in particular on the NAT box to allow these clients
