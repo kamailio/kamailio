@@ -136,6 +136,9 @@ static int tls_complete_init(struct tcp_connection* c)
 static int tls_update_fd(struct tcp_connection *c, int fd)
 {
 	SSL *ssl;
+	BIO *rbio;
+	BIO *wbio;
+	
 	if (!c->extra_data && tls_complete_init(c) < 0) {
 		ERR("Delayed init failed\n");
 		return -1;
@@ -145,11 +148,21 @@ static int tls_update_fd(struct tcp_connection *c, int fd)
 		return -1;
 	}
 	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
-	if (SSL_set_fd(ssl, fd) != 1) {
+	
+	if (((rbio=SSL_get_rbio(ssl))==0) || ((wbio=SSL_get_wbio(ssl))==0)){
+		/* no BIO connected */
+		if (SSL_set_fd(ssl, fd) != 1) {
+			TLS_ERR("tls_update_fd:");
+			return -1;
+		}
+		return 0;
+	}
+	if ((BIO_set_fd(rbio, fd, BIO_NOCLOSE)!=1) ||
+		(BIO_set_fd(wbio, fd, BIO_NOCLOSE)!=1)) {
+		/* it should be always 1 */
 		TLS_ERR("tls_update_fd:");
 		return -1;
 	}
-
 	return 0;
 }
 
