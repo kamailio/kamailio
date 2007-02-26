@@ -228,6 +228,7 @@ PerlInterpreter *parser_init() {
 	}
 
 	if (modpathset) pkg_free(argv[modpathset]);
+	perl_run(new_perl);
 
 	return new_perl;
 
