@@ -171,6 +171,7 @@ Chapter 1. User's Guide
    machinery: retransmissions , FR timeouts, forking, etc. See
    t_uac prototype in uac.h for more details. Who wants to see
    the transaction result may register for a callback.
+
      _________________________________________________________
 
 1.1.1. Per-Branch flags
