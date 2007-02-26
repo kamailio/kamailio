@@ -65,7 +65,7 @@ void printf_subs(subs_t* subs)
 
 }
 
-str* build_str_hdr(str event, str status, int expires_t, str reason)
+str* build_str_hdr(str event, str event_id, str status, int expires_t, str reason)
 {
 
 	static 	char buf[3000];
@@ -86,9 +86,16 @@ str* build_str_hdr(str event, str status, int expires_t, str reason)
 	str_hdr->len = 7;
 	strncpy(str_hdr->s+str_hdr->len, event.s, event.len);
 	str_hdr->len += event.len;
+	if (event_id.len) {
+ 		strncpy(str_hdr->s+str_hdr->len, ";id=", 4);
+ 		str_hdr->len += 4;
+ 		strncpy(str_hdr->s+str_hdr->len, event_id.s, event_id.len);
+ 		str_hdr->len += event_id.len;
+ 	}
 	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
-	
+
+
 	strncpy(str_hdr->s+str_hdr->len ,"Contact: <", 10);
 	str_hdr->len += 10;
 	strncpy(str_hdr->s+str_hdr->len, server_address.s, server_address.len);
@@ -1505,7 +1512,7 @@ jump_over_body:
 			subs->event.s);
 
 	printf_subs(subs);
-	str_hdr = build_str_hdr( subs->event,subs->status, subs->expires,
+	str_hdr = build_str_hdr( subs->event, subs->event_id, subs->status, subs->expires,
 			subs->reason );
 	if(str_hdr == NULL|| str_hdr->s== NULL|| str_hdr->len==0)
 	{
