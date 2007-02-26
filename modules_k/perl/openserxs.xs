@@ -185,7 +185,7 @@ SV *getStringFromURI(SV *self, enum uri_members what) {
 		}
 	}
 
-	if (ret) {
+	if ((ret) && (ret->len)) {
 		return sv_2mortal(newSVpv(ret->s, ret->len));
 	} else {
 		return &PL_sv_undef;
