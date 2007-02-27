@@ -46,5 +46,8 @@
 ## are accepted
 # ACL_GROUPS="local ld int voicemail free-pstn"
 
+## presence of serweb tables - default "no"
+# HAS_SERWEB="yes"
+
 ## verbose - debug purposes - default '0'
 # VERBOSE=1

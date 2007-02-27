@@ -1533,11 +1533,20 @@ subscriber() {
 				exit 1
 			fi
 
-			_gen_phplib_id 
-			QUERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,$REALM_COLUMN,\
-$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN,$SUB_CREATED_COLUMN,\
-$PHP_LIB_COLUMN) values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
-now(),'$PHPLIB_ID');";
+			if [ "$HAS_SERWEB" = "yes" ] ; then
+				_gen_phplib_id 
+				QUERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,\
+				$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,\
+				$EMAIL_COLUMN,$SUB_CREATED_COLUMN,$PHP_LIB_COLUMN) \
+				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
+				now(),'$PHPLIB_ID');";
+			else
+				UERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,\
+				$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,\
+				$EMAIL_COLUMN,$SUB_CREATED_COLUMN) \
+				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
+				now());";
+			fi
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "introducing the new user '$1' to the database failed"
@@ -1839,7 +1848,7 @@ case $1 in
 		# error handling is hacked -- filter_fl should not
 		# consume positive status -- that should be done by
 		# calling app
-		if [ "$#" -ne 2 ] ; then	
+		if [ "$#" -ne 2 ] ; then
 			usage_ping
 			exit 1
 		fi
