@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="dbg.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="dbg.dbg_msleep">
+	<title>
+	    <function>dbg_msleep(ms)</function>
+	</title>
+	<para>
+		Causes a <varname>ms</varname> milliseconds delay in processing for the
+		executing process.
+	</para>
+	<para>
+		This function can be used to simulate delays.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>ms</emphasis> - delay in milliseconds.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>dbg_msleep</function> usage</title>
+	    <programlisting>
+...
+dbg_msleep(1000); # 1 second delay
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="dbg.abort">
+	<title>
+	    <function>dbg_abort()</function>
+	</title>
+	<para>
+		Forces a core dump (see abort(3)).
+	</para>
+	<example>
+	    <title><function>dbg_abort</function> usage</title>
+	    <programlisting>
+...
+dbg_abort();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="dbg.pkg_status">
+	<title>
+	    <function>dbg_pkg_status()</function>
+	</title>
+	<para>
+		Dumps the local memory malloc fragment list into the log.
+	</para>
+	<example>
+	    <title><function>dbg_pkg_status</function> usage</title>
+	    <programlisting>
+...
+dbg_pkg_status();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="dbg.shm_status">
+	<title>
+	    <function>dbg_shm_status()</function>
+	</title>
+	<para>
+		Dumps the shared memory malloc fragment list into the log.
+	</para>
+	<example>
+	    <title><function>dbg_shm_status</function> usage</title>
+	    <programlisting>
+...
+dbg_shm_status();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+
+</section>

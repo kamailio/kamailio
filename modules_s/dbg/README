@@ -1,0 +1,71 @@
+
+Dbg Module
+
+Andrei Pelinescu-Onciul
+
+   iptelorg GmbH
+
+   Copyright © 2007 iptelorg GmbH
+   Revision History
+   Revision $Revision$ $Date$
+     _________________________________________________________________
+
+Overview
+
+   This is a module used for debugging. It should contain only test and
+   debugging related functions. For example it contains functions to
+   simulate delays and to dump core.
+
+   This modules should not be used in production.
+
+Parameters
+
+   Revision History
+   Revision $Revision$ $Date$
+
+Functions
+
+   Revision History
+   Revision $Revision$ $Date$
+
+dbg_msleep(ms)
+
+   Causes a ms milliseconds delay in processing for the executing
+   process.
+
+   This function can be used to simulate delays.
+
+   Meaning of the parameters is as follows:
+     * ms - delay in milliseconds.
+
+   Example 1. dbg_msleep usage
+...
+dbg_msleep(1000); # 1 second delay
+...
+
+dbg_abort()
+
+   Forces a core dump (see abort(3)).
+
+   Example 2. dbg_abort usage
+...
+dbg_abort();
+...
+
+dbg_pkg_status()
+
+   Dumps the local memory malloc fragment list into the log.
+
+   Example 3. dbg_pkg_status usage
+...
+dbg_pkg_status();
+...
+
+dbg_shm_status()
+
+   Dumps the shared memory malloc fragment list into the log.
+
+   Example 4. dbg_shm_status usage
+...
+dbg_shm_status();
+...
