@@ -417,8 +417,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">fix_nated_sdp(flags)</function>
-		<function moreinfo="none">fix_nated_sdp(flags,IP)</function>
+		<function moreinfo="none">fix_nated_sdp(flags [, ip_address])</function>
 		</title>
 		<para>
 		Alters the SDP information in orer to facilitate NAT traversal. What
@@ -456,10 +455,11 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 			</itemizedlist>
 			</listitem>
 			<listitem><para>
-			<emphasis>IP</emphasis> - IP to be used for rewritting SDP. If not
-			specified, the received signalling IP will be used. The parameter
-			allows pseudo-variables usage.NOTE: For the IP to be used, you 
-			need to use 0x02 or 0x08 flags, otherwise it will have no effect.
+			<emphasis>ip_address</emphasis> - IP to be used for rewritting SDP.
+			If not specified, the received signalling IP will be used. The
+			parameter allows pseudo-variables usage. NOTE: For the IP to be
+			used, you need to use 0x02 or 0x08 flags, otherwise it will have
+			no effect.
 			</para>
 		</itemizedlist>
 		<para>
@@ -477,31 +477,13 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">force_rtp_proxy()</function>
+		<function moreinfo="none">force_rtp_proxy([flags [, ip_address]])</function>
 		</title>
 		<para>
 		Rewrites &sdp; body to ensure that media is passed through 
-		an &rtp; proxy.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE, BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>force_rtp_proxy</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">force_rtp_proxy(flags)</function>
-		</title>
-		<para>
-		Same as force_rtp_proxy, but forces additional flags.
+		an &rtp; proxy. It can have optional parameters to force additional
+		features. If ip_address is provided, it will be used to replace the
+		one in SDP.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -560,6 +542,9 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 				</para></listitem>
 			</itemizedlist>
 		</listitem>
+		<listitem><para>
+		<emphasis>ip_address</emphasis> - new SDP IP address.
+		</para></listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
@@ -569,34 +554,8 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 		<title><function>force_rtp_proxy</function> usage</title>
 		<programlisting format="linespecific">
 ...
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">force_rtp_proxy(flags, ip_address)</function>
-		</title>
-		<para>
-		Same as force_rtp_proxy(flags), but it may force a new SDP IP address.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>flags</emphasis> - flags to turn on some features.
-			</para></listitem>
-			<listitem><para>
-			<emphasis>ip_address</emphasis> - new SDP IP address.
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>force_rtp_proxy</function> usage</title>
-		<programlisting format="linespecific">
-...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
 ...
 </programlisting>
@@ -623,8 +582,7 @@ unforce_rtp_proxy();
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">add_rcv_param()</function>,
-		<function moreinfo="none">add_rcv_param(flag)</function>
+		<function moreinfo="none">add_rcv_param([flag])</function>,
 		</title>
 		<para>
 		Add received parameter to Contact header fields or Contact URI.

@@ -45,14 +45,12 @@ Bogdan-Andrei Iancu
         1.5. Exported Functions
 
               1.5.1. fix_nated_contact()
-              1.5.2. fix_nated_sdp(flags) fix_nated_sdp(flags,IP)
-              1.5.3. force_rtp_proxy()
-              1.5.4. force_rtp_proxy(flags)
-              1.5.5. force_rtp_proxy(flags, ip_address)
-              1.5.6. unforce_rtp_proxy()
-              1.5.7. add_rcv_param(), add_rcv_param(flag)
-              1.5.8. fix_nated_register()
-              1.5.9. nat_uac_test(flags)
+              1.5.2. fix_nated_sdp(flags [, ip_address])
+              1.5.3. force_rtp_proxy([flags [, ip_address]])
+              1.5.4. unforce_rtp_proxy()
+              1.5.5. add_rcv_param([flag]),
+              1.5.6. fix_nated_register()
+              1.5.7. nat_uac_test(flags)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -74,11 +72,9 @@ Bogdan-Andrei Iancu
    1-14. fix_nated_contact usage
    1-15. fix_nated_sdp usage
    1-16. force_rtp_proxy usage
-   1-17. force_rtp_proxy usage
-   1-18. force_rtp_proxy usage
-   1-19. unforce_rtp_proxy usage
-   1-20. add_rcv_paramer usage
-   1-21. fix_nated_register usage
+   1-17. unforce_rtp_proxy usage
+   1-18. add_rcv_paramer usage
+   1-19. fix_nated_register usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -350,7 +346,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
      _________________________________________________________
 
-1.5.2. fix_nated_sdp(flags) fix_nated_sdp(flags,IP)
+1.5.2. fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT
    traversal. What changes to be performed may be controled via
@@ -370,11 +366,11 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
             source address of the message or the provided IP
             address (the provide IP address take precedence over
             the source address).
-     * IP - IP to be used for rewritting SDP. If not specified,
-       the received signalling IP will be used. The parameter
-       allows pseudo-variables usage.NOTE: For the IP to be used,
-       you need to use 0x02 or 0x08 flags, otherwise it will have
-       no effect.
+     * ip_address - IP to be used for rewritting SDP. If not
+       specified, the received signalling IP will be used. The
+       parameter allows pseudo-variables usage. NOTE: For the IP
+       to be used, you need to use 0x02 or 0x08 flags, otherwise
+       it will have no effect.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
@@ -385,23 +381,12 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
      _________________________________________________________
 
-1.5.3. force_rtp_proxy()
+1.5.3. force_rtp_proxy([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an
-   RTP proxy.
-
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE, BRANCH_ROUTE.
-
-   Example 1-16. force_rtp_proxy usage
-...
-if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
-...
-     _________________________________________________________
-
-1.5.4. force_rtp_proxy(flags)
-
-   Same as force_rtp_proxy, but forces additional flags.
+   RTP proxy. It can have optional parameters to force additional
+   features. If ip_address is provided, it will be used to
+   replace the one in SDP.
 
    Meaning of the parameters is as follows:
 
@@ -436,49 +421,33 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
             the RTP session and a reply confirms it. If swapped,
             a reply will create the RTP session and a request
             will confirm it.
-
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE, BRANCH_ROUTE.
-
-   Example 1-17. force_rtp_proxy usage
-...
-if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
-...
-     _________________________________________________________
-
-1.5.5. force_rtp_proxy(flags, ip_address)
-
-   Same as force_rtp_proxy(flags), but it may force a new SDP IP
-   address.
-
-   Meaning of the parameters is as follows:
-
-     * flags - flags to turn on some features.
      * ip_address - new SDP IP address.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-18. force_rtp_proxy usage
+   Example 1-16. force_rtp_proxy usage
 ...
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
+if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
 ...
      _________________________________________________________
 
-1.5.6. unforce_rtp_proxy()
+1.5.4. unforce_rtp_proxy()
 
    Tears down the RTPProxy session for the current call.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-19. unforce_rtp_proxy usage
+   Example 1-17. unforce_rtp_proxy usage
 ...
 unforce_rtp_proxy();
 ...
      _________________________________________________________
 
-1.5.7. add_rcv_param(), add_rcv_param(flag)
+1.5.5. add_rcv_param([flag]),
 
    Add received parameter to Contact header fields or Contact
    URI. The parameter will contain URI created from the source
@@ -498,7 +467,7 @@ unforce_rtp_proxy();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-20. add_rcv_paramer usage
+   Example 1-18. add_rcv_paramer usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
@@ -506,7 +475,7 @@ add_rcv_param("1"); # add the paramter to the Contact URI
 ...
      _________________________________________________________
 
-1.5.8. fix_nated_register()
+1.5.6. fix_nated_register()
 
    The function creates a URI consisting of the source IP, port,
    and protocol and stores the URI in an Attribute-Value-Pair.
@@ -516,13 +485,13 @@ add_rcv_param("1"); # add the paramter to the Contact URI
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-21. fix_nated_register usage
+   Example 1-19. fix_nated_register usage
 ...
 fix_nated_register();
 ...
      _________________________________________________________
 
-1.5.9. nat_uac_test(flags)
+1.5.7. nat_uac_test(flags)
 
    Tries to guess if client's request originated behind a nat.
    The parameter determines what heuristics is used.
