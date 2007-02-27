@@ -82,7 +82,7 @@ static inline int mi_fix_aor(str *aor)
 
 
 static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r,
-																	time_t t)
+													time_t t, int short_dump)
 {
 	struct mi_node *anode;
 	struct mi_node *cnode;
@@ -96,6 +96,9 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r,
 			r->aor.s, r->aor.len);
 	if (anode==0)
 		return -1;
+
+	if (short_dump)
+		return 0;
 
 	for( c=r->contacts ; c ; c=c->next) {
 		/* contact */
@@ -316,6 +319,18 @@ struct mi_root* mi_usrloc_dump(struct mi_root *cmd, void *param)
 	int len;
 	int n;
 	int i;
+	int short_dump;
+
+	node = cmd->node.kids;
+	if (node && node->next)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+
+	if (node && node->value.len==5 && !strncasecmp(node->value.s, "brief", 5)){
+		/* short version */
+		short_dump = 1;
+	} else {
+		short_dump = 0;
+	}
 
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	if (rpl_tree==NULL)
@@ -346,7 +361,7 @@ struct mi_root* mi_usrloc_dump(struct mi_root *cmd, void *param)
 				max= dom->table[i].n;
 			for( r = dom->table[i].first ; r ; r=r->next ) {
 				/* add entry */
-				if (mi_add_aor_node( node, r, t)!=0) {
+				if (mi_add_aor_node( node, r, t, short_dump)!=0) {
 					unlock_ulslot( dom, i);
 					goto error;
 				}

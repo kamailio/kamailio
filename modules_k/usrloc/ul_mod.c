@@ -203,7 +203,7 @@ static mi_export_t mi_cmds[] = {
 				mi_child_init },
 	{ MI_USRLOC_RM_CONTACT,   mi_usrloc_rm_contact,   0,                 0,
 				mi_child_init },
-	{ MI_USRLOC_DUMP,         mi_usrloc_dump,         MI_NO_INPUT_FLAG,  0,
+	{ MI_USRLOC_DUMP,         mi_usrloc_dump,         0,                 0,
 				0             },
 	{ MI_USRLOC_FLUSH,        mi_usrloc_flush,        MI_NO_INPUT_FLAG,  0,
 				mi_child_init },
