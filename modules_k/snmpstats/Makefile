@@ -7,7 +7,8 @@ include ../../Makefile.defs
 BUILDER = $(shell which net-snmp-config)
 ifeq ($(BUILDER),)
 	DEFS +=-I$(LOCALBASE)/include
-	BUILDAGENTLIBS =-L$(LOCALBASE)/lib -lnetsnmpmibs -lnetsnmpagent -lnetsnmphelpers -lnetsnmp
+	BUILDAGENTLIBS =-L$(LOCALBASE)/lib -lnetsnmpmibs -lnetsnmpagent \
+		-lnetsnmphelpers -lnetsnmp
 	INSTALLMIBDIR = $(cfg-prefix)/share/snmp/mibs
 else
 	BUILDAGENTLIBS = $(shell net-snmp-config --agent-libs)
@@ -25,5 +26,5 @@ include ../../Makefile.modules
 install_module_custom:
 	echo "installing mibs ..."
 	mkdir -p $(INSTALLMIBDIR)
-	install -m 644 mibs/OPENSER* $(INSTALLMIBDIR)
+	$(INSTALL-CFG) mibs/OPENSER* $(INSTALLMIBDIR)
 
