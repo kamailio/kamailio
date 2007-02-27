@@ -142,11 +142,8 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 	int backup_mhomed;
 	int ret;
 
-	if ( msg->first_line.u.request.method_value==METHOD_ACK) {
-		LOG(L_WARN,"WARNING:sl:sl_send_reply: I won't send "
-			"a reply for ACK!!\n");
+	if ( msg->first_line.u.request.method_value==METHOD_ACK)
 		goto error;
-	}
 
 	if (reply_to_via) {
 		if (update_sock_struct_from_via(  &(to), msg, msg->via1 )==-1) {
