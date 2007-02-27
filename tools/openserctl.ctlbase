@@ -64,6 +64,7 @@ usage_usrloc() {
 	echo
 cat <<EOF
  ul show [<username>]................ show in-RAM online users
+ ul show --brief..................... show in-RAM online users in short format
  ul rm <username> [<contact URI>].... delete user's UsrLoc entries
  ul add <username> <uri> ............ introduce a permanent UrLoc entry
  ul add <username> <uri> <expires> .. introduce a temporary UrLoc entry
