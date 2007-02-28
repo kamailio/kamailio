@@ -292,6 +292,84 @@ modparam("tls", "tls_log", 10)
 	</example>
 	</section>
 
+<section id="low_mem_threshold1">
+	<title><varname>low_mem_threshold1</varname> (integer)</title>
+	<para>
+		Sets the minimal free memory from which new tls connection will start to fail. The value is expressed in KB.
+	</para>
+	<para>
+		The default value depends on whether the openssl library used handles well low memory situations (openssl bug #1491). As of this writing this is not true for any openssl version (including 0.9.8e).
+	</para>
+	<para>
+		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created tls connections (and hence on the process number).
+	</para>
+	<para>
+		The following values have a special meaning:
+	</para>
+	<itemizedlist>
+			<listitem>
+				<para>
+					-1 - use the default value
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					0 - disable (tls connections will not fail preemptively)
+				</para>
+			</listitem>
+	</itemizedlist>
+	<para>
+		See also <varname>low_mem_threshold2</varname>.
+	</para>
+	<example>
+		<title>Set <varname>low_memory_threshold1</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "low_memory_threshold1", -1)
+...
+	</programlisting>
+	</example>
+	</section>
+
+<section id="low_mem_threshold2">
+	<title><varname>low_mem_threshold2</varname> (integer)</title>
+	<para>
+		Sets the minimal free memory from which tls operations on already established tls connections will start to fail preemptively.  The value is expressed in KB.
+	</para>
+	<para>
+		The default value depends on whether the openssl library used handles well low memory situations (openssl bug #1491). As of this writing this is not true for any openssl version (including 0.9.8e).
+	</para>
+	<para>
+		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created tls connections (and hence on the process number).
+	</para>
+	<para>
+		The following values have a special meaning:
+	</para>
+	<itemizedlist>
+			<listitem>
+				<para>
+					-1 - use the default value
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					0 - disable (tls operations will not fail preemptively)
+				</para>
+			</listitem>
+	</itemizedlist>
+	<para>
+		See also <varname>low_mem_threshold1</varname>.
+	</para>
+	<example>
+		<title>Set <varname>low_memory_threshold2</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "low_memory_threshold2", -1)
+...
+	</programlisting>
+	</example>
+	</section>
+
 	<section id="tls_force_run">
 	<title><varname>tls_force_run</varname> (boolean)</title>
 	<para>
