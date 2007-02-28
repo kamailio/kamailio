@@ -117,6 +117,19 @@
 	}
 
 
+#if defined __GNUC__ &&  __GNUC__ < 3 && __GNUC_MINOR__ < 9
+#define ATOMIC_FUNC_DECL01_1(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
+	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+														P_TYPE v ) \
+	{ \
+		P_TYPE ret; \
+		asm volatile( \
+			ATOMIC_ASM_OP01_##P_TYPE(OP) \
+			: "=&r"(ret), "=r"(v), "=m"(*var), "0"(v)  : "m"(*var) \
+			); \
+		return RET_EXPR; \
+	}
+#else
 /* input in %0, and %1 (param), output in %1,  %0 goes in ret */
 #define ATOMIC_FUNC_DECL01_1(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
 	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
@@ -129,7 +142,7 @@
 			); \
 		return RET_EXPR; \
 	}
-
+#endif /* gcc && gcc version < 2.9 */
 
 /* input in %0, output in %1, %0 goes in ret */
 #define ATOMIC_FUNC_DECL0_1(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
