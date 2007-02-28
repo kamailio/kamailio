@@ -1541,7 +1541,7 @@ subscriber() {
 				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
 				now(),'$PHPLIB_ID');";
 			else
-				UERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,\
+				QUERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,\
 				$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,\
 				$EMAIL_COLUMN,$SUB_CREATED_COLUMN) \
 				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
