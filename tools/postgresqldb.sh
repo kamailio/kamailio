@@ -571,7 +571,7 @@ CREATE TABLE usr_preferences (
   attribute varchar(32) NOT NULL default '',
   value varchar(128) NOT NULL default '',
   type int NOT NULL default '0',
-  modified $TIMESTAMP
+  last_modified $TIMESTAMP
 ) $TABLE_TYPE;
 CREATE INDEX ua_idx ON usr_preferences(uuid,attribute);
 CREATE INDEX uda_idx ON usr_preferences($USERCOL,domain,attribute);
@@ -689,6 +689,12 @@ CREATE TABLE pdt (
 $GRANT_CMD
 
 EOF
+
+if [ $? -ne 0 ] ; then
+	echo "Creating core tables failed!"
+	exit 1;
+fi
+echo "Core OpenSER tables succesfully created."
 
 echo -n "Install presence related tables ?(y/n):"
 read INPUT
@@ -853,9 +859,12 @@ $GRANT_PRESENCE_CMD
 
 EOF
 
-	if [ $? -eq 0 ] ; then
-		echo "...presence tables created"
-	fi
+if [ $? -ne 0 ] ; then
+	echo "Failed to create presence tables!"
+	exit 1
+fi
+
+echo "Presence tables succesfully created."
 }  # end presence_create
 
 
@@ -977,9 +986,12 @@ $GRANT_EXTRA_CMD
 
 EOF
 
-	if [ $? -eq 0 ] ; then
-		echo "...extra tables created"
-	fi
+if [ $? -ne 0 ] ; then
+	echo "Failed to create extra tables!"
+	exit 1
+fi
+
+echo "Extra tables succesfully created."
 }  # end extra_create
 
 
@@ -1206,22 +1218,25 @@ $GRANT_SERWEB_CMD
 
 EOF
 
-	if [ $? -eq 0 ] ; then
-		echo "...serweb tables created"
-		echo ""
-		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-		echo "!                                                 !"
-		echo "!                  WARNING                        !"
-		echo "!                                                 !"
-		echo "! There was a default admin user created:         !"
-		echo "!    username: admin@$SIP_DOMAIN "
-		echo "!    password: $DBRWPW       "
-		echo "!                                                 !"
-		echo "! Please change this password or remove this user !"
-		echo "! from the subscriber and admin_privileges table. !"
-		echo "!                                                 !"
-		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-	fi
+if [ $? -ne 0 ] ; then
+	echo "Failed to create serweb tables!"
+	exit 1
+fi
+
+echo "SERWEB tables succesfully created."
+echo ""
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "!                                                 !"
+echo "!                  WARNING                        !"
+echo "!                                                 !"
+echo "! There was a default admin user created:         !"
+echo "!    username: admin@$SIP_DOMAIN "
+echo "!    password: $DBRWPW  "
+echo "!                                                 !"
+echo "! Please change this password or remove this user !"
+echo "! from the subscriber and admin_privileges table. !"
+echo "!                                                 !"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 
 }  # end serweb_create
 
