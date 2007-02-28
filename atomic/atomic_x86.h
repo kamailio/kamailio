@@ -129,6 +129,18 @@
 				); \
 	}
 
+#if defined __GNUC__ &&  __GNUC__ < 3 && __GNUC_MINOR__ < 9
+/* gcc version < 2.9 */
+#define ATOMIC_FUNC_XCHG(NAME, OP, TYPE) \
+	inline static TYPE atomic_##NAME##_##TYPE(volatile TYPE* var, TYPE v) \
+{ \
+	asm volatile( \
+			OP " \n\t" \
+			: "=q"(v), "=m"(*var) :"m"(*var), "0"(v) : "memory" \
+			); \
+	return v; \
+}
+#else
 #define ATOMIC_FUNC_XCHG(NAME, OP, TYPE) \
 	inline static TYPE atomic_##NAME##_##TYPE(volatile TYPE* var, TYPE v) \
 { \
@@ -138,6 +150,7 @@
 			); \
 	return v; \
 }
+#endif /* gcc & gcc version < 2.9 */
 
 /* returns a value, 1 param */
 #define ATOMIC_FUNC_TEST(NAME, OP, P_TYPE, RET_TYPE) \
@@ -218,7 +231,11 @@ inline static void mb_atomic_set_int(volatile int* v, int i)
 {
 	asm volatile(
 			"xchgl %1, %0 \n\t"
+#if defined __GNUC__ &&  __GNUC__ < 3 && __GNUC_MINOR__ < 9
+			: "=q"(i), "=m"(*v) : "m"(*v), "0"(i) : "memory" 
+#else
 			: "+q"(i), "=m"(*v) : "m"(*v) : "memory" 
+#endif
 			);
 }
 
@@ -231,7 +248,11 @@ inline static void mb_atomic_set_long(volatile long* v, long l)
 #else
 			"xchgl %1, %0 \n\t"
 #endif
+#if defined __GNUC__ &&  __GNUC__ < 3 && __GNUC_MINOR__ < 9
+			: "=q"(l), "=m"(*v) : "m"(*v), "0"(l) : "memory" 
+#else
 			: "+q"(l), "=m"(*v) : "m"(*v) : "memory" 
+#endif
 			);
 }
 
