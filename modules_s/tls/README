@@ -78,10 +78,49 @@ Important Notes
    The tls module includes workarounds for the following known openssl
    bugs: openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if
    compression is enabled, for versions between 0.9.8 and 0.9.8c),
-   openssl #1468 (fix zlib compression memory allocation) and openssl
-   #1467 (kerberos support will be disabled if openssl version less than
-   0.9.8e-beta1). The bug reports can be viewed at
-   http://rt.openssl.org/.
+   openssl #1468 (fix zlib compression memory allocation), openssl #1467
+   (kerberos support will be disabled if the openssl version is less than
+   0.9.8e-beta1) and openssl #1491 (stop using tls in low memory
+   situations due to the very high risk of openssl crashing or leaking
+   memory). The bug reports can be viewed at http://rt.openssl.org/.
+
+Compiling the TLS Module
+
+   In most case compiling the TLS module is as simple as:
+make modules modules=modules/tls
+
+   or
+cd modules/tls
+make
+
+   or (compiling whole ser and the tls module)
+make all include_modules=tls
+
+   .
+
+   However in some cases the openssl library requires linking with other
+   libraries. For example compiling the openssl library with kerberos and
+   zlib-shared support will require linking the tls module with libkrb5
+   and libz. In this case just add TLS_EXTRA_LIBS="library list" to
+   make's command line. E.g.:
+make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
+
+   In general, if ser fails to start with a symbol not found error when
+   trying to load the tls module (check the log), it means some needed
+   library was not linked and it must be added to TLS_EXTRA_LIBS
+
+TLS and Low Memory
+
+   The openssl library doesn't handle very well low memory situations. If
+   memory allocations start to fail (due to memory shortage), openssl can
+   crash or cause memory leaks (making the memory shortage even worse).
+   As of this writing all openssl versions were affected (includind
+   0.9.8e), see openssl bug #1491. The tls module has some workarounds
+   for preventing this problem (see low_mem_treshold1 and
+   low_mem_threshold2), however starting ser with enough shared memory is
+   higly recommended. When this is not possible a quick way to
+   significantly reduce openssl memory usage it to disable compression
+   (see tls_disable_compression).
 
 Known Limitations
 
@@ -383,6 +422,57 @@ tls_log (int)
 modparam("tls", "tls_log", 10)
 ...
 
+low_mem_threshold1 (integer)
+
+   Sets the minimal free memory from which new tls connection will start
+   to fail. The value is expressed in KB.
+
+   The default value depends on whether the openssl library used handles
+   well low memory situations (openssl bug #1491). As of this writing
+   this is not true for any openssl version (including 0.9.8e).
+
+   If an ill-behaved openssl version is detected, a very conservative
+   value is choosed, which depends on the maximum possible number of
+   simultaneously created tls connections (and hence on the process
+   number).
+
+   The following values have a special meaning:
+     * -1 - use the default value
+     * 0 - disable (tls connections will not fail preemptively)
+
+   See also low_mem_threshold2.
+
+   Example 15. Set low_memory_threshold1 parameter
+...
+modparam("tls", "low_memory_threshold1", -1)
+...
+
+low_mem_threshold2 (integer)
+
+   Sets the minimal free memory from which tls operations on already
+   established tls connections will start to fail preemptively. The value
+   is expressed in KB.
+
+   The default value depends on whether the openssl library used handles
+   well low memory situations (openssl bug #1491). As of this writing
+   this is not true for any openssl version (including 0.9.8e).
+
+   If an ill-behaved openssl version is detected, a very conservative
+   value is choosed, which depends on the maximum possible number of
+   simultaneously created tls connections (and hence on the process
+   number).
+
+   The following values have a special meaning:
+     * -1 - use the default value
+     * 0 - disable (tls operations will not fail preemptively)
+
+   See also low_mem_threshold1.
+
+   Example 16. Set low_memory_threshold2 parameter
+...
+modparam("tls", "low_memory_threshold2", -1)
+...
+
 tls_force_run (boolean)
 
    If enabled ser will start even if some of the openssl sanity checks
@@ -399,7 +489,7 @@ tls_force_run (boolean)
 
    By default tls_force_run is disabled.
 
-   Example 15. Set tls_force_run parameter
+   Example 17. Set tls_force_run parameter
 ...
 modparam("tls", "tls_force_run", 11)
 ...
@@ -429,7 +519,7 @@ config (string)
    ser acts as a server when it accepts a connection and as a client when
    it initiates a new connection by itself (it connects to something).
 
-   Example 16. Short config file
+   Example 18. Short config file
 [server:default]
 method = TLSv1
 verify_certificate = no
@@ -455,7 +545,7 @@ ca_list = local_ca.pem
    For a more complete example check the tls.cfg distributed with the ser
    source (sip_router/modules/tls/tls.cfg).
 
-   Example 17. Set config parameter
+   Example 19. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 ...

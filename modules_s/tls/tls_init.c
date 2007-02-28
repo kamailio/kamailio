@@ -102,7 +102,8 @@ to compile on the  _target_ system)"
 #ifdef TLS_KSSL_WORKARROUND
 int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
-int openssl_low_mem_bug=0; /* openssl bug #1491 workaround */
+int openssl_mem_threshold1=-1; /* low memory threshold for connect/accept */
+int openssl_mem_threshold2=-1; /* like above but for other tsl operations */
 int tls_disable_compression = 0; /* by default enabled */
 int tls_force_run = 0; /* ignore some start-up sanity checks, use it
 						  at your own risk */
@@ -533,15 +534,32 @@ int init_tls_h(void)
 			" kerberos support will be disabled...\n");
 	}
 	#endif
-	LOG(L_WARN, "tls: init_tls_h: openssl low memory bugs (#1491) workaround"
-				" enabled (on low memory tls operations will fail"
-				" preemptively)\n");
-	openssl_low_mem_bug=1; /* openssl bug #1491 workaround, for now
-								always enabled */
+	 /* set free memory threshold for openssl bug #1491 workaround */
+	if (openssl_mem_threshold1<0){
+		/* default */
+		openssl_mem_threshold1=512*1024*get_max_procs();
+	}else
+		openssl_mem_threshold1*=1024; /* KB */
+	if (openssl_mem_threshold2<0){
+		/* default */
+		openssl_mem_threshold2=256*1024*get_max_procs();
+	}else
+		openssl_mem_threshold2*=1024; /* KB */
+	if ((openssl_mem_threshold1==0) || (openssl_mem_threshold2==0))
+		LOG(L_WARN, "tls: openssl bug #1491 (crash/mem leaks on low memory)"
+					" workarround disabled\n");
+	else
+		LOG(L_WARN, "tls: openssl bug #1491 (crash/mem leaks on low memory)"
+				" workaround enabled (on low memory tls operations will fail"
+				" preemptively) with free memory thresholds %d and %d bytes\n",
+				openssl_mem_threshold1, openssl_mem_threshold2);
+	
 	if (shm_available()==(unsigned long)(-1)){
 		LOG(L_WARN, "tls: ser compiled without MALLOC_STATS support:"
 				" the workaround for low mem. openssl bugs will _not_ "
 				"work\n");
+		openssl_mem_threshold1=0;
+		openssl_mem_threshold2=0;
 	}
 	SSL_library_init();
 	SSL_load_error_strings();

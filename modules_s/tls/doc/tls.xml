@@ -77,6 +77,44 @@ route{
   <ulink url="http://rt.openssl.org/">http://rt.openssl.org/</ulink>.
 		</para>
 		</section>
+
+
+		<section id="tls.compile">
+		<title>Compiling the TLS Module</title>
+		<para>
+			In most case compiling the TLS module is as simple as:
+			<programlisting>
+make modules modules=modules/tls
+			</programlisting>
+			or
+			<programlisting>
+cd modules/tls
+make
+			</programlisting>
+			or (compiling whole ser and the tls module)
+			<programlisting>
+make all include_modules=tls
+			</programlisting>
+			.
+		</para>
+		<para>
+			However in some cases the openssl library requires linking with other libraries. For example compiling the openssl library with kerberos and zlib-shared support will require linking the tls module with libkrb5 and libz. In this case just add  <emphasis>TLS_EXTRA_LIBS</emphasis>="library list" to make's command line. E.g.:
+			<programlisting>
+make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
+			</programlisting>
+		</para>
+		<para>
+			In general, if ser fails to start with a symbol not found error when trying to load the tls module (check the log), it means some needed library was not linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
+		</para>
+		</section>
+
+		<section id="tls.low_memory">
+		<title>TLS and Low Memory</title>
+		<para>
+			The openssl library doesn't handle very well low memory situations. If memory allocations start to fail (due to memory shortage), openssl can crash or cause memory leaks (making the memory shortage even worse). As of this writing all openssl versions were affected (includind 0.9.8e), see openssl bug #1491. The tls module has some workarounds for preventing this problem (see <varname>low_mem_treshold1</varname> and <varname>low_mem_threshold2</varname>), however starting ser with enough shared memory is higly recommended. When this is not possible a quick way to significantly reduce openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
+		</para>
+		</section>
+
 		<section id="tls.known_limitations">
 		<title>Known Limitations</title>
 		<para>

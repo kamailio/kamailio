@@ -208,6 +208,8 @@ static param_export_t params[] = {
 	{"config",              PARAM_STR,    &tls_cfg_file           },
 	{"tls_disable_compression", PARAM_INT,&tls_disable_compression},
 	{"tls_force_run",       PARAM_INT,    &tls_force_run},
+	{"low_mem_threshold1",       PARAM_INT,    &openssl_mem_threshold1},
+	{"low_mem_threshold2",       PARAM_INT,    &openssl_mem_threshold2},
 	{0, 0, 0}
 };
 
