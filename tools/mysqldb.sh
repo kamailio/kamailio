@@ -28,6 +28,7 @@
 # 2006-09-02  Added address table (juhe)
 # 2006-10-27  subscriber table cleanup; some columns are created only if
 #             serweb is installed (bogdan)
+# 2007-02-28  DB migration added (bogdan)
 #
 
 PATH=$PATH:/usr/local/sbin
@@ -122,7 +123,7 @@ usage: $COMMAND create
        $COMMAND backup (dumps current database to stdout)
        $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
-       $COMMAND reinstall (updates to a new OpenSER database)
+       $COMMAND migrate <old_db> <new_db> (migrates DB from 1.1 to 1.2)
        $COMMAND presence (adds the presence related tables)
        $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
        $COMMAND serweb (adds the SERWEB specific tables)
@@ -145,12 +146,17 @@ prompt_pw()
 	read PW
 	stty $savetty
 	echo
+	export PW
 }
 
 # execute sql command
 sql_query()
 {
-	$CMD "-p$PW" "$@"
+	if [ "X$PW" = "X" ] ; then
+		$CMD "$@"
+	else
+		$CMD "-p$PW" "$@"
+	fi
 }
 
 # dump all rows
@@ -527,7 +533,7 @@ CREATE TABLE usr_preferences (
   attribute varchar(32) NOT NULL default '',
   type int(11) NOT NULL default '0',
   value varchar(128) NOT NULL default '',
-  modified timestamp(14) NOT NULL default '0000-00-00 00:00:00',
+  last_modified timestamp(14) NOT NULL default '0000-00-00 00:00:00',
   INDEX ua_idx  (uuid,attribute),
   INDEX uda_idx ($USERCOL,domain,attribute),
   PRIMARY KEY (id)
@@ -637,6 +643,12 @@ CREATE TABLE pdt (
 ) $TABLE_TYPE;
 EOF
 
+if [ $? -ne 0 ] ; then
+	echo "Creating core tables failed!"
+	exit 1
+fi
+echo "Core OpenSER tables succesfully created."
+
 echo -n "Install presence related tables ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
@@ -648,6 +660,7 @@ echo -n "Install extra tables - imc,cpl,siptrace,domainpolicy ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
 then
+	HAS_EXTRA="yes"
 	extra_create $1
 fi
 
@@ -655,6 +668,7 @@ echo -n "Install SERWEB related tables ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
 then
+	HAS_SERWEB="yes"
 	serweb_create $1
 fi
 } # openser_create
@@ -782,9 +796,12 @@ CREATE TABLE pua (
 ) $TABLE_TYPE;
 EOF
 
-	if [ $? -eq 0 ] ; then
-		echo "...presence tables created"
-	fi
+if [ $? -ne 0 ] ; then
+	echo "Failed to create presence tables!"
+	exit 1
+fi
+
+echo "Presence tables succesfully created."
 }  # end presence_create
 
 
@@ -894,9 +911,12 @@ CREATE TABLE domainpolicy (
 
 EOF
 
-	if [ $? -eq 0 ] ; then
-		echo "...extra tables created"
-	fi
+if [ $? -ne 0 ] ; then
+	echo "Failed to create extra tables!"
+	exit 1
+fi
+
+echo "Extra tables succesfully created."
 }  # end extra_create
 
 
@@ -1082,26 +1102,244 @@ CREATE TABLE admin_privileges (
 $INITIAL_INSERT
 EOF
 
+if [ $? -ne 0 ] ; then
+	echo "Failed to create serweb tables!"
+	exit 1
+fi
 
-	if [ $? -eq 0 ] ; then
-		echo "...serweb tables created"
-		echo ""
-		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-		echo "!                                                 !"
-		echo "!                  WARNING                        !"
-		echo "!                                                 !"
-                echo "! There was a default admin user created:         !"
-		echo "!    username: admin@$SIP_DOMAIN "
-		echo "!    password: $DBRWPW       "
-		echo "!                                                 !"
-		echo "! Please change this password or remove this user !"
-		echo "! from the subscriber and admin_privileges table. !"
-		echo "!                                                 !"
-		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-	fi
+echo "SERWEB tables succesfully created."
 
+echo ""
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "!                                                 !"
+echo "!                  WARNING                        !"
+echo "!                                                 !"
+echo "! There was a default admin user created:         !"
+echo "!    username: admin@$SIP_DOMAIN "
+echo "!    password: $DBRWPW "
+echo "!                                                 !"
+echo "! Please change this password or remove this user !"
+echo "! from the subscriber and admin_privileges table. !"
+echo "!                                                 !"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 }  # end serweb_create
 
+
+
+migrate_table () # 4 paremeters (dst_table, dst_cols, src_table, src_cols)
+{
+if [ $# -ne 4 ] ; then
+	echo "migrate_table function takes 4 params $@"
+	exit 1
+fi
+
+src_cols=`echo $4 | sed s/?/$3./g `
+
+X=`sql_query 2>&1 <<EOF
+INSERT into $1 ($2) SELECT $src_cols from $3;
+EOF`
+
+if [ $? -ne 0 ] ; then
+	echo $X | $GREP "ERROR 1146" > /dev/null
+	if [ $? -eq 0 ] ; then 
+		echo " -- Migrating $3 to $1.....SKIPPED (no source)"
+		return 0
+	fi
+	echo "ERROR: failed to migrate $3 to $1!!!"
+	echo -n "Skip it and continue (y/n)? "
+	read INPUT
+	if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+	then
+		return 0
+	fi
+
+	exit 1;
+fi
+
+echo " -- Migrating $3 to $1.....OK"
+
+}
+
+
+migrate_db () # 2 parameters (src_db, dst_db)
+{
+if [ $# -ne 2 ] ; then
+	echo "migrate_db function takes 2 params"
+	exit 1
+fi
+
+dst_db=$2
+src_db=$1
+
+migrate_table ${dst_db}.acc \
+	"method,from_tag,to_tag,callid,sip_code,time" \
+	${src_db}.acc \
+	"?sip_method,?fromtag,?totag,?sip_callid,?sip_status,?time"
+
+migrate_table ${dst_db}.missed_calls \
+	"method,from_tag,to_tag,callid,sip_code,time" \
+	${src_db}.missed_calls \
+	"?sip_method,?fromtag,?totag,?sip_callid,?sip_status,?time"
+
+migrate_table ${dst_db}.aliases \
+	"username,domain,contact,expires,q,callid,cseq,last_modified,\
+		flags,user_agent" \
+	${src_db}.aliases \
+	"?username,?domain,?contact,?expires,?q,?callid,?cseq,?last_modified,\
+		?flags,?user_agent"
+
+migrate_table ${dst_db}.dbaliases \
+	"alias_username,alias_domain,username,domain" \
+	${src_db}.dbaliases \
+	"?alias_username,?alias_domain,?username,?domain"
+
+migrate_table ${dst_db}.grp \
+	"username,domain,grp,last_modified" \
+	${src_db}.grp \
+	"?username,?domain,?grp,?last_modified"
+
+migrate_table ${dst_db}.re_grp \
+	"reg_exp,group_id" \
+	${src_db}.re_grp \
+	"?reg_exp,?group_id"
+
+migrate_table ${dst_db}.silo \
+	"id,src_addr,dst_addr,username,domain,inc_time,exp_time,snd_time,\
+		ctype,body" \
+	${src_db}.silo \
+	"?mid,?src_addr,?dst_addr,?username,?domain,?inc_time,?exp_time,?snd_time,\
+		?ctype,?body"
+
+migrate_table ${dst_db}.domain \
+	"domain,last_modified" \
+	${src_db}.domain \
+	"?domain,?last_modified"
+
+migrate_table ${dst_db}.uri \
+	"username,domain,uri_user,last_modified" \
+	${src_db}.uri \
+	"?username,?domain,?uri_user,?last_modified"
+
+migrate_table ${dst_db}.usr_preferences \
+	"uuid,username,domain,attribute,type,value,last_modified" \
+	${src_db}.usr_preferences \
+	"?uuid,?username,?domain,?attribute,?type,?value,?modified"
+
+migrate_table ${dst_db}.trusted \
+	"src_ip,proto,from_pattern,tag" \
+	${src_db}.trusted \
+	"?src_ip,?proto,?from_pattern,?tag"
+
+migrate_table ${dst_db}.speed_dial \
+	"id,username,domain,sd_username,sd_domain,new_uri,\
+		fname,lname,description" \
+	${src_db}.speed_dial \
+	"?uuid,?username,?domain,?sd_username,?sd_domain,?new_uri,\
+		?fname,?lname,?description"
+
+migrate_table ${dst_db}.gw \
+	"gw_name,grp_id,ip_addr,port,uri_scheme,transport,strip,prefix" \
+	${src_db}.gw \
+	"?gw_name,?grp_id, INET_NTOA(((?ip_addr & 0x000000ff) << 24) + \
+	((?ip_addr & 0x0000ff00) << 8) + ((?ip_addr & 0x00ff0000) >> 8) + \
+	((?ip_addr & 0xff000000) >> 24)),?port,?uri_scheme,?transport,?strip,\
+	?prefix"
+
+migrate_table ${dst_db}.gw_grp \
+	"grp_id,grp_name" \
+	${src_db}.gw_grp \
+	"?grp_id,?grp_name"
+
+migrate_table ${dst_db}.lcr \
+	"prefix,from_uri,grp_id,priority" \
+	${src_db}.lcr \
+	"?prefix,?from_uri,?grp_id,?priority"
+
+migrate_table ${dst_db}.pdt \
+	"sdomain,prefix,domain" \
+	${src_db}.pdt \
+	"?sdomain,?prefix,?domain"
+
+if [ "$HAS_SERWEB" = "yes" ] ; then
+	# migrate subscribers with serweb support
+	migrate_table ${dst_db}.subscriber \
+		"username,domain,password,first_name,last_name,email_address,\
+		datetime_created,ha1,ha1b,timezone,rpid,phplib_id,phone,\
+		datetime_modified,confirmation,flag,sendnotification,\
+		greeting,allow_find" \
+		${src_db}.subscriber \
+		"?username,?domain,?password,?first_name,?last_name,?email_address,\
+		?datetime_created,?ha1,?ha1b,?timezone,?rpid,?phplib_id,?phone,\
+		?datetime_modified,?confirmation,?flag,?sendnotification,\
+		?greeting,?allow_find"
+
+	migrate_table ${dst_db}.active_sessions \
+		"sid,name,val,changed" \
+		${src_db}.active_sessions \
+		"?sid,?name,?val,?changed"
+
+	migrate_table ${dst_db}.pending \
+		"username,domain,password,first_name,last_name,email_address,\
+		datetime_created,ha1,ha1b,timezone,rpid,phplib_id,phone,\
+		datetime_modified,confirmation,flag,sendnotification,\
+		greeting,allow_find" \
+		${src_db}.pending \
+		"?username,?domain,?password,?first_name,?last_name,?email_address,\
+		?datetime_created,?ha1,?ha1b,?timezone,?rpid,?phplib_id,?phone,\
+		?datetime_modified,?confirmation,?flag,?sendnotification,\
+		?greeting,?allow_find"
+
+	migrate_table ${dst_db}.phonebook \
+		"id,username,domain,fname,lname,sip_uri" \
+		${src_db}.phonebook \
+		"?id,?username,?domain,?fname,?lname,?sip_uri"
+
+	migrate_table ${dst_db}.server_monitoring \
+		"time,id,param,value,increment" \
+		${src_db}.server_monitoring \
+		"?time,?id,?param,?value,?increment"
+
+	migrate_table ${dst_db}.usr_preferences_type \
+		"att_name,att_rich_type,att_raw_type,att_type_spec,default_value" \
+		${src_db}.usr_preferences_type \
+		"?att_name,?att_rich_type,?att_raw_type,?att_type_spec,?default_value"
+
+	migrate_table ${dst_db}.server_monitoring_agg \
+		"param,s_value,s_increment,last_aggregated_increment,av,mv,ad,lv,\
+		min_val,max_val,min_inc,max_inc,lastupdate" \
+		${src_db}.server_monitoring_agg \
+		"?param,?s_value,?s_increment,?last_aggregated_increment,?av,?mv,\
+		?ad,?lv,?min_val,?max_val,?min_inc,?max_inc,?lastupdate"
+
+	migrate_table ${dst_db}.admin_privileges \
+		"username,domain,priv_name,priv_value" \
+		${src_db}.admin_privileges \
+		"?username,?domain,?priv_name,?priv_value"
+else
+	# migrate subscribers with no serweb support
+	migrate_table ${dst_db}.subscriber \
+		"username,domain,password,first_name,last_name,email_address,\
+		datetime_created,ha1,ha1b,timezone,rpid" \
+		${src_db}.subscriber \
+		"?username,?domain,?password,?first_name,?last_name,?email_address,\
+		?datetime_created,?ha1,?ha1b,?timezone,?rpid"
+fi
+
+if [ "$HAS_EXTRA" = "yes" ] ; then
+	migrate_table ${dst_db}.cpl \
+		"username,domain,cpl_xml,cpl_bin" \
+		${src_db}.cpl \
+		"?username,?domain,?cpl_xml,?cpl_bin"
+
+	migrate_table ${dst_db}.siptrace \
+		"id,date,callid,traced_user,msg,method,status,fromip,toip,\
+		fromtag,direction" \
+		${src_db}.siptrace \
+		"?id,?date,?callid,?traced_user,?msg,?method,?status,?fromip,?toip,\
+		?fromtag,?direction"
+fi
+
+}  #end migrate_db()
 
 
 export PW
@@ -1110,53 +1348,27 @@ if [ "$#" -ne 0 ] && [ "$PW" = "" ]; then
 fi
 
 
+
+
 case $1 in
-	reinstall)
-		#1 create a backup database (named *_bak)
-		echo "creating backup database"
-		openser_backup $DBNAME
-		if [ "$?" -ne 0 ] ; then
-			echo "reinstall: creating backup db failed"
+	migrate)
+		if [ $# -ne 3 ] ; then
+			echo "migrate requires 2 paramets: old and new database"
 			exit 1
 		fi
-		#2 dump original database and change names in it
-		echo "dumping table content ($DBNAME)"
-		tmp_file=/tmp/openser_mysql.$$
-		openser_dump "$DBNAME --ignore-table=$DBNAME.version" > $tmp_file
-		if [ "$?" -ne 0 ] ; then
-			echo "reinstall: dumping original db failed"
-			exit 1
-		fi
-		sed "s/[sS][rR][cC]\($\|[^_]\)/src_leg\1/g" $tmp_file |
-			sed "s/[dD][sS][tT]\($\|[^_]\)/dst_leg\1/g"> ${tmp_file}.2
-		#3 drop original database
-		echo "dropping table ($DBNAME)"
-		openser_drop $DBNAME
-		if [ "$?" -ne 0 ] ; then
-			echo "reinstall: dropping table failed"
-			rm $tmp_file*
-			exit 1
-		fi
-		#4 change names in table definition and restore
-		echo "creating new structures"
+		# create new database
+		echo "Creating new Database $3...."
 		NO_USER_INIT="yes"
-		openser_create $DBNAME
+		openser_create $3
 		if [ "$?" -ne 0 ] ; then
-			echo "reinstall: creating new table failed"
-			rm $tmp_file*
+			echo "migrate: creating new database failed"
 			exit 1
 		fi
-		#5 restoring table content
-		echo "restoring table content"
-		openser_restore $DBNAME ${tmp_file}.2
-		if [ "$?" -ne 0 ] ; then
-			echo "reinstall: restoring table failed"
-			rm $tmp_file*
-			exit 1
-		fi
-		# done
-		rm -f $tmp_file*
-		exit 0
+		# migrate data
+		echo "Migrating data from $2 to $3...."
+		migrate_db $2 $3
+		echo "Migration successfully completed."
+		exit 0;
 		;;
 	copy)
 		# copy database to some other name
