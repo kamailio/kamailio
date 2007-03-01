@@ -33,6 +33,7 @@
 #include "seas.h"
 #include "statistics.h"
 #include "seas_action.h"
+#include "seas_error.h"
 #include "ha.h"
 
 #define MAX_HEADER 1024
@@ -52,10 +53,12 @@ extern char seas_tags[];
 extern int write_pipe;
 extern int server_signature;
 pid_t my_parent;
+extern int fifo_pid;
 extern int process_no;
 
 static inline int shm_str_dup(str* _d, str* _s);
 static inline struct sip_msg *parse_ac_msg(hdr_flags_t flags,char *start,int len);
+static inline void set_process_no();
 static inline void free_sip_msg_lite(struct sip_msg *my_msg);
 static inline int calculate_hooks(dlg_t* _d);
 
@@ -75,7 +78,7 @@ int dispatch_actions()
    struct timeval last,now;
 
    /* now the process_no is set, I delete the pt (process_table) global var, because it confuses
-    * LOG() */
+    * SLOG() */
    pt=0;
    fd=my_as->u.as.action_fd;
    fds[0].fd=fd;
@@ -91,7 +94,7 @@ int dispatch_actions()
       ktimeout=servlet_ping_timeout;
    /*ac_buffer is pkg_malloc because only this process (action dispatcher) will use it*/
    if((my_as->u.as.ac_buffer.s = pkg_malloc(AS_BUF_SIZE))==0){
-      LOG(L_ERR,"ERROR:seas: dispatch_actions: unable to alloc pkg mem for the action buffer\n");
+      SLOG(L_ERR,"unable to alloc pkg mem for the action buffer\n");
       return -1;
    }
    my_as->u.as.ac_buffer.len=0;
@@ -105,9 +108,9 @@ int dispatch_actions()
 	       gettimeofday(&last,NULL);
 	       continue;
 	    }else if(errno==EBADF){
-	       LOG(L_ERR,"EBADF !!\n");
+	       SLOG(L_ERR,"EBADF !!\n");
 	    }else{
-	       LOG(L_ERR,"ERROR on poll\n");
+	       SLOG(L_ERR,"on poll\n");
 	    }
 	 }else if(n==0){/*timeout*/
 	    if (0>(ret=process_pings(&my_as->u.as.jain_pings))) {
@@ -150,12 +153,12 @@ again:
    if(0>(j=read(fd,my_as->u.as.ac_buffer.s+my_as->u.as.ac_buffer.len,k))){
       if(errno==EINTR)
 	 goto again;
-      LOG(L_ERR,"ERROR:seas:process_input:reading data for as %.*s (%s)\n",my_as->name.len,my_as->name.s,strerror(errno));
+      SLOG(L_ERR,"reading data for as %.*s (%s)\n",my_as->name.len,my_as->name.s,strerror(errno));
       return -1;
    }else if(j==0){
       pkg_free(my_as->u.as.ac_buffer.s);
       close(fd);
-      LOG(L_ERR,"ERROR:seas:dispatch_actions: read 0 bytes from AS:%.*s\n",my_as->name.len,my_as->name.s);
+      SLOG(L_ERR,"read 0 bytes from AS:%.*s\n",my_as->name.len,my_as->name.s);
       /** we return, so we will exit, so our parent (Event Dispatcher) will receive a sigchld and know
        * it should tear down the corresponding AS
        * what still is not clear is what will happen to events that were put in the pipe...
@@ -163,12 +166,12 @@ again:
       return -2;
    }
    (my_as->u.as.ac_buffer.len)+=j;
-   LOG(L_DBG,"read %d bytes from AS action socket (total = %d)\n",j,my_as->u.as.ac_buffer.len);
+   SLOG(L_DBG,"read %d bytes from AS action socket (total = %d)\n",j,my_as->u.as.ac_buffer.len);
    if(use_stats)
       receivedplus();
    if(my_as->u.as.ac_buffer.len>5){
       process_action(&my_as->u.as);
-      LOG(L_DBG,"(Action dispatched,buffer.len=%d)\n",my_as->u.as.ac_buffer.len);
+      SLOG(L_DBG,"(Action dispatched,buffer.len=%d)\n",my_as->u.as.ac_buffer.len);
    }
    return 0;
 }
@@ -205,7 +208,7 @@ static inline int process_pings(struct ha *the_table)
 	 tmp=the_table->pings+k;
 	 elapsed=(now.tv_sec-tmp->sent.tv_sec)*1000+(now.tv_usec-tmp->sent.tv_usec)/1000;
 	 if(elapsed>the_table->timeout){
-	    LOG(L_DBG,"ping timed out %d\n",tmp->id);
+	    SLOG(L_DBG,"ping timed out %d\n",tmp->id);
 	    the_table->timed_out_pings++;
 	 }else{
 	    the_table->begin=k;
@@ -217,6 +220,33 @@ static inline int process_pings(struct ha *the_table)
    lock_release(the_table->mutex);
    return 0;
 }
+
+/* Because TransactionModule organizes statistics based on process_no, 
+ * and process_no are only assigned to SER processes (not to Action dispatchers like us ;)
+ * we have to simulate we are the FIFO process, so TM thinks that the transactions WE put
+ * are put by the fifo process...
+static inline void set_process_no()
+{
+   int pcnt,i;
+
+   pcnt=process_count();
+   for(i=0;i<pcnt;i++){
+      if(pt[i].pid==fifo_pid){
+	 process_no=i;
+	 SLOG(L_DBG,"Setting fake process_no to %d (fifo pid=%d)\n",i,fifo_pid);
+	 return;
+      }
+   }
+   for(i=0;i<pcnt;i++){
+      if(!memcmp(pt[i].desc,"unix domain socket server",26)){
+	 process_no=i;
+	 SLOG(L_DBG,"Setting fake process_no to %d\n",i);
+	 return;
+      }
+   }
+   SLOG(L_ERR,"unable to fake process_no\n");
+}
+*/
 
 /**Processes the actions received from the socket.
  * returns
@@ -233,35 +263,35 @@ int process_action(as_p the_as)
    if(use_stats)
       stats_reply();
    if(ac_len>AS_BUF_SIZE){
-      LOG(L_WARN,"BUG:Action too big (%d)!!! should be skipped and an error returned!\n",ac_len);
+      SLOG(L_WARN,"BUG:Action too big (%d)!!! should be skipped and an error returned!\n",ac_len);
       return -1;
    }
    while (the_as->ac_buffer.len>=ac_len) {
-      LOG(L_DBG,"Processing action %d bytes long\n",ac_len);
+      SLOG(L_DBG,"Processing action %d bytes long\n",ac_len);
       switch(the_as->ac_buffer.s[4]){
 	 case REPLY_PROV:
 	 case REPLY_FIN:
-	    LOG(L_DBG,"Processing a REPLY action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
+	    SLOG(L_DBG,"Processing a REPLY action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
 	    ac_reply(the_as,the_as->ac_buffer.s+5,ac_len-5);
 	    break;
 	 case UAC_REQ:
-	    LOG(L_DBG,"Processing an UAC REQUEST action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
+	    SLOG(L_DBG,"Processing an UAC REQUEST action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
 	    ac_uac_req(the_as,the_as->ac_buffer.s+5,ac_len-5);
 	    break;
 	 case AC_CANCEL:
-	    LOG(L_DBG,"Processing a CANCEL REQUEST action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
+	    SLOG(L_DBG,"Processing a CANCEL REQUEST action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
 	    ac_cancel(the_as,the_as->ac_buffer.s+5,ac_len-5);
 	    break;
 	 case SL_MSG:
-	    LOG(L_DBG,"Processing a STATELESS MESSAGE action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
+	    SLOG(L_DBG,"Processing a STATELESS MESSAGE action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
 	    ac_sl_msg(the_as,the_as->ac_buffer.s+5,ac_len-5);
 	    break;
 	 case JAIN_PONG:
-	    LOG(L_DBG,"Processing a PONG\n");
+	    SLOG(L_DBG,"Processing a PONG\n");
 	    ac_jain_pong(the_as,the_as->ac_buffer.s+5,ac_len-5);
 	    break;
 	 default:
-	    LOG(L_DBG,"Processing a UNKNOWN TYPE action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
+	    SLOG(L_DBG,"Processing a UNKNOWN TYPE action from AS (length=%d): %.*s\n",ac_len,the_as->name.len,the_as->name.s);
 	    break;
       }
       memmove(the_as->ac_buffer.s,the_as->ac_buffer.s+ac_len,(the_as->ac_buffer.len)-ac_len);
@@ -303,7 +333,7 @@ int process_pong(struct ha *the_table,unsigned int seqno)
       tmp=the_table->pings+k;
       if(tmp->id == seqno){
 	 elapsed=(now.tv_sec-tmp->sent.tv_sec)*1000+(now.tv_usec-tmp->sent.tv_usec)/1000;
-	 LOG(L_DBG,"Ping-Pong delay: %d (timeout was:%d)\n",elapsed,the_table->timeout);
+	 SLOG(L_DBG,"Ping-Pong delay: %d (timeout was:%d)\n",elapsed,the_table->timeout);
 	 if(elapsed>the_table->timeout){
 	    /*if this ping has timed out, all the more-ancient pings will also be
 	     * timed out*/
@@ -357,32 +387,32 @@ int ac_cancel(as_p the_as,char *action,int len)
    net2hostL(cancelled_label,action,k);
 
    if(!(headers.s=pkg_malloc(MAX_HEADER))){
-      LOG(L_ERR,"ERROR:seas:ac_cancel:Out of Memory!!");
+      SLOG(L_ERR,"Out of Memory!!");
       goto error;
    }
    headers.len=0;
    if(!(my_msg=pkg_malloc(sizeof(struct sip_msg)))){
-      LOG(L_ERR,"ERROR:seas:ac_cancel: out of memory!\n");
+      SLOG(L_ERR,"out of memory!\n");
       goto error;
    }
    memset(my_msg,0,sizeof(struct sip_msg));
    my_msg->buf=action+k;
    my_msg->len=len-k;
-   LOG(L_DBG,"ac_cancel:Action UAC Message: uac_id:%d processor_id=%d, message:[%.*s]\n",uac_id,processor_id,len-4,&action[4]);
+   SLOG(L_DBG,"Action UAC Message: uac_id:%d processor_id=%d, message:[%.*s]\n",uac_id,processor_id,len-4,&action[4]);
    if(parse_msg(action+k,len-k,my_msg)<0){
-      LOG(L_ERR,"ERROR:seas:ac_cancel: parsing sip_msg");
+      SLOG(L_ERR,"parsing sip_msg");
       goto error;
    }
    if(my_msg->first_line.type==SIP_REPLY){
-      LOG(L_ERR,"ERROR:seas:ac_cancel:trying to create a UAC with a SIP response!!\n");
+      SLOG(L_ERR,"trying to create a UAC with a SIP response!!\n");
       goto error;
    }
    if(parse_headers(my_msg,HDR_EOH_F,0)==-1){
-      LOG(L_ERR,"ERROR:seas:ac_cancel:parsing headers\n");
+      SLOG(L_ERR,"parsing headers\n");
       goto error;
    }
    if(0>(headers.len=extract_allowed_headers(my_msg,1,-1,HDR_CONTENTLENGTH_F|HDR_ROUTE_F|HDR_TO_F|HDR_FROM_F|HDR_CALLID_F|HDR_CSEQ_F,headers.s,MAX_HEADER))) {
-      LOG(L_ERR,"ERROR:seas:Unable to extract allowed headers!!\n");
+      SLOG(L_ERR,"Unable to extract allowed headers!!\n");
       goto error;
    }
    headers.s[headers.len]=0;
@@ -391,12 +421,12 @@ int ac_cancel(as_p the_as,char *action,int len)
    i=(unsigned int)get_content_length(my_msg);
    if(i!=0){
       if(!(body.s=pkg_malloc(i))){
-	 LOG(L_ERR,"ERROR:seas:ac_uac_req:Out of Memory!");
+	 SLOG(L_ERR,"Out of Memory!");
 	 goto error;
       }
       memcpy(body.s,get_body(my_msg),i);
       body.len=i;
-      LOG(L_DBG,"Trying to construct a Sip Request with: body:%d[%s] headers:%d[%s]\n",\
+      SLOG(L_DBG,"Trying to construct a Sip Request with: body:%d[%s] headers:%d[%s]\n",\
 	    body.len,body.s,headers.len,headers.s);
    }else{
       body.s=NULL;
@@ -404,7 +434,7 @@ int ac_cancel(as_p the_as,char *action,int len)
    }
 
    if(!(the_param=shm_malloc(sizeof(struct as_uac_param)))){
-      LOG(L_ERR,"ERROR:seas:ac_cancel() out of shared memory\n");
+      SLOG(L_ERR,"out of shared memory\n");
       goto error;
    }
    the_param->who=my_as;
@@ -413,8 +443,8 @@ int ac_cancel(as_p the_as,char *action,int len)
 
    ret=seas_f.tmb.t_cancel_uac(&headers,&body,cancelled_hashIdx,cancelled_label,uac_cb,(void*)the_param);
    if (ret == 0) {
-      LOG(L_ERR, "ERROR:seas:ac_cancel() Error on t_cancel_uac\n");
-      as_action_fail_resp(uac_id,-E_UNSPEC,"500 SEAS cancel error");
+      SLOG(L_ERR, "Error on t_cancel_uac\n");
+      as_action_fail_resp(uac_id,SE_CANCEL,SE_CANCEL_MSG,SE_CANCEL_MSG_LEN);
       goto error;
    }else{
       the_param->label=ret;
@@ -499,12 +529,12 @@ int via_diff(struct sip_msg *req,struct sip_msg *resp)
    for(hf=resp->h_via1;hf;hf=hf->sibling){
       if(!hf->parsed){
 	 if((vb=pkg_malloc(sizeof(struct via_body)))==0){
-	    LOG(L_ERR,"Out of mem in via_diff!!\n");
+	    SLOG(L_ERR,"Out of mem in via_diff!!\n");
 	    return -1;
 	 }
 	 memset(vb,0,sizeof(struct via_body));
 	 if(parse_via(hf->body.s,hf->body.s+hf->body.len+1,vb)<0){
-	    LOG(L_ERR,"Unable to parse via in via_diff!\n");
+	    SLOG(L_ERR,"Unable to parse via in via_diff!\n");
 	    pkg_free(vb);
 	    return -1;
 	 }
@@ -577,18 +607,18 @@ int ac_reply(as_p the_as,char *action,int len)
    net2hostL(label,action,k);
 
    if(seas_f.tmb.t_lookup_ident(&c,hash_index,label)<0){
-      LOG(L_ERR,"ERROR:seas:Failed to t_lookup_ident hash_idx=%d,label=%d\n",hash_index,label);
+      SLOG(L_ERR,"Failed to t_lookup_ident hash_idx=%d,label=%d\n",hash_index,label);
       goto error;
    }
    if(use_stats)
       action_stat(c);
    if(c->uas.status>=200){
-      LOG(L_ERR,"ERROR:seas:ac_reply: trying to reply to a \"%.*s\" transaction"
+      SLOG(L_ERR,"ac_reply: trying to reply to a \"%.*s\" transaction"
 	    "that is already in completed state\n",REQ_LINE(c->uas.request).method.len,REQ_LINE(c->uas.request).method.s);
       goto error;
    }
    if (!(my_msg=parse_ac_msg(HDR_EOH_F,action+k,len-k))) {
-      LOG(L_ERR,"ERROR:seas:Failed to parse_ac_msg hash_idx=%d,label=%d\n",hash_index,label);
+      SLOG(L_ERR,"Failed to parse_ac_msg hash_idx=%d,label=%d\n",hash_index,label);
       goto error;
    }
    tb=(struct to_body*)my_msg->to->parsed;
@@ -598,26 +628,26 @@ int ac_reply(as_p the_as,char *action,int len)
       totag.s=NULL;
       totag.len=0;
       /*if(!(ttag=pkg_malloc(TOTAG_VALUE_LEN))){
-	 LOG(L_ERR,"ERROR:seas:Out of memory !!!\n");
+	 SLOG(L_ERR,"Out of memory !!!\n");
 	 goto error;
       }
       totag.s=ttag;
       calc_crc_suffix(c->uas.request,seas_tag_suffix);
-      LOG(L_DBG,"seas_tags = %.*s\n",TOTAG_VALUE_LEN,seas_tags);
+      SLOG(L_DBG,"seas_tags = %.*s\n",TOTAG_VALUE_LEN,seas_tags);
       memcpy(totag.s,seas_tags,TOTAG_VALUE_LEN);
       totag.len=TOTAG_VALUE_LEN;*/
    }
-   LOG(L_DBG,"Using totag=[%.*s]\n",totag.len,totag.s);
+   SLOG(L_DBG,"Using totag=[%.*s]\n",totag.len,totag.s);
    if(my_msg->content_length)
       contentlength=(unsigned int)(long)my_msg->content_length->parsed;
    if(0>(i=recordroute_diff(c->uas.request,my_msg))){/*not likely..*/
-      LOG(L_DBG,"Seems that request had more RecordRoutes than response...\n");
+      SLOG(L_DBG,"Seems that request had more RecordRoutes than response...\n");
       goto error;
    }else
-      LOG(L_DBG,"Recordroute Diff = %d\n",i);
+      SLOG(L_DBG,"Recordroute Diff = %d\n",i);
 
    if(0>(i=extract_allowed_headers(my_msg,0,i,HDR_VIA_F|HDR_TO_F|HDR_FROM_F|HDR_CSEQ_F|HDR_CALLID_F|HDR_CONTENTLENGTH_F,headers,MAX_HEADER))){
-      LOG(L_ERR,"ERROR:seas:ac_reply() filtering headers !\n");
+      SLOG(L_ERR,"ac_reply() filtering headers !\n");
       goto error;
    }
    headers[i]=0;
@@ -633,12 +663,12 @@ int ac_reply(as_p the_as,char *action,int len)
    body.len=contentlength;
    body.s=get_body(my_msg);
 
-   LOG(L_DBG,"Trying to construct a SipReply with: ReasonPhrase:[%.*s] body:[%.*s] headers:[%.*s] totag:[%.*s]\n",\
+   SLOG(L_DBG,"Trying to construct a SipReply with: ReasonPhrase:[%.*s] body:[%.*s] headers:[%.*s] totag:[%.*s]\n",\
 	 my_msg->first_line.u.reply.reason.len,my_msg->first_line.u.reply.reason.s,\
 	 body.len,body.s,new_header.len,new_header.s,totag.len,totag.s);
    /* t_reply_with_body un-ref-counts the transaction, so dont use it anymore*/
    if(seas_f.tmb.t_reply_with_body(c,my_msg->first_line.u.reply.statuscode,&(my_msg->first_line.u.reply.reason),&body,&new_header,&totag)<0){
-      LOG(L_ERR,"ERROR:seas:Failed to t_reply\n");
+      SLOG(L_ERR,"Failed to t_reply\n");
       goto error;
    }
    retval=0;
@@ -660,19 +690,19 @@ static inline struct sip_msg *parse_ac_msg(hdr_flags_t flags,char *start,int len
    struct sip_msg *my_msg;
    my_msg=NULL;
    if(!(my_msg=pkg_malloc(sizeof(struct sip_msg)))){
-      LOG(L_ERR,"ERROR:seas:ac_reply: out of memory!\n");
+      SLOG(L_ERR,"ac_reply: out of memory!\n");
       goto error;
    }
    memset(my_msg,0,sizeof(struct sip_msg));
    my_msg->buf=start;
    my_msg->len=len;
-   LOG(L_DBG,"Action Message:[%.*s]\n",len,start);
+   SLOG(L_DBG,"Action Message:[%.*s]\n",len,start);
    if(0>parse_msg(start,len,my_msg)){
-      LOG(L_ERR,"ERROR:seas:parse_ac_msg: parsing sip_msg");
+      SLOG(L_ERR,"parse_ac_msg: parsing sip_msg");
       goto error;
    }
    if(0>parse_headers(my_msg,flags,0)){
-      LOG(L_ERR,"ERROR:seas:parse_ac_msg: parsing headers\n");
+      SLOG(L_ERR,"parse_ac_msg: parsing headers\n");
       goto error;
    }
    return my_msg;
@@ -711,19 +741,19 @@ int ac_sl_msg(as_p the_as,char *action,int len)
    proxy=0;
 
    if(!(my_msg = parse_ac_msg(HDR_EOH_F,action+k,len-k))){
-      LOG(L_ERR,"ERROR:seas:ac_sl_msg: out of memory!\n");
+      SLOG(L_ERR,"out of memory!\n");
       goto error;
    }
    if(my_msg->first_line.type == SIP_REQUEST)
-      DBG("DEBUG:seas:ac_sl_msg: forwarding request:\"%.*s\" statelessly \n",my_msg->first_line.u.request.method.len+1+\
+      SLOG(L_DBG,"forwarding request:\"%.*s\" statelessly \n",my_msg->first_line.u.request.method.len+1+\
 	    my_msg->first_line.u.request.uri.len,my_msg->first_line.u.request.method.s);
    else
-      DBG("DEBUG:seas:ac_sl_msg: forwarding reply:\"%.*s\" statelessly \n",my_msg->first_line.u.reply.status.len+1+\
+      SLOG(L_DBG,"forwarding reply:\"%.*s\" statelessly \n",my_msg->first_line.u.reply.status.len+1+\
 	    my_msg->first_line.u.reply.reason.len,my_msg->first_line.u.reply.status.s);
 
    if (my_msg->route) {
       if (parse_rr(my_msg->route) < 0) {
-	 LOG(L_ERR, "Error while parsing Route body\n");
+	 SLOG(L_ERR, "Error while parsing Route body\n");
 	 goto error;
       }
       my_route = (rr_t*)my_msg->route->parsed;
@@ -738,7 +768,7 @@ int ac_sl_msg(as_p the_as,char *action,int len)
       */
    proxy=uri2proxy(uri,PROTO_NONE);
    if (proxy==0) {
-      LOG(L_ERR,"ERROR:seas:ac_sl_msg: unable to create proxy from URI \n");
+      SLOG(L_ERR,"unable to create proxy from URI \n");
       goto error;
    }
    proto=proxy->proto; /* uri2proxy set it correctly */
@@ -811,6 +841,8 @@ int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto)
 	return ret;
 }
 
+
+
 /*Actions are composed as follows:
  * (the action length and type as always= 5 bytes)
  * 4:uac_id
@@ -846,17 +878,17 @@ int ac_uac_req(as_p the_as,char *action,int len)
    processor_id=action[k++];
 
    if(!(headers.s=pkg_malloc(MAX_HEADER))){
-      LOG(L_ERR,"ERROR:seas:ac_uac_req:Out of Memory!!");
+      SLOG(L_ERR,"Out of Memory!!");
       goto error;
    }
    headers.len=0;
-   LOG(L_DBG,"ac_uac_req:Action UAC Message: uac_id:%d processor_id=%d\n",uac_id,processor_id);
-   if (!(my_msg = parse_ac_msg(0,action+k,len-k))) {
-      LOG(L_ERR,"ERROR:seas:ac_uac_req: out of memory!\n");
+   SLOG(L_DBG,"Action UAC Message: uac_id:%d processor_id=%d\n",uac_id,processor_id);
+   if (!(my_msg = parse_ac_msg(HDR_EOH_F,action+k,len-k))) {
+      SLOG(L_ERR,"out of memory!\n");
       goto error;
    }
    if(my_msg->first_line.type==SIP_REPLY){
-      LOG(L_ERR,"ERROR:seas:ac_uac_req:trying to create a UAC with a SIP response!!\n");
+      SLOG(L_ERR,"trying to create a UAC with a SIP response!!\n");
       goto error;
    }
    if(parse_headers(my_msg,HDR_EOH_F,0)==-1){
@@ -864,25 +896,25 @@ int ac_uac_req(as_p the_as,char *action,int len)
       goto error;
    }
    if(parse_from_header(my_msg)<0){
-      LOG(L_ERR,"ERROR:seas:uc_uac_req:parsing from header ! \n");
+      SLOG(L_ERR,"parsing from header ! \n");
       goto error;
    }
    if(check_transaction_quadruple(my_msg)==0){
-      as_action_fail_resp(uac_id,0,"Headers missing (to,from,call-id,cseq)?");
-      LOG(L_ERR,"ERROR:seas:ac_uac_req:Headers missing (to,from,call-id,cseq)?");
+      as_action_fail_resp(uac_id,SE_UAC,"Headers missing (to,from,call-id,cseq)?",0);
+      SLOG(L_ERR,"Headers missing (to,from,call-id,cseq)?");
       goto error;
    }
    if(!(get_from(my_msg)) || !(get_from(my_msg)->tag_value.s) || 
 	 !(get_from(my_msg)->tag_value.len)){
-      as_action_fail_resp(uac_id,0,"From tag missing");
-      LOG(L_ERR,"ERROR:seas:ac_uac_req:From tag missing");
+      as_action_fail_resp(uac_id,SE_UAC,"From tag missing",0);
+      SLOG(L_ERR,"From tag missing");
       goto error;
    }
    fb=my_msg->from->parsed;
    tb=my_msg->to->parsed;
    cseqb=my_msg->cseq->parsed;
    if(0!=(str2int(&cseqb->number,&cseq))){
-      LOG(L_DBG,"ERROR:seas:ac_uac_req() unable to parse CSeq\n");
+      SLOG(L_DBG,"unable to parse CSeq\n");
       goto error;
    }
    if(my_msg->first_line.u.request.method_value != METHOD_ACK &&
@@ -892,8 +924,8 @@ int ac_uac_req(as_p the_as,char *action,int len)
    }
    if(seas_f.tmb.new_dlg_uac(&(my_msg->callid->body),&(fb->tag_value),cseq,\
 	    &(fb->uri),&(tb->uri),&my_dlg) < 0) {
-      as_action_fail_resp(uac_id,0,"Error creating new dialog");
-      LOG(L_ERR,"ERROR:seas:ac_uac_req:Error while creating new dialog\n");
+      as_action_fail_resp(uac_id,SE_UAC,"Error creating new dialog",0);
+      SLOG(L_ERR,"Error while creating new dialog\n");
       goto error;
    }
    if(tb->tag_value.s && tb->tag_value.len)
@@ -906,7 +938,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
    server_signature=0;
    my_dlg->state = DLG_CONFIRMED;
    if(0>(headers.len=extract_allowed_headers(my_msg,1,-1,HDR_CONTENTLENGTH_F|HDR_ROUTE_F|HDR_TO_F|HDR_FROM_F|HDR_CALLID_F|HDR_CSEQ_F,headers.s,MAX_HEADER))) {
-      LOG(L_ERR,"ERROR:seas:Unable to extract allowed headers!!\n");
+      SLOG(L_ERR,"Unable to extract allowed headers!!\n");
       goto error;
    }
    headers.s[headers.len]=0;
@@ -915,13 +947,13 @@ int ac_uac_req(as_p the_as,char *action,int len)
       clen=(long)get_content_length(my_msg);
    if(clen!=0){
       if(!(body.s=pkg_malloc(clen))){
-	 LOG(L_ERR,"ERROR:seas:ac_uac_req:Out of Memory!");
+	 SLOG(L_ERR,"Out of Memory!");
 	 goto error;
       }
       memcpy(body.s,get_body(my_msg),clen);
       body.len=clen;
       body.s[clen]=0;
-      LOG(L_DBG,"Trying to construct a Sip Request with: body:%d[%.*s] headers:%d[%.*s]\n",\
+      SLOG(L_DBG,"Trying to construct a Sip Request with: body:%d[%.*s] headers:%d[%.*s]\n",\
 	    body.len,body.len,body.s,headers.len,headers.len,headers.s);
       /*t_reply_with_body un-ref-counts the transaction, so dont use it anymore*/
    }else{
@@ -939,7 +971,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
     *
     */
    if(!(the_param=shm_malloc(sizeof(struct as_uac_param)))){
-      LOG(L_ERR,"ERROR:seas:ac_uac_req() out of shared memory\n");
+      SLOG(L_ERR,"out of shared memory\n");
       goto error;
    }
    the_param->who=my_as;
@@ -950,7 +982,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
 
    if (my_msg->route) {
       if (parse_rr(my_msg->route) < 0) {
-	 LOG(L_ERR, "Error while parsing Route body\n");
+	 SLOG(L_ERR, "Error while parsing Route body\n");
 	 goto error;
       }
       /* TODO route_set should be a shm copy of my_msg->route->parsed */
@@ -969,7 +1001,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
       fake_uri.len=print_local_uri(the_as,processor_id,fake_uri.s,200);
 
       if(fake_uri.len<0){
-	 LOG(L_ERR,"ERROR printing local uri\n");
+	 SLOG(L_ERR,"printing local uri\n");
 	 goto error;
       }
       my_dlg->hooks.next_hop=&fake_uri;
@@ -981,11 +1013,11 @@ int ac_uac_req(as_p the_as,char *action,int len)
    my_dlg->route_set=(rr_t *)0;
    if (ret <= 0) {
       err_ret = err2reason_phrase(ret,&sip_error,err_buf, sizeof(err_buf), "SEAS/UAC");
-      LOG(L_ERR, "ERROR:seas:ac_uac_req() Error on request_within %s\n",err_buf );
+      SLOG(L_ERR,"Error on request_within %s\n",err_buf );
       if(err_ret > 0) {
-	 as_action_fail_resp(uac_id,sip_error,err_buf);
+	 as_action_fail_resp(uac_id,ret,err_buf,0);
       }else{
-	 as_action_fail_resp(uac_id,-E_UNSPEC,"500 SEAS/UAC error");
+	 as_action_fail_resp(uac_id,E_UNSPEC,"500 SEAS/UAC error",0);
       }
       goto error;
    }
@@ -1026,7 +1058,7 @@ int print_local_uri(as_p as,char processor_id,char *where,int len)
 	 break;
    }
    if(i==MAX_BINDS){
-      LOG(L_DBG,"processor ID not found\n");
+      SLOG(L_DBG,"processor ID not found\n");
       return -1;
    }
    si=as->binds[i];
@@ -1059,14 +1091,14 @@ int print_local_uri(as_p as,char processor_id,char *where,int len)
 	       htons(si->address.u.addr16[6]), htons(si->address.u.addr16[7]),si->port_no,proto.len,proto.s);
 	 break;
       default:
-	 LOG(L_ERR,"address family unknown\n");
+	 SLOG(L_ERR,"address family unknown\n");
 	 return -1;
    }
    if(i>len){
-      LOG(L_ERR,"Output was truncated!!\n");
+      SLOG(L_ERR,"Output was truncated!!\n");
       return -1;
    }else if(i<0){
-      LOG(L_ERR,"Error on snprintf\n");
+      SLOG(L_ERR,"Error on snprintf\n");
       return i;
    }
    return i;
@@ -1111,12 +1143,12 @@ static inline int calculate_hooks(dlg_t* _d)
    if (_d->route_set) {
       uri = &_d->route_set->nameaddr.uri;
       if (parse_uri(uri->s, uri->len, &puri) < 0) {
-         LOG(L_ERR, "calculate_hooks(): Error while parsing URI\n");
+         SLOG(L_ERR, "Error while parsing URI\n");
          return -1;
       }
 
       if (parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0) {
-         LOG(L_ERR, "calculate_hooks(): Error while parsing parameters\n");
+         SLOG(L_ERR, "Error while parsing parameters\n");
          return -2;
       }
       free_params(params);
@@ -1173,13 +1205,13 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 
    for(hf=my_msg->headers;hf;hf=hf->next){
       if(forbidden_hdrs & HDR_T2F(hf->type)){
-	 LOG(L_DBG,"Skipping header (%.*s)\n",hf->name.len,hf->name.s);
+	 SLOG(L_DBG,"Skipping header (%.*s)\n",hf->name.len,hf->name.s);
 	 continue;
       }else if(hf->type==HDR_VIA_T && strip_top_vias > 0){
 	 /** All vias MUST be parsed !!*/
 	 for(i=0,vb=hf->parsed;vb;vb=vb->next,i++);
 	 if(i<=strip_top_vias){
-	    LOG(L_DBG,"Stripping vias [%.*s]\n",hf->len,hf->name.s);
+	    SLOG(L_DBG,"Stripping vias [%.*s]\n",hf->len,hf->name.s);
 	    /** skip this via header*/
 	    strip_top_vias-=i;
 	 }else{
@@ -1188,15 +1220,15 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 	    while(strip_top_vias--)
 	       vb=vb->next;
 	    k= (hf->name.s + hf->len) - vb->name.s;
-	    LOG(L_DBG,"Stripping vias [%.*s]\n",(int)(vb->name.s-hf->name.s),
-			hf->name.s);
+	    SLOG(L_DBG,"Stripping vias [%.*s]\n",(int)(vb->name.s-hf->name.s),
+		  hf->name.s);
 	    if(k+VIA_LEN<headers_len){
 	       memcpy(headers+len,VIA,VIA_LEN);
 	       len+=VIA_LEN;
 	       memcpy(headers+len,vb->name.s,k);
 	       len+=k;
 	    }else{
-	       LOG(L_ERR,"Out Of Space !!\n");
+	       SLOG(L_ERR,"Out Of Space !!\n");
 	       goto error;
 	    }
 	 }
@@ -1204,17 +1236,17 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 	 if(rtcnt==0)
 	    continue;
 	 if(!hf->parsed && 0>parse_rr(hf)){
-	    LOG(L_ERR,"ERROR parsing Record-Route:\"%.*s\"\n",hf->body.len,hf->body.s);
+	    SLOG(L_ERR,"parsing Record-Route:\"%.*s\"\n",hf->body.len,hf->body.s);
 	    goto error;
 	 }
 	 for(i=0,rb=hf->parsed;rb;rb=rb->next,i++);
 	 if(i<=rtcnt){
 	    if((len+hf->len)<headers_len){
-	       LOG(L_DBG,"Allowing RecordRoute [%.*s]\n",hf->len,hf->name.s);
+	       SLOG(L_DBG,"Allowing RecordRoute [%.*s]\n",hf->len,hf->name.s);
 	       memcpy(headers+len,hf->name.s,hf->len);
 	       len+=hf->len;
 	    }else{
-	       LOG(L_ERR,"Unable to keep recordroute (not enough space left in headers) Discarding \"%.*s\" \n",hf->name.len,hf->name.s);
+	       SLOG(L_ERR,"Unable to keep recordroute (not enough space left in headers) Discarding \"%.*s\" \n",hf->name.len,hf->name.s);
 	       goto error;
 	    }
 	    /** is this dangerous ? because the rtcnt is the control variable for this conditional 'if'
@@ -1228,12 +1260,12 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 	    k= (((rb->nameaddr.name.s) + rb->len)-hf->name.s) ;
 	    if(len+k+CRLF_LEN<headers_len){
 	       memcpy(headers+len,hf->name.s,k);
-	       LOG(L_DBG,"Allowing RecordRoute [%.*s\r\n]\n",k,hf->name.s);
+	       SLOG(L_DBG,"Allowing RecordRoute [%.*s\r\n]\n",k,hf->name.s);
 	       len+=k;
 	       memcpy(headers+len,CRLF,CRLF_LEN);
 	       len+=CRLF_LEN;
 	    }else{
-	       LOG(L_ERR,"Out Of Space !!\n");
+	       SLOG(L_ERR,"Out Of Space !!\n");
 	       goto error;
 	    }
 	 }
@@ -1246,7 +1278,7 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 	    memcpy(headers+len,hf->name.s,hf->len);
 	    len+=hf->len;
 	 }else{
-	    LOG(L_WARN,"Too many headers. Discarding \"%.*s\" \n",hf->name.len,hf->name.s);
+	    SLOG(L_WARN,"Too many headers. Discarding \"%.*s\" \n",hf->name.len,hf->name.s);
 	 }
       }
    }/*for*/
@@ -1263,7 +1295,7 @@ static inline int shm_str_dup(str* _d, str* _s)
 {
    _d->s = shm_malloc(_s->len);
    if (!_d->s) {
-      LOG(L_ERR, "ERROR:seas:str_duplicate(): No memory left\n");
+      SLOG(L_ERR, "No memory left\n");
       return -1;
    }
 
@@ -1283,25 +1315,26 @@ static inline int shm_str_dup(str* _d, str* _s)
  * N: the string
  *
  */
-int as_action_fail_resp(int uac_id,int sip_error,char *err_buf)
+int as_action_fail_resp(int uac_id,int sip_error,char *err_buf,int i)
 {
    char msg[14+MAX_REASON_LEN];
-   int k,i;
+   int k;
    k=4;
-   i=strlen(err_buf);
+   if(i==0)
+      i=strlen(err_buf);
    if(i>MAX_REASON_LEN){
-      LOG(L_ERR,"ERROR:seas:Error Reason bigger than MAX_REASON_LEN\n");
+      SLOG(L_ERR,"Error Reason bigger than MAX_REASON_LEN\n");
       return -1;
    }
    msg[k++]=AC_RES_FAIL;
    uac_id=htonl(uac_id);
-   memcpy(&msg[k],&uac_id,4);
+   memcpy(msg+k,&uac_id,4);
    k+=4;
    sip_error=htonl(sip_error);
-   memcpy(&msg[k],&sip_error,4);
+   memcpy(msg+k,&sip_error,4);
    k+=4;
    msg[k++]=(char)(unsigned char)i;
-   memcpy(&msg[k],err_buf,i);
+   memcpy(msg+k,err_buf,i);
    k+=i;
    k=htonl(k);
    memcpy(msg,&k,4);
@@ -1335,16 +1368,16 @@ void uac_cb(struct cell* t, int type,struct tmcb_params *rcvd_params)
    if(!ev_info || !ev_info->who){
       return;
    }
-   LOG(L_DBG,"Reply to UAC Transaction for AS:%.*s code: %d\n",ev_info->who->name.len,ev_info->who->name.s,code);
-   LOG(L_DBG,"Transaction %p Nr_of_outgoings:%d is_Local:%c\n",t,t->nr_of_outgoings,is_local(t)?'y':'n');
+   SLOG(L_DBG,"Reply to UAC Transaction for AS:%.*s code: %d\n",ev_info->who->name.len,ev_info->who->name.s,code);
+   SLOG(L_DBG,"Transaction %p Nr_of_outgoings:%d is_Local:%c\n",t,t->nr_of_outgoings,is_local(t)?'y':'n');
    for(i=0;i<t->nr_of_outgoings;i++)
-      LOG(L_DBG,"UAC[%d].last_received=%d\n",i,t->uac[i].last_received);
+      SLOG(L_DBG,"UAC[%d].last_received=%d\n",i,t->uac[i].last_received);
    if(!(my_as_ev=shm_malloc(sizeof(as_msg_t)))){
-      LOG(L_ERR,"ERROR:seas:uac_cb() Out of shared mem\n");
+      SLOG(L_ERR,"Out of shared mem\n");
       goto error;
    }
    if(!(buffer=create_as_action_reply(t,rcvd_params,ev_info->uac_id,ev_info->processor_id,&mylen))){
-      LOG(L_ERR,"ERROR:seas:uac_cb() Unable to encode message\n");
+      SLOG(L_ERR,":seas:uac_cb() Unable to encode message\n");
       goto error;
    }
    my_as_ev->as = ev_info->who;
@@ -1374,7 +1407,7 @@ char* create_as_action_reply(struct cell *c,struct tmcb_params *params,int uac_i
    char *buffer;
    struct sip_msg *msg;
    if(!(buffer=shm_malloc(ENCODED_MSG_SIZE))){
-      LOG(L_ERR,"ERROR:seas:create_as_action_reply Out Of Memory !!\n");
+      SLOG(L_ERR,"create_as_action_reply Out Of Memory !!\n");
       return 0;
    }
    msg=0;
@@ -1390,7 +1423,7 @@ char* create_as_action_reply(struct cell *c,struct tmcb_params *params,int uac_i
    buffer[k++]=processor_id;
    /*flags (by now, not used)*/
    flags=htonl(flags);
-   memcpy(&buffer[k],&flags,4);
+   memcpy(buffer+k,&flags,4);
    k+=4;
    /*recv info*/
    if(!(params->rpl == FAKED_REPLY)) {
@@ -1400,20 +1433,20 @@ char* create_as_action_reply(struct cell *c,struct tmcb_params *params,int uac_i
       /*src ip len + src ip*/
       len=msg->rcv.src_ip.len;
       buffer[k++]=(unsigned char)len;
-      memcpy(&buffer[k],&(msg->rcv.src_ip.u),len);
+      memcpy(buffer+k,&(msg->rcv.src_ip.u),len);
       k+=len;
       /*dst ip len + dst ip*/
       len=msg->rcv.dst_ip.len;
       buffer[k++]=(unsigned char)len;
-      memcpy(&buffer[k],&(msg->rcv.dst_ip.u),len);
+      memcpy(buffer+k,&(msg->rcv.dst_ip.u),len);
       k+=len;
       /*src port */
       port=htons(msg->rcv.src_port);
-      memcpy(&buffer[k],&port,2);
+      memcpy(buffer+k,&port,2);
       k+=2;
       /*dst port */
       port=htons(msg->rcv.dst_port);
-      memcpy(&buffer[k],&port,2);
+      memcpy(buffer+k,&port,2);
       k+=2;
    }else{
       /*protocol*/
@@ -1430,26 +1463,26 @@ char* create_as_action_reply(struct cell *c,struct tmcb_params *params,int uac_i
    }
    /*hash_index*/
    i=htonl(c->hash_index);
-   memcpy(&buffer[k],&i,4);
+   memcpy(buffer+k,&i,4);
    k+=4;
    /*label*/
    i=(!strncmp(c->method.s,"CANCEL",6)) ? \
      htonl(((struct as_uac_param*)*params->param)->label) : \
 	htonl(c->label);
-   memcpy(&buffer[k],&i,4);
+   memcpy(buffer+k,&i,4);
    k+=4;
    /*uac_id*/
    uac_id=htonl(uac_id);
-   memcpy(&buffer[k],&uac_id,4);
+   memcpy(buffer+k,&uac_id,4);
    k+=4;
    /*code*/
    code=htonl(params->code);
-   memcpy(&buffer[k],&code,4);
+   memcpy(buffer+k,&code,4);
    k+=4;
    /*length of event (hdr+payload-4), copied at the beginning*/
-   if(!(params->rpl == FAKED_REPLY)) {
+   if(params->rpl != FAKED_REPLY) {
       if((i=encode_msg(msg,buffer+k,ENCODED_MSG_SIZE-k))<0){
-	 LOG(L_ERR,"ERROR:seas:Unable to encode msg\n");
+	 SLOG(L_ERR,"Unable to encode msg\n");
 	 goto error;
       }
       k+=i;

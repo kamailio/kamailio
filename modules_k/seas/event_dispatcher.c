@@ -86,11 +86,11 @@ int dispatcher_main_loop()
 
    strcpy(whoami,"Seas Event Dispatcher process");
    /*I set process_no to -1 because otherwise, the logging process confuses this process with another from SER
-    * (see LOG() and dprint() and my_pid())*/
+    * (see SLOG() and dprint() and my_pid())*/
    process_no = -1;
 
    if(open_server_sockets(seas_listen_ip,seas_listen_port,socks)==-1){
-      LOG(L_ERR,"ERROR:seas: dispatcher_main_loop: unable to open server sockets on dispatcher\n");
+      SLOG(L_ERR,"unable to open server sockets on dispatcher\n");
       return -1;
    }
    for(i=0;i<2;i++){
@@ -112,11 +112,11 @@ int dispatcher_main_loop()
       if(sig_flag==SIGCHLD){
 	 while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
 	    if (WIFEXITED(chld_status)){
-	       LOG(L_INFO, "child process %d exited normally, status=%d\n",chld,WEXITSTATUS(chld_status));
+	       SLOG(L_INFO, "child process %d exited normally, status=%d\n",chld,WEXITSTATUS(chld_status));
 	    }else if (WIFSIGNALED(chld_status)) {
-	       LOG(L_INFO, "child process %d exited by a signal %d\n",chld,WTERMSIG(chld_status));
+	       SLOG(L_INFO, "child process %d exited by a signal %d\n",chld,WTERMSIG(chld_status));
 	    }else if (WIFSTOPPED(chld_status)) 
-	       LOG(L_INFO, "child process %d stopped by a signal %d\n",chld,WSTOPSIG(chld_status));
+	       SLOG(L_INFO, "child process %d stopped by a signal %d\n",chld,WSTOPSIG(chld_status));
 	    for (as=as_list;as;as=as->next) {
 	       if(as->type!=AS_TYPE)
 		  continue;
@@ -124,7 +124,7 @@ int dispatcher_main_loop()
 		  for(i=0;i<as_nr && ((poll_fds[3+i].fd)!=(as->u.as.event_fd));i++)
 		     ;
 		  if(i==as_nr){
-		     LOG(L_ERR,"ERROR:seas:Either the pinger has died or BUG found..\n");
+		     SLOG(L_ERR,"Either the pinger has died or BUG found..\n");
 		     continue;
 		  }
 		  /*overwrite the obsolete 'i' position with the next position*/
@@ -144,17 +144,17 @@ int dispatcher_main_loop()
 		  destroy_pingtable(&as->u.as.jain_pings);
 		  destroy_pingtable(&as->u.as.servlet_pings);
 		  as_nr--;
-		  LOG(L_WARN,"client [%.*s] leaving (Action Dispatcher Process died !)\n",as->name.len,as->name.s);
+		  SLOG(L_WARN,"client [%.*s] leaving (Action Dispatcher Process died !)\n",as->name.len,as->name.s);
 		  break;
 	       }/*if(action_pid==chld)*/
 	    }/*for(as=as_list;as;as=as->next)*/
 	 }/*while(waitpid(-1)>0)*/
       }else if (sig_flag) {
-	 LOG(L_WARN,"WARN: received signal != sigchld(%d)\n",sig_flag);
+	 SLOG(L_WARN,"received signal != sigchld(%d)\n",sig_flag);
       }
       sig_flag=0;
       clean_index=0;
-      LOG(L_INFO,"polling [2 ServSock] [1 pipe] [%d App Servers] [%d Uncomplete AS]\n",as_nr,unc_as_nr);
+      SLOG(L_INFO,"polling [2 ServSock] [1 pipe] [%d App Servers] [%d Uncomplete AS]\n",as_nr,unc_as_nr);
       poll_events = poll(poll_fds,3+unc_as_nr+as_nr,-1);
       if (poll_events == -1) {
 	 if(errno==EINTR){
@@ -163,11 +163,11 @@ int dispatcher_main_loop()
 	    continue;
 	 }
 	 if(errno==EBADF){
-	    LOG(L_ERR, "ERROR:seas: invalid file descriptor pased to poll (%s)\n",strerror(errno));
+	    SLOG(L_ERR, "invalid file descriptor pased to poll (%s)\n",strerror(errno));
 	    return -1;/*??*/
 	 }
 	 /* errors */
-	 LOG(L_ERR,"ERROR:seas:poll'ing:%s\n",strerror(errno));
+	 SLOG(L_ERR,"poll'ing:%s\n",strerror(errno));
 	 poll_events=0;
 	 continue;
       } else if (poll_events == 0) {/*timeout*/
@@ -184,9 +184,9 @@ int dispatcher_main_loop()
 		  poll_tmp->fd=fd;
 		  poll_tmp->events=POLLIN|POLLHUP;
 		  unc_as_nr++;
-		  LOG(L_DBG,"Have new %s client\n",i==0?"event":"action");
+		  SLOG(L_DBG,"Have new %s client\n",i==0?"event":"action");
 	       }else{
-		  LOG(L_ERR,"ERROR accepting connection from AS\n");
+		  SLOG(L_ERR,"accepting connection from AS\n");
 	       }
 	    }
 	 }
@@ -195,36 +195,36 @@ int dispatcher_main_loop()
 	    poll_fds[2].revents &= (~POLLIN);
 	    poll_events--;
 	    if(dispatch_relay()<0){
-	       LOG(L_ERR,"ERROR:seas:dispatcher_main_loop(): dispatch_relay returned -1"
+	       SLOG(L_ERR,"dispatch_relay returned -1"
 		     "should clean-up table\n");
 	    }
 	 }
 	 /*now handle receive data from completed AS*/
 	 clean_index=0;
-	 LOG(L_DBG,"Scanning data from %d AS\n",as_nr);
+	 SLOG(L_DBG,"Scanning data from %d AS\n",as_nr);
 	 for(i=0;(i<as_nr) && poll_events;i++){
 	    clean_index=0;
 	    poll_tmp=&poll_fds[3+i];
 	    if(poll_tmp->revents)
 	       poll_events--;
 	    if(poll_tmp->revents & POLLIN){
-	       LOG(L_DBG,"POLLIN found in AS #%i\n",i);
+	       SLOG(L_DBG,"POLLIN found in AS #%i\n",i);
 	       poll_tmp->revents &= (~POLLIN);
 	       switch(handle_as_data(poll_tmp->fd)){
 		  case -2:/*read returned 0 bytes, an AS client is leaving*/
 		     clean_index=1;
 		     break;
 		  case -1:/*shouldnt happen*/
-		     LOG(L_ERR,"ERROR:seas:error reading from AS socket\n");
+		     SLOG(L_ERR,"reading from AS socket\n");
 		     break;
 		  case 0:/* event_response received and processed*/
 		     break;
 		  default:
-		     LOG(L_WARN,"WARNING:seas:unknown return type from handle_as_data\n");
+		     SLOG(L_WARN,"unknown return type from handle_as_data\n");
 	       }
 	    }
 	    if(clean_index || (poll_tmp->revents & POLLHUP)){
-	       LOG(L_DBG,"POLHUP or read==0 found in %i AS \n",i);
+	       SLOG(L_DBG,"POLHUP or read==0 found in %i AS \n",i);
 	       clean_index=0;
 	       poll_tmp->revents = 0;
 	       for(as=as_list;as;as=as->next){
@@ -243,24 +243,24 @@ int dispatcher_main_loop()
 			poll_fds[j].revents=poll_fds[j+1].revents;
 		     }
 		     --i;
-		     LOG(L_WARN,"client %.*s leaving !!!\n",as->name.len,as->name.s);
+		     SLOG(L_WARN,"client %.*s leaving !!!\n",as->name.len,as->name.s);
 		     break;
 		  }
 	       }
 	       if (!as) {
-		  LOG(L_ERR,"the leaving client was not found in the as_list\n");
+		  SLOG(L_ERR,"the leaving client was not found in the as_list\n");
 	       }
 	    }
 	 }
 	 /*now handle data sent from uncompleted AS*/
-	 LOG(L_DBG,"Scanning data from %d uncomplete AS \n",unc_as_nr);
+	 SLOG(L_DBG,"Scanning data from %d uncomplete AS \n",unc_as_nr);
 	 clean_index=0;
 	 for(i=0;i<unc_as_nr && poll_events;i++){
 	    poll_tmp=&poll_fds[3+as_nr+i];
 	    if(poll_tmp->revents)
 	       poll_events--;
 	    if(poll_tmp->revents & POLLIN){
-	       LOG(L_DBG,"POLLIN found in %d uncomplete AS \n",i);
+	       SLOG(L_DBG,"POLLIN found in %d uncomplete AS \n",i);
 	       poll_tmp->revents &= (~POLLIN);
 	       fd=handle_unc_as_data(poll_tmp->fd);
 	       if(fd>0){
@@ -291,7 +291,7 @@ int dispatcher_main_loop()
 	       }
 	    }
 	    if(poll_tmp->revents & POLLHUP){
-	       LOG(L_DBG,"POLLHUP found in %d uncomplete AS \n",i);
+	       SLOG(L_DBG,"POLLHUP found in %d uncomplete AS \n",i);
 	       close(poll_tmp->fd);
 	       for(k=i;k<(unc_as_nr-1);k++){
 		  j=3+as_nr+k;
@@ -334,30 +334,30 @@ static int open_server_sockets(struct ip_addr *address,unsigned short port,int *
    fd[0]=fd[1]=-1;
 
    if(address->af!=AF_INET && address->af!=AF_INET6){
-      LOG(L_ERR,"ERROR:seas:Only ip and ipv6 allowed socket types\n");
+      SLOG(L_ERR,"Only ip and ipv6 allowed socket types\n");
       return -1;
    }
 
    for(i=0;i<2;i++){
       if(init_su(&su,address,port+i)<0){
-	 LOG(L_ERR,"ERROR:seas: open_server_sockets: unable to init sockaddr_union\n");
+	 SLOG(L_ERR,"unable to init sockaddr_union\n");
 	 return -1;
       }
       if((fd[i]=socket(AF2PF(su.s.sa_family), SOCK_STREAM, 0))==-1){
-	 LOG(L_ERR,"ERROR:seas: open_server_sockets: trying to open server %s socket (%s)\n",i==0?"event":"action",strerror(errno));
+	 SLOG(L_ERR,"trying to open server %s socket (%s)\n",i==0?"event":"action",strerror(errno));
 	 goto error;
       }
       optval=1;
       if (setsockopt(fd[i], SOL_SOCKET, SO_REUSEADDR, (void*)&optval, sizeof(optval))==-1) {
-	 LOG(L_ERR,"ERROR:seas: open_server_sockets: setsockopt (%s)\n",strerror(errno));
+	 SLOG(L_ERR,"setsockopt (%s)\n",strerror(errno));
 	 goto error;
       }
       if ((bind(fd[i], &su.s,sizeof(union sockaddr_union)))==-1){
-	 LOG(L_ERR, "ERROR:seas: open_server_sockets: bind (%s)\n",strerror(errno));
+	 SLOG(L_ERR, "bind (%s)\n",strerror(errno));
 	 goto error;
       }
       if (listen(fd[i], 10)==-1){
-	 LOG(L_ERR, "ERROR:seas: open_server_sockets: listen (%s)\n",strerror(errno));
+	 SLOG(L_ERR, "listen (%s)\n",strerror(errno));
 	 goto error;
       }
    }
@@ -402,13 +402,13 @@ read_again:
       if(errno==EINTR){
 	 goto read_again;
       }else{
-	 LOG(L_ERR,"ERROR:seas:dispatch_relay(): Dispatcher Process "
+	 SLOG(L_ERR,"Dispatcher Process "
 	       "received unknown error reading from pipe (%s)\n",strerror(errno));
 	 retval=-1;
 	 goto error;
       }
    }else if(i==0){
-	 LOG(L_ERR,"ERROR:seas:dispatch_relay(): Dispatcher Process "
+	 SLOG(L_ERR,"Dispatcher Process "
 	       "received 0 while reading from pipe\n");
 	 goto error;
    }else{
@@ -418,7 +418,7 @@ read_again:
    }
 
    if (!thepointer.ptr) {
-      LOG(L_ERR,"Received Corrupted pointer to event !!\n");
+      SLOG(L_ERR,"Received Corrupted pointer to event !!\n");
       retval=0;
       goto error;
    }
@@ -426,7 +426,7 @@ read_again:
    if(use_stats && thepointer.ptr->transaction)
       event_stat(thepointer.ptr->transaction);
    if(thepointer.ptr->as == NULL || !thepointer.ptr->as->connected || thepointer.ptr->as->type==CLUSTER_TYPE){
-      LOG(L_WARN,"WARNING: tryied to send an event to an App Server that is scheduled to die !!\n");
+      SLOG(L_WARN,"tryied to send an event to an App Server that is scheduled to die !!\n");
       retval=-2;
       goto error;
    }
@@ -438,18 +438,18 @@ write_again:
       switch(errno){
 	 case EINTR:
 	    if(!thepointer.ptr->as->connected){
-	       LOG(L_WARN,"WARNING: tryied to send an event to an App Server that is scheduled to die !!\n");
+	       SLOG(L_WARN,"tryied to send an event to an App Server that is scheduled to die !!\n");
 	       retval=-2;
 	       goto error;
 	    }
 	    goto write_again;
 	 case EPIPE:
-	    LOG(L_ERR,"ERROR:seas:dispatch_relay(): AS [%.*s] closed "
+	    SLOG(L_ERR,"AS [%.*s] closed "
 		  "the socket !\n",thepointer.ptr->as->u.as.name.len,thepointer.ptr->as->u.as.name.s);
 	    retval=-2;
 	    goto error;
 	 default:
-	    LOG(L_ERR,"ERROR:seas:dispatch_relay(): unknown error while "
+	    SLOG(L_ERR,"unknown error while "
 		  "trying to write to AS socket(%s)\n",strerror(errno));
 	    retval=-2;
 	    goto error;
@@ -460,12 +460,12 @@ write_again:
 	 goto write_again;
    }else if(i==0){
       if (tries++ > MAX_WRITE_TRIES) { 
-	 LOG(L_ERR,"MAX WRITE TRIES !!!\n");
+	 SLOG(L_ERR,"MAX WRITE TRIES !!!\n");
 	 goto error;
       }else
 	 goto write_again;
    }
-   LOG(L_DBG,"Event relaied to %.*s AS\n",thepointer.ptr->as->u.as.name.len,thepointer.ptr->as->u.as.name.s);
+   SLOG(L_DBG,"Event relaied to %.*s AS\n",thepointer.ptr->as->u.as.name.len,thepointer.ptr->as->u.as.name.s);
    LOG(L_DBG,"Event type %s \n",action_names[thepointer.ptr->type]);
    retval=0;
 error:
@@ -503,13 +503,13 @@ static inline int add_new_as(int event_idx,int action_idx,struct as_entry *as)
    if(use_ha){
       if(jain_ping_timeout){
 	 if (0>init_pingtable(&the_as->jain_pings,jain_ping_timeout,(jain_ping_timeout/jain_ping_period+1)*PING_OVER_FACTOR)){
-	    LOG(L_ERR,"Unable to init jain pinging table...\n");
+	    SLOG(L_ERR,"Unable to init jain pinging table...\n");
 	    goto error;
 	 }
       }
       if(servlet_ping_timeout){
 	 if (0>init_pingtable(&the_as->servlet_pings,servlet_ping_timeout,(servlet_ping_timeout/servlet_ping_period+1)*PING_OVER_FACTOR)){
-	    LOG(L_ERR,"Unable to init servlet pinging table...\n");
+	    SLOG(L_ERR,"Unable to init servlet pinging table...\n");
 	    goto error;
 	 }
       }
@@ -517,7 +517,7 @@ static inline int add_new_as(int event_idx,int action_idx,struct as_entry *as)
    /*TODO attention, this is pkg_malloc because only the Event_Dispatcher process 
     * has to use it !!*/
    if(!(the_as->ev_buffer.s = pkg_malloc(AS_BUF_SIZE))){
-      LOG(L_ERR,"ERROR: seas: add_new_as: unable to alloc pkg mem for the event buffer\n");
+      SLOG(L_ERR,"unable to alloc pkg mem for the event buffer\n");
       goto error;
    }
    the_as->ev_buffer.len=0;
@@ -530,7 +530,7 @@ static inline int add_new_as(int event_idx,int action_idx,struct as_entry *as)
 	 if (tmp->u.cs.as_names[j].len == the_as->name.len && 
 	       !memcmp(tmp->u.cs.as_names[j].s,the_as->name.s,the_as->name.len)) { 
 	    if(tmp->u.cs.num==tmp->u.cs.registered){
-	       LOG(L_ERR,"AS %.*s belongs to cluster %.*s which is already completed\n",
+	       SLOG(L_ERR,"AS %.*s belongs to cluster %.*s which is already completed\n",
 		     the_as->name.len,the_as->name.s,tmp->name.len,tmp->name.s);
 	       break;
 	    }
@@ -540,11 +540,11 @@ static inline int add_new_as(int event_idx,int action_idx,struct as_entry *as)
       }
    }
    if(0>spawn_action_dispatcher(as)){
-      LOG(L_ERR,"ERROR:seas:add_new_as(): Unable to spawn Action Dispatcher for as %s\n",ev->name);
+      SLOG(L_ERR,"Unable to spawn Action Dispatcher for as %s\n",ev->name);
       goto error;
    }
    if(send_sockinfo(the_as->event_fd)==-1){
-      LOG(L_ERR,"ERROR:seas:add_new_as(): Unable to send socket info to as %s\n",ev->name);
+      SLOG(L_ERR,"Unable to send socket info to as %s\n",ev->name);
       goto error;
    }
    return 0;
@@ -595,7 +595,7 @@ static inline int send_sockinfo(int fd)
    for(s=tls_listen;s;s=s->next,i++);
 #endif
    if(i==0){
-      LOG(L_ERR,"ERROR:seas:send_sockinfo no udp|tcp|tls sockets ?!!\n");
+      SLOG(L_ERR,"no udp|tcp|tls sockets ?!!\n");
       return -1;
    }
    buffer[k++]=i;
@@ -648,7 +648,7 @@ static inline int print_sock_info(char *buffer,int wheremax,int *idx,struct sock
    k=*idx;
    buffer[k++]=(char)type;
    if((i=(unsigned char)s->name.len)>30){
-      LOG(L_ERR,"ERROR:seas:print_sock_info: name too long\n");
+      SLOG(L_ERR,"name too long\n");
       return -1;
    }
    buffer[k++]=i;
@@ -684,23 +684,23 @@ static int handle_as_data(int fd)
       if(as->type == AS_TYPE && as->connected && (as->u.as.event_fd==fd))
 	 break;
    if(!as){
-      LOG(L_ERR,"ERROR:seas:handle_as_data AS not found\n");
+      SLOG(L_ERR,"AS not found\n");
       return -1;
    }
    k=AS_BUF_SIZE-(as->u.as.ev_buffer.len);
 again:
    if((j=read(fd,as->u.as.ev_buffer.s+as->u.as.ev_buffer.len,k))<0){
-      LOG(L_ERR,"ERROR:seas:handle_as_data: reading data for as %.*s\n",as->name.len,as->name.s);
+      SLOG(L_ERR,"reading data for as %.*s\n",as->name.len,as->name.s);
       if(errno==EINTR)
 	 goto again;
       else
 	 return -1;
    }else if(j==0){
-      LOG(L_ERR,"AS client leaving (%.*s)\n",as->name.len,as->name.s);
+      SLOG(L_ERR,"AS client leaving (%.*s)\n",as->name.len,as->name.s);
       return -2;
    }
    as->u.as.ev_buffer.len+=j;
-   LOG(L_DBG,"read %d bytes from AS (total = %d)\n",j,as->u.as.ev_buffer.len);
+   SLOG(L_DBG,"read %d bytes from AS (total = %d)\n",j,as->u.as.ev_buffer.len);
    if(as->u.as.ev_buffer.len>5)
       process_event_reply(&as->u.as);
    return 0;
@@ -734,18 +734,18 @@ static int process_event_reply(as_p as)
    /*if ev_len > BUF_SIZE then a flag should be put on the AS so that the whole length
     * of the action is skipped, until a mechanism for handling big packets is implemented*/
    if(ev_len>AS_BUF_SIZE){
-      LOG(L_WARN,"Packet too big (%d)!!! should be skipped and an error returned!\n",ev_len);
+      SLOG(L_WARN,"Packet too big (%d)!!! should be skipped and an error returned!\n",ev_len);
       return -1;
    }
    if((as->ev_buffer.len<ev_len) || as->ev_buffer.len<4)
       return 0;
    switch(as->ev_buffer.s[4]){
       case BIND_AC:
-	 LOG(L_DBG,"Processing a BIND action from AS (length=%d): %.*s\n",ev_len,as->name.len,as->name.s);
+	 SLOG(L_DBG,"Processing a BIND action from AS (length=%d): %.*s\n",ev_len,as->name.len,as->name.s);
 	 process_bind_action(as,&as->ev_buffer.s[5],ev_len-5);
 	 break;
       case UNBIND_AC:
-	 LOG(L_DBG,"Processing a UNBIND action from AS (length=%d): %.*s\n",ev_len,as->name.len,as->name.s);
+	 SLOG(L_DBG,"Processing a UNBIND action from AS (length=%d): %.*s\n",ev_len,as->name.len,as->name.s);
 	 process_unbind_action(as,&as->ev_buffer.s[5],ev_len-5);
 	 break;
       default:
@@ -787,7 +787,7 @@ int process_bind_action(as_p as,char *payload,int len)
 	 break;
    }
    if(i==MAX_BINDS){
-      LOG(L_ERR,"ERROR:seas:No more bindings allowed. Ignoring bind request for processor %d\n",processor_id);
+      SLOG(L_ERR,"No more bindings allowed. Ignoring bind request for processor %d\n",processor_id);
       return -1;
    }
    memset(&my_addr,0,sizeof(struct ip_addr));
@@ -828,12 +828,12 @@ int process_bind_action(as_p as,char *payload,int len)
 	 as->binds[i]=si;
 	 as->bound_processor[i]=processor_id;
 	 as->num_binds++;
-	 LOG(L_DBG,"AS processor with id: %d bound to %s %s %d\n",processor_id,proto_s,buffer,port);
+	 SLOG(L_DBG,"AS processor with id: %d bound to %s %s %d\n",processor_id,proto_s,buffer,port);
 	 return 0;
       }
    }
 error:
-   LOG(L_ERR,"Cannot bind to %s %s %d !!!\n",proto_s,buffer,port);
+   SLOG(L_ERR,"Cannot bind to %s %s %d !!!\n",proto_s,buffer,port);
    return -1;
 }
 
@@ -856,12 +856,12 @@ int process_unbind_action(as_p as,char *payload,int len)
 	 break;
    }
    if(i==MAX_BINDS){
-      LOG(L_ERR,"ERROR:seas:process_unbind_action() tried to unbind a processor which is not registered (id=%d)!\n",processor_id);
+      SLOG(L_ERR,"tried to unbind a processor which is not registered (id=%d)!\n",processor_id);
       return 0;
    }
    as->bound_processor[i]=0;
    as->num_binds--;
-   LOG(L_DBG,"AS processor un-bound with id: %d\n",processor_id);
+   SLOG(L_DBG,"AS processor un-bound with id: %d\n",processor_id);
    return 0;
 }
 
@@ -884,23 +884,23 @@ static int handle_unc_as_data(int fd)
       if(unc_as_t[i].valid && unc_as_t[i].fd==fd)
 	 break;
    if(i==2*MAX_UNC_AS_NR){
-      LOG(L_ERR,"ERROR:seas:handle_unc_as_data has received an fd which is not in uncompleted AS array\n");
+      SLOG(L_ERR,"has received an fd which is not in uncompleted AS array\n");
       return -1;
    }
    if(unc_as_t[i].flags & HAS_NAME){/*shouldn't happen, if it has a name, it shouldnt be in fdset[]*/
-      LOG(L_WARN,"ERROR:seas:handle_unc_as_data:BUG this shouldn't happen\n");
+      SLOG(L_WARN,"BUG this shouldn't happen\n");
       return 0;/*already have a name, please take me out the uncompleted AS array*/
    }
-   LOG(L_DBG,"Reading client name\n");
+   SLOG(L_DBG,"Reading client name\n");
 
    if(-1==(len=read_name(fd,unc_as_t[i].name,MAX_AS_NAME))){
       /*this guy should be disconnected, it sent an AS_NAME too long*/
-      LOG(L_ERR,"ERROR:seas:Bad name passed from fd\n");
+      SLOG(L_ERR,"Bad name passed from fd\n");
       unc_as_t[i].valid=0;
       unc_as_t[i].flags=0;
       return -2;
    }else if(len==-2){
-      LOG(L_WARN,"client disconnected\n");
+      SLOG(L_WARN,"client disconnected\n");
       return -2;
    }
    name1=unc_as_t[i].name;
@@ -909,7 +909,7 @@ static int handle_unc_as_data(int fd)
    for(as=as_list;as;as=as->next){
       if(as->name.len==len && !memcmp(name1,as->name.s,len)){
 	 if(as->connected){
-	    LOG(L_WARN,"WARN:handle_unc_as_data:AppServer trying to connect with a name already taken (%.*s)\n",len,name1);
+	    SLOG(L_WARN,"AppServer trying to connect with a name already taken (%.*s)\n",len,name1);
 	    unc_as_t[i].valid=0;
 	    unc_as_t[i].flags=0;
 	    return -2;
@@ -918,7 +918,7 @@ static int handle_unc_as_data(int fd)
       }
    }
    if (!as) {
-      LOG(L_ERR,"ERROR: a client tried to connect which is not declared in config. script(%.*s)\n",len,name1);
+      SLOG(L_ERR,"a client tried to connect which is not declared in config. script(%.*s)\n",len,name1);
       unc_as_t[i].valid=0;
       unc_as_t[i].flags=0;
       return -2;
@@ -933,10 +933,10 @@ static int handle_unc_as_data(int fd)
 	    (unc_as_t[j].flags & HAS_NAME) && 
 	    !strcmp(unc_as_t[i].name,unc_as_t[j].name))
 	 break;
-   LOG(L_INFO,"Fantastic, we have a new client: %s\n",unc_as_t[i].name);
+   SLOG(L_INFO,"Fantastic, we have a new client: %s\n",unc_as_t[i].name);
    if(j==k)/* the unc_as peer's socket hasn't been found, just take this one out of fdset because it already has its name */
       return 0;/*take me out from fdset[]*/
-   LOG(L_INFO,"EUREKA, we have a new completed AS: %s\n",unc_as_t[i].name);
+   SLOG(L_INFO,"EUREKA, we have a new completed AS: %s\n",unc_as_t[i].name);
    /* EUREKA ! we have a sweet pair of AS sockets, with the same name !!*/
    if(add_new_as(i<j?i:j,i<j?j:i,as)==-1){
       close(unc_as_t[j].fd);
@@ -964,15 +964,15 @@ try_again1:
       if(errno==EINTR)
 	 goto try_again1;
       else{
-	 LOG(L_ERR,"ERROR:seas:read_name: trying to read length from fd=%d (%s)\n",sock,strerror(errno));
+	 SLOG(L_ERR,"trying to read length from fd=%d (%s)\n",sock,strerror(errno));
 	 return -1;
       }
    }else if(n==0){
-      LOG(L_WARN,"WARN:seas:read_name: uncomplete AS has disconnected before giving its name\n");
+      SLOG(L_WARN,"uncomplete AS has disconnected before giving its name\n");
       return -2;
    }
    if(namelen>dstlen || namelen==0){
-      LOG(L_ERR,"ERROR:seas:read_name: name too long to fit in dst (%d > %d)\n",namelen,dstlen);
+      SLOG(L_ERR,"name too long to fit in dst (%d > %d)\n",namelen,dstlen);
       return -1;
    }
 try_again2:
@@ -980,11 +980,11 @@ try_again2:
       if(errno==EINTR)
 	 goto try_again2;
       else{
-	 LOG(L_ERR,"ERROR:seas:read_name: trying to read %d chars into %p from fd=%d (%s)\n",namelen,dst,sock,strerror(errno));
+	 SLOG(L_ERR,"trying to read %d chars into %p from fd=%d (%s)\n",namelen,dst,sock,strerror(errno));
 	 return -1;
       }
    }else if(n==0){
-      LOG(L_WARN,"WARN:seas:read_name: uncomplete AS has disconnected before giving its name\n");
+      SLOG(L_WARN,"uncomplete AS has disconnected before giving its name\n");
       return -2;
    }
    dst[namelen]=0;
@@ -1018,7 +1018,7 @@ again:
       if(errno==EINTR){
 	 goto again;
       }else{
-	 LOG(L_ERR,  "ERROR:seas:new_as_connect: error while accepting connection: %s\n", strerror(errno));
+	 SLOG(L_ERR,"error while accepting connection: %s\n", strerror(errno));
 	 return -1;
       }
    }
@@ -1026,7 +1026,7 @@ again:
       case 'e':
 	 for(i=0;i<MAX_UNC_AS_NR && unc_as_t[i].valid;i++);
 	 if(i==MAX_UNC_AS_NR){
-	    LOG(L_WARN,"WARN:seas: new_as_connect: no more uncomplete connections allowed\n");
+	    SLOG(L_WARN,"no more uncomplete connections allowed\n");
 	    goto error;
 	 }
 	 unc_as_t[i].fd=sock;
@@ -1037,7 +1037,7 @@ again:
       case 'a':
 	 for(i=MAX_UNC_AS_NR;(i<(2*MAX_UNC_AS_NR)) && unc_as_t[i].valid;i++);
 	 if(i==2*MAX_UNC_AS_NR){
-	    LOG(L_WARN,"WARN:seas: new_as_connect: no more uncomplete connections allowed\n");
+	    SLOG(L_WARN,"no more uncomplete connections allowed\n");
 	    goto error;
 	 }
 	 unc_as_t[i].fd=sock;
@@ -1050,7 +1050,7 @@ again:
    }
    flags=1;
    if ((setsockopt(sock, IPPROTO_TCP , TCP_NODELAY,&flags, sizeof(flags))<0) ){
-      LOG(L_WARN, "WARNING: init_sock_opt: could not disable Nagle: %s\n",
+      SLOG(L_WARN, "could not disable Nagle: %s\n",
 	    strerror(errno));
    }
 
@@ -1066,7 +1066,7 @@ int spawn_action_dispatcher(struct as_entry *the_as)
    pid_t pid;
    pid=fork();
    if(pid<0){
-      LOG(L_ERR,"ERROR:seas: unable to fork an action dispatcher for %.*s\n",the_as->name.len,the_as->name.s);
+      SLOG(L_ERR,"unable to fork an action dispatcher for %.*s\n",the_as->name.len,the_as->name.s);
       return -1;
    }
    if(pid==0){/*child*/

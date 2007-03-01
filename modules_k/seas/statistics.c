@@ -13,6 +13,7 @@
 #include <signal.h>
 
 #include "statistics.h"
+#include "seas.h" /*SLOG*/
 #include "../../mem/shm_mem.h"
 #include "../../resolve.h"
 #include "../../ut.h"
@@ -29,14 +30,14 @@ static void sig_handler(int signo)
 {
    switch(signo){
       case SIGTERM:
-	 LOG(L_ERR,"Stats process caught SIGTERM, shutting down..\n");
+	 SLOG(L_ERR,"Stats process caught SIGTERM, shutting down..\n");
 	 close(stats_fd);
 	 destroy_seas_stats_table();
 	 exit(0);
       default:
-	 LOG(L_DBG,"caught signal %d\n",signo);
+	 SLOG(L_DBG,"caught signal %d\n",signo);
    }
-   LOG(L_WARN,"Statistics process:caught signal (%d)\n",signo);
+   SLOG(L_WARN,"Statistics process:caught signal (%d)\n",signo);
 }
 
 struct statstable* init_seas_stats_table()
@@ -44,12 +45,12 @@ struct statstable* init_seas_stats_table()
    /*allocs the table*/
    seas_stats_table= (struct statstable*)shm_malloc( sizeof( struct statstable ) );
    if (!seas_stats_table) {
-      LOG(L_ERR, "ERROR:init_seas_stats_table: no shmem for stats table (%d bytes)\n",(int)sizeof(struct statstable));
+      SLOG(L_ERR, "no shmem for stats table (%d bytes)\n",sizeof(struct statstable));
       return 0;
    }
    memset(seas_stats_table, 0, sizeof(struct statstable) );
    if(0==(seas_stats_table->mutex=lock_alloc())){
-      LOG(L_ERR,"ERROR:init_seas_stats_table: couldn't alloc mutex (get_lock_t)\n");
+      SLOG(L_ERR,"couldn't alloc mutex (get_lock_t)\n");
       shm_free(seas_stats_table);
       return 0;
    }
@@ -78,7 +79,7 @@ inline void as_relay_stat(struct cell *t)
    if(t==0)
       return;
    if(t->fwded_totags != 0){
-      LOG(L_DBG,"seas:as_relay_stat() unable to put a payload in fwded_totags because it is being used !!\n");
+      SLOG(L_DBG,"seas:as_relay_stat() unable to put a payload in fwded_totags because it is being used !!\n");
       return;
    }
    if(!(s=shm_malloc(sizeof(struct statscell)))){
@@ -117,7 +118,7 @@ inline void event_stat(struct cell *t)
       return;
    }
    if(t->fwded_totags == 0){
-      LOG(L_DBG,"seas:event_stat() unabe to set the event_stat timeval: no payload found at cell!! (fwded_totags=0)\n");
+      SLOG(L_DBG,"seas:event_stat() unabe to set the event_stat timeval: no payload found at cell!! (fwded_totags=0)\n");
       return;
    }
    /*esto da un CORE DUMP cuando hay mucha carga.. warning*/
@@ -151,7 +152,7 @@ inline void action_stat(struct cell *t)
    if(t==0)
       return;
    if(t->fwded_totags == 0){
-      LOG(L_DBG,"seas:event_stat() unable to set the event_stat timeval: no payload found at cell!! (fwded_totags=0)\n");
+      SLOG(L_DBG,"seas:event_stat() unable to set the event_stat timeval: no payload found at cell!! (fwded_totags=0)\n");
       return;
    }
    to=t->fwded_totags;
@@ -210,7 +211,7 @@ int start_stats_server(char *stats_socket)
       return 0;
 
    if(!init_seas_stats_table()){
-      LOG(L_ERR,"ERROR:seas:start_stats_server() unable to init stats table, disabling statistics\n");
+      SLOG(L_ERR,"unable to init stats table, disabling statistics\n");
       return -1;
    }
    while(*p){
@@ -225,27 +226,27 @@ int start_stats_server(char *stats_socket)
    if(port==(char*)0 || *port==0)
       stats_port=5088;
    else if(!(stats_port=str2s(port,strlen(port),0))){
-	 LOG(L_ERR,"ERROR:seas:init: invalid port %s\n",port);
+	 SLOG(L_ERR,"invalid port %s\n",port);
 	 goto error;
       }
    if((stats_fd=socket(he->h_addrtype, SOCK_STREAM, 0))==-1){
-      LOG(L_ERR,"ERROR: start_stats_server: trying to open server socket (%s)\n",strerror(errno));
+      SLOG(L_ERR,"trying to open server socket (%s)\n",strerror(errno));
       goto error;
    }
    optval=1;
    if (setsockopt(stats_fd, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, sizeof(optval))==-1) {
-      LOG(L_ERR,"ERROR: start_stats_server: setsockopt (%s)\n",strerror(errno));
+      SLOG(L_ERR,"setsockopt (%s)\n",strerror(errno));
       goto error;
    }
    su.sin_family = he->h_addrtype;
    su.sin_port=htons(stats_port);
    memcpy(&su.sin_addr,he->h_addr_list[0],4);
    if((bind(stats_fd,(struct sockaddr*)&su,sizeof(struct sockaddr_in)))==-1){
-      LOG(L_ERR, "ERROR: start_stats_server: bind (%s)\n",strerror(errno));
+      SLOG(L_ERR, "bind (%s)\n",strerror(errno));
       goto error;
    }
    if(listen(stats_fd, 10)==-1){
-      LOG(L_ERR, "ERROR: start_stats_server: listen (%s)\n",strerror(errno));
+      SLOG(L_ERR, "listen (%s)\n",strerror(errno));
       goto error;
    }
    if(!(pid=fork())){/*child*/
@@ -256,7 +257,7 @@ int start_stats_server(char *stats_socket)
    }else if(pid>0){/*parent*/
       close(stats_fd);
    }else{/*error*/
-      LOG(L_ERR,"Unable to create stats server process\n");
+      SLOG(L_ERR,"Unable to create stats server process\n");
       goto error;
    }
    use_stats=1;
@@ -306,7 +307,7 @@ void serve_stats(int fd)
 	 if(errno==EINTR){
 	    continue;
 	 }else{
-	    LOG(L_ERR,  "ERROR:seas:serve_stats: error while accepting connection: %s\n", strerror(errno));
+	    SLOG(L_ERR,  "error while accepting connection: %s\n", strerror(errno));
 	    return ;
 	 }
       }
@@ -315,7 +316,7 @@ void serve_stats(int fd)
 	    if(errno==EINTR){
 	       continue;
 	    }else{
-	       LOG(L_ERR,"ERROR:seas:serve_stats: unknown error reading from socket\n"); 
+	       SLOG(L_ERR,"unknown error reading from socket\n"); 
 	       close(sock);
 	       /** and continue accept()'ing*/
 	       break;
@@ -324,11 +325,11 @@ void serve_stats(int fd)
 	 retrn=print_stats_info(f,sock);
 	 if(retrn==-1){
 	    /**simple error happened, dont worry*/
-	       LOG(L_ERR,"ERROR:seas:printing statistics \n");
+	       SLOG(L_ERR,"printing statistics \n");
 	       continue;
 	 }else if(retrn==-2){
 	    /**let's go to the outer loop, and receive more Statistics clients*/
-	    LOG(L_ERR,"Statistics client left\n");
+	    SLOG(L_ERR,"Statistics client left\n");
 	    close(sock);
 	    break;
 	 }

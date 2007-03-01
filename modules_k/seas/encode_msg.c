@@ -133,7 +133,6 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
    struct hdr_field* hf;
    struct msg_start* ms;
    struct sip_uri miuri;
-   unsigned char index[3*MAX_HEADERS];
    char *myerror=NULL;
    ptrdiff_t diff;
 
@@ -144,7 +143,6 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
       goto error;
    }
    memset(payload,0,len);
-   memset(index,0,sizeof(index));
    ms=&msg->first_line;
    if(ms->type == SIP_REQUEST)
       request=1;
@@ -163,7 +161,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
    else
       h=(unsigned short)(ms->u.reply.statuscode);
    if(h==32){/*statuscode wont be 32...*/
-      myerror="ERROR:encode_msg: unknown message type\n";
+      myerror="unknown message type\n";
       goto error;
    }
    h=htons(h);
@@ -175,7 +173,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
    memcpy(&payload[MSG_LEN_IDX],&h,2);
    /*then goes the content start index (starting from SIP MSG START)*/
    if(0>(diff=(get_body(msg)-(msg->buf)))){
-      myerror="ERROR: body starts before the message (uh ?)";
+      myerror="body starts before the message (uh ?)";
       goto error;
    }else
       h=htons((unsigned short int)diff);
@@ -197,7 +195,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
 	 (ms->u.reply.version.s-msg->buf));
    if(request){
       if (parse_uri(ms->u.request.uri.s,ms->u.request.uri.len, &miuri)<0){
-	 LOG(L_ERR, "ERROR:encode_msg:<%.*s>\n",ms->u.request.uri.len,ms->u.request.uri.s);
+	 SLOG(L_ERR, "<%.*s>\n",ms->u.request.uri.len,ms->u.request.uri.s);
 	 myerror="while parsing the R-URI";
 	 goto error;
       }
@@ -225,8 +223,8 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
       /*now goes a payload-based-ptr to where the header-code starts*/
       memcpy(&payload[k+1],&h,2);
       /*TODO fix this... fixed with k-=3?*/
-      if((i=encode_header(msg,hf,(unsigned char*)(payload+j),MAX_ENCODED_MSG+MAX_MESSAGE_LEN-j))<0){
-	 LOG(L_ERR,"ERROR: encode_msg: encoding header %.*s\n",hf->name.len,hf->name.s);
+      if(0>(i=encode_header(msg,hf,(unsigned char*)(payload+j),MAX_ENCODED_MSG+MAX_MESSAGE_LEN-j))){
+	 SLOG(L_ERR,"encoding header %.*s\n",hf->name.len,hf->name.s);
 	 goto error;
 	 k-=3;
 	 continue;
@@ -250,13 +248,13 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
    /*pkg_free(payload2);*/
    /*now we copy the actual message after the headers-meta-section*/
    memcpy(&payload[j],msg->buf,msg->len);
-   LOG(L_DBG,"msglen = %d,msg starts at %d\n",msg->len,j);
+   SLOG(L_DBG,"msglen = %d,msg starts at %d\n",msg->len,j);
    j=htons(j);
    /*now we copy at the beginning, the index to where the actual message starts*/
    memcpy(&payload[MSG_START_IDX],&j,2);
    return GET_PAY_SIZE( payload );
 error:
-   LOG(L_ERR,"ERROR: encode_msg: %s\n",myerror);
+   SLOG(L_ERR,"%s\n",myerror);
    return -1;
 }
 
@@ -278,7 +276,7 @@ int decode_msg(struct sip_msg *msg,char *code, unsigned int len)
       goto error;
    }
 error:
-   LOG(L_ERR,"ERROR:decode_msg:(%s)\n",myerror);
+   SLOG(L_ERR,"(%s)\n",myerror);
    return -1;
 }
 

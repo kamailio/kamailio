@@ -53,5 +53,5 @@ void uac_cb(struct cell* t, int type, struct tmcb_params*);
 /**
  * Event creating functions
  */
-int as_action_fail_resp(int uac_id,int sip_error,char *err_buf);
+int as_action_fail_resp(int uac_id,int sip_error,char *err_buf,int err_len);
 char* create_as_action_reply(struct cell *c,struct tmcb_params *params,int uac_id,char processor_id,int *evt_len);

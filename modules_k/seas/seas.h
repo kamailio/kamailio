@@ -46,13 +46,13 @@
 
 #define SPIRAL_FLAG 0x00000001
 
-#define LOG_OUT_OF_MEM(what) LOG(L_ERR,"ERROR:seas:global_init: out of mem for "what" \n");
-
 #define net2hostL(dst,from,index) do{ \
    memcpy(&(dst),(from)+(index),4); \
    dst=ntohl(dst); \
    (index)+=4; \
 }while(0);
+
+#define SLOG(leve,format, ...) LOG(leve,"seas-%s:%s:"format,leve==4?"DBG":leve==3?"INF":leve==2?"NTC":leve==1?"WRN":leve==-1?"ERR":leve==-2?"CRT":leve==-3?"ALT":"UNK",__FUNCTION__,##__VA_ARGS__)
 
 
 extern char use_stats;

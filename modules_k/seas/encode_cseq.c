@@ -24,6 +24,7 @@
 #include "../../parser/parse_cseq.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "xaddress.h"/*for SLOG*/
 
 /* Encoder for CSeq header
  * Returns the length of the encoded structure in bytes
@@ -48,7 +49,7 @@ int encode_cseq(char *hdrstart,int hdrlen,struct cseq_body *body,unsigned char *
       i++;
    where[0]=i;
    if(str2int(&body->number,&cseqnum)<0){
-      LOG(L_ERR,"ERROR: encode_cseq: str2int(cseq number)\n");
+      SLOG(L_ERR,"str2int(cseq number)\n");
       return -1;
    }
    cseqnum=htonl(cseqnum);

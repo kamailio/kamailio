@@ -95,12 +95,13 @@
  */
 int encode_uri2(char *hdr,int hdrlen,str uri_str, struct sip_uri *uri_parsed,unsigned char *payload)
 {
-   int i=4;/* 1*pointer+1*len+2*flags*/
+   int i=4,j;/* 1*pointer+1*len+2*flags*/
+   unsigned int scheme;
    unsigned char flags1=0,flags2=0,uriptr;
 
    uriptr=REL_PTR(hdr,uri_str.s);
    if(uri_str.len>255 || uriptr>hdrlen){
-      LOG(L_ERR,"ERROR: uri2xuri: uri too long, or out of the sip_msg bounds\n");
+      SLOG(L_ERR,"uri too long, or out of the sip_msg bounds\n");
       return -1;
    }
    payload[0]=uriptr;
@@ -168,6 +169,9 @@ int encode_uri2(char *hdr,int hdrlen,str uri_str, struct sip_uri *uri_parsed,uns
       payload[i+1]=(unsigned char)uri_parsed->lr.len;
       i+=2;
    }
+   /*in parse_uri, when there's a user=phone, the type
+    * is set to TEL_URI_T, even if there's a sip: in the beginning
+    * so lets check it by ourselves:
    switch(uri_parsed->type){
       case SIP_URI_T:
 	 flags1 |= SIP_OR_TEL_F;
@@ -182,11 +186,36 @@ int encode_uri2(char *hdr,int hdrlen,str uri_str, struct sip_uri *uri_parsed,uns
 	 break;
       default:
 	 return -1;
-   }
+   }*/
+#define SIP_SCH		0x3a706973
+#define SIPS_SCH	0x73706973
+#define TEL_SCH		0x3a6c6574
+#define TELS_SCH	0x736c6574
+   scheme=uri_str.s[0]+(uri_str.s[1]<<8)+(uri_str.s[2]<<16)+(uri_str.s[3]<<24);
+   scheme|=0x20202020;
+   if (scheme==SIP_SCH){
+      flags1 |= SIP_OR_TEL_F;
+   }else if(scheme==SIPS_SCH){
+      if(uri_str.s[4]==':'){
+	 flags1 |= (SIP_OR_TEL_F|SECURE_F);
+      }else goto error;
+   }else if (scheme==TEL_SCH){
+      /*nothing*/
+   }else if (scheme==TELS_SCH){
+      if(uri_str.s[4]==':'){
+	 flags1 |= SECURE_F;
+      }
+   }else goto error;
+	
    payload[2]=flags1;
    payload[3]=flags2;
+   j=i;
    i+=encode_parameters(&payload[i],uri_parsed->params.s,uri_str.s,&uri_parsed->params.len,'u');
+   if(i<j)
+      goto error;
    return i;
+error:
+   return -1;
 }
 
 int print_encoded_uri(int fd,unsigned char *payload,int paylen,char *hdrstart,int hdrlen,char *prefix)
@@ -200,7 +229,7 @@ int print_encoded_uri(int fd,unsigned char *payload,int paylen,char *hdrstart,in
    for(j=0;j<paylen;j++)
       dprintf(fd,"%s%d%s",j==0?"ENCODED-URI:[":":",payload[j],j==paylen-1?"]\n":"");
    if(uriidx>hdrlen){
-      dprintf(fd,"ERROR: print_encoded_uri: bad index for start of uri: hdrlen=%d uri_index=%d\n",hdrlen,uriidx);
+      dprintf(fd,"bad index for start of uri: hdrlen=%d uri_index=%d\n",hdrlen,uriidx);
       return -1;
    }
    ch_uriptr = hdrstart+uriidx;
@@ -273,7 +302,7 @@ int print_uri_junit_tests(char *hdrstart,int hdrlen,unsigned char *payload,int p
 
    uriidx=payload[0];
    if(uriidx>hdrlen){
-      dprintf(fd,"ERROR: print_encoded_uri: bad index for start of uri: hdrlen=%d uri_index=%d\n",hdrlen,uriidx);
+      dprintf(fd,"bad index for start of uri: hdrlen=%d uri_index=%d\n",hdrlen,uriidx);
       return -1;
    }
 

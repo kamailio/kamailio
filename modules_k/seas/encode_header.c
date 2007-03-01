@@ -56,7 +56,7 @@
 #define ONLY_URIS 0x01
 #define HEADER_OFFSET_IDX 0
 #define HEADER_LEN_IDX (HEADER_OFFSET_IDX+2)
-#define HEADER_NAME_LEN_IDX (HEADER_LEN_IDX+1)
+#define HEADER_NAME_LEN_IDX (HEADER_LEN_IDX+2)
 #define HEADER_PAYLOAD_IDX (HEADER_NAME_LEN_IDX+1)
 
 /*
@@ -65,7 +65,7 @@
  *
  * The header codes start with this encoded-bytes:
  * 2: SIP-MSG-START based pointer to the header (including header name)
- * 1: length of the header
+ * 2: length of the header
  * 1: length of the header name
  */
 int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *payload,int paylen)
@@ -84,20 +84,21 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
    mlen=sipmsg->len;
    hdrstart = hdr->name.s;
    if(hdrstart-msg<0){
-      LOG(L_ERR,"ERROR:encode_header: header(%.*s) does not belong to sip_msg(hdrstart<msg)\n",hdr->name.len,hdr->name.s);
+      SLOG(L_ERR,"header(%.*s) does not belong to sip_msg(hdrstart<msg)\n",hdr->name.len,hdr->name.s);
       return -1;
    }
    ptr=htons((short int)(hdrstart-msg));
    if((hdrstart-msg)>mlen){
-      LOG(L_ERR,"ERROR: encode_header: out of the sip_msg bounds (%d>%d)\n",ntohs(ptr),mlen);
+      SLOG(L_ERR,"out of the sip_msg bounds (%d>%d)\n",ntohs(ptr),mlen);
       return -1;
    }
-   if(hdr->len>255){
-      LOG(L_ERR,"ERROR: encode_header: length of header too long\n");
+   if(hdr->len>(1<<16)){
+      SLOG(L_ERR,"length of header too long\n");
       return -1;
    }
    memcpy(payload,&ptr,2);
-   payload[HEADER_LEN_IDX]=(unsigned char)hdr->len;
+   ptr=htons((short int)(hdr->len));
+   memcpy(payload+HEADER_LEN_IDX,&ptr,2);
    payload[HEADER_NAME_LEN_IDX]=(unsigned char)hdr->name.len;
    switch(hdr->type){
       case HDR_FROM_T:
@@ -112,184 +113,184 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	    memset(tobody,0,sizeof(struct to_body));
 	    parse_to(hdr->body.s,hdr->body.s+hdr->body.len+1,tobody);
 	    if (tobody->error == PARSE_ERROR) {
-	       myerror="ERROR:parse_to_header: bad (REFER,TO,FROM,RPID) header\n";
+	       myerror="bad (REFER,TO,FROM,RPID) header\n";
 	       pkg_free(tobody);
-	       return 4;
+	       return 5;
 	       goto error;
 	    }
 	    hdr->parsed=(struct to_body*)tobody;
 	 }else
 	    tobody=(struct to_body*)hdr->parsed;
-	 if((len=encode_to_body(hdr->name.s,hdr->len,tobody,&payload[4]))<0){
-	    myerror="ERROR: encode_header: parsing from or to header\n";
+	 if((len=encode_to_body(hdr->name.s,hdr->len,tobody,payload+5))<0){
+	    myerror="parsing from or to header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_CONTACT_T:
 	 if(!hdr->parsed)
 	    if(parse_contact(hdr)<0){
-	       myerror="ERROR: encode_header: parsing contact\n";
+	       myerror="parsing contact\n";
 	       goto error;
 	    }
-	 if((len=encode_contact_body(hdr->name.s,hdr->len,(contact_body_t*)hdr->parsed,&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding contact header\n";
+	 if((len=encode_contact_body(hdr->name.s,hdr->len,(contact_body_t*)hdr->parsed,payload+5))<0){
+	    myerror="encoding contact header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_ROUTE_T:
       case HDR_RECORDROUTE_T:
 	 if(!hdr->parsed)
 	    if(parse_rr(hdr)<0){
-	       myerror="ERROR: encode_header: encoding route or recordroute\n";
+	       myerror="encoding route or recordroute\n";
 	       goto error;
 	    }
-	 if((len=encode_route_body(hdr->name.s,hdr->len,(rr_t*)hdr->parsed,&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding route or recordroute header\n";
+	 if((len=encode_route_body(hdr->name.s,hdr->len,(rr_t*)hdr->parsed,payload+5))<0){
+	    myerror="encoding route or recordroute header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_CONTENTLENGTH_T:
 	 if(!hdr->parsed){
 	    tmp=parse_content_length(hdr->body.s,hdr->body.s+hdr->body.len+1,(int*)&integer);
 	    if (tmp==0){
-	       myerror="ERROR:get_hdr_field: bad content_length header\n";
+	       myerror="bad content_length header\n";
 	       goto error;
 	    }
 	    hdr->parsed=(void*)(long)integer;
 	 }
-	 if((len=encode_contentlength(hdr->name.s,hdr->len,(long int)hdr->parsed,(char*)&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding content-length header\n";
+	 if((len=encode_contentlength(hdr->name.s,hdr->len,(long int)hdr->parsed,payload+5))<0){
+	    myerror="encoding content-length header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_VIA_T:
 	 if(!hdr->parsed){
 	    if((viabody=pkg_malloc(sizeof(struct via_body)))==0){
-	       myerror="ERROR: encode_header: out of memory\n";
+	       myerror="out of memory\n";
 	       goto error;
 	    }
 	    memset(viabody,0,sizeof(struct via_body));
 	    if(parse_via(hdr->body.s,hdr->body.s+hdr->body.len+1,viabody)<0){
-	       myerror="ERROR: encode_header: encoding via \n";
+	       myerror="encoding via \n";
 	       goto error;
 	    }
 	    hdr->parsed=viabody;
 	 }
-	 if((len=encode_via_body(hdr->name.s,hdr->len,(struct via_body*)hdr->parsed,&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding via header\n";
+	 if((len=encode_via_body(hdr->name.s,hdr->len,(struct via_body*)hdr->parsed,payload+5))<0){
+	    myerror="encoding via header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_ACCEPT_T:
 	 if(!hdr->parsed){
 	    if(parse_accept_hdr(sipmsg)<0){
-	       return 4;
+	       return 5;
 	    }
 	 }
-	 if((len=encode_accept(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,(char*)&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding via header\n";
+	 if((len=encode_accept(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,payload+5))<0){
+	    myerror="encoding via header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_CONTENTTYPE_T:
 	 if(!hdr->parsed){
 	    if(parse_content_type_hdr(sipmsg)<0){
-	       myerror="ERROR: encode_header: encoding content-type header\n";
+	       myerror="encoding content-type header\n";
 	       goto error;
 	    }
 	 }
-	 if((len=encode_content_type(hdr->name.s,hdr->len,(unsigned int)(unsigned long)hdr->parsed,(char*)&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding via header\n";
+	 if((len=encode_content_type(hdr->name.s,hdr->len,(unsigned int)hdr->parsed,payload+5))<0){
+	    myerror="encoding via header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_CSEQ_T:
 	 if(!hdr->parsed){
 	    if((cseqbody=pkg_malloc(sizeof(struct cseq_body)))==0){
-	       myerror="ERROR: encode_header: out of memory\n";
+	       myerror="out of memory\n";
 	       goto error;
 	    }
 	    memset(cseqbody,0,sizeof(struct cseq_body));
 	    if(parse_cseq(hdr->name.s,hdr->body.s+hdr->body.len+1,cseqbody)<0){
-	       myerror="ERROR: encode_header: encoding cseq header\n";
+	       myerror="encoding cseq header\n";
 	       goto error;
 	    }
 	    hdr->parsed=cseqbody;
 	 }
-	 if((len=encode_cseq(hdr->name.s,hdr->len,(struct cseq_body*)hdr->parsed,&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding via header\n";
+	 if((len=encode_cseq(hdr->name.s,hdr->len,(struct cseq_body*)hdr->parsed,payload+5))<0){
+	    myerror="encoding via header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_EXPIRES_T:
 	 if(!hdr->parsed){
 	    if(parse_expires(hdr)<0){
-	       myerror="ERROR: encode_header: encoding expires header\n";
+	       myerror="encoding expires header\n";
 	       goto error;
 	    }
 	 }
-	 if((len=encode_expires(hdr->name.s,hdr->len,(exp_body_t *)hdr->parsed,&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding expires header\n";
+	 if((len=encode_expires(hdr->name.s,hdr->len,(exp_body_t *)hdr->parsed,payload+5))<0){
+	    myerror="encoding expires header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_ALLOW_T:
 	 if(!hdr->parsed){
 	    if((methods=pkg_malloc(sizeof(unsigned int)))==0){
-	       myerror="ERROR: encode_header: out of memory\n";
+	       myerror="out of memory\n";
 	       goto error;
 	    }
 	    *methods=0;
 	    if(parse_methods(&hdr->body,methods)!=0){
-	       myerror="ERROR: encode_header: encoding allow header\n";
+	       myerror="encoding allow header\n";
 	       pkg_free(methods);
-	       return 4;
+	       return 5;
 	       /*goto error;*/
 	    }
 	    hdr->parsed=methods;
 	 }
-	 if((len=encode_allow(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,(char*)&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding allow header\n";
+	 if((len=encode_allow(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,payload+5))<0){
+	    myerror="encoding allow header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       case HDR_AUTHORIZATION_T:
       case HDR_PROXYAUTH_T:
 	 if(!hdr->parsed){
 	    if(parse_credentials(hdr)<0){
-	       myerror="ERROR: encode_header: encoding a digest header\n";
+	       myerror="encoding a digest header\n";
 	       goto error;
 	    }
 	 }
-	 if((len=encode_digest(hdr->name.s,hdr->len,(dig_cred_t*)(&(((auth_body_t*)hdr->parsed)->digest)),&payload[4]))<0){
-	    myerror="ERROR: encode_header: encoding allow header\n";
+	 if((len=encode_digest(hdr->name.s,hdr->len,(dig_cred_t*)(&(((auth_body_t*)hdr->parsed)->digest)),payload+5))<0){
+	    myerror="encoding allow header\n";
 	    goto error;
 	 }else{
-	    return 4+len;
+	    return 5+len;
 	 }
 	 break;
       default:
-	 return 4;
+	 return 5;
    }
    return 1;
 error:
@@ -301,7 +302,7 @@ error:
       free_via_list(viabody);
    if(methods)
       pkg_free(methods);
-   LOG(L_ERR,"%s",myerror);
+   SLOG(L_ERR,"%s",myerror);
    return -1;
 }
 
@@ -314,9 +315,11 @@ int print_encoded_header(int fd,char *msg,int msglen,unsigned char *payload,int 
    start_idx=ntohs(start_idx);
 
    hdr_start_ptr = &msg[start_idx];
+   memcpy(&i,payload+HEADER_LEN_IDX,2);
+   i=ntohs(i);
 
    dprintf(fd,"%sHEADER NAME:[%.*s]\n",prefix,payload[HEADER_NAME_LEN_IDX],hdr_start_ptr);
-   dprintf(fd,"%sHEADER:[%.*s]\n",prefix,payload[HEADER_LEN_IDX]-2,hdr_start_ptr);
+   dprintf(fd,"%sHEADER:[%.*s]\n",prefix,i-2,hdr_start_ptr);
    dprintf(fd,"%sHEADER CODE=",prefix);
    for(i=0;i<len;i++)
       dprintf(fd,"%s%d%s",i==0?"[":":",payload[i],i==len-1?"]\n":"");
@@ -327,61 +330,83 @@ int print_encoded_header(int fd,char *msg,int msglen,unsigned char *payload,int 
       case HDR_TO_T:/*to*/
       case HDR_REFER_TO_T:/*refer-to*/
       case HDR_RPID_T:/*rpid= remote parte id*/
-	 print_encoded_to_body(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_to_body(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_CONTACT_T:/*contact*/
-	 print_encoded_contact_body(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_contact_body(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_ROUTE_T:/*route*/
       case HDR_RECORDROUTE_T:/*record-route*/
-	 print_encoded_route_body(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_route_body(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_CONTENTLENGTH_T:/*contentlength*/
-	 print_encoded_contentlength(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_contentlength(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_VIA_T:/*via*/
       case HDR_VIA2_T:/*via*/
-	 print_encoded_via_body(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_via_body(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_ACCEPT_T:/*accept*/
-	 print_encoded_accept(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_accept(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_CONTENTTYPE_T:/*content-type*/
-	 print_encoded_content_type(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_content_type(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_CSEQ_T:/*CSeq*/
-	 print_encoded_cseq(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_cseq(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_EXPIRES_T:/*expires*/
-	 print_encoded_expires(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_expires(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_ALLOW_T:/*allow*/
-	 print_encoded_allow(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_allow(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;
       case HDR_PROXYAUTH_T:/*proxy-authenticate*/
       case HDR_AUTHORIZATION_T:/*authorization*/
       /*case HDR_PROXYAUTHORIZATION_T:proxy-authorization*/
-	 print_encoded_digest(fd,hdr_start_ptr,payload[HEADER_LEN_IDX],&payload[HEADER_PAYLOAD_IDX],
+	 memcpy(&i,payload+HEADER_LEN_IDX,2);
+	 i=ntohs(i);
+	 print_encoded_digest(fd,hdr_start_ptr,i,&payload[HEADER_PAYLOAD_IDX],
 	       len-HEADER_PAYLOAD_IDX,strcat(prefix,"  "));
 	 prefix[strlen(prefix)-2]=0;
 	 break;

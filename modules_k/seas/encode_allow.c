@@ -18,8 +18,9 @@
  */
 
 #define _GNU_SOURCE
-#include <netinet/in.h>
 #include <string.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include "../../parser/parse_allow.h"
 #include "../../parser/msg_parser.h"
