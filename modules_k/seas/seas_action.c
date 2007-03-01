@@ -58,7 +58,6 @@ extern int process_no;
 
 static inline int shm_str_dup(str* _d, str* _s);
 static inline struct sip_msg *parse_ac_msg(hdr_flags_t flags,char *start,int len);
-static inline void set_process_no();
 static inline void free_sip_msg_lite(struct sip_msg *my_msg);
 static inline int calculate_hooks(dlg_t* _d);
 

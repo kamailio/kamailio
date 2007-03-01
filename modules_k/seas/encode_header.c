@@ -164,7 +164,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	    }
 	    hdr->parsed=(void*)(long)integer;
 	 }
-	 if((len=encode_contentlength(hdr->name.s,hdr->len,(long int)hdr->parsed,payload+5))<0){
+	 if((len=encode_contentlength(hdr->name.s,hdr->len,(long int)hdr->parsed,(char*)(payload+5)))<0){
 	    myerror="encoding content-length header\n";
 	    goto error;
 	 }else{
@@ -197,7 +197,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	       return 5;
 	    }
 	 }
-	 if((len=encode_accept(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,payload+5))<0){
+	 if((len=encode_accept(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,(char*)(payload+5)))<0){
 	    myerror="encoding via header\n";
 	    goto error;
 	 }else{
@@ -211,7 +211,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	       goto error;
 	    }
 	 }
-	 if((len=encode_content_type(hdr->name.s,hdr->len,(unsigned int)hdr->parsed,payload+5))<0){
+	 if((len=encode_content_type(hdr->name.s,hdr->len,(unsigned int)hdr->parsed,(char*)(payload+5)))<0){
 	    myerror="encoding via header\n";
 	    goto error;
 	 }else{
@@ -267,7 +267,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	    }
 	    hdr->parsed=methods;
 	 }
-	 if((len=encode_allow(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,payload+5))<0){
+	 if((len=encode_allow(hdr->name.s,hdr->len,(unsigned int*)hdr->parsed,(char*)(payload+5)))<0){
 	    myerror="encoding allow header\n";
 	    goto error;
 	 }else{
