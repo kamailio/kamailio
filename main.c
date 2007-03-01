@@ -861,6 +861,7 @@ int main_loop()
 	int  i;
 	pid_t pid;
 	struct socket_info* si;
+	char si_desc[MAX_PT_DESC];
 #ifdef EXTRA_DEBUG
 	int r;
 #endif
@@ -994,8 +995,10 @@ int main_loop()
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
+				snprintf(si_desc, MAX_PT_DESC, "receiver child=%d sock=%s:%s",
+					i, si->name.s, si->port_no_str.s);	
 				child_rank++;
-				pid = fork_process(child_rank, "udp", 1);
+				pid = fork_process(child_rank, si_desc, 1);
 				if (pid<0){
 					LOG(L_CRIT,  "main_loop: Cannot fork\n");
 					goto error;
@@ -1006,10 +1009,6 @@ int main_loop()
 					setstats( i+r*children_no );
 #endif
 					return udp_rcv_loop();
-				}else{
-						snprintf(pt[process_no].desc, MAX_PT_DESC,
-							"receiver child=%d sock= %s:%s", i,
-							si->name.s, si->port_no_str.s );
 				}
 			}
 			/*parent*/
