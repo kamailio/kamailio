@@ -32,19 +32,25 @@
 #  2006-02-14  added utils & install-utils (andrei)
 #  2006-03-15  added nodeb parameter for make tar (andrei)
 #  2006-09-29  added modules-doc as target and doc_format= as make option (greger)
-#  2006-12-09  added new group_include as make option and defined groups defining
-#		which modules to include
-#		Also added new target print-modules that you can use to check which
-#		modules will be compiled (greger)
-#  2007-01-10   added new group_include targets mysql, radius, and presence 
-#		improved print-modules output
-#		fixed problem in include/exclude logic when using group_include (greger)
+#  2006-12-09  added new group_include as make option and defined groups 
+#               defining which modules to include. Also added new target 
+#               print-modules that you can use to check which modules will be 
+#               compiled (greger)
+#  2007-01-10  added new group_include targets mysql, radius, and presence 
+#               improved print-modules output fixed problem in include/exclude
+#               logic when using group_include (greger)
+#  2007-03-01  fail if a module or a required utility make fail unless 
+#              err_fail=0; don't try to make modules with no Makefiles (andrei)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
 
 #include  source related defs
 include Makefile.sources
+
+# whether or not the entire build process should fail if building a module or
+#  an utility fails
+err_fail?=1
 
 # whether or not to install ser.cfg or just ser.cfg.default
 # (ser.cfg will never be overwritten by make install, this is usefull
@@ -62,32 +68,36 @@ doc_format?=html
 # Make backwards compatible, don't set group_include default...
 #group_include?="standard"
 
-# Modules in this group are considered a standard part of SER (due to widespread usage)
-# but they have no dependencies (note that some of these interplay with external systems.
-# However, they don't have compile or link dependencies)
-module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum \
+# Modules in this group are considered a standard part of SER (due to 
+# widespread usage) and have no external compile or link dependencies (note 
+# that some of these interplay with external systems).
+module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum\
 				eval exec fifo flatstore gflags maxfwd mediaproxy \
 				nathelper options pdt permissions pike print ratelimit \
 				registrar rr sanity sl textops timer tm uac unixsock uri \
 				usrloc xlog
 
-# Modules in this group are considered a standard part of SER (due to widespread usage)
-# but they have dependencies that most be satisfied for compilation
+# Modules in this group are considered a standard part of SER (due to 
+# widespread usage) but they have dependencies that must be satisfied for 
+# compilation.
 # acc_radius, auth_radius, avp_radius, uri_radius => radiusclient-ng
-# acc_db, auth_db, avp_db, db_ops, domain, lcr, msilo, mysql, dialog, postgres, speeddial
-# uri_db
-#      => mysql server, postgres server or other database back-end (ex. mysql-devel)
+# acc_db, auth_db, avp_db, db_ops, domain, lcr, msilo, dialog, speeddial,
+# uri_db => database module (mysql, postgres, dbtext)
+# mysql, postgres => mysql server and client libraries or postgres server and
+#  client libraries or other database back-end (ex. mysql-devel)
 # pa, xmlrpc => libxml2
 # rls => pa
 #
-# NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
-# group due to interdependencies
-module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db avp_radius \
+# NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been
+# included in this group due to interdependencies
+module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
+				avp_radius \
 				db_ops domain lcr msilo mysql dialog pa postgres \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
 # For mysql
-module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql speeddial
+module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql\
+				speeddial
 
 # For radius
 module_group_radius=acc_radius auth_radius avp_radius
@@ -95,21 +105,23 @@ module_group_radius=acc_radius auth_radius avp_radius
 # For presence
 module_group_presence=dialog pa presence_b2b rls xcap
 
-# Modules in this group satisfy specific or niche applications, but are considered
-# stable for production use. They may or may not have dependencies
+# Modules in this group satisfy specific or niche applications, but are 
+# considered stable for production use. They may or may not have dependencies
 # cpl-c => libxml2
 # jabber => expat (library)
 # osp => OSP Toolkit (sipfoundry)
 # sms => none (external modem)
 module_group_stable=cpl-c dbtext jabber osp sms
 
-# Modules in this group are either not complete, untested, or without enough reports
-# of usage to allow the module into the stable group. They may or may not have dependencies
+# Modules in this group are either not complete, untested, or without enough
+# reports of usage to allow the module into the stable group. They may or may
+# not have dependencies
 module_group_experimental=tls oracle
 
 # if not set on the cmd. line or the env, exclude the below modules.
 ifneq ($(group_include),)
-	# For group_include, default all modules are excluded except those in include_modules
+	# For group_include, default all modules are excluded except those in 
+	# include_modules
 	exclude_modules?=
 else
 	# Old defaults for backwards compatibility
@@ -172,8 +184,10 @@ static_defs= $(foreach  mod, $(static_modules), \
 override extra_defs+=$(static_defs) $(EXTRA_DEFS)
 export extra_defs
 
-# Historically, the resultant set of modules is: modules/* - exclude_modules + include_modules
-# When group_include is used, we want: include_modules (based on group_include) - exclude_modules
+# Historically, the resultant set of modules is: modules/* - exclude_modules +
+# include_modules
+# When group_include is used, we want: include_modules (based on group_include)
+# - exclude_modules
 ifneq ($(group_include),)
 	modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
@@ -213,7 +227,8 @@ include Makefile.defs
 NAME=$(MAIN_NAME)
 
 #export relevant variables to the sub-makes
-export DEFS PROFILE CC LD MKDEP MKTAGS CFLAGS LDFLAGS INCLUDES MOD_CFLAGS MOD_LDFLAGS 
+export DEFS PROFILE CC LD MKDEP MKTAGS CFLAGS LDFLAGS INCLUDES MOD_CFLAGS \
+		MOD_LDFLAGS 
 export LIBS
 export LEX YACC YACC_FLAGS
 export PREFIX LOCALBASE
@@ -274,33 +289,39 @@ print-modules:
 
 .PHONY: modules
 modules:
-	-@for r in $(modules) "" ; do \
-		if [ -n "$$r" ]; then \
+	@for r in $(modules) "" ; do \
+		if [ -n "$$r" -a -r "$$r/Makefile" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			$(MAKE) -C $$r ; \
+			if ! $(MAKE) -C $$r && [ ${err_fail} = 1 ] ; then \
+				exit 1; \
+			fi ; \
 		fi ; \
-	done 
+	done; true
 
 $(extra_objs):
-	-@echo "Extra objs: $(extra_objs)" 
-	-@for r in $(static_modules_path) "" ; do \
-		if [ -n "$$r" ]; then \
+	@echo "Extra objs: $(extra_objs)" 
+	@for r in $(static_modules_path) "" ; do \
+		if [ -n "$$r" -a -r "$$r/Makefile"  ]; then \
 			echo  "" ; \
 			echo  "Making static module $r" ; \
-			$(MAKE) -C $$r static ; \
+			if ! $(MAKE) -C $$r static ; then  \
+				exit 1; \
+			fi ;  \
 		fi ; \
-	done 
+	done
 
 .PHONY: utils
 utils:
-	-@for r in $(utils_compile) "" ; do \
+	@for r in $(utils_compile) "" ; do \
 		if [ -n "$$r" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			$(MAKE) -C $$r ; \
+			if ! $(MAKE) -C $$r && [ ${err_fail} = 1 ] ; then \
+				exit 1; \
+			fi ; \
 		fi ; \
-	done 
+	done; true
 
 
 dbg: ser
@@ -440,7 +461,7 @@ install-bin: $(bin-prefix)/$(bin-dir)
 		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
 
 install-modules: modules $(modules-prefix)/$(modules-dir)
-	-@for r in $(modules_full_path) "" ; do \
+	@for r in $(modules_full_path) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
 				$(INSTALL-TOUCH) \
@@ -448,12 +469,15 @@ install-modules: modules $(modules-prefix)/$(modules-dir)
 				$(INSTALL-MODULES)  "$$r"  $(modules-prefix)/$(modules-dir) ; \
 			else \
 				echo "ERROR: module $$r not compiled" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
 			fi ;\
 		fi ; \
-	done 
+	done; true
 
 install-utils: utils $(bin-prefix)/$(bin-dir)
-	-@for r in $(utils_install) "" ; do \
+	@for r in $(utils_install) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
 				$(INSTALL-TOUCH) \
@@ -461,9 +485,12 @@ install-utils: utils $(bin-prefix)/$(bin-dir)
 				$(INSTALL-BIN)  "$$r"  $(bin-prefix)/$(bin-dir) ; \
 			else \
 				echo "ERROR: $$r not compiled" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
 			fi ;\
 		fi ; \
-	done 
+	done; true
 
 
 
@@ -484,7 +511,7 @@ install-doc: $(doc-prefix)/$(doc-dir) install-modules-doc
 
 
 install-modules-doc: $(doc-prefix)/$(doc-dir)
-	-@for r in $(modules_basenames) "" ; do \
+	@for r in $(modules_basenames) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f modules/"$$r"/README ]; then \
 				$(INSTALL-TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \
@@ -532,7 +559,8 @@ export INSTALL-TOUCH
 dep_mods = $(filter $(addprefix modules/, $(lib_dependent_modules)), $(modules))
 dep_mods += $(filter $(lib_dependent_modules), $(static_modules))
 
-# make 'modules' dependent on libraries if there are modules which need them (experimental)
+# make 'modules' dependent on libraries if there are modules which need them 
+# (experimental)
 ifneq ($(strip $(dep_mods)),)
 modules:	libs
 
