@@ -1,8 +1,8 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
-<!ENTITY user SYSTEM "SNMPStats_user.sgml">
-<!ENTITY devel SYSTEM "SNMPStats_devel.sgml">
-<!ENTITY faq SYSTEM "SNMPStats_faq.sgml">
+<!ENTITY user SYSTEM "snmpstats_user.sgml">
+<!ENTITY devel SYSTEM "snmpstats_devel.sgml">
+<!ENTITY faq SYSTEM "snmptats_faq.sgml">
 
 <!-- Include general OpenSER documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
