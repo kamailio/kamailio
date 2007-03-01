@@ -599,18 +599,10 @@ int select_uri_type(str* res, select_t* s, struct sip_msg* msg)
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 
-	switch (uri.type) {
-	case SIPS_URI_T:
-	case TELS_URI_T:
-		res->len=4;
-		break;
-	case SIP_URI_T:
-	case TEL_URI_T:
-		res->len=3;
-		break;
-	case ERROR_URI_T:
+	if (uri.type==ERROR_URI_T)
 		return -1;
-	}
+
+	uri_type_to_str(uri.type, res);
 	return 0;
 }
 
@@ -619,6 +611,13 @@ int select_uri_user(str* res, select_t* s, struct sip_msg* msg)
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 
+	if (uri.flags & URI_USER_NORMALIZE) {
+		if (!(res->s=get_static_buffer(uri.user.len)))
+			return -1;
+		if ((res->len=normalize_tel_user(res->s, (&uri.user)))==0)
+			return 1;
+		return 0;
+	}
 	RETURN0_res(uri.user);
 }
 

@@ -113,7 +113,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	int found_user;
 	int error_headers;
 	unsigned int scheme;
-	uri_type backup;
+	uri_type backup_urit;
+	uri_flags backup_urif;
+
 #ifdef USE_COMP
 	str comp_str; /* not returned for now */
 	str comp_val; /* not returned for now */
@@ -139,11 +141,13 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 								user.len=p-user.s; \
 							}\
 							/* save the uri type/scheme */ \
-							backup=uri->type; \
+							backup_urit=uri->type; \
+							backup_urif=uri->flags; \
 							/* everything else is 0 */ \
 							memset(uri, 0, sizeof(struct sip_uri)); \
-							/* restore the scheme, copy user & pass */ \
-							uri->type=backup; \
+							/* restore the scheme & flags, copy user & pass */ \
+							uri->type=backup_urit; \
+							uri->flags=backup_urif; \
 							uri->user=user; \
 							if (pass)	uri->passwd=password;  \
 							s=p+1; \
@@ -435,6 +439,15 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						s=p+1;
 						break;
 						/* almost anything permitted in the user part */
+					case '.':
+					case '-':
+					case '(':
+					case ')':
+						/* tel uri visual separators, set flag meaning, that
+						 * user should be normalized before usage
+						 */
+						uri->flags|=URI_USER_NORMALIZE;
+						break;
 					case '[':
 					case ']': /* the user part cannot contain "[]" */
 						goto error_bad_char;
@@ -1083,29 +1096,28 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			goto error_bug;
 	}
 	switch(uri->type){
+		case SIPS_URI_T:
 		case SIP_URI_T:
 			if ((uri->user_param_val.len == 5) &&
 				(strncmp(uri->user_param_val.s, "phone", 5) == 0)) {
 				uri->type = TEL_URI_T;
+				uri->flags |= URI_SIP_USER_PHONE;
 				/* move params from user into uri->params */
 				p=q_memchr(uri->user.s, ';', uri->user.len);
 				if (p){
+					/* NOTE: 
+					 * specialized uri params (user, maddr, etc.) still hold
+					 * the values from the sip-uri envelope
+					 * while uri->params point to the params in the embedded tel uri
+					 */
 					uri->params.s=p+1;
 					uri->params.len=uri->user.s+uri->user.len-uri->params.s;
 					uri->user.len=p-uri->user.s;
+				} else {
+					uri->params.len=0;
 				}
-			}
-			break;
-		case SIPS_URI_T:
-			if ((uri->user_param_val.len == 5) &&
-				(strncmp(uri->user_param_val.s, "phone", 5) == 0)) {
-				uri->type = TELS_URI_T;
-				p=q_memchr(uri->user.s, ';', uri->user.len);
-				if (p){
-					uri->params.s=p+1;
-					uri->params.len=uri->user.s+uri->user.len-uri->params.s;
-					uri->user.len=p-uri->user.s;
-				}
+			} else {
+				uri->flags&=~URI_USER_NORMALIZE;
 			}
 			break;
 		case TEL_URI_T:
@@ -1133,6 +1145,10 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->params.len, ZSW(uri->params.s), uri->params.len,
 			uri->headers.len, ZSW(uri->headers.s), uri->headers.len
 		);
+	DBG(" uri flags : ");
+		if (uri->flags & URI_USER_NORMALIZE) DBG("user_need_norm ");
+		if (uri->flags & URI_SIP_USER_PHONE) DBG("sip_user_phone ");
+		DBG("   value=%d\n",uri->flags);
 	DBG(" uri params:\n   transport=<%.*s>, val=<%.*s>, proto=%d\n",
 			uri->transport.len, ZSW(uri->transport.s), uri->transport_val.len,
 			ZSW(uri->transport_val.s), uri->proto);
@@ -1390,3 +1406,47 @@ int parse_orig_ruri(struct sip_msg* msg)
 	if (ret<0) LOG(L_ERR, "ERROR: parse_orig_ruri failed\n");
 	return ret;
 }
+
+inline int normalize_tel_user(char* res, str* src) {
+	int i, l;
+	l=0;
+	for (i=0; i<src->len; i++) {
+		switch (src->s[i]) {
+			case '-':
+			case '.':
+			case '(':
+			case ')':
+				break;
+			default:
+				res[l++]=src->s[i];
+		}
+	}  
+	return l;
+}
+
+
+static str	s_sip  = STR_STATIC_INIT("sip");
+static str	s_sips = STR_STATIC_INIT("sips");
+static str	s_tel  = STR_STATIC_INIT("tel");
+static str	s_tels = STR_STATIC_INIT("tels");
+static str	s_null = STR_STATIC_INIT("");
+
+inline void uri_type_to_str(uri_type type, str *s) {
+	switch (type) {
+	case SIP_URI_T:
+		*s = s_sip;
+		break;
+	case SIPS_URI_T:
+		*s = s_sips;
+		break;
+	case TEL_URI_T:
+		*s = s_tel;
+		break;
+	case TELS_URI_T:
+		*s = s_tels;
+		break;
+	default:
+		*s = s_null;
+	}
+}
+

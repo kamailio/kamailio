@@ -54,6 +54,6 @@ int reset_static_buffer();
 int str_to_static_buffer(str* res, str* s);
 int int_to_static_buffer(str* res, int val);
 int uint_to_static_buffer(str* res, unsigned int val);
-int uint_ex_to_static_buffer(str* res, unsigned int val, int base, int pad);
+int uint_to_static_buffer_ex(str* res, unsigned int val, int base, int pad);
 
 #endif /* SELECT_BUFFER_H */
