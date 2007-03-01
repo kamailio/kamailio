@@ -201,13 +201,25 @@ prompt_pw()
 #
 sql_query()
 {
-    if [ $# -gt 1 ] ; then
-	DB=$1
-	shift
-	$CMD "$PW" $MYSQL_OPTS "$DB" -e "$@"
-    else
-	$CMD "$PW" $MYSQL_OPTS "$@"
-    fi
+	if [ $# -gt 1 ] ; then
+		if [ -n "$1" ]; then
+			DB=\"$1\"
+		else
+			DB=""
+		fi
+		shift
+		if [ -n "$PW" ]; then
+			$CMD "$PW" $MYSQL_OPTS $DB -e "$@"
+		else
+			$CMD $MYSQL_OPTS $DB -e "$@"
+		fi
+	else
+		if [ -n "$PW" ]; then
+			$CMD "$PW" $MYSQL_OPTS "$@"
+		else
+			$CMD $MYSQL_OPTS "$@"
+		fi
+	fi
 }
 
 # Drop SER database
