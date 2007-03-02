@@ -59,6 +59,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
+#include "../../dprint.h"
 #include "../sl/sl_api.h"
 
 #include "sst_handlers.h"
@@ -67,15 +68,6 @@
  * My own LOG() macros to add the correct message prefix and
  * file/function/line number information to all LOG messages.
  */
-#define DLOG(format, ...) LOG(L_DBG, "DEBUG:%s:%s:%d: "format,	\
-			__FILE__, __FUNCTION__, __LINE__,					\
-			##__VA_ARGS__)
-#define WLOG(format, ...) LOG(L_WARN, "WARNING:%s:%s:%d: "format,	\
-			__FILE__, __FUNCTION__, __LINE__,						\
-			##__VA_ARGS__)
-#define ELOG(format, ...) LOG(L_ERR, "ERROR:%s:%s:%d: "format,	\
-			__FILE__, __FUNCTION__, __LINE__,					\
-			##__VA_ARGS__)
 
 #define DLOGMSG(msg) {									   \
 		if (msg->first_line.type == SIP_REQUEST) {		   \
@@ -256,13 +248,14 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 		struct sip_msg* msg, void** param)
 {
 	sst_info_t *info = NULL;
-	sst_msg_info_t minfo = {0};
+	sst_msg_info_t minfo;
 
+	memset(&minfo, 0, sizeof(sst_msg_info_t));
 	/*
 	 * Only deal with messages flaged as SST interested.
 	 */
 	if ((msg->flags & sst_flag) != sst_flag) {
-		DLOG("SST flag was not set for this request\n");
+		LOG(L_DBG, "SST flag was not set for this request\n");
 		return;
 	}
 
@@ -271,7 +264,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 	 */
 	if (msg->first_line.type != SIP_REQUEST ||
 			msg->first_line.u.request.method_value != METHOD_INVITE) {
-		WLOG("Dialog create callback called with a non-INVITE request.\n");
+		LOG(L_WARN, "Dialog create callback called with a non-INVITE request.\n");
 		return;
 	}
 
@@ -279,7 +272,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 	 * Gather all he information about SST for this message
 	 */
 	if (parse_msg_for_sst_info(msg, &minfo)) {
-		ELOG("Failed to parse sst information\n");
+		LOG(L_ERR, "Failed to parse sst information\n");
 		return;
 	}
 
@@ -315,7 +308,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 				info->interval = MAX(sst_min_se, minfo.min_se);
 				snprintf(buf, 80, "Min-SE: %d\r\n", info->interval);
 				if (append_header(msg, buf)) {
-					ELOG("Could not append modified Min-SE: header\n");
+					LOG(L_ERR, "Could not append modified Min-SE: header\n");
 				}
 			}
 			else if (sst_reject) {
@@ -342,7 +335,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 			remove_header(msg, "Min-SE");
 			snprintf(buf, 80, "Min-SE: %d\r\n", info->interval);
 			if (append_header(msg, buf)) {
-				ELOG("Could not append modified Min-SE: header\n");
+				LOG(L_ERR, "Could not append modified Min-SE: header\n");
 				/* What to do? Let is slide, we can still work */
 			}
 		}
@@ -350,7 +343,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 		info->requester = SST_PXY;
 		snprintf(buf, 80, "Session-Expires: %d\r\n", info->interval);
 		if (append_header(msg, buf)) {
-			ELOG("Error appending Session-Expires header to proxy "
+			LOG(L_ERR, "Error appending Session-Expires header to proxy "
 					"requested SST.\n");
 			shm_free(info);
 			return; /* Nothing we can do! */
@@ -368,7 +361,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 static void sst_dialog_confirmed_CB(struct dlg_cell *did, int type,
 		struct sip_msg* msg, void** param)
 {
-	DLOG("confirmed dialog CB %p\n", did);
+	LOG(L_DBG, "confirmed dialog CB %p\n", did);
 	DLOGMSG(msg);
 }
 #endif /* USE_CONFIRM_CALLBACK */
@@ -389,17 +382,17 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 {
 	switch (type) {
 		case DLGCB_FAILED:
-			DLOG("DID %p failed (canceled). "
+			LOG(L_ERR, "DID %p failed (canceled). "
 					"Terminating session.\n", did);
 			break;
 		case DLGCB_EXPIRED:
 			/* In the case of expired, the msg is pointing at a
 			 * FAKED_REPLY (-1)
 			 */
-			ELOG("Terminating session.\n");
+			LOG(L_ERR, "Terminating session.\n");
 			break;
 		default: /* Normal termination. */
-			DLOG("Terminating DID %p session\n",
+			LOG(L_DBG, "Terminating DID %p session\n",
 					did);
 			break;
 	}
@@ -407,7 +400,7 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 	 * Free the param sst_info_t memory
 	 */
 	if (*param) {
-		DLOG("Freeing the sst_info_t from dialog %p\n", did);
+		LOG(L_DBG, "Freeing the sst_info_t from dialog %p\n", did);
 		shm_free(*param);
 		*param = '\0';
 	}
@@ -441,7 +434,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 		if ((msg->first_line.u.request.method_value == METHOD_INVITE ||
 						msg->first_line.u.request.method_value == METHOD_UPDATE)) {
 
-			DLOG("Update by a REQUEST. %.*s\n", 
+			LOG(L_DBG, "Update by a REQUEST. %.*s\n", 
 					msg->first_line.u.request.method.len, 
 					msg->first_line.u.request.method.s);
 			if (parse_msg_for_sst_info(msg, &minfo)) {
@@ -464,7 +457,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 			 * confiremed callback code should look for the new AVP
 			 * value, which is does not.
 			 */
-			DLOG("PRACK workaround applied!\n");
+			LOG(L_DBG, "PRACK workaround applied!\n");
 			set_timeout_avp(msg, info->interval);
 		}
 	}
@@ -475,7 +468,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 			 * To spec (RFC) the internal time out value so not be reset
 			 * until here.
 			 */
-			DLOG("Update by a REPLY %d %.*s\n", 
+			LOG(L_DBG, "Update by a REPLY %d %.*s\n", 
 					msg->first_line.u.reply.statuscode,
 					msg->first_line.u.reply.reason.len, 
 					msg->first_line.u.reply.reason.s);
@@ -511,7 +504,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		sst_msg_info_t minfo = {0};
 		sst_info_t *info = (sst_info_t *)*param;
 
-		DLOG("Dialog seen REPLY %d %.*s\n", 
+		LOG(L_DBG, "Dialog seen REPLY %d %.*s\n", 
 				msg->first_line.u.reply.statuscode,
 				msg->first_line.u.reply.reason.len, 
 				msg->first_line.u.reply.reason.s);
@@ -523,7 +516,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		 */
 		if (msg->first_line.u.reply.statuscode == 422) {
 			if (parse_msg_for_sst_info(msg, &minfo)) {
-				ELOG("Could not prase sst information for thr 422 reply\n");
+				LOG(L_ERR, "Could not prase sst information for thr 422 reply\n");
 				return;
 			}
 			/* Make sure we do not try to use anything smaller */
@@ -536,7 +529,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		 * INVITE or reINVTE/UPDATE.
 		 */
 		if (!msg->cseq && ((parse_headers(msg, HDR_CSEQ_F, 0) == -1) || !msg->cseq)) {
-			ELOG("Error while parsing CSeq\n");
+			LOG(L_ERR, "Error while parsing CSeq\n");
 			return;
 		}
 		
@@ -546,7 +539,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 				(get_cseq(msg)->method_id == METHOD_INVITE ||
 						get_cseq(msg)->method_id == METHOD_UPDATE)) {
 			if (parse_msg_for_sst_info(msg, &minfo)) {
-				ELOG("Could not parse sst information for the 2XX reply\n");
+				LOG(L_ERR, "Could not parse sst information for the 2XX reply\n");
 				return;
 			}
 
@@ -561,7 +554,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 				if (info->requester == SST_PXY || info->supported == SST_UAC) {
 					char se_buf[80];
 					
-					DLOG("Appending the Session-Expires: header to the 2XX reply."
+					LOG(L_DBG, "Appending the Session-Expires: header to the 2XX reply."
 							" UAC will deal with it.\n");
 					/*
 					 * GOOD! we can just insert the Session-Expires:
@@ -571,7 +564,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 					snprintf(se_buf, 80, "Session-Expires: %d;refresher=uac\r\n", 
 							info->interval);
 					if (append_header(msg, se_buf)) {
-						ELOG("Error appending Session-Expires header\n");
+						LOG(L_ERR, "Error appending Session-Expires header\n");
 						return;
 					}
 					/* Set the dialog timeout HERE */
@@ -582,7 +575,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 				else {
 					/* We are sunk, uac did not request it, and it
 					 * does not support it */
-					DLOG("UAC and UAS do not support timers!"
+					LOG(L_DBG, "UAC and UAS do not support timers!"
 							" No session timers for this session.\n");
 				}
 			}
@@ -633,11 +626,11 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 		 */
 		if ((result = parse_session_expires(msg, &se)) != parse_sst_success) {
 			if (result != parse_sst_header_not_found) {
-				ELOG("error parsing Session-Expires headers.\n");
+				LOG(L_ERR, "error parsing Session-Expires headers.\n");
 				return 0; /* Error drop the message */
 			}
 			/* Session-Expires not supported/stated */
-			DLOG("No Session-Expires header "
+			LOG(L_DBG, "No Session-Expires header "
 					"found. retuning false (-1)\n");
 			/*
 			 * NOTE: 0 == drop message, 1 == true, -1 == false
@@ -654,18 +647,18 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 				 * This is an error. The header was found but could
 				 * not parse it.
 				 */
-				ELOG("Error parsing MIN-SE header.\n");
+				LOG(L_ERR, "Error parsing MIN-SE header.\n");
 				return -1; 
 			}
 			/*
 			 * If not stated, use the value from the session-expires
 			 * header
 			 */
-			DLOG("No MIN-SE header found.\n");
+			LOG(L_DBG, "No MIN-SE header found.\n");
 			minse = se.interval;
 		}
 		
-		DLOG("Session-Expires: %d; MIN-SE: %d\n",
+		LOG(L_DBG, "Session-Expires: %d; MIN-SE: %d\n",
 				se.interval, minse);
 
 		/*
@@ -684,21 +677,21 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 				char *minse_hdr = pkg_malloc(hdr_len+1);
 				memset(minse_hdr, 0, hdr_len+1);
 				snprintf(minse_hdr, hdr_len+1, "%s%d", "MIN-SE:", sst_min_se);
-				DLOG("Sending 422: %.*s\n",
+				LOG(L_DBG, "Sending 422: %.*s\n",
 						hdr_len, minse_hdr);
 				if (send_response(msg, 422, &sst_422_rpl, minse_hdr, hdr_len)){
-					ELOG("Error sending 422 reply.\n");
+					LOG(L_ERR, "Error sending 422 reply.\n");
 				}
 				
 				if (minse_hdr) {
 					pkg_free(minse_hdr);
 				}
 			}
-			DLOG("Done returning true (1)\n");
+			LOG(L_DBG, "Done returning true (1)\n");
 			return 1; /* return true */
 		}
 	}
-	DLOG("Done returning false (-1)\n");
+	LOG(L_DBG, "Done returning false (-1)\n");
 	/*
 	 * All is good.
 	 */
@@ -727,13 +720,13 @@ static int send_response(struct sip_msg *request, int code, str *reason,
 		if ((header) && (header_len)) {
 			if (add_lump_rpl(request, header, header_len, LUMP_RPL_HDR) == 0) {
 				/* An error with adding the lump */
-				ELOG("unable to append header.\n");
+				LOG(L_ERR, "unable to append header.\n");
 				return -1;
 			}
 		}
 		/* Now using the sl function, send the reply/response */
 		if (slb.reply(request, code, reason) < 0) {
-			ELOG("Unable to sent reply.\n");
+			LOG(L_ERR, "Unable to sent reply.\n");
 			return -1;
 		}
 	}
@@ -757,29 +750,29 @@ static int append_header(struct sip_msg *msg, const char *header)
 	char *s = NULL;
 	int len = 0;
 
-	DLOG("Appending header: %s", header);
+	LOG(L_DBG, "Appending header: %s", header);
 
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		ELOG("Error while parsing headers in message.\n");
+		LOG(L_ERR, "Error while parsing headers in message.\n");
 		return(1);
 	}
 
 	if ((anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0)) == 0) {
-		ELOG("Error getting anchor to append header\n");
+		LOG(L_ERR, "Error getting anchor to append header\n");
 		return(1);
 	}
 	len = strlen(header);
 	if ((s = (char *)pkg_malloc(len)) == 0) {
-		ELOG("No memory. (size requested = %d)\n", len);
+		LOG(L_ERR, "No memory. (size requested = %d)\n", len);
 		return(1);
 	}
 	memcpy(s, header, len);
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
-		ELOG("Can't insert lump\n");
+		LOG(L_ERR, "Can't insert lump\n");
 		pkg_free(s);
 		return(1);
 	}
-	DLOG("Done appending header successfully.\n");
+	LOG(L_DBG, "Done appending header successfully.\n");
 	return(0);
 }
 
@@ -800,7 +793,7 @@ static int remove_header(struct sip_msg *msg, const char *header)
 	int len = strlen(header);
 
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		ELOG("Error while parsing headers in message.\n");
+		LOG(L_ERR, "Error while parsing headers in message.\n");
 		return(-1);
 	}
 	
@@ -814,7 +807,7 @@ static int remove_header(struct sip_msg *msg, const char *header)
 
 		anchor = del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (anchor == 0) {
-			ELOG("no memory\n");
+			LOG(L_ERR, "no memory\n");
 			return -1;
 		}
 		cnt++;
@@ -842,7 +835,7 @@ static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 		if ((result = xl_get_spec_value(msg, timeout_avp, &xl_val, 0)) == 0) {
 			if (xl_val.flags & XL_VAL_INT) {
 				/* We now hold a reference to the AVP int value */
-				DLOG("Found current timeout value is %d, setting it to %d\n",
+				LOG(L_ERR, "Found current timeout value is %d, setting it to %d\n",
 						xl_val.ri, value);
 				xl_val.ri = value;
 				rtn = 0;
@@ -860,20 +853,20 @@ static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 					xl_get_avp_name(msg, timeout_avp, &avp_name, &name_type);
 					avp_value.n = value;
 					add_avp(name_type, avp_name, avp_value);
-					DLOG("Added the avp and set the value to %d\n", value);
+					LOG(L_DBG, "Added the avp and set the value to %d\n", value);
 					rtn = 0;
 				}
 				else {
-					ELOG("AVP wrong type %d. Not an integer.\n", xl_val.flags);
+					LOG(L_ERR, "AVP wrong type %d. Not an integer.\n", xl_val.flags);
 				}
 			}
 		}
 		else {
-			ELOG("SST not reset. get avp result is %d\n", result);
+			LOG(L_ERR, "SST not reset. get avp result is %d\n", result);
 		}
 	}
 	else {
-		ELOG("SST needs to know the name of the dialog timeout AVP!\n");
+		LOG(L_ERR, "SST needs to know the name of the dialog timeout AVP!\n");
 	}
 	return(rtn);
 }
@@ -949,11 +942,11 @@ static int send_reject(struct sip_msg *msg, unsigned int min_se)
 		memset(minse_hdr, 0, hdr_len+1);
 		snprintf(minse_hdr, hdr_len+1, "%s %d", "MIN-SE:", min_se);
 		if (send_response(msg, 422, &sst_422_rpl, minse_hdr, hdr_len)) {
-			ELOG("Error sending 422 reply.\n");
+			LOG(L_ERR, "Error sending 422 reply.\n");
 			return(-1);
 		}
 		pkg_free(minse_hdr);
-		DLOG("Send reject reply 422 with Min-SE: %d\n", min_se);
+		LOG(L_DBG, "Send reject reply 422 with Min-SE: %d\n", min_se);
 		return(0);
 	}
 	return(-1);
@@ -974,18 +967,18 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 	 */
 
 #ifdef USE_CONFIRM_CALLBACK
-	DLOG("Adding callback "
+	LOG(L_DBG, "Adding callback "
 			"DLGCB_CONFIRMED\n");
 	dlg_binds->register_dlgcb(did,
 			DLGCB_CONFIRMED, sst_dialog_confirmed_CB, info);
 #endif /* USE_CONFIRM_CALLBACK */
 
-	DLOG("Adding callback "
+	LOG(L_DBG, "Adding callback "
 			"DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED\n");
 	dlg_binds->register_dlgcb(did,
 			DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED,
 			sst_dialog_terminate_CB, info);
-	DLOG("Adding callback DLGCB_REQ_WITHIN\n");
+	LOG(L_DBG, "Adding callback DLGCB_REQ_WITHIN\n");
 	/* This is for the reINVITE/UPDATE requests */
 	dlg_binds->register_dlgcb(did, DLGCB_REQ_WITHIN,
 			sst_dialog_request_within_CB, info);
@@ -995,7 +988,7 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 	 * immutable! we must do all the real work in the DLGCB_FRD
 	 * callback were we can change the message.
 	 */
-	DLOG("Adding callback DLGCB_RESPONSE_FWDED\n");
+	LOG(L_DBG, "Adding callback DLGCB_RESPONSE_FWDED\n");
 	dlg_binds->register_dlgcb(did, DLGCB_RESPONSE_FWDED,
 			sst_dialog_response_fwded_CB, info);
 }
