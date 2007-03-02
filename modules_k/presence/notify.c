@@ -1285,7 +1285,17 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	row_vals = ROW_VALUES(row);
 
 	body.s = row_vals[0].val.str_val.s;
+	if(body.s== NULL)
+	{
+		DBG("PRESENCE:get_xcap_tree: Xcap doc NULL\n");
+		goto error;
+	}	
 	body.len = strlen(body.s);
+	if(body.len== 0)
+	{
+		DBG("PRESENCE:get_xcap_tree: Xcap doc empty\n");
+		goto error;
+	}			
 	
 	DBG("PRESENCE:get_xcap_tree: xcap body:\n%.*s", body.len,body.s);
 	
