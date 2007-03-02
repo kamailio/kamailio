@@ -1533,18 +1533,24 @@ subscriber() {
 				exit 1
 			fi
 
+			if [ "$STORE_PLAINTEXT_PW" = "1" ] ; then
+				PASS="$2"
+			else
+				PASS=""
+			fi
+
 			if [ "$HAS_SERWEB" = "yes" ] ; then
 				_gen_phplib_id 
 				QUERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,\
 				$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,\
 				$EMAIL_COLUMN,$SUB_CREATED_COLUMN,$PHP_LIB_COLUMN) \
-				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
+				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$PASS','$3',\
 				now(),'$PHPLIB_ID');";
 			else
 				QUERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,\
 				$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,\
 				$EMAIL_COLUMN,$SUB_CREATED_COLUMN) \
-				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$2','$3',\
+				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$PASS','$3',\
 				now());";
 			fi
 			$DBCMD "$QUERY"
@@ -1591,8 +1597,15 @@ $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN'"
 				merr "non-existent user '$1'"
 				exit 1
 			fi
+
+			if [ "$STORE_PLAINTEXT_PW" = "1" ] ; then
+				PASS="$2"
+			else
+				PASS=""
+			fi
+
 			QUERY="update $SUB_TABLE set $HA1_COLUMN='$HA1', \
-$HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2', $SUB_MODIFIED_COLUMN=now() \
+$HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$PASS', $SUB_MODIFIED_COLUMN=now() \
 WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then

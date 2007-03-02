@@ -51,3 +51,7 @@
 
 ## verbose - debug purposes - default '0'
 # VERBOSE=1
+
+## do (1) or don't (0) store plaintext passwords
+## in the subscriber table - default '1'
+# STORE_PLAINTEXT_PW=0
