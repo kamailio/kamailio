@@ -32,7 +32,13 @@
 #define XMLRPC_WANT_INTERNAL_DECLARATIONS
 #include <xmlrpc.h>
 
-xmlrpc_value * default_method ( xmlrpc_env * env, char * host, char * methodName, xmlrpc_value * paramArray, void * serverInfo );
+xmlrpc_value * default_method ( xmlrpc_env * env, char * host,
+		char * methodName, xmlrpc_value * paramArray, void * serverInfo );
+
 int set_default_method ( xmlrpc_env * env );
+
+int init_async_lock();
+
+void destroy_async_lock();
 
 #endif /* _XR_SERVER_H_ */

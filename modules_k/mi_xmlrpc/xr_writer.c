@@ -197,7 +197,8 @@ char* xr_build_response( xmlrpc_env * env, struct mi_root * tree )
 	buf.len = reply_buffer_len;
 
 	if ( tree->code<200 || tree->code>=300 ){
-		DBG("DEBUG: mi_xmlrpc: xr_build_response: Command processing failure: %s\n", tree->reason.s); 
+		DBG("DEBUG: mi_xmlrpc: xr_build_response: Command processing "
+			"failure: %s\n", tree->reason.s); 
 		if (tree->reason.s)
 			xmlrpc_env_set_fault(env, tree->code, tree->reason.s);
 		else
@@ -206,8 +207,9 @@ char* xr_build_response( xmlrpc_env * env, struct mi_root * tree )
 	}
 	
 	if ( recur_build_response(env, (&tree->node)->kids, &buf) != 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_build_response: Failed to read from the MI tree!\n");
-		xmlrpc_env_set_fault(env, 500, "Failed to write reply");
+		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_build_response: Failed to read "
+			"from the MI tree!\n");
+		xmlrpc_env_set_fault(env, 500, "Failed to build reply");
 		return 0;
 	}
 	

@@ -98,7 +98,13 @@ static int mod_init(void)
 
 	mi_xmlrpc_pid = (pid_t*) shm_malloc ( sizeof(pid_t) );
 	if ( mi_xmlrpc_pid == 0 ) {
-		LOG(L_ERR, "ERROR mi_xmlrpc: mod_init: failed to init shm mem for mi_xmlrpc_pid\n");
+		LOG(L_ERR, "ERROR mi_xmlrpc: mod_init: failed to init shm mem for "
+			"mi_xmlrpc_pid\n");
+		return -1;
+	}
+
+	if (init_async_lock()!=0) {
+		LOG(L_ERR, "ERROR mi_xmlrpc: mod_init: failed to init async lock\n");
 		return -1;
 	}
 
@@ -239,6 +245,8 @@ int destroy(void)
 		}
 		shm_free(mi_xmlrpc_pid);
 	}
+
+	destroy_async_lock();
 
 	return 0;
 }
