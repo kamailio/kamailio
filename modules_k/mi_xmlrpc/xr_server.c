@@ -92,7 +92,7 @@ static void xmlrpc_close_async( struct mi_root *mi_rpl, struct mi_handler *hdl,
 }
 
 
-#define MAX_XMLRPC_WAIT 2*60
+#define MAX_XMLRPC_WAIT 2*60*4
 static inline struct mi_root* wait_async_reply(struct mi_handler *hdl)
 {
 	struct mi_root *mi_rpl;
