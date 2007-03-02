@@ -501,7 +501,7 @@ int it_get_dlg_lifetime(struct sip_msg *msg, xl_value_t *res,
 		return -1;
 
 	if (CURR_DLG_ID!=msg->id)
-		return -1;
+		return xl_get_null( msg, res, param, flags);
 
 	res->ri = CURR_DLG_LIFETIME;
 	ch = int2str( (unsigned long)res->ri, &l);
@@ -525,7 +525,7 @@ int it_get_dlg_status(struct sip_msg *msg, xl_value_t *res,
 		return -1;
 
 	if (CURR_DLG_ID!=msg->id)
-		return -1;
+		return xl_get_null( msg, res, param, flags);
 
 	res->ri = CURR_DLG_STATUS;
 	ch = int2str( (unsigned long)res->ri, &l);

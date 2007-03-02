@@ -282,6 +282,7 @@ modparam("dialog", "use_tight_match", 1)
 
    Value may be:
 
+     * NULL - Dialog not found.
      * 3 - Confirmed by a final reply but no ACK received yet.
      * 4 - Confirmed by a final reply and ACK received.
      * 5 - Dialog ended.
@@ -294,6 +295,8 @@ modparam("dialog", "use_tight_match", 1)
    calculated from the dialog confirmation and the current
    moment. This PV will be available only for sequential
    requests, after doing loose_route().
+
+   NULL will be returned if there is no dialog for the request.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

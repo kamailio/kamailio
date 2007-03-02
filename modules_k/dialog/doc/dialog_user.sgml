@@ -329,6 +329,9 @@ modparam("dialog", "use_tight_match", 1)
 			</para>
 			<itemizedlist>
 				<listitem><para>
+					<emphasis>NULL</emphasis> - Dialog not found.
+				</para></listitem>
+				<listitem><para>
 					<emphasis>3</emphasis> - Confirmed by a final reply but 
 					no ACK received yet.
 				</para></listitem>
@@ -349,6 +352,9 @@ modparam("dialog", "use_tight_match", 1)
 			the processed sequential request. The duration is calculated from 
 			the dialog confirmation and the current moment. This PV will be 
 			available only for sequential requests, after doing loose_route().
+			</para>
+			<para>
+			NULL will be returned if there is no dialog for the request.
 			</para>
 		</section>
 
