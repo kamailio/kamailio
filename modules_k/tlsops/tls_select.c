@@ -127,7 +127,7 @@ int tlsops_cipher(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return -1;
+	return xl_get_null(msg, res, param, flags);
 }
 
 
@@ -165,7 +165,7 @@ int tlsops_bits(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return -1;
+	return xl_get_null(msg, res, param, flags);
 }
 
 
@@ -203,7 +203,7 @@ int tlsops_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int 
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return -1;
+	return xl_get_null(msg, res, param, flags);
 }
 
 
@@ -234,7 +234,7 @@ int tlsops_desc(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return -1;	
+	return xl_get_null(msg, res, param, flags);
 }
 
 
@@ -253,7 +253,7 @@ int tlsops_cert_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_version: bug in call to "
 			"tlsops_cert_version\n");
-		return -1;
+		return xl_get_null(msg, res, param, flags);
 	}
 
 	if (get_cert(&cert, &c, msg, my) < 0) return -1;
@@ -289,7 +289,7 @@ int tlsops_check_cert(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, i
 	default:
 		LOG(L_CRIT,"BUG:tlsops:tlsops_check_cert: unexpected parameter "
 			"value \"%d\"\n", param->ind);
-		return -1;
+		return xl_get_null(msg, res, param, flags);
 	}   
 
 	c = get_cur_connection(msg);
@@ -316,7 +316,7 @@ int tlsops_check_cert(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, i
 err:
 	if (cert) X509_free(cert);
 	if (c) tcpconn_put(c);
-	return -1;
+	return xl_get_null(msg, res, param, flags);
 }
 
 
@@ -373,7 +373,7 @@ err:
 	if (mem) BIO_free(mem);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
-	return -1;
+	return xl_get_null(msg, res, param, flags);
 }
 
 
@@ -391,10 +391,11 @@ int tlsops_sn(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags
 		my = 1;
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_sn: could not determine certificate\n");
-		return -1;
+		return xl_get_null(msg, res, param, flags);
 	}
 	
-	if (get_cert(&cert, &c, msg, my) < 0) return -1;
+	if (get_cert(&cert, &c, msg, my) < 0)
+		return xl_get_null(msg, res, param, flags);
 	
 	serial = ASN1_INTEGER_get(X509_get_serialNumber(cert));
 	sn = int2str( serial, &res->rs.len);
@@ -433,7 +434,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_comp: could not determine "
 			"certificate\n");
-		return -1;
+		return xl_get_null(msg, res, param, flags);
 	}
 
 	if (ind_local & CERT_SUBJECT) {
@@ -445,7 +446,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_comp: could not determine "
 			"subject or issuer\n");
-		return -1;
+		return xl_get_null(msg, res, param, flags);
 	}
 
 	switch(ind_local) {
@@ -512,7 +513,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	if (text.s) OPENSSL_free(text.s);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
-	return -1;
+	return xl_get_null(msg, res, param, flags);
 }
 
 int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
@@ -536,7 +537,7 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 		ind_local = ind_local ^ CERT_LOCAL;
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_alt: could not determine certificate\n");
-		return -1;
+		return xl_get_null(msg, res, param, flags);
 	}
 
 	switch(ind_local) {
@@ -546,7 +547,7 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 		case COMP_IP:   type = GEN_IPADD; break;
 		default:
 			LOG(L_CRIT,"BUG:tlsops:tlsops_alt: ind_local=%d\n", ind_local);
-			return -1;
+			return xl_get_null(msg, res, param, flags);
 	}
 
 	if (get_cert(&cert, &c, msg, my) < 0) return -1;
@@ -605,6 +606,6 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 	if (names) sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
-	return -1;
+	return xl_get_null(msg, res, param, flags);
 }
 
