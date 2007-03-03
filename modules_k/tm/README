@@ -171,7 +171,6 @@ Chapter 1. User's Guide
    machinery: retransmissions , FR timeouts, forking, etc. See
    t_uac prototype in uac.h for more details. Who wants to see
    the transaction result may register for a callback.
-
      _________________________________________________________
 
 1.1.1. Per-Branch flags
@@ -461,11 +460,11 @@ modparam("tm", "restart_fr_on_each_reply", 0)
    If set to empty string, the whole mechanism for variable
    timeout will be disabled, falling back to the static value.
 
-   Default value is "callee_fr_timer". 
+   Default value is "$avp(s:callee_fr_timer)". 
 
    Example 1-12. Set fr_timer_avp parameter
 ...
-modparam("tm", "fr_timer_avp", "i:24")
+modparam("tm", "fr_timer_avp", "$avp(i:24)")
 ...
      _________________________________________________________
 
@@ -478,11 +477,11 @@ modparam("tm", "fr_timer_avp", "i:24")
    If set to empty string, the whole mechanism for variable
    timeout will be disabled, falling back to the static value.
 
-   Default value is "callee_fr_inv_timer". 
+   Default value is "$avp(s:callee_fr_inv_timer)". 
 
    Example 1-13. Set fr_inv_timer_avp parameter
 ...
-modparam("tm", "fr_inv_timer_avp", "i:25")
+modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
 ...
      _________________________________________________________
 

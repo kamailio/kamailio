@@ -67,8 +67,8 @@ extern int noisy_ctimer;
 
 
 /* default names for timer's AVPs  */
-#define FR_TIMER_AVP      "s:callee_fr_timer"
-#define FR_INV_TIMER_AVP  "s:callee_fr_inv_timer"
+#define FR_TIMER_AVP      "$avp(s:callee_fr_timer)"
+#define FR_INV_TIMER_AVP  "$avp(s:callee_fr_inv_timer)"
 
 /* t_reply_to flags */
 #define TM_T_REPLY_repl_FLAG     (1<<0)

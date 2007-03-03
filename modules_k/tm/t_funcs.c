@@ -58,10 +58,8 @@
 /* fr_timer AVP specs */
 static int     fr_timer_avp_type;
 static int_str fr_timer_avp;
-static str     fr_timer_str;
 static int     fr_inv_timer_avp_type;
 static int_str fr_inv_timer_avp;
-static str     fr_inv_timer_str;
 
 static str relay_reason_100 = str_init("Giving a try");
 
@@ -286,29 +284,45 @@ done:
  */
 int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 {
+	xl_spec_t avp_spec;
+	unsigned short avp_flags;
 	if (fr_timer_param && *fr_timer_param) {
-		fr_timer_str.s = fr_timer_param;
-		fr_timer_str.len = strlen(fr_timer_str.s);
-		if (parse_avp_spec( &fr_timer_str, &fr_timer_avp_type,
-		&fr_timer_avp)<0) {
-			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_timer "
-				"AVP specs \"%s\"\n", fr_timer_param);
+		if (xl_parse_spec(fr_timer_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:tm:init_avp_params: malformed or non AVP %s "
+				"AVP definition\n", fr_timer_param);
 			return -1;
 		}
+
+		if(xl_get_avp_name(0, &avp_spec, &fr_timer_avp, &avp_flags)!=0)
+		{
+			LOG(L_ERR, "ERROR:tm:init_avp_params: [%s]- invalid "
+				"AVP definition\n", fr_timer_param);
+			return -1;
+		}
+		fr_timer_avp_type = avp_flags;
 	} else {
 		fr_timer_avp.n = 0;
 		fr_timer_avp_type = 0;
 	}
 
 	if (fr_inv_timer_param && *fr_inv_timer_param) {
-		fr_inv_timer_str.s = fr_inv_timer_param;
-		fr_inv_timer_str.len = strlen(fr_inv_timer_str.s);
-		if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type, 
-		&fr_inv_timer_avp)<0) {
-			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_inv_timer "
-				"AVP specs \"%s\"\n", fr_inv_timer_param);
+		if (xl_parse_spec(fr_inv_timer_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:tm:init_avp_params: malformed or non AVP %s "
+				"AVP definition\n", fr_inv_timer_param);
 			return -1;
 		}
+
+		if(xl_get_avp_name(0, &avp_spec, &fr_inv_timer_avp, &avp_flags)!=0)
+		{
+			LOG(L_ERR, "ERROR:tm:init_avp_params: [%s]- invalid "
+				"AVP definition\n", fr_inv_timer_param);
+			return -1;
+		}
+		fr_inv_timer_avp_type = avp_flags;
 	} else {
 		fr_inv_timer_avp.n = 0;
 		fr_inv_timer_avp_type = 0;

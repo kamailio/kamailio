@@ -485,14 +485,14 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 		</para>
 		<para>
 		<emphasis>
-			Default value is "callee_fr_timer".
+			Default value is "$avp(s:callee_fr_timer)".
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>fr_timer_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("tm", "fr_timer_avp", "i:24")
+modparam("tm", "fr_timer_avp", "$avp(i:24)")
 ...
 </programlisting>
 		</example>
@@ -511,14 +511,14 @@ modparam("tm", "fr_timer_avp", "i:24")
 		</para>
 		<para>
 		<emphasis>
-			Default value is "callee_fr_inv_timer".
+			Default value is "$avp(s:callee_fr_inv_timer)".
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>fr_inv_timer_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("tm", "fr_inv_timer_avp", "i:25")
+modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
 ...
 </programlisting>
 		</example>
