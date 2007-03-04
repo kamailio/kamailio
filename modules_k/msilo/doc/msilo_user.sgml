@@ -426,27 +426,26 @@ modparam("msilo", "sc_uri_user", "user")
     </section>
 
 	<section>
-		<title><varname>snd_time_avp</varname> (int)</title>
+		<title><varname>snd_time_avp</varname> (str)</title>
 		<para>
-		The integer ID of an AVP which may contain the time when to sent
+		The name of an AVP which may contain the time when to sent
 		the received message as reminder.The AVP is used ony by m_store().
 		</para>
 		<para>
-		If the parameter is not set to a value different than 0, the module
-		does not look for this AVP. If the value is set to a number different
-		than 0, then the module expects in the AVP with that ID to be a time
-		in format YYYYMMDDHHMMSS (e.g., 20060101201500).
+		If the parameter is not set, the module does not look for this AVP. If
+		the value is set to a valid AVP name, then the module expects in the AVP
+		to be a time value in format YYYYMMDDHHMMSS (e.g., 20060101201500).
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0</quote>.
+			Default value is <quote>null</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set the <quote>snd_time_avp</quote> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("msilo", "snd_time_avp", 35)
+modparam("msilo", "snd_time_avp", "$avp(i:123)")
 ...
 </programlisting>
 		</example>

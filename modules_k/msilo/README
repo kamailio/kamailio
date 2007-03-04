@@ -42,7 +42,7 @@ Daniel-Constantin Mierla
               1.3.17. sc_exp_time (string)
               1.3.18. sc_inc_time (string)
               1.3.19. sc_snd_time (string)
-              1.3.20. snd_time_avp (int)
+              1.3.20. snd_time_avp (str)
               1.3.21. add_date (int)
               1.3.22. max_messages (int)
 
@@ -403,23 +403,21 @@ modparam("msilo", "sc_uri_user", "user")
 
      _________________________________________________________
 
-1.3.20. snd_time_avp (int)
+1.3.20. snd_time_avp (str)
 
-   The integer ID of an AVP which may contain the time when to
-   sent the received message as reminder.The AVP is used ony by
-   m_store().
+   The name of an AVP which may contain the time when to sent the
+   received message as reminder.The AVP is used ony by m_store().
 
-   If the parameter is not set to a value different than 0, the
-   module does not look for this AVP. If the value is set to a
-   number different than 0, then the module expects in the AVP
-   with that ID to be a time in format YYYYMMDDHHMMSS (e.g.,
-   20060101201500).
+   If the parameter is not set, the module does not look for this
+   AVP. If the value is set to a valid AVP name, then the module
+   expects in the AVP to be a time value in format YYYYMMDDHHMMSS
+   (e.g., 20060101201500).
 
-   Default value is "0". 
+   Default value is "null". 
 
    Example 1-20. Set the "snd_time_avp" parameter
 ...
-modparam("msilo", "snd_time_avp", 35)
+modparam("msilo", "snd_time_avp", "$avp(i:123)")
 ...
      _________________________________________________________
 

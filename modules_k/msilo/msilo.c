@@ -138,9 +138,12 @@ int  ms_check_time=60;
 int  ms_send_time=0;
 int  ms_clean_period=10;
 int  ms_use_contact=1;
-int  ms_snd_time_avp = 0;
 int  ms_add_date = 1;
 int  ms_max_messages = 0;
+
+char*    ms_snd_time_avp_param = 0;
+int_str  ms_snd_time_avp_name;
+unsigned short  ms_snd_time_avp_type;
 
 str msg_type = { "MESSAGE", 7 };
 
@@ -180,28 +183,28 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{ "db_url",       STR_PARAM, &ms_db_url       },
-	{ "db_table",     STR_PARAM, &ms_db_table     },
-	{ "registrar",    STR_PARAM, &ms_registrar.s  },
-	{ "reminder",     STR_PARAM, &ms_reminder.s   },
-	{ "expire_time",  INT_PARAM, &ms_expire_time  },
-	{ "check_time",   INT_PARAM, &ms_check_time   },
-	{ "send_time",    INT_PARAM, &ms_send_time    },
-	{ "clean_period", INT_PARAM, &ms_clean_period },
-	{ "use_contact",  INT_PARAM, &ms_use_contact  },
-	{ "sc_mid",       STR_PARAM, &sc_mid          },
-	{ "sc_from",      STR_PARAM, &sc_from         },
-	{ "sc_to",        STR_PARAM, &sc_to           },
-	{ "sc_uri_user",  STR_PARAM, &sc_uri_user     },
-	{ "sc_uri_host",  STR_PARAM, &sc_uri_host     },
-	{ "sc_body",      STR_PARAM, &sc_body         },
-	{ "sc_ctype",     STR_PARAM, &sc_ctype        },
-	{ "sc_exp_time",  STR_PARAM, &sc_exp_time     },
-	{ "sc_inc_time",  STR_PARAM, &sc_inc_time     },
-	{ "sc_snd_time",  STR_PARAM, &sc_snd_time     },
-	{ "snd_time_avp", INT_PARAM, &ms_snd_time_avp },
-	{ "add_date",     INT_PARAM, &ms_add_date     },
-	{ "max_messages", INT_PARAM, &ms_max_messages },
+	{ "db_url",       STR_PARAM, &ms_db_url             },
+	{ "db_table",     STR_PARAM, &ms_db_table           },
+	{ "registrar",    STR_PARAM, &ms_registrar.s        },
+	{ "reminder",     STR_PARAM, &ms_reminder.s         },
+	{ "expire_time",  INT_PARAM, &ms_expire_time        },
+	{ "check_time",   INT_PARAM, &ms_check_time         },
+	{ "send_time",    INT_PARAM, &ms_send_time          },
+	{ "clean_period", INT_PARAM, &ms_clean_period       },
+	{ "use_contact",  INT_PARAM, &ms_use_contact        },
+	{ "sc_mid",       STR_PARAM, &sc_mid                },
+	{ "sc_from",      STR_PARAM, &sc_from               },
+	{ "sc_to",        STR_PARAM, &sc_to                 },
+	{ "sc_uri_user",  STR_PARAM, &sc_uri_user           },
+	{ "sc_uri_host",  STR_PARAM, &sc_uri_host           },
+	{ "sc_body",      STR_PARAM, &sc_body               },
+	{ "sc_ctype",     STR_PARAM, &sc_ctype              },
+	{ "sc_exp_time",  STR_PARAM, &sc_exp_time           },
+	{ "sc_inc_time",  STR_PARAM, &sc_inc_time           },
+	{ "sc_snd_time",  STR_PARAM, &sc_snd_time           },
+	{ "snd_time_avp", STR_PARAM, &ms_snd_time_avp_param },
+	{ "add_date",     INT_PARAM, &ms_add_date           },
+	{ "max_messages", INT_PARAM, &ms_max_messages       },
 	{ 0,0,0 }
 };
 
@@ -248,6 +251,7 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	xl_spec_t avp_spec;
 	str _s;
 	int ver = 0;
 
@@ -264,6 +268,27 @@ static int mod_init(void)
 		LOG(L_ERR, "MSILO: ERROR: Database module does not implement "
 		    "all functions needed by the module\n");
 		return -1;
+	}
+
+	if (ms_snd_time_avp_param && *ms_snd_time_avp_param) {
+		if (xl_parse_spec(ms_snd_time_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:MSILO:mod_init: malformed or non AVP %s "
+				"AVP definition\n", ms_snd_time_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &ms_snd_time_avp_name,
+					&ms_snd_time_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:MSILO:mod_init: [%s]- invalid "
+				"AVP definition\n", ms_snd_time_avp_param);
+			return -1;
+		}
+	} else {
+		ms_snd_time_avp_name.n = 0;
+		ms_snd_time_avp_type = 0;
 	}
 
 	db_con = msilo_dbf.init(ms_db_url);
@@ -368,7 +393,6 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	int mime;
 	int printbuf_len;
 
-	int_str        avp_name;
 	int_str        avp_value;
 	struct usr_avp *avp;
 
@@ -629,11 +653,11 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	db_vals[nr_keys].type = DB_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = 0;
-	if(ms_snd_time_avp!=0)
+	if(ms_snd_time_avp_name.n!=0)
 	{
 		avp = NULL;
-		avp_name.n = ms_snd_time_avp;
-		avp=search_first_avp(0, avp_name, &avp_value, 0);
+		avp=search_first_avp(ms_snd_time_avp_type, ms_snd_time_avp_name,
+				&avp_value, 0);
 		if(avp!=NULL && is_avp_str_val(avp))
 		{
 			if(ms_extract_time(&avp_value.s, &db_vals[nr_keys].val.int_val)!=0)
