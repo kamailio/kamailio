@@ -51,9 +51,16 @@ char *dslistfile = CFG_DIR"dispatcher.list";
 int  ds_force_dst   = 0;
 int  ds_flags       = 0; 
 int  ds_use_default = 0; 
-int  dst_avp_id     = 271;
-int  grp_avp_id     = 272;
-int  cnt_avp_id     = 273;
+char*  dst_avp_param     = NULL;
+char*  grp_avp_param     = NULL;
+char*  cnt_avp_param     = NULL;
+int_str dst_avp_name;
+unsigned short dst_avp_type;
+int_str grp_avp_name;
+unsigned short grp_avp_type;
+int_str cnt_avp_name;
+unsigned short cnt_avp_type;
+
 
 /** module functions */
 static int mod_init(void);
@@ -89,9 +96,9 @@ static param_export_t params[]={
 	{"force_dst",      INT_PARAM, &ds_force_dst},
 	{"flags",          INT_PARAM, &ds_flags},
 	{"use_default",    INT_PARAM, &ds_use_default},
-	{"dst_avp_id",     INT_PARAM, &dst_avp_id},
-	{"grp_avp_id",     INT_PARAM, &grp_avp_id},
-	{"cnt_avp_id",     INT_PARAM, &cnt_avp_id},
+	{"dst_avp",        STR_PARAM, &dst_avp_param},
+	{"grp_avp",        STR_PARAM, &grp_avp_param},
+	{"cnt_avp",        STR_PARAM, &cnt_avp_param},
 	{0,0,0}
 };
 
@@ -123,6 +130,7 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	xl_spec_t avp_spec;
 	DBG("DISPATCHER: initializing ...\n");
 
 	if(ds_load_list(dslistfile)!=0)
@@ -131,6 +139,64 @@ static int mod_init(void)
 		return -1;
 	}
 	
+	if (dst_avp_param && *dst_avp_param) {
+		if (xl_parse_spec(dst_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:DISPATCHER:mod_init: malformed or non AVP %s "
+				"AVP definition\n", dst_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &dst_avp_name, &dst_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:DISPATCHER:mod_init: [%s]- invalid "
+				"AVP definition\n", dst_avp_param);
+			return -1;
+		}
+	} else {
+		dst_avp_name.n = 0;
+		dst_avp_type = 0;
+	}
+	if (grp_avp_param && *grp_avp_param) {
+		if (xl_parse_spec(grp_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:DISPATCHER:mod_init: malformed or non AVP %s "
+				"AVP definition\n", grp_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &grp_avp_name, &grp_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:DISPATCHER:mod_init: [%s]- invalid "
+				"AVP definition\n", grp_avp_param);
+			return -1;
+		}
+	} else {
+		grp_avp_name.n = 0;
+		grp_avp_type = 0;
+	}
+	if (cnt_avp_param && *cnt_avp_param) {
+		if (xl_parse_spec(cnt_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:DISPATCHER:mod_init: malformed or non AVP %s "
+				"AVP definition\n", cnt_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &cnt_avp_name, &cnt_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:DISPATCHER:mod_init: [%s]- invalid "
+				"AVP definition\n", cnt_avp_param);
+			return -1;
+		}
+	} else {
+		cnt_avp_name.n = 0;
+		cnt_avp_type = 0;
+	}
+
 	return 0;
 }
 

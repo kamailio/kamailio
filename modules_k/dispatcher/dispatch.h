@@ -48,10 +48,14 @@ typedef struct _ds_param
 } ds_param_t, *ds_param_p;
 
 extern int ds_flags; 
-extern int ds_use_default; 
-extern int dst_avp_id;
-extern int grp_avp_id;
-extern int cnt_avp_id;
+extern int ds_use_default;
+
+extern int_str dst_avp_name;
+extern unsigned short dst_avp_type;
+extern int_str grp_avp_name;
+extern unsigned short grp_avp_type;
+extern int_str cnt_avp_name;
+extern unsigned short cnt_avp_type;
 
 int ds_load_list(char *lfile);
 int ds_destroy_list();

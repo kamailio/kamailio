@@ -151,9 +151,9 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
 	</section>
  	<section>
- 		<title><varname>dst_avp_id</varname> (int)</title>
+ 		<title><varname>dst_avp_id</varname> (str)</title>
  		<para>
- 		The id of the avp which will hold the list with addresses, in the order
+ 		The name of the avp which will hold the list with addresses, in the order
 		they have been selected by the chosen algorithm. If use_default is 1,
 		the value of last dst_avp_id is the last address in destination set. The
 		first dst_avp_id is the selected destinations. All the other addresses
@@ -162,54 +162,54 @@ modparam("dispatcher", "force_dst", 1)
  		</para>
  		<para>
  		<emphasis>
- 			Default value is <quote>271</quote>.
+ 			Default value is <quote>null</quote> - don't add AVPs.
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>dst_avp_id</quote> parameter</title>
+ 		<title>Set the <quote>dst_avp</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "dst_avp_id", 100)
+ modparam("dispatcher", "dst_avp", "$avp(i:271)")
  ...
  </programlisting>
  		</example>
  	</section>
  	<section>
- 		<title><varname>grp_avp_id</varname> (int)</title>
+ 		<title><varname>grp_avp</varname> (str)</title>
  		<para>
- 		The id of the avp storing the group id of the destination set. Good
+ 		The name of the avp storing the group id of the destination set. Good
 		to have it for later usage or checks.
  		</para>
  		<para>
  		<emphasis>
- 			Default value is <quote>272</quote>.
+ 			Default value is <quote>null</quote> - don't add AVP.
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>grp_avp_id</quote> parameter</title>
+ 		<title>Set the <quote>grp_avp</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "grp_avp_id", 101)
+ modparam("dispatcher", "grp_avp", "$avp(i:272)")
  ...
  </programlisting>
  		</example>
  	</section>
  	<section>
- 		<title><varname>cnt_avp_id</varname> (int)</title>
+ 		<title><varname>cnt_avp</varname> (str)</title>
  		<para>
- 		The id of the avp storing the number of destination addresses kept in
-		dst_avp_id avps.
+ 		The name of the avp storing the number of destination addresses kept in
+		dst_avp avps.
  		</para>
  		<para>
  		<emphasis>
- 			Default value is <quote>273</quote>.
+ 			Default value is <quote>null</quote> - don't add AVP.
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>cnt_avp_id</quote> parameter</title>
+ 		<title>Set the <quote>cnt_avp</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "cnt_avp_id", 103)
+ modparam("dispatcher", "cnt_avp", "$avp(i:273)")
  ...
  </programlisting>
  		</example>

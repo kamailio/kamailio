@@ -29,9 +29,9 @@ Daniel-Constantin Mierla
               1.3.2. force_dst (int)
               1.3.3. flags (int)
               1.3.4. use_default (int)
-              1.3.5. dst_avp_id (int)
-              1.3.6. grp_avp_id (int)
-              1.3.7. cnt_avp_id (int)
+              1.3.5. dst_avp_id (str)
+              1.3.6. grp_avp (str)
+              1.3.7. cnt_avp (str)
 
         1.4. Exported Functions
 
@@ -59,9 +59,9 @@ Daniel-Constantin Mierla
    1-2. Set the "force_dst" parameter
    1-3. Set the "flags" parameter
    1-4. Set the "use_default" parameter
-   1-5. Set the "dst_avp_id" parameter
-   1-6. Set the "grp_avp_id" parameter
-   1-7. Set the "cnt_avp_id" parameter
+   1-5. Set the "dst_avp" parameter
+   1-6. Set the "grp_avp" parameter
+   1-7. Set the "cnt_avp" parameter
    1-8. ds_select_dst usage
    1-9. dispatcher list file
    1-10. OpenSER config script - sample dispatcher usage
@@ -164,49 +164,49 @@ modparam("dispatcher", "force_dst", 1)
 
      _________________________________________________________
 
-1.3.5. dst_avp_id (int)
+1.3.5. dst_avp_id (str)
 
-   The id of the avp which will hold the list with addresses, in
-   the order they have been selected by the chosen algorithm. If
-   use_default is 1, the value of last dst_avp_id is the last
+   The name of the avp which will hold the list with addresses,
+   in the order they have been selected by the chosen algorithm.
+   If use_default is 1, the value of last dst_avp_id is the last
    address in destination set. The first dst_avp_id is the
    selected destinations. All the other addresses from the
    destination set will be added in the avp list to be able to
    implement serial forking.
 
-   Default value is "271". 
+   Default value is "null" - don't add AVPs. 
 
-   Example 1-5. Set the "dst_avp_id" parameter
+   Example 1-5. Set the "dst_avp" parameter
  ...
- modparam("dispatcher", "dst_avp_id", 100)
- ...
-
-     _________________________________________________________
-
-1.3.6. grp_avp_id (int)
-
-   The id of the avp storing the group id of the destination set.
-   Good to have it for later usage or checks.
-
-   Default value is "272". 
-
-   Example 1-6. Set the "grp_avp_id" parameter
- ...
- modparam("dispatcher", "grp_avp_id", 101)
+ modparam("dispatcher", "dst_avp", "$avp(i:271)")
  ...
 
      _________________________________________________________
 
-1.3.7. cnt_avp_id (int)
+1.3.6. grp_avp (str)
 
-   The id of the avp storing the number of destination addresses
-   kept in dst_avp_id avps.
+   The name of the avp storing the group id of the destination
+   set. Good to have it for later usage or checks.
 
-   Default value is "273". 
+   Default value is "null" - don't add AVP. 
 
-   Example 1-7. Set the "cnt_avp_id" parameter
+   Example 1-6. Set the "grp_avp" parameter
  ...
- modparam("dispatcher", "cnt_avp_id", 103)
+ modparam("dispatcher", "grp_avp", "$avp(i:272)")
+ ...
+
+     _________________________________________________________
+
+1.3.7. cnt_avp (str)
+
+   The name of the avp storing the number of destination
+   addresses kept in dst_avp avps.
+
+   Default value is "null" - don't add AVP. 
+
+   Example 1-7. Set the "cnt_avp" parameter
+ ...
+ modparam("dispatcher", "cnt_avp", "$avp(i:273)")
  ...
 
      _________________________________________________________

@@ -699,7 +699,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 {
 	int idx, i, cnt;
 	unsigned int hash;
-	int_str avp_name, avp_val;
+	int_str avp_val;
 
 	if(msg==NULL)
 	{
@@ -818,63 +818,66 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	if(!(ds_flags&DS_FAILOVER_ON))
 		return 1;
 
-	if(ds_use_default!=0 && hash!=_ds_list[idx].nr-1)
+	if(dst_avp_name.n!=0)
 	{
-		avp_val.s = _ds_list[idx].dlist[_ds_list[idx].nr-1].uri;
-		avp_name.n = dst_avp_id;
-		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
+		if(ds_use_default!=0 && hash!=_ds_list[idx].nr-1)
+		{
+			avp_val.s = _ds_list[idx].dlist[_ds_list[idx].nr-1].uri;
+			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
+				return -1;
+			cnt++;
+		}
+	
+		/* add to avp */
+
+		for(i=hash-1; i>=0; i--)
+		{	
+			if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
+					|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
+				continue;
+			DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
+					set, i);
+			avp_val.s = _ds_list[idx].dlist[i].uri;
+			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
+				return -1;
+			cnt++;
+		}
+
+		for(i=_ds_list[idx].nr-1; i>hash; i--)
+		{	
+			if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
+					|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
+				continue;
+			DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
+					set, i);
+			avp_val.s = _ds_list[idx].dlist[i].uri;
+			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
+				return -1;
+			cnt++;
+		}
+	
+		/* add to avp the first used dst */
+		avp_val.s = _ds_list[idx].dlist[hash].uri;
+		if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 			return -1;
 		cnt++;
 	}
-	
-	/* add to avp */
 
-	for(i=hash-1; i>=0; i--)
-	{	
-		if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
-				|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
-			continue;
-		DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
-				set, i);
-		avp_val.s = _ds_list[idx].dlist[i].uri;
-		avp_name.n = dst_avp_id;
-		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
+	if(grp_avp_name.n!=0)
+	{
+		/* add to avp the group id */
+		avp_val.n = set;
+		if(add_avp(grp_avp_type, grp_avp_name, avp_val)!=0)
 			return -1;
-		cnt++;
 	}
 
-	for(i=_ds_list[idx].nr-1; i>hash; i--)
-	{	
-		if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
-				|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
-			continue;
-		DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
-				set, i);
-		avp_val.s = _ds_list[idx].dlist[i].uri;
-		avp_name.n = dst_avp_id;
-		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
+	if(cnt_avp_name.n!=0)
+	{
+		/* add to avp the number of dst */
+		avp_val.n = cnt;
+		if(add_avp(cnt_avp_type, cnt_avp_name, avp_val)!=0)
 			return -1;
-		cnt++;
 	}
-
-	/* add to avp the first used dst */
-	avp_val.s = _ds_list[idx].dlist[hash].uri;
-	avp_name.n = dst_avp_id;
-	if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
-		return -1;
-	cnt++;
-	
-	/* add to avp the group id */
-	avp_val.n = set;
-	avp_name.n = grp_avp_id;
-	if(add_avp(0, avp_name, avp_val)!=0)
-		return -1;
-	
-	/* add to avp the number of dst */
-	avp_val.n = cnt;
-	avp_name.n = cnt_avp_id;
-	if(add_avp(0, avp_name, avp_val)!=0)
-		return -1;
 	
 	return 1;
 }
@@ -883,18 +886,16 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 {
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
-	int_str avp_name;
 	int_str avp_value;
 	
-	if(!(ds_flags&DS_FAILOVER_ON))
+	if(!(ds_flags&DS_FAILOVER_ON) || dst_avp_name.n==0)
 	{
 		LOG(L_WARN, "DISPATCHER:ds_next_dst: failover support disabled\n");
 		return -1;
 	}
 
-	avp_name.n = dst_avp_id;
 
-	prev_avp = search_first_avp(0, avp_name, &avp_value, 0);
+	prev_avp = search_first_avp(dst_avp_type, dst_avp_name, &avp_value, 0);
 	if(prev_avp==NULL)
 		return -1; /* used avp deleted -- strange */
 
@@ -918,7 +919,6 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 {
 	int group, ret;
 	struct usr_avp *prev_avp;
-	int_str avp_name;
 	int_str avp_value;
 	
 	if(!(ds_flags&DS_FAILOVER_ON))
@@ -927,15 +927,13 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 		return -1;
 	}
 
-	avp_name.n = grp_avp_id;
-	prev_avp = search_first_avp(0, avp_name, &avp_value, 0);
+	prev_avp = search_first_avp(grp_avp_type, grp_avp_name, &avp_value, 0);
 	
 	if(prev_avp==NULL || prev_avp->flags&AVP_VAL_STR)
 		return -1; /* grp avp deleted -- strange */
 	group = avp_value.n;
 	
-	avp_name.n = dst_avp_id;
-	prev_avp = search_first_avp(0, avp_name, &avp_value, 0);
+	prev_avp = search_first_avp(dst_avp_type, dst_avp_name, &avp_value, 0);
 	
 	if(prev_avp==NULL || !(prev_avp->flags&AVP_VAL_STR))
 		return -1; /* dst avp deleted -- strange */
