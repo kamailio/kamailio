@@ -32,6 +32,7 @@
 #include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_uri.h"
+#include "../../usr_avp.h"
 #include "../../action.h"
 #include "../../flags.h"
 #include "../../items.h"
@@ -1107,6 +1108,75 @@ pseudoVar(self, varstring)
 			ST(0) = &PL_sv_undef;
 		}
 	}
+
+
+
+=head2 addAVP(name,val)
+
+Add an AVP.
+
+Add an OpenSER AVP to its environment. name and val may be both integers or
+strings; this function will try to guess what is correct. Please note that
+ $m->addAVP("10", "10")
+is something different than
+ $m->addAVP(10, 10)
+due to this evaluation: The first will create _string_ AVPs with the name
+10, while the latter will create numerical AVPs.
+
+=cut
+
+int
+addAVP(self, p_name, p_val)
+	SV *self;
+	SV *p_name;
+	SV *p_val;
+  PREINIT:
+	struct sip_msg *msg = sv2msg(self);
+	int_str name;
+	int_str val;
+	unsigned short flags = 0;
+	char *s;
+	STRLEN len;
+  CODE:
+  	RETVAL = 0;
+  	if (!msg) {
+		LOG(L_ERR, "perl: Invalid message reference\n");
+		RETVAL = -1;
+	} else {
+		if (SvOK(p_name) && SvOK(p_val)) {
+			if (SvIOK(p_name)) { /* numerical name */
+				name.n = SvIV(p_name);
+			} else if (SvPOK(p_name)) {
+				s = SvPV(p_name, len);
+				name.s.len = len;
+				name.s.s = pkg_malloc(len+1);
+				strcpy(name.s.s, s);
+				flags |= AVP_NAME_STR;
+			} else {
+				LOG(L_ERR, "perl:addAVP: Invalid name.");
+				RETVAL = -1;
+			}
+
+			if ((RETVAL == 0) && SvIOK(p_val)) {
+				val.n = SvIV(p_val);
+			} else if (SvPOK(p_val)) {
+				s = SvPV(p_val, len);
+				val.s.len = len;
+				val.s.s = pkg_malloc(len+1);
+				strcpy(val.s.s, s);
+				flags |= AVP_VAL_STR;
+			} else {
+				LOG(L_ERR, "perl:addAVP: Invalid name.");
+				RETVAL = -1;
+			}
+		}
+				
+		if (RETVAL == 0)
+			RETVAL = add_avp(flags, name, val);
+	}
+  OUTPUT:
+	RETVAL
+
 
 
 

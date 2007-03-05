@@ -31,7 +31,7 @@
 	with the perl function log (which calculates the logarithm). Either
 	explicitly import the function (via <literal
 	role="code"><![CDATA[use OpenSER qw ( log );]]></literal>), or call
-	it with it's full name:
+	it with its full name:
       </para>
       <screen><![CDATA[OpenSER::log(L_INFO, "foobar");]]></screen>
     </section>
@@ -39,8 +39,8 @@
   <section id="ID-949656abaac653354242d1d0e9b418be"><title>OpenSER::Message</title>
     <para>
       This package provides access functions for an OpenSER <literal
-      role="code"><![CDATA[sip_msg]]></literal> structure and it's
-      sub-components. Through it's means it is possible to fully configure
+      role="code"><![CDATA[sip_msg]]></literal> structure and its
+      sub-components. Through its means it is possible to fully configure
       alternative routing decisions.
     </para>
     <section id="ID-4462b43922a45955436db6a77eff1274"><title>getType()</title>
@@ -317,6 +317,19 @@ $m->xlog("L_INFO", "foo");]]></screen>
 	'$' sign in perl strings!</emphasis>
       </para>
     </section>
+    <section id="ID-9d4c08f9f757ed207c83c8cfb1b456ec"><title>addAVP(name,val)</title>
+      <para>
+	Add an AVP.
+      </para>
+      <para>
+	Add an OpenSER AVP to its environment. name and val may be both
+	integers or strings; this function will try to guess what is
+	correct. Please note that $m-&gt;addAVP("10", "10") is something
+	different than $m-&gt;addAVP(10, 10) due to this evaluation: The
+	first will create _string_ AVPs with the name 10, while the latter
+	will create numerical AVPs.
+      </para>
+    </section>
     <section id="ID-098e67bc760ef445343eb9e8f93ece8b"><title>append_branch(branch,qval)</title>
       <para>
 	Append a branch to current message.
@@ -508,7 +521,7 @@ $number    = dialNumber("+497612034567");]]></screen>
     </para>
     <section id="ID-bd49dfdfc2284e87abd95fbce2d63cbd"><title>new(publicAccessPrefix,internationalPrefix,longDistancePrefix,countryCode,areaCode,pbxCode)</title>
       <para>
-	The new operator returns an object of this type and sets it's
+	The new operator returns an object of this type and sets its
 	locational context according to the passed parameters. See
 	<citerefentry>
 	<refentrytitle>OpenSER::Utils::PhoneNumbers</refentrytitle>
@@ -517,10 +530,9 @@ $number    = dialNumber("+497612034567");]]></screen>
     </section>
     <section id="ID-aa52786fee82fe6e26ac766b30a1a4fa"><title>canonicalForm( number [, context] )</title>
       <para>
-	Convert a phone number (given as first argument) into it's
-	canonical form. When no context is passed in as the second
-	argument, the default context from the systems configuration file
-	is used.
+	Convert a phone number (given as first argument) into its canonical
+	form. When no context is passed in as the second argument, the
+	default context from the systems configuration file is used.
       </para>
     </section>
     <section id="ID-31479dee3ae037c27cd7a84aa7358bd2"><title>dialNumber( number [, context] )</title>
