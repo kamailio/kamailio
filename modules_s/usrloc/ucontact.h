@@ -72,17 +72,17 @@ typedef enum flags {
 typedef struct ucontact {
 	str* domain;              /* Pointer to domain name */
 	str* uid;                 /* UID of owner of contact*/
-        str  aor;                 /* Address of record */
+	str  aor;                 /* Address of record */
 	str c;                    /* Contact address */
 	str received;             /* IP, port, and protocol we received the REGISTER from */
 	struct socket_info* sock; /* Socket to be used when sending SIP messages to this contact */
 	time_t expires;           /* expires parameter */
 	qvalue_t q;               /* q parameter */
 	str callid;               /* Call-ID header field */
-        int cseq;                 /* CSeq value */
+	int cseq;                 /* CSeq value */
 	cstate_t state;           /* State of the contact */
 	unsigned int flags;       /* Various flags (NAT, supported methods etc) */
-	str user_agent;		  /* User-Agent header field */
+	str user_agent;	          /* User-Agent header field */
 	str instance;             /* sip.instance parameter */
 	struct ucontact* next;    /* Next contact in the linked list */
 	struct ucontact* prev;    /* Previous contact in the linked list */
@@ -192,7 +192,7 @@ typedef int (*update_ucontact_t)(ucontact_t* _c, str* _u, str* aor, time_t _e, q
 				 unsigned int _set, unsigned int _res, str* _ua, str* _recv,
 				 struct socket_info* sock, str* _inst);
 int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs,
-		    unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-		    struct socket_info* sock, str* _inst);
+					unsigned int _set, unsigned int _res, str* _ua, str* _recv,
+					struct socket_info* sock, str* _inst);
 
 #endif /* UCONTACT_H */
