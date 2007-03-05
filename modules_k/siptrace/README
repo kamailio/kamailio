@@ -161,12 +161,12 @@ modparam("siptrace", "trace_on", 1)
    the message many times for many users by having multiple
    values for this AVP.
 
-   Default value is "0" (feature disabled). 
+   Default value is "NULL" (feature disabled). 
 
    Example 1-5. Set trace_on parameter
 ...
-modparam("siptrace", "traced_user_avp", "i:123")
-modparam("siptrace", "traced_user_avp", "s:user")
+modparam("siptrace", "traced_user_avp", "$avp(i:123)")
+modparam("siptrace", "traced_user_avp", "$avp(s:user)")
 ...
      _________________________________________________________
 
@@ -178,12 +178,12 @@ modparam("siptrace", "traced_user_avp", "s:user")
    where to store the traced messages. The table must exists, and
    must have the same structure as 'sip_trace' table.
 
-   Default value is "0" (feature disabled). 
+   Default value is "NULL" (feature disabled). 
 
    Example 1-6. Set trace_on parameter
 ...
-modparam("siptrace", "trace_table_avp", "i:345")
-modparam("siptrace", "trace_table_avp", "s:siptrace_table")
+modparam("siptrace", "trace_table_avp", "$avp(i:345)")
+modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
 ...
      _________________________________________________________
 

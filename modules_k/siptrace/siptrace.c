@@ -38,6 +38,7 @@
 #include "../../db/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
+#include "../../items.h"
 #include "../tm/tm_load.h"
 #include "../sl/sl_cb.h"
 
@@ -85,11 +86,11 @@ struct sip_uri *dup_uri = 0;
 
 int   *trace_on_flag = NULL;      
 
-static int     traced_user_avp_type;
+static unsigned short traced_user_avp_type;
 static int_str traced_user_avp;
 char           *traced_user_avp_str = NULL;
 
-static int     trace_table_avp_type;
+static unsigned short trace_table_avp_type;
 static int_str trace_table_avp;
 char           *trace_table_avp_str = NULL;
 
@@ -178,7 +179,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	str s;
+	xl_spec_t avp_spec;
 
 	DBG("siptrace - initializing\n");
 	
@@ -257,12 +258,19 @@ static int mod_init(void)
 
 	if(traced_user_avp_str && *traced_user_avp_str)
 	{
-		s.s = traced_user_avp_str;
-		s.len = strlen(s.s);
-		if(parse_avp_spec(&s, &traced_user_avp_type, &traced_user_avp)<0)
+		if (xl_parse_spec(traced_user_avp_str, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:siptrace:mod_init: malformed or non AVP %s "
+				"AVP definition\n", traced_user_avp_str);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &traced_user_avp,
+					&traced_user_avp_type)!=0)
 		{
-			LOG(L_CRIT,"ERROR:siptrace:mod_init: invalid traced_user "
-				"AVP specs \"%s\"\n", traced_user_avp_str);
+			LOG(L_ERR, "ERROR:siptrace:mod_init: [%s]- invalid "
+				"AVP definition\n", traced_user_avp_str);
 			return -1;
 		}
 	} else {
@@ -271,12 +279,19 @@ static int mod_init(void)
 	}
 	if(trace_table_avp_str && *trace_table_avp_str)
 	{
-		s.s = trace_table_avp_str;
-		s.len = strlen(s.s);
-		if(parse_avp_spec(&s, &trace_table_avp_type, &trace_table_avp)<0)
+		if (xl_parse_spec(trace_table_avp_str, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:siptrace:mod_init: malformed or non AVP %s "
+				"AVP definition\n", trace_table_avp_str);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &trace_table_avp,
+					&trace_table_avp_type)!=0)
 		{
-			LOG(L_CRIT,"ERROR:siptrace:mod_init: invalid traced_user "
-				"AVP specs \"%s\"\n", trace_table_avp_str);
+			LOG(L_ERR, "ERROR:siptrace:mod_init: [%s]- invalid "
+				"AVP definition\n", trace_table_avp_str);
 			return -1;
 		}
 	} else {
