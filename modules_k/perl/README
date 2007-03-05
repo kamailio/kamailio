@@ -60,10 +60,11 @@ Bastian Friedrich
               3.2.16. resetFlag(flag)
               3.2.17. isFlagSet(flag)
               3.2.18. pseudoVar(string)
-              3.2.19. append_branch(branch,qval)
-              3.2.20. serialize_branches(clean_before)
-              3.2.21. next_branches()
-              3.2.22. getParsedRURI()
+              3.2.19. addAVP(name,val)
+              3.2.20. append_branch(branch,qval)
+              3.2.21. serialize_branches(clean_before)
+              3.2.22. next_branches()
+              3.2.23. getParsedRURI()
 
         3.3. OpenSER::URI
 
@@ -345,14 +346,14 @@ Chapter 3. OpenSER Perl API
    Please note that this method is NOT automatically exported, as
    it collides with the perl function log (which calculates the
    logarithm). Either explicitly import the function (via use
-   OpenSER qw ( log );), or call it with it's full name:
+   OpenSER qw ( log );), or call it with its full name:
 OpenSER::log(L_INFO, "foobar");
      _________________________________________________________
 
 3.2. OpenSER::Message
 
    This package provides access functions for an OpenSER sip_msg
-   structure and it's sub-components. Through it's means it is
+   structure and its sub-components. Through its means it is
    possible to fully configure alternative routing decisions.
      _________________________________________________________
 
@@ -607,22 +608,34 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
    strings!
      _________________________________________________________
 
-3.2.19. append_branch(branch,qval)
+3.2.19. addAVP(name,val)
+
+   Add an AVP.
+
+   Add an OpenSER AVP to its environment. name and val may be
+   both integers or strings; this function will try to guess what
+   is correct. Please note that $m->addAVP("10", "10") is
+   something different than $m->addAVP(10, 10) due to this
+   evaluation: The first will create _string_ AVPs with the name
+   10, while the latter will create numerical AVPs.
+     _________________________________________________________
+
+3.2.20. append_branch(branch,qval)
 
    Append a branch to current message.
      _________________________________________________________
 
-3.2.20. serialize_branches(clean_before)
+3.2.21. serialize_branches(clean_before)
 
    Serialize branches.
      _________________________________________________________
 
-3.2.21. next_branches()
+3.2.22. next_branches()
 
    Next branches.
      _________________________________________________________
 
-3.2.22. getParsedRURI()
+3.2.23. getParsedRURI()
 
    Returns the current destination URI as an OpenSER::URI object.
      _________________________________________________________
@@ -792,14 +805,14 @@ $number    = dialNumber("+497612034567");
 new(publicAccessPrefix,internationalPrefix,longDistancePrefix,countr
 yCode,areaCode,pbxCode)
 
-   The new operator returns an object of this type and sets it's
+   The new operator returns an object of this type and sets its
    locational context according to the passed parameters. See
    OpenSER::Utils::PhoneNumbers above.
      _________________________________________________________
 
 3.4.2. canonicalForm( number [, context] )
 
-   Convert a phone number (given as first argument) into it's
+   Convert a phone number (given as first argument) into its
    canonical form. When no context is passed in as the second
    argument, the default context from the systems configuration
    file is used.
