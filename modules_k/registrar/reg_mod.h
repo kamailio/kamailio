@@ -70,12 +70,15 @@ extern int min_expires;
 extern int max_expires;
 extern int received_avp;
 extern int use_domain;
-extern int aor_avp_id;
 extern str realm_prefix;
 extern float def_q;
 
+extern unsigned short aor_avp_type;
+extern int_str aor_avp_name;
+extern unsigned short rcv_avp_type;
+extern int_str rcv_avp_name;
+
 extern str rcv_param;
-extern int_str rcv_avp;
 extern int max_contacts;
 extern int retry_after;
 extern int method_filtering;

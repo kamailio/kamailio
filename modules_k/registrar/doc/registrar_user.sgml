@@ -273,9 +273,9 @@ modparam("registrar", "append_branches", 0)
 	</section>
 
 	<section>
-		<title><varname>aor_avp_id</varname> (integer)</title>
+		<title><varname>aor_avp</varname> (str)</title>
 		<para>
-		If set, the module will try first to get the AOR from the AVP ID 
+		If set, the module will try first to get the AOR from this AVP 
 		instead of fetching it form the processed request.
 		</para>
 		<para>
@@ -284,14 +284,14 @@ modparam("registrar", "append_branches", 0)
 		</para>
 		<para>
 		<emphasis>
-			Default value is 0 (disabled).
+			Default value is "NULL" (disabled).
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>aor_avp_id</varname> parameter</title>
+		<title>Set <varname>aor_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "aor_avp_id", 3223)
+modparam("registrar", "aor_avp", "$acp(i:3223)")
 ...
 </programlisting>
 		</example>
@@ -320,7 +320,7 @@ modparam("registrar", "case_sensitive", 1)
 	</section>
 
 	<section>
-		<title><varname>received_avp</varname> (integer)</title>
+		<title><varname>received_avp</varname> (str)</title>
 		<para>
 		Registrar will store the value of the AVP configured by this 
 		parameter in the received column in the user location database. 
@@ -336,14 +336,14 @@ modparam("registrar", "case_sensitive", 1)
 		</note>
 		<para>
 		<emphasis>
-			Default value is 42.
+			Default value is "NULL" (disabled).
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>received_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "received_avp", 43)
+modparam("registrar", "received_avp", "$avp(s:rcv)")
 ...
 </programlisting>
 		</example>

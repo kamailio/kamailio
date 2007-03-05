@@ -50,6 +50,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../socket_info.h"
+#include "../../items.h"
 #include "../usrloc/ul_mod.h"
 #include "../sl/sl_api.h"
 
@@ -108,10 +109,16 @@ int path_mode = PATH_MODE_STRICT;
 /* if the received- and nat-parameters of last Path uri should be used
  * to determine if UAC is nat'ed */
 int path_use_params = 0;
+
 /* if instead of extacting the AOR from the request, it should be 
  * fetched via this AVP ID */
-int aor_avp_id=0;
+char *aor_avp_param =0;
+unsigned short aor_avp_type=0;
+int_str aor_avp_name;
 
+char* rcv_avp_param = 0;
+unsigned short rcv_avp_type = 0;
+int_str rcv_avp_name;
 
 int use_domain = 0;
 char* realm_pref    = "";   /* Realm prefix to be removed */
@@ -121,9 +128,7 @@ int sock_flag = -1;
 str sock_hdr_name = {0,0};
 
 #define RCV_NAME "received"
-
 str rcv_param = str_init(RCV_NAME);
-int rcv_avp_no = 42;
 
 stat_var *accepted_registrations;
 stat_var *rejected_registrations;
@@ -166,8 +171,8 @@ static param_export_t params[] = {
 	{"min_expires",        INT_PARAM, &min_expires         },
 	{"max_expires",        INT_PARAM, &max_expires         },
 	{"received_param",     STR_PARAM, &rcv_param           },
-	{"received_avp",       INT_PARAM, &rcv_avp_no          },
-	{"aor_avp_id",         INT_PARAM, &aor_avp_id          },
+	{"received_avp",       STR_PARAM, &rcv_avp_param       },
+	{"aor_avp",            STR_PARAM, &aor_avp_param       },
 	{"max_contacts",       INT_PARAM, &max_contacts        },
 	{"retry_after",        INT_PARAM, &retry_after         },
 	{"sock_flag",          INT_PARAM, &sock_flag           },
@@ -214,6 +219,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	xl_spec_t avp_spec;
 	bind_usrloc_t bind_usrloc;
 
 	DBG("registrar - initializing\n");
@@ -228,7 +234,45 @@ static int mod_init(void)
 	realm_prefix.len = strlen(realm_pref);
 
 	rcv_param.len = strlen(rcv_param.s);
-	rcv_avp.n = rcv_avp_no;
+
+	if (rcv_avp_param && *rcv_avp_param) {
+		if (xl_parse_spec(rcv_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:registrar:mod_init: malformed or non AVP %s "
+				"AVP definition\n", rcv_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &rcv_avp_name, &rcv_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:registrar:mod_init: [%s]- invalid "
+				"AVP definition\n", rcv_avp_param);
+			return -1;
+		}
+	} else {
+		rcv_avp_name.n = 0;
+		rcv_avp_type = 0;
+	}
+	if (aor_avp_param && *aor_avp_param) {
+		if (xl_parse_spec(aor_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:registrar:mod_init: malformed or non AVP %s "
+				"AVP definition\n", aor_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &aor_avp_name, &aor_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:registrar:mod_init: [%s]- invalid "
+				"AVP definition\n", aor_avp_param);
+			return -1;
+		}
+	} else {
+		aor_avp_name.n = 0;
+		aor_avp_type = 0;
+	}
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {

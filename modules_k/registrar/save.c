@@ -65,7 +65,6 @@
 #include "save.h"
 
 static int mem_only = 0;
-int_str rcv_avp;
 
 /*
  * Process request that contained a star, in that case, 
@@ -317,7 +316,10 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 				ci.received = _c->received->body;
 			} else {
 				if (received_found==0) {
-					if (search_first_avp(0, rcv_avp, &val, 0) && val.s.s) {
+					memset(&val, 0, sizeof(int_str));
+					if (rcv_avp_name.n!=0
+								&& search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0)
+								&& val.s.len > 0) {
 						if (val.s.len>RECEIVED_MAX_SIZE) {
 							rerrno = R_CONTACT_LEN;
 							LOG(L_ERR,"ERROR:registrar:pack_ci: received "

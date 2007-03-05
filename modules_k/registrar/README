@@ -35,9 +35,9 @@ Bogdan-Andre Iancu
               1.3.5. tcp_persistent_flag (integer)
               1.3.6. realm_prefix (string)
               1.3.7. append_branches (integer)
-              1.3.8. aor_avp_id (integer)
+              1.3.8. aor_avp (str)
               1.3.9. case_sensitive (integer)
-              1.3.10. received_avp (integer)
+              1.3.10. received_avp (str)
               1.3.11. received_param (string)
               1.3.12. max_contacts (integer)
               1.3.13. retry_after (integer)
@@ -75,7 +75,7 @@ Bogdan-Andre Iancu
    1-5. Set tcp_persistent_flag parameter
    1-6. Set realm_prefix parameter
    1-7. Set append_branches parameter
-   1-8. Set aor_avp_id parameter
+   1-8. Set aor_avp parameter
    1-9. Set case_sensitive parameter
    1-10. Set received_avp parameter
    1-11. Set received_param parameter
@@ -267,20 +267,20 @@ modparam("registrar", "append_branches", 0)
 ...
      _________________________________________________________
 
-1.3.8. aor_avp_id (integer)
+1.3.8. aor_avp (str)
 
-   If set, the module will try first to get the AOR from the AVP
-   ID instead of fetching it form the processed request.
+   If set, the module will try first to get the AOR from this AVP
+   instead of fetching it form the processed request.
 
    The AVP must contain a valid SIP URI. If no AVP is found, it
    will be tried to get the AOR from the message (standard
    behaviour).
 
-   Default value is 0 (disabled). 
+   Default value is "NULL" (disabled). 
 
-   Example 1-8. Set aor_avp_id parameter
+   Example 1-8. Set aor_avp parameter
 ...
-modparam("registrar", "aor_avp_id", 3223)
+modparam("registrar", "aor_avp", "$acp(i:3223)")
 ...
      _________________________________________________________
 
@@ -298,7 +298,7 @@ modparam("registrar", "case_sensitive", 1)
 ...
      _________________________________________________________
 
-1.3.10. received_avp (integer)
+1.3.10. received_avp (str)
 
    Registrar will store the value of the AVP configured by this
    parameter in the received column in the user location
@@ -311,11 +311,11 @@ modparam("registrar", "case_sensitive", 1)
    The value of this parameter should be the same as the value of
    corresponding parameter of nathelper module.
 
-   Default value is 42. 
+   Default value is "NULL" (disabled). 
 
    Example 1-10. Set received_avp parameter
 ...
-modparam("registrar", "received_avp", 43)
+modparam("registrar", "received_avp", "$avp(s:rcv)")
 ...
      _________________________________________________________
 
