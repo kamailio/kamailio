@@ -117,8 +117,8 @@ inline static int t_was_cancelled(struct sip_msg* msg, char* , char* );
 
 
 /* strings with avp definition */
-static char *fr_timer_param = FR_TIMER_AVP;
-static char *fr_inv_timer_param = FR_INV_TIMER_AVP;
+static char *fr_timer_param = NULL;
+static char *fr_inv_timer_param = NULL;
 
 /* module parameteres */
 int tm_enable_stats = 1;

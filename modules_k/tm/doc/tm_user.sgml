@@ -485,7 +485,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 		</para>
 		<para>
 		<emphasis>
-			Default value is "$avp(s:callee_fr_timer)".
+			Default value is "NULL" (feature disabled).
 		</emphasis>
 		</para>
 		<example>
@@ -511,7 +511,7 @@ modparam("tm", "fr_timer_avp", "$avp(i:24)")
 		</para>
 		<para>
 		<emphasis>
-			Default value is "$avp(s:callee_fr_inv_timer)".
+			Default value is "NULL" (feature disabled).
 		</emphasis>
 		</para>
 		<example>
