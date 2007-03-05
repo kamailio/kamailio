@@ -199,7 +199,7 @@ SV *getStringFromURI(SV *self, enum uri_members what) {
  *
  * Return codes:
  *   -1 - Function not available (or other error).
- *    1 - Function was called. It's return value is returned via the retval
+ *    1 - Function was called. Its return value is returned via the retval
  *        parameter.
  */
 
@@ -410,7 +410,7 @@ is one of the following:
 
 Please note that this method is I<NOT> automatically exported, as it collides
 with the perl function log (which calculates the logarithm). Either explicitly
-import the function (via C<use OpenSER qw ( log );>), or call it with it's full
+import the function (via C<use OpenSER qw ( log );>), or call it with its full
 name:
 
  OpenSER::log(L_INFO, "foobar");
@@ -436,7 +436,7 @@ PROTOTYPES: ENABLE
 =head1 OpenSER::Message
 
 This package provides access functions for an OpenSER C<sip_msg> structure and
-it's sub-components. Through it's means it is possible to fully configure
+its sub-components. Through its means it is possible to fully configure
 alternative routing decisions.
 
 =cut
@@ -632,8 +632,8 @@ getFullHeader(self)
     SV *self
   PREINIT:
     struct sip_msg *msg = sv2msg(self);
-    SV *ret;
     char *firsttoken;
+    long headerlen;
   INIT:
   CODE:
 	if (!msg) {
@@ -644,17 +644,25 @@ getFullHeader(self)
 			LOG(L_ERR, "perl:getFullHeader: Invalid message type.\n");
 			ST(0)  = &PL_sv_undef;
 		} else {
+			parse_headers(msg, ~0, 0);
 			if (getType(msg) == SIP_REQUEST) {
-				parse_headers(msg, ~0, 0);
 				firsttoken = (msg->first_line).u.request.method.s;
 			} else { /* SIP_REPLY */
 				firsttoken = (msg->first_line).u.reply.version.s;
 			}
 
-			ret = newSVpv(firsttoken,
-				(((long)(msg->eoh))-
-				 ((long)(firsttoken))));
-			ST(0) = sv_2mortal(ret);
+			if (msg->eoh == NULL)
+				headerlen = 0;
+			else
+				headerlen = ((long)(msg->eoh))
+						-((long)(firsttoken));
+
+			if (headerlen > 0) {
+				ST(0) = 
+				    sv_2mortal(newSVpv(firsttoken, headerlen));
+			} else {
+				ST(0) = &PL_sv_undef;
+			}
 		}
 	}
 
