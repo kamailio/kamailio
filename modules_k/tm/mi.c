@@ -361,12 +361,16 @@ static void mi_uac_dlg_hdl( struct cell *t, int type, struct tmcb_params *ps )
 			text.s, text.len);
 		pkg_free(text.s);
 		mi_print_uris( &rpl_tree->node, 0 );
+		add_mi_node_child( &rpl_tree->node, 0, 0, 0, ".",1);
 	} else { 
 		addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%d %.*s",
 			ps->rpl->first_line.u.reply.statuscode,
 			ps->rpl->first_line.u.reply.reason.len,
 			ps->rpl->first_line.u.reply.reason.s);
 		mi_print_uris( &rpl_tree->node, ps->rpl);
+		add_mi_node_child( &rpl_tree->node, MI_DUP_VALUE, 0, 0,
+			ps->rpl->headers->name.s,
+			ps->rpl->len-(ps->rpl->headers->name.s - ps->rpl->buf));
 	}
 
 	DBG("DEBUG:tm: mi_callback successfully completed\n");
