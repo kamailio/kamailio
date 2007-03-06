@@ -48,7 +48,8 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 	mi_root = init_mi_tree(0, 0, 0);
 	
 	if ( !mi_root ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: The MI tree cannot be initialized!\n");
+		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: The MI tree cannot "
+			"be initialized!\n");
 		goto error;
 	}
 
@@ -57,131 +58,152 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 	for (i=0 ; i< size ; i++) {
 
 		item = xmlrpc_array_get_item(env, paramArray, i);
-    	if ( env->fault_occurred ) {
-       			LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to get array item: %s\n", env->fault_string);
-				goto error;
+		if ( env->fault_occurred ) {
+			LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to "
+				"get array item: %s\n", env->fault_string);
+			goto error;
 		}
-	
-	    switch ( xmlrpc_value_type(item) ) {
+		
+		switch ( xmlrpc_value_type(item) ) {
 		
 		case (XMLRPC_TYPE_INT):
-
-		  	validateType(env, item, XMLRPC_TYPE_INT);
-
-   			if ( env->fault_occurred ) {
-        		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read the intValue: %s\n", env->fault_string);
+			
+			validateType(env, item, XMLRPC_TYPE_INT);
+			
+			if ( env->fault_occurred ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read "
+					"the intValue: %s\n", env->fault_string);
 				goto error;
 			}
-
+			
 			intValue = item->_value.i;
-			if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%d", intValue) == NULL ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+			if (addf_mi_node_child(&mi_root->node,0,0,0,"%d",intValue)==NULL) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
+					"node to the MI tree.\n");
 				goto error;
 			}
 			break;
-			
+
 		case (XMLRPC_TYPE_BOOL):
-
+			
 			validateType(env, item, XMLRPC_TYPE_BOOL);
-
-   			if ( env->fault_occurred ) {
-       			LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read the boolValue: %s\n", env->fault_string);
+			
+			if ( env->fault_occurred ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to "
+					"read the boolValue: %s\n", env->fault_string);
 				goto error;
 			}
-
+			
 			boolValue = item->_value.b;
-			if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%u", boolValue) == NULL ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+			if (addf_mi_node_child(&mi_root->node,0,0,0,"%u",boolValue)==NULL){
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
+					"node to the MI tree.\n");
 				goto error;
-
 			}
 			break;
 
 		case (XMLRPC_TYPE_DOUBLE):
-
+			
 			validateType(env, item, XMLRPC_TYPE_DOUBLE);
-
+			
 			if ( env->fault_occurred ) {
-        		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read the doubleValue: %s\n", env->fault_string);
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to "
+					"read the doubleValue: %s\n", env->fault_string);
 				goto error;
 			}
 
 			doubleValue = item->_value.d;
-        	if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%lf", doubleValue) == NULL ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+			if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%lf",
+			doubleValue) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
+					"node to the MI tree.\n");
 				goto error;
 			}
-        	break;
+			break;
 
-    	case (XMLRPC_TYPE_STRING):
-			 
-		#if HAVE_UNICODE_WCHAR
+		case (XMLRPC_TYPE_STRING):
+			
+			#if HAVE_UNICODE_WCHAR
 			char * stringValueW;
 			xmlrpc_read_string_w(env, item, &stringValueW);
-
-   			if ( env->fault_occurred ) {
-        			LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: failed to read stringValueW: %s!\n", env->fault_string);
-					goto error;
-			}
-
-			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValueW, strlen(stringValueW)) == NULL ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
-				goto error;
-			}
-		#else
-			xmlrpc_read_string(env, item, &stringValue);
-
-   			if ( env->fault_occurred ) {
-        			LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read stringValue: %s!\n", env->fault_string);
-					goto error;
-			}
-
-			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValue, strlen(stringValue)) == NULL ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
-				goto error;
-			}
-    	#endif
-
-         	break;
-        
-		case (XMLRPC_TYPE_BASE64):
-
-			validateType(env, item, XMLRPC_TYPE_BASE64);
-
+			
 			if ( env->fault_occurred ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read byteStringValue: %s!\n", env->fault_string);
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: failed to read "
+					"stringValueW: %s!\n", env->fault_string);
 				goto error;
 			}
 
-       		length = XMLRPC_TYPED_MEM_BLOCK_SIZE(char, &item->_block);
-   			contents = XMLRPC_TYPED_MEM_BLOCK_CONTENTS(char, &item->_block);
-   	        byteStringValue = pkg_malloc(length);
-
-       		if ( !byteStringValue ){
-				xmlrpc_env_set_fault_formatted(env, XMLRPC_INTERNAL_ERROR, "Unable to allocate %u bytes for byte string.", length);
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: pkg_malloc cannot allocate any more memory!\n");
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValueW,
+			strlen(stringValueW)) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
+					"node to the MI tree.\n");
 				goto error;
-			} else 
+			}
+			#else
+			xmlrpc_read_string(env, item, &stringValue);
+			
+			if ( env->fault_occurred ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read "
+					"stringValue: %s!\n", env->fault_string);
+				goto error;
+			}
+
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValue,
+			strlen(stringValue)) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
+					"node to the MI tree.\n");
+				goto error;
+			}
+			#endif
+			
+			break;
+
+		case (XMLRPC_TYPE_BASE64):
+			
+			validateType(env, item, XMLRPC_TYPE_BASE64);
+			
+			if ( env->fault_occurred ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read "
+					"byteStringValue: %s!\n", env->fault_string);
+				goto error;
+			}
+			
+			length = XMLRPC_TYPED_MEM_BLOCK_SIZE(char, &item->_block);
+			contents = XMLRPC_TYPED_MEM_BLOCK_CONTENTS(char, &item->_block);
+			byteStringValue = pkg_malloc(length);
+			
+			if ( !byteStringValue ){
+				xmlrpc_env_set_fault_formatted(env, XMLRPC_INTERNAL_ERROR,
+					"Unable to allocate %u bytes for byte string.", length);
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: pkg_malloc "
+					"cannot allocate any more memory!\n");
+				goto error;
+			} else
 				memcpy(byteStringValue, contents, length);
-    		
-			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, byteStringValue, length) == NULL ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+			
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, byteStringValue,
+			length) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
+					"node to the MI tree.\n");
 				goto error;
 			}
-         	break;
+			break;
 
-    	case (XMLRPC_TYPE_C_PTR):
-
+		case (XMLRPC_TYPE_C_PTR):
+			
 			validateType(env, item, XMLRPC_TYPE_C_PTR);
-
-    		if ( env->fault_occurred ) {
-        		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read the cptrValue: %s\n", env->fault_string);
+			
+			if ( env->fault_occurred ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to read "
+					"the cptrValue: %s\n", env->fault_string);
 				goto error;
 			}
 
 			cptrValue = item->_value.c_ptr;
-	  		if ( add_mi_node_child(&mi_root->node, 0, 0, 0, (char*)cptrValue, strlen((char*)cptrValue)) == NULL ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add node to the MI tree.\n");
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, (char*)cptrValue,
+			strlen((char*)cptrValue)) == NULL ) {
+				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
+					"node to the MI tree.\n");
 				goto error;
 			}
 			break;
