@@ -235,6 +235,7 @@ static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
+static int fixup_fix_nated_register(void** param, int param_no);
 static int fixup_fix_sdp(void** param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static char *find_sdp_line(char *, char *, char);
@@ -285,10 +286,12 @@ static int rtpproxy_retr = 5;
 static int rtpproxy_tout = 1;
 static pid_t mypid;
 static unsigned int myseqn = 0;
-static int rcv_avp_no = 42;
 static str nortpproxy_str = str_init("a=nortpproxy:yes\r\n");
 static int sipping_flag = -1;
 
+static char* rcv_avp_param = NULL;
+static unsigned short rcv_avp_type = 0;
+static int_str rcv_avp_name;
 
 struct rtpp_head {
 	struct rtpp_node	*rn_first;
@@ -327,7 +330,7 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"nat_uac_test",       nat_uac_test_f,         1, fixup_str2int,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"fix_nated_register", fix_nated_register_f,   0, 0,
+	{"fix_nated_register", fix_nated_register_f,   0, fixup_fix_nated_register,
 			REQUEST_ROUTE },
 	{"add_rcv_param",      add_rcv_param_f,        0, 0,
 			REQUEST_ROUTE },
@@ -345,7 +348,7 @@ static param_export_t params[] = {
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
-	{"received_avp",          INT_PARAM, &rcv_avp_no            },
+	{"received_avp",          STR_PARAM, &rcv_avp_param         },
 	{"force_socket",          STR_PARAM, &force_socket_str      },
 	{"sipping_from",          STR_PARAM, &sipping_from.s        },
 	{"sipping_method",        STR_PARAM, &sipping_method.s      },
@@ -392,6 +395,16 @@ fixup_fix_sdp(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_fix_nated_register(void** param, int param_no)
+{
+	if (rcv_avp_name.n == 0) {
+		LOG(L_ERR, "ERROR:nathelper:fixup_fix_nated_register: you must set"
+				" 'received_avp' parameter. Must be same value as"
+				" parameter 'received_avp' of registrar module\n");
+		return -1;
+	}
+	return 0;
+}
 
 static int
 mod_init(void)
@@ -400,6 +413,27 @@ mod_init(void)
 	bind_usrloc_t bind_usrloc;
 	struct in_addr addr;
 	str socket_str;
+	xl_spec_t avp_spec;
+
+	if (rcv_avp_param && *rcv_avp_param) {
+		if (xl_parse_spec(rcv_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:nathelper:mod_init: malformed or non AVP %s "
+				"AVP definition\n", rcv_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &rcv_avp_name, &rcv_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:nathelper:mod_init: [%s]- invalid "
+				"AVP definition\n", rcv_avp_param);
+			return -1;
+		}
+	} else {
+		rcv_avp_name.n = 0;
+		rcv_avp_type = 0;
+	}
 
 	if (force_socket_str) {
 		socket_str.s=force_socket_str;
@@ -2350,7 +2384,9 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str uri;
 	int_str val;
-	int_str rcv_avp;
+
+	if(rcv_avp_name.n==0)
+		return 1;
 
 	if (create_rcv_uri(&uri, msg) < 0) {
 		return -1;
@@ -2358,8 +2394,7 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 
 	val.s = uri;
 
-	rcv_avp.n=rcv_avp_no;
-	if (add_avp(AVP_VAL_STR, rcv_avp, val) < 0) {
+	if (add_avp(AVP_VAL_STR|rcv_avp_type, rcv_avp_name, val) < 0) {
 		LOG(L_ERR, "fix_nated_register: Error while creating AVP\n");
 		return -1;
 	}

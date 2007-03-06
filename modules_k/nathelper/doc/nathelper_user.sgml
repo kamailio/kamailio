@@ -158,25 +158,32 @@ modparam("nathelper", "ping_nated_only", 1)
 		</example>
 	</section>
 	<section>
-		<title><varname>received_avp</varname> (integer)</title>
+		<title><varname>received_avp</varname> (str)</title>
 		<para>
-		The number of the Attribute-Value-Pair (AVP) used to store the URI 
+		The name of the Attribute-Value-Pair (AVP) used to store the URI 
 		containing the received IP, port, and protocol. The URI is created 
 		by fix_nated_register function of nathelper module and the attribute 
 		is then used by the registrar to store the received parameters. Do 
 		not forget to change the value of corresponding parameter in
 		registrar module if you change the value of this parameter.
 		</para>
+		<note>
+		<para>
+		You must set this parameter if you use "fix_nated_register". In such
+		case you must set the parameter with same name of "registrar"
+		module to same value.
+		</para>
+		</note>
 		<para>
 		<emphasis>
-			Default value is 42.
+			Default value is "NULL" (disabled).
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>received_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "received_avp", 43)
+modparam("nathelper", "received_avp", "$avp(i:42)")
 ...
 </programlisting>
 		</example>
@@ -302,7 +309,7 @@ modparam("nathelper", "force_socket", "localhost:33333")
 		</example>
 	</section>
 	<section>
-		<title><varname>sipping_flag</varname> (integer)</title>
+		<title><varname>sipping_bflag</varname> (integer)</title>
 		<para>
 		What branch flag should be used by the module to identify NATed 
 		contacts for which it should perform NAT ping via a SIP request 
@@ -314,10 +321,10 @@ modparam("nathelper", "force_socket", "localhost:33333")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>sipping_flag</varname> parameter</title>
+		<title>Set <varname>sipping_bflag</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "sipping_flag", 7)
+modparam("nathelper", "sipping_bflag", 7)
 ...
 </programlisting>
 		</example>
