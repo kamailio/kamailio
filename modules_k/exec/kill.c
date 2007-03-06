@@ -52,7 +52,7 @@
 #include "kill.h"
 
 
-static gen_lock_t *kill_lock;
+static gen_lock_t *kill_lock=NULL;
 
 
 static struct timer_list kill_list;
@@ -162,7 +162,9 @@ void destroy_kill()
 	/* if disabled ... */
 	if (time_to_kill==0) 
 		return; 
-	lock_destroy(kill_lock);
-	lock_dealloc(kill_lock);
+	if (kill_lock) {
+		lock_destroy(kill_lock);
+		lock_dealloc(kill_lock);
+	}
 	return;
 }

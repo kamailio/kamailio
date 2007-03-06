@@ -104,7 +104,7 @@ void exec_shutdown()
 
 static int mod_init( void )
 {
-	fprintf( stderr, "exec - initializing\n");
+	LOG(L_INFO, "EXEC - initializing\n");
 	if (time_to_kill) initialize_kill();
 	return 0;
 }
