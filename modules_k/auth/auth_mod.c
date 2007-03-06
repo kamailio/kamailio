@@ -55,7 +55,7 @@ MODULE_VERSION
 #define DEF_RPID_PREFIX ""
 #define DEF_RPID_SUFFIX ";party=calling;id-type=subscriber;screen=yes"
 #define DEF_STRIP_REALM ""
-#define DEF_RPID_AVP "s:rpid"
+#define DEF_RPID_AVP "$avp(s:rpid)"
 
 
 /*
@@ -103,9 +103,9 @@ str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1};
 str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
 /* Prefix to strip from realm */
 str realm_prefix = {DEF_STRIP_REALM, sizeof(DEF_STRIP_REALM) - 1};
+
 /* definition of AVP containing rpid value */
 char* rpid_avp_param = DEF_RPID_AVP;
-
 
 /*
  * Exported functions 
@@ -214,7 +214,7 @@ static int mod_init(void)
 		secret.len = strlen(secret.s);
 	}
 
-	if ( init_rpid_avp( rpid_avp_param)<0 ) {
+	if ( init_rpid_avp(rpid_avp_param)<0 ) {
 		LOG(L_ERR,"ERROR:auth:mod_init: failed to process rpid AVPs\n");
 		return -4;
 	}

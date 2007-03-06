@@ -42,9 +42,9 @@
 #include "../../error.h"
 #include "../../items.h"
 #include "../../mem/mem.h"
-#include "../auth/aaa_avps.h"
 #include "../auth/api.h"
 #include "../sl/sl_api.h"
+#include "aaa_avps.h"
 #include "authorize.h"
 
 MODULE_VERSION

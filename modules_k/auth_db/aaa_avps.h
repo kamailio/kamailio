@@ -24,20 +24,20 @@
  *  2005-05-31 created by bogdan
  */
 
-#ifndef _SER_AAA_AVPS_H_
-#define _SER_AAA_AVPS_H_
+#ifndef _OPENSER_AAA_AVPS_H_
+#define _OPENSER_AAA_AVPS_H_
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../trim.h"
-#include "../../usr_avp.h"
+#include "../../items.h"
 
 #include <string.h>
 
 
 struct aaa_avp {
 	int_str avp_name;
-	int avp_type;
+	unsigned short avp_type;
 	str attr_name;
 	struct aaa_avp *next;
 };
@@ -75,10 +75,12 @@ static inline int parse_aaa_avps(char *definition,
 {
 	struct aaa_avp *avp;
 	int_str avp_name;
+	xl_spec_t avp_spec;
 	str  foo;
 	char *p;
 	char *e;
 	char *s;
+	char t;
 
 	p = definition;
 	*avp_def = 0;
@@ -103,8 +105,25 @@ static inline int parse_aaa_avps(char *definition,
 			trim( &foo );
 			if (foo.len==0)
 				goto parse_error;
-			if (parse_avp_spec( &foo, &avp->avp_type, &avp_name)!=0 )
+			t = foo.s[foo.len];
+			foo.s[foo.len] = '\0';
+			
+			if (xl_parse_spec(foo.s, &avp_spec,
+						XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+					|| avp_spec.type!=XL_AVP) {
+				LOG(L_ERR, "ERROR:auth_aaa_avps: malformed or non AVP %s "
+					"AVP definition\n", foo.s);
+				goto parse_error;;
+			}
+
+			if(xl_get_avp_name(0, &avp_spec, &avp_name, &avp->avp_type)!=0)
+			{
+				LOG(L_ERR, "ERROR:auth_aaa_avps: [%s]- invalid "
+					"AVP definition\n", foo.s);
 				goto parse_error;
+			}
+			foo.s[foo.len] = t;
+
 			/* copy the avp name into the avp structure */
 			if (avp->avp_type&AVP_NAME_STR) {
 				avp->avp_name.s.s =

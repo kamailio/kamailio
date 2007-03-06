@@ -37,7 +37,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
-#include "../../usr_avp.h"
+#include "../../items.h"
 #include "auth_mod.h"
 #include "api.h"
 #include "rpid.h"
@@ -47,9 +47,8 @@
 #define RPID_HF_NAME_LEN (sizeof(RPID_HF_NAME) - 1)
 
 /* rpid AVP specs */
-static int     rpid_avp_type;
-static int_str rpid_avp;
-static str     rpid_str;
+static unsigned short rpid_avp_type;
+static int_str rpid_avp_name;
 
 
 /*
@@ -57,19 +56,27 @@ static str     rpid_str;
  */
 int init_rpid_avp(char *rpid_avp_param)
 {
+	xl_spec_t avp_spec;
 	if (rpid_avp_param && *rpid_avp_param) {
-		rpid_str.s = rpid_avp_param;
-		rpid_str.len = strlen(rpid_str.s);
-		if (parse_avp_spec( &rpid_str, &rpid_avp_type,
-		&rpid_avp)<0) {
-			LOG(L_CRIT,"ERROR:auth:init_rpid_avp: invalid rpid "
-				"AVP specs \"%s\"\n", rpid_avp_param);
+		if (xl_parse_spec(rpid_avp_param, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:auth:init_rpid_avp: malformed or non AVP %s "
+				"AVP definition\n", rpid_avp_param);
+			return -1;
+		}
+
+		if(xl_get_avp_name(0, &avp_spec, &rpid_avp_name, &rpid_avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:auth:init_rpid_avp: [%s]- invalid "
+				"AVP definition\n", rpid_avp_param);
 			return -1;
 		}
 	} else {
-		rpid_avp.n = 0;
+		rpid_avp_name.n = 0;
 		rpid_avp_type = 0;
 	}
+
 	return 0;
 }
 
@@ -79,7 +86,7 @@ int init_rpid_avp(char *rpid_avp_param)
  */
 void get_rpid_avp( int_str *rpid_avp_p, int *rpid_avp_type_p )
 {
-	*rpid_avp_p = rpid_avp;
+	*rpid_avp_p = rpid_avp_name;
 	*rpid_avp_type_p = rpid_avp_type;
 }
 
@@ -140,12 +147,12 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 	char *at;
 	int_str val;
 
-	if (rpid_avp.s.s==0) {
+	if (rpid_avp_name.n==0) {
 		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
 		return -1;
 	}
 
-	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val, 0))==0 ) {
+	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp_name, &val, 0))==0 ) {
 		DBG("append_rpid_hf: No rpid AVP\n");
 		return -1;
 	}
@@ -200,12 +207,12 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 	str* p, *s;
 	int_str val;
 
-	if (rpid_avp.s.s==0) {
+	if (rpid_avp_name.n==0) {
 		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
 		return -1;
 	}
 
-	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val, 0))==0 ) {
+	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp_name, &val, 0))==0 ) {
 		DBG("append_rpid_hf: No rpid AVP\n");
 		return -1;
 	}
@@ -262,12 +269,12 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 	struct sip_uri uri;
 	int_str val;
 
-	if (rpid_avp.s.s==0) {
+	if (rpid_avp_name.n==0) {
 		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
 		return -1;
 	}
 
-	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp, &val, 0))==0 ) {
+	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp_name, &val, 0))==0 ) {
 		DBG("is_rpid_user_e164: No rpid AVP\n");
 		goto err;
 	}

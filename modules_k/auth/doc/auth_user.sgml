@@ -152,7 +152,7 @@ modparam("auth", "realm_prefix", "sip.")
 	<section>
 		<title><varname>rpid_avp</varname> (string)</title>
 		<para>
-			Full AVP specification (ID, Name, Alias) for the AVP which 
+			Full AVP specification for the AVP which 
 			stores the RPID value. It used to transport the RPID value from
 			authntication backend modules (auth_db or auth_radius) or from 
 			script to the auth function append_rpid_hf and is_rpid_user_e164.
@@ -162,13 +162,12 @@ modparam("auth", "realm_prefix", "sip.")
 			runtime.
 		</para>
 		<para>
-		Default value is <quote>rpid</quote> (Name AVP - e.g, 'i:number',
-		's:string' or 'avp_alias_string').
+		Default value is <quote>$avp(s:rpid)</quote>.
 		</para>
 		<example>
 		<title>rpid_avp parameter example</title>
 		<programlisting format="linespecific">
-modparam("auth", "rpid_avp", "i:13")
+modparam("auth", "rpid_avp", "$avp(i:13)")
 		</programlisting>
 		</example>
 	</section>

@@ -172,20 +172,18 @@ modparam("auth", "realm_prefix", "sip.")
 
 1.3.6. rpid_avp (string)
 
-   Full AVP specification (ID, Name, Alias) for the AVP which
-   stores the RPID value. It used to transport the RPID value
-   from authntication backend modules (auth_db or auth_radius) or
-   from script to the auth function append_rpid_hf and
-   is_rpid_user_e164.
+   Full AVP specification for the AVP which stores the RPID
+   value. It used to transport the RPID value from authntication
+   backend modules (auth_db or auth_radius) or from script to the
+   auth function append_rpid_hf and is_rpid_user_e164.
 
    If defined to NULL string, all RPID functions will fail at
    runtime.
 
-   Default value is "rpid" (Name AVP - e.g, 'i:number',
-   's:string' or 'avp_alias_string').
+   Default value is "$avp(s:rpid)".
 
    Example 1-6. rpid_avp parameter example
-modparam("auth", "rpid_avp", "i:13")
+modparam("auth", "rpid_avp", "$avp(i:13)")
      _________________________________________________________
 
 1.4. Exported Functions

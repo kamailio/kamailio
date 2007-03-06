@@ -44,7 +44,7 @@
 #include "../../usr_avp.h"
 #include "../../items.h"
 #include "../../mem/mem.h"
-#include "../auth/aaa_avps.h"
+#include "aaa_avps.h"
 #include "authdb_mod.h"
 #include "rfc2617.h"
 
