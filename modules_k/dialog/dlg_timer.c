@@ -22,6 +22,8 @@
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
+ * 2007-03-06  to avoid races, tests on timer links are done under locks
+ *             (bogdan)
  */
 
 
@@ -102,15 +104,15 @@ static inline void insert_dlg_timer_unsafe(struct dlg_tl *tl)
 
 int insert_dlg_timer(struct dlg_tl *tl, int interval)
 {
+	lock_get( d_timer->lock);
+
 	if (tl->next!=0 || tl->prev!=0) {
-		LOG(L_CRIT,"BUG:dialog:insert_dlg_timer: links are not nul!\n");
+		lock_release( d_timer->lock);
 		return -1;
 	}
-
 	tl->timeout = get_ticks()+interval;
-
-	lock_get( d_timer->lock);
 	insert_dlg_timer_unsafe( tl );
+
 	lock_release( d_timer->lock);
 
 	return 0;
@@ -128,14 +130,12 @@ static inline void remove_dlg_timer_unsafe(struct dlg_tl *tl)
 
 int remove_dlg_timer(struct dlg_tl *tl)
 {
+	lock_get( d_timer->lock);
+
 	if (tl->prev==0) {
-		return -1;
-	} else if (tl->next==0) {
-		LOG(L_CRIT,"BUG:dialog:remove_dlg_timer: links are nul!\n");
+		lock_release( d_timer->lock);
 		return -1;
 	}
-
-	lock_get( d_timer->lock);
 
 	remove_dlg_timer_unsafe(tl);
 	tl->next = 0;
@@ -150,15 +150,16 @@ int remove_dlg_timer(struct dlg_tl *tl)
 
 int update_dlg_timer( struct dlg_tl *tl, int timeout )
 {
-	if (tl->next==0 || tl->prev==0) {
-		LOG(L_CRIT,"BUG:dialog:update_dlg_timer: links are nul "
-			"(not in timer)!\n");
-		return -1;
-	}
-
 	lock_get( d_timer->lock);
 
-	remove_dlg_timer_unsafe(tl);
+	if ( tl->next ) {
+		if (tl->prev==0) {
+			lock_release( d_timer->lock);
+			return -1;
+		}
+		remove_dlg_timer_unsafe(tl);
+	}
+
 	tl->timeout = get_ticks()+timeout;
 	insert_dlg_timer_unsafe( tl );
 
@@ -214,7 +215,7 @@ void dlg_timer_routine(unsigned int ticks , void * attr)
 	while (tl) {
 		ctl = tl;
 		tl = tl->next;
-		ctl->next = ctl->prev = 0;
+		ctl->next = (struct dlg_tl *)-1;
 		DBG("DEBUG:dialog:dlg_timer_routine: tl=%p next=%p\n", ctl, tl);
 		timer_hdl( ctl );
 	}

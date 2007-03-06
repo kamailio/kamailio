@@ -25,6 +25,8 @@
  * 2006-11-28  Added num_100s and num_200s to dlg_cell, to aid in adding 
  *             statistics tracking of the number of early, and active dialogs.
  *             (Jeffrey Magder - SOMA Networks)
+ * 2007-03-06  syncronized state machine added for dialog state. New tranzition
+ *             design based on events; removed num_1xx and num_2xx (bogdan)
  */
 
 
@@ -42,6 +44,13 @@
 #define DLG_STATE_CONFIRMED    4
 #define DLG_STATE_DELETED      5
 
+#define DLG_EVENT_TDEL         1
+#define DLG_EVENT_RPL1xx       2
+#define DLG_EVENT_RPL2xx       3
+#define DLG_EVENT_RPL3xx       4
+#define DLG_EVENT_REQACK       5
+#define DLG_EVENT_REQBYE       6
+#define DLG_EVENT_REQ          7
 
 struct dlg_cell
 {
@@ -60,8 +69,6 @@ struct dlg_cell
 	str                  from_tag;
 	str                  to_tag;
 	struct dlg_head_cbl  cbs;
-	int                  num_200s;
-	int                  num_100s;
 };
 
 
@@ -100,9 +107,10 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
 
 void link_dlg(struct dlg_cell *dlg, int n);
 
-void ref_dlg(struct dlg_cell *dlg);
+void unref_dlg(struct dlg_cell *dlg, int cnt);
 
-void unref_dlg(struct dlg_cell *dlg, int n, int deleted);
+void next_state_dlg(struct dlg_cell *dlg, int event,
+		int *old_state, int *new_state, int *unref);
 
 struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
 

@@ -19,19 +19,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * TODO - several races to be fixed:
- *   1) race between multiple 200 OK (parallel execution)
- *   2) race between 200 OK and BYE - BYE received before going into CONFIRMED
- *       state (rpl callback is actually called after sending out the reply)
- *   3) race between non-200 OK and 200 OK replies - 200 Ok may be pushed after
- *       (or in parallel) with a negative reply
- *
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
  * 2006-11-28  Added support for tracking the number of early dialogs, and the
  *             number of failed dialogs. This involved updates to dlg_onreply()
  *             (Jeffrey Magder - SOMA Networks)
+ * 2007-03-06  syncronized state machine added for dialog state. New tranzition
+ *             design based on events; removed num_1xx and num_2xx (bogdan)
  */
 
 
@@ -137,22 +132,15 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
 	struct sip_msg *rpl;
 	struct dlg_cell *dlg;
+	int new_state;
+	int old_state;
+	int unref;
+	int event;
 	str tag;
 
 	dlg = (struct dlg_cell *)(*param->param);
 	if (shutdown_done || dlg==0)
 		return;
-
-	if (type==TMCB_TRANS_DELETED) {
-		if (dlg->state == DLG_STATE_UNCONFIRMED) {
-			DBG("DEBUG:dialog:dlg_onreply: destroying unused dialog %p\n",dlg);
-			unref_dlg(dlg,2,1);
-			if_update_stat( dlg_enable_stats, active_dlgs, -1);
-			return;
-		}
-		unref_dlg(dlg,1,0);
-		return;
-	}
 
 	rpl = param->rpl;
 
@@ -162,101 +150,64 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
-	if (param->code<200) {
-		DBG("DEBUG:dialog:dlg_onreply: dialog %p goes into Early state "
-			"with code %d\n", dlg, param->code);
+	if (type==TMCB_TRANS_DELETED)
+		event = DLG_EVENT_TDEL;
+	else if (param->code<200)
+		event = DLG_EVENT_RPL1xx;
+	else if (param->code<300)
+		event = DLG_EVENT_RPL2xx;
+	else
+		event = DLG_EVENT_RPL3xx;
 
-		/* We only want to update the 'early' statistics if this is the
-		* first provisional response. */
-		if (dlg->state != DLG_STATE_EARLY) {
-		
-			/* We have received a provisional response, so we are
-			* officially in an 'early state'.  Update the stats
-			* accordingly. */
+	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
+
+	if (new_state==DLG_STATE_EARLY) {
+		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl);
+		if (old_state!=DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, 1);
+		return;
+	}
 
-			/* We need to keep track of the number of 1xx responses.
-			* If there is at least one, we'll need to decrement the
-			* counter later when we get a 2xx response. */
-			dlg->num_100s++;
-
+	if (new_state==DLG_STATE_CONFIRMED_NA &&
+	old_state!=DLG_STATE_CONFIRMED_NA && old_state!=DLG_STATE_CONFIRMED ) {
+		DBG("DEBUG:dialog:dlg_onreply: dialog %p confirmed\n",dlg);
+		/* set to tag*/
+		if ( (!rpl->to && parse_headers(rpl, HDR_TO_F,0)<0) || !rpl->to ) {
+			LOG(L_ERR, "ERROR:dialog:dlg_onreply: bad reply or "
+				"missing TO hdr :-/\n");
+		} else {
+			tag = get_to(rpl)->tag_value;
+			if (tag.s!=0 && tag.len!=0)
+				dlg_set_totag( dlg, &tag);
 		}
 
-		dlg->state = DLG_STATE_EARLY;
+		/* set start time */
+		dlg->start_ts = get_ticks();
 
-		/* Early state, the message is immutable here */
-		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl);
-		return;
-	}
+		insert_dlg_timer( &dlg->tl, dlg->lifetime );
 
-	/* for this point we deal only with final requests that trigger dialog
-	 * ending, so prevent any sequential callbacks to be executed */
-	if ( (dlg->state & (DLG_STATE_UNCONFIRMED|DLG_STATE_EARLY))==0 )
-		return;
+		/* dialog confirmed */
+		run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl);
 
-	DBG("DEBUG:dialog:dlg_onreply: dialog %p confirmed\n",dlg);
-
-	/* We need to handle the case that the dialog received a provisional
-	 * response at some point, but then that there was an error at some
-	 * other point before the call could receive a 2xx response.  This means
-	 * we have to decrement the early_dlgs counter. */
-	if (dlg->state == DLG_STATE_EARLY) {
-		if (param->code >= 300)
+		if (old_state==DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, -1);
-		dlg->state = DLG_STATE_CONFIRMED_NA;
-	} else if (dlg->state == DLG_STATE_UNCONFIRMED) {
-		dlg->state = DLG_STATE_CONFIRMED_NA;
+
+		if_update_stat(dlg_enable_stats, active_dlgs, 1);
+		return;
 	}
 
-	if (param->code>=300) {
-		DBG("DEBUG:dialog:dlg_onreply: destroying dialog "
-			"with code %d (%p)\n", param->code, dlg);
-
+	if ( event==DLG_EVENT_RPL3xx && new_state==DLG_STATE_DELETED ) {
+		DBG("DEBUG:dialog:dlg_onreply: dialog %p failed (negative reply)\n",
+			dlg);
 		/* dialog setup not completed (3456XX) */
 		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl);
-
-		unref_dlg(dlg,1,1);
-
-		if_update_stat( dlg_enable_stats, active_dlgs, -1);
+		if (unref)
+			unref_dlg(dlg,unref);
+		if (old_state==DLG_STATE_EARLY)
+			if_update_stat(dlg_enable_stats, early_dlgs, -1);
 		return;
 	}
 
-	if ( (!rpl->to && parse_headers(rpl, HDR_TO_F,0)<0) || !rpl->to ) {
-		LOG(L_ERR, "ERROR:dialog:dlg_onreply: bad reply or "
-			"missing TO hdr :-/\n");
-	} else {
-		tag = get_to(rpl)->tag_value;
-		if (tag.s!=0 && tag.len!=0)
-			/* FIXME: this should be sincronized since multiple 200 can be
-			 * sent out */
-			dlg_set_totag( dlg, &tag);
-	}
-
-	dlg->start_ts = get_ticks();
-
-	/* We have received a non-provisional response, so the dialog is no
-	 * longer in the early state.  However, we need to check two things:
-	 *
-	 * 1) We can get more than one 2xx response.  We only want to decrement
-	 *    for the first one.
-	 * 
-	 * 2) It is possible to receive a 2xx response without ever receiving a
-	 *    1xx response.  If this has happened, we don't want to decrement.
-	 */
-
-	if ((dlg->num_200s == 0) && (dlg->num_100s > 0)) {
-		if_update_stat(dlg_enable_stats, early_dlgs, -1);
-	}
-
-	/* Increment the number of 2xx's we've gotten so we don't update our
-	* counters more than once */
-	dlg->num_200s++;
-
-
-	/* dialog confirmed */
-	run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl);
-
-	insert_dlg_timer( &dlg->tl, dlg->lifetime );
 
 	return;
 }
@@ -340,12 +291,11 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	dlg->lifetime = get_dlg_timeout(req);
 
 	if_update_stat( dlg_enable_stats, processed_dlgs, 1);
-	if_update_stat( dlg_enable_stats, active_dlgs, 1);
 
 	return;
 error:
+	unref_dlg(dlg,2);
 	update_stat(failed_dlgs, 1);
-	unref_dlg(dlg,2,1);
 	return;
 }
 
@@ -387,7 +337,10 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	str callid;
 	int h_entry;
 	int h_id;
-
+	int new_state;
+	int old_state;
+	int unref;
+	int event;
 
 	if (d_rrb.get_route_param( req, &rr_param, &val)!=0) {
 		DBG("DEBUG:dialog:dlg_onroute: Route param '%.*s' not found\n",
@@ -421,46 +374,45 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		}
 	}
 
+	/* run state machine */
+	if (req->first_line.u.request.method_value==METHOD_ACK)
+		event = DLG_EVENT_REQACK;
+	else if (req->first_line.u.request.method_value==METHOD_BYE)
+		event = DLG_EVENT_REQBYE;
+	else
+		event = DLG_EVENT_REQ;
+
+	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
+
 	CURR_DLG_ID = req->id;
 	CURR_DLG_LIFETIME = get_ticks()-dlg->start_ts;
+	CURR_DLG_STATUS = new_state;
 
-	if (req->first_line.u.request.method_value==METHOD_BYE) {
-		CURR_DLG_STATUS = DLG_STATE_DELETED;
-		if (remove_dlg_timer(&dlg->tl)!=0) {
-			unref_dlg( dlg , 1, 0);
-			return;
-		}
-		if (dlg->state!=DLG_STATE_CONFIRMED)
-			LOG(L_WARN, "WARNING:dialog:dlg_onroute: BYE for "
-				"unconfirmed dialog ?!\n");
-
+	/* run actions for the transition */
+	if (event==DLG_EVENT_REQBYE && new_state==DLG_STATE_DELETED &&
+	old_state!=DLG_STATE_DELETED) {
+		DBG("DEBUG:dialog:dlg_onroute: BYE successfully processed\n");
+		/* remove from timer */
+		remove_dlg_timer(&dlg->tl);
 		/* dialog terminated (BYE) */
 		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req);
+		/* destroy dialog */
+		unref_dlg(dlg, unref+1);
 
-		unref_dlg(dlg, 2, 1);
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		return;
-	} else {
-		/* within dialog request */
-		run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
 	}
 
-	if (req->first_line.u.request.method_value!=METHOD_ACK) {
+	if (event==DLG_EVENT_REQ && new_state==DLG_STATE_CONFIRMED) {
+		DBG("DEBUG:dialog:dlg_onroute: sequential request successfully "
+			"processed\n");
 		dlg->lifetime = get_dlg_timeout(req);
-		update_dlg_timer( &dlg->tl, dlg->lifetime );
-	} else {
-		if (dlg->state==DLG_STATE_CONFIRMED_NA ||
-		dlg->state==DLG_STATE_CONFIRMED) {
-			dlg->state=DLG_STATE_CONFIRMED;
-		} else {
-			LOG(L_WARN, "WARNING:dialog:dlg_onroute: ACK for "
-				"unconfirmed or unconfirmed_NA dialog ?!\n");
-		}
+		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1)
+			/* within dialog request */
+			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
 	}
 
-	CURR_DLG_STATUS = dlg->state;
-
-	unref_dlg( dlg , 1, 0);
+	unref_dlg( dlg , 1);
 	return;
 }
 
@@ -472,19 +424,26 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 void dlg_ontimeout( struct dlg_tl *tl)
 {
 	struct dlg_cell *dlg;
+	int new_state;
+	int old_state;
+	int unref;
 
 	dlg = get_dlg_tl_payload(tl);
 
-	DBG("DEBUG:dialog:dlg_timeout: dlg %p timeout at %d\n",
-		dlg, tl->timeout);
+	next_state_dlg( dlg, DLG_EVENT_REQBYE, &old_state, &new_state, &unref);
 
-	/* dialog timeout */
-	run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0);
+	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
+		DBG("DEBUG:dialog:dlg_timeout: dlg %p timeout at %d\n",
+			dlg, tl->timeout);
 
-	unref_dlg(dlg, 1, 1);
+		/* dialog timeout */
+		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0);
 
-	if_update_stat( dlg_enable_stats, expired_dlgs, 1);
-	if_update_stat( dlg_enable_stats, active_dlgs, -1);
+		unref_dlg(dlg, unref);
+
+		if_update_stat( dlg_enable_stats, expired_dlgs, 1);
+		if_update_stat( dlg_enable_stats, active_dlgs, -1);
+	}
 
 	return;
 }

@@ -22,6 +22,8 @@
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
+ * 2007-03-06  syncronized state machine added for dialog state. New tranzition
+ *             design based on events; removed num_1xx and num_2xx (bogdan)
  */
 
 #include <stdlib.h>
@@ -284,23 +286,34 @@ static inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
 }
 
 
+#define ref_dlg_unsafe(_dlg,_cnt)     \
+	(_dlg)->ref += (_cnt)
+#define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
+	do { \
+		(_dlg)->ref -= (_cnt); \
+		DBG("DBUG:dialog:unref_dlg: unref dlg %p with %d -> %d\n",\
+			(_dlg),(_cnt),(_dlg)->ref);\
+		if ((_dlg)->ref<=0) { \
+			unlink_unsafe_dlg( _d_entry, _dlg);\
+			destroy_dlg(_dlg);\
+		}\
+	}while(0)
 
-void ref_dlg(struct dlg_cell *dlg)
+
+void unref_dlg(struct dlg_cell *dlg, int cnt)
 {
 	struct dlg_entry *d_entry;
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
 	dlg_lock( d_table, d_entry);
-
-	dlg->ref++;
-
+	unref_dlg_unsafe( dlg, cnt, d_entry);
 	dlg_unlock( d_table, d_entry);
 }
 
 
-
-void unref_dlg(struct dlg_cell *dlg, int n, int delete)
+void next_state_dlg(struct dlg_cell *dlg, int event,
+								int *old_state, int *new_state, int *unref)
 {
 	struct dlg_entry *d_entry;
 
@@ -309,21 +322,112 @@ void unref_dlg(struct dlg_cell *dlg, int n, int delete)
 
 	dlg_lock( d_table, d_entry);
 
-	dlg->ref -= n;
-	
-	DBG("DBUG:dialog:unref_dlg: unref dlg %p with %d (delete=%d)-> %d\n",
-		dlg,n,delete,dlg->ref);
+	*old_state = dlg->state;
 
-	if (delete)
-		dlg->state = DLG_STATE_DELETED;
-
-	if (dlg->ref<=0) {
-		unlink_unsafe_dlg( d_entry, dlg);
-		destroy_dlg(dlg);
+	switch (event) {
+		case DLG_EVENT_TDEL:
+			switch (dlg->state) {
+				case DLG_STATE_UNCONFIRMED:
+				case DLG_STATE_EARLY:
+					dlg->state = DLG_STATE_DELETED;
+					unref_dlg_unsafe(dlg,2,d_entry);
+					break;
+				case DLG_STATE_CONFIRMED_NA:
+				case DLG_STATE_CONFIRMED:
+				case DLG_STATE_DELETED:
+					unref_dlg_unsafe(dlg,1,d_entry);
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
+		case DLG_EVENT_RPL1xx:
+			switch (dlg->state) {
+				case DLG_STATE_UNCONFIRMED:
+				case DLG_STATE_EARLY:
+					dlg->state = DLG_STATE_EARLY;
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
+		case DLG_EVENT_RPL3xx:
+			switch (dlg->state) {
+				case DLG_STATE_UNCONFIRMED:
+				case DLG_STATE_EARLY:
+					dlg->state = DLG_STATE_DELETED;
+					*unref = 1;
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
+		case DLG_EVENT_RPL2xx:
+			switch (dlg->state) {
+				case DLG_STATE_DELETED:
+					ref_dlg_unsafe(dlg,1);
+				case DLG_STATE_UNCONFIRMED:
+				case DLG_STATE_EARLY:
+					dlg->state = DLG_STATE_CONFIRMED_NA;
+					break;
+				case DLG_STATE_CONFIRMED_NA:
+				case DLG_STATE_CONFIRMED:
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
+		case DLG_EVENT_REQACK:
+			switch (dlg->state) {
+				case DLG_STATE_CONFIRMED_NA:
+					dlg->state = DLG_STATE_CONFIRMED;
+					break;
+				case DLG_STATE_CONFIRMED:
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
+		case DLG_EVENT_REQBYE:
+			switch (dlg->state) {
+				case DLG_STATE_CONFIRMED_NA:
+				case DLG_STATE_CONFIRMED:
+					dlg->state = DLG_STATE_DELETED;
+					*unref = 1;
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
+		case DLG_EVENT_REQ:
+			switch (dlg->state) {
+				case DLG_STATE_CONFIRMED_NA:
+				case DLG_STATE_CONFIRMED:
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
+		default:
+			LOG(L_CRIT,"BUG:next_state_dlg: unknown event %d\n",
+				event);
 	}
+	*new_state = dlg->state;
 
 	dlg_unlock( d_table, d_entry);
+
+	DBG("DEBUG:dialog:next_state_dlg: dialog %p changed from state %d to "
+		"state %d, due event %d\n",dlg,*old_state,*new_state,event);
 }
+
+
 
 
 struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
