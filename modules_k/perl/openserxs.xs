@@ -383,6 +383,43 @@ char *xl_sprintf(struct sip_msg *m, char *fmt) {
 	return ret;
 }
 
+/**
+ * Convert an SV to an int_str struct. Needed in AVP package.
+ * - val: SV to convert.
+ * - is: pointer to resulting int_str
+ * - flags: pointer to flags to set
+ * - strflag: flag mask to be or-applied for string match
+ */
+
+inline int sv2int_str(SV *val, int_str *is,
+		      unsigned short *flags, unsigned short strflag) {
+	char *s;
+	STRLEN len;
+
+	if (!SvOK(val)) {
+		LOG(L_ERR, "perl:AVP:sv2int_str: Invalid value "
+			"(not a scalar).\n");
+		return 0;
+	}
+	
+	if (SvIOK(val)) { /* numerical name */
+		is->n = SvIV(val);
+		*flags = 0;
+		return 1;
+	} else if (SvPOK(val)) {
+		s = SvPV(val, len);
+		is->s.len = len;
+		is->s.s = pkg_malloc(len+1);
+		strcpy(is->s.s, s);
+		(*flags) |= strflag;
+		return 1;
+	} else {
+		LOG(L_ERR, "perl:AVP:sv2int_str: Invalid value "
+			"(neither string nor integer).\n");
+		return 0;
+	}
+}
+
 /* ************************************************************************ */
 /* Object methods begin here */
 
@@ -1111,75 +1148,6 @@ pseudoVar(self, varstring)
 
 
 
-=head2 addAVP(name,val)
-
-Add an AVP.
-
-Add an OpenSER AVP to its environment. name and val may be both integers or
-strings; this function will try to guess what is correct. Please note that
- $m->addAVP("10", "10")
-is something different than
- $m->addAVP(10, 10)
-due to this evaluation: The first will create _string_ AVPs with the name
-10, while the latter will create numerical AVPs.
-
-=cut
-
-int
-addAVP(self, p_name, p_val)
-	SV *self;
-	SV *p_name;
-	SV *p_val;
-  PREINIT:
-	struct sip_msg *msg = sv2msg(self);
-	int_str name;
-	int_str val;
-	unsigned short flags = 0;
-	char *s;
-	STRLEN len;
-  CODE:
-  	RETVAL = 0;
-  	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
-		RETVAL = -1;
-	} else {
-		if (SvOK(p_name) && SvOK(p_val)) {
-			if (SvIOK(p_name)) { /* numerical name */
-				name.n = SvIV(p_name);
-			} else if (SvPOK(p_name)) {
-				s = SvPV(p_name, len);
-				name.s.len = len;
-				name.s.s = pkg_malloc(len+1);
-				strcpy(name.s.s, s);
-				flags |= AVP_NAME_STR;
-			} else {
-				LOG(L_ERR, "perl:addAVP: Invalid name.");
-				RETVAL = -1;
-			}
-
-			if ((RETVAL == 0) && SvIOK(p_val)) {
-				val.n = SvIV(p_val);
-			} else if (SvPOK(p_val)) {
-				s = SvPV(p_val, len);
-				val.s.len = len;
-				val.s.s = pkg_malloc(len+1);
-				strcpy(val.s.s, s);
-				flags |= AVP_VAL_STR;
-			} else {
-				LOG(L_ERR, "perl:addAVP: Invalid name.");
-				RETVAL = -1;
-			}
-		}
-				
-		if (RETVAL == 0)
-			RETVAL = add_avp(flags, name, val);
-	}
-  OUTPUT:
-	RETVAL
-
-
-
-
 =head2 append_branch(branch,qval)
 
 Append a branch to current message.
@@ -1597,5 +1565,167 @@ r2_val(self)
     SV *self;
   CODE:
 	ST(0) = getStringFromURI(self, r2_val);
+
+
+
+=head1 OpenSER::AVP
+
+This package provides access functions for OpenSER's AVPs.
+These variables can be created, evaluated, modified and removed through this
+package.
+
+Please note that these functions do NOT support the notation used
+in the configuration file, but directly work on strings or numbers. See
+documentation of add method below.
+
+=cut
+
+
+MODULE = OpenSER PACKAGE = OpenSER::AVP
+
+=head2 add(name,val)
+
+Add an AVP.
+
+Add an OpenSER AVP to its environment. name and val may both be integers or
+strings; this function will try to guess what is correct. Please note that
+ 
+ OpenSER::AVP::add("10", "10")
+
+is something different than
+
+ OpenSER::AVP::add(10, 10)
+
+due to this evaluation: The first will create _string_ AVPs with the name
+10, while the latter will create a numerical AVP.
+
+You can modify/overwrite AVPs with this function.
+
+=cut
+
+int
+add(p_name, p_val)
+	SV *p_name;
+	SV *p_val;
+  PREINIT:
+	int_str name;
+	int_str val;
+	unsigned short flags = 0;
+	char *s;
+	STRLEN len;
+  CODE:
+  	RETVAL = 0;
+	if (SvOK(p_name) && SvOK(p_val)) {
+		if (!sv2int_str(p_name, &name, &flags, AVP_NAME_STR)) {
+			RETVAL = -1;
+		} else if (!sv2int_str(p_val, &val, &flags, AVP_VAL_STR)) {
+			RETVAL = -1;
+		}
+
+		if (RETVAL == 0) {
+			RETVAL = add_avp(flags, name, val);
+		}
+	}
+  OUTPUT:
+	RETVAL
+
+
+
+
+=head2 get(name)
+
+get an OpenSER AVP:
+
+ my $numavp = OpenSER::AVP::get(5);
+ my $stravp = OpenSER::AVP::get("foo");
+
+=cut
+
+int
+get(p_name)
+	SV *p_name;
+  PREINIT:
+	struct usr_avp *first_avp;
+	int_str name;
+	int_str val;
+	unsigned short flags = 0;
+	SV *ret = &PL_sv_undef;
+	int err = 0;
+	char *s;
+	STRLEN len;
+  CODE:
+	if (SvOK(p_name)) {
+		if (!sv2int_str(p_name, &name, &flags, AVP_NAME_STR)) {
+			LOG(L_ERR, "perl:AVP:get: Invalid name.");
+			err = 1;
+		}
+	} else {
+		LOG(L_ERR, "perl:AVP:get: Invalid name.");
+		err = 1;
+	}
+	
+	if (err == 0) {
+		first_avp = search_first_avp(flags, name, &val, NULL);
+		
+		if (first_avp != NULL) { /* found correct AVP */
+			if (is_avp_str_val(first_avp)) {
+				ret = sv_2mortal(newSVpv(val.s.s, val.s.len));
+			} else {
+				ret = sv_2mortal(newSViv(val.n));
+			}
+		} else {
+			/* Empty AVP requested. */
+		}
+	}
+
+	ST(0) = ret;
+
+
+
+
+=head2 destroy(name)
+
+Destroy an AVP.
+
+ OpenSER::AVP::destroy(5);
+ OpenSER::AVP::destroy("foo");
+
+=cut
+
+int
+destroy(p_name)
+	SV *p_name;
+  PREINIT:
+	struct usr_avp *first_avp;
+	int_str name;
+	int_str val;
+	unsigned short flags = 0;
+	SV *ret = &PL_sv_undef;
+	char *s;
+	STRLEN len;
+  CODE:
+	RETVAL = 1;
+	if (SvOK(p_name)) {
+		if (!sv2int_str(p_name, &name, &flags, AVP_NAME_STR)) {
+			RETVAL = 0;
+			LOG(L_ERR, "perl:AVP:destroy: Invalid name.");
+		}
+	} else {
+		RETVAL = 0;
+		LOG(L_ERR, "perl:AVP:destroy: Invalid name.");
+	}
+	
+	if (RETVAL == 1) {
+		first_avp = search_first_avp(flags, name, &val, NULL);
+		
+		if (first_avp != NULL) { /* found correct AVP */
+			destroy_avp(first_avp);
+		} else {
+			RETVAL = 0;
+			/* Empty AVP requested. */
+		}
+	}
+  OUTPUT:
+	RETVAL
 
 

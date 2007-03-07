@@ -317,19 +317,6 @@ $m->xlog("L_INFO", "foo");]]></screen>
 	'$' sign in perl strings!</emphasis>
       </para>
     </section>
-    <section id="ID-9d4c08f9f757ed207c83c8cfb1b456ec"><title>addAVP(name,val)</title>
-      <para>
-	Add an AVP.
-      </para>
-      <para>
-	Add an OpenSER AVP to its environment. name and val may be both
-	integers or strings; this function will try to guess what is
-	correct. Please note that $m-&gt;addAVP("10", "10") is something
-	different than $m-&gt;addAVP(10, 10) due to this evaluation: The
-	first will create _string_ AVPs with the name 10, while the latter
-	will create numerical AVPs.
-      </para>
-    </section>
     <section id="ID-098e67bc760ef445343eb9e8f93ece8b"><title>append_branch(branch,qval)</title>
       <para>
 	Append a branch to current message.
@@ -456,6 +443,54 @@ $m->xlog("L_INFO", "foo");]]></screen>
       </para>
     </section>
   </section>
+  <section id="ID-f092a1ce520e2e575c41702289adf85e"><title>OpenSER::AVP</title>
+    <para>
+      This package provides access functions for OpenSER's AVPs. These
+      variables can be created, evaluated, modified and removed through
+      this package.
+    </para>
+    <para>
+      Please note that these functions do NOT support the notation used in
+      the configuration file, but directly work on strings or numbers. See
+      documentation of add method below.
+    </para>
+    <section id="ID-d4453222c49e08dc556c25a6586a00bc"><title>add(name,val)</title>
+      <para>
+	Add an AVP.
+      </para>
+      <para>
+	Add an OpenSER AVP to its environment. name and val may both be
+	integers or strings; this function will try to guess what is
+	correct. Please note that
+      </para>
+      <screen><![CDATA[OpenSER::AVP::add("10", "10")]]></screen>
+      <para>
+	is something different than
+      </para>
+      <screen><![CDATA[OpenSER::AVP::add(10, 10)]]></screen>
+      <para>
+	due to this evaluation: The first will create _string_ AVPs with
+	the name 10, while the latter will create a numerical AVP.
+      </para>
+      <para>
+	You can modify/overwrite AVPs with this function.
+      </para>
+    </section>
+    <section id="ID-ad3f402b1c78426a3a1de4d0c1d9ad6c"><title>get(name)</title>
+      <para>
+	get an OpenSER AVP:
+      </para>
+      <screen><![CDATA[my $numavp = OpenSER::AVP::get(5);
+my $stravp = OpenSER::AVP::get("foo");]]></screen>
+    </section>
+    <section id="ID-15db533161502fc4591ec9acdd990ef4"><title>destroy(name)</title>
+      <para>
+	Destroy an AVP.
+      </para>
+      <screen><![CDATA[OpenSER::AVP::destroy(5);
+OpenSER::AVP::destroy("foo");]]></screen>
+    </section>
+  </section>
   <section id="ID-b2dcbd51ac3a3e6208edd5e4f6a5ef63"><title>OpenSER::Utils::PhoneNumbers</title>
     <para>
       OpenSER::Utils::PhoneNumbers - Functions for canonical forms of phone
@@ -521,7 +556,7 @@ $number    = dialNumber("+497612034567");]]></screen>
     </para>
     <section id="ID-bd49dfdfc2284e87abd95fbce2d63cbd"><title>new(publicAccessPrefix,internationalPrefix,longDistancePrefix,countryCode,areaCode,pbxCode)</title>
       <para>
-	The new operator returns an object of this type and sets its
+	The new operator returns an object of this type and sets it's
 	locational context according to the passed parameters. See
 	<citerefentry>
 	<refentrytitle>OpenSER::Utils::PhoneNumbers</refentrytitle>
@@ -530,9 +565,10 @@ $number    = dialNumber("+497612034567");]]></screen>
     </section>
     <section id="ID-aa52786fee82fe6e26ac766b30a1a4fa"><title>canonicalForm( number [, context] )</title>
       <para>
-	Convert a phone number (given as first argument) into its canonical
-	form. When no context is passed in as the second argument, the
-	default context from the systems configuration file is used.
+	Convert a phone number (given as first argument) into it's
+	canonical form. When no context is passed in as the second
+	argument, the default context from the systems configuration file
+	is used.
       </para>
     </section>
     <section id="ID-31479dee3ae037c27cd7a84aa7358bd2"><title>dialNumber( number [, context] )</title>
