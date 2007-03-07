@@ -403,7 +403,7 @@ CREATE TABLE location (
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   methods int(11) default NULL,
-  UNIQUE KEY udc_loc ($USERCOL, domain, contact),
+  INDEX udc_loc ($USERCOL, domain, contact),
   PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
@@ -429,7 +429,7 @@ CREATE TABLE aliases (
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   methods int(11) default NULL,
-  UNIQUE KEY udc_als($USERCOL, domain, contact),
+  INDEX udc_als($USERCOL, domain, contact),
   PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
