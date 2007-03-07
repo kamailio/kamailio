@@ -1567,7 +1567,15 @@ mod_init(void)
         }
 
         if (ul_bind_usrloc(&userLocation) < 0) {
-            LOG(L_ERR, "error: mediaproxy/mod_init(): can't access the usrloc module.\n");
+            LOG(L_ERR, "error: mediaproxy/mod_init(): can't access the usrloc "
+                "module.\n");
+            return -1;
+        }
+
+        if (userLocation.nat_flag==0) {
+            LOG(L_ERR, "ERROR:mediaproxy:mod_init: Bad config - "
+                "nat ping enabled, but not nat bflag set in usrloc "
+                "module\n");
             return -1;
         }
 

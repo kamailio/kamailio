@@ -459,6 +459,13 @@ mod_init(void)
 			return -1;
 		}
 
+		if (ping_nated_only && ul.nat_flag==0) {
+			LOG(L_ERR, "ERROR:nathelper:mod_init: Bad config - "
+				"ping_nated_only enabled, but not nat bflag set in usrloc "
+				"module\n");
+			return -1;
+		}
+
 		sipping_flag = (sipping_flag==-1)?0:(1<<sipping_flag);
 
 		/* set reply function if SIP natping is enabled */
