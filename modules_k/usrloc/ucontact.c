@@ -200,7 +200,8 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 
 	char* ptr;
 
-	update_str( &_c->callid, _ci->callid);
+	/* No need to update Callid as it is constant 
+	 * per ucontact (set at insert time)  -bogdan */
 
 	update_str( &_c->user_agent, _ci->user_agent);
 
@@ -521,11 +522,11 @@ int db_insert_ucontact(ucontact_t* _c)
 int db_update_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys1[3];
-	db_val_t vals1[3];
+	db_key_t keys1[4];
+	db_val_t vals1[4];
 
-	db_key_t keys2[12];
-	db_val_t vals2[12];
+	db_key_t keys2[11];
+	db_val_t vals2[11];
 
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -533,19 +534,19 @@ int db_update_ucontact(ucontact_t* _c)
 
 	keys1[0] = user_col.s;
 	keys1[1] = contact_col.s;
-	keys1[2] = domain_col.s;
+	keys1[2] = callid_col.s;
+	keys1[3] = domain_col.s;
 	keys2[0] = expires_col.s;
 	keys2[1] = q_col.s;
-	keys2[2] = callid_col.s;
-	keys2[3] = cseq_col.s;
-	keys2[4] = flags_col.s;
-	keys2[5] = cflags_col.s;
-	keys2[6] = user_agent_col.s;
-	keys2[7] = received_col.s;
-	keys2[8] = path_col.s;
-	keys2[9] = sock_col.s;
-	keys2[10] = methods_col.s;
-	keys2[11] = last_mod_col.s;
+	keys2[2] = cseq_col.s;
+	keys2[3] = flags_col.s;
+	keys2[4] = cflags_col.s;
+	keys2[5] = user_agent_col.s;
+	keys2[6] = received_col.s;
+	keys2[7] = path_col.s;
+	keys2[8] = sock_col.s;
+	keys2[9] = methods_col.s;
+	keys2[10] = last_mod_col.s;
 
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
@@ -555,6 +556,10 @@ int db_update_ucontact(ucontact_t* _c)
 	vals1[1].nul = 0;
 	vals1[1].val.str_val = _c->c;
 
+	vals1[2].type = DB_STR;
+	vals1[2].nul = 0;
+	vals1[2].val.str_val = _c->callid;
+
 	vals2[0].type = DB_DATETIME;
 	vals2[0].nul = 0;
 	vals2[0].val.time_val = _c->expires;
@@ -563,70 +568,66 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[1].nul = 0;
 	vals2[1].val.double_val = q2double(_c->q);
 
-	vals2[2].type = DB_STR;
+	vals2[2].type = DB_INT;
 	vals2[2].nul = 0;
-	vals2[2].val.str_val = _c->callid;
+	vals2[2].val.int_val = _c->cseq;
 
 	vals2[3].type = DB_INT;
 	vals2[3].nul = 0;
-	vals2[3].val.int_val = _c->cseq;
+	vals2[3].val.bitmap_val = _c->flags;
 
 	vals2[4].type = DB_INT;
 	vals2[4].nul = 0;
-	vals2[4].val.bitmap_val = _c->flags;
+	vals2[4].val.bitmap_val = _c->cflags;
 
-	vals2[5].type = DB_INT;
+	vals2[5].type = DB_STR;
 	vals2[5].nul = 0;
-	vals2[5].val.bitmap_val = _c->cflags;
+	vals2[5].val.str_val = _c->user_agent;
 
 	vals2[6].type = DB_STR;
-	vals2[6].nul = 0;
-	vals2[6].val.str_val = _c->user_agent;
-
-	vals2[7].type = DB_STR;
 	if (_c->received.s == 0) {
+		vals2[6].nul = 1;
+	} else {
+		vals2[6].nul = 0;
+		vals2[6].val.str_val = _c->received;
+	}
+	
+	vals2[7].type = DB_STR;
+	if (_c->path.s == 0) {
 		vals2[7].nul = 1;
 	} else {
 		vals2[7].nul = 0;
-		vals2[7].val.str_val = _c->received;
+		vals2[7].val.str_val = _c->path;
 	}
-	
+
 	vals2[8].type = DB_STR;
-	if (_c->path.s == 0) {
-		vals2[8].nul = 1;
-	} else {
-		vals2[8].nul = 0;
-		vals2[8].val.str_val = _c->path;
-	}
-
-	vals2[9].type = DB_STR;
 	if (_c->sock) {
-		vals2[9].val.str_val = _c->sock->sock_str;
-		vals2[9].nul = 0;
+		vals2[8].val.str_val = _c->sock->sock_str;
+		vals2[8].nul = 0;
 	} else {
-		vals2[9].nul = 1;
+		vals2[8].nul = 1;
 	}
 
-	vals2[10].type = DB_BITMAP;
+	vals2[9].type = DB_BITMAP;
 	if (_c->methods == 0xFFFFFFFF) {
-		vals2[10].nul = 1;
+		vals2[9].nul = 1;
 	} else {
-		vals2[10].val.bitmap_val = _c->methods;
-		vals2[10].nul = 0;
+		vals2[9].val.bitmap_val = _c->methods;
+		vals2[9].nul = 0;
 	}
 
-	vals2[11].type = DB_DATETIME;
-	vals2[11].nul = 0;
-	vals2[11].val.time_val = _c->last_modified;
+	vals2[10].type = DB_DATETIME;
+	vals2[10].nul = 0;
+	vals2[10].val.time_val = _c->last_modified;
 
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals1[0].val.str_val.len = dom - _c->aor->s;
 
-		vals1[2].type = DB_STR;
-		vals1[2].nul = 0;
-		vals1[2].val.str_val.s = dom + 1;
-		vals1[2].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		vals1[3].type = DB_STR;
+		vals1[3].nul = 0;
+		vals1[3].val.str_val.s = dom + 1;
+		vals1[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
@@ -635,7 +636,7 @@ int db_update_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, 
-	(use_domain) ? (3) : (2), 12) < 0) {
+	(use_domain) ? (4) : (3), 11) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
@@ -650,8 +651,8 @@ int db_update_ucontact(ucontact_t* _c)
 int db_delete_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[3];
-	db_val_t vals[3];
+	db_key_t keys[4];
+	db_val_t vals[4];
 
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -659,7 +660,8 @@ int db_delete_ucontact(ucontact_t* _c)
 
 	keys[0] = user_col.s;
 	keys[1] = contact_col.s;
-	keys[2] = domain_col.s;
+	keys[2] = callid_col.s;
+	keys[3] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -669,14 +671,18 @@ int db_delete_ucontact(ucontact_t* _c)
 	vals[1].nul = 0;
 	vals[1].val.str_val = _c->c;
 
+	vals[2].type = DB_STR;
+	vals[2].nul = 0;
+	vals[2].val.str_val = _c->callid;
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals[0].val.str_val.len = dom - _c->aor->s;
 
-		vals[2].type = DB_STR;
-		vals[2].nul = 0;
-		vals[2].val.str_val.s = dom + 1;
-		vals[2].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		vals[3].type = DB_STR;
+		vals[3].nul = 0;
+		vals[3].val.str_val.s = dom + 1;
+		vals[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
@@ -684,7 +690,7 @@ int db_delete_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (3) : (2)) < 0) {
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (4) : (3)) < 0) {
 		LOG(L_ERR, "db_del_ucontact(): Error while deleting from database\n");
 		return -1;
 	}
