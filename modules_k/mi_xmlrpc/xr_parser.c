@@ -147,7 +147,6 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 					"stringValue: %s!\n", env->fault_string);
 				goto error;
 			}
-
 			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValue,
 			strlen(stringValue)) == NULL ) {
 				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
