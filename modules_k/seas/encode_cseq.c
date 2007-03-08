@@ -49,7 +49,7 @@ int encode_cseq(char *hdrstart,int hdrlen,struct cseq_body *body,unsigned char *
       i++;
    where[0]=i;
    if(str2int(&body->number,&cseqnum)<0){
-      SLOG(L_ERR,"str2int(cseq number)\n");
+      LOG(L_ERR,"str2int(cseq number)\n");
       return -1;
    }
    cseqnum=htonl(cseqnum);

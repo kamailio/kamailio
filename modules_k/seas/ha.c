@@ -43,8 +43,8 @@ int prepare_ha()
       goto error;
    if(parse_ping(servlet_ping_config,&servlet_ping_period,&servlet_pings_lost,&servlet_ping_timeout)<0) 
       goto error;
-   SLOG(L_DBG,"jain: pinging period :%d max pings lost:%d ping timeout:%d\n",jain_ping_period,jain_pings_lost,jain_ping_timeout);
-   SLOG(L_DBG,"servlet: pinging period:%d max pings lost:%d ping timeout:%d\n",servlet_ping_period,servlet_pings_lost,servlet_ping_timeout);
+   LOG(L_DBG,"jain: pinging period :%d max pings lost:%d ping timeout:%d\n",jain_ping_period,jain_pings_lost,jain_ping_timeout);
+   LOG(L_DBG,"servlet: pinging period:%d max pings lost:%d ping timeout:%d\n",servlet_ping_period,servlet_pings_lost,servlet_ping_timeout);
    use_ha=1;
    return 1;
 error:
@@ -106,7 +106,7 @@ static inline int parse_ping(char * string,int *ping_period,int *pings_lost,int 
    }
 
    if (((*string)<'0')||((*string)>'9')) {
-      SLOG(L_ERR,"malformed ping config string. Unparseable :[%s]\n",string);
+      LOG(L_ERR,"malformed ping config string. Unparseable :[%s]\n",string);
       return -1;
    }
    ping_period_s=string;
@@ -118,14 +118,14 @@ static inline int parse_ping(char * string,int *ping_period,int *pings_lost,int 
 	 }else if (!ping_timeout_s && (*(string+1))) {
 	    ping_timeout_s=string+1;
 	 }else{
-	    SLOG(L_ERR,"malformed ping config string. Unparseable :[%s]\n",string);
+	    LOG(L_ERR,"malformed ping config string. Unparseable :[%s]\n",string);
 	    return -1;
 	 }
       }
       string++;
    }
    if (!(ping_period_s && pings_lost_s && ping_timeout_s)) {
-      SLOG(L_ERR,"malformed ping config string. Unparseable :[%s]\n",string);
+      LOG(L_ERR,"malformed ping config string. Unparseable :[%s]\n",string);
       return -1;
    }
    *ping_period =atoi(ping_period_s);
@@ -152,7 +152,7 @@ int spawn_pinger()
    struct as_entry *as;
 
    if ((pinger_pid=fork())<0) {
-      SLOG(L_ERR,"cant fork !\n");
+      LOG(L_ERR,"cant fork !\n");
       goto error;
    }else if(pinger_pid>0){
       return 0;
@@ -188,7 +188,7 @@ int spawn_pinger()
       timeout=next_jain<next_servlet?next_jain:next_servlet;
 
       if ((n=poll(NULL,0,timeout<0?0:timeout))<0) {
-	 SLOG(L_ERR,"poll returned %d\n",n);
+	 LOG(L_ERR,"poll returned %d\n",n);
 	 goto error;
       }else if(n==0){/*timeout*/
 	 gettimeofday(&now,NULL);
@@ -209,7 +209,7 @@ int spawn_pinger()
 	    }
 	 }
       }else{/*impossible..*/
-	 SLOG(L_ERR,"bug:poll returned %d\n",n);
+	 LOG(L_ERR,"bug:poll returned %d\n",n);
 	 goto error;
       }
    }
@@ -237,12 +237,12 @@ static inline int send_ping(struct as_entry *the_as,struct timeval *now)
    the_ping=(char *)0;
    retval=0;
    if (!(aping=shm_malloc(sizeof(as_msg_t)))) {
-      SLOG(L_ERR,"out of shm_mem for ping event\n");
+      LOG(L_ERR,"out of shm_mem for ping event\n");
       retval=-1;
       goto error;
    }
    if (!(the_ping=create_ping_event(&pinglen,0,&seqno))) {
-      SLOG(L_ERR,"Unable to create ping event\n");
+      LOG(L_ERR,"Unable to create ping event\n");
       retval=-1;
       goto error;
    }
@@ -253,7 +253,7 @@ static inline int send_ping(struct as_entry *the_as,struct timeval *now)
    lock_get(the_as->u.as.jain_pings.mutex);
    {
       if(the_as->u.as.jain_pings.count==the_as->u.as.jain_pings.size){
-	 SLOG(L_ERR,"Cant send ping because the pingtable is full (%d pings)\n",\
+	 LOG(L_ERR,"Cant send ping because the pingtable is full (%d pings)\n",\
 	       the_as->u.as.jain_pings.count);
 	 retval=0;
 	 lock_release(the_as->u.as.jain_pings.mutex);
@@ -272,7 +272,7 @@ again:
       if(errno==EINTR){
 	 goto again;
       }else{
-	 SLOG(L_ERR,"error sending ping\n");
+	 LOG(L_ERR,"error sending ping\n");
 	 goto error;
       }
    }
@@ -303,13 +303,13 @@ inline int init_pingtable(struct ha *table,int timeout,int maxpings)
    table->timeout=timeout;
 
    if (!(table->mutex=lock_alloc())){
-      SLOG(L_ERR,"Unable to allocate a lock for the ping table\n");
+      LOG(L_ERR,"Unable to allocate a lock for the ping table\n");
       goto error;
    }else 
       lock_init(table->mutex);
-   SLOG(L_ERR,"alloc'ing %d bytes for %d pings\n",(maxpings*sizeof(struct ping)),maxpings);
+   LOG(L_ERR,"alloc'ing %d bytes for %d pings\n",(int)(maxpings*sizeof(struct ping)),maxpings);
    if (0==(table->pings=shm_malloc(maxpings*sizeof(struct ping)))){
-      SLOG(L_ERR,"Unable to shm_malloc %d bytes for %d pings\n",(maxpings*sizeof(struct ping)),maxpings);
+      LOG(L_ERR,"Unable to shm_malloc %d bytes for %d pings\n",(int)(maxpings*sizeof(struct ping)),maxpings);
       goto error;
    }else{
       memset(table->pings,0,(maxpings*sizeof(struct ping)));
@@ -353,7 +353,7 @@ char * create_ping_event(int *evt_len,int flags,unsigned int *seqno)
    static unsigned int ping_seqno=0;
 
    if (!(buffer=shm_malloc(4+1+1+4+4))) {
-      SLOG(L_ERR,"out of shm for ping\n");
+      LOG(L_ERR,"out of shm for ping\n");
       return 0;
    }
    *evt_len=(4+1+1+4+4);

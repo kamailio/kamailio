@@ -84,16 +84,16 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
    mlen=sipmsg->len;
    hdrstart = hdr->name.s;
    if(hdrstart-msg<0){
-      SLOG(L_ERR,"header(%.*s) does not belong to sip_msg(hdrstart<msg)\n",hdr->name.len,hdr->name.s);
+      LOG(L_ERR,"header(%.*s) does not belong to sip_msg(hdrstart<msg)\n",hdr->name.len,hdr->name.s);
       return -1;
    }
    ptr=htons((short int)(hdrstart-msg));
    if((hdrstart-msg)>mlen){
-      SLOG(L_ERR,"out of the sip_msg bounds (%d>%d)\n",ntohs(ptr),mlen);
+      LOG(L_ERR,"out of the sip_msg bounds (%d>%d)\n",ntohs(ptr),mlen);
       return -1;
    }
    if(hdr->len>(1<<16)){
-      SLOG(L_ERR,"length of header too long\n");
+      LOG(L_ERR,"length of header too long\n");
       return -1;
    }
    memcpy(payload,&ptr,2);
@@ -302,7 +302,7 @@ error:
       free_via_list(viabody);
    if(methods)
       pkg_free(methods);
-   SLOG(L_ERR,"%s",myerror);
+   LOG(L_ERR,"%s",myerror);
    return -1;
 }
 

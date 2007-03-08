@@ -84,11 +84,11 @@ int encode_digest(char *hdrstart,int hdrlen,dig_cred_t *digest,unsigned char *wh
       memset(&sipuri,0,sizeof(struct sip_uri));
       flags1|=HAS_URI_F;
       if (parse_uri(digest->uri.s, digest->uri.len,&sipuri) < 0 ) {
-	 SLOG(L_ERR, "Bad URI in address\n");
+	 LOG(L_ERR, "Bad URI in address\n");
 	 return -1;
       }else{
 	 if((j=encode_uri2(hdrstart,hdrlen,digest->uri,&sipuri,&where[i+1]))<0){
-	    SLOG(L_ERR, "Error encoding the URI\n");
+	    LOG(L_ERR, "Error encoding the URI\n");
 	    return -1;
 	 }else{
 	    where[i]=(unsigned char)j;

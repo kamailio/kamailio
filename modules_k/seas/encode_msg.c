@@ -195,7 +195,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
 	 (ms->u.reply.version.s-msg->buf));
    if(request){
       if (parse_uri(ms->u.request.uri.s,ms->u.request.uri.len, &miuri)<0){
-	 SLOG(L_ERR, "<%.*s>\n",ms->u.request.uri.len,ms->u.request.uri.s);
+	 LOG(L_ERR, "<%.*s>\n",ms->u.request.uri.len,ms->u.request.uri.s);
 	 myerror="while parsing the R-URI";
 	 goto error;
       }
@@ -224,7 +224,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
       memcpy(&payload[k+1],&h,2);
       /*TODO fix this... fixed with k-=3?*/
       if(0>(i=encode_header(msg,hf,(unsigned char*)(payload+j),MAX_ENCODED_MSG+MAX_MESSAGE_LEN-j))){
-	 SLOG(L_ERR,"encoding header %.*s\n",hf->name.len,hf->name.s);
+	 LOG(L_ERR,"encoding header %.*s\n",hf->name.len,hf->name.s);
 	 goto error;
 	 k-=3;
 	 continue;
@@ -248,13 +248,13 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
    /*pkg_free(payload2);*/
    /*now we copy the actual message after the headers-meta-section*/
    memcpy(&payload[j],msg->buf,msg->len);
-   SLOG(L_DBG,"msglen = %d,msg starts at %d\n",msg->len,j);
+   LOG(L_DBG,"msglen = %d,msg starts at %d\n",msg->len,j);
    j=htons(j);
    /*now we copy at the beginning, the index to where the actual message starts*/
    memcpy(&payload[MSG_START_IDX],&j,2);
    return GET_PAY_SIZE( payload );
 error:
-   SLOG(L_ERR,"%s\n",myerror);
+   LOG(L_ERR,"%s\n",myerror);
    return -1;
 }
 
@@ -276,7 +276,7 @@ int decode_msg(struct sip_msg *msg,char *code, unsigned int len)
       goto error;
    }
 error:
-   SLOG(L_ERR,"(%s)\n",myerror);
+   LOG(L_ERR,"(%s)\n",myerror);
    return -1;
 }
 

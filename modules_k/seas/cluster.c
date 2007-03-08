@@ -45,16 +45,16 @@ int parse_cluster_cfg()
       while (*p!=' ' && *p!='\t' && *p!='[' && *p!=0)
 	 p++;
       if ( p==start || *p==0 ){
-	 SLOG(L_ERR,"ERROR: cluster names must only contain alphanumeric chars\n");
+	 LOG(L_ERR,"ERROR: cluster names must only contain alphanumeric chars\n");
 	 goto error;
       }
       if (!((*entry)=(struct as_entry*)shm_malloc(sizeof(struct as_entry)))) {
-	 SLOG(L_ERR,"Out of shm mem for as_entry\n");
+	 LOG(L_ERR,"Out of shm mem for as_entry\n");
 	 goto error;
       }
       memset(*entry,0,sizeof(struct as_entry));
       if (!((*entry)->name.s=shm_malloc(p-start))) {
-	 SLOG(L_ERR,"Out of shm malloc for cluster name\n");
+	 LOG(L_ERR,"Out of shm malloc for cluster name\n");
 	 goto error;
       }
       memcpy((*entry)->name.s, start, p-start);
@@ -65,7 +65,7 @@ int parse_cluster_cfg()
       /*get as names*/
       eat_spaces(p);
       if (*p!='['){
-	 SLOG(L_ERR,"Malformed cluster cfg string %s\n",cluster_cfg);
+	 LOG(L_ERR,"Malformed cluster cfg string %s\n",cluster_cfg);
 	 goto error;
       }
       p++;
@@ -79,14 +79,14 @@ int parse_cluster_cfg()
 	 if ( p==start || *p==0 )
 	    goto error;
 	 if (!((*entry)->u.cs.as_names[n].s=shm_malloc(p-start))) {
-	    SLOG(L_ERR,"Out of shm_mem for AS name in cluster\n");
+	    LOG(L_ERR,"Out of shm_mem for AS name in cluster\n");
 	    goto error;
 	 }
 	 (*entry)->u.cs.as_names[n].len=p-start;
 	 memcpy((*entry)->u.cs.as_names[n].s,start,p-start);
 	 n++;
 	 if(n>=MAX_AS_PER_CLUSTER){
-	    SLOG(L_ERR,"ERROR: too many AS per cluster\n");
+	    LOG(L_ERR,"ERROR: too many AS per cluster\n");
 	    goto error;
 	 }
 	 eat_spaces(p);
@@ -105,16 +105,16 @@ int parse_cluster_cfg()
       entry=&((*entry)->next);
    }
    for (tmp=as_list;tmp->next;tmp=tmp->next){
-      SLOG(L_DBG,"%.*s\n",tmp->name.len,tmp->name.s);
+      LOG(L_DBG,"%.*s\n",tmp->name.len,tmp->name.s);
    }
-   SLOG(L_DBG,"%.*s\n",tmp->name.len,tmp->name.s);
+   LOG(L_DBG,"%.*s\n",tmp->name.len,tmp->name.s);
    entry=&(tmp->next);
    for(tmp=as_list;tmp;tmp=tmp->next){
       if (tmp->type!=CLUSTER_TYPE) 
 	 continue;
-      SLOG(L_DBG,"cluster:[%.*s]\n",tmp->name.len,tmp->name.s);
+      LOG(L_DBG,"cluster:[%.*s]\n",tmp->name.len,tmp->name.s);
       for(k=0;k<tmp->u.cs.num;k++){
-	 SLOG(L_DBG,"\tAS:[%.*s]\n",tmp->u.cs.as_names[k].len,tmp->u.cs.as_names[k].s);
+	 LOG(L_DBG,"\tAS:[%.*s]\n",tmp->u.cs.as_names[k].len,tmp->u.cs.as_names[k].s);
 	 for (tmp2=as_list;tmp2;tmp2=tmp2->next) {
 	    if (tmp2->type== AS_TYPE && tmp->u.cs.as_names[k].len == tmp2->name.len && 
 		  !memcmp(tmp->u.cs.as_names[k].s,tmp2->name.s,tmp2->name.len)) {
@@ -125,13 +125,13 @@ int parse_cluster_cfg()
 	 if(tmp2)
 	    continue;
 	 if (!((*entry)=shm_malloc(sizeof(struct as_entry)))) {
-	    SLOG(L_ERR,"ERROR:Out of shm mem \n");
+	    LOG(L_ERR,"ERROR:Out of shm mem \n");
 	    goto error;
 	 }
 	 memset(*entry,0,sizeof(struct as_entry));
 	 (*entry)->type=AS_TYPE;
 	 if (!((*entry)->name.s=shm_malloc(tmp->u.cs.as_names[k].len))) {
-	    SLOG(L_ERR,"ERROR:out of shm mem\n");
+	    LOG(L_ERR,"ERROR:out of shm mem\n");
 	    goto error;
 	 }
 	 memcpy((*entry)->name.s,tmp->u.cs.as_names[k].s,tmp->u.cs.as_names[k].len);
@@ -142,7 +142,7 @@ int parse_cluster_cfg()
       }
    }
    for(tmp=as_list;tmp;tmp=tmp->next){
-      SLOG(L_DBG,"%.*s %s",tmp->name.len,tmp->name.s,tmp->next?"":"\n");
+      LOG(L_DBG,"%.*s %s",tmp->name.len,tmp->name.s,tmp->next?"":"\n");
    }
    return 1;
 error:

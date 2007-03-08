@@ -5,5 +5,5 @@
 #define ALSO_RURI 0x04
 #define JUNIT     0x08
 
-#define SLOG(lev,format, ...) LOG(lev,"seas:%s:"format,__FUNCTION__,##__VA_ARGS__)
+/*#define LOG(lev,format, ...) LOG(lev,"seas:%s:"format,__FUNCTION__,##__VA_ARGS__)*/
 
