@@ -29,6 +29,7 @@
  * 2003-03-26 Frees also hdr->parsed for Route & Record-Route (janakj)
  * 2003-04-26 ZSW (jiri)
  * 2003-08-05 free the parsed part of Accept header (bogdan)
+ * 2007-01-26 HDR_DATE_T, HDR_IDENTITY_T, HDR_IDENTITY_INFO_T added (gergo)
  */
 
 
@@ -36,6 +37,7 @@
 #include "parse_via.h"
 #include "parse_to.h"
 #include "parse_cseq.h"
+#include "parse_date.h"
 #include "../dprint.h"
 #include "../mem/mem.h"
 #include "parse_def.h"
@@ -57,7 +59,7 @@
 void clean_hdr_field(struct hdr_field* hf)
 {
 	void** h_parsed;
-	
+
 	if (hf->parsed){
 		h_parsed=&hf->parsed; /*strict aliasing warnings workarround */
 		switch(hf->type){
@@ -122,7 +124,7 @@ void clean_hdr_field(struct hdr_field* hf)
 
 		case HDR_REQUIRE_T:
 			break;
-			
+
 		case HDR_PROXYREQUIRE_T:
 			break;
 
@@ -173,9 +175,21 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_REFER_TO_T:
 			free_to(hf->parsed);
 			break;
-		
+
 		case HDR_SUBSCRIPTION_STATE_T:
 			free_subscription_state((subscription_state_t**)h_parsed);
+			break;
+
+		case HDR_DATE_T:
+			free_date(hf->parsed);
+			break;
+
+		case HDR_IDENTITY_INFO_T:
+			free_identityinfo(hf->parsed);
+			break;
+
+		case HDR_IDENTITY_T:
+			free_identity(hf->parsed);
 			break;
 
 		case HDR_SESSIONEXPIRES_T:

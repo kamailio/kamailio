@@ -37,6 +37,8 @@
  *  2003-05-01  parser extended to support Accept header field (janakj)
  *  2005-02-23  parse_headers uses hdr_flags_t now (andrei)
  *  2005-03-02  free_via_list(vb) on via parse error (andrei)
+ *  2007-01-26  parser extended to support Identity, Identity-info and Date 
+ *		header fields (gergo)
  */
 
 
@@ -77,6 +79,9 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	struct via_body *vb;
 	struct cseq_body* cseq_b;
 	struct to_body* to_b;
+	struct date_body* date_b;
+	struct identity_body* identity_b;
+	struct identityinfo_body* identityinfo_b;
 	int integer;
 
 	if ((*buf)=='\n' || (*buf)=='\r'){
@@ -180,6 +185,57 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			hdr->body.len=tmp-hdr->body.s;
 			DBG("DEBUG: get_hdr_body : content_length=%d\n",
 					(int)(long)hdr->parsed);
+			break;
+		case HDR_DATE_T:
+			date_b=pkg_malloc(sizeof(*date_b));
+			if (date_b==0){
+				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				goto error;
+			}
+			memset(date_b, 0, sizeof(*date_b));
+			hdr->body.s=tmp;
+			tmp=parse_date(tmp,end,date_b);
+			if (date_b->error==PARSE_ERROR){
+				LOG(L_ERR, "ERROR:get_hdr_field: bad date header\n");
+				free_date(date_b);
+				goto error;
+			}
+			hdr->parsed=(void*)date_b;
+			hdr->body.len=tmp-hdr->body.s;
+			break;
+		case HDR_IDENTITY_INFO_T:
+			identityinfo_b=pkg_malloc(sizeof(*identityinfo_b));
+			if (identityinfo_b==0){
+				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				goto error;
+			}
+			memset(identityinfo_b, 0, sizeof(*identityinfo_b));
+			hdr->body.s=tmp;
+			tmp=parse_identityinfo(tmp,end,identityinfo_b);
+			if (identityinfo_b->error==PARSE_ERROR || !tmp){
+				LOG(L_ERR, "ERROR: get_hdr_field: bad identityinfo header\n");
+				free_identityinfo(identityinfo_b);
+				goto error;
+			}
+			hdr->parsed=(void*)identityinfo_b;
+			hdr->body.len=tmp-hdr->body.s;
+			break;
+		case HDR_IDENTITY_T:
+			identity_b=pkg_malloc(sizeof(*identity_b));
+			if (identity_b==0){
+				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				goto error;
+			}
+			memset(identity_b, 0, sizeof(*identity_b));
+			hdr->body.s=tmp;
+			tmp=parse_identity(tmp,end,identity_b);
+			if (identity_b->error==PARSE_ERROR || !tmp){
+				LOG(L_ERR, "ERROR: get_hdr_field: bad identity header\n");
+				free_identity(identity_b);
+				goto error;
+			}
+			hdr->parsed=(void*)identity_b;
+			hdr->body.len=tmp-hdr->body.s;
 			break;
 		case HDR_SUPPORTED_T:
 		case HDR_REQUIRE_T:
@@ -476,6 +532,18 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 					msg->parsed_flag|=HDR_VIA2_F;
 					DBG("parse_headers: this is the second via\n");
 				}
+				break;
+			case HDR_DATE_T:
+				if (msg->date==0) msg->date=hf;
+				msg->parsed_flag|=HDR_DATE_F;
+				break;
+			case HDR_IDENTITY_T:
+				if (msg->identity==0) msg->identity=hf;
+				msg->parsed_flag|=HDR_IDENTITY_F;
+				break;
+			case HDR_IDENTITY_INFO_T:
+				if (msg->identity_info==0) msg->identity_info=hf;
+				msg->parsed_flag|=HDR_IDENTITY_INFO_F;
 				break;
 			default:
 				LOG(L_CRIT, "BUG: parse_headers: unknown header type %d\n",

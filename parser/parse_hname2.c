@@ -31,6 +31,7 @@
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-05-01 added support for Accept HF (janakj)
+ * 2007-01-26 Date, Identity, Identity_info HF support added (gergo)
  */
 
 
@@ -92,6 +93,8 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_subs.h"     /* Subscription-State */
 #include "case_requ.h"     /* Require */
 #include "case_www.h"      /* WWW-Authenticate */
+#include "case_date.h"     /* Date */
+#include "case_iden.h"     /* Identity, Identity-info */
 
 
 #define READ(val) \
@@ -133,6 +136,8 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _min__: min_CASE;  \
 	case _requ_: requ_CASE;  \
 	case _www__: www_CASE; \
+	case _date_: date_CASE; \
+	case _iden_: iden_CASE; \
 
 
 
@@ -202,6 +207,8 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 		case 'd': PARSE_COMPACT(HDR_REQUESTDISPOSITION_T); break;
 		case 's': PARSE_COMPACT(HDR_SUBJECT_T);       break;
 		case 'r': PARSE_COMPACT(HDR_REFER_TO_T);      break;
+		case 'y': PARSE_COMPACT(HDR_IDENTITY_T);      break;
+		case 'n': PARSE_COMPACT(HDR_IDENTITY_INFO_T); break;
 		}
 		goto other;
         }

@@ -29,6 +29,7 @@
  *  2005-12-19  select framework, basic core functions (mma)
  *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
  *  2006-02-17  fixup call for select_anyhdr (mma)
+ *  2007-01-26  date, identity, identity_info support added (gergo)
  */
 
 #include <stdlib.h> 
@@ -1184,6 +1185,9 @@ SELECT_plain_header(priority, priority, HDR_PRIORITY_F)
 SELECT_plain_header(session_expires, session_expires, HDR_SESSIONEXPIRES_F)
 SELECT_plain_header(min_se, min_se, HDR_MIN_SE_F)
 SELECT_plain_header(sip_if_match, sipifmatch, HDR_SIPIFMATCH_F)
+SELECT_plain_header(date, date, HDR_DATE_F)
+SELECT_plain_header(identity, identity, HDR_IDENTITY_F)
+SELECT_plain_header(identity_info, identity_info, HDR_IDENTITY_INFO_F)
 
 int select_msg_request(str* res, select_t* s, struct sip_msg* msg)
 {

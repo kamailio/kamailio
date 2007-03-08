@@ -40,6 +40,8 @@
  *  2005-02-25  uri types added (sip, sips & tel)  (andrei)
  *  2006-04-20  uri comp member (only if USE_COMP is defined) (andrei)
  *  2006-11-10  check_transaction_quadruple inlined (andrei)
+ *  2007-01-26  added date, identity, identity_info header fields
+ *		to sip_msg (gergo)
  */
 
 
@@ -56,6 +58,9 @@
 #include "../config.h"
 #include "parse_def.h"
 #include "parse_cseq.h"
+#include "parse_date.h"
+#include "parse_identity.h"
+#include "parse_identityinfo.h"
 #include "parse_to.h"
 #include "parse_via.h"
 #include "parse_fline.h"
@@ -232,6 +237,9 @@ struct sip_msg {
 	struct hdr_field* min_se;
 	struct hdr_field* sipifmatch;
 	struct hdr_field* subscription_state;
+	struct hdr_field* date;
+	struct hdr_field* identity;
+	struct hdr_field* identity_info;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/

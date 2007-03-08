@@ -28,6 +28,7 @@
  * --------
  *  2005-12-19  select framework, basic core functions (mma)
  *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
+ *  2007-01-26  date, identity, identity_info support added (gergo)
  */
 
  
@@ -202,6 +203,10 @@ SELECT_F(select_branch_uri)
 SELECT_F(select_branch_dst_uri)
 SELECT_F(select_branch_uriq)
 SELECT_F(select_branch_q)
+
+SELECT_F(select_date)
+SELECT_F(select_identity)
+SELECT_F(select_identity_info)
 
 static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0}, /* not the same as request.uri because it is involved by new_uri */
@@ -385,6 +390,10 @@ static select_row_t select_core[] = {
 	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("uriq"), select_branch_uriq, OPTIONAL | CONSUME_NEXT_INT | DIVERSION | SEL_BRANCH_URI | SEL_BRANCH_Q},
 	{ select_branch_uriq, SEL_PARAM_STR, STR_NULL, select_any_nameaddr, NESTED},
 	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("q"), select_branch_q, OPTIONAL | CONSUME_NEXT_INT | DIVERSION | SEL_BRANCH_Q},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("date"), select_date, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("identity"), select_identity, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("identity_info"), select_identity_info, 0},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };

@@ -48,6 +48,7 @@
  *  2004-03-31  alias shortcuts are also translated (andrei)
  *  2006-04-20  via->comp is also translated (andrei)
  *  2006-10-16  HDR_{PROXY,WWW}_AUTHENTICATE_T cloned (andrei)
+ *  2007-01-26  HDR_DATE_T, HDR_IDENTITY_T, HDR_IDENTITY_INFO_T added (gergo)
  */
 
 #include "defs.h"
@@ -390,6 +391,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_REQUESTDISPOSITION_T:
 		case HDR_WWW_AUTHENTICATE_T:
 		case HDR_PROXY_AUTHENTICATE_T:
+		case HDR_DATE_T:
+		case HDR_IDENTITY_T:
+		case HDR_IDENTITY_INFO_T:
 			/* we ignore them for now even if they have something parsed*/
 			break;
 		}/*switch*/
@@ -530,6 +534,9 @@ do { \
 		case HDR_REQUESTDISPOSITION_T:
 		case HDR_WWW_AUTHENTICATE_T:
 		case HDR_PROXY_AUTHENTICATE_T:
+		case HDR_DATE_T:
+		case HDR_IDENTITY_T:
+		case HDR_IDENTITY_INFO_T:
 			break;
 
 		case HDR_VIA_T:

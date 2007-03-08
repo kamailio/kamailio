@@ -31,6 +31,7 @@
  * 2003-05-01 _acce_ macro added (janakj)
  * 2003-05-01 Macros for Accept-Disposition added (janakj)
  * 2003-11-02 Macros for Diversion added (jh)
+ * 2007-01-26 Macros for Identity, Identity-info, Date added (gergo)
  */
 
 #ifndef KEYS_H
@@ -103,6 +104,10 @@
 #define _sip_  0x2d706973   /* "sip-" */
 #define _ifm_  0x6d2d6669   /* "if-m" */
 #define _atch_ 0x68637461   /* "atch" */
+#define _date_ 0x65746164   /* "date" */
+#define _iden_ 0x6e656469   /* "iden" */
+#define _tity_ 0x79746974   /* "tity" */
+#define _info_ 0x6f666e69   /* "info" */
 
 #define _pt_l_ 0x6c2d7470   /* "pt-l" */
 #define _angu_ 0x75676e61   /* "angu" */

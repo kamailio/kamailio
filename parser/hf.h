@@ -31,6 +31,7 @@
  * 2003-05-01 HDR_ACCEPT added (janakj)
  * 2005-02-14 hdr_flags_t && hdr_flags_f defined, split HDR_xxx into
  *             HDR_xxx_F & HDR_xxx_T [WARNING: don't mix them!] (andrei)
+ * 2007-01-26 HDR_DATE_T, HDR_IDENTITY_T, HDR_IDENTITY_INFO_T added (gergo)
  */
 
 
@@ -100,6 +101,9 @@ enum _hdr_types_t {
 	HDR_REQUESTDISPOSITION_T	       /* Request-Disposition header */,
 	HDR_WWW_AUTHENTICATE_T		       /* WWW-Authenticate header field */,
 	HDR_PROXY_AUTHENTICATE_T	       /* Proxy-Authenticate header field */,
+	HDR_DATE_T			       /* Date header field */,
+	HDR_IDENTITY_T			       /* Identity header field */,
+	HDR_IDENTITY_INFO_T		       /* Identity-info header field */,
 
 	HDR_EOH_T					       /* End of message header */
 };
@@ -163,6 +167,9 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_REQUESTDISPOSITION_F	HDR_F_DEF(REQUESTDISPOSITION)
 #define HDR_WWW_AUTHENTICATE_F		HDR_F_DEF(WWW_AUTHENTICATE)
 #define HDR_PROXY_AUTHENTICATE_F	HDR_F_DEF(PROXY_AUTHENTICATE)
+#define HDR_DATE_F			HDR_F_DEF(DATE)
+#define HDR_IDENTITY_F			HDR_F_DEF(IDENTITY)
+#define HDR_IDENTITY_INFO_F		HDR_F_DEF(IDENTITY_INFO)
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 
