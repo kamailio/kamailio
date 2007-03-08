@@ -12,7 +12,7 @@ ifeq ($(BUILDER),)
 	INSTALLMIBDIR = $(cfg-prefix)/share/snmp/mibs
 else
 	BUILDAGENTLIBS = $(shell net-snmp-config --agent-libs)
-	INSTALLMIBDIR = $(shell net-snmp-config --prefix)/share/snmp/mibs
+	INSTALLMIBDIR = $(cfg-prefix)$(shell net-snmp-config --prefix)/share/snmp/mibs
 endif 
 
 CFLAGS+=
