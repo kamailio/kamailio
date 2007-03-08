@@ -33,6 +33,7 @@
  *              transaction for all its callbacks (bogdan)
  *  2004-08-23  user avp(attribute value pair) added -> making avp list
  *              available in callbacks (bogdan)
+ * 2007-03-08  membar_write() used in insert_tmcb(...) (andrei)
  */
 
 #include "defs.h"
@@ -43,6 +44,7 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "../../usr_avp.h"
+#include "../../atomic_ops.h" /* membar_write() */
 #include "t_hooks.h"
 #include "t_lookup.h"
 #include "t_funcs.h"
@@ -95,18 +97,27 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 		return E_OUT_OF_MEM;
 	}
 
-	/* link it into the proper place... */
-	cbp->next = cb_list->first;
-	cb_list->first = cbp;
 	cb_list->reg_types |= types;
 	/* ... and fill it up */
 	cbp->callback = f;
 	cbp->param = param;
 	cbp->types = types;
+	/* link it into the proper place... */
+	cbp->next = cb_list->first;
 	if (cbp->next)
 		cbp->id = cbp->next->id+1;
 	else
 		cbp->id = 0;
+	membar_write(); /* make sure all the changes to cbp are visible on all cpus
+					   before we update cb_list->first. This is needed for
+					   three reasons: the compiler might reorder some of the 
+					   writes, the cpu/cache could also reorder them with
+					   respect to the visibility on other cpus
+					   (e.g. some of the changes to cbp could be visible on
+					    another cpu _after_ seeing cb_list->first=cbp) and
+					   the "readers" (callbacks callers) do not use locks and
+					   could be called simultaneously on another cpu.*/
+	cb_list->first = cbp;
 
 	return 1;
 }
@@ -116,6 +127,10 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 /* register a callback function 'f' for 'types' mask of events;
  * will be called back whenever one of the events occurs in transaction module
  * (global or per transaction, depending of event type)
+ * It _must_ be always called either with the REPLY_LOCK held, or before the
+ *  branches are created.
+ *  Special case: TMCB_REQUEST_IN - it must be called from mod_init
+ *  (before forking!).
 */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 											transaction_cb f, void *param )

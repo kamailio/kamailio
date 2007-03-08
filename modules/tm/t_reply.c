@@ -78,6 +78,7 @@
  *              replace a 503 final relayed reply by a 500 (andrei)
  * 2006-10-16  aggregate all the authorization headers/challenges when
  *               the final response is 401 or 407 (andrei)
+ * 2007-03-08  membar_write() used in update_totag_set(...)(andrei)
  *
  */
 
@@ -97,6 +98,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../usr_avp.h"
+#include "../../atomic_ops.h" /* membar_write() */
 
 #include "defs.h"
 #include "h_table.h"
@@ -293,6 +295,15 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 	memcpy(s, tag->s, tag->len );
 	n->tag.s=s;n->tag.len=tag->len;
 	n->next=t->fwded_totags;
+	membar_write(); /* make sure all the changes to n are visible on all cpus
+					   before we update t->fwded_totags. This is needed for
+					   three reasons: the compiler might reorder some of the 
+					   writes, the cpu/cache could also reorder them with
+					   respect to the visibility on other cpus
+					   (e.g. some of the changes to n could be visible on
+					    another cpu _after_ seeing t->fwded_totags=n) and
+					   the "readers" (unmatched_tags()) do not use locks and
+					   can be called simultaneously on another cpu.*/
 	t->fwded_totags=n;
 	DBG("DEBUG: update_totag_set: new totag \n");
 	return 0;
