@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section>
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Gergely</firstname>
+		<surname>Kovacs</surname>
+		<affiliation><orgname>Iptel.org</orgname></affiliation>
+		<address>
+		    <email>gergo@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Iptel.org</holder>
+	</copyright>
+    </sectioninfo>
+
+    <title>Auth Identity Module</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		Auth Identity module provides functionalities for securely identifying
+		originators of SIP messages. This module has two basic service:
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>authorizer</emphasis> - authorizes a message and adds Identity and
+				Identity-Info headers
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>verifier</emphasis> - verifies an authorized message
+			</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+	    Known limitations in this version:
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+			authorizer and verifier support only SIP requests except for
+			<emphasis>CANCEL</emphasis> and <emphasis>REGISTER</emphasis>
+		</para>
+	    </listitem>
+		<listitem>
+			<para>
+				verifier does not support the subjectAltName extension of
+				certificates
+			</para>
+		</listitem>
+	</itemizedlist>
+    </section>
+
+    <section id="auth_identity.dep">
+	<title>Dependencies</title>
+	<para>
+		This module does not depend any other module.
+	</para>
+    </section>
+
+    <section id="auth_identity.install_and_run">
+	<title>Installation And Running</title>
+	<para>
+		<emphasis>Authorizer</emphasis> service needs an opportunity to make the public key,
+		which conveyed in a certificate, available over HTTPS or HTTP for
+		verifiers. The domain the authorizer is responsible for and the
+		domain part of the URL of the certificate must be the same. This
+		service needs its private key too.
+	</para>
+    </section>
+
+
+	<section>
+		<title>Authorizer service parameters</title>
+		<section>
+			<title><varname>privatekey_path</varname> (string)</title>
+			<para>
+				The path of private key of the authentication service.
+			</para>
+			<para>
+				This parameter is required by authentication service.
+			</para>
+			<example>
+				<title>Set <varname>privatekey_path</varname> parameter</title>
+				<programlisting>
+...
+modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title><varname>certificate_path</varname> (string)</title>
+			<para>
+				The path of certificate of the authentication service.
+			</para>
+			<para>
+				This parameter is required by authentication service.
+			</para>
+			<example>
+				<title>Set <varname>certificate_path</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","certificate_path","/var/www/ssl/mycert.crt")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title><varname>certificate_url</varname> (string)</title>
+			<para>
+				The url where certificate is available for other verifier
+				services. (value of Identity-info header)
+			</para>
+			<para>
+				This parameter is required by authentication service.
+			</para>
+			<example>
+				<title>Set <varname>certificate_url</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","certificate_url","https://foo.bar/mycert.crt")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title><varname>msg_timeout</varname> (integer)</title>
+			<para>
+				If the Date header of message which is needed to be authenticated
+				contains a time different by more than this seconds from the current
+				time noted by the authentication service then it rejects the
+				message.
+			</para>
+			<para>
+				This parameter is optional. The default value is "600".
+			</para>
+			<example>
+				<title>Set <varname>msg_timeout</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","msg_timeout",600)
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Authorizer service functions</title>
+
+		<section>
+			<title>
+				<function>auth_date_proc()</function>
+			</title>
+			<para>
+				If a message, the auth service should authorize, contains Date header
+				then this function checks whether it falls in message timeout (set by
+				<emphasis>msg_timeout</emphasis> parameter). If there is not any Date
+				header then adds one. This function also checks whether the certificate
+				of auth service (set by <emphasis>certificate_path</emphasis> parameter)
+				has not been expired.
+			</para>
+			<section>
+				<title>Dependencies</title>
+				<para>
+					No dependencies
+				</para>
+			</section>
+		</section>
+
+		<section>
+			<title>
+				<function>auth_add_identity()</function>
+			</title>
+			<para>
+				Assembles digest-string from the message, calculates its SHA1 hash,
+				encrypt it with the private key (set by <emphasis>privatekey_path</emphasis>
+				parameter) of authorizer service, base64 encodes it and adds to the
+				outgoing message as the value of <emphasis>Identity</emphasis> header.
+				This function also adds Identity-Info header which contains an URI
+				(set by <emphasis>certificate_url</emphasis> parameter) from which
+				the certificate of auth service can be acquired.
+			</para>
+			<section>
+				<title>Dependencies</title>
+				<para>
+					auth_date_proc() must be called before
+				</para>
+			</section>
+		</section>
+	</section>
+
+	<section>
+		<title>Authorizer service examples</title>
+
+			<programlisting><![CDATA[
+...
+route[INIT]
+{
+	# we process new transactions only
+	if (!t_newtran()) {
+		sl_reply("500", "Internal error newtran");
+		drop;
+	}
+...
+route[OUTBOUND]
+{
+	# If we are responsible for the domain of the sender of this message
+	if ($f.did && !$t.did) {
+		# Authentication service
+		if (method=="INVITE" || method=="BYE"
+			|| method=="OPTION" || method=="ACK") {
+			# Identity and Identity-info headers must not exist
+			if (@identity) {
+				t_reply("403", "Invalid Identity header");
+				drop;
+			}
+			if (@identity_info) {
+				t_reply("403", "Invalid Identity-info header");
+				drop;
+			}
+
+			if (!auth_date_proc()) {
+				t_reply("403", "Invalid Date value");
+				drop;
+			}
+
+			if (!auth_add_identity()) {
+				t_reply("480", "Authentication error");
+				drop;
+			}
+		}
+		route(FORWARD);
+	}
+}
+...
+]]></programlisting>
+	</section>
+
+
+
+
+	<section>
+		<title>Verifier service parameters</title>
+
+		<section id="auth_validity_time">
+			<title><varname>auth_validity_time</varname> (integer)</title>
+			<para>
+				The validity time of an authenticated message. The message
+				will be refused if it contains a time different by more
+				than this seconds from the current time noted by the verification
+				service.
+			</para>
+			<para>
+				This parameter is optional. The default value is "3600".
+			</para>
+			<example>
+				<title>Set <varname>auth_validity_time</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","auth_validity_time",3600)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="callid_cache_limit">
+			<title><varname>callid_cache_limit</varname> (integer)</title>
+			<para>
+				The number of Call-IDs stored in order to recognize call replay
+				attacks. A Call-ID is stored <varname>auth_validity_time</varname> long and
+				uses approximately 100 bytes memory.
+			</para>
+			<para>
+				This parameter is optional. The default value is "32768".
+				(you should increase the size of shared memory with -m
+				 command line switch if you liked to store more callid than
+				 10000)
+			</para>
+			<example>
+				<title>Set <varname>auth_validity_time</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","callid_cache_limit",32768)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="certificate_cache_limit">
+			<title><varname>certificate_cache_limit</varname> (integer)</title>
+			<para>
+				The number of certificates stored in order to avoid needless
+				download. A certificate is stored until its expiration date and
+				uses approximately 600 bytes memory.
+			</para>
+			<para>
+				This parameter is optional. The default value is "4096".
+			</para>
+			<example>
+				<title>Set <varname>certificate_cache_limit</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","certificate_cache_limit",4096)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="cainfo_path">
+			<title><varname>cainfo_path</varname> (string)</title>
+			<para>
+				A file of trusted certificates. The file should contain multiple
+				certificates in PEM format concatenated together. It could be useful
+				for verifying a certificate not signed by a trusted CA.
+			</para>
+			<para>
+				This parameter is optional. It has not got default value.
+			</para>
+			<example>
+				<title>Set <varname>cainfo_path</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section id="auth_identity.vfyfunctions" xmlns:xi="http://www.w3.org/2001/XInclude">
+		<title>Verifier service functions</title>
+
+		<section id="vrfy_check_date">
+			<title>
+				<function>vrfy_check_date()</function>
+			</title>
+			<para>
+				Checks Date header of the incoming message whether falls in validity
+				time (set by <emphasis>auth_validity_time</emphasis> parameter)
+			</para>
+			<section id="vrfy_check_date.dep">
+				<title>Dependencies</title>
+				<para>
+					No dependencies
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_get_certificate">
+			<title>
+				<function>vrfy_get_certificate()</function>
+			</title>
+			<para>
+				Tries to get certificate defined by the value of
+				<emphasis>Identity-info</emphasis> header from certificate table
+				(which size is set by <emphasis>certificate_cache_limit</emphasis>
+				parameter). If the required certificate is not found there then
+				this function downloads it.
+			</para>
+			<section id="vrfy_get_certificate.dep">
+				<title>Dependencies</title>
+				<para>
+					No dependencies
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_check_certificate">
+			<title>
+				<function>vrfy_check_certificate()</function>
+			</title>
+			<para>
+				Checks whether the downloaded certificate is valid (is not expired,
+				its subject and the domain part of the URL are the same) and adds it
+				to certificate table.
+			</para>
+			<section id="vrfy_check_certificate.dep">
+				<title>Dependencies</title>
+				<para>
+					vrfy_get_certificate() must be called before
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_check_msgvalidity">
+			<title>
+				<function>vrfy_check_msgvalidity()</function>
+			</title>
+			<para>
+				Assembles digest-string from the message, create SHA1 hash and
+				compares it with the decrypted value of <emphasis>Identity</emphasis>
+				header.
+			</para>
+			<section id="vrfy_check_msgvalidity.dep">
+				<title>Dependencies</title>
+				<para>
+					vrfy_get_certificate() must be called before and
+					vrfy_check_certificate() should be called before
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_check_callid">
+			<title>
+				<function>vrfy_check_callid()</function>
+			</title>
+			<para>
+				Checks whether the current call's been already processed in validity
+				time (set by <emphasis>auth_validity_time</emphasis>) to recognize
+				call replay attacks. If this call (identified by Call-id, Cseq,
+				and tag of From header triple) has not been replayed then adds it to
+				callid table (which size is set by <emphasis>callid_cache_limit</emphasis>
+				parameter).
+			</para>
+			<section id="vrfy_check_callid.dep">
+				<title>Dependencies</title>
+				<para>
+					This function should be called for the last time.
+				</para>
+			</section>
+		</section>
+	</section>
+
+	<section>
+		<title>Authorizer service examples</title>
+
+		<programlisting><![CDATA[
+...
+route[INIT]
+{
+	# we process new transactions only
+	if (!t_newtran()) {
+		sl_reply("500", "Internal error newtran");
+		drop;
+	}
+...
+route[VERIFY]
+{
+	# if we've already processed this message then we drop it
+	if (!t_newtran()) {
+		sl_reply("500", "Internal error newtran");
+		drop;
+	}
+
+	if (method=="INVITE" || method=="BYE"
+		|| method=="OPTION" || method=="ACK") {
+		# Identity and Identity-info are required for verification
+		if (!@identity) {
+			t_reply("428", "Use Identity Header");
+			drop;
+		}
+		if (!@identity_info) {
+			t_reply("436", "Bad Identity-Info");
+			drop;
+		}
+
+		if (!vrfy_check_date()) {
+			t_reply("403", "Outdated Date header value");
+			drop;
+		}
+
+		if (!vrfy_get_certificate()) {
+			t_reply("436", "Bad Identity-Info");
+			drop;
+		}
+
+		if (!vrfy_check_certificate()) {
+			t_reply("437", "Unsupported Certificate");
+			drop;
+		}
+
+		if (!vrfy_check_msgvalidity()) {
+			t_reply("438", "Invalid Identity Header");
+			drop;
+		}
+
+		if (!vrfy_check_callid()) {
+			t_reply("403", "Message is replayed");
+			drop;
+		}
+	}
+}
+...
+]]></programlisting>
+	</section>
+</section>
