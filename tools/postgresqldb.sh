@@ -794,7 +794,7 @@ CREATE TABLE active_watchers (
   expires int NOT NULL,
   status varchar(32) NOT NULL default 'pending',
   version int NOT NULL default '0',
-  UNIQUE (from_tag)
+  UNIQUE (to_tag)
 ) $TABLE_TYPE;
 CREATE INDEX due_activewatchers ON active_watchers (to_domain,to_user,event);
 
