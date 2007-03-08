@@ -211,7 +211,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	       goto error;
 	    }
 	 }
-	 if((len=encode_content_type(hdr->name.s,hdr->len,(unsigned int)hdr->parsed,(char*)(payload+5)))<0){
+	 if((len=encode_content_type(hdr->name.s,hdr->len,(unsigned int)(long int)hdr->parsed,(char*)(payload+5)))<0){
 	    myerror="encoding via header\n";
 	    goto error;
 	 }else{
