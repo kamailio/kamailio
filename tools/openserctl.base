@@ -130,6 +130,18 @@ cat <<EOF
  stop ............................... stop OpenSER
 EOF
 }
+
+usage_tls() {
+	echo
+	mecho " -- command 'tls'"
+	echo
+cat <<EOF
+ tls rootCA [<etcdir>] .......... creates new rootCA
+ tls userCERT <user> [<etcdir>] ... creates user certificate
+ default <etcdir> is $ETCDIR/tls
+EOF
+}
+
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_base"
 
 mdbg() {
