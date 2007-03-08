@@ -8,10 +8,8 @@ IMPORTANT: it's not a trustable certificate - the CA is also an example.
 
 All TLS configuration file may be found in "user" directory. If you want to
 generate your own certificate, you may find in the "rootCA" directory the 
-root CA to sign your request with. For how to do it, please see the README
-file from the tls/tools directory (for "gen_usercert.sh" script) - basically
-you have to copy this "rootCA" directory into the "tls/tools" one, update the 
-user.conf with your data and run "gen_usercert.sh" - the password is "openser".
+root CA to sign your request with. Use "openserctl tls userCERT" command to
+create a new certificate; the rootCA password is "openser".
 
 What is the purpose of these default CA and certificate? First to make an 
 out-of-the box TLS configuration for users not so familiar with SSL/TLS.
