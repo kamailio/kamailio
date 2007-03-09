@@ -22,7 +22,6 @@ else
 endif
 
 
-
 include ../../Makefile.modules
 
 PODFILES=openserxs.xs `find lib/perl -name *.pm`
@@ -54,3 +53,18 @@ perlpod: doc/perl_pod.sgml
 
 doc/perl_pod.sgml: openserxs.xs
 	cat $(PODFILES) | pod2docbook --doctype=chapter --title='OpenSER Perl API' --no-header - doc/perl_pod.sgml
+
+install_module_custom:
+	echo "installing Perl OpenSER packages ..."
+	mkdir -p $(modules-prefix)/$(lib-dir)/perl
+	$(INSTALL-CFG) lib/perl/*.pm $(modules-prefix)/$(lib-dir)/perl
+	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER
+	$(INSTALL-CFG) lib/perl/OpenSER/*.pm \
+		$(modules-prefix)/$(lib-dir)/perl/OpenSER
+	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/LDAPUtils
+	$(INSTALL-CFG) lib/perl/OpenSER/LDAPUtils/*.pm \
+		$(modules-prefix)/$(lib-dir)/perl/OpenSER/LDAPUtils
+	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
+	$(INSTALL-CFG) lib/perl/OpenSER/Utils/*.pm \
+		$(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
+
