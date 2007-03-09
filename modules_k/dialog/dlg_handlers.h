@@ -22,6 +22,8 @@
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
+ * 2007-03-06  syncronized state machine added for dialog state. New tranzition
+ *             design based on events; removed num_1xx and num_2xx (bogdan)
  */
 
 
