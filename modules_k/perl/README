@@ -166,6 +166,17 @@ Chapter 1. User's Guide
    strongly advised to use a threaded version. The default binary
    packages from your favorite Linux distribution should work
    fine.
+
+   Cross compilation is supported by the Makefile. You need to
+   set the environment variables PERLLDOPTS, PERLCCOPTS and
+   TYPEMAP to values similar to the output of
+PERLLDOPTS: perl -MExtUtils::Embed -e ldopts
+PERLCCOPTS: perl -MExtUtils::Embed -e ccopts
+TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/Ex
+tUtils/typemap"
+
+   The exact position of your (precompiled!) perl libraries
+   depends on the setup of your environment.
      _________________________________________________________
 
 1.3. Using the module
@@ -216,7 +227,7 @@ if (perl_exec("ldap_alias")) {
 
    This module has been developed and tested with Perl 5.8.8, but
    should work with any 5.8.x release. Compilation is possible
-   with 5.6.x, but it's behavior is unsupported. Earlier versions
+   with 5.6.x, but its behavior is unsupported. Earlier versions
    do not work.
 
    On current Debian systems, at least the following packages

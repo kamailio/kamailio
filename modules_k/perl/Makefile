@@ -8,15 +8,31 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=perl.so
-LIBS+=`perl -MExtUtils::Embed -e ldopts`
-DEFS+=`perl -MExtUtils::Embed -e ccopts`
+
+ifeq ($(PERLLDOPTS),)
+	LIBS+=`perl -MExtUtils::Embed -e ldopts`
+else
+	LIBS+=$(PERLLDOPTS)
+endif
+
+ifeq ($(PERLCCOPTS),)
+	DEFS+=`perl -MExtUtils::Embed -e ccopts`
+else
+	DEFS+=$(PERLCCOPTS)
+endif
+
+
 
 include ../../Makefile.modules
 
 PODFILES=openserxs.xs `find lib/perl -name *.pm`
 
-PERLLIBPATH=`perl -MConfig -e 'print $$Config{installprivlib}'`
-TYPEMAP=$(PERLLIBPATH)/ExtUtils/typemap
+ifeq ($(TYPEMAP),)
+	ifeq ($(PERLLIBPATH),)
+		PERLLIBPATH=`perl -MConfig -e 'print $$Config{installprivlib}'`
+	endif
+	TYPEMAP=$(PERLLIBPATH)/ExtUtils/typemap
+endif
 
 perl.d: openserxs.o
 perl.o: perl.c openserxs.o
