@@ -76,6 +76,7 @@ static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
 void destroy(void);
 
 static int ds_fixup(void** param, int param_no);
+static int ds_warn_fixup(void** param, int param_no);
 
 struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
 struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
@@ -83,10 +84,10 @@ struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    w_ds_select_dst,    2, ds_fixup, REQUEST_ROUTE},
 	{"ds_select_domain", w_ds_select_domain, 2, ds_fixup, REQUEST_ROUTE},
-	{"ds_next_dst",      w_ds_next_dst,      0,        0, FAILURE_ROUTE},
-	{"ds_next_domain",   w_ds_next_domain,   0,        0, FAILURE_ROUTE},
-	{"ds_mark_dst",      w_ds_mark_dst0,     0,        0, FAILURE_ROUTE},
-	{"ds_mark_dst",      w_ds_mark_dst1,     1,        0, FAILURE_ROUTE},
+	{"ds_next_dst",      w_ds_next_dst,      0, ds_warn_fixup, FAILURE_ROUTE},
+	{"ds_next_domain",   w_ds_next_domain,   0, ds_warn_fixup, FAILURE_ROUTE},
+	{"ds_mark_dst",      w_ds_mark_dst0,     0, ds_warn_fixup, FAILURE_ROUTE},
+	{"ds_mark_dst",      w_ds_mark_dst1,     1, ds_warn_fixup, FAILURE_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -369,6 +370,15 @@ static int ds_fixup(void** param, int param_no)
 	return 0;
 }
 
+static int ds_warn_fixup(void** param, int param_no)
+{
+	if(dst_avp_param==NULL || grp_avp_param == NULL || cnt_avp_param == NULL)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_fixup: failover functions used, but"
+				" AVPs paraamters required are NULL -- feature disabled\n");
+	}
+	return 0;
+}
 
 /************************** MI STUFF ************************/
 

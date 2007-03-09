@@ -153,13 +153,19 @@ modparam("dispatcher", "force_dst", 1)
  	<section>
  		<title><varname>dst_avp_id</varname> (str)</title>
  		<para>
- 		The name of the avp which will hold the list with addresses, in the order
+ 		The name of the avp which will hold the list with addresses, in the
+		order
 		they have been selected by the chosen algorithm. If use_default is 1,
 		the value of last dst_avp_id is the last address in destination set. The
 		first dst_avp_id is the selected destinations. All the other addresses
 		from the destination set will be added in the avp list to be able to
 		implement serial forking.
  		</para>
+		<note>
+ 		<para>
+		You must set this parameter if you want do do load balancing fail over.
+ 		</para>
+		</note>
  		<para>
  		<emphasis>
  			Default value is <quote>null</quote> - don't add AVPs.
@@ -180,6 +186,11 @@ modparam("dispatcher", "force_dst", 1)
  		The name of the avp storing the group id of the destination set. Good
 		to have it for later usage or checks.
  		</para>
+		<note>
+ 		<para>
+		You must set this parameter if you want do do load balancing fail over.
+ 		</para>
+		</note>
  		<para>
  		<emphasis>
  			Default value is <quote>null</quote> - don't add AVP.
@@ -200,6 +211,11 @@ modparam("dispatcher", "force_dst", 1)
  		The name of the avp storing the number of destination addresses kept in
 		dst_avp avps.
  		</para>
+		<note>
+ 		<para>
+		You must set this parameter if you want do do load balancing fail over.
+ 		</para>
+		</note>
  		<para>
  		<emphasis>
  			Default value is <quote>null</quote> - don't add AVP.
