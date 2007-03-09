@@ -1151,17 +1151,20 @@ int t_unref( struct sip_msg* p_msg  )
 {
 	enum kill_reason kr;
 
-	if (T==T_UNDEFINED || T==T_NULL_CELL)
+	if (T==T_UNDEFINED)
 		return -1;
-	if (p_msg->first_line.type==SIP_REQUEST){
-		kr=get_kr();
-		if (kr==0 
-				||(p_msg->REQ_METHOD==METHOD_ACK && !(kr & REQ_RLSD))) {
-			LOG(L_WARN, "WARNING: script writer didn't release transaction\n");
-			t_release_transaction(T);
+	if (T!=T_NULL_CELL) {
+		if (p_msg->first_line.type==SIP_REQUEST){
+			kr=get_kr();
+			if (kr==0 
+					||(p_msg->REQ_METHOD==METHOD_ACK && !(kr & REQ_RLSD))) {
+				LOG(L_WARN, "WARNING: script writer didn't release "
+					"transaction\n");
+				t_release_transaction(T);
+			}
 		}
+		UNREF( T );
 	}
-	UNREF( T );
 	set_t(T_UNDEFINED);
 	return 1;
 }
