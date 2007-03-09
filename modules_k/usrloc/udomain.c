@@ -43,7 +43,6 @@
 #include "notify.h"
 
 
-
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
 {
@@ -366,6 +365,10 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			(int)time(NULL));
 #endif
 
+#ifdef TIMING_INFO
+	set_time_stamp("before usrloc loading");
+#endif
+
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
 		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
 		0) < 0) {
@@ -471,6 +474,11 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	LOG(L_ERR, "usrloc:preload_udomain(): load end time [%d]\n",
 			(int)time(NULL));
 #endif
+
+#ifdef TIMING_INFO
+	diff_time_stamp(L_ERR, "usrloc loaded");
+#endif
+
 	return 0;
 error1:
 	free_ucontact(c);

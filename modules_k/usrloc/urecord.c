@@ -60,8 +60,9 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 
 	(*_r)->aor.s = (char*)shm_malloc(_aor->len);
 	if ((*_r)->aor.s == 0) {
-		LOG(L_ERR, "ERROR:usrloc:new_urecord: no shm memory left\n");
+		LOG(L_ERR, "ERROR:usrloc:new_urecord: no shm memory left!\n");
 		shm_free(*_r);
+		*_r = 0;
 		return -2;
 	}
 	memcpy((*_r)->aor.s, _aor->s, _aor->len);

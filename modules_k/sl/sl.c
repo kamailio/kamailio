@@ -165,7 +165,7 @@ static void mod_destroy()
 
 static int fixup_sl_send_reply(void** param, int param_no)
 {
-	xl_elem_t *model;
+	xl_elem_t *model=NULL;
 	str s;
 
 	/* convert to str */
@@ -175,14 +175,29 @@ static int fixup_sl_send_reply(void** param, int param_no)
 	model=NULL;
 	if (param_no==1 || param_no==2)
 	{
-		if(s.len!=0)
+		if(s.len==0)
 		{
-			if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0)
+			LOG(L_ERR, "ERROR:sl:fixup_sl_reply: no param %d!\n", param_no);
+			return E_UNSPEC;
+		}
+
+		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0 || model==NULL)
+		{
+			LOG(L_ERR, "ERROR:sl:fixup_sl_reply: wrong format [%s] "
+				"for param no %d!\n", s.s, param_no);
+			return E_UNSPEC;
+		}
+		if(model->spec.itf==NULL)
+		{
+			if(param_no==1)
 			{
-				LOG(L_ERR, "ERROR:sl:fixup_sl_reply: wrong format [%s] "
-					"for param no %d!\n", s.s, param_no);
-				pkg_free(s.s);
-				return E_UNSPEC;
+			   if(str2int(&s, (unsigned int*)&model->spec.p.ind)!=0
+					   || model->spec.p.ind<100)
+			   {
+					LOG(L_ERR, "ERROR:sl:fixup_sl_reply: wrong value [%s] "
+						"for param no %d!\n", s.s, param_no);
+					return E_UNSPEC;
+			   }
 			}
 		}
 		*param = (void*)model;
@@ -204,14 +219,24 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 	str code_s;
 	unsigned int code_i;
 
-	if(str1==NULL || str2==NULL)
-		return -1;
-	if(xl_printf_s(msg, (xl_elem_p)str1, &code_s)!=0)
-		return -1;
-	if(str2int(&code_s, &code_i)!=0 || code_i<100)
-		return -1;
-	if(xl_printf_s(msg, (xl_elem_p)str2, &code_s)!=0 || code_s.len <=0)
-		return -1;
+	if(((xl_elem_p)str1)->spec.itf!=NULL)
+	{
+		if(xl_printf_s(msg, (xl_elem_p)str1, &code_s)!=0)
+			return -1;
+		if(str2int(&code_s, &code_i)!=0 || code_i<100)
+			return -1;
+	} else {
+		code_i = ((xl_elem_p)str1)->spec.p.ind;
+	}
+	
+	if(((xl_elem_p)str2)->spec.itf!=NULL)
+	{
+		if(xl_printf_s(msg, (xl_elem_p)str2, &code_s)!=0 || code_s.len <=0)
+			return -1;
+	} else {
+		code_s = ((xl_elem_p)str2)->text;
+	}
+
 	return sl_send_reply(msg, code_i, &code_s);
 }
 
