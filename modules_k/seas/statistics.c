@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
 #include <netinet/ip.h> /* superset of previous */
 #include <string.h>
 #include <unistd.h>
