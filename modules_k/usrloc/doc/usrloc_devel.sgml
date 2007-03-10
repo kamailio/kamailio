@@ -435,6 +435,37 @@
 		</listitem>
 		</itemizedlist>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_get_num_users()
+			</function>
+		</title>
+		<para>
+		The function loops through all domains summing up the number of users.
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_register_watcher()
+			</function>
+		</title>
+		<para>
+		Obsolete function - to be removed in the future.
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_unregister_watcher()
+			</function>
+		</title>
+		<para>
+		Obsolete function - to be removed in the future.
+		</para>
+	</section>
+
 	</section>
 
 </chapter>

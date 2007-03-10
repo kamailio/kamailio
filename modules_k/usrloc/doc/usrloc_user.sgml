@@ -831,27 +831,37 @@ modparam("usrloc", "hash_size", 10)
 	<section>
 		<title>Exported statistics</title>
 		<para>
-		Exported statistics are listed in the next sections. Each statistic
-		will be register for each used domain (Ex: location).
+		Exported statistics are listed in the next sections.
 		</para>
 		<section>
 		<title>users</title>
 			<para>
-			Number of AOR existing in the USRLOC memory cache - can not be
-			resetted.
+			Number of AOR existing in the USRLOC memory cache for that domain
+			- can not be resetted; this statistic will be register for each 
+			used domain (Ex: location).
 			</para>
 		</section>
 		<section>
 		<title>contacts</title>
 			<para>
-			Number of contacts existing in the USRLOC memory cache - can not be
-			resetted.
+			Number of contacts existing in the USRLOC memory cache for that 
+			domain - can not be resetted; this statistic will be register for 
+			each used domain (Ex: location).
 			</para>
 		</section>
 		<section>
 		<title>expires</title>
 			<para>
-			Total number of expired contacts - can be resetted.
+			Total number of expired contacts for that domain - can be resetted;
+			 this statistic will be register for each used domain 
+			(Ex: location).
+			</para>
+		</section>
+		<section>
+		<title>registered_users</title>
+			<para>
+			Total number of AOR existing in the USRLOC memory cache for all
+			domains - can not be resetted.
 			</para>
 		</section>
 	</section>

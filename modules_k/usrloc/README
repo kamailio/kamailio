@@ -70,6 +70,7 @@ Bogdan-Andrei Iancu
               1.6.1. users
               1.6.2. contacts
               1.6.3. expires
+              1.6.4. registered_users
 
    2. Developer's Guide
 
@@ -93,6 +94,9 @@ Bogdan-Andrei Iancu
 
               2.1.13. ul_bind_ursloc( api ) 
               2.1.14. ul_register_ulcb(type ,callback, param) 
+              2.1.15. ul_get_num_users() 
+              2.1.16. ul_register_watcher() 
+              2.1.17. ul_unregister_watcher() 
 
    3. Frequently Asked Questions
 
@@ -626,26 +630,34 @@ modparam("usrloc", "hash_size", 10)
 
 1.6. Exported statistics
 
-   Exported statistics are listed in the next sections. Each
-   statistic will be register for each used domain (Ex:
-   location).
+   Exported statistics are listed in the next sections.
      _________________________________________________________
 
 1.6.1. users
 
-   Number of AOR existing in the USRLOC memory cache - can not be
-   resetted.
+   Number of AOR existing in the USRLOC memory cache for that
+   domain - can not be resetted; this statistic will be register
+   for each used domain (Ex: location).
      _________________________________________________________
 
 1.6.2. contacts
 
-   Number of contacts existing in the USRLOC memory cache - can
-   not be resetted.
+   Number of contacts existing in the USRLOC memory cache for
+   that domain - can not be resetted; this statistic will be
+   register for each used domain (Ex: location).
      _________________________________________________________
 
 1.6.3. expires
 
-   Total number of expired contacts - can be resetted.
+   Total number of expired contacts for that domain - can be
+   resetted; this statistic will be register for each used domain
+   (Ex: location).
+     _________________________________________________________
+
+1.6.4. registered_users
+
+   Total number of AOR existing in the USRLOC memory cache for
+   all domains - can not be resetted.
      _________________________________________________________
 
 Chapter 2. Developer's Guide
@@ -868,6 +880,22 @@ res, ua, sock)
        prototype.
      * void *param - some parameter to be passed to the callback
        each time when it is called.
+     _________________________________________________________
+
+2.1.15. ul_get_num_users()
+
+   The function loops through all domains summing up the number
+   of users.
+     _________________________________________________________
+
+2.1.16. ul_register_watcher()
+
+   Obsolete function - to be removed in the future.
+     _________________________________________________________
+
+2.1.17. ul_unregister_watcher()
+
+   Obsolete function - to be removed in the future.
      _________________________________________________________
 
 Chapter 3. Frequently Asked Questions
