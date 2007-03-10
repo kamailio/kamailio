@@ -30,6 +30,7 @@ Lavinia-Andreea Andrei
               1.4.4. buffer_size (integer)
 
         1.5. Exported Functions
+        1.6. Example
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -39,6 +40,7 @@ Lavinia-Andreea Andrei
    1-2. Set log_file parameter
    1-3. Set reply_option parameter
    1-4. Set reply_option parameter
+   1-5. XMLRPC request
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -81,8 +83,15 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * libxml.
-     * libxmlrpc-c3.
-     * libxmlrpc-c3-dev.
+     * libxmlrpc-c3 version 0.9.10.
+     * libxmlrpc-c3-dev version 0.9.10.
+
+   If libxmlrpc-c3[-dev] package is not available on your system,
+   you may check if packages for your OS are not available on the
+   "xmlrpc-c"project ( http://xmlrpc-c.sourceforge.net/).
+   Otherwise you need to install the library and devel headers
+   from the sources. In both cases, keep in mind to use the
+   0.9.10 version!!.
      _________________________________________________________
 
 1.4. Exported Parameters
@@ -151,6 +160,33 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 1.5. Exported Functions
 
    No function exported to be used from configuration file.
+     _________________________________________________________
+
+1.6. Example
+
+   This is an example showing the xmlrpc format for the
+   "get_statistics dialog: tm:" MI commad: response.
+
+   Example 1-5. XMLRPC request
+POST /RPC2 HTTP/1.0
+Host: 127.0.0.1
+Connection: close
+User-Agent: OpenSIPg XML_RPC Client
+Content-Type: text/xml
+Content-Length: 1000
+
+<?xml version="1.0" ?>
+<methodCall>
+   <methodName>get_statistics</methodName>
+   <params>
+       <param>
+           <value><string>dialog:</string></value>
+       </param>
+       <param>
+           <value><string>tm:</string></value>
+       </param>
+  </params>
+</methodCall>
      _________________________________________________________
 
 Chapter 2. Developer's Guide
