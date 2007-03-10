@@ -216,6 +216,28 @@ modparam("mi_fifo", "reply_ident", "    ")
 		</para>
 	</section>
 
+	<section>
+	<title>Example</title>
+		<para>
+		This is an example showing the FIFO format for the 
+		<quote>get_statistics dialog: tm:</quote> MI commad:
+		response.
+		</para>
+		<example>
+		<title>FIFO request</title>
+		<programlisting format="linespecific">
+
+get_statistics:/tmp/reply_fifo\n
+dialog:\n
+tm:\n
+\n
+
+</programlisting>
+		</example>
+
+	</section>
+
+
 </chapter>
 
 <!-- Keep this element at the end of the file

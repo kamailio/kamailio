@@ -32,6 +32,7 @@ Bogdan-Andrei Iancu
               1.4.6. reply_indent (string)
 
         1.5. Exported Functions
+        1.6. Example
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -43,6 +44,7 @@ Bogdan-Andrei Iancu
    1-4. Set fifo_user parameter
    1-5. Set reply_dir parameter
    1-6. Set reply_ident parameter
+   1-7. FIFO request
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -166,6 +168,18 @@ modparam("mi_fifo", "reply_ident", "    ")
 1.5. Exported Functions
 
    No function exported to be used from configuration file.
+     _________________________________________________________
+
+1.6. Example
+
+   This is an example showing the FIFO format for the
+   "get_statistics dialog: tm:" MI commad: response.
+
+   Example 1-7. FIFO request
+get_statistics:/tmp/reply_fifo\n
+dialog:\n
+tm:\n
+\n
      _________________________________________________________
 
 Chapter 2. Developer's Guide
