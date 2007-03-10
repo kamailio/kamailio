@@ -303,7 +303,7 @@ modparam("cpl_c","realm_prefix","sip.")
 
    Example 1-13. Set timer_avp parameter
 ...
-modparam("cpl_c","timer_avp","i:14")
+modparam("cpl_c","timer_avp","$avp(i:14)")
 ...
      _________________________________________________________
 

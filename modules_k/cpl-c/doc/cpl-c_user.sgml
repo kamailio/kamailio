@@ -354,7 +354,7 @@ modparam("cpl_c","realm_prefix","sip.")
 				<title>Set <varname>timer_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","timer_avp","i:14")
+modparam("cpl_c","timer_avp","$avp(i:14)")
 ...
 </programlisting>
 			</example>

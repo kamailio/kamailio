@@ -49,7 +49,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
-#include "../../usr_avp.h"
+#include "../../items.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
@@ -222,7 +222,8 @@ static int cpl_init(void)
 	struct stat   stat_t;
 	char *ptr;
 	int val;
-	str foo;
+	xl_spec_t avp_spec;
+	unsigned short avp_type;
 
 	LOG(L_INFO,"CPL - initializing\n");
 
@@ -247,14 +248,22 @@ static int cpl_init(void)
 	}
 
 	/* fix the timer_avp name */
-	if (timer_avp) {
-		foo.s = timer_avp;
-		foo.len = strlen(foo.s);
-		if (parse_avp_spec(&foo,&cpl_env.timer_avp_type,&cpl_env.timer_avp)<0){
-			LOG(L_CRIT,"ERROR:cpl_init: invalid timer AVP specs \"%s\"\n",
-				timer_avp);
-			goto error;
+	if (timer_avp && *timer_avp) {
+		if (xl_parse_spec(timer_avp, &avp_spec,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
+				|| avp_spec.type!=XL_AVP) {
+			LOG(L_ERR, "ERROR:cpl_init: malformed or non AVP %s "
+				"AVP definition\n", timer_avp);
+			return -1;
 		}
+
+		if(xl_get_avp_name(0, &avp_spec, &cpl_env.timer_avp, &avp_type)!=0)
+		{
+			LOG(L_ERR, "ERROR:cpl_init: [%s]- invalid "
+				"AVP definition\n", timer_avp);
+			return -1;
+		}
+		cpl_env.timer_avp_type = avp_type;
 	}
 
 	if (dtd_file==0) {
