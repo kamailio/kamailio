@@ -126,7 +126,7 @@ int fr_inv_avp2timer( utime_t* timer);
 
 
 
-static void inline _set_fr_retr( struct retr_buf *rb, int retr )
+inline static void _set_fr_retr( struct retr_buf *rb, int retr )
 {
 	utime_t timer;
 
@@ -146,13 +146,13 @@ static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 }
 
 
-static void inline start_retr(struct retr_buf *rb)
+inline static void start_retr(struct retr_buf *rb)
 {
 	_set_fr_retr(rb, rb->dst.proto==PROTO_UDP);
 }
 
 
-static void inline force_retr(struct retr_buf *rb)
+inline static void force_retr(struct retr_buf *rb)
 {
 	_set_fr_retr(rb, 1);
 }

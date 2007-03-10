@@ -56,7 +56,7 @@ typedef unsigned int (*tuaccancel_f)( str *headers,str *body,
 char *build_cancel(struct cell *Trans,unsigned int branch,
 	unsigned int *len );
 
-inline short static should_cancel_branch( struct cell *t, int b )
+inline static short should_cancel_branch( struct cell *t, int b )
 {
 	int last_received;
 

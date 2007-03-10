@@ -875,7 +875,7 @@ void set_timer( struct timer_link *new_tl, enum lists list_id,
 	utime_t timeout;
 	struct timer* list;
 
-	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
+	if (list_id>=NR_OF_TIMER_LISTS) {
 		LOG(L_CRIT, "BUG:set_timer: unknown list: %d\n", list_id);
 #ifdef EXTRA_DEBUG
 		abort();
@@ -922,7 +922,7 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id,
 	struct timer* list;
 
 
-	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
+	if (list_id>=NR_OF_TIMER_LISTS) {
 		LOG(L_CRIT, "ERROR: set_timer: unknown list: %d\n", list_id);
 #ifdef EXTRA_DEBUG
 		abort();

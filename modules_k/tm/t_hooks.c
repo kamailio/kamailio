@@ -42,7 +42,7 @@
 struct tmcb_head_list* req_in_tmcb_hl = 0;
 
 struct tmcb_head_list tmcb_pending_hl = {0,0};
-int tmcb_pending_id = -1;
+unsigned int tmcb_pending_id = -1;
 
 
 int init_tmcb_lists()
@@ -174,7 +174,7 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 }
 
 
-static struct tmcb_params params = {0,0,0,0};
+static struct tmcb_params params = {0,0,0,0,0,0};
 
 void set_extra_tmcb_params(void *extra1, void *extra2)
 {

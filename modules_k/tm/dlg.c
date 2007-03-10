@@ -771,7 +771,7 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 {
 	str contact;
-	int cseq;
+	unsigned int cseq;
 
 	if (!_d || !_m) {
 		LOG(L_ERR, "dlg_request_uas(): Invalid parameter value\n");
@@ -785,7 +785,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 		LOG(L_ERR, "dlg_request_uas(): Error while parsing headers\n");
 		return -2;
 	}
-	if (get_cseq_value(_m, (unsigned int*)&cseq) < 0) return -3;
+	if (get_cseq_value(_m, &cseq) < 0) return -3;
 	if (_d->rem_seq.is_set && (cseq <= _d->rem_seq.value)) return 0;
 
 	     /* Neither out of order nor retransmission -> update */

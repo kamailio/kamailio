@@ -216,7 +216,7 @@ static inline void init_synonym_id( struct cell *t )
 	}
 }
 
-static void inline init_branches(struct cell *t)
+static inline void init_branches(struct cell *t)
 {
 	unsigned int i;
 	struct ua_client *uac;

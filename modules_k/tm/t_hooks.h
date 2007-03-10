@@ -192,7 +192,7 @@ struct tmcb_head_list {
 extern struct tmcb_head_list*  req_in_tmcb_hl;
 
 extern struct tmcb_head_list tmcb_pending_hl;
-extern int tmcb_pending_id;
+extern unsigned int tmcb_pending_id;
 
 #define has_tran_tmcbs(_T_, _types_) \
 	( ((_T_)->tmcb_hl.reg_types)&(_types_) )

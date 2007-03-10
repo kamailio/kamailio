@@ -522,7 +522,7 @@ error:
 	return 0;
 }
 
-void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
+inline static void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 {
 	struct hdr_field *hdr;
 

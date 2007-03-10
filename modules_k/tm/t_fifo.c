@@ -385,7 +385,7 @@ int init_twrite_lines()
 
 
 
-static int inline write_to_fifo(char *fifo, int cnt )
+static inline int write_to_fifo(char *fifo, int cnt )
 {
 	int   fd_fifo;
 
