@@ -7,6 +7,7 @@ Currently the following modules are available: digest authentication,
 CPL scripts, instant messaging, MySQL and UNIXODBC support, a presence agent,
 radius authentication, record routing, an SMS gateway, a jabber gateway, a 
 transaction and dialog module, OSP module, statistics support, 
-registrar and user location.
+registrar and user location, SIMPLE Presence, Perl programming interface and
+SNMP.
 
 WWW: http://www.openser.org/
