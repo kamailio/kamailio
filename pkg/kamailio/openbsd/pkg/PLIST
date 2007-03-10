@@ -14,6 +14,7 @@ lib/openser/modules/dialog.so
 lib/openser/modules/dispatcher.so
 lib/openser/modules/diversion.so
 lib/openser/modules/domain.so
+lib/openser/modules/domainpolicy.so
 lib/openser/modules/enum.so
 lib/openser/modules/exec.so
 lib/openser/modules/flatstore.so
@@ -24,6 +25,7 @@ lib/openser/modules/lcr.so
 lib/openser/modules/mangler.so
 lib/openser/modules/maxfwd.so
 lib/openser/modules/mediaproxy.so
+lib/openser/modules/mi_fifo.so
 lib/openser/modules/msilo.so
 lib/openser/modules/mysql.so
 lib/openser/modules/nathelper.so
@@ -35,10 +37,12 @@ lib/openser/modules/permissions.so
 lib/openser/modules/pike.so
 lib/openser/modules/registrar.so
 lib/openser/modules/rr.so
+lib/openser/modules/seas.so
 lib/openser/modules/siptrace.so
 lib/openser/modules/sl.so
 lib/openser/modules/sms.so
 lib/openser/modules/speeddial.so
+lib/openser/modules/sst.so
 lib/openser/modules/statistics.so
 lib/openser/modules/textops.so
 lib/openser/modules/tm.so
@@ -48,6 +52,7 @@ lib/openser/modules/uri.so
 lib/openser/modules/uri_db.so
 lib/openser/modules/usrloc.so
 lib/openser/modules/xlog.so
+lib/openser/modules/xmpp.so
 lib/openserctl/openserctl.base
 lib/openserctl/openserctl.sqlbase
 lib/openserctl/openserctl.ctlbase
@@ -70,6 +75,7 @@ share/doc/openser/README.dialog
 share/doc/openser/README.dispatcher
 share/doc/openser/README.diversion
 share/doc/openser/README.domain
+share/doc/openser/README.domainpolicy
 share/doc/openser/README.enum
 share/doc/openser/README.exec
 share/doc/openser/README.flatstore
@@ -80,6 +86,7 @@ share/doc/openser/README.lcr
 share/doc/openser/README.mangler
 share/doc/openser/README.maxfwd
 share/doc/openser/README.mediaproxy
+share/doc/openser/README.mi_fifo
 share/doc/openser/README.msilo
 share/doc/openser/README.mysql
 share/doc/openser/README.nathelper
@@ -91,11 +98,13 @@ share/doc/openser/README.permissions
 share/doc/openser/README.pike
 share/doc/openser/README.registrar
 share/doc/openser/README.rr
+share/doc/openser/README.seas
 share/doc/openser/README.siptrace
 share/doc/openser/README.sl
 share/doc/openser/README.sms
 share/doc/openser/README.speeddial
 share/doc/openser/README.statistics
+share/doc/openser/README.sst
 share/doc/openser/README.textops
 share/doc/openser/README.tm
 share/doc/openser/README.uac
@@ -104,6 +113,7 @@ share/doc/openser/README.uri
 share/doc/openser/README.uri_db
 share/doc/openser/README.usrloc
 share/doc/openser/README.xlog
+share/doc/openser/README.xmpp
 @dirrm share/doc/openser
 @dirrm etc/openser
 @dirrm lib/openser/modules
