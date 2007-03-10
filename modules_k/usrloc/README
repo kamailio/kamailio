@@ -56,6 +56,20 @@ Bogdan-Andrei Iancu
               1.3.24. hash_size (integer)
 
         1.4. Exported Functions
+        1.5. Exported MI Functions
+
+              1.5.1. ul_rm
+              1.5.2. ul_rm_contact
+              1.5.3. ul_dump
+              1.5.4. ul_flush
+              1.5.5. ul_add
+              1.5.6. ul_show_contact
+
+        1.6. Exported statistics
+
+              1.6.1. users
+              1.6.2. contacts
+              1.6.3. expires
 
    2. Developer's Guide
 
@@ -534,6 +548,104 @@ modparam("usrloc", "hash_size", 10)
 1.4. Exported Functions
 
    There are no exported functions that could be used in scripts.
+     _________________________________________________________
+
+1.5. Exported MI Functions
+
+1.5.1. ul_rm
+
+   Deletes an entire AOR record (including its contacts).
+
+   Parameters:
+
+     * table name - table where the AOR is removed from (Ex:
+       location).
+     * AOR - user AOR in username[@domain] format (domain must be
+       supplied only if use_domain option is on).
+     _________________________________________________________
+
+1.5.2. ul_rm_contact
+
+   Deletes a contact from an AOR record.
+
+   Parameters:
+
+     * table name - table where the AOR is removed from (Ex:
+       location).
+     * AOR - user AOR in username[@domain] format (domain must be
+       supplied only if use_domain option is on).
+     * contact - exact contact to be removed
+     _________________________________________________________
+
+1.5.3. ul_dump
+
+   Dumps the entire content of the USRLOC in memory cache
+
+   Parameters:
+
+     * brief - (optional, may not be present); if equals to
+       string "brief", a brief dump will be done (only AOR and
+       contacts, with no other details)
+     _________________________________________________________
+
+1.5.4. ul_flush
+
+   Triggers the flush of USRLOC memory cache into DB.
+     _________________________________________________________
+
+1.5.5. ul_add
+
+   Adds a new contact for an user AOR.
+
+   Parameters:
+
+     * table name - table where the contact will be added (Ex:
+       location).
+     * AOR - user AOR in username[@domain] format (domain must be
+       supplied only if use_domain option is on).
+     * contact - contact string to be added
+     * expires - expires value of the contact
+     * Q - Q value of the contact
+     * unused - unused attribute (kept for backword
+       compatibility)
+     * flags - internal USRLOC flags of the contact
+     * cflags - per branch flags of the contact
+     * methods - mask with supported requests of the contact
+     _________________________________________________________
+
+1.5.6. ul_show_contact
+
+   Dumps the contacts of an user AOR.
+
+   Parameters:
+
+     * table name - table where the AOR resides (Ex: location).
+     * AOR - user AOR in username[@domain] format (domain must be
+       supplied only if use_domain option is on).
+     _________________________________________________________
+
+1.6. Exported statistics
+
+   Exported statistics are listed in the next sections. Each
+   statistic will be register for each used domain (Ex:
+   location).
+     _________________________________________________________
+
+1.6.1. users
+
+   Number of AOR existing in the USRLOC memory cache - can not be
+   resetted.
+     _________________________________________________________
+
+1.6.2. contacts
+
+   Number of contacts existing in the USRLOC memory cache - can
+   not be resetted.
+     _________________________________________________________
+
+1.6.3. expires
+
+   Total number of expired contacts - can be resetted.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

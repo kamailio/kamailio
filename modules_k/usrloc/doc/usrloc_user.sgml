@@ -682,6 +682,181 @@ modparam("usrloc", "hash_size", 10)
 		There are no exported functions that could be used in scripts.
 	</para>
 	</section>
+
+
+	<section>
+	<title>Exported MI Functions</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_rm</function>
+		</title>
+		<para>
+		Deletes an entire AOR record (including its contacts).
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the AOR
+				is removed from (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_rm_contact</function>
+		</title>
+		<para>
+		Deletes a contact from an AOR record.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the AOR
+				is removed from (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>contact</emphasis> - exact contact to be removed
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_dump</function>
+		</title>
+		<para>
+		Dumps the entire content of the USRLOC in memory cache
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>brief</emphasis> - (optional, may not be present); if
+				equals to string <quote>brief</quote>, a brief dump will be
+				done (only AOR and contacts, with no other details)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_flush</function>
+		</title>
+		<para>
+		Triggers the flush of USRLOC memory cache into DB.
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_add</function>
+		</title>
+		<para>
+		Adds a new contact for an user AOR.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the contact
+				will be added (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>contact</emphasis> - contact string to be added
+			</para></listitem>
+			<listitem><para>
+				<emphasis>expires</emphasis> - expires value of the contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>Q</emphasis> - Q value of the contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>unused</emphasis> - unused attribute (kept for
+				backword compatibility)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>flags</emphasis> - internal USRLOC flags of the 
+				contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cflags</emphasis> - per branch flags of the 
+				contact
+			</para></listitem>
+			<listitem><para>
+				<emphasis>methods</emphasis> - mask with supported requests
+				of the contact
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul_show_contact</function>
+		</title>
+		<para>
+		Dumps the contacts of an user AOR.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the AOR
+				resides (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	</section>
+
+
+	<section>
+		<title>Exported statistics</title>
+		<para>
+		Exported statistics are listed in the next sections. Each statistic
+		will be register for each used domain (Ex: location).
+		</para>
+		<section>
+		<title>users</title>
+			<para>
+			Number of AOR existing in the USRLOC memory cache - can not be
+			resetted.
+			</para>
+		</section>
+		<section>
+		<title>contacts</title>
+			<para>
+			Number of contacts existing in the USRLOC memory cache - can not be
+			resetted.
+			</para>
+		</section>
+		<section>
+		<title>expires</title>
+			<para>
+			Total number of expired contacts - can be resetted.
+			</para>
+		</section>
+	</section>
+
+
 </chapter>
 
 <!-- Keep this element at the end of the file
