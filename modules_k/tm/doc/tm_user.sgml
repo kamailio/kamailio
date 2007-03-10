@@ -1220,31 +1220,233 @@ branch_route[1] {
 	</section>
 
 	</section>
+
+
 	<section>
-	<title>Exported pseudo-variables</title>
-	<para>
-	Exported pseudo-variables are listed in the next sections.
-	</para>
-	<section>
-	<title>$T_branch_idx</title>
+		<title>Exported pseudo-variables</title>
 		<para>
-		<emphasis>$T_branch_idx</emphasis> - the index (starting with 1
-		for the first branch) of the branch for which is executed the
-		branch_route[]. If used outside of branch_route[] block, the value
-		is '0'.
+		Exported pseudo-variables are listed in the next sections.
 		</para>
+		<section>
+		<title>$T_branch_idx</title>
+			<para>
+			<emphasis>$T_branch_idx</emphasis> - the index (starting with 1
+			for the first branch) of the branch for which is executed the
+			branch_route[]. If used outside of branch_route[] block, the value
+			is '0'.
+			</para>
+		</section>
+		<section>
+		<title>$T_reply_code</title>
+			<para>
+			<emphasis>$T_reply_code</emphasis> - the code of the reply, as 
+			follows: in request_route will be the last stateful sent reply;
+			in reply_route will be the current processed reply; in 
+			failure_route will be the negative winning reply. In case of 
+			no-reply or error, '0' value is returned.
+			</para>
+		</section>
 	</section>
+
+
 	<section>
-	<title>$T_reply_code</title>
+	<title>Exported MI Functions</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_uac_dlg</function>
+		</title>
 		<para>
-		<emphasis>$T_reply_code</emphasis> - the code of the reply, as 
-		follows: in request_route will be the last stateful sent reply;
-		in reply_route will be the current processed reply; in 
-		failure_route will be the negative winning reply. In case of 
-		no-reply or error, '0' value is returned.
+		Generates and sends a local SIP request.
 		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>method</emphasis> - request method
+			</para></listitem>
+			<listitem><para>
+				<emphasis>RURI</emphasis> - request SIP URI
+			</para></listitem>
+			<listitem><para>
+				<emphasis>NEXT HOP</emphasis> - next hop SIP URI (OBP);
+				use <quote>.</quote> if no value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>socket</emphasis> - local socket to be used for
+				sending the request; use <quote>.</quote> if no value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>headers</emphasis> - set of additional headers to
+				be added to the request; at least 
+				<quote>From</quote> and <quote>To</quote> headers must be
+				specify)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				request body (if present, requires the 
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_uac_cancel</function>
+		</title>
+		<para>
+		Generates and sends a CANCEL for an existing local SIP request.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> - callid of the INVITE request
+				to be cancelled.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cseq</emphasis> - cseq of the INVITE request to be
+				cancelled.
+			</para></listitem>
+		</itemizedlist>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_hash</function>
+		</title>
+		<para>
+		Gets information about the load of TM internal hash table.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_uac_cancel</function>
+		</title>
+		<para>
+		Generates and sends a reply for an existing inbound SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>code</emphasis> - reply code
+			</para></listitem>
+			<listitem><para>
+				<emphasis>reason</emphasis> - reason phrase.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>trans_id</emphasis> - transaction identifier
+				(has the hash_entry:label format)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>to_tag</emphasis> - To tag to be added to TO header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>new_headers</emphasis> - extra headers to be
+				appended to the reply
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				reply body (if present, requires the 
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	</section>
+
+
+	<section>
+		<title>Exported statistics</title>
+		<para>
+		Exported statistics are listed in the next sections.
+		</para>
+		<section>
+		<title>received_replies</title>
+			<para>
+			Total number of total replies received by TM module - can be
+			resetted.
+			</para>
+		</section>
+		<section>
+		<title>relayed_replies</title>
+			<para>
+			Total number of replied received and relayed by TM module - can be
+			resetted.
+			</para>
+		</section>
+		<section>
+		<title>local_replies</title>
+			<para>
+			Total number of replied local generated by TM module - can be
+			resetted.
+			</para>
+		</section>
+		<section>
+		<title>UAS_transactions</title>
+			<para>
+			Total number of transaction created by received requests - can be
+			resetted.
+			</para>
+		</section>
+		<section>
+		<title>UAC_transactions</title>
+			<para>
+			Total number of transaction created by local generated requests - 
+			can be resetted.
+			</para>
+		</section>
+		<section>
+		<title>2xx_transactions</title>
+			<para>
+			Total number of transaction completed with 2xx replies - 
+			can be resetted.
+			</para>
+		</section>
+		<section>
+		<title>3xx_transactions</title>
+			<para>
+			Total number of transaction completed with 3xx replies - 
+			can be resetted.
+			</para>
+		</section>
+		<section>
+		<title>4xx_transactions</title>
+			<para>
+			Total number of transaction completed with 4xx replies - 
+			can be resetted.
+			</para>
+		</section>
+		<section>
+		<title>5xx_transactions</title>
+			<para>
+			Total number of transaction completed with 5xx replies - 
+			can be resetted.
+			</para>
+		</section>
+		<section>
+		<title>6xx_transactions</title>
+			<para>
+			Total number of transaction completed with 6xx replies - 
+			can be resetted.
+			</para>
+		</section>
+		<section>
+		<title>inuse_transactions</title>
+			<para>
+			Number of transaction existing in memeory at current time - 
+			can not be resetted.
+			</para>
+		</section>
+	</section>
+
 </chapter>
 
 <!-- Keep this element at the end of the file
