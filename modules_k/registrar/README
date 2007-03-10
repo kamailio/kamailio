@@ -280,7 +280,7 @@ modparam("registrar", "append_branches", 0)
 
    Example 1-8. Set aor_avp parameter
 ...
-modparam("registrar", "aor_avp", "$acp(i:3223)")
+modparam("registrar", "aor_avp", "$avp(i:3223)")
 ...
      _________________________________________________________
 
@@ -370,10 +370,10 @@ modparam("registrar", "retry_after", 30)
 
 1.3.14. sock_flag (integer)
 
-   Flag to signal to register module to look into REGISTER
-   request for a header which contains a socket description
-   (IP:port). This socket info will be stored by register instead
-   of the received socket info.
+   Message flag to signal to register module to look into
+   REGISTER request for a header which contains a socket
+   description (IP:port). This socket info will be stored by
+   register instead of the received socket info.
 
    This make sens only in multiple replicated servers scenarios.
 
@@ -388,7 +388,7 @@ modparam("registrar", "sock_flag", 18)
 1.3.15. sock_hdr_name (string)
 
    Header which contains a socket description (proto:IP:port) to
-   overide the the received socket info. The heaer will be read
+   overide the the received socket info. The header will be read
    only if the flag sock_flag is set.
 
    This make sens only in multiple replicated servers scenarios.
@@ -458,11 +458,11 @@ modparam("registrar", "path_mode", 0)
 
 1.3.19. path_use_received (integer)
 
-   If set to 1, the "received" parameter of the first Path uri of
-   a registration is set as received-uri and the NAT flag is set
-   for this contact. This is useful if the registrar is placed
-   behind a SIP loadbalancer, which passes the nat'ed UAC address
-   as "received" parameter in it's Path uri.
+   If set to 1, the "received" parameter of the first Path URI of
+   a registration is set as received-uri and the NAT branch flag
+   is set for this contact. This is useful if the registrar is
+   placed behind a SIP loadbalancer, which passes the nat'ed UAC
+   address as "received" parameter in it's Path uri.
 
    Default value is 0 (disabled). 
 
@@ -642,33 +642,39 @@ Chapter 2. Developer's Guide
 
 Chapter 3. Frequently Asked Questions
 
-   3.1. What happend with the old "use_domain" module parameter?
-   3.2. What happend with the old "save_noreply" and
+   3.1. What happend with the old "nat_flag" module parameter?
+   3.2. What happend with the old "use_domain" module parameter?
+   3.3. What happend with the old "save_noreply" and
           "save_memory" functions?
 
-   3.3. Where can I find more about OpenSER?
-   3.4. Where can I post a question about this module?
-   3.5. How can I report a bug?
-   3.6. What happened to the desc_time_order parameter?
+   3.4. Where can I find more about OpenSER?
+   3.5. Where can I post a question about this module?
+   3.6. How can I report a bug?
+   3.7. What happened to the desc_time_order parameter?
 
-   3.1. What happend with the old "use_domain" module parameter?
+   3.1. What happend with the old "nat_flag" module parameter?
+
+   In was removed, as the module internally loads this value from
+   the "USRLOC' module (see the "nat_bflag" USRLOC parameter). '"
+
+   3.2. What happend with the old "use_domain" module parameter?
 
    In was removed, as the module internally loads this option
    from the "USRLOC' module. This was done in order to simplify
    the configuration. '"
 
-   3.2. What happend with the old "save_noreply" and
+   3.3. What happend with the old "save_noreply" and
    "save_memory" functions?
 
    There functions were merged into the new "save(domain,flags)'
    functions. If a reply should be sent or if the DB should be
    updated also is controlled via the flags. '"
 
-   3.3. Where can I find more about OpenSER?
+   3.4. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   3.4. Where can I post a question about this module?
+   3.5. Where can I post a question about this module?
 
    First at all check if your question was already answered on
    one of our mailing lists:
@@ -685,12 +691,12 @@ Chapter 3. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   3.5. How can I report a bug?
+   3.6. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://sourceforge.net/tracker/?group_id=139143.
 
-   3.6. What happened to the desc_time_order parameter?
+   3.7. What happened to the desc_time_order parameter?
 
    It was removed, as its functionality was mmigrate into usrloc
    module, were there is a parameter with the same name.

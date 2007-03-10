@@ -198,9 +198,9 @@ modparam("registrar", "default_q", 100)
 	<section>
 		<title><varname>tcp_persistent_flag</varname> (integer)</title>
 		<para>
-		The parameter specifies the message flag to be used to control the module
-		behaviour regarding TCP connections. If the flag is set for a REGISTER
-		via TCP containing a TCP contact, the module, via the 
+		The parameter specifies the message flag to be used to control the 
+		module behaviour regarding TCP connections. If the flag is set for a 
+		REGISTER via TCP containing a TCP contact, the module, via the 
 		<quote>save()</quote> functions will set the lifetime of the TCP
 		connection to the contact expire value. By doing this, the TCP 
 		connection will stay on as long as the contact is valid.
@@ -291,7 +291,7 @@ modparam("registrar", "append_branches", 0)
 		<title>Set <varname>aor_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "aor_avp", "$acp(i:3223)")
+modparam("registrar", "aor_avp", "$avp(i:3223)")
 ...
 </programlisting>
 		</example>
@@ -425,9 +425,10 @@ modparam("registrar", "retry_after", 30)
 	<section>
 		<title><varname>sock_flag</varname> (integer)</title>
 		<para>
-		Flag to signal to register module to look into REGISTER request for
-		a header which contains a socket description (IP:port). This socket
-		info will be stored by register instead of the received socket info.
+		Message flag to signal to register module to look into REGISTER 
+		request for a header which contains a socket description (IP:port). 
+		This socket info will be stored by register instead of the received 
+		socket info.
 		</para>
 		<para>
 		This make sens only in multiple replicated servers scenarios.
@@ -451,7 +452,7 @@ modparam("registrar", "sock_flag", 18)
 		<title><varname>sock_hdr_name</varname> (string)</title>
 		<para>
 		Header which contains a socket description (proto:IP:port) to overide
-		the the received socket info. The heaer will be read only if the
+		the the received socket info. The header will be read only if the
 		flag sock_flag is set.
 		</para>
 		<para>
@@ -566,9 +567,11 @@ modparam("registrar", "path_mode", 0)
 	<section>
 		<title><varname>path_use_received</varname> (integer)</title>
 		<para>
-		If set to 1, the <quote>received</quote> parameter of the first Path uri of a registration is set
-		as received-uri and the NAT flag is set for this contact. This is useful if the registrar is placed
-		behind a SIP loadbalancer, which passes the nat'ed UAC address as <quote>received</quote> parameter
+		If set to 1, the <quote>received</quote> parameter of the first Path 
+		URI of a registration is set as received-uri and the NAT branch flag is
+		set for this contact. This is useful if the registrar is placed
+		behind a SIP loadbalancer, which passes the nat'ed UAC address as 
+		<quote>received</quote> parameter
 		in it's Path uri.
 		</para>
 		<para>

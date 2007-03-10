@@ -11,6 +11,20 @@
 	</chapterinfo>
 	<title>Frequently Asked Questions</title>
 	<qandaset defaultlabel="number">
+
+	<qandaentry>
+		<question>
+		<para>What happend with the old <quote>nat_flag</quote> module parameter?</para>
+		</question>
+		<answer>
+		<para>
+			In was removed, as the module internally loads this value from the
+			<quote>USRLOC<quote> module (see the <quote>nat_bflag</quote>
+			USRLOC parameter).
+		</para>
+		</answer>
+	</qandaentry>
+
 	<qandaentry>
 		<question>
 		<para>What happend with the old <quote>use_domain</quote> module parameter?</para>
@@ -23,6 +37,7 @@
 		</para>
 		</answer>
 	</qandaentry>
+
 	<qandaentry>
 		<question>
 		<para>What happend with the old <quote>save_noreply</quote> and <quote>save_memory</quote> functions?</para>
@@ -36,6 +51,7 @@
 		</para>
 		</answer>
 	</qandaentry>
+
 	<qandaentry>
 		<question>
 		<para>Where can I find more about OpenSER?</para>
