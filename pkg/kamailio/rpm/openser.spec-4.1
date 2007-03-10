@@ -1,5 +1,5 @@
 %define name    openser
-%define ver     1.1.0
+%define ver     1.2.0
 %define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber cpl-c avp_radius auth_radius group_radius uri_radius pa postgres osp tlsops unixodbc
@@ -12,7 +12,7 @@
 %define RADIUS_MODULES		avp_radius auth_radius group_radius uri_radius
 %define RADIUS_MOD_PATH		modules/avp_radius modules/auth_radius modules/group_radius modules/uri_radius
 
-Summary:      Open SIP Express Router, very fast and flexible SIP Proxy
+Summary:      OpenSER, very fast and flexible SIP Proxy
 Name:         %name
 Version:      %ver
 Release:      %rel
@@ -29,7 +29,7 @@ BuildPrereq:  make flex bison
 
 
 %description
-OpenSER or OPEN SIP Express Router is a very fast and flexible SIP (RFC3261)
+OpenSER is a very fast and flexible SIP (RFC3261)
 proxy server. Written entirely in C, openser can handle thousands calls
 per second even on low-budget hardware. A C Shell like scripting language
 provides full control over the server's behaviour. It's modular
@@ -38,10 +38,11 @@ Currently the following modules are available: digest authentication,
 CPL scripts, instant messaging, MySQL and UNIXODBC support, a presence agent,
 radius authentication, record routing, an SMS gateway, a jabber gateway, a 
 transaction and dialog module, OSP module, statistics support, 
-registrar and user location.
+registrar and user location, SNMP, SIMPLE Presence and Perl programming
+interface.
 
 %package  mysql
-Summary:  MySQL connectivity for the OPEN SIP Express Router.
+Summary:  MySQL connectivity for the OpenSER.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  mysql-devel zlib-devel
@@ -52,7 +53,7 @@ need to use digest authentication module or persistent user location
 entries.
 
 %package  postgres
-Summary:  MPOSTGRES connectivity for the OPEN SIP Express Router.
+Summary:  MPOSTGRES connectivity for the OpenSER.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  postgresql-devel
@@ -63,7 +64,7 @@ need to use digest authentication module or persistent user location
 entries.
 
 %package  unixodbc
-Summary:  UNIXODBC connectivity for OPEN SIP Express Router.
+Summary:  UNIXODBC connectivity for OpenSER.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  unixodbc-dev
@@ -73,7 +74,7 @@ The openser-unixodbc package contains UNIXODBC database connectivity support
 that is required by other modules with database dependencies.
 
 %package  jabber
-Summary:  sip jabber message translation support for the OPEN SIP Express Router.
+Summary:  sip jabber message translation support for the OpenSER.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  expat-devel
@@ -82,7 +83,7 @@ BuildPrereq:  expat-devel
 The openser-jabber package contains a sip to jabber message translator.
 
 %%package  cpl
-Summary:  CPL interpreter engine for the OPEN SIP Express Router.
+Summary:  CPL interpreter engine for the OpenSER.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  libxml2-dev
@@ -91,7 +92,7 @@ BuildPrereq:  libxml2-dev
 The openser-cpl package contains a SIP CPL interpreter engine.
 
 %package  pa
-Summary:  sip presence agent support for the OPEN SIP Express Router.
+Summary:  sip presence agent support for the OpenSER.
 Group:    System Environment/Daemons
 Requires: openser = %ver
 BuildPrereq:  libxml2-dev
