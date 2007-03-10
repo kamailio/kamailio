@@ -5,12 +5,12 @@
 # $Id$
 #
 
-COMMENT= "Open SIP Express Router"
+COMMENT= "OpenSER"
 
 PORTNAME= openser
-PORTVERSION= 1.0.0
+PORTVERSION= 1.2.0
 CATEGORIES= net
-MASTER_SITES= http://openser.org/pub/openser/1.1.0/src/
+MASTER_SITES= http://openser.org/pub/openser/1.2.0/src/
 
 MAINTAINER= daniel@voice-system.ro
 
