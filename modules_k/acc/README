@@ -845,15 +845,40 @@ Chapter 2. Developer's Guide
 
 Chapter 3. Frequently Asked Questions
 
-   3.1. Where can I find more about OpenSER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
+   3.1. What happend with old log_fmt parameter
+   3.2. What happend with old multi_leg_enabled parameter
+   3.3. What happend with old src_leg_avp_id & dst_leg_avp_id
+          parameters
 
-   3.1. Where can I find more about OpenSER?
+   3.4. Where can I find more about OpenSER?
+   3.5. Where can I post a question about this module?
+   3.6. How can I report a bug?
+
+   3.1. What happend with old log_fmt parameter
+
+   The parameter became obsolete with the restructure of the data
+   logged by ACC module (refer to the Overview chapter). For
+   similar behaviour you can use the extra accouting (see the
+   coresponding chapter).
+
+   3.2. What happend with old multi_leg_enabled parameter
+
+   The parameter becaome obsolete by the addition of the new
+   multi_leg_info parameter. The multi-leg accouting is
+   automatically enabled when multi_leg_info is defined.
+
+   3.3. What happend with old src_leg_avp_id & dst_leg_avp_id
+   parameters
+
+   The parameter was replaced by the more generic new parameter
+   multi_leg_info. This allows logging (per-leg) of more
+   information than just dst and src.
+
+   3.4. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   3.2. Where can I post a question about this module?
+   3.5. Where can I post a question about this module?
 
    First at all check if your question was already answered on
    one of our mailing lists:
@@ -870,7 +895,7 @@ Chapter 3. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   3.3. How can I report a bug?
+   3.6. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://sourceforge.net/tracker/?group_id=139143.
