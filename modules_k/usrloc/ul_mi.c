@@ -412,6 +412,7 @@ struct mi_root* mi_usrloc_flush(struct mi_root *cmd, void *param)
  *        Q
  *        useless - backward compat.
  *        flags
+ *        cflags
  *        methods
  */
 struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
@@ -426,8 +427,8 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 	unsigned int ui_val;
 	int n;
 
-	for( n=0,node = cmd->node.kids; n<8 && node ; n++,node=node->next );
-	if (n!=8 || node!=0)
+	for( n=0,node = cmd->node.kids; n<9 && node ; n++,node=node->next );
+	if (n!=9 || node!=0)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	node = cmd->node.kids;
@@ -468,7 +469,12 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 	if (str2int( &node->value, (unsigned int*)&ci.flags) < 0)
 		goto bad_syntax;
 
-	/* flags value (param 8) */
+	/* branch flags value (param 8) */
+	node = node->next;
+	if (str2int( &node->value, (unsigned int*)&ci.cflags) < 0)
+		goto bad_syntax;
+
+	/* methods value (param 9) */
 	node = node->next;
 	if (str2int( &node->value, (unsigned int*)&ci.methods) < 0)
 		goto bad_syntax;
