@@ -22,6 +22,7 @@ f none lib/openser/modules/dialog.so 0755 bin bin
 f none lib/openser/modules/dispatcher.so 0755 bin bin
 f none lib/openser/modules/diversion.so 0755 bin bin
 f none lib/openser/modules/domain.so 0755 bin bin
+f none lib/openser/modules/domainpolicy.so 0755 bin bin
 f none lib/openser/modules/enum.so 0755 bin bin
 f none lib/openser/modules/exec.so 0755 bin bin
 f none lib/openser/modules/flatstore.so 0755 bin bin
@@ -32,6 +33,7 @@ f none lib/openser/modules/jabber.so 0755 bin bin
 f none lib/openser/modules/mangler.so 0755 bin bin
 f none lib/openser/modules/maxfwd.so 0755 bin bin
 f none lib/openser/modules/mediaproxy.so 0755 bin bin
+f none lib/openser/modules/mi_fifo.so 0755 bin bin
 f none lib/openser/modules/msilo.so 0755 bin bin
 f none lib/openser/modules/mysql.so 0755 bin bin
 f none lib/openser/modules/nathelper.so 0755 bin bin
@@ -42,10 +44,12 @@ f none lib/openser/modules/permissions.so 0755 bin bin
 f none lib/openser/modules/pike.so 0755 bin bin
 f none lib/openser/modules/registrar.so 0755 bin bin
 f none lib/openser/modules/rr.so 0755 bin bin
+f none lib/openser/modules/seas.so 0755 bin bin
 f none lib/openser/modules/siptrace.so 0755 bin bin
 f none lib/openser/modules/sl.so 0755 bin bin
 f none lib/openser/modules/sms.so 0755 bin bin
 f none lib/openser/modules/speeddial.so 0755 bin bin
+f none lib/openser/modules/sst.so 0755 bin bin
 f none lib/openser/modules/statistics.so 0755 bin bin
 f none lib/openser/modules/textops.so 0755 bin bin
 f none lib/openser/modules/tm.so 0755 bin bin
@@ -55,6 +59,7 @@ f none lib/openser/modules/uri.so 0755 bin bin
 f none lib/openser/modules/uri_db.so 0755 bin bin
 f none lib/openser/modules/usrloc.so 0755 bin bin
 f none lib/openser/modules/xlog.so 0755 bin bin
+f none lib/openser/modules/xmpp.so 0755 bin bin
 d none lib/openserctl 0644 bin bin
 f none lib/openserctl/openserctl.base 0644 bin bin
 f none lib/openserctl/openserctl.ctlbase 0644 bin bin
@@ -80,6 +85,7 @@ f none doc/openser/README.dialog  0644 bin bin
 f none doc/openser/README.dispatcher  0644 bin bin
 f none doc/openser/README.diversion  0644 bin bin
 f none doc/openser/README.domain  0644 bin bin
+f none doc/openser/README.domainpolicy  0644 bin bin
 f none doc/openser/README.enum    0644 bin bin
 f none doc/openser/README.exec 0644 bin bin
 f none doc/openser/README.flatstore 0644 bin bin
@@ -90,6 +96,7 @@ f none doc/openser/README.lcr 0644 bin bin
 f none doc/openser/README.mangler 0644 bin bin
 f none doc/openser/README.maxfwd 0644 bin bin
 f none doc/openser/README.mediaproxy 0644 bin bin
+f none doc/openser/README.mi_fifo 0644 bin bin
 f none doc/openser/README.msilo 0644 bin bin
 f none doc/openser/README.mysql 0644 bin bin
 f none doc/openser/README.nathelper 0644 bin bin
@@ -101,10 +108,12 @@ f none doc/openser/README.pike 0644 bin bin
 f none doc/openser/README.registrar 0644 bin bin
 f none doc/openser/README.rr 0644 bin bin
 f none doc/openser/README.siptrace 0644 bin bin
+f none doc/openser/README.seas 0644 bin bin
 f none doc/openser/README.sl 0644 bin bin
 f none doc/openser/README.sms 0644 bin bin
 f none doc/openser/README.speeddial 0644 bin bin
 f none doc/openser/README.statistics 0644 bin bin
+f none doc/openser/README.sst 0644 bin bin
 f none doc/openser/README.textops 0644 bin bin
 f none doc/openser/README.tm 0644 bin bin
 f none doc/openser/README.uac 0644 bin bin
@@ -113,6 +122,7 @@ f none doc/openser/README.uri 0644 bin bin
 f none doc/openser/README.uri_db 0644 bin bin
 f none doc/openser/README.usrloc 0644 bin bin
 f none doc/openser/README.xlog 0644 bin bin
+f none doc/openser/README.xmpp 0644 bin bin
 d none man 0755 bin bin
 d none man/man8 0755 bin bin
 f none man/man8/openser.8 0644 bin bin

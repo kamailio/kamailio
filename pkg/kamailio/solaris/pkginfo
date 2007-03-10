@@ -1,6 +1,6 @@
 PKG=OpenSER
 ARCH=sparc
-VERSION=1.1.0
+VERSION=1.2.0
 CATEGORY=application
 EMAIL=daniel@voice-system.ro
 NAME= OpenSER is a very fast and flexible SIP (RFC3261) proxy server
