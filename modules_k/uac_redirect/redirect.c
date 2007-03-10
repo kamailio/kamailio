@@ -76,7 +76,7 @@ static cmd_export_t cmds[] = {
 			FAILURE_ROUTE },
 	{"get_redirects",      w_get_redirect1,  1,  get_redirect_fixup,
 			FAILURE_ROUTE },
-	{0, 0, 0}
+	{0, 0, 0, 0, 0}
 };
 
 static param_export_t params[] = {
@@ -307,8 +307,8 @@ error:
 
 static inline void msg_tracer(struct sip_msg* msg, int reset)
 {
-	static int id  = 0;
-	static int set = 0;
+	static unsigned int id  = 0;
+	static unsigned int set = 0;
 
 	if (reset) {
 		set = 0;
