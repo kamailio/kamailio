@@ -62,12 +62,12 @@ Description: PostgreSQL database connectivity module for OpenSER
 Package: openser-jabber-module
 Architecture: any
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
-Description: Jabber and XMPP gateway modules for OpenSER
+Description: Jabber gateway module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the SIP to Jabber and SIP to XMPP translator modules 
+ This package provides the SIP to Jabber translator module 
  for OpenSER.
 
 Package: openser-cpl-module
@@ -93,7 +93,7 @@ Description: radius modules for OpenSER
  authentication, group membership and messages URIs checking against a
  Radius Server.
 
-Package: openser-unixodbc-module 
+Package: openser-unixodbc-module
 Architecture: any 
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: unixODBC database connectivity module for OpenSER 
@@ -103,7 +103,7 @@ Description: unixODBC database connectivity module for OpenSER
  .
  This package provides the unixODBC database driver for OpenSER. 
 
-Package: openser-presence-modules 
+Package: openser-presence-modules
 Architecture: any 
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: SIMPLE presence modules for OpenSER 
@@ -115,7 +115,7 @@ Description: SIMPLE presence modules for OpenSER
  server and presence user agent for RICH presence, registrar-based presence,
  external triggered presence and XCAP support.
 
-Package: openser-xmlrpc-module 
+Package: openser-xmlrpc-module
 Architecture: any 
 Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: XMLRPC support for Managemen Interface in OpenSER 
@@ -125,3 +125,33 @@ Description: XMLRPC support for Managemen Interface in OpenSER
  .
  This package provides the XMLRPC transport implementation for the Management
  Interface in OpenSER.
+
+Package: openser-perl-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: Perl module for OpenSER
+ OpenSER is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides an interface for OpenSER to write Perl extensions.
+
+Package: openser-snmpstats-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: snmpstats module for OpenSER
+ OpenSER is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides SNMP management interface to OpenSER.
+
+Package: openser-xmpp-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: XMPP gateway module for OpenSER
+ OpenSER is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the SIP to XMPP IM translator module for OpenSER.

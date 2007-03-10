@@ -1,3 +1,11 @@
+openser (1.2.0-rc0svn) UNRELEASED; urgency=low
+
+  * Preparation for new upstream release using SVN.
+    + added new packages: openser-perl-module, openser-snmpstats-module,
+      openser-xmpp-module (split from openser-jabber-module)
+
+ -- Julien BLACHE <jblache@debian.org>  Sat, 10 Mar 2007 18:52:31 +0200
+
 openser (1.1.0-3cvs) UNRELEASED; urgency=low
 
   * OpenSER CVS.
