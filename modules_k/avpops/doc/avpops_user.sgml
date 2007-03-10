@@ -321,8 +321,33 @@ modparam("avpops","type_column","type")
 		<section>
 			<title><varname>db_scheme</varname> (string)</title>
 			<para>
-				Definition of a DB schemeto be used for non-standard
+				Definition of a DB scheme to be used for non-standard
 				access to Database information.
+			</para>
+			<para>
+			Definition of a DB scheme. Scheme syntax is:
+			<itemizedlist>
+				<listitem><para><emphasis>
+				db_scheme = name':'element[';'element]*
+				</emphasis></para></listitem>
+				<listitem><para><emphasis>element</emphasis> =
+					<itemizedlist>
+						<listitem><para>'uuid_col='string
+						</para></listitem>
+						<listitem><para>'username_col='string
+						</para></listitem>
+						<listitem><para>'domain_col='string
+						</para></listitem>
+						<listitem><para>'value_col='string
+						</para></listitem>
+						<listitem><para>'value_type='('integer'|'string')
+						</para></listitem>
+						<listitem><para>'table='string
+						</para></listitem>
+					</itemizedlist>
+				</para></listitem>
+			</itemizedlist>
+			</para>
 			<para>
 				<emphasis>Default value is <quote>NULL</quote>.
 				</emphasis>
@@ -333,7 +358,7 @@ modparam("avpops","type_column","type")
 				<programlisting format="linespecific">
 ...
 modparam("avpops","db_scheme",
-"scheme1:table=subscriber;uuid_column=uuid;value_column=first_name")
+"scheme1:table=subscriber;uuid_col=uuid;value_col=first_name")
 ...
 				</programlisting>
 			</example>

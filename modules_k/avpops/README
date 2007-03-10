@@ -288,15 +288,26 @@ modparam("avpops","type_column","type")
 
 1.4.12. db_scheme (string)
 
-   Definition of a DB schemeto be used for non-standard access to
-   Database information.
+   Definition of a DB scheme to be used for non-standard access
+   to Database information.
+
+   Definition of a DB scheme. Scheme syntax is:
+
+     * db_scheme = name':'element[';'element]* 
+     * element =
+          + 'uuid_col='string
+          + 'username_col='string
+          + 'domain_col='string
+          + 'value_col='string
+          + 'value_type='('integer'|'string')
+          + 'table='string
 
    Default value is "NULL". 
 
    Example 1-12. Set db_scheme parameter 
 ...
 modparam("avpops","db_scheme",
-"scheme1:table=subscriber;uuid_column=uuid;value_column=first_name")
+"scheme1:table=subscriber;uuid_col=uuid;value_col=first_name")
 ...
      _________________________________________________________
 
