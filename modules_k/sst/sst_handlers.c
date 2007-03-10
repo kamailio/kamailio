@@ -115,7 +115,7 @@ enum sst_flags {
 typedef struct sst_info_st {
 	enum sst_flags requester;
 	enum sst_flags supported;
-	int interval;
+	unsigned int interval;
 } sst_info_t;
 
 /**
@@ -428,7 +428,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 		struct sip_msg* msg, void** param)
 {
 	sst_info_t *info = (sst_info_t *)*param;
-	sst_msg_info_t minfo = {0};
+	sst_msg_info_t minfo = {0,0,0,0};
 
 	if (msg->first_line.type == SIP_REQUEST) {
 		if ((msg->first_line.u.request.method_value == METHOD_INVITE ||
@@ -501,7 +501,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 	 * lets be safe.
 	 */
 	if (msg->first_line.type == SIP_REPLY) {
-		sst_msg_info_t minfo = {0};
+		sst_msg_info_t minfo = {0,0,0,0};
 		sst_info_t *info = (sst_info_t *)*param;
 
 		LOG(L_DBG, "Dialog seen REPLY %d %.*s\n", 
@@ -609,7 +609,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 {
 	enum parse_sst_result result;
-	struct session_expires se = {0};
+	struct session_expires se = {0,0};
 	unsigned minse = 0;
 
 	/*
@@ -883,7 +883,7 @@ static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
 {
 	int rtn = 0;
-	struct session_expires se = {0};
+	struct session_expires se = {0,0};
 
 	if (!msg || !minfo) {
 		return (-1);
