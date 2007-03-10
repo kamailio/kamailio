@@ -150,7 +150,7 @@ AVP_DOMAIN_COLUMN=domain
 AVP_ATTRIBUTE_COLUMN=attribute
 AVP_VALUE_COLUMN=value
 AVP_TYPE_COLUMN=type
-AVP_MODIFIED_COLUMN=modified
+AVP_MODIFIED_COLUMN=last_modified
 
 ##### ----------------------------------------------- #####
 ### ACL name verification
