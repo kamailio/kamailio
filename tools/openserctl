@@ -1128,7 +1128,9 @@ openser_start() {
 	echo
 	printf "Starting OpenSER : "
 	if [ -r $PID_FILE ] ; then
-		minfo "PID file exists! ($PID_FILE) already running?"
+		ps axw | grep openser
+		ls -l $PID_FILE
+		minfo "PID file exists ($PID_FILE)! OpenSER already running?"
 		exit 1
 	fi
 	
@@ -1165,6 +1167,7 @@ openser_stop() {
 	else
 		echo
 		merr "No PID file found ($PID_FILE)! OpenSER probably not running"
+		minfo "check with 'ps axw | grep openser'"
 		exit 1
 	fi
 }
