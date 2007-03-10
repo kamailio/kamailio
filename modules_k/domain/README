@@ -40,7 +40,7 @@ Juha Heinanen
 
    List of Examples
    1-1. Setting db_url parameter
-   1-2. nonce_expire example
+   1-2. db_mode example
    1-3. Setting domain_table parameter
    1-4. Setting domain_col parameter
    1-5. is_from_local usage
@@ -98,7 +98,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 
    Default value is 0 (non-caching).
 
-   Example 1-2. nonce_expire example
+   Example 1-2. db_mode example
 modparam("domain", "db_mode", 1)   # Use caching
      _________________________________________________________
 

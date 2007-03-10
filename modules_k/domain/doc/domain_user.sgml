@@ -77,7 +77,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 		Default value is 0 (non-caching).
 		</para>
 		<example>
-		<title>nonce_expire example</title>
+		<title>db_mode example</title>
 		<programlisting format="linespecific">
 modparam("domain", "db_mode", 1)   # Use caching
 </programlisting>
