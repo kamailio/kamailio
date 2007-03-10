@@ -532,7 +532,7 @@ int via_diff(struct sip_msg *req,struct sip_msg *resp)
 	    return -1;
 	 }
 	 memset(vb,0,sizeof(struct via_body));
-	 if(parse_via(hf->body.s,hf->body.s+hf->body.len+1,vb)<0){
+	 if(parse_via(hf->body.s,hf->body.s+hf->body.len+1,vb)==0){
 	    LOG(L_ERR,"Unable to parse via in via_diff!\n");
 	    pkg_free(vb);
 	    return -1;
@@ -557,7 +557,7 @@ int via_diff(struct sip_msg *req,struct sip_msg *resp)
 	    goto error;
 	 }
 	 memset(vb,0,sizeof(struct via_body));
-	 if(parse_via(hf->body.s,hf->body.s+hf->body.len+1,vb)<0){
+	 if(parse_via(hf->body.s,hf->body.s+hf->body.len+1,vb)==0){
 	    goto error;
 	 }
 	 hf->parsed=vb;

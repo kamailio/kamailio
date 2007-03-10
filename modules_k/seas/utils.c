@@ -131,7 +131,7 @@ int print_msg_info(int fd,struct sip_msg* msg)
    char *payload=0;
    char *prefix=0;
    int retval=-1;
-   if((prefix=pkg_malloc(500))<=0){
+   if((prefix=pkg_malloc(500))==0){
       printf("OUT OF MEMORY !!!\n");
       return -1;
    }

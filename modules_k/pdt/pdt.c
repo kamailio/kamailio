@@ -127,7 +127,7 @@ static mi_export_t mi_cmds[] = {
 	{ "pdt_add",     pdt_mi_add,     0,  0,  child_init },
 	{ "pdt_delete",  pdt_mi_delete,  0,  0,  0 },
 	{ "pdt_list",    pdt_mi_list,    0,  0,  0 },
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
 };
 
 
@@ -960,7 +960,7 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 {
 	str sd, sp, sdomain;
 	pd_t *it;
-	int i= 0;
+	unsigned int i= 0;
 	hash_t *h;
 	struct mi_root* rpl_tree = NULL;
 	struct mi_node* rpl = NULL;

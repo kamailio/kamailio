@@ -178,7 +178,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	       goto error;
 	    }
 	    memset(viabody,0,sizeof(struct via_body));
-	    if(parse_via(hdr->body.s,hdr->body.s+hdr->body.len+1,viabody)<0){
+	    if(parse_via(hdr->body.s,hdr->body.s+hdr->body.len+1,viabody)==0){
 	       myerror="encoding via \n";
 	       goto error;
 	    }
@@ -225,7 +225,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	       goto error;
 	    }
 	    memset(cseqbody,0,sizeof(struct cseq_body));
-	    if(parse_cseq(hdr->name.s,hdr->body.s+hdr->body.len+1,cseqbody)<0){
+	    if(parse_cseq(hdr->name.s,hdr->body.s+hdr->body.len+1,cseqbody)==0){
 	       myerror="encoding cseq header\n";
 	       goto error;
 	    }

@@ -169,7 +169,7 @@ int update_dlg_timer( struct dlg_tl *tl, int timeout )
 
 
 
-static inline struct dlg_tl* get_expired_dlgs(int time)
+static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 {
 	struct dlg_tl *tl , *end, *ret;
 

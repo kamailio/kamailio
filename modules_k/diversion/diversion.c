@@ -128,7 +128,7 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 	char *ptr;
 
 	static struct lump* anchor = 0;
-	static int msg_id = 0;
+	static unsigned int msg_id = 0;
 
 	if (msg_id != msg->id) {
 		msg_id = msg->id;

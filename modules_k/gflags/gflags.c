@@ -100,7 +100,7 @@ static mi_export_t mi_cmds[] = {
 	{ FIFO_RESET_GFLAG, mi_reset_gflag, 0,                 0,  0 },
 	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,                 0,  0 },
 	{ FIFO_GET_GFLAGS,  mi_get_gflags,  MI_NO_INPUT_FLAG,  0,  0 },
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
 };
 
 struct module_exports exports = {

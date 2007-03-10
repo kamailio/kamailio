@@ -110,15 +110,15 @@ static stat_export_t mod_stats[] = {
 
 static mi_export_t mi_cmds[] = {
 	{ "dlg_list",  mi_print_dlgs,   MI_NO_INPUT_FLAG,  0,  0},
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
 };
 
 
 static item_export_t mod_items[] = {
-	{ "DLG_count",    it_get_dlg_count,    100, {{0, 0}, 0} },
-	{ "DLG_lifetime", it_get_dlg_lifetime, 100, {{0, 0}, 0} },
-	{ "DLG_status",   it_get_dlg_status  , 100, {{0, 0}, 0} },
-	{ 0, 0, 0, {{0, 0}, 0} }
+	{ "DLG_count",    it_get_dlg_count,    100, {{0, 0}, 0, 0} },
+	{ "DLG_lifetime", it_get_dlg_lifetime, 100, {{0, 0}, 0, 0} },
+	{ "DLG_status",   it_get_dlg_status  , 100, {{0, 0}, 0, 0} },
+	{ 0, 0, 0, {{0, 0}, 0, 0} }
 };
 
 struct module_exports exports= {
@@ -172,7 +172,7 @@ static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
 
 static int mod_init(void)
 {
-	int n;
+	unsigned int n;
 
 	LOG(L_INFO,"Dialog module - initializing\n");
 

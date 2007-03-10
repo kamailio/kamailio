@@ -59,7 +59,7 @@ struct statstable* init_seas_stats_table()
    return seas_stats_table;
 }
 
-void inline destroy_seas_stats_table()
+inline void destroy_seas_stats_table()
 {
    /*deallocs the table*/
    if(seas_stats_table){
@@ -279,7 +279,7 @@ error:
  * 1 if stats properly started
  * -1 if error
  */
-int inline stop_stats_server()
+inline int stop_stats_server()
 {
    if(pid)
       kill(SIGTERM,pid);

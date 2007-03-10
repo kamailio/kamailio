@@ -57,7 +57,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
  */
 static cmd_export_t cmds[] = {
 	{"options_reply", (cmd_function)opt_reply, 0, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0}
+	{0, 0, 0, 0, 0}
 };
 
 /*

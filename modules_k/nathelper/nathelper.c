@@ -305,7 +305,7 @@ struct rtpp_node {
 	int			rn_fd;		/* control fd */
 	int			rn_disabled;	/* found unaccessible? */
 	unsigned		rn_weight;	/* for load balancing */
-	int			rn_recheck_ticks;
+	unsigned int	rn_recheck_ticks;
 	struct rtpp_node	*rn_next;
 };
 

@@ -107,7 +107,7 @@ static param_export_t params[]={
 static mi_export_t mi_cmds[] = {
 	{ "ds_set_state",   ds_mi_set,   0,                 0,  0 },
 	{ "ds_list",        ds_mi_list,  MI_NO_INPUT_FLAG,  0,  0 },
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
 };
 
 

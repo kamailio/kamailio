@@ -51,8 +51,8 @@ extern char use_stats;
  * Initialize and destroy statistics table
  */
 struct statstable* init_seas_stats_table();
-int inline stop_stats_server();
-void inline destroy_seas_stats_table();
+inline int stop_stats_server();
+inline void destroy_seas_stats_table();
 /** Statistics server process
  * functions
  */

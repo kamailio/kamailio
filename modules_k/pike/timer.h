@@ -50,7 +50,7 @@ void remove_from_timer(struct list_link *head, struct list_link *ll);
 
 void update_in_timer(struct list_link *head, struct list_link *ll);
 
-void check_and_split_timer(struct list_link *head, int time,
+void check_and_split_timer(struct list_link *head, unsigned int time,
 		struct list_link *split, unsigned char *mask);
 
 #endif

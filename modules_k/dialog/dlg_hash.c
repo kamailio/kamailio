@@ -49,8 +49,8 @@ static struct dlg_table *d_table = 0;
 
 int init_dlg_table(unsigned int size)
 {
-	int n;
-	int i;
+	unsigned int n;
+	unsigned int i;
 
 	d_table = (struct dlg_table*)shm_malloc
 		( sizeof(struct dlg_table) + size*sizeof(struct dlg_entry));
@@ -111,7 +111,7 @@ static inline void destroy_dlg(struct dlg_cell *dlg)
 void destroy_dlg_table()
 {
 	struct dlg_cell *dlg, *l_dlg;
-	int i;
+	unsigned int i;
 
 	if (d_table==0)
 		return;
@@ -436,7 +436,8 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 	struct mi_node* rpl = NULL, *node= NULL;
 	struct mi_attr* attr= NULL;
 	struct mi_root* rpl_tree= NULL;
-	int i, len;
+	unsigned int i;
+	int len;
 	char* p;
 
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);

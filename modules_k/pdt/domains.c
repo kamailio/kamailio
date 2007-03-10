@@ -167,7 +167,7 @@ pd_t** init_hash_entries(unsigned int hash_size)
 }
 void free_hash_entries(pd_t** hash, unsigned int hash_size)
 {
-    int   i;
+    unsigned int   i;
     pd_t *tmp, *it;
     if(hash==NULL || hash_size<=0)
 		return;
@@ -691,7 +691,7 @@ str* pdt_get_prefix(hash_list_t *hl, str*sdomain, str* sd)
 
 int check_pd(hash_t *ph, str *sp, str *sd)
 {
-	int i;
+	unsigned int i;
 	unsigned int dhash;
 	pd_t* it;
 	
@@ -759,7 +759,7 @@ int pdt_check_pd(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 
 void pdt_print_hash_list(hash_list_t* hl)
 {
-	int i, count;
+	unsigned int i, count;
 	pd_t *it;
 	hash_t *hash;
 	

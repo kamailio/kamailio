@@ -93,7 +93,7 @@ static param_export_t params[] = {
  */
 static mi_export_t mi_cmds[] = {
 	{ MI_FLAT_ROTATE, mi_flat_rotate_cmd,   MI_NO_INPUT_FLAG,  0,  0 },
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
 };
 
 struct module_exports exports = {

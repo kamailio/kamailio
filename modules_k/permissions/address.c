@@ -122,7 +122,7 @@ int reload_address_table(void)
 	    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
 	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
 	    (VAL_TYPE(val + 2) == DB_INT) && !VAL_NULL(val + 2) && 
-	    ((unsigned int)VAL_INT(val + 2) >= 0) && 
+	    ((unsigned int)VAL_INT(val + 2) > 0) && 
 	    ((unsigned int)VAL_INT(val + 2) <= 32) &&
 	    (VAL_TYPE(val + 3) == DB_INT) && !VAL_NULL(val + 3)) {
 	    if ((unsigned int)VAL_INT(val + 2) == 32) {

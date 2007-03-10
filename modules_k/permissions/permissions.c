@@ -184,7 +184,7 @@ static mi_export_t mi_cmds[] = {
 													mi_addr_child_init },
 	{ MI_ADDRESS_DUMP,    mi_address_dump,    MI_NO_INPUT_FLAG,  0,  0 },
 	{ MI_SUBNET_DUMP,     mi_subnet_dump,     MI_NO_INPUT_FLAG,  0,  0 },
-	{ 0, 0, 0, 0 }
+	{ 0, 0, 0, 0, 0 }
 };
 
 /* Module interface */
