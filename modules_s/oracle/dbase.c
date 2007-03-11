@@ -124,47 +124,46 @@ db_con_t* db_init(const char* _sqlurl)
   /* CON_ORA() could not be used as lvalue due to deprecated lvalue casts. */
   CON_TAIL(p_db_con) = (unsigned long)p_ora_con;
 
-  rc = OCIEnvCreate(&(p_ora_con->p_env), OCI_DEFAULT,
+  rc = OCIEnvCreate(&(p_ora_con->env.ptr), OCI_DEFAULT,
                     NULL, NULL, NULL, NULL, 0, NULL);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(p_ora_con->p_env, rc);
+    OCICHECK(p_ora_con->env.ptr, rc);
     goto db_init_err;
   }
 
-  rc = OCIHandleAlloc(p_ora_con->p_env, (dvoid **)&(p_ora_con->p_err),
-                      OCI_HTYPE_ERROR, 0, 0);
+  rc = OCIHandleAlloc(p_ora_con->env.ptr, &(p_ora_con->err.dvoid_ptr),
+                      OCI_HTYPE_ERROR, 0, NULL);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(p_ora_con->p_err, rc);
+    OCICHECK(p_ora_con->err.ptr, rc);
     goto db_init_err;
   }
 
-  rc = OCIHandleAlloc(p_ora_con->p_env, (dvoid **)&(p_ora_con->p_svc),
-                      OCI_HTYPE_SVCCTX, 0, 0);
+  rc = OCIHandleAlloc(p_ora_con->env.ptr, &(p_ora_con->svc.dvoid_ptr),
+                      OCI_HTYPE_SVCCTX, 0, NULL);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(p_ora_con->p_env, rc);
+    OCICHECK(p_ora_con->env.ptr, rc);
     goto db_init_err;
   }
 
-  rc = OCILogon(p_ora_con->p_env, p_ora_con->p_err, &(p_ora_con->p_svc),
+  rc = OCILogon(p_ora_con->env.ptr, p_ora_con->err.ptr, &(p_ora_con->svc.ptr),
                 (OraText *)sz_user, strlen(sz_user),
                 (OraText *)sz_passwd, strlen(sz_passwd),
                 (OraText *)sz_db, strlen(sz_db));
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(p_ora_con->p_err, rc);
+    OCICHECK(p_ora_con->err.ptr, rc);
     goto db_init_err;
   }
 
 #if DB_PREALLOC_SQLT_HANDLE
-  rc = OCIHandleAlloc(p_ora_con->p_env,
-                      (dvoid **)&(p_ora_con->p_stmt),
-                      OCI_HTYPE_STMT, 0, 0);
+  rc = OCIHandleAlloc(p_ora_con->env.ptr, &(p_ora_con->stmt.dvoid_ptr),
+                      OCI_HTYPE_STMT, 0, NULL);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(p_ora_con->p_env, rc);
+    OCICHECK(p_ora_con->env.ptr, rc);
     goto db_init_err;
   }
 #endif
@@ -173,13 +172,13 @@ db_con_t* db_init(const char* _sqlurl)
 
 db_init_err:
 #if DB_PREALLOC_SQLT_HANDLE
-  if (p_ora_con->p_stmt != NULL)
-    OCICHECK(p_ora_con->p_env, OCIHandleFree(p_ora_con->p_stmt, OCI_HTYPE_STMT));
+  if (p_ora_con->stmt.ptr != NULL)
+    OCICHECK(p_ora_con->env.ptr, OCIHandleFree(p_ora_con->stmt.ptr, OCI_HTYPE_STMT));
 #endif
-  if (p_ora_con->p_svc != NULL)
-    OCICHECK(p_ora_con->p_env, OCIHandleFree(p_ora_con->p_svc, OCI_HTYPE_SVCCTX));
-  if (p_ora_con->p_err != NULL)
-    OCICHECK(p_ora_con->p_env, OCIHandleFree(p_ora_con->p_err, OCI_HTYPE_ERROR));
+  if (p_ora_con->svc.ptr != NULL)
+    OCICHECK(p_ora_con->env.ptr, OCIHandleFree(p_ora_con->svc.ptr, OCI_HTYPE_SVCCTX));
+  if (p_ora_con->err.ptr != NULL)
+    OCICHECK(p_ora_con->env.ptr, OCIHandleFree(p_ora_con->err.ptr, OCI_HTYPE_ERROR));
   if (p_ora_con)
   {
     pkg_free(p_ora_con);
@@ -208,31 +207,31 @@ void db_close(db_con_t* _h)
   DBG("%s\n", __FUNCTION__);
 
 #if DB_PREALLOC_SQLT_HANDLE
-  rc = OCIHandleFree(CON_ORA(_h)->p_stmt, OCI_HTYPE_STMT);
+  rc = OCIHandleFree(CON_ORA(_h)->stmt.ptr, OCI_HTYPE_STMT);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_env, rc);
+    OCICHECK(CON_ORA(_h)->env.ptr, rc);
   }
 #endif
 
-  rc = OCILogoff(CON_ORA(_h)->p_svc, CON_ORA(_h)->p_err);
+  rc = OCILogoff(CON_ORA(_h)->svc.ptr, CON_ORA(_h)->err.ptr);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_err, rc);
+    OCICHECK(CON_ORA(_h)->err.ptr, rc);
   }
 
-  /* Note: p_svc handle was released by OCILogoff() function. */
+  /* Note: svc.ptr handle was released by OCILogoff() function. */
 
-  rc = OCIHandleFree(CON_ORA(_h)->p_err, OCI_HTYPE_ERROR);
+  rc = OCIHandleFree(CON_ORA(_h)->err.ptr, OCI_HTYPE_ERROR);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_env, rc);
+    OCICHECK(CON_ORA(_h)->env.ptr, rc);
   }
 
   rc = OCITerminate(OCI_DEFAULT);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_env, rc);
+    OCICHECK(CON_ORA(_h)->env.ptr, rc);
   }
 
   if (CON_ORA(_h) != NULL)
@@ -295,7 +294,7 @@ int db_query(db_con_t* _h, db_key_t* _k,
   rc = init_db_res(_r, params_num);
   if (rc != 0) goto err_cleanup;
 
-  while ((rc = OCIStmtFetch(CON_ORA(_h)->p_stmt, CON_ORA(_h)->p_err, 1, 0, 0))
+  while ((rc = OCIStmtFetch(CON_ORA(_h)->stmt.ptr, CON_ORA(_h)->err.ptr, 1, 0, 0))
             == OCI_SUCCESS)
   {
     rc = convert_row(params_num, *_r);
@@ -304,7 +303,7 @@ int db_query(db_con_t* _h, db_key_t* _k,
 
   if (rc != OCI_SUCCESS && rc != OCI_NO_DATA)
   {
-    OCICHECK(CON_ORA(_h)->p_err, rc);
+    OCICHECK(CON_ORA(_h)->err.ptr, rc);
     rc = -1;
     goto err_cleanup;
   }
@@ -374,7 +373,7 @@ int db_free_result(db_con_t* _h, db_res_t* _r)
       {
         if (VAL_TYPE(p_val) == DB_STRING && VAL_STRING(p_val) != NULL)
         {
-          pkg_free(VAL_STRING(p_val));
+          pkg_free((void *)VAL_STRING(p_val)); /* XXX Get rid of cast */
           VAL_STRING(p_val) = NULL;
           DBG("%s: DB_STRING memory released\n", __FUNCTION__);
         }
@@ -651,13 +650,13 @@ static int bind_values(db_con_t* _h, db_val_t* _v, int _n, int bound_count)
     }
   
     p_bnd = NULL; /* XXX Not used so far */
-    rc = OCIBindByPos(CON_ORA(_h)->p_stmt, &p_bnd, CON_ORA(_h)->p_err,
+    rc = OCIBindByPos(CON_ORA(_h)->stmt.ptr, &p_bnd, CON_ORA(_h)->err.ptr,
                       bound_count + i + 1, p_bind_val, bind_val_sz,
                       bind_val_type, &ora_bind_inds[i], 0, 0, 0, 0,
                       OCI_DEFAULT);
     if (rc != OCI_SUCCESS)
     {
-      OCICHECK(CON_ORA(_h)->p_err, rc);
+      OCICHECK(CON_ORA(_h)->err.ptr, rc);
       return -1;
     }
   }
@@ -693,8 +692,8 @@ static int define_params(db_con_t* _h, int _nc)
 
   /* XXX handle case when _nc is defined separately to avoid extra call
    *     to OCIParamGet() */
-  while ((rc = OCIParamGet(CON_ORA(_h)->p_stmt, OCI_HTYPE_STMT,
-                           CON_ORA(_h)->p_err,
+  while ((rc = OCIParamGet(CON_ORA(_h)->stmt.ptr, OCI_HTYPE_STMT,
+                           CON_ORA(_h)->err.ptr,
                            &p_param, ora_params_num + 1)) == OCI_SUCCESS)
   {
     if (ora_params_num == ORA_PARAMS_MAX)
@@ -711,7 +710,7 @@ static int define_params(db_con_t* _h, int _nc)
       pkg_malloc(ora_params[ora_params_num].size);
   
     p_dfn = NULL; /* XXX currently unused */
-    rc = OCIDefineByPos(CON_ORA(_h)->p_stmt, &p_dfn, CON_ORA(_h)->p_err,
+    rc = OCIDefineByPos(CON_ORA(_h)->stmt.ptr, &p_dfn, CON_ORA(_h)->err.ptr,
                         ora_params_num + 1,
                         ora_params[ora_params_num].p_data,
                         ora_params[ora_params_num].size,
@@ -719,7 +718,7 @@ static int define_params(db_con_t* _h, int _nc)
                         &ora_params[ora_params_num].ind, 0, 0, OCI_DEFAULT);
     if (rc != OCI_SUCCESS)
     {
-      OCICHECK(CON_ORA(_h)->p_err, rc);
+      OCICHECK(CON_ORA(_h)->err.ptr, rc);
       return -1;
     }
     
@@ -733,7 +732,7 @@ static int define_params(db_con_t* _h, int _nc)
      * OCIParamGet(). This is the only(?) way to handle 'select *'
      * statement while using non-scrollable cursor.
      */
-    if (OCICHECK(CON_ORA(_h)->p_err, rc) != 24334 || rc != OCI_ERROR)
+    if (OCICHECK(CON_ORA(_h)->err.ptr, rc) != 24334 || rc != OCI_ERROR)
     {
       return -1;
     }
@@ -779,10 +778,10 @@ static int map_int_param_type_and_size_to_ext(db_con_t* _h, dvoid* p_param,
   sword rc;
   
   rc = OCIAttrGet(p_param, OCI_DTYPE_PARAM, &ora_params[ora_params_num].type,
-                  0, OCI_ATTR_DATA_TYPE, CON_ORA(_h)->p_err);
+                  0, OCI_ATTR_DATA_TYPE, CON_ORA(_h)->err.ptr);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_err, rc);
+    OCICHECK(CON_ORA(_h)->err.ptr, rc);
     return -1;
   }
 
@@ -797,10 +796,10 @@ static int map_int_param_type_and_size_to_ext(db_con_t* _h, dvoid* p_param,
     {
       rc = OCIAttrGet(p_param, OCI_DTYPE_PARAM,
                       &ora_params[ora_params_num].size,
-                      0, OCI_ATTR_DATA_SIZE, CON_ORA(_h)->p_err);
+                      0, OCI_ATTR_DATA_SIZE, CON_ORA(_h)->err.ptr);
       if (rc != OCI_SUCCESS)
       {
-        OCICHECK(CON_ORA(_h)->p_err, rc);
+        OCICHECK(CON_ORA(_h)->err.ptr, rc);
         return -1;
       }
 
@@ -846,19 +845,19 @@ static int map_int_param_type_and_size_to_ext(db_con_t* _h, dvoid* p_param,
       
       rc = OCIAttrGet(p_param, OCI_DTYPE_PARAM,
                       &precision,
-                      0, OCI_ATTR_PRECISION, CON_ORA(_h)->p_err);
+                      0, OCI_ATTR_PRECISION, CON_ORA(_h)->err.ptr);
       if (rc != OCI_SUCCESS)
       {
-        OCICHECK(CON_ORA(_h)->p_err, rc);
+        OCICHECK(CON_ORA(_h)->err.ptr, rc);
         return -1;
       }
 
       rc = OCIAttrGet(p_param, OCI_DTYPE_PARAM,
                       &scale,
-                      0, OCI_ATTR_SCALE, CON_ORA(_h)->p_err);
+                      0, OCI_ATTR_SCALE, CON_ORA(_h)->err.ptr);
       if (rc != OCI_SUCCESS)
       {
-        OCICHECK(CON_ORA(_h)->p_err, rc);
+        OCICHECK(CON_ORA(_h)->err.ptr, rc);
         return -1;
       }
 
@@ -1130,30 +1129,30 @@ static int oci_prepare(db_con_t *_h)
   DBG("%s\n", __FUNCTION__);
 
 #if !DB_PREALLOC_SQLT_HANDLE
-  sword rc = OCIHandleAlloc(CON_ORA(_h)->p_env,
-                            (dvoid **)&(CON_ORA(_h)->p_stmt),
-                            OCI_HTYPE_STMT, 0, 0);
+  sword rc = OCIHandleAlloc(CON_ORA(_h)->env.ptr,
+                            (dvoid **)&(CON_ORA(_h)->stmt.ptr),
+                            OCI_HTYPE_STMT, 0, NULL);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_env, rc);
+    OCICHECK(CON_ORA(_h)->env.ptr, rc);
     return -1;
   }
 #else
   sword
 #endif
 
-  rc = OCIStmtPrepare(CON_ORA(_h)->p_stmt, CON_ORA(_h)->p_err,
+  rc = OCIStmtPrepare(CON_ORA(_h)->stmt.ptr, CON_ORA(_h)->err.ptr,
                       (OraText *)prepared_sql(), prepared_sql_len(),
                       OCI_NTV_SYNTAX, OCI_DEFAULT);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_err, rc);
+    OCICHECK(CON_ORA(_h)->err.ptr, rc);
 
 #if !DB_PREALLOC_SQLT_HANDLE
-    if (CON_ORA(_h)->p_stmt != NULL)
+    if (CON_ORA(_h)->stmt.ptr != NULL)
     {
-      OCICHECK(CON_ORA(_h)->p_env,
-               OCIHandleFree(CON_ORA(_h)->p_stmt, OCI_HTYPE_STMT));
+      OCICHECK(CON_ORA(_h)->env.ptr,
+               OCIHandleFree(CON_ORA(_h)->stmt.ptr, OCI_HTYPE_STMT));
     }
 #endif
     return -2;
@@ -1167,12 +1166,12 @@ static int oci_execute(db_con_t *_h, ub4 iters)
 {
   DBG("%s\n", __FUNCTION__);
 
-  sword rc = OCIStmtExecute(CON_ORA(_h)->p_svc, CON_ORA(_h)->p_stmt,
-                            CON_ORA(_h)->p_err, iters, 0, NULL, NULL,
+  sword rc = OCIStmtExecute(CON_ORA(_h)->svc.ptr, CON_ORA(_h)->stmt.ptr,
+                            CON_ORA(_h)->err.ptr, iters, 0, NULL, NULL,
                             OCI_COMMIT_ON_SUCCESS);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_err, rc);
+    OCICHECK(CON_ORA(_h)->err.ptr, rc);
     return -1;
   }
   return 0;
@@ -1183,10 +1182,10 @@ static int oci_cleanup(db_con_t *_h)
 {
   DBG("%s\n", __FUNCTION__);
 
-  sword rc = OCIHandleFree(CON_ORA(_h)->p_stmt, OCI_HTYPE_STMT);
+  sword rc = OCIHandleFree(CON_ORA(_h)->stmt.ptr, OCI_HTYPE_STMT);
   if (rc != OCI_SUCCESS)
   {
-    OCICHECK(CON_ORA(_h)->p_env, rc);
+    OCICHECK(CON_ORA(_h)->env.ptr, rc);
     return -1;
   }
   return 0;

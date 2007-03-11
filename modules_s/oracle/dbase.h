@@ -43,10 +43,25 @@
 /* A pointer to this structure is assigned to CON_TAIL(_h). */
 typedef struct _ora_con_t
 {
-  OCIEnv    *p_env;
-  OCIError  *p_err;
-  OCISvcCtx *p_svc;
-  OCIStmt   *p_stmt;
+  union {
+    OCIEnv    *ptr;
+    dvoid     *dvoid_ptr;
+  } env;
+
+  union {
+    OCIError  *ptr;
+    dvoid     *dvoid_ptr;
+  } err;
+
+  union {
+    OCISvcCtx *ptr;
+    dvoid     *dvoid_ptr;
+  } svc;
+
+  union {
+    OCIStmt   *ptr;
+    dvoid     *dvoid_ptr;
+  } stmt;
 
 } ora_con_t;
 
