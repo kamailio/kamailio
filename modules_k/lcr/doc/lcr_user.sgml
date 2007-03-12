@@ -372,66 +372,22 @@ modparam("lcr","priority_column","priority")
 	</section>
 
 <section>
-		<title><varname>gw_uri_avp</varname> (string)</title>
+		<title><varname>contact_avp</varname> (AVP string)</title>
 		<para>
-   Overrides the name of the AVP containing URI scheme, host, port, and
-   transport of a gateway.  If the string name of the AVP contains only
-   digits, the name of the AVP is integer value of the string.
+		Internal AVP that load_contacts function uses to store
+		contacts of the destination set.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>1400</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>gw_uri_avp</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","gw_uri_avp","1400")
-...
-</programlisting>
-		</example>
-	</section>
-<section>
-		<title><varname>ruri_user_avp</varname> (string)</title>
-		<para>
-   Overrides the name of the AVP containing user part of Request-URI
-   after the first next_gw() call.  If the string
-   name of the AVP contains only digits, the name of the AVP is integer
-   value of the string.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>1402</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>ruri_user_avp</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","ruri_user_avp","500")
-...
-</programlisting>
-		</example>
-	</section>
-
-<section>
-		<title><varname>contact_avp</varname> (string)</title>
-		<para>
-		Overrides the name of the AVP containing the contact. If the string 
-		name of the AVP contains only digits, the name of the AVP is integer 
-		value of the string.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>1401</quote>.
+			There is NO default value, thus this variable must
+			be defined in openser.cfg.
 		</emphasis>
 		</para>
 		<example>
 		<title>Setting <varname>contact_avp</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","contact_avp","1401")
+modparam("lcr", "contact_avp", "$avp(i:711)")
 
 ...
 </programlisting>
@@ -439,21 +395,88 @@ modparam("lcr","contact_avp","1401")
 	</section>
 
 <section>
-		<title><varname>fr_inv_timer_avp</varname> (string)</title>
+		<title><varname>fr_inv_timer_avp</varname> (AVP string)</title>
 		<para>
-		Overrides the name of the AVP carrying the Final Response timeout 
-		for INVITEs.
+		An AVP that contains a final response timeout
+		for INVITEs.  Its value must be the same as that of the
+		corresponding tm module parameter.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>fr_inv_timer_avp</quote>.
+			There is NO default value, thus this variable must
+			be defined in openser.cfg.
 		</emphasis>
 		</para>
 		<example>
 		<title>Setting <varname>fr_inv_timer_avp</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","fr_inv_timer_avp","fr_inv_timer_avp")
+modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>gw_uri_avp</varname> (AVP string)</title>
+		<para>
+   Internal AVP that load_gws function uses to store information of
+   matching gateways.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, thus this variable must
+			be defined in openser.cfg.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_uri_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "gw_uri_avp", "$avp(i:709)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>rpid_avp</varname> (AVP string)</title>
+		<para>
+		An AVP that contains caller's RPID (if any).
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, thus this variable must
+			be defined in openser.cfg.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>rpid_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("^auth$|domain|lcr", "rpid_avp", "$avp(i:302)")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>ruri_user_avp</varname> (AVP string)</title>
+		<para>
+   Internal AVP that next_gw function uses to store Request-URI user for
+   subsequent next_gw calls.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, thus this variable must
+			be defined in openser.cfg.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>ruri_user_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 ...
 </programlisting>
 		</example>
@@ -502,26 +525,6 @@ modparam("lcr","fr_inv_timer",90)
 		<programlisting format="linespecific">
 ...
 modparam("lcr","fr_inv_timer_next",30)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>rpid_avp</varname> (string)</title>
-		<para>
-		Sets the string name of the AVP containing the RPID.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>rpid</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>rpid_avp</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","rpid_avp","rpid")
 ...
 </programlisting>
 		</example>

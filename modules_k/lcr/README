@@ -34,13 +34,13 @@ Juha Heinanen
               1.3.11. prefix_column (string)
               1.3.12. from_uri_column (string)
               1.3.13. priority_column (string)
-              1.3.14. gw_uri_avp (string)
-              1.3.15. ruri_user_avp (string)
-              1.3.16. contact_avp (string)
-              1.3.17. fr_inv_timer_avp (string)
-              1.3.18. fr_inv_timer (integer)
-              1.3.19. fr_inv_timer_next (integer)
-              1.3.20. rpid_avp (string)
+              1.3.14. contact_avp (AVP string)
+              1.3.15. fr_inv_timer_avp (AVP string)
+              1.3.16. gw_uri_avp (AVP string)
+              1.3.17. rpid_avp (AVP string)
+              1.3.18. ruri_user_avp (AVP string)
+              1.3.19. fr_inv_timer (integer)
+              1.3.20. fr_inv_timer_next (integer)
 
         1.4. Exported Functions
 
@@ -76,13 +76,13 @@ Juha Heinanen
    1-11. Setting prefix_column module parameter
    1-12. Setting from_uri_column module parameter
    1-13. Setting priority_column module parameter
-   1-14. Setting gw_uri_avp module parameter
-   1-15. Setting ruri_user_avp module parameter
-   1-16. Setting contact_avp module parameter
-   1-17. Setting fr_inv_timer_avp module parameter
-   1-18. Setting fr_inv_timer module parameter
-   1-19. Setting fr_inv_timer_next module parameter
-   1-20. Setting rpid_avp module parameter
+   1-14. Setting contact_avp module parameter
+   1-15. Setting fr_inv_timer_avp module parameter
+   1-16. Setting gw_uri_avp module parameter
+   1-17. Setting rpid_avp module parameter
+   1-18. Setting ruri_user_avp module parameter
+   1-19. Setting fr_inv_timer module parameter
+   1-20. Setting fr_inv_timer_next module parameter
    1-21. load_gws usage
    1-22. load_gws usage with group-id
    1-23. next_gw usage from a route block
@@ -321,78 +321,91 @@ modparam("lcr","priority_column","priority")
 ...
      _________________________________________________________
 
-1.3.14. gw_uri_avp (string)
+1.3.14. contact_avp (AVP string)
 
-   Overrides the name of the AVP containing URI scheme, host,
-   port, and transport of a gateway. If the string name of the
-   AVP contains only digits, the name of the AVP is integer value
-   of the string.
+   Internal AVP that load_contacts function uses to store
+   contacts of the destination set.
 
-   Default value is "1400". 
+   There is NO default value, thus this variable must be defined
+   in openser.cfg. 
 
-   Example 1-14. Setting gw_uri_avp module parameter
+   Example 1-14. Setting contact_avp module parameter
 ...
-modparam("lcr","gw_uri_avp","1400")
-...
-     _________________________________________________________
-
-1.3.15. ruri_user_avp (string)
-
-   Overrides the name of the AVP containing user part of
-   Request-URI after the first next_gw() call. If the string name
-   of the AVP contains only digits, the name of the AVP is
-   integer value of the string.
-
-   Default value is "1402". 
-
-   Example 1-15. Setting ruri_user_avp module parameter
-...
-modparam("lcr","ruri_user_avp","500")
-...
-     _________________________________________________________
-
-1.3.16. contact_avp (string)
-
-   Overrides the name of the AVP containing the contact. If the
-   string name of the AVP contains only digits, the name of the
-   AVP is integer value of the string.
-
-   Default value is "1401". 
-
-   Example 1-16. Setting contact_avp module parameter
-...
-modparam("lcr","contact_avp","1401")
+modparam("lcr", "contact_avp", "$avp(i:711)")
 
 ...
      _________________________________________________________
 
-1.3.17. fr_inv_timer_avp (string)
+1.3.15. fr_inv_timer_avp (AVP string)
 
-   Overrides the name of the AVP carrying the Final Response
-   timeout for INVITEs.
+   An AVP that contains a final response timeout for INVITEs. Its
+   value must be the same as that of the corresponding tm module
+   parameter.
 
-   Default value is "fr_inv_timer_avp". 
+   There is NO default value, thus this variable must be defined
+   in openser.cfg. 
 
-   Example 1-17. Setting fr_inv_timer_avp module parameter
+   Example 1-15. Setting fr_inv_timer_avp module parameter
 ...
-modparam("lcr","fr_inv_timer_avp","fr_inv_timer_avp")
+modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
 ...
      _________________________________________________________
 
-1.3.18. fr_inv_timer (integer)
+1.3.16. gw_uri_avp (AVP string)
+
+   Internal AVP that load_gws function uses to store information
+   of matching gateways.
+
+   There is NO default value, thus this variable must be defined
+   in openser.cfg. 
+
+   Example 1-16. Setting gw_uri_avp module parameter
+...
+modparam("lcr", "gw_uri_avp", "$avp(i:709)")
+...
+     _________________________________________________________
+
+1.3.17. rpid_avp (AVP string)
+
+   An AVP that contains caller's RPID (if any).
+
+   There is NO default value, thus this variable must be defined
+   in openser.cfg. 
+
+   Example 1-17. Setting rpid_avp module parameter
+...
+modparam("^auth$|domain|lcr", "rpid_avp", "$avp(i:302)")
+...
+     _________________________________________________________
+
+1.3.18. ruri_user_avp (AVP string)
+
+   Internal AVP that next_gw function uses to store Request-URI
+   user for subsequent next_gw calls.
+
+   There is NO default value, thus this variable must be defined
+   in openser.cfg. 
+
+   Example 1-18. Setting ruri_user_avp module parameter
+...
+modparam("lcr", "ruri_user_avp", "$avp(i:500)")
+...
+     _________________________________________________________
+
+1.3.19. fr_inv_timer (integer)
 
    Sets the value of the fist INVITE's Final Response timeout to
    be used during sequential forwarding:
 
    Default value is 90. 
 
-   Example 1-18. Setting fr_inv_timer module parameter
+   Example 1-19. Setting fr_inv_timer module parameter
 ...
 modparam("lcr","fr_inv_timer",90)
 ...
      _________________________________________________________
 
-1.3.19. fr_inv_timer_next (integer)
+1.3.20. fr_inv_timer_next (integer)
 
    Sets the value of the next INVITE's Final Response timeouts to
    be used during sequential forwarding:
@@ -404,21 +417,9 @@ modparam("lcr","fr_inv_timer",90)
 
    Default value is 30. 
 
-   Example 1-19. Setting fr_inv_timer_next module parameter
+   Example 1-20. Setting fr_inv_timer_next module parameter
 ...
 modparam("lcr","fr_inv_timer_next",30)
-...
-     _________________________________________________________
-
-1.3.20. rpid_avp (string)
-
-   Sets the string name of the AVP containing the RPID.
-
-   Default value is "rpid". 
-
-   Example 1-20. Setting rpid_avp module parameter
-...
-modparam("lcr","rpid_avp","rpid")
 ...
      _________________________________________________________
 
