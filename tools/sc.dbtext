@@ -854,7 +854,9 @@ case $1 in
 	dbtext)
 		
 		if [ $# -eq 1 ] ; then
-			DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+			if [ -z "$DBTEXT_PATH" ] ; then
+				DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+			fi
 		elif [ $# -eq 2 ]; then
 			DBTEXT_PATH=$2
 		else 
