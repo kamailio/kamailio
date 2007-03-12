@@ -1,9 +1,4 @@
-openser (1.2.0-0svn) UNRELEASED; urgency=low
-
-  * OpenSER SVN BUILD.
-  * NOT YET RELEASED: OpenSER 1.2.0 test build.
-
-  * Source: use the OpenSER TLS tarball
+openser (1.2.0-0) unstable; urgency=low
 
   * debian/control:
     + New packages: openser-presence-modules, openser-xmlrpc-module,
