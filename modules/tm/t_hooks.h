@@ -95,14 +95,34 @@ struct cell;
  * incomplete -- this callback is called in very early stage
  * before the message is shmem-ized (so that you can work
  * with it).
+ * It's safe to install other TMCB callbacks from here.
+ * Note: this callback MUST be installed before forking
+ * (the req_in_tmcb_hl callback list does not live in shmem and has no access
+ * protection), i.e., at best from mod_init functions.
+ *
+ * Note: all the other callbacks MUST be installed before or immediately after
+ *  the transaction is created (they must not be installed from any place 
+ *  where the transaction callbacks can be run or added simultaneously with 
+ *  the add operation). Another safe way of installing them is to hold the
+ *  REPLY lock prior to adding a callback.
+ *  In general it's not safe to register callbacks from other TMCB callbacks,
+ *  unless the contrary is explicitly stated in the TMCB callback description.
+ *  For example a good place for installing them is from a TMCB_REQUEST_IN 
+ *  callback.
  *
  * TMCB_RESPONSE_IN -- a brand-new reply was received which matches
- * an existing transaction. It may or may not be a retransmission.
+ * an existing non-local transaction. It may or may not be a retransmission.
+ * No lock is held here (yet).
+ * It's unsafe to register other TMCB callbacks.
  *
  *  TMCB_RESPONSE_OUT -- a final reply was sent out (either local
  *  or proxied) -- there is nothing more you can change from
- *  the callback, it is good for accounting-like uses.
- *
+ *  the callback, it is good for accounting-like uses. No lock is held.
+ *  It's unsafe to registers other callbacks to the current transaction from
+ *   the TMCB_RESPONSE_OUT callback.
+ *  Known BUGS: it's called also for provisional replies for relayed replies.
+ *  For local replies it's called only for the final reply.
+ *    
  *    Note: the message passed to callback may also have
  *    value FAKED_REPLY (like other reply callbacks) which
  *    indicates a pseudo_reply caused by a timer. Check for
@@ -123,7 +143,9 @@ struct cell;
  *
  *  TMCB_ON_FAILURE -- called on receipt of a reply or timer;
  *  it means all branches completed with a failure; that's
- *  a chance for example to add new transaction branches
+ *  a chance for example to add new transaction branches.
+ *  WARNING: the REPLY lock is held.
+ *  It is safe to add more callbacks from here.
  *
  *  TMCB_RESPONSE_FWDED -- called when a reply is about to be
  *  forwarded; it is called after a message is received but before
@@ -134,7 +156,7 @@ struct cell;
  *  has not been executed and may fail, there is no guarantee
  *  a reply will be successfully sent out at this point of time.
  *
- *     Note: TMCB_REPLY_ON_FAILURE and TMCB_REPLY_FWDED are
+ *     Note: TMCB_ON_FAILURE and TMCB_REPLY_FWDED are
  *     called from reply mutex which is used to deterministically
  *     process multiple replies received in parallel. A failure
  *     to set the mutex again or stay too long in the callback
@@ -152,20 +174,32 @@ struct cell;
  *  because it can be only dialog-wise matched, only the first
  *  transaction occurrence will be matched with spirals. If
  *  record-routing is not enabled, you will never receive the
- *  ACK and the callback will be never triggered.
- *
+ *  ACK and the callback will be never triggered. In general it's called only
+ *   for the first ACK but it can be also called multiple times 
+ *   quasi-simultaneously if multiple ACK copies arrive in parallel or if
+ *   ACKs with different (never seen before) to-tags are received.
  *
  *  TMCB_REQUEST_FWDED -- request is being forwarded out. It is
- *  called before a message is forwarded and it is your last
- *  chance to change its shape.
+ *  called before a message is forwarded, when the corresponding branch
+ *   is created (it's called for each branch) and it is your last
+ *  chance to change its shape. It can also be called from the failure
+ *   router (via t_relay/t_forward_nonack) and in this case the REPLY lock 
+ *   will be held.
+ *  It's unsafe to register other TMCB callbacks (except if it it's called
+ * from the failure route).
  *
- *  TMCB_LOCAL COMPLETED -- final reply for localy initiated
- *  transaction arrived. Message may be FAKED_REPLY.
+ *  TMCB_LOCAL_COMPLETED -- final reply for localy initiated
+ *  transaction arrived. Message may be FAKED_REPLY. Can be called multiple
+ *  times, no lock is held.
+ *  It's unsafe to register other TMCB callbacks (unless this is protected
+ *  by the reply lock).
  *
-
-	note that callbacks MUST be installed before forking
-	(callback lists do not live in shmem and have no access
-	protection), i.e., at best from mod_init functions.
+ *  TMCB_LOCAL_REPONSE_OUT -- provisional reply for localy initiated 
+ *  transaction. The message may be a FAKED_REPLY and the callback might be 
+ *  called multiple time quasi-simultaneously. No lock is held.
+ *  It's unsafe to register other TMCB callbacks.
+ *
+ *
 
 	the callback's param MUST be in shared memory and will
 	NOT be freed by TM; you must do it yourself from the
