@@ -151,7 +151,7 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
 	</section>
  	<section>
- 		<title><varname>dst_avp_id</varname> (str)</title>
+ 		<title><varname>dst_avp</varname> (str)</title>
  		<para>
  		The name of the avp which will hold the list with addresses, in the
 		order
