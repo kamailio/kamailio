@@ -511,7 +511,8 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 				is ommited, the result is stored in 
 				<quote>$avp(i:1);$avp(i:2);...</quote>. If the result gives
 				many rows, then multiple AVPs with corresponding name will
-				be added.
+				be added. The value type of the AVP (string or integer) will
+				be derived from the type of the columns.
 				</para>
 			</listitem>
 			</itemizedlist>

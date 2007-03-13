@@ -403,6 +403,8 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
        parameter is ommited, the result is stored in
        "$avp(i:1);$avp(i:2);...". If the result gives many rows,
        then multiple AVPs with corresponding name will be added.
+       The value type of the AVP (string or integer) will be
+       derived from the type of the columns.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
