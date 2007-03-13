@@ -4,17 +4,20 @@
 
 DH_COMPAT=$(shell cat $(CURDIR)/debian/compat)
 
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+
 ALL_PACKAGES = openser openser-mysql-module openser-postgres-module \
 	openser-jabber-module openser-cpl-module openser-radius-modules \
-	openser-unixodbc-module openser-presence-modules openser-xmlrpc-module
+	openser-unixodbc-module openser-presence-modules openser-xmlrpc-module \
+	openser-perl-module openser-snmpstats-module openser-xmpp-module
 
 DEBVERSION:=$(shell head -n 1 debian/changelog \
                     | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
 UPVERSION:=$(shell echo $(DEBVERSION) | sed -e 's/^.*://' -e 's/-[0-9.]*$$//' -e 's/.dfsg$$//')
 
 FILENAME := openser_$(UPVERSION).orig.tar.gz
-UPFILENAME := openser-$(UPVERSION)-notls_src.tar.gz
-URL := http://openser.org/pub/openser/$(UPVERSION)/src/openser-$(UPVERSION)-notls_src.tar.gz
+UPFILENAME := openser-$(UPVERSION)-tls_src.tar.gz
+URL := http://openser.org/pub/openser/$(UPVERSION)/src/openser-$(UPVERSION)-tls_src.tar.gz
 
 # Uncomment this to turn on verbose mode.
 # export DH_VERBOSE=1
@@ -23,8 +26,9 @@ URL := http://openser.org/pub/openser/$(UPVERSION)/src/openser-$(UPVERSION)-notl
 include /usr/share/dpatch/dpatch.make
 
 
-# Is this the TLS version ?
-TLS=$(shell test -d tls && echo 1)
+# Do we want the TLS version ?
+# Disabled by default due to license issues, set to non-void to enable
+TLS=
 
 # modules depending on mysql
 MYSQL_MODULES = mysql
@@ -32,8 +36,8 @@ MYSQL_MODULES = mysql
 POSTGRES_MODULES = postgres
 # modules depending on unixODBC
 UNIXODBC_MODULES=unixodbc
-# jabber related modules
-JABBER_MODULES = jabber xmpp
+# jabber module
+JABBER_MODULES = jabber
 # cpl related modules
 CPL_MODULES = cpl-c
 # module depending on radiusclient
@@ -42,9 +46,14 @@ RADIUS_MODULES = avp_radius auth_radius group_radius uri_radius
 PRESENCE_MODULES = presence pua pua_mi pua_usrloc
 # XMLRPC module
 XMLRPC_MODULES = mi_xmlrpc
+# Perl module
+PERL_MODULES = perl
+# SNMPstats module
+SNMPSTATS_MODULES = snmpstats
+# XMPP module
+XMPP_MODULES = xmpp
 
-
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES)
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES)
 
 # modules not in the "main" package or unstable modules
 EXCLUDED_MODULES = $(ALL_MODULES) pa osp
@@ -58,9 +67,12 @@ CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
 RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
 PRESENCE_MOD_PATH=$(addprefix modules/, $(PRESENCE_MODULES))
 XMLRPC_MOD_PATH=$(addprefix modules/, $(XMLRPC_MODULES))
+PERL_MOD_PATH=$(addprefix modules/, $(PERL_MODULES))
+SNMPSTATS_MOD_PATH=$(addprefix modules/, $(SNMPSTATS_MODULES))
+XMPP_MOD_PATH=$(addprefix modules/, $(XMPP_MODULES))
 
 ifeq (cc, $(CC))
-CC = gcc
+	CC = gcc
 endif
 
 CFLAGS = -Wall -g
@@ -68,7 +80,7 @@ CFLAGS = -Wall -g
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
         CFLAGS += -O0
 else
-        CFLAGS += -O2
+	CFLAGS += -O2
 endif
 
 ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
@@ -97,6 +109,9 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PRESENCE_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMLRPC_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PERL_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(SNMPSTATS_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMPP_MOD_PATH)" cfg-target=/etc/openser/
 
 	touch build-stamp
 
@@ -162,7 +177,7 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-unixodbc-module
 
-	#install only the jabber module
+	# install only the jabber module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-jabber-module \
 		prefix=/usr \
@@ -170,7 +185,7 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-jabber-module
 
-	#install only the cpl module
+	# install only the cpl module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-cpl-module \
 		prefix=/usr \
@@ -178,7 +193,7 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-cpl-module
 
-	#install only the radius modules
+	# install only the radius modules
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-radius-modules \
 		prefix=/usr \
@@ -189,7 +204,7 @@ install: build
 	mkdir -p $(CURDIR)/debian/openser-radius-modules/etc/openser/
 	mv $(CURDIR)/debian/openser/etc/openser/dictionary.radius $(CURDIR)/debian/openser-radius-modules/etc/openser/
 
-	#install only the presence modules
+	# install only the presence modules
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PRESENCE_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-presence-modules \
 		prefix=/usr \
@@ -197,7 +212,7 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-presence-modules
 
-	#install only the xmlrpc module
+	# install only the xmlrpc module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-xmlrpc-module \
 		prefix=/usr \
@@ -205,6 +220,34 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-xmlrpc-module
 
+	# install only the perl module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PERL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-perl-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-perl-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-perl-module
+
+	# install only the snmpstats module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(SNMPSTATS_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-snmpstats-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-snmpstats-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-snmpstats-module
+
+	# install only the xmpp module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(XMPP_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-xmpp-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-xmpp-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-xmpp-module
+
+
+	# the modules packages all ship an empty /usr/sbin directory, let's clean that up
+	for p in $(ALL_PACKAGES); \
+		do rmdir --ignore-fail-on-non-empty $(CURDIR)/debian/$$p/usr/sbin; done
 
 # This single target is used to build all the packages, all at once, or
 # one at a time. So keep in mind: any options passed to commands here will
@@ -232,7 +275,7 @@ ifeq ($(DH_COMPAT),4)
 	done
 else
 	dh_strip --dbg-package=openser-dbg
-endif
+endif   
 	dh_compress 
 	dh_fixperms
 	dh_installdeb
