@@ -112,7 +112,7 @@ natping(unsigned int ticks, void *param)
 	if (rval > 0) {
 		if (buf != NULL)
 			pkg_free(buf);
-		cblen = rval * 2;
+		cblen = (cblen + rval) * 2;
 		buf = pkg_malloc(cblen);
 		if (buf == NULL) {
 			LOG(L_ERR, "ERROR: nathelper::natping: out of memory\n");
