@@ -401,10 +401,10 @@ modparam("acc", "failed_transaction_flag", 4)
    (unless RR enabled) and mismatch original INVITE (e2e ACKs are
    a separate transaction).
 
-   Default value is 1 (yes).
+   Default value is 0 (no).
 
    Example 1-3. report_ack example
-modparam("acc", "report_ack", 0)
+modparam("acc", "report_ack", 1)
      _________________________________________________________
 
 1.5.4. report_cancels (integer)

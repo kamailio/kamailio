@@ -390,12 +390,12 @@ modparam("acc", "failed_transaction_flag", 4)
 		a separate transaction).
 		</para>
 		<para>
-		Default value is 1 (yes).
+		Default value is 0 (no).
 		</para>
 		<example>
 		<title>report_ack example</title>
 		<programlisting format="linespecific">
-modparam("acc", "report_ack", 0)
+modparam("acc", "report_ack", 1)
 </programlisting>
 		</example>
 	</section>
