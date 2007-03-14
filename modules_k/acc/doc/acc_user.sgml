@@ -179,8 +179,8 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<para>
 			The full list of supported pseudo-variables in &ser; is availabe 
 			at: 
-			<ulink url="http://openser.org/docs/pseudo-variables-1.1.x.html">
-			http://openser.org/docs/pseudo-variables-1.1.x.html</ulink>
+			<ulink url="http://openser.org/dokuwiki/doku.php/pseudovariables:devel">
+			http://openser.org/dokuwiki/doku.php/pseudovariables:devel</ulink>
 			</para>
 			<para>
 			Via <emphasis>log_name</emphasis> you define how/where the 

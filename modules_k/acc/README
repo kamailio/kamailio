@@ -254,7 +254,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 
    The full list of supported pseudo-variables in OpenSER is
    availabe at:
-   http://openser.org/docs/pseudo-variables-1.1.x.html
+   http://openser.org/dokuwiki/doku.php/pseudovariables:devel
 
    Via log_name you define how/where the data will be logged. Its
    meaning depends of the accounting support which is used:
