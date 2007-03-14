@@ -351,12 +351,6 @@ int lcr_db_bind(char* db_url)
 		return -1;
 	}
 
-	if (!DB_CAPABILITY(lcr_dbf, DB_CAP_RAW_QUERY)) {
-	    LOG(L_ERR, "ERROR: lcr_db_bind: Database module does not "
-		"implement raw 'query' function\n");
-	    return -1;
-	}
-
 	return 0;
 }
 
