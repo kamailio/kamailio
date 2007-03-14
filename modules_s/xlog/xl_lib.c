@@ -1597,6 +1597,7 @@ int xl_mod_init()
 	int i;
 
 	s=(char*)pkg_malloc(HOSTNAME_MAX);
+	if (!s) return -1;
 	if (gethostname(s, HOSTNAME_MAX)<0) {
 		str_fullname.len = 0;
 		str_fullname.s = NULL;
@@ -1606,6 +1607,11 @@ int xl_mod_init()
 		str_domainname.s = NULL;
 	} else {
 		str_fullname.len = strlen(s);
+		s = pkg_realloc(s, str_fullname.len+1); /* this will leave the ending \0 */
+		if (!s) { /* should never happen because decreasing size */
+			pkg_free(s);
+			return -1;
+		}
 		str_fullname.s = s;
 
 		d=strchr(s, '.');
@@ -1619,13 +1625,15 @@ int xl_mod_init()
 			str_domainname.len=0;
 			str_domainname.s=NULL;
 		}
+		s=(char*)pkg_malloc(HOSTNAME_MAX);
+		if (!s) {
+			pkg_free(str_fullname.s);
+			return -1;
+		}
 	}
-	pkg_realloc(s, str_fullname.len+1); /* this will leave the ending \0 */
 
 	str_ipaddr.len=0;
 	str_ipaddr.s=NULL;
-
-	s=(char*)pkg_malloc(HOSTNAME_MAX);
 	if (str_fullname.len) {
 		he=resolvehost(str_fullname.s);
 		if (he) {
