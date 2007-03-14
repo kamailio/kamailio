@@ -60,9 +60,8 @@
 #define NOTIFY_LEN 6
 
 struct msg_start {
-	int type;                         /* Type of the Message - Request/Response */
-	str line;                         /* len does not include CRLF, correct way how to point at second line is line.s+len */
-	int len; 						/* length including delimiter */
+	int type;					/* Type of the Message - Request/Response */
+	int len; 					/* length including delimiter */
 	union {
 		struct {
 			str method;       /* Method string */
@@ -78,6 +77,7 @@ struct msg_start {
 		} reply;
 	}u;
 };
+
 
 
 char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl);

@@ -42,6 +42,7 @@
  *  2006-11-10  check_transaction_quadruple inlined (andrei)
  *  2007-01-26  added date, identity, identity_info header fields
  *		to sip_msg (gergo)
+ *  2007-03-14  added SIP_MSG_START(msg) macro
  */
 
 
@@ -73,6 +74,9 @@
 #define REQ_METHOD first_line.u.request.method_value
 #define REPLY_STATUS first_line.u.reply.statuscode
 #define REPLY_CLASS(_reply) ((_reply)->REPLY_STATUS/100)
+
+/* start of "actual" sip msg (start of first line) */
+#define SIP_MSG_START(m)	((m)->first_line.u.request.method.s)
 
 /* number methods as power of two to allow bitmap matching */
 enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4,
