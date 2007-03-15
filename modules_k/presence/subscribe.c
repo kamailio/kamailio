@@ -656,6 +656,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR in use_table\n");
+		pa_dbf.free_result(pa_db, result);
 		return ;
 	}
 
@@ -687,8 +688,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	db_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
-	int len= 0;
-	int old_contact= 0;
+	str status= {0, 0};
+	str reason= {0, 0};
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
@@ -1048,37 +1049,35 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 		else
 		{
-			old_contact= 1;
 			row = &result->rows[0];
 			row_vals = ROW_VALUES(row);		
 			
-			len= strlen(row_vals[0].val.str_val.s);
-			subs.status.s= (char*)pkg_malloc(len* sizeof(char));
-			if(subs.status.s== NULL)
+			status.len= strlen(row_vals[0].val.str_val.s);
+			status.s= (char*)pkg_malloc(status.len* sizeof(char));
+			if(status.s== NULL)
 			{
 				LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
 				goto error;
 			}	
-			memcpy(subs.status.s, row_vals[0].val.str_val.s, len);
-			subs.status.len = len;
+			memcpy(status.s, row_vals[0].val.str_val.s, status.len);
+			subs.status= status;
 
 			if(row_vals[1].val.str_val.s)
 			{
-				len= strlen(row_vals[1].val.str_val.s);
-				if(len== 0)
-					subs.reason.s= NULL;
+				reason.len= strlen(row_vals[1].val.str_val.s);
+				if(reason.len== 0)
+					reason.s= NULL;
 				else
 				{
-					subs.reason.s= (char*)pkg_malloc(len*sizeof(char));
-					if(subs.reason.s)
+					reason.s= (char*)pkg_malloc(reason.len*sizeof(char));
+					if(reason.s)
 					{
 						LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
 						goto error;		
 					}		
-					old_contact= 2;
-					memcpy(subs.reason.s, row_vals[1].val.str_val.s, len);
+					memcpy(reason.s, row_vals[1].val.str_val.s, reason.len);
 				}
-				subs.reason.len = len;
+				subs.reason= reason;
 			}
 		}
 		if(result)
@@ -1094,11 +1093,11 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 
-	if(old_contact && subs.status.s)
+	if(status.s && status.len)
 	{
-		pkg_free(subs.status.s);
-		if(old_contact== 2&& subs.reason.s )
-			pkg_free(subs.reason.s);
+		pkg_free(status.s);
+		if(reason.s )
+			pkg_free(reason.s);
 	}
 	return 1;
 
@@ -1106,11 +1105,11 @@ error:
 	LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR occured\n");
 	if(result)
 			pa_dbf.free_result(pa_db, result);
-	if(old_contact)
+	if(status.s && status.len)
 	{
-		pkg_free(subs.status.s);
-		if(old_contact== 2)
-			pkg_free(subs.reason.s);
+		pkg_free(status.s);
+		if(reason.s )
+			pkg_free(reason.s);
 	}
 
 	return error_ret;
