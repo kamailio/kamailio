@@ -41,9 +41,12 @@ typedef struct hslot {
 	struct urecord* first;  /* First element in the list */
 	struct urecord* last;   /* Last element in the list */
 	struct udomain* d;      /* Domain we belong to */
-	gen_lock_t *lock;       /* Lock for hash entry */
+#ifdef GEN_LOCK_T_PREFERED
+	gen_lock_t *lock;       /* Lock for hash entry - fastlock */
+#else
+	int lockidx;            /* Lock index for hash entry - the rest*/
+#endif
 } hslot_t;
-
 
 /*
  * Initialize slot structure
@@ -70,5 +73,10 @@ void slot_rem(hslot_t* _s, struct urecord* _r);
 
 int ul_init_locks();
 void ul_destroy_locks();
+
+#ifndef GEN_LOCK_T_PREFERED
+void ul_lock_idx(int idx);
+void ul_release_idx(int idx);
+#endif
 
 #endif /* HSLOT_H */

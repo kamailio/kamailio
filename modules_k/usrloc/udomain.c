@@ -729,7 +729,12 @@ void lock_udomain(udomain_t* _d, str* _aor)
 	if (db_mode!=DB_ONLY)
 	{
 		sl = core_hash(_aor, 0, _d->size);
+
+#ifdef GEN_LOCK_T_PREFERED
 		lock_get(_d->table[sl].lock);
+#else
+		ul_lock_idx(_d->table[sl].lockidx);
+#endif
 	}
 }
 
@@ -743,7 +748,11 @@ void unlock_udomain(udomain_t* _d, str* _aor)
 	if (db_mode!=DB_ONLY)
 	{
 		sl = core_hash(_aor, 0, _d->size);
+#ifdef GEN_LOCK_T_PREFERED
 		lock_release(_d->table[sl].lock);
+#else
+		ul_release_idx(_d->table[sl].lockidx);
+#endif
 	}
 }
 
@@ -753,7 +762,11 @@ void unlock_udomain(udomain_t* _d, str* _aor)
 void lock_ulslot(udomain_t* _d, int i)
 {
 	if (db_mode!=DB_ONLY)
+#ifdef GEN_LOCK_T_PREFERED
 		lock_get(_d->table[i].lock);
+#else
+		ul_lock_idx(_d->table[i].lockidx);
+#endif
 }
 
 
@@ -763,7 +776,11 @@ void lock_ulslot(udomain_t* _d, int i)
 void unlock_ulslot(udomain_t* _d, int i)
 {
 	if (db_mode!=DB_ONLY)
+#ifdef GEN_LOCK_T_PREFERED
 		lock_release(_d->table[i].lock);
+#else
+		ul_release_idx(_d->table[i].lockidx);
+#endif
 }
 
 

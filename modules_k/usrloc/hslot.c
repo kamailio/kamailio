@@ -40,7 +40,8 @@ int ul_init_locks()
 				(lock_set_init(ul_locks)!=0))
 		{
 			ul_locks_no = i;
-			LOG(L_INFO, "INFO:ul_init_locks: locks array size %d\n", ul_locks_no);
+			LOG(L_INFO, "INFO:ul_init_locks: locks array size %d\n",
+					ul_locks_no);
 			return 0;
 
 		}
@@ -65,6 +66,18 @@ void ul_destroy_locks()
 	};
 }
 
+#ifndef GEN_LOCK_T_PREFERED
+void ul_lock_idx(int idx)
+{
+	lock_set_get(ul_locks, idx);
+}
+
+void ul_release_idx(int idx)
+{
+	lock_set_release(ul_locks, idx);
+}
+#endif
+
 /*
  * Initialize cache slot structure
  */
@@ -74,7 +87,12 @@ int init_slot(struct udomain* _d, hslot_t* _s, int n)
 	_s->first = 0;
 	_s->last = 0;
 	_s->d = _d;
+
+#ifdef GEN_LOCK_T_PREFERED
 	_s->lock = &ul_locks->locks[n%ul_locks_no];
+#else
+	_s->lockidx = n%ul_locks_no;
+#endif
 	return 0;
 }
 
