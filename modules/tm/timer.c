@@ -107,6 +107,7 @@
  *               return a 408
  *              set the corresponding "faked" failure route sip_msg->msg_flags 
  *               on timeout or if the branch received a reply (andrei)
+ *  2007-03-15  TMCB_ONSEND callbacks support (andrei)
  */
 
 #include "defs.h"
@@ -129,6 +130,7 @@
 #include "t_funcs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
+#include "t_hooks.h"
 #ifdef USE_DNS_FAILOVER
 #include "t_fwd.h" /* t_send_branch */
 #endif
@@ -305,6 +307,9 @@ inline static ticks_t retransmission_handler( struct retr_buf *r_buf )
 				fake_reply(r_buf->my_T, r_buf->branch, 503 );
 				return (ticks_t)-1;
 			}
+#ifdef TMCB_ONSEND
+			run_onsend_callbacks(TMCB_REQUEST_SENT, r_buf, 1);
+#endif
 	} else {
 #ifdef EXTRA_DEBUG
 			DBG("DEBUG: retransmission_handler : "

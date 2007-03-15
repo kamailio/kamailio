@@ -63,6 +63,7 @@
  *              stop retr. timers fix on cancel for non-invites     (andrei)
  *  2006-11-20  new_uri is no longer saved/restore across add_uac calls, since
  *              print_uac_request is now uri safe (andrei)
+ * 2007-03-15  TMCB_ONSEND hooks added (andrei)
  */
 
 #include "defs.h"
@@ -507,6 +508,12 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
 					LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
 				}
+#ifdef TMCB_ONSEND
+				else{
+					run_onsend_callbacks(TMCB_REQUEST_SENT, 
+											&t_cancel->uac[i].request, 0);
+				}
+#endif
 				if (start_retr( &t_cancel->uac[i].request )!=0)
 					LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr."
 							" for %p\n", &t_cancel->uac[i].request);
@@ -655,7 +662,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 	if (SEND_BUFFER( &uac->request)==-1) {
 		/* disable the current branch: set a "fake" timeout
 		 *  reply code but don't set uac->reply, to avoid overriding 
-		 *  a higly unlikely, perfectly timed fake reply (to a message
+		 *  a highly unlikely, perfectly timed fake reply (to a message
 		 *  we never sent).
 		 * (code=final reply && reply==0 => t_pick_branch won't ever pick it)*/
 		uac->last_received=408;
@@ -685,6 +692,9 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		if (proxy) { proxy->errors++; proxy->ok=0; }
 		return -2;
 	} else {
+#ifdef TMCB_ONSEND
+		run_onsend_callbacks(TMCB_REQUEST_SENT, &uac->request, 0);
+#endif
 		/* start retr. only if the send succeeded */
 		if (start_retr( &uac->request )!=0){
 			LOG(L_CRIT, "BUG: t_send_branch: retr. already started for %p\n",

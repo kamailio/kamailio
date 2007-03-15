@@ -80,7 +80,8 @@
  *               the final response is 401 or 407 (andrei)
  * 2007-03-08  membar_write() used in update_totag_set(...)(andrei)
  * 2007-03-15  build_local_ack: removed next_hop and replaced with dst to 
- *              avoid resolving next_hop twice (andrei)
+ *              avoid resolving next_hop twice
+*              added TMCB_ONSEND callbacks support for replies & ACKs (andrei)
  *
  */
 
@@ -491,7 +492,13 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (!trans->uas.response.dst.send_sock) {
 		LOG(L_ERR, "ERROR: _reply_light: no resolved dst to send reply to\n");
 	} else {
+#ifdef TMCB_ONSEND
+		if (SEND_PR_BUFFER( rb, buf, len )>=0)
+			run_onsend_callbacks2(TMCB_RESPONSE_SENT, rb, buf, len, &rb->dst,
+									code);
+#else
 		SEND_PR_BUFFER( rb, buf, len );
+#endif
 		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n",
 			buf, buf, rb->buffer, rb->buffer );
 	}
@@ -1069,6 +1076,9 @@ int t_retransmit_reply( struct cell *t )
 	memcpy( b, t->uas.response.buffer, len );
 	UNLOCK_REPLIES( t );
 	SEND_PR_BUFFER( & t->uas.response, b, len );
+#ifdef TMCB_ONSEND
+	run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, 1);
+#endif
 	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n",
 		b, b, t->uas.response.buffer, t->uas.response.buffer );
 	return 1;
@@ -1431,12 +1441,15 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
-		SEND_PR_BUFFER( uas_rb, buf, res_len );
-		DBG("DEBUG: reply relayed. buf=%p: %.15s..., shmem=%p: %.9s totag_retr=%d\n",
-			buf, buf, uas_rb->buffer, uas_rb->buffer, totag_retr );
-		if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
-			run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
-				relayed_msg, relayed_code);
+		if (SEND_PR_BUFFER( uas_rb, buf, res_len )>=0){
+			if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
+				run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
+					relayed_msg, relayed_code);
+			}
+#ifdef TMCB_ONSEND
+			run_onsend_callbacks2(TMCB_RESPONSE_SENT, uas_rb, buf, res_len,
+									&uas_rb->dst, relayed_code);
+#endif
 		}
 		pkg_free( buf );
 	}
@@ -1615,15 +1628,28 @@ int reply_received( struct sip_msg  *p_msg )
 			if (msg_status >= 300) {
 				ack = build_ack(p_msg, t, branch, &ack_len);
 				if (ack) {
+#ifdef	TMCB_ONSEND
+					if (SEND_PR_BUFFER(&uac->request, ack, ack_len)>=0)
+						run_onsend_callbacks2(TMCB_REQUEST_SENT,
+									&uac->request, ack, ack_len, 
+									&uac->request.dst,
+									TYPE_LOCAL_ACK);
+#else
 					SEND_PR_BUFFER(&uac->request, ack, ack_len);
+#endif
 					shm_free(ack);
 				}
 			} else if (is_local(t) /*&& 200 <= msg_status < 300*/) {
 				ack = build_local_ack(p_msg, t, branch, &ack_len, &lack_dst);
 				if (ack) {
-					if (msg_send(&lack_dst, ack, ack_len)<0){
+					if (msg_send(&lack_dst, ack, ack_len)<0)
 						LOG(L_ERR, "Error while sending local ACK\n");
-					}
+#ifdef	TMCB_ONSEND
+					else
+						run_onsend_callbacks2(TMCB_REQUEST_SENT,
+									&uac->request, ack, ack_len, &lack_dst,
+									TYPE_LOCAL_ACK);
+#endif
 					shm_free(ack);
 				}
 			}

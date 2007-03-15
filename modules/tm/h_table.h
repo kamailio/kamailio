@@ -45,8 +45,10 @@
 #ifndef _H_TABLE_H
 #define _H_TABLE_H
 
-#include <stdio.h>
-#include <stdlib.h>
+/*
+ #include <stdio.h>
+ #include <stdlib.h>
+*/
 
 #include "../../parser/msg_parser.h"
 #include "../../types.h"
@@ -80,6 +82,7 @@ void unlock_hash(int i);
 #define NO_CANCEL       ( (char*) 0 )
 #define EXTERNAL_CANCEL ( (char*) -1)
 
+#define TYPE_LOCAL_ACK    -2
 #define TYPE_LOCAL_CANCEL -1
 #define TYPE_REQUEST       0
 

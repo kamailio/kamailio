@@ -32,6 +32,7 @@
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  * 2004-02-13  timer_link.payload removed (bogdan)
  * 2006-10-10  cancel_uacs  & cancel_branch take more options now (andrei)
+ * 2007-03-15  TMCB_ONSEND hooks added (andrei)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
@@ -46,6 +47,7 @@
 #include "t_cancel.h"
 #include "t_msgbuilder.h"
 #include "t_lookup.h" /* for t_lookup_callid in fifo_uac_cancel */
+#include "t_hooks.h"
 
 
 /* determine which branches should be canceled; do it
@@ -114,9 +116,9 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
  *         -1 - error
  * WARNING:
  *          - F_CANCEL_KILL_B should be used only if the transaction is killed
- *            explicitely afterwards (since it might kill all the timers
+ *            explicitly afterwards (since it might kill all the timers
  *            the transaction won't be able to "kill" itself => if not
- *            explicitely "put_on_wait" it migh leave forever)
+ *            explicitly "put_on_wait" it might live forever)
  *          - F_CANCEL_B_FAKE_REPLY must be used only if the REPLY_LOCK is not
  *            held
  */
@@ -189,7 +191,12 @@ int cancel_branch( struct cell *t, int branch, int flags )
 	crb->activ_type = TYPE_LOCAL_CANCEL;
 
 	DBG("DEBUG: cancel_branch: sending cancel...\n");
+#ifdef TMCB_ONSEND
+	if (SEND_BUFFER( crb )>=0)
+		run_onsend_callbacks(TMCB_REQUEST_SENT, crb, 0);
+#else
 	SEND_BUFFER( crb );
+#endif
 	/*sets and starts the FINAL RESPONSE timer */
 	if (start_retr( crb )!=0)
 		LOG(L_CRIT, "BUG: cancel_branch: failed to start retransmission"

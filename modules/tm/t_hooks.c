@@ -34,6 +34,7 @@
  *  2004-08-23  user avp(attribute value pair) added -> making avp list
  *              available in callbacks (bogdan)
  * 2007-03-08  membar_write() used in insert_tmcb(...) (andrei)
+ * 2007-03-14  added *_SENT callbacks (andrei)
  */
 
 #include "defs.h"
@@ -182,19 +183,11 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 }
 
 
-void run_trans_callbacks( int type , struct cell *trans,
-						struct sip_msg *req, struct sip_msg *rpl, int code )
+static void run_trans_callbacks_internal(int type, struct cell *trans, 
+											struct tmcb_params *params)
 {
-	static struct tmcb_params params = {0,0,0,0};
 	struct tm_callback    *cbp;
 	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to, *backup_uri_from, *backup_uri_to;
-
-	params.req = req;
-	params.rpl = rpl;
-	params.code = code;
-
-	if (trans->tmcb_hl.first==0 || ((trans->tmcb_hl.reg_types)&type)==0 )
-		return;
 
 	backup_uri_from = set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM, &trans->uri_avps_from );
 	backup_uri_to = set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, &trans->uri_avps_to );
@@ -206,8 +199,8 @@ void run_trans_callbacks( int type , struct cell *trans,
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 				trans, type, cbp->id );
-			params.param = &(cbp->param);
-			cbp->callback( trans, type, &params );
+			params->param = &(cbp->param);
+			cbp->callback( trans, type, params );
 		}
 	}
 	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, backup_dom_to );
@@ -220,17 +213,80 @@ void run_trans_callbacks( int type , struct cell *trans,
 
 
 
+void run_trans_callbacks( int type , struct cell *trans,
+						struct sip_msg *req, struct sip_msg *rpl, int code )
+{
+	struct tmcb_params params;
+	if (trans->tmcb_hl.first==0 || ((trans->tmcb_hl.reg_types)&type)==0 )
+		return;
+	memset (&params, 0, sizeof(params));
+	params.req = req;
+	params.rpl = rpl;
+	params.code = code;
+	run_trans_callbacks_internal(type, trans, &params);
+}
+
+
+
+#ifdef TMCB_ONSEND
+void run_onsend_callbacks(int type, struct retr_buf* rbuf, int retr)
+{
+	struct tmcb_params params;
+	struct cell * trans;
+
+	trans=rbuf->my_T;
+	if ( trans==0 || trans->tmcb_hl.first==0 || 
+			((trans->tmcb_hl.reg_types)&type)==0 )
+		return;
+	memset (&params, 0, sizeof(params));
+	params.send_buf.s=rbuf->buffer;
+	params.send_buf.len=rbuf->buffer_len;
+	params.dst=&rbuf->dst;
+	params.is_retr=retr;
+	params.branch=rbuf->branch;
+	params.t_rbuf=rbuf;
+	params.code=rbuf->activ_type;
+	/* req, rpl */
+	run_trans_callbacks_internal(type, trans, &params);
+}
+
+
+void run_onsend_callbacks2(int type , struct retr_buf* rbuf, char* buf,
+							int buf_len, struct dest_info* dst, int code)
+{
+	struct tmcb_params params;
+	struct cell * trans;
+
+	trans=rbuf->my_T;
+	if ( trans==0 || trans->tmcb_hl.first==0 || 
+			((trans->tmcb_hl.reg_types)&type)==0 )
+		return;
+	memset (&params, 0, sizeof(params));
+	params.send_buf.s=buf;
+	params.send_buf.len=buf_len;
+	params.dst=dst;
+	params.is_retr=0;
+	params.branch=rbuf->branch;
+	params.t_rbuf=rbuf;
+	params.code=code;
+	/* req, rpl */
+	run_trans_callbacks_internal(type, trans, &params);
+}
+
+#endif
+
 void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 {
-	static struct tmcb_params params = {0,0,0,0};
+	static struct tmcb_params params;
 	struct tm_callback    *cbp;
 	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to, *backup_uri_from, *backup_uri_to;
 
+	if (req_in_tmcb_hl->first==0)
+		return;
+	memset (&params, 0, sizeof(params));
 	params.req = req;
 	params.code = code;
 
-	if (req_in_tmcb_hl->first==0)
-		return;
 
 	backup_uri_from = set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM, &trans->uri_avps_from );
 	backup_uri_to = set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, &trans->uri_avps_to );

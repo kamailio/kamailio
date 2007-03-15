@@ -53,6 +53,7 @@
  *  2005-12-16  t_uac will set the new_cell timers to the default values,
  *               fixes 0 fr_timer bug (andrei)
  *  2006-08-11  t_uac uses dns failover until it finds a send socket (andrei)
+ *  2007-03-15  TMCB_ONSEND callbacks support added (andrei)
  */
 
 #include <string.h>
@@ -344,6 +345,11 @@ static inline void send_prepared_request_impl(struct retr_buf *request, int retr
 	if (SEND_BUFFER(request) == -1) {
 		LOG(L_ERR, "t_uac: Attempt to send to precreated request failed\n");
 	}
+#ifdef TMCB_ONSEND
+	else
+		/* we don't know the method here */
+		run_onsend_callbacks(TMCB_REQUEST_SENT, request, 0);
+#endif
 	
 	if (retransmit && (start_retr(request)!=0))
 		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", request);

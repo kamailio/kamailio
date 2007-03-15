@@ -3,7 +3,15 @@ Release notes for SIP Express Router (ser)
 
 $Id$
 
-0.10.99-dev changes
+
+2.1.0 changes
+
+modules:
+ - tm        - new onsend callbacks support (require defining TMCB_ONSEND prior
+               to compiling tm)
+
+
+2.0.0 changes
 
 
 new archs:
