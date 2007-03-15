@@ -77,12 +77,13 @@ char *build_uac_request(  str msg_type, str dst, str from,
 
 /*
  * The function creates an ACK to 200 OK. Route set will be created
- * and parsed and next_hop parameter will contain uri the which the
+ * and parsed and the dst parameter will contain the destination to which the
  * request should be send. The function is used by tm when it generates
  * local ACK to 200 OK (on behalf of applications using uac
  */
-char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch,
-		    str* to, unsigned int *len, str *next_hop);
+char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, 
+					unsigned int branch, str* to, unsigned int *len,
+					struct dest_info *dst);
 
 
 /*

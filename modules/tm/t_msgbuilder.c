@@ -42,6 +42,8 @@
  *              uri2sock replaced with uri2dst (andrei)
  * 2006-08-11  build_dlg_ack: use the first dns ip for which a send_sock
  *              is found (andrei)
+ * 2007-03-15  build_dls_ack: removed next_hop and replaced by dst to avoid
+ *               resolving nexthop twice (andrei)
  */
 
 #include "defs.h"
@@ -362,12 +364,13 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 
      /*
       * The function creates an ACK to 200 OK. Route set will be created
-      * and parsed and next_hop parameter will contain the uri to which the
-      * request should be send. The function is used by tm when it generates
-      * local ACK to 200 OK (on behalf of applications using uac)
+      * and parsed and the dst parameter will contain the destination to which 
+	  * the request should be send. The function is used by tm when it 
+	  * generates local ACK to 200 OK (on behalf of applications using uac)
       */
-char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch,
-		    str* to, unsigned int *len, str *next_hop)
+char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, 
+					unsigned int branch, str* to, unsigned int *len,
+					struct dest_info* dst)
 {
 	char *req_buf, *p, *via;
 	unsigned int via_len;
@@ -377,7 +380,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	struct hostport hp;
 	struct rte* list;
 	str contact, ruri, *cont;
-	struct dest_info dst;
+	str next_hop;
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
@@ -386,7 +389,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 		return 0;
 	}
 	
-	if (process_routeset(rpl, &contact, &list, &ruri, next_hop) < 0) {
+	if (process_routeset(rpl, &contact, &list, &ruri, &next_hop) < 0) {
 		return 0;
 	}
 	
@@ -411,22 +414,23 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 #ifdef USE_DNS_FAILOVER
 	if (use_dns_failover){
 		dns_srv_handle_init(&dns_h);
-		if ((uri2dst(&dns_h , &dst, rpl, next_hop, PROTO_NONE)==0) ||
-				(dst.send_sock==0)){
+		if ((uri2dst(&dns_h , dst, rpl, &next_hop, PROTO_NONE)==0) ||
+				(dst->send_sock==0)){
 			dns_srv_handle_put(&dns_h);
 			LOG(L_ERR, "build_dlg_ack: no socket found\n");
 			goto error;
 		}
 		dns_srv_handle_put(&dns_h); /* not needed any more */
 	}else{
-		if ((uri2dst(0 , &dst, rpl, next_hop, PROTO_NONE)==0) ||
-				(dst.send_sock==0)){
+		if ((uri2dst(0 , dst, rpl, &next_hop, PROTO_NONE)==0) ||
+				(dst->send_sock==0)){
 			LOG(L_ERR, "build_dlg_ack: no socket found\n");
 			goto error;
 		}
 	}
 #else
-	if ( (uri2dst( &dst, rpl, next_hop, PROTO_NONE)==0) || (dst.send_sock==0)){
+	if ( (uri2dst( dst, rpl, &next_hop, PROTO_NONE)==0) ||
+			(dst->send_sock==0)){
 			LOG(L_ERR, "build_dlg_ack: no socket found\n");
 		goto error;
 	}
@@ -436,7 +440,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	branch_str.s = branch_buf;
 	branch_str.len = branch_len;
 	set_hostport(&hp, 0);
-	via = via_builder(&via_len, &dst, &branch_str, 0, &hp);
+	via = via_builder(&via_len, dst, &branch_str, 0, &hp);
 	if (!via) {
 		LOG(L_ERR, "build_dlg_ack: No via header got from builder\n");
 		goto error;

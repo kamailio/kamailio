@@ -79,6 +79,8 @@
  * 2006-10-16  aggregate all the authorization headers/challenges when
  *               the final response is 401 or 407 (andrei)
  * 2007-03-08  membar_write() used in update_totag_set(...)(andrei)
+ * 2007-03-15  build_local_ack: removed next_hop and replaced with dst to 
+ *              avoid resolving next_hop twice (andrei)
  *
  */
 
@@ -331,12 +333,16 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 
 
 /*
- * The function builds an ACK to 200 OK of local transactions, honor the
- * route set, the URI to which the message should be sent will be returned
- * in next_hop parameter
+ * The function builds an ACK to 200 OK of local transactions, honoring the
+ * route set.
+ * The destination to which the message should be sent will be returned
+ * in the dst parameter.
+ * returns 0 on error and a pkg_malloc'ed buffer with length in ret_len
+ *  and intended destination in dst on success.
  */
-static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch,
-			     unsigned int *ret_len, str* next_hop)
+static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, 
+								int branch, unsigned int *ret_len,
+								struct dest_info*  dst)
 {
 	str to;
 	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
@@ -346,10 +352,12 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch
 
 	to.s = rpl->to->name.s;
 	to.len = rpl->to->len;
-	return build_dlg_ack(rpl, trans, branch, &to, ret_len, next_hop);
+	return build_dlg_ack(rpl, trans, branch, &to, ret_len, dst);
 }
 
 
+
+#if 0 /* candidate for removal --andrei */
      /*
       * The function is used to send a localy generated ACK to INVITE
       * (tm generates the ACK on behalf of application using UAC
@@ -391,6 +399,8 @@ static int send_local_ack(struct sip_msg* msg, str* next_hop,
 #endif
 	return msg_send(&dst, ack, ack_len);
 }
+#endif
+
 
 
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
@@ -1554,7 +1564,7 @@ int reply_received( struct sip_msg  *p_msg )
 	branch_bm_t cancel_bitmap;
 	struct ua_client *uac;
 	struct cell *t;
-	str next_hop;
+	struct dest_info  lack_dst;
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
 	avp_list_t* backup_uri_from, *backup_uri_to;
@@ -1608,10 +1618,10 @@ int reply_received( struct sip_msg  *p_msg )
 					SEND_PR_BUFFER(&uac->request, ack, ack_len);
 					shm_free(ack);
 				}
-			} else if (is_local(t) /*&& msg_status >= 200*/) {
-				ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
+			} else if (is_local(t) /*&& 200 <= msg_status < 300*/) {
+				ack = build_local_ack(p_msg, t, branch, &ack_len, &lack_dst);
 				if (ack) {
-					if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
+					if (msg_send(&lack_dst, ack, ack_len)<0){
 						LOG(L_ERR, "Error while sending local ACK\n");
 					}
 					shm_free(ack);
