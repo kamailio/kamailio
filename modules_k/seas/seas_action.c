@@ -434,6 +434,20 @@ int ac_cancel(as_p the_as,char *action,int len)
       LOG(L_ERR,"Unable to extract allowed headers!!\n");
       goto error;
    }
+   if(flags & SPIRAL_FLAG){
+      memcpy(headers.s+headers.len,SPIRAL_HDR CRLF,SPIRAL_HDR_LEN + CRLF_LEN);
+      headers.len+=SPIRAL_HDR_LEN+CRLF_LEN;
+      /*headers.s[headers.len]=0;
+      fake_uri.s=pkg_malloc(200);
+      fake_uri.len=print_local_uri(the_as,processor_id,fake_uri.s,200);
+
+      if(fake_uri.len<0){
+	 SLOG(L_ERR,"printing local uri\n");
+	 goto error;
+      }
+      my_dlg->hooks.next_hop=&fake_uri;*/
+   }
+
    headers.s[headers.len]=0;
 
    /*let's get the body*/
