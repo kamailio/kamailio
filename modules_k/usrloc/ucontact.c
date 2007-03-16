@@ -766,16 +766,16 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
  */
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 {
-	/* run callbacks for UPDATE event */
-	if (exists_ulcb_type(UL_CONTACT_UPDATE)) {
-		run_ul_callbacks( UL_CONTACT_UPDATE, _c);
-	}
-
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
 	if (mem_update_ucontact( _c, _ci) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update memory\n");
 		return -1;
+	}
+
+	/* run callbacks for UPDATE event */
+	if (exists_ulcb_type(UL_CONTACT_UPDATE)) {
+		run_ul_callbacks( UL_CONTACT_UPDATE, _c);
 	}
 
 	if (_r && db_mode!=DB_ONLY)
