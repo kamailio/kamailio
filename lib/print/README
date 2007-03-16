@@ -1,0 +1,11 @@
+example print library
+--------------
+
+
+Description:
+------------
+
+This library is an example on how to implement a ser specific library
+(see the Makefile).
+See also modules/print_lib for a library usage example.
+
