@@ -544,13 +544,18 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	db_res_t *result;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
-	subs_t subs;
-
+	subs_t** subs_array= NULL;
+	subs_t* subs= NULL;
+	int n, size;
 	int n_result_cols = 0;
 	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
 	int to_user_col, to_domain_col, event_col;
 	int callid_col, cseq_col, i, event_id_col = 0;
-	int record_route_col = 0, contact_col;
+	int record_route_col = 0, contact_col, cseq;
+
+	str from_user, from_domain, to_tag, from_tag;
+	str to_user, to_domain, event, event_id, callid;
+	str record_route, contact;
 	
 	DBG("PRESENCE: msg_active_watchers_clean:cleaning expired watcher information\n");
 	
@@ -597,77 +602,180 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		return;
 	}
 
-	for(i=0 ; i< result->n; i++)
+	n= result->n;
+	subs_array= (subs_t**)pkg_malloc(n* sizeof(subs_t*));
+	if(subs_array== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR while allocating memory\n");
+		pa_dbf.free_result(pa_db, result);
+		return;	
+	}
+	memset(subs_array, 0, n*sizeof(subs_t*));
+
+	for(i=0 ; i< n; i++)
 	{
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);		
 		
-		memset(&subs, 0, sizeof(subs_t));
+		to_user.s = row_vals[to_user_col].val.str_val.s;
+		to_user.len =strlen(row_vals[to_user_col].val.str_val.s);
 
-		subs.to_user.s = row_vals[to_user_col].val.str_val.s;
-		subs.to_user.len =strlen(row_vals[to_user_col].val.str_val.s);
- 
-		subs.to_domain.s = row_vals[to_domain_col].val.str_val.s;
-		subs.to_domain.len =strlen(row_vals[to_domain_col].val.str_val.s);
+		to_domain.s = row_vals[to_domain_col].val.str_val.s;
+		to_domain.len =strlen(row_vals[to_domain_col].val.str_val.s);
 
-		subs.event.s =row_vals[event_col].val.str_val.s;
-		subs.event.len = strlen(row_vals[event_col].val.str_val.s);
+		event.s =row_vals[event_col].val.str_val.s;
+		event.len = strlen(row_vals[event_col].val.str_val.s);
 
-		subs.from_user.s = row_vals[from_user_col].val.str_val.s;
-		subs.from_user.len = strlen(row_vals[from_user_col].val.str_val.s);
+		from_user.s = row_vals[from_user_col].val.str_val.s;
+		from_user.len = strlen(row_vals[from_user_col].val.str_val.s);
 		
-		subs.from_domain.s = row_vals[from_domain_col].val.str_val.s;
-		subs.from_domain.len = strlen(row_vals[from_domain_col].val.str_val.s);
+		from_domain.s = row_vals[from_domain_col].val.str_val.s;
+		from_domain.len = strlen(row_vals[from_domain_col].val.str_val.s);
 		
-		subs.event_id.s = row_vals[event_id_col].val.str_val.s;
-		if(subs.event_id.s)
-			subs.event_id.len = strlen(subs.event_id.s);
+		memset(&event_id, 0, sizeof(str));
+		event_id.s = row_vals[event_id_col].val.str_val.s;
+		if(event_id.s)
+			event_id.len = strlen(event_id.s);
+
 			
-		subs.to_tag.s = row_vals[to_tag_col].val.str_val.s;
-		subs.to_tag.len = strlen(row_vals[to_tag_col].val.str_val.s);
+		to_tag.s = row_vals[to_tag_col].val.str_val.s;
+		to_tag.len = strlen(row_vals[to_tag_col].val.str_val.s);
 		
-		subs.from_tag.s = row_vals[from_tag_col].val.str_val.s;
-		subs.from_tag.len = strlen(row_vals[from_tag_col].val.str_val.s);
+		from_tag.s = row_vals[from_tag_col].val.str_val.s;
+		from_tag.len = strlen(row_vals[from_tag_col].val.str_val.s);
 
-		subs.callid.s = row_vals[callid_col].val.str_val.s;
-		subs.callid.len = strlen(row_vals[callid_col].val.str_val.s);
-	
-		subs.contact.s = row_vals[contact_col].val.str_val.s;
-		if(subs.contact.s)
-			subs.contact.len = strlen(row_vals[contact_col].val.str_val.s);
+		callid.s = row_vals[callid_col].val.str_val.s;
+		callid.len = strlen(row_vals[callid_col].val.str_val.s);
 
-		subs.cseq = row_vals[cseq_col].val.int_val;
+		memset(&contact, 0, sizeof(str));
+		contact.s = row_vals[contact_col].val.str_val.s;
+		if(contact.s)
+			contact.len = strlen(row_vals[contact_col].val.str_val.s);
 
-		subs.record_route.s = row_vals[record_route_col].val.str_val.s;
-		if(subs.record_route.s )
-			subs.record_route.len = strlen(subs.record_route.s);
+		cseq = row_vals[cseq_col].val.int_val;
+		
+		memset(&record_route, 0, sizeof(str));
+		record_route.s = row_vals[record_route_col].val.str_val.s;
+		if(record_route.s )
+			record_route.len = strlen(record_route.s);
 	
-		subs.expires = 0;
-	
-		subs.status.s = "terminated";
-		subs.status.len = 10;
+		size= sizeof(subs_t)+ ( to_user.len+ to_domain.len+ from_user.len+ from_domain.len+
+				event.len+ event_id.len+ to_tag.len+ from_tag.len+ callid.len+ contact.len+
+				record_route.len)* sizeof(char);
 
-		subs.reason.s = "timeout";
-		subs.reason.len = 7;
+		subs= (subs_t*)pkg_malloc(size);
+		if(subs== NULL)
+		{
+			LOG(L_ERR," PRESENCE:msg_active_watchers_clean: ERROR while allocating memory\n");
+			pa_dbf.free_result(pa_db, result);
+			goto error;
+		}
+		memset(subs, 0, size);
+		size= sizeof(subs_t);
+		
+		subs->to_user.s= (char*)subs+ size;
+		memcpy(subs->to_user.s, to_user.s, to_user.len);
+		subs->to_user.len= to_user.len;
+		size+= to_user.len;
 	
-		notify(&subs,  NULL, NULL, 0);
+		subs->to_domain.s= (char*)subs+ size;
+		memcpy(subs->to_domain.s, to_domain.s, to_domain.len);
+		subs->to_domain.len= to_domain.len;
+		size+= to_domain.len;
+
+		subs->from_user.s= (char*)subs+ size;
+		memcpy(subs->from_user.s, from_user.s, from_user.len);
+		subs->from_user.len= from_user.len;
+		size+= from_user.len;
+	
+		subs->from_domain.s= (char*)subs+ size;
+		memcpy(subs->from_domain.s, from_domain.s, from_domain.len);
+		subs->from_domain.len= from_domain.len;
+		size+= from_domain.len;
+
+		subs->event.s= (char*)subs+ size;
+		memcpy(subs->event.s, event.s, event.len);
+		subs->event.len= event.len;
+		size+= event.len;
+
+		if(event_id.s)
+		{	
+			subs->event_id.s= (char*)subs+ size;
+			memcpy(subs->event_id.s, event_id.s, event_id.len);
+			subs->event_id.len= event_id.len;
+			size+= event_id.len;
+		}
+		subs->to_tag.s= (char*)subs+ size;
+		memcpy(subs->to_tag.s, to_tag.s, to_tag.len);
+		subs->to_tag.len= to_tag.len;
+		size+= to_tag.len;
+	
+		subs->from_tag.s= (char*)subs+ size;
+		memcpy(subs->from_tag.s, from_tag.s, from_tag.len);
+		subs->from_tag.len= from_tag.len;
+		size+= from_tag.len;
+
+		subs->callid.s= (char*)subs+ size;
+		memcpy(subs->callid.s, callid.s, callid.len);
+		subs->callid.len= callid.len;
+		size+= callid.len;
+		
+		if(contact.s)
+		{	
+			subs->contact.s= (char*)subs+ size;
+			memcpy(subs->contact.s, contact.s, contact.len);
+			subs->contact.len= contact.len;
+			size+= contact.len;
+		}
+		if(record_route.s)
+		{
+			subs->record_route.s= (char*)subs+ size;
+			memcpy(subs->record_route.s, record_route.s, record_route.len);
+			subs->record_route.len= record_route.len;
+			size+= record_route.len;
+		}	
+		subs->expires = 0;
+		subs->cseq= cseq;
+		subs->status.s = "terminated";
+		subs->status.len = 10;
+		subs->reason.s = "timeout";
+		subs->reason.len = 7;
+		subs_array[i]= subs;
+
 	}
-	
+	pa_dbf.free_result(pa_db, result);
+	result= NULL;
+
+	for(i= 0; i< n; i++)
+	{
+		notify(subs_array[i],  NULL, NULL, 0);
+		pkg_free(subs_array[i]);
+	}
+	pkg_free(subs_array);
+		
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR in use_table\n");
-		pa_dbf.free_result(pa_db, result);
 		return ;
 	}
 
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
 		LOG(L_ERR,"PRESENCE:msg_active_watchers_clean: ERROR cleaning expired"
 				" messages\n");
-
-	pa_dbf.free_result(pa_db, result);
 	return;
+error:
+	if(subs_array)
+	{
+		for(i= 0; i<n; i++)
+		{
+			if(subs_array[i])
+				pkg_free(subs_array[i]);
+			else
+				break;
+		}
+		pkg_free(subs_array);
+	}
 }
-
 
 int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 {
