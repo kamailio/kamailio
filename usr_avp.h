@@ -84,7 +84,7 @@ typedef union {
 } int_str;
 
 #define avp_id_t	unsigned short
-#define avp_flags_t	unsigned short
+#define avp_flags_t	unsigned int
 #define avp_name_t	int_str
 #define avp_value_t	int_str
 #define avp_index_t	unsigned short

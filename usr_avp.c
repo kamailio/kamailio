@@ -1093,7 +1093,10 @@ avp_flags_t register_avpflag(char* name) {
 	avp_flags_t ret;
 	ret = get_avpflag_no(name);
 	if (ret == 0) {
-		if (registered_avpflags_no >= MAX_AVPFLAG) return -1;
+		if (registered_avpflags_no >= MAX_AVPFLAG) {
+			LOG(L_ERR, "register_avpflag: cannot register new avp flag ('%s'), max.number of flags (%d) reached\n", name, MAX_AVPFLAG);
+			return -1;
+		}
 		ret = 1<<(AVP_CUSTOM_FLAGS+registered_avpflags_no);
 		registered_avpflags[registered_avpflags_no++] = name;
 	}
