@@ -83,7 +83,7 @@ int ospSetupProvider(void)
             (const OSPTCERT**)cacerts,
             1,
             _osp_ssl_lifetime,
-            2,
+            _osp_sp_number,
             _osp_persistence,
             _osp_retry_delay,
             _osp_retry_limit,
