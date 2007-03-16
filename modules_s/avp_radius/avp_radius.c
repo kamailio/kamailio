@@ -241,24 +241,6 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
 }
 
 
-static void uri_type_to_str(uri_type type, str *s) {
-    static str	s_sip  = STR_STATIC_INIT("sip");
-    static str	s_sips = STR_STATIC_INIT("sips");
-    static str	s_tel  = STR_STATIC_INIT("tel");
-    static str	s_tels = STR_STATIC_INIT("tels");
-    static str	s_null = STR_STATIC_INIT("");
-    
-    switch (type) {
-	
-    case SIP_URI_T:	*s = s_sip;	break;
-    case SIPS_URI_T:	*s = s_sips;	break;
-    case TEL_URI_T:	*s = s_tel;	break;
-    case TELS_URI_T:	*s = s_tels;	break;
-    default:		*s = s_null;
-    }
-}
-
-
 static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp)
 {
     static char rad_msg[4096];
