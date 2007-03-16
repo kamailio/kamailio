@@ -53,6 +53,8 @@
 #  2006-07-10  added -DPROFILING (hscholz)
 #  2007-02-09  added TLS_HOOKS and CORE_TLS support, obsoleted TLS=1
 #              added TLS_EXTRA_LIBS (andrei)
+#  2007-03-16  added LIB building options: LIB_LDFLAGS, LIB_SONAME, LIB_RPATH,
+#                INSTALL-LIB, libraries install paths (andrei)
 
 
 # check if already included/exported
@@ -123,6 +125,7 @@ CC_EXTRA_OPTS ?=
 cfg-dir = etc/ser/
 bin-dir = sbin/
 modules-dir = lib/ser/modules/
+lib-dir = lib/ser/
 ifeq ($(OS), linux)
 	doc-dir = share/doc/ser/
 	man-dir = share/man/
@@ -173,6 +176,7 @@ basedir = $(BASEDIR)
 cfg-prefix = $(basedir)$(prefix)
 bin-prefix = $(basedir)$(prefix)
 modules-prefix = $(basedir)$(prefix)
+lib-prefix = $(basedir)$(prefix)
 doc-prefix = $(basedir)$(prefix)
 man-prefix = $(basedir)$(prefix)
 ut-prefix = $(basedir)$(prefix)
@@ -182,6 +186,7 @@ ut-prefix = $(basedir)$(prefix)
 cfg-target = $(prefix)/$(cfg-dir)
 bin-target = $(prefix)/$(bin-dir)
 modules-target = $(prefix)/$(modules-dir)
+lib-target = $(prefix)/$(lib-dir)
 doc-target = $(prefix)/$(doc-dir)
 
 
@@ -199,6 +204,7 @@ INSTALL-TOUCH = touch          # used to create the file first (good to
 INSTALL-CFG = $(INSTALL) -m 644
 INSTALL-BIN = $(INSTALL) -m 755
 INSTALL-MODULES = $(INSTALL) -m 755
+INSTALL-LIB = $(INSTALL) -m 755
 INSTALL-DOC = $(INSTALL) -m 644
 INSTALL-MAN = $(INSTALL) -m 644
 
@@ -1144,21 +1150,34 @@ ifeq	($(CC_NAME), gcc)
 ifeq		($(LDTYPE), solaris)
 		# solaris ld
 		LDFLAGS+=-O2 $(PROFILE)
-		MOD_LDFLAGS=-G $(LDFLAGS)
+		MOD_LDFLAGS:=-G $(LDFLAGS)
+		LIB_LDFLAGS:=-G $(LDFLAGS)
+		LIB_SONAME=-Wl,-h,
+		LD_RPATH=-Wl,-R,
 else		
 		#gcc and maybe others, => gnu ld
 		LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
-		MOD_LDFLAGS=-shared $(LDFLAGS)
+		MOD_LDFLAGS:=-shared $(LDFLAGS)
+		LIB_LDFLAGS:=-shared $(LDFLAGS)
+		LIB_SONAME=-Wl,-soname,
+		LD_RPATH=-Wl,-rpath,
 endif
 endif
 ifeq	($(CC_NAME), icc)
 	#gcc and maybe others
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
-	MOD_LDFLAGS=-shared $(LDFLAGS)
+	MOD_LDFLAGS:=-shared $(LDFLAGS)
+	LIB_LDFLAGS:=-shared $(LDFLAGS)
+	LIB_SONAME=-Wl,-soname,
+	LD_RPATH=-Wl,-rpath,
 endif
 ifeq	($(CC_NAME), suncc)
+	# -dy?
 	LDFLAGS+=-xO5 $(PROFILE)
-	MOD_LDFLAGS=-G $(LDFLAGS)
+	MOD_LDFLAGS:=-G $(LDFLAGS)
+	LIB_LDFLAGS:=-G $(LDFLAGS)
+	LIB_SONAME="-h "
+	LD_RPATH=-"-R "
 endif
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
@@ -1175,23 +1194,35 @@ endif
 ifeq		($(LDTYPE), solaris)
 			#solaris ld
 			LDFLAGS+=-g $(PROFILE)
-			MOD_LDFLAGS=-G $(LDFLAGS)
+			MOD_LDFLAGS:=-G $(LDFLAGS)
+			LIB_LDFLAGS:=-G $(LDFLAGS)
+			LIB_SONAME=-Wl,-h,
+			LD_RPATH=-Wl,-R,
 else
 			#gnu or other ld type
 			LDFLAGS+=-g -Wl,-E $(PROFILE)
-			MOD_LDFLAGS=-shared $(LDFLAGS)
+			MOD_LDFLAGS:=-shared $(LDFLAGS)
+			LIB_LDFLAGS:=-shared $(LDFLAGS)
+			LIB_SONAME=-Wl,-soname,
+			LD_RPATH=-Wl,-rpath,
 endif
 endif
 ifeq	($(CC_NAME), icc)
 		DEFS+=-DCC_GCC_LIKE_ASM
 		CFLAGS=-g  $(PROFILE)
 		LDFLAGS+=-g -Wl,-E $(PROFILE)
-		MOD_LDFLAGS=-shared $(LDFLAGS)
+		MOD_LDFLAGS:=-shared $(LDFLAGS)
+		LIB_LDFLAGS:=-shared $(LDFLAGS)
+		LIB_SONAME=-Wl,-soname,
+		LD_RPATH=-Wl,-rpath,
 endif
 ifeq	($(CC_NAME), suncc)
 		CFLAGS= -g $(PROFILE)
 		LDFLAGS+=-g $(PROFILE)
-		MOD_LDFLAGS=-G $(LDFLAGS)
+		MOD_LDFLAGS:=-G $(LDFLAGS)
+		LIB_LDFLAGS:=-G $(LDFLAGS)
+		LIB_SONAME="-h "
+		LD_RPATH=-"-R "
 endif
 
 endif #mode=release
@@ -1213,13 +1244,17 @@ endif # CC_NAME=gcc
 
 #*FLAGS used for compiling the modules
 ifeq	($(CC_NAME), gcc)
-MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
+MOD_CFLAGS:=-fPIC -DPIC $(CFLAGS)
+LIB_CFLAGS:=-fPIC -DPIC $(CFLAGS)
 endif
 ifeq	($(CC_NAME), icc)
-MOD_CFLAGS=-Kpic $(CFLAGS)
+MOD_CFLAGS:=-Kpic $(CFLAGS)
+LIB_CFLAGS:=-Kpic $(CFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
-MOD_CFLAGS=-xcode=pic32  $(CFLAGS)
+# FIMXE: use -KPIC instead -xcode ?
+MOD_CFLAGS:=-xcode=pic32  $(CFLAGS)
+LIB_CFLAGS:=-xcode=pic32  $(CFLAGS)
 endif
 
 ifeq ($(LEX),)
@@ -1418,7 +1453,13 @@ ifeq ($(OS), darwin)
 		DEFS+=-DHAVE_SELECT
 	endif
 	LDFLAGS=        # darwin doesn't like -O2 or -E
-	MOD_LDFLAGS= -bundle -bundle_loader ../../$(MAIN_NAME)
+	MOD_LDFLAGS:= -bundle -bundle_loader ../../$(MAIN_NAME)
+	LIB_LDFLAGS:= -dynamiclib
+	# on darwin soname should include the full path
+	# (it kind of combines rpath & soname)
+	LIB_SONAME=
+	# no equiv. for rpath on darwin
+	LD_RPATH=
 	YACC=yacc
 endif
 
@@ -1453,6 +1494,18 @@ endif
 
 
 
-
+#export relevant variables to the sub-makes
+export RELEASE OS ARCH
+export DEFS PROFILE CC LD MKDEP MKTAGS CFLAGS LDFLAGS INCLUDES MOD_CFLAGS \
+		MOD_LDFLAGS LIB_CFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH
+export LIBS
+export LEX YACC YACC_FLAGS
+export PREFIX LOCALBASE
+export TAR
+export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
+export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
+export lib-prefix lib-dir cfg-target lib-target modules-target
+export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
+export INSTALL-LIB INSTALL-TOUCH
 
 endif  # ifeq ($(makefile_defs, 1)

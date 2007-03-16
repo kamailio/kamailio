@@ -1,0 +1,101 @@
+#
+# $Id$
+#
+# module Makefile
+#(to be included from each library makefile)
+#
+# History:
+# --------
+#  2007-03-16  created by andrei
+
+# NAME, MAJOR_VER and MINOR_VER should be pre-defined in the library 
+# makefile
+#
+
+ifeq ($(NAME),)
+$(error NAME, MAJOR_VER and MINOR_VER must be defined in the library Makefile)
+endif
+ifeq ($(MAJOR_VER),)
+$(error NAME, MAJOR_VER and MINOR_VER must be defined in the library Makefile)
+endif
+ifeq ($(MINOR_VER),)
+$(error NAME, MAJOR_VER and MINOR_VER must be defined in the library Makefile)
+endif
+ifeq ($(BUGFIX_VER),)
+	BUGFIX_VER:=0
+endif
+
+ifeq ($(OS), darwin)
+	LIB_NAME:=lib$(NAME).$(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER).dylib
+	LIB_RUNTIME_NAME:=lib$(NAME).$(MAJOR_VER).dylib
+	LIB_LINK_NAME:=lib$(NAME).dylib
+	NAME_LD_FLAGS:= -compatibility_version $(MAJOR_VER).$(MINOR_VER) \
+					-current_version $(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER) \
+					-install_name $(lib_target)/$(LIB_RUNTIME_NAME)
+
+else
+	LIB_NAME:=lib$(NAME).so.$(MAJOR_VER).$(MINOR_VER)
+	LIB_RUNTIME_NAME:=lib$(NAME).so.$(MAJOR_VER)
+	LIB_LINK_NAME:=lib$(NAME).so
+	NAME_LD_FLAGS:= $(LIB_SONAME)$(LIB_RUNTIME_NAME)
+endif
+
+
+COREPATH ?=../..
+
+ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
+ $(COREPATH)/Makefile.libs
+
+
+ifeq ($(MAKELEVEL), 0)
+# make called directly in the library dir!
+ifneq ($(makefile_defs), 1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
+
+else
+# called by the main Makefile
+
+ALLDEP+=$(COREPATH)/Makefile $(COREPATH)/Makefile.defs
+
+endif
+
+include $(COREPATH)/Makefile.sources
+
+
+CFLAGS:=$(LIB_CFLAGS)
+LDFLAGS:=$(LIB_LDFLAGS) $(NAME_LD_FLAGS)
+NAME:=$(LIB_NAME)
+
+
+include $(COREPATH)/Makefile.rules
+
+$(NAME): $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME)
+
+$(LIB_RUNTIME_NAME): 
+	-@ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME)
+
+$(LIB_LINK_NAME):
+	-@ln -s $(LIB_NAME) $(LIB_LINK_NAME)
+
+.PHONY: link_clean
+link_clean:
+	-@rm -f $(LIB_RUNTIME_NAME)
+	-@rm -f $(LIB_LINK_NAME)
+
+clean: link_clean
+
+$(lib-prefix)/$(lib-dir):
+	mkdir -p $(lib-prefix)/$(lib-dir)
+
+.PHONY: install
+install: $(LIB_NAME) $(lib-prefix)/$(lib-dir)
+	$(INSTALL-TOUCH) $(lib-prefix)/$(lib-dir)/$(LIB_NAME)
+	$(INSTALL-LIB) $(LIB_NAME) $(lib-prefix)/$(lib-dir)
+	rm -f $(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME) \
+			$(lib-prefix)/$(lib-dir)/$(LIB_LINK_NAME) 
+	ln -s $(lib-prefix)/$(lib-dir)/$(LIB_NAME) \
+			$(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME) 
+	ln -s $(lib-prefix)/$(lib-dir)/$(LIB_NAME) \
+			$(lib-prefix)/$(lib-dir)/$(LIB_LINK_NAME) 
+

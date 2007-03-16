@@ -41,6 +41,7 @@
 #               logic when using group_include (greger)
 #  2007-03-01  fail if a module or a required utility make fail unless 
 #              err_fail=0; don't try to make modules with no Makefiles (andrei)
+#  2007-03-16  moved the exports to Makefile.defs
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -134,7 +135,7 @@ else
 							auth_radius group_radius uri_radius avp_radius \
 							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
-							unixsock eval dbg
+							unixsock eval dbg print_lib
 endif
 
 # always exclude the CVS dir
@@ -225,23 +226,6 @@ DEFS:=
 include Makefile.defs
 
 NAME=$(MAIN_NAME)
-
-#export relevant variables to the sub-makes
-export DEFS PROFILE CC LD MKDEP MKTAGS CFLAGS LDFLAGS INCLUDES MOD_CFLAGS \
-		MOD_LDFLAGS 
-export LIBS
-export LEX YACC YACC_FLAGS
-export PREFIX LOCALBASE
-# export relevant variables for recursive calls of this makefile 
-# (e.g. make deb)
-#export LIBS
-#export TAR 
-#export NAME RELEASE OS ARCH 
-#export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
-#export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
-#export cfg-target modules-target
-#export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
-#export INSTALL-TOUCH
 
 tar_name=$(NAME)-$(RELEASE)_src
 
@@ -550,11 +534,6 @@ install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 
 lib_dependent_modules = dialog pa rls presence_b2b xcap
 
-# exports for libs
-export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
-export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
-export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
-export INSTALL-TOUCH
 
 dep_mods = $(filter $(addprefix modules/, $(lib_dependent_modules)), $(modules))
 dep_mods += $(filter $(lib_dependent_modules), $(static_modules))

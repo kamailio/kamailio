@@ -22,10 +22,18 @@
 	|  sed 's#\(\($*D)\)\?$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
 	[ -s $@ ] || rm -f $@
 
+# use RPATH and SER_LIBS if needed
+ifneq	($(SER_LIBS),)
+ifneq	($(LD_RPATH),)
+SER_RPATH:=$(LD_RPATH)$(lib-target)
+endif
+endif
+
+ALL_LIBS=$(LIBS) $(SER_LIBS)
 
 # normal rules
 $(NAME): $(objs) $(ALLDEP)
-	$(LD) $(LDFLAGS) $(objs) $(extra_objs) $(LIBS) -o $(NAME) 
+	$(LD) $(LDFLAGS) $(objs) $(extra_objs) $(ALL_LIBS) $(SER_RPATH) -o $(NAME)
 
 
 .PHONY: all
