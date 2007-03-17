@@ -32,6 +32,8 @@
  *              multiple events per callback added; single list per
  *              transaction for all its callbacks (bogdan)
  * 2007-03-14   added *_SENT callbacks (andrei)
+ * 2007-03-17   added TMCB_NEG_ACK_IN, TMCB_REQ_RETR_IN & 
+ *               TMCB_LOCAL_RESPONSE_IN (andrei)
  */
 
 
@@ -62,12 +64,15 @@ struct cell;
 #define TMCB_RESPONSE_OUT_N     7
 #define TMCB_LOCAL_COMPLETED_N  8
 #define TMCB_LOCAL_RESPONSE_OUT_N 9
+#define TMCB_ACK_NEG_IN_N       10
+#define TMCB_REQ_RETR_IN_N      11
+#define TMCB_LOCAL_RESPONSE_IN_N 12
 #ifdef TMCB_ONSEND
-#define TMCB_REQUEST_SENT_N     10
-#define TMCB_RESPONSE_SENT_N    11
-#define TMCB_MAX_N              11
+#define TMCB_REQUEST_SENT_N     13
+#define TMCB_RESPONSE_SENT_N    14
+#define TMCB_MAX_N              14
 #else
-#define TMCB_MAX_N              9
+#define TMCB_MAX_N              12
 #endif
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
@@ -80,6 +85,9 @@ struct cell;
 #define TMCB_RESPONSE_OUT     (1<<TMCB_RESPONSE_OUT_N)
 #define TMCB_LOCAL_COMPLETED  (1<<TMCB_LOCAL_COMPLETED_N)
 #define TMCB_LOCAL_RESPONSE_OUT (1<<TMCB_LOCAL_RESPONSE_OUT_N)
+#define TMCB_ACK_NEG_IN       (1<<TMCB_ACK_NEG_IN_N)
+#define TMCB_REQ_RETR_IN      (1<<TMCB_REQ_RETR_IN_N)
+#define TMCB_LOCAL_RESPONSE_IN (1<<TMCB_LOCAL_RESPONSE_IN_N)
 #ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
@@ -219,7 +227,17 @@ struct cell;
  *  called multiple time quasi-simultaneously. No lock is held.
  *  It's unsafe to register other TMCB callbacks.
  *
- *  TMCB_ONSEND callbacks
+ *  TMCB_NEG_ACK_IN -- an ACK to a negative reply was received, thus ending
+ *  the transaction (this happens only when the final reply sent by tm is 
+ *  negative). The callback might be called simultaneously. No lock is held.
+ *
+ *  TMCB_REQ_RETR_IN -- a retransmitted request was received. This callback
+ *   might be called simultaneously. No lock is held.
+ *
+ * TMCB_LOCAL_RESPONSE_IN -- a brand-new reply was received which matches
+ * an existing local transaction (like TMCB_RESPONSE_IN but for local 
+ * transactions). It may or may not be a retransmission.
+ * No lock is held here (yet). It's unsafe to register other TMCB callbacks.
  *
  *  All of the following callbacks are called immediately after or before 
  *  sending a message. All of them are read-only (no change can be made to
@@ -325,8 +343,6 @@ void destroy_tmcb_lists();
 /* register a callback for several types of events */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 											transaction_cb f, void *param );
-//int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
-//																void *param );
 
 /* inserts a callback into the a callback list */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,
