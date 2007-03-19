@@ -27,7 +27,7 @@ if [ -z "$PGSQL" ] ; then
 		echo "error: 'psql' tool not found: set PGSQL variable to correct tool path"
 		exit
 	fi
-	PGSQL="$TOOLPATH"'
+	PGSQL="$TOOLPATH"
 fi
 
 ##### ----------------------------------------------- #####
