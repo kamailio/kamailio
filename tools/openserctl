@@ -1721,9 +1721,11 @@ usrloc() {
 				# expires 0 means persistent contact
 				UL_EXPIRES=0
 				UL_FLAGS=0
+				BR_FLAGS=0
 			elif [ $# -eq 4 ] ; then
 				UL_EXPIRES=$4
 				UL_FLAGS=0
+				BR_FLAGS=0
 			else
 				usage_usrloc
 				exit 1
@@ -1756,7 +1758,7 @@ usrloc() {
 			fi
 
 			$CTLCMD ul_add "$USRLOC_TABLE" "$OSERUSER@$OSERDOMAIN" "$2" \
-"$UL_EXPIRES" "1.00" "0" "$UL_FLAGS" "$ALL_METHODS"
+"$UL_EXPIRES" "1.00" "0" "$UL_FLAGS" "$BR_FLAGS" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)
