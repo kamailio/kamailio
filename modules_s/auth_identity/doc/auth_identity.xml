@@ -67,7 +67,26 @@
 	</para>
     </section>
 
-    <section id="auth_identity.install_and_run">
+	<section id="auth_identity.compilation">
+		<title>Compilation</title>
+		<para>
+		This module needs the following headers and libraries:
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>OpenSSL</emphasis> for cryptographic functions
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>libcURL</emphasis> for HTTP, HTTPS functions
+				</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+
+	<section id="auth_identity.install_and_run">
 	<title>Installation And Running</title>
 	<para>
 		<emphasis>Authorizer</emphasis> service needs an opportunity to make the public key,
@@ -197,6 +216,12 @@ modparam("auth_identity","msg_timeout",600)
 				This function also adds Identity-Info header which contains an URI
 				(set by <emphasis>certificate_url</emphasis> parameter) from which
 				the certificate of auth service can be acquired.
+			</para>
+			<para>
+				<emphasis>Note: this function needs the final outgoing
+				message for authorization, so no module may modify any
+				digest string related headers (From, To, Call-ID, CSeq,
+				Date, Contact) and body after auth_add_identity()'s been called</emphasis>
 			</para>
 			<section>
 				<title>Dependencies</title>
@@ -444,7 +469,7 @@ modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
 	</section>
 
 	<section>
-		<title>Authorizer service examples</title>
+		<title>Verifier service examples</title>
 
 		<programlisting><![CDATA[
 ...
