@@ -734,6 +734,9 @@ CREATE TABLE active_watchers (
   expires int(11) NOT NULL,
   status varchar(32) NOT NULL default 'pending',
   version int(11) default '0',
+  socket_info varchar(128) NOT NULL,
+  local_contact varchar(255) NOT NULL,
+
   PRIMARY KEY  (id),
   UNIQUE KEY tt_watchers (to_tag),
   KEY due_activewatchers (to_domain,to_user,event)
