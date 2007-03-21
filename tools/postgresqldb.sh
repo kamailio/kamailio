@@ -766,7 +766,7 @@ CREATE TABLE presentity (
   etag varchar(64) NOT NULL,
   expires int NOT NULL,
   received_time int NOT NULL,
-  body text NOT NULL,
+  body bytea NOT NULL,
   UNIQUE (username, domain, event, etag)
 ) $TABLE_TYPE;
 
