@@ -172,10 +172,14 @@ static int mod_init(void)
 
 	if(server_address.s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:mod_init:ERROR server_address parameter has no value\n");
-		return -1;
+		DBG("PRESENCE:mod_init: server_address parameter not set in"
+				" configuration file\n");
 	}
-	server_address.len= strlen(server_address.s);
+	
+	if(server_address.s)
+		server_address.len= strlen(server_address.s);
+	else
+		server_address.len= 0;
 
 	/* load SL API */
 	if(load_sl_api(&slb)==-1)

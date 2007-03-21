@@ -15,6 +15,8 @@ typedef struct subscribtion
 	str to_tag;
 	str from_tag;
 	str callid;
+	str sockinfo_str;
+	str local_contact;
 	unsigned int cseq;
 	str contact;
 	str record_route;

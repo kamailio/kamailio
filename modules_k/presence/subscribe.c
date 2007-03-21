@@ -36,6 +36,7 @@
 #include "subscribe.h"
 #include "utils_func.h"
 #include "notify.h"
+#include "../../ip_addr.h"
 
 
 static str su_200_rpl  = str_init("OK");
@@ -104,22 +105,23 @@ error:
 	return -1;
 } 
 
-int send_202ok(struct sip_msg * msg, int lexpire, str *rtag)
+int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 {
 	static str hdr_append;
 
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*50);
+	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(local_contact->len+ 50));
 	if(hdr_append.s == NULL)
 	{
-		LOG(L_ERR,"ERROR:send_202ok : no more pkg memory\n");
+		LOG(L_ERR,"PRESENCE: send_202ok:ERROR no more pkg memory\n");
 		return -1;
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
 	
+	
 	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
 	hdr_append.len += 10;
-	strncpy(hdr_append.s+hdr_append.len, server_address.s, server_address.len);
-	hdr_append.len += server_address.len;
+	strncpy(hdr_append.s+hdr_append.len, local_contact->s, local_contact->len);
+	hdr_append.len+= local_contact->len;
 	strncpy(hdr_append.s+hdr_append.len, ">", 1);
 	hdr_append.len += 1;
 	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
@@ -148,22 +150,21 @@ error:
 	return -1;
 }
 
-int send_200ok(struct sip_msg * msg, int lexpire, str *rtag)
+int send_200ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 {
-	static str hdr_append;
+	static str hdr_append;	
 
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*255);
+	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(local_contact->len+ 50));
 	if(hdr_append.s == NULL)
 	{
 		LOG(L_ERR,"ERROR:send_200ok : unable to add lump_rl\n");
 		return -1;
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
-	
 	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
 	hdr_append.len += 10;
-	strncpy(hdr_append.s+hdr_append.len, server_address.s, server_address.len);
-	hdr_append.len += server_address.len;
+	strncpy(hdr_append.s+hdr_append.len, local_contact->s, local_contact->len);
+	hdr_append.len+= local_contact->len;
 	strncpy(hdr_append.s+hdr_append.len, ">", 1);
 	hdr_append.len += 1;
 	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
@@ -194,9 +195,9 @@ error:
 int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 		int to_tag_gen)
 {	
-	db_key_t query_cols[15];
-	db_op_t  query_ops[15];
-	db_val_t query_vals[15], update_vals[5];
+	db_key_t query_cols[16];
+	db_op_t  query_ops[16];
+	db_val_t query_vals[16], update_vals[5];
 	db_key_t result_cols[4], update_keys[5];
 	db_res_t *result;
 	
@@ -340,7 +341,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			}
 			if(subs->event.len == strlen("presence"))
 			{	
-				if( send_202ok(msg, subs->expires, rtag) <0)
+				if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
 					LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 						" sending 202 OK\n");
@@ -356,7 +357,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			}	
 			else /* if unsubscribe for winfo */
 			{
-				if( send_200ok(msg, subs->expires, rtag) <0)
+				if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
 					LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 						" sending 202 OK\n");
@@ -424,10 +425,30 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 				n_query_cols++;
 			}
 
+			/*  */
+			/* Save receive socket also -- ke. */
+		    struct socket_info *si = msg->rcv.bind_address;
+			query_cols[n_query_cols] = "socket_info";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].val.str_val = si->sock_str;
+			query_vals[n_query_cols].nul = 0;
+			n_query_cols++;
+
+			subs->sockinfo_str.s= si->sock_str.s;
+			subs->sockinfo_str.len= si->sock_str.len;
+			
+			query_cols[n_query_cols] = "local_contact";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val.s = subs->local_contact.s;
+			query_vals[n_query_cols].val.str_val.len = 
+				subs->local_contact.len;
+			n_query_cols++;
+
 
 			DBG("PRESENCE:update_subscribtion:Inserting into database:"		
 				"\nn_query_cols:%d\n",n_query_cols);
-			for(i = 0;i< n_query_cols-2; i++)
+			for(i = 0;i< n_query_cols; i++)
 			{
 				if(query_vals[i].type==DB_STR)
 				DBG("[%d] = %s %.*s\n",i, query_cols[i], 
@@ -455,7 +476,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 	if(subs->event.len == strlen("presence"))
 	{	
-		if( send_202ok(msg, subs->expires, rtag) <0)
+		if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
 			LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 					" sending 202 OK\n");
@@ -481,7 +502,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 	}
 	else /* if a new subscribe for winfo */
 	{
-		if( send_200ok(msg, subs->expires, rtag) <0)
+		if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
 			LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
 					" sending 202 OK\n");
@@ -786,7 +807,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	int  to_tag_gen = 0;
 	str rtag_value;
 	subs_t subs;
-	char buf[50];
+	static char buf[50];
+	static char cont_buf[256];
 	str rec_route;
 	int error_ret = -1;
 	int rt  = 0;
@@ -798,6 +820,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	db_val_t *row_vals ;
 	str status= {0, 0};
 	str reason= {0, 0};
+	str contact;
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
@@ -1067,6 +1090,62 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 
 	subs.version = 0;
+	
+	if((!server_address.s) || (server_address.len== 0))
+	{
+		str ip;
+		char* proto;
+		int port;
+
+		memset(cont_buf, 0, 255*sizeof(char));
+		contact.s= cont_buf;
+		contact.len= 0;
+	
+		if(msg->rcv.proto== PROTO_NONE || msg->rcv.proto==PROTO_UDP)
+		{
+			proto= "upd";
+		}
+		else
+		if(msg->rcv.proto== PROTO_TCP)
+		{
+			proto= "tcp";
+		}
+		else
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR wrong proto value\n");
+			goto error;
+		}	
+		ip.s= ip_addr2a(&msg->rcv.dst_ip);
+		if(ip.s== NULL)
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR while transforming ip_addr to ascii\n");
+			goto error;
+		}
+		ip.len= strlen(ip.s);
+		port = msg->rcv.dst_port;
+
+		if(strncmp(ip.s, "sip:", 4)!=0)
+		{
+			strncpy(contact.s, "sip:", 4);
+			contact.len+= 4;
+		}	
+		strncpy(contact.s+contact.len, ip.s, ip.len);
+		contact.len += ip.len;
+		if(port== 5060)
+			strncpy(contact.s+contact.len, ":5060;transport=" , 16);
+		else
+			strncpy(contact.s+ contact.len, ":5062;transport=", 16);
+		contact.len+=16;
+
+		strncpy(contact.s+ contact.len, proto, 3);
+		contact.len += 3;
+		
+		subs.local_contact= contact;
+	}
+	else
+		subs.local_contact= server_address;
+	DBG("PRESENCE: handle_subscribe: local_contact: %.*s --- len= %d\n", 
+			subs.local_contact.len, subs.local_contact.s, subs.local_contact.len);
 
 	if( PWINFO_LEN==subs.event.len)
 	{

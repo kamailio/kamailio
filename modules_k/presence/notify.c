@@ -38,6 +38,7 @@
 #include "../../db/db.h"
 #include "../../db/db_val.h"
 #include "../tm/tm_load.h"
+#include "../../socket_info.h"
 
 #include "presence.h"
 #include "notify.h"
@@ -65,7 +66,8 @@ void printf_subs(subs_t* subs)
 
 }
 
-str* build_str_hdr(str event, str event_id, str status, int expires_t, str reason)
+str* build_str_hdr(str event, str event_id, str status, int expires_t,
+		str reason,str* local_contact)
 {
 
 	static 	char buf[3000];
@@ -98,8 +100,8 @@ str* build_str_hdr(str event, str event_id, str status, int expires_t, str reaso
 
 	strncpy(str_hdr->s+str_hdr->len ,"Contact: <", 10);
 	str_hdr->len += 10;
-	strncpy(str_hdr->s+str_hdr->len, server_address.s, server_address.len);
-	str_hdr->len += server_address.len;
+	strncpy(str_hdr->s+str_hdr->len, local_contact->s, local_contact->len);
+	str_hdr->len +=  local_contact->len;
 	strncpy(str_hdr->s+str_hdr->len, ">", 1);
 	str_hdr->len += 1;
 	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
@@ -636,6 +638,19 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 			&td->route_set);
 		
 	td->state= DLG_CONFIRMED ;
+
+	if (subs->sockinfo_str.len) {
+		int port, proto;
+        str host;
+		if (parse_phostport (
+				subs->sockinfo_str.s,subs->sockinfo_str.len,&host.s,
+				&host.len,&port, &proto )) {
+			LOG (L_ERR,"PRESENCE:build_dlg_t:bad sockinfo string\n");
+			goto error;
+		}
+		td->send_sock = grep_sock_info (
+			&host, (unsigned short) port, (unsigned short) proto);
+	}
 	
 	return td;
 
@@ -647,6 +662,7 @@ error:
 	}
 	if(td!=NULL)
 		free_tm_dlg(td);
+
 	return NULL;
 }
 
@@ -659,7 +675,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	db_key_t query_cols[6];
 	db_op_t  query_ops[6];
 	db_val_t query_vals[6];
-	db_key_t result_cols[15];
+	db_key_t result_cols[16];
 	int n_result_cols = 0, n_query_cols = 0;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -667,9 +683,11 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	int size= 0;
 	str from_user, from_domain, to_tag, from_tag;
 	str event_id, callid, record_route, contact, status;
+	str sockinfo_str, local_contact;
 	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
 	int expires_col= 0,callid_col, cseq_col, i, status_col =0, event_id_col = 0;
 	int version_col = 0, record_route_col = 0, contact_col = 0;
+	int sockinfo_col = 0, local_contact_col= 0;;
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
@@ -713,6 +731,8 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	result_cols[contact_col=n_result_cols++] = "contact";
 	result_cols[expires_col=n_result_cols++] = "expires";
 	result_cols[status_col=n_result_cols++] = "status"; 
+	result_cols[sockinfo_col=n_result_cols++] = "socket_info"; 
+	result_cols[local_contact_col=n_result_cols++] = "local_contact"; 
 	
 	if(strlen(event)== strlen( "presence.winfo"))
 	{
@@ -793,9 +813,18 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 			status.len= 0;
 		}
 		
+		sockinfo_str.s = row_vals[sockinfo_col].val.str_val.s;
+		sockinfo_str.len = sockinfo_str.s?strlen (sockinfo_str.s):0;
+
+		local_contact.s = row_vals[local_contact_col].val.str_val.s;
+		local_contact.len = local_contact.s?strlen (local_contact.s):0;
+		
+
+
 		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
 				from_domain.len+ event_id.len+ + strlen(event)+ to_tag.len+ 
-				from_tag.len+ callid.len+ record_route.len+ contact.len)* sizeof(char);
+				from_tag.len+ callid.len+ record_route.len+ contact.len+
+				sockinfo_str.len+ local_contact.len)* sizeof(char);
 
 		if(force_active== 0)
 			size+= status.len* sizeof(char);
@@ -891,6 +920,16 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 			}
 		}
 
+		subs->sockinfo_str.s =(char*)subs+ size;
+		memcpy(subs->sockinfo_str.s, sockinfo_str.s, sockinfo_str.len);
+		subs->sockinfo_str.len = sockinfo_str.len;
+		size+= sockinfo_str.len;
+		
+		subs->local_contact.s =(char*)subs+ size;
+		memcpy(subs->local_contact.s, local_contact.s, local_contact.len);
+		subs->local_contact.len = local_contact.len;
+		size+= local_contact.len;
+
 		subs->cseq = row_vals[cseq_col].val.int_val;
 		subs->expires = row_vals[expires_col].val.int_val - 
 			(int)time(NULL);
@@ -921,8 +960,6 @@ error:
 	return NULL;
 	
 }
-
-
 
 int query_db_notify(str* p_user, str* p_domain, char* event, 
 		subs_t* watcher_subs, str* etag )
@@ -1523,7 +1560,7 @@ jump_over_body:
 
 	printf_subs(subs);
 	str_hdr = build_str_hdr( subs->event, subs->event_id, subs->status, subs->expires,
-			subs->reason );
+			subs->reason, &subs->local_contact );
 	if(str_hdr == NULL|| str_hdr->s== NULL|| str_hdr->len==0)
 	{
 		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
@@ -1541,7 +1578,7 @@ jump_over_body:
 
 	if(subs->event.len == PWINFO_LEN && watcher_subs )
 	{
-		DBG("PRESENCE: notify:Send notify for presence on callback");
+		DBG("PRESENCE: notify:Send notify for presence on callback\n");
 		watcher_subs->send_on_cback = 1;			
 	}
 	cb_param = shm_dup_subs(watcher_subs, subs->to_tag);
@@ -1758,7 +1795,7 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 	int size;
 	c_back_param* cb_param = NULL;
 
-	size = sizeof(c_back_param) + to_tag.len +1;
+	size = sizeof(c_back_param) + to_tag.len +10;
 
 	if(subs && subs->send_on_cback)
 	{
@@ -1766,11 +1803,15 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 			subs->to_domain.len+ subs->from_user.len+ subs->from_domain.len+
 			subs->event.len +subs->event_id.len + subs->to_tag.len +
 			subs->from_tag.len + subs->callid.len +subs->contact.len +
-			subs->record_route.len +subs->status.len + subs->reason.len)
-			*sizeof(char);
+			subs->record_route.len +subs->status.len + subs->reason.len+
+			subs->local_contact.len+ subs->sockinfo_str.len)* sizeof(char);
+		
+		DBG("PRESENCE: notify: \tlocal_contact.len= %d\n\tsockinfo_str.len= %d\n",
+				subs->local_contact.len, subs->sockinfo_str.len);
 	}	
 	cb_param = (c_back_param*)shm_malloc(size);
 	
+
 	if(cb_param == NULL)
 	{
 		LOG(L_ERR, "PRESENCE: notify:Error no more share memory\n ");
@@ -1868,6 +1909,16 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 		cb_param->wi_subs->reason.len = subs->reason.len;
 		size+= subs->reason.len;
 	}
+	cb_param->wi_subs->local_contact.s = (char*)cb_param + size;
+	strncpy(cb_param->wi_subs->local_contact.s, subs->local_contact.s, subs->local_contact.len);
+	cb_param->wi_subs->local_contact.len= subs->local_contact.len;
+	size+= subs->local_contact.len;
+
+	cb_param->wi_subs->sockinfo_str.s = (char*)cb_param + size;
+	strncpy(cb_param->wi_subs->sockinfo_str.s, subs->sockinfo_str.s, subs->sockinfo_str.len);
+	cb_param->wi_subs->sockinfo_str.len= subs->sockinfo_str.len;
+	size+= subs->sockinfo_str.len;
+
 	cb_param->wi_subs->version = subs->version;
 
 	return cb_param;

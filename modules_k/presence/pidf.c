@@ -174,7 +174,7 @@ str* agregate_xmls(str** body_array, int n)
 
 	for(i=0; i<n;i++)
 	{
-		if(body_array[i] == NULL)
+		if(body_array[i] == NULL )
 			continue;
 
 		xml_array[j] = NULL;
