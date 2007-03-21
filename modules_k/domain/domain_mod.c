@@ -80,9 +80,9 @@ str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};       /* Name of domain column */
 /*
  * Other module variables
  */
-struct domain_list ***hash_table;	/* Pointer to current hash table pointer */
-struct domain_list **hash_table_1;	/* Pointer to hash table 1 */
-struct domain_list **hash_table_2;	/* Pointer to hash table 2 */
+struct domain_list ***hash_table = 0;	/* Pointer to current hash table pointer */
+struct domain_list **hash_table_1 = 0;	/* Pointer to hash table 1 */
+struct domain_list **hash_table_2 = 0;	/* Pointer to hash table 2 */
 
 
 /*

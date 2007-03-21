@@ -87,6 +87,8 @@ int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl)
 	struct domain_list *np;
 	struct mi_node* node;
 
+	if(hash_table==0)
+		return -1;
 	for (i = 0; i < DOM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
@@ -106,6 +108,9 @@ void hash_table_free (struct domain_list **hash_table)
 {
 	int i;
 	struct domain_list *np, *next;
+	
+	if(hash_table==0)
+		return;
 
 	for (i = 0; i < DOM_HASH_SIZE; i++) {
 		np = hash_table[i];

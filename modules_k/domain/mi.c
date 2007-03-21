@@ -40,6 +40,9 @@
  */
 struct mi_root* mi_domain_reload(struct mi_root *cmd_tree, void *param)
 {
+	if(db_mode==0)
+		return init_mi_tree( 500, "command not activated", 21);
+
 	if (reload_domain_table () == 1) {
 		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	} else {
@@ -54,6 +57,9 @@ struct mi_root* mi_domain_reload(struct mi_root *cmd_tree, void *param)
 struct mi_root* mi_domain_dump(struct mi_root *cmd_tree, void *param)
 {
 	struct mi_root* rpl_tree;
+
+	if(db_mode==0)
+		return init_mi_tree( 500, "command not activated", 21);
 
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	if (rpl_tree==NULL)
