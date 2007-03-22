@@ -1103,16 +1103,21 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	
 		if(msg->rcv.proto== PROTO_NONE || msg->rcv.proto==PROTO_UDP)
 		{
-			proto= "upd";
+			proto= "udp";
 		}
 		else
+		if(msg->rcv.proto== PROTO_TLS )
+		{
+			proto= "tls";
+		}
+		else	
 		if(msg->rcv.proto== PROTO_TCP)
 		{
 			proto= "tcp";
 		}
 		else
 		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR wrong proto value\n");
+			LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR unsupported proto\n");
 			goto error;
 		}	
 		ip.s= ip_addr2a(&msg->rcv.dst_ip);
@@ -1131,11 +1136,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}	
 		strncpy(contact.s+contact.len, ip.s, ip.len);
 		contact.len += ip.len;
-		if(port== 5060)
-			strncpy(contact.s+contact.len, ":5060;transport=" , 16);
-		else
-			strncpy(contact.s+ contact.len, ":5062;transport=", 16);
-		contact.len+=16;
+		contact.len+= sprintf(contact.s+contact.len, ":%d;transport=" , port);
 
 		strncpy(contact.s+ contact.len, proto, 3);
 		contact.len += 3;
