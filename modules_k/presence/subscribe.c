@@ -808,7 +808,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	str rtag_value;
 	subs_t subs;
 	static char buf[50];
-	static char cont_buf[256];
+	static char cont_buf[1024];
 	str rec_route;
 	int error_ret = -1;
 	int rt  = 0;
@@ -1096,8 +1096,9 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		str ip;
 		char* proto;
 		int port;
+		int len;
 
-		memset(cont_buf, 0, 255*sizeof(char));
+		memset(cont_buf, 0, 1024*sizeof(char));
 		contact.s= cont_buf;
 		contact.len= 0;
 	
@@ -1136,8 +1137,19 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}	
 		strncpy(contact.s+contact.len, ip.s, ip.len);
 		contact.len += ip.len;
-		contact.len+= sprintf(contact.s+contact.len, ":%d;transport=" , port);
+		if(contact.len> 1003)
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR buffer overflow\n");
+			goto error;
+		}	
+		len= sprintf(contact.s+contact.len, ":%d;transport=" , port);
+		if(len< 0)
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR in function sprintf\n");
+			goto error;
 
+		}	
+		contact.len+= len;
 		strncpy(contact.s+ contact.len, proto, 3);
 		contact.len += 3;
 		
