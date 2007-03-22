@@ -216,8 +216,8 @@ modparam("presence", "lock_set_size", 8)
 1.4.9. expires_offset (int)
 
    The value that should be subtracted from the expires value
-   when sending a 200OK for a publish to force the client cu send
-   an update before the old publish expires
+   when sending a 200OK for a publish. It is used for forcing the
+   client cu send an update before the old publish expires.
 
    Default value is "0". 
 
@@ -229,10 +229,14 @@ modparam("presence", "expires_offset", 10)
 
 1.4.10. force_active (int)
 
-   This parameter offers the possibility to set either the first
-   Notify sent for a new subscribe should have the
-   Subscriptions-State value 'pending' or 'active'. If it is
-   different than 0, the Subscription-State value is 'active'.
+   This parameter is used for permissions when handling Subscribe
+   messages. If set to 1, subscription state is considered active
+   and the presentity is not queried for permissions. Otherwise,
+   the xcap_table is queried and the state is extracted from
+   there. If no record exists, the subscriptions remains in
+   pending state and the watcher receives Notify messages with no
+   body. ( If not using an xcap server, you should set this
+   parameter to 1).
 
    Default value is "0". 
 
@@ -244,8 +248,8 @@ modparam("presence", "force_active", 1)
 
 1.4.11. max_expires (int)
 
-   The value at which to reduce the validity of PUBLISH/SUBSCRIBE
-   if the Expires in request is greater.
+   The the maximum admissible expires value for PUBLISH/SUBSCRIBE
+   message.
 
    Default value is "3600". 
 

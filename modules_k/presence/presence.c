@@ -71,7 +71,7 @@ char *active_watchers_table = "active_watchers";
 char *watchers_table= "watchers";  
 char *xcap_table= "xcap_xml";  
 int use_db=1;
-str server_address;
+str server_address= {0, 0};
 
 /* to tag prefix */
 char* to_tag_pref = "10";
@@ -153,8 +153,8 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-//	str _s;
-//	int ver = 0;
+	str _s;
+	int ver = 0;
 
 	DBG("PRESENCE: initializing module ...\n");
 
@@ -233,18 +233,17 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/*
 	_s.s = presentity_table;
 	_s.len = strlen(presentity_table);
 	
-	 * ver =  table_version(&pa_dbf, pa_db, &_s);
+	 ver =  table_version(&pa_dbf, pa_db, &_s);
 	if(ver!=S_TABLE_VERSION)
 	{
 		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
 				" need v%d\n", ver, presentity_table, S_TABLE_VERSION);
 		return -1;
 	}
-	*/	
+	
 	if(clean_period<=0)
 	{
 		DBG("PRESENCE: ERROR: mod_init: wrong clean_period \n");

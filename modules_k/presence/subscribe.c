@@ -38,6 +38,7 @@
 #include "notify.h"
 #include "../../ip_addr.h"
 
+#define LCONTACT_BUF_SIZE 1024
 
 static str su_200_rpl  = str_init("OK");
 static str pu_481_rpl  = str_init("Subscription does not exist");
@@ -808,7 +809,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	str rtag_value;
 	subs_t subs;
 	static char buf[50];
-	static char cont_buf[1024];
+	static char cont_buf[LCONTACT_BUF_SIZE];
 	str rec_route;
 	int error_ret = -1;
 	int rt  = 0;
@@ -1098,7 +1099,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		int port;
 		int len;
 
-		memset(cont_buf, 0, 1024*sizeof(char));
+		memset(cont_buf, 0, LCONTACT_BUF_SIZE*sizeof(char));
 		contact.s= cont_buf;
 		contact.len= 0;
 	
@@ -1137,7 +1138,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}	
 		strncpy(contact.s+contact.len, ip.s, ip.len);
 		contact.len += ip.len;
-		if(contact.len> 1003)
+		if(contact.len> LCONTACT_BUF_SIZE - 21)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR buffer overflow\n");
 			goto error;
