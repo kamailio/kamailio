@@ -830,7 +830,7 @@ CREATE TABLE xcap_xml (
   username varchar(66) NOT NULL,
   domain varchar(128) NOT NULL,
   xcap text NOT NULL,
-  doc_type varchar(64) NOT NULL,
+  doc_type int NOT NULL,
   UNIQUE (username, domain, doc_type)
 ) $TABLE_TYPE;
 

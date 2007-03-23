@@ -772,7 +772,7 @@ CREATE TABLE xcap_xml (
   username varchar(66) NOT NULL,
   domain varchar(128) NOT NULL,
   xcap text NOT NULL,
-  doc_type varchar(64) NOT NULL,
+  doc_type int(11) NOT NULL,
   UNIQUE KEY udd_xcap (username,domain,doc_type),
   PRIMARY KEY (id)
 ) $TABLE_TYPE;
