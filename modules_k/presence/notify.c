@@ -687,7 +687,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
 	int expires_col= 0,callid_col, cseq_col, i, status_col =0, event_id_col = 0;
 	int version_col = 0, record_route_col = 0, contact_col = 0;
-	int sockinfo_col = 0, local_contact_col= 0;;
+	int sockinfo_col = 0, local_contact_col= 0;
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{

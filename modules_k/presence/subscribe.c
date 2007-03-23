@@ -574,10 +574,12 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	int to_user_col, to_domain_col, event_col;
 	int callid_col, cseq_col, i, event_id_col = 0;
 	int record_route_col = 0, contact_col, cseq;
+	int sockinfo_col = 0, local_contact_col= 0;
 
 	str from_user, from_domain, to_tag, from_tag;
 	str to_user, to_domain, event, event_id, callid;
 	str record_route, contact;
+	str sockinfo_str, local_contact;
 	
 	DBG("PRESENCE: msg_active_watchers_clean:cleaning expired watcher information\n");
 	
@@ -600,6 +602,8 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	result_cols[cseq_col=n_result_cols++] = "cseq";
 	result_cols[record_route_col=n_result_cols++] = "record_route";
 	result_cols[contact_col=n_result_cols++] = "contact";
+	result_cols[local_contact_col=n_result_cols++] = "local_contact";
+	result_cols[sockinfo_col=n_result_cols++] = "socket_info"; 
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
@@ -680,10 +684,15 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		record_route.s = row_vals[record_route_col].val.str_val.s;
 		if(record_route.s )
 			record_route.len = strlen(record_route.s);
-	
+
+		sockinfo_str.s = row_vals[sockinfo_col].val.str_val.s;
+		sockinfo_str.len = sockinfo_str.s?strlen (sockinfo_str.s):0;
+
+		local_contact.s = row_vals[local_contact_col].val.str_val.s;
+		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		size= sizeof(subs_t)+ ( to_user.len+ to_domain.len+ from_user.len+ from_domain.len+
 				event.len+ event_id.len+ to_tag.len+ from_tag.len+ callid.len+ contact.len+
-				record_route.len)* sizeof(char);
+				record_route.len+ sockinfo_str.len+ local_contact.len)* sizeof(char);
 
 		subs= (subs_t*)pkg_malloc(size);
 		if(subs== NULL)
@@ -755,7 +764,17 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 			memcpy(subs->record_route.s, record_route.s, record_route.len);
 			subs->record_route.len= record_route.len;
 			size+= record_route.len;
-		}	
+		}
+		subs->sockinfo_str.s =(char*)subs+ size;
+		memcpy(subs->sockinfo_str.s, sockinfo_str.s, sockinfo_str.len);
+		subs->sockinfo_str.len = sockinfo_str.len;
+		size+= sockinfo_str.len;
+		
+		subs->local_contact.s =(char*)subs+ size;
+		memcpy(subs->local_contact.s, local_contact.s, local_contact.len);
+		subs->local_contact.len = local_contact.len;
+		size+= local_contact.len;
+
 		subs->expires = 0;
 		subs->cseq= cseq;
 		subs->status.s = "terminated";
