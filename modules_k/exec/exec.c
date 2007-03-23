@@ -100,7 +100,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	char *cmd_line;
 	int ret;
 	int l1;
-	char uri_line[MAX_URI_SIZE+1];
+	static char uri_line[MAX_URI_SIZE+1];
 	int uri_cnt;
 	str uri;
 	int exit_status;
@@ -108,7 +108,11 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	/* pessimist: assume error by default */
 	ret=-1;
 	
-	l1=strlen(cmd);cmd_len=l1+param_len+2;
+	l1=strlen(cmd);
+	if(param_len>0)
+		cmd_len=l1+param_len+4;
+	else
+		cmd_len=l1+1;
 	cmd_line=pkg_malloc(cmd_len);
 	if (cmd_line==0) {
 		ret=ser_error=E_OUT_OF_MEM;
@@ -117,8 +121,17 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	}
 
 	/* 'command parameter \0' */
-	memcpy(cmd_line, cmd, l1); cmd_line[l1]=' ';
-	memcpy(cmd_line+l1+1, param, param_len);cmd_line[l1+param_len+1]=0;
+	memcpy(cmd_line, cmd, l1); 
+	if(param_len>0)
+	{
+		cmd_line[l1]=' ';
+		cmd_line[l1+1]='\'';
+		memcpy(cmd_line+l1+2, param, param_len);
+		cmd_line[l1+param_len+2]='\'';
+		cmd_line[l1+param_len+3]=0;
+	} else {
+		cmd_line[l1] = 0;
+	}
 	
 	pipe=popen( cmd_line, "r" );
 	if (pipe==NULL) {
