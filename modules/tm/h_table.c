@@ -266,32 +266,37 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	/* timers */
 	init_cell_timers(new_cell);
 
-	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI,  &new_cell->uri_avps_from );
+	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, 
+			&new_cell->uri_avps_from );
 	new_cell->uri_avps_from = *old;
 	*old = 0;
 
-	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI,  &new_cell->uri_avps_to );
+	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, 
+			&new_cell->uri_avps_to );
 	new_cell->uri_avps_to = *old;
 	*old = 0;
 
-	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  &new_cell->user_avps_from );
+	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, 
+			&new_cell->user_avps_from );
 	new_cell->user_avps_from = *old;
 	*old = 0;
 
-	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER,  &new_cell->user_avps_to );
+	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, 
+			&new_cell->user_avps_to );
 	new_cell->user_avps_to = *old;
 	*old = 0;
 
 	     /* We can just store pointer to domain avps in the transaction context,
 	      * because they are read-only
 	      */
-	new_cell->domain_avps_from = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN);
+	new_cell->domain_avps_from = get_avp_list(AVP_TRACK_FROM | 
+								AVP_CLASS_DOMAIN);
 	new_cell->domain_avps_to = get_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN);
 
 	/* enter callback, which may potentially want to parse some stuff,
 	 * before the request is shmem-ized */
-	if ( p_msg && has_reqin_tmcbs() )
-		run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
+	if (p_msg && has_reqin_tmcbs())
+			run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
 
 	if (p_msg) {
 		/* clean possible previous added vias/clen header or else they would 

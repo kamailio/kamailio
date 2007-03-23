@@ -35,6 +35,7 @@
  *              available in callbacks (bogdan)
  * 2007-03-08  membar_write() used in insert_tmcb(...) (andrei)
  * 2007-03-14  added *_SENT callbacks (andrei)
+ * 2007-03-23  added local_req_in callbacks support (andrei)
  */
 
 #include "defs.h"
@@ -52,6 +53,7 @@
 
 
 struct tmcb_head_list* req_in_tmcb_hl = 0;
+struct tmcb_head_list* local_req_in_tmcb_hl = 0;
 
 
 
@@ -59,13 +61,27 @@ int init_tmcb_lists()
 {
 	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
 		( sizeof(struct tmcb_head_list) );
-	if (req_in_tmcb_hl==0) {
+	local_req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
+		( sizeof(struct tmcb_head_list) );
+	if ((req_in_tmcb_hl==0) || (local_req_in_tmcb_hl==0)) {
 		LOG(L_CRIT,"ERROR:tm:init_tmcb_lists: no more shared mem\n");
-		return -1;
+		goto error;
 	}
 	req_in_tmcb_hl->first = 0;
 	req_in_tmcb_hl->reg_types = 0;
+	local_req_in_tmcb_hl->first = 0;
+	local_req_in_tmcb_hl->reg_types = 0;
 	return 1;
+error:
+	if (req_in_tmcb_hl){
+		shm_free(req_in_tmcb_hl);
+		req_in_tmcb_hl=0;
+	}
+	if(local_req_in_tmcb_hl){
+		shm_free(local_req_in_tmcb_hl);
+		local_req_in_tmcb_hl=0;
+	}
+	return -1;
 }
 
 
@@ -73,17 +89,26 @@ void destroy_tmcb_lists()
 {
 	struct tm_callback *cbp, *cbp_tmp;
 
-	if (!req_in_tmcb_hl)
-		return;
-
-	for( cbp=req_in_tmcb_hl->first; cbp ; ) {
-		cbp_tmp = cbp;
-		cbp = cbp->next;
-		if (cbp_tmp->param) shm_free( cbp_tmp->param );
-		shm_free( cbp_tmp );
+	if (req_in_tmcb_hl){
+		for( cbp=req_in_tmcb_hl->first; cbp ; ) {
+			cbp_tmp = cbp;
+			cbp = cbp->next;
+			if (cbp_tmp->param) shm_free( cbp_tmp->param );
+			shm_free( cbp_tmp );
+		}
+		shm_free(req_in_tmcb_hl);
+		req_in_tmcb_hl=0;
 	}
-
-	shm_free(req_in_tmcb_hl);
+	if(local_req_in_tmcb_hl){
+		for( cbp=local_req_in_tmcb_hl->first; cbp ; ) {
+			cbp_tmp = cbp;
+			cbp = cbp->next;
+			if (cbp_tmp->param) shm_free( cbp_tmp->param );
+			shm_free( cbp_tmp );
+		}
+		shm_free(local_req_in_tmcb_hl);
+		local_req_in_tmcb_hl=0;
+	}
 }
 
 
@@ -130,8 +155,8 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
  * (global or per transaction, depending of event type)
  * It _must_ be always called either with the REPLY_LOCK held, or before the
  *  branches are created.
- *  Special case: TMCB_REQUEST_IN - it must be called from mod_init
- *  (before forking!).
+ *  Special cases: TMCB_REQUEST_IN & TMCB_LOCAL_REQUEST_IN - must be called 
+ *                 from mod_init (before forking!).
 */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 											transaction_cb f, void *param )
@@ -158,6 +183,14 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 			return E_BUG;
 		}
 		cb_list = req_in_tmcb_hl;
+	}else if (types & TMCB_LOCAL_REQUEST_IN) {
+		if (types!=TMCB_LOCAL_REQUEST_IN) {
+			LOG(L_CRIT, "BUG:tm:register_tmcb: callback type"
+					" TMCB_LOCAL_REQUEST_IN can't be register along with"
+					" other types\n");
+			return E_BUG;
+		}
+		cb_list = local_req_in_tmcb_hl;
 	} else {
 		if (!t) {
 			if (!p_msg) {
@@ -189,12 +222,18 @@ static void run_trans_callbacks_internal(int type, struct cell *trans,
 	struct tm_callback    *cbp;
 	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to, *backup_uri_from, *backup_uri_to;
 
-	backup_uri_from = set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM, &trans->uri_avps_from );
-	backup_uri_to = set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, &trans->uri_avps_to );
-	backup_from = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, &trans->user_avps_from );
-	backup_to = set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, &trans->user_avps_to );
-	backup_dom_from = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, &trans->domain_avps_from);
-	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, &trans->domain_avps_to);
+	backup_uri_from = set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM,
+			&trans->uri_avps_from );
+	backup_uri_to = set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, 
+			&trans->uri_avps_to );
+	backup_from = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, 
+			&trans->user_avps_from );
+	backup_to = set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, 
+			&trans->user_avps_to );
+	backup_dom_from = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, 
+			&trans->domain_avps_from);
+	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, 
+			&trans->domain_avps_to);
 	for (cbp=trans->tmcb_hl.first; cbp; cbp=cbp->next)  {
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
@@ -275,30 +314,31 @@ void run_onsend_callbacks2(int type , struct retr_buf* rbuf, char* buf,
 
 #endif
 
-void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
+static void run_reqin_callbacks_internal(struct tmcb_head_list* hl,
+							struct cell *trans, struct tmcb_params* params)
 {
-	static struct tmcb_params params;
 	struct tm_callback    *cbp;
-	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to, *backup_uri_from, *backup_uri_to;
+	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to,
+				*backup_uri_from, *backup_uri_to;
 
-	if (req_in_tmcb_hl->first==0)
-		return;
-	memset (&params, 0, sizeof(params));
-	params.req = req;
-	params.code = code;
-
-
-	backup_uri_from = set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM, &trans->uri_avps_from );
-	backup_uri_to = set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, &trans->uri_avps_to );
-	backup_from = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, &trans->user_avps_from );
-	backup_to = set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, &trans->user_avps_to );
-	backup_dom_from = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, &trans->domain_avps_from);
-	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, &trans->domain_avps_to);
-	for (cbp=req_in_tmcb_hl->first; cbp; cbp=cbp->next)  {
+	if (hl==0 || hl->first==0) return;
+	backup_uri_from = set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM,
+			&trans->uri_avps_from );
+	backup_uri_to = set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, 
+			&trans->uri_avps_to );
+	backup_from = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, 
+			&trans->user_avps_from );
+	backup_to = set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, 
+			&trans->user_avps_to );
+	backup_dom_from = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, 
+			&trans->domain_avps_from);
+	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, 
+			&trans->domain_avps_to);
+	for (cbp=hl->first; cbp; cbp=cbp->next)  {
 		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 			trans, cbp->types, cbp->id );
-		params.param = &(cbp->param);
-		cbp->callback( trans, cbp->types, &params );
+		params->param = &(cbp->param);
+		cbp->callback( trans, cbp->types, params );
 	}
 	set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, backup_uri_to );
 	set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM, backup_uri_from );
@@ -306,4 +346,34 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, backup_dom_from );
 	set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, backup_to );
 	set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, backup_from );
+}
+
+
+
+void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
+{
+	static struct tmcb_params params;
+
+	if (req_in_tmcb_hl->first==0)
+		return;
+	memset (&params, 0, sizeof(params));
+	params.req = req;
+	params.code = code;
+	
+	run_reqin_callbacks_internal(req_in_tmcb_hl, trans, &params);
+}
+
+
+void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req,
+								int code )
+{
+	static struct tmcb_params params;
+
+	if (local_req_in_tmcb_hl->first==0)
+		return;
+	memset (&params, 0, sizeof(params));
+	params.req = req;
+	params.code = code;
+	
+	run_reqin_callbacks_internal(local_req_in_tmcb_hl, trans, &params);
 }

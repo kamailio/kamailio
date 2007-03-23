@@ -34,6 +34,7 @@
  * 2007-03-14   added *_SENT callbacks (andrei)
  * 2007-03-17   added TMCB_NEG_ACK_IN, TMCB_REQ_RETR_IN & 
  *               TMCB_LOCAL_RESPONSE_IN (andrei)
+ * 2007-03-23   added TMCB_LOCAL_REQUEST_IN (andrei)
  */
 
 
@@ -67,12 +68,13 @@ struct cell;
 #define TMCB_ACK_NEG_IN_N       10
 #define TMCB_REQ_RETR_IN_N      11
 #define TMCB_LOCAL_RESPONSE_IN_N 12
+#define TMCB_LOCAL_REQUEST_IN_N  13
 #ifdef TMCB_ONSEND
-#define TMCB_REQUEST_SENT_N     13
-#define TMCB_RESPONSE_SENT_N    14
-#define TMCB_MAX_N              14
+#define TMCB_REQUEST_SENT_N     14
+#define TMCB_RESPONSE_SENT_N    15
+#define TMCB_MAX_N              15
 #else
-#define TMCB_MAX_N              12
+#define TMCB_MAX_N              13
 #endif
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
@@ -88,6 +90,7 @@ struct cell;
 #define TMCB_ACK_NEG_IN       (1<<TMCB_ACK_NEG_IN_N)
 #define TMCB_REQ_RETR_IN      (1<<TMCB_REQ_RETR_IN_N)
 #define TMCB_LOCAL_RESPONSE_IN (1<<TMCB_LOCAL_RESPONSE_IN_N)
+#define TMCB_LOCAL_REQUEST_IN (1<<TMCB_LOCAL_REQUEST_IN_N)
 #ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
@@ -239,6 +242,20 @@ struct cell;
  * transactions). It may or may not be a retransmission.
  * No lock is held here (yet). It's unsafe to register other TMCB callbacks.
  *
+ * TMCB_LOCAL_REQUEST_IN -- like TMCB_REQUEST_IN but for locally generated 
+ * request (e.g. via fifo/rpc):  a brand-new local request was 
+ * received/generated and a transaction for it is about to be created.
+ * It's called from HASH_LOCK, so be careful. It is guaranteed not to be
+ * a retransmission. The transactional context is mostly
+ * incomplete -- this callback is called in very early stage
+ * before the message is shmem-ized (so that you can work
+ * with it).
+ * It's safe to install other TMCB callbacks from here.
+ * Note: this callback MUST be installed before forking
+ * (the local_req_in_tmcb_hl callback list does not live in shmem and has no 
+ * access protection), i.e., at best from mod_init functions.
+ *
+ *
  *  All of the following callbacks are called immediately after or before 
  *  sending a message. All of them are read-only (no change can be made to
  * the message). These callbacks use the t_rbuf, send_buf, dst, is_retr
@@ -327,12 +344,15 @@ struct tmcb_head_list {
 
 
 extern struct tmcb_head_list*  req_in_tmcb_hl;
+extern struct tmcb_head_list*  local_req_in_tmcb_hl;
 
 
 #define has_tran_tmcbs(_T_, _types_) \
 	( ((_T_)->tmcb_hl.reg_types)|(_types_) )
 #define has_reqin_tmcbs() \
 	( req_in_tmcb_hl->first!=0 )
+#define has_local_reqin_tmcbs() \
+	( local_req_in_tmcb_hl->first!=0 )
 
 
 int init_tmcb_lists();
@@ -354,6 +374,8 @@ void run_trans_callbacks( int type , struct cell *trans,
 
 /* run all REQUEST_IN callbacks */
 void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
+void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req, 
+		int code );
 
 #ifdef TMCB_ONSEND
 void run_onsend_callbacks(int type, struct retr_buf* rbuf, int retr);
