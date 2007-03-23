@@ -645,9 +645,6 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 			}
 		}
 #endif
-
-		if (e>e_max)
-			e_max = e;
 	}
 
 #ifdef USE_TCP
