@@ -320,6 +320,13 @@ static int fixup_db_query_avp(void** param, int param_no)
 	itemname_list_t *anlist = NULL;
 	char *s;
 
+	if (DB_URL==0)
+	{
+		LOG(L_ERR,"ERROR:avpops:fixup_db_query_avp: you have to config a"
+				" db url for using avp_db_query function\n");
+		return E_UNSPEC;
+	}
+
 	s = (char*)(*param);
 	if (param_no==1)
 	{
