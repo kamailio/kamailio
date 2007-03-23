@@ -603,7 +603,7 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 	}
 	memset(td, 0, sizeof(dlg_t));
 
-	td->loc_seq.value = subs->cseq ;
+	td->loc_seq.value = subs->cseq+ 1;
 	td->loc_seq.is_set = 1;
 
 	td->id.call_id = subs->callid;
