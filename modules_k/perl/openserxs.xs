@@ -715,7 +715,6 @@ SV *
 getBody(self)
     SV *self
   PREINIT:
-  PREINIT:
     struct sip_msg *msg = sv2msg(self);
   INIT:
   CODE:
@@ -737,7 +736,6 @@ Returns the whole message including headers and body.
 SV *
 getMessage(self)
     SV *self
-  PREINIT:
   PREINIT:
     struct sip_msg *msg = sv2msg(self);
   INIT:
