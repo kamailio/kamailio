@@ -171,6 +171,6 @@ if (perl_exec_msg("ldap_alias")) {
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("group.sgml" "Book" "chapter")
+sgml-parent-document: ("perl.sgml" "Book" "chapter")
 End:
 -->

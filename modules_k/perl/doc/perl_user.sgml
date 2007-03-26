@@ -251,6 +251,6 @@ if (perl_exec("ldapalias")) {
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("group.sgml" "Book" "chapter")
+sgml-parent-document: ("perl.sgml" "Book" "chapter")
 End:
 -->
