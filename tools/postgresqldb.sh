@@ -748,7 +748,7 @@ sql_query <<EOF
 $USE_CMD $1;
 
 INSERT INTO version VALUES ( 'presentity', '1');
-INSERT INTO version VALUES ( 'active_watchers', '1');
+INSERT INTO version VALUES ( 'active_watchers', '2');
 INSERT INTO version VALUES ( 'watchers', '1');
 INSERT INTO version VALUES ( 'xcap_xml', '1');
 INSERT INTO version VALUES ( 'pua', '1');
