@@ -57,7 +57,8 @@
 #include "subscribe.h"
 MODULE_VERSION
 
-#define S_TABLE_VERSION 0
+#define S_TABLE_VERSION 1
+#define ACTWATCH_TABLE_VERSION 2
 
 char *log_buf = NULL;
 static int clean_period=100;
@@ -111,7 +112,6 @@ static cmd_export_t cmds[]=
 {
 	{"handle_publish",	  handle_publish,		0,0, REQUEST_ROUTE},
 	{"handle_subscribe",  handle_subscribe,		0,0, REQUEST_ROUTE},
-//	{"handle_notify",	  handle_notify,		0,0, REQUEST_ROUTE},
 	{"stored_pres_info",  stored_pres_info,		1,0,   0          },
 	{0,0,0,0,0} 
 };
@@ -232,10 +232,9 @@ static int mod_init(void)
 		LOG(L_ERR,"PRESENCE:mod_init: Error while connecting database\n");
 		return -1;
 	}
-
+	// verify table version 
 	_s.s = presentity_table;
 	_s.len = strlen(presentity_table);
-	
 	 ver =  table_version(&pa_dbf, pa_db, &_s);
 	if(ver!=S_TABLE_VERSION)
 	{
@@ -244,6 +243,36 @@ static int mod_init(void)
 		return -1;
 	}
 	
+	_s.s = active_watchers_table;
+	_s.len = strlen(active_watchers_table);
+	 ver =  table_version(&pa_dbf, pa_db, &_s);
+	if(ver!=ACTWATCH_TABLE_VERSION)
+	{
+		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
+				" need v%d\n", ver, presentity_table, ACTWATCH_TABLE_VERSION);
+		return -1;
+	}
+
+	_s.s = watchers_table;
+	_s.len = strlen(watchers_table);
+	 ver =  table_version(&pa_dbf, pa_db, &_s);
+	if(ver!=S_TABLE_VERSION)
+	{
+		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
+				" need v%d\n", ver, presentity_table, S_TABLE_VERSION);
+		return -1;
+	}
+
+	_s.s = xcap_table;
+	_s.len = strlen(xcap_table);
+	 ver =  table_version(&pa_dbf, pa_db, &_s);
+	if(ver!=S_TABLE_VERSION)
+	{
+		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
+				" need v%d\n", ver, presentity_table, S_TABLE_VERSION);
+		return -1;
+	}
+
 	if(clean_period<=0)
 	{
 		DBG("PRESENCE: ERROR: mod_init: wrong clean_period \n");
