@@ -17,7 +17,7 @@ typedef struct subscribtion
 	str callid;
 	str sockinfo_str;
 	str local_contact;
-	unsigned int cseq;
+	unsigned int cseq; 
 	str contact;
 	str record_route;
 	int expires;

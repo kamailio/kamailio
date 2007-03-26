@@ -726,7 +726,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	result_cols[from_tag_col=n_result_cols++] = "from_tag";
 	result_cols[to_tag_col=n_result_cols++] = "to_tag";	
 	result_cols[callid_col=n_result_cols++] = "callid";
-	result_cols[cseq_col=n_result_cols++] = "cseq";
+	result_cols[cseq_col=n_result_cols++] = "local_cseq";
 	result_cols[record_route_col=n_result_cols++] = "record_route";
 	result_cols[contact_col=n_result_cols++] = "contact";
 	result_cols[expires_col=n_result_cols++] = "expires";
@@ -1372,8 +1372,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 	xmlNodePtr rule_node = NULL;
 	xmlDocPtr xcap_tree = NULL;
     c_back_param *cb_param= NULL;
-
-
+	
 	LOG(L_INFO, "PRESENCE:notify:dialog informations:\n");
 	printf_subs(subs);
 
@@ -1617,7 +1616,7 @@ jump_over_body:
 	db_vals[0].nul = 0;
 	db_vals[0].val.str_val = subs->to_tag ;
 	
-	update_keys[n_update_keys] = "cseq";
+	update_keys[n_update_keys] = "local_cseq";
 	update_vals[n_update_keys].type = DB_INT;
 	update_vals[n_update_keys].nul = 0;
 	update_vals[n_update_keys].val.int_val = subs->cseq +1;

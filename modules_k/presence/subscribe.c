@@ -193,7 +193,7 @@ error:
 
 }
 
-int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
+int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		int to_tag_gen)
 {	
 	db_key_t query_cols[16];
@@ -201,12 +201,15 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 	db_val_t query_vals[16], update_vals[5];
 	db_key_t result_cols[4], update_keys[5];
 	db_res_t *result;
-	
+	unsigned int remote_cseq, local_cseq;
+	db_row_t *row ;	
+	db_val_t *row_vals ;
+
 	int n_query_cols = 0;
 	int n_result_cols = 0;
-	int version_col= 0, i ;
+	int i , remote_cseq_col= 0, local_cseq_col= 0;
 
-	DBG("PRESENCE: update_subscribtion ...\n");
+	DBG("PRESENCE: update_subscription...\n");
 	printf_subs(subs);	
 	
 	query_cols[n_query_cols] = "to_user";
@@ -286,12 +289,13 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 	query_vals[n_query_cols].val.str_val.s = subs->from_tag.s;
 	query_vals[n_query_cols].val.str_val.len = subs->from_tag.len;
 	n_query_cols++;
-	//	result_cols[status_col=n_result_cols++] = "status" ;
-	result_cols[version_col=n_result_cols++] = "version";
 	
+	result_cols[remote_cseq_col=n_result_cols++] = "remote_cseq";
+	result_cols[local_cseq_col=n_result_cols++] = "local_cseq";
+
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR in use_table\n");
+		LOG(L_ERR, "PRESENCE:update_subscription: ERROR in use_table\n");
 		goto error;
 	}
 	
@@ -299,11 +303,11 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
 	{
-		LOG(L_INFO,"PRESENCE:update_subscribtion: querying database  \n");
+		LOG(L_INFO,"PRESENCE:update_subscription: querying database  \n");
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 		{
-			LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while querying"
+			LOG(L_ERR, "PRESENCE:update_subscription: ERROR while querying"
 					" presentity\n");
 			if(result)
 				pa_dbf.free_result(pa_db, result);
@@ -314,12 +318,12 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 		if(result && result->n <=0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscribtion: The query returned"
+			LOG(L_ERR, "PRESENCE:update_subscription: The query returned"
 					" no result\n");
 			
 			if (slb.reply(msg, 481, &pu_481_rpl) == -1)
 			{
-				LOG(L_ERR, "PRESENCE: update_subscribtion: ERROR while"
+				LOG(L_ERR, "PRESENCE: update_subscription: ERROR while"
 						" sending reply\n");
 				pa_dbf.free_result(pa_db, result);
 				return -1;
@@ -327,24 +331,44 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			pa_dbf.free_result(pa_db, result);
 			return 0;
 		}
+		// verify remote cseq
+		row = &result->rows[0];
+		row_vals = ROW_VALUES(row);
+		local_cseq= row_vals[local_cseq_col].val.int_val;
+		remote_cseq= row_vals[remote_cseq_col].val.int_val;
+		if(subs->cseq<= remote_cseq)
+		{
+			LOG(L_ERR, "PRESENCE:update_subscription: ERROR wron sequence number\n");
+			if (slb.reply(msg, 400, &pu_400_rpl) == -1)
+			{
+				LOG(L_ERR, "PRESENCE: update_subscription: ERROR while"
+						" sending reply\n");
+				pa_dbf.free_result(pa_db, result);
+				return -1;
+			}
+		}	
 		pa_dbf.free_result(pa_db, result);
 		
-		/* delete previous stored subscribtion if the expires value is 0*/
+		// from this point on the subs.cseq field will store 
+		// the local_cseq used for Notify
+		subs->cseq= local_cseq;
+		
+		/* delete previous stored subscriptionif the expires value is 0*/
 		if(subs->expires == 0)
 		{
-			LOG(L_INFO,"PRESENCE:update_subscribtion: expires =0 ->"
+			LOG(L_INFO,"PRESENCE:update_subscription: expires =0 ->"
 					" deleting from database\n");
 			if(pa_dbf.delete(pa_db, query_cols, query_ops, query_vals,
 						n_query_cols)< 0 )
 			{
-				LOG(L_ERR,"PRESENCE:update_subscribtion: ERROR cleaning"
+				LOG(L_ERR,"PRESENCE:update_subscription: ERROR cleaning"
 						" unsubscribed messages\n");	
 			}
 			if(subs->event.len == strlen("presence"))
 			{	
 				if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+					LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
 						" sending 202 OK\n");
 					goto error;
 				}
@@ -352,7 +376,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 				if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
 							NULL, NULL)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
+					LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
 							" notify for presence.winfo\n");
 				}
 			}	
@@ -360,7 +384,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			{
 				if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+					LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
 						" sending 202 OK\n");
 					goto error;
 				}
@@ -368,17 +392,22 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			return 1;
 		}
 
-		/* otherwise update in database and send Subscribe on refresh */
+		/* otherwise update in database expires and remote_cseq */
 
 		update_keys[0] = "expires";
 		update_vals[0].type = DB_INT;
 		update_vals[0].nul = 0;
 		update_vals[0].val.int_val = subs->expires + (int)time(NULL);
-		
+
+		update_keys[1] = "remote_cseq";
+		update_vals[1].type = DB_INT;
+		update_vals[1].nul = 0;
+		update_vals[1].val.int_val = remote_cseq ; // the last cseq in dialog
+
 		if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
-					update_keys, update_vals, n_query_cols,1 )<0) 
+					update_keys, update_vals, n_query_cols,2 )<0) 
 		{
-			LOG( L_ERR , "PRESENCE:update_subscribtion:ERROR while updating"
+			LOG( L_ERR , "PRESENCE:update_subscription:ERROR while updating"
 					" presence information\n");
 			goto error;
 		}
@@ -400,12 +429,20 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			query_vals[n_query_cols].val.str_val.s = subs->status.s;
 			query_vals[n_query_cols].val.str_val.len = subs->status.len;
 			n_query_cols++;
-
-			query_cols[n_query_cols] = "cseq";
+			
+			query_cols[n_query_cols] = "remote_cseq";
 			query_vals[n_query_cols].type = DB_INT;
 			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.int_val = subs->cseq;
+			query_vals[n_query_cols].val.int_val = subs->cseq; // initialise with 0
 			n_query_cols++;
+
+
+			query_cols[n_query_cols] = "local_cseq";
+			query_vals[n_query_cols].type = DB_INT;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.int_val = 0; // initialise with 0
+			n_query_cols++;
+			subs->cseq= 0;
 
 			DBG("expires: %d\n", subs->expires);
 			query_cols[n_query_cols] = "expires";
@@ -447,7 +484,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 			n_query_cols++;
 
 
-			DBG("PRESENCE:update_subscribtion:Inserting into database:"		
+			DBG("PRESENCE:update_subscription:Inserting into database:"		
 				"\nn_query_cols:%d\n",n_query_cols);
 			for(i = 0;i< n_query_cols; i++)
 			{
@@ -461,7 +498,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 	
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
 			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while storing"
+				LOG(L_ERR, "PRESENCE:update_subscription: ERROR while storing"
 						" new subscribtion\n");
 				goto error;
 			}
@@ -479,7 +516,7 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 	{	
 		if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+			LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
 					" sending 202 OK\n");
 			goto error;
 		}
@@ -487,14 +524,14 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 		if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
 					subs, NULL)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscribtion:Could not send"
+			LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
 					" notify for presence.winfo\n");
 		}
 		if(subs->send_on_cback== 0)
 		{	
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_subscribtion: Could not send"
+				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
 					" notify for presence\n");
 			}
 		}
@@ -505,13 +542,13 @@ int update_subscribtion(struct sip_msg* msg, subs_t* subs, str *rtag,
 	{
 		if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscribtion:ERROR while"
+			LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
 					" sending 202 OK\n");
 			goto error;
 		}		
 		if(notify(subs, NULL, NULL, 0 )< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscribtion: ERROR while"
+			LOG(L_ERR, "PRESENCE:update_subscription: ERROR while"
 				" sending notify\n");
 		}
 	}
@@ -599,7 +636,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	result_cols[from_tag_col=n_result_cols++] = "from_tag";
 	result_cols[to_tag_col=n_result_cols++] = "to_tag";	
 	result_cols[callid_col=n_result_cols++] = "callid";
-	result_cols[cseq_col=n_result_cols++] = "cseq";
+	result_cols[cseq_col=n_result_cols++] = "local_cseq";
 	result_cols[record_route_col=n_result_cols++] = "record_route";
 	result_cols[contact_col=n_result_cols++] = "contact";
 	result_cols[local_contact_col=n_result_cols++] = "local_contact";
@@ -1307,7 +1344,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	printf_subs(&subs);	
-	if( update_subscribtion(msg, &subs, &rtag_value, to_tag_gen) <0 )
+	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
 		goto error;
