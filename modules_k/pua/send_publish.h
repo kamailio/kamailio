@@ -46,6 +46,6 @@ typedef int (*send_publish_t)(publ_info_t* publ);
 int send_publish( publ_info_t* publ );
 void print_ua_pres(ua_pres_t* p);
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps);
-str* publ_build_hdr(int expires, str* etag);
+str* publ_build_hdr(int expires, str* etag, int is_body);
 
 #endif

@@ -93,7 +93,7 @@ void print_hentity(hentity_t* h)
 		DBG("\ttuple_id: %.*s\n", h->tuple_id.len, h->tuple_id.s);
 }	
 
-str* publ_build_hdr(int expires, str* etag)
+str* publ_build_hdr(int expires, str* etag, int is_body)
 {
 	static char buf[3000];
 	str* str_hdr = NULL;	
@@ -147,7 +147,7 @@ str* publ_build_hdr(int expires, str* etag)
 		memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
 	}
-	else
+	if(is_body)
 	{	
 		memcpy(str_hdr->s+str_hdr->len,"Content-Type: application/pidf+xml" , 34);
 		str_hdr->len += 34;
@@ -531,11 +531,7 @@ int send_publish( publ_info_t* publ )
 
 send_publish:
 	
-	if(publ->flag & UPDATE_TYPE)
-		str_hdr = publ_build_hdr(publ->expires, &etag);
-	else
-		str_hdr= publ_build_hdr(publ->expires, NULL);
-
+	str_hdr = publ_build_hdr(publ->expires,(publ->flag & UPDATE_TYPE)?&etag:NULL, (body!=NULL)?1:0);
 	if(str_hdr == NULL)
 	{
 		LOG(L_ERR, "PUA:send_publish: ERROR while building extra_headers\n");

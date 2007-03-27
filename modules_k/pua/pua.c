@@ -541,7 +541,7 @@ int update_pua(ua_pres_t* p)
 	if(p->watcher_uri== NULL)
 	{
 		str met= {"PUBLISH", 7};
-		str_hdr = publ_build_hdr(p->desired_expires- (int)time(NULL), &p->etag);
+		str_hdr = publ_build_hdr(p->desired_expires- (int)time(NULL), &p->etag, 0);
 		if(str_hdr == NULL)
 		{
 			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");
