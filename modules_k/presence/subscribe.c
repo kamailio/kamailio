@@ -204,7 +204,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	unsigned int remote_cseq, local_cseq;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
-
+	int n_update_cols= 0;
 	int n_query_cols = 0;
 	int n_result_cols = 0;
 	int i , remote_cseq_col= 0, local_cseq_col= 0;
@@ -396,18 +396,26 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 		/* otherwise update in database expires and remote_cseq */
 
-		update_keys[0] = "expires";
-		update_vals[0].type = DB_INT;
-		update_vals[0].nul = 0;
-		update_vals[0].val.int_val = subs->expires + (int)time(NULL);
+		update_keys[n_update_cols] = "expires";
+		update_vals[n_update_cols].type = DB_INT;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.int_val = subs->expires + (int)time(NULL);
+		n_update_cols++;
+		
+		update_keys[n_update_cols] = "remote_cseq";
+		update_vals[n_update_cols].type = DB_INT;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.int_val = remote_cseq ; // the last cseq in dialog
+		n_update_cols++;
 
-		update_keys[1] = "remote_cseq";
-		update_vals[1].type = DB_INT;
-		update_vals[1].nul = 0;
-		update_vals[1].val.int_val = remote_cseq ; // the last cseq in dialog
+		update_keys[n_update_cols] = "status";
+		update_vals[n_update_cols].type = DB_STR;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.str_val = subs->status;
+		n_update_cols++;
 
 		if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
-					update_keys, update_vals, n_query_cols,2 )<0) 
+					update_keys, update_vals, n_query_cols,n_update_cols )<0) 
 		{
 			LOG( L_ERR , "PRESENCE:update_subscription:ERROR while updating"
 					" presence information\n");
@@ -1308,19 +1316,44 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 		else
 		{
+			// change according to force_active value
 			row = &result->rows[0];
 			row_vals = ROW_VALUES(row);		
 			
-			status.len= strlen(row_vals[0].val.str_val.s);
-			status.s= (char*)pkg_malloc(status.len* sizeof(char));
-			if(status.s== NULL)
+			if(strncmp(row_vals[0].val.str_val.s, "pending", 7)==0 && force_active)
 			{
-				LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
-				goto error;
-			}	
-			memcpy(status.s, row_vals[0].val.str_val.s, status.len);
-			subs.status= status;
+			    // update in database
+				db_key_t update_keys[1];
+				db_val_t update_vals[1];
 
+				update_keys[0]="subs_status";
+				update_vals[0].type = DB_STR;
+				update_vals[0].nul = 0;
+				update_vals[0].val.str_val.s= "active";
+				update_vals[0].val.str_val.len= 6;
+
+				if(pa_dbf.update(pa_db, db_keys, 0, db_vals, update_keys, update_vals, 4, 1 )< 0)
+				{
+					LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR while updating database table\n");
+					goto error;
+				}	
+
+				subs.status.s= "active";
+				subs.status.len= 6;
+			}
+			else
+			{	
+				status.len= strlen(row_vals[0].val.str_val.s);
+				status.s= (char*)pkg_malloc(status.len* sizeof(char));
+				if(status.s== NULL)
+				{
+					LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
+					goto error;
+				}	
+				memcpy(status.s, row_vals[0].val.str_val.s, status.len);
+				subs.status= status;
+			}
+		
 			if(row_vals[1].val.str_val.s)
 			{
 				reason.len= strlen(row_vals[1].val.str_val.s);
