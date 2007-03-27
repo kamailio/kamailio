@@ -239,7 +239,7 @@ static int mod_init(void)
 	if(ver!=S_TABLE_VERSION)
 	{
 		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, presentity_table, S_TABLE_VERSION);
+				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
 		return -1;
 	}
 	
@@ -249,7 +249,7 @@ static int mod_init(void)
 	if(ver!=ACTWATCH_TABLE_VERSION)
 	{
 		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, presentity_table, ACTWATCH_TABLE_VERSION);
+				" need v%d\n", ver, _s.s, ACTWATCH_TABLE_VERSION);
 		return -1;
 	}
 
@@ -259,7 +259,7 @@ static int mod_init(void)
 	if(ver!=S_TABLE_VERSION)
 	{
 		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, presentity_table, S_TABLE_VERSION);
+				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
 		return -1;
 	}
 
@@ -269,7 +269,7 @@ static int mod_init(void)
 	if(ver!=S_TABLE_VERSION)
 	{
 		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, presentity_table, S_TABLE_VERSION);
+				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
 		return -1;
 	}
 

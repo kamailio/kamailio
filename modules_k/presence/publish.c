@@ -281,7 +281,8 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 	hdr = msg->headers;
 	while (hdr!= NULL)
 	{
-		if(strncmp(hdr->name.s, "SIP-If-Match",12)==0 )
+		if(strncmp(hdr->name.s, "SIP-If-Match",12)==0|| 
+				strncmp(hdr->name.s,"Sip-If-Match",12)==0 )
 		{
 			found = 1;
 			break;

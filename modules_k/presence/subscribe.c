@@ -346,7 +346,9 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				pa_dbf.free_result(pa_db, result);
 				return -1;
 			}
-		}	
+		}
+		else
+		   remote_cseq=subs->cseq;
 		pa_dbf.free_result(pa_db, result);
 		
 		// from this point on the subs.cseq field will store 
