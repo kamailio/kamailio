@@ -712,28 +712,30 @@ static inline int add_user_name(struct sip_msg* rq, void* rh, VALUE_PAIR** send)
 
 			user = &puri.user;
 			realm = &puri.host;
-
-			user_name.len = user->len + 1 + realm->len;
-			user_name.s = pkg_malloc(user_name.len);
-			if (!user_name.s) {
-				LOG(L_ERR, "ERROR:acc:add_user_name: no memory\n");
-				return -1;
-			}
-			memcpy(user_name.s, user->s, user->len);
-			user_name.s[user->len] = '@';
-			memcpy(user_name.s + user->len + 1, realm->s, realm->len);
-
-			if (!rc_avpair_add(rh, send, ATTRID(attrs[A_USER_NAME].v),
-					   user_name.s, user_name.len, VENDOR(attrs[A_USER_NAME].v))) {
-				LOG(L_ERR, "ERROR:acc:add_user_name: Failed to add User-Name attribute\n");
-				pkg_free(user_name.s);
-				return -1;
-			}
-			pkg_free(user_name.s);
 		} else {
 			DBG("acc:add_user_name: Neither digest nor From found, mandatory attribute User-Name not added\n");
+			return -1;
 		}
 	}
+
+	user_name.len = user->len + 1 + realm->len;
+	user_name.s = pkg_malloc(user_name.len);
+	if (!user_name.s) {
+		LOG(L_ERR, "ERROR:acc:add_user_name: no memory\n");
+		return -1;
+	}
+	memcpy(user_name.s, user->s, user->len);
+	user_name.s[user->len] = '@';
+	memcpy(user_name.s + user->len + 1, realm->s, realm->len);
+
+	if (!rc_avpair_add(rh, send, ATTRID(attrs[A_USER_NAME].v),
+			   user_name.s, user_name.len, VENDOR(attrs[A_USER_NAME].v))) {
+		LOG(L_ERR, "ERROR:acc:add_user_name: Failed to add User-Name attribute\n");
+		pkg_free(user_name.s);
+		return -1;
+	}
+	pkg_free(user_name.s);
+	
 	return 0;
 }
 
