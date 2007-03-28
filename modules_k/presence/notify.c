@@ -1886,7 +1886,7 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 	cb_param->wi_subs->contact.len= subs->contact.len;
 	size+= subs->contact.len;
 
-	if(cb_param->wi_subs->record_route.s)
+	if(subs->record_route.s)
 	{
 		cb_param->wi_subs->record_route.s = (char*)cb_param + size;
 		strncpy(cb_param->wi_subs->record_route.s, subs->record_route.s, subs->record_route.len);
