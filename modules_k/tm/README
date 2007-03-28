@@ -350,6 +350,11 @@ modparam("tm", "fr_inv_timer", 200)
    branches are finished by a final reply or FR timer--we
    simplified).
 
+   For non-INVITE transaction this timer relates to timer J of
+   RFC 3261 section 17.2.2. According to the RFC this timer
+   should be 64*T1 (= 32 seconds). But this would increase memory
+   usage as the transactions are kept in memory very long.
+
    Default value is 5 seconds. 
 
    Example 1-3. Set wt_timer parameter

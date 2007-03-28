@@ -282,6 +282,12 @@ modparam("tm", "fr_inv_timer", 200)
 		are finished by a final reply or FR timer--we simplified).
 		</para>
 		<para>
+		For non-INVITE transaction this timer relates to timer J of RFC 3261 
+		section 17.2.2. According to the RFC this timer should be 64*T1 
+		(= 32 seconds). But this would increase memory usage as the transactions
+		are kept in memory very long.
+		</para>
+		<para>
 		<emphasis>
 			Default value is 5 seconds.
 		</emphasis>
