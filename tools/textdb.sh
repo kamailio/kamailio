@@ -364,7 +364,7 @@ cd $DBTEXT_PATH
 echo "creating presence tables into $1 ..."
 
 echo "presentity:1" 		>> version;
-echo "active_watchers:1" 	>> version;
+echo "active_watchers:2" 	>> version;
 echo "watchers:1" 			>> version;
 echo "xcap_xml:1" 			>> version;
 echo "pua:1" 				>> version;
@@ -385,7 +385,7 @@ echo "id(int) username(str) domain(str) event(str) etag(str) expires(int) receiv
 #
 touch active_watchers;
 echo "DBTEXT Add Table: active_watchers"
-echo "id(int) to_user(str) to_domain(str) from_user(str) from_domain(str) event(str) event_id(str,null) to_tag(str) from_tag(str) callid (str) cseq(int) contact(str) record_route(str,null) expires(int) status(str) version(int)" >> active_watchers;
+echo "id(int) to_user(str) to_domain(str) from_user(str) from_domain(str) event(str) event_id(str,null) to_tag(str) from_tag(str) callid (str) local_cseq(int) remote_cseq(int) contact(str) record_route(str,null) expires(int)  status(str) version(int) socket_info(str) local_contact(str)" >> active_watchers;
 
 #
 # Table structure for table 'watchers'
