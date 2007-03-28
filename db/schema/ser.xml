@@ -91,7 +91,9 @@
          an error if they are not present, although it
          would produce a warning
       -->
+<!-- It produces an error, not warning!
     <xi:include href="extra.xml" xpointer="xpointer(data/table)">
 	<xi:fallback/>
     </xi:include>
+-->
 </database>
