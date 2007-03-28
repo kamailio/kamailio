@@ -356,7 +356,6 @@ Warning: 392 127.0.0.1:5060 "Noisy feedback tells:  pid=9975 req_src_ip=127.0.0
 		this:
 		<programlisting>
 if (method == "POST" || method == "GET") {
-    <emphasis>create_via();</emphasis>   # Create fake Via
     <emphasis>dispatch_rpc();</emphasis> # Process the request
     break;
 };
@@ -702,7 +701,8 @@ static void rpc_delete_contact(rpc_t* rpc)
 {
     str aor, contact;
     char* table;
-    int handle, expires;
+    void *handle;
+    int   expires;
     double q;
 
     if (rpc->scan("sS{", &table, &aor, &handle) < 0) {
@@ -861,7 +861,8 @@ static void core_kill(rpc_t* rpc)
 static void rpc_func(rpc_t* rpc)
 {
     str str_result;
-    int int_result, handle;
+    int int_result;
+    void *handle;
     double float_result;
 
     if (rpc->add("Sdf{", &str_result, int_result, float_result, &handle) < 0) return;
@@ -929,11 +930,11 @@ if (rpc->printf("Unable to delete %d entries from table %s", num_entries, table_
 <![CDATA[
 static void rpc_func(rpc_t* rpc)
 {
-    int handle;
+    void *handle;
 
-      /* Create empty structure and obtain its handle */
+        /* Create empty structure and obtain its handle */
     if (rpc->add("{", &handle) < 0) return;
-      /* Fill-in the structure */
+        /* Fill-in the structure */
     if (rpc->struct_add(handle, "sd", "attr1", str_val, "attr2", int_val) < 0) return;
 }
 ]]>
@@ -959,7 +960,7 @@ static void rpc_register(rpc_t* rpc)
     char* domain;
     str aor;
     contact_t contact, new_contact;
-    int handle;
+    void *handle;
 
         /* Extract the domain, address of record from the request */
     if (rpc->scan("sS{", &domain, &aor, &handle) < 0) return;
