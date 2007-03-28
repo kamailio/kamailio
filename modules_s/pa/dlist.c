@@ -181,7 +181,7 @@ int register_pdomain(const char* _n, pdomain_t** _d)
 	}
 	
 	if (new_dlist(&s, &d) < 0) {
-		LOG(L_ERR, "register_udomain(): Error while creating new domain\n");
+		LOG(L_ERR, "register_pdomain(): Error while creating new domain\n");
 		return -1;
 	} 
 
