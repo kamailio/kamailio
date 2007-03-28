@@ -39,7 +39,7 @@
 typedef struct {
 	const char* table;     /* Default table to use */
 	unsigned long tail;    /* Variable length tail
-				* database module specific */    
+	                        * database module specific */    
 } db_con_t;
 
 
