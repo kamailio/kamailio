@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2005 iptel.org
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -25,37 +26,50 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <unistd.h>
+#include <string.h>
 #include "../dprint.h"
 #include "db_pool.h"
 
+SLIST_HEAD(db_pool_head, db_pool_entry);
 
-/* The head of the pool */
-static struct pool_con* db_pool = 0;
+/* The global connection pool */
+struct db_pool_head db_pool = SLIST_HEAD_INITIALIZER(db_pool);
+
+
+int db_pool_entry_init(struct db_pool_entry *entry, void* free_func, db_uri_t* uri)
+{
+	if (db_drv_init(&entry->drv_gen, free_func) < 0) return -1;
+	SLIST_NEXT(entry, next) = NULL;
+	entry->uri = uri;
+	entry->ref = 1;
+	return 0;
+}
+
+
+void db_pool_entry_free(struct db_pool_entry* entry)
+{
+	db_drv_free(&entry->drv_gen);
+	entry->uri = NULL;
+	entry->ref = 0;
+}
 
 
 /*
  * Search the pool for a connection with
- * the identifier equal to id, NULL is returned
+ * the URI equal to uri, NULL is returned
  * when no connection is found
  */
-struct pool_con* pool_get(struct db_id* id)
+struct db_pool_entry* db_pool_get(db_uri_t* uri)
 {
-	struct pool_con* ptr;
+	db_pool_entry_t* ptr;
 
-	if (!id) {
-		LOG(L_ERR, "pool_get: Invalid parameter value\n");
-		return 0;
-	}
-
-	ptr = db_pool;
-	while (ptr) {
-		if (cmp_db_id(id, ptr->id)) {
+	SLIST_FOREACH(ptr, &db_pool, next) {
+		if (db_uri_cmp(ptr->uri, uri)) {
 			ptr->ref++;
 			return ptr;
 		}
-		ptr = ptr->next;
 	}
-
 	return 0;
 }
 
@@ -63,12 +77,9 @@ struct pool_con* pool_get(struct db_id* id)
 /*
  * Insert a new connection into the pool
  */
-void pool_insert(struct pool_con* con)
+void db_pool_put(db_pool_entry_t* entry)
 {
-	if (!con) return;
-
-	con->next = db_pool;
-	db_pool = con;
+	SLIST_INSERT_HEAD(&db_pool, entry, next);
 }
 
 
@@ -82,39 +93,23 @@ void pool_insert(struct pool_con* con)
  * The function returns -1 if the connection is
  * not in the pool.
  */
-int pool_remove(struct pool_con* con)
+int db_pool_remove(db_pool_entry_t* entry)
 {
-	struct pool_con* ptr;
+	db_pool_entry_t* ptr, *tmp_ptr;
 
-	if (!con) return -2;
+	if (!entry) return -2;
 
-	if (con->ref > 1) {
+	if (entry->ref > 1) {
 		     /* There are still other users, just
 		      * decrease the reference count and return
 		      */
-		DBG("pool_remove: Connection still kept in the pool\n");
-		con->ref--;
+		DBG("db_pool_remove: Connection still kept in the pool\n");
+		entry->ref--;
 		return 0;
 	}
 
-	DBG("pool_remove: Removing connection from the pool\n");
+	DBG("db_pool_remove: Removing connection from the pool\n");
 
-	if (db_pool == con) {
-		db_pool = db_pool->next;
-	} else {
-		ptr = db_pool;
-		while(ptr) {
-			if (ptr->next == con) break;
-			ptr = ptr->next;
-		}
-		if (!ptr) {
-			LOG(L_ERR, "pool_remove: Weird, connection not found in the pool\n");
-			return -1;
-		} else {
-			     /* Remove the connection from the pool */
-			ptr->next = con->next;
-		}
-	}
-
+	SLIST_REMOVE(&db_pool, entry, db_pool_entry, next);
 	return 1;
 }

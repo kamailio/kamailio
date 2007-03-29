@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2005 iptel.org
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,10 +27,16 @@
  */
 
 #ifndef _DB_POOL_H
-#define _DB_POOL_H
+#define _DB_POOL_H  1
 
-#include "db_id.h"
-#include "db_con.h"
+#include <sys/types.h>
+#include "db_drv.h"
+#include "../list.h"
+#include "db_uri.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 
 /*
@@ -40,11 +47,16 @@
  * created by the backends) must have these
  * attributes.
  */
-struct pool_con {
-	struct db_id* id;        /* Connection identifier */
-	unsigned int ref;        /* Reference count */
-	struct pool_con* next;   /* Next element in the pool */
-};
+typedef struct db_pool_entry {
+	db_drv_t drv_gen;  /* Generic part of the driver specific data */
+	SLIST_ENTRY(db_pool_entry) next;
+	db_uri_t* uri;     /* Pointer to the URI representing the connection */
+	unsigned int ref;  /* Reference count */
+} db_pool_entry_t;
+
+
+int db_pool_entry_init(struct db_pool_entry *entry, void* free_func, db_uri_t* uri);
+void db_pool_entry_free(struct db_pool_entry* entry);	
 
 
 /*
@@ -52,13 +64,13 @@ struct pool_con {
  * the identifier equal to id, NULL is returned
  * when no connection is found
  */
-struct pool_con* pool_get(struct db_id* id);
+struct db_pool_entry* db_pool_get(db_uri_t* uri);
 
 
 /*
  * Insert a new connection into the pool
  */
-void pool_insert(struct pool_con* con);
+void db_pool_put(struct db_pool_entry* entry);
 
 
 /*
@@ -71,7 +83,10 @@ void pool_insert(struct pool_con* con);
  * The function returns -1 if the connection is
  * not in the pool.
  */
-int pool_remove(struct pool_con* con);
+int db_pool_remove(struct db_pool_entry* entry);
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-#endif /* _POOL_H */
+#endif /* _DB_POOL_H */
