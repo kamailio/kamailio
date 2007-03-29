@@ -26,17 +26,18 @@ ifeq ($(BUGFIX_VER),)
 endif
 
 ifeq ($(OS), darwin)
-	LIB_NAME:=lib$(NAME).$(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER).dylib
-	LIB_RUNTIME_NAME:=lib$(NAME).$(MAJOR_VER).dylib
-	LIB_LINK_NAME:=lib$(NAME).dylib
+	LIB_NAME:= \
+	$(LIB_PREFIX)$(NAME).$(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER)$(LIB_SUFFIX)
+	LIB_RUNTIME_NAME:=$(LIB_PREFIX)$(NAME).$(MAJOR_VER)$(LIB_SUFFIX)
+	LIB_LINK_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX)
 	NAME_LD_FLAGS:= -compatibility_version $(MAJOR_VER).$(MINOR_VER) \
 					-current_version $(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER) \
 					-install_name $(lib_target)/$(LIB_RUNTIME_NAME)
 
 else
-	LIB_NAME:=lib$(NAME).so.$(MAJOR_VER).$(MINOR_VER)
-	LIB_RUNTIME_NAME:=lib$(NAME).so.$(MAJOR_VER)
-	LIB_LINK_NAME:=lib$(NAME).so
+	LIB_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER).$(MINOR_VER)
+	LIB_RUNTIME_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER)
+	LIB_LINK_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX)
 	NAME_LD_FLAGS:= $(LIB_SONAME)$(LIB_RUNTIME_NAME)
 endif
 
@@ -72,7 +73,7 @@ include $(COREPATH)/Makefile.rules
 
 $(NAME): $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME)
 
-$(LIB_RUNTIME_NAME): 
+$(LIB_RUNTIME_NAME):
 	-@ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME)
 
 $(LIB_LINK_NAME):
@@ -99,3 +100,9 @@ install: $(LIB_NAME) $(lib-prefix)/$(lib-dir)
 	ln -s $(lib-prefix)/$(lib-dir)/$(LIB_NAME) \
 			$(lib-prefix)/$(lib-dir)/$(LIB_LINK_NAME) 
 
+
+.PHONY:install-if-newer
+install-if-newer: $(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME) 
+
+$(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME)
+	@$(MAKE) install

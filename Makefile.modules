@@ -4,6 +4,13 @@
 # module Makefile
 #(to be included from each module)
 #
+# History:
+# --------
+#  2007-03-29  if a module depends on SER_LIBS, it will be rebuilt on install
+#               with the proper rpath; libraries will be automatically
+#               installed if needed (andrei)
+#
+
 MOD_NAME=$(NAME:.so=)
 
 # allow place modules in separate directory apart from ser core
@@ -23,7 +30,7 @@ override static_modules_path=
 ifeq ($(MAKELEVEL), 0)
 # make called directly in the module dir!
 
-$(warning "you should run make from the main ser directory")
+#$(warning "you should run make from the main ser directory")
 ifneq ($(makefile_defs), 1)
 $(error "the local makefile does not include Makefile.defs!")
 endif
@@ -42,4 +49,18 @@ CFLAGS:=$(MOD_CFLAGS)
 LDFLAGS:=$(MOD_LDFLAGS)
 endif
 
+
 include $(COREPATH)/Makefile.rules
+
+
+$(modules-prefix)/$(modules-dir):
+		mkdir -p $(modules-prefix)/$(modules-dir)
+
+
+.PHONY: install
+install: $(NAME) $(modules-prefix)/$(modules-dir)
+	$(INSTALL-TOUCH) $(modules-prefix)/$(modules-dir)/$(NAME)
+	$(INSTALL-MODULES)  $(NAME)  $(modules-prefix)/$(modules-dir)
+	@for lib in $(dir $(SER_LIBS)); do \
+		$(MAKE) -C "$${lib}" install-if-newer ;\
+	done

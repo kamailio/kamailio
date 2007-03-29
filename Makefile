@@ -41,7 +41,8 @@
 #               logic when using group_include (greger)
 #  2007-03-01  fail if a module or a required utility make fail unless 
 #              err_fail=0; don't try to make modules with no Makefiles (andrei)
-#  2007-03-16  moved the exports to Makefile.defs
+#  2007-03-16  moved the exports to Makefile.defs (andrei)
+#  2007-03-29  install-modules changed to use make -C modpath install (andrei)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -326,6 +327,7 @@ tar:
 		--exclude=CVS* \
 		--exclude=.svn* \
 		--exclude=.cvsignore \
+		--exclude=librpath.lst \
 		--exclude=*.[do] \
 		--exclude=*.so \
 		--exclude=*.il \
@@ -391,7 +393,7 @@ modules-doc:
 	done 
 
 .PHONY: install
-install: all mk-install-dirs install-cfg install-bin install-modules \
+install: install-bin install-modules install-cfg \
 	install-doc install-man install-utils
 		mv -f $(bin-prefix)/$(bin-dir)/sc $(bin-prefix)/$(bin-dir)/serctl #fix
 
@@ -440,23 +442,18 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
 
-install-bin: $(bin-prefix)/$(bin-dir) 
-		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
-		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
+install-bin: $(bin-prefix)/$(bin-dir) $(NAME)
+		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/$(NAME)
+		$(INSTALL-BIN) $(NAME) $(bin-prefix)/$(bin-dir)
 
-install-modules: modules $(modules-prefix)/$(modules-dir)
-	@for r in $(modules_full_path) "" ; do \
-		if [ -n "$$r" ]; then \
-			if [ -f "$$r" ]; then \
-				$(INSTALL-TOUCH) \
-					$(modules-prefix)/$(modules-dir)/`basename "$$r"` ; \
-				$(INSTALL-MODULES)  "$$r"  $(modules-prefix)/$(modules-dir) ; \
-			else \
-				echo "ERROR: module $$r not compiled" ; \
-				if [ ${err_fail} = 1 ] ; then \
-					exit 1; \
-				fi ; \
-			fi ;\
+install-modules: $(modules-prefix)/$(modules-dir)
+	@for r in $(modules) "" ; do \
+		if [ -n "$$r" -a -r "$$r/Makefile" ]; then \
+			echo  "" ; \
+			echo  "" ; \
+			if ! $(MAKE) -C $$r install && [ ${err_fail} = 1 ] ; then \
+				exit 1; \
+			fi ; \
 		fi ; \
 	done; true
 

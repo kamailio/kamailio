@@ -71,7 +71,7 @@ MAIN_NAME=ser
 VERSION = 2
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev1
+EXTRAVERSION = -dev2
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -1266,6 +1266,8 @@ endif
 YACC_FLAGS=-d -b cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
 LIBS= -ldl -lresolv
+LIB_PREFIX:=lib
+LIB_SUFFIX:=.so
 
 
 #os specific stuff
@@ -1455,6 +1457,7 @@ ifeq ($(OS), darwin)
 	LDFLAGS=        # darwin doesn't like -O2 or -E
 	MOD_LDFLAGS:= -bundle -bundle_loader ../../$(MAIN_NAME)
 	LIB_LDFLAGS:= -dynamiclib
+	LIB_SUFFIX:=.dylib
 	# on darwin soname should include the full path
 	# (it kind of combines rpath & soname)
 	LIB_SONAME=
@@ -1497,7 +1500,8 @@ endif
 #export relevant variables to the sub-makes
 export RELEASE OS ARCH
 export DEFS PROFILE CC LD MKDEP MKTAGS CFLAGS LDFLAGS INCLUDES MOD_CFLAGS \
-		MOD_LDFLAGS LIB_CFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH
+		MOD_LDFLAGS LIB_CFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH \
+		LIB_SUFFIX LIB_PREFIX
 export LIBS
 export LEX YACC YACC_FLAGS
 export PREFIX LOCALBASE
