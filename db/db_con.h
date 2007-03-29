@@ -1,7 +1,8 @@
 /* 
  * $Id$ 
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -25,26 +26,38 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _DB_CON_H
+#define _DB_CON_H  1
+
+#include "db_gen.h"
+#include "db_ctx.h"
+#include "db_uri.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+struct db_con;
+struct db_ctx;
+
+typedef int (db_con_connect_t)(struct db_con* con);
+typedef void (db_con_disconnect_t)(struct db_con* con);
 
 
-#ifndef DB_CON_H
-#define DB_CON_H
+typedef struct db_con {
+	db_gen_t gen;            /* Generic part of the structure */
+	db_con_connect_t* connect;
+	db_con_disconnect_t* disconnect;
 
-
-/*
- * This structure represents a database connection
- * and pointer to this structure is used as a connection
- * handle
- */
-typedef struct {
-	const char* table;     /* Default table to use */
-	unsigned long tail;    /* Variable length tail
-	                        * database module specific */    
+	struct db_ctx* ctx;
+    db_uri_t* uri;
 } db_con_t;
 
+struct db_con* db_con(struct db_ctx* ctx, db_uri_t* uri);
+void db_con_free(struct db_con* con);
 
-#define CON_TABLE(cn)      ((cn)->table)
-#define CON_TAIL(cn)       ((cn)->tail)
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-
-#endif /* DB_CON_H */
+#endif /* _DB_CON_H */
