@@ -1,7 +1,8 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -24,168 +25,29 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*
- * History:
- * --------
- *  2004-06-06  removed db_* macros and global dbf (andrei)
- */
+#ifndef _DB_H
+#define _DB_H  1
 
-
-#ifndef DB_H
-#define DB_H
-
-#include "db_key.h"
-#include "db_op.h"
-#include "db_val.h"
-#include "db_con.h"
-#include "db_row.h"
+#include "db_gen.h"
+#include "db_ctx.h"
+#include "db_uri.h"
+#include "db_cmd.h"
 #include "db_res.h"
-#include "db_cap.h"
+#include "db_rec.h"
+#include "db_fld.h"
 
-/*
- * Various database flags shared by modules 
- */
-#define DB_LOAD_SER   (1 << 0)  /* The row should be loaded by SER */
-#define DB_DISABLED   (1 << 1)  /* The row is disabled */
-#define DB_CANON      (1 << 2)  /* Canonical entry (domain or uri) */
-#define DB_IS_TO      (1 << 3)  /* The URI can be used in To */
-#define DB_IS_FROM    (1 << 4)  /* The URI can be used in From */
-#define DB_FOR_SERWEB (1 << 5)  /* Credentials instance can be used by serweb */
-#define DB_PENDING    (1 << 6)
-#define DB_DELETED    (1 << 7)
-#define DB_CALLER_DELETED (1 << 8) /* Accounting table */
-#define DB_CALLEE_DELETED (1 << 9) /* Accounting table */
-#define DB_MULTIVALUE     (1 << 10) /* Attr_types table */
-#define DB_FILL_ON_REG    (1 << 11) /* Attr_types table */
-#define DB_REQUIRED       (1 << 12) /* Attr_types table */
-#define DB_DIR            (1 << 13) /* Domain_settings table */
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
+struct db_gen;
 
-/*
- * Specify table name that will be used for
- * subsequent operations
- */
-typedef int (*db_use_table_f)(db_con_t* _h, const char* _t);
+DBLIST_HEAD(db_root);
 
+extern struct db_root db;
 
-/*
- * Initialize database connection and
- * obtain the connection handle
- */
-typedef db_con_t* (*db_init_f) (const char* _sqlurl);
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-
-/*
- * Close a database connection and free
- * all memory used
- */
-typedef void (*db_close_f) (db_con_t* _h); 
-
-
-/*
- * Query table for specified rows
- * _h: structure representing database connection
- * _k: key names
- * _op: conditions
- * _v: values of the keys that must match
- * _c: column names to return
- * _n: nmber of key=values pairs to compare
- * _nc: number of columns to return
- * _o: order by the specified column
- * _r: Result will be stored in this variable
- *     NULL if there is no result
- */
-typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k, 
-			   db_op_t* _op, db_val_t* _v, 
-			   db_key_t* _c, int _n, int _nc,
-			   db_key_t _o, db_res_t** _r);
-
-
-/*
- * Raw SQL query, database specific !
- */
-typedef int (*db_raw_query_f) (db_con_t* _h, char* _s, db_res_t** _r);
-
-
-/*
- * Free a result allocated by db_query
- * _h: structure representing database connection
- * _r: db_res structure
- */
-typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
-
-
-/*
- * Insert a row into specified table
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys
- * _n: number of key=value pairs
- */
-typedef int (*db_insert_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
-
-
-/*
- * Delete a row from the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _n: number of key=value pairs
- */
-typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
-
-
-/*
- * Update some rows in the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _uk: updated columns
- * _uv: updated values of the columns
- * _n: number of key=value pairs
- * _un: number of columns to update
- */
-typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-			    db_key_t* _uk, db_val_t* _uv, int _n, int _un);
-
-/*
- * Insert a row and replace if one already 
- */
-typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
-
-
-typedef struct db_func {
-	unsigned int     cap;          /* Capability vector of the database transport */
-	db_use_table_f   use_table;    /* Specify table name */
-	db_init_f        init;         /* Initialize database connection */
-	db_close_f       close;        /* Close database connection */
-	db_query_f       query;        /* query a table */
-	db_raw_query_f   raw_query;    /* Raw query - SQL */
-	db_free_result_f free_result;  /* Free a query result */
-	db_insert_f      insert;       /* Insert into table */
-	db_delete_f      delete;       /* Delete from table */ 
-	db_update_f      update;       /* Update table */
-	db_replace_f     replace;      /* Replace row in a table */
-} db_func_t;
-
-
-
-/*
- * Bind database module functions
- * returns TRUE if everything went OK
- * FALSE otherwise
- */
-int bind_dbmod(char* mod, db_func_t* dbf);
-
-
-/*
- * Get the version of the given table. If there is
- * no row for the table then the function returns
- * version 0. -1 is returned on error.
- */
-int table_version(db_func_t* dbf, db_con_t* con, const str* table);
-
-
-#endif /* DB_H */
+#endif /* _DB_H */
