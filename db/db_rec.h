@@ -26,26 +26,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _DB_RES_H
-#define _DB_RES_H  1
+#ifndef _DB_REC_H
+#define _DB_REC_H  1
 
 #include "db_gen.h"
-#include "db_cmd.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-typedef struct db_res {
-	db_gen_t gen;       /* Generic part of the structure */
-    struct db_cmd* cmd; /* Command that produced the result */
-} db_res_t;
+typedef struct db_rec {
+	db_gen_t gen; /* Generic part of the structure */
+} db_rec_t;
 
-struct db_res* db_res(struct db_cmd* cmd);
-void db_res_free(struct db_res* res);
+struct db_rec* db_rec(void);
+void db_rec_free(struct db_rec* rec);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* _DB_RES_H */
+#endif /* _DB_REC_H */

@@ -26,26 +26,36 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _DB_RES_H
-#define _DB_RES_H  1
+#include <string.h>
+#include "../dprint.h"
+#include "../mem/mem.h"
+#include "db_res.h"
 
-#include "db_gen.h"
-#include "db_cmd.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+db_res_t* db_res(db_cmd_t* cmd)
+{
+    db_res_t* r;
 
-typedef struct db_res {
-	db_gen_t gen;       /* Generic part of the structure */
-    struct db_cmd* cmd; /* Command that produced the result */
-} db_res_t;
+    r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
+    if (r == NULL) goto err;
+	memset(r, '\0', sizeof(db_res_t));
+	if (db_gen_init(&r->gen) < 0) goto err;
+    r->cmd = cmd;
+    return r;
 
-struct db_res* db_res(struct db_cmd* cmd);
-void db_res_free(struct db_res* res);
-
-#ifdef __cplusplus
+ err:
+    ERR("db_res: Cannot create db_res structure\n");
+	if (r) {
+		db_gen_free(&r->gen);
+		pkg_free(r);
+	}
+    return NULL;
 }
-#endif /* __cplusplus */
 
-#endif /* _DB_RES_H */
+
+void db_res_free(db_res_t* r)
+{
+    if (r == NULL) return;
+	db_gen_free(&r->gen);
+    pkg_free(r);
+}

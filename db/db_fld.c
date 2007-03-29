@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2001-2005 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -26,26 +26,54 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _DB_RES_H
-#define _DB_RES_H  1
+#include <string.h>
+#include "../mem/mem.h"
+#include "../dprint.h"
+#include "db_fld.h"
 
-#include "db_gen.h"
-#include "db_cmd.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+int db_fld_init(db_fld_t* fld, size_t n)
+{
+	int i;
 
-typedef struct db_res {
-	db_gen_t gen;       /* Generic part of the structure */
-    struct db_cmd* cmd; /* Command that produced the result */
-} db_res_t;
-
-struct db_res* db_res(struct db_cmd* cmd);
-void db_res_free(struct db_res* res);
-
-#ifdef __cplusplus
+	memset(fld, '\0', sizeof(db_fld_t) * n);
+	for(i = 0; i < n; i++) {
+		if (db_gen_init(&fld[i].gen) < 0) return -1;
+	}
+	return 0;
 }
-#endif /* __cplusplus */
 
-#endif /* _DB_RES_H */
+
+db_fld_t* db_fld(size_t n)
+{
+	db_fld_t* r;
+
+	r = (db_fld_t*)pkg_malloc(sizeof(db_fld_t) * n);
+	if (r == NULL) {
+		ERR("db_fld: No memory left\n");
+		return NULL;
+	}
+	if (db_fld_init(r, n) < 0) goto error;
+	return r;
+
+ error:
+	if (r) {
+		db_gen_free(&r->gen);
+		pkg_free(r);
+	}
+	return NULL;
+}
+
+
+void db_fld_free(db_fld_t* fld, size_t n)
+{
+    int i;
+    if (!fld || !n) return;
+
+	for(i = 0; i < n; i++) {
+		db_gen_free(&fld[i].gen);
+		if (fld[i].name.s) pkg_free(fld[i].name.s);
+	}
+	pkg_free(fld);
+}
+
