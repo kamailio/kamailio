@@ -62,7 +62,7 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
         int res;
         str cid;
         str ua;
-	str aor = STR_NULL;
+        str aor = STR_NULL;
 
         if (_e == 0 && !(_f & FL_PERMANENT)) {
                 LOG(L_ERR, "rpc_add_contact(): expires == 0 and not persistent contact, giving up\n");
@@ -147,7 +147,7 @@ static void rpc_delete_uid(rpc_t* rpc, void* c)
         udomain_t* d;
         str uid, t;
 
-	if (rpc->scan(c, "SS", &t, &uid) < 2) return;
+        if (rpc->scan(c, "SS", &t, &uid) < 2) return;
 
         rpc_find_domain(&t, &d);
         if (d) {
@@ -155,12 +155,12 @@ static void rpc_delete_uid(rpc_t* rpc, void* c)
                 if (delete_urecord(d, &uid) < 0) {
                         ERR("Error while deleting user %.*s\n", uid.len, uid.s);
                         unlock_udomain(d);
-			rpc->fault(c, 500, "Error While Deleting Record");
+                        rpc->fault(c, 500, "Error While Deleting Record");
                         return;
                 }
                 unlock_udomain(d);
         } else {
-		rpc->fault(c, 400, "Table Not Found");
+                rpc->fault(c, 400, "Table Not Found");
         }
 }
 
@@ -261,13 +261,13 @@ static void rpc_add_contact(rpc_t* rpc, void* c)
 {
         udomain_t* d;
         int expires, flags;
-	double q;
+        double q;
         qvalue_t qval;
 
         str table, uid, contact;
 
-	if (rpc->scan(c, "SSSdfd", &table, &uid, &contact, &expires, &q, &flags) < 6) return;
-	qval = double2q(q);
+        if (rpc->scan(c, "SSSdfd", &table, &uid, &contact, &expires, &q, &flags) < 6) return;
+        qval = double2q(q);
 		      
         rpc_find_domain(&table, &d);
         if (d) {
@@ -277,12 +277,12 @@ static void rpc_add_contact(rpc_t* rpc, void* c)
                         unlock_udomain(d);
                         ERR("Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
                             uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
-			rpc->fault(c, 500, "Error while adding Contact");
+                        rpc->fault(c, 500, "Error while adding Contact");
                         return;
                 }
                 unlock_udomain(d);
         } else {
-		rpc->fault(c, 400, "Table Not Found");
+                rpc->fault(c, 400, "Table Not Found");
         }
 }
 
@@ -293,16 +293,16 @@ static void rpc_add_contact(rpc_t* rpc, void* c)
 static inline int print_contacts(rpc_t* rpc, void* ctx, ucontact_t* _c)
 {
         int cnt = 0;
-	void* handle;
+        void* handle;
 
         while(_c) {
                 if (VALID_CONTACT(_c, act_time)) {
                         cnt++;
-			if (rpc->add(ctx, "{", &handle) < 0) return -1;
-			rpc->struct_add(handle, "Sfd",
-					"contact", &_c->c,
-					"q", q2double(_c->q),
-					"expires", (int)(_c->expires - act_time));
+                        if (rpc->add(ctx, "{", &handle) < 0) return -1;
+                        rpc->struct_add(handle, "Sfd",
+                                        "contact", &_c->c,
+                                        "q", q2double(_c->q),
+                                        "expires", (int)(_c->expires - act_time));
                 }
 		
                 _c = _c->next;
@@ -324,7 +324,7 @@ static void rpc_show_contacts(rpc_t* rpc, void* c)
         int res;
         str t, uid;
 
-	if (rpc->scan(c, "SS", &t, &uid) < 2) return;
+        if (rpc->scan(c, "SS", &t, &uid) < 2) return;
 
         rpc_find_domain(&t, &d);
         if (d) {
@@ -332,14 +332,14 @@ static void rpc_show_contacts(rpc_t* rpc, void* c)
 
                 res = get_urecord(d, &uid, &r);
                 if (res < 0) {
-			rpc->fault(c, 500, "Error While Searching AOR");
+                        rpc->fault(c, 500, "Error While Searching AOR");
                         ERR("Error while looking for username %.*s in table %.*s\n", uid.len, uid.s, t.len, t.s);
                         unlock_udomain(d);
                         return;
                 }
 
                 if (res > 0) {
-			rpc->fault(c, 404, "AOR Not Found");
+                        rpc->fault(c, 404, "AOR Not Found");
                         unlock_udomain(d);
                         return;
                 }
@@ -348,13 +348,13 @@ static void rpc_show_contacts(rpc_t* rpc, void* c)
 
                 if (!print_contacts(rpc, c, r->contacts)) {
                         unlock_udomain(d);
-			rpc->fault(c, 404, "No Registered Contacts Found");
+                        rpc->fault(c, 404, "No Registered Contacts Found");
                         return;
                 }
 
                 unlock_udomain(d);
         } else {
-		rpc->fault(c, 400, "Table Not Found");
+                rpc->fault(c, 400, "Table Not Found");
         }
 }
 
