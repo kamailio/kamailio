@@ -46,7 +46,7 @@ static int mod_init(void); /* Module initialization function */
 /*
  * Module parameter variables
  */
-static char* radius_config = DEFAULT_RADIUSCLEINT_CONF;
+static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
 
 /*

@@ -60,7 +60,7 @@ static int auth_fixup(void** param, int param_no); /* char* -> str* */
 /*
  * Module parameter variables
  */
-static char* radius_config = DEFAULT_RADIUSCLEINT_CONF;
+static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
 
 /*

@@ -52,7 +52,7 @@ static int hf_fixup(void** param, int param_no); /* Header field fixup */
 /*
  * Module parameter variables
  */
-static char* radius_config = DEFAULT_RADIUSCLEINT_CONF;
+static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
 int use_domain = 0;  /* By default we use domain */
 
 

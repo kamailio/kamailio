@@ -60,7 +60,7 @@ static int load_avp_radius(struct sip_msg*, char*, char*);
 static int load_avp_fixup(void**, int);
 
 
-static char *radius_config = DEFAULT_RADIUSCLEINT_CONF;
+static char *radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int caller_service_type = -1;
 static int callee_service_type = -1;
 static str caller_prefix = {CALLER_PREFIX, CALLER_PREFIX_LEN};
