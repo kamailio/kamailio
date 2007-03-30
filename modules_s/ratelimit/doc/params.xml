@@ -14,8 +14,8 @@
 
     <title>Parameters</title>
 
-    <section id="timer_value">
-	<title><varname>timer_value</varname> (integer)</title>
+    <section id="timer_interval">
+	<title><varname>timer_interval</varname> (integer)</title>
 	<para>
 		The initial length of a timer interval in seconds.
 		All amounts of messages have to be divided by this timer to get a

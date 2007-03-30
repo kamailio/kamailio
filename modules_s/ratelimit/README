@@ -75,7 +75,7 @@ Random Early Detection (RED)
 
 Parameters
 
-timer_value (integer)
+timer_interval (integer)
 
    The initial length of a timer interval in seconds. All amounts of
    messages have to be divided by this timer to get a messages per second
