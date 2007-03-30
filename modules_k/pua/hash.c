@@ -82,7 +82,7 @@ error:
 		{
 			if(H->p_records[i].entity)
 				shm_free(H->p_records[i].entity);
-			lock_destroy(&_imc_htable[i].lock);
+			lock_destroy(&H->p_records[i].lock);
 
 		}
 		shm_free(H->p_records);
