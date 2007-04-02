@@ -57,14 +57,14 @@ doc/perl_pod.sgml: openserxs.xs
 install_module_custom:
 	echo "installing Perl OpenSER packages ..."
 	mkdir -p $(modules-prefix)/$(lib-dir)/perl
-	$(INSTALL-CFG) lib/perl/*.pm $(modules-prefix)/$(lib-dir)/perl
+	$(INSTALL_CFG) lib/perl/*.pm $(modules-prefix)/$(lib-dir)/perl
 	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER
-	$(INSTALL-CFG) lib/perl/OpenSER/*.pm \
+	$(INSTALL_CFG) lib/perl/OpenSER/*.pm \
 		$(modules-prefix)/$(lib-dir)/perl/OpenSER
 	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/LDAPUtils
-	$(INSTALL-CFG) lib/perl/OpenSER/LDAPUtils/*.pm \
+	$(INSTALL_CFG) lib/perl/OpenSER/LDAPUtils/*.pm \
 		$(modules-prefix)/$(lib-dir)/perl/OpenSER/LDAPUtils
 	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
-	$(INSTALL-CFG) lib/perl/OpenSER/Utils/*.pm \
+	$(INSTALL_CFG) lib/perl/OpenSER/Utils/*.pm \
 		$(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
 
