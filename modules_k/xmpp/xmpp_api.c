@@ -37,7 +37,6 @@
 xmpp_cb_list_t *_xmpp_cb_list = 0;
 
 
-
 int init_xmpp_cb_list()
 {
 	_xmpp_cb_list = (xmpp_cb_list_t*)shm_malloc(sizeof(xmpp_cb_list_t));
@@ -46,7 +45,7 @@ int init_xmpp_cb_list()
 		return -1;
 	}
 	memset(_xmpp_cb_list, 0, sizeof(xmpp_cb_list_t));
-	return 1;
+	return 0;
 }
 
 
@@ -74,6 +73,12 @@ void destroy_xmpp_cb_list()
 int register_xmpp_cb( int types, xmpp_cb_f f, void *param )
 {
 	xmpp_callback_t *it;
+
+	if(_xmpp_cb_list==0)
+	{
+		LOG(L_CRIT, "BUG:register_xmpp_cb: null callback list\n");
+		return E_BUG;
+	}
 
 	/* check null functions */
 	if (f==0) {
@@ -108,6 +113,7 @@ int bind_xmpp(xmpp_api_t* api)
 		LOG(L_ERR, "bind_xmpp: Invalid parameter value\n");
 		return -1;
 	}
+	api->register_callback = register_xmpp_cb;
 	api->xpacket    = xmpp_send_xpacket;
 	api->xmessage   = xmpp_send_xmessage;
 	api->xsubscribe = xmpp_send_xsubscribe;

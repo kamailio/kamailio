@@ -27,10 +27,10 @@
 #define _XMPP_API_H_
 
 #define XMPP_RCV_MESSAGE      (1<<0)
-#define XMPP_RCV_PSUBSCRIBE   (1<<1)
-#define XMPP_RCV_PNOTIFY      (1<<2)
+#define XMPP_RCV_PRESENCE     (1<<1)
+#define XMPP_RCV_IQ			  (1<<2)
 
-typedef void (xmpp_cb_f) (void *msg, int type, void *param);
+typedef void (xmpp_cb_f) (char *msg, int type, void *param);
 typedef int (*register_xmpp_cb_t)(int types, xmpp_cb_f f, void *param);
 
 
@@ -64,7 +64,7 @@ void destroy_xmpp_cb_list();
 int register_xmpp_cb( int types, xmpp_cb_f f, void *param );
 
 /* run all transaction callbacks for an event type */
-static inline void run_xmpp_callbacks( int type, void *msg)
+static inline void run_xmpp_callbacks( int type, char *msg)
 {
 	xmpp_callback_t *it;
 
@@ -97,6 +97,7 @@ char *encode_uri_xmpp_sip(char *jid);
 
 typedef struct xmpp_api_
 {
+	register_xmpp_cb_t register_callback;
 	xmpp_send_xpacket_f xpacket;
 	xmpp_send_xmessage_f xmessage;
 	xmpp_send_xsubscribe_f xsubscribe;

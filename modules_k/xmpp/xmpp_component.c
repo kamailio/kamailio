@@ -67,6 +67,7 @@ static int xode_send(int fd, xode x)
 		LOG(L_ERR, "xmpp: send() error: %s\n", strerror(errno));
 		return -1;
 	}
+	/* should str be freed?!?! */
 	return len;
 }
 
@@ -91,10 +92,10 @@ static void stream_node_callback(int type, xode node, void *arg)
 		break;
 	case XODE_STREAM_NODE:
 		tag = xode_get_name(node);
-
 		if (!strcmp(tag, "handshake")) {
 			DBG("xmpp: handshake succeeded\n");
 		} else if (!strcmp(tag, "message")) {
+			DBG("xmpp: XMPP IM received\n");
 			char *from = xode_get_attrib(node, "from");
 			char *to = xode_get_attrib(node, "to");
 			char *type = xode_get_attrib(node, "type");
@@ -121,6 +122,12 @@ static void stream_node_callback(int type, xode node, void *arg)
 				msg);
 		} else if (!strcmp(tag, "presence")) {
 			/* call presence callbacks */
+			DBG("xmpp: XMPP Presence received\n");
+			run_xmpp_callbacks(XMPP_RCV_PRESENCE, xode_to_str(node));
+		}else if (!strcmp(tag, "iq")) {
+			/* call presence callbacks */
+			DBG("xmpp: XMPP IQ received\n");
+			run_xmpp_callbacks(XMPP_RCV_IQ, xode_to_str(node));
 		}
 		break;
 	case XODE_STREAM_ERROR:

@@ -199,6 +199,11 @@ static int mod_init(void) {
 	if (domain_sep_str && *domain_sep_str)
 		domain_separator = *domain_sep_str;
 
+	if(init_xmpp_cb_list()<0){
+		LOG(L_ERR, "xmpp: cannot init callback list\n");
+		return -1;
+	}
+
 	return 0;
 }
 
