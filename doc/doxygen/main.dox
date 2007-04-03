@@ -1,0 +1,14 @@
+/**
+ * \mainpage SER Development Documentation
+ *
+ * The development documentation for SER consists of annotated and documented
+ * source files. For the sake of clarity the documentation is split into the
+ * following groups:
+ *
+ * \section db_layer Database Abstraction Layer
+ *
+ * \ref db_api Database Abstraction Layer is a group of data structures and functions that
+ * are used by all SER modules that need to access a database.
+ *
+ * \section ser_modules SER Modules
+ */
