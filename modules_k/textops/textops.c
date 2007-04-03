@@ -1001,7 +1001,7 @@ static int is_method_f(struct sip_msg *msg, char *meth, char *str2 )
 					&& (strncasecmp(msg->first_line.u.request.method.s, m->s,
 					m->len)==0))?1:-1;
 	}
-	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0)
+	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL)
 	{
 		LOG(L_ERR, "textops:is_method: ERROR - cannot parse cseq header\n");
 		return -1; /* should it be 0 ?!?! */
