@@ -1383,7 +1383,7 @@ int reply_received( struct sip_msg  *p_msg )
 		}
 	}
 	
-	if (reply_status == RPS_ERROR)
+	if (reply_status!=RPS_PROVISIONAL)
 		goto done;
 	
 	/* update FR/RETR timers on provisional replies */
