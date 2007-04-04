@@ -161,17 +161,15 @@ static str restimestamp_col = STR_STATIC_INIT(A_RESTIMESTAMP);
 static str src_ip_col = STR_STATIC_INIT(A_SRCIP);
 static str src_port_col = STR_STATIC_INIT(A_SRCPORT);
 
-static db_func_t acc_dbf;
-static db_con_t* db_handle = 0;
+static db_ctx_t* acc_db = NULL;
+static db_fld_t fld[sizeof(ALL_LOG_FMT) - 1];
+static db_cmd_t* write_mc = NULL, *write_acc = NULL;
+
 
 /* Attribute-value pairs */
 static char* attrs = "";
 avp_ident_t* avps;
 int avps_n;
-
-static db_key_t keys[sizeof(ALL_LOG_FMT) - 1];
-static db_val_t vals[sizeof(ALL_LOG_FMT) - 1];
-static int db_n;
 
 static int acc_db_request0(struct sip_msg *rq, char *p1, char *p2);
 static int acc_db_missed0(struct sip_msg *rq, char *p1, char *p2);
@@ -197,7 +195,7 @@ static param_export_t params[] = {
 	{"log_missed_flag",	PARAM_INT, &log_missed_flag },
 	{"log_missed_flag",	PARAM_STRING|PARAM_USE_FUNC, fix_log_missed_flag},
 	{"log_fmt",		PARAM_STRING, &log_fmt },
-        {"attrs",               PARAM_STRING, &attrs },
+	{"attrs",               PARAM_STRING, &attrs },
 	{"db_url",              PARAM_STR, &db_url },
 	{"acc_table",           PARAM_STR, &acc_table },
 	{"mc_table",            PARAM_STR, &mc_table },
@@ -399,157 +397,136 @@ static inline struct hdr_field* valid_to(struct cell* t, struct sip_msg* reply)
 
 static int init_data(char* fmt)
 {
-	db_n = 0;
+	int i = 0;
+
+	memset(fld, '\0', sizeof(fld));
 	while(*fmt) {
 		switch(*fmt) {
 		case 'a': /* attr */
-			keys[db_n] = attrs_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].name = attrs_col.s;
+			fld[i].type = DB_STR;
 			break;
 
 		case 'c': /* callid */
-			keys[db_n] = callid_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = callid_col.s;
 			break;
 
 		case 'd': /* To tag */
-			keys[db_n] = totag_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = totag_col.s;
 			break;
 
 		case 'f': /* From */
-			keys[db_n] = from_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = from_col.s;
 			break;
 
 		case 'g': /* flags */
-			keys[db_n] = flags_col.s;
-			vals[db_n].type = DB_INT;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_INT;
+			fld[i].name = flags_col.s;
 			break;
 
 		case 'i': /* Inbound ruri */
-			keys[db_n] = iuri_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+		    fld[i].name = iuri_col.s;
 			break;
 
 		case 'm': /* method */
-			keys[db_n] = method_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = method_col.s;
 			break;
 
 		case 'n': /* sip_cseq */
-			keys[db_n] = cseq_col.s;
-			vals[db_n].type = DB_INT;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_INT;
+			fld[i].name = cseq_col.s;
 			break;
 
 		case 'o': /* outbound_ruri */
-			keys[db_n] = ouri_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = ouri_col.s;
 			break;
 
 		case 'p': /* src_ip */
-			keys[db_n] = src_ip_col.s;
-			vals[db_n].type = DB_INT;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_INT;
+			fld[i].name = src_ip_col.s;
 			break;
 
 		case 'r': /* from_tag */
-			keys[db_n] = fromtag_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = fromtag_col.s;
 			break;
 
 		case 't': /* sip_to */
-			keys[db_n] = to_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = to_col.s;
 			break;
 
 		case 'u': /* digest_username */
-			keys[db_n] = diguser_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = diguser_col.s;
 			break;
 
 		case 'x': /* request_timestamp */
-			keys[db_n] = reqtimestamp_col.s;
-			vals[db_n].type = DB_DATETIME;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_DATETIME;
+			fld[i].name = reqtimestamp_col.s;
 			break;
 
 		case 'D': /* to_did */
-			keys[db_n] = todid_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = todid_col.s;
 			break;
 
 		case 'F': /* from_uri */
-			keys[db_n] = fromuri_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = fromuri_col.s;
 			break;
 
 		case 'I': /* from_uid */
-			keys[db_n] = fromuid_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = fromuid_col.s;
 			break;
 
 		case 'M': /* from_did */
-			keys[db_n] = fromdid_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+		    fld[i].type = DB_STR;
+			fld[i].name = fromdid_col.s;
 			break;
 
 		case 'P': /* src_port */
-			keys[db_n] = src_port_col.s;
-			vals[db_n].type = DB_INT;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_INT;
+			fld[i].name = src_port_col.s;
 			break;
 
 		case 'R': /* digest_realm */
-			keys[db_n] = digrealm_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = digrealm_col.s;
 			break;
 
 		case 'S': /* sip_status */
-			keys[db_n] = status_col.s;
-			vals[db_n].type = DB_INT;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_INT;
+			fld[i].name = status_col.s;
 			break;
 
 		case 'T': /* to_uri */
-			keys[db_n] = touri_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = touri_col.s;
 			break;
 
 		case 'U': /* to_uid */
-			keys[db_n] = touid_col.s;
-			vals[db_n].type = DB_STR;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_STR;
+			fld[i].name = touid_col.s;
 			break;
 
 		case 'X': /* response_timestamp */
-			keys[db_n] = restimestamp_col.s;
-			vals[db_n].type = DB_DATETIME;
-			vals[db_n].nul = 0;
+			fld[i].type = DB_DATETIME;
+			fld[i].name = restimestamp_col.s;
 			break;
 		}
 
 		fmt++;
-		db_n++;
+		i++;
 	}
+	fld[i].name = NULL;
 	return 0;
 }
 
@@ -562,11 +539,12 @@ static int init_data(char* fmt)
  * tm sip_msg_clones does not clone (shmmem-zed) parsed fields, other then Via1,2. Such fields clone now or use from rq_rp
  */
 static int fmt2strar(char *fmt,             /* what would you like to account ? */
-		     struct sip_msg *rq,    /* accounted message */
-		     str* ouri,             /* Outbound Request-URI */
-		     struct hdr_field *to,
-		     unsigned int code,
-		     time_t req_time)       /* Timestamp of the request */
+					 struct sip_msg *rq,    /* accounted message */
+					 str* ouri,             /* Outbound Request-URI */
+					 struct hdr_field *to,
+					 unsigned int code,
+					 time_t req_time,
+					 db_fld_t* params)       /* Timestamp of the request */
 {
 	int cnt;
 	struct to_body* from, *pto;
@@ -587,140 +565,140 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			return 0;
 		}
 
+		params[cnt].flags &= ~DB_NULL;
 		switch(*fmt) {
 		case 'a': /* attr */
 			at = print_attrs(avps, avps_n, 0);
 			if (!at) {
-				vals[cnt].nul = 1;
+				params[cnt].flags |= DB_NULL;
 			} else {
-				vals[cnt].val.str_val = *at;
+				params[cnt].v.str = *at;
 			}
 			break;
 
 		case 'c': /* sip_callid */
 			if (rq->callid && rq->callid->body.len) {
-				vals[cnt].val.str_val = rq->callid->body;
+				params[cnt].v.str = rq->callid->body;
 			} else {
-				vals[cnt].nul = 1;
+				params[cnt].flags |= DB_NULL;
 			}
 			break;
 
 		case 'd': /* to_tag */
 			if (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) {
-				vals[cnt].val.str_val = pto->tag_value;
+				params[cnt].v.str = pto->tag_value;
 			} else {
-				vals[cnt].nul = 1;
+				params[cnt].flags |= DB_NULL;
 			}
 			break;
 
 		case 'f': /* sip_from */
 			if (rq->from && rq->from->body.len) {
-				vals[cnt].val.str_val = rq->from->body;
+				params[cnt].v.str = rq->from->body;
 			} else {
-				vals[cnt].nul = 1;
+				params[cnt].flags |= DB_NULL;				
 			}
 			break;
 
 		case 'g': /* flags */
-			vals[cnt].val.int_val = rq->flags;
+			params[cnt].v.int4 = rq->flags;
 			break;
 
 		case 'i': /* inbound_ruri */
-			vals[cnt].val.str_val = rq->first_line.u.request.uri;
+			params[cnt].v.str = rq->first_line.u.request.uri;
 			break;
 
 		case 'm': /* sip_method */
-			vals[cnt].val.str_val = rq->first_line.u.request.method;
+			params[cnt].v.str = rq->first_line.u.request.method;
 			break;
 
 		case 'n': /* sip_cseq */
 			if (rq->cseq && (cseq = get_cseq(rq)) && cseq->number.len) {
-				str2int(&cseq->number, (unsigned int*)&vals[cnt].val.int_val);
+				str2int(&cseq->number, (unsigned int*)&params[cnt].v.int4);
 			} else {
-				vals[cnt].nul = 1;
+				params[cnt].flags |= DB_NULL;
 			}
 			break;
 
 		case 'o': /* outbound_ruri */
-		        vals[cnt].val.str_val = *ouri;
+			params[cnt].v.str = *ouri;
 			break;
 
 		case 'p':
-			vals[cnt].val.int_val = rq->rcv.src_ip.u.addr32[0];
-			break;
+			params[cnt].v.int4 = rq->rcv.src_ip.u.addr32[0];
 			break;
 
 		case 'r': /* from_tag */
 			if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
-				vals[cnt].val.str_val = from->tag_value;
+				params[cnt].v.str = from->tag_value;
 			} else {
-				vals[cnt].nul = 1;
+				params[cnt].flags |= DB_NULL;
 			}
 			break;
 
 		case 't': /* sip_to */
-			if (to && to->body.len) vals[cnt].val.str_val = to->body;
-			else vals[cnt].nul = 1;
+			if (to && to->body.len) params[cnt].v.str = to->body;
+			else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'u': /* digest_username */
 			cr = cred_user(rq);
-			if (cr) vals[cnt].val.str_val = *cr;
-			else vals[cnt].nul = 1;
+			if (cr) params[cnt].v.str = *cr;
+			else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'x': /* request_timestamp */
-			vals[cnt].val.time_val = req_time;
+			params[cnt].v.time = req_time;
 			break;
 
 		case 'D': /* to_did */
-			vals[cnt].nul = 1;
+			params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'F': /* from_uri */
 			if (rq->from && (from = get_from(rq)) && from->uri.len) {
-				vals[cnt].val.str_val = from->uri;
-			} else vals[cnt].nul = 1;
+				params[cnt].v.str = from->uri;
+			} else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'I': /* from_uid */
-			if (get_from_uid(&vals[cnt].val.str_val, rq) < 0) {
-				vals[cnt].nul = 1;
+			if (get_from_uid(&params[cnt].v.str, rq) < 0) {
+				params[cnt].flags |= DB_NULL;
 			}
 			break;
 
 		case 'M': /* from_did */
-			vals[cnt].nul = 1;
+			params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'P': /* source_port */
-			vals[cnt].val.int_val = rq->rcv.src_port;
+			params[cnt].v.int4 = rq->rcv.src_port;
 			break;
 
 		case 'R': /* digest_realm */
 			cr = cred_realm(rq);
-			if (cr) vals[cnt].val.str_val = *cr;
-			else vals[cnt].nul = 1;
+			if (cr) params[cnt].v.str = *cr;
+			else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'S': /* sip_status */
-			if (code > 0) vals[cnt].val.int_val = code;
-			else vals[cnt].nul = 1;
+			if (code > 0) params[cnt].v.int4 = code;
+			else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'T': /* to_uri */
-			if (rq->to && (pto = get_to(rq)) && pto->uri.len) vals[cnt].val.str_val = pto->uri;
-			else vals[cnt].nul = 1;
+			if (rq->to && (pto = get_to(rq)) && pto->uri.len) params[cnt].v.str = pto->uri;
+			else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'U': /* to_uid */
-			if (get_to_uid(&vals[cnt].val.str_val, rq) < 0) {
-				vals[cnt].nul = 1;
+			if (get_to_uid(&params[cnt].v.str, rq) < 0) {
+				params[cnt].flags |= DB_NULL;
 			}
 			break;
 
 		case 'X': /* response_timestamp */
-			vals[cnt].val.time_val = time(0);
+			params[cnt].v.time = time(0);
 			break;
 
 		default:
@@ -736,12 +714,12 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 }
 
 
-int log_request(struct sip_msg *rq, str* ouri, struct hdr_field *to, char *table, unsigned int code, time_t req_timestamp)
+int log_request(struct sip_msg *rq, str* ouri, struct hdr_field *to, db_cmd_t* cmd, unsigned int code, time_t req_timestamp)
 {
 	int cnt;
 	if (skip_cancel(rq)) return 1;
 
-        cnt = fmt2strar(log_fmt, rq, ouri, to, code, req_timestamp);
+	cnt = fmt2strar(log_fmt, rq, ouri, to, code, req_timestamp, cmd->params);
 	if (cnt == 0) {
 		LOG(L_ERR, "ERROR:acc:log_request: fmt2strar failed\n");
 		return -1;
@@ -752,13 +730,8 @@ int log_request(struct sip_msg *rq, str* ouri, struct hdr_field *to, char *table
 		return -1;
 	}
 
-	if (acc_dbf.use_table(db_handle, table) < 0) {
-		LOG(L_ERR, "ERROR:acc:log_request:Error in use_table\n");
-		return -1;
-	}
-
-	if (acc_dbf.insert(db_handle, keys, vals, cnt) < 0) {
-		LOG(L_ERR, "ERROR:acc:log_request:acc_request: Error while inserting to database\n");
+	if (db_exec(NULL, cmd) < 0) {
+		ERR("Error while inserting to database\n");
 		return -1;
 	}
 
@@ -768,15 +741,15 @@ int log_request(struct sip_msg *rq, str* ouri, struct hdr_field *to, char *table
 
 static void log_reply(struct cell* t , struct sip_msg* reply, unsigned int code, time_t req_time)
 {
-        str* ouri;
-
+	str* ouri;
+	
 	if (t->relayed_reply_branch >= 0) {
 	    ouri = &t->uac[t->relayed_reply_branch].uri;
 	} else {
 	    ouri = GET_NEXT_HOP(t->uas.request);
 	}
-
-	log_request(t->uas.request, ouri, valid_to(t,reply), acc_table.s, code, req_time);
+	
+	log_request(t->uas.request, ouri, valid_to(t,reply), write_acc, code, req_time);
 }
 
 
@@ -789,7 +762,7 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 	if (ack->to) to = ack->to;
 	else to = rq->to;
 
-	log_request(ack, GET_RURI(ack), to, acc_table.s, t->uas.status, req_time);
+	log_request(ack, GET_RURI(ack), to, write_acc, t->uas.status, req_time);
 }
 
 
@@ -803,7 +776,7 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
 	    ouri = GET_NEXT_HOP(t->uas.request);
 	}
 	
-        log_request(t->uas.request, ouri, valid_to(t, reply), mc_table.s, code, req_time);
+	log_request(t->uas.request, ouri, valid_to(t, reply), write_mc, code, req_time);
 }
 
 
@@ -814,7 +787,7 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
 static int acc_db_request0(struct sip_msg *rq, char* s1, char* s2)
 {
 	preparse_req(rq);
-	return log_request(rq, GET_RURI(rq), rq->to, acc_table.s, 0, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, write_acc, 0, time(0));
 }
 
 
@@ -825,7 +798,7 @@ static int acc_db_request0(struct sip_msg *rq, char* s1, char* s2)
 static int acc_db_missed0(struct sip_msg *rq, char* s1, char* s2)
 {
 	preparse_req(rq);
-	return log_request(rq, GET_RURI(rq), rq->to, mc_table.s, 0, time(0));
+	return log_request(rq, GET_RURI(rq), rq->to, write_mc, 0, time(0));
 }
 
 
@@ -841,7 +814,7 @@ static int acc_db_request1(struct sip_msg *rq, char* p1, char* p2)
 	code = 0;
     }
     preparse_req(rq);
-    return log_request(rq, GET_RURI(rq), rq->to, acc_table.s, code, time(0));
+    return log_request(rq, GET_RURI(rq), rq->to, write_acc, code, time(0));
 }
 
 
@@ -857,7 +830,7 @@ static int acc_db_missed1(struct sip_msg *rq, char* p1, char* p2)
 	code = 0;
     }
     preparse_req(rq);
-    return log_request(rq, GET_RURI(rq), rq->to, mc_table.s, code, time(0));
+    return log_request(rq, GET_RURI(rq), rq->to, write_mc, code, time(0));
 }
 
 
@@ -970,12 +943,32 @@ static int child_init(int rank)
 {
 	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
+
 	if (db_url.s) {
-		db_handle = acc_dbf.init(db_url.s);
-		if (db_handle == 0) {
-			LOG(L_ERR, "ERROR:acc:child_init: unable to connect to the database\n");
+		acc_db = db_ctx("acc_db");
+		if (acc_db == NULL) {
+			ERR("Error while initializing database layer\n");
 			return -1;
 		}
+
+		if (db_add_db(acc_db, db_url.s) < 0) return -1;
+		if (db_connect(acc_db) < 0) return -1;
+
+		write_acc = db_cmd(DB_PUT, acc_db, acc_table.s, NULL, fld);
+		if (write_acc == NULL) {
+			ERR("Error while compiling database query\n");
+			db_ctx_free(acc_db);
+			return -1;
+		}
+
+		write_mc = db_cmd(DB_PUT, acc_db, mc_table.s, NULL, fld);
+		if (write_acc == NULL) {
+			ERR("Error while compiling database query\n");
+			db_cmd_free(write_acc);
+			db_ctx_free(acc_db);
+			return -1;
+		}
+
 		return 0;
 	} else {
 		LOG(L_CRIT, "BUG:acc:child_init: null db url\n");
@@ -986,7 +979,12 @@ static int child_init(int rank)
 
 static void mod_destroy(void)
 {
-	if (db_handle && acc_dbf.close) acc_dbf.close(db_handle);
+	if (write_mc) db_cmd_free(write_mc);
+	if (write_acc) db_cmd_free(write_acc);
+	if (acc_db) {
+		db_disconnect(acc_db);
+		db_ctx_free(acc_db);
+	}
 }
 
 
@@ -1008,17 +1006,6 @@ static int mod_init(void)
 	if (tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, on_req, 0 ) <= 0) {
 		LOG(L_ERR,"ERROR:acc:mod_init: cannot register TMCB_REQUEST_IN "
 		    "callback\n");
-		return -1;
-	}
-
-	if (bind_dbmod(db_url.s, &acc_dbf) < 0) {
-		LOG(L_ERR, "ERROR:acc:mod_init: bind_db failed\n");
-		return -1;
-	}
-
-	     /* Check database capabilities */
-	if (!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
-		LOG(L_ERR, "ERROR:acc:mod_init: Database module does not implement insert function\n");
 		return -1;
 	}
 
