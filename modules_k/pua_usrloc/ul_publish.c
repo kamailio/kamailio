@@ -163,7 +163,6 @@ error:
 	return NULL;
 }	
 
-
 void ul_publish(ucontact_t* c, int type, void* param)
 {
 	str* body= NULL;
@@ -265,7 +264,8 @@ void ul_publish(ucontact_t* c, int type, void* param)
 		publ->flag|= UPDATE_TYPE;
 
 	publ->source_flag|= UL_PUBLISH;
-
+	publ->event|= PRESENCE_EVENT;
+	publ->extra_headers= NULL;
 	print_publ(publ);
 	if(pua_send_publish(publ)< 0)
 	{
