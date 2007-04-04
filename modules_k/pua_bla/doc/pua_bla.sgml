@@ -1,0 +1,57 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "pua_bla_user.sgml">
+<!ENTITY devel SYSTEM "pua_bla_devel.sgml">
+<!ENTITY faq SYSTEM "pua_bla_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>PUA Bridged Line Appearances</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Anca-Maria</firstname>
+		<surname>Vamanu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		<email>anca@voice-system.ro</email>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Anca-Maria</firstname>
+		<surname>Vamanu</surname>
+		<address>
+		    <email>anca@voice-system.ro</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 1294 $</revnumber>
+		<date>$Date: 2007-03-13 14:05:07 +0200 (Thu, 13 March 2007) $</date>
+	    </revision>
+	</revhistory>
+  </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
+
+

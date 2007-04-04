@@ -1,0 +1,129 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 1488 $</revnumber>
+		<date>$Date: 2007-03-13 14:05:13 +0200 (Thu, 13 March 2007) $</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		 The pua_bla module enables Bridged Line Appearances support according to 
+		 the specifications in draft-anil-sipping-bla-03.txt.
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>usrloc</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>presence</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<para>
+	No parameter exported.
+	</para>
+</section>	
+	
+	
+<section>
+	<title>Exported Functions</title>
+		<section>
+				<title>
+				<function moreinfo="none">bla_set_flag</function>
+				</title>
+			<para>
+				The function is used to mark REGISTER requests made to a BLA AOR.
+				The modules subscribes to the registered contacts for dialog;sla 
+				event.
+			</para>
+			<para>
+			</para>
+		<example>
+		<title><function>bla_set_flag</function> usage</title>
+	<programlisting format="linespecific">
+...
+if(is_method("REGISTER") && to_uri=~"bla_aor@openser.org") 
+	bla_set_flag();		
+...
+</programlisting>
+		</example>
+
+		</section>
+	<section>
+				<title>
+				<function moreinfo="none">bla_handle_notify</function>
+				</title>
+			<para>
+				The function handles Notify requests sent from phones on the
+				same BLA to the server. The message is transformed in Publish 
+				request and passed to presence module for further handling.
+				in case of a successful processing a 2xx reply should be sent.
+			</para>
+			<para>
+			</para>
+		<example>
+		<title><function>bla_handle_notify</function> usage</title>
+	<programlisting format="linespecific">
+...
+if(is_method("NOTIFY") && to_uri=~"bla_aor@openser.org") 
+{
+		if( bla_handle_notify() ) 
+			t_reply("200", "OK");
+}	
+...
+</programlisting>
+		</example>
+
+		</section>
+</section>		
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pua_bla.sgml" "Book" "chapter")
+End:
+-->
+
+

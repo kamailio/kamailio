@@ -1,0 +1,70 @@
+<!-- Module FAQ -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 1294 $</revnumber>
+		<date>$Date: 2007-03-13 14:05:07 +0200 (Thu, 13 March 2007) $</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Frequently Asked Questions</title>
+    <qandaset defaultlabel="number">
+	<qandaentry>
+	    <question>
+		<para>Where can I find more about OpenSER?</para>
+	    </question>
+	    <answer>
+		<para>
+			Take a look at &serhomelink;.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Where can I post a question about this module?</para>
+	    </question>
+	    <answer>
+		<para>
+			First at all check if your question was already answered on one of
+			our mailing lists: 
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>User Mailing List - &seruserslink;</para>
+		    </listitem>
+		    <listitem>
+			<para>Developer Mailing List - &serdevlink;</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+			E-mails regarding any stable &ser; release should be sent to 
+			&serusersmail; and e-mails regarding development versions
+			should be sent to &serdevmail;.
+		</para>
+		<para>
+			If you want to keep the mail private, send it to 
+			&serhelpmail;.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>How can I report a bug?</para>
+	    </question>
+	    <answer>
+		<para>
+			Please follow the guidelines provided at:
+			&serbugslink;.
+		</para>
+	    </answer>
+	</qandaentry>
+    </qandaset>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pua_bla.sgml" "Book" "chapter")
+End:
+-->
