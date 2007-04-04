@@ -26,7 +26,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include <string.h>
 #include "../dprint.h"
@@ -36,29 +38,29 @@
 
 db_res_t* db_res(db_cmd_t* cmd)
 {
-    db_res_t* r;
+    db_res_t* newp;
 	int ret;
 
-    r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-    if (r == NULL) goto err;
-	memset(r, '\0', sizeof(db_res_t));
-	if (db_gen_init(&r->gen) < 0) goto err;
-    r->cmd = cmd;
+    newp = (db_res_t*)pkg_malloc(sizeof(db_res_t));
+    if (newp == NULL) goto err;
+	memset(newp, '\0', sizeof(db_res_t));
+	if (db_gen_init(&newp->gen) < 0) goto err;
+    newp->cmd = cmd;
 
 	ret = db_drv_call(&cmd->ctx->con[db_payload_idx]->uri->scheme, 
-					  "db_res", r, db_payload_idx);
+					  "db_res", newp, db_payload_idx);
 	if (ret < 0) goto err;
 
-	r->cur_rec = db_rec(r, cmd->result);
-	if (r->cur_rec == NULL) goto err;
-    return r;
+	newp->cur_rec = db_rec(newp, cmd->result);
+	if (newp->cur_rec == NULL) goto err;
+    return newp;
 
  err:
     ERR("db_res: Cannot create db_res structure\n");
-	if (r) {
-		if (r->cur_rec) db_rec_free(r->cur_rec);
-		db_gen_free(&r->gen);
-		pkg_free(r);
+	if (newp) {
+		if (newp->cur_rec) db_rec_free(newp->cur_rec);
+		db_gen_free(&newp->gen);
+		pkg_free(newp);
 	}
     return NULL;
 }

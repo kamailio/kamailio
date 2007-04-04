@@ -54,7 +54,7 @@ struct db_rec;
 
 typedef int (*db_exec_func_t)(struct db_res* res, struct db_cmd* cmd);
 typedef int (*db_first_func_t)(struct db_res* res);
-typedef int (*db_next_func_t)(struct db_rec* rec);
+typedef int (*db_next_func_t)(struct db_res* res);
 
 
 enum db_cmd_type {

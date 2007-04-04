@@ -29,7 +29,9 @@
 #ifndef _DB_DRV_H
 #define _DB_DRV_H  1
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include "../str.h"
 #include "../list.h"

@@ -26,7 +26,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -37,21 +39,21 @@
 
 db_rec_t* db_rec(db_res_t* res, db_fld_t* fld)
 {
-    db_rec_t* r;
+    db_rec_t* newp;
 
-    r = (db_rec_t*)pkg_malloc(sizeof(db_rec_t));
-    if (r == NULL) goto err;
-    memset(r, '\0', sizeof(db_rec_t));
-	if (db_gen_init(&r->gen) < 0) goto err;
-	r->res = res;
-	r->fld = fld;
-    return r;
+    newp = (db_rec_t*)pkg_malloc(sizeof(db_rec_t));
+    if (newp == NULL) goto err;
+    memset(newp, '\0', sizeof(db_rec_t));
+	if (db_gen_init(&newp->gen) < 0) goto err;
+	newp->res = res;
+	newp->fld = fld;
+    return newp;
 
  err:
     ERR("Cannot create db_rec structure\n");
-	if (r) {
-		db_gen_free(&r->gen);
-		pkg_free(r);
+	if (newp) {
+		db_gen_free(&newp->gen);
+		pkg_free(newp);
 	}
     return NULL;
 }

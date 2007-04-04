@@ -26,7 +26,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include <string.h>
 #include <stdlib.h>
@@ -64,33 +66,33 @@ static void db_con_disconnect(db_con_t* con)
  */
 db_con_t* db_con(db_ctx_t* ctx, db_uri_t* uri)
 {
-    db_con_t* r;
+    db_con_t* newp;
 
-    r = (db_con_t*)pkg_malloc(sizeof(db_con_t));
-    if (r == NULL) {
+    newp = (db_con_t*)pkg_malloc(sizeof(db_con_t));
+    if (newp == NULL) {
 		ERR("db_con: No memory left\n");
 		goto error;
     }
 
-    memset(r, '\0', sizeof(db_con_t));
-	if (db_gen_init(&r->gen) < 0) goto error;
+    memset(newp, '\0', sizeof(db_con_t));
+	if (db_gen_init(&newp->gen) < 0) goto error;
 
-    r->uri = uri;
-	r->ctx = ctx;
-	r->connect = db_con_connect;
-	r->disconnect = db_con_disconnect;
+    newp->uri = uri;
+	newp->ctx = ctx;
+	newp->connect = db_con_connect;
+	newp->disconnect = db_con_disconnect;
 
 	/* Call db_ctx function if the driver has it */
-	if (db_drv_call(&uri->scheme, "db_con", r, ctx->con_n) < 0) {
+	if (db_drv_call(&uri->scheme, "db_con", newp, ctx->con_n) < 0) {
 		goto error;
 	}
 
-	return r;
+	return newp;
 
  error:
-	if (r) {
-		db_gen_free(&r->gen);
-		pkg_free(r);
+	if (newp) {
+		db_gen_free(&newp->gen);
+		pkg_free(newp);
 	}
 	return NULL;
 }

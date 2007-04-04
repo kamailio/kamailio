@@ -29,7 +29,9 @@
 #ifndef _DB_REC_H
 #define _DB_REC_H  1
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include "db_gen.h"
 #include "db_res.h"

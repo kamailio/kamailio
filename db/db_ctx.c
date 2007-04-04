@@ -26,7 +26,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include <string.h>
 #include "../dprint.h"
@@ -48,7 +50,7 @@ static struct db_ctx_data* db_ctx_data(str* module, db_drv_t* data)
 	memcpy(newp->module.s, module->s, module->len);
 	newp->module.len = module->len;
 	newp->data = data;
-	return res;
+	return newp;
 
  error:
 	ERR("No memory left\n");
@@ -70,29 +72,29 @@ static void db_ctx_data_free(struct db_ctx_data* ptr)
  */
 db_ctx_t* db_ctx(const char* id)
 {
-    db_ctx_t* r;
+    db_ctx_t* newp;
 
-    r = (db_ctx_t*)pkg_malloc(sizeof(db_ctx_t));
-    if (r == NULL) goto error;
-    memset(r, '\0', sizeof(db_ctx_t));
-	if (db_gen_init(&r->gen) < 0) goto error;
+    newp = (db_ctx_t*)pkg_malloc(sizeof(db_ctx_t));
+    if (newp == NULL) goto error;
+    memset(newp, '\0', sizeof(db_ctx_t));
+	if (db_gen_init(&newp->gen) < 0) goto error;
 
-	r->id.len = strlen(id);
-	r->id.s = pkg_malloc(r->id.len + 1);
-	if (r->id.s == NULL) goto error;
-	memcpy(r->id.s, id, r->id.len + 1);
+	newp->id.len = strlen(id);
+	newp->id.s = pkg_malloc(newp->id.len + 1);
+	if (newp->id.s == NULL) goto error;
+	memcpy(newp->id.s, id, newp->id.len + 1);
 
 	/* Insert the newly created context into the linked list
 	 * of all existing contexts
 	 */
-	DBLIST_INSERT_HEAD(&db, r);
-    return r;
+	DBLIST_INSERT_HEAD(&db, newp);
+    return newp;
 
  error:
-	if (r) {
-		db_gen_free(&r->gen);
-		if (r->id.s) pkg_free(r->id.s);
-		pkg_free(r);
+	if (newp) {
+		db_gen_free(&newp->gen);
+		if (newp->id.s) pkg_free(newp->id.s);
+		pkg_free(newp);
 	}
 	return NULL;
 }

@@ -26,7 +26,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include <string.h>
 #include "../dprint.h"
@@ -68,45 +70,45 @@ db_uri_t* db_uri(const char* uri)
 {
     char* colon;
     int len;
-    db_uri_t* r;
+    db_uri_t* newp;
     
-    r = (db_uri_t*)pkg_malloc(sizeof(db_uri_t));
-    if (r == NULL) goto error;
-    memset(r, '\0', sizeof(db_uri_t));
-	if (db_gen_init(&r->gen) < 0) goto error;	
+    newp = (db_uri_t*)pkg_malloc(sizeof(db_uri_t));
+    if (newp == NULL) goto error;
+    memset(newp, '\0', sizeof(db_uri_t));
+	if (db_gen_init(&newp->gen) < 0) goto error;	
 
     len = strlen(uri);
     colon = q_memchr((char*)uri, ':', len);
     if (colon == NULL) {
-		r->scheme.s = pkg_malloc(len + 1);
-		if (r->scheme.s == NULL) goto error;
-		memcpy(r->scheme.s, uri, len);
-		r->scheme.len = len;
+		newp->scheme.s = pkg_malloc(len + 1);
+		if (newp->scheme.s == NULL) goto error;
+		memcpy(newp->scheme.s, uri, len);
+		newp->scheme.len = len;
     } else {
-		r->scheme.len = colon - uri;
-		r->scheme.s = pkg_malloc(r->scheme.len + 1);
-		if (r->scheme.s == NULL) goto error;
-		memcpy(r->scheme.s, uri, colon - uri);
+		newp->scheme.len = colon - uri;
+		newp->scheme.s = pkg_malloc(newp->scheme.len + 1);
+		if (newp->scheme.s == NULL) goto error;
+		memcpy(newp->scheme.s, uri, colon - uri);
 		
-		r->body.len = len - r->scheme.len - 1;
-		r->body.s = pkg_malloc(r->body.len + 1);
-		if (r->body.s == NULL) goto error;
-		memcpy(r->body.s, colon + 1, r->body.len);
-		r->body.s[r->body.len] = '\0';
+		newp->body.len = len - newp->scheme.len - 1;
+		newp->body.s = pkg_malloc(newp->body.len + 1);
+		if (newp->body.s == NULL) goto error;
+		memcpy(newp->body.s, colon + 1, newp->body.len);
+		newp->body.s[newp->body.len] = '\0';
     }
-    r->scheme.s[r->scheme.len] = '\0';
+    newp->scheme.s[newp->scheme.len] = '\0';
 
 	/* Call db_uri function if the driver has it */
-	if (db_drv_call(&r->scheme, "db_uri", r, 0) < 0) goto error;
-    return r;
+	if (db_drv_call(&newp->scheme, "db_uri", newp, 0) < 0) goto error;
+    return newp;
     
  error:
     ERR("db_uri: Error while creating db_uri structure\n");
-	if (r) {
-		db_gen_free(&r->gen);
-		if (r->body.s) pkg_free(r->body.s);
-		if (r->scheme.s) pkg_free(r->scheme.s);
-		pkg_free(r);
+	if (newp) {
+		db_gen_free(&newp->gen);
+		if (newp->body.s) pkg_free(newp->body.s);
+		if (newp->scheme.s) pkg_free(newp->scheme.s);
+		pkg_free(newp);
 	}
     return 0;
 }

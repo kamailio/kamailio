@@ -31,9 +31,7 @@
 
 /**
  * \defgroup DB_API Database Abstraction Layer
- * \brief brief description
  *
- * I wonder where this text goes.
  * @{
  */
 

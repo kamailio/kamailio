@@ -26,7 +26,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include <string.h>
 #include "../mem/mem.h"
@@ -57,22 +59,22 @@ void db_fld_close(db_fld_t* fld, size_t n)
 
 db_fld_t* db_fld(size_t n)
 {
-	db_fld_t* r;
+	db_fld_t* newp;
 
-	r = (db_fld_t*)pkg_malloc(sizeof(db_fld_t) * n);
-	if (r == NULL) {
+	newp = (db_fld_t*)pkg_malloc(sizeof(db_fld_t) * n);
+	if (newp == NULL) {
 		ERR("db_fld: No memory left\n");
 		return NULL;
 	}
-	memset(r, '\0', sizeof(db_fld_t) * n);
+	memset(newp, '\0', sizeof(db_fld_t) * n);
 
-	if (db_fld_init(r, n) < 0) goto error;
-	return r;
+	if (db_fld_init(newp, n) < 0) goto error;
+	return newp;
 
  error:
-	if (r) {
-		db_gen_free(&r->gen);
-		pkg_free(r);
+	if (newp) {
+		db_gen_free(&newp->gen);
+		pkg_free(newp);
 	}
 	return NULL;
 }

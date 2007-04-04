@@ -29,7 +29,9 @@
 #ifndef _DB_URI_H
 #define _DB_URI_H  1
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include "../str.h"
 #include "db_gen.h"

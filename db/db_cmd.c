@@ -26,7 +26,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** \ingroup DB_API @{ */
+/** \ingroup DB_API 
+ * @{ 
+ */
 
 #include <string.h>
 #include "../dprint.h"
@@ -39,25 +41,24 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 				 db_fld_t* result, db_fld_t* params)
 {
 	char* fname;
-    db_cmd_t* res;
+    db_cmd_t* newp;
 	db_con_t* con;
-	db_fld_t* f;
 	int i, r, j;
+	
+    newp = (db_cmd_t*)pkg_malloc(sizeof(db_cmd_t));
+    if (newp == NULL) goto err;
+    memset(newp, '\0', sizeof(db_cmd_t));
+	if (db_gen_init(&newp->gen) < 0) goto err;
+    newp->ctx = ctx;
 
-    res = (db_cmd_t*)pkg_malloc(sizeof(db_cmd_t));
-    if (res == NULL) goto err;
-    memset(res, '\0', sizeof(db_cmd_t));
-	if (db_gen_init(&res->gen) < 0) goto err;
-    res->ctx = ctx;
+	newp->table.len = strlen(table);
+    newp->table.s = (char*)pkg_malloc(newp->table.len);
+    if (newp->table.s == NULL) goto err;
+    memcpy(newp->table.s, table, newp->table.len);
 
-	res->table.len = strlen(table);
-    res->table.s = (char*)pkg_malloc(res->table.len);
-    if (res->table.s == NULL) goto err;
-    memcpy(res->table.s, table, res->table.len);
-
-	res->type = type;
-	res->result = result;
-	res->params = params;
+	newp->type = type;
+	newp->result = result;
+	newp->params = params;
 
 	for(i = 0; i < ctx->con_n; i++) {
 		con = ctx->con[i];
@@ -76,14 +77,14 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			}
 		}
 
-		r = db_drv_call(&con->uri->scheme, "db_cmd", res, i);
+		r = db_drv_call(&con->uri->scheme, "db_cmd", newp, i);
 		if (r < 0) goto err;
 		if (r > 0) {
 			ERR("DB driver %.*s does not implement mandatory db_cmd function\n",
 				con->uri->scheme.len, ZSW(con->uri->scheme.s));
 			goto err;
 		}
-		if (res->exec[i] == NULL) {
+		if (newp->exec[i] == NULL) {
 			/* db_cmd in the db driver did not provide any runtime function, so try to lookup the
 			 * default one through the module API
 			 */
@@ -94,7 +95,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			default: ERR("db_cmd: Unsupported command type\n"); goto err;
 			}
 
-			r = db_drv_func((void*)&(res->exec[i]), &con->uri->scheme, fname);
+			r = db_drv_func((void*)&(newp->exec[i]), &con->uri->scheme, fname);
 			if (r < 0) goto err;
 			if (r > 0) {
 				ERR("DB driver %.*s does not provide runtime execution function %s\n",
@@ -103,7 +104,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			}
 		}
 
-		r = db_drv_func((void*)(&res->first[i]), &con->uri->scheme, "db_first");
+		r = db_drv_func((void*)(&newp->first[i]), &con->uri->scheme, "db_first");
 		if (r < 0) goto err;
 		if (r > 0) {
 			ERR("DB driver %.*s does not implement mandatory db_first function\n",
@@ -111,7 +112,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			goto err;
 		}
 
-		r = db_drv_func((void*)(&res->next[i]), &con->uri->scheme, "db_next");
+		r = db_drv_func((void*)(&newp->next[i]), &con->uri->scheme, "db_next");
 		if (r < 0) goto err;
 		if (r > 0) {
 			ERR("DB driver %.*s does not implement mandatory db_next function\n",
@@ -121,14 +122,14 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 
 
 	}
-    return res;
+    return newp;
 
  err:
     ERR("db_cmd: Cannot create db_cmd structure\n");
-    if (res) {
-		db_gen_free(&res->gen);
-		if (res->table.s) pkg_free(res->table.s);
-		pkg_free(res);
+    if (newp) {
+		db_gen_free(&newp->gen);
+		if (newp->table.s) pkg_free(newp->table.s);
+		pkg_free(newp);
 	}
 	return NULL;
 }
@@ -160,7 +161,6 @@ void db_cmd_free(db_cmd_t* cmd)
 
 int db_exec(db_res_t** res, db_cmd_t* cmd)
 {
-	int i;
 	db_res_t* r = NULL;
 
 	if (cmd->type == DB_GET) {
