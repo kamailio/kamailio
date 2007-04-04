@@ -99,7 +99,7 @@ static str strings[] = {
 
 
 
-static int my_cmd_free(db_cmd_t* cmd, struct my_cmd* payload)
+static void my_cmd_free(db_cmd_t* cmd, struct my_cmd* payload)
 {
 	db_drv_free(&payload->gen);
 	if (payload->query.s) pkg_free(payload->query.s);
@@ -308,7 +308,6 @@ static int build_replace_query(str* query, db_cmd_t* cmd)
 static inline int update_params(MYSQL_STMT* st, db_fld_t* params)
 {
 	int i;
-	struct db_fld* f;  /* Current field */
 	struct my_fld* fp; /* Current field payload */
 	struct tm* t;
 
@@ -353,6 +352,15 @@ static inline int update_params(MYSQL_STMT* st, db_fld_t* params)
 			fp->time.month = t->tm_mon + 1;
 			fp->time.year = t->tm_year + 1900;
 			break;
+			
+		case DB_NONE:
+		case DB_INT:
+		case DB_FLOAT:
+		case DB_DOUBLE:
+		case DB_BITMAP:
+			/* No need to do anything for these types */
+			break;
+
 		}
 	}
 
@@ -364,7 +372,6 @@ static inline int update_params(MYSQL_STMT* st, db_fld_t* params)
 static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 {
 	int i;
-	struct db_fld* r;  /* Current field in the result */
 	struct my_fld* rp; /* Payload of the current field in result */
 	struct tm t;
 
@@ -416,6 +423,14 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 			result[i].v.time = _timegm(&t);
 #endif /* HAVE_TIMEGM */
 			break;
+
+		case DB_NONE:
+		case DB_INT:
+		case DB_FLOAT:
+		case DB_DOUBLE:
+		case DB_BITMAP:
+			/* No need to do anything for these types */
+			break;
 		}
 	}
 
@@ -439,7 +454,6 @@ int my_cmd_write(db_res_t* res, db_cmd_t* cmd)
 
 int my_cmd_read(db_res_t* res, db_cmd_t* cmd)
 {
-	db_res_t* r;
 	struct my_cmd* mcmd;
    
 	mcmd = DB_GET_PAYLOAD(cmd);
@@ -506,6 +520,10 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld)
 		case DB_BLOB:
 			params[i].buffer_type = MYSQL_TYPE_BLOB;
 			params[i].buffer = ""; /* Updated on runtime */
+			break;
+
+		case DB_NONE:
+			/* Eliminates gcc warning */
 			break;
 
 		}
@@ -607,6 +625,10 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 			result[i].buffer = f->buf.s;
 			fld[i].v.blob.s = f->buf.s;
 			result[i].buffer_length = STR_BUF_SIZE - 1;
+			break;
+
+		case DB_NONE:
+			/* Eliminates gcc warning */
 			break;
 
 		}
