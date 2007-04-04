@@ -257,8 +257,6 @@ int my_uri(db_uri_t* uri)
 {
 	struct my_uri* res;
 
-	ERR("my_uri called\n");
-
 	res = (struct my_uri*)pkg_malloc(sizeof(struct my_uri));
 	if (res == NULL) {
 		ERR("No memory left\n");

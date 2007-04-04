@@ -45,8 +45,6 @@ int my_fld(db_fld_t* fld)
 {
 	struct my_fld* res;
 
-	ERR("my_fld executed\n");
-
 	res = (struct my_fld*)pkg_malloc(sizeof(struct my_fld));
 	if (res == NULL) {
 		ERR("No memory left\n");
