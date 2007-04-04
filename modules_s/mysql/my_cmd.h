@@ -1,9 +1,8 @@
 /* 
- * $Id$ 
- *
- * MySQL module interface
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,17 +25,31 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*
- * History:
- * --------
- *  2003-03-11  updated to the new module exports interface (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- */
 
-#ifndef DB_MOD_H
-#define DB_MOD_H
+#ifndef _MY_CMD_H
+#define _MY_CMD_H  1
 
-extern int ping_interval;
-extern int auto_reconnect;
+#include "../../db/db_drv.h"
+#include "../../db/db_cmd.h"
+#include <mysql/mysql.h>
 
-#endif /* DB_MOD_H */
+struct my_cmd {
+	db_drv_t gen;
+
+	str query;
+	MYSQL_STMT* st;
+};
+
+int my_cmd(db_cmd_t* cmd);
+
+/* Runtime execution function for DB_GET */
+int my_cmd_read(db_res_t* res, db_cmd_t* cmd);
+
+/* Runtime execution function for DB_PUT and DB_DEL */
+int my_cmd_write(db_res_t* res, db_cmd_t* cmd);
+
+int my_cmd_first(db_res_t* res);
+
+int my_cmd_next(db_res_t* res);
+
+#endif /* _MY_CMD_H */

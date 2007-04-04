@@ -1,9 +1,8 @@
 /* 
- * $Id$ 
- *
- * MySQL module result related functions
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,36 +26,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef RES_H
-#define RES_H
+#ifndef _MY_FLD_H
+#define _MY_FLD_H  1
 
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
+#include "../../db/db_drv.h"
+#include "../../db/db_fld.h"
+#include <mysql/mysql.h>
 
-struct my_res {
-	MYSQL_RES* res; /* The mysql result */
-	MYSQL_ROW  row; /* The current row */
+struct my_fld {
+	db_drv_t gen;
+
+	my_bool is_null;
+	MYSQL_TIME time;
+	unsigned long length;
+	str buf;
 };
 
-#define MYRES_RESULT(db_res)   (((struct my_res*)(db_res)->data)->res)
-#define MYRES_ROW(db_res)      (((struct my_res*)(db_res)->data)->row)
+int my_fld(db_fld_t* fld);
 
-/*
- * Create a new result structure and initialize it
- */
-db_res_t* new_result(void);
-
-
-/*
- * Fill the structure with data from database
- */
-int convert_result(db_con_t* _h, db_res_t* _r);
-
-
-/*
- * Release memory used by a result structure
- */
-int free_result(db_res_t* _r);
-
-
-#endif /* RES_H */
+#endif /* _MY_FLD_H */

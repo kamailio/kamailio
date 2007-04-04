@@ -34,10 +34,13 @@
  */
 
 #include "../../sr_module.h"
-#include "dbase.h"
-#include "db_mod.h"
-
-#include <mysql.h>
+#include "../../db/db.h"
+#include "my_uri.h"
+#include "my_con.h"
+#include "my_cmd.h"
+#include "my_fld.h"
+#include "my_res.h"
+#include "mysql_mod.h"
 
 int ping_interval = 5 * 60; /* Default is 5 minutes */
 int auto_reconnect = 1;     /* Default is enabled */
@@ -51,16 +54,17 @@ MODULE_VERSION
  * MySQL database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",   (cmd_function)use_table,      2, 0, 0},
-	{"db_init",        (cmd_function)db_init,        1, 0, 0},
-	{"db_close",       (cmd_function)db_close,       2, 0, 0},
-	{"db_query",       (cmd_function)db_query,       2, 0, 0},
-	{"db_raw_query",   (cmd_function)db_raw_query,   2, 0, 0},
-	{"db_free_result", (cmd_function)db_free_result, 2, 0, 0},
-	{"db_insert",      (cmd_function)db_insert,      2, 0, 0},
-	{"db_delete",      (cmd_function)db_delete,      2, 0, 0},
-	{"db_update",      (cmd_function)db_update,      2, 0, 0},
-	{"db_replace",     (cmd_function)db_replace,     2, 0, 0},
+	{"db_ctx",         (cmd_function)NULL,  0, 0, 0},
+	{"db_con",         (cmd_function)my_con,  0, 0, 0},
+	{"db_uri",         (cmd_function)my_uri,  0, 0, 0},
+	{"db_cmd",         (cmd_function)my_cmd,  0, 0, 0},
+	{"db_put",         (cmd_function)my_cmd_write, 0, 0, 0},
+	{"db_del",         (cmd_function)my_cmd_write, 0, 0, 0},
+	{"db_get",         (cmd_function)my_cmd_read, 0, 0, 0},
+	{"db_res",         (cmd_function)my_res,  0, 0, 0},
+	{"db_fld",         (cmd_function)my_fld,  0, 0, 0},
+	{"db_first",       (cmd_function)my_cmd_next, 0, 0, 0},
+	{"db_next",        (cmd_function)my_cmd_next,  0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -90,6 +94,5 @@ struct module_exports exports = {
 
 static int mysql_mod_init(void)
 {
-	DBG("mysql: MySQL client version is %s\n", mysql_get_client_info());
 	return 0;
 }

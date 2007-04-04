@@ -1,9 +1,10 @@
 /* 
  * $Id$ 
  *
- * MySQL module row related functions
+ * MySQL module interface
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,24 +28,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef ROW_H
-#define ROW_H
+#ifndef _MY_URI_H
+#define _MY_URI_H
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
-#include "../../db/db_row.h"
+#include "../../db/db_uri.h"
+#include "../../db/db_drv.h"
 
-
-/*
- * Convert a row from result into db API representation
- */
-int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r);
-
-
-/*
- * Release memory used by row
- */
-int free_row(db_row_t* _r);
+struct my_uri {
+	db_drv_t drv;
+	char* username;
+	char* password;
+	char* host;
+	unsigned short port;
+	char* database;
+};
 
 
-#endif /* ROW_H */
+int my_uri(db_uri_t* uri);
+
+
+#endif /* _MY_URI_H */
+
