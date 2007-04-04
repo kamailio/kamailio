@@ -92,7 +92,7 @@ static int child_init(int);
 int handle_publish(struct sip_msg*, char*, char*);
 int handle_subscribe(struct sip_msg*, char*, char*);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
-
+static int fixup_presence(void** param, int param_no);
 //int handle_notify(struct sip_msg*, char*, char*);
 
 int counter =0;
@@ -110,10 +110,10 @@ void destroy(void);
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",	  handle_publish,		0,0, REQUEST_ROUTE},
-	{"handle_subscribe",  handle_subscribe,		0,0, REQUEST_ROUTE},
-	{"stored_pres_info",  stored_pres_info,		1,0,   0          },
-	{0,0,0,0,0} 
+	{"handle_publish",	  handle_publish,	1,  fixup_presence, REQUEST_ROUTE},
+	{"handle_subscribe",  handle_subscribe,	0,		   0,       REQUEST_ROUTE},
+	{"stored_pres_info",  stored_pres_info,	1,		   0,		   0         },
+	{0,						0,				0,		   0,	   0	     }	 
 };
 
 static param_export_t params[]={
@@ -377,7 +377,7 @@ int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s)
 
 	if(pa_dbf.query(pa_db, keys, 0, vals, 0, 2, 0, 0, &result )< 0)
 	{
-		LOG(L_ERR, "PRESENCE:stored_pres_uri: Error while querrying database\n");
+		LOG(L_ERR, "PRESENCE:stored_pres_uri: Error while querying database\n");
 		return -1;
 	}
 
@@ -393,4 +393,22 @@ int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s)
 	return -1;
 }
 
+static int fixup_presence(void** param, int param_no)
+{
+	xl_elem_t *model;
+	if(*param)
+	{
+		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		{
+			LOG(L_ERR, "PRESENCE:fixup_presence: ERROR wrong format[%s]\n",
+				(char*)(*param));
+			return E_UNSPEC;
+		}
+			
+		*param = (void*)model;
+		return 0;
+	}
+	LOG(L_ERR, "PRESENCE:fixup_presence: ERROR null format\n");
+	return E_UNSPEC;
+}
 

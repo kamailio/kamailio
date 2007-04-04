@@ -38,10 +38,11 @@
 //extern char wi_event[16] ;
 #define PRES_LEN 8
 #define PWINFO_LEN 14
+#define BLA_LEN 10
 
 #define PRES_RULES 1;
 #define RESOURCE_LIST 2;
-#define RLS_SERVICE 2;
+#define RLS_SERVICE 3;
 
 typedef struct watcher
 {
@@ -70,7 +71,8 @@ int free_tm_dlg(dlg_t *td);
 
 dlg_t* build_dlg_t (str p_uri, subs_t* subs);
 
-int query_db_notify(str* p_user, str* p_domain, char* event, subs_t *subs, str* etag);
+int query_db_notify(str* p_user, str* p_domain, char* event,
+		subs_t *subs, str* etag, str* sender);
 
 int notify(subs_t* subs, subs_t* watcher_subs, str* n_body, int force_null_body);
 

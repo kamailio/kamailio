@@ -191,10 +191,10 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	for(i= 0; i<n ; i++)
 	{
 
-		LOG(L_INFO, "PRESENCE:msg_presentity_clean:found expired publish"
+		DBG( "PRESENCE:msg_presentity_clean:found expired publish"
 				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
 				p[i]->domain.len, p[i]->domain.s);
-		query_db_notify( &p[i]->user, &p[i]->domain, "presence", NULL, &p[i]->etag);
+		query_db_notify( &p[i]->user, &p[i]->domain, "presence", NULL, &p[i]->etag, NULL);
 
 	}
 
@@ -239,9 +239,9 @@ error:
  * PUBLISH request handling
  *
  */
-int handle_publish(struct sip_msg* msg, char* str1, char* str2)
+int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 {
-	struct sip_uri uri;
+	struct sip_uri uri, puri;
 	str body;
 	unsigned int idx;
 	struct to_body *pto, TO;
@@ -249,10 +249,14 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 	presentity_t* presentity = 0;
 	struct hdr_field* hdr;
 	int found= 0, etag_gen = 0, update_p = 0;
-	str etag;
+	str etag={0, 0};
 	str hdr_append, hdr_append2 ;
 	int error_ret = -1; /* error return code */
 	xmlDocPtr doc= NULL;
+	int event= 0;
+	str* sender= NULL;
+	static char buf[256];
+	int buf_len= 255;
 
 	counter ++;
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
@@ -263,19 +267,16 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 	}
 	memset(&body, 0, sizeof(str));
 	/* inspecting the Event header field */
-	if( (!msg->event ) ||(msg->event->body.len<=0) ||
-	( strncmp(msg->event->body.s, "presence",8 )!=0) )
-	{
-		LOG(L_ERR, "PRESENCE: handle_publish:Missing or unsupported event"
-				" header field value [%.*s]\n", msg->event->body.len,
-				msg->event->body.s);
-
-		if (slb.reply(msg, 489, &pu_489_rpl) == -1)
-		{
-			LOG(L_ERR, "PRESENCE: handle_publish: Error while sending reply\n");
-		}
-		return 0;
-	}
+	if( (!msg->event ) ||(msg->event->body.len<=0) )
+		goto unsupported_event;
+	
+	if(strncmp(msg->event->body.s, "presence",8 )==0)
+		event|= PRESENCE_EVENT;
+	else
+	if(strncmp(msg->event->body.s, "dialog;sla",10 )==0)
+		event|= BLA_EVENT;
+	else
+		goto unsupported_event;
 
 	/* examine the SIP-If-Match header field */
 	hdr = msg->headers;
@@ -425,11 +426,36 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 		}
 		xmlFreeDoc(doc);
 	}	
-	
+	memset(&puri, 0, sizeof(struct sip_uri));
+	if(sender_uri && sender_uri!= "")
+	{
+		sender=(str*)pkg_malloc(sizeof(str));
+		if(sender== NULL)
+		{
+			LOG(L_ERR, "PRESENCE: handle_publish: ERROR while allocating memery\n");
+			goto error;
+		}	
+		if(xl_printf(msg, (xl_elem_t*)sender_uri, buf, &buf_len)<0)
+		{
+			LOG(L_ERR, "PRESENCE: handle_publish:error - cannot print the format\n");
+			goto error;
+		}
+		if(parse_uri(buf, buf_len, &puri)!=0)
+		{
+			LOG(L_ERR, "PRESENCE: handle_publish: bad owner SIP address!\n");
+			goto error;
+		} else {
+			DBG("PRESENCE: handle_publish:using user id [%.*s]\n",buf_len,buf);
+		}
+		sender->s= buf;
+		sender->len= buf_len;
+	}
+
 	/* now we have all the necessary values */
 	/* fill in the filds of the structure */
-	if(new_presentity(&uri.host, &uri.user, lexpire ,(int)time(NULL), &etag,&presentity)
-			!=0)
+
+	presentity= new_presentity(&uri.host, &uri.user, lexpire, event, &etag, sender);
+	if(presentity== NULL)
 	{
 		LOG(L_ERR,"PRESENCE: handle_publish: ERORR creating presentity\n");
 		goto error;
@@ -523,8 +549,10 @@ int handle_publish(struct sip_msg* msg, char* str1, char* str2)
 
 	if(presentity)
 		free_presentity(presentity);
-	if(etag_gen)
+	if(etag_gen && etag.s)
 		pkg_free(etag.s);
+	if(sender)
+		pkg_free(sender);
 	xmlCleanupParser();
 	xmlMemoryDump();
 
@@ -535,14 +563,27 @@ error:
 	
 	if(presentity)
 		free_presentity(presentity);
-	if(etag_gen )
 		pkg_free(etag.s);
+	if(etag_gen && etag.s)
+	if(sender)
+		pkg_free(sender);
 	xmlCleanupParser();
 	xmlMemoryDump();
 	
 	return error_ret;
 
-}
+unsupported_event:
 
+	LOG(L_ERR, "PRESENCE: handle_publish:Missing or unsupported event"
+			" header field value [%.*s]\n", msg->event->body.len,
+			msg->event->body.s);
+
+	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
+	{
+		LOG(L_ERR, "PRESENCE: handle_publish: Error while sending reply\n");
+	}
+	return 0;
+
+}
 
 

@@ -39,7 +39,7 @@ Anca-Maria Vamanu
 
         1.5. Exported Functions
 
-              1.5.1. handle_publish()
+              1.5.1. handle_publish(char* sender_uri)
               1.5.2. handle_subscribe()
 
         1.6. Installation
@@ -273,18 +273,32 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 
 1.5. Exported Functions
 
-1.5.1. handle_publish()
+1.5.1. handle_publish(char* sender_uri)
 
    The function handles PUBLISH requests. It stores and updates
    presence information in database and calls functions to send
-   NOTIFY messages when changes in presence information occur.
+   NOTIFY messages when changes in presence information occur. It
+   takes one argument -> sender_uri. The parameter was added for
+   enabling BLA implementation. If present, Notification of a
+   change in presence state is not sent to the respective uri
+   even though a subscription exists. It should be taken from the
+   Sender header. It was left at the decision of the
+   administrator whether or not to transmit the content of this
+   header as parameter for handle_publish, to prevent security
+   problems.
 
    This function can be used from REQUEST_ROUTE.
 
    Example 1-13. handle_publish usage
 ...
-if(method=="PUBLISH")
-    handle_publish();
+        if(is_method("PUBLISH"))
+        {
+                if($hdr(Sender)!= NULL)
+                        handle_publish("$hdr(Sender)");
+                else
+                        handle_publish("");
+                t_release();
+        }
 ...
      _________________________________________________________
 

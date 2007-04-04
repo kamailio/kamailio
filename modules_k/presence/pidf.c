@@ -163,7 +163,7 @@ str* agregate_xmls(str** body_array, int n)
 
 	xml_array = (xmlDocPtr*)pkg_malloc( (n+1)*sizeof(xmlDocPtr));
 
-	if(!xml_array)
+	if(xml_array== NULL)
 	{
 	
 		LOG(L_ERR,"PRESENCE:agregate_xmls: Error while alocating memory");
@@ -453,7 +453,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 		goto error;
 	}
 
-	LOG(L_INFO,"PRESENCE: build_off_nbody: querying presentity\n");
+	DBG("PRESENCE: build_off_nbody: querying presentity\n");
 	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
@@ -494,7 +494,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 
 	if( etag && (strncmp (status,"closed", 6) == 0) )
 	{
-		LOG(L_INFO, "PRESENCE:build_off_nbody:The presentity status was"
+		DBG( "PRESENCE:build_off_nbody:The presentity status was"
 				" already offline\n");
 		goto error;
 	}

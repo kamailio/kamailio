@@ -52,16 +52,16 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 void printf_subs(subs_t* subs)
 {
-	LOG(L_INFO,"\n\t[p_user]= %.*s  [p_domain]= %.*s\n\t[w_user]= %.*s "  
+	DBG("\n\t[p_user]= %.*s  [p_domain]= %.*s\n\t[w_user]= %.*s "  
 			"[w_domain]= %.*s\n",
 			subs->to_user.len, subs->to_user.s, subs->to_domain.len,
 			subs->to_domain.s,
 			subs->from_user.len, subs->from_user.s, subs->from_domain.len,
 			subs->from_domain.s);
-	LOG(L_INFO,"[event]= %.*s\n\t[staus]= %.*s\n\t[expires]= %d\n",
+	DBG("[event]= %.*s\n\t[staus]= %.*s\n\t[expires]= %d\n",
 			subs->event.len, subs->event.s,	subs->status.len, subs->status.s,
 			subs->expires );
-	LOG(L_INFO,"[to_tag]= %.*s\n\t[from_tag]= %.*s\n",
+	DBG("[to_tag]= %.*s\n\t[from_tag]= %.*s\n",
 			subs->to_tag.len, subs->to_tag.s,	subs->from_tag.len, subs->from_tag.s);
 
 }
@@ -109,7 +109,7 @@ str* build_str_hdr(str event, str event_id, str status, int expires_t,
 
 	if(strncmp(status.s, "terminated",10) == 0)
 	{
-		LOG(L_INFO, "PRESENCE: build_str_hdr: state = terminated writing state"
+		DBG( "PRESENCE: build_str_hdr: state = terminated writing state"
 				" and reason\n");
 
 		strncpy(str_hdr->s+str_hdr->len,"Subscription-State: ", 20);
@@ -127,7 +127,6 @@ str* build_str_hdr(str event, str event_id, str status, int expires_t,
 	}
 	else
 	{	
-	
 		strncpy(str_hdr->s+str_hdr->len,"Subscription-State: ", 20);
 		str_hdr->len += 20;
 		strncpy(str_hdr->s+str_hdr->len, status.s ,status.len );
@@ -164,10 +163,18 @@ str* build_str_hdr(str event, str event_id, str status, int expires_t,
 			str_hdr->len += 20;
 		}
 		else
+		if(event.len ==PWINFO_LEN)
 		{
 			strncpy(str_hdr->s+str_hdr->len,"application/watcherinfo+xml" , 27);
 			str_hdr->len += 27;
-		}	
+		}
+		else
+		if(event.len ==BLA_LEN)
+		{
+			strncpy(str_hdr->s+str_hdr->len,"application/dialog-info+xml", 27);
+			str_hdr->len += 27;
+		}
+
 		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
 	}
@@ -286,7 +293,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		goto error;
 	}
 
-	LOG(L_INFO,"PRESENCE:get_wi_notify_body: querying database  \n");
+	DBG("PRESENCE:get_wi_notify_body: querying database  \n");
 	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
@@ -346,7 +353,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			}
 		}
 
-	LOG(L_INFO, "PRESENCE:get_wi_notify_body: the query returned no result\n");
+	DBG( "PRESENCE:get_wi_notify_body: the query returned no result\n");
 	notify_body = create_winfo_xml(watchers, result->n, version_str, p_uri.s,
 			FULL_STATE_FLAG );
 
@@ -396,19 +403,17 @@ error:
 	return NULL;
 
 }
-
-
-str* get_p_notify_body(str user, str host, str* etag)
+str* get_p_notify_body(str user, str host, str* etag, str event)
 {
-	db_key_t query_cols[4];
-	db_op_t  query_ops[4];
-	db_val_t query_vals[4];
-	db_key_t result_cols[4];
+	db_key_t query_cols[6];
+	db_op_t  query_ops[6];
+	db_val_t query_vals[6];
+	db_key_t result_cols[6];
 	db_res_t *result = NULL;
-	int body_col, expires_col, etag_col;
-	str** body_array;
-	str* notify_body;	
-	db_row_t *row ;	
+	int body_col, expires_col, etag_col= 0;
+	str** body_array= NULL;
+	str* notify_body= NULL;	
+	db_row_t *row= NULL ;	
 	db_val_t *row_vals;
 	int n_result_cols = 0;
 	int n_query_cols = 0;
@@ -432,6 +437,14 @@ str* get_p_notify_body(str user, str host, str* etag)
 	query_vals[n_query_cols].val.str_val.len = user.len;
 	n_query_cols++;
 
+	query_cols[n_query_cols] = "event";
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val.s = event.s;
+	query_vals[n_query_cols].val.str_val.len = event.len;
+	n_query_cols++;
+
 	result_cols[body_col=n_result_cols++] = "body" ;
 	result_cols[expires_col=n_result_cols++] = "expires";
 	result_cols[etag_col=n_result_cols++] = "etag";
@@ -442,7 +455,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 		return NULL;
 	}
 
-	LOG(L_INFO,"PRESENCE:get_p_notify_body: querying presentity\n");
+	DBG("PRESENCE:get_p_notify_body: querying presentity\n");
 	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 		 result_cols, n_query_cols, n_result_cols, "received_time",  &result) < 0) 
 	{
@@ -456,17 +469,61 @@ str* get_p_notify_body(str user, str host, str* etag)
 	if(result== NULL)
 		return NULL;
 
-	if (result && result->n <=0 )
+	if (result && result->n<=0 )
 	{
 		DBG("PRESENCE: get_p_notify_body: The query returned no"
-				" result\nThere is no presence information recorded for"
-				"the user\n");
+				" result\n[username]= %.*s\t[domain]= %.*s\t[event]= %.*s\n",
+				user.len, user.s, host.len, host.s, event.len, event.s);
+
 		pa_dbf.free_result(pa_db, result);
 		return NULL;
 	}
 	else
 	{
 		n= result->n;
+		if(BLA_LEN== event.len )
+		{
+			int len;
+		/*	if(n>1)
+			{
+				LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR multiple published" 
+					" dialog states stored for the same BLA AOR\n");
+				goto error;
+			}
+		*/
+			row = &result->rows[0];
+			row_vals = ROW_VALUES(row);
+			if(row_vals[body_col].val.str_val.s== NULL)
+			{
+				LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR NULL notify body record\n");
+				goto error;
+			}
+			len= strlen(row_vals[body_col].val.str_val.s);
+			if(len== 0)
+			{
+				LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR Empty notify body record\n");
+				goto error;
+			}
+			notify_body= (str*)pkg_malloc(sizeof(str));
+			if(notify_body== NULL)
+			{
+				LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR while allocating memory\n");
+				goto error;
+			}
+			memset(notify_body, 0, sizeof(str));
+			notify_body->s= (char*)malloc( len* sizeof(char));
+			if(notify_body->s== NULL)
+			{
+				LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR while allocating memory\n");
+				pkg_free(notify_body);
+				goto error;
+			}
+			memcpy(notify_body->s, row_vals[body_col].val.str_val.s, len);
+			notify_body->len= len;
+
+			goto done;
+		}
+		
 		body_array =(str**)pkg_malloc( (result->n)*sizeof(str*));
 		if(body_array == NULL)
 		{
@@ -479,7 +536,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 		{
 			DBG("PRESENCE:get_p_notify_body:searched etag = %.*s len= %d\n", 
 					etag->len, etag->s, etag->len);
-			LOG(L_INFO, "PRESENCE:get_p_notify_body: etag not NULL\n");
+			DBG( "PRESENCE:get_p_notify_body: etag not NULL\n");
 			for(i= 0; i<result->n; i++)
 			{
 				row = &result->rows[i];
@@ -498,7 +555,7 @@ str* get_p_notify_body(str user, str host, str* etag)
 					body_array[build_off_n]= offline_nbody(&row_vals[body_col].val.str_val);
 					if(body_array[i] == NULL)
 					{
-						LOG(L_INFO, "PRESENCE: get_p_notify_body:The users's"
+						DBG("PRESENCE: get_p_notify_body:The users's"
 								"status was already offline\n");
 						goto error;
 					}
@@ -507,16 +564,18 @@ str* get_p_notify_body(str user, str host, str* etag)
 					body_array[i] =&row_vals[body_col].val.str_val;
 			}
 		}	
-		else	
+		else
+		{	
 			for(i=0;i<result->n;i++)
 			{
 				row = &result->rows[i];
 				row_vals = ROW_VALUES(row);
 				body_array[i] =&row_vals[body_col].val.str_val;
 			}			
+		}
 		notify_body = agregate_xmls(body_array, result->n);
 	}
-
+done:	
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
 	if(build_off_n >= 0)
@@ -667,14 +726,14 @@ error:
 }
 
 
-subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
+subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, int *n)
 {
 
 	subs_t** subs_array= NULL;
 	subs_t* subs= NULL;
-	db_key_t query_cols[6];
-	db_op_t  query_ops[6];
-	db_val_t query_vals[6];
+	db_key_t query_cols[7];
+	db_op_t  query_ops[7];
+	db_val_t query_vals[7];
 	db_key_t result_cols[16];
 	int n_result_cols = 0, n_query_cols = 0;
 	db_row_t *row ;	
@@ -695,7 +754,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 		return NULL;
 	}
 
-	LOG(L_INFO,"PRESENCE:get_subs_dialog:querying database table = active_watchers\n");
+	DBG("PRESENCE:get_subs_dialog:querying database table = active_watchers\n");
 	query_cols[n_query_cols] = "to_domain";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
@@ -720,6 +779,20 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 	query_vals[n_query_cols].val.str_val.len = strlen(event);
 	n_query_cols++;
 
+	if(sender)
+	{	
+		DBG("PRESENCE:get_subs_dialog: Should not send Notify to: [uri]= %.*s\n",
+				 sender->len, sender->s);
+
+		query_cols[n_query_cols] = "contact";
+		query_ops[n_query_cols] = OP_NEQ;
+		query_vals[n_query_cols].type = DB_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val.s = sender->s;
+		query_vals[n_query_cols].val.str_val.len = sender->len;
+		n_query_cols++;
+	}
+
 	result_cols[from_user_col=n_result_cols++] = "from_user" ;
 	result_cols[from_domain_col=n_result_cols++] = "from_domain" ;
 	result_cols[event_id_col=n_result_cols++] = "event_id";
@@ -739,7 +812,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 		result_cols[version_col=n_result_cols++] = "version";
 	}
 
-	if (pa_dbf.query(pa_db, query_cols, 0, query_vals,result_cols,
+	if (pa_dbf.query(pa_db, query_cols, query_ops, query_vals,result_cols,
 				n_query_cols, n_result_cols, 0, &result) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_subs_dialog:Error while querying database\n");
@@ -755,7 +828,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event, int *n)
 
 	if (result->n <=0 )
 	{
-		LOG(L_ERR, "PRESENCE: get_subs_dialog:The query for subscribtion for"
+		DBG("PRESENCE: get_subs_dialog:The query for subscribtion for"
 				" [user]= %.*s,[domain]= %.*s for [event]= %s returned no"
 				" result\n",p_user->len, p_user->s, p_domain->len, 
 				p_domain->s,event);
@@ -962,13 +1035,13 @@ error:
 }
 
 int query_db_notify(str* p_user, str* p_domain, char* event, 
-		subs_t* watcher_subs, str* etag )
+		subs_t* watcher_subs, str* etag, str* sender )
 {
 	subs_t** subs_array = NULL;
 	int n=0, i=0;
 	str * notify_body = NULL;
 
-	subs_array= get_subs_dialog(p_user, p_domain, event, &n);
+	subs_array= get_subs_dialog(p_user, p_domain, event,sender, &n);
 	if(subs_array == NULL)
 	{
 		LOG(L_ERR, "PRESENCE:query_db_notify: Could not get subs_dialog from"
@@ -976,12 +1049,15 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 		goto error;
 	}
 	
-	if(PRES_LEN == strlen(event) )
+	if(PWINFO_LEN!= strlen(event) )
 	{
-		notify_body = get_p_notify_body(*p_user, *p_domain, etag);
+		str event_str;
+ 		event_str.s= event;
+ 		event_str.len= strlen(event);
+		notify_body = get_p_notify_body(*p_user, *p_domain, etag, event_str);
 		if(notify_body == NULL)
 		{
-			LOG(L_DBG, "PRESENCE:query_db_notify: Could not get the"
+			DBG( "PRESENCE:query_db_notify: Could not get the"
 					" notify_body\n");
 			/* goto error; */
 		}
@@ -991,7 +1067,7 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 	{
 		if(notify(subs_array[i], watcher_subs, notify_body, 0)< 0 )
 		{
-			LOG(L_DBG, "PRESENCE:query_db_notify: Could not send notify for"
+			DBG( "PRESENCE:query_db_notify: Could not send notify for"
 					"%s\n", event);
 		}
 	}
@@ -1060,7 +1136,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 	ruleset_node = xmlDocGetNodeByName(xcap_tree, "ruleset", NULL);
 	if(ruleset_node == NULL)
 	{
-		LOG(L_INFO, "PRESENCE:is_watcher_allowed: ruleset_node NULL\n");
+		DBG( "PRESENCE:is_watcher_allowed: ruleset_node NULL\n");
 		goto error;
 
 	}	
@@ -1075,7 +1151,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		cond_node = xmlNodeGetChildByName(node1, "conditions");
 		if(cond_node == NULL)
 		{	
-			LOG(L_INFO, "PRESENCE:is_watcher_allowed:cond node NULL\n");
+			DBG( "PRESENCE:is_watcher_allowed:cond node NULL\n");
 			goto error;
 		}
 		DBG("PRESENCE:is_watcher_allowed:cond_node->name= %s\n",
@@ -1084,7 +1160,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		validity_node = xmlNodeGetChildByName(cond_node, "validity");
 		if(validity_node !=NULL)
 		{
-			LOG(L_INFO, "PRESENCE:is_watcher_allowed:found validity tag\n");
+			DBG("PRESENCE:is_watcher_allowed:found validity tag\n");
 
 		}	
 		sphere_node = xmlNodeGetChildByName(cond_node, "sphere");
@@ -1191,7 +1267,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 	{	actions_node = xmlNodeGetChildByName(node1, "actions");
 		if(actions_node == NULL)
 		{	
-			LOG(L_INFO, "PRESENCE:is_watcher_allowed: actions_node NULL\n");
+			DBG( "PRESENCE:is_watcher_allowed: actions_node NULL\n");
 			return NULL;
 		}
 		DBG("PRESENCE:is_watcher_allowed:actions_node->name= %s\n",
@@ -1201,7 +1277,7 @@ xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		sub_handling_node = xmlNodeGetChildByName(actions_node, "sub-handling");
 		if(sub_handling_node== NULL)
 		{	
-			LOG(L_INFO, "PRESENCE:is_watcher_allowed:sub_handling_node NULL\n");
+			DBG( "PRESENCE:is_watcher_allowed:sub_handling_node NULL\n");
 			return NULL;
 		}
 		sub_handling = (char*)xmlNodeGetContent(sub_handling_node);
@@ -1309,12 +1385,12 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 
 	if(result && result->n<=0)
 	{
-		LOG(L_ERR, "PRESENCE:get_xcap_tree:The query in table xcap for"
+		DBG("PRESENCE:get_xcap_tree:The query in table xcap for"
 				" [username]=%.*s , domain=%.*s returned no result\n",
 				user.len, user.s, domain.len, domain.s);
 		goto error;
 	}
-	LOG(L_ERR, "PRESENCE:get_xcap_tree:The query in table xcap for"
+	DBG("PRESENCE:get_xcap_tree:The query in table xcap for"
 			" [username]=%.*s , domain=%.*s returned result",	user.len,
 			user.s, domain.len, domain.s );
 
@@ -1373,7 +1449,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 	xmlDocPtr xcap_tree = NULL;
     c_back_param *cb_param= NULL;
 	
-	LOG(L_INFO, "PRESENCE:notify:dialog informations:\n");
+	DBG("PRESENCE:notify:dialog informations:\n");
 	printf_subs(subs);
 
 	if(force_null_body)
@@ -1392,7 +1468,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 		xcap_tree = get_xcap_tree(subs->to_user, subs->to_domain);
 		if(xcap_tree == NULL)
 		{	
-			LOG(L_INFO, "PRESENCE:notify: Couldn't get xcap_tree\n");
+			DBG( "PRESENCE:notify: Couldn't get xcap_tree\n");
 			if(force_active && subs->status.len ==7)
 			{
 				subs->status.s = "active";
@@ -1404,7 +1480,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 			rule_node = is_watcher_allowed(subs, xcap_tree);
 			if(rule_node ==NULL)
 			{
-				LOG(L_INFO, "PRESENCE:notify: The subscriber didn't match"
+				DBG("PRESENCE:notify: The subscriber didn't match"
 					" the conditions\n");
 			}	
 			else
@@ -1471,7 +1547,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 		if(strncmp( subs->status.s, "terminated", 10) == 0 ||
 			strncmp( subs->status.s, "pending", 7) == 0) 
 		{
-			LOG(L_INFO, "PRESENCE:notify: state terminated or pending-"
+			DBG("PRESENCE:notify: state terminated or pending-"
 					" notify body NULL");
 			notify_body = NULL;
 		}
@@ -1503,12 +1579,13 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 				else
 				{	
 					notify_body = get_p_notify_body(subs->to_user,
-							subs->to_domain, NULL);
+							subs->to_domain, NULL ,subs->event);
 					if(notify_body == NULL)
 					{
-						LOG(L_DBG, "PRESENCE:notify: Could not get the"
+						DBG("PRESENCE:notify: Could not get the"
 								" notify_body\n");
-						/* goto error; */
+						if(subs->event.len== BLA_LEN)
+							goto done;
 					}
 				}	
 			}		
@@ -1552,7 +1629,7 @@ jump_over_body:
 		LOG(L_ERR, "PRESENCE:notify :ERROR while creating uri\n");
 		goto error;
 	}
-	LOG(L_INFO, "PRESENCE: notify: build notify to user= %.*s domain= %.*s"
+	DBG("PRESENCE: notify: build notify to user= %.*s domain= %.*s"
 			" for event= %.*s\n", subs->from_user.len, subs->from_user.s,
 			subs->from_domain.len, subs->from_domain.s,subs->event.len,
 			subs->event.s);
@@ -1565,7 +1642,7 @@ jump_over_body:
 		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
 		goto error;
 	}	
-	LOG(L_INFO, "PRESENCE:notify: headers:%.*s\n ", str_hdr->len, str_hdr->s);
+	DBG("PRESENCE:notify: headers:%.*s\n ", str_hdr->len, str_hdr->s);
 
 	/* construct the dlg_t structure */
 	td = build_dlg_t(p_uri, subs);
@@ -1644,6 +1721,7 @@ jump_over_body:
 		LOG(L_ERR, "PRESENCE:notify: Error while updating cseq value\n");
 		goto error;
 	}
+done:
 	if(p_uri.s!=NULL)
 		pkg_free(p_uri.s);
 	if(td!=NULL)
@@ -1729,7 +1807,7 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		return;
 	}
 	
-	LOG(L_DBG, "PRESENCE:p_tm_callback: completed with status %d [watcher_id:"
+	DBG( "PRESENCE:p_tm_callback: completed with status %d [watcher_id:"
 			"%p/%s]\n",ps->code, ps->param, ((c_back_param*)(*ps->param))->w_id);
 
 	if(ps->code >= 300)

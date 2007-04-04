@@ -42,26 +42,22 @@ typedef struct presentity
 	int presid;
 	str user;
 	str domain;
-	int expires;
-	int received_time;
+	int event;
 	str etag;
-//	xmlDocPtr body;
-
+	str* sender;
+	time_t expires;
+	time_t received_time;
 } presentity_t;
 
 /* create new presentity */
-int new_presentity(str* domain,str* user, int expires, int received_time, 
-		str* t_tag, presentity_t** p);
+presentity_t* new_presentity( str* domain,str* user,int expires, 
+ 		int event, str* etag, str* sender);
 
 /* update presentity in database */
 int update_presentity(presentity_t* p, str* body, int t_new);
 
 /* free memory */
 void free_presentity(presentity_t* p);
-
-/* Run a time handler for a presentity  */
-//int timer_presentity(presentity_t * p);
-
 
 #endif
 
