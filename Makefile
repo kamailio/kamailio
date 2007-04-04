@@ -120,6 +120,9 @@ module_group_stable=cpl-c dbtext jabber osp sms
 # not have dependencies
 module_group_experimental=tls oracle
 
+# Doxygen directory
+doxygen_dir=doc/doxygen
+
 # if not set on the cmd. line or the env, exclude the below modules.
 ifneq ($(group_include),)
 	# For group_include, default all modules are excluded except those in 
@@ -314,8 +317,12 @@ dbg: ser
 
 .PHONY: tar
 .PHONY: dist
+.PHONY: doxygen
 
 dist: tar
+
+doxygen:
+	doxygen $(doxygen_dir)/ser.doxygen
 
 tar: 
 	$(TAR) -C .. \
@@ -544,10 +551,14 @@ install-modules:	install-libs
 
 endif
 
-.PHONY: clean_libs libs install-libs
+.PHONY: clean_libs libs install-libs clean_doxygen
 
 clean_libs:
 			$(MAKE) -f Makefile.ser -C lib proper
+
+clean_doxygen:
+		rm -rf $(doxygen_dir)/output/{xml,man,rtf,latex,html}
+
 
 # cleaning in libs always when cleaning ser
 clean:	clean_libs
