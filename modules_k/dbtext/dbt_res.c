@@ -268,7 +268,7 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 			case DB_STRING:
 			case DB_STR:
 			case DB_BLOB:
-				_rp->fields[i].type = DB_STR;
+				_rp->fields[i].type = DB_STRING;
 				_rp->fields[i].val.str_val.len =
 						_drp->fields[n].val.str_val.len;
 				_rp->fields[i].val.str_val.s =(char*)pkg_malloc(sizeof(char)*
