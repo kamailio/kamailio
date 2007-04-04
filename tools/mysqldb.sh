@@ -798,7 +798,7 @@ CREATE TABLE pua (
   from_tag varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
   version int(11) NOT NULL,
-  PRIMARY KEY  (`id`)
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 EOF
 
