@@ -751,7 +751,7 @@ INSERT INTO version VALUES ( 'presentity', '1');
 INSERT INTO version VALUES ( 'active_watchers', '2');
 INSERT INTO version VALUES ( 'watchers', '1');
 INSERT INTO version VALUES ( 'xcap_xml', '1');
-INSERT INTO version VALUES ( 'pua', '1');
+INSERT INTO version VALUES ( 'pua', '2');
 
 /*
  * Table structure for table 'presentity'
@@ -846,6 +846,7 @@ CREATE TABLE pua (
   id $AUTO_INCREMENT,
   pres_uri varchar(128) NOT NULL,
   pres_id varchar(128) NOT NULL,
+  event int NOT NULL, 
   expires int NOT NULL,
   flag int NOT NULL,
   etag varchar(128) NOT NULL,

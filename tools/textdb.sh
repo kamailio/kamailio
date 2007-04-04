@@ -367,7 +367,7 @@ echo "presentity:1" 		>> version;
 echo "active_watchers:2" 	>> version;
 echo "watchers:1" 			>> version;
 echo "xcap_xml:1" 			>> version;
-echo "pua:1" 				>> version;
+echo "pua:2" 				>> version;
 
 #
 # Table structure for table 'presentity'
@@ -413,7 +413,7 @@ echo "id(int) username(str) domain(str) xcap(str) doc_type(str)" >> xcap_xml;
 #
 touch pua;
 echo "DBTEXT Add Table: pua"
-echo "id(int) pres_uri(str) pres_id(str) expires(int) flag(int) etag(str) tuple_id(str) watcher_uri(str) call_id(str) to_tag(str) from_tag(str) cseq(int)" >> pua;
+echo "id(int) pres_uri(str) pres_id(str) event(int) expires(int) flag(int) etag(str) tuple_id(str) watcher_uri(str) call_id(str) to_tag(str) from_tag(str) cseq(int)" >> pua;
 
 cd $CURRENT_PWD
 }  # end presence_create
