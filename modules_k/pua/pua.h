@@ -28,8 +28,8 @@
 #include "../../str.h"
 #include "hash.h"
 
-#define INSERT_TYPE  1<<0
-#define UPDATE_TYPE  1<<1
+#define INSERT_TYPE  1<<1
+#define UPDATE_TYPE  1<<2
 
 extern str default_domain;
 extern struct tm_binds tmb;

@@ -32,32 +32,22 @@
 #include "../../str.h"
 #include "../../lock_ops.h"
 
-#define UL_PUBLISH			1<<0
-#define MI_PUBLISH			1<<1
-#define MI_SUBSCRIBE		1<<2
-#define END2END_PUBLISH		1<<3
-#define END2END_SUBSCRIBE   1<<4
-#define XMPP_PUBLISH		1<<5
-#define XMPP_SUBSCRIBE      1<<6
+#define UL_PUBLISH					1<<0
+#define BLA_PUBLISH					1<<1
+#define BLA_SUBSCRIBE				1<<2
+#define XMPP_PUBLISH				1<<3
+#define XMPP_SUBSCRIBE				1<<4
+#define XMPP_INITIAL_SUBS		    1<<5
+#define MI_PUBLISH					1<<6
+#define MI_SUBSCRIBE				1<<7
 
 #define PRESENCE_EVENT      1<<0
 #define PWINFO_EVENT        1<<1
-
+#define BLA_EVENT			1<<2
 
 #define NO_UPDATEDB_FLAG	1<<0
 #define UPDATEDB_FLAG		1<<1
 #define INSERTDB_FLAG		1<<2
-
-typedef struct hentity
-{
-	str* pres_uri;
-	str* watcher_uri;
-	str id;
-	str tuple_id;
-	int event;
-	int flag;
-	int desired_expires;
-}hentity_t;
 
 typedef struct ua_pres{
  
@@ -70,18 +60,20 @@ typedef struct ua_pres{
 	int flag;
 	int db_flag;
 	struct ua_pres* next;
-
+	
 	/* publish */
 	str etag;
 	str tuple_id;
-	
+	str* body;
 	/* subscribe */
 	str* watcher_uri;
 	str call_id;
 	str to_tag;
     str from_tag;
 	int cseq;
-	
+	int version;
+      int watcher_count;
+ /*?? should this be long? */
 }ua_pres_t;
 
 typedef struct hash_entry
@@ -96,17 +88,19 @@ typedef struct htable{
 
 htable_t* new_htable();
 
-ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id, 
-		int FLAG, int event, unsigned int hash_code);
+ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
+		str id, unsigned int hash_code);
 
 void insert_htable(ua_pres_t* presentity );
 
 void update_htable(ua_pres_t* presentity,time_t desired_expires,
 		int expires, unsigned int hash_code);
 
-void delete_htable(ua_pres_t* presentity );
+void delete_htable(ua_pres_t* presentity, unsigned int hash_code);
 
 void destroy_htable();
+int is_dialog(ua_pres_t* dialog);
+ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code);
 
-
+typedef int  (*query_dialog_t)(ua_pres_t* presentity);
 #endif

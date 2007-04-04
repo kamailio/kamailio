@@ -37,11 +37,12 @@ typedef struct subs_info
 	str id;
 	str* pres_uri;
 	str* watcher_uri;
+	str* contact;
 	int event;
 	int expires;
-	int flag;
 	int source_flag;
-
+	int flag;
+/* INSERT_TYPE or UPDATE_TYPE (not compulsory)*/	
 }subs_info_t;
 
 typedef int (*send_subscribe_t)(subs_info_t* subs);

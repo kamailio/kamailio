@@ -92,27 +92,31 @@ error:
 
 }
 
-ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
-		int FLAG, int event,unsigned int hash_code)
+
+ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG, 
+		str id, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL,* L= NULL;
  
 	L= HashT->p_records[hash_code].entity;
 	DBG("PUA: search_htable: core_hash= %u\n", hash_code);
+	if(FLAG& BLA_SUBSCRIBE)
+	{
+		DBG("PUA: search_htable: Search BLA_SUBSCRIBE_FLAG\n");
+	}
 
 	for(p= L->next; p; p=p->next)
 	{
-		if((p->event== event) && (p->flag & FLAG))
+
+		if(p->flag & FLAG)
 		{
 			DBG("PUA: search_htable:pres_uri= %.*s len= %d\n",
 					p->pres_uri->len, p->pres_uri->s, p->pres_uri->len);
 			DBG("PUA: search_htable:searched uri= %.*s len= %d\n",
 					pres_uri->len,pres_uri->s, pres_uri->len);
-
 			if((p->pres_uri->len==pres_uri->len) &&
 					(strncmp(p->pres_uri->s, pres_uri->s,pres_uri->len)==0))
 			{
-				DBG("PUA: search_htable:found pres_ur\n");
 				if(watcher_uri)
 				{
 					if(p->watcher_uri->len==watcher_uri->len &&
@@ -126,7 +130,6 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, str id,
 				{
 					if(id.s)
 					{	
-						DBG("PUA: search_htable: compare id\n");
 						if(id.len== p->id.len &&
 								strncmp(p->id.s, id.s, id.len)==0)
 							break;
@@ -151,7 +154,7 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires, int expires, un
 	DBG("PUA:hash_update ..\n");
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				presentity->id, presentity->flag,presentity->event, hash_code);
+				 presentity->flag, presentity->id, hash_code);
 	if(p== NULL)
 	{
 		DBG("PUA:hash_update : no recod found\n");
@@ -167,7 +170,7 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires, int expires, un
 		p->cseq ++;
 
 }
-
+/* insert in front; so when searching the most recent result is returned*/
 void insert_htable(ua_pres_t* presentity)
 {
 	ua_pres_t* p= NULL;
@@ -175,22 +178,22 @@ void insert_htable(ua_pres_t* presentity)
 
 	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, 
 			HASH_SIZE);
-
+	
 	if(presentity->expires < (int)time(NULL))
 	{
 		LOG(L_ERR, "PUA: insert_htable: expired information- do not insert\n");
 		return;
 	}
-
 	lock_get(&HashT->p_records[hash_code].lock);
 
-	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				presentity->id, presentity->flag, presentity->event, hash_code);
-	if(p) 
+/*	
+ *	useless since always checking before calling insert
+	if(get_dialog(presentity, hash_code)!= NULL )
 	{
-		lock_release(& HashT->p_records[hash_code].lock);
+		DBG("PUA: insert_htable: Dialog already found- do not insert\n");
 		return; 
 	}
+*/	
 	p= HashT->p_records[hash_code].entity;
 
 	presentity->db_flag= INSERTDB_FLAG;
@@ -199,19 +202,16 @@ void insert_htable(ua_pres_t* presentity)
 	p->next= presentity;
 
 	lock_release(&HashT->p_records[hash_code].lock);
+
 }
 
-void delete_htable(ua_pres_t* presentity)
+void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 { 
 	ua_pres_t* p= NULL, *q= NULL;
-	unsigned int hash_code;
 	DBG("PUA:delete_htable...\n");
 
-	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, 
-			HASH_SIZE);
-
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-			presentity->id, presentity->flag, presentity->event, hash_code);
+			 presentity->flag, presentity->id, hash_code);
 	if(p== NULL)
 		return;
 
@@ -249,5 +249,58 @@ void destroy_htable()
 	shm_free(HashT);
   
   return;
+}
+
+/* must lock the record line before calling this function*/
+ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
+{
+	ua_pres_t* p= NULL, *L;
+	DBG("PUA: get_dialog: core_hash= %u\n", hash_code);
+
+	L= HashT->p_records[hash_code].entity;
+	for(p= L->next; p; p=p->next)
+	{
+
+		if(p->flag& dialog->flag)
+		{
+			DBG("PUA: get_dialog: pres_uri= %.*s\twatcher_uri=%.*s\n\tcallid= %.*s\tto_tag= %.*s\tfrom_tag= %.*s\n",
+					p->pres_uri->len, p->pres_uri->s, p->watcher_uri->len, p->watcher_uri->s,
+					p->call_id.len, p->call_id.s, p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
+
+			DBG("PUA: get_dialog: searched to_tag= %.*s\tfrom_tag= %.*s\n",
+					 p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
+	    	if((p->pres_uri->len== dialog->pres_uri->len) &&
+				(strncmp(p->pres_uri->s, dialog->pres_uri->s,p->pres_uri->len)==0)&&
+				(p->watcher_uri->len== dialog->watcher_uri->len) &&
+				(strncmp(p->watcher_uri->s, dialog->watcher_uri->s, p->watcher_uri->len )==0)&&
+				(strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
+				(strncmp(p->to_tag.s, dialog->to_tag.s, p->to_tag.len)== 0) &&
+				(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) )
+				{	
+					DBG("PUA: get_dialog: FOUND dialog\n");
+					break;
+				}
+		}	
+	
+	}
+		
+	return p;
+}	
+int is_dialog(ua_pres_t* dialog)
+{
+	int ret_code= 0;
+	unsigned int hash_code;
+	
+	hash_code= core_hash(dialog->pres_uri, dialog->watcher_uri, HASH_SIZE);
+	lock_get(&HashT->p_records[hash_code].lock);
+
+	if(get_dialog(dialog, hash_code)== NULL)
+		ret_code= -1;
+	else
+		ret_code= 0;
+	lock_release(&HashT->p_records[hash_code].lock);
+	
+	return ret_code;
+
 }
 

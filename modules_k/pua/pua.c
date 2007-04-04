@@ -47,8 +47,10 @@
 #include "send_publish.h"
 #include "send_subscribe.h"
 #include "pua_bind.h"
+#include "pua_callback.h"
 
 MODULE_VERSION
+#define PUA_TABLE_VERSION 2
 
 struct tm_binds tmb;
 htable_t* HashT= NULL;
@@ -74,7 +76,7 @@ static void destroy(void);
 int send_subscribe(subs_info_t*);
 int send_publish(publ_info_t*);
 
-int update_pua(ua_pres_t* p);
+int update_pua(ua_pres_t* p, unsigned int hash_code);
 
 int db_store();
 int db_restore();
@@ -83,10 +85,12 @@ void hashT_clean(unsigned int ticks,void *param);
 
 static cmd_export_t cmds[]=
 {
-	{"bind_pua",	   (cmd_function)bind_pua,		   1, 0, 0},
-	{"send_publish",   (cmd_function)send_publish,     1, 0, 0},
-	{"send_subscribe", (cmd_function)send_subscribe,   1, 0, 0},
-	{0,							0,					   0, 0, 0} 
+	{"bind_pua",	     (cmd_function)bind_pua,		 1, 0, 0},
+	{"send_publish",     (cmd_function)send_publish,     1, 0, 0},
+	{"send_subscribe",   (cmd_function)send_subscribe,   1, 0, 0},
+	{"pua_is_dialog",    (cmd_function)is_dialog,		 1, 0, 0},
+	{"register_puacb", (cmd_function)register_puacb,     1, 0, 0},
+	{0,							0,					     0, 0, 0} 
 };
 
 static param_export_t params[]={
@@ -120,6 +124,9 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	str _s;
+	int ver = 0;
+	
 	load_tm_f  load_tm;
 
 	DBG("PUA: initializing module ...\n");
@@ -165,6 +172,16 @@ static int mod_init(void)
 		LOG(L_ERR,"PUA:mod_init: Error while connecting database\n");
 		return -1;
 	}
+	// verify table version 
+	_s.s = db_table;
+	_s.len = strlen(db_table);
+	 ver =  table_version(&pua_dbf, pua_db, &_s);
+	if(ver!=PUA_TABLE_VERSION)
+	{
+		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
+				" need v%d\n", ver, _s.s, PUA_TABLE_VERSION);
+		return -1;
+	}
 
 	if(HASH_SIZE<=1)
 		HASH_SIZE= 512;
@@ -188,10 +205,15 @@ static int mod_init(void)
 		DBG("PUA: ERROR: mod_init: wrong clean_period \n");
 		return -1;
 	}
+	if ( init_puacb_list() < 0)
+    {
+		LOG(L_ERR, "PUA:mod_init: ERROR: callbacks initialization failed\n");
+        return -1;
+    }
 
 	startup_time = (int) time(NULL);
 	
-	register_timer(hashT_clean, 0, update_period);
+	register_timer(hashT_clean, 0, update_period- 5);
 
 	register_timer(db_update, 0, update_period);
 
@@ -236,8 +258,11 @@ static int child_init(int rank)
 static void destroy(void)
 {	
 	DBG("PUA: destroying module ...\n");
+	if (puacb_list)
+		destroy_puacb_list();
 
-	db_update(0,0);
+	if(pua_db && HashT)
+		db_update(0,0);
 	
 	if(HashT)
 		destroy_htable();
@@ -251,7 +276,7 @@ static void destroy(void)
 int db_restore()
 {
 	ua_pres_t* p= NULL;
-	db_key_t result_cols[12]; 
+	db_key_t result_cols[13]; 
 	db_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
@@ -260,19 +285,23 @@ int db_restore()
 	str watcher_uri, call_id;
 	str to_tag, from_tag;
 	int size= 0, i;
-	
-	result_cols[0] ="pres_uri";		
-	result_cols[1] ="pres_id";	
-	result_cols[2] ="expires";
-	result_cols[3] ="flag";
-	result_cols[4] ="etag";
-	result_cols[5] ="tuple_id";
-	result_cols[6] ="watcher_uri";
-	result_cols[7] ="call_id";
-	result_cols[8] ="to_tag";
-	result_cols[9] ="from_tag";
-	result_cols[10]="cseq";
+	int n_result_cols= 0;
+	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col;
+	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,event_col;
 
+	result_cols[puri_col=n_result_cols++]	="pres_uri";		
+	result_cols[pid_col=n_result_cols++]	="pres_id";	
+	result_cols[expires_col=n_result_cols++]="expires";
+	result_cols[flag_col=n_result_cols++]	="flag";
+	result_cols[etag_col=n_result_cols++]	="etag";
+	result_cols[tuple_col=n_result_cols++]	="tuple_id";
+	result_cols[watcher_col=n_result_cols++]="watcher_uri";
+	result_cols[callid_col=n_result_cols++] ="call_id";
+	result_cols[totag_col=n_result_cols++]	="to_tag";
+	result_cols[fromtag_col=n_result_cols++]="from_tag";
+	result_cols[cseq_col= n_result_cols++]	="cseq";
+	result_cols[event_col= n_result_cols++]	="event";
+	
 	if(!pua_db)
 	{
 		LOG(L_ERR,"PUA: db_restore: ERROR null database connection\n");
@@ -285,7 +314,7 @@ int db_restore()
 		return -1;
 	}
 
-	if(pua_dbf.query(pua_db,0, 0, 0, result_cols,0, 11, 0,&res)< 0)
+	if(pua_dbf.query(pua_db,0, 0, 0, result_cols,0, n_result_cols, 0,&res)< 0)
 	{
 		LOG(L_ERR, "PUA: db_restore:ERROR while querrying table\n");
 		if(res)
@@ -328,25 +357,25 @@ int db_restore()
 
 		if(row_vals[4].val.str_val.s)
 		{
-			etag.s= row_vals[4].val.str_val.s;
+			etag.s= row_vals[etag_col].val.str_val.s;
 			etag.len = strlen(etag.s);
 	
-			tuple_id.s= row_vals[5].val.str_val.s;
+			tuple_id.s= row_vals[tuple_col].val.str_val.s;
 			tuple_id.len = strlen(tuple_id.s);
 		}
 
 		if(row_vals[6].val.str_val.s)
 		{	
-			watcher_uri.s= row_vals[6].val.str_val.s;
+			watcher_uri.s= row_vals[watcher_col].val.str_val.s;
 			watcher_uri.len = strlen(watcher_uri.s);
 	
-			call_id.s= row_vals[7].val.str_val.s;
+			call_id.s= row_vals[callid_col].val.str_val.s;
 			call_id.len = strlen(call_id.s);
 
-			to_tag.s= row_vals[8].val.str_val.s;
+			to_tag.s= row_vals[totag_col].val.str_val.s;
 			to_tag.len = strlen(to_tag.s);
 
-			from_tag.s= row_vals[9].val.str_val.s;
+			from_tag.s= row_vals[fromtag_col].val.str_val.s;
 			from_tag.len = strlen(from_tag.s);
 		}
 		
@@ -377,8 +406,8 @@ int db_restore()
 		p->id.len= pres_id.len;
 		size+= pres_id.len;
 
-		p->expires= row_vals[2].val.int_val;
-		p->flag|=	row_vals[3].val.int_val;
+		p->expires= row_vals[expires_col].val.int_val;
+		p->flag|=	row_vals[flag_col].val.int_val;
 		p->db_flag|= INSERTDB_FLAG;
 
 		if(etag.len)
@@ -418,9 +447,10 @@ int db_restore()
 			p->call_id.len= call_id.len;
 			size+= call_id.len;
 
-			p->cseq= row_vals[10].val.int_val;
+			p->cseq= row_vals[cseq_col].val.int_val;
 		}
-		
+		p->event= row_vals[event_col].val.int_val;
+
 		insert_htable(p);
 	}
 	if(res)
@@ -449,57 +479,64 @@ error:
 void hashT_clean(unsigned int ticks,void *param)
 {
 	int i;
+	time_t now;
 	ua_pres_t* p= NULL, *q= NULL;
 
 	DBG("PUA: hashT_clean ..\n");
-
+	now = time(NULL);
 	for(i= 0;i< HASH_SIZE; i++)
 	{
 		lock_get(&HashT->p_records[i].lock);
 		p= HashT->p_records[i].entity->next;
 		while(p)
 		{	
-			if(p->expires< (int)(time)(NULL)+10)
+			if(p->expires- update_period < now )
 			{
-				if(p->desired_expires> p->expires+ 10 || (p->desired_expires && p->watcher_uri))
+				if((p->desired_expires> p->expires + min_expires) || 
+						(p->desired_expires== 0 ))
 				{
-					if(update_pua(p)< 0)
+					if(update_pua(p, i)< 0)
 					{
 						LOG(L_ERR, "PUA: hashT_clean: Error while updating\n");
 						lock_release(&HashT->p_records[i].lock);
 						return;
-					}	
-				}
-				p= p->next;
-			}
-			else
-				if(p->expires< (int)(time)(NULL))
+					}
+					p= p->next;
+					continue;
+				}	
+			    if(p->expires < now - 2)
 				{
 					q= p->next;
-					delete_htable(p);
+					DBG("PUA: hashT_clean: Found expired: uri= %.*s\n", p->pres_uri->len,
+							p->pres_uri->s);
+					delete_htable(p, i);
 					p= q;
 				}
 				else
 					p= p->next;
+			}	
+			else
+				p= p->next;
 		}
 		lock_release(&HashT->p_records[i].lock);
 	}
 
 }
-int update_pua(ua_pres_t* p)
+int update_pua(ua_pres_t* p, unsigned int hash_code)
 {
 	int size= 0;
-	hentity_t* hentity= NULL;
+	ua_pres_t* hentity= NULL;
 	str* str_hdr= NULL;
+	int expires;
 
-	size= sizeof(hentity_t)+ sizeof(str)+ (p->pres_uri->len+ 1)*sizeof(char);
+	size= sizeof(ua_pres_t)+ sizeof(str)+ (p->pres_uri->len+ 1)*sizeof(char);
 	
 	if(p->watcher_uri)
 		size+= sizeof(str)+ p->watcher_uri->len;
 	else
 		size+=  p->id.len;
 
-	hentity= (hentity_t*)shm_malloc(size);
+	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
 		LOG(L_ERR, "PUA: update_pua: ERROR no more share memory\n");
@@ -507,7 +544,7 @@ int update_pua(ua_pres_t* p)
 	}
 	memset(hentity, 0, size);
 
-	size =  sizeof(hentity_t);
+	size =  sizeof(ua_pres_t);
 
 	hentity->pres_uri = (str*)((char*)hentity + size);
 	size+= sizeof(str);
@@ -534,21 +571,25 @@ int update_pua(ua_pres_t* p)
 		hentity->id.len= p->id.len;
 		size+= p->id.len;
 	}
-
 	hentity->flag|= p->flag;
 	
+	if(p->desired_expires== 0)
+			expires= 3600;
+		else
+			expires= p->desired_expires- (int)time(NULL);
 
 	if(p->watcher_uri== NULL)
 	{
 		str met= {"PUBLISH", 7};
-		str_hdr = publ_build_hdr(p->desired_expires- (int)time(NULL), &p->etag, 0);
+		str_hdr = publ_build_hdr(expires, p->event, &p->etag, NULL, 0);
 		if(str_hdr == NULL)
 		{
 			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");
 			goto error;
 		}
 		DBG("PUA: update_pua: str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
-	
+		
+		
 		tmb.t_request(&met,						/* Type of the message */
 				p->pres_uri,					/* Request-URI */
 				p->pres_uri,					/* To */
@@ -558,10 +599,10 @@ int update_pua(ua_pres_t* p)
 				publ_cback_func,				/* Callback function */
 				(void*)hentity					/* Callback parameter */
 				);
+		
 	}
 	else
 	{
-		int expires;
 		str met= {"SUBSCRIBE", 9};
 		dlg_t* td= NULL;
 		td= pua_build_dlg_t(p);
@@ -570,19 +611,16 @@ int update_pua(ua_pres_t* p)
 			LOG(L_ERR, "PUA:update_pua: Error while building tm dlg_t"
 					"structure");		
 			goto error;
-		}
-		if(p->desired_expires== 0)
-			expires= 3600;
-		else
-			expires= p->desired_expires- (int)time(NULL);
-
+		};
+	
 		str_hdr= subs_build_hdr(p->watcher_uri, expires, p->event);
 		if(str_hdr== NULL || str_hdr->s== NULL)
 		{
 			LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
+			pkg_free(td);
 			return -1;
 		}
-
+		
 		tmb.t_request_within
 		(&met,
 		str_hdr,                               
@@ -611,7 +649,7 @@ error:
 void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
-	db_key_t q_cols[13];
+	db_key_t q_cols[14];
 	db_res_t *res= NULL;
 	db_key_t db_cols[3];
 	db_val_t q_vals[13], db_vals[3];
@@ -619,52 +657,75 @@ void db_update(unsigned int ticks,void *param)
 	int n_query_cols= 0;
 	int n_update_cols= 0;
 	int i;
+	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col;
+	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,event_col;
+	int no_lock= 0;
 	
+	if(ticks== 0 && param == NULL)
+		no_lock= 1;
+
+
+	DBG("PUA: db_update...\n");
 	/* cols and values used for insert */
-	q_cols[0] ="pres_uri";
-	q_vals[0].type = DB_STR;
-	q_vals[0].nul = 0;
-
-	q_cols[1] ="pres_id";	
-	q_vals[1].type = DB_STR;
-	q_vals[1].nul = 0;
-
-	q_cols[2] ="flag";
-	q_vals[2].type = DB_INT;
-	q_vals[2].nul = 0;
-
-	q_cols[3] ="watcher_uri";
-	q_vals[3].type = DB_STR;
-	q_vals[3].nul = 0;
-
-	q_cols[4] ="tuple_id";
-	q_vals[4].type = DB_STR;
-	q_vals[4].nul = 0;
-
-	q_cols[5] ="etag";
-	q_vals[5].type = DB_STR;
-	q_vals[5].nul = 0;
+	q_cols[puri_col= n_query_cols] ="pres_uri";
+	q_vals[puri_col= n_query_cols].type = DB_STR;
+	q_vals[puri_col= n_query_cols].nul = 0;
+	n_query_cols++;
 	
-	q_cols[6] ="call_id";
-	q_vals[6].type = DB_STR;
-	q_vals[6].nul = 0;
+	q_cols[pid_col= n_query_cols] ="pres_id";	
+	q_vals[pid_col= n_query_cols].type = DB_STR;
+	q_vals[pid_col= n_query_cols].nul = 0;
+	n_query_cols++;
 
-	q_cols[7] ="to_tag";
-	q_vals[7].type = DB_STR;
-	q_vals[7].nul = 0;
-	
-	q_cols[8] ="from_tag";
-	q_vals[8].type = DB_STR;
-	q_vals[8].nul = 0;
-	
-	q_cols[9]="cseq";
-	q_vals[9].type = DB_INT;
-	q_vals[9].nul = 0;
+	q_cols[flag_col= n_query_cols] ="flag";
+	q_vals[flag_col= n_query_cols].type = DB_INT;
+	q_vals[flag_col= n_query_cols].nul = 0;
+	n_query_cols++;
+	q_cols[watcher_col= n_query_cols] ="watcher_uri";
+	q_vals[watcher_col= n_query_cols].type = DB_STR;
+	q_vals[watcher_col= n_query_cols].nul = 0;
+	n_query_cols++;
 
-	q_cols[10] ="expires";
-	q_vals[10].type = DB_INT;
-	q_vals[10].nul = 0;
-	
+	q_cols[tuple_col= n_query_cols] ="tuple_id";
+	q_vals[tuple_col= n_query_cols].type = DB_STR;
+	q_vals[tuple_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
+	q_cols[etag_col= n_query_cols] ="etag";
+	q_vals[etag_col= n_query_cols].type = DB_STR;
+	q_vals[etag_col= n_query_cols].nul = 0;
+	n_query_cols++;	
+
+	q_cols[callid_col= n_query_cols] ="call_id";
+	q_vals[callid_col= n_query_cols].type = DB_STR;
+	q_vals[callid_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
+	q_cols[totag_col= n_query_cols] ="to_tag";
+	q_vals[totag_col= n_query_cols].type = DB_STR;
+	q_vals[totag_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
+	q_cols[fromtag_col= n_query_cols] ="from_tag";
+	q_vals[fromtag_col= n_query_cols].type = DB_STR;
+	q_vals[fromtag_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
+	q_cols[cseq_col= n_query_cols]="cseq";
+	q_vals[cseq_col= n_query_cols].type = DB_INT;
+	q_vals[cseq_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
+	q_cols[expires_col= n_query_cols] ="expires";
+	q_vals[expires_col= n_query_cols].type = DB_INT;
+	q_vals[expires_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
+	q_cols[event_col= n_query_cols] ="event";
+	q_vals[event_col= n_query_cols].type = DB_INT;
+	q_vals[event_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
 	/* cols and values used for update */
 	db_cols[0]= "expires";
 	db_vals[0].type = DB_INT;
@@ -674,14 +735,11 @@ void db_update(unsigned int ticks,void *param)
 	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
 
-	DBG("PUA:db_update ...\n");
-	
 	if(pua_db== NULL)
 	{
 		LOG(L_ERR,"PUA: db_update: ERROR null database connection\n");
 		return;
 	}
-
 	if(pua_dbf.use_table(pua_db, db_table)< 0)
 	{
 		LOG(L_ERR, "PUA: db_update:ERROR in use table\n");
@@ -690,7 +748,9 @@ void db_update(unsigned int ticks,void *param)
 
 	for(i=0; i<HASH_SIZE; i++) 
 	{
-		lock_get(&HashT->p_records[i].lock);	
+		if(!no_lock)
+			lock_get(&HashT->p_records[i].lock);	
+		
 		p = HashT->p_records[i].entity->next;
 		while(p)
 		{
@@ -715,9 +775,9 @@ void db_update(unsigned int ticks,void *param)
 					n_update_cols= 1;
 					n_query_cols= 3;
 					
-					q_vals[0].val.str_val = *(p->pres_uri);
-					q_vals[1].val.str_val = p->id;
-					q_vals[2].val.int_val = p->flag;
+					q_vals[puri_col].val.str_val = *(p->pres_uri);
+					q_vals[pid_col].val.str_val = p->id;
+					q_vals[flag_col].val.int_val = p->flag;
 
 					db_vals[0].val.int_val= p->expires;
 					
@@ -775,22 +835,23 @@ void db_update(unsigned int ticks,void *param)
 				case INSERTDB_FLAG:
 				{	
 					DBG("PUA: db_update: INSERTDB_FLAG\n ");
-					q_vals[0].val.str_val = *(p->pres_uri);
-					q_vals[1].val.str_val = p->id;
-					q_vals[2].val.int_val = p->flag;
+					q_vals[puri_col].val.str_val = *(p->pres_uri);
+					q_vals[pid_col].val.str_val = p->id;
+					q_vals[flag_col].val.int_val = p->flag;
 					if((p->watcher_uri))
-						q_vals[3].val.str_val = *(p->watcher_uri);
+						q_vals[watcher_col].val.str_val = *(p->watcher_uri);
 					else
-						memset(& q_vals[3].val.str_val ,0, sizeof(str));
-					q_vals[4].val.str_val = p->tuple_id;
-					q_vals[5].val.str_val = p->etag;
-					q_vals[6].val.str_val = p->call_id;
-					q_vals[7].val.str_val = p->to_tag;
-					q_vals[8].val.str_val = p->from_tag;
-					q_vals[9].val.int_val= p->cseq;
-					q_vals[10].val.int_val = p->expires;
+						memset(& q_vals[watcher_col].val.str_val ,0, sizeof(str));
+					q_vals[tuple_col].val.str_val = p->tuple_id;
+					q_vals[etag_col].val.str_val = p->etag;
+					q_vals[callid_col].val.str_val = p->call_id;
+					q_vals[totag_col].val.str_val = p->to_tag;
+					q_vals[fromtag_col].val.str_val = p->from_tag;
+					q_vals[cseq_col].val.int_val= p->cseq;
+					q_vals[expires_col].val.int_val = p->expires;
+					q_vals[event_col].val.int_val = p->event;
 						
-					if(pua_dbf.insert(pua_db, q_cols, q_vals, 11)<0)
+					if(pua_dbf.insert(pua_db, q_cols, q_vals, 12)<0)
 					{
 						LOG(L_ERR, "PUA: db_update: ERROR while inserting"
 								" into table pua\n");
@@ -807,7 +868,8 @@ void db_update(unsigned int ticks,void *param)
 			}
 			p= p->next;
 		}
-		lock_release(&HashT->p_records[i].lock);	
+		if(!no_lock)
+			lock_release(&HashT->p_records[i].lock);	
 	}
 
 	db_vals[0].val.int_val= (int)time(NULL);

@@ -27,10 +27,13 @@
 #define PUA_API_H
 #include "send_subscribe.h"
 #include "send_publish.h"
+#include "pua_callback.h"
 
 typedef struct pua_api {
 	send_subscribe_t send_subscribe;
 	send_publish_t send_publish;
+	register_puacb_t register_puacb;
+	query_dialog_t is_dialog;
 } pua_api_t;
 
 typedef int (*bind_pua_t)(pua_api_t* api);

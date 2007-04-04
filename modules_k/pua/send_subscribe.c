@@ -40,6 +40,7 @@
 #include "hash.h"
 #include "pua.h"
 #include "send_subscribe.h"
+#include "pua_callback.h"
 
 extern int default_expires;
 extern int min_expires;
@@ -54,7 +55,7 @@ void print_subs(subs_info_t* subs)
 
 }
 
-str* subs_build_hdr(str* watcher_uri, int expires, int event)
+str* subs_build_hdr(str* contact, int expires, int event)
 {
 	str* str_hdr= NULL;
 	static char buf[3000];
@@ -67,6 +68,7 @@ str* subs_build_hdr(str* watcher_uri, int expires, int event)
 		LOG(L_ERR, "PUA:subs_build_hdr:ERROR while allocating memory\n");
 		return NULL;
 	}
+	memset(str_hdr, 0, sizeof(str));
 	str_hdr->s= buf;
 
 	if(event& PRESENCE_EVENT)
@@ -75,9 +77,22 @@ str* subs_build_hdr(str* watcher_uri, int expires, int event)
 		str_hdr->len = 15;
 	}
 	else
+	if(event& PWINFO_EVENT)	
 	{	
 		memcpy(str_hdr->s ,"Event: presence.winfo", 21);
 		str_hdr->len = 21;
+	}
+	else
+	if(event& BLA_EVENT)	
+	{	
+		memcpy(str_hdr->s ,"Event: dialog;sla", 17);
+		str_hdr->len = 17;
+	}
+	else
+	{
+		LOG(L_ERR, "PUA:subs_build_hdr:ERROR wrong event parameter\n");
+		pkg_free(str_hdr);
+		return NULL;
 	}
 
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
@@ -85,9 +100,9 @@ str* subs_build_hdr(str* watcher_uri, int expires, int event)
 	
 	memcpy(str_hdr->s+ str_hdr->len ,"Contact: ", 9);
 	str_hdr->len += 9;
-	memcpy(str_hdr->s +str_hdr->len, watcher_uri->s, 
-			watcher_uri->len);
-	str_hdr->len+= watcher_uri->len;
+	memcpy(str_hdr->s +str_hdr->len, contact->s, 
+			contact->len);
+	str_hdr->len+= contact->len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 
@@ -97,7 +112,7 @@ str* subs_build_hdr(str* watcher_uri, int expires, int event)
 	if( expires<= min_expires)
 		subs_expires= int2str(min_expires, &len);  
 	else
-		subs_expires= int2str(expires+ 1, &len);
+		subs_expires= int2str(expires+ 10, &len);
 		
 	if(subs_expires == NULL || len == 0)
 	{
@@ -166,152 +181,56 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	td->rem_target.len = presentity->pres_uri->len;
 	size+= td->rem_target.len;
 
-	td->loc_seq.value = presentity->cseq ;
+	td->loc_seq.value = presentity->cseq;
 	td->loc_seq.is_set = 1;
 	td->state= DLG_CONFIRMED ;
 	
 	return td;
 }
 
-void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
+void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg= NULL;
 	int lexpire= 0;
 	unsigned int cseq;
-	ua_pres_t* presentity= NULL;
-	struct to_body *pto, *pfrom = NULL, TO;
+	ua_pres_t* presentity= NULL, *hentity= NULL;
+	struct to_body *pto= NULL, *pfrom = NULL, TO;
 	int size= 0;
 	unsigned int hash_code;
+	int flag ;
 
-	if( ps->param== NULL )
+	if( ps->param== NULL || *ps->param== NULL )
 	{
 		LOG(L_ERR, "PUA:subs_cback_func:ERROR null callback parameter\n");
 		return;
 	}
 	DBG("PUA:subs_cback_func: completed with status %d\n",ps->code) ;
-	
-	if(ps->code >= 300 )
-	{
+	hentity= (ua_pres_t*)(*ps->param);
+	hash_code= core_hash(hentity->pres_uri,hentity->watcher_uri,
+				HASH_SIZE);
+	flag= hentity->flag;
+	if(hentity->flag & XMPP_INITIAL_SUBS)
+		hentity->flag= XMPP_SUBSCRIBE;
 
-		if( *ps->param== NULL )
-		{
-			LOG(L_ERR, "PUA:subs_cback_func: null callback parameter\n");
-			return;
-		}
-		
-		hash_code= core_hash(((hentity_t*)(*ps->param))->pres_uri, 
-			((hentity_t*)(*ps->param))->watcher_uri, HASH_SIZE);
-
-		lock_get(&HashT->p_records[hash_code].lock);
-
-		presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, 
-				((hentity_t*)(*ps->param))->watcher_uri,
-				((hentity_t*)(*ps->param))->id	,
-				((hentity_t*)(*ps->param))->flag, 
-				((hentity_t*)(*ps->param))->event, hash_code);
-
-		if(presentity)
-			delete_htable(presentity);
-
-		lock_release(&HashT->p_records[hash_code].lock);
-
-		goto done;
-	}
-
+	/* get dialog information from reply message: callid, to_tag, from_tag */
 	msg= ps->rpl;
 	if(msg == NULL || msg== FAKED_REPLY)
 	{
 		LOG(L_ERR, "PUA:subs_cback_func: no reply message found\n ");
 		goto done;
 	}
-	
+
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LOG(L_ERR, "PUA:subs_cback_func: error parsing headers\n");
 		goto done;
 	}
-	
-	if(ps->rpl->expires && msg->expires->body.len > 0)
-	{
-		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
-		{
-			LOG(L_ERR, "PUA:subs_cback_func: ERROR cannot parse Expires"
-					" header\n");
-			goto done;
-		}
-		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		DBG("PUA:subs_cback_func: lexpire= %d\n", lexpire);
-	}		
-	if(lexpire== 0 && *ps->param== NULL )
-	{
-		DBG("PUA:subs_cback_func: Reply with expires= 0 and entity already"
-				" deleted\n");
-		return;
-	}
-	if( *ps->param== NULL )
-	{
-		LOG(L_ERR, "PUA:subs_cback_func:ERROR null callback parameter\n");
-		return;
-	}
-
-
-	hash_code= core_hash(((hentity_t*)(*ps->param))->pres_uri, 
-			((hentity_t*)(*ps->param))->watcher_uri, HASH_SIZE);
-	
-	lock_get(&HashT->p_records[hash_code].lock);
-
-	presentity= search_htable(((hentity_t*)(*ps->param))->pres_uri, 
-				((hentity_t*)(*ps->param))->watcher_uri,
-				((hentity_t*)(*ps->param))->id,
-				((hentity_t*)(*ps->param))->flag,
-				((hentity_t*)(*ps->param))->event, hash_code);
-
-	if(presentity)
-	{
-		if(lexpire == 0 )
-		{
-			DBG("PUA:subs_cback_func: lexpire= 0 Delete from hash table");
-			delete_htable(presentity );
-			lock_release(&HashT->p_records[hash_code].lock);
-			goto done;
-		}
-		DBG("PUA:subs_cback_func: *** Update expires\n");
-		update_htable(presentity, ((hentity_t*)(*ps->param))->desired_expires, lexpire, hash_code);
-		
-		lock_release(&HashT->p_records[hash_code].lock);
-		goto done;
-	}
-
-	lock_release(&HashT->p_records[hash_code].lock);
-	/* if a new subscribe -> insert */
-	
-	if(lexpire== 0)
-	{	
-		LOG(L_ERR, "PUA: subs_cback_func:expires= 0: no not insert\n");
-		goto done;
-	}
-	
-	/* get dialog information */
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
 		LOG(L_ERR, "PUA: subs_cback_func: ERROR cannot parse callid"
 		" header\n");
 		goto done;
-	}
-	
-	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
-	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR cannot parse cseq"
-		" header\n");
-		goto done;
-	}
-
-	if( str2int( &(get_cseq(msg)->number), &cseq)< 0)
-	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR while converting str"
-					" to int\n");
-    }
-			
+	}		
 	if (!msg->from || !msg->from->body.s)
 	{
 		DBG("PUA:subs_cback_func: ERROR cannot find 'from' header!\n");
@@ -332,14 +251,13 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		LOG(L_ERR, "PUA: subs_cback_func: ERROR no from tag value"
 			" present\n");
 		goto done;
-	}
-		
+	}	
 	if( msg->to==NULL || msg->to->body.s==NULL)
 	{
 		LOG(L_ERR, "PUA: subs_cback_func: ERROR cannot parse TO"
 				" header\n");
 		goto done;
-	}
+	}		
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
@@ -357,15 +275,107 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			goto done;
 		}
 		pto = &TO;
-	}
-		
+	}		
 	if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
 	{
 		LOG(L_ERR, "PUA: subs_cback_func: ERROR no from tag value"
 			" present\n");
 		goto done;
 	}
-		
+	/* extract the other necesary information for inserting a new record */		
+	if(ps->rpl->expires && msg->expires->body.len > 0)
+	{
+		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
+		{
+			LOG(L_ERR, "PUA:subs_cback_func: ERROR cannot parse Expires"
+					" header\n");
+			goto done;
+		}
+		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
+		DBG("PUA:subs_cback_func: lexpire= %d\n", lexpire);
+	}		
+
+
+	/* complete the callback function with dialog information */
+	
+	hentity->call_id=  msg->callid->body;
+	hentity->to_tag= pto->tag_value;
+	hentity->from_tag= pfrom->tag_value;
+
+	lock_get(&HashT->p_records[hash_code].lock);
+
+	presentity= get_dialog(hentity, hash_code);
+
+	if(ps->code >= 300 )
+	{	/* if an error code and a stored dialog delete it and try to send 
+		   a subscription with type= INSERT_TYPE, else return*/	
+	/*must work on this!!! generates infinite requests */
+		if(presentity)
+		{	
+			subs_info_t subs;
+			delete_htable(presentity, hash_code);
+			lock_release(&HashT->p_records[hash_code].lock);
+			
+			memset(&subs, 0, sizeof(subs_info_t));
+			subs.pres_uri= hentity->pres_uri; 
+			subs.watcher_uri= hentity->watcher_uri;
+			subs.contact= hentity->watcher_uri;
+			subs.expires= hentity->desired_expires - (int)time(NULL)+ 10;
+			subs.flag|= INSERT_TYPE;
+			subs.source_flag|= hentity->flag;
+			subs.event|= hentity->event;
+			subs.id= hentity->id;
+			if(send_subscribe(&subs)< 0)
+			{
+				LOG(L_ERR, "PUA:subs_cback_func: ERROR when trying to send PUBLISH\n");
+				goto done;
+			}
+		}
+		else 
+		{
+			DBG("PUA:subs_cback_func: No dialog found\n");			
+		}
+		lock_release(&HashT->p_records[hash_code].lock);
+		goto done;
+	}
+	/*if a 2XX reply handle the two cases- an existing dialog and a new one*/
+
+	if(presentity)
+	{		
+		if(lexpire== 0 )
+		{
+			DBG("PUA:subs_cback_func: lexpire= 0 Delete from hash table");
+			delete_htable(presentity, hash_code);
+			lock_release(&HashT->p_records[hash_code].lock);
+			goto done;
+		}
+		DBG("PUA:subs_cback_func: *** Update expires\n");
+		update_htable(presentity, hentity->desired_expires, lexpire, hash_code);
+		lock_release(&HashT->p_records[hash_code].lock);
+		goto done;
+	}
+	lock_release(&HashT->p_records[hash_code].lock);
+
+	/* if a new dialog -> insert */
+	if(lexpire== 0)
+	{	
+		LOG(L_ERR, "PUA: subs_cback_func:expires= 0: no not insert\n");
+		goto done;
+	}
+
+	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
+	{
+		LOG(L_ERR, "PUA: subs_cback_func: ERROR cannot parse cseq"
+		" header\n");
+		goto done;
+	}
+
+	if( str2int( &(get_cseq(msg)->number), &cseq)< 0)
+	{
+		LOG(L_ERR, "PUA: subs_cback_func: ERROR while converting str"
+					" to int\n");
+    }	
+	
 	size= sizeof(ua_pres_t)+ 2*sizeof(str)+( pto->uri.len+
 		pfrom->uri.len+ pto->tag_value.len+ pfrom->tag_value.len
 		+msg->callid->body.len+ 1 )*sizeof(char);
@@ -411,40 +421,44 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->from_tag.len= pfrom->tag_value.len;
 	size+= pfrom->tag_value.len;
 	
-	presentity->event|= ((hentity_t*)(*ps->param))->event;
-	presentity->flag|= ((hentity_t*)(*ps->param))->flag;
+	presentity->event|= hentity->event;
+	presentity->flag= hentity->flag;
 	presentity->db_flag|= INSERTDB_FLAG;
 	presentity->etag.s= NULL;
 	presentity->cseq= cseq;
-	presentity->desired_expires= ((hentity_t*)(*ps->param))->desired_expires;
+	presentity->desired_expires= hentity->desired_expires;
 	presentity->expires= lexpire+ (int)time(NULL);
+	if(BLA_SUBSCRIBE & presentity->flag)
+	{
+		DBG("PUA: subs_cback_func:  BLA_SUBSCRIBE FLAG inserted\n");
+	}	
+	DBG("PUA: subs_cback_func: record for subscribe from %.*s to %.*s inserted in"
+			" datatbase\n", presentity->watcher_uri->len, presentity->watcher_uri->s,
+			presentity->pres_uri->len, presentity->pres_uri->s);
 	insert_htable(presentity);
-	
-	
-	shm_free(*ps->param);
-	(*ps->param)= NULL;
 
-	return ;
-	
 done:
-		if(*ps->param)
-		{	
-			shm_free(*ps->param);
-			*ps->param= NULL;
-		}
-		return;
+	hentity->flag= flag;
+	run_pua_callbacks( hentity, &msg->first_line);
+	
+	if(*ps->param)
+	{	
+		shm_free(*ps->param);
+		*ps->param= NULL;
+	}
+	return;
 
 }
 
-hentity_t* build_cback_param(subs_info_t* subs)
+ua_pres_t* build_cback_param(subs_info_t* subs)
 {	
-	hentity_t* hentity= NULL;
+	ua_pres_t* hentity= NULL;
 	int size;
 
-	size= sizeof(hentity_t)+ 2*sizeof(str)+(subs->pres_uri->len+
+	size= sizeof(ua_pres_t)+ 2*sizeof(str)+(subs->pres_uri->len+
 		subs->watcher_uri->len+ 1)* sizeof(char);
 	
-	hentity= (hentity_t*)shm_malloc(size);
+	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
 		LOG(L_ERR, "PUA: build_cback_param: No more share memory\n");
@@ -452,7 +466,7 @@ hentity_t* build_cback_param(subs_info_t* subs)
 	}
 	memset(hentity, 0, size);
 
-	size= sizeof(hentity_t);
+	size= sizeof(ua_pres_t);
 
 	hentity->pres_uri = (str*)((char*)hentity + size);
 	size+= sizeof(str);
@@ -477,8 +491,7 @@ hentity_t* build_cback_param(subs_info_t* subs)
 	else
 		hentity->desired_expires=subs->expires+ (int)time(NULL);
 
-	hentity->desired_expires= subs->expires+ (int)time(NULL);
-	hentity->flag|= subs->source_flag;
+	hentity->flag= subs->source_flag;
 	hentity->event|= subs->event;
 
 	return hentity;
@@ -492,18 +505,23 @@ int send_subscribe(subs_info_t* subs)
 	str* str_hdr= NULL;
 	int ret= 0;
 	unsigned int hash_code;
-	hentity_t* hentity= NULL;
+	ua_pres_t* hentity= NULL;
 	int expires;
+	int flag;
 
 	DBG("send_subscribe... \n");
 	print_subs(subs);
+
+	flag= subs->source_flag;
+	if(subs->source_flag & XMPP_INITIAL_SUBS)
+		subs->source_flag= XMPP_SUBSCRIBE;
 
 	if(subs->expires< 0)
 		expires= 3600;
 	else
 		expires= subs->expires;
 
-	str_hdr= subs_build_hdr(subs->watcher_uri, expires, subs->event);
+	str_hdr= subs_build_hdr(subs->contact, expires, subs->event);
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
 		LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
@@ -515,18 +533,35 @@ int send_subscribe(subs_info_t* subs)
 	lock_get(&HashT->p_records[hash_code].lock);
 
 	presentity= search_htable(subs->pres_uri, subs->watcher_uri,
-				subs->id, subs->source_flag, subs->event, hash_code);
+				 subs->source_flag, subs->id, hash_code);
 
+	/* if flag == INSERT_TYPE insert no matter what the search result is */
+	if(subs->flag & INSERT_TYPE)
+	{
+		DBG("PUA:send_subscribe: A subscription request with insert type\n");
+		goto insert;
+	}
+	
 	if(presentity== NULL )
 	{
+insert:
 		lock_release(&HashT->p_records[hash_code].lock); 
 
 		if(subs->flag & UPDATE_TYPE)
 		{
-			LOG(L_ERR,"PUA:send_subscribe: UNSUBS_FLAG and no record found\n");
+			/*
+			LOG(L_ERR, "PUA:send_subscribe:ERROR request for a subscription"
+					" with update type and no record found\n");
+			ret= -1;
 			goto done;
-		}
+			commented this because of the strange type parameter in usrloc callback functions
+			*/
+			
+			DBG("PUA:send_subscribe:request for a subscription"
+					" with update type and no record found\n");
+			subs->flag= INSERT_TYPE;
 
+		}	
 		hentity= build_cback_param(subs);
 		if(hentity== NULL)
 		{
@@ -535,6 +570,7 @@ int send_subscribe(subs_info_t* subs)
 			ret= -1;
 			goto done;
 		}
+		hentity->flag= flag;
 
 		tmb.t_request
 			(&met,						  /* Type of the message */
@@ -549,6 +585,45 @@ int send_subscribe(subs_info_t* subs)
 	}
 	else
 	{
+		/* tackle the case in which the desired_expires== 0 and subs->expires< 0*/
+		if(presentity->desired_expires== 0)
+		{
+			if(subs->expires< 0)
+			{
+				DBG("PUA:send_subscribe: Found previous request for"
+						" unlimited subscribe- do not send subscribe\n");
+				if (subs->event & PWINFO_EVENT)
+				{	
+					presentity->watcher_count++;
+				}
+				lock_release(&HashT->p_records[hash_code].lock);
+				goto done;
+			}
+		
+			if(subs->event & PWINFO_EVENT)
+			{	
+				if(subs->expires== 0) /* request for unsubscribe*/
+				{
+					presentity->watcher_count--;
+					if(	presentity->watcher_count> 0)
+					{
+						lock_release(&HashT->p_records[hash_code].lock);
+						goto done;
+					}
+				}
+				else
+				{
+					presentity->watcher_count--;
+					if(presentity->watcher_count> 1)
+					{
+						lock_release(&HashT->p_records[hash_code].lock);
+						goto done;
+					}
+				}
+			}	
+			
+		}	
+
 		dlg_t* td= NULL;
 		td= pua_build_dlg_t(presentity);
 		if(td== NULL)
@@ -557,28 +632,20 @@ int send_subscribe(subs_info_t* subs)
 					"structure");
 			ret= -1;
 			lock_release(&HashT->p_records[hash_code].lock);
-			shm_free(hentity);
 			goto done;
 		}
-
-		if(subs->expires== 0)
-		{	
-			delete_htable(presentity);
-		}
-		else
-		{
-			hentity= build_cback_param(subs);
-			if(hentity== NULL)
-			{
-				LOG(L_ERR, "PUA:send_subscribe:ERROR while building callback"
-						" param\n");
-				lock_release(&HashT->p_records[hash_code].lock);
-				ret= -1;
-				goto done;
-			}
-		}
 		lock_release(&HashT->p_records[hash_code].lock);
-	
+		
+		hentity= build_cback_param(subs);
+		if(hentity== NULL)
+		{
+			LOG(L_ERR, "PUA:send_subscribe:ERROR while building callback"
+					" param\n");
+			ret= -1;
+			pkg_free(td);
+			goto done;
+		}
+	//	hentity->flag= flag;
 	
 		tmb.t_request_within
 		(&met,
@@ -594,7 +661,6 @@ int send_subscribe(subs_info_t* subs)
 	}
 
 done:
-
 	pkg_free(str_hdr);
 	return ret;
 }

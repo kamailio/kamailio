@@ -25,8 +25,6 @@
 
 #include "pua_bind.h"
 #include "../../dprint.h"
-#include "../../sr_module.h"
-
 
 int bind_pua(pua_api_t* api)
 {
@@ -48,6 +46,19 @@ int bind_pua(pua_api_t* api)
 	if (api->send_subscribe == 0)
 	{
 		LOG(L_ERR, "PUA:bind_pua: Can't bind send_subscribe\n");
+		return -1;
+	}
+	api->register_puacb = ( register_puacb_t)find_export
+		("register_puacb", 1, 0);
+	if (api->register_puacb == 0)
+	{
+		LOG(L_ERR, "PUA:bind_pua: Can't bind send_subscribe\n");
+		return -1;
+	}
+	api->is_dialog= (query_dialog_t)find_export("pua_is_dialog", 1, 0);
+	if(api->is_dialog== 0)
+	{
+		LOG(L_ERR, "PUA:bind_pua: Can't bind pua_is_dialog\n");
 		return -1;
 	}
 	return 0;

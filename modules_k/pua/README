@@ -38,6 +38,8 @@ Anca-Maria Vamanu
         2.1. bind_pua(pua_api_t* api)
         2.2. send_publish(publ_info_t*)
         2.3. send_subscribe(subs_info_t*)
+        2.4. pua_is_dialog(ua_prea_t*)
+        2.5. register_puacb(int types, pua_cb f, void* param)
 
    3. Frequently Asked Questions
 
@@ -50,6 +52,8 @@ Anca-Maria Vamanu
    1-6. Set update_period parameter
    1-7. PUA tables
    2-1. pua_api structure
+   2-2. pua_is_dialog usage example
+   2-3. register_puacb usage example
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -60,12 +64,16 @@ Chapter 1. User's Guide
    client, sending Subscribe and Publish messages.
 
    Now it can be used with the following modules: pua_mi and
-   pua_usrloc. The pua_mi offer the possiblity to publish any
-   kind of information or subscribing to a resource through fifo.
-   The pua_usrloc module calls a function exported by pua modules
-   to publish elementary presence information, such as basic
-   status "open" or "closed", for clients that do not implement
-   client-to-server presence.
+   pua_usrloc, pua_bla and pua_xmpp. The pua_mi offer the
+   possibility to publish any kind of information or subscribing
+   to a resource through fifo. The pua_usrloc module calls a
+   function exported by pua modules to publish elementary
+   presence information, such as basic status "open" or "closed",
+   for clients that do not implement client-to-server presence.
+   Through pua_bla , BRIDGED LINE APPEARANCE features are added
+   to openser. The pua_xmpp module represents a gateway between
+   SIP and XMPP, so that jabber and SIP clients can exchange
+   presence information.
 
    The module use cache to store presentity list and writes to
    database on timer to be able to recover upon restart.
@@ -187,6 +195,7 @@ CREATE TABLE pua (
   id int(10) unsigned NOT NULL auto_increment,
   pres_uri varchar(128) NOT NULL,
   pres_id varchar(128) NOT NULL,
+  event int(11) NOT NULL,
   expires int(11) NOT NULL,
   flag int(11) NOT NULL,
   etag varchar(128) NOT NULL,
@@ -196,6 +205,7 @@ CREATE TABLE pua (
   to_tag varchar(128) NOT NULL,
   from_tag varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
+  version int(11) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM;
 
@@ -271,6 +281,43 @@ typedef struct subs_info
                       *  used values: UL_PUBLISH, MI_PUBLISH,
                       * MI_SUBSCRIBE */
 }subs_info_t;
+...
+     _________________________________________________________
+
+2.4. pua_is_dialog(ua_prea_t*)
+
+   This function checks is the parameter coresponds to a stored
+   Subscribe initiated dialog.
+
+   Example 2-2. pua_is_dialog usage example
+...
+        if(pua_is_dialog(dialog)< 0)
+        {
+                LOG(L_ERR, "ERROR while querying dialog\n");
+                goto error;
+        }
+...
+     _________________________________________________________
+
+2.5. register_puacb(int types, pua_cb f, void* param)
+
+   This function registers a callback to be called on receiving
+   the reply message for the sent request( Publish or Subscribe).
+   The type parameter should be set the same as the source_flag
+   for that request. The function registered as callback for pua
+   should be of type pua_cb , which is: typedef void
+   (pua_cb)(ua_pres_t* hentity, struct msg_start * fl); The
+   parameters are the dialog structure for that request and the
+   first line of the reply message.
+
+   Example 2-3. register_puacb usage example
+...
+        if(pua.register_puacb(XMPP_SUBSCRIBE, Sipreply2Xmpp, NULL)< 0)
+        {
+                LOG(L_ERR, "PUA_XMPP:mod_init Could not register
+                callback\n");
+                return -1;
+        }
 ...
      _________________________________________________________
 
