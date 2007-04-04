@@ -29,6 +29,8 @@
 #ifndef _DB_CON_H
 #define _DB_CON_H  1
 
+/** \ingroup DB_API @{ */
+
 #include "db_gen.h"
 #include "db_ctx.h"
 #include "db_uri.h"
@@ -60,4 +62,8 @@ void db_con_free(struct db_con* con);
 }
 #endif /* __cplusplus */
 
+/** @} */
+
 #endif /* _DB_CON_H */
+
+

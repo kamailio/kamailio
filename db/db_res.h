@@ -29,7 +29,12 @@
 #ifndef _DB_RES_H
 #define _DB_RES_H  1
 
+/** \ingroup DB_API 
+ * @{ 
+ */
+
 #include "db_gen.h"
+#include "db_rec.h"
 #include "db_cmd.h"
 
 #ifdef __cplusplus
@@ -38,14 +43,21 @@ extern "C" {
 
 typedef struct db_res {
 	db_gen_t gen;       /* Generic part of the structure */
+	struct db_rec* cur_rec;  /* Currently active record in the result */
     struct db_cmd* cmd; /* Command that produced the result */
 } db_res_t;
 
 struct db_res* db_res(struct db_cmd* cmd);
 void db_res_free(struct db_res* res);
 
+struct db_rec* db_first(struct db_res* res);
+
+struct db_rec* db_next(struct db_res* res);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_RES_H */

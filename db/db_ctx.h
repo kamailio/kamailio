@@ -29,6 +29,8 @@
 #ifndef _DB_CTX_H
 #define _DB_CTX_H  1
 
+/** \ingroup DB_API @{ */
+
 #include "../str.h"
 #include "../list.h"
 #include "db_drv.h"
@@ -40,6 +42,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 struct db_ctx;
+
 
 /* This structure is stored in a linked list inside db_ctx
  * and is used to lookup driver-specific data based on module
@@ -60,7 +63,7 @@ typedef struct db_ctx {
 	str id;          /* Text id of the context */
 	int con_n;       /* Number of connections in the context */
 	SLIST_HEAD(, db_ctx_data) data;
-   	DBLIST_HEAD(db_ctx_con) con;  /* The list of all connections within the context */
+	struct db_con* con[DB_PAYLOAD_MAX];
 } db_ctx_t;
 
 	
@@ -100,5 +103,7 @@ void db_disconnect(struct db_ctx* ctx);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_CTX_H */

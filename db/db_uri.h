@@ -29,6 +29,8 @@
 #ifndef _DB_URI_H
 #define _DB_URI_H  1
 
+/** \ingroup DB_API @{ */
+
 #include "../str.h"
 #include "db_gen.h"
 
@@ -62,5 +64,7 @@ db_uri_cmp_t db_uri_cmp;
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_URI_H */

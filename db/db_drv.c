@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <string.h>
 #include <stdlib.h>
 #include "../mem/mem.h"
@@ -101,3 +103,5 @@ int db_drv_call(str* module, char* func_name, void* db_struct, int offset)
 		return 1;
 	}
 }
+
+/** @} */

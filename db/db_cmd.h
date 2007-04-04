@@ -29,10 +29,19 @@
 #ifndef _DB_CMD_H
 #define _DB_CMD_H  1
 
+/** \ingroup DB_API 
+ * @{ 
+ */
+
+/** \file
+ * Representation of database commands
+ */
+
 #include "db_fld.h"
 #include "db_drv.h"
 #include "db_gen.h"
 #include "db_res.h"
+#include "db_rec.h"
 #include "db_ctx.h"
 
 #ifdef __cplusplus
@@ -41,6 +50,12 @@ extern "C" {
 
 struct db_cmd;
 struct db_res;
+struct db_rec;
+
+typedef int (*db_exec_func_t)(struct db_res* res, struct db_cmd* cmd);
+typedef int (*db_first_func_t)(struct db_res* res);
+typedef int (*db_next_func_t)(struct db_rec* rec);
+
 
 enum db_cmd_type {
 	DB_PUT,  /* Insert or update new record in database */
@@ -53,18 +68,21 @@ typedef struct db_cmd {
 	enum db_cmd_type type; /* Type of the command to be executed */
     struct db_ctx* ctx;   /* Context containing database connections to be used */
     str table;            /* Name of the table to perform the command on */
-	db_drv_func_t exec[DB_PAYLOAD_MAX]; /* Array of exec functions provided by modules */
-	db_fld_t* match;      /* Fields to match */
-	db_fld_t* fld;        /* Fields to store or retrieve */
+	db_exec_func_t exec[DB_PAYLOAD_MAX]; /* Array of exec functions provided by modules */
+	db_first_func_t first[DB_PAYLOAD_MAX];
+	db_next_func_t next[DB_PAYLOAD_MAX];
+	db_fld_t* result;     /* Fields to to be returned in result */
+	db_fld_t* params;     /* Query parameters */
 } db_cmd_t;
 
 
 #define DB_SET_EXEC(db_cmd, func) do { \
-		(db_cmd)->exec[db_payload_idx] = (void*)(func);	\
+		(db_cmd)->exec[db_payload_idx] = (func); \
 } while(0)
 
 
-struct db_cmd* db_cmd(enum db_cmd_type type, struct db_ctx* ctx, char* table, db_fld_t* match, db_fld_t* fld);
+struct db_cmd* db_cmd(enum db_cmd_type type, struct db_ctx* ctx, char* table, 
+					  db_fld_t* result, db_fld_t* params);
 void db_cmd_free(struct db_cmd* cmd);
 
 int db_exec(struct db_res** res, struct db_cmd* cmd);
@@ -72,5 +90,7 @@ int db_exec(struct db_res** res, struct db_cmd* cmd);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_CMD_H */

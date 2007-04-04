@@ -29,6 +29,8 @@
 #ifndef _DB_FLD_H
 #define _DB_FLD_H  1
 
+/** \ingroup DB_API @{ */
+
 #include <time.h>
 #include "../str.h"
 #include "db_gen.h"
@@ -64,7 +66,7 @@ enum db_flags {
 
 typedef struct db_fld {
 	db_gen_t gen;  /* Generic part of the structure */
-    str name;
+    char* name;
     enum db_fld_type type;
     unsigned int flags;
     union {
@@ -72,7 +74,7 @@ typedef struct db_fld {
 		float        flt;    /* float value */
 		double       dbl;    /* double value */
 		time_t       time;   /* unix time value */
-		const char*  cstr;   /* NULL terminated string */
+		char*  cstr;         /* NULL terminated string */
 		str          str;    /* str string value */
 		str          blob;   /* Blob data */
 		unsigned int bitmap; /* Bitmap data type, 32 flags, should be enough */ 
@@ -81,13 +83,20 @@ typedef struct db_fld {
 	enum db_fld_op op;
 } db_fld_t;
 
+#define DB_FLD_LAST(fld) ((fld).name == NULL)
+#define DB_FLD_EMPTY(fld) ((fld) == NULL || (fld)[0].name == NULL)
 
 struct db_fld* db_fld(size_t n);
-int db_fld_init(struct db_fld* fld, size_t n);
 void db_fld_free(struct db_fld* fld, size_t n);
+
+int db_fld_init(struct db_fld* fld, size_t n);
+void db_fld_release(struct db_fld* fld, size_t n);
+
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_FLD_H */

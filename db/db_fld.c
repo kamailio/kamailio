@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <string.h>
 #include "../mem/mem.h"
 #include "../dprint.h"
@@ -36,11 +38,20 @@ int db_fld_init(db_fld_t* fld, size_t n)
 {
 	int i;
 
-	memset(fld, '\0', sizeof(db_fld_t) * n);
 	for(i = 0; i < n; i++) {
 		if (db_gen_init(&fld[i].gen) < 0) return -1;
 	}
 	return 0;
+}
+
+
+void db_fld_close(db_fld_t* fld, size_t n)
+{
+	int i;
+
+	for(i = 0; i < n; i++) {
+		db_gen_free(&fld[i].gen);
+	}
 }
 
 
@@ -53,6 +64,8 @@ db_fld_t* db_fld(size_t n)
 		ERR("db_fld: No memory left\n");
 		return NULL;
 	}
+	memset(r, '\0', sizeof(db_fld_t) * n);
+
 	if (db_fld_init(r, n) < 0) goto error;
 	return r;
 
@@ -67,13 +80,8 @@ db_fld_t* db_fld(size_t n)
 
 void db_fld_free(db_fld_t* fld, size_t n)
 {
-    int i;
-    if (!fld || !n) return;
-
-	for(i = 0; i < n; i++) {
-		db_gen_free(&fld[i].gen);
-		if (fld[i].name.s) pkg_free(fld[i].name.s);
-	}
+	db_fld_close(fld, n);
 	pkg_free(fld);
 }
 
+/** @} */

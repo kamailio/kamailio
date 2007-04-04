@@ -31,6 +31,9 @@
   *  2004-06-06  bind_dbmod takes dbf as parameter (andrei)
   */
 
+/** \ingroup DB_API
+ * @{
+ */
 
 #include "../dprint.h"
 #include "../sr_module.h"
@@ -42,3 +45,5 @@
 #include "db.h"
 
 struct db_root db = DBLIST_INITIALIZER(db);
+
+/** @} */

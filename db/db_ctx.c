@@ -26,33 +26,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <string.h>
 #include "../dprint.h"
 #include "../mem/mem.h"
 #include "db.h"
 #include "db_ctx.h"
 
-
 static struct db_ctx_data* db_ctx_data(str* module, db_drv_t* data)
 {
-	struct db_ctx_data* res;
+	struct db_ctx_data* newp;
 
-	res = (struct db_ctx_data*)pkg_malloc(sizeof(struct db_ctx_data));
-	if (res == NULL) goto error;
-	memset(res, '\0', sizeof(struct db_ctx_data));
+	newp = (struct db_ctx_data*)pkg_malloc(sizeof(struct db_ctx_data));
+	if (newp == NULL) goto error;
+	memset(newp, '\0', sizeof(struct db_ctx_data));
 
-	res->module.s = pkg_malloc(module->len);
-	if (res->module.s == NULL) goto error;
+	newp->module.s = pkg_malloc(module->len);
+	if (newp->module.s == NULL) goto error;
 
-	memcpy(res->module.s, module->s, module->len);
-	res->module.len = module->len;
-	res->data = data;
-
+	memcpy(newp->module.s, module->s, module->len);
+	newp->module.len = module->len;
+	newp->data = data;
 	return res;
 
  error:
-	ERR("db_ctx_data: No memory left\n");
-	if (res) pkg_free(res);
+	ERR("No memory left\n");
+	if (newp) pkg_free(newp);
 	return NULL;
 }
 
@@ -76,8 +76,6 @@ db_ctx_t* db_ctx(const char* id)
     if (r == NULL) goto error;
     memset(r, '\0', sizeof(db_ctx_t));
 	if (db_gen_init(&r->gen) < 0) goto error;
-
-	DBLIST_INIT(&r->con);
 
 	r->id.len = strlen(id);
 	r->id.s = pkg_malloc(r->id.len + 1);
@@ -106,7 +104,7 @@ db_ctx_t* db_ctx(const char* id)
  */
 void db_ctx_free(db_ctx_t* ctx)
 {
-	db_con_t* con, *tmp_con;
+	int i;
 	struct db_ctx_data* ptr, *ptr2;
 
     if (ctx == NULL) return;
@@ -119,17 +117,15 @@ void db_ctx_free(db_ctx_t* ctx)
 	/* Disconnect all connections */
 	db_disconnect(ctx);
 
-	/* Destroy the list of all connections */
-	DBLIST_FOREACH_SAFE(con, &ctx->con, tmp_con) {
- 		DBLIST_REMOVE_HEAD(&ctx->con);
-		db_con_free(con);
+	for(i = 0; i < ctx->con_n; i++) {
+		db_con_free(ctx->con[i]);
 	}
 
 	/* Dispose all driver specific data structures as well as
 	 * the data structures in db_ctx_data linked list
 	 */
 	SLIST_FOREACH_SAFE(ptr, &ctx->data, next, ptr2) {
-		if (ptr->data) ptr->data->free(ptr->data);
+		if (ptr->data) ptr->data->free((void*)ptr, ptr->data);
 		db_ctx_data_free(ptr);
 	}
 	/* Clear all pointers to attached data structures because we have
@@ -210,7 +206,7 @@ int db_add_db(db_ctx_t* ctx, const char* uri)
 			/* We failed to create db_ctx_data for this payload so we have
 			 * to dispose it manually here before bailing out.
 			 */
-			((struct db_drv*)DB_GET_PAYLOAD(ctx))->free(DB_GET_PAYLOAD(ctx));
+			((struct db_drv*)DB_GET_PAYLOAD(ctx))->free((void*)ctx, DB_GET_PAYLOAD(ctx));
 			goto error;
 		}
 
@@ -230,9 +226,7 @@ int db_add_db(db_ctx_t* ctx, const char* uri)
 	con = db_con(ctx, parsed_uri);
 	if (con == NULL) goto error;
 
-	DBLIST_INSERT_TAIL(&ctx->con, con);
-	ctx->con_n++;
-
+	ctx->con[ctx->con_n++] = con;
 	return 0;
 
  error:
@@ -247,10 +241,10 @@ int db_add_db(db_ctx_t* ctx, const char* uri)
  */
 int db_connect(db_ctx_t* ctx)
 {
-	db_con_t* con;
+	int i;
 
-	DBLIST_FOREACH(con, &ctx->con) {
-		if (con->connect && con->connect(con) < 0) return -1;
+	for(i = 0; i < ctx->con_n; i++) {
+		if (ctx->con[i]->connect && ctx->con[i]->connect(ctx->con[i]) < 0) return -1;
 	}
 	return 0;
 }
@@ -262,9 +256,11 @@ int db_connect(db_ctx_t* ctx)
  */
 void db_disconnect(db_ctx_t* ctx)
 {
-	db_con_t* con;
+	int i;
 
-	DBLIST_FOREACH(con, &ctx->con) {
-		if (con->disconnect) con->disconnect(con);
+	for(i = 0; i < ctx->con_n; i++) {
+		if (ctx->con[i]->disconnect) ctx->con[i]->disconnect(ctx->con[i]);
 	}
 }
+
+/** @} */

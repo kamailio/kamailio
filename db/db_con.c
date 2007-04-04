@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <string.h>
 #include <stdlib.h>
 #include "../mem/mem.h"
@@ -104,3 +106,5 @@ void db_con_free(db_con_t* con)
 	if (con->uri) db_uri_free(con->uri);
     pkg_free(con);
 }
+
+/** @} */

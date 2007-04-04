@@ -29,6 +29,10 @@
 #ifndef _DB_POOL_H
 #define _DB_POOL_H  1
 
+/** \ingroup DB_API 
+ * @{ 
+ */
+
 #include <sys/types.h>
 #include "db_drv.h"
 #include "../list.h"
@@ -88,5 +92,7 @@ int db_pool_remove(struct db_pool_entry* entry);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_POOL_H */

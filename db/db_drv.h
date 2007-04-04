@@ -29,16 +29,20 @@
 #ifndef _DB_DRV_H
 #define _DB_DRV_H  1
 
+/** \ingroup DB_API @{ */
+
 #include "../str.h"
 #include "../list.h"
+#include "db_gen.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
 struct db_drv;
+struct db_gen;
 
-typedef void db_drv_free_t(struct db_drv* data);
+typedef void db_drv_free_t(struct db_gen* db_struct, struct db_drv* payload);
 
 
 /*
@@ -80,5 +84,7 @@ int db_drv_call(str* module, char* func_name, void* db_struct, int offset);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_DRV_H */

@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <string.h>
 #include "../dprint.h"
 #include "../mem/mem.h"
@@ -33,12 +35,14 @@
 #include "db_cmd.h"
 
 
-db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, db_fld_t* match, db_fld_t* fld)
+db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, 
+				 db_fld_t* result, db_fld_t* params)
 {
 	char* fname;
     db_cmd_t* res;
 	db_con_t* con;
-	int i, r;
+	db_fld_t* f;
+	int i, r, j;
 
     res = (db_cmd_t*)pkg_malloc(sizeof(db_cmd_t));
     if (res == NULL) goto err;
@@ -50,12 +54,28 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, db_fld_t* ma
     res->table.s = (char*)pkg_malloc(res->table.len);
     if (res->table.s == NULL) goto err;
     memcpy(res->table.s, table, res->table.len);
-	res->type = type;
-	res->match = match;
-	res->fld = fld;
 
-	i = 0;
-	DBLIST_FOREACH(con, &ctx->con) {
+	res->type = type;
+	res->result = result;
+	res->params = params;
+
+	for(i = 0; i < ctx->con_n; i++) {
+		con = ctx->con[i];
+
+		if (!DB_FLD_EMPTY(result)) {
+			for(j = 0; !DB_FLD_LAST(result[j]); j++) {
+				if (db_fld_init(result + j, 1) < 0) goto err;
+				if (db_drv_call(&con->uri->scheme, "db_fld", result + j, i) < 0) goto err;
+			}
+		}
+
+		if (!DB_FLD_EMPTY(params)) {
+			for(j = 0; !DB_FLD_LAST(params[j]); j++) {
+				if (db_fld_init(params + j, 1) < 0) goto err;
+				if (db_drv_call(&con->uri->scheme, "db_fld", params + j, i) < 0) goto err;
+			}
+		}
+
 		r = db_drv_call(&con->uri->scheme, "db_cmd", res, i);
 		if (r < 0) goto err;
 		if (r > 0) {
@@ -74,7 +94,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, db_fld_t* ma
 			default: ERR("db_cmd: Unsupported command type\n"); goto err;
 			}
 
-			r = db_drv_func(&(res->exec[i]), &con->uri->scheme, fname);
+			r = db_drv_func((void*)&(res->exec[i]), &con->uri->scheme, fname);
 			if (r < 0) goto err;
 			if (r > 0) {
 				ERR("DB driver %.*s does not provide runtime execution function %s\n",
@@ -82,23 +102,56 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, db_fld_t* ma
 				goto err;
 			}
 		}
-		i++;
+
+		r = db_drv_func((void*)(&res->first[i]), &con->uri->scheme, "db_first");
+		if (r < 0) goto err;
+		if (r > 0) {
+			ERR("DB driver %.*s does not implement mandatory db_first function\n",
+				con->uri->scheme.len, ZSW(con->uri->scheme.s));
+			goto err;
+		}
+
+		r = db_drv_func((void*)(&res->next[i]), &con->uri->scheme, "db_next");
+		if (r < 0) goto err;
+		if (r > 0) {
+			ERR("DB driver %.*s does not implement mandatory db_next function\n",
+				con->uri->scheme.len, ZSW(con->uri->scheme.s));
+			goto err;
+		}
+
+
 	}
     return res;
 
  err:
     ERR("db_cmd: Cannot create db_cmd structure\n");
-	db_gen_free(&res->gen);
-    if (res == NULL) return NULL;
-    if (res->table.s) pkg_free(res->table.s);
-    pkg_free(res);
-    return NULL;
+    if (res) {
+		db_gen_free(&res->gen);
+		if (res->table.s) pkg_free(res->table.s);
+		pkg_free(res);
+	}
+	return NULL;
 }
 
 
 void db_cmd_free(db_cmd_t* cmd)
 {
+	int i;
+
     if (cmd == NULL) return;
+
+	if (!DB_FLD_EMPTY(cmd->result)) {
+		for(i = 0; !DB_FLD_LAST(cmd->result[i]); i++) {
+			db_fld_close(cmd->result + i, 1);
+		}
+	}
+	
+	if (!DB_FLD_EMPTY(cmd->params)) {
+		for(i = 0; !DB_FLD_LAST(cmd->params[i]); i++) {
+			db_fld_close(cmd->params + i, 1);
+		}
+	}
+	
 	db_gen_free(&cmd->gen);
     if (cmd->table.s) pkg_free(cmd->table.s);
     pkg_free(cmd);
@@ -107,14 +160,18 @@ void db_cmd_free(db_cmd_t* cmd)
 
 int db_exec(db_res_t** res, db_cmd_t* cmd)
 {
-	db_con_t* con;
 	int i;
+	db_res_t* r = NULL;
 
-	i = 0;
-	DBLIST_FOREACH(con, &cmd->ctx->con) {
-		db_payload_idx = i;
-		if (cmd->exec[i](cmd) < 0) return -1;
-		i++;
+	if (cmd->type == DB_GET) {
+		r = db_res(cmd);
+		if (r == NULL) return -1;
+		if (res) *res = r;
 	}
-	return 0;
+
+	/* FIXME */
+	db_payload_idx = 0;
+	return cmd->exec[0](r, cmd);
 }
+
+/** @} */

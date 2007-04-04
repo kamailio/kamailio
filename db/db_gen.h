@@ -29,6 +29,10 @@
 #ifndef _DB_GEN_H
 #define _DB_GEN_H  1
 
+/** \ingroup DB_API 
+ * @{ 
+ */
+
 #include "../str.h"
 #include "../list.h"
 #include "db_drv.h"
@@ -36,11 +40,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-
-
-/*
- * Operations on top of linked-lists of generic DB API structures
- */
 
 
 /*
@@ -72,6 +71,7 @@ extern "C" {
 #define DBLIST_INIT(head) \
 	STAILQ_INIT(head)
 
+#define	DBLIST_FIRST(head) SLIST_FIRST(head)
 
 /*
  * Insert a new DB API structure at the beginning of the
@@ -206,5 +206,7 @@ void db_gen_free(struct db_gen* gen);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_GEN_H */

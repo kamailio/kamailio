@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <string.h>
 #include "../dprint.h"
 #include "../mem/mem.h"
@@ -35,17 +37,26 @@
 db_res_t* db_res(db_cmd_t* cmd)
 {
     db_res_t* r;
+	int ret;
 
     r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
     if (r == NULL) goto err;
 	memset(r, '\0', sizeof(db_res_t));
 	if (db_gen_init(&r->gen) < 0) goto err;
     r->cmd = cmd;
+
+	ret = db_drv_call(&cmd->ctx->con[db_payload_idx]->uri->scheme, 
+					  "db_res", r, db_payload_idx);
+	if (ret < 0) goto err;
+
+	r->cur_rec = db_rec(r, cmd->result);
+	if (r->cur_rec == NULL) goto err;
     return r;
 
  err:
     ERR("db_res: Cannot create db_res structure\n");
 	if (r) {
+		if (r->cur_rec) db_rec_free(r->cur_rec);
 		db_gen_free(&r->gen);
 		pkg_free(r);
 	}
@@ -57,5 +68,26 @@ void db_res_free(db_res_t* r)
 {
     if (r == NULL) return;
 	db_gen_free(&r->gen);
+	if (r->cur_rec) db_rec_free(r->cur_rec);
     pkg_free(r);
 }
+
+
+db_rec_t* db_first(db_res_t* res)
+{
+	if (res->cmd->first[0](res) != 0) {
+		return NULL;
+	}
+	return res->cur_rec;
+}
+
+
+db_rec_t* db_next(db_res_t* res)
+{
+	if (res->cmd->next[0](res) != 0) {
+		return NULL;
+	}
+	return res->cur_rec;
+}
+
+/** @} */

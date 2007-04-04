@@ -25,8 +25,18 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 #ifndef _DB_H
 #define _DB_H  1
+
+/**
+ * \defgroup DB_API Database Abstraction Layer
+ * \brief brief description
+ *
+ * I wonder where this text goes.
+ * @{
+ */
+
 
 #include "db_gen.h"
 #include "db_ctx.h"
@@ -42,12 +52,20 @@ extern "C" {
 
 struct db_gen;
 
+
 DBLIST_HEAD(db_root);
 
+/** \brief The root of all DB API structures
+ *
+ *  This is the root linked list of all database
+ *  structures allocated in SER
+ */
 extern struct db_root db;
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+/** @} */
 
 #endif /* _DB_H */

@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <string.h>
 #include "db_gen.h"
 
@@ -52,6 +54,8 @@ void db_gen_free(db_gen_t* gen)
 
 	/* Dispose all the attached data structures */
 	for(i = 0; i < DB_PAYLOAD_MAX && gen->data[i]; i++) {
-		if (gen->data[i]) gen->data[i]->free(gen->data[i]);
+		if (gen->data[i]) gen->data[i]->free(gen, gen->data[i]);
 	}
 }
+
+/** @} */

@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** \ingroup DB_API @{ */
+
 #include <unistd.h>
 #include <string.h>
 #include "../dprint.h"
@@ -113,3 +115,5 @@ int db_pool_remove(db_pool_entry_t* entry)
 	SLIST_REMOVE(&db_pool, entry, db_pool_entry, next);
 	return 1;
 }
+
+/** @} */
