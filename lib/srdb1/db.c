@@ -23,6 +23,7 @@
   * History:
   * --------
   *  2004-06-06  bind_dbmod takes dbf as parameter (andrei)
+  *  2006-10-10  Added support for retrieving the last inserted ID (Carsten Bock, BASIS AudioNet GmbH)
   */
 
 
@@ -139,6 +140,11 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 	dbf.replace = (db_replace_f)find_mod_export(tmp, "db_replace", 2, 0);
 	if (dbf.replace) {
 		dbf.cap |= DB_CAP_REPLACE;
+	}
+
+	dbf.last_inserted_id= (db_last_inserted_id_f)find_mod_export(tmp, "db_last_inserted_id", 1, 0);
+	if (dbf.last_inserted_id) {
+		dbf.cap |= DB_CAP_LAST_INSERTED_ID;
 	}
 
 	*mydbf=dbf; /* copy */

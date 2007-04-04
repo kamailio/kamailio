@@ -35,6 +35,7 @@ typedef enum db_cap {
 	DB_CAP_UPDATE =    1 << 4,  /* Database driver can update data in the database */
 	DB_CAP_REPLACE =   1 << 5,  /* Replace (also known as INSERT OR UPDATE) support */
 	DB_CAP_FETCH   =   1 << 6,  /* Fetch result support */
+	DB_CAP_LAST_INSERTED_ID = 1 << 7,  /* ID of the last insert */
 } db_cap_t;
 
 

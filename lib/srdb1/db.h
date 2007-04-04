@@ -28,6 +28,7 @@
  * History:
  * --------
  *  2004-06-06  removed db_* macros and global dbf (andrei)
+ *  2006-10-10  Added support for retrieving the last inserted ID (Carsten Bock, BASIS AudioNet GmbH)
  */
 
 
@@ -146,6 +147,11 @@ typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
  */
 typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 
+/*
+ * Retrieve the last inserted ID in a table
+ */
+typedef int (*db_last_inserted_id_f) (db_con_t* handle);
+
 
 typedef struct db_func {
 	unsigned int     cap;           /* Capability vector of the database transport */
@@ -160,6 +166,8 @@ typedef struct db_func {
 	db_delete_f       delete;        /* Delete from table */ 
 	db_update_f       update;        /* Update table */
 	db_replace_f      replace;       /* Replace row in a table */
+	db_last_inserted_id_f  last_inserted_id;  /* Retrieve the last inserted ID
+	                                            in a table */
 } db_func_t;
 
 

@@ -616,3 +616,27 @@ n: number of key=value pairs
 
 The function returns 0 if everything is OK, otherwise the function returns
 value < 0.
+
+
+2.11 Callback dbf.last_inserted_id
+
+2.11.1 Description
+
+The function returns the value generated for an AUTO_INCREMENT column by the 
+previous INSERT or UPDATE  statement. Use this function after you have 
+performed an INSERT statement into a table that contains an AUTO_INCREMENT 
+field.
+
+2.11.2 Prototype
+
+   int (*db_last_inserted_id) (db_con_t* handle);
+
+2.11.3 Parameters
+
+The function takes one parameter:
+handle: structure representing database connection
+
+2.11.4 Return Value
+
+The function returns the ID as integer or returns 0 if the previous statement 
+does not use an AUTO_INCREMENT value.
