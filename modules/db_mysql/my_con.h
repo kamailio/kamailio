@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -25,43 +26,34 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef MY_CON_H
-#define MY_CON_H
+#ifndef _MY_CON_H
+#define _MY_CON_H  1
 
 #include "../../db/db_pool.h"
-#include "../../db/db_id.h"
+#include "../../db/db_con.h"
+#include "../../db/db_uri.h"
 
 #include <time.h>
 #include <mysql/mysql.h>
 
-
-struct my_con {
-	struct db_id* id;        /* Connection identifier */
-	unsigned int ref;        /* Reference count */
-	struct pool_con* next;   /* Next connection in the pool */
-
-	MYSQL* con;              /* Connection representation */
-	time_t timestamp;        /* Timestamp of last query */
+enum my_flags {
+	MY_CONNECTED = 1
 };
 
+struct my_con {
+	/* Generic part of the structure */
+	db_pool_entry_t gen;
 
-/*
- * Some convenience wrappers
- */
-#define CON_CONNECTION(db_con) (((struct my_con*)((db_con)->tail))->con)
-#define CON_TIMESTAMP(db_con)  (((struct my_con*)((db_con)->tail))->timestamp)
+	MYSQL* con;
+	unsigned int flags;
+	time_t timestamp;
+};
 
 
 /*
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
-struct my_con* new_connection(struct db_id* id);
+int my_con(db_con_t* con);
 
-
-/*
- * Close the connection and release memory
- */
-void free_connection(struct my_con* con);
-
-#endif /* MY_CON_H */
+#endif /* _MY_CON_H */

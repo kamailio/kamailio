@@ -1,7 +1,8 @@
 /* 
- * $Id$ 
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -25,23 +26,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef VAL_H
-#define VAL_H
-
 #include <mysql/mysql.h>
-#include "../../db/db_val.h"
+#include "../../mem/mem.h"
+#include "../../dprint.h"
+#include "../../db/db_gen.h"
+#include "my_cmd.h"
+#include "my_res.h"
+
+
+void my_res_free(db_res_t* res, struct my_res* payload)
+{
+	struct my_cmd* mcmd;
+
+	mcmd = DB_GET_PAYLOAD(res->cmd);
+
+	if (mysql_stmt_free_result(mcmd->st)) {
+		ERR("Error while freeing MySQL result: %s\n", mysql_stmt_error(mcmd->st));
+	}
+
+	db_drv_free(&payload->gen);
+	pkg_free(payload);
+}
 
 
 /*
- * Does not copy strings
+ * Attach a mysql specific structure to db_res, this structure contains a pointer
+ * to my_res_free which releases the mysql result stored in the mysql statement
+ * and if there is a cursor open in the statement then it will be closed as well
  */
-int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l);
+int my_res(db_res_t* res)
+{
+	struct my_res* mr;
 
-
-/*
- * Used when converting result from a query
- */
-int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len);
-
-
-#endif /* VAL_H */
+	mr = (struct my_res*)pkg_malloc(sizeof(struct my_res));
+	if (mr == NULL) {
+		ERR("No memory left\n");
+		return -1;
+	}
+	if (db_drv_init(&mr->gen, my_res_free) < 0) goto error;
+	DB_SET_PAYLOAD(res, mr);
+	return 0;
+	
+ error:
+	if (mr) {
+		db_drv_free(&mr->gen);
+		pkg_free(mr);
+	}
+	return -1;
+}

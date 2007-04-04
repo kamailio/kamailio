@@ -1,9 +1,8 @@
 /* 
- * $Id$ 
- *
- * MySQL module utilities
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006-2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,23 +26,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _MY_RES_H
+#define _MY_RES_H  1
 
-#ifndef UTILS_H
-#define UTILS_H
+#include "../../db/db_drv.h"
+#include "../../db/db_res.h"
 
-#include <time.h>
+struct my_res {
+	db_drv_t gen;
+};
 
+int my_res(db_res_t* cmd);
 
-/*
- * Convert time_t structure to format accepted by MySQL database
- */
-int time2mysql(time_t _time, char* _result, int _res_len);
-
-
-/*
- * Convert MySQL time representation to time_t structure
- */
-time_t mysql2time(const char* _str);
-
-
-#endif /* UTILS_H */
+#endif /* _MY_RES_H */

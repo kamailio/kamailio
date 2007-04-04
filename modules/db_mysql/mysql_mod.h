@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * MySQL module various definitions
+ * MySQL module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -26,12 +26,17 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
+ */
 
+#ifndef _MYSQL_MOD_H
+#define _MYSQL_MOD_H
 
-#ifndef DEFS_H
-#define DEFS_H
+extern int ping_interval;
+extern int auto_reconnect;
 
-#define PARANOID
-#define SQL_BUF_LEN 65535
-
-#endif /* DEFS_H */
+#endif /* _MYSQL_MOD_H */
