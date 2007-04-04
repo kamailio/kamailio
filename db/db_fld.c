@@ -36,22 +36,22 @@
 #include "db_fld.h"
 
 
-int db_fld_init(db_fld_t* fld, size_t n)
+int db_fld_init(db_fld_t* fld)
 {
 	int i;
 
-	for(i = 0; i < n; i++) {
+	for(i = 0; !DB_FLD_LAST(fld[i]); i++) {
 		if (db_gen_init(&fld[i].gen) < 0) return -1;
 	}
 	return 0;
 }
 
 
-void db_fld_close(db_fld_t* fld, size_t n)
+void db_fld_close(db_fld_t* fld)
 {
 	int i;
 
-	for(i = 0; i < n; i++) {
+	for(i = 0; !DB_FLD_LAST(fld[i]); i++) {
 		db_gen_free(&fld[i].gen);
 	}
 }
@@ -59,6 +59,7 @@ void db_fld_close(db_fld_t* fld, size_t n)
 
 db_fld_t* db_fld(size_t n)
 {
+	int i;
 	db_fld_t* newp;
 
 	newp = (db_fld_t*)pkg_malloc(sizeof(db_fld_t) * n);
@@ -68,7 +69,9 @@ db_fld_t* db_fld(size_t n)
 	}
 	memset(newp, '\0', sizeof(db_fld_t) * n);
 
-	if (db_fld_init(newp, n) < 0) goto error;
+	for(i = 0; i < n; i++) {
+		if (db_gen_init(&newp[i].gen) < 0) goto error;
+	}
 	return newp;
 
  error:
@@ -80,9 +83,34 @@ db_fld_t* db_fld(size_t n)
 }
 
 
-void db_fld_free(db_fld_t* fld, size_t n)
+db_fld_t* db_fld_copy(db_fld_t* fld)
 {
-	db_fld_close(fld, n);
+	int n;
+	db_fld_t* newp;
+
+	for(n = 0; fld[n].name; n++);
+
+	newp = (db_fld_t*)pkg_malloc(sizeof(db_fld_t) * n);
+	if (newp == NULL) {
+		ERR("db_fld: No memory left\n");
+		return NULL;
+	}
+	memcpy(newp, fld, sizeof(db_fld_t) * n);
+	if (db_fld_init(newp) < 0) goto error;
+	return newp;
+
+ error:
+	if (newp) {
+		db_gen_free(&newp->gen);
+		pkg_free(newp);
+	}
+	return NULL;
+}
+
+
+void db_fld_free(db_fld_t* fld)
+{
+	db_fld_close(fld);
 	pkg_free(fld);
 }
 

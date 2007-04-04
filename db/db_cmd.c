@@ -57,23 +57,29 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
     memcpy(newp->table.s, table, newp->table.len);
 
 	newp->type = type;
-	newp->result = result;
-	newp->params = params;
+
+	if (result) {
+		newp->result = db_fld_copy(result);
+		if (newp->result == NULL) goto err;
+	}
+
+	if (params) {
+		newp->params = db_fld_copy(params);
+		if (newp->params == NULL) goto err;
+	}
 
 	for(i = 0; i < ctx->con_n; i++) {
 		con = ctx->con[i];
 
-		if (!DB_FLD_EMPTY(result)) {
-			for(j = 0; !DB_FLD_LAST(result[j]); j++) {
-				if (db_fld_init(result + j, 1) < 0) goto err;
-				if (db_drv_call(&con->uri->scheme, "db_fld", result + j, i) < 0) goto err;
+		if (!DB_FLD_EMPTY(newp->result)) {
+			for(j = 0; !DB_FLD_LAST(newp->result[j]); j++) {
+				if (db_drv_call(&con->uri->scheme, "db_fld", newp->result + j, i) < 0) goto err;
 			}
 		}
 
-		if (!DB_FLD_EMPTY(params)) {
-			for(j = 0; !DB_FLD_LAST(params[j]); j++) {
-				if (db_fld_init(params + j, 1) < 0) goto err;
-				if (db_drv_call(&con->uri->scheme, "db_fld", params + j, i) < 0) goto err;
+		if (!DB_FLD_EMPTY(newp->params)) {
+			for(j = 0; !DB_FLD_LAST(newp->params[j]); j++) {
+				if (db_drv_call(&con->uri->scheme, "db_fld", newp->params + j, i) < 0) goto err;
 			}
 		}
 
@@ -128,6 +134,8 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
     ERR("db_cmd: Cannot create db_cmd structure\n");
     if (newp) {
 		db_gen_free(&newp->gen);
+		if (newp->result) db_fld_free(newp->result);
+		if (newp->params) db_fld_free(newp->params);
 		if (newp->table.s) pkg_free(newp->table.s);
 		pkg_free(newp);
 	}
@@ -137,23 +145,11 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 
 void db_cmd_free(db_cmd_t* cmd)
 {
-	int i;
-
     if (cmd == NULL) return;
-
-	if (!DB_FLD_EMPTY(cmd->result)) {
-		for(i = 0; !DB_FLD_LAST(cmd->result[i]); i++) {
-			db_fld_close(cmd->result + i, 1);
-		}
-	}
-	
-	if (!DB_FLD_EMPTY(cmd->params)) {
-		for(i = 0; !DB_FLD_LAST(cmd->params[i]); i++) {
-			db_fld_close(cmd->params + i, 1);
-		}
-	}
-	
 	db_gen_free(&cmd->gen);
+
+	if (cmd->result) db_fld_free(cmd->result);
+	if (cmd->params) db_fld_free(cmd->params);
     if (cmd->table.s) pkg_free(cmd->table.s);
     pkg_free(cmd);
 }

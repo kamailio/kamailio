@@ -89,11 +89,12 @@ typedef struct db_fld {
 #define DB_FLD_EMPTY(fld) ((fld) == NULL || (fld)[0].name == NULL)
 
 struct db_fld* db_fld(size_t n);
-void db_fld_free(struct db_fld* fld, size_t n);
+void db_fld_free(struct db_fld* fld);
 
-int db_fld_init(struct db_fld* fld, size_t n);
-void db_fld_close(struct db_fld* fld, size_t n);
+int db_fld_init(struct db_fld* fld);
+void db_fld_close(struct db_fld* fld);
 
+db_fld_t* db_fld_copy(db_fld_t* fld);
 
 #ifdef __cplusplus
 }
