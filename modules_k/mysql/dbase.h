@@ -94,6 +94,10 @@ int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
  */
 int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 
+/*
+ * Returns the last inserted ID
+ */
+int db_last_inserted_id(db_con_t* _h);
 
 /*
  * Store name of table that will be used by

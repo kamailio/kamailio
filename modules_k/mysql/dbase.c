@@ -740,3 +740,13 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 	LOG(L_ERR, "db_replace: Error in snprintf\n");
 	return -1;
 }
+
+
+/*
+ * Returns the last inserted ID
+ */
+int db_last_inserted_id(db_con_t* _h)
+{
+	return mysql_insert_id(CON_CONNECTION(_h));
+}
+
