@@ -111,7 +111,8 @@ int dbt_result_free(dbt_result_p _dres)
 		{
 			for(i=0; i<_dres->nrcols; i++)
 			{
-				if(_dres->colv[i].type==DB_STR 
+				if((_dres->colv[i].type==DB_STR 
+							|| _dres->colv[i].type==DB_STRING)
 						&& _rp0->fields[i].val.str_val.s)
 					pkg_free(_rp0->fields[i].val.str_val.s);
 			}
@@ -297,7 +298,7 @@ clean:
 	DBG("DBT:dbt_result_extract_fields: make clean!\n");
 	while(i>=0)
 	{
-		if(_rp->fields[i].type == DB_STR
+		if((_rp->fields[i].type == DB_STRING || _rp->fields[i].type == DB_STR)
 				&& !_rp->fields[i].nul
 				&& _rp->fields[i].val.str_val.s)
 			pkg_free(_rp->fields[i].val.str_val.s);
