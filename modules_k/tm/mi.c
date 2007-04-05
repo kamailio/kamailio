@@ -433,7 +433,7 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 	node = node->next;
 	ruri = &node->value;
 	if (parse_uri( ruri->s, ruri->len, &pruri) < 0 )
-		return init_mi_tree( 400, "Invalid RURI", 11);
+		return init_mi_tree( 400, "Invalid RURI", 12);
 
 	/* nexthop RURI (param 3) */
 	node = node->next;
