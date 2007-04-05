@@ -89,6 +89,7 @@ db_fld_t* db_fld_copy(db_fld_t* fld)
 	db_fld_t* newp;
 
 	for(n = 0; fld[n].name; n++);
+	n++; /* We need to copy the terminating element too */
 
 	newp = (db_fld_t*)pkg_malloc(sizeof(db_fld_t) * n);
 	if (newp == NULL) {

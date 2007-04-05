@@ -87,7 +87,7 @@ db_ctx_t* db_ctx(const char* id)
 	/* Insert the newly created context into the linked list
 	 * of all existing contexts
 	 */
-	DBLIST_INSERT_HEAD(&db, newp);
+	DBLIST_INSERT_HEAD(&db_root, newp);
     return newp;
 
  error:
@@ -114,7 +114,7 @@ void db_ctx_free(db_ctx_t* ctx)
 	/* Remove the context from the linked list of
 	 * all contexts
 	 */
-	DBLIST_REMOVE(&db, ctx);
+	DBLIST_REMOVE(&db_root, ctx);
 
 	/* Disconnect all connections */
 	db_disconnect(ctx);
