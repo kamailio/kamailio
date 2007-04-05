@@ -33,6 +33,8 @@
 
 extern int is_bla_aor;
 extern str default_domain;
+extern str header_name;
+
 extern send_publish_t pua_send_publish;
 extern send_subscribe_t pua_send_subscribe;
 extern query_dialog_t pua_is_dialog;

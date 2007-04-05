@@ -50,7 +50,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	str subs_state;
 	int found= 0;
 	str extra_headers;
-	static char buf[100];
+	static char buf[255];
 	xmlDoc* doc= NULL;
 	xmlNode* node= NULL, *dialog_node= NULL;
 	char* stare= NULL;
@@ -216,8 +216,10 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 
 /* build extra_headers with Sender*/
 	extra_headers.s= buf;
-	memcpy(extra_headers.s, "Sender: ", 8);
-	extra_headers.len= 8;
+	memcpy(extra_headers.s, header_name.s, header_name.len);
+	extra_headers.len= header_name.len;
+	memcpy(extra_headers.s+extra_headers.len,": ",2);
+	extra_headers.len= 2;
 	memcpy(extra_headers.s+ extra_headers.len, dialog.pres_uri->s,
 			dialog.pres_uri->len);
 	extra_headers.len+= dialog.pres_uri->len;

@@ -40,6 +40,7 @@ pua_api_t pua;
 /* Structure containing pointers to usrloc functions */
 usrloc_api_t ul;
 str default_domain= {NULL, 0};
+str header_name= {0, 0};
 int is_bla_aor= 0;
 static int mod_init(void);
 static int child_init(int);
@@ -59,6 +60,7 @@ static cmd_export_t cmds[]=
 static param_export_t params[]=
 {
 	{"default_domain",	 STR_PARAM, &default_domain.s	 },
+	{"header_name",      STR_PARAM, &header_name.s       },
 	{0,							 0,			0            }
 };
 
@@ -85,6 +87,20 @@ static int mod_init(void)
 	DBG("pua_bla: mod_init...\n");
 	bind_pua_t bind_pua;
 	bind_usrloc_t bind_usrloc;
+	
+	if(default_domain.s == NULL )
+	{	
+		LOG(L_ERR, "pua_bla: default domain not found\n");
+		return -1;
+	}
+	default_domain.len= strlen(default_domain.s);
+
+	if(header_name.s == NULL )
+	{	
+		LOG(L_ERR, "pua_bla: default domain not found\n");
+		return -1;
+	}
+	header_name.len= strlen(header_name.s);
 
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
@@ -160,12 +176,6 @@ static int mod_init(void)
 				" delete\n");
 		return -1;
 	}
-	if(default_domain.s == NULL )
-	{	
-		LOG(L_ERR, "pua_bla: default domain not found\n");
-		return -1;
-	}
-	default_domain.len= strlen(default_domain.s);
 
 	return 0;
 }
