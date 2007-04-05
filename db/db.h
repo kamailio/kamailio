@@ -48,17 +48,37 @@
 extern "C" {
 #endif /* __cplusplus */
 
+
+/*
+ * Various database flags shared by modules 
+ */
+#define DB_LOAD_SER   (1 << 0)  /* The row should be loaded by SER */
+#define DB_DISABLED   (1 << 1)  /* The row is disabled */
+#define DB_CANON      (1 << 2)  /* Canonical entry (domain or uri) */
+#define DB_IS_TO      (1 << 3)  /* The URI can be used in To */
+#define DB_IS_FROM    (1 << 4)  /* The URI can be used in From */
+#define DB_FOR_SERWEB (1 << 5)  /* Credentials instance can be used by serweb */
+#define DB_PENDING    (1 << 6)
+#define DB_DELETED    (1 << 7)
+#define DB_CALLER_DELETED (1 << 8) /* Accounting table */
+#define DB_CALLEE_DELETED (1 << 9) /* Accounting table */
+#define DB_MULTIVALUE     (1 << 10) /* Attr_types table */
+#define DB_FILL_ON_REG    (1 << 11) /* Attr_types table */
+#define DB_REQUIRED       (1 << 12) /* Attr_types table */
+#define DB_DIR            (1 << 13) /* Domain_settings table */
+
+
 struct db_gen;
 
 
-DBLIST_HEAD(db_root);
+DBLIST_HEAD(_db_root);
 
 /** \brief The root of all DB API structures
  *
  *  This is the root linked list of all database
  *  structures allocated in SER
  */
-extern struct db_root db;
+extern struct _db_root db_root;
 
 #ifdef __cplusplus
 }

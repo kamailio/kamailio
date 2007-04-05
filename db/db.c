@@ -44,6 +44,6 @@
 #include "db_drv.h"
 #include "db.h"
 
-struct db_root db = DBLIST_INITIALIZER(db);
+struct _db_root db_root = DBLIST_INITIALIZER(db_root);
 
 /** @} */
