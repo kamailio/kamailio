@@ -60,7 +60,8 @@ typedef int (*db_next_func_t)(struct db_res* res);
 enum db_cmd_type {
 	DB_PUT,  /* Insert or update new record in database */
 	DB_DEL,  /* Delete all matching records from database */
-	DB_GET   /* Get matching records from database */
+	DB_GET,  /* Get matching records from database */
+	DB_SQL,  /* Raw SQL query */
 };
 
 typedef struct db_cmd {

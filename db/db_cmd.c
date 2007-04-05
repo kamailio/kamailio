@@ -98,6 +98,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			case DB_PUT: fname = "db_put"; break;
 			case DB_DEL: fname = "db_del"; break;
 			case DB_GET: fname = "db_get"; break;
+			case DB_SQL: fname = "db_sql"; break;
 			default: ERR("db_cmd: Unsupported command type\n"); goto err;
 			}
 
@@ -159,7 +160,7 @@ int db_exec(db_res_t** res, db_cmd_t* cmd)
 {
 	db_res_t* r = NULL;
 
-	if (cmd->type == DB_GET) {
+	if (res) {
 		r = db_res(cmd);
 		if (r == NULL) return -1;
 		if (res) *res = r;
