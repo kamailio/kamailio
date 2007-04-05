@@ -71,8 +71,7 @@ extern struct hash_entry*** hash;  /* Pointer to the current hash table */
 extern struct hash_entry** hash_1; /* Hash table 1 */
 extern struct hash_entry** hash_2; /* Hash table 2 */
 
-extern db_con_t* con;
-extern db_func_t db;
+extern db_cmd_t* load_domains_cmd, *get_did_cmd, *load_attrs_cmd;
 
 int reload_domain_list(void);
 

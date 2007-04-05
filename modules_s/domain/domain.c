@@ -178,86 +178,60 @@ void free_domain_list(domain_t* list)
 int db_load_domain_attrs(domain_t* d)
 {
     int_str name, v;
-    str avp_name, avp_val;
-    int i, type, n;
-    db_key_t keys[1], cols[4];
+	str avp_val;
     db_res_t* res;
-    db_val_t kv[1], *val;
+	db_rec_t* rec;
     unsigned short flags;
     
-    if (!con) {
-	LOG(L_ERR, "domain:db_load_domain_attrs: Invalid database handle\n");
+	load_attrs_cmd->params[0].v.str = d->did;
+
+	if (db_exec(&res, load_attrs_cmd) < 0) {
+		ERR("Error while quering database\n");
 		return -1;
     }
     
-    keys[0] = domattr_did.s;
-    kv[0].type = DB_STR;
-    kv[0].nul = 0;
-    kv[0].val.str_val = d->did;
-    
-    cols[0] = domattr_name.s;
-    cols[1] = domattr_type.s;
-    cols[2] = domattr_value.s;
-    cols[3] = domattr_flags.s;
-    
-    if (db.use_table(con, domattr_table.s) < 0) {
-	LOG(L_ERR, "domain:db_load_domain_attrs Error in use_table\n");
-	return -1;
+	rec = db_first(res);
+	while(rec) {
+		if (rec->fld[0].flags & DB_NULL ||
+			rec->fld[1].flags & DB_NULL ||
+			rec->fld[3].flags & DB_NULL) {
+			ERR("Skipping row containing NULL entries\n");
+			goto skip;
+		}
+		
+		if ((rec->fld[3].v.int4 & DB_LOAD_SER) == 0) goto skip;
+	
+		/* Get AVP name */
+		name.s = rec->fld[0].v.str;
+		
+		/* Test for NULL value */
+		if (rec->fld[2].flags & DB_NULL) {
+			avp_val.s = 0;
+			avp_val.len = 0;
+		} else {
+			avp_val = rec->fld[2].v.str;
+		}
+		
+		flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
+		if (rec->fld[1].v.int4 == AVP_VAL_STR) {
+			/* String AVP */
+			v.s = avp_val;
+			flags |= AVP_VAL_STR;
+		} else {
+			/* Integer AVP */
+			str2int(&avp_val, (unsigned*)&v.n);
+		}
+		
+		if (add_avp_list(&d->attrs, flags, name, v) < 0) {
+			LOG(L_ERR, "domain:db_load_domain_attrs: Error while adding domain attribute %.*s to domain %.*s, skipping\n",
+				name.s.len, ZSW(name.s.s),
+				d->did.len, ZSW(d->did.s));
+		}
+		
+	skip:
+		rec = db_next(res);
     }
-    
-    if (db.query(con, keys, 0, kv, cols, 1, 4, 0, &res) < 0) {
-	LOG(L_ERR, "domain:db_load_domain_attrs: Error while quering database\n");
-	return -1;
-    }
-    
-    n = 0;
-    for(i = 0; i < res->n; i++) {
-	val = res->rows[i].values;
-	
-	if (val[0].nul || val[1].nul || val[3].nul) {
-	    LOG(L_ERR, "domain:db_load_domain_attrs: Skipping row containing NULL entries\n");
-	    continue;
-	}
-	
-	if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
-	
-	n++;
-	     /* Get AVP name */
-	avp_name.s = (char*)val[0].val.string_val;
-	avp_name.len = strlen(avp_name.s);
-	name.s = avp_name;
-	
-	     /* Get AVP type */
-	type = val[1].val.int_val;
-	
-	     /* Test for NULL value */
-	if (val[2].nul) {
-	    avp_val.s = 0;
-	    avp_val.len = 0;
-	} else {
-	    avp_val.s = (char*)val[2].val.string_val;
-	    avp_val.len = strlen(avp_val.s);
-	}
-	
-	flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
-	if (type == AVP_VAL_STR) {
-		 /* String AVP */
-	    v.s = avp_val;
-	    flags |= AVP_VAL_STR;
-	} else {
-		 /* Integer AVP */
-	    str2int(&avp_val, (unsigned*)&v.n);
-	}
-
-	if (add_avp_list(&d->attrs, flags, name, v) < 0) {
-	    LOG(L_ERR, "domain:db_load_domain_attrs: Error while adding domain attribute %.*s to domain %.*s, skipping\n",
-		avp_name.len, ZSW(avp_name.s),
-		d->did.len, ZSW(d->did.s));
-	    continue;
-	}
-    }
-    DBG("domain:db_load_domain_attrs: %d domain attributes found, %d loaded\n", res->n, n);
-    db.free_result(con, res);
+    db_res_free(res);
     return 0;
 }
 
@@ -267,79 +241,61 @@ int db_load_domain_attrs(domain_t* d)
  */
 int load_domains(domain_t** dest)
 {
-	db_key_t cols[3];
-	db_res_t* res;
-	db_row_t* row;
-	db_val_t* val;
-	unsigned int flags, i;
-	str did, domain;
+	db_res_t* res = NULL;
+	db_rec_t* rec;
+	unsigned int flags;
 	domain_t* d, *list;
 
-	if (!con) {
-		LOG(L_ERR, "domain:load_domains: Invalid database handle\n");
-		return -1;
-	}
-
 	list = 0;
-	cols[0] = did_col.s;
-	cols[1] = domain_col.s;
-	cols[2] = flags_col.s;
 
-	if (db.use_table(con, domain_table.s) < 0) {
-		LOG(L_ERR, "domain:load_domains: Error while trying to use domain table\n");
+	if (db_exec(&res, load_domains_cmd) < 0) {
+		ERR("Error while querying database\n");
 		return -1;
 	}
 
-	if (db.query(con, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
-		LOG(L_ERR, "domain:load_domains: Error while querying database\n");
-		return -1;
-	}
+	rec = db_first(res);
 
-	row = res->rows;
-	DBG("domain:load_domains: Number of rows in domain table: %d\n", res->n);
-		
-	for (i = 0; i < res->n; i++) {
-		val = row[i].values;
-
+	while(rec) {
 		     /* Do not assume that the database server performs any constrain
 		      * checking (dbtext does not) and perform sanity checks here to
 		      * make sure that we only load good entried
 		      */
-		if (val[0].nul || val[1].nul || val[2].nul) {
-			LOG(L_ERR, "domain:load_domains: Row with NULL column(s), skipping\n");
-			continue;
+		if (rec->fld[0].flags & DB_NULL || 
+			rec->fld[1].flags & DB_NULL || 
+			rec->fld[2].flags & DB_NULL) {
+			ERR("Row with NULL column(s), skipping\n");
+			goto skip;
 		}
 
-		did.s = (char*)val[0].val.string_val;
-		did.len = strlen(did.s);
-		domain.s = (char*)val[1].val.string_val;
-		domain.len = strlen(domain.s);
-		flags = val[2].val.int_val;
-
-		     /* Skip entries that are disabled/scheduled for removal */
-		if (flags & DB_DISABLED) continue;
+		flags = rec->fld[2].v.int4;
+		
+		/* Skip entries that are disabled/scheduled for removal */
+		if (flags & DB_DISABLED) goto skip;
 		     /* Skip entries that are for serweb/ser-ctl only */
-		if (!(flags & DB_LOAD_SER)) continue;
+		if (!(flags & DB_LOAD_SER)) goto skip;
 		
 		DBG("domain:load_domains: Processing entry (%.*s, %.*s, %u)\n",
-		    did.len, ZSW(did.s),
-		    domain.len, ZSW(domain.s),
+		    rec->fld[0].v.str.len, ZSW(rec->fld[0].v.str.s),
+		    rec->fld[1].v.str.len, ZSW(rec->fld[1].v.str.s),
 		    flags);
 
-		d = domain_search(list, &did);
+		d = domain_search(list, &rec->fld[0].v.str);
 		if (d) {
-			     /* DID exists in the list, update it */
-			if (domain_add(d, &domain, flags) < 0) goto error;
+			/* DID exists in the list, update it */
+			if (domain_add(d, &rec->fld[0].v.str, flags) < 0) goto error;
 		} else {
 			     /* DID does not exist yet, create a new entry */
-			d = new_domain(&did, &domain, flags);
+			d = new_domain(&rec->fld[0].v.str, &rec->fld[1].v.str, flags);
 			if (!d) goto error;
 			d->next = list;
 			list = d;
 		}
+
+	skip:
+		rec = db_next(res);
 	}
 
-	db.free_result(con, res);
+	db_res_free(res);
 
 	if (load_domain_attrs) {
 		d = list;
@@ -353,6 +309,7 @@ int load_domains(domain_t** dest)
 	return 0;
 
  error:
+	if (res) db_res_free(res);
 	free_domain_list(list);
 	return 1;
 }

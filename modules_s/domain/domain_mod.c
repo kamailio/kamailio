@@ -108,8 +108,8 @@ str domattr_flags = STR_STATIC_INIT(DOMATTR_FLAGS);
 
 int load_domain_attrs = 0;  /* Load attributes for each domain by default */
 
-db_con_t* con = 0;
-db_func_t db;
+static db_ctx_t* db = NULL;
+db_cmd_t* load_domains_cmd = NULL, *get_did_cmd = NULL, *load_attrs_cmd = NULL;
 
 struct hash_entry*** active_hash = 0; /* Pointer to current hash table */
 struct hash_entry** hash_1 = 0;       /* Pointer to hash table 1 */
@@ -172,62 +172,66 @@ struct module_exports exports = {
 };
 
 
-static int connect_db(void)
+static int init_db(void)
 {
-    if (db.init == 0) {
-	ERR("BUG: No database module found\n");
-	return -1;
-    }
-    
-    con = db.init(db_url.s);
-    if (con == 0){
-	ERR("Unable to connect database %s", db_url.s);
-	return -1;
-    }
-    return 0;
+	db_fld_t res1[] = {
+		{.name = did_col.s,    DB_STR},
+		{.name = domain_col.s, DB_STR},
+		{.name = flags_col.s,  DB_BITMAP},
+		{.name = NULL}
+	};
+	db_fld_t res2[] = {
+		{.name = did_col.s, DB_STR},
+		{.name = NULL}
+	};
+	db_fld_t res3[] = {
+		{.name = domattr_name.s, .type = DB_STR},
+		{.name = domattr_type.s, .type = DB_INT},
+		{.name = domattr_value.s, .type = DB_STR},
+		{.name = domattr_flags.s, .type = DB_BITMAP},
+		{.name = NULL}
+	};
+	db_fld_t params[] = {
+		{.name = domain_col.s, DB_STR},
+		{.name = NULL}
+	};
+	db_fld_t params2[] = {
+		{.name = domattr_did.s, .type = DB_STR},
+		{.name = NULL}
+	};
+
+	db = db_ctx("domain");
+	if (db == NULL) {
+		ERR("Error while initializing database layer\n");
+		return -1;
+	}
+	if (db_add_db(db, db_url.s) < 0) return -1;
+	if (db_connect(db) < 0) return -1;
+	
+	load_domains_cmd = db_cmd(DB_GET, db, domain_table.s, res1, NULL);
+	if (load_domains_cmd == NULL) {
+		ERR("Error while preparing load_domains database command\n");
+		return -1;
+	}
+	
+	get_did_cmd = db_cmd(DB_GET, db, domain_table.s, res2, params);
+	if (get_did_cmd == NULL) {
+		ERR("Error while preparing load_domains database command\n");
+		return -1;
+	}
+
+	load_attrs_cmd = db_cmd(DB_GET, db, domattr_table.s, res3, params2);
+	if (load_attrs_cmd == NULL) {
+		ERR("Error while preparing load_attrs database command\n");
+		return -1;
+	}
+
+	return 0;
 }
 
-
-static void disconnect_db(void)
-{
-    if (con && db.close){
-	db.close(con);
-	con = 0;
-    }
-}
-
-
-/*
- * Check version of domain and domain_attrs tables
- */
-static int check_version(void)
-{
-    int ver;
-    
-	 /* Check table version */
-    ver = table_version(&db, con, &domain_table);
-    if (ver < 0) {
-	ERR("Error while querying table version\n");
-	return -1;
-    } else if (ver < DOMAIN_TABLE_VERSION) {
-	ERR("Invalid table version, update your database schema\n");
-	return -1;
-    }
-    
-    ver = table_version(&db, con, &domattr_table);
-    if (ver < 0) {
-	ERR("Error while querying table version\n");
-	return -1;
-    } else if (ver < DOMATTR_TABLE_VERSION) {
-	ERR("Invalid table version, update your database schema\n");
-	return -1;
-    }
-    return 0;
-}
 
 static int allocate_tables(void)
 {
-
     active_hash = (struct hash_entry***)shm_malloc(sizeof(struct hash_entry**));
     hash_1 = (struct hash_entry**)shm_malloc(sizeof(struct hash_entry*) * HASH_SIZE);
     hash_2 = (struct hash_entry**)shm_malloc(sizeof(struct hash_entry*) * HASH_SIZE);
@@ -235,8 +239,8 @@ static int allocate_tables(void)
     domains_2 = (domain_t**)shm_malloc(sizeof(domain_t*));
     
     if (!hash_1 || !hash_2 || !active_hash || !domains_1 || !domains_2) {
-	LOG(L_ERR, "ERROR:domain:allocate_tables: No memory left\n");
-	return -1;
+		LOG(L_ERR, "ERROR:domain:allocate_tables: No memory left\n");
+		return -1;
     }
     memset(hash_1, 0, sizeof(struct hash_entry*) * HASH_SIZE);
     memset(hash_2, 0, sizeof(struct hash_entry*) * HASH_SIZE);
@@ -253,48 +257,69 @@ static void destroy_tables(void)
     if (active_hash) shm_free(active_hash);
     
     if (domains_1) {
-	free_domain_list(*domains_1);
-	shm_free(domains_1);
+		free_domain_list(*domains_1);
+		shm_free(domains_1);
     }
     
     if (domains_2) {
-	free_domain_list(*domains_2);
-	shm_free(domains_2);
+		free_domain_list(*domains_2);
+		shm_free(domains_2);
     }
 }
 
 
 static int mod_init(void)
 {
-    if (bind_dbmod(db_url.s, &db )) {
-	LOG(L_CRIT, "Cannot bind to database module! "
-	     "Did you forget to load a database module ?\n");
-	return -1;
-    }
-    
-	 /* Check if cache needs to be loaded from domain table */
+	/* Check if cache needs to be loaded from domain table */
     if (db_mode) {
-	if (connect_db() < 0) goto error;
-	if (check_version() < 0) goto error;
-	if (allocate_tables() < 0) goto error;
-	if (reload_domain_list() < 0) goto error;
-	disconnect_db();
+		if (init_db() < 0) goto error;
+
+		if (allocate_tables() < 0) goto error;
+		if (reload_domain_list() < 0) goto error;
+
+		db_cmd_free(load_domains_cmd);
+		load_domains_cmd = NULL;
+
+		db_cmd_free(load_attrs_cmd);
+		load_attrs_cmd = NULL;
+
+		db_cmd_free(get_did_cmd);
+		get_did_cmd = NULL;
+
+		if (db) db_disconnect(db);
+		db_ctx_free(db);
+		db = NULL;
     }
     
     return 0;
     
  error:
-    disconnect_db();
+	if (get_did_cmd) {
+		db_cmd_free(get_did_cmd);
+		get_did_cmd = NULL;
+	}
+	if (load_domains_cmd) {
+		db_cmd_free(load_domains_cmd);
+		load_domains_cmd = NULL;
+	}
+	if (load_attrs_cmd) {
+		db_cmd_free(load_attrs_cmd);
+		load_attrs_cmd = NULL;
+	}
+	if (db) db_disconnect(db);
+	db_ctx_free(db);
+	db = NULL;
     return -1;
 }
 
 
 static int child_init(int rank)
 {
-	 /* Check if database is needed by child */
+	/* Check if database is needed by child */
     if (rank > 0 || rank == PROC_RPC || rank == PROC_UNIXSOCK) {
-	if (connect_db() < 0) return -1;
-    }
+		if (init_db() < 0) return -1;
+	}
+
     return 0;
 }
 
@@ -302,27 +327,28 @@ static int child_init(int rank)
 static void free_old_domain(domain_t* d)
 {
     int i;
+
     if (!d) return;
     if (d->did.s) {
-	pkg_free(d->did.s);
-	d->did.s = NULL;
+		pkg_free(d->did.s);
+		d->did.s = NULL;
     }
     
     if (d->domain) {
-	for(i = 0; i < d->n; i++) {
-	    if (d->domain[i].s) pkg_free(d->domain[i].s);
-	}
-	pkg_free(d->domain);
-	d->domain = NULL;
+		for(i = 0; i < d->n; i++) {
+			if (d->domain[i].s) pkg_free(d->domain[i].s);
+		}
+		pkg_free(d->domain);
+		d->domain = NULL;
     }
     
     if (d->flags) {
-	pkg_free(d->flags);
-	d->flags = NULL;
+		pkg_free(d->flags);
+		d->flags = NULL;
     }
-
+	
     if (d->attrs) {
-	destroy_avp_list(&d->attrs);
+		destroy_avp_list(&d->attrs);
     }
 }
 
@@ -334,9 +360,19 @@ static void destroy(void)
 	  * it is closed in mod_init already
 	  */
     if (!db_mode) {
-	free_old_domain(&dom_buf[0]);
-	free_old_domain(&dom_buf[1]);
+		free_old_domain(&dom_buf[0]);
+		free_old_domain(&dom_buf[1]);
     }
+
+	if (load_domains_cmd) db_cmd_free(load_domains_cmd);
+	if (get_did_cmd) db_cmd_free(get_did_cmd);
+	if (load_attrs_cmd) db_cmd_free(load_attrs_cmd);
+
+	if (db) {
+		db_disconnect(db);
+		db_ctx_free(db);
+	}
+
     destroy_tables();
 }
 
@@ -352,76 +388,56 @@ static void destroy(void)
  */
 static int db_get_did(str* did, str* domain)
 {
-    db_key_t keys[1], cols[2];
-    db_val_t vals[1], *val;
-    db_res_t* res;
-    str t;
-    
-    keys[0] = domain_col.s;
-    cols[0] = did_col.s;
-    cols[1] = flags_col.s;
-    res = 0;
+    db_res_t* res = NULL;
+	db_rec_t* rec;
     
     if (!domain) {
-	ERR("BUG:Invalid parameter value\n");
-	goto err;
+		ERR("BUG:Invalid parameter value\n");
+		goto err;
     }
     
-    if (db.use_table(con, domain_table.s) < 0) {
-	ERR("Error while trying to use domain table\n");
-	goto err;
-    }
-    
-    vals[0].type = DB_STR;
-    vals[0].nul = 0;
-    vals[0].val.str_val = *domain;
-    
-    if (db.query(con, keys, 0, vals, cols, 1, 2, 0, &res) < 0) {
-	ERR("Error while querying database\n");
-	goto err;
-    }
-    
-    if (res->n > 0) {
-	val = res->rows[0].values;
-	
-	     /* Test flags first, we are only interested in rows
-	      * that are not disabled
-	      */
-	if (val[1].nul || (val[1].val.int_val & DB_DISABLED)) {
-	    db.free_result(con, res);
-	    return 0;
+	get_did_cmd->params[0].v.str = *domain;
+
+	if (db_exec(&res, get_did_cmd) < 0) {
+		ERR("Error in database query\n");
+		goto err;
 	}
-	
-	if (did) {
-	    if (val[0].nul) {
-		did->len = 0;
-		did->s = 0;
-		WARN("Domain '%.*s' has NULL did\n", domain->len, ZSW(domain->s));
-	    } else {
-		t.s = (char*)val[0].val.string_val;
-		t.len = strlen(t.s);
-		did->s = pkg_malloc(t.len);
-		if (!did->s) {
-		    ERR("No memory left\n");
-		    goto err;
+
+	rec = db_first(res);
+    if (rec) {
+		/* Test flags first, we are only interested in rows
+		 * that are not disabled
+		 */
+		if (rec->fld[1].flags & DB_NULL || (rec->fld[1].v.bitmap & DB_DISABLED)) {
+			db_res_free(res);
+			return 0;
 		}
-		memcpy(did->s, t.s, t.len);
-		did->len = t.len;
-	    }
-	}
-
-	db.free_result(con, res);
-	return 1;
+		
+		if (did) {
+			if (rec->fld[0].flags & DB_NULL) {
+				did->len = 0;
+				did->s = 0;
+				WARN("Domain '%.*s' has NULL did\n", domain->len, ZSW(domain->s));
+			} else {
+				did->s = pkg_malloc(rec->fld[0].v.str.len);
+				if (!did->s) {
+					ERR("No memory left\n");
+					goto err;
+				}
+				memcpy(did->s, rec->fld[0].v.str.s, rec->fld[0].v.str.len);
+				did->len = rec->fld[0].v.str.len;
+			}
+		}
+		
+		db_res_free(res);
+		return 1;
     } else {
-	db.free_result(con, res);
-	return 0;
+		db_res_free(res);
+		return 0;
     }
-
+	
  err:
-    if (res) {
-	db.free_result(con, res);
-	res = 0;
-    }
+    if (res) db_res_free(res);
     return -1;
 }
 
@@ -432,31 +448,31 @@ static int db_get_did(str* did, str* domain)
 static int is_local(struct sip_msg* msg, char* fp, char* s2)
 {
     str domain, tmp;
-
+	
     if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
-	ERR("Unable to get domain to check\n");
-	return -1;
+		ERR("Unable to get domain to check\n");
+		return -1;
     }
-
+	
     tmp.s = pkg_malloc(domain.len);
     if (!tmp.s) {
-	ERR("No memory left\n");
-	return -1;
+		ERR("No memory left\n");
+		return -1;
     }
     memcpy(tmp.s, domain.s, domain.len);
     tmp.len = domain.len;
     strlower(&tmp);
     
     if (!db_mode) {
-	switch(db_get_did(0, &tmp)) {
-	case 1:  goto found;
-	default: goto not_found;
-	}
+		switch(db_get_did(0, &tmp)) {
+		case 1:  goto found;
+		default: goto not_found;
+		}
     } else {
-	if (hash_lookup(0, *active_hash, &tmp) == 1) goto found;
-	else goto not_found;
+		if (hash_lookup(0, *active_hash, &tmp) == 1) goto found;
+		else goto not_found;
     }
-
+	
  found:
     pkg_free(tmp.s);
     return 1;
@@ -472,26 +488,26 @@ static int db_load_domain(domain_t** d, unsigned long flags, str* domain)
     int_str name, val;
     domain_t* p;
     str name_s = STR_STATIC_INIT(AVP_DID);
-
+	
     if (flags & AVP_TRACK_FROM) {
-	p = &dom_buf[0];
+		p = &dom_buf[0];
     } else {
-	p = &dom_buf[1];
+		p = &dom_buf[1];
     }
-
+	
     free_old_domain(p);
-
+	
     ret = db_get_did(&p->did, domain);
     if (ret != 1) return ret;
     if (load_domain_attrs) {
-	if (db_load_domain_attrs(p) < 0) return -1;
+		if (db_load_domain_attrs(p) < 0) return -1;
     }
-
-	 /* Create an attribute containing did of the domain */
+	
+	/* Create an attribute containing did of the domain */
     name.s = name_s;
     val.s = p->did;
     if (add_avp_list(&p->attrs, AVP_CLASS_DOMAIN | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) return -1;
-
+	
     *d = p;
     return 0;
 }
@@ -507,31 +523,31 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
     track = 0;
     
     if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
-	ERR("Cannot get domain name to lookup\n");
-	return -1;
+		ERR("Cannot get domain name to lookup\n");
+		return -1;
     }
     
     tmp.s = pkg_malloc(domain.len);
     if (!tmp.s) {
-	ERR("No memory left\n");
-	return -1;
+		ERR("No memory left\n");
+		return -1;
     }
     memcpy(tmp.s, domain.s, domain.len);
     tmp.len = domain.len;
     strlower(&tmp);
-
+	
     if (db_mode) {
-	if (hash_lookup(&d, *active_hash, &tmp) == 1) {
-	    set_avp_list((unsigned long)flags, &d->attrs);
-	    ret = 1;
-	}
+		if (hash_lookup(&d, *active_hash, &tmp) == 1) {
+			set_avp_list((unsigned long)flags, &d->attrs);
+			ret = 1;
+		}
     } else {
-	if (db_load_domain(&d, (unsigned long)flags, &tmp) == 0) {
-	    set_avp_list((unsigned long)flags, &d->attrs);
-	    ret = 1;
-	}
+		if (db_load_domain(&d, (unsigned long)flags, &tmp) == 0) {
+			set_avp_list((unsigned long)flags, &d->attrs);
+			ret = 1;
+		}
     }
-
+	
     pkg_free(tmp.s);
     return ret;
 }
@@ -546,26 +562,26 @@ static int get_did(str* did, str* domain)
     track = 0;
     
     if (!db_mode) {
-	ERR("lookup_domain only works in cache mode\n");
-	return -1;
+		ERR("lookup_domain only works in cache mode\n");
+		return -1;
     }
     
     tmp.s = pkg_malloc(domain->len);
     if (!tmp.s) {
-	ERR("No memory left\n");
-	return -1;
+		ERR("No memory left\n");
+		return -1;
     }
     memcpy(tmp.s, domain->s, domain->len);
     tmp.len = domain->len;
     strlower(&tmp);
     
     if (hash_lookup(&d, *active_hash, &tmp) == 1) {
-	*did = d->did;
-	pkg_free(tmp.s);
-	return 1;
+		*did = d->did;
+		pkg_free(tmp.s);
+		return 1;
     } else {
-	pkg_free(tmp.s);
-	return -1;
+		pkg_free(tmp.s);
+		return -1;
     }
 }
 
@@ -575,15 +591,15 @@ int reload_domain_list(void)
     struct hash_entry** new_table;
     domain_t** new_list;
     
-	 /* Choose new hash table and free its old contents */
+	/* Choose new hash table and free its old contents */
     if (*active_hash == hash_1) {
-	free_table(hash_2);
-	new_table = hash_2;
-	new_list = domains_2;
+		free_table(hash_2);
+		new_table = hash_2;
+		new_list = domains_2;
     } else {
-	free_table(hash_1);
-	new_table = hash_1;
-	new_list = domains_1;
+		free_table(hash_1);
+		new_table = hash_1;
+		new_list = domains_1;
     }
     
     if (load_domains(new_list) < 0) goto error;
@@ -602,39 +618,39 @@ static int lookup_domain_fixup(void** param, int param_no)
 {
     unsigned long flags;
     char* s;
-    
-    if (param_no == 1) {
-	     /* Determine the track and class of attributes to be loaded */
-	s = (char*)*param;
-	flags = 0;
-	if (*s != '$' || (strlen(s) != 3)) {
-	    ERR("Invalid parameter value, $xy expected\n");
-	    return -1;
-	}
-	switch((s[1] << 8) + s[2]) {
-	case 0x4644: /* $fd */
-	case 0x6664:
-	case 0x4664:
-	case 0x6644:
-	    flags = AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
-	    break;
-	    
-	case 0x5444: /* $td */
-	case 0x7464:
-	case 0x5464:
-	case 0x7444:
-	    flags = AVP_TRACK_TO | AVP_CLASS_DOMAIN;
-	    break;
-	    
-	default:
-	    ERR("Invalid parameter value: '%s'\n", s);
-	    return -1;
-	}
 	
-	pkg_free(*param);
-	*param = (void*)flags;
+    if (param_no == 1) {
+		/* Determine the track and class of attributes to be loaded */
+		s = (char*)*param;
+		flags = 0;
+		if (*s != '$' || (strlen(s) != 3)) {
+			ERR("Invalid parameter value, $xy expected\n");
+			return -1;
+		}
+		switch((s[1] << 8) + s[2]) {
+		case 0x4644: /* $fd */
+		case 0x6664:
+		case 0x4664:
+		case 0x6644:
+			flags = AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
+			break;
+			
+		case 0x5444: /* $td */
+		case 0x7464:
+		case 0x5464:
+		case 0x7444:
+			flags = AVP_TRACK_TO | AVP_CLASS_DOMAIN;
+			break;
+			
+		default:
+			ERR("Invalid parameter value: '%s'\n", s);
+			return -1;
+		}
+		
+		pkg_free(*param);
+		*param = (void*)flags;
     } else if (param_no == 2) {
-	return fixup_var_str_12(param, 2);
+		return fixup_var_str_12(param, 2);
     }
     
     return 0;
