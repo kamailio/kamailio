@@ -76,7 +76,7 @@
 		<title>Set <varname>default_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("default_domain", "default_domain", "openser.org");
+modparam(pua_usrloc, "default_domain", "openser.org");
 ...
 
 <section>

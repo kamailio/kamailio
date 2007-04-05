@@ -72,9 +72,11 @@ Chapter 1. User's Guide
    The default domain to use when constructing the presentity uri
    if it is missing from recorded aor.
 
+   Default value is "NULL". 
+
    Example 1-1. Set default_domain parameter
 ...
-modparam("default_domain", "default_domain", "openser.org");
+modparam(pua_usrloc, "default_domain", "openser.org");
 ...
      _________________________________________________________
 
