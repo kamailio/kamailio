@@ -27,5 +27,4 @@
 
 #include "../../db/db.h"
 
-extern db_con_t* con;
-extern db_func_t db;
+extern db_ctx_t* ctx;
