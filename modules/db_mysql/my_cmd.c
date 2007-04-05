@@ -466,6 +466,19 @@ int my_cmd_read(db_res_t* res, db_cmd_t* cmd)
 }
 
 
+int my_cmd_sql(db_res_t* res, db_cmd_t* cmd)
+{
+	struct my_cmd* mcmd;
+   
+	mcmd = DB_GET_PAYLOAD(cmd);
+	if (mysql_stmt_execute(mcmd->st)) {
+		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
+		return -1;
+	}
+	return 0;
+}
+
+
 static int bind_params(MYSQL_STMT* st, db_fld_t* fld)
 {
 	int i, n;
@@ -711,6 +724,17 @@ int my_cmd(db_cmd_t* cmd)
 			if (bind_params(res->st, cmd->params) < 0) goto error;
 		}
 		if (bind_result(res->st, cmd->result) < 0) goto error;
+		break;
+
+	case DB_SQL:
+		if (mysql_stmt_prepare(res->st, cmd->table.s, cmd->table.len)) {
+			ERR("Error while preparing raw SQL query: %s\n",
+				mysql_stmt_error(res->st));
+			goto error;
+		}
+		if (!DB_FLD_EMPTY(cmd->result)) {
+			if (bind_result(res->st, cmd->result) < 0) goto error;
+		}
 		break;
 	}
 
