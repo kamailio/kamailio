@@ -375,8 +375,8 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 	struct my_fld* rp; /* Payload of the current field in result */
 	struct tm t;
 
-	/* Iterate through all the query parameters and update
-	 * their values if needed
+	/* Iterate through all the fields returned by MySQL and convert
+	 * them to DB API representation if necessary
 	 */
 
 	for(i = 0; i < st->field_count; i++) {
