@@ -34,7 +34,6 @@
 #include "pua_bla.h"
 
 extern int is_bla_aor;
-str default_domain={"192.168.2.132", 13};
 
 void bla_cb(ucontact_t* c, int type, void* param)
 {

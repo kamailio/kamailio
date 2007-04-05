@@ -39,7 +39,7 @@ MODULE_VERSION
 pua_api_t pua;
 /* Structure containing pointers to usrloc functions */
 usrloc_api_t ul;
-
+str default_domain= {NULL, 0};
 int is_bla_aor= 0;
 static int mod_init(void);
 static int child_init(int);
@@ -58,7 +58,8 @@ static cmd_export_t cmds[]=
 };
 static param_export_t params[]=
 {
-		{0,0,0}
+	{"default_domain",	 STR_PARAM, &default_domain.s	 },
+	{0,							 0,			0            }
 };
 
 /** module exports */
@@ -159,6 +160,12 @@ static int mod_init(void)
 				" delete\n");
 		return -1;
 	}
+	if(default_domain.s == NULL )
+	{	
+		LOG(L_ERR, "pua_bla: default domain not found\n");
+		return -1;
+	}
+	default_domain.len= strlen(default_domain.s);
 
 	return 0;
 }
