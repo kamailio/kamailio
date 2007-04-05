@@ -69,7 +69,6 @@ MODULE_VERSION
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
-static int mod_init(void);       /* Module initialization function */
 static int lookup_user(struct sip_msg* msg, char* s1, char* s2);
 static int lookup_user_2(struct sip_msg* msg, char* s1, char* s2);
 static int check_uri(struct sip_msg* msg, char* s1, char* s2);
@@ -99,8 +98,8 @@ str scheme_col   = STR_STATIC_INIT(SCHEME_COL);
 str canonical_avp = STR_STATIC_INIT(CANONICAL_AVP);
 str canonical_avp_val = STR_STATIC_INIT(CANONICAL_AVP_VAL);
 
-db_con_t* con = 0;
-db_func_t db;
+static db_ctx_t* db = NULL;
+static db_cmd_t* lookup_uid_cmd = NULL;
 
 static domain_get_did_t dm_get_did = NULL;
 
@@ -141,7 +140,7 @@ struct module_exports exports = {
 	cmds,      /* Exported functions */
 	0,         /* RPC methods */
 	params,    /* Exported parameters */
-	mod_init,  /* module initialization function */
+	0,         /* module initialization function */
 	0,         /* response function */
 	destroy,   /* destroy function */
 	0,         /* oncancel function */
@@ -154,72 +153,48 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
+	db_fld_t res[] = {
+		{.name = uid_col.s,   DB_STR},
+		{.name = flags_col.s, DB_BITMAP},
+		{.name = NULL}
+	};
+
+	db_fld_t params[] = {
+		{.name = username_col.s, DB_STR},
+		{.name = did_col.s,      DB_STR},
+		{.name = scheme_col.s,   DB_STR},
+		{.name = NULL}
+	};
+
 	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main or tcp_main processes */
-	con = db.init(db_url.s);
-	if (con == 0) {
-		LOG(L_ERR, "uri_db:child_init: Unable to connect to the database\n");
+
+	db = db_ctx("uri_db");
+	if (db == NULL) {
+		ERR("Error while initializing database layer\n");
+		return -1;
+	}
+	if (db_add_db(db, db_url.s) < 0) goto error;
+	if (db_connect(db) < 0) goto error;
+	
+	lookup_uid_cmd = db_cmd(DB_GET, db, uri_table.s, res, params);
+	if (lookup_uid_cmd == NULL) {
+		ERR("Error while building db query to load global attributes\n");
 		goto error;
 	}
 	return 0;
+
 error:
-	return -1;
-}
-
-
-/*
- * Module initialization function that is called before the main process forks
- */
-static int mod_init(void)
-{
-	int ver;
-
-	if (bind_dbmod(db_url.s, &db) < 0) {
-		LOG(L_ERR, "uri_db:mod_init: Unable to bind to the database module\n");
-		return -1;
-	}
-
-	if (!DB_CAPABILITY(db, DB_CAP_QUERY)) {
-		LOG(L_ERR, "uri_db:mod_init: Database module does not implement 'query' function\n");
-		return -1;
-	}
-
-	if (db.init == 0) {
-		LOG(L_CRIT, "uri_db:mod_init: Broken database driver\n");
-		return -1;
-	}
-
-        con = db.init(db_url.s);
-	if (con == 0) {
-		LOG(L_ERR, "uri_db:mod_init: Unable to open database connection\n");
-		return -1;
-	}
-	ver = table_version(&db, con, &uri_table);
-	db.close(con);
-	con = 0;
-
-	if (ver < 0) {
-		LOG(L_ERR, "uri_db:mod_init:"
-		    " Error while querying table version\n");
-		goto err;
-	} else if (ver < URI_TABLE_VERSION) {
-		LOG(L_ERR, "uri_db:mod_init: Invalid table version"
-		    " of uri table (use ser_mysql.sh reinstall)\n");
-		goto err;
-	}
-	return 0;
-
- err:
+	if (lookup_uid_cmd) db_cmd_free(lookup_uid_cmd);
+	if (db) db_ctx_free(db);
 	return -1;
 }
 
 
 static void destroy(void)
 {
-	if (con && db.close) {
-		db.close(con);
-		con = 0;
-	}
+	if (lookup_uid_cmd) db_cmd_free(lookup_uid_cmd);
+	if (db) db_ctx_free(db);
 }
 
 /*
@@ -232,25 +207,12 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 	struct to_body* from, *to;
 	struct sip_uri puri;
 	str did, uid;
-	db_key_t keys[3], cols[2];
-	db_val_t vals[3], *val;
 	db_res_t* res;
-	int flag, i, ret;
+	db_rec_t* rec;
+	int flag, ret;
 
 	int_str avp_name, avp_val;
 	flag=0; /*warning fix*/
-
-	keys[0] = username_col.s;
-	keys[1] = did_col.s;
-	keys[2] = scheme_col.s;
-	cols[0] = uid_col.s;
-	cols[1] = flags_col.s;
-
-	vals[0].type = DB_STR;
-	vals[0].nul = 0;
-
-	vals[2].type = DB_STR;
-	vals[2].nul = 0;
 
 	did.s = 0; did.len = 0;
 
@@ -271,8 +233,8 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing From URI\n");
 			return -1;
 		}
-		vals[0].val.str_val = puri.user;
-		uri_type_to_str(puri.type, &(vals[2].val.str_val));
+		lookup_uid_cmd->params[0].v.str = puri.user;
+		uri_type_to_str(puri.type, &(lookup_uid_cmd->params[2].v.str));
 	} else if (id == USE_TO) {
 		get_to_did(&did, msg);
 		if (!msg->to) {
@@ -290,63 +252,59 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing To URI\n");
 			return -1;
 		}
-		vals[0].val.str_val = puri.user;
-		uri_type_to_str(puri.type, &(vals[2].val.str_val));
+		lookup_uid_cmd->params[0].v.str = puri.user;
+		uri_type_to_str(puri.type, &(lookup_uid_cmd->params[2].v.str));
 		flag = DB_IS_TO;
 	} else {
 		get_to_did(&did, msg);
 		flag = DB_IS_TO;
 
 		if (parse_sip_msg_uri(msg) < 0) return -1;
-		vals[0].val.str_val = msg->parsed_uri.user;
-		uri_type_to_str(msg->parsed_uri.type, &(vals[2].val.str_val));
+		lookup_uid_cmd->params[0].v.str = msg->parsed_uri.user;
+		uri_type_to_str(msg->parsed_uri.type, &(lookup_uid_cmd->params[2].v.str));
 	}
 
-	vals[1].type = DB_STR;
-	vals[1].nul = 0;
 	if (did.s && did.len) {
-		vals[1].val.str_val = did;
+		lookup_uid_cmd->params[1].v.str = did;
 	} else {
 		LOG(L_DBG, "uri_db:lookup_uid: DID not found, using default value\n");
-		vals[1].val.str_val = default_did;
+		lookup_uid_cmd->params[1].v.str = default_did;
 	}
 
-	if (db.use_table(con, uri_table.s) < 0) {
-		LOG(L_ERR, "uri_db:lookup_uid: Error in use_table\n");
+	if (db_exec(&res, lookup_uid_cmd) < 0) {
+		LOG(L_ERR, "uri_db:lookup_uid: Error while executing database query\n");
 		return -1;
 	}
 
-	if (db.query(con, keys, 0, vals, cols, 3, 2, 0, &res) < 0) {
-		LOG(L_ERR, "uri_db:lookup_uid: Error in db_query\n");
-		return -1;
-	}
-
-	for(i = 0; i < res->n; i++) {
-		val = res->rows[i].values;
-
-		if (val[0].nul || val[1].nul) {
+	rec = db_first(res);
+	while(rec) {
+		if (rec->fld[0].flags & DB_NULL ||
+			rec->fld[1].flags & DB_NULL) {
 			LOG(L_ERR, "uri_db:lookup_uid: Bogus line in %s table\n", uri_table.s);
-			continue;
+			goto skip;
 		}
 
-		if ((val[1].val.int_val & DB_DISABLED)) continue; /* Skip disabled entries */
-		if ((val[1].val.int_val & DB_LOAD_SER) == 0) continue; /* Not for SER */
-		if ((val[1].val.int_val & flag) == 0) continue;        /* Not allowed in the header we are interested in */
+		if ((rec->fld[1].v.int4 & DB_DISABLED)) goto skip; /* Skip disabled entries */
+		if ((rec->fld[1].v.int4 & DB_LOAD_SER) == 0) goto skip; /* Not for SER */
+		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;        /* Not allowed in the header we are interested in */
 		goto found;
+
+	skip:
+		rec = db_next(res);
 	}
 	ret = -1; /* Not found -> not allowed */
 	goto freeres;
+
  found:
 	if (store) {
-		uid.s = (char*)val[0].val.string_val;
-		uid.len = strlen(uid.s);
+		uid = rec->fld[0].v.str;
 		if (id == USE_FROM) {
 			set_from_uid(&uid);
 		} else {
 			set_to_uid(&uid);
 			if (id == USE_RURI) {
 				     /* store as str|int avp if alias is canonical or not (1,0) */
-				if ((val[1].val.int_val & DB_CANON) != 0) {
+				if ((rec->fld[1].v.int4 & DB_CANON) != 0) {
 					avp_name.s = canonical_avp;
 					avp_val.s = canonical_avp_val;
 					add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
@@ -357,7 +315,7 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 	ret = 1;
 
  freeres:
-	db.free_result(con, res);
+	db_res_free(res);
 	return ret;
 }
 
@@ -377,90 +335,73 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 
 static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 {
-    db_key_t keys[3], cols[2];
-    db_val_t vals[3], *val;
     db_res_t* res;
+	db_rec_t* rec;
     str uri, did, uid;
     struct sip_uri puri;
     avp_ident_t* avp;
     int_str avp_val;
-    int i, flag, ret;
+    int flag, ret;
 
     avp = &((fparam_t*)attr)->v.avp;
 
     if (!avp) {
-	ERR("lookup_user: Invalid parameter 1, attribute name expected\n");
-	return -1;
+		ERR("lookup_user: Invalid parameter 1, attribute name expected\n");
+		return -1;
     }
 
     if (avp->flags & AVP_TRACK_TO) {
-	flag = DB_IS_TO;
+		flag = DB_IS_TO;
     } else {
-	flag = DB_IS_FROM;
+		flag = DB_IS_FROM;
     }
 
     if (get_str_fparam(&uri, msg, (fparam_t*)select) != 0) {
-	ERR("lookup_user: Unable to get SIP URI from %s\n", ((fparam_t*)select)->orig);
-	return -1;
+		ERR("lookup_user: Unable to get SIP URI from %s\n", ((fparam_t*)select)->orig);
+		return -1;
     }
 
     if (parse_uri(uri.s, uri.len, &puri) < 0) {
-	ERR("Error while parsing URI '%.*s'\n", uri.len, ZSW(uri.s));
-	return -1;
+		ERR("Error while parsing URI '%.*s'\n", uri.len, ZSW(uri.s));
+		return -1;
     }
 
     if (puri.host.len) {
-	/* domain name is present */
-	if (dm_get_did(&did, &puri.host) < 0) {
-		DBG("Cannot lookup DID for domain '%.*s', using default value\n", puri.host.len, ZSW(puri.host.s));
-		did = default_did;
-	}
+		/* domain name is present */
+		if (dm_get_did(&did, &puri.host) < 0) {
+			DBG("Cannot lookup DID for domain '%.*s', using default value\n", puri.host.len, ZSW(puri.host.s));
+			did = default_did;
+		}
     } else {
-	/* domain name is missing -- can be caused by Tel: URI */
-	DBG("There is no domain name, using default value\n");
-	did = default_did;
+		/* domain name is missing -- can be caused by Tel: URI */
+		DBG("There is no domain name, using default value\n");
+		did = default_did;
     }
 
-    keys[0] = username_col.s;
-    keys[1] = did_col.s;
-    keys[2] = scheme_col.s;
-    cols[0] = uid_col.s;
-    cols[1] = flags_col.s;
-    
-    vals[0].type = DB_STR;
-    vals[0].nul = 0;
-    vals[0].val.str_val = puri.user;
+	lookup_uid_cmd->params[0].v.str = puri.user;
+    lookup_uid_cmd->params[1].v.str = did;
+    uri_type_to_str(puri.type, &(lookup_uid_cmd->params[2].v.str));
 
-    vals[1].type = DB_STR;
-    vals[1].nul = 0;
-    vals[1].val.str_val = did;
-
-    vals[2].type = DB_STR;
-    vals[2].nul = 0;
-    uri_type_to_str(puri.type, &(vals[2].val.str_val));
-
-    if (db.use_table(con, uri_table.s) < 0) {
-	LOG(L_ERR, "lookup_user: Error in use_table\n");
-	return -1;
+    if (db_exec(&res, lookup_uid_cmd) < 0) {
+		LOG(L_ERR, "lookup_user: Error in db_query\n");
+		return -1;
     }
 
-    if (db.query(con, keys, 0, vals, cols, 3, 2, 0, &res) < 0) {
-	LOG(L_ERR, "lookup_user: Error in db_query\n");
-	return -1;
-    }
+	rec = db_first(res);
+	while(rec) {
+		if (rec->fld[0].flags & DB_NULL ||
+			rec->fld[1].flags & DB_NULL) {
+			LOG(L_ERR, "lookup_user: Bogus line in %s table\n", uri_table.s);
+			goto skip;
+		}
+		
+		if ((rec->fld[1].v.int4 & DB_DISABLED)) goto skip; /* Skip disabled entries */
+		if ((rec->fld[1].v.int4 & DB_LOAD_SER) == 0) goto skip; /* Not for SER */
+		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;        /* Not allowed in the header we are interested in */
+		goto found;
 
-    for(i = 0; i < res->n; i++) {
-	val = res->rows[i].values;
-	
-	if (val[0].nul || val[1].nul) {
-	    LOG(L_ERR, "lookup_user: Bogus line in %s table\n", uri_table.s);
-	    continue;
-	}
-	
-	if ((val[1].val.int_val & DB_DISABLED)) continue; /* Skip disabled entries */
-	if ((val[1].val.int_val & DB_LOAD_SER) == 0) continue; /* Not for SER */
-	if ((val[1].val.int_val & flag) == 0) continue;        /* Not allowed in the header we are interested in */
-	goto found;
+	skip:
+		rec = db_next(res);
     }
 
     DBG("lookup_user: UID not found for '%.*s'\n", uri.len, ZSW(uri.s));
@@ -468,19 +409,18 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
     goto freeres;
 
  found:
-    uid.s = (char*)val[0].val.string_val;
-    uid.len = strlen(uid.s);
+	uid = rec->fld[0].v.str;
     avp_val.s = uid;
 
     if (add_avp(avp->flags | AVP_VAL_STR, avp->name, avp_val) < 0) {
-	ERR("lookup_user: Error while creating attribute\n");
-	ret = -1;
+		ERR("lookup_user: Error while creating attribute\n");
+		ret = -1;
     } else {
-	ret = 1;
+		ret = 1;
     }
 
  freeres:
-    db.free_result(con, res);
+    db_res_free(res);
     return ret;
 }
 
