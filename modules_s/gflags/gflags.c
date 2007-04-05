@@ -81,8 +81,8 @@ static char* attr_type = "type";
 static char* attr_value = "value";
 static char* attr_flags = "flags";
 
-static db_con_t* con = 0;
-static db_func_t db;
+static db_ctx_t* db = NULL;
+static db_cmd_t* load_attrs_cmd = NULL, *save_gflags_cmd = NULL;
 
 static avp_list_t* active_global_avps;
 static avp_list_t avps_1;
@@ -120,6 +120,48 @@ struct module_exports exports = {
 	0,           /* oncancel function */
 	child_init   /* per-child init function */
 };
+
+
+static int init_db(void)
+{
+	db_fld_t attr_res[] = {
+		{.name = attr_name,  DB_STR},
+		{.name = attr_type,  DB_INT},
+		{.name = attr_value, DB_STR},
+		{.name = attr_flags, DB_BITMAP},
+		{.name = NULL}
+	};
+
+	db_fld_t params[] = {
+		{.name = attr_name,  DB_CSTR},
+		{.name = attr_type,  DB_INT},
+		{.name = attr_value, DB_STR},
+		{.name = attr_flags, DB_BITMAP},
+		{.name = NULL}
+	};
+
+	db = db_ctx("gflags");
+	if (db == NULL) {
+		ERR("Error while initializing database layer\n");
+		return -1;
+	}
+	if (db_add_db(db, db_url) < 0) return -1;
+	if (db_connect(db) < 0) return -1;
+	
+	load_attrs_cmd = db_cmd(DB_GET, db, attr_table, attr_res, NULL);
+	if (load_attrs_cmd == NULL) {
+		ERR("Error while building db query to load global attributes\n");
+		return -1;
+	}
+
+	save_gflags_cmd = db_cmd(DB_PUT, db, attr_table, NULL, params);
+	if (save_gflags_cmd == NULL) {
+		ERR("Error while building db query to save global flags\n");
+		return -1;
+	}
+
+	return 0;
+}
 
 
 static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo)
@@ -171,85 +213,61 @@ static int is_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 static int load_attrs(avp_list_t* global_avps)
 {
 	int_str name, v;
-
-	str avp_name, avp_val;
-	int i, type, n;
-	db_key_t cols[4];
 	db_res_t* res;
-	db_val_t *val;
+	db_rec_t* rec;
+	str avp_val;
 	unsigned short flags;
 
-	if (!con) {
-		LOG(L_ERR, "gflags:load_attrs: Invalid database handle\n");
-		return -1;
-	}
+	if (db_exec(&res, load_attrs_cmd) < 0) return -1;
 
-	cols[0] = attr_name;
-	cols[1] = attr_type;
-	cols[2] = attr_value;
-	cols[3] = attr_flags;
+	rec = db_first(res);
 
-	if (db.use_table(con, attr_table) < 0) {
-		LOG(L_ERR, "gflags:load_attrs: Error in use_table\n");
-		return -1;
-	}
-
-	if (db.query(con, 0, 0, 0, cols, 0, 4, 0, &res) < 0) {
-		LOG(L_ERR, "gflags:load_attrs: Error while quering database\n");
-		return -1;
-	}
-
-	n = 0;
-	for(i = 0; i < res->n; i++) {
-		val = res->rows[i].values;
-
-		if (val[0].nul || val[1].nul || val[3].nul) {
+	while(rec) {
+		if (rec->fld[0].flags & DB_NULL ||
+			rec->fld[1].flags & DB_NULL ||
+			rec->fld[3].flags & DB_NULL) {
 			LOG(L_ERR, "gflags:load_attrs: Skipping row containing NULL entries\n");
-			continue;
+			goto skip;
 		}
 
-		if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
+		if ((rec->fld[3].v.int4 & DB_LOAD_SER) == 0) goto skip;
 
-		n++;
-		     /* Get AVP name */
-		avp_name.s = (char*)val[0].val.string_val;
-		avp_name.len = strlen(avp_name.s);
-		name.s = avp_name;
-
-		     /* Get AVP type */
-		type = val[1].val.int_val;
+		name.s = rec->fld[0].v.str;
 
 		     /* Test for NULL value */
-		if (val[2].nul) {
+		if (rec->fld[2].flags & DB_NULL) {
 			avp_val.s = 0;
 			avp_val.len = 0;
 		} else {
-			avp_val.s = (char*)val[2].val.string_val;
-			avp_val.len = strlen(avp_val.s);
+			avp_val = rec->fld[2].v.str;
 		}
 
 		flags = AVP_CLASS_GLOBAL | AVP_NAME_STR;
-		if (type == AVP_VAL_STR) {
-			     /* String AVP */
+		if (rec->fld[1].v.int4 == AVP_VAL_STR) {
+			/* String AVP */
 			v.s = avp_val;
 			flags |= AVP_VAL_STR;
 		} else {
-			     /* Integer AVP */
+			/* Integer AVP */
 			str2int(&avp_val, (unsigned*)&v.n);
-			if (!strcmp(AVP_GFLAGS, avp_name.s)) {
-				     /* Restore gflags */
+			if (rec->fld[0].v.str.len == (sizeof(AVP_GFLAGS) - 1) &&
+				!strncmp(rec->fld[0].v.str.s, AVP_GFLAGS, sizeof(AVP_GFLAGS) - 1)) {
+				/* Restore gflags */
 				*gflags = v.n;
 			}
 		}
-
+		
 		if (add_avp_list(global_avps, flags, name, v) < 0) {
 			LOG(L_ERR, "gflags:load_attrs: Error while adding global attribute %.*s, skipping\n",
-			    avp_name.len, ZSW(avp_name.s));
-			continue;
+			    rec->fld[0].v.str.len, ZSW(rec->fld[0].v.str.s));
+			goto skip;
 		}
+
+	skip:
+		rec = db_next(res);
 	}
-	DBG("gflags:load_attrs: %d global attributes found, %d loaded\n", res->n, n);
-	db.free_result(con, res);
+
+	db_res_free(res);
 	return 0;
 }
 
@@ -266,31 +284,24 @@ static int mod_init(void)
 	avps_1 = 0;
 	avps_2 = 0;
 	active_global_avps = &avps_1;
-	
+
 	if (load_global_attrs) {
-		if (bind_dbmod(db_url, &db) < 0) { /* Find database module */
-			LOG(L_ERR, "gflags:mod_init: Can't bind database module\n");
+		if (init_db() < 0) {
+			shm_free(gflags);
 			return -1;
 		}
-		if (!DB_CAPABILITY(db, DB_CAP_ALL)) {
-			LOG(L_ERR, "gflags:mod_init: Database module does not implement"
-			    " all functions needed by the module\n");
-			return -1;
-		}
-		con = db.init(db_url); /* Get a new database connection */
-		if (!con) {
-			LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");
-			return -1;
-		}
-
+		
 		if (load_attrs(active_global_avps) < 0) {
-			db.close(con);
+			db_cmd_free(load_attrs_cmd);
+			db_cmd_free(save_gflags_cmd);
+			db_ctx_free(db);
 			return -1;
 		}
-
+		
 		set_avp_list(AVP_CLASS_GLOBAL, active_global_avps);
-
-		db.close(con);
+		
+		db_cmd_free(load_attrs_cmd);
+		db_ctx_free(db);
 	}
 
 	return 0;
@@ -301,11 +312,8 @@ static int child_init(int rank)
 	if (load_global_attrs) {
 		if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 			return 0; /* do nothing for the main or tcp_main processes */
-		con = db.init(db_url);
-		if (!con) {
-			LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");
-			return -1;
-		}
+
+		if (init_db() < 0) return -1;
 	}
 	return 0;
 }
@@ -320,54 +328,30 @@ static void mod_destroy(void)
 		destroy_avp_list(&avps_2);
 	}
 	active_global_avps = 0;
+
+	db_cmd_free(load_attrs_cmd);
+	db_cmd_free(save_gflags_cmd);
+	db_ctx_free(db);
 }
 
 
 int save_gflags(unsigned int flags)
 {
-	db_key_t keys[4];
-	db_val_t vals[4];
-        str fl;
+	str fl;
 
 	if (!load_global_attrs) {
 		LOG(L_ERR, "gflags:save_gflags: You must enable load_global_attrs to make flush_gflag work\n");
 		return -1;
 	}
 
-	if (db.use_table(con,attr_table) < 0) {
-		LOG(L_ERR, "gflags:save_gflags: Error in use_table\n");
-		return -1;
-	}
-
-	keys[0] = attr_name;
-	vals[0].type = DB_STRING;
-	vals[0].nul = 0;
-	vals[0].val.string_val = AVP_GFLAGS;
-
-	if (db.delete(con, keys, 0, vals, 1) < 0) {
-		LOG(L_ERR, "gflags:save_gflag: Error while deleting previous value\n");
-		return -1;
-	}
-
-	keys[1] = attr_type;
-	keys[2] = attr_value;
-	keys[3] = attr_flags;
-
-	vals[1].type = DB_INT;
-	vals[1].nul = 0;
-	vals[1].val.int_val = 0; /* Integer */
-
 	fl.s = int2str(flags, &fl.len);
 
-	vals[2].type = DB_STR;
-	vals[2].nul = 0;
-	vals[2].val.str_val = fl;
+	save_gflags_cmd->params[0].v.cstr = AVP_GFLAGS;
+	save_gflags_cmd->params[1].v.int4 = 0;
+	save_gflags_cmd->params[2].v.str = fl;
+	save_gflags_cmd->params[3].v.bitmap = DB_LOAD_SER;
 
-	vals[3].type = DB_INT;
-	vals[3].nul = 0;
-	vals[3].val.int_val = DB_LOAD_SER;
-
-	if (db.insert(con, keys, vals, 4) < 0) {
+	if (db_exec(NULL, save_gflags_cmd) < 0) {
 		LOG(L_ERR, "gflags:save_gflag: Unable to store new value\n");
 		return -1;
 	}
