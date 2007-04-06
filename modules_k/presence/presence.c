@@ -73,6 +73,7 @@ char *watchers_table= "watchers";
 char *xcap_table= "xcap_xml";  
 int use_db=1;
 str server_address= {0, 0};
+evlist_t* EvList= NULL;
 
 /* to tag prefix */
 char* to_tag_pref = "10";
@@ -110,9 +111,9 @@ void destroy(void);
 
 static cmd_export_t cmds[]=
 {
+	{"handle_publish",	  handle_publish,	0,		   0,       REQUEST_ROUTE},
 	{"handle_publish",	  handle_publish,	1,  fixup_presence, REQUEST_ROUTE},
 	{"handle_subscribe",  handle_subscribe,	0,		   0,       REQUEST_ROUTE},
-	{"stored_pres_info",  stored_pres_info,	1,		   0,		   0         },
 	{0,						0,				0,		   0,	   0	     }	 
 };
 
@@ -272,6 +273,18 @@ static int mod_init(void)
 				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
 		return -1;
 	}
+	EvList= init_evlist();
+	if(!EvList)
+	{
+		LOG(L_ERR,"PRESENCE:mod_init: ERROR while initializing event list\n");
+		if(pa_db)
+			pa_dbf.close(pa_db);
+		pa_db = NULL;
+		return -1;
+	}	
+	add_event("presence", NULL,  "application/pidf+xml", 1);
+	add_event("presence.winfo", NULL,  "application/watcherinfo+xml", 0);
+	add_event("dialog", "sla", "application/dialog-info+xml", 0);
 
 	if(clean_period<=0)
 	{
@@ -340,75 +353,24 @@ void destroy(void)
 	
 	if(pa_db && pa_dbf.close)
 		pa_dbf.close(pa_db);
-
-}
-
-
-int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s)
-{
-	db_key_t keys[2];
-	db_val_t vals[13];
-	db_res_t* result= NULL;
-	struct sip_uri uri;
-	
-	
-	if(parse_uri(pres_uri, strlen(pres_uri), &uri)!=0)
-	{
-		LOG(L_ERR, "PRESENCE: stored_pres_info: bad URI!\n");
-		return -1;
-	}
-
-	if(uri.user.len<=0 || uri.user.s==NULL || uri.host.len<=0 ||
-			uri.host.s==NULL)
-	{
-		LOG(L_ERR, "PRESENCE: stored_pres_uri: bad URI in To header!\n");
-		return -1;
-	}
-
-	keys[0]= "username";
-	vals[0].type= DB_STR;
-	vals[0].nul = 0;
-	vals[0].val.str_val=uri.user;
-
-	keys[1]= "domain";
-	vals[1].type= DB_STR;
-	vals[1].nul = 0;
-	vals[1].val.str_val=uri.host;
-
-	if(pa_dbf.query(pa_db, keys, 0, vals, 0, 2, 0, 0, &result )< 0)
-	{
-		LOG(L_ERR, "PRESENCE:stored_pres_uri: Error while querying database\n");
-		return -1;
-	}
-
-	if(result && result->n > 0)
-	{
-		pa_dbf.free_result(pa_db, result);
-		return 1;
-	}
-
-	if(result)
-		pa_dbf.free_result(pa_db, result);
-
-	return -1;
+	destroy_evlist();
 }
 
 static int fixup_presence(void** param, int param_no)
 {
-	xl_elem_t *model;
-	if(*param)
-	{
-		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
-		{
-			LOG(L_ERR, "PRESENCE:fixup_presence: ERROR wrong format[%s]\n",
-				(char*)(*param));
-			return E_UNSPEC;
-		}
-			
-		*param = (void*)model;
-		return 0;
-	}
-	LOG(L_ERR, "PRESENCE:fixup_presence: ERROR null format\n");
-	return E_UNSPEC;
+ 	xl_elem_t *model;
+ 	if(*param)
+ 	{
+ 		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+ 		{
+ 			LOG(L_ERR, "PRESENCE:fixup_presence: ERROR wrong format[%s]\n",
+ 				(char*)(*param));
+ 			return E_UNSPEC;
+ 		}
+ 
+ 		*param = (void*)model;
+ 		return 0;
+ 	}
+ 	LOG(L_ERR, "PRESENCE:fixup_presence: ERROR null format\n");
+ 	return E_UNSPEC;
 }
-

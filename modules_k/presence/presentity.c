@@ -49,7 +49,7 @@ extern db_con_t* pa_db;
 extern db_func_t pa_dbf;
 
 presentity_t* new_presentity( str* domain,str* user,int expires, 
-		int event, str* etag, str* sender)
+		ev_t* event, str* etag, str* sender)
 {
 	presentity_t *presentity;
 	int size;
@@ -93,7 +93,7 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 		size+= sender->len;
 	}
 
-	presentity->event|= event;
+	presentity->event= event;
 	presentity->expires = expires;
 	presentity->received_time= (int)time(NULL);
 	return presentity;
@@ -103,7 +103,6 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 int update_presentity(presentity_t* presentity, str* body, int new_t )
 {
 	str res_body;
-	char* ev= NULL;
 	db_key_t query_cols[8];
 	db_op_t  query_ops[8];
 	db_val_t query_vals[8], update_vals[4];
@@ -114,24 +113,11 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 	int n_result_cols = 0;
 	int n_update_cols = 0;
 	int body_col;
-	xmlDocPtr doc = NULL;
-	xmlNodePtr root_node = NULL;
 	char* status = NULL;
-    
+
 	if( !use_db )
 		return 0;
 
-	if(presentity->event & PRESENCE_EVENT)
-		ev= "presence";
-	else
-	if(presentity->event & BLA_EVENT)
-		ev= "dialog;sla";
-	else
-	{
-		LOG(L_ERR, "PRESENCE: update_presentity: ERROR BAD event parameter\n");
-		return -1;
-	}
-		
 	query_cols[n_query_cols] = "domain";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
@@ -148,16 +134,12 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 	query_vals[n_query_cols].val.str_val.len = presentity->user.len;
 	n_query_cols++;
 
-
 	query_cols[n_query_cols] = "event";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = ev;
-	query_vals[n_query_cols].val.str_val.len= strlen(ev);
+	query_vals[n_query_cols].val.str_val = presentity->event->stored_name;
 	n_query_cols++;
-	DBG("PRESENCE: update_presentity: [%s] = %s  - len= %d",
-			query_cols[n_query_cols-1], ev, strlen(ev));
 
 	query_cols[n_query_cols] = "etag";
 	query_ops[n_query_cols] = OP_EQ;
@@ -170,7 +152,7 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 	if(presentity->expires == 0) 
 	{
 		query_db_notify( &presentity->user, &presentity->domain, 
-				ev, NULL, &presentity->etag, presentity->sender);
+				presentity->event, NULL, &presentity->etag, presentity->sender);
 	
 		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 		{
@@ -229,40 +211,9 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 					" inserting new presentity\n");
 			goto error;
 		}
-	
-		if(presentity->event & PRESENCE_EVENT)
-		{	
-			/* stop sending Notify when user registers and has the status Offine*/
-			doc = xmlParseMemory(body->s, body->len);
-			if ( doc == NULL)
-			{
-				LOG(L_ERR, "PRESENCE:update_presentity: ERROR while parsing"
-					" xml body\n");
-				goto error;
-			}
-			root_node = xmlDocGetNodeByName(doc,"presence", NULL);
-			if(root_node == NULL)
-			{
-				LOG(L_ERR, "PRESENCE:update_presentity: ERROR while getting"
-					" entity attribute\n");
-				goto error;
-			}
-			status = xmlNodeGetNodeContentByName(root_node, "basic", NULL );
-			if(status == NULL)
-			{
-				LOG(L_ERR, "PRESENCE:update_presentity: ERROR while getting" 
-						" entity attribute\n");
-				goto error;
-			}
-		}
-		if((presentity->event & PRESENCE_EVENT) &&(strncmp (status,"closed", 6) == 0))
-		{
-			DBG("PRESENCE:update_presentity:The presentity status" 
-					" is offline; do not send notify\n");
-		}
-		else			/* send notify with presence information */
+		/* send notify with presence information */
 			if (query_db_notify(&presentity->user, &presentity->domain,
-						"presence", NULL, NULL, presentity->sender)<0)
+						presentity->event, NULL, NULL, presentity->sender)<0)
 			{
 				DBG(" PRESENCE:update_presentity:Could not send"
 						" notify for event presence\n");
@@ -341,7 +292,7 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 
 			/* presentity body is updated so send notify to all watchers */
 			if (query_db_notify(&presentity->user, &presentity->domain,
-						ev, NULL, NULL, presentity->sender)<0)
+						presentity->event, NULL, NULL, presentity->sender)<0)
 			{
 				LOG(L_ERR," PRESENCE:update_presentity: Could not send Notify\n");
 			}
@@ -358,9 +309,6 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 
 	if(status)
 		xmlFree(status);
-	if(doc)
-		xmlFreeDoc(doc);
-	xmlCleanupParser();
 
 	return ret_code;
 
@@ -373,9 +321,6 @@ error:
 	}
 	if(status)
 		xmlFree(status);
-	if(doc)
-		xmlFreeDoc(doc);
-	xmlCleanupParser();
 	return -1;
 
 }

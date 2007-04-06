@@ -31,6 +31,7 @@
 #include "../../usr_avp.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/parse_expires.h"
+#include "../../parser/parse_event.h"
 #include "../../parser/contact/parse_contact.h"
 #include "presence.h"
 #include "subscribe.h"
@@ -194,7 +195,7 @@ error:
 }
 
 int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
-		int to_tag_gen)
+		int to_tag_gen, ev_t* event)
 {	
 	db_key_t query_cols[16];
 	db_op_t  query_ops[16];
@@ -208,6 +209,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	int n_query_cols = 0;
 	int n_result_cols = 0;
 	int i ,remote_cseq_col= 0, local_cseq_col= 0;
+	
 
 	DBG("PRESENCE: update_subscription...\n");
 	printf_subs(subs);	
@@ -248,8 +250,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->event.s;
-	query_vals[n_query_cols].val.str_val.len = subs->event.len;
+	query_vals[n_query_cols].val.str_val = subs->event->stored_name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "event_id";
@@ -366,7 +367,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				LOG(L_ERR,"PRESENCE:update_subscription: ERROR cleaning"
 						" unsubscribed messages\n");	
 			}
-			if(subs->event.len == PRES_LEN)
+			if(event->type & PUBL_TYPE)
 			{	
 				if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
@@ -374,13 +375,16 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 						" sending 202 OK\n");
 					goto error;
 				}
-		
-				if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
-							NULL, NULL, NULL)< 0)
+				
+				if(event->wipeer)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
+					if(query_db_notify(&subs->to_user,&subs->to_domain, event->wipeer ,
+							NULL, NULL, NULL)< 0)
+					{
+						LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
 							" notify for presence.winfo\n");
-				}
+					}
+				}	
 			}	
 			else /* if unsubscribe for winfo */
 			{
@@ -522,7 +526,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 /* reply_and_notify  */
 
-	if(subs->event.len == PRES_LEN)
+	if(event->type & PUBL_TYPE)
 	{	
 		if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
@@ -531,24 +535,34 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			goto error;
 		}
 		
-		if(query_db_notify(&subs->to_user,&subs->to_domain,"presence.winfo",
-					subs, NULL, NULL)< 0)
-		{
-			LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
-					" notify for presence.winfo\n");
-		}
-		if(subs->send_on_cback== 0)
+		if(event->wipeer)
 		{	
+			if(query_db_notify(&subs->to_user,&subs->to_domain, event->wipeer,
+					subs, NULL, NULL)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
+					" notify for presence.winfo\n");
+			}	
+			if(subs->send_on_cback== 0)
+			{	
+				if(notify(subs, NULL, NULL, 0)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
+					" notify for presence\n");
+				}
+			}
+		}
+		else
+		{
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
-					" notify for presence\n");
+				" notify for presence\n");
 			}
-		}
-		
+		}	
 			
 	}
-	else /* if a new subscribe for winfo */
+	else 
 	{
 		if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
@@ -622,6 +636,9 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	int callid_col, cseq_col, i, event_id_col = 0;
 	int record_route_col = 0, contact_col, cseq;
 	int sockinfo_col = 0, local_contact_col= 0;
+	str ev_name;
+	str* ev_param= NULL;
+	char* sep;
 
 	str from_user, from_domain, to_tag, from_tag;
 	str to_user, to_domain, event, event_id, callid;
@@ -691,19 +708,19 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		row_vals = ROW_VALUES(row);		
 		
 		to_user.s = row_vals[to_user_col].val.str_val.s;
-		to_user.len =strlen(row_vals[to_user_col].val.str_val.s);
+		to_user.len =strlen(to_user.s);
 
 		to_domain.s = row_vals[to_domain_col].val.str_val.s;
-		to_domain.len =strlen(row_vals[to_domain_col].val.str_val.s);
+		to_domain.len =strlen(to_domain.s);
 
 		event.s =row_vals[event_col].val.str_val.s;
-		event.len = strlen(row_vals[event_col].val.str_val.s);
+		event.len = strlen(event.s);
 
 		from_user.s = row_vals[from_user_col].val.str_val.s;
-		from_user.len = strlen(row_vals[from_user_col].val.str_val.s);
+		from_user.len = strlen(from_user.s);
 		
 		from_domain.s = row_vals[from_domain_col].val.str_val.s;
-		from_domain.len = strlen(row_vals[from_domain_col].val.str_val.s);
+		from_domain.len = strlen(from_domain.s);
 		
 		memset(&event_id, 0, sizeof(str));
 		event_id.s = row_vals[event_id_col].val.str_val.s;
@@ -712,18 +729,18 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 
 			
 		to_tag.s = row_vals[to_tag_col].val.str_val.s;
-		to_tag.len = strlen(row_vals[to_tag_col].val.str_val.s);
+		to_tag.len = strlen(to_tag.s);
 		
 		from_tag.s = row_vals[from_tag_col].val.str_val.s;
-		from_tag.len = strlen(row_vals[from_tag_col].val.str_val.s);
+		from_tag.len = strlen(from_tag.s);
 
 		callid.s = row_vals[callid_col].val.str_val.s;
-		callid.len = strlen(row_vals[callid_col].val.str_val.s);
+		callid.len = strlen(callid.s);
 
 		memset(&contact, 0, sizeof(str));
 		contact.s = row_vals[contact_col].val.str_val.s;
 		if(contact.s)
-			contact.len = strlen(row_vals[contact_col].val.str_val.s);
+			contact.len = strlen(contact.s);
 
 		cseq = row_vals[cseq_col].val.int_val;
 		
@@ -738,7 +755,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		local_contact.s = row_vals[local_contact_col].val.str_val.s;
 		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		size= sizeof(subs_t)+ ( to_user.len+ to_domain.len+ from_user.len+ from_domain.len+
-				event.len+ event_id.len+ to_tag.len+ from_tag.len+ callid.len+ contact.len+
+				 event_id.len+ to_tag.len+ from_tag.len+ callid.len+ contact.len+
 				record_route.len+ sockinfo_str.len+ local_contact.len)* sizeof(char);
 
 		subs= (subs_t*)pkg_malloc(size);
@@ -771,10 +788,36 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		subs->from_domain.len= from_domain.len;
 		size+= from_domain.len;
 
-		subs->event.s= (char*)subs+ size;
-		memcpy(subs->event.s, event.s, event.len);
-		subs->event.len= event.len;
-		size+= event.len;
+		sep= memchr(event.s, ';', event.len);
+		if(sep == NULL)
+		{
+			ev_name= event;
+		}
+		else
+		{
+			ev_name.s= event.s;
+			ev_name.len= sep- event.s;
+
+			ev_param= (str*)pkg_malloc(sizeof(str));
+			if(ev_param== NULL)
+			{
+				LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR no more memory\n");
+				goto error;
+			}
+			ev_param->s= sep+1;
+			ev_param->len= event.len- ev_name.len -1;
+		}	
+
+		subs->event= contains_event(&ev_name, ev_param);
+		if(ev_param)
+			pkg_free(ev_param);
+		
+		if(subs->event== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR while"
+					" searching for event\n");
+			goto error;
+		}	
 
 		if(event_id.s)
 		{	
@@ -888,7 +931,11 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	str status= {0, 0};
 	str reason= {0, 0};
 	str contact;
-	char* id_sep= NULL;
+	ev_t* event= NULL;
+	param_t* ev_param= NULL;
+	str ev_name;
+	
+	/* determines whether winfo */
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
@@ -912,45 +959,61 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	/* inspecting the Event header field */
-	if( (!msg->event ) ||(msg->event->body.len<=0) ||
-		((strncmp(msg->event->body.s, "presence",8 )!=0)&&
-		(strncmp(msg->event->body.s, "presence.winfo",14 )!=0)
-		&&(strncmp(msg->event->body.s, "dialog;sla",10 )!=0)))
+	if(msg->event && msg->event->body.len > 0)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe:Missing or unsupported event"
-				" header field value\n");
-
-		if (slb.reply(msg, 489, &pu_489_rpl) == -1)
+		if (!msg->event->parsed && (parse_event(msg->event) < 0))
 		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
-					" reply\n");
+			LOG(L_ERR,
+				"PRESENCE: handle_subscribe: ERROR cannot parse Event header\n");
+			goto error;
 		}
-		error_ret = 0;
-		goto error;
-	}
-	
-	/* ??? implement event header parser */
-		id_sep= strchr(msg->event->body.s, ';' );
-
-	if((id_sep && id_sep< msg->event->body.s+ msg->event->body.len)
-			&& (strncmp(id_sep+1, "id", 2)== 0))
-	{	
-		subs.event_id.s = id_sep+ 4;
-		subs.event_id.len= msg->event->body.len- (id_sep- msg->event->body.s+ 4);
-		
-		subs.event.s = msg->event->body.s;
-		subs.event.len = id_sep- msg->event->body.s;
+		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
+		{	
+			goto bad_event;
+		}
 	}
 	else
-	{	
-		subs.event.s = msg->event->body.s;
-		/* probably useless - to be removed*/
-		if( strncmp(msg->event->body.s, "dialog;sla",10 )==0)
-			subs.event.len= 10;
-		else
-			subs.event.len =  msg->event->body.len;	
-	}
+		goto bad_event;
+
+	ev_name= ((event_t*)msg->event->parsed)->text;
+	ev_param= ((event_t*)msg->event->parsed)->params;
 	
+	event= contains_event(&ev_name, NULL);
+	
+	if(!event && ev_param)
+	{
+		while(ev_param)
+		{
+			if(ev_param->name.len== 2 && strncmp(ev_param->name.s, "id", 2)== 0)
+				subs.event_id= ev_param->body;
+
+			event= contains_event(&ev_name, &ev_param->name);
+			if(event)
+				break;
+			ev_param= ev_param->next;
+		}	
+	}	
+
+	if(event== NULL)
+	{
+		goto bad_event;
+	}
+	if(!subs.event_id.s && ev_param)
+	{
+		while(ev_param)
+		{
+			if(ev_param->name.len== 2 && strncmp(ev_param->name.s, "id", 2)== 0)
+			{
+				subs.event_id= ev_param->body;
+				break;
+			}
+			ev_param= ev_param->next;
+		}	
+	}	
+	subs.event= event;
+	
+
+
 	/* examine the expire header field */
 	if(msg->expires && msg->expires->body.len > 0)
 	{
@@ -992,8 +1055,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	else
 	{
 		memset( &TO , 0, sizeof(TO) );
-		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
-		if(TO.uri.len <= 0) 
+		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO));
 		{
 			DBG("PRESENCE: handle_subscribe: 'To' header NOT parsed\n");
 			goto error;
@@ -1018,7 +1080,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 	subs.to_domain.s = to_uri.host.s;
 	subs.to_domain.len = to_uri.host.len;
-
 
 	/* examine the from header */
 	if (!msg->from || !msg->from->body.s)
@@ -1152,7 +1213,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs.from_tag.s = pfrom->tag_value.s;
 	subs.from_tag.len = pfrom->tag_value.len;
 
-
 	subs.version = 0;
 	
 	if((!server_address.s) || (server_address.len== 0))
@@ -1224,7 +1284,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	DBG("PRESENCE: handle_subscribe: local_contact: %.*s --- len= %d\n", 
 			subs.local_contact.len, subs.local_contact.s, subs.local_contact.len);
 
-	if( PWINFO_LEN==subs.event.len)
+	if(!event->req_auth)
 	{
 		subs.status.s = "active";
 		subs.status.len = 6 ;
@@ -1280,28 +1340,14 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			DBG( "PRESENCE:handle_subscribe:The query in table watches "
 				"returned no result\n");
 		
-			if(subs.event.len== BLA_LEN)
-			{
-				subs.status.s = "active";
-				subs.status.len = 7;
-			}
-			else
-			if(subs.event.len== PRES_LEN)	
-			{
-				subs.status.s = "pending";
-				subs.status.len = 7;
-			}
-			else
-			{
-				LOG(L_ERR, "PRESENCE:handle_subscribe: Not implemented\n");
-				goto error;
-			}
-			subs.reason.s = NULL;
+			subs.status.s = "pending";
+			subs.status.len = 7;
+		    subs.reason.s = NULL;
 
 			db_keys[4] ="subs_status";
 			db_vals[4].type = DB_STR;
 			db_vals[4].nul = 0;
-			if(force_active==0 && subs.event.len== PRES_LEN)
+			if(force_active==0 )
 			{
 				db_vals[4].val.str_val.s = "pending";
 				db_vals[4].val.str_val.len = 7;
@@ -1390,7 +1436,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	printf_subs(&subs);	
-	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen) <0 )
+	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen, event) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
 		goto error;
@@ -1403,6 +1449,17 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			pkg_free(reason.s);
 	}
 	return 1;
+
+bad_event:
+
+		LOG(L_ERR, "PRESENCE: handle_subscribe:Missing or unsupported event"
+			" header field value\n");
+		if (slb.reply(msg, 489, &pu_489_rpl) == -1)
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
+				" reply\n");
+		}
+		error_ret = 0;
 
 error:
 	LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR occured\n");

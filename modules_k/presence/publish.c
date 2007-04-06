@@ -35,6 +35,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h" 
 #include "../../parser/parse_expires.h" 
+#include "../../parser/parse_event.h" 
 #include "../../parser/parse_content.h" 
 #include "../../lock_ops.h"
 #include "../../hash_func.h"
@@ -88,7 +89,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	db_key_t db_keys[5];
 	db_val_t db_vals[5];
 	db_op_t  db_ops[5] ;
-	db_key_t result_cols[3];
+	db_key_t result_cols[4];
 	db_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -97,7 +98,11 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	presentity_t* pres= NULL;
 	int user_len, domain_len, etag_len;
 	int n= 0;
-
+	str event;
+	char* sep;
+	str ev_name;
+	str* ev_param= NULL;
+	
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:msg_presentity_clean: Error in use_table\n");
@@ -116,9 +121,10 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	result_cols[0] = "username";
 	result_cols[1] = "domain";
 	result_cols[2] = "etag";
+	result_cols[3] = "event";
 
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
-						1, 3, 0, &result )< 0)
+						1, 4, 0, &result )< 0)
 	{
 		LOG(L_ERR,
 			"PRESENCE:msg_presentity_clean: ERROR while querying database"
@@ -181,10 +187,42 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		pres->etag.len= etag_len;
 		size+= etag_len;
 		
+		event.s= row_vals[3].val.str_val.s;
+		event.len= strlen(event.s);
+		/* search for a parameter*/
+		sep= memchr(event.s, ';', event.len);
+		if(sep == NULL)
+		{
+			ev_name= event;
+		}
+		else
+		{
+			ev_name.s= event.s;
+			ev_name.len= sep- event.s;
+
+			ev_param= (str*)pkg_malloc(sizeof(str));
+			if(ev_param== NULL)
+			{
+				LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR no more memory\n");
+				goto error;
+			}
+			ev_param->s= sep+1;
+			ev_param->len= event.len- ev_name.len -1;
+		}	
+
+		pres->event= contains_event(&event, ev_param);
+
+		if(ev_param)
+			pkg_free(ev_param);
+		if(pres->event== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while searching for event\n");
+			goto error;
+		}	
+
 		p[i]= pres;
 
 	}
-
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;
 	
@@ -194,7 +232,8 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		DBG( "PRESENCE:msg_presentity_clean:found expired publish"
 				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
 				p[i]->domain.len, p[i]->domain.s);
-		query_db_notify( &p[i]->user, &p[i]->domain, "presence", NULL, &p[i]->etag, NULL);
+		query_db_notify( &p[i]->user, &p[i]->domain, p[i]->event, NULL, &p[i]->etag, NULL);
+
 
 	}
 
@@ -253,12 +292,14 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	str hdr_append, hdr_append2 ;
 	int error_ret = -1; /* error return code */
 	xmlDocPtr doc= NULL;
-	int event= 0;
 	str* sender= NULL;
 	static char buf[256];
 	int buf_len= 255;
+	ev_t* event= NULL;
+	param_t* ev_param= NULL;
+	str ev_name;
 
-	counter ++;
+	counter++;
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LOG(L_ERR, "PRESENCE:handle_publish: error parsing headers\n");
@@ -266,17 +307,48 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		return 0;
 	}
 	memset(&body, 0, sizeof(str));
-	/* inspecting the Event header field */
-	if( (!msg->event ) ||(msg->event->body.len<=0) )
-		goto unsupported_event;
 	
-	if(strncmp(msg->event->body.s, "presence",8 )==0)
-		event|= PRESENCE_EVENT;
-	else
-	if(strncmp(msg->event->body.s, "dialog;sla",10 )==0)
-		event|= BLA_EVENT;
+	/* inspecting the Event header field */
+	
+	if(msg->event && msg->event->body.len > 0)
+	{
+		if (!msg->event->parsed && (parse_event(msg->event) < 0))
+		{
+			LOG(L_ERR,
+				"PRESENCE: handle_publish: ERROR cannot parse Event header\n");
+			goto error;
+		}
+		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
+		{	
+			goto unsupported_event;
+		}
+	}
 	else
 		goto unsupported_event;
+
+	ev_name= ((event_t*)msg->event->parsed)->text;
+	ev_param= ((event_t*)msg->event->parsed)->params;
+	DBG("PRESENCE: handle_publish: name= %.*s\n", ev_name.len, ev_name.s);
+	if(ev_param)
+		DBG("PRESENCE: handle_publish: param= %.*s\n", ev_param->name.len, ev_param->name.s);
+
+	event= contains_event(&ev_name, NULL);
+	
+	if(!event && ev_param)
+	{
+		while(ev_param)
+		{
+			event= contains_event(&ev_name, &ev_param->name);
+			if(event)
+				break;
+			ev_param= ev_param->next;
+		}	
+	}	
+
+	if(event== NULL)
+	{
+		goto unsupported_event;
+	}	
 
 	/* examine the SIP-If-Match header field */
 	hdr = msg->headers;
@@ -290,7 +362,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		}
 		hdr = hdr->next;
 	}
-	if( found==0 )
+	if(found==0 )
 	{
 		DBG("PRESENCE:handle_publish: SIP-If-Match not found\n");
 		etag.s = generate_ETag();
@@ -329,7 +401,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
 		DBG("PRESENCE: handle_publish: lexpire= %d\n", lexpire);
 
-	} else 
+	}
+	else 
 	{
 		DBG("PRESENCE: handle_publish: 'expires' not found; default=%d\n",
 				default_expires);
@@ -353,8 +426,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	else
 	{
 		memset( &TO , 0, sizeof(TO) );
-		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
-		if(TO.uri.len <= 0) 
+		if(!parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO))
 		{
 			DBG("PRESENCE: handle_publish: 'To' header NOT parsed\n");
 			goto error;
@@ -393,7 +465,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 
 			if (slb.reply(msg, 400, &pu_400b_rpl) == -1)
 			{
-				LOG(L_ERR, "PRESENCE: handle_publish: Error while sending"
+ 				LOG(L_ERR, "PRESENCE: handle_publish: Error while sending"
 						" reply\n");
 			}
 			error_ret = 0;

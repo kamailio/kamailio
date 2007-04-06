@@ -59,14 +59,14 @@ void printf_subs(subs_t* subs)
 			subs->from_user.len, subs->from_user.s, subs->from_domain.len,
 			subs->from_domain.s);
 	DBG("[event]= %.*s\n\t[staus]= %.*s\n\t[expires]= %d\n",
-			subs->event.len, subs->event.s,	subs->status.len, subs->status.s,
+			subs->event->stored_name.len, subs->event->stored_name.s,	subs->status.len, subs->status.s,
 			subs->expires );
 	DBG("[to_tag]= %.*s\n\t[from_tag]= %.*s\n",
 			subs->to_tag.len, subs->to_tag.s,	subs->from_tag.len, subs->from_tag.s);
 
 }
 
-str* build_str_hdr(str event, str event_id, str status, int expires_t,
+str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 		str reason,str* local_contact)
 {
 
@@ -86,9 +86,10 @@ str* build_str_hdr(str event, str event_id, str status, int expires_t,
 
 	strncpy(str_hdr->s ,"Event: ", 7);
 	str_hdr->len = 7;
-	strncpy(str_hdr->s+str_hdr->len, event.s, event.len);
-	str_hdr->len += event.len;
-	if (event_id.len) {
+	strncpy(str_hdr->s+str_hdr->len, event->stored_name.s, event->stored_name.len);
+	str_hdr->len += event->stored_name.len;
+	if (event_id.len) 
+	{
  		strncpy(str_hdr->s+str_hdr->len, ";id=", 4);
  		str_hdr->len += 4;
  		strncpy(str_hdr->s+str_hdr->len, event_id.s, event_id.len);
@@ -157,24 +158,8 @@ str* build_str_hdr(str event, str event_id, str status, int expires_t,
 
 		strncpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
 		str_hdr->len += 14;
-		if (event.len ==PRES_LEN)
-		{
-			strncpy(str_hdr->s+str_hdr->len,"application/pidf+xml" , 20);
-			str_hdr->len += 20;
-		}
-		else
-		if(event.len ==PWINFO_LEN)
-		{
-			strncpy(str_hdr->s+str_hdr->len,"application/watcherinfo+xml" , 27);
-			str_hdr->len += 27;
-		}
-		else
-		if(event.len ==BLA_LEN)
-		{
-			strncpy(str_hdr->s+str_hdr->len,"application/dialog-info+xml", 27);
-			str_hdr->len += 27;
-		}
-
+		strncpy(str_hdr->s+str_hdr->len, event->content_type.s , event->content_type.len);
+		str_hdr->len += event->content_type.len;
 		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
 	}
@@ -242,8 +227,8 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 				(const unsigned char*) swatchers.uri.s, swatchers.uri.len );
 			
 		swatchers.id.len = strlen(swatchers.id.s);
-		swatchers.event.s = "presence";
-		swatchers.event.len = 8;
+		
+		swatchers.event= watcher_subs->event->stored_name;
 		
 		notify_body = create_winfo_xml(&swatchers, 1, version_str,p_uri.s,
 				PARTIAL_STATE_FLAG );
@@ -273,12 +258,12 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	query_vals[n_query_cols].val.str_val.len = subs->to_domain.len;
 	n_query_cols++;
 
+	
 	query_cols[n_query_cols] = "event";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = "presence";
-	query_vals[n_query_cols].val.str_val.len = strlen("presence");
+	query_vals[n_query_cols].val.str_val = subs->event->wipeer->stored_name;
 	n_query_cols++;
 
 	result_cols[status_col=n_result_cols++] = "status" ;
@@ -348,8 +333,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 						watchers[i].uri.len );
 			
 				watchers[i].id.len = strlen(watchers[i].id.s);
-				watchers[i].event.s = "presence";
-				watchers[i].event.len = strlen("presence");	
+				watchers[i].event= subs->event->wipeer->stored_name;
 			}
 		}
 
@@ -403,7 +387,7 @@ error:
 	return NULL;
 
 }
-str* get_p_notify_body(str user, str host, str* etag, str event)
+str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 {
 	db_key_t query_cols[6];
 	db_op_t  query_ops[6];
@@ -441,8 +425,7 @@ str* get_p_notify_body(str user, str host, str* etag, str event)
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = event.s;
-	query_vals[n_query_cols].val.str_val.len = event.len;
+	query_vals[n_query_cols].val.str_val= event->stored_name;
 	n_query_cols++;
 
 	result_cols[body_col=n_result_cols++] = "body" ;
@@ -473,7 +456,7 @@ str* get_p_notify_body(str user, str host, str* etag, str event)
 	{
 		DBG("PRESENCE: get_p_notify_body: The query returned no"
 				" result\n[username]= %.*s\t[domain]= %.*s\t[event]= %.*s\n",
-				user.len, user.s, host.len, host.s, event.len, event.s);
+				user.len, user.s, host.len, host.s, event->stored_name.len, event->stored_name.s);
 
 		pa_dbf.free_result(pa_db, result);
 		return NULL;
@@ -481,7 +464,7 @@ str* get_p_notify_body(str user, str host, str* etag, str event)
 	else
 	{
 		n= result->n;
-		if(BLA_LEN== event.len )
+		if(!event->agg_body )
 		{
 			int len;
 		/*	if(n>1)
@@ -726,7 +709,7 @@ error:
 }
 
 
-subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, int *n)
+subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, int *n)
 {
 
 	subs_t** subs_array= NULL;
@@ -745,8 +728,8 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, in
 	str sockinfo_str, local_contact;
 	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
 	int expires_col= 0,callid_col, cseq_col, i, status_col =0, event_id_col = 0;
-	int version_col = 0, record_route_col = 0, contact_col = 0;
-	int sockinfo_col = 0, local_contact_col= 0;
+	int version_col= 0, record_route_col = 0, contact_col = 0;
+	int sockinfo_col= 0, local_contact_col= 0;
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
@@ -775,8 +758,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, in
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = event;
-	query_vals[n_query_cols].val.str_val.len = strlen(event);
+	query_vals[n_query_cols].val.str_val = event->stored_name;
 	n_query_cols++;
 
 	if(sender)
@@ -806,11 +788,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, in
 	result_cols[status_col=n_result_cols++] = "status"; 
 	result_cols[sockinfo_col=n_result_cols++] = "socket_info"; 
 	result_cols[local_contact_col=n_result_cols++] = "local_contact"; 
-	
-	if(strlen(event)== strlen( "presence.winfo"))
-	{
-		result_cols[version_col=n_result_cols++] = "version";
-	}
+	result_cols[version_col=n_result_cols++] = "version";
 
 	if (pa_dbf.query(pa_db, query_cols, query_ops, query_vals,result_cols,
 				n_query_cols, n_result_cols, 0, &result) < 0) 
@@ -829,9 +807,9 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, in
 	if (result->n <=0 )
 	{
 		DBG("PRESENCE: get_subs_dialog:The query for subscribtion for"
-				" [user]= %.*s,[domain]= %.*s for [event]= %s returned no"
+				" [user]= %.*s,[domain]= %.*s for [event]= %.*s returned no"
 				" result\n",p_user->len, p_user->s, p_domain->len, 
-				p_domain->s,event);
+				p_domain->s,event->stored_name.len, event->stored_name.s);
 		pa_dbf.free_result(pa_db, result);
 		result = NULL;
 		return NULL;
@@ -895,7 +873,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, in
 
 
 		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
-				from_domain.len+ event_id.len+ + strlen(event)+ to_tag.len+ 
+				from_domain.len+ event_id.len+ to_tag.len+ 
 				from_tag.len+ callid.len+ record_route.len+ contact.len+
 				sockinfo_str.len+ local_contact.len)* sizeof(char);
 
@@ -923,11 +901,9 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, in
 		memcpy(subs->to_domain.s, p_domain->s, p_domain->len);
 		subs->to_domain.len = p_domain->len;
 		size+= p_domain->len;
-		
-		subs->event.s= (char*)subs+ size;
-		memcpy(subs->event.s, event, strlen(event));
-		subs->event.len= strlen(event);
-		size+= subs->event.len;
+	
+
+		subs->event= event;
 
 		subs->from_user.s= (char*)subs+ size;
 		memcpy(subs->from_user.s, from_user.s, from_user.len);
@@ -1006,9 +982,7 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, char* event,str* sender, in
 		subs->cseq = row_vals[cseq_col].val.int_val;
 		subs->expires = row_vals[expires_col].val.int_val - 
 			(int)time(NULL);
-
-		if(strlen(event) == PWINFO_LEN)
-			subs->version = row_vals[version_col].val.int_val;
+		subs->version = row_vals[version_col].val.int_val;
 		
 		subs_array[i]= subs;
 	}
@@ -1034,14 +1008,14 @@ error:
 	
 }
 
-int query_db_notify(str* p_user, str* p_domain, char* event, 
+int query_db_notify(str* p_user, str* p_domain, ev_t* event, 
 		subs_t* watcher_subs, str* etag, str* sender )
 {
 	subs_t** subs_array = NULL;
 	int n=0, i=0;
 	str * notify_body = NULL;
 
-	subs_array= get_subs_dialog(p_user, p_domain, event,sender, &n);
+	subs_array= get_subs_dialog(p_user, p_domain, event , sender, &n);
 	if(subs_array == NULL)
 	{
 		LOG(L_ERR, "PRESENCE:query_db_notify: Could not get subs_dialog from"
@@ -1049,12 +1023,9 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 		goto error;
 	}
 	
-	if(PWINFO_LEN!= strlen(event) )
+	if(event->type & PUBL_TYPE)
 	{
-		str event_str;
- 		event_str.s= event;
- 		event_str.len= strlen(event);
-		notify_body = get_p_notify_body(*p_user, *p_domain, etag, event_str);
+		notify_body = get_p_notify_body(*p_user, *p_domain, etag, event);
 		if(notify_body == NULL)
 		{
 			DBG( "PRESENCE:query_db_notify: Could not get the"
@@ -1068,7 +1039,7 @@ int query_db_notify(str* p_user, str* p_domain, char* event,
 		if(notify(subs_array[i], watcher_subs, notify_body, 0)< 0 )
 		{
 			DBG( "PRESENCE:query_db_notify: Could not send notify for"
-					"%s\n", event);
+					"%.*s\n", event->stored_name.len, event->stored_name.s);
 		}
 	}
 
@@ -1463,7 +1434,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 	}
     /* getting the notify body */
 
-	if ( subs->event.len == PRES_LEN)
+	if ( subs->event->req_auth )
 	{	
 		xcap_tree = get_xcap_tree(subs->to_user, subs->to_domain);
 		if(xcap_tree == NULL)
@@ -1553,7 +1524,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 		}
 		else  
 		{		
-			if(PWINFO_LEN == subs->event.len)	
+			if(subs->event->type & WINFO_TYPE)	
 			{	
 				notify_body = get_wi_notify_body(subs, watcher_subs );
 				if(notify_body == NULL)
@@ -1584,8 +1555,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 					{
 						DBG("PRESENCE:notify: Could not get the"
 								" notify_body\n");
-						if(subs->event.len== BLA_LEN)
-							goto done;
+						goto done;
 					}
 				}	
 			}		
@@ -1593,7 +1563,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 		}
 	}
 	
-	if( (subs->event.len == PRES_LEN) && notify_body&& rule_node)
+	if( (subs->event->type & PUBL_TYPE) && notify_body&& rule_node)
 	{
 		DBG("PRESENCE:notify: get final body according to transformations\n");
 
@@ -1631,8 +1601,8 @@ jump_over_body:
 	}
 	DBG("PRESENCE: notify: build notify to user= %.*s domain= %.*s"
 			" for event= %.*s\n", subs->from_user.len, subs->from_user.s,
-			subs->from_domain.len, subs->from_domain.s,subs->event.len,
-			subs->event.s);
+			subs->from_domain.len, subs->from_domain.s,subs->event->stored_name.len,
+			subs->event->stored_name.s);
 
 	printf_subs(subs);
 	str_hdr = build_str_hdr( subs->event, subs->event_id, subs->status, subs->expires,
@@ -1652,7 +1622,7 @@ jump_over_body:
 		goto error;	
 	}
 
-	if(subs->event.len == PWINFO_LEN && watcher_subs )
+	if(subs->event->type == WINFO_TYPE && watcher_subs )
 	{
 		DBG("PRESENCE: notify:Send notify for presence on callback\n");
 		watcher_subs->send_on_cback = 1;			
@@ -1706,7 +1676,7 @@ jump_over_body:
 	n_update_keys++;
 
 
-	if(PWINFO_LEN == subs->event.len)
+	if(subs->event->type & WINFO_TYPE)
 	{	
 		update_keys[n_update_keys] = "version";
 		update_vals[n_update_keys].type = DB_INT;
@@ -1743,7 +1713,7 @@ done:
 		}
 	}	
 	else
-		if(subs->event.len == PRES_LEN && rule_node)
+		if(subs->event->type & PUBL_TYPE && rule_node)
 		{
 			if(final_body!=NULL)
 			{
@@ -1779,7 +1749,7 @@ error:
 		}
 	}	
 	else
-		if(subs->event.len == PRES_LEN && rule_node)
+		if(subs->event->type &PUBL_TYPE && rule_node)
 		{
 			if(final_body!=NULL)
 			{
@@ -1878,7 +1848,7 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 	{
 		size+= sizeof(subs_t) + (subs->to_user.len+ 
 			subs->to_domain.len+ subs->from_user.len+ subs->from_domain.len+
-			subs->event.len +subs->event_id.len + subs->to_tag.len +
+			+subs->event_id.len + subs->to_tag.len +
 			subs->from_tag.len + subs->callid.len +subs->contact.len +
 			subs->record_route.len +subs->status.len + subs->reason.len+
 			subs->local_contact.len+ subs->sockinfo_str.len)* sizeof(char);
@@ -1932,10 +1902,7 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 	cb_param->wi_subs->from_domain.len = subs->from_domain.len;
 	size+= subs->from_domain.len;
 
-	cb_param->wi_subs->event.s = (char*)cb_param + size;
-	strncpy(cb_param->wi_subs->event.s, subs->event.s, subs->event.len);
-	cb_param->wi_subs->event.len = subs->event.len;
-	size+= subs->event.len;
+	cb_param->wi_subs->event= subs->event; 
 
 	cb_param->wi_subs->event_id.s = (char*)cb_param + size;
 	strncpy(cb_param->wi_subs->event_id.s, subs->event_id.s, subs->event_id.len);

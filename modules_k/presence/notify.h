@@ -71,7 +71,7 @@ int free_tm_dlg(dlg_t *td);
 
 dlg_t* build_dlg_t (str p_uri, subs_t* subs);
 
-int query_db_notify(str* p_user, str* p_domain, char* event,
+int query_db_notify(str* p_user, str* p_domain, ev_t* event,
 		subs_t *subs, str* etag, str* sender);
 
 int notify(subs_t* subs, subs_t* watcher_subs, str* n_body, int force_null_body);

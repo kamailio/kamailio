@@ -36,6 +36,7 @@
 #include "../../db/db.h"
 #include "../../parser/parse_from.h"
 #include <libxml/parser.h>
+#include "event_list.h"
 
 /* TM bind */
 extern struct tm_binds tmb;
@@ -63,5 +64,6 @@ extern int force_active;
 extern int max_expires;
 extern struct sl_binds slb;
 extern str server_address;
+extern evlist_t* EvList;
 
 #endif /* PA_MOD_H */

@@ -10,7 +10,7 @@ typedef struct subscribtion
 	str to_domain;
 	str from_user;
 	str from_domain;
-	str event;
+	ev_t* event;
 	str event_id;
 	str to_tag;
 	str from_tag;

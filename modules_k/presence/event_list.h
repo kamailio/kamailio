@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: event_list.c 1953 2007-04-04 08:50:33Z anca_vamanu $
  *
  * presence module - presence server implementation
  *
@@ -23,43 +23,44 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2007-04-05  initial version (anca)
  */
 
-#ifndef PRESENTITY_H
-#define PRESENTITY_H
+#ifndef _PRES_EV_LST_
+#define  _PRES_EV_LST_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <libxml/parser.h>
-#include <time.h>
 #include "../../str.h"
-#include "../../parser/msg_parser.h" 
-#include "event_list.h"
 
-typedef struct presentity
+#define WINFO_TYPE			1<< 0
+#define PUBL_TYPE		    1<< 1
+
+typedef struct ev
 {
-	int presid;
-	str user;
-	str domain;
-	ev_t* event;
-	str etag;
-	str* sender;
-	time_t expires;
-	time_t received_time;
-} presentity_t;
+	str name;
+	str* param;         // required param 
+	/* to do: transform it in a list ( for multimple param)*/
+	str stored_name;
+	str content_type;
+	int agg_body;
+	int type;
+	int req_auth;
+	struct ev* wipeer; /* can be NULL or the name of teh winfo event */
+	struct ev* next;
+	
+}ev_t;
 
-/* create new presentity */
-presentity_t* new_presentity( str* domain,str* user,int expires, 
- 		ev_t* event, str* etag, str* sender);
+typedef struct evlist
+{
+	int ev_count;
+	ev_t* events;
+}evlist_t;	
 
-/* update presentity in database */
-int update_presentity(presentity_t* p, str* body, int t_new);
+evlist_t* init_evlist();
 
-/* free memory */
-void free_presentity(presentity_t* p);
+int add_event(char* name, char* param, char* content_type, int agg_body);
+
+ev_t* contains_event(str* name, str* param);
+
+void destroy_evlist();
 
 #endif
-
