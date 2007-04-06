@@ -35,6 +35,7 @@
 # 2003-03-01 bug_fix: route set reversed
 # 2003-02-27 dialog support completed (jiri)
 # 2003-04-28 dialog info precomputed in SER (jiri)
+# 2007-04-06 updated for 1.2.0+ (daniel)
 
 #--------------------------------
 # config: who with whom
@@ -56,7 +57,7 @@ fi
 
 #---------------------------------
 # fixed config data
-FIFO="/tmp/ser_fifo"
+FIFO="/tmp/openser_fifo"
 # address of controller
 FROM="<sip:controller@foo.bar>"
 CSEQ="1"
@@ -82,21 +83,22 @@ END { exit ret; }
 
 {line++; }
 
-# line 1: status code
-line==1 && /^2[0-9][0-9] / { ret=0;next; }
-line==1 && /^[3-6][0-9][0-9] / { print; print $0 > "/dev/stderr"; next; }
-line==1 { print "reply error"; print; next; } 
+# line 2: status code
+line==2 && /^2[0-9][0-9] / { ret=0;next; }
+line==2 && /^[3-6][0-9][0-9] / { print; print $0 > "/dev/stderr"; next; }
+line==2 { print "reply error"; print; next; } 
 
 # skip body
 /^$/ { eoh=1 }
 eoh==1 { next }
 
 # uri and outbound uri at line 2,3: copy and paste
-line==2 || line==3 { print $0; next; }
-# line 4: Route; empty if ".", copy and paste otherwise
-line==4 && /^\.$/ { next; }
+line==3 { print $0; next; }
+line==4 { print $0; print "."; printf("\""); next; }
+# line 5: Route; empty if ".", copy and paste otherwise
+line==5 && /^\.$/ { next; }
 # if non-empty, copy and paste it
-line==4 { print $0; next; }
+line==5 { print $0; next; }
 # filter out to header field for use in next requests
 /^(To|t):/ { print $0; next; }
 # anything else will be ignored
@@ -124,6 +126,7 @@ fi
 chmod a+w $fifo_reply
 # start reader now so that it is ready for replies
 # immediately after a request is out
+
 cat < $fifo_reply | filter_fl > $dlg  &
 fifo_job="$!"
 
@@ -132,17 +135,17 @@ fifo_job="$!"
 # outbound uri, end of headers, end of body; eventualy
 # the FIFO request must be terminated with an empty line)
 cat > $FIFO <<EOF
-
 :t_uac_dlg:$name
 INVITE 
 $URI
 .
-$FIXED_DLG
+.
+"$FIXED_DLG
 To: <$URI>
 CSeq: $CSEQ INVITE
 Content-Type: application/sdp
-.
-v=0
+"
+"v=0
 o=click-to-dial 0 0 IN IP4 0.0.0.0
 s=session
 c=IN IP4 0.0.0.0
@@ -150,7 +153,7 @@ b=CT:1000
 t=0 0
 m=audio 9 RTP/AVP 0
 a=rtpmap:0 PCMU/8000
-.
+"
 
 EOF
 
@@ -172,12 +175,12 @@ CSEQ=`expr $CSEQ + 1`
 
 # start reader now so that it is ready for replies
 # immediately after a request is out
+
 cat < $fifo_reply | filter_fl > /dev/null  &
 fifo_job="$!"
 
 # dump the REFER request to FIFO server 
 cat > $FIFO <<EOF
-
 :t_uac_dlg:$name
 REFER
 `cat $dlg`
@@ -185,8 +188,7 @@ $FIXED_DLG
 CSeq: $CSEQ REFER
 Referred-By: $FROM
 Refer-To: $TARGET
-.
-.
+"
 
 EOF
 
@@ -211,14 +213,12 @@ CSEQ=`expr $CSEQ + 1`
 cat < $fifo_reply | filter_fl > /dev/null  &
 fifo_job="$!"
 cat > $FIFO <<EOF
-
 :t_uac_dlg:$name
 BYE
 `cat $dlg`
 $FIXED_DLG
 CSeq: $CSEQ BYE
-.
-.
+"
 
 EOF
 
