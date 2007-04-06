@@ -35,7 +35,7 @@
 # 2003-03-01 bug_fix: route set reversed
 # 2003-02-27 dialog support completed (jiri)
 # 2003-04-28 dialog info precomputed in SER (jiri)
-# 2007-04-06 updated for 1.2.0+ (daniel)
+# 2007-04-06 updated for OpenSER 1.2.0+ (daniel)
 
 #--------------------------------
 # config: who with whom
@@ -66,7 +66,7 @@ CALLID="${CALLIDNR}.fifouacctd"
 name="ctd_fifo_$$"
 fifo_reply="/tmp/$name"
 dlg="/tmp/$CALLID.dlg"
-FIXED_DLG=`printf "From: $FROM;tag=$CALLIDNR\nCall-ID: $CALLID\nContact: <sip:caller@!!>"`
+FIXED_DLG="From: $FROM;tag=$CALLIDNR\r\nCall-ID: $CALLID\r\nContact: <sip:caller@!!>\r\n"
 #----------------------------------
 
 # generate parts of FIFO-request essential to forming
@@ -98,9 +98,9 @@ line==4 { print $0; print "."; printf("\""); next; }
 # line 5: Route; empty if ".", copy and paste otherwise
 line==5 && /^\.$/ { next; }
 # if non-empty, copy and paste it
-line==5 { print $0; next; }
+line==5 { printf("%s\n", $0); next; }
 # filter out to header field for use in next requests
-/^(To|t):/ { print $0; next; }
+/^(To|t):/ { printf("%s\n", $0); next; }
 # anything else will be ignored
 {next} 
 	' # end of awk script
@@ -134,28 +134,20 @@ fifo_job="$!"
 # (note the dots -- they mean in order of appearance:
 # outbound uri, end of headers, end of body; eventualy
 # the FIFO request must be terminated with an empty line)
+#cat <<EOF
 cat > $FIFO <<EOF
 :t_uac_dlg:$name
 INVITE 
 $URI
 .
 .
-"$FIXED_DLG
-To: <$URI>
-CSeq: $CSEQ INVITE
-Content-Type: application/sdp
+"`printf "${FIXED_DLG}To: <$URI>\r\nCSeq: $CSEQ INVITE\r\nContent-Type: application/sdp\r\n"`
 "
-"v=0
-o=click-to-dial 0 0 IN IP4 0.0.0.0
-s=session
-c=IN IP4 0.0.0.0
-b=CT:1000
-t=0 0
-m=audio 9 RTP/AVP 0
-a=rtpmap:0 PCMU/8000
+"`printf "v=0\r\no=click-to-dial 0 0 IN IP4 0.0.0.0\r\ns=session\r\nc=IN IP4 0.0.0.0\r\nb=CT:1000\r\nt=0 0\r\nm=audio 9 RTP/AVP 8 0\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"`
 "
 
 EOF
+#exit
 
 # wait for reply 
 wait $fifo_job # returns completion status of filter_fl
@@ -183,11 +175,7 @@ fifo_job="$!"
 cat > $FIFO <<EOF
 :t_uac_dlg:$name
 REFER
-`cat $dlg`
-$FIXED_DLG
-CSeq: $CSEQ REFER
-Referred-By: $FROM
-Refer-To: $TARGET
+`cat $dlg; printf "${FIXED_DLG}CSeq: $CSEQ REFER\r\nReferred-By: $FROM\r\nRefer-To: $TARGET\r\n"`
 "
 
 EOF
@@ -215,9 +203,7 @@ fifo_job="$!"
 cat > $FIFO <<EOF
 :t_uac_dlg:$name
 BYE
-`cat $dlg`
-$FIXED_DLG
-CSeq: $CSEQ BYE
+`cat $dlg; printf "${FIXED_DLG}CSeq: $CSEQ BYE\r\n"`
 "
 
 EOF
