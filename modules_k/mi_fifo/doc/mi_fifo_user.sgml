@@ -190,7 +190,7 @@ modparam("mi_fifo", "reply_dir", "/home/openser/tmp/")
 		<title><varname>reply_indent</varname> (string)</title>
 		<para>
 		Strings to be used for line indentation. As the MI data structure 
-		is tree oriendeted, the depth level will printed as identation.
+		is tree oriendeted, the depth level will printed as indentation.
 		</para>
 		<para>
 		<emphasis>
@@ -198,10 +198,10 @@ modparam("mi_fifo", "reply_dir", "/home/openser/tmp/")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>reply_ident</varname> parameter</title>
+		<title>Set <varname>reply_indent</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mi_fifo", "reply_ident", "    ")
+modparam("mi_fifo", "reply_indent", "    ")
 ...
 </programlisting>
 		</example>

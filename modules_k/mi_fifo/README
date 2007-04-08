@@ -43,7 +43,7 @@ Bogdan-Andrei Iancu
    1-3. Set fifo_group parameter
    1-4. Set fifo_user parameter
    1-5. Set reply_dir parameter
-   1-6. Set reply_ident parameter
+   1-6. Set reply_indent parameter
    1-7. FIFO request
      _________________________________________________________
 
@@ -155,13 +155,13 @@ modparam("mi_fifo", "reply_dir", "/home/openser/tmp/")
 
    Strings to be used for line indentation. As the MI data
    structure is tree oriendeted, the depth level will printed as
-   identation.
+   indentation.
 
    Default value is ""\t" (TAB)". 
 
-   Example 1-6. Set reply_ident parameter
+   Example 1-6. Set reply_indent parameter
 ...
-modparam("mi_fifo", "reply_ident", "    ")
+modparam("mi_fifo", "reply_indent", "    ")
 ...
      _________________________________________________________
 
