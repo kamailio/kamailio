@@ -1,17 +1,23 @@
---- Makefile.orig	Thu Jul 27 18:18:37 2006
-+++ Makefile	Wed Feb 28 17:36:04 2007
-@@ -46,8 +46,8 @@
+--- Makefile.orig	Mon Apr  9 11:54:01 2007
++++ Makefile	Mon Apr  9 13:44:55 2007
+@@ -47,13 +47,9 @@
  skip_modules?=
  
  # if not set on the cmd. line or the env, exclude this modules:
 -exclude_modules?= 		jabber cpl-c mysql pa postgres osp unixodbc \
--						avp_radius auth_radius group_radius uri_radius
-+exclude_modules?= 		jabber osp $(POSTGRESQL) $(MYSQL) $(UNIXODBC) \
-+					avp_radius auth_radius group_radius uri_radius
- ifeq ($(TLS),)
- 	exclude_modules+= tlsops
- endif
-@@ -335,21 +335,9 @@
+-						avp_radius auth_radius group_radius uri_radius xmpp \
+-						presence pua pua_mi pua_usrloc \
+-						mi_xmlrpc perl snmpstats
+-ifeq ($(TLS),)
+-	exclude_modules+= tlsops
+-endif
++exclude_modules?= 		$(MYSQL) $(POSTGRESQL) $(SNMPSTATS) $(TLSOPS) $(UNIXODBC) \
++						avp_radius auth_radius group_radius uri_radius \
++						jabber osp mi_xmlrpc perl xmpp
+ # always exclude the SVN dir
+ override exclude_modules+= .svn $(skip_modules)
+ 
+@@ -339,21 +335,9 @@
  		
  # note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
  install-cfg: $(cfg-prefix)/$(cfg-dir)
@@ -34,34 +40,7 @@
  		# openserctl config
  		$(INSTALL-TOUCH)   $(cfg-prefix)/$(cfg-dir)/openserctlrc.sample
  		$(INSTALL-CFG) scripts/openserctlrc \
-@@ -368,25 +356,7 @@
- 			mkdir -p $(cfg-prefix)/$(cfg-dir)/tls/rootCA/private ; \
- 			mkdir -p $(cfg-prefix)/$(cfg-dir)/tls/user ; \
- 			$(INSTALL-TOUCH) etc/tls/README $(cfg-prefix)/$(cfg-dir)/tls/; \
--			$(INSTALL-CFG) etc/tls/README $(cfg-prefix)/$(cfg-dir)/tls/; \
--			$(INSTALL-TOUCH) etc/tls/rootCA/index.txt $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
--			$(INSTALL-CFG) etc/tls/rootCA/index.txt $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
--			$(INSTALL-TOUCH) etc/tls/rootCA/serial $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
--			$(INSTALL-CFG) etc/tls/rootCA/serial $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
--			$(INSTALL-TOUCH) etc/tls/rootCA/cacert.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
--			$(INSTALL-CFG) etc/tls/rootCA/cacert.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
--			$(INSTALL-TOUCH) etc/tls/rootCA/certs/01.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/certs/; \
--			$(INSTALL-CFG) etc/tls/rootCA/certs/01.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/certs/; \
--			$(INSTALL-TOUCH) etc/tls/rootCA/private/cakey.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/private/; \
--			$(INSTALL-CFG) etc/tls/rootCA/private/cakey.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/private/; \
--			$(INSTALL-TOUCH) etc/tls/user/user-calist.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
--			$(INSTALL-CFG) etc/tls/user/user-calist.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
--			$(INSTALL-TOUCH) etc/tls/user/user-cert.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
--			$(INSTALL) etc/tls/user/user-cert.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
--			$(INSTALL-TOUCH) etc/tls/user/user-privkey.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
--			$(INSTALL-CFG) etc/tls/user/user-privkey.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
--			$(INSTALL-TOUCH) etc/tls/user/user-cert_req.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
--			$(INSTALL-CFG) etc/tls/user/user-cert_req.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
-+			$(BSD_INSTALL_DATA) etc/tls/README $(cfg-prefix)/$(cfg-dir)/tls/; \
- 		fi
- 
- install-bin: $(bin-prefix)/$(bin-dir) utils
-@@ -397,7 +367,7 @@
+@@ -389,7 +373,7 @@
  		sed -e "s#/usr/local/lib/openser#$(lib-target)#g" | \
  		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/openserctl
  		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/openserctl
@@ -70,7 +49,7 @@
  		rm -fr /tmp/openserctl
  		sed -e "s#/usr/local/sbin#$(bin-target)#g" \
  			< scripts/openserctl.base > /tmp/openserctl.base
-@@ -461,7 +431,7 @@
+@@ -454,7 +438,7 @@
  			sed -e "s#PATH:/usr/local/sbin#PATH:$(bin-target)#g" \
  				< scripts/mysqldb.sh > /tmp/$(NAME)_mysql.sh ; \
  			$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)_mysql.sh ; \
@@ -79,7 +58,7 @@
  			rm -fr /tmp/$(NAME)_mysql.sh ; \
  		fi
  		if [ "$(PGSQLON)" = "yes" ]; then \
-@@ -474,7 +444,7 @@
+@@ -467,7 +451,7 @@
  			sed -e "s#PATH:/usr/local/sbin#PATH:$(bin-target)#g" \
  				< scripts/postgresqldb.sh > /tmp/$(NAME)_postgresql.sh ; \
  			$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/$(NAME)_postgresql.sh ; \
@@ -88,7 +67,7 @@
  				$(bin-prefix)/$(bin-dir) ; \
  			rm -fr /tmp/$(NAME)_postgresql.sh ; \
  		fi
-@@ -499,8 +469,6 @@
+@@ -492,8 +476,6 @@
  			if [ -f modules/"$$r"/README ]; then \
  				$(INSTALL-TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \
  				$(INSTALL-DOC)  modules/"$$r"/README  \

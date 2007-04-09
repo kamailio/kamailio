@@ -1,18 +1,15 @@
---- Makefile.defs.orig	Thu Feb 22 15:46:16 2007
-+++ Makefile.defs	Wed Feb 28 10:53:25 2007
-@@ -116,9 +116,9 @@
- 
- ARCH_B= $(shell echo $(ARCH) | sed -e 's/.*64.*/64b/')
+--- Makefile.defs.orig	Mon Apr  9 12:01:20 2007
++++ Makefile.defs	Mon Apr  9 11:59:14 2007
+@@ -128,7 +128,7 @@
  ifeq ($(ARCH_B),64b)
--	LIBDIR ?= lib64
-+	LIBDIR = lib64
+ 	LIBDIR ?= lib64
  else
 -	LIBDIR ?= lib
 +	LIBDIR = lib
  	# assume 32b - it is not really used further
  	ARCH_B=32b
  endif
-@@ -198,13 +198,13 @@
+@@ -208,13 +208,13 @@
  TAR ?= tar
  endif
  
@@ -23,7 +20,7 @@
 -INSTALL-MODULES = $(INSTALL) -m 755
 -INSTALL-DOC = $(INSTALL) -m 644
 -INSTALL-MAN = $(INSTALL) -m 644
-+INSTALL-TOUCH = :		# used to create the file first (good to
++INSTALL-TOUCH = :		# used to create the file first (good to 
 +				#  make solaris install work)
 +INSTALL-CFG = $(BSD_INSTALL_DATA)
 +INSTALL-BIN = $(BSD_INSTALL_PROGRAM)
@@ -33,7 +30,7 @@
  
  #set some vars from the environment (and not make builtins)
  CC   := $(shell echo "$${CC}")
-@@ -1203,8 +1203,8 @@
+@@ -1196,8 +1196,8 @@
  
  #add libssl if needed
  ifneq ($(TLS),)

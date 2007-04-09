@@ -2,7 +2,7 @@
 # Date created:				20 October 2005
 # Whom:					jesusr
 #
-# $FreeBSD: ports/net/openser/Makefile,v 1.4 2006/06/22 14:08:48 johans Exp $
+# $FreeBSD: ports/net/openser/Makefile,v 1.6 2007/03/04 22:09:30 miwi Exp $
 #
 
 PORTNAME=	openser
@@ -28,15 +28,17 @@ MAKE_ENV=	CC="${CC}" \
 PLIST_FILES=	sbin/openser sbin/openserctl sbin/openserunix \
 		lib/openser/openserctl/openserctl.base lib/openser/openserctl/openserctl.ctlbase \
 		lib/openser/openserctl/openserctl.fifo lib/openser/openserctl/openserctl.sqlbase \
-		lib/openser/openserctl/openserctl.unixsock
+		lib/openser/openserctl/openserctl.unixsock \
+		etc/openser/openserctlrc
 
 PLIST_DIRS=	lib/openser/modules lib/openser/openserctl lib/openser
 
 MODULES=	acc alias_db auth auth_db auth_diameter avpops cpl-c dbtext \
-		dialog dispatcher diversion domain enum exec flatstore gflags \
-		group lcr mangler maxfwd mediaproxy msilo nathelper options \
-		pa path pdt permissions pike registrar rr siptrace sl sms \
-		speeddial statistics textops tm uac uac_redirect uri \
+		dialog dispatcher diversion domain domainpolicy enum exec flatstore \
+		gflags group imc lcr mangler maxfwd mediaproxy mi_fifo msilo \
+		nathelper options pa path pdt permissions pike presence pua pua_mi \
+		pua_usrloc registrar rr seas siptrace sl sms speeddial sst statistics \
+		textops tm uac uac_redirect uri \
 		uri_db usrloc xlog
 
 RC_FILES=	acc/radiusclient.conf \
@@ -45,9 +47,12 @@ RC_FILES=	acc/radiusclient.conf \
 		openser.cfg
 RC_DIRS=	acc
 
+ONLY_FOR_ARCHS=	i386
+
 MAN5=		openser.cfg.5
 MAN8=		openser.8 \
-		openserctl.8
+		openserctl.8 \
+		openserunix.8
 
 PORTDOCS=	*
 
@@ -55,9 +60,10 @@ SUB_FILES=	pkg-install pkg-deinstall
 SUB_LIST=	RC_DIRS="${RC_DIRS}" RC_FILES="${RC_FILES}"
 
 OPTIONS=	MYSQL "MySQL support" on \
-		POSTGRESQL "PostgreSQL support" on \
-		UNIXODBC "UnixODBC support" on \
-		TLS "TLS support" on
+		POSTGRESQL "PostgreSQL support" off \
+		UNIXODBC "UnixODBC support" off \
+		TLS "TLS support" off \
+		SNMPSTATS "SNMPStats support" off
 
 .include <bsd.port.pre.mk>
 
@@ -85,6 +91,7 @@ MAKE_ENV+=	UNIXODBC=unixodbc
 .endif
 
 .if defined(WITH_TLS)
+MODULES+=	tlsops
 .include "${PORTSDIR}/Mk/bsd.openssl.mk"
 TLS_RC_FILES=	tls/rootCA/cacert.pem \
 		tls/rootCA/certs/01.pem \
@@ -94,7 +101,11 @@ TLS_RC_FILES=	tls/rootCA/cacert.pem \
 		tls/user/user-calist.pem \
 		tls/user/user-cert.pem \
 		tls/user/user-cert_req.pem \
-		tls/user/user-privkey.pem
+		tls/user/user-privkey.pem \
+		tls/README \
+		tls/ca.conf \
+		tls/request.conf \
+		tls/user.conf
 RC_FILES+=	${TLS_RC_FILES}
 TLS_RC_DIRS=	tls/user \
 		tls/rootCA/certs \
@@ -103,7 +114,15 @@ TLS_RC_DIRS=	tls/user \
 		tls
 RC_DIRS+=	${TLS_RC_DIRS}
 .else
+MAKE_ENV+=	TLSOPS=tlsops
 MAKE_ARGS+=	TLS=""
+.endif
+
+.if defined(WITH_SNMPSTATS)
+RUN_DEPENDS+=	snmpcheck:${PORTSDIR}/net-mgmt/net-snmp
+MODULES+=       snmpstats
+.else
+MAKE_ENV+=      SNMPSTATS=snmpstats
 .endif
 
 PLIST_FILES+=	${MODULES:S|^|lib/openser/modules/|:S|$|.so|} \
