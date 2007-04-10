@@ -53,8 +53,7 @@ extern str flags_column;    /* Flags column in credentials table */
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
 extern int use_did;           /* Whether query should also use did in query */
 
-extern db_con_t* auth_db_handle; /* database connection handle */
-extern db_func_t auth_dbf;
+extern db_ctx_t* auth_db_handle; /* database connection handle */
 
 extern auth_api_t auth_api;
 
@@ -66,5 +65,17 @@ extern int credentials_n;
  * Pointer to reply function in stateless module
  */
 extern sl_api_t sl;
+
+/* structure holding information for a table (holds
+ * only pregenerated DB queries now) */
+typedef struct _authdb_table_info_t {
+	str table; /* s is zero terminated */
+	db_cmd_t *query_pass; /* queries HA1 */
+	db_cmd_t *query_pass2; /* queries HA1B */
+	db_cmd_t *query_password; /* queries plain password */
+
+	struct _authdb_table_info_t *next;
+	char buf[1]; /* used to hold 'table' data */
+} authdb_table_info_t;
 
 #endif /* AUTHDB_MOD_H */

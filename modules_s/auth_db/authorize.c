@@ -51,101 +51,79 @@
 #include "rfc2617.h"
 
 
-static inline int get_ha1(struct username* username, str* did, str* realm,
-			  str* table, char* ha1, db_res_t** res, int* row)
-{
-    db_key_t keys[3];
-    db_val_t vals[3];
-    db_val_t* val;
-    db_key_t* col;
-    str result;
-    int n, nc, i;
-    char* t = 0;
-    
-    val = 0; /* Fixes gcc warning */
-    col = pkg_malloc(sizeof(*col) * (credentials_n + 2));
-    if (col == NULL) {
-	LOG(L_ERR, "auth_db:get_ha1: Error while allocating memory\n");
-	return -1;
-    }
-    
-    keys[0] = username_column.s;
-    keys[1] = realm_column.s;
-    keys[2] = did_column.s;
-    col[0] = (username->domain.len && !calc_ha1) ? (pass_column_2.s) : (pass_column.s);
-    col[1] = flags_column.s;
-    
-    for (n = 0; n < credentials_n; n++) {
-	col[2 + n] = credentials[n].s;
-    }
-    
-    vals[0].type = vals[1].type = DB_STR;
-    vals[0].nul = vals[1].nul = 0;
-    vals[0].val.str_val = username->user;
-    vals[1].val.str_val = *realm;
-    
-    if (use_did) {
-	vals[2].type = DB_STR;
-	vals[2].nul = 0;
-	vals[2].val.str_val = *did;
-	n = 3;
-    } else { 
-	n = 2;
-    }
+#define IS_NULL(f)	((f).flags & DB_NULL)
 
-    nc = 2 + credentials_n;
-    t = as_asciiz(table);
-    if (auth_dbf.use_table(auth_db_handle, t) < 0) {
-	LOG(L_ERR, "auth_db:get_ha1: Error in use_table\n");
-	if (t) pkg_free(t);
-	pkg_free(col);
-	return -1;
-    }
-    if (t) pkg_free(t);
-    
-    if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
-	LOG(L_ERR, "auth_db:get_ha1: Error while querying database\n");
-	pkg_free(col);
-	return -1;
-    }
-    pkg_free(col);
-    
-    for(i = 0; i < (*res)->n; i++) {
-	val = ((*res)->rows[i].values);
-	
-	if (val[0].nul || val[1].nul) {
-	    LOG(L_ERR, "auth_db:get_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
-		username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
-	    continue;
+static inline int get_ha1(struct username* username, str* did, str* realm,
+			  authdb_table_info_t *table_info, char* ha1, db_res_t** res, db_rec_t** row)
+{
+    str result;
+	db_cmd_t *q = NULL;
+   
+	if (calc_ha1) {
+		q = table_info->query_password;
+		DBG("querying plain password\n");
 	}
-	
-	if (val[1].val.int_val & DB_DISABLED) continue;
-	if (val[1].val.int_val & DB_LOAD_SER) {
-	    *row = i;
-	    break;
+	else {
+	    if (username->domain.len) {
+			q = table_info->query_pass2;
+			DBG("querying ha1b\n");
+		}
+		else {
+			q = table_info->query_pass;
+			DBG("querying ha1\n");
+		}
 	}
-    }
     
-    if (i == (*res)->n) {
-	DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found\n",
-	    username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
-	return 1;
-    }		
-    
-    result.s = (char*)val[0].val.string_val;
-    result.len = strlen(result.s);
-    
-    if (calc_ha1) {
-	     /* Only plaintext passwords are stored in database,
-	      * we have to calculate HA1 */
-	calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
-	DBG("auth_db:get_ha1: HA1 string calculated: %s\n", ha1);
-    } else {
-	memcpy(ha1, result.s, result.len);
-	ha1[result.len] = '\0';
-    }
-    
-    return 0;
+    q->params[0].v.str = username->user;
+    q->params[1].v.str = *realm;
+
+	if (use_did) q->params[2].v.str = *did;
+
+	if (db_exec(res, q) < 0 ) {
+		ERR("Error while querying database\n");
+	}
+
+	if (*res) *row = db_first(*res);
+	else *row = NULL;
+	while (*row) {
+		if (IS_NULL((*row)->fld[0]) || IS_NULL((*row)->fld[1])) {
+			LOG(L_ERR, "auth_db:get_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
+					username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+		}
+		else {
+			if ((*row)->fld[1].v.int4 & DB_DISABLED) {
+				/* disabled rows ignored */
+			}
+			else {
+				if ((*row)->fld[1].v.int4 & DB_LOAD_SER) {
+					/* *row = i; */
+					break;
+				}
+			}
+		}
+		*row = db_next(*res);
+	}
+
+	if (!*row) {
+		DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found\n",
+				username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+		return 1;
+	}		
+
+	result.s = (*row)->fld[0].v.cstr;
+	result.len = strlen(result.s);
+
+	if (calc_ha1) {
+		/* Only plaintext passwords are stored in database,
+		 * we have to calculate HA1 */
+		calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
+		DBG("auth_db:get_ha1: HA1 string calculated: %s\n", ha1);
+	} else {
+		memcpy(ha1, result.s, result.len);
+		ha1[result.len] = '\0';
+	}
+
+	return 0;
 }
 
 /*
@@ -193,32 +171,30 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 /*
  * Generate AVPs from the database result
  */
-static int generate_avps(db_res_t* result, unsigned int row)
+static int generate_avps(db_res_t* result, db_rec_t *row)
 {
     int i;
     int_str iname, ivalue;
     str value;
     
-    for (i = 2; i < credentials_n + 2; i++) {
-	value.s = (char*)VAL_STRING(&(result->rows[row].values[i]));
-	
-	if (VAL_NULL(&(result->rows[row].values[i]))
-	    || value.s == NULL) {
-	    continue;
+	for (i = 2; i < credentials_n + 2; i++) {
+		value = row->fld[i].v.str;
+
+		if (IS_NULL(row->fld[i]) || value.s == NULL) {
+			continue;
+		}
+
+		iname.s = credentials[i - 2];
+		ivalue.s = value;
+
+		if (add_avp(AVP_NAME_STR | AVP_VAL_STR | AVP_CLASS_USER, iname, ivalue) < 0) {
+			LOG(L_ERR, "auth_db:generate_avps: Error while creating AVPs\n");
+			return -1;
+		}
+
+		DBG("auth_db:generate_avps: set string AVP \'%.*s = %.*s\'\n",
+				iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
 	}
-	
-	iname.s = credentials[i - 2];
-	value.len = strlen(value.s);
-	ivalue.s = value;
-	
-	if (add_avp(AVP_NAME_STR | AVP_VAL_STR | AVP_CLASS_USER, iname, ivalue) < 0) {
-	    LOG(L_ERR, "auth_db:generate_avps: Error while creating AVPs\n");
-	    return -1;
-	}
-	
-	DBG("auth_db:generate_avps: set string AVP \'%.*s = %.*s\'\n",
-	    iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
-    }
     
     return 0;
 }
@@ -232,10 +208,11 @@ static int generate_avps(db_res_t* result, unsigned int row)
  *      -1 -- Authentication failed
  *       1 -- Authentication successful
  */
-static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_types_t hftype)
+static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_info_t *table, hdr_types_t hftype)
 {
     char ha1[256];
-    int res, row, ret;
+    int res, ret;
+	db_rec_t *row;
     struct hdr_field* h;
     auth_body_t* cred;
     db_res_t* result;
@@ -317,7 +294,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_
 	}
     
  end:
-    if (result) auth_dbf.free_result(auth_db_handle, result);
+    if (result) db_res_free(result);
     if (ret < 0) {
 	if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
 	    ERR("Error while creating challenge\n");
@@ -333,18 +310,14 @@ static inline int authenticate(struct sip_msg* msg, str* realm, str* table, hdr_
  */
 int proxy_authenticate(struct sip_msg* msg, char* p1, char* p2)
 {
-    str realm, table;
+	str realm;
 
-    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
-	ERR("Cannot obtain digest realm from parameter '%s'\n", ((fparam_t*)p1)->orig);
-	return -1;
-    }
+	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+		ERR("Cannot obtain digest realm from parameter '%s'\n", ((fparam_t*)p1)->orig);
+		return -1;
+	}
 
-    if (get_str_fparam(&table, msg, (fparam_t*)p2) < 0) {
-	ERR("Cannot obtain table name from parameter '%s'\n", ((fparam_t*)p2)->orig);
-	return -1;
-    }
-    return authenticate(msg, &realm, &table, HDR_PROXYAUTH_T);
+	return authenticate(msg, &realm, (authdb_table_info_t*)p2, HDR_PROXYAUTH_T);
 }
 
 
@@ -353,16 +326,12 @@ int proxy_authenticate(struct sip_msg* msg, char* p1, char* p2)
  */
 int www_authenticate(struct sip_msg* msg, char* p1, char* p2)
 {
-    str realm, table;
+    str realm;
 
-    if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
-	ERR("Cannot obtain digest realm from parameter '%s'\n", ((fparam_t*)p1)->orig);
-	return -1;
-    }
+	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+		ERR("Cannot obtain digest realm from parameter '%s'\n", ((fparam_t*)p1)->orig);
+		return -1;
+	}
 
-    if (get_str_fparam(&table, msg, (fparam_t*)p2) < 0) {
-	ERR("Cannot obtain table name from parameter '%s'\n", ((fparam_t*)p2)->orig);
-	return -1;
-    }
-    return authenticate(msg, &realm, &table, HDR_AUTHORIZATION_T);
+    return authenticate(msg, &realm, (authdb_table_info_t*)p2, HDR_AUTHORIZATION_T);
 }
