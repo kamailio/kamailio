@@ -290,6 +290,9 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 				goto error;
 			}
 
+			pa_dbf.free_result(pa_db, result);
+			result= NULL;
+
 			/* presentity body is updated so send notify to all watchers */
 			if (query_db_notify(&presentity->user, &presentity->domain,
 						presentity->event, NULL, NULL, presentity->sender)<0)
@@ -304,9 +307,6 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 		}
 	}
 	
-	if(result)
-		pa_dbf.free_result(pa_db, result);
-
 	if(status)
 		xmlFree(status);
 
