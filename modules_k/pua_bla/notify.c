@@ -49,7 +49,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	struct hdr_field* hdr;
 	str subs_state;
 	int found= 0;
-	str extra_headers;
+	str extra_headers= {0, 0};
 	static char buf[255];
 	xmlDoc* doc= NULL;
 	xmlNode* node= NULL, *dialog_node= NULL;
@@ -219,7 +219,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	memcpy(extra_headers.s, header_name.s, header_name.len);
 	extra_headers.len= header_name.len;
 	memcpy(extra_headers.s+extra_headers.len,": ",2);
-	extra_headers.len= 2;
+	extra_headers.len+= 2;
 	memcpy(extra_headers.s+ extra_headers.len, dialog.pres_uri->s,
 			dialog.pres_uri->len);
 	extra_headers.len+= dialog.pres_uri->len;
