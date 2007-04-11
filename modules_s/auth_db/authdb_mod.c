@@ -351,18 +351,18 @@ static int authdb_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		return fixup_var_str_12(param, param_no);
 	} else if (param_no == 2) {
-		if (fixup_str_12(param, param_no) < 0) return -1;
+		if (fixup_var_str_12(param, param_no) < 0) return -1;
 		p = (fparam_t*)(*param);
 		if (p->type == FPARAM_STR) {
-			/* vku: here was test for table version
-			 * FIXME - add to list of tables here? */
 			*param = register_table(&p->v.str);
 			if (!*param) {
 				ERR("can't register table %.*s\n", p->v.str.len, p->v.str.s);
 				return -1;
 			}
 		} else {
-			DBG("Not checking table version, parameter is attribute or select\n");
+			ERR("Non-string value of table with credentials is not allowed.\n");
+			/* TODO: allow this too */
+			return -1;
 		}
 	}
 
