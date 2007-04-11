@@ -175,14 +175,12 @@ static int generate_queries(authdb_table_info_t *info)
 		{ .name = NULL }
 	};
 	db_fld_t *results = NULL;
-	char *t;
 	int len, i;
 
 	len = sizeof(*results) * (credentials_n + 2);
 	results = pkg_malloc(len);
 	if (!results) {
 		ERR("can't allocate pkg mem\n");
-		pkg_free(t);
 		return -1;
 	}
 	memset(results, 0, len);
