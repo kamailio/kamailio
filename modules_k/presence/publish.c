@@ -146,12 +146,13 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 	n= result->n;
 	
-	p= (presentity_t**)pkg_malloc(result->n* sizeof(presentity_t*));
+	p= (presentity_t**)pkg_malloc(n* sizeof(presentity_t*));
 	if(p== NULL)
 	{
 		LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR while allocating memory\n");
 		goto error;
 	}
+	memset(p, 0, n* sizeof(presentity_t*));
 
 	for(i = 0; i< n; i++)
 	{	
@@ -210,7 +211,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			ev_param->len= event.len- ev_name.len -1;
 		}	
 
-		pres->event= contains_event(&event, ev_param);
+		pres->event= contains_event(&ev_name, ev_param);
 
 		if(ev_param)
 			pkg_free(ev_param);
@@ -233,8 +234,6 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
 				p[i]->domain.len, p[i]->domain.s);
 		query_db_notify( &p[i]->user, &p[i]->domain, p[i]->event, NULL, &p[i]->etag, NULL);
-
-
 	}
 
 
@@ -266,6 +265,8 @@ error:
 		{
 			if(p[i])
 				pkg_free(p[i]);
+			else
+				break;
 		}
 		pkg_free(p);
 	}
