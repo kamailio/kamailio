@@ -49,6 +49,7 @@
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "notify.h"
 #include "reg_avps.h"
+#include "reg_avps_db.h"
 #include "../../hashes.h"
 
 /* #define HASH_STRING_OPTIMIZE */
@@ -292,6 +293,7 @@ int preload_udomain(udomain_t* _d)
 		{.name = received_col.s,   .type = DB_STR},
 		{.name = instance_col.s,   .type = DB_STR},
 		{.name = aor_col.s,        .type = DB_STR},
+		{.name = avp_column,       .type = DB_STR}, /* Must be the last element in the array */
 		{.name = NULL}
 	};
 
@@ -395,7 +397,10 @@ int preload_udomain(udomain_t* _d)
 			goto error;
 		}
 
-		db_read_reg_avps(c);
+		if (use_reg_avps() && ((rec->fld[11].flags & DB_NULL) != DB_NULL)) {
+			c->avps = deserialize_avps(&rec->fld[11].v.str);
+				
+		}
 
 		     /* We have to do this, because insert_ucontact sets state to CS_NEW
 		      * and we have the contact in the database already

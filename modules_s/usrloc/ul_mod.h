@@ -78,7 +78,6 @@ extern db_ctx_t* db;
 extern db_cmd_t** del_rec;
 extern db_cmd_t** del_contact;
 extern db_cmd_t** ins_contact;
-extern db_cmd_t** read_avps;
 extern int cmd_n, cur_cmd;
 
 #endif /* UL_MOD_H */

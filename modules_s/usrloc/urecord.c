@@ -275,13 +275,12 @@ static inline int wt_timer(urecord_t* _r)
 			      * state, so notify */
 			if (!ptr && t->state == CS_SYNC) not=1;
 		
-			db_delete_reg_avps(t);
 			if (db_delete_ucontact(t) < 0) {
 				LOG(L_ERR, "wt_timer(): Error while deleting contact from "
 				    "database\n");
 			}
-			
-			delete_reg_avps(t);
+
+			delete_reg_avps(t);			
 			mem_delete_ucontact(_r, t);
 			_r->slot->d->expired++;
 		} else {
@@ -294,6 +293,7 @@ static inline int wt_timer(urecord_t* _r)
 	
 	return 0;
 }
+
 
 
 
@@ -328,7 +328,6 @@ static inline int wb_timer(urecord_t* _r)
 			
 			     /* Should we remove the contact from the database ? */
 			if (st_expired_ucontact(t) == 1) {
-				db_delete_reg_avps(t);
 				if (db_delete_ucontact(t) < 0) {
 					LOG(L_ERR, "wb_timer(): Can't delete contact from the database\n");
 				}
@@ -348,18 +347,15 @@ static inline int wb_timer(urecord_t* _r)
 				if (db_store_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while inserting contact into database\n");
 				}
-				db_save_reg_avps(ptr);
 				break;
 
 			case 2: /* update */
 				if (db_store_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while updating contact in db\n");
 				}
-				db_update_reg_avps(ptr);
 				break;
 
 			case 4: /* delete */
-				db_delete_reg_avps(ptr);
 				if (db_delete_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Can't delete contact from database\n");
 				}
@@ -430,7 +426,6 @@ int insert_ucontact(urecord_t* _r, str* aor, str* _c, time_t _e, qvalue_t _q, st
 			LOG(L_ERR, "insert_ucontact(): Error while inserting in database\n");
 		}
 		(*_con)->state = CS_SYNC;
-		db_save_reg_avps(*_con);
 	}
 
 	return 0;
@@ -450,7 +445,6 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 	
 	if (st_delete_ucontact(_c) > 0) {
 		if (db_mode == WRITE_THROUGH) {
-			db_delete_reg_avps(_c);
 			if (db_delete_ucontact(_c) < 0) {
 				LOG(L_ERR, "delete_ucontact(): Can't remove contact from "
 							"database\n");

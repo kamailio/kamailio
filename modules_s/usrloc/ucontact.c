@@ -46,6 +46,7 @@
 #include "ul_mod.h"
 #include "ul_callback.h"
 #include "reg_avps.h"
+#include "reg_avps_db.h"
 
 #define	MIN(x, y)	((x) < (y) ? (x) : (y))
 
@@ -492,9 +493,13 @@ int st_flush_ucontact(ucontact_t* _c)
  */
 int db_store_ucontact(ucontact_t* _c)
 {
+	str avps;
+	
 	if (_c->flags & FL_MEM) {
 		return 0;
 	}
+
+	avps.s = NULL;
 
 	ins_contact[cur_cmd]->params[0].v.str = *_c->uid;
 	ins_contact[cur_cmd]->params[1].v.str.s = _c->c.s;
@@ -525,12 +530,22 @@ int db_store_ucontact(ucontact_t* _c)
 	ins_contact[cur_cmd]->params[10].v.str.s = _c->aor.s;
 	ins_contact[cur_cmd]->params[10].v.str.len = MIN(_c->aor.len, 255);
 
+	if (use_reg_avps()) {
+		if (serialize_avps(_c->avps, &avps) < 0) {
+			ERR("Error while serializing AVPs\n");
+			return -1;
+		}
+		ins_contact[cur_cmd]->params[11].v.str = avps;
+	}
+
 	     /* FIXME */
 	if (db_exec(NULL, ins_contact[cur_cmd]) < 0) {
 		ERR("Error while storing contact in database\n");
+		if (avps.s) pkg_free(avps.s);
 		return -1;
 	}
-	
+
+	if (avps.s) pkg_free(avps.s);	
 	return 0;
 }
 
@@ -575,12 +590,11 @@ int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, s
 		return -1;
 	}
 	st_update_ucontact(_c);
-	update_reg_avps(_c);
+	save_reg_avps(_c);
 	if (db_mode == WRITE_THROUGH) {
 		if (db_store_ucontact(_c) < 0) {
 			LOG(L_ERR, "update_ucontact(): Error while updating database\n");
 		}
-		db_update_reg_avps(_c);
 	}
 	return 0;
 }

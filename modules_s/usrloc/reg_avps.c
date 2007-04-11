@@ -12,6 +12,7 @@ static avp_flags_t reg_avp_flag = 0;
 /*  FIXME - ugly */
 extern avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val);
 
+
 void trace_avp(const char *prolog, avp_t *avp)
 {
 	str *s;
@@ -21,10 +22,12 @@ void trace_avp(const char *prolog, avp_t *avp)
 	else INFO("%s: unnamed AVP (flags = %d)\n", prolog, avp->flags);
 }
 
+
 int use_reg_avps()
 {
 	return (reg_avp_flag != 0);
 }
+
 
 /* ************************************************************** */
 /* internal functions for storing/restoring AVPs into ucontact */
@@ -108,11 +111,11 @@ static int save_reg_avps_impl(struct ucontact *c)
 	
 	for (i = 0; lists[i]; i++) {
 		for (avp = get_avp_list(lists[i]); avp; avp = avp->next) {
-
+			
 			/* trace_avp("trying to save avp", avp); */
 			
 			if ((avp->flags & reg_avp_flag) == 0) continue;
-		
+			
 			/* trace_avp("saving avp", avp); */
 			
 			dup = avp_dup(avp);
@@ -197,6 +200,12 @@ int set_reg_avpflag_name(char *name)
 	return 0;
 }
 
+
+/*
+ * Take AVPS from the current lists and store them in the contact
+ * structure as registration AVPs. Existing registration AVPs will
+ * be destroyed.
+ */
 int save_reg_avps(struct ucontact *contact)
 {
 	/* no locking here! */
@@ -207,6 +216,10 @@ int save_reg_avps(struct ucontact *contact)
 	return save_reg_avps_impl(contact);
 }
 
+
+/*
+ * Delete registration AVPs from the contact
+ */
 int delete_reg_avps(struct ucontact* c)
 {
 	/* no locking here! */
@@ -217,16 +230,11 @@ int delete_reg_avps(struct ucontact* c)
 	return delete_reg_avps_impl(c);
 }
 
-int update_reg_avps(struct ucontact* c)
-{
-	/* no locking here! */
 
-	if (!use_reg_avps()) return 0;
-
-	/* INFO("updating registration AVP flags\n"); */
-	return save_reg_avps_impl(c);
-}
-
+/*
+ * Take registration AVPs from the contact and copy
+ * them to the current AVP lists
+ */
 int load_reg_avps(struct ucontact *contact)
 {
 	/* lock udomain here! */
@@ -236,6 +244,7 @@ int load_reg_avps(struct ucontact *contact)
 	/* INFO("loading registration AVP flags\n"); */
 	return restore_reg_avps(contact);
 }
+
 
 int read_reg_avps_fixup(void** param, int param_no)
 {
@@ -254,6 +263,7 @@ int read_reg_avps_fixup(void** param, int param_no)
 	}
 	return 0;
 }
+
 
 int read_reg_avps(struct sip_msg *m, char* _domain, char* fp)
 {
@@ -293,6 +303,7 @@ int read_reg_avps(struct sip_msg *m, char* _domain, char* fp)
 	return 1;
 }
 
+
 int dup_reg_avps(struct ucontact *dst, struct ucontact *src)
 {
 	struct usr_avp *avp, *dup;
@@ -325,6 +336,4 @@ int dup_reg_avps(struct ucontact *dst, struct ucontact *src)
 /*	if (dst->avps) db_save_reg_avps(dst); */
 	
 	return 0;
-
 }
-

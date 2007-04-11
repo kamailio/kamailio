@@ -7,19 +7,11 @@
 #define TYPE_STRING 's'
 #define TYPE_NUM    'n'
 
-char *reg_avp_table = "contact_attrs";
 /* int use_serialized_reg_avps = 0; */
 
 /*** table columns ***/
 
-char *serialized_reg_avp_column = NULL;
-
-char *regavp_uid_column = "uid";
-char *regavp_contact_column = "contact";
-char *regavp_name_column = "name";
-char *regavp_value_column = "value";
-char *regavp_type_column = "type";
-char *regavp_flags_column = "flags";
+char *avp_column = NULL;
 
 /*  FIXME - ugly */
 extern avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val);
@@ -88,7 +80,7 @@ static inline char *get_separator(char *buf) /* returns position after the numbe
 	return buf + i;
 }
 
-char *get_nums(char *buf, int *_name_len, int *_value_len, int *_flags)
+static char *get_nums(char *buf, int *_name_len, int *_value_len, int *_flags)
 {
 	str name_len, value_len, flags;
 	char *last;
@@ -149,7 +141,8 @@ avp_t *deserialize_avps(str *serialized_avps)
 	return first;
 }
 
-int serialize_avps(avp_t *first, str *dst) {
+int serialize_avps(avp_t *first, str *dst) 
+{
 	avp_t *avp;
 	int len = 0;
 
@@ -182,185 +175,4 @@ int serialize_avps(avp_t *first, str *dst) {
 	return 0;
 }
 
-/* ************************************************************** */
-/* database operations */
-
-static inline int can_write_db()
-{
-	if (((db_mode == WRITE_THROUGH) || (db_mode == WRITE_BACK))) {
-		if (db) return 1;
-	}
-	return 0;
-}
-
-
-/* AVPs are stored into 'location' table into "serialized_avp_column" column - hack for
- * existing database */
-
-int db_delete_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
-{
-	/*
-	db_key_t cols[] = { serialized_reg_avp_column };
-	db_val_t vals[1];
-	db_key_t keys[] = { regavp_uid_column, regavp_contact_column };
-	db_op_t ops[] = { OP_EQ, OP_EQ };
-	db_val_t k_vals[2];
-	
-	if (!can_write_db()) return 0;
-
-	del_avps[cur_cmd]->params[0].v.str = *c->uid;
-	del_avps[cur_cmd]->params[1].v.str = c->c;
-
-	string_val(k_vals[0], c->uid);
-	string_val(k_vals[1], &c->c);
-	vals[0].type = DB_STR;
-	vals[0].val.str_val.s = NULL;
-	vals[0].val.str_val.len = 0;
-	vals[0].nul = 1;
-	
-	if (ul_dbf.update(ul_dbh, keys, ops, k_vals, 
-				cols, vals, 2, 1) < 0) {
-		ERR("Can't update record\n");
-		return -1;
-	}
-	
-	return 0;
-	*/
-	ERR("No implemented\n");
-	return -1;
-}
-
-int db_update_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
-{
-	/* db_delete_reg_avps(c); not needed ! */
-	return db_save_reg_avps(c);
-}
-
-int db_save_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
-{
-	/*
-	avp_t *avp = c->avps;
-	db_key_t cols[] = { serialized_reg_avp_column };
-	db_val_t vals[1];
-	
-	db_key_t keys[] = { regavp_uid_column, regavp_contact_column };
-	db_op_t ops[] = { OP_EQ, OP_EQ };
-	db_val_t k_vals[2];
-	
-	str s = STR_NULL;
-	char b[256];
-
-	if (!can_write_db()) return 0;
-	
-	memcpy(b, c->domain->s, c->domain->len);
-	b[c->domain->len] = '\0';
-
-	if (ul_dbf.use_table(ul_dbh, b) < 0) {
-		ERR("Error in use_table\n");
-		return -1;
-	}
-
-	if (serialize_avps(avp, &s) < 0) {
-		ERR("can't serialize AVPs\n");
-		return -1;
-	}
-	
-	string_val(k_vals[0], c->uid);
-	string_val(k_vals[1], &c->c);
-	string_val(vals[0], &s);
-	
-	if (ul_dbf.update(ul_dbh, keys, ops, k_vals, 
-				cols, vals, 2, 1) < 0) {
-		ERR("Can't update record\n");
-		return -1;
-	}
-
-	if (s.s) pkg_free(s.s);
-	*/
-	ERR("No implemented yet\n");
-	return 0;
-}
-
-int db_read_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
-{
-	/* load on startup, ... */
-	/*
-	db_key_t keys[] = { regavp_uid_column, regavp_contact_column };
-	db_op_t ops[] = { OP_EQ, OP_EQ };
-	db_val_t k_vals[2];
-	db_key_t result_cols[] = { serialized_reg_avp_column };
-	char b[256];
-	*/
-	db_res_t *res = NULL;
-	db_rec_t* rec;
-
-	if (db_mode == NO_DB) {
-		INFO("not reading attrs\n");
-		return 0;
-	}
-
-/*	INFO("reading attrs for uid: %.*s, contact: %.*s\n",
-			c->uid->len, c->uid->s, 
-			c->c.len, c->c.s);*/
-
-	read_avps[cmd_n]->params[0].v.str = *c->uid;
-	read_avps[cmd_n]->params[1].v.str = c->c;
-	
-	if (db_exec(&res, read_avps[cur_cmd]) < 0) {
-		ERR("Error while querying contact attrs\n");
-		return -1;
-	}
-	
-	for(rec = db_first(res); rec; rec = db_next(res)) {
-		if ((rec->fld[0].flags & DB_NULL) != DB_NULL) {
-			c->avps = deserialize_avps(&rec->fld[0].v.str);
-		}
-	}
-
-	db_res_free(res);
-	return 0;
-}
-
-/*** interface functions ***/
-
-/* These functions call only implementation in xxx_lt or xxx_et functions.
- * 
- * _et means extra table - such fuction uses reg AVPs stored in extra table
- * contact_attrs.  
- *
- * _lt means location table - these functions use location table (more
- * precisely table from ucontact) for storing serialized AVPs into one column.
- */
-
-static inline int serialize_reg_avps()
-{
-	if (serialized_reg_avp_column) 
-		if (*serialized_reg_avp_column) return 1;
-
-	return 0;
-}
-
-int db_save_reg_avps(struct ucontact* c)
-{
-	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
-	return db_save_reg_avps_lt(c);
-}
-
-int db_delete_reg_avps(struct ucontact* c)
-{
-	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
-	return db_delete_reg_avps_lt(c);
-}
-
-int db_update_reg_avps(struct ucontact* c)
-{
-	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
-	return db_update_reg_avps_lt(c);
-}
-
-int db_read_reg_avps(struct ucontact *c)
-{
-	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
-	return db_read_reg_avps_lt(c);
-}
 

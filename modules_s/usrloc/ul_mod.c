@@ -155,15 +155,8 @@ static param_export_t params[] = {
 	{"received_column",   PARAM_STR, &received_col   },
 	{"instance_column",   PARAM_STR, &instance_col   },
 	{"aor_column",        PARAM_STR, &aor_col        },
-	{"reg_avp_table",     PARAM_STRING, &reg_avp_table  },
-	{"reg_avp_column",        PARAM_STRING, &serialized_reg_avp_column  },	
-	{"regavp_uid_column",     PARAM_STRING, &regavp_uid_column  },
-	{"regavp_contact_column", PARAM_STRING, &regavp_contact_column  },
-	{"regavp_name_column",    PARAM_STRING, &regavp_name_column  },
-	{"regavp_value_column",   PARAM_STRING, &regavp_value_column  },
-	{"regavp_type_column",    PARAM_STRING, &regavp_type_column  },
-	{"regavp_flags_column",   PARAM_STRING, &regavp_flags_column  },
-	{"reg_avp_flag",          PARAM_STRING, &reg_avp_flag_name },
+	{"reg_avp_column",    PARAM_STRING, &avp_column  },	
+	{"reg_avp_flag",      PARAM_STRING, &reg_avp_flag_name },
 	{0, 0, 0}
 };
 
@@ -228,6 +221,7 @@ static int build_db_cmds(void)
 		{.name = received_col.s,   .type = DB_STR},
 		{.name = instance_col.s,   .type = DB_STR},
 		{.name = aor_col.s,        .type = DB_STR},
+		{.name = avp_column,       .type = DB_STR}, /* Must be the last element in the array */
 		{.name = NULL},
 	};
 	
