@@ -72,7 +72,7 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 	{
 		DBG("PUA_XMPP:pres_Xmpp2Sip: type attribut not present\n");
 		build_publish(pres_node, -1);
-		if(presence_subscribe(pres_node, -1, XMPP_SUBSCRIBE)< 0)
+		if(presence_subscribe(pres_node, 3600, XMPP_SUBSCRIBE)< 0)
 		{
 				LOG(L_ERR, "PUA_XMPP:pres_Xmpp2Sip:ERROR when sending"
 						" subscribe for presence");
