@@ -102,8 +102,10 @@ int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write 
 int desc_time_order = 0;              /* By default do not enable timestamp ordering */
 
 
-db_con_t* ul_dbh = 0; /* Database connection handle */
-db_func_t ul_dbf;
+db_ctx_t* db = NULL;
+db_cmd_t** del_contact = NULL;
+db_cmd_t** ins_contact = NULL;
+int cmd_n = 0, cur_cmd = 0;
 
 static char *reg_avp_flag_name = NULL;
 
@@ -154,8 +156,8 @@ static param_export_t params[] = {
 	{"instance_column",   PARAM_STR, &instance_col   },
 	{"aor_column",        PARAM_STR, &aor_col        },
 	{"reg_avp_table",     PARAM_STRING, &reg_avp_table  },
-	{"reg_avp_column",       PARAM_STRING, &serialized_reg_avp_column  },	
-	{"regavp_uid_column", PARAM_STRING, &regavp_uid_column  },
+	{"reg_avp_column",        PARAM_STRING, &serialized_reg_avp_column  },	
+	{"regavp_uid_column",     PARAM_STRING, &regavp_uid_column  },
 	{"regavp_contact_column", PARAM_STRING, &regavp_contact_column  },
 	{"regavp_name_column",    PARAM_STRING, &regavp_name_column  },
 	{"regavp_value_column",   PARAM_STRING, &regavp_value_column  },
@@ -200,23 +202,66 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* Shall we use database ? */
-	if (db_mode != NO_DB) { /* Yes */
-		if (bind_dbmod(db_url.s, &ul_dbf) < 0) { /* Find database module */
-			LOG(L_ERR, "ERROR: mod_init(): Can't bind database module\n");
-			return -1;
-		}
-		if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
-			LOG(L_ERR, "usrloc:mod_init: Database module does not implement"
-						" all functions needed by the module\n");
-			return -1;
-		}
-	}
-
 	set_reg_avpflag_name(reg_avp_flag_name);
 
 	return 0;
 }
+
+
+static int build_db_cmds(void)
+{
+	db_fld_t del_contact_params[] = {
+		{.name = uid_col.s, .type = DB_STR},
+		{.name = contact_col.s, .type = DB_STR},
+		{.name = NULL},
+	};
+	
+	db_fld_t ins_contact_params[] = {
+		{.name = uid_col.s,        .type = DB_STR},
+		{.name = contact_col.s,    .type = DB_STR},
+		{.name = expires_col.s,    .type = DB_DATETIME},
+		{.name = q_col.s,          .type = DB_DOUBLE},
+		{.name = callid_col.s,     .type = DB_STR},
+		{.name = cseq_col.s,       .type = DB_INT},
+		{.name = flags_col.s,      .type = DB_BITMAP},
+		{.name = user_agent_col.s, .type = DB_STR},
+		{.name = received_col.s,   .type = DB_STR},
+		{.name = instance_col.s,   .type = DB_STR},
+		{.name = aor_col.s,        .type = DB_STR},
+		{.name = NULL},
+	};
+	
+	dlist_t* ptr;
+	int i;
+
+	for(cmd_n = 0, ptr = root; ptr; cmd_n++, ptr = ptr->next);
+
+	del_contact = pkg_malloc(cmd_n);
+	if (del_contact == NULL) {
+		ERR("No memory left\n");
+		return -1;
+	}
+	memset(del_contact, '\0', sizeof(del_contact) * cmd_n);
+
+	ins_contact = pkg_malloc(cmd_n);
+	if (ins_contact == NULL) {
+		ERR("No memory left\n");
+		return -1;
+	}
+	memset(ins_contact, '\0', sizeof(ins_contact) * cmd_n);
+
+	for(i = 0, ptr = root; ptr; ptr = ptr->next, i++) {
+		del_contact[i] = db_cmd(DB_DEL, db, ptr->name.s, NULL, del_contact_params);
+		if (del_contact[i] == NULL) return -1;
+	}
+
+	for(i = 0, ptr = root; ptr; ptr = ptr->next, i++) {
+		ins_contact[i] = db_cmd(DB_PUT, db, ptr->name.s, NULL, ins_contact_params);
+		if (ins_contact[i] == NULL) return -1;
+	}
+	return 0;
+}
+
 
 
 static int child_init(int _rank)
@@ -225,16 +270,20 @@ static int child_init(int _rank)
 		return 0; /* do nothing for the main or tcp_main processes */
 	     /* Shall we use database ? */
 	if ( db_mode != NO_DB) { /* Yes */
-		ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
-		if (!ul_dbh) {
-			LOG(L_ERR, "ERROR: child_init(%d): "
-			    "Error while connecting database\n", _rank);
+		db = db_ctx("usrloc");
+		if (db == NULL) {
+			ERR("Error while initializing database layer\n");
 			return -1;
 		}
+
+		if (db_add_db(db, db_url.s) < 0) return -1;
+		if (db_connect(db) < 0) return -1;
+		if (build_db_cmds() < 0) return -1;
 	}
 
 	return 0;
 }
+
 
 
 /*
@@ -242,17 +291,39 @@ static int child_init(int _rank)
  */
 static void destroy(void)
 {
+	int i;
+
 	/* Parent only, synchronize the world
 	* and then nuke it */
-	if (is_main && ul_dbh) {
+	if (is_main && db) {
 		if (synchronize_all_udomains() != 0) {
 			LOG(L_ERR, "timer(): Error while flushing cache\n");
 		}
 		free_all_udomains();
 	}
 
-	/* All processes close database connection */
-	if (ul_dbh) ul_dbf.close(ul_dbh);
+	if (del_rec) {
+		for(i = 0; i < cmd_n; i++) {
+			if (del_rec[i]) db_cmd_free(del_rec[i]);
+		}
+		pkg_free(del_rec);
+	}
+
+	if (del_contact) {
+		for(i = 0; i < cmd_n; i++) {
+			if (del_contact[i]) db_cmd_free(del_contact[i]);
+		}
+		pkg_free(del_rec);
+	}
+
+	if (ins_contact) {
+		for(i = 0; i < cmd_n; i++) {
+			if (ins_contact[i]) db_cmd_free(ins_contact[i]);
+		}
+		pkg_free(del_rec);
+	}
+
+	if (db) db_ctx_free(db);
 
 	/* free callbacks list */
 	destroy_ulcb_list();

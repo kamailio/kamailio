@@ -111,12 +111,6 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c);
 int timer_urecord(urecord_t* _r);
 
 
-/*
- * Delete the whole record from database
- */
-int db_delete_urecord(urecord_t* _r);
-
-
 /* ===== Module interface ======== */
 
 

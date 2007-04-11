@@ -181,7 +181,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	}
 	memset(ptr, 0, sizeof(dlist_t));
 
-	ptr->name.s = (char*)shm_malloc(_n->len);
+	ptr->name.s = (char*)shm_malloc(_n->len + 1);
 	if (ptr->name.s == 0) {
 		LOG(L_ERR, "new_dlist(): No memory left 2\n");
 		shm_free(ptr);
@@ -189,6 +189,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	}
 
 	memcpy(ptr->name.s, _n->s, _n->len);
+	ptr->name.s[_n->len] = '\0';
 	ptr->name.len = _n->len;
 
 	if (new_udomain(&(ptr->name), &(ptr->d)) < 0) {
@@ -203,6 +204,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 }
 
 
+
 /*
  * Function registers a new domain with usrloc
  * if the domain exists, pointer to existing structure
@@ -213,8 +215,6 @@ int register_udomain(const char* _n, udomain_t** _d)
 {
 	dlist_t* d;
 	str s;
-	int ver;
-	db_con_t* con;
 
 	s.s = (char*)_n;
 	s.len = strlen(_n);
@@ -228,34 +228,29 @@ int register_udomain(const char* _n, udomain_t** _d)
 		LOG(L_ERR, "register_udomain(): Error while creating new domain\n");
 		return -1;
 	} 
-
-	     /* Preload domain with data from database if we are gonna
-	      * to use database
-	      */
+	
+	/* Preload domain with data from database if we are gonna
+	 * to use database
+	 */
 	if (db_mode != NO_DB) {
-		con = ul_dbf.init(db_url.s);
-		if (!con) {
-			LOG(L_ERR, "register_udomain(): Can not open database connection\n");
-			goto err;
-		}
-
-		ver = table_version(&ul_dbf, con, &s);
-
-		if (ver < 0) {
-			LOG(L_ERR, "register_udomain(): Error while querying table version\n");
-			goto err;
-		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "register_udomain(): Invalid table version (use ser_mysql.sh reinstall)\n");
+		db = db_ctx("usrloc");
+		if (db == NULL) {
+			ERR("Error while initializing database layer\n");
 			goto err;
 		}
 		
-		if (preload_udomain(con, d->d) < 0) {
+		if (db_add_db(db, db_url.s) < 0) goto err;
+		if (db_connect(db) < 0) goto err;
+		
+		if (preload_udomain(d->d) < 0) {
 			LOG(L_ERR, "register_udomain(): Error while preloading domain '%.*s'\n",
 			    s.len, ZSW(s.s));
 			goto err;
 		}
 
-		ul_dbf.close(con);
+		db_disconnect(db);
+		db_ctx_free(db);
+		db = NULL;
 	}
 
 	d->next = root;
@@ -265,7 +260,11 @@ int register_udomain(const char* _n, udomain_t** _d)
 	return 0;
 
  err:
-	if (con) ul_dbf.close(con);
+	if (db) {
+		db_disconnect(db);
+		db_ctx_free(db);
+		db = NULL;
+	}
 	free_udomain(d->d);
 	shm_free(d->name.s);
 	shm_free(d);

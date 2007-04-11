@@ -185,204 +185,31 @@ int serialize_avps(avp_t *first, str *dst) {
 /* ************************************************************** */
 /* database operations */
 
-#define string_val(v,s)	(v).type = DB_STR; \
-	if (s) { (v).val.str_val=*s; (v).nul = 0; }  \
-	else (v).nul=1; 
-#define int_val(v,t)	(v).type = DB_INT; \
-	(v).val.int_val=t;\
-	(v).nul=0; 
-
-#define get_str_val(rvi,dst)	do{if(!rvi.nul){dst.s=(char*)rvi.val.string_val;dst.len=strlen(dst.s);}}while(0)
-#define get_int_val(rvi,dst)	do{if(!rvi.nul){dst=rvi.val.int_val;}else dst=0;}while(0)
-
 static inline int can_write_db()
 {
 	if (((db_mode == WRITE_THROUGH) || (db_mode == WRITE_BACK))) {
-		if (ul_dbh) return 1;
+		if (db) return 1;
 	}
 	return 0;
 }
-	
-int db_read_reg_avps_et(db_con_t* con, struct ucontact *c)
-{
-	/* load on startup, ... */
-	db_key_t keys[] = { regavp_uid_column, regavp_contact_column };
-	db_op_t ops[] = { OP_EQ, OP_EQ };
-	db_val_t k_vals[2];
-	int i;
-	db_res_t *res = NULL;
-	db_key_t result_cols[] = { regavp_name_column, 
-		regavp_type_column, regavp_value_column, regavp_flags_column };
-	avp_t *first = NULL;
-	avp_t *last = NULL;
-	avp_t *avp;
 
-	if (db_mode == NO_DB) {
-		INFO("not reading attrs\n");
-		return 0;
-	}
-
-/*	INFO("reading attrs for uid: %.*s, contact: %.*s\n",
-			c->uid->len, c->uid->s, 
-			c->c.len, c->c.s);*/
-	
-	string_val(k_vals[0], c->uid);
-	string_val(k_vals[1], &c->c);
-	
-	if (ul_dbf.use_table(con, reg_avp_table) < 0) {
-		ERR("Error in use_table\n");
-		return -1;
-	}
-
-	if (ul_dbf.query (con, keys, ops, k_vals,
-			result_cols, 2, sizeof(result_cols) / sizeof(db_key_t), 
-			0, &res) < 0) {
-		ERR("Error while querying contact attrs\n");
-		return -1;
-	}
-	
-	if (!res) return 0; /* ? */
-	
-	for (i = 0; i < res->n; i++) {
-		int flags = 0;
-		int type = 0;
-		str value = STR_NULL;
-		avp_value_t val;
-		avp_name_t name;
-		db_row_t *row = &res->rows[i];
-		db_val_t *row_vals = ROW_VALUES(row);
-		
-		get_str_val(row_vals[0], name.s);
-		get_int_val(row_vals[1], type);
-		get_str_val(row_vals[2], value);
-		get_int_val(row_vals[3], flags);
-
-		if (type == AVP_VAL_STR) val.s = value;
-		else str2int(&value, (unsigned int*)&val.n);
-		avp = create_avp(flags, name, val);
-
-		if (last) last->next = avp;
-		else first = avp;
-		last = avp;
-	}
-	ul_dbf.free_result(con, res);
-	
-	c->avps = first;
-	return 0;
-}
-
-int db_delete_reg_avps_et(struct ucontact *c)
-{
-	db_key_t keys[] = { regavp_uid_column, regavp_contact_column };
-	db_op_t ops[] = { OP_EQ, OP_EQ };
-	db_val_t k_vals[2];
-
-	if (!can_write_db()) return 0;
-	
-	string_val(k_vals[0], c->uid);
-	string_val(k_vals[1], &c->c);
-
-	if (ul_dbf.use_table(ul_dbh, reg_avp_table) < 0) {
-		ERR("Error in use_table\n");
-		return -1;
-	}
-
-	if (ul_dbf.delete(ul_dbh, keys, ops, k_vals, 2) < 0) {
-		LOG(L_ERR, "Error while removing data\n");
-		return -1;
-	}
-	
-	return 0;
-}
-
-static inline int db_save_avp_et(avp_t *avp, str *uid, str *contact)
-{
-	db_key_t cols[10];
-	db_val_t vals[10];
-	str *s;
-	str v;
-	int type;
-	
-	int n = -1;
-
-	cols[++n] = regavp_uid_column;
-	string_val(vals[n], uid);
-	
-	cols[++n] = regavp_contact_column;
-	string_val(vals[n], contact);
-	
-	s = get_avp_name(avp);
-	cols[++n] = regavp_name_column;
-	string_val(vals[n], s);
-	
-	get_avp_value_ex(avp, &v, &type);
-	cols[++n] = regavp_value_column;
-	string_val(vals[n], &v);
-	
-	cols[++n] = regavp_type_column;
-	int_val(vals[n], type);
-	
-	cols[++n] = regavp_flags_column;
-	int_val(vals[n], avp->flags);
-
-	if (ul_dbf.insert(ul_dbh, cols, vals, n + 1) < 0) {
-		ERR("Can't insert record into DB\n");
-		return -1;
-	}
-	
-	return 0;
-}
-
-int db_save_reg_avps_et(struct ucontact *c)
-{
-	avp_t *avp = c->avps;
-	int res = 0;
-
-	if (!can_write_db()) return 0;
-
-	if (avp) {
-		if (ul_dbf.use_table(ul_dbh, reg_avp_table) < 0) {
-			ERR("Error in use_table\n");
-			return -1;
-		}
-	}
-
-	while (avp) {
-		if (db_save_avp_et(avp, c->uid, &c->c) < 0) res = -1;
-		avp = avp->next;
-	}
-	
-	return res;
-}
-
-int db_update_reg_avps_et(struct ucontact* _c)
-{
-	db_delete_reg_avps(_c);
-	return db_save_reg_avps(_c);
-}
 
 /* AVPs are stored into 'location' table into "serialized_avp_column" column - hack for
  * existing database */
 
 int db_delete_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
 {
+	/*
 	db_key_t cols[] = { serialized_reg_avp_column };
 	db_val_t vals[1];
-	
 	db_key_t keys[] = { regavp_uid_column, regavp_contact_column };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[2];
-	char b[256];
 	
 	if (!can_write_db()) return 0;
 
-	memcpy(b, c->domain->s, c->domain->len);
-	b[c->domain->len] = '\0';
-	
-	if (ul_dbf.use_table(ul_dbh, b) < 0) {
-		ERR("Error in use_table\n");
-		return -1;
-	}
+	del_avps[cur_cmd]->params[0].v.str = *c->uid;
+	del_avps[cur_cmd]->params[1].v.str = c->c;
 
 	string_val(k_vals[0], c->uid);
 	string_val(k_vals[1], &c->c);
@@ -398,6 +225,9 @@ int db_delete_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! *
 	}
 	
 	return 0;
+	*/
+	ERR("No implemented\n");
+	return -1;
 }
 
 int db_update_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
@@ -408,6 +238,7 @@ int db_update_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! *
 
 int db_save_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
 {
+	/*
 	avp_t *avp = c->avps;
 	db_key_t cols[] = { serialized_reg_avp_column };
 	db_val_t vals[1];
@@ -445,61 +276,48 @@ int db_save_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
 	}
 
 	if (s.s) pkg_free(s.s);
-	
+	*/
+	ERR("No implemented yet\n");
 	return 0;
 }
 
-int db_read_reg_avps_lt(db_con_t* con, struct ucontact *c) /* !!! FIXME: hacked version !!! */
+int db_read_reg_avps_lt(struct ucontact *c) /* !!! FIXME: hacked version !!! */
 {
 	/* load on startup, ... */
+	/*
 	db_key_t keys[] = { regavp_uid_column, regavp_contact_column };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
 	db_val_t k_vals[2];
-	db_res_t *res = NULL;
 	db_key_t result_cols[] = { serialized_reg_avp_column };
 	char b[256];
+	*/
+	db_res_t *res = NULL;
+	db_rec_t* rec;
 
 	if (db_mode == NO_DB) {
 		INFO("not reading attrs\n");
 		return 0;
 	}
 
-	memcpy(b, c->domain->s, c->domain->len);
-	b[c->domain->len] = '\0';
-	
 /*	INFO("reading attrs for uid: %.*s, contact: %.*s\n",
 			c->uid->len, c->uid->s, 
 			c->c.len, c->c.s);*/
-	
-	string_val(k_vals[0], c->uid);
-	string_val(k_vals[1], &c->c);
-	
-	if (ul_dbf.use_table(con, b) < 0) {
-		ERR("Error in use_table\n");
-		return -1;
-	}
 
-	if (ul_dbf.query (con, keys, ops, k_vals,
-			result_cols, 2, sizeof(result_cols) / sizeof(db_key_t), 
-			0, &res) < 0) {
+	read_avps[cmd_n]->params[0].v.str = *c->uid;
+	read_avps[cmd_n]->params[1].v.str = c->c;
+	
+	if (db_exec(&res, read_avps[cur_cmd]) < 0) {
 		ERR("Error while querying contact attrs\n");
 		return -1;
 	}
 	
-	if (!res) return 0; /* ? */
-	
-	if (res->n > 0) {
-		str serialized_avps = STR_NULL;
-		db_row_t *row = &res->rows[0];
-		db_val_t *row_vals = ROW_VALUES(row);
-		
-		get_str_val(row_vals[0], serialized_avps);
-		/* INFO("reading AVPs from db: %.*s\n", serialized_avps.len, serialized_avps.s); */
-		c->avps = deserialize_avps(&serialized_avps);
-
+	for(rec = db_first(res); rec; rec = db_next(res)) {
+		if ((rec->fld[0].flags & DB_NULL) != DB_NULL) {
+			c->avps = deserialize_avps(&rec->fld[0].v.str);
+		}
 	}
-	ul_dbf.free_result(con, res);
-	
+
+	db_res_free(res);
 	return 0;
 }
 
@@ -524,41 +342,25 @@ static inline int serialize_reg_avps()
 
 int db_save_reg_avps(struct ucontact* c)
 {
-	if (!use_reg_avps()) return 0;
-	
-	if (serialize_reg_avps())
-		return db_save_reg_avps_lt(c);
-	else 
-		return db_save_reg_avps_et(c);
+	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
+	return db_save_reg_avps_lt(c);
 }
 
 int db_delete_reg_avps(struct ucontact* c)
 {
-	if (!use_reg_avps()) return 0;
-	
-	if (serialize_reg_avps())
-		return db_delete_reg_avps_lt(c);
-	else 
-		return db_delete_reg_avps_et(c);
+	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
+	return db_delete_reg_avps_lt(c);
 }
 
 int db_update_reg_avps(struct ucontact* c)
 {
-	if (!use_reg_avps()) return 0;
-
-	if (serialize_reg_avps())
-		return db_update_reg_avps_lt(c);
-	else 
-		return db_update_reg_avps_et(c);
+	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
+	return db_update_reg_avps_lt(c);
 }
 
-int db_read_reg_avps(db_con_t* con, struct ucontact *c)
+int db_read_reg_avps(struct ucontact *c)
 {
-	if (!use_reg_avps()) return 0;
-
-	if (serialize_reg_avps())
-		return db_read_reg_avps_lt(con, c);
-	else 
-		return db_read_reg_avps_et(con, c);
+	if (!use_reg_avps() || !serialize_reg_avps()) return 0;
+	return db_read_reg_avps_lt(c);
 }
 

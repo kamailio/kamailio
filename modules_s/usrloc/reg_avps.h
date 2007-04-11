@@ -16,7 +16,7 @@ int update_reg_avps(struct ucontact* c);
 int db_save_reg_avps(struct ucontact* c);
 int db_delete_reg_avps(struct ucontact* c);
 int db_update_reg_avps(struct ucontact* c);
-int db_read_reg_avps(db_con_t* con, struct ucontact *c);
+int db_read_reg_avps(struct ucontact *c);
 	
 int set_reg_avpflag_name(char *name);
 

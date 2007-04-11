@@ -345,14 +345,14 @@ static inline int wb_timer(urecord_t* _r)
 				break;
 
 			case 1: /* insert */
-				if (db_insert_ucontact(ptr) < 0) {
+				if (db_store_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while inserting contact into database\n");
 				}
 				db_save_reg_avps(ptr);
 				break;
 
 			case 2: /* update */
-				if (db_update_ucontact(ptr) < 0) {
+				if (db_store_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while updating contact in db\n");
 				}
 				db_update_reg_avps(ptr);
@@ -393,38 +393,6 @@ int timer_urecord(urecord_t* _r)
 }
 
 
-
-int db_delete_urecord(urecord_t* _r)
-{
-	static char b[256];
-	db_key_t keys[1];
-	db_val_t vals[1];
-
-	keys[0] = uid_col.s;
-	vals[0].type = DB_STR;
-	vals[0].nul = 0;
-	vals[0].val.str_val.s = _r->uid.s;
-	vals[0].val.str_val.len = _r->uid.len;
-
-	     /* FIXME */
-	memcpy(b, _r->domain->s, _r->domain->len);
-	b[_r->domain->len] = '\0';
-	if (ul_dbf.use_table(ul_dbh, b) < 0) {
-		LOG(L_ERR, "ERROR: db_delete_urecord():"
-		                " Error in use_table\n");
-		return -1;
-	}
-
-	if (ul_dbf.delete(ul_dbh, keys, 0, vals, 1) < 0) {
-		LOG(L_ERR, "ERROR: db_delete_urecord():"
-				" Error while deleting from database\n");
-		return -1;
-	}
-
-	return 0;
-}
-
-
 /*
  * Release urecord previously obtained
  * through get_urecord
@@ -458,7 +426,7 @@ int insert_ucontact(urecord_t* _r, str* aor, str* _c, time_t _e, qvalue_t _q, st
 	save_reg_avps(*_con);
 	
 	if (db_mode == WRITE_THROUGH) {
-		if (db_insert_ucontact(*_con) < 0) {
+		if (db_store_ucontact(*_con) < 0) {
 			LOG(L_ERR, "insert_ucontact(): Error while inserting in database\n");
 		}
 		(*_con)->state = CS_SYNC;

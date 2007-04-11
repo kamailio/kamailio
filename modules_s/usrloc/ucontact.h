@@ -167,13 +167,7 @@ int st_flush_ucontact(ucontact_t* _c);
 /*
  * Insert contact into the database
  */
-int db_insert_ucontact(ucontact_t* _c);
-
-
-/*
- * Update contact in the database
- */
-int db_update_ucontact(ucontact_t* _c);
+int db_store_ucontact(ucontact_t* _c);
 
 
 /*

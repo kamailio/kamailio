@@ -278,165 +278,124 @@ static struct socket_info* find_socket(str* received)
 
 
 
-int preload_udomain(db_con_t* _c, udomain_t* _d)
+int preload_udomain(udomain_t* _d)
 {
-	char b[256];
-	db_key_t columns[11];
-	db_res_t* res;
-	db_row_t* row;
-	int i, cseq;
-	unsigned int flags;
+	db_fld_t columns[] = {
+		{.name = uid_col.s,        .type = DB_STR},
+		{.name = contact_col.s,    .type = DB_STR},
+		{.name = expires_col.s,    .type = DB_STR},
+		{.name = q_col.s,          .type = DB_DOUBLE},
+		{.name = callid_col.s,     .type = DB_STR},
+		{.name = cseq_col.s,       .type = DB_INT},
+		{.name = flags_col.s,      .type = DB_BITMAP},
+		{.name = user_agent_col.s, .type = DB_STR},
+		{.name = received_col.s,   .type = DB_STR},
+		{.name = instance_col.s,   .type = DB_STR},
+		{.name = aor_col.s,        .type = DB_STR},
+		{.name = NULL}
+	};
+
+	db_res_t* res = NULL;
+	db_rec_t* rec;
+	db_cmd_t* get_all = NULL;
+
 	struct socket_info* sock;
-	str uid, contact, callid, ua, received, instance, aor;
-	str* rec;
-	time_t expires;
+	str callid, ua, instance, aor;
+	str* receivedp;
 	qvalue_t q;
 
 	urecord_t* r;
 	ucontact_t* c;
 
-	columns[0] = uid_col.s;
-	columns[1] = contact_col.s;
-	columns[2] = expires_col.s;
-	columns[3] = q_col.s;
-	columns[4] = callid_col.s;
-	columns[5] = cseq_col.s;
-	columns[6] = flags_col.s;
-	columns[7] = user_agent_col.s;
-	columns[8] = received_col.s;
-	columns[9] = instance_col.s;
-	columns[10] = aor_col.s;
-	
-	memcpy(b, _d->name->s, _d->name->len);
-	b[_d->name->len] = '\0';
-
-	if (ul_dbf.use_table(_c, b) < 0) {
-		LOG(L_ERR, "preload_udomain(): Error in use_table\n");
+	get_all = db_cmd(DB_GET, db, _d->name->s, columns, NULL);
+	if (get_all == NULL) {
+		ERR("Error while compiling DB_GET command\n");
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 11, 0, &res) < 0) {
-		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
-		return -1;
-	}
+	if (db_exec(&res, get_all) < 0) goto error;
 
-	if (RES_ROW_N(res) == 0) {
+	rec = db_first(res);
+	if (rec == NULL) {
 		DBG("preload_udomain(): Table is empty\n");
-		ul_dbf.free_result(_c, res);
+		db_res_free(res);
+		db_cmd_free(get_all);
 		return 0;
 	}
 
 	lock_udomain(_d);
 
-	for(i = 0; i < RES_ROW_N(res); i++) {
-		row = RES_ROWS(res) + i;
-		
-		uid.s      = (char*)VAL_STRING(ROW_VALUES(row));
-		if (uid.s == 0) {
+	for(; rec != NULL; rec = db_next(res)) {
+		/* UID column must never be NULL */
+		if (rec->fld[0].flags & DB_NULL) {
 			LOG(L_CRIT, "preload_udomain: ERROR: bad uid "
-							"record in table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+				"record in table %.*s, skipping...\n", 
+				_d->name->len, _d->name->s);
 			continue;
-		} else {
-			uid.len = strlen(uid.s);
 		}
 
-		contact.s = (char*)VAL_STRING(ROW_VALUES(row) + 1);
-		if (contact.s == 0) {
-			LOG(L_CRIT, "preload_udomain: ERROR: bad contact "
-							"record in table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s\n",
-							uid.len, uid.s);
-			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+		/* Contact column must never be NULL */
+		if (rec->fld[1].flags & DB_NULL) {
+			LOG(L_CRIT, "ERROR: Bad contact for uid %.*s in table %.*s, skipping\n",
+				rec->fld[0].v.str.len, rec->fld[0].v.str.s,
+				_d->name->len, _d->name->s);
 			continue;
-		} else {
-			contact.len = strlen(contact.s);
-		}
-		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
-		q           = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
-		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
-		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
-		if (callid.s == 0) {
-			LOG(L_CRIT, "preload_udomain: ERROR: bad callid record in"
-							" table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s,"
-							" contact %.*s\n",
-							uid.len, uid.s, contact.len, contact.s);
-			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
-			continue;
-		} else {
-			callid.len  = strlen(callid.s);
 		}
 
-		flags  = VAL_BITMAP(ROW_VALUES(row) + 6);
+		q = double2q(rec->fld[3].v.dbl);
 
-		ua.s  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
-		if (ua.s) {
-			ua.len = strlen(ua.s);
+		if (rec->fld[4].flags & DB_NULL) {
+			callid.s = NULL;
+			callid.len = 0;
 		} else {
+			callid = rec->fld[4].v.str;
+		}
+
+		if (rec->fld[7].flags & DB_NULL) {
+			ua.s = NULL;
 			ua.len = 0;
+		} else {
+			ua = rec->fld[7].v.str;
 		}
 
-		if (!VAL_NULL(ROW_VALUES(row) + 8)) {
-			received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 8);
-			if (received.s) {
-				received.len = strlen(received.s);
-				rec = &received;
-
-				sock = find_socket(&received);
-			} else {
-				received.len = 0;
-				rec = 0;
-				sock = 0;
-			}
-		} else {
-			received.s = 0;
-			received.len = 0;
-			rec = 0;
+		if (rec->fld[8].flags & DB_NULL) {
+			receivedp = 0;
 			sock = 0;
+		} else {
+			receivedp = &rec->fld[8].v.str;
+			sock = find_socket(receivedp);
 		}
 
-		if (!VAL_NULL(ROW_VALUES(row) + 9)) {
-			instance.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
-			if (instance.s) {
-				instance.len = strlen(instance.s);
-			} else {
-				instance.len = 0;
-			}
-		} else {
-			instance.s = 0;
+		if (rec->fld[9].flags & DB_NULL) {
+			instance.s = NULL;
 			instance.len = 0;
-		}
-
-		if (!VAL_NULL(ROW_VALUES(row) + 10)) {
-			aor.s  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
-			if (aor.s) {
-				aor.len = strlen(aor.s);
-			} else {
-				aor.len = 0;
-			}
 		} else {
-			aor.s = 0;
-			aor.len = 0;
+			instance = rec->fld[9].v.str;
 		}
 
-		if (get_urecord(_d, &uid, &r) > 0) {
-			if (mem_insert_urecord(_d, &uid, &r) < 0) {
+		if (rec->fld[10].flags & DB_NULL) {
+			aor.s = NULL;
+			aor.len = 0;
+		} else {
+			aor = rec->fld[10].v.str;
+		}
+
+		if (get_urecord(_d, &rec->fld[0].v.str, &r) > 0) {
+			if (mem_insert_urecord(_d, &rec->fld[0].v.str, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
-				ul_dbf.free_result(_c, res);
 				unlock_udomain(_d);
-				return -2;
+				goto error;
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &aor, &contact, expires, q, &callid, cseq, flags, &c, &ua, rec, sock, &instance) < 0) {
+		if (mem_insert_ucontact(r, &aor, &rec->fld[1].v.str, rec->fld[2].v.int4, 
+								q, &callid, rec->fld[5].v.int4, rec->fld[6].v.bitmap, &c, &ua, receivedp, sock, &instance) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
-			ul_dbf.free_result(_c, res);
 			unlock_udomain(_d);
-			return -3;
+			goto error;
 		}
 
-		db_read_reg_avps(_c, c);
+		db_read_reg_avps(c);
 
 		     /* We have to do this, because insert_ucontact sets state to CS_NEW
 		      * and we have the contact in the database already
@@ -446,9 +405,15 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		c->state = CS_SYNC;
 	}
 
-	ul_dbf.free_result(_c, res);
 	unlock_udomain(_d);
+	db_res_free(res);
+	db_cmd_free(get_all);
 	return 0;
+
+ error:
+	if (res) db_res_free(res);
+	if (get_all) db_cmd_free(get_all);
+	return -1;
 }
 
 
@@ -527,6 +492,7 @@ int timer_udomain(udomain_t* _d)
 void lock_udomain(udomain_t* _d)
 {
 	lock_get(&_d->lock);
+	cur_cmd = _d->db_cmd_idx;
 }
 
 
@@ -588,7 +554,7 @@ int delete_urecord(udomain_t* _d, str* _uid)
 	if (get_urecord(_d, _uid, &r) > 0) {
 		return 0;
 	}
-		
+
 	c = r->contacts;
 	while(c) {
 		t = c;
