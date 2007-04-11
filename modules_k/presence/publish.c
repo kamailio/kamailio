@@ -647,7 +647,10 @@ error:
 unsupported_event:
 
 	LOG(L_ERR, "PRESENCE: handle_publish:Missing or unsupported event"
-			" header field value [%.*s]\n", msg->event->body.len,
+			" header field value\n");
+
+	if(msg->event->body.s && msg->event->body.len>0)
+			LOG(L_ERR, "\tevent=[%.*s]\n", msg->event->body.len,
 			msg->event->body.s);
 
 	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
