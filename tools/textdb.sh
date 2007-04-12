@@ -190,14 +190,14 @@ echo "address:3" 			>> version;
 #
 touch subscriber;
 echo "DBTEXT Add Table: subscriber"
-echo "id(int) $USERCOL(str) domain(str) password(str) first_name(str,null) last_name(str,null) email_address(str) datetime_created(int) ha1(str) ha1b(str) timezone(str,null) rpid(str,null)" >> subscriber;
+echo "id(int,auto) $USERCOL(str) domain(str) password(str) first_name(str,null) last_name(str,null) email_address(str) datetime_created(int) ha1(str) ha1b(str) timezone(str,null) rpid(str,null)" >> subscriber;
 
 #
 # Table structure for table 'acc' -- accounted calls
 #
 touch acc;
 echo "DBTEXT Add Table: acc"
-echo "id(int) method(str) from_tag(str) to_tag(str) callid(str) sip_code(str) sip_reason(str) time(int)" >> acc;
+echo "id(int,auto) method(str) from_tag(str) to_tag(str) callid(str) sip_code(str) sip_reason(str) time(int)" >> acc;
 
 #
 # Table structure for table 'missed_calls' -- acc-like table
@@ -205,14 +205,14 @@ echo "id(int) method(str) from_tag(str) to_tag(str) callid(str) sip_code(str) si
 #
 touch missed_calls;
 echo "DBTEXT Add Table: missed_calls"
-echo "id(int) method(str) from_tag(str) to_tag(str) callid(str) sip_code(str) sip_reason(str) time(int)" >> missed_calls;
+echo "id(int,auto) method(str) from_tag(str) to_tag(str) callid(str) sip_code(str) sip_reason(str) time(int)" >> missed_calls;
 
 #
 # Table structure for table 'location' -- that is persistent UsrLoc
 #
 touch location;
 echo "DBTEXT Add Table: location"
-echo "id(int) $USERCOL(str) domain(str) contact(str) received(str,null) path(str,null) expires(int) q(double) callid(str) cseq(int) last_modified(int) flags(int) cflags(int) user_agent(str) socket(str,null) methods(int,null)" >> location;
+echo "id(int,auto) $USERCOL(str) domain(str) contact(str) received(str,null) path(str,null) expires(int) q(double) callid(str) cseq(int) last_modified(int) flags(int) cflags(int) user_agent(str) socket(str,null) methods(int,null)" >> location;
 
 #
 # Table structure for table 'aliases' -- location-like table
@@ -220,14 +220,14 @@ echo "id(int) $USERCOL(str) domain(str) contact(str) received(str,null) path(str
 #
 touch aliases;
 echo "DBTEXT Add Table: aliases"
-echo "id(int) $USERCOL(str) domain(str) contact(str) received(str,null) path(str,null) expires(int) q(double) callid(str) cseq(int) last_modified(int) flags(int) cflags(int) user_agent(str) socket(str,null) methods(int,null)" >> aliases;
+echo "id(int,auto) $USERCOL(str) domain(str) contact(str) received(str,null) path(str,null) expires(int) q(double) callid(str) cseq(int) last_modified(int) flags(int) cflags(int) user_agent(str) socket(str,null) methods(int,null)" >> aliases;
 
 #
 # DB aliases
 #
 touch dbaliases;
 echo "DBTEXT Add Table: dbaliases"
-echo "id(int) alias_username(str) alias_domain(str) $USERCOL(str) domain(str)" >> dbaliases;
+echo "id(int,auto) alias_username(str) alias_domain(str) $USERCOL(str) domain(str)" >> dbaliases;
 
 #
 # Table structure for table 'grp' -- group membership
@@ -235,7 +235,7 @@ echo "id(int) alias_username(str) alias_domain(str) $USERCOL(str) domain(str)" >
 #
 touch grp;
 echo "DBTEXT Add Table: grp"
-echo "id(int) $USERCOL(str) domain(str) grp(str) last_modified(int)" >> grp;
+echo "id(int,auto) $USERCOL(str) domain(str) grp(str) last_modified(int)" >> grp;
 
 #
 # Table structure for table 're_grp' -- group membership
@@ -243,7 +243,7 @@ echo "id(int) $USERCOL(str) domain(str) grp(str) last_modified(int)" >> grp;
 #
 touch re_grp;
 echo "DBTEXT Add Table: re_grp"
-echo "id(int) reg_exp(str) group_id(str)" >> re_grp;
+echo "id(int,auto) reg_exp(str) group_id(str)" >> re_grp;
 
 #
 # "instant" message silo
@@ -251,77 +251,77 @@ echo "id(int) reg_exp(str) group_id(str)" >> re_grp;
 touch silo;
 echo "DBTEXT Add Table: silo"
 echo "WARNING: the body column is declared BLOB in MySQL ... here we do as str!!! Correct?"
-echo "id(int) src_addr(str) dst_addr(str) $USERCOL(str) domain(str) inc_time(int) exp_time(int) snd_time(int) ctype(str) body(str)" >> silo;
+echo "id(int,auto) src_addr(str) dst_addr(str) $USERCOL(str) domain(str) inc_time(int) exp_time(int) snd_time(int) ctype(str) body(str)" >> silo;
 
 #
 # Table structure for table 'domain' -- domains proxy is responsible for
 #
 touch domain;
 echo "DBTEXT Add Table: domain"
-echo "id(int) domain(str) last_modified(int)" >> domain;
+echo "id(int,auto) domain(str) last_modified(int)" >> domain;
 
 #
 # Table structure for table 'uri' -- uri user parts users are allowed to use
 #
 touch uri;
 echo "DBTEXT Add Table: uri"
-echo "id(int) $USERCOL(str) domain(str) uri_user(str) last_modified(int)" >> uri;
+echo "id(int,auto) $USERCOL(str) domain(str) uri_user(str) last_modified(int)" >> uri;
 
 #
 # Table structure for table 'usr_preferences'
 #
 touch usr_preferences;
 echo "DBTEXT Add Table: usr_preferences"
-echo "id(int) uuid(str) $USERCOL(str) domain(str) attribute(str) type(int) value(str) modified(int)" >> usr_preferences;
+echo "id(int,auto) uuid(str) $USERCOL(str) domain(str) attribute(str) type(int) value(str) modified(int)" >> usr_preferences;
 
 #
 # Table structure for table trusted
 #
 touch trusted;
 echo "DBTEXT Add Table: trusted"
-echo "id(int) src_ip(str) proto(str) from_pattern(str,null) tag(str,null)" >> trusted;
+echo "id(int,auto) src_ip(str) proto(str) from_pattern(str,null) tag(str,null)" >> trusted;
 
 #
 # Table structure for table 'speed_dial'
 #
 touch speed_dial;
 echo "DBTEXT Add Table: speed_dial"
-echo "id(int) $USERCOL(str) domain(str) sd_username(str) sd_domain(str) new_uri(str) fname(str) lname(str) description(str)" >> speed_dial;
+echo "id(int,auto) $USERCOL(str) domain(str) sd_username(str) sd_domain(str) new_uri(str) fname(str) lname(str) description(str)" >> speed_dial;
 
 #
 # Table structure for table 'gw'
 #
 touch gw;
 echo "DBTEXT Add Table: gw"
-echo "id(int) gw_name(str) grp_id(int) ip_addr(str) port(int) uri_scheme(int) transport(int) strip(int) prefix(str,null)" >> gw;
+echo "id(int,auto) gw_name(str) grp_id(int) ip_addr(str) port(int) uri_scheme(int) transport(int) strip(int) prefix(str,null)" >> gw;
 
 #
 # Table structure for table 'gw_grp'
 #
 touch gw_grp;
 echo "DBTEXT Add Table: gw_grp"
-echo "grp_id(int) grp_name(str)" >> gw_grp;
+echo "grp_id(int,auto) grp_name(str)" >> gw_grp;
 
 #
 # Table structure for table 'lcr'
 #
 touch lcr;
 echo "DBTEXT Add Table: lcr"
-echo "id(int) prefix(str) from_uri(str,null) grp_id(int) priority(int)" >> lcr;
+echo "id(int,auto) prefix(str) from_uri(str,null) grp_id(int) priority(int)" >> lcr;
 
 #
 # Table structure for table 'address'
 #
 touch address;
 echo "DBTEXT Add Table: addresses"
-echo "id(int) grp(int) ip_addr(str) mask(int) port(int)" >> address;
+echo "id(int,auto) grp(int) ip_addr(str) mask(int) port(int)" >> address;
 
 #
 # Table structure for table 'pdt'
 # 
 touch pdt;
 echo "DBTEXT Add Table: pdt"
-echo "id(int) sdomain(str) prefix(str) domain(str)" >> pdt;
+echo "id(int,auto) sdomain(str) prefix(str) domain(str)" >> pdt;
 
 echo -n "Install presence related tables ?(y/n):"
 read INPUT
@@ -376,7 +376,7 @@ echo "pua:2" 				>> version;
 #
 touch presentity;
 echo "DBTEXT Add Table: presentity"
-echo "id(int) username(str) domain(str) event(str) etag(str) expires(int) received_time(int) body(str)" >> presentity;
+echo "id(int,auto) username(str) domain(str) event(str) etag(str) expires(int) received_time(int) body(str)" >> presentity;
 
 #
 # Table structure for table 'active_watchers'
@@ -385,7 +385,7 @@ echo "id(int) username(str) domain(str) event(str) etag(str) expires(int) receiv
 #
 touch active_watchers;
 echo "DBTEXT Add Table: active_watchers"
-echo "id(int) to_user(str) to_domain(str) from_user(str) from_domain(str) event(str) event_id(str,null) to_tag(str) from_tag(str) callid (str) local_cseq(int) remote_cseq(int) contact(str) record_route(str,null) expires(int)  status(str) version(int) socket_info(str) local_contact(str)" >> active_watchers;
+echo "id(int,auto) to_user(str) to_domain(str) from_user(str) from_domain(str) event(str) event_id(str,null) to_tag(str) from_tag(str) callid (str) local_cseq(int) remote_cseq(int) contact(str) record_route(str,null) expires(int)  status(str) version(int) socket_info(str) local_contact(str)" >> active_watchers;
 
 #
 # Table structure for table 'watchers'
@@ -394,7 +394,7 @@ echo "id(int) to_user(str) to_domain(str) from_user(str) from_domain(str) event(
 #
 touch watchers;
 echo "DBTEXT Add Table: watchers"
-echo "id(int) p_user(str) p_domain(str) w_user(str) w_domain(str) subs_status(str) reason(str,null) inserted_time(int)" >> watchers;
+echo "id(int,auto) p_user(str) p_domain(str) w_user(str) w_domain(str) subs_status(str) reason(str,null) inserted_time(int)" >> watchers;
 
 #
 # Table structure for table 'xcap_xml'
@@ -404,7 +404,7 @@ echo "id(int) p_user(str) p_domain(str) w_user(str) w_domain(str) subs_status(st
 touch xcap_xml;
 echo "DBTEXT Add Table: xcap_xml"
 echo "WARNING: Creating xcap_xml table, with column xcap originally BLOB type ... now STR"
-echo "id(int) username(str) domain(str) xcap(str) doc_type(str)" >> xcap_xml;
+echo "id(int,auto) username(str) domain(str) xcap(str) doc_type(str)" >> xcap_xml;
 
 #
 # Table structure for table 'pua'
@@ -413,7 +413,7 @@ echo "id(int) username(str) domain(str) xcap(str) doc_type(str)" >> xcap_xml;
 #
 touch pua;
 echo "DBTEXT Add Table: pua"
-echo "id(int) pres_uri(str) pres_id(str) event(int) expires(int) flag(int) etag(str) tuple_id(str) watcher_uri(str) call_id(str) to_tag(str) from_tag(str) cseq(int)" >> pua;
+echo "id(int,auto) pres_uri(str) pres_id(str) event(int) expires(int) flag(int) etag(str) tuple_id(str) watcher_uri(str) call_id(str) to_tag(str) from_tag(str) cseq(int)" >> pua;
 
 cd $CURRENT_PWD
 }  # end presence_create
@@ -444,7 +444,7 @@ echo "domainpolicy:2" 	>> version;
 #
 touch cpl;
 echo "DBTEXT Add Table: cpl"
-echo "id(int) username(str) domain(str) cpl_xml(str) cpl_bin(str)" >> cpl;
+echo "id(int,auto) username(str) domain(str) cpl_xml(str) cpl_bin(str)" >> cpl;
 
 
 #
@@ -454,7 +454,7 @@ echo "id(int) username(str) domain(str) cpl_xml(str) cpl_bin(str)" >> cpl;
 #
 touch imc_members;
 echo "DBTEXT Add Table: imc_members"
-echo "id(int) username(str) domain(str) room(str) flag(int)" >> imc_members;
+echo "id(int,auto) username(str) domain(str) room(str) flag(int)" >> imc_members;
 
 
 #
@@ -464,7 +464,7 @@ echo "id(int) username(str) domain(str) room(str) flag(int)" >> imc_members;
 #
 touch imc_rooms;
 echo "DBTEXT Add Table: imc_rooms"
-echo "id(int) name(str) domain(str) flag(int)" >> imc_rooms;
+echo "id(int,auto) name(str) domain(str) flag(int)" >> imc_rooms;
 
 
 #
@@ -472,7 +472,7 @@ echo "id(int) name(str) domain(str) flag(int)" >> imc_rooms;
 #
 touch sip_trace;
 echo "DBTEXT Add Table: sip_trace"
-echo "id(int) date(int) callid(str) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) direction(str)" >> sip_trace;
+echo "id(int,auto) date(int) callid(str) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) direction(str)" >> sip_trace;
 
 
 #
@@ -480,7 +480,7 @@ echo "id(int) date(int) callid(str) traced_user(str) msg(str) method(str) status
 #
 touch domainpolicy;
 echo "DBTEXT Add Table: domainpolicy"
-echo "id(int) rule(str) type(str) att(str) val(str) comment(str)" >> domainpolicy;
+echo "id(int,auto) rule(str) type(str) att(str) val(str) comment(str)" >> domainpolicy;
 
 	if [ $? -eq 0 ] ; then
 		echo "...extra tables created"
