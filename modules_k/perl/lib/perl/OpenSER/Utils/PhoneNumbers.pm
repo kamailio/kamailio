@@ -80,6 +80,7 @@ The following fields should be set:
 This module exports the following functions when C<use>ed:
 
 =cut
+
 package OpenSER::Utils::PhoneNumbers;
 
 use Exporter;
@@ -91,7 +92,7 @@ our @EXPORT = qw(
 
 =head2 new(publicAccessPrefix,internationalPrefix,longDistancePrefix,countryCode,areaCode,pbxCode)
 
-The new operator returns an object of this type and sets it's locational
+The new operator returns an object of this type and sets its locational
 context according to the passed parameters. See
 L<OpenSER::Utils::PhoneNumbers> above.
 
@@ -119,7 +120,7 @@ sub new {
 
 =head2 canonicalForm( number [, context] )
 
-Convert a phone number (given as first argument) into it's canonical form. When
+Convert a phone number (given as first argument) into its canonical form. When
 no context is passed in as the second argument, the default context from the
 systems configuration file is used.
 

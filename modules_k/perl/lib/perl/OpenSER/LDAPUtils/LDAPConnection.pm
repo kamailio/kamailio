@@ -46,6 +46,7 @@ functionality. It is intended for cases where just a few attributes should
 be retrieved without the overhead of the full featured C<Net::LDAP>.
 
 =cut
+
 package OpenSER::LDAPUtils::LDAPConnection;
 
 use OpenSER::LDAPUtils::LDAPConf;
@@ -222,6 +223,7 @@ sub search {
 
     my @result=();
     my $max_entries=$mesg->count;
+    my $i;
     for($i = 0 ; $i < $max_entries ; $i++) {
         my $entry = $mesg->entry($i);
         foreach my $attr (@requested_attr) {

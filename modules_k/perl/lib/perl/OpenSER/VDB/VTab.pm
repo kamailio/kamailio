@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: VTab.pm 757 2007-01-05 10:56:28Z bastian $
 #
 # Perl module for OpenSER
 #
@@ -23,29 +23,48 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER;
-require Exporter;
-require DynaLoader;
+=head1 OpenSER::VDB::VTab
 
-@ISA = qw(Exporter DynaLoader);
-@EXPORT = qw ( t );
-@EXPORT_OK = qw ( log );
+This package handles virtual tables and is used by the OpenSER::VDB class to store
+information about valid tables. The package is not inteded for end user access.
 
-use OpenSER::Message;
-use OpenSER::Constants;
-use OpenSER::Utils::Debug;
+=cut
 
-bootstrap OpenSER;
+package OpenSER::VDB::VTab;
 
+use OpenSER;
 
-BEGIN {
-	$SIG{'__DIE__'} = sub {
-		OpenSER::Message::log(undef, L_ERR, "perl error: $_[0]\n");
-        };
-	$SIG{'__WARN__'} = sub {
-		OpenSER::Message::log(undef, L_ERR, "perl warning: $_[0]\n");
-        };
+our @ISA = qw ( OpenSER::Utils::Debug );
+
+=head2 new()
+
+ Constructs a new VTab object
+
+=cut
+
+sub new {
+	my $class = shift;
+	return bless { @_ }, $class;
+}
+
+=head2 call(op,[args])
+
+Invokes an operation on the table (insert, update, ...) with the
+given arguments.
+
+=cut
+
+sub call {
+	my $self = shift;
+	my $operation = shift;
+	my @args = @_;
+
+	if( my $obj = $self->{obj} ) {
+		return $obj->$operation(@args);
+	} else {
+		no strict;
+		return &{$self->{func}}($operation, @args);
+	}
 }
 
 1;
-

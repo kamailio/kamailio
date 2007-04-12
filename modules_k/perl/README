@@ -10,7 +10,7 @@ Edited by
 Bastian Friedrich
 
    Copyright © 2007 Collax GmbH
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -97,9 +97,9 @@ Bastian Friedrich
         3.5. OpenSER::Utils::PhoneNumbers
 
               3.5.1.
-                      new(publicAccessPrefix,internationalPrefix,lo
-                      ngDistancePrefix,countryCode,areaCode,pbxCo
-                      de)
+                      new(publicAccessPrefix,internationalPrefix,lon
+                      gDistancePrefix,countryCode,areaCode,pbxCode
+                      )
 
               3.5.2. canonicalForm( number [, context] )
               3.5.3. dialNumber( number [, context] )
@@ -122,7 +122,48 @@ Bastian Friedrich
               3.7.2. Function/Method search( conf, filter, base,
                       [requested_attributes ...])
 
-        3.8. OpenSER::Constants
+        3.8. OpenSER::VDB
+        3.9. OpenSER::Constants
+        3.10. OpenSER::VDB::Adapter::Speeddial
+        3.11. OpenSER::VDB::Adapter::Alias
+
+              3.11.1. query(conds,retkeys,order)
+
+        3.12. OpenSER::VDB::Adapter::AccountingSIPtrace
+        3.13. OpenSER::VDB::Adapter::Describe
+        3.14. OpenSER::VDB::Adapter::Auth
+        3.15. OpenSER::VDB::ReqCond
+
+              3.15.1. new(key,op,type,name)
+              3.15.2. op()
+
+        3.16. OpenSER::VDB::Pair
+
+              3.16.1. new(key,type,name)
+              3.16.2. key()
+
+        3.17. OpenSER::VDB::VTab
+
+              3.17.1. new()
+              3.17.2. call(op,[args])
+
+        3.18. OpenSER::VDB::Value
+
+              3.18.1. stringification
+              3.18.2. new(type,data)
+              3.18.3. type()
+              3.18.4. data()
+
+        3.19. OpenSER::VDB::Column
+
+              3.19.1. Stringification
+              3.19.2. new(type,name)
+              3.19.3. type( )
+              3.19.4. name()
+              3.19.5. OpenSER::VDB::Result
+              3.19.6. new(coldefs,[row, row, ...])
+              3.19.7. coldefs()
+              3.19.8. rows()
 
    4. Perl samples
 
@@ -137,24 +178,23 @@ Bastian Friedrich
    1-2. Set modpath parameter
    1-3. perl_exec_simple() usage
    1-4. perl_exec() usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   The time needed when writing a new OpenSER module
-   unfortunately is quite high, while the options provided by the
-   configuration file are limited to the features implemented in
-   the modules.
+   The time needed when writing a new OpenSER module unfortunately
+   is quite high, while the options provided by the configuration
+   file are limited to the features implemented in the modules.
 
    With this Perl module, you can easily implement your own
    OpenSER extensions in Perl. This allows for simple access to
    the full world of CPAN modules. SIP URI rewriting could be
    implemented based on regular expressions; accessing arbitrary
-   data backends, e.g. LDAP or Berkeley DB files, is now
-   extremely simple.
-     _________________________________________________________
+   data backends, e.g. LDAP or Berkeley DB files, is now extremely
+   simple.
+     __________________________________________________________
 
 1.2. Installing the module
 
@@ -167,17 +207,17 @@ Chapter 1. User's Guide
    packages from your favorite Linux distribution should work
    fine.
 
-   Cross compilation is supported by the Makefile. You need to
-   set the environment variables PERLLDOPTS, PERLCCOPTS and
-   TYPEMAP to values similar to the output of
+   Cross compilation is supported by the Makefile. You need to set
+   the environment variables PERLLDOPTS, PERLCCOPTS and TYPEMAP to
+   values similar to the output of
 PERLLDOPTS: perl -MExtUtils::Embed -e ldopts
 PERLCCOPTS: perl -MExtUtils::Embed -e ccopts
-TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/Ex
-tUtils/typemap"
+TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/Ext
+Utils/typemap"
 
    The exact position of your (precompiled!) perl libraries
    depends on the setup of your environment.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Using the module
 
@@ -201,7 +241,7 @@ if (perl_exec("ldap_alias")) {
    read and modify the current SIP message, such as the RURI or
    the message flags. An introduction to the Perl interface and
    the full reference documentation can be found below.
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Dependencies
 
@@ -212,7 +252,7 @@ if (perl_exec("ldap_alias")) {
      * The "sl" module is needed for sending replies uppon fatal
        errors. All other modules can be accessed from the Perl
        module, though.
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. External Libraries or Applications
 
@@ -221,9 +261,9 @@ if (perl_exec("ldap_alias")) {
 
      * Perl 5.8.x or later
 
-   Additionally, a number of perl modules should be installed.
-   The OpenSER::LDAPUtils package relies on Net::LDAP to be
-   installed. One of the sample scripts needs IPC::Shareable
+   Additionally, a number of perl modules should be installed. The
+   OpenSER::LDAPUtils package relies on Net::LDAP to be installed.
+   One of the sample scripts needs IPC::Shareable
 
    This module has been developed and tested with Perl 5.8.8, but
    should work with any 5.8.x release. Compilation is possible
@@ -255,7 +295,7 @@ if (perl_exec("ldap_alias")) {
    to be fetched from CPAN. Consider using the program "cpan2rpm"
    - which, in turn, is available on CPAN. It creates RPM files
    from CPAN.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Exported Parameters
 
@@ -265,27 +305,27 @@ if (perl_exec("ldap_alias")) {
    only, but it may include an arbitary number of functions and
    "use" as many Perl module as necessary.
 
-   May not be empty! 
+   May not be empty!
 
    Example 1-1. Set filename parameter
 ...
 modparam("perl", "filename", "/home/john/openser/myperl.pl")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.2. modpath (string)
 
-   The path to the Perl modules included (OpenSER.pm et.al). It
-   is not absolutely crucial to set this path, as you may install
-   the Modules in Perl's standard path, or update the "%INC"
-   variable from within your script. Using this module parameter
-   is the standard behavior, though.
+   The path to the Perl modules included (OpenSER.pm et.al). It is
+   not absolutely crucial to set this path, as you may install the
+   Modules in Perl's standard path, or update the "%INC" variable
+   from within your script. Using this module parameter is the
+   standard behavior, though.
 
    Example 1-2. Set modpath parameter
 ...
 modparam("perl", "modpath", "/usr/local/lib/openser/perl/")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.6. Exported Functions
 
@@ -308,7 +348,7 @@ if (method=="INVITE") {
         perl_exec_simple("dosomething", "on invite messages");
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.6.2. perl_exec(func, [param])
 
@@ -329,23 +369,22 @@ if (perl_exec("ldapalias")) {
         ...
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. OpenSER Perl API
 
 3.1. OpenSER
 
-   This module provides access to a limited number of OpenSER
-   core functions. As the most interesting functions deal with
-   SIP messages, they are located in the OpenSER::Message class
-   below.
-     _________________________________________________________
+   This module provides access to a limited number of OpenSER core
+   functions. As the most interesting functions deal with SIP
+   messages, they are located in the OpenSER::Message class below.
+     __________________________________________________________
 
 3.1.1. log(level,message)
 
@@ -364,37 +403,37 @@ Chapter 3. OpenSER Perl API
    logarithm). Either explicitly import the function (via use
    OpenSER qw ( log );), or call it with its full name:
 OpenSER::log(L_INFO, "foobar");
-     _________________________________________________________
+     __________________________________________________________
 
 3.2. OpenSER::Message
 
    This package provides access functions for an OpenSER sip_msg
    structure and its sub-components. Through its means it is
    possible to fully configure alternative routing decisions.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.1. getType()
 
    Returns one of the constants SIP_REQUEST, SIP_REPLY,
    SIP_INVALID stating the type of the current message.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.2. getStatus()
 
    Returns the status code of the current Reply message. This
    function is invalid in Request context!
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.3. getReason()
 
    Returns the reason of the current Reply message. This function
    is invalid in Request context!
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.4. getVersion()
 
    Returns the version string of the current SIP message.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.5. getRURI()
 
@@ -407,7 +446,7 @@ OpenSER::log(L_INFO, "foobar");
    receive a parsed structure.
 
    This function is valid in request messages only.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.6. getMethod()
 
@@ -417,26 +456,26 @@ OpenSER::log(L_INFO, "foobar");
    my $method = $m->getMethod();
 
    This function is valid in request messages only.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.7. getFullHeader()
 
    Returns the full message header as present in the current
-   message. You might use this header to further work with it
-   with your favorite MIME package.
+   message. You might use this header to further work with it with
+   your favorite MIME package.
 
    my $hdr = $m->getFullHeader();
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.8. getBody()
 
    Returns the message body.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.9. getMessage()
 
    Returns the whole message including headers and body.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.10. getHeader(name)
 
@@ -445,12 +484,12 @@ OpenSER::log(L_INFO, "foobar");
    print $m->getHeader("To");
 
    "John" <sip:john@doe.example>
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.11. getHeaderNames()
 
    Returns an array of all header names. Duplicates possible!
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.12. moduleFunction(func,string1,string2)
 
@@ -472,8 +511,7 @@ $m->xlog("L_INFO", "foo");
    WARNING
 
    In OpenSER 1.2, only a limited subset of module functions is
-   available. This restriction will be removed in a later
-   version.
+   available. This restriction will be removed in a later version.
 
    Here is a list of functions that are expected to be working
    (not claiming completeness):
@@ -571,7 +609,7 @@ $m->xlog("L_INFO", "foo");
 * radius_does_uri_exist
 * ul_* (All functions exported by the usrloc module for user access)
 * xmpp_send_message
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.13. log(level,message) (deprecated type)
 
@@ -587,7 +625,7 @@ $m->xlog("L_INFO", "foo");
 
    The logging function should be accessed via the OpenSER module
    variant. This one, located in OpenSER::Message, is deprecated.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.14. rewrite_ruri(newruri)
 
@@ -596,208 +634,207 @@ $m->xlog("L_INFO", "foo");
 if ($m->getRURI() =~ m/\@somedomain.net/) {
   $m->rewrite_ruri("sip:dispatcher\@organization.net");
 }
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.15. setFlag(flag)
 
    Sets a message flag. The constants as known from the C API may
    be used, when Constants.pm is included.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.16. resetFlag(flag)
 
    Resets a message flag.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.17. isFlagSet(flag)
 
    Returns whether a message flag is set or not.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.18. pseudoVar(string)
 
-   Returns a new string where all pseudo variables are
-   substituted by their values. Can be used to receive the values
-   of single variables, too.
+   Returns a new string where all pseudo variables are substituted
+   by their values. Can be used to receive the values of single
+   variables, too.
 
    Please remember that you need to escape the '$' sign in perl
    strings!
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.19. append_branch(branch,qval)
 
    Append a branch to current message.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.20. serialize_branches(clean_before)
 
    Serialize branches.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.21. next_branches()
 
    Next branches.
-     _________________________________________________________
+     __________________________________________________________
 
 3.2.22. getParsedRURI()
 
    Returns the current destination URI as an OpenSER::URI object.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3. OpenSER::URI
 
    This package provides functions for access to sip_uri
    structures.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.1. user()
 
    Returns the user part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.2. host()
 
    Returns the host part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.3. passwd()
 
    Returns the passwd part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.4. port()
 
    Returns the port part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.5. params()
 
    Returns the params part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.6. headers()
 
    Returns the headers part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.7. transport()
 
    Returns the transport part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.8. ttl()
 
    Returns the ttl part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.9. user_param()
 
    Returns the user_param part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.10. maddr()
 
    Returns the maddr part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.11. method()
 
    Returns the method part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.12. lr()
 
    Returns the lr part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.13. r2()
 
    Returns the r2 part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.14. transport_val()
 
    Returns the transport_val part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.15. ttl_val()
 
    Returns the ttl_val part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.16. user_param_val()
 
    Returns the user_param_val part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.17. maddr_val()
 
    Returns the maddr_val part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.18. method_val()
 
    Returns the method_val part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.19. lr_val()
 
    Returns the lr_val part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.3.20. r2_val()
 
    Returns the r2_val part of this URI.
-     _________________________________________________________
+     __________________________________________________________
 
 3.4. OpenSER::AVP
 
    This package provides access functions for OpenSER's AVPs.
-   These variables can be created, evaluated, modified and
-   removed through this package.
+   These variables can be created, evaluated, modified and removed
+   through this package.
 
    Please note that these functions do NOT support the notation
-   used in the configuration file, but directly work on strings
-   or numbers. See documentation of add method below.
-     _________________________________________________________
+   used in the configuration file, but directly work on strings or
+   numbers. See documentation of add method below.
+     __________________________________________________________
 
 3.4.1. add(name,val)
 
    Add an AVP.
 
-   Add an OpenSER AVP to its environment. name and val may both
-   be integers or strings; this function will try to guess what
-   is correct. Please note that
+   Add an OpenSER AVP to its environment. name and val may both be
+   integers or strings; this function will try to guess what is
+   correct. Please note that
 OpenSER::AVP::add("10", "10")
 
    is something different than
 OpenSER::AVP::add(10, 10)
 
    due to this evaluation: The first will create _string_ AVPs
-   with the name 10, while the latter will create a numerical
-   AVP.
+   with the name 10, while the latter will create a numerical AVP.
 
    You can modify/overwrite AVPs with this function.
-     _________________________________________________________
+     __________________________________________________________
 
 3.4.2. get(name)
 
    get an OpenSER AVP:
 my $numavp = OpenSER::AVP::get(5);
 my $stravp = OpenSER::AVP::get("foo");
-     _________________________________________________________
+     __________________________________________________________
 
 3.4.3. destroy(name)
 
    Destroy an AVP.
 OpenSER::AVP::destroy(5);
 OpenSER::AVP::destroy("foo");
-     _________________________________________________________
+     __________________________________________________________
 
 3.5. OpenSER::Utils::PhoneNumbers
 
-   OpenSER::Utils::PhoneNumbers - Functions for canonical forms
-   of phone numbers.
+   OpenSER::Utils::PhoneNumbers - Functions for canonical forms of
+   phone numbers.
 use OpenSER::Utils::PhoneNumber
 
 my $phonenumber = new OpenSER::Utils::PhoneNumber(
@@ -826,17 +863,17 @@ $number    = dialNumber("+497612034567");
    To canonicalize any number, we strip off any dial prefix we
    find and then add the prefixes for the location. So, when the
    user enters the number 04514829 in context pyramid, we remove
-   the publicAccessPrefix (at Pyramid this is 0) and the
-   pbxPrefix (4514 here). The result is 829. Then we add all the
-   general dial prefixes - 49 (country) 761 (area) 4514 (pbx) and
-   829, the number itself => +497614514829
+   the publicAccessPrefix (at Pyramid this is 0) and the pbxPrefix
+   (4514 here). The result is 829. Then we add all the general
+   dial prefixes - 49 (country) 761 (area) 4514 (pbx) and 829, the
+   number itself => +497614514829
 
    To get the dialing number from a canonical phone number, we
    substract all general prefixes until we have something
 
-   As said before, the interpretation of a phone number depends
-   on the context of the location. For the functions in this
-   package, the context is created through the new operator.
+   As said before, the interpretation of a phone number depends on
+   the context of the location. For the functions in this package,
+   the context is created through the new operator.
 
    The following fields should be set:
 'longDistancePrefix'
@@ -847,24 +884,24 @@ $number    = dialNumber("+497612034567");
 'countryCode'
 
    This module exports the following functions when useed:
-     _________________________________________________________
+     __________________________________________________________
 
 3.5.1.
-new(publicAccessPrefix,internationalPrefix,longDistancePrefix,countr
-yCode,areaCode,pbxCode)
+new(publicAccessPrefix,internationalPrefix,longDistancePrefix,country
+Code,areaCode,pbxCode)
 
-   The new operator returns an object of this type and sets it's
+   The new operator returns an object of this type and sets its
    locational context according to the passed parameters. See
    OpenSER::Utils::PhoneNumbers above.
-     _________________________________________________________
+     __________________________________________________________
 
 3.5.2. canonicalForm( number [, context] )
 
-   Convert a phone number (given as first argument) into it's
+   Convert a phone number (given as first argument) into its
    canonical form. When no context is passed in as the second
    argument, the default context from the systems configuration
    file is used.
-     _________________________________________________________
+     __________________________________________________________
 
 3.5.3. dialNumber( number [, context] )
 
@@ -872,7 +909,7 @@ yCode,areaCode,pbxCode)
    into a number to to dial. WHen no context is given in the
    second argument, a default context from the systems
    configuration is used.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6. OpenSER::LDAPUtils::LDAPConf
 
@@ -888,35 +925,34 @@ my $conf = new OpenSER::LDAPUtils::LDAPConf();
 
    When used from an account with sufficient privilegs (e.g.
    root), the ldap manager passwort is also retrieved.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.1. Constructor new()
 
-   Returns a new, initialized OpenSER::LDAPUtils::LDAPConf
-   object.
-     _________________________________________________________
+   Returns a new, initialized OpenSER::LDAPUtils::LDAPConf object.
+     __________________________________________________________
 
 3.6.2. Method base()
 
    Returns the servers base-dn to use when doing queries.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.3. Method host()
 
    Returns the ldap host to contact.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.4. Method port()
 
    Returns the ldap servers port.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.5. Method uri()
 
    Returns an uri to contact the ldap server. When there is no
    ldap_uri in the configuration file, an ldap: uri is constucted
    from host and port.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.6. Method rootbindpw()
 
@@ -925,26 +961,26 @@ my $conf = new OpenSER::LDAPUtils::LDAPConf();
    Note that the rootbindpw is only available when the current
    account has sufficient privilegs to access
    /etc/openldap/ldap.secret.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.7. Method rootbinddn()
 
    Returns the DN to use for "root"-access to the ldap server.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.8. Method binddn()
 
    Returns the DN to use for authentication to the ldap server.
    When no bind dn has been specified in the configuration file,
    returns the rootbinddn.
-     _________________________________________________________
+     __________________________________________________________
 
 3.6.9. Method bindpw()
 
    Returns the password to use for authentication to the ldap
    server. When no bind password has been specified, returns the
    rootbindpw if any.
-     _________________________________________________________
+     __________________________________________________________
 
 3.7. OpenSER::LDAPUtils::LDAPConnection
 
@@ -959,14 +995,14 @@ my @rows = $ldap-search("uid=andi","ou=people,ou=coreworks,ou=de");
    Procedural interface:
 use OpenSER::LDAPUtils::LDAPConnection;
 my @rows = $ldap->search(
-      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=co
-reworks,ou=de");
+      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=cor
+eworks,ou=de");
 
    This perl module offers a somewhat simplified interface to the
    Net::LDAP functionality. It is intended for cases where just a
    few attributes should be retrieved without the overhead of the
    full featured Net::LDAP.
-     _________________________________________________________
+     __________________________________________________________
 
 3.7.1. Constructor new( [config, [authenticated]] )
 
@@ -984,7 +1020,7 @@ reworks,ou=de");
 
    On success, a new LDAPConnection object is returned, otherwise
    the result is undef.
-     _________________________________________________________
+     __________________________________________________________
 
 3.7.2. Function/Method search( conf, filter, base,
 [requested_attributes ...])
@@ -1004,7 +1040,7 @@ reworks,ou=de");
    OpenSER::LDAPUtils::LDAPConf object. In this mode, the
    OpenSER::LDAPUtils::LDAPConnection from previous queries will
    be reused.
-     _________________________________________________________
+     __________________________________________________________
 
 3.7.2.1. Arguments:
 
@@ -1016,68 +1052,280 @@ reworks,ou=de");
           ldap search filter, eg '(mail=some@domain)'
 
    base
-          search base for this query. If undef use default
-          suffix, concat base with default suffix if the last
-          char is a ','
+          search base for this query. If undef use default suffix,
+          concat base with default suffix if the last char is a
+          ','
 
    requested_attributes
-          retrieve the given attributes instead of the dn from
-          the ldap directory.
-     _________________________________________________________
+          retrieve the given attributes instead of the dn from the
+          ldap directory.
+     __________________________________________________________
 
 3.7.2.2. Result:
 
-   Without any specific requested_attributes, return the dn of
-   all matching entries in the LDAP directory.
+   Without any specific requested_attributes, return the dn of all
+   matching entries in the LDAP directory.
 
    When some requested_attributes are given, return an array with
    those attibutes. When multiple entries match the query, the
    attribute lists are concatenated.
-     _________________________________________________________
+     __________________________________________________________
 
-3.8. OpenSER::Constants
+3.8. OpenSER::VDB
+
+   This package is an (abstract) base class for all virtual
+   databases. Derived packages can be configured to be used by
+   OpenSER as a database.
+
+   The base class itself should NOT be used in this context, as it
+   does not provide any functionality.
+     __________________________________________________________
+
+3.9. OpenSER::Constants
 
    This package provides a number of constants taken from enums
-   and defines of OpenSER header files. Unfortunately, there is
-   no mechanism for updating the constants automatically, so
-   check the values if you are in doubt.
-     _________________________________________________________
+   and defines of OpenSER header files. Unfortunately, there is no
+   mechanism for updating the constants automatically, so check
+   the values if you are in doubt.
+     __________________________________________________________
+
+3.10. OpenSER::VDB::Adapter::Speeddial
+
+   This adapter can be used with the speeddial module.
+     __________________________________________________________
+
+3.11. OpenSER::VDB::Adapter::Alias
+
+   This package is intended for usage with the alias_db module.
+   The query VTab has to take two arguments and return an array of
+   two arguments (user name/domain).
+     __________________________________________________________
+
+3.11.1. query(conds,retkeys,order)
+
+   Queries the vtab with the given arguments for request
+   conditions, keys to return and sort order column name.
+     __________________________________________________________
+
+3.12. OpenSER::VDB::Adapter::AccountingSIPtrace
+
+   This package is an Adapter for the acc and siptrace modules,
+   featuring only an insert operation.
+     __________________________________________________________
+
+3.13. OpenSER::VDB::Adapter::Describe
+
+   This package is intended for debug usage. It will print
+   information about requested functions and operations of a
+   client module.
+
+   Use this module to request schema information when creating new
+   adapters.
+     __________________________________________________________
+
+3.14. OpenSER::VDB::Adapter::Auth
+
+   This adapter is intended for usage with the auth_db module. The
+   VTab should take a username as an argument and return a (plain
+   text!) password.
+     __________________________________________________________
+
+3.15. OpenSER::VDB::ReqCond
+
+   This package represents a request condition for database
+   access, consisting of a column name, an operator (=, <, >,
+   ...), a data type and a value.
+
+   This package inherits from OpenSER::VDB::Pair and thus includes
+   its methods.
+     __________________________________________________________
+
+3.15.1. new(key,op,type,name)
+
+   Constructs a new Column object.
+     __________________________________________________________
+
+3.15.2. op()
+
+   Returns or sets the current operator.
+     __________________________________________________________
+
+3.16. OpenSER::VDB::Pair
+
+   This package represents database key/value pairs, consisting of
+   a key, a value type, and the value.
+
+   This package inherits from OpenSER::VDB::Value and thus has the
+   same methods.
+     __________________________________________________________
+
+3.16.1. new(key,type,name)
+
+   Constructs a new Column object.
+     __________________________________________________________
+
+3.16.2. key()
+
+   Returns or sets the current key.
+     __________________________________________________________
+
+3.17. OpenSER::VDB::VTab
+
+   This package handles virtual tables and is used by the
+   OpenSER::VDB class to store information about valid tables. The
+   package is not inteded for end user access.
+     __________________________________________________________
+
+3.17.1. new()
+
+Constructs a new VTab object
+     __________________________________________________________
+
+3.17.2. call(op,[args])
+
+   Invokes an operation on the table (insert, update, ...) with
+   the given arguments.
+     __________________________________________________________
+
+3.18. OpenSER::VDB::Value
+
+   This package represents a database value. Additional to the
+   data itself, information about its type is stored.
+     __________________________________________________________
+
+3.18.1. stringification
+
+   When accessing a OpenSER::VDB::Value object as a string, it
+   simply returns its data regardless of its type. =cut
+
+   use strict;
+
+   package OpenSER::VDB::Value;
+
+   use overload '""' => \&stringify;
+
+   sub stringify { shift->{data} }
+
+   use OpenSER; use OpenSER::Constants;
+
+   our @ISA = qw ( OpenSER::Utils::Debug );
+     __________________________________________________________
+
+3.18.2. new(type,data)
+
+   Constructs a new Value object. Its data type and the data are
+   passed as parameters.
+     __________________________________________________________
+
+3.18.3. type()
+
+   Returns or sets the current data type. Please consider using
+   the constants from OpenSER::Constants
+     __________________________________________________________
+
+3.18.4. data()
+
+   Returns or sets the current data.
+     __________________________________________________________
+
+3.19. OpenSER::VDB::Column
+
+   This package represents database column definition, consisting
+   of a column name and its data type.
+     __________________________________________________________
+
+3.19.1. Stringification
+
+   When accessing a OpenSER::VDB::Column object as a string, it
+   simply returns its column name regardless of its type. =cut
+
+   package OpenSER::VDB::Column;
+
+   use overload '""' => \&stringify;
+
+   sub stringify { shift->{name} }
+
+   use OpenSER; use OpenSER::Constants;
+
+   our @ISA = qw ( OpenSER::Utils::Debug );
+     __________________________________________________________
+
+3.19.2. new(type,name)
+
+   Constructs a new Column object. Its type and the name are
+   passed as parameters.
+     __________________________________________________________
+
+3.19.3. type( )
+
+   Returns or sets the current type. Please consider using the
+   constants from OpenSER::Constants
+     __________________________________________________________
+
+3.19.4. name()
+
+   Returns or sets the current column name.
+     __________________________________________________________
+
+3.19.5. OpenSER::VDB::Result
+
+   This class represents a VDB result set. It contains a column
+   definition, plus an array of rows. Rows themselves are simply
+   references to arrays of scalars.
+     __________________________________________________________
+
+3.19.6. new(coldefs,[row, row, ...])
+
+   The constructor creates a new Result object. Its first
+   parameter is a reference to an array of OpenSER::VDB::Column
+   objects. Additional parameters may be passed to provide initial
+   rows, which are references to arrays of scalars.
+     __________________________________________________________
+
+3.19.7. coldefs()
+
+Returns or sets the column definition of the object.
+     __________________________________________________________
+
+3.19.8. rows()
+
+Returns or sets the rows of the object.
+     __________________________________________________________
 
 Chapter 4. Perl samples
 
 4.1. sample directory
 
    There are a number of example scripts in the "samples/". They
-   are documented well. Read them, it will explain a lot to you
-   :)
+   are documented well. Read them, it will explain a lot to you :)
 
    If you want to use any of these scripts directly in your
    implementation, you can use Perl's "require" mechanism to
    import them (just remember that you need to use quotes when
    require'ing .pl files).
-     _________________________________________________________
+     __________________________________________________________
 
 4.1.1. Script descriptions
 
    The included sample scripts are described below:
-     _________________________________________________________
+     __________________________________________________________
 
 4.1.1.1. branches.pl
 
    The minimal function in branches.pl demonstrates that you can
    access the "append_branch" function from within perl, just as
-   you would have done from your normal configuration file.
-   You'll find documentation on the concepts of branching in the
-   OpenSER documentation.
-     _________________________________________________________
+   you would have done from your normal configuration file. You'll
+   find documentation on the concepts of branching in the OpenSER
+   documentation.
+     __________________________________________________________
 
 4.1.1.2. firstline.pl
 
-   Message's first_line structure may be evaluated. Message can
-   be either of SIP_REQUEST or SIP_REPLY. Depending on that,
-   different information can be received. This script
-   demonstrates these functions.
-     _________________________________________________________
+   Message's first_line structure may be evaluated. Message can be
+   either of SIP_REQUEST or SIP_REPLY. Depending on that,
+   different information can be received. This script demonstrates
+   these functions.
+     __________________________________________________________
 
 4.1.1.3. flags.pl
 
@@ -1089,7 +1337,7 @@ Chapter 4. Perl samples
    The first function, setflag, demonstrates how the "green" flag
    is set. In the second function, readflag, the "green" and
    "magenta" flags are evaluated.
-     _________________________________________________________
+     __________________________________________________________
 
 4.1.1.4. functions.pl
 
@@ -1117,12 +1365,12 @@ Chapter 4. Perl samples
    calls to module functions.
 
    The "diefunc"s show that dying perl scripts - by "manual"
-   dying, or because of script errors - are handled by the
-   OpenSER package. The error message is logged through OpenSER's
-   logging mechanism. Please note that this only works correctly
-   if you do NOT overwrite the default die handler. Oh, yes, that
-   works for warnings, too.
-     _________________________________________________________
+   dying, or because of script errors - are handled by the OpenSER
+   package. The error message is logged through OpenSER's logging
+   mechanism. Please note that this only works correctly if you do
+   NOT overwrite the default die handler. Oh, yes, that works for
+   warnings, too.
+     __________________________________________________________
 
 4.1.1.5. headers.pl
 
@@ -1134,16 +1382,16 @@ Chapter 4. Perl samples
 
    "someheaders" logs the contents of the two headers, "To" and
    "WWW-Contact". As you can see, headers that occur more than
-   once are retrieved as an array, which may be accessed by
-   Perl's array accessing methods.
-     _________________________________________________________
+   once are retrieved as an array, which may be accessed by Perl's
+   array accessing methods.
+     __________________________________________________________
 
 4.1.1.6. logging.pl
 
    For debugging purposes, you probably want to write messages to
    the syslog. The "logdemo" shows three ways to access the
-   OpenSER log function: it is available through the OpenSER
-   class as well as through the OpenSER::Message class.
+   OpenSER log function: it is available through the OpenSER class
+   as well as through the OpenSER::Message class.
 
    Remember that you can use exported functions from other
    modules. You may thus as well use the "xlog" module and it's
@@ -1151,15 +1399,15 @@ Chapter 4. Perl samples
 
    The L_INFO, L_DBG, L_ERR, L_CRIT... constants are available
    through the OpenSER::Constants package.
-     _________________________________________________________
+     __________________________________________________________
 
 4.1.1.7. messagedump.pl
 
-   This script demonstrates how to access the whole message
-   header of the current message. Please note that modifications
-   on the message made by earlier function calls in your
-   configuration script may NOT be reflected in this dump.
-     _________________________________________________________
+   This script demonstrates how to access the whole message header
+   of the current message. Please note that modifications on the
+   message made by earlier function calls in your configuration
+   script may NOT be reflected in this dump.
+     __________________________________________________________
 
 4.1.1.8. persistence.pl
 
@@ -1170,14 +1418,14 @@ Chapter 4. Perl samples
    instances of OpenSER. You may want to use a mechanism such as
    the IPC::Shareable shared memory access package to correct
    this.
-     _________________________________________________________
+     __________________________________________________________
 
 4.1.1.9. phonenumbers.pl
 
    The OpenSER::Utils::PhoneNumbers package provides two methods
-   for the transformation of local to canonical telephone
-   numbers, and vice versa. This script demonstrates it's use.
-     _________________________________________________________
+   for the transformation of local to canonical telephone numbers,
+   and vice versa. This script demonstrates it's use.
+     __________________________________________________________
 
 4.1.1.10. pseudovars.pl
 
@@ -1188,7 +1436,7 @@ Chapter 4. Perl samples
    You might notice that there is no particular function for
    setting pseudo variables; you may use the exported functions
    from the avpops module, though.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 5. Frequently Asked Questions
 
@@ -1202,8 +1450,8 @@ Chapter 5. Frequently Asked Questions
 
    5.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

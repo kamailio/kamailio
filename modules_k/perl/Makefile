@@ -67,4 +67,10 @@ install_module_custom:
 	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
 	$(INSTALL_CFG) lib/perl/OpenSER/Utils/*.pm \
 		$(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
+	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB
+	$(INSTALL_CFG) lib/perl/OpenSER/VDB/*.pm \
+		$(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB
+	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB/Adapter
+	$(INSTALL_CFG) lib/perl/OpenSER/VDB/Adapter/*.pm \
+		$(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB/Adapter
 

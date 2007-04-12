@@ -1,10 +1,10 @@
 #
-# $Id$
+# $Id: TableVersions.pm 757 2007-01-05 10:56:28Z bastian $
 #
 # Perl module for OpenSER
 #
-# Copyright (C) 2006 Collax GmbH
-#		     (Bastian Friedrich <bastian.friedrich@collax.com>)
+# Copyright (C) 2007 Collax GmbH
+#                    (Bastian Friedrich <bastian.friedrich@collax.com>)
 #
 # This file is part of openser, a free SIP server.
 #
@@ -23,37 +23,25 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER::Message;
-require Exporter;
-require DynaLoader;
+package OpenSER::VDB::Adapter::TableVersions;
 
-our @ISA = qw(Exporter DynaLoader);
-our @EXPORT = qw ( t );
-bootstrap OpenSER;
+use OpenSER;
+use OpenSER::Constants;
 
-sub AUTOLOAD{
-	use vars qw($AUTOLOAD);
-	my $a = $AUTOLOAD;
+sub version {
+	my $table = shift;
+
+	# FIXME We need to split table name again - possibly, this is a function only, so this one will not work
+	my $v = $table->version();
+
+	my @cols;
+	my @row;
+
+	push @cols, new OpenSER::VDB::Column(DB_INT, "table_version");
+	push @row, new OpenSER::VDB::Value(DB_INT, $v);
 	
-	$a =~ s/^OpenSER::Message:://;
-
-	my $l = scalar @_;
-	if ($l == 0) {
-		croak("Usage: $a(self, param1 = undef, param2 = undef)");
-	} elsif ($l == 1) {
-		return OpenSER::Message::moduleFunction(@_[0], $a);
-	} elsif ($l == 2) {
-		return OpenSER::Message::moduleFunction(@_[0], $a, @_[1]);
-	} elsif ($l == 3) {
-		return OpenSER::Message::moduleFunction(@_[0],
-							$a, @_[1], @_[2]);
-	} else {
-		croak("Usage: $a(self, param1 = undef, param2 = undef)");
-	}
-
+	return new OpenSER::VDB::Result(\@cols, (bless \@row, OpenSER::Utils::Debug));
 }
-
-sub DESTROY {}
 
 1;
 

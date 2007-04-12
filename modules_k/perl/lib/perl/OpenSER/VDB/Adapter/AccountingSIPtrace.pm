@@ -1,10 +1,10 @@
 #
-# $Id$
+# $Id: AccountingSIPtrace.pm 757 2007-01-05 10:56:28Z bastian $
 #
 # Perl module for OpenSER
 #
-# Copyright (C) 2006 Collax GmbH
-#		     (Bastian Friedrich <bastian.friedrich@collax.com>)
+# Copyright (C) 2007 Collax GmbH
+#                    (Bastian Friedrich <bastian.friedrich@collax.com>)
 #
 # This file is part of openser, a free SIP server.
 #
@@ -23,37 +23,29 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER::Message;
-require Exporter;
-require DynaLoader;
+=head1 OpenSER::VDB::Adapter::AccountingSIPtrace
 
-our @ISA = qw(Exporter DynaLoader);
-our @EXPORT = qw ( t );
-bootstrap OpenSER;
+This package is an Adapter for the acc and siptrace modules, featuring
+only an insert operation.
 
-sub AUTOLOAD{
-	use vars qw($AUTOLOAD);
-	my $a = $AUTOLOAD;
-	
-	$a =~ s/^OpenSER::Message:://;
+=cut
 
-	my $l = scalar @_;
-	if ($l == 0) {
-		croak("Usage: $a(self, param1 = undef, param2 = undef)");
-	} elsif ($l == 1) {
-		return OpenSER::Message::moduleFunction(@_[0], $a);
-	} elsif ($l == 2) {
-		return OpenSER::Message::moduleFunction(@_[0], $a, @_[1]);
-	} elsif ($l == 3) {
-		return OpenSER::Message::moduleFunction(@_[0],
-							$a, @_[1], @_[2]);
-	} else {
-		croak("Usage: $a(self, param1 = undef, param2 = undef)");
-	}
+package OpenSER::VDB::Adapter::AccountingSIPtrace;
 
+use OpenSER::VDB;
+use OpenSER::VDB::VTab;
+use OpenSER;
+use OpenSER::Constants;
+use Data::Dumper;
+
+our @ISA = qw ( OpenSER::VDB );
+
+sub insert {
+	my $self = shift;
+	my $vals = shift;
+
+	my $vtab = $self->{vtabs}->{$self->{tablename}};
+	return $vtab->call("insert", $vals);
 }
 
-sub DESTROY {}
-
 1;
-

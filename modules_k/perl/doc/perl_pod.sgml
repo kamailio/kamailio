@@ -556,7 +556,7 @@ $number    = dialNumber("+497612034567");]]></screen>
     </para>
     <section id="ID-bd49dfdfc2284e87abd95fbce2d63cbd"><title>new(publicAccessPrefix,internationalPrefix,longDistancePrefix,countryCode,areaCode,pbxCode)</title>
       <para>
-	The new operator returns an object of this type and sets it's
+	The new operator returns an object of this type and sets its
 	locational context according to the passed parameters. See
 	<citerefentry>
 	<refentrytitle>OpenSER::Utils::PhoneNumbers</refentrytitle>
@@ -565,10 +565,9 @@ $number    = dialNumber("+497612034567");]]></screen>
     </section>
     <section id="ID-aa52786fee82fe6e26ac766b30a1a4fa"><title>canonicalForm( number [, context] )</title>
       <para>
-	Convert a phone number (given as first argument) into it's
-	canonical form. When no context is passed in as the second
-	argument, the default context from the systems configuration file
-	is used.
+	Convert a phone number (given as first argument) into its canonical
+	form. When no context is passed in as the second argument, the
+	default context from the systems configuration file is used.
       </para>
     </section>
     <section id="ID-31479dee3ae037c27cd7a84aa7358bd2"><title>dialNumber( number [, context] )</title>
@@ -785,6 +784,17 @@ my @rows = $ldap->search(
       </section>
     </section>
   </section>
+  <section id="ID-94fdb1e4103544a567ac38ee23c8a4d1"><title>OpenSER::VDB</title>
+    <para>
+      This package is an (abstract) base class for all virtual databases.
+      Derived packages can be configured to be used by OpenSER as a
+      database.
+    </para>
+    <para>
+      The base class itself should NOT be used in this context, as it does
+      not provide any functionality.
+    </para>
+  </section>
   <section id="ID-d97df315e2044f430319fc4cd9937aa5"><title>OpenSER::Constants</title>
     <para>
       This package provides a number of constants taken from enums and
@@ -792,5 +802,215 @@ my @rows = $ldap->search(
       for updating the constants automatically, so check the values if you
       are in doubt.
     </para>
+  </section>
+  <section id="ID-9658bbad14831f685cca13a5c9bb4335"><title>OpenSER::VDB::Adapter::Speeddial</title>
+    <para>
+      This adapter can be used with the speeddial module.
+    </para>
+  </section>
+  <section id="ID-5cdb14839de18c32782e3d768e170da7"><title>OpenSER::VDB::Adapter::Alias</title>
+    <para>
+      This package is intended for usage with the alias_db module. The
+      query VTab has to take two arguments and return an array of two
+      arguments (user name/domain).
+    </para>
+    <section id="ID-748da8d11c20576948ef68d62753a06a"><title>query(conds,retkeys,order)</title>
+      <para>
+	Queries the vtab with the given arguments for request conditions,
+	keys to return and sort order column name.
+      </para>
+    </section>
+  </section>
+  <section id="ID-8165ac0b808b36ff72ee4032e0f62881"><title>OpenSER::VDB::Adapter::AccountingSIPtrace</title>
+    <para>
+      This package is an Adapter for the acc and siptrace modules,
+      featuring only an insert operation.
+    </para>
+  </section>
+  <section id="ID-048913e15394a9675cfe02af5c340528"><title>OpenSER::VDB::Adapter::Describe</title>
+    <para>
+      This package is intended for debug usage. It will print information
+      about requested functions and operations of a client module.
+    </para>
+    <para>
+      Use this module to request schema information when creating new
+      adapters.
+    </para>
+  </section>
+  <section id="ID-682dd320dd536e7fb0de4a24e9d1e46e"><title>OpenSER::VDB::Adapter::Auth</title>
+    <para>
+      This adapter is intended for usage with the auth_db module. The VTab
+      should take a username as an argument and return a (plain text!)
+      password.
+    </para>
+  </section>
+  <section id="ID-f245c032bf4b4837415c871537a63e3b"><title>OpenSER::VDB::ReqCond</title>
+    <para>
+      This package represents a request condition for database access,
+      consisting of a column name, an operator (=, &lt;, &gt;, ...), a data
+      type and a value.
+    </para>
+    <para>
+      This package inherits from OpenSER::VDB::Pair and thus includes its
+      methods.
+    </para>
+    <section id="ID-c50f7cee51ceffdb7253101a36d6b7b3"><title>new(key,op,type,name)</title>
+      <para>
+	Constructs a new Column object.
+      </para>
+    </section>
+    <section id="ID-cb5f02a3144f3af620484048b11472af"><title>op()</title>
+      <para>
+	Returns or sets the current operator.
+      </para>
+    </section>
+  </section>
+  <section id="ID-4be9a5fa03b11c2c2dad3594fc3b585d"><title>OpenSER::VDB::Pair</title>
+    <para>
+      This package represents database key/value pairs, consisting of a
+      key, a value type, and the value.
+    </para>
+    <para>
+      This package inherits from OpenSER::VDB::Value and thus has the same
+      methods.
+    </para>
+    <section id="ID-e6cc5b1a997ea8e29d2a00b986784dc0"><title>new(key,type,name)</title>
+      <para>
+	Constructs a new Column object.
+      </para>
+    </section>
+    <section id="ID-9c70856322a870405521ad299a6785d6"><title>key()</title>
+      <para>
+	Returns or sets the current key.
+      </para>
+    </section>
+  </section>
+  <section id="ID-41cd8a9b5b94c05139d2a7f62d5a967b"><title>OpenSER::VDB::VTab</title>
+    <para>
+      This package handles virtual tables and is used by the OpenSER::VDB
+      class to store information about valid tables. The package is not
+      inteded for end user access.
+    </para>
+    <section id="ID-a42ddb87d67983028cf8d1b7d6f46baa"><title>new()</title>
+      <screen><![CDATA[Constructs a new VTab object]]></screen>
+    </section>
+    <section id="ID-c00e2c0b9abc7cd56be59f2b051a538c"><title>call(op,[args])</title>
+      <para>
+	Invokes an operation on the table (insert, update, ...) with the
+	given arguments.
+      </para>
+    </section>
+  </section>
+  <section id="ID-dd87abbf6c21bba656e60f50bf1db81b"><title>OpenSER::VDB::Value</title>
+    <para>
+      This package represents a database value. Additional to the data
+      itself, information about its type is stored.
+    </para>
+    <section id="ID-f8210a055e2dc48b7cd31acfbe483ef9"><title>stringification</title>
+      <para>
+	When accessing a OpenSER::VDB::Value object as a string, it simply
+	returns its data regardless of its type. =cut
+      </para>
+      <para>
+	use strict;
+      </para>
+      <para>
+	package OpenSER::VDB::Value;
+      </para>
+      <para>
+	use overload '""' =&gt; \&amp;stringify;
+      </para>
+      <para>
+	sub stringify { shift-&gt;{data} }
+      </para>
+      <para>
+	use OpenSER; use OpenSER::Constants;
+      </para>
+      <para>
+	our @ISA = qw ( OpenSER::Utils::Debug );
+      </para>
+    </section>
+    <section id="ID-246aa300bb8cb062e3126e6eddd094c4"><title>new(type,data)</title>
+      <para>
+	Constructs a new Value object. Its data type and the data are
+	passed as parameters.
+      </para>
+    </section>
+    <section id="ID-1b24f490feaba7e8ffde5919a34a3ea5"><title>type()</title>
+      <para>
+	Returns or sets the current data type. Please consider using the
+	constants from OpenSER::Constants
+      </para>
+    </section>
+    <section id="ID-8ed1b290ce747e1e6fc97d5c253d67eb"><title>data()</title>
+      <para>
+	Returns or sets the current data.
+      </para>
+    </section>
+  </section>
+  <section id="ID-01b04d0ae14c862d7543534782702100"><title>OpenSER::VDB::Column</title>
+    <para>
+      This package represents database column definition, consisting of a
+      column name and its data type.
+    </para>
+    <section id="ID-c1f63ab2d499e0ffb0eff65d3d1bcaa3"><title>Stringification</title>
+      <para>
+	When accessing a OpenSER::VDB::Column object as a string, it simply
+	returns its column name regardless of its type. =cut
+      </para>
+      <para>
+	package OpenSER::VDB::Column;
+      </para>
+      <para>
+	use overload '""' =&gt; \&amp;stringify;
+      </para>
+      <para>
+	sub stringify { shift-&gt;{name} }
+      </para>
+      <para>
+	use OpenSER; use OpenSER::Constants;
+      </para>
+      <para>
+	our @ISA = qw ( OpenSER::Utils::Debug );
+      </para>
+    </section>
+    <section id="ID-9be0a542b4be1d36c09e57a0a7785b8b"><title>new(type,name)</title>
+      <para>
+	Constructs a new Column object. Its type and the name are passed as
+	parameters.
+      </para>
+    </section>
+    <section id="ID-9e27faa58b7b4659e2d511fd4ed58ccd"><title>type( )</title>
+      <para>
+	Returns or sets the current type. Please consider using the
+	constants from OpenSER::Constants
+      </para>
+    </section>
+    <section id="ID-e3219d620b6d1b4f5656ee466ef3cf22"><title>name()</title>
+      <para>
+	Returns or sets the current column name.
+      </para>
+    </section>
+    <section id="ID-07e232dc068e186782a8d0c0bbae91d3"><title>OpenSER::VDB::Result</title>
+      <para>
+	This class represents a VDB result set. It contains a column
+	definition, plus an array of rows. Rows themselves are simply
+	references to arrays of scalars.
+      </para>
+    </section>
+    <section id="ID-54e80aeec6aaaa66afb9548d25388dea"><title>new(coldefs,[row, row, ...])</title>
+      <para>
+	The constructor creates a new Result object. Its first parameter is
+	a reference to an array of OpenSER::VDB::Column objects. Additional
+	parameters may be passed to provide initial rows, which are
+	references to arrays of scalars.
+      </para>
+    </section>
+    <section id="ID-c77fe41ba24f3f04c12254c9f001bb27"><title>coldefs()</title>
+      <screen><![CDATA[Returns or sets the column definition of the object.]]></screen>
+    </section>
+    <section id="ID-a20f0baefcdf46a3e923bb02203b3792"><title>rows()</title>
+      <screen><![CDATA[Returns or sets the rows of the object.]]></screen>
+    </section>
   </section>
 </chapter>

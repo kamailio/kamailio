@@ -199,6 +199,14 @@ BEGIN {
 	const( DB_DATETIME	=> 4 );
 	const( DB_BLOB		=> 5 );
 	const( DB_BITMAP	=> 6 );
+
+
+#####################
+# For VDB call types
+	const( VDB_CALLTYPE_FUNCTION_SINGLE	=> 0 );
+	const( VDB_CALLTYPE_FUNCTION_MULTI	=> 0 );
+	const( VDB_CALLTYPE_METHOD		=> 1 );
+
 }
 
 1;

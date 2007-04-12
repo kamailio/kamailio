@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: Pair.pm 757 2007-01-05 10:56:28Z bastian $
 #
 # Perl module for OpenSER
 #
@@ -23,29 +23,56 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER;
-require Exporter;
-require DynaLoader;
+=head1 OpenSER::VDB::Pair
 
-@ISA = qw(Exporter DynaLoader);
-@EXPORT = qw ( t );
-@EXPORT_OK = qw ( log );
+This package represents database key/value pairs, consisting of a 
+key, a value type, and the value.
 
-use OpenSER::Message;
-use OpenSER::Constants;
-use OpenSER::Utils::Debug;
+This package inherits from OpenSER::VDB::Value and thus has the same methods.
 
-bootstrap OpenSER;
+=cut
+
+package OpenSER::VDB::Pair;
+
+use OpenSER::VDB::Value;
+
+our @ISA = qw ( OpenSER::VDB::Value OpenSER::Utils::Debug );
+
+=head2 new(key,type,name)
+
+Constructs a new Column object.
+
+=cut
+
+sub new {
+	my $class = shift;
+	my $key = shift;
+	my $type = shift;
+	my $data = shift;
+
+	my $self = new OpenSER::VDB::Value($type, $data);
+
+	bless $self, $class;
+
+	$self->{key} = $key;
+
+	return $self;
+}
 
 
-BEGIN {
-	$SIG{'__DIE__'} = sub {
-		OpenSER::Message::log(undef, L_ERR, "perl error: $_[0]\n");
-        };
-	$SIG{'__WARN__'} = sub {
-		OpenSER::Message::log(undef, L_ERR, "perl warning: $_[0]\n");
-        };
+=head2 key()
+
+Returns or sets the current key.
+
+=cut
+
+sub key {
+	my $self = shift;
+	if (@_) {
+		$self->{key} = shift;
+	}
+
+	return $self->{key};
 }
 
 1;
-

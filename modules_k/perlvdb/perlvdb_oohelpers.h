@@ -1,9 +1,9 @@
-/*
- * $Id$
+/* 
+ * $Id: perlvdb_oohelpers.h 770 2007-01-22 10:16:34Z bastian $
  *
- * Perl module for OpenSER
+ * Perl virtual database module interface
  *
- * Copyright (C) 2006 Collax GmbH
+ * Copyright (C) 2007 Collax GmbH
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
  *
  * This file is part of openser, a free SIP server.
@@ -18,28 +18,25 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
-#ifndef PERL_MOD_H
-#define PERL_MOD_H
+#ifndef _PERLVDB_OOHELPERS_H
+#define _PERLVDB_OOHELPERS_H 
 
 #include <EXTERN.h>
 #include <perl.h>
 
-#include "../sl/sl_api.h"
+#include "perlvdb.h"
 
-extern char *filename;
-extern char *modpath;
+SV *perlvdb_perlmethod(SV *ref,
+		       const char* method,
+		       SV *param1,
+		       SV *param2,
+		       SV *param3,
+		       SV *param4);
 
-extern PerlInterpreter *my_perl;
-
-extern struct sl_binds slb;
-
-#define PERLCLASS_MESSAGE	"OpenSER::Message"
-#define PERLCLASS_URI		"OpenSER::URI"
-
-#endif /* PERL_MOD_H */
+#endif /* _PERLVDB_OOHELPERS_H */
