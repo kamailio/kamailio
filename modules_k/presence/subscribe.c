@@ -668,52 +668,52 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);		
 		
-		to_user.s = row_vals[to_user_col].val.str_val.s;
+		to_user.s = (char*)row_vals[to_user_col].val.string_val;
 		to_user.len =strlen(to_user.s);
 
-		to_domain.s = row_vals[to_domain_col].val.str_val.s;
+		to_domain.s = (char*)row_vals[to_domain_col].val.string_val;
 		to_domain.len =strlen(to_domain.s);
 
-		event.s =row_vals[event_col].val.str_val.s;
+		event.s =(char*)row_vals[event_col].val.string_val;
 		event.len = strlen(event.s);
 
-		from_user.s = row_vals[from_user_col].val.str_val.s;
+		from_user.s = (char*)row_vals[from_user_col].val.string_val;
 		from_user.len = strlen(from_user.s);
 		
-		from_domain.s = row_vals[from_domain_col].val.str_val.s;
+		from_domain.s = (char*)row_vals[from_domain_col].val.string_val;
 		from_domain.len = strlen(from_domain.s);
 		
 		memset(&event_id, 0, sizeof(str));
-		event_id.s = row_vals[event_id_col].val.str_val.s;
+		event_id.s = (char*)row_vals[event_id_col].val.string_val;
 		if(event_id.s)
 			event_id.len = strlen(event_id.s);
 
 			
-		to_tag.s = row_vals[to_tag_col].val.str_val.s;
+		to_tag.s = (char*)row_vals[to_tag_col].val.string_val;
 		to_tag.len = strlen(to_tag.s);
 		
-		from_tag.s = row_vals[from_tag_col].val.str_val.s;
+		from_tag.s = (char*)row_vals[from_tag_col].val.string_val;
 		from_tag.len = strlen(from_tag.s);
 
-		callid.s = row_vals[callid_col].val.str_val.s;
+		callid.s = (char*)row_vals[callid_col].val.string_val;
 		callid.len = strlen(callid.s);
 
 		memset(&contact, 0, sizeof(str));
-		contact.s = row_vals[contact_col].val.str_val.s;
+		contact.s = (char*)row_vals[contact_col].val.string_val;
 		if(contact.s)
 			contact.len = strlen(contact.s);
 
 		cseq = row_vals[cseq_col].val.int_val;
 		
 		memset(&record_route, 0, sizeof(str));
-		record_route.s = row_vals[record_route_col].val.str_val.s;
+		record_route.s = (char*)row_vals[record_route_col].val.string_val;
 		if(record_route.s )
 			record_route.len = strlen(record_route.s);
 
-		sockinfo_str.s = row_vals[sockinfo_col].val.str_val.s;
+		sockinfo_str.s = (char*)row_vals[sockinfo_col].val.string_val;
 		sockinfo_str.len = sockinfo_str.s?strlen (sockinfo_str.s):0;
 
-		local_contact.s = row_vals[local_contact_col].val.str_val.s;
+		local_contact.s = (char*)row_vals[local_contact_col].val.string_val;
 		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		size= sizeof(subs_t)+ ( to_user.len+ to_domain.len+ from_user.len+ from_domain.len+
 				 event_id.len+ to_tag.len+ from_tag.len+ callid.len+ contact.len+
@@ -1361,20 +1361,20 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			}
 			else
 			{	
-				status.len= strlen(row_vals[0].val.str_val.s);
+				status.len= strlen(row_vals[0].val.string_val);
 				status.s= (char*)pkg_malloc(status.len* sizeof(char));
 				if(status.s== NULL)
 				{
 					LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
 					goto error;
 				}	
-				memcpy(status.s, row_vals[0].val.str_val.s, status.len);
+				memcpy(status.s, row_vals[0].val.string_val, status.len);
 				subs.status= status;
 			}
 		
-			if(row_vals[1].val.str_val.s)
+			if(row_vals[1].val.string_val)
 			{
-				reason.len= strlen(row_vals[1].val.str_val.s);
+				reason.len= strlen(row_vals[1].val.string_val);
 				if(reason.len== 0)
 					reason.s= NULL;
 				else
@@ -1385,7 +1385,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 						LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
 						goto error;		
 					}		
-					memcpy(reason.s, row_vals[1].val.str_val.s, reason.len);
+					memcpy(reason.s, row_vals[1].val.string_val, reason.len);
 				}
 				subs.reason= reason;
 			}

@@ -296,6 +296,9 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	else
 		if(result->n >0)			
 		{
+			str from_user;
+			str from_domain;
+
 			watchers =(watcher_t*)pkg_malloc( (result->n+1)*sizeof(watcher_t));
 			if(watchers == NULL)
 			{
@@ -307,20 +310,20 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			{
 				row = &result->rows[i];
 				row_vals = ROW_VALUES(row);
-				watchers[i].status.s = row_vals[status_col].val.str_val.s;
+				watchers[i].status.s = (char*)row_vals[status_col].val.string_val;
 				watchers[i].status.len=
-					strlen(row_vals[status_col].val.str_val.s);
+					strlen(row_vals[status_col].val.string_val);
 
-				row_vals[from_user_col].val.str_val.len =
-					strlen(row_vals[from_user_col].val.str_val.s);
-				row_vals[from_domain_col].val.str_val.len =
-					strlen(row_vals[from_domain_col].val.str_val.s);
+				from_user.s= (char*)row_vals[from_user_col].val.string_val;
+				from_user.len= strlen(from_user.s);
 
-				if(uandd_to_uri(row_vals[from_user_col].val.str_val,
-					row_vals[from_domain_col].val.str_val, &watchers[i].uri)<0)
+				from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
+				from_domain.len= strlen(from_domain.s);
+
+				if(uandd_to_uri(from_user, from_domain, &watchers[i].uri)<0)
 				{
 					LOG(L_ERR, "PRESENCE:get_wi_notify_body:ERROR while creating"
-						" memory\n");
+						" uri\n");
 					goto error;
 
 				}	
@@ -476,12 +479,12 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 		*/
 			row = &result->rows[0];
 			row_vals = ROW_VALUES(row);
-			if(row_vals[body_col].val.str_val.s== NULL)
+			if(row_vals[body_col].val.string_val== NULL)
 			{
 				LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR NULL notify body record\n");
 				goto error;
 			}
-			len= strlen(row_vals[body_col].val.str_val.s);
+			len= strlen(row_vals[body_col].val.string_val);
 			if(len== 0)
 			{
 				LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR Empty notify body record\n");
@@ -501,7 +504,7 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 				pkg_free(notify_body);
 				goto error;
 			}
-			memcpy(notify_body->s, row_vals[body_col].val.str_val.s, len);
+			memcpy(notify_body->s, row_vals[body_col].val.string_val, len);
 			notify_body->len= len;
 
 			goto done;
@@ -524,7 +527,7 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 			{
 				row = &result->rows[i];
 				row_vals = ROW_VALUES(row);
-				etags.s = row_vals[etag_col].val.str_val.s;
+				etags.s = (char*)row_vals[etag_col].val.string_val;
 				etags.len = strlen(etags.s);
 
 				DBG("PRESENCE:get_p_notify_body:etag = %.*s len= %d\n", 
@@ -830,32 +833,32 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);		
 		
-		from_user.s= row_vals[from_user_col].val.str_val.s;
+		from_user.s= (char*)row_vals[from_user_col].val.string_val;
 		from_user.len= 	strlen(from_user.s);
-		from_domain.s= row_vals[from_domain_col].val.str_val.s;
+		from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
 		from_domain.len= strlen(from_domain.s);
-		event_id.s=row_vals[event_id_col].val.str_val.s;
+		event_id.s=(char*)row_vals[event_id_col].val.string_val;
 		event_id.len= strlen(event_id.s);
 		if(event_id.s== NULL)
 			event_id.len = 0;
-		to_tag.s= row_vals[to_tag_col].val.str_val.s;
+		to_tag.s= (char*)row_vals[to_tag_col].val.string_val;
 		to_tag.len= strlen(to_tag.s);
-		from_tag.s= row_vals[from_tag_col].val.str_val.s; 
+		from_tag.s= (char*)row_vals[from_tag_col].val.string_val; 
 		from_tag.len= strlen(from_tag.s);
-		callid.s= row_vals[callid_col].val.str_val.s;
+		callid.s= (char*)row_vals[callid_col].val.string_val;
 		callid.len= strlen(callid.s);
 		
-		record_route.s=  row_vals[record_route_col].val.str_val.s;
+		record_route.s=  (char*)row_vals[record_route_col].val.string_val;
 		record_route.len= strlen(record_route.s);
 		if(record_route.s== NULL )
 			record_route.len= 0;
 		
-		contact.s= row_vals[contact_col].val.str_val.s;
+		contact.s= (char*)row_vals[contact_col].val.string_val;
 		contact.len= strlen(contact.s);
 		
-		if(!force_active && row_vals[status_col].val.str_val.s)
+		if(!force_active && row_vals[status_col].val.string_val)
 		{
-			status.s=  row_vals[status_col].val.str_val.s;
+			status.s=  (char*)row_vals[status_col].val.string_val;
 			status.len= strlen(status.s);
 		}
 		else
@@ -864,10 +867,10 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 			status.len= 0;
 		}
 		
-		sockinfo_str.s = row_vals[sockinfo_col].val.str_val.s;
+		sockinfo_str.s = (char*)row_vals[sockinfo_col].val.string_val;
 		sockinfo_str.len = sockinfo_str.s?strlen (sockinfo_str.s):0;
 
-		local_contact.s = row_vals[local_contact_col].val.str_val.s;
+		local_contact.s = (char*)row_vals[local_contact_col].val.string_val;
 		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		
 
@@ -1368,7 +1371,7 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	row = &result->rows[0];
 	row_vals = ROW_VALUES(row);
 
-	body.s = row_vals[0].val.str_val.s;
+	body.s = (char*)row_vals[0].val.string_val;
 	if(body.s== NULL)
 	{
 		DBG("PRESENCE:get_xcap_tree: Xcap doc NULL\n");
