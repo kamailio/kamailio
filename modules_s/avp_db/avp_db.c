@@ -131,13 +131,13 @@ static int child_init(int rank)
 		{.name = NULL}
 	};
 	db_fld_t params_uri[] = {
-		{.name = username_column, DB_STR},
-		{.name = did_column, DB_STR},
-		{.name = scheme_column, DB_STR},
+		{.name = username_column, .type = DB_STR, .op = DB_EQ},
+		{.name = did_column, .type = DB_STR, .op = DB_EQ},
+		{.name = scheme_column, .type = DB_STR, .op = DB_EQ},
 		{.name = NULL}
 	};
 	db_fld_t params_user[] = {
-		{.name = uid_column, DB_STR},
+		{.name = uid_column, .type = DB_STR, .op = DB_EQ},
 		{.name = NULL}
 	};
 
