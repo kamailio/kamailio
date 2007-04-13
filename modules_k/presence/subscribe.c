@@ -33,6 +33,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_event.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_rr.h"
 #include "presence.h"
 #include "subscribe.h"
 #include "utils_func.h"
@@ -46,67 +47,6 @@ static str pu_481_rpl  = str_init("Subscription does not exist");
 static str pu_400_rpl  = str_init("Bad request");
 static str pu_489_rpl  = str_init("Bad Event");
 
-int process_rr(	struct hdr_field *i_route, str *o_route)
-{
-	rr_t *p;
-	int n = 0;
-	int i = 0;
-	int route_len;
-	str route[64];
-	char *cp;
-
-	if(i_route==NULL)
-		return 0;
-	
-	route_len=0;
-	while (i_route!=NULL) 
-	{
-		
-		if (parse_rr(i_route) < 0) 
-		{
-			LOG(L_ERR,"PRESENCE:process_rr: ERROR while parsing RR\n");
-			goto error;
-		}
-
-		p =(rr_t*)i_route->parsed;
-		while (p)
-		{
-			route[n].s = p->nameaddr.name.s;
-			route[n].len = p->len;
-			route_len+=p->len;
-			n++;
-			p = p->next;
-		}
-		i_route = i_route->sibling;
-	}
-
-	route_len += --n;
-	o_route->s=(char*)pkg_malloc(route_len);
-	if(o_route->s==0)
-	{
-		LOG(L_ERR, "PRESENCE:process_rr: ERROR no more pkg mem\n");
-		goto error;
-	}
-	cp = o_route->s;
-	i = 0;
-	while (i<=n)
-	{
-		memcpy( cp, route[i].s, route[i].len );
-		cp += route[i].len;
-		if (++i<=n)
-			*(cp++) = ',';
-	}
-	o_route->len=route_len;
-
-	DBG("PRESENCE :proces_rr: out rr [%.*s]\n",
-			o_route->len, o_route->s);
-
-	return 0;
-
-error:
-	return -1;
-} 
-
 int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 {
 	static str hdr_append;
@@ -117,8 +57,7 @@ int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 		LOG(L_ERR,"PRESENCE: send_202ok:ERROR no more pkg memory\n");
 		return -1;
 	}
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
-	
+	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);	
 	
 	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
 	hdr_append.len += 10;
@@ -1189,7 +1128,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 /*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
 	{
-		rt = process_rr(msg->record_route, &rec_route);
+		rt = print_rr_body(msg->record_route, &rec_route, 0);
 		if(rt != 0)
 		{
 			LOG(L_ERR,"PRESENCE:handle_subscribe:error processing the record"
