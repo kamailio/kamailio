@@ -79,6 +79,39 @@
 	</section>
 
 	<section>
+	<title>Multiple RTPProxy usage</title>
+	<para>
+		Currently, the nathelper module can support multiple rtpproxies for
+		balancing/distribution and control/selection purposes.
+	</para>
+	<para>
+		The module allows the definition of several sets of rtpproxies - 
+		load-balancing will be performed over a set and the user has the
+		ability to choose what set should be used. The set is selected via
+		its id - the id being defined along with the set. Refer to the 
+		<quote>rtpproxy_sock</quote> module parameter definition for syntax
+		description.
+	</para>
+	<para>
+		The balancing inside a set is done automatically by the module based on
+		the weight of each rtpproxy from the set.
+	</para>
+	<para>
+		The selection of the set is done from script prior using 
+		[un]force_rtp_proxy() functions - see the set_rtp_proxy_set() function.
+	</para>
+	<para>
+		For backward compatibility reasons, a set with no id take by default 
+		the id 0. Also if no set is explicitly set before 
+		[un]force_rtp_proxy(), the 0 id set will be used.
+	</para>
+	<para>
+		IMPORTANT: if you use nultiple sets, take care and use the same set for
+		both force_ and unforce_rtpproxy()!!
+	</para>
+	</section>
+
+	<section>
 	<title>Dependencies</title>
 	<section>
 		<title>&ser; Modules</title>
@@ -109,6 +142,7 @@
 		</para>
 	</section>
 	</section>
+
 	<section>
 	<title>Exported Parameters</title>
 	<section>
@@ -191,19 +225,28 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 	<section>
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
-		Socket used to connect to RTPProxy. It may specify a UNIX socket or an
-		IPv4/IPv6 UDP socket.
+		Definition of socket(s) used to connect to (a set) RTPProxy. It may 
+		specify a UNIX socket or an IPv4/IPv6 UDP socket.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>unix:/var/run/rtpproxy.sock</quote>.
+			Default value is <quote>NONE</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>rtpproxy_sock</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
+# single rtproxy
 modparam("nathelper", "rtpproxy_sock", "udp:localhost:12221")
+# multiple rtproxies for LB
+modparam("nathelper", "rtpproxy_sock",
+	"udp:localhost:12221 udp:localhost:12222")
+# multiple sets of multiple rtproxies
+modparam("nathelper", "rtpproxy_sock",
+	"1 == udp:localhost:12221 udp:localhost:12222")
+modparam("nathelper", "rtpproxy_sock",
+	"2 == udp:localhost:12225")
 ...
 </programlisting>
 		</example>
@@ -478,6 +521,28 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		<programlisting format="linespecific">
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">set_rtp_proxy_set()</function>
+		</title>
+		<para>
+		Sets the Id of the rtpproxy set to be used for the next 
+		[un]force_rtp_proxy() command.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>fix_nated_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_rtp_proxy_set("2");
+force_rtp_proxy();
 ...
 </programlisting>
 		</example>
