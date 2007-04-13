@@ -136,9 +136,9 @@ error:
 int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		int to_tag_gen, ev_t* event)
 {	
-	db_key_t query_cols[16];
-	db_op_t  query_ops[16];
-	db_val_t query_vals[16], update_vals[5];
+	db_key_t query_cols[17];
+	db_op_t  query_ops[17];
+	db_val_t query_vals[17], update_vals[5];
 	db_key_t result_cols[4], update_keys[5];
 	db_res_t *result;
 	unsigned int remote_cseq, local_cseq;
@@ -436,6 +436,11 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				subs->local_contact.len;
 			n_query_cols++;
 
+			query_cols[n_query_cols] = "version";
+			query_vals[n_query_cols].type = DB_INT;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.int_val = 0;
+			n_query_cols++;
 
 			DBG("PRESENCE:update_subscription:Inserting into database:"		
 				"\nn_query_cols:%d\n",n_query_cols);
@@ -530,6 +535,7 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	db_key_t db_keys[3];
 	db_val_t db_vals[3];
 	db_op_t  db_ops[3] ;
+	db_res_t *result= NULL;
 
 	DBG("PRESENCE: msg_watchers_clean:cleaning pending subscriptions\n");
 	
@@ -550,6 +556,22 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	{
 		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR in use_table\n");
 		return ;
+	}
+	
+	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, 0,	1, 0, 0, &result )< 0)
+	{
+		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR while querying database"
+				" for expired messages\n");
+		if(result)
+			pa_dbf.free_result(pa_db, result);
+		return;
+	}
+	if(result == NULL)
+		return;
+	if(result->n <= 0)
+	{
+		pa_dbf.free_result(pa_db, result);
+		return;
 	}
 
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
