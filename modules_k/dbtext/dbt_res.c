@@ -60,6 +60,7 @@ dbt_result_p dbt_result_new(dbt_table_p _dtp, int *_lres, int _sz)
 		pkg_free(_dres);
 		return NULL;
 	}
+	memset(_dres->colv, 0, _sz*sizeof(dbt_column_t));
 	DBG("DBT:dbt_result_new: new res with %d cols\n", _sz);
 	for(i = 0; i < _sz; i++)
 	{

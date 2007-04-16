@@ -185,6 +185,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 #endif
 		return -1;
 	}
+	*_r = NULL;
 	
 	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
