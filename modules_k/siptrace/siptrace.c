@@ -682,23 +682,30 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[3].val.str_val.s = "";
 	db_vals[3].val.str_val.len = 0;
 		
+	memset(&to_ip, 0, sizeof(struct ip_addr));
+	dst = (struct dest_info*)ps->extra2;
+
 	db_keys[4] = fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
 	if (trace_local_ip)
 		db_vals[4].val.string_val = trace_local_ip;
 	else {
-		strcpy(fromip_buff, ip_addr2a(&msg->rcv.dst_ip));
-		strcat(fromip_buff,":");
-		strcat(fromip_buff, int2str(msg->rcv.dst_port, NULL));
-		db_vals[4].val.string_val = fromip_buff;
+		if(dst==0 || dst->send_sock==0 || dst->send_sock->sock_str.s==0)
+		{
+			strcpy(fromip_buff, ip_addr2a(&msg->rcv.dst_ip));
+			strcat(fromip_buff,":");
+			strcat(fromip_buff, int2str(msg->rcv.dst_port, NULL));
+			db_vals[4].val.string_val = fromip_buff;
+		} else {
+			db_vals[4].type = DB_STR;
+			db_vals[4].val.str_val = dst->send_sock->sock_str;
+		}
 	}
 	
 	db_keys[5] = toip_column;
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
-	memset(&to_ip, 0, sizeof(struct ip_addr));
-	dst = (struct dest_info*)ps->extra2;
 	if(dst==0)
 	{
 		db_vals[5].val.string_val = "255.255.255.255";
