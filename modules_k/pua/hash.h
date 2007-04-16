@@ -65,6 +65,7 @@ typedef struct ua_pres{
 	str etag;
 	str tuple_id;
 	str* body;
+
 	/* subscribe */
 	str* watcher_uri;
 	str call_id;
@@ -72,7 +73,8 @@ typedef struct ua_pres{
     str from_tag;
 	int cseq;
 	int version;
-      int watcher_count;
+    int watcher_count;
+	str* outbound_proxy;
  /*?? should this be long? */
 }ua_pres_t;
 

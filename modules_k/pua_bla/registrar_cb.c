@@ -90,6 +90,15 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	subs.event= BLA_EVENT;
 	subs.contact= subs.watcher_uri;
 	
+	if(outbound_proxy.s && outbound_proxy.len)
+	{
+		DBG("PUA_BLA: bla_cb : outbound_proxy= %.*s\n", outbound_proxy.len, 
+				outbound_proxy.s);
+		subs.outbound_proxy= &outbound_proxy;
+	}
+	else
+		subs.outbound_proxy= NULL;
+
 	if(type & UL_CONTACT_INSERT)
 		subs.flag|= INSERT_TYPE;
 	else

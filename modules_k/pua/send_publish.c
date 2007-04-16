@@ -166,10 +166,20 @@ str* publ_build_hdr(int expires, int event, str* etag, str* extra_headers, int i
 	}
 	if(is_body)
 	{	
-		memcpy(str_hdr->s+str_hdr->len,"Content-Type: application/pidf+xml" , 34);
-		str_hdr->len += 34;
-		memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-		str_hdr->len += CRLF_LEN;
+		if(event & PRESENCE_EVENT)
+		{
+			memcpy(str_hdr->s+str_hdr->len,"Content-Type: application/pidf+xml" , 34);
+			str_hdr->len += 34;
+			memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+			str_hdr->len += CRLF_LEN;
+		}
+		else
+		{
+			memcpy(str_hdr->s+str_hdr->len,"Content-Type: application/dialog-info+xml" , 41);
+			str_hdr->len += 41;
+			memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+			str_hdr->len += CRLF_LEN;		
+		}	
 	}
 
 	if(extra_headers && extra_headers->s && extra_headers->len)
@@ -671,6 +681,7 @@ send_publish:
 			publ->pres_uri,					/* From */
 			str_hdr,						/* Optional headers */
 			body,							/* Message body */
+			0,								/* outbound proxy*/
 			publ_cback_func,				/* Callback function */
 			(void*)hentity					/* Callback parameter */
 			);

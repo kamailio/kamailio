@@ -41,6 +41,7 @@ pua_api_t pua;
 usrloc_api_t ul;
 str default_domain= {NULL, 0};
 str header_name= {0, 0};
+str outbound_proxy= {0, 0};
 int is_bla_aor= 0;
 static int mod_init(void);
 static int child_init(int);
@@ -61,6 +62,7 @@ static param_export_t params[]=
 {
 	{"default_domain",	 STR_PARAM, &default_domain.s	 },
 	{"header_name",      STR_PARAM, &header_name.s       },
+	{"outbound_proxy",   STR_PARAM, &outbound_proxy.s    },
 	{0,							 0,			0            }
 };
 
@@ -101,6 +103,13 @@ static int mod_init(void)
 		return -1;
 	}
 	header_name.len= strlen(header_name.s);
+
+	if(outbound_proxy.s == NULL )
+	{	
+		DBG("pua_bla: No outbound proxy set\n");
+	}
+	else
+		outbound_proxy.len= strlen(outbound_proxy.s);
 
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)

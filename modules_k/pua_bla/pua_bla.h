@@ -34,6 +34,7 @@
 extern int is_bla_aor;
 extern str default_domain;
 extern str header_name;
+extern str outbound_proxy;
 
 extern send_publish_t pua_send_publish;
 extern send_subscribe_t pua_send_subscribe;

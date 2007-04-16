@@ -138,7 +138,12 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 
 	size= sizeof(dlg_t)+ ( presentity->call_id.len+ presentity->to_tag.len+
 		presentity->from_tag.len+ presentity->watcher_uri->len+
-		2* presentity->pres_uri->len+ 1)* sizeof(char);
+		presentity->pres_uri->len+ 1)* sizeof(char);
+
+	if(presentity->outbound_proxy)
+		size+= presentity->outbound_proxy->len* sizeof(char);
+	else
+		size+= presentity->pres_uri->len* sizeof(char);
 
 	td = (dlg_t*)pkg_malloc(size);
 	if(td == NULL)
@@ -176,10 +181,21 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	size+= td->rem_uri.len;
 
 	td->rem_target.s = (char*)td+ size;
-	memcpy(td->rem_target.s, presentity->pres_uri->s,
-			presentity->pres_uri->len) ;
-	td->rem_target.len = presentity->pres_uri->len;
-	size+= td->rem_target.len;
+	if(presentity->outbound_proxy)
+	{
+		memcpy(td->rem_target.s, presentity->outbound_proxy->s,
+				presentity->outbound_proxy->len) ;
+		td->rem_target.len = presentity->outbound_proxy->len;
+		size+= td->rem_target.len;
+
+	}
+	else
+	{	
+		memcpy(td->rem_target.s, presentity->pres_uri->s,
+				presentity->pres_uri->len) ;
+		td->rem_target.len = presentity->pres_uri->len;
+		size+= td->rem_target.len;
+	}
 
 	td->loc_seq.value = presentity->cseq;
 	td->loc_seq.is_set = 1;
@@ -327,7 +343,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.id= hentity->id;
 			if(send_subscribe(&subs)< 0)
 			{
-				LOG(L_ERR, "PUA:subs_cback_func: ERROR when trying to send PUBLISH\n");
+				LOG(L_ERR, "PUA:subs_cback_func: ERROR when trying to send SUBSCRIBE\n");
 				goto done;
 			}
 		}
@@ -379,7 +395,9 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	size= sizeof(ua_pres_t)+ 2*sizeof(str)+( pto->uri.len+
 		pfrom->uri.len+ pto->tag_value.len+ pfrom->tag_value.len
 		+msg->callid->body.len+ 1 )*sizeof(char);
-	
+
+	if(hentity->outbound_proxy)
+		size+= sizeof(str)+ hentity->outbound_proxy->len* sizeof(char);	
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
@@ -420,7 +438,16 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			pfrom->tag_value.len);
 	presentity->from_tag.len= pfrom->tag_value.len;
 	size+= pfrom->tag_value.len;
-	
+
+	if(hentity->outbound_proxy)
+	{
+		presentity->outbound_proxy= (str*)( (char*)presentity+ size);
+		size+= sizeof(str);
+		presentity->outbound_proxy->s= (char*)presentity+ size;
+		memcpy(presentity->outbound_proxy->s, hentity->outbound_proxy->s, hentity->outbound_proxy->len);
+		presentity->outbound_proxy->len= hentity->outbound_proxy->len;
+		size+= hentity->outbound_proxy->len;
+	}	
 	presentity->event|= hentity->event;
 	presentity->flag= hentity->flag;
 	presentity->db_flag|= INSERTDB_FLAG;
@@ -458,6 +485,9 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 	size= sizeof(ua_pres_t)+ 2*sizeof(str)+(subs->pres_uri->len+
 		subs->watcher_uri->len+ 1)* sizeof(char);
 	
+	if(subs->outbound_proxy && subs->outbound_proxy->len && subs->outbound_proxy->s )
+		size+= sizeof(str)+ subs->outbound_proxy->len* sizeof(char);
+
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
@@ -486,6 +516,15 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 	hentity->watcher_uri->len= subs->watcher_uri->len;
 	size+= subs->watcher_uri->len;
 
+	if(subs->outbound_proxy)
+	{
+		hentity->outbound_proxy= (str*)((char*)hentity+ size);
+		size+= sizeof(str);
+		hentity->outbound_proxy->s= (char*)hentity+ size;
+		memcpy(hentity->outbound_proxy->s, subs->outbound_proxy->s, subs->outbound_proxy->len);
+		hentity->outbound_proxy->len= subs->outbound_proxy->len;
+		size+= subs->outbound_proxy->len;
+	}	
 	if(subs->expires< 0)
 		hentity->desired_expires= 0;
 	else
@@ -545,6 +584,7 @@ int send_subscribe(subs_info_t* subs)
 	if(presentity== NULL )
 	{
 insert:
+	
 		lock_release(&HashT->p_records[hash_code].lock); 
 
 		if(subs->flag & UPDATE_TYPE)
@@ -579,6 +619,7 @@ insert:
 			subs->watcher_uri,			  /* From */
 			str_hdr,					  /* Optional headers including CRLF */
 			0,							  /* Message body */
+			subs->outbound_proxy,		  /* Outbound_proxy */	
 			subs_cback_func,		      /* Callback function */
 			(void*)hentity			      /* Callback parameter */
 			);

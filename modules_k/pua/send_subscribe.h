@@ -38,6 +38,7 @@ typedef struct subs_info
 	str* pres_uri;
 	str* watcher_uri;
 	str* contact;
+	str* outbound_proxy;
 	int event;
 	int expires;
 	int source_flag;

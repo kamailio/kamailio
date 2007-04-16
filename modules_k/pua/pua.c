@@ -595,7 +595,8 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 				p->pres_uri,					/* To */
 				p->pres_uri,					/* From */
 				str_hdr,						/* Optional headers */
-				0,							/* Message body */
+				0,								/* Message body */
+				0,								/* Outbound proxy*/
 				publ_cback_func,				/* Callback function */
 				(void*)hentity					/* Callback parameter */
 				);
