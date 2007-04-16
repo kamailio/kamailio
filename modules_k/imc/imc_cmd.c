@@ -515,6 +515,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 				&room->uri,           /* From */
 				&imc_hdr_ctype,       /* Antet optional */
 				&body,                /* Message body */
+				0,                    /* outbound uri */
 				imc_inv_callback,     /* functie callback */
 				(void*)(cback_param)  /* parametru callback */
 			);				
@@ -1013,6 +1014,7 @@ int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 					dst,                /* From */
 					&imc_hdr_ctype,     /* Headers */
 					&body,              /* Body */
+					0,                  /* outbound uri */
 					NULL,               /* callback function */
 					NULL                /* callback parameter */
 				);
@@ -1045,6 +1047,7 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 					dst,                /* From */
 					&imc_hdr_ctype,     /* Headers */
 					&body,              /* Body */
+					0,                  /* outbound uri */
 					NULL,               /* callback function */
 					NULL                /* callback parameter */
 				);
@@ -1154,6 +1157,7 @@ int imc_send_message(str *src, str *dst, str *headers, str *body)
 			src,		        /* From */
 			headers,			/* Headers */
 			body,				/* Body */
+			0,                  /* outbound uri */
 			NULL,				/* callback function */
 			NULL				/* callback parameter */
 		);
@@ -1249,6 +1253,7 @@ send_message:
 					&from_uri_s,		/* From */
 					NULL,				/* Headers */
 					&body_final,		/* Body */
+					0,                  /* outbound uri */
 					NULL,				/* callback function */
 					NULL				/* callback parameter */
 				);

@@ -43,7 +43,7 @@ extern int pass_provisional_replies;
  */
 typedef int (*reqwith_t)(str* m, str* h, str* b, dlg_t* d, transaction_cb c, void* cp);
 typedef int (*reqout_t)(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
-typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, transaction_cb c, void* cp);
+typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, str *oburi, transaction_cb c, void* cp);
 
 
 /*
@@ -79,7 +79,7 @@ int req_outside(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_c
 /*
  * Send a transactional request, no dialogs involved
  */
-int request(str* m, str* ruri, str* to, str* from, str* h, str* b, transaction_cb c, void* cp);
+int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *oburi, transaction_cb c, void* cp);
 
 
 #endif

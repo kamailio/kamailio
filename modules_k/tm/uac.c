@@ -322,7 +322,7 @@ int req_outside(str* method, str* to, str* from, str* headers, str* body, dlg_t*
 /*
  * Send a transactional request, no dialogs involved
  */
-int request(str* m, str* ruri, str* to, str* from, str* h, str* b, transaction_cb c, void* cp)
+int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *oburi, transaction_cb c, void* cp)
 {
 	str callid, fromtag;
 	dlg_t* dialog;
@@ -343,6 +343,9 @@ int request(str* m, str* ruri, str* to, str* from, str* h, str* b, transaction_c
 		dialog->rem_target.len = ruri->len;
 		dialog->hooks.request_uri = &dialog->rem_target;
 	}
+	
+	if (oburi && oburi->s) dialog->hooks.next_hop = oburi;
+
 	w_calculate_hooks(dialog);
 
 	res = t_uac(m, h, b, dialog, c, cp);

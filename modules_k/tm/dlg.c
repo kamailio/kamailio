@@ -130,7 +130,8 @@ static inline int calculate_hooks(dlg_t* _d)
 	} else {
 		if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
 		else _d->hooks.request_uri = &_d->rem_uri;
-		_d->hooks.next_hop = _d->hooks.request_uri;
+		if(_d->hooks.next_hop==NULL)
+			_d->hooks.next_hop = _d->hooks.request_uri;
 	}
 
 	if ((_d->hooks.request_uri) && (_d->hooks.request_uri->s) && (_d->hooks.request_uri->len)) {

@@ -732,6 +732,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 			&reg_addr,        /* From */
 			&str_hdr,         /* Optional headers including CRLF */
 			&body,            /* Message body */
+			0,                /* outbound uri */
 			NULL,             /* Callback function */
 			NULL              /* Callback parameter */
 		);
@@ -953,8 +954,9 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 					&str_vals[0],     /* From */
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
+					0,                /* outbound uri */
 					m_tm_callback,    /* Callback function */
-					(void*)(long)mid        /* Callback parameter */
+					(void*)(long)mid  /* Callback parameter */
 				);
 	}
 
@@ -1223,6 +1225,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 					&ms_reminder,     /* From */
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
+					0,                /* outbound uri */
 					m_tm_callback,    /* Callback function */
 					(void*)(long)mid        /* Callback parameter */
 				);

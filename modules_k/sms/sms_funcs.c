@@ -343,6 +343,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 			&from,                    /* From */
 			&hdrs,                    /* Additional headers including CRLF */
 			body,                     /* Message body */
+			0,                        /* outbound uri */
 			0,                        /* Callback function */
 			0                         /* Callback parameter */
 		);

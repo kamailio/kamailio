@@ -272,7 +272,8 @@ int xmpp_send_sip_msg(char *from, char *to, char *msg)
 	msgstr.s = msg;
 	msgstr.len = strlen(msg);
 
-	return tmb.t_request(&msg_type, 0, &tostr, &fromstr, &hdr, &msgstr, 0, 0);
+	return tmb.t_request(&msg_type, 0, &tostr, &fromstr, &hdr, &msgstr,
+			0, 0, 0);
 }
 
 
