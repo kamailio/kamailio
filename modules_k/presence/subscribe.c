@@ -140,7 +140,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	db_op_t  query_ops[17];
 	db_val_t query_vals[17], update_vals[5];
 	db_key_t result_cols[4], update_keys[5];
-	db_res_t *result;
+	db_res_t *result= NULL;
 	unsigned int remote_cseq, local_cseq;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -573,6 +573,7 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 		pa_dbf.free_result(pa_db, result);
 		return;
 	}
+	pa_dbf.free_result(pa_db, result);
 
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
 		LOG(L_ERR,"PRESENCE:msg_watchers_clean: ERROR cleaning pending "
@@ -585,7 +586,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	db_val_t db_vals[1];
 	db_op_t  db_ops[1] ;
 	db_key_t result_cols[20];
-	db_res_t *result;
+	db_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	subs_t** subs_array= NULL;
