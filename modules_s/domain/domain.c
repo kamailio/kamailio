@@ -282,7 +282,7 @@ int load_domains(domain_t** dest)
 		d = domain_search(list, &rec->fld[0].v.str);
 		if (d) {
 			/* DID exists in the list, update it */
-			if (domain_add(d, &rec->fld[0].v.str, flags) < 0) goto error;
+			if (domain_add(d, &rec->fld[1].v.str, flags) < 0) goto error;
 		} else {
 			     /* DID does not exist yet, create a new entry */
 			d = new_domain(&rec->fld[0].v.str, &rec->fld[1].v.str, flags);
