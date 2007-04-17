@@ -13,11 +13,19 @@ LIBS=
 # uncomment the next line if you wish to enable SQL accounting
 DEFS+=-DSQL_ACC
 
-# uncomment the next two lines if you wish to enable RADIUS accounting
-#DEFS+=-DRAD_ACC -I$(LOCALBASE)/include
-#LIBS=-L$(LOCALBASE)/lib $(RADIUS_LIB)
+# set ENABLE_RADIUS_ACC to true if you wish to enable RADIUS accounting
+#   (uncomment next line or 'ENABLE_RADIUS_ACC=true make all')
+#ENABLE_RADIUS_ACC=true
+ifeq ($(ENABLE_RADIUS_ACC),true)
+DEFS+=-DRAD_ACC -I$(LOCALBASE)/include
+LIBS=-L$(LOCALBASE)/lib $(RADIUS_LIB)
+endif
 
-# uncomment the next two lines if you wish to enable DIAMETER accounting
-#DEFS+=-DDIAM_ACC
+# set ENABLE_DIAMETER_ACC to true if you wish to enable DIAMETER accounting
+#   (uncomment next line or 'ENABLE_DIAMETER_ACC=true make all')
+#ENABLE_DIAMETER_ACC=true
+ifeq ($(ENABLE_DIAMETER_ACC),true)
+DEFS+=-DDIAM_ACC
+endif
 
 include ../../Makefile.modules
