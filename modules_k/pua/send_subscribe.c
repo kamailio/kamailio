@@ -98,11 +98,13 @@ str* subs_build_hdr(str* contact, int expires, int event)
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 	
-	memcpy(str_hdr->s+ str_hdr->len ,"Contact: ", 9);
-	str_hdr->len += 9;
+	memcpy(str_hdr->s+ str_hdr->len ,"Contact: <", 10);
+	str_hdr->len += 10;
 	memcpy(str_hdr->s +str_hdr->len, contact->s, 
 			contact->len);
 	str_hdr->len+= contact->len;
+	memcpy(str_hdr->s+ str_hdr->len, ">", 1);
+	str_hdr->len+= 1;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 
@@ -138,12 +140,7 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 
 	size= sizeof(dlg_t)+ ( presentity->call_id.len+ presentity->to_tag.len+
 		presentity->from_tag.len+ presentity->watcher_uri->len+
-		presentity->pres_uri->len+ 1)* sizeof(char);
-
-	if(presentity->outbound_proxy)
-		size+= presentity->outbound_proxy->len* sizeof(char);
-	else
-		size+= presentity->pres_uri->len* sizeof(char);
+		2* presentity->pres_uri->len+ 1)* sizeof(char);
 
 	td = (dlg_t*)pkg_malloc(size);
 	if(td == NULL)
@@ -181,21 +178,21 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	size+= td->rem_uri.len;
 
 	td->rem_target.s = (char*)td+ size;
-	if(presentity->outbound_proxy)
+	memcpy(td->rem_target.s, presentity->pres_uri->s,
+			presentity->pres_uri->len) ;
+	td->rem_target.len = presentity->pres_uri->len;
+	size+= td->rem_target.len;
+	
+	if(presentity->record_route.s && presentity->record_route.len)
 	{
-		memcpy(td->rem_target.s, presentity->outbound_proxy->s,
-				presentity->outbound_proxy->len) ;
-		td->rem_target.len = presentity->outbound_proxy->len;
-		size+= td->rem_target.len;
-
-	}
-	else
-	{	
-		memcpy(td->rem_target.s, presentity->pres_uri->s,
-				presentity->pres_uri->len) ;
-		td->rem_target.len = presentity->pres_uri->len;
-		size+= td->rem_target.len;
-	}
+		if(parse_rr_body(presentity->record_route.s, presentity->record_route.len,
+				&td->route_set)< 0)
+		{
+			LOG(L_ERR, "PUA:pua_build_dlg_t: ERROR in function parse_rr_body\n");
+			pkg_free(td);
+			return NULL;
+		}
+	}	
 
 	td->loc_seq.value = presentity->cseq;
 	td->loc_seq.is_set = 1;
@@ -214,6 +211,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	int size= 0;
 	unsigned int hash_code;
 	int flag ;
+	str record_route= {0, 0};
+	int rt;
 
 	if( ps->param== NULL || *ps->param== NULL )
 	{
@@ -341,6 +340,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.source_flag|= hentity->flag;
 			subs.event|= hentity->event;
 			subs.id= hentity->id;
+			subs.outbound_proxy= hentity->outbound_proxy;
 			if(send_subscribe(&subs)< 0)
 			{
 				LOG(L_ERR, "PUA:subs_cback_func: ERROR when trying to send SUBSCRIBE\n");
@@ -392,16 +392,29 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 					" to int\n");
     }	
 	
+	/*process record route and add it to a string*/
+	if (msg->record_route!=NULL)
+	{
+		rt = print_rr_body(msg->record_route, &record_route, 1);
+		if(rt != 0)
+		{
+			LOG(L_ERR,"PRESENCE:handle_subscribe:error processing the record"
+					" route [%d]\n", rt);	
+			record_route.s=NULL;
+			record_route.len=0;
+		}
+	}
+
 	size= sizeof(ua_pres_t)+ 2*sizeof(str)+( pto->uri.len+
 		pfrom->uri.len+ pto->tag_value.len+ pfrom->tag_value.len
-		+msg->callid->body.len+ 1 )*sizeof(char);
+		+msg->callid->body.len+ record_route.len )*sizeof(char);
 
-	if(hentity->outbound_proxy)
-		size+= sizeof(str)+ hentity->outbound_proxy->len* sizeof(char);	
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: Error no more share memory");
+		LOG(L_ERR, "PUA: subs_cback_func: Error no more share memory\n");
+		if(record_route.s)
+			pkg_free(record_route.s);
 		goto done;
 	}
 	memset(presentity, 0, size);
@@ -439,14 +452,13 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	presentity->from_tag.len= pfrom->tag_value.len;
 	size+= pfrom->tag_value.len;
 
-	if(hentity->outbound_proxy)
+	if(record_route.len && record_route.s)
 	{
-		presentity->outbound_proxy= (str*)( (char*)presentity+ size);
-		size+= sizeof(str);
-		presentity->outbound_proxy->s= (char*)presentity+ size;
-		memcpy(presentity->outbound_proxy->s, hentity->outbound_proxy->s, hentity->outbound_proxy->len);
-		presentity->outbound_proxy->len= hentity->outbound_proxy->len;
-		size+= hentity->outbound_proxy->len;
+		presentity->record_route.s= (char*)presentity + size;
+		memcpy(presentity->record_route.s, record_route.s, record_route.len);
+		presentity->record_route.len= record_route.len;
+		size+= record_route.len;
+		pkg_free(record_route.s);
 	}	
 	presentity->event|= hentity->event;
 	presentity->flag= hentity->flag;
@@ -468,10 +480,10 @@ done:
 	hentity->flag= flag;
 	run_pua_callbacks( hentity, &msg->first_line);
 	
-	if(*ps->param)
+	if(hentity)
 	{	
-		shm_free(*ps->param);
-		*ps->param= NULL;
+		shm_free(hentity);
+		hentity= NULL;
 	}
 	return;
 
@@ -697,6 +709,8 @@ insert:
 		(void*)hentity
 		);
 
+		if(td->route_set)
+			free_rr(&td->route_set);
 		pkg_free(td);
 		td= NULL;
 	}

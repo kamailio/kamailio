@@ -50,7 +50,7 @@
 #include "pua_callback.h"
 
 MODULE_VERSION
-#define PUA_TABLE_VERSION 2
+#define PUA_TABLE_VERSION 3
 
 struct tm_binds tmb;
 htable_t* HashT= NULL;
@@ -276,7 +276,7 @@ static void destroy(void)
 int db_restore()
 {
 	ua_pres_t* p= NULL;
-	db_key_t result_cols[13]; 
+	db_key_t result_cols[14]; 
 	db_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
@@ -284,9 +284,10 @@ int db_restore()
 	str etag, tuple_id;
 	str watcher_uri, call_id;
 	str to_tag, from_tag;
+	str record_route;
 	int size= 0, i;
 	int n_result_cols= 0;
-	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col;
+	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col, record_route_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,event_col;
 
 	result_cols[puri_col=n_result_cols++]	="pres_uri";		
@@ -301,6 +302,7 @@ int db_restore()
 	result_cols[fromtag_col=n_result_cols++]="from_tag";
 	result_cols[cseq_col= n_result_cols++]	="cseq";
 	result_cols[event_col= n_result_cols++]	="event";
+	result_cols[record_route_col= n_result_cols++]	="record_route";
 	
 	if(!pua_db)
 	{
@@ -348,14 +350,15 @@ int db_restore()
 		pres_id.s= row_vals[1].val.str_val.s;
 		pres_id.len = strlen(pres_id.s);
 
-		memset(&etag,		 0, sizeof(str));
-		memset(&tuple_id,	 0, sizeof(str));
-		memset(&watcher_uri,  0, sizeof(str));
-		memset(&call_id,	 0, sizeof(str));
-		memset(&to_tag,		 0, sizeof(str));
-		memset(&from_tag,	 0, sizeof(str));
-
-		if(row_vals[4].val.str_val.s)
+		memset(&etag,			 0, sizeof(str));
+		memset(&tuple_id,		 0, sizeof(str));
+		memset(&watcher_uri,	 0, sizeof(str));
+		memset(&call_id,		 0, sizeof(str));
+		memset(&to_tag,			 0, sizeof(str));
+		memset(&from_tag,		 0, sizeof(str));
+		memset(&record_route,	 0, sizeof(str));
+	
+		if(row_vals[etag_col].val.str_val.s)
 		{
 			etag.s= row_vals[etag_col].val.str_val.s;
 			etag.len = strlen(etag.s);
@@ -364,7 +367,7 @@ int db_restore()
 			tuple_id.len = strlen(tuple_id.s);
 		}
 
-		if(row_vals[6].val.str_val.s)
+		if(row_vals[watcher_col].val.str_val.s)
 		{	
 			watcher_uri.s= row_vals[watcher_col].val.str_val.s;
 			watcher_uri.len = strlen(watcher_uri.s);
@@ -377,6 +380,12 @@ int db_restore()
 
 			from_tag.s= row_vals[fromtag_col].val.str_val.s;
 			from_tag.len = strlen(from_tag.s);
+
+			if(row_vals[record_route_col].val.str_val.s)
+			{
+				record_route.s= row_vals[record_route_col].val.str_val.s;
+				record_route.len= strlen(record_route.s);
+			}	
 		}
 		
 		size= sizeof(ua_pres_t)+ sizeof(str)+ pres_uri.len+ pres_id.len;
@@ -384,7 +393,7 @@ int db_restore()
 			size+= etag.len+ tuple_id.len;
 		else
 			size+= sizeof(str)+ watcher_uri.len+ call_id.len+ to_tag.len+
-				from_tag.len;
+				from_tag.len+ record_route.len;
 		p= (ua_pres_t*)shm_malloc(size);
 		if(p== NULL)
 		{
@@ -446,7 +455,14 @@ int db_restore()
 			memcpy(p->call_id.s, call_id.s, call_id.len);
 			p->call_id.len= call_id.len;
 			size+= call_id.len;
-
+			
+			if(record_route.s && record_route.len)
+			{
+				p->record_route.s= (char*)p + size;
+				memcpy(p->record_route.s, record_route.s, record_route.len);
+				p->record_route.len= record_route.len;
+				size+= record_route.len;
+			}	
 			p->cseq= row_vals[cseq_col].val.int_val;
 		}
 		p->event= row_vals[event_col].val.int_val;
@@ -650,21 +666,20 @@ error:
 void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
-	db_key_t q_cols[14];
+	db_key_t q_cols[15];
 	db_res_t *res= NULL;
 	db_key_t db_cols[3];
-	db_val_t q_vals[13], db_vals[3];
+	db_val_t q_vals[15], db_vals[3];
 	db_op_t  db_ops[1] ;
 	int n_query_cols= 0;
 	int n_update_cols= 0;
 	int i;
-	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col;
-	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,event_col;
+	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
+	int watcher_col,callid_col,totag_col,fromtag_col,record_route_col,cseq_col;
 	int no_lock= 0;
 	
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
-
 
 	DBG("PUA: db_update...\n");
 	/* cols and values used for insert */
@@ -727,6 +742,11 @@ void db_update(unsigned int ticks,void *param)
 	q_vals[event_col= n_query_cols].nul = 0;
 	n_query_cols++;
 
+	q_cols[record_route_col= n_query_cols] ="record_route";
+	q_vals[record_route_col= n_query_cols].type = DB_STR;
+	q_vals[record_route_col= n_query_cols].nul = 0;
+	n_query_cols++;
+	
 	/* cols and values used for update */
 	db_cols[0]= "expires";
 	db_vals[0].type = DB_INT;
@@ -851,8 +871,12 @@ void db_update(unsigned int ticks,void *param)
 					q_vals[cseq_col].val.int_val= p->cseq;
 					q_vals[expires_col].val.int_val = p->expires;
 					q_vals[event_col].val.int_val = p->event;
+					if(p->record_route.s)
+						DBG("PUA: db_update: record has record_route\\t n_query_cols= %d\n",n_query_cols );
+
+					q_vals[record_route_col].val.str_val = p->record_route;
 						
-					if(pua_dbf.insert(pua_db, q_cols, q_vals, 12)<0)
+					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_query_cols )<0)
 					{
 						LOG(L_ERR, "PUA: db_update: ERROR while inserting"
 								" into table pua\n");

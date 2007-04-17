@@ -75,6 +75,7 @@ typedef struct ua_pres{
 	int version;
     int watcher_count;
 	str* outbound_proxy;
+	str record_route;
  /*?? should this be long? */
 }ua_pres_t;
 

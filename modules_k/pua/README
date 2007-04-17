@@ -205,6 +205,7 @@ CREATE TABLE pua (
   to_tag varchar(128) NOT NULL,
   from_tag varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
+  record_route text NULL,
   version int(11) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM;
