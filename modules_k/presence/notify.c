@@ -679,9 +679,15 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 	{
 		td->rem_target = w_uri;
 	}
-	parse_rr_body(subs->record_route.s, subs->record_route.len,
-			&td->route_set);
-		
+	if(subs->record_route.s && subs->record_route.len)
+	{
+		if(parse_rr_body(subs->record_route.s, subs->record_route.len,
+			&td->route_set)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:build_dlg_t :ERROR in function parse_rr_body\n");
+			goto error;
+		}
+	}	
 	td->state= DLG_CONFIRMED ;
 
 	if (subs->sockinfo_str.len) {
@@ -838,9 +844,11 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
 		from_domain.len= strlen(from_domain.s);
 		event_id.s=(char*)row_vals[event_id_col].val.string_val;
-		event_id.len= strlen(event_id.s);
 		if(event_id.s== NULL)
 			event_id.len = 0;
+		else
+			event_id.len= strlen(event_id.s);
+		
 		to_tag.s= (char*)row_vals[to_tag_col].val.string_val;
 		to_tag.len= strlen(to_tag.s);
 		from_tag.s= (char*)row_vals[from_tag_col].val.string_val; 
@@ -849,10 +857,11 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		callid.len= strlen(callid.s);
 		
 		record_route.s=  (char*)row_vals[record_route_col].val.string_val;
-		record_route.len= strlen(record_route.s);
 		if(record_route.s== NULL )
 			record_route.len= 0;
-		
+		else
+			record_route.len= strlen(record_route.s);
+
 		contact.s= (char*)row_vals[contact_col].val.string_val;
 		contact.len= strlen(contact.s);
 		
@@ -873,7 +882,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		local_contact.s = (char*)row_vals[local_contact_col].val.string_val;
 		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		
-
 
 		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
 				from_domain.len+ event_id.len+ to_tag.len+ 

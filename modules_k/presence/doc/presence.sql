@@ -28,7 +28,7 @@ CREATE TABLE `active_watchers` (
   `local_cseq` int(11) NOT NULL,
   `remote_cseq` int(11) NOT NULL,
   `contact` varchar(128) NOT NULL,
-  `record_route` varchar(255),
+  `record_route` text,
   `expires` int(11) NOT NULL,
   `status` varchar(32) NOT NULL default 'pending',
   `version` int(11) default '0',

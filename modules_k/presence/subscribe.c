@@ -881,7 +881,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs_t subs;
 	static char buf[50];
 	static char cont_buf[LCONTACT_BUF_SIZE];
-	str rec_route;
+	str rec_route= {0, 0};
 	int error_ret = -1;
 	int rt  = 0;
 	db_key_t db_keys[7];
@@ -897,13 +897,9 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	param_t* ev_param= NULL;
 	str ev_name;
 	
-	/* determines whether winfo */
-
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
 	contact_body_t *b;
-	rec_route.s = NULL;
-	rec_route.len = 0;
 
 	memset(&subs, 0, sizeof(subs_t));
 
@@ -1410,6 +1406,9 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		if(reason.s )
 			pkg_free(reason.s);
 	}
+	if(subs.record_route.s)
+		pkg_free(subs.record_route.s);
+
 	return 1;
 
 bad_event:
@@ -1433,6 +1432,8 @@ error:
 		if(reason.s )
 			pkg_free(reason.s);
 	}
+	if(subs.record_route.s)
+		pkg_free(subs.record_route.s);
 
 	return error_ret;
 
