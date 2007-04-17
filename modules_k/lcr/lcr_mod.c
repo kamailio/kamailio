@@ -1428,8 +1428,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    LOG(L_ERR, "next_gw(): Parsing of R-URI failed.\n");
 	    return -1;
 	}
-	new_ruri.len = gw_uri_val.s.len + _m->parsed_uri.user.len + 1;
-	new_ruri.s = pkg_malloc(new_ruri.len);
+	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
 	if (!new_ruri.s) {
 	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
 	    return -1;
@@ -1497,8 +1496,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    LOG(L_ERR, "next_gw(): No ruri_user AVP\n");
 	    return -1;
 	}
-	new_ruri.len = gw_uri_val.s.len + ruri_user_val.s.len + 1;
-	new_ruri.s = pkg_malloc(new_ruri.len);
+	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
 	if (!new_ruri.s) {
 	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
 	    return -1;
@@ -1538,7 +1536,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 		   (at_char + 1 - gw_uri_val.s.s));
 	    at = at + gw_uri_val.s.len - (at_char + 1 - gw_uri_val.s.s);
 	}
-	*at = '\0';
+	new_ruri.len = at - new_ruri.s;
 	act.type = APPEND_BRANCH_T;
 	act.elem[0].type = STRING_ST;
 	act.elem[0].u.s = new_ruri;
