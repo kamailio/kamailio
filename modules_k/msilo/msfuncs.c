@@ -273,7 +273,7 @@ int m_build_body(str *body, time_t date, str msg, time_t sdate)
 		*p++ = ' ';
 	}
 	
-	strncpy(p, msg.s, msg.len);
+	memcpy(p, msg.s, msg.len);
 	p += msg.len;
 
 	body->len = p - body->s;
