@@ -690,7 +690,7 @@ INSERT INTO version VALUES ( 'presentity', '1');
 INSERT INTO version VALUES ( 'active_watchers', '2');
 INSERT INTO version VALUES ( 'watchers', '1');
 INSERT INTO version VALUES ( 'xcap_xml', '1');
-INSERT INTO version VALUES ( 'pua', '2');
+INSERT INTO version VALUES ( 'pua', '3');
 
 #
 # Table structure for table 'presentity'
@@ -797,6 +797,7 @@ CREATE TABLE pua (
   to_tag varchar(128) NOT NULL,
   from_tag varchar(128) NOT NULL,
   cseq int(11) NOT NULL,
+  record_route text NULL,
   version int(11) NOT NULL,
   PRIMARY KEY  (id)
 ) $TABLE_TYPE;

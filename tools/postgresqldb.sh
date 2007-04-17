@@ -748,10 +748,10 @@ sql_query <<EOF
 $USE_CMD $1;
 
 INSERT INTO version VALUES ( 'presentity', '1');
-INSERT INTO version VALUES ( 'active_watchers', '2');
+INSERT INTO version VALUES ( 'active_watchers', '3');
 INSERT INTO version VALUES ( 'watchers', '1');
 INSERT INTO version VALUES ( 'xcap_xml', '1');
-INSERT INTO version VALUES ( 'pua', '2');
+INSERT INTO version VALUES ( 'pua', '3');
 
 /*
  * Table structure for table 'presentity'
@@ -791,7 +791,7 @@ CREATE TABLE active_watchers (
   local_cseq int NOT NULL,
   remote_cseq int NOT NULL,
   contact varchar(128) NOT NULL,
-  record_route varchar(255) NULL,
+  record_route text NULL,
   expires int NOT NULL,
   status varchar(32) NOT NULL default 'pending',
   version int NOT NULL default '0',
@@ -856,6 +856,8 @@ CREATE TABLE pua (
   to_tag varchar(128) NOT NULL,
   from_tag varchar(128) NOT NULL,
   cseq int NOT NULL
+  record_route text NULL,
+  version int NOT NULL,
 ) $TABLE_TYPE;
 
 
