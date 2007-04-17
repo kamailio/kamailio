@@ -463,7 +463,7 @@ static int nathelper_add_rtpproxy_set( modparam_t type, void* val){
 					"Can't allocate memory\n");
 				return -1;
 			}
-			memset(rtpp_set_list, 0, sizeof(rtpp_set_list));
+			memset(rtpp_set_list, 0, sizeof(struct rtpp_set_head));
 		}
 		p= (char*) val;
 		rtp_proxies = strstr(p, "==");
@@ -514,7 +514,7 @@ static int nathelper_add_rtpproxy_set( modparam_t type, void* val){
 					"failed to allocate rtppoxylist memory\n");
 				return -1;
 			}
-			memset(rtpp_list, 0, sizeof(rtpp_list));
+			memset(rtpp_list, 0, sizeof(struct rtpp_set));
 			rtpp_list->id_set = my_current_id;
 			rtpp_list->set_disabled = 0;
 		}
