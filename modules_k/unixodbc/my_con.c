@@ -144,7 +144,6 @@ struct my_con* new_connection(struct db_id* id)
 			DBG("DEBUG:unixodbc:new_connection: driver reported the "
 				"following diagnostics\n");
 			extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
-			goto err;
 		}
 	}
 	else
