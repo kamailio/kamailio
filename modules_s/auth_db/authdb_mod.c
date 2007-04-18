@@ -177,7 +177,7 @@ static int generate_queries(authdb_table_info_t *info)
 	db_fld_t *results = NULL;
 	int len, i;
 
-	len = sizeof(*results) * (credentials_n + 2);
+	len = sizeof(*results) * (credentials_n + 3);
 	results = pkg_malloc(len);
 	if (!results) {
 		ERR("can't allocate pkg mem\n");
@@ -194,6 +194,7 @@ static int generate_queries(authdb_table_info_t *info)
 		results[2 + i].name = credentials[i].s;
 		results[2 + i].type = DB_STR;
 	}
+	results[2 + i].name = NULL;
 
 	if (use_did) {
 		info->query_pass = db_cmd(DB_GET, auth_db_handle, info->table.s, 
