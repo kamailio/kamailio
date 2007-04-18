@@ -8,7 +8,8 @@ NAME=postgres.so
 
 # libpq-fe.h locations
 DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/pgsql/include \
-	 -I$(SYSBASE)/include/postgresql -I$(SYSBASE)/include/postgresql/8.0
+	 -I$(SYSBASE)/include/pgsql -I$(SYSBASE)/include/postgresql \
+	 -I$(SYSBASE)/include/postgresql/8.0
 LIBS=-L$(LOCALBASE)/lib -L$(LOCALBASE)/pgsql/lib -L$(LOCALBASE)/lib/pgsql \
 	 -lpq
 
