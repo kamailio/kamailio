@@ -46,6 +46,7 @@ db_res_t* db_res(db_cmd_t* cmd)
 	memset(newp, '\0', sizeof(db_res_t));
 	if (db_gen_init(&newp->gen) < 0) goto err;
     newp->cmd = cmd;
+	newp->fields = cmd->res_fields;
 
 	ret = db_drv_call(&cmd->ctx->con[db_payload_idx]->uri->scheme, 
 					  "db_res", newp, db_payload_idx);

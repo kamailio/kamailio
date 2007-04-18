@@ -41,7 +41,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-
 /*
  * Declare a list of DB API structures with given structure
  * name
@@ -150,7 +149,8 @@ struct db_drv;
  * all DB API structures share some common variables.
  */
 typedef struct db_gen {
-    DBLIST_ENTRY; /* All DB API structures can be arranged into lists */
+        DBLIST_ENTRY;
+
 	/* Array of pointers to driver-specific data. The database API
 	 * supports access to multiple databases at the same time and each
 	 * database driver may want to append some data to generic DB structures,
@@ -179,7 +179,7 @@ extern int db_payload_idx;
  * DB API structure
  */
 #define DB_SET_PAYLOAD(db_struct, drv_data) do { \
-    ((struct db_gen*)(db_struct))->data[db_payload_idx] = (void*)(drv_data); \
+    ((struct db_gen*)(db_struct))->data[db_payload_idx] = (struct db_drv*)(drv_data); \
 } while(0)
 
 

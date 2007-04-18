@@ -44,7 +44,8 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
     db_cmd_t* newp;
 	db_con_t* con;
 	int i, r, j;
-	
+	db_drv_func_t func;
+
     newp = (db_cmd_t*)pkg_malloc(sizeof(db_cmd_t));
     if (newp == NULL) goto err;
     memset(newp, '\0', sizeof(db_cmd_t));
@@ -52,9 +53,9 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
     newp->ctx = ctx;
 
 	newp->table.len = strlen(table);
-    newp->table.s = (char*)pkg_malloc(newp->table.len);
+    newp->table.s = (char*)pkg_malloc(newp->table.len + 1);
     if (newp->table.s == NULL) goto err;
-    memcpy(newp->table.s, table, newp->table.len);
+    memcpy(newp->table.s, table, newp->table.len + 1);
 
 	newp->type = type;
 
@@ -71,16 +72,23 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 	for(i = 0; i < ctx->con_n; i++) {
 		con = ctx->con[i];
 
+		r = db_drv_func(&func, &con->uri->scheme, "db_fld");
+		if (r < 0) goto err;
+		if (r > 0) func = NULL;
+		db_payload_idx = i;
+
 		if (!DB_FLD_EMPTY(newp->result)) {
 			for(j = 0; !DB_FLD_LAST(newp->result[j]); j++) {
-				if (db_drv_call(&con->uri->scheme, "db_fld", newp->result + j, i) < 0) goto err;
+				if (func && func(newp->result + j, table) < 0) goto err;
 			}
+			newp->res_fields = j;
 		}
 
 		if (!DB_FLD_EMPTY(newp->params)) {
 			for(j = 0; !DB_FLD_LAST(newp->params[j]); j++) {
-				if (db_drv_call(&con->uri->scheme, "db_fld", newp->params + j, i) < 0) goto err;
+				if (func && func(newp->params + j, table) < 0) goto err;
 			}
+			newp->param_fields = j;
 		}
 
 		r = db_drv_call(&con->uri->scheme, "db_cmd", newp, i);

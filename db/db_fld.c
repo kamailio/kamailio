@@ -36,6 +36,20 @@
 #include "db_fld.h"
 
 
+char* db_fld_str[] = {
+	"DB_NONE",
+	"DB_INT",
+	"DB_FLOAT",
+	"DB_DOUBLE",
+	"DB_CSTR",
+	"DB_STR",
+	"DB_DATETIME",
+	"DB_BLOB",
+	"DB_BITMAP"
+};
+
+
+
 int db_fld_init(db_fld_t* fld)
 {
 	int i;

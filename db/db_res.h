@@ -42,9 +42,10 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef struct db_res {
-	db_gen_t gen;       /* Generic part of the structure */
-	struct db_rec* cur_rec;  /* Currently active record in the result */
-    struct db_cmd* cmd; /* Command that produced the result */
+	db_gen_t gen;           /* Generic part of the structure */
+	unsigned int fields;    /* Number of fields in the result */
+	struct db_rec* cur_rec; /* Currently active record in the result */
+    struct db_cmd* cmd;     /* Command that produced the result */
 } db_res_t;
 
 struct db_res* db_res(struct db_cmd* cmd);

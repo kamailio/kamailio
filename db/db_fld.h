@@ -54,6 +54,8 @@ enum db_fld_type {
     DB_BITMAP      /* Bitmap of flags */
 };
 
+extern char* db_fld_str[];
+
 enum db_fld_op {
 	DB_EQ = 0, /* The value of the field must be equal */
 	DB_LT,     /* The value of the field must be less than */
@@ -77,7 +79,7 @@ typedef struct db_fld {
 		double       dbl;    /* double value */
 		time_t       time;   /* unix time value */
 		char*  cstr;         /* NULL terminated string */
-		str          str;    /* str string value */
+                str          lstr;   /* String with known length */
 		str          blob;   /* Blob data */
 		unsigned int bitmap; /* Bitmap data type, 32 flags, should be enough */ 
 		long long    int8;   /* 8-byte integer */
