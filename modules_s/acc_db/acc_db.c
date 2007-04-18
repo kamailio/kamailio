@@ -572,13 +572,13 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			if (!at) {
 				params[cnt].flags |= DB_NULL;
 			} else {
-				params[cnt].v.str = *at;
+				params[cnt].v.lstr = *at;
 			}
 			break;
 
 		case 'c': /* sip_callid */
 			if (rq->callid && rq->callid->body.len) {
-				params[cnt].v.str = rq->callid->body;
+				params[cnt].v.lstr = rq->callid->body;
 			} else {
 				params[cnt].flags |= DB_NULL;
 			}
@@ -586,7 +586,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 
 		case 'd': /* to_tag */
 			if (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) {
-				params[cnt].v.str = pto->tag_value;
+				params[cnt].v.lstr = pto->tag_value;
 			} else {
 				params[cnt].flags |= DB_NULL;
 			}
@@ -594,7 +594,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 
 		case 'f': /* sip_from */
 			if (rq->from && rq->from->body.len) {
-				params[cnt].v.str = rq->from->body;
+				params[cnt].v.lstr = rq->from->body;
 			} else {
 				params[cnt].flags |= DB_NULL;				
 			}
@@ -605,11 +605,11 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			break;
 
 		case 'i': /* inbound_ruri */
-			params[cnt].v.str = rq->first_line.u.request.uri;
+			params[cnt].v.lstr = rq->first_line.u.request.uri;
 			break;
 
 		case 'm': /* sip_method */
-			params[cnt].v.str = rq->first_line.u.request.method;
+			params[cnt].v.lstr = rq->first_line.u.request.method;
 			break;
 
 		case 'n': /* sip_cseq */
@@ -621,7 +621,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			break;
 
 		case 'o': /* outbound_ruri */
-			params[cnt].v.str = *ouri;
+			params[cnt].v.lstr = *ouri;
 			break;
 
 		case 'p':
@@ -630,20 +630,20 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 
 		case 'r': /* from_tag */
 			if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
-				params[cnt].v.str = from->tag_value;
+				params[cnt].v.lstr = from->tag_value;
 			} else {
 				params[cnt].flags |= DB_NULL;
 			}
 			break;
 
 		case 't': /* sip_to */
-			if (to && to->body.len) params[cnt].v.str = to->body;
+			if (to && to->body.len) params[cnt].v.lstr = to->body;
 			else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'u': /* digest_username */
 			cr = cred_user(rq);
-			if (cr) params[cnt].v.str = *cr;
+			if (cr) params[cnt].v.lstr = *cr;
 			else params[cnt].flags |= DB_NULL;
 			break;
 
@@ -657,12 +657,12 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 
 		case 'F': /* from_uri */
 			if (rq->from && (from = get_from(rq)) && from->uri.len) {
-				params[cnt].v.str = from->uri;
+				params[cnt].v.lstr = from->uri;
 			} else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'I': /* from_uid */
-			if (get_from_uid(&params[cnt].v.str, rq) < 0) {
+			if (get_from_uid(&params[cnt].v.lstr, rq) < 0) {
 				params[cnt].flags |= DB_NULL;
 			}
 			break;
@@ -677,7 +677,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 
 		case 'R': /* digest_realm */
 			cr = cred_realm(rq);
-			if (cr) params[cnt].v.str = *cr;
+			if (cr) params[cnt].v.lstr = *cr;
 			else params[cnt].flags |= DB_NULL;
 			break;
 
@@ -687,12 +687,12 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			break;
 
 		case 'T': /* to_uri */
-			if (rq->to && (pto = get_to(rq)) && pto->uri.len) params[cnt].v.str = pto->uri;
+			if (rq->to && (pto = get_to(rq)) && pto->uri.len) params[cnt].v.lstr = pto->uri;
 			else params[cnt].flags |= DB_NULL;
 			break;
 
 		case 'U': /* to_uid */
-			if (get_to_uid(&params[cnt].v.str, rq) < 0) {
+			if (get_to_uid(&params[cnt].v.lstr, rq) < 0) {
 				params[cnt].flags |= DB_NULL;
 			}
 			break;

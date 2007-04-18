@@ -41,7 +41,7 @@ static void my_fld_free(db_fld_t* fld, struct my_fld* payload)
 }
 
 
-int my_fld(db_fld_t* fld)
+int my_fld(db_fld_t* fld, char* table)
 {
 	struct my_fld* res;
 

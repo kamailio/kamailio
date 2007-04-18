@@ -183,7 +183,7 @@ int db_load_domain_attrs(domain_t* d)
 	db_rec_t* rec;
     unsigned short flags;
     
-	load_attrs_cmd->params[0].v.str = d->did;
+	load_attrs_cmd->params[0].v.lstr = d->did;
 
 	if (db_exec(&res, load_attrs_cmd) < 0) {
 		ERR("Error while quering database\n");
@@ -202,14 +202,14 @@ int db_load_domain_attrs(domain_t* d)
 		if ((rec->fld[3].v.int4 & DB_LOAD_SER) == 0) goto skip;
 	
 		/* Get AVP name */
-		name.s = rec->fld[0].v.str;
+		name.s = rec->fld[0].v.lstr;
 		
 		/* Test for NULL value */
 		if (rec->fld[2].flags & DB_NULL) {
 			avp_val.s = 0;
 			avp_val.len = 0;
 		} else {
-			avp_val = rec->fld[2].v.str;
+			avp_val = rec->fld[2].v.lstr;
 		}
 		
 		flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
@@ -275,17 +275,17 @@ int load_domains(domain_t** dest)
 		if (!(flags & DB_LOAD_SER)) goto skip;
 		
 		DBG("domain:load_domains: Processing entry (%.*s, %.*s, %u)\n",
-		    rec->fld[0].v.str.len, ZSW(rec->fld[0].v.str.s),
-		    rec->fld[1].v.str.len, ZSW(rec->fld[1].v.str.s),
+		    rec->fld[0].v.lstr.len, ZSW(rec->fld[0].v.lstr.s),
+		    rec->fld[1].v.lstr.len, ZSW(rec->fld[1].v.lstr.s),
 		    flags);
 
-		d = domain_search(list, &rec->fld[0].v.str);
+		d = domain_search(list, &rec->fld[0].v.lstr);
 		if (d) {
 			/* DID exists in the list, update it */
-			if (domain_add(d, &rec->fld[1].v.str, flags) < 0) goto error;
+			if (domain_add(d, &rec->fld[1].v.lstr, flags) < 0) goto error;
 		} else {
 			     /* DID does not exist yet, create a new entry */
-			d = new_domain(&rec->fld[0].v.str, &rec->fld[1].v.str, flags);
+			d = new_domain(&rec->fld[0].v.lstr, &rec->fld[1].v.lstr, flags);
 			if (!d) goto error;
 			d->next = list;
 			list = d;

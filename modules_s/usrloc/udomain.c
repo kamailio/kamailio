@@ -339,7 +339,7 @@ int preload_udomain(udomain_t* _d)
 		/* Contact column must never be NULL */
 		if (rec->fld[1].flags & DB_NULL) {
 			LOG(L_CRIT, "ERROR: Bad contact for uid %.*s in table %.*s, skipping\n",
-				rec->fld[0].v.str.len, rec->fld[0].v.str.s,
+				rec->fld[0].v.lstr.len, rec->fld[0].v.lstr.s,
 				_d->name->len, _d->name->s);
 			continue;
 		}
@@ -350,21 +350,21 @@ int preload_udomain(udomain_t* _d)
 			callid.s = NULL;
 			callid.len = 0;
 		} else {
-			callid = rec->fld[4].v.str;
+			callid = rec->fld[4].v.lstr;
 		}
 
 		if (rec->fld[7].flags & DB_NULL) {
 			ua.s = NULL;
 			ua.len = 0;
 		} else {
-			ua = rec->fld[7].v.str;
+			ua = rec->fld[7].v.lstr;
 		}
 
 		if (rec->fld[8].flags & DB_NULL) {
 			receivedp = 0;
 			sock = 0;
 		} else {
-			receivedp = &rec->fld[8].v.str;
+			receivedp = &rec->fld[8].v.lstr;
 			sock = find_socket(receivedp);
 		}
 
@@ -372,25 +372,25 @@ int preload_udomain(udomain_t* _d)
 			instance.s = NULL;
 			instance.len = 0;
 		} else {
-			instance = rec->fld[9].v.str;
+			instance = rec->fld[9].v.lstr;
 		}
 
 		if (rec->fld[10].flags & DB_NULL) {
 			aor.s = NULL;
 			aor.len = 0;
 		} else {
-			aor = rec->fld[10].v.str;
+			aor = rec->fld[10].v.lstr;
 		}
 
-		if (get_urecord(_d, &rec->fld[0].v.str, &r) > 0) {
-			if (mem_insert_urecord(_d, &rec->fld[0].v.str, &r) < 0) {
+		if (get_urecord(_d, &rec->fld[0].v.lstr, &r) > 0) {
+			if (mem_insert_urecord(_d, &rec->fld[0].v.lstr, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
 				unlock_udomain(_d);
 				goto error;
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &aor, &rec->fld[1].v.str, rec->fld[2].v.int4, 
+		if (mem_insert_ucontact(r, &aor, &rec->fld[1].v.lstr, rec->fld[2].v.int4, 
 								q, &callid, rec->fld[5].v.int4, rec->fld[6].v.bitmap, &c, &ua, receivedp, sock, &instance) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			unlock_udomain(_d);
@@ -398,7 +398,7 @@ int preload_udomain(udomain_t* _d)
 		}
 
 		if (use_reg_avps() && ((rec->fld[11].flags & DB_NULL) != DB_NULL)) {
-			c->avps = deserialize_avps(&rec->fld[11].v.str);
+			c->avps = deserialize_avps(&rec->fld[11].v.lstr);
 				
 		}
 

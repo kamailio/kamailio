@@ -501,41 +501,41 @@ int db_store_ucontact(ucontact_t* _c)
 
 	avps.s = NULL;
 
-	ins_contact[cur_cmd]->params[0].v.str = *_c->uid;
-	ins_contact[cur_cmd]->params[1].v.str.s = _c->c.s;
-	ins_contact[cur_cmd]->params[1].v.str.len = MIN(_c->c.len, 255);
+	ins_contact[cur_cmd]->params[0].v.lstr = *_c->uid;
+	ins_contact[cur_cmd]->params[1].v.lstr.s = _c->c.s;
+	ins_contact[cur_cmd]->params[1].v.lstr.len = MIN(_c->c.len, 255);
 	ins_contact[cur_cmd]->params[2].v.time = _c->expires;
 	ins_contact[cur_cmd]->params[3].v.flt = (float)q2double(_c->q);
-	ins_contact[cur_cmd]->params[4].v.str.s = _c->callid.s;
-	ins_contact[cur_cmd]->params[4].v.str.len = MIN(_c->callid.len, 255);
+	ins_contact[cur_cmd]->params[4].v.lstr.s = _c->callid.s;
+	ins_contact[cur_cmd]->params[4].v.lstr.len = MIN(_c->callid.len, 255);
 	ins_contact[cur_cmd]->params[5].v.int4 = _c->cseq;
 	ins_contact[cur_cmd]->params[6].v.bitmap = _c->flags;
-	ins_contact[cur_cmd]->params[7].v.str.s = _c->user_agent.s;
-	ins_contact[cur_cmd]->params[7].v.str.len = MIN(_c->user_agent.len, 64);
+	ins_contact[cur_cmd]->params[7].v.lstr.s = _c->user_agent.s;
+	ins_contact[cur_cmd]->params[7].v.lstr.len = MIN(_c->user_agent.len, 64);
 
 	if (_c->received.s == 0) {
 		ins_contact[cur_cmd]->params[8].flags |= DB_NULL;
 	} else {
 		ins_contact[cur_cmd]->params[8].flags &= ~DB_NULL;
-		ins_contact[cur_cmd]->params[8].v.str = _c->received;
+		ins_contact[cur_cmd]->params[8].v.lstr = _c->received;
 	}
 
 	if (_c->instance.s == 0) {
 		ins_contact[cur_cmd]->params[9].flags |= DB_NULL;
 	} else {
 		ins_contact[cur_cmd]->params[9].flags &= ~DB_NULL;
-		ins_contact[cur_cmd]->params[9].v.str = _c->instance;
+		ins_contact[cur_cmd]->params[9].v.lstr = _c->instance;
 	}
 
-	ins_contact[cur_cmd]->params[10].v.str.s = _c->aor.s;
-	ins_contact[cur_cmd]->params[10].v.str.len = MIN(_c->aor.len, 255);
+	ins_contact[cur_cmd]->params[10].v.lstr.s = _c->aor.s;
+	ins_contact[cur_cmd]->params[10].v.lstr.len = MIN(_c->aor.len, 255);
 
 	if (use_reg_avps()) {
 		if (serialize_avps(_c->avps, &avps) < 0) {
 			ERR("Error while serializing AVPs\n");
 			return -1;
 		}
-		ins_contact[cur_cmd]->params[11].v.str = avps;
+		ins_contact[cur_cmd]->params[11].v.lstr = avps;
 	}
 
 	     /* FIXME */
@@ -559,8 +559,8 @@ int db_delete_ucontact(ucontact_t* _c)
 		return 0;
 	}
 
-	del_contact[cur_cmd]->params[0].v.str = *_c->uid;
-	del_contact[cur_cmd]->params[1].v.str = _c->c;
+	del_contact[cur_cmd]->params[0].v.lstr = *_c->uid;
+	del_contact[cur_cmd]->params[1].v.lstr = _c->c;
 
 	if (db_exec(NULL, del_contact[cur_cmd]) < 0) {
 		ERR("Error while deleting contact from database\n");

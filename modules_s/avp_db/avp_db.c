@@ -199,7 +199,7 @@ static void read_attrs(db_res_t *res, unsigned long flags)
 
 		n++;
 		/* Get AVP name */
-		name.s = row->fld[0].v.str;
+		name.s = row->fld[0].v.lstr;
 
 		/* Get AVP type */
 		type = row->fld[1].v.int4;
@@ -209,7 +209,7 @@ static void read_attrs(db_res_t *res, unsigned long flags)
 			avp_val.s = 0;
 			avp_val.len = 0;
 		} else {
-			avp_val = row->fld[2].v.str;
+			avp_val = row->fld[2].v.lstr;
 		}
 
 		if (type == AVP_VAL_STR) {
@@ -250,21 +250,21 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
 		return -1;
 	}
 
-    load_uri_attrs_cmd->params[0].v.str = puri.user;
+    load_uri_attrs_cmd->params[0].v.lstr = puri.user;
 
 	if (puri.host.len) {
 		/* domain name is present */
-		if (dm_get_did(&load_uri_attrs_cmd->params[1].v.str, &puri.host) < 0) {
+		if (dm_get_did(&load_uri_attrs_cmd->params[1].v.lstr, &puri.host) < 0) {
 			DBG("Cannot lookup DID for domain %.*s, using default value\n", puri.host.len, ZSW(puri.host.s));
-			load_uri_attrs_cmd->params[1].v.str = default_did;
+			load_uri_attrs_cmd->params[1].v.lstr = default_did;
 		}
 	} else {
 		/* domain name is missing -- can be caused by tel: URI */
 		DBG("There is no domain name, using default value\n");
-		load_uri_attrs_cmd->params[1].v.str = default_did;
+		load_uri_attrs_cmd->params[1].v.lstr = default_did;
 	}
 
-    uri_type_to_str(puri.type, &(load_uri_attrs_cmd->params[2].v.str));
+    uri_type_to_str(puri.type, &(load_uri_attrs_cmd->params[2].v.lstr));
 
 	if (db_exec(&res, load_uri_attrs_cmd) < 0) {
 		ERR("Error while quering database\n");
@@ -283,7 +283,7 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
 {
     db_res_t* res;
 
-	if (get_str_fparam(&load_user_attrs_cmd->params[0].v.str, msg, (fparam_t*)fp) < 0) {
+	if (get_str_fparam(&load_user_attrs_cmd->params[0].v.lstr, msg, (fparam_t*)fp) < 0) {
 		ERR("Unable to get UID\n");
 		return -1;
 	}

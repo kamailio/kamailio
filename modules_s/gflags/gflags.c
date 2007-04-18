@@ -232,14 +232,14 @@ static int load_attrs(avp_list_t* global_avps)
 
 		if ((rec->fld[3].v.int4 & DB_LOAD_SER) == 0) goto skip;
 
-		name.s = rec->fld[0].v.str;
+		name.s = rec->fld[0].v.lstr;
 
 		     /* Test for NULL value */
 		if (rec->fld[2].flags & DB_NULL) {
 			avp_val.s = 0;
 			avp_val.len = 0;
 		} else {
-			avp_val = rec->fld[2].v.str;
+			avp_val = rec->fld[2].v.lstr;
 		}
 
 		flags = AVP_CLASS_GLOBAL | AVP_NAME_STR;
@@ -250,8 +250,8 @@ static int load_attrs(avp_list_t* global_avps)
 		} else {
 			/* Integer AVP */
 			str2int(&avp_val, (unsigned*)&v.n);
-			if (rec->fld[0].v.str.len == (sizeof(AVP_GFLAGS) - 1) &&
-				!strncmp(rec->fld[0].v.str.s, AVP_GFLAGS, sizeof(AVP_GFLAGS) - 1)) {
+			if (rec->fld[0].v.lstr.len == (sizeof(AVP_GFLAGS) - 1) &&
+				!strncmp(rec->fld[0].v.lstr.s, AVP_GFLAGS, sizeof(AVP_GFLAGS) - 1)) {
 				/* Restore gflags */
 				*gflags = v.n;
 			}
@@ -259,7 +259,7 @@ static int load_attrs(avp_list_t* global_avps)
 		
 		if (add_avp_list(global_avps, flags, name, v) < 0) {
 			LOG(L_ERR, "gflags:load_attrs: Error while adding global attribute %.*s, skipping\n",
-			    rec->fld[0].v.str.len, ZSW(rec->fld[0].v.str.s));
+			    rec->fld[0].v.lstr.len, ZSW(rec->fld[0].v.lstr.s));
 			goto skip;
 		}
 
@@ -348,7 +348,7 @@ int save_gflags(unsigned int flags)
 
 	save_gflags_cmd->params[0].v.cstr = AVP_GFLAGS;
 	save_gflags_cmd->params[1].v.int4 = 0;
-	save_gflags_cmd->params[2].v.str = fl;
+	save_gflags_cmd->params[2].v.lstr = fl;
 	save_gflags_cmd->params[3].v.bitmap = DB_LOAD_SER;
 
 	if (db_exec(NULL, save_gflags_cmd) < 0) {

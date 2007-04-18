@@ -42,6 +42,6 @@ struct my_fld {
 	str buf;
 };
 
-int my_fld(db_fld_t* fld);
+int my_fld(db_fld_t* fld, char* table);
 
 #endif /* _MY_FLD_H */
