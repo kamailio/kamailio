@@ -30,8 +30,8 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/sys/queue.h,v 1.68 2006/10/24 11:20:29 ru Exp $
  */
 
-#ifndef _LIST_H
-#define	_LIST_H
+#ifndef _SER_LIST_H
+#define	_SER_LIST_H
 
 #include <sys/cdefs.h>
 
