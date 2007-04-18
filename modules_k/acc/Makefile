@@ -10,7 +10,7 @@ auto_gen=
 NAME=acc.so
 LIBS=
 
-# uncomment the next line if you wish to enable SQL accounting
+# comment the next line if you wish to disable SQL accounting
 DEFS+=-DSQL_ACC
 
 # set ENABLE_RADIUS_ACC to true if you wish to enable RADIUS accounting

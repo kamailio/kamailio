@@ -493,7 +493,8 @@ static inline UINT4 rad_status( struct sip_msg *req, int code )
 
 #define ADD_RAD_AVPAIR(_attr,_val,_len) \
 	do { \
-		if (!rc_avpair_add( rh, &send, rd_attrs[_attr].v, _val, _len, 0)){ \
+		if ( (_len)!=0 && \
+		!rc_avpair_add( rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
 			LOG(L_ERR, "ERROR:acc:acc_rad_request: failed to add %s, %d\n", \
 				rd_attrs[_attr].n,_attr); \
 			goto error; \
