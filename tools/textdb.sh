@@ -364,7 +364,7 @@ cd $DBTEXT_PATH
 echo "creating presence tables into $1 ..."
 
 echo "presentity:1" 		>> version;
-echo "active_watchers:2" 	>> version;
+echo "active_watchers:3" 	>> version;
 echo "watchers:1" 			>> version;
 echo "xcap_xml:1" 			>> version;
 echo "pua:3" 				>> version;

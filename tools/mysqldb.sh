@@ -687,7 +687,7 @@ sql_query <<EOF
 use $1;
 
 INSERT INTO version VALUES ( 'presentity', '1');
-INSERT INTO version VALUES ( 'active_watchers', '2');
+INSERT INTO version VALUES ( 'active_watchers', '3');
 INSERT INTO version VALUES ( 'watchers', '1');
 INSERT INTO version VALUES ( 'xcap_xml', '1');
 INSERT INTO version VALUES ( 'pua', '3');
@@ -731,7 +731,7 @@ CREATE TABLE active_watchers (
   local_cseq int(11) NOT NULL,
   remote_cseq int(11) NOT NULL,
   contact varchar(128) NOT NULL,
-  record_route varchar(255),
+  record_route text,
   expires int(11) NOT NULL,
   status varchar(32) NOT NULL default 'pending',
   version int(11) default '0',
