@@ -329,8 +329,8 @@ static inline int update_params(MYSQL_STMT* st, db_fld_t* params)
 
 		switch(params[i].type) {
 		case DB_STR:
-			st->params[i].buffer = params[i].v.str.s;
-			fp->length = params[i].v.str.len;
+			st->params[i].buffer = params[i].v.lstr.s;
+			fp->length = params[i].v.lstr.len;
 			break;
 
 		case DB_BLOB:
@@ -391,7 +391,7 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 
 		switch(result[i].type) {
 		case DB_STR:
-			result[i].v.str.len = rp->length;
+			result[i].v.lstr.len = rp->length;
 			break;
 
 		case DB_BLOB:
@@ -558,6 +558,9 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld)
 	return -1;
 }
 
+/* FIXME: Add support for DB_NONE, in this case the function should determine
+ * the type of the column in the database and set the field type appropriately
+ */
 
 static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 {
@@ -612,7 +615,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 				return -1;
 			}
 			result[i].buffer = f->buf.s;
-			fld[i].v.str.s = f->buf.s;
+			fld[i].v.lstr.s = f->buf.s;
 			result[i].buffer_length = STR_BUF_SIZE - 1;
 			break;
 
