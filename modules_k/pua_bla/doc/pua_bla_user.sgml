@@ -101,6 +101,25 @@ modparam("pua_bla", "header_name", "Sender")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>outbound_proxy</varname>(str)</title>
+		<para>
+		The outbound_proxy uri to be used when sending Subscribe requests.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_bla", "outbound_proxy", "sip:proxy@openser.org")
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>	
 	
 	
