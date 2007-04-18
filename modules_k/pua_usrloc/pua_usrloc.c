@@ -51,6 +51,7 @@ MODULE_VERSION
 str default_domain= {NULL, 0};
 int pua_ul_publish= 0;
 pua_api_t pua;
+str pres_prefix= {0, 0};
 
 /* Structure containing pointers to usrloc functions */
 usrloc_api_t ul;
@@ -75,6 +76,7 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]={
 	{"default_domain",	 STR_PARAM, &default_domain.s	 },
+	{"entity_prefix",	 STR_PARAM, &pres_prefix.s		 },
 	{0,							 0,			0            }
 };
 
@@ -109,6 +111,13 @@ static int mod_init(void)
 	}
 	default_domain.len= strlen(default_domain.s);
 	
+	if(pres_prefix.s == NULL )
+	{	
+		DBG("pua_usrloc: No pres_prefix configured\n");
+	}
+	else
+		pres_prefix.len= strlen(pres_prefix.s);
+
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc)
 	{

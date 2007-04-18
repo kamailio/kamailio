@@ -78,7 +78,27 @@
 ...
 modparam(pua_usrloc, "default_domain", "openser.org");
 ...
+</section>
+	<section>
+		<title><varname>entity_prefix</varname> (str)</title>
+		<para>
+		The prefix when construstructing entity attribute to be added to
+		presence node in xml pidf.
+		(ex: pres:user@domain ).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>presentity_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam(pua_usrloc, "entity_prefix", "pres");
+...
+</section>
 
+</section>
 <section>
 	<title>Exported Functions</title>
 		<section>

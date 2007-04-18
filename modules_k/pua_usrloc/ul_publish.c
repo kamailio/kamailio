@@ -73,8 +73,13 @@ str* build_pidf(ucontact_t* c)
 	}
 
 	pres_uri.s = buf;
-	memcpy(pres_uri.s, "pres:", 5);
-	pres_uri.len= 5;
+	if(pres_prefix.s)
+	{
+		memcpy(pres_uri.s, pres_prefix.s, pres_prefix.len);
+		pres_uri.len+= pres_prefix.len;
+		memcpy(pres_uri.s+ pres_uri.len, ":", 1);
+		pres_uri.len+= 1;
+	}	
 	memcpy(pres_uri.s+ pres_uri.len, c->aor->s, c->aor->len);
 	pres_uri.len+= c->aor->len;
 

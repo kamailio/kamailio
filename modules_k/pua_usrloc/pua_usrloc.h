@@ -32,5 +32,5 @@ void ul_publish(ucontact_t* c, int type, void* param);
 
 extern int pua_ul_publish; 
 extern str default_domain;
-
+extern str pres_prefix;
 #endif
