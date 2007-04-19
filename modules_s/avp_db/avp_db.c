@@ -172,7 +172,7 @@ err:
 static void read_attrs(db_res_t *res, unsigned long flags)
 {
     int_str name, v;
-    str avp_name, avp_val;
+    str avp_val;
     int type, n, found;
 	db_rec_t* row;
 
@@ -181,6 +181,7 @@ static void read_attrs(db_res_t *res, unsigned long flags)
 	/* AVP names from DB are always strings */
 	flags |= AVP_NAME_STR;
 	if (res) row = db_first(res);
+	else row = NULL;
 	while (row) {
 		found++;
 
@@ -225,7 +226,7 @@ static void read_attrs(db_res_t *res, unsigned long flags)
 
 		if (add_avp(flags, name, v) < 0) {
 			ERR("Error while adding user attribute %.*s, skipping\n",
-					avp_name.len, ZSW(avp_name.s));
+					name.s.len, ZSW(name.s.s));
 		}
 		row = db_next(res);
 
