@@ -284,7 +284,7 @@ int preload_udomain(udomain_t* _d)
 	db_fld_t columns[] = {
 		{.name = uid_col.s,        .type = DB_STR},
 		{.name = contact_col.s,    .type = DB_STR},
-		{.name = expires_col.s,    .type = DB_STR},
+		{.name = expires_col.s,    .type = DB_DATETIME},
 		{.name = q_col.s,          .type = DB_DOUBLE},
 		{.name = callid_col.s,     .type = DB_STR},
 		{.name = cseq_col.s,       .type = DB_INT},
