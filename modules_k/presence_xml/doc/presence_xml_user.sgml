@@ -1,0 +1,166 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 1953 $</revnumber>
+		<date>$Date: 2007-04-04 11:50:33 +0300 (Wed, 04 Apr 2007) $</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para> 
+	The module does specific handling for notify-subscribe events using xml bodies.
+	It is used with the general event handling module, presence. It constructs and add
+	3 events to it: presence, presence.winfo, dialog;sla. 
+	</para>
+	<para>
+	This module uses xcap_table with permission rules to deal with authorization rules 
+	for presence.
+	</para>
+	<para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a database module</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>presence</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname>(str)</title>
+		<para>
+		The database url.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "db_url", 
+	"mysql://openser:openserrw@192.168.2.132/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xcap_table</varname>(str)</title>
+		<para>
+		The name of the db table where XCAP XMLs are stored.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>xcap_xml</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xcap_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "xcap_table", "xcaps")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>force_active</varname> (int)</title>
+		<para>
+		This parameter is used for permissions when handling Subscribe messages.
+		If set to 1, subscription state is considered active and the presentity
+		is not queried for permissions. 
+		Otherwise, the xcap_table is queried and the state is extracted
+		from there. If no record exists, the subscriptions remains in pending
+		state and the watcher receives Notify messages with no body.
+		( If not using an xcap server, you should set this parameter to 1).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>force_active</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "force_active", 1)
+...
+</programlisting>
+		</example>
+	</section>
+</section>
+
+<section>
+	<title>Exported Functions</title>
+	<para>
+	None to be used in configuration file.
+	</para>
+</section>
+
+<section>
+	<title>Installation</title>
+	<para>
+	The module requires 1 table in OpenSER database. Next SQL statements
+	shows the syntax to create it.
+	</para>
+	<example>
+	<title>PRESECE_XML tables</title>
+	<programlisting format="linespecific">
+...
+&sql;
+...
+</programlisting>
+	</example>
+</section>
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("presence_xml.sgml" "Book" "chapter")
+End:
+-->
+
