@@ -665,7 +665,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 			      * janakj: AVPs are zero terminated too so this is not problem either
 			      */
 			backup=left->s[left->len];
-			left->s[left->len]='\0';
+			if (backup) left->s[left->len]='\0';
 			if (rtype == AVP_ST || rtype == SELECT_ST) {
 				     /* For AVPs we need to compile the RE on the fly */
 				re=(regex_t*)pkg_malloc(sizeof(regex_t));
@@ -686,7 +686,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 			} else {
 				ret=(regexec(r->re, left->s, 0, 0, 0)==0);
 			}
-			left->s[left->len] = backup;
+			if (backup) left->s[left->len] = backup;
 			break;
 		default:
 			LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
@@ -814,9 +814,10 @@ inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r,
 	ret = run_select(&val, sel, msg);
 	if (ret < 0) return -1;
 	if (ret > 0) return 0;
+	if (val.len==0) return 0;
 
 	switch(op) {
-	case NO_OP: return (val.len>0);
+	case NO_OP: return 1;
 	case BINOR_OP:
 	case BINAND_OP:
 		ERR("Binary operators cannot be used with string selects\n");
