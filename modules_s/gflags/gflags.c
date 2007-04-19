@@ -84,9 +84,9 @@ static char* attr_flags = "flags";
 static db_ctx_t* db = NULL;
 static db_cmd_t* load_attrs_cmd = NULL, *save_gflags_cmd = NULL;
 
-static avp_list_t* active_global_avps;
-static avp_list_t avps_1;
-static avp_list_t avps_2;
+static avp_list_t** active_global_avps;
+static avp_list_t *avps_1;
+static avp_list_t *avps_2;
 static rpc_export_t rpc_methods[];
 
 static cmd_export_t cmds[]={
@@ -281,8 +281,18 @@ static int mod_init(void)
 	}
 	*gflags=initial;
 
-	avps_1 = 0;
-	avps_2 = 0;
+	avps_1 = shm_malloc(sizeof(*avps_1));
+	if (!avps_1) {
+		ERR("can't allocate memory\n");
+		return -1;
+	}
+	*avps_1 = NULL;
+	avps_2 = shm_malloc(sizeof(*avps_2));
+	if (!avps_2) {
+		ERR("can't allocate memory\n");
+		return -1;
+	}
+	*avps_2 = NULL;
 	active_global_avps = &avps_1;
 
 	if (load_global_attrs) {
@@ -291,14 +301,14 @@ static int mod_init(void)
 			return -1;
 		}
 		
-		if (load_attrs(active_global_avps) < 0) {
+		if (load_attrs(*active_global_avps) < 0) {
 			db_cmd_free(load_attrs_cmd);
 			db_cmd_free(save_gflags_cmd);
 			db_ctx_free(db);
 			return -1;
 		}
 		
-		set_avp_list(AVP_CLASS_GLOBAL, active_global_avps);
+		set_avp_list(AVP_CLASS_GLOBAL, *active_global_avps);
 		
 		db_cmd_free(load_attrs_cmd);
 		db_ctx_free(db);
@@ -322,10 +332,10 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	if (avps_1 != 0) {
-		destroy_avp_list(&avps_1);
+		destroy_avp_list(avps_1);
 	}
 	if (avps_2 != 0) {
-		destroy_avp_list(&avps_2);
+		destroy_avp_list(avps_2);
 	}
 	active_global_avps = 0;
 
@@ -362,28 +372,29 @@ int save_gflags(unsigned int flags)
 
 static int reload_global_attributes(void)
 {
-	avp_list_t*  new_global_avps;
+	avp_list_t**  new_global_avps;
   
   /* Choose new global AVP list and free its old contents */
   if (active_global_avps == &avps_1) {
-  	destroy_avp_list(&avps_2);
+  	destroy_avp_list(avps_2);
 		new_global_avps = &avps_2;
 	} 
 	else {
-		destroy_avp_list(&avps_1);
+		destroy_avp_list(avps_1);
 		new_global_avps = &avps_1;
 	}
     
-  if (load_attrs(new_global_avps) < 0) {
+  if (load_attrs(*new_global_avps) < 0) {
   	goto error;
   }
   
   active_global_avps = new_global_avps;
+  set_avp_list(AVP_CLASS_GLOBAL, *active_global_avps);
 
   return 0;
     
 error:
-	destroy_avp_list(new_global_avps);
+	destroy_avp_list(*new_global_avps);
   return -1;
 }
 
