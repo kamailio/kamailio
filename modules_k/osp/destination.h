@@ -59,6 +59,7 @@ typedef struct _osp_dest {
     int supported;
     int used;
     int reported;
+    unsigned int destinationCount;
 } osp_dest;
 
 osp_dest* ospInitDestination(osp_dest* dest);

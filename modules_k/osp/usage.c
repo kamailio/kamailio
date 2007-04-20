@@ -50,7 +50,7 @@ extern OSPTPROVHANDLE _osp_provider;
 extern str OSP_ORIGDEST_NAME;
 extern struct rr_binds osp_rr;
 
-static void ospRecordTransaction(struct sip_msg* msg, OSPTTRANHANDLE transaction, char* uac, char* from, char* to, time_t authtime, int isorig);
+static void ospRecordTransaction(struct sip_msg* msg, unsigned long long transaction, char* uac, char* from, char* to, time_t authtime, int isorig, unsigned destinationCount);
 static int ospBuildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest, int lastcode);
 static int ospReportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest);
 static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID* callid, int release, int isorig);
@@ -67,12 +67,13 @@ static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID
  */
 static void ospRecordTransaction(
     struct sip_msg* msg, 
-    OSPTTRANHANDLE transaction, 
+    unsigned long long transaction, 
     char* uac, 
     char* from, 
     char* to, 
     time_t authtime, 
-    int isorig)
+    int isorig,
+    unsigned destinationCount)
 {
     str cookie;
     char buffer[OSP_STRBUF_SIZE];
@@ -88,14 +89,28 @@ static void ospRecordTransaction(
     }
 
     cookie.s = buffer;
-    cookie.len = snprintf(
-        buffer,
-        sizeof(buffer),
-        ";%s=t%llu_s%s_T%d",
-        (isorig == 1 ? OSP_ORIG_COOKIE : OSP_TERM_COOKIE),
-        ospGetTransactionId(transaction),
-        uac,
-        (unsigned int)authtime);
+
+    if (isorig == 1) {
+        cookie.len = snprintf(
+            buffer,
+            sizeof(buffer),
+            ";%s=t%llu_s%s_T%d_c%d",
+            OSP_ORIG_COOKIE,
+            transaction,
+            uac,
+            (unsigned int)authtime,
+            destinationCount);
+    } else {
+        cookie.len = snprintf(
+            buffer,
+            sizeof(buffer),
+            ";%s=t%llu_s%s_T%d",
+            OSP_TERM_COOKIE,
+            transaction,
+            uac,
+            (unsigned int)authtime);
+    }
+
     if (cookie.len < 0) {
         LOG(L_ERR, "osp: ERROR: failed to create OSP cookie\n");
         return;
@@ -116,17 +131,18 @@ static void ospRecordTransaction(
  */
 void ospRecordOrigTransaction(
     struct sip_msg* msg, 
-    OSPTTRANHANDLE transaction, 
+    unsigned long long transaction, 
     char* uac, 
     char* from, 
     char* to, 
-    time_t authtime)
+    time_t authtime,
+    unsigned destinationCount)
 {
     int isorig = 1;
 
     LOG(L_DBG, "osp: ospRecordOrigTransaction\n");
 
-    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig);
+    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
@@ -140,17 +156,18 @@ void ospRecordOrigTransaction(
  */
 void ospRecordTermTransaction(
     struct sip_msg* msg, 
-    OSPTTRANHANDLE transaction, 
+    unsigned long long transaction, 
     char* uac, 
     char* from, 
     char* to, 
     time_t authtime)
 {
     int isorig = 0;
+    unsigned destinationCount = 0; /* N/A */
 
     LOG(L_DBG, "osp: ospRecordTermTransaction\n");
 
-    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig);
+    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
@@ -167,7 +184,7 @@ static int ospReportUsageFromCookie(
     char* cookie, 
     OSPTCALLID* callid, 
     int release,
-    int isorig) 
+    int isorig)
 {
     char* tmp;
     char* token;
@@ -193,6 +210,7 @@ static int ospReportUsageFromCookie(
     char devbuf[OSP_STRBUF_SIZE];
     OSPTTRANHANDLE transaction = -1;
     int errorcode;
+    unsigned destinationCount = 0;
 
     LOG(L_DBG, "osp: ospReportUsageFromCookie\n");
 
@@ -213,6 +231,9 @@ static int ospReportUsageFromCookie(
                 break;
             case 's':
                 uac = value;
+                break;
+            case 'c':
+                destinationCount = (unsigned)atoi(value);
                 break;
             default:
                 LOG(L_ERR, "osp: ERROR: unexpected tag '%c' / value '%s'\n", tag, value);
@@ -292,6 +313,12 @@ static int ospReportUsageFromCookie(
         NULL);
 
     LOG(L_DBG, "osp: built usage handle '%d' (%d)\n", transaction, errorcode);
+
+    if (errorcode == 0 && destinationCount > 0) {
+      errorcode = OSPPTransactionSetDestinationCount(
+          transaction,
+          destinationCount);
+    }
 
     ospReportUsageWrapper(
         transaction,

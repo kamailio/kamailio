@@ -68,3 +68,7 @@
    o Using fromtag in RR to report who releases the call first.
      For bug 1527940 on OpenSER tracker.
 
+
+2007 April 20
+   o Report destination count in source-stop usage indications, requires
+     osptoolkit version 3.4.0

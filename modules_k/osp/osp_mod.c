@@ -233,17 +233,17 @@ static int ospVerifyParameters(void)
     /* Default location for the cert files is in the compile time variable CFG_DIR */
     if (_osp_private_key == NULL) {
         sprintf(_osp_PRIVATE_KEY, "%spkey.pem", CFG_DIR);
-        _osp_private_key = _osp_PRIVATE_KEY;
+        _osp_private_key = (unsigned char *)_osp_PRIVATE_KEY;
     } 
 
     if (_osp_local_certificate == NULL) {
         sprintf(_osp_LOCAL_CERTIFICATE, "%slocalcert.pem", CFG_DIR);
-        _osp_local_certificate = _osp_LOCAL_CERTIFICATE;
+        _osp_local_certificate = (unsigned char *)_osp_LOCAL_CERTIFICATE;
     }
 
     if (_osp_ca_certificate == NULL) {
         sprintf(_osp_CA_CERTIFICATE, "%scacert_0.pem", CFG_DIR);
-        _osp_ca_certificate = _osp_CA_CERTIFICATE;
+        _osp_ca_certificate = (unsigned char *)_osp_CA_CERTIFICATE;
     }
 
     if (_osp_device_ip == NULL) {

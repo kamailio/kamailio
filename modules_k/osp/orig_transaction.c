@@ -93,6 +93,8 @@ static int ospLoadRoutes(
             break;
         }
 
+        dest->destinationCount = count+1;
+
         if (count == 0) {
             errorcode = OSPPTransactionGetFirstDestination(
                 transaction,
@@ -329,7 +331,7 @@ int ospRequestRouting(
                 callids[0]->ospmCallIdLen, 
                 callids[0]->ospmCallIdVal,
                 ospGetTransactionId(transaction));
-            ospRecordOrigTransaction(msg, transaction, sourcedev, source, destination, authtime);
+            /* Will record a unique cookie in the on-branch section */
             result = ospLoadRoutes(msg, transaction, destcount, _osp_device_ip, sourcedev, authtime);
         } else if ((errorcode == 0) && (destcount == 0)) {
             LOG(L_INFO, 
@@ -519,6 +521,9 @@ static int ospPrepareDestination(
 
             /* Add OSP token header */
             ospAddOspHeader(msg, dest->token, dest->tokensize);
+
+            /* Add branch-specific OSP Cookie */
+            ospRecordOrigTransaction(msg, dest->tid, dest->srcdev, dest->calling, dest->called, dest->authtime, dest->destinationCount);
 
             /* Add rpid avp for calling number translation */
             res = ospSetRpid(msg, dest);
