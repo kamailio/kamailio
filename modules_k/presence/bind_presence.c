@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: bind_presence.c 1979 2007-04-06 13:24:12Z anca_vamanu $
  *
  * presence module - presence server implementation
  *
@@ -23,50 +23,26 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2007-04-17  initial version (anca)
  */
+#include "bind_presence.h"
+#include "../../dprint.h"
+#include "../../sr_module.h"
 
-#ifndef SUBSCRIBE_H
-#define SUBSCRIBE_H
-
-#include "presence.h"
-#include "../../str.h"
-
-struct ev;
-
-#include "event_list.h"
-
-struct subscription
+int bind_presence(event_api_t* api)
 {
-	str to_user;
-	str to_domain;
-	str from_user;
-	str from_domain;
-	struct ev* event;
-	str event_id;
-	str to_tag;
-	str from_tag;
-	str callid;
-	str sockinfo_str;
-	str local_contact;
-	unsigned int cseq; 
-	str contact;
-	str record_route;
-	int expires;
-	str status;
-	str reason;
-	int version;
-	int send_on_cback;
-/* flag to check whether the notify for presence is sent on the callback of
- * the notify for wather info
- */
-};
-typedef struct subscription subs_t;
+	if (!api) {
+		LOG(L_ERR, "NOTIFIER:bind_notifier: Invalid parameter value\n");
+		return -1;
+	}
+	api->add_event = (add_event_t )find_export("add_event", 1, 0);
+	if(!api->add_event)
+	{
+		LOG(L_ERR, "NOTIFIER:bind_notifier: Can't bind add_event\n");
+		return -1;
+	}
 
-void msg_active_watchers_clean(unsigned int ticks,void *param);
+	return 0;
+}
 
-void msg_watchers_clean(unsigned int ticks,void *param);
 
-int handle_subscribe(struct sip_msg*, char*, char*);
-
-#endif

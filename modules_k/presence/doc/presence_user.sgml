@@ -13,17 +13,14 @@
 	
 	<section>
 	<title>Overview</title>
-	<para> The modules implements a presence server. It handles PUBLISH
-	and SUBSCRIBE messages and generates NOTIFY messages. It
-	offers support for aggregation of published presence
-	information for the same presentity using more devices. It can
-	also filter the information provided to watchers according to
-	privacy rules.
+	<para> The modules handles PUBLISH and SUBSCRIBE messages and generates
+	NOTIFY messages in a general, event independent way. It allows registering 
+	events to it from other &ser modules. Events that can currently be added to
+	it are: presence, presence.winfo, dialog;sla from presence_xml module.
 	</para>
 	<para>
 	The modules works with database storage. It stores published information 
-	and Subscribe -Notify dialog characteristics. There is also an extra table
-	which stores xcap documents with permission rules. 
+	and Subscribe -Notify dialog characteristics.
 	</para>
 	<para>
 	The server follows the specifications in: RFC3265, RFC3856, RFC3857, 
@@ -31,14 +28,6 @@
 	</para>
 	</section>
 
-	<section>
-	<title>To-do</title>
-		<para>
-		Provide support for clients which implement 
-		end-to-end presence. 
-		</para>
-	</section>
-	
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -68,15 +57,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
-			<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>libxml</emphasis>.
-			</para>
-			</listitem>
-			</itemizedlist>
+			None.
 		</para>
 	</section>
 	</section>
@@ -153,24 +134,6 @@ modparam("presence", "active_watchers_table", "active_watchers")
 		<programlisting format="linespecific">
 ...
 modparam("presence", "watchers_table", "watchers")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>xcap_table</varname>(str)</title>
-		<para>
-		The name of the db table where XCAP XMLs are stored.
-		</para>
-		<para>
-		<emphasis>	Default value is <quote>scap_xml</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>xcap_table</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "xcap_table", "xcaps")
 ...
 </programlisting>
 		</example>
@@ -258,30 +221,6 @@ modparam("presence", "expires_offset", 10)
 	</section>
 
 	<section>
-		<title><varname>force_active</varname> (int)</title>
-		<para>
-		This parameter is used for permissions when handling Subscribe messages.
-		If set to 1, subscription state is considered active and the presentity
-		is not queried for permissions. 
-		Otherwise, the xcap_table is queried and the state is extracted
-		from there. If no record exists, the subscriptions remains in pending
-		state and the watcher receives Notify messages with no body.
-		( If not using an xcap server, you should set this parameter to 1).
-		</para>
-		<para>
-		<emphasis>Default value is <quote>0</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>force_active</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "force_active", 1)
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>max_expires</varname> (int)</title>
 		<para>
 		The the maximum admissible expires value for PUBLISH/SUBSCRIBE 
@@ -327,11 +266,11 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 		</title>
 		<para>
 		The function handles PUBLISH requests. It stores and updates 
-		presence information in database and calls functions to send 
-		NOTIFY messages when changes in presence information occur.
+		published information in database and calls functions to send 
+		NOTIFY messages when changes in the published information occur.
 		It takes one argument -> sender_uri. The parameter was added 
 		for enabling BLA implementation. If present, Notification of
-		a change in presence state is not sent to the respective uri
+		a change in published state is not sent to the respective uri
 		even though a subscription exists.
 		It should be taken from the Sender header. It was left at the
 		decision of the administrator whether or not to transmit the 
@@ -385,7 +324,7 @@ if(method=="SUBSCRIBE")
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires 4 table in OpenSER database. Next SQL statements
+	The module requires 3 table in OpenSER database. Next SQL statements
 	shows the syntax to create them.
 	</para>
 	<example>

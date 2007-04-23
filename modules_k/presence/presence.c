@@ -26,7 +26,6 @@
  *  2006-08-15  initial version (anca)
  */
 
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -55,6 +54,8 @@
 #include "../../pt.h"
 #include "publish.h"
 #include "subscribe.h"
+#include "event_list.h"
+#include "bind_presence.h"
 MODULE_VERSION
 
 #define S_TABLE_VERSION 1
@@ -70,7 +71,7 @@ gen_lock_set_t* set;
 char *presentity_table="presentity";
 char *active_watchers_table = "active_watchers";
 char *watchers_table= "watchers";  
-char *xcap_table= "xcap_xml";  
+
 int use_db=1;
 str server_address= {0, 0};
 evlist_t* EvList= NULL;
@@ -103,18 +104,20 @@ int startup_time=0;
 str db_url = {0, 0};
 int lock_set_size = 8;
 int expires_offset = 0;
-int force_active = 0;
 int default_expires = 3600;
 int max_expires = 3600;
+
 
 void destroy(void);
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",	  handle_publish,	0,		   0,       REQUEST_ROUTE},
-	{"handle_publish",	  handle_publish,	1,  fixup_presence, REQUEST_ROUTE},
-	{"handle_subscribe",  handle_subscribe,	0,		   0,       REQUEST_ROUTE},
-	{0,						0,				0,		   0,	   0	     }	 
+	{"handle_publish",		handle_publish,	        0,	   0,           REQUEST_ROUTE},
+	{"handle_publish",		handle_publish,	        1,  fixup_presence, REQUEST_ROUTE},
+	{"handle_subscribe",	handle_subscribe,	    0,	   0,           REQUEST_ROUTE},
+	{"bind_presence", (cmd_function)bind_presence,  1,     0,             0          },
+	{"add_event",         (cmd_function)add_event,  1,     0,             0          },
+	{0,						0,				        0,	   0,             0			 }	 
 };
 
 static param_export_t params[]={
@@ -122,13 +125,11 @@ static param_export_t params[]={
 	{ "presentity_table",		STR_PARAM, &presentity_table},
 	{ "active_watchers_table", 	STR_PARAM, &active_watchers_table},
 	{ "watchers_table",			STR_PARAM, &watchers_table},
-	{ "xcap_table",				STR_PARAM, &xcap_table},
 	{ "clean_period",			INT_PARAM, &clean_period },
 	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
 	{ "totag_avpid",			INT_PARAM, &reply_tag_avp_id },
 	{ "lock_set_size",			INT_PARAM, &lock_set_size },
 	{ "expires_offset",			INT_PARAM, &expires_offset },
-	{ "force_active",			INT_PARAM, &force_active },
 	{ "max_expires",			INT_PARAM, &max_expires  },
 	{ "server_address",         STR_PARAM, &server_address.s},
 	{0,0,0}
@@ -264,15 +265,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	_s.s = xcap_table;
-	_s.len = strlen(xcap_table);
-	 ver =  table_version(&pa_dbf, pa_db, &_s);
-	if(ver!=S_TABLE_VERSION)
-	{
-		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
-		return -1;
-	}
 	EvList= init_evlist();
 	if(!EvList)
 	{
@@ -282,9 +274,6 @@ static int mod_init(void)
 		pa_db = NULL;
 		return -1;
 	}	
-	add_event("presence", NULL,  "application/pidf+xml", 1);
-	add_event("presence.winfo", NULL,  "application/watcherinfo+xml", 0);
-	add_event("dialog", "sla", "application/dialog-info+xml", 0);
 
 	if(clean_period<=0)
 	{

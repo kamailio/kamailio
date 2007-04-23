@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libxml/parser.h>
 
 #include "../../trim.h"
 #include "../../ut.h"
@@ -42,7 +43,6 @@
 
 #include "presence.h"
 #include "notify.h"
-#include "pidf.h"
 #include "utils_func.h"
 
 extern struct tm_binds tmb;
@@ -65,6 +65,7 @@ void printf_subs(subs_t* subs)
 			subs->to_tag.len, subs->to_tag.s,	subs->from_tag.len, subs->from_tag.s);
 
 }
+str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, int STATE_FLAG );
 
 str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 		str reason,str* local_contact)
@@ -390,7 +391,7 @@ error:
 	return NULL;
 
 }
-str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
+str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 {
 	db_key_t query_cols[6];
 	db_op_t  query_ops[6];
@@ -467,16 +468,10 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 	else
 	{
 		n= result->n;
-		if(!event->agg_body )
+		if(event->agg_nbody== NULL )
 		{
 			int len;
-		/*	if(n>1)
-			{
-				LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR multiple published" 
-					" dialog states stored for the same BLA AOR\n");
-				goto error;
-			}
-		*/
+			DBG("PRESENCE:get_p_notify_body: Event does not require aggregation\n");
 			row = &result->rows[0];
 			row_vals = ROW_VALUES(row);
 			if(row_vals[body_col].val.string_val== NULL)
@@ -510,6 +505,8 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 			goto done;
 		}
 		
+		DBG("PRESENCE:get_p_notify_body: Event requires aggregation\n");
+
 		body_array =(str**)pkg_malloc( (result->n)*sizeof(str*));
 		if(body_array == NULL)
 		{
@@ -537,17 +534,8 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 				{
 					DBG("PRESENCE:get_p_notify_body found etag  \n");
 					build_off_n= i;
-					
-					body_array[build_off_n]= offline_nbody(&row_vals[body_col].val.str_val);
-					if(body_array[i] == NULL)
-					{
-						DBG("PRESENCE: get_p_notify_body:The users's"
-								"status was already offline\n");
-						goto error;
-					}
-				}
-				else
-					body_array[i] =&row_vals[body_col].val.str_val;
+				}	
+				body_array[i] =&row_vals[body_col].val.str_val;
 			}
 		}	
 		else
@@ -559,20 +547,13 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event)
 				body_array[i] =&row_vals[body_col].val.str_val;
 			}			
 		}
-		notify_body = agregate_xmls(body_array, result->n);
+	
+		notify_body = event->agg_nbody(body_array, result->n, build_off_n);
 	}
+
 done:	
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
-	if(build_off_n >= 0)
-	{
-		if(body_array[build_off_n])
-		{
-			if(body_array[build_off_n]->s)
-				xmlFree(body_array[build_off_n]->s);
-			pkg_free(body_array[build_off_n]);
-		}
-	}	
 	if(body_array!=NULL)
 		pkg_free(body_array);
 	return notify_body;
@@ -580,15 +561,6 @@ done:
 error:
 	if(result!=NULL)
 		pa_dbf.free_result(pa_db, result);
-	if(build_off_n > 0)
-	{
-		if(body_array[build_off_n])
-		{
-			if(body_array[build_off_n]->s)
-				xmlFree(body_array[build_off_n]->s);
-			pkg_free(body_array[build_off_n]);
-		}
-	}	
 
 	if(body_array!=NULL)
 		pkg_free(body_array);
@@ -838,7 +810,8 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 	{
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);		
-		
+	
+		memset(&status, 0, sizeof(str));
 		from_user.s= (char*)row_vals[from_user_col].val.string_val;
 		from_user.len= 	strlen(from_user.s);
 		from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
@@ -865,17 +838,9 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		contact.s= (char*)row_vals[contact_col].val.string_val;
 		contact.len= strlen(contact.s);
 		
-		if(!force_active && row_vals[status_col].val.string_val)
-		{
-			status.s=  (char*)row_vals[status_col].val.string_val;
-			status.len= strlen(status.s);
-		}
-		else
-		{
-			status.s= NULL;
-			status.len= 0;
-		}
-		
+		status.s=  (char*)row_vals[status_col].val.string_val;
+		status.len= strlen(status.s);
+			
 		sockinfo_str.s = (char*)row_vals[sockinfo_col].val.string_val;
 		sockinfo_str.len = sockinfo_str.s?strlen (sockinfo_str.s):0;
 
@@ -884,14 +849,9 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		
 
 		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
-				from_domain.len+ event_id.len+ to_tag.len+ 
+				from_domain.len+ event_id.len+ to_tag.len+ status.len+
 				from_tag.len+ callid.len+ record_route.len+ contact.len+
 				sockinfo_str.len+ local_contact.len)* sizeof(char);
-
-		if(force_active== 0)
-			size+= status.len* sizeof(char);
-		else
-			size+= 6;
 
 		subs= (subs_t*)pkg_malloc(size);
 		if(subs ==NULL)
@@ -913,7 +873,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		subs->to_domain.len = p_domain->len;
 		size+= p_domain->len;
 	
-
 		subs->event= event;
 
 		subs->from_user.s= (char*)subs+ size;
@@ -961,25 +920,12 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		memcpy(subs->contact.s, contact.s, contact.len);
 		subs->contact.len = contact.len;
 		size+= contact.len;
+	
+		subs->status.s= (char*)subs+ size;
+		memcpy(subs->status.s, status.s, status.len);
+		subs->status.len = status.len;
+		size+= status.len;
 		
-		if(force_active!=0)
-		{
-			subs->status.s=(char*)subs+ size;
-			memcpy(subs->status.s, "active", 6);
-			subs->status.len = 6;
-			size+= 6;
-		}
-		else
-		{
-			if(status.s && status.len)
-			{
-				subs->status.s= (char*)subs+ size;
-				memcpy(subs->status.s, status.s, status.len);
-				subs->status.len = status.len;
-				size+= status.len;
-			}
-		}
-
 		subs->sockinfo_str.s =(char*)subs+ size;
 		memcpy(subs->sockinfo_str.s, sockinfo_str.s, sockinfo_str.len);
 		subs->sockinfo_str.len = sockinfo_str.len;
@@ -1036,7 +982,7 @@ int query_db_notify(str* p_user, str* p_domain, ev_t* event,
 	
 	if(event->type & PUBL_TYPE)
 	{
-		notify_body = get_p_notify_body(*p_user, *p_domain, etag, event);
+		notify_body = get_p_notify_body(*p_user, *p_domain, etag, event, NULL);
 		if(notify_body == NULL)
 		{
 			DBG( "PRESENCE:query_db_notify: Could not get the"
@@ -1091,328 +1037,6 @@ error:
 	return -1;
 }
 
-xmlNodePtr is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
-{
-	xmlNodePtr ruleset_node = NULL, node1= NULL, node2= NULL;
-	xmlNodePtr cond_node = NULL, except_node = NULL, actions_node = NULL;
-	xmlNodePtr identity_node = NULL, validity_node =NULL, sphere_node = NULL;
-	xmlNodePtr sub_handling_node = NULL;
-	int apply_rule = -1;
-	char* id = NULL, *domain = NULL;
-	str w_uri;
-	char* sub_handling = NULL;
-
-	if(xcap_tree == NULL)
-	{
-		LOG(L_ERR, "PRESENCE: is_watcher_allowed: The authorization document"
-				" is NULL\n");
-		return NULL;
-	}
-	
-	uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
-	if(w_uri.s == NULL)
-	{
-		LOG(L_ERR, "PRESENCE: is_watcher_allowed:Error while creating uri\n");
-		return NULL;
-	}
-	ruleset_node = xmlDocGetNodeByName(xcap_tree, "ruleset", NULL);
-	if(ruleset_node == NULL)
-	{
-		DBG( "PRESENCE:is_watcher_allowed: ruleset_node NULL\n");
-		goto error;
-
-	}	
-	for(node1 = ruleset_node->children ; node1; node1 = node1->next)
-	{
-		if(xmlStrcasecmp(node1->name, (unsigned char*)"text")==0 )
-				continue;
-
-		/* process conditions */
-		DBG("PRESENCE:is_watcher_allowed:node1->name= %s\n",node1->name);
-
-		cond_node = xmlNodeGetChildByName(node1, "conditions");
-		if(cond_node == NULL)
-		{	
-			DBG( "PRESENCE:is_watcher_allowed:cond node NULL\n");
-			goto error;
-		}
-		DBG("PRESENCE:is_watcher_allowed:cond_node->name= %s\n",
-				cond_node->name);
-
-		validity_node = xmlNodeGetChildByName(cond_node, "validity");
-		if(validity_node !=NULL)
-		{
-			DBG("PRESENCE:is_watcher_allowed:found validity tag\n");
-
-		}	
-		sphere_node = xmlNodeGetChildByName(cond_node, "sphere");
-
-		identity_node = xmlNodeGetChildByName(cond_node, "identity");
-		if(identity_node == NULL)
-		{
-			LOG(L_ERR, "PRESENCE:is_watcher_allowed:ERROR didn't found"
-					" identity tag\n");
-			goto error;
-		}	
-		id = NULL;
-		
-		if(strcmp ((const char*)identity_node->children->name, "one") == 0)	
-			for(node2 = identity_node->children; node2; node2 = node2->next)
-			{
-				if(xmlStrcasecmp(node2->name, (unsigned char*)"text")== 0)
-					continue;
-
-				id = xmlNodeGetAttrContentByName(node2, "id");	
-				if((strlen(id)== w_uri.len && 
-							(strncmp(id, w_uri.s, w_uri.len)==0)))	
-				{
-					apply_rule = 1;
-					break;
-				}
-			}	
-		else
-		{	
-			domain = NULL;
-			for(node2 = identity_node->children; node2; node2 = node2->next)
-			{
-				if(xmlStrcasecmp(node2->name, (unsigned char*)"text")== 0)
-					continue;
-	
-				domain = xmlNodeGetAttrContentByName(node2, "domain");
-			
-				if(domain == NULL)
-				{	
-					apply_rule = 1;
-					break;
-				}
-				else	
-					if((strlen(domain)!= subs->from_domain.len && 
-								strncmp(domain, subs->from_domain.s,
-									subs->from_domain.len) ))
-						continue;
-
-				apply_rule = 1;
-				if(node2->children == NULL)       /* there is no exception */
-					break;
-
-				for(except_node = node2->children; except_node;
-						except_node= except_node->next)
-				{
-					if(xmlStrcasecmp(except_node->name, 
-								(unsigned char*)"text")== 0)
-						continue;
-
-					id = xmlNodeGetAttrContentByName(except_node, "id");	
-					if(id!=NULL)
-					{
-						if((strlen(id)== w_uri.len && (strncmp(id, w_uri.s,
-											w_uri.len)==0)))	
-						{
-							apply_rule = 0;
-							break;
-						}
-					}	
-					else
-					{
-						domain = NULL;
-						domain = xmlNodeGetAttrContentByName(except_node,
-								"domain");
-						if((domain!=NULL && strlen(domain)== 
-									subs->from_domain.len &&
-						(strncmp(domain,subs->from_domain.s , 
-								 subs->from_domain.len)==0)))	
-						{
-							apply_rule = 0;
-							break;
-						}
-					}	
-					if (apply_rule == 0)
-						break;
-				}
-				if(apply_rule ==1 || apply_rule==0)
-					break;
-
-			}		
-		}
-		if(apply_rule ==1 || apply_rule==0)
-					break;
-	}
-
-
-	if(w_uri.s!=NULL)
-		pkg_free(w_uri.s);
-
-	if( !apply_rule || !node1)
-		return NULL;
-	else
-	/* process actions */	
-	{	actions_node = xmlNodeGetChildByName(node1, "actions");
-		if(actions_node == NULL)
-		{	
-			DBG( "PRESENCE:is_watcher_allowed: actions_node NULL\n");
-			return NULL;
-		}
-		DBG("PRESENCE:is_watcher_allowed:actions_node->name= %s\n",
-				actions_node->name);
-	
-		
-		sub_handling_node = xmlNodeGetChildByName(actions_node, "sub-handling");
-		if(sub_handling_node== NULL)
-		{	
-			DBG( "PRESENCE:is_watcher_allowed:sub_handling_node NULL\n");
-			return NULL;
-		}
-		sub_handling = (char*)xmlNodeGetContent(sub_handling_node);
-
-		DBG("PRESENCE:is_watcher_allowed:sub_handling_node->name= %s\n",
-				sub_handling_node->name);
-		DBG("PRESENCE:is_watcher_allowed:sub_handling_node->content= %s\n",
-				sub_handling);
-
-//		sub_handling = (char *)sub_handling_node->content;
-		
-		if(sub_handling== NULL)
-		{
-			LOG(L_ERR, "PRESENCE:is_watcher_allowed:ERROR Couldn't get"
-					" sub-handling content\n");
-			return NULL;
-		}
-		if( strncmp((char*)sub_handling, "block",5 )==0)
-		{	
-			subs->status.s = "terminated";
-			subs->status.len = 10;
-			subs->reason.s= "rejected";
-			subs->reason.len = 8;
-		}
-		
-		if( strncmp((char*)sub_handling, "confirm",7 )==0)
-		{	
-			subs->status.s = "pending";
-			subs->status.len = 7;
-		}
-		
-		if( strncmp((char*)sub_handling , "polite-block",12 )==0)
-		{	
-			subs->status.s = "active";
-			subs->status.len = 6;
-			subs->reason.s= "polite-block";
-			subs->reason.len = 12;
-		
-		}
-		
-		if( strncmp((char*)sub_handling , "allow",5 )==0)
-		{	
-			subs->status.s = "active";
-			subs->status.len = 6;
-			subs->reason.s = NULL;
-		}
-
-		return node1;
-	}	
-error:
-	pkg_free(w_uri.s);
-	return NULL;
-}
-
-xmlDocPtr get_xcap_tree(str user, str domain)
-{
-	db_key_t query_cols[5];
-	db_val_t query_vals[5];
-	db_key_t result_cols[3];
-	int n_query_cols = 0;
-	db_res_t *result = 0;
-	db_row_t *row ;	
-	db_val_t *row_vals ;
-	str body ;
-	xmlDocPtr xcap_tree =NULL;
-
-	query_cols[n_query_cols] = "username";
-	query_vals[n_query_cols].type = DB_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = user.s;
-	query_vals[n_query_cols].val.str_val.len = user.len;
-	n_query_cols++;
-	
-	query_cols[n_query_cols] = "domain";
-	query_vals[n_query_cols].type = DB_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = domain.s;
-	query_vals[n_query_cols].val.str_val.len = domain.len;
-	n_query_cols++;
-	
-	query_cols[n_query_cols] = "doc_type";
-	query_vals[n_query_cols].type = DB_INT;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val= PRES_RULES;
-	n_query_cols++;
-
-	result_cols[0] = "xcap";
-
-	if (pa_dbf.use_table(pa_db, xcap_table) < 0) 
-	{
-		LOG(L_ERR, "PRESENCE:get_xcap_tree: Error in use_table\n");
-		return NULL;
-	}
-
-	if( pa_dbf.query(pa_db, query_cols, 0 , query_vals, result_cols, 
-				n_query_cols, 1, 0, &result)<0)
-	{
-		LOG(L_ERR, "PRESENCE:get_xcap_tree:Error while querying table xcap for"
-		" [username]=%.*s , domain=%.*s\n",user.len, user.s, domain.len,
-		domain.s);
-		goto error;
-	}
-	if(result== NULL)
-		return NULL;
-
-	if(result && result->n<=0)
-	{
-		DBG("PRESENCE:get_xcap_tree:The query in table xcap for"
-				" [username]=%.*s , domain=%.*s returned no result\n",
-				user.len, user.s, domain.len, domain.s);
-		goto error;
-	}
-	DBG("PRESENCE:get_xcap_tree:The query in table xcap for"
-			" [username]=%.*s , domain=%.*s returned result",	user.len,
-			user.s, domain.len, domain.s );
-
-	row = &result->rows[0];
-	row_vals = ROW_VALUES(row);
-
-	body.s = (char*)row_vals[0].val.string_val;
-	if(body.s== NULL)
-	{
-		DBG("PRESENCE:get_xcap_tree: Xcap doc NULL\n");
-		goto error;
-	}	
-	body.len = strlen(body.s);
-	if(body.len== 0)
-	{
-		DBG("PRESENCE:get_xcap_tree: Xcap doc empty\n");
-		goto error;
-	}			
-	
-	DBG("PRESENCE:get_xcap_tree: xcap body:\n%.*s", body.len,body.s);
-	
-	xcap_tree = xmlParseMemory(body.s, body.len);
-	if(xcap_tree == NULL)
-	{
-		LOG(L_ERR,"PRESENCE:get_xcap_tree: ERROR while parsing memory\n");
-		goto error;
-	}
-
-	if(result!=NULL)
-		pa_dbf.free_result(pa_db, result);
-
-	return xcap_tree;
-
-error:
-	if(result!=NULL)
-		pa_dbf.free_result(pa_db, result);
-	return NULL;
-}
-
-
 int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body )
 {
 
@@ -1420,110 +1044,40 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 	dlg_t* td = NULL;
 	str met = {"NOTIFY", 6};
 	str* str_hdr = NULL;
-	str* notify_body = NULL, *final_body = NULL;
+	str* notify_body = NULL;
 	int result= 0;
-	int n_update_keys = 0, wn_update_keys = 0;
+	int n_update_keys = 0;
 	db_key_t db_keys[1], update_keys[3];
 	db_val_t db_vals[1], update_vals[3];
-	db_key_t w_keys[5], w_up_keys[2];
-	db_val_t  w_vals[5], w_up_vals[2];
-	xmlNodePtr rule_node = NULL;
-	xmlDocPtr xcap_tree = NULL;
     c_back_param *cb_param= NULL;
 	
 	DBG("PRESENCE:notify:dialog informations:\n");
 	printf_subs(subs);
 
+    /* getting the status of the subscription */
+
+
 	if(force_null_body)
 	{	
-		if(force_active && subs->status.len ==7)
-		{
-			subs->status.s = "active";
-			subs->status.len = 6;
-		}	
 		goto jump_over_body;
 	}
-    /* getting the notify body */
 
-	if ( subs->event->req_auth )
-	{	
-		xcap_tree = get_xcap_tree(subs->to_user, subs->to_domain);
-		if(xcap_tree == NULL)
-		{	
-			DBG( "PRESENCE:notify: Couldn't get xcap_tree\n");
-			if(force_active && subs->status.len ==7)
-			{
-				subs->status.s = "active";
-				subs->status.len = 6;
-			}	
-		}	
-		else
-		{
-			rule_node = is_watcher_allowed(subs, xcap_tree);
-			if(rule_node ==NULL)
-			{
-				DBG("PRESENCE:notify: The subscriber didn't match"
-					" the conditions\n");
-			}	
-			else
-			{	
-				DBG("PRESENCE:notify: [status]=%s\n",subs->status.s);
-				if(subs->reason.s!= NULL)
-					DBG(" [reason]= %s\n", subs->reason.s);
-			
-				w_keys[0] = "p_user";
-				w_vals[0].type = DB_STR; 
-				w_vals[0].nul = 0;
-				w_vals[0].val.str_val = subs->to_user;
-				
-				w_keys[1] = "p_domain";
-				w_vals[1].type = DB_STR; 
-				w_vals[1].nul = 0;
-				w_vals[1].val.str_val = subs->to_domain;
-
-				w_keys[2] = "w_user";
-				w_vals[2].type = DB_STR; 
-				w_vals[2].nul = 0;
-				w_vals[2].val.str_val = subs->from_user;
-				
-				w_keys[3] = "w_domain";
-				w_vals[3].type = DB_STR; 
-				w_vals[3].nul = 0;
-				w_vals[3].val.str_val = subs->from_domain;
-				
-				w_up_keys[wn_update_keys]= "subs_status";
-				w_up_vals[wn_update_keys].type = DB_STR; 
-				w_up_vals[wn_update_keys].nul = 0;
-				w_up_vals[wn_update_keys].val.str_val = subs->status;
-				wn_update_keys++;
-				
-				if(subs->reason.s)
-				{	
-					w_up_keys[wn_update_keys]= "reason";
-					w_up_vals[wn_update_keys].type = DB_STR; 
-					w_up_vals[wn_update_keys].nul = 0;
-					w_up_vals[wn_update_keys].val.str_val = subs->reason;
-					wn_update_keys++;
-				}
-				if(pa_dbf.use_table(pa_db, watchers_table)< 0)
-				{	
-					LOG(L_ERR, "PRESENCE: notify:ERROR in use watchers table\n");
-					goto error;
-				}
-				if(pa_dbf.update(pa_db, w_keys, 0, w_vals, w_up_keys,w_up_vals,
-							4,wn_update_keys++)< 0)
-				{
-					LOG(L_ERR, "PRESENCE: notify:ERROR while updating watchers table\n");
-					goto error;
-				}
-			}	
-	
-		}	
-	
-	}
-	
 	if(n_body!= NULL && strncmp( subs->status.s, "active", 6) == 0 )
-		notify_body = n_body;
+	{
+		if(subs->event->req_auth)
+		{	
+			
+			if( subs->event->apply_auth_nbody(n_body, subs, notify_body)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:notify: ERROR in function hget_nbody\n");
+				goto error;
+			}
+			if(notify_body== NULL)
+				notify_body= n_body;
+		}
+		else
+			notify_body= n_body;
+	}	
 	else
 	{	
 		if(strncmp( subs->status.s, "terminated", 10) == 0 ||
@@ -1546,60 +1100,35 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 			}
 			else
 			{
-				if(strncmp(subs->status.s, "active", 6)==0 && subs->reason.s
-					&& strncmp(subs->reason.s, "polite-block", 12)==0)
+				notify_body = get_p_notify_body(subs->to_user,
+						subs->to_domain, NULL ,subs->event, subs);
+				if(notify_body == NULL || notify_body->s== NULL)
 				{
-					notify_body = build_off_nbody(subs->to_user,subs->to_domain,
-							NULL);
-					if(notify_body == NULL)
-					{
-						LOG(L_ERR, "PRESENCE:notify: ERROR while building"
-							" polite-block body\n");
-						goto error;
-					}	
+					DBG("PRESENCE:notify: Could not get the notify_body\n");
+					goto done;
 				}
-				else
-				{	
-					notify_body = get_p_notify_body(subs->to_user,
-							subs->to_domain, NULL ,subs->event);
-					if(notify_body == NULL)
+				/* apply authorization rules if exists */
+				if(subs->event->req_auth)
+				{
+					str* final_body= NULL;
+					 
+					if(subs->event->apply_auth_nbody(notify_body, subs, final_body)< 0)
 					{
-						DBG("PRESENCE:notify: Could not get the"
-								" notify_body\n");
-						goto done;
+						LOG(L_ERR, "PRESENCE:notify: ERROR in function apply_auth\n");
+						goto error;
 					}
+					if(final_body)
+					{
+						xmlFree(notify_body->s);
+						pkg_free(notify_body);
+						notify_body= final_body;
+					}	
 				}	
 			}		
 			
 		}
 	}
 	
-	if( (subs->event->type & PUBL_TYPE) && notify_body&& rule_node)
-	{
-		DBG("PRESENCE:notify: get final body according to transformations\n");
-
-		final_body = get_final_notify_body(subs,notify_body, rule_node);
-		if(final_body == NULL)
-		{
-			LOG(L_ERR, "PRESENCE:notify: ERROR occured while transforming"
-					" body\n");
-			goto error;
-		}
-
-		if(n_body == NULL)
-		{	
-			if(notify_body!=NULL)
-			{
-				if(notify_body->s!=NULL)
-					xmlFree(notify_body->s);
-				pkg_free(notify_body);
-			}
-			notify_body = NULL;
-		}
-	}
-	else
-		final_body= notify_body;
-
 jump_over_body:
 
 	/* built extra headers */	
@@ -1645,14 +1174,11 @@ jump_over_body:
 			" share memory\n");
 		goto error;	
 	}	
-
-	if(final_body != NULL)
-		DBG("body :\n:%.*s\n", final_body->len, final_body->s);	
-			
+				
 	result = tmb.t_request_within
 		(&met,						             
 		str_hdr,                               
-		final_body,                           
+		notify_body,                           
 		td,					                  
 		p_tm_callback,				        
 		(void*)cb_param);				
@@ -1714,27 +1240,15 @@ done:
 	if(str_hdr!=NULL)
 		pkg_free(str_hdr);
 
-	if(n_body == NULL)
+	if((int)n_body!= (int)notify_body)
 	{
-		if(final_body!=NULL)
+		if(notify_body!=NULL)
 		{
-			if(final_body->s!=NULL)
-				free(final_body->s);
-			pkg_free(final_body);
+			if(notify_body->s!=NULL)
+				free(notify_body->s);
+			pkg_free(notify_body);
 		}
 	}	
-	else
-		if(subs->event->type & PUBL_TYPE && rule_node)
-		{
-			if(final_body!=NULL)
-			{
-				if(final_body->s!=NULL)
-					xmlFree(final_body->s);
-				pkg_free(final_body);
-			}
-		}
-	if(xcap_tree!=NULL)
-		xmlFreeDoc(xcap_tree);
 
 	return 0;
 
@@ -1750,27 +1264,15 @@ error:
 	if(str_hdr!=NULL)
 		pkg_free(str_hdr);
 
-	if(n_body == NULL)
+	if((int)n_body!= (int)notify_body)
 	{
-		if(final_body!=NULL)
+		if(notify_body!=NULL)
 		{
-			if(final_body->s!=NULL)
-				xmlFree(final_body->s);
-			pkg_free(final_body);
+			if(notify_body->s!=NULL)
+				free(notify_body->s);
+			pkg_free(notify_body);
 		}
 	}	
-	else
-		if(subs->event->type &PUBL_TYPE && rule_node)
-		{
-			if(final_body!=NULL)
-			{
-				if(final_body->s!=NULL)
-					free(final_body->s);
-				pkg_free(final_body);
-			}
-		}
-	if(xcap_tree!=NULL)
-		xmlFreeDoc(xcap_tree);
 
 	return -1;
 
@@ -1846,8 +1348,6 @@ done:
 
 }
 
-		
-	
 c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 {
 	int size;
@@ -1983,6 +1483,145 @@ error:
 		shm_free(cb_param);
 	return NULL;
 }
+
+
+str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, int STATE_FLAG )
+{
+	xmlDocPtr doc = NULL;       /* document pointer */
+    xmlNodePtr root_node = NULL, node = NULL;/* node pointers */
+    xmlNodePtr w_list_node = NULL;	
+    int i;
+	char content[200];
+	str *body;
+
+	body = (str*)pkg_malloc(sizeof(str));
+	if(body == NULL)
+	{
+		LOG(L_ERR,"PRESENCE:create_winfo_xmls:Error while allocating memory\n");
+		return NULL;
+	}
+
+	memset(body, 0, sizeof(str));
+
+    LIBXML_TEST_VERSION;
+
+    /* 
+     * Creates a new document, a node and set it as a root node
+     */
+    doc = xmlNewDoc(BAD_CAST "1.0");
+    root_node = xmlNewNode(NULL, BAD_CAST "watcherinfo");
+    xmlDocSetRootElement(doc, root_node);
+
+    xmlNewProp(root_node, BAD_CAST "xmlns",
+			BAD_CAST "urn:ietf:params:xml:ns:watcherinfo");
+    xmlNewProp(root_node, BAD_CAST "version", BAD_CAST version );
+   
+	if(STATE_FLAG & FULL_STATE_FLAG)
+	{
+		if( xmlNewProp(root_node, BAD_CAST "state", BAD_CAST "full") == NULL)
+		{
+			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding new"
+					"attribute\n");
+			goto error;
+		}
+	}
+	else	
+	{	
+		if( xmlNewProp(root_node, BAD_CAST "state", 
+					BAD_CAST "partial")== NULL) /* chage this */
+		{
+			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding new"
+					"attribute\n");
+			goto error;
+		}
+	}
+	/* 
+     * xmlNewChild() creates a new node, which is "attached" as child node
+     * of root_node node. 
+     */
+
+     w_list_node =xmlNewChild(root_node, NULL, BAD_CAST "watcher-list",NULL);
+
+	if( w_list_node == NULL)
+	{
+		LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding child\n");
+		goto error;
+	}
+	xmlNewProp(w_list_node, BAD_CAST "resource", BAD_CAST resource);
+	xmlNewProp(w_list_node, BAD_CAST "package", BAD_CAST "presence");
+
+//	strcpy(content, "sip:");
+
+    for( i =0; i<n; i++)
+	{
+		strncpy( content,watchers[i].uri.s, watchers[i].uri.len);
+		content[ watchers[i].uri.len ]='\0';
+		node = xmlNewChild(w_list_node, NULL, BAD_CAST "watcher",
+				BAD_CAST content) ;
+		if( node ==NULL)
+		{
+			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding"
+					" child\n");
+			goto error;
+		}
+		if(xmlNewProp(node, BAD_CAST "id", BAD_CAST watchers[i].id.s)== NULL)
+		{
+			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding"
+					" new attribute\n");
+			goto error;
+		}	
+		
+		if(xmlNewProp(node, BAD_CAST "event", BAD_CAST "subscribe")== NULL)
+		{
+			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding new"
+					" attribute\n");
+			goto error;
+		}	
+		
+		if(xmlNewProp(node, BAD_CAST "status", 
+					BAD_CAST watchers[i].status.s )== NULL)
+		{
+			LOG(L_ERR, "PRESENCE: create_winfo_xml: ERROR while adding"
+					" new attribute\n");
+			goto error;
+		}	
+	}
+    
+    /* 
+     * Dumping document to stdio or file
+     */
+    //xmlSaveFormatFileEnc("stdout", doc, "UTF-8", 1);
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);
+
+    /*free the document */
+    if(doc)
+		xmlFreeDoc(doc);
+
+    /*
+     *Free the global variables that may
+     *have been allocated by the parser.
+     */
+    xmlCleanupParser();
+
+    /*
+     * this is to debug memory for regression tests
+     */
+    xmlMemoryDump();
+
+    return body;
+
+error:
+	if(body)
+	{
+		if(body->s)
+			xmlFree(body->s);
+		pkg_free(body);
+	}
+    if(doc)
+		xmlFreeDoc(doc);
+	return NULL;
+}
+
 
 
 

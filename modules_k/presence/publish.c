@@ -26,8 +26,6 @@
  *  2006-08-15  initial version (anca)
  */
 
-#include <libxml/parser.h>
-#include <libxml/xpath.h>
 #include <time.h>
 
 #include "../../ut.h"
@@ -58,7 +56,6 @@ extern int startup_time;
 static str pu_400a_rpl = str_init("Bad request");
 static str pu_400b_rpl = str_init("Invalid request");
 static str pu_489_rpl  = str_init("Bad Event");
-static str pu_415_rpl  = str_init("Unsupported media type");
 static str pu_200_rpl  = str_init("OK");
 static str pu_412_rpl  = str_init("Conditional request failed");
 
@@ -191,6 +188,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		event.s= row_vals[3].val.str_val.s;
 		event.len= strlen(event.s);
 		/* search for a parameter*/
+		ev_param= NULL;
 		sep= memchr(event.s, ';', event.len);
 		if(sep == NULL)
 		{
@@ -209,12 +207,18 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			}
 			ev_param->s= sep+1;
 			ev_param->len= event.len- ev_name.len -1;
+			DBG("PRESENCE:msg_presentity_clean: ev_name= %.*s ev_param= %.*s\n", 
+			ev_name.len, ev_name.s,ev_param->len, ev_param->s );
 		}	
-
+	
 		pres->event= contains_event(&ev_name, ev_param);
 
 		if(ev_param)
+		{
 			pkg_free(ev_param);
+			ev_param= NULL;
+		}
+
 		if(pres->event== NULL)
 		{
 			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while searching for event\n");
@@ -292,7 +296,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	str etag={0, 0};
 	str hdr_append, hdr_append2 ;
 	int error_ret = -1; /* error return code */
-	xmlDocPtr doc= NULL;
 	str* sender= NULL;
 	static char buf[256];
 	int buf_len= 255;
@@ -482,22 +485,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 					" from msg\n");
 			goto error;
 		}
-		/* content-length (if present) must be already parsed */
-
-		body.len = get_content_length( msg );
-		doc= xmlParseMemory( body.s , body.len );
-		if(doc== NULL)
-		{
-			LOG(L_ERR, "PRESENCE: handle_publish: Bad body format\n");
-			if( slb.reply( msg, 415, &pu_415_rpl)== -1)
-			{
-				LOG(L_ERR,"PRESENCE: handle_publish: ERORR while sending"
-						" reply\n");
-			}
-			error_ret = 0;
-			goto error;
-		}
-		xmlFreeDoc(doc);
+		body.len= get_content_length( msg );
 	}	
 	memset(&puri, 0, sizeof(struct sip_uri));
 	if(sender_uri && sender_uri!= "")
@@ -522,6 +510,16 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		}
 		sender->s= buf;
 		sender->len= buf_len;
+	}
+	/* call event specific handlinh function*/
+	if(event->evs_publ_handl)
+	{
+		if(event->evs_publ_handl(msg)< 0)
+		{
+			LOG(L_ERR, "PRESENCE: handle_publish: ERROR in event specific"
+					" publish handling\n");
+			goto error;
+		}
 	}
 
 	/* now we have all the necessary values */
@@ -593,8 +591,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 			goto error;
 		}
 		hdr_append2.s[hdr_append2.len]= '\0';
-		LOG(L_ERR, "PRESENCE: handle_publish: sip-etag: [%.*s/%d]\n",
-				hdr_append2.len,hdr_append2.s,hdr_append2.len);
 		if (add_lump_rpl(msg, hdr_append2.s, hdr_append2.len, LUMP_RPL_HDR)==0 )
 		{
 			LOG(L_ERR,"PRESENCE:handle_publish: unable to add lump_rl\n");
@@ -626,8 +622,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		pkg_free(etag.s);
 	if(sender)
 		pkg_free(sender);
-	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return 1;
 
@@ -640,8 +634,6 @@ error:
 	if(etag_gen && etag.s)
 	if(sender)
 		pkg_free(sender);
-	xmlCleanupParser();
-	xmlMemoryDump();
 	
 	return error_ret;
 
@@ -650,8 +642,8 @@ unsupported_event:
 	LOG(L_ERR, "PRESENCE: handle_publish:Missing or unsupported event"
 			" header field value\n");
 
-	if(msg->event->body.s && msg->event->body.len>0)
-			LOG(L_ERR, "\tevent=[%.*s]\n", msg->event->body.len,
+	if(msg->event && msg->event->body.s && msg->event->body.len>0)
+		LOG(L_ERR, "\tevent=[%.*s]\n", msg->event->body.len,
 			msg->event->body.s);
 
 	if (slb.reply(msg, 489, &pu_489_rpl) == -1)

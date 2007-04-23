@@ -11,8 +11,164 @@
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
-	The module does not provide any <acronym>API</acronym> to use in other &ser; modules.
-    </para>
+		The module provides the following functions that can be used
+		in other &ser; modules.
+   </para>
+ 		<section>
+				<title>
+				<function moreinfo="none">bind_presence(event_api_t* api)</function>
+				</title>
+			<para>
+				This function binds the presence modules and fills the structure 
+				with one exported function -> add_event, which when called adds a 
+				new event to be handled by presence.
+			</para>
+		<example>
+		<title><function>event_api_t</function> structure</title>
+	<programlisting format="linespecific">
+...
+typedef struct event_api {
+	add_event_t add_event;
+} event_api_t;
+...
+</programlisting>
+		</example>
+
+		</section>
+	
+	<section>
+			<title>
+			<function moreinfo="none">add_event(ev_t* event)</function>
+			</title>
+		<para>
+			This function receives as a parameter a structure with event specific
+			information and adds it to presence list.
+		</para>
+		<para>
+		The structure received as a parameter:
+	<programlisting format="linespecific">
+...
+typedef struct ev
+{
+	str name;
+	str* param;         // required param 
+	str stored_name;
+	str content_type;
+	int type;
+/*	it can be: PUBL_TYPE or WINFO_TYPE */
+	int req_auth;
+/* flag to mark if the event requires authorization*/	
+	apply_auth_t*  apply_auth_nbody;
+	is_allowed_t*  is_watcher_allowed;
+	
+	agg_nbody_t* agg_nbody;
+	publ_handling_t  * evs_publ_handl;
+	subs_handling_t  * evs_subs_handl;
+
+/* this two should not be filed when the structure is given as a
+	parmeter for add_event function */
+	struct ev* wipeer;			
+	struct ev* next;
+	
+}ev_t;
+...
+</programlisting>
+		</section>
+
+<section>
+		<title>
+			<function moreinfo="none">apply_auth_nbody</function>
+		</title>
+		<para>
+			This parameter should be a function to be calledfor an event that requires
+			authorization, when constructing final body. It is called only if the
+			req_auth field is not 0.
+		</para>
+		<para>
+			Filed type:
+			<programlisting format="linespecific">
+...
+typedef int (apply_auth_t)(str* , struct subscription*, str* );
+..
+			</programlisting>
+			</para>
+</section>			
+
+<section>
+		<title>
+			<function moreinfo="none">is_watcher_allowed</function>
+		</title>
+		<para>
+			This filed is a function to be called for a subscription request to
+			return the state for that subscription according to authorization rules.
+			It is called only if the req_auth field is not 0.
+		</para>
+		<para>
+			Filed type:
+			<programlisting format="linespecific">
+...
+typedef int (is_allowed_t)(struct subscription* subs);
+..
+			</programlisting>
+			</para>
+</section>	
+
+<section>
+		<title>
+			<function moreinfo="none">agg_nbody</function>
+		</title>
+		<para>
+			If present, this field marks that the events requires aggregation of states.
+			This function receives a body array and should return the final body.
+			If not present, it is considered that the event does not require aggregation and
+			the most recent published information is used when constructing Notifies.
+		</para>
+		<para>
+		Filed type:
+			<programlisting format="linespecific">
+...
+typedef str* (agg_nbody_t)(str** body_array, int n, int off_index);
+..
+			</programlisting>
+			</para>
+</section>	
+
+<section>
+		<title>
+			<function moreinfo="none">evs_publ_handl</function>
+		</title>
+		<para>
+		This function is called when handling Publish requests. Most contain 
+		body correctitude check.
+		</para>
+		<para>
+			<programlisting format="linespecific">
+...
+typedef int (publ_handling_t)(struct sip_msg*);
+..
+			</programlisting>
+			</para>
+</section>	
+
+<section>
+		<title>
+			<function moreinfo="none">evs_subs_handl</function>
+		</title>
+		<para>
+		It is not compulsory. Should contain event specific handling for
+		Subscription requests.
+		</para>
+		<para>
+		Filed type:
+			<programlisting format="linespecific">
+...
+typedef int (subs_handling_t)(struct sip_msg*);
+..
+			</programlisting>
+			</para>
+</section>	
+
+
 </chapter>
 
 <!-- Keep this element at the end of the file

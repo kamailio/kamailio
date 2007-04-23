@@ -40,9 +40,6 @@
 #define PWINFO_LEN 14
 #define BLA_LEN 10
 
-#define PRES_RULES 1;
-#define RESOURCE_LIST 2;
-#define RLS_SERVICE 3;
 
 typedef struct watcher
 {

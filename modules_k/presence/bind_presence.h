@@ -1,9 +1,9 @@
 /*
- * $Id$
+ * $Id: bind_presence.h 1979 2007-04-06 13:24:12Z anca_vamanu $
  *
  * presence module - presence server implementation
  *
- * Copyright (C) 2006 Voice Sistem S.R.L.
+ * Copyright (C) 2007 Voice Sistem S.R.L.
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,50 +23,21 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2007-04-17  initial version (anca)
  */
 
-#ifndef SUBSCRIBE_H
-#define SUBSCRIBE_H
-
-#include "presence.h"
-#include "../../str.h"
-
-struct ev;
+#ifndef _PRES_BIND_H_
+#define _PRES_BIND_H_
 
 #include "event_list.h"
 
-struct subscription
-{
-	str to_user;
-	str to_domain;
-	str from_user;
-	str from_domain;
-	struct ev* event;
-	str event_id;
-	str to_tag;
-	str from_tag;
-	str callid;
-	str sockinfo_str;
-	str local_contact;
-	unsigned int cseq; 
-	str contact;
-	str record_route;
-	int expires;
-	str status;
-	str reason;
-	int version;
-	int send_on_cback;
-/* flag to check whether the notify for presence is sent on the callback of
- * the notify for wather info
- */
-};
-typedef struct subscription subs_t;
+typedef struct event_api {
+	add_event_t add_event;
+} event_api_t;
 
-void msg_active_watchers_clean(unsigned int ticks,void *param);
+int bind_presence(event_api_t* api);
 
-void msg_watchers_clean(unsigned int ticks,void *param);
-
-int handle_subscribe(struct sip_msg*, char*, char*);
+typedef int (*bind_presence_t)(event_api_t* api);
 
 #endif
+

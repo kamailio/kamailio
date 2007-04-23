@@ -30,14 +30,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <libxml/parser.h>
 
 #include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../str.h"
 #include "../alias_db/alias_db.h"
-#include "pidf.h"
 #include "presentity.h"
 #include "presence.h" 
 #include "notify.h"

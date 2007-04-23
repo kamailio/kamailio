@@ -33,45 +33,39 @@
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h" 
 #include "event_list.h"
-#include "presence.h"
+//#include "presence.h"
 
-int add_event(char* name, char* param, char* content_type, int agg_body)
+int add_event(ev_t* event)
 {
 	ev_t* ev= NULL;
 	int size;
-	str str_name;
-	str* str_param= NULL;
 	char* sep= NULL;
 	str wipeer_name;
 	char buf[50];
 	int ret_code= 1;
 
-	str_name.s= name;
-	str_name.len= strlen(name);
-
-	if(param)
+	if(event->name.s== NULL || event->name.len== 0)
 	{
-		str_param= (str*)pkg_malloc(sizeof(str));
-		if(str_param== NULL)
-		{
-			LOG(L_ERR, "PRESENCE: add_event: ERROR No more memory\n");
-			return -1;
-		}
-		str_param->s= param;
-		str_param->len= strlen(param);
+		LOG(L_ERR, "PRESENCE: add_event: NULL event name\n");
+		return -1;
 	}
 
-	if(contains_event(&str_name, str_param))
+	if(event->content_type.s== NULL || event->content_type.len== 0)
+	{
+		LOG(L_ERR, "PRESENCE: add_event: NULL content_type param\n");
+		return -1;
+	}
+
+	if(contains_event(&event->name, event->param))
 	{
 		DBG("PRESENCE: add_event: Found prevoius record for event\n");
 		ret_code= -1;
 		goto done;
 	}	
-	size= sizeof(ev_t)+ (str_name.len+ strlen(content_type))
-		*sizeof(char);
+	size= sizeof(ev_t)+ (event->name.len+ event->content_type.len)*sizeof(char);
 
-	if(param)
-		size+= sizeof(str)+ ( 2*strlen(param) + str_name.len+ 1)* sizeof(char);
+	if(event->param)
+		size+= sizeof(str)+ ( 2*event->param->len + event->name.len+ 1)* sizeof(char);
 
 	ev= (ev_t*)shm_malloc(size);
 	if(ev== NULL)
@@ -84,26 +78,26 @@ int add_event(char* name, char* param, char* content_type, int agg_body)
 
 	size= sizeof(ev_t);
 	ev->name.s= (char*)ev+ size;
-	ev->name.len= str_name.len;
-	memcpy(ev->name.s, name, str_name.len);
-	size+= str_name.len;
+	ev->name.len= event->name.len;
+	memcpy(ev->name.s, event->name.s, event->name.len);
+	size+= event->name.len;
 
-	if(str_param)
+	if(event->param)
 	{	
 		ev->param= (str*)((char*)ev+ size);
 		size+= sizeof(str);
 		ev->param->s= (char*)ev+ size;
-		memcpy(ev->param->s, str_param->s, str_param->len);
-		ev->param->len= str_param->len;
-		size+= str_param->len;
-
+		memcpy(ev->param->s, event->param->s, event->param->len);
+		ev->param->len= event->param->len;
+		size+= event->param->len;
+	
 		ev->stored_name.s= (char*)ev+ size;
-		memcpy(ev->stored_name.s, name, str_name.len);
-		ev->stored_name.len= str_name.len;
+		memcpy(ev->stored_name.s, event->name.s, event->name.len);
+		ev->stored_name.len= event->name.len;
 		memcpy(ev->stored_name.s+ ev->stored_name.len, ";", 1);
 		ev->stored_name.len+= 1;
-		memcpy(ev->stored_name.s+ ev->stored_name.len, str_param->s, str_param->len);
-		ev->stored_name.len+= str_param->len;
+		memcpy(ev->stored_name.s+ ev->stored_name.len, event->param->s, event->param->len);
+		ev->stored_name.len+= event->param->len;
 		size+= ev->stored_name.len;
 	}
 	else
@@ -113,20 +107,18 @@ int add_event(char* name, char* param, char* content_type, int agg_body)
 	}	
 
 	ev->content_type.s= (char*)ev+ size;
-	ev->content_type.len= strlen(content_type);
-	memcpy(ev->content_type.s, content_type, ev->content_type.len);
+	ev->content_type.len= event->content_type.len;
+	memcpy(ev->content_type.s, event->content_type.s, event->content_type.len);
 	size+= ev->content_type.len;
 	
-	ev->agg_body= agg_body;
-	
-	sep= strchr(name, '.');
+	sep= strchr(event->name.s, '.');
 	if(sep)
 	{
 		if(strncmp(sep+1, "winfo", 5)== 0)
 		{	
 			ev->type= WINFO_TYPE;
-			wipeer_name.s= name;
-			wipeer_name.len= sep - name;
+			wipeer_name.s= event->name.s;
+			wipeer_name.len= sep - event->name.s;
 			
 			ev->wipeer= contains_event(&wipeer_name, ev->param );
 		}
@@ -134,7 +126,8 @@ int add_event(char* name, char* param, char* content_type, int agg_body)
 		{	
 			ev->type= PUBL_TYPE;
 			wipeer_name.s= buf;
-			wipeer_name.len= sprintf(wipeer_name.s, "%s", name);
+			memcpy(wipeer_name.s, event->name.s, event->name.len);
+			wipeer_name.len= event->name.len;
 			memcpy(wipeer_name.s+ wipeer_name.len, ".winfo", 5);
 			wipeer_name.len+= 5;
 			ev->wipeer= contains_event(&wipeer_name, ev->param);
@@ -144,13 +137,19 @@ int add_event(char* name, char* param, char* content_type, int agg_body)
 	else
 		ev->type= PUBL_TYPE;
 
+	ev->req_auth= event->req_auth;
+	ev->agg_nbody= event->agg_nbody;
+	ev->apply_auth_nbody= event->apply_auth_nbody;
+	ev->is_watcher_allowed= event->is_watcher_allowed;
+	ev->evs_publ_handl= event->evs_publ_handl;
+
 	ev->next= EvList->events;
 	EvList->events= ev;
 	EvList->ev_count++;
 
 done:
-	if(str_param)
-		pkg_free(str_param);
+	DBG("\n\n\nPRESENCE: add_event: SUCCESFULLY ADDED EVENT: %.*s\n\n", 
+			ev->stored_name.len, ev->stored_name.s);
 	return ret_code; 
 }
 

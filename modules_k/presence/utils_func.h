@@ -26,12 +26,46 @@
  *  2006-08-15  initial version (anca)
  */
 
-#include "../../str.h"
 
 #ifndef UTILS_FUNC_H
 #define UTILS_FUNC_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "../../mem/mem.h"
+#include "../../dprint.h"
+#include "../../str.h"
 
-int uandd_to_uri(str user,  str domain, str* out);
+static inline int uandd_to_uri(str user,  str domain, str *out)
+{
+	int size;
+
+	if(out==0)
+		return -1;
+
+	size = user.len + domain.len+7;
+
+	out->s = (char*)pkg_malloc(size*sizeof(char));
+	if(out->s == NULL)
+	{
+		LOG(L_ERR, "PRESENCE: uandd_to_uri: Error while allocating memory\n");
+		return -1;
+	}
+	out->len = 0;
+	strcpy(out->s,"sip:");
+	out->len = 4;
+	strncpy(out->s+out->len, user.s, user.len);
+	out->len += user.len;
+	out->s[out->len] = '@';
+	out->len+= 1;
+	strncpy(out->s + out->len, domain.s, domain.len);
+	out->len += domain.len;
+
+	out->s[out->len] = 0;
+	DBG("presence:uandd_to_uri: uri=%.*s\n", out->len, out->s);
+	
+	return 0;
+}
 
 //str* int_to_str(long int n);
 

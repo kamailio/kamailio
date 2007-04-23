@@ -35,7 +35,6 @@
 #include "../sl/sl_api.h"
 #include "../../db/db.h"
 #include "../../parser/parse_from.h"
-#include <libxml/parser.h>
 #include "event_list.h"
 
 /* TM bind */
@@ -50,7 +49,6 @@ extern str db_url;
 extern char *presentity_table;
 extern char *active_watchers_table;
 extern char *watchers_table; 
-extern char *xcap_table; 
 
 extern int counter;
 extern int pid;
@@ -60,10 +58,8 @@ extern char *to_tag_pref;
 extern int expires_offset;
 extern int default_expires;
 extern int lock_set_size;
-extern int force_active;
 extern int max_expires;
 extern struct sl_binds slb;
 extern str server_address;
-extern evlist_t* EvList;
 
 #endif /* PA_MOD_H */
