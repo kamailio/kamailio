@@ -69,7 +69,6 @@ int db_mysql_get_columns(db_con_t* _h, db_res_t* _r)
 	fields = mysql_fetch_fields(CON_RESULT(_h));
 	for(i = 0; i < n; i++) {
 		RES_NAMES(_r)[i] = fields[i].name;
-		LOG(L_ERR, "get_columns: col[%d] type [%d]\n", i, fields[i].type);
 		switch(fields[i].type) {
 		case FIELD_TYPE_TINY:
 		case FIELD_TYPE_SHORT:
