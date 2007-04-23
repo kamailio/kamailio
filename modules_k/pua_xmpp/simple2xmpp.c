@@ -217,7 +217,15 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 		}
 		if(hdr && strncmp(hdr->body.s,"terminated", 10)== 0)
 		{
+			/* chack if reason timeout => don't send notification */
+			if(strncmp(hdr->body.s+11,"reason=timeout", 14)== 0)
+			{
+				DBG("PUA_XMPP: Notify2Xmpp: Received Notification with state"
+					"terminated; reason= timeout=> don't send notification\n");
+				return 1;
+			}	
 			is_terminated= 1;
+
 		}
 	
 		if(build_xmpp_content(&to_uri, &from_uri, &body, &id, is_terminated)< 0)
@@ -911,7 +919,7 @@ void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl)
 
 	DBG("PUA_XMPP: Sipreply2Xmpp:xmpp_msg: %.*s\n",xmpp_msg.len, xmpp_msg.s);
 	
-	if(xmpp_packet(&from_uri, &to_uri, &xmpp_msg, &hentity->to_tag));
+	if(xmpp_packet(&from_uri, &to_uri, &xmpp_msg, &hentity->to_tag)< 0)
 	{
 		LOG(L_ERR, "PUA_XMPP:Sipreply2Xmpp: ERROR while sending"
 				" xmpp_reply_to_subscribe\n");
