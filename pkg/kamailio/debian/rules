@@ -255,7 +255,7 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installdocs
-	dh_installexamples
+	dh_installexamples --exclude=".svn"
 #	dh_installlogrotate
 	dh_installinit -popenser -- defaults 23
 	dh_installcron

@@ -1,16 +1,2 @@
-examples/acc.cfg
-examples/ctd.sh
-examples/exec_s3.cfg
-examples/exec_s4.cfg
-examples/exec_s5.cfg
-examples/flag_reply.cfg
-examples/fork.cfg
-examples/logging.cfg
-examples/msilo.cfg
-examples/nathelper.cfg
-examples/pstn.cfg
-examples/redirect.cfg
-examples/replicate.cfg
-examples/serial_183.cfg
-examples/web_im
+examples/*
 
