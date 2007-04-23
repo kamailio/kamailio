@@ -1,0 +1,307 @@
+<!-- cfgutils Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 40078 $</revnumber>
+		<date>$Date: 2007-03-23 13:30:39 +0100 (Fr, 23 Mär 2007) $</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	The cfgutils module can be used to introduce some randomness to
+	the behaviour of the server. It provides some setup functions
+	and the <quote>rand_event</quote> function. This function return either
+	true or false, depending on a random value and a specified probability.
+	E.g. if you set via fifo or script a probability value of 5%, then 5% of
+	all calls to rand_event will return false.
+	The pseudovariable <quote>$RANDOM</quote> could be used to introduce 
+	random values e.g. into a SIP reply.
+	</para>
+	<para>
+	The benefit of this module is the probability of the decision
+	can be manipulated by external applications such as web interface
+	or command line tools. The probability must be specified as 
+	percent value, ranging from 0 to 100.
+	</para>
+	<para>
+	The module exports commands to FIFO server that can be used to change
+	the global settings via FIFO interface. The FIFO commands are:
+	<quote>set_prob</quote>, <quote>reset_prob</quote> and
+	<quote>get_prob</quote>.
+	</para>
+	<para>
+	This module can be used for simple load-shedding, e.g. reply 5% of
+	the Invites with a 503 error and a adequate random Retry-After value.
+	</para>
+	<para>
+	Due the openser architecture the module uses only one seed for all the
+	children, that means if you have for example three children, the random
+	descision and the returned random value will repeat three times.
+	</para>
+	<para>
+	The module provides as well some functions to delay the execution of the
+	server. The functions <quote>sleep</quote> and <quote>usleep</quote> could
+	be used to let the server wait a specific time interval.
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the
+		listed modules must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>none</emphasis></para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>initial_probability</varname> (string)</title>
+		<para>
+		The initial value of the probability.
+		</para>
+		<para>
+		Default value is 
+			<quote>10</quote>.
+		</para>
+		<example>
+		<title><varname>initial_probability</varname> parameter usage</title>
+		<programlisting format="linespecific">
+   
+modparam("cfgutils", "initial_probability", "15);
+   
+</programlisting>
+	    </example>
+	</section>
+</section>
+
+    <section>
+	<title>Exported Functions</title>
+	<section>
+		<title><function moreinfo="none">rand_event()</function></title>
+		<para>
+			Return true or false, depending on a random value and a
+			probability value.
+		</para>
+		<example>
+			<title><function moreinfo="none">rand_event()</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (rand_event()) {
+  append_to_reply("Retry-After: 120\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows
+...
+</programlisting>
+		</example>
+	</section>
+	
+	<section>
+	    <title><function moreinfo="none">rand_set_prob(probabiltiy)</function></title>
+	    <para>
+		Set the <quote>probability</quote> of the decision.
+	    </para>
+	    <para>
+		<quote>probability</quote> can have a value from the range 0..99.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_set_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_set_prob("4");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">rand_reset_prob()</function></title>
+	    <para>
+		Reset the probability back to the inital value.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_reset_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_reset_prob();
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">rand_get_prob()</function></title>
+	    <para>
+		Return the current probability setting, e.g. for logging purposes.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_get_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_get_prob();
+   
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">sleep(time)</function>
+		</title>
+		<para>
+			Waits "time" seconds.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>time</emphasis> - Time to wait in seconds.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>sleep</function> usage</title>
+			<programlisting format="linespecific">
+...
+sleep("1");
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title>
+			<function moreinfo="none">usleep(time)</function>
+		</title>
+		<para>
+			Waits "time" milli-seconds.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>time</emphasis> - Time to wait in milli-seconds.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>usleep</function> usage</title>
+			<programlisting format="linespecific">
+...
+usleep("500");
+...
+			</programlisting>
+		</example>
+	</section>
+</section>
+	<section>
+		<title><acronym>MI</acronym> Commands</title>
+		<section>
+			<title><function moreinfo="none">rand_set_prop</function></title>
+			<para>
+				Set the probability value to the given parameter.
+				The parameter should be a percent value.
+			</para>
+			<para>
+				The parameter value must be a number from 0 to 99.
+			</para>
+			<example>
+				<title><function moreinfo="none">rand_set_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo rand_set_prob 10
+200 OK
+...
+</programlisting>
+			</example>
+			
+		</section>
+		<section>
+			<title><function moreinfo="none">rand_reset_prob</function></title>
+			<para>
+				Reset the probability value to the inital start value.
+			</para>
+			<para>
+				This command don't need a parameter.
+			</para>
+			<example>
+				<title>
+					<function moreinfo="none">rand_reset_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo rand_reset_prob
+200 OK
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">rand_get_prob</function></title>
+			<para>
+				Return the actual probability setting.
+			</para>
+			<para>
+				The function return the actual probability value.
+			</para>
+			<example>
+				<title><function moreinfo="none">rand_get_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo get_prob
+200 OK
+The actual probability is 50 percent.
+...
+</programlisting>
+			</example>
+		</section>
+</section>
+	
+<section>
+	<title>Exported pseudo-variables</title>
+		
+		<section>
+			<title><varname>$RANDOM</varname></title>
+			<para>
+				Returns a random value from the [0 - 2^31) range.
+			</para>
+			<example>
+				<title><function moreinfo="none">RANDOM pseudo-variable</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (get_random()) {
+  $avp(i:10) = ($RANDOM / 16777216); # 2^24
+  if ($avp(i:10) < 10) {
+     $avp(i:10) = 10;
+  }
+  append_to_reply("Retry-After: $avp(i:10)\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows
+   
+				 </programlisting>
+			</example>
+	</section>
+</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("cfgutils.sgml" "Book" "chapter")
+End:
+-->

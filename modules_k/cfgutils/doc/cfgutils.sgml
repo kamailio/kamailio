@@ -1,0 +1,50 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "cfgutils_user.sgml">
+<!ENTITY devel SYSTEM "cfgutils_devel.sgml">
+<!ENTITY faq SYSTEM "cfgutils_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>cfgutils Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Henning</firstname>
+		<surname>Westerholt</surname>
+		<affiliation><orgname>1und1 Internet AG</orgname></affiliation>
+		<email>henning.westerholt@1und1.de</email>
+		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>BASIS AudioNet GmbH</orgname></affiliation>
+		<address>
+		<email>bock@basis-audionet.de</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2007</year>
+		<holder>1und1 Internet AG</holder>
+		<holder>BASIS AudioNet GmbH</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 40078 $</revnumber>
+		<date>$Date: 2007-03-23 13:30:39 +0100 (Fr, 23 Mär 2007) $</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&devel;
+	&faq;
+
+</book>
