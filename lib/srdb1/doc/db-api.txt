@@ -640,3 +640,25 @@ handle: structure representing database connection
 
 The function returns the ID as integer or returns 0 if the previous statement 
 does not use an AUTO_INCREMENT value.
+
+
+2.12 Callback dbf.fetch_result
+
+2.12.1 Description
+
+The function fetches a number of rows from a database result.
+
+2.12.2 Prototype
+   int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n)
+
+2.12.3 Parameters
+
+The function takes three parameters:
+_h: structure representing database connection
+_r: structure for the result
+_n: the number of rows that should be fetched
+
+2.12.4 Return Value
+
+The function returns 0 if everything is ok, otherwise the function returns a
+value < 0.

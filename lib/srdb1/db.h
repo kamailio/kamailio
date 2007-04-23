@@ -84,7 +84,10 @@ typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k,
 			   db_key_t _o, db_res_t** _r);
 
 /*
- * Fetch number of rows from result !
+ * Fetch number of rows from a result
+ * _h structure representing database connection
+ * _r db_res structure for the result
+ * _n the number of rows that should be fetched
  */
 typedef int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n);
 
