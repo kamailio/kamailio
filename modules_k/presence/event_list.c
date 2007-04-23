@@ -148,7 +148,7 @@ int add_event(ev_t* event)
 	EvList->ev_count++;
 
 done:
-	DBG("\n\n\nPRESENCE: add_event: SUCCESFULLY ADDED EVENT: %.*s\n\n", 
+	DBG("PRESENCE: add_event: succesfully added event: %.*s\n", 
 			ev->stored_name.len, ev->stored_name.s);
 	return ret_code; 
 }
