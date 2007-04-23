@@ -2008,7 +2008,7 @@ case $1 in
 
 	online)
 		require_ctlengine
-		$CTLCMD ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
+		$CTLCMD ul_dump | $EGREP -i aor | awk '{print $2}' | sort | sort -mu
 		exit $?
 		;;
 
