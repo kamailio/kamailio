@@ -288,7 +288,6 @@ static str sup_ptypes[] = {
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
 static char *force_socket_str = 0;
-static int rtpproxy_disable = 0;
 static int rtpproxy_disable_tout = 60;
 static int rtpproxy_retr = 5;
 static int rtpproxy_tout = 1;
@@ -343,7 +342,6 @@ static param_export_t params[] = {
 	{"nortpproxy_str",        STR_PARAM, &nortpproxy_str.s      },
 	{"rtpproxy_sock",         STR_PARAM|USE_FUNC_PARAM,
 	                         (void*)nathelper_add_rtpproxy_set  },
-	{"rtpproxy_disable",      INT_PARAM, &rtpproxy_disable      },
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
@@ -375,15 +373,14 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 										char * rtpproxy){
 	/* Make rtp proxies list. */
 	char *p, *p1, *p2, *plim;
+	struct rtpp_node *pnode;
+	int weight;
 
 	p = rtpproxy;
 	plim = p + strlen(p);
-	
-	for(;;) {
-		struct rtpp_node *pnode;
-		int weight;
 
-		weight = 1;
+	for(;;) {
+			weight = 1;
 		while (*p && isspace((int)*p))
 			++p;
 		if (p >= plim)
@@ -413,18 +410,15 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 		pnode->rn_disabled = 0;
 		pnode->rn_url = pkg_malloc(p2 - p1 + 1);
 		if (pnode->rn_url == NULL) {
+			pkg_free(pnode);
 			LOG(L_ERR, "nathelper: Can't allocate memory\n");
 			return -1;
 		}
 		memmove(pnode->rn_url, p1, p2 - p1);
 		pnode->rn_url[p2 - p1] = 0;
-		if (rtpp_list->rn_first == NULL) {
-			rtpp_list->rn_first = pnode;
-		} else {
-			rtpp_list->rn_last->rn_next = pnode;
-		}
-				rtpp_list->rn_last = pnode;
-		rtpp_list->rtpp_node_count++;
+			
+		LOG(L_DBG, "DBG:nathelper:add_rtp_proxy_socks: url is %s\n", 
+			pnode->rn_url);
 		/* Leave only address in rn_address */
 		pnode->rn_address = pnode->rn_url;
 		if (strncmp(pnode->rn_address, "udp:", 4) == 0) {
@@ -437,7 +431,15 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 			pnode->rn_umode = 0;
 			pnode->rn_address += 5;
 		}
-	/*	LOG(L_DBG, "DBG:nathelper: rtp proxy %s added\n", pnode->rn_url);*/
+
+		if (rtpp_list->rn_first == NULL) {
+			rtpp_list->rn_first = pnode;
+		} else {
+			rtpp_list->rn_last->rn_next = pnode;
+		}
+
+		rtpp_list->rn_last = pnode;
+		rtpp_list->rtpp_node_count++;
 	}
 	return 0;
 }
@@ -450,12 +452,79 @@ static int nathelper_add_rtpproxy_set( modparam_t type, void* val){
 	
 	char *p, * rtp_proxies, *p2;
 	struct rtpp_set * rtpp_list;
-	str id_set;
-
 	unsigned int my_current_id;
-		
-	if (rtpproxy_disable == 0) {
-		
+	str id_set;
+	int new_list;
+
+	/* empty definition? */
+	p= (char*) val;
+	if(!p || *p=='\0'){
+		return 0;
+	}
+
+	for(;*p && isspace(*p);p++);
+	if(*p=='\0'){
+		return 0;
+	}
+
+	rtp_proxies = strstr(p, "==");
+	if(rtp_proxies){
+		if(*(rtp_proxies +2)=='\0'){
+			LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
+					"script error -invalid rtp proxy list!\n");
+			return -1;
+		}
+			
+		*rtp_proxies = '\0';
+		p2 = rtp_proxies-1;
+		for(;isspace(*p2); *p2 = '\0',p2--);
+		id_set.s = p;	id_set.len = p2 - p+1;
+			
+		if(id_set.len <= 0 ||str2int(&id_set, &my_current_id)<0 ){
+		LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
+				"script error -invalid set_id value!\n");
+			return -1;
+		}
+			
+		rtp_proxies+=2;
+	}else{
+		rtp_proxies = p;
+		my_current_id = DEFAULT_RTPP_SET_ID;
+	}
+
+	for(;*rtp_proxies && isspace(*rtp_proxies);rtp_proxies++);
+
+	if(!(*rtp_proxies)){
+		LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
+			"script error -empty rtp_proxy list\n");
+		return -1;;
+	}
+
+	/*search for the current_id*/
+	rtpp_list = rtpp_set_list ? rtpp_set_list->rset_first : 0;
+	while( rtpp_list != 0 && rtpp_list->id_set!=my_current_id)
+		rtpp_list = rtpp_list->rset_next;
+
+	if(rtpp_list==NULL){	/*if a new id_set : add a new set of rtpp*/
+		rtpp_list = pkg_malloc(sizeof(struct rtpp_set));
+		if(!rtpp_list){
+			LOG(L_ERR, "ERROR:nathelper: nathelper_add_rtpproxy_sets:"
+				"failed to allocate rtppoxylist memory\n");
+			return -1;
+		}
+		memset(rtpp_list, 0, sizeof(struct rtpp_set));
+		rtpp_list->id_set = my_current_id;
+		new_list = 1;
+	} else {
+		new_list = 0;
+	}
+
+	if(add_rtpproxy_socks(rtpp_list, rtp_proxies)!= 0){
+		/*if this list will not be inserted, clean it up*/
+		goto error;
+	}
+
+	if (new_list) {
 		if(!rtpp_set_list){/*initialize the list of set*/
 			rtpp_set_list = pkg_malloc(sizeof(struct rtpp_set_head));
 			if(!rtpp_set_list){
@@ -465,86 +534,25 @@ static int nathelper_add_rtpproxy_set( modparam_t type, void* val){
 			}
 			memset(rtpp_set_list, 0, sizeof(struct rtpp_set_head));
 		}
-		p= (char*) val;
-		rtp_proxies = strstr(p, "==");
-		if(rtp_proxies){
-			if(*(rtp_proxies +1)=='\0'){
-				LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-						"script error -invalid rtp proxy list!\n");
-				return -1;
-			}
-			if(*(rtp_proxies +1)!='\0'){
-				*rtp_proxies = '\0';
-				p2 = rtp_proxies-1;
-				for(;isspace(*p2); *p2 = '\0',p2--);
-				id_set.s = p;	id_set.len = p2 - p+1;
-				
-				if(str2int(&id_set, &my_current_id)<0 ){
-					LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-						"script error -invalid set_id value!\n");
-					return -1;
-				}
-			}
-			rtp_proxies+=2;
+
+		/*update the list of set info*/
+		if(!rtpp_set_list->rset_first){
+			rtpp_set_list->rset_first = rtpp_list;
 		}else{
-			rtp_proxies = p;
-			my_current_id = DEFAULT_RTPP_SET_ID;
+			rtpp_set_list->rset_last->rset_next = rtpp_list;
 		}
 
-		while (*rtp_proxies && isspace((int)*rtp_proxies))
-			rtp_proxies++;
-		if(!(*rtp_proxies)){
-			LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-				"script error -empty rtp_proxy list\n");
-			return -1;;
-		}
+		rtpp_set_list->rset_last = rtpp_list;
+		rtpp_set_count++;
 
-		/*search for the current_id*/
-		for( rtpp_list=rtpp_set_list->rset_first ; rtpp_list != 0 && 
-			rtpp_list->id_set!=my_current_id; rtpp_list = rtpp_list->rset_next);
-		if(rtpp_list && my_current_id!= 0){
-			LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-				"script error - rtpp_set %i already exists!\n", my_current_id);
-			return -1;
-		}
-		if(!rtpp_list){	/*if a new id_set : add a new set of rtpp*/
-			rtpp_list = pkg_malloc(sizeof(struct rtpp_set));
-			if(!rtpp_list){
-				LOG(L_ERR, "ERROR:nathelper: nathelper_add_rtpproxy_set:"
-					"failed to allocate rtppoxylist memory\n");
-				return -1;
-			}
-			memset(rtpp_list, 0, sizeof(struct rtpp_set));
-			rtpp_list->id_set = my_current_id;
-			rtpp_list->set_disabled = 0;
-		}
-		
-		/*add the rtppproxies nodes,if my_current_id ==0 they will be appended*/
-		if(add_rtpproxy_socks(rtpp_list, rtp_proxies)!= 0){
-			
-			pkg_free(rtpp_list);
-			return -1;
-		}
-
-		if(rtpp_list->rtpp_node_count){
-			/*update the list of set info*/
-			if(!rtpp_set_list->rset_first){
-				rtpp_set_list->rset_first = rtpp_list;
-			}else{
-				rtpp_set_list->rset_last->rset_next = rtpp_list;
-			}
-			rtpp_set_list->rset_last = rtpp_list;
-			rtpp_set_count++;
-		}else{
-			pkg_free(rtpp_list);
-			return -1;
-		}
 		if(my_current_id == DEFAULT_RTPP_SET_ID){
 			default_rtpp_set = rtpp_list;
 		}
 	}
 
 	return 0;
+error:
+	return -1;
 }
 
 
@@ -606,6 +614,7 @@ static int fixup_fix_nated_register(void** param, int param_no)
 	return 0;
 }
 
+
 static int
 mod_init(void)
 {
@@ -640,6 +649,10 @@ mod_init(void)
 		socket_str.len=strlen(socket_str.s);
 		force_socket=grep_sock_info(&socket_str,0,0);
 	}
+
+	/* any rtpptoxy configured? */
+	if(rtpp_set_list)
+		default_rtpp_set = select_rtpp_set(DEFAULT_RTPP_SET_ID);
 
 	if (nortpproxy_str.s==NULL || nortpproxy_str.s[0]==0) {
 		nortpproxy_str.len = 0;
@@ -696,8 +709,6 @@ mod_init(void)
 		nets_1918[i].netaddr = ntohl(addr.s_addr) & nets_1918[i].mask;
 	}
 
-	default_rtpp_set = select_rtpp_set(DEFAULT_RTPP_SET_ID);
-
 	return 0;
 }
 
@@ -710,8 +721,15 @@ child_init(int rank)
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
 
+	if (rank<=0)
+		return 0;
+
+	if(rtpp_set_list==NULL )
+		return 0;
+
 	/* Iterate known RTP proxies - create sockets */
 	mypid = getpid();
+
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != 0;
 		rtpp_list = rtpp_list->rset_next){
 
@@ -764,8 +782,6 @@ rptest:
 			pnode->rn_disabled = rtpp_test(pnode, 0, 1);
 		}
 	}
-	if (rtpproxy_disable)
-		rtpproxy_disable_tout = -1;
 
 	return 0;
 }
@@ -1728,6 +1744,7 @@ static struct rtpp_set * select_rtpp_set(int id_set ){
 
 	struct rtpp_set * rtpp_list;
 	/*is it a valid set_id?*/
+	
 	if(!rtpp_set_list || !rtpp_set_list->rset_first){
 		LOG(L_ERR, "ERROR:nathelper:select_rtpp_set:no rtp_proxy configured\n");
 		return 0;
@@ -1763,16 +1780,9 @@ select_rtpp_node(str callid, int do_test)
 	/* Most popular case: 1 proxy, nothing to calculate */
 	if (selected_rtpp_set->rtpp_node_count == 1) {
 		node = selected_rtpp_set->rn_first;
-		node->rn_disabled = rtpp_test(node, 1, 0);
-		if(node->rn_disabled){
-			/*force the rtpp_proxy*/
-			node->rn_disabled = rtpp_test(node, 1, 1);
+		if (node->rn_disabled && node->rn_recheck_ticks <= get_ticks())
 			node->rn_disabled = rtpp_test(node, 1, 0);
-
-			return node->rn_disabled ? NULL : node;
-		}else{
-			return node;
-		}
+		return node->rn_disabled ? NULL : node;
 	}
 
 	/* XXX Use quick-and-dirty hashing algo */

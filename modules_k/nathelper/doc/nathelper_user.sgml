@@ -230,7 +230,7 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>NONE</quote>.
+			Default value is <quote>NONE</quote> (disabled).
 		</emphasis>
 		</para>
 		<example>
@@ -247,26 +247,6 @@ modparam("nathelper", "rtpproxy_sock",
 	"1 == udp:localhost:12221 udp:localhost:12222")
 modparam("nathelper", "rtpproxy_sock",
 	"2 == udp:localhost:12225")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>rtpproxy_disable</varname> (integer)</title>
-		<para>
-		If true (set to a non 0 value), the RTPProxy support will be
-		disabled - no connection to it will be established.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>0 (false)</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>rtpproxy_disable</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "rtpproxy_disable", 1)
 ...
 </programlisting>
 		</example>

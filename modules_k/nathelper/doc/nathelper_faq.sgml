@@ -13,6 +13,18 @@
     <qandaset defaultlabel="number">
 	<qandaentry>
 	    <question>
+		<para>What happend with <quote>rtpproxy_disable</quote> parameter?</para>
+	    </question>
+	    <answer>
+		<para>
+			It was removed as it became obsolete - now 
+			<quote>rtpproxy_sock</quote> can take empty value to disable the
+			rtpproxy functionality.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
 		<para>Where can I find more about OpenSER?</para>
 	    </question>
 	    <answer>
