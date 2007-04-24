@@ -2032,7 +2032,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 			}
 			port = atoi(argv[0]);
 			if (port <= 0 || port > 65535) {
-				LOG(L_ERR, "force_rtp_proxy2: incorrect port in reply from rtp proxy\n");
+				/*
+				 * In forced lookup mode absence of session indicated
+				 * by port number being zero is not an error condition
+				 * but merely of indication that there is no such
+				 * session in the proxy exists.
+				 */
+				if (port != 0 || flookup == 0)
+					LOG(L_ERR, "force_rtp_proxy2: incorrect port in reply from rtp proxy\n");
 				return -1;
 			}
 
