@@ -284,7 +284,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 {
 	struct sip_uri uri, puri;
 	str body;
-	unsigned int idx;
 	struct to_body *pto, TO;
 	int lexpire;
 	presentity_t* presentity = 0;
@@ -528,9 +527,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		goto error;
 	}
 
-	idx = core_hash( &pto->uri, NULL, lock_set_size ) ;
-
-	lock_set_get( set, idx );
 	/* querry the database and update or insert */
 	if(update_presentity(msg, presentity, &body, etag_gen) <0)
 	{
@@ -538,7 +534,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 				" presentity\n");
 		goto error;
 	}
-	lock_set_release( set, idx );
 
 	if(presentity)
 		free_presentity(presentity);

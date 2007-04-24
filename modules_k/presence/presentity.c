@@ -167,16 +167,13 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, int new_t )
 {
-	str res_body;
 	db_key_t query_cols[8];
 	db_op_t  query_ops[8];
 	db_val_t query_vals[8], update_vals[4];
-	db_key_t result_cols[4], update_keys[4];
+	db_key_t update_keys[4];
 	db_res_t *result= NULL;
 	int n_query_cols = 0;
-	int n_result_cols = 0;
 	int n_update_cols = 0;
-	int body_col;
 	char* status = NULL;
 
 	if( !use_db )
@@ -215,8 +212,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 
 	if(presentity->expires == 0) 
 	{
-		query_db_notify( &presentity->user, &presentity->domain, 
-				presentity->event, NULL, &presentity->etag, presentity->sender);
 	
 		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 		{
@@ -237,10 +232,17 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
 			return -1;
 		}
+		if( query_db_notify( &presentity->user, &presentity->domain, 
+			presentity->event, NULL, &presentity->etag, presentity->sender)< 0 )
+		{
+			LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
+			return -1;
+		}
+
 		return 1;
 	}
 
-	if(new_t) /* daca a fost generat un nou etag insereaza */
+	if(new_t) 
 	{
 		/* insert new record into database */	
 				
@@ -297,7 +299,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 	}
 	else
 	{
-		result_cols[body_col=n_result_cols++] = "body" ;
 		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 		{
 			LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
@@ -306,7 +307,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 
 		DBG("PRESENCE:update_presentity: querying presentity  \n");
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-			 result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
+			 0, n_query_cols, 0, 0, &result) < 0) 
 		{
 			LOG(L_ERR, "PRESENCE:update_presentity: Error while querying"
 					" presentity\n");
@@ -341,6 +342,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 					goto error;
 				}
 				pa_dbf.free_result(pa_db, result);
+				
+				/* send 200ok */
 				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 				{
 					LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
@@ -348,14 +351,15 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 				}
 				return 0;
 			}
-
+/*
 			db_row_t *row = &result->rows[0];
 			db_val_t *row_vals = ROW_VALUES(row);
 			res_body.s = row_vals[body_col].val.str_val.s;	
 			res_body.len = row_vals[body_col].val.str_val.len;
-			
+*/			
 			//	update_xml( &res_body, body);
 			/* write the new body*/
+
 			update_keys[n_update_cols] = "body";
 			update_vals[n_update_cols].type = DB_BLOB;
 			update_vals[n_update_cols].nul = 0;

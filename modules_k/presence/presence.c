@@ -46,9 +46,7 @@
 #include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../locking.h"
 #include "../../usr_avp.h"
-#include "../../lock_ops.h"
 #include "../tm/tm_load.h"
 #include "../sl/sl_api.h"
 #include "../../pt.h"
@@ -67,7 +65,6 @@ static int clean_period=100;
 /* database connection */
 db_con_t *pa_db = NULL;
 db_func_t pa_dbf;
-gen_lock_set_t* set;
 char *presentity_table="presentity";
 char *active_watchers_table = "active_watchers";
 char *watchers_table= "watchers";  
@@ -102,7 +99,6 @@ int pid = 0;
 char prefix='a';
 int startup_time=0;
 str db_url = {0, 0};
-int lock_set_size = 8;
 int expires_offset = 0;
 int default_expires = 3600;
 int max_expires = 3600;
@@ -128,7 +124,6 @@ static param_export_t params[]={
 	{ "clean_period",			INT_PARAM, &clean_period },
 	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
 	{ "totag_avpid",			INT_PARAM, &reply_tag_avp_id },
-	{ "lock_set_size",			INT_PARAM, &lock_set_size },
 	{ "expires_offset",			INT_PARAM, &expires_offset },
 	{ "max_expires",			INT_PARAM, &max_expires  },
 	{ "server_address",         STR_PARAM, &server_address.s},
@@ -159,9 +154,6 @@ static int mod_init(void)
 	int ver = 0;
 
 	DBG("PRESENCE: initializing module ...\n");
-
-	if(lock_set_size<=2)
-		lock_set_size = 8;
 
 	if(expires_offset<0)
 		expires_offset = 0;
@@ -194,19 +186,6 @@ static int mod_init(void)
 	if(load_tm_api(&tmb)==-1)
 	{
 		LOG(L_ERR, "PRESENCE:mod_init:ERROR can't load tm functions\n");
-		return -1;
-	}
-
-	set = lock_set_alloc(lock_set_size);
-	if( set == NULL )
-	{
-		LOG(L_ERR, "PRESENCE:mod_init:ERROR while allocating lock_set \n");
-		return -1;
-	}
-
-	if ( (set = lock_set_init(set))== 0 )
-	{
-		LOG(L_ERR, "PRESENCE:mod_init: ERROR while initializing lock \n");
 		return -1;
 	}
 
@@ -337,8 +316,6 @@ static int child_init(int rank)
 void destroy(void)
 {
 	DBG("PRESENCE: destroy module ...\n");
-	
-	lock_set_destroy(set);
 	
 	if(pa_db && pa_dbf.close)
 		pa_dbf.close(pa_db);
