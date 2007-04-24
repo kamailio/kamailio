@@ -1266,11 +1266,11 @@ int reply_received( struct sip_msg  *p_msg )
 	struct usr_avp **backup_list;
 
 	/* make sure we know the associated transaction ... */
-	if (t_check(p_msg, &branch ) == -1) return 1;
-	
+	if (t_check(p_msg, &branch ) == -1) goto not_found;
+
 	/*... if there is none, tell the core router to fwd statelessly */
 	t = get_t();
-	if ((t == 0) || (t == T_UNDEFINED)) return 1;
+	if ((t == 0) || (t == T_UNDEFINED)) goto not_found;
 
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;
@@ -1422,6 +1422,9 @@ done:
 	 * retransmit; hopefuly, we'll then be better off 
 	 */
 	return 0;
+not_found:
+	set_t(T_UNDEFINED);
+	return 1;
 }
 
 
