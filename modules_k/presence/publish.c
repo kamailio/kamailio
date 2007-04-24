@@ -38,7 +38,6 @@
 #include "../../lock_ops.h"
 #include "../../hash_func.h"
 #include "../../db/db.h"
-#include "../../data_lump_rpl.h"
 #include "presence.h"
 #include "notify.h"
 #include "utils_func.h"
@@ -56,8 +55,6 @@ extern int startup_time;
 static str pu_400a_rpl = str_init("Bad request");
 static str pu_400b_rpl = str_init("Invalid request");
 static str pu_489_rpl  = str_init("Bad Event");
-static str pu_200_rpl  = str_init("OK");
-static str pu_412_rpl  = str_init("Conditional request failed");
 
 
 char* generate_ETag()
@@ -292,9 +289,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	int lexpire;
 	presentity_t* presentity = 0;
 	struct hdr_field* hdr;
-	int found= 0, etag_gen = 0, update_p = 0;
+	int found= 0, etag_gen = 0;
 	str etag={0, 0};
-	str hdr_append, hdr_append2 ;
 	int error_ret = -1; /* error return code */
 	str* sender= NULL;
 	static char buf[256];
@@ -536,85 +532,13 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 
 	lock_set_get( set, idx );
 	/* querry the database and update or insert */
-	update_p= update_presentity(presentity, &body, etag_gen);
-	lock_set_release( set, idx );
-
-	if(update_p <0)
+	if(update_presentity(msg, presentity, &body, etag_gen) <0)
 	{
 		LOG(L_ERR, "PRESENCE:handle_publish: ERROR occured while updating"
 				" presentity\n");
 		goto error;
 	}
-
-	if(update_p >= 0 && update_p != 412)
-	{
-		/*send a 200(OK) reply with the 2 headers*/	
-	
-		/* ??? should we use static allocated buffer */
-		hdr_append.s = (char *)pkg_malloc( sizeof(char)*50);
-		if(hdr_append.s == NULL)
-		{
-			LOG(L_ERR,"ERROR:handle_publish : unable to add lump_rl\n");
-			goto error;
-		}
-		hdr_append.s[0]='\0';
-		hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n",lexpire -
-				expires_offset);
-		if(hdr_append.len < 0)
-		{
-			LOG(L_ERR, "PRESENCE:handle_publish: ERROR unsuccessful sprintf\n");
-			pkg_free(hdr_append.s);
-			goto error;
-		}
-		hdr_append.s[hdr_append.len]= '\0';
-		
-		if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
-		{
-			LOG(L_ERR,"PRESENCE: handle_publish:ERROR unable to add lump_rl\n");
-			pkg_free(hdr_append.s);
-			goto error;
-		}
-		pkg_free(hdr_append.s);
-
-		hdr_append2.s = (char *)pkg_malloc( sizeof(char)*16+etag.len );
-		if(hdr_append2.s == NULL)
-		{
-			LOG(L_ERR,"PRESENCE:handle_publish:ERROR unable to add lump_rl\n");
-			goto error;
-		}
-		hdr_append2.s[0]='\0';
-		hdr_append2.len = sprintf(hdr_append2.s, "SIP-ETag: %s\r\n", etag.s);
-		if(hdr_append2.len < 0)
-		{
-			LOG(L_ERR, "PRESENCE:handle_publish:ERROR unsuccessful sprintf\n ");
-			pkg_free(hdr_append2.s);
-			goto error;
-		}
-		hdr_append2.s[hdr_append2.len]= '\0';
-		if (add_lump_rpl(msg, hdr_append2.s, hdr_append2.len, LUMP_RPL_HDR)==0 )
-		{
-			LOG(L_ERR,"PRESENCE:handle_publish: unable to add lump_rl\n");
-			pkg_free(hdr_append2.s);
-			goto error;
-		}
-		pkg_free(hdr_append2.s);
-
-		if( slb.reply( msg, 200, &pu_200_rpl)== -1)
-		{
-			LOG(L_ERR,"PRESENCE: handle_publish: ERORR while sending reply\n");
-			goto error;
-		}
-	}
-
-	if(update_p == 412)
-	{
-		if (slb.reply(msg, 412, &pu_412_rpl) == -1)
-		{
-			LOG(L_ERR, "PRESENCE:PRESENCE:handle_publish: ERROR while sending"
-					"reply\n");
-		}
-	}
-	
+	lock_set_release( set, idx );
 
 	if(presentity)
 		free_presentity(presentity);

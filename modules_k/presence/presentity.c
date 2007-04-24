@@ -36,6 +36,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../str.h"
 #include "../alias_db/alias_db.h"
+#include "../../data_lump_rpl.h"
 #include "presentity.h"
 #include "presence.h" 
 #include "notify.h"
@@ -46,6 +47,72 @@ extern char* presentity_table;
 extern db_con_t* pa_db;
 extern db_func_t pa_dbf;
 
+static str pu_200_rpl  = str_init("OK");
+static str pu_412_rpl  = str_init("Conditional request failed");
+
+int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
+{
+	str hdr_append, hdr_append2 ;
+
+	DBG("PRESENCE:publ_send200ok: send 200OK reply\n");	
+	/* ??? should we use static allocated buffer */
+	hdr_append.s = (char *)pkg_malloc( sizeof(char)*100);
+	if(hdr_append.s == NULL)
+	{
+		LOG(L_ERR,"ERROR:publ_send200ok: unable to add lump_rl\n");
+		return -1;
+	}
+	hdr_append.s[0]='\0';
+	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n",lexpire -
+			expires_offset);
+	if(hdr_append.len < 0)
+	{
+		LOG(L_ERR, "PRESENCE:publ_send200ok: ERROR unsuccessful sprintf\n");
+		pkg_free(hdr_append.s);
+			return -1;
+	}
+	hdr_append.s[hdr_append.len]= '\0';
+		
+	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
+	{
+		LOG(L_ERR,"PRESENCE: publ_send200ok:ERROR unable to add lump_rl\n");
+		pkg_free(hdr_append.s);
+		return -1;
+	}
+	pkg_free(hdr_append.s);
+
+	hdr_append2.s = (char *)pkg_malloc( sizeof(char)*(20+etag.len) );
+	if(hdr_append2.s == NULL)
+	{
+		LOG(L_ERR,"PRESENCE:publ_send200ok:ERROR unable to add lump_rl\n");
+		return -1;
+	}
+	hdr_append2.s[0]='\0';
+	hdr_append2.len = sprintf(hdr_append2.s, "SIP-ETag: %s\r\n", etag.s);
+	if(hdr_append2.len < 0)
+	{
+		LOG(L_ERR, "PRESENCE:publ_send200ok:ERROR unsuccessful sprintf\n ");
+		pkg_free(hdr_append2.s);
+		return -1;
+	}
+	hdr_append2.s[hdr_append2.len]= '\0';
+	if (add_lump_rpl(msg, hdr_append2.s, hdr_append2.len, LUMP_RPL_HDR)==0 )
+	{
+		LOG(L_ERR,"PRESENCE:publ_send200ok: unable to add lump_rl\n");
+		pkg_free(hdr_append2.s);
+		return -1;
+	}
+	pkg_free(hdr_append2.s);
+
+	if( slb.reply( msg, 200, &pu_200_rpl)== -1)
+	{
+		LOG(L_ERR,"PRESENCE: publ_send200ok: ERORR while sending reply\n");
+		return -1;
+	}
+
+	return 0;
+
+}	
 presentity_t* new_presentity( str* domain,str* user,int expires, 
 		ev_t* event, str* etag, str* sender)
 {
@@ -98,7 +165,7 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
     
 }
 
-int update_presentity(presentity_t* presentity, str* body, int new_t )
+int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, int new_t )
 {
 	str res_body;
 	db_key_t query_cols[8];
@@ -106,7 +173,6 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 	db_val_t query_vals[8], update_vals[4];
 	db_key_t result_cols[4], update_keys[4];
 	db_res_t *result= NULL;
-	int ret_code= 0;
 	int n_query_cols = 0;
 	int n_result_cols = 0;
 	int n_update_cols = 0;
@@ -166,6 +232,11 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 		}
 		DBG("PRESENCE:update_presentity:delete from db %.*s\n",
 				presentity->user.len,presentity->user.s );
+		if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
+			return -1;
+		}
 		return 1;
 	}
 
@@ -209,13 +280,20 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 					" inserting new presentity\n");
 			goto error;
 		}
+		/* send 200ok */
+		if(publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 2000k\n");
+			goto error;
+		}
+		
 		/* send notify with presence information */
-			if (query_db_notify(&presentity->user, &presentity->domain,
-						presentity->event, NULL, NULL, presentity->sender)<0)
-			{
-				DBG(" PRESENCE:update_presentity:Could not send"
-						" notify for event presence\n");
-			}
+		if (query_db_notify(&presentity->user, &presentity->domain,
+					presentity->event, NULL, NULL, presentity->sender)<0)
+		{
+			DBG(" PRESENCE:update_presentity:Could not send"
+					" notify for event presence\n");
+		}
 	}
 	else
 	{
@@ -263,6 +341,11 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 					goto error;
 				}
 				pa_dbf.free_result(pa_db, result);
+				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
+					return -1;
+				}
 				return 0;
 			}
 
@@ -290,6 +373,13 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 
 			pa_dbf.free_result(pa_db, result);
 			result= NULL;
+			
+			/* send 200OK */
+			if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
+				return -1;
+			}
 
 			/* presentity body is updated so send notify to all watchers */
 			if (query_db_notify(&presentity->user, &presentity->domain,
@@ -301,14 +391,17 @@ int update_presentity(presentity_t* presentity, str* body, int new_t )
 		else  /* if there isn't no registration with those 3 values */
 		{
 			LOG(L_DBG, "PRESENCE:update_presentity: No E_Tag match\n");
-			ret_code=  412;
+			if (slb.reply(msg, 412, &pu_412_rpl) == -1)
+			{
+				LOG(L_ERR, "PRESENCE:PRESENCE:update_presentity: ERROR while sending"
+					"reply\n");
+			}
 		}
 	}
-	
 	if(status)
 		xmlFree(status);
 
-	return ret_code;
+	return 0;
 
 error:
 	LOG(L_ERR, "PRESENCE:update_presentity: ERROR occured\n");

@@ -111,8 +111,7 @@ str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 
 	if(strncmp(status.s, "terminated",10) == 0)
 	{
-		DBG( "PRESENCE: build_str_hdr: state = terminated writing state"
-				" and reason\n");
+		DBG( "PRESENCE: build_str_hdr: state = terminated \n");
 
 		strncpy(str_hdr->s+str_hdr->len,"Subscription-State: ", 20);
 		str_hdr->len += 20;
@@ -1084,7 +1083,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 			strncmp( subs->status.s, "pending", 7) == 0) 
 		{
 			DBG("PRESENCE:notify: state terminated or pending-"
-					" notify body NULL");
+					" notify body NULL\n");
 			notify_body = NULL;
 		}
 		else  
