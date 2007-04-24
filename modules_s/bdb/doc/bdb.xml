@@ -13,6 +13,9 @@
 		<affiliation><orgname>Sippy Software, Inc.</orgname></affiliation>
 		<address>
 		<email>devel@sippysoft.com</email>
+                <otheraddr>
+                <ulink url="http://www.sippysoft.com">http://www.sippysoft.com</ulink>
+                </otheraddr>
 		</address>
 	    </author>
 	</authorgroup>
