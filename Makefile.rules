@@ -27,7 +27,7 @@
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFS) -c $< -o $@
 
 %.d: %.c $(ALLDEP)
-	@set -e; $(MKDEP) $(INCLUDES) $(DEFS) $< \
+	@set -e; $(MKDEP) $(CFLAGS) $(INCLUDES) $(DEFS) $< \
 	|  sed 's#\(\($*D)\)\?$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
 	[ -s $@ ] || rm -f $@
 
