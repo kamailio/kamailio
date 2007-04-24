@@ -174,7 +174,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 	db_res_t *result= NULL;
 	int n_query_cols = 0;
 	int n_update_cols = 0;
-	char* status = NULL;
 
 	if( !use_db )
 		return 0;
@@ -342,7 +341,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 					goto error;
 				}
 				pa_dbf.free_result(pa_db, result);
-				
+		
 				/* send 200ok */
 				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 				{
@@ -389,7 +388,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			if (query_db_notify(&presentity->user, &presentity->domain,
 						presentity->event, NULL, NULL, presentity->sender)<0)
 			{
-				LOG(L_ERR," PRESENCE:update_presentity: Could not send Notify\n");
+				DBG(" PRESENCE:update_presentity: Could not send Notify for an"
+						" updating Publish\n");
 			}
 		}  
 		else  /* if there isn't no registration with those 3 values */
@@ -399,12 +399,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			{
 				LOG(L_ERR, "PRESENCE:PRESENCE:update_presentity: ERROR while sending"
 					"reply\n");
+				goto error;
 			}
 		}
 	}
-	if(status)
-		xmlFree(status);
-
 	return 0;
 
 error:
@@ -414,8 +412,6 @@ error:
 		pa_dbf.free_result(pa_db, result);
 		result= NULL;
 	}
-	if(status)
-		xmlFree(status);
 	return -1;
 
 }

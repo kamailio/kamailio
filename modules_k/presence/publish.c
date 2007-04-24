@@ -549,8 +549,8 @@ error:
 	
 	if(presentity)
 		free_presentity(presentity);
-		pkg_free(etag.s);
 	if(etag_gen && etag.s)
+		pkg_free(etag.s);
 	if(sender)
 		pkg_free(sender);
 	
