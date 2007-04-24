@@ -28,6 +28,7 @@
  * -------
  * 2003-03-29 Created by janakj
  * 2003-07-08 added wrapper to calculate_hooks, needed by b2bua (dcm)
+ * 2007-04-13 added dialog callbacks (andrei)
  */
 
 
@@ -58,6 +59,103 @@
 #define ROUTE_SEPARATOR "," CRLF "       "
 #define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
 
+
+#ifdef DIALOG_CALLBACKS
+
+struct new_dlg_cb{
+	int types;
+	struct new_dlg_cb* next;
+	dialog_cb* callback;
+	void* param;
+};
+
+static struct new_dlg_cb* new_dlg_cb_list=0;
+/* callbacks for new dialogs (called each time a new dialog (uas or uac) is
+ * created)
+ * params: type - DLG_CB_UAC or DLG_CB_UAS
+ *            f - callback function
+ *        param - parameter passed to the callback; if allocated it must
+ *                  be allocated in shared mem.
+ * returns < 0 on error
+ * WARNING: this callbacks can be registered only before forking (in mod_init)
+ */
+int register_new_dlg_cb(int type, dialog_cb f, void* param)
+{
+	struct new_dlg_cb* dlg_cb;
+	
+	dlg_cb=shm_malloc(sizeof(struct new_dlg_cb));
+	if (dlg_cb==0)
+		return E_OUT_OF_MEM;
+	dlg_cb->types=type;
+	dlg_cb->callback=f;
+	dlg_cb->param=param;
+	dlg_cb->next=new_dlg_cb_list;
+	new_dlg_cb_list=dlg_cb;
+	return 0;
+}
+
+
+void destroy_new_dlg_cbs()
+{
+	struct new_dlg_cb* c;
+	struct new_dlg_cb* n;
+
+	c=new_dlg_cb_list;
+	while(c){
+		n=c->next;
+		shm_free(c);
+		c=n;
+	}
+	new_dlg_cb_list=0;
+}
+
+
+static void run_new_dlg_callbacks(int type, dlg_t* dlg, struct sip_msg* msg)
+{
+	struct new_dlg_cb* c;
+	for (c=new_dlg_cb_list; c; c=c->next){
+		if (c->types & type)
+			c->callback(type, dlg, msg);
+	}
+}
+
+
+int register_dlg_tmcb(int types, dlg_t* dlg, transaction_cb f, void* param)
+{
+	if (types!=TMCB_DLG){
+		LOG(L_CRIT, "BUG: tm: register_dlg_tmcb: bad types %d\n", types);
+		return E_BUG;
+	}
+	if (f==0){
+		LOG(L_CRIT, "BUG: tm: register_dlg_tmcb: null callback function");
+		return E_BUG;
+	}
+	return insert_tmcb(&dlg->dlg_callbacks, types, f, param);
+}
+
+
+/* per dialog callbacks receive only the transaction, send buffer, destination
+ * and the retr. buff */
+void run_trans_dlg_callbacks(dlg_t* dlg, struct cell* trans,
+								struct retr_buf* rbuf)
+{
+	struct tmcb_params params;
+	
+	if (dlg->dlg_callbacks.first==0)
+		return;
+	memset(&params, 0, sizeof(params));
+#ifdef TMCB_ONSEND
+	params.t_rbuf=rbuf;
+	params.dst=&rbuf->dst;
+	params.send_buf.s=rbuf->buffer;
+	params.send_buf.len=rbuf->buffer_len;
+#endif
+	
+	run_trans_callbacks_internal(&dlg->dlg_callbacks, TMCB_DLG, trans, 
+									&params);
+}
+
+#endif /* DIALOG_CALLBACKS */
 
 /*** Temporary hack ! */
 /*
@@ -224,6 +322,9 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 		shm_free(res);
 		return -2;
 	}
+#ifdef DIALOG_CALLBACKS
+	run_new_dlg_callbacks(DLG_CB_UAC, res, 0);
+#endif
 	
 	return 0;
 }
@@ -866,6 +967,9 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 		free_dlg(res);
 		return -6;
 	}
+#ifdef DIALOG_CALLBACKS
+	run_new_dlg_callbacks(DLG_CB_UAS, res, _req);
+#endif
 
 	return 0;
 }

@@ -216,8 +216,9 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 }
 
 
-static void run_trans_callbacks_internal(int type, struct cell *trans, 
-											struct tmcb_params *params)
+void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
+									struct cell *trans, 
+									struct tmcb_params *params)
 {
 	struct tm_callback    *cbp;
 	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to, *backup_uri_from, *backup_uri_to;
@@ -234,7 +235,7 @@ static void run_trans_callbacks_internal(int type, struct cell *trans,
 			&trans->domain_avps_from);
 	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, 
 			&trans->domain_avps_to);
-	for (cbp=trans->tmcb_hl.first; cbp; cbp=cbp->next)  {
+	for (cbp=cb_lst->first; cbp; cbp=cbp->next)  {
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 				trans, type, cbp->id );
@@ -262,7 +263,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 	params.req = req;
 	params.rpl = rpl;
 	params.code = code;
-	run_trans_callbacks_internal(type, trans, &params);
+	run_trans_callbacks_internal(&trans->tmcb_hl, type, trans, &params);
 }
 
 
@@ -286,7 +287,7 @@ void run_onsend_callbacks(int type, struct retr_buf* rbuf, int retr)
 	params.t_rbuf=rbuf;
 	params.code=rbuf->activ_type;
 	/* req, rpl */
-	run_trans_callbacks_internal(type, trans, &params);
+	run_trans_callbacks_internal(&trans->tmcb_hl, type, trans, &params);
 }
 
 
@@ -309,7 +310,7 @@ void run_onsend_callbacks2(int type , struct retr_buf* rbuf, char* buf,
 	params.t_rbuf=rbuf;
 	params.code=code;
 	/* req, rpl */
-	run_trans_callbacks_internal(type, trans, &params);
+	run_trans_callbacks_internal(&trans->tmcb_hl, type, trans, &params);
 }
 
 #endif

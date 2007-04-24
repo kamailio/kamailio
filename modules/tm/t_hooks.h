@@ -69,12 +69,13 @@ struct cell;
 #define TMCB_REQ_RETR_IN_N      11
 #define TMCB_LOCAL_RESPONSE_IN_N 12
 #define TMCB_LOCAL_REQUEST_IN_N  13
+#define TMCB_DLG_N              14
 #ifdef TMCB_ONSEND
-#define TMCB_REQUEST_SENT_N     14
-#define TMCB_RESPONSE_SENT_N    15
-#define TMCB_MAX_N              15
+#define TMCB_REQUEST_SENT_N     15
+#define TMCB_RESPONSE_SENT_N    16
+#define TMCB_MAX_N              16
 #else
-#define TMCB_MAX_N              13
+#define TMCB_MAX_N              14
 #endif
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
@@ -91,6 +92,7 @@ struct cell;
 #define TMCB_REQ_RETR_IN      (1<<TMCB_REQ_RETR_IN_N)
 #define TMCB_LOCAL_RESPONSE_IN (1<<TMCB_LOCAL_RESPONSE_IN_N)
 #define TMCB_LOCAL_REQUEST_IN (1<<TMCB_LOCAL_REQUEST_IN_N)
+#define TMCB_DLG              (1<<TMCB_DLG_N)
 #ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
@@ -371,7 +373,10 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 /* run all transaction callbacks for an event type */
 void run_trans_callbacks( int type , struct cell *trans,
 						struct sip_msg *req, struct sip_msg *rpl, int code );
-
+/* helper function */
+void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
+									struct cell *trans, 
+									struct tmcb_params *params);
 /* run all REQUEST_IN callbacks */
 void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
 void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req, 

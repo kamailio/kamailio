@@ -55,6 +55,7 @@
  *  2006-08-11  t_uac uses dns failover until it finds a send socket (andrei)
  *  2007-03-15  TMCB_ONSEND callbacks support added (andrei)
  *  2007-03-23  TMCB_LOCAL_REQUEST_IN callbacks support (andrei)
+ *  2007-04-23  per dialog callbacks support (andrei)
  */
 
 #include <string.h>
@@ -297,6 +298,9 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	
 	if (has_local_reqin_tmcbs())
 			run_local_reqin_callbacks(new_cell, 0, 0);
+#ifdef DIALOG_CALLBACKS
+	run_trans_dlg_callbacks(dialog, new_cell, request);
+#endif /* DIALOG_CALLBACKS */
 	if (dst_req) *dst_req = request;
 	if (dst_cell) *dst_cell = new_cell;
 	

@@ -26,6 +26,7 @@
  * History:
  * -------
  * 2003-03-29 Created by janakj
+ * 2007-04-13 added dialog callbacks (andrei)
  */
 
 #ifndef DLG_H
@@ -36,6 +37,19 @@
 #include "../../str.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/msg_parser.h"
+
+/*
+#define DIALOG_CALLBACKS
+*/
+
+#ifdef DIALOG_CALLBACKS
+#include "t_hooks.h"
+#include "h_table.h"
+
+#define DLG_CB_UAC 30
+#define DLG_CB_UAS 31
+
+#endif /* DIALOG_CALLBACKS */
 
 
 /*
@@ -104,6 +118,9 @@ typedef struct dlg {
 				 * can be reused when building a message (to
 				 * prevent repeated analyzing of the dialog data
 				 */
+#ifdef DIALOG_CALLBACKS
+	struct tmcb_head_list dlg_callbacks;
+#endif
 } dlg_t;
 
 typedef enum {
@@ -182,5 +199,28 @@ typedef int (*calculate_hooks_f)(dlg_t* _d);
  */
 int set_dlg_target(dlg_t* _d, str* _ruri, str* _duri);
 typedef int (*set_dlg_target_f)(dlg_t* _d, str* _ruri, str* _duri);
+
+#ifdef DIALOG_CALLBACKS
+
+/* dialog callback
+ * params:  type - DLG_UAC or DLG_UAS
+ *          dlg  - dialog structure
+ *          msg  - message used for creating the new dialog for the new_dlg_uas
+ *                 case, 0 otherwise (new_dlg_uac)
+ */
+typedef void (dialog_cb) (int type, dlg_t* dlg, struct sip_msg* msg);
+
+/* callbacks for new dialogs (called each time a new dialog (uas or uac) is
+ * created). Can be used for installing in-dialog callbacks
+ * returns < 0 on error*/
+int register_new_dlg_cb(int types, dialog_cb f, void* param);
+/* callbacks for messages sent dialogs */
+int register_dlg_tmcb(int type, dlg_t* dlg, transaction_cb f, void* param);
+void run_trans_dlg_callbacks(dlg_t* dlg, struct cell* trans,
+								struct retr_buf* rbuf);
+/* cleanup on exit */
+void destroy_new_dlg_cbs();
+#endif /* DIALOG_CALLBACKS */
+
 
 #endif /* DLG_H */
