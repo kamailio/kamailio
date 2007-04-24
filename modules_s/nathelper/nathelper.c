@@ -162,6 +162,9 @@
  *
  * 2007-04-23	Do NAT pinging in the separate dedicated process. It provides much
  *		better scalability than doing it in the main one.
+ *
+ * 2007-04-23	New function start_recording() allowing to start recording RTP
+ *		session in the RTP proxy.
  */
 
 #include "nhelpr_funcs.h"
@@ -241,6 +244,8 @@ static int rtpp_test(struct rtpp_node*, int, int);
 static char *send_rtpp_command(struct rtpp_node*, struct iovec *, int);
 static int unforce_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
+static int start_recording0_f(struct sip_msg *, char *, char *);
+static int start_recording1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
@@ -316,6 +321,8 @@ static cmd_export_t cmds[] = {
 	{"nat_uac_test",       nat_uac_test_f,         1, fixup_int_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"fix_nated_register", fix_nated_register_f,   0, 0,             REQUEST_ROUTE },
 	{"ping_contact",       ping_contact_f,         1, fixup_ping_contact,  REQUEST_ROUTE },
+	{"start_recording",    start_recording0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"start_recording",    start_recording1_f,     1, fixup_var_str_1,   REQUEST_ROUTE | ONREPLY_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -1688,6 +1695,74 @@ unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 
 	str2int(&rtpnode, (unsigned int*)&node_idx);
 	return unforce_rtp_proxy_f(msg, node_idx);
+}
+
+static int
+start_recording_f(struct sip_msg* msg, int node_idx)
+{
+	int nitems;
+	str callid, from_tag, to_tag;
+	struct rtpp_node *node;
+	struct iovec v[1 + 4 + 3] = {{NULL, 0}, {"R", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+						/* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
+
+	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
+		LOG(L_ERR, "ERROR: start_recording: can't get Call-Id field\n");
+		return -1;
+	}
+	if (get_to_tag(msg, &to_tag) == -1) {
+		LOG(L_ERR, "ERROR: start_recording: can't get To tag\n");
+		return -1;
+	}
+	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
+		LOG(L_ERR, "ERROR: start_recording: can't get From tag\n");
+		return -1;
+	}
+	STR2IOVEC(callid, v[3]);
+	STR2IOVEC(from_tag, v[5]);
+	STR2IOVEC(to_tag, v[7]);
+	node = select_rtpp_node(callid, 1, node_idx);
+	if (!node) {
+		LOG(L_ERR, "ERROR: start_recording: no available proxies\n");
+		return -1;
+	}
+	nitems = 8;
+	if (msg->first_line.type == SIP_REPLY) {
+		if (to_tag.len == 0)
+			return -1;
+		STR2IOVEC(to_tag, v[5]);
+		STR2IOVEC(from_tag, v[7]);
+	} else {
+		STR2IOVEC(from_tag, v[5]);
+		STR2IOVEC(to_tag, v[7]);
+		if (to_tag.len <= 0)
+			nitems = 6;
+	}
+	send_rtpp_command(node, v, nitems);
+
+	return 1;
+}
+
+static int
+start_recording0_f(struct sip_msg* msg, char* str1, char* str2)
+{
+
+	return start_recording_f(msg, -1);
+}
+
+static int
+start_recording1_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	int node_idx;
+	str rtpnode;
+
+	if (get_str_fparam(&rtpnode, msg, (fparam_t*) str1) < -1) {
+		ERR("start_recording(): Error while getting rtp_proxy node (fparam '%s')\n", ((fparam_t*)str1)->orig);
+		return -1;
+	}
+
+	str2int(&rtpnode, (unsigned int*)&node_idx);
+	return start_recording_f(msg, node_idx);
 }
 
 /*
