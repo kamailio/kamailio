@@ -4,6 +4,15 @@
 
 <section id="presence_b2b"><title>Presence B2B UA</title>
 
+    <sectioninfo><authorgroup>
+	<author>
+		<firstname>Vaclav</firstname>
+		<surname>Kubart</surname>
+		<affiliation><orgname>Iptel/Tekelec</orgname></affiliation>
+		<email>vaclav.kubart@iptel.org</email>
+	</author>
+	</authorgroup></sectioninfo>
+
 <para>This module acts as back to back user agent for presence events. In the
 future it will do subscriptions to reg events and presence with resource lists
 too.</para>

@@ -5,6 +5,15 @@
 	]>
 
 <section id="pres_rls"><title>RLS (Resource List Server)</title>
+	    
+    <sectioninfo><authorgroup>
+	<author>
+		<firstname>Vaclav</firstname>
+		<surname>Kubart</surname>
+		<affiliation><orgname>Iptel/Tekelec</orgname></affiliation>
+		<email>vaclav.kubart@iptel.org</email>
+	</author>
+	</authorgroup></sectioninfo>
 
 &base;
 

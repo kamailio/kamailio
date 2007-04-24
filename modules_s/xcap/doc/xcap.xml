@@ -3,6 +3,16 @@
 	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
 
 <section id="xcap_module"><title>XCAP module</title>
+
+    <sectioninfo><authorgroup>
+	<author>
+		<firstname>Vaclav</firstname>
+		<surname>Kubart</surname>
+		<affiliation><orgname>Iptel/Tekelec</orgname></affiliation>
+		<email>vaclav.kubart@iptel.org</email>
+	</author>
+	</authorgroup></sectioninfo>
+
 <para>Module for doing XCAP queries.</para>
 
 <para>This module covers functions called internaly to access XCAP server. These

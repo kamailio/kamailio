@@ -5,6 +5,30 @@
 	]>
 
 <section id="pa"><title>PA module</title>
+	
+	<sectioninfo><title>Authors</title><authorgroup>
+	    <author>
+			<firstname>Vaclav</firstname>
+			<surname>Kubart</surname>
+			<affiliation><orgname>Iptel</orgname></affiliation>
+			<authorblurb><para>Current maintainer.</para></authorblurb>
+			<contrib>Nowadays module maintainer.</contrib>
+			<email>vaclav.kubart@iptel.org</email>
+	    </author>
+	    <author>
+			<firstname>Jamey</firstname>
+			<surname>Hicks</surname>
+			<affiliation><orgname>Hewlett-Packard Company</orgname></affiliation>
+			<email>jamey.hicks@hp.com</email>
+	    </author>	    
+	    <author>
+			<firstname>Jan</firstname>
+			<surname>Janak</surname>
+			<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+			<email>jan@iptel.org</email>
+	    </author>
+	</authorgroup></sectioninfo>
+
 
 &base;
 
