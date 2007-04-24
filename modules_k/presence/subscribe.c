@@ -1273,29 +1273,25 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	db_keys[n_query_cols] ="p_user";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val.s= subs.to_user.s;
-	db_vals[n_query_cols].val.str_val.len= subs.to_user.len;
+	db_vals[n_query_cols].val.str_val= subs.to_user;
 	n_query_cols++;
 
 	db_keys[n_query_cols] ="p_domain";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val.s = subs.to_domain.s;
-	db_vals[n_query_cols].val.str_val.len = subs.to_domain.len;
+	db_vals[n_query_cols].val.str_val = subs.to_domain;
 	n_query_cols++;
 
 	db_keys[n_query_cols] ="w_user";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val.s = subs.from_user.s;
-	db_vals[n_query_cols].val.str_val.len = subs.from_user.len;
+	db_vals[n_query_cols].val.str_val = subs.from_user;
 	n_query_cols++;
 
 	db_keys[n_query_cols] ="w_domain";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val.s = subs.from_domain.s;
-	db_vals[n_query_cols].val.str_val.len = subs.from_domain.len;
+	db_vals[n_query_cols].val.str_val = subs.from_domain;
 	n_query_cols++;
 
 	result_cols[0] = "subs_status";
@@ -1308,7 +1304,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}	
 
 	if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols,
-					4, 2, 0, &result )< 0)
+					n_query_cols, 2, 0, &result )< 0)
 	{
 		LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR while querying"
 				" watchers table\n");
@@ -1430,23 +1426,25 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 								strncmp(reason.s, subs.reason.s, reason.len)))
 				{		
 									
-					update_keys[n_query_cols]="subs_status";
-					update_vals[n_query_cols].type = DB_STR;
-					update_vals[n_query_cols].nul = 0;
-					update_vals[n_query_cols].val.str_val= subs.status;
-					n_query_cols++;
+					int n_update_cols= 0;
+
+					update_keys[0]="subs_status";
+					update_vals[0].type = DB_STR;
+					update_vals[0].nul = 0;
+					update_vals[0].val.str_val= subs.status;
+					n_update_cols++;
 
 					if(subs.reason.s && subs.reason.len)
 					{
-						update_keys[n_query_cols]="reason";
-						update_vals[n_query_cols].type = DB_STR;
-						update_vals[n_query_cols].nul = 0;
-						update_vals[n_query_cols].val.str_val= subs.reason;
-						n_query_cols++;
+						update_keys[1]="reason";
+						update_vals[1].type = DB_STR;
+						update_vals[1].nul = 0;
+						update_vals[1].val.str_val= subs.reason;
+						n_update_cols++;
 					}	
 					
 					if(pa_dbf.update(pa_db, db_keys, 0, db_vals, 
-								update_keys, update_vals, 4, n_query_cols)< 0)
+								update_keys, update_vals, n_query_cols, n_update_cols)< 0)
 					{
 						LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR while"
 								" updating database table\n");

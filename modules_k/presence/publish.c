@@ -153,6 +153,13 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
 		
+		if(row_vals[0].val.str_val.s== NULL || 
+				row_vals[1].val.str_val.s || row_vals[2].val.str_val.s)
+		{
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL row result"
+					" from database\n");
+			goto error;	
+		}	
 		user_len = strlen(row_vals[0].val.str_val.s);
 		domain_len = strlen(row_vals[1].val.str_val.s);
 		etag_len= strlen(row_vals[2].val.str_val.s);
