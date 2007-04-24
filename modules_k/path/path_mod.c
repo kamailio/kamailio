@@ -30,6 +30,7 @@
 
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
+#include "../../mod_fix.h"
 #include "../rr/api.h"
 
 #include "path.h"
@@ -56,11 +57,6 @@ static int child_init(int rank);
  * Module initialization function prototype
  */
 static int mod_init(void);
-
-/*
- * char* to str conversion
- */
-static int str_fixup(void** param, int param_no);
 
 /*
  * rr callback API
@@ -134,29 +130,6 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-}
-
-/*  
- * Convert char* parameter to str* parameter   
- * Taken from modules/rr/rr_mod.c
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
-	return 0;
 }
 
 

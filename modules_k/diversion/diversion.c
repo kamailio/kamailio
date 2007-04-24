@@ -30,6 +30,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
+#include "../../mod_fix.h"
 
 
 MODULE_VERSION
@@ -48,8 +49,6 @@ MODULE_VERSION
 str suffix = {"", 0};
 
 int add_diversion(struct sip_msg* msg, char* r, char* s);
-static int str_fixup(void** param, int param_no);
-
 
 /*
  * Module initialization function prototype
@@ -96,29 +95,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	suffix.len = strlen(suffix.s);
-	return 0;
-}
-
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-
-	if (param_no == 1 || param_no == 2) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup: No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-
 	return 0;
 }
 

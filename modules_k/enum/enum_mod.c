@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include "../../sr_module.h"
 #include "../../error.h"
+#include "../../mod_fix.h"
 #include "enum.h"
 
 MODULE_VERSION
@@ -47,7 +48,6 @@ static int mod_init(void);
 /*
  * Fixup functions
  */
-static int str_fixup(void** param, int param_no);
 static int enum_fixup(void** param, int param_no);
 
 
@@ -149,28 +149,6 @@ static int mod_init(void)
 	return 0;
 }
 
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-
-	if (param_no == 1) {
-		s = (str*)malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "authorize_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-
-	return 0;
-}
 
 /*
  * Convert both enum_query parameters to str* representation

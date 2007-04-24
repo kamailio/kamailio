@@ -53,6 +53,7 @@
 #include "../../items.h"
 #include "../usrloc/ul_mod.h"
 #include "../sl/sl_api.h"
+#include "../../mod_fix.h"
 
 #include "save.h"
 #include "lookup.h"
@@ -70,7 +71,6 @@ static void mod_destroy(void);
 /* Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
-static int str_fixup(void** param, int param_no);
 /* Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
@@ -387,29 +387,6 @@ static int save_fixup(void** param, int param_no)
 		return 0;
 	}
 }
-
-
-
-/*
- * Convert char* parameter to str*
- */
-static int str_fixup(void** param, int param_no)
-{
-	str *s;
-
-	if (param_no == 1) {
-		s = (str*)pkg_malloc( sizeof(str) );
-		if (s==0) {
-			LOG(L_ERR,"ERROR:registrar:str_fixup: no more pkg mem\n");
-			return E_UNSPEC;
-		}
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	return 0;
-}
-
 
 
 static void mod_destroy(void)

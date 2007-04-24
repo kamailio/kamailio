@@ -42,6 +42,7 @@
 #include "../../error.h"
 #include "../../items.h"
 #include "../../ut.h"
+#include "../../mod_fix.h"
 #include "../sl/sl_api.h"
 #include "auth_mod.h"
 #include "challenge.h"
@@ -70,11 +71,6 @@ static int mod_init(void);
 
 
 static int challenge_fixup(void** param, int param_no);
-
-/*  
- * Convert char* parameter to str* parameter   
- */
-static int str_fixup(void** param, int param_no);
 
 
 /*
@@ -266,29 +262,6 @@ static int challenge_fixup(void** param, int param_no)
 		}
 	}
 
-	return 0;
-}
-
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
 	return 0;
 }
 

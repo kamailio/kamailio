@@ -42,13 +42,13 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "../../items.h"
+#include "../../mod_fix.h"
 #include "uri_mod.h"
 #include "checks.h"
 
 MODULE_VERSION
 
 
-static int str_fixup(void** param, int param_no);
 static int uri_fixup(void** param, int param_no);
 static int pvar_fixup(void** param, int param_no);
 
@@ -93,29 +93,6 @@ struct module_exports exports = {
 	0,         /* destroy function */
 	0          /* child initialization function */
 };
-
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
-	return 0;
-}
 
 
 /*
