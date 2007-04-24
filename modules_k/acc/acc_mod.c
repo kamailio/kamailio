@@ -219,7 +219,7 @@ static param_export_t params[] = {
 	{"db_table_missed_calls",STR_PARAM, &db_table_mc          },
 	{"acc_method_column",    STR_PARAM, &acc_method_col       },
 	{"acc_from_tag_column",  STR_PARAM, &acc_fromtag_col      },
-	{"acc_totag_column",     STR_PARAM, &acc_totag_col        },
+	{"acc_to_tag_column",    STR_PARAM, &acc_totag_col        },
 	{"acc_callid_column",    STR_PARAM, &acc_callid_col       },
 	{"acc_sip_code_column",  STR_PARAM, &acc_sipcode_col      },
 	{"acc_sip_reason_column",STR_PARAM, &acc_sipreason_col    },
