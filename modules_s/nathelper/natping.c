@@ -25,6 +25,8 @@
  *
  */
 
+#include <unistd.h>
+#include <signal.h>
 #include "../usrloc/usrloc.h"
 #include "../tm/tm_load.h"
 #include "../../dprint.h"
@@ -44,6 +46,7 @@ int ping_nated_only = 0;
  */
 char *natping_method = NULL;
 
+static pid_t aux_process = -1;
 static usrloc_api_t ul;
 /* TM bind */
 static struct tm_binds tmb;
@@ -51,6 +54,7 @@ static int cblen = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
 
 static void natping(unsigned int ticks, void *param);
+static void natping_cycle(void);
 
 int
 natpinger_init(void)
@@ -86,16 +90,70 @@ natpinger_init(void)
 				return -1;
 		}
 
-		register_timer(natping, NULL, natping_interval);
+		/*
+		 * Use timer only in single process. For forked SER,
+		 * use separate process (see natpinger_child_init())
+		 */
+		if (dont_fork)
+			register_timer(natping, NULL, natping_interval);
 	}
 
 	return 0;
 }
 
+int
+natpinger_child_init(int rank)
+{
+
+	/* If forking is prohibited, use only timer. */
+	if (dont_fork)
+		return 0;
+
+	/* don't do anything for main process and TCP manager process */
+	if (rank == PROC_MAIN || rank == PROC_TCP_MAIN)
+		return 0;
+
+	/* only child 1 will fork the aux process */
+	if (rank != 1)
+		return 0;
+
+	aux_process = fork();
+	if (aux_process == -1) {
+		LOG(L_ERR, "natping_child_init(): fork: %s\n", strerror(errno));
+		return -1;
+	}
+	if (aux_process == 0) {
+		natping_cycle();
+		/*UNREACHED*/
+		_exit(1);
+	}
+	return 0;
+}
+
+int
+natpinger_cleanup(void)
+{
+
+	if (aux_process != -1)
+		kill(aux_process, SIGTERM);
+	return 0;
+}
+
+static void
+natping_cycle(void)
+{
+
+	signal(SIGTERM, SIG_DFL); /* no special treat */
+	for(;;) {
+		sleep(natping_interval);
+		natping(0, NULL);
+	}
+}
+
 static void
 natping(unsigned int ticks, void *param)
 {
-	int rval;
+	int rval, n;
 	void *buf, *cp;
 	str c;
 	struct dest_info dst;
@@ -129,6 +187,7 @@ natping(unsigned int ticks, void *param)
 		return;
 
 	cp = buf;
+	n = 0;
 	while (1) {
 		memcpy(&(c.len), cp, sizeof(c.len));
 		if (c.len == 0)
@@ -138,6 +197,8 @@ natping(unsigned int ticks, void *param)
 		init_dest_info(&dst);
 		memcpy(&dst.send_sock, cp, sizeof(dst.send_sock));
 		cp += sizeof(dst.send_sock);
+		if ((++n % 50) == 0)
+			usleep(1);
 		natping_contact(c, &dst);
 	}
 	pkg_free(buf);

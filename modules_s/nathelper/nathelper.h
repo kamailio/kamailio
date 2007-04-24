@@ -38,6 +38,8 @@ extern struct socket_info* force_socket;
 
 /* Functions from natping.c */
 int natpinger_init(void);
+int natpinger_child_init(int);
+int natpinger_cleanup(void);
 
 int natping_contact(str, struct dest_info *);
 

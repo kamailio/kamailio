@@ -159,6 +159,9 @@
  *
  * 2006-06-10	select nathepler.rewrite_contact
  *		pingcontact function (tma)
+ *
+ * 2007-04-23	Do NAT pinging in the separate dedicated process. It provides much
+ *		better scalability than doing it in the main one.
  */
 
 #include "nhelpr_funcs.h"
@@ -247,6 +250,7 @@ static int fixup_ping_contact(void **param, int param_no);
 static int ping_contact_f(struct sip_msg* msg, char* str1, char* str2);
 
 static int mod_init(void);
+static void mod_cleanup(void);
 static int child_init(int);
 
 struct socket_info* force_socket = 0;
@@ -335,7 +339,7 @@ struct module_exports exports = {
 	params,
 	mod_init,
 	0, /* reply processing */
-	0, /* destroy function */
+	mod_cleanup, /* destroy function */
 	0, /* on_break */
 	child_init
 };
@@ -455,6 +459,13 @@ mod_init(void)
 	return 0;
 }
 
+static void
+mod_cleanup(void)
+{
+
+	natpinger_cleanup();
+}
+
 static int
 child_init(int rank)
 {
@@ -463,6 +474,8 @@ child_init(int rank)
 	struct addrinfo hints, *res;
 	struct rtpp_node *pnode;
 	
+	if (natpinger_child_init(rank) < 0)
+		return -1;
 
 	/* Iterate known RTP proxies - create sockets */
 	mypid = getpid();
