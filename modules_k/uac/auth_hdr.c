@@ -214,7 +214,6 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 		{
 			case QOP_STATE:
 				/* TODO - add qop support */
-				auth->qop = val;
 				LOG(L_NOTICE,"NOTICE:uac:parse_authenticate_body: no qop "
 					"support for the moment :-( -> ignoring\n");
 				break;
