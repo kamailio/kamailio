@@ -136,9 +136,8 @@ error:
 int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		int to_tag_gen, ev_t* event)
 {	
-	db_key_t query_cols[17];
-	db_op_t  query_ops[17];
-	db_val_t query_vals[17], update_vals[5];
+	db_key_t query_cols[19];
+	db_val_t query_vals[19], update_vals[5];
 	db_key_t result_cols[4], update_keys[5];
 	db_res_t *result= NULL;
 	unsigned int remote_cseq, local_cseq;
@@ -154,46 +153,36 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	printf_subs(subs);	
 	
 	query_cols[n_query_cols] = "to_user";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->to_user.s;
-	query_vals[n_query_cols].val.str_val.len = subs->to_user.len;
+	query_vals[n_query_cols].val.str_val = subs->to_user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = "to_domain";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->to_domain.s;
-	query_vals[n_query_cols].val.str_val.len = subs->to_domain.len;
+	query_vals[n_query_cols].val.str_val = subs->to_domain;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "from_user";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->from_user.s;
-	query_vals[n_query_cols].val.str_val.len = subs->from_user.len;
+	query_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = "from_domain";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->from_domain.s;
-	query_vals[n_query_cols].val.str_val.len = subs->from_domain.len;
+	query_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "event";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->event->stored_name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "event_id";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	if( subs->event_id.s != NULL)
@@ -207,27 +196,21 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = "callid";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->callid.s;
-	query_vals[n_query_cols].val.str_val.len = subs->callid.len;
+	query_vals[n_query_cols].val.str_val = subs->callid;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "to_tag";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->to_tag.s;
-	query_vals[n_query_cols].val.str_val.len = subs->to_tag.len;
+	query_vals[n_query_cols].val.str_val = subs->to_tag;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "from_tag";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->from_tag.s;
-	query_vals[n_query_cols].val.str_val.len = subs->from_tag.len;
+	query_vals[n_query_cols].val.str_val = subs->from_tag;
 	n_query_cols++;
 	
 	result_cols[remote_cseq_col=n_result_cols++] = "remote_cseq";
@@ -244,7 +227,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
 	{
 		DBG("PRESENCE:update_subscription: querying database  \n");
-		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+		if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 			 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 		{
 			LOG(L_ERR, "PRESENCE:update_subscription: ERROR while querying"
@@ -301,7 +284,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		{
 			DBG("PRESENCE:update_subscription: expires =0 ->"
 					" deleting from database\n");
-			if(pa_dbf.delete(pa_db, query_cols, query_ops, query_vals,
+			if(pa_dbf.delete(pa_db, query_cols, 0, query_vals,
 						n_query_cols)< 0 )
 			{
 				LOG(L_ERR,"PRESENCE:update_subscription: ERROR cleaning"
@@ -358,7 +341,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		update_vals[n_update_cols].val.str_val = subs->status;
 		n_update_cols++;
 
-		if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
+		if( pa_dbf.update( pa_db,query_cols, 0, query_vals,
 					update_keys, update_vals, n_query_cols,n_update_cols )<0) 
 		{
 			LOG( L_ERR , "PRESENCE:update_subscription:ERROR while updating"
@@ -373,15 +356,13 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			query_cols[n_query_cols] = "contact";
 			query_vals[n_query_cols].type = DB_STR;
 			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.str_val.s = subs->contact.s;
-			query_vals[n_query_cols].val.str_val.len = subs->contact.len;
+			query_vals[n_query_cols].val.str_val = subs->contact;
 			n_query_cols++;
 	
 			query_cols[n_query_cols] = "status";
 			query_vals[n_query_cols].type = DB_STR;
 			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.str_val.s = subs->status.s;
-			query_vals[n_query_cols].val.str_val.len = subs->status.len;
+			query_vals[n_query_cols].val.str_val = subs->status;
 			n_query_cols++;
 			
 			query_cols[n_query_cols] = "remote_cseq";
@@ -398,7 +379,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			n_query_cols++;
 			subs->cseq= 0;
 
-			DBG("expires: %d\n", subs->expires);
+			DBG("PRESENCE: update_subscription: expires: %d\n", subs->expires);
 			query_cols[n_query_cols] = "expires";
 			query_vals[n_query_cols].type = DB_INT;
 			query_vals[n_query_cols].nul = 0;
@@ -417,8 +398,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				n_query_cols++;
 			}
 
-			/*  */
-			/* Save receive socket also -- ke. */
+			/* Save receive socket also */
 		    struct socket_info *si = msg->rcv.bind_address;
 			query_cols[n_query_cols] = "socket_info";
 			query_vals[n_query_cols].type = DB_STR;
@@ -559,7 +539,7 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 		return ;
 	}
 	
-	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, 0,	1, 0, 0, &result )< 0)
+	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, 0,	2, 0, 0, &result )< 0)
 	{
 		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR while querying database"
 				" for expired messages\n");
@@ -690,7 +670,6 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		if(event_id.s)
 			event_id.len = strlen(event_id.s);
 
-			
 		to_tag.s = (char*)row_vals[to_tag_col].val.string_val;
 		to_tag.len = strlen(to_tag.s);
 		
@@ -985,8 +964,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}	
 	subs.event= event;
 	
-
-
 	/* examine the expire header field */
 	if(msg->expires && msg->expires->body.len > 0)
 	{
@@ -1171,7 +1148,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		//	goto error;
 		}
 	}
-
 	subs.record_route.s = rec_route.s;
 	subs.record_route.len = rec_route.len;
 
@@ -1266,7 +1242,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 					" subscription handling\n");
 			goto error;
 		}
-
 	}	
 
 	/* subscription status handling */
@@ -1329,7 +1304,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}	
 		memcpy(status.s, row_vals[0].val.string_val, status.len);
-		subs.status= status;
 	
 		if(row_vals[1].val.string_val)
 		{
@@ -1345,12 +1319,13 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 					pa_dbf.free_result(pa_db, result);
 					goto error;		
 				}		
-			memcpy(reason.s, row_vals[1].val.string_val, reason.len);
+				memcpy(reason.s, row_vals[1].val.string_val, reason.len);
 			}
-			subs.reason= reason;
 		}
 	}	
 	pa_dbf.free_result(pa_db, result);
+	subs.status= status;
+	subs.reason= reason;
 	
 	/* get subs.status */
 	if(!event->req_auth)

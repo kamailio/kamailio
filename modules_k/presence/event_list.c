@@ -33,7 +33,6 @@
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h" 
 #include "event_list.h"
-//#include "presence.h"
 
 int add_event(ev_t* event)
 {
@@ -65,7 +64,7 @@ int add_event(ev_t* event)
 	size= sizeof(ev_t)+ (event->name.len+ event->content_type.len)*sizeof(char);
 
 	if(event->param)
-		size+= sizeof(str)+ ( 2*event->param->len + event->name.len+ 1)* sizeof(char);
+		size+= sizeof(str)+ ( 2*event->param->len + event->name.len+ 2)* sizeof(char);
 
 	ev= (ev_t*)shm_malloc(size);
 	if(ev== NULL)
@@ -74,7 +73,7 @@ int add_event(ev_t* event)
 		ret_code= -1;
 		goto done;
 	}
-	memset(ev, 0, sizeof(ev_t));
+	memset(ev, 0, size);
 
 	size= sizeof(ev_t);
 	ev->name.s= (char*)ev+ size;

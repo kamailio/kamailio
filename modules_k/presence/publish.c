@@ -80,10 +80,10 @@ char* generate_ETag()
 
 void msg_presentity_clean(unsigned int ticks,void *param)
 {
-	db_key_t db_keys[5];
-	db_val_t db_vals[5];
-	db_op_t  db_ops[5] ;
-	db_key_t result_cols[4];
+	db_key_t db_keys[2];
+	db_val_t db_vals[2];
+	db_op_t  db_ops[2] ;
+	db_key_t result_cols[5];
 	db_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -153,16 +153,29 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
 		
-		if(row_vals[0].val.str_val.s== NULL || 
-				row_vals[1].val.str_val.s || row_vals[2].val.str_val.s)
+		if(row_vals[0].val.string_val== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL row result"
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL username row result"
 					" from database\n");
 			goto error;	
-		}	
-		user_len = strlen(row_vals[0].val.str_val.s);
-		domain_len = strlen(row_vals[1].val.str_val.s);
-		etag_len= strlen(row_vals[2].val.str_val.s);
+		}
+		if(row_vals[1].val.string_val== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL domain row result"
+					" from database\n");
+			goto error;	
+		}
+
+		 if(row_vals[2].val.string_val== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL etag row result"
+					" from database\n");
+			goto error;	
+		}
+	
+		user_len = strlen(row_vals[0].val.string_val);
+		domain_len = strlen(row_vals[1].val.string_val);
+		etag_len= strlen(row_vals[2].val.string_val);
 		
 		size= sizeof(presentity_t)+ user_len+ domain_len+ etag_len; 
 		pres= (presentity_t*)pkg_malloc(size);
@@ -175,21 +188,21 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		size= sizeof(presentity_t);
 		
 		pres->user.s= (char*)pres+ size;	
-		memcpy(pres->user.s, row_vals[0].val.str_val.s, user_len);
+		memcpy(pres->user.s, (char*)row_vals[0].val.string_val, user_len);
 		pres->user.len= user_len;
 		size+= user_len;
 
 		pres->domain.s= (char*)pres+ size;
-		memcpy(pres->domain.s, row_vals[1].val.str_val.s, domain_len);
+		memcpy(pres->domain.s, (char*)row_vals[1].val.string_val, domain_len);
 		pres->domain.len= domain_len;
 		size+= domain_len;
 
 		pres->etag.s= (char*)pres+ size;
-		memcpy(pres->etag.s, row_vals[2].val.str_val.s, etag_len);
+		memcpy(pres->etag.s, (char*)row_vals[2].val.string_val, etag_len);
 		pres->etag.len= etag_len;
 		size+= etag_len;
 		
-		event.s= row_vals[3].val.str_val.s;
+		event.s= (char*)row_vals[3].val.string_val;
 		event.len= strlen(event.s);
 		/* search for a parameter*/
 		ev_param= NULL;
@@ -225,7 +238,8 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 		if(pres->event== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while searching for event\n");
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while searching"
+					" for event\n");
 			goto error;
 		}	
 
@@ -237,11 +251,11 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	
 	for(i= 0; i<n ; i++)
 	{
-
 		DBG( "PRESENCE:msg_presentity_clean:found expired publish"
 				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
 				p[i]->domain.len, p[i]->domain.s);
-		query_db_notify( &p[i]->user, &p[i]->domain, p[i]->event, NULL, &p[i]->etag, NULL);
+		query_db_notify( &p[i]->user, &p[i]->domain, p[i]->event, NULL, 
+				&p[i]->etag, NULL);
 	}
 
 
@@ -513,7 +527,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		sender->s= buf;
 		sender->len= buf_len;
 	}
-	/* call event specific handlinh function*/
+	/* call event specific handling function*/
 	if(event->evs_publ_handl)
 	{
 		if(event->evs_publ_handl(msg)< 0)
@@ -543,7 +557,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	}
 
 	if(presentity)
-		free_presentity(presentity);
+		pkg_free(presentity);
 	if(etag_gen && etag.s)
 		pkg_free(etag.s);
 	if(sender)
@@ -555,7 +569,7 @@ error:
 	LOG(L_ERR, "PRESENCE: handle_publish: ERROR occured\n");
 	
 	if(presentity)
-		free_presentity(presentity);
+		pkg_free(presentity);
 	if(etag_gen && etag.s)
 		pkg_free(etag.s);
 	if(sender)

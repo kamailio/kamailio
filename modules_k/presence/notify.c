@@ -82,7 +82,6 @@ str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 		LOG(L_ERR, "PRESENCE: build_str_hdr:ERROR while allocating memory\n");
 		return NULL;
 	}
-
 	str_hdr->s = buf;
 
 	strncpy(str_hdr->s ,"Event: ", 7);
@@ -246,16 +245,14 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->to_user.s;
-	query_vals[n_query_cols].val.str_val.len = subs->to_user.len;
+	query_vals[n_query_cols].val.str_val= subs->to_user;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "to_domain";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = subs->to_domain.s;
-	query_vals[n_query_cols].val.str_val.len = subs->to_domain.len;
+	query_vals[n_query_cols].val.str_val = subs->to_domain;
 	n_query_cols++;
 
 	
@@ -294,51 +291,47 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		goto error;
 	}
 	else
-		if(result->n >0)			
+	if(result->n >0)			
+	{
+		str from_user;
+		str from_domain;
+
+		watchers =(watcher_t*)pkg_malloc( (result->n+1)*sizeof(watcher_t));
+		if(watchers == NULL)
 		{
-			str from_user;
-			str from_domain;
-
-			watchers =(watcher_t*)pkg_malloc( (result->n+1)*sizeof(watcher_t));
-			if(watchers == NULL)
-			{
-				LOG(L_ERR, "PRESENCE:get_wi_notify_body:ERROR while allocating"
-						" memory\n");
-				goto error;
-			}
-			for(i=0;i<result->n;i++)
-			{
-				row = &result->rows[i];
-				row_vals = ROW_VALUES(row);
-				watchers[i].status.s = (char*)row_vals[status_col].val.string_val;
-				watchers[i].status.len=
-					strlen(row_vals[status_col].val.string_val);
-
-				from_user.s= (char*)row_vals[from_user_col].val.string_val;
-				from_user.len= strlen(from_user.s);
-
-				from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
-				from_domain.len= strlen(from_domain.s);
-
-				if(uandd_to_uri(from_user, from_domain, &watchers[i].uri)<0)
-				{
-					LOG(L_ERR, "PRESENCE:get_wi_notify_body:ERROR while creating"
-						" uri\n");
-					goto error;
-
-				}	
-			
-				watchers[i].id.s = 
-					(char *)pkg_malloc(watchers[i].uri.len *2 +1);
-
-				to64frombits((unsigned char *)watchers[i].id.s,
-						(const unsigned char*) watchers[i].uri.s,
-						watchers[i].uri.len );
-			
-				watchers[i].id.len = strlen(watchers[i].id.s);
-				watchers[i].event= subs->event->wipeer->stored_name;
-			}
+			LOG(L_ERR, "PRESENCE:get_wi_notify_body:ERROR while allocating"
+					" memory\n");
+			goto error;
 		}
+		memset(watchers, 0, (result->n+1)*sizeof(watcher_t));
+
+		for(i=0; i<result->n; i++)
+		{
+			row = &result->rows[i];
+			row_vals = ROW_VALUES(row);
+			watchers[i].status.s = (char*)row_vals[status_col].val.string_val;
+			watchers[i].status.len= strlen(watchers[i].status.s);
+
+			from_user.s= (char*)row_vals[from_user_col].val.string_val;
+			from_user.len= strlen(from_user.s);
+
+			from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
+			from_domain.len= strlen(from_domain.s);
+
+			if(uandd_to_uri(from_user, from_domain, &watchers[i].uri)<0)
+			{
+				LOG(L_ERR, "PRESENCE:get_wi_notify_body:ERROR while creating"
+					" uri\n");
+				goto error;
+			}	
+			watchers[i].id.s = (char*)pkg_malloc(watchers[i].uri.len*2 +1);
+			to64frombits((unsigned char *)watchers[i].id.s,
+					(const unsigned char*) watchers[i].uri.s,watchers[i].uri.len );
+			
+			watchers[i].id.len = strlen(watchers[i].id.s);
+			watchers[i].event= subs->event->wipeer->stored_name;
+		}
+	}
 
 	DBG( "PRESENCE:get_wi_notify_body: the query returned no result\n");
 	notify_body = create_winfo_xml(watchers, result->n, version_str, p_uri.s,
@@ -355,12 +348,10 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		}
 		pkg_free(watchers);
 	}
-
+	pa_dbf.free_result(pa_db, result);
 	if(p_uri.s)
 		pkg_free(p_uri.s);
 
-	if(result!=NULL)
-		pa_dbf.free_result(pa_db, result);
 	return notify_body;
 
 error:
@@ -393,7 +384,6 @@ error:
 str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 {
 	db_key_t query_cols[6];
-	db_op_t  query_ops[6];
 	db_val_t query_vals[6];
 	db_key_t result_cols[6];
 	db_res_t *result = NULL;
@@ -409,7 +399,6 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 	str etags;
 
 	query_cols[n_query_cols] = "domain";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val.s = host.s;
@@ -417,7 +406,6 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "username";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val.s = user.s;
@@ -425,7 +413,6 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "event";
-	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= event->stored_name;
@@ -442,7 +429,7 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 	}
 
 	DBG("PRESENCE:get_p_notify_body: querying presentity\n");
-	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 		 result_cols, n_query_cols, n_result_cols, "received_time",  &result) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_p_notify_body: Error while querying"
@@ -500,7 +487,6 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 			}
 			memcpy(notify_body->s, row_vals[body_col].val.string_val, len);
 			notify_body->len= len;
-
 			goto done;
 		}
 		
@@ -846,7 +832,6 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		local_contact.s = (char*)row_vals[local_contact_col].val.string_val;
 		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		
-
 		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
 				from_domain.len+ event_id.len+ to_tag.len+ status.len+
 				from_tag.len+ callid.len+ record_route.len+ contact.len+
@@ -1046,15 +1031,14 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 	str* notify_body = NULL;
 	int result= 0;
 	int n_update_keys = 0;
-	db_key_t db_keys[1], update_keys[3];
-	db_val_t db_vals[1], update_vals[3];
+	db_key_t db_keys[1], update_keys[4];
+	db_val_t db_vals[1], update_vals[4];
     c_back_param *cb_param= NULL;
 	
 	DBG("PRESENCE:notify:dialog informations:\n");
 	printf_subs(subs);
 
     /* getting the status of the subscription */
-
 
 	if(force_null_body)
 	{	
@@ -1124,7 +1108,6 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 					}	
 				}	
 			}		
-			
 		}
 	}
 	
@@ -1218,8 +1201,8 @@ jump_over_body:
 		update_vals[n_update_keys].type = DB_INT;
 		update_vals[n_update_keys].nul = 0;
 		update_vals[n_update_keys].val.int_val = subs->version +1;
+		n_update_keys++;
 
-			n_update_keys++;
 	}
 	if(pa_dbf.update(pa_db,db_keys, 0, db_vals, update_keys, update_vals, 1,
 			n_update_keys )<0 )
@@ -1486,9 +1469,9 @@ error:
 
 str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, int STATE_FLAG )
 {
-	xmlDocPtr doc = NULL;       /* document pointer */
-    xmlNodePtr root_node = NULL, node = NULL;/* node pointers */
-    xmlNodePtr w_list_node = NULL;	
+	xmlDocPtr doc = NULL;       
+    xmlNodePtr root_node = NULL, node = NULL;
+	xmlNodePtr w_list_node = NULL;	
     int i;
 	char content[200];
 	str *body;
@@ -1499,7 +1482,6 @@ str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, i
 		LOG(L_ERR,"PRESENCE:create_winfo_xmls:Error while allocating memory\n");
 		return NULL;
 	}
-
 	memset(body, 0, sizeof(str));
 
     LIBXML_TEST_VERSION;
@@ -1548,8 +1530,6 @@ str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, i
 	}
 	xmlNewProp(w_list_node, BAD_CAST "resource", BAD_CAST resource);
 	xmlNewProp(w_list_node, BAD_CAST "package", BAD_CAST "presence");
-
-//	strcpy(content, "sip:");
 
     for( i =0; i<n; i++)
 	{

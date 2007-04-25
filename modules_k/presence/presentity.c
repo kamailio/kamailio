@@ -182,16 +182,14 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = presentity->domain.s;
-	query_vals[n_query_cols].val.str_val.len = presentity->domain.len;
+	query_vals[n_query_cols].val.str_val = presentity->domain;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = "username";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = presentity->user.s;
-	query_vals[n_query_cols].val.str_val.len = presentity->user.len;
+	query_vals[n_query_cols].val.str_val = presentity->user;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "event";
@@ -205,34 +203,35 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = presentity->etag.s;
-	query_vals[n_query_cols].val.str_val.len = presentity->etag.len;
+	query_vals[n_query_cols].val.str_val = presentity->etag;
 	n_query_cols++;
 
 	if(presentity->expires == 0) 
 	{
-	
-		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
-		{
-			LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
-			goto error;
-		}
-		DBG("PRESENCE:update_presentity: expires =0 -> deleting"
+		if(!new_t)
+		{	
+			if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+			{
+				LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
+				goto error;
+			}
+			DBG("PRESENCE:update_presentity: expires =0 -> deleting"
 				" from database\n");
-		if(pa_dbf.delete(pa_db, query_cols, 0 ,query_vals,n_query_cols)< 0 )
-		{
-			DBG( "PRESENCE:update_presentity: ERROR cleaning"
-					" unsubscribed messages\n");
-		}
-		DBG("PRESENCE:update_presentity:delete from db %.*s\n",
+			if(pa_dbf.delete(pa_db, query_cols, 0 ,query_vals,n_query_cols)< 0 )
+			{
+				DBG( "PRESENCE:update_presentity: ERROR cleaning"
+						" unsubscribed messages\n");
+			}
+			DBG("PRESENCE:update_presentity:delete from db %.*s\n",
 				presentity->user.len,presentity->user.s );
+		}
 		if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 		{
 			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
 			return -1;
 		}
 		if( query_db_notify( &presentity->user, &presentity->domain, 
-			presentity->event, NULL, &presentity->etag, presentity->sender)< 0 )
+				presentity->event, NULL, &presentity->etag, presentity->sender)< 0 )
 		{
 			LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
 			return -1;
@@ -318,6 +317,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 		if (result->n > 0)
 		{
 			n_update_cols= 0;
+			
 			update_keys[n_update_cols] = "expires";
 			update_vals[n_update_cols].type = DB_INT;
 			update_vals[n_update_cols].nul = 0;
@@ -401,6 +401,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 					"reply\n");
 				goto error;
 			}
+			pa_dbf.free_result(pa_db, result);
 		}
 	}
 	return 0;
@@ -415,10 +416,3 @@ error:
 	return -1;
 
 }
-
-void free_presentity(presentity_t* presentity)
-{
-	pkg_free(presentity);
-}
-
-
