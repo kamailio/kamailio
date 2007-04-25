@@ -1168,6 +1168,7 @@ jump_over_body:
 	if(result < 0)
 	{
 		LOG(L_ERR, "PRESENCE:notify: ERROR in function tmb.t_request_within\n");
+		shm_free(cb_param);
 		goto error;	
 	}
 	
