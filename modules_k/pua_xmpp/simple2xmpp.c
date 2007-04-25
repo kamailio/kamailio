@@ -251,7 +251,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 			if(hdr && strncmp(hdr->body.s,"terminated", 10)== 0)
 			{
 				DBG("PUA_XMPP: Notify2Xmpp: Notify for presence.winfo with" 
-					" Subscription-State terminated- should not translate");
+					" Subscription-State terminated- should not translate\n");
 				goto error;
 			}
 			if(winfo2xmpp(&to_uri, &body, &id)< 0)
@@ -925,8 +925,8 @@ void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl)
 				" xmpp_reply_to_subscribe\n");
 		goto error;
 	}
-
-	pkg_free(err_reason);
+	if(err_reason)
+		pkg_free(err_reason);
 	xmlFreeDoc(doc);
 	
 	return ;
