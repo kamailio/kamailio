@@ -90,7 +90,7 @@ str* subs_build_hdr(str* contact, int expires, int event)
 	}
 	else
 	{
-		LOG(L_ERR, "PUA:subs_build_hdr:ERROR wrong event parameter\n");
+		LOG(L_ERR, "PUA:subs_build_hdr:ERROR wrong event parameter: %d\n", event);
 		pkg_free(str_hdr);
 		return NULL;
 	}
@@ -328,6 +328,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		if(presentity)
 		{	
 			subs_info_t subs;
+			hentity->event= presentity->event;
 			delete_htable(presentity, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
 			
@@ -335,10 +336,12 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.pres_uri= hentity->pres_uri; 
 			subs.watcher_uri= hentity->watcher_uri;
 			subs.contact= hentity->watcher_uri;
-			subs.expires= hentity->desired_expires - (int)time(NULL)+ 10;
-			subs.flag|= INSERT_TYPE;
-			subs.source_flag|= hentity->flag;
-			subs.event|= hentity->event;
+			subs.expires= (hentity->desired_expires>0)?
+					hentity->desired_expires- (int)time(NULL)+ 10:-1;
+			subs.flag= INSERT_TYPE;
+			subs.source_flag= hentity->flag;
+			subs.event= hentity->event;
+			DBG("PUA:subs_cback_func: event_parameter= %d\n",subs.event);
 			subs.id= hentity->id;
 			subs.outbound_proxy= hentity->outbound_proxy;
 			if(send_subscribe(&subs)< 0)
@@ -366,7 +369,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			goto done;
 		}
 		DBG("PUA:subs_cback_func: *** Update expires\n");
-		update_htable(presentity, hentity->desired_expires, lexpire, hash_code);
+		update_htable(presentity, hentity->desired_expires, lexpire, NULL, hash_code);
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
 	}
@@ -543,7 +546,7 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 		hentity->desired_expires=subs->expires+ (int)time(NULL);
 
 	hentity->flag= subs->source_flag;
-	hentity->event|= subs->event;
+	hentity->event= subs->event;
 
 	return hentity;
 
@@ -699,7 +702,7 @@ insert:
 			goto done;
 		}
 	//	hentity->flag= flag;
-	
+		DBG("PUA:send_subscribe: event parameter: %d\n", hentity->event);	
 		tmb.t_request_within
 		(&met,
 		str_hdr,

@@ -282,6 +282,23 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
 		DBG("PUA:publ_cback_func: lexpire= %d\n", lexpire);
 	}
+	
+	hdr = msg->headers;
+	while (hdr!= NULL)
+	{
+		if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
+		{
+			found = 1;
+			break;
+		}
+		hdr = hdr->next;
+	}
+	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
+	{	
+		LOG(L_ERR, "PUA:publ_cback_func:no SIP-ETag header field found\n");
+		goto done;
+	}
+	etag= hdr->body;
 
 	/* if publish with 0 the callback parameter is NULL*/
 	if(lexpire== 0 && *ps->param== NULL )	
@@ -320,7 +337,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				goto done;
 			}
 			update_htable(presentity, hentity->desired_expires,
-					lexpire, hash_code);
+					lexpire, &etag, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 	}
@@ -331,26 +348,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		LOG(L_ERR, "PUA:publ_cback_func:expires= 0: no not insert\n");
 		goto done;
 	}
-	hdr = msg->headers;
-	while (hdr!= NULL)
-	{
-		if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
-		{
-			found = 1;
-			break;
-		}
-		hdr = hdr->next;
-	}
-	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
-	{	
-		LOG(L_ERR, "PUA:publ_cback_func:no SIP-ETag header field found\n");
-		goto done;
-	}
-	etag= hdr->body;
 	size= sizeof(ua_pres_t)+ sizeof(str)+ 
-		(((ua_pres_t*)(*ps->param))->pres_uri->len+etag.len+ 
-		 ((ua_pres_t*)(*ps->param))->tuple_id.len + 
-		 ((ua_pres_t*)(*ps->param))->id.len+ 1)* sizeof(char);
+		(hentity->pres_uri->len+ hentity->tuple_id.len + 
+		 hentity->id.len)* sizeof(char);
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
@@ -363,35 +363,32 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= sizeof(str);
 
 	presentity->pres_uri->s= (char*)presentity+ size;
-	memcpy(presentity->pres_uri->s,
-			((ua_pres_t*)(*ps->param))->pres_uri->s,
-			((ua_pres_t*)(*ps->param))->pres_uri->len);
-	presentity->pres_uri->len= 
-		((ua_pres_t*)(*ps->param))->pres_uri->len;
-	size+= ((ua_pres_t*)(*ps->param))->pres_uri->len;
-	presentity->etag.s= (char*)presentity+ size;
-	memcpy(presentity->etag.s, etag.s, etag.len);
-	presentity->etag.len= etag.len;
-	size+= etag.len;
-
+	memcpy(presentity->pres_uri->s, hentity->pres_uri->s, 
+			hentity->pres_uri->len);
+	presentity->pres_uri->len= hentity->pres_uri->len;
+	size+= hentity->pres_uri->len;
+	
 	presentity->tuple_id.s= (char*)presentity+ size;
-	memcpy(presentity->tuple_id.s,
-			((ua_pres_t*)(*ps->param))->tuple_id.s,
-			((ua_pres_t*)(*ps->param))->tuple_id.len);
-	presentity->tuple_id.len= ((ua_pres_t*)(*ps->param))->tuple_id.len;
+	memcpy(presentity->tuple_id.s, hentity->tuple_id.s,
+			hentity->tuple_id.len);
+	presentity->tuple_id.len= hentity->tuple_id.len;
 	size+= presentity->tuple_id.len;
 
 	presentity->id.s=(char*)presentity+ size;
-	memcpy(presentity->id.s, ((ua_pres_t*)(*ps->param))->id.s, 
-			((ua_pres_t*)(*ps->param))->id.len);
-	presentity->id.len= ((ua_pres_t*)(*ps->param))->id.len; 
+	memcpy(presentity->id.s, hentity->id.s, 
+			hentity->id.len);
+	presentity->id.len= hentity->id.len; 
 	size+= presentity->id.len;
 		
 	presentity->expires= lexpire +(int)time(NULL);
-	presentity->desired_expires= ((ua_pres_t*)(*ps->param))->desired_expires;
-	presentity->flag|= ((ua_pres_t*)(*ps->param))->flag;
-	presentity->event|= ((ua_pres_t*)(*ps->param))->event;
+	presentity->desired_expires= hentity->desired_expires;
+	presentity->flag|= hentity->flag;
+	presentity->event|= hentity->event;
 	presentity->db_flag|= INSERTDB_FLAG;
+
+	presentity->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
+	memcpy(presentity->etag.s, etag.s, etag.len);
+	presentity->etag.len= etag.len;
 
 	insert_htable( presentity);
 	DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		

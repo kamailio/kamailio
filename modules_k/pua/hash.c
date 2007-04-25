@@ -128,7 +128,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 				}
 				else
 				{
-					if(id.s)
+					if(id.s && id.len)
 					{	
 						if(id.len== p->id.len &&
 								strncmp(p->id.s, id.s, id.len)==0)
@@ -148,10 +148,12 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 	return p;
 }
 
-void update_htable(ua_pres_t* presentity,time_t desired_expires, int expires, unsigned int hash_code)
+void update_htable(ua_pres_t* presentity,time_t desired_expires, 
+		int expires,str* etag, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL;
 	DBG("PUA:hash_update ..\n");
+
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
 				 presentity->flag, presentity->id, hash_code);
@@ -159,6 +161,13 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires, int expires, un
 	{
 		DBG("PUA:hash_update : no recod found\n");
 		return; 
+	}
+	if(etag)
+	{	
+		shm_free(p->etag.s);
+		p->etag.s= (char*)shm_malloc(etag->len);
+		memcpy(p->etag.s, etag->s, etag->len);
+		p->etag.len= etag->len;
 	}
 
 	p->expires= expires+ (int)time(NULL);
@@ -220,7 +229,9 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 	while(q->next!=p)
 		q= q->next;
 	q->next=p->next;
-
+	
+	if(p->etag.s)
+		shm_free(p->etag.s);
 	shm_free(p);
 	p= NULL;
 
@@ -240,6 +251,8 @@ void destroy_htable()
 		{
 			q=p->next;
 			p->next=q->next;
+			if(q->etag.s)
+				shm_free(q->etag.s);
 			shm_free(q);
 			q= NULL;
 		}

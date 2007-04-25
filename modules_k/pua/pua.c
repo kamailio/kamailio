@@ -520,7 +520,7 @@ void hashT_clean(unsigned int ticks,void *param)
 					p= p->next;
 					continue;
 				}	
-			    if(p->expires < now - 2)
+			    if(p->expires < now - 10)
 				{
 					q= p->next;
 					DBG("PUA: hashT_clean: Found expired: uri= %.*s\n", p->pres_uri->len,
@@ -536,6 +536,7 @@ void hashT_clean(unsigned int ticks,void *param)
 		}
 		lock_release(&HashT->p_records[i].lock);
 	}
+
 
 }
 int update_pua(ua_pres_t* p, unsigned int hash_code)
@@ -666,7 +667,7 @@ error:
 void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
-	db_key_t q_cols[15];
+	db_key_t q_cols[15], result_cols[1];
 	db_res_t *res= NULL;
 	db_key_t db_cols[3];
 	db_val_t q_vals[15], db_vals[3];
@@ -697,6 +698,7 @@ void db_update(unsigned int ticks,void *param)
 	q_vals[flag_col= n_query_cols].type = DB_INT;
 	q_vals[flag_col= n_query_cols].nul = 0;
 	n_query_cols++;
+
 	q_cols[watcher_col= n_query_cols] ="watcher_uri";
 	q_vals[watcher_col= n_query_cols].type = DB_STR;
 	q_vals[watcher_col= n_query_cols].nul = 0;
@@ -755,6 +757,8 @@ void db_update(unsigned int ticks,void *param)
 	db_cols[1]= "cseq";
 	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
+
+	result_cols[0]= "expires";
 
 	if(pua_db== NULL)
 	{
@@ -815,7 +819,7 @@ void db_update(unsigned int ticks,void *param)
 						" n_update_cols= %d\n", n_query_cols, n_update_cols);
 
 					if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
-								 0, n_query_cols, 0, 0, &res)< 0)
+								 result_cols, n_query_cols, 1, 0, &res)< 0)
 					{
 						LOG(L_ERR, "PUA: db_update:ERROR while querying"
 								" database");
@@ -904,7 +908,7 @@ void db_update(unsigned int ticks,void *param)
 		LOG(L_ERR,"PUA: db_update: ERROR cleaning expired"
 				" information\n");
 	}
-
+	DBG("PUA: db_update: updated records in database tables\n");
 	return ;
 
 }	

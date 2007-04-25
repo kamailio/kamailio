@@ -97,7 +97,7 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 void insert_htable(ua_pres_t* presentity );
 
 void update_htable(ua_pres_t* presentity,time_t desired_expires,
-		int expires, unsigned int hash_code);
+		int expires, str* etag, unsigned int hash_code);
 
 void delete_htable(ua_pres_t* presentity, unsigned int hash_code);
 
