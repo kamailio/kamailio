@@ -49,7 +49,6 @@ extern db_func_t pa_dbf;
 extern gen_lock_set_t* set;
 extern int counter ;
 extern int pid;
-extern char prefix;
 extern int startup_time;
 
 static str pu_400a_rpl = str_init("Bad request");
@@ -57,26 +56,6 @@ static str pu_400b_rpl = str_init("Invalid request");
 static str pu_489_rpl  = str_init("Bad Event");
 
 
-char* generate_ETag()
-{
-	char* etag;
-	int size = 0;
-	etag = (char*)pkg_malloc(40*sizeof(char));
-	if(etag ==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:generate_ETag:Error while allocating memory \n");
-		return NULL ;
-	}
-	size = sprintf (etag, "%c.%d.%d.%d",prefix, startup_time, pid, counter );
-	if( size <0 )
-	{
-		LOG(L_ERR, "PRESENCE: generate_ETag: ERROR unsuccessfull sprintf\n ");
-		return NULL;
-	}
-	LOG(L_ERR, "PRESENCE: generate_ETag: etag= %.*s / %d\n ", size, etag, size);
-	etag[size] = '\0';
-	return etag;
-}
 
 void msg_presentity_clean(unsigned int ticks,void *param)
 {
@@ -385,7 +364,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	if(found==0 )
 	{
 		DBG("PRESENCE:handle_publish: SIP-If-Match not found\n");
-		etag.s = generate_ETag();
+		etag.s = generate_ETag(0);
 		if(etag.s == NULL)
 		{
 			LOG(L_ERR,

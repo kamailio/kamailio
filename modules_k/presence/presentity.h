@@ -38,6 +38,9 @@
 #include "../../str.h"
 #include "../../parser/msg_parser.h" 
 #include "event_list.h"
+#include "presence.h"
+
+extern char prefix;
 
 typedef struct presentity
 {
@@ -60,6 +63,27 @@ int update_presentity(struct sip_msg* msg, presentity_t* p, str* body, int t_new
 
 /* free memory */
 void free_presentity(presentity_t* p);
+
+static inline char* generate_ETag(int publ_count)
+{
+	char* etag;
+	int size = 0;
+	etag = (char*)pkg_malloc(60*sizeof(char));
+	if(etag ==NULL)
+	{
+		LOG(L_ERR, "PRESENCE:generate_ETag:Error while allocating memory \n");
+		return NULL ;
+	}
+	size = sprintf (etag, "%c.%d.%d.%d.%d",prefix, startup_time, pid, counter, publ_count);
+	if( size <0 )
+	{
+		LOG(L_ERR, "PRESENCE: generate_ETag: ERROR unsuccessfull sprintf\n ");
+		return NULL;
+	}
+	etag[size] = '\0';
+	DBG("PRESENCE: generate_ETag: etag= %s / %d\n ",etag, size);
+	return etag;
+}
 
 #endif
 

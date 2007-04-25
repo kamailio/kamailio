@@ -261,7 +261,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		remote_cseq= row_vals[remote_cseq_col].val.int_val;
 		if(subs->cseq<= remote_cseq)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscription: ERROR wrong sequence number\n");
+			LOG(L_ERR, "PRESENCE:update_subscription: ERROR wrong sequence number"
+					" received: %d -  stored: %d\n",subs->cseq, remote_cseq);
 			if (slb.reply(msg, 400, &pu_400_rpl) == -1)
 			{
 				LOG(L_ERR, "PRESENCE: update_subscription: ERROR while"
@@ -368,7 +369,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			query_cols[n_query_cols] = "remote_cseq";
 			query_vals[n_query_cols].type = DB_INT;
 			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.int_val = subs->cseq; // initialise with 0
+			query_vals[n_query_cols].val.int_val = subs->cseq; 
 			n_query_cols++;
 
 
@@ -513,7 +514,7 @@ error:
 
 void msg_watchers_clean(unsigned int ticks,void *param)
 {
-	db_key_t db_keys[3];
+	db_key_t db_keys[3], result_cols[1];
 	db_val_t db_vals[3];
 	db_op_t  db_ops[3] ;
 	db_res_t *result= NULL;
@@ -533,13 +534,14 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	db_vals[1].val.str_val.s = "pending";
 	db_vals[1].val.str_val.len = 7;
 
+	result_cols[0]= "id";
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR in use_table\n");
 		return ;
 	}
 	
-	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, 0,	2, 0, 0, &result )< 0)
+	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols, 2, 1, 0, &result )< 0)
 	{
 		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR while querying database"
 				" for expired messages\n");
@@ -594,7 +596,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	db_ops[0] = OP_LT;
 	db_vals[0].type = DB_INT;
 	db_vals[0].nul = 0;
-	db_vals[0].val.int_val = (int)time(NULL);
+	db_vals[0].val.int_val = (int)time(NULL)- 10;
 	
 
 	result_cols[event_col=n_result_cols++] = "event";
