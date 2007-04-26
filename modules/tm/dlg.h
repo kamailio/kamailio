@@ -220,6 +220,9 @@ void run_trans_dlg_callbacks(dlg_t* dlg, struct cell* trans,
 								struct retr_buf* rbuf);
 /* cleanup on exit */
 void destroy_new_dlg_cbs();
+
+typedef int (*register_new_dlg_cb_f)(int, dialog_cb, void*);
+typedef int (*register_dlg_tmcb_f)(int, dlg_t*, transaction_cb, void*);
 #endif /* DIALOG_CALLBACKS */
 
 

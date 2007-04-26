@@ -48,6 +48,7 @@ int load_tm( struct tm_binds *tmb)
 		return -1;
 	}
 
+	memset(tmb, 0, sizeof(struct tm_binds));
 	if (!( tmb->register_tmcb=(register_tmcb_f) 
 		find_export("register_tmcb", NO_SCRIPT, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'register_tmcb' not found\n");
@@ -194,5 +195,9 @@ int load_tm( struct tm_binds *tmb)
 	tmb->send_prepared_request = send_prepared_request;
 	
 	tmb->route_mode = &rmode;
+#ifdef DIALOG_CALLBACKS
+	tmb->register_new_dlg_cb=register_new_dlg_cb;
+	tmb->register_dlg_tmcb=register_dlg_tmcb;
+#endif
 	return 1;
 }

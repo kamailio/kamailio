@@ -111,6 +111,14 @@ struct tm_binds {
 	prepare_request_within_f  prepare_request_within;
 	send_prepared_request_f   send_prepared_request;
 	enum route_mode*   route_mode;
+#ifdef DIALOG_CALLBACKS
+	register_new_dlg_cb_f register_new_dlg_cb;
+	register_dlg_tmcb_f   register_dlg_tmcb;
+#else
+	void* reserved1; /* make sure the structure has the same size even
+	                    if no dlg callbacks are used/defined*/
+	void* reserved2;
+#endif
 };
 
 extern int tm_init;
