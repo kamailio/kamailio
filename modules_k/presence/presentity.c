@@ -50,6 +50,28 @@ extern db_func_t pa_dbf;
 static str pu_200_rpl  = str_init("OK");
 static str pu_412_rpl  = str_init("Conditional request failed");
 
+char* generate_ETag(int publ_count)
+{
+	char* etag;
+	int size = 0;
+	etag = (char*)pkg_malloc(60*sizeof(char));
+	if(etag ==NULL)
+	{
+		LOG(L_ERR, "PRESENCE:generate_ETag:Error while allocating memory \n");
+		return NULL ;
+	}
+	memset(etag, 0, 60*sizeof(char));
+	size = sprintf (etag, "%c.%d.%d.%d.%d",prefix, startup_time, pid, counter, publ_count);
+	if( size <0 )
+	{
+		LOG(L_ERR, "PRESENCE: generate_ETag: ERROR unsuccessfull sprintf\n ");
+		return NULL;
+	}
+	etag[size] = '\0';
+	DBG("PRESENCE: generate_ETag: etag= %s / %d\n ",etag, size);
+	return etag;
+}
+
 int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 {
 	str hdr_append, hdr_append2 ;
@@ -145,7 +167,7 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 	size+= user->len;
 
 	presentity->etag.s = ((char*)presentity)+ size;
-	strncpy(presentity->etag.s, etag->s, etag->len);
+	strcpy(presentity->etag.s, etag->s);
 	presentity->etag.len = etag->len;
 	size+= etag->len;
 	
@@ -271,7 +293,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 		}
 
 		DBG( "PRESENCE:update_presentity: inserting %d cols into"
-				"table\n",
+				" table\n",
 				n_query_cols);
 				
 		if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
