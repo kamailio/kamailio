@@ -57,7 +57,7 @@ static inline void free_aaa_avp(struct aaa_avp *avp)
 
 
 
-static void inline free_aaa_avp_list(struct aaa_avp *avp)
+static inline void free_aaa_avp_list(struct aaa_avp *avp)
 {
 	struct aaa_avp *tmp;
 
