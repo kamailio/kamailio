@@ -41,4 +41,6 @@ extern send_subscribe_t pua_send_subscribe;
 extern query_dialog_t pua_is_dialog;
 extern query_dialog_t pua_is_dialog;
 extern int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2);
+extern void term_publ_callback(ua_pres_t* hentity, struct msg_start * fl);
+
 #endif

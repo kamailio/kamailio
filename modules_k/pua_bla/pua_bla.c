@@ -144,6 +144,18 @@ static int mod_init(void)
 	}
 	pua_is_dialog= pua.is_dialog;
 	
+	if(pua.register_puacb== NULL)
+	{
+		LOG(L_ERR, "pua_bla:mod_init Could not import register callback\n");
+		return -1;
+	}	
+	if(pua.register_puacb(BLA_TERM_PUBLISH, term_publ_callback, NULL)< 0)
+	{
+		LOG(L_ERR, "PUA_XMPP:mod_init Could not register callback\n");
+		return -1;
+	}	
+
+
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc)
 	{

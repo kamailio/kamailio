@@ -227,10 +227,45 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	extra_headers.len+= CRLF_LEN;
 	
 	publ.body= &body;
-	publ.source_flag= BLA_PUBLISH;
 	publ.expires= expires;
 	publ.event= BLA_EVENT;
 	publ.extra_headers= &extra_headers;
+
+	/* if state= terminated construct a Publish message with no dialog-info elements*/
+	if(body.s && body.len)
+	{	
+		doc= xmlParseMemory(body.s, body.len );
+		if(doc== NULL)
+		{
+			LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while parsing xml memory\n");
+			goto error;
+		}
+		dialog_node= xmlDocGetNodeByName(doc, "dialog", NULL);
+		if(dialog_node )
+		{
+		    
+			node= xmlNodeGetChildByName(dialog_node, "state");
+			if(node == NULL)
+			{
+				LOG(L_ERR, "PUA_BLA: handle_notify: No dialog node found\n");
+					goto error;
+			}
+			stare= (char*)xmlNodeGetContent(node->children);
+		
+			if( strncmp(stare, "terminated", 10) == 0)
+			{
+				DBG("PUA_BLA: handle_notify: Found state terminated - send another Publish\n");
+				publ.source_flag= BLA_TERM_PUBLISH;	
+			}	
+			else
+				publ.source_flag= BLA_PUBLISH;	
+			xmlFree(stare);
+		}
+		else
+			publ.source_flag= BLA_PUBLISH;	
+	}
+	else
+		publ.source_flag= BLA_PUBLISH;
 
 	if(pua_send_publish(&publ)< 0)
 	{
@@ -238,62 +273,9 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 		goto error;
 	}
 
-	/* if state= terminated construct a Publish message with no dialog-info elements*/
-	doc= xmlParseMemory(body.s, body.len );
-	if(doc== NULL)
-	{
-		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while parsing xml memory\n");
-		goto error;
-	}
-	dialog_node= xmlDocGetNodeByName(doc, "dialog", NULL);
-	if(dialog_node == NULL)
-	{
-		DBG("PUA_BLA: handle_notify: No dialog node found\n");
-		xmlFreeDoc(doc);
-		goto done;
-	}
-    
-	node= xmlNodeGetChildByName(dialog_node, "state");
-	if(node == NULL)
-	{
-		LOG(L_ERR, "PUA_BLA: handle_notify: No dialog node found\n");
-		goto error;
-	}
-	stare= (char*)xmlNodeGetContent(node->children);
-
-	if( strncmp(stare, "terminated", 10) == 0)
-	{
-		xmlFree(stare);
-		DBG("PUA_BLA: handle_notify: Found state terminated - send another Publish\n");
-		xmlUnlinkNode(dialog_node);
-		xmlFreeNode(dialog_node);
-		
-		memset(&body, 0, sizeof(str));
-		xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body.s, &body.len, 1);	
-		if(body.s== NULL || body.len== 0)
-		{
-			LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while dumping xml memory\n");
-			goto error;
-		}	
-		xmlFreeDoc(doc);
-		doc= NULL;
-    
-		publ.body= &body;
-	    if(pua_send_publish(&publ)< 0)
-	    {
-			LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while sending Publish\n");
-			xmlFree(body.s);
-			goto error;
-		}
-		xmlFree(body.s);
-	}
-	else
-		xmlFree(stare);
-
 	xmlCleanupParser();
 	xmlMemoryDump();
 
-done:	
 	return 1;
 
 error:
@@ -302,6 +284,91 @@ error:
 
 	return 0;
 }	
+
+void term_publ_callback(ua_pres_t* hentity, struct msg_start * fl)
+{
+	publ_info_t publ;
+	str extra_headers= {0, 0};
+	static char buf[255];
+	xmlDocPtr doc= NULL;
+	xmlNodePtr dialog_node= NULL;
+	str body;
+	char* entity= NULL;
+
+	memset(&publ, 0, sizeof(publ_info_t));
+
+	/* build extra_headers with Sender*/
+	extra_headers.s= buf;
+	memcpy(extra_headers.s, header_name.s, header_name.len);
+	extra_headers.len= header_name.len;
+	memcpy(extra_headers.s+extra_headers.len,": ",2);
+	extra_headers.len+= 2;
+	memcpy(extra_headers.s+ extra_headers.len, hentity->pres_uri->s,
+			hentity->pres_uri->len);
+	extra_headers.len+= hentity->pres_uri->len;
+	memcpy(extra_headers.s+ extra_headers.len, CRLF, CRLF_LEN);
+	extra_headers.len+= CRLF_LEN;
+
+	publ.pres_uri= hentity->pres_uri;
+	publ.expires= hentity->expires- (int)time(NULL);
+	publ.event= BLA_EVENT;
+	publ.extra_headers= &extra_headers;
+	publ.source_flag= BLA_PUBLISH;
+	
+	memset(&body, 0, sizeof(str));
+	
+	if(hentity->body->s== NULL || hentity->body->len== 0)
+	{
+		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR NULL body\n");
+   		goto error;
+	}
+	doc= xmlParseMemory(hentity->body->s, hentity->body->len );
+	if(doc== NULL)
+  	{
+  		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while parsing xml memory\n");
+   		goto error;
+   	}
+   	dialog_node= xmlDocGetNodeByName(doc, "dialog", NULL);
+   	if(dialog_node == NULL)
+   	{
+   		DBG("PUA_BLA: handle_notify: No dialog node found\n");
+   		xmlFreeDoc(doc);
+   		goto error;
+   	}
+   
+   	xmlUnlinkNode(dialog_node);
+   	xmlFreeNode(dialog_node);
+   
+  	memset(&body, 0, sizeof(str));
+   	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body.s, &body.len, 1);
+   	if(body.s== NULL || body.len== 0)
+   	{
+   		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while dumping xml memory\n");
+   		goto error;
+   	}
+   	xmlFreeDoc(doc);
+   	doc= NULL;
+   
+   	publ.body= &body;
+   	if(pua_send_publish(&publ)< 0)
+   	{
+   		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while sending Publish\n");
+   		xmlFree(body.s);
+   		goto error;
+   	}
+   	xmlFree(body.s);
+   	
+	return;	
+
+error:
+	if(doc)
+		xmlFreeDoc(doc);
+	if(entity)
+		xmlFree(entity);
+	return;
+
+}	
+
 
 xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
 															const char *ns)
@@ -339,4 +406,48 @@ xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
 	return NULL;
 }
 
+#if 0
+	entity= (char*)pkg_malloc((hentity->pres_uri->len+ 1)* sizeof(char));
+	if(entity== NULL)
+	{
+		LOG(L_ERR, "PUA_BLA: term_publ_callback: NO more memory\n");
+		return;
+	}
+	memcpy(entity, hentity->pres_uri->s, hentity->pres_uri->len);
+	entity[hentity->pres_uri->len]= '\0';
 
+	/* construct body*/
+	doc = xmlNewDoc(BAD_CAST "1.0");
+    if(doc== NULL)
+	{
+		LOG(L_ERR, "PUA_BLA: term_publ_callback: ERROR when creating new xml doc\n");
+		goto error;
+	}
+	dialog_node = xmlNewNode(NULL, BAD_CAST "dialog-info");
+    if(dialog_node== NULL)
+	{
+		LOG(L_ERR, "PUA_BLA: term_publ_callback: ERROR when creating new node\n");
+		goto error;
+	}	
+	xmlDocSetRootElement(doc, dialog_node);
+
+	xmlNewProp(dialog_node, BAD_CAST "xmlns",
+			BAD_CAST "urn:ietf:params:xml:ns:dialog-info");
+
+	xmlNewProp(dialog_node, BAD_CAST "version", BAD_CAST "1");
+	xmlNewProp(dialog_node, BAD_CAST "state", BAD_CAST "partial");
+	xmlNewProp(dialog_node, BAD_CAST "entity", BAD_CAST entity);
+	pkg_free(entity);
+	entity= NULL;
+
+	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body.s, &body.len, 1);	
+	if(body.s== NULL || body.len== 0)
+	{
+		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while dumping xml memory\n");
+		xmlFreeDoc(doc);
+		goto error;
+	}	
+	xmlFreeDoc(doc);
+	doc= NULL;
+
+#endif
