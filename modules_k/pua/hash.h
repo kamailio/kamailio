@@ -34,12 +34,13 @@
 
 #define UL_PUBLISH					1<<0
 #define BLA_PUBLISH					1<<1
-#define BLA_SUBSCRIBE				1<<2
-#define XMPP_PUBLISH				1<<3
-#define XMPP_SUBSCRIBE				1<<4
-#define XMPP_INITIAL_SUBS		    1<<5
-#define MI_PUBLISH					1<<6
-#define MI_SUBSCRIBE				1<<7
+#define BLA_TERM_PUBLISH			1<<2
+#define BLA_SUBSCRIBE				1<<3
+#define XMPP_PUBLISH				1<<4
+#define XMPP_SUBSCRIBE				1<<5
+#define XMPP_INITIAL_SUBS		    1<<6
+#define MI_PUBLISH					1<<7
+#define MI_SUBSCRIBE				1<<8
 
 #define PRESENCE_EVENT      1<<0
 #define PWINFO_EVENT        1<<1

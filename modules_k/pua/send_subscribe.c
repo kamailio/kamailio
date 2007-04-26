@@ -339,7 +339,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.expires= (hentity->desired_expires>0)?
 					hentity->desired_expires- (int)time(NULL)+ 10:-1;
 			subs.flag= INSERT_TYPE;
-			subs.source_flag= hentity->flag;
+			subs.source_flag= flag;
 			subs.event= hentity->event;
 			DBG("PUA:subs_cback_func: event_parameter= %d\n",subs.event);
 			subs.id= hentity->id;

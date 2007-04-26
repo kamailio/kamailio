@@ -40,6 +40,7 @@
 #include "pua.h"
 #include "hash.h"
 #include "send_publish.h"
+#include "pua_callback.h"
 
 extern struct tm_binds tmb;
 
@@ -202,13 +203,15 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	int size= 0;
 	int lexpire= 0;
 	str etag;
+	int flag;
 	unsigned int hash_code;
 
 	if(ps->param== NULL)
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: Error NULL callback parameter\n");
-		goto done;
+		goto error;
 	}
+	
 	if( ps->code>= 300 )
 	{
 		if( *ps->param== NULL ) 
@@ -217,6 +220,10 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			return;
 		}
 		hentity= (ua_pres_t*)(*ps->param);
+		flag= hentity->flag;
+		if(hentity->flag & BLA_TERM_PUBLISH)
+			hentity->flag= BLA_PUBLISH;
+
 		hash_code= core_hash(hentity->pres_uri, NULL,
 					HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
@@ -239,13 +246,13 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				publ.expires= (hentity->desired_expires>0)?
 					hentity->desired_expires- (int)time(NULL)+ 10:-1;
 				publ.flag|= INSERT_TYPE;
-				publ.source_flag|= hentity->flag;
+				publ.source_flag|= flag;
 				publ.event|= hentity->event;
 				publ.id= hentity->id;
 				if(send_publish(&publ)< 0)
 				{
 					LOG(L_ERR, "PUA:publ_cback_func: ERROR when trying to send PUBLISH\n");
-					goto done;
+					goto error;
 				}
 			}
 			else
@@ -257,19 +264,19 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		}
 		else
 			lock_release(&HashT->p_records[hash_code].lock);
-		goto done;
+		goto error;
 	}
 
 	msg= ps->rpl;
 	if(msg == NULL || msg== FAKED_REPLY)
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: ERROR no reply message found\n ");
-		goto done;
+		goto error;
 	}
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: error parsing headers\n");
-		goto done;
+		goto error;
 	}	
 	if(ps->rpl->expires && msg->expires->body.len > 0)
 	{
@@ -277,7 +284,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		{
 			LOG(L_ERR, "PUA:publ_cback_func: ERROR cannot parse Expires"
 					" header\n");
-			goto done;
+			goto error;
 		}
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
 		DBG("PUA:publ_cback_func: lexpire= %d\n", lexpire);
@@ -296,7 +303,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
 	{	
 		LOG(L_ERR, "PUA:publ_cback_func:no SIP-ETag header field found\n");
-		goto done;
+		goto error;
 	}
 	etag= hdr->body;
 
@@ -317,6 +324,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	LOG(L_DBG, "PUA:publ_cback_func: completed with status %d [contact:"
 			"%.*s]\n",ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
+	flag= hentity->flag;
+	if(hentity->flag & BLA_TERM_PUBLISH)
+		hentity->flag= BLA_PUBLISH;
 
 	DBG("PUA: publ_cback_func: searched presentity:\n");
 	print_hentity( hentity);
@@ -346,7 +356,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	if(lexpire== 0)
 	{
 		LOG(L_ERR, "PUA:publ_cback_func:expires= 0: no not insert\n");
-		goto done;
+		goto error;
 	}
 	size= sizeof(ua_pres_t)+ sizeof(str)+ 
 		(hentity->pres_uri->len+ hentity->tuple_id.len + 
@@ -355,7 +365,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	if(presentity== NULL)
 	{
 		LOG(L_ERR,"PUA:publ_cback_func: ERROR no more share memory\n");
-		goto done;
+		goto error;
 	}	
 	memset(presentity, 0, size);
 	size= sizeof(ua_pres_t);
@@ -395,11 +405,22 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		
 
 done:
+	hentity->flag= flag;
+	run_pua_callbacks( hentity, &msg->first_line);
 	if(*ps->param)
 	{
 		shm_free(*ps->param);
 		*ps->param= NULL;
 	}
+	return;
+
+error:
+	if(*ps->param)
+	{
+		shm_free(*ps->param);
+		*ps->param= NULL;
+	}
+
 	return;
 
 }	
@@ -420,9 +441,14 @@ int send_publish( publ_info_t* publ )
 	unsigned int hash_code;
 	str etag= {0, 0};
 	int ver= 0;
+	int flag;
 
 	DBG("PUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
 			publ->pres_uri->s );
+	
+	flag= publ->source_flag;
+	if(publ->source_flag & BLA_TERM_PUBLISH)
+		publ->source_flag= BLA_PUBLISH;
 
 	hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
 
@@ -648,7 +674,7 @@ after_handle_body:
 	}
 
 	hentity->event|= publ->event;
-	hentity->flag|= publ->source_flag;
+	hentity->flag|= flag;
 	if(publ->expires> 0)
 		hentity->desired_expires= publ->expires + (int )time(NULL);
 	else
