@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
  * Copyright (C) 2003 iptel.org
- * Copyright (C) 2003-2006 Juha Heinanen
+ * Copyright (C) 2003-2007 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -713,8 +713,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (init_tag_avp( tag_avp_param) < 0) {
-		LOG(L_ERR,"ERROR:permissions:mod_init: failed to process tag AVP\n");
+	if (init_tag_avp(tag_avp_param) < 0) {
+		LOG(L_ERR,"ERROR:permissions:mod_init: failed to process peer_tag_avp AVP param\n");
 		return -1;
 	}
 

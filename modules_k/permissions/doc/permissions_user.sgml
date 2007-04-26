@@ -636,9 +636,9 @@ modparam("permissions", "tag_col", "peer_tag")
 		</example>
 	</section>
 	<section>
-		<title><varname>peer_tag_avp</varname> (string)</title>
+		<title><varname>peer_tag_avp</varname> (AVP string)</title>
 		<para>
-		AVP spec of peer tag AVP.  If defined, the AVP will be
+		If defined, the AVP will be
                 set as side effect of allow_trusted() call to not NULL
                 tag column value of the matching peer.
 		</para>
@@ -651,7 +651,7 @@ modparam("permissions", "tag_col", "peer_tag")
 		<title>Set <varname>peer_tag_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("permissions", "peer_tag_avp", "i:707")
+modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 ...
 </programlisting>
 		</example>

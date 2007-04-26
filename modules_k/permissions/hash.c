@@ -28,16 +28,17 @@
 #include "../../hash_func.h"
 #include "../../usr_avp.h"
 #include "../../ip_addr.h"
+#include "../../items.h"
 #include "hash.h"
 #include "trusted.h"
 #include "address.h"
 
 #define perm_hash(_s)  core_hash( &(_s), 0, PERM_HASH_SIZE)
 
+
 /* tag AVP specs */
 static int     tag_avp_type;
 static int_str tag_avp;
-static str     tag_str;
 
 
 /*
@@ -45,19 +46,28 @@ static str     tag_str;
  */
 int init_tag_avp(char *tag_avp_param)
 {
-	if (tag_avp_param && *tag_avp_param) {
-		tag_str.s = tag_avp_param;
-		tag_str.len = strlen(tag_str.s);
-		if (parse_avp_spec( &tag_str, &tag_avp_type, &tag_avp)<0) {
-			LOG(L_CRIT,"ERROR:permissions:init_tag_avp: "
-				"invalid tag AVP spec \"%s\"\n", tag_avp_param);
-			return -1;
-		}
-	} else {
-		tag_avp.n = 0;
-		tag_avp_type = 0;
+    xl_spec_t avp_spec;
+    unsigned short avp_flags;
+
+    if (tag_avp_param && *tag_avp_param) {
+	if (xl_parse_spec(tag_avp_param, &avp_spec,
+			  XL_THROW_ERROR|XL_DISABLE_MULTI|
+			  XL_DISABLE_COLORS)==0
+	    || avp_spec.type != XL_AVP) {
+	    LOG(L_ERR, "ERROR:permissions:mod_init: malformed or non "
+		"AVP %s peer_tag_avp definition\n", tag_avp_param);
+	    return -1;
 	}
-	return 0;
+	if(xl_get_avp_name(0, &avp_spec, &tag_avp, &avp_flags)!=0) {
+	    LOG(L_ERR, "ERROR:permissions:mod_init: [%s]- invalid "
+		"peer_tag_avp AVP definition\n", tag_avp_param);
+	    return -1;
+	}
+	tag_avp_type = avp_flags;
+    } else {
+	tag_avp.n = 0;
+    }
+    return 0;
 }
 
 
