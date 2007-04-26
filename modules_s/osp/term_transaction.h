@@ -32,12 +32,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef OSP_MOD_TERM_TRANSACTION_H
-#define OSP_MOD_TERM_TRANSACTION_H
 
-#include "../../sr_module.h"
+#ifndef _OSP_MOD_TERM_TRANSACTION_H_
+#define _OSP_MOD_TERM_TRANSACTION_H_
 
-int checkospheader(   struct sip_msg*, char*,char*);
-int validateospheader(struct sip_msg*, char*,char*);
+#include "../../parser/msg_parser.h"
 
-#endif
+int ospCheckHeader(struct sip_msg*, char*, char*);
+int ospValidateHeader(struct sip_msg*, char*, char*);
+
+#endif /* _OSP_MOD_TERM_TRANSACTION_H_ */
+

@@ -32,150 +32,172 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 #include "osp_mod.h"
-#include "osptoolkit.h"
 #include "term_transaction.h"
 #include "sipheader.h"
 #include "destination.h"
+#include "osptoolkit.h"
 #include "usage.h"
-#include "osp/osp.h"
-#include "osp/ospb64.h"
-#include "../../sr_module.h"
-#include "../../locking.h"
-#include "../../mem/mem.h"
 
-extern OSPTPROVHANDLE _provider;
-extern int _token_format;
-extern int _validate_call_id;
-extern char* _device_ip;
+extern char* _osp_device_ip;
+extern int _osp_token_format;
+extern int _osp_validate_callid;
+extern OSPTPROVHANDLE _osp_provider;
 
+/*
+ * Get OSP token
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+int ospCheckHeader(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    unsigned char buffer[OSP_TOKENBUF_SIZE];
+    unsigned int  buffersize = sizeof(buffer);
 
-int checkospheader(struct sip_msg* msg, char* ignore1, char* ignore2) {
-	char temp[3000];
-	int  sizeoftemp = sizeof(temp);
+    LOG(L_DBG, "osp: ospCheckHeader\n");
 
-
-	if (getOspHeader(msg, temp, &sizeoftemp) != 0) {
-		return MODULE_RETURNCODE_FALSE;
-	} else {
-		return MODULE_RETURNCODE_TRUE;
-	}
+    if (ospGetOspHeader(msg, buffer, &buffersize) != 0) {
+        return MODULE_RETURNCODE_FALSE;
+    } else {
+        return MODULE_RETURNCODE_TRUE;
+    }
 }
 
+/*
+ * Validate OSP token
+ * param ignore1
+ * param ignore2
+ * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+int ospValidateHeader (
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    int errorcode; 
+    OSPTTRANHANDLE transaction = -1;
+    unsigned int authorized = 0;
+    unsigned int timelimit = 0;
+    void* detaillog = NULL;
+    unsigned int logsize = 0;
+    unsigned char* callidval = (unsigned char*)"";
+    OSPTCALLID* callid = NULL;
+    unsigned callidsize = 0;
+    unsigned char token[OSP_TOKENBUF_SIZE];
+    unsigned int tokensize = sizeof(token);
+    osp_dest dest;
+    int result = MODULE_RETURNCODE_FALSE;
 
+    LOG(L_DBG, "osp: ospValidateHeader\n");
 
+    ospInitDestination(&dest);
 
-/** validate OSP header */
-int validateospheader (struct sip_msg* msg, char* ignore1, char* ignore2) {
-	int res; 
-	int valid;
+    if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction) != 0)) {
+        LOG(L_ERR, "osp: ERROR: failed to create a new OSP transaction handle (%d)\n", errorcode);
+    } else if ((ospGetRpidUserpart(msg, dest.calling, sizeof(dest.calling)) != 0) && 
+        (ospGetFromUserpart(msg, dest.calling, sizeof(dest.calling)) != 0))
+    {
+        LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
+    } else if ((ospGetUriUserpart(msg, dest.called, sizeof(dest.called)) != 0) &&
+        (ospGetToUserpart(msg, dest.called, sizeof(dest.called)) != 0))
+    {
+        LOG(L_ERR, "osp: ERROR: failed to extract called number\n");
+    } else if (ospGetCallId(msg, &callid) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to extract call id\n");
+    } else if (ospGetSourceAddress(msg, dest.source, sizeof(dest.source)) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to extract source address\n");
+    } else if (ospGetOspHeader(msg, token, &tokensize) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to extract OSP authorization token\n");
+    } else {
+        LOG(L_INFO, 
+            "osp: validate token for: "
+            "transaction_handle '%i' "
+            "e164_source '%s' "
+            "e164_dest '%s' "
+            "validate_call_id '%s' "
+            "call_id '%.*s'\n",
+            transaction,
+            dest.calling,
+            dest.called,
+            _osp_validate_callid == 0 ? "No" : "Yes",
+            callid->ospmCallIdLen,
+            callid->ospmCallIdVal);
 
-	OSPTTRANHANDLE transaction = -1;
-	unsigned int authorized = 0;
-	unsigned int time_limit = 0;
-	unsigned int log_size = 0;
-	void *detail_log = NULL;
-	OSPTCALLID* call_id = NULL;
-	osp_dest  dest;
+        if (_osp_validate_callid != 0) {
+            callidsize = callid->ospmCallIdLen;
+            callidval = callid->ospmCallIdVal;
+        }
 
-	char token[3000];
-	int sizeoftoken = sizeof(token);
+        errorcode = OSPPTransactionValidateAuthorisation(
+            transaction,
+            "",
+            "",
+            "",
+            "",
+            dest.calling,
+            OSPC_E164,
+            dest.called,
+            OSPC_E164,
+            callidsize,
+            callidval,
+            tokensize,
+            token,
+            &authorized,
+            &timelimit,
+            &logsize,
+            detaillog,
+            _osp_token_format);
+    
+        if (callid->ospmCallIdLen > sizeof(dest.callid) - 1) {
+            dest.callidsize = sizeof(dest.callid) - 1;
+        } else {
+            dest.callidsize = callid->ospmCallIdLen;
+        }
+        memcpy(dest.callid, callid->ospmCallIdVal, dest.callidsize);
+        dest.callid[dest.callidsize] = 0;
+        dest.tid = ospGetTransactionId(transaction);
+        dest.type = OSPC_DESTINATION;
+        dest.authtime = time(NULL);
+        strcpy(dest.host, _osp_device_ip);
 
-	unsigned callIdLen = 0;
-	unsigned char* callIdVal = (unsigned char*)"";
+        ospSaveTermDestination(&dest);
 
-	
+        if ((errorcode == 0) && (authorized == 1)) {
+            LOG(L_DBG, 
+                "osp: call is authorized for %d seconds, call_id '%.*s' transaction_id '%lld'",
+                timelimit,
+                dest.callidsize,
+                dest.callid,
+                dest.tid);
+            ospRecordTermTransaction(msg, transaction, dest.source, dest.calling, dest.called, dest.authtime);
+            result = MODULE_RETURNCODE_TRUE;
+        } else {
+            LOG(L_ERR, "osp: ERROR: token is invalid (%i)\n", errorcode);
 
-	valid = MODULE_RETURNCODE_FALSE;
+            /* 
+             * Update terminating status code to 401 and report terminating setup usage.
+             * We may need to make 401 configurable, just in case a user decides to reply with
+             * a different code.  Other options - trigger call setup usage reporting from the cpl
+             * (after replying with an error code), or maybe use a different tm callback.
+             */
+            ospRecordEvent(0, 401);
+        }
+    }
 
-	initDestination(&dest);
+    if (transaction != -1) {
+        OSPPTransactionDelete(transaction);
+    }
 
-	if (0!= (res=OSPPTransactionNew(_provider, &transaction))) {
-		ERR("osp: Failed to create a new OSP transaction id %d\n",res);
-	} else if (0 != getFromUserpart(msg, dest.callingnumber, sizeof(dest.callingnumber))) {
-		ERR("osp: Failed to extract calling number\n");
-	} else if (0 != getToUserpart(msg, dest.callednumber, sizeof(dest.callednumber))) {
-		ERR("osp: Failed to extract called number\n");
-	} else if (0 != getCallId(msg, &call_id)) {
-		ERR("osp: Failed to extract call id\n");
-	} else if (0 != getSourceAddress(msg,dest.source,sizeof(dest.source))) {
-		ERR("osp: Failed to extract source address\n");
-	} else if (0 != getOspHeader(msg, token, &sizeoftoken)) {
-		ERR("osp: Failed to extract OSP authorization token\n");
-	} else {
-		DBG("About to validate OSP token for:\n"
-			"transaction-handle = >%i< \n"
-			"e164_source = >%s< \n"
-			"e164_dest = >%s< \n"
-			"validate_call_id = >%s< \n"
-			"call-id = >%.*s< \n",
-			transaction,
-			dest.callingnumber,
-			dest.callednumber,
-			_validate_call_id==0?"No":"Yes",
-			call_id->ospmCallIdLen,
-			call_id->ospmCallIdVal);
-
-		if (_validate_call_id != 0) {
-			callIdLen = call_id->ospmCallIdLen;
-			callIdVal = call_id->ospmCallIdVal;
-		}
-
-		res = OSPPTransactionValidateAuthorisation(
-			transaction,
-			"",
-			"",
-			"",
-			"",
-			dest.callingnumber,
-			OSPC_E164,
-			dest.callednumber,
-			OSPC_E164,
-			callIdLen,
-			callIdVal,
-			sizeoftoken,
-			token,
-			&authorized,
-			&time_limit,
-			&log_size,
-			detail_log,
-			_token_format);
-	
-		memcpy(dest.callid,call_id->ospmCallIdVal,call_id->ospmCallIdLen);
-		dest.sizeofcallid = call_id->ospmCallIdLen;
-		dest.tid = get_transaction_id(transaction);
-		dest.type = OSPC_DESTINATION;
-		dest.time_auth = time(NULL);
-		strcpy(dest.destination,_device_ip);
-
-		saveTermDestination(&dest);
-
-		if (res == 0 && authorized == 1) {
-			DBG("osp: Call is authorized for %d seconds, call-id '%.*s', transaction-id '%lld'",
-				time_limit,dest.sizeofcallid,dest.callid,dest.tid);
-			record_term_transaction(msg,transaction,dest.source,dest.callingnumber,dest.callednumber,dest.time_auth);
-			valid = MODULE_RETURNCODE_TRUE;
-		} else {
-			ERR("osp: Token is not valid, code %i\n", res);
-
-			/* Update terminating status code to 401 and report terminating set-up usage.
-			 * We may need to make 401 configurable, just in case a user decides to reply with
-			 * a different code.  Other options - trigger call-set up usage reporting from the cpl
-			 * (after replying with an error code), or maybe use a different tm callback.
-			 */
-			recordEvent(0,401);
-			reportTermCallSetUpUsage();
-		}
-	}
-
-	if (transaction != -1) {
-		OSPPTransactionDelete(transaction);
-	}
-
-	if (call_id!=NULL) {
-		OSPPCallIdDelete(&call_id);
-	}
-	
-	return valid;
+    if (callid != NULL) {
+        OSPPCallIdDelete(&callid);
+    }
+    
+    return result;
 }
 

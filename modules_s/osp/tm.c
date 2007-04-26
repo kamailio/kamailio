@@ -33,107 +33,123 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "../tm/tm_load.h"
 #include "tm.h"
 #include "destination.h"
-#include "usage.h"
-#include "../tm/tm_load.h"
 
-struct tm_binds _tmb;
+struct tm_binds osp_tmb;
 
-static void onreq( struct cell* t, int type, struct tmcb_params *ps );
-static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
+static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps);
+static void ospTmcbFunc(struct cell* t, int type, struct tmcb_params* ps);
 
-
-int mod_init_tm()
+/*
+ * Load TM API
+ * return 0 success, -1 failure
+ */
+int ospInitTm(void)
 {
-        load_tm_f load_tm;
+    load_tm_f load_tm;
 
-        INFO("osp/tm - initializing\n");
+    LOG(L_DBG, "osp: ospInitTm\n");
 
-        /* import the TM auto-loading function */
-        if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
-                ERR("osp:mod_init_tm: can't import load_tm\n");
-                ERR("osp:mod_init_tm: tm is required for reporting call set up usage info\n");
-                return -1;
-        }
-        /* let the auto-loading function load all TM stuff */
-        if (load_tm( &_tmb )==-1) return -1;
+    if ((load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0)) == 0) {
+        LOG(L_ERR, "osp: ERROR: failed to import load_tm\n");
+        return -1;
+    }
 
-        /* register callbacks*/
-        /* listen for all incoming requests  */
-        if ( _tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, onreq, 0 ) <=0 ) {
-                ERR("osp:mod_init_tm: cannot register TMCB_REQUEST_IN callback\n");
-                ERR("osp:mod_init_tm: tm callbacks are required for reporting call set up usage info\n");
-                return -1;
-        }
+    if (load_tm(&osp_tmb) == -1) {
+        LOG(L_ERR, "osp: ERROR: failed to load TM API\n");
+        LOG(L_ERR, "osp: ERROR: TM is required for reporting call setup usage\n");
+        return -1;
+    }
 
-        return 0;
+    /* Register callbacks, listen for all incoming requests  */
+    if (osp_tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, ospOnReq, 0) <= 0) {
+        LOG(L_ERR, "osp: ERROR: failed to register TMCB_REQUEST_IN callback\n");
+        LOG(L_ERR, "osp: ERROR: TM callbacks are required for reporting call set up usage\n");
+        return -1;
+    }
+
+    return 0;
 }
 
-static void onreq( struct cell* t, int type, struct tmcb_params *ps )
+/*
+ * Register OSP callback function
+ * param t
+ * param type
+ * param ps
+ */
+static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps)
 {
-        int tmcb_types;
+    int tmcb_types;
 
-        DBG("osp: onreq: Registering transaction call backs\n\n");
+    LOG(L_DBG, "osp: ospOnReq\n");
 
-        /* install addaitional handlers */
-        tmcb_types =
-		     /* TMCB_REQUEST_FWDED | */
-		     /* TMCB_RESPONSE_FWDED | */
-			TMCB_ON_FAILURE | 
-		     /* TMCB_LOCAL_COMPLETED  | */
-			/* report on completed transactions */
-			TMCB_RESPONSE_OUT |
-			/* account e2e acks if configured to do so */
-			TMCB_E2EACK_IN |
-			/* report on missed calls */
-			TMCB_ON_FAILURE_RO //|
-                /* get incoming replies ready for processing */
-                /*TMCB_RESPONSE_IN */
-		;
+    /* install addaitional handlers */
+    tmcb_types =
+//        TMCB_REQUEST_FWDED |
+//        TMCB_RESPONSE_FWDED |
+        TMCB_ON_FAILURE | 
+//        TMCB_LOCAL_COMPLETED |
+        /* report on completed transactions */
+        TMCB_RESPONSE_OUT |
+        /* account e2e acks if configured to do so */
+        TMCB_E2EACK_IN |
+        /* report on missed calls */
+        TMCB_ON_FAILURE_RO |
+        /* get incoming replies ready for processing */
+//        TMCB_RESPONSE_IN |
+        0;
 
-	if (_tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
-		ERR("osp:onreq: cannot register for tm callbacks\n");
-                ERR("osp:onreq: tm callbacks are required for reporting call set up usage info\n");
-		return;
-	}
+    if (osp_tmb.register_tmcb(0, t, tmcb_types, ospTmcbFunc, 0) <= 0) {
+        LOG(L_ERR, "osp: ERROR: failed to register TM callbacks\n");
+        LOG(L_ERR, "osp: ERROR: TM callbacks are required for reporting call setup usage\n");
+        return;
+    }
 
-        /* also, if that is INVITE, disallow silent t-drop */
-        if (ps->req->REQ_METHOD==METHOD_INVITE) {
-                DBG("noisy_timer set for accounting\n");
-                t->flags |= T_NOISY_CTIMER_FLAG;
-        }
+    /* Also, if that is INVITE, disallow silent t-drop */
+    if (ps->req->REQ_METHOD == METHOD_INVITE) {
+        LOG(L_DBG, "osp: noisy_timer set for accounting\n");
+        t->flags |= T_NOISY_CTIMER_FLAG;
+    }
 }
 
-
-
-static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
+/*
+ * OSP callback function
+ * param t
+ * param type
+ * param ps
+ */
+static void ospTmcbFunc(
+    struct cell* t, 
+    int type, 
+    struct tmcb_params* ps)
 {
-        if (type&TMCB_RESPONSE_OUT) {
-                DBG("osp:tmcb: on-RESPONSE_OUT-out\n");
-        } else if (type&TMCB_E2EACK_IN) {
-                DBG("osp:tmcb: on-E2EACK_IN\n");
-        } else if (type&TMCB_ON_FAILURE_RO) {
-                DBG("osp:tmcb: on-FAILURE_RO\n");
-        } else if (type&TMCB_RESPONSE_IN) {
-                DBG("osp:tmcb: on-RESPONSE_IN\n");
-        } else if (type&TMCB_REQUEST_FWDED) {
-                DBG("osp:tmcb: on-REQUEST_FWDED\n");
-        } else if (type&TMCB_RESPONSE_FWDED) {
-                DBG("osp:tmcb: on-RESPONSE_FWDED\n");
-        } else if (type&TMCB_ON_FAILURE) {
-                DBG("osp:tmcb: on-FAILURE\n");
-        } else if (type&TMCB_LOCAL_COMPLETED) {
-                DBG("osp:tmcb: on-COMPLETED\n");
-        } else {
-                DBG("osp:tmcb: on-something-else: %d\n",type);
-        }
+    LOG(L_DBG, "osp: ospTmcbFunc\n");
 
-	if (t) {
-		recordEvent(t->uac[t->nr_of_outgoings-1].last_received,t->uas.status);
-	} else {
-                DBG("osp:tmcb: cell is empty\n");
-	}
+    if (type & TMCB_RESPONSE_OUT) {
+        LOG(L_DBG, "osp: RESPONSE_OUT\n");
+    } else if (type & TMCB_E2EACK_IN) {
+        LOG(L_DBG, "osp: E2EACK_IN\n");
+    } else if (type & TMCB_ON_FAILURE_RO) {
+        LOG(L_DBG, "osp: FAILURE_RO\n");
+    } else if (type & TMCB_RESPONSE_IN) {
+        LOG(L_DBG, "osp: RESPONSE_IN\n");
+    } else if (type & TMCB_REQUEST_FWDED) {
+        LOG(L_DBG, "osp: REQUEST_FWDED\n");
+    } else if (type & TMCB_RESPONSE_FWDED) {
+        LOG(L_DBG, "osp: RESPONSE_FWDED\n");
+    } else if (type & TMCB_ON_FAILURE) {
+        LOG(L_DBG, "osp: FAILURE\n");
+    } else if (type & TMCB_LOCAL_COMPLETED) {
+        LOG(L_DBG, "osp: COMPLETED\n");
+    } else {
+        LOG(L_DBG, "osp: something else '%d'\n", type);
+    }
+
+    if (t) {
+        ospRecordEvent(t->uac[t->nr_of_outgoings - 1].last_received, t->uas.status);
+    } else {
+        LOG(L_DBG, "osp: cell is empty\n");
+    }
 }
-
-

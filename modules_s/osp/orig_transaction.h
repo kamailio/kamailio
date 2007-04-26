@@ -32,14 +32,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef OSP_MOD_ORIG_TRANSACTION_H
-#define OSP_MOD_ORIG_TRANSACTION_H
 
-#include "../../sr_module.h"
+#ifndef _OSP_MOD_ORIG_TRANSACTION_H_
+#define _OSP_MOD_ORIG_TRANSACTION_H_
 
-int requestosprouting(    struct sip_msg*, char*,char*);
-int prepareallosproutes(  struct sip_msg*, char*,char*);
-int preparefirstosproute( struct sip_msg*, char*,char*);
-int preparenextosproute(  struct sip_msg*, char*,char*);
+#include "../../parser/msg_parser.h"
 
-#endif
+int ospRequestRouting(struct sip_msg*, char*, char*);
+int ospCheckRoute(struct sip_msg*, char*, char*);
+int ospPrepareFirstRoute(struct sip_msg*, char*, char*);
+int ospPrepareNextRoute(struct sip_msg*, char*, char*);
+int ospPrepareAllRoutes(struct sip_msg*, char*, char*);
+int ospAppendHeaders(struct sip_msg*, char*, char*);
+
+#endif /* _OSP_MOD_ORIG_TRANSACTION_H_ */
+

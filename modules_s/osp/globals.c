@@ -33,27 +33,36 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "osp/ospprovider.h"
+#include <stdio.h>
+#include <osp/osp.h>
+#include "osp_mod.h"
 
-int   _spWeights[2]      = {1000,1000};
-char* _spURIs[2];
-char* _private_key       = NULL;
-char* _local_certificate = NULL;
-char* _ca_certificate    = NULL;
-char* _device_ip         = NULL;
-char* _device_port       = NULL;
-int   _ssl_lifetime      = 300;
-int   _persistence       = 60 * 1000;
-int   _retry_delay       = 0;
-int   _retry_limit       = 2;
-int   _timeout           = 60 * 1000;
-int   _max_destinations  = 5;
-int   _token_format      = 2;
-int   _crypto_hw_support = 0;
-/* by default validate call ids, set to 0 to disable validation */
-int   _validate_call_id  = 1;
-char _PRIVATE_KEY[255];
-char _LOCAL_CERTIFICATE[255];
-char _CA_CERTIFICATE[255];
+unsigned int _osp_sp_number;
+char* _osp_sp_uris[OSP_DEF_SPS];
+unsigned long _osp_sp_weights[OSP_DEF_SPS] = {
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT
+};
+char* _osp_device_ip = NULL;
+char* _osp_device_port = NULL;
+unsigned char* _osp_private_key = NULL;
+unsigned char* _osp_local_certificate = NULL;
+unsigned char* _osp_ca_certificate = NULL;
+int _osp_crypto_hw = OSP_DEF_HW;
+int _osp_validate_callid = OSP_DEF_CALLID;
+int _osp_token_format = OSP_DEF_TOKEN;
+int _osp_ssl_lifetime = OSP_DEF_SSLLIFE;
+int _osp_persistence = OSP_DEF_PERSISTENCE;
+int _osp_retry_delay = OSP_DEF_DELAY;
+int _osp_retry_limit = OSP_DEF_RETRY;
+int _osp_timeout = OSP_DEF_TIMEOUT;
+int _osp_max_dests = OSP_DEF_DESTS;
+int _osp_use_rpid = OSP_DEF_USERPID;
+char _osp_PRIVATE_KEY[OSP_KEYBUF_SIZE];
+char _osp_LOCAL_CERTIFICATE[OSP_KEYBUF_SIZE];
+char _osp_CA_CERTIFICATE[OSP_KEYBUF_SIZE];
 
-OSPTPROVHANDLE _provider = -1;
+OSPTPROVHANDLE _osp_provider = -1;
+

@@ -32,19 +32,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef OSP_TM_MOD_H
-#define OSP_TM_MOD_H
 
-#include "../tm/tm_load.h"
-#include "../tm/t_hooks.h"
-#include "../tm/h_table.h"
-#include "../tm/tm_load.h"
+#ifndef _OSP_MOD_TM_H_
+#define _OSP_MOD_TM_H_
 
-
-/* Register for tm events and use them to record and report information
+/* 
+ * Register for tm events and use them to record and report information
  * about the call set up transaction - return codes, call start, alert and
  * connect times, etc.
  */
-int mod_init_tm( void );
+int ospInitTm(void);
 
-#endif
+#endif /* _OSP_MOD_TM_H_ */
+

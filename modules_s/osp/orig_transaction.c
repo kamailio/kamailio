@@ -32,325 +32,511 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include "osp_mod.h"
-#include "osptoolkit.h"
-#include "orig_transaction.h"
-#include "sipheader.h"
-#include "destination.h"
-#include "usage.h"
-#include "osp/osp.h"
-#include "../../sr_module.h"
-#include "../../locking.h"
-#include "../../mem/mem.h"
+
+#include <string.h>
+#include <osp/osp.h>
 #include "../../dset.h"
+#include "../../usr_avp.h"
+#include "../../mem/mem.h"
+#include "../auth/api.h"
+#include "orig_transaction.h"
+#include "destination.h"
+#include "osptoolkit.h"
+#include "sipheader.h"
+#include "usage.h"
 
-extern int   _max_destinations;
-extern char* _device_ip;
-extern char* _device_port;
-extern OSPTPROVHANDLE _provider;
+extern char* _osp_device_ip;
+extern char* _osp_device_port;
+extern int _osp_max_dests;
+extern OSPTPROVHANDLE _osp_provider;
+extern auth_api_t osp_auth;
 
+const int OSP_FIRST_ROUTE = 1;
+const int OSP_NEXT_ROUTE = 0;
+const int OSP_MAIN_ROUTE = 1;
+const int OSP_BRANCH_ROUTE = 0;
+const str OSP_CALLING_NAME = {"_osp_calling_translated_", 24};
 
-const int FIRST_ROUTE = 1;
-const int NEXT_ROUTE  = 0;
+static int ospLoadRoutes(struct sip_msg* msg, OSPTTRANHANDLE transaction, int destcount, char* source, char* sourcedev, time_t authtime);
+static int ospPrepareDestination(struct sip_msg* msg, int isfirst, int type);
 
+/*
+ * Get routes from AuthRsp
+ * param msg SIP message
+ * param transaction Transaction handle
+ * param destcount Expected destination count
+ * param source Source IP
+ * param sourcedev Source device IP
+ * param authtime Request authorization time
+ * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+static int ospLoadRoutes(
+    struct sip_msg* msg, 
+    OSPTTRANHANDLE transaction, 
+    int destcount, 
+    char* source, 
+    char* sourcedev, 
+    time_t authtime)
+{
+    int count;
+    int errorcode;
+    osp_dest* dest;
+    osp_dest dests[OSP_DEF_DESTS];
+    OSPE_DEST_PROT protocol;
+    OSPE_DEST_OSP_ENABLED enabled;
+    int result = MODULE_RETURNCODE_TRUE;
+    
+    LOG(L_DBG, "osp: ospLoadRoutes\n");
 
-static int loadosproutes(     struct sip_msg* msg, OSPTTRANHANDLE transaction, int expectedDestCount, char* source, char* source_dev, time_t time_ath);
-static int prepareDestination(struct sip_msg* msg, int isFirst);
+    for (count = 0; count < destcount; count++) {
+        /* This is necessary becuase we will save destinations in reverse order */
+        dest = ospInitDestination(&dests[count]);
 
+        if (dest == NULL) {
+            result = MODULE_RETURNCODE_FALSE;
+            break;
+        }
 
+        if (count == 0) {
+            errorcode = OSPPTransactionGetFirstDestination(
+                transaction,
+                sizeof(dest->validafter),
+                dest->validafter,
+                dest->validuntil,
+                &dest->timelimit,
+                &dest->callidsize,
+                (void*)dest->callid,
+                sizeof(dest->called),
+                dest->called,
+                sizeof(dest->calling),
+                dest->calling,
+                sizeof(dest->host),
+                dest->host,
+                sizeof(dest->destdev),
+                dest->destdev,
+                &dest->tokensize,
+                dest->token);
+        } else {
+            errorcode = OSPPTransactionGetNextDestination(
+                transaction,
+                0,
+                sizeof(dest->validafter),
+                dest->validafter,
+                dest->validuntil,
+                &dest->timelimit,
+                &dest->callidsize,
+                (void*)dest->callid,
+                sizeof(dest->called),
+                dest->called,
+                sizeof(dest->calling),
+                dest->calling,
+                sizeof(dest->host),
+                dest->host,
+                sizeof(dest->destdev),
+                dest->destdev,
+                &dest->tokensize,
+                dest->token);
+        }
+        
+        if (errorcode != 0) {
+            LOG(L_ERR, 
+                "osp: ERROR: failed to load routes (%d) expected '%d' current '%d'\n", 
+                errorcode, 
+                destcount, 
+                count);
+            result = MODULE_RETURNCODE_FALSE;
+            break;
+        }
 
+        errorcode = OSPPTransactionGetDestProtocol(transaction, &protocol);
+        if (errorcode != 0) {
+            /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
+            LOG(L_DBG, "osp: cannot get dest protocol (%d)\n", errorcode);
+            protocol = OSPE_DEST_PROT_SIP;
+        }
+        switch (protocol) {
+            case OSPE_DEST_PROT_H323_LRQ:
+            case OSPE_DEST_PROT_H323_SETUP:
+            case OSPE_DEST_PROT_IAX:
+                dest->supported = 0;
+                break;
+            case OSPE_DEST_PROT_SIP:
+            case OSPE_DEST_PROT_UNDEFINED:
+            case OSPE_DEST_PROT_UNKNOWN:
+            default:
+                dest->supported = 1;
+                break;
+        }
 
+        errorcode = OSPPTransactionIsDestOSPEnabled(transaction, &enabled);
+        if (errorcode != 0) {
+            /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
+            LOG(L_DBG, "osp: cannot get dest OSP version (%d)\n", errorcode);
+        } else if (enabled == OSPE_OSP_FALSE) {
+            /* Destination device does not support OSP. Do not send token to it */
+            dest->token[0] = '\0';
+            dest->tokensize = 0;
+        }
 
+        errorcode = OSPPTransactionGetDestNetworkId(transaction, dest->networkid);
+        if (errorcode != 0) {
+            /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
+            LOG(L_DBG, "osp: cannot get dest network ID (%d)\n", errorcode);
+            dest->networkid[0] = '\0';
+        }
 
+        strcpy(dest->source, source);
+        strcpy(dest->srcdev, sourcedev);
+        dest->type = OSPC_SOURCE;
+        dest->tid = ospGetTransactionId(transaction);
+        dest->authtime = authtime;
 
-int requestosprouting(struct sip_msg* msg, char* ignore1, char* ignore2) {
+        LOG(L_INFO,
+            "osp: get destination '%d': "
+            "valid after '%s' "
+            "valid until '%s' "
+            "time limit '%i' seconds "
+            "call id '%.*s' "
+            "calling number '%s' "
+            "called number '%s' "
+            "host '%s' "
+            "supported '%d' "
+            "network id '%s' "
+            "token size '%i'\n",
+            count, 
+            dest->validafter, 
+            dest->validuntil, 
+            dest->timelimit, 
+            dest->callidsize, 
+            dest->callid, 
+            dest->calling, 
+            dest->called, 
+            dest->host, 
+            dest->supported,
+            dest->networkid, 
+            dest->tokensize);
+    }
 
-	int res;     /* used for function results */
-	int valid;   /* returncode for this function */
+    /* 
+     * Save destination in reverse order,
+     * when we start searching avps the destinations
+     * will be in order 
+     */
+    if (result == MODULE_RETURNCODE_TRUE) {
+        for(count = destcount -1; count >= 0; count--) {
+            ospSaveOrigDestination(&dests[count]);
+        }
+    }
 
-	/* parameters for API call */
-	char osp_source_dev[200];
-	char e164_source[1000];
-	char e164_dest [1000];
-	unsigned int number_callids = 1;
-	OSPTCALLID* call_ids[number_callids];
-	unsigned int log_size = 0;
-	char* detail_log = NULL;
-	const char** preferred = NULL;
-	unsigned int dest_count;
-	OSPTTRANHANDLE transaction = -1;
-	time_t time_auth;
-
-	valid = MODULE_RETURNCODE_FALSE;
-
-	time_auth = time(NULL);
-
-	dest_count = _max_destinations;
-
-	if (0!= (res=OSPPTransactionNew(_provider, &transaction))) {
-		ERR("osp: Failed to create a new OSP transaction id %d\n",res);
-	} else if (0 != getFromUserpart(msg, e164_source,sizeof(e164_source))) {
-		ERR("osp: Failed to extract calling number\n");
-	} else if (0 != getToUserpart(msg, e164_dest,sizeof(e164_dest))) {
-		ERR("osp: Failed to extract called number\n");
-	} else if (0 != getCallId(msg, &(call_ids[0]))) {
-		ERR("osp: Failed to extract call id\n");
-	} else if (0 != getSourceAddress(msg,osp_source_dev,sizeof(osp_source_dev))) {
-		ERR("osp: Failed to extract source address\n");
-	} else {
-		DBG("osp: Requesting OSP authorization and routing for: "
-		    "transaction-handle '%i' \n"
-		    "osp_source '%s' "
-		    "osp_source_port '%s' "
-		    "osp_source_dev '%s' "
-		    "e164_source '%s' "
-		    "e164_dest '%s' "
-		    "call-id '%.*s' "
-		    "dest_count '%i'",
-		    transaction,
-		    _device_ip,
-		    _device_port,
-		    osp_source_dev,
-		    e164_source,
-		    e164_dest,
-		    call_ids[0]->ospmCallIdLen,
-		    call_ids[0]->ospmCallIdVal,
-		    dest_count
-		);	
-
-
-		if (strlen(_device_port) > 0) {
-			OSPPTransactionSetNetworkIds(transaction,_device_port,"");
-		}
-
-		/* try to request authorization */
-		res = OSPPTransactionRequestAuthorisation(
-		transaction,       /* transaction handle */
-		_device_ip,         /* from the configuration file */
-		osp_source_dev,    /* source of call, protocol specific */
-		e164_source,       /* calling number in nodotted e164 notation */
-		OSPC_E164,
-		e164_dest,         /* called number */
-		OSPC_E164,
-		"",                /* optional username string, used if no number */
-		number_callids,    /* number of call ids, here always 1 */
-		call_ids,          /* sized-1 array of call ids */
-		preferred,         /* preferred destinations, here always NULL */
-		&dest_count,       /* max destinations, after call dest_count */
-		&log_size,          /* size allocated for detaillog (next param) 0=no log */
-		detail_log);       /* memory location for detaillog to be stored */
-
-		if (res == 0 && dest_count > 0) {
-			DBG("osp: there is %d osp routes, call-id '%.*s', transaction-id '%lld'\n",
-			    dest_count,call_ids[0]->ospmCallIdLen, call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
-			record_orig_transaction(msg,transaction,osp_source_dev,e164_source,e164_dest,time_auth);
-			valid = loadosproutes(msg,transaction,dest_count,_device_ip,osp_source_dev,time_auth);
-		} else if (res == 0 && dest_count == 0) {
-			DBG("osp: there is 0 osp routes, the route is blocked, call-id '%.*s', transaction-id '%lld'\n",
-			    call_ids[0]->ospmCallIdLen,call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
-		} else {
-			ERR("osp: OSPPTransactionRequestAuthorisation returned %i, call-id '%.*s', transaction-id '%lld'\n",
-				res,call_ids[0]->ospmCallIdLen,call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
-		}
-	}
-
-	if (call_ids[0]!=NULL) {
-		OSPPCallIdDelete(&(call_ids[0]));
-	}
-
-	if (transaction!=-1) {
-		OSPPTransactionDelete(transaction);
-	}
-	
-	return valid;
+    return result;
 }
 
+/*
+ * Request OSP authorization and routeing
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+int ospRequestRouting(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    int errorcode;
+    time_t authtime;
+    char tmp[OSP_STRBUF_SIZE];
+    char source[OSP_E164BUF_SIZE];
+    char sourcedev[OSP_STRBUF_SIZE];
+    char destination[OSP_E164BUF_SIZE];
+    unsigned int callidnumber = 1;
+    OSPTCALLID* callids[callidnumber];
+    unsigned int logsize = 0;
+    char* detaillog = NULL;
+    const char** preferred = NULL;
+    unsigned int destcount;
+    OSPTTRANHANDLE transaction = -1;
+    int result = MODULE_RETURNCODE_FALSE;
 
-static int loadosproutes(struct sip_msg* msg, OSPTTRANHANDLE transaction, int expectedDestCount, char* source, char* source_dev, time_t time_auth) {
+    LOG(L_DBG, "osp: ospRequestRouting\n");
 
-	int result = MODULE_RETURNCODE_TRUE;
-	int res;
-	int count;
+    authtime = time(NULL);
 
-	osp_dest  dests[MAX_DESTS];
-	osp_dest* dest;
-	
-	for (count = 0; count < expectedDestCount; count++) {
+    destcount = _osp_max_dests;
 
-		dest = initDestination(&dests[count]);
+    if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction)) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to create new OSP transaction (%d)\n", errorcode);
+    } else if ((ospGetRpidUserpart(msg, source, sizeof(source)) != 0) &&
+        (ospGetFromUserpart(msg, source, sizeof(source)) != 0)) 
+    {
+        LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
+    } else if ((ospGetUriUserpart(msg, destination, sizeof(destination)) != 0) &&
+        (ospGetToUserpart(msg, destination, sizeof(destination)) != 0)) 
+    {
+        LOG(L_ERR, "osp: ERROR: failed to extract called number\n");
+    } else if (ospGetCallId(msg, &(callids[0])) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to extract call id\n");
+    } else if (ospGetSourceAddress(msg, sourcedev, sizeof(sourcedev)) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to extract source address\n");
+    } else {
+        ospConvertAddress(sourcedev, tmp, sizeof(tmp));
 
-		if (dest == NULL) {
-			result = MODULE_RETURNCODE_FALSE;
-			break;
-		}
+        LOG(L_INFO,
+            "osp: request auth and routing for: "
+            "transaction '%i' "
+            "source '%s' "
+            "source_port '%s' "
+            "source_dev '%s' "
+            "e164_source '%s' "
+            "e164_dest '%s' "
+            "call_id '%.*s' "
+            "dest_count '%i'\n",
+            transaction,
+            _osp_device_ip,
+            _osp_device_port,
+            tmp,                        /* sourcedev in "[x.x.x.x]" or host.domain format */
+            source,
+            destination,
+            callids[0]->ospmCallIdLen,
+            callids[0]->ospmCallIdVal,
+            destcount
+        );    
 
-		if (count==0) {
-			res = OSPPTransactionGetFirstDestination(
-				transaction,
-				sizeof(dest->validafter),
-				dest->validafter,
-				dest->validuntil,
-				&dest->timelimit,
-				&dest->sizeofcallid,
-				(void*)dest->callid,
-				sizeof(dest->callednumber),
-				dest->callednumber,
-				sizeof(dest->callingnumber),
-				dest->callingnumber,
-				sizeof(dest->destination),
-				dest->destination,
-				sizeof(dest->destinationdevice),
-				dest->destinationdevice,
-				&dest->sizeoftoken,
-				dest->osptoken);
-		} else {
-			res = OSPPTransactionGetNextDestination(
-				transaction,
-				0,
-				sizeof(dest->validafter),
-				dest->validafter,
-				dest->validuntil,
-				&dest->timelimit,
-				&dest->sizeofcallid,
-				(void*)dest->callid,
-				sizeof(dest->callednumber),
-				dest->callednumber,
-				sizeof(dest->callingnumber),
-				dest->callingnumber,
-				sizeof(dest->destination),
-				dest->destination,
-				sizeof(dest->destinationdevice),
-				dest->destinationdevice,
-				&dest->sizeoftoken,
-				dest->osptoken);
-		}
+/* Do not use network ID as port */
+#if 0
+        if (strlen(_osp_device_port) > 0) {
+            OSPPTransactionSetNetworkIds(transaction, _osp_device_port, "");
+        }
+#endif
 
-		
-		if (res != 0) {
-			ERR("osp: getDestination %d failed, expected number %d, current count %d\n",res,expectedDestCount,count);
-			result = MODULE_RETURNCODE_FALSE;
-			break;
-		}
+        /* try to request authorization */
+        errorcode = OSPPTransactionRequestAuthorisation(
+            transaction,       /* transaction handle */
+            _osp_device_ip,    /* from the configuration file */
+            tmp,               /* source of call, protocol specific, in OSP format */
+            source,            /* calling number in nodotted e164 notation */
+            OSPC_E164,         /* calling number format */
+            destination,       /* called number */
+            OSPC_E164,         /* called number format */
+            "",                /* optional username string, used if no number */
+            callidnumber,      /* number of call ids, here always 1 */
+            callids,           /* sized-1 array of call ids */
+            preferred,         /* preferred destinations, here always NULL */
+            &destcount,        /* max destinations, after call dest_count */
+            &logsize,          /* size allocated for detaillog (next param) 0=no log */
+            detaillog);        /* memory location for detaillog to be stored */
 
-		OSPPTransactionGetDestNetworkId(transaction,dest->network_id);
-		strcpy(dest->source,source);
-		strcpy(dest->sourcedevice,source_dev);
-		dest->type = OSPC_SOURCE;
-		dest->tid = get_transaction_id(transaction);
-		dest->time_auth = time_auth;
+        if ((errorcode == 0) && (destcount > 0)) {
+            LOG(L_INFO, 
+                "osp: there are '%d' OSP routes, call_id '%.*s' transaction_id '%lld'\n",
+                destcount,
+                callids[0]->ospmCallIdLen, 
+                callids[0]->ospmCallIdVal,
+                ospGetTransactionId(transaction));
+            ospRecordOrigTransaction(msg, transaction, sourcedev, source, destination, authtime);
+            result = ospLoadRoutes(msg, transaction, destcount, _osp_device_ip, sourcedev, authtime);
+        } else if ((errorcode == 0) && (destcount == 0)) {
+            LOG(L_INFO, 
+                "osp: there is 0 osp routes, call_id '%.*s' transaction_id '%lld'\n",
+                callids[0]->ospmCallIdLen,
+                callids[0]->ospmCallIdVal,
+                ospGetTransactionId(transaction));
+            /* Must do manually since callback does not work for this case. Do not know why. */
+            ospRecordEvent(0, 503);
+        } else {
+            LOG(L_ERR, 
+                "osp: ERROR: failed to request auth and routing (%i), call_id '%.*s' transaction_id '%lld'\n",
+                errorcode,
+                callids[0]->ospmCallIdLen,
+                callids[0]->ospmCallIdVal,
+                ospGetTransactionId(transaction));
+        }
+    }
 
-		DBG("osp: getDestination %d returned the following information: "
-		    "valid after '%s' "
-		    "valid until '%s' "
-		    "time limit '%i' seconds "
-		    "call-id '%.*s' "
-		    "calling number '%s' "
-		    "called number '%s' "
-		    "destination '%s' "
-		    "network id '%s' "
-		    "bn token size '%i' ",
-		    count, dest->validafter, dest->validuntil, dest->timelimit, dest->sizeofcallid, dest->callid, dest->callingnumber, dest->callednumber, 
-		    dest->destination, dest->network_id, dest->sizeoftoken);
-	}
+    if (callids[0] != NULL) {
+        OSPPCallIdDelete(&(callids[0]));
+    }
 
-	/* save destination in reverse order,
-	 * this way, when we start searching avps the destinations
-	 * will be in order 
-	 */
-	if (result == MODULE_RETURNCODE_TRUE) {
-		for(count = expectedDestCount -1; count >= 0; count--) {
-			saveOrigDestination(&dests[count]);
-		}
-	}
-
-	return result;
+    if (transaction != -1) {
+        OSPPTransactionDelete(transaction);
+    }
+    
+    return result;
 }
 
+/*
+ * Check if there is a route
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+int ospCheckRoute(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    LOG(L_DBG, "osp: ospCheckRoute\n");
 
-
-
-
-int preparefirstosproute(struct sip_msg* msg, char* ignore1, char* ignore2) {
-	int result = MODULE_RETURNCODE_TRUE;
-
-	DBG("osp: Preparing 1st route\n");
-
-	result = prepareDestination(msg,FIRST_ROUTE);
-
-	return result;
+    if (ospCheckOrigDestination() == 0) {
+        return MODULE_RETURNCODE_TRUE;
+    } else {
+        return MODULE_RETURNCODE_FALSE;
+    }
 }
 
+/*
+ * Append route specific OSP headers
+ *     This function only works in branch route block. 
+ *     This function is only for SER. SER does not support rewrite_uri in BRANCH_ROUTE.
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return MODULE_RETURNCODE_TRUE success MODULE_RETURNCODE_FALSE failed
+ */
+int ospAppendHeaders(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    osp_dest* dest;
+    int result = MODULE_RETURNCODE_FALSE;
 
+    LOG(L_DBG, "osp: ospAppendHeaders\n");
 
+    dest = ospGetLastOrigDestination();
+    if (dest != NULL) {
+        ospAddOspHeader(msg, dest->token, dest->tokensize);
+        result = MODULE_RETURNCODE_TRUE;
+    } else {
+        LOG(L_ERR, "osp: ERROR: failed to get last used destination\n");
+    }
 
-int preparenextosproute(struct sip_msg* msg, char* ignore1, char* ignore2) {
-	int result = MODULE_RETURNCODE_TRUE;
-
-	DBG("osp: Preparing next route\n");
-
-	result = prepareDestination(msg,NEXT_ROUTE);
-
-
-	return result;
+    return result;
 }
 
+/*
+ * Build SIP message for destination
+ * param msg SIP message
+ * param isfirst Is first destination
+ * param type Main or branch route block
+ * return MODULE_RETURNCODE_TRUE success MODULE_RETURNCODE_FALSE failure
+ */
+static int ospPrepareDestination(
+    struct sip_msg* msg, 
+    int isfirst,
+    int type)
+{
+    str newuri = {NULL, 0};
+    int result = MODULE_RETURNCODE_FALSE;
 
+    LOG(L_DBG, "osp: ospPrepareDestination\n");
 
+    osp_dest* dest = ospGetNextOrigDestination();
 
-int prepareallosproutes(struct sip_msg* msg, char* ignore1, char* ignore2) {
-	int result = MODULE_RETURNCODE_TRUE;
+    if (dest != NULL) {
+        ospRebuildDestionationUri(&newuri, dest->called, dest->host, "");
 
-	for( result = preparefirstosproute(msg,ignore1,ignore2);
-	     result == MODULE_RETURNCODE_TRUE;
-	     result = preparenextosproute(msg,ignore1,ignore2)) {
-	}
+        LOG(L_INFO, 
+            "osp: prepare route to URI '%.*s' for call_id '%.*s' transaction_id '%lld'\n",
+            newuri.len,
+            newuri.s,
+            dest->callidsize,
+            dest->callid,
+            dest->tid);
 
-	return MODULE_RETURNCODE_TRUE;
+        if (type == OSP_MAIN_ROUTE) {
+            if (isfirst == OSP_FIRST_ROUTE) {
+                rewrite_uri(msg, &newuri);
+            } else {
+                append_branch(msg, newuri.s, newuri.len, NULL, 0, 0, NULL);
+            }
+
+            result = MODULE_RETURNCODE_TRUE;
+        } else {
+            LOG(L_ERR, "osp: ERROR: unsupported route block type\n");
+        }
+    } else {
+        LOG(L_DBG, "osp: there is no more routes\n");
+        ospReportOrigSetupUsage();
+    }
+
+    if (newuri.len > 0) {
+        pkg_free(newuri.s);
+    }
+    
+    return result;
 }
 
+/*
+ * Prepare OSP first route
+ *     This function prepare the first OSP route
+ *     This function is only for SER. SER does not support rewrite_uri in BRANCH_ROUTE.
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+int ospPrepareFirstRoute(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    int result = MODULE_RETURNCODE_TRUE;
 
+    LOG(L_DBG, "osp: ospPrepareFirstRoute\n");
 
+    result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE);
 
-int prepareDestination(struct sip_msg* msg, int isFirst) {
-	int result = MODULE_RETURNCODE_TRUE;
-	str newuri = {NULL,0};
-
-	osp_dest* dest = getNextOrigDestination();
-
-	if (dest != NULL) {
-
-		rebuildDestionationUri(&newuri, dest->destination, dest->network_id, dest->callednumber);
-
-		DBG("osp: Preparing route to uri '%.*s' for call-id '%.*s' transaction-id '%lld'\n",newuri.len,newuri.s,dest->sizeofcallid,dest->callid,dest->tid);
-
-		if (isFirst == FIRST_ROUTE) {
-			rewrite_uri(msg, &newuri);
-			addOspHeader(msg,dest->osptoken,dest->sizeoftoken);
-		} else {
-			append_branch(msg, newuri.s, newuri.len, 0, 0, 0, NULL);
-		}
-
-	} else {
-		DBG("osp: There is no more routes\n");
-
-		reportOrigCallSetUpUsage();
-
-		/* Terminating call set-up usage will be reported before the proxy replies with
-		 * '503 - Service Unavailable' and a tm call back updates the term destination code.
-		 * So, we will do it manually.
-		 * We may need to make 503 configurable, just in case a user decides to reply with
-		 * a different code.  Other options - trigger call-set up usage reporting from the cpl
-		 * (after replying with an error code), or maybe use a different tm callback.
-		 */
-		recordEvent(0,503);
-		reportTermCallSetUpUsage();
-
-		result = MODULE_RETURNCODE_FALSE;
-	}
-
-	if (newuri.len > 0) {
-		pkg_free(newuri.s);
-	}
-	
-	return result;
+    return result;
 }
+
+/*
+ * Prepare OSP next route
+ *     This function prepare the next OSP route
+ *     This function is only for SER. SER does not support rewrite_uri in BRANCH_ROUTE.
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+int ospPrepareNextRoute(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    int result = MODULE_RETURNCODE_TRUE;
+
+    LOG(L_DBG, "osp: ospPrepareNextRoute\n");
+
+    result = ospPrepareDestination(msg, OSP_NEXT_ROUTE, OSP_MAIN_ROUTE);
+
+    return result;
+}
+
+/*
+ * Prepare all OSP routes
+ *     This function does not work in branch route block.
+ * param msg SIP message
+ * param ignore1
+ * param ignore2
+ * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ */
+int ospPrepareAllRoutes(
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
+{
+    int result = MODULE_RETURNCODE_TRUE;
+
+    LOG(L_DBG, "osp: ospPrepareAllRoutes\n");
+
+    for(result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE);
+        result == MODULE_RETURNCODE_TRUE;
+        result = ospPrepareDestination(msg, OSP_NEXT_ROUTE, OSP_MAIN_ROUTE))
+    {
+    }
+
+    return MODULE_RETURNCODE_TRUE;
+}
+

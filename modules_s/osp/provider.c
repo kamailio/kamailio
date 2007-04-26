@@ -32,97 +32,111 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include "osp_mod.h"
+
+#include <osp/osp.h>
+#include <osp/osputils.h>
+#include "../../dprint.h"
 #include "provider.h"
-#include "../../sr_module.h"
-#include "osp/osputils.h"
-#include "../../data_lump_rpl.h"
-#include "../../mem/mem.h"
 
-extern char* _spURIs[2];
-extern int   _spWeights[2];
+extern unsigned int _osp_sp_number;
+extern char* _osp_sp_uris[];
+extern unsigned long _osp_sp_weights[];
+extern unsigned char* _osp_private_key;
+extern unsigned char* _osp_local_certificate;
+extern unsigned char* _osp_ca_certificate;
+extern int _osp_ssl_lifetime;
+extern int _osp_persistence;
+extern int _osp_retry_delay;
+extern int _osp_retry_limit;
+extern int _osp_timeout;
+extern int _osp_crypto_hw;
+extern OSPTPROVHANDLE _osp_provider;
 
-extern char* _private_key;
-extern char* _local_certificate;
-extern char* _ca_certificate;
+/*
+ * Create a new OSP provider object per process
+ * return 0 success, others failure
+ */
+int ospSetupProvider(void) 
+{
+    OSPTPRIVATEKEY privatekey;
+    OSPTCERT localcert;
+    OSPTCERT cacert;
+    OSPTCERT* cacerts[1];
+    int result;
 
-extern int   _ssl_lifetime;
-extern int   _persistence;
-extern int   _retry_delay;
-extern int   _retry_limit;
-extern int   _timeout;
-extern int   _crypto_hw_support;
-extern OSPTPROVHANDLE _provider;
+    LOG(L_DBG, "osp: ospSetupProvider\n");
 
+    cacerts[0] = &cacert;
 
-int setup_provider() {
+    if ((result = OSPPInit(_osp_crypto_hw)) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to initalize OSP (%i)\n", result);
+    } else if (OSPPUtilLoadPEMPrivateKey(_osp_private_key, &privatekey) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to load private key from '%s'\n", _osp_private_key);
+    } else if (OSPPUtilLoadPEMCert(_osp_local_certificate, &localcert) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to load local certificate from '%s'\n",_osp_local_certificate);
+    } else if (OSPPUtilLoadPEMCert(_osp_ca_certificate, &cacert) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to load CA certificate from '%s'\n", _osp_ca_certificate);
+    } else {
+        result = OSPPProviderNew(
+            _osp_sp_number,
+            (const char**)_osp_sp_uris,
+            _osp_sp_weights,
+            "http://localhost:1234",
+            &privatekey,
+            &localcert,
+            1,
+            (const OSPTCERT**)cacerts,
+            1,
+            _osp_ssl_lifetime,
+            _osp_sp_number,
+            _osp_persistence,
+            _osp_retry_delay,
+            _osp_retry_limit,
+            _osp_timeout,
+            "",
+            "",
+            &_osp_provider);
+        if (result != 0) {
+            LOG(L_ERR, "osp: ERROR: failed to create provider (%i)\n", result);
+        } else {
+            LOG(L_DBG, "osp: created new (per process) provider '%d'\n", _osp_provider);
+            result = 0;
+        }
+    }
 
-	int result = 1;
-	OSPTCERT localcert;
-	OSPTCERT cacert;
-	OSPTPRIVATEKEY privatekey;
-	OSPTCERT *cacerts[1];
+    /* 
+     * Free space allocated while loading crypto information from PEM-encoded files.
+     * There are some problems to free the memory, do not free them
+     */
+    if (privatekey.PrivateKeyData != NULL) {
+        //free(privatekey.PrivateKeyData);
+    }
 
-	cacerts[0] = &cacert;
+    if (localcert.CertData != NULL) {
+        //free(localcert.CertData);
+    }
+    
+    if (cacert.CertData != NULL) {
+        //free(localcert.CertData);
+    }
 
-	if ( (result = OSPPInit(_crypto_hw_support)) != 0 ) {
-		ERR("osp: setup_provider: could not initalize libosp. (%i)\n", result);
-	} else if ( OSPPUtilLoadPEMPrivateKey ((unsigned char*)_private_key, &privatekey) != 0 ) {
-		ERR("osp: setup_provider: could not load private key from %s\n", _private_key);
-	} else if ( OSPPUtilLoadPEMCert ((unsigned char*)_local_certificate, &localcert) != 0 ) {
-		ERR("osp: setup_provider: could not load local certificate from %s\n",_local_certificate);
-	} else	if ( OSPPUtilLoadPEMCert ((unsigned char*)_ca_certificate, &cacert) != 0 ) {
-		ERR("osp: setup_provider: could not load CA certificate from %s\n", _ca_certificate);
-	} else if ( 0 != (result = OSPPProviderNew(
-				2,
-				(const char **)_spURIs,
-				(unsigned long *)_spWeights,
-				"http://localhost:1234",
-				&privatekey,
-				&localcert,
-				1,
-				(const OSPTCERT **)cacerts,
-				1,
-				_ssl_lifetime,
-				2,
-				_persistence,
-				_retry_delay,
-				_retry_limit,
-				_timeout,
-				"",
-				"",
-				&_provider))) {
-		ERR("osp: setup_provider: could not create provider. (%i)\n", result);
-	} else {
-		DBG("osp: Successfully created a new (per process) provider object, handle (%d)\n",_provider);
-		result = 0;
-	}
-
-	/* Free space allocated while loading crypto information from PEM-encoded files */
-	if (localcert.CertData != NULL) {
-		//free(localcert.CertData);
-	}
-	
-	if (cacert.CertData != NULL) {
-		//free(localcert.CertData);
-	}
-
-	if (privatekey.PrivateKeyData != NULL) {
-		//free(privatekey.PrivateKeyData);
-	}
-
-	return result;
+    return result;
 }
 
+/*
+ * Erase OSP provider object
+ * return 0 success, others failure
+ */
+int ospDeleteProvider(void) 
+{
+    int result;
 
-int delete_provider() {
-	int result;
+    LOG(L_DBG, "osp: ospDeleteProvider\n");
 
-	DBG("osp: Deleting provider object\n");
-
-	if (0 != (result = OSPPProviderDelete(_provider,0))) {
-		ERR("osp: problems deleting provider object, handle (%d), error (%d)\n",_provider,result);
-	}
-	
-	return result;
+    if ((result = OSPPProviderDelete(_osp_provider, 0)) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to erase provider '%d' (%d)\n", _osp_provider, result);
+    }
+    
+    return result;
 }
+

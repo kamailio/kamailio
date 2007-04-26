@@ -32,431 +32,683 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include "osp_mod.h"
-#include "provider.h"
-#include "sipheader.h"
-#include "../../sr_module.h"
-#include <stdio.h>
-#include "osp/osp.h"
-#include "osp/ospb64.h"
-#include "../../mem/mem.h"
-#include "../../timer.h"
-#include "../../locking.h"
+
+#include <osp/osp.h>
+#include <osp/ospb64.h>
+#include "../../trim.h"
 #include "../../forward.h"
-#include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_rpid.h"
 #include "../../parser/parse_rr.h"
+#include "../../parser/parse_uri.h"
 #include "../../data_lump.h"
+#include "../../mem/mem.h"
+#include "osp_mod.h"
+#include "sipheader.h"
 
+extern int _osp_use_rpid;
 
+static void ospSkipPlus(char* e164);
+static int ospAppendHeader(struct sip_msg* msg, str* header); 
 
-
-
-int getFromUserpart(struct sip_msg* msg, char *fromuser, int buffer_size)
-{
-	struct to_body* from;
-	struct sip_uri uri;
-	int retVal = 1;
-
-	strcpy(fromuser, "");
-
-	if (parse_from_header(msg) == 0) {
-		from = get_from(msg);
-		if (parse_uri(from->uri.s, from->uri.len, &uri) == 0) {
-			copy_from_str_to_buffer(&uri.user, fromuser, buffer_size);
-			skipPlus(fromuser);
-			retVal = 0;
-		} else {
-			ERR("osp: getFromUserpart: could not parse from uri\n");
-		}
-	} else {
-		ERR("osp: getFromUserpart: could not parse from header\n");
-	}
-	
-	return retVal;
-}
-
-int getToUserpart(struct sip_msg* msg, char *touser, int buffer_size)
-{
-	struct to_body* to;
-	struct sip_uri uri;
-	int retVal = 1;
-
-	strcpy(touser, "");
-
-	if (!msg->to && parse_headers(msg, HDR_TO_F,0) == -1) {
-		ERR("To parsing failed\n");
-		return retVal;
-	}
-
-	if (!msg->to) {
-		ERR("No To\n");
-		return retVal;
-	}
-
-	to = get_to(msg);
-	if (parse_uri(to->uri.s, to->uri.len, &uri) == 0) {
-		copy_from_str_to_buffer(&uri.user, touser,buffer_size);
-		skipPlus(touser);
-		retVal = 0;
-	} else {
-		ERR("osp: getToUserpart: could not parse to uri\n");
-	}
-
-	return retVal;
-}
-
-
-void skipPlus(char* e164) {
-	if (*e164 == '+') {
-		strncpy(e164,e164+1,strlen(e164)-1);
-		e164[strlen(e164)-1] = 0;
-	}
-}
-
-
-static int append_hf(struct sip_msg* msg, str* str1)
-{
-	struct lump* anchor;
-	char *s;
-	int len;
-
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		ERR("Error while parsing message\n");
-		return -1;
-	}
-
-	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
-	if (anchor == 0) {
-		ERR("Can't get anchor\n");
-		return -1;
-	}
-
-	len=str1->len;
-
-	s = (char*)pkg_malloc(len);
-	if (!s) {
-		ERR("No memory left\n");
-		return -1;
-	}
-
-	memcpy(s, str1->s, str1->len);
-
-	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
-		ERR("Can't insert lump\n");
-		pkg_free(s);
-		return -1;
-	}
-	return 1;
-}
-
-
-int addOspHeader(struct sip_msg* msg, char* token, int sizeoftoken) {
-
-	char headerBuffer[3500];
-	unsigned char encodedToken[3000];
-	unsigned int  sizeofencodedToken = sizeof(encodedToken);
-	str  headerVal;
-	int  retVal = 1;
-
-	if (OSPPBase64Encode((unsigned char*)token, sizeoftoken, encodedToken, &sizeofencodedToken) == 0) {
-		snprintf(headerBuffer,
-			 sizeof(headerBuffer),
-			 "%s%.*s\r\n", 
-			 OSP_HEADER,
-			 sizeofencodedToken,
-			 encodedToken);
-
-		headerVal.s = headerBuffer;
-		headerVal.len = strlen(headerBuffer);
-
-		DBG("osp: Setting osp token header field - (%s)\n", headerBuffer);
-
-		if (append_hf(msg, &headerVal) > 0) {
-			retVal = 0;
-		} else {
-			ERR("osp: addOspHeader: failed to append osp header to the message\n");
-		}
-	} else {
-		ERR("osp: addOspHeader: base64 encoding failed\n");
-	}
-
-	return retVal;
-}
-
-
-
-
-int getOspHeader(struct sip_msg* msg, char* token, int* sizeoftoken) {
-	struct hdr_field *hf;
-
-	int code;
-	int retVal = 1;
-
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		ERR("osp: Error while parsing headers\n");
-		return retVal;
-	}
-
-	for (hf=msg->headers; hf; hf=hf->next) {
-		if ( (hf->type == HDR_OTHER_T) && (hf->name.len == OSP_HEADER_LEN-2)) {
-			// possible hit
-			if (strncasecmp(hf->name.s, OSP_HEADER, OSP_HEADER_LEN) == 0) {
-				if ( (code=OSPPBase64Decode(hf->body.s, hf->body.len, (unsigned char*)token, (unsigned int*)sizeoftoken)) == 0) {
-					retVal = 0;
-				} else {
-					ERR("osp: getOspHeader: failed to base64 decode OSP token, reason - %d\n",code);
-					ERR("osp: header '%.*s' length %d\n",hf->body.len,hf->body.s,hf->body.len);
-				}
-				break;
-			}		
-		} 
-	}
-
-	return retVal;
-}
-
-
-
-
-int getCallId(struct sip_msg* msg, OSPTCALLID** callid) {
-
-	struct hdr_field *cid;
-	int retVal = 1;
-
-
-	if (!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) == -1) {
-		ERR("Call-ID parsing failed\n");
-		return retVal;
-	}
-
-	cid = (struct hdr_field*) msg->callid;
-
-	if (cid != NULL) {
-		*callid = OSPPCallIdNew(cid->body.len,(unsigned char*)cid->body.s);
-		if (*callid) {
-			retVal = 0;
-		} else {
-			ERR("osp: getCallId: failed to allocate call-id object for '%.*s'\n",cid->body.len,cid->body.s);
-		}
-	} else {
-		ERR("osp: getCallId: could not find Call-Id-Header\n");
-	}	
-
-	return retVal;
-}
-
-
-/* get first VIA header and uses the IP or host name
+/* 
+ * Copy str to buffer and check overflow 
+ * param source Str
+ * param buffer Buffer
+ * param buffersize Size of buffer
  */
-int getSourceAddress(struct sip_msg* msg, char* source_address, int buffer_size)
+void ospCopyStrToBuffer(
+    str* source, 
+    char* buffer, 
+    int buffersize)
 {
-	struct hdr_field* hf;
-	struct via_body* via_body;
-	int retVal = 1;
+    int copybytes;
 
-	/* no need to call parse_headers, called already and VIA is parsed
-	 * anyway by default 
-	 */
-	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->type == HDR_VIA_T) {
-			// found first VIA
-			via_body = (struct via_body*)hf->parsed;	
-			copy_from_str_to_buffer(&via_body->host, source_address, buffer_size);
+    LOG(L_DBG, "osp: ospCopyStrToBuffer\n");
 
-			DBG("osp: getSourceAddress: result is %s\n", source_address);
+    if (source->len > buffersize - 1) {
+        LOG(L_ERR,
+            "osp: ERROR: buffer for copying '%.*s' is too small, will copy the first '%d' bytes\n",
+            source->len,
+            source->s, 
+            buffersize);
+        copybytes = buffersize - 1;
+    } else {
+        copybytes = source->len;
+    }
 
-			retVal = 0;
-			break;
-		} 
-	}
-
-	return retVal;
+    strncpy(buffer, source->s, copybytes);
+    buffer[copybytes] = '\0';
 }
 
-
-/* Get route parameters from the 1st Route or Request Line
-*/
-int getRouteParams(struct sip_msg* msg, char* route_params, int buffer_size)
+/* 
+ * Remove '+' in E164 string
+ * param e164 E164 string
+ */
+static void ospSkipPlus(
+    char* e164)
 {
-	int retVal = 1;
+    LOG(L_DBG, "osp: ospSkipPlus\n");
 
-        struct hdr_field* hdr;
-        struct sip_uri puri;
-        rr_t* rt;
+    if (*e164 == '+') {
+        strncpy(e164, e164 + 1, strlen(e164) - 1);
+        e164[strlen(e164) - 1] = '\0';
+    }
+}
 
-	 DBG("osp: getRouteParams: parsed uri: host '%.*s' port '%d' vars '%.*s'\n",
-             msg->parsed_uri.host.len,msg->parsed_uri.host.s,
-             msg->parsed_uri.port_no,
-             msg->parsed_uri.params.len,msg->parsed_uri.params.s);
+/* 
+ * Get calling number from From header
+ * param msg SIP message
+ * param fromuser User part of From header
+ * param buffersize Size of fromuser buffer
+ * return 0 success, -1 failure
+ */
+int ospGetFromUserpart(
+    struct sip_msg* msg, 
+    char* fromuser, 
+    int buffersize)
+{
+    struct to_body* from;
+    struct sip_uri uri;
+    int result = -1;
 
-        if (!(hdr=msg->route)) {
-                DBG("osp: getRouteParams: there is no route headers\n");
-        } else if (!(rt=(rr_t*)hdr->parsed)) {
-                ERR("osp: getRouteParams: the route headers are not parsed\n");
-        } else if (parse_uri(rt->nameaddr.uri.s,rt->nameaddr.uri.len,&puri) != 0) {
-                ERR("osp: getRouteParams: failed to parse the route URI '%.*s'\n",rt->nameaddr.uri.len,rt->nameaddr.uri.s);
-        } else if (check_self(&puri.host, puri.port_no ? puri.port_no : SIP_PORT, PROTO_NONE) != 1) {
-                DBG("osp: getRouteParams: the route uri is NOT mine\n");
-                DBG("osp: getRouteParams: host '%.*s' port '%d'\n",puri.host.len,puri.host.s,puri.port_no);
-                DBG("osp: getRouteParams: params '%.*s'\n",puri.params.len,puri.params.s);
+    LOG(L_DBG, "osp: ospGetFromUserpart\n");
+
+    fromuser[0] = '\0';
+
+    if (msg->from != NULL) {
+        if (parse_from_header(msg) == 0) {
+            from = get_from(msg);
+            if (parse_uri(from->uri.s, from->uri.len, &uri) == 0) {
+                ospCopyStrToBuffer(&uri.user, fromuser, buffersize);
+                ospSkipPlus(fromuser);
+                result = 0;
+            } else {
+                LOG(L_ERR, "osp: ERROR: failed to parse From uri\n");
+            }
         } else {
-                DBG("osp: getRouteParams: the Route IS mine - '%.*s'\n",puri.params.len,puri.params.s);
-                DBG("osp: getRouteParams: host '%.*s' port '%d'\n",puri.host.len,puri.host.s,puri.port_no);
-                copy_from_str_to_buffer(&puri.params, route_params, buffer_size);
-                retVal = 0;
+            LOG(L_ERR, "osp: ERROR: failed to parse From header\n");
         }
+    } else {
+        LOG(L_ERR, "osp: ERROR: failed to find From header\n");
+    }
 
-        if (retVal == 1 && msg->parsed_uri.params.len > 0) {
-                DBG("osp: getRouteParams: using route params fromt he request uri\n");
-                copy_from_str_to_buffer(&msg->parsed_uri.params, route_params, buffer_size);
-                route_params[msg->parsed_uri.params.len] = 0;
-                retVal = 0;
-        }
-
-	return retVal;
+    return result;
 }
 
-
-/* Will use the first 'Route' hf not generated by this proxy or
- * URI from the request line */
-void getNextHop(struct sip_msg* msg, char* next_hope, int buffer_size)
+/* 
+ * Get calling number from Remote-Party-ID header
+ * param msg SIP message
+ * param rpiduser User part of Remote-Party-ID header
+ * param buffersize Size of fromuser buffer
+ * return 0 success, -1 failure
+ */
+int ospGetRpidUserpart(
+    struct sip_msg* msg, 
+    char* rpiduser, 
+    int buffersize)
 {
-	struct hdr_field* hf;
-        struct sip_uri puri;
-	rr_t*   route;
-	int    found = 0;
+    struct to_body* rpid;
+    struct sip_uri uri;
+    int result = -1;
 
-	DBG("osp: getNextHop: will iterate through the 'Route' header-fields\n");
+    LOG(L_DBG, "osp: ospGetRpidUserpart\n");
 
-	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->type == HDR_ROUTE_T) {
-			route = (rr_t*)hf->parsed;	
-			if (parse_uri(route->nameaddr.uri.s,route->nameaddr.uri.len,&puri) == 0) {
-				DBG("osp: getNextHop: host '%.*s' port '%d'\n",puri.host.len,puri.host.s,puri.port_no);
+    rpiduser[0] = '\0';
 
-				if (check_self(&puri.host, puri.port_no ? puri.port_no : SIP_PORT, PROTO_NONE) != 1) {
-					DBG("osp: getNextHop: it is NOT me, FOUND!\n");
+    if (_osp_use_rpid != 0) {
+        if (msg->rpid != NULL) {
+            if (parse_rpid_header(msg) == 0) {
+                rpid = get_rpid(msg);
+                if (parse_uri(rpid->uri.s, rpid->uri.len, &uri) == 0) {
+                    ospCopyStrToBuffer(&uri.user, rpiduser, buffersize);
+                    ospSkipPlus(rpiduser);
+                    result = 0;
+                } else {
+                    LOG(L_ERR, "osp: ERROR: failed to parse RPID uri\n");
+                }
+            } else {
+                LOG(L_ERR, "osp: ERROR: failed to parse RPID header\n");
+            }
+        } else {
+            LOG(L_DBG, "osp: without RPID header\n");
+        }
+    } else {
+        LOG(L_DBG, "osp: do not use RPID header\n");
+    }
 
-					copy_from_str_to_buffer(&puri.host, next_hope, buffer_size);
-					found = 1;
-					break;
-				} else {
-					DBG("osp: getNextHop: it IS me, keep looking\n");
-				}
-			} else {
-				ERR("osp: getNextHop: failed to parsed 'Route' uri '%.*s'\n",route->nameaddr.uri.len,route->nameaddr.uri.s);
-			}
-
-		}
-	}
-
-	if (!found) {
-		DBG("osp: getNextHop: Using the request line instead host '%.*s' port '%d'\n",
-		     msg->parsed_uri.host.len,msg->parsed_uri.host.s,
-		     msg->parsed_uri.port_no);
-
-		copy_from_str_to_buffer(&msg->parsed_uri.host, next_hope, buffer_size);
-		found =1;
-	}
+    return result;
 }
 
+/* 
+ * Get called number from To header
+ * param msg SIP message
+ * param touser User part of To header
+ * param buffersize Size of touser buffer
+ * return 0 success, -1 failure
+ */
+int ospGetToUserpart(
+    struct sip_msg* msg, 
+    char* touser, 
+    int buffersize)
+{
+    struct to_body* to;
+    struct sip_uri uri;
+    int result = -1;
 
+    LOG(L_DBG, "osp: ospGetToUserpart\n");
 
+    touser[0] = '\0';
 
+    if (msg->to != NULL) {
+        if (parse_headers(msg, HDR_TO_F, 0) == 0) {
+            to = get_to(msg);
+            if (parse_uri(to->uri.s, to->uri.len, &uri) == 0) {
+                ospCopyStrToBuffer(&uri.user, touser, buffersize);
+                ospSkipPlus(touser);
+                result = 0;
+            } else {
+                LOG(L_ERR, "osp: ERROR: failed to parse To uri\n");
+            }
+        } else {
+            LOG(L_ERR, "osp: ERROR: failed to parse To header\n");
+        }
+    } else {
+        LOG(L_ERR, "osp: ERROR: failed to find To header\n");
+    }
 
-int rebuildDestionationUri(str *newuri, char *destination, char *port, char *callednumber) {
-	#define TRANS ";transport=tcp" 
-	#define TRANS_LEN 14
-	char* buf;
-	int sizeofcallednumber;
-	int sizeofdestination;
-	int sizeofport;
+    return result;
+}
 
-	sizeofcallednumber = strlen(callednumber);
-	sizeofdestination = strlen(destination);
-	sizeofport = strlen(port);
+/* 
+ * Get called number from Request-Line header
+ * param msg SIP message
+ * param touser User part of To header
+ * param buffersize Size of touser buffer
+ * return 0 success, -1 failure
+ */
+int ospGetUriUserpart(
+    struct sip_msg* msg, 
+    char* uriuser, 
+    int buffersize)
+{
+    int result = -1;
 
-	DBG("osp: rebuilddestionationstr >%s<(%i) >%s<(%i) >%s<(%i)\n",
-		callednumber, sizeofcallednumber, destination, sizeofdestination, port, sizeofport);
+    LOG(L_DBG, "osp: ospGetUriUserpart\n");
 
+    uriuser[0] = '\0';
 
-		
-	/* "sip:+" + callednumber + "@" + destination + : + port + " SIP/2.0" */
-	newuri->s = (char*) pkg_malloc(sizeofdestination + sizeofcallednumber + sizeofport + 1 + 16 + TRANS_LEN);
-	if (newuri == NULL) {
-		ERR("osp: rebuilddestionationstr: no memory\n");
-		return 1;
-	}	
-	buf = newuri->s;
+    if (parse_sip_msg_uri(msg) >= 0) {
+        ospCopyStrToBuffer(&msg->parsed_uri.user, uriuser, buffersize);
+        ospSkipPlus(uriuser);
+        result = 0;
+    } else {
+        LOG(L_ERR, "osp: ERROR: failed to parse Request-Line URI\n");
+    }
 
-	*buf++ = 's';
-	*buf++ = 'i';
-	*buf++ = 'p';
-	*buf++ = ':';
+    return result;
+}
 
-	/* Don't prepend +
-	if (*callednumber == '+') {
-		// already starts with
-	} else {
-		*buf++ = '+';
-	}
-	*/
+/* 
+ * Append header to SIP message
+ * param msg SIP message
+ * param header Header to be appended
+ * return 0 success, -1 failure
+ */
+static int ospAppendHeader(
+    struct sip_msg* msg, 
+    str* header)
+{
+    char* s;
+    struct lump* anchor;
+    
+    LOG(L_DBG, "osp: ospAppendHeader\n");
 
-	memcpy(buf, callednumber, sizeofcallednumber);
-	buf += sizeofcallednumber;
-	*buf++ = '@';
-	
-	if (*destination == '[') {
-		/* leave out annoying [] */
-		memcpy(buf, destination+1, sizeofdestination-2);
-		buf += sizeofdestination-2;
-	} else {
-		memcpy(buf, destination, sizeofdestination);
-		buf += sizeofdestination;
-	}
-	
-	if (sizeofport > 0) {
-		*buf++ = ':';
-		memcpy(buf, port, sizeofport);
-		buf += sizeofport;
-	}
+    if((msg == 0) || (header == 0) || (header->s == 0) || (header->len <= 0)) {
+        LOG(L_ERR, "osp: ERROR: bad parameters for appending header\n");
+        return -1;
+    }
 
-/*	*buf++ = ' ';
-	*buf++ = 'S';
-	*buf++ = 'I';
-	*buf++ = 'P';
-	*buf++ = '/';
-	*buf++ = '2';
-	*buf++ = '.';
-	*buf++ = '0';
+    if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+        LOG(L_ERR, "osp: ERROR: failed to parse message\n");
+        return -1;
+    }
+
+    anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+    if (anchor == 0) {
+        LOG(L_ERR, "osp: ERROR: failed to get anchor\n");
+        return -1;
+    }
+
+    s = (char*)pkg_malloc(header->len);
+    if (s == 0) {
+        LOG(L_ERR, "osp: ERROR: no memory\n");
+        return -1;
+    }
+
+    memcpy(s, header->s, header->len);
+
+    if (insert_new_lump_before(anchor, s, header->len, 0) == 0) {
+        LOG(L_ERR, "osp: ERROR: failed to insert lump\n");
+        pkg_free(s);
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* 
+ * Add OSP token header to SIP message
+ * param msg SIP message
+ * param token OSP authorization token
+ * param tokensize Size of OSP authorization token
+ * return 0 success, -1 failure
+ */
+int ospAddOspHeader(
+    struct sip_msg* msg, 
+    unsigned char* token, 
+    unsigned int tokensize)
+{
+    str headerval;
+    char buffer[OSP_HEADERBUF_SIZE];
+    unsigned char encodedtoken[OSP_TOKENBUF_SIZE];
+    unsigned int encodedtokensize = sizeof(encodedtoken);
+    int  result = -1;
+
+    LOG(L_DBG, "osp: ospAddOspHeader\n");
+
+    if (tokensize == 0) {
+        LOG(L_DBG, "osp: destination is not OSP device\n");
+        result = 0;
+    } else {
+        if (OSPPBase64Encode(token, tokensize, encodedtoken, &encodedtokensize) == 0) {
+            snprintf(buffer,
+                sizeof(buffer),
+                "%s%.*s\r\n", 
+                OSP_TOKEN_HEADER,
+                encodedtokensize,
+                encodedtoken);
+    
+            headerval.s = buffer;
+            headerval.len = strlen(buffer);
+    
+            LOG(L_DBG, "osp: setting osp token header field '%s'\n", buffer);
+    
+            if (ospAppendHeader(msg, &headerval) == 0) {
+                result = 0;
+            } else {
+                LOG(L_ERR, "osp: ERROR: failed to append osp header\n");
+            }
+        } else {
+            LOG(L_ERR, "osp: ERROR: failed to base64 encode token\n");
+        }
+    }
+
+    return result;
+}
+
+/* 
+ * Get OSP token from SIP message
+ * param msg SIP message
+ * param token OSP authorization token
+ * param tokensize Size of OSP authorization token
+ * return 0 success, -1 failure
+ */
+int ospGetOspHeader(
+    struct sip_msg* msg, 
+    unsigned char* token, 
+    unsigned int* tokensize)
+{
+    struct hdr_field* hf;
+    int errorcode;
+    int result = -1;
+
+    LOG(L_DBG, "osp: ospGetOspHeader\n");
+
+    if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+        LOG(L_ERR, "osp: ERROR: failed to parse headers\n");
+        return result;
+    }
+
+    for (hf = msg->headers; hf; hf = hf->next) {
+        if ((hf->type == HDR_OTHER_T) && (hf->name.len == OSP_HEADER_SIZE - 2)) {
+            // possible hit
+            if (strncasecmp(hf->name.s, OSP_TOKEN_HEADER, OSP_HEADER_SIZE) == 0) {
+                if ((errorcode = OSPPBase64Decode(hf->body.s, hf->body.len, token, tokensize)) == 0) {
+                    result = 0;
+                } else {
+                    LOG(L_ERR, "osp: ERROR: failed to base64 decode token (%d)\n", errorcode);
+                    LOG(L_ERR, "osp: ERROR: header '%.*s' length %d\n", hf->body.len, hf->body.s, hf->body.len);
+                }
+                break;
+            }        
+        } 
+    }
+
+    return result;
+}
+
+/* 
+ * Get first VIA header and use the IP or host name
+ * param msg SIP message
+ * param sourceaddress Source address
+ * param buffersize Size of sourceaddress
+ * return 0 success, -1 failure
+ */
+int ospGetSourceAddress(
+    struct sip_msg* msg, 
+    char* sourceaddress, 
+    int buffersize)
+{
+    struct via_body* via;
+    int result = -1;
+
+    LOG(L_DBG, "osp: ospGetSourceAddress\n");
+
+    if (msg->h_via1 || (parse_headers(msg, HDR_VIA_F, 0) == 0 && msg->h_via1)) {
+        via = msg->h_via1->parsed;
+        ospCopyStrToBuffer(&via->host, sourceaddress, buffersize);
+        LOG(L_DBG, "osp: source address '%s'\n", sourceaddress);
+        result = 0;
+    }
+
+    return result;
+}
+
+/* 
+ * Get Call-ID header from SIP message
+ * param msg SIP message
+ * param callid Call ID
+ * return 0 success, -1 failure
+ */
+int ospGetCallId(
+    struct sip_msg* msg, 
+    OSPTCALLID** callid)
+{
+    struct hdr_field* hf;
+    int result = -1;
+
+    LOG(L_DBG, "osp: ospGetCallId\n");
+
+    if (!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) == -1) {
+        LOG(L_ERR, "osp: failed to parse Call-ID\n");
+        return result;
+    }
+
+    hf = (struct hdr_field*)msg->callid;
+    if (hf != NULL) {
+        *callid = OSPPCallIdNew(hf->body.len, (unsigned char*)hf->body.s);
+        if (*callid) {
+            result = 0;
+        } else {
+            LOG(L_ERR, "osp: ERROR: failed to allocate OSPCALLID object for '%.*s'\n", hf->body.len, hf->body.s);
+        }
+    } else {
+        LOG(L_ERR, "osp: ERROR: failed to find Call-ID header\n");
+    }    
+
+    return result;
+}
+
+/* 
+ * Get route parameters from the 1st Route or Request-Line
+ * param msg SIP message
+ * param routeparameters Route parameters
+ * param buffersize Size of routeparameters
+ * return 0 success, -1 failure
+ */
+int ospGetRouteParameters(
+    struct sip_msg* msg, 
+    char* routeparameters, 
+    int buffersize)
+{
+    struct hdr_field* hf;
+    rr_t* rt;
+    struct sip_uri uri;
+    int result = -1;
+
+    LOG(L_DBG, "osp: ospGetRouterParameters\n");
+    LOG(L_DBG, "osp: parsed uri host '%.*s' port '%d' vars '%.*s'\n",
+        msg->parsed_uri.host.len,
+        msg->parsed_uri.host.s,
+        msg->parsed_uri.port_no,
+        msg->parsed_uri.params.len,
+        msg->parsed_uri.params.s);
+
+    if (!(hf = msg->route)) {
+        LOG(L_DBG, "osp: there is no Route headers\n");
+    } else if (!(rt = (rr_t*)hf->parsed)) {
+        LOG(L_ERR, "osp: ERROR: route headers are not parsed\n");
+    } else if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len, &uri) != 0) {
+        LOG(L_ERR, "osp: ERROR: failed to parse the Route uri '%.*s'\n", rt->nameaddr.uri.len, rt->nameaddr.uri.s);
+    } else if (check_self(&uri.host, uri.port_no ? uri.port_no : SIP_PORT, PROTO_NONE) != 1) {
+        LOG(L_DBG, "osp: the Route uri is NOT mine\n");
+        LOG(L_DBG, "osp: host '%.*s' port '%d'\n", uri.host.len, uri.host.s, uri.port_no);
+        LOG(L_DBG, "osp: params '%.*s'\n", uri.params.len, uri.params.s);
+    } else {
+        LOG(L_DBG, "osp: the Route uri IS mine - '%.*s'\n", uri.params.len, uri.params.s);
+        LOG(L_DBG, "osp: host '%.*s' port '%d'\n", uri.host.len, uri.host.s, uri.port_no);
+        ospCopyStrToBuffer(&uri.params, routeparameters, buffersize);
+        result = 0;
+    }
+
+    if ((result == -1) && (msg->parsed_uri.params.len > 0)) {
+        LOG(L_DBG, "osp: using route parameters from Request-Line uri\n");
+        ospCopyStrToBuffer(&msg->parsed_uri.params, routeparameters, buffersize);
+        routeparameters[msg->parsed_uri.params.len] = '\0';
+        result = 0;
+    }
+
+    return result;
+}
+
+/* 
+ * Rebuild URI using called number, destination IP, and port
+ * param newuri URI to be built
+ * param called Called number
+ * param dest Destination IP
+ * param port Destination port
+ * return 0 success, -1 failure
+ */
+int ospRebuildDestionationUri(
+    str* newuri, 
+    char* called,
+    char* dest, 
+    char* port) 
+{
+    static const str TRANS = {";transport=tcp", 14};
+    char* buffer;
+    int calledsize;
+    int destsize;
+    int portsize;
+
+    LOG(L_DBG, "osp: ospRebuildDestinationUri\n");
+
+    calledsize = strlen(called);
+    destsize = strlen(dest);
+    portsize = strlen(port);
+
+    LOG(L_DBG, "osp: '%s'(%i) '%s'(%i) '%s'(%i)\n",
+        called, 
+        calledsize,
+        dest, 
+        destsize, 
+        port, 
+        portsize); 
+
+    /* "sip:" + called + "@" + dest + : + port + " SIP/2.0" */
+    newuri->s = (char*)pkg_malloc(4 + calledsize + 1 + destsize + 1 + portsize + 1 + 16 + TRANS.len);
+    if (newuri == NULL) {
+        LOG(L_ERR, "osp: ERROR: no memory\n");
+        return -1;
+    }    
+    buffer = newuri->s;
+
+    *buffer++ = 's';
+    *buffer++ = 'i';
+    *buffer++ = 'p';
+    *buffer++ = ':';
+
+    memcpy(buffer, called, calledsize);
+    buffer += calledsize;
+    *buffer++ = '@';
+    
+    if (*dest == '[') {
+        /* leave out annoying [] */
+        memcpy(buffer, dest + 1, destsize - 2);
+        buffer += destsize - 2;
+    } else {
+        memcpy(buffer, dest, destsize);
+        buffer += destsize;
+    }
+    
+    if (portsize > 0) {
+        *buffer++ = ':';
+        memcpy(buffer, port, portsize);
+        buffer += portsize;
+    }
+
+/*    
+    *buffer++ = ' ';
+    *buffer++ = 'S';
+    *buffer++ = 'I';
+    *buffer++ = 'P';
+    *buffer++ = '/';
+    *buffer++ = '2';
+    *buffer++ = '.';
+    *buffer++ = '0';
+
+    memcpy(buffer, TRANS.s, TRANS.len);
+    buffer += TRANS.len;
+    *buffer = '\0';
 */
-	/* zero terminate for convenience */
-	//memcpy(buf, TRANS, TRANS_LEN);
-	//buf+=TRANS_LEN;
-	//*buf = '\0';
-	newuri->len = buf - newuri->s;
 
-	DBG("newuri is >%.*s<\n", newuri->len, newuri->s);
-	return 0; /* success */
+    newuri->len = buffer - newuri->s;
+
+    LOG(L_DBG, "osp: new uri '%.*s'\n", newuri->len, newuri->s);
+
+    return 0;
 }
 
-
-
-
-/* Copies a str to a buffer and checks for over-flow */
-void copy_from_str_to_buffer(str* from, char* buffer, int buffer_size)
+/* 
+ * Get next hop using the first Route not generated by this proxy or URI from the Request-Line
+ * param msg SIP message
+ * param nexthop Next hop IP
+ * param buffersize Size of nexthop
+ */
+void ospGetNextHop(
+    struct sip_msg* msg, 
+    char* nexthop, 
+    int buffersize)
 {
-	int copy_bytes;
+    struct hdr_field* hf;
+    struct sip_uri uri;
+    rr_t* rt;
+    int found = 0;
 
-	if (from->len > buffer_size) {
-		ERR("Buffer for copying '%.*s' is too small, will copy the first %d of %d bytes\n",
-		    from->len,from->s,buffer_size,from->len);
-		copy_bytes = buffer_size;
-	} else {
-		copy_bytes = from->len;
-	}
+    LOG(L_DBG, "osp: ospGetNextHop\n");
 
-	strncpy(buffer,from->s,copy_bytes);
-	buffer[copy_bytes] = '\0';
+    for (hf = msg->headers; hf; hf = hf->next) {
+        if (hf->type == HDR_ROUTE_T) {
+            for (rt = (rr_t*)hf->parsed; rt; rt = rt->next) {
+                if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len, &uri) == 0) {
+                    LOG(L_DBG, "osp: host '%.*s' port '%d'\n", uri.host.len, uri.host.s, uri.port_no);
+
+                    if (check_self(&uri.host, uri.port_no ? uri.port_no : SIP_PORT, PROTO_NONE) != 1) {
+                        LOG(L_DBG, "osp: it is NOT me, FOUND!\n");
+
+                        ospCopyStrToBuffer(&uri.host, nexthop, buffersize);
+                        found = 1;
+                        break;
+                    } else {
+                        LOG(L_DBG, "osp: it IS me, keep looking\n");
+                    }
+                } else {
+                    LOG(L_ERR, 
+                        "osp: ERROR: failed to parsed route uri '%.*s'\n", 
+                        rt->nameaddr.uri.len, 
+                        rt->nameaddr.uri.s);
+                }
+            }
+            if (found == 1) {
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        LOG(L_DBG, "osp: using the Request-Line instead host '%.*s' port '%d'\n",
+             msg->parsed_uri.host.len,
+             msg->parsed_uri.host.s,
+             msg->parsed_uri.port_no);
+
+        ospCopyStrToBuffer(&msg->parsed_uri.host, nexthop, buffersize);
+        found = 1;
+    }
+}
+
+/* 
+ * Get direction using the first Route not generated by this proxy or URI from the Request-Line
+ *     SER does not have is_direction as OpenSER. We have to write it.
+ *     The problem is we cannot check append_fromtag option before running. So, ftag may not exist.
+ * param msg SIP message
+ * return 0 originating, 1 terminating, -1 failed 
+ */
+int ospGetDirection(struct sip_msg* msg)
+{
+    static const str FTAG = {"ftag", 4};
+    char parameters[OSP_HEADERBUF_SIZE];
+    char* tmp;
+    char* token;
+    str ftag;
+    struct to_body* from;
+    int result = -1;
+
+    LOG(L_DBG, "osp: ospGetDirection\n");
+
+    if (ospGetRouteParameters(msg, parameters, sizeof(parameters)) == 0) {
+        for (token = strtok_r(parameters, ";", &tmp);
+             token;
+             token = strtok_r(NULL, ";", &tmp))
+        {
+            ftag.s = token;
+            ftag.len = strlen(token);
+
+            /* Remove leading white space char */
+            trim_leading(&ftag);
+
+            if (strncmp(ftag.s, FTAG.s, FTAG.len) == 0) {
+                /* Remove "ftag" string */
+                ftag.s += FTAG.len;
+                ftag.len -= FTAG.len;
+
+                /* Remove leading white space char */
+                trim_leading(&ftag);
+
+                /* Remove '=' char */
+                ftag.s++;
+                ftag.len--;
+
+                /* Remove leading and tailing white space char */
+                trim(&ftag);
+
+                LOG(L_DBG, "osp: ftag '%s'\n", ftag.s);
+
+                if ((parse_from_header(msg) == 0) && ((from = get_from(msg)) != 0)) {
+                    if ((ftag.len == from->tag_value.len) && !strncmp(ftag.s, from->tag_value.s, ftag.len)) {
+                        LOG(L_DBG, "osp: originating\n");
+                        result = 0;
+                    } else {
+                        LOG(L_DBG, "osp: terminating\n");
+                        result = 1;
+                    }
+                }
+                break;
+            } else {
+                LOG(L_DBG, "osp: ignoring parameter '%s'\n", token);
+            }
+        }
+    }
+
+    return result;
 }

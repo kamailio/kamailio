@@ -33,51 +33,50 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _OSP_MOD_DESTINATION_H_
+#define _OSP_MOD_DESTINATION_H_
 
-#ifndef OSP_MOD_DESTINATION_H
-#define OSP_MOD_DESTINATION_H
+#include <time.h>
+#include "osp_mod.h"
 
-#include "../../str.h"
+typedef struct _osp_dest {
+    char validafter[OSP_STRBUF_SIZE];
+    char validuntil[OSP_STRBUF_SIZE];
+    char callid[OSP_STRBUF_SIZE];
+    char called[OSP_STRBUF_SIZE];
+    char calling[OSP_STRBUF_SIZE];
+    char source[OSP_STRBUF_SIZE];
+    char srcdev[OSP_STRBUF_SIZE];
+    char host[OSP_STRBUF_SIZE];
+    char destdev[OSP_STRBUF_SIZE];
+    char networkid[OSP_STRBUF_SIZE];
+    unsigned char token[OSP_TOKENBUF_SIZE];
+    unsigned int callidsize;
+    unsigned int tokensize;
+    unsigned int timelimit;
+    int lastcode;
+    time_t authtime;
+    time_t time100;
+    time_t time180;
+    time_t time200;
+    int type;
+    unsigned long long tid;
+    int supported;
+    int used;
+    int reported;
+} osp_dest;
 
-struct _osp_dest {
-	char validafter[100];
-	char validuntil[100];
-	char callid[100];
-	char callednumber[100];
-	char callingnumber[100];
-	char source[100];
-	char sourcedevice[100];
-	char destination[100];
-	char destinationdevice[100];
-	char network_id[100];
-	char osptoken[2000];
-	unsigned int sizeofcallid;
-	unsigned int timelimit;
-	unsigned int sizeoftoken;
-	int  used;
-	int  last_code;
-	time_t time_auth;
-	time_t time_100;
-	time_t time_180;
-	time_t time_200;
-	unsigned long long tid;
-	int type;
-	int reported;
-};
+osp_dest* ospInitDestination(osp_dest* dest);
+int ospSaveOrigDestination(osp_dest* dest);
+int ospSaveTermDestination(osp_dest* dest);
+int ospCheckOrigDestination(void);
+osp_dest* ospGetNextOrigDestination(void);
+osp_dest* ospGetLastOrigDestination(void);
+osp_dest* ospGetTermDestination(void);
+void ospRecordEvent(int clientcode, int servercode);
+void ospDumpDestination(osp_dest* dest);
+void ospDumpAllDestination(void);
+void ospConvertAddress(char* src, char* dst, int buffersize);
 
-typedef struct _osp_dest osp_dest;
+#endif /* _OSP_MOD_DESTINATION_H_ */
 
-osp_dest* initDestination(osp_dest* dest);
-
-osp_dest* getNextOrigDestination();
-osp_dest* getTermDestination();
-
-
-int       saveOrigDestination(osp_dest* dest);
-int       saveTermDestination(osp_dest* dest);
-
-void	  recordEvent(int client_code, int server_code);
-
-void      dumpDebugInfo();
-void      dumbDestDebugInfo(osp_dest *dest);
-#endif

@@ -51,3 +51,12 @@ October 17, 2005
 
 October 31, 2005
    o Copied files from cvs.berlios.de:/cvsroot/osp-module to cvs.berlios.de:/cvsroot/ser
+
+2006 September 5
+   o Using BRAND_ROUTE approach to add route specific header to avoid sending
+     an OSP token to a non-OSP destination.
+   o Using called number in Request-Line for token validation and auth request.
+   o Sending DeviceInfo in "[x.x.x.x]" format in OSP AuthReq messages.
+   o Using fromtag in RR to report who releases the call first.
+   o Using AVP to add RR paramters for inserting OSP cookies.
+

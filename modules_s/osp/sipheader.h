@@ -32,27 +32,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef OSP_MOD_SIPHEADER_H
-#define OSP_MOD_SIPHEADER_H
 
-#include "osp/osp.h"
-#include "../../sr_module.h"
+#ifndef _OSP_MOD_SIPHEADER_H_
+#define _OSP_MOD_SIPHEADER_H_
 
-#define OSP_HEADER        "P-OSP-Auth-Token: "
-#define OSP_HEADER_LEN    strlen(OSP_HEADER)
+#include <osp/osp.h>
+#include "../../parser/msg_parser.h"
 
-int  getFromUserpart(    struct sip_msg* msg, char* fromuser, int buffer_size);
-int  getToUserpart(      struct sip_msg* msg, char* touser, int buffer_size);
-int  addOspHeader(       struct sip_msg* msg, char* token, int  sizeoftoken);
-int  getOspHeader(       struct sip_msg* msg, char* token, int* sizeoftoken);
-int  getSourceAddress(   struct sip_msg* msg, char* source_address, int buffer_size);
-int  getCallId(          struct sip_msg* msg, OSPTCALLID** callid);
-int  getRouteParams(     struct sip_msg* msg, char* route_params, int buffer_size);
-int  rebuildDestionationUri(str *newuri, char *destination, char *port, char *callednumber);
-void getNextHop(struct sip_msg* msg, char* next_hope, int buffer_size);
-void copy_from_str_to_buffer(str* from, char* buffer, int buffer_size);
+#define OSP_TOKEN_HEADER    "P-OSP-Auth-Token: "
+#define OSP_HEADER_SIZE     strlen(OSP_TOKEN_HEADER)
 
-void skipPlus(char* e164);
+void ospCopyStrToBuffer(str* source, char* buffer, int buffersize);
+int ospGetFromUserpart(struct sip_msg* msg, char* fromuser, int buffersize);
+int ospGetRpidUserpart(struct sip_msg* msg, char* fromuser, int buffersize);
+int ospGetToUserpart(struct sip_msg* msg, char* touser, int buffersize);
+int ospGetUriUserpart(struct sip_msg* msg, char* touser, int buffersize);
+int ospAddOspHeader(struct sip_msg* msg, unsigned char* token, unsigned int tokensize);
+int ospGetOspHeader(struct sip_msg* msg, unsigned char* token, unsigned int* tokensize);
+int ospGetSourceAddress(struct sip_msg* msg, char* sourceaddress, int buffersize);
+int ospGetCallId(struct sip_msg* msg, OSPTCALLID** callid);
+int ospGetRouteParameters(struct sip_msg* msg, char* routeparams, int buffersize);
+int ospRebuildDestionationUri(str* newuri, char* called, char* dest, char* port);
+void ospGetNextHop(struct sip_msg* msg, char* nexthop, int buffersize);
+int ospGetDirection(struct sip_msg* msg);
 
-#endif
+#endif /* _OSP_MOD_SIPHEADER_H_ */
 
