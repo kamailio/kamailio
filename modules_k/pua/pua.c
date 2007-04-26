@@ -549,9 +549,10 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 	size= sizeof(ua_pres_t)+ sizeof(str)+ (p->pres_uri->len+ 1)*sizeof(char);
 	
 	if(p->watcher_uri)
-		size+= sizeof(str)+ p->watcher_uri->len;
+		size+= sizeof(str)+ p->watcher_uri->len*sizeof(char);
 	else
-		size+=  p->id.len;
+	if(p->id.s && p->id.len)
+		size+=  p->id.len*sizeof(char);
 
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
@@ -582,6 +583,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		size+= p->watcher_uri->len;
 	}	
 	else
+	if(p->id.s && p->id.len)
 	{	
 		hentity->id.s = ((char*)hentity+ size);
 		memcpy(hentity->id.s, p->id.s, p->id.len);
@@ -672,7 +674,7 @@ void db_update(unsigned int ticks,void *param)
 	db_key_t db_cols[3];
 	db_val_t q_vals[15], db_vals[3];
 	db_op_t  db_ops[1] ;
-	int n_query_cols= 0;
+	int n_query_cols= 0, n_query_update= 3;
 	int n_update_cols= 0;
 	int i;
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
@@ -798,7 +800,7 @@ void db_update(unsigned int ticks,void *param)
 				{
 					DBG("PUA: db_update: UPDATEDB_FLAG\n ");
 					n_update_cols= 1;
-					n_query_cols= 3;
+				
 					
 					q_vals[puri_col].val.str_val = *(p->pres_uri);
 					q_vals[pid_col].val.str_val = p->id;
@@ -808,18 +810,18 @@ void db_update(unsigned int ticks,void *param)
 					
 					if(p->watcher_uri)   /* for subscribe */
 					{
-						q_vals[n_query_cols].val.str_val = *(p->watcher_uri);
-						n_query_cols= 4;
+						q_vals[n_query_update].val.str_val = *(p->watcher_uri);
+						n_query_update++;
 					
 						db_vals[1].val.int_val= p->cseq	;
-						n_update_cols= 2;
+						n_update_cols++;
 					}
 					
-					DBG("PUA: db_update: Updating ..n_query_cols= %d\t"
-						" n_update_cols= %d\n", n_query_cols, n_update_cols);
+					DBG("PUA: db_update: Updating ..n_query_update= %d\t"
+						" n_update_cols= %d\n", n_query_update, n_update_cols);
 
 					if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
-								 result_cols, n_query_cols, 1, 0, &res)< 0)
+								 result_cols, n_query_update, 1, 0, &res)< 0)
 					{
 						LOG(L_ERR, "PUA: db_update:ERROR while querying"
 								" database");
@@ -831,7 +833,7 @@ void db_update(unsigned int ticks,void *param)
 					if(res && res->n> 0)
 					{																				
 						if(pua_dbf.update(pua_db, q_cols, 0, q_vals, db_cols, 
-								db_vals, n_query_cols, n_update_cols)<0)
+								db_vals, n_query_update, n_update_cols)<0)
 						{
 							LOG(L_ERR, "PUA: db_update: ERROR while updating"
 									" in database");
