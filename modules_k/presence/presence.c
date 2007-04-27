@@ -300,10 +300,20 @@ static int child_init(int rank)
 	{
 		if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
 		{
-			LOG(L_ERR, "PRESENCE: child %d: Error in use_table\n", rank);
+			LOG(L_ERR, "PRESENCE: child %d: Error in use_table presentity_table\n", rank);
 			return -1;
 		}
-		
+		if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
+		{
+			LOG(L_ERR, "PRESENCE: child %d: Error in use_table active_watchers_table\n", rank);
+			return -1;
+		}
+		if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
+		{
+			LOG(L_ERR, "PRESENCE: child %d: Error in use_table watchers_table\n", rank);
+			return -1;
+		}
+
 		DBG("PRESENCE: child %d: Database connection opened successfully\n", rank);
 	}
 	pid = my_pid();

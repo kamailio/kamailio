@@ -67,6 +67,7 @@ struct ev
 	str content_type;
 	int type;
 
+
 	/* fileds that deal with authorization rules*/
 	/*
 	 *  req_auth -> flag 0  - if not require 

@@ -168,8 +168,10 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 
 	presentity->etag.s = ((char*)presentity)+ size;
 	strcpy(presentity->etag.s, etag->s);
+	presentity->etag.s[etag->len]= '\0';
 	presentity->etag.len = etag->len;
-	size+= etag->len;
+
+	size+= etag->len+1;
 	
 	if(sender)
 	{
