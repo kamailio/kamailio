@@ -458,7 +458,7 @@ str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
 		{
 			int len;
 			DBG("PRESENCE:get_p_notify_body: Event does not require aggregation\n");
-			row = &result->rows[0];
+			row = &result->rows[n-1];
 			row_vals = ROW_VALUES(row);
 			if(row_vals[body_col].val.string_val== NULL)
 			{
