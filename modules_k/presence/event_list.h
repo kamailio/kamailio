@@ -66,8 +66,11 @@ struct ev
 	str stored_name;
 	str content_type;
 	int type;
-
-
+	int etag_not_new;
+	/*
+	 *  0 - the standard mechanism (allocating new etag for each Publish)
+	 *  1 - allocating an etag only for an initial Publish 
+	 * */
 	/* fileds that deal with authorization rules*/
 	/*
 	 *  req_auth -> flag 0  - if not require 

@@ -201,6 +201,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 	int n_update_cols = 0;
 	char* dot= NULL;
 	str etag= {0, 0};
+	str cur_etag= {0, 0};
 
 	if( !use_db )
 		return 0;
@@ -340,43 +341,54 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 
 		if (result->n > 0)
 		{
-			/* generate another etag */
-			unsigned int publ_nr;
-			str str_publ_nr= {0, 0};
-
-			dot= presentity->etag.s+ presentity->etag.len;
-			while(*dot!= '.' && str_publ_nr.len< presentity->etag.len)
-			{
-				str_publ_nr.len++;
-				dot--;
-			}
-			if(str_publ_nr.len== presentity->etag.len)
-			{
-				LOG(L_ERR, "PRESENCE:update_presentity: ERROR wrong etag\n");
-				return -1;			
-			}	
-			str_publ_nr.s= dot+1;
-			str_publ_nr.len--;
-
-			DBG("PRESENCE: update_presentity: str_publ_nr.len= %.*s - len= %d\n", str_publ_nr.len,
-					str_publ_nr.s, str_publ_nr.len);
-
-			if( str2int(&str_publ_nr, &publ_nr)< 0)
-			{
-				LOG(L_ERR, "PRESENCE: update_presentity: ERROR while converting string to int\n");
-				goto error;
-			}
-			etag.s = generate_ETag(publ_nr+1);
-			if(etag.s == NULL)
-			{
-				LOG(L_ERR,"PRESENCE:update_presentity: ERROR while generating etag\n");
-				return -1;
-			}
-			etag.len=(strlen(etag.s));
-			DBG("PRESENCE:update_presentity: new etag  = %.*s \n", etag.len,
-				etag.s);
-
 			n_update_cols= 0;
+			
+			if(presentity->event->etag_not_new== 0)
+			{	
+				/* generate another etag */
+				unsigned int publ_nr;
+				str str_publ_nr= {0, 0};
+
+				dot= presentity->etag.s+ presentity->etag.len;
+				while(*dot!= '.' && str_publ_nr.len< presentity->etag.len)
+				{
+					str_publ_nr.len++;
+					dot--;
+				}
+				if(str_publ_nr.len== presentity->etag.len)
+				{
+					LOG(L_ERR, "PRESENCE:update_presentity: ERROR wrong etag\n");
+					return -1;			
+				}	
+				str_publ_nr.s= dot+1;
+				str_publ_nr.len--;
+	
+				if( str2int(&str_publ_nr, &publ_nr)< 0)
+				{
+					LOG(L_ERR, "PRESENCE: update_presentity: ERROR while converting string to int\n");
+					goto error;
+				}
+				etag.s = generate_ETag(publ_nr+1);
+				if(etag.s == NULL)
+				{
+					LOG(L_ERR,"PRESENCE:update_presentity: ERROR while generating etag\n");
+					return -1;
+				}
+				etag.len=(strlen(etag.s));
+				DBG("PRESENCE:update_presentity: new etag  = %.*s \n", etag.len,
+					etag.s);
+				
+				cur_etag= etag;
+
+				update_keys[n_update_cols] = "etag";
+				update_vals[n_update_cols].type = DB_STR;
+				update_vals[n_update_cols].nul = 0;
+				update_vals[n_update_cols].val.str_val = etag;
+				n_update_cols++;
+
+			}
+			else
+				cur_etag= presentity->etag;
 			
 			update_keys[n_update_cols] = "expires";
 			update_vals[n_update_cols].type = DB_INT;
@@ -390,12 +402,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			update_vals[n_update_cols].val.int_val = presentity->received_time;
 			n_update_cols++;
 
-			update_keys[n_update_cols] = "etag";
-			update_vals[n_update_cols].type = DB_STR;
-			update_vals[n_update_cols].nul = 0;
-			update_vals[n_update_cols].val.str_val = etag;
-			n_update_cols++;
-
 			if(body==NULL || body->s==NULL) /* if there is no body update expires value
 											   and sender if present */
 			{
@@ -404,19 +410,20 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 				{
 					LOG( L_ERR , "PRESENCE:update_presentity:ERROR while"
 							" updating presence information\n");
-					pkg_free(etag.s);
 					goto error;
 				}
 				pa_dbf.free_result(pa_db, result);
 		
 				/* send 200ok */
-				if( publ_send200ok(msg, presentity->expires, etag)< 0)
+				if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
 				{
 					LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
-					pkg_free(etag.s);
+					if(etag.s)
+						pkg_free(etag.s);
 					return -1;
 				}
-				pkg_free(etag.s);
+				if(etag.s)
+					pkg_free(etag.s);
 				return 0;
 			}
 /*
@@ -440,7 +447,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			{
 				LOG( L_ERR , "PRESENCE:update_presentity: ERROR while"
 						" updating presence information\n");
-				pkg_free(etag.s);
 				goto error;
 			}
 
@@ -448,14 +454,17 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			result= NULL;
 			
 			/* send 200OK */
-			if( publ_send200ok(msg, presentity->expires,etag)< 0)
+			if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
-				pkg_free(etag.s);
+				if(etag.s)
+					pkg_free(etag.s);
 				return -1;
 			}
-			pkg_free(etag.s);
-
+			if(etag.s)
+				pkg_free(etag.s);
+			etag.s= NULL;
+			
 			/* presentity body is updated so send notify to all watchers */
 			if (query_db_notify(&presentity->user, &presentity->domain,
 						presentity->event, NULL, NULL, presentity->sender)<0)
@@ -485,6 +494,9 @@ error:
 		pa_dbf.free_result(pa_db, result);
 		result= NULL;
 	}
+	if(etag.s)
+		pkg_free(etag.s);
+
 	return -1;
 
 }

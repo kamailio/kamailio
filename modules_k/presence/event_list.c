@@ -141,7 +141,7 @@ int add_event(ev_t* event)
 	ev->apply_auth_nbody= event->apply_auth_nbody;
 	ev->is_watcher_allowed= event->is_watcher_allowed;
 	ev->evs_publ_handl= event->evs_publ_handl;
-
+	ev->etag_not_new= event->etag_not_new;
 	ev->next= EvList->events;
 	EvList->events= ev;
 	EvList->ev_count++;
