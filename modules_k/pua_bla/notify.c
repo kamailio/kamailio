@@ -293,7 +293,6 @@ void term_publ_callback(ua_pres_t* hentity, struct msg_start * fl)
 	xmlDocPtr doc= NULL;
 	xmlNodePtr dialog_node= NULL;
 	str body;
-	char* entity= NULL;
 
 	memset(&publ, 0, sizeof(publ_info_t));
 
@@ -332,7 +331,6 @@ void term_publ_callback(ua_pres_t* hentity, struct msg_start * fl)
    	if(dialog_node == NULL)
    	{
    		DBG("PUA_BLA: handle_notify: No dialog node found\n");
-   		xmlFreeDoc(doc);
    		goto error;
    	}
    
@@ -363,8 +361,6 @@ void term_publ_callback(ua_pres_t* hentity, struct msg_start * fl)
 error:
 	if(doc)
 		xmlFreeDoc(doc);
-	if(entity)
-		xmlFree(entity);
 	return;
 
 }	
