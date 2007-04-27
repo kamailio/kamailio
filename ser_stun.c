@@ -33,10 +33,9 @@
 #ifdef USE_STUN 
  
 #include <arpa/inet.h>
+#include <openssl/sha.h>
 #include "ser_stun.h"
 #include "forward.h"
-
-extern unsigned char* SHA1(const unsigned char* d, size_t m,unsigned char* md);
 
 /*
  * ****************************************************************************
