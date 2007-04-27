@@ -308,7 +308,7 @@ inline static ticks_t retransmission_handler( struct retr_buf *r_buf )
 				return (ticks_t)-1;
 			}
 #ifdef TMCB_ONSEND
-			run_onsend_callbacks(TMCB_REQUEST_SENT, r_buf, 1);
+			run_onsend_callbacks(TMCB_REQUEST_SENT, r_buf, TMCB_RETR_F);
 #endif
 	} else {
 #ifdef EXTRA_DEBUG

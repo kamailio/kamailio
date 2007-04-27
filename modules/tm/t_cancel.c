@@ -193,7 +193,7 @@ int cancel_branch( struct cell *t, int branch, int flags )
 	DBG("DEBUG: cancel_branch: sending cancel...\n");
 #ifdef TMCB_ONSEND
 	if (SEND_BUFFER( crb )>=0)
-		run_onsend_callbacks(TMCB_REQUEST_SENT, crb, 0);
+		run_onsend_callbacks(TMCB_REQUEST_SENT, crb, TMCB_LOCAL_F);
 #else
 	SEND_BUFFER( crb );
 #endif

@@ -511,7 +511,8 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 #ifdef TMCB_ONSEND
 				else{
 					run_onsend_callbacks(TMCB_REQUEST_SENT, 
-											&t_cancel->uac[i].request, 0);
+											&t_cancel->uac[i].request,
+											TMCB_LOCAL_F);
 				}
 #endif
 				if (start_retr( &t_cancel->uac[i].request )!=0)

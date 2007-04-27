@@ -269,7 +269,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 
 
 #ifdef TMCB_ONSEND
-void run_onsend_callbacks(int type, struct retr_buf* rbuf, int retr)
+void run_onsend_callbacks(int type, struct retr_buf* rbuf, short flags)
 {
 	struct tmcb_params params;
 	struct cell * trans;
@@ -282,7 +282,7 @@ void run_onsend_callbacks(int type, struct retr_buf* rbuf, int retr)
 	params.send_buf.s=rbuf->buffer;
 	params.send_buf.len=rbuf->buffer_len;
 	params.dst=&rbuf->dst;
-	params.is_retr=retr;
+	params.flags=flags;
 	params.branch=rbuf->branch;
 	params.t_rbuf=rbuf;
 	params.code=rbuf->activ_type;
@@ -292,7 +292,8 @@ void run_onsend_callbacks(int type, struct retr_buf* rbuf, int retr)
 
 
 void run_onsend_callbacks2(int type , struct retr_buf* rbuf, char* buf,
-							int buf_len, struct dest_info* dst, int code)
+							int buf_len, struct dest_info* dst, int code,
+							short flags)
 {
 	struct tmcb_params params;
 	struct cell * trans;
@@ -305,7 +306,7 @@ void run_onsend_callbacks2(int type , struct retr_buf* rbuf, char* buf,
 	params.send_buf.s=buf;
 	params.send_buf.len=buf_len;
 	params.dst=dst;
-	params.is_retr=0;
+	params.flags=flags;
 	params.branch=rbuf->branch;
 	params.t_rbuf=rbuf;
 	params.code=code;

@@ -301,6 +301,10 @@ struct cell;
 	callback function if necessary.
 */
 
+#ifdef TMCB_ONSEND
+#define TMCB_RETR_F 1
+#define TMCB_LOCAL_F 2
+#endif
 
 /* pack structure with all params passed to callback function */
 struct tmcb_params {
@@ -315,9 +319,12 @@ struct tmcb_params {
 	struct dest_info* dst; /* destination */
 	str send_buf; /* what was/will be sent on the net, used for ACKs
 					(which don't have a retr_buf). */
-	short is_retr; /* set if this is a _ser_ retransmission (but not if
-					 if it's a "forwarded" retr., like a retr. 200 Ok for 
-					 example) */
+	short flags; /* set to a combination of:
+					TMCB_RETR_F if this is a _ser_ retransmission (but 
+					 not if if it's a "forwarded" retr., like a retr. 200 Ok
+					 for example)
+					 TMCB_LOCAL_F if this is a local generated message
+					  (and not forwarded) */
 	unsigned short branch;
 	/* could also be: send_buf, dst, branch */
 #endif
@@ -383,9 +390,10 @@ void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req,
 		int code );
 
 #ifdef TMCB_ONSEND
-void run_onsend_callbacks(int type, struct retr_buf* rbuf, int retr);
+void run_onsend_callbacks(int type, struct retr_buf* rbuf, short flags);
 void run_onsend_callbacks2(int type , struct retr_buf* rbuf, char* buf,
-							int buf_len, struct dest_info* dst, int code);
+							int buf_len, struct dest_info* dst, int code,
+							short flags);
 #endif
 
 #endif

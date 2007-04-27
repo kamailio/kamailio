@@ -495,7 +495,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 #ifdef TMCB_ONSEND
 		if (SEND_PR_BUFFER( rb, buf, len )>=0)
 			run_onsend_callbacks2(TMCB_RESPONSE_SENT, rb, buf, len, &rb->dst,
-									code);
+									code, TMCB_LOCAL_F);
 #else
 		SEND_PR_BUFFER( rb, buf, len );
 #endif
@@ -1077,7 +1077,9 @@ int t_retransmit_reply( struct cell *t )
 	UNLOCK_REPLIES( t );
 	SEND_PR_BUFFER( & t->uas.response, b, len );
 #ifdef TMCB_ONSEND
-	run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, 1);
+	/* we don't know if it's a retransmission of a local reply or a forwarded
+	 * reply */
+	run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, TMCB_RETR_F);
 #endif
 	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n",
 		b, b, t->uas.response.buffer, t->uas.response.buffer );
@@ -1448,7 +1450,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			}
 #ifdef TMCB_ONSEND
 			run_onsend_callbacks2(TMCB_RESPONSE_SENT, uas_rb, buf, res_len,
-									&uas_rb->dst, relayed_code);
+									&uas_rb->dst, relayed_code, 
+									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0);
 #endif
 		}
 		pkg_free( buf );
@@ -1633,7 +1636,7 @@ int reply_received( struct sip_msg  *p_msg )
 						run_onsend_callbacks2(TMCB_REQUEST_SENT,
 									&uac->request, ack, ack_len, 
 									&uac->request.dst,
-									TYPE_LOCAL_ACK);
+									TYPE_LOCAL_ACK, TMCB_LOCAL_F);
 #else
 					SEND_PR_BUFFER(&uac->request, ack, ack_len);
 #endif
@@ -1648,7 +1651,7 @@ int reply_received( struct sip_msg  *p_msg )
 					else
 						run_onsend_callbacks2(TMCB_REQUEST_SENT,
 									&uac->request, ack, ack_len, &lack_dst,
-									TYPE_LOCAL_ACK);
+									TYPE_LOCAL_ACK, TMCB_LOCAL_F);
 #endif
 					shm_free(ack);
 				}

@@ -355,7 +355,7 @@ static inline void send_prepared_request_impl(struct retr_buf *request, int retr
 #ifdef TMCB_ONSEND
 	else
 		/* we don't know the method here */
-		run_onsend_callbacks(TMCB_REQUEST_SENT, request, 0);
+		run_onsend_callbacks(TMCB_REQUEST_SENT, request, TMCB_LOCAL_F);
 #endif
 	
 	if (retransmit && (start_retr(request)!=0))
