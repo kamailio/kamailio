@@ -63,8 +63,8 @@ int force_active= 0;
 struct sl_binds slb;
 
 /* database connection */
-db_con_t *pa_db = NULL;
-db_func_t pa_dbf;
+db_con_t *pxml_db = NULL;
+db_func_t pxml_dbf;
 
 
 static cmd_export_t cmds[]=
@@ -113,21 +113,21 @@ static int mod_init(void)
 			db_url.s);
 	
 	/* binding to mysql module  */
-	if (bind_dbmod(db_url.s, &pa_dbf))
+	if (bind_dbmod(db_url.s, &pxml_dbf))
 	{
 		DBG("presence_xml:mod_init: ERROR: Database module not found\n");
 		return -1;
 	}
 	
 
-	if (!DB_CAPABILITY(pa_dbf, DB_CAP_ALL)) {
+	if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
 		LOG(L_ERR,"presence_xml:mod_init: ERROR Database module does not implement "
 		    "all functions needed by the module\n");
 		return -1;
 	}
 
-	pa_db = pa_dbf.init(db_url.s);
-	if (!pa_db)
+	pxml_db = pxml_dbf.init(db_url.s);
+	if (!pxml_db)
 	{
 		LOG(L_ERR,"presence_xml:mod_init: Error while connecting database\n");
 		return -1;
@@ -135,7 +135,7 @@ static int mod_init(void)
 
 	_s.s = xcap_table;
 	_s.len = strlen(xcap_table);
-	 ver =  table_version(&pa_dbf, pa_db, &_s);
+	 ver =  table_version(&pxml_dbf, pxml_db, &_s);
 	if(ver!=S_TABLE_VERSION)
 	{
 		LOG(L_ERR,"presence_xml:mod_init: Wrong version v%d for table <%s>,"
@@ -172,6 +172,9 @@ static int mod_init(void)
 		LOG(L_ERR, "presence_xml:mod_init: ERROR while adding xml events\n");
 		return -1;		
 	}	
+	if(pxml_db)
+		pxml_dbf.close(pxml_db);
+	pxml_db = NULL;
 
 	return 0;
 }
@@ -179,12 +182,38 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	DBG("presence_xml: init_child [%d]  pid [%d]\n", rank, getpid());
+	
+	if (pxml_dbf.init==0)
+	{
+		LOG(L_CRIT, "BUG: PRESENCE_XML: child_init: database not bound\n");
+		return -1;
+	}
+	pxml_db = pxml_dbf.init(db_url.s);
+	if (!pxml_db)
+	{
+		LOG(L_ERR,"PRESENCE_XML: child %d: Error while connecting database\n",
+				rank);
+		return -1;
+	}
+	else
+	{
+		if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
+		{
+			LOG(L_ERR, "PRESENCE_XML: child %d: Error in use_table\n", rank);
+			return -1;
+		}
+		
+		DBG("PRESENCE_XML: child %d: Database connection opened successfully\n", rank);
+	}
+
 	return 0;
 }	
 
 static void destroy(void)
 {	
 	DBG("presence_xml: destroying module ...\n");
+	if(pxml_db && pxml_dbf.close)
+		pxml_dbf.close(pxml_db);
 
 	return ;
 }

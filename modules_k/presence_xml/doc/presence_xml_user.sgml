@@ -15,7 +15,7 @@
 	<title>Overview</title>
 	<para> 
 	The module does specific handling for notify-subscribe events using xml bodies.
-	It is used with the general event handling module, presence. It constructs and add
+	It is used with the general event handling module, presence. It constructs and adds
 	3 events to it: presence, presence.winfo, dialog;sla. 
 	</para>
 	<para>

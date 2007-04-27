@@ -29,12 +29,14 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../presence/utils_func.h"
+#include "presence_xml.h"
 #include "xcap_auth.h"
 #include "pidf.h"
-#include "presence_xml.h"
 
 extern char* xcap_table;
 extern int force_active;
+extern db_func_t pxml_dbf;
+extern db_con_t *pxml_db;
 
 int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree );
 
@@ -331,13 +333,13 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 
 	result_cols[0] = "xcap";
 
-	if (pa_dbf.use_table(pa_db, xcap_table) < 0) 
+	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE_XML:get_xcap_tree: Error in use_table\n");
 		return NULL;
 	}
 
-	if( pa_dbf.query(pa_db, query_cols, 0 , query_vals, result_cols, 
+	if( pxml_dbf.query(pxml_db, query_cols, 0 , query_vals, result_cols, 
 				n_query_cols, 1, 0, &result)<0)
 	{
 		LOG(L_ERR, "PRESENCE_XML:get_xcap_tree:Error while querying table xcap for"
@@ -385,13 +387,13 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	}
 
 	if(result!=NULL)
-		pa_dbf.free_result(pa_db, result);
+		pxml_dbf.free_result(pxml_db, result);
 
 	return xcap_tree;
 
 error:
 	if(result!=NULL)
-		pa_dbf.free_result(pa_db, result);
+		pxml_dbf.free_result(pxml_db, result);
 	return NULL;
 }
 

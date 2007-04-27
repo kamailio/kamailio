@@ -871,14 +871,14 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 
 	result_cols[body_col=n_result_cols++] = "body" ;
 
-	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+	if (pxml_dbf.use_table(pxml_db, presentity_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE: build_off_nbody: Error in use_table\n");
 		goto error;
 	}
 
 	DBG("PRESENCE: build_off_nbody: querying presentity\n");
-	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+	if (pxml_dbf.query (pxml_db, query_cols, query_ops, query_vals,
 		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE: build_off_nbody: Error while querying"
@@ -989,7 +989,7 @@ str* build_off_nbody(str p_user, str p_domain, str* etag)
 	DBG("PRESENCE: build_off_nbody:new_body:\n%.*s\n",body->len, body->s);
 
 	if(result !=NULL)
-		pa_dbf.free_result(pa_db, result);
+		pxml_dbf.free_result(pxml_db, result);
 
     /*free the document */
     xmlFreeDoc(doc);
@@ -1018,7 +1018,7 @@ error:
 	if(new_doc)
 		xmlFreeDoc(new_doc);
 	if(result)
-		pa_dbf.free_result(pa_db, result);
+		pxml_dbf.free_result(pxml_db, result);
 	if(body)
 	{
 		if(body->s)
