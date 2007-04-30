@@ -1088,7 +1088,6 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 				if(notify_body == NULL || notify_body->s== NULL)
 				{
 					DBG("PRESENCE:notify: Could not get the notify_body\n");
-					goto done;
 				}
 				/* apply authorization rules if exists */
 				if(subs->event->req_auth)
@@ -1211,7 +1210,7 @@ jump_over_body:
 		LOG(L_ERR, "PRESENCE:notify: Error while updating cseq value\n");
 		goto error;
 	}
-done:
+	
 	if(p_uri.s!=NULL)
 		pkg_free(p_uri.s);
 	if(td!=NULL)
