@@ -730,6 +730,77 @@ fix_nated_register();
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 	</section>
+
+	<section>
+		<title><acronym>MI</acronym> Commands</title>
+		<section>
+			<title><function moreinfo="none">nh_enable_ping</function></title>
+			<para>
+			Enables natping if parameter value greater than 0.
+			Disables natping if parameter value is 0.
+			</para>
+			<para>
+			The function takes only one parameter - a number in decimal format.
+			</para>
+			<example>
+			<title><function moreinfo="none">nh_enable_ping</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo nh_enable_ping 1
+...
+			</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title><function moreinfo="none">nh_enable_rtpp</function></title>
+			<para>
+			Enables a rtp proxy if parameter value is greater than 0.
+			Disables it if a zero value is given.
+			</para>
+			<para>
+			The first parameter is the rtp proxy url (exactly as defined in 
+			the config file).
+			</para>
+			<para>
+			The second parameter value must be a number in decimal.
+			</para>
+			<para>
+			NOTE: if a rtpproxy is defined multiple times (in the same or
+			diferente sete), all its instances will be enables/disabled.
+			</para>
+			<example>
+			<title>
+			<function moreinfo="none">nh_enable_rtpp</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
+...
+			</programlisting>
+			</example>
+		</section>
+				
+			<section>
+			<title><function moreinfo="none">nh_show_rtpp</function></title>
+			<para>
+			Displays all the rtp proxies and their information: set and 
+			status (disabled or not, weight and recheck_ticks).
+			</para>
+			<para>
+			No parameter.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">nh_show_rtpp</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo nh_show_rtpp 
+...
+			</programlisting>
+			</example>
+		</section>
+
+
 </chapter>
 
 <!-- Keep this element at the end of the file

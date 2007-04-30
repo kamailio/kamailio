@@ -27,8 +27,10 @@
 #ifndef _NATHELPER_NATHELPER_H
 #define _NATHELPER_NATHELPER_H
 
+#include "../../str.h"
+
 struct rtpp_node {
-	char				*rn_url;	/* unparsed, deletable */
+	str					rn_url;	/* unparsed, deletable */
 	int					rn_umode;
 	char				*rn_address;	/* substring of rn_url */
 	int					rn_fd;		/* control fd */
