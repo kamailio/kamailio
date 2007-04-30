@@ -86,6 +86,7 @@
 	<index>
 		<name>offline_winfo_key</name>
 		<colref linkend="offline_winfo.dbid"/>
+		<unique/>
 	</index>
 
 </table>
