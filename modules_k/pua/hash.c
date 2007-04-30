@@ -92,12 +92,12 @@ error:
 
 }
 
-
 ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG, 
-		str id, unsigned int hash_code)
+			str id, str* etag,  unsigned int hash_code)
 {
 	ua_pres_t* p= NULL,* L= NULL;
- 
+	int ok;
+
 	L= HashT->p_records[hash_code].entity;
 	DBG("PUA: search_htable: core_hash= %u\n", hash_code);
 	if(FLAG& BLA_SUBSCRIBE)
@@ -128,13 +128,23 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 				}
 				else
 				{
-					if(id.s && id.len)
+					ok= 1;
+
+					if(id.s && id.len) 
 					{	
-						if(id.len== p->id.len &&
-								strncmp(p->id.s, id.s, id.len)==0)
-							break;
+
+						if(!(id.len== p->id.len &&
+								strncmp(p->id.s, id.s, id.len)==0))
+							ok= 0;
 					}
-					else
+					if(etag)
+					{
+						if(!(etag->len== p->etag.len &&
+								strncmp(p->etag.s, etag->s, etag->len)==0))
+							ok= 0;
+						
+					}	
+					if(ok== 1)
 						break;
 				}
 			}
@@ -156,7 +166,7 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires,
 
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				 presentity->flag, presentity->id, hash_code);
+				 presentity->flag, presentity->id, &presentity->etag, hash_code);
 	if(p== NULL)
 	{
 		DBG("PUA:hash_update : no recod found\n");
@@ -220,7 +230,7 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 	DBG("PUA:delete_htable...\n");
 
 	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-			 presentity->flag, presentity->id, hash_code);
+			 presentity->flag, presentity->id, &presentity->etag, hash_code);
 	if(p== NULL)
 		return;
 

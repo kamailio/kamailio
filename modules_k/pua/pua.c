@@ -600,7 +600,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 	if(p->watcher_uri== NULL)
 	{
 		str met= {"PUBLISH", 7};
-		str_hdr = publ_build_hdr(expires, p->event, &p->etag, NULL, 0);
+		str_hdr = publ_build_hdr(expires, p->event, NULL, &p->etag, NULL, 0);
 		if(str_hdr == NULL)
 		{
 			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");

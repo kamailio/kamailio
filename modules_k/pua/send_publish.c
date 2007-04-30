@@ -94,13 +94,15 @@ void print_hentity(ua_pres_t* h)
 		DBG("\ttuple_id: %.*s\n", h->tuple_id.len, h->tuple_id.s);
 }	
 
-str* publ_build_hdr(int expires, int event, str* etag, str* extra_headers, int is_body)
+str* publ_build_hdr(int expires, int ev, str* content_type, str* etag,
+		str* extra_headers, int is_body)
 {
 	static char buf[3000];
 	str* str_hdr = NULL;	
 	char* expires_s = NULL;
 	int len = 0;
 	int t= 0;
+	str event= {0, 0};
 
 	DBG("PUA: publ_build_hdr ...\n");
 	str_hdr =(str*) pkg_malloc(sizeof(str));
@@ -114,23 +116,17 @@ str* publ_build_hdr(int expires, int event, str* etag, str* extra_headers, int i
 	str_hdr->s = buf;
 	str_hdr->len= 0;
 
-	if(event & PRESENCE_EVENT)
+	get_event_name(ev, &event);	
+	if(event.s== NULL)
 	{
-		memcpy(str_hdr->s ,"Event: presence", 15);
-		str_hdr->len = 15;
+		LOG(L_ERR, "PUA: publ_build_hdr:ERROR NULL event parameter\n");
+		goto error;
 	}
-	else
-	if(event & BLA_EVENT)	
-	{
-		memcpy(str_hdr->s ,"Event: dialog;sla", 17);
-		str_hdr->len = 17;	
-	}
-	else
-	{
-		LOG(L_ERR, "PUA: publ_build_hdr:ERROR BAD event value\n");
-		pkg_free(str_hdr);
-		return NULL;
-	}	
+
+	memcpy(str_hdr->s ,"Event: ", 7);
+	str_hdr->len = 7;
+	memcpy(str_hdr->s+ str_hdr->len, event.s, event.len);
+	str_hdr->len+= event.len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 	
@@ -167,20 +163,17 @@ str* publ_build_hdr(int expires, int event, str* etag, str* extra_headers, int i
 	}
 	if(is_body)
 	{	
-		if(event & PRESENCE_EVENT)
+		if(content_type== NULL || content_type->s== NULL || content_type->len== 0)
 		{
-			memcpy(str_hdr->s+str_hdr->len,"Content-Type: application/pidf+xml" , 34);
-			str_hdr->len += 34;
-			memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-			str_hdr->len += CRLF_LEN;
+			LOG(L_ERR, "PUA: publ_build_hdr:ERROR NULL content_type parameter\n");
+			goto error;
 		}
-		else
-		{
-			memcpy(str_hdr->s+str_hdr->len,"Content-Type: application/dialog-info+xml" , 41);
-			str_hdr->len += 41;
-			memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-			str_hdr->len += CRLF_LEN;		
-		}	
+		memcpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
+		str_hdr->len += 14;
+		memcpy(str_hdr->s+str_hdr->len, content_type->s, content_type->len);
+		str_hdr->len += content_type->len;
+		memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+		str_hdr->len += CRLF_LEN;
 	}
 
 	if(extra_headers && extra_headers->s && extra_headers->len)
@@ -191,6 +184,10 @@ str* publ_build_hdr(int expires, int event, str* etag, str* extra_headers, int i
 	str_hdr->s[str_hdr->len] = '\0';
 	
 	return str_hdr;
+
+error:
+	pkg_free(str_hdr);
+	return NULL;
 }
 
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
@@ -228,7 +225,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 					HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
 		presentity= search_htable( hentity->pres_uri, NULL, hentity->flag,
-								   hentity->id, hash_code);
+				hentity->id, hentity->etag.s?&hentity->etag:NULL, hash_code);
 		if(presentity)
 		{
 			if(ps->code== 412 && hentity->body)
@@ -248,6 +245,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				publ.flag|= INSERT_TYPE;
 				publ.source_flag|= flag;
 				publ.event|= hentity->event;
+				publ.etag= hentity->etag.s?&hentity->etag:NULL;
+				publ.content_type= hentity->content_type;	
 				publ.id= hentity->id;
 				if(send_publish(&publ)< 0)
 				{
@@ -335,7 +334,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	lock_get(&HashT->p_records[hash_code].lock);
 	
 	presentity= search_htable(hentity->pres_uri, NULL,hentity->flag,
-			hentity->id, hash_code);
+			hentity->id, hentity->etag.s?&hentity->etag:NULL,  hash_code);
 	if(presentity)
 	{
 			DBG("PUA:publ_cback_func: update record\n");
@@ -455,7 +454,7 @@ int send_publish( publ_info_t* publ )
 	lock_get(&HashT->p_records[hash_code].lock);
 	
 	presentity= search_htable(publ->pres_uri, NULL,
-			     publ->source_flag, publ->id,hash_code);
+			     publ->source_flag, publ->id, publ->etag, hash_code);
 
 	if(publ->flag & INSERT_TYPE)
 		goto insert;
@@ -517,7 +516,7 @@ insert:
 			LOG(L_ERR, "PUA: send_publish: ERROR while parsing xml memory\n");
 			goto error;
 		}
-		if(publ->event& BLA_EVENT)
+		if(publ->source_flag & BLA_PUBLISH)
 		{
 			char* version;
 			int len;
@@ -620,12 +619,15 @@ after_handle_body:
 	/* construct the callback parameter */
 
 	size= sizeof(ua_pres_t)+ sizeof(str)+ (publ->pres_uri->len+ 
-		tuple_id_len + 1)*sizeof(char);
+		tuple_id_len + publ->content_type.len+ 1)*sizeof(char);
 	if(body && body->s && body->len)
 		size+= sizeof(str)+ body->len* sizeof(char);
 	DBG("PUA: send_publish: size= %d\n", size);
 	if(publ->id.s && publ->id.len)
 		size+= publ->id.len* sizeof(char);
+	
+	if(publ->etag )
+		size+= publ->etag->len* sizeof(char);
 
 	DBG("PUA: send_publish: before allocating size= %d\n", size);
 	hentity= (ua_pres_t*)shm_malloc(size);
@@ -672,8 +674,22 @@ after_handle_body:
 		hentity->body->len= body->len;
 		size+= body->len;
 	}
+	if(publ->etag)
+	{
+		hentity->etag.s= (char*)hentity + size;
+		memcpy(hentity->etag.s, publ->etag->s, publ->etag->len);
+		hentity->etag.len= publ->etag->len;
+		size+= hentity->etag.len;
+	}
+	if(publ->content_type.s && publ->content_type.len)
+	{
+		hentity->content_type.s= (char*)hentity + size;
+		memcpy(hentity->content_type.s, publ->content_type.s, publ->content_type.len);
+		hentity->content_type.len= publ->content_type.len;
+		size+= hentity->content_type.len;
 
-	hentity->event|= publ->event;
+	}	
+	hentity->event= publ->event;
 	hentity->flag|= flag;
 	if(publ->expires> 0)
 		hentity->desired_expires= publ->expires + (int )time(NULL);
@@ -684,7 +700,7 @@ send_publish:
 	
 	if(publ->flag & UPDATE_TYPE)
 		DBG("PUA:send_publish: etag:%.*s\n", etag.len, etag.s);
-	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, publ->event, 
+	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, publ->event, &publ->content_type, 
 				(publ->flag & UPDATE_TYPE)?&etag:NULL, publ->extra_headers, (body)?1:0);
 
 	if(str_hdr == NULL)

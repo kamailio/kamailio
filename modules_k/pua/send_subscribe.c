@@ -587,7 +587,7 @@ int send_subscribe(subs_info_t* subs)
 	lock_get(&HashT->p_records[hash_code].lock);
 
 	presentity= search_htable(subs->pres_uri, subs->watcher_uri,
-				 subs->source_flag, subs->id, hash_code);
+				 subs->source_flag, subs->id, NULL, hash_code);
 
 	/* if flag == INSERT_TYPE insert no matter what the search result is */
 	if(subs->flag & INSERT_TYPE)
