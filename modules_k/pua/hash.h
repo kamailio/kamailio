@@ -145,4 +145,31 @@ static inline int get_event_name(int ev_flag, str* event)
 }	
 
 
+static inline int get_event_flag(str* event)
+{
+    switch (event->len) {
+    case 8:
+	if (strncmp(event->s, "presence", 8) == 0)
+	    return PRESENCE_EVENT;
+	break;
+    case 10:
+	if (strncmp(event->s, "dialog;sla", 10) == 0)
+	    return BLA_EVENT;
+	break;
+    case 14:
+	if (strncmp(event->s, "presence;winfo", 14) == 0)
+	    return PWINFO_EVENT;
+	break;
+    case 15:
+	if (strncmp(event->s, "message-summary", 15) == 0)
+	    return MSGSUM_EVENT;
+	break;
+    default:
+	break;
+    }
+    LOG(L_ERR, "PUA: get_event: Unknown event string\n");
+    return -1;
+}	
+
+
 #endif
