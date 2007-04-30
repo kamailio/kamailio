@@ -230,6 +230,8 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
    	publ.expires= expires;
    	publ.event= BLA_EVENT;
    	publ.extra_headers= &extra_headers;
+	publ.content_type.s= "application/dialog-info+xml";
+	publ.content_type.len= 27;
    
    	if(pua_send_publish(&publ)< 0)
    	{
