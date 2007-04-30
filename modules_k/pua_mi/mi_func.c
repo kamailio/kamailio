@@ -39,6 +39,9 @@
  * cmd: mi_pua_publish
  *		<presentity_uri> 
  *		<expires>
+ *		<event package>
+ *		<content_type>      - in case of update without body it can be 0
+ *		<ETag>              - 0 or the value of the replied ETag it should match
  *		<xml_presence_body> - may not be present in case of update 
  *	 * */
 
@@ -51,6 +54,9 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	str body= {0, 0};
 	struct sip_uri uri;
 	publ_info_t publ;
+	str event;
+	str content_type;
+	str etag;
 
 	DBG("pua_mi: pua_mi_publish ..\n");
 	node = cmd->node.kids;
@@ -88,7 +94,37 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	}
 
 	DBG("pua_mi: pua_mi_publish: expires= %d\n", len);
-	
+
+	node = node->next;
+	if(node == NULL)
+		return 0;
+	event= node->value;
+	if(event.s== NULL || event.len== 0)
+	{
+		LOG(L_ERR, "pua_mi: pua_mi_publish: Bad event parameter\n");
+		return init_mi_tree(400, "Bad expires", 11);
+	}
+
+	node = node->next;
+	if(node == NULL)
+		return 0;
+	content_type= node->value;
+	if(content_type.s== NULL || content_type.len== 0)
+	{
+		LOG(L_ERR, "pua_mi: pua_mi_publish: Bad event parameter\n");
+		return init_mi_tree(400, "Bad expires", 11);
+	}
+
+	node = node->next;
+	if(node == NULL)
+		return 0;
+	etag= node->value;
+	if(etag.s== NULL || etag.len== 0)
+	{
+		LOG(L_ERR, "pua_mi: pua_mi_publish: Bad event parameter\n");
+		return init_mi_tree(400, "Bad expires", 11);
+	}
+
 	node = node->next;
 	if(node == NULL )
 	{
@@ -111,7 +147,10 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		}
 
 	}
-
+	if(body.s== NULL && content_type.len== 1 && content_type.s[0]== '0')
+	{
+		return init_mi_tree(400, "No content_type provisioned", 27);
+	}
 	/* creating the publ_info_t structure */
 	
 	memset(&publ, 0, sizeof(publ_info_t));
@@ -123,9 +162,22 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		DBG("pua_mi: pua_mi_publish: body= %.*s\n",publ.body->len, 
 				publ.body->s);
 	}
-	publ.event= PRESENCE_EVENT;
+	
+	publ.event= get_event_flag(&event);
+	if(publ.event< 0)
+	{
+		return init_mi_tree(400, "Wrong event", 11);
+	}
+	if(content_type.len!= 1)
+	{
+		publ.content_type= content_type;
+	}	
+	
+	if(! (etag.len== 1 && etag.s[0]== '0'))
+	{
+		publ.etag= &etag;
+	}	
 	publ.expires= len;
-	publ.flag|= INSERT_TYPE;
 	publ.source_flag|= MI_PUBLISH;
 	
 	DBG("pua_mi: pua_mi_publish: send publish\n");
@@ -135,7 +187,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		LOG(L_ERR, "pua_mi: pua_mi_publish:ERROR while sending publish\n");
 		goto error;
 	}	
-
+	
 	rpl = init_mi_tree( 202, "accepted", 8);
 	if(rpl == NULL)
 		return 0;
@@ -145,15 +197,9 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 error:
 
 	return 0;
-
 }
 
-/*
- * cmd: mi_pua_publish
- *		<presentity_uri> 
- *		<xml_presence_body>
- *		<expires>
- * */
+
 
 struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 {
