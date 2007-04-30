@@ -1,0 +1,50 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "presence_mwi_user.sgml">
+<!ENTITY devel SYSTEM "presence_mwi_devel.sgml">
+<!ENTITY faq SYSTEM "presence_mwi_faq.sgml">
+<!ENTITY sql SYSTEM "presence_mwi.sql">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Presence_MWI Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
+	    </author>
+	    <editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+  	        <email>jh@tutpro.com</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Juha Heinanen</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 1 $</revnumber>
+		<date>$Date: 2007-04-30 14:05:57 +0200 (Mon, 30 Jan 2007) $</date>
+	    </revision>
+	</revhistory>
+  </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
+
+

@@ -1,0 +1,87 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 1 $</revnumber>
+		<date>$Date: 2007-04-30 11:50:33 +0300 (Mon, 30 Apr 2007) $</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+
+	<title>User's Guide</title>
+	
+	<section>
+	  <title>Overview</title>
+	    <para> 
+	      The module does specific handling for notify-subscribe
+	      message-summary (message waiting indication) events
+	      as specified in RFC 3842.
+	      It is used with the general event handling module,
+   	      presence. It constructs and adds message-summary event to
+  	      it.
+	    </para>
+	    <para>
+ 	      The module does not currently implement any authorization
+	      rules.  It assumes that publish requests are only issued by
+	      a voicemail application and subscribe requests only by
+	      the owner of voicemail box.  Authorization can thus
+	      be easily done by &ser; configuration file before
+	      calling handle_publish() and handle_subscribe()
+	      functions.
+	    </para>
+	    <para>
+	      The module implements a simple check of content type
+	      application/simple-message-summary:  Content must start
+	      with Messages-Waiting status line followed by zero or
+	      more lines that consist of tabs and printable ASCII
+	      characters.
+	    </para>
+	</section>
+
+	<section>
+	  <title>Dependencies</title>
+	  <section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>presence</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	  </section>
+
+	  <section>
+		<title>External Libraries or Applications</title>
+		<para>
+		None.
+		</para>
+	  </section>
+	</section>
+	
+	<section>
+	  <title>Exported Parameters</title>
+		<para>
+		  None.
+		</para>
+        </section>
+
+        <section>
+	  <title>Exported Functions</title>
+	      <para>
+	        None to be used in configuration file.
+	      </para>
+	</section>
+
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("presence_mwi.sgml" "Book" "chapter")
+End:
+-->

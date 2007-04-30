@@ -1,0 +1,23 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 1168 $</revnumber>
+		<date>$Date: 2007-04-30 15:21:23 +0300 (Mon, 30 Apr 2007) $</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Developer's Guide</title>
+	<para>
+		The module does not provide any <acronym>API</acronym>
+    to use in other &ser; modules.
+	</para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("presence_mwi.sgml" "book" "chapter")
+End:
+-->
