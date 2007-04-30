@@ -105,6 +105,8 @@ int dlg_set_totag(struct dlg_cell *dlg, str *tag);
 
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
 
+struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag);
+
 void link_dlg(struct dlg_cell *dlg, int n);
 
 void unref_dlg(struct dlg_cell *dlg, int cnt);
@@ -113,5 +115,17 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 		int *old_state, int *new_state, int *unref);
 
 struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
+
+static inline int match_dialog(struct dlg_cell *dlg, str *callid,
+													str *ftag, str *ttag ) {
+	if (dlg->callid.len!=callid->len ||
+	dlg->from_tag.len!=ftag->len ||
+	dlg->to_tag.len!=ttag->len ||
+	strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
+	strncmp(dlg->from_tag.s,ftag->s,ftag->len)!=0 ||
+	strncmp(dlg->to_tag.s,ttag->s,ttag->len)!=0)
+		return 0;
+	return 1;
+}
 
 #endif

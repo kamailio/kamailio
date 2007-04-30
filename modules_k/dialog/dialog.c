@@ -26,6 +26,9 @@
  *  2006-04-14  initial version (bogdan)
  *  2006-11-28  Added statistic support for the number of early and failed
  *              dialogs. (Jeffrey Magder - SOMA Networks) 
+ * 2007-04-30  added dialog matching without DID (dialog ID), but based only
+ *             on RFC3261 elements - based on an original patch submitted 
+ *             by Michel Bensoussan <michel@extricom.com> (bogdan)
  */
 
 
@@ -62,7 +65,8 @@ static char* rr_param = "did";
 static int dlg_flag = -1;
 static char* timeout_spec = 0;
 static int default_timeout = 60 * 60 * 12;  /* 12 hours */
-static int use_tight_match = 0;
+static int use_tight_match = 1;
+static int seq_match_mode = SEQ_MATCH_STRICT_ID;
 
 /* statistic variables */
 int dlg_enable_stats = 1;
@@ -93,6 +97,7 @@ static param_export_t mod_params[]={
 	{ "dlg_flag",              INT_PARAM, &dlg_flag               },
 	{ "timeout_avp",           STR_PARAM, &timeout_spec           },
 	{ "default_timeout",       INT_PARAM, &default_timeout        },
+	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode         },
 	{ "use_tight_match",       INT_PARAM, &use_tight_match        },
 	{ 0,0,0 }
 };
@@ -208,6 +213,14 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (seq_match_mode!=SEQ_MATCH_NO_ID &&
+	seq_match_mode!=SEQ_MATCH_FALLBACK &&
+	seq_match_mode!=SEQ_MATCH_STRICT_ID ) {
+		LOG(L_ERR,"ERROR:dialog:mod_init: invalid value %d for "
+			"seq_match_mode param!!\n",seq_match_mode );
+		return -1;
+	}
+
 	/* if statistics are disabled, prevent their registration to core */
 	if (dlg_enable_stats==0)
 		exports.stats = 0;
@@ -245,7 +258,8 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec?&timeout_avp:0, default_timeout, use_tight_match);
+		timeout_spec?&timeout_avp:0, default_timeout,
+		use_tight_match, seq_match_mode);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {

@@ -24,6 +24,9 @@
  * 2006-04-14  initial version (bogdan)
  * 2007-03-06  syncronized state machine added for dialog state. New tranzition
  *             design based on events; removed num_1xx and num_2xx (bogdan)
+ * 2007-04-30  added dialog matching without DID (dialog ID), but based only
+ *             on RFC3261 elements - based on an original patch submitted 
+ *             by Michel Bensoussan <michel@extricom.com> (bogdan)
  */
 
 #include <stdlib.h>
@@ -238,6 +241,48 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 not_found:
 	DBG("DEBUG:dialog:lookup_dlg: no dialog id=%u found on entry %u\n",
 		h_id, h_entry);
+	return 0;
+}
+
+
+/* Get dialog that correspond to CallId, From Tag and To Tag         */
+/* See RFC 3261, paragraph 4. Overview of Operation:                 */
+/* "The combination of the To tag, From tag, and Call-ID completely  */
+/* defines a peer-to-peer SIP relationship between [two UAs] and is  */
+/* referred to as a dialog."*/
+struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag)
+{
+	struct dlg_cell *dlg;
+	struct dlg_entry *d_entry;
+	unsigned int i;
+
+	for( i=0 ; i < d_table->size; i++ ) {
+
+		d_entry = &(d_table->entries[i]);
+
+		dlg_lock( d_table, d_entry);
+
+		for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
+			/* Check callid / fromtag / totag */
+			if (match_dialog( dlg, callid, ftag, ttag )==1) {
+				if (dlg->state==DLG_STATE_DELETED) {
+					dlg_unlock( d_table, d_entry);
+					goto not_found;
+				}
+				dlg->ref++;
+				dlg_unlock( d_table, d_entry);
+				DBG("DEBUG:dialog:lookup_dlg: dialog callid='%.*s' found\n"
+					" on entry %u\n",callid->len, callid->s,i);
+				return dlg;
+			}
+		}
+
+		dlg_unlock( d_table, d_entry);
+	}
+
+not_found:
+	DBG("DEBUG:dialog:get_dlg: no dialog callid='%.*s' found\n",
+		callid->len, callid->s);
 	return 0;
 }
 

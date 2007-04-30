@@ -38,8 +38,14 @@
 
 #define MAX_DLG_RR_PARAM_NAME 32
 
+/* values for the sequential match mode */
+#define SEQ_MATCH_STRICT_ID  0
+#define SEQ_MATCH_FALLBACK   1
+#define SEQ_MATCH_NO_ID      2
+
 void init_dlg_handlers(char *rr_param, int dlg_flag,
-		xl_spec_t *timeout_avp, int default_timeout, int use_tight_match);
+		xl_spec_t *timeout_avp, int default_timeout,
+		int use_tight_match, int seq_match_mode);
 
 void destroy_dlg_handlers();
 

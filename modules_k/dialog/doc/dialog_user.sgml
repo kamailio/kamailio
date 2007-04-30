@@ -214,23 +214,66 @@ modparam("dialog", "default_timeout", 21600)
 	</section>
 
 	<section>
+		<title><varname>dlg_match_mode</varname> (integer)</title>
+		<para>
+		How the seqential requests should be matched against the known dialogs.
+		The modes are a conbination between matching based on a cookie (DID)
+		stored as cookie in Record-Route header and the matching based on SIP 
+		elements (as in RFC3261).
+		</para>
+		<para>
+		The supported modes are:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>0 - DID_ONLY</emphasis> - the match is done 
+				exclusivly based on DID;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>1 - DID_FALLBACK</emphasis> - the match is first 
+				tried based on DID and if the not present, it will fallback 
+				to SIP matching;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>2 - DID_NONE</emphasis> - the match is done 
+				exclusivly based on SIP elements; no DID information is added 
+				in RR.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>1 (DID_ONLY)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dlg_match_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dlg_match_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>use_tight_match</varname> (integer)</title>
 		<para>
-		If tight matching should be use dialog matching of sequential requests.
+		If tight matching should be use in DID-based dialog matching for 
+		sequential requests.
 		By default, the matching is done only on the RR cookie; tight matching
-		extra checks the callid. Set it to zero to disable or to non-zero to 
-		enable it.
+		extra checks the callid, TO and FROM tags. Set it to zero to disable 
+		or to non-zero to enable it.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0 (disabled)</quote>.
+			Default value is <quote>1 (enabled)</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>use_tight_match</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "use_tight_match", 1)
+modparam("dialog", "use_tight_match", 0)
 ...
 </programlisting>
 		</example>

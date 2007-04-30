@@ -27,6 +27,9 @@
  *             (Jeffrey Magder - SOMA Networks)
  * 2007-03-06  syncronized state machine added for dialog state. New tranzition
  *             design based on events; removed num_1xx and num_2xx (bogdan)
+ * 2007-04-30  added dialog matching without DID (dialog ID), but based only
+ *             on RFC3261 elements - based on an original patch submitted 
+ *             by Michel Bensoussan <michel@extricom.com> (bogdan)
  */
 
 
@@ -49,6 +52,7 @@ static int       dlg_flag;
 static xl_spec_t *timeout_avp;
 static int       default_timeout;
 static int       use_tight_match;
+static int       seq_match_mode;
 static int       shutdown_done = 0;
 
 extern struct tm_binds d_tmb;
@@ -72,7 +76,8 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;
 
 
 void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
-		xl_spec_t *timeout_avp_p ,int default_timeout_p, int use_tight_match_p)
+		xl_spec_t *timeout_avp_p ,int default_timeout_p, 
+		int use_tight_match_p, int seq_match_mode_p)
 {
 	rr_param.s = rr_param_p;
 	rr_param.len = strlen(rr_param.s);
@@ -82,6 +87,7 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 	timeout_avp = timeout_avp_p;
 	default_timeout = default_timeout_p;
 	use_tight_match = use_tight_match_p;
+	seq_match_mode = seq_match_mode_p;
 }
 
 
@@ -276,7 +282,8 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 
 	link_dlg( dlg , 1/* one extra ref for the callback*/);
 
-	if ( add_dlg_rr_param( req, dlg->h_entry, dlg->h_id)<0 ) {
+	if ( seq_match_mode!=SEQ_MATCH_NO_ID &&
+	add_dlg_rr_param( req, dlg->h_entry, dlg->h_id)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:dlg_onreq: failed to add RR param\n");
 		goto error;
 	}
@@ -329,12 +336,47 @@ static inline int parse_dlg_rr_param(char *p, char *end,
 }
 
 
+static inline int pre_match_parse( struct sip_msg *req, str *callid,
+														str *ftag, str *ttag)
+{
+	if (parse_headers(req,HDR_CALLID_F|HDR_TO_F,0)<0 || !req->callid ||
+	!req->to || get_to(req)->tag_value.len==0 ) {
+		LOG(L_ERR, "ERROR:dialog:pre_match_parse: bad request or "
+			"missing CALLID/TO hdr :-/\n");
+		return -1;
+	}
+
+	if (parse_from_header(req)<0 || get_from(req)->tag_value.len==0) {
+		LOG(L_ERR,"ERROR:dialog:pre_match_parse: failed to get From header\n");
+		return -1;
+	}
+
+	/* callid */
+	*callid = req->callid->body;
+	trim(callid);
+
+	if (d_rrb.is_direction(req,RR_FLOW_UPSTREAM)==0) {
+		/* to tag */
+		*ttag = get_from(req)->tag_value;
+		/* from tag */
+		*ftag = get_to(req)->tag_value;
+	} else {
+		/* to tag */
+		*ttag = get_to(req)->tag_value;
+		/* from tag */
+		*ftag = get_from(req)->tag_value;
+	}
+	return 0;
+}
+
 
 void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 {
 	struct dlg_cell *dlg;
 	str val;
 	str callid;
+	str ftag;
+	str ttag;
 	int h_entry;
 	int h_id;
 	int new_state;
@@ -342,34 +384,46 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	int unref;
 	int event;
 
-	if (d_rrb.get_route_param( req, &rr_param, &val)!=0) {
-		DBG("DEBUG:dialog:dlg_onroute: Route param '%.*s' not found\n",
-			rr_param.len,rr_param.s);
-		return;
-	}
-	DBG("DEBUG:dialog:dlg_onroute: route param is '%.*s' (len=%d)\n",
-		val.len, val.s, val.len);
+	dlg = 0;
+	if ( seq_match_mode!=SEQ_MATCH_NO_ID ) {
+		if( d_rrb.get_route_param( req, &rr_param, &val)!=0) {
+			DBG("DEBUG:dialog:dlg_onroute: Route param '%.*s' not found\n",
+				rr_param.len,rr_param.s);
+			if (seq_match_mode==SEQ_MATCH_STRICT_ID )
+				return;
+		} else {
+			DBG("DEBUG:dialog:dlg_onroute: route param is '%.*s' (len=%d)\n",
+				val.len, val.s, val.len);
 
-	if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 )
-		return;
+			if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 )
+				return;
 
-	dlg = lookup_dlg( h_entry, h_id);
-	if (dlg==0) {
-		LOG(L_WARN,"WARNING:dialog:dlg_onroute: unable to find dialog\n");
-		return;
-	}
-	if (use_tight_match) {
-		if ((!req->callid && parse_headers(req,HDR_CALLID_F,0)<0) ||
-		!req->callid) {
-			LOG(L_ERR, "ERROR:dialog:dlg_onroute: bad request or "
-				"missing CALLID hdr :-/\n");
-			return;
+			dlg = lookup_dlg( h_entry, h_id);
+			if (dlg==0) {
+				LOG(L_WARN, "WARNING:dialog:dlg_onroute: "
+					"unable to find dialog\n");
+				return;
+			}
+
+			if (use_tight_match) {
+				if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
+					return;
+				if (match_dialog( dlg, &callid, &ftag, &ttag )==0) {
+					LOG(L_WARN,"WARNING:dialog:dlg_onroute: "
+						"tight matching failed\n");
+					return;
+				}
+			}
 		}
-		callid = req->callid->body;
-		trim(&callid);
-		if (dlg->callid.len!=callid.len ||
-		strncmp(dlg->callid.s,callid.s,callid.len)!=0) {
-			LOG(L_WARN,"WARNING:dialog:dlg_onroute: tight matching failed\n");
+	}
+
+	if (dlg==0) {
+		if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
+			return;
+		dlg = get_dlg(&callid, &ftag, &ttag);
+		if (!dlg){
+			DBG("DEBUG:dialog:dlg_onroute: Callid '%.*s' not found\n",
+				req->callid->body.len, req->callid->body.s);
 			return;
 		}
 	}
