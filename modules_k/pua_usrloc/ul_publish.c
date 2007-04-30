@@ -175,6 +175,10 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	char* at= NULL;
 	publ_info_t* publ= NULL;
 	int size= 0;
+	str content_type;
+
+	content_type.s= "application/pidf+xml";
+	content_type.len= 20;
 
 	if(pua_ul_publish== 0)
 	{
@@ -221,7 +225,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	DBG("ul_publish: uri= %.*s\n", uri.len, uri.s);
 	
 	size= sizeof(publ_info_t)+ sizeof(str)+( uri.len 
-			+c->callid.len+ 12 )*sizeof(char); 
+			+c->callid.len+ 12 + content_type.len)*sizeof(char); 
 	
 	if(body)
 		size+= sizeof(str)+ body->len* sizeof(char);
@@ -257,6 +261,11 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	memcpy(publ->id.s+11, c->callid.s, c->callid.len);
 	publ->id.len= 11+ c->callid.len;
 	size+= publ->id.len;
+
+	publ->content_type.s= (char*)publ+ size;
+	memcpy(publ->content_type.s, content_type.s, content_type.len);
+	publ->content_type.len= content_type.len;
+	size+= content_type.len;
 
 	if(type & UL_CONTACT_EXPIRE || type & UL_CONTACT_DELETE)
 		publ->expires= 0;
