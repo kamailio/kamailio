@@ -33,10 +33,17 @@
 
 
 typedef enum auth_result {
-	ERROR = -2 ,        /* Error occurred, a reply has been sent out -> return 0 to the ser core */
-	NOT_AUTHORIZED,     /* Don't perform authorization, credentials missing */
-	DO_AUTHORIZATION,   /* Perform digest authorization */
-        AUTHORIZED          /* Authorized by default, no digest authorization necessary */
+	AUTH_ERROR = -5,    /* Error occurred, a reply has not been sent out */
+	NO_CREDENTIALS,     /* Credentials missing */
+	STALE_NONCE,        /* Stale nonce */
+	INVALID_PASSWORD,   /* Invalid password */
+	USER_UNKNOWN,       /* User non existant */
+	ERROR,              /* Error occurred, a reply has been sent out -> */
+	                    /* return 0 to the openser core */
+	AUTHORIZED,         /* Authorized. If returned by pre_auth, */
+	                    /* no digest authorization necessary */
+	DO_AUTHORIZATION    /* Can only be returned by pre_auth. */
+	                    /* Means to continue doing authorization */
 } auth_result_t;
 
 

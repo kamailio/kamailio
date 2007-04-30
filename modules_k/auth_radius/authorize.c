@@ -90,7 +90,7 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
     if (_realm) {
 	if (xl_printf_s(_msg, _realm, &domain)!=0) {
 	    LOG(L_ERR,"ERROR:auth_radius:authorize: xl_printf_s failed\n");
-	    return -1;
+	    return AUTH_ERROR;
 	}
     } else {
 	/* get pre_auth domain from To/From header */
@@ -99,14 +99,10 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
     }
 
     ret = auth_api.pre_auth(_msg, &domain, _hftype, &h);
-	
-    switch(ret) {
-    case ERROR:            return 0;
-    case NOT_AUTHORIZED:   return -1;
-    case DO_AUTHORIZATION: break;
-    case AUTHORIZED:       return 1;
-    }
-	
+
+    if (ret != DO_AUTHORIZATION)
+	return ret;
+
     cred = (auth_body_t*)h->parsed;
 
     /* get uri_user from _uri_user pvap (if exists) or
@@ -120,22 +116,22 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
 	    } else {
 		LOG(L_ERR, "ERROR:auth_radius:authorize: "
 		    "uri_user pvar value is not string\n");
-		return -1;
+		return AUTH_ERROR;
 	    }
 	} else {
 	    LOG(L_ERR, "ERROR:auth_radius:authorize: "
 		"cannot get uri_user pvar value\n");
-	    return -1;
+	    return AUTH_ERROR;
 	}
     } else {
 	if (get_uri_user(_msg, &uri_user) < 0) {
 	    LOG(L_ERR, "authorize(): To/From URI not found\n");
-	    return -1;
+	    return AUTH_ERROR;
 	}
 	user.s = (char *)pkg_malloc(uri_user->len);
 	if (user.s == NULL) {
 	    LOG(L_ERR, "authorize: No memory left for user\n");
-	    return -1;
+	    return AUTH_ERROR;
 	}
 	un_escape(uri_user, &user);
 	res = radius_authorize_sterman(_msg, &cred->digest, 
@@ -146,15 +142,10 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
 
     if (res == 1) {
 	ret = auth_api.post_auth(_msg, h);
-	switch(ret) {
-	case ERROR:          return 0;
-	case NOT_AUTHORIZED: return -1;
-	case AUTHORIZED:     return 1;
-	default:             return -1;
-	}
+	return ret;
     }
 
-    return -1;
+    return AUTH_ERROR;
 }
 
 

@@ -157,9 +157,24 @@ modparam("auth_radius", "service_type", 15)
 		succeed and mark the credentials as authorized (marked credentials can 
 		be later used by some other functions). If the function was unable to 
 		verify the credentials for some reason then it will fail and
-		the script should call <function moreinfo="none">www_challenge</function>
+		the script should call
+		<function moreinfo="none">www_challenge</function>
 		which will challenge the user again.
 		</para>
+		<para>Negative codes may be interpreted as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>-5 (generic error)</emphasis> - some generic error
+			occurred and no reply was sent out;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-4 (no credentials)</emphasis> - credentials were not
+			found in request;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
+			</para></listitem>
+		</itemizedlist>
 		<para>
 		This function will, in fact, perform sanity checks over the received 
 		credentials and then pass them along to the radius server which will 
@@ -211,7 +226,8 @@ if (!radius_www_authorize("siphub.net")) {
 		be later used by some other functions). If the function was unable to 
 		verify the credentials for some reason then it will fail and the script 
 		should call <function moreinfo="none">proxy_challenge</function> which 
-		will challenge the user again.
+		will challenge the user again. For more about the negative return 
+		codes, see the above functions.
 		</para>
 		<para>
 		This function will, in fact, perform sanity checks over the received 

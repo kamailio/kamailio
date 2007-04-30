@@ -260,7 +260,7 @@ static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
 	if (_realm) {
 		if (xl_printf_s(_m, _realm, &domain)!=0) {
 			LOG(L_ERR, "ERROR:auth_db:authorize: xl_printf_s failed\n");
-			return -1;
+			return AUTH_ERROR;
 		}
 	} else {
 		domain.len = 0;
@@ -269,12 +269,8 @@ static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
 
 	ret = auth_api.pre_auth(_m, &domain, _hftype, &h);
 
-	switch(ret) {
-		case ERROR:            return 0;
-		case NOT_AUTHORIZED:   return -1;
-		case DO_AUTHORIZATION: break;
-		case AUTHORIZED:       return 1;
-	}
+	if (ret != DO_AUTHORIZATION)
+		return ret;
 
 	cred = (auth_body_t*)h->parsed;
 
@@ -284,39 +280,25 @@ static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
 		if (slb.reply(_m, 500, &auth_500_err) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
 		}
-		return 0;
+		return ERROR;
 	}
 	if (res > 0) {
 		/* Username not found in the database */
 		auth_dbf.free_result(auth_db_handle, result);
-		return -1;
+		return USER_UNKNOWN;
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
 	if (!check_response(&(cred->digest),&_m->first_line.u.request.method,ha1)) {
 		ret = auth_api.post_auth(_m, h);
-		switch(ret) {
-		case ERROR:
-			auth_dbf.free_result(auth_db_handle, result);
-			return 1;
-
-		case NOT_AUTHORIZED:
-			auth_dbf.free_result(auth_db_handle, result);
-			return -1;
-
-		case AUTHORIZED:
+		if (ret == AUTHORIZED)
 			generate_avps(result);
-			auth_dbf.free_result(auth_db_handle, result);
-			return 1;
-
-		default:
-			auth_dbf.free_result(auth_db_handle, result);
-			return -1;
-		}
+		auth_dbf.free_result(auth_db_handle, result);
+		return ret;
 	}
 
 	auth_dbf.free_result(auth_db_handle, result);
-	return -1;
+	return AUTH_ERROR;
 }
 
 

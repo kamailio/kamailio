@@ -158,6 +158,16 @@ modparam("auth_diameter", "use_domain", 1)
 		is sent back to UAC. If the credentials don't match the ones computed by
 		DISC then <quote>403 Forbidden</quote> is sent back.
 		</para>
+		<para>Negative codes may be interpreted as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>-5 (generic error)</emphasis> - some generic error
+			occurred and no reply was sent out;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
+			</para></listitem>
+		</itemizedlist>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
@@ -190,7 +200,8 @@ if(!diameter_www_authorize("siphub.net"))
 		SIP Proxy checks for authorization having a DIAMETER server in backend.
 		If no credentials are provided inside the SIP request then a challenge
 		is sent back to UAC. If the credentials don't match the ones computed by
-		DISC then <quote>403 Forbidden</quote> is sent back.
+		DISC then <quote>403 Forbidden</quote> is sent back.  For more about 
+		the negative return codes, see the above functions.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

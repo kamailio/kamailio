@@ -58,6 +58,7 @@
 #include "diameter_msg.h"
 #include "auth_diameter.h"
 #include "defs.h"
+#include "../auth/api.h"
 #include "authorize.h"
 #include "tcp_comm.h"
 
@@ -295,7 +296,7 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 		if (xl_printf_s(msg, realm, &domain)!=0) {
 			LOG(L_ERR,"ERROR:auth_diamtere:authorize: xl_printf_s "
 				"failed\n");
-			return -1;
+			return AUTH_ERROR;
 		}
 	} else {
 		domain.len = 0;
@@ -304,30 +305,27 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 
 	/* see what is to do after a first look at the message */
 	ret = pre_auth(msg, &domain, hftype, &h);
-	
+
 	switch(ret) 
 	{
-		case ERROR:            return 0;
-
-		case AUTHORIZED:       return 1;
-
 		case NO_CREDENTIALS:   cred = NULL;
 							   break;
 
 		case DO_AUTHORIZATION: cred = (auth_body_t*)h->parsed;
 							   break;
+		default:               return ret;
 	}
 
 	if (get_uri(msg, &uri) < 0) 
 	{
 		LOG(L_ERR, M_NAME":authorize(): From/To URI not found\n");
-		return -1;
+		return AUTH_ERROR;
 	}
 	
 	if (parse_uri(uri->s, uri->len, &puri) < 0) 
 	{
 		LOG(L_ERR, M_NAME":authorize(): Error while parsing From/To URI\n");
-		return -1;
+		return AUTH_ERROR;
 	}
 //	user.s = (char *)pkg_malloc(puri.user.len);
 //	un_escape(&(puri.user), &user);
@@ -336,7 +334,7 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 	if(msg->parsed_uri_ok==0 && parse_sip_msg_uri(msg)<0)
 	{
 		LOG(L_ERR,M_NAME":authorize(): ERROR while parsing the Request-URI\n");
-		return -1;
+		return AUTH_ERROR;
 	}
 	
 	/* preliminary check */
@@ -346,14 +344,14 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 		{
 			DBG(M_NAME":authorize(): Credentials realm and URI host do not "
 				"match\n");  
-			return -1;
+			return AUTH_ERROR;
 		}
 	
 		if (strncasecmp(puri.host.s, cred->digest.realm.s, puri.host.len) != 0) 
 		{
 			DBG(M_NAME":authorize(): Credentials realm and URI host do not "
 				"match\n");
-			return -1;
+			return AUTH_ERROR;
 		}
 	}
 	
@@ -361,15 +359,15 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 					puri, msg->parsed_uri, msg->id, rb) != 1)
 	{
 		send_resp(msg, 500, &dia_500_err, NULL, 0);
-		return -1;
+		return AUTH_ERROR;
 	}
 	
 	if( srv_response(msg, rb, hftype) != 1 )
-		return -1;
+		return AUTH_ERROR;
 
 	mark_authorized_cred(msg, h);
 
-	return 1;
+	return AUTHORIZED;
 }
 
 

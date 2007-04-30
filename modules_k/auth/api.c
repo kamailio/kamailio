@@ -190,7 +190,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 		return ERROR;
 	} else if (ret > 0) {
 		DBG("pre_auth(): Credentials with given realm not found\n");
-		return NOT_AUTHORIZED;
+		return NO_CREDENTIALS;
 	}
 
 	/* Pointer to the parsed credentials */
@@ -207,7 +207,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 
 	if (check_nonce(&c->digest.nonce, &secret) != 0) {
 		DBG("pre_auth(): Invalid nonce value received\n");
-		return NOT_AUTHORIZED;
+		return STALE_NONCE;
 	}
 
 	return DO_AUTHORIZATION;
@@ -237,7 +237,7 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 		} else {
 			DBG("post_auth(): Response is OK, but nonce is stale\n");
 			c->stale = 1;
-			res = NOT_AUTHORIZED;
+			res = STALE_NONCE;
 		}
 	}
 

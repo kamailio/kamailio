@@ -248,6 +248,16 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address"
    then it will fail and the script should call www_challenge
    which will challenge the user again.
 
+   Negative codes may be interpreted as follows:
+
+     * -5 (generic error) - some generic error occurred and no
+       reply was sent out;
+     * -4 (no credentials) - credentials were not found in
+       request;
+     * -3 (stale nonce) - stale nonce;
+     * -2 (invalid password) - valid user, but wrong password;
+     * -1 (invalid user) - authentication user does not exist.
+
    Meaning of the parameters is as follows:
 
      * realm - Realm is a opaque string that the user agent
@@ -281,7 +291,8 @@ if (www_authorize("siphub.net", "subscriber")) {
    credentials can be later used by some other functions). If the
    function was unable to verify the credentials for some reason
    then it will fail and the script should call proxy_challenge
-   which will challenge the user again.
+   which will challenge the user again. For more about the
+   negative return codes, see the above functions.
 
    Meaning of the parameters is as follows:
 

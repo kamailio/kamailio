@@ -164,6 +164,14 @@ modparam("auth_radius", "service_type", 15)
    then it will fail and the script should call www_challenge
    which will challenge the user again.
 
+   Negative codes may be interpreted as follows:
+
+     * -5 (generic error) - some generic error occurred and no
+       reply was sent out;
+     * -4 (no credentials) - credentials were not found in
+       request;
+     * -3 (stale nonce) - stale nonce;
+
    This function will, in fact, perform sanity checks over the
    received credentials and then pass them along to the radius
    server which will verify the credentials and return whether
@@ -200,7 +208,8 @@ if (!radius_www_authorize("siphub.net")) {
    credentials can be later used by some other functions). If the
    function was unable to verify the credentials for some reason
    then it will fail and the script should call proxy_challenge
-   which will challenge the user again.
+   which will challenge the user again. For more about the
+   negative return codes, see the above functions.
 
    This function will, in fact, perform sanity checks over the
    received credentials and then pass them along to the radius
