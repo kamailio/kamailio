@@ -366,10 +366,9 @@ CREATE TABLE offline_winfo (
     status VARCHAR(32),
     created_on TIMESTAMP NOT NULL DEFAULT '2006-01-31 13:13:13',
     expires_on TIMESTAMP NOT NULL DEFAULT '2006-01-31 13:13:13',
-    dbid SERIAL NOT NULL
+    dbid SERIAL NOT NULL,
+    CONSTRAINT offline_winfo_key UNIQUE (dbid)
 );
-
-CREATE INDEX offline_winfo_key ON offline_winfo (dbid);
 
 CREATE TABLE rls_subscription (
     id VARCHAR(48) NOT NULL,
