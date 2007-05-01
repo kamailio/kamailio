@@ -217,6 +217,7 @@ struct sip_msg {
 	struct hdr_field* priority;
 	struct hdr_field* subject;
 	struct hdr_field* user_agent;
+	struct hdr_field* server;
 	struct hdr_field* content_disposition;
 	struct hdr_field* accept_disposition;
 	struct hdr_field* diversion;

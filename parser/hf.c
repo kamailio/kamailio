@@ -155,6 +155,9 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_USERAGENT_T:
 			break;
 
+		case HDR_SERVER_T:
+			break;
+
 		case HDR_ACCEPTDISPOSITION_T:
 			break;
 
