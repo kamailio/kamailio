@@ -259,6 +259,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_PRIORITY_T:
 		case HDR_SUBJECT_T:
 		case HDR_USERAGENT_T:
+		case HDR_SERVER_T:
 		case HDR_CONTENTDISPOSITION_T:
 		case HDR_ACCEPTDISPOSITION_T:
 		case HDR_DIVERSION_T:
@@ -481,6 +482,10 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_USERAGENT_T:
 				if (msg->user_agent==0) msg->user_agent = hf;
 				msg->parsed_flag|=HDR_USERAGENT_F;
+				break;
+			case HDR_SERVER_T:
+				if (msg->server==0) msg->server = hf;
+				msg->parsed_flag|=HDR_SERVER_F;
 				break;
 			case HDR_CONTENTDISPOSITION_T:
 				if (msg->content_disposition==0) msg->content_disposition = hf;

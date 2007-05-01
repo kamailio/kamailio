@@ -84,6 +84,7 @@ enum _hdr_types_t {
 	HDR_PRIORITY_T				       /* Priority header field */,
 	HDR_SUBJECT_T				       /* Subject header field */,
 	HDR_USERAGENT_T				       /* User-Agent header field */,
+	HDR_SERVER_T				       /* Server header field */,
 	HDR_ACCEPTDISPOSITION_T		       /* Accept-Disposition hdr field */,
 	HDR_CONTENTDISPOSITION_T	       /* Content-Disposition hdr field */,
 	HDR_DIVERSION_T				       /* Diversion header field */,
@@ -150,6 +151,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_PRIORITY_F				HDR_F_DEF(PRIORITY)
 #define HDR_SUBJECT_F				HDR_F_DEF(SUBJECT)
 #define HDR_USERAGENT_F				HDR_F_DEF(USERAGENT)
+#define HDR_SERVER_F				HDR_F_DEF(SERVER)
 #define HDR_ACCEPTDISPOSITION_F		HDR_F_DEF(ACCEPTDISPOSITION)
 #define HDR_CONTENTDISPOSITION_F	HDR_F_DEF(CONTENTDISPOSITION)
 #define HDR_DIVERSION_F				HDR_F_DEF(DIVERSION)
