@@ -58,77 +58,99 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	str content_type;
 	str etag;
 
-	DBG("pua_mi: pua_mi_publish ..\n");
+	DBG("DEBUG:pua_mi:mi_pua_publish: start\n");
+
 	node = cmd->node.kids;
 	if(node == NULL)
 		return 0;
 
+	/* Get presentity URI */
 	pres_uri = node->value;
 	if(pres_uri.s == NULL || pres_uri.s== 0)
 	{
-		return init_mi_tree(404, "Bad uri", 7);
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: empty uri\n");
+		return init_mi_tree(404, "Empty presentity URI", 20);
 	}
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
 	{
-		LOG(L_ERR, "pua_mi: pua_mi_publish: bad uri\n");	
-		return init_mi_tree(404, "Bad uri", 7);
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: bad uri\n");
+		return init_mi_tree(404, "Bad presentity URI", 18);
 	}
-
-	DBG("pua_mi_publish: pres_uri: '%.*s'\n", pres_uri.len, pres_uri.s);
+	DBG("DEBUG:pua_mi:mi_pua_publish: pres_uri '%.*s'\n",
+	    pres_uri.len, pres_uri.s);
 
 	node = node->next;
 	if(node == NULL)
 		return 0;
-	
+
+	/* Get expires */
 	expires= node->value;
 	if(expires.s== NULL || expires.len== 0)
 	{
-		LOG(L_ERR, "pua_mi: pua_mi_publish: Bad expires parameter\n");
-		return init_mi_tree(400, "Bad expires", 11);
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+		    "empty expires parameter\n");
+		return init_mi_tree(400, "Empty expires parameter", 23);
 	}
-	
 	if( str2int(&expires, (unsigned int*) &len)< 0)
 	{
-		LOG(L_ERR,"pua_mi: pua_mi_publish:ERROR while getting int from str\n" );
+		LOG(L_ERR,"ERROR;pua_mi:mi_pua_publish: "
+		    "invalid expires parameter\n" );
 		goto error;
 	}
-
-	DBG("pua_mi: pua_mi_publish: expires= %d\n", len);
+	DBG("DEBUG:pua_mi:mi_pua_publish: expires '%d'\n", len);
 
 	node = node->next;
 	if(node == NULL)
 		return 0;
+
+	/* Get event */
 	event= node->value;
 	if(event.s== NULL || event.len== 0)
 	{
-		LOG(L_ERR, "pua_mi: pua_mi_publish: Bad event parameter\n");
-		return init_mi_tree(400, "Bad expires", 11);
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+		    "empty event parameter\n");
+		return init_mi_tree(400, "Empty event parameter", 21);
 	}
+	DBG("DEBUG:pua_mi:mi_pua_publish: event '%.*s'\n",
+	    event.len, event.s);
 
 	node = node->next;
 	if(node == NULL)
 		return 0;
+
+	/* Get content type */
 	content_type= node->value;
 	if(content_type.s== NULL || content_type.len== 0)
 	{
-		LOG(L_ERR, "pua_mi: pua_mi_publish: Bad event parameter\n");
-		return init_mi_tree(400, "Bad expires", 11);
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+		    "empty content type\n");
+		return init_mi_tree(400, "Empty content type parameter", 28);
 	}
+	DBG("DEBUG:pua_mi:mi_pua_publish: content type '%.*s'\n",
+	    content_type.len, content_type.s);
 
 	node = node->next;
 	if(node == NULL)
 		return 0;
+
+	/* Get etag */
 	etag= node->value;
 	if(etag.s== NULL || etag.len== 0)
 	{
-		LOG(L_ERR, "pua_mi: pua_mi_publish: Bad event parameter\n");
+		LOG(L_ERR, "ERROR:pua_mi: mi_pua_publish: "
+		    "empty etag parameter\n");
 		return init_mi_tree(400, "Bad expires", 11);
 	}
+	DBG("DEBUG:pua_mi:mi_pua_publish: etag '%.*s'\n",
+	    etag.len, etag.s);
 
 	node = node->next;
+
+	/* Get body */
 	if(node == NULL )
 	{
 		body.s= NULL;
+		body.len= 0;
 	}
 	else
 	{
@@ -138,34 +160,42 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		body= node->value;
 		if(body.s == NULL || body.s== 0)
 		{
-			return init_mi_tree(400, "Bad body", 8);
+			LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+			    "empty body parameter\n");
+			return init_mi_tree(400, "Empty body parameter", 20);
 		}
-		if(xmlParseMemory(body.s, body.len)== 0)
-		{
-			LOG(L_ERR, "pua_mi: pua_mi_publish: bad body\n");	
-			return init_mi_tree(400, "Bad body", 8);
-		}
+	}
+	DBG("DEBUG:pua_mi:mi_pua_publish: body '%.*s'\n",
+	    body.len, body.s);
 
-	}
-	if(body.s== NULL && content_type.len== 1 && content_type.s[0]== '0')
+	/* Check that body is NULL iff content type is 0 */
+	if(body.s== NULL && (content_type.len!= 1 || content_type.s[0]!= '0'))
 	{
-		return init_mi_tree(400, "No content_type provisioned", 27);
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+			    "body is missing, but content type is not 0\n");
+		return init_mi_tree(400, "Body parameter is missing", 25);
 	}
-	/* creating the publ_info_t structure */
-	
+	if(body.s!= NULL && content_type.len== 1 && content_type.s[0]== '0')
+	{
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+			    "bad content type\n");
+		return init_mi_tree(400, "Bad content type parameter", 26);
+	}
+
+	/* Create the publ_info_t structure */
 	memset(&publ, 0, sizeof(publ_info_t));
 	
 	publ.pres_uri= &pres_uri;
 	if(body.s)
 	{
 		publ.body= &body;
-		DBG("pua_mi: pua_mi_publish: body= %.*s\n",publ.body->len, 
-				publ.body->s);
 	}
 	
 	publ.event= get_event_flag(&event);
 	if(publ.event< 0)
 	{
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+			    "unkown event\n");
 		return init_mi_tree(400, "Unknown event", 13);
 	}
 	if(content_type.len!= 1)
@@ -180,15 +210,16 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	publ.expires= len;
 	publ.source_flag|= MI_PUBLISH;
 	
-	DBG("pua_mi: pua_mi_publish: send publish\n");
+	DBG("DEBUG:pua_mi:mi_pua_publish: send publish\n");
 
 	if(pua_send_publish(&publ)< 0)
 	{
-		LOG(L_ERR, "pua_mi: pua_mi_publish:ERROR while sending publish\n");
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
+		    "sending publish failed\n");
 		goto error;
 	}	
 	
-	rpl = init_mi_tree( 202, "accepted", 8);
+	rpl = init_mi_tree( 202, "Accepted", 8);
 	if(rpl == NULL)
 		return 0;
 	
