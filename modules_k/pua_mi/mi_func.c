@@ -26,9 +26,10 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 
+#include "../../parser/parse_expires.h"
+#include "../../parser/parse_uri.h"
 #include  "../../mem/mem.h"
 #include "../../mi/mi.h"
-#include "../../parser/parse_uri.h"
 #include "../../ut.h"
 
 #include "../pua/pua_bind.h"
@@ -40,15 +41,15 @@
  *		<presentity_uri> 
  *		<expires>
  *		<event package>
- *		<content_type>      - in case of update without body it can be 0
+ *		<content_type>      - 0 if no body or the body type
  *		<ETag>              - 0 or the value of the replied ETag it should match
  *		<xml_presence_body> - may not be present in case of update 
  *	 * */
+int mi_publ_rpl_cback(struct sip_msg* reply, void* param);
 
 struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 {
 	int len;
-	struct mi_root* rpl= NULL;
 	struct mi_node* node= NULL;
 	str pres_uri, expires;
 	str body= {0, 0};
@@ -57,6 +58,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	str event;
 	str content_type;
 	str etag;
+	int result;
 
 	DBG("DEBUG:pua_mi:mi_pua_publish: start\n");
 
@@ -168,7 +170,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	DBG("DEBUG:pua_mi:mi_pua_publish: body '%.*s'\n",
 	    body.len, body.s);
 
-	/* Check that body is NULL iff content type is 0 */
+	/* Check that body is NULL if content type is 0 */
 	if(body.s== NULL && (content_type.len!= 1 || content_type.s[0]!= '0'))
 	{
 		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
@@ -210,27 +212,105 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	publ.expires= len;
 	publ.source_flag|= MI_PUBLISH;
 	
+	if (cmd->async_hdl!=NULL)
+	{
+		publ.cbrpl= mi_publ_rpl_cback;
+		publ.cbparam= (void*)cmd->async_hdl;
+	}	
+
 	DBG("DEBUG:pua_mi:mi_pua_publish: send publish\n");
 
-	if(pua_send_publish(&publ)< 0)
+	result= pua_send_publish(&publ);
+
+	if(result< 0)
 	{
 		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
 		    "sending publish failed\n");
-		goto error;
+		return init_mi_tree(500, "MI/PUBLISH failed", 17);
 	}	
+	if(result== 418)
+		return init_mi_tree(418, "Wrong ETag", 10);
 	
-	rpl = init_mi_tree( 202, "Accepted", 8);
-	if(rpl == NULL)
-		return 0;
-	
-	return rpl;
+	if (cmd->async_hdl==NULL)
+			return init_mi_tree( 202, "Accepted", 8);
+	else
+			return MI_ROOT_ASYNC_RPL;
 
 error:
 
 	return 0;
 }
 
+int mi_publ_rpl_cback(struct sip_msg* reply, void* param)
+{
+	struct mi_root *rpl_tree= NULL;
+	struct mi_handler* mi_hdl= NULL;
+	struct hdr_field* hdr= NULL;
+	int statuscode;
+	int lexpire;
+	int found;
+	str etag;
 
+	if(reply== NULL || param== NULL)
+	{
+		LOG(L_ERR, "pua_mi:mi_publ_rpl_cback: ERROR NULL parameter\n");
+		return -1;
+	}
+	if(reply== FAKED_REPLY)
+		return 0;
+
+	mi_hdl = (struct mi_handler *)(param);
+	statuscode= reply->first_line.u.reply.statuscode;
+
+	/* extract ETag and expires */
+	lexpire = ((exp_body_t*)reply->expires->parsed)->val;
+	DBG("PUA:mi_publ_rpl_cback: lexpire= %d\n", lexpire);
+	
+	hdr = reply->headers;
+	while (hdr!= NULL)
+	{
+		if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
+		{
+			found = 1;
+			break;
+		}
+		hdr = hdr->next;
+	}
+	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
+	{	
+		LOG(L_ERR, "PUA:mi_publ_rpl_cback: SIP-ETag header field not found\n");
+		goto error;
+	}
+	etag= hdr->body;
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==0)
+		goto done;
+
+		
+	addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%d %.*s",
+			statuscode, reply->first_line.u.reply.reason.len,
+			reply->first_line.u.reply.reason.s);
+	
+	addf_mi_node_child( &rpl_tree->node, 0, "ETag", 4, "%.*s", etag.len, etag.s);
+	
+	addf_mi_node_child( &rpl_tree->node, 0, "Expires", 7, "%d", lexpire);
+
+done:
+	if ( statuscode >= 200) 
+	{
+		mi_hdl->handler_f( rpl_tree, mi_hdl, 1);
+		param= 0;
+	}
+	else 
+	{
+		mi_hdl->handler_f( rpl_tree, mi_hdl, 0 );
+	}
+	return 0;
+
+error:
+	return  -1;
+}	
 
 struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 {
