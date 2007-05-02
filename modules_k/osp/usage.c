@@ -50,7 +50,7 @@ extern OSPTPROVHANDLE _osp_provider;
 extern str OSP_ORIGDEST_NAME;
 extern struct rr_binds osp_rr;
 
-static void ospRecordTransaction(struct sip_msg* msg, unsigned long long transaction, char* uac, char* from, char* to, time_t authtime, int isorig, unsigned destinationCount);
+static void ospRecordTransaction(struct sip_msg* msg, unsigned long long tranid, char* uac, char* from, char* to, time_t authtime, int isorig, unsigned destinationCount);
 static int ospBuildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest, int lastcode);
 static int ospReportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest);
 static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID* callid, int release, int isorig);
@@ -67,7 +67,7 @@ static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID
  */
 static void ospRecordTransaction(
     struct sip_msg* msg, 
-    unsigned long long transaction, 
+    unsigned long long tranid, 
     char* uac, 
     char* from, 
     char* to, 
@@ -96,7 +96,7 @@ static void ospRecordTransaction(
             sizeof(buffer),
             ";%s=t%llu_s%s_T%d_c%d",
             OSP_ORIG_COOKIE,
-            transaction,
+            tranid,
             uac,
             (unsigned int)authtime,
             destinationCount);
@@ -106,7 +106,7 @@ static void ospRecordTransaction(
             sizeof(buffer),
             ";%s=t%llu_s%s_T%d",
             OSP_TERM_COOKIE,
-            transaction,
+            tranid,
             uac,
             (unsigned int)authtime);
     }
@@ -131,7 +131,7 @@ static void ospRecordTransaction(
  */
 void ospRecordOrigTransaction(
     struct sip_msg* msg, 
-    unsigned long long transaction, 
+    unsigned long long tranid, 
     char* uac, 
     char* from, 
     char* to, 
@@ -142,7 +142,7 @@ void ospRecordOrigTransaction(
 
     LOG(L_DBG, "osp: ospRecordOrigTransaction\n");
 
-    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig, destinationCount);
+    ospRecordTransaction(msg, tranid, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
@@ -156,7 +156,7 @@ void ospRecordOrigTransaction(
  */
 void ospRecordTermTransaction(
     struct sip_msg* msg, 
-    unsigned long long transaction, 
+    unsigned long long tranid, 
     char* uac, 
     char* from, 
     char* to, 
@@ -167,7 +167,7 @@ void ospRecordTermTransaction(
 
     LOG(L_DBG, "osp: ospRecordTermTransaction\n");
 
-    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig, destinationCount);
+    ospRecordTransaction(msg, tranid, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
@@ -315,9 +315,9 @@ static int ospReportUsageFromCookie(
     LOG(L_DBG, "osp: built usage handle '%d' (%d)\n", transaction, errorcode);
 
     if (errorcode == 0 && destinationCount > 0) {
-      errorcode = OSPPTransactionSetDestinationCount(
-          transaction,
-          destinationCount);
+        errorcode = OSPPTransactionSetDestinationCount(
+            transaction,
+            destinationCount);
     }
 
     ospReportUsageWrapper(

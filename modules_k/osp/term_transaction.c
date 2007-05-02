@@ -170,7 +170,7 @@ int ospValidateHeader (
                 dest.callidsize,
                 dest.callid,
                 dest.tid);
-            ospRecordTermTransaction(msg, ospGetTransactionId(transaction), dest.source, dest.calling, dest.called, dest.authtime);
+            ospRecordTermTransaction(msg, dest.tid, dest.source, dest.calling, dest.called, dest.authtime);
             result = MODULE_RETURNCODE_TRUE;
         } else {
             LOG(L_ERR, "osp: ERROR: token is invalid (%i)\n", errorcode);
