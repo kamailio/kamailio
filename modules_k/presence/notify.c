@@ -67,14 +67,15 @@ void printf_subs(subs_t* subs)
 }
 str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, int STATE_FLAG );
 
-str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
-		str reason,str* local_contact)
+str* build_str_hdr(subs_t* subs, int is_body)
 {
 
 	static 	char buf[3000];
 	str* str_hdr = NULL;	
 	char* subs_expires = NULL;
 	int len = 0;
+	ev_t* event= subs->event;
+	int expires_t;
 
 	str_hdr =(str*) pkg_malloc(sizeof(str));
 	if(!str_hdr)
@@ -88,12 +89,12 @@ str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 	str_hdr->len = 7;
 	strncpy(str_hdr->s+str_hdr->len, event->stored_name.s, event->stored_name.len);
 	str_hdr->len += event->stored_name.len;
-	if (event_id.len) 
+	if (subs->event_id.len) 
 	{
  		strncpy(str_hdr->s+str_hdr->len, ";id=", 4);
  		str_hdr->len += 4;
- 		strncpy(str_hdr->s+str_hdr->len, event_id.s, event_id.len);
- 		str_hdr->len += event_id.len;
+ 		strncpy(str_hdr->s+str_hdr->len, subs->event_id.s, subs->event_id.len);
+ 		str_hdr->len += subs->event_id.len;
  	}
 	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
@@ -101,26 +102,26 @@ str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 
 	strncpy(str_hdr->s+str_hdr->len ,"Contact: <", 10);
 	str_hdr->len += 10;
-	strncpy(str_hdr->s+str_hdr->len, local_contact->s, local_contact->len);
-	str_hdr->len +=  local_contact->len;
+	strncpy(str_hdr->s+str_hdr->len, subs->local_contact.s, subs->local_contact.len);
+	str_hdr->len +=  subs->local_contact.len;
 	strncpy(str_hdr->s+str_hdr->len, ">", 1);
 	str_hdr->len += 1;
 	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 
-	if(strncmp(status.s, "terminated",10) == 0)
+	if(strncmp(subs->status.s, "terminated",10) == 0)
 	{
 		DBG( "PRESENCE: build_str_hdr: state = terminated \n");
 
 		strncpy(str_hdr->s+str_hdr->len,"Subscription-State: ", 20);
 		str_hdr->len += 20;
-		strncpy(str_hdr->s+str_hdr->len, status.s ,status.len );
-		str_hdr->len += status.len;
+		strncpy(str_hdr->s+str_hdr->len, subs->status.s ,subs->status.len );
+		str_hdr->len += subs->status.len;
 		
 		strncpy(str_hdr->s+str_hdr->len,";reason=", 8);
 		str_hdr->len += 8;
-		strncpy(str_hdr->s+str_hdr->len, reason.s ,reason.len );
-		str_hdr->len += reason.len;
+		strncpy(str_hdr->s+str_hdr->len, subs->reason.s ,subs->reason.len );
+		str_hdr->len += subs->reason.len;
 		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
 
@@ -129,13 +130,15 @@ str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 	{	
 		strncpy(str_hdr->s+str_hdr->len,"Subscription-State: ", 20);
 		str_hdr->len += 20;
-		strncpy(str_hdr->s+str_hdr->len, status.s ,status.len );
-		str_hdr->len += status.len;
+		strncpy(str_hdr->s+str_hdr->len, subs->status.s ,subs->status.len );
+		str_hdr->len += subs->status.len;
 		strncpy(str_hdr->s+str_hdr->len,";expires=", 9);
 		str_hdr->len+= 9;
 	
-		if(expires_t < 0)
+		if(subs->expires < 0)
 			expires_t = 0;
+		else
+			expires_t= subs->expires;
 
 		subs_expires= int2str(expires_t, &len); 
 
@@ -155,12 +158,15 @@ str* build_str_hdr(ev_t* event, str event_id, str status, int expires_t,
 		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
 
-		strncpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
-		str_hdr->len += 14;
-		strncpy(str_hdr->s+str_hdr->len, event->content_type.s , event->content_type.len);
-		str_hdr->len += event->content_type.len;
-		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-		str_hdr->len += CRLF_LEN;
+		if(is_body)
+		{	
+			strncpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
+			str_hdr->len += 14;
+			strncpy(str_hdr->s+str_hdr->len, event->content_type.s , event->content_type.len);
+			str_hdr->len += event->content_type.len;
+			strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+			str_hdr->len += CRLF_LEN;
+		}
 	}
 
 	str_hdr->s[str_hdr->len] = '\0';
@@ -1126,8 +1132,7 @@ jump_over_body:
 			subs->event->stored_name.s);
 
 	printf_subs(subs);
-	str_hdr = build_str_hdr( subs->event, subs->event_id, subs->status, subs->expires,
-			subs->reason, &subs->local_contact );
+	str_hdr = build_str_hdr( subs, notify_body?1:0);
 	if(str_hdr == NULL|| str_hdr->s== NULL|| str_hdr->len==0)
 	{
 		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
