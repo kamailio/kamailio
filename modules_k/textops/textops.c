@@ -63,6 +63,7 @@
 #include "../../parser/parse_methods.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_privacy.h"
+#include "../../mod_fix.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -109,7 +110,6 @@ static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
 
-static int fixup_regex(void**, int);
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
 static int fixup_method(void** param, int param_no);
@@ -122,21 +122,21 @@ static int mod_init(void);
 
 
 static cmd_export_t cmds[]={
-	{"search",           search_f,          1, fixup_regex, 
+	{"search",           search_f,          1, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"search_body",      search_body_f,     1, fixup_regex, 
+	{"search_body",      search_body_f,     1, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"search_append",    search_append_f,   2, fixup_regex, 
+	{"search_append",    search_append_f,   2, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"search_append_body", search_append_body_f,   2, fixup_regex, 
+	{"search_append_body", search_append_body_f,   2, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace",          replace_f,         2, fixup_regex, 
+	{"replace",          replace_f,         2, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace_body",     replace_body_f,    2, fixup_regex, 
+	{"replace_body",     replace_body_f,    2, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace_all",      replace_all_f,     2, fixup_regex, 
+	{"replace_all",      replace_all_f,     2, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace_body_all", replace_body_all_f,2, fixup_regex, 
+	{"replace_body_all", replace_body_all_f,2, fixup_str2regexp, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
 	{"append_to_reply",  append_to_reply_f, 1, it_list_fixup,
 			REQUEST_ROUTE|BRANCH_ROUTE|ERROR_ROUTE},
@@ -756,28 +756,6 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	}
 	return -1;
 }
-
-
-
-static int fixup_regex(void** param, int param_no)
-{
-	regex_t* re;
-
-	DBG("module - fixing %s\n", (char*)(*param));
-	if (param_no!=1) return 0;
-	if ((re=pkg_malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
-	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
-		pkg_free(re);
-		LOG(L_ERR, "ERROR: %s : bad re %s\n", exports.name, (char*)*param);
-		return E_BAD_RE;
-	}
-	/* free string */
-	pkg_free(*param);
-	/* replace it with the compiled re */
-	*param=re;
-	return 0;
-}
-
 
 
 static int fixup_substre(void** param, int param_no)

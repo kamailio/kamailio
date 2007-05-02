@@ -88,7 +88,6 @@ static int it_get_tm_reply_code(struct sip_msg *msg, xl_value_t *res,
 
 /* fixup functions */
 static int fixup_t_send_reply(void** param, int param_no);
-static int fixup_str2regexp(void** param, int param_no);
 static int fixup_local_replied(void** param, int param_no);
 static int fixup_t_relay1(void** param, int param_no);
 static int fixup_t_relay2(void** param, int param_no);
@@ -423,30 +422,6 @@ static int fixup_t_send_reply(void** param, int param_no)
 		*param = (void*)s;
 	}
 
-	return 0;
-}
-
-
-static int fixup_str2regexp(void** param, int param_no)
-{
-	regex_t* re;
-
-	if (param_no==1) {
-		if ((re=pkg_malloc(sizeof(regex_t)))==0)
-			return E_OUT_OF_MEM;
-		if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
-			pkg_free(re);
-			LOG(L_ERR,"ERROR: %s : bad re %s\n", exports.name, (char*)*param);
-			return E_BAD_RE;
-		}
-		/* free string */
-		pkg_free(*param);
-		/* replace it with the compiled re */
-		*param=re;
-	} else {
-		LOG(L_ERR,"ERROR: fixup_str2regexp called with parameter != 1\n");
-		return E_BUG;
-	}
 	return 0;
 }
 
