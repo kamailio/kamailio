@@ -54,7 +54,6 @@ RPID_COLUMN=rpid
 SUBSCRIBER_COLUMN='username'
 EMAIL_COLUMN=email_address
 SUB_CREATED_COLUMN=datetime_created
-SUB_MODIFIED_COLUMN=datetime_modified
 PHP_LIB_COLUMN=phplib_id
 if [ -z "$STORE_PLAINTEXT_PW" ] ; then
 	STORE_PLAINTEXT_PW=1
