@@ -335,6 +335,7 @@ static param_export_t params[]={
 													(void*)parse_tw_append   },
 	{"pass_provisional_replies", PARAM_INT, &pass_provisional_replies        },
 	{"aggregate_challenges", PARAM_INT, &tm_aggregate_auth                   },
+	{"unmatched_cancel",    PARAM_INT, &unmatched_cancel                     },
 	{"default_code",        PARAM_INT, &default_code                         },
 	{"default_reason",      PARAM_STR, &default_reason                       },
 	{0,0,0}

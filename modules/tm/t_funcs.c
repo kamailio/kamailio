@@ -47,6 +47,7 @@
  *  2006-08-11  updated forward_request usage (andrei)
  *              t_relay_to releases the transaction if t_forward_non_ack
  *              fails and t_kill fails or this is a failed replication (andrei)
+ *  2007-05-02  t_relay_to() uses now t_forward_cancel for cancels (andrei)
  */
 
 #include <limits.h>
@@ -215,6 +216,12 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 
 	ret=0;
 	
+	/* special case for CANCEL */
+	if ( p_msg->REQ_METHOD==METHOD_CANCEL){
+		ret=t_forward_cancel(p_msg, proxy, proto, &t);
+		if (t) goto handle_ret;
+		goto done;
+	}
 	new_tran = t_newtran( p_msg );
 	
 	/* parsing error, memory alloc, whatever ... if via is bad
@@ -283,6 +290,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 
 	/* now go ahead and forward ... */
 	ret=t_forward_nonack(t, p_msg, proxy, proto);
+handle_ret:
 	if (ret<=0) {
 		DBG( "ERROR:tm:t_relay_to:  t_forward_nonack returned error \n");
 		/* we don't want to pass upstream any reply regarding replicating

@@ -64,6 +64,7 @@
  *  2006-11-20  new_uri is no longer saved/restore across add_uac calls, since
  *              print_uac_request is now uri safe (andrei)
  * 2007-03-15  TMCB_ONSEND hooks added (andrei)
+ * 2007-05-02  added t_forward_cancel(unmatched_cancel) (andrei)
  */
 
 #include "defs.h"
@@ -98,6 +99,7 @@
 #endif
 
 
+int unmatched_cancel=UM_CANCEL_STATEFULL;
 
 static int goto_on_branch = 0, branch_route = 0;
 
@@ -726,13 +728,13 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int lock_replies;
 	str dst_uri;
 	struct socket_info* si, *backup_si;
+	
 
 	/* make -Wall happy */
 	current_uri.s=0;
 
 	set_kr(REQ_FWDED);
-
-	if (p_msg->REQ_METHOD==METHOD_CANCEL) {
+	if (p_msg->REQ_METHOD==METHOD_CANCEL) { 
 		t_invite=t_lookupOriginalT(  p_msg );
 		if (t_invite!=T_NULL_CELL) {
 			e2e_cancel( p_msg, t, t_invite );
@@ -831,6 +833,107 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		return -1;
 	}
 	return 1;
+}
+
+
+
+/* cancel handling/forwarding function
+ * CANCELs with no matching transaction are handled in function of
+ * the unmatched_cancel config var: they are either forwarded statefully,
+ * statelessly or dropped.
+ * function returns:
+ *       1 - forward successful
+ *       0 - error, but do not reply 
+ *      <0 - error during forward
+ * it also sets *tran if a transaction was created
+ */
+int t_forward_cancel(struct sip_msg* p_msg , struct proxy_l * proxy, int proto,
+						struct cell** tran)
+{
+	struct cell* t_invite;
+	struct cell* t;
+	int ret;
+	int new_tran;
+	struct dest_info dst;
+	str host;
+	unsigned short port;
+	short comp;
+	
+	t=0;
+	/* handle cancels for which no transaction was created yet */
+	if (unmatched_cancel==UM_CANCEL_STATEFULL){
+		/* create cancel transaction */
+		new_tran=t_newtran(p_msg);
+		if (new_tran<=0 && new_tran!=E_SCRIPT){
+			if (new_tran==0)
+				 /* retransmission => do nothing */
+				ret=1;
+			else
+				/* some error => return it or DROP */
+				ret=(ser_error==E_BAD_VIA && reply_to_via) ? 0: new_tran;
+			goto end;
+		}
+		t=get_t();
+		ret=t_forward_nonack(t, p_msg, proxy, proto);
+		goto end;
+	}
+	
+	t_invite=t_lookupOriginalT(  p_msg );
+	if (t_invite!=T_NULL_CELL) {
+		/* create cancel transaction */
+		new_tran=t_newtran(p_msg);
+		if (new_tran<=0 && new_tran!=E_SCRIPT){
+			if (new_tran==0)
+				 /* retransmission => do nothing */
+				ret=1;
+			else
+				/* some error => return it or DROP */
+				ret=(ser_error==E_BAD_VIA && reply_to_via) ? 0: new_tran;
+			UNREF(t_invite);
+			goto end;
+		}
+		t=get_t();
+		e2e_cancel( p_msg, t, t_invite );
+		UNREF(t_invite);
+		ret=1;
+		goto end;
+	}else /* no coresponding INVITE transaction */
+	     if (unmatched_cancel==UM_CANCEL_DROP){
+				DBG("t_forward_nonack: non matching cancel dropped\n");
+				ret=1; /* do nothing -> drop */
+				goto end;
+		 }else{
+			/* UM_CANCEL_STATELESS -> stateless forward */
+				DBG( "SER: forwarding CANCEL statelessly \n");
+				if (proxy==0) {
+					init_dest_info(&dst);
+					dst.proto=proto;
+					if (get_uri_send_info(GET_NEXT_HOP(p_msg), &host,
+								&port, &dst.proto, &comp)!=0){
+						ret=E_BAD_ADDRESS;
+						goto end;
+					}
+#ifdef USE_COMP
+					dst.comp=comp;
+#endif
+					/* dst->send_sock not set, but forward_request 
+					 * will take care of it */
+					ret=forward_request(p_msg, &host, port, &dst);
+					goto end;
+				} else {
+					init_dest_info(&dst);
+					dst.proto=get_proto(proto, proxy->proto);
+					proxy2su(&dst.to, proxy);
+					/* dst->send_sock not set, but forward_request 
+					 * will take care of it */
+					ret=forward_request( p_msg , 0, 0, &dst) ;
+					goto end;
+				}
+		}
+end:
+	if (tran)
+		*tran=t;
+	return ret;
 }
 
 

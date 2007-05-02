@@ -29,6 +29,7 @@
  * History:
  * --------
  *  2003-02-18  added proto to various function prototypes (andrei)
+ *  2007-05-02  added unmatched_cancel & t_forward_cancel (andrei)
  */
 
 
@@ -39,6 +40,11 @@
 
 #include "../../proxy.h"
 #include "h_table.h"
+
+enum unmatched_cancel_t { UM_CANCEL_STATEFULL=0, UM_CANCEL_STATELESS,
+							UM_CANCEL_DROP };
+
+extern int unmatched_cancel;
 
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
 typedef int (*taddblind_f)( /*struct cell *t */ );
@@ -62,6 +68,8 @@ int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg,
 int add_blind_uac( /* struct cell *t */ );
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 						struct proxy_l * p, int proto);
+int t_forward_cancel(struct sip_msg* p_msg , struct proxy_l * proxy,
+						int proto, struct cell** tran);
 int t_forward_ack( struct sip_msg* p_msg );
 int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 					struct proxy_l * proxy, int lock_replies);
