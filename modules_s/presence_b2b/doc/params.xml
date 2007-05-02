@@ -29,6 +29,12 @@
 	</para></listitem>
 </varlistentry>
 <varlistentry>
+	<term><varname>additional_presence_headers</varname> (string)</term>
+	<listitem><para>Additional headers put into sent SUBSCRIBE requests.</para>
+	<para>Default value: empty.
+	</para></listitem>
+</varlistentry>
+<varlistentry>
 	<term><varname>wait_for_term_notify</varname> (integer)</term>
 	<listitem>
 		<para>Default timeout for receiving terminating NOTIFY after
