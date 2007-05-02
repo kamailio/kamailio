@@ -93,6 +93,12 @@ MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
 if test "$DUMP_CORE" = "yes" ; then
     # set proper ulimit
     ulimit -c unlimited
+
+    # directory for the core dump files
+    # COREDIR=/home/corefiles
+    # [ -d $COREDIR ] || mkdir $COREDIR
+    # chmod 777 $COREDIR
+    # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
 fi
 
 OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
