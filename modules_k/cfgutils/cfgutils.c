@@ -53,6 +53,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mi/mi.h"
 #include "../../ut.h"
+#include "../../mod_fix.h"
 #include <stdlib.h>
 
 MODULE_VERSION
@@ -70,7 +71,7 @@ static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param );
 
 static int it_get_random_val(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags);
 
-static int fixup_str2int( void** param, int param_no);
+static int fixup_prob( void** param, int param_no);
 
 static int mod_init(void);
 static void mod_destroy(void);
@@ -82,7 +83,7 @@ static cmd_export_t cmds[]={
 	{"rand_set_prob", /* action name as in scripts */
 		set_prob,  /* C function name */
 		1,          /* number of parameters */
-		fixup_str2int,          /* */
+		fixup_prob,          /* */
 		/* can be applied to original/failed requests and replies */
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE}, 
 	{"rand_reset_prob", reset_prob, 0, 0,
@@ -131,7 +132,7 @@ struct module_exports exports = {
 
 
 /**************************** fixup functions ******************************/
-static int fixup_str2int( void** param, int param_no)
+static int fixup_prob( void** param, int param_no)
 {
 	unsigned int myint;
 	str param_str;
@@ -144,8 +145,8 @@ static int fixup_str2int( void** param, int param_no)
 	param_str.len=strlen(param_str.s);
 	str2int(&param_str, &myint);
 
-	if (myint > 100 || myint < 0) {
-		LOG(L_ERR, "ERROR:cfgutils:fixup_str2int: incorrect probability<%s>\n",
+	if (myint > 100) {
+		LOG(L_ERR, "ERROR:cfgutils:fixup_prob: incorrect probability<%s>\n",
 			(char *)(*param));
 		return E_CFG;
 	}

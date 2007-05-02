@@ -194,6 +194,7 @@
 #include "../../msg_translator.h"
 #include "../../usr_avp.h"
 #include "../../socket_info.h"
+#include "../../mod_fix.h"
 #include "../registrar/sip_msg.h"
 #include "../usrloc/usrloc.h"
 #include "nathelper.h"
@@ -283,7 +284,6 @@ static int nathelper_add_rtpproxy_set( char * rtp_proxies);
 
 
 static void nh_timer(unsigned int, void *);
-inline static int fixup_str2int(void**, int);
 static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
@@ -1318,26 +1318,6 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	return 1;
 }
 
-inline static int
-fixup_str2int( void** param, int param_no)
-{
-	unsigned long go_to;
-	int err;
-
-	if (param_no == 1 || param_no == 2) {
-		go_to = str2s(*param, strlen(*param), &err);
-		if (err == 0) {
-			pkg_free(*param);
-			*param = (void *)go_to;
-			return 0;
-		} else {
-			LOG(L_ERR, "ERROR: fixup_str2int: bad number <%s>\n",
-				(char *)(*param));
-			return E_CFG;
-		}
-	}
-	return 0;
-}
 
 /*
  * Test if IP address pointed to by saddr belongs to RFC1918 networks

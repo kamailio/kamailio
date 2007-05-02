@@ -63,6 +63,7 @@
 #include "../../mem/mem.h"
 #include "../../unixsock_server.h"
 #include "../../items.h"
+#include "../../mod_fix.h"
 
 #include "sip_msg.h"
 #include "h_table.h"
@@ -87,7 +88,6 @@ static int it_get_tm_reply_code(struct sip_msg *msg, xl_value_t *res,
 
 /* fixup functions */
 static int fixup_t_send_reply(void** param, int param_no);
-static int fixup_str2int( void** param, int param_no);
 static int fixup_str2regexp(void** param, int param_no);
 static int fixup_local_replied(void** param, int param_no);
 static int fixup_t_relay1(void** param, int param_no);
@@ -316,27 +316,6 @@ static int fixup_t_replicate(void** param, int param_no)
 		/* flags */
 		if (flag_fixup( param, 1)!=0) {
 			LOG(L_ERR, "ERROR:TM:fixup_t_relay2: bad flags <%s>\n",
-				(char *)(*param));
-			return E_CFG;
-		}
-	}
-	return 0;
-}
-
-
-static int fixup_str2int( void** param, int param_no)
-{
-	unsigned long go_to;
-	int err;
-
-	if (param_no==1) {
-		go_to=str2s(*param, strlen(*param), &err );
-		if (err==0) {
-			pkg_free(*param);
-			*param=(void *)go_to;
-			return 0;
-		} else {
-			LOG(L_ERR, "ERROR:tm:fixup_str2int: bad number <%s>\n",
 				(char *)(*param));
 			return E_CFG;
 		}

@@ -72,7 +72,7 @@ static struct mi_root* mi_reset_gflag(struct mi_root* cmd, void* param );
 static struct mi_root* mi_is_gflag(struct mi_root* cmd, void* param );
 static struct mi_root* mi_get_gflags(struct mi_root* cmd, void* param );
 
-static int fixup_str2int( void** param, int param_no);
+static int fixup_gflags( void** param, int param_no);
 
 static int  mod_init(void);
 static void mod_destroy(void);
@@ -81,11 +81,11 @@ static int initial=0;
 static unsigned int *gflags=0;
 
 static cmd_export_t cmds[]={
-	{"set_gflag",    set_gflag,   1,   fixup_str2int,
+	{"set_gflag",    set_gflag,   1,   fixup_gflags,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"reset_gflag",  reset_gflag, 1,   fixup_str2int,
+	{"reset_gflag",  reset_gflag, 1,   fixup_gflags,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"is_gflag",     is_gflag,    1,   fixup_str2int,
+	{"is_gflag",     is_gflag,    1,   fixup_gflags,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -119,7 +119,7 @@ struct module_exports exports = {
 
 
 /**************************** fixup functions ******************************/
-static int fixup_str2int( void** param, int param_no)
+static int fixup_gflags( void** param, int param_no)
 {
 	unsigned int myint;
 	str param_str;
@@ -132,12 +132,12 @@ static int fixup_str2int( void** param, int param_no)
 	param_str.len=strlen(param_str.s);
 
 	if (str2int(&param_str, &myint )<0) {
-		LOG(L_ERR, "ERROR:gflags:fixup_str2int: bad number <%s>\n",
+		LOG(L_ERR, "ERROR:gflags:fixup_gflags: bad number <%s>\n",
 			(char *)(*param));
 		return E_CFG;
 	}
 	if ( myint >= 8*sizeof(*gflags) ) {
-		LOG(L_ERR, "ERROR:gflags:fixup_str2int: flag <%d> out of "
+		LOG(L_ERR, "ERROR:gflags:fixup_gflags: flag <%d> out of "
 			"range [0..%lu]\n", myint, (unsigned long)8*sizeof(*gflags) );
 		return E_CFG;
 	}
