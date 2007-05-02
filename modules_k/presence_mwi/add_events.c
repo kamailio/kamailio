@@ -69,19 +69,19 @@ int mwi_publ_handl(struct sip_msg* msg)
     over = body.s + body.len;
 
     /* check msg-status-line */
-    if (body.len <= sizeof("Messages-Waiting")) goto err;
-    if (strcmp(body.s, "Messages-Waiting") != 0) goto err;
-    at = body.s + sizeof("Messages-Waiting");
+    if (body.len <= 16) goto err;
+    if (strncmp(body.s, "Messages-Waiting", 16) != 0) goto err;
+    at = body.s + 16;
     at = eat_sp_tab(at, over);
     if ((at >= over) || (*at != ':')) goto err;
     at++;
-    if ((at >= over) || (*at != ' ') || (*at != '\t')) goto err;
+    if ((at >= over) || ((*at != ' ') && (*at != '\t'))) goto err;
     at++;
     at = eat_sp_tab(at, over);
     if (at + 3 >= over) goto err;
-    if (strcmp(at, "yes") == 0) at = at + 3;
+    if (strncmp(at, "yes", 3) == 0) at = at + 3;
     else
-	if (strcmp(at, "no") == 0) at = at + 2;
+	if (strncmp(at, "no", 2) == 0) at = at + 2;
 	else
 	    goto err;
     if ((at + 1 >= over) || (*at != '\r') || (*(at + 1) != '\n')) goto err;
