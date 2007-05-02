@@ -30,6 +30,7 @@
 #include "../../str.h"
 #include "hash.h"
 
+typedef int (publrpl_cb_t)(struct sip_msg* msg, void*  extra_param);
 
 typedef struct publ_info
 {
@@ -43,8 +44,15 @@ typedef struct publ_info
 	str content_type;   // not needed on update expires (empty body), should be {0, 0}
 	str* etag;
 	str* extra_headers;
-
+	publrpl_cb_t* cbrpl;
+	void* cbparam;
 }publ_info_t;
+
+typedef struct treq_cbparam
+{
+	publ_info_t publ;
+	str tuple_id;
+}treq_cbparam_t;
 
 typedef int (*send_publish_t)(publ_info_t* publ);
 int send_publish( publ_info_t* publ );

@@ -43,6 +43,10 @@
 #include "pua_callback.h"
 
 extern struct tm_binds tmb;
+int process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple);
+int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple);
+int bla_process_body (str* init_body, str** fin_body, int ver);
+int mwi_process_body (str* init_body, str** fin_body, int ver);
 
 xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
 															const char *ns)
@@ -195,12 +199,12 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	struct hdr_field* hdr= NULL;
 	struct sip_msg* msg= NULL;
 	ua_pres_t* presentity= NULL;
-	ua_pres_t* hentity= NULL;
+	treq_cbparam_t* hentity= NULL;
 	int found = 0;
 	int size= 0;
 	int lexpire= 0;
 	str etag;
-	int flag;
+	int desired_expires;
 	unsigned int hash_code;
 
 	if(ps->param== NULL)
@@ -216,19 +220,16 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			DBG("PUA publ_cback_func: NULL callback parameter\n");
 			return;
 		}
-		hentity= (ua_pres_t*)(*ps->param);
-		flag= hentity->flag;
-		if(hentity->flag & BLA_TERM_PUBLISH)
-			hentity->flag= BLA_PUBLISH;
+		hentity= (treq_cbparam_t*)(*ps->param);
 
-		hash_code= core_hash(hentity->pres_uri, NULL,
+		hash_code= core_hash(hentity->publ.pres_uri, NULL,
 					HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
-		presentity= search_htable( hentity->pres_uri, NULL, hentity->flag,
-				hentity->id, hentity->etag.s?&hentity->etag:NULL, hash_code);
+		presentity= search_htable( hentity->publ.pres_uri, NULL, hentity->publ.source_flag,
+				hentity->publ.id, hentity->publ.etag, hash_code);
 		if(presentity)
 		{
-			if(ps->code== 412 && hentity->body)
+			if(ps->code== 412 && hentity->publ.body)
 			{
 				/* sent a PUBLISH within a dialog that no longer exists
 				 * send again an intial PUBLISH */
@@ -238,16 +239,16 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				lock_release(&HashT->p_records[hash_code].lock);
 				publ_info_t publ;
 				memset(&publ, 0, sizeof(publ_info_t));
-				publ.pres_uri= hentity->pres_uri; 
-				publ.body= hentity->body;
-				publ.expires= (hentity->desired_expires>0)?
-					hentity->desired_expires- (int)time(NULL)+ 10:-1;
+				publ.pres_uri= hentity->publ.pres_uri; 
+				publ.body= hentity->publ.body;
+				publ.expires= hentity->publ.expires;
 				publ.flag|= INSERT_TYPE;
-				publ.source_flag|= flag;
-				publ.event|= hentity->event;
-				publ.etag= hentity->etag.s?&hentity->etag:NULL;
-				publ.content_type= hentity->content_type;	
-				publ.id= hentity->id;
+				publ.source_flag|= hentity->publ.source_flag;
+				publ.event|= hentity->publ.event;
+				publ.etag= hentity->publ.etag;
+				publ.content_type= hentity->publ.content_type;	
+				publ.id= hentity->publ.id;
+				publ.extra_headers= hentity->publ.extra_headers;
 				if(send_publish(&publ)< 0)
 				{
 					LOG(L_ERR, "PUA:publ_cback_func: ERROR when trying to send PUBLISH\n");
@@ -267,28 +268,37 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	msg= ps->rpl;
-	if(msg == NULL || msg== FAKED_REPLY)
+	if(msg == NULL)
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: ERROR no reply message found\n ");
 		goto error;
 	}
+	if(msg== FAKED_REPLY)
+	{
+		DBG("PUA:publ_cback_func: FAKED_REPLY\n");
+		goto error;
+	}
+
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: error parsing headers\n");
 		goto error;
 	}	
-	if(ps->rpl->expires && msg->expires->body.len > 0)
+	if(msg->expires== NULL || msg->expires->body.len<= 0)
 	{
-		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
-		{
-			LOG(L_ERR, "PUA:publ_cback_func: ERROR cannot parse Expires"
-					" header\n");
+			LOG(L_ERR, "PUA:publ_cback_func: ERROR No Expires header found\n");
 			goto error;
-		}
-		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		DBG("PUA:publ_cback_func: lexpire= %d\n", lexpire);
-	}
+	}	
 	
+	if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
+	{
+		LOG(L_ERR, "PUA:publ_cback_func: ERROR cannot parse Expires"
+					" header\n");
+		goto error;
+	}
+	lexpire = ((exp_body_t*)msg->expires->parsed)->val;
+	DBG("PUA:publ_cback_func: lexpire= %d\n", lexpire);
+		
 	hdr = msg->headers;
 	while (hdr!= NULL)
 	{
@@ -319,22 +329,19 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		DBG("PUA publ_cback_func: Error NULL callback parameter\n");
 		return;
 	}
-	hentity= (ua_pres_t*)(*ps->param);
+		
+	hentity= (treq_cbparam_t*)(*ps->param);
 
 	LOG(L_DBG, "PUA:publ_cback_func: completed with status %d [contact:"
-			"%.*s]\n",ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
-	flag= hentity->flag;
-	if(hentity->flag & BLA_TERM_PUBLISH)
-		hentity->flag= BLA_PUBLISH;
+			"%.*s]\n",ps->code, hentity->publ.pres_uri->len, hentity->publ.pres_uri->s);
 
-	DBG("PUA: publ_cback_func: searched presentity:\n");
-	print_hentity( hentity);
+	desired_expires= hentity->publ.expires<0?0: hentity->publ.expires+ (int)time(NULL);
 
-	hash_code= core_hash(hentity->pres_uri, NULL, HASH_SIZE);
+	hash_code= core_hash(hentity->publ.pres_uri, NULL, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 	
-	presentity= search_htable(hentity->pres_uri, NULL,hentity->flag,
-			hentity->id, hentity->etag.s?&hentity->etag:NULL,  hash_code);
+	presentity= search_htable(hentity->publ.pres_uri, NULL,hentity->publ.source_flag,
+			hentity->publ.id, hentity->publ.etag,  hash_code);
 	if(presentity)
 	{
 			DBG("PUA:publ_cback_func: update record\n");
@@ -345,7 +352,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				lock_release(&HashT->p_records[hash_code].lock);
 				goto done;
 			}
-			update_htable(presentity, hentity->desired_expires,
+			
+			update_htable(presentity, desired_expires,
 					lexpire, &etag, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
@@ -358,8 +366,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 	size= sizeof(ua_pres_t)+ sizeof(str)+ 
-		(hentity->pres_uri->len+ hentity->tuple_id.len + 
-		 hentity->id.len)* sizeof(char);
+		(hentity->publ.pres_uri->len+ hentity->tuple_id.len + 
+		 hentity->publ.id.len)* sizeof(char);
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
@@ -372,10 +380,10 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= sizeof(str);
 
 	presentity->pres_uri->s= (char*)presentity+ size;
-	memcpy(presentity->pres_uri->s, hentity->pres_uri->s, 
-			hentity->pres_uri->len);
-	presentity->pres_uri->len= hentity->pres_uri->len;
-	size+= hentity->pres_uri->len;
+	memcpy(presentity->pres_uri->s, hentity->publ.pres_uri->s, 
+			hentity->publ.pres_uri->len);
+	presentity->pres_uri->len= hentity->publ.pres_uri->len;
+	size+= hentity->publ.pres_uri->len;
 	
 	presentity->tuple_id.s= (char*)presentity+ size;
 	memcpy(presentity->tuple_id.s, hentity->tuple_id.s,
@@ -384,33 +392,47 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= presentity->tuple_id.len;
 
 	presentity->id.s=(char*)presentity+ size;
-	memcpy(presentity->id.s, hentity->id.s, 
-			hentity->id.len);
-	presentity->id.len= hentity->id.len; 
+	memcpy(presentity->id.s, hentity->publ.id.s, 
+			hentity->publ.id.len);
+	presentity->id.len= hentity->publ.id.len; 
 	size+= presentity->id.len;
 		
 	presentity->expires= lexpire +(int)time(NULL);
-	presentity->desired_expires= hentity->desired_expires;
-	presentity->flag|= hentity->flag;
-	presentity->event|= hentity->event;
+	presentity->desired_expires= desired_expires;
+	presentity->flag|= hentity->publ.source_flag;
+	presentity->event|= hentity->publ.event;
 	presentity->db_flag|= INSERTDB_FLAG;
 
 	presentity->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
+	if(presentity->etag.s== NULL)
+	{
+		LOG(L_ERR, "PUA: publ_cback_func: ERROR No more share memory\n");
+		goto error;
+	}
 	memcpy(presentity->etag.s, etag.s, etag.len);
 	presentity->etag.len= etag.len;
 
 	insert_htable( presentity);
 	DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		
-		
 
 done:
-	hentity->flag= flag;
-	run_pua_callbacks( hentity, &msg->first_line);
+
+	if(hentity->publ.cbrpl )
+	{
+		if( hentity->publ.cbrpl(msg,  hentity->publ.cbparam)< 0)
+		{
+			LOG(L_ERR,"PUA:publ_cback_func: in callback function ERROR ");
+			goto error;
+		}	
+			
+	}	
 	if(*ps->param)
 	{
 		shm_free(*ps->param);
 		*ps->param= NULL;
 	}
+
+
 	return;
 
 error:
@@ -429,25 +451,18 @@ int send_publish( publ_info_t* publ )
 	str met = {"PUBLISH", 7};
 	str* str_hdr = NULL;
 	ua_pres_t* presentity= NULL;
-	char buf[50];
 	unsigned int size= 0;
 	str* body= NULL;
-	xmlDocPtr doc= NULL;
-	xmlNodePtr node= NULL;
-	char* tuple_id= NULL, *person_id= NULL;
-	int tuple_id_len= 0;
-	ua_pres_t* hentity= NULL;
+	str* tuple_id= NULL;
+	treq_cbparam_t* cb_param= NULL;
 	unsigned int hash_code;
 	str etag= {0, 0};
 	int ver= 0;
-	int flag;
+	int result;
 
 	DBG("PUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
 			publ->pres_uri->s );
 	
-	flag= publ->source_flag;
-	if(publ->source_flag & BLA_TERM_PUBLISH)
-		publ->source_flag= BLA_PUBLISH;
 
 	hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
 
@@ -459,6 +474,9 @@ int send_publish( publ_info_t* publ )
 	if(publ->flag & INSERT_TYPE)
 		goto insert;
 	
+	if(publ->etag && presentity== NULL)
+		return 418;
+
 	if(presentity== NULL)
 	{
 insert:	
@@ -508,194 +526,113 @@ insert:
 		lock_release(&HashT->p_records[hash_code].lock);
 	}
 
+    /* handle body */
+
 	if(publ->body && publ->body->s)
 	{
-		doc= xmlParseMemory(publ->body->s, publ->body->len );
-		if(doc== NULL)
+		if( (process_body(publ, &body, ver, tuple_id)< 0) || body== NULL)
 		{
-			LOG(L_ERR, "PUA: send_publish: ERROR while parsing xml memory\n");
-			goto error;
-		}
-		if(publ->source_flag & BLA_PUBLISH)
-		{
-			char* version;
-			int len;
-			/* change version and state*/
-			node= xmlNodeGetNodeByName(doc->children, "dialog-info", NULL);
-			if(node == NULL)
-			{
-				LOG(L_ERR, "PUA: send_publish: ERROR while extracting dialog-info node\n");
-				goto error;
-			}
-			version= int2str(ver,&len);
-			version[len]= '\0';
-
-			if( xmlSetProp(node, (const xmlChar *)"version",(const xmlChar*)version)== NULL)
-			{
-				LOG(L_ERR, "PUA: send_publish: ERROR while setting version attribute\n");
-				goto error;	
-			}
-			body= (str*)pkg_malloc(sizeof(str));
+			LOG(L_ERR, "PUA:send_publish: ERROR while processing body\n");
 			if(body== NULL)
-			{
-				LOG(L_ERR, "PUA: send_publish: ERROR NO more memory left\n");
-				goto error;
-			}
-			memset(body, 0, sizeof(str));
-			xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);	
-
-			xmlFreeDoc(doc);
-			doc= NULL;
-
-			goto after_handle_body;
-		}
-
-		DBG("PUA: send_publish: completing the body with tuple id if needed\n");
-		node= xmlNodeGetNodeByName(doc->children, "tuple", NULL);
-		if(node == NULL)
-		{
-			LOG(L_ERR, "PUA: send_publish: ERROR while extracting tuple node\n");
+				LOG(L_ERR, "PUA:send_publish: ERROR NULL body\n");
 			goto error;
 		}
-		tuple_id= xmlNodeGetAttrContentByName(node, "id");
-		if(tuple_id== NULL)
-		{	
-			tuple_id= buf;
-			tuple_id_len= sprintf(tuple_id, "%p", publ);
-			tuple_id[tuple_id_len]= '\0'; 
-			
-			if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
-			{
-				LOG(L_ERR, "PUA: send_publish: ERROR while extracting xml"
-						" node\n");
-				goto error;
-			}
-		}
-		else
-		{
-			strcpy(buf, tuple_id);
-			xmlFree(tuple_id);
-			tuple_id= buf;
-			tuple_id_len= strlen(tuple_id);
-		}	
-		node= xmlNodeGetNodeByName(doc->children, "person", NULL);
-		if(node)
-		{
-			DBG("PUA: send_publish: found person node\n");
-			person_id= xmlNodeGetAttrContentByName(node, "id");
-			if(person_id== NULL)
-			{	
-				if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
-				{
-					LOG(L_ERR, "PUA: send_publish: ERROR while extracting xml"
-							" node\n");
-					goto error;
-				}
-			}
-			else
-			{
-				xmlFree(person_id);
-			}
-		}	
-		body= (str*)pkg_malloc(sizeof(str));
-		if(body== NULL)
-		{
-			LOG(L_ERR, "PUA: send_publish: ERROR NO more memory left\n");
-			goto error;
-		}
-		memset(body, 0, sizeof(str));
-		xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);	
-		if(body->s== NULL || body->len== 0)
-		{
-			LOG(L_ERR, "PUA: send_publish: ERROR while dumping xml format\n");
-			goto error;
-		}	
-		xmlFreeDoc(doc);
-		doc= NULL;
 	}
-
-after_handle_body:
-
 	/* construct the callback parameter */
 
-	size= sizeof(ua_pres_t)+ sizeof(str)+ (publ->pres_uri->len+ 
-		tuple_id_len + publ->content_type.len+ 1)*sizeof(char);
+	size= sizeof(treq_cbparam_t)+ sizeof(str)+ (publ->pres_uri->len+ 
+		+ publ->content_type.len+ publ->id.len+ 1)*sizeof(char);
 	if(body && body->s && body->len)
 		size+= sizeof(str)+ body->len* sizeof(char);
-	DBG("PUA: send_publish: size= %d\n", size);
-	if(publ->id.s && publ->id.len)
-		size+= publ->id.len* sizeof(char);
-	
-	if(publ->etag )
-		size+= publ->etag->len* sizeof(char);
+	if(publ->etag)
+		size+= sizeof(str)+ publ->etag->len* sizeof(char);
+	if(publ->extra_headers)
+		size+= sizeof(str)+ publ->extra_headers->len* sizeof(char);
+	if(tuple_id )
+		size+= tuple_id->len* sizeof(char);
 
 	DBG("PUA: send_publish: before allocating size= %d\n", size);
-	hentity= (ua_pres_t*)shm_malloc(size);
-	if(hentity== NULL)
+	cb_param= (treq_cbparam_t*)shm_malloc(size);
+	if(cb_param== NULL)
 	{
 		LOG(L_ERR, "PUA: send_publish: ERROR no more share memory while"
-				" allocating hentity - size= %d\n", size);
+				" allocating cb_param - size= %d\n", size);
 		goto error;
 	}
-	memset(hentity, 0, size);
-
-	size =  sizeof(ua_pres_t);
+	memset(cb_param, 0, size);
+	size =  sizeof(treq_cbparam_t);
+	DBG("PUA: send_publish: size= %d\n", size);
 	
-	hentity->pres_uri = (str*)((char*)hentity + size);
+	cb_param->publ.pres_uri = (str*)((char*)cb_param + size);
 	size+= sizeof(str);
 
-	hentity->pres_uri->s = (char*)hentity+ size;
-	memcpy(hentity->pres_uri->s, publ->pres_uri->s ,
+	cb_param->publ.pres_uri->s = (char*)cb_param + size;
+	memcpy(cb_param->publ.pres_uri->s, publ->pres_uri->s ,
 			publ->pres_uri->len ) ;
-	hentity->pres_uri->len= publ->pres_uri->len;
+	cb_param->publ.pres_uri->len= publ->pres_uri->len;
 	size+= publ->pres_uri->len;
-
-	hentity->tuple_id.s = (char*)hentity+ size;
-	memcpy(hentity->tuple_id.s, tuple_id ,tuple_id_len);
-	hentity->tuple_id.len= tuple_id_len;
-	size+= tuple_id_len;
 
 	if(publ->id.s && publ->id.len)
 	{	
-		hentity->id.s = ((char*)hentity+ size);
-		memcpy(hentity->id.s, publ->id.s, publ->id.len);
-		hentity->id.len= publ->id.len;
+		cb_param->publ.id.s = ((char*)cb_param+ size);
+		memcpy(cb_param->publ.id.s, publ->id.s, publ->id.len);
+		cb_param->publ.id.len= publ->id.len;
 		size+= publ->id.len;
 	}
 
 	if(body && body->s && body->len)
 	{
-		hentity->body = (str*)((char*)hentity + size);
+		cb_param->publ.body = (str*)((char*)cb_param  + size);
 		size+= sizeof(str);
 		
-		hentity->body->s = (char*)hentity+ size;
-		memcpy(hentity->body->s, body->s ,
+		cb_param->publ.body->s = (char*)cb_param + size;
+		memcpy(cb_param->publ.body->s, body->s ,
 			body->len ) ;
-		hentity->body->len= body->len;
+		cb_param->publ.body->len= body->len;
 		size+= body->len;
 	}
 	if(publ->etag)
 	{
-		hentity->etag.s= (char*)hentity + size;
-		memcpy(hentity->etag.s, publ->etag->s, publ->etag->len);
-		hentity->etag.len= publ->etag->len;
-		size+= hentity->etag.len;
+		cb_param->publ.etag = (str*)((char*)cb_param  + size);
+		size+= sizeof(str);
+		cb_param->publ.etag->s = (char*)cb_param + size;
+		memcpy(cb_param->publ.etag->s, publ->etag->s ,
+			publ->etag->len ) ;
+		cb_param->publ.etag->len= publ->etag->len;
+		size+= publ->etag->len;
 	}
+	if(publ->extra_headers)
+	{
+		cb_param->publ.extra_headers = (str*)((char*)cb_param  + size);
+		size+= sizeof(str);
+		cb_param->publ.extra_headers->s = (char*)cb_param + size;
+		memcpy(cb_param->publ.extra_headers->s, publ->extra_headers->s ,
+			publ->extra_headers->len ) ;
+		cb_param->publ.extra_headers->len= publ->extra_headers->len;
+		size+= publ->extra_headers->len;
+	}	
+
 	if(publ->content_type.s && publ->content_type.len)
 	{
-		hentity->content_type.s= (char*)hentity + size;
-		memcpy(hentity->content_type.s, publ->content_type.s, publ->content_type.len);
-		hentity->content_type.len= publ->content_type.len;
-		size+= hentity->content_type.len;
+		cb_param->publ.content_type.s= (char*)cb_param + size;
+		memcpy(cb_param->publ.content_type.s, publ->content_type.s, publ->content_type.len);
+		cb_param->publ.content_type.len= publ->content_type.len;
+		size+= cb_param->publ.content_type.len;
 
 	}	
-	hentity->event= publ->event;
-	hentity->flag|= flag;
-	if(publ->expires> 0)
-		hentity->desired_expires= publ->expires + (int )time(NULL);
-	else
-		hentity->desired_expires= 0;
-
+	if(tuple_id)
+	{	
+		cb_param->tuple_id.s = (char*)cb_param+ size;
+		memcpy(cb_param->tuple_id.s, tuple_id->s ,tuple_id->len);
+		cb_param->tuple_id.len= tuple_id->len;
+		size+= tuple_id->len;
+	}
+	cb_param->publ.cbparam= publ->cbparam;
+	cb_param->publ.cbrpl= publ->cbrpl;
+	cb_param->publ.event= publ->event;
+	cb_param->publ.source_flag|= publ->source_flag;
+	cb_param->publ.expires= publ->expires;
+	
 send_publish:
 	
 	if(publ->flag & UPDATE_TYPE)
@@ -714,7 +651,7 @@ send_publish:
 	if(body && body->len && body->s )
 		DBG("PUA: send_publish: body:\n%.*s\n ", body->len, body->s);
 
-	tmb.t_request(&met,						/* Type of the message */
+	result= tmb.t_request(&met,				/* Type of the message */
 			publ->pres_uri,					/* Request-URI */
 			publ->pres_uri,					/* To */
 			publ->pres_uri,					/* From */
@@ -722,21 +659,31 @@ send_publish:
 			body,							/* Message body */
 			0,								/* outbound proxy*/
 			publ_cback_func,				/* Callback function */
-			(void*)hentity					/* Callback parameter */
+			(void*)cb_param					/* Callback parameter */
 			);
-	
+
+	if(result< 0)
+	{
+		LOG(L_ERR, "PUA: send_publish: ERROR while sending request\n");
+		goto error;
+	}
+
 	pkg_free(str_hdr);
 
 	if( body)
 	{
 		if(body->s)
-			xmlFree(body->s);
+			free(body->s);
 		pkg_free(body);
 	}	
 	if(etag.s)
 		pkg_free(etag.s);
-	xmlCleanupParser();
-	xmlMemoryDump();
+	if(tuple_id)
+	{
+		if(tuple_id->s)
+			pkg_free(tuple_id->s);
+		pkg_free(tuple_id);
+	}
 
 	return 0;
 
@@ -744,23 +691,211 @@ error:
 	if(etag.s)
 		pkg_free(etag.s);
 
-	if(hentity)
-		shm_free(hentity);
-
+	if(cb_param)
+	{
+		shm_free(cb_param);
+	}	
 	if(body)
 	{
 		if(body->s)
-			xmlFree(body->s);
+			free(body->s);
 		pkg_free(body);
 	}	
-	
 	if(str_hdr)
 		pkg_free(str_hdr);
-	
-	if(doc)
-		xmlFreeDoc(doc);
-	xmlCleanupParser();
-	xmlMemoryDump();
-
+	if(tuple_id)
+	{
+		if(tuple_id->s)
+			pkg_free(tuple_id->s);
+		pkg_free(tuple_id);
+	}
 	return -1;
 }
+
+int process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
+{
+	tuple= NULL;
+	switch(publ->event)
+	{
+		case(PRESENCE_EVENT): {
+			return pres_process_body(publ, fin_body, ver, tuple);
+		}  
+		case(BLA_EVENT): {
+			return bla_process_body(publ->body, fin_body, ver);
+		}  
+		case(MSGSUM_EVENT): {
+			return mwi_process_body(publ->body, fin_body, ver);
+		}  
+	}
+	return -1;
+}
+
+int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
+{
+
+	xmlDocPtr doc= NULL;
+	xmlNodePtr node= NULL;
+	char* tuple_id= NULL, *person_id= NULL;
+	int tuple_id_len= 0;
+	char buf[50];
+	str* body= NULL;
+
+	tuple= NULL;
+	doc= xmlParseMemory(publ->body->s, publ->body->len );
+	if(doc== NULL)
+	{
+		LOG(L_ERR, "PUA: pres_process_body: ERROR while parsing xml memory\n");
+		goto error;
+	}
+
+	node= xmlNodeGetNodeByName(doc->children, "tuple", NULL);
+	if(node == NULL)
+	{
+		LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting tuple node\n");
+		goto error;
+	}
+	tuple_id= xmlNodeGetAttrContentByName(node, "id");
+	if(tuple_id== NULL)
+	{	
+		tuple_id= buf;
+		tuple_id_len= sprintf(tuple_id, "%p", publ);
+		tuple_id[tuple_id_len]= '\0'; 
+		
+		if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
+		{
+			LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting xml"
+						" node\n");
+			goto error;
+		}
+	}
+	else
+	{
+		strcpy(buf, tuple_id);
+		xmlFree(tuple_id);
+		tuple_id= buf;
+		tuple_id_len= strlen(tuple_id);
+	}	
+	node= xmlNodeGetNodeByName(doc->children, "person", NULL);
+	if(node)
+	{
+		DBG("PUA: pres_process_body:found person node\n");
+		person_id= xmlNodeGetAttrContentByName(node, "id");
+		if(person_id== NULL)
+		{	
+			if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
+			{
+				LOG(L_ERR, "PUA:pres_process_body:ERROR while extracting xml"
+						" node\n");
+				goto error;
+			}
+		}
+		else
+		{
+			xmlFree(person_id);
+		}
+	}	
+	body= (str*)pkg_malloc(sizeof(str));
+	if(body== NULL)
+	{
+		LOG(L_ERR, "PUA:pres_process_body ERROR NO more memory left\n");
+		goto error;
+	}
+	memset(body, 0, sizeof(str));
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);	
+	if(body->s== NULL || body->len== 0)
+	{
+		LOG(L_ERR, "PUA: pres_process_body: ERROR while dumping xml format\n");
+		goto error;
+	}	
+	xmlFreeDoc(doc);
+	doc= NULL;
+	
+	tuple= (str*)pkg_malloc(sizeof(str));
+	if(tuple== NULL)
+	{
+		LOG(L_ERR, "PUA: pres_process_body: ERROR No more memory\n");
+		goto error;
+	}
+	tuple->s= tuple_id;
+	tuple->len= tuple_id_len;
+	
+	*(fin_body)= body;
+	xmlMemoryDump();
+	xmlCleanupParser();
+	return 0;
+
+error:
+	if(doc)
+		xmlFreeDoc(doc);
+	if(body)
+		pkg_free(body);
+	return -1;
+
+}	
+
+int bla_process_body(str* init_body, str** fin_body, int ver)
+{
+	xmlNodePtr node= NULL;
+	xmlDocPtr doc= NULL;
+	char* version;
+	str* body= NULL;
+	int len;
+
+	DBG("PUA: bla_process_body: start\n");
+	doc= xmlParseMemory(init_body->s, init_body->len );
+	if(doc== NULL)
+	{
+		LOG(L_ERR, "PUA: bla_process_body: ERROR while parsing xml memory\n");
+		goto error;
+	}
+	/* change version and state*/
+	node= xmlNodeGetNodeByName(doc->children, "dialog-info", NULL);
+	if(node == NULL)
+	{
+		LOG(L_ERR, "PUA: bla_process_body: ERROR while extracting dialog-info node\n");
+		goto error;
+	}
+	version= int2str(ver,&len);
+	version[len]= '\0';
+
+	if( xmlSetProp(node, (const xmlChar *)"version",(const xmlChar*)version)== NULL)
+	{
+		LOG(L_ERR, "PUA: bla_process_body: ERROR while setting version attribute\n");
+		goto error;	
+	}
+	body= (str*)pkg_malloc(sizeof(str));
+	if(body== NULL)
+	{
+		LOG(L_ERR, "PUA: bla_process_body: ERROR NO more memory left\n");
+		goto error;
+	}
+	memset(body, 0, sizeof(str));
+	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);	
+
+	xmlFreeDoc(doc);
+	doc= NULL;
+	*(fin_body)= body;	
+	if(*fin_body== NULL)
+		DBG("PUA: bla_process_body: NULL fin_body\n");
+
+	xmlMemoryDump();
+	xmlCleanupParser();
+	DBG("PUA: bla_process_body: successful\n");
+	return 0;
+
+error:
+	if(doc)
+		xmlFreeDoc(doc);
+	if(body)
+		pkg_free(body);
+	
+	xmlMemoryDump();
+	xmlCleanupParser();
+	return -1;
+}
+
+int mwi_process_body(str* init_body, str** fin_body,  int ver)
+{
+	return 0;
+}
+

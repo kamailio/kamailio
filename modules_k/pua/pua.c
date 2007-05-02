@@ -508,8 +508,9 @@ void hashT_clean(unsigned int ticks,void *param)
 		{	
 			if(p->expires- update_period < now )
 			{
-				if((p->desired_expires> p->expires + min_expires) || 
-						(p->desired_expires== 0 ))
+				if((p->event!= BLA_SUBSCRIBE) &&
+						((p->desired_expires> p->expires + min_expires) || 
+						(p->desired_expires== 0 )))
 				{
 					if(update_pua(p, i)< 0)
 					{
