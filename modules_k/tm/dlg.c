@@ -75,24 +75,6 @@ void get_raw_uri(str* _s)
 }
 
 
-
-/*
- * Make a copy of a str structure using shm_malloc
- */
-static inline int str_duplicate(str* _d, str* _s)
-{
-	_d->s = shm_malloc(_s->len);
-	if (!_d->s) {
-		LOG(L_ERR, "str_duplicate(): No memory left\n");
-		return -1;
-	}
-	
-	memcpy(_d->s, _s->s, _s->len);
-	_d->len = _s->len;
-	return 0;
-}
-
-
 /*
  * Calculate dialog hooks
  */
@@ -181,13 +163,13 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 	memset(res, 0, sizeof(dlg_t));
 	
 	     /* Make a copy of Call-ID */
-	if (str_duplicate(&res->id.call_id, _cid) < 0) return -3;
+	if (shm_str_dup(&res->id.call_id, _cid) < 0) return -3;
 	     /* Make a copy of local tag (usually From tag) */
-	if (str_duplicate(&res->id.loc_tag, _ltag) < 0) return -4;
+	if (shm_str_dup(&res->id.loc_tag, _ltag) < 0) return -4;
 	     /* Make a copy of local URI (usually From) */
-	if (str_duplicate(&res->loc_uri, _luri) < 0) return -5;
+	if (shm_str_dup(&res->loc_uri, _luri) < 0) return -5;
 	     /* Make a copy of remote URI (usually To) */
-	if (str_duplicate(&res->rem_uri, _ruri) < 0) return -6;
+	if (shm_str_dup(&res->rem_uri, _ruri) < 0) return -6;
 	     /* Make a copy of local sequence (usually CSeq) */
 	res->loc_seq.value = _lseq;
 	     /* And mark it as set */
@@ -360,10 +342,10 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 	}
 	
 	if (get_contact_uri(_m, &contact) < 0) return -2;
-	if (contact.len && str_duplicate(&_d->rem_target, &contact) < 0) return -3;
+	if (contact.len && shm_str_dup(&_d->rem_target, &contact) < 0) return -3;
 	
 	if (get_to_tag(_m, &rtag) < 0) goto err1;
-	if (rtag.len && str_duplicate(&_d->id.rem_tag, &rtag) < 0) goto err1;
+	if (rtag.len && shm_str_dup(&_d->id.rem_tag, &rtag) < 0) goto err1;
 	
 	if (get_route_set(_m, &_d->route_set, REVERSE_ORDER) < 0) goto err2;
 
@@ -531,7 +513,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 			     /* Free old remote target if any */
 			if (_d->rem_target.s) shm_free(_d->rem_target.s);
 			     /* Duplicate new remote target */
-			if (str_duplicate(&_d->rem_target, &contact) < 0) return -4;
+			if (shm_str_dup(&_d->rem_target, &contact) < 0) return -4;
 		}
 	}
 
@@ -673,13 +655,13 @@ static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 	}
 
 	if (get_contact_uri(_m, &contact) < 0) return -2;
-	if (contact.len && str_duplicate(&_d->rem_target, &contact) < 0) return -3;
+	if (contact.len && shm_str_dup(&_d->rem_target, &contact) < 0) return -3;
 	
 	if (get_from_tag(_m, &rtag) < 0) goto err1;
-	if (rtag.len && str_duplicate(&_d->id.rem_tag, &rtag) < 0) goto err1;
+	if (rtag.len && shm_str_dup(&_d->id.rem_tag, &rtag) < 0) goto err1;
 
 	if (get_callid(_m, &callid) < 0) goto err2;
-	if (callid.len && str_duplicate(&_d->id.call_id, &callid) < 0) goto err2;
+	if (callid.len && shm_str_dup(&_d->id.call_id, &callid) < 0) goto err2;
 
 	if (get_cseq_value(_m, &_d->rem_seq.value) < 0) goto err3;
 	_d->rem_seq.is_set = 1;
@@ -748,7 +730,7 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 	tag.s = tm_tags;
 	tag.len = TOTAG_VALUE_LEN;
 	calc_crc_suffix(_req, tm_tag_suffix);
-	if (str_duplicate(&res->id.loc_tag, &tag) < 0) {
+	if (shm_str_dup(&res->id.loc_tag, &tag) < 0) {
 		free_dlg(res);
 		return -5;
 	}
@@ -806,7 +788,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 		if (get_contact_uri(_m, &contact) < 0) return -5;
 		if (contact.len) {
 			if (_d->rem_target.s) shm_free(_d->rem_target.s);
-			if (str_duplicate(&_d->rem_target, &contact) < 0) return -6;
+			if (shm_str_dup(&_d->rem_target, &contact) < 0) return -6;
 		}
 	}
 

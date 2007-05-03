@@ -50,17 +50,6 @@
 ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 														ucontact_info_t* _ci)
 {
-#define str_dup(_new,_org) \
-	do{ \
-		(_new)->s = (char*)shm_malloc((_org)->len); \
-		if ( (_new)->s == 0) { \
-			LOG(L_ERR, "ERROR:usrloc:new_contact: no more shm memory\n"); \
-			goto error;\
-		}\
-		memcpy((_new)->s, (_org)->s, (_org)->len);\
-		(_new)->len = (_org)->len; \
-	}while(0)
-
 	ucontact_t *c;
 
 	c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
@@ -70,15 +59,15 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 	}
 	memset(c, 0, sizeof(ucontact_t));
 
-	str_dup( &c->c, _contact);
-	str_dup( &c->callid, _ci->callid);
-	str_dup( &c->user_agent, _ci->user_agent);
+	if (shm_str_dup( &c->c, _contact) < 0) goto error;
+	if (shm_str_dup( &c->callid, _ci->callid) < 0) goto error;
+	if (shm_str_dup( &c->user_agent, _ci->user_agent) < 0) goto error;
 
 	if (_ci->received.s && _ci->received.len) {
-		str_dup( &c->received, &_ci->received);
+		if (shm_str_dup( &c->received, &_ci->received) < 0) goto error;
 	}
 	if (_ci->path && _ci->path->len) {
-		str_dup( &c->path, _ci->path);
+		if (shm_str_dup( &c->path, _ci->path) < 0) goto error;
 	}
 
 	c->domain = _dom;
@@ -95,6 +84,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 
 	return c;
 error:
+	LOG(L_ERR, "ERROR:usrloc:new_contact: no more shm memory\n");
 	if (c->path.s) shm_free(c->path.s);
 	if (c->received.s) shm_free(c->received.s);
 	if (c->user_agent.s) shm_free(c->user_agent.s);

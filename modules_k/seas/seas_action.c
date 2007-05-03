@@ -34,6 +34,7 @@
 #include "../../ip_addr.h"
 #include "../../tags.h"
 #include "../../error.h"
+#include "../../ut.h"
 #include "../../parser/hf.h"
 #include "../../parser/parse_fline.h"
 #include "../../parser/parser_f.h"/*find_not_quoted*/
@@ -76,7 +77,6 @@ pid_t my_parent;
 extern int fifo_pid;
 extern int process_no;
 
-static inline int shm_str_dup(str* _d, str* _s);
 static inline struct sip_msg *parse_ac_msg(hdr_flags_t flags,char *start,int len);
 static inline void free_sip_msg_lite(struct sip_msg *my_msg);
 static inline int calculate_hooks(dlg_t* _d);
@@ -1318,23 +1318,6 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
    return len;
 error:
    return -1;
-}
-
-
-/*
- * Make a copy of a str structure using shm_malloc
- */
-static inline int shm_str_dup(str* _d, str* _s)
-{
-   _d->s = shm_malloc(_s->len);
-   if (!_d->s) {
-      LOG(L_ERR, "No memory left\n");
-      return -1;
-   }
-
-   memcpy(_d->s, _s->s, _s->len);
-   _d->len = _s->len;
-   return 0;
 }
 
 
