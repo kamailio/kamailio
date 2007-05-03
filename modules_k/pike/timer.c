@@ -36,7 +36,8 @@
 
 
 
-inline void append_to_timer(struct list_link *head, struct list_link *new_ll )
+static inline void append_to_timer(struct list_link *head,
+													struct list_link *new_ll )
 {
 	DBG("DEBUG:pike:append_to_timer:  %p in %p(%p,%p)\n",
 		new_ll, head,head->prev,head->next);
@@ -50,7 +51,8 @@ inline void append_to_timer(struct list_link *head, struct list_link *new_ll )
 
 
 
-inline void remove_from_timer(struct list_link *head, struct list_link *ll)
+static inline void remove_from_timer(struct list_link *head,
+														struct list_link *ll)
 {
 	DBG("DEBUG:pike:remove_from_timer:  %p from %p(%p,%p)\n",
 		ll, head,head->prev,head->next);
