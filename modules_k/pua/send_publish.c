@@ -41,56 +41,9 @@
 #include "hash.h"
 #include "send_publish.h"
 #include "pua_callback.h"
+#include "event_list.h"
 
 extern struct tm_binds tmb;
-
-int process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple);
-/*
- *  should return:   0  if not changed ( fin_body points to publ->body)
- *                   1  if changed ( must be freed)	
- * */
-
-int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple);
-int bla_process_body (str* init_body, str** fin_body, int ver);
-int mwi_process_body (str* init_body, str** fin_body, int ver);
-
-xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
-															const char *ns)
-{
-	xmlNodePtr cur = node;
-	while (cur) {
-		xmlNodePtr match = NULL;
-		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0) {
-			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix,
-							(unsigned char*)ns) == 0))
-				return cur;
-		}
-		match = xmlNodeGetNodeByName(cur->children, name, ns);
-		if (match)
-			return match;
-		cur = cur->next;
-	}
-	return NULL;
-}
-xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
-{
-	xmlAttrPtr attr = node->properties;
-	while (attr) {
-		if (xmlStrcasecmp(attr->name, (unsigned char*)name) == 0)
-			return attr;
-		attr = attr->next;
-	}
-	return NULL;
-}
-
-char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name)
-{
-	xmlAttrPtr attr = xmlNodeGetAttrByName(node, name);
-	if (attr)
-		return (char*)xmlNodeGetContent(attr->children);
-	else
-		return NULL;
-}
 
 void print_hentity(ua_pres_t* h)
 {
@@ -104,7 +57,7 @@ void print_hentity(ua_pres_t* h)
 		DBG("\ttuple_id: %.*s\n", h->tuple_id.len, h->tuple_id.s);
 }	
 
-str* publ_build_hdr(int expires, int ev, str* content_type, str* etag,
+str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 		str* extra_headers, int is_body)
 {
 	static char buf[3000];
@@ -112,7 +65,7 @@ str* publ_build_hdr(int expires, int ev, str* content_type, str* etag,
 	char* expires_s = NULL;
 	int len = 0;
 	int t= 0;
-	str event= {0, 0};
+	str ctype;
 
 	DBG("PUA: publ_build_hdr ...\n");
 	str_hdr =(str*) pkg_malloc(sizeof(str));
@@ -126,17 +79,10 @@ str* publ_build_hdr(int expires, int ev, str* content_type, str* etag,
 	str_hdr->s = buf;
 	str_hdr->len= 0;
 
-	get_event_name(ev, &event);	
-	if(event.s== NULL)
-	{
-		LOG(L_ERR, "PUA: publ_build_hdr:ERROR NULL event parameter\n");
-		goto error;
-	}
-
 	memcpy(str_hdr->s ,"Event: ", 7);
 	str_hdr->len = 7;
-	memcpy(str_hdr->s+ str_hdr->len, event.s, event.len);
-	str_hdr->len+= event.len;
+	memcpy(str_hdr->s+ str_hdr->len, ev->name.s, ev->name.len);
+	str_hdr->len+= ev->name.len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 	
@@ -175,13 +121,18 @@ str* publ_build_hdr(int expires, int ev, str* content_type, str* etag,
 	{	
 		if(content_type== NULL || content_type->s== NULL || content_type->len== 0)
 		{
-			LOG(L_ERR, "PUA: publ_build_hdr:ERROR NULL content_type parameter\n");
-			goto error;
+			ctype= ev->content_type; /* use event default value */ 
 		}
+		else
+		{	
+			ctype.s=   content_type->s;
+			ctype.len= content_type->len;
+		}
+
 		memcpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
 		str_hdr->len += 14;
-		memcpy(str_hdr->s+str_hdr->len, content_type->s, content_type->len);
-		str_hdr->len += content_type->len;
+		memcpy(str_hdr->s+str_hdr->len, ctype.s, ctype.len);
+		str_hdr->len += ctype.len;
 		memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
 	}
@@ -195,9 +146,6 @@ str* publ_build_hdr(int expires, int ev, str* content_type, str* etag,
 	
 	return str_hdr;
 
-error:
-	pkg_free(str_hdr);
-	return NULL;
 }
 
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
@@ -466,8 +414,9 @@ int send_publish( publ_info_t* publ )
 	int ver= 0;
 	int result;
 	int ret_code= 0;
+	pua_event_t* ev= NULL;
 
-	DBG("\n\n\nPUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
+	DBG("PUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
 			publ->pres_uri->s );
 	
 
@@ -533,11 +482,20 @@ insert:
 		lock_release(&HashT->p_records[hash_code].lock);
 	}
 
+	/* get event from list */
+
+	ev= get_event(publ->event);
+	if(ev== NULL)
+	{
+		LOG(L_ERR, "PUA:send_publish: ERROR event not found in list\n");
+		goto error;
+	}	
+
     /* handle body */
 
 	if(publ->body && publ->body->s)
 	{
-		ret_code= process_body(publ, &body, ver, tuple_id);
+		ret_code= ev->process_body(publ, &body, ver, tuple_id);
 		if( ret_code< 0 || body== NULL)
 		{
 			LOG(L_ERR, "PUA:send_publish: ERROR while processing body\n");
@@ -647,7 +605,7 @@ send_publish:
 	
 	if(publ->flag & UPDATE_TYPE)
 		DBG("PUA:send_publish: etag:%.*s\n", etag.len, etag.s);
-	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, publ->event, &publ->content_type, 
+	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, ev, &publ->content_type, 
 				(publ->flag & UPDATE_TYPE)?&etag:NULL, publ->extra_headers, (body)?1:0);
 
 	if(str_hdr == NULL)
@@ -722,191 +680,4 @@ error:
 	return -1;
 }
 
-int process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
-{
-	tuple= NULL;
-	switch(publ->event)
-	{
-		case(PRESENCE_EVENT): {
-			return pres_process_body(publ, fin_body, ver, tuple);
-		}  
-		case(BLA_EVENT): {
-			return bla_process_body(publ->body, fin_body, ver);
-		}  
-		case(MSGSUM_EVENT): {
-			return mwi_process_body(publ->body, fin_body, ver);
-		}  
-	}
-	return -1;
-}
-
-int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
-{
-
-	xmlDocPtr doc= NULL;
-	xmlNodePtr node= NULL;
-	char* tuple_id= NULL, *person_id= NULL;
-	int tuple_id_len= 0;
-	char buf[50];
-	str* body= NULL;
-
-	tuple= NULL;
-	doc= xmlParseMemory(publ->body->s, publ->body->len );
-	if(doc== NULL)
-	{
-		LOG(L_ERR, "PUA: pres_process_body: ERROR while parsing xml memory\n");
-		goto error;
-	}
-
-	node= xmlNodeGetNodeByName(doc->children, "tuple", NULL);
-	if(node == NULL)
-	{
-		LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting tuple node\n");
-		goto error;
-	}
-	tuple_id= xmlNodeGetAttrContentByName(node, "id");
-	if(tuple_id== NULL)
-	{	
-		tuple_id= buf;
-		tuple_id_len= sprintf(tuple_id, "%p", publ);
-		tuple_id[tuple_id_len]= '\0'; 
-		
-		if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
-		{
-			LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting xml"
-						" node\n");
-			goto error;
-		}
-	}
-	else
-	{
-		strcpy(buf, tuple_id);
-		xmlFree(tuple_id);
-		tuple_id= buf;
-		tuple_id_len= strlen(tuple_id);
-	}	
-	node= xmlNodeGetNodeByName(doc->children, "person", NULL);
-	if(node)
-	{
-		DBG("PUA: pres_process_body:found person node\n");
-		person_id= xmlNodeGetAttrContentByName(node, "id");
-		if(person_id== NULL)
-		{	
-			if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
-			{
-				LOG(L_ERR, "PUA:pres_process_body:ERROR while extracting xml"
-						" node\n");
-				goto error;
-			}
-		}
-		else
-		{
-			xmlFree(person_id);
-		}
-	}	
-	body= (str*)pkg_malloc(sizeof(str));
-	if(body== NULL)
-	{
-		LOG(L_ERR, "PUA:pres_process_body ERROR NO more memory left\n");
-		goto error;
-	}
-	memset(body, 0, sizeof(str));
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);	
-	if(body->s== NULL || body->len== 0)
-	{
-		LOG(L_ERR, "PUA: pres_process_body: ERROR while dumping xml format\n");
-		goto error;
-	}	
-	xmlFreeDoc(doc);
-	doc= NULL;
-	
-	tuple= (str*)pkg_malloc(sizeof(str));
-	if(tuple== NULL)
-	{
-		LOG(L_ERR, "PUA: pres_process_body: ERROR No more memory\n");
-		goto error;
-	}
-	tuple->s= tuple_id;
-	tuple->len= tuple_id_len;
-	
-	*fin_body= body;
-	xmlMemoryDump();
-	xmlCleanupParser();
-	return 1;
-
-error:
-	if(doc)
-		xmlFreeDoc(doc);
-	if(body)
-		pkg_free(body);
-	return -1;
-
-}	
-
-int bla_process_body(str* init_body, str** fin_body, int ver)
-{
-	xmlNodePtr node= NULL;
-	xmlDocPtr doc= NULL;
-	char* version;
-	str* body= NULL;
-	int len;
-
-	DBG("PUA: bla_process_body: start\n");
-	doc= xmlParseMemory(init_body->s, init_body->len );
-	if(doc== NULL)
-	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR while parsing xml memory\n");
-		goto error;
-	}
-	/* change version and state*/
-	node= xmlNodeGetNodeByName(doc->children, "dialog-info", NULL);
-	if(node == NULL)
-	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR while extracting dialog-info node\n");
-		goto error;
-	}
-	version= int2str(ver,&len);
-	version[len]= '\0';
-
-	if( xmlSetProp(node, (const xmlChar *)"version",(const xmlChar*)version)== NULL)
-	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR while setting version attribute\n");
-		goto error;	
-	}
-	body= (str*)pkg_malloc(sizeof(str));
-	if(body== NULL)
-	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR NO more memory left\n");
-		goto error;
-	}
-	memset(body, 0, sizeof(str));
-	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);	
-
-	xmlFreeDoc(doc);
-	doc= NULL;
-	*fin_body= body;	
-	if(*fin_body== NULL)
-		DBG("PUA: bla_process_body: NULL fin_body\n");
-
-	xmlMemoryDump();
-	xmlCleanupParser();
-	DBG("PUA: bla_process_body: successful\n");
-	return 1;
-
-error:
-	if(doc)
-		xmlFreeDoc(doc);
-	if(body)
-		pkg_free(body);
-	
-	xmlMemoryDump();
-	xmlCleanupParser();
-	return -1;
-}
-
-int mwi_process_body(str* init_body, str** fin_body,  int ver)
-{
-	*fin_body= init_body;
-	return 0;
-}
 

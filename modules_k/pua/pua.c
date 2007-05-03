@@ -48,6 +48,8 @@
 #include "send_subscribe.h"
 #include "pua_bind.h"
 #include "pua_callback.h"
+#include "event_list.h"
+#include "add_events.h"
 
 MODULE_VERSION
 #define PUA_TABLE_VERSION 3
@@ -62,6 +64,7 @@ str db_url = {0, 0};
 char* db_table= "pua";
 int update_period= 100;
 int startup_time = 0;
+pua_event_t* pua_evlist= NULL;
 
 /* database connection */
 db_con_t *pua_db = NULL;
@@ -210,6 +213,17 @@ static int mod_init(void)
 		LOG(L_ERR, "PUA:mod_init: ERROR: callbacks initialization failed\n");
         return -1;
     }
+	pua_evlist= init_pua_evlist();
+	if(pua_evlist< 0)
+	{
+		LOG(L_ERR, "PUA:mod_init: ERROR when initializing pua_evlist\n");
+		return -1;
+	}
+	if(pua_add_events()< 0)
+	{
+		LOG(L_ERR, "PUA:mod_init: ERROR while adding events\n");
+		return -1;
+	}
 
 	startup_time = (int) time(NULL);
 	
@@ -221,6 +235,8 @@ static int mod_init(void)
 	if(pua_db)
 		pua_dbf.close(pua_db);
 	pua_db = NULL;
+
+	
 
 	return 0;
 }
@@ -269,6 +285,8 @@ static void destroy(void)
 
 	if(pua_db)
 		pua_dbf.close(pua_db);
+	if(pua_evlist)
+		destroy_pua_evlist();
 
 	return ;
 }
@@ -600,7 +618,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 	if(p->watcher_uri== NULL)
 	{
 		str met= {"PUBLISH", 7};
-		str_hdr = publ_build_hdr(expires, p->event, NULL, &p->etag, NULL, 0);
+		str_hdr = publ_build_hdr(expires, get_event(p->event), NULL, &p->etag, NULL, 0);
 		if(str_hdr == NULL)
 		{
 			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");

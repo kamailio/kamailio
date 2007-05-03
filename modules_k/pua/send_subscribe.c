@@ -41,6 +41,7 @@
 #include "pua.h"
 #include "send_subscribe.h"
 #include "pua_callback.h"
+#include "event_list.h"
 
 extern int default_expires;
 extern int min_expires;
@@ -61,6 +62,7 @@ str* subs_build_hdr(str* contact, int expires, int event)
 	static char buf[3000];
 	char* subs_expires= NULL;
 	int len= 1;
+	pua_event_t* ev;	
 
 	str_hdr= (str*)pkg_malloc(sizeof(str));
 	if(str_hdr== NULL)
@@ -70,31 +72,18 @@ str* subs_build_hdr(str* contact, int expires, int event)
 	}
 	memset(str_hdr, 0, sizeof(str));
 	str_hdr->s= buf;
-
-	if(event& PRESENCE_EVENT)
-	{	
-		memcpy(str_hdr->s ,"Event: presence", 15);
-		str_hdr->len = 15;
-	}
-	else
-	if(event& PWINFO_EVENT)	
-	{	
-		memcpy(str_hdr->s ,"Event: presence.winfo", 21);
-		str_hdr->len = 21;
-	}
-	else
-	if(event& BLA_EVENT)	
-	{	
-		memcpy(str_hdr->s ,"Event: dialog;sla", 17);
-		str_hdr->len = 17;
-	}
-	else
+	
+	ev= get_event(event);	
+	if(ev== NULL)
 	{
-		LOG(L_ERR, "PUA:subs_build_hdr:ERROR wrong event parameter: %d\n", event);
-		pkg_free(str_hdr);
-		return NULL;
+		LOG(L_ERR, "PUA: publ_build_hdr:ERROR while getting event from list\n");
+		goto error;
 	}
 
+	memcpy(str_hdr->s ,"Event: ", 7);
+	str_hdr->len = 7;
+	memcpy(str_hdr->s+ str_hdr->len, ev->name.s, ev->name.len);
+	str_hdr->len+= ev->name.len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
 	
@@ -131,6 +120,11 @@ str* subs_build_hdr(str* contact, int expires, int event)
 	str_hdr->s[str_hdr->len]= '\0';
 
 	return str_hdr;
+
+error:
+	if(str_hdr)
+		pkg_free(str_hdr);
+	return NULL;
 }	
 
 dlg_t* pua_build_dlg_t(ua_pres_t* presentity)	

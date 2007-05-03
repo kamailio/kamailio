@@ -29,6 +29,7 @@
 #include "../tm/tm_load.h"
 #include "../../str.h"
 #include "hash.h"
+#include "event_list.h"
 
 typedef int (publrpl_cb_t)(struct sip_msg* msg, void*  extra_param);
 
@@ -41,7 +42,7 @@ typedef struct publ_info
 	int flag;
 	int source_flag;
 	int event;   
-	str content_type;   // not needed on update expires (empty body), should be {0, 0}
+	str content_type;   /* optional field - only if different from event default */ 
 	str* etag;
 	str* extra_headers;
 	publrpl_cb_t* cbrpl;
@@ -58,6 +59,7 @@ typedef int (*send_publish_t)(publ_info_t* publ);
 int send_publish( publ_info_t* publ );
 void print_ua_pres(ua_pres_t* p);
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps);
-str* publ_build_hdr(int expires, int event,str* content_type, str* etag, str* extra_headers, int is_body);
+str* publ_build_hdr(int expires, pua_event_t* event, str* content_type, str* etag,
+		str* extra_headers, int is_body);
 
 #endif

@@ -32,6 +32,11 @@
 #include "../../str.h"
 #include "../../lock_ops.h"
 
+#define PRESENCE_EVENT      1<<0
+#define PWINFO_EVENT        1<<1
+#define BLA_EVENT			1<<2
+#define MSGSUM_EVENT        1<<3
+
 #define UL_PUBLISH					1<<0
 #define BLA_PUBLISH					1<<1
 #define BLA_TERM_PUBLISH			1<<2
@@ -41,12 +46,6 @@
 #define XMPP_INITIAL_SUBS		    1<<6
 #define MI_PUBLISH					1<<7
 #define MI_SUBSCRIBE				1<<8
-
-
-#define PRESENCE_EVENT      1<<0
-#define PWINFO_EVENT        1<<1
-#define BLA_EVENT			1<<2
-#define MSGSUM_EVENT        1<<3
 
 #define NO_UPDATEDB_FLAG	1<<0
 #define UPDATEDB_FLAG		1<<1
@@ -110,40 +109,6 @@ int is_dialog(ua_pres_t* dialog);
 ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code);
 
 typedef int  (*query_dialog_t)(ua_pres_t* presentity);
-
-static inline int get_event_name(int ev_flag, str* event)
-{
-	switch(ev_flag)
-	{
-		case(PRESENCE_EVENT):{
-								event->s= "presence";
-								event->len= 8;
-								break;
-							}
-		case(PWINFO_EVENT):{
-								event->s= "presence;winfo";
-								event->len= 14;
-								break;
-							}
-		case(BLA_EVENT):    {
-								event->s= "dialog;sla";
-								event->len= 10;
-								break;
-							}
-		case(MSGSUM_EVENT): {
-								event->s= "message-summary";
-								event->len= 15;
-								break;
-							}
-		default:{
-					LOG(L_ERR, "PUA: get_event_name: Unknown event flag\n");
-					return -1;
-				}	
-	}
-	return 0;
-			 
-}	
-
 
 static inline int get_event_flag(str* event)
 {
