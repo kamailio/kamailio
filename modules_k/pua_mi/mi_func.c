@@ -37,14 +37,15 @@
 #include "pua_mi.h"
 
 /*
- * cmd: mi_pua_publish
+ * mi cmd: pua_publish
  *		<presentity_uri> 
  *		<expires>
  *		<event package>
- *		<content_type>      - 0 if no body or the body type
- *		<ETag>              - 0 or the value of the replied ETag it should match
+ *		<content_type>      - body type or . if no body
+ *		<ETag>              - ETag that publish should match
+ *                                    or . if no ETag
  *		<xml_presence_body> - may not be present in case of update 
- *	 * */
+ */
 int mi_publ_rpl_cback(struct sip_msg* reply, void* param);
 
 struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
@@ -170,14 +171,14 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	DBG("DEBUG:pua_mi:mi_pua_publish: body '%.*s'\n",
 	    body.len, body.s);
 
-	/* Check that body is NULL if content type is 0 */
-	if(body.s== NULL && (content_type.len!= 1 || content_type.s[0]!= '0'))
+	/* Check that body is NULL iff content type is . */
+	if(body.s== NULL && (content_type.len!= 1 || content_type.s[0]!= '.'))
 	{
 		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-			    "body is missing, but content type is not 0\n");
+			    "body is missing, but content type is not .\n");
 		return init_mi_tree(400, "Body parameter is missing", 25);
 	}
-	if(body.s!= NULL && content_type.len== 1 && content_type.s[0]== '0')
+	if(body.s!= NULL && content_type.len== 1 && content_type.s[0]== '.')
 	{
 		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
 			    "bad content type\n");
@@ -205,7 +206,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		publ.content_type= content_type;
 	}	
 	
-	if(! (etag.len== 1 && etag.s[0]== '0'))
+	if(! (etag.len== 1 && etag.s[0]== '.'))
 	{
 		publ.etag= &etag;
 	}	
