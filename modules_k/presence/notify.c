@@ -558,34 +558,6 @@ error:
 	return NULL;
 }
 
-static inline int shm_strdup(str* dst, str* src)
-{
-	dst->s = shm_malloc(src->len);
-	if (dst->s==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:shm_strdup: No memory left\n");
-		return -1;
-	}
-	
-	memcpy(dst->s, src->s, src->len);
-	dst->len = src->len;
-	return 0;
-}
-
-static inline int pkg_strdup(str* dst, str* src)
-{
-	dst->s = pkg_malloc(src->len);
-	if (dst->s==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:pkg_strdup: No memory left\n");
-		return -1;
-	}
-	
-	memcpy(dst->s, src->s, src->len);
-	dst->len = src->len;
-	return 0;
-}
-
 int free_tm_dlg(dlg_t *td)
 {
 	if(td)
