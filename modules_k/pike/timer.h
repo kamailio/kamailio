@@ -41,17 +41,20 @@ struct list_link {
 #define is_list_empty(_head) \
 	((_head)->next == (_head))
 
-
+#define update_in_timer( _head, _ll) \
+	do { \
+		remove_from_timer( _head, _ll);\
+		append_to_timer( _head, _ll); \
+	}while(0)
 
 
 void append_to_timer(struct list_link *head, struct list_link *ll );
 
 void remove_from_timer(struct list_link *head, struct list_link *ll);
 
-void update_in_timer(struct list_link *head, struct list_link *ll);
-
 void check_and_split_timer(struct list_link *head, unsigned int time,
 		struct list_link *split, unsigned char *mask);
+
 
 #endif
 
