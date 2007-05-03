@@ -34,6 +34,8 @@
  *  2006-12-20  extended by tma
  */
 
+#include <sys/types.h>
+#include <sys/uio.h>
 #include <stdlib.h> /* realloc, rand ... */
 #include <stdio.h>
 #include <unistd.h>
