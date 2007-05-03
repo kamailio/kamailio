@@ -148,8 +148,10 @@ int xcap_query_impl(const char *uri, xcap_query_params_t *params, char **buf, in
 		curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data_func);
 		curl_easy_setopt(handle, CURLOPT_WRITEDATA, &data);
 
+#ifdef CURLOPT_MUTE
 		/* be quiet */
 		curl_easy_setopt(handle, CURLOPT_MUTE, 1);
+#endif /* CURLOPT_MUTE */
 		
 		/* non-2xx => error */
 		curl_easy_setopt(handle, CURLOPT_FAILONERROR, 1);
