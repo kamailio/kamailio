@@ -802,26 +802,187 @@ error:
 
 static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 {
-	struct sip_msg* msg;
+	db_key_t db_keys[NR_KEYS];
+	db_val_t db_vals[NR_KEYS];
 
+	static char fromip_buff[IP_ADDR_MAX_STR_SIZE+12];
+	static char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
+	struct sip_msg* msg;
+	struct sip_msg* req;
+	int_str        avp_value;
+	struct usr_avp *avp;
+	char statusbuf[8];
+	
 	if(t==NULL || t->uas.request==0 || ps==NULL)
 	{
 		DBG("trace_onreply_in: no uas request, local transaction\n");
 		return;
 	}
 
+	req = ps->req;
 	msg = ps->rpl;
-	if(msg==NULL || msg==FAKED_REPLY)
+	if(msg==NULL || req==NULL)
 	{
-		DBG("trace_onreply_in: no reply, local transaction\n");
+		DBG("trace_onreply_in: no reply\n");
 		return;
 	}
 	
-	if( trace_is_off(msg) )
+	avp = NULL;
+	if(traced_user_avp.n!=0)
+		avp=search_first_avp(traced_user_avp_type, traced_user_avp,
+				&avp_value, 0);
+
+	if((avp==NULL) &&  trace_is_off(req))
 	{
 		DBG("trace_onreply_in: trace off...\n");
 		return;
 	}
+
+	if(parse_from_header(msg)==-1 || msg->from==NULL || get_from(msg)==NULL)
+	{
+		LOG(L_ERR, "trace_onreply_in: ERROR cannot parse FROM header\n");
+		goto error;
+	}
+
+	if(parse_headers(msg, HDR_CALLID_F, 0)!=0)
+	{
+		LOG(L_ERR, "trace_onreply_in: ERROR cannot parse call-id\n");
+		return;
+	}
+
+	db_keys[0] = msg_column;
+	db_vals[0].type = DB_BLOB;
+	db_vals[0].nul = 0;
+	if(msg->len>0) {
+		db_vals[0].val.blob_val.s   = msg->buf;
+		db_vals[0].val.blob_val.len = msg->len;
+	} else {
+		db_vals[0].val.blob_val.s   = "No reply buffer";
+		db_vals[0].val.blob_val.len = sizeof("No reply buffer")-1;
+	}
+
+	/* check Call-ID header */
+	if(msg->callid==NULL || msg->callid->body.s==NULL)
+	{
+		LOG(L_ERR, "trace_onreply_in: ERROR cannot find Call-ID header!\n");
+		goto error;
+	}
+
+	db_keys[1] = callid_column;
+	db_vals[1].type = DB_STR;
+	db_vals[1].nul = 0;
+	db_vals[1].val.str_val.s = msg->callid->body.s;
+	db_vals[1].val.str_val.len = msg->callid->body.len;
+	
+	db_keys[2] = method_column;
+	db_vals[2].type = DB_STR;
+	db_vals[2].nul = 0;
+	db_vals[2].val.str_val.s = t->method.s;
+	db_vals[2].val.str_val.len = t->method.len;
+		
+	db_keys[3] = status_column;
+	db_vals[3].type = DB_STRING;
+	db_vals[3].nul = 0;
+	strcpy(statusbuf, int2str(ps->code, NULL));
+	db_vals[3].val.string_val = statusbuf;
+		
+	db_keys[4] = fromip_column;
+	db_vals[4].type = DB_STRING;
+	db_vals[4].nul = 0;
+	strcpy(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
+	strcat(fromip_buff,":");
+	strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
+	db_vals[4].val.string_val = fromip_buff;
+	
+	db_keys[5] = toip_column;
+	db_vals[5].type = DB_STRING;
+	db_vals[5].nul = 0;
+	// db_vals[5].val.string_val = ip_addr2a(&msg->rcv.dst_ip);;
+	if(trace_local_ip)
+		db_vals[5].val.string_val = trace_local_ip;
+	else {
+		if(msg->rcv.proto==PROTO_TCP) {
+			memcpy(toip_buff, "tcp:", 4);
+		} else if(msg->rcv.proto==PROTO_TLS) {
+			memcpy(toip_buff, "tls:", 4);
+		} else {
+			memcpy(toip_buff, "udp:", 4);
+		}
+		strcpy(toip_buff+4, ip_addr2a(&msg->rcv.dst_ip));
+		strcat(toip_buff+4,":");
+		strcat(toip_buff+4, int2str(msg->rcv.dst_port, NULL));
+		db_vals[5].val.string_val = toip_buff;
+	}
+	
+	db_keys[6] = date_column;
+	db_vals[6].type = DB_DATETIME;
+	db_vals[6].nul = 0;
+	db_vals[6].val.int_val = time(NULL);
+	
+	db_keys[7] = direction_column;
+	db_vals[7].type = DB_STRING;
+	db_vals[7].nul = 0;
+	db_vals[7].val.string_val = "in";
+	
+	db_keys[8] = fromtag_column;
+	db_vals[8].type = DB_STR;
+	db_vals[8].nul = 0;
+	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
+	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
+	
+	db_funcs.use_table(db_con, siptrace_get_table());
+
+	db_keys[9] = traced_user_column;
+	db_vals[9].type = DB_STR;
+	db_vals[9].nul = 0;
+
+	if( !trace_is_off(req) ) {
+		db_vals[9].val.str_val.s   = "";
+		db_vals[9].val.str_val.len = 0;
+	
+		DBG("trace_onreply_in: storing info...\n");
+		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
+		{
+			LOG(L_ERR, "trace_onreply_out: error storing trace\n");
+			goto error;
+		}
+	}
+	
+	if(avp==NULL)
+		goto done;
+	
+	trace_send_duplicate(db_vals[0].val.blob_val.s,
+			db_vals[0].val.blob_val.len);
+	
+	db_vals[9].val.str_val.s = avp_value.s.s;
+	db_vals[9].val.str_val.len = avp_value.s.len;
+
+	DBG("trace_onreply_in: storing info...\n");
+	if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
+	{
+		LOG(L_ERR, "trace_onreply_in: error storing trace\n");
+		goto error;
+	}
+
+	avp = search_next_avp( avp, &avp_value);
+	while(avp!=NULL)
+	{
+		db_vals[9].val.str_val.s = avp_value.s.s;
+		db_vals[9].val.str_val.len = avp_value.s.len;
+
+		DBG("### - trace_onreply_in: storing info ...\n");
+		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
+		{
+			LOG(L_ERR, "trace_onreply_in: error storing trace\n");
+			goto error;
+		}
+		avp = search_next_avp( avp, &avp_value);
+	}
+	
+done:
+	return;
+error:
+	return;
 }
 
 static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
@@ -995,7 +1156,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
-	if( !trace_is_off(msg) ) {
+	if( !trace_is_off(req) ) {
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
