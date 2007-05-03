@@ -46,6 +46,7 @@
 #include "../../error.h"
 #include "../../items.h"
 #include "../../mem/mem.h"
+#include "../../mod_fix.h"
 #include "loose.h"
 #include "record.h"
 #include "rr_cb.h"
@@ -70,7 +71,6 @@ MODULE_VERSION
 static int  mod_init(void);
 static void mod_destroy(void);
 /* fixup functions */
-static int regexp_fixup(void** param, int param_no);
 static int direction_fixup(void** param, int param_no);
 static int it_list_fixup(void** param, int param_no);
 /* wrapper functions */
@@ -94,7 +94,7 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"add_rr_param",         w_add_rr_param,        1,     it_list_fixup,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"check_route_param",    w_check_route_param,   1,     regexp_fixup,
+	{"check_route_param",    w_check_route_param,   1,     fixup_str2regexp,
 			REQUEST_ROUTE},
 	{"is_direction",         w_is_direction,        1,     direction_fixup,
 			REQUEST_ROUTE},
@@ -156,29 +156,6 @@ static int mod_init(void)
 static void mod_destroy()
 {
 	destroy_rrcb_lists();
-}
-
-
-static int regexp_fixup(void** param, int param_no)
-{
-	regex_t* re;
-
-	if (param_no==1) {
-		if ((re=pkg_malloc(sizeof(regex_t)))==0) {
-			LOG(L_ERR,"ERROR:rr:regexp_fixup: no more pkg memory\n");
-			return E_OUT_OF_MEM;
-		}
-		if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
-			pkg_free(re);
-			LOG(L_ERR, "ERROR:rr:regexp_fixup: bad regexp %s\n",(char*)*param);
-			return E_BAD_RE;
-		}
-		/* free string */
-		pkg_free(*param);
-		/* replace it with the compiled re */
-		*param=re;
-	}
-	return 0;
 }
 
 
