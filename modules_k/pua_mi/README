@@ -9,6 +9,8 @@ Edited by
 
 Anca-Maria Vamanu
 
+Juha Heinanen
+
    Copyright © 2006 voice-system.ro
      _________________________________________________________
 
@@ -25,27 +27,29 @@ Anca-Maria Vamanu
         1.4. Exported Functions
         1.5. Exported MI functions
 
-              1.5.1. mi_pua_publish
+              1.5.1. pua_publish
 
    2. Developer's Guide
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. mi_pua_publish FIFO example
+   1-1. pua_publish FIFO example
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   The pua_mi sends offer the possibility to publish presence
-   information via MI transports. Future improvement may be
-   ability to subscribe for presence status via MI.
+   The pua_mi offers the possibility to publish presence
+   information and subscribe to presence information via MI
+   transports.
 
    Using this module you can create independent
    applications/scripts to publish not sip-related information
    (e.g., system resources like CPU-usage, memory, number of
-   active subscribers ...)
+   active subscribers ...). Also, this module allows non-SIP
+   speaking applications to subscribe presence information kept
+   in a SIP presence server.
      _________________________________________________________
 
 1.2. Dependencies
@@ -54,8 +58,7 @@ Chapter 1. User's Guide
 
    The following modules must be loaded before this module:
 
-     * mi_fifo.
-     * pua.
+     * pua
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -63,12 +66,12 @@ Chapter 1. User's Guide
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
 
-     * none.
+     * none
      _________________________________________________________
 
 1.3. Exported Parameters
 
-     * none.
+     * none
      _________________________________________________________
 
 1.4. Exported Functions
@@ -79,23 +82,31 @@ Chapter 1. User's Guide
 
 1.5. Exported MI functions
 
-1.5.1. mi_pua_publish
+1.5.1. pua_publish
 
    Command parameters:
 
-     * presentity_uri - like 'sip:system@openser.org' 
-     * expires 
-       The relative time in seconds (eg: 3600 )
-     * body 
-       The body of the publish message; the only format accepted
-       is xml. For FIFO MI transport, it has to be on a single
-       line.
+     * presentity_uri - e.g. sip:system@openser.org
+     * expires - Relative expires time in seconds (e.g. 3600).
+     * event package - Event package that is target of published
+       information (e.g. presence). 
+     * content type - Content type of published information (e.g.
+       application/pidf+xml) or . if no information is enclosed. 
+     * ETag - ETag that publish should match or . if no ETag is
+       given. 
+     * body - The body of the publish request containing
+       published information or missing if no published
+       information. It has to be a single line for FIFO
+       transport. 
 
-   Example 1-1. mi_pua_publish FIFO example
+   Example 1-1. pua_publish FIFO example
 ...
-:mi_pua_publish:fifo_test_reply
+:pua_publish:fifo_test_reply
 sip:system@openser.org
 10
+presence
+application/pidf+xml
+.
 <?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmln
 s:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:para
 ms:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity
@@ -103,7 +114,6 @@ ms:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity
 </status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/
 >away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></p
 resence>
-...
      _________________________________________________________
 
 Chapter 2. Developer's Guide

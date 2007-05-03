@@ -14,14 +14,17 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		 The pua_mi sends offer the possibility to publish presence
-		 information via MI transports. Future improvement may be
-		 ability to subscribe for presence status via MI.
+		 The pua_mi offers the possibility to publish presence
+	         information and subscribe to presence information via MI
+ 	         transports.
 	</para>
 	<para>
 		Using this module you can create independent applications/scripts to
 		publish not sip-related information (e.g., system resources like
-		CPU-usage, memory, number of active subscribers ...)
+		CPU-usage, memory, number of active subscribers ...).
+	        Also, this module allows non-SIP speaking applications
+		to subscribe presence information kept in a SIP presence
+	        server.
 	</para>
 	<para>
 	</para>
@@ -36,14 +39,10 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>mi_fifo</emphasis>.
+				<emphasis>pua</emphasis>
 			</para>
 			</listitem>
-			<listitem>
-			<para>
-				<emphasis>pua</emphasis>.
-			</para>
-			</listitem>
+			</itemizedlist>
 	</section>
 	
 	<section>
@@ -54,7 +53,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>none</emphasis>.
+				<emphasis>none</emphasis>
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -68,7 +67,7 @@
 		<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>none</emphasis>.
+				<emphasis>none</emphasis>
 			</para>
 			</listitem>
 		</itemizedlist>	
@@ -84,47 +83,70 @@
 		<title>Exported MI functions</title>
 		<section>
 				<title>
-				<function moreinfo="none">mi_pua_publish</function>
+				<function moreinfo="none">pua_publish</function>
 				</title>
 			<para>
 				Command parameters:
 			<itemizedlist>
 			<listitem>
 				<para>
-					<emphasis>presentity_uri<emphasis> - like 'sip:system@openser.org'
-				<para>	
+					<emphasis>presentity_uri</emphasis>
+					- e.g. sip:system@openser.org
+				</para>	
 			</listitem>
 			<listitem>
 				<para>
-					<emphasis>expires<emphasis>
-					<para>The relative time in seconds (eg: 3600 )</para> 
-				<para>	
+					<emphasis>expires</emphasis>
+					- Relative expires time in
+					seconds (e.g. 3600).
+				</para>	
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>event package<emphasis>
+					- Event package that is
+		target of published information (e.g. presence).
+				    </para> 
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>content type<emphasis>
+					- Content type of published
+		information (e.g. application/pidf+xml) or . if no
+		information is enclosed.
+			       </para> 
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>ETag<emphasis>
+					- ETag that publish should
+		match or . if no ETag is given.
+		                </para> 
 			</listitem>
 			<listitem>
 				<para>
 					<emphasis>body<emphasis>
-					<para>The body of the publish message; the only format
-					accepted is xml. For FIFO MI transport, it has to be
-					on a single line.</para>
-				<para>	
+					- The body of the publish
+		request containing published information or missing if
+		no published information.
+		It has to be a single line for FIFO transport.
+				 </para>
 			</listitem>
-
-
-
-			</para>
-			<para>
+			</itemizedlist>
 			</para>
 		<example>
-		<title><function>mi_pua_publish</function> FIFO example</title>
+		<title><function>pua_publish</function> FIFO example</title>
 	<programlisting format="linespecific">
 ...
 <![CDATA[
-:mi_pua_publish:fifo_test_reply
+:pua_publish:fifo_test_reply
 sip:system@openser.org
 10
+presence
+application/pidf+xml
+.
 <?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='system@openser.org'><tuple id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presence>
 ]]>
-...
 </programlisting>
 		</example>
 		</section>
@@ -138,5 +160,3 @@ Local Variables:
 sgml-parent-document: ("pua.sgml" "Book" "chapter")
 End:
 -->
-
-
