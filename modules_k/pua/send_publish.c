@@ -43,7 +43,13 @@
 #include "pua_callback.h"
 
 extern struct tm_binds tmb;
+
 int process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple);
+/*
+ *  should return:   0  if not changed ( fin_body points to publ->body)
+ *                   1  if changed ( must be freed)	
+ * */
+
 int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple);
 int bla_process_body (str* init_body, str** fin_body, int ver);
 int mwi_process_body (str* init_body, str** fin_body, int ver);
@@ -212,7 +218,19 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		LOG(L_ERR, "PUA:publ_cback_func: Error NULL callback parameter\n");
 		goto error;
 	}
-	
+
+	msg= ps->rpl;
+	if(msg == NULL)
+	{
+		LOG(L_ERR, "PUA:publ_cback_func: ERROR no reply message found\n ");
+		goto error;
+	}
+	if(msg== FAKED_REPLY)
+	{
+		DBG("PUA:publ_cback_func: FAKED_REPLY\n");
+		goto error;
+	}
+
 	if( ps->code>= 300 )
 	{
 		if( *ps->param== NULL ) 
@@ -266,19 +284,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			lock_release(&HashT->p_records[hash_code].lock);
 		goto error;
 	}
-
-	msg= ps->rpl;
-	if(msg == NULL)
-	{
-		LOG(L_ERR, "PUA:publ_cback_func: ERROR no reply message found\n ");
-		goto error;
-	}
-	if(msg== FAKED_REPLY)
-	{
-		DBG("PUA:publ_cback_func: FAKED_REPLY\n");
-		goto error;
-	}
-
+	
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LOG(L_ERR, "PUA:publ_cback_func: error parsing headers\n");
@@ -459,8 +465,9 @@ int send_publish( publ_info_t* publ )
 	str etag= {0, 0};
 	int ver= 0;
 	int result;
+	int ret_code= 0;
 
-	DBG("PUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
+	DBG("\n\n\nPUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
 			publ->pres_uri->s );
 	
 
@@ -530,7 +537,8 @@ insert:
 
 	if(publ->body && publ->body->s)
 	{
-		if( (process_body(publ, &body, ver, tuple_id)< 0) || body== NULL)
+		ret_code= process_body(publ, &body, ver, tuple_id);
+		if( ret_code< 0 || body== NULL)
 		{
 			LOG(L_ERR, "PUA:send_publish: ERROR while processing body\n");
 			if(body== NULL)
@@ -560,9 +568,10 @@ insert:
 		goto error;
 	}
 	memset(cb_param, 0, size);
+	memset(&cb_param->publ, 0, sizeof(publ_info_t));
 	size =  sizeof(treq_cbparam_t);
 	DBG("PUA: send_publish: size= %d\n", size);
-	
+
 	cb_param->publ.pres_uri = (str*)((char*)cb_param + size);
 	size+= sizeof(str);
 
@@ -627,6 +636,7 @@ insert:
 		cb_param->tuple_id.len= tuple_id->len;
 		size+= tuple_id->len;
 	}
+	DBG("PUA:send_publish: after allocating: size= %d\n", size);
 	cb_param->publ.cbparam= publ->cbparam;
 	cb_param->publ.cbrpl= publ->cbrpl;
 	cb_param->publ.event= publ->event;
@@ -670,7 +680,7 @@ send_publish:
 
 	pkg_free(str_hdr);
 
-	if( body)
+	if( body && ret_code)
 	{
 		if(body->s)
 			free(body->s);
@@ -695,7 +705,7 @@ error:
 	{
 		shm_free(cb_param);
 	}	
-	if(body)
+	if(body&& ret_code)
 	{
 		if(body->s)
 			free(body->s);
@@ -819,10 +829,10 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 	tuple->s= tuple_id;
 	tuple->len= tuple_id_len;
 	
-	*(fin_body)= body;
+	*fin_body= body;
 	xmlMemoryDump();
 	xmlCleanupParser();
-	return 0;
+	return 1;
 
 error:
 	if(doc)
@@ -874,14 +884,14 @@ int bla_process_body(str* init_body, str** fin_body, int ver)
 
 	xmlFreeDoc(doc);
 	doc= NULL;
-	*(fin_body)= body;	
+	*fin_body= body;	
 	if(*fin_body== NULL)
 		DBG("PUA: bla_process_body: NULL fin_body\n");
 
 	xmlMemoryDump();
 	xmlCleanupParser();
 	DBG("PUA: bla_process_body: successful\n");
-	return 0;
+	return 1;
 
 error:
 	if(doc)
@@ -896,6 +906,7 @@ error:
 
 int mwi_process_body(str* init_body, str** fin_body,  int ver)
 {
+	*fin_body= init_body;
 	return 0;
 }
 
