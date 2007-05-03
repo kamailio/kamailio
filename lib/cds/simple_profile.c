@@ -9,9 +9,11 @@
 
 #define trace_signal SIGTRAP
 
+typedef void (*_sig_t) (int);
+
 unsigned int tick_counter = 0;
 static struct sigaction old_sigprof_action;
-__sighandler_t old_sigx_action;
+_sig_t old_sigx_action;
 static int initialized = 0;
 static trace_f trace_function = NULL;
 
