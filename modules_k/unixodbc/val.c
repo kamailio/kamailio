@@ -28,58 +28,17 @@
  */
 
 
-#include <limits.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "../../dprint.h"
 #include "../../strcommon.h"
+#include "../../db/db_ut.h"
 #include "utils.h"
 #include "db_mod.h"
 #include "val.h"
 
 
-/*
- * Convert a string to integer
- */
-static inline int str2int(const char* _s, int* _v)
-{
+#include <string.h>
+#include <stdio.h>
 
-	long tmp;
-
-	if (!_s || !_v)
-	{
-		LOG(L_ERR, "str2int: Invalid parameter value\n");
-		return -1;
-	}
-
-	tmp = strtoul(_s, 0, 10);
-	if ((tmp == ULONG_MAX && errno == ERANGE) ||
-		(tmp < INT_MIN) || (tmp > UINT_MAX))
-	{
-		LOG(L_ERR, "str2int: Value out of range\n");
-		return -1;
-	}
-
-	*_v = (int)tmp;
-	return 0;
-}
-
-/*
- * Convert a string to double
- */
-static inline int str2double(const char* _s, double* _v)
-{
-	if ((!_s) || (!_v))
-	{
-		LOG(L_ERR, "str2double: Invalid parameter value\n");
-		return -1;
-	}
-
-	*_v = atof(_s);
-	return 0;
-}
 
 /* 
  * Convert a string to time_t
@@ -96,53 +55,6 @@ static inline int str2time(const char* _s, time_t* _v)
 	return 0;
 }
 
-/*
- * Convert an integer to string
- */
-static inline int int2str(int _v, char* _s, int* _l)
-{
-	int ret;
-
-	if ((!_s) || (!_l) || (!*_l))
-	{
-		LOG(L_ERR, "int2str: Invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(_s, *_l, "%-d", _v);
-	if (ret < 0 || ret >= *_l)
-	{
-		LOG(L_ERR, "int2str: Error in sprintf\n");
-		return -1;
-	}
-	*_l = ret;
-
-	return 0;
-}
-
-/*
- * Convert a double to string
- */
-static inline int double2str(double _v, char* _s, int* _l)
-{
-	int ret;
-
-	if ((!_s) || (!_l) || (!*_l))
-	{
-		LOG(L_ERR, "double2str: Invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(_s, *_l, "%-10.2f", _v);
-	if (ret < 0 || ret >= *_l)
-	{
-		LOG(L_ERR, "double2str: Error in snprintf\n");
-		return -1;
-	}
-	*_l = ret;
-
-	return 0;
-}
 
 /*
  * Convert time_t to string
@@ -196,7 +108,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 	switch(_t)
 	{
 		case DB_INT:
-			if (str2int(_s, &VAL_INT(_v)) < 0)
+			if (db_str2int(_s, &VAL_INT(_v)) < 0)
 			{
 				LOG(L_ERR,
 				"str2val: Error while converting integer value from string\n");
@@ -210,7 +122,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 			break;
 
 		case DB_BITMAP:
-			if (str2int(_s, &VAL_INT(_v)) < 0)
+			if (db_str2int(_s, &VAL_INT(_v)) < 0)
 			{
 				LOG(L_ERR,
 				"str2val: Error while converting bitmap value from string\n");
@@ -224,7 +136,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 			break;
 
 		case DB_DOUBLE:
-			if (str2double(_s, &VAL_DOUBLE(_v)) < 0)
+			if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0)
 			{
 				LOG(L_ERR,
 				"str2val: Error while converting double value from string\n");
@@ -299,7 +211,7 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 	switch(VAL_TYPE(_v))
 	{
 		case DB_INT:
-			if (int2str(VAL_INT(_v), _s, _len) < 0)
+			if (db_int2str(VAL_INT(_v), _s, _len) < 0)
 			{
 				LOG(L_ERR, "val2str: Error while converting string to int\n");
 				return -2;
@@ -311,7 +223,7 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			break;
 
 		case DB_BITMAP:
-			if (int2str(VAL_BITMAP(_v), _s, _len) < 0)
+			if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0)
 			{
 				LOG(L_ERR, "val2str: Error while converting string to int\n");
 				return -3;
@@ -323,7 +235,7 @@ int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
 			break;
 
 		case DB_DOUBLE:
-			if (double2str(VAL_DOUBLE(_v), _s, _len) < 0)
+			if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0)
 			{
 				LOG(L_ERR,
 					"val2str: Error while converting string to double\n");

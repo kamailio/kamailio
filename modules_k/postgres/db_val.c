@@ -33,12 +33,9 @@
  *
  */
 
-#include <limits.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+
 #include "../../db/db_val.h"
+#include "../../db/db_ut.h"
 #include "../../dprint.h"
 #include "defs.h"
 #include "db_utils.h"
@@ -47,50 +44,10 @@
 #include "../../mem/mem.h"
 #include "dbase.h"
 
+#include <string.h>
+
 
 char *strptime(const char *s, const char *format, struct tm *tm);
-
-/**
- * Convert a string to integer
- */
-static inline int str2int(const char* _s, int* _v)
-{
-	long tmp;
-
-#ifdef PARANOID
-	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "PG[str2int]: Invalid parameter value\n");
-		return -1;
-	}
-#endif
-
-	tmp = strtoul(_s, 0, 10);
-	if ((tmp == ULONG_MAX && errno == ERANGE) || 
-	    (tmp < INT_MIN) || (tmp > UINT_MAX)) {
-		LOG(L_ERR, "PG[str2int]: Value out of range\n");
-		return -1;
-	}
-
-	*_v = (int)tmp;
-
-	return 0;
-}
-
-
-/*
- * Convert a string to double
- */
-static inline int str2double(const char* _s, double* _v)
-{
-#ifdef PARANOID
-	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "PG[str2double]: Invalid parameter value\n");
-		return -1;
-	}
-#endif
-	*_v = atof(_s);
-	return 0;
-}
 
 
 /* 
@@ -117,38 +74,6 @@ static inline int str2time(const char* _s, time_t* _v)
 	time.tm_isdst = -1;   
 	*_v = mktime(&time);
 
-	return 0;
-}
-
-
-/*
- * Convert an integer to string
- */
-static inline int int2str(int _v, char* _s, int* _l)
-{
-#ifdef PARANOID
-	if ((!_s) || (!_l) || (!*_l)) {
-		LOG(L_ERR, "PG[int2str]: Invalid parameter value\n");
-		return -1;
-	}
-#endif
-	*_l = snprintf(_s, *_l, "%-d", _v);
-	return 0;
-}
-
-
-/*
- * Convert a double to string
- */
-static inline int double2str(double _v, char* _s, int* _l)
-{
-#ifdef PARANOID
-	if ((!_s) || (!_l) || (!*_l)) {
-		LOG(L_ERR, "PG[double2str]: Invalid parameter value\n");
-		return -1;
-	}
-#endif
-	*_l = snprintf(_s, *_l, "%-10.2f", _v);
 	return 0;
 }
 
@@ -207,7 +132,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 	switch(_t) {
 	case DB_INT:
 		LOG(L_DBG, "PG[str2val]: Converting INT [%s]\n", _s);
-		if (str2int(_s, &VAL_INT(_v)) < 0) {
+		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
 			LOG(L_ERR, "PG[str2val]: Error while converting INT value from string\n");
 			return -2;
 		} else {
@@ -218,7 +143,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 
 	case DB_BITMAP:
 		LOG(L_DBG, "PG[str2val]: Converting BITMAP [%s]\n", _s);
-		if (str2int(_s, &VAL_INT(_v)) < 0) {
+		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
 			LOG(L_ERR, "PG[str2val]: Error while converting BITMAP value from string\n");
 			return -3;
 		} else {
@@ -229,7 +154,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 	
 	case DB_DOUBLE:
 		LOG(L_DBG, "PG[str2val]: Converting DOUBLE [%s]\n", _s);
-		if (str2double(_s, &VAL_DOUBLE(_v)) < 0) {
+		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
 			LOG(L_ERR, "PG[str2val]: Error while converting DOUBLE value from string\n");
 			return -4;
 		} else {
@@ -300,7 +225,7 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 	
 	switch(VAL_TYPE(_v)) {
 	case DB_INT:
-		if (int2str(VAL_INT(_v), _s, _len) < 0) {
+		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
 			LOG(L_ERR, "PG[val2str]: Error while converting string to int\n");
 			return -2;
 		} else {
@@ -309,7 +234,7 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 		break;
 
 	case DB_BITMAP:
-		if (int2str(VAL_BITMAP(_v), _s, _len) < 0) {
+		if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0) {
 			LOG(L_ERR, "PG[val2str]: Error while converting string to int\n");
 			return -3;
 		} else {
@@ -318,7 +243,7 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 		break;
 
 	case DB_DOUBLE:
-		if (double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
+		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
 			LOG(L_ERR,
 					"PG[val2str]: Error while converting string to double\n");
 			return -3;
