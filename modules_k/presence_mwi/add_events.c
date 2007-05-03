@@ -42,7 +42,8 @@ inline char *eat_sp_tab(char *at, char *over)
 /* utility function that skips printable ascii chars */
 inline char *eat_printable(char *at, char *over)
 {
-    while((at < over) && ((*at = '\t') || ((*at >= 32) && (*at <= 126)))) at++;
+    while ((at < over) && ((*at == '\t') || ((*at >= 32) && (*at <= 126))))
+	at++;
     return at;
 }
 
@@ -61,17 +62,18 @@ int mwi_publ_handl(struct sip_msg* msg)
     if (body.s == NULL) {
 	LOG(L_ERR,"presence_mwi:mwi_publ_handl: ERROR cannot extract body"
 	    " from msg\n");
-	goto err;
+	return -1;
     }
 
     /* content-length (if present) must be already parsed */
     body.len = get_content_length(msg);
+    at = body.s;
     over = body.s + body.len;
 
     /* check msg-status-line */
     if (body.len <= 16) goto err;
     if (strncmp(body.s, "Messages-Waiting", 16) != 0) goto err;
-    at = body.s + 16;
+    at = at + 16;
     at = eat_sp_tab(at, over);
     if ((at >= over) || (*at != ':')) goto err;
     at++;
@@ -98,6 +100,8 @@ int mwi_publ_handl(struct sip_msg* msg)
     return 1;
 
 err:
+    DBG("DEBUG:presence_mwi:mwi_publ_handl: body check failed at "
+	"character number %d\n", at - body.s + 1);
     return -1;
 
 }
