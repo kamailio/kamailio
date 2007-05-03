@@ -123,6 +123,11 @@ inline static unsigned short dst_blst_hash_no(unsigned char proto,
 
 void destroy_dst_blacklist()
 {
+	int r;
+	struct dst_blst_entry** crt;
+	struct dst_blst_entry** tmp;
+	struct dst_blst_entry* e;
+	
 	if (blst_timer_h){
 		timer_del(blst_timer_h);
 		timer_free(blst_timer_h);
@@ -134,6 +139,14 @@ void destroy_dst_blacklist()
 		blst_lock=0;
 	}
 	if (dst_blst_hash){
+		for(r=0; r<DST_BLST_HASH_SIZE; r++){
+			for (crt=&dst_blst_hash[r], tmp=&(*crt)->next; *crt; 
+					crt=tmp, tmp=&(*crt)->next){
+			e=*crt;
+			*crt=(*crt)->next;
+			blst_destroy_entry(e);
+			}
+		}
 		shm_free(dst_blst_hash);
 		dst_blst_hash=0;
 	}
@@ -155,12 +168,15 @@ int init_dst_blacklist()
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
+	*blst_mem_used=0;
 	dst_blst_hash=shm_malloc(sizeof(struct dst_blst_entry*) *
 											DST_BLST_HASH_SIZE);
 	if (dst_blst_hash==0){
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
+	memset(dst_blst_hash, 0, sizeof(struct dst_blst_entry*) *
+								DST_BLST_HASH_SIZE);
 	blst_lock=lock_alloc();
 	if (blst_lock==0){
 		ret=E_OUT_OF_MEM;
