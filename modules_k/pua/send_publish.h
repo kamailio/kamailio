@@ -31,7 +31,7 @@
 #include "hash.h"
 #include "event_list.h"
 
-typedef int (publrpl_cb_t)(struct sip_msg* msg, void*  extra_param);
+typedef int (publrpl_cb_t)(struct sip_msg* reply, void*  extra_param);
 
 typedef struct publ_info
 {
@@ -42,7 +42,8 @@ typedef struct publ_info
 	int flag;
 	int source_flag;
 	int event;   
-	str content_type;   /* optional field - only if different from event default */ 
+	str content_type;  /*the content_type of the body if present(optional if the
+					   *	 same as the default value for that event) */	 
 	str* etag;
 	str* extra_headers;
 	publrpl_cb_t* cbrpl;

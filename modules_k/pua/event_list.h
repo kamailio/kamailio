@@ -32,7 +32,8 @@
 
 struct publ_info;
 
-typedef int (evs_process_body_t)(struct publ_info* , str** , int , str* );
+typedef int (evs_process_body_t)(struct publ_info* , str** final_body, 
+		 int ver, str* tuple);
 
 typedef struct pua_event
 {
@@ -51,7 +52,8 @@ pua_event_t* init_pua_evlist();
 int add_pua_event(int ev_flag, char* name, char* content_type,
 		evs_process_body_t* process_body);
 
-typedef int (*add_pua_event_t)(pua_event_t* event);
+typedef int (*add_pua_event_t)(int ev_flag, char* name, char* content_type,
+		evs_process_body_t* process_body);
 
 pua_event_t* contains_pua_event(str* name);
 

@@ -37,19 +37,18 @@
 #define BLA_EVENT			1<<2
 #define MSGSUM_EVENT        1<<3
 
-#define UL_PUBLISH					1<<0
-#define BLA_PUBLISH					1<<1
-#define BLA_TERM_PUBLISH			1<<2
-#define BLA_SUBSCRIBE				1<<3
-#define XMPP_PUBLISH				1<<4
-#define XMPP_SUBSCRIBE				1<<5
-#define XMPP_INITIAL_SUBS		    1<<6
-#define MI_PUBLISH					1<<7
-#define MI_SUBSCRIBE				1<<8
+#define UL_PUBLISH          1<<0
+#define BLA_PUBLISH         1<<1
+#define BLA_SUBSCRIBE		1<<2
+#define XMPP_PUBLISH		1<<3
+#define XMPP_SUBSCRIBE		1<<4
+#define XMPP_INITIAL_SUBS   1<<5
+#define MI_PUBLISH			1<<6
+#define MI_SUBSCRIBE		1<<7
 
-#define NO_UPDATEDB_FLAG	1<<0
-#define UPDATEDB_FLAG		1<<1
-#define INSERTDB_FLAG		1<<2
+#define NO_UPDATEDB_FLAG    1<<0
+#define UPDATEDB_FLAG       1<<1
+#define INSERTDB_FLAG       1<<2
 
 typedef struct ua_pres{
  

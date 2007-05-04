@@ -42,8 +42,9 @@ typedef struct subs_info
 	int event;
 	int expires;
 	int source_flag;
-	int flag;
-/* INSERT_TYPE or UPDATE_TYPE (not compulsory)*/	
+	int flag;         /*  it can be : INSERT_TYPE or UPDATE_TYPE
+                      *  not compulsory */
+
 }subs_info_t;
 
 typedef int (*send_subscribe_t)(subs_info_t* subs);
