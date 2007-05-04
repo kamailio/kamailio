@@ -41,10 +41,9 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../hash_func.h"
+#include "../../ut.h"
 
 #include "domains.h"
-#include "utils.h"
-
 
 #define pdt_compute_hash(_s)        core_case_hash(_s,0,0)
 #define get_hash_entry(_h,_size)    (_h)&((_size)-1)
@@ -396,14 +395,14 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd, int mode)
 	/* search the it position where to insert new domain */
 	it = hl->hash; 
 	prev=NULL;
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 	{	
 		prev=it;
 		it=it->next;
 	}
 
 	/* add new sdomain, i.e. new entry in the hash list */
-	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 	{
 		ph = init_hash(hl->hash_size, sdomain); /* !!!! check this hash size setting mode */
 		if(ph==NULL)
@@ -461,10 +460,10 @@ hash_t* pdt_search_hash(hash_list_t* hl, str *sd)
 
 	/* search the it position where to insert new domain */
 	it = hl->hash;
-	while(it!=NULL && scmp(&it->sdomain, sd)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sd)<0)
 		it = it->next;
 
-	if(it==NULL || scmp(&it->sdomain, sd)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sd)>0)
 	{
 		lock_release(&hl->hl_lock);
 		return NULL;
@@ -573,11 +572,11 @@ int pdt_remove_from_hash_list(hash_list_t *hl, str* sdomain, str *sd)
 	
 	/* search the it position where to remove from */
 	it = hl->hash;
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 		it = it->next;
 		
 	/* sdomain not found, nothing to delete */
-	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 	{
 		lock_release(&hl->hl_lock);
 		return 1; /* nothing to delete */
@@ -604,14 +603,14 @@ int pdt_remove_hash_from_hash_list(hash_list_t *hl, str* sdomain)
 	// search the it position where to remove from 
 	it = hl->hash;
 	prev=NULL;
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 	{	
 		prev = it;
 		it = it->next;
 	}
 
 	// sdomain not found, nothing to delete 
-	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 	{
 		lock_release(&hl->hl_lock);
 		return 0;
@@ -742,10 +741,10 @@ int pdt_check_pd(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 
 	/* search the it position */
 	it = hl->hash;
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 		it = it->next;
 
-	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 	{
 		lock_release(&hl->hl_lock);
 		return 0;

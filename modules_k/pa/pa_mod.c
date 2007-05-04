@@ -32,6 +32,7 @@
 #include "../../db/db.h"
 #include "../../sr_module.h"
 #include "../../error.h"
+#include "../../ut.h"
 #include "subscribe.h"
 #include "publish.h"
 #include "dlist.h"
@@ -298,50 +299,4 @@ static void timer(unsigned int ticks, void* param)
 	if (timer_all_pdomains() != 0) {
 		LOG(L_ERR, "timer(): Error while synchronizing domains\n");
 	}
-}
-
-/*
- * compare two str's
- */
-int str_strcmp(const str *stra, const str *strb)
-{
-     int i;
-     int alen = stra->len;
-     int blen = strb->len;
-     int minlen = (alen < blen ? alen : blen);
-     for (i = 0; i < minlen; i++) {
-	  const char a = stra->s[i];
-	  const char b = strb->s[i];
-	  if (a < b) return -1;
-	  if (a > b) return 1;
-     }
-     if (alen < blen)
-	  return -1;
-     else if (blen > alen)
-	  return 1;
-     else
-	  return 0;
-}
-
-/*
- * case-insensitive compare two str's
- */
-int str_strcasecmp(const str *stra, const str *strb)
-{
-     int i;
-     int alen = stra->len;
-     int blen = strb->len;
-     int minlen = (alen < blen ? alen : blen);
-     for (i = 0; i < minlen; i++) {
-	  const char a = tolower(stra->s[i]);
-	  const char b = tolower(strb->s[i]);
-	  if (a < b) return -1;
-	  if (a > b) return 1;
-     }
-     if (alen < blen)
-	  return -1;
-     else if (blen > alen)
-	  return 1;
-     else
-	  return 0;
 }

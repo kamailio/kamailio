@@ -58,13 +58,4 @@ extern int callback_lock_pdomain;
 extern int new_tuple_on_publish;
 extern int pa_pidf_priority;
 
-/*
- * compare two str's
- */
-int str_strcmp(const str *stra, const str *strb);
-/*
- * case-insensitive compare two str's
- */
-int str_strcasecmp(const str *stra, const str *strb);
-
 #endif /* PA_MOD_H */

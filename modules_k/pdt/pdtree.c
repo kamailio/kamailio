@@ -33,9 +33,9 @@
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "../../ut.h"
 
 #include "pdtree.h"
-#include "utils.h"
 
 pdt_tree_t* pdt_init_tree(str* sdomain)
 {
@@ -160,10 +160,10 @@ pdt_tree_t* pdt_get_tree(pdt_tree_t *pl, str *sdomain)
 
 	it = pl;
 	/* search the tree for the asked sdomain */
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 		it = it->next;
 
-	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 		return NULL;
 	
 	return it;
@@ -186,7 +186,7 @@ int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
 	it = *dpt;
 	prev = NULL;
 	/* search the it position before which to insert new domain */
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 	{	
 		prev = it;
 		it = it->next;
@@ -194,7 +194,7 @@ int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
 //	printf("sdomain:%.*s\n", sdomain->len, sdomain->s);
 
 	/* add new sdomain*/
-	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 	{
 		ndl = pdt_init_tree(sdomain);
 		if(ndl==NULL)
@@ -276,11 +276,11 @@ int pdt_remove_prefix_from_tree(pdt_tree_t *pl, str *sdomain, str* code)
 	}
 
 	it = pl;
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 		it = it->next;
 	
 	/* find the sdomain where to delete the (prefix, domain) */
-	if(it!=NULL && scmp(&it->sdomain, sdomain)==0)
+	if(it!=NULL && str_strcmp(&it->sdomain, sdomain)==0)
 	{
 		if(remove_from_tree(it, code)<0)
 		{
@@ -347,10 +347,10 @@ str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
 	}
 
 	it = pl;
-	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	while(it!=NULL && str_strcmp(&it->sdomain, sdomain)<0)
 		it = it->next;
 	
-	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 		return NULL;
 	
 	domain = get_domain(it, code, &len);
