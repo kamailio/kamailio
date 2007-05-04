@@ -41,10 +41,10 @@
  *		<presentity_uri> 
  *		<expires>
  *		<event package>
- *		<content_type>      - body type or . if no body
- *		<ETag>              - ETag that publish should match
- *                                    or . if no ETag
- *		<xml_presence_body> - may not be present in case of update 
+ *		<content_type>     - body type if body of a type different from default
+ *                            event content-type or . 
+ *		<ETag>             - ETag that publish should match or . if no ETag
+ *		<publish_body>     - may not be present in case of update for expire
  */
 int mi_publ_rpl_cback(struct sip_msg* reply, void* param);
 
@@ -178,12 +178,6 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 			    "body is missing, but content type is not .\n");
 		return init_mi_tree(400, "Body parameter is missing", 25);
 	}
-	if(body.s!= NULL && content_type.len== 1 && content_type.s[0]== '.')
-	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-			    "bad content type\n");
-		return init_mi_tree(400, "Bad content type parameter", 26);
-	}
 
 	/* Create the publ_info_t structure */
 	memset(&publ, 0, sizeof(publ_info_t));
@@ -313,6 +307,8 @@ error:
 	return  -1;
 }	
 
+
+
 struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 {
 	int exp= 0;
@@ -406,55 +402,3 @@ error:
 
 }
 
-#if 0
-struct mi_node* mi_send_reply(str* pres_uri, str* watcher_uri, int FLAG)
-{
-	ua_pres_t* presentity= NULL;
-	struct mi_node* rpl= NULL;
-	struct mi_node* node= NULL;
-	int exp= 0;
-	str expires;
-
-	DBG("pua_mi:mi_send_reply ..\n");
-
-	presentity= search_htable(pres_uri, watcher_uri, NULL, 
-			FLAG, HashT);
-	
-	if(presentity == NULL)
-	{
-		LOG(L_ERR, "pua_mi:mi_send_reply: ERROR no record found for"
-				" subscription\n");
-		return 0;
-	}
-
-	rpl= init_mi_tree(MI_200_OK_S, MI_200_OK_LEN);
-	if(rpl == NULL)
-		return 0;
-
-	if(FLAG & MI_PUBLISH_FLAG)
-	{
-		node = add_mi_node_child(rpl, 0, "Etag", 4, presentity->etag.s, 
-				presentity->etag.len);
-		if( node== NULL)
-			goto error;
-	}
-
-	exp= presentity->expires- (int)time(NULL); 
-	expires.s= int2str(exp, &expires.len);
-	
-	node= add_mi_node_child(rpl, MI_DUP_VALUE, "EXPIRES", 7, expires.s, expires.len);
-	if(node == NULL)
-	{
-		LOG(L_ERR, "pua_mi:mi_send_reply: ERROR while adding mi node\n");
-		goto error;
-	}
-
-	DBG("pua_mi:mi_send_reply: send 200 OK reply\n");
-	return rpl;
-
-error:
-	free_mi_tree(rpl);
-	return 0;
-
-}
-#endif
