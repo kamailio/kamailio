@@ -43,6 +43,8 @@
 #              err_fail=0; don't try to make modules with no Makefiles (andrei)
 #  2007-03-16  moved the exports to Makefile.defs (andrei)
 #  2007-03-29  install-modules changed to use make -C modpath install (andrei)
+#  2007-05-04  "if ! foo" not supported in standard sh, switched to 
+#                "if foo; then :; else ... ; fi" (andrei)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -281,7 +283,9 @@ modules:
 		if [ -n "$$r" -a -r "$$r/Makefile" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if ! $(MAKE) -C $$r && [ ${err_fail} = 1 ] ; then \
+			if  $(MAKE) -C $$r || [ ${err_fail} != 1 ] ; then \
+				:; \
+			else \
 				exit 1; \
 			fi ; \
 		fi ; \
@@ -293,7 +297,9 @@ $(extra_objs):
 		if [ -n "$$r" -a -r "$$r/Makefile"  ]; then \
 			echo  "" ; \
 			echo  "Making static module $r" ; \
-			if ! $(MAKE) -C $$r static ; then  \
+			if $(MAKE) -C $$r static ; then  \
+				:; \
+			else \
 				exit 1; \
 			fi ;  \
 		fi ; \
@@ -305,7 +311,9 @@ utils:
 		if [ -n "$$r" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if ! $(MAKE) -C $$r && [ ${err_fail} = 1 ] ; then \
+			if  $(MAKE) -C $$r || [ ${err_fail} != 1 ] ; then \
+				:; \
+			else \
 				exit 1; \
 			fi ; \
 		fi ; \
@@ -458,7 +466,9 @@ install-modules: $(modules-prefix)/$(modules-dir)
 		if [ -n "$$r" -a -r "$$r/Makefile" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if ! $(MAKE) -C $$r install && [ ${err_fail} = 1 ] ; then \
+			if  $(MAKE) -C $$r install || [ ${err_fail} != 1 ] ; then \
+				:; \
+			else \
 				exit 1; \
 			fi ; \
 		fi ; \
