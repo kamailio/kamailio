@@ -233,7 +233,7 @@ int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 }
 
 
-auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, 
+auth_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype, 
 													struct hdr_field** _h)
 {
 	int ret;
@@ -304,7 +304,7 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 	}
 
 	/* see what is to do after a first look at the message */
-	ret = pre_auth(msg, &domain, hftype, &h);
+	ret = diam_pre_auth(msg, &domain, hftype, &h);
 
 	switch(ret) 
 	{
