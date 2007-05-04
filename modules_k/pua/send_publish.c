@@ -428,7 +428,10 @@ int send_publish( publ_info_t* publ )
 		goto insert;
 	
 	if(publ->etag && presentity== NULL)
+	{
+		lock_release(&HashT->p_records[hash_code].lock);
 		return 418;
+	}
 
 	if(presentity== NULL)
 	{

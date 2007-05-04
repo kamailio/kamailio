@@ -92,7 +92,8 @@ static cmd_export_t cmds[]=
 	{"send_publish",     (cmd_function)send_publish,     1, 0, 0},
 	{"send_subscribe",   (cmd_function)send_subscribe,   1, 0, 0},
 	{"pua_is_dialog",    (cmd_function)is_dialog,		 1, 0, 0},
-	{"register_puacb", (cmd_function)register_puacb,     1, 0, 0},
+	{"register_puacb",   (cmd_function)register_puacb,   1, 0, 0},
+	{"add_pua_event",    (cmd_function)add_pua_event,    4, 0, 0},
 	{0,							0,					     0, 0, 0} 
 };
 

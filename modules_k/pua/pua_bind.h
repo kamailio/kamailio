@@ -34,6 +34,7 @@ typedef struct pua_api {
 	send_publish_t send_publish;
 	register_puacb_t register_puacb;
 	query_dialog_t is_dialog;
+	add_pua_event_t add_event;
 } pua_api_t;
 
 typedef int (*bind_pua_t)(pua_api_t* api);

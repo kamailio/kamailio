@@ -61,6 +61,13 @@ int bind_pua(pua_api_t* api)
 		LOG(L_ERR, "PUA:bind_pua: Can't bind pua_is_dialog\n");
 		return -1;
 	}
+	api->add_event= (add_pua_event_t)find_export("add_pua_event", 4, 0);
+	if(api->add_event== 0)
+	{
+		LOG(L_ERR, "PUA:bind_pua: Can't bind add_pua_event\n");
+		return -1;
+	}
+
 	return 0;
 }
 
