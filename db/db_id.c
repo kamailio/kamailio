@@ -143,6 +143,8 @@ static int parse_db_url(struct db_id* id, const char* url)
 				break;
 
 			case '/':
+				if (strchr(url + i + 1, '/') != NULL)
+					break;
 				if (dupl_string(&id->host, begin, url + i) < 0) goto err;
 				if (dupl_string(&id->database, url + i + 1, url + len) < 0) goto err;
 				return 0;
@@ -159,6 +161,8 @@ static int parse_db_url(struct db_id* id, const char* url)
 				break;
 
 			case '/':
+				if (strchr(url + i + 1, '/') != NULL)
+					break;
 				id->host = prev_token;
 				id->port = str2s(begin, url + i - begin, 0);
 				if (dupl_string(&id->database, url + i + 1, url + len) < 0) goto err;
@@ -175,6 +179,8 @@ static int parse_db_url(struct db_id* id, const char* url)
 				break;
 
 			case '/':
+				if (strchr(url + i + 1, '/') != NULL)
+					break;
 				if (dupl_string(&id->host, begin, url + i) < 0) goto err;
 				if (dupl_string(&id->database, url + i + 1, url + len) < 0) goto err;
 				return 0;
