@@ -45,18 +45,6 @@
 
 extern struct tm_binds tmb;
 
-void print_hentity(ua_pres_t* h)
-{
-	DBG("\tpresentity:\n");
-	DBG("\turi= %.*s\n", h->pres_uri->len, h->pres_uri->s);
-	
-	if(h->id.s)
-		DBG("\tid= %.*s\n", h->id.len, h->id.s);
-
-	if(h->tuple_id.s)
-		DBG("\ttuple_id: %.*s\n", h->tuple_id.len, h->tuple_id.s);
-}	
-
 str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 		str* extra_headers, int is_body)
 {
@@ -419,6 +407,15 @@ int send_publish( publ_info_t* publ )
 	DBG("PUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
 			publ->pres_uri->s );
 	
+	/* get event from list */
+
+	ev= get_event(publ->event);
+	if(ev== NULL)
+	{
+		LOG(L_ERR, "PUA:send_publish: ERROR event not found in list\n");
+		goto error;
+	}	
+
 
 	hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
 
@@ -481,15 +478,6 @@ insert:
 		ver= presentity->version;
 		lock_release(&HashT->p_records[hash_code].lock);
 	}
-
-	/* get event from list */
-
-	ev= get_event(publ->event);
-	if(ev== NULL)
-	{
-		LOG(L_ERR, "PUA:send_publish: ERROR event not found in list\n");
-		goto error;
-	}	
 
     /* handle body */
 
