@@ -469,6 +469,27 @@ insert:
 		memcpy(etag.s, presentity->etag.s, presentity->etag.len);
 		etag.len= presentity->etag.len;
 
+		if(presentity->tuple_id.s && presentity->tuple_id.len)
+		{	
+			/* get tuple_id*/
+			tuple_id=(str*)pkg_malloc(sizeof(str));
+			if(tuple_id== NULL)
+			{
+				LOG(L_ERR, "PUA:send_publish: ERROR No more memory\n");
+				lock_release(&HashT->p_records[hash_code].lock);
+				goto error;
+			}	
+			tuple_id->s= (char*)pkg_malloc(presentity->tuple_id.len* sizeof(char));
+			if(tuple_id->s== NULL)
+			{
+				LOG(L_ERR, "PUA:send_publish: ERROR No more memory\n");
+				lock_release(&HashT->p_records[hash_code].lock);
+				goto error;
+			}	
+			memcpy(tuple_id->s, presentity->tuple_id.s, presentity->tuple_id.len);
+			tuple_id->len= presentity->tuple_id.len;
+		}
+
 		if(publ->expires== 0)
 		{
 			DBG("PUA:send_publish: expires= 0- delete from hash table\n");

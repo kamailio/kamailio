@@ -300,7 +300,7 @@ typedef int (*send_subscribe_t)(subs_info_t* subs);
 ...
 
    This function receives as a parameter a structure with
-   Susbcribe required information and sends a Subscribe message.
+   Subscribe required information and sends a Subscribe message.
 
    The structure received as a parameter:
 ...
@@ -335,7 +335,7 @@ typedef struct subs_info
 typedef int  (*query_dialog_t)(ua_pres_t* presentity);
 ...
 
-   This function checks is the parameter coresponds to a stored
+   This function checks is the parameter corresponds to a stored
    Subscribe initiated dialog.
 
    Example 2-2. pua_is_dialog usage example

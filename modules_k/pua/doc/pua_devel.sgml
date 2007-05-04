@@ -115,7 +115,7 @@ typedef int (*send_subscribe_t)(subs_info_t* subs);
 </programlisting>
 		</para>		
 		<para>
-			This function receives as a parameter a structure with Susbcribe 
+			This function receives as a parameter a structure with Subscribe 
 			required information and sends a Subscribe message.
 		</para>
 		<para>
@@ -160,7 +160,7 @@ typedef int  (*query_dialog_t)(ua_pres_t* presentity);
 				</programlisting>
 		</para>			
 		<para>
-			This function checks is the parameter coresponds to a stored
+			This function checks is the parameter corresponds to a stored
 			Subscribe initiated dialog. 
 		</para>
 		<example>

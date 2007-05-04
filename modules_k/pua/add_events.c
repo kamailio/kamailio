@@ -116,6 +116,7 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 	int tuple_id_len= 0;
 	char buf[50];
 	str* body= NULL;
+	int alloc_tuple= 0;
 
 	tuple= NULL;
 	doc= xmlParseMemory(publ->body->s, publ->body->len );
@@ -133,11 +134,37 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 	}
 	tuple_id= xmlNodeGetAttrContentByName(node, "id");
 	if(tuple_id== NULL)
-	{	
-		tuple_id= buf;
-		tuple_id_len= sprintf(tuple_id, "%p", publ);
-		tuple_id[tuple_id_len]= '\0'; 
-		
+	{
+		if(tuple== NULL)	// generate a tuple_id
+		{
+			tuple_id= buf;
+			tuple_id_len= sprintf(tuple_id, "%p", publ);
+			tuple_id[tuple_id_len]= '\0'; 
+
+			tuple=(str*)pkg_malloc(sizeof(str));
+			if(tuple== NULL)
+			{
+				LOG(L_ERR, "PUA: pres_process_body:ERROR No more memory\n");
+				goto error;
+			}
+			tuple->s= (char*)pkg_malloc(tuple_id_len* sizeof(char));
+			if(tuple->s== NULL)
+			{
+				LOG(L_ERR, "PUA: pres_process_body:ERROR NO more memory\n");
+				goto error;
+			}
+			memcpy(tuple->s, tuple_id, tuple_id_len);
+			tuple->len= tuple_id_len;
+			alloc_tuple= 1;
+		}
+		else
+		{
+			tuple_id= buf;
+			tuple_id_len= tuple->len;
+			memcpy(tuple_id, tuple->s, tuple_id_len);
+			tuple_id[tuple_id_len]= '\0';
+		}	
+		/* add tuple id */
 		if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
 		{
 			LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting xml"
@@ -147,11 +174,32 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 	}
 	else
 	{
-		strcpy(buf, tuple_id);
-		xmlFree(tuple_id);
-		tuple_id= buf;
-		tuple_id_len= strlen(tuple_id);
+		if(tuple== NULL)
+		{
+			strcpy(buf, tuple_id);
+			xmlFree(tuple_id);
+			tuple_id= buf;
+			tuple_id_len= strlen(tuple_id);
+		
+			tuple=(str*)pkg_malloc(sizeof(str));
+			if(tuple== NULL)
+			{
+				LOG(L_ERR, "PUA: pres_process_body:ERROR No more memory\n");
+				goto error;
+			}
+			tuple->s= (char*)pkg_malloc(tuple_id_len* sizeof(char));
+			if(tuple->s== NULL)
+			{
+				LOG(L_ERR, "PUA: pres_process_body:ERROR NO more memory\n");
+				goto error;
+			}
+			memcpy(tuple->s, tuple_id, tuple_id_len);
+			tuple->len= tuple_id_len;
+			alloc_tuple= 1;
+
+		}	
 	}	
+
 	node= xmlNodeGetNodeByName(doc->children, "person", NULL);
 	if(node)
 	{
@@ -187,15 +235,6 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 	xmlFreeDoc(doc);
 	doc= NULL;
 	
-	tuple= (str*)pkg_malloc(sizeof(str));
-	if(tuple== NULL)
-	{
-		LOG(L_ERR, "PUA: pres_process_body: ERROR No more memory\n");
-		goto error;
-	}
-	tuple->s= tuple_id;
-	tuple->len= tuple_id_len;
-	
 	*fin_body= body;
 	xmlMemoryDump();
 	xmlCleanupParser();
@@ -206,6 +245,13 @@ error:
 		xmlFreeDoc(doc);
 	if(body)
 		pkg_free(body);
+	if(tuple && alloc_tuple)
+	{
+		if(tuple->s)
+			pkg_free(tuple->s);
+		pkg_free(tuple);
+		tuple= NULL;
+	}
 	return -1;
 
 }	
