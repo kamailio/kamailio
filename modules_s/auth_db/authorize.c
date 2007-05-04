@@ -35,6 +35,8 @@
  */
 
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "../../ut.h"
 #include "../../str.h"
@@ -176,13 +178,31 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
     int i;
     int_str iname, ivalue;
     str value;
+    char buf[32];
     
 	for (i = 2; i < credentials_n + 2; i++) {
 		value = row->fld[i].v.lstr;
 
-		if (IS_NULL(row->fld[i]) || value.s == NULL) {
+		if (IS_NULL(row->fld[i]))
 			continue;
+
+		switch (row->fld[i].type) {
+		case DB_STR:
+		    value = row->fld[i].v.lstr;
+		    break;
+
+		case DB_INT:
+		    value.len = sprintf(buf, "%d", row->fld[i].v.int4);
+		    value.s = buf;
+		    break;
+
+		default:
+		    abort();
+		    break;
 		}
+
+		if (value.s == NULL)
+		    continue;
 
 		iname.s = credentials[i - 2];
 		ivalue.s = value;
