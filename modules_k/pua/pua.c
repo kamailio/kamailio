@@ -80,6 +80,8 @@ int send_subscribe(subs_info_t*);
 int send_publish(publ_info_t*);
 
 int update_pua(ua_pres_t* p, unsigned int hash_code);
+treq_cbparam_t* build_uppubl_cbparam(ua_pres_t* pres);
+ua_pres_t* build_upsubs_cbparam(ua_pres_t* pres);
 
 int db_store();
 int db_restore();
@@ -560,65 +562,20 @@ void hashT_clean(unsigned int ticks,void *param)
 }
 int update_pua(ua_pres_t* p, unsigned int hash_code)
 {
-	int size= 0;
-	ua_pres_t* hentity= NULL;
 	str* str_hdr= NULL;
 	int expires;
-
-	size= sizeof(ua_pres_t)+ sizeof(str)+ (p->pres_uri->len+ 1)*sizeof(char);
-	
-	if(p->watcher_uri)
-		size+= sizeof(str)+ p->watcher_uri->len*sizeof(char);
-	else
-	if(p->id.s && p->id.len)
-		size+=  p->id.len*sizeof(char);
-
-	hentity= (ua_pres_t*)shm_malloc(size);
-	if(hentity== NULL)
-	{
-		LOG(L_ERR, "PUA: update_pua: ERROR no more share memory\n");
-		goto error;
-	}
-	memset(hentity, 0, size);
-
-	size =  sizeof(ua_pres_t);
-
-	hentity->pres_uri = (str*)((char*)hentity + size);
-	size+= sizeof(str);
-
-	hentity->pres_uri->s = (char*)hentity+ size;
-	memcpy(hentity->pres_uri->s, p->pres_uri->s ,
-			p->pres_uri->len ) ;
-	hentity->pres_uri->len= p->pres_uri->len;
-	size+= p->pres_uri->len;
-		
-	if(p->watcher_uri)
-	{
-		hentity->watcher_uri=(str*)((char*)hentity+ size);
-		size+= sizeof(str);
-		hentity->watcher_uri->s= (char*)hentity+ size;
-		memcpy(hentity->watcher_uri->s, p->watcher_uri->s,p->watcher_uri->len);
-		hentity->watcher_uri->len= p->watcher_uri->len;
-		size+= p->watcher_uri->len;
-	}	
-	else
-	if(p->id.s && p->id.len)
-	{	
-		hentity->id.s = ((char*)hentity+ size);
-		memcpy(hentity->id.s, p->id.s, p->id.len);
-		hentity->id.len= p->id.len;
-		size+= p->id.len;
-	}
-	hentity->flag|= p->flag;
+	int result;
 	
 	if(p->desired_expires== 0)
-			expires= 3600;
-		else
-			expires= p->desired_expires- (int)time(NULL);
+		expires= 3600;
+	else
+		expires= p->desired_expires- (int)time(NULL);
 
 	if(p->watcher_uri== NULL)
 	{
 		str met= {"PUBLISH", 7};
+		treq_cbparam_t* cb_param;
+
 		str_hdr = publ_build_hdr(expires, get_event(p->event), NULL, &p->etag, NULL, 0);
 		if(str_hdr == NULL)
 		{
@@ -626,9 +583,13 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			goto error;
 		}
 		DBG("PUA: update_pua: str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
-		
-		
-		tmb.t_request(&met,						/* Type of the message */
+		cb_param= build_uppubl_cbparam(p);
+		if(cb_param== NULL)
+		{
+			LOG(L_ERR, "PUA: update_pua: ERROR while constructing publ callback param\n");
+			goto error;
+		}	
+		result= tmb.t_request(&met,						/* Type of the message */
 				p->pres_uri,					/* Request-URI */
 				p->pres_uri,					/* To */
 				p->pres_uri,					/* From */
@@ -636,14 +597,22 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 				0,								/* Message body */
 				0,								/* Outbound proxy*/
 				publ_cback_func,				/* Callback function */
-				(void*)hentity					/* Callback parameter */
+				(void*)cb_param					/* Callback parameter */
 				);
+		if(result< 0)
+		{
+			LOG(L_ERR, "PUA: update_pua: ERROR in t_request function\n"); 
+			shm_free(cb_param);
+			goto error;
+		}
 		
 	}
 	else
 	{
 		str met= {"SUBSCRIBE", 9};
 		dlg_t* td= NULL;
+		ua_pres_t* cb_param= NULL;
+
 		td= pua_build_dlg_t(p);
 		if(td== NULL)
 		{
@@ -655,19 +624,32 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		str_hdr= subs_build_hdr(p->watcher_uri, expires, p->event);
 		if(str_hdr== NULL || str_hdr->s== NULL)
 		{
-			LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
+			LOG(L_ERR, "PUA:update_pua: Error while building extra headers\n");
 			pkg_free(td);
 			return -1;
 		}
-		
-		tmb.t_request_within
-		(&met,
-		str_hdr,                               
-		0,                           
-		td,					                  
-		subs_cback_func,				        
-		(void*)hentity	
-		);
+		cb_param= build_upsubs_cbparam(p);
+		if(cb_param== NULL)
+		{
+			LOG(L_ERR, "PUA: update_pua: ERROR while constructing subs callback param\n");
+			goto error;
+
+		}	
+		result= tmb.t_request_within
+				(&met,
+				str_hdr,                               
+				0,                           
+				td,					                  
+				subs_cback_func,				        
+				(void*)cb_param	
+				);
+		if(result< 0)
+		{
+			LOG(L_ERR, "PUA: update_pua: ERROR in t_request function\n"); 
+			shm_free(cb_param);
+			pkg_free(td);
+			goto error;
+		}
 
 		pkg_free(td);
 		td= NULL;
@@ -679,8 +661,6 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 error:
 	if(str_hdr)
 		pkg_free(str_hdr);
-	if(hentity)
-		pkg_free(hentity);
 	return -1;
 
 }
@@ -934,4 +914,117 @@ void db_update(unsigned int ticks,void *param)
 
 }	
 	
+treq_cbparam_t* build_uppubl_cbparam(ua_pres_t* pres)
+{
+	int size;
+	treq_cbparam_t* cb_param= NULL;
+	
+	size= sizeof(treq_cbparam_t)+ sizeof(str)*2+ (pres->pres_uri->len+ 
+		+ pres->content_type.len+ pres->id.len+ pres->etag.len+
+		pres->tuple_id.len+ 1)*sizeof(char); 
 
+	DBG("PUA: send_publish: before allocating size= %d\n", size);
+	cb_param= (treq_cbparam_t*)shm_malloc(size);
+	if(cb_param== NULL)
+	{
+		LOG(L_ERR, "PUA: send_publish: ERROR no more share memory while"
+				" allocating cb_param - size= %d\n", size);
+		return NULL;
+	}
+	memset(cb_param, 0, size);
+	memset(&cb_param->publ, 0, sizeof(publ_info_t));
+	size =  sizeof(treq_cbparam_t);
+	DBG("PUA: send_publish: size= %d\n", size);
+
+	cb_param->publ.pres_uri = (str*)((char*)cb_param + size);
+	size+= sizeof(str);
+
+	cb_param->publ.pres_uri->s = (char*)cb_param + size;
+	memcpy(cb_param->publ.pres_uri->s, pres->pres_uri->s ,
+			pres->pres_uri->len ) ;
+	cb_param->publ.pres_uri->len= pres->pres_uri->len;
+	size+= pres->pres_uri->len;
+
+	if(pres->id.s && pres->id.len)
+	{	
+		cb_param->publ.id.s = ((char*)cb_param+ size);
+		memcpy(cb_param->publ.id.s, pres->id.s, pres->id.len);
+		cb_param->publ.id.len= pres->id.len;
+		size+= pres->id.len;
+	}
+
+	cb_param->publ.etag = (str*)((char*)cb_param  + size);
+	size+= sizeof(str);
+	cb_param->publ.etag->s = (char*)cb_param + size;
+	memcpy(cb_param->publ.etag->s, pres->etag.s, pres->etag.len ) ;
+	cb_param->publ.etag->len= pres->etag.len;
+	size+= pres->etag.len;
+	
+		
+	cb_param->tuple_id.s = (char*)cb_param+ size;
+	memcpy(cb_param->tuple_id.s, pres->tuple_id.s ,pres->tuple_id.len);
+	cb_param->tuple_id.len= pres->tuple_id.len;
+	size+= pres->tuple_id.len;
+	
+	DBG("PUA:send_publish: after allocating: size= %d\n", size);
+	cb_param->publ.event= pres->event;
+	cb_param->publ.source_flag|= pres->flag;
+	cb_param->publ.expires= pres->expires;
+
+	return cb_param;
+}
+
+ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
+{
+	ua_pres_t* hentity;
+	int size;
+
+	size= sizeof(ua_pres_t)+ sizeof(str)+ (p->pres_uri->len+ 1)*sizeof(char);
+	
+	if(p->watcher_uri)
+		size+= sizeof(str)+ p->watcher_uri->len*sizeof(char);
+	else
+	if(p->id.s && p->id.len)
+		size+=  p->id.len*sizeof(char);
+
+	hentity= (ua_pres_t*)shm_malloc(size);
+	if(hentity== NULL)
+	{
+		LOG(L_ERR, "PUA: update_pua: ERROR no more share memory\n");
+		return NULL;
+	}
+	memset(hentity, 0, size);
+
+	size =  sizeof(ua_pres_t);
+
+	hentity->pres_uri = (str*)((char*)hentity + size);
+	size+= sizeof(str);
+
+	hentity->pres_uri->s = (char*)hentity+ size;
+	memcpy(hentity->pres_uri->s, p->pres_uri->s ,
+			p->pres_uri->len ) ;
+	hentity->pres_uri->len= p->pres_uri->len;
+	size+= p->pres_uri->len;
+		
+	if(p->watcher_uri)
+	{
+		hentity->watcher_uri=(str*)((char*)hentity+ size);
+		size+= sizeof(str);
+		hentity->watcher_uri->s= (char*)hentity+ size;
+		memcpy(hentity->watcher_uri->s, p->watcher_uri->s,p->watcher_uri->len);
+		hentity->watcher_uri->len= p->watcher_uri->len;
+		size+= p->watcher_uri->len;
+	}	
+	else
+	if(p->id.s && p->id.len)
+	{	
+		hentity->id.s = ((char*)hentity+ size);
+		memcpy(hentity->id.s, p->id.s, p->id.len);
+		hentity->id.len= p->id.len;
+		size+= p->id.len;
+	}
+	hentity->flag|= p->flag;
+	
+	return hentity;
+	
+}
