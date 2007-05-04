@@ -306,7 +306,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 							NULL, NULL, NULL)< 0)
 					{
 						LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
-							" notify for presence.winfo\n");
+							" notify for winfo\n");
+						goto error;
 					}
 				}	
 			}	
@@ -467,14 +468,16 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 					subs, NULL, NULL)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
-					" notify for presence.winfo\n");
+					" notify winfo\n");
+				goto error;
 			}	
 			if(subs->send_on_cback== 0)
 			{	
 				if(notify(subs, NULL, NULL, 0)< 0)
 				{
 					LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
-					" notify for presence\n");
+					" notify \n");
+					goto error;
 				}
 			}
 		}
@@ -483,7 +486,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
-				" notify for presence\n");
+				" notify\n");
+				goto error;
 			}
 		}	
 			
@@ -500,6 +504,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		{
 			LOG(L_ERR, "PRESENCE:update_subscription: ERROR while"
 				" sending notify\n");
+			goto error;
 		}
 	}
 	
@@ -828,7 +833,11 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 
 	for(i= 0; i< n; i++)
 	{
-		notify(subs_array[i],  NULL, NULL, 0);
+		if( notify(subs_array[i],  NULL, NULL, 0)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: Could not send notify\n");
+			goto error;
+		}
 		pkg_free(subs_array[i]);
 	}
 	pkg_free(subs_array);

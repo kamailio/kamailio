@@ -200,14 +200,15 @@ ev_t* contains_event(str* name, str* param)
 void destroy_evlist()
 {
     ev_t* e1, *e2;
-    if (EvList) {
-	e1= EvList->events;
-	while(e1)
+    if (EvList) 
+	{
+		e1= EvList->events;
+		while(e1)
 	    {
-		e2= e1->next;
-		shm_free(e1);
-		e1= e2;
+			e2= e1->next;
+			shm_free(e1);
+			e1= e2;
 	    }	
-	shm_free(EvList);
+		shm_free(EvList);
     }
 }

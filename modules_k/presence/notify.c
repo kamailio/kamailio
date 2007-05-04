@@ -653,7 +653,8 @@ error:
 }
 
 
-subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, int *n)
+int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
+		subs_t*** array, int *n)
 {
 
 	subs_t** subs_array= NULL;
@@ -675,10 +676,11 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0;
 
+
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_subs_dialog: Error in use_table\n");
-		return NULL;
+		return -1;
 	}
 
 	DBG("PRESENCE:get_subs_dialog:querying database table = active_watchers\n");
@@ -742,11 +744,11 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 		{
 			pa_dbf.free_result(pa_db, result);
 		}
-		return NULL;
+		return -1;
 	}
 
 	if(result== NULL)
-		return NULL;
+		return -1;
 
 	if (result->n <=0 )
 	{
@@ -756,7 +758,8 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 				p_domain->s,event->stored_name.len, event->stored_name.s);
 		pa_dbf.free_result(pa_db, result);
 		result = NULL;
-		return NULL;
+		array= NULL;
+		return 0;
 
 	}
 	DBG("PRESENCE: get_subs_dialog:n= %d\n", result->n);
@@ -909,7 +912,8 @@ subs_t** get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender, in
 	*n = result->n;
 	pa_dbf.free_result(pa_db, result);
 
-	return subs_array;
+	*array= subs_array;
+	return 0;
 
 error:
 	if(subs_array)
@@ -923,7 +927,7 @@ error:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
 	
-	return NULL;
+	return -1;
 	
 }
 
@@ -932,14 +936,19 @@ int query_db_notify(str* p_user, str* p_domain, ev_t* event,
 {
 	subs_t** subs_array = NULL;
 	int n=0, i=0;
-	str * notify_body = NULL;
+	str* notify_body = NULL;
 
-	subs_array= get_subs_dialog(p_user, p_domain, event , sender, &n);
+	if(get_subs_dialog(p_user, p_domain, event , sender, &subs_array, &n)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:query_db_notify: ERROR while getting subs_dialog"
+				" from database\n");
+		goto error;
+	}
 	if(subs_array == NULL)
 	{
-		LOG(L_ERR, "PRESENCE:query_db_notify: Could not get subs_dialog from"
-				" database\n");
-		goto error;
+		DBG("PRESENCE:query_db_notify: Could not get subs_dialog from"
+			" database\n");
+		goto done;
 	}
 	
 	if(event->type & PUBL_TYPE)
@@ -957,10 +966,13 @@ int query_db_notify(str* p_user, str* p_domain, ev_t* event,
 	{
 		if(notify(subs_array[i], watcher_subs, notify_body, 0)< 0 )
 		{
-			DBG( "PRESENCE:query_db_notify: Could not send notify for"
+			LOG(L_ERR, "PRESENCE:query_db_notify: Could not send notify for"
 					"%.*s\n", event->stored_name.len, event->stored_name.s);
+			goto error;
 		}
 	}
+
+done:
 
 	if(subs_array!=NULL)
 	{	

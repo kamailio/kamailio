@@ -316,8 +316,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 		if (query_db_notify(&presentity->user, &presentity->domain,
 					presentity->event, NULL, NULL, presentity->sender)<0)
 		{
-			DBG(" PRESENCE:update_presentity:Could not send"
-					" notify for event presence\n");
+			LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
+			return -1;
 		}
 	}
 	else
@@ -469,8 +469,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			if (query_db_notify(&presentity->user, &presentity->domain,
 						presentity->event, NULL, NULL, presentity->sender)<0)
 			{
-				DBG(" PRESENCE:update_presentity: Could not send Notify for an"
-						" updating Publish\n");
+				LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
+				return -1;
 			}
 		}  
 		else  /* if there isn't no registration with those 3 values */
