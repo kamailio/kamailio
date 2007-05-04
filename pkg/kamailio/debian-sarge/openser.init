@@ -135,6 +135,20 @@ case "$1" in
 		$PIDFILE --exec $DAEMON  -- $OPTIONS
 	echo "."
 	;;
+  status)
+	echo -n "Status of $DESC: "
+	if [ ! -r "$PIDFILE" ]; then
+		echo "$NAME is not running."
+		exit 3
+	fi
+	if read pid < "$PIDFILE" && ps -p "$pid" > /dev/null 2>&1; then
+		echo "$NAME is running."
+		exit 0
+	else
+		echo "$NAME is not running but $PIDFILE exists."
+		exit 1
+	fi
+	;;
   *)
 	N=/etc/init.d/$NAME
 	echo "Usage: $N {start|stop|restart|force-reload|debug}" >&2
