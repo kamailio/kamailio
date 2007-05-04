@@ -29,6 +29,12 @@
 #include <XSUB.h>
 #include <unistd.h>
 #undef load_module
+
+/* perl.h defines union semun */
+#ifdef USE_SYSV_SEM
+# undef _SEM_SEMUN_UNDEFINED
+#endif
+
 #include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_uri.h"
@@ -43,27 +49,27 @@
 
 extern int unsafemodfnc;
 
-enum uri_members {
-	user = 0,
-	passwd,
-	host,
-	port,
-	params,
-	headers,
-	transport,
-	ttl,
-	user_param,
-	maddr,
-	method,
-	lr,
-	r2,
-	transport_val,
-	ttl_val,
-	user_param_val,
-	maddr_val,
-	method_val,
-	lr_val,
-	r2_val
+enum xs_uri_members {
+	XS_URI_USER = 0,
+	XS_URI_PASSWD,
+	XS_URI_HOST,
+	XS_URI_PORT,
+	XS_URI_PARAMS,
+	XS_URI_HEADERS,
+	XS_URI_TRANSPORT,
+	XS_URI_TTL,
+	XS_URI_USER_PARAM,
+	XS_URI_MADDR,
+	XS_URI_METHOD,
+	XS_URI_LR,
+	XS_URI_R2,
+	XS_URI_TRANSPORT_VAL,
+	XS_URI_TTL_VAL,
+	XS_URI_USER_PARAM_VAL,
+	XS_URI_MADDR_VAL,
+	XS_URI_METHOD_VAL,
+	XS_URI_LR_VAL,
+	XS_URI_R2_VAL
 	
 	/* These members are no strings:
 		unsigned short port_no;
@@ -129,7 +135,7 @@ inline static int getType(struct sip_msg *msg) {
 }
 		
 
-SV *getStringFromURI(SV *self, enum uri_members what) {
+SV *getStringFromURI(SV *self, enum xs_uri_members what) {
 	struct sip_uri *myuri = sv2uri(self);
 	str *ret = NULL;
 
@@ -139,45 +145,45 @@ SV *getStringFromURI(SV *self, enum uri_members what) {
 	} else {
 		
 		switch (what) {
-			case user:		ret = &(myuri->user);
+			case XS_URI_USER:	ret = &(myuri->user);
 						break;
-			case host:		ret = &(myuri->host);
+			case XS_URI_HOST:	ret = &(myuri->host);
 						break;
-			case passwd:		ret = &(myuri->passwd);
+			case XS_URI_PASSWD:	ret = &(myuri->passwd);
 						break;
-			case port:		ret = &(myuri->port);
+			case XS_URI_PORT:	ret = &(myuri->port);
 						break;
-			case params:		ret = &(myuri->params);
+			case XS_URI_PARAMS:	ret = &(myuri->params);
 						break;
-			case headers:		ret = &(myuri->headers);
+			case XS_URI_HEADERS:	ret = &(myuri->headers);
 						break;
-			case transport:		ret = &(myuri->transport);
+			case XS_URI_TRANSPORT:	ret = &(myuri->transport);
 						break;
-			case ttl:		ret = &(myuri->ttl);
+			case XS_URI_TTL:		ret = &(myuri->ttl);
 						break;
-			case user_param:	ret = &(myuri->user_param);
+			case XS_URI_USER_PARAM:	ret = &(myuri->user_param);
 						break;
-			case maddr:		ret = &(myuri->maddr);
+			case XS_URI_MADDR:	ret = &(myuri->maddr);
 						break;
-			case method:		ret = &(myuri->method);
+			case XS_URI_METHOD:	ret = &(myuri->method);
 						break;
-			case lr:		ret = &(myuri->lr);
+			case XS_URI_LR:		ret = &(myuri->lr);
 						break;
-			case r2:		ret = &(myuri->r2);
+			case XS_URI_R2:		ret = &(myuri->r2);
 						break;
-			case transport_val:	ret = &(myuri->transport_val);
+			case XS_URI_TRANSPORT_VAL:	ret = &(myuri->transport_val);
 						break;
-			case ttl_val:		ret = &(myuri->ttl_val);
+			case XS_URI_TTL_VAL:	ret = &(myuri->ttl_val);
 						break;
-			case user_param_val:	ret = &(myuri->user_param_val);
+			case XS_URI_USER_PARAM_VAL:	ret = &(myuri->user_param_val);
 						break;
-			case maddr_val:		ret = &(myuri->maddr_val);
+			case XS_URI_MADDR_VAL:	ret = &(myuri->maddr_val);
 						break;
-			case method_val:	ret = &(myuri->method_val);
+			case XS_URI_METHOD_VAL:	ret = &(myuri->method_val);
 						break;
-			case lr_val:		ret = &(myuri->lr_val);
+			case XS_URI_LR_VAL:	ret = &(myuri->lr_val);
 						break;
-			case r2_val:		ret = &(myuri->r2_val);
+			case XS_URI_R2_VAL:	ret = &(myuri->r2_val);
 						break;
 
 			default:	LOG(L_INFO, "Unknown URI element"
@@ -1315,7 +1321,7 @@ SV *
 user(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, user);
+	ST(0) = getStringFromURI(self, XS_URI_USER);
 
 
 =head2 host()
@@ -1328,7 +1334,7 @@ SV *
 host(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, host);
+	ST(0) = getStringFromURI(self, XS_URI_HOST);
 
 
 =head2 passwd()
@@ -1341,7 +1347,7 @@ SV *
 passwd(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, passwd);
+	ST(0) = getStringFromURI(self, XS_URI_PASSWD);
 
 
 =head2 port()
@@ -1354,7 +1360,7 @@ SV *
 port(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, port);
+	ST(0) = getStringFromURI(self, XS_URI_PORT);
 
 
 =head2 params()
@@ -1367,7 +1373,7 @@ SV *
 params(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, params);
+	ST(0) = getStringFromURI(self, XS_URI_PARAMS);
 
 
 =head2 headers()
@@ -1380,7 +1386,7 @@ SV *
 headers(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, headers);
+	ST(0) = getStringFromURI(self, XS_URI_HEADERS);
 
 
 =head2 transport()
@@ -1393,7 +1399,7 @@ SV *
 transport(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, transport);
+	ST(0) = getStringFromURI(self, XS_URI_TRANSPORT);
 
 
 =head2 ttl()
@@ -1406,7 +1412,7 @@ SV *
 ttl(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, ttl);
+	ST(0) = getStringFromURI(self, XS_URI_TTL);
 
 
 =head2 user_param()
@@ -1419,7 +1425,7 @@ SV *
 user_param(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, user_param);
+	ST(0) = getStringFromURI(self, XS_URI_USER_PARAM);
 
 
 
@@ -1433,7 +1439,7 @@ SV *
 maddr(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, maddr);
+	ST(0) = getStringFromURI(self, XS_URI_MADDR);
 
 =head2 method()
 
@@ -1445,7 +1451,7 @@ SV *
 method(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, method);
+	ST(0) = getStringFromURI(self, XS_URI_METHOD);
 
 
 =head2 lr()
@@ -1458,7 +1464,7 @@ SV *
 lr(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, lr);
+	ST(0) = getStringFromURI(self, XS_URI_LR);
 
 
 =head2 r2()
@@ -1471,7 +1477,7 @@ SV *
 r2(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, r2);
+	ST(0) = getStringFromURI(self, XS_URI_R2);
 
 
 =head2 transport_val()
@@ -1484,7 +1490,7 @@ SV *
 transport_val(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, transport_val);
+	ST(0) = getStringFromURI(self, XS_URI_TRANSPORT_VAL);
 
 
 =head2 ttl_val()
@@ -1497,7 +1503,7 @@ SV *
 ttl_val(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, ttl_val);
+	ST(0) = getStringFromURI(self, XS_URI_TTL_VAL);
 
 
 =head2 user_param_val()
@@ -1510,7 +1516,7 @@ SV *
 user_param_val(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, user_param_val);
+	ST(0) = getStringFromURI(self, XS_URI_USER_PARAM_VAL);
 
 
 =head2 maddr_val()
@@ -1523,7 +1529,7 @@ SV *
 maddr_val(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, maddr_val);
+	ST(0) = getStringFromURI(self, XS_URI_MADDR_VAL);
 
 
 =head2 method_val()
@@ -1536,7 +1542,7 @@ SV *
 method_val(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, method_val);
+	ST(0) = getStringFromURI(self, XS_URI_METHOD_VAL);
 
 
 =head2 lr_val()
@@ -1549,7 +1555,7 @@ SV *
 lr_val(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, lr_val);
+	ST(0) = getStringFromURI(self, XS_URI_LR_VAL);
 
 
 =head2 r2_val()
@@ -1562,7 +1568,7 @@ SV *
 r2_val(self)
     SV *self;
   CODE:
-	ST(0) = getStringFromURI(self, r2_val);
+	ST(0) = getStringFromURI(self, XS_URI_R2_VAL);
 
 
 

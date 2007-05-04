@@ -27,10 +27,15 @@
 #ifndef PERL_MOD_H
 #define PERL_MOD_H
 
+#include "../sl/sl_api.h"
+
+/* lock_ops.h defines union semun, perl does not need to redefine it */
+#ifdef USE_SYSV_SEM
+# define HAS_UNION_SEMUN
+#endif
+
 #include <EXTERN.h>
 #include <perl.h>
-
-#include "../sl/sl_api.h"
 
 extern char *filename;
 extern char *modpath;

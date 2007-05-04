@@ -37,6 +37,11 @@
 #include "../rr/api.h"
 #include "../sl/sl_api.h"
 
+/* lock_ops.h defines union semun, perl does not need to redefine it */
+#ifdef USE_SYSV_SEM
+# define HAS_UNION_SEMUN
+#endif
+
 #include "perlfunc.h"
 #include "perl.h"
 
