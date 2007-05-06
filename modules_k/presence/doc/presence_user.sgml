@@ -16,7 +16,8 @@
 	<para> The modules handles PUBLISH and SUBSCRIBE messages and generates
 	NOTIFY messages in a general, event independent way. It allows registering 
 	events to it from other &ser modules. Events that can currently be added to
-	it are: presence, presence.winfo, dialog;sla from presence_xml module.
+	it are: presence, presence.winfo, dialog;sla from presence_xml
+	module and message-summary from presence_mwi module.
 	</para>
 	<para>
 	The modules works with database storage. It stores published information 
