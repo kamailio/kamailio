@@ -218,7 +218,6 @@ unsigned int t_uac_cancel( str *headers, str *body,
 
 	/* <insert_into_hashtable> */
 	cancel_cell->flags |= T_IS_LOCAL_FLAG;
-	set_kr(REQ_FWDED);
 	cancel_cell->hash_index=t_invite->hash_index;
 
 	LOCK_HASH(cancel_cell->hash_index);

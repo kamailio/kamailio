@@ -221,7 +221,6 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	if (method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0)
 		new_cell->flags |= T_IS_INVITE_FLAG;
 	new_cell->flags |= T_IS_LOCAL_FLAG;
-	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[0].request;
 	request->dst.to = to_su;
@@ -257,7 +256,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	start_retr(request);
 	return 1;
 
- error1:
+error1:
 	LOCK_HASH(hi);
 	remove_from_hash_table_unsafe(new_cell);
 	UNLOCK_HASH(hi);
