@@ -40,7 +40,6 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../db/db_pool.h"
-#include "utils.h"
 #include "val.h"
 #include "my_con.h"
 #include "res.h"

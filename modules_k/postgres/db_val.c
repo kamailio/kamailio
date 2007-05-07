@@ -45,41 +45,13 @@
 #include "dbase.h"
 
 #include <string.h>
-
-
-char *strptime(const char *s, const char *format, struct tm *tm);
-
-
-/* 
- * Convert a string to time_t
- */
-static inline int str2time(const char* _s, time_t* _v)
-{
-	struct tm time;
-#ifdef PARANOID
-	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "PG[str2time]: Invalid parameter value\n");
-		return -1;
-	}
-#endif
-
-	memset(&time, '\0', sizeof(struct tm));
-	strptime(_s,"%Y-%m-%d %H:%M:%S",&time);
-
-	     /* Daylight saving information got lost in the database
-	      * so let mktime to guess it. This eliminates the bug when
-	      * contacts reloaded from the database have different time
-	      * of expiration by one hour when daylight saving is used
-	      */ 
-	time.tm_isdst = -1;   
-	*_v = mktime(&time);
-
-	return 0;
-}
+#include <time.h>
 
 
 /*
  * Convert time_t to string
+ * postgresql stores dates with the timezone attached, so we can't use the
+ * converter function from db/db_ut.h
  */
 static inline int time2str(time_t _v, char* _s, int* _l)
 {
@@ -178,7 +150,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 
 	case DB_DATETIME:
 		LOG(L_DBG, "PG[str2val]: Converting DATETIME [%s]\n", _s);
-		if (str2time(_s, &VAL_TIME(_v)) < 0) {
+		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
 			LOG(L_ERR, "PG[str2val]: Error converting datetime\n");
 			return -5;
 		} else {

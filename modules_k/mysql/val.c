@@ -23,45 +23,11 @@
 
 #include "../../dprint.h"
 #include "../../db/db_ut.h"
-#include "utils.h"
 #include "val.h"
 
 #include <string.h>
 #include <stdio.h>
 
-/* 
- * Convert a string to time_t
- */
-static inline int str2time(const char* _s, time_t* _v)
-{
-	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "str2time: Invalid parameter value\n");
-		return -1;
-	}
-
-	*_v = mysql2time(_s);
-	return 0;
-}
-
-
-/*
- * Convert time_t to string
- */
-static inline int time2str(time_t _v, char* _s, int* _l)
-{
-	int l;
-
-	if ((!_s) || (!_l) || (*_l < 2))  {
-		LOG(L_ERR, "time2str: Invalid parameter value\n");
-		return -1;
-	}
-
-	*_s++ = '\'';
-	l = time2mysql(_v, _s, *_l - 1);
-	*(_s + l) = '\'';
-	*_l = l + 2;
-	return 0;
-}
 
 /*
  * Does not copy strings
@@ -133,7 +99,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		return 0;
 
 	case DB_DATETIME:
-		if (str2time(_s, &VAL_TIME(_v)) < 0) {
+		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
 			LOG(L_ERR, "str2val: Error while converting datetime value from string\n");
 			return -5;
 		} else {
@@ -235,7 +201,7 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 		break;
 
 	case DB_DATETIME:
-		if (time2str(VAL_TIME(_v), _s, _len) < 0) {
+		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
 			LOG(L_ERR, "val2str: Error while converting string to time_t\n");
 			return -7;
 		} else {

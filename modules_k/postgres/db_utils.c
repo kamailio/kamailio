@@ -30,54 +30,11 @@
  *
  */
 
-#define _GNU_SOURCE /* To avoid strptime warning */
-#define _XOPEN_SOURCE 4     /* bsd */
-#define _XOPEN_SOURCE_EXTENDED 1    /* solaris */
-
 
 #include <strings.h>
 #include <string.h>
-#include <time.h>
 #include "db_utils.h"
 #include "defs.h"
-
-/*
- * Convert time_t structure to format accepted by PostgreSQL database
- */
-int time2postgresql(time_t _time, char* _result, int _res_len)
-{
-        struct tm* t;
-
-             /*
-               if (_time == MAX_TIME_T) {
-               snprintf(_result, _res_len, "0000-00-00 00:00:00");
-               }
-             */
-
-        t = localtime(&_time);
-        return strftime(_result, _res_len, "%Y-%m-%d %H:%M:%S", t);
-}
-
-
-/*
- * Convert PostgreSQL time representation to time_t structure
- */
-time_t postgresql2time(const char* _str)
-{
-        struct tm time;
-
-             /* It is necessary to zero tm structure first */
-        memset(&time, '\0', sizeof(struct tm));
-        strptime(_str, "%Y-%m-%d %H:%M:%S", &time);
-
-             /* Daylight saving information got lost in the database
-              * so let mktime to guess it. This eliminates the bug when
-              * contacts reloaded from the database have different time
-              * of expiration by one hour when daylight saving is used
-              */
-        time.tm_isdst = -1;
-        return mktime(&time);
-}
 
 char* trim(char* _s);
 

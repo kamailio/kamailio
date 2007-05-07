@@ -34,25 +34,10 @@
 #ifndef DB_UTILS_H
 #define DB_UTILS_H
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE
-#endif
-#include <time.h>
 
 /*
  * SQL URL parser
  */
 int parse_sql_url(char* _url, char** _user, char** _pass, 
 		  char** _host, char** _port, char** _db);
-
-/*
- * Convert time_t structure to format accepted by PostgreSQL database
- */
-int time2postgresql(time_t _time, char* _result, int _res_len);
-
-/*
- * Convert PostgreSQL time representation to time_t structure
- */
-time_t postgresql2time(const char* _str);
-
 #endif
