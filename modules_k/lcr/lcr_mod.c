@@ -108,7 +108,7 @@ int reload_gws ( void );
 #define MAX_NO_OF_GWS 32
 #define MAX_NO_OF_LCRS 256
 #define MAX_PREFIX_LEN 16
-#define MAX_FROM_URI_LEN 128
+#define MAX_FROM_URI_LEN 256
 
 /* Default module parameter values */
 #define DEF_FR_INV_TIMER 90
@@ -1140,7 +1140,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	strncpy(from_uri_str, from_uri.s, from_uri.len);
 	from_uri_str[from_uri.len] = '\0';
     } else {
-	LOG(L_ERR, "load_gws(): from_uri to large\n");
+	LOG(L_ERR, "load_gws(): from_uri is too long\n");
 	return -1;
     }
 
