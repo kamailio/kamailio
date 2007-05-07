@@ -317,6 +317,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}	
 	memset(presentity, 0, size);
+	memset(&presentity->etag, 0, sizeof(str));
+
 	size= sizeof(ua_pres_t);
 	presentity->pres_uri= (str*)((char*)presentity+ size);
 	size+= sizeof(str);
@@ -507,7 +509,7 @@ insert:
 
 	if(publ->body && publ->body->s)
 	{
-		ret_code= ev->process_body(publ, &body, ver, tuple_id);
+		ret_code= ev->process_body(publ, &body, ver, &tuple_id );
 		if( ret_code< 0 || body== NULL)
 		{
 			LOG(L_ERR, "PUA:send_publish: ERROR while processing body\n");
@@ -516,6 +518,9 @@ insert:
 			goto error;
 		}
 	}
+	if(tuple_id)
+		DBG("\n\nPUA:send_publish: tuple_id= %.*s\n\n", tuple_id->len, tuple_id->s  );
+	
 	/* construct the callback parameter */
 
 	size= sizeof(treq_cbparam_t)+ sizeof(str)+ (publ->pres_uri->len+ 

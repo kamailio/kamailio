@@ -33,7 +33,7 @@
 struct publ_info;
 
 typedef int (evs_process_body_t)(struct publ_info* , str** final_body, 
-		 int ver, str* tuple);
+		 int ver, str** tuple);
 
 typedef struct pua_event
 {

@@ -107,6 +107,9 @@ void destroy_htable();
 int is_dialog(ua_pres_t* dialog);
 ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code);
 
+/* for degug */
+void print_ua_pres(ua_pres_t* p);
+
 typedef int  (*query_dialog_t)(ua_pres_t* presentity);
 
 static inline int get_event_flag(str* event)

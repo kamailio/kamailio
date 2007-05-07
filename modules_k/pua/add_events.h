@@ -35,8 +35,8 @@
  * */
 int pua_add_events();
 
-int pres_process_body(struct publ_info* publ, str** fin_body, int ver, str* tuple);
-int bla_process_body (struct publ_info* publ, str** fin_body, int ver, str* tuple);
-int mwi_process_body (struct publ_info* publ, str** fin_body, int ver, str* tuple);
+int pres_process_body(struct publ_info* publ, str** fin_body, int ver, str** tuple);
+int bla_process_body (struct publ_info* publ, str** fin_body, int ver, str** tuple);
+int mwi_process_body (struct publ_info* publ, str** fin_body, int ver, str** tuple);
 
 #endif

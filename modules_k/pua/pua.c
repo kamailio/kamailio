@@ -365,11 +365,10 @@ int db_restore()
 		row = &res->rows[i];
 		row_vals = ROW_VALUES(row);
 	
-		pres_uri.s= row_vals[0].val.str_val.s;
+		pres_uri.s= (char*)row_vals[puri_col].val.string_val;
 		pres_uri.len = strlen(pres_uri.s);
-
-		pres_id.s= row_vals[1].val.str_val.s;
-		pres_id.len = strlen(pres_id.s);
+		
+		DBG("PUA: db_restore: pres_uri= %.*s\n", pres_uri.len, pres_uri.s);
 
 		memset(&etag,			 0, sizeof(str));
 		memset(&tuple_id,		 0, sizeof(str));
@@ -378,43 +377,49 @@ int db_restore()
 		memset(&to_tag,			 0, sizeof(str));
 		memset(&from_tag,		 0, sizeof(str));
 		memset(&record_route,	 0, sizeof(str));
+		memset(&pres_id,         0, sizeof(str));
 	
-		if(row_vals[etag_col].val.str_val.s)
+		pres_id.s= (char*)row_vals[pid_col].val.string_val;
+		if(pres_id.s)
+			pres_id.len = strlen(pres_id.s);
+
+		if(row_vals[etag_col].val.string_val)
 		{
-			etag.s= row_vals[etag_col].val.str_val.s;
+			etag.s= (char*)row_vals[etag_col].val.string_val;
 			etag.len = strlen(etag.s);
 	
-			tuple_id.s= row_vals[tuple_col].val.str_val.s;
+			tuple_id.s= (char*)row_vals[tuple_col].val.string_val;
 			tuple_id.len = strlen(tuple_id.s);
 		}
 
-		if(row_vals[watcher_col].val.str_val.s)
+		if(row_vals[watcher_col].val.string_val)
 		{	
-			watcher_uri.s= row_vals[watcher_col].val.str_val.s;
+			watcher_uri.s= (char*)row_vals[watcher_col].val.string_val;
 			watcher_uri.len = strlen(watcher_uri.s);
 	
-			call_id.s= row_vals[callid_col].val.str_val.s;
+			call_id.s= (char*)row_vals[callid_col].val.string_val;
 			call_id.len = strlen(call_id.s);
 
-			to_tag.s= row_vals[totag_col].val.str_val.s;
+			to_tag.s= (char*)row_vals[totag_col].val.string_val;
 			to_tag.len = strlen(to_tag.s);
 
-			from_tag.s= row_vals[fromtag_col].val.str_val.s;
+			from_tag.s= (char*)row_vals[fromtag_col].val.string_val;
 			from_tag.len = strlen(from_tag.s);
 
-			if(row_vals[record_route_col].val.str_val.s)
+			if(row_vals[record_route_col].val.string_val)
 			{
-				record_route.s= row_vals[record_route_col].val.str_val.s;
+				record_route.s= (char*)row_vals[record_route_col].val.string_val;
 				record_route.len= strlen(record_route.s);
 			}	
 		}
 		
-		size= sizeof(ua_pres_t)+ sizeof(str)+ pres_uri.len+ pres_id.len;
-		if(etag.len)
-			size+= etag.len+ tuple_id.len;
-		else
+		size= sizeof(ua_pres_t)+ sizeof(str)+ pres_uri.len+ pres_id.len+
+					tuple_id.len;
+		
+		if(watcher_uri.s)
 			size+= sizeof(str)+ watcher_uri.len+ call_id.len+ to_tag.len+
 				from_tag.len+ record_route.len;
+		
 		p= (ua_pres_t*)shm_malloc(size);
 		if(p== NULL)
 		{
@@ -430,30 +435,24 @@ int db_restore()
 		memcpy(p->pres_uri->s, pres_uri.s, pres_uri.len);
 		p->pres_uri->len= pres_uri.len;
 		size+= pres_uri.len;
-
-		p->id.s= (char*)p + size;
-		memcpy(p->id.s, pres_id.s, pres_id.len);
-		p->id.len= pres_id.len;
-		size+= pres_id.len;
-
-		p->expires= row_vals[expires_col].val.int_val;
-		p->flag|=	row_vals[flag_col].val.int_val;
-		p->db_flag|= INSERTDB_FLAG;
-
-		if(etag.len)
+		
+		if(pres_id.s)
+		{	
+			p->id.s= (char*)p + size;
+			memcpy(p->id.s, pres_id.s, pres_id.len);
+			p->id.len= pres_id.len;
+			size+= pres_id.len;
+		}
+		if(tuple_id.s && tuple_id.len)
 		{
-			p->etag.s= (char*)p+ size;
-			memcpy(p->etag.s, etag.s, etag.len);
-			p->etag.len= etag.len;
-			size+= etag.len;
-			
 			p->tuple_id.s= (char*)p + size;
 			memcpy(p->tuple_id.s, tuple_id.s, tuple_id.len);
 			p->tuple_id.len= tuple_id.len;
 			size+= tuple_id.len;
-		}
-		else
-		{
+		}	
+
+		if(watcher_uri.s && watcher_uri.len)
+		{	
 			p->watcher_uri= (str*)((char*)p+ size);
 			size+= sizeof(str);
 
@@ -486,10 +485,30 @@ int db_restore()
 			}	
 			p->cseq= row_vals[cseq_col].val.int_val;
 		}
+		
 		p->event= row_vals[event_col].val.int_val;
+		p->expires= row_vals[expires_col].val.int_val;
+		p->flag|=	row_vals[flag_col].val.int_val;
+		p->db_flag|= INSERTDB_FLAG;
 
+		memset(&p->etag, 0, sizeof(str));
+		if(etag.s && etag.len)
+		{
+			/* alloc separately */
+			p->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
+			if(p->etag.s==  NULL)
+			{
+				LOG(L_ERR, "pua:db_restore:ERROR while aloocating memory\n");
+				goto error;
+			}	
+			memcpy(p->etag.s, etag.s, etag.len);
+			p->etag.len= etag.len;
+		}
+
+		print_ua_pres(p);
 		insert_htable(p);
 	}
+
 	if(res)
 	{
 		pua_dbf.free_result(pua_db, res);
@@ -527,6 +546,7 @@ void hashT_clean(unsigned int ticks,void *param)
 		p= HashT->p_records[i].entity->next;
 		while(p)
 		{	
+			print_ua_pres(p);
 			if(p->expires- update_period < now )
 			{
 				if((p->desired_expires> p->expires + min_expires) || 
@@ -589,7 +609,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			LOG(L_ERR, "PUA: update_pua: ERROR while constructing publ callback param\n");
 			goto error;
 		}	
-		result= tmb.t_request(&met,						/* Type of the message */
+		result= tmb.t_request(&met,				/* Type of the message */
 				p->pres_uri,					/* Request-URI */
 				p->pres_uri,					/* To */
 				p->pres_uri,					/* From */
@@ -843,7 +863,7 @@ void db_update(unsigned int ticks,void *param)
 						}
 						pua_dbf.free_result(pua_db, res);
 						res= NULL;
-
+						break;		
 					}
 					else
 					{
@@ -854,8 +874,8 @@ void db_update(unsigned int ticks,void *param)
 						}
 						DBG("PUA:db_update: UPDATEDB_FLAG and no record"
 								" found\n");
+						p->db_flag= INSERTDB_FLAG;
 					}	
-					break;		
 				}
 				
 				case INSERTDB_FLAG:
@@ -902,7 +922,7 @@ void db_update(unsigned int ticks,void *param)
 			lock_release(&HashT->p_records[i].lock);	
 	}
 
-	db_vals[0].val.int_val= (int)time(NULL);
+	db_vals[0].val.int_val= (int)time(NULL)- 10;
 	db_ops[0]= OP_LT;
 	if(pua_dbf.delete(pua_db, db_cols, db_ops, db_vals, 1) < 0)
 	{
@@ -920,21 +940,20 @@ treq_cbparam_t* build_uppubl_cbparam(ua_pres_t* pres)
 	treq_cbparam_t* cb_param= NULL;
 	
 	size= sizeof(treq_cbparam_t)+ sizeof(str)*2+ (pres->pres_uri->len+ 
-		+ pres->content_type.len+ pres->id.len+ pres->etag.len+
-		pres->tuple_id.len+ 1)*sizeof(char); 
+		+ pres->id.len+ pres->etag.len+ pres->tuple_id.len)*sizeof(char); 
 
-	DBG("PUA: send_publish: before allocating size= %d\n", size);
+	DBG("PUA: build_uppubl_cbparam: before allocating size= %d\n", size);
 	cb_param= (treq_cbparam_t*)shm_malloc(size);
 	if(cb_param== NULL)
 	{
-		LOG(L_ERR, "PUA: send_publish: ERROR no more share memory while"
+		LOG(L_ERR, "PUA: build_uppubl_cbparam: ERROR no more share memory while"
 				" allocating cb_param - size= %d\n", size);
 		return NULL;
 	}
 	memset(cb_param, 0, size);
 	memset(&cb_param->publ, 0, sizeof(publ_info_t));
 	size =  sizeof(treq_cbparam_t);
-	DBG("PUA: send_publish: size= %d\n", size);
+	DBG("PUA: build_uppubl_cbparam: size= %d\n", size);
 
 	cb_param->publ.pres_uri = (str*)((char*)cb_param + size);
 	size+= sizeof(str);
@@ -966,7 +985,7 @@ treq_cbparam_t* build_uppubl_cbparam(ua_pres_t* pres)
 	cb_param->tuple_id.len= pres->tuple_id.len;
 	size+= pres->tuple_id.len;
 	
-	DBG("PUA:send_publish: after allocating: size= %d\n", size);
+	DBG("PUA:build_uppubl_cbparam: after allocating: size= %d\n", size);
 	cb_param->publ.event= pres->event;
 	cb_param->publ.source_flag|= pres->flag;
 	cb_param->publ.expires= pres->expires;
@@ -979,14 +998,8 @@ ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 	ua_pres_t* hentity;
 	int size;
 
-	size= sizeof(ua_pres_t)+ sizeof(str)+ (p->pres_uri->len+ 1)*sizeof(char);
+	size= sizeof(ua_pres_t)+ sizeof(str)*2+ (p->pres_uri->len+ p->watcher_uri->len)*sizeof(char);
 	
-	if(p->watcher_uri)
-		size+= sizeof(str)+ p->watcher_uri->len*sizeof(char);
-	else
-	if(p->id.s && p->id.len)
-		size+=  p->id.len*sizeof(char);
-
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
@@ -1006,23 +1019,13 @@ ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 	hentity->pres_uri->len= p->pres_uri->len;
 	size+= p->pres_uri->len;
 		
-	if(p->watcher_uri)
-	{
-		hentity->watcher_uri=(str*)((char*)hentity+ size);
-		size+= sizeof(str);
-		hentity->watcher_uri->s= (char*)hentity+ size;
-		memcpy(hentity->watcher_uri->s, p->watcher_uri->s,p->watcher_uri->len);
-		hentity->watcher_uri->len= p->watcher_uri->len;
-		size+= p->watcher_uri->len;
-	}	
-	else
-	if(p->id.s && p->id.len)
-	{	
-		hentity->id.s = ((char*)hentity+ size);
-		memcpy(hentity->id.s, p->id.s, p->id.len);
-		hentity->id.len= p->id.len;
-		size+= p->id.len;
-	}
+	hentity->watcher_uri=(str*)((char*)hentity+ size);
+	size+= sizeof(str);
+	hentity->watcher_uri->s= (char*)hentity+ size;
+	memcpy(hentity->watcher_uri->s, p->watcher_uri->s,p->watcher_uri->len);
+	hentity->watcher_uri->len= p->watcher_uri->len;
+	size+= p->watcher_uri->len;
+	
 	hentity->flag|= p->flag;
 	
 	return hentity;

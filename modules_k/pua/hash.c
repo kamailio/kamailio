@@ -35,7 +35,19 @@
 #include "pua.h"
 #include "send_publish.h"
 
-
+void print_ua_pres(ua_pres_t* p)
+{
+	DBG("PUA:print_ua_pres: \n");
+	DBG("\tpres_uri= %.*s   len= %d\n", p->pres_uri->len, p->pres_uri->s, p->pres_uri->len);
+	if(p->watcher_uri)
+	{	
+		DBG("\twatcher_uri= %.*s  len= %d\n", p->watcher_uri->len, p->watcher_uri->s, p->watcher_uri->len);
+		DBG("\tcall_id= %.*s   len= %d\n", p->call_id.len, p->call_id.s, p->call_id.len);
+	}	
+	else
+		DBG("\tetag= %.*s - len= %d\n", p->etag.len, p->etag.s, p->etag.len);
+	DBG("\texpires= %ld\n", p->expires- (int)time(NULL));
+}	
 htable_t* new_htable()
 {
 	htable_t* H= NULL;
@@ -182,8 +194,8 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires,
 
 	p->expires= expires+ (int)time(NULL);
 	p->desired_expires= desired_expires;
-	if(p->db_flag& NO_UPDATEDB_FLAG)
-		p->db_flag= UPDATEDB_FLAG;
+		
+	p->db_flag= UPDATEDB_FLAG;
 
 	if(p->watcher_uri)
 		p->cseq ++;

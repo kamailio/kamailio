@@ -107,7 +107,7 @@ int pua_add_events()
 
 }	
 
-int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
+int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_param)
 {
 
 	xmlDocPtr doc= NULL;
@@ -117,8 +117,8 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 	char buf[50];
 	str* body= NULL;
 	int alloc_tuple= 0;
+	str* tuple= NULL;
 
-	tuple= NULL;
 	doc= xmlParseMemory(publ->body->s, publ->body->len );
 	if(doc== NULL)
 	{
@@ -135,6 +135,8 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 	tuple_id= xmlNodeGetAttrContentByName(node, "id");
 	if(tuple_id== NULL)
 	{
+		tuple= *(tuple_param);
+
 		if(tuple== NULL)	// generate a tuple_id
 		{
 			tuple_id= buf;
@@ -155,7 +157,12 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
 			}
 			memcpy(tuple->s, tuple_id, tuple_id_len);
 			tuple->len= tuple_id_len;
+
+			*tuple_param= tuple;
 			alloc_tuple= 1;
+
+			DBG("PUA: pres_process_body: allocated tuple_id\n\n");
+
 		}
 		else
 		{
@@ -256,7 +263,7 @@ error:
 
 }	
 
-int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
+int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 {
 	xmlNodePtr node= NULL;
 	xmlDocPtr doc= NULL;
@@ -320,7 +327,7 @@ error:
 	return -1;
 }
 
-int mwi_process_body(publ_info_t* publ, str** fin_body, int ver, str* tuple)
+int mwi_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 {
 	*fin_body= publ->body;
 	return 0;
