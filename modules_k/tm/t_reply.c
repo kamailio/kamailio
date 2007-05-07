@@ -627,6 +627,8 @@ static inline int do_dns_failover(struct cell *t)
 	if ( get_next_su( uac->proxy, &uac->request.dst.to, 1)!=0 )
 		return -1;
 
+	DBG("DEBUG:tm:do_dns_failover: new destination available\n");
+
 	if (!fake_req(&faked_req, shmem_msg, &t->uas, uac)) {
 		LOG(L_ERR, "ERROR:tm:do_dns_failover: fake_req failed\n");
 		return -1;
@@ -793,8 +795,16 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->uac[picked_branch].proxy!=NULL ) {
 			/* is is a DNS failover scenario? - according to RFC 3263
 			 * this means 503 reply or timeout with no reply */
-			if (Trans->uac[picked_branch].last_received==503 ||
-			(new_code==408 && Trans->uac[picked_branch].last_received<0) ) {
+			DBG("DEBUG:tm:t_should_relay_response: dns-failover test: "
+				"branch=%d, last_recv=%d, flags=%X\n",
+				picked_branch, Trans->uac[picked_branch].last_received,
+				Trans->uac[picked_branch].flags);
+			if ( Trans->uac[picked_branch].last_received==503 ||
+			(Trans->uac[picked_branch].last_received==408 && 
+			(Trans->uac[picked_branch].flags&T_UAC_HAS_RECV_REPLY)==0)
+			 ) {
+				DBG("DEBUG:tm:t_should_relay_response: trying DNS-based "
+					"failover\n");
 				/* do DNS failover -> add new branches */
 				if (do_dns_failover( Trans )!=0) {
 					/* skip the failed added branches */
