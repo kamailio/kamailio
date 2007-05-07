@@ -27,15 +27,13 @@
 #ifndef _PERLVDB_CONV_H
 #define _PERLVDB_CONV_H 
 
-#include <EXTERN.h>
-#include <perl.h>
-#include <XSUB.h>
-
 #include "../../db/db_op.h"
 #include "../../db/db_val.h"
 #include "../../db/db_key.h"
 
 #include "perlvdb.h"
+
+#include <XSUB.h>
 
 #define PERL_CLASS_VALUE	"OpenSER::VDB::Value"
 #define PERL_CLASS_PAIR		"OpenSER::VDB::Pair"

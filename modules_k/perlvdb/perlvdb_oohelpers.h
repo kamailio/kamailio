@@ -27,9 +27,6 @@
 #ifndef _PERLVDB_OOHELPERS_H
 #define _PERLVDB_OOHELPERS_H 
 
-#include <EXTERN.h>
-#include <perl.h>
-
 #include "perlvdb.h"
 
 SV *perlvdb_perlmethod(SV *ref,

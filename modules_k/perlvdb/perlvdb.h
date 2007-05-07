@@ -27,20 +27,26 @@
 #ifndef _PERLVDB_H
 #define _PERLVDB_H 
 
-#undef OP_LT
-#undef OP_GT
-#undef OP_EQ
-
-#include <EXTERN.h>
-#include <perl.h>
-
-#undef load_module
 
 #include "../../db/db.h"
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+
+/* lock_ops.h defines union semun, perl does not need to redefine it */
+#ifdef USE_SYSV_SEM
+# define HAS_UNION_SEMUN
+#endif
+
+#undef OP_LT
+#undef OP_GT
+#undef OP_EQ
+
+#undef load_module
+
+#include <EXTERN.h>
+#include <perl.h>
 
 #include "perlvdb_conv.h"
 #include "perlvdb_oohelpers.h"

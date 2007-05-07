@@ -24,9 +24,6 @@
  *
  */
 
-#include <EXTERN.h>
-#include <perl.h>
-
 #include "perlvdb_conv.h"
 #include "perlvdb_oohelpers.h"
 
