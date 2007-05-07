@@ -25,12 +25,26 @@
 #ifndef DB_UT_H
 #define DB_UT_H
 
+
+/* for strptime, use 600 for 'Single UNIX Specification, Version 3' */
+#define _XOPEN_SOURCE 600          /* glibc2 on linux, bsd */
+#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
+
+#include <time.h>
+
+#undef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE_EXTENDED
+
+
 int db_str2int(const char* _s, int* _v);
 
 int db_str2double(const char* _s, double* _v);
 
 int db_int2str(int _v, char* _s, int* _l);
 
-inline int db_double2str(double _v, char* _s, int* _l);
+int db_double2str(double _v, char* _s, int* _l);
 
+int db_time2str(time_t _v, char* _s, int* _l);
+
+int db_str2time(const char* _s, time_t* _v);
 #endif
