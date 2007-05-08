@@ -1136,7 +1136,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	}
 	from_uri = get_from(_m)->uri;
     }
-    if (from_uri.len < MAX_FROM_URI_LEN) {
+    if (from_uri.len <= MAX_FROM_URI_LEN) {
 	strncpy(from_uri_str, from_uri.s, from_uri.len);
 	from_uri_str[from_uri.len] = '\0';
     } else {
