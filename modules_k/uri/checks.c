@@ -40,7 +40,6 @@
 #include "../../db/db.h"                /* Database API */
 #include "../../dset.h"
 #include "../../items.h"
-#include "uri_mod.h"
 #include "checks.h"
 
 

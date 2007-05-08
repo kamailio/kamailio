@@ -43,7 +43,6 @@
 #include "../../mem/mem.h"
 #include "../../items.h"
 #include "../../mod_fix.h"
-#include "uri_mod.h"
 #include "checks.h"
 
 MODULE_VERSION
