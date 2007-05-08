@@ -33,7 +33,7 @@
 #ifndef _SER_LIST_H
 #define	_SER_LIST_H
 
-#include <sys/cdefs.h>
+/* #include <sys/cdefs.h> - not needed and not present on all the systems */
 
 /*
  * This file defines four types of data structures: singly-linked lists,
