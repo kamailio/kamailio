@@ -489,7 +489,6 @@ int db_restore()
 		p->event= row_vals[event_col].val.int_val;
 		p->expires= row_vals[expires_col].val.int_val;
 		p->flag|=	row_vals[flag_col].val.int_val;
-		p->db_flag|= INSERTDB_FLAG;
 
 		memset(&p->etag, 0, sizeof(str));
 		if(etag.s && etag.len)
@@ -691,9 +690,9 @@ void db_update(unsigned int ticks,void *param)
 	db_key_t q_cols[15], result_cols[1];
 	db_res_t *res= NULL;
 	db_key_t db_cols[3];
-	db_val_t q_vals[15], db_vals[3];
+	db_val_t q_vals[15], db_vals[4];
 	db_op_t  db_ops[1] ;
-	int n_query_cols= 0, n_query_update= 3;
+	int n_query_cols= 0, n_query_update= 0;
 	int n_update_cols= 0;
 	int i;
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
@@ -720,20 +719,15 @@ void db_update(unsigned int ticks,void *param)
 	q_vals[flag_col= n_query_cols].nul = 0;
 	n_query_cols++;
 
+	q_cols[event_col= n_query_cols] ="event";
+	q_vals[event_col= n_query_cols].type = DB_INT;
+	q_vals[event_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
 	q_cols[watcher_col= n_query_cols] ="watcher_uri";
 	q_vals[watcher_col= n_query_cols].type = DB_STR;
 	q_vals[watcher_col= n_query_cols].nul = 0;
 	n_query_cols++;
-
-	q_cols[tuple_col= n_query_cols] ="tuple_id";
-	q_vals[tuple_col= n_query_cols].type = DB_STR;
-	q_vals[tuple_col= n_query_cols].nul = 0;
-	n_query_cols++;
-
-	q_cols[etag_col= n_query_cols] ="etag";
-	q_vals[etag_col= n_query_cols].type = DB_STR;
-	q_vals[etag_col= n_query_cols].nul = 0;
-	n_query_cols++;	
 
 	q_cols[callid_col= n_query_cols] ="call_id";
 	q_vals[callid_col= n_query_cols].type = DB_STR;
@@ -750,6 +744,16 @@ void db_update(unsigned int ticks,void *param)
 	q_vals[fromtag_col= n_query_cols].nul = 0;
 	n_query_cols++;
 
+	q_cols[etag_col= n_query_cols] ="etag";
+	q_vals[etag_col= n_query_cols].type = DB_STR;
+	q_vals[etag_col= n_query_cols].nul = 0;
+	n_query_cols++;	
+
+	q_cols[tuple_col= n_query_cols] ="tuple_id";
+	q_vals[tuple_col= n_query_cols].type = DB_STR;
+	q_vals[tuple_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
 	q_cols[cseq_col= n_query_cols]="cseq";
 	q_vals[cseq_col= n_query_cols].type = DB_INT;
 	q_vals[cseq_col= n_query_cols].nul = 0;
@@ -758,11 +762,6 @@ void db_update(unsigned int ticks,void *param)
 	q_cols[expires_col= n_query_cols] ="expires";
 	q_vals[expires_col= n_query_cols].type = DB_INT;
 	q_vals[expires_col= n_query_cols].nul = 0;
-	n_query_cols++;
-
-	q_cols[event_col= n_query_cols] ="event";
-	q_vals[event_col= n_query_cols].type = DB_INT;
-	q_vals[event_col= n_query_cols].nul = 0;
 	n_query_cols++;
 
 	q_cols[record_route_col= n_query_cols] ="record_route";
@@ -778,6 +777,10 @@ void db_update(unsigned int ticks,void *param)
 	db_cols[1]= "cseq";
 	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
+						
+	db_cols[2]= "etag";
+	db_vals[2].type = DB_STR;
+	db_vals[2].nul = 0;
 
 	result_cols[0]= "expires";
 
@@ -818,23 +821,51 @@ void db_update(unsigned int ticks,void *param)
 				case UPDATEDB_FLAG:
 				{
 					DBG("PUA: db_update: UPDATEDB_FLAG\n ");
-					n_update_cols= 1;
-				
-					
-					q_vals[puri_col].val.str_val = *(p->pres_uri);
-					q_vals[pid_col].val.str_val = p->id;
-					q_vals[flag_col].val.int_val = p->flag;
+					n_update_cols= 0;
+					n_query_update= 0;
 
-					db_vals[0].val.int_val= p->expires;
+					q_vals[puri_col].val.str_val = *(p->pres_uri);
+					n_query_update++;
 					
-					if(p->watcher_uri)   /* for subscribe */
+					q_vals[pid_col].val.str_val = p->id;
+					n_query_update++;
+					
+					q_vals[flag_col].val.int_val = p->flag;
+					n_query_update++;
+						
+					q_vals[event_col].val.int_val = p->event;
+					n_query_update++;
+				
+					if(p->watcher_uri)
 					{
-						q_vals[n_query_update].val.str_val = *(p->watcher_uri);
+						q_vals[watcher_col].val.str_val = *(p->watcher_uri);
+						n_query_update++;
+									
+						q_vals[callid_col].val.str_val = p->call_id;
 						n_query_update++;
 					
-						db_vals[1].val.int_val= p->cseq	;
-						n_update_cols++;
+						q_vals[totag_col].val.str_val = p->to_tag;
+						n_query_update++;
+						
+						q_vals[fromtag_col].val.str_val = p->from_tag;
+						n_query_update++;
 					}
+
+					db_vals[0].val.int_val= p->expires;
+					n_update_cols++;
+
+					db_cols[1]= "cseq";
+					db_vals[1].type = DB_INT;
+					db_vals[1].nul = 0;
+					db_vals[1].val.int_val= p->cseq	;
+					n_update_cols++;
+					
+					db_cols[2]= "etag";
+					db_vals[2].type = DB_STR;
+					db_vals[2].nul = 0;
+					db_vals[2].val.str_val= p->etag	;
+					n_update_cols++;
+						
 					
 					DBG("PUA: db_update: Updating ..n_query_update= %d\t"
 						" n_update_cols= %d\n", n_query_update, n_update_cols);
@@ -844,7 +875,8 @@ void db_update(unsigned int ticks,void *param)
 					{
 						LOG(L_ERR, "PUA: db_update:ERROR while querying"
 								" database");
-						lock_release(&HashT->p_records[i].lock);
+						if(!no_lock)
+							lock_release(&HashT->p_records[i].lock);
 						if(res)
 							pua_dbf.free_result(pua_db, res);	
 						return ;
@@ -856,14 +888,14 @@ void db_update(unsigned int ticks,void *param)
 						{
 							LOG(L_ERR, "PUA: db_update: ERROR while updating"
 									" in database");
-							lock_release(&HashT->p_records[i].lock);	
+							if(!no_lock)
+								lock_release(&HashT->p_records[i].lock);	
 							pua_dbf.free_result(pua_db, res);
 							res= NULL;
 							return ;
 						}
 						pua_dbf.free_result(pua_db, res);
-						res= NULL;
-						break;		
+						res= NULL;		
 					}
 					else
 					{
@@ -874,10 +906,10 @@ void db_update(unsigned int ticks,void *param)
 						}
 						DBG("PUA:db_update: UPDATEDB_FLAG and no record"
 								" found\n");
-						p->db_flag= INSERTDB_FLAG;
+					//	p->db_flag= INSERTDB_FLAG;
 					}	
+					break;	
 				}
-				
 				case INSERTDB_FLAG:
 				{	
 					DBG("PUA: db_update: INSERTDB_FLAG\n ");
@@ -905,17 +937,15 @@ void db_update(unsigned int ticks,void *param)
 					{
 						LOG(L_ERR, "PUA: db_update: ERROR while inserting"
 								" into table pua\n");
-						lock_release(&HashT->p_records[i].lock);
+						if(!no_lock)
+							lock_release(&HashT->p_records[i].lock);
 						return ;
 					}
 					break;
 				}
 
 			}
-			if(!(p->db_flag & NO_UPDATEDB_FLAG))
-			{
-				p->db_flag= NO_UPDATEDB_FLAG;	
-			}
+			p->db_flag= NO_UPDATEDB_FLAG;	
 			p= p->next;
 		}
 		if(!no_lock)

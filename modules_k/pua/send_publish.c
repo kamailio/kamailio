@@ -345,7 +345,6 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->desired_expires= desired_expires;
 	presentity->flag|= hentity->publ.source_flag;
 	presentity->event|= hentity->publ.event;
-	presentity->db_flag|= INSERTDB_FLAG;
 
 	presentity->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
 	if(presentity->etag.s== NULL)

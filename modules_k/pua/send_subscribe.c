@@ -459,7 +459,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	}	
 	presentity->event|= hentity->event;
 	presentity->flag= hentity->flag;
-	presentity->db_flag|= INSERTDB_FLAG;
 	presentity->etag.s= NULL;
 	presentity->cseq= cseq;
 	presentity->desired_expires= hentity->desired_expires;

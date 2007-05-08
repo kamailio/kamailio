@@ -195,7 +195,8 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires,
 	p->expires= expires+ (int)time(NULL);
 	p->desired_expires= desired_expires;
 		
-	p->db_flag= UPDATEDB_FLAG;
+	if(p->db_flag & NO_UPDATEDB_FLAG)
+		p->db_flag= UPDATEDB_FLAG;
 
 	if(p->watcher_uri)
 		p->cseq ++;
