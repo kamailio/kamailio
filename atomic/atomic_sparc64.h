@@ -38,6 +38,7 @@
  * History:
  * --------
  *  2006-03-28  created by andrei
+ *  2007-05-08 added atomic_add and atomic_cmpxchg (andrei)
  */
 
 
@@ -121,6 +122,34 @@
 		return RET_EXPR; \
 	}
 
+/* same as above, but uses a short 1 op sequence 
+ * %2 (or %1) is var, %0 is  v and return (ret)*/
+#define ATOMIC_FUNC_DECL1_RAW(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
+	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+															P_TYPE v) \
+	{ \
+		P_TYPE ret; \
+		asm volatile( \
+			OP "\n\t" \
+			: "=&r"(ret), "=m"(*var) : "r"(var), "0"(v) : "cc" \
+			); \
+		return RET_EXPR; \
+	}
+
+/* same as above, but takes two extra params, v, which goes in %4
+ * and uses a short 1 op sequence:
+ * %2 (or %1) is var, %3 is v1 and %0 is v2 & result (ret) */
+#define ATOMIC_FUNC_DECL2_CAS(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
+	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+													P_TYPE v1, P_TYPE v2) \
+	{ \
+		P_TYPE ret; \
+		asm volatile( \
+			OP "\n\t" \
+			: "=&r"(ret), "=m"(*var) : "r"(var), "r"(v1), "0"(v2) : "cc" \
+			); \
+		return RET_EXPR; \
+	}
 
 
 
@@ -130,7 +159,11 @@ ATOMIC_FUNC_DECL1(and,     "and  %0, %4, %1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "or   %0, %4, %1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "add   %0, 1, %1", int, int, ((ret+1)==0) )
 ATOMIC_FUNC_DECL(dec_and_test, "sub   %0, 1, %1", int, int, ((ret-1)==0) )
-ATOMIC_FUNC_DECL1(get_and_set, "mov %4, %1" , int, int,  ret)
+/* deprecated but probably better then CAS for futexes */
+ATOMIC_FUNC_DECL1_RAW(get_and_set, "swap [%2], %0", int, int, ret)
+/*ATOMIC_FUNC_DECL1(get_and_set, "mov %4, %1" , int, int,  ret)*/
+ATOMIC_FUNC_DECL1(add,     "add  %0, %4, %1", int, int,  ret+v)
+ATOMIC_FUNC_DECL2_CAS(cmpxchg, "cas  [%2], %3, %0", int, int,  ret)
 
 
 ATOMIC_FUNC_DECL(inc,      "add  %0,  1, %1", long, void, /* no return */ )
@@ -140,6 +173,12 @@ ATOMIC_FUNC_DECL1(or,      "or   %0, %4, %1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "add   %0, 1, %1", long, long, ((ret+1)==0) )
 ATOMIC_FUNC_DECL(dec_and_test, "sub   %0, 1, %1", long, long, ((ret-1)==0) )
 ATOMIC_FUNC_DECL1(get_and_set, "mov %4, %1" , long, long,  ret)
+ATOMIC_FUNC_DECL1(add,     "add  %0, %4, %1", long, long,  ret+v)
+#ifdef SPARC64_MODE
+ATOMIC_FUNC_DECL2_CAS(cmpxchg, "casx  [%2], %3, %0", long, long,  ret)
+#else
+ATOMIC_FUNC_DECL2_CAS(cmpxchg, "cas   [%2], %3, %0", long, long,  ret)
+#endif
 
 
 #define atomic_inc(var) atomic_inc_int(&(var)->val)
@@ -149,6 +188,10 @@ ATOMIC_FUNC_DECL1(get_and_set, "mov %4, %1" , long, long,  ret)
 #define atomic_dec_and_test(var) atomic_dec_and_test_int(&(var)->val)
 #define atomic_inc_and_test(var) atomic_inc_and_test_int(&(var)->val)
 #define atomic_get_and_set(var, i) atomic_get_and_set_int(&(var)->val, i)
+#define atomic_add(var, i) atomic_add_int(&(var)->val, i)
+#define atomic_cmpxchg(var, old, new_v) \
+	atomic_cmpxchg_int(&(var)->val, old, new_v)
+
 
 
 /* with integrated membar */

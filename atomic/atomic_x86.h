@@ -43,6 +43,7 @@
  * --------
  *  2006-03-08  created by andrei
  *  2007-05-07  added cmpxchg (andrei)
+ *  2007-05-08  added atomic_add (andrei)
  */
 
 #ifndef _atomic_x86_h
@@ -184,6 +185,18 @@
 		return ret; \
 	}
 
+/* similar w/ XCHG but with LOCK prefix, relaxed constraints & diff. return */
+#define ATOMIC_FUNC_XADD(NAME, OP, TYPE) \
+	inline static TYPE atomic_##NAME##_##TYPE(volatile TYPE* var, TYPE v) \
+{ \
+	TYPE ret; \
+	asm volatile( \
+			__LOCK_PREF " " OP " \n\t" \
+			: "=r"(ret), "=m"(*var) :"m"(*var), "0"(v) : "cc", "memory" \
+			); \
+	return ret+v; \
+}
+
 ATOMIC_FUNC_DECL1(inc, "incl %0", int)
 ATOMIC_FUNC_DECL1(dec, "decl %0", int)
 ATOMIC_FUNC_DECL2(and, "andl %1, %0", int)
@@ -192,6 +205,7 @@ ATOMIC_FUNC_TEST(inc_and_test, "incl %0", int, int)
 ATOMIC_FUNC_TEST(dec_and_test, "decl %0", int, int)
 ATOMIC_FUNC_XCHG(get_and_set,  "xchgl %1, %0", int)
 ATOMIC_FUNC_CMPXCHG(cmpxchg, "cmpxchgl %2, %1", int , int)
+ATOMIC_FUNC_XADD(add, "xaddl %0, %1", int) 
 #ifdef __CPU_x86_64
 ATOMIC_FUNC_DECL1(inc, "incq %0", long)
 ATOMIC_FUNC_DECL1(dec, "decq %0", long)
@@ -201,6 +215,7 @@ ATOMIC_FUNC_TEST(inc_and_test, "incq %0", long, int)
 ATOMIC_FUNC_TEST(dec_and_test, "decq %0", long, int)
 ATOMIC_FUNC_XCHG(get_and_set,  "xchgq %1, %0", long)
 ATOMIC_FUNC_CMPXCHG(cmpxchg, "cmpxchgq %2, %1", long , long)
+ATOMIC_FUNC_XADD(add, "xaddq %0, %1",long) 
 #else
 ATOMIC_FUNC_DECL1(inc, "incl %0", long)
 ATOMIC_FUNC_DECL1(dec, "decl %0", long)
@@ -210,6 +225,7 @@ ATOMIC_FUNC_TEST(inc_and_test, "incl %0", long, int)
 ATOMIC_FUNC_TEST(dec_and_test, "decl %0", long, int)
 ATOMIC_FUNC_XCHG(get_and_set,  "xchgl %1, %0", long)
 ATOMIC_FUNC_CMPXCHG(cmpxchg, "cmpxchgl %2, %1", long , long)
+ATOMIC_FUNC_XADD(add, "xaddl %0, %1",long) 
 #endif
 
 #define atomic_inc(var) atomic_inc_int(&(var)->val)
@@ -221,6 +237,7 @@ ATOMIC_FUNC_CMPXCHG(cmpxchg, "cmpxchgl %2, %1", long , long)
 #define atomic_get_and_set(var, i) atomic_get_and_set_int(&(var)->val, i)
 #define atomic_cmpxchg(var, old, newv) \
 		atomic_cmpxchg_int(&(var)->val, old, newv)
+#define atomic_add(var, v) atomic_add_int(&(var)->val, v)
 
 
 #ifdef NOSMP

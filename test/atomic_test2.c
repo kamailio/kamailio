@@ -134,6 +134,7 @@ static char* flags=
 #define at_or	AT_DECL(or)
 #define at_get_and_set	AT_DECL(get_and_set)
 #define at_cmpxchg	AT_DECL(cmpxchg)
+#define at_add	AT_DECL(add)
 
 
 #define CHECK_ERR(txt, x, y) \
@@ -215,7 +216,7 @@ int main(int argc, char** argv)
 	printf(" atomic_and, v should be 2 ............. %2d\n", (int)at_get(v));
 	
 	VERIFY(at_or(v, 5), 7);
-	printf(" atomic_or,  v should be 7 ............. %2d\n", (int)r);
+	printf(" atomic_or,  v should be 7 ............. %2d\n", (int)at_get(v));
 	VERIFY(r=at_get_and_set(v, 0), 0);
 	printf(" atomic_get_and_set, v should be 0 ..... %2d\n", (int)at_get(v));
 	VERIFY(r=at_cmpxchg(v, 0, 7), 7);
@@ -226,6 +227,14 @@ int main(int argc, char** argv)
 	CHECK_ERR(cmpxchg, r, 7);
 	printf(" atomic_cmpxchg (fail), v should be 7 .. %2d\n", (int)at_get(v));
 	printf("                        r should be 7 .. %2d\n", (int)r);
+	VERIFY(r=at_add(v, 2), 9);
+	CHECK_ERR(atomic_add, r, 9);
+	printf(" atomic_add, v should be 9 ............. %2d\n", (int)at_get(v));
+	printf("             r should be 9 ............. %2d\n", (int)r);
+	VERIFY(r=at_add(v, -10), -1);
+	CHECK_ERR(atomic_add, r, -1);
+	printf(" atomic_add, v should be -1 ............ %2d\n", (int)at_get(v));
+	printf("             r should be -1 ............ %2d\n", (int)r);
 
 	
 	printf("\ndone.\n");
