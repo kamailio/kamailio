@@ -183,7 +183,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				hentity->publ.id, hentity->publ.etag, hash_code);
 		if(presentity)
 		{
-			if(ps->code== 412 && hentity->publ.body)
+			if(ps->code== 412 && hentity->publ.body && 
+					hentity->publ.source_flag!= MI_PUBLISH)
 			{
 				/* sent a PUBLISH within a dialog that no longer exists
 				 * send again an intial PUBLISH */
@@ -218,7 +219,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		}
 		else
 			lock_release(&HashT->p_records[hash_code].lock);
-		goto error;
+		goto done;
 	}
 	
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
@@ -374,8 +375,6 @@ done:
 		shm_free(*ps->param);
 		*ps->param= NULL;
 	}
-
-
 	return;
 
 error:
