@@ -1,12 +1,21 @@
-DEFS     += 
-INCLUDES += -I/usr/include/libxml2 -I/usr/local/include/libxml2 -I/usr/local/include
-LIBS     += -L/usr/local/lib -lxml2 -lcds
 
-# name of result executable or library
-NAME = presence
+# example library makefile
+#
 
-# TYPE=lib => shared or static library, executable otherwise
-TYPE = lib
+include ../../Makefile.defs
+auto_gen=
+NAME:=ser_presence
+MAJOR_VER=0
+MINOR_VER=1
+BUGFIX_VER=0
+DEFS+=-DSER
+libxml2_includes=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
+					-I$(LOCALBASE)/include
+libxml2_libs=-L$(LOCALBASE)/lib -lxml2
+INCLUDES= -I$(CURDIR)/.. -I$(CURDIR)/../.. $(libxml2_includes) 
+LIBS=$(libxml2_libs)
+SERLIBPATH=..
+SER_LIBS=$(SERLIBPATH)/cds/ser_cds
 
-include ../Makefile.defs
+include ../../Makefile.libs
 

@@ -1,12 +1,16 @@
-DEFS     += 
-INCLUDES +=
-LIBS     +=
+#
+# example library makefile
+#
 
-# name of result executable or library
-NAME = cds
+include ../../Makefile.defs
+auto_gen=
+NAME:=ser_cds
+MAJOR_VER=0
+MINOR_VER=1
+BUGFIX_VER=0
+DEFS+=-DSER
+INCLUDES= -I$(CURDIR)/.. -I$(CURDIR)/../..
+LIBS=
 
-# TYPE=lib => shared or static library, executable otherwise
-TYPE = lib
-
-include ../Makefile.defs
+include ../../Makefile.libs
 

@@ -1,6 +1,0 @@
-LIBNAME  = cds
-OUT_NAME = lib_ser_cds.so
-OUT_TYPE = lib
-
-include ../Makefile.ser.defs
-

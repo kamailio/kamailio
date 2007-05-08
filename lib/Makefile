@@ -1,15 +1,11 @@
-# variables to change
+#  $Id$
+#
+#  libs makefile
+#
+# This makefile multiplexes the original goal to all the libraries listed in 
+# SUBDIRS.
+#
 
-INCLUDES += -I$(CURDIR)
-LIBS     += -L$(CURDIR)/cds -L$(CURDIR)/qsa
-DEFS     += -Wall
-
-####################################
-# make rules
-
-export LIBS
-export DEFS
-export INCLUDES
 
 SUBDIRS=binrpc cds xcap presence
 
@@ -17,10 +13,14 @@ SUBDIRS=binrpc cds xcap presence
 
 # clean install tags proper
 
-subdirs:	$(SUBDIRS)
+
+# we need sub_goals without 'all' target
+sub_goals = $(patsubst all,,$(MAKECMDGOALS))
+
+subdirs: $(SUBDIRS)
 
 $(SUBDIRS):	
-			@echo "Making $(MAKECMDGOALS) in $@" ; $(MAKE) $(MAKECMDGOALS) -C $@
+			-@echo "Making $(sub_goals) in $@" ; $(MAKE) $(sub_goals) -C $@
 
 all:	subdirs
 

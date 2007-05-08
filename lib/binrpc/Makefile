@@ -1,12 +1,14 @@
-# warning: set correct structure aligment!
-CFLAGS   += -ggdb -fPIC -malign-double
+#
+# example library makefile
+#
 
-# name of result executable or library
-NAME = binrpc
+include ../../Makefile.defs
+auto_gen=
+NAME:=binrpc
+MAJOR_VER=0
+MINOR_VER=1
+BUGFIX_VER=0
+LIBS=
 
-# override using 'make lib-type=static'
-# TYPE=lib => shared or static library, executable otherwise
-TYPE = lib
-
-include ../Makefile.defs
+include ../../Makefile.libs
 
