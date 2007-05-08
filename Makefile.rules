@@ -37,7 +37,7 @@
 ifneq	($(SER_LIBS),)
 ifneq	($(LD_RPATH),)
 ifneq	(,$(filter install, $(MAKECMDGOALS)))
-SER_RPATH_LST:=$(lib-target)
+SER_RPATH_LST:=$(lib_target)
 else
 SER_RPATH_LST:=$(realpath $(dir $(SER_LIBS)))
 endif

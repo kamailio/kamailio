@@ -410,7 +410,7 @@ modules-doc:
 .PHONY: install
 install: install-bin install-modules install-cfg \
 	install-doc install-man install-utils
-		mv -f $(bin-prefix)/$(bin-dir)/sc $(bin-prefix)/$(bin-dir)/serctl #fix
+		mv -f $(bin_prefix)/$(bin_dir)/sc $(bin_prefix)/$(bin_dir)/serctl #fix
 
 .PHONY: dbinstall
 dbinstall:
@@ -418,50 +418,53 @@ dbinstall:
 	scripts/mysql/ser_mysql.sh create
 	-@echo "Done"
 
-mk-install-dirs: $(cfg-prefix)/$(cfg-dir) $(bin-prefix)/$(bin-dir) \
-			$(modules-prefix)/$(modules-dir) $(doc-prefix)/$(doc-dir) \
-			$(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
+mk-install_dirs: $(cfg_prefix)/$(cfg_dir) $(bin_prefix)/$(bin_dir) \
+			$(modules_prefix)/$(modules_dir) $(doc_prefix)/$(doc_dir) \
+			$(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 
 
-$(cfg-prefix)/$(cfg-dir): 
-		mkdir -p $(cfg-prefix)/$(cfg-dir)
+$(cfg_prefix)/$(cfg_dir): 
+		mkdir -p $(cfg_prefix)/$(cfg_dir)
 
-$(bin-prefix)/$(bin-dir):
-		mkdir -p $(bin-prefix)/$(bin-dir)
+$(bin_prefix)/$(bin_dir):
+		mkdir -p $(bin_prefix)/$(bin_dir)
 
-$(modules-prefix)/$(modules-dir):
-		mkdir -p $(modules-prefix)/$(modules-dir)
+$(modules_prefix)/$(modules_dir):
+		mkdir -p $(modules_prefix)/$(modules_dir)
 
 
-$(doc-prefix)/$(doc-dir):
-		mkdir -p $(doc-prefix)/$(doc-dir)
+$(doc_prefix)/$(doc_dir):
+		mkdir -p $(doc_prefix)/$(doc_dir)
 
-$(man-prefix)/$(man-dir)/man8:
-		mkdir -p $(man-prefix)/$(man-dir)/man8
+$(man_prefix)/$(man_dir)/man8:
+		mkdir -p $(man_prefix)/$(man_dir)/man8
 
-$(man-prefix)/$(man-dir)/man5:
-		mkdir -p $(man-prefix)/$(man-dir)/man5
+$(man_prefix)/$(man_dir)/man5:
+		mkdir -p $(man_prefix)/$(man_dir)/man5
 		
 # note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
-install-cfg: $(cfg-prefix)/$(cfg-dir)
-		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
-			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
-		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
+install-cfg: $(cfg_prefix)/$(cfg_dir)
+		sed -e "s#/usr/.*lib/ser/modules/#$(modules_target)#g" \
+			< etc/ser.cfg > $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
+		chmod 644 $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
-			mv -f $(cfg-prefix)/$(cfg-dir)ser.cfg.sample \
-				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
+				! -f $(cfg_prefix)/$(cfg_dir)ser.cfg ]; then \
+			mv -f $(cfg_prefix)/$(cfg_dir)ser.cfg.sample \
+				$(cfg_prefix)/$(cfg_dir)ser.cfg; \
 		fi
 		# radius dictionary
-		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.ser 
-		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
-#		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
+		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.ser 
+		$(INSTALL_CFG) etc/dictionary.ser $(cfg_prefix)/$(cfg_dir)
+#		$(INSTALL_CFG) etc/ser.cfg $(cfg_prefix)/$(cfg_dir)
 
-install-bin: $(bin-prefix)/$(bin-dir) $(NAME)
-		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/$(NAME)
-		$(INSTALL-BIN) $(NAME) $(bin-prefix)/$(bin-dir)
+install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
+		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
+		$(INSTALL_BIN) $(NAME) $(bin_prefix)/$(bin_dir)
 
-install-modules: $(modules-prefix)/$(modules-dir)
+
+export INSTALL_TOUCH RELEASE
+
+install-modules: $(modules_prefix)/$(modules_dir)
 	@for r in $(modules) "" ; do \
 		if [ -n "$$r" -a -r "$$r/Makefile" ]; then \
 			echo  "" ; \
@@ -474,13 +477,13 @@ install-modules: $(modules-prefix)/$(modules-dir)
 		fi ; \
 	done; true
 
-install-utils: utils $(bin-prefix)/$(bin-dir)
+install-utils: utils $(bin_prefix)/$(bin_dir)
 	@for r in $(utils_install) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
-				$(INSTALL-TOUCH) \
-					$(bin-prefix)/$(bin-dir)/`basename "$$r"` ; \
-				$(INSTALL-BIN)  "$$r"  $(bin-prefix)/$(bin-dir) ; \
+				$(INSTALL_TOUCH) \
+					$(bin_prefix)/$(bin_dir)/`basename "$$r"` ; \
+				$(INSTALL_BIN)  "$$r"  $(bin_prefix)/$(bin_dir) ; \
 			else \
 				echo "ERROR: $$r not compiled" ; \
 				if [ ${err_fail} = 1 ] ; then \
@@ -495,46 +498,46 @@ install-utils: utils $(bin-prefix)/$(bin-dir)
 install-modules-all: install-modules install-modules-doc
 
 
-install-doc: $(doc-prefix)/$(doc-dir) install-modules-doc
-	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/INSTALL 
-	$(INSTALL-DOC) INSTALL $(doc-prefix)/$(doc-dir)
-	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/README-MODULES 
-	$(INSTALL-DOC) README-MODULES $(doc-prefix)/$(doc-dir)
-	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/AUTHORS 
-	$(INSTALL-DOC) AUTHORS $(doc-prefix)/$(doc-dir)
-	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/NEWS
-	$(INSTALL-DOC) NEWS $(doc-prefix)/$(doc-dir)
-	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/README 
-	$(INSTALL-DOC) README $(doc-prefix)/$(doc-dir)
+install-doc: $(doc_prefix)/$(doc_dir) install-modules-doc
+	$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)/INSTALL 
+	$(INSTALL_DOC) INSTALL $(doc_prefix)/$(doc_dir)
+	$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)/README_MODULES 
+	$(INSTALL_DOC) README_MODULES $(doc_prefix)/$(doc_dir)
+	$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)/AUTHORS 
+	$(INSTALL_DOC) AUTHORS $(doc_prefix)/$(doc_dir)
+	$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)/NEWS
+	$(INSTALL_DOC) NEWS $(doc_prefix)/$(doc_dir)
+	$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)/README 
+	$(INSTALL_DOC) README $(doc_prefix)/$(doc_dir)
 
 
-install-modules-doc: $(doc-prefix)/$(doc-dir)
+install-modules-doc: $(doc_prefix)/$(doc_dir)
 	@for r in $(modules_basenames) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f modules/"$$r"/README ]; then \
-				$(INSTALL-TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \
-				$(INSTALL-DOC)  modules/"$$r"/README  \
-									$(doc-prefix)/$(doc-dir)/README ; \
-				mv -f $(doc-prefix)/$(doc-dir)/README \
-						$(doc-prefix)/$(doc-dir)/README."$$r" ; \
+				$(INSTALL_TOUCH)  $(doc_prefix)/$(doc_dir)/README ; \
+				$(INSTALL_DOC)  modules/"$$r"/README  \
+									$(doc_prefix)/$(doc_dir)/README ; \
+				mv -f $(doc_prefix)/$(doc_dir)/README \
+						$(doc_prefix)/$(doc_dir)/README."$$r" ; \
 			fi ; \
 		fi ; \
 	done 
 
 
-install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
-		sed -e "s#/etc/ser/ser\.cfg#$(cfg-target)ser.cfg#g" \
-			-e "s#/usr/sbin/#$(bin-target)#g" \
-			-e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
-			-e "s#/usr/share/doc/ser/#$(doc-target)#g" \
-			< ser.8 >  $(man-prefix)/$(man-dir)/man8/ser.8
-		chmod 644  $(man-prefix)/$(man-dir)/man8/ser.8
-		sed -e "s#/etc/ser/ser\.cfg#$(cfg-target)ser.cfg#g" \
-			-e "s#/usr/sbin/#$(bin-target)#g" \
-			-e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
-			-e "s#/usr/share/doc/ser/#$(doc-target)#g" \
-			< ser.cfg.5 >  $(man-prefix)/$(man-dir)/man5/ser.cfg.5
-		chmod 644  $(man-prefix)/$(man-dir)/man5/ser.cfg.5
+install-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
+		sed -e "s#/etc/ser/ser\.cfg#$(cfg_target)ser.cfg#g" \
+			-e "s#/usr/sbin/#$(bin_target)#g" \
+			-e "s#/usr/lib/ser/modules/#$(modules_target)#g" \
+			-e "s#/usr/share/doc/ser/#$(doc_target)#g" \
+			< ser.8 >  $(man_prefix)/$(man_dir)/man8/ser.8
+		chmod 644  $(man_prefix)/$(man_dir)/man8/ser.8
+		sed -e "s#/etc/ser/ser\.cfg#$(cfg_target)ser.cfg#g" \
+			-e "s#/usr/sbin/#$(bin_target)#g" \
+			-e "s#/usr/lib/ser/modules/#$(modules_target)#g" \
+			-e "s#/usr/share/doc/ser/#$(doc_target)#g" \
+			< ser.cfg.5 >  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
+		chmod 644  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
 
 
 ##################

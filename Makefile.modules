@@ -53,14 +53,15 @@ endif
 include $(COREPATH)/Makefile.rules
 
 
-$(modules-prefix)/$(modules-dir):
-		mkdir -p $(modules-prefix)/$(modules-dir)
+$(modules_prefix)/$(modules_dir):
+		mkdir -p $(modules_prefix)/$(modules_dir)
+
 
 
 .PHONY: install
-install: $(NAME) $(modules-prefix)/$(modules-dir)
-	$(INSTALL-TOUCH) $(modules-prefix)/$(modules-dir)/$(NAME)
-	$(INSTALL-MODULES)  $(NAME)  $(modules-prefix)/$(modules-dir)
+install: $(NAME) $(modules_prefix)/$(modules_dir)
+	$(INSTALL_TOUCH) $(modules_prefix)/$(modules_dir)/$(NAME)
+	$(INSTALL_MODULES)  $(NAME)  $(modules_prefix)/$(modules_dir)
 	@for lib in $(dir $(SER_LIBS)); do \
 		$(MAKE) -C "$${lib}" install-if-newer ;\
 	done

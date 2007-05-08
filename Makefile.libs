@@ -86,23 +86,23 @@ link_clean:
 
 clean: link_clean
 
-$(lib-prefix)/$(lib-dir):
-	mkdir -p $(lib-prefix)/$(lib-dir)
+$(lib_prefix)/$(lib_dir):
+	mkdir -p $(lib_prefix)/$(lib_dir)
 
 .PHONY: install
-install: $(LIB_NAME) $(lib-prefix)/$(lib-dir)
-	$(INSTALL-TOUCH) $(lib-prefix)/$(lib-dir)/$(LIB_NAME)
-	$(INSTALL-LIB) $(LIB_NAME) $(lib-prefix)/$(lib-dir)
-	rm -f $(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME) \
-			$(lib-prefix)/$(lib-dir)/$(LIB_LINK_NAME) 
-	ln -s $(lib-prefix)/$(lib-dir)/$(LIB_NAME) \
-			$(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME) 
-	ln -s $(lib-prefix)/$(lib-dir)/$(LIB_NAME) \
-			$(lib-prefix)/$(lib-dir)/$(LIB_LINK_NAME) 
+install: $(LIB_NAME) $(lib_prefix)/$(lib_dir)
+	$(INSTALL_TOUCH) $(lib_prefix)/$(lib_dir)/$(LIB_NAME)
+	$(INSTALL_LIB) $(LIB_NAME) $(lib_prefix)/$(lib_dir)
+	rm -f $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) \
+			$(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME) 
+	ln -s $(lib_prefix)/$(lib_dir)/$(LIB_NAME) \
+			$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) 
+	ln -s $(lib_prefix)/$(lib_dir)/$(LIB_NAME) \
+			$(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME) 
 
 
 .PHONY:install-if-newer
-install-if-newer: $(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME) 
+install-if-newer: $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) 
 
-$(lib-prefix)/$(lib-dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME)
+$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME)
 	@$(MAKE) install

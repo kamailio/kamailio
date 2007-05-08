@@ -12,7 +12,7 @@
 # History:
 # --------
 #              created by andrei
-#  2003-02-24  added LOCALBASE, fixed doc-dir for freebsd - patch provided
+#  2003-02-24  added LOCALBASE, fixed doc_dir for freebsd - patch provided
 #               by Maxim Sobolev <sobomax@FreeBSD.org>
 #  2003-02-25  added -DDISABLE_NAGLE (andrei)
 #  2003-03-02  added -DDIGEST_DOMAIN (janakj)
@@ -54,7 +54,7 @@
 #  2007-02-09  added TLS_HOOKS and CORE_TLS support, obsoleted TLS=1
 #              added TLS_EXTRA_LIBS (andrei)
 #  2007-03-16  added LIB building options: LIB_LDFLAGS, LIB_SONAME, LIB_RPATH,
-#                INSTALL-LIB, libraries install paths (andrei)
+#                INSTALL_LIB, libraries install paths (andrei)
 
 
 # check if already included/exported
@@ -122,37 +122,37 @@ endif
 CC_EXTRA_OPTS ?=
 
 # dirs 
-cfg-dir = etc/ser/
-bin-dir = sbin/
-modules-dir = lib/ser/modules/
-lib-dir = lib/ser/
+cfg_dir = etc/ser/
+bin_dir = sbin/
+modules_dir = lib/ser/modules/
+lib_dir = lib/ser/
 ifeq ($(OS), linux)
-	doc-dir = share/doc/ser/
-	man-dir = share/man/
+	doc_dir = share/doc/ser/
+	man_dir = share/man/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), freebsd)
-	doc-dir = share/doc/ser/
-	man-dir = man/
+	doc_dir = share/doc/ser/
+	man_dir = man/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), openbsd)
-	doc-dir = share/doc/ser/
-	man-dir = man/
+	doc_dir = share/doc/ser/
+	man_dir = man/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), netbsd)
-	doc-dir = share/doc/ser
-	man-dir = man/
+	doc_dir = share/doc/ser
+	man_dir = man/
 	LOCALBASE ?= /usr/pkg
 else
 ifeq ($(OS), darwin)
-	doc-dir = share/doc/ser/
-	man-dir = man/
+	doc_dir = share/doc/ser/
+	man_dir = man/
 	LOCALBASE ?= /usr/local
 else
-	doc-dir = doc/ser/
-	man-dir = man/
+	doc_dir = doc/ser/
+	man_dir = man/
 	LOCALBASE ?= /usr/local
 endif
 endif
@@ -173,21 +173,21 @@ prefix = $(PREFIX)
 BASEDIR ?=
 basedir = $(BASEDIR)
 # install prefixes for various stuff
-cfg-prefix = $(basedir)$(prefix)
-bin-prefix = $(basedir)$(prefix)
-modules-prefix = $(basedir)$(prefix)
-lib-prefix = $(basedir)$(prefix)
-doc-prefix = $(basedir)$(prefix)
-man-prefix = $(basedir)$(prefix)
-ut-prefix = $(basedir)$(prefix)
+cfg_prefix = $(basedir)$(prefix)
+bin_prefix = $(basedir)$(prefix)
+modules_prefix = $(basedir)$(prefix)
+lib_prefix = $(basedir)$(prefix)
+doc_prefix = $(basedir)$(prefix)
+man_prefix = $(basedir)$(prefix)
+ut_prefix = $(basedir)$(prefix)
 
 
 # target dirs for various stuff
-cfg-target = $(prefix)/$(cfg-dir)
-bin-target = $(prefix)/$(bin-dir)
-modules-target = $(prefix)/$(modules-dir)
-lib-target = $(prefix)/$(lib-dir)
-doc-target = $(prefix)/$(doc-dir)
+cfg_target = $(prefix)/$(cfg_dir)
+bin_target = $(prefix)/$(bin_dir)
+modules_target = $(prefix)/$(modules_dir)
+lib_target = $(prefix)/$(lib_dir)
+doc_target = $(prefix)/$(doc_dir)
 
 
 ifeq ($(OS), solaris)
@@ -199,14 +199,14 @@ INSTALL ?= install
 TAR ?= tar
 endif
 
-INSTALL-TOUCH = touch          # used to create the file first (good to 
+INSTALL_TOUCH = touch          # used to create the file first (good to 
                                #  make solaris install work)
-INSTALL-CFG = $(INSTALL) -m 644
-INSTALL-BIN = $(INSTALL) -m 755
-INSTALL-MODULES = $(INSTALL) -m 755
-INSTALL-LIB = $(INSTALL) -m 755
-INSTALL-DOC = $(INSTALL) -m 644
-INSTALL-MAN = $(INSTALL) -m 644
+INSTALL_CFG = $(INSTALL) -m 644
+INSTALL_BIN = $(INSTALL) -m 755
+INSTALL_MODULES = $(INSTALL) -m 755
+INSTALL_LIB = $(INSTALL) -m 755
+INSTALL_DOC = $(INSTALL) -m 644
+INSTALL_MAN = $(INSTALL) -m 644
 
 #set some vars from the environment (and not make builtins)
 CC   := $(shell echo "$${CC}")
@@ -392,7 +392,7 @@ DEFS+= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DSER_VER=$(SER_VER) \
-	 -DCFG_DIR='"$(cfg-target)"'\
+	 -DCFG_DIR='"$(cfg_target)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DDNS_IP_HACK \
@@ -1506,10 +1506,10 @@ export LIBS
 export LEX YACC YACC_FLAGS
 export PREFIX LOCALBASE
 export TAR
-export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
-export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
-export lib-prefix lib-dir cfg-target lib-target modules-target
-export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
-export INSTALL-LIB INSTALL-TOUCH
+export cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir
+export doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir
+export lib_prefix lib_dir cfg_target lib_target modules_target
+export INSTALL INSTALL_CFG INSTALL_BIN INSTALL_MODULES INSTALL_DOC INSTALL_MAN 
+export INSTALL_LIB INSTALL_TOUCH
 
 endif  # ifeq ($(makefile_defs, 1)
