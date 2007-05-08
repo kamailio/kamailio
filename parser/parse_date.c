@@ -39,20 +39,22 @@
 #define READ(val) \
 (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 
+inline static int char2int (char *p, int *t)
+{
+	if (*p < '0' || *p > '9' || *(p + 1) < '0' || *(p + 1) > '9')
+		return -1;
+	*t = (*p - '0')*10 + *(p + 1) - '0';
+
+	return 0;
+}
+
 /*
  * Converts a RFC 1123 formatted date string to stuct tm
  */
-int rfc1123totm (char *stime, struct tm *ttm ) {
+static int rfc1123totm (char *stime, struct tm *ttm ) {
 	char *ptime = stime;
 	unsigned int uval;
 	int ires;
-
-	int char2int (char *p, int *t){
-		if (*p < '0' || *p > '9' || *(p + 1) < '0' || *(p + 1) > '9') return -1;
-		*t = (*p - '0')*10 + *(p + 1) - '0';
-
-		return 0;
-	}
 
 	uval = READ(ptime);
 	ptime+=4;
