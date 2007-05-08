@@ -256,40 +256,43 @@ int mi_publ_rpl_cback(struct sip_msg* reply, void* param)
 
 	mi_hdl = (struct mi_handler *)(param);
 	statuscode= reply->first_line.u.reply.statuscode;
-
-	/* extract ETag and expires */
-	lexpire = ((exp_body_t*)reply->expires->parsed)->val;
-	DBG("PUA:mi_publ_rpl_cback: lexpire= %d\n", lexpire);
 	
-	hdr = reply->headers;
-	while (hdr!= NULL)
-	{
-		if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
-		{
-			found = 1;
-			break;
-		}
-		hdr = hdr->next;
-	}
-	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
-	{	
-		LOG(L_ERR, "PUA:mi_publ_rpl_cback: SIP-ETag header field not found\n");
-		goto error;
-	}
-	etag= hdr->body;
-
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		goto done;
-
-		
+		if (rpl_tree==0)
+			goto done;
+	
 	addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%d %.*s",
-			statuscode, reply->first_line.u.reply.reason.len,
-			reply->first_line.u.reply.reason.s);
+		statuscode, reply->first_line.u.reply.reason.len,
+		reply->first_line.u.reply.reason.s);
 	
-	addf_mi_node_child( &rpl_tree->node, 0, "ETag", 4, "%.*s", etag.len, etag.s);
 	
-	addf_mi_node_child( &rpl_tree->node, 0, "Expires", 7, "%d", lexpire);
+	if(statuscode== 200)
+	{	
+		/* extract ETag and expires */
+		lexpire = ((exp_body_t*)reply->expires->parsed)->val;
+		DBG("PUA:mi_publ_rpl_cback: lexpire= %d\n", lexpire);
+		
+		hdr = reply->headers;
+		while (hdr!= NULL)
+		{
+			if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
+			{
+				found = 1;
+				break;
+			}
+			hdr = hdr->next;
+		}
+		if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
+		{	
+			LOG(L_ERR, "PUA:mi_publ_rpl_cback: SIP-ETag header field not found\n");
+			goto error;
+		}
+		etag= hdr->body;
+			
+		addf_mi_node_child( &rpl_tree->node, 0, "ETag", 4, "%.*s", etag.len, etag.s);
+		
+		addf_mi_node_child( &rpl_tree->node, 0, "Expires", 7, "%d", lexpire);
+	}	
 
 done:
 	if ( statuscode >= 200) 
