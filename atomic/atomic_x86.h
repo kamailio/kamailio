@@ -42,6 +42,7 @@
  * History:
  * --------
  *  2006-03-08  created by andrei
+ *  2007-05-07  added cmpxchg (andrei)
  */
 
 #ifndef _atomic_x86_h
@@ -165,6 +166,24 @@
 		return ret; \
 	}
 
+/* returns a value, 3 params (var, old, new)
+ * The returned value is the value before the xchg:
+ *  if ret!=old => cmpxchg failed and ret is var's value
+ *  else  => success and new_v is var's new value */
+#define ATOMIC_FUNC_CMPXCHG(NAME, OP, P_TYPE, RET_TYPE) \
+	inline static RET_TYPE atomic_##NAME##_##P_TYPE(volatile P_TYPE* var, \
+													P_TYPE old, P_TYPE new_v)\
+	{ \
+		P_TYPE ret; \
+		asm volatile( \
+				__LOCK_PREF " " OP "\n\t" \
+				: "=a"(ret), "=m" (*var) :\
+					"r"(new_v), "m"(*var), "0"(old):\
+					"cc", "memory" \
+				); \
+		return ret; \
+	}
+
 ATOMIC_FUNC_DECL1(inc, "incl %0", int)
 ATOMIC_FUNC_DECL1(dec, "decl %0", int)
 ATOMIC_FUNC_DECL2(and, "andl %1, %0", int)
@@ -172,6 +191,7 @@ ATOMIC_FUNC_DECL2(or,  "orl %1, %0", int)
 ATOMIC_FUNC_TEST(inc_and_test, "incl %0", int, int)
 ATOMIC_FUNC_TEST(dec_and_test, "decl %0", int, int)
 ATOMIC_FUNC_XCHG(get_and_set,  "xchgl %1, %0", int)
+ATOMIC_FUNC_CMPXCHG(cmpxchg, "cmpxchgl %2, %1", int , int)
 #ifdef __CPU_x86_64
 ATOMIC_FUNC_DECL1(inc, "incq %0", long)
 ATOMIC_FUNC_DECL1(dec, "decq %0", long)
@@ -180,6 +200,7 @@ ATOMIC_FUNC_DECL2(or,  "orq %1, %0", long)
 ATOMIC_FUNC_TEST(inc_and_test, "incq %0", long, int)
 ATOMIC_FUNC_TEST(dec_and_test, "decq %0", long, int)
 ATOMIC_FUNC_XCHG(get_and_set,  "xchgq %1, %0", long)
+ATOMIC_FUNC_CMPXCHG(cmpxchg, "cmpxchgq %2, %1", long , long)
 #else
 ATOMIC_FUNC_DECL1(inc, "incl %0", long)
 ATOMIC_FUNC_DECL1(dec, "decl %0", long)
@@ -188,6 +209,7 @@ ATOMIC_FUNC_DECL2(or,  "orl %1, %0", long)
 ATOMIC_FUNC_TEST(inc_and_test, "incl %0", long, int)
 ATOMIC_FUNC_TEST(dec_and_test, "decl %0", long, int)
 ATOMIC_FUNC_XCHG(get_and_set,  "xchgl %1, %0", long)
+ATOMIC_FUNC_CMPXCHG(cmpxchg, "cmpxchgl %2, %1", long , long)
 #endif
 
 #define atomic_inc(var) atomic_inc_int(&(var)->val)
@@ -197,6 +219,8 @@ ATOMIC_FUNC_XCHG(get_and_set,  "xchgl %1, %0", long)
 #define atomic_dec_and_test(var) atomic_dec_and_test_int(&(var)->val)
 #define atomic_inc_and_test(var) atomic_inc_and_test_int(&(var)->val)
 #define atomic_get_and_set(var, i) atomic_get_and_set_int(&(var)->val, i)
+#define atomic_cmpxchg(var, old, newv) \
+		atomic_cmpxchg_int(&(var)->val, old, newv)
 
 
 #ifdef NOSMP
