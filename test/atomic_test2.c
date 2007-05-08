@@ -133,6 +133,7 @@ static char* flags=
 #define at_and	AT_DECL(and)
 #define at_or	AT_DECL(or)
 #define at_get_and_set	AT_DECL(get_and_set)
+#define at_cmpxchg	AT_DECL(cmpxchg)
 
 
 #define CHECK_ERR(txt, x, y) \
@@ -214,9 +215,17 @@ int main(int argc, char** argv)
 	printf(" atomic_and, v should be 2 ............. %2d\n", (int)at_get(v));
 	
 	VERIFY(at_or(v, 5), 7);
-	VERIFY(r=at_get_and_set(v, 0), 0);
 	printf(" atomic_or,  v should be 7 ............. %2d\n", (int)r);
+	VERIFY(r=at_get_and_set(v, 0), 0);
 	printf(" atomic_get_and_set, v should be 0 ..... %2d\n", (int)at_get(v));
+	VERIFY(r=at_cmpxchg(v, 0, 7), 7);
+	CHECK_ERR(cmpxchg, r, 0);
+	printf(" atomic_cmpxchg, v should be 7 ......... %2d\n", (int)at_get(v));
+	printf("                 r should be 0 ......... %2d\n", (int)r);
+	VERIFY(r=at_cmpxchg(v, 2, 3), 7);
+	CHECK_ERR(cmpxchg, r, 7);
+	printf(" atomic_cmpxchg (fail), v should be 7 .. %2d\n", (int)at_get(v));
+	printf("                        r should be 7 .. %2d\n", (int)r);
 
 	
 	printf("\ndone.\n");
