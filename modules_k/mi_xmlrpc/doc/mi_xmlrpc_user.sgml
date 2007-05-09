@@ -26,8 +26,19 @@
 		tree nodes information (name, values and attributes) or like an array 
 		whose elements are consisted of each MI tree node stored information.
 	</para>	
+	<para>
+		Implementation of mi_xmlrpc module's xmlrpc server is based on Abyss
+		XML-RPC server.  Current version of Abyss server
+		"normalizes" CRLF sequence in received XML-RPC strings
+		to LF character, which makes it impossible to pass CRLF
+		sequence from xmlrpc client application to &ser modules,
+		such as mi_fifo and pua_mi, that accept requests via MI
+		transport.  To overcome this limitation mi_xmlrpc module
+		implements a hack that coverts each LFLF sequence in
+	        received XML-RPC strings to CRLF sequence.
+	</para>
 	</section>
-
+	
 	<section>
 	<title>To-do</title>
 		<para>
