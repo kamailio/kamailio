@@ -97,7 +97,7 @@ int pua_add_events()
 	}
 	
 	/* add presence;winfo */
-	if(add_pua_event(PWINFO_EVENT, "presence;winfo", NULL, NULL)< 0)
+	if(add_pua_event(PWINFO_EVENT, "presence.winfo", NULL, NULL)< 0)
 	{
 		LOG(L_ERR, "PUA: pua_add_events: ERROR while adding event presence\n");
 		return -1;
