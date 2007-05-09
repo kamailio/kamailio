@@ -41,6 +41,7 @@ Daniel-Constantin Mierla
               1.5.11. delay_time (integer)
               1.5.12. sleep_time (integer)
               1.5.13. check_time (integer)
+              1.5.14. priority (str)
 
         1.6. Exported Functions
 
@@ -67,11 +68,12 @@ Daniel-Constantin Mierla
    1-11. Set delay_time parameter
    1-12. Set sleep_time parameter
    1-13. Set check_time parameter
-   1-14. jab_send_message() usage
-   1-15. jab_join_jconf() usage
-   1-16. jab_exit_jconf() usage
-   1-17. jab_go_online() usage
-   1-18. jab_go_offline() usage
+   1-14. Set priority parameter
+   1-15. jab_send_message() usage
+   1-16. jab_join_jconf() usage
+   1-17. jab_exit_jconf() usage
+   1-18. jab_go_online() usage
+   1-19. jab_go_offline() usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -441,6 +443,18 @@ modparam("jabber", "check_time", 20)
 ...
      _________________________________________________________
 
+1.5.14. priority (str)
+
+   Presence priority for Jabber gateway.
+
+   Default value is "9". 
+
+   Example 1-14. Set priority parameter
+...
+modparam("jabber", "priority", "3")
+...
+     _________________________________________________________
+
 1.6. Exported Functions
 
 1.6.1. jab_send_message()
@@ -450,7 +464,7 @@ modparam("jabber", "check_time", 20)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-14. jab_send_message() usage
+   Example 1-15. jab_send_message() usage
 ...
 jab_send_message();
 ...
@@ -465,7 +479,7 @@ jab_send_message();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-15. jab_join_jconf() usage
+   Example 1-16. jab_join_jconf() usage
 ...
 jab_join_jconf();
 ...
@@ -479,7 +493,7 @@ jab_join_jconf();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-16. jab_exit_jconf() usage
+   Example 1-17. jab_exit_jconf() usage
 ...
 jab_exit_jconf();
 ...
@@ -492,7 +506,7 @@ jab_exit_jconf();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-17. jab_go_online() usage
+   Example 1-18. jab_go_online() usage
 ...
 jab_go_online();
 ...
@@ -505,7 +519,7 @@ jab_go_online();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-18. jab_go_offline() usage
+   Example 1-19. jab_go_offline() usage
 ...
 jab_go_offline();
 ...

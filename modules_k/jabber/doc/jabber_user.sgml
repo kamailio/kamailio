@@ -620,6 +620,26 @@ modparam("jabber", "check_time", 20)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>priority</varname> (str)</title>
+		<para>
+		Presence priority for Jabber gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>9</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>priority</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jabber", "priority", "3")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 	<title>Exported Functions</title>

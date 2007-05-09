@@ -108,6 +108,8 @@ char *jaliases = NULL;
 char *jdomain  = NULL;
 char *proxy	   = NULL;
 
+char* priority = "9";
+
 int delay_time = 90;
 int sleep_time = 20;
 int cache_time = 600;
@@ -155,6 +157,7 @@ static param_export_t params[] = {
 	{"proxy",      STR_PARAM, &proxy     },
 	{"jdomain",    STR_PARAM, &jdomain   },
 	{"registrar",  STR_PARAM, &registrar },
+	{"priority",   STR_PARAM, &priority  },
 	{"jport",      INT_PARAM, &jport     },
 	{"workers",    INT_PARAM, &nrw       },
 	{"max_jobs",   INT_PARAM, &max_jobs  },
@@ -344,8 +347,8 @@ static int child_init(int rank)
 										" pid\n");
 						return -1;
 					}
-					xj_worker_process(jwl,jaddress,jport,i,db_con[i],
-							&jabber_dbf);
+					xj_worker_process(jwl,jaddress,jport, priority, i, 
+							db_con[i], &jabber_dbf);
 					exit(0);
 				}
 			}
@@ -833,7 +836,8 @@ void xjab_check_workers(int mpid)
 					" worker's pid - w[%d]\n", i);
 				return;
 			}
-			xj_worker_process(jwl,jaddress,jport,i,db_con[i], &jabber_dbf);
+			xj_worker_process(jwl,jaddress,jport,priority, i,
+					db_con[i], &jabber_dbf);
 			exit(0);
 		}
 	}			

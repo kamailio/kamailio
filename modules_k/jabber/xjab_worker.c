@@ -246,11 +246,12 @@ done:
  * - jport : port of the jabber server
  * - rank : worker's rank
  * - db_con : connection to database
+ * - priority: jabber's priority
  *   dbf: database module callbacks structure
  * #return : 0 on success or <0 on error
  */
-int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
-		db_con_t* db_con, db_func_t* dbf)
+int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, char* priority,
+		int rank, db_con_t* db_con, db_func_t* dbf)
 {
 	int pipe, ret, i, pos, maxfd, flag;
 	xj_jcon_pool jcp;
@@ -477,7 +478,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		FD_SET(jbc->sock, &set);
 										
 		xj_jcon_get_roster(jbc);
-		xj_jcon_send_presence(jbc, NULL, NULL, "Online", "9");
+		xj_jcon_send_presence(jbc, NULL, NULL, "Online", priority);
 		
 		/** wait for a while - the worker is tired */
 		//sleep(3);
