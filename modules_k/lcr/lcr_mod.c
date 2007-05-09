@@ -148,8 +148,8 @@ struct from_uri_regex {
 };
 
 struct mi {
-    unsigned int gw_index;
-    unsigned int route_index;
+    int gw_index;
+    int route_index;
     int randomizer;
 };
 
