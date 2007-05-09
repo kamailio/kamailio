@@ -77,6 +77,7 @@ static int child_init(int rank); /* Per-child initialization function */
 static int mi_child_init(void);
 static int mod_init(void);       /* Module initialization function */
 static int fixstring2int(void **param, int param_count);
+static int fixstringloadgws(void **param, int param_count);
 
 int reload_gws ( void );
 
@@ -243,7 +244,7 @@ int next_contacts (struct sip_msg*, char*, char*);
 static cmd_export_t cmds[] = {
 	{"load_gws",      load_gws,      0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"load_gws",      load_gws_grp,  1, fixstring2int,
+	{"load_gws",      load_gws_grp,  1, fixstringloadgws,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"next_gw",       next_gw,       0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
@@ -1380,10 +1381,20 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
  */
 int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2)
 {
-    int grp_id;
-
-    grp_id = (int)(long)_s1;
-    return do_load_gws(_m, grp_id);
+	str grp_s;
+	unsigned int grp_id;
+	
+	if(((xl_elem_p)_s1)->spec.itf!=NULL)
+	{
+		if(xl_printf_s(_m, (xl_elem_p)_s1, &grp_s)!=0)
+			return -1;
+		if(str2int(&grp_s, &grp_id)!=0)
+			return -1;
+	} else {
+		grp_id = ((xl_elem_p)_s1)->spec.p.ind;
+	}
+	if (grp_id > 0) return do_load_gws(_m, (int)grp_id);
+	else return -1;
 }
 
 /*
@@ -1927,3 +1938,50 @@ static int fixstring2int(void **param, int param_count)
     }
     return 0;
 }
+
+/* 
+ * Convert string parameter to integer for functions that expect an integer.
+ * Taken from sl module.
+ */
+static int fixstringloadgws(void **param, int param_count)
+{
+	xl_elem_t *model=NULL;
+	str s;
+
+	/* convert to str */
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+
+	model=NULL;
+	if (param_count==1) {
+		if(s.len==0)
+		{
+			LOG(L_ERR, "lcr/fixstringloadgws(): no param %d!\n", param_count);
+			return E_UNSPEC;
+		}
+
+		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0 || model==NULL)
+		{
+			LOG(L_ERR, "lcr/fixstringloadgws(): wrong format [%s] "
+				"for param no %d!\n", s.s, param_count);
+			return E_UNSPEC;
+		}
+		if(model->spec.itf==NULL)
+		{
+			if(param_count==1)
+			{
+			   if(str2int(&s, (unsigned int*)&model->spec.p.ind)!=0
+					   || model->spec.p.ind<100)
+			   {
+					LOG(L_ERR, "lcr/fixstringloadgws(): wrong value [%s] "
+						"for param no %d!\n", s.s, param_count);
+					return E_UNSPEC;
+			   }
+			}
+		}
+		*param = (void*)model;
+	}
+
+	return 0;
+}
+

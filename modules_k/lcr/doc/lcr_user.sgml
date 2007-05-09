@@ -544,6 +544,7 @@ modparam("lcr","fr_inv_timer_next",30)
 		that match user part of Request-URI to gw_uri_avp AVPs (see Overview
 		section). If an optional group-id is specified, only gateways belonging
 		to this group are loaded.
+		The group may contain pseudo-variables that are replaced at runtime.
 		Returns 1 or -1 depending on success.
 		</para>
 		<para>
@@ -565,6 +566,17 @@ if (!load_gws()) {
 		<programlisting format="linespecific">
 ...
 if (!load_gws("1")) {
+	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
+	exit;
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>load_gws</function> usage with pseudo-variables</title>
+		<programlisting format="linespecific">
+...
+if (!load_gws("$avp(s:gateway_group)")) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
 	exit;
 };

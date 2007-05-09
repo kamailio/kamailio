@@ -85,15 +85,16 @@ Juha Heinanen
    1-20. Setting fr_inv_timer_next module parameter
    1-21. load_gws usage
    1-22. load_gws usage with group-id
-   1-23. next_gw usage from a route block
-   1-24. next_gw usage from a failure route block
-   1-25. from_gw usage
-   1-26. from_gw usage with group-id
-   1-27. to_gw usage
-   1-28. to_gw usage with group-id
-   1-29. load_contacts usage
-   1-30. next_contacts usage from route block
-   1-31. next_contacts usage from failure route block
+   1-23. load_gws usage with pseudo-variables
+   1-24. next_gw usage from a route block
+   1-25. next_gw usage from a failure route block
+   1-26. from_gw usage
+   1-27. from_gw usage with group-id
+   1-28. to_gw usage
+   1-29. to_gw usage with group-id
+   1-30. load_contacts usage
+   1-31. next_contacts usage from route block
+   1-32. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -432,7 +433,8 @@ modparam("lcr","fr_inv_timer_next",30)
    gateways that match user part of Request-URI to gw_uri_avp
    AVPs (see Overview section). If an optional group-id is
    specified, only gateways belonging to this group are loaded.
-   Returns 1 or -1 depending on success.
+   The group may contain pseudo-variables that are replaced at
+   runtime. Returns 1 or -1 depending on success.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -448,6 +450,15 @@ ays");
    Example 1-22. load_gws usage with group-id
 ...
 if (!load_gws("1")) {
+        sl_send_reply("500", "Server Internal Error - Cannot load gatew
+ays from group 1");
+        exit;
+};
+...
+
+   Example 1-23. load_gws usage with pseudo-variables
+...
+if (!load_gws("$avp(s:gateway_group)")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
 ays from group 1");
         exit;
@@ -476,7 +487,7 @@ ays from group 1");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-23. next_gw usage from a route block
+   Example 1-24. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -484,7 +495,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1-24. next_gw usage from a failure route block 
+   Example 1-25. next_gw usage from a failure route block 
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -502,7 +513,7 @@ if (!next_gw()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-25. from_gw usage
+   Example 1-26. from_gw usage
 ...
 if (from_gw()) {
         ...
@@ -510,7 +521,7 @@ if (from_gw()) {
 };
 ...
 
-   Example 1-26. from_gw usage with group-id
+   Example 1-27. from_gw usage with group-id
 ...
 if (from_gw("1")) {
         ...
@@ -527,7 +538,7 @@ if (from_gw("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-27. to_gw usage
+   Example 1-28. to_gw usage
 ...
 if (to_gw()) {
         ...
@@ -535,7 +546,7 @@ if (to_gw()) {
 };
 ...
 
-   Example 1-28. to_gw usage with group-id
+   Example 1-29. to_gw usage with group-id
 ...
 if (to_gw("1")) {
         ...
@@ -556,7 +567,7 @@ if (to_gw("1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-29. load_contacts usage
+   Example 1-30. load_contacts usage
 ...
 if (!load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load conta
@@ -586,7 +597,7 @@ cts");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-30. next_contacts usage from route block 
+   Example 1-31. next_contacts usage from route block 
 ...
 if (!next_contacts()) {
         sl_send_reply("500", "Server Internal Error");
@@ -596,7 +607,7 @@ if (!next_contacts()) {
 };
 ...
 
-   Example 1-31. next_contacts usage from failure route block 
+   Example 1-32. next_contacts usage from failure route block 
 if (next_contacts()) {
         t_relay();
 };
