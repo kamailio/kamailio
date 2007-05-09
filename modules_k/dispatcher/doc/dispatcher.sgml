@@ -33,6 +33,14 @@
 		<email>daniel@voice-system.ro</email>
 		</address>
 	    </editor>
+            <editor>
+                <firstname>Carsten</firstname>
+                <surname>Bock</surname>
+                <affiliation><orgname>BASIS AudioNet GmbH</orgname></affiliation>
+                <address>
+                <email>bock@basis-audionet.de</email>
+                </address>
+            </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2004</year>

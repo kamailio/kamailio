@@ -25,7 +25,12 @@
  * History
  * -------
  * 2004-07-31  first version, by daniel
- * 
+ * 2007-01-11  Added a function to check if a specific gateway is in a group
+ *				(carsten - Carsten Bock, BASIS AudioNet GmbH)
+ * 2007-02-09  Added active probing of failed destinations and automatic
+ *				re-enabling of destinations (carsten)
+ * 2007-05-08  Ported the changes to SVN-Trunk and renamed ds_is_domain
+ *				to ds_is_from_list.  (carsten)
  */
 
 #include <stdio.h>
@@ -61,6 +66,11 @@ unsigned short grp_avp_type;
 int_str cnt_avp_name;
 unsigned short cnt_avp_type;
 
+int probing_threshhold = 3; /* number of failed requests, before a destination
+							   is taken into probing */
+str ping_method = {"OPTIONS",7};
+str ping_from = {"sip:dispatcher@localhost", 24};
+static int ds_ping_interval = 30;
 
 /** module functions */
 static int mod_init(void);
@@ -72,6 +82,10 @@ static int w_ds_next_dst(struct sip_msg*, char*, char*);
 static int w_ds_next_domain(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst0(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
+
+static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
+static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
+static int fixstring2int(void **, int);
 
 void destroy(void);
 
@@ -88,6 +102,8 @@ static cmd_export_t cmds[]={
 	{"ds_next_domain",   w_ds_next_domain,   0, ds_warn_fixup, FAILURE_ROUTE},
 	{"ds_mark_dst",      w_ds_mark_dst0,     0, ds_warn_fixup, FAILURE_ROUTE},
 	{"ds_mark_dst",      w_ds_mark_dst1,     1, ds_warn_fixup, FAILURE_ROUTE},
+	{"ds_is_from_list",  w_ds_is_from_list0, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"ds_is_from_list",  w_ds_is_from_list1, 1, fixstring2int, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -100,6 +116,10 @@ static param_export_t params[]={
 	{"dst_avp",        STR_PARAM, &dst_avp_param},
 	{"grp_avp",        STR_PARAM, &grp_avp_param},
 	{"cnt_avp",        STR_PARAM, &cnt_avp_param},
+	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
+	{"ds_ping_method",     STR_PARAM, &ping_method},
+	{"ds_ping_from",       STR_PARAM, &ping_from},
+	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
 	{0,0,0}
 };
 
@@ -196,6 +216,35 @@ static int mod_init(void)
 	} else {
 		cnt_avp_name.n = 0;
 		cnt_avp_type = 0;
+	}
+	
+	if (ping_from.s) ping_from.len = strlen(ping_from.s);
+	if (ping_method.s) ping_method.len = strlen(ping_method.s);
+
+	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */
+	if (ds_ping_interval > 0) {
+		/*****************************************************
+		 * TM-Bindings
+	  	 *****************************************************/
+		load_tm_f load_tm;
+		load_tm=(load_tm_f)find_export("load_tm", 0, 0);
+	
+		/* import the TM auto-loading function */
+		if (load_tm) {
+			/* let the auto-loading function load all TM stuff */
+			if (load_tm( &tmb ) == -1) {
+				LOG(L_ERR, "DISPATCHER:mod_init:ERROR -- could not load"
+						" the TM-functions\n");
+				return -1;
+			}
+			/*****************************************************
+			 * Register the PING-Timer
+	    	 *****************************************************/
+			register_timer(ds_check_timer, NULL, ds_ping_interval);
+		} else {
+			LOG(L_WARN, "DISPATCHER:mod_init:WARNING -- could not bind to"
+					" the TM-Module, automatic re-activation disabled.\n");
+		}
 	}
 
 	return 0;
@@ -312,6 +361,8 @@ static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 {
 	if(str1 && (str1[0]=='i' || str1[0]=='I' || str1[0]=='0'))
 		return ds_mark_dst(msg, 0);
+	else if(str1 && (str1[0]=='p' || str1[0]=='P' || str1[0]=='2'))
+		return ds_mark_dst(msg, 2);
 	else
 		return ds_mark_dst(msg, 1);
 }
@@ -461,3 +512,44 @@ struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
 	return rpl_tree;
 }
 
+
+/**
+ *
+ */
+static int w_ds_is_from_list0(struct sip_msg *msg, char *str1, char *str2)
+{
+	return ds_is_from_list(msg, -1);
+}
+
+
+/**
+ *
+ */
+static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
+{
+	return ds_is_from_list(msg, (int)set);
+}
+
+/* 
+ * Convert string parameter to integer for functions that expect an integer.
+ * Taken from mediaproxy/LCR module.
+ */
+static int fixstring2int(void **param, int param_count)
+{
+	unsigned long number;
+	int err;
+
+	if (param_count == 1) {
+		number = str2s(*param, strlen(*param), &err);
+		if (err == 0) {
+			pkg_free(*param);
+			*param = (void*)number;
+			return 0;
+		} else {
+			LOG(L_ERR, "dispatcher/fixstring2int(): ERROR: bad number `%s'\n",
+				(char*)(*param));
+			return E_CFG;
+		}
+	}
+	return 0;
+}

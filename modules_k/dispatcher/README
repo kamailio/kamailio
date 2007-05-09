@@ -9,6 +9,8 @@ Edited by
 
 Daniel-Constantin Mierla
 
+Carsten Bock
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice-System.RO
@@ -32,6 +34,10 @@ Daniel-Constantin Mierla
               1.3.5. dst_avp (str)
               1.3.6. grp_avp (str)
               1.3.7. cnt_avp (str)
+              1.3.8. ds_ping_method (string)
+              1.3.9. ds_ping_from (string)
+              1.3.10. ds_ping_interval (int)
+              1.3.11. ds_probing_threshhold (int)
 
         1.4. Exported Functions
 
@@ -40,6 +46,9 @@ Daniel-Constantin Mierla
               1.4.3. ds_next_dst()
               1.4.4. ds_next_domain()
               1.4.5. ds_mark_dst()
+              1.4.6. ds_mark_dst("s")
+              1.4.7. ds_is_from_list()
+              1.4.8. ds_is_from_list("group")
 
         1.5. Exported MI Functions
 
@@ -62,9 +71,13 @@ Daniel-Constantin Mierla
    1-5. Set the "dst_avp" parameter
    1-6. Set the "grp_avp" parameter
    1-7. Set the "cnt_avp" parameter
-   1-8. ds_select_dst usage
-   1-9. dispatcher list file
-   1-10. OpenSER config script - sample dispatcher usage
+   1-8. Set the "ds_ping_method" parameter
+   1-9. Set the "ds_ping_from" parameter
+   1-10. Set the "ds_ping_interval" parameter
+   1-11. Set the "ds_probing_threshhold" parameter
+   1-12. ds_select_dst usage
+   1-13. dispatcher list file
+   1-14. OpenSER config script - sample dispatcher usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -86,7 +99,7 @@ Chapter 1. User's Guide
 
    The following modules must be loaded before this module:
 
-     * none.
+     * TM - only if active recovery of failed hosts is required.
      _________________________________________________________
 
 1.2.2. External libraries or applications
@@ -226,6 +239,69 @@ modparam("dispatcher", "force_dst", 1)
 
      _________________________________________________________
 
+1.3.8. ds_ping_method (string)
+
+   With this Method you can define, with which method you want to
+   probe the failed gateways. This method is only available, if
+   compiled with the probing of failed gateways enabled.
+
+   Default value is "OPTIONS". 
+
+   Example 1-8. Set the "ds_ping_method" parameter
+ ...
+ modparam("dispatcher", "ds_ping_method", "INFO")
+ ...
+
+     _________________________________________________________
+
+1.3.9. ds_ping_from (string)
+
+   With this Method you can define the "From:"-Line for the
+   request, sent to the failed gateways. This method is only
+   available, if compiled with the probing of failed gateways
+   enabled.
+
+   Default value is "sip:dispatcher@localhost". 
+
+   Example 1-9. Set the "ds_ping_from" parameter
+ ...
+ modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
+ ...
+
+     _________________________________________________________
+
+1.3.10. ds_ping_interval (int)
+
+   With this Method you can define the interval for sending a
+   request to a failed gateway. This parameter is only used, when
+   the TM-Module is loaded. If set to "0", the pinging of failed
+   requests is disabled.
+
+   Default value is "10". 
+
+   Example 1-10. Set the "ds_ping_interval" parameter
+ ...
+ modparam("dispatcher", "ds_ping_interval", 30)
+ ...
+
+     _________________________________________________________
+
+1.3.11. ds_probing_threshhold (int)
+
+   If you want to set a gateway into probing mode, you will need
+   a specific number of requests until it will change from
+   "active" to probing. The number of attempts can be set with
+   this parameter.
+
+   Default value is "3". 
+
+   Example 1-11. Set the "ds_probing_threshhold" parameter
+ ...
+ modparam("dispatcher", "ds_probing_threshhold", 10)
+ ...
+
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. ds_select_dst(set, alg)
@@ -243,6 +319,9 @@ modparam("dispatcher", "force_dst", 1)
           + "2" - hash over to uri.
           + "3" - hash over request-uri.
           + "4" - round-robin (next destination).
+          + "5" - hash over authorization-username
+            (Proxy-Authorization or "normal" authorization). If
+            no username is found, round robin is used.
           + "X" - if the algorithm is not implemented, the first
             entry in set is chosen.
 
@@ -253,7 +332,7 @@ modparam("dispatcher", "force_dst", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-8. ds_select_dst usage
+   Example 1-12. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -300,6 +379,48 @@ ds_select_dst("1", "0");
    This function can be used from FAILURE_ROUTE.
      _________________________________________________________
 
+1.4.6. ds_mark_dst("s")
+
+   Mark the last used address from destination set as inactive
+   ("i"/"I"/"0"), active ("a"/"A"/"1") or probing ("p"/"P"/"2").
+   With this function, an automatic detection of failed gateways
+   can be implemented. When an address is marked as inactive or
+   probing, it will be ignored by 'ds_select_dst' and
+   'ds_select_domain'.
+
+   possible parameters:
+
+     * "i", "I" or "0" - the last destination should be set to
+       inactive and will be ignored in future requests.
+     * "a", "A" or "1" - the last destination should be set to
+       active.
+     * "p", "P" or "2" - the last destination will be set to
+       probing. Note: You will need to call this function
+       "threshhold"-times, before it will be actually set to
+       probing.
+
+   This function can be used from FAILURE_ROUTE.
+     _________________________________________________________
+
+1.4.7. ds_is_from_list()
+
+   This function returns true, if the current request comes from
+   a host from the dispatcher-list; otherwise false.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE and ONREPLY_ROUTE.
+     _________________________________________________________
+
+1.4.8. ds_is_from_list("group")
+
+   This function returns true, if the current request comes from
+   a host in the given group of the dispatcher-list; otherwise
+   false.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE and ONREPLY_ROUTE.
+     _________________________________________________________
+
 1.5. Exported MI Functions
 
 1.5.1. ds_set_state
@@ -314,6 +435,7 @@ ds_select_dst("1", "0");
      * _state_ : state of the destination address
           + "a": active
           + "i": inactive
+          + "p": probing
      * _group_: destination group id
      * _address_: address of the destination in the _group_
 
@@ -347,7 +469,7 @@ ds_select_dst("1", "0");
    integer value. Destination address must be a valid SIP URI.
    Empty lines or lines starting with "#" are ignored.
 
-   Example 1-9. dispatcher list file
+   Example 1-13. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -368,7 +490,7 @@ ds_select_dst("1", "0");
 
    Next picture displays a sample usage of dispatcher.
 
-   Example 1-10. OpenSER config script - sample dispatcher usage
+   Example 1-14. OpenSER config script - sample dispatcher usage
 ...
 # $Id$
 # sample config file for dispatcher module

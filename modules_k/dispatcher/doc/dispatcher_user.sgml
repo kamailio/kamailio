@@ -33,7 +33,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>none</emphasis>.
+				<emphasis>TM - only if active recovery of failed hosts is required</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -230,6 +230,90 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
  	</section>
+ 	<section>
+ 		<title><varname>ds_ping_method</varname> (string)</title>
+ 		<para>
+ 		With this Method you can define, with which method you want to probe the failed gateways.
+ 		This method is only available, if compiled with the probing of failed gateways enabled. 		
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>OPTIONS</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_ping_method</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_ping_method", "INFO")
+ ...
+ </programlisting>
+ 		</example>
+	</section> 	
+ 	<section>
+ 		<title><varname>ds_ping_from</varname> (string)</title>
+ 		<para>
+ 		With this Method you can define the "From:"-Line for the request, sent to the failed gateways. 		
+ 		This method is only available, if compiled with the probing of failed gateways enabled.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>sip:dispatcher@localhost</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_ping_from</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
+ ...
+ </programlisting>
+ 		</example>
+	</section> 	
+
+ 	<section>
+ 		<title><varname>ds_ping_interval</varname> (int)</title>
+ 		<para>
+ 		With this Method you can define the interval for sending a request to a failed gateway.
+ 		This parameter is only used, when the TM-Module is loaded.
+		If set to <quote>0</quote>, the pinging of failed requests is disabled.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>10</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_ping_interval</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_ping_interval", 30)
+ ...
+ </programlisting>
+ 		</example>
+	</section> 	
+	
+ 	<section>
+ 		<title><varname>ds_probing_threshhold</varname> (int)</title>
+ 		<para>
+		If you want to set a gateway into probing mode, you will need a specific number of requests until it will change from "active" to probing.
+		The number of attempts can be set with this parameter.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>3</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_probing_threshhold</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_probing_threshhold", 10)
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -278,6 +362,11 @@ modparam("dispatcher", "force_dst", 1)
 			<listitem>
 				<para>
 				<quote>4</quote> - round-robin (next destination).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>5</quote> - hash over authorization-username (Proxy-Authorization or "normal" authorization). If no username is found, round robin is used.
 				</para>
 			</listitem>
 			<listitem>
@@ -364,6 +453,53 @@ ds_select_dst("1", "0");
 		This function can be used from FAILURE_ROUTE.
 		</para>
  	</section>
+  	<section>
+ 		<title>
+ 		<function moreinfo="none">ds_mark_dst("s")</function>
+ 		</title>
+ 		<para>
+ 		Mark the last used address from destination set as inactive ("i"/"I"/"0"), active ("a"/"A"/"1") or probing ("p"/"P"/"2").
+ 		With this function, an automatic detection of failed gateways can be implemented. When an address is marked as
+		inactive or probing, it will be ignored by 'ds_select_dst' and 'ds_select_domain'.
+ 		</para>
+		<para>possible parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>"i", "I" or "0"</emphasis> - the last destination should be set to inactive and will be ignored in future requests.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>"a", "A" or "1"</emphasis> - the last destination should be set to active.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>"p", "P" or "2"</emphasis> - the last destination will be set to probing. Note: You will need to call this function "threshhold"-times, before it will be actually set to probing.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from FAILURE_ROUTE.
+		</para>
+ 	</section>
+  	<section>
+ 		<title>
+ 		<function moreinfo="none">ds_is_from_list()</function>
+ 		</title>
+ 		<para>
+ 		This function returns true, if the current request comes from a host from the dispatcher-list; otherwise false.
+ 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE and ONREPLY_ROUTE.
+		</para>
+ 	</section>
+  	<section>
+ 		<title>
+ 		<function moreinfo="none">ds_is_from_list("group")</function>
+ 		</title>
+ 		<para>
+ 		This function returns true, if the current request comes from a host in the given group of the dispatcher-list; otherwise false.
+ 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE and ONREPLY_ROUTE.
+		</para>
+ 	</section>
 	</section>
 
 	<section>
@@ -385,6 +521,7 @@ ds_select_dst("1", "0");
 			      <itemizedlist>
 	                 <listitem><para> <quote>a</quote>: active </para></listitem> 
 			         <listitem><para> <quote>i</quote>: inactive </para></listitem>	
+				<listitem><para> <quote>p</quote>: probing </para></listitem>
 				  </itemizedlist>
 			</listitem>	  
 

@@ -24,6 +24,12 @@
  * History
  * -------
  * 2004-07-31  first version, by daniel
+ * 2007-01-11  Added a function to check if a specific gateway is in
+ *		a group (carsten)
+ * 2007-02-09  Added active probing of failed destinations and automatic
+ *		re-enabling of destinations
+ * 2007-05-08  Ported the changes to SVN-Trunk and renamed ds_is_domain
+ *		to ds_is_from_list.
  */
 
 #ifndef _DISPATCH_H_
@@ -32,11 +38,16 @@
 #include <stdio.h>
 #include "../../items.h"
 #include "../../parser/msg_parser.h"
+#include "../tm/tm_load.h"
 
 
 #define DS_HASH_USER_ONLY	1  /* use only the uri user part for hashing */
 #define DS_FAILOVER_ON		2  /* store the other dest in avps */
+
 #define DS_INACTIVE_DST		1  /* inactive destination */
+#define DS_PROBING_DST		2  /* checking destination */
+#define DS_RESET_FAIL_DST	4  /* Reset-Failure-Counter */
+
 
 typedef struct _ds_param
 {
@@ -57,6 +68,12 @@ extern unsigned short grp_avp_type;
 extern int_str cnt_avp_name;
 extern unsigned short cnt_avp_type;
 
+/* Structure containing pointers to TM-functions */
+struct tm_binds tmb;
+extern str ping_method;
+extern str ping_from;
+extern int probing_threshhold; /* number of failed requests, before a destination is taken into probing */ 
+
 int ds_load_list(char *lfile);
 int ds_destroy_list();
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
@@ -65,6 +82,12 @@ int ds_set_state(int group, str *address, int state, int type);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_print_mi_list(struct mi_node* rpl);
+
+int ds_is_from_list(struct sip_msg *_m, int group);
+/*
+ * Timer for checking inactive destinations
+ */
+void ds_check_timer(unsigned int ticks, void* param);
 
 #endif
 
