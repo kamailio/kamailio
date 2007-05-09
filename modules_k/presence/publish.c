@@ -233,8 +233,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		DBG( "PRESENCE:msg_presentity_clean:found expired publish"
 				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
 				p[i]->domain.len, p[i]->domain.s);
-		if(query_db_notify( &p[i]->user, &p[i]->domain, p[i]->event, NULL, 
-				&p[i]->etag, NULL)< 0)
+		if(publ_notify( p[i], NULL, &p[i]->etag)< 0)
 		{
 			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while sending Notify\n");
 			goto error;

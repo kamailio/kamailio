@@ -40,7 +40,7 @@
 #include "../../db/db_val.h"
 #include "../tm/tm_load.h"
 #include "../../socket_info.h"
-
+#include "presentity.h"
 #include "presence.h"
 #include "notify.h"
 #include "utils_func.h"
@@ -387,7 +387,8 @@ error:
 	return NULL;
 
 }
-str* get_p_notify_body(str user, str host, str* etag, ev_t* event, subs_t* subs)
+str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
+		subs_t* subs)
 {
 	db_key_t query_cols[6];
 	db_val_t query_vals[6];
@@ -930,15 +931,99 @@ error:
 	return -1;
 	
 }
+int publ_notify(presentity_t* p, str* body, str* offline_etag)
+{
+	int n=0, i=0;
+	str* notify_body = NULL;
+	subs_t** subs_array = NULL;
+
+	if(get_subs_dialog(&p->user, &p->domain, p->event , p->sender,
+				&subs_array, &n)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:publ_notify: ERROR while getting subs_dialog"
+				" from database\n");
+		goto error;
+	}
+	if(subs_array == NULL)
+	{
+		DBG("PRESENCE: publ_notify: Could not get subs_dialog from"
+			" database\n");
+		goto done;
+	}
+
+	/* if the event does not require aggregation - we have the final body */
+	if(p->event->agg_nbody)
+	{	
+		notify_body = get_p_notify_body(p->user, p->domain,
+				p->event , offline_etag, NULL);
+		if(notify_body == NULL)
+		{
+			DBG( "PRESENCE: publ_notify: Could not get the"
+					" notify_body\n");
+			/* goto error; */
+		}
+	}
+
+	for(i =0; i<n; i++)
+	{
+		if(notify(subs_array[i], NULL, notify_body?notify_body:body, 0)< 0 )
+		{
+			LOG(L_ERR, "PRESENCE: publ_notify: Could not send notify for"
+					"%.*s\n", p->event->stored_name.len, 
+					p->event->stored_name.s);
+			goto error;
+		}
+	}
+
+done:
+
+	if(subs_array!=NULL)
+	{	
+		for(i =0; i<n; i++)
+		{
+			if(subs_array[i]!=NULL)
+				pkg_free(subs_array[i]);
+		}
+		pkg_free(subs_array);
+	}
+	if(notify_body!=NULL)
+	{
+		if(notify_body->s)
+			free(notify_body->s);
+		pkg_free(notify_body);
+	}
+
+	return 1;
+
+error:
+	if(subs_array!=NULL)
+	{
+		for(i =0; i<n; i++)
+		{
+			if(subs_array[i]!=NULL)
+				pkg_free(subs_array[i]);
+		}
+		pkg_free(subs_array);
+	}
+	if(notify_body!=NULL)
+	{
+		if(notify_body->s)
+			free(notify_body->s);
+		pkg_free(notify_body);
+	}
+	return -1;
+
+}	
+
 
 int query_db_notify(str* p_user, str* p_domain, ev_t* event, 
-		subs_t* watcher_subs, str* etag, str* sender )
+		subs_t* watcher_subs )
 {
 	subs_t** subs_array = NULL;
 	int n=0, i=0;
 	str* notify_body = NULL;
 
-	if(get_subs_dialog(p_user, p_domain, event , sender, &subs_array, &n)< 0)
+	if(get_subs_dialog(p_user, p_domain, event , NULL, &subs_array, &n)< 0)
 	{
 		LOG(L_ERR, "PRESENCE:query_db_notify: ERROR while getting subs_dialog"
 				" from database\n");
@@ -953,7 +1038,8 @@ int query_db_notify(str* p_user, str* p_domain, ev_t* event,
 	
 	if(event->type & PUBL_TYPE)
 	{
-		notify_body = get_p_notify_body(*p_user, *p_domain, etag, event, NULL);
+		notify_body = get_p_notify_body(*p_user, *p_domain, event,
+				NULL, NULL);
 		if(notify_body == NULL)
 		{
 			DBG( "PRESENCE:query_db_notify: Could not get the"
@@ -1074,7 +1160,7 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 			else
 			{
 				notify_body = get_p_notify_body(subs->to_user,
-						subs->to_domain, NULL ,subs->event, subs);
+						subs->to_domain,subs->event, NULL, subs);
 				if(notify_body == NULL || notify_body->s== NULL)
 				{
 					DBG("PRESENCE:notify: Could not get the notify_body\n");

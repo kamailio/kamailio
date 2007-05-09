@@ -28,6 +28,7 @@
 
 #include "../../str.h"
 #include "subscribe.h"
+#include "presentity.h"
 
 #ifndef NOTIFY_H
 #define NOTIFY_H
@@ -68,8 +69,10 @@ int free_tm_dlg(dlg_t *td);
 
 dlg_t* build_dlg_t (str p_uri, subs_t* subs);
 
-int query_db_notify(str* p_user, str* p_domain, ev_t* event,
-		subs_t *subs, str* etag, str* sender);
+int query_db_notify(str* p_user, str* p_domain, ev_t* event, 
+		subs_t* watcher_subs);
+
+int publ_notify(presentity_t* p, str* body, str* offline_etag);
 
 int notify(subs_t* subs, subs_t* watcher_subs, str* n_body, int force_null_body);
 

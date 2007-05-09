@@ -302,8 +302,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				
 				if(event->wipeer)
 				{
-					if(query_db_notify(&subs->to_user,&subs->to_domain, event->wipeer ,
-							NULL, NULL, NULL)< 0)
+					if(query_db_notify(&subs->to_user,&subs->to_domain,
+								event->wipeer, NULL)< 0)
 					{
 						LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
 							" notify for winfo\n");
@@ -465,7 +465,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		if(event->wipeer)
 		{	
 			if(query_db_notify(&subs->to_user,&subs->to_domain, event->wipeer,
-					subs, NULL, NULL)< 0)
+					subs )< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
 					" notify winfo\n");

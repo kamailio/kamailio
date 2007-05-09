@@ -242,8 +242,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
 			return -1;
 		}
-		if( query_db_notify( &presentity->user, &presentity->domain, 
-				presentity->event, NULL, &presentity->etag, presentity->sender)< 0 )
+		if( publ_notify( presentity, body, &presentity->etag)< 0 )
 		{
 			LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
 			return -1;
@@ -313,8 +312,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 		}
 		
 		/* send notify with presence information */
-		if (query_db_notify(&presentity->user, &presentity->domain,
-					presentity->event, NULL, NULL, presentity->sender)<0)
+		if (publ_notify(presentity, body,NULL )<0)
 		{
 			LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
 			return -1;
@@ -466,8 +464,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 			etag.s= NULL;
 			
 			/* presentity body is updated so send notify to all watchers */
-			if (query_db_notify(&presentity->user, &presentity->domain,
-						presentity->event, NULL, NULL, presentity->sender)<0)
+			if (publ_notify(presentity, body, NULL)<0)
 			{
 				LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
 				return -1;
