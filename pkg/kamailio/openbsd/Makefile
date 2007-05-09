@@ -8,7 +8,7 @@
 COMMENT= "OpenSER"
 
 PORTNAME= openser
-PORTVERSION= 1.2.0
+PORTVERSION= 1.2.0-notls
 CATEGORIES= net
 MASTER_SITES= http://openser.org/pub/openser/1.2.0/src/
 
