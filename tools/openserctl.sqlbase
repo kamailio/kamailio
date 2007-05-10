@@ -245,7 +245,7 @@ cat <<EOF
    *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls       *
    * Examples:  lcr addgw_grp usa 1                                  *
    *            lcr addgw level3 1.2.3.4 5080 sip tcp 1              *
-   *            lcr addroute +1 % 1 1                                *
+   *            lcr addroute +1 '' 1 1                               *
  lcr show ....................................................................
            ............. show routes, gateways and groups
  lcr reload ..................................................................
@@ -265,7 +265,7 @@ cat <<EOF
  lcr rmgw  <gw_name> .........................................................
            ............... delete a gateway
  lcr addroute <prefix> <from> <grp_id> <prio> ................................
-           .............. add a route
+           .............. add a route ( use '' to match anything in <from> )
  lcr rmroute  <prefix> <from> <grp_id> <prio> ................................
            .............. delete a route
 EOF

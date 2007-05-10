@@ -241,14 +241,14 @@ parameter usage:
    *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls              *
    * Examples:  openser_dbtext_ctl lcr addgw_grp usa 1                      *
    *            openser_dbtext_ctl lcr addgw level3 1.2.3.4 5080 sip tcp 1  *
-   *            openser_dbtext_ctl lcr addroute +1 % 1 1                    *
+   *            openser_dbtext_ctl lcr addroute +1 '' 1 1                   *
  lcr show ...................................... show routes, gateways and groups
  lcr addgw_grp <grp_name> <grp_id> ............. add gateway group with grp_id
  lcr rmgw_grp  <grp_id> ........................ delete the gw_grp
  lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> ........... add a gateway
  lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> .. add a gateway with prefix
  lcr rmgw  <gw_name> ..................................................... delete a gateway
- lcr addroute <prefix> <from> <grp_id> <prio> .. add a route
+ lcr addroute <prefix> <from> <grp_id> <prio> .. add a route  ( use '' to match anything in <from> )
  lcr rmroute  <prefix> <from> <grp_id> <prio> .. delete a route
 
            * control and diagnostics *
