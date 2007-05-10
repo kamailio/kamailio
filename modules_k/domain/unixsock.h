@@ -29,8 +29,6 @@
 #define DOMAIN_RELOAD "domain_reload"
 #define DOMAIN_DUMP "domain_dump"
 
-
-int reload_domain_table( void );
 /*
  * Register domain unixsock functions
  */

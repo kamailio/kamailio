@@ -43,7 +43,6 @@ struct ha{
 
 extern char *jain_ping_config;
 extern int jain_ping_period;
-extern int jain_pings_lost;
 extern int jain_ping_timeout;
 extern struct ping *jain_pings;
 
@@ -51,7 +50,6 @@ extern pid_t pinger_pid;
 
 extern char *servlet_ping_config;
 extern int servlet_ping_period;
-extern int servlet_pings_lost;
 extern int servlet_ping_timeout;
 extern struct ping *servlet_pings;
 

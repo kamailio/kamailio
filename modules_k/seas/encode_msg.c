@@ -177,7 +177,6 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
       for(h=0;h<32;j=(0x01<<h),h++)
 	 if(j & ms->u.request.method_value)
 	    break;
-	 else;
    else
       h=(unsigned short)(ms->u.reply.statuscode);
    if(h==32){/*statuscode wont be 32...*/

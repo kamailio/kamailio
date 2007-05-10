@@ -65,7 +65,6 @@ struct statstable
    unsigned int received;
 };
 extern struct statstable *seas_stats_table;
-extern char use_stats;
 
 /**
  * Initialize and destroy statistics table

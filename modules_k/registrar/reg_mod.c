@@ -74,8 +74,6 @@ static int save_fixup(void** param, int param_no);
 /* Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
-/* Structure containing pointers to usrloc functions */
-usrloc_api_t ul;
 
 /* Default expires value in seconds */
 int default_expires = 3600;

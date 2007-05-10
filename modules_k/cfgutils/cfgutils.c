@@ -169,7 +169,7 @@ static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param )
 
 	if( strno2int( &node->value, &percent) <0)
 		goto error;
-	if (percent > 100 || percent < 0) {
+	if (percent > 100) {
 		LOG(L_ERR, "ERROR:cfgutils:mi_set_prob: incorrect probability\n");
 		goto error;
 	}

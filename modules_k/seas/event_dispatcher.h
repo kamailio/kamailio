@@ -33,7 +33,6 @@ struct unc_as{
 /*uncomplete as table, from 0 to MAX_UNC_AS_NR are event, from then on are action*/
 /*should only be modified by the dispatcher process, or we should add a lock*/
 extern struct unc_as unc_as_t[];
-extern struct as_entry *my_as;
 
 int process_unbind_action(as_p as,char *payload,int len);
 int process_bind_action(as_p as,char *payload,int len);

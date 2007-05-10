@@ -74,13 +74,6 @@ typedef int (*treply_wb_f)( struct cell* trans, unsigned int code, str *text,
 int reply_received( struct sip_msg  *p_msg ) ;
 
 
-/* Retransmits the last sent inbound reply.
- * Returns  -1 - error
- *           1 - OK
- */
-int t_retransmit_reply( /* struct sip_msg * */  );
-
-
 /* send a UAS reply
  * Warning: 'buf' and 'len' should already have been build.
  * returns 1 if everything was OK or -1 for error
@@ -132,6 +125,10 @@ unsigned int get_on_negative();
 void t_on_reply( unsigned int go_to );
 unsigned int get_on_reply();
 
+/* Retransmits the last sent inbound reply.
+ * Returns  -1 - error
+ *           1 - OK
+ */
 int t_retransmit_reply( struct cell *t );
 
 void tm_init_tags();

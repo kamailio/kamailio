@@ -68,14 +68,10 @@
 #define VIA "Via: "
 #define VIA_LEN (sizeof(VIA)-1)
 
-extern struct as_entry *my_as;
 extern char *seas_tag_suffix;
 extern char seas_tags[];
-extern int write_pipe;
-extern int server_signature;
 pid_t my_parent;
 extern int fifo_pid;
-extern int process_no;
 
 static inline struct sip_msg *parse_ac_msg(hdr_flags_t flags,char *start,int len);
 static inline void free_sip_msg_lite(struct sip_msg *my_msg);
@@ -87,7 +83,6 @@ static inline int ac_jain_pong(as_p the_as,char *action,int len);
 int process_pong(struct ha *the_table,unsigned int seqno);
 int print_local_uri(as_p as,char processor_id,char *where,int len);
 
-int print_pingtable(struct ha *ta,int idx,int lock);
 
 int dispatch_actions()
 {
@@ -1417,7 +1412,8 @@ exit:
 
 char* create_as_action_reply(struct cell *c,struct tmcb_params *params,int uac_id,char processor_id,int *evt_len)
 {
-   unsigned int i,code,flags;
+   int i;
+   unsigned int code,flags;
    unsigned short int port;
    unsigned int k,len;
    char *buffer;
