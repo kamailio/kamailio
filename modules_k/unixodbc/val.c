@@ -40,7 +40,7 @@
 
 
 /*
- * Does not copy strings
+ * Convert str to db value, does not copy strings
  */
 int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 {

@@ -25,9 +25,10 @@
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include <mysql/mysql.h>
-#include "val.h"
+#include "../../db/db_row.h"
+#include "../../db/db_ut.h"
 #include "my_con.h"
+#include "val.h"
 #include "row.h"
 
 
@@ -57,25 +58,9 @@ int db_mysql_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
 			    ((MYSQL_ROW)CON_ROW(_h))[i], lengths[i]) < 0) {
 			LOG(L_ERR, "convert_row: Error while converting value\n");
-			db_mysql_free_row(_r);
+			free_row(_r);
 			return -3;
 		}
 	}
 	return 0;
 }
-
-
-/*
- * Release memory used by row
- */
-int db_mysql_free_row(db_row_t* _r)
-{
-	if (!_r) {
-		LOG(L_ERR, "free_row: Invalid parameter value\n");
-		return -1;
-	}
-
-	if (ROW_VALUES(_r)) pkg_free(ROW_VALUES(_r));
-	return 0;
-}
-

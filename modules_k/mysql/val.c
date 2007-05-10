@@ -30,7 +30,7 @@
 
 
 /*
- * Does not copy strings
+ * Convert str to db value, does not copy strings
  */
 int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 {
@@ -217,7 +217,7 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			_s += mysql_escape_string(_s, VAL_STR(_v).s, l);
+			_s += mysql_real_escape_string(_c, _s, VAL_STR(_v).s, l);
 			*_s++ = '\'';
 			*_s = '\0';
 			*_len = _s - old_s;

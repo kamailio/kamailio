@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <mysql/mysql.h>
+#include "../../db/db_res.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "row.h"
@@ -110,28 +111,6 @@ int db_mysql_get_columns(db_con_t* _h, db_res_t* _r)
 
 
 /*
- * Release memory used by rows
- */
-int db_mysql_free_rows(db_res_t* _r)
-{
-	int i;
-
-	if (!_r) {
-		LOG(L_ERR, "free_rows: Invalid parameter value\n");
-		return -1;
-	}
-
-	for(i = 0; i < RES_ROW_N(_r); i++) {
-		db_mysql_free_row(&(RES_ROWS(_r)[i]));
-	}
-	if (RES_ROWS(_r)) pkg_free(RES_ROWS(_r));
-	RES_ROWS(_r) = 0;
-
-	return 0;
-}
-
-
-/*
  * Convert rows from mysql to db API representation
  */
 static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
@@ -160,13 +139,13 @@ static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 		if (!CON_ROW(_h)) {
 			LOG(L_ERR, "convert_rows: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(_r) = i;
-			db_mysql_free_rows(_r);
+			free_rows(_r);
 			return -3;
 		}
 		if (db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) {
 			LOG(L_ERR, "convert_rows: Error while converting row #%d\n", i);
 			RES_ROW_N(_r) = i;
-			db_mysql_free_rows(_r);
+			free_rows(_r);
 			return -4;
 		}
 	}
@@ -241,7 +220,7 @@ int db_mysql_free_dbresult(db_res_t* _r)
 	}
 
 	db_mysql_free_columns(_r);
-	db_mysql_free_rows(_r);
+	free_rows(_r);
 	pkg_free(_r);
 	return 0;
 }

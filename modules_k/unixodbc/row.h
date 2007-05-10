@@ -41,11 +41,4 @@
 int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r,
 		unsigned long* lengths);
 
-
-/*
- * Release memory used by row
- */
-int free_row(db_row_t* _r);
-
-
 #endif /* ROW_H */

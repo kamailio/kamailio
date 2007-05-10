@@ -31,6 +31,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../db/db_pool.h"
+#include "../../db/db_ut.h"
 #include "val.h"
 #include "my_con.h"
 #include "res.h"
@@ -92,38 +93,6 @@ static int db_mysql_submit_query(db_con_t* _h, const char* _s)
 	}
 	LOG(L_ERR, "submit_query: %s\n", mysql_error(CON_CONNECTION(_h)));
 	return -2;
-}
-
-
-/*
- * Print list of columns separated by comma
- */
-static int db_mysql_print_columns(char* _b, int _l, db_key_t* _c, int _n)
-{
-	int i, ret;
-	int len = 0;
-
-	if ((!_c) || (!_n) || (!_b) || (!_l)) {
-		LOG(L_ERR, "print_columns: Invalid parameter value\n");
-		return -1;
-	}
-
-	for(i = 0; i < _n; i++) {
-		if (i == (_n - 1)) {
-			ret = snprintf(_b + len, _l - len, "%s ", _c[i]);
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
-		} else {
-			ret = snprintf(_b + len, _l - len, "%s,", _c[i]);
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
-		}
-	}
-	return len;
-
- error:
-	LOG(L_ERR, "print_columns: Error in snprintf\n");
-	return -1;
 }
 
 
@@ -406,7 +375,7 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 		off = ret;
 
-		ret = db_mysql_print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
+		ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
 		if (ret < 0) return -1;
 		off += ret;
 
@@ -491,7 +460,7 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 	} else {
 		/* free old rows */
 		if(RES_ROWS(*_r)!=0)
-			db_mysql_free_rows(*_r);
+			free_rows(*_r);
 		RES_ROWS(*_r) = 0;
 		RES_ROW_N(*_r) = 0;
 	}
@@ -517,14 +486,14 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 			LOG(L_ERR,
 				"db_fetch_result: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(*_r) = i;
-			db_mysql_free_rows(*_r);
+			free_rows(*_r);
 			return -6;
 		}
 		if (db_mysql_convert_row(_h, *_r, &(RES_ROWS(*_r)[i])) < 0) {
 			LOG(L_ERR,
 				"db_fetch_result: Error while converting row #%d\n", i);
 			RES_ROW_N(*_r) = i;
-			db_mysql_free_rows(*_r);
+			free_rows(*_r);
 			return -7;
 		}
 	}
@@ -572,7 +541,7 @@ int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
-	ret = db_mysql_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
+	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
 	if (ret < 0) return -1;
 	off += ret;
 
@@ -714,7 +683,7 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
-	ret = db_mysql_print_columns(sql_buf + off, SQL_BUF_LEN - off, keys, n);
+	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, keys, n);
 	if (ret < 0) return -1;
 	off += ret;
 

@@ -544,6 +544,10 @@ int pg_free_rows(db_res_t* _res)
 
 /**
  * Release memory used by row
+ * This function loops over each column and calls pkg_free on STRINGs, this is different 
+ * from the mysql and unixodbc behaviour which skips this step. 
+ * So we need an own implementation of this function here. 
+ * This needs some investigation..
  */
 int pg_free_row(db_row_t* _row)
 {
@@ -582,6 +586,7 @@ int pg_free_row(db_row_t* _row)
 
 /**
  * Release memory used by columns
+ * The same applies as in pg_free_colum
  */
 int pg_free_columns(db_res_t* _res)
 {

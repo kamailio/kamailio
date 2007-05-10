@@ -46,10 +46,6 @@ int db_mysql_convert_result(db_con_t* _h, db_res_t* _r);
  */
 int db_mysql_free_dbresult(db_res_t* _r);
 
-/*
- * Release memory used by rows in a result structure
- */
-int db_mysql_free_rows(db_res_t* _r);
 
 int db_mysql_get_columns(db_con_t* _h, db_res_t* _r);
 

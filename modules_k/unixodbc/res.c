@@ -32,6 +32,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "row.h"
+#include "../../db/db_res.h"
 #include "my_con.h"
 #include "res.h"
 #include "list.h"
@@ -129,27 +130,6 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 				break;
 		}
 	}
-	return 0;
-}
-
-/*
- * Release memory used by rows
- */
-static inline int free_rows(db_res_t* _r)
-{
-	int i;
-
-	if (!_r)
-	{
-		LOG(L_ERR, "unixodbc:free_rows: Invalid parameter value\n");
-		return -1;
-	}
-
-	for(i = 0; i < RES_ROW_N(_r); i++)
-	{
-		free_row(&(RES_ROWS(_r)[i]));
-	}
-	if (RES_ROWS(_r)) pkg_free(RES_ROWS(_r));
 	return 0;
 }
 

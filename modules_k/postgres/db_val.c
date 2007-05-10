@@ -73,7 +73,9 @@ static inline int time2str(time_t _v, char* _s, int* _l)
 }
 
 /*
- * Does not copy strings
+ * Convert a str to a db value, does not copy strings
+ * The postgresql module uses a custom escape function for BLOBs,
+ * so the common db_str2val function from db_ut.h could not used.
  */
 int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 {
@@ -296,7 +298,7 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 			return -7;
 		} else {
 			*_s++ = '\'';
-			tmp_s = (char*)PQescapeBytea((unsigned char*)VAL_STRING(_v),
+			tmp_s = (char*)PQescapeByteaConn(CON_CONNECTION(_con), (unsigned char*)VAL_STRING(_v),
 					(size_t)l, (size_t*)&tmp_len);
 			if(tmp_s==NULL)
 			{

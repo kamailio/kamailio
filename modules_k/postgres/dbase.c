@@ -70,6 +70,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../db/db.h"
+#include "../../db/db_ut.h"
 #include "db_utils.h"
 #include "defs.h"
 #include "dbase.h"
@@ -767,23 +768,6 @@ static int rollback_transaction(db_con_t * _con)
 
 #endif
 
-/*
- * Print list of columns separated by comma
- */
-static int print_columns(char* _b, int _l, db_key_t* _c, int _n)
-{
-	int i;
-	int res = 0;
-	for(i = 0; i < _n; i++) {
-		if (i == (_n - 1)) {
-			res += snprintf(_b + res, _l - res, "%s ", _c[i]);
-		} else {
-			res += snprintf(_b + res, _l - res, "%s,", _c[i]);
-		}
-	}
-	return res;
-}
-
 
 /*
  * Print list of values separated by comma
@@ -882,7 +866,7 @@ int pg_query(db_con_t* _con, db_key_t* _k, db_op_t* _op,
 			"select * from %s ", CON_TABLE(_con));
 	} else {
 		off = snprintf(_s, SQL_BUF_LEN, "select ");
-		off += print_columns(_s + off, SQL_BUF_LEN - off, _c, _nc);
+		off += db_print_columns(_s + off, SQL_BUF_LEN - off, _c, _nc);
 		off += snprintf(_s + off, SQL_BUF_LEN - off,
 			"from %s ", CON_TABLE(_con));
 	}
@@ -1042,7 +1026,7 @@ int pg_insert(db_con_t* _con, db_key_t* _k, db_val_t* _v, int _n)
 	int rv = 0;
 
 	off = snprintf(_s, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_con));
-	off += print_columns(_s + off, SQL_BUF_LEN - off, _k, _n);
+	off += db_print_columns(_s + off, SQL_BUF_LEN - off, _k, _n);
 	off += snprintf(_s + off, SQL_BUF_LEN - off, ") values (");
 	off += print_values(_con, _s + off, SQL_BUF_LEN - off, _v, _n);
 	*(_s + off++) = ')';

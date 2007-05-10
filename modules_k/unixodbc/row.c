@@ -30,8 +30,10 @@
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "val.h"
+#include "../../db/db_row.h"
+#include "../../db/db_ut.h"
 #include "my_con.h"
+#include "val.h"
 #include "row.h"
 
 /*
@@ -64,20 +66,5 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengt
 			return -3;
 		}
 	}
-	return 0;
-}
-
-/*
- * Release memory used by row
- */
-int free_row(db_row_t* _r)
-{
-	if (!_r)
-	{
-		LOG(L_ERR, "free_row: Invalid parameter value\n");
-		return -1;
-	}
-
-	if (ROW_VALUES(_r)) pkg_free(ROW_VALUES(_r));
 	return 0;
 }
