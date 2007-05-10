@@ -230,7 +230,7 @@ int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 	xmlNodePtr node= NULL,  actions_node = NULL;
 	xmlNodePtr sub_handling_node = NULL;
 	char* sub_handling = NULL;
-
+	
 	node= get_rule_node(subs, xcap_tree);
 	if(node== NULL)
 		return 0;
