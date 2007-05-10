@@ -944,20 +944,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 	
-	/* getting presentity uri from Request-URI */
-
-	if( parse_uri(msg->first_line.u.request.uri.s, 
-				msg->first_line.u.request.uri.len, &pres_uri)< 0)
-	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing Request URI\n");
-		goto error;
-	}
-	subs.pres_user.s= pres_uri.user.s;
-	subs.pres_user.len= pres_uri.user.len;
-	
-	subs.pres_domain.s= pres_uri.host.s;
-	subs.pres_domain.len= pres_uri.host.len;
-	
 	/* inspecting the Event header field */
 	if(msg->event && msg->event->body.len > 0)
 	{
@@ -1078,6 +1064,24 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 	subs.to_domain.s = to_uri.host.s;
 	subs.to_domain.len = to_uri.host.len;
+	
+	/* getting presentity uri from Request-URI */
+	if(!subs.event->to_pres_uri)
+	{	
+		if( parse_uri(msg->first_line.u.request.uri.s, 
+					msg->first_line.u.request.uri.len, &pres_uri)< 0)
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing Request URI\n");
+			goto error;
+		}
+		subs.pres_user= pres_uri.user;
+		subs.pres_domain= pres_uri.host;
+	}
+	else
+	{
+		subs.pres_user= subs.to_user;
+		subs.pres_domain= subs.to_domain;
+	}
 
 	/* examine the from header */
 	if (!msg->from || !msg->from->body.s)
