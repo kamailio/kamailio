@@ -34,21 +34,31 @@
 
 
 /*
- * Convert LFLF to CRLF.  Hack that is needed as long as Abyss XML-RPC
- * server "normalizes" CRLF to LF in XML-RPC strings.
+ * Convert in argument string each LFLF to CRLF and return length of
+ * the string not including the terminating `\0' character.
+ * This is a hack that is needed as long as Abyss XML-RPC server "normalizes"
+ * CRLF to LF in XML-RPC strings. 
  */
-void lflf_to_crlf_hack(char *s) {
+int lflf_to_crlf_hack(char *s) {
+
+    unsigned int len;
+
+    len = 0;
 
     while (*s) {
 	if (*(s + 1) && (*s == '\n') && *(s + 1) == '\n') {
 	    *s = '\r';
 	    s = s + 2;
+	    len = len + 2;
 	} else {
 	    s++;
+	    len++;
 	}
     }
+
+    return len;
 }
-    
+
 
 struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 
@@ -165,9 +175,9 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 					"stringValue: %s!\n", env->fault_string);
 				goto error;
 			}
-			lflf_to_crlf_hack(stringValue);
-			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValue,
-			strlen(stringValue)) == NULL ) {
+			if ( add_mi_node_child(&mi_root->node, 0, 0, 0,
+					       stringValue,
+					       lflf_to_crlf_hack(stringValue)) == NULL ) {
 				LOG(L_ERR, "ERROR: mi_xmlrpc: xr_parse_tree: Failed to add "
 					"node to the MI tree.\n");
 				goto error;
