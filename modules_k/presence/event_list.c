@@ -136,6 +136,7 @@ int add_event(ev_t* event)
 	else
 		ev->type= PUBL_TYPE;
 
+	ev->to_pres_uri= event->to_pres_uri;
 	ev->req_auth= event->req_auth;
 	ev->agg_nbody= event->agg_nbody;
 	ev->apply_auth_nbody= event->apply_auth_nbody;

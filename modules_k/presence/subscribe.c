@@ -1066,8 +1066,13 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs.to_domain.len = to_uri.host.len;
 	
 	/* getting presentity uri from Request-URI */
-	if(!subs.event->to_pres_uri)
-	{	
+	if(subs.event->to_pres_uri)
+	{
+		subs.pres_user= subs.to_user;
+		subs.pres_domain= subs.to_domain;
+	}
+	else
+	{
 		if( parse_uri(msg->first_line.u.request.uri.s, 
 					msg->first_line.u.request.uri.len, &pres_uri)< 0)
 		{
@@ -1076,11 +1081,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 		subs.pres_user= pres_uri.user;
 		subs.pres_domain= pres_uri.host;
-	}
-	else
-	{
-		subs.pres_user= subs.to_user;
-		subs.pres_domain= subs.to_domain;
 	}
 
 	/* examine the from header */
