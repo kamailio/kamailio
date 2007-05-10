@@ -285,9 +285,8 @@ error:
  */
 int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 {
-	struct sip_uri uri, puri;
+	struct sip_uri puri;
 	str body;
-	struct to_body *pto, TO;
 	int lexpire;
 	presentity_t* presentity = 0;
 	struct hdr_field* hdr;
@@ -300,6 +299,9 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	ev_t* event= NULL;
 	param_t* ev_param= NULL;
 	str ev_name;
+	str pres_user;
+	str pres_domain;
+	struct sip_uri pres_uri;
 
 	counter++;
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
@@ -413,41 +415,15 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	if(lexpire > max_expires)
 		lexpire = max_expires;
 
-	if( msg->to==NULL || msg->to->body.s==NULL)
+	/* get pres_uri from Request-URI*/
+	if( parse_uri(msg->first_line.u.request.uri.s, 
+				msg->first_line.u.request.uri.len, &pres_uri)< 0)
 	{
-		LOG(L_ERR, "PRESENCE: handle_publish: ERROR cannot parse TO header\n");
+		LOG(L_ERR, "PRESENCE: handle_publish:error parsing Request URI\n");
 		goto error;
 	}
-
-	if(msg->to->parsed != NULL)
-	{
-		pto = (struct to_body*)msg->to->parsed;
-		DBG("PRESENCE: handle_publish: 'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
-	}
-	else
-	{
-		memset( &TO , 0, sizeof(TO) );
-		if(!parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO))
-		{
-			DBG("PRESENCE: handle_publish: 'To' header NOT parsed\n");
-			goto error;
-		}
-		pto = &TO;
-	}
-	
-	if(parse_uri(pto->uri.s, pto->uri.len, &uri)!=0)
-	{
-		LOG(L_ERR, "PRESENCE: handle_publish: bad R-URI!\n");
-		goto error;
-	}
-
-	if(uri.user.len<=0 || uri.user.s==NULL || uri.host.len<=0 ||
-			uri.host.s==NULL)
-	{
-		LOG(L_ERR, "PRESENCE: handle_publish: bad URI in To header!\n");
-		goto error;
-	}
+	pres_user= pres_uri.user;
+	pres_domain= pres_uri.host;
 
 	if (!msg->content_length) 
 	{
@@ -523,7 +499,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	/* now we have all the necessary values */
 	/* fill in the filds of the structure */
 
-	presentity= new_presentity(&uri.host, &uri.user, lexpire, event, &etag, sender);
+	presentity= new_presentity(&pres_domain, &pres_user, lexpire, event, &etag, sender);
 	if(presentity== NULL)
 	{
 		LOG(L_ERR,"PRESENCE: handle_publish: ERORR creating presentity\n");

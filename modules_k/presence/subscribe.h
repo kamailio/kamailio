@@ -38,6 +38,8 @@ struct ev;
 
 struct subscription
 {
+	str pres_user;
+	str pres_domain;
 	str to_user;
 	str to_domain;
 	str from_user;

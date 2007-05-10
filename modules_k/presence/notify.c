@@ -51,7 +51,10 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag);
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 void printf_subs(subs_t* subs)
-{
+{	
+	DBG("\n\tpres_user= %.*s - len: %d\tpres_domain= %.*s - len: %d", 
+			subs->pres_user.len,  subs->pres_user.s, subs->pres_user.len,
+			subs->pres_domain.len,  subs->pres_domain.s, subs->pres_domain.len);
 	DBG("\n\t[p_user]= %.*s  [p_domain]= %.*s\n\t[w_user]= %.*s "  
 			"[w_domain]= %.*s\n",
 			subs->to_user.len, subs->to_user.s, subs->to_domain.len,
@@ -63,7 +66,8 @@ void printf_subs(subs_t* subs)
 			subs->expires );
 	DBG("[to_tag]= %.*s\n\t[from_tag]= %.*s\n",
 			subs->to_tag.len, subs->to_tag.s,	subs->from_tag.len, subs->from_tag.s);
-
+	DBG("[contact]= %.*s\n",
+			subs->contact.len, subs->contact.s);
 }
 str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, int STATE_FLAG );
 
@@ -247,18 +251,18 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		return notify_body;
 	}
 
-	query_cols[n_query_cols] = "to_user";
+	query_cols[n_query_cols] = "pres_user";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val= subs->to_user;
+	query_vals[n_query_cols].val.str_val= subs->pres_user;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "to_domain";
+	query_cols[n_query_cols] = "pres_domain";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->to_domain;
+	query_vals[n_query_cols].val.str_val = subs->pres_domain;
 	n_query_cols++;
 
 	
@@ -663,16 +667,18 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 	db_key_t query_cols[7];
 	db_op_t  query_ops[7];
 	db_val_t query_vals[7];
-	db_key_t result_cols[16];
+	db_key_t result_cols[18];
 	int n_result_cols = 0, n_query_cols = 0;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	db_res_t *result = NULL;
 	int size= 0;
-	str from_user, from_domain, to_tag, from_tag;
+	str from_user, from_domain, from_tag;
+	str to_user, to_domain, to_tag;
 	str event_id, callid, record_route, contact, status;
 	str sockinfo_str, local_contact;
-	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
+	int from_user_col, from_domain_col, from_tag_col;
+	int to_user_col, to_domain_col, to_tag_col;
 	int expires_col= 0,callid_col, cseq_col, i, status_col =0, event_id_col = 0;
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0;
@@ -685,7 +691,7 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 	}
 
 	DBG("PRESENCE:get_subs_dialog:querying database table = active_watchers\n");
-	query_cols[n_query_cols] = "to_domain";
+	query_cols[n_query_cols] = "pres_domain";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -693,7 +699,7 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 	query_vals[n_query_cols].val.str_val.len = p_domain->len;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "to_user";
+	query_cols[n_query_cols] = "pres_user";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -721,7 +727,8 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 		query_vals[n_query_cols].val.str_val.len = sender->len;
 		n_query_cols++;
 	}
-
+	result_cols[to_user_col=n_result_cols++] = "to_user" ;
+	result_cols[to_domain_col=n_result_cols++] = "to_domain" ;
 	result_cols[from_user_col=n_result_cols++] = "from_user" ;
 	result_cols[from_domain_col=n_result_cols++] = "from_domain" ;
 	result_cols[event_id_col=n_result_cols++] = "event_id";
@@ -779,6 +786,11 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 		row_vals = ROW_VALUES(row);		
 	
 		memset(&status, 0, sizeof(str));
+		to_user.s= (char*)row_vals[to_user_col].val.string_val;
+		to_user.len= 	strlen(to_user.s);
+		to_domain.s= (char*)row_vals[to_domain_col].val.string_val;
+		to_domain.len= strlen(to_domain.s);
+
 		from_user.s= (char*)row_vals[from_user_col].val.string_val;
 		from_user.len= 	strlen(from_user.s);
 		from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
@@ -814,10 +826,11 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 		local_contact.s = (char*)row_vals[local_contact_col].val.string_val;
 		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		
-		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ from_user.len+ 
-				from_domain.len+ event_id.len+ to_tag.len+ status.len+
-				from_tag.len+ callid.len+ record_route.len+ contact.len+
-				sockinfo_str.len+ local_contact.len)* sizeof(char);
+		size= sizeof(subs_t)+ (p_user->len+ p_domain->len+ to_user.len+
+				to_domain.len+ from_user.len+ from_domain.len+ event_id.len+
+				to_tag.len+ status.len+ from_tag.len+ callid.len+ 
+				record_route.len+ contact.len+ sockinfo_str.len+ 
+				local_contact.len)* sizeof(char);
 
 		subs= (subs_t*)pkg_malloc(size);
 		if(subs ==NULL)
@@ -829,16 +842,26 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 		memset(subs, 0, size);
 		size= sizeof(subs_t);
 
-		subs->to_user.s= (char*)subs+ size;
-		memcpy(subs->to_user.s, p_user->s, p_user->len);
-		subs->to_user.len = p_user->len;
+		subs->pres_user.s= (char*)subs+ size;
+		memcpy(subs->pres_user.s, p_user->s, p_user->len);
+		subs->pres_user.len = p_user->len;
 		size+= p_user->len;
 
-		subs->to_domain.s= (char*)subs+ size;
-		memcpy(subs->to_domain.s, p_domain->s, p_domain->len);
-		subs->to_domain.len = p_domain->len;
+		subs->pres_domain.s= (char*)subs+ size;
+		memcpy(subs->pres_domain.s, p_domain->s, p_domain->len);
+		subs->pres_domain.len = p_domain->len;
 		size+= p_domain->len;
 	
+		subs->to_user.s= (char*)subs+ size;
+		memcpy(subs->to_user.s, to_user.s, to_user.len);
+		subs->to_user.len = to_user.len;
+		size+= to_user.len;
+
+		subs->to_domain.s= (char*)subs+ size;
+		memcpy(subs->to_domain.s, to_domain.s, to_domain.len);
+		subs->to_domain.len = to_domain.len;
+		size+= to_domain.len;
+
 		subs->event= event;
 
 		subs->from_user.s= (char*)subs+ size;
@@ -1097,7 +1120,7 @@ error:
 	return -1;
 }
 
-int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body )
+int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 {
 
 	str p_uri= {NULL, 0};
@@ -1159,8 +1182,8 @@ int notify(subs_t* subs, subs_t * watcher_subs, str* n_body, int force_null_body
 			}
 			else
 			{
-				notify_body = get_p_notify_body(subs->to_user,
-						subs->to_domain,subs->event, NULL, subs);
+				notify_body = get_p_notify_body(subs->pres_user,
+						subs->pres_domain, subs->event, NULL, subs);
 				if(notify_body == NULL || notify_body->s== NULL)
 				{
 					DBG("PRESENCE:notify: Could not get the notify_body\n");
@@ -1416,7 +1439,8 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 	{
 		size+= sizeof(subs_t) + (subs->to_user.len+ 
 			subs->to_domain.len+ subs->from_user.len+ subs->from_domain.len+
-			+subs->event_id.len + subs->to_tag.len +
+			subs->pres_user.len+ subs->pres_domain.len +
+			subs->event_id.len + subs->to_tag.len +
 			subs->from_tag.len + subs->callid.len +subs->contact.len +
 			subs->record_route.len +subs->status.len + subs->reason.len+
 			subs->local_contact.len+ subs->sockinfo_str.len)* sizeof(char);
@@ -1449,6 +1473,16 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 
 	cb_param->wi_subs = (subs_t*)((char*)cb_param + size);
 	size+= sizeof(subs_t);
+
+	cb_param->wi_subs->pres_user.s = (char*)cb_param + size;
+	strncpy(cb_param->wi_subs->pres_user.s, subs->pres_user.s, subs->pres_user.len);
+	cb_param->wi_subs->pres_user.len = subs->pres_user.len;
+	size+= subs->pres_user.len;
+
+	cb_param->wi_subs->pres_domain.s = (char*)cb_param + size;
+	strncpy(cb_param->wi_subs->pres_domain.s, subs->pres_domain.s, subs->pres_domain.len);
+	cb_param->wi_subs->pres_domain.len = subs->pres_domain.len;
+	size+= subs->pres_domain.len;
 
 	cb_param->wi_subs->to_user.s = (char*)cb_param + size;
 	strncpy(cb_param->wi_subs->to_user.s, subs->to_user.s, subs->to_user.len);

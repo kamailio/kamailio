@@ -136,8 +136,8 @@ error:
 int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		int to_tag_gen, ev_t* event)
 {	
-	db_key_t query_cols[19];
-	db_val_t query_vals[19], update_vals[5];
+	db_key_t query_cols[22];
+	db_val_t query_vals[22], update_vals[5];
 	db_key_t result_cols[4], update_keys[5];
 	db_res_t *result= NULL;
 	unsigned int remote_cseq, local_cseq;
@@ -152,6 +152,18 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	DBG("PRESENCE: update_subscription...\n");
 	printf_subs(subs);	
 	
+	query_cols[n_query_cols] = "pres_user";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->pres_user;
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "pres_domain";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->pres_domain;
+	n_query_cols++;
+
 	query_cols[n_query_cols] = "to_user";
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -302,7 +314,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				
 				if(event->wipeer)
 				{
-					if(query_db_notify(&subs->to_user,&subs->to_domain,
+					if(query_db_notify(&subs->pres_user,&subs->pres_domain,
 								event->wipeer, NULL)< 0)
 					{
 						LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
@@ -360,7 +372,9 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			query_vals[n_query_cols].nul = 0;
 			query_vals[n_query_cols].val.str_val = subs->contact;
 			n_query_cols++;
-	
+			DBG("PRESENCE:update_subscription: subs->contact= %.*s-  len= %d\n",
+					subs->contact.len, subs->contact.s, subs->contact.len);
+
 			query_cols[n_query_cols] = "status";
 			query_vals[n_query_cols].type = DB_STR;
 			query_vals[n_query_cols].nul = 0;
@@ -430,8 +444,9 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			for(i = 0;i< n_query_cols; i++)
 			{
 				if(query_vals[i].type==DB_STR)
-				DBG("[%d] = %s %.*s\n",i, query_cols[i], 
-					query_vals[i].val.str_val.len,query_vals[i].val.str_val.s );
+				DBG("[%d] = %s %.*s-  len= %d\n",i, query_cols[i], 
+					query_vals[i].val.str_val.len,query_vals[i].val.str_val.s,
+					query_vals[i].val.str_val.len);
 				if(query_vals[i].type==DB_INT)
 					DBG("[%d] = %s %d\n",i, query_cols[i], 
 						query_vals[i].val.int_val);
@@ -440,14 +455,13 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription: ERROR while storing"
-						" new subscribtion\n");
+						" new subscription\n");
 				goto error;
 			}
 		
 		}
 		/*otherwise there is a subscription outside a dialog with expires= 0 
-		 * no update in database, but
-		 * should try to send Notify */
+		 * no update in database, but should try to send Notify */
 		 
 	}
 
@@ -464,7 +478,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		
 		if(event->wipeer)
 		{	
-			if(query_db_notify(&subs->to_user,&subs->to_domain, event->wipeer,
+			if(query_db_notify(&subs->pres_user,&subs->pres_domain, event->wipeer,
 					subs )< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
@@ -583,6 +597,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	int n_result_cols = 0;
 	int from_user_col, from_domain_col, to_tag_col, from_tag_col;
 	int to_user_col, to_domain_col, event_col;
+	int pres_user_col, pres_domain_col;
 	int callid_col, cseq_col, i, event_id_col = 0;
 	int record_route_col = 0, contact_col, cseq;
 	int sockinfo_col = 0, local_contact_col= 0;
@@ -592,7 +607,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 
 	str from_user, from_domain, to_tag, from_tag;
 	str to_user, to_domain, event, event_id, callid;
-	str record_route, contact;
+	str record_route, contact, pres_user, pres_domain;
 	str sockinfo_str, local_contact;
 	
 	DBG("PRESENCE: msg_active_watchers_clean:cleaning expired watcher information\n");
@@ -603,7 +618,8 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = (int)time(NULL)- 10;
 	
-
+	result_cols[pres_user_col=n_result_cols++] = "pres_user" ;
+	result_cols[pres_domain_col=n_result_cols++] = "pres_domain" ;
 	result_cols[event_col=n_result_cols++] = "event";
 	result_cols[from_user_col=n_result_cols++] = "from_user" ;
 	result_cols[from_domain_col=n_result_cols++] = "from_domain" ;
@@ -656,6 +672,12 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	{
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);		
+		
+		pres_user.s = (char*)row_vals[pres_user_col].val.string_val;
+		pres_user.len =strlen(pres_user.s);
+
+		pres_domain.s = (char*)row_vals[pres_domain_col].val.string_val;
+		pres_domain.len =strlen(pres_domain.s);
 		
 		to_user.s = (char*)row_vals[to_user_col].val.string_val;
 		to_user.len =strlen(to_user.s);
@@ -884,10 +906,10 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	str rec_route= {0, 0};
 	int error_ret = -1;
 	int rt  = 0;
-	db_key_t db_keys[8];
-	db_val_t db_vals[8];
-	db_key_t update_keys[3];
-	db_val_t update_vals[3];
+	db_key_t db_keys[10];
+	db_val_t db_vals[10];
+	db_key_t update_keys[5];
+	db_val_t update_vals[5];
 
 	int n_query_cols= 0; 
 	db_key_t result_cols[2];
@@ -901,7 +923,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	param_t* ev_param= NULL;
 	str ev_name;
 	int result_code, result_n;
-	
+	struct sip_uri pres_uri;
+
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
 	contact_body_t *b;
@@ -920,7 +943,21 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		error_ret = 0;
 		goto error;
 	}
+	
+	/* getting presentity uri from Request-URI */
 
+	if( parse_uri(msg->first_line.u.request.uri.s, 
+				msg->first_line.u.request.uri.len, &pres_uri)< 0)
+	{
+		LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing Request URI\n");
+		goto error;
+	}
+	subs.pres_user.s= pres_uri.user.s;
+	subs.pres_user.len= pres_uri.user.len;
+	
+	subs.pres_domain.s= pres_uri.host.s;
+	subs.pres_domain.len= pres_uri.host.len;
+	
 	/* inspecting the Event header field */
 	if(msg->event && msg->event->body.len > 0)
 	{
@@ -1145,8 +1182,11 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	subs.contact.s = b->contacts->uri.s;
 	subs.contact.len = b->contacts->uri.len;
-	
-/*process record route and add it to a string*/
+
+	DBG("PRESENCE: handle_subscribe: subs.contact= %.*s - len = %d\n",
+			subs.contact.len, subs.contact.s, subs.contact.len);	
+
+	/*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
 	{
 		rt = print_rr_body(msg->record_route, &rec_route, 0);
@@ -1168,7 +1208,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 				" present\n");
 		goto error;
 	}
-
 	subs.from_tag.s = pfrom->tag_value.s;
 	subs.from_tag.len = pfrom->tag_value.len;
 
@@ -1254,20 +1293,19 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}
 	}	
-
 	/* subscription status handling */
 	db_keys[n_query_cols] ="p_user";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val= subs.to_user;
+	db_vals[n_query_cols].val.str_val= subs.pres_user;
 	n_query_cols++;
 
 	db_keys[n_query_cols] ="p_domain";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs.to_domain;
+	db_vals[n_query_cols].val.str_val = subs.pres_domain;
 	n_query_cols++;
-
+	
 	db_keys[n_query_cols] ="w_user";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
@@ -1300,7 +1338,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	if(result== NULL)
 		goto error;
-		
+	
 	result_n= result->n;
 	if(result_n> 0)
 	{	
@@ -1339,6 +1377,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs.reason= reason;
 	
 	/* get subs.status */
+
 	if(!event->req_auth)
 	{
 		subs.status.s = "active";
@@ -1373,7 +1412,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			LOG(L_ERR, "PRESENCE: subscribe: ERROR in function event specific function"
 					" is_watcher_allowed\n");
 			goto error;
-		}				
+		}	
 		if(result_code!=0)	/* a change has ocured */
 		{
 			if(result_n <=0)
@@ -1468,6 +1507,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			
 		}
 	}
+	
 	printf_subs(&subs);	
 	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen, event) <0 )
 	{	

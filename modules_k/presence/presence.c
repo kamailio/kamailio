@@ -57,7 +57,7 @@
 MODULE_VERSION
 
 #define S_TABLE_VERSION 1
-#define ACTWATCH_TABLE_VERSION 3
+#define ACTWATCH_TABLE_VERSION 4
 
 char *log_buf = NULL;
 static int clean_period=100;
