@@ -32,6 +32,17 @@
 extern "C" {
 #endif
 
+/** \ingroup cds
+ * @{ 
+ *
+ * \defgroup cds_memory Memory management
+ *
+ * Memory operations are common for whole CDS library. Because it must work
+ together with SER's memory management and must work without it too, there are
+ wrapper macros for memory allocation/deallocation.
+ * 
+ * @{ */
+
 /* typedef void*(*cds_malloc_func)(unsigned int size);
 typedef void(*cds_free_func)(void *ptr);
 
@@ -40,16 +51,64 @@ extern cds_free_func cds_free;
 
 void cds_set_memory_functions(cds_malloc_func _malloc, cds_free_func _free); */
 
+/** \def cds_malloc(s)
+ * Function/macro for memory allocation. Which function is choosen depends on
+ * SER and TRACE_CDS_MEMORY defines. 
+ *
+ * When SER is defined shm_malloc is choosen, standard malloc otherwise. */
+
+/** \def cds_free(p)
+ * Function/macro for memory deallocation. Which function is choosen depends
+ * on SER and TRACE_CDS_MEMORY defines. 
+ *
+ * If SER is defined shm_free is choosen, standard free otherwise. */
+
+/** \def cds_malloc_ptr
+ * Function/macro for memory allocation when pointer to function needed. Which
+ * function is choosen depends on SER and TRACE_CDS_MEMORY defines. 
+ *
+ * If SER is defined shm_malloc is choosen, standard malloc otherwise.  */
+
+/** \def cds_free_ptr
+ * Function/macro for memory deallocation when pointer to function needed.
+ * Which function is choosen depends on SER and TRACE_CDS_MEMORY defines. 
+ *
+ * If SER is defined shm_free is choosen, standard free otherwise.  */
+
+/** \def cds_malloc_pkg(s)
+ * Function/macro for 'local' memory allocation. Which function is choosen
+ * depends on SER and TRACE_CDS_MEMORY defines. 
+ *
+ * When SER is defined pkg_malloc is choosen, standard malloc otherwise. */
+
+/** \def cds_free_pkg(p)
+ * Function/macro for 'local' memory deallocation. Which function is choosen
+ * depends on SER and TRACE_CDS_MEMORY defines. 
+ *
+ * When SER is defined pkg_free is choosen, standard free otherwise. */
+
 #ifdef TRACE_CDS_MEMORY
 
+/** \internal Debugging variant of alloc function */
 void *debug_malloc(int size, const char *file, int line);
+
+/** \internal Debugging variant of free function */
 void debug_free(void *block, const char *file, int line);
+
+/** \internal Another debugging variant of alloc function - used when pointer
+ * to function needed. */
 void *debug_malloc_ex(unsigned int size);
+
+/** \internal Another debugging variant of free function - used when pointer to
+ * function needed. */
 void debug_free_ex(void *block);
 
-/* trace function */
+/* \internal Helper function for debugging - shows some debugging information about
+ * memory allocations (currently only the number of allocated blocks). */
 void cds_memory_trace(char *dst, int dst_len);
-/* initializes internal variables for memory tracing */
+
+/** \internal Helper function which is useful for memory debugging only - initializes
+ * internal variables for memory tracing */
 void cds_memory_trace_init();
 
 #define cds_malloc(s)	debug_malloc(s,__FILE__, __LINE__)
@@ -95,6 +154,8 @@ void shm_free_x(void *ptr);
 }
 #endif
 
+/** @} 
+ * @} */
 
 #endif
 

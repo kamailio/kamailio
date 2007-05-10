@@ -3,6 +3,8 @@
 #include <cds/sync.h>
 #include <cds/logger.h>
 
+#if 0
+
 typedef struct {
 	int init_cnt;
 } init_data_t;
@@ -55,3 +57,4 @@ void cds_cleanup()
 	}
 }
 
+#endif

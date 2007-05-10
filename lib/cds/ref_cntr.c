@@ -2,42 +2,50 @@
 #include <cds/logger.h>
 #include <cds/memory.h>
 
-/* One global mutex for reference counting may be enough. 
- * If problems try to create pool of precreated mutexes
- * and use them randomly.
- */
-static cds_mutex_t *ref_cntr_mutex = NULL;
+/* functions for initialization and destruction */
 
-/* global functions for initialization and destruction */
-
-int reference_counter_initialize()
+reference_counter_group_t *create_reference_counter_group(int mutex_cnt)
 {
-	if (!ref_cntr_mutex) {
-		ref_cntr_mutex = (cds_mutex_t*)cds_malloc(sizeof(cds_mutex_t));
-		if (ref_cntr_mutex) {
-			cds_mutex_init(ref_cntr_mutex);
-			return 0;
-		}
+	reference_counter_group_t *g;
+	int i;
+
+	g = cds_malloc(sizeof(*g) + mutex_cnt * sizeof(cds_mutex_t));
+	if (!g) {
+		ERROR_LOG("can't allocate memory\n");
+		return NULL;
 	}
-	return -1;
+
+	for (i = 0; i < mutex_cnt; i++) {
+		cds_mutex_init(&g->mutexes[i]);
+	}
+	g->mutex_to_assign = 0;
+	g->mutex_cnt = mutex_cnt;
+
+	return g;
 }
 
-void reference_counter_cleanup()
+void free_reference_counter_group(reference_counter_group_t *grp)
 {
-	if (ref_cntr_mutex) {
-		cds_mutex_destroy(ref_cntr_mutex);
-		cds_free((void*)ref_cntr_mutex);
-		ref_cntr_mutex = NULL;
+	int i;
+	if (grp) {
+		for (i = 0; i < grp->mutex_cnt; i++) {
+			cds_mutex_destroy(&grp->mutexes[i]);
+		}
+		cds_free(grp);
 	}
 }
 
 /* -------------------------------------------------------------------- */
 
-void init_reference_counter(reference_counter_data_t *ref)
+void init_reference_counter(reference_counter_group_t *grp, reference_counter_data_t *ref)
 {
-	if (ref) {
+	int m;
+	if (ref && grp) {
+		m = grp->mutex_to_assign;
 		ref->cntr = 1;
-		ref->mutex = ref_cntr_mutex;
+		ref->mutex = grp->mutexes + m;
+		m = (m + 1) % grp->mutex_cnt; /* can't be less than zero */
+		grp->mutex_to_assign = m;
 	}
 }
 

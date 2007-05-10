@@ -93,14 +93,14 @@ int push_message(msg_queue_t *q, mq_message_t *m)
 	if ((!q) || (!m)) return -1;
 	m->next = NULL;
 	
-	if (q->use_mutex) cds_mutex_lock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_lock(&q->q_mutex);
 	if (q->last) q->last->next = m;
 	else {
 		q->first = m;
 		q->last = m;
 	}
 	q->last = m;
-	if (q->use_mutex) cds_mutex_unlock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_unlock(&q->q_mutex);
 	
 	return 0;
 }
@@ -110,11 +110,11 @@ int mq_add_to_top(msg_queue_t *q, mq_message_t *m)
 	if ((!q) || (!m)) return -1;
 	m->next = NULL;
 	
-	if (q->use_mutex) cds_mutex_lock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_lock(&q->q_mutex);
 	m->next = q->first;
 	q->first = m;
 	if (!q->last) q->last = m;
-	if (q->use_mutex) cds_mutex_unlock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_unlock(&q->q_mutex);
 	
 	return 0;
 }
@@ -124,7 +124,7 @@ mq_message_t *pop_message(msg_queue_t *q)
 	mq_message_t *m;
 	if (!q) return NULL;
 
-	if (q->use_mutex) cds_mutex_lock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_lock(&q->q_mutex);
 	m = q->first;
 	if (m) {
 		if (q->first == q->last) {
@@ -134,18 +134,17 @@ mq_message_t *pop_message(msg_queue_t *q)
 		else q->first = m->next;
 		m->next = NULL;
 	}
-	if (q->use_mutex) cds_mutex_unlock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_unlock(&q->q_mutex);
 		
 	return m;
 }
 
-/** 1 ... empty, 0 ...  NOT empty !! */
 int is_msg_queue_empty(msg_queue_t *q)
 {
 	int res = 1;
-	if (q->use_mutex) cds_mutex_lock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_lock(&q->q_mutex);
 	if (q->first) res = 0;
-	if (q->use_mutex) cds_mutex_unlock(&q->q_mutex);
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_unlock(&q->q_mutex);
 	return res;
 }
 
@@ -156,20 +155,31 @@ int msg_queue_init(msg_queue_t *q)
 
 int msg_queue_init_ex(msg_queue_t *q, int synchronize)
 {
-	if (synchronize) cds_mutex_init(&q->q_mutex);
-	init_reference_counter(&q->ref);
-	q->use_mutex = synchronize;
+	if (synchronize) {
+		cds_mutex_init(&q->q_mutex);
+		q->flags = MQ_USE_MUTEX;
+	}
+	else q->flags = 0;
 	q->first = NULL;
 	q->last = NULL;
 	return 0;
 }
 
-void msg_queue_destroy(msg_queue_t *q)
+/** \internal Destroys all internal data of message queue and 
+ * optionaly frees it if no more references exist. */
+static inline void msg_queue_destroy_and_free(msg_queue_t *q, int do_free)
 {
 	mq_message_t *m,*n;
 	if (!q) return;
 	
-	if (q->use_mutex) cds_mutex_lock(&q->q_mutex);
+	if (q->flags & MQ_USE_REF_CNTR) {
+		if (!remove_reference(&q->ref)) {
+			/* this was NOT the last reference */
+			return;
+		}
+	}
+
+	if (q->flags & MQ_USE_MUTEX) cds_mutex_lock(&q->q_mutex);
 	m = q->first;
 	while (m) {
 		n = m->next;
@@ -178,17 +188,29 @@ void msg_queue_destroy(msg_queue_t *q)
 	}
 	q->first = NULL;
 	q->last = NULL;
-	if (q->use_mutex) {
+	if (q->flags & MQ_USE_MUTEX) {
 		cds_mutex_unlock(&q->q_mutex);
 		cds_mutex_destroy(&q->q_mutex);
 	}
+	if (do_free) cds_free(q);
+}
+
+void msg_queue_destroy(msg_queue_t *q)
+{
+	msg_queue_destroy_and_free(q, 0);
 }
 
 void msg_queue_free(msg_queue_t *q)
 {
-	if (remove_reference(&q->ref)) {
-		msg_queue_destroy(q);
-		cds_free(q);
+	msg_queue_destroy_and_free(q, 1);
+}
+
+void msg_queue_init_ref_cnt(msg_queue_t *q, reference_counter_group_t *grp)
+{
+	if (grp) {
+		init_reference_counter(grp, &q->ref);
+		q->flags |= MQ_USE_REF_CNTR;
 	}
+	else q->flags &= ~MQ_USE_REF_CNTR; /* don't use reference counter */
 }
 
