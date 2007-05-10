@@ -60,9 +60,6 @@ int xcap_mod_init(void)
 	DEBUG_LOG(" ... libcurl\n");
 	curl_global_init(CURL_GLOBAL_ALL);
 
-	DEBUG_LOG(" ... common libraries\n");
-	cds_initialize();
-
 	return 0;
 }
 
@@ -77,9 +74,6 @@ void xcap_mod_destroy(void)
 	char *s;*/
 
 	DEBUG_LOG("xcap module cleanup\n");
-
-	DEBUG_LOG(" ... common libs\n");
-	cds_cleanup();
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
 /*	xmlCleanupParser();

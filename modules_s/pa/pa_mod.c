@@ -406,7 +406,6 @@ static int pa_mod_init(void)
 	DBG("Presence Agent - initializing\n");
 
 	DBG(" ... common libraries\n");
-	cds_initialize();
 	qsa_initialize();
 
 	if (subscribe_to_users) {
@@ -557,7 +556,6 @@ static void pa_destroy(void)
 
 	DBG(" ... cleaning common libs\n");
 	qsa_cleanup();
-	cds_cleanup();
 }
 
 

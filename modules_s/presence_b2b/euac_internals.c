@@ -86,7 +86,8 @@ int init_events_uac_internals()
 
 	euac_internals->create_cnt = 0;
 	euac_internals->destroy_cnt = 0;
-	
+	euac_internals->rc_grp = create_reference_counter_group(16);
+
 	return 0;
 }
 

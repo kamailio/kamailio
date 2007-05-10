@@ -83,7 +83,7 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 	dstr_destroy(&dstr);
 
 	uac->dialog = NULL;
-	init_reference_counter(&uac->ref_cntr); /* main reference - removed in "destroyed" status */
+	init_reference_counter(euac_internals->rc_grp, &uac->ref_cntr); /* main reference - removed in "destroyed" status */
 	add_reference(&uac->ref_cntr); /* add reference for client */
 	/*TRACE("[%s]: added reference (%d)\n", "???", 
 				uac->ref_cntr.cntr);*/

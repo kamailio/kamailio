@@ -5,6 +5,7 @@
 
 #include "events_uac.h"
 #include <cds/hash_table.h>
+#include <cds/ref_cntr.h>
 #include "../tm/tm_load.h"
 #include "trace.h"
 
@@ -25,7 +26,8 @@ typedef struct {
 	/* members for trace */
 	int create_cnt;
 	int destroy_cnt;
-	
+
+	reference_counter_group_t *rc_grp;
 } events_uacs_internals_t;
 
 extern events_uacs_internals_t *euac_internals;

@@ -178,7 +178,6 @@ int rls_mod_init(void)
 	xmlInitParser();
 
 	DEBUG_LOG(" ... common libraries\n");
-	cds_initialize();
 	qsa_initialize();
 
 	if (time_event_management_init() != 0) {
@@ -334,7 +333,6 @@ void rls_mod_destroy(void)
 
 	DEBUG_LOG(" ... common libs\n");
 	qsa_cleanup();
-	cds_cleanup();
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
 /*	xmlCleanupParser(); */

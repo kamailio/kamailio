@@ -82,7 +82,6 @@ int events_mod_init(void)
 	xmlInitParser();
 
 	DEBUG_LOG(" ... common libraries\n");
-	cds_initialize();
 	qsa_initialize();
 
 	if (events_uac_init() != 0) {
@@ -118,7 +117,6 @@ void events_mod_destroy(void)
 
 	DEBUG_LOG(" ... common libs\n");
 	qsa_cleanup();
-	cds_cleanup();
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
 /*	xmlCleanupParser(); */
