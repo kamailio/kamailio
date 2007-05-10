@@ -57,7 +57,7 @@ struct binrpc_response_handle {
  *   future communication. It can create unix socket or TCP/UDP connection 
  *   depending on input parameteres.
  * 
- * @param handler [in]: handler that will be used for saving of obtained socket;
+ * @param handle [in]: handler that will be used for saving of obtained socket;
  *   if this function succeed, this handler must be freed via calling of 
  *   binrpc_close_connection function
  * @param name [in]: host IP address or FQDN or unix socket name
@@ -139,7 +139,7 @@ int binrpc_send_command(
  *   provides possibility to pass already prepared input values.
  *
  * @param handle [in]: a descriptor of connection
- * @param cmd [in]: method and method attributes
+ * @param pkt [in]: packet to be sent
  * @param resp_handle [out]: structure for holding binary form of response, must be deallocated using binrpc_release_response
  *
  * @return 0 on success, -1 on failure.
