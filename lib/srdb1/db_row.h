@@ -39,5 +39,9 @@ typedef struct db_row {
 #define ROW_VALUES(rw) ((rw)->values)
 #define ROW_N(rw)      ((rw)->n)
 
+/*
+ * Release memory used by row
+ */
+int free_row(db_row_t* _r);
 
 #endif /* DB_ROW_H */

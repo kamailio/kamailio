@@ -35,6 +35,7 @@
 #undef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE_EXTENDED
 
+#include "db_key.h"
 
 int db_str2int(const char* _s, int* _v);
 
@@ -47,4 +48,7 @@ int db_double2str(double _v, char* _s, int* _l);
 int db_time2str(time_t _v, char* _s, int* _l);
 
 int db_str2time(const char* _s, time_t* _v);
+
+int db_print_columns(char* _b, int _l, db_key_t* _c, int _n);
+
 #endif

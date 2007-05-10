@@ -124,8 +124,7 @@ inline int db_double2str(double _v, char* _s, int* _l)
  */
 inline int db_str2time(const char* _s, time_t* _v)
 {
-	if ((!_s) || (!_v))
-	{
+	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "ERROR:db_str2time: Invalid parameter value\n");
 		return -1;
 	}
@@ -155,8 +154,7 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 {
 	int l;
 
-	if ((!_s) || (!_l) || (*_l < 2))
-	{
+	if ((!_s) || (!_l) || (*_l < 2)) {
 		LOG(L_ERR, "ERROR:db_time2str: Invalid parameter value\n");
 		return -1;
 	}
@@ -171,4 +169,36 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 	*(_s + l) = '\'';
 	*_l = l + 2;
 	return 0;
+}
+
+
+/*
+ * Print list of columns separated by comma
+ */
+inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
+{
+	int i, ret;
+	int len = 0;
+
+	if ((!_c) || (!_n) || (!_b) || (!_l)) {
+		LOG(L_ERR, "ERROR:print_columns: Invalid parameter value\n");
+		return -1;
+	}
+
+	for(i = 0; i < _n; i++)	{
+		if (i == (_n - 1)) {
+			ret = snprintf(_b + len, _l - len, "%s ", _c[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
+		} else {
+			ret = snprintf(_b + len, _l - len, "%s,", _c[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
+		}
+	}
+	return len;
+
+	error:
+	LOG(L_ERR, "ERROR:print_columns: Error in snprintf\n");
+	return -1;
 }

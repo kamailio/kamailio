@@ -2,6 +2,7 @@
  * $Id$ 
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007 1und1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,40 +21,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#ifndef DB_RES_H
-#define DB_RES_H
-
+#include "db_res.h"
 
 #include "db_row.h"
-#include "db_key.h"
-#include "db_val.h"
-
-
-typedef struct db_res {
-	struct {
-		db_key_t* names;   /* Column names */
-		db_type_t* types;  /* Column types */
-		int n;             /* Number of columns */
-	} col;
-	struct db_row* rows;       /* Rows */
-	int n;                     /* Number of rows in current fetch */
-	int res_rows;              /* Number of total rows in query */
-	int last_row;              /* Last row */
-} db_res_t;
-
-
-#define RES_NAMES(re) ((re)->col.names)
-#define RES_TYPES(re) ((re)->col.types)
-#define RES_COL_N(re) ((re)->col.n)
-#define RES_ROWS(re)  ((re)->rows)
-#define RES_ROW_N(re) ((re)->n)
-#define RES_LAST_ROW(re)  ((re)->last_row)
-#define RES_NUM_ROWS(re) ((re)->res_rows)
+#include "../dprint.h"
+#include "../mem/mem.h"
 
 /*
- * Release memory used by rows in a result structure
+ * Release memory used by rows
  */
-int free_rows(db_res_t* _r);
+inline int free_rows(db_res_t* _r)
+{
+	int i;
 
-#endif /* DB_RES_H */
+	if (!_r) {
+		LOG(L_ERR, "ERROR:free_rows: Invalid parameter value\n");
+		return -1;
+	}
+	LOG(L_DBG, "DEBUG:free_rows: Freeing %d rows\n", RES_ROW_N(_r));
+
+	for(i = 0; i < RES_ROW_N(_r); i++) {
+		LOG(L_DBG, "DEBUG:free_row: Row[%d]=%p\n", i, &(RES_ROWS(_r)[i]));
+		free_row(&(RES_ROWS(_r)[i]));
+	}
+	if (RES_ROWS(_r)) {
+		LOG(L_DBG, "DEBUG:free_rows: %p=pkg_free() RES_ROWS\n", RES_ROWS(_r));
+		pkg_free(RES_ROWS(_r));
+		RES_ROWS(_r) = NULL;
+	}
+	return 0;
+}
