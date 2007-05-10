@@ -43,6 +43,10 @@ extern "C" {
  * be left on caller. It can use reference counter which is useful
  * when accessing dynamicaly allocated queue destroyed by its last user.
  *
+ * \todo To meaningfully use reference counters it is needed to add
+ * function for adding new reference to message queue.
+ *
+ * \todo Introduce message types because it is often needed.
  * @{
  * */
 
@@ -59,15 +63,20 @@ typedef void (*destroy_function_f)(void *);
  * For simple structures it is set automaticaly during the message creation.
  */
 typedef struct _mq_message_t {
+	/** pointer to data hold by the message */
 	void *data;
+	/** length of data hold by message */
 	int data_len;
+	/** pointer to next message in the queue - is used only when
+	 * message is in the queue */
 	struct _mq_message_t *next;
-	destroy_function_f destroy_function; /* see doc */
+	/** pointer to destroy function */
+	destroy_function_f destroy_function;
 	enum { 
-		message_allocated_with_data, 
-		message_holding_data_ptr
-	} allocation_style;
-	char data_buf[1];
+		message_allocated_with_data, /**< data are allocated together with message structure */
+		message_holding_data_ptr /**< message holds only pointer to data */
+	} allocation_style; /**< member describing the manner of data storage */
+	char data_buf[1]; /**< data buffer used when data are allocated together with message */
 } mq_message_t;
 
 
@@ -81,15 +90,36 @@ typedef struct _mq_message_t {
  * non-NULL group parameter. */ 
 #define MQ_USE_REF_CNTR	2
 
+/** Message queue structure. 
+ * Never access its members directly (they may change), always
+ * use interface functions!
+*/
 typedef struct msg_queue {
+	/** Reference counter. Need not to be used.
+	 * If you want to use reference counter to message queue you have
+	 * to call \ref msg_queue_init_ref_cnt function with not-NULL reference
+	 * counter group.*/
 	reference_counter_data_t ref;
+	/** Pointer to the first message in the queue. Messages are hold in
+	 * one way linked list, each message contains pointer to next one. */
 	mq_message_t *first;
+	/** Pointer to last message in the queue to speed up appending messages
+	 * into the queue.*/
 	mq_message_t *last;
+	/** Queue mutex - might not be initialized, depends on initialization
+	 * parameters */
 	cds_mutex_t q_mutex;
+	/** flags - see MQ_xxx constants */
 	unsigned int flags;
 } msg_queue_t;
 
+/** Macro for accessing message data. 
+ * It is better to use this macro than accessing internal members of
+ * the structure. */
 #define get_message_data(msg)		(msg ? msg->data: NULL)
+/** Macro for determining message data length. 
+ * It is better to use this macro than accessing internal members of
+ * the structure. */
 #define get_message_data_len(msg)	(msg ? msg->data_len: 0)
 
 /** The space for data is allocated in messages data
@@ -98,8 +128,9 @@ typedef struct msg_queue {
 mq_message_t *create_message_ex(int data_len);
 
 /** Creates message holding data allocated using cds_malloc.
- * Warning: data must be allocated using cds_malloc and they
- * are automacicaly freed by free_message! */
+ * Data must be allocated using cds_malloc or there must be
+ * set destroy function via \ref set_data_destroy_function
+ * because they are automaticaly freed by free_message! */
 mq_message_t *create_message(void *data, int data_len);
 
 /** Sets function which will be called by free_message to destroy data. 
