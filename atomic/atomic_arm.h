@@ -37,6 +37,7 @@
  * History:
  * --------
  *  2006-03-31  created by andrei
+ *  2007-05-10  added atomic_add and atomic_cmpxchg (andrei)
  */
 
 
@@ -126,6 +127,44 @@
 	}
 
 
+#define ATOMIC_XCHG_DECL(NAME, P_TYPE) \
+	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+														P_TYPE v ) \
+	{ \
+		P_TYPE ret; \
+		asm volatile( \
+			"     swp %0, %2, [%3] \n\t" \
+			: "=&r"(ret),  "=m"(*var) :\
+				"r"(v), "r"(var) \
+			); \
+		return ret; \
+	}
+
+
+/* cmpxchg: %5=old, %4=new_v, %3=var
+ * if (*var==old) *var=new_v
+ * returns the original *var (can be used to check if it succeeded: 
+ *  if old==cmpxchg(var, old, new_v) -> success
+ */
+#define ATOMIC_CMPXCHG_DECL(NAME, P_TYPE) \
+	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+														P_TYPE old, \
+														P_TYPE new_v) \
+	{ \
+		P_TYPE ret, tmp; \
+		asm volatile( \
+			"1:   ldrex %0, [%3] \n\t" \
+			"     cmp %0, %5 \n\t" \
+			"     strexeq %1, %4, [%3] \n\t" \
+			"     cmp %1, #0 \n\t" \
+			"     bne 1b \n\t" \
+			: "=&r"(ret), "=&r"(tmp), "=m"(*var) :\
+				"r"(var), "r"(new_v), "r"(old) : "cc" \
+			); \
+		return ret; \
+	}
+
+
 
 ATOMIC_FUNC_DECL(inc,      "add  %1, %0, #1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      "sub  %1, %0, #1", int, void, /* no return */ )
@@ -133,7 +172,10 @@ ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", int, void, /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", int, int, ret )
 ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", int, int, ret )
-ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , int, int,  ret)
+//ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , int, int,  ret)
+ATOMIC_XCHG_DECL(get_and_set, int)
+ATOMIC_CMPXCHG_DECL(cmpxchg, int)
+ATOMIC_FUNC_DECL1(add,     "add  %1, %0, %4", int, int, ret )
 
 ATOMIC_FUNC_DECL(inc,      "add  %1, %0, #1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      "sub  %1, %0, #1", long, void, /* no return */ )
@@ -141,7 +183,10 @@ ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", long, void, /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", long, long, ret )
 ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", long, long, ret )
-ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , long, long,  ret)
+//ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , long, long,  ret)
+ATOMIC_XCHG_DECL(get_and_set, long)
+ATOMIC_CMPXCHG_DECL(cmpxchg, long)
+ATOMIC_FUNC_DECL1(add,     "add  %1, %0, %4", long, long, ret )
 
 #define atomic_inc(var) atomic_inc_int(&(var)->val)
 #define atomic_dec(var) atomic_dec_int(&(var)->val)
@@ -150,6 +195,9 @@ ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , long, long,  ret)
 #define atomic_dec_and_test(var) atomic_dec_and_test_int(&(var)->val)
 #define atomic_inc_and_test(var) atomic_inc_and_test_int(&(var)->val)
 #define atomic_get_and_set(var, i) atomic_get_and_set_int(&(var)->val, i)
+#define atomic_cmpxchg(var, old, new_v) \
+	atomic_cmpxchg_int(&(var)->val, old, new_v)
+#define atomic_add(var, v) atomic_add_int(&(var)->val, (v))
 
 
 /* with integrated membar */

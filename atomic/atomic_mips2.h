@@ -42,6 +42,7 @@
  * History:
  * --------
  *  2006-03-08  created by andrei
+ *  2007-05-10  added atomic_add & atomic_cmpxchg (andrei)
  */
 
 
@@ -167,6 +168,23 @@
 	}
 
 
+/* %0=var, %1=*var, %2=new, %3=old :
+ * ret=*var; if *var==old  then *var=new; return ret
+ * => if succesfull (changed var to new)  ret==old */
+#define ATOMIC_CMPXCHG_DECL(NAME, P_TYPE) \
+	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+														P_TYPE old, \
+														P_TYPE new_v) \
+	{ \
+		asm volatile( \
+			ATOMIC_ASM_OP_##P_TYPE("bne %1, %3, 2f \n\t nop") \
+			"2:    \n\t" \
+			: "=m"(*var), "=&r"(old), "=r"(new_v)  \
+			: "r"(old), "m"(*var), "2"(new_v) \
+			 \
+			); \
+		return old; \
+	}
 
 ATOMIC_FUNC_DECL(inc,      "addiu %2, %1, 1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL_CT(dec,   "subu %2, %1, %3", 1,  int, void, /* no return */ )
@@ -175,6 +193,8 @@ ATOMIC_FUNC_DECL1(or,  "or  %2, %1, %3", int, void,  /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "addiu %2, %1, 1", int, int, (ret+1)==0 )
 ATOMIC_FUNC_DECL_CT(dec_and_test, "subu %2, %1, %3", 1, int, int, (ret-1)==0 )
 ATOMIC_FUNC_DECL2(get_and_set, "" /* nothing needed */, int, int, ret )
+ATOMIC_CMPXCHG_DECL(cmpxchg, int)
+ATOMIC_FUNC_DECL1(add, "addu %2, %1, %3 \n\t move %1, %2", int, int, ret )
 
 #ifdef __CPU_mips64
 
@@ -185,6 +205,8 @@ ATOMIC_FUNC_DECL1(or,  "or  %2, %1, %3", long, void,  /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "daddiu %2, %1, 1", long, long, (ret+1)==0 )
 ATOMIC_FUNC_DECL_CT(dec_and_test, "dsubu %2, %1, %3", 1,long, long, (ret-1)==0 )
 ATOMIC_FUNC_DECL2(get_and_set, "" /* nothing needed */, long, long, ret )
+ATOMIC_CMPXCHG_DECL(cmpxchg, long)
+ATOMIC_FUNC_DECL1(add, "daddu %2, %1, %3 \n\t move %1, %2", long, long, ret )
 
 #else /* ! __CPU_mips64 => __CPU_mips2 or __CPU_mips */
 
@@ -195,6 +217,8 @@ ATOMIC_FUNC_DECL1(or,  "or  %2, %1, %3", long, void,  /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "addiu %2, %1, 1", long, long, (ret+1)==0 )
 ATOMIC_FUNC_DECL_CT(dec_and_test, "subu %2, %1, %3", 1,long, long, (ret-1)==0 )
 ATOMIC_FUNC_DECL2(get_and_set, "" /* nothing needed */, long, long, ret )
+ATOMIC_CMPXCHG_DECL(cmpxchg, long)
+ATOMIC_FUNC_DECL1(add, "addu %2, %1, %3 \n\t move %1, %2", long, long, ret )
 
 #endif /* __CPU_mips64 */
 
@@ -205,6 +229,9 @@ ATOMIC_FUNC_DECL2(get_and_set, "" /* nothing needed */, long, long, ret )
 #define atomic_dec_and_test(var) atomic_dec_and_test_int(&(var)->val)
 #define atomic_inc_and_test(var) atomic_inc_and_test_int(&(var)->val)
 #define atomic_get_and_set(var, i) atomic_get_and_set_int(&(var)->val, i)
+#define atomic_add(var, i) atomic_add_int(&(var)->val, i)
+#define atomic_cmpxchg(var, old, new_v)  \
+	atomic_cmpxchg_int(&(var)->val, old, new_v)
 
 
 /* with integrated membar */
