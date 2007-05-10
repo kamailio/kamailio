@@ -748,7 +748,7 @@ sql_query <<EOF
 $USE_CMD $1;
 
 INSERT INTO version VALUES ( 'presentity', '1');
-INSERT INTO version VALUES ( 'active_watchers', '3');
+INSERT INTO version VALUES ( 'active_watchers', '4');
 INSERT INTO version VALUES ( 'watchers', '1');
 INSERT INTO version VALUES ( 'xcap_xml', '1');
 INSERT INTO version VALUES ( 'pua', '3');
@@ -779,6 +779,8 @@ CREATE TABLE presentity (
  */
 CREATE TABLE active_watchers (
   id $AUTO_INCREMENT,
+  pres_user varchar(64) NOT NULL,
+  pres_domain varchar(128) NOT NULL,
   to_user varchar(64) NOT NULL,
   to_domain varchar(128) NOT NULL,
   from_user varchar(64) NOT NULL,
