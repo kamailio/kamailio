@@ -39,8 +39,6 @@ int qsa_initialize()
 {
 	int res = 0;
 
-	cds_initialize();
-	
 	/* initialization should be called from one process/thread 
 	 * it is not synchronized because it is impossible ! */
 	if (!init) {
@@ -81,7 +79,6 @@ void qsa_cleanup()
 			init = NULL;
 		}
 	}
-	cds_cleanup();
 }
 
 notifier_domain_t *qsa_register_domain(const str_t *name)

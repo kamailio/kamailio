@@ -36,6 +36,7 @@ extern "C" {
 
 typedef struct {
 	ptr_vector_t registered_domains;
+	reference_counter_group_t *rc_grp;
 	cds_mutex_t mutex;
 } domain_maintainer_t;
 

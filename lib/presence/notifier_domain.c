@@ -241,7 +241,7 @@ static void remove_notifier_from_subscription(qsa_subscription_t *s, notifier_t 
 /* -------- Domain initialization/destruction functions -------- */
 
 /** Creates a new domain using cds memory functions. */
-notifier_domain_t *create_notifier_domain(const str_t *name)
+notifier_domain_t *create_notifier_domain(reference_counter_group_t *g, const str_t *name)
 {
 	notifier_domain_t *d = (notifier_domain_t*)cds_malloc(sizeof(notifier_domain_t));
 	if (d) {
@@ -249,6 +249,7 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 		d->last_package = NULL;
 		d->first_content_type = NULL;
 		d->last_content_type = NULL;
+		d->rc_grp = g;
 		if (str_dup(&d->name, name) < 0) {
 			cds_free(d);
 			ERROR_LOG("can't allocate memory\n");
@@ -256,7 +257,7 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 		}
 		cds_mutex_init(&d->mutex);
 		cds_mutex_init(&d->data_mutex);
-		init_reference_counter(&d->ref);
+		init_reference_counter(g, &d->ref);
 	}
 	return d;
 }
@@ -407,7 +408,7 @@ qsa_subscription_t *subscribe(notifier_domain_t *domain,
 	s->mutex = &domain->data_mutex;
 	s->data = data;
 	s->allow_notifications = 1;
-	init_reference_counter(&s->ref);
+	init_reference_counter(domain->rc_grp, &s->ref);
 
 	DOUBLE_LINKED_LIST_ADD(p->first_subscription, p->last_subscription, s);
 

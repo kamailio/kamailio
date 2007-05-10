@@ -107,12 +107,13 @@ struct _notifier_domain_t {
 	notifier_package_t *first_package, *last_package;
 	qsa_content_type_t *first_content_type, *last_content_type;
 	reference_counter_data_t ref;
+	reference_counter_group_t *rc_grp;
 };
 
 /* -------- Domain initialization/destruction functions -------- */
 
 /** Creates a new domain using cds memory functions. */
-notifier_domain_t *create_notifier_domain(const str_t *name);
+notifier_domain_t *create_notifier_domain(reference_counter_group_t *g, const str_t *name);
 
 /** Destroys domain and whole information stored in internal
  * structures. If there are any subscribers, they are unsubscribed,

@@ -36,6 +36,7 @@ domain_maintainer_t *create_domain_maintainer()
 	if (dm) {
 		ptr_vector_init(&dm->registered_domains, 8);
 		cds_mutex_init(&dm->mutex);
+		dm->rc_grp = create_reference_counter_group(16);
 	}
 	return dm;
 }
@@ -79,7 +80,7 @@ static notifier_domain_t *find_domain_nolock(domain_maintainer_t *dm, const str_
 
 static notifier_domain_t *add_domain_nolock(domain_maintainer_t *dm, const str_t *name)
 {
-	notifier_domain_t *d = create_notifier_domain(name);
+	notifier_domain_t *d = create_notifier_domain(dm->rc_grp, name);
 	
 	if (d) {
 		DEBUG_LOG("created domain: \'%.*s\'\n", FMT_STR(d->name));
