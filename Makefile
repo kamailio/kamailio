@@ -540,34 +540,10 @@ install-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 		chmod 644  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
 
 
-##################
-# making libraries
-# 
-# you can use:
-#    make libs all include_modules=... install prefix=...
-#    make libs proper
-#
-# but libs should be compiled/installed automaticaly when there are any modules which need them
-
-lib_dependent_modules = dialog pa rls presence_b2b xcap
-
-
-dep_mods = $(filter $(addprefix modules/, $(lib_dependent_modules)), $(modules))
-dep_mods += $(filter $(lib_dependent_modules), $(static_modules))
-
-# make 'modules' dependent on libraries if there are modules which need them 
-# (experimental)
-ifneq ($(strip $(dep_mods)),)
-modules:	libs
-
-install-modules:	install-libs
-
-endif
-
-.PHONY: clean_libs libs install-libs clean_doxygen
+.PHONY: clean_libs clean_doxygen
 
 clean_libs:
-			$(MAKE) -f Makefile.ser -C lib proper
+			$(MAKE) -C lib proper
 
 clean_doxygen:
 		rm -rf $(doxygen_dir)/output/{xml,man,rtf,latex,html}
@@ -575,10 +551,4 @@ clean_doxygen:
 
 # cleaning in libs always when cleaning ser
 clean:	clean_libs
-
-libs:	
-		$(MAKE) -C lib -f Makefile.ser
-
-install-libs:	
-		$(MAKE) -C lib -f Makefile.ser install
 
