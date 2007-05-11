@@ -42,6 +42,8 @@
 
 #define LCONTACT_BUF_SIZE 1024
 
+int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* remote_cseq);
+
 static str su_200_rpl  = str_init("OK");
 static str pu_481_rpl  = str_init("Subscription does not exist");
 static str pu_400_rpl  = str_init("Bad request");
@@ -134,36 +136,19 @@ error:
 }
 
 int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
-		int to_tag_gen, ev_t* event)
+		int to_tag_gen, unsigned int remote_cseq)
 {	
 	db_key_t query_cols[22];
 	db_val_t query_vals[22], update_vals[5];
-	db_key_t result_cols[4], update_keys[5];
-	db_res_t *result= NULL;
-	unsigned int remote_cseq, local_cseq;
-	db_row_t *row ;	
-	db_val_t *row_vals ;
+	db_key_t update_keys[5];
 	int n_update_cols= 0;
 	int n_query_cols = 0;
-	int n_result_cols = 0;
-	int i ,remote_cseq_col= 0, local_cseq_col= 0;
+	int i ;
 	
 
 	DBG("PRESENCE: update_subscription...\n");
 	printf_subs(subs);	
 	
-	query_cols[n_query_cols] = "pres_user";
-	query_vals[n_query_cols].type = DB_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->pres_user;
-	n_query_cols++;
-	
-	query_cols[n_query_cols] = "pres_domain";
-	query_vals[n_query_cols].type = DB_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->pres_domain;
-	n_query_cols++;
-
 	query_cols[n_query_cols] = "to_user";
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -224,10 +209,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_tag;
 	n_query_cols++;
-	
-	result_cols[remote_cseq_col=n_result_cols++] = "remote_cseq";
-	result_cols[local_cseq_col=n_result_cols++] = "local_cseq";
 
+	
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:update_subscription: ERROR in use_table\n");
@@ -238,60 +221,6 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
 	{
-		DBG("PRESENCE:update_subscription: querying database  \n");
-		if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
-			 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
-		{
-			LOG(L_ERR, "PRESENCE:update_subscription: ERROR while querying"
-					" presentity\n");
-			if(result)
-				pa_dbf.free_result(pa_db, result);
-			return -1;
-		}
-		if(result== NULL)
-			return -1;
-
-		if(result && result->n <=0)
-		{
-			LOG(L_ERR, "PRESENCE:update_subscription: The query returned"
-					" no result\n");
-			
-			if (slb.reply(msg, 481, &pu_481_rpl) == -1)
-			{
-				LOG(L_ERR, "PRESENCE: update_subscription: ERROR while"
-						" sending reply\n");
-				pa_dbf.free_result(pa_db, result);
-				return -1;
-			}
-			pa_dbf.free_result(pa_db, result);
-			return 0;
-		}
-		// verify remote cseq
-		row = &result->rows[0];
-		row_vals = ROW_VALUES(row);
-		local_cseq= row_vals[local_cseq_col].val.int_val;
-		remote_cseq= row_vals[remote_cseq_col].val.int_val;
-		if(subs->cseq<= remote_cseq)
-		{
-			LOG(L_ERR, "PRESENCE:update_subscription: ERROR wrong sequence number"
-					" received: %d -  stored: %d\n",subs->cseq, remote_cseq);
-			if (slb.reply(msg, 400, &pu_400_rpl) == -1)
-			{
-				LOG(L_ERR, "PRESENCE: update_subscription: ERROR while"
-						" sending reply\n");
-			}
-			pa_dbf.free_result(pa_db, result);
-			return -1;
-		}
-		else
-		   remote_cseq=subs->cseq;
-		
-		pa_dbf.free_result(pa_db, result);
-		result= NULL;
-		// from this point on the subs.cseq field will store 
-		// the local_cseq used for Notify
-		subs->cseq= local_cseq;
-		
 		/* delete previous stored subscription if the expires value is 0*/
 		if(subs->expires == 0)
 		{
@@ -303,7 +232,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				LOG(L_ERR,"PRESENCE:update_subscription: ERROR cleaning"
 						" unsubscribed messages\n");	
 			}
-			if(event->type & PUBL_TYPE)
+			if(subs->event->type & PUBL_TYPE)
 			{	
 				if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
@@ -312,10 +241,10 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 					goto error;
 				}
 				
-				if(event->wipeer)
+				if(subs->event->wipeer)
 				{
 					if(query_db_notify(&subs->pres_user,&subs->pres_domain,
-								event->wipeer, NULL)< 0)
+								subs->event->wipeer, NULL)< 0)
 					{
 						LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
 							" notify for winfo\n");
@@ -366,7 +295,19 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	else
 	{
 		if(subs->expires!= 0)
-		{		
+		{	
+			query_cols[n_query_cols] = "pres_user";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val = subs->pres_user;
+			n_query_cols++;
+	
+			query_cols[n_query_cols] = "pres_domain";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val = subs->pres_domain;
+			n_query_cols++;
+
 			query_cols[n_query_cols] = "contact";
 			query_vals[n_query_cols].type = DB_STR;
 			query_vals[n_query_cols].nul = 0;
@@ -467,7 +408,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 /* reply_and_notify  */
 
-	if(event->type & PUBL_TYPE)
+	if(subs->event->type & PUBL_TYPE)
 	{	
 		if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
@@ -476,9 +417,9 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			goto error;
 		}
 		
-		if(event->wipeer)
+		if(subs->event->wipeer)
 		{	
-			if(query_db_notify(&subs->pres_user,&subs->pres_domain, event->wipeer,
+			if(query_db_notify(&subs->pres_user,&subs->pres_domain, subs->event->wipeer,
 					subs )< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
@@ -910,7 +851,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	db_val_t db_vals[10];
 	db_key_t update_keys[5];
 	db_val_t update_vals[5];
-
+	unsigned int remote_cseq;
 	int n_query_cols= 0; 
 	db_key_t result_cols[2];
 	db_res_t *result = NULL;
@@ -1065,24 +1006,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs.to_domain.s = to_uri.host.s;
 	subs.to_domain.len = to_uri.host.len;
 	
-	/* getting presentity uri from Request-URI */
-	if(subs.event->to_pres_uri)
-	{
-		subs.pres_user= subs.to_user;
-		subs.pres_domain= subs.to_domain;
-	}
-	else
-	{
-		if( parse_uri(msg->first_line.u.request.uri.s, 
-					msg->first_line.u.request.uri.len, &pres_uri)< 0)
-		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing Request URI\n");
-			goto error;
-		}
-		subs.pres_user= pres_uri.user;
-		subs.pres_domain= pres_uri.host;
-	}
-
 	/* examine the from header */
 	if (!msg->from || !msg->from->body.s)
 	{
@@ -1284,6 +1207,31 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	else
 		subs.local_contact= server_address;
 
+	/* getting presentity uri from Request-URI if initial subscribe - or else from database*/
+	if(to_tag_gen)
+	{
+		if( parse_uri(msg->first_line.u.request.uri.s, 
+					msg->first_line.u.request.uri.len, &pres_uri)< 0)
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing Request URI\n");
+			goto error;
+		}
+		subs.pres_user= pres_uri.user;
+		subs.pres_domain= pres_uri.host;
+	}
+	else
+	{
+		if(get_database_info(msg, &subs, &remote_cseq )< 0)
+		{
+			LOG(L_ERR, "PRESENCE: handle_subscribe:error while getting info"
+					" from database\n");
+			goto error;
+		}
+		DBG("PRESENCE: handle_subscribe: pres_user= %.*s\t pres_domain= %.*s\n", 
+				subs.pres_user.len, subs.pres_user.s,
+				subs.pres_domain.len, subs.pres_domain.s);
+	}	
+
 	DBG("PRESENCE: handle_subscribe: local_contact: %.*s --- len= %d\n", 
 	subs.local_contact.len, subs.local_contact.s, subs.local_contact.len);
 
@@ -1297,7 +1245,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}
 	}	
-	/* subscription status handling */
+		/* subscription status handling */
 	db_keys[n_query_cols] ="p_user";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
@@ -1511,9 +1459,9 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			
 		}
 	}
-	
+
 	printf_subs(&subs);	
-	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen, event) <0 )
+	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen, remote_cseq) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
 		goto error;
@@ -1527,6 +1475,14 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	if(subs.record_route.s)
 		pkg_free(subs.record_route.s);
+	
+	if(to_tag_gen== 0)
+	{
+		if(subs.pres_user.s)
+			pkg_free(subs.pres_user.s);
+		if(subs.pres_domain.s)
+			pkg_free(subs.pres_domain.s);
+	}
 
 	return 1;
 
@@ -1552,7 +1508,176 @@ error:
 	if(subs.record_route.s)
 		pkg_free(subs.record_route.s);
 
+	if(to_tag_gen== 0)
+	{
+		if(subs.pres_user.s)
+			pkg_free(subs.pres_user.s);
+		if(subs.pres_domain.s)
+			pkg_free(subs.pres_domain.s);
+	}
+
 	return error_ret;
 
 }
 
+int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* rem_cseq)
+{	
+	db_key_t query_cols[10];
+	db_val_t query_vals[10];
+	db_key_t result_cols[5];
+	db_res_t *result= NULL;
+	unsigned int local_cseq;
+	db_row_t *row ;	
+	db_val_t *row_vals ;
+	int n_query_cols = 0;
+	int n_result_cols = 0;
+	int remote_cseq_col= 0, local_cseq_col= 0;
+	int pres_user_col, pres_domain_col;
+	unsigned int remote_cseq;
+	str pres_user, pres_domain;	
+
+	query_cols[n_query_cols] = "to_user";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->to_user;
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "to_domain";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->to_domain;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "from_user";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->from_user;
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "from_domain";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->from_domain;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "event";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->event->stored_name;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "event_id";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	if( subs->event_id.s != NULL)
+	{
+		query_vals[n_query_cols].val.str_val.s = subs->event_id.s;
+		query_vals[n_query_cols].val.str_val.len = subs->event_id.len;
+	} else {
+		query_vals[n_query_cols].val.str_val.s = "";
+		query_vals[n_query_cols].val.str_val.len = 0;
+	}
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "callid";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->callid;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "to_tag";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->to_tag;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "from_tag";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = subs->from_tag;
+	n_query_cols++;
+
+	result_cols[pres_user_col=n_result_cols++] = "pres_user";
+	result_cols[pres_domain_col=n_result_cols++] = "pres_domain";
+	result_cols[remote_cseq_col=n_result_cols++] = "remote_cseq";
+	result_cols[local_cseq_col=n_result_cols++] = "local_cseq";
+
+	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE: get_database_info: ERROR in use_table\n");
+		return -1;
+	}
+	
+	DBG("PRESENCE: get_database_info: querying database  \n");
+	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
+		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE: get_database_info: ERROR while querying"
+				" presentity\n");
+		if(result)
+			pa_dbf.free_result(pa_db, result);
+		return -1;
+	}
+	if(result== NULL)
+		return -1;
+
+	if(result && result->n <=0)
+	{
+		LOG(L_ERR, "PRESENCE: get_database_info: The query returned"
+				" no result\n");
+		
+		if (slb.reply(msg, 481, &pu_481_rpl) == -1)
+		{
+			LOG(L_ERR, "PRESENCE: get_database_info: ERROR while"
+					" sending reply\n");
+			pa_dbf.free_result(pa_db, result);
+			return -1;
+		}
+		pa_dbf.free_result(pa_db, result);
+		return 0;
+	}
+
+	row = &result->rows[0];
+	row_vals = ROW_VALUES(row);
+	local_cseq= row_vals[local_cseq_col].val.int_val;
+	remote_cseq= row_vals[remote_cseq_col].val.int_val;
+	
+	if(subs->cseq<= remote_cseq)
+	{
+		LOG(L_ERR, "PRESENCE: get_database_info: ERROR wrong sequence number"
+				" received: %d -  stored: %d\n",subs->cseq, remote_cseq);
+		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
+		{
+			LOG(L_ERR, "PRESENCE: get_database_info: ERROR while"
+					" sending reply\n");
+		}
+		pa_dbf.free_result(pa_db, result);
+		return -1;
+	}
+	else
+	   remote_cseq= subs->cseq;
+	
+	*rem_cseq= remote_cseq;
+	
+	pres_user.s= (char*)row_vals[pres_user_col].val.string_val;
+	pres_user.len= strlen(pres_user.s);
+	subs->pres_user.s= (char*)pkg_malloc(pres_user.len);
+	memcpy(subs->pres_user.s, pres_user.s, pres_user.len);
+	subs->pres_user.len= pres_user.len;
+	
+	pres_domain.s= (char*)row_vals[pres_domain_col].val.string_val;
+	pres_domain.len= strlen(pres_domain.s);
+	subs->pres_domain.s= (char*)pkg_malloc(pres_domain.len);
+	memcpy(subs->pres_domain.s, pres_domain.s, pres_domain.len);
+	subs->pres_domain.len= pres_domain.len;
+
+	pa_dbf.free_result(pa_db, result);
+	result= NULL;
+	// from this point on the subs.cseq field will store 
+	// the local_cseq used for Notify
+	subs->cseq= local_cseq;
+
+
+	return 0;
+
+}
