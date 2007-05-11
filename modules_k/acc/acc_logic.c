@@ -285,6 +285,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 											struct sip_msg *reply, int code)
 {
 	str new_uri_bk;
+	int flags_to_reset = 0;
 
 	/* set as new_uri the last branch */
 	new_uri_bk = req->new_uri;
@@ -302,28 +303,35 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	if (is_log_mc_on(req)) {
 		env_set_text( ACC_MISSED, ACC_MISSED_LEN);
 		acc_log_request( req );
-		reset_acc_flag( req, log_missed_flag );
+		flags_to_reset |= log_missed_flag;
 	}
 #ifdef SQL_ACC
 	if (is_db_mc_on(req)) {
 		env_set_text( db_table_mc, 0);
 		acc_db_request( req );
-		reset_acc_flag( req, db_missed_flag );
+		flags_to_reset |= db_missed_flag;
 	}
 #endif
 #ifdef RAD_ACC
 	if (is_rad_mc_on(req)) {
 		acc_rad_request( req );
-		reset_acc_flag( req, radius_missed_flag );
+		flags_to_reset |= radius_missed_flag;
 	}
 #endif
 /* DIAMETER */
 #ifdef DIAM_ACC
 	if (is_diam_mc_on(req)) {
 		acc_diam_request( req );
-		reset_acc_flag( req, diameter_missed_flag );
+		flags_to_reset |= diameter_missed_flag;
 	}
 #endif
+
+	/* Reset the accounting missed_flags
+	 * These can't be reset in the blocks above, because
+	 * it would skip accounting if the flags are identical
+	 */
+	reset_acc_flag( req, flags_to_reset );
+
 	req->new_uri = new_uri_bk;
 	req->parsed_uri_ok = 0;
 }
