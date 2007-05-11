@@ -62,7 +62,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengt
 			((CON_ROW(_h))[i]), lengths[i]) < 0)
 		{
 			LOG(L_ERR, "convert_row: Error while converting value\n");
-			free_row(_r);
+			db_free_row(_r);
 			return -3;
 		}
 	}

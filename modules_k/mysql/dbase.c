@@ -460,7 +460,7 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 	} else {
 		/* free old rows */
 		if(RES_ROWS(*_r)!=0)
-			free_rows(*_r);
+			db_free_rows(*_r);
 		RES_ROWS(*_r) = 0;
 		RES_ROW_N(*_r) = 0;
 	}
@@ -486,14 +486,14 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 			LOG(L_ERR,
 				"db_fetch_result: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(*_r) = i;
-			free_rows(*_r);
+			db_free_rows(*_r);
 			return -6;
 		}
 		if (db_mysql_convert_row(_h, *_r, &(RES_ROWS(*_r)[i])) < 0) {
 			LOG(L_ERR,
 				"db_fetch_result: Error while converting row #%d\n", i);
 			RES_ROW_N(*_r) = i;
-			free_rows(*_r);
+			db_free_rows(*_r);
 			return -7;
 		}
 	}

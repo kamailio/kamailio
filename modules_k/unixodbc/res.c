@@ -209,7 +209,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 		{
 			LOG(L_ERR, "unixodbc:convert_rows: string null\n");
 			RES_ROW_N(_r) = row_n;
-			free_rows(_r);
+			db_free_rows(_r);
 			return -3;
 		}
 		if (convert_row(_h, _r, &(RES_ROWS(_r)[i]), rows->lengths) < 0)
@@ -217,7 +217,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 			LOG(L_ERR, "unixodbc:convert_rows: Error while converting "
 				"row #%d\n", i);
 			RES_ROW_N(_r) = i;
-			free_rows(_r);
+			db_free_rows(_r);
 			return -4;
 		}
 		i++;
@@ -301,7 +301,7 @@ int free_result(db_res_t* _r)
 	}
 
 	free_columns(_r);
-	free_rows(_r);
+	db_free_rows(_r);
 	pkg_free(_r);
 	return 0;
 }

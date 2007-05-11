@@ -139,13 +139,13 @@ static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 		if (!CON_ROW(_h)) {
 			LOG(L_ERR, "convert_rows: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(_r) = i;
-			free_rows(_r);
+			db_free_rows(_r);
 			return -3;
 		}
 		if (db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) {
 			LOG(L_ERR, "convert_rows: Error while converting row #%d\n", i);
 			RES_ROW_N(_r) = i;
-			free_rows(_r);
+			db_free_rows(_r);
 			return -4;
 		}
 	}
@@ -220,7 +220,7 @@ int db_mysql_free_dbresult(db_res_t* _r)
 	}
 
 	db_mysql_free_columns(_r);
-	free_rows(_r);
+	db_free_rows(_r);
 	pkg_free(_r);
 	return 0;
 }
