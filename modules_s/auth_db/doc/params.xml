@@ -113,16 +113,18 @@ modparam("auth_db", "rpid_column", "remote_party_id")
     <section id="calculate_ha1">
 	<title><varname>calculate_ha1</varname> (integer)</title>
 	<para>
-	    This parameter tells server whether it should expect plaintext
-	    passwords in the database or HA1 string. If the parameter is set to
+	    This parameter tells server whether it should read plaintext
+	    password from the database or HA1 string. If the parameter is set to
 	    1 then the server will assume that the column pointed to by
-	    <varname>password_column</varname> contains plaintext passwords and
+	    <varname>plain_password_column</varname> contains plaintext passwords and
 	    it will calculate HA1 strings on the fly.
 	</para>
 	<para>
 	    If the parameter is set to 0 then the server assumes that the
 	    database contains HA1 strings directly and will not calculate
-	    them. If username parameter of credentials contains also @domain
+	    them. In this case it will use value of <varname>password_column</varname>
+		as name of column with HA1 password.
+		If username parameter of credentials contains also @domain
 	    (some user agents put domain in username parameter), then column
 	    pointed to by <varname>password_column_2</varname> parameter will
 	    be used instead. This column should also contain HA1 strings but
@@ -145,6 +147,23 @@ modparam("auth_db", "rpid_column", "remote_party_id")
 modparam("auth_db", "calculate_ha1", 1)
 	    </programlisting>
 	</example>
+    </section>
+
+    <section id="plain_password_column">
+	<title><varname>plain_password_column</varname> (string)</title>
+	<para>
+		This parameter holds the name of column holding plain text password.
+		This column is used when calculate_ha1 is set.
+	</para>
+	<para>
+	    Default value is "password".
+	</para>
+	<example>
+	    <title><varname>plain_password_column</varname> usage</title>
+	    <programlisting>
+modparam("auth_db", "plain_password_column", "password")
+	    </programlisting>
+	    </example>
     </section>
 
     <section id="password_column_2">
