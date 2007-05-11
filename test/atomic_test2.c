@@ -41,7 +41,8 @@
 
 #include "../atomic_ops.h"
 
-#if defined ATOMIC_OPS_USE_LOCK  || defined MEMBAR_USES_LOCK
+#if defined ATOMIC_OPS_USE_LOCK  || defined MEMBAR_USES_LOCK || \
+	defined ATOMIC_OPS_USE_LOCK_SET
 /* hack to make lock work */
 #include "../lock_ops.h"
 #endif
@@ -51,11 +52,15 @@ gen_lock_t* __membar_lock=0; /* init in atomic_ops.c */
 gen_lock_t dummy_membar_lock;
 #endif
 
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+gen_lock_set_t* _atomic_lock_set=0;
+gen_lock_set_t dummy_atomic_lock_set;
+gen_lock_t locks_array[_ATOMIC_LS_SIZE];
+#elif defined ATOMIC_OPS_USE_LOCK
 gen_lock_t* _atomic_lock=0;
 gen_lock_t dummy_atomic_lock;
+#endif /* ATOMIC_OPS_USE_LOCK / _SET */
 
-#endif
 
 
 
@@ -100,7 +105,13 @@ static char* flags=
 	"no_asm_membar(slow) "
 #endif
 #ifndef HAVE_ASM_INLINE_ATOMIC_OPS
-	"no_asm_atomic_ops "
+	"no_asm_atomic_ops"
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+	":use_lock_set"
+#elif defined ATOMIC_OPS_USE_LOCK
+	":use_lock"
+#endif
+	" "
 #endif
 #ifdef TYPE
 	STR(TYPE) " "
@@ -147,7 +158,7 @@ static char* flags=
 
 #define VERIFY(ops, y) \
 	ops ; \
-	CHECK_ERR( ops, get_val(v), y)
+	CHECK_ERR( ops, y, get_val(v))
 
 
 int main(int argc, char** argv)
@@ -170,7 +181,16 @@ int main(int argc, char** argv)
 	_membar_lock; /* start with the lock "taken" so that we can safely use
 					 unlock/lock sequences on it later */
 #endif
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+	/* init the lock (emulate atomic_ops.c) */
+	dummy_atomic_lock_set.locks=&locks_array[0];
+	_atomic_lock_set=&dummy_atomic_lock_set;
+	if (lock_set_init(_atomic_lock_set)==0){
+		fprintf(stderr, "ERROR: failed to initialize atomic_lock\n");
+		_atomic_lock_set=0;
+		goto error;
+	}
+#elif defined ATOMIC_OPS_USE_LOCK
 	/* init the lock (emulate atomic_ops.c) */
 	_atomic_lock=&dummy_atomic_lock;
 	if (lock_init(_atomic_lock)==0){
@@ -241,7 +261,9 @@ int main(int argc, char** argv)
 #ifdef MEMBAR_USES_LOCK
 	lock_destroy(__membar_lock);
 #endif
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+	lock_set_destroy(_atomic_lock_set);
+#elif defined ATOMIC_OPS_USE_LOCK
 	lock_destroy(_atomic_lock);
 #endif
 	return 0;
@@ -250,7 +272,10 @@ error:
 	if (__membar_lock)
 		lock_destroy(__membar_lock);
 #endif
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+	if (_atomic_lock_set)
+		lock_set_destroy(_atomic_lock_set);
+#elif defined ATOMIC_OPS_USE_LOCK
 	if (_atomic_lock)
 		lock_destroy(_atomic_lock);
 #endif

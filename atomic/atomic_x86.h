@@ -3,26 +3,17 @@
  * 
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  *  atomic operations and memory barriers (x86 and x86_64/amd64 specific)
@@ -335,6 +326,8 @@ inline static long mb_atomic_get_long(volatile long* var)
 #define mb_atomic_inc_and_test_int(v)	atomic_inc_and_test_int(v)
 #define mb_atomic_dec_and_test_int(v)	atomic_dec_and_test_int(v)
 #define mb_atomic_get_and_set_int(v, i)	atomic_get_and_set_int(v, i)
+#define mb_atomic_cmpxchg_int(v, o, n)	atomic_cmpxchg_int(v, o, n)
+#define mb_atomic_add_int(v, a)	atomic_add_int(v, a)
 
 #define mb_atomic_inc_long(v)	atomic_inc_long(v)
 #define mb_atomic_dec_long(v)	atomic_dec_long(v)
@@ -343,6 +336,8 @@ inline static long mb_atomic_get_long(volatile long* var)
 #define mb_atomic_inc_and_test_long(v)	atomic_inc_and_test_long(v)
 #define mb_atomic_dec_and_test_long(v)	atomic_dec_and_test_long(v)
 #define mb_atomic_get_and_set_long(v, i)	atomic_get_and_set_long(v, i)
+#define mb_atomic_cmpxchg_long(v, o, n)	atomic_cmpxchg_long(v, o, n)
+#define mb_atomic_add_long(v, a)	atomic_add_long(v, a)
 
 #define mb_atomic_inc(v)	atomic_inc(v)
 #define mb_atomic_dec(v)	atomic_dec(v)
@@ -353,6 +348,8 @@ inline static long mb_atomic_get_long(volatile long* var)
 #define mb_atomic_get(v)	mb_atomic_get_int( &(v)->val)
 #define mb_atomic_set(v, i)	mb_atomic_set_int(&(v)->val, i)
 #define mb_atomic_get_and_set(v, i)	atomic_get_and_set_int(&(v)->val, i)
+#define mb_atomic_cmpxchg(v, o, n)	atomic_cmpxchg_int(&(v)->val, o, n)
+#define mb_atomic_add(v, a)	atomic_add_int(&(v)->val, a)
 
 
 #endif

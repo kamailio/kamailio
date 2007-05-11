@@ -3,26 +3,17 @@
  * 
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  *  atomic operations init
@@ -31,12 +22,14 @@
  * History:
  * --------
  *  2006-03-08  created by andrei
+ *  2007-05-11  added lock_set support (andrei)
  */
 
 #include "atomic_ops_init.h"
 #include "atomic_ops.h"
 
-#if defined ATOMIC_OPS_USE_LOCK  || defined MEMBAR_USES_LOCK
+#if defined ATOMIC_OPS_USE_LOCK  || defined ATOMIC_OPS_USE_LOCK_SET || \
+	defined MEMBAR_USES_LOCK
 #include "locking.h"
 #endif
 
@@ -44,7 +37,9 @@
 gen_lock_t* __membar_lock=0; /* init in atomic_ops.c */
 #endif
 
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+gen_lock_set_t* _atomic_lock_set=0;
+#elif defined ATOMIC_OPS_USE_LOCK
 gen_lock_t* _atomic_lock=0;
 #endif
 
@@ -65,7 +60,16 @@ int init_atomic_ops()
 	_membar_lock; /* start with the lock "taken" so that we can safely use
 					 unlock/lock sequences on it later */
 #endif
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+	if ((_atomic_lock_set=lock_set_alloc(_ATOMIC_LS_SIZE))==0){
+		goto error;
+	}
+	if (lock_set_init(_atomic_lock_set)==0){
+		lock_set_dealloc(_atomic_lock_set);
+		_atomic_lock_set=0;
+		goto error;
+	}
+#elif defined ATOMIC_OPS_USE_LOCK
 	if ((_atomic_lock=lock_alloc())==0){
 		goto error;
 	}
@@ -74,9 +78,10 @@ int init_atomic_ops()
 		_atomic_lock=0;
 		goto error;
 	}
-#endif
+#endif /* ATOMIC_OPS_USE_LOCK_SET/ATOMIC_OPS_USE_LOCK */
 	return 0;
-#if defined MEMBAR_USES_LOCK || defined ATOMIC_OPS_USE_LOCK
+#if defined MEMBAR_USES_LOCK || defined ATOMIC_OPS_USE_LOCK || \
+	defined ATOMIC_OPS_USE_LOCK_SET
 error:
 	destroy_atomic_ops();
 	return -1;
@@ -94,11 +99,17 @@ void destroy_atomic_ops()
 		__membar_lock=0;
 	}
 #endif
-#ifdef ATOMIC_OPS_USE_LOCK
+#ifdef ATOMIC_OPS_USE_LOCK_SET
+	if (_atomic_lock_set!=0){
+		lock_set_destroy(_atomic_lock_set);
+		lock_set_dealloc(_atomic_lock_set);
+		_atomic_lock_set=0;
+	}
+#elif defined ATOMIC_OPS_USE_LOCK
 	if (_atomic_lock!=0){
 		lock_destroy(_atomic_lock);
 		lock_dealloc(_atomic_lock);
 		_atomic_lock=0;
 	}
-#endif
+#endif /* ATOMIC_OPS_USE_LOCK_SET / ATOMIC_OPS_USE_LOCK*/
 }

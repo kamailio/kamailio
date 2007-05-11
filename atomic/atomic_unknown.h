@@ -3,26 +3,17 @@
  * 
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  *  atomic operations and memory barriers implemented using locks
@@ -42,6 +33,8 @@
  * History:
  * --------
  *  2006-03-08  created by andrei
+ *  2007-05-11  added atomic_add and atomic_cmpxchg 
+ *              use lock_set if lock economy is not needed (andrei)
  */
 
 #ifndef _atomic_unknown_h
@@ -94,15 +87,33 @@ extern gen_lock_t* __membar_lock; /* init in atomic_ops.c */
 
 #ifndef HAVE_ASM_INLINE_ATOMIC_OPS
 
+#ifdef GEN_LOCK_SET_T_UNLIMITED
+#ifndef ATOMIC_OPS_USE_LOCK_SET
+#define ATOMIC_OPS_USE_LOCK_SET
+#endif
+#else
 #ifndef ATOMIC_OPS_USE_LOCK
 #define ATOMIC_OPS_USE_LOCK
 #endif
+#endif /* GEN_LOCK_SET_T_UNLIMITED */
 
+#ifdef ATOMIC_OPS_USE_LOCK_SET 
+#define _ATOMIC_LS_SIZE	256
+/* hash after the variable address: ignore first 4 bits since
+ * vars are generally alloc'ed at at least 16 bytes multiples */
+#define _atomic_ls_hash(v)  ((((unsigned long)(v))>>4)&(_ATOMIC_LS_SIZE-1))
+extern gen_lock_set_t* _atomic_lock_set;
+
+#define atomic_lock(v)   lock_set_get(_atomic_lock_set, _atomic_ls_hash(v))
+#define atomic_unlock(v) lock_set_release(_atomic_lock_set, _atomic_ls_hash(v))
+
+#else
 extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic_ops.c */
 
-#define atomic_lock    lock_get(_atomic_lock)
-#define atomic_unlock  lock_release(_atomic_lock)
+#define atomic_lock(v)    lock_get(_atomic_lock)
+#define atomic_unlock(v)  lock_release(_atomic_lock)
 
+#endif /* ATOMIC_OPS_USE_LOCK_SET */
 
 /* atomic ops */
 
@@ -111,9 +122,9 @@ extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic_ops.c */
 #define ATOMIC_FUNC_DECL(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
 	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var) \
 	{ \
-		atomic_lock; \
+		atomic_lock(var); \
 		OP ; \
-		atomic_unlock; \
+		atomic_unlock(var); \
 		return RET_EXPR; \
 	}
 
@@ -124,9 +135,9 @@ extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic_ops.c */
 	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
 														P_TYPE v) \
 	{ \
-		atomic_lock; \
+		atomic_lock(var); \
 		OP ; \
-		atomic_unlock; \
+		atomic_unlock(var); \
 		return RET_EXPR; \
 	}
 
@@ -136,9 +147,9 @@ extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic_ops.c */
 	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var) \
 	{ \
 		P_TYPE ret; \
-		atomic_lock; \
+		atomic_lock(var); \
 		OP ; \
-		atomic_unlock; \
+		atomic_unlock(var); \
 		return RET_EXPR; \
 	}
 
@@ -148,11 +159,24 @@ extern gen_lock_t* _atomic_lock; /* declared and init in ../atomic_ops.c */
 														P_TYPE v) \
 	{ \
 		P_TYPE ret; \
-		atomic_lock; \
+		atomic_lock(var); \
 		OP ; \
-		atomic_unlock; \
+		atomic_unlock(var); \
 		return RET_EXPR; \
 	}
+
+/* like ATOMIC_FUNC_DECL1_RET, but takes an extra param */
+#define ATOMIC_FUNC_DECL2_RET(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
+	inline static RET_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+														P_TYPE v1, P_TYPE v2)\
+	{ \
+		P_TYPE ret; \
+		atomic_lock(var); \
+		OP ; \
+		atomic_unlock(var); \
+		return RET_EXPR; \
+	}
+
 
 ATOMIC_FUNC_DECL(inc,      (*var)++, int, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      (*var)--, int, void, /* no return */ )
@@ -161,6 +185,10 @@ ATOMIC_FUNC_DECL1(or,      *var|=v, int, void, /* no return */ )
 ATOMIC_FUNC_DECL_RET(inc_and_test, ret=++(*var), int, int, (ret==0) )
 ATOMIC_FUNC_DECL_RET(dec_and_test, ret=--(*var), int, int, (ret==0) )
 ATOMIC_FUNC_DECL1_RET(get_and_set, ret=*var;*var=v , int, int,  ret)
+ATOMIC_FUNC_DECL2_RET(cmpxchg, ret=*var;\
+							*var=(((ret!=v1)-1)&v2)+(~((ret!=v1)-1)&ret),\
+							int, int,  ret)
+ATOMIC_FUNC_DECL1_RET(add, *var+=v;ret=*var, int, int, ret )
 
 ATOMIC_FUNC_DECL(inc,      (*var)++, long, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      (*var)--, long, void, /* no return */ )
@@ -169,6 +197,10 @@ ATOMIC_FUNC_DECL1(or,      *var|=v, long, void, /* no return */ )
 ATOMIC_FUNC_DECL_RET(inc_and_test, ret=++(*var), long, long, (ret==0) )
 ATOMIC_FUNC_DECL_RET(dec_and_test, ret=--(*var), long, long, (ret==0) )
 ATOMIC_FUNC_DECL1_RET(get_and_set, ret=*var;*var=v , long, long,  ret)
+ATOMIC_FUNC_DECL2_RET(cmpxchg, ret=*var;\
+							*var=(((ret!=v1)-1)&v2)+(~((ret!=v1)-1)&ret),\
+							long, long,  ret)
+ATOMIC_FUNC_DECL1_RET(add, *var+=v;ret=*var, long, long, ret )
 
 
 #define atomic_inc(var) atomic_inc_int(&(var)->val)
@@ -178,6 +210,9 @@ ATOMIC_FUNC_DECL1_RET(get_and_set, ret=*var;*var=v , long, long,  ret)
 #define atomic_dec_and_test(var) atomic_dec_and_test_int(&(var)->val)
 #define atomic_inc_and_test(var) atomic_inc_and_test_int(&(var)->val)
 #define atomic_get_and_set(var, i) atomic_get_and_set_int(&(var)->val, i)
+#define atomic_cmpxchg(var, old, new_v) \
+	atomic_cmpxchg_int(&(var)->val, old, new_v)
+#define atomic_add(var, v) atomic_add_int(&(var)->val, v)
 
 
 /* memory barrier versions, the same as "normal" versions (since the
@@ -221,6 +256,8 @@ inline static long mb_atomic_get_long(volatile long* v)
 #define mb_atomic_inc_and_test_int(v)	atomic_inc_and_test_int(v)
 #define mb_atomic_dec_and_test_int(v)	atomic_dec_and_test_int(v)
 #define mb_atomic_get_and_set_int(v, i)	atomic_get_and_set_int(v, i)
+#define mb_atomic_cmpxchg_int(v, o, n)	atomic_cmpxchg_int(v, o, n)
+#define mb_atomic_add_int(v, i)	atomic_add_int(v, i)
 
 #define mb_atomic_inc_long(v)	atomic_inc_long(v)
 #define mb_atomic_dec_long(v)	atomic_dec_long(v)
@@ -229,6 +266,8 @@ inline static long mb_atomic_get_long(volatile long* v)
 #define mb_atomic_inc_and_test_long(v)	atomic_inc_and_test_long(v)
 #define mb_atomic_dec_and_test_long(v)	atomic_dec_and_test_long(v)
 #define mb_atomic_get_and_set_long(v, i)	atomic_get_and_set_long(v, i)
+#define mb_atomic_cmpxchg_long(v, o, n)	atomic_cmpxchg_long(v, o, n)
+#define mb_atomic_add_long(v, i)	atomic_add_long(v, i)
 
 #define mb_atomic_inc(var) mb_atomic_inc_int(&(var)->val)
 #define mb_atomic_dec(var) mb_atomic_dec_int(&(var)->val)
@@ -237,6 +276,8 @@ inline static long mb_atomic_get_long(volatile long* v)
 #define mb_atomic_dec_and_test(var) mb_atomic_dec_and_test_int(&(var)->val)
 #define mb_atomic_inc_and_test(var) mb_atomic_inc_and_test_int(&(var)->val)
 #define mb_atomic_get_and_set(var, i) mb_atomic_get_and_set_int(&(var)->val, i)
+#define mb_atomic_cmpxchg(v, o, n)	atomic_cmpxchg_int(&(v)->val, o, n)
+#define mb_atomic_add(v, i)	atomic_add_int(&(v)->val, i)
 
 #define mb_atomic_get(var)	mb_atomic_get_int(&(var)->val)
 #define mb_atomic_set(var, i)	mb_atomic_set_int(&(var)->val, i)

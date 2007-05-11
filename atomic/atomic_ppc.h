@@ -3,26 +3,17 @@
  * 
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  *  atomic operations and memory barriers (powerpc and powerpc64 versions)
@@ -38,6 +29,7 @@
  * History:
  * --------
  *  2006-03-24  created by andrei
+ *  2007-05-11  added atomic_add and atomic_cmpxchg (andrei)
  */
 
 #ifndef _atomic_ppc_h
@@ -133,23 +125,44 @@
 		return RET_EXPR; \
 	}
 
+/* cmpxchg, %3=var, %0=*var, %4=old, %3=new  */
+#define ATOMIC_CMPXCHG_DECL(NAME, P_TYPE) \
+	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
+															P_TYPE old \
+															P_TYPE new_v) \
+	{ \
+		P_TYPE ret; \
+		asm volatile( \
+			ATOMIC_ASM_OP3_##P_TYPE("cmpw %0, %4 \n\t bne- 2f") \
+			: "=&r"(ret), "=m"(*var) : "r"(var), "r"(new_v), "r"(old) \
+				: "cc" \
+			); \
+		return ret; \
+	}
 
 
-ATOMIC_FUNC_DECL(inc,      "addic  %0, %0,  1", int, void, /* no return */ )
-ATOMIC_FUNC_DECL(dec,      "addic %0, %0,  -1", int, void, /* no return */ )
+
+
+
+ATOMIC_FUNC_DECL(inc,      "addi  %0, %0,  1", int, void, /* no return */ )
+ATOMIC_FUNC_DECL(dec,      "addi %0, %0,  -1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and     %0, %0, %3", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "or     %0, %0, %3", int, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "addic   %0, %0, 1", int, int, (ret==0) )
-ATOMIC_FUNC_DECL(dec_and_test, "addic  %0, %0, -1", int, int, (ret==0) )
+ATOMIC_FUNC_DECL(inc_and_test, "addi   %0, %0, 1", int, int, (ret==0) )
+ATOMIC_FUNC_DECL(dec_and_test, "addi  %0, %0, -1", int, int, (ret==0) )
 ATOMIC_FUNC_DECL3(get_and_set, /* no extra op needed */ , int, int,  ret)
+ATOMIC_CMPXCHG_DECL(cmpxchg, int)
+ATOMIC_FUNC_DECL1(add, "add %0, %0, %3" , int, int,  ret)
 
-ATOMIC_FUNC_DECL(inc,      "addic  %0, %0,  1", long, void, /* no return */ )
-ATOMIC_FUNC_DECL(dec,      "addic %0, %0,  -1", long, void, /* no return */ )
+ATOMIC_FUNC_DECL(inc,      "addi  %0, %0,  1", long, void, /* no return */ )
+ATOMIC_FUNC_DECL(dec,      "addi %0, %0,  -1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and     %0, %0, %3",long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "or     %0, %0, %3", long, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "addic   %0, %0, 1", long, long, (ret==0) )
-ATOMIC_FUNC_DECL(dec_and_test, "addic  %0, %0, -1", long, long, (ret==0) )
+ATOMIC_FUNC_DECL(inc_and_test, "addi   %0, %0, 1", long, long, (ret==0) )
+ATOMIC_FUNC_DECL(dec_and_test, "addi  %0, %0, -1", long, long, (ret==0) )
 ATOMIC_FUNC_DECL3(get_and_set, /* no extra op needed */ , long, long,  ret)
+ATOMIC_CMPXCHG_DECL(cmpxchg, long)
+ATOMIC_FUNC_DECL1(add, "add %0, %0, %3" , long, long,  ret)
 
 
 #define atomic_inc(var) atomic_inc_int(&(var)->val)
@@ -159,6 +172,8 @@ ATOMIC_FUNC_DECL3(get_and_set, /* no extra op needed */ , long, long,  ret)
 #define atomic_dec_and_test(var) atomic_dec_and_test_int(&(var)->val)
 #define atomic_inc_and_test(var) atomic_inc_and_test_int(&(var)->val)
 #define atomic_get_and_set(var, i) atomic_get_and_set_int(&(var)->val, i)
+#define atomic_cmpxchg(var, o, n) atomic_cmpxchg_int(&(var)->val, (o), (n))
+#define atomic_add(var, i) atomic_add_int(&(var)->val, (i))
 
 
 /* with integrated membar */
@@ -221,6 +236,17 @@ inline static int mb_atomic_get_and_set_int(volatile int* v, int i)
 	return atomic_get_and_set_int(v, i);
 }
 
+inline static int mb_atomic_cmpxchg_int(volatile int* v, int o, int n)
+{
+	membar();
+	return atomic_cmpxchg_int(v, o, n);
+}
+
+inline static int mb_atomic_add_int(volatile int* v, int i)
+{
+	membar();
+	return atomic_add_int(v, i);
+}
 
 
 #define mb_atomic_set_long(v, i) \
@@ -282,6 +308,19 @@ inline static long mb_atomic_get_and_set_long(volatile long* v, long l)
 	return atomic_get_and_set_long(v, l);
 }
 
+inline static long mb_atomic_cmpxchg_long(volatile long* v, long o, long n)
+{
+	membar();
+	return atomic_cmpxchg_long(v, o, n);
+}
+
+inline static long mb_atomic_add_long(volatile long* v, long i)
+{
+	membar();
+	return atomic_add_long(v, i);
+}
+
+
 
 #define mb_atomic_inc(var) mb_atomic_inc_int(&(var)->val)
 #define mb_atomic_dec(var) mb_atomic_dec_int(&(var)->val)
@@ -292,5 +331,8 @@ inline static long mb_atomic_get_and_set_long(volatile long* v, long l)
 #define mb_atomic_get(var)	mb_atomic_get_int(&(var)->val)
 #define mb_atomic_set(var, i)	mb_atomic_set_int(&(var)->val, i)
 #define mb_atomic_get_and_set(var, i) mb_atomic_get_and_set_int(&(var)->val, i)
+#define mb_atomic_cmpxchg(v, o, n)	atomic_cmpxchg_int(&(v)->val, o, n)
+#define mb_atomic_add(v, a)	atomic_add_int(&(v)->val, a)
+
 
 #endif

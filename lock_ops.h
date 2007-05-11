@@ -3,26 +3,17 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -65,6 +56,22 @@ Implements:
 	int  lock_set_try(gen_lock_set_t* s, int i);    - tries to lock the sem i,
 	                                                  returns 0 on success and
 	                                                  -1 on failure
+	
+	defines:
+	--------
+	GEN_LOCK_T_PREFERRED - defined if using  arrays of gen_lock_t is as good as
+	                      using a lock set (gen_lock_set_t). 
+						  In general is better to have the locks "close" or 
+						  inside the protected data structure rather then 
+						  having a separate array or lock set. However in some
+						  case (e.g. SYSV_LOCKS) is better to use lock sets,
+						  either due to lock number limitations, excesive 
+						  performance or memory overhead. In this cases
+						  GEN_LOCK_T_PREFERRED will not be defined.
+	GEN_LOCK_T_UNLIMITED - defined if there is no system imposed limit on
+	                       the number of locks (other then the memory).
+	GEN_LOCK_SET_T_UNLIMITED
+	                      - like above but for the size of a lock set.
 
 WARNING: - lock_set_init may fail for large number of sems (e.g. sysv). 
          - signals are not treated! (some locks are "awakened" by the signals)
@@ -257,7 +264,10 @@ tryagain:
 /* lock sets */
 
 #if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
-#define GEN_LOCK_T_PREFERED
+#define GEN_LOCK_T_PREFERRED
+#define GEN_LOCK_T_PREFERED  /* backwards compat. */
+#define GEN_LOCK_T_UNLIMITED
+#define GEN_LOCK_SET_T_UNLIMITED
 
 struct gen_lock_set_t_ {
 	long size;
@@ -281,7 +291,12 @@ inline static gen_lock_set_t* lock_set_init(gen_lock_set_t* s)
 #define lock_set_release(set, i) lock_release(&set->locks[i])
 
 #elif defined(USE_SYSV_SEM)
-#undef GEN_LOCK_T_PREFERED
+#undef GEN_LOCK_T_PREFERRED
+#undef GEN_LOCK_T_PREFERED  /* backwards compat. */
+#undef GEN_LOCK_T_UNLIMITED
+#undef GEN_LOCK_SET_T_UNLIMITED
+#define GEN_LOCK_T_LIMITED
+#define GEN_LOCK_SET_T_LIMITED
 
 struct gen_lock_set_t_ {
 	int size;

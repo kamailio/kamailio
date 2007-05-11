@@ -3,26 +3,17 @@
  * 
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  *  atomic ops and memory barriers for arm (>= v3)
@@ -260,6 +251,18 @@ inline static int mb_atomic_get_and_set_int(volatile int* v, int i)
 	return atomic_get_and_set_int(v, i);
 }
 
+inline static int mb_atomic_cmpxchg_int(volatile int* v, int o, int n)
+{
+	membar();
+	return atomic_cmpxchg_int(v, o, n);
+}
+
+inline static int mb_atomic_add_int(volatile int* v, int i)
+{
+	membar();
+	return atomic_add_int(v, i);
+}
+
 
 
 #define mb_atomic_set_long(v, i) \
@@ -321,6 +324,17 @@ inline static long mb_atomic_get_and_set_long(volatile long* v, long l)
 	return atomic_get_and_set_long(v, l);
 }
 
+inline static long mb_atomic_cmpxchg_long(volatile long* v, long o, long n)
+{
+	membar();
+	return atomic_cmpxchg_long(v, o, n);
+}
+
+inline static long mb_atomic_add_long(volatile long* v, long i)
+{
+	membar();
+	return atomic_add_long(v, i);
+}
 
 #define mb_atomic_inc(var) mb_atomic_inc_int(&(var)->val)
 #define mb_atomic_dec(var) mb_atomic_dec_int(&(var)->val)
@@ -331,6 +345,9 @@ inline static long mb_atomic_get_and_set_long(volatile long* v, long l)
 #define mb_atomic_get(var)	mb_atomic_get_int(&(var)->val)
 #define mb_atomic_set(var, i)	mb_atomic_set_int(&(var)->val, i)
 #define mb_atomic_get_and_set(var, i) mb_atomic_get_and_set_int(&(var)->val, i)
+#define mb_atomic_cmpxchg(var, o, n) mb_atomic_cmpxchg_int(&(var)->val, o, n)
+#define mb_atomic_add(var, i) mb_atomic_add_int(&(var)->val, i)
+
 
 
 #else /* ! __CPU_arm6 => __CPU_arm */
