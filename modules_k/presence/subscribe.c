@@ -42,7 +42,7 @@
 
 #define LCONTACT_BUF_SIZE 1024
 
-int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* remote_cseq);
+int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* remote_cseq, int* error_ret);
 
 static str su_200_rpl  = str_init("OK");
 static str pu_481_rpl  = str_init("Subscription does not exist");
@@ -1221,7 +1221,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	else
 	{
-		if(get_database_info(msg, &subs, &remote_cseq )< 0)
+		if(get_database_info(msg, &subs, &remote_cseq, &error_ret )< 0)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe:error while getting info"
 					" from database\n");
@@ -1498,7 +1498,6 @@ bad_event:
 	error_ret = 0;
 
 error:
-	LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR occured\n");
 	if(status.s && status.len)
 	{
 		pkg_free(status.s);
@@ -1515,12 +1514,12 @@ error:
 		if(subs.pres_domain.s)
 			pkg_free(subs.pres_domain.s);
 	}
-
 	return error_ret;
 
 }
 
-int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* rem_cseq)
+int get_database_info(struct sip_msg* msg, subs_t* subs,
+		unsigned int* rem_cseq, int* error_ret)
 {	
 	db_key_t query_cols[10];
 	db_val_t query_vals[10];
@@ -1535,6 +1534,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* rem_cseq)
 	int pres_user_col, pres_domain_col;
 	unsigned int remote_cseq;
 	str pres_user, pres_domain;	
+
+	*error_ret= -1;
 
 	query_cols[n_query_cols] = "to_user";
 	query_vals[n_query_cols].type = DB_STR;
@@ -1634,7 +1635,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* rem_cseq)
 			return -1;
 		}
 		pa_dbf.free_result(pa_db, result);
-		return 0;
+		*error_ret= 0;
+		return -1;
 	}
 
 	row = &result->rows[0];
@@ -1652,6 +1654,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* rem_cseq)
 					" sending reply\n");
 		}
 		pa_dbf.free_result(pa_db, result);
+		*error_ret= 0;
 		return -1;
 	}
 	else
