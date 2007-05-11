@@ -82,7 +82,7 @@ modparam("usrloc", "timer_interval", 10)
 
 # -- auth params --
 modparam("auth_db", "calculate_ha1", yes)
-modparam("auth_db", "password_column", "password")
+modparam("auth_db", "plain_password_column", "password")
 #modparam("auth_db", "use_rpid", 1)
 modparam("auth", "nonce_expire", 300)
 modparam("auth", "rpid_prefix", "<sip:")
