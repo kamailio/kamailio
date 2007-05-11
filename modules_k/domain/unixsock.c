@@ -27,6 +27,7 @@
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "../../ut.h"
+#include "domain.h"
 #include "unixsock.h"
 
 
