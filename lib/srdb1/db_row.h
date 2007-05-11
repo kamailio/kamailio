@@ -42,6 +42,6 @@ typedef struct db_row {
 /*
  * Release memory used by row
  */
-int free_row(db_row_t* _r);
+int db_free_row(db_row_t* _r);
 
 #endif /* DB_ROW_H */

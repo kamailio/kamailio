@@ -54,6 +54,6 @@ typedef struct db_res {
 /*
  * Release memory used by rows in a result structure
  */
-int free_rows(db_res_t* _r);
+int db_free_rows(db_res_t* _r);
 
 #endif /* DB_RES_H */

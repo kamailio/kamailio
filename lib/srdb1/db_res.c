@@ -30,22 +30,22 @@
 /*
  * Release memory used by rows
  */
-inline int free_rows(db_res_t* _r)
+inline int db_free_rows(db_res_t* _r)
 {
 	int i;
 
 	if (!_r) {
-		LOG(L_ERR, "ERROR:free_rows: Invalid parameter value\n");
+		LOG(L_ERR, "ERROR:db_free_rows: Invalid parameter value\n");
 		return -1;
 	}
-	LOG(L_DBG, "DEBUG:free_rows: Freeing %d rows\n", RES_ROW_N(_r));
+	LOG(L_DBG, "DEBUG:db_free_rows: Freeing %d rows\n", RES_ROW_N(_r));
 
 	for(i = 0; i < RES_ROW_N(_r); i++) {
-		LOG(L_DBG, "DEBUG:free_row: Row[%d]=%p\n", i, &(RES_ROWS(_r)[i]));
-		free_row(&(RES_ROWS(_r)[i]));
+		LOG(L_DBG, "DEBUG:db_free_row: Row[%d]=%p\n", i, &(RES_ROWS(_r)[i]));
+		db_free_row(&(RES_ROWS(_r)[i]));
 	}
 	if (RES_ROWS(_r)) {
-		LOG(L_DBG, "DEBUG:free_rows: %p=pkg_free() RES_ROWS\n", RES_ROWS(_r));
+		LOG(L_DBG, "DEBUG:db_free_rows: %p=pkg_free() RES_ROWS\n", RES_ROWS(_r));
 		pkg_free(RES_ROWS(_r));
 		RES_ROWS(_r) = NULL;
 	}
