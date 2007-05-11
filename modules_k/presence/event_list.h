@@ -67,7 +67,6 @@ struct ev
 	str content_type;
 	int type;
 	int etag_not_new;
-	int to_pres_uri;
 	/*
 	 *  0 - the standard mechanism (allocating new etag for each Publish)
 	 *  1 - allocating an etag only for an initial Publish 

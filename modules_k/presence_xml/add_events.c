@@ -92,7 +92,6 @@ int xml_add_events()
 	param.s= "sla";
 	param.len= 3;
 	event.etag_not_new= 1;
-	event.to_pres_uri= 1;
 	event.param= &param;
 	event.evs_publ_handl= xml_publ_handl;
 	event.content_type.s= "application/dialog-info+xml";
