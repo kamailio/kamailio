@@ -680,6 +680,16 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		memset(subs, 0, size);
 		size= sizeof(subs_t);
 		
+		subs->pres_user.s= (char*)subs+ size;
+		memcpy(subs->pres_user.s, pres_user.s, pres_user.len);
+		subs->pres_user.len= pres_user.len;
+		size+= pres_user.len;
+	
+		subs->pres_domain.s= (char*)subs+ size;
+		memcpy(subs->pres_domain.s, pres_domain.s, pres_domain.len);
+		subs->pres_domain.len= pres_domain.len;
+		size+= pres_domain.len;
+
 		subs->to_user.s= (char*)subs+ size;
 		memcpy(subs->to_user.s, to_user.s, to_user.len);
 		subs->to_user.len= to_user.len;

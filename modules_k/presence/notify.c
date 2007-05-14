@@ -45,6 +45,7 @@
 #include "notify.h"
 #include "utils_func.h"
 
+#define ALLOC_SIZE 3000
 extern struct tm_binds tmb;
 c_back_param* shm_dup_subs(subs_t* subs, str to_tag);
 
@@ -61,7 +62,7 @@ void printf_subs(subs_t* subs)
 			subs->to_domain.s,
 			subs->from_user.len, subs->from_user.s, subs->from_domain.len,
 			subs->from_domain.s);
-	DBG("[event]= %.*s\n\t[staus]= %.*s\n\t[expires]= %d\n",
+	DBG("[event]= %.*s\n\t[status]= %.*s\n\t[expires]= %d\n",
 			subs->event->stored_name.len, subs->event->stored_name.s,	subs->status.len, subs->status.s,
 			subs->expires );
 	DBG("[to_tag]= %.*s\n\t[from_tag]= %.*s\n",
@@ -71,23 +72,27 @@ void printf_subs(subs_t* subs)
 }
 str* create_winfo_xml(watcher_t* watchers,int n, char* version,char* resource, int STATE_FLAG );
 
-str* build_str_hdr(subs_t* subs, int is_body)
+int build_str_hdr(subs_t* subs, int is_body, str** hdr)
 {
-
-	static 	char buf[3000];
 	str* str_hdr = NULL;	
 	char* subs_expires = NULL;
 	int len = 0;
 	ev_t* event= subs->event;
 	int expires_t;
 
-	str_hdr =(str*) pkg_malloc(sizeof(str));
-	if(!str_hdr)
+	str_hdr =(str*)pkg_malloc(sizeof(str));
+	if(str_hdr== NULL)
 	{
 		LOG(L_ERR, "PRESENCE: build_str_hdr:ERROR while allocating memory\n");
-		return NULL;
+		return -1;
 	}
-	str_hdr->s = buf;
+	str_hdr->s = (char*)pkg_malloc(ALLOC_SIZE* sizeof(char));
+	if(str_hdr->s== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: build_str_hdr:ERROR while allocating memory\n");
+		pkg_free(str_hdr);
+		return -1;
+	}	
 
 	strncpy(str_hdr->s ,"Event: ", 7);
 	str_hdr->len = 7;
@@ -150,8 +155,9 @@ str* build_str_hdr(subs_t* subs, int is_body)
 		{
 			LOG(L_ERR, "PRESENCE:built_str_hdr: ERROR while converting int "
 					" to str\n");
+			pkg_free(str_hdr->s);
 			pkg_free(str_hdr);
-			return NULL;
+			return -1;
 		}
 
 		DBG("PRESENCE:build_str_hdr: expires = %d\n", expires_t);
@@ -174,9 +180,9 @@ str* build_str_hdr(subs_t* subs, int is_body)
 	}
 
 	str_hdr->s[str_hdr->len] = '\0';
-	DBG("PRESENCE: build_str_hdr: headers:\n%.*s\n", str_hdr->len, str_hdr->s);
-		
-	return str_hdr;
+	*hdr= str_hdr;
+
+	return 0;
 
 }
 
@@ -1225,14 +1231,6 @@ jump_over_body:
 			subs->event->stored_name.s);
 
 	printf_subs(subs);
-	str_hdr = build_str_hdr( subs, notify_body?1:0);
-	if(str_hdr == NULL|| str_hdr->s== NULL|| str_hdr->len==0)
-	{
-		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
-		goto error;
-	}	
-	DBG("PRESENCE:notify: headers:%.*s\n ", str_hdr->len, str_hdr->s);
-
 	/* construct the dlg_t structure */
 	td = build_dlg_t(p_uri, subs);
 	if(td ==NULL)
@@ -1253,7 +1251,14 @@ jump_over_body:
 			" share memory\n");
 		goto error;	
 	}	
-				
+
+	if( build_str_hdr( subs, notify_body?1:0, &str_hdr)< 0 )
+	{
+		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
+		goto error;
+	}	
+	DBG("PRESENCE:notify: headers:\n%.*s\n", str_hdr->len, str_hdr->s);
+			
 	result = tmb.t_request_within
 		(&met,						             
 		str_hdr,                               
@@ -1318,8 +1323,11 @@ jump_over_body:
 		free_tm_dlg(td);
 	}
 	if(str_hdr!=NULL)
+	{
+		if(str_hdr->s)
+			pkg_free(str_hdr->s);
 		pkg_free(str_hdr);
-
+	}
 	if((int)n_body!= (int)notify_body)
 	{
 		if(notify_body!=NULL)
@@ -1342,7 +1350,11 @@ error:
 		free_tm_dlg(td);
 	}
 	if(str_hdr!=NULL)
+	{
+		if(str_hdr->s)
+			pkg_free(str_hdr->s);
 		pkg_free(str_hdr);
+	}
 
 	if((int)n_body!= (int)notify_body)
 	{
