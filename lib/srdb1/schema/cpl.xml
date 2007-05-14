@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="cpl" xmlns:db="http://docbook.org/ns/docbook">
+    <name>cpl</name>
+    <version>1</version>
+    <description>
+	<db:para>Table for the call processing language "cpl" module</db:para>
+    </description>
+
+    <column id="cpl.id">
+	<name>id</name>
+	<type db="mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
+	<size>&id_len;</size>
+	<description>Unique ID</description>
+    </column>
+
+    <column id="cpl.username">
+	    <name>username</name>
+	    <type>string</type>
+	    <size>&user_len;</size>
+    </column>
+
+    <column id="cpl.domain">
+	    <name>domain</name>
+	    <type>string</type>
+	    <size>64</size>
+	    <default/>
+    </column>
+
+    <column>
+	<name>cpl_xml</name>
+	<type db="mysql">TEXT</type>
+	<null/>
+    </column>
+
+    <column>
+	<name>cpl_bin</name>
+	<type db="mysql">TEXT</type>
+	<null/>
+    </column>
+
+    <index>
+	<name>ud_cpl</name>
+	<unique/>
+	<colref linkend="cpl.username"/>
+	<colref linkend="cpl.domain"/>
+    </index>
+
+    <index>
+	    <colref linkend="gw.id"/>
+	    <primary/>
+    </index>
+</table>

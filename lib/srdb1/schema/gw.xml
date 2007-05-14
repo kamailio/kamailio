@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
-  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+  "../../doc/dbschema/dtd/dbschema.dtd"  [
 
 <!ENTITY % entities SYSTEM "entities.xml">
 %entities;
@@ -11,10 +11,9 @@
     <name>gw</name>
     <version>4</version>
     <description>
-	    <db:para>This table contains Least Cost Routing Gateway definitions 
-		    More information can be found at: http://www.openser.org/docs/modules/1.2.x/lcr.html 
-		    Gateways (gw) Table
-	    </db:para>
+	<db:para>This table contains Least Cost Routing Gateway definitions.
+		More information can be found at: http://www.openser.org/docs/modules/1.2.x/lcr.html Gateways (gw) Table.
+	</db:para>
     </description>
 
     <column id="gw.id">

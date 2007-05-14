@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:db="http://docbook.org/ns/docbook">
+    <name>pdt</name>
+    <version>1</version>
+    <description>
+	<db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). 
+		More information can be found at: http://www.openser.org/docs/modules/1.2.x/pdt.html 
+	</db:para>
+    </description>
+
+    <column id="pdt.id">
+	<name>id</name>
+	<type db="mysql">INT(10) AUTO_INCREMENT</type>
+	<type db="postgres">SERIAL</type>
+	<type db="dbtext">int,auto</type>
+	<description>unique ID</description>
+    </column>
+
+    <column id="pdt.sdomain">
+	    <name>sdomain</name>
+	    <type>string</type>
+	    <size>&uri_len;</size>
+	    <description>Source Domain</description>
+    </column>
+
+    <column id="pdt.prefix">
+	<name>prefix</name>
+	<type>string</type>
+	<size>32</size>
+	<description>Prefix found in the username part of R-URI.</description>
+    </column>
+
+    <column>
+	<name>domain</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+	<default/>
+	<description>Domain corresponding to (sdomain, prefix) pair where the message must be sent.</description>
+    </column>
+
+    <index>
+	<name>sp_pdt</name>
+	<unique/>
+	<colref linkend="pdt.sdomain"/>
+	<colref linkend="pdt.prefix"/>
+    </index>
+
+    <index>
+	<colref linkend="gw.id"/>
+	<primary/>
+    </index>
+</table>

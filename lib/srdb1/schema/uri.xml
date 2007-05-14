@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+
+<table xmlns:db="http://docbook.org/ns/docbook">
+    <name>uri</name>
+    <version>1</version>
+    <description>
+	    <db:para> This table is used by uri_db module to implement various SIP URI checks.
+		    More information about the uri_db module can be found at: http://www.openser.org/docs/modules/1.2.x/uri_db.html 
+	    </db:para>
+    </description>
+
+    <column id="uri.id">
+	<name>id</name>
+	<type db="mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
+	<type db="postgres">SERIAL</type>
+	<type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="uri.username"> <!--FIXME $USERCOL -->
+	<name>username</name>
+	<type>string</type>
+	<size>&user_len;</size>
+	<default/>
+	<description>Username / Phone Number</description>
+    </column>
+
+    <column id="uri.domain">
+	<name>domain</name>
+	<type>string</type>
+	<size>&domain_len;</size>
+	<default/>
+	<description>Domain Name</description>
+    </column>
+
+    <column id="uri.uri_user">
+	<name>uri_user</name>
+	<type>string</type>
+	<size>50</size>
+	<default/>
+	<description>Username / Phone Number</description>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+	<type>datetime</type>
+	<default>0000-00-00 00:00:00</default>
+	<description>Date / Time this record was last modified.</description>
+    </column>
+
+    <index>
+	<name>udu_uri</name>
+	<colref linkend="uri.username"/>
+	<colref linkend="uri.domain"/>
+	<colref linkend="uri.uri_user"/>
+	<unique/>
+    </index>
+
+    <index>
+	<colref linkend="uri.id"/>
+	<primary/>
+    </index>
+</table>
