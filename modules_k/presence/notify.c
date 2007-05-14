@@ -1188,7 +1188,7 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 				{
 					DBG("PRESENCE:notify: Could not get the notify_body\n");
 				}
-				/* apply authorization rules if exists */
+				else		/* apply authorization rules if exists */
 				if(subs->event->req_auth)
 				{
 					str* final_body= NULL;
