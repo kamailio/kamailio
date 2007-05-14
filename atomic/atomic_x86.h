@@ -57,6 +57,10 @@
 #define membar()	asm volatile ("" : : : "memory")
 #define membar_read()	membar()
 #define membar_write()	membar()
+/* lock barrriers: empty, not needed for NOSMP; the lock/unlock should already
+ * contain gcc barriers*/
+#define membar_enter_lock() 
+#define membar_leave_lock()
 
 #else
 
@@ -94,6 +98,13 @@
 #endif /* X86_OOSTORE */
 
 #endif /* __CPU_x86_64 */
+
+/* lock barrriers: empty, not needed on x86 or x86_64 (atomic ops already
+ *  force the barriers if needed); the lock/unlock should already contain the 
+ *  gcc do_not_cache barriers*/
+#define membar_enter_lock() 
+#define membar_leave_lock()
+
 
 
 

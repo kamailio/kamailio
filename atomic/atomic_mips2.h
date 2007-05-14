@@ -52,6 +52,11 @@
 #define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
+/* lock barriers: empty, not needed for NOSMP; the lock/unlock should already
+ * contain gcc barriers*/
+#define membar_enter_lock() 
+#define membar_leave_lock()
+
 #else
 
 #define membar() \
@@ -66,6 +71,8 @@
 
 #define membar_read()  membar()
 #define membar_write() membar()
+#define membar_enter_lock() membar()
+#define membar_leave_lock() membar()
 
 #endif /* NOSMP */
 

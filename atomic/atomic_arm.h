@@ -44,6 +44,10 @@
 #define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
+/* lock barriers: empty, not needed for NOSMP; the lock/unlock should already
+ * contain gcc barriers*/
+#define membar_enter_lock() 
+#define membar_leave_lock()
 #else /* SMP */
 #warning SMP not supported for arm atomic ops, try compiling with -DNOSMP
 /* fall back to default lock based barriers (don't define HAVE_ASM...) */

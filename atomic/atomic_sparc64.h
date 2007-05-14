@@ -52,6 +52,20 @@
 #define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
+/*  memory barriers for lock & unlock where lock & unlock are inline asm
+ *  functions that use atomic ops (and both of them use at least a store to
+ *  the lock). membar_enter_lock() is at most a StoreStore|StoreLoad barrier
+ *   and membar_leave_lock() is at most a LoadStore|StoreStore barries
+ *  (if the atomic ops on the specific arhitecture imply these barriers
+ *   => these macros will be empty)
+ *   Warning: these barriers don't force LoadLoad ordering between code
+ *    before the lock/membar_enter_lock() and code 
+ *    after membar_leave_lock()/unlock()
+ *
+ *  Usage: lock(); membar_enter_lock(); .... ; membar_leave_lock(); unlock()
+ */
+#define membar_enter_lock()
+#define membar_leave_lock()
 #else /* SMP */
 #define membar() \
 	asm volatile ( \
@@ -60,6 +74,10 @@
 
 #define membar_read() asm volatile ("membar #LoadLoad \n\t" : : : "memory")
 #define membar_write() asm volatile ("membar #StoreStore \n\t" : : : "memory")
+#define membar_enter_lock() \
+	asm volatile ("membar #StoreStore | #StoreLoad \n\t" : : : "memory");
+#define membar_leave_lock() \
+	asm volatile ("membar #LoadStore | #StoreStore \n\t" : : : "memory");
 #endif /* NOSMP */
 
 

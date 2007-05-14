@@ -48,12 +48,21 @@
 #define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
+/* lock barriers: empty, not needed for NOSMP; the lock/unlock should already
+ * contain gcc barriers*/
+#define membar_enter_lock() 
+#define membar_leave_lock()
+
 #else
 #define membar() asm volatile ("sync \n\t" : : : "memory") 
 /* lwsync orders LoadLoad, LoadStore and StoreStore */
 #define membar_read() asm volatile ("lwsync \n\t" : : : "memory") 
 /* on "normal" cached mem. eieio orders StoreStore */
 #define membar_write() asm volatile ("eieio \n\t" : : : "memory") 
+#define membar_enter_lock() asm volatile("lwsync \n\t" : : : "memory")
+/* for unlock lwsync will work too and is faster then sync
+ *  [IBM Prgramming Environments Manual, D.4.2.2] */
+#define membar_leave_lock() asm volatile("lwsync \n\t" : : : "memory")
 #endif /* NOSMP */
 
 

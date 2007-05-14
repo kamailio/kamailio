@@ -26,9 +26,31 @@
  *  void membar_read()   - load (read) memory barrier
  *  void membar_write()  - store (write) memory barrier
  *
- *  Note: properly using memory barriers is tricky, in general try not to 
+ *  void membar_enter_lock() - memory barrier function that should be 
+ *                             called after a lock operation (where lock is
+ *                             an asm inline function that uses atomic store
+ *                             operation on the lock var.). It is at most
+ *                             a StoreStore|StoreLoad barrier, but could also
+ *                             be empty if an atomic op implies a memory 
+ *                             barrier on the specific arhitecture.
+ *                             Example usage: 
+ *                               raw_lock(l); membar_enter_lock(); ...
+ *  void membar_leave_lock() - memory barrier function that should be called 
+ *                             before an unlock operation (where unlock is an
+ *                             asm inline function that uses at least an atomic
+ *                             store to on the lock var.). It is at most a 
+ *                             LoadStore|StoreStore barrier (but could also be
+ *                             empty, see above).
+ *                             Example: raw_lock(l); membar_enter_lock(); ..
+ *                                      ... critical section ...
+ *                                      membar_leave_lock(); raw_unlock(l);
+ *
+ *  Note: - properly using memory barriers is tricky, in general try not to 
  *        depend on them. Locks include memory barriers, so you don't need
  *        them for writes/load already protected by locks.
+ *        - membar_enter_lock() and membar_leave_lock() are needed only if
+ *        you implement your own locks using atomic ops (ser locks have the
+ *        membars included)
  *
  * atomic operations:
  * ------------------
@@ -89,70 +111,17 @@
  * History:
  * --------
  *  2006-03-08  created by andrei
+ *  2007-05-13  moved some of the decl. and includes into atomic_common.h and 
+ *               atomic_native.h (andrei)
  */
 #ifndef __atomic_ops
 #define __atomic_ops
 
-/* atomic_t defined as a struct to easily catch non atomic ops. on it,
- * e.g.  atomic_t  foo; foo++  will generate a compile error */
-typedef struct{ volatile int val; } atomic_t; 
+#include "atomic/atomic_common.h"
 
+#include "atomic/atomic_native.h"
 
-/* store and load operations are atomic on all cpus, note however that they
- * don't include memory barriers so if you want to use atomic_{get,set} 
- * to implement mutexes you must use the mb_* versions or explicitely use
- * the barriers */
-
-#define atomic_set_int(pvar, i) (*(pvar)=i)
-#define atomic_set_long(pvar, i) (*(pvar)=i)
-#define atomic_get_int(pvar) (*(pvar))
-#define atomic_get_long(pvar) (*(pvar))
-
-#define atomic_set(at_var, value)	(atomic_set_int(&((at_var)->val), (value)))
-
-inline static int atomic_get(atomic_t *v)
-{
-	return atomic_get_int(&(v->val));
-}
-
-
-
-#ifdef CC_GCC_LIKE_ASM
-
-#if defined __CPU_i386 || defined __CPU_x86_64
-
-#include "atomic/atomic_x86.h"
-
-#elif defined __CPU_mips2 || defined __CPU_mips64 || \
-	  ( defined __CPU_mips && defined MIPS_HAS_LLSC )
-
-#include "atomic/atomic_mips2.h"
-
-#elif defined __CPU_ppc || defined __CPU_ppc64
-
-#include "atomic/atomic_ppc.h"
-
-#elif defined __CPU_sparc64
-
-#include "atomic/atomic_sparc64.h"
-
-#elif defined __CPU_sparc
-
-#include "atomic/atomic_sparc.h"
-
-#elif defined __CPU_arm || defined __CPU_arm6
-
-#include "atomic/atomic_arm.h"
-
-#elif defined __CPU_alpha
-
-#include "atomic/atomic_alpha.h"
-
-#endif /* __CPU_xxx  => no known cpu */
-
-#endif /* CC_GCC_LIKE_ASM */
-
-
+/* if no native operations, emulate them using locks */
 #if  ! defined HAVE_ASM_INLINE_ATOMIC_OPS || ! defined HAVE_ASM_INLINE_MEMBAR
 
 #include "atomic/atomic_unknown.h"
