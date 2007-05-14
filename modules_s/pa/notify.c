@@ -156,7 +156,7 @@ static void refresh_dialog(pa_notify_cb_param_t *cbd, struct sip_msg *m)
 	
 	lock_pdomain(cbd->domain);
 	if (get_watcher(cbd, &w, &p) >= 0)
-		tmb.dlg_response_uac(w->dialog, m, IS_TARGET_REFRESH);
+		tmb.dlg_response_uac(w->dialog, m, notify_is_refresh != 0 ? IS_TARGET_REFRESH : IS_NOT_TARGET_REFRESH);
 	unlock_pdomain(cbd->domain);
 }
 

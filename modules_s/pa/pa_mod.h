@@ -119,6 +119,7 @@ extern str pa_subscription_uri;
 extern int use_offline_winfo;
 extern char *offline_winfo_table;
 extern int ignore_408_on_notify;
+extern int notify_is_refresh;
 
 extern str pres_rules_file; /* filename for XCAP queries */
 db_con_t* create_pa_db_connection();
