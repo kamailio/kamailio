@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:db="http://docbook.org/ns/docbook">
+    <name>gw</name>
+    <version>4</version>
+    <description>
+	    <db:para>This table contains Least Cost Routing Gateway definitions 
+		    More information can be found at: http://www.openser.org/docs/modules/1.2.x/lcr.html 
+		    Gateways (gw) Table
+	    </db:para>
+    </description>
+
+    <column id="gw.id">
+	<name>id</name>
+	<type db="mysql">INT(10) AUTO_INCREMENT</type>
+	<type db="postgres">SERIAL</type>
+	<type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="gw.gw_name">
+	<name>gw_name</name>
+	<type>string</type>
+	<size>128</size>
+	<description>Gateway Name</description>
+    </column>
+
+    <column id="gw.grp_id">
+	    <name>grp_id</name>
+	    <type>unsigned int</type>
+	    <description>Gateway ID</description>
+    </column>
+
+    <column>
+	    <name>ip_addr</name>
+	    <type>string</type>
+	    <size>15</size>
+	    <description>IP Address of the gateway</description>
+    </column>
+
+    <column>
+	<name>port</name>
+	<type>unsigned short</type>
+	<null/>
+	<description>Port of the gateway</description>
+    </column>
+
+    <column>
+	<name>uri_scheme</name>
+	<type>unsigned char</type>
+	<null/>
+	<description>URI scheme of the gateway</description>
+    </column>
+
+    <column>
+	<name>transport</name>
+	<type>unsigned char</type>
+	<null/>
+	<description>Transport type to be used for the gateway</description>
+    </column>
+
+    <column>
+	    <name>strip</name>
+	    <type>unsigned char</type>
+	    <null/>
+	    <description>The number of digits to strip from the RURI before applying the prefix.</description>
+    </column>
+
+    <column>
+	    <name>prefix</name>
+	    <type>string</type>
+	    <size>16</size>
+	    <null/>
+	    <default><null/></default>
+	    <description>The R-URI(destination) prefix</description>
+    </column>
+
+    <index>
+	<name>name_gw</name>
+	<colref linkend="gw.gw_name"/>
+	<unique/>
+    </index>
+
+    <index>
+	<name>gid_gw</name>
+	<colref linkend="gw.grp_id"/>
+    </index>
+
+    <index>
+	<colref linkend="gw.id"/>
+	<primary/>
+    </index>
+</table>
