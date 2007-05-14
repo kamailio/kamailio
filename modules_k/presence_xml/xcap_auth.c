@@ -45,6 +45,7 @@ int pres_watcher_allowed(subs_t* subs)
 	xmlDocPtr doc= NULL;
 	int ret_code= 0;
 	
+	DBG("PRESENCE_XML:pres_watcher_allowed: ...\n\n\n");
 	/* if force_active set status to active*/
 	if(force_active)
 	{
@@ -80,17 +81,18 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 	xmlNodePtr ruleset_node = NULL, node1= NULL, node2= NULL;
 	xmlNodePtr cond_node = NULL, except_node = NULL;
 	xmlNodePtr identity_node = NULL, validity_node =NULL, sphere_node = NULL;
+	xmlNodePtr iden_child;
 
 	uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
 	if(w_uri.s == NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML: is_watcher_allowed:Error while creating uri\n");
+		LOG(L_ERR, "PRESENCE_XML: get_rule_node:Error while creating uri\n");
 		return NULL;
 	}
 	ruleset_node = xmlDocGetNodeByName(xcap_tree, "ruleset", NULL);
 	if(ruleset_node == NULL)
 	{
-		DBG( "PRESENCE_XML:is_watcher_allowed: ruleset_node NULL\n");
+		DBG( "PRESENCE_XML:get_rule_node: ruleset_node NULL\n");
 		goto error;
 
 	}	
@@ -100,21 +102,21 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 				continue;
 
 		/* process conditions */
-		DBG("PRESENCE_XML:is_watcher_allowed:node1->name= %s\n",node1->name);
+		DBG("PRESENCE_XML:get_rule_node: node1->name= %s\n",node1->name);
 
 		cond_node = xmlNodeGetChildByName(node1, "conditions");
 		if(cond_node == NULL)
 		{	
-			DBG( "PRESENCE_XML:is_watcher_allowed:cond node NULL\n");
+			DBG( "PRESENCE_XML:get_rule_node:cond node NULL\n");
 			goto error;
 		}
-		DBG("PRESENCE_XML:is_watcher_allowed:cond_node->name= %s\n",
+		DBG("PRESENCE_XML:get_rule_node:cond_node->name= %s\n",
 				cond_node->name);
 
 		validity_node = xmlNodeGetChildByName(cond_node, "validity");
 		if(validity_node !=NULL)
 		{
-			DBG("PRESENCE_XML:is_watcher_allowed:found validity tag\n");
+			DBG("PRESENCE_XML:get_rule_node:found validity tag\n");
 
 		}	
 		sphere_node = xmlNodeGetChildByName(cond_node, "sphere");
@@ -122,18 +124,20 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 		identity_node = xmlNodeGetChildByName(cond_node, "identity");
 		if(identity_node == NULL)
 		{
-			LOG(L_ERR, "PRESENCE_XML:is_watcher_allowed:ERROR didn't found"
+			LOG(L_ERR, "PRESENCE_XML:get_rule_node:ERROR didn't found"
 					" identity tag\n");
 			goto error;
 		}	
 		id = NULL;
 		
-		if(strcmp ((const char*)identity_node->children->name, "one") == 0)	
+		iden_child= xmlNodeGetChildByName(identity_node, "one");
+		if(iden_child)	
+		{
 			for(node2 = identity_node->children; node2; node2 = node2->next)
 			{
-				if(xmlStrcasecmp(node2->name, (unsigned char*)"text")== 0)
+				if(xmlStrcasecmp(node2->name, (unsigned char*)"one")!= 0)
 					continue;
-
+				
 				id = xmlNodeGetAttrContentByName(node2, "id");	
 				if((strlen(id)== w_uri.len && 
 							(strncmp(id, w_uri.s, w_uri.len)==0)))	
@@ -141,28 +145,33 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 					apply_rule = 1;
 					break;
 				}
-			}	
-		else
-		{	
+			}
+		}	
+
+		/* search for many node*/
+		iden_child= xmlNodeGetChildByName(identity_node, "many");
+		if(iden_child)	
+		{
 			domain = NULL;
 			for(node2 = identity_node->children; node2; node2 = node2->next)
 			{
-				if(xmlStrcasecmp(node2->name, (unsigned char*)"text")== 0)
+				if(xmlStrcasecmp(node2->name, (unsigned char*)"many")!= 0)
 					continue;
 	
 				domain = xmlNodeGetAttrContentByName(node2, "domain");
-			
 				if(domain == NULL)
 				{	
-					apply_rule = 1;
-					break;
+					DBG("PRESENCE_XML:get_rule_node: No domain attribute to many\n");
 				}
 				else	
+				{
+					DBG("PRESENCE_XML:get_rule_node: <many domain= %s>\n", domain);
 					if((strlen(domain)!= subs->from_domain.len && 
 								strncmp(domain, subs->from_domain.s,
 									subs->from_domain.len) ))
 						continue;
-
+				}
+				xmlFree(domain);
 				apply_rule = 1;
 				if(node2->children == NULL)       /* there is no exception */
 					break;
@@ -170,47 +179,52 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 				for(except_node = node2->children; except_node;
 						except_node= except_node->next)
 				{
-					if(xmlStrcasecmp(except_node->name, 
-								(unsigned char*)"text")== 0)
+					if(xmlStrcasecmp(except_node->name, (unsigned char*)"except"))
 						continue;
 
 					id = xmlNodeGetAttrContentByName(except_node, "id");	
 					if(id!=NULL)
 					{
-						if((strlen(id)== w_uri.len && (strncmp(id, w_uri.s,
-											w_uri.len)==0)))	
+						if((strlen(id)- 1== w_uri.len && 
+								(strncmp(id, w_uri.s, w_uri.len)==0)))	
 						{
+							xmlFree(id);
 							apply_rule = 0;
 							break;
 						}
+						xmlFree(id);
 					}	
 					else
 					{
 						domain = NULL;
-						domain = xmlNodeGetAttrContentByName(except_node,
-								"domain");
-						if((domain!=NULL && strlen(domain)== 
-									subs->from_domain.len &&
-						(strncmp(domain,subs->from_domain.s , 
-								 subs->from_domain.len)==0)))	
+						domain = xmlNodeGetAttrContentByName(except_node, "domain");
+						if(domain!=NULL)
 						{
-							apply_rule = 0;
-							break;
-						}
+							DBG("PRESENCE_XML:get_rule_node: Found except domain= %s\n- strlen(domain)= %d\n",
+									domain, strlen(domain));
+							if(strlen(domain)==subs->from_domain.len &&
+								(strncmp(domain,subs->from_domain.s , subs->from_domain.len)==0))	
+							{
+								DBG("PRESENCE_XML:get_rule_node: except domain match\n");
+								xmlFree(domain);
+								apply_rule = 0;
+								break;
+							}
+							xmlFree(domain);
+						}	
+
 					}	
-					if (apply_rule == 0)
-						break;
 				}
-				if(apply_rule ==1 || apply_rule==0)
-					break;
+				break;
 
 			}		
 		}
+		/* if a match was found- either allow or deny */
 		if(apply_rule ==1 || apply_rule==0)
 					break;
 	}
 
-
+	DBG("PRESENCE_XML:get_rule_node: apply_rule= %d\n", apply_rule);
 	if(w_uri.s!=NULL)
 		pkg_free(w_uri.s);
 
@@ -270,13 +284,13 @@ int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		subs->reason.s= "rejected";
 		subs->reason.len = 8;
 	}
-	
+	else	
 	if( strncmp((char*)sub_handling, "confirm",7 )==0)
 	{	
 		subs->status.s = "pending";
 		subs->status.len = 7;
 	}
-	
+	else
 	if( strncmp((char*)sub_handling , "polite-block",12 )==0)
 	{	
 		subs->status.s = "active";
@@ -284,13 +298,14 @@ int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		subs->reason.s= "polite-block";
 		subs->reason.len = 12;
 	}
-		
+	else	
 	if( strncmp((char*)sub_handling , "allow",5 )==0)
 	{	
 		subs->status.s = "active";
 		subs->status.len = 6;
 		subs->reason.s = NULL;
 	}
+	
 
 	if(node)
 		return 1;

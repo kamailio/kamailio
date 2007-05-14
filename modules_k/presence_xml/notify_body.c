@@ -85,7 +85,7 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str* final_nbody)
 	node= get_rule_node(subs, doc);
 	if(node== NULL)
 	{
-		DBG("PRESENCE_XML:pres_apply_auth: he subscriber didn't match"
+		DBG("PRESENCE_XML:pres_apply_auth: The subscriber didn't match"
 					" the conditions\n");
 		xmlFreeDoc(doc);
 		return 0;
