@@ -55,6 +55,8 @@
 #              added TLS_EXTRA_LIBS (andrei)
 #  2007-03-16  added LIB building options: LIB_LDFLAGS, LIB_SONAME, LIB_RPATH,
 #                INSTALL_LIB, libraries install paths (andrei)
+#  2007-05-14  futex support if linux 2.5.70+ and 
+#               use_futex=yes (default) (andrei)
 
 
 # check if already included/exported
@@ -71,7 +73,7 @@ MAIN_NAME=ser
 VERSION = 2
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev2
+EXTRAVERSION = -dev3
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -323,6 +325,8 @@ endif
 #		work on all systems inter-processes (e.g. linux)
 # -DUSE_POSIX_SEM
 #		uses posix semaphores for locking (faster than sys v)
+# -DUSE_FUTEX
+#		uses futexes for locking (linux 2.6+)
 # -DBUSY_WAIT
 #		uses busy waiting on the lock (FAST_LOCK)
 # -DADAPTIVE_WAIT
@@ -405,6 +409,7 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DDBG_QM_MALLOC \
+	 #-DF_MALLOC
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DEXTRA_DEBUG \
@@ -550,6 +555,7 @@ endif
 
 ifeq ($(ARCH), alpha)
 	use_fast_lock=yes
+	DEFS+=-DNOSMP # very likely
 endif
 
 ifeq ($(use_fast_lock), yes)
@@ -1272,11 +1278,16 @@ LIB_SUFFIX:=.so
 
 #os specific stuff
 ifeq ($(OS), linux)
+# by default use futexes if available
+	use_futex= yes
 	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
 			-DHAVE_TIMEGM
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_SYSV_SEM  # try posix sems
+		#DEFS+= -DUSE_POSIX_SEM
+		DEFS+=-DUSE_PTHREAD_MUTEX
+		LIBS+= -lpthread
+		#DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes
 	else
 		ifneq (,$(findstring -DUSE_POSIX_SEM, $(DEFS)))
@@ -1298,6 +1309,12 @@ ifeq ($(OS), linux)
 	ifeq ($(shell [ $(OSREL_N) -ge 2002000 ] && echo has_sigio), has_sigio)
 		ifeq ($(NO_SIGIO),)
 			DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKARROUND
+		endif
+	endif
+	# check for >= 2.5.70
+	ifeq ($(shell [ $(OSREL_N) -ge 2005070 ] && echo has_futex), has_futex)
+		ifeq ($(use_futex), yes)
+			DEFS+=-DUSE_FUTEX
 		endif
 	endif
 	ifeq ($(NO_SELECT),)

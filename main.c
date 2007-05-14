@@ -144,6 +144,7 @@
 #include "usr_avp.h"
 #include "core_cmd.h"
 #include "flags.h"
+#include "lock_ops_init.h"
 #include "atomic_ops_init.h"
 #ifdef USE_DNS_CACHE
 #include "dns_cache.h"
@@ -470,6 +471,7 @@ void cleanup(show_status)
 	/* zero all shmem alloc vars that we still use */
 	shm_mem_destroy();
 #endif
+	destroy_lock_ops();
 	if (pid_file) unlink(pid_file);
 	if (pgid_file) unlink(pgid_file);
 }
@@ -1429,6 +1431,9 @@ try_again:
 		dont_daemonize = dont_fork == 2;
 		dont_fork = dont_fork == 1;
 	}
+	/* init locks first */
+	if (init_lock_ops()!=0)
+		goto error;
 	/* init the resolver, before fixing the config */
 	resolv_init();
 	/* fix parameters */

@@ -50,9 +50,9 @@
 #include <unistd.h> /* close, ioctl */
 #endif
 
-#include <sys/utsname.h> /* uname() */
 #include <stdlib.h> /* strtol() */
 #include "io_wait.h"
+#include "ut.h" /* get_sys_ver() */
 
 
 #include "mem/mem.h"
@@ -293,41 +293,6 @@ static int init_select(io_wait_h* h)
 	return 0;
 }
 #endif
-
-
-
-/* return system version (major.minor.minor2) as
- *  (major<<16)|(minor)<<8|(minor2)
- * (if some of them are missing, they are set to 0)
- * if the parameters are not null they are set to the coresp. part 
- */
-static unsigned int get_sys_version(int* major, int* minor, int* minor2)
-{
-	struct utsname un;
-	int m1;
-	int m2;
-	int m3;
-	char* p;
-	
-	memset (&un, 0, sizeof(un));
-	m1=m2=m3=0;
-	/* get sys version */
-	uname(&un);
-	m1=strtol(un.release, &p, 10);
-	if (*p=='.'){
-		p++;
-		m2=strtol(p, &p, 10);
-		if (*p=='.'){
-			p++;
-			m3=strtol(p, &p, 10);
-		}
-	}
-	if (major) *major=m1;
-	if (minor) *minor=m2;
-	if (minor2) *minor2=m3;
-	return ((m1<<16)|(m2<<8)|(m3));
-}
-
 
 
 /*

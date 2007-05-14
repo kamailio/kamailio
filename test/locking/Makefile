@@ -46,6 +46,9 @@ $(NAME)_pmutex: $(NAME).c
 $(NAME)_fastlock: $(NAME).c
 	gcc $(CFLAGS) $(DEFS) -DFAST_LOCK -o $@ $(INCLUDE) $< $(LIBS) 
 
+$(NAME)_futex: $(NAME).c
+	gcc $(CFLAGS) $(DEFS) -DFUTEX -o $@ $(INCLUDE) $< $(LIBS) 
+
 all: $(NAME) $(NAME)_sysv  $(NAME)_posix $(NAME)_pmutex \
 		$(NAME)_fastlock
 

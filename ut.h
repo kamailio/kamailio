@@ -39,6 +39,7 @@
  * 2004-03-08 updated int2str (64 bits, INT2STR_MAX_LEN used) (andrei)
  * 2005-11-29 reverse_hex2int/int2reverse_hex switched to unsigned int (andrei)
  * 2005-12-09 added msgid_var (andrei)
+ * 2007-05-14 added get_sys_ver() (andrei)
  */
 
 
@@ -509,5 +510,12 @@ time_t _timegm(struct tm* t);
  * using pkg_malloc
  */
 char* as_asciiz(str* s);
+
+
+/* return system version (major.minor.minor2) as
+ *  (major<<16)|(minor)<<8|(minor2)
+ * (if some of them are missing, they are set to 0)
+ * if the parameters are not null they are set to the coresp. part */
+unsigned int get_sys_version(int* major, int* minor, int* minor2);
 
 #endif

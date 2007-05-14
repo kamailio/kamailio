@@ -34,6 +34,7 @@
  *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
  *              on darwin (andrei)
  *  2006-04-04  added lock_try(lock) and lock_set_try(s,i) (andrei)
+ *  2007-05-13  added futex support (andrei)
  *
 Implements:
 
@@ -44,7 +45,7 @@ Implements:
 	void    lock_get(gen_lock_t* lock);      - lock (mutex down)
 	void    lock_release(gen_lock_t* lock);  - unlock (mutex up)
 	int     lock_try(gen_lock_t* lock);      - tries to get the lock, returns
-	                                            0 on success and -1 on failure
+	                                            0 on success and !=0 on failure
 	
 	lock sets: 
 	----------
@@ -55,7 +56,7 @@ Implements:
 	                                                   set
 	int  lock_set_try(gen_lock_set_t* s, int i);    - tries to lock the sem i,
 	                                                  returns 0 on success and
-	                                                  -1 on failure
+	                                                  !=0 on failure
 	
 	defines:
 	--------
@@ -80,8 +81,24 @@ WARNING: - lock_set_init may fail for large number of sems (e.g. sysv).
 #ifndef _lock_ops_h
 #define _lock_ops_h
 
+#ifdef USE_FUTEX
+#include "futexlock.h"
+/* if no native atomic ops support => USE_FUTEX will be undefined */
+#endif
 
-#ifdef FAST_LOCK
+
+#ifdef USE_FUTEX
+
+typedef futex_lock_t gen_lock_t;
+
+#define lock_destroy(lock) /* do nothing */
+#define lock_init(lock) futex_init(lock)
+#define lock_try(lock)  futex_try(lock)
+#define lock_get(lock)  futex_get(lock)
+#define lock_release(lock) futex_release(lock)
+
+
+#elif defined FAST_LOCK
 #include "fastlock.h"
 
 typedef fl_lock_t gen_lock_t;
@@ -263,7 +280,8 @@ tryagain:
 
 /* lock sets */
 
-#if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
+#if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || \
+	defined(USE_POSIX_SEM) || defined(USE_FUTEX)
 #define GEN_LOCK_T_PREFERRED
 #define GEN_LOCK_T_PREFERED  /* backwards compat. */
 #define GEN_LOCK_T_UNLIMITED

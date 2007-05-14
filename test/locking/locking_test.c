@@ -58,6 +58,12 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 fl_lock_t lock;
 #endif
 
+#ifdef FUTEX
+#define USE_FUTEX
+#include "../../futexlock.h"
+futex_lock_t lock;
+#endif
+
 #ifdef SYSV_SEM
 #include <sys/ipc.h>
 #include <sys/sem.h>
@@ -123,6 +129,11 @@ static int semid=-1;
 		get_lock(&lock)
 	#define UNLOCK() \
 		release_lock(&lock)
+#elif defined FUTEX
+	#define LOCK() \
+		futex_get(&lock)
+	#define UNLOCK() \
+		futex_release(&lock)
 #endif
 
 
@@ -139,9 +150,11 @@ static char *version="locking_test 0.1-"
 #elif defined POSIX_SEM
  "posix_sem"
 #elif defined PTHREAD_MUTEX
- "pthread_mutext"
+ "pthread_mutex"
 #elif defined FAST_LOCK
  "fast_lock"
+#elif defined FUTEX
+ "futex"
 #endif
 ;
 
@@ -263,6 +276,9 @@ int main (int argc, char** argv)
 #elif defined FAST_LOCK
 	puts("Initializing fast lock\n");
 	init_lock(lock);
+#elif defined FUTEX
+	puts("Initializing futex lock\n");
+	futex_init(&lock);
 #endif
 
 
