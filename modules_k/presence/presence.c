@@ -50,10 +50,13 @@
 #include "../tm/tm_load.h"
 #include "../sl/sl_api.h"
 #include "../../pt.h"
+#include "../../mi/mi.h"
 #include "publish.h"
 #include "subscribe.h"
 #include "event_list.h"
 #include "bind_presence.h"
+#include "notify.h"
+
 MODULE_VERSION
 
 #define S_TABLE_VERSION 1
@@ -92,7 +95,7 @@ int handle_publish(struct sip_msg*, char*, char*);
 int handle_subscribe(struct sip_msg*, char*, char*);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
-//int handle_notify(struct sip_msg*, char*, char*);
+struct mi_root* refreshWatchers(struct mi_root* cmd, void* param);
 
 int counter =0;
 int pid = 0;
@@ -108,12 +111,12 @@ void destroy(void);
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",		handle_publish,	        0,	   0,           REQUEST_ROUTE},
-	{"handle_publish",		handle_publish,	        1,  fixup_presence, REQUEST_ROUTE},
-	{"handle_subscribe",	handle_subscribe,	    0,	   0,           REQUEST_ROUTE},
-	{"bind_presence", (cmd_function)bind_presence,  1,     0,             0          },
-	{"add_event",         (cmd_function)add_event,  1,     0,             0          },
-	{0,						0,				        0,	   0,             0			 }	 
+	{"handle_publish",		handle_publish,	     0,	   0,        REQUEST_ROUTE},
+	{"handle_publish",		handle_publish,	     1,fixup_presence,REQUEST_ROUTE},
+	{"handle_subscribe",	handle_subscribe,	 0,	   0,         REQUEST_ROUTE},
+	{"bind_presence",(cmd_function)bind_presence,1,    0,            0         },
+	{"add_event",    (cmd_function)add_event,    1,    0,            0         },
+	{0,						0,				     0,	   0,            0	       }	 
 };
 
 static param_export_t params[]={
@@ -130,6 +133,11 @@ static param_export_t params[]={
 	{0,0,0}
 };
 
+static mi_export_t mi_cmds[] = {
+	{ "refershWatchers", refreshWatchers,    0,  0,  0},
+	{ 0, 0, 0, 0}
+};
+
 /** module exports */
 struct module_exports exports= {
 	"presence",					/* module name */
@@ -137,7 +145,7 @@ struct module_exports exports= {
 	cmds,						/* exported functions */
 	params,						/* exported parameters */
 	0,							/* exported statistics */
-	0  ,						/* exported MI functions */
+	mi_cmds,   					/* exported MI functions */
 	0,							/* exported pseudo-variables */
 	mod_init,					/* module initialization function */
 	(response_function) 0,      /* response handling function */
@@ -350,3 +358,70 @@ static int fixup_presence(void** param, int param_no)
  	LOG(L_ERR, "PRESENCE:fixup_presence: ERROR null format\n");
  	return E_UNSPEC;
 }
+/* 
+ *  mi cmd: refreshWatchers
+ *			<presentity_uri> 
+ *			<event>
+ * */
+
+struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
+{
+	struct mi_node* node= NULL;
+	str pres_uri, event;
+	ev_t* ev;
+	struct sip_uri uri;
+
+	DBG("PRESENCE:refreshWatchers: start\n");
+	
+	node = cmd->node.kids;
+	if(node == NULL)
+		return 0;
+
+	/* Get presentity URI */
+	pres_uri = node->value;
+	if(pres_uri.s == NULL || pres_uri.s== 0)
+	{
+		LOG(L_ERR, "PRESENCE:refreshWatchers: empty uri\n");
+		return init_mi_tree(404, "Empty presentity URI", 20);
+	}
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
+	{
+		LOG(L_ERR, "PRESENCE:refreshWatchers: bad uri\n");
+		return init_mi_tree(404, "Bad presentity URI", 18);
+	}
+	DBG("PRESENCE:refreshWatchers: pres_uri '%.*s'\n",
+	    pres_uri.len, pres_uri.s);
+	
+	node = node->next;
+	if(node == NULL)
+		return 0;
+	event= node->value;
+	if(event.s== NULL || event.len== 0)
+	{
+		LOG(L_ERR, "PRESENCE:refreshWatchers: "
+		    "empty event parameter\n");
+		return init_mi_tree(400, "Empty event parameter", 21);
+	}
+	DBG("PRESENCE:refreshWatchers: event '%.*s'\n",
+	    event.len, event.s);
+	
+	if(node->next!= NULL)
+	{
+		LOG(L_ERR, "PRESENCE:refreshWatchers: Too many parameters\n");
+		return init_mi_tree(400, "Too many parameters", 19);
+	}
+
+	ev= contains_event(&event, NULL);
+	if(ev== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:refreshWatchers: ERROR wrong event parameter\n");
+		return 0;
+	}	
+	if(query_db_notify(&uri.user, &uri.host, ev, NULL)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:refreshWatchers: ERROR while sending notify");
+		return 0;
+	}	
+	
+	return init_mi_tree(200, "OK", 2);
+}	

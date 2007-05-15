@@ -277,8 +277,6 @@ error:
 	return;	
 }
 
-
-
 /**
  * PUBLISH request handling
  *
