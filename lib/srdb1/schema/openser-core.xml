@@ -16,7 +16,6 @@
     <xi:include href="pdt.xml"/>
     <xi:include href="uri.xml"/>
 
-
     <!-- Include extra definitions if found, it is not
          an error if they are not present, although it
          would produce a warning

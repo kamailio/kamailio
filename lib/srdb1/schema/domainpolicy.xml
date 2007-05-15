@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table xmlns:db="http://docbook.org/ns/docbook">
+    <name>domainpolicy</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for the domainpolicy module. More information at http://www.openser.org/docs/modules/1.2.x/domainpolicy.html.
+        </db:para>
+    </description>
+
+    <column id="domainpolicy.id">
+        <name>id</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="domainpolicy.rule">
+        <name>rule</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <description>Domain policy rule name which is equal to the URI as published in the domain policy NAPTRs.</description>
+    </column>
+
+    <column>
+        <name>type</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <description> Domain policy rule type. In the case of federation names, this is “fed”. For standard referrals according to draft-lendl-speermint-technical-policy-00, this is “std”. For direct domain lookups, this is “dom”. Default value is “type”.</description>
+    </column>
+
+    <column id="domainpolicy.att">
+        <name>att</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <null/>
+        <description>It contains the AVP’s name. If the rule stored in this row triggers, than dp_can_connect() will add an AVP with that name.</description>
+    </column>
+
+    <column id="domainpolicy.val">
+        <name>val</name>
+        <type>string</type>
+        <size>&avp_val_len;</size>
+        <null/>
+        <description>It contains the values for AVPs created by dp_can_connect(). Default value is “val”</description>
+    </column>
+
+    <column>
+        <name>comment</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <description>Comment about the rule</description>
+    </column>
+
+    <index>
+        <colref linkend="domainpolicy.rule"/>
+        <colref linkend="domainpolicy.att"/>
+        <colref linkend="domainpolicy.val"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>rule_idx</name>
+        <colref linkend="domainpolicy.rule"/>
+    </index>
+
+    <index>
+        <colref linkend="domainpolicy.id"/>
+        <primary/>
+    </index>
+</table>

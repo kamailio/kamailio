@@ -32,6 +32,9 @@ DOCBOOK_XSL = $(STYLESHEETS)/docbook.xsl
 # Enable/disable DTD validation
 VALIDATE = 0
 
+# be verbose
+VERBOSE = 0
+
 # XML Catalog used to resolve entities
 CATALOG = $(ROOT)/doc/catalog.xml
 
@@ -40,6 +43,10 @@ XSLTPROC_FLAGS = --xinclude
 
 ifeq ($(VALIDATE), 0)
 	override XSLTPROC := $(XSLTPROC) --novalid
+endif
+
+ifeq ($(VERBOSE), 1)
+	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
 all: mysql dbtext mysql postgres #oracle docbook
@@ -51,7 +58,6 @@ mysql:
 	    --stringparam prefix "core-" \
 	    --stringparam db "mysql" \
 	    $(MYSQL_XSL) $(DOC_CORE)
-	    
 	    
 	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 	    --stringparam dir "$(ROOT)/scripts/mysql" \

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table xmlns:db="http://docbook.org/ns/docbook">
+    <name>imc_rooms</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Room table for the imc module. More information at http://www.openser.org/docs/modules/1.2.x/imc.html.
+        </db:para>
+    </description>
+
+    <column id="imc_rooms.id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="imc_rooms.name">
+        <name>name</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Name of the room</description>
+    </column>
+
+    <column id="imc_rooms.domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain of the room</description>
+    </column>
+
+    <column>
+        <name>flag</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Flags</description>
+    </column>
+
+    <index>
+        <name>nd_imc</name>
+        <colref linkend="imc_rooms.name"/>
+        <colref linkend="imc_rooms.domain"/>
+        <unique/>
+    </index>
+
+    <index>
+        <colref linkend="imc_rooms.id"/>
+        <primary/>
+    </index>
+</table>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:db="http://docbook.org/ns/docbook">
+	<name>sip_trace</name>
+	<version>1</version>
+	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
+	<description>
+		<db:para>This table is used to store incoming/outgoing SIP messages in database. More informations can be found in the siptrace module documentation at http://www.openser.org/docs/modules/1.2.x/siptrace.html.
+		</db:para>
+	</description>
+
+    <column id="sip_trace.id">
+	<name>id</name>
+	<type>int</type>
+	<size>&table_id_len;</size>
+	<autoincrement/>
+	<type db="dbtext">int,auto</type>
+	<description>unique ID</description>
+    </column>
+
+    <column id="sip_trace.date">
+	<name>date</name>
+	<type>datetime</type>
+	<default>0000-00-00 00:00:00</default>
+	<description>Recording date</description>
+    </column>
+
+    <column id="sip_trace.callid">
+	<name>callid</name>
+	<type>string</type>
+	<size>&hf_len;</size>
+	<default/>
+	<description>call ID from SIP message</description>
+    </column>
+
+    <column id="sip_trace.traced_user">
+	<name>traced_user</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+	<default/>
+	<description>SIP URI of the user being traced</description>
+    </column>
+
+    <column>
+	<name>msg</name>
+	<type>text</type>
+	<description>Full SIP message</description>
+    </column>
+
+    <column>
+	<name>method</name>
+	<type>string</type>
+	<size>50</size>
+	<default/>
+	<description>SIP method name</description>
+    </column>
+
+    <column>
+	<name>status</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+	<default/>
+	<description>SIP reply status</description>
+    </column>
+
+    <column id="sip_trace.fromip">
+	<name>fromip</name>
+	<type>string</type>
+	<size>&ip_add_len;</size>
+	<default/>
+	<description>Source IP address</description>
+    </column>
+
+    <column>
+	<name>toip</name>
+	<type>string</type>
+	<size>&ip_add_len;</size>
+	<default/>
+	<description>Destination IP address</description>
+    </column>
+
+    <column>
+	<name>fromtag</name>
+	<type>string</type>
+	<size>&id_len;</size>
+	<default/>
+	<description>From tag</description>
+    </column>
+
+    <column>
+	<name>direction</name>
+	<type>string</type>
+	<size>4</size>
+	<default/>
+	<description>Destination IP address</description>
+    </column>
+
+    <index>
+	<name>user_idx</name>
+	<colref linkend="sip_trace.traced_user"/>
+    </index>
+
+    <index>
+	<name>date_id</name>
+	<colref linkend="sip_trace.date"/>
+    </index>
+
+    <index>
+	<name>ip_idx</name>
+	<colref linkend="sip_trace.fromip"/>
+    </index>
+
+    <index>
+	<name>call_id</name>
+	<colref linkend="sip_trace.callid"/>
+    </index>
+
+    <index>
+	<colref linkend="sip_trace.id"/>
+    <primary/>
+    </index>
+</table>
