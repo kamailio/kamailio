@@ -667,10 +667,12 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		local_contact.s = (char*)row_vals[local_contact_col].val.string_val;
 		local_contact.len = local_contact.s?strlen (local_contact.s):0;
 		
-		size= sizeof(subs_t)+ ( to_user.len+ to_domain.len+ from_user.len+ from_domain.len+
-				 event_id.len+ to_tag.len+ from_tag.len+ callid.len+ contact.len+
+		size= sizeof(subs_t)+ ( pres_domain.len+pres_user.len + to_user.len+ 
+				to_domain.len+ from_user.len+ from_domain.len+ event_id.len+
+				to_tag.len+ from_tag.len+ callid.len+ contact.len+
 				record_route.len+ sockinfo_str.len+ local_contact.len)* sizeof(char);
 
+		DBG(" PRESENCE:msg_active_watchers_clean: size= %d\n", size);
 		subs= (subs_t*)pkg_malloc(size);
 		if(subs== NULL)
 		{
@@ -1371,7 +1373,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		result_code= subs.event->is_watcher_allowed(&subs);
 		if(result_code< 0)
 		{
-			LOG(L_ERR, "PRESENCE: subscribe: ERROR in function event specific function"
+			LOG(L_ERR, "PRESENCE: subscribe: ERROR in event specific function"
 					" is_watcher_allowed\n");
 			goto error;
 		}	
