@@ -10,6 +10,7 @@
 <table xmlns:db="http://docbook.org/ns/docbook">
     <name>pdt</name>
     <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 	<db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). 
 		More information can be found at: http://www.openser.org/docs/modules/1.2.x/pdt.html 
@@ -18,8 +19,9 @@
 
     <column id="pdt.id">
 	<name>id</name>
-	<type db="mysql">INT(10) AUTO_INCREMENT</type>
-	<type db="postgres">SERIAL</type>
+	<type>int</type>
+	<size>&table_id_len;</size>
+	<autoincrement/>
 	<type db="dbtext">int,auto</type>
 	<description>unique ID</description>
     </column>
@@ -54,7 +56,7 @@
     </index>
 
     <index>
-	<colref linkend="gw.id"/>
+	<colref linkend="pdt.id"/>
 	<primary/>
     </index>
 </table>

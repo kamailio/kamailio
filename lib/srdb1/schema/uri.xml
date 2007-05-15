@@ -11,6 +11,7 @@
 <table xmlns:db="http://docbook.org/ns/docbook">
     <name>uri</name>
     <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 	    <db:para> This table is used by uri_db module to implement various SIP URI checks.
 		    More information about the uri_db module can be found at: http://www.openser.org/docs/modules/1.2.x/uri_db.html 
@@ -19,13 +20,14 @@
 
     <column id="uri.id">
 	<name>id</name>
-	<type db="mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
-	<type db="postgres">SERIAL</type>
+	<type>unsigned int</type>
+	<size>&table_id_len;</size>
+	<autoincrement/>
 	<type db="dbtext">int,auto</type>
     </column>
 
-    <column id="uri.username"> <!--FIXME $USERCOL -->
-	<name>username</name>
+    <column id="uri.username">
+	<name>&USERCOL;</name>
 	<type>string</type>
 	<size>&user_len;</size>
 	<default/>

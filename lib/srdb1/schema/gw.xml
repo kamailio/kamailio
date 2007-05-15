@@ -10,6 +10,7 @@
 <table xmlns:db="http://docbook.org/ns/docbook">
     <name>gw</name>
     <version>4</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 	<db:para>This table contains Least Cost Routing Gateway definitions.
 		More information can be found at: http://www.openser.org/docs/modules/1.2.x/lcr.html Gateways (gw) Table.
@@ -18,8 +19,9 @@
 
     <column id="gw.id">
 	<name>id</name>
-	<type db="mysql">INT(10) AUTO_INCREMENT</type>
-	<type db="postgres">SERIAL</type>
+	<type>int</type>
+	<size>&table_id_len;</size>
+	<autoincrement/>
 	<type db="dbtext">int,auto</type>
     </column>
 

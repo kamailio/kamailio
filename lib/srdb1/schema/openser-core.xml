@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>openser</name>
+
+    <xi:include href="version.xml"/>
+
+    <xi:include href="gw.xml"/>
+    <xi:include href="pdt.xml"/>
+    <xi:include href="uri.xml"/>
+
+
+    <!-- Include extra definitions if found, it is not
+         an error if they are not present, although it
+         would produce a warning
+      -->
+    <xi:include href="extra.xml" xpointer="xpointer(data/table)">
+	<xi:fallback/>
+    </xi:include>
+</database>

@@ -1,0 +1,17 @@
+<!ENTITY user_len "64">
+<!ENTITY domain_len "128">
+<!ENTITY realm_len "64">
+<!ENTITY uri_len "255">
+<!ENTITY id_len "64">
+<!ENTITY table_id_len "10">
+<!ENTITY hf_len "255">
+<!ENTITY method_len "16">
+<!ENTITY avp_name_len "32">
+<!ENTITY avp_val_len "255">
+<!ENTITY MYSQL_TABLE_TYPE "MyISAM">
+<!ENTITY USERCOL "username">
+<!ENTITY DEFAULT_ALIASES_EXPIRES "2020-05-28 21:32:15">
+<!ENTITY DEFAULT_LOCATION_EXPIRES "2020-05-28 21:32:15">
+<!ENTITY DEFAULT_Q  "1.0">
+<!ENTITY DEFAULT_CALLID "Default-Call-ID">
+<!ENTITY DEFAULT_CSEQ "13">

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+	  "../../doc/dbschema/dtd/dbschema.dtd"[
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="version" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>version</name>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+
+    <column id="tn">
+	<name>table_name</name>
+	<type>string</type>
+	<size>32</size>
+    </column>
+    <column id="tv">
+	<name>table_version</name>
+	<type>unsigned int</type>
+	<default>0</default>
+    </column>
+</table>

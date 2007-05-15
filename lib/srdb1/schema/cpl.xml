@@ -10,14 +10,17 @@
 <table id="cpl" xmlns:db="http://docbook.org/ns/docbook">
     <name>cpl</name>
     <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 	<db:para>Table for the call processing language "cpl" module</db:para>
     </description>
 
     <column id="cpl.id">
 	<name>id</name>
-	<type db="mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
-	<size>&id_len;</size>
+	<type>unsigned int</type>
+	<autoincrement/>
+	<type db="dbtext">int,auto</type>
+	<size>&table_id_len;</size>
 	<description>Unique ID</description>
     </column>
 
@@ -36,13 +39,13 @@
 
     <column>
 	<name>cpl_xml</name>
-	<type db="mysql">TEXT</type>
+	<type>text</type>
 	<null/>
     </column>
 
     <column>
 	<name>cpl_bin</name>
-	<type db="mysql">TEXT</type>
+	<type>text</type>
 	<null/>
     </column>
 
@@ -54,7 +57,7 @@
     </index>
 
     <index>
-	    <colref linkend="gw.id"/>
+	    <colref linkend="cpl.id"/>
 	    <primary/>
     </index>
 </table>
