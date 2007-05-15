@@ -419,6 +419,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		
 		if(subs->event->wipeer)
 		{	
+			DBG("PRESENCE:update_subscription: send Notify with winfo\n");
 			if(query_db_notify(&subs->pres_user,&subs->pres_domain, subs->event->wipeer,
 					subs )< 0)
 			{
@@ -600,6 +601,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 	}
 
 	n= result->n;
+	DBG("PRESENCE:msg_active_watchers_clean: result->n= %d\n", result->n);
 	subs_array= (subs_t**)pkg_malloc(n* sizeof(subs_t*));
 	if(subs_array== NULL)
 	{
@@ -639,6 +641,8 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		event_id.s = (char*)row_vals[event_id_col].val.string_val;
 		if(event_id.s)
 			event_id.len = strlen(event_id.s);
+		else
+			event_id.len= 0;
 
 		to_tag.s = (char*)row_vals[to_tag_col].val.string_val;
 		to_tag.len = strlen(to_tag.s);
@@ -670,9 +674,8 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		size= sizeof(subs_t)+ ( pres_domain.len+pres_user.len + to_user.len+ 
 				to_domain.len+ from_user.len+ from_domain.len+ event_id.len+
 				to_tag.len+ from_tag.len+ callid.len+ contact.len+
-				record_route.len+ sockinfo_str.len+ local_contact.len)* sizeof(char);
+				record_route.len+ sockinfo_str.len+ local_contact.len+ 10+ 7)* sizeof(char);
 
-		DBG(" PRESENCE:msg_active_watchers_clean: size= %d\n", size);
 		subs= (subs_t*)pkg_malloc(size);
 		if(subs== NULL)
 		{
@@ -792,15 +795,23 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		memcpy(subs->local_contact.s, local_contact.s, local_contact.len);
 		subs->local_contact.len = local_contact.len;
 		size+= local_contact.len;
+		
+		subs->status.s= (char*)subs+ size;
+		memcpy(subs->status.s, "terminated", 10);
+		subs->status.len= 10;
+		size+= 10;
 
+		subs->reason.s= (char*)subs+ size;
+		memcpy(subs->reason.s, "timeout", 7);
+		subs->reason.len= 7;
+		size+= 7;
+
+		
 		subs->expires = 0;
 		subs->cseq= cseq;
-		subs->status.s = "terminated";
-		subs->status.len = 10;
-		subs->reason.s = "timeout";
 		subs->reason.len = 7;
-		subs_array[i]= subs;
 
+		subs_array[i]= subs;
 	}
 	
 	pa_dbf.free_result(pa_db, result);
@@ -808,11 +819,15 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 
 	for(i= 0; i< n; i++)
 	{
+		printf_subs(subs);
 		if( notify(subs_array[i],  NULL, NULL, 0)< 0)
 		{
 			LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: Could not send notify\n");
 			goto error;
 		}
+	}
+	for(i= 0; i< n; i++)
+	{
 		pkg_free(subs_array[i]);
 	}
 	pkg_free(subs_array);
@@ -1471,8 +1486,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			
 		}
 	}
-
-	printf_subs(&subs);	
 	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen, remote_cseq) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");

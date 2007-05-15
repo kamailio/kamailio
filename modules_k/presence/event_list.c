@@ -111,30 +111,27 @@ int add_event(ev_t* event)
 	size+= ev->content_type.len;
 	
 	sep= strchr(event->name.s, '.');
-	if(sep)
-	{
-		if(strncmp(sep+1, "winfo", 5)== 0)
-		{	
-			ev->type= WINFO_TYPE;
-			wipeer_name.s= event->name.s;
-			wipeer_name.len= sep - event->name.s;
-			
-			ev->wipeer= contains_event(&wipeer_name, ev->param );
-		}
-		else
-		{	
-			ev->type= PUBL_TYPE;
-			wipeer_name.s= buf;
-			memcpy(wipeer_name.s, event->name.s, event->name.len);
-			wipeer_name.len= event->name.len;
-			memcpy(wipeer_name.s+ wipeer_name.len, ".winfo", 5);
-			wipeer_name.len+= 5;
-			ev->wipeer= contains_event(&wipeer_name, ev->param);
-		}
 
-	}	
+	if(sep && strncmp(sep+1, "winfo", 5)== 0)
+	{	
+		ev->type= WINFO_TYPE;
+		wipeer_name.s= event->name.s;
+		wipeer_name.len= sep - event->name.s;
+		ev->wipeer= contains_event(&wipeer_name, ev->param );
+	}
 	else
+	{	
 		ev->type= PUBL_TYPE;
+		wipeer_name.s= buf;
+		memcpy(wipeer_name.s, event->name.s, event->name.len);
+		wipeer_name.len= event->name.len;
+		memcpy(wipeer_name.s+ wipeer_name.len, ".winfo", 6);
+		wipeer_name.len+= 6;
+		ev->wipeer= contains_event(&wipeer_name, ev->param);
+	}
+	
+	if(ev->wipeer)	
+		ev->wipeer->wipeer= ev;
 
 	ev->req_auth= event->req_auth;
 	ev->agg_nbody= event->agg_nbody;
@@ -146,9 +143,10 @@ int add_event(ev_t* event)
 	EvList->events= ev;
 	EvList->ev_count++;
 
-done:
 	DBG("PRESENCE: add_event: succesfully added event: %.*s - len= %d\n", 
 			ev->stored_name.len, ev->stored_name.s, ev->stored_name.len);
+done:
+	
 	return ret_code; 
 }
 

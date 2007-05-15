@@ -97,7 +97,7 @@ int build_str_hdr(subs_t* subs, int is_body, str** hdr)
 	strncpy(str_hdr->s ,"Event: ", 7);
 	str_hdr->len = 7;
 	strncpy(str_hdr->s+str_hdr->len, event->stored_name.s, event->stored_name.len);
-	str_hdr->len += event->stored_name.len;
+	str_hdr->len+= event->stored_name.len;
 	if (subs->event_id.len) 
 	{
  		strncpy(str_hdr->s+str_hdr->len, ";id=", 4);
@@ -123,16 +123,16 @@ int build_str_hdr(subs_t* subs, int is_body, str** hdr)
 		DBG( "PRESENCE: build_str_hdr: state = terminated \n");
 
 		strncpy(str_hdr->s+str_hdr->len,"Subscription-State: ", 20);
-		str_hdr->len += 20;
+		str_hdr->len+= 20;
 		strncpy(str_hdr->s+str_hdr->len, subs->status.s ,subs->status.len );
-		str_hdr->len += subs->status.len;
+		str_hdr->len+= subs->status.len;
 		
 		strncpy(str_hdr->s+str_hdr->len,";reason=", 8);
-		str_hdr->len += 8;
+		str_hdr->len+= 8;
 		strncpy(str_hdr->s+str_hdr->len, subs->reason.s ,subs->reason.len );
-		str_hdr->len += subs->reason.len;
+		str_hdr->len+= subs->reason.len;
 		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-		str_hdr->len += CRLF_LEN;
+		str_hdr->len+= CRLF_LEN;
 
 	}
 	else
@@ -1152,9 +1152,8 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 
 	if(n_body!= NULL && strncmp( subs->status.s, "active", 6) == 0 )
 	{
-		if(subs->event->req_auth)
+		if( subs->event->req_auth)
 		{	
-			
 			if( subs->event->apply_auth_nbody(n_body, subs, notify_body)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:notify: ERROR in function hget_nbody\n");
@@ -1231,6 +1230,15 @@ jump_over_body:
 			subs->event->stored_name.s);
 
 	printf_subs(subs);
+
+	/* build extra headers */
+	if( build_str_hdr( subs, notify_body?1:0, &str_hdr)< 0 )
+	{
+		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
+		goto error;
+	}	
+	DBG("PRESENCE:notify: headers:\n%.*s\n", str_hdr->len, str_hdr->s);
+
 	/* construct the dlg_t structure */
 	td = build_dlg_t(p_uri, subs);
 	if(td ==NULL)
@@ -1252,13 +1260,6 @@ jump_over_body:
 		goto error;	
 	}	
 
-	if( build_str_hdr( subs, notify_body?1:0, &str_hdr)< 0 )
-	{
-		LOG(L_ERR, "PRESENCE:notify:ERROR while building headers \n");
-		goto error;
-	}	
-	DBG("PRESENCE:notify: headers:\n%.*s\n", str_hdr->len, str_hdr->s);
-			
 	result = tmb.t_request_within
 		(&met,						             
 		str_hdr,                               
