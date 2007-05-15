@@ -530,7 +530,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 	reset_cancelled_t();
 	reset_e2eack_t();
 	/* reset the kr status */
-	set_kr(0);
+	reset_kr();
 	return 1;
 }
 

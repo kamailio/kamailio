@@ -336,6 +336,7 @@ struct s_table
 extern int syn_branch;
 
 
+void reset_kr();
 void set_kr( enum kill_reason kr );
 enum kill_reason get_kr();
 

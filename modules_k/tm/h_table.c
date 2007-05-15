@@ -66,6 +66,11 @@ static struct s_table*  tm_table;
 int syn_branch = 1;
 
 
+void reset_kr()
+{
+	kr = 0;
+}
+
 void set_kr( enum kill_reason _kr )
 {
 	kr|=_kr;
