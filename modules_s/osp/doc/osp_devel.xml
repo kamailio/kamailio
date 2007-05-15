@@ -15,6 +15,6 @@
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("osp.sgml" "book" "chapter")
+xml-parent-document: ("osp.xml" "book" "chapter")
 End:
 -->

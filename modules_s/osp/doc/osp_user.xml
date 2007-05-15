@@ -42,19 +42,10 @@
         <para><emphasis>textops</emphasis> -- text based operation</para>
       </listitem>
       <listitem>
-        <para><emphasis>maxfwd</emphasis> -- Max-Forward operation</para>
-      </listitem>
-      <listitem>
-        <para><emphasis>usrloc</emphasis> -- user location table operation</para>
-      </listitem>
-      <listitem>
-        <para><emphasis>registrar</emphasis> -- REGISTER processing</para>
-      </listitem>
-      <listitem>
         <para><emphasis>avpops</emphasis> -- AVP operation</para>
       </listitem>
       <listitem>
-        <para><emphasis>OSP Toolkit</emphasis> -- The OSP Toolkit, available from www.sipfoundry.org/OSP, must be built before building SER with the OSP Module. See the document "Secure, Multi-lateral Peering with SER", located at http://www.transnexus.com/White%20Papers/Multi-Lateral%20Peering%20with%20SER.pdf for build instructions.</para>
+        <para><emphasis>OSP Toolkit</emphasis> -- The OSP Toolkit, available from http://sourceforge.net/projects/osp-toolkit, must be built before building SER with the OSP Module.  For instructions on building SER with the OSP Toolkit, see http://www.transnexus.com/White%20Papers/Multi-Lateral_Peering_with_SER_V2.0.x.pdf</para>
       </listitem>
     </itemizedlist>
   </section>
@@ -211,7 +202,7 @@ modparam("osp","max_destinations",5)
     </section>
     <section>
       <title><varname>validate_call_id</varname></title>
-      <para>The validate_call_id (integer) parameter instructs the OSP module to validate call id in the peering token. If this value is set to 1, the OSP Module validates that the call id in the SIP INVITE message matches the call id in the peering token. If they do not match the INVITE is rejected. If this value is set to 0, the OSP Module will not validate the call id in the peering token. The default value is 1</para>
+      <para>The validate_call_id (integer) parameter instructs the OSP module to validate call id in the peering token. If this value is set to 1, the OSP Module validates that the call id in the SIP INVITE message matches the call id in the peering token. If they do not match the INVITE is rejected. If this value is set to 0, the OSP Module will not validate the call id in the peering token. The default value is 1.</para>
       <example>
         <title>Instructing the module to validate call id</title>
         <programlisting format="linespecific">
@@ -221,7 +212,7 @@ modparam("osp","validate_call_id",1)
     </section>
     <section>
       <title><varname>use_rpid_for_calling_number</varname></title>
-      <para>The use_rpid_for_calling_number(integer) parameter instructs the OSP module to use the calling number in the Remote-Party-ID of the SIP INVITE message. If this value is set to 1, the OSP Module uses the calling number in the Reomte-Party-ID header of the INVITE message when a Remote-Party-ID exists. If this value is set to 0, the OSP Module will use the calling number in the From header of the INVITE message. The default value is 1</para>
+      <para>The use_rpid_for_calling_number(integer) parameter instructs the OSP module to use the calling number in the Remote-Party-ID of the SIP INVITE message. If this value is set to 1, the OSP Module uses the calling number in the Reomte-Party-ID header of the INVITE message when a Remote-Party-ID exists. If this value is set to 0, the OSP Module will use the calling number in the From header of the INVITE message. The default value is 1.</para>
       <example>
         <title>Instructing the module to use calling number in Remote-Party-ID</title>
         <programlisting format="linespecific">
@@ -373,6 +364,6 @@ if (reportospusage ()) {
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("osp.sgml" "Book" "chapter")
+xml-parent-document: ("osp.xml" "Book" "chapter")
 End:
 -->
