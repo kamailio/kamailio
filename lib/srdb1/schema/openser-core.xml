@@ -12,6 +12,7 @@
 
     <xi:include href="version.xml"/>
 
+    <xi:include href="acc.xml"/>
     <xi:include href="gw.xml"/>
     <xi:include href="pdt.xml"/>
     <xi:include href="uri.xml"/>

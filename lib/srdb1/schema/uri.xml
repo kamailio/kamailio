@@ -7,8 +7,7 @@
 
 ]>
 
-
-<table xmlns:db="http://docbook.org/ns/docbook">
+<table id="uri" xmlns:db="http://docbook.org/ns/docbook">
     <name>uri</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
@@ -18,7 +17,7 @@
 	    </db:para>
     </description>
 
-    <column id="uri.id">
+    <column id="id">
 	<name>id</name>
 	<type>unsigned int</type>
 	<size>&table_id_len;</size>
@@ -26,7 +25,7 @@
 	<type db="dbtext">int,auto</type>
     </column>
 
-    <column id="uri.username">
+    <column id="username">
 	<name>&USERCOL;</name>
 	<type>string</type>
 	<size>&user_len;</size>
@@ -34,7 +33,7 @@
 	<description>Username / Phone Number</description>
     </column>
 
-    <column id="uri.domain">
+    <column id="domain">
 	<name>domain</name>
 	<type>string</type>
 	<size>&domain_len;</size>
@@ -42,7 +41,7 @@
 	<description>Domain Name</description>
     </column>
 
-    <column id="uri.uri_user">
+    <column id="uri_user">
 	<name>uri_user</name>
 	<type>string</type>
 	<size>&user_len;</size>
@@ -59,14 +58,14 @@
 
     <index>
 	<name>udu_uri</name>
-	<colref linkend="uri.username"/>
-	<colref linkend="uri.domain"/>
-	<colref linkend="uri.uri_user"/>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+	<colref linkend="uri_user"/>
 	<unique/>
     </index>
 
     <index>
-	<colref linkend="uri.id"/>
+	<colref linkend="id"/>
 	<primary/>
     </index>
 </table>

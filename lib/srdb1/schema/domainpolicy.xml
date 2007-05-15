@@ -7,7 +7,7 @@
 
 ]>
 
-<table xmlns:db="http://docbook.org/ns/docbook">
+<table id="domainpolicy" xmlns:db="http://docbook.org/ns/docbook">
     <name>domainpolicy</name>
     <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
@@ -16,7 +16,7 @@
         </db:para>
     </description>
 
-    <column id="domainpolicy.id">
+    <column id="id">
         <name>id</name>
         <type>int</type>
         <size>&table_id_len;</size>
@@ -25,7 +25,7 @@
         <description>unique ID</description>
     </column>
 
-    <column id="domainpolicy.rule">
+    <column id="rule">
         <name>rule</name>
         <type>string</type>
         <size>&rule_len;</size>
@@ -39,7 +39,7 @@
         <description> Domain policy rule type. In the case of federation names, this is “fed”. For standard referrals according to draft-lendl-speermint-technical-policy-00, this is “std”. For direct domain lookups, this is “dom”. Default value is “type”.</description>
     </column>
 
-    <column id="domainpolicy.att">
+    <column id="att">
         <name>att</name>
         <type>string</type>
         <size>&rule_len;</size>
@@ -47,7 +47,7 @@
         <description>It contains the AVP’s name. If the rule stored in this row triggers, than dp_can_connect() will add an AVP with that name.</description>
     </column>
 
-    <column id="domainpolicy.val">
+    <column id="val">
         <name>val</name>
         <type>string</type>
         <size>&avp_val_len;</size>
@@ -63,19 +63,19 @@
     </column>
 
     <index>
-        <colref linkend="domainpolicy.rule"/>
-        <colref linkend="domainpolicy.att"/>
-        <colref linkend="domainpolicy.val"/>
+        <colref linkend="rule"/>
+        <colref linkend="att"/>
+        <colref linkend="val"/>
         <unique/>
     </index>
 
     <index>
         <name>rule_idx</name>
-        <colref linkend="domainpolicy.rule"/>
+        <colref linkend="rule"/>
     </index>
 
     <index>
-        <colref linkend="domainpolicy.id"/>
+        <colref linkend="id"/>
         <primary/>
     </index>
 </table>

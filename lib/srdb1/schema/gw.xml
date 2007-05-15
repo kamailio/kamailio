@@ -7,7 +7,7 @@
 
 ]>
 
-<table xmlns:db="http://docbook.org/ns/docbook">
+<table id="gw" xmlns:db="http://docbook.org/ns/docbook">
     <name>gw</name>
     <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
@@ -17,7 +17,7 @@
 	</db:para>
     </description>
 
-    <column id="gw.id">
+    <column id="id">
 	<name>id</name>
 	<type>int</type>
 	<size>&table_id_len;</size>
@@ -25,14 +25,14 @@
 	<type db="dbtext">int,auto</type>
     </column>
 
-    <column id="gw.gw_name">
+    <column id="gw_name">
 	<name>gw_name</name>
 	<type>string</type>
 	<size>128</size>
 	<description>Gateway Name</description>
     </column>
 
-    <column id="gw.grp_id">
+    <column id="grp_id">
 	    <name>grp_id</name>
 	    <type>unsigned int</type>
 	    <description>Gateway ID</description>
@@ -84,17 +84,17 @@
 
     <index>
 	<name>name_gw</name>
-	<colref linkend="gw.gw_name"/>
+	<colref linkend="gw_name"/>
 	<unique/>
     </index>
 
     <index>
 	<name>gid_gw</name>
-	<colref linkend="gw.grp_id"/>
+	<colref linkend="grp_id"/>
     </index>
 
     <index>
-	<colref linkend="gw.id"/>
+	<colref linkend="id"/>
 	<primary/>
     </index>
 </table>

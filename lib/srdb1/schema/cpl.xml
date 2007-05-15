@@ -15,7 +15,7 @@
 	<db:para>Table for the call processing language "cpl" module</db:para>
     </description>
 
-    <column id="cpl.id">
+    <column id="id">
 	<name>id</name>
 	<type>unsigned int</type>
 	<autoincrement/>
@@ -24,13 +24,13 @@
 	<description>Unique ID</description>
     </column>
 
-    <column id="cpl.username">
+    <column id="username">
 	    <name>username</name>
 	    <type>string</type>
 	    <size>&user_len;</size>
     </column>
 
-    <column id="cpl.domain">
+    <column id="domain">
 	    <name>domain</name>
 	    <type>string</type>
 	    <size>64</size>
@@ -52,12 +52,12 @@
     <index>
 	<name>ud_cpl</name>
 	<unique/>
-	<colref linkend="cpl.username"/>
-	<colref linkend="cpl.domain"/>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
     </index>
 
     <index>
-	    <colref linkend="cpl.id"/>
+	    <colref linkend="id"/>
 	    <primary/>
     </index>
 </table>

@@ -7,7 +7,7 @@
 
 ]>
 
-<table xmlns:db="http://docbook.org/ns/docbook">
+<table id="pdt" xmlns:db="http://docbook.org/ns/docbook">
     <name>pdt</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
@@ -17,7 +17,7 @@
 	</db:para>
     </description>
 
-    <column id="pdt.id">
+    <column id="id">
 	<name>id</name>
 	<type>int</type>
 	<size>&table_id_len;</size>
@@ -26,14 +26,14 @@
 	<description>unique ID</description>
     </column>
 
-    <column id="pdt.sdomain">
+    <column id="sdomain">
 	    <name>sdomain</name>
 	    <type>string</type>
 	    <size>&uri_len;</size>
 	    <description>Source Domain</description>
     </column>
 
-    <column id="pdt.prefix">
+    <column id="prefix">
 	<name>prefix</name>
 	<type>string</type>
 	<size>32</size>
@@ -51,12 +51,12 @@
     <index>
 	<name>sp_pdt</name>
 	<unique/>
-	<colref linkend="pdt.sdomain"/>
-	<colref linkend="pdt.prefix"/>
+	<colref linkend="sdomain"/>
+	<colref linkend="prefix"/>
     </index>
 
     <index>
-	<colref linkend="pdt.id"/>
+	<colref linkend="id"/>
 	<primary/>
     </index>
 </table>

@@ -7,7 +7,7 @@
 
 ]>
 
-<table xmlns:db="http://docbook.org/ns/docbook">
+<table id="sip_trace" xmlns:db="http://docbook.org/ns/docbook">
 	<name>sip_trace</name>
 	<version>1</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
@@ -16,7 +16,7 @@
 		</db:para>
 	</description>
 
-    <column id="sip_trace.id">
+    <column id="id">
 	<name>id</name>
 	<type>int</type>
 	<size>&table_id_len;</size>
@@ -25,14 +25,14 @@
 	<description>unique ID</description>
     </column>
 
-    <column id="sip_trace.date">
+    <column id="date">
 	<name>date</name>
 	<type>datetime</type>
 	<default>0000-00-00 00:00:00</default>
 	<description>Recording date</description>
     </column>
 
-    <column id="sip_trace.callid">
+    <column id="callid">
 	<name>callid</name>
 	<type>string</type>
 	<size>&hf_len;</size>
@@ -40,7 +40,7 @@
 	<description>call ID from SIP message</description>
     </column>
 
-    <column id="sip_trace.traced_user">
+    <column id="traced_user">
 	<name>traced_user</name>
 	<type>string</type>
 	<size>&uri_len;</size>
@@ -70,7 +70,7 @@
 	<description>SIP reply status</description>
     </column>
 
-    <column id="sip_trace.fromip">
+    <column id="fromip">
 	<name>fromip</name>
 	<type>string</type>
 	<size>&ip_add_len;</size>
@@ -104,26 +104,26 @@
 
     <index>
 	<name>user_idx</name>
-	<colref linkend="sip_trace.traced_user"/>
+	<colref linkend="traced_user"/>
     </index>
 
     <index>
 	<name>date_id</name>
-	<colref linkend="sip_trace.date"/>
+	<colref linkend="date"/>
     </index>
 
     <index>
 	<name>ip_idx</name>
-	<colref linkend="sip_trace.fromip"/>
+	<colref linkend="fromip"/>
     </index>
 
     <index>
 	<name>call_id</name>
-	<colref linkend="sip_trace.callid"/>
+	<colref linkend="callid"/>
     </index>
 
     <index>
-	<colref linkend="sip_trace.id"/>
+	<colref linkend="id"/>
     <primary/>
     </index>
 </table>
