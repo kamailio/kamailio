@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="aliases" xmlns:db="http://docbook.org/ns/docbook">
+    <name>aliases</name>
+    <version>1004</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table for the registrar module is similar to the “location” table. More information is available at: http://www.openser.org/docs/modules/1.2.x/registrar.html
+	</db:para>
+    </description>
+
+    <column id="id">
+	<name>id</name>
+	<type>unsigned int</type>
+	<size>&table_id_len;</size>
+	<autoincrement/>
+	<type db="dbtext">int,auto</type>
+	<description>unique ID</description>
+    </column>
+
+    <column id="username">
+	    <name>&USERCOL;</name>
+	    <type>string</type>
+	    <size>&user_len;</size>
+            <default/>
+            <description>Alias Username / Phone Number </description>
+    </column>
+
+    <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<size>&domain_len;</size>
+        <default/>
+	<description>Domain name</description>
+    </column>
+
+    <column id="contact">
+	<name>contact</name>
+	<type>string</type>
+	<size>&hf_len;</size>
+	<default/>
+        <description>Contact header field value provides a URI whoses meaning depends on the type of request or response it is in.</description>
+    </column>
+
+    <column>
+        <name>received</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <null/>
+        <default>NULL</default>
+        <description>Received IP:PORT in the format SIP:IP:PORT</description>
+    </column>
+
+    <column>
+        <name>path</name>
+        <type>string</type>
+        <size></size>
+        <null/>
+        <default>NULL</default>
+        <description>Path Header(s) per RFC 3327</description>
+    </column>
+
+    <column>
+        <name>expires</name>
+        <type>datetime</type>
+        <default>&DEFAULT_ALIASES_EXPIRES;</default>
+        <description>Date / Time that this entry expires.</description>
+    </column>
+
+    <column>
+        <name>q</name>
+        <type>float</type>
+        <size>10,2</size>
+        <default>&DEFAULT_Q;</default>
+        <description>Value used for preferential routing.</description>
+    </column>
+
+    <column>
+        <name>callid</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <default>&DEFAULT_CALLID;</default>
+        <description>Call-ID header field uniquely identifies a particular invitation or all registrations of a particular client.</description>
+    </column>
+
+    <column>
+        <name>cseq</name>
+        <type>int</type>
+        <size>11</size>
+        <default>&DEFAULT_CSEQ;</default>
+        <description>CSeq header field contains a single decimal sequence number and the request method.</description>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>1900-01-01 00:00</default>
+        <description>Date / Time this entry was last changed.</description>
+    </column>
+
+    <column>
+        <name>flags</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>Flags</description>
+    </column>
+
+    <column>
+        <name>cflags</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>CFlags</description>
+    </column>
+
+    <column>
+        <name>useragent</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <default/>
+        <description>User-Agent header field contains information about the UAC originating the request.</description>
+    </column>
+
+    <column>
+        <name>socket</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default>NULL</default>
+        <description>Socket used to connect to OpenSER. For example: UDP:IP:PORT</description>
+    </column>
+
+    <column>
+        <name>methods</name>
+        <type>int</type>
+        <size>11</size>
+        <null/>
+        <default>NULL</default>
+        <description>Flags that indicate the SIP Methods this contact will accept.</description>
+    </column>
+
+    <index>
+	<name>udc_als</name>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+        <colref linkend="contact"/>
+    </index>
+
+    <index>
+	<colref linkend="id"/>
+	<primary/>
+    </index>
+</table>

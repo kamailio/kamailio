@@ -28,7 +28,7 @@
     <column id="date">
 	<name>date</name>
 	<type>datetime</type>
-	<default>0000-00-00 00:00:00</default>
+	<default>&DEFAULT_DATETIME;</default>
 	<description>Recording date</description>
     </column>
 

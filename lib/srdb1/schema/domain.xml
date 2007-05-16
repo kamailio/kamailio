@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="domain" xmlns:db="http://docbook.org/ns/docbook">
+    <name>domain</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the domain module to determine if a host part of a URI is “local” or not. More information about the domain module can be found at: http://www.openser.org/docs/modules/1.2.x/domain.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="dom">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain name</description>
+        <default/>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <description>Date / Time this record was last modified</description>
+    </column>
+
+    <index>
+        <name>d_domain</name>
+        <colref linkend="dom"/>
+    <unique/>
+    </index>
+
+    <index>
+        <colref linkend="id"/>
+        <primary/>
+    </index>
+</table>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+]>
+
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>openser</name>
+    <xi:include href="grp.xml"/>
+</database>

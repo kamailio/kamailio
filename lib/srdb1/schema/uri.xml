@@ -52,7 +52,7 @@
     <column>
         <name>last_modified</name>
 	<type>datetime</type>
-	<default>0000-00-00 00:00:00</default>
+	<default>&DEFAULT_DATETIME;</default>
 	<description>Date / Time this record was last modified.</description>
     </column>
 
