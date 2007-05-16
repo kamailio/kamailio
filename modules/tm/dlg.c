@@ -166,7 +166,7 @@ static void destroy_trans_dlg_callbacks(dlg_t* dlg)
 	struct tm_callback* cbp;
 	
 	if ((dlg->dlg_callbacks.first==0) || 
-			((dlg->dlg_callbacks.types&TMCB_DESTROY)==0) )
+			((dlg->dlg_callbacks.reg_types&TMCB_DESTROY)==0) )
 		return;
 	memset(&params, 0, sizeof(params));
 	for (cbp=dlg->dlg_callbacks.first; cbp; cbp=cbp->next){
@@ -1176,7 +1176,7 @@ void free_dlg(dlg_t* _d)
 {
         if (!_d) return;
 #ifdef DIALOG_CALLBACKS
-	destroy_trans_dlg_callbacks(dlg_t* _d);
+	destroy_trans_dlg_callbacks(_d);
 #endif
 	if (_d->id.call_id.s) shm_free(_d->id.call_id.s);
 	if (_d->id.rem_tag.s) shm_free(_d->id.rem_tag.s);
