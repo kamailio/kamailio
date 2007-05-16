@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
-  "../../doc/dbschema/dtd/dbschema.dtd" [
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
 %entities;

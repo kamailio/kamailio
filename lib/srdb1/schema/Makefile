@@ -2,14 +2,8 @@
 # $Id$
 #
 
-# File containing OpenSER core database descriptions
-DOC_CORE = openser-core.xml
-# File containing OpenSER extra database descriptions
-DOC_EXTRA = openser-extra.xml
-# File containing OpenSER serweb database descriptions
-DOC_SERWEB = openser-serweb.xml
-# File containing OpenSER presence database descriptions
-DOC_PRESENCE = openser-presence.xml
+# OpenSER database descriptions
+TABLES = standard acc imc lcr siptrace domainpolicy cpl presence serweb 
 
 ROOT=../..
 STYLESHEETS=$(ROOT)/doc/dbschema/xsl
@@ -32,11 +26,11 @@ DOCBOOK_XSL = $(STYLESHEETS)/docbook.xsl
 # Enable/disable DTD validation
 VALIDATE = 0
 
-# be verbose
+# Enable/disable verbose output (and DTD validation)
 VERBOSE = 0
 
 # XML Catalog used to resolve entities
-CATALOG = $(ROOT)/doc/catalog.xml
+CATALOG = $(ROOT)/doc/dbschema/catalog.xml
 
 XSLTPROC = /usr/bin/xsltproc
 XSLTPROC_FLAGS = --xinclude
@@ -49,124 +43,59 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql dbtext mysql postgres #oracle docbook
+all: mysql postgres dbtext #oracle docbook
 
 .PHONY: mysql mysql_clean
 mysql:
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/mysql" \
-	    --stringparam prefix "core-" \
-	    --stringparam db "mysql" \
-	    $(MYSQL_XSL) $(DOC_CORE)
-	    
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/mysql" \
-	    --stringparam prefix "extra-" \
-	    --stringparam db "mysql" \
-	    $(MYSQL_XSL) $(DOC_EXTRA)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/mysql" \
-	    --stringparam prefix "serweb-" \
-	    --stringparam db "mysql" \
-	    $(MYSQL_XSL) $(DOC_SERWEB)
-    
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/mysql" \
-	    --stringparam prefix "presence-" \
-	    --stringparam db "mysql" \
-	    $(MYSQL_XSL) $(DOC_PRESENCE)
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/scripts/mysql" \
+		--stringparam prefix "$$FILE-" \
+		--stringparam db "mysql" \
+		$(MYSQL_XSL) openser-"$$FILE".xml ; \
+	done
 
 mysql_clean:
 	rm -f $(ROOT)/scripts/mysql/my_*
 
 .PHONY: postgres postgres_clean
 postgres:
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/postgres" \
-	    --stringparam prefix "core-" \
-	    --stringparam db "postgres" \
-	    $(POSTGRES_XSL) $(DOC_CORE)
-	    
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/postgres" \
-	    --stringparam prefix "extra-" \
-	    --stringparam db "postgres" \
-	    $(POSTGRES_XSL) $(DOC_EXTRA)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/postgres" \
-	    --stringparam prefix "serweb-" \
-	    --stringparam db "postgres" \
-	    $(POSTGRES_XSL) $(DOC_SERWEB)
-	    
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/postgres" \
-	    --stringparam prefix "presence-" \
-	    --stringparam db "postgres" \
-	    $(POSTGRES_XSL) $(DOC_PRESENCE)
-
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/scripts/postgres" \
+		--stringparam prefix "$$FILE-" \
+		--stringparam db "postgres" \
+		$(POSTGRES_XSL) openser-"$$FILE".xml ; \
+	done
 
 postgres_clean:
-	rm -f $(ROOT)/scripts/postgres/pg_*
+	rm -f $(ROOT)/scripts/postgres/*
 
 .PHONY: oracle oracle_clean
 oracle:
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/oracle" \
-	    --stringparam prefix "core-" \
-	    --stringparam db "oracle" \
-	    $(ORACLE_XSL) $(DOC_CORE)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/oracle" \
-	    --stringparam prefix "extra-" \
-	    --stringparam db "oracle" \
-	    $(ORACLE_XSL) $(DOC_EXTRA)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/oracle" \
-	    --stringparam prefix "serweb-" \
-	    --stringparam db "oracle" \
-	    $(ORACLE_XSL) $(DOC_SERWEB)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	    --stringparam dir "$(ROOT)/scripts/oracle" \
-	    --stringparam prefix "presence-" \
-	    --stringparam db "oracle" \
-	    $(ORACLE_XSL) $(DOC_PRESENCE)
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/scripts/oracle" \
+		--stringparam prefix "$$FILE-" \
+		--stringparam db "oracle" \
+		$(ORACLE_XSL) openser-"$$FILE".xml ; \
+	done
 
 oracle_clean:
-	rm -f $ROOT/scripts/oracles/or_*
+	rm -f $ROOT/scripts/oracle/*
 
 .PHONY: dbtext dbtext_clean
 dbtext:
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	--stringparam dir "$(ROOT)/scripts/dbtext/openser_db" \
-	--stringparam prefix "" \
-	--stringparam db "dbtext" \
-	$(DBTEXT_XSL) $(DOC_CORE)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	--stringparam dir "$(ROOT)/scripts/dbtext/openser_db" \
-	--stringparam prefix "" \
-	--stringparam db "dbtext" \
-	$(DBTEXT_XSL) $(DOC_EXTRA)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	--stringparam dir "$(ROOT)/scripts/dbtext/openser_db" \
-	--stringparam prefix "" \
-	--stringparam db "dbtext" \
-	$(DBTEXT_XSL) $(DOC_SERWEB)
-
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-	--stringparam dir "$(ROOT)/scripts/dbtext/openser_db" \
-	--stringparam prefix "" \
-	--stringparam db "dbtext" \
-	$(DBTEXT_XSL) $(DOC_PRESENCE)
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/scripts/dbtext/openser_db" \
+		--stringparam prefix "" \
+		--stringparam db "dbtext" \
+		$(DBTEXT_XSL) openser-"$$FILE".xml ; \
+	done
 
 dbtext_clean:
-	rm -f $ROOT/scripts/dbtext/ser_db/*
+	rm -f $ROOT/scripts/dbtext/openser_db/*
 
 .PHONY: docbook docbook_clean
 docbook:
@@ -180,4 +109,3 @@ docbook_clean:
 
 .PHONY: clean
 clean: mysql_clean postgres_clean oracle_clean dbtext_clean docbook_clean
-

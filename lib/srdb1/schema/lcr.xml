@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="lcr" xmlns:db="http://docbook.org/ns/docbook">
+    <name>lcr</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the lcr (Least Cost Routing) rules.
+            More information can be found at: http://www.openser.org/docs/modules/1.2.x/lcr.html Gateways (gw) Table.
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="prefix">
+        <name>prefix</name>
+        <type>string</type>
+        <size>16</size>
+        <description>The Request-URI (destination) prefix.</description>
+    </column>
+
+    <column id="from_uri">
+        <name>from_uri</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <description>The FROM (source) URI.</description>
+    </column>
+
+    <column id="grp_id">
+        <name>grp_id</name>
+        <type>unsigned int</type>
+        <description>Group ID</description>
+    </column>
+
+    <column>
+        <name>priority</name>
+        <type>unsigned char</type>
+        <description>Priority</description>
+    </column>
+
+    <index>
+        <colref linkend="prefix"/>
+    </index>
+
+    <index>
+        <colref linkend="from_uri"/>
+    </index>
+
+    <index>
+        <colref linkend="grp_id"/>
+    </index>
+
+    <index>
+        <colref linkend="id"/>
+        <primary/>
+    </index>
+</table>
