@@ -134,7 +134,7 @@ static param_export_t params[]={
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "refershWatchers", refreshWatchers,    0,  0,  0},
+	{ "refreshWatchers", refreshWatchers,    0,  0,  0},
 	{ 0, 0, 0, 0}
 };
 
