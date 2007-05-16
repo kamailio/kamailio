@@ -15,7 +15,7 @@
     <title>Functions</title>
 
     <section id="m_store">
-	<title><function>m_store(mode, next_step)</function></title>
+	<title><function>m_store(mode, next_hop)</function></title>
 	<para>
 	    The method stores certain parts of the current SIP request (it
 	    should be called when the request type is MESSAGE and the
@@ -54,9 +54,9 @@
 	    </listitem>
 	    <listitem>
 		<para>
-		    <emphasis>next_hop</emphasis> - specifies next hop for sending
+		    <emphasis>next_hop (optional)</emphasis> - specifies next hop for sending
 			outgoing messages (use as "outbound
-			proxy"). Its value can be empty or set to a sip URI like
+			proxy"). Its value can be unset, empty or set to a sip URI like
 			"sip:127.0.0.1:5060".
 		</para>
 	    </listitem>
@@ -76,9 +76,9 @@
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    <emphasis>next_hop</emphasis> - specifies next hop for sending
+		    <emphasis>next_hop (optional)</emphasis> - specifies next hop for sending
 			outgoing messages (use as "outbound
-			proxy"). Its value can be empty or set to a sip URI like
+			proxy"). Its value can be unset, empty or set to a sip URI like
 			"sip:127.0.0.1:5060".
 		</para>
 	    </listitem>
