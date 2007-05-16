@@ -37,6 +37,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <null/>
+        <default>NULL</default>
         <description>The FROM (source) URI.</description>
     </column>
 

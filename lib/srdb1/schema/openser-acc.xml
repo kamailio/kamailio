@@ -10,4 +10,5 @@
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>openser</name>
     <xi:include href="acc.xml"/>
+    <xi:include href="missed_calls.xml"/>
 </database>

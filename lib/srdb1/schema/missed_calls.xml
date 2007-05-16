@@ -7,15 +7,14 @@
 
 ]>
 
-<table id="acc" xmlns:db="http://docbook.org/ns/docbook">
-    <name>acc</name>
-    <version>4</version>
+<table id="missed_calls" xmlns:db="http://docbook.org/ns/docbook">
+    <name>missed_calls</name>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table is used by the ACC module to report on transactions - accounted calls. More information is available at: http://www.openser.org/docs/modules/1.2.x/acc.html
-        </db:para>
+        <db:para>This table is used by the ACC module for keeping track of missed calls. This table is similar to the 'acc' table. More information is available at: http://www.openser.org/docs/modules/1.2.x/acc.html</db:para>
     </description>
-
+    
     <column id="id">
         <name>id</name>
         <type>unsigned int</type>
@@ -24,7 +23,7 @@
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
     </column>
-
+    
     <column>
         <name>method</name>
         <type>string</type>
@@ -32,7 +31,7 @@
         <description>A method is the primary function that a request is meant to invoke on a server.</description>
         <default/>
     </column>
-
+    
     <column>
         <name>from_tag</name>
         <type>string</type>
@@ -40,7 +39,7 @@
         <default/>
         <description>The tag parameter serves as a general mechanism to identify a dialog, which is the combination of the Call-ID along with two tags, one from participant in the dialog.</description>
     </column>
-
+    
     <column>
         <name>to_tag</name>
         <type>string</type>
@@ -48,7 +47,7 @@
         <default/>
         <description>The tag parameter serves as a general mechanism to identify a dialog, which is the combination of the Call-ID along with two tags, one from participant in the dialog.</description>
     </column>
-
+    
     <column id="callid">
         <name>callid</name>
         <type>string</type>
@@ -56,7 +55,7 @@
         <default/>
         <description>Call-ID header field uniquely identifies a particular invitation or all registrations of a particular client. </description>
     </column>
-
+    
     <column>
         <name>sip_code</name>
         <type>string</type>
@@ -64,7 +63,7 @@
         <default/>
         <description>SIP reply code</description>
     </column>
-
+    
     <column>
         <name>sip_reason</name>
         <type>string</type>
@@ -72,18 +71,18 @@
         <default/>
         <description>SIP reply reason</description>
     </column>
-
+    
     <column>
         <name>time</name>
         <type>datetime</type>
         <description>Date / Time this record was written.</description>
     </column>
-
+    
     <index>
         <name>acc_callid</name>
         <colref linkend="callid"/>
     </index>
-
+    
     <index>
         <colref linkend="id"/>
         <primary/>

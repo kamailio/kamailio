@@ -12,7 +12,7 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Room table for the imc module. More information at http://www.openser.org/docs/modules/1.2.x/imc.html.
+        <db:para>Room table for the IMC module. More information at http://www.openser.org/docs/modules/1.2.x/imc.html.
         </db:para>
     </description>
 

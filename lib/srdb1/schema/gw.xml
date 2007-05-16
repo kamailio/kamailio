@@ -13,7 +13,7 @@
     <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-	<db:para>This table contains Least Cost Routing Gateway definitions.
+	<db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
 		More information can be found at: http://www.openser.org/docs/modules/1.2.x/lcr.html Gateways (gw) Table.
 	</db:para>
     </description>

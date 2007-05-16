@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<!--       port smallint(5) unsigned NOT NULL default '0',
+           PRIMARY KEY (id)-->
+
+<table id="address" xmlns:db="http://docbook.org/ns/docbook">
+    <name>address</name>
+    <version>3</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the ACC module. More information is available at: http://www.openser.org/docs/modules/1.2.x/acc.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column>
+        <name>grp</name>
+        <type>unsigned short</type>
+        <size>5</size>
+        <default>0</default>
+        <description>Group</description>
+    </column>
+
+    <column>
+        <name>ip_addr</name>
+        <type>string</type>
+        <size>15</size>
+        <description>IP address</description>
+    </column>
+
+    <column>
+        <name>mask</name>
+        <type>char</type>
+        <size>32</size>
+        <default>32</default>
+        <description>Network mask</description>
+    </column>
+
+    <column>
+        <name>port</name>
+        <type>unsigned short</type>
+        <size>5</size>
+        <default>0</default>
+        <description>Port</description>
+    </column>
+
+    <index>
+        <colref linkend="id"/>
+        <primary/>
+    </index>
+</table>
