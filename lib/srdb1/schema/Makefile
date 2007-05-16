@@ -3,7 +3,7 @@
 #
 
 # OpenSER database descriptions
-TABLES = standard acc imc lcr siptrace domainpolicy cpl domain group permissions registrar presence serweb 
+TABLES = standard acc imc lcr siptrace domainpolicy cpl domain group permissions registrar usrloc presence serweb 
 
 ROOT=../..
 STYLESHEETS=$(ROOT)/doc/dbschema/xsl

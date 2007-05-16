@@ -15,7 +15,7 @@
          an error if they are not present, although it
          would produce a warning
          -->
-    <xi:include href="extra.xml" xpointer="xpointer(data/table)">
+    <xi:include href="extra.xml">
         <xi:fallback/>
     </xi:include>
 

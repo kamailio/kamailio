@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+<!-- set DTD for XML format, use values from entities.xml -->
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="table_name" xmlns:db="http://docbook.org/ns/docbook"> <!-- set id for colref links and namespace for "db:para" nodes -->
+    <name>table_name</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type><!-- specify the table type for mysql -->
+    <description>
+	<db:para>table documentation</db:para>
+    </description>
+
+    <column id="id">
+	<name>id</name>
+	<type>int</type>
+	<size>&table_id_len;</size> <!-- use a value from entities.xml -->
+	<autoincrement/><!-- auto increment the id -->
+	<type db="dbtext">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->
+	<description>unique ID</description>
+    </column>
+
+    <column id="bla">
+	<name>foo</name>
+	<type>string</type>
+	<size>100</size>
+        <!--<default>bla</default> Default value for the column is 'bla' -->
+        <!--<default/>  Default value is '' -->
+        <!--</null> This column can be NULL -->
+	<description>column documentation</description>
+    </column>
+
+    <index>
+	<name>bar</name>
+	<!--<unique/> -> UNIQUE KEY -->
+	<colref linkend="bla"/> <!-- link to the node with these id -->
+    </index>
+
+    <index>
+	<colref linkend="id"/>
+	<primary/> <!-- PRIMARY KEY -->
+    </index>
+</table>
