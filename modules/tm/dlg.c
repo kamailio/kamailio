@@ -29,6 +29,7 @@
  * 2003-03-29 Created by janakj
  * 2003-07-08 added wrapper to calculate_hooks, needed by b2bua (dcm)
  * 2007-04-13 added dialog callbacks (andrei)
+ * 2007-05-16 added dialog callbacks destroy (andrei)
  */
 
 
@@ -122,7 +123,8 @@ static void run_new_dlg_callbacks(int type, dlg_t* dlg, struct sip_msg* msg)
 
 int register_dlg_tmcb(int types, dlg_t* dlg, transaction_cb f, void* param)
 {
-	if (types!=TMCB_DLG){
+	/* only TMCB_DLG bad TMCB_DESTROY allowed */
+	if ((types&(TMCB_DLG|TMCB_DESTROY))!=types){
 		LOG(L_CRIT, "BUG: tm: register_dlg_tmcb: bad types %d\n", types);
 		return E_BUG;
 	}
@@ -145,16 +147,35 @@ void run_trans_dlg_callbacks(dlg_t* dlg, struct cell* trans,
 		return;
 	memset(&params, 0, sizeof(params));
 #ifdef TMCB_ONSEND
-	params.t_rbuf=rbuf;
-	params.dst=&rbuf->dst;
-	params.send_buf.s=rbuf->buffer;
-	params.send_buf.len=rbuf->buffer_len;
+	if (rbuf){
+		params.t_rbuf=rbuf;
+		params.dst=&rbuf->dst;
+		params.send_buf.s=rbuf->buffer;
+		params.send_buf.len=rbuf->buffer_len;
+	}
 #endif
 	
 	run_trans_callbacks_internal(&dlg->dlg_callbacks, TMCB_DLG, trans, 
 									&params);
 }
 
+/* TMCB_DESTROY per dialog callbacks */
+static void destroy_trans_dlg_callbacks(dlg_t* dlg)
+{
+	struct tmcb_params params;
+	struct tm_callback* cbp;
+	
+	if ((dlg->dlg_callbacks.first==0) || 
+			((dlg->dlg_callbacks.types&TMCB_DESTROY)==0) )
+		return;
+	memset(&params, 0, sizeof(params));
+	for (cbp=dlg->dlg_callbacks.first; cbp; cbp=cbp->next){
+		if (cbp->types & TMCB_DESTROY){
+			params.param=&(cbp->param);
+			cbp->callback(0, 0, &params);
+		}
+	}
+}
 #endif /* DIALOG_CALLBACKS */
 
 /*** Temporary hack ! */
@@ -1154,7 +1175,9 @@ char* print_routeset(char* buf, dlg_t* _d)
 void free_dlg(dlg_t* _d)
 {
         if (!_d) return;
-
+#ifdef DIALOG_CALLBACKS
+	destroy_trans_dlg_callbacks(dlg_t* _d);
+#endif
 	if (_d->id.call_id.s) shm_free(_d->id.call_id.s);
 	if (_d->id.rem_tag.s) shm_free(_d->id.rem_tag.s);
 	if (_d->id.loc_tag.s) shm_free(_d->id.loc_tag.s);

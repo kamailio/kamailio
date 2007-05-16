@@ -35,6 +35,7 @@
  * 2007-03-17   added TMCB_NEG_ACK_IN, TMCB_REQ_RETR_IN & 
  *               TMCB_LOCAL_RESPONSE_IN (andrei)
  * 2007-03-23   added TMCB_LOCAL_REQUEST_IN (andrei)
+ * 2007-05-16   added TMCB_DESTROY (andrei)
  */
 
 
@@ -70,13 +71,15 @@ struct cell;
 #define TMCB_LOCAL_RESPONSE_IN_N 12
 #define TMCB_LOCAL_REQUEST_IN_N  13
 #define TMCB_DLG_N              14
+#define TMCB_DESTROY_N          15  /* called on transaction destroy */
 #ifdef TMCB_ONSEND
-#define TMCB_REQUEST_SENT_N     15
-#define TMCB_RESPONSE_SENT_N    16
-#define TMCB_MAX_N              16
+#define TMCB_REQUEST_SENT_N     16
+#define TMCB_RESPONSE_SENT_N    17
+#define TMCB_MAX_N              17
 #else
-#define TMCB_MAX_N              14
+#define TMCB_MAX_N              15
 #endif
+
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
 #define TMCB_RESPONSE_IN      (1<<TMCB_RESPONSE_IN_N)
@@ -93,6 +96,7 @@ struct cell;
 #define TMCB_LOCAL_RESPONSE_IN (1<<TMCB_LOCAL_RESPONSE_IN_N)
 #define TMCB_LOCAL_REQUEST_IN (1<<TMCB_LOCAL_REQUEST_IN_N)
 #define TMCB_DLG              (1<<TMCB_DLG_N)
+#define TMCB_DESTROY          (1<<TMCB_DESTROY_N)
 #ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
@@ -295,10 +299,16 @@ struct cell;
  *  This callback is "read-only", the message was already sent and no changes
  *  are allowed.
  *
+ *  TMCB_DESTROY -- called when the transaction is destroyed. Everything but
+ *  the cell* parameter (t) and the tmcb are set to 0. Only the param is
+ *  is filled inside TMCB. For dialogs callbacks t is also 0.
+ *
 
 	the callback's param MUST be in shared memory and will
 	NOT be freed by TM; you must do it yourself from the
-	callback function if necessary.
+	callback function if necessary (for example register it also for 
+	 TMCB_DESTROY and when called with TMCB_DESTROY just free the param
+	).
 */
 
 #ifdef TMCB_ONSEND

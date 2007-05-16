@@ -42,6 +42,7 @@
  * 2004-08-23  avp support added - move and remove avp list to/from
  *             transactions (bogdan)
  * 2006-08-11  dns failover support (andrei)
+ * 2007-05-16  callbacks called on destroy (andrei)
  */
 
 #include <stdlib.h>
@@ -121,6 +122,7 @@ void free_cell( struct cell* dead_cell )
 	struct tm_callback *cbs, *cbs_tmp;
 
 	release_cell_lock( dead_cell );
+	run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
 	shm_lock();
 
 	/* UA Server */
