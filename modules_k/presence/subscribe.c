@@ -740,8 +740,11 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 		}	
 		subs->event= contains_event(&ev_name, ev_param);
 		if(ev_param)
+		{
 			pkg_free(ev_param);
-		
+			ev_param= NULL;
+		}
+
 		if(subs->event== NULL)
 		{
 			LOG(L_ERR, "PRESENCE:msg_active_watchers_clean: ERROR while"
