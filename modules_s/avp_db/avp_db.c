@@ -47,6 +47,7 @@
 #include "../../id.h"
 #include "../domain/domain.h"
 #include "avp_db.h"
+#include "extra_attrs.h"
 
 MODULE_VERSION
 
@@ -79,6 +80,16 @@ static domain_get_did_t dm_get_did = NULL;
  */
 static cmd_export_t cmds[] = {
     {"load_attrs", load_attrs, 2, attrs_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	
+	/* functions for loading/storing flagged attributes into DB */
+    {"load_extra_attrs", load_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+    {"save_extra_attrs", save_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+    {"remove_extra_attrs", remove_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+
+	/* locking attrs - needed for proper work! */
+    {"lock_extra_attrs", lock_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+    {"unlock_extra_attrs", unlock_extra_attrs, 2, extra_attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},	
+	
     {0, 0, 0, 0, 0}
 };
 
@@ -98,6 +109,8 @@ static param_export_t params[] = {
     {"value_column",     PARAM_STRING, &val_column      },
     {"flags_column",     PARAM_STRING, &flags_column    },
     {"scheme_column",    PARAM_STRING, &scheme_column   },
+
+	{"attr_group", PARAM_STR | PARAM_USE_FUNC, (void*)declare_attr_group },
     {0, 0, 0}
 };
 
@@ -117,7 +130,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-    return 0;
+	return init_extra_avp_locks();
 }
 
 
@@ -154,6 +167,8 @@ static int child_init(int rank)
 
 	load_user_attrs_cmd = db_cmd(DB_GET, ctx, user_attrs_table, res, params_user);
 	if (!load_user_attrs_cmd) goto err;
+
+	if (init_extra_avp_queries(ctx) < 0) goto err;
 
     return 0;
 

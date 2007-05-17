@@ -9,5 +9,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=avp_db.so
 LIBS=
+DEFS += -Wall
 
 include ../../Makefile.modules
