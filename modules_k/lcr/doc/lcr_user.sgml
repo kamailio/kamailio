@@ -61,7 +61,8 @@
 	Table lcr contains prefix of user part of Request-URI, From URI
 	pattern, gateway group id, and priority.  From URI pattern is a
 	regular expression.  Empty From URI pattern matches any From
-	URI.  Larger priority value means higher priority.
+	URI.  Smaller priority value means higher priority (highest
+	priority value being 0).
 	</para>
 	<para>
 	In addition to gw and lcr tables there is third table gw_grp that is
