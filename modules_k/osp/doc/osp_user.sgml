@@ -232,9 +232,9 @@ modparam("osp","use_rpid_calling_number",1)
         <programlisting format="linespecific">
 ...
 if (checkospheader()) {
-  log("OSP header field found.\n");
+  log(1,"OSP header field found.\n");
 } else {
-  log("no OSP header field present\n");
+  log(1,"no OSP header field present\n");
 };
 ...
         </programlisting>
@@ -249,9 +249,9 @@ if (checkospheader()) {
         <programlisting format="linespecific">
 ...
 if (validateospheader()) {
-  log("valid OSP header found\n");
+  log(1,"valid OSP header found\n");
 } else {
-  log("OSP header not found, invalid or expired\n");
+  log(1,"OSP header not found, invalid or expired\n");
 };
 ...
         </programlisting>
@@ -267,9 +267,9 @@ if (validateospheader()) {
         <programlisting format="linespecific">
 ...
 if (requestosprouting()) {
-  log("successfully queried OSP server, now relaying call\n");
+  log(1,"successfully queried OSP server, now relaying call\n");
 } else {
-  log("Authorization request was rejected from OSP server\n");
+  log(1,"Authorization request was rejected from OSP server\n");
 };
 ...
         </programlisting>
@@ -284,9 +284,9 @@ if (requestosprouting()) {
         <programlisting format="linespecific">
 ...
 if (checkosproute()) {
-  log("There is at least one route for the call\n");
+  log(1,"There is at least one route for the call\n");
 } else {
-  log("There is not any route for the call\n");
+  log(1,"There is not any route for the call\n");
 };
 ...
         </programlisting>
@@ -301,9 +301,9 @@ if (checkosproute()) {
         <programlisting format="linespecific">
 ...
 if (prepareosproute()) {
-  log("successfully prepared the route, now relaying call\n");
+  log(1,"successfully prepared the route, now relaying call\n");
 } else {
-  log("could not prepare the route, there is not route\n");
+  log(1,"could not prepare the route, there is not route\n");
 };
 ...
         </programlisting>
@@ -338,9 +338,9 @@ if (checkcallingtranslation()) {
         <programlisting format="linespecific">
 ...
 if (prepareallosproute()) {
-  log("Routes are prepared, now either forking or redirecting the call\n");
+  log(1,"Routes are prepared, now either forking or redirecting the call\n");
 } else {
-  log("Could not prepare the routes. No destination available\n");
+  log(1,"Could not prepare the routes. No destination available\n");
 };
 ...
         </programlisting>
@@ -365,14 +365,14 @@ if (prepareallosproute()) {
         <programlisting format="linespecific">
 ...
 if (is_direction("downstream")) {
-  log(1,"-----------------ROUTE: This BYE message is from SOURCE\n");
+  log(1,"This BYE message is from SOURCE\n");
   if (!reportospusage("0")) {
-    log(1,"-----------------ROUTE: This BYE message does not include OSP usage information\n");
+    log(1,"This BYE message does not include OSP usage information\n");
   }
 } else {
-  log(1,"-----------------ROUTE: This BYE message is from DESTINATION\n");
+  log(1,"This BYE message is from DESTINATION\n");
   if (!reportospusage("1")) {
-    log(1,"-----------------ROUTE: This BYE message does not include OSP usage information\n");
+    log(1,"This BYE message does not include OSP usage information\n");
   }
 }
 ...
