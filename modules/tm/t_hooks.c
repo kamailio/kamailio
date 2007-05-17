@@ -36,6 +36,8 @@
  * 2007-03-08  membar_write() used in insert_tmcb(...) (andrei)
  * 2007-03-14  added *_SENT callbacks (andrei)
  * 2007-03-23  added local_req_in callbacks support (andrei)
+ * 2007-05-17  insert_tmcb is now safe: it loops arround a mb_atomic_cmpxchg
+ *              for a safe lockless list insert (andrei)
  */
 
 #include "defs.h"
@@ -90,7 +92,7 @@ void destroy_tmcb_lists()
 	struct tm_callback *cbp, *cbp_tmp;
 
 	if (req_in_tmcb_hl){
-		for( cbp=req_in_tmcb_hl->first; cbp ; ) {
+		for( cbp=(struct tm_callback*)req_in_tmcb_hl->first; cbp ; ) {
 			cbp_tmp = cbp;
 			cbp = cbp->next;
 			if (cbp_tmp->param) shm_free( cbp_tmp->param );
@@ -100,7 +102,7 @@ void destroy_tmcb_lists()
 		req_in_tmcb_hl=0;
 	}
 	if(local_req_in_tmcb_hl){
-		for( cbp=local_req_in_tmcb_hl->first; cbp ; ) {
+		for( cbp=(struct tm_callback*)local_req_in_tmcb_hl->first; cbp ; ) {
 			cbp_tmp = cbp;
 			cbp = cbp->next;
 			if (cbp_tmp->param) shm_free( cbp_tmp->param );
@@ -112,10 +114,14 @@ void destroy_tmcb_lists()
 }
 
 
+
+/* lockless insert: should be always safe */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 									transaction_cb f, void *param )
 {
 	struct tm_callback *cbp;
+	struct tm_callback *old;
+
 
 	/* build a new callback structure */
 	if (!(cbp=shm_malloc( sizeof( struct tm_callback)))) {
@@ -123,27 +129,23 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 		return E_OUT_OF_MEM;
 	}
 
-	cb_list->reg_types |= types;
+	atomic_or_int(&cb_list->reg_types, types);
 	/* ... and fill it up */
 	cbp->callback = f;
 	cbp->param = param;
 	cbp->types = types;
+	old=(struct tm_callback*)cb_list->first;
 	/* link it into the proper place... */
-	cbp->next = cb_list->first;
-	if (cbp->next)
-		cbp->id = cbp->next->id+1;
-	else
-		cbp->id = 0;
-	membar_write(); /* make sure all the changes to cbp are visible on all cpus
-					   before we update cb_list->first. This is needed for
-					   three reasons: the compiler might reorder some of the 
-					   writes, the cpu/cache could also reorder them with
-					   respect to the visibility on other cpus
-					   (e.g. some of the changes to cbp could be visible on
-					    another cpu _after_ seeing cb_list->first=cbp) and
-					   the "readers" (callbacks callers) do not use locks and
-					   could be called simultaneously on another cpu.*/
-	cb_list->first = cbp;
+	do{
+		cbp->next = old;
+		if (cbp->next)
+			cbp->id = cbp->next->id+1;
+		else
+			cbp->id = 0;
+		/* mb_atomic_cmpxchg includes membar */
+		old=(void*)mb_atomic_cmpxchg_long((void*)&cb_list->first,
+										(long)old, (long)cbp);
+	}while(old!=cbp->next);
 
 	return 1;
 }
@@ -235,7 +237,7 @@ void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
 			&trans->domain_avps_from);
 	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, 
 			&trans->domain_avps_to);
-	for (cbp=cb_lst->first; cbp; cbp=cbp->next)  {
+	for (cbp=(struct tm_callback*)cb_lst->first; cbp; cbp=cbp->next)  {
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 				trans, type, cbp->id );
@@ -336,7 +338,7 @@ static void run_reqin_callbacks_internal(struct tmcb_head_list* hl,
 			&trans->domain_avps_from);
 	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, 
 			&trans->domain_avps_to);
-	for (cbp=hl->first; cbp; cbp=cbp->next)  {
+	for (cbp=(struct tm_callback*)hl->first; cbp; cbp=cbp->next)  {
 		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 			trans, cbp->types, cbp->id );
 		params->param = &(cbp->param);

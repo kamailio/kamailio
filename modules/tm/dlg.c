@@ -169,7 +169,7 @@ static void destroy_trans_dlg_callbacks(dlg_t* dlg)
 			((dlg->dlg_callbacks.reg_types&TMCB_DESTROY)==0) )
 		return;
 	memset(&params, 0, sizeof(params));
-	for (cbp=dlg->dlg_callbacks.first; cbp; cbp=cbp->next){
+	for (cbp=(struct tm_callback*)dlg->dlg_callbacks.first;cbp;cbp=cbp->next){
 		if (cbp->types & TMCB_DESTROY){
 			params.param=&(cbp->param);
 			cbp->callback(0, 0, &params);

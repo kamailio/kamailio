@@ -357,7 +357,7 @@ struct tm_callback {
 };
 
 struct tmcb_head_list {
-	struct tm_callback *first;
+	struct tm_callback volatile *first;
 	int reg_types;
 };
 
