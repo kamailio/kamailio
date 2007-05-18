@@ -12,51 +12,50 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-	<db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). 
-		More information can be found at: http://www.openser.org/docs/modules/1.2.x/pdt.html 
-	</db:para>
+        <db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). More information can be found at: http://www.openser.org/docs/modules/1.2.x/pdt.html 
+        </db:para>
     </description>
 
     <column id="id">
-	<name>id</name>
-	<type>int</type>
-	<size>&table_id_len;</size>
-	<autoincrement/>
-	<type db="dbtext">int,auto</type>
-	<description>unique ID</description>
+        <name>id</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
     </column>
 
     <column id="sdomain">
-	    <name>sdomain</name>
-	    <type>string</type>
-	    <size>&uri_len;</size>
-	    <description>Source Domain</description>
+        <name>sdomain</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Source Domain</description>
     </column>
 
     <column id="prefix">
-	<name>prefix</name>
-	<type>string</type>
-	<size>32</size>
-	<description>Prefix found in the username part of R-URI.</description>
+        <name>prefix</name>
+        <type>string</type>
+        <size>32</size>
+        <description>Prefix found in the username part of R-URI.</description>
     </column>
 
     <column>
-	<name>domain</name>
-	<type>string</type>
-	<size>&uri_len;</size>
-	<default/>
-	<description>Domain corresponding to (sdomain, prefix) pair where the message must be sent.</description>
+        <name>domain</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Domain corresponding to (sdomain, prefix) pair where the message must be sent.</description>
     </column>
 
     <index>
-	<name>sp_pdt</name>
-	<unique/>
-	<colref linkend="sdomain"/>
-	<colref linkend="prefix"/>
+        <name>sp_pdt</name>
+        <colref linkend="sdomain"/>
+        <colref linkend="prefix"/>
+        <unique/>
     </index>
 
     <index>
-	<colref linkend="id"/>
-	<primary/>
+        <colref linkend="id"/>
+        <primary/>
     </index>
 </table>

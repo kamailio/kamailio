@@ -17,7 +17,7 @@
 
     <column id="id">
 	<name>id</name>
-	<type>int</type>
+	<type>int</type><!-- look into the xsl files in doc/dbschema/xsl for a list of all possible datatypes -->
 	<size>&table_id_len;</size> <!-- use a value from entities.xml -->
 	<autoincrement/><!-- auto increment the id -->
 	<type db="dbtext">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->

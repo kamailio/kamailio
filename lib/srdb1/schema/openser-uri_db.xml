@@ -8,6 +8,5 @@
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>openser</name>
-    <xi:include href="grp.xml"/>
-    <xi:include href="re_grp.xml"/>
+    <xi:include href="uri.xml"/>
 </database>

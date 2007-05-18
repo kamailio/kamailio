@@ -3,7 +3,9 @@
 #
 
 # OpenSER database descriptions
-TABLES = standard acc imc lcr siptrace domainpolicy cpl domain group permissions registrar usrloc presence serweb 
+TABLES = standard acc imc lcr siptrace domainpolicy cpl domain group \
+	permissions registrar usrloc msilo alias_db uri_db speeddial \
+	presence serweb
 
 ROOT=../..
 STYLESHEETS=$(ROOT)/doc/dbschema/xsl
@@ -43,7 +45,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext #oracle docbook
+all: mysql postgres dbtext #docbook oracle
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -100,7 +102,7 @@ dbtext_clean:
 .PHONY: docbook docbook_clean
 docbook:
 #	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-#           --stringparam dir "($ROOT)/doc/database" \
+#           --stringparam dir "$(ROOT)/doc/database" \
 #	    --stringparam prefix "" \
 #	    $(DOCBOOK_XSL) $(DOC_ROOT)
 
