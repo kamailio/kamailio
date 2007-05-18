@@ -22,7 +22,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <type db="dbtext">int,auto</type>
-        <description>unique ID</description>
+        <description>Unique ID</description>
     </column>
 
     <column id="sdomain">

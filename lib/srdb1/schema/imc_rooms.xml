@@ -42,7 +42,7 @@
     <column>
         <name>flag</name>
         <type>int</type>
-        <size>11</size>
+        <size>&flag_len;</size>
         <description>Flags</description>
     </column>
 

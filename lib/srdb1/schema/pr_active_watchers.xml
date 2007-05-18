@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="active_watchers" xmlns:db="http://docbook.org/ns/docbook">
+    <name>active_watchers</name>
+    <version>4</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for the presence module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/presence.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column>
+        <name>pres_user</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>Presence User</description>
+    </column>
+
+    <column>
+        <name>pres_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Presence Domain</description>
+    </column>
+
+    <column id="to_user">
+        <name>to_user</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>To User</description>
+    </column>
+
+    <column id="to_domain">
+        <name>to_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>To Domain</description>
+    </column>
+
+    <column>
+        <name>from_user</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>From User</description>
+    </column>
+
+    <column>
+        <name>from_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>From Domain</description>
+    </column>
+
+    <column id="event">
+        <name>event</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default>presence</default>
+        <description>Event description</description>
+    </column>
+
+    <column>
+        <name>event_id</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <null/>
+        <description>Event ID</description>
+    </column>
+
+    <column id="to_tag">
+        <name>to_tag</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>TO tag</description>
+    </column>
+
+    <column>
+        <name>from_tag</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>From tag</description>
+    </column>
+
+    <column>
+        <name>callid</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Call ID</description>
+    </column>
+
+    <column>
+        <name>local_cseq</name>
+        <type>int</type>
+        <size>&cseq_len;</size>
+        <description>Local cseq</description>
+    </column>
+
+    <column>
+        <name>remove_cseq</name>
+        <type>int</type>
+        <size>&cseq_len;</size>
+        <description>Remote cseq</description>
+    </column>
+
+    <column>
+        <name>contact</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Contact</description>
+    </column>
+
+    <column>
+        <name>record_route</name>
+        <type>text</type>
+        <null/>
+        <description>Record route</description>
+    </column>
+
+    <column>
+        <name>expires</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Expires</description>
+    </column>
+
+    <column>
+        <name>status</name>
+        <type>string</type>
+        <size>32</size>
+        <default>pending</default>
+        <description>Status</description>
+    </column>
+
+    <column>
+        <name>version</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>Version</description>
+    </column>
+
+    <column>
+        <name>socket_info</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Socket info</description>
+    </column>
+
+    <column>
+        <name>local_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Local contact</description>
+    </column>
+
+    <index>
+        <name>tt_watchers</name>
+        <colref linkend="to_tag"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>due_activewatchers</name>
+        <colref linkend="to_domain"/>
+        <colref linkend="to_user"/>
+        <colref linkend="event"/>
+    </index>
+
+    <index>
+        <colref linkend="id"/>
+        <primary/>
+    </index>
+</table>

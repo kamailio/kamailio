@@ -12,6 +12,9 @@
 <!ENTITY ip_add_len "50">
 <!ENTITY sip_code_len "3">
 <!ENTITY sip_reason_len "32">
+<!ENTITY cseq_len "11">
+<!ENTITY expires_len "11">
+<!ENTITY flag_len "11">
 <!ENTITY MYSQL_TABLE_TYPE "MyISAM">
 <!ENTITY USERCOL "username">
 <!ENTITY DEFAULT_ALIASES_EXPIRES "2020-05-28 21:32:15">

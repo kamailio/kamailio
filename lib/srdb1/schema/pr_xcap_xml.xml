@@ -2,34 +2,34 @@
 <!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
   "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
 
-  <!ENTITY % entities SYSTEM "entities.xml">
-  %entities;
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
 
 ]>
 
-<table id="imc_members" xmlns:db="http://docbook.org/ns/docbook">
-    <name>imc_members</name>
+<table id="xcap_xml" xmlns:db="http://docbook.org/ns/docbook">
+    <name>xcap_xml</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Member table for the IMC module. More information at http://www.openser.org/docs/modules/1.2.x/imc.html.
+        <db:para>Table for the presence module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/presence.html
         </db:para>
     </description>
 
     <column id="id">
         <name>id</name>
-        <type>unsigned int</type>
+        <type>int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
         <type db="dbtext">int,auto</type>
-        <description>unique ID</description>
+        <description>Unique ID</description>
     </column>
 
     <column id="username">
         <name>username</name>
         <type>string</type>
-        <size>&domain_len;</size>
-        <description>Username</description>
+        <size>&user_len;</size>
+        <description>User name</description>
     </column>
 
     <column id="domain">
@@ -39,24 +39,24 @@
         <description>Domain</description>
     </column>
 
-    <column id="room">
-        <name>room</name>
-        <type>string</type>
-        <size>&realm_len;</size>
+    <column>
+        <name>xcap</name>
+        <type>text</type>
+        <description>xcap</description>
     </column>
 
-    <column>
-        <name>flag</name>
+    <column id="doc_type">
+        <name>doc_type</name>
         <type>int</type>
-        <size>&flag_len;</size>
-        <description>Flags</description>
+        <size>11</size>
+        <description>Doctype</description>
     </column>
 
     <index>
-        <name>nd_imc</name>
+        <name>udd_xcap</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
-        <colref linkend="room"/>
+        <colref linkend="doc_type"/>
         <unique/>
     </index>
 
@@ -65,4 +65,3 @@
         <primary/>
     </index>
 </table>
-

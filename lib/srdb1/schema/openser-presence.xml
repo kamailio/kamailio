@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE database PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
-	  "../../doc/dbschema/dtd/dbschema.dtd" [
-	  
-	  <!ENTITY % entities SYSTEM "entities.xml">
-	  %entities;
-	  
-	  ]>
-	  
-	  <database xmlns:xi="http://www.w3.org/2001/XInclude">
-		  <name>openser</name>
-		  <!-- TODO -->
-	  </database>
+  "../../doc/dbschema/dtd/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>openser</name>
+    <xi:include href="pr_presentity.xml"/>
+    <xi:include href="pr_active_watchers.xml"/>
+    <xi:include href="pr_watchers.xml"/>
+    <xi:include href="pr_xcap_xml.xml"/>
+    <xi:include href="pr_pua.xml"/>
+    -->
+</database>

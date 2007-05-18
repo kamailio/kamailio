@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="active_sessions" xmlns:db="http://docbook.org/ns/docbook">
+    <name>active_sessions</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by SERWeb. It is not used by OpenSER.</db:para>
+    </description>
+
+    <column id="sid">
+        <name>sid</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+        <description>Session ID</description>
+    </column>
+
+    <column id="name">
+        <name>name</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+        <description>Session Name</description>
+    </column>
+
+    <column>
+        <name>val</name>
+        <type>text</type>
+        <null/>
+        <description>Val</description>
+    </column>
+
+    <column id="changed">
+        <name>changed</name>
+        <type>string</type>
+        <size>14</size>
+        <default/>
+        <description>Domain corresponding to (sdomain, prefix) pair where the message must be sent.</description>
+    </column>
+
+    <index>
+        <name>changed</name>
+        <colref linkend="changed"/>
+    </index>
+
+    <index>
+        <colref linkend="name"/>
+        <colref linkend="sid"/>
+        <primary/>
+    </index>
+</table>

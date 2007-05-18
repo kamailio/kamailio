@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="subscriber" xmlns:db="http://docbook.org/ns/docbook">
+    <name>subscriber</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used to provide authentication information. More information about the auth_db module can be found at: http://www.openser.org/docs/modules/1.2.x/auth_db.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / Phone Number</description>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain name</description>
+    </column>
+
+    <column>
+        <name>password</name>
+        <type>string</type>
+        <size>25</size>
+        <default/>
+        <description>Password</description>
+    </column>
+
+    <column>
+        <name>firstname</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>First name</description>
+    </column>
+
+    <column>
+        <name>lastname</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Last name</description>
+    </column>
+
+    <column>
+        <name>email_address</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Email Address</description>
+    </column>
+
+    <column>
+        <name>datetime</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <description>Date / Time this record was created</description>
+    </column>
+
+    <column>
+        <name>ha1</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>md5(username:realm:password)</description>
+    </column>
+
+    <column>
+        <name>ha1b</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>md5(username@domain:realm:password)</description>
+    </column>
+
+    <column>
+        <name>timezone</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default>NULL</default>
+        <description>Users time zone</description>
+    </column>
+
+    <column>
+        <name>rpid</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default>NULL</default>
+        <description>The SIP Remote-Party-ID header identifies the calling party and includes user, party, screen and privacy headers that specify how a call is presented and screened.</description>
+    </column>
+
+    <index>
+        <name>user_id</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>username_id</name>
+        <colref linkend="username"/>
+    </index>
+
+    <index>
+        <colref linkend="id"/>
+        <primary/>
+    </index>
+</table>

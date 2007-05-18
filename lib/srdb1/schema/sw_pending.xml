@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="pending" xmlns:db="http://docbook.org/ns/docbook">
+    <name>pending</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>SerWEB specific table - Not used by OpenSER. It should have same structure as table subscriber and contains unconfirmed subscription requests.</db:para>
+    </description>
+    
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="phplib_id">
+        <name>phplib_id</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+        <description>PHP Library ID</description>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / Phone Number</description>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain name</description>
+    </column>
+
+    <column>
+        <name>password</name>
+        <type>string</type>
+        <size>25</size>
+        <default/>
+        <description>Password</description>
+    </column>
+
+    <column>
+        <name>firstname</name>
+        <type>string</type>
+        <size>25</size>
+        <default/>
+        <description>First name</description>
+    </column>
+
+    <column>
+        <name>lastname</name>
+        <type>string</type>
+        <size>45</size>
+        <default/>
+        <description>Last name</description>
+    </column>
+
+    <column>
+        <name>phone</name>
+        <type>string</type>
+        <size>15</size>
+        <default/>
+    </column>
+
+    <column>
+        <name>email_address</name>
+        <type>string</type>
+        <size>50</size>
+        <default/>
+        <description>Email Address</description>
+    </column>
+
+    <column>
+        <name>datetime_created</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <description>Date / Time this record was created</description>
+    </column>
+
+    <column>
+        <name>datetime_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <description>Date / Time this record was modified</description>
+    </column>
+
+    <column>
+        <name>confirmation</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Confirmation</description>
+    </column>
+
+    <column>
+        <name>flag</name>
+        <type>string</type>
+        <size>1</size>
+        <default>o</default>
+        <description>Flag</description>
+    </column>
+
+    <column>
+        <name>sendnotification</name>
+        <type>string</type>
+        <size>50</size>
+        <default/>
+        <description>Send notification</description>
+    </column>
+
+    <column>
+        <name>greeting</name>
+        <type>string</type>
+        <size>50</size>
+        <default/>
+        <description>Greeting</description>
+    </column>
+
+    <column>
+        <name>ha1</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>md5(username:realm:password)</description>
+    </column>
+
+    <column>
+        <name>ha1b</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>md5(username@domain:realm:password)</description>
+    </column>
+
+    <column>
+        <name>allow_find</name>
+        <type>string</type>
+        <size>1</size>
+        <default>0</default>
+        <description>Allow find Flag</description>
+    </column>
+
+    <column>
+        <name>timezone</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default>NULL</default>
+        <description>Users time zone</description>
+    </column>
+
+    <column>
+        <name>rpid</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default>NULL</default>
+        <description>The SIP Remote-Party-ID header identifies the calling party and includes user, party, screen and privacy headers that specify how a call is presented and screened.</description>
+    </column>
+
+    <index>
+        <name>user_id</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>phplib_id</name>
+        <colref linkend="phplib_id"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>username_id</name>
+        <colref linkend="username"/>
+    </index>
+
+    <index>
+        <colref linkend="id"/>
+        <primary/>
+    </index>
+</table>

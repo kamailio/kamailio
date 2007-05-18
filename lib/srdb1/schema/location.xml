@@ -93,7 +93,7 @@
     <column>
         <name>cseq</name>
         <type>int</type>
-        <size>11</size>
+        <size>&cseq_len;</size>
         <default>&DEFAULT_CSEQ;</default>
         <description>CSeq header field contains a single decimal sequence number and the request method.</description>
     </column>
@@ -108,7 +108,7 @@
     <column>
         <name>flags</name>
         <type>int</type>
-        <size>11</size>
+        <size>&flag_len;</size>
         <default>0</default>
         <description>Flags</description>
     </column>
@@ -116,7 +116,7 @@
     <column>
         <name>cflags</name>
         <type>int</type>
-        <size>11</size>
+        <size>&flag_len;</size>
         <default>0</default>
         <description>CFlags</description>
     </column>
