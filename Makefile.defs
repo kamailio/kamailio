@@ -1461,10 +1461,11 @@ ifeq ($(OS), darwin)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS= -pthread -lresolv  #dlopen is in libc
-	else
-		LIBS= -lresolv  #dlopen is in libc
+		DEFS+= -DUSE_SYSV_SEM  # try sys v sems (pthread don't work for
+		                       # processes and unnamed posix sems are not
+		                       # supported)
 	endif
+	LIBS= -lresolv  #dlopen is in libc
 	ifeq ($(NO_KQUEUE),)
 		DEFS+=-DHAVE_KQUEUE
 	endif
