@@ -30,6 +30,10 @@
  * --------
  *  2006-03-24  created by andrei
  *  2007-05-11  added atomic_add and atomic_cmpxchg (andrei)
+ *  2007-05-18  reverted to addic instead of addi - sometimes gcc uses
+ *               r0 as the second operand in addi and  addi rD,r0, val
+ *               is a special case, equivalent with rD=0+val and not
+ *               rD=r0+val (andrei)
  */
 
 #ifndef _atomic_ppc_h
@@ -76,7 +80,8 @@
 	"1: lwarx  %0, 0, %2 \n\t" \
 	"   " op " \n\t" \
 	"   stwcx. %3, 0, %2 \n\t" \
-	"   bne- 1b \n\t"
+	"   bne- 1b \n\t" \
+	"2: \n\t"
 
 #ifdef __CPU_ppc64
 #define ATOMIC_ASM_OP0_long(op) \
@@ -89,7 +94,8 @@
 	"1: ldarx  %0, 0, %2 \n\t" \
 	"   " op " \n\t" \
 	"   stdcx. %3, 0, %2 \n\t" \
-	"   bne- 1b \n\t"
+	"   bne- 1b \n\t" \
+	"2: \n\t"
 
 #else /* __CPU_ppc */
 #define ATOMIC_ASM_OP0_long ATOMIC_ASM_OP0_int
@@ -137,7 +143,7 @@
 /* cmpxchg, %3=var, %0=*var, %4=old, %3=new  */
 #define ATOMIC_CMPXCHG_DECL(NAME, P_TYPE) \
 	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
-															P_TYPE old \
+															P_TYPE old, \
 															P_TYPE new_v) \
 	{ \
 		P_TYPE ret; \
@@ -153,22 +159,22 @@
 
 
 
-ATOMIC_FUNC_DECL(inc,      "addi  %0, %0,  1", int, void, /* no return */ )
-ATOMIC_FUNC_DECL(dec,      "addi %0, %0,  -1", int, void, /* no return */ )
+ATOMIC_FUNC_DECL(inc,      "addic  %0, %0,  1", int, void, /* no return */ )
+ATOMIC_FUNC_DECL(dec,      "addic %0, %0,  -1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and     %0, %0, %3", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "or     %0, %0, %3", int, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "addi   %0, %0, 1", int, int, (ret==0) )
-ATOMIC_FUNC_DECL(dec_and_test, "addi  %0, %0, -1", int, int, (ret==0) )
+ATOMIC_FUNC_DECL(inc_and_test, "addic   %0, %0, 1", int, int, (ret==0) )
+ATOMIC_FUNC_DECL(dec_and_test, "addic  %0, %0, -1", int, int, (ret==0) )
 ATOMIC_FUNC_DECL3(get_and_set, /* no extra op needed */ , int, int,  ret)
 ATOMIC_CMPXCHG_DECL(cmpxchg, int)
 ATOMIC_FUNC_DECL1(add, "add %0, %0, %3" , int, int,  ret)
 
-ATOMIC_FUNC_DECL(inc,      "addi  %0, %0,  1", long, void, /* no return */ )
-ATOMIC_FUNC_DECL(dec,      "addi %0, %0,  -1", long, void, /* no return */ )
+ATOMIC_FUNC_DECL(inc,      "addic  %0, %0,  1", long, void, /* no return */ )
+ATOMIC_FUNC_DECL(dec,      "addic %0, %0,  -1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and     %0, %0, %3",long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "or     %0, %0, %3", long, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "addi   %0, %0, 1", long, long, (ret==0) )
-ATOMIC_FUNC_DECL(dec_and_test, "addi  %0, %0, -1", long, long, (ret==0) )
+ATOMIC_FUNC_DECL(inc_and_test, "addic   %0, %0, 1", long, long, (ret==0) )
+ATOMIC_FUNC_DECL(dec_and_test, "addic  %0, %0, -1", long, long, (ret==0) )
 ATOMIC_FUNC_DECL3(get_and_set, /* no extra op needed */ , long, long,  ret)
 ATOMIC_CMPXCHG_DECL(cmpxchg, long)
 ATOMIC_FUNC_DECL1(add, "add %0, %0, %3" , long, long,  ret)
