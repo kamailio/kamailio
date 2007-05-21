@@ -12,7 +12,7 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table is used by SERWeb. It is not used by OpenSER.</db:para>
+        <db:para>This table is used by SERWeb to maintain active sessions. It is not used by OpenSER.</db:para>
     </description>
 
     <column id="sid">

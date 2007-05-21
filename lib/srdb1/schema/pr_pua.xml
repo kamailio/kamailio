@@ -28,7 +28,7 @@
     <column>
         <name>pres_user</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&uri_len;</size>
         <description>URI</description>
     </column>
 
@@ -78,7 +78,7 @@
     <column>
         <name>watcher_uri</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&uri_len;</size>
         <description>Watcher URI</description>
     </column>
 
