@@ -6,14 +6,14 @@ $Id$
                
 
 
-I.   About SIP Express Router (ser)
+I.   About SIP Express Router (SER)
 II.  Feature List
 III. About iptel.org
 IV.  Obtaining Help
-V.   Contact, Licensing and More Information
+V.   More Information
 
 
- SIP Express Router (SER) is an industrial-strength, free VoIP 
+SIP Express Router (SER) is an industrial-strength, free VoIP 
 server based on the session initiation protocol (SIP RFC2543-bis). 
 It is engineered to power IP telephony infrastructures up to large 
 scale. The server keeps track of users, sets up VoIP sessions, 
@@ -27,10 +27,7 @@ of other leading SIP vendors.
 The SIP Express Router enables a flexible plug-in model for new 
 applications: Third parties can easily link their plug-ins with 
 the server code and provide thereby advanced and customized 
-services.  In this way, plug-ins such as SNMP support, RADIUS 
-accounting, or SMS gateway have already been developed and are 
-provided as advanced features. Other modules are underway: 
-Presence server, firewall control, and more.
+services.  
 
 Its performance and robustness allows it to serve millions of users 
 and accommodate needs of very large operators. With a $3000 dual-CPU, 
@@ -50,51 +47,34 @@ guard for example.
 
 II. Feature List
 
-Based on the latest standards, the SIP Express Router (SER) includes 
-support for registrar, proxy and redirect mode. Further it acts as 
-an application server with support for CPL, instant messaging and 
-presence (IM&P) including a 2G/SMS gateway, a call control policy 
-language, call number translation, private dial plans and accounting, 
-authorization and authentication (AAA) services. SER runs on Sun/
-Solaris, PC/Linux, IPAQ/Linux platforms and supports  both IPv4 and 
-IPv6.
+See http://www.iptel.org/ser/features for an updated feature list.
+Note that as features easily are added as modules, changes can
+occur quickly.
 
 Most of SER features are implemented as plug-in modules. See
-README-MODULES for a description of modules available in
-ser distribution.
+http://www.iptel.org/views/tableofmodules for a list of modules 
+available in SER distribution.
 
 
 III. About iptel.org
 
-iptel.org is a know-how organization spun off from Germany's national 
-research company FhG Fokus. One of the first SIP implementations ever, 
-low-QoS enhancements, interoperability tests and VoIP-capable firewall 
-control concepts are examples of well-known FhG's work.
-
-iptel.org continues to keep this know-how leadership in SIP. 
-The access rate of the company's site, a well-known source of 
-technological information, is a best proof of interest. Thousands 
-of hits come every day from the whole Internet.
+See http://www.iptel.org/ser_history for the story of SER and iptel.org.
 
 IV. Obtaining Help
 
 We offer best-effort free support for ser. "best-effort" means 
 that we try to solve your problems via email as soon as we can, 
-subject to available manpower. If you need commercial support, 
-contact info@iptel.org.
+subject to available manpower. 
 
 To receive feedback to your inquiries, we recommend you to subscribe 
 to the serusers mailing list and post your queries there. This mailing 
 list is set up for mutual help by the community of ser users and developers. 
 To participate in the mailing list, subscribe at the following web address: 
-         http://mail.iptel.org/mailman/listinfo/serusers.
+         http://lists.iptel.org/mailman/listinfo/serusers.
 Send your questions to 
          serusers@iptel.org. 
 
-V. Contact, Licensing and More Information
-
-For any additional information, send an inquiry to info@iptel.org. 
-Licensing conditions other than GPL are available on request. 
+V. More Information
 
 Most up-to-date information is always available at our website,
                  http://www.iptel.org/ser/
