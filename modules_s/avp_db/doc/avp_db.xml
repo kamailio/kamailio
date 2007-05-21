@@ -62,6 +62,10 @@
 
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
-    <xi:include href="fifo.xml"/>
+    <!-- <xi:include href="fifo.xml"/> -->
 
+	<section><title>Example extra attributes usage</title>
+	<para><programlisting><include xmlns="http://www.w3.org/2001/XInclude"
+href="avp_dialogs.cfg" parse="text"/></programlisting></para>
+	</section>
 </section>
