@@ -162,7 +162,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <null/>
-        <default>NULL</default>
+        <default><null/></default>
         <description>Users time zone</description>
     </column>
 
@@ -171,7 +171,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <null/>
-        <default>NULL</default>
+        <default><null/></default>
         <description>The SIP Remote-Party-ID header identifies the calling party and includes user, party, screen and privacy headers that specify how a call is presented and screened.</description>
     </column>
 

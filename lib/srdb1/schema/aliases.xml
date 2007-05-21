@@ -54,7 +54,7 @@
         <type>string</type>
         <size>&uri_len;</size>
         <null/>
-        <default>NULL</default>
+        <default><null/></default>
         <description>Received IP:PORT in the format SIP:IP:PORT</description>
     </column>
 
@@ -63,7 +63,7 @@
         <type>string</type>
         <size>&uri_len;</size>
         <null/>
-        <default>NULL</default>
+        <default><null/></default>
         <description>Path Header(s) per RFC 3327</description>
     </column>
 
@@ -134,7 +134,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <null/>
-        <default>NULL</default>
+        <default><null/></default>
         <description>Socket used to connect to OpenSER. For example: UDP:IP:PORT</description>
     </column>
 
@@ -143,7 +143,7 @@
         <type>int</type>
         <size>11</size>
         <null/>
-        <default>NULL</default>
+        <default><null/></default>
         <description>Flags that indicate the SIP Methods this contact will accept.</description>
     </column>
 

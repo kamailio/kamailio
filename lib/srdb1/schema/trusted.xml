@@ -45,7 +45,7 @@
 	<name>from_pattern</name>
 	<type>string</type>
 	<size>&id_len;</size>
-        <default>NULL</default>
+        <default><null/></default>
         <null/>
         <description>Regular expression matches From URI of request.</description>
     </column>

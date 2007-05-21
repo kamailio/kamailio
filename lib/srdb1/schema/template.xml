@@ -30,7 +30,9 @@
 	<size>100</size>
         <!--<default>bla</default> Default value for the column is 'bla' -->
         <!--<default/>  Default value is '' -->
-        <!--</null> This column can be NULL -->
+        <!--<default></null></default> This column is NULL -->
+        
+        <!--</null> This column can be NULL, if not specified it is NOT NULL -->
 	<description>column documentation</description>
     </column>
 
