@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="admin_privileges" xmlns:db="http://docbook.org/ns/docbook">
+    <name>admin_privileges</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Admin privileges table for SERWeb.</db:para>
+    </description>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username</description>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain</description>
+    </column>
+
+    <column id="priv_name">
+        <name>priv_name</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>priv_name</description>
+    </column>
+
+    <column id="priv_value">
+        <name>priv_value</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>priv_value</description>
+    </column>
+
+    <index>
+        <colref linkend="username"/>
+        <colref linkend="priv_name"/>
+        <colref linkend="priv_value"/>
+        <colref linkend="domain"/>
+        <primary/>
+    </index>
+</table>

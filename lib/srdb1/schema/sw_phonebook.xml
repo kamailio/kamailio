@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="phonebook" xmlns:db="http://docbook.org/ns/docbook">
+    <name>phonebook</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Users Phonebook table used from SERWeb.</db:para>
+    </description>
+
+    <column id="id">
+        <name>unsigned id</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column>
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / Phonenumber</description>
+    </column>
+
+    <column>
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain Name</description>
+    </column>
+
+    <column>
+        <name>fname</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+        <description>First Nname</description>
+    </column>
+
+    <column>
+        <name>lname</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+        <description>Last Name</description>
+    </column>
+
+    <column>
+        <name>sip_uri</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>SIP URI associated with this record</description>
+    </column>
+
+    <index>
+        <colref linkend="id"/>
+        <primary/>
+    </index>
+</table>

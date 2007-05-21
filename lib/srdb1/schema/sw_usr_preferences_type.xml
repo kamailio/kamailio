@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="usr_preferences_types" xmlns:db="http://docbook.org/ns/docbook">
+    <name>usr_preferences_types</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>User preferences table for SERWeb.</db:para>
+    </description>
+
+    <column id="att_name">
+        <name>att_name</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+        <description>att_name</description>
+    </column>
+
+    <column>
+        <name>att_rich</name>
+        <type>string</type>
+        <size>32</size>
+        <default>string</default>
+        <description>att_rich</description>
+    </column>
+
+    <column>
+        <name>att_raw_type</name>
+        <type>int</type>
+        <default>2</default>
+        <description>att_raw</description>
+    </column>
+
+    <column>
+        <name>att_type_spec</name>
+        <type>text</type>
+        <description>att_type_spec</description>
+    </column>
+
+    <column>
+        <name>default_value</name>
+        <type>string</type>
+        <size>100</size>
+        <default/>
+        <description>Default Value</description>
+    </column>
+
+    <index>
+        <colref linkend="att_name"/>
+        <primary/>
+    </index>
+</table>
