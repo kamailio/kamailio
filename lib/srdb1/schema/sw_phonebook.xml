@@ -16,8 +16,8 @@
     </description>
 
     <column id="id">
-        <name>unsigned id</name>
-        <type>int</type>
+        <name>id</name>
+        <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
         <type db="dbtext">int,auto</type>

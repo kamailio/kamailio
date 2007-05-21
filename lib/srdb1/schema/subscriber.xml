@@ -50,7 +50,7 @@
     </column>
 
     <column>
-        <name>firstname</name>
+        <name>first_name</name>
         <type>string</type>
         <size>&user_len;</size>
         <default/>
@@ -58,7 +58,7 @@
     </column>
 
     <column>
-        <name>lastname</name>
+        <name>last_name</name>
         <type>string</type>
         <size>&user_len;</size>
         <default/>
@@ -74,7 +74,7 @@
     </column>
 
     <column>
-        <name>datetime</name>
+        <name>datetime_created</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
         <description>Date / Time this record was created</description>
