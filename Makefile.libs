@@ -7,10 +7,16 @@
 # History:
 # --------
 #  2007-03-16  created by andrei
+#  2007-05-19  rebuild on changed install name on darwin  (andrei)
 
 # NAME, MAJOR_VER and MINOR_VER should be pre-defined in the library 
 # makefile
 #
+
+ifneq	(,$(filter install% %install install, $(MAKECMDGOALS)))
+compile_for_install:=yes
+$(warning install mode => compile_for_install=$(compile_for_install))
+endif
 
 ifeq ($(NAME),)
 $(error NAME, MAJOR_VER and MINOR_VER must be defined in the library Makefile)
@@ -25,20 +31,33 @@ ifeq ($(BUGFIX_VER),)
 	BUGFIX_VER:=0
 endif
 
+ifeq	($(strip $(compile_for_install)),yes)
+	LIB_INSTALL_NAME:=$(lib_target)/$(LIB_RUNTIME_NAME)
+else
+	LIB_INSTALL_NAME:=$(shell pwd)/$(LIB_RUNTIME_NAME)
+endif
+
 ifeq ($(OS), darwin)
 	LIB_NAME:= \
 	$(LIB_PREFIX)$(NAME).$(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER)$(LIB_SUFFIX)
 	LIB_RUNTIME_NAME:=$(LIB_PREFIX)$(NAME).$(MAJOR_VER)$(LIB_SUFFIX)
 	LIB_LINK_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX)
+	# on darwin we add an extra dependency on a file containing the install 
+	# name (we want to rebuild the library if the install path changed)
+	# this is needed because instead of a rpath link option, on darwin the
+	# path to a linked library is taken from the library itself (the path
+	# is built-in the library)
+	LIBINAME_F:=libiname.lst
 	NAME_LD_FLAGS:= -compatibility_version $(MAJOR_VER).$(MINOR_VER) \
 					-current_version $(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER) \
-					-install_name $(lib_target)/$(LIB_RUNTIME_NAME)
+					-install_name $(LIB_INSTALL_NAME)
 
 else
 	LIB_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER).$(MINOR_VER)
 	LIB_RUNTIME_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER)
 	LIB_LINK_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX)
 	NAME_LD_FLAGS:= $(LIB_SONAME)$(LIB_RUNTIME_NAME)
+	LIBINAME_F:=
 endif
 
 
@@ -71,7 +90,16 @@ NAME:=$(LIB_NAME)
 
 include $(COREPATH)/Makefile.rules
 
-$(NAME): $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME)
+ifeq	(,$(filter clean %clean clean% proper %proper proper%, $(MAKECMDGOALS)))
+ifneq ($(strip $(LIBINAME_F)),)
+-include $(LIBINAME_F)
+ifneq ($(strip $(LIB_INSTALL_NAME)), $(strip $(COMPILED_INAME)))
+$(shell rm -f $(LIBINAME_F))
+endif
+endif
+endif
+
+$(NAME): $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME) $(LIBINAME_F)
 
 $(LIB_RUNTIME_NAME):
 	-@ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME)
@@ -86,11 +114,20 @@ link_clean:
 
 clean: link_clean
 
+ifneq ($(strip $(LIBINAME_F)),)
+.PHONY: libiname_clean
+
+libiname_clean:
+	-@rm -f "$(LIBINAME_F)"
+
+clean: libiname_clean
+endif
+
 $(lib_prefix)/$(lib_dir):
 	mkdir -p $(lib_prefix)/$(lib_dir)
 
 .PHONY: install
-install: $(LIB_NAME) $(lib_prefix)/$(lib_dir)
+install: $(LIB_NAME) $(lib_prefix)/$(lib_dir) $(LIBINAME_F)
 	$(INSTALL_TOUCH) $(lib_prefix)/$(lib_dir)/$(LIB_NAME)
 	$(INSTALL_LIB) $(LIB_NAME) $(lib_prefix)/$(lib_dir)
 	rm -f $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) \
@@ -104,5 +141,11 @@ install: $(LIB_NAME) $(lib_prefix)/$(lib_dir)
 .PHONY:install-if-newer
 install-if-newer: $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) 
 
-$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME)
+$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME) $(LIBINAME_F)
 	@$(MAKE) install
+
+
+ifneq ($(strip $(LIBINAME_F)),)
+$(LIBINAME_F): $(ALLDEP)
+	@echo "COMPILED_INAME:=$(LIB_INSTALL_NAME)" > $(LIBINAME_F)
+endif

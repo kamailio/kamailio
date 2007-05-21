@@ -35,8 +35,18 @@
 # on some ser libs)
 
 ifneq	($(SER_LIBS),)
+# realpath doesn't seem to work on darwin
+SER_LIBS_DIRS:=$(abspath $(dir $(SER_LIBS)))
+ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
+lib_compile_for_install=yes
+expected_lib_ipath=$(lib_target)
+else
+lib_compile_for_install=no
+# function: expected_lib_ipath ser_lib_dir
+expected_lib_ipath=$(1)
+endif
 ifneq	($(LD_RPATH),)
-ifneq	(,$(filter install, $(MAKECMDGOALS)))
+ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
 SER_RPATH_LST:=$(lib_target)
 else
 SER_RPATH_LST:=$(realpath $(dir $(SER_LIBS)))
@@ -45,14 +55,20 @@ ifneq	($(strip $(SER_RPATH_LST)),)
 SER_RPATH:=$(addprefix $(LD_RPATH),$(SER_RPATH_LST))
 endif
 endif
+ifeq ($(OS), darwin)
+SER_IPATH_LST:=$(addsuffix /libiname.lst,$(SER_LIBS_DIRS))
+#$(warning $(NAME) DARWIN, SER_LIBS=$(SER_LIBS), $(SER_LIBS_DIRS), ipath_lst=$(SER_IPATH_LST))
+endif
 endif
 
 ALL_LIBS=$(LIBS)
 
+ifeq	(,$(filter clean %clean clean% proper %proper proper%, $(MAKECMDGOALS)))
 ifneq ($(SER_LIBS),)
 -include librpath.lst
 ifneq ($(SER_RPATH_LST), $(LIB_RPATH_LST))
 $(shell rm -f librpath.lst)
+endif
 endif
 
 SER_LIBS_DEPS:= \
@@ -62,7 +78,33 @@ ALL_LIBS+=$(foreach l, $(SER_LIBS), -L$(dir $l) -l$(notdir $l))
 $(NAME): $(SER_LIBS_DEPS) librpath.lst
 
 $(SER_LIBS_DEPS):
-	$(MAKE) -C $(dir $@)
+	$(MAKE) -C $(dir $@)  compile_for_install=$(lib_compile_for_install)
+
+
+ifneq ($(SER_IPATH_LST),)
+
+$(NAME): $(SER_IPATH_LST) 
+
+$(SER_IPATH_LST): FORCE
+	@if grep "COMPILED_INAME:=$(call expected_lib_ipath,$(@D))" $(@) \
+			1>/dev/null 2>/dev/null ; \
+	then :; \
+	else \
+		echo "re-building $(@D)" ; \
+		$(MAKE) -C $(@D) compile_for_install=$(lib_compile_for_install) ; \
+	fi
+
+.PHONY: FORCE
+FORCE:
+
+.PHONY: FORCE-BUILD-LIBS
+FORCE-BUILD-LIBS:
+	@for r in $(SER_LIBS_DIRS) ; do \
+		echo building lib $$r; \
+		$(MAKE) -C $$r compile_for_install=$(lib_compile_for_install) ; \
+	done
+
+endif
 
 endif
 
