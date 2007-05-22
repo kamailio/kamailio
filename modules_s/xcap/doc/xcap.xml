@@ -22,6 +22,27 @@ reason was to protect other modules from linking with libcurl (implements
 HTTP) or other such stuff.
 </para>
 
+<section><title>Dependencies</title>
+<para>
+	<itemizedlist><title>Libraries</title>
+
+			<listitem><para><application>libxml2</application> (development
+			version) - external library for parsing XML
+			documents</para></listitem>
+
+			<listitem><para><application>libcurl</application> (development
+			version) - external library for HTTP queries</para></listitem>
+
+			<listitem><para><application>libcds (internal)</application></para></listitem>
+			
+			<listitem><para><application>libpresence (internal)</application></para></listitem>
+
+			<listitem><para><application>libxcap (internal)</application> -
+			parsing XCAP documents, ...</para></listitem>
+	</itemizedlist>
+</para>
+</section>
+
 <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
 <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
 
