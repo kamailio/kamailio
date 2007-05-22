@@ -1207,7 +1207,7 @@ onreply_route[1] {
 		<programlisting format="linespecific">
 ...
 route { 
-	t_on_reply("1"); 
+	t_on_branch("1"); 
 	t_relay();
 } 
 

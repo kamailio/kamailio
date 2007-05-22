@@ -966,7 +966,7 @@ onreply_route[1] {
    Example 1-32. t_on_branch usage
 ...
 route {
-        t_on_reply("1");
+        t_on_branch("1");
         t_relay();
 }
 
