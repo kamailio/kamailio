@@ -1,13 +1,16 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
-	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd' [
+<!ENTITY % local.common.attrib "xml:base  CDATA  #IMPLIED"> 
+]>
 	
 <section><title>Introduction</title>
 <para>This document describes usage of SIP Express Router as a presence server.
 <!-- TODO: What is presence, ... (use doc from PIC-SE wiki?) -->
 </para>
-<para>Main features:
-<itemizedlist>
+
+<section><title>Main features</title>
+<para><itemizedlist>
 	<listitem><para>presence events with XCAP authorization and watcher info
 	support</para></listitem>
 	<listitem><para>resource list server (only for presence now)</para></listitem>
@@ -16,3 +19,81 @@
 </itemizedlist>
 </para>
 </section>
+		
+<section><title>SER presence basics</title>
+
+<para>Presence is one of quite important components of SER. It allows users to
+watch presence state of other users, process lists of them and manipulate one's 
+own presence state.</para>
+
+<para>Configuration data can be stored on a XCAP server <xref
+linkend="pres_draft_xcap"/> by user's client software and processed by SER. This
+may be useful for lists of watched users (resource lists) and for authorization
+rules.</para>
+
+<para>There is a few of modules which serve as parts of "presence":
+<itemizedlist>
+	<listitem><para><link linkend="pa">PA</link> acts as a presence
+	server. Its main function is processing of subscriptions to presence
+	state of standalone users and processing presence state publications for
+	them.</para></listitem>
+	<listitem><para><link linkend="pres_rls">RLS</link> - Resource list server - this
+	module processes subscriptions to lists of resources. It gets presence
+	information for standalone users from internal queries to PA module or
+	remote presence server queries and build them
+	together into list notifications.</para></listitem>
+	<listitem><para><link linkend="presence_b2b">PRESENCE_B2B</link> can be used
+	to subscribe to presence state on remote server. It can be used by RLS for
+	remote presence server queries.</para></listitem>
+	<listitem><para><link linkend="xcap_module">XCAP</link> offers internal functions
+	for querying XCAP server. <!-- TODO caching responses and monitoring changes
+	in documents stored on XCAP server. --></para></listitem>
+	<listitem><para><emphasis>DIALOG</emphasis> module is a helper module used
+	by other presence modules for some
+	dialog operations. It was intended to contain dialog management functions
+	but it was not finished.</para></listitem>
+<!--	<listitem><para><emphasis>RPA </emphasis>Reg events server. Will be used by
+	PA instead of direct callbacks into usrloc. Will be added
+	soon.</para></listitem>-->
+</itemizedlist>
+</para>
+
+<para>All <quote>presence</quote> modules share common code stored in SER
+libraries. Their interface is described in standalone documents.
+</para>
+
+<section><title>Persistence</title>
+<para>Modules can store their status (working data) into database. This data is
+automatically reloaded on startup, so it is possible to restart SER and
+clients don't note it. Established SIP dialogs are stored in database too.</para>
+<para>Details about database storage are described for each module separately in
+module documentation.
+
+<!-- TODO: db modes (cache mode) -->
+</para>
+</section>
+
+<section><title>Authorization</title>
+<para>Authorization is very important in presence services. The server
+must take care about authorization rules defined by user about whom and
+whom not allow access to user's presence status. More about authorization
+rules may be found in <xref linkend="pres_draft_common_auth"/> and 
+<xref linkend="pres_draft_auth"/>.</para>
+
+<!-- TODO: types of authorization common for all presence modules -->
+
+<para>Only XCAP storage of authorization rules is supported at this moment. It is 
+<emphasis>not fully implemented</emphasis> now - only basic rule conditions, no sphere 
+and time conditions. Transformations defined in <xref linkend="pres_draft_auth"/> are 
+ignored.
+May be, that in the
+future will be possible to use other variants like webdav or storing
+authorization rules in SER's own database.</para>
+
+<!-- TODO: XCAP module and authorization ? at least link into XCAP doc? -->
+
+</section>
+
+</section> <!-- presence basics -->
+
+</section> <!-- introduction -->

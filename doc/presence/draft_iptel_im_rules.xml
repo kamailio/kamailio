@@ -36,7 +36,13 @@ type of common policy documents defined there - application/auth-policy+xml.
 </para>
 
 <para>All XML elements designed in this document belong to 
-<quote>urn:iptel:xml:ns:im-rules</quote> namespace.</para>
+<quote>urn:iptel:xml:ns:im-rules</quote> namespace.
+<note>
+<para>This namespace breaks conventions mentioned in the document which was used
+as source but it will stay here due to compatibility reasons if there will be no
+problems with it.</para>
+</note>
+</para>
 
 <section><title>Conditions</title>
 <para>Conditions are processed according specification in <xref linkend="common_auth"/>.
