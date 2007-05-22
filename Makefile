@@ -77,8 +77,9 @@ module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum \
 # acc_db, auth_db, avp_db, db_ops, domain, lcr, msilo, mysql, dialog, postgres, speeddial
 # uri_db
 #      => mysql server, postgres server or other database back-end (ex. mysql-devel)
-# pa, xmlrpc => libxml2
-# rls => pa
+# pa, xmlrpc, rls, presence_b2b, xcap => libxml2
+# xcap => libcurl
+# pa, rls, presence_b2b => dialog
 #
 # NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
 # group due to interdependencies
