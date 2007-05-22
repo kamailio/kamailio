@@ -33,10 +33,12 @@
 #include "xcap_auth.h"
 #include "pidf.h"
 #include "notify_body.h"
+#include "presence_xml.h"
 
 str* offline_nbody(str* body);
 str* agregate_xmls(str** body_array, int n);
 str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node);
+extern int force_active;
 
 str* pres_agg_nbody(str** body_array, int n, int off_index)
 {
@@ -72,8 +74,10 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str* final_nbody)
 	xmlDocPtr doc= NULL;
 	xmlNodePtr node= NULL;
 	str* n_body= NULL;
-
+	
 	final_nbody= NULL;
+	if(force_active)
+		return 0;
 
 	doc= get_xcap_tree(subs->to_user, subs->to_domain);
 	if(doc== NULL)

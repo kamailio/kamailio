@@ -44,13 +44,13 @@ int pres_watcher_allowed(subs_t* subs)
 {
 	xmlDocPtr doc= NULL;
 	int ret_code= 0;
-	
-	DBG("PRESENCE_XML:pres_watcher_allowed: ...\n\n\n");
+	str status= {"active", 6};
+
+	DBG("PRESENCE_XML:pres_watcher_allowed: ...\n");
 	/* if force_active set status to active*/
 	if(force_active)
 	{
-		subs->status.s= "active";
-		subs->status.len= 6;
+		subs->status= status;
 		return 1;
 	}
 	/* else search in xcap_table */
@@ -143,8 +143,10 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 							(strncmp(id, w_uri.s, w_uri.len)==0)))	
 				{
 					apply_rule = 1;
+					xmlFree(id);
 					break;
 				}
+				xmlFree(id);
 			}
 		}	
 
@@ -169,7 +171,10 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 					if((strlen(domain)!= subs->from_domain.len && 
 								strncmp(domain, subs->from_domain.s,
 									subs->from_domain.len) ))
+					{
+						xmlFree(domain);
 						continue;
+					}	
 				}
 				xmlFree(domain);
 				apply_rule = 1;
@@ -215,13 +220,13 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 
 					}	
 				}
-				break;
+				if(apply_rule== 1)  /* if a match was found no need to keep searching*/
+					break;
 
 			}		
 		}
-		/* if a match was found- either allow or deny */
-		if(apply_rule ==1 || apply_rule==0)
-					break;
+		if(apply_rule ==1)
+			break;
 	}
 
 	DBG("PRESENCE_XML:get_rule_node: apply_rule= %d\n", apply_rule);
@@ -305,7 +310,7 @@ int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 		subs->status.len = 6;
 		subs->reason.s = NULL;
 	}
-	
+	xmlFree(sub_handling);
 
 	if(node)
 		return 1;

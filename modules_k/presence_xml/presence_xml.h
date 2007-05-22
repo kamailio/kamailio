@@ -36,6 +36,7 @@ extern add_event_t pres_add_event;
 extern db_con_t *pxml_db = NULL;
 extern db_func_t pxml_dbf;
 extern int force_active;
+
 /* SL bind */
 extern struct sl_binds slb;
 
