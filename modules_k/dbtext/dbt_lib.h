@@ -131,7 +131,9 @@ dbt_cache_p dbt_cache_get_db(str*);
 int dbt_cache_check_db(str*);
 int dbt_cache_del_db(str*);
 tbl_cache_p dbt_db_get_table(dbt_cache_p, str*);
+#if 0
 int dbt_db_del_table(dbt_cache_p, str*);
+#endif
 
 int dbt_db_free(dbt_db_p);
 int dbt_cache_free(dbt_cache_p);

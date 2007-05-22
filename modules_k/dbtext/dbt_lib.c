@@ -324,6 +324,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 /**
  *
  */
+#if 0
 int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 {
 	tbl_cache_p _tbc = NULL;
@@ -353,6 +354,7 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 	
 				if(_tbc->next)
 					(_tbc->next)->prev = _tbc->prev;
+				lock_release(&_tbc->sem);
 				break;
 			}
 			lock_release(&_tbc->sem);
@@ -366,6 +368,7 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 	
 	return 0;
 }
+#endif 
 
 /**
  *
