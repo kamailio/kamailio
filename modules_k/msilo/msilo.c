@@ -380,7 +380,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	str body, str_hdr, ctaddr;
 	struct to_body to, *pto, *pfrom;
 	struct sip_uri puri;
-
+	str duri;
 	db_key_t db_keys[NR_KEYS-1];
 	db_val_t db_vals[NR_KEYS-1];
 	db_key_t db_cols[1]; 
@@ -480,13 +480,19 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	} else { /* get it from R-URI */
 		if(msg->new_uri.len <= 0)
 		{
-			LOG(L_ERR, "MSILO:m_store: bad new R-URI!\n");
-			goto error;
+			if(msg->first_line.u.request.uri.len <= 0)
+			{
+				LOG(L_ERR, "MSILO:m_store: bad dst URI!\n");
+				goto error;
+			}
+			duri = msg->first_line.u.request.uri;
+		} else {
+			duri = msg->new_uri;
 		}
 		DBG("MSILO:m_store: NEW R-URI found - check if is AoR!\n");
-		if(parse_uri(msg->new_uri.s, msg->new_uri.len, &puri)!=0)
+		if(parse_uri(duri.s, duri.len, &puri)!=0)
 		{
-			LOG(L_ERR, "MSILO:m_store: bad new R-URI!!\n");
+			LOG(L_ERR, "MSILO:m_store: bad dst R-URI!!\n");
 			goto error;
 		}
 	}
