@@ -1405,6 +1405,9 @@ case $1 in
 		openser_restore $1 $tmp_file
 		ret=$?
 		rm -f $tmp_file
+		if [ "$ret" -ne 0 ]; then
+			echo "copy: restoring old db failed"
+		fi
 		exit $ret
 		;;
 	backup)
