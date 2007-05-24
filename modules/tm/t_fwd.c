@@ -63,8 +63,9 @@
  *              stop retr. timers fix on cancel for non-invites     (andrei)
  *  2006-11-20  new_uri is no longer saved/restore across add_uac calls, since
  *              print_uac_request is now uri safe (andrei)
- * 2007-03-15  TMCB_ONSEND hooks added (andrei)
- * 2007-05-02  added t_forward_cancel(unmatched_cancel) (andrei)
+ *  2007-03-15  TMCB_ONSEND hooks added (andrei)
+ *  2007-05-02  added t_forward_cancel(unmatched_cancel) (andrei)
+ *  2007-05-24  added TMCB_E2ECANCEL_IN hook support (andrei)
  */
 
 #include "defs.h"
@@ -82,6 +83,7 @@
 #include "../../action.h"
 #include "../../data_lump.h"
 #include "../../onsend.h"
+#include "../../compiler_opt.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
 #include "t_msgbuilder.h"
@@ -475,6 +477,9 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	cancel_bm=0;
 	lowest_error=0;
 
+	if (unlikely(has_tran_tmcbs(t_invite, TMCB_E2ECANCEL_IN)))
+		run_trans_callbacks( TMCB_E2ECANCEL_IN, t_invite, cancel_msg, 0,
+								cancel_msg->REQ_METHOD);
 	/* first check if there are any branches */
 	if (t_invite->nr_of_outgoings==0){
 		t_invite->flags|=T_CANCELED;
@@ -512,9 +517,10 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				}
 #ifdef TMCB_ONSEND
 				else{
-					run_onsend_callbacks(TMCB_REQUEST_SENT, 
-											&t_cancel->uac[i].request,
-											TMCB_LOCAL_F);
+					if (unlikely(has_tran_tmcbs(t_cancel, TMCB_REQUEST_SENT)))
+						run_onsend_callbacks(TMCB_REQUEST_SENT, 
+												&t_cancel->uac[i].request,
+												TMCB_LOCAL_F);
 				}
 #endif
 				if (start_retr( &t_cancel->uac[i].request )!=0)
