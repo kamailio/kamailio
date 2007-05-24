@@ -76,6 +76,7 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 		{
 				LOG(L_ERR, "PUA_XMPP:pres_Xmpp2Sip:ERROR when sending"
 						" subscribe for presence");
+				xmlFree(pres_type);
 				goto error;
 		}
 
@@ -92,6 +93,7 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 		{
 				LOG(L_ERR,"PUA_XMPP:pres_Xmpp2Sip:ERROR when unsubscribing"
 						" for presence");
+				xmlFree(pres_type);
 				goto error;
 		}
 
@@ -111,6 +113,7 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 			{
 				LOG(L_ERR, "PUA_XMPP:pres_Xmpp2Sip:ERROR when sending"
 						" subscribe for presence");
+				xmlFree(pres_type);
 				goto error;
 			}
 		}	
@@ -121,20 +124,28 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 			{
 				LOG(L_ERR,"PUA_XMPP:pres_Xmpp2Sip:ERROR when unsubscribing"
 						" for presence");
+				xmlFree(pres_type);
 				goto error;
 			}
 		}
-	}	
+	}
+	xmlFree(pres_type);
+
 	//	else 
 	//		send_reply_message(pres_node);
 
 	xmlFreeDoc(doc);
+	xmlCleanupParser();
+	xmlMemoryDump();
 	return ;
 
 error:
 
 	if(doc)
 		xmlFreeDoc(doc);
+	xmlCleanupParser();
+	xmlMemoryDump();
+
 	return ;
 
 }	

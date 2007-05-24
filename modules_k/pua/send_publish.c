@@ -197,10 +197,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				publ.pres_uri= hentity->publ.pres_uri; 
 				publ.body= hentity->publ.body;
 				publ.expires= hentity->publ.expires;
-				publ.flag|= INSERT_TYPE;
 				publ.source_flag|= hentity->publ.source_flag;
 				publ.event|= hentity->publ.event;
-				publ.etag= hentity->publ.etag;
 				publ.content_type= hentity->publ.content_type;	
 				publ.id= hentity->publ.id;
 				publ.extra_headers= hentity->publ.extra_headers;
@@ -210,7 +208,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 					goto error;
 				}
 			}
-			else
+			else 
 			{	
 				delete_htable(presentity, hash_code);
 				DBG("PUA:publ_cback_func: ***Delete from table\n");
@@ -640,7 +638,7 @@ send_publish:
 			publ->pres_uri,					/* From */
 			str_hdr,						/* Optional headers */
 			body,							/* Message body */
-			0,								/* outbound proxy*/
+			0,								/* Outbound proxy*/
 			publ_cback_func,				/* Callback function */
 			(void*)cb_param					/* Callback parameter */
 			);

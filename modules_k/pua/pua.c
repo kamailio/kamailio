@@ -56,7 +56,7 @@ MODULE_VERSION
 
 struct tm_binds tmb;
 htable_t* HashT= NULL;
-int HASH_SIZE=4;
+int HASH_SIZE= -1;
 extern int bind_pua(pua_api_t* api);
 int min_expires= 0;
 int default_expires=3600;

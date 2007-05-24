@@ -387,6 +387,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	{
 		LOG(L_ERR, "PUA: subs_cback_func: ERROR while converting str"
 					" to int\n");
+		goto done;
     }	
 	
 	/*process record route and add it to a string*/
@@ -555,6 +556,7 @@ int send_subscribe(subs_info_t* subs)
 	ua_pres_t* hentity= NULL;
 	int expires;
 	int flag;
+	int result;
 
 	DBG("send_subscribe... \n");
 	print_subs(subs);
@@ -620,7 +622,7 @@ insert:
 		}
 		hentity->flag= flag;
 
-		tmb.t_request
+		result= tmb.t_request
 			(&met,						  /* Type of the message */
 			subs->pres_uri,				  /* Request-URI */
 			subs->pres_uri,				  /* To */
@@ -631,6 +633,12 @@ insert:
 			subs_cback_func,		      /* Callback function */
 			(void*)hentity			      /* Callback parameter */
 			);
+		if(result< 0)
+		{
+			LOG(L_ERR, "PUA:send_subscribe: ERROR while sending request with t_request\n");
+			shm_free(hentity);
+			goto  done;
+		}
 	}
 	else
 	{
@@ -696,14 +704,21 @@ insert:
 		}
 	//	hentity->flag= flag;
 		DBG("PUA:send_subscribe: event parameter: %d\n", hentity->event);	
-		tmb.t_request_within
-		(&met,
-		str_hdr,
-		0,
-		td,
-		subs_cback_func,
-		(void*)hentity
-		);
+		result= tmb.t_request_within
+			(&met,
+			str_hdr,
+			0,
+			td,
+			subs_cback_func,
+			(void*)hentity
+			);
+		if(result< 0)
+		{
+			shm_free(hentity);
+			hentity= NULL;
+			LOG(L_ERR, "PUA:send_subscribe: ERROR while sending request with t_request\n");
+			goto done;
+		}
 
 		if(td->route_set)
 			free_rr(&td->route_set);

@@ -108,6 +108,11 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	memcpy(uri, pto->uri.s, pto->uri.len);
 	uri[pto->uri.len]= '\0';
 	to_uri.s= duri_sip_xmpp(uri);
+	if(to_uri.s== NULL)
+	{
+		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR whil decoding sip uri in xmpp\n");
+		return -1;	
+	}	
 	to_uri.len= strlen(to_uri.s);
 	pkg_free(uri);
 
@@ -153,7 +158,13 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	}
 	memcpy(uri, pfrom->uri.s, pfrom->uri.len);
 	uri[pfrom->uri.len]= '\0';
+	
 	from_uri.s= euri_sip_xmpp(uri);
+	if(from_uri.s== NULL)
+	{
+		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR while encoding sip uri in xmpp\n");
+		goto error;
+	}	
 	from_uri.len= strlen(from_uri.s);
 	pkg_free(uri);
 	
@@ -551,6 +562,8 @@ done:
 	}
 
 	xmlBufferFree(buffer);
+	xmlCleanupParser();
+	xmlMemoryDump();
 
 	if(sip_doc)
 		xmlFreeDoc(sip_doc);
@@ -565,6 +578,9 @@ error:
 		xmlFree(note);
 	if(buffer)
 		xmlBufferFree(buffer);
+	xmlCleanupParser();
+	xmlMemoryDump();
+
 	return -1;
 
 }
@@ -613,6 +629,12 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 			goto error;
 		}
 		from_uri.s= euri_sip_xmpp(watcher);
+		if(from_uri.s== NULL)
+		{
+			LOG(L_ERR, "PUA_XMPP: winfo2xmpp: Error while encoding sip uri "
+					"in xmpp\n");
+			goto error;
+		}	
 		from_uri.len= strlen(from_uri.s);
 		xmlFree(watcher);
 		watcher= NULL;
@@ -690,7 +712,8 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 	}
 
 	xmlFreeDoc(notify_doc);
-
+	xmlCleanupParser();
+	xmlMemoryDump();
 	return 0;
 
 error:
@@ -703,6 +726,9 @@ error:
 		xmlFree(watcher);
 	if(buffer)
 		xmlBufferFree(buffer);
+	xmlCleanupParser();
+	xmlMemoryDump();
+
 	return -1;
 
 }
@@ -793,6 +819,12 @@ void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl)
 	memcpy(uri, hentity->watcher_uri->s, hentity->watcher_uri->len);
 	uri[hentity->watcher_uri->len]= '\0';
 	to_uri.s= duri_sip_xmpp(uri);
+	if(to_uri.s== NULL)
+	{
+		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR whil decoding sip uri in xmpp\n");
+		goto error;	
+	}	
+
 	to_uri.len= strlen(to_uri.s);
 	pkg_free(uri);
 	
@@ -805,6 +837,12 @@ void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl)
 	memcpy(uri, hentity->pres_uri->s, hentity->pres_uri->len);
 	uri[hentity->pres_uri->len]= '\0';
 	from_uri.s= euri_sip_xmpp(uri);
+	if(from_uri.s== NULL)
+	{
+		LOG(L_ERR, "PUA_XMPP: Sipreply2SIP: ERROR while encoding sip uri in xmpp\n");
+		goto error;
+	}
+
 	from_uri.len= strlen(from_uri.s);
 	pkg_free(uri);
 
