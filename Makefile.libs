@@ -132,10 +132,8 @@ install: $(LIB_NAME) $(lib_prefix)/$(lib_dir) $(LIBINAME_F)
 	$(INSTALL_LIB) $(LIB_NAME) $(lib_prefix)/$(lib_dir)
 	rm -f $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) \
 			$(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME) 
-	ln -s $(lib_prefix)/$(lib_dir)/$(LIB_NAME) \
-			$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) 
-	ln -s $(lib_prefix)/$(lib_dir)/$(LIB_NAME) \
-			$(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME) 
+	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME) 
+	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_NAME) $(LIB_LINK_NAME) 
 
 
 .PHONY:install-if-newer
