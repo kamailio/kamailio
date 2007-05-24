@@ -49,30 +49,6 @@
 
 
 /*
- * Convert time_t to string
- * postgresql stores dates with the timezone attached, so we can't use the
- * converter function from db/db_ut.h
- */
-static inline int time2str(time_t _v, char* _s, int* _l)
-{
-	struct tm *t;
-	int bl;
-#ifdef PARANOID
-	if ((!_s) || (!_l) || (*_l < 2))  {
-		LOG(L_ERR, "PG[time2str]: Invalid parameter value\n");
-		return -1;
-	}
-#endif
-
-	t = localtime(&_v);
-
-	if((bl=strftime(_s,(size_t)(*_l)-1,"'%Y-%m-%d %H:%M:%S %z'",t))>0)
-		*_l = bl;
-	
-	return 0;
-}
-
-/*
  * Convert a str to a db value, does not copy strings
  * The postgresql module uses a custom escape function for BLOBs,
  * so the common db_str2val function from db_ut.h could not used.
@@ -282,7 +258,7 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 		break;
 
 	case DB_DATETIME:
-		if (time2str(VAL_TIME(_v), _s, _len) < 0) {
+		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
 			LOG(L_ERR,
 				"PG[val2str]: Error while converting string to time_t\n");
 			return -6;
