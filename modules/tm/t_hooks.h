@@ -206,7 +206,7 @@ extern struct tmcb_head_list*  req_in_tmcb_hl;
 
 
 #define has_tran_tmcbs(_T_, _types_) \
-	( ((_T_)->tmcb_hl.reg_types)|(_types_) )
+	( ((_T_)->tmcb_hl.reg_types)&(_types_) )
 #define has_reqin_tmcbs() \
 	( req_in_tmcb_hl->first!=0 )
 
