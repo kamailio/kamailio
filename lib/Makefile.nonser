@@ -20,7 +20,7 @@ SUBDIRS=binrpc cds xcap presence
 subdirs:	$(SUBDIRS)
 
 $(SUBDIRS):	
-			@echo "Making $(MAKECMDGOALS) in $@" ; $(MAKE) $(MAKECMDGOALS) -C $@
+			@echo "Making $(MAKECMDGOALS) in $@" ; $(MAKE) -f Makefile.nonser $(MAKECMDGOALS) -C $@
 
 all:	subdirs
 
