@@ -65,17 +65,19 @@ str* pres_agg_nbody(str** body_array, int n, int off_index)
 		xmlFree(body_array[off_index]->s);
 		pkg_free(body_array[off_index]);
 	}
+	xmlCleanupParser();
+    xmlMemoryDump();
 
 	return n_body;
 }	
 
-int pres_apply_auth(str* notify_body, subs_t* subs, str* final_nbody)
+int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody)
 {
 	xmlDocPtr doc= NULL;
 	xmlNodePtr node= NULL;
 	str* n_body= NULL;
 	
-	final_nbody= NULL;
+	*final_nbody= NULL;
 	if(force_active)
 		return 0;
 
@@ -105,7 +107,10 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str* final_nbody)
 	}
 
 	xmlFreeDoc(doc);
-	final_nbody= n_body;
+	xmlCleanupParser();
+    xmlMemoryDump();
+
+	*final_nbody= n_body;
 	return 1;
 
 }	
@@ -400,14 +405,12 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 
     xmlFreeDoc(doc);
 
-    xmlCleanupParser();
-
-    xmlMemoryDump();
-
 	xmlFree(class_cont);
 	xmlFree(occurence_ID);
 	xmlFree(deviceID);
 	xmlFree(service_uri);
+    xmlCleanupParser();
+    xmlMemoryDump();
 
     return new_body;
 error:

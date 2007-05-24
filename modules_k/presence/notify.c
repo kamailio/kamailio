@@ -1139,6 +1139,7 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 	db_key_t db_keys[1], update_keys[4];
 	db_val_t db_vals[1], update_vals[4];
     c_back_param *cb_param= NULL;
+	str* final_body= NULL;
 	
 	DBG("PRESENCE:notify:dialog informations:\n");
 	printf_subs(subs);
@@ -1154,7 +1155,7 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 	{
 		if( subs->event->req_auth)
 		{	
-			if( subs->event->apply_auth_nbody(n_body, subs, notify_body)< 0)
+			if( subs->event->apply_auth_nbody(n_body, subs, &notify_body)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:notify: ERROR in function hget_nbody\n");
 				goto error;
@@ -1196,9 +1197,8 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 				else		/* apply authorization rules if exists */
 				if(subs->event->req_auth)
 				{
-					str* final_body= NULL;
 					 
-					if(subs->event->apply_auth_nbody(notify_body, subs, final_body)< 0)
+					if(subs->event->apply_auth_nbody(notify_body, subs, &final_body)< 0)
 					{
 						LOG(L_ERR, "PRESENCE:notify: ERROR in function apply_auth\n");
 						goto error;

@@ -30,6 +30,6 @@
 #define _NBODY_H_
 
 str* pres_agg_nbody(str** body_array, int n, int off_index);
-int pres_apply_auth(str* notify_body, subs_t* subs, str* final_nbody);
+int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody);
 
 #endif
