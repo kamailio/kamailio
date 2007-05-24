@@ -1327,10 +1327,12 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		row = &result->rows[0];
 		row_vals = ROW_VALUES(row);
 		status.len= strlen(row_vals[0].val.string_val);
+			
 		status.s= (char*)pkg_malloc(status.len* sizeof(char));
 		if(status.s== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
+			LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory when"
+					"allocating status\n");
 			pa_dbf.free_result(pa_db, result);
 			goto error;
 		}	
@@ -1344,9 +1346,10 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			else
 			{
 				reason.s= (char*)pkg_malloc(reason.len*sizeof(char));
-				if(reason.s)
+				if(reason.s== NULL)
 				{
-					LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory\n");
+					LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory"
+							" when allocating reason\n");
 					pa_dbf.free_result(pa_db, result);
 					goto error;		
 				}		
