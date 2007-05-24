@@ -219,9 +219,8 @@ struct cell;
  *   quasi-simultaneously if multiple ACK copies arrive in parallel or if
  *   ACKs with different (never seen before) to-tags are received.
  *
- *  TMCB_E2ECANCEL_IN -- called when a CANCEL belonging to a proxied
- *  INVITE arrived. Note that if the CANCEL arrives before the INVITE
- *  (out of order) this callback won't be called.
+ *  TMCB_E2ECANCEL_IN -- called when a CANCEL for the INVITE transaction
+ *  for which the callback was registered arrives.
  *   The transaction parameter will point to the invite transaction (and 
  *   not the cancel) and the request parameter to the CANCEL sip msg.
  *
@@ -350,6 +349,24 @@ struct tmcb_params {
 	int code;
 };
 
+#define INIT_TMCB_PARAMS(tmcb, request, reply, r_code)\
+do{\
+	memset(&(tmcb), 0, sizeof((tmcb))); \
+	(tmcb).req=(request); (tmcb).rpl=(reply);  \
+	(tmcb).code=(r_code); \
+}while(0)
+
+#ifdef TMCB_ONSEND
+#define INIT_TMCB_ONSEND_PARAMS(tmcb, req, repl, rbuf, dest, buf, buf_len, \
+								onsend_flags, t_branch, code) \
+do{ \
+	INIT_TMCB_PARAMS(tmcb, req, repl, code); \
+	tmcb.t_rbuf=(rbuf); tmcb.dst=(dest); \
+	tmcb.send_buf.s=(buf); tmcb.send_buf.len=(buf_len); \
+	tmcb.flags=(onsend_flags); tmcb.branch=(t_branch); \
+}while(0)
+#endif
+
 /* callback function prototype */
 typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
 /* register callback function prototype */
@@ -409,10 +426,10 @@ void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req,
 		int code );
 
 #ifdef TMCB_ONSEND
-void run_onsend_callbacks(int type, struct retr_buf* rbuf, short flags);
-void run_onsend_callbacks2(int type , struct retr_buf* rbuf, char* buf,
-							int buf_len, struct dest_info* dst, int code,
-							short flags);
+
+void run_onsend_callbacks(int type, struct retr_buf* rbuf, struct sip_msg* req,
+									struct sip_msg* repl, short flags);
+void run_onsend_callbacks2(int type, struct tmcb_params* p);
 #endif
 
 #endif

@@ -520,7 +520,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 					if (unlikely(has_tran_tmcbs(t_cancel, TMCB_REQUEST_SENT)))
 						run_onsend_callbacks(TMCB_REQUEST_SENT, 
 												&t_cancel->uac[i].request,
-												TMCB_LOCAL_F);
+												cancel_msg, 0, TMCB_LOCAL_F);
 				}
 #endif
 				if (start_retr( &t_cancel->uac[i].request )!=0)
@@ -702,7 +702,8 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		return -2;
 	} else {
 #ifdef TMCB_ONSEND
-		run_onsend_callbacks(TMCB_REQUEST_SENT, &uac->request, 0);
+		if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
+			run_onsend_callbacks(TMCB_REQUEST_SENT, &uac->request, p_msg, 0,0);
 #endif
 		/* start retr. only if the send succeeded */
 		if (start_retr( &uac->request )!=0){

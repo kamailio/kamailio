@@ -81,7 +81,7 @@
  * 2007-03-08  membar_write() used in update_totag_set(...)(andrei)
  * 2007-03-15  build_local_ack: removed next_hop and replaced with dst to 
  *              avoid resolving next_hop twice
-*              added TMCB_ONSEND callbacks support for replies & ACKs (andrei)
+ *              added TMCB_ONSEND callbacks support for replies & ACKs (andrei)
  *
  */
 
@@ -102,6 +102,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../usr_avp.h"
 #include "../../atomic_ops.h" /* membar_write() */
+#include "../../compiler_opt.h"
 
 #include "defs.h"
 #include "h_table.h"
@@ -412,6 +413,9 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	struct retr_buf *rb;
 	unsigned int buf_len;
 	branch_bm_t cancel_bitmap;
+#ifdef TMCB_ONSEND
+	struct tmcb_params onsend_params;
+#endif
 
 	if (!buf)
 	{
@@ -463,11 +467,11 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (code>=200) {
 		if ( is_local(trans) ) {
 			DBG("DEBUG: local transaction completed from _reply\n");
-			if ( has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) )
+			if ( unlikely(has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED)) )
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, trans,
 					0, FAKED_REPLY, code);
 		} else {
-			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_OUT) )
+			if ( unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_OUT)) )
 				run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
 					trans->uas.request, FAKED_REPLY, code);
 		}
@@ -494,8 +498,11 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	} else {
 #ifdef TMCB_ONSEND
 		if (SEND_PR_BUFFER( rb, buf, len )>=0)
-			run_onsend_callbacks2(TMCB_RESPONSE_SENT, rb, buf, len, &rb->dst,
-									code, TMCB_LOCAL_F);
+			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
+				INIT_TMCB_ONSEND_PARAMS(onsend_params, 0, 0, rb, &rb->dst, 
+								buf, buf_len, TMCB_LOCAL_F, rb->branch, code);
+				run_onsend_callbacks2(TMCB_RESPONSE_SENT, &onsend_params);
+			}
 #else
 		SEND_PR_BUFFER( rb, buf, len );
 #endif
@@ -735,7 +742,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	faked_env( t, &faked_req);
 	/* DONE with faking ;-) -> run the failure handlers */
 
-	if ( has_tran_tmcbs( t, TMCB_ON_FAILURE) ) {
+	if (unlikely(has_tran_tmcbs( t, TMCB_ON_FAILURE)) ) {
 		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req, rpl, code);
 	}
 	if (t->on_negative) {
@@ -1079,7 +1086,8 @@ int t_retransmit_reply( struct cell *t )
 #ifdef TMCB_ONSEND
 	/* we don't know if it's a retransmission of a local reply or a forwarded
 	 * reply */
-	run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, TMCB_RETR_F);
+	run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, 0, 0,
+							TMCB_RETR_F);
 #endif
 	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n",
 		b, b, t->uas.response.buffer, t->uas.response.buffer );
@@ -1273,6 +1281,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
 	str* to_tag;
+#ifdef TMCB_ONSEND
+	struct tmcb_params onsend_params;
+#endif
 
 	/* keep compiler warnings about use of uninit vars silent */
 	res_len=0;
@@ -1306,8 +1317,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		 * be called on; we do not evoke this callback on messages
 		 * stored in shmem -- they are fixed and one cannot change them
 		 * anyway */
-		if (msg_status<300 && branch==relay
-		&& has_tran_tmcbs(t,TMCB_RESPONSE_FWDED) ) {
+		if (unlikely(msg_status<300 && branch==relay
+		&& has_tran_tmcbs(t,TMCB_RESPONSE_FWDED)) ) {
 			run_trans_callbacks( TMCB_RESPONSE_FWDED, t, t->uas.request,
 				p_msg, msg_status );
 		}
@@ -1425,9 +1436,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		t->uas.status = relayed_code;
 		t->relayed_reply_branch = relay;
 
-		if (is_invite(t) && relayed_msg!=FAKED_REPLY
+		if ( unlikely(is_invite(t) && relayed_msg!=FAKED_REPLY
 		&& relayed_code>=200 && relayed_code < 300
-		&& has_tran_tmcbs( t, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) ) {
+		&& has_tran_tmcbs( t, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN))) {
 			totag_retr=update_totag_set(t, relayed_msg);
 		}
 	}; /* if relay ... */
@@ -1444,14 +1455,19 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
 		if (SEND_PR_BUFFER( uas_rb, buf, res_len )>=0){
-			if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
+			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 				run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
 					relayed_msg, relayed_code);
 			}
 #ifdef TMCB_ONSEND
-			run_onsend_callbacks2(TMCB_RESPONSE_SENT, uas_rb, buf, res_len,
-									&uas_rb->dst, relayed_code, 
-									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0);
+			if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
+				INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
+									relayed_msg, uas_rb, &uas_rb->dst, buf,
+									res_len,
+									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
+									uas_rb->branch, relayed_code);
+				run_onsend_callbacks2(TMCB_RESPONSE_SENT, &onsend_params);
+			}
 #endif
 		}
 		pkg_free( buf );
@@ -1521,17 +1537,17 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		t->uas.status = winning_code;
 		update_reply_stats( winning_code );
-		if (is_invite(t) && winning_msg!=FAKED_REPLY
+		if (unlikely(is_invite(t) && winning_msg!=FAKED_REPLY
 		&& winning_code>=200 && winning_code <300
-		&& has_tran_tmcbs(t,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )  {
+		&& has_tran_tmcbs(t,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) ))  {
 			totag_retr=update_totag_set(t, winning_msg);
 		}
 	}
 	UNLOCK_REPLIES(t);
  
         if (local_winner >= 0 && pass_provisional_replies && winning_code < 200) {
-                if (!totag_retr && has_tran_tmcbs(t, TMCB_LOCAL_RESPONSE_OUT) ) {
-                        DBG("DEBUG: Passing provisional reply %d to FIFO application\n", winning_code);
+			if (unlikely(!totag_retr && 
+							has_tran_tmcbs(t, TMCB_LOCAL_RESPONSE_OUT) )) {
                         run_trans_callbacks( TMCB_LOCAL_RESPONSE_OUT, t, 0,
                                 winning_msg, winning_code);
                 }
@@ -1540,7 +1556,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	if (local_winner>=0 && winning_code>=200 ) {
 		DBG("DEBUG: local transaction completed\n");
 		if (!totag_retr) {
-			if ( has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) )
+			if (unlikely(has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) ))
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, t, 0,
 					winning_msg, winning_code );
 		}
@@ -1588,6 +1604,9 @@ int reply_received( struct sip_msg  *p_msg )
 	int branch_ret;
 	int prev_branch;
 #endif
+#ifdef TMCB_ONSEND
+	struct tmcb_params onsend_params;
+#endif
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -1633,10 +1652,14 @@ int reply_received( struct sip_msg  *p_msg )
 				if (ack) {
 #ifdef	TMCB_ONSEND
 					if (SEND_PR_BUFFER(&uac->request, ack, ack_len)>=0)
-						run_onsend_callbacks2(TMCB_REQUEST_SENT,
-									&uac->request, ack, ack_len, 
-									&uac->request.dst,
-									TYPE_LOCAL_ACK, TMCB_LOCAL_F);
+						if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))){ 
+							INIT_TMCB_ONSEND_PARAMS(onsend_params, 
+									t->uas.request, p_msg, &uac->request,
+									&uac->request.dst, ack, ack_len,
+									TMCB_LOCAL_F, branch, TYPE_LOCAL_ACK);
+							run_onsend_callbacks2(TMCB_REQUEST_SENT,
+													&onsend_params);
+						}
 #else
 					SEND_PR_BUFFER(&uac->request, ack, ack_len);
 #endif
@@ -1648,10 +1671,14 @@ int reply_received( struct sip_msg  *p_msg )
 					if (msg_send(&lack_dst, ack, ack_len)<0)
 						LOG(L_ERR, "Error while sending local ACK\n");
 #ifdef	TMCB_ONSEND
-					else
-						run_onsend_callbacks2(TMCB_REQUEST_SENT,
-									&uac->request, ack, ack_len, &lack_dst,
-									TYPE_LOCAL_ACK, TMCB_LOCAL_F);
+					else if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))){
+							INIT_TMCB_ONSEND_PARAMS(onsend_params, 
+									t->uas.request, p_msg, &uac->request,
+									&lack_dst, ack, ack_len, TMCB_LOCAL_F,
+									branch, TYPE_LOCAL_ACK);
+							run_onsend_callbacks2(TMCB_REQUEST_SENT,
+													&onsend_params);
+					}
 #endif
 					shm_free(ack);
 				}

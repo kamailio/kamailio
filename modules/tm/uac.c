@@ -66,6 +66,7 @@
 #include "../../crc.h"
 #include "../../ip_addr.h"
 #include "../../socket_info.h"
+#include "../../compiler_opt.h"
 #include "ut.h"
 #include "h_table.h"
 #include "t_hooks.h"
@@ -353,9 +354,10 @@ static inline void send_prepared_request_impl(struct retr_buf *request, int retr
 		LOG(L_ERR, "t_uac: Attempt to send to precreated request failed\n");
 	}
 #ifdef TMCB_ONSEND
-	else
+	else if (unlikely(has_tran_tmcbs(request->my_T, TMCB_REQUEST_SENT)))
 		/* we don't know the method here */
-		run_onsend_callbacks(TMCB_REQUEST_SENT, request, TMCB_LOCAL_F);
+			run_onsend_callbacks(TMCB_REQUEST_SENT, request, 0, 0,
+									TMCB_LOCAL_F);
 #endif
 	
 	if (retransmit && (start_retr(request)!=0))
