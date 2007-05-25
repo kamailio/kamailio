@@ -6,11 +6,27 @@ include ../../Makefile.defs
 auto_gen=
 NAME=postgres.so
 
-# libpq-fe.h locations
-DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/pgsql/include \
-	 -I$(SYSBASE)/include/pgsql -I$(SYSBASE)/include/postgresql \
-	 -I$(SYSBASE)/include/postgresql/8.0
-LIBS=-L$(LOCALBASE)/lib -L$(LOCALBASE)/pgsql/lib -L$(LOCALBASE)/lib/pgsql \
-	 -lpq
+
+# uncomment the following line if you what to skip
+# the autodetection
+PGCFG=$(shell which pg_config)
+
+ifneq ($(PGCFG),)
+
+	# use autodetection
+	DEFS += -I$(shell $(PGCFG) --includedir)
+	LIBS = -L$(shell $(PGCFG) --libdir) -lpq
+
+else
+
+	# use standard know paths
+	# libpq-fe.h locations
+	DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/pgsql/include \
+		 -I$(SYSBASE)/include/pgsql -I$(SYSBASE)/include/postgresql \
+		 -I$(SYSBASE)/include/postgresql/8.0
+	LIBS=-L$(LOCALBASE)/lib -L$(LOCALBASE)/pgsql/lib -L$(LOCALBASE)/lib/pgsql \
+		 -lpq
+
+endif
 
 include ../../Makefile.modules
