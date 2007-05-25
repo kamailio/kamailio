@@ -155,6 +155,9 @@
  *             nh_enable_rtpp used to enable or disable a specific rtp proxy
  *             nh_show_rtpp   used to display information for all rtp proxies 
  *             (ancuta)
+ * 2007-05-09 New function start_recording() allowing to start recording RTP 
+ *             session in the RTP proxy (Carsten Bock - ported from SER)
+
  */
 
 #include <sys/types.h>
@@ -271,6 +274,8 @@ static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static int fixup_fix_nated_register(void** param, int param_no);
 static int fixup_fix_sdp(void** param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
+static int start_recording_f(struct sip_msg *, char *, char *);
+
 static char *find_sdp_line(char *, char *, char);
 static char *find_next_sdp_line(char *, char *, char, char *);
 
@@ -379,6 +384,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE },
 	{"add_rcv_param",      add_rcv_param_f,        1, fixup_str2int,
 			REQUEST_ROUTE },
+	{"start_recording",    start_recording_f,      0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -2777,7 +2784,7 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	str proto;
 
 	if (!uri || !m) {
-		LOG(L_ERR, "create_rcv_uri: Invalid parameter value\n");
+		LOG(L_ERR,"ERROR:nathelper:create_rcv_uri: Invalid parameter value\n");
 		return -1;
 	}
 
@@ -2820,7 +2827,7 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	}
 
 	if (len > MAX_URI_SIZE) {
-		LOG(L_ERR, "create_rcv_uri: Buffer too small\n");
+		LOG(L_ERR, "ERROR:nathelper:create_rcv_uri: Buffer too small\n");
 		return -1;
 	}
 
@@ -2881,7 +2888,7 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 	while(c) {
 		param = (char*)pkg_malloc(RECEIVED_LEN + 2 + uri.len);
 		if (!param) {
-			LOG(L_ERR, "add_rcv_param: No memory left\n");
+			LOG(L_ERR, "ERROR:nathelper:add_rcv_param: No memory left\n");
 			return -1;
 		}
 		memcpy(param, RECEIVED, RECEIVED_LEN);
@@ -2897,12 +2904,13 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 			anchor = anchor_lump(msg, c->uri.s + c->uri.len - msg->buf, 0, 0);
 		}
 		if (anchor == NULL) {
-			LOG(L_ERR, "add_rcv_param: anchor_lump failed\n");
+			LOG(L_ERR, "ERROR:nathelper:add_rcv_param: anchor_lump failed\n");
 			return -1;
 		}		
 
 		if (insert_new_lump_after(anchor, param, RECEIVED_LEN + 1 + uri.len + 1, 0) == 0) {
-			LOG(L_ERR, "add_rcv_param: insert_new_lump_after failed\n");
+			LOG(L_ERR, "ERROR:nathelper:add_rcv_param: "
+				"insert_new_lump_after failed\n");
 			pkg_free(param);
 			return -1;
 		}
@@ -2914,6 +2922,64 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 
 	return 1;
 }
+
+
+static int start_recording_f(struct sip_msg* msg, char *foo, char *bar)
+{
+	int nitems;
+	str callid = {0, 0};
+	str from_tag = {0, 0};
+	str to_tag = {0, 0};
+	struct rtpp_node *node;
+	struct iovec v[1 + 4 + 3] = {{NULL, 0}, {"R", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+	                             /* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
+
+	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
+		LOG(L_ERR, "ERROR:nathelper:start_recording: can't get "
+			"Call-Id field\n");
+		return -1;
+	}
+
+	if (get_to_tag(msg, &to_tag) == -1) {
+		LOG(L_ERR, "ERROR:nathelper:start_recording: can't get To tag\n");
+		return -1;
+	}
+
+	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
+		LOG(L_ERR, "ERROR:nathelper:start_recording: can't get From tag\n");
+		return -1;
+	}
+
+	if(msg->id != current_msg_id){
+		selected_rtpp_set = default_rtpp_set;
+	}
+
+	STR2IOVEC(callid, v[3]);
+	STR2IOVEC(from_tag, v[5]);
+	STR2IOVEC(to_tag, v[7]);
+	node = select_rtpp_node(callid, 1);
+	if (!node) {
+		LOG(L_ERR, "ERROR:nathelper:start_recording: no available proxies\n");
+		return -1;
+	}
+
+	nitems = 8;
+	if (msg->first_line.type == SIP_REPLY) {
+		if (to_tag.len == 0)
+			return -1;
+		STR2IOVEC(to_tag, v[5]);
+		STR2IOVEC(from_tag, v[7]);
+	} else {
+		STR2IOVEC(from_tag, v[5]);
+		STR2IOVEC(to_tag, v[7]);
+		if (to_tag.len <= 0)
+			nitems = 6;
+	}
+	send_rtpp_command(node, v, nitems);
+
+	return 1;
+}
+
 
 
 /*

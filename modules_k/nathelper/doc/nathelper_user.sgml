@@ -734,6 +734,27 @@ fix_nated_register();
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">start_recording()</function>
+		</title>
+		<para>
+		This command will send a signal to the RTP-Proxy to record 
+		the RTP stream on the RTP-Proxy.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>start_recording</function> usage</title>
+		<programlisting format="linespecific">
+...
+start_recording();
+...
+		</programlisting>
+		</example>
+	</section>
+
 
 	<section>
 		<title><acronym>MI</acronym> Commands</title>

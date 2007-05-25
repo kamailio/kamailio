@@ -52,7 +52,8 @@ Bogdan-Andrei Iancu
               1.6.6. add_rcv_param([flag]),
               1.6.7. fix_nated_register()
               1.6.8. nat_uac_test(flags)
-              1.6.9. MI Commands
+              1.6.9. start_recording()
+              1.6.10. MI Commands
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -77,9 +78,10 @@ Bogdan-Andrei Iancu
    1-17. unforce_rtp_proxy usage
    1-18. add_rcv_paramer usage
    1-19. fix_nated_register usage
-   1-20. nh_enable_ping usage
-   1-21. nh_enable_rtpp usage
-   1-22. nh_show_rtpp usage
+   1-20. start_recording usage
+   1-21. nh_enable_ping usage
+   1-22. nh_enable_rtpp usage
+   1-23. nh_show_rtpp usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -567,9 +569,23 @@ fix_nated_register();
    FAILURE_ROUTE, BRANCH_ROUTE.
      _________________________________________________________
 
-1.6.9. MI Commands
+1.6.9. start_recording()
 
-1.6.9.1. nh_enable_ping
+   This command will send a signal to the RTP-Proxy to record the
+   RTP stream on the RTP-Proxy.
+
+   This function can be used from REQUEST_ROUTE and
+   ONREPLY_ROUTE.
+
+   Example 1-20. start_recording usage
+...
+start_recording();
+...
+     _________________________________________________________
+
+1.6.10. MI Commands
+
+1.6.10.1. nh_enable_ping
 
    Enables natping if parameter value greater than 0. Disables
    natping if parameter value is 0.
@@ -577,13 +593,13 @@ fix_nated_register();
    The function takes only one parameter - a number in decimal
    format.
 
-   Example 1-20. nh_enable_ping usage
+   Example 1-21. nh_enable_ping usage
 ...
 $ openserctl fifo nh_enable_ping 1
 ...
      _________________________________________________________
 
-1.6.9.2. nh_enable_rtpp
+1.6.10.2. nh_enable_rtpp
 
    Enables a rtp proxy if parameter value is greater than 0.
    Disables it if a zero value is given.
@@ -596,20 +612,20 @@ $ openserctl fifo nh_enable_ping 1
    NOTE: if a rtpproxy is defined multiple times (in the same or
    diferente sete), all its instances will be enables/disabled.
 
-   Example 1-21. nh_enable_rtpp usage
+   Example 1-22. nh_enable_rtpp usage
 ...
 $ openserctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
      _________________________________________________________
 
-1.6.9.3. nh_show_rtpp
+1.6.10.3. nh_show_rtpp
 
    Displays all the rtp proxies and their information: set and
    status (disabled or not, weight and recheck_ticks).
 
    No parameter.
 
-   Example 1-22. nh_show_rtpp usage
+   Example 1-23. nh_show_rtpp usage
 ...
 $ openserctl fifo nh_show_rtpp
 ...
