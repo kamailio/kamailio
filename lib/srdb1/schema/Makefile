@@ -58,7 +58,7 @@ mysql:
 	done
 
 mysql_clean:
-	rm -f $(ROOT)/scripts/mysql/my_*
+	rm -f $(ROOT)/scripts/mysql/*
 
 .PHONY: postgres postgres_clean
 postgres:
@@ -84,7 +84,7 @@ oracle:
 	done
 
 oracle_clean:
-	rm -f $ROOT/scripts/oracle/*
+	rm -f $(ROOT)/scripts/oracle/*
 
 .PHONY: dbtext dbtext_clean
 dbtext:
@@ -97,7 +97,7 @@ dbtext:
 	done
 
 dbtext_clean:
-	rm -f $ROOT/scripts/dbtext/openser_db/*
+	rm -f $(ROOT)/scripts/dbtext/openser_db/*
 
 .PHONY: docbook docbook_clean
 docbook:
