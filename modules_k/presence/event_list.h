@@ -44,7 +44,7 @@ typedef int (publ_handling_t)(struct sip_msg*);
 
 typedef int (subs_handling_t)(struct sip_msg*);
 
-typedef str* (agg_nbody_t)(str** body_array, int n, int off_index);
+typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain, str** body_array, int n, int off_index);
 /* params for agg_body_t 
  *	body_array= an array with all the bodies stored for that resource
  *	n= the number of bodies

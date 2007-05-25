@@ -340,7 +340,9 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 		if (result->n > 0)
 		{
 			n_update_cols= 0;
-			
+			pa_dbf.free_result(pa_db, result);
+			result= NULL;
+
 			if(presentity->event->etag_not_new== 0)
 			{	
 				/* generate another etag */
@@ -410,7 +412,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 							" updating presence information\n");
 					goto error;
 				}
-				pa_dbf.free_result(pa_db, result);
 		
 				/* send 200ok */
 				if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
@@ -424,14 +425,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 					pkg_free(etag.s);
 				return 0;
 			}
-/*
-			db_row_t *row = &result->rows[0];
-			db_val_t *row_vals = ROW_VALUES(row);
-			res_body.s = row_vals[body_col].val.str_val.s;	
-			res_body.len = row_vals[body_col].val.str_val.len;
-*/			
-			//	update_xml( &res_body, body);
-			/* write the new body*/
 
 			update_keys[n_update_cols] = "body";
 			update_vals[n_update_cols].type = DB_BLOB;
@@ -448,8 +441,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 				goto error;
 			}
 
-			pa_dbf.free_result(pa_db, result);
-			result= NULL;
 			
 			/* send 200OK */
 			if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
@@ -472,6 +463,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 		}  
 		else  /* if there isn't no registration with those 3 values */
 		{
+			pa_dbf.free_result(pa_db, result);
+			result= NULL;
 			LOG(L_DBG, "PRESENCE:update_presentity: No E_Tag match\n");
 			if (slb.reply(msg, 412, &pu_412_rpl) == -1)
 			{
@@ -479,7 +472,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 					"reply\n");
 				goto error;
 			}
-			pa_dbf.free_result(pa_db, result);
 		}
 	}
 	return 0;
@@ -487,10 +479,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, 
 error:
 	LOG(L_ERR, "PRESENCE:update_presentity: ERROR occured\n");
 	if(result)
-	{
 		pa_dbf.free_result(pa_db, result);
-		result= NULL;
-	}
 	if(etag.s)
 		pkg_free(etag.s);
 

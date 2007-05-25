@@ -411,9 +411,11 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 	db_val_t *row_vals;
 	int n_result_cols = 0;
 	int n_query_cols = 0;
-	int i, n;
+	int i, n, len;
 	int build_off_n= -1; 
 	str etags;
+	str* body;
+	int size= 0;
 
 	query_cols[n_query_cols] = "domain";
 	query_vals[n_query_cols].type = DB_STR;
@@ -464,8 +466,17 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 		DBG("PRESENCE: get_p_notify_body: The query returned no"
 				" result\n[username]= %.*s\t[domain]= %.*s\t[event]= %.*s\n",
 				user.len, user.s, host.len, host.s, event->stored_name.len, event->stored_name.s);
-
+		
 		pa_dbf.free_result(pa_db, result);
+		result= NULL;
+
+		if(event->agg_nbody)
+		{
+			notify_body = event->agg_nbody(&user, &host, NULL, 0, -1);
+			if(notify_body)
+				goto done;
+		}	
+			
 		return NULL;
 	}
 	else
@@ -473,7 +484,6 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 		n= result->n;
 		if(event->agg_nbody== NULL )
 		{
-			int len;
 			DBG("PRESENCE:get_p_notify_body: Event does not require aggregation\n");
 			row = &result->rows[n-1];
 			row_vals = ROW_VALUES(row);
@@ -495,7 +505,7 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 				goto error;
 			}
 			memset(notify_body, 0, sizeof(str));
-			notify_body->s= (char*)malloc( len* sizeof(char));
+			notify_body->s= (char*)pkg_malloc( len* sizeof(char));
 			if(notify_body->s== NULL)
 			{
 				LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR while allocating memory\n");
@@ -504,12 +514,14 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 			}
 			memcpy(notify_body->s, row_vals[body_col].val.string_val, len);
 			notify_body->len= len;
-			goto done;
+			pa_dbf.free_result(pa_db, result);
+			
+			return notify_body;
 		}
 		
 		DBG("PRESENCE:get_p_notify_body: Event requires aggregation\n");
-
-		body_array =(str**)pkg_malloc( (result->n)*sizeof(str*));
+		
+		body_array =(str**)pkg_malloc( (n+1) *sizeof(str*));
 		if(body_array == NULL)
 		{
 			LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR while allocating"
@@ -522,7 +534,7 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 			DBG("PRESENCE:get_p_notify_body:searched etag = %.*s len= %d\n", 
 					etag->len, etag->s, etag->len);
 			DBG( "PRESENCE:get_p_notify_body: etag not NULL\n");
-			for(i= 0; i<result->n; i++)
+			for(i= 0; i< n; i++)
 			{
 				row = &result->rows[i];
 				row_vals = ROW_VALUES(row);
@@ -536,28 +548,76 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 				{
 					DBG("PRESENCE:get_p_notify_body found etag  \n");
 					build_off_n= i;
-				}	
-				body_array[i] =&row_vals[body_col].val.str_val;
+				}
+				len= strlen(row_vals[body_col].val.string_val);
+				if(len== 0)
+				{
+					LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR Empty notify body record\n");
+					goto error;
+				}
+			
+				size= sizeof(str)+ len* sizeof(char);
+				body= (str*)pkg_malloc(size);
+				if(body== NULL)
+				{
+					LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR while allocating memory\n");
+					goto error;
+				}
+				memset(body, 0, size);
+				size= sizeof(str);
+				body->s= (char*)body+ size;
+				memcpy(body->s, row_vals[body_col].val.string_val, len);
+				body->len= len;
+
+				body_array[i]= body;
 			}
 		}	
 		else
 		{	
-			for(i=0;i<result->n;i++)
+			for(i=0; i< n; i++)
 			{
 				row = &result->rows[i];
 				row_vals = ROW_VALUES(row);
-				body_array[i] =&row_vals[body_col].val.str_val;
+				
+				len= strlen(row_vals[body_col].val.string_val);
+				if(len== 0)
+				{
+					LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR Empty notify body record\n");
+					goto error;
+				}
+				
+				size= sizeof(str)+ len* sizeof(char);
+				body= (str*)pkg_malloc(size);
+				if(body== NULL)
+				{
+					LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR while allocating memory\n");
+					goto error;
+				}
+				memset(body, 0, size);
+				size= sizeof(str);
+				body->s= (char*)body+ size;
+				memcpy(body->s, row_vals[body_col].val.string_val, len);
+				body->len= len;
+
+				body_array[i]= body;
 			}			
 		}
-	
-		notify_body = event->agg_nbody(body_array, result->n, build_off_n);
+		pa_dbf.free_result(pa_db, result);
+		result= NULL;
+
+		notify_body = event->agg_nbody(&user, &host, body_array, n, build_off_n);
 	}
 
 done:	
-	if(result!=NULL)
-		pa_dbf.free_result(pa_db, result);
 	if(body_array!=NULL)
+	{
+		for(i= 0; i< n; i++)
+		{
+			if(body_array[i])
+				pkg_free(body_array[i]);
+		}
 		pkg_free(body_array);
+	}
 	return notify_body;
 
 error:
@@ -565,7 +625,19 @@ error:
 		pa_dbf.free_result(pa_db, result);
 
 	if(body_array!=NULL)
+	{
+		for(i= 0; i< n; i++)
+		{
+			if(body_array[i])
+				pkg_free(body_array[i]);
+			else
+				break;
+
+		}
+	
 		pkg_free(body_array);
+	}
+
 	return NULL;
 }
 

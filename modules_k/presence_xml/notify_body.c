@@ -36,35 +36,44 @@
 #include "presence_xml.h"
 
 str* offline_nbody(str* body);
-str* agregate_xmls(str** body_array, int n);
+str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
 str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node);
 extern int force_active;
+extern int pidf_manipulation;
 
-str* pres_agg_nbody(str** body_array, int n, int off_index)
+str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
 {
 	str* n_body= NULL;
+	str* body= NULL;
+
+	if(body_array== NULL && !pidf_manipulation)
+		return NULL;
 
 	if(off_index>= 0)
 	{
-		body_array[off_index]= offline_nbody(body_array[off_index]);
+		body= body_array[off_index];
+		body_array[off_index]= offline_nbody(body);
+
 		if(body_array[off_index]== NULL || body_array[off_index]->s== NULL)
 		{
 			LOG(L_ERR, "PRESENCE_XML: ERROR while constructing offline body\n");
 			return NULL;
 		}
 	}
-	
-	n_body= agregate_xmls(body_array, n);
+
+	n_body= agregate_xmls(pres_user, pres_domain, body_array, n);
 	if(n_body== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML: ERROR while constructing offline body\n");
+		LOG(L_ERR, "PRESENCE_XML: ERROR while aggregating body\n");
 	}
 
 	if(off_index>= 0)
 	{
 		xmlFree(body_array[off_index]->s);
 		pkg_free(body_array[off_index]);
+		body_array[off_index]= body;
 	}
+
 	xmlCleanupParser();
     xmlMemoryDump();
 
@@ -81,7 +90,13 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody)
 	if(force_active)
 		return 0;
 
-	doc= get_xcap_tree(subs->to_user, subs->to_domain);
+	if(get_xcap_tree(subs->to_user, subs->to_domain, PRES_RULES, &doc)< 0)
+	{
+		LOG(L_ERR, "PRESENCE_XML:pres_apply_auth: Error while getting xcap doc"
+				" for pres_rules\n");
+		return -1;
+	}
+
 	if(doc== NULL)
 	{
 		DBG("PRESENCE_XML:pres_apply_auth: No xcap document found\n");
@@ -434,154 +449,7 @@ error:
 	return NULL;
 }	
 
-/*
-if(strncmp(subs->status.s, "active", 6)==0 && subs->reason.s
-					&& strncmp(subs->reason.s, "polite-block", 12)==0)
-				{
-					if(event->polite_block_nbody== NULL)
-					{
-						LOG(L_ERR, "PRESENCE_XML:notify: ERROR no plite_bloc_nbody hadling" 
-								" procedure defined for this event\n");
-						goto error;
-					}	
-					notify_body = event->polite_block_nbody(subs->to_user,subs->to_domain);
-					if(notify_body == NULL)
-					{
-						LOG(L_ERR, "PRESENCE_XML:notify: ERROR while building"
-							" polite-block body\n");
-						goto error;
-					}	
-
-
-
-if(xcap_tree!=NULL)
-		xmlFreeDoc(xcap_tree);
-
-
-
-int add_event(ev_t* event)
-{
-	ev_t* ev= NULL;
-	int size;
-	str str_name;
-	str* str_param= NULL;
-	char* sep= NULL;
-	str wipeer_name;
-	char buf[50];
-	int ret_code= 1;
-
-	str_name.s= name;
-	str_name.len= strlen(name);
-
-	if(param)
-	{
-		str_param= (str*)pkg_malloc(sizeof(str));
-		if(str_param== NULL)
-		{
-			LOG(L_ERR, "PRESENCE_XML: add_event: ERROR No more memory\n");
-			return -1;
-		}
-		str_param->s= param;
-		str_param->len= strlen(param);
-	}
-
-	if(contains_event(&str_name, str_param))
-	{
-		DBG("PRESENCE_XML: add_event: Found prevoius record for event\n");
-		ret_code= -1;
-		goto done;
-	}	
-	size= sizeof(ev_t)+ (str_name.len+ strlen(content_type))
-		*sizeof(char);
-
-	if(param)
-		size+= sizeof(str)+ ( 2*strlen(param) + str_name.len+ 1)* sizeof(char);
-
-	ev= (ev_t*)shm_malloc(size);
-	if(ev== NULL)
-	{
-		LOG(L_ERR, "PRESENCE_XML: add_event: ERROR while allocating memory\n");
-		ret_code= -1;
-		goto done;
-	}
-	memset(ev, 0, sizeof(ev_t));
-
-	size= sizeof(ev_t);
-	ev->name.s= (char*)ev+ size;
-	ev->name.len= str_name.len;
-	memcpy(ev->name.s, name, str_name.len);
-	size+= str_name.len;
-
-	if(str_param)
-	{	
-		ev->param= (str*)((char*)ev+ size);
-		size+= sizeof(str);
-		ev->param->s= (char*)ev+ size;
-		memcpy(ev->param->s, str_param->s, str_param->len);
-		ev->param->len= str_param->len;
-		size+= str_param->len;
-
-		ev->stored_name.s= (char*)ev+ size;
-		memcpy(ev->stored_name.s, name, str_name.len);
-		ev->stored_name.len= str_name.len;
-		memcpy(ev->stored_name.s+ ev->stored_name.len, ";", 1);
-		ev->stored_name.len+= 1;
-		memcpy(ev->stored_name.s+ ev->stored_name.len, str_param->s, str_param->len);
-		ev->stored_name.len+= str_param->len;
-		size+= ev->stored_name.len;
-	}
-	else
-	{
-		ev->stored_name.s= ev->name.s;
-		ev->stored_name.len= ev->name.len;
-	}	
-
-	ev->content_type.s= (char*)ev+ size;
-	ev->content_type.len= strlen(content_type);
-	memcpy(ev->content_type.s, content_type, ev->content_type.len);
-	size+= ev->content_type.len;
-	
-	ev->agg_body= agg_body;
-	
-	sep= strchr(name, '.');
-	if(sep)
-	{
-		if(strncmp(sep+1, "winfo", 5)== 0)
-		{	
-			ev->type= WINFO_TYPE;
-			wipeer_name.s= name;
-			wipeer_name.len= sep - name;
-			
-			ev->wipeer= contains_event(&wipeer_name, ev->param );
-		}
-		else
-		{	
-			ev->type= PUBL_TYPE;
-			wipeer_name.s= buf;
-			wipeer_name.len= sprintf(wipeer_name.s, "%s", name);
-			memcpy(wipeer_name.s+ wipeer_name.len, ".winfo", 5);
-			wipeer_name.len+= 5;
-			ev->wipeer= contains_event(&wipeer_name, ev->param);
-		}
-
-	}	
-	else
-		ev->type= PUBL_TYPE;
-
-	ev->next= EvList->events;
-	EvList->events= ev;
-	EvList->ev_count++;
-
-done:
-	if(str_param)
-		pkg_free(str_param);
-	return ret_code; 
-}
-
-*/
-
-str* agregate_xmls(str** body_array, int n)
-
+str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 {
 	int i, j= 0, append ;
 	xmlNodePtr p_root= NULL, new_p_root= NULL ;
@@ -590,19 +458,40 @@ str* agregate_xmls(str** body_array, int n)
 	xmlNodePtr add_node = NULL ;
 	str *body= NULL;
 	char* id= NULL, *tuple_id = NULL;
+	xmlDocPtr pidf_manip_doc= NULL;
 
-	xml_array = (xmlDocPtr*)pkg_malloc( (n+1)*sizeof(xmlDocPtr));
-
+	xml_array = (xmlDocPtr*)pkg_malloc( (n+2)*sizeof(xmlDocPtr));
 	if(xml_array== NULL)
 	{
 	
 		LOG(L_ERR,"PRESENCE:agregate_xmls: Error while alocating memory");
 		return NULL;
 	}
-	
-	memset(xml_array, 0, (n+1)*sizeof(xmlDocPtr)) ;
+	memset(xml_array, 0, (n+2)*sizeof(xmlDocPtr)) ;
 
-	for(i=0; i<n;i++)
+	/* if pidf_manipulation usage is configured */
+	if(pidf_manipulation)
+	{
+		if( get_xcap_tree(*pres_user, *pres_domain, PIDF_MANIPULATION, &pidf_manip_doc)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:agregate_xmls: Error while getting xcap tree"
+					" for doc_type PIDF_MANIPULATION\n");
+			goto error;
+		}	
+
+		if(pidf_manip_doc== NULL)
+		{
+			DBG( "PRESENCE:agregate_xmls: No PIDF_MANIPULATION doc for [user]= %.*s"
+					" [domain]= %.*s found\n", pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
+		}		
+		else
+		{	
+			xml_array[0]= pidf_manip_doc;
+			j++;
+		}
+	}
+	
+	for(i=0; i<n; i++)
 	{
 		if(body_array[i] == NULL )
 			continue;
@@ -617,7 +506,14 @@ str* agregate_xmls(str** body_array, int n)
 		}
 		j++;
 
-	} 	
+	} 
+
+	if(j== 0)  /* no body */
+	{
+		if(xml_array)
+			pkg_free(xml_array);
+		return NULL;
+	}
 
 	j--;
 	p_root = xmlDocGetNodeByName( xml_array[j], "presence", NULL);
@@ -818,227 +714,4 @@ error:
 	return NULL;
 
 }		
-#if 0
-/* not used now*/ 
-str* build_off_nbody(str p_user, str p_domain, str* etag)
-{	
-	xmlDocPtr doc = NULL, new_doc = NULL; 
-	xmlNodePtr root_node = NULL, node = NULL, p_root= NULL;
-	xmlNodePtr tuple_node = NULL, status_node = NULL, basic_node = NULL;
 
-	db_key_t query_cols[4];
-	db_op_t  query_ops[4];
-	db_val_t query_vals[4];
-	db_key_t result_cols[4];
-	db_res_t *result = NULL;
-	int body_col;
-	db_row_t *row ;	
-	db_val_t *row_vals;
-	int n_result_cols = 0;
-	int n_query_cols = 0;
-	str old_body ;
-	char * tuple_id = NULL, * entity = NULL;
-	str* body;
-	char* status = NULL;
-
-	body = (str*)pkg_malloc(sizeof(str));
-	if(body == NULL)
-	{
-		LOG(L_ERR,"PRESENCE: build_off_nbody:Error while allocating memory\n");
-		return NULL;
-	}
-	memset(body, 0, sizeof(str));
-
-	query_cols[n_query_cols] = "domain";
-	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = p_domain.s;
-	query_vals[n_query_cols].val.str_val.len = p_domain.len;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = "username";
-	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = p_user.s;
-	query_vals[n_query_cols].val.str_val.len = p_user.len;
-	n_query_cols++;
-
-	if(etag!= NULL)
-	{
-		query_cols[n_query_cols] = "etag";
-		query_ops[n_query_cols] = OP_EQ;
-		query_vals[n_query_cols].type = DB_STR;
-		query_vals[n_query_cols].nul = 0;
-		query_vals[n_query_cols].val.str_val.s = etag->s;
-		query_vals[n_query_cols].val.str_val.len = etag->len;
-		n_query_cols++;
-	}
-
-	result_cols[body_col=n_result_cols++] = "body" ;
-
-	if (pxml_dbf.use_table(pxml_db, presentity_table) < 0) 
-	{
-		LOG(L_ERR, "PRESENCE: build_off_nbody: Error in use_table\n");
-		goto error;
-	}
-
-	DBG("PRESENCE: build_off_nbody: querying presentity\n");
-	if (pxml_dbf.query (pxml_db, query_cols, query_ops, query_vals,
-		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
-	{
-		LOG(L_ERR, "PRESENCE: build_off_nbody: Error while querying"
-				" presentity\n");
-		goto error;
-	}
-	if(result== NULL)
-		goto error;
-
-	if (result && result->n <=0 )
-	{
-		LOG(L_ERR, "PRESENCE: build_off_nbody:The query returned no result\n");
-		goto error;
-	}
-
-	row = &result->rows[0];
-	row_vals = ROW_VALUES(row);
-	old_body = row_vals[body_col].val.str_val ;
-	DBG("PRESENCE: build_off_nbody:old-body:\n%.*s\n",old_body.len, old_body.s);
-
-	doc = xmlParseMemory( old_body.s, old_body.len );
-	if(doc== NULL) 
-	{
-		LOG(L_ERR,"PRESENCE: build_off_nbody: ERROR while parsing"
-				" the xml body message\n");
-		goto error;
-	}
-	
-	p_root = xmlDocGetNodeByName(doc,"presence", NULL);
-	status = xmlNodeGetNodeContentByName(p_root, "basic", NULL );
-	if(status == NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: error while getting entity"
-				" attribute\n");
-		goto error;
-	}
-
-	if( etag && (strncmp (status,"closed", 6) == 0) )
-	{
-		DBG( "PRESENCE:build_off_nbody:The presentity status was"
-				" already offline\n");
-		goto error;
-	}
-	entity = xmlNodeGetAttrContentByName(p_root, "entity");
-	if(entity == NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: error while getting entity"
-				" attribute\n");
-		goto error;
-	}
-	for (node = p_root->children; node!=NULL; node = node->next)
-	{
-		if(xmlStrcasecmp (node->name,(unsigned char*) "tuple") == 0)
-		{
-			tuple_id = xmlNodeGetAttrContentByName(node, "id");
-			if(tuple_id == NULL)
-			{
-				LOG(L_ERR, "PRESENCE:build_off_nbody: error while getting"
-						" entity attribute\n");
-				goto error;
-			}
-		}	
-	}
-
-	LIBXML_TEST_VERSION;
-	new_doc = xmlNewDoc(BAD_CAST "1.0");
-	if(new_doc==0)
-		goto error;
-    root_node = xmlNewNode(NULL, BAD_CAST "presence");
-	if(root_node==0)
-		goto error;
-    xmlDocSetRootElement(new_doc, root_node);
-
-    xmlNewProp(root_node, BAD_CAST "xmlns",
-			BAD_CAST "urn:ietf:params:xml:ns:pidf");
-	xmlNewProp(root_node, BAD_CAST "xmlns:dm",
-			BAD_CAST "urn:ietf:params:xml:ns:pidf:data-model");
-	xmlNewProp(root_node, BAD_CAST  "xmlns:rpid",
-			BAD_CAST "urn:ietf:params:xml:ns:pidf:rpid" );
-	xmlNewProp(root_node, BAD_CAST "xmlns:c",
-			BAD_CAST "urn:ietf:params:xml:ns:pidf:cipid");
-	xmlNewProp(root_node, BAD_CAST "entity", BAD_CAST entity);
-
-	tuple_node =xmlNewChild(root_node, NULL, BAD_CAST "tuple", NULL) ;
-	if( tuple_node ==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
-		goto error;
-	}
-	xmlNewProp(tuple_node, BAD_CAST "id", BAD_CAST tuple_id);
-	
-	status_node = xmlNewChild(tuple_node, NULL, BAD_CAST "status", NULL) ;
-	if( status_node ==NULL)
-	{
-		LOG(L_ERR, "PRESENCE: build_off_nbody: ERROR while adding child\n");
-		goto error;
-	}
-
-	basic_node = xmlNewChild(status_node, NULL, BAD_CAST "basic",
-			BAD_CAST "closed") ;
-	if( basic_node ==NULL)
-	{
-		LOG(L_ERR, "PRESENCE:build_off_nbody: ERROR while adding child\n");
-		goto error;
-	}
-	xmlDocDumpFormatMemory(new_doc,(xmlChar**)(void*)&body->s, &body->len, 1);
-
-	DBG("PRESENCE: build_off_nbody:new_body:\n%.*s\n",body->len, body->s);
-
-	if(result !=NULL)
-		pxml_dbf.free_result(pxml_db, result);
-
-    /*free the document */
-    xmlFreeDoc(doc);
-	xmlFreeDoc(new_doc);
-
-    /*
-     *Free the global variables that may
-     *have been allocated by the parser.
-     */
-    xmlCleanupParser();
-
-    /*
-     * this is to debug memory for regression tests
-     */
-    xmlMemoryDump();
-
-	xmlFree(status);
-	xmlFree(entity);
-	xmlFree(tuple_id);
-	
-    return body;
-
-error:
-	if(doc)
-		xmlFreeDoc(doc);
-	if(new_doc)
-		xmlFreeDoc(new_doc);
-	if(result)
-		pxml_dbf.free_result(pxml_db, result);
-	if(body)
-	{
-		if(body->s)
-			xmlFree(body->s);
-		pkg_free(body);
-	}
-	if(status)
-		xmlFree(status);
-	if(entity)
-		xmlFree(entity);
-	if(tuple_id)
-		xmlFree(tuple_id);
-	return NULL;
-
-}
-#endif

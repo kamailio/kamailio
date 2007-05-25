@@ -34,13 +34,14 @@
 #include "../../str.h"
 #include "../presence/subscribe.h"
 
-#define PRES_RULES 1;
-#define RESOURCE_LIST 2;
-#define RLS_SERVICE 3;
+#define PRES_RULES        1
+#define RESOURCE_LIST     2
+#define RLS_SERVICE       3
+#define PIDF_MANIPULATION 4
 
 int pres_watcher_allowed(subs_t* subs);
 
-xmlDocPtr get_xcap_tree(str user, str domain);
+int get_xcap_tree(str user, str domain, int doc_type, xmlDocPtr* doc);
 xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree );
 
 #endif

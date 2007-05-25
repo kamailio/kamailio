@@ -55,12 +55,17 @@ int pres_watcher_allowed(subs_t* subs)
 	}
 	/* else search in xcap_table */
 
-	doc= get_xcap_tree(subs->to_user, subs->to_domain);
+	if( get_xcap_tree(subs->to_user, subs->to_domain, PRES_RULES, &doc)< 0)
+	{
+		LOG(L_ERR, "PRESENCE_XML:pres_watcher_allowed: ERROR while getting xcap_tree\n");
+		return -1;	
+	}	
 	if(doc== NULL)
 	{
 		DBG("PRESENCE_XML:pres_watcher_allowed: No xcap document found\n");
 		return 0;
 	}
+
 	ret_code= is_watcher_allowed(subs, doc);
 	if(ret_code==0 )
 	{
@@ -128,7 +133,6 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 					" identity tag\n");
 			goto error;
 		}	
-		id = NULL;
 		
 		iden_child= xmlNodeGetChildByName(identity_node, "one");
 		if(iden_child)	
@@ -139,6 +143,12 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 					continue;
 				
 				id = xmlNodeGetAttrContentByName(node2, "id");	
+				if(id== NULL)
+				{
+					LOG(L_ERR, "PRESENCE_XML:get_rule_node:Error while extracting"
+							" attribute\n");
+					goto error;
+				}
 				if((strlen(id)== w_uri.len && 
 							(strncmp(id, w_uri.s, w_uri.len)==0)))	
 				{
@@ -319,7 +329,7 @@ int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 }
 
 
-xmlDocPtr get_xcap_tree(str user, str domain)
+int get_xcap_tree(str user, str domain, int doc_type, xmlDocPtr* doc )
 {
 	db_key_t query_cols[5];
 	db_val_t query_vals[5];
@@ -330,6 +340,7 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	db_val_t *row_vals ;
 	str body ;
 	xmlDocPtr xcap_tree =NULL;
+	int err_ret= -1;
 
 	query_cols[n_query_cols] = "username";
 	query_vals[n_query_cols].type = DB_STR;
@@ -348,15 +359,17 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	query_cols[n_query_cols] = "doc_type";
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val= PRES_RULES;
+	query_vals[n_query_cols].val.int_val= doc_type;
 	n_query_cols++;
 
 	result_cols[0] = "xcap";
 
+	*doc= NULL;
+
 	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE_XML:get_xcap_tree: Error in use_table\n");
-		return NULL;
+		return -1;
 	}
 
 	if( pxml_dbf.query(pxml_db, query_cols, 0 , query_vals, result_cols, 
@@ -365,21 +378,24 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 		LOG(L_ERR, "PRESENCE_XML:get_xcap_tree:Error while querying table xcap for"
 		" [username]=%.*s , domain=%.*s\n",user.len, user.s, domain.len,
 		domain.s);
-		goto error;
+		if(result)
+			pxml_dbf.free_result(pxml_db, result);
+		return -1;
 	}
 	if(result== NULL)
-		return NULL;
+		return -1;
 
 	if(result && result->n<=0)
 	{
 		DBG("PRESENCE_XML:get_xcap_tree:The query in table xcap for"
 				" [username]=%.*s , domain=%.*s returned no result\n",
 				user.len, user.s, domain.len, domain.s);
+		err_ret= 0;
 		goto error;
 	}
 	DBG("PRESENCE_XML:get_xcap_tree:The query in table xcap for"
-			" [username]=%.*s , domain=%.*s returned result",user.len,
-			user.s, domain.len, domain.s );
+			" [username]=%.*s , domain=%.*s , doc_type= %d returned result\n",
+			user.len, user.s, domain.len, domain.s, doc_type );
 
 	row = &result->rows[0];
 	row_vals = ROW_VALUES(row);
@@ -409,12 +425,14 @@ xmlDocPtr get_xcap_tree(str user, str domain)
 	if(result!=NULL)
 		pxml_dbf.free_result(pxml_db, result);
 
-	return xcap_tree;
+	*doc= xcap_tree;
+
+	return 0;
 
 error:
 	if(result!=NULL)
 		pxml_dbf.free_result(pxml_db, result);
-	return NULL;
+	return err_ret;
 }
 
 

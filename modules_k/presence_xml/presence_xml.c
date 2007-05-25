@@ -58,7 +58,7 @@ add_event_t pres_add_event;
 char* xcap_table="xcap_xml";  
 str db_url = {0, 0};
 int force_active= 0;
-
+int pidf_manipulation= 0;
 /* SL bind */
 struct sl_binds slb;
 
@@ -81,6 +81,7 @@ static param_export_t params[]={
 	{ "db_url",					STR_PARAM, &db_url.s},
 	{ "xcap_table",				STR_PARAM, &xcap_table},
 	{ "force_active",			INT_PARAM, &force_active },
+	{ "pidf_manipulation",      INT_PARAM, &pidf_manipulation}, 
 	{0,0,0}
 };
 	/** module exports */
