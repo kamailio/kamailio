@@ -500,7 +500,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		if (SEND_PR_BUFFER( rb, buf, len )>=0)
 			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, 0, 0, rb, &rb->dst, 
-								buf, buf_len, TMCB_LOCAL_F, rb->branch, code);
+								buf, len, TMCB_LOCAL_F, rb->branch, code);
 				run_onsend_callbacks2(TMCB_RESPONSE_SENT, &onsend_params);
 			}
 #else

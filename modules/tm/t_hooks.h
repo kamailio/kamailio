@@ -99,7 +99,7 @@ struct cell;
 #define TMCB_LOCAL_REQUEST_IN (1<<TMCB_LOCAL_REQUEST_IN_N)
 #define TMCB_DLG              (1<<TMCB_DLG_N)
 #define TMCB_DESTROY          (1<<TMCB_DESTROY_N)
-#define TMCB_E2ECANCEL_IN     (1<<TMCB_E2EACK_IN_N)
+#define TMCB_E2ECANCEL_IN     (1<<TMCB_E2ECANCEL_IN_N)
 #ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
@@ -221,8 +221,9 @@ struct cell;
  *
  *  TMCB_E2ECANCEL_IN -- called when a CANCEL for the INVITE transaction
  *  for which the callback was registered arrives.
- *   The transaction parameter will point to the invite transaction (and 
- *   not the cancel) and the request parameter to the CANCEL sip msg.
+ *   The transaction parameter will point to the cancel transaction (and 
+ *   not the invite) and the request parameter to the CANCEL sip msg.
+ *   Note: the callback should be registered for an INVITE transaction.
  *
  *  TMCB_REQUEST_FWDED -- request is being forwarded out. It is
  *  called before a message is forwarded, when the corresponding branch
