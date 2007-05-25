@@ -311,12 +311,12 @@ static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 	if (db_mysql_convert_result(_h, *_r) < 0) {
 		LOG(L_ERR, "store_result: Error while converting result\n");
 		pkg_free(*_r);
-		/* This cannot be used because if convert_result fails,
-		 * free_result will try to free rows and columns too 
-		 * and free will be called two times
-		 */
-		/* db_mysql_free_dbresult(*_r); */
 		*_r = 0;
+		/* all mem on openser API side is already freed by 
+		 * db_mysql_convert_result in case of error, but we also need
+		 * to free the mem from the mysql lib side */
+		mysql_free_result(CON_RESULT(_h));
+		CON_RESULT(_h) = 0;
 		return -4;
 	}
 	
