@@ -46,6 +46,8 @@
 #include "utils_func.h"
 
 #define ALLOC_SIZE 3000
+#define MAX_FORWARD 70
+
 extern struct tm_binds tmb;
 c_back_param* shm_dup_subs(subs_t* subs, str to_tag);
 
@@ -86,6 +88,8 @@ int build_str_hdr(subs_t* subs, int is_body, str** hdr)
 		LOG(L_ERR, "PRESENCE: build_str_hdr:ERROR while allocating memory\n");
 		return -1;
 	}
+	memset(str_hdr, 0, sizeof(str));
+
 	str_hdr->s = (char*)pkg_malloc(ALLOC_SIZE* sizeof(char));
 	if(str_hdr->s== NULL)
 	{
@@ -94,8 +98,22 @@ int build_str_hdr(subs_t* subs, int is_body, str** hdr)
 		return -1;
 	}	
 
-	strncpy(str_hdr->s ,"Event: ", 7);
-	str_hdr->len = 7;
+	strncpy(str_hdr->s ,"Max-Forwards: ", 14);
+	str_hdr->len = 14;
+	len= sprintf(str_hdr->s+str_hdr->len, "%d", MAX_FORWARD);
+	if(len<= 0)
+	{
+		LOG(L_ERR, "PRESENCE: build_str_hdr:ERROR while printing in string\n");
+		pkg_free(str_hdr->s);
+		pkg_free(str_hdr);
+		return -1;
+	}	
+	str_hdr->len+= len; 
+	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+	str_hdr->len += CRLF_LEN;
+
+	strncpy(str_hdr->s+str_hdr->len  ,"Event: ", 7);
+	str_hdr->len+= 7;
 	strncpy(str_hdr->s+str_hdr->len, event->stored_name.s, event->stored_name.len);
 	str_hdr->len+= event->stored_name.len;
 	if (subs->event_id.len) 
