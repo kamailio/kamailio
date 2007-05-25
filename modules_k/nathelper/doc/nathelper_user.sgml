@@ -592,6 +592,10 @@ force_rtp_proxy();
 				swapped, a reply will create the RTP session and a request
 				will confirm it.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>w</emphasis> - flags that for the UA from which 
+				message is received, support symmetric RTP must be forced.
+				</para></listitem>
 			</itemizedlist>
 		</listitem>
 		<listitem><para>

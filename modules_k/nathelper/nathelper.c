@@ -2334,6 +2334,11 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			swap = 1;
 			break;
 
+		case 'w':
+		case 'W':
+			opts[oidx++] = 'S';
+			break;
+
 		default:
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", *cp);
 			return -1;
