@@ -38,7 +38,7 @@
 #include "../../db/db_id.h"
 
 #include <time.h>
-#include "libpq-fe.h"
+#include <libpq-fe.h>
 
 /*
  * Postgres specific connection data

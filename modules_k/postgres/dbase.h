@@ -111,7 +111,7 @@ int pg_use_table(db_con_t* _h, const char* _t);
 
 int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len);
 
-int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l);
+int pg_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l);
 
 int pg_convert_result(db_con_t* _h, db_res_t* _r);
 

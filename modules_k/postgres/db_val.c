@@ -52,10 +52,10 @@
  * Convert a str to a db value, does not copy strings
  * The postgresql module uses a custom escape function for BLOBs,
  * so the common db_str2val function from db_ut.h could not used.
+ * If the _s is linked in the db_val result, it will be returned zero
  */
-int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
+int pg_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 {
-
 	static str dummy_string = {"", 0};
 
 #ifdef PARANOID
@@ -83,7 +83,8 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 	case DB_INT:
 		LOG(L_DBG, "PG[str2val]: Converting INT [%s]\n", _s);
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LOG(L_ERR, "PG[str2val]: Error while converting INT value from string\n");
+			LOG(L_ERR, "PG[str2val]: Error while converting INT value "
+				"from string\n");
 			return -2;
 		} else {
 			VAL_TYPE(_v) = DB_INT;
@@ -94,7 +95,8 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 	case DB_BITMAP:
 		LOG(L_DBG, "PG[str2val]: Converting BITMAP [%s]\n", _s);
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LOG(L_ERR, "PG[str2val]: Error while converting BITMAP value from string\n");
+			LOG(L_ERR, "PG[str2val]: Error while converting BITMAP value "
+				"from string\n");
 			return -3;
 		} else {
 			VAL_TYPE(_v) = DB_BITMAP;
@@ -105,7 +107,8 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 	case DB_DOUBLE:
 		LOG(L_DBG, "PG[str2val]: Converting DOUBLE [%s]\n", _s);
 		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
-			LOG(L_ERR, "PG[str2val]: Error while converting DOUBLE value from string\n");
+			LOG(L_ERR, "PG[str2val]: Error while converting DOUBLE value "
+				"from string\n");
 			return -4;
 		} else {
 			VAL_TYPE(_v) = DB_DOUBLE;
@@ -114,7 +117,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		break;
 
 	case DB_STRING:
-		LOG(L_DBG, "PG[str2val]: Converting STRING [%s]\n", _s);	
+		LOG(L_DBG, "PG[str2val]: Converting STRING [%s]\n", _s);
 		VAL_STRING(_v) = _s;
 		VAL_TYPE(_v) = DB_STRING;
 		return 0;
@@ -124,6 +127,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		VAL_STR(_v).s = (char*)_s;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
+		_s = 0;
 		return 0;
 
 	case DB_DATETIME:
@@ -139,10 +143,13 @@ int pg_str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 
 	case DB_BLOB:
 		LOG(L_DBG, "PG[str2val]: Converting BLOB [%s]\n", _s);
-		/* PQunescapeBytea:  Converts a string representation of binary data into binary data — the reverse of PQescapeBytea.
-		 * This is needed when retrieving bytea data in text format, but not when retrieving it in binary format.
+		/* PQunescapeBytea:  Converts a string representation of binary data 
+		 * into binary data — the reverse of PQescapeBytea.
+		 * This is needed when retrieving bytea data in text format, 
+		 * but not when retrieving it in binary format.
 		 */
-		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s, (size_t*)&(VAL_BLOB(_v).len) );
+		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s, 
+			(size_t*)&(VAL_BLOB(_v).len) );
 		VAL_TYPE(_v) = DB_BLOB;
 		LOG(L_DBG, "PG[str2val]: got blob len %d\n", _l);
 		return 0;
