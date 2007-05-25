@@ -18,9 +18,9 @@
     <column id="id">
 	<name>id</name>
 	<type>unsigned int</type>
+	<size>&table_id_len;</size>
 	<autoincrement/>
 	<type db="dbtext">int,auto</type>
-	<size>&table_id_len;</size>
 	<description>Unique ID</description>
     </column>
 

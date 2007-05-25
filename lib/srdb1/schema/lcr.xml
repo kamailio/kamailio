@@ -19,7 +19,7 @@
 
     <column id="id">
         <name>id</name>
-        <type>int</type>
+        <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
         <type db="dbtext">int,auto</type>
