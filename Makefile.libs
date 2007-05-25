@@ -31,12 +31,6 @@ ifeq ($(BUGFIX_VER),)
 	BUGFIX_VER:=0
 endif
 
-ifeq	($(strip $(compile_for_install)),yes)
-	LIB_INSTALL_NAME:=$(lib_target)/$(LIB_RUNTIME_NAME)
-else
-	LIB_INSTALL_NAME:=$(shell pwd)/$(LIB_RUNTIME_NAME)
-endif
-
 ifeq ($(OS), darwin)
 	LIB_NAME:= \
 	$(LIB_PREFIX)$(NAME).$(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER)$(LIB_SUFFIX)
@@ -48,7 +42,7 @@ ifeq ($(OS), darwin)
 	# path to a linked library is taken from the library itself (the path
 	# is built-in the library)
 	LIBINAME_F:=libiname.lst
-	NAME_LD_FLAGS:= -compatibility_version $(MAJOR_VER).$(MINOR_VER) \
+	NAME_LD_FLAGS= -compatibility_version $(MAJOR_VER).$(MINOR_VER) \
 					-current_version $(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER) \
 					-install_name $(LIB_INSTALL_NAME)
 
@@ -56,8 +50,14 @@ else
 	LIB_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER).$(MINOR_VER)
 	LIB_RUNTIME_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER)
 	LIB_LINK_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX)
-	NAME_LD_FLAGS:= $(LIB_SONAME)$(LIB_RUNTIME_NAME)
+	NAME_LD_FLAGS= $(LIB_SONAME)$(LIB_RUNTIME_NAME)
 	LIBINAME_F:=
+endif
+
+ifeq	($(strip $(compile_for_install)),yes)
+	LIB_INSTALL_NAME:=$(lib_target)/$(LIB_RUNTIME_NAME)
+else
+	LIB_INSTALL_NAME:=$(shell pwd)/$(LIB_RUNTIME_NAME)
 endif
 
 

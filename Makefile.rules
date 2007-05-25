@@ -35,8 +35,8 @@
 # on some ser libs)
 
 ifneq	($(SER_LIBS),)
-# realpath doesn't seem to work on darwin
-SER_LIBS_DIRS:=$(abspath $(dir $(SER_LIBS)))
+# abspath & realpath don't seem to work on darwin
+SER_LIBS_DIRS:=$(dir $(SER_LIBS))
 ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
 lib_compile_for_install=yes
 expected_lib_ipath=$(lib_target)
@@ -78,7 +78,7 @@ ALL_LIBS+=$(foreach l, $(SER_LIBS), -L$(dir $l) -l$(notdir $l))
 $(NAME): $(SER_LIBS_DEPS) librpath.lst
 
 $(SER_LIBS_DEPS):
-	$(MAKE) -C $(dir $@)  compile_for_install=$(lib_compile_for_install)
+	$(MAKE) -wC $(dir $@)  compile_for_install=$(lib_compile_for_install)
 
 
 ifneq ($(SER_IPATH_LST),)
@@ -86,12 +86,13 @@ ifneq ($(SER_IPATH_LST),)
 $(NAME): $(SER_IPATH_LST) 
 
 $(SER_IPATH_LST): FORCE
-	@if grep "COMPILED_INAME:=$(call expected_lib_ipath,$(@D))" $(@) \
-			1>/dev/null 2>/dev/null ; \
+	@if grep \
+		"COMPILED_INAME:=$(call expected_lib_ipath,$(shell cd $(@D); pwd))" \
+		$(@) 1>/dev/null 2>/dev/null ; \
 	then :; \
 	else \
 		echo "re-building $(@D)" ; \
-		$(MAKE) -C $(@D) compile_for_install=$(lib_compile_for_install) ; \
+		$(MAKE) -wC $(@D) compile_for_install=$(lib_compile_for_install) ; \
 	fi
 
 .PHONY: FORCE
@@ -101,7 +102,7 @@ FORCE:
 FORCE-BUILD-LIBS:
 	@for r in $(SER_LIBS_DIRS) ; do \
 		echo building lib $$r; \
-		$(MAKE) -C $$r compile_for_install=$(lib_compile_for_install) ; \
+		$(MAKE) -wC $$r compile_for_install=$(lib_compile_for_install) ; \
 	done
 
 endif
@@ -132,7 +133,7 @@ clean:
 		if [ -d "$$r" ]; then \
 			echo "module $$r" ; \
 			$(MAKE) -C $$r clean ; \
-		        $(MAKE) -C $$r/doc clean ; \
+			$(MAKE) -C $$r/doc clean ; \
 		fi ; \
 	done 
 	@if [ -n "$(modules)" ]; then \

@@ -31,11 +31,19 @@ ifeq ($(use_readline),1)
 endif
 
 
-
 include ../../Makefile.sources
 include ../../Makefile.rules
 
-$(NAME).o: msg
+ifeq ($(use_readline),1)
+$(info readline detected ($(readline_path)) )
+$(info command completion enabled)
+else
+$(info "no readline include files detected, disabling readline support")
+$(info "command completion disabled" )
+$(info "(to force readline support try 'make use_readline=1')")
+endif
+
+$(NAME).o: 
 
 .PHONY: msg
 msg:
