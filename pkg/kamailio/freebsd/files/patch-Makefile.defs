@@ -1,6 +1,6 @@
---- Makefile.defs.orig	Mon Apr  9 12:01:20 2007
-+++ Makefile.defs	Mon Apr  9 11:59:14 2007
-@@ -128,7 +128,7 @@
+--- Makefile.defs.orig	Thu May 24 11:21:19 2007
++++ Makefile.defs	Sat May 26 19:52:01 2007
+@@ -131,7 +131,7 @@
  ifeq ($(ARCH_B),64b)
  	LIBDIR ?= lib64
  else
@@ -9,28 +9,28 @@
  	# assume 32b - it is not really used further
  	ARCH_B=32b
  endif
-@@ -208,13 +208,13 @@
+@@ -211,13 +211,13 @@
  TAR ?= tar
  endif
  
--INSTALL-TOUCH = touch          # used to create the file first (good to 
+-INSTALL_TOUCH = touch          # used to create the file first (good to 
 -                               #  make solaris install work)
--INSTALL-CFG = $(INSTALL) -m 644
--INSTALL-BIN = $(INSTALL) -m 755
--INSTALL-MODULES = $(INSTALL) -m 755
--INSTALL-DOC = $(INSTALL) -m 644
--INSTALL-MAN = $(INSTALL) -m 644
-+INSTALL-TOUCH = :		# used to create the file first (good to 
+-INSTALL_CFG = $(INSTALL) -m 644
+-INSTALL_BIN = $(INSTALL) -m 755
+-INSTALL_MODULES = $(INSTALL) -m 755
+-INSTALL_DOC = $(INSTALL) -m 644
+-INSTALL_MAN = $(INSTALL) -m 644
++INSTALL_TOUCH = :	# used to create the file first (good to
 +				#  make solaris install work)
-+INSTALL-CFG = $(BSD_INSTALL_DATA)
-+INSTALL-BIN = $(BSD_INSTALL_PROGRAM)
-+INSTALL-MODULES = $(BSD_INSTALL_PROGRAM)
-+INSTALL-DOC = $(BSD_INSTALL_DATA)
-+INSTALL-MAN = $(BSD_INSTALL_MAN)
++INSTALL_CFG = $(BSD_INSTALL_DATA)
++INSTALL_BIN = $(BSD_INSTALL_PROGRAM)
++INSTALL_MODULES = $(BSD_INSTALL_PROGRAM)
++INSTALL_DOC = $(BSD_INSTALL_DATA)
++INSTALL_MAN = $(BSD_INSTALL_MAN)
  
  #set some vars from the environment (and not make builtins)
  CC   := $(shell echo "$${CC}")
-@@ -1196,8 +1196,8 @@
+@@ -1205,8 +1205,8 @@
  
  #add libssl if needed
  ifneq ($(TLS),)

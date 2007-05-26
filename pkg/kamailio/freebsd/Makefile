@@ -2,11 +2,11 @@
 # Date created:				20 October 2005
 # Whom:					jesusr
 #
-# $FreeBSD: ports/net/openser/Makefile,v 1.6 2007/03/04 22:09:30 miwi Exp $
+# $FreeBSD: ports/net/openser/Makefile,v 1.7 2007/04/11 21:53:47 miwi Exp $
 #
 
 PORTNAME=	openser
-PORTVERSION=	1.2.0
+PORTVERSION=	1.2.1
 CATEGORIES=	net
 MASTER_SITES=	http://openser.org/pub/openser/${PORTVERSION}/src/
 DISTNAME=	${PORTNAME}-${PORTVERSION}-tls_src
@@ -120,9 +120,9 @@ MAKE_ARGS+=	TLS=""
 
 .if defined(WITH_SNMPSTATS)
 RUN_DEPENDS+=	snmpcheck:${PORTSDIR}/net-mgmt/net-snmp
-MODULES+=       snmpstats
+MODULES+=	snmpstats
 .else
-MAKE_ENV+=      SNMPSTATS=snmpstats
+MAKE_ENV+=	SNMPSTATS=snmpstats
 .endif
 
 PLIST_FILES+=	${MODULES:S|^|lib/openser/modules/|:S|$|.so|} \
