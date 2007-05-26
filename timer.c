@@ -29,8 +29,10 @@
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
  *  2005-07-27  complete re-design/re-implementation (andrei)
- *  2005-12-12  workarround & bug reporting for timer_del(self) called from
+ *  2005-12-12  workaround & bug reporting for timer_del(self) called from
  *              a timer handle; added timer_allow_del()  (andrei)
+ *  2007-05-26  workaround for darwin sigwait() bug, see slow_timer_main() or
+ *              grep __OS_darwin for more info (andrei)
  */
 
 
@@ -340,6 +342,17 @@ again:
 				strerror(errno), errno);
 		goto error;
 	}
+#ifdef __OS_darwin
+	/* workaround for darwin sigwait bug, see slow_timer_main() for more
+	   info (or grep __OS_darwin) */
+	/* keep in sync wih main.c: sig_usr() - signals we are interested in */
+	sigaddset(&slow_timer_sset, SIGINT);
+	sigaddset(&slow_timer_sset, SIGTERM);
+	sigaddset(&slow_timer_sset, SIGUSR1);
+	sigaddset(&slow_timer_sset, SIGHUP);
+	sigaddset(&slow_timer_sset, SIGCHLD);
+	sigaddset(&slow_timer_sset, SIGALRM);
+#endif
 	return 0;
 error:
 	return -1;
@@ -989,17 +1002,24 @@ ticks_t get_ticks()
  *   -it  increments *s_idx (at the end it will be == *t_idx)
  *   -all list operations are protected by the "slow" timer lock
  */
+#ifdef __OS_darwin
+extern void sig_usr(int signo);
+#endif
+
 void slow_timer_main()
 {
 	int n;
 	ticks_t ret;
 	struct timer_ln* tl;
 	unsigned short i;
+#ifdef USE_SIGWAIT
+	int sig;
+#endif
 	
 	in_slow_timer=1; /* mark this process as the slow timer */
 	while(1){
 #ifdef USE_SIGWAIT
-		n=sigwait(&slow_timer_sset, 0);
+		n=sigwait(&slow_timer_sset, &sig);
 #else
 		n=sigwaitinfo(&slow_timer_sset, 0);
 #endif
@@ -1010,6 +1030,20 @@ void slow_timer_main()
 			sleep(1);
 			/* try to continue */
 		}
+#ifdef USE_SIGWAIT
+	if (sig!=SLOW_TIMER_SIG){
+#ifdef __OS_darwin
+		/* on darwin sigwait is buggy: it will cause extreme slow down
+		   on signal delivery for the signals it doesn't wait on
+		   (on darwin 8.8.0, g4 1.5Ghz I've measured a 36s delay!).
+		  To work arround this bug, we sigwait() on all the signals we
+		  are interested in ser and manually call the master signal handler 
+		  if the signal!= slow timer signal -- andrei */
+		sig_usr(sig);
+#endif
+		continue;
+	}
+#endif
 		LOCK_SLOW_TIMER_LIST();
 		while(*s_idx!=*t_idx){
 			i= *s_idx%SLOW_LISTS_NO;

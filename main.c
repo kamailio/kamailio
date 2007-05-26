@@ -644,7 +644,7 @@ void handle_sigs()
     - modified by andrei: moved most of the stuff to handle_sigs,
        made it safer for the "fork" case
 */
-static void sig_usr(int signo)
+void sig_usr(int signo)
 {
 
 
