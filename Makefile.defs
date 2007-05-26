@@ -57,6 +57,8 @@
 #                INSTALL_LIB, libraries install paths (andrei)
 #  2007-05-14  futex support if linux 2.5.70+ and 
 #               use_futex=yes (default) (andrei)
+#  2007-05-26  changed darwin module link flags (instead of -bundle_loader ser
+#               -flat_namespace -undefined suppress) (andrei)
 
 
 # check if already included/exported
@@ -1473,7 +1475,9 @@ ifeq ($(OS), darwin)
 		DEFS+=-DHAVE_SELECT
 	endif
 	LDFLAGS=        # darwin doesn't like -O2 or -E
-	MOD_LDFLAGS:= -bundle -bundle_loader ../../$(MAIN_NAME)
+	# the modules uses symbols from ser => either 
+	# -flat_namespace -undefined_suppress or -bundle_loader ../../$(MAIN_NAME)
+	MOD_LDFLAGS:= -bundle -flat_namespace -undefined suppress
 	LIB_LDFLAGS:= -dynamiclib
 	LIB_SUFFIX:=.dylib
 	# on darwin soname should include the full path
