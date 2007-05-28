@@ -104,13 +104,14 @@ parts of documents with namespaces).</emphasis></para>
 <para>Let us assume
 <itemizedlist>
 	<listitem><para><varname>xcap-root</varname> = <literal>http://localhost/xcap-root</literal></para></listitem>
-	<listitem><para><varname>AOR of SUBSCRIBE request</varname> = <literal>sip:technical-support@iptel.org</literal></para></listitem>
+	<listitem><para><varname>AOR of SUBSCRIBE request</varname> =
+	<literal>sip:technical-support@someorg.org</literal></para></listitem>
 </itemizedlist></para>
 <para>Resulting document describing the list will be get from URI:
-<filename>http://localhost/xcap-root/rls-services/global/index/~~/rls-services/service[@uri=%22&lt;technical-support@iptel.org&gt;%22]</filename>,
+<filename>http://localhost/xcap-root/rls-services/global/index/~~/rls-services/service[@uri=%22&lt;technical-support@someorg.org&gt;%22]</filename>,
 which means the <literal>service</literal> element with
 <parameter>uri</parameter> parameter value
-<literal>technical-support@iptel.org</literal> stored in rls-services document
+<literal>technical-support@someorg.org</literal> stored in rls-services document
 named index.</para></example>
 </section>
 

@@ -72,7 +72,7 @@ common for all users.
 </para>
 
 <example><title>presence authorization document uri</title>
-<para>For example for presentity <literal>sip:joe@iptel.org</literal> with
+<para>For example for presentity <literal>sip:joe@someorg.org</literal> with
 UUID <quote>joe</quote> and <parameter>xcap-root</parameter>
 <literal>http://localhost/xcap-root</literal> will be the URI for the
 authorization document
@@ -122,7 +122,7 @@ redefined in <function>authorize_message</function> call parameter) and
 <parameter>&lt;username&gt;</parameter> is UUID discovered from To URI.
 </para>
 <example><title>message authorization document uri</title>
-<para>For example for recipient <literal>sip:smith@iptel.org</literal> with
+<para>For example for recipient <literal>sip:smith@someorg.org</literal> with
 UUID <quote>smith</quote> and <parameter>xcap-root</parameter>
 <literal>http://localhost/xcap-root</literal> will be the URI for the
 authorization document
