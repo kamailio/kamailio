@@ -37,10 +37,14 @@
  * 2004-08-23  avp support added - avp list linked in transaction (bogdan)
  * 2005-11-03  updated to the new timer interface (dropped tm timers) (andrei)
  * 2006-08-11  dns failover support (andrei)
+ * 2007-05-29  switch ref_count to atomic and delete a cell automatically on
+ *             UNREF if the ref_count reaches 0 (andrei)
  */
 
 #include "defs.h"
 
+
+#define TM_DEL_UNREF
 
 #ifndef _H_TABLE_H
 #define _H_TABLE_H
@@ -55,6 +59,7 @@
 #include "../../md5utils.h"
 #include "../../usr_avp.h"
 #include "../../timer.h"
+#include "../../atomic_ops.h"
 #include "config.h"
 
 struct s_table;
@@ -71,6 +76,7 @@ struct retr_buf;
 #ifdef USE_DNS_FAILOVER
 #include "../../dns_cache.h"
 #endif
+
 
 #define LOCK_HASH(_h) lock_hash((_h))
 #define UNLOCK_HASH(_h) unlock_hash((_h))
@@ -223,6 +229,19 @@ typedef struct cell
 	/* number of forks */
 	short nr_of_outgoings;
 
+#ifdef TM_DEL_UNREF
+	/* every time the transaction/cell is referenced from somewhere this
+	 * ref_count should be increased (via REF()) and every time the reference
+	 * is removed the ref_count should be decreased (via UNREF()).
+	 * This includes adding the cell to the hash table (REF() before adding)
+	 * and removing it from the hash table (UNREF_FREE() after unlinking).
+	 * Exception: it does not include starting/stopping timers (timers are 
+	 * forced-stopped every time when ref_count reaches 0)
+	 * If the cell is no longer referenced (ref_count==0 after an UNREF),
+	 * it will be automatically deleted by the UNREF() operation.
+	 */
+	atomic_t ref_count;
+#else 
 	/* how many processes are currently processing this transaction ;
 	   note that only processes working on a request/reply belonging
 	   to a transaction increase ref_count -- timers don't, since we
@@ -233,6 +252,7 @@ typedef struct cell
 	   tries to delete a transaction whereas at the same time 
 	   a delayed message belonging to the transaction is received */
 	volatile unsigned int ref_count;
+#endif
 
 	/* needed for generating local ACK/CANCEL for local
 	   transactions; all but cseq_n include the entire

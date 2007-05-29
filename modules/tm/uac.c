@@ -169,6 +169,13 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 	return hashid;
 }
 
+
+/* WARNING: - dst_cell contains the created cell, but it is un-referenced
+ *            (before using it make sure you REF() it first)
+ *          - if  ACK (method==ACK), a cell will be created but it will not
+ *            be added in the hash table (should be either deleted by the 
+ *            caller) 
+ */
 static inline int t_uac_prepare(str* method, str* headers, str* body, 
 		dlg_t* dialog, transaction_cb cb, void* cbp, struct retr_buf **dst_req,
 		struct cell **dst_cell)
@@ -276,6 +283,9 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	request->dst = dst;
 
 	if (!is_ack) {
+#ifdef TM_DEL_UNREF
+		INIT_REF(new_cell, 1); /* ref'ed only from the hash */
+#endif
 		hi=dlg2hash(dialog);
 		LOCK_HASH(hi);
 		insert_into_hash_table_unsafe(new_cell, hi);
@@ -304,6 +314,9 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 #endif /* DIALOG_CALLBACKS */
 	if (dst_req) *dst_req = request;
 	if (dst_cell) *dst_cell = new_cell;
+	else if(is_ack && dst_req==0){
+		free_cell(new_cell);
+	}
 	
 	return 1;
 
@@ -312,8 +325,13 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 		LOCK_HASH(hi);
 		remove_from_hash_table_unsafe(new_cell);
 		UNLOCK_HASH(hi);
+#ifdef TM_DEL_UNREF
+		UNREF_FREE(new_cell);
+	}else
+#else
 	}
-	free_cell(new_cell);
+#endif
+		free_cell(new_cell);
 error2:
 	return ret;
 }

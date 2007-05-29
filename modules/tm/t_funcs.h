@@ -59,6 +59,7 @@
 #include "../../ip_addr.h"
 #include "../../parser/parse_uri.h"
 #include "../../usr_avp.h"
+#include "../../atomic_ops.h"
 
 #include "config.h"
 #include "lock.h"
@@ -104,6 +105,27 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 	SEND_PR_BUFFER( (_rb) , (_rb)->buffer , (_rb)->buffer_len )
 
 
+
+#ifdef TM_DEL_UNREF
+
+
+#define UNREF_FREE(_T_cell) \
+	do{\
+		if (atomic_dec_and_test(&(_T_cell)->ref_count)){ \
+			unlink_timers((_T_cell)); \
+			free_cell((_T_cell)); \
+		}\
+	}while(0)
+
+#define UNREF_UNSAFE(_T_cell) UNREF_FREE(_T_cell)
+/* all the version are safe when using atomic ops */
+#define UNREF(_T_cell) UNREF_UNSAFE(_T_cell); 
+#define REF(_T_cell) (atomic_inc(&(_T_cell)->ref_count))
+#define REF_UNSAFE(_T_cell)  REF(_T_cell)
+#define INIT_REF(_T_cell, v) atomic_set(&(_T_cell)->ref_count, v)
+
+#else
+
 #define UNREF_UNSAFE(_T_cell) ((_T_cell)->ref_count--)
 #define UNREF(_T_cell) do{ \
 	LOCK_HASH( (_T_cell)->hash_index ); \
@@ -113,6 +135,7 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 #define INIT_REF_UNSAFE(_T_cell) ((_T_cell)->ref_count=1)
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
+#endif
 /*
  * Parse and fixup the fr_*_timer AVP specs
  */

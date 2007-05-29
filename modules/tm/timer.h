@@ -162,4 +162,25 @@ inline static void change_fr(struct cell* t, ticks_t fr_inv, ticks_t fr)
 }
 
 
+inline static void cleanup_localcancel_timers( struct cell *t )
+{
+	int i;
+	for (i=0; i<t->nr_of_outgoings; i++ )
+		stop_rb_timers(&t->uac[i].local_cancel);
+}
+
+
+
+inline static void unlink_timers( struct cell *t )
+{
+	int i;
+
+	stop_rb_timers(&t->uas.response);
+	for (i=0; i<t->nr_of_outgoings; i++)
+		stop_rb_timers(&t->uac[i].request);
+	cleanup_localcancel_timers(t);
+}
+
+
+
 #endif

@@ -108,6 +108,8 @@
  *              set the corresponding "faked" failure route sip_msg->msg_flags 
  *               on timeout or if the branch received a reply (andrei)
  *  2007-03-15  TMCB_ONSEND callbacks support (andrei)
+ *  2007-05-29  delete on transaction ref_count==0 : removed the delete timer
+ *               (andrei)
  */
 
 #include "defs.h"
@@ -184,28 +186,7 @@ int tm_init_timers()
 /******************** handlers ***************************/
 
 
-
-inline static void cleanup_localcancel_timers( struct cell *t )
-{
-	int i;
-	for (i=0; i<t->nr_of_outgoings; i++ )
-		stop_rb_timers(&t->uac[i].local_cancel);
-}
-
-
-
-inline static void unlink_timers( struct cell *t )
-{
-	int i;
-
-	stop_rb_timers(&t->uas.response);
-	for (i=0; i<t->nr_of_outgoings; i++)
-		stop_rb_timers(&t->uac[i].request);
-	cleanup_localcancel_timers(t);
-}
-
-
-
+#ifndef TM_DEL_UNREF
 /* returns number of ticks before retrying the del, or 0 if the del.
  * was succesfull */
 inline static ticks_t  delete_cell( struct cell *p_cell, int unlock )
@@ -233,6 +214,7 @@ inline static ticks_t  delete_cell( struct cell *p_cell, int unlock )
 		return 0;
 	}
 }
+#endif /* TM_DEL_UNREF */
 
 
 
@@ -547,6 +529,17 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void* data)
 			ti, p_cell, wait_tl);
 #endif
 
+#ifdef TM_DEL_UNREF
+	/* stop cancel timers if any running */
+	if ( is_invite(p_cell) ) cleanup_localcancel_timers( p_cell );
+	/* remove the cell from the hash table */
+	LOCK_HASH( p_cell->hash_index );
+	remove_from_hash_table_unsafe(  p_cell );
+	UNLOCK_HASH( p_cell->hash_index );
+	p_cell->flags |= T_IN_AGONY;
+	UNREF_FREE(p_cell);
+	ret=0;
+#else /* TM_DEL_UNREF */
 	if (p_cell->flags & T_IN_AGONY){
 		/* delayed delete */
 		/* we call delete now without any locking on hash/ref_count;
@@ -559,7 +552,7 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void* data)
 		   zero safely without locking
 		*/
 		ret=delete_cell( p_cell, 0 /* don't unlock on return */ );
-	}else{
+	}else {
 		/* stop cancel timers if any running */
 		if ( is_invite(p_cell) ) cleanup_localcancel_timers( p_cell );
 		/* remove the cell from the hash table */
@@ -569,6 +562,7 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void* data)
 		/* delete (returns with UNLOCK-ed_HASH) */
 		ret=delete_cell( p_cell, 1 /* unlock on return */ );
 	}
+#endif /* TM_DEL_UNREF */
 	return ret;
 }
 
