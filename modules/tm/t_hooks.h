@@ -153,6 +153,10 @@ struct cell;
  * TMCB_RESPONSE_IN -- a brand-new reply was received which matches
  * an existing non-local transaction. It may or may not be a retransmission.
  * No lock is held here (yet).
+ * Note: for an invite transaction this callback will also catch the reply
+ *  to local cancels (e.g. branch canceled due to fr_inv_timeout). To
+ *  distinguish between the two, one would need to look at the method in
+ *  Cseq (look at t_reply.c:1630 (reply_received()) for an example).
  * It's unsafe to register other TMCB callbacks.
  *
  *  TMCB_RESPONSE_OUT -- a final reply was sent out (either local
@@ -430,7 +434,7 @@ void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req,
 
 void run_onsend_callbacks(int type, struct retr_buf* rbuf, struct sip_msg* req,
 									struct sip_msg* repl, short flags);
-void run_onsend_callbacks2(int type, struct tmcb_params* p);
+void run_onsend_callbacks2(int type, struct cell* t, struct tmcb_params* p);
 #endif
 
 #endif

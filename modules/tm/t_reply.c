@@ -501,7 +501,8 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, 0, 0, rb, &rb->dst, 
 								buf, len, TMCB_LOCAL_F, rb->branch, code);
-				run_onsend_callbacks2(TMCB_RESPONSE_SENT, &onsend_params);
+				run_onsend_callbacks2(TMCB_RESPONSE_SENT, trans,
+										&onsend_params);
 			}
 #else
 		SEND_PR_BUFFER( rb, buf, len );
@@ -1466,7 +1467,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 									res_len,
 									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
 									uas_rb->branch, relayed_code);
-				run_onsend_callbacks2(TMCB_RESPONSE_SENT, &onsend_params);
+				run_onsend_callbacks2(TMCB_RESPONSE_SENT, t, &onsend_params);
 			}
 #endif
 		}
@@ -1657,7 +1658,7 @@ int reply_received( struct sip_msg  *p_msg )
 									t->uas.request, p_msg, &uac->request,
 									&uac->request.dst, ack, ack_len,
 									TMCB_LOCAL_F, branch, TYPE_LOCAL_ACK);
-							run_onsend_callbacks2(TMCB_REQUEST_SENT,
+							run_onsend_callbacks2(TMCB_REQUEST_SENT, t,
 													&onsend_params);
 						}
 #else
@@ -1676,7 +1677,7 @@ int reply_received( struct sip_msg  *p_msg )
 									t->uas.request, p_msg, &uac->request,
 									&lack_dst, ack, ack_len, TMCB_LOCAL_F,
 									branch, TYPE_LOCAL_ACK);
-							run_onsend_callbacks2(TMCB_REQUEST_SENT,
+							run_onsend_callbacks2(TMCB_REQUEST_SENT, t,
 													&onsend_params);
 					}
 #endif

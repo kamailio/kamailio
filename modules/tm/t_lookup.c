@@ -96,6 +96,7 @@
 
 
 #include "../../comp_defs.h"
+#include "../../compiler_opt.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
@@ -886,22 +887,25 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		 * enabled -- except callback customers, nobody cares about 
 		 * retransmissions of multiple 200/INV or ACK/200s
 		 */
-		if (is_invite(p_cell) && p_msg->REPLY_STATUS>=200 
-		&& p_msg->REPLY_STATUS<300 
-		&& ( (!is_local(p_cell) &&
-				has_tran_tmcbs(p_cell,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
-			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell,TMCB_LOCAL_COMPLETED))
-		)) {
+		if (unlikely( is_invite(p_cell) && p_msg->REPLY_STATUS>=200 
+			&& p_msg->REPLY_STATUS<300 
+			&& ((!is_local(p_cell) &&
+				has_tran_tmcbs(p_cell, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
+			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell, TMCB_LOCAL_COMPLETED))
+		)) ) {
 			if (parse_headers(p_msg, HDR_TO_F, 0)==-1) {
 				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
 			}
 		}
-		if (!is_local(p_cell)) {
-			run_trans_callbacks( TMCB_RESPONSE_IN, T, T->uas.request, p_msg,
-				p_msg->REPLY_STATUS);
-		}else{
-			run_trans_callbacks( TMCB_LOCAL_RESPONSE_IN, T, T->uas.request, 
-					p_msg, p_msg->REPLY_STATUS);
+		if (unlikely(has_tran_tmcbs(T, TMCB_RESPONSE_IN |
+										TMCB_LOCAL_RESPONSE_IN))){
+			if (!is_local(p_cell)) {
+				run_trans_callbacks( TMCB_RESPONSE_IN, T, T->uas.request,
+										p_msg, p_msg->REPLY_STATUS);
+			}else{
+				run_trans_callbacks( TMCB_LOCAL_RESPONSE_IN, T, T->uas.request,
+										p_msg, p_msg->REPLY_STATUS);
+			}
 		}
 		return 1;
 	} /* for cycle */
@@ -1198,12 +1202,14 @@ int t_newtran( struct sip_msg* p_msg )
 	/* transaction found, it's a retransmission  */
 	if (lret>0) {
 		if (p_msg->REQ_METHOD==METHOD_ACK) {
-			run_trans_callbacks(TMCB_ACK_NEG_IN, T, p_msg, 0, 
-									p_msg->REQ_METHOD);
+			if (unlikely(has_tran_tmcbs(T, TMCB_ACK_NEG_IN)))
+				run_trans_callbacks(TMCB_ACK_NEG_IN, T, p_msg, 0, 
+										p_msg->REQ_METHOD);
 			t_release_transaction(T);
 		} else {
-			run_trans_callbacks(TMCB_REQ_RETR_IN, T, p_msg, 0,
-									p_msg->REQ_METHOD);
+			if (unlikely(has_tran_tmcbs(T, TMCB_REQ_RETR_IN)))
+				run_trans_callbacks(TMCB_REQ_RETR_IN, T, p_msg, 0,
+										p_msg->REQ_METHOD);
 			t_retransmit_reply(T);
 		}
 		/* things are done -- return from script */
@@ -1214,7 +1220,7 @@ int t_newtran( struct sip_msg* p_msg )
 
 	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
 		/* no callbacks? complete quickly */
-		if ( !has_tran_tmcbs(t_ack,TMCB_E2EACK_IN) ) {
+		if (likely( !has_tran_tmcbs(t_ack,TMCB_E2EACK_IN) )) {
 			UNLOCK_HASH(p_msg->hash_index);
 			return 1;
 		} 

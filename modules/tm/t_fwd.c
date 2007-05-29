@@ -473,13 +473,16 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	int i;
 	int lowest_error;
 	int ret;
+	struct tmcb_params tmcb;
 
 	cancel_bm=0;
 	lowest_error=0;
 
-	if (unlikely(has_tran_tmcbs(t_invite, TMCB_E2ECANCEL_IN)))
-		run_trans_callbacks( TMCB_E2ECANCEL_IN, t_cancel, cancel_msg, 0,
-								cancel_msg->REQ_METHOD);
+	if (unlikely(has_tran_tmcbs(t_invite, TMCB_E2ECANCEL_IN))){
+		INIT_TMCB_PARAMS(tmcb, cancel_msg, 0, cancel_msg->REQ_METHOD);
+		run_trans_callbacks_internal(&t_invite->tmcb_hl, TMCB_E2ECANCEL_IN, 
+										t_cancel, &tmcb);
+	}
 	/* first check if there are any branches */
 	if (t_invite->nr_of_outgoings==0){
 		t_invite->flags|=T_CANCELED;
