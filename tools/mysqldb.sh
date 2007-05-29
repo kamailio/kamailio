@@ -45,7 +45,7 @@ if [ -f ~/.opensermysqlrc ]; then
 	. ~/.opensermysqlrc
 fi
 
-# PATH to the database schemas
+# path to the database schemas
 DATA_DIR="/usr/local/share/openser"
 if [ -d "$DATA_DIR/mysql" ] ; then
 	DB_SCHEMA="$DATA_DIR/mysql"
@@ -90,8 +90,8 @@ DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
 BACKUP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c "
 
 
-# if you change this definitions here, then you must change them 
-# in db/schema/entities.xml too, 
+# If you change this definitions here, then you must change them 
+# in db/schema/entities.xml too.
 # FIXME
 
 # type of mysql tables
@@ -130,7 +130,7 @@ fi
 # openser standard modules
 STANDARD_MODULES="standard acc lcr domain group permissions 
                   registrar usrloc msilo alias_db uri_db 
-                  speeddial avpops auth_db"
+                  speeddial avpops auth_db pdt"
 
 # openser extra modules
 EXTRA_MODULES="imc cpl siptrace domainpolicy"
