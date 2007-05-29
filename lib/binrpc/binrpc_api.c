@@ -861,6 +861,22 @@ error:
 	*/
 }
 
+
+void binrpc_free_rpc_array(struct binrpc_val* a, int size)
+{
+	int r;
+	for (r=0; r<size; r++){
+		if (a[r].name.s)
+			binrpc_free(a[r].name.s);
+		if ((a[r].type==BINRPC_T_STR || a[r].type==BINRPC_T_BYTES) &&
+				a[r].u.strval.s){
+			binrpc_free(a[r].u.strval.s);
+		}
+	}
+	binrpc_free(a);
+}
+
+
 #define VAL_ARRAY_CHUNK 100
 int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 	struct binrpc_response_handle *resp_handle)
@@ -871,6 +887,7 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 
 	resp_handle->in_pkt.offset = resp_handle->in_pkt.in_struct = resp_handle->in_pkt.in_array = 0;
 
+	i=0;
 	if (*val_count==0){
 		*val_count=VAL_ARRAY_CHUNK; /* start with a reasonable size */
 	}
@@ -879,7 +896,6 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 		goto error_mem;
 	p = resp_handle->reply_buf;
 	end = p + resp_handle->in_pkt.tlen;
-	i=0;
 	
 	/* read body */
 	while(p < end){
@@ -906,6 +922,27 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 			*val_count += VAL_ARRAY_CHUNK;
 		}
 		(*vals)[i] = val;
+		if (val.name.s){
+			if (((*vals)[i].name.s=binrpc_malloc(val.name.len+1))==0)
+				goto error_mem;
+			memcpy((*vals)[i].name.s, val.name.s, val.name.len);
+			(*vals)[i].name.s[val.name.len+1]=0; /* 0-term */
+		}
+		if (val.u.strval.s){
+			if (val.type==BINRPC_T_STR){
+				if (((*vals)[i].u.strval.s=
+							binrpc_malloc(val.u.strval.len+1))==0)
+					goto error_mem;
+				memcpy((*vals)[i].u.strval.s, val.u.strval.s,
+						val.u.strval.len);
+				(*vals)[i].u.strval.s[val.u.strval.len]=0; /* 0-term */
+			}else if (val.type==BINRPC_T_BYTES){
+				if (((*vals)[i].u.strval.s=binrpc_malloc(val.u.strval.len))==0)
+					goto error_mem;
+				memcpy((*vals)[i].u.strval.s, val.u.strval.s, 
+						val.u.strval.len);
+			}
+		}
 		i++;
 	}
 	if (i == 0) {
@@ -926,7 +963,7 @@ error_mem:
 		"parse_response: out of memory");
 error:
 	if (*vals){
-		binrpc_free(*vals);
+		binrpc_free_rpc_array(*vals, i);
 		*vals = NULL;
 	}
 	*val_count=0;
@@ -1214,7 +1251,7 @@ int main(int argc, char** argv)
 	}
 
 	if (vals != NULL) {
-		binrpc_free(vals);
+		binrpc_free_rpc_array(vals, cnt);
 	}	
 	if (txt_rsp != NULL) {
 		binrpc_free(txt_rsp);
@@ -1227,7 +1264,7 @@ err:
 	return -1;
 err3:
 	if (vals != NULL) {
-		binrpc_free(vals);
+		binrpc_free_rpc_array(vals, cnt);
 	}	
 	if (txt_rsp) {
 		binrpc_free(txt_rsp);
