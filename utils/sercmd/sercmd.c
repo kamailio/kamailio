@@ -978,6 +978,22 @@ inline static int run_line(int s, char* l, char* format)
 
 
 
+static void free_rpc_array(struct binrpc_val* a, int size)
+{
+	int r;
+	for (r=0; r<size; r++){
+		if (a[r].name.s)
+			free(a[r].name.s);
+		if ((a[r].type==BINRPC_T_STR || a[r].type==BINRPC_T_BYTES) &&
+				a[r].u.strval.s){
+			free(a[r].u.strval.s);
+		}
+	}
+	free(a);
+}
+
+
+
 /* parse the body into a malloc allocated,  binrpc_val array */
 static struct binrpc_val* parse_reply_body(int* records, 
 											struct binrpc_parse_ctx* in_pkt,
@@ -991,6 +1007,7 @@ static struct binrpc_val* parse_reply_body(int* records,
 	int ret;
 	int rec;
 
+	rec=0;
 	if (*records==0){
 		*records=100; /* start with a reasonable size */
 	};
@@ -999,7 +1016,6 @@ static struct binrpc_val* parse_reply_body(int* records,
 		goto error_mem;
 	p=body;
 	end=p+size;
-	rec=0;
 	
 	/* read body */
 	while(p<end){
@@ -1025,6 +1041,24 @@ static struct binrpc_val* parse_reply_body(int* records,
 			*records*=2;
 		}
 		a[rec]=val;
+		if (val.name.s){
+			if ((a[rec].name.s=malloc(val.name.len+1))==0)
+				goto error_mem;
+			memcpy(a[rec].name.s, val.name.s, val.name.len);
+			a[rec].name.s[val.name.len+1]=0; /* 0-term */
+		}
+		if (val.u.strval.s){
+			if (val.type==BINRPC_T_STR){
+				if ((a[rec].u.strval.s=malloc(val.u.strval.len+1))==0)
+					goto error_mem;
+				memcpy(a[rec].u.strval.s, val.u.strval.s, val.u.strval.len);
+				a[rec].u.strval.s[val.u.strval.len]=0; /* 0-term */
+			}else if (val.type==BINRPC_T_BYTES){
+				if ((a[rec].u.strval.s=malloc(val.u.strval.len))==0)
+					goto error_mem;
+				memcpy(a[rec].u.strval.s, val.u.strval.s, val.u.strval.len);
+			}
+		}
 		rec++;
 	}
 	if (rec && (rec<*records)){
@@ -1036,7 +1070,7 @@ error_mem:
 	fprintf(stderr, "ERROR: parse_reply_body: out of memory\n");
 error:
 	if (a){
-		free(a);
+		free_rpc_array(a, rec);
 	}
 	*records=0;
 	return 0;
@@ -1482,7 +1516,7 @@ end:
 	if (format)
 		free(format);
 	if (rpc_array)
-		free(rpc_array);
+		free_rpc_array(rpc_array, rpc_no);
 	cleanup();
 	exit(0);
 error:
@@ -1491,7 +1525,7 @@ error:
 	if (format)
 		free(format);
 	if (rpc_array)
-		free(rpc_array);
+		free_rpc_array(rpc_array, rpc_no);
 	cleanup();
 	exit(-1);
 }
