@@ -22,9 +22,15 @@
  *  memory barriers:
  *  ----------------
  *
- *  void membar();       - memory barrier (load & store)
- *  void membar_read()   - load (read) memory barrier
- *  void membar_write()  - store (write) memory barrier
+ *  void membar();        - memory barrier (load & store)
+ *  void membar_read()    - load (read) memory barrier
+ *  void membar_write()   - store (write) memory barrier
+ *  void membar_depends() - read depends memory barrier, needed before using
+ *                          the contents of a pointer (for now is needed only
+ *                          on Alpha so on all other CPUs it will be a no-op)
+ *                          For more info see: 
+ *                          http://lse.sourceforge.net/locking/wmbdd.html
+ *                          http://www.linuxjournal.com/article/8212
  *
  *  void membar_enter_lock() - memory barrier function that should be 
  *                             called after a lock operation (where lock is
@@ -44,6 +50,37 @@
  *                             Example: raw_lock(l); membar_enter_lock(); ..
  *                                      ... critical section ...
  *                                      membar_leave_lock(); raw_unlock(l);
+ *  void membar_atomic_op() - memory barrier that should be called if a memory
+ *                            barrier is needed immediately after or 
+ *                            immediately before an atomic operation
+ *                            (for example: atomic_inc(&i); membar_atomic_op()
+ *                               instead of atomic_inc(&i); membar()).
+ *                            atomic_op means every atomic operation except get
+ *                            and set (for them use membar_atomic_setget()).
+ *                            Using membar_atomic_op() instead of membar() in
+ *                            these cases will generate faster code on some
+ *                            architectures (for now x86 and x86_64), where 
+ *                            atomic operations act also as memory barriers.
+ *                            Note that mb_atomic_<OP>(...) is equivalent to
+ *                            membar_atomic_op(); atomic_<OP>(...) and in this
+ *                            case the first form is preferred).
+ * void membar_atomic_setget() - same as above but for atomic_set and 
+ *                            atomic_get (and not for any other atomic op.,
+ *                            including atomic_get_and_set, for them use
+ *                            membar_atomic_op()).
+ *                            Note that mb_atomic_{get,set}(&i) is equivalent 
+ *                            and preferred to membar_atomic_setget(); 
+ *                            atomic_{get,set}(&i) (it will generate faster
+ *                            code on x86 and x86_64).
+ * void membar_read_atomic_op() - like membar_atomic_op(), but acts only as
+ *                             a read barrier.
+ * void membar_read_atomic_setget() - like membar_atomic_setget() but acts only
+ *                            as a read barrier.
+ * void membar_write_atomic_op() - like membar_atomic_op(), but acts only as
+ *                            a write barrier.
+ * void membar_write_atomic_setget() - like membar_atomic_setget() but acts 
+ *                            only as a write barrier.
+ *
  *
  *  Note: - properly using memory barriers is tricky, in general try not to 
  *        depend on them. Locks include memory barriers, so you don't need
@@ -67,6 +104,10 @@
  *  int atomic_dec_and_test(atomic_t* v)     - returns 1 if the result is 0
  *  void atomic_or (atomic_t* v, int mask)   - v->val|=mask 
  *  void atomic_and(atomic_t* v, int mask)   - v->val&=mask
+ *  int atomic_add(atomic_t* v, int i)       - v->val+=i; return v->val
+ *  int atomic_cmpxchg(atomic_t* v, o, n)    - r=v->val; if (r==o) v->val=n;
+ *                                             return r (old value)
+ *
  * 
  * same ops, but with builtin memory barriers:
  *
@@ -79,6 +120,9 @@
  *  int mb_atomic_dec_and_test(atomic_t* v)  - returns 1 if the result is 0
  *  void mb_atomic_or(atomic_t* v, int mask - v->val|=mask 
  *  void mb_atomic_and(atomic_t* v, int mask)- v->val&=mask
+ *  int mb_atomic_add(atomic_t* v, int i)    - v->val+=i; return v->val
+ *  int mb_atomic_cmpxchg(atomic_t* v, o, n) - r=v->val; if (r==o) v->val=n;
+ *                                             return r (old value)
  *
  *  Same operations are available for int and long. The functions are named
  *   after the following rules:

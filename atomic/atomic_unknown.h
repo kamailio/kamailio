@@ -35,6 +35,8 @@
  *  2006-03-08  created by andrei
  *  2007-05-11  added atomic_add and atomic_cmpxchg 
  *              use lock_set if lock economy is not needed (andrei)
+ *  2007-05-29  added membar_depends(), membar_*_atomic_op and
+ *                membar_*_atomic_setget (andrei)
  */
 
 #ifndef _atomic_unknown_h
@@ -47,7 +49,7 @@
 #ifndef HAVE_ASM_INLINE_MEMBAR
 
 #ifdef NOSMP
-#define membar()
+#define membar() do {} while(0)
 #else /* SMP */
 
 #warning no native memory barrier implementations, falling back to slow lock \
@@ -81,6 +83,29 @@ extern gen_lock_t* __membar_lock; /* init in atomic_ops.c */
 #define membar_write() membar()
 
 #define membar_read()  membar()
+
+
+#ifndef __CPU_alpha
+#define membar_depends()  do {} while(0) /* really empty, not even a cc bar. */
+#else
+/* really slow */
+#define membar_depends()  membar_read()
+#endif
+
+#define membar_enter_lock() do {} while(0)
+#define membar_leave_lock() do {} while(0)
+
+/* membars after or before atomic_ops or atomic_setget -> use these or
+ *  mb_<atomic_op_name>() if you need a memory barrier in one of these
+ *  situations (on some archs where the atomic operations imply memory
+ *   barriers is better to use atomic_op_x(); membar_atomic_op() then
+ *    atomic_op_x(); membar()) */
+#define membar_atomic_op()				membar()
+#define membar_atomic_setget()			membar()
+#define membar_write_atomic_op()		membar_write()
+#define membar_write_atomic_setget()	membar_write()
+#define membar_read_atomic_op()			membar_read()
+#define membar_read_atomic_setget()		membar_read()
 
 #endif /* HAVE_ASM_INLINE_MEMBAR */
 

@@ -29,6 +29,8 @@
  * --------
  *  2006-03-31  created by andrei
  *  2007-05-10  added atomic_add and atomic_cmpxchg (andrei)
+ *  2007-05-29  added membar_depends(), membar_*_atomic_op and
+ *                membar_*_atomic_setget (andrei)
  */
 
 
@@ -44,10 +46,22 @@
 #define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
+#define membar_depends()   do {} while(0) /* really empty, not even a cc bar.*/
 /* lock barriers: empty, not needed for NOSMP; the lock/unlock should already
  * contain gcc barriers*/
-#define membar_enter_lock() 
-#define membar_leave_lock()
+#define membar_enter_lock() do {} while(0)
+#define membar_leave_lock() do {} while(0)
+/* membars after or before atomic_ops or atomic_setget -> use these or
+ *  mb_<atomic_op_name>() if you need a memory barrier in one of these
+ *  situations (on some archs where the atomic operations imply memory
+ *   barriers is better to use atomic_op_x(); membar_atomic_op() then
+ *    atomic_op_x(); membar()) */
+#define membar_atomic_op()				membar()
+#define membar_atomic_setget()			membar()
+#define membar_write_atomic_op()		membar_write()
+#define membar_write_atomic_setget()	membar_write()
+#define membar_read_atomic_op()			membar_read()
+#define membar_read_atomic_setget()		membar_read()
 #else /* SMP */
 #warning SMP not supported for arm atomic ops, try compiling with -DNOSMP
 /* fall back to default lock based barriers (don't define HAVE_ASM...) */

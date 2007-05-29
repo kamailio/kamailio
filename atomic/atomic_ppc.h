@@ -34,6 +34,8 @@
  *               r0 as the second operand in addi and  addi rD,r0, val
  *               is a special case, equivalent with rD=0+val and not
  *               rD=r0+val (andrei)
+ *  2007-05-29  added membar_depends(), membar_*_atomic_op and
+ *                membar_*_atomic_setget (andrei)
  */
 
 #ifndef _atomic_ppc_h
@@ -52,10 +54,22 @@
 #define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
+#define membar_depends()  do {} while(0) /* really empty, not even a cc bar. */
 /* lock barriers: empty, not needed for NOSMP; the lock/unlock should already
  * contain gcc barriers*/
-#define membar_enter_lock() 
-#define membar_leave_lock()
+#define membar_enter_lock() do {} while(0)
+#define membar_leave_lock() do {} while(0)
+/* membars after or before atomic_ops or atomic_setget -> use these or
+ *  mb_<atomic_op_name>() if you need a memory barrier in one of these
+ *  situations (on some archs where the atomic operations imply memory
+ *   barriers is better to use atomic_op_x(); membar_atomic_op() then
+ *    atomic_op_x(); membar()) */
+#define membar_atomic_op()				membar()
+#define membar_atomic_setget()			membar()
+#define membar_write_atomic_op()		membar_write()
+#define membar_write_atomic_setget()	membar_write()
+#define membar_read_atomic_op()			membar_read()
+#define membar_read_atomic_setget()		membar_read()
 
 #else
 #define membar() asm volatile ("sync \n\t" : : : "memory") 
@@ -63,10 +77,22 @@
 #define membar_read() asm volatile ("lwsync \n\t" : : : "memory") 
 /* on "normal" cached mem. eieio orders StoreStore */
 #define membar_write() asm volatile ("eieio \n\t" : : : "memory") 
+#define membar_depends()  do {} while(0) /* really empty, not even a cc bar. */
 #define membar_enter_lock() asm volatile("lwsync \n\t" : : : "memory")
 /* for unlock lwsync will work too and is faster then sync
  *  [IBM Prgramming Environments Manual, D.4.2.2] */
 #define membar_leave_lock() asm volatile("lwsync \n\t" : : : "memory")
+/* membars after or before atomic_ops or atomic_setget -> use these or
+ *  mb_<atomic_op_name>() if you need a memory barrier in one of these
+ *  situations (on some archs where the atomic operations imply memory
+ *   barriers is better to use atomic_op_x(); membar_atomic_op() then
+ *    atomic_op_x(); membar()) */
+#define membar_atomic_op()				membar()
+#define membar_atomic_setget()			membar()
+#define membar_write_atomic_op()		membar_write()
+#define membar_write_atomic_setget()	membar_write()
+#define membar_read_atomic_op()			membar_read()
+#define membar_read_atomic_setget()		membar_read()
 #endif /* NOSMP */
 
 

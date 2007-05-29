@@ -209,6 +209,24 @@ int main(int argc, char** argv)
 	printf(" membar_write() ........................ ok\n");
 	membar_read();
 	printf(" membar_read() ......................... ok\n");
+	membar_depends();
+	printf(" membar_depends() ...................... ok\n");
+	membar_enter_lock();
+	printf(" membar_enter_lock() ................... ok\n");
+	membar_leave_lock();
+	printf(" membar_leave_lock() ................... ok\n");
+	membar_atomic_op();
+	printf(" membar_atomic_op() .................... ok\n");
+	membar_atomic_setget();
+	printf(" membar_atomic_setget() ................ ok\n");
+	membar_read_atomic_op();
+	printf(" membar_read_atomic_op() ............... ok\n");
+	membar_read_atomic_setget();
+	printf(" membar_read_atomic_setget() ........... ok\n");
+	membar_write_atomic_op();
+	printf(" membar_write_atomic_op() .............. ok\n");
+	membar_write_atomic_setget();
+	printf(" membar_write_atomic_setget() .......... ok\n");
 	
 	printf("\nstarting atomic ops basic tests...\n");
 	
