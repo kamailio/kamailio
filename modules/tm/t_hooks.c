@@ -134,16 +134,19 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 	cbp->callback = f;
 	cbp->param = param;
 	cbp->types = types;
+	cbp->id=0;
 	old=(struct tm_callback*)cb_list->first;
 	/* link it into the proper place... */
 	do{
 		cbp->next = old;
+		/*
 		if (cbp->next)
 			cbp->id = cbp->next->id+1;
 		else
 			cbp->id = 0;
-		/* mb_atomic_cmpxchg includes membar */
-		old=(void*)mb_atomic_cmpxchg_long((void*)&cb_list->first,
+		 -- callback ids are useless -- andrei */
+		membar_write_atomic_op();
+		old=(void*)atomic_cmpxchg_long((void*)&cb_list->first,
 										(long)old, (long)cbp);
 	}while(old!=cbp->next);
 
@@ -237,13 +240,17 @@ void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
 			&trans->domain_avps_from);
 	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, 
 			&trans->domain_avps_to);
-	for (cbp=(struct tm_callback*)cb_lst->first; cbp; cbp=cbp->next)  {
+	cbp=(struct tm_callback*)cb_lst->first;
+	while(cbp){
+		membar_depends(); /* make sure the cache has the correct cbp 
+							 contents */
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 				trans, type, cbp->id );
 			params->param = &(cbp->param);
 			cbp->callback( trans, type, params );
 		}
+		cbp=cbp->next;
 	}
 	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, backup_dom_to );
 	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, backup_dom_from );

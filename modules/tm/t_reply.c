@@ -225,7 +225,10 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 		return 1;
 	}
 	tag=&get_to(ack)->tag_value;
-	for (i=t->fwded_totags; i; i=i->next) {
+	i=t->fwded_totags;
+	while(i){
+		membar_depends(); /* make sure we don't see some old i content
+							(needed on CPUs like Alpha) */
 		if (i->tag.len==tag->len
 				&& memcmp(i->tag.s, tag->s, tag->len)==0) {
 			DBG("DEBUG: totag for e2e ACK found: %d\n", i->acked);
@@ -235,6 +238,7 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 			i->acked=1;
 			return 1;
 		}
+		i=i->next;
 	}
 	/* surprising: to-tag never sighted before */
 	return 1;
