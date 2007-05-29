@@ -42,6 +42,7 @@
     <column>
         <name>xcap</name>
         <type>text</type>
+        <type db="postgres">bytea</type><!-- Bug 1684821 -->
         <description>xcap</description>
     </column>
 
