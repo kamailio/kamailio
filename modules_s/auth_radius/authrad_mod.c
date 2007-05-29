@@ -122,7 +122,7 @@ static int mod_init(void)
 	DBG("auth_radius - Initializing\n");
 
 	memset(attrs, 0, sizeof(attrs));
-	memset(attrs, 0, sizeof(vals));
+	memset(vals, 0, sizeof(vals));
 
 	     /* RFC2865, RFC2866 */
 	attrs[A_USER_NAME].n			= "User-Name";
