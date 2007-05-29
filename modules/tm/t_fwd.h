@@ -73,6 +73,7 @@ int t_forward_cancel(struct sip_msg* p_msg , struct proxy_l * proxy,
 int t_forward_ack( struct sip_msg* p_msg );
 int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 					struct proxy_l * proxy, int lock_replies);
+int t_relay_cancel(struct sip_msg* p_msg);
 
 
 #endif

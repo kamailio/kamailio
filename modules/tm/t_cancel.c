@@ -33,6 +33,9 @@
  * 2004-02-13  timer_link.payload removed (bogdan)
  * 2006-10-10  cancel_uacs  & cancel_branch take more options now (andrei)
  * 2007-03-15  TMCB_ONSEND hooks added (andrei)
+ * 2007-05-28: cancel_branch() constructs the CANCEL from the
+ *             outgoing INVITE instead of the incomming one.
+ *             (it can be disabled with reparse_invite=0) (Miklos)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
@@ -175,8 +178,14 @@ int cancel_branch( struct cell *t, int branch, int flags )
 			return 1;
 		}
 	}
-	
-	cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to);
+
+	if (reparse_invite) {
+		/* build the CANCEL from the INVITE which was sent out */
+		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN, &t->to);
+	} else {
+		/* build the CANCEL from the reveived INVITE */
+		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to);
+	}
 	if (!cancel) {
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
 		return -1;

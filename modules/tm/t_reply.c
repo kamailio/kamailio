@@ -82,6 +82,9 @@
  * 2007-03-15  build_local_ack: removed next_hop and replaced with dst to 
  *              avoid resolving next_hop twice
  *              added TMCB_ONSEND callbacks support for replies & ACKs (andrei)
+ * 2007-05-28: build_ack() constructs the ACK from the
+ *             outgoing INVITE instead of the incomming one.
+ *             (it can be disabled with reparse_invite=0) (Miklos)
  *
  */
 
@@ -333,8 +336,16 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
     }
 	to.s=rpl->to->name.s;
 	to.len=rpl->to->len;
-    return build_local( trans, branch, ret_len,
-        ACK, ACK_LEN, &to );
+
+	if (reparse_invite) {
+		/* build the ACK from the INVITE which was sent out */
+		return build_local_reparse( trans, branch, ret_len,
+					ACK, ACK_LEN, &to );
+	} else {
+		/* build the ACK from the reveived INVITE */
+		return build_local( trans, branch, ret_len,
+					ACK, ACK_LEN, &to );
+	}
 }
 
 

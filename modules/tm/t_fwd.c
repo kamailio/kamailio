@@ -66,6 +66,11 @@
  *  2007-03-15  TMCB_ONSEND hooks added (andrei)
  *  2007-05-02  added t_forward_cancel(unmatched_cancel) (andrei)
  *  2007-05-24  added TMCB_E2ECANCEL_IN hook support (andrei)
+ *  2007-05-28: e2e_cancel_branch() constructs the CANCEL from the
+ *              outgoing INVITE instead of applying the lumps to the
+ *              incomming one. (it can be disabled with reparse_invite=0) (Miklos)
+ *              t_relay_cancel() introduced -- can be used to relay CANCELs
+ *              at the beginning of the script. (Miklos)
  */
 
 #include "defs.h"
@@ -440,9 +445,21 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	*/
 
 	/* print */
-	shbuf=print_uac_request( t_cancel, cancel_msg, branch, 
+	if (reparse_invite) {
+		/* buffer is built localy from the INVITE which was sent out */
+		if (cancel_msg->add_rm || cancel_msg->body_lumps) {
+			LOG(L_WARN, "WARNING: e2e_cancel_branch: CANCEL is built locally, "
+			"thus lumps are not applied to the message!\n");
+		}
+		shbuf=build_local_reparse( t_invite, branch, &len, CANCEL, CANCEL_LEN, &t_invite->to);
+
+	} else {
+		/* buffer is constructed from the received CANCEL with applying lumps */
+		shbuf=print_uac_request( t_cancel, cancel_msg, branch, 
 							&t_invite->uac[branch].uri, &len, 
 							&t_invite->uac[branch].request.dst);
+	}
+
 	if (!shbuf) {
 		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
 		ret=ser_error=E_OUT_OF_MEM;
@@ -946,7 +963,52 @@ end:
 	return ret;
 }
 
+/* Relays a CANCEL request if a corresponding INVITE transaction
+ * can be found. The function is supposed to be used at the very
+ * beginning of the script with reparse_invite=1 module parameter.
+ *
+ * return value:
+ *    0: the CANCEL was successfully relayed
+ *       (or error occured but reply cannot be sent) => DROP
+ *    1: no corresponding INVITE transaction exisis
+ *   <0: corresponding INVITE transaction exisis but error occured
+ */
+int t_relay_cancel(struct sip_msg* p_msg)
+{
+	struct cell* t_invite;
+	struct cell* t;
+	int ret;
+	int new_tran;
 
+	t_invite=t_lookupOriginalT(  p_msg );
+	if (t_invite!=T_NULL_CELL) {
+		/* create cancel transaction */
+		new_tran=t_newtran(p_msg);
+		if (new_tran<=0 && new_tran!=E_SCRIPT){
+			if (new_tran==0)
+				/* retransmission => DROP,
+				t_newtran() takes care about it */
+				ret=0;
+			else
+				/* some error => return it or DROP */
+				ret=(ser_error==E_BAD_VIA && reply_to_via) ? 0: new_tran;
+			UNREF(t_invite);
+			goto end;
+		}
+		t=get_t();
+		e2e_cancel( p_msg, t, t_invite );
+		UNREF(t_invite);
+		/* return 0 to stop the script processing */
+		ret=0;
+		goto end;
+
+	} else {
+		/* no corresponding INVITE trasaction found */
+		ret=1;
+	}
+end:
+	return ret;
+}
 
 /* WARNING: doesn't work from failure route (deadlock, uses t_relay_to which
  *  is failure route unsafe) */

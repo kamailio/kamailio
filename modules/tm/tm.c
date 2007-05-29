@@ -80,6 +80,8 @@
  *  2006-09-28  added t_branch_replied, t_branch_timeout, t_any_replied, 
  *               t_any_timeout, t_is_canceled (andrei)
  *  2006-10-16  added a new param.: aggregate challenges (andrei)
+ *  2007-05-28  two new params: reparse_invite, ac_extra_hdrs
+ *              added w_t_relay_cancel() (Miklos)
  */
 
 
@@ -180,6 +182,7 @@ inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_tls(struct sip_msg* msg, char* str,char*);
 #endif
 inline static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
+inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo, char *_bar);
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
@@ -261,6 +264,8 @@ static cmd_export_t cmds[]={
 #endif
 	{"t_forward_nonack_to", w_t_forward_nonack_to,  2, fixup_proto_hostport2proxy,
 			REQUEST_ROUTE},
+	{"t_relay_cancel",     w_t_relay_cancel,        0, 0,
+			REQUEST_ROUTE},
 	{"t_on_failure",       w_t_on_negative,         1, fixup_on_failure,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_on_reply",         w_t_on_reply,            1, fixup_on_reply,
@@ -338,6 +343,8 @@ static param_export_t params[]={
 	{"unmatched_cancel",    PARAM_INT, &unmatched_cancel                     },
 	{"default_code",        PARAM_INT, &default_code                         },
 	{"default_reason",      PARAM_STR, &default_reason                       },
+	{"reparse_invite",      PARAM_INT, &reparse_invite                       },
+	{"ac_extra_hdrs",       PARAM_STR, &ac_extra_hdrs                        },
 	{0,0,0}
 };
 
@@ -1121,6 +1128,21 @@ inline static int w_t_relay( struct sip_msg  *p_msg ,
 		0 /* no replication */ );
 	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
 	return 0;
+}
+
+/* relays CANCEL at the beginning of the script */
+inline static int w_t_relay_cancel( struct sip_msg  *p_msg ,
+						char *_foo, char *_bar)
+{
+	if (p_msg->REQ_METHOD!=METHOD_CANCEL)
+		return 1;
+
+	/* it makes no sense to use this function without reparse_invite=1 */
+	if (!reparse_invite)
+		LOG(L_WARN, "WARNING: t_relay_cancel is probably used with "
+			"wrong configuration, check the readme for details\n");
+
+	return t_relay_cancel(p_msg);
 }
 
 /* set fr_inv_timeout & or fr_timeout; 0 means: use the default value */

@@ -66,7 +66,13 @@
 		(_d) += (_len);\
 	}while(0);
 
+extern str ac_extra_hdrs;
+extern int reparse_invite;
+
 char *build_local(struct cell *Trans, unsigned int branch,
+	unsigned int *len, char *method, int method_len, str *to);
+
+char *build_local_reparse(struct cell *Trans, unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to);
 
 char *build_uac_request(  str msg_type, str dst, str from,
