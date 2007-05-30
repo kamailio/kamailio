@@ -157,13 +157,10 @@ struct cell;
  *  to local cancels (e.g. branch canceled due to fr_inv_timeout). To
  *  distinguish between the two, one would need to look at the method in
  *  Cseq (look at t_reply.c:1630 (reply_received()) for an example).
- * It's unsafe to register other TMCB callbacks.
  *
  *  TMCB_RESPONSE_OUT -- a final reply was sent out (either local
  *  or proxied) -- there is nothing more you can change from
  *  the callback, it is good for accounting-like uses. No lock is held.
- *  It's unsafe to registers other callbacks to the current transaction from
- *   the TMCB_RESPONSE_OUT callback.
  *  Known BUGS: it's called also for provisional replies for relayed replies.
  *  For local replies it's called only for the final reply.
  *    
@@ -225,8 +222,8 @@ struct cell;
  *
  *  TMCB_E2ECANCEL_IN -- called when a CANCEL for the INVITE transaction
  *  for which the callback was registered arrives.
- *   The transaction parameter will point to the cancel transaction (and 
- *   not the invite) and the request parameter to the CANCEL sip msg.
+ *   The transaction parameter will point to the invite transaction (and 
+ *   not the cancel) and the request parameter to the CANCEL sip msg.
  *   Note: the callback should be registered for an INVITE transaction.
  *
  *  TMCB_REQUEST_FWDED -- request is being forwarded out. It is
@@ -235,19 +232,14 @@ struct cell;
  *  chance to change its shape. It can also be called from the failure
  *   router (via t_relay/t_forward_nonack) and in this case the REPLY lock 
  *   will be held.
- *  It's unsafe to register other TMCB callbacks (except if it it's called
- * from the failure route).
  *
  *  TMCB_LOCAL_COMPLETED -- final reply for localy initiated
  *  transaction arrived. Message may be FAKED_REPLY. Can be called multiple
  *  times, no lock is held.
- *  It's unsafe to register other TMCB callbacks (unless this is protected
- *  by the reply lock).
  *
  *  TMCB_LOCAL_REPONSE_OUT -- provisional reply for localy initiated 
  *  transaction. The message may be a FAKED_REPLY and the callback might be 
  *  called multiple time quasi-simultaneously. No lock is held.
- *  It's unsafe to register other TMCB callbacks.
  *
  *  TMCB_NEG_ACK_IN -- an ACK to a negative reply was received, thus ending
  *  the transaction (this happens only when the final reply sent by tm is 
@@ -259,7 +251,6 @@ struct cell;
  * TMCB_LOCAL_RESPONSE_IN -- a brand-new reply was received which matches
  * an existing local transaction (like TMCB_RESPONSE_IN but for local 
  * transactions). It may or may not be a retransmission.
- * No lock is held here (yet). It's unsafe to register other TMCB callbacks.
  *
  * TMCB_LOCAL_REQUEST_IN -- like TMCB_REQUEST_IN but for locally generated 
  * request (e.g. via fifo/rpc):  a brand-new local request was 
