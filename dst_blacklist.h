@@ -46,6 +46,22 @@
 #define BLST_ADM_PROHIBITED	(1<<6)	/* administratively prohibited */
 #define BLST_PERMANENT		(1<<7)  /* never deleted, never expires */
 
+
+/*#define DST_BLACKLIST_HOOKS*/
+
+#define DST_BLACKLIST_ACCEPT 0
+#define DST_BLACKLIST_DENY  -1
+
+#ifdef DST_BLACKLIST_HOOKS
+struct blacklist_hook{
+	int (*on_blst_add)(struct dest_info* si, unsigned char* err_flags);
+	/* called before ser shutdown */
+	void (*destroy)(void);
+};
+
+int register_blacklist_hook(struct blacklist_hook *h);
+#endif /* DST_BLACKLIST_HOOKS */
+
 int init_dst_blacklist();
 void destroy_dst_blacklist();
 

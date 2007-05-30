@@ -29,6 +29,7 @@
 /* History:
  * --------
  *  2006-07-29  created by andrei
+ *  2007-05-39  added hooks for add; more locks to reduce contention (andrei)
  */
 
 
@@ -43,6 +44,7 @@
 #include "ip_addr.h"
 #include "error.h"
 #include "rpc.h"
+#include "compiler_opt.h"
 
 
 
@@ -66,7 +68,54 @@ struct dst_blst_entry{
 #define DEFAULT_BLST_TIMER_INTERVAL		60 /* 1 min */
 
 
+/* lock method */
+#ifdef GEN_LOCK_T_UNLIMITED
+#define BLST_LOCK_PER_BUCKET
+#elif defined GEN_LOCK_SET_T_UNLIMITED
+#define BLST_LOCK_SET
+#else
+#define BLST_ONE_LOCK
+#endif
+
+
+#ifdef BLST_LOCK_PER_BUCKET
+/* lock included in the hash bucket */
+#define LOCK_BLST(h)		lock_get(&dst_blst_hash[(h)].lock)
+#define UNLOCK_BLST(h)		lock_release(&dst_blst_hash[(h)].lock)
+#elif defined BLST_LOCK_SET
+static gen_lock_set_t* blst_lock_set=0;
+#define LOCK_BLST(h)		lock_set_get(blst_lock_set, (h))
+#define UNLOCK_BLST(h)		lock_set_release(blst_lock_set, (h))
+#else
+/* use only one lock */
 static gen_lock_t* blst_lock=0;
+#define LOCK_BLST(h)		lock_get(blst_lock)
+#define UNLOCK_BLST(h)		lock_release(blst_lock)
+#endif
+
+
+
+
+#define BLST_HASH_STATS
+
+#ifdef BLST_HASH_STATS
+#define BLST_HASH_STATS_DEC(h) dst_blst_hash[(h)].entries--
+#define BLST_HASH_STATS_INC(h) dst_blst_hash[(h)].entries++
+#else
+#define BLST_HASH_STATS_DEC(h) do{}while(0)
+#define BLST_HASH_STATS_INC(h) do{}while(0)
+#endif
+
+struct dst_blst_lst_head{
+	struct dst_blst_entry* first;
+#ifdef BLST_LOCK_PER_BUCKET
+	gen_lock_t	lock;
+#endif
+#ifdef BLST_HASH_STATS
+	unsigned int entries;
+#endif
+};
+
 static struct timer_ln* blst_timer_h=0;
 
 static volatile unsigned int* blst_mem_used=0;
@@ -74,11 +123,96 @@ unsigned int  blst_max_mem=DEFAULT_BLST_MAX_MEM; /* maximum memory used
 													for the blacklist entries*/
 unsigned int blst_timeout=DEFAULT_BLST_TIMEOUT;
 unsigned int blst_timer_interval=DEFAULT_BLST_TIMER_INTERVAL;
-struct dst_blst_entry** dst_blst_hash=0;
+struct dst_blst_lst_head* dst_blst_hash=0;
 
 
-#define LOCK_BLST()		lock_get(blst_lock)
-#define UNLOCK_BLST()	lock_release(blst_lock)
+
+#ifdef DST_BLACKLIST_HOOKS
+
+#define MAX_BLST_HOOKS 1
+
+static struct blacklist_hook* blacklist_hooks;
+static unsigned int blacklist_max_hooks=MAX_BLST_HOOKS;
+static int last_blacklist_hook_idx=0;
+
+static int init_blacklist_hooks()
+{
+	blacklist_hooks=pkg_malloc(blacklist_max_hooks*
+								sizeof(struct blacklist_hook));
+	if (blacklist_hooks==0)
+		goto error;
+	memset(blacklist_hooks, 0,
+				blacklist_max_hooks*sizeof(struct blacklist_hook));
+	return 0;
+error:
+	LOG(L_ERR, "blacklist_hooks: memory allocation failure\n");
+	return -1;
+}
+
+
+static void destroy_blacklist_hooks()
+{
+	int r;
+
+	if (blacklist_hooks){
+		for (r=0; r<last_blacklist_hook_idx; r++){
+			if (blacklist_hooks[r].destroy)
+				blacklist_hooks[r].destroy();
+		}
+		pkg_free(blacklist_hooks);
+		blacklist_hooks=0;
+	}
+}
+
+
+/* allocates a new hook
+ * returns 0 on success and -1 on error
+ * must be called from mod init (from the main process, before forking)*/
+int register_blacklist_hook(struct blacklist_hook *h)
+{
+	struct blacklist_hook* tmp;
+	int new_max_hooks;
+	
+	if (blacklist_max_hooks==0)
+		goto error;
+	if (last_blacklist_hook_idx >= blacklist_max_hooks){
+		new_max_hooks=2*blacklist_max_hooks;
+		tmp=pkg_realloc(blacklist_hooks, 
+				new_max_hooks*sizeof(struct blacklist_hook));
+		if (tmp==0){
+			goto error;
+		}
+		blacklist_hooks=tmp;
+		/* init the new chunk */
+		memset(&blacklist_hooks[last_blacklist_hook_idx+1], 0, 
+					(new_max_hooks-blacklist_max_hooks-1)*
+						sizeof(struct blacklist_hook));
+		blacklist_max_hooks=new_max_hooks;
+	}
+	blacklist_hooks[last_blacklist_hook_idx]=*h;
+	last_blacklist_hook_idx++;
+	return 0;
+error:
+	return -1;
+}
+
+
+int blacklist_run_hooks(struct dest_info* si, unsigned char* flags)
+{
+	int r;
+	int ret;
+	
+	ret=DST_BLACKLIST_ACCEPT; /* default, if no hook installed accept 
+								blacklist operation */
+	for (r=0; r<last_blacklist_hook_idx; r++){
+		ret=blacklist_hooks[r].on_blst_add(si, flags);
+		if (ret!=DST_BLACKLIST_ACCEPT) break;
+	}
+	return ret;
+}
+
+
+#endif /* DST_BLACKLIST_HOOKS */
 
 
 inline static void blst_destroy_entry(struct dst_blst_entry* e)
@@ -133,14 +267,26 @@ void destroy_dst_blacklist()
 		timer_free(blst_timer_h);
 		blst_timer_h=0;
 	}
+#ifdef BLST_LOCK_PER_BUCKET
+		for(r=0; r<DST_BLST_HASH_SIZE; r++)
+			lock_destroy(&dst_blst_hash[r].lock);
+#elif defined BLST_LOCK_SET
+		if (blst_lock_set){
+			lock_set_destroy(blst_lock_set);
+			lock_set_dealloc(blst_lock_set);
+			blst_lock_set=0;
+		}
+#else
 	if (blst_lock){
 		lock_destroy(blst_lock);
 		lock_dealloc(blst_lock);
 		blst_lock=0;
 	}
+#endif
+	
 	if (dst_blst_hash){
 		for(r=0; r<DST_BLST_HASH_SIZE; r++){
-			for (crt=&dst_blst_hash[r], tmp=&(*crt)->next; *crt; 
+			for (crt=&dst_blst_hash[r].first, tmp=&(*crt)->next; *crt; 
 					crt=tmp, tmp=&(*crt)->next){
 			e=*crt;
 			*crt=(*crt)->next;
@@ -154,6 +300,9 @@ void destroy_dst_blacklist()
 		shm_free((void*)blst_mem_used);
 		blst_mem_used=0;
 	}
+#ifdef DST_BLACKLIST_HOOKS
+	destroy_blacklist_hooks();
+#endif
 }
 
 
@@ -161,22 +310,51 @@ void destroy_dst_blacklist()
 int init_dst_blacklist()
 {
 	int ret;
+#ifdef BLST_LOCK_PER_BUCKET
+	int r;
+#endif
 	
 	ret=-1;
+#ifdef DST_BLACKLIST_HOOKS
+	if (init_blacklist_hooks()!=0){
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+#endif
 	blst_mem_used=shm_malloc(sizeof(*blst_mem_used));
 	if (blst_mem_used==0){
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
 	*blst_mem_used=0;
-	dst_blst_hash=shm_malloc(sizeof(struct dst_blst_entry*) *
+	dst_blst_hash=shm_malloc(sizeof(struct dst_blst_lst_head) *
 											DST_BLST_HASH_SIZE);
 	if (dst_blst_hash==0){
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
-	memset(dst_blst_hash, 0, sizeof(struct dst_blst_entry*) *
+	memset(dst_blst_hash, 0, sizeof(struct dst_blst_lst_head) *
 								DST_BLST_HASH_SIZE);
+#ifdef BLST_LOCK_PER_BUCKET
+	for (r=0; r<DST_BLST_HASH_SIZE; r++){
+		if (lock_init(&dst_blst_hash[r].lock)==0){
+			ret=-1;
+			goto error;
+		}
+	}
+#elif defined BLST_LOCK_SET
+	blst_lock_set=lock_set_alloc(DST_BLST_HASH_SIZE);
+	if (blst_lock_set==0){
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+	if (lock_set_init(blst_lock_set)==0){
+		lock_set_dealloc(blst_lock_set);
+		blst_lock_set=0;
+		ret=-1;
+		goto error;
+	}
+#else /* BLST_ONE_LOCK */
 	blst_lock=lock_alloc();
 	if (blst_lock==0){
 		ret=E_OUT_OF_MEM;
@@ -188,6 +366,7 @@ int init_dst_blacklist()
 		ret=-1;
 		goto error;
 	}
+#endif /* BLST*LOCK*/
 	blst_timer_h=timer_alloc();
 	if (blst_timer_h==0){
 		ret=E_OUT_OF_MEM;
@@ -240,6 +419,7 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
 	type=(ip->af==AF_INET6)*BLST_IS_IPV6;
 	for (crt=head, tmp=&(*head)->next; *crt; crt=tmp, tmp=&(*crt)->next){
 		e=*crt;
+		prefetch_loc_r((*crt)->next, 1);
 		/* remove old expired entries */
 		if ((s_ticks_t)(now-(*crt)->expire)>=0){
 			*crt=(*crt)->next;
@@ -260,62 +440,6 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
 /* frees all the expired entries until either there are no more of them
  *  or the total memory used is <= target (to free all of them use -1 for 
  *  targer)
- *  It must be called with LOCK_BLST held (or call dst_blacklist_clean_expired
- *   instead).
- *  params:   target  - free expired entries until no more then taget memory 
- *                      is used  (use 0 to free all of them)
- *            delta   - consider an entry expired if it expires after delta
- *                      ticks from now
- *            timeout - exit after timeout ticks
- *
- *  returns: number of deleted entries
- *  This function should be called periodically from a timer
- */
-inline static int _dst_blacklist_clean_expired_unsafe(unsigned int target,
-												ticks_t delta,
-												ticks_t timeout)
-{
-	static unsigned short start=0;
-	unsigned short h;
-	struct dst_blst_entry** crt;
-	struct dst_blst_entry** tmp;
-	struct dst_blst_entry* e;
-	ticks_t start_time;
-	ticks_t now;
-	int no=0;
-	
-	now=start_time=get_ticks_raw();
-	for(h=start; h!=(start+DST_BLST_HASH_SIZE); h++){
-		for (crt=&dst_blst_hash[h%DST_BLST_HASH_SIZE], tmp=&(*crt)->next;
-				*crt; crt=tmp, tmp=&(*crt)->next){
-			e=*crt;
-			if ((s_ticks_t)(now+delta-(*crt)->expire)>=0){
-				*crt=(*crt)->next;
-				*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
-				blst_destroy_entry(e);
-				no++;
-				if (*blst_mem_used<=target)
-					goto skip;
-			}
-		}
-		/* check for timeout only "between" hash cells */
-		now=get_ticks_raw();
-		if ((now-start_time)>=timeout){
-			DBG("_dst_blacklist_clean_expired_unsafe: timeout: %d > %d\n",
-					TICKS_TO_MS(now-start_time), TICKS_TO_MS(timeout));
-			goto skip;
-		}
-	}
-skip:
-	start=h; /* next time we start where we left */
-	return no;
-}
-
-
-
-/* frees all the expired entries until either there are no more of them
- *  or the total memory used is <= target (to free all of them use -1 for 
- *  targer)
  *  params:   target  - free expired entries until no more then taget memory 
  *                      is used  (use 0 to free all of them)
  *            delta   - consider an entry expired if it expires after delta
@@ -326,14 +450,52 @@ skip:
  *  This function should be called periodically from a timer
  */
 inline static int dst_blacklist_clean_expired(unsigned int target,
-												ticks_t delta,
-												ticks_t timeout)
+									  ticks_t delta,
+									  ticks_t timeout)
 {
-	int no;
+	static unsigned short start=0;
+	unsigned short h;
+	struct dst_blst_entry** crt;
+	struct dst_blst_entry** tmp;
+	struct dst_blst_entry* e;
+	ticks_t start_time;
+	ticks_t now;
+	int no=0;
+	int i;
 	
-	LOCK_BLST();
-		no=_dst_blacklist_clean_expired_unsafe(target, delta, timeout);
-	UNLOCK_BLST();
+	now=start_time=get_ticks_raw();
+	for(h=start; h!=(start+DST_BLST_HASH_SIZE); h++){
+		i=h%DST_BLST_HASH_SIZE;
+		if (dst_blst_hash[i].first){
+			LOCK_BLST(i);
+			for (crt=&dst_blst_hash[i].first, tmp=&(*crt)->next;
+					*crt; crt=tmp, tmp=&(*crt)->next){
+				e=*crt;
+				prefetch_loc_r((*crt)->next, 1);
+				if ((s_ticks_t)(now+delta-(*crt)->expire)>=0){
+					*crt=(*crt)->next;
+					*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
+					blst_destroy_entry(e);
+					BLST_HASH_STATS_DEC(i);
+					no++;
+					if (*blst_mem_used<=target){
+						UNLOCK_BLST(i);
+						goto skip;
+					}
+				}
+			}
+			UNLOCK_BLST(i);
+			/* check for timeout only "between" hash cells */
+			now=get_ticks_raw();
+			if ((now-start_time)>=timeout){
+				DBG("_dst_blacklist_clean_expired_unsafe: timeout: %d > %d\n",
+						TICKS_TO_MS(now-start_time), TICKS_TO_MS(timeout));
+				goto skip;
+			}
+		}
+	}
+skip:
+	start=h; /* next time we start where we left */
 	if (no){
 		DBG("dst_blacklist_clean_expired, %d entries removed\n", no);
 	}
@@ -376,24 +538,28 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 	now=get_ticks_raw();
 	hash=dst_blst_hash_no(proto, ip, port);
 	/* check if the entry already exists */
-	LOCK_BLST();
-		e=_dst_blacklist_lst_find(&dst_blst_hash[hash], ip, proto, port, now);
+	LOCK_BLST(hash);
+		e=_dst_blacklist_lst_find(&dst_blst_hash[hash].first, ip, proto,
+																port, now);
 		if (e){
 			e->flags|=err_flags;
 			e->expire=now+S_TO_TICKS(blst_timeout); /* update the timeout */
 		}else{
-			if ((*blst_mem_used+size)>=blst_max_mem){
+			if (unlikely((*blst_mem_used+size)>=blst_max_mem)){
+				UNLOCK_BLST(hash);
 				/* first try to free some memory  (~ 12%), but don't
 				 * spend more then 250 ms*/
-				_dst_blacklist_clean_expired_unsafe(*blst_mem_used/16*14, 0, 
+				dst_blacklist_clean_expired(*blst_mem_used/16*14, 0, 
 															MS_TO_TICKS(250));
-				if (*blst_mem_used+size>=blst_max_mem){
+				if (unlikely(*blst_mem_used+size>=blst_max_mem)){
 					ret=-1;
 					goto error;
 				}
+				LOCK_BLST(hash);
 			}
 			e=shm_malloc(size);
 			if (e==0){
+				UNLOCK_BLST(hash);
 				ret=E_OUT_OF_MEM;
 				goto error;
 			}
@@ -404,10 +570,11 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 			memcpy(e->ip, ip->u.addr, ip->len);
 			e->expire=now+S_TO_TICKS(blst_timeout); /* update the timeout */
 			e->next=0;
-			dst_blacklist_lst_add(&dst_blst_hash[hash], e);
+			dst_blacklist_lst_add(&dst_blst_hash[hash].first, e);
+			BLST_HASH_STATS_INC(hash);
 		}
+	UNLOCK_BLST(hash);
 error:
-	UNLOCK_BLST();
 	return ret;
 }
 
@@ -426,12 +593,13 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 	ret=0;
 	now=get_ticks_raw();
 	hash=dst_blst_hash_no(proto, ip, port);
-	LOCK_BLST();
-		e=_dst_blacklist_lst_find(&dst_blst_hash[hash], ip, proto, port, now);
+	LOCK_BLST(hash);
+		e=_dst_blacklist_lst_find(&dst_blst_hash[hash].first, ip, proto,
+									port, now);
 		if (e){
 			ret=e->flags;
 		}
-	UNLOCK_BLST();
+	UNLOCK_BLST(hash);
 	return ret;
 }
 
@@ -440,6 +608,11 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si)
 {
 	struct ip_addr ip;
+
+#ifdef DST_BLACKLIST_HOOKS
+	if (blacklist_run_hooks(si, &err_flags)!=DST_BLACKLIST_ACCEPT)
+		return 0;
+#endif
 	su2ip_addr(&ip, &si->to);
 	return dst_blacklist_add_ip(err_flags, si->proto, &ip,
 								su_getport(&si->to));
@@ -491,9 +664,9 @@ void dst_blst_debug(rpc_t* rpc, void* ctx)
 	struct ip_addr ip;
 	
 	now=get_ticks_raw();
-	LOCK_BLST();
 		for(h=0; h<DST_BLST_HASH_SIZE; h++){
-			for(e=dst_blst_hash[h]; e; e=e->next){
+			LOCK_BLST(h);
+			for(e=dst_blst_hash[h].first; e; e=e->next){
 				dst_blst_entry2ip(&ip, e);
 				rpc->add(ctx, "ssddd", get_proto_name(e->proto), 
 										ip_addr2a(&ip), e->port, 
@@ -502,9 +675,33 @@ void dst_blst_debug(rpc_t* rpc, void* ctx)
 										-TICKS_TO_S(now-e->expire) ,
 										e->flags);
 			}
+			UNLOCK_BLST(h);
 		}
-	UNLOCK_BLST();
 }
+
+/* only for debugging, it helds the lock too long for "production" use */
+void dst_blst_hash_stats(rpc_t* rpc, void* ctx)
+{
+	int h;
+	struct dst_blst_entry* e;
+#ifdef BLST_HASH_STATS
+	int n;
+	
+	n=0;
+#endif
+	
+		for(h=0; h<DST_BLST_HASH_SIZE; h++){
+#ifdef BLST_HASH_STATS
+			LOCK_BLST(h);
+			for(e=dst_blst_hash[h].first; e; e=e->next) n++;
+			UNLOCK_BLST(h);
+			rpc->add(ctx, "dd", h, n);
+#else
+			rpc->add(ctx, "dd", h, dst_blst_hash[h].entries);
+#endif
+		}
+}
+
 
 #endif /* USE_DST_BLACKLIST */
 
