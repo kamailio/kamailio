@@ -19,6 +19,7 @@
         <name>att_name</name>
         <type>string</type>
         <size>32</size>
+        <primary/>
         <default/>
         <description>att_name</description>
     </column>
@@ -51,9 +52,4 @@
         <default/>
         <description>Default Value</description>
     </column>
-
-    <index>
-        <colref linkend="att_name"/>
-        <primary/>
-    </index>
 </table>

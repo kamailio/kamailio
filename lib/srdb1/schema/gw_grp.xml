@@ -21,6 +21,8 @@
         <name>grp_id</name>
         <type>unsigned int</type>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>Group ID</description>
     </column>
@@ -31,9 +33,4 @@
         <size>&id_len;</size>
         <description>Group name</description>
     </column>
-
-    <index>
-        <colref linkend="grp_id"/>
-        <primary/>
-    </index>
 </table>

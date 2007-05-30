@@ -47,13 +47,13 @@
     </column>
 
     <index>
-        <name>changed</name>
-        <colref linkend="changed"/>
-    </index>
-
-    <index>
         <colref linkend="name"/>
         <colref linkend="sid"/>
         <primary/>
+    </index>
+
+    <index>
+        <name>changed</name>
+        <colref linkend="changed"/>
     </index>
 </table>

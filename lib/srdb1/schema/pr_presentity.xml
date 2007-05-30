@@ -21,6 +21,8 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>Unique ID</description>
     </column>
@@ -69,7 +71,7 @@
 
     <column>
         <name>body</name>
-        <type>text</type>
+        <type>binary</type>
     </column>
 
     <index>
@@ -79,10 +81,5 @@
         <colref linkend="event"/>
         <colref linkend="etag"/>
         <unique/>
-    </index>
-
-    <index>
-        <colref linkend="id"/>
-        <primary/>
     </index>
 </table>

@@ -20,6 +20,8 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>Unique ID</description>
     </column>
@@ -63,9 +65,4 @@
         <default/>
         <description>SIP URI associated with this record</description>
     </column>
-
-    <index>
-        <colref linkend="id"/>
-        <primary/>
-    </index>
 </table>

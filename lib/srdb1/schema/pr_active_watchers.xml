@@ -21,6 +21,8 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>Unique ID</description>
     </column>
@@ -180,10 +182,5 @@
         <colref linkend="to_domain"/>
         <colref linkend="to_user"/>
         <colref linkend="event"/>
-    </index>
-
-    <index>
-        <colref linkend="id"/>
-        <primary/>
     </index>
 </table>

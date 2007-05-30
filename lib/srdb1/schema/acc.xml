@@ -21,6 +21,8 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
     </column>
@@ -80,12 +82,7 @@
     </column>
 
     <index>
-        <name>acc_callid</name>
+        <name>acc_callid_idx</name>
         <colref linkend="callid"/>
-    </index>
-
-    <index>
-        <colref linkend="id"/>
-        <primary/>
     </index>
 </table>

@@ -23,7 +23,9 @@
 	<type>unsigned int</type>
 	<size>&table_id_len;</size>
 	<autoincrement/>
-	<type db="dbtext">int,auto</type>
+	<primary/>
+	<type db="postgres">SERIAL PRIMARY KEY</type>
+        <type db="dbtext">int,auto</type>
 	<description>unique ID</description>
     </column>
 
@@ -59,12 +61,7 @@
     </column>
 
     <index>
-	<name>Key1</name>
+	<name>ip_addr</name>
 	<colref linkend="src_ip"/>
-    </index>
-
-    <index>
-	<colref linkend="id"/>
-	<primary/>
     </index>
 </table>

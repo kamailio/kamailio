@@ -21,6 +21,8 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>Unique ID</description>
     </column>
@@ -121,9 +123,4 @@
         <type>int</type>
         <size>11</size>
     </column>
-
-    <index>
-        <colref linkend="id"/>
-        <primary/>
-    </index>
 </table>

@@ -19,6 +19,7 @@
         <name>param</name>
         <type>string</type>
         <size>32</size>
+        <primary/>
         <default/>
         <description>Param</description>
     </column>
@@ -115,9 +116,4 @@
         <default>&DEFAULT_DATETIME;</default>
         <description>last update time and date</description>
     </column>
-
-    <index>
-        <colref linkend="param"/>
-        <primary/>
-    </index>
 </table>

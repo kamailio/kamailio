@@ -21,6 +21,8 @@
 	<type>unsigned int</type>
 	<size>&table_id_len;</size>
 	<autoincrement/>
+	<primary/>
+	<type db="postgres">SERIAL PRIMARY KEY</type>
 	<type db="dbtext">int,auto</type>
 	<description>unique ID</description>
     </column>
@@ -97,10 +99,5 @@
 	<name>ud_silo</name>
 	<colref linkend="username"/>
 	<colref linkend="domain"/>
-    </index>
-
-    <index>
-	<colref linkend="id"/>
-	<primary/>
     </index>
 </table>

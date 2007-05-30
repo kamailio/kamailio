@@ -22,6 +22,8 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
     </column>
 
@@ -54,19 +56,17 @@
     </column>
 
     <index>
+        <name>lcr_prefix_idx</name>
         <colref linkend="prefix"/>
     </index>
 
     <index>
+        <name>lcr_from_uri_idx</name>
         <colref linkend="from_uri"/>
     </index>
 
     <index>
+        <name>lcr_grp_id_idx</name>
         <colref linkend="grp_id"/>
-    </index>
-
-    <index>
-        <colref linkend="id"/>
-        <primary/>
     </index>
 </table>

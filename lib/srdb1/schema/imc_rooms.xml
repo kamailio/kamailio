@@ -7,7 +7,7 @@
 
 ]>
 
-<table xmlns:db="http://docbook.org/ns/docbook">
+<table id="imc_rooms" xmlns:db="http://docbook.org/ns/docbook">
     <name>imc_rooms</name>
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
@@ -16,23 +16,25 @@
         </db:para>
     </description>
 
-    <column id="imc_rooms.id">
+    <column id="id">
         <name>id</name>
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
     </column>
 
-    <column id="imc_rooms.name">
+    <column id="name">
         <name>name</name>
         <type>string</type>
         <size>&domain_len;</size>
         <description>Name of the room</description>
     </column>
 
-    <column id="imc_rooms.domain">
+    <column id="domain">
         <name>domain</name>
         <type>string</type>
         <size>&domain_len;</size>
@@ -48,13 +50,8 @@
 
     <index>
         <name>nd_imc</name>
-        <colref linkend="imc_rooms.name"/>
-        <colref linkend="imc_rooms.domain"/>
+        <colref linkend="name"/>
+        <colref linkend="domain"/>
         <unique/>
-    </index>
-
-    <index>
-        <colref linkend="imc_rooms.id"/>
-        <primary/>
     </index>
 </table>

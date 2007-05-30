@@ -12,38 +12,42 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type><!-- specify the table type for mysql -->
     <description>
-	<db:para>table documentation</db:para>
+        <db:para>table documentation</db:para>
     </description>
 
     <column id="id">
-	<name>id</name>
-	<type>int</type><!-- look into the xsl files in doc/dbschema/xsl for a list of all possible datatypes -->
-	<size>&table_id_len;</size> <!-- use a value from entities.xml -->
-	<autoincrement/><!-- auto increment the id -->
-	<type db="dbtext">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->
-	<description>unique ID</description>
+        <name>id</name>
+        <type>int</type><!-- look into the xsl files in doc/dbschema/xsl for a list of all possible datatypes -->
+        <size>&table_id_len;</size> <!-- use a value from entities.xml -->
+        <primary/><!-- primary key -->
+        <autoincrement/><!-- auto increment the id -->
+        <type db="postgres">SERIAL PRIMARY KEY</type>
+        <type db="dbtext">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->
+        <description>unique ID</description>
     </column>
 
     <column id="bla">
-	<name>foo</name>
-	<type>string</type>
-	<size>100</size>
+        <name>foo</name>
+        <type>string</type>
+        <size>100</size>
         <!--<default>bla</default> Default value for the column is 'bla' -->
         <!--<default/>  Default value is '' -->
         <!--<default></null></default> This column is NULL -->
-        
+
         <!--</null> This column can be NULL, if not specified it is NOT NULL -->
-	<description>column documentation</description>
+        <description>column documentation</description>
     </column>
 
     <index>
-	<name>bar</name>
-	<!--<unique/> -> UNIQUE KEY -->
-	<colref linkend="bla"/> <!-- link to the node with these id -->
+        <name>bar</name>
+        <!--<unique/> -> UNIQUE KEY -->
+        <colref linkend="bla"/> <!-- link to the node with these id -->
     </index>
 
     <index>
-	<colref linkend="id"/>
-	<primary/> <!-- PRIMARY KEY -->
+        <name>blub</name>
+        <!--<primary/> -> PRIMARY KEY over more than one colums -->
+        <colref linkend="bla"/> <!-- link to the node with these id -->
+        <colref linkend="id"/>
     </index>
 </table>

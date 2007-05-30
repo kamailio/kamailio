@@ -20,6 +20,8 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>Unique ID</description>
     </column>
@@ -176,7 +178,7 @@
     </column>
 
     <index>
-        <name>user_id</name>
+        <name>sw_user_id</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <unique/>
@@ -191,10 +193,5 @@
     <index>
         <name>username_id</name>
         <colref linkend="username"/>
-    </index>
-
-    <index>
-        <colref linkend="id"/>
-        <primary/>
     </index>
 </table>
