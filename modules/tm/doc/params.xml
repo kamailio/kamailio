@@ -203,4 +203,65 @@ modparam("tm", "aggregate_challenges", 0)
 	</example>
     </section>
 
+    <section id="reparse_invite">
+	<title><varname>reparse_invite</varname> (integer)</title>
+	<para>
+		If set (default), the CANCEL and negative ACK requests are
+		constructed from the INVITE message which was sent out instead
+		of building them from the received request. The disadvantage is
+		that the outgoing INVITE has to be partially re-parsed, the advantage
+		is that the CANCEL/ACK is always RFC 3261-compliant, it always
+		contains the same route-set as the INVITE message. Do not disable
+		the INVITE re-parsing for example in the following cases:
+	</para>
+	<para>
+		- The INVITE contains a preloaded route-set, and SER forwards
+		the message to the next hop according to the Route header. The
+		Route header is not removed in the CANCEL without
+		<varname>reparse_invite</varname>=1.
+	</para>
+	<para>
+		- SER record-routes, thus an in-dialog INVITE contains a Route
+		header which is removed during loose routing. If the in-dialog
+		INVITE is rejected, the negative ACK still contains the Route
+		header without <varname>reparse_invite</varname>=1.
+	</para>
+	<para>
+	    Default value is 1.
+	</para>
+	<example>
+	    <title>Set <varname>reparse_invite</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "reparse_invite", 0)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="ac_extra_hdrs">
+	<title><varname>ac_extra_hdrs</varname> (string)</title>
+	<para>
+		Header fields prefixed by this parameter value are included
+		in the CANCEL and negative ACK messages if they were present
+		in the outgoing INVITE.
+	</para>
+	<para>
+		Note, that the parameter value effects only those headers
+		which are not covered by RFC-3261 (which are neither mandatory
+		nor prohibited in CANCEL and ACK), and the parameter can be used
+		only together with <varname>reparse_invite</varname>=1.
+	</para>
+	<para>
+	    Default value is "".
+	</para>
+	<example>
+	    <title>Set <varname>ac_extra_hdrs</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "ac_extra_hdrs", "myfavoriteheaders-")
+...
+	    </programlisting>
+	</example>
+    </section>
 </section>
