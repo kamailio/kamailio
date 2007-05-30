@@ -25,15 +25,15 @@
  *                          Example: if (likely(p!=NULL)) {... }
  *   unlikely(expr)       - branch prediction optimization - is unlikely that 
  *                          expr will be true, so optimize for this case
- *   prefetch(addr)        - will prefetch addr for reading
- *   prefetch_w(addr)      - will prefetch add for writing
+ *   prefetch(addr)        - will prefetch addr. for reading
+ *   prefetch_w(addr)      - will prefetch addr. for writing
  *   prefetch_loc_r(addr, loc) - prefetch for reading, data at addr has
  *                                no temporal locality (loc==0), a short
  *                                degree of temporal locality (loc==1), 
  *                                moderate (loc==2) or high (loc==3).
  *                                prefetch(addr) is equiv. to 
  *                                prefetch_loc_r(addr, 3).
- *  prefetch_loc_r(addr, loc) - like above but for writing.
+ *  prefetch_loc_w(addr, loc) - like above but for writing.
  */
 /* 
  * History:
@@ -49,7 +49,7 @@
 #define unlikely(expr)            __builtin_expect(!!(expr), 0)
 
 #define prefetch(addr)            __builtin_prefetch((addr))
-#define prefecth_w(addr)          __builtin_prefetch((addr), 1)
+#define prefetch_w(addr)          __builtin_prefetch((addr), 1)
 #define prefetch_loc_r(addr, loc) __builtin_prefetch((addr), 0, (loc))
 #define prefetch_loc_w(addr, loc) __builtin_prefetch((addr), 1, (loc))
 
@@ -60,7 +60,7 @@
 #define unlikely(expr) (expr)
 
 #define prefetch(addr)
-#define prefecth_w(addr)
+#define prefetch_w(addr)
 #define prefetch_loc_r(addr, loc)
 #define prefetch_loc_w(addr, loc)
 #endif /* __GNUC__ */
