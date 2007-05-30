@@ -457,12 +457,13 @@ if [ -z "$NO_USER_INIT" ] ; then
 	VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
 	INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
 	VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
+
+	if [ $? -ne 0 ] ; then
+		echo "Failed to create serweb credentials tables!"
+		exit 1
+	fi
 fi
 
-if [ $? -ne 0 ] ; then
-	echo "Failed to create serweb credentials tables!"
-	exit 1
-fi
 
 echo "SERWEB tables succesfully created."
 
