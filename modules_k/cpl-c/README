@@ -132,7 +132,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set db_url parameter
 ...
-modparam("cpl_c","db_url","mysql://user:passwd@host/database")
+modparam("cpl-c","db_url","mysql://user:passwd@host/database")
 ...
      _________________________________________________________
 
@@ -147,7 +147,7 @@ modparam("cpl_c","db_url","mysql://user:passwd@host/database")
 
    Example 1-2. Set cpl_table parameter
 ...
-modparam("cpl_c","cpl_table","cpltable")
+modparam("cpl-c","cpl_table","cpltable")
 ...
      _________________________________________________________
 
@@ -160,7 +160,7 @@ modparam("cpl_c","cpl_table","cpltable")
 
    Example 1-3. Set username_column parameter
 ...
-modparam("cpl_c","username_column","username")
+modparam("cpl-c","username_column","username")
 ...
      _________________________________________________________
 
@@ -172,7 +172,7 @@ modparam("cpl_c","username_column","username")
 
    Example 1-4. Set domain_column parameter
 ...
-modparam("cpl_c","domain_column","domain")
+modparam("cpl-c","domain_column","domain")
 ...
      _________________________________________________________
 
@@ -185,7 +185,7 @@ modparam("cpl_c","domain_column","domain")
 
    Example 1-5. Set cpl_xml_column parameter
 ...
-modparam("cpl_c","cpl_xml_column","cpl_xml")
+modparam("cpl-c","cpl_xml_column","cpl_xml")
 ...
      _________________________________________________________
 
@@ -198,7 +198,7 @@ modparam("cpl_c","cpl_xml_column","cpl_xml")
 
    Example 1-6. Set cpl_bin_column parameter
 ...
-modparam("cpl_c","cpl_bin_column","cpl_bin")
+modparam("cpl-c","cpl_bin_column","cpl_bin")
 ...
      _________________________________________________________
 
@@ -213,7 +213,7 @@ modparam("cpl_c","cpl_bin_column","cpl_bin")
 
    Example 1-7. Set cpl_dtd_file parameter
 ...
-modparam("cpl_c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
+modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 ...
      _________________________________________________________
 
@@ -228,7 +228,7 @@ modparam("cpl_c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 
    Example 1-8. Set log_dir parameter
 ...
-modparam("cpl_c","log_dir","/var/log/openser/cpl")
+modparam("cpl-c","log_dir","/var/log/openser/cpl")
 ...
      _________________________________________________________
 
@@ -245,7 +245,7 @@ modparam("cpl_c","log_dir","/var/log/openser/cpl")
 
    Example 1-9. Set proxy_recurse parameter
 ...
-modparam("cpl_c","proxy_recurse",2)
+modparam("cpl-c","proxy_recurse",2)
 ...
      _________________________________________________________
 
@@ -259,7 +259,7 @@ modparam("cpl_c","proxy_recurse",2)
 
    Example 1-10. Set proxy_route parameter
 ...
-modparam("cpl_c","proxy_route",1)
+modparam("cpl-c","proxy_route",1)
 ...
      _________________________________________________________
 
@@ -273,7 +273,7 @@ modparam("cpl_c","proxy_route",1)
 
    Example 1-11. Set case_sensitive parameter
 ...
-modparam("cpl_c","case_sensitive",1)
+modparam("cpl-c","case_sensitive",1)
 ...
      _________________________________________________________
 
@@ -286,7 +286,7 @@ modparam("cpl_c","case_sensitive",1)
 
    Example 1-12. Set realm_prefix parameter
 ...
-modparam("cpl_c","realm_prefix","sip.")
+modparam("cpl-c","realm_prefix","sip.")
 ...
      _________________________________________________________
 
@@ -303,7 +303,7 @@ modparam("cpl_c","realm_prefix","sip.")
 
    Example 1-13. Set timer_avp parameter
 ...
-modparam("cpl_c","timer_avp","$avp(i:14)")
+modparam("cpl-c","timer_avp","$avp(i:14)")
 ...
      _________________________________________________________
 
@@ -320,7 +320,7 @@ modparam("cpl_c","timer_avp","$avp(i:14)")
 
    Example 1-14. Set lookup_domain parameter
 ...
-modparam("cpl_c","lookup_domain","location")
+modparam("cpl-c","lookup_domain","location")
 ...
      _________________________________________________________
 
@@ -335,7 +335,7 @@ modparam("cpl_c","lookup_domain","location")
 
    Example 1-15. Set lookup_append_branches parameter
 ...
-modparam("cpl_c","lookup_append_branches",1)
+modparam("cpl-c","lookup_append_branches",1)
 ...
      _________________________________________________________
 
@@ -348,7 +348,7 @@ modparam("cpl_c","lookup_append_branches",1)
 
    Example 1-16. Set use_domain parameter
 ...
-modparam("cpl_c","use_domain",1)
+modparam("cpl-c","use_domain",1)
 ...
      _________________________________________________________
 

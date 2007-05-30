@@ -99,7 +99,7 @@
 				<title>Set <varname>db_url</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","db_url","mysql://user:passwd@host/database")
+modparam("cpl-c","db_url","mysql://user:passwd@host/database")
 ...
 </programlisting>
 			</example>
@@ -121,7 +121,7 @@ modparam("cpl_c","db_url","mysql://user:passwd@host/database")
 				<title>Set <varname>cpl_table</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","cpl_table","cpltable")
+modparam("cpl-c","cpl_table","cpltable")
 ...
 </programlisting>
 			</example>
@@ -140,7 +140,7 @@ modparam("cpl_c","cpl_table","cpltable")
 				<title>Set <varname>username_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","username_column","username")
+modparam("cpl-c","username_column","username")
 ...
 </programlisting>
 			</example>
@@ -159,7 +159,7 @@ modparam("cpl_c","username_column","username")
 				<title>Set <varname>domain_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","domain_column","domain")
+modparam("cpl-c","domain_column","domain")
 ...
 </programlisting>
 			</example>
@@ -179,7 +179,7 @@ modparam("cpl_c","domain_column","domain")
 				<title>Set <varname>cpl_xml_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","cpl_xml_column","cpl_xml")
+modparam("cpl-c","cpl_xml_column","cpl_xml")
 ...
 </programlisting>
 			</example>
@@ -199,7 +199,7 @@ modparam("cpl_c","cpl_xml_column","cpl_xml")
 				<title>Set <varname>cpl_bin_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","cpl_bin_column","cpl_bin")
+modparam("cpl-c","cpl_bin_column","cpl_bin")
 ...
 </programlisting>
 			</example>
@@ -221,7 +221,7 @@ modparam("cpl_c","cpl_bin_column","cpl_bin")
 				<title>Set <varname>cpl_dtd_file</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
+modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 ...
 </programlisting>
 			</example>
@@ -243,7 +243,7 @@ modparam("cpl_c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 				<title>Set <varname>log_dir</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","log_dir","/var/log/openser/cpl")
+modparam("cpl-c","log_dir","/var/log/openser/cpl")
 ...
 </programlisting>
 			</example>
@@ -267,7 +267,7 @@ modparam("cpl_c","log_dir","/var/log/openser/cpl")
 				<title>Set <varname>proxy_recurse</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","proxy_recurse",2)
+modparam("cpl-c","proxy_recurse",2)
 ...
 </programlisting>
 			</example>
@@ -288,7 +288,7 @@ modparam("cpl_c","proxy_recurse",2)
 				<title>Set <varname>proxy_route</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","proxy_route",1)
+modparam("cpl-c","proxy_route",1)
 ...
 </programlisting>
 			</example>
@@ -309,7 +309,7 @@ modparam("cpl_c","proxy_route",1)
 				<title>Set <varname>case_sensitive</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","case_sensitive",1)
+modparam("cpl-c","case_sensitive",1)
 ...
 </programlisting>
 			</example>
@@ -329,7 +329,7 @@ modparam("cpl_c","case_sensitive",1)
 				<title>Set <varname>realm_prefix</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","realm_prefix","sip.")
+modparam("cpl-c","realm_prefix","sip.")
 ...
 </programlisting>
 			</example>
@@ -354,7 +354,7 @@ modparam("cpl_c","realm_prefix","sip.")
 				<title>Set <varname>timer_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","timer_avp","$avp(i:14)")
+modparam("cpl-c","timer_avp","$avp(i:14)")
 ...
 </programlisting>
 			</example>
@@ -379,7 +379,7 @@ modparam("cpl_c","timer_avp","$avp(i:14)")
 				<title>Set <varname>lookup_domain</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","lookup_domain","location")
+modparam("cpl-c","lookup_domain","location")
 ...
 </programlisting>
 			</example>
@@ -402,7 +402,7 @@ modparam("cpl_c","lookup_domain","location")
 					parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","lookup_append_branches",1)
+modparam("cpl-c","lookup_append_branches",1)
 ...
 </programlisting>
 			</example>
@@ -423,7 +423,7 @@ modparam("cpl_c","lookup_append_branches",1)
 				<title>Set <varname>use_domain</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","use_domain",1)
+modparam("cpl-c","use_domain",1)
 ...
 </programlisting>
 			</example>
