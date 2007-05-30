@@ -146,18 +146,18 @@ conn.close()
 &lt;resource-lists&gt;
 	&lt;list name="default"&gt;
 		&lt;list name="work"&gt;
-			&lt;entry uri="sip:someone@iptel.org"&gt;
+			&lt;entry uri="sip:someone@someorg.org"&gt;
 				&lt;display-name&gt;Someone&lt;/display-name&gt;
 			&lt;/entry&gt;
-			&lt;entry uri="sip:smith@iptel.org"&gt;
+			&lt;entry uri="sip:smith@someorg.org"&gt;
 				&lt;display-name&gt;Jonathan Smith&lt;/display-name&gt;
 			&lt;/entry&gt;
 		&lt;/list&gt;
-		&lt;entry uri="sip:vasek@iptel.org"&gt;
+		&lt;entry uri="sip:vasek@someorg.org"&gt;
 			&lt;display-name&gt;Vasek&lt;/display-name&gt;
 		&lt;/entry&gt;
-		&lt;entry uri="sip:vaclav.kubart@iptel.org"&gt;
-			&lt;display-name&gt;Vaclav Kubart&lt;/display-name&gt;
+		&lt;entry uri="sip:vaclav.picbumprask@someorg.org"&gt;
+			&lt;display-name&gt;Vaclav Picbumprask&lt;/display-name&gt;
 		&lt;/entry&gt;
 	&lt;/list&gt;
 &lt;/resource-lists&gt;
@@ -167,7 +167,7 @@ conn.close()
 <example id="rls.xml"><title>Example rls-services document (rls.xml)</title>
 <para>Example document which is processed by Resource List Server (RLS module).
 This document can contain references to users buddy lists like
-<quote>smith-list@iptel.org</quote> which points to buddy list for user smith
+<quote>smith-list@someorg.org</quote> which points to buddy list for user smith
 named <quote>default</quote> and can contain such lists directly.
 <!--<caution><para>EyeBeam stores user's <quote>buddy list</quote> in 
 <filename>&lt;XCAP-root&gt;/users/&lt;username&gt;/resource-list.xml</filename>, 
@@ -178,21 +178,21 @@ these examples.</para></caution>-->
 <programlisting>
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;rls-services&gt;
-	&lt;service uri="sip:smith-list@iptel.org"&gt;
+	&lt;service uri="sip:smith-list@someorg.org"&gt;
 		&lt;resource-list&gt;http://localhost/xcap-root/resource-lists/users/smith/resource-list.xml/~~/resource-lists/list[@name=%22default%22]&lt;/resource-list&gt;
 		&lt;packages&gt;
 			&lt;package&gt;presence&lt;/package&gt;
 		&lt;/packages&gt;
 	&lt;/service&gt;
-	&lt;service uri="sip:cz@iptel.org"&gt;
-		&lt;list name="czech iptel"&gt;
-			&lt;entry uri="sip:abc@iptel.org"&gt;
+	&lt;service uri="sip:cz@someorg.org"&gt;
+		&lt;list name="czech part of some org"&gt;
+			&lt;entry uri="sip:abc@someorg.org"&gt;
 				&lt;display-name&gt;A B&lt;/display-name&gt;
 			&lt;/entry&gt;
-			&lt;entry uri="sip:cde@iptel.org"&gt;
+			&lt;entry uri="sip:cde@someorg.org"&gt;
 				&lt;display-name&gt;C D&lt;/display-name&gt;
 			&lt;/entry&gt;
-			&lt;entry uri="sip:efg@iptel.org"&gt;
+			&lt;entry uri="sip:efg@someorg.org"&gt;
 				&lt;display-name&gt;Ef Ge&lt;/display-name&gt;
 			&lt;/entry&gt;
 		&lt;/list&gt;
@@ -209,7 +209,7 @@ these examples.</para></caution>-->
 <para>This document contains two rules: 
 <itemizedlist>
 	<listitem><para><quote>white list</quote>, which allows
-	access to presence information from all from domain iptel.org
+	access to presence information from all from domain someorg.org
 	</para></listitem>
 	<listitem><para><quote>black list</quote>, which denies access for user
 	nemo@somewhere.net</para></listitem>	
@@ -232,7 +232,7 @@ these examples.</para></caution>-->
 	&lt;rule id="whitelist"&gt;
 		&lt;conditions&gt;
 			&lt;identity&gt;
-				&lt;domain domain="iptel.org"/&gt;
+				&lt;domain domain="someorg.org"/&gt;
 			&lt;/identity&gt;
 		&lt;/conditions&gt;
 		&lt;actions&gt;
