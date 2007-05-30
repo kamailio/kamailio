@@ -428,7 +428,7 @@ $(man-prefix)/$(man-dir)/man5:
 # note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
 install-cfg: $(cfg-prefix)/$(cfg-dir)
 		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
-			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
+			< etc/ser-basic.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
 		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
 				! -f $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
@@ -439,6 +439,7 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.ser 
 		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
+		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)/ser-advanced.cfg
 
 install-bin: $(bin-prefix)/$(bin-dir) 
 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
