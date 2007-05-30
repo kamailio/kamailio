@@ -306,6 +306,8 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TCP_CON_LIFETIME
 %token TCP_POLL_METHOD
 %token TCP_MAX_CONNECTIONS
+%token TCP_SOURCE_IPV4
+%token TCP_SOURCE_IPV6
 %token DISABLE_TLS
 %token ENABLE_TLS
 %token TLSLOG
@@ -708,6 +710,32 @@ assign_stm:
 		#endif
 	}
 	| TCP_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
+	| TCP_SOURCE_IPV4 EQUAL ipv4 {
+		#ifdef USE_TCP
+			tcp_use_source_ipv4 = 1;
+			tcp_source_ipv4 = (struct sockaddr_in) {.sin_family = AF_INET, .sin_port = 0};
+			memcpy(&tcp_source_ipv4.sin_addr, &($3)->u.addr, 4);
+		#else
+			warn("tcp support not compiled in");
+		#endif
+		pkg_free($3);
+	}
+	| TCP_SOURCE_IPV4 EQUAL error { yyerror("IPv4 address expected"); }
+	| TCP_SOURCE_IPV6 EQUAL ipv6 {
+		#ifdef USE_TCP
+			#ifdef USE_IPV6
+				tcp_use_source_ipv6 = 1;
+				tcp_source_ipv6 = (struct sockaddr_in6) {.sin6_family = AF_INET6, .sin6_port = 0};
+				memcpy(&tcp_source_ipv6.sin6_addr, &($3)->u.addr, 16);
+			#else
+				warn("IPv6 support not compiled in");
+			#endif
+		#else
+			warn("tcp support not compiled in");
+		#endif
+		pkg_free($3);
+	}
+	| TCP_SOURCE_IPV6 EQUAL error { yyerror("IPv6 address expected"); }
 	| DISABLE_TLS EQUAL NUMBER {
 		#ifdef USE_TLS
 			tls_disable=$3;

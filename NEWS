@@ -26,6 +26,12 @@ modules:
                            received bogus CANCEL will create a new transaction 
                            that will live by default 30s).
 
+new config variables:
+  tcp_source_ipv4 = IPv4 address
+  tcp_source_ipv6 = IPv6 address
+    Set the given source IP for all outbound TCP connections.
+    If setting the IP fails the TCP connection will use the default.
+
 
 2.0.0 changes
 
