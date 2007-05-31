@@ -51,18 +51,21 @@ struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
  */
 struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
 {
-    struct mi_root* rpl_tree;
-    
-    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-    if (rpl_tree==NULL) return 0;
-    
-    if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0) {
-	LOG(L_ERR,"permissions:mi_trusted_dump: Error while adding node\n");
-	free_mi_tree(rpl_tree);
-	return 0;
-    }
+	struct mi_root* rpl_tree;
 
-    return rpl_tree;
+	if (hash_table==NULL)
+		return init_mi_tree( 500, "Trusted-module not in use", 24 );
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==NULL) return 0;
+
+	if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0) {
+		LOG(L_ERR,"permissions:mi_trusted_dump: Error while adding node\n");
+		free_mi_tree(rpl_tree);
+		return 0;
+	}
+
+	return rpl_tree;
 }
 
 
