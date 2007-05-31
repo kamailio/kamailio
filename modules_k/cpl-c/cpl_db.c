@@ -30,6 +30,8 @@
 #include "../../dprint.h"
 #include "cpl_db.h"
 
+#define TABLE_VERSION 1
+
 static db_con_t* db_hdl=0;
 static db_func_t cpl_dbf;
 
@@ -75,6 +77,22 @@ int cpl_db_init(char* db_url, char* db_table)
 		LOG(L_CRIT,"ERROR:cpl_db_init: cannot select table \"%s\"\n",db_table);
 		goto error;
 	}
+
+	int ver;
+	str table_str; 
+	table_str.s = (char*)db_table;
+	table_str.len = strlen(table_str.s);
+
+	ver = table_version(&cpl_dbf, db_hdl, &table_str);
+	if (ver < 0) {
+		LOG(L_ERR, "ERROR:cpl_db_init: failed to query table version\n");
+		goto error;
+	} else if (ver < TABLE_VERSION) {
+		LOG(L_ERR, "ERROR:cpl_db_init: Invalid table version "
+			"(use openser_mysql.sh reinstall)\n");
+		goto error;
+	}
+
 	return 0;
 error:
 	if (db_hdl){

@@ -423,8 +423,7 @@ static int cpl_child_init(int rank)
 			/* I'm the child */
 			cpl_aux_process( cpl_env.cmd_pipe[0], cpl_env.log_dir);
 		} else {
-			LOG(L_INFO,"INFO:cpl_child_init(%d): I just gave birth to a child!"
-				" I'm a PARENT!!\n",rank);
+			LOG(L_INFO,"INFO:cpl_child_init(%d): child created\n",rank);
 			/* I'm the parent -> remember the pid */
 			aux_process = pid;
 		}
@@ -451,21 +450,20 @@ static int cpl_exit(void)
 	/* if still running, stop the aux process */
 	if (!aux_process) {
 		LOG(L_INFO,"INFO:cpl_c:cpl_exit: aux process hasn't been created -> "
-			"nothing to kill :-(\n");
+			"nothing to kill\n");
 	} else {
 		/* kill the auxiliary process */
 		if (kill( aux_process, SIGKILL)!=0) {
 			if (errno==ESRCH) {
 				LOG(L_INFO,"INFO:cpl_c:cpl_exit: seems that my child is "
-					"already dead! :-((\n");
+					"already dead!\n");
 			} else {
 				LOG(L_ERR,"ERROR:cpl_c:cpl_exit: killing the aux. process "
-					"failed! kill said: %s\n",strerror(errno));
+					"failed! error from kill: %s\n",strerror(errno));
 				return -1;
 			}
 		} else {
-			LOG(L_INFO,"INFO:cl_c:cpl_exit: I have blood on my hands!! I just"
-				" killed my own child!");
+			LOG(L_INFO,"INFO:cl_c:cpl_exit: killed my child!");
 		}
 	}
 	return 0;
