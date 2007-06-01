@@ -8,58 +8,56 @@
 # History:
 # 2007-02-14  Branch from mysqldb.sh script and adapt minimal capabilities(Cesc Santasusana)
 #
+# 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
 
 PATH=$PATH:/usr/local/sbin
 
 ### include resource files, if any
-if [ -f /etc/openser/.openscdbtextrc ]; then
-	. /etc/openser/.openscdbtextrc
+if [ -f /usr/local/etc/openser/openserctlrc ]; then
+	. /usr/local/etc/openser/openserctlrc
 fi
-if [ -f /usr/local/etc/openser/.openscdbtextrc ]; then
-	. /usr/local/etc/openser/.openscdbtextrc
+if [ -f ~/.openserctlrc ]; then
+	. ~/.openserctlrc
 fi
-if [ -f ~/.openscdbtextrc ]; then
-	. ~/.openscdbtextrc
+if [ -f ./openserctlrc ]; then
+	. ./openserctlrc
+fi
+  	
+# force values for variables in this section
+# you better set the variables in ~/.openserctlrc
+if [ -z "$ETCDIR" ] ; then
+	ETCDIR="/usr/local/etc/openser"
 fi
 
-#################################################################
-# config vars
-#################################################################
+### version for this script
+VERSION='1.3dev - $Revision$'
+
+if [ -z "$MYDIR" ] ; then
+	MYDIR=`dirname $0`
+fi
+
+if [ -z "$MYLIBDIR" ] ; then
+	MYLIBDIR="/usr/local/lib/openser/openserctl"
+	if [ ! -d "$MYLIBDIR" ]; then
+		MYLIBDIR=$MYDIR
+	fi
+fi
+
+# load base functions
+if [ -f "$MYLIBDIR/openserdbctl.base" ]; then
+	. "$MYLIBDIR/openserdbctl.base"
+else
+	echo "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ..."
+	exit -1
+fi
+
+
 # Default PATH to the DBTEXT folder where the files are
 if [ -z "$DBTEXT_PATH" ]; then
 	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
 fi
-#################################################################
-#################################################################
 
-# user name column
-if [ -z "$USERCOL" ]; then
-	USERCOL="username"
-fi
 
-# Program to calculate a message-digest fingerprint 
-if [ -z "$MD5" ]; then
-	MD5="md5sum"
-fi
-if [ -z "$AWK" ]; then
-	AWK="awk"
-fi
-if [ -z "$GREP" ]; then
-	GREP="egrep"
-fi
-if [ -z "$SED" ]; then
-	SED="sed"
-fi
-
-FOREVER="2020-05-28 21:32:15"
-
-DEFAULT_ALIASES_EXPIRES=$FOREVER
-DEFAULT_Q="1.0"
-DEFAULT_CALLID="Default-Call-ID"
-DEFAULT_CSEQ="13"
-DEFAULT_LOCATION_EXPIRES=$FOREVER
-
-#################################################################
 
 
 usage() {

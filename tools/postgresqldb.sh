@@ -50,20 +50,48 @@
 #             and fix permissions for the SERIAL sequences.
 #
 # 2007-05-21  Move SQL database definitions out of this script (henning)
-
-
+#
+# 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
 
 PATH=$PATH:/usr/local/sbin
 
-# include resource files, if any
-if [ -f /etc/openser/.openserpostgresqlrc ]; then
-	. /etc/openser/.openserpostgresqlrc
+### include resource files, if any
+if [ -f /usr/local/etc/openser/openserctlrc ]; then
+	. /usr/local/etc/openser/openserctlrc
 fi
-if [ -f /usr/local/etc/openser/.openserpostgresqlrc ]; then
-	. /usr/local/etc/openser/.openserpostgresqlrc
+if [ -f ~/.openserctlrc ]; then
+	. ~/.openserctlrc
 fi
-if [ -f ~/.openserpostgresqlrc ]; then
-	. ~/.openserpostgresqlrc
+if [ -f ./openserctlrc ]; then
+	. ./openserctlrc
+fi
+
+# force values for variables in this section
+# you better set the variables in ~/.openserctlrc
+if [ -z "$ETCDIR" ] ; then
+	ETCDIR="/usr/local/etc/openser"
+fi
+
+### version for this script
+VERSION='1.3dev - $Revision$'
+
+if [ -z "$MYDIR" ] ; then
+	MYDIR=`dirname $0`
+fi
+
+if [ -z "$MYLIBDIR" ] ; then
+	MYLIBDIR="/usr/local/lib/openser/openserctl"
+	if [ ! -d "$MYLIBDIR" ]; then
+		MYLIBDIR=$MYDIR
+	fi
+fi
+
+# load base functions
+if [ -f "$MYLIBDIR/openserdbctl.base" ]; then
+	. "$MYLIBDIR/openserdbctl.base"
+else
+	echo "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ..."
+	exit -1
 fi
 
 # path to the database schemas
@@ -77,30 +105,7 @@ fi
 #################################################################
 # config vars
 #################################################################
-# name of the database to be used by SER
-if [ -z "$DBNAME" ]; then
-	DBNAME="openser"
-fi
-# address of Postgres server
-if [ -z "$DBHOST" ]; then
-	DBHOST="localhost"
-fi
-# user with full privileges over DBNAME database
-if [ -z "$DBRWUSER" ]; then
-	DBRWUSER="openser"
-fi
-# password user with full privileges over DBNAME database
-if [ -z "$DBRWPW" ]; then
-	DBRWPW="openserrw"
-fi
-# read-only user
-if [ -z "$DBROUSER" ]; then
-	DBROUSER="openserro"
-fi
-# password for read-only user
-if [ -z "$DBROPW" ]; then
-	DBROPW="openserro"
-fi
+
 # full privileges Postgres user
 if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="postgres"
@@ -115,35 +120,6 @@ CMD="psql -h $DBHOST -U $DBROOTUSER "
 # the following commands are untested:
 #   DUMP_CMD="pg_dump -h $DBHOST -u$DBROOTUSER -c -t "
 #   BACKUP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c "
-
-# type of sql tables
-if [ -z "$TABLE_TYPE" ]; then
-	TABLE_TYPE=""
-fi
-# user name column
-if [ -z "$USERCOL" ]; then
-	USERCOL="username"
-fi
-
-# Program to calculate a message-digest fingerprint 
-if [ -z "$MD5" ]; then
-	MD5="md5sum"
-fi
-if [ -z "$AWK" ]; then
-	AWK="awk"
-fi
-
-# if you change this definitions here, then you must change them 
-# in db/schema/entities.xml too.
-# FIXME
-DUMMY_DATE="1900-01-01 00:00:01"
-FOREVER="2020-05-28 21:32:15"
-
-DEFAULT_ALIASES_EXPIRES=$FOREVER
-DEFAULT_Q="1.0"
-DEFAULT_CALLID="Default-Call-ID"
-DEFAULT_CSEQ="42"
-DEFAULT_LOCATION_EXPIRES=$FOREVER
 
 #################################################################
 
@@ -239,51 +215,21 @@ sql_query $1 < $2
 
 openser_drop()  # pars: <database name>
 {
-	if [ $# -ne 1 ] ; then
-		echo "openser_drop function takes two params"
-		exit 1
-	fi
+if [ $# -ne 1 ] ; then
+	echo "openser_drop function takes two params"
+	exit 1
+fi
 
-	# postgresql users are not dropped automatically
-	DROP_USER="DROP USER \"$DBRWUSER\";
-	           DROP USER \"$DBROUSER\";"
+# postgresql users are not dropped automatically
+sql_query "template1" "drop database $1; drop user \"$DBRWUSER\"; drop user \"$DBROUSER\";"
 
-	sql_query << EOF
-	drop database $1;
-	$DROP_USER
-EOF
+if [ $? -ne 0 ] ; then
+	echo "Dropping database $1 failed!"
+	exit 1
+fi
+echo "Database $1 dropped"
 } #openser_drop
 
-# read realm
-prompt_realm()
-{
-	printf "Domain (realm) for the default user 'admin': "
-	read SIP_DOMAIN
-	echo
-}
-
-# calculate credentials for admin
-credentials()
-{
-	HA1=`echo -n "admin:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
-	if [ $? -ne 0 ] ; then
-		echo "HA1 calculation failed"
-		exit 1
-	fi
-	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
-	if [ $? -ne 0 ] ; then
-		echo "HA1B calculation failed"
-		exit 1
-	fi
-
-	#PHPLIB_ID of users should be difficulty to guess for security reasons
-	NOW=`date`;
-	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | $AWK '{ print $1 }'`
-	if [ $? -ne 0 ] ; then
-		echo "PHPLIB_ID calculation failed"
-		exit 1
-	fi
-}
 
 openser_create () # pars: <database name>
 {
@@ -291,15 +237,6 @@ if [ $# -ne 1 ] ; then
 	echo "openser_create function takes one param"
 	exit 1
 fi
-
-# define what modules should be installed
-# openser standard modules
-STANDARD_MODULES="standard acc lcr domain group permissions
-                  registrar usrloc msilo alias_db uri_db
-                  speeddial avpops auth_db pdt"
-
-# openser extra modules
-EXTRA_MODULES="imc cpl siptrace domainpolicy"
 
 echo "creating database $1 ..."
 
@@ -521,7 +458,7 @@ if [ -z "$NO_USER_INIT" ] ; then
 			phone, email_address, datetime_created, datetime_modified, confirmation,
 			flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
 			VALUES ( 'admin', '$DBRWPW', 'Initial', 'Admin', '123', 'root@localhost', 
-			'2002-09-04 19:37:45', '$DUMMY_DATE', '57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53',
+			'2002-09-04 19:37:45', '1900-01-01 00:00:01', '57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53',
 			'o', '', '', '$HA1', '$SIP_DOMAIN', '$HA1B', '$PHPLIB_ID' );
 			INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
 			VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
@@ -535,9 +472,9 @@ if [ -z "$NO_USER_INIT" ] ; then
 fi
 
 # emulate mysql proprietary functions used by the serweb in postgresql
-sql_query "$1" "CREATE FUNCTION "truncate" (numeric,int) RETURNS numeric AS 'SELECT trunc(\$1,\$2);' LANGUAGE 'sql';
-		create function unix_timestamp(timestamp) returns integer as 'select date_part(''epoch'', \$1)::int4 
-		as result' language 'sql';"
+sql_query "$1" "CREATE FUNCTION truncate(numeric, int) RETURNS numeric AS 'SELECT trunc(\$1,\$2);' LANGUAGE 'sql';
+		CREATE FUNCTION unix_timestamp(timestamp) RETURNS integer AS 'SELECT date_part(''epoch'', \$1)::int4 
+		AS result' LANGUAGE 'sql';"
 
 if [ $? -ne 0 ] ; then
 	echo "Failed to create mysql emulation functions for serweb!"
@@ -545,20 +482,8 @@ if [ $? -ne 0 ] ; then
 fi
 
 echo "SERWEB tables succesfully created."
-echo ""
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-echo "!                                                 !"
-echo "!                  WARNING                        !"
-echo "!                                                 !"
-echo "! There was a default admin user created:         !"
-echo "!    username: admin@$SIP_DOMAIN "
-echo "!    password: $DBRWPW  "
-echo "!                                                 !"
-echo "! Please change this password or remove this user !"
-echo "! from the subscriber and admin_privileges table. !"
-echo "!                                                 !"
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 
+serweb_message
 }  # end serweb_create
 
 

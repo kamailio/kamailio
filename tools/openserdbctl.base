@@ -1,0 +1,159 @@
+PATH=$PATH:/usr/local/sbin
+
+# config vars
+
+# name of the database to be used by OpenSER
+if [ -z "$DBNAME" ]; then
+	DBNAME="openser"
+fi
+# address of database server
+if [ -z "$DBHOST" ]; then
+	DBHOST="localhost"
+fi
+# user with full privileges over DBNAME database
+if [ -z "$DBRWUSER" ]; then
+	DBRWUSER="openser"
+fi
+# password user with full privileges over DBNAME database
+if [ -z "$DBRWPW" ]; then
+	DBRWPW="openserrw"
+fi
+# read-only user
+if [ -z "$DBROUSER" ]; then
+	DBROUSER="openserro"
+fi
+# password for read-only user
+if [ -z "$DBROPW" ]; then
+	DBROPW="openserro"
+fi
+
+# user name column
+if [ -z "$USERCOL" ]; then
+	USERCOL="username"
+fi
+
+# SQL definitions
+# If you change this definitions here, then you must change them
+# in db/schema/entities.xml too.
+# FIXME
+
+if [ -z "$FOREVER" ] ; then
+	FOREVER="2020-05-28 21:32:15"
+fi
+if [ -z "$DEFAULT_ALIASES_EXPIRES" ] ; then
+	DEFAULT_ALIASES_EXPIRES=$FOREVER
+fi
+if [ -z "$DEFAULT" ] ; then
+	DEFAULT_Q="1.0"
+fi 
+if [ -z "$DEFAULT_CALLID" ] ; then
+	DEFAULT_CALLID="Default-Call-ID"
+fi
+if [ -z "$DEFAULT_CSEQ" ] ; then
+	DEFAULT_CSEQ="13"
+fi
+if [ -z "$DEFAULT_LOCATION_EXPIRES" ] ; then
+	DEFAULT_LOCATION_EXPIRES=$FOREVER
+fi
+
+
+# Program to calculate a message-digest fingerprint 
+if [ -z "$MD5" ]; then
+	MD5="md5sum"
+fi
+if [ -z "$AWK" ]; then
+	AWK="awk"
+fi
+if [ -z "$GREP" ]; then
+	GREP="egrep"
+fi
+if [ -z "$SED" ]; then
+	SED="sed"
+fi
+
+# define what modules should be installed
+if [ -z "$STANDARD_MODULES" ] ; then
+	STANDARD_MODULES="standard acc lcr domain group permissions registrar
+			  usrloc msilo alias_db uri_db speeddial avpops auth_db pdt"
+fi
+if [ -z "$EXTRA_MODULES" ] ; then
+	EXTRA_MODULES="imc cpl siptrace domainpolicy"
+fi
+
+############################################################
+
+# common functions
+
+usage() {
+COMMAND=`basename $0`
+cat <<EOF
+usage: $COMMAND create
+       $COMMAND drop   (!!entirely deletes tables)
+       $COMMAND reinit (!!entirely deletes and than re-creates tables
+       $COMMAND backup (dumps current database to stdout)
+       $COMMAND restore <file> (restores tables from a file)
+       $COMMAND copy <new_db> (creates a new db from an existing one)
+       $COMMAND migrate <old_db> <new_db> (migrates DB from 1.1 to 1.2)
+       $COMMAND presence (adds the presence related tables)
+       $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
+       $COMMAND serweb (adds the SERWEB specific tables)
+
+       if you want to manipulate database as other MySQL user than
+       root, want to change database name from default value "$DBNAME",
+       or want to use other values for users and password, edit the
+       "config vars" section of the command $COMMAND
+
+EOF
+} #usage
+
+
+
+
+# read realm
+prompt_realm()
+{
+	printf "Domain (realm) for the default user 'admin': "
+	read SIP_DOMAIN
+	echo
+}
+
+
+# calculate credentials for admin
+credentials()
+{
+	HA1=`echo -n "admin:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
+	if [ $? -ne 0 ] ; then
+		echo "HA1 calculation failed"
+		exit 1
+	fi
+	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
+	if [ $? -ne 0 ] ; then
+		echo "HA1B calculation failed"
+		exit 1
+	fi
+
+	#PHPLIB_ID of users should be difficulty to guess for security reasons
+	NOW=`date`;
+	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | $AWK '{ print $1 }'`
+	if [ $? -ne 0 ] ; then
+		echo "PHPLIB_ID calculation failed"
+		exit 1
+	fi
+}
+
+# success message for serweb
+serweb_message()
+{
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	echo "!                                                 !"
+	echo "!                  WARNING                        !"
+	echo "!                                                 !"
+	echo "! There was a default admin user created:         !"
+	echo "!    username: admin@$SIP_DOMAIN "
+	echo "!    password: $DBRWPW  "
+	echo "!                                                 !"
+	echo "! Please change this password or remove this user !"
+	echo "! from the subscriber and admin_privileges table. !"
+	echo "!                                                 !"
+	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+}

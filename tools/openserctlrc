@@ -2,7 +2,7 @@
 #
 # openser control tool resource file
 #
-# here you can set variables used in the openserctl
+# here you can set variables used in the openserctl and openserdbctl
 
 ## your SIP domain
 # SIP_DOMAIN=openser.org
@@ -27,6 +27,46 @@
 
 ## database super user
 # DBROOTUSER="root"
+
+# user name column
+#USERCOL="username"
+
+
+# SQL definitions
+# If you change this definitions here, then you must change them 
+# in db/schema/entities.xml too.
+# FIXME
+
+#FOREVER="2020-05-28 21:32:15"
+#DEFAULT_ALIASES_EXPIRES=$FOREVER
+#DEFAULT_Q="1.0"
+#DEFAULT_CALLID="Default-Call-ID"
+#DEFAULT_CSEQ="13"
+#DEFAULT_LOCATION_EXPIRES=$FOREVER
+
+
+# Program to calculate a message-digest fingerprint 
+#MD5="md5sum"
+
+# awk tool
+# AWK="awk"
+
+# grep tool
+# GREP="egrep"
+
+# sed tool
+# SED="sed"
+
+
+# define what modules should be installed
+
+# openser standard modules
+#STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc
+#		   msilo alias_db uri_db speeddial avpops auth_db pdt"
+
+# openser extra modules
+#EXTRA_MODULES="imc cpl siptrace domainpolicy"
+
 
 ## type of aliases used: DB - database aliases; UL - usrloc aliases
 ## - default: none

@@ -31,19 +31,50 @@
 # 2007-02-28  DB migration added (bogdan)
 #
 # 2007-05-21  Move SQL database definitions out of this script (henning)
+#
+# 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
 
 PATH=$PATH:/usr/local/sbin
 
-# include resource files, if any
-if [ -f /etc/openser/.opensermysqlrc ]; then
-	. /etc/openser/.opensermysqlrc
+### include resource files, if any
+if [ -f /usr/local/etc/openser/openserctlrc ]; then
+	. /usr/local/etc/openser/openserctlrc
 fi
-if [ -f /usr/local/etc/openser/.opensermysqlrc ]; then
-	. /usr/local/etc/openser/.opensermysqlrc
+if [ -f ~/.openserctlrc ]; then
+	. ~/.openserctlrc
 fi
-if [ -f ~/.opensermysqlrc ]; then
-	. ~/.opensermysqlrc
+if [ -f ./openserctlrc ]; then
+	. ./openserctlrc
 fi
+
+# force values for variables in this section
+# you better set the variables in ~/.openserctlrc
+if [ -z "$ETCDIR" ] ; then
+	ETCDIR="/usr/local/etc/openser"
+fi
+
+### version for this script
+VERSION='1.3dev - $Revision$'
+
+if [ -z "$MYDIR" ] ; then
+	MYDIR=`dirname $0`
+fi
+
+if [ -z "$MYLIBDIR" ] ; then
+	MYLIBDIR="/usr/local/lib/openser/openserctl"
+	if [ ! -d "$MYLIBDIR" ]; then
+		MYLIBDIR=$MYDIR
+	fi
+fi
+
+# load base functions
+if [ -f "$MYLIBDIR/openserdbctl.base" ]; then
+	. "$MYLIBDIR/openserdbctl.base"
+else
+	echo "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ..."
+	exit -1
+fi
+
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/openser"
@@ -56,30 +87,7 @@ fi
 #################################################################
 # config vars
 #################################################################
-# name of the database to be used by SER
-if [ -z "$DBNAME" ]; then
-	DBNAME="openser"
-fi
-# address of MySQL server
-if [ -z "$DBHOST" ]; then
-	DBHOST="localhost"
-fi
-# user with full privileges over DBNAME database
-if [ -z "$DBRWUSER" ]; then
-	DBRWUSER="openser"
-fi
-# password user with full privileges over DBNAME database
-if [ -z "$DBRWPW" ]; then
-	DBRWPW="openserrw"
-fi
-# read-only user
-if [ -z "$DBROUSER" ]; then
-	DBROUSER="openserro"
-fi
-# password for read-only user
-if [ -z "$DBROPW" ]; then
-	DBROPW="openserro"
-fi
+
 # full privileges MySQL user
 if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="root"
@@ -89,75 +97,7 @@ CMD="mysql -h $DBHOST -u$DBROOTUSER "
 DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
 BACKUP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c "
 
-
-# If you change this definitions here, then you must change them 
-# in db/schema/entities.xml too.
-# FIXME
-
-# type of mysql tables
-if [ -z "$TABLE_TYPE" ]; then
-	TABLE_TYPE="TYPE=MyISAM"
-fi
-# user name column
-if [ -z "$USERCOL" ]; then
-	USERCOL="username"
-fi
-
-FOREVER="2020-05-28 21:32:15"
-
-DEFAULT_ALIASES_EXPIRES=$FOREVER
-DEFAULT_Q="1.0"
-DEFAULT_CALLID="Default-Call-ID"
-DEFAULT_CSEQ="13"
-DEFAULT_LOCATION_EXPIRES=$FOREVER
-
-# Program to calculate a message-digest fingerprint 
-if [ -z "$MD5" ]; then
-	MD5="md5sum"
-fi
-if [ -z "$AWK" ]; then
-	AWK="awk"
-fi
-if [ -z "$GREP" ]; then
-	GREP="egrep"
-fi
-if [ -z "$SED" ]; then
-	SED="sed"
-fi
-
-# define what modules should be installed
-
-# openser standard modules
-STANDARD_MODULES="standard acc lcr domain group permissions 
-                  registrar usrloc msilo alias_db uri_db 
-                  speeddial avpops auth_db pdt"
-
-# openser extra modules
-EXTRA_MODULES="imc cpl siptrace domainpolicy"
 #################################################################
-
-
-usage() {
-COMMAND=`basename $0`
-cat <<EOF
-usage: $COMMAND create
-       $COMMAND drop   (!!entirely deletes tables)
-       $COMMAND reinit (!!entirely deletes and than re-creates tables
-       $COMMAND backup (dumps current database to stdout)
-       $COMMAND restore <file> (restores tables from a file)
-       $COMMAND copy <new_db> (creates a new db from an existing one)
-       $COMMAND migrate <old_db> <new_db> (migrates DB from 1.1 to 1.2)
-       $COMMAND presence (adds the presence related tables)
-       $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
-       $COMMAND serweb (adds the SERWEB specific tables)
-
-       if you want to manipulate database as other MySQL user than
-       root, want to change database name from default value "$DBNAME",
-       or want to use other values for users and password, edit the
-       "config vars" section of the command $COMMAND
-
-EOF
-} #usage
 
 
 # read password
@@ -250,39 +190,12 @@ if [ $# -ne 1 ] ; then
 fi
 
 sql_query "" "drop database $1;"
-}
 
-
-# read realm
-prompt_realm()
-{
-	printf "Domain (realm) for the default user 'admin': "
-	read SIP_DOMAIN
-	echo
-}
-
-
-# calculate credentials for admin
-credentials()
-{
-	HA1=`echo -n "admin:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
-	if [ $? -ne 0 ] ; then
-		echo "HA1 calculation failed"
-		exit 1
-	fi
-	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
-	if [ $? -ne 0 ] ; then
-		echo "HA1B calculation failed"
-		exit 1
-	fi
-
-	#PHPLIB_ID of users should be difficulty to guess for security reasons
-	NOW=`date`;
-	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | $AWK '{ print $1 }'`
-	if [ $? -ne 0 ] ; then
-		echo "PHPLIB_ID calculation failed"
-		exit 1
-	fi
+if [ $? -ne 0 ] ; then
+	echo "Dropping database $1 failed!"
+	exit 1
+fi
+echo "Database $1 deleted"
 }
 
 
@@ -467,19 +380,7 @@ fi
 
 echo "SERWEB tables succesfully created."
 
-echo ""
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-echo "!                                                 !"
-echo "!                  WARNING                        !"
-echo "!                                                 !"
-echo "! There was a default admin user created:         !"
-echo "!    username: admin@$SIP_DOMAIN "
-echo "!    password: $DBRWPW "
-echo "!                                                 !"
-echo "! Please change this password or remove this user !"
-echo "! from the subscriber and admin_privileges table. !"
-echo "!                                                 !"
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+serweb_message
 }  # end serweb_create
 
 
