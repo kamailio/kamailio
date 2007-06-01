@@ -61,6 +61,8 @@
 #	elif defined F_MALLOC
 #		include "f_malloc.h"
 		extern struct fm_block* mem_block;
+#	elif defined DL_MALLOC
+#		include "dl_malloc.h"
 #   else
 #		include "q_malloc.h"
 		extern struct qm_block* mem_block;
@@ -102,6 +104,10 @@
 #			define pkg_malloc(s) fm_malloc(mem_block, (s))
 #			define pkg_realloc(p, s) fm_realloc(mem_block, (p), (s))
 #			define pkg_free(p)   fm_free(mem_block, (p))
+#		elif defined DL_MALLOC
+#			define pkg_malloc(s) dlmalloc((s))
+#			define pkg_realloc(p, s) dlrealloc((p), (s))
+#			define pkg_free(p)   dlfree((p))
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s))
 #			define pkg_realloc(p, s) qm_realloc(mem_block, (p), (s))
@@ -114,6 +120,10 @@
 #		define pkg_status()    fm_status(mem_block)
 #		define pkg_info(mi)    fm_info(mem_block, mi)
 #		define pkg_available() fm_available(mem_block)
+#	elif defined DL_MALLOC
+#		define pkg_status()  0
+#		define pkg_info(mi)  0
+#		define pkg_available()  0
 #	else
 #		define pkg_status()    qm_status(mem_block)
 #		define pkg_info(mi)    qm_info(mem_block, mi)

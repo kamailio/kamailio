@@ -316,6 +316,8 @@ endif
 #		(not true anymore, q_malloc performs approx. the same)
 # -DF_MALLOC
 #		an even faster malloc, not recommended for debugging
+# -DDL_MALLOC
+#		a malloc implementation based on Doug Lea's dl_malloc
 # -DDBG_MALLOC
 #		issues additional debugging information if lock/unlock is called
 # -DFAST_LOCK
@@ -411,7 +413,8 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DDBG_QM_MALLOC \
-	 #-DF_MALLOC
+	 #-DDL_MALLOC \
+	 #-DF_MALLOC \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DEXTRA_DEBUG \
