@@ -544,6 +544,7 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 	return rpl_tree;
 
 error:
+	dlg_unlock( d_table, &(d_table->entries[i]) );
 	LOG(L_ERR,"ERROR:mi_ps: failed to add node\n");
 	free_mi_tree(rpl_tree);
 	return 0;
