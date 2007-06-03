@@ -751,8 +751,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	for (i=t->first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
 			do {
-				if (check_blacklists( t->uac[i].proxy->port,
-				t->uac[i].proxy->proto,
+				if (check_blacklists( t->uac[i].request.dst.proto,
 				&t->uac[i].request.dst.to,
 				t->uac[i].request.buffer.s,
 				t->uac[i].request.buffer.len)) {
@@ -768,7 +767,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 					ser_error=E_SEND;
 				}
 				/* get next dns entry */
-				if ( t->uac[i].proxy &&
+				if ( t->uac[i].proxy==0 ||
 				get_next_su( t->uac[i].proxy, &t->uac[i].request.dst.to,
 				(ser_error==E_IP_BLOCKED)?0:1)!=0 )
 					break;
