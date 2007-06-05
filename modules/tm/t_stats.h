@@ -31,6 +31,9 @@
 #ifndef _T_STATS_H
 #define _T_STATS_H
 
+/* if defined even more stats are produced */
+#define TM_MORE_STATS
+
 #include "defs.h"
 
 #include "../../rpc.h"
@@ -41,6 +44,14 @@ extern struct t_stats *tm_stats;
 typedef unsigned long stat_counter;
 
 struct t_stats {
+#ifdef TM_MORE_STATS
+	/* number of created transactions */
+	stat_counter *t_created;
+	/* number of freed transactions */
+	stat_counter *t_freed;
+	/* number of transactions for which free was deleted */
+	stat_counter *delayed_free;
+#endif /* TM_MORE_STATS */
 	/* number of transactions in wait state */
 	stat_counter *s_waiting;
 	/* number of server transactions */
@@ -53,6 +64,32 @@ struct t_stats {
 	stat_counter replied_localy;
 	stat_counter deleted;
 };
+
+#ifdef TM_MORE_STATS 
+inline void static t_stats_created()
+{
+	/* keep it in process's piece of shmem */
+	tm_stats->t_created[process_no]++;
+}
+
+inline void static t_stats_freed()
+{
+	/* keep it in process's piece of shmem */
+	tm_stats->t_freed[process_no]++;
+}
+
+inline void static t_stats_delayed_free()
+{
+	/* keep it in process's piece of shmem */
+	tm_stats->delayed_free[process_no]++;
+}
+#else /* TM_MORE_STATS  */
+/* do nothing */
+#define t_stats_created()  do{}while(0)
+#define t_stats_freed()  do{}while(0)
+#define t_stats_delayed_free()  do{}while(0)
+
+#endif /* TM_MORE_STATS */
 
 inline void static t_stats_new(int local)
 {

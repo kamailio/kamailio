@@ -94,8 +94,43 @@ int init_tm_stats_child(void)
 		goto error3;
 	}
 	memset(tm_stats->s_client_transactions, 0, size);
-	return 0;
 
+#ifdef TM_MORE_STATS 
+	tm_stats->t_created = shm_malloc(size);
+	if (tm_stats->t_created == 0) {
+		ERR("No mem for stats\n");
+		goto error4;
+	}
+	memset(tm_stats->t_created, 0, size);
+
+	tm_stats->t_freed = shm_malloc(size);
+	if (tm_stats->t_freed == 0) {
+		ERR("No mem for stats\n");
+		goto error5;
+	}
+	memset(tm_stats->t_freed, 0, size);
+
+	tm_stats->delayed_free = shm_malloc(size);
+	if (tm_stats->delayed_free == 0) {
+		ERR("No mem for stats\n");
+		goto error6;
+	}
+	memset(tm_stats->delayed_free, 0, size);
+#endif /* TM_MORE_STATS  */
+
+
+	return 0;
+#ifdef TM_MORE_STATS 
+ error6:
+	shm_free(tm_stats->t_freed);
+	tm_stats->t_freed = 0;
+ error5:
+	shm_free(tm_stats->t_created);
+	tm_stats->t_created = 0;
+ error4:
+	shm_free(tm_stats->s_client_transactions);
+	tm_stats->s_client_transactions = 0;
+#endif /* TM_MORE_STATS */
  error3:
 	shm_free(tm_stats->s_transactions);
 	tm_stats->s_transactions = 0;
@@ -111,6 +146,14 @@ int init_tm_stats_child(void)
 void free_tm_stats()
 {
 	if (tm_stats == 0) return;
+#ifdef TM_MORE_STATS 
+	if (tm_stats->delayed_free)
+		shm_free(tm_stats->delayed_free);
+	if (tm_stats->t_freed)
+		shm_free(tm_stats->t_freed);
+	if (tm_stats->t_created)
+		shm_free(tm_stats->t_created);
+#endif
 	if (tm_stats->s_client_transactions) 
 		shm_free(tm_stats->s_client_transactions);
 	if (tm_stats->s_transactions)
@@ -133,13 +176,24 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 {
 	void* st;
 	unsigned long total, current, waiting, total_local;
+#ifdef TM_MORE_STATS 
+	unsigned long created, freed, delayed_free;
+#endif
 	int i, pno;
 
 	pno = get_max_procs();
+#ifdef TM_MORE_STATS 
+	created=freed=delayed_free=0;
+#endif
 	for(i = 0, total = 0, waiting = 0, total_local = 0; i < pno; i++) {
 		total += tm_stats->s_transactions[i];
 		waiting += tm_stats->s_waiting[i];
 		total_local += tm_stats->s_client_transactions[i];
+#ifdef TM_MORE_STATS 
+		created+= tm_stats->t_created[i];
+		freed+= tm_stats->t_freed[i];
+		delayed_free+=tm_stats->delayed_free[i];
+#endif
 	}
 	current = total - tm_stats->deleted;
 	waiting -= tm_stats->deleted;
@@ -156,5 +210,9 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 			"4xx", tm_stats->completed_4xx,
 			"3xx", tm_stats->completed_3xx,
 			"2xx", tm_stats->completed_2xx);
+#ifdef TM_MORE_STATS 
+	rpc->struct_add(st, "dd", "created", created, "freed", freed);
+	rpc->struct_add(st, "d", "delayed_free", delayed_free);
+#endif
 	/* rpc->fault(c, 100, "Trying"); */
 }
