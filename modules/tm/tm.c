@@ -82,6 +82,8 @@
  *  2006-10-16  added a new param.: aggregate challenges (andrei)
  *  2007-05-28  two new params: reparse_invite, ac_extra_hdrs
  *              added w_t_relay_cancel() (Miklos)
+ *  2007-06-05  added t_set_auto_inv_100() and auto_inv_100 (param);
+ *               t_set_max_lifetime(), max_{non}inv_lifetime  (andrei)
  */
 
 
@@ -191,6 +193,7 @@ static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo);
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
 static int w_t_set_retr(struct sip_msg* msg, char* retr_t1, char* retr_t2);
 static int w_t_set_max_lifetime(struct sip_msg* msg, char* inv, char* noninv);
+static int t_set_auto_inv_100(struct sip_msg* msg, char* on_off, char* foo);
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
@@ -288,6 +291,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_max_lifetime", w_t_set_max_lifetime,      2, fixup_var_int_12,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_set_auto_inv_100", t_set_auto_inv_100,       1, fixup_var_int_1,
+													  REQUEST_ROUTE},
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,  FAILURE_ROUTE},
 	{"t_branch_replied",  t_branch_replied,         0, 0,  FAILURE_ROUTE},
 	{"t_any_timeout",     t_any_timeout,            0, 0, 
@@ -339,6 +344,7 @@ static param_export_t params[]={
 	{"max_inv_lifetime",    PARAM_INT, &tm_max_inv_lifetime                  },
 	{"max_noninv_lifetime", PARAM_INT, &tm_max_noninv_lifetime               },
 	{"noisy_ctimer",        PARAM_INT, &noisy_ctimer                         },
+	{"auto_inv_100",        PARAM_INT, &tm_auto_inv_100                      },
 	{"uac_from",            PARAM_STRING, &uac_from                          },
 	{"unix_tx_timeout",     PARAM_INT, &tm_unix_tx_timeout                   },
 	{"restart_fr_on_each_reply", PARAM_INT, &restart_fr_on_each_reply        },
@@ -1210,6 +1216,34 @@ static int w_t_set_max_lifetime(struct sip_msg* msg, char* p1, char* p2)
 		t2 = 0;
 	}
 	return t_set_max_lifetime(msg, t1, t2);
+}
+
+
+
+/* set automatically sending 100 replies on/off for the current or
+ * next to be created transaction */
+static int t_set_auto_inv_100(struct sip_msg* msg, char* p1, char* p2)
+{
+	int state;
+	struct cell* t;
+	
+	if (get_int_fparam(&state, msg, (fparam_t*)p1) < 0) return -1;
+	t=get_t();
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already
+	 * created; if not -> use the static variables */
+	if (!t || t==T_UNDEFINED ){
+		if (state)
+			set_msgid_val(user_auto_inv_100, msg->id, int, 1); /* set */
+		else
+			set_msgid_val(user_auto_inv_100, msg->id, int, -1); /* reset */
+	}else{
+		if (state)
+			t->flags|=T_AUTO_INV_100;
+		else
+			t->flags&=~T_AUTO_INV_100;
+	}
+	return 1;
 }
 
 

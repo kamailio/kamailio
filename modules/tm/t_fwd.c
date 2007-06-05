@@ -71,6 +71,7 @@
  *              incomming one. (it can be disabled with reparse_invite=0) (Miklos)
  *              t_relay_cancel() introduced -- can be used to relay CANCELs
  *              at the beginning of the script. (Miklos)
+ * 2007-06-04  running transaction are canceled hop by hop (andrei)
  */
 
 #include "defs.h"
@@ -105,6 +106,8 @@
 #include "../../dst_blacklist.h"
 #endif
 
+/* cancel hop by hop */
+#define E2E_CANCEL_HOP_BY_HOP
 
 int unmatched_cancel=UM_CANCEL_STATEFULL;
 
@@ -254,7 +257,9 @@ int add_blind_uac( /*struct cell *t*/ )
 	}
 	/* make sure it will be replied */
 	t->flags |= T_NOISY_CTIMER_FLAG;
-	t->nr_of_outgoings++;
+	membar_write(); /* to allow lockless which_cancel() we want to be sure 
+					   all the writes finished before updating branch number*/
+	t->nr_of_outgoings=(branch+1);
 	/* start FR timer -- protocol set by default to PROTO_NONE,
        which means retransmission timer will not be started
     */
@@ -271,7 +276,8 @@ int add_blind_uac( /*struct cell *t*/ )
 
 /* introduce a new uac to transaction; returns its branch id (>=0)
    or error (<0); it doesn't send a message yet -- a reply to it
-   might interfere with the processes of adding multiple branches
+   might interfere with the processes of adding multiple branches;
+   On error returns <0 & sets ser_error to the same value
 */
 int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	struct proxy_l *proxy, int proto )
@@ -285,7 +291,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	branch=t->nr_of_outgoings;
 	if (branch==MAX_BRANCHES) {
 		LOG(L_ERR, "ERROR: add_uac: maximum number of branches exceeded\n");
-		ret=E_CFG;
+		ret=ser_error=E_TOO_MANY_BRANCHES;
 		goto error;
 	}
 
@@ -316,7 +322,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 						next_hop ? next_hop: uri, proto)==0)
 #endif
 		{
-			ret=E_BAD_ADDRESS;
+			ret=ser_error=E_BAD_ADDRESS;
 			goto error;
 		}
 	}
@@ -345,7 +351,10 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	t->uac[branch].uri.s=t->uac[branch].request.buffer+
 		request->first_line.u.request.method.len+1;
 	t->uac[branch].uri.len=uri->len;
-	t->nr_of_outgoings++;
+	membar_write(); /* to allow lockless ops (e.g. which_cancel()) we want
+					   to be sure everything above is fully written before
+					   updating branches no. */
+	t->nr_of_outgoings=(branch+1);
 
 	/* update stats */
 	if (proxy){
@@ -366,7 +375,8 @@ error:
  *  new ip address (if the dns name resolves to more ips). If no more
  *   ips are found => returns -1.
  *  returns its branch id (>=0)
-   or error (<0); it doesn't send a message yet -- a reply to it
+   or error (<0) and sets ser_error if needed; it doesn't send a message 
+   yet -- a reply to it
    might interfere with the processes of adding multiple branches
    if lock_replies is 1 replies will be locked for t until the new branch
    is added (to prevent add branches races). Use 0 if the reply lock is
@@ -400,7 +410,8 @@ int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg,
 							"branches exceeded\n");
 				if (lock_replies)
 					UNLOCK_REPLIES(t);
-				return E_CFG;
+					ret=ser_error=E_TOO_MANY_BRANCHES;
+				return ret;
 			}
 			/* copy the dns handle into the new uac */
 			dns_srv_handle_cpy(&t->uac[t->nr_of_outgoings].dns_h,
@@ -489,7 +500,10 @@ error:
 void e2e_cancel( struct sip_msg *cancel_msg, 
 	struct cell *t_cancel, struct cell *t_invite )
 {
-	branch_bm_t cancel_bm, tmp_bm;
+	branch_bm_t cancel_bm;
+#ifndef E2E_CANCEL_HOP_BY_HOP
+	branch_bm_t tmp_bm;
+#endif
 	int i;
 	int lowest_error;
 	int ret;
@@ -515,9 +529,21 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	
 	/* determine which branches to cancel ... */
 	which_cancel( t_invite, &cancel_bm );
-	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
 	/* fix label -- it must be same for reply matching */
 	t_cancel->label=t_invite->label;
+#ifdef E2E_CANCEL_HOP_BY_HOP
+	for (i=0; i<t_invite->nr_of_outgoings; i++)
+		if (cancel_bm & (1<<i)) {
+			/* it's safe to get the reply lock since e2e_cancel is
+			 * called with the cancel as the "current" transaction so
+			 * at most t_cancel REPLY_LOCK is held in this process =>
+			 * no deadlock possibility */
+			ret=cancel_branch(t_invite, i, F_CANCEL_B_FAKE_REPLY);
+			if (ret<0) cancel_bm &= ~(1<<i);
+			if (ret<lowest_error) lowest_error=ret;
+		}
+#else
+	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
 	/* ... and install CANCEL UACs */
 	for (i=0; i<t_invite->nr_of_outgoings; i++)
 		if ((cancel_bm & (1<<i)) && (t_invite->uac[i].last_received>=100)) {
@@ -564,6 +590,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			}
 		}
 	}
+#endif /*E2E_CANCEL_HOP_BY_HOP */
 
 	/* if error occurred, let it know upstream (final reply
 	   will also move the transaction on wait state
@@ -571,7 +598,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	if (lowest_error<0) {
 		LOG(L_ERR, "ERROR: cancel error\n");
 		/* if called from failure_route, make sure that the unsafe version
-		 * is called (we are already hold the reply mutex for the cancel
+		 * is called (we are already holding the reply mutex for the cancel
 		 * transaction).
 		 */
 		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
@@ -592,8 +619,8 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		else
 			t_reply( t_cancel, cancel_msg, 200, CANCELING );
 	} else {
-		/* if the transaction exists, but there is no more pending
-		   branch, tell upstream we're done
+		/* if the transaction exists, but there are no more pending
+		   branches, tell upstream we're done
 		*/
 		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
 		/* if called from failure_route, make sure that the unsafe version
@@ -763,24 +790,24 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* make -Wall happy */
 	current_uri.s=0;
 
-	set_kr(REQ_FWDED);
+	if (t->flags & T_CANCELED){
+		DBG("t_forward_non_ack: no forwarding on a canceled transaction\n");
+		ser_error=E_CANCELED;
+		return -1;
+	}
 	if (p_msg->REQ_METHOD==METHOD_CANCEL) { 
 		t_invite=t_lookupOriginalT(  p_msg );
 		if (t_invite!=T_NULL_CELL) {
 			e2e_cancel( p_msg, t, t_invite );
 			UNREF(t_invite);
+			set_kr(REQ_FWDED);
 			return 1;
 		}
-	}
-	if (t->flags & T_CANCELED){
-		DBG("t_forward_non_ack: no forwarding on canceled branch\n");
-		ser_error=E_CANCELED;
-		return -1;
 	}
 
 	backup_si = p_msg->force_send_socket;
 	/* if no more specific error code is known, use this */
-	lowest_ret=E_BUG;
+	lowest_ret=E_UNSPEC;
 	/* branches added */
 	added_branches=0;
 	/* branch to begin with */
@@ -802,11 +829,12 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	*/
 	if (first_branch==0) {
 		try_new=1;
-		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg), proxy, proto );
+		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
+							proxy, proto );
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
-			lowest_ret=branch_ret;
+			lowest_ret=MIN_int(lowest_ret, branch_ret);
 	} else try_new=0;
 
 	init_branch_iterator();
@@ -823,7 +851,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
-			lowest_ret=branch_ret;
+			lowest_ret=MIN_int(lowest_ret, branch_ret);
 	}
 	/* consume processed branches */
 	clear_branches();
@@ -839,9 +867,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			return -1;
 		}
 		LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
+		ser_error=lowest_ret;
 		return lowest_ret;
 	}
-
+	ser_error=0; /* clear branch adding errors */
 	/* send them out now */
 	success_branch=0;
 	lock_replies= ! ((rmode==MODE_ONFAILURE) && (t==get_t()));
@@ -858,10 +887,14 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		}
 	}
 	if (success_branch<=0) {
-		ser_error=E_SEND;
+		if (ser_error==0)
+				ser_error=E_SEND;
+		/* else return the last error (?) */
 		/* the caller should take care and delete the transaction */
 		return -1;
 	}
+	ser_error=0; /* clear branch send errors, we have overall success */
+	set_kr(REQ_FWDED);
 	return 1;
 }
 

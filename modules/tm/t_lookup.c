@@ -92,6 +92,10 @@
  *              replies and replies to local transactions (andrei)
  * 2007-06-01  support for different retransmissions intervals per transaction;
  *             added maximum inv. and non-inv. transaction life time (andrei)
+ * 2007-06-05  added delayed error reply support in t_unref;
+*              added support for turning off 100 repl. sending on inv. (andrei)
+ * 2007-06-01  support for different retransmissions intervals per transaction;
+ *             added maximum inv. and non-inv. transaction life time (andrei)
  */
 
 #include "defs.h"
@@ -173,6 +177,8 @@ static struct cell *T;
    don't even think of changing it
 */
 unsigned int     global_msg_id;
+
+
 
 struct cell *get_t() { return T; }
 void set_t(struct cell *t) { T=t; }
@@ -1071,6 +1077,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	struct sip_msg *shm_msg;
 	unsigned int timeout; /* avp timeout gets stored here (in s) */
 	ticks_t lifetime;
+	int v;
 
 	shm_msg=new_cell->uas.request;
 	new_cell->from.s=shm_msg->from->name.s;
@@ -1087,6 +1094,11 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	new_cell->method=new_cell->uas.request->first_line.u.request.method;
 	if (p_msg->REQ_METHOD==METHOD_INVITE){
 		new_cell->flags |= T_IS_INVITE_FLAG;
+		if (unlikely(v=get_msgid_val(user_auto_inv_100, p_msg->id, int)))
+			/* 1 = set, -1 = reset */
+			new_cell->flags|=T_AUTO_INV_100 & (!(v+1)-1);
+		else
+			new_cell->flags|=T_AUTO_INV_100 & ( !tm_auto_inv_100 -1);
 		lifetime=(ticks_t)get_msgid_val(user_inv_max_lifetime,
 												p_msg->id, int);
 		if (likely(lifetime==0))
@@ -1321,16 +1333,29 @@ int t_unref( struct sip_msg* p_msg  )
 		return -1;
 	if (p_msg->first_line.type==SIP_REQUEST){
 		kr=get_kr();
-		if (kr==0 
-				||(p_msg->REQ_METHOD==METHOD_ACK && !(kr & REQ_RLSD))) {
+		if (unlikely(kr == REQ_ERR_DELAYED)){
+			DBG("t_unref: delayed error reply generation(%d)\n", tm_error);
+			if (unlikely(rmode==MODE_ONFAILURE)){
+				BUG("tm: t_unref: called w/ kr=REQ_ERR_DELAYED in failure"
+						" route\n");
+			}else if (unlikely( kill_transaction(T, tm_error)<=0 )){
+				DBG("ERROR: t_unref: generation of a delayed stateful reply"
+						" failed\n");
+				t_release_transaction(T);
+			}
+		}else if ( unlikely (kr==0 ||(p_msg->REQ_METHOD==METHOD_ACK && 
+								!(kr & REQ_RLSD)))) {
 			LOG(L_WARN, "WARNING: script writer didn't release transaction\n");
 			t_release_transaction(T);
 		}
+		tm_error=0; /* clear it */
 	}
 	UNREF( T );
 	set_t(T_UNDEFINED);
 	return 1;
 }
+
+
 
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label)
 {

@@ -116,8 +116,14 @@ void unlock_hash(int i);
             from t_release_transaction
    REQ_EXIST means that this request is a retransmission which does not
             affect transactional state
+   REQ_ERR_DELAYED mean that tm wants to send  reply(ser_error) but it
+            delayed it to end-of-script to allow it to be overriden.
+            If this is set and all of the above flag are not => send reply
+            on end of script. If any of the above flags is set, do not
+            send (especially REQ_RPLD and REQ_RLSD).
 */
-enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8 };
+enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8,
+				   REQ_ERR_DELAYED=16 };
 
 
 /* #define F_RB_T_ACTIVE		0x01  (obsolete) fr or retr active */
@@ -217,7 +223,7 @@ struct totag_elem {
 
 #define T_IN_AGONY (1<<5) /* set if waiting to die (delete timer)
                              TODO: replace it with del on unref */
-
+#define T_AUTO_INV_100 (1<<6) /* send an 100 reply automatically  to inv. */
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ticks =>

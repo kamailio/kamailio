@@ -63,6 +63,7 @@
 #include "fix_lumps.h" /* free_via_clen_lump */
 #include "timer.h"
 
+
 static enum kill_reason kr;
 
 /* pointer to the big table where all the transaction data

@@ -73,8 +73,10 @@ struct timer;
 struct entry;
 struct cell;
 
+extern int tm_error; /* delayed tm error */
 extern int noisy_ctimer;
-
+extern int tm_auto_inv_100; /*automatically send 100 to an INVITE, default on*/
+extern struct msgid_var user_auto_inv_100;
 
 /* default names for timer's AVPs  */
 #define FR_TIMER_AVP      "callee_fr_timer"
@@ -195,5 +197,6 @@ void put_on_wait(  struct cell  *Trans  );
 int t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy, int proto, int replicate ) ;
 
+int kill_transaction( struct cell *trans, int error );
 #endif
 

@@ -254,6 +254,7 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	}
 	if (method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0){
 		new_cell->flags |= T_IS_INVITE_FLAG;
+		new_cell->flags|=T_AUTO_INV_100 & (!tm_auto_inv_100 -1);
 		lifetime=tm_max_inv_lifetime;
 	}else
 		lifetime=tm_max_noninv_lifetime;

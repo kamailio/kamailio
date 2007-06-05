@@ -64,12 +64,14 @@
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
 {
 	int i;
+	int branches_no;
 	
 	*cancel_bm=0;
-	for( i=0 ; i<t->nr_of_outgoings ; i++ ) {
+	branches_no=t->nr_of_outgoings;
+	membar_depends(); 
+	for( i=0 ; i<branches_no ; i++ ) {
 		if (should_cancel_branch(t, i, 1)) 
 			*cancel_bm |= 1<<i ;
-
 	}
 }
 

@@ -48,6 +48,9 @@
  *              t_relay_to releases the transaction if t_forward_non_ack
  *              fails and t_kill fails or this is a failed replication (andrei)
  *  2007-05-02  t_relay_to() uses now t_forward_cancel for cancels (andrei)
+ *  2007-06-05  delay t_relay() replies till script end so that they can be
+ *               overwritten by the script user; generate 100 automatically
+ *               only if T_NO_100 is not set (andrei)
  */
 
 #include <limits.h>
@@ -67,6 +70,10 @@
 #include "config.h"
 #include "t_stats.h"
 
+/* if defined t_relay* error reply generation will be delayed till script
+ * end (this allows the script writter to send its own error reply) */
+#define TM_DELAYED_REPLY
+
 /* fr_timer AVP specs */
 static int     fr_timer_avp_type = 0;
 static int_str fr_timer_avp = {0};
@@ -77,6 +84,10 @@ static int_str fr_inv_timer_avp = {0};
 static str     fr_inv_timer_str;
 static int     fr_inv_timer_index = 0;
 
+int tm_error = 0; /* delayed tm error */
+
+int tm_auto_inv_100=1; /* automatically send 100 to an INVITE, default on*/
+struct msgid_var user_auto_inv_100;
 
 /* ----------------------------------------------------- */
 int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
@@ -172,7 +183,7 @@ void put_on_wait(  struct cell  *Trans  )
 
 /* WARNING: doesn't work from failure route (deadlock, uses t_reply =>
  *  tries to get the reply lock again) */
-static int kill_transaction( struct cell *trans )
+int kill_transaction( struct cell *trans, int error )
 {
 	char err_buffer[128];
 	int sip_err;
@@ -184,7 +195,7 @@ static int kill_transaction( struct cell *trans )
 		want to put the forking burden on upstream client;
 		however, it may fail too due to lack of memory */
 
-	ret=err2reason_phrase( ser_error, &sip_err,
+	ret=err2reason_phrase(error, &sip_err,
 		err_buffer, sizeof(err_buffer), "TM" );
 	if (ret>0) {
 		reply_ret=t_reply( trans, trans->uas.request, 
@@ -206,13 +217,15 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 {
 	int ret;
 	int new_tran;
-	int reply_ret;
 	/* struct hdr_field *hdr; */
 	struct cell *t;
 	struct dest_info dst;
 	unsigned short port;
 	str host;
 	short comp;
+#ifndef TM_DELAYED_REPLY
+	int reply_ret;
+#endif
 
 	ret=0;
 	
@@ -280,7 +293,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 
 	/* INVITE processing might take long, particularly because of DNS
 	   look-ups -- let upstream know we're working on it */
-	if (p_msg->REQ_METHOD==METHOD_INVITE )
+	if (p_msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100))
 	{
 		DBG( "SER: new INVITE\n");
 		if (!t_reply( t, p_msg , 100 ,
@@ -295,8 +308,14 @@ handle_ret:
 		DBG( "ERROR:tm:t_relay_to:  t_forward_nonack returned error \n");
 		/* we don't want to pass upstream any reply regarding replicating
 		 * a request; replicated branch must stop at us*/
-		if (!replicate) {
-			reply_ret=kill_transaction( t );
+		if (likely(!replicate)) {
+#ifdef TM_DELAYED_REPLY
+			/* current error in tm_error */
+			tm_error=ser_error;
+			set_kr(REQ_ERR_DELAYED);
+			DBG("%d error reply generation delayed \n", ser_error);
+#else
+			reply_ret=kill_transaction( t, ser_error );
 			if (reply_ret>0) {
 				/* we have taken care of all -- do nothing in
 			  	script */
@@ -308,6 +327,7 @@ handle_ret:
 					"on error failed\n");
 				t_release_transaction(t);
 			}
+#endif /* TM_DELAYED_REPLY */
 		}else{
 			t_release_transaction(t); /* kill it  silently */
 		}
