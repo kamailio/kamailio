@@ -145,7 +145,7 @@
 
 
 
-int noisy_ctimer=0;
+int noisy_ctimer=1;
 
 struct msgid_var user_fr_timeout;
 struct msgid_var user_fr_inv_timeout;
@@ -286,7 +286,9 @@ static void fake_reply(struct cell *t, int branch, int code )
 	short do_cancel_branch;
 	enum rps reply_status;
 
-	do_cancel_branch = is_invite(t) && should_cancel_branch(t, branch);
+	do_cancel_branch = is_invite(t) && should_cancel_branch(t, branch, 0);
+	/* mark branch as canceled */
+	t->uac[branch].request.flags|=F_RB_CANCELED;
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
 					  code, &cancel_bitmap );
@@ -418,8 +420,12 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 	   state without compellingly removing it from the
 	   world */
 	silent=
+		/* don't go silent if disallowed globally ... */
+		noisy_ctimer==0
+		/* ... or for this particular transaction */
+		&& has_noisy_ctimer(t) == 0
 		/* not for UACs */
-		!is_local(t)
+		&& !is_local(t)
 		/* invites only */
 		&& is_invite(t)
 		/* parallel forking does not allow silent state discarding */
@@ -430,15 +436,14 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 		/* the same for FAILURE callbacks */
 		&& !has_tran_tmcbs( t, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE) 
 		/* something received -- we will not be silent on error */
-		&& t->uac[r_buf->branch].last_received>0
-		/* don't go silent if disallowed globally ... */
-		&& noisy_ctimer==0
-		/* ... or for this particular transaction */
-		&& has_noisy_ctimer(t) == 0;
+		&& t->uac[r_buf->branch].last_received==0;
+	
 	if (silent) {
 		UNLOCK_REPLIES(t);
 #ifdef EXTRA_DEBUG
-		DBG("DEBUG: final_response_handler: transaction silently dropped (%p)\n",t);
+		DBG("DEBUG: final_response_handler: transaction silently dropped (%p)"
+				", branch %d, last_received %d\n",t, r_buf->branch,
+				 t->uac[r_buf->branch].last_received);
 #endif
 		put_on_wait( t );
 		return;

@@ -135,15 +135,20 @@ modparam("tm", "retr_timer2", 2000)
     <section id="noisy_ctimer">
 	<title><varname>noisy_ctimer</varname> (integer)</title>
 	<para>
-	    If set, on FR timer INVITE transactions will be explicitly canceled
-	    if possible, silently dropped otherwise. Preferably, it is turned
-	    off to allow very long ringing.  This behavior is overridden if a
-	    request is forked, or some functionality explicitly turned it off
-	    for a transaction (like acc does to avoid unaccounted transactions
-	    due to expired timer).
+	    If set, INVITE transactions that time-out (FR INV timer) will be 
+		always replied. If it's not set, the transaction has only one
+		branch and no response was ever received on this branch, it 
+		will be silently dropped (no 408 reply will be generated)
+		This behavior is overridden if a request is forked, the transaction
+		 has a failure route or callback, or some functionality explicitly 
+		 turned it on  for a transaction (like acc does to avoid unaccounted
+		 transactions due to expired timer).
+		Turn this off only if you know the client UACs will timeout and their
+		timeout interval fro INVITEs is lower or equal than tm's
+		<varname>fr_inv_timer</varname>.
 	</para>
 	<para>
-	    Default value is 0 (false).
+	    Default value is 1 (on).
 	</para>
 	<example>
 	    <title>Set <varname>noisy_ctimer</varname> parameter</title>

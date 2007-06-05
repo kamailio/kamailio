@@ -170,7 +170,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	i_req->add_rm = dup_lump_list(i_req->add_rm);
 	i_req->body_lumps = dup_lump_list(i_req->body_lumps);
 
-	if (branch_route) {
+	if (unlikely(branch_route)) {
 		     /* run branch_route actions if provided */
 		if (run_actions(branch_rt.rlist[branch_route], i_req) < 0) {
 			LOG(L_ERR, "ERROR: print_uac_request: Error in run_actions\n");
@@ -178,7 +178,9 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	}
 
 	/* run the specific callbacks for this transaction */
-	run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0, -i_req->REQ_METHOD);
+	if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
+		run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0,
+								-i_req->REQ_METHOD);
 
 	/* ... and build it now */
 	buf=build_req_buf_from_sip_req( i_req, len, dst);
@@ -439,6 +441,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 		/* inactive / deleted  branch */
 		goto error;
 	}
+	t_invite->uac[branch].request.flags|=F_RB_CANCELED;
 
 	/* note -- there is a gap in proxy stats -- we don't update 
 	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.)

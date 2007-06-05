@@ -30,6 +30,8 @@
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *  2006-10-10  should_cancel_branch() returns true even for branches with
  *               no response or with response <100 (andrei)
+ *  2007-06-04  should_cancel_branch() takes another parameter and it is safe
+ *               to be called w/o REPLY_LOCK held (andrei)
  */
 
 
@@ -38,6 +40,7 @@
 
 #include <stdio.h> /* just for FILE* for fifo_uac_cancel */
 #include "../../rpc.h"
+#include "../../atomic_ops.h"
 #include "defs.h"
 
 
@@ -61,6 +64,8 @@
 								 haven't received any response (>=100). It
 								 assumes the REPLY_LOCK is not held (if it is
 								 => deadlock) */
+#define F_CANCEL_B_FORCE 4 /* will send a cancel even if no reply was received;
+							  F_CANCEL_B_FAKE_REPLY will be ignored */
 
 
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
@@ -72,24 +77,31 @@ typedef int(*cancel_uacs_f)( struct cell *t, branch_bm_t cancel_bm,
 
 
 
-/* should be called either with the REPLY_LOCK held or if its known
- *  by other means that no other cancel trigerring reply can appear
+/* 
+ * Can be called w/o REPLY_LOCK held
  *  between this call and the call to cancel_uacs()/cancel_branch()
+ *  if noreply is set to 1 it will return true even if no reply was received
+ *   (it will return false only if a final response or a cancel have already 
+ *    been sent on the current branch).
+ *  if noreply is set to 0 it will return true only if no cancel has already 
+ *   been sent and a provisional (<200) reply >=100 was received.
  *  WARNING: has side effects: marks branches that should be canceled
  *   and a second call won't return them again */
-inline short static should_cancel_branch( struct cell *t, int b )
+inline short static should_cancel_branch( struct cell *t, int b, int noreply )
 {
 	int last_received;
-	short should;
+	unsigned long old;
 
 	last_received=t->uac[b].last_received;
-	/* cancel even if no reply received (in this case cancel_branch()
-	 *  won't actually send the cancel but it will do the cleanup) */
-	should=last_received<200 && t->uac[b].local_cancel.buffer==0;
-	/* we'll cancel -- label it so that noone else
-		(e.g. another 200 branch) will try to do the same */
-	if (should) t->uac[b].local_cancel.buffer=BUSY_BUFFER;
-	return should;
+	/* if noreply=1 cancel even if no reply received (in this case 
+	 * cancel_branch()  won't actually send the cancel but it will do the 
+	 * cleanup) */
+	if (last_received<200 && (noreply || last_received>=100)){
+		old=atomic_cmpxchg_long((void*)&t->uac[b].local_cancel.buffer, 0,
+									(long)(BUSY_BUFFER));
+		return old==0;
+	}
+	return 0;
 }
 
 const char* rpc_cancel_doc[2];

@@ -1504,8 +1504,11 @@ error02:
 	}
 error01:
 	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
+	*cancel_bitmap=0; /* t_reply_unsafe already canceled everything needed */
 	UNLOCK_REPLIES(t);
-	if (is_invite(t)) cancel_uacs( t, *cancel_bitmap, 0);
+	/* if (is_invite(t)) cancel_uacs( t, *cancel_bitmap, 0); 
+	 *  -- not needed, t_reply_unsafe took care of this */
+
 	/* a serious error occurred -- attempt to send an error reply;
 	   it will take care of clean-ups  */
 
@@ -1588,6 +1591,7 @@ error:
 	if ( get_cseq(p_msg)->method.len==INVITE_LEN
 		&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN)==0)
 		cancel_uacs( t, *cancel_bitmap, F_CANCEL_B_KILL);
+	*cancel_bitmap=0; /* we've already took care of everything */
 	put_on_wait(t);
 	return RPS_ERROR;
 }
@@ -1703,6 +1707,35 @@ int reply_received( struct sip_msg  *p_msg )
 			}
 		}
 	}else{
+		/* if branch already canceled re-transmit or generate cancel
+		 * TODO: check if it really makes sense to do it for non-invites too */
+		if (uac->request.flags & F_RB_CANCELED){
+			if (uac->local_cancel.buffer_len){
+				membar_read(); /* make sure we get the current value of
+								  local_cancel */
+				/* re-transmit if cancel already built */
+				DBG("tm: reply_received: branch CANCEL retransmit\n");
+#ifdef TMCB_ONSEND
+				if (SEND_BUFFER( &uac->local_cancel)>=0){
+					if (unlikely (has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
+						run_onsend_callbacks(TMCB_REQUEST_SENT,
+											&uac->local_cancel,
+											0, 0, TMCB_LOCAL_F);
+				}
+#else
+				SEND_BUFFER( &uac->local_cancel );
+#endif
+				/* retrs. should be already started so do nothing */
+			}else if (atomic_cmpxchg_long((void*)&uac->local_cancel.buffer, 0, 
+										(long)BUSY_BUFFER)==0){
+				/* try to rebuild it if empty (not set or marked as BUSY).
+				 * if BUSY or set just exit, a cancel will be (or was) sent 
+				 * shortly on this branch */
+				DBG("tm: reply_received: branch CANCEL created\n");
+				cancel_branch(t, branch, F_CANCEL_B_FORCE);
+			}
+			goto done; /* nothing to do */
+		}
 		if (is_invite(t)){
 			/* stop only retr. (and not fr) */
 			stop_rb_retr(&uac->request);

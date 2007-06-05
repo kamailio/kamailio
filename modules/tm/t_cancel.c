@@ -36,6 +36,8 @@
  * 2007-05-28: cancel_branch() constructs the CANCEL from the
  *             outgoing INVITE instead of the incomming one.
  *             (it can be disabled with reparse_invite=0) (Miklos)
+ * 2007-06-04  cancel_branch() can operate in lockless mode (with a lockless
+ *              should_cancel()) (andrei)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
@@ -53,20 +55,19 @@
 #include "t_hooks.h"
 
 
-/* determine which branches should be canceled; do it
-   only from within REPLY_LOCK, otherwise collisions
-   could occur (e.g., two 200 for two branches processed
-   by two processes might concurrently try to generate
-   a CANCEL for the third branch, resulting in race conditions
-   during writing to cancel buffer
- WARNING: - has side effects, see should_cancel_branch() */
+/* determine which branches should be canceled; can be called 
+   without REPLY_LOCK, since should_cancel_branch() is atomic now
+   -- andrei
+ WARNING: - has side effects, see should_cancel_branch()
+          - one _must_ call cancel_uacs(cancel_bm) if *cancel_bm!=0 or
+            you'll have some un-cancelable branches */
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
 {
 	int i;
 	
 	*cancel_bm=0;
 	for( i=0 ; i<t->nr_of_outgoings ; i++ ) {
-		if (should_cancel_branch(t, i)) 
+		if (should_cancel_branch(t, i, 1)) 
 			*cancel_bm |= 1<<i ;
 
 	}
@@ -101,7 +102,11 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
 
 
 
-/* 
+/* should be called directly only if one of the condition bellow is true:
+ *  - should_cancel_branch or which_cancel returned true for this branch
+ *  - buffer value was 0 and then set to BUSY in an atomic op.:
+ *     if (atomic_cmpxchg_long(&buffer, 0, BUSY_BUFFER)==0).
+ *
  * params:  t - transaction
  *          branch - branch number to be canceled
  *          flags - howto cancel: 
@@ -111,6 +116,9 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
  *                      to all branches that haven't received any response
  *                      (>=100). It assumes the REPLY_LOCK is not held
  *                      (if it is => deadlock)
+ *                  F_CANCEL_B_FORCE - will send a cancel (and create the 
+ *                       corresp. local cancel rb) even if no reply was 
+ *                       received; F_CANCEL_B_FAKE_REPLY will be ignored.
  *                  default: stop only the retransmissions for the branch
  *                      and leave it to timeout if it doesn't receive any
  *                      response to the CANCEL
@@ -124,6 +132,8 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
  *            explicitly "put_on_wait" it might live forever)
  *          - F_CANCEL_B_FAKE_REPLY must be used only if the REPLY_LOCK is not
  *            held
+ *          - checking for buffer==0 under REPLY_LOCK is no enough, an 
+ *           atomic_cmpxhcg or atomic_get_and_set _must_ be used.
  */
 int cancel_branch( struct cell *t, int branch, int flags )
 {
@@ -135,11 +145,13 @@ int cancel_branch( struct cell *t, int branch, int flags )
 
 	crb=&t->uac[branch].local_cancel;
 	irb=&t->uac[branch].request;
+	irb->flags|=F_RB_CANCELED;
 	ret=1;
 
 #	ifdef EXTRA_DEBUG
-	if (crb->buffer!=0 && crb->buffer!=BUSY_BUFFER) {
-		LOG(L_CRIT, "ERROR: attempt to rewrite cancel buffer\n");
+	if (crb->buffer!=BUSY_BUFFER) {
+		LOG(L_CRIT, "ERROR: attempt to rewrite cancel buffer: %p\n",
+				crb->buffer);
 		abort();
 	}
 #	endif
@@ -147,9 +159,12 @@ int cancel_branch( struct cell *t, int branch, int flags )
 	if (flags & F_CANCEL_B_KILL){
 		stop_rb_timers( irb );
 		ret=0;
-		if (t->uac[branch].last_received < 100) {
+		if ((t->uac[branch].last_received < 100) &&
+				!(flags & F_CANCEL_B_FORCE)) {
 			DBG("DEBUG: cancel_branch: no response ever received: "
 			    "giving up on cancel\n");
+			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
+			atomic_set_long((void*)&crb->buffer, 0);
 			if (flags & F_CANCEL_B_FAKE_REPLY){
 				LOCK_REPLIES(t);
 				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm) == 
@@ -162,9 +177,12 @@ int cancel_branch( struct cell *t, int branch, int flags )
 		}
 	}else{
 		stop_rb_retr(irb); /* stop retransmissions */
-		if (t->uac[branch].last_received < 100) {
+		if ((t->uac[branch].last_received < 100) &&
+				!(flags & F_CANCEL_B_FORCE)) {
 			/* no response received => don't send a cancel on this branch,
 			 *  just drop it */
+			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
+			atomic_set_long((void*)&crb->buffer, 0);
 			if (flags & F_CANCEL_B_FAKE_REPLY){
 				stop_rb_timers( irb ); /* stop even the fr timer */
 				LOCK_REPLIES(t);
@@ -188,16 +206,30 @@ int cancel_branch( struct cell *t, int branch, int flags )
 	}
 	if (!cancel) {
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
+		/* remove BUSY_BUFFER -- mark cancel buffer as not used */
+		atomic_set_long((void*)&crb->buffer, 0);
 		return -1;
 	}
 	/* install cancel now */
-	crb->buffer = cancel;
-	crb->buffer_len = len;
 	crb->dst = irb->dst;
 	crb->branch = branch;
 	/* label it as cancel so that FR timer can better know how to
 	   deal with it */
 	crb->activ_type = TYPE_LOCAL_CANCEL;
+	/* be extra carefully and check for bugs (the below if could be replaced
+	 *  by an atomic_set((void*)&crb->buffer, cancel) */
+	if (unlikely(atomic_cmpxchg_long((void*)&crb->buffer, (long)BUSY_BUFFER,
+							(long)cancel)!= (long)BUSY_BUFFER)){
+		BUG("tm: cancel_branch: local_cancel buffer=%p != BUSY_BUFFER"
+				" (trying to continue)\n", crb->buffer);
+		shm_free(cancel);
+		return -1;
+	}
+	membar_write_atomic_op(); /* cancel retr. can be called from 
+								 reply_received w/o the reply lock held => 
+								 they check for buffer_len to 
+								 see if a valid reply exists */
+	crb->buffer_len = len;
 
 	DBG("DEBUG: cancel_branch: sending cancel...\n");
 #ifdef TMCB_ONSEND
