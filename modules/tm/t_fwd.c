@@ -800,6 +800,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		if (t_invite!=T_NULL_CELL) {
 			e2e_cancel( p_msg, t, t_invite );
 			UNREF(t_invite);
+			/* it should be set to REQ_RPLD by e2e_cancel, which should
+			 * send a final reply */
 			set_kr(REQ_FWDED);
 			return 1;
 		}
@@ -863,7 +865,11 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
 		if (try_new==0) {
-			LOG(L_ERR, "ERROR: t_forward_nonack: no branches for forwarding\n");
+			LOG(L_ERR, "ERROR: t_forward_nonack: no branches for"
+						" forwarding\n");
+			/* either failed to add branches, or there were no more branches
+			*/
+			ser_error=MIN_int(lowest_ret, E_CFG);
 			return -1;
 		}
 		LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
