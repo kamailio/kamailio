@@ -453,8 +453,8 @@ inline static int dst_blacklist_clean_expired(unsigned int target,
 									  ticks_t delta,
 									  ticks_t timeout)
 {
-	static unsigned short start=0;
-	unsigned short h;
+	static unsigned int start=0;
+	unsigned int h;
 	struct dst_blst_entry** crt;
 	struct dst_blst_entry** tmp;
 	struct dst_blst_entry* e;
@@ -464,7 +464,7 @@ inline static int dst_blacklist_clean_expired(unsigned int target,
 	int i;
 	
 	now=start_time=get_ticks_raw();
-	for(h=start; h!=(start+(unsigned short)DST_BLST_HASH_SIZE); h++){
+	for(h=start; h!=(start+DST_BLST_HASH_SIZE); h++){
 		i=h%DST_BLST_HASH_SIZE;
 		if (dst_blst_hash[i].first){
 			LOCK_BLST(i);
