@@ -496,7 +496,6 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 				rbuf->retr_expire=ticks+retr_interval;
 				/* set new interval to -1 on error, or retr_int. on success */
 				retr_remainder=retransmission_handler(rbuf) | retr_interval;
-				retr_remainder=retr_interval;
 				/* store the crt. retr. interval inside the timer struct,
 				 * in the data member */
 				tl->data=(void*)(unsigned long)retr_interval;
