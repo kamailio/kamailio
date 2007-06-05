@@ -1337,15 +1337,19 @@ int t_unref( struct sip_msg* p_msg  )
 			DBG("t_unref: delayed error reply generation(%d)\n", tm_error);
 			if (unlikely(rmode==MODE_ONFAILURE)){
 				BUG("tm: t_unref: called w/ kr=REQ_ERR_DELAYED in failure"
-						" route\n");
+						" route for %p\n", T);
 			}else if (unlikely( kill_transaction(T, tm_error)<=0 )){
-				DBG("ERROR: t_unref: generation of a delayed stateful reply"
+				ERR("ERROR: t_unref: generation of a delayed stateful reply"
 						" failed\n");
 				t_release_transaction(T);
 			}
 		}else if ( unlikely (kr==0 ||(p_msg->REQ_METHOD==METHOD_ACK && 
 								!(kr & REQ_RLSD)))) {
 			LOG(L_WARN, "WARNING: script writer didn't release transaction\n");
+			t_release_transaction(T);
+		}else if (unlikely((kr & REQ_ERR_DELAYED))){
+			BUG("tm: t_unref: REQ_ERR DELAYED should have been caught much"
+					" earlier for %p: %d (hex %x)\n",T, kr, kr);
 			t_release_transaction(T);
 		}
 		tm_error=0; /* clear it */
