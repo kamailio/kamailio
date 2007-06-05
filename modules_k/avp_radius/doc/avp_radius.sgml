@@ -12,7 +12,7 @@
 
 <book>
 	<bookinfo>
-	<title>Auth_radius Module</title>
+	<title>avp_radius Module</title>
 	<authorgroup>
 		<author>
 		<firstname>Juha</firstname>
