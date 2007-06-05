@@ -178,19 +178,19 @@ ticks_t tm_max_inv_lifetime		=	MAX_INV_LIFETIME;
 ticks_t tm_max_noninv_lifetime	=	MAX_NONINV_LIFETIME;
 
 
-/* internal use, val should be unsigned or positive */
+/* internal use, val should be unsigned or positive
+ *  <= instead of < to get read of gcc warning when 
+ *  sizeof(cell_member)==sizeof(val) (Note that this limits
+ *  maximum value to max. type -1) */
 #define SIZE_FIT_CHECK(cell_member, val, cfg_name) \
-	if (MAX_UVAR_VALUE(((struct cell*)0)->cell_member) < (val)){ \
+	if (MAX_UVAR_VALUE(((struct cell*)0)->cell_member) <= (val)){ \
 		ERR("tm_init_timers: " cfg_name " too big: %lu (%lu ticks) " \
 				"- max %lu (%lu ticks) \n", TICKS_TO_MS((unsigned long)(val)),\
 				(unsigned long)(val), \
 				TICKS_TO_MS(MAX_UVAR_VALUE(((struct cell*)0)->cell_member)), \
 				MAX_UVAR_VALUE(((struct cell*)0)->cell_member)); \
 		goto error; \
-	} \
-	DBG("tm_init_timer:" cfg_name " value: %lu , max value %lu\n", \
-			(unsigned long)(val), \
-				MAX_UVAR_VALUE(((struct cell*)0)->cell_member)) 
+	} 
 
 /* fix timer values to ticks */
 int tm_init_timers()
