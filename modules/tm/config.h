@@ -55,11 +55,20 @@
 
 /* DELETE timer ... tells how long should the transaction persist in memory
    after it was removed from the hash table and before it will be deleted */
-#define DEL_TIME_OUT      200 /* ms */
+#define DEL_TIME_OUT      200 /* ms, obsoleted */
  
 /* retransmission timers */
 #define RETR_T1           500 /* ms */
 #define RETR_T2          4000 /* ms */
+
+/* maximum total lifetime for an INVITE or non-INVITE transaction
+ * Note: after this time the transaction will not be deleted
+ *  immediately, but forced to go in the wait state or in wait for ack state 
+ *  and then wait state, so it will still be alive for either WT_TIME_OUT in 
+ *  the non-inv or "silent" inv. case and for FR_TIME_OUT + WT_TIME_OUT for an
+ *  invite transaction (for which  we must wait for the neg. reply ack)*/
+#define MAX_INV_LIFETIME    180000 /* ms, rfc min. C-timer value */
+#define MAX_NONINV_LIFETIME  32000 /* ms, rfc timer F value */
 
 /* when first reply is sent, this additional space is allocated so that
    one does not have to reallocate share memory when the message is

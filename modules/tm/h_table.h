@@ -39,6 +39,8 @@
  * 2006-08-11  dns failover support (andrei)
  * 2007-05-29  switch ref_count to atomic and delete a cell automatically on
  *             UNREF if the ref_count reaches 0 (andrei)
+ * 2007-06-01  support for different retransmissions intervals per transaction;
+ *             added maximum inv. and non-inv. transaction life time (andrei)
  */
 
 #include "defs.h"
@@ -61,6 +63,12 @@
 #include "../../timer.h"
 #include "../../atomic_ops.h"
 #include "config.h"
+
+/* if TM_DIFF_RT_TIMEOUT is defined, different retransmissions timeouts
+ * can be used for each transaction, at a small memory cost
+ * (extra 4 bytes/transaction) */
+#define TM_DIFF_RT_TIMEOUT
+
 
 struct s_table;
 struct entry;
@@ -211,7 +219,10 @@ struct totag_elem {
 
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
-
+/* unsigned short should be enough for a retr. timer: max. 65535 ticks =>
+ * max  retr. = 1023 s for tick = 15 ms, which should be more then enough and
+ * saves us 2*2 bytes */
+typedef unsigned short retr_timeout_t;
 
 /* transaction context */
 
@@ -294,6 +305,11 @@ typedef struct cell
 	
 	ticks_t fr_timeout;     /* final response interval for retr_bufs */
 	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
+#ifdef TM_DIFF_RT_TIMEOUT
+	retr_timeout_t rt_t1_timeout; /* start retr. interval for retr_bufs */
+	retr_timeout_t rt_t2_timeout; /* maximum retr. interval for retr_bufs */
+#endif
+	ticks_t end_of_life; /* maximum lifetime */
 
 	/* nr of replied branch; 0..MAX_BRANCHES=branch value,
 	 * -1 no reply, -2 local reply */

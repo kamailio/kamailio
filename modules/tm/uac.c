@@ -56,6 +56,8 @@
  *  2007-03-15  TMCB_ONSEND callbacks support added (andrei)
  *  2007-03-23  TMCB_LOCAL_REQUEST_IN callbacks support (andrei)
  *  2007-04-23  per dialog callbacks support (andrei)
+ *  2007-06-01  support for per transaction different retransmissions intervals
+ *              (andrei)
  */
 
 #include <string.h>
@@ -187,6 +189,7 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
         int buf_len, ret, flags;
 	unsigned int hi;
 	int is_ack;
+	ticks_t lifetime;
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
@@ -249,6 +252,12 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 		LOG(L_ERR, "t_uac: short of cell shmem\n");
 		goto error2;
 	}
+	if (method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0){
+		new_cell->flags |= T_IS_INVITE_FLAG;
+		lifetime=tm_max_inv_lifetime;
+	}else
+		lifetime=tm_max_noninv_lifetime;
+	new_cell->flags |= T_IS_LOCAL_FLAG;
 	/* init timers hack, new_cell->fr_timer and new_cell->fr_inv_timer
 	 * must be set, or else the fr will happen immediately
 	 * we can't call init_new_t() because we don't have a sip msg
@@ -256,6 +265,12 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	 * module params fr_inv_timer and fr_timer -- andrei */
 	new_cell->fr_timeout=fr_timeout;
 	new_cell->fr_inv_timeout=fr_inv_timeout;
+	new_cell->end_of_life=get_ticks_raw()+lifetime;
+#ifdef TM_DIFF_RT_TIMEOUT
+	/* same as above for retransmission intervals */
+	new_cell->rt_t1_timeout=rt_t1_timeout;
+	new_cell->rt_t2_timeout=rt_t2_timeout;
+#endif
 
 	/* better reset avp list now - anyhow, it's useless from
 	 * this point (bogdan) */
@@ -273,9 +288,6 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 		goto error2;
 	}
 
-	if (method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0)
-		new_cell->flags |= T_IS_INVITE_FLAG;
-	new_cell->flags |= T_IS_LOCAL_FLAG;
 	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[0].request;

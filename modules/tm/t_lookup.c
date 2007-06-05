@@ -90,6 +90,8 @@
  *               needed (andrei)
  * 2007-03-17  added callbacks for retransmitted request, ack to negative 
  *              replies and replies to local transactions (andrei)
+ * 2007-06-01  support for different retransmissions intervals per transaction;
+ *             added maximum inv. and non-inv. transaction life time (andrei)
  */
 
 #include "defs.h"
@@ -1068,6 +1070,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 {
 	struct sip_msg *shm_msg;
 	unsigned int timeout; /* avp timeout gets stored here (in s) */
+	ticks_t lifetime;
 
 	shm_msg=new_cell->uas.request;
 	new_cell->from.s=shm_msg->from->name.s;
@@ -1082,23 +1085,35 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 		-shm_msg->cseq->name.s;
 
 	new_cell->method=new_cell->uas.request->first_line.u.request.method;
-	if (p_msg->REQ_METHOD==METHOD_INVITE) new_cell->flags |= T_IS_INVITE_FLAG;
+	if (p_msg->REQ_METHOD==METHOD_INVITE){
+		new_cell->flags |= T_IS_INVITE_FLAG;
+		lifetime=(ticks_t)get_msgid_val(user_inv_max_lifetime,
+												p_msg->id, int);
+		if (likely(lifetime==0))
+			lifetime=tm_max_inv_lifetime;
+	}else{
+		lifetime=(ticks_t)get_msgid_val(user_noninv_max_lifetime, 
+											p_msg->id, int);
+		if (likely(lifetime==0))
+			lifetime=tm_max_noninv_lifetime;
+	}
 	new_cell->on_negative=get_on_negative();
 	new_cell->on_reply=get_on_reply();
+	new_cell->end_of_life=get_ticks_raw()+lifetime;;
 	new_cell->fr_timeout=(ticks_t)get_msgid_val(user_fr_timeout,
 												p_msg->id, int);
 	new_cell->fr_inv_timeout=(ticks_t)get_msgid_val(user_fr_inv_timeout,
 												p_msg->id, int);
-	if (new_cell->fr_timeout==0){
-		if (!fr_avp2timer(&timeout)) {
+	if (likely(new_cell->fr_timeout==0)){
+		if (unlikely(!fr_avp2timer(&timeout))) {
 			DBG("init_new_t: FR__TIMER = %d s\n", timeout);
 			new_cell->fr_timeout=S_TO_TICKS((ticks_t)timeout);
 		}else{
 			new_cell->fr_timeout=fr_timeout;
 		}
 	}
-	if (new_cell->fr_inv_timeout==0){
-		if (!fr_inv_avp2timer(&timeout)) {
+	if (likely(new_cell->fr_inv_timeout==0)){
+		if (unlikely(!fr_inv_avp2timer(&timeout))) {
 			DBG("init_new_t: FR_INV_TIMER = %d s\n", timeout);
 			new_cell->fr_inv_timeout=S_TO_TICKS((ticks_t)timeout);
 			new_cell->flags |= T_NOISY_CTIMER_FLAG;
@@ -1106,6 +1121,16 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 			new_cell->fr_inv_timeout=fr_inv_timeout;
 		}
 	}
+#ifdef TM_DIFF_RT_TIMEOUT
+	new_cell->rt_t1_timeout=(ticks_t)get_msgid_val(user_rt_t1_timeout,
+												p_msg->id, int);
+	if (likely(new_cell->rt_t1_timeout==0))
+		new_cell->rt_t1_timeout=rt_t1_timeout;
+	new_cell->rt_t2_timeout=(ticks_t)get_msgid_val(user_rt_t2_timeout,
+												p_msg->id, int);
+	if (likely(new_cell->rt_t2_timeout==0))
+		new_cell->rt_t2_timeout=rt_t2_timeout;
+#endif
 	new_cell->on_branch=get_on_branch();
 }
 
@@ -1468,12 +1493,99 @@ int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to)
 	t=get_t();
 	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
 	 * in MODE_REQUEST T will be set only if the transaction was already
-	 * created; if not -> use the static variable */
+	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		set_msgid_val(user_fr_inv_timeout, msg->id, int, (int)fr_inv);
 		set_msgid_val(user_fr_timeout, msg->id, int, (int)fr);
 	}else{
 		change_fr(t, fr_inv, fr); /* change running uac timers */
+	}
+	return 1;
+}
+
+
+#ifdef TM_DIFF_RT_TIMEOUT
+
+/* params: retr. t1 & retr. t2 value in ms, 0 means "do not touch"
+ * ret: 1 on success, -1 on error (script safe)*/
+int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to)
+{
+	struct cell *t;
+	ticks_t retr_t1, retr_t2;
+	
+	
+	retr_t1=MS_TO_TICKS((ticks_t)t1_to);
+	if (unlikely((retr_t1==0) && (t1_to!=0))){
+		ERR("t_set_retr: retr. t1 interval too small (%u)\n", t1_to);
+		return -1;
+	}
+	if (unlikely(MAX_UVAR_VALUE(t->rt_t1_timeout) < retr_t1)){
+		ERR("t_set_retr: retr. t1 interval too big: %d (max %lu)\n",
+				t1_to, TICKS_TO_MS(MAX_UVAR_VALUE(t->rt_t1_timeout))); 
+		return -1;
+	} 
+	retr_t2=MS_TO_TICKS((ticks_t)t2_to);
+	if (unlikely((retr_t2==0) && (t2_to!=0))){
+		ERR("t_set_retr: retr. t2 interval too small (%d)\n", t2_to);
+		return -1;
+	}
+	if (unlikely(MAX_UVAR_VALUE(t->rt_t2_timeout) < retr_t2)){
+		ERR("t_set_retr: retr. t2 interval too big: %u (max %lu)\n",
+				t2_to, TICKS_TO_MS(MAX_UVAR_VALUE(t->rt_t2_timeout))); 
+		return -1;
+	} 
+	
+	t=get_t();
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already
+	 * created; if not -> use the static variables */
+	if (!t || t==T_UNDEFINED ){
+		set_msgid_val(user_rt_t1_timeout, msg->id, int, (int)retr_t1);
+		set_msgid_val(user_rt_t2_timeout, msg->id, int, (int)retr_t2);
+	}else{
+		change_retr(t, 1, retr_t1, retr_t2); /* change running uac timers */
+	}
+	return 1;
+}
+#endif
+
+
+/* params: maximum transaction lifetime for inv and non-inv
+ *         0 means do not touch"
+ * ret: 1 on success, -1 on error (script safe)*/
+int t_set_max_lifetime(struct sip_msg* msg,
+						unsigned int lifetime_inv_to,
+						unsigned int lifetime_noninv_to)
+{
+	struct cell *t;
+	ticks_t max_inv_lifetime, max_noninv_lifetime;
+	
+	
+	max_noninv_lifetime=MS_TO_TICKS((ticks_t)lifetime_noninv_to);
+	max_inv_lifetime=MS_TO_TICKS((ticks_t)lifetime_inv_to);
+	if (unlikely((max_noninv_lifetime==0) && (lifetime_noninv_to!=0))){
+		ERR("t_set_max_lifetime: non-inv. interval too small (%d)\n",
+				lifetime_noninv_to);
+		return -1;
+	}
+	if (unlikely((max_inv_lifetime==0) && (lifetime_inv_to!=0))){
+		ERR("t_set_max_lifetime: inv. interval too small (%d)\n",
+				lifetime_inv_to);
+		return -1;
+	}
+	
+	t=get_t();
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already
+	 * created; if not -> use the static variables */
+	if (!t || t==T_UNDEFINED ){
+		set_msgid_val(user_noninv_max_lifetime, msg->id, int,
+						(int)max_noninv_lifetime);
+		set_msgid_val(user_inv_max_lifetime, msg->id, int,
+						(int)max_inv_lifetime);
+	}else{
+		change_end_of_life(t, 1, is_invite(t)?max_inv_lifetime:
+												max_noninv_lifetime);
 	}
 	return 1;
 }

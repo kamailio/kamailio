@@ -110,6 +110,8 @@
  *  2007-03-15  TMCB_ONSEND callbacks support (andrei)
  *  2007-05-29  delete on transaction ref_count==0 : removed the delete timer
  *               (andrei)
+ * 2007-06-01  support for different retransmissions intervals per transaction;
+ *             added maximum inv. and non-inv. transaction life time (andrei)
  */
 
 #include "defs.h"
@@ -147,6 +149,12 @@ int noisy_ctimer=0;
 
 struct msgid_var user_fr_timeout;
 struct msgid_var user_fr_inv_timeout;
+#ifdef TM_DIFF_RT_TIMEOUT
+struct msgid_var user_rt_t1_timeout;
+struct msgid_var user_rt_t2_timeout;
+#endif
+struct msgid_var user_inv_max_lifetime;
+struct msgid_var user_noninv_max_lifetime;
 
 /* default values of timeouts for all the timer list */
 
@@ -157,6 +165,33 @@ ticks_t delete_timeout	=	DEL_TIME_OUT;
 ticks_t rt_t1_timeout	=	RETR_T1;
 ticks_t rt_t2_timeout	=	RETR_T2;
 
+/* maximum time and invite or noninv transaction will live, from
+ * the moment of creation (overrides larger fr/fr_inv timeouts,
+ * extensions due to dns failover, fr_inv restart a.s.o)
+ * Note: after this time the transaction will not be deleted
+ *  immediately, but forced to go in the wait state or in wait for ack state 
+ *  and then wait state, so it will still be alive for either wait_timeout in 
+ *  the non-inv or "silent" inv. case and for fr_timeout + wait_timeout for an
+ *  invite transaction (for which  we must wait for the neg. reply ack)
+ */
+ticks_t tm_max_inv_lifetime		=	MAX_INV_LIFETIME;
+ticks_t tm_max_noninv_lifetime	=	MAX_NONINV_LIFETIME;
+
+
+/* internal use, val should be unsigned or positive */
+#define SIZE_FIT_CHECK(cell_member, val, cfg_name) \
+	if (MAX_UVAR_VALUE(((struct cell*)0)->cell_member) < (val)){ \
+		ERR("tm_init_timers: " cfg_name " too big: %lu (%lu ticks) " \
+				"- max %lu (%lu ticks) \n", TICKS_TO_MS((unsigned long)(val)),\
+				(unsigned long)(val), \
+				TICKS_TO_MS(MAX_UVAR_VALUE(((struct cell*)0)->cell_member)), \
+				MAX_UVAR_VALUE(((struct cell*)0)->cell_member)); \
+		goto error; \
+	} \
+	DBG("tm_init_timer:" cfg_name " value: %lu , max value %lu\n", \
+			(unsigned long)(val), \
+				MAX_UVAR_VALUE(((struct cell*)0)->cell_member)) 
+
 /* fix timer values to ticks */
 int tm_init_timers()
 {
@@ -166,6 +201,8 @@ int tm_init_timers()
 	delete_timeout=MS_TO_TICKS(delete_timeout);
 	rt_t1_timeout=MS_TO_TICKS(rt_t1_timeout);
 	rt_t2_timeout=MS_TO_TICKS(rt_t2_timeout);
+	tm_max_inv_lifetime=MS_TO_TICKS(tm_max_inv_lifetime);
+	tm_max_noninv_lifetime=MS_TO_TICKS(tm_max_noninv_lifetime);
 	/* fix 0 values to 1 tick (minimum possible wait time ) */
 	if (fr_timeout==0) fr_timeout=1;
 	if (fr_inv_timeout==0) fr_inv_timeout=1;
@@ -173,14 +210,36 @@ int tm_init_timers()
 	if (delete_timeout==0) delete_timeout=1;
 	if (rt_t2_timeout==0) rt_t2_timeout=1;
 	if (rt_t1_timeout==0) rt_t1_timeout=1;
+	if (tm_max_inv_lifetime==0) tm_max_inv_lifetime=1;
+	if (tm_max_noninv_lifetime==0) tm_max_noninv_lifetime=1;
+	
+	/* size fit checks */
+	SIZE_FIT_CHECK(fr_timeout, fr_timeout, "fr_timer");
+	SIZE_FIT_CHECK(fr_inv_timeout, fr_inv_timeout, "fr_inv_timer");
+#ifdef TM_DIFF_RT_TIMEOUT
+	SIZE_FIT_CHECK(rt_t1_timeout, rt_t1_timeout, "retr_timer1");
+	SIZE_FIT_CHECK(rt_t2_timeout, rt_t2_timeout, "retr_timer2");
+#endif
+	SIZE_FIT_CHECK(end_of_life, tm_max_inv_lifetime, "max_inv_lifetime");
+	SIZE_FIT_CHECK(end_of_life, tm_max_noninv_lifetime, "max_noninv_lifetime");
 	
 	memset(&user_fr_timeout, 0, sizeof(user_fr_timeout));
 	memset(&user_fr_inv_timeout, 0, sizeof(user_fr_inv_timeout));
+#ifdef TM_DIFF_RT_TIMEOUT
+	memset(&user_rt_t1_timeout, 0, sizeof(user_rt_t1_timeout));
+	memset(&user_rt_t2_timeout, 0, sizeof(user_rt_t2_timeout));
+#endif
+	memset(&user_inv_max_lifetime, 0, sizeof(user_inv_max_lifetime));
+	memset(&user_noninv_max_lifetime, 0, sizeof(user_noninv_max_lifetime));
 	
-	DBG("tm: tm_init_timers: fr=%d fr_inv=%d wait=%d delete=%d t1=%d t2=%d\n",
+	DBG("tm: tm_init_timers: fr=%d fr_inv=%d wait=%d delete=%d t1=%d t2=%d"
+			" max_inv_lifetime=%d max_noninv_lifetime=%d\n",
 			fr_timeout, fr_inv_timeout, wait_timeout, delete_timeout,
-			rt_t1_timeout, rt_t2_timeout);
+			rt_t1_timeout, rt_t2_timeout, tm_max_inv_lifetime,
+			tm_max_noninv_lifetime);
 	return 0;
+error:
+	return -1;
 }
 
 /******************** handlers ***************************/
@@ -319,6 +378,7 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 	*/
 	int branch_ret;
 	int prev_branch;
+	ticks_t now;
 #endif
 
 #	ifdef EXTRA_DEBUG
@@ -397,15 +457,17 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 		/* if this is an invite, the destination resolves to more ips, and
 		 *  it still hasn't passed more than fr_inv_timeout since we
 		 *  started, add another branch/uac */
-		if (is_invite(t) && use_dns_failover &&
-				((get_ticks_raw()-(r_buf->fr_expire-t->fr_timeout)) <
-				 	t->fr_inv_timeout)){
-			branch_ret=add_uac_dns_fallback(t, t->uas.request,
-												&t->uac[r_buf->branch], 0);
-			prev_branch=-1;
-			while((branch_ret>=0) &&(branch_ret!=prev_branch)){
-				prev_branch=branch_ret;
-				branch_ret=t_send_branch(t, branch_ret, t->uas.request , 0, 0);
+		if (use_dns_failover){
+			now=get_ticks_raw();
+			if ((s_ticks_t)(t->end_of_life-now)>0){
+				branch_ret=add_uac_dns_fallback(t, t->uas.request,
+													&t->uac[r_buf->branch], 0);
+				prev_branch=-1;
+				while((branch_ret>=0) &&(branch_ret!=prev_branch)){
+					prev_branch=branch_ret;
+					branch_ret=t_send_branch(t, branch_ret, t->uas.request , 
+												0, 0);
+				}
 			}
 		}
 #endif
@@ -433,6 +495,7 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 	ticks_t fr_remainder;
 	ticks_t retr_remainder;
 	ticks_t retr_interval;
+	ticks_t new_retr_interval;
 	struct cell *t;
 
 	rbuf=(struct  retr_buf*)
@@ -460,7 +523,7 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 			if ((s_ticks_t)(rbuf->retr_expire-ticks)<=0){
 				if (rbuf->flags & F_RB_RETR_DISABLED)
 					goto disabled;
-				/* retr_interval= min (2*ri, rt_t2) */
+				/* retr_interval= min (2*ri, rt_t2) , *p==2*ri*/
 				/* no branch version: 
 					#idef CC_SIGNED_RIGHT_SHIFT
 						ri=  rt_t2+((2*ri-rt_t2) & 
@@ -472,13 +535,16 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 				
 				/* get the  current interval from timer param. */
 				if ((rbuf->flags & F_RB_T2) || 
-						(((ticks_t)(unsigned long)p<<1)>rt_t2_timeout))
-					retr_interval=rt_t2_timeout;
-				else
-					retr_interval=(ticks_t)(unsigned long)p<<1;
+						(((ticks_t)(unsigned long)p)>RT_T2_TIMEOUT(rbuf))){
+					retr_interval=RT_T2_TIMEOUT(rbuf);
+					new_retr_interval=RT_T2_TIMEOUT(rbuf);
+				}else{
+					retr_interval=(ticks_t)(unsigned long)p;
+					new_retr_interval=retr_interval<<1;
+				}
 #ifdef TIMER_DEBUG
 				DBG("tm: timer: retr: new interval %d (max %d)\n", 
-						retr_interval, rt_t2_timeout);
+						retr_interval, RT_T2_TIMEOUT(rbuf));
 #endif
 				/* we could race with the reply_received code, but the 
 				 * worst thing that can happen is to delay a reset_to_t2
@@ -486,10 +552,9 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 				rbuf->retr_expire=ticks+retr_interval;
 				/* set new interval to -1 on error, or retr_int. on success */
 				retr_remainder=retransmission_handler(rbuf) | retr_interval;
-				retr_remainder=retr_interval;
-				/* store the crt. retr. interval inside the timer struct,
+				/* store the next retr. interval inside the timer struct,
 				 * in the data member */
-				tl->data=(void*)(unsigned long)retr_interval;
+				tl->data=(void*)(unsigned long)(new_retr_interval);
 			}else{
 				retr_remainder= rbuf->retr_expire-ticks;
 				DBG("tm: timer: retr: nothing to do, expire in %d\n", 
@@ -507,6 +572,13 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 #ifdef TIMER_DEBUG
 	DBG("tm: timer retr_buf_handler @%d (%p ->%p->%p) exiting min (%d, %d)\n",
 			ticks, tl, rbuf, t, retr_remainder, fr_remainder);
+#endif
+#ifdef EXTRA_DEBUG
+	if  (retr_remainder==0 || fr_remainder==0){
+		BUG("tm: timer retr_buf_handler: 0 remainder => disabling timer!: "
+				"retr_remainder=%d, fr_remainder=%d\n", retr_remainder,
+				fr_remainder);
+	}
 #endif
 	if (retr_remainder<fr_remainder)
 		return retr_remainder;

@@ -30,6 +30,8 @@
  *  2003-09-12  timer_link.tg exists only if EXTRA_DEBUG (andrei)
  *  2004-02-13  timer_link.payload removed (bogdan)
  *  2005-11-03  rewritten to use the new timers (andrei)
+ *  2007-06-01  support for different retr. intervals per transaction;
+ *              added maximum inv. and non-inv. transaction life time (andrei)
  */
 
 
@@ -43,8 +45,28 @@
 #include "../../timer.h"
 #include "h_table.h"
 
+
+
+#ifdef  TM_DIFF_RT_TIMEOUT
+#define RT_T1_TIMEOUT(rb)	((rb)->my_T->rt_t1_timeout)
+#define RT_T2_TIMEOUT(rb)	((rb)->my_T->rt_t2_timeout)
+#else
+#define RT_T1_TIMEOUT(rb)	(rt_t1_timeout)
+#define RT_T2_TIMEOUT(rb)	(rt_t2_timeout)
+#endif
+
+#define TM_REQ_TIMEOUT(t) \
+	(is_invite(t)?tm_max_inv_lifetime:tm_max_noninv_lifetime)
+
+
 extern struct msgid_var user_fr_timeout;
 extern struct msgid_var user_fr_inv_timeout;
+#ifdef TM_DIFF_RT_TIMEOUT
+extern struct msgid_var user_rt_t1_timeout;
+extern struct msgid_var user_rt_t2_timeout;
+#endif
+extern struct msgid_var user_inv_max_lifetime;
+extern struct msgid_var user_noninv_max_lifetime;
 
 extern ticks_t fr_timeout;
 extern ticks_t fr_inv_timeout;
@@ -52,6 +74,10 @@ extern ticks_t wait_timeout;
 extern ticks_t delete_timeout;
 extern ticks_t rt_t1_timeout;
 extern ticks_t rt_t2_timeout;
+
+extern ticks_t tm_max_inv_lifetime;
+extern ticks_t tm_max_noninv_lifetime;
+
 
 extern int tm_init_timers();
 
@@ -63,7 +89,7 @@ ticks_t retr_buf_handler(ticks_t t, struct timer_ln *tl, void* data);
 
 #define init_rb_timers(rb) \
 	timer_init(&(rb)->timer, retr_buf_handler, \
-				(void*)(unsigned long)rt_t1_timeout, 0)
+				(void*)(unsigned long)RT_T1_TIMEOUT(rb), 0)
 
 /* set fr & retr timer
  * rb  -  pointer to struct retr_buf
@@ -80,11 +106,13 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 {
 	ticks_t timeout;
 	ticks_t ticks;
+	ticks_t eol;
 	int ret;
 	
 	ticks=get_ticks_raw();
 	timeout=rb->my_T->fr_timeout;
-	rb->timer.data=(void*)(unsigned long)retr; /* hack */
+	eol=rb->my_T->end_of_life;
+	rb->timer.data=(void*)(unsigned long)(2*retr); /* hack , next retr. int. */
 	rb->retr_expire=ticks+retr;
 	if (rb->t_active){
 		/* we could have set_fr_retr called in the same time (acceptable 
@@ -98,6 +126,12 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 	}
 	/* set active & if retr==-1 set disabled */
 	rb->flags|= (F_RB_RETR_DISABLED & -(retr==-1)); 
+	/* adjust timeout to MIN(fr, maximum lifetime) if rb is a request
+	 *  (for neg. replies we are force to wait for the ACK so use fr) */
+	if (unlikely ((rb->activ_type==TYPE_REQUEST) && 
+		((s_ticks_t)(eol-(ticks+timeout))<0)) ){ /* fr after end of life */
+		timeout=(((s_ticks_t)(eol-ticks))>0)?(eol-ticks):1; /* expire now */ 
+	}
 	rb->fr_expire=ticks+timeout;
 #ifdef TIMER_DEBUG
 	ret=timer_add_safe(&(rb)->timer, (timeout<retr)?timeout:retr,
@@ -127,14 +161,25 @@ do{ \
 /* reset retr. interval to t2 and restart retr. timer */
 #define switch_rb_retr_to_t2(rb) \
 	do{ \
-		(rb)->retr_expire=get_ticks_raw()+rt_t2_timeout; \
 		(rb)->flags|=F_RB_T2; \
+		(rb)->retr_expire=get_ticks_raw()+RT_T2_TIMEOUT(rb); \
 	}while(0)
 
 
-/* restart fr */
-#define restart_rb_fr(rb, new_val) \
-	((rb)->fr_expire=get_ticks_raw()+(new_val))
+
+inline static void restart_rb_fr(struct retr_buf* rb, ticks_t new_val)
+{
+	ticks_t now;
+	struct cell* t;
+	
+	now=get_ticks_raw();
+	t=rb->my_T;
+	if (unlikely ((rb->activ_type==TYPE_REQUEST) &&
+					(((s_ticks_t)(t->end_of_life-(now+new_val)))<0)) )
+		rb->fr_expire=t->end_of_life;
+	else
+		rb->fr_expire=now+new_val;
+}
 
 
 
@@ -144,23 +189,87 @@ do{ \
 inline static void change_fr(struct cell* t, ticks_t fr_inv, ticks_t fr)
 {
 	int i;
-	ticks_t fr_inv_expire, fr_expire;
+	ticks_t fr_inv_expire, fr_expire, req_fr_expire;
 	
 	fr_expire=get_ticks_raw();
 	fr_inv_expire=fr_expire+fr_inv;
 	fr_expire+=fr;
+	req_fr_expire=((s_ticks_t)(t->end_of_life-fr_expire)<0)?
+						t->end_of_life:fr_expire;
 	if (fr_inv) t->fr_inv_timeout=fr_inv;
 	if (fr) t->fr_timeout=fr;
 	for (i=0; i<t->nr_of_outgoings; i++){
 		if (t->uac[i].request.t_active){ 
 				if ((t->uac[i].request.flags & F_RB_FR_INV) && fr_inv)
 					t->uac[i].request.fr_expire=fr_inv_expire;
-				else if (fr)
-					t->uac[i].request.fr_expire=fr_expire;
+				else if (fr){
+					if (t->uac[i].request.activ_type==TYPE_REQUEST)
+						t->uac[i].request.fr_expire=req_fr_expire;
+					else
+						t->uac[i].request.fr_expire=fr_expire;
+				}
 		}
 	}
 }
 
+
+#ifdef TM_DIFF_RT_TIMEOUT
+/* change t1 & t2 retransmissions timers
+ * if now==1 try to change them almost on the fly 
+ *  (next retransmission either at rt_t1 or rt_t2)
+ * else only rt_t2 for running branches and both of them for new branches
+ *  if timer value==0 => leave it unchanged
+ */
+inline static void change_retr(struct cell* t, int now,
+								ticks_t rt_t1, ticks_t rt_t2)
+{
+	int i;
+	ticks_t new_rt1_expire, new_rt2_expire, crt;
+
+	if (rt_t1) t->rt_t1_timeout=rt_t1;
+	if (rt_t2) t->rt_t2_timeout=rt_t2;
+	if (now){
+		crt=get_ticks_raw();
+		new_rt1_expire=crt+rt_t1;
+		new_rt2_expire=crt+rt_t2;
+		for (i=0; i<t->nr_of_outgoings; i++){
+			if (t->uac[i].request.t_active){ 
+					if ((t->uac[i].request.flags & F_RB_T2) && rt_t2)
+						/* not really needed (?) - if F_RB_T2 is set
+						 * t->rt_t2_timeout will be used anyway */
+						t->uac[i].request.timer.data=
+									(void*)(unsigned long)rt_t2;
+					else if (rt_t1)
+						t->uac[i].request.timer.data=
+									(void*)(unsigned long)rt_t1;
+			}
+		}
+	}
+}
+#endif /* TM_DIFF_RT_TIMEOUT */
+
+
+
+/* set the maximum transaction lifetime (from the present moment)
+ * if adj is 1, adjust final response timeouts for all the req. branches such
+ * that they are all <= eol (note however that this will work only for
+ *  branches that still retransmit) */
+inline static void change_end_of_life(struct cell* t, int adj, ticks_t eol)
+{
+	int i;
+	
+	t->end_of_life=get_ticks_raw()+eol;
+	if (adj){
+		for (i=0; i<t->nr_of_outgoings; i++){
+			if (t->uac[i].request.t_active){ 
+					if ((t->uac[i].request.activ_type==TYPE_REQUEST) &&
+							((s_ticks_t)(t->end_of_life - 
+										t->uac[i].request.fr_expire)<0))
+						t->uac[i].request.fr_expire=t->end_of_life;
+			}
+		}
+	}
+}
 
 inline static void cleanup_localcancel_timers( struct cell *t )
 {

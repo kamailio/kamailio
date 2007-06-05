@@ -742,7 +742,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	}
 
 	/* don't start faking anything if we don't have to */
-	if ( !has_tran_tmcbs( t, TMCB_ON_FAILURE) && !t->on_negative ) {
+	if (unlikely(!t->on_negative && !has_tran_tmcbs( t, TMCB_ON_FAILURE))) {
 		LOG(L_WARN,
 			"Warning: run_failure_handlers: no negative handler (%d, %d)\n",
 			t->on_negative,
@@ -973,8 +973,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 								 allow new branches from the failure route */
 
 		/* run ON_FAILURE handlers ( route and callbacks) */
-		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
-		|| Trans->on_negative ) {
+		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
+						|| Trans->on_negative )) {
 			extra_flags=
 				((Trans->uac[picked_branch].request.flags & F_RB_TIMEOUT)?
 							FL_TIMEOUT:0) | 
@@ -1100,10 +1100,12 @@ int t_retransmit_reply( struct cell *t )
 	UNLOCK_REPLIES( t );
 	SEND_PR_BUFFER( & t->uas.response, b, len );
 #ifdef TMCB_ONSEND
-	/* we don't know if it's a retransmission of a local reply or a forwarded
-	 * reply */
-	run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, 0, 0,
-							TMCB_RETR_F);
+	if (unlikely(has_tran_tmcbs(r_buf->my_T, TMCB_RESPONSE_SENT))){ 
+		/* we don't know if it's a retransmission of a local reply or a 
+		 * forwarded reply */
+		run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, 0, 0,
+								TMCB_RETR_F);
+	}
 #endif
 	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n",
 		b, b, t->uas.response.buffer, t->uas.response.buffer );
@@ -1797,14 +1799,12 @@ int reply_received( struct sip_msg  *p_msg )
 		goto done;
 
 	/* update FR/RETR timers on provisional replies */
-	if (msg_status<200 && ( restart_fr_on_each_reply ||
+	if (is_invite(t) && msg_status<200 && ( restart_fr_on_each_reply ||
 				( (last_uac_status<msg_status) &&
 					((msg_status>=180) || (last_uac_status==0)) )
 			) ) { /* provisional now */
-		if (is_invite(t)) {
-			restart_rb_fr(& uac->request, t->fr_inv_timeout);
-			uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
-		}
+		restart_rb_fr(& uac->request, t->fr_inv_timeout);
+		uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 	} /* provisional replies */
 
 done:

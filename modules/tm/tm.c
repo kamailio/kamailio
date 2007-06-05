@@ -189,6 +189,8 @@ inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo);
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
+static int w_t_set_retr(struct sip_msg* msg, char* retr_t1, char* retr_t2);
+static int w_t_set_max_lifetime(struct sip_msg* msg, char* inv, char* noninv);
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
@@ -282,6 +284,10 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_fr",          t_set_fr_all,             2, fixup_var_int_12,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_set_retr",        w_t_set_retr,               2, fixup_var_int_12,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_set_max_lifetime", w_t_set_max_lifetime,      2, fixup_var_int_12,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,  FAILURE_ROUTE},
 	{"t_branch_replied",  t_branch_replied,         0, 0,  FAILURE_ROUTE},
 	{"t_any_timeout",     t_any_timeout,            0, 0, 
@@ -330,6 +336,8 @@ static param_export_t params[]={
 	{"delete_timer",        PARAM_INT, &delete_timeout                       },
 	{"retr_timer1",         PARAM_INT, &rt_t1_timeout                        },
 	{"retr_timer2"  ,       PARAM_INT, &rt_t2_timeout                        },
+	{"max_inv_lifetime",    PARAM_INT, &tm_max_inv_lifetime                  },
+	{"max_noninv_lifetime", PARAM_INT, &tm_max_noninv_lifetime               },
 	{"noisy_ctimer",        PARAM_INT, &noisy_ctimer                         },
 	{"uac_from",            PARAM_STRING, &uac_from                          },
 	{"unix_tx_timeout",     PARAM_INT, &tm_unix_tx_timeout                   },
@@ -1163,6 +1171,45 @@ static int t_set_fr_all(struct sip_msg* msg, char* p1, char* p2)
 static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo)
 {
 	return t_set_fr_all(msg, fr_inv, (char*)0);
+}
+
+
+
+/* set retr. intervals per transaction; 0 means: use the default value */
+static int w_t_set_retr(struct sip_msg* msg, char* p1, char* p2)
+{
+	int t1, t2;
+	
+	if (get_int_fparam(&t1, msg, (fparam_t*)p1) < 0) return -1;
+	if (p2) {
+		if (get_int_fparam(&t2, msg, (fparam_t*)p2) < 0) return -1;
+	} else {
+		t2 = 0;
+	}
+#ifdef TM_DIFF_RT_TIMEOUT
+	return t_set_retr(msg, t1, t2);
+#else
+	ERR("w_t_set_retr: support for changing retransmission intervals on "
+			"the fly not compiled in (re-compile tm with"
+			" -DTM_DIFF_RT_TIMEOUT)\n");
+	return -1;
+#endif
+}
+
+
+
+/* set maximum transaction lifetime for inv & noninv */
+static int w_t_set_max_lifetime(struct sip_msg* msg, char* p1, char* p2)
+{
+	int t1, t2;
+	
+	if (get_int_fparam(&t1, msg, (fparam_t*)p1) < 0) return -1;
+	if (p2) {
+		if (get_int_fparam(&t2, msg, (fparam_t*)p2) < 0) return -1;
+	} else {
+		t2 = 0;
+	}
+	return t_set_max_lifetime(msg, t1, t2);
 }
 
 

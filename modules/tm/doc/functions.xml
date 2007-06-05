@@ -372,7 +372,9 @@ t_forward_nonack("1.2.3.4", "5060");
 	</title>
 	<para>
 		Sets the fr_inv_timeout and optionally fr_timeout for the current
-		transaction. If the transaction is already created (e.g called after
+		transaction or for transactions created during the same script 
+		invocation, after calling this function.
+		If the transaction is already created (e.g called after
 		 <function>t_relay()</function> or in an onreply_route) all the
 		 branches will have their final response timeout updated on-the-fly.
 		If one of the parameters is 0, it's value won't be changed.
@@ -406,6 +408,69 @@ branch_route[1] {
 	# for all the branches, and set the no-reply-received timeout to 2s
 	if (uri=~"sip:[0-9]+"){
 		t_set_fr(50000, 2000); 
+	}
+}
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="t_set_retr">
+	<title>
+	    <function>t_set_retr(retr_t1_interval, retr_t2_interval)</function>
+	</title>
+	<para>
+		Sets the retr_t1_interval and retr_t2_interval for the current
+		transaction or for transactions created during the same script 
+		invocation, after calling this function.
+		If one of the parameters is 0, it's value won't be changed.
+		If the transaction is already created (e.g called after
+		 <function>t_relay()</function> or in an onreply_route) all the
+		 existing branches will have their retransmissions intervals updated 
+		 on-the-fly:
+		 if the retransmission interval for the branch has not yet reached T2
+		  the interval will be reset to retr_t1_interval, else to 
+		  retr_t2_interval. Note that the change will happen after the current
+		  interval expires (after the next retransmission, the next-next 
+		  retransmission will take place at retr_t1_interval or 
+		  retr_t2_interval).
+		 All new branches of the same transaction will start with the new 
+		 values.
+		 This function will work even if it's called in the script before
+		a transaction creating function (e.g.: t_set_retr(500, 4000);
+		t_relay()). All new transaction created after this function call, 
+		during the same script invocation will use the new values.
+		Note that this function will work only if tm is compile with
+		 -DTM_DIFF_RT_TIMEOUT (which increases every transaction size with
+		 4 bytes).
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>retr_t1_interval</emphasis> - new T1 retransmission
+			interval (in milliseconds). See also
+			<varname>retr_t1_timeout</varname>.
+		</para>
+		<para><emphasis>retr_t2_interval</emphasis> - new T2 (or maximum) 
+			retransmission interval (in milliseconds). See also
+			<varname>retr_t2_timeout</varname>.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>t_set_retr</function> usage</title>
+	    <programlisting>
+...
+route { 
+	t_set_retr(250, 0); # set only T1 to 250 ms
+	t_on_branch("1");
+	t_relay(); 
+} 
+
+branch_route[1] {
+	# if we are calling the a remote pstn, extend T1 and decrease T2
+	# for all the branches
+	if (uri=~"sip:[0-9]+"){
+		t_set_retr(500, 2000); 
 	}
 }
 	    </programlisting>
