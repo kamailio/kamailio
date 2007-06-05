@@ -40,6 +40,7 @@
  * 2005-11-29 reverse_hex2int/int2reverse_hex switched to unsigned int (andrei)
  * 2005-12-09 added msgid_var (andrei)
  * 2007-05-14 added get_sys_ver() (andrei)
+ * 2007-06-05 added MAX_UVAR_VALUE(), MAX_int(a,b) MIN_int(a,b) (andrei)
  */
 
 
@@ -116,6 +117,27 @@
 /* rounds to sizeof(short) - the first 2 byte multiple */
 #define ROUND_SHORT(s) ROUND2TYPE(s, short)
 
+
+/* params: v - either a variable name, structure member or a type
+ * returns an unsigned long containing the maximum possible value that will
+ * fit in v, if v is unsigned or converted to an unsigned version
+ * example: MAX_UVAR_VALUE(unsigned short); MAX_UVAR_VALUE(i);
+ *  MAX_UVAR_VALUE(((struct foo*)0)->bar) */
+#define MAX_UVAR_VALUE(v) \
+	(((unsigned long)(-1))>>((sizeof(unsigned long)-sizeof(v))*8UL))
+
+
+#define MIN_int(a, b) (((a)<(b))?(a):(b))
+#define MAX_int(a, b) (((a)>(b))?(a):(b))
+
+#if 0
+#define MIN_int(a, b) ((b)+(((a)-(b))& -((a)<(b))))
+#define MAX_int(a, b) ((a)-(((a)-(b))& -((b)>(a))))
+
+/* depend on signed right shift result which depends on the compiler */
+#define MIN_int(a, b) ((b)+(((a)-(b))&(((a)-(b))>>(sizeof(int)*8-1))))
+#define MAX_int(a, b) ((a)-(((a)-(b))&(((a)-(b))>>(sizeof(int)*8-1))))
+#endif
 
 
 /* links a value to a msgid */
