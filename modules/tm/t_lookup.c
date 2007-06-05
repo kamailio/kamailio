@@ -1008,9 +1008,9 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 		}
 #ifdef EXTRA_DEBUG
 		if ( T && T!=T_UNDEFINED && T->flags & (T_IN_AGONY)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion "
-				"and called from t_check (flags=%x)\n", T, T->flags);
-			abort();
+			LOG( L_WARN, "WARNING: transaction %p scheduled for deletion "
+				"and called from t_check (flags=%x) (but it might be ok)\n",
+				T, T->flags);
 		}
 #endif
 		DBG("DEBUG: t_check: msg id=%d global id=%d T end=%p\n",
