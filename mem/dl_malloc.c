@@ -437,6 +437,7 @@ DEFAULT_MMAP_THRESHOLD       default: 256K
   disable mmap by setting to MAX_SIZE_T.
 
 */
+#ifdef DL_MALLOC
 
 #include "dl_config.h"
 #include "meminfo.h"
@@ -5078,3 +5079,6 @@ void mspace_info(mspace ms, struct mem_info* info)
 	info->max_used=0;
 	info->total_frags=0;
 }
+
+
+#endif /* DL_MALLOC */
