@@ -71,6 +71,9 @@ static enum kill_reason kr;
 static struct s_table*  tm_table;
 
 
+void reset_kr() {
+	kr=0;
+}
 
 void set_kr( enum kill_reason _kr )
 {
@@ -123,9 +126,10 @@ void free_cell( struct cell* dead_cell )
 	struct tm_callback *cbs, *cbs_tmp;
 
 	release_cell_lock( dead_cell );
-	run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
-	shm_lock();
+	if (unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
+		run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
 
+	shm_lock();
 	/* UA Server */
 	if ( dead_cell->uas.request )
 		sip_msg_free_unsafe( dead_cell->uas.request );
@@ -193,6 +197,7 @@ void free_cell( struct cell* dead_cell )
 	shm_free_unsafe( dead_cell );
 
 	shm_unlock();
+	t_stats_freed();
 }
 
 
@@ -319,6 +324,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 	init_synonym_id(new_cell);
 	init_cell_lock(  new_cell );
+	t_stats_created();
 	return new_cell;
 
 error:

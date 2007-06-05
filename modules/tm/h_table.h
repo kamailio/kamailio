@@ -386,6 +386,7 @@ struct s_table
 #define has_noisy_ctimer(_t_)    ((_t_)->flags&T_NOISY_CTIMER_FLAG)
 
 
+void reset_kr();
 void set_kr( enum kill_reason kr );
 enum kill_reason get_kr();
 
