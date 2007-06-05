@@ -497,7 +497,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 	t_on_reply(0);
 	t_on_branch(0);
 	/* reset the kr status */
-	set_kr(0);
+	reset_kr(0);
 	/* set request mode so that multiple-mode actions know
 	 * how to behave */
 	rmode=MODE_REQUEST;

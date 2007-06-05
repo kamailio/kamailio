@@ -69,6 +69,9 @@ static enum kill_reason kr;
 static struct s_table*  tm_table;
 
 
+void reset_kr() {
+	kr=0;
+}
 
 void set_kr( enum kill_reason _kr )
 {
