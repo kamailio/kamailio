@@ -275,8 +275,8 @@ inline static int _dst_blacklist_clean_expired_unsafe(unsigned int target,
 												ticks_t delta,
 												ticks_t timeout)
 {
-	static unsigned short start=0;
-	unsigned short h;
+	static unsigned int start=0;
+	unsigned int h;
 	struct dst_blst_entry** crt;
 	struct dst_blst_entry** tmp;
 	struct dst_blst_entry* e;
