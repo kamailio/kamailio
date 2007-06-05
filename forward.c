@@ -416,7 +416,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (use_dst_blacklist){
 			if (dst_is_blacklisted(send_info)){
 				su2ip_addr(&ip, &send_info->to);
-				LOG(L_ERR, "ERROR: blacklisted destination:%s:%d (%d)\n",
+				LOG(L_DBG, "DEBUG: blacklisted destination:%s:%d (%d)\n",
 							ip_addr2a(&ip), su_getport(&send_info->to),
 							send_info->proto);
 				ret=ser_error=E_SEND;
