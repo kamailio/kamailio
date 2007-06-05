@@ -76,6 +76,7 @@
 #include "t_msgbuilder.h"
 #include "callid.h"
 #include "uac.h"
+#include "t_stats.h"
 
 
 #define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
