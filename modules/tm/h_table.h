@@ -41,21 +41,30 @@
  *             UNREF if the ref_count reaches 0 (andrei)
  * 2007-06-01  support for different retransmissions intervals per transaction;
  *             added maximum inv. and non-inv. transaction life time (andrei)
+ * 2007-06-06  switched tm bucket list to a simpler and faster clist;
+ *              inlined often used functions (andrei)
  */
-
-#include "defs.h"
-
-
-#define TM_DEL_UNREF
 
 #ifndef _H_TABLE_H
 #define _H_TABLE_H
 
-/*
- #include <stdio.h>
- #include <stdlib.h>
-*/
+#include "defs.h"
+#include "t_stats.h"
 
+#define TM_DEL_UNREF
+/* uncomment the next define if you wish to keep hash statistics*/
+/*
+#define TM_HASH_STATS
+*/
+/* use hash stats always in debug mode */
+#ifdef EXTRA_DEBUG
+#ifndef TM_HASH_STATS
+#define TM_HASH_STATS
+#endif
+#endif
+
+
+#include "../../clist.h"
 #include "../../parser/msg_parser.h"
 #include "../../types.h"
 #include "../../md5utils.h"
@@ -236,8 +245,10 @@ typedef unsigned short retr_timeout_t;
 typedef struct cell
 {
 	/* linking data */
-	struct cell*     next_cell;
-	struct cell*     prev_cell;
+	/* WARNING: don't move or change order of next_c or prev_c
+	 * or breakage will occur */
+	struct cell*     next_c;
+	struct cell*     prev_c;
 	/* tells in which hash table entry the cell lives */
 	unsigned int  hash_index;
 	/* sequence number within hash collision slot */
@@ -329,24 +340,39 @@ typedef struct cell
 	 /* The route to take for each downstream branch separately */
 	unsigned short on_branch;
 
-	/* MD5checksum  (meaningful only if syn_branch=0) */
-	char md5[MD5_LEN];
+	/* place holder for MD5checksum  (meaningful only if syn_branch=0) */
+	char md5[0]; /* if syn_branch==0 then MD5_LEN bytes are extra alloc'ed*/
 
 }cell_type;
 
 
+#if 0
+/* warning: padding too much => big size increase */
+#define ENTRY_PAD_TO  128 /* should be a multiple of cacheline size for 
+                             best performance*/
+#define ENTRY_PAD_BYTES	 \
+	(ENTRY_PAD_TO-2*sizeof(struct cell*)+sizeof(ser_lock_t)+sizeof(int)+ \
+	 				2*sizeof(long))
+#else
+#define ENTRY_PAD_BYTES 0
+#endif
 
 /* double-linked list of cells with hash synonyms */
 typedef struct entry
 {
-	struct cell*    first_cell;
-	struct cell*    last_cell;
-	/* currently highest sequence number in a synonym list */
-	unsigned int    next_label;
+	/* WARNING: don't move or change order of next_c or prev_c
+	 * or breakage will occur */
+	struct cell*    next_c; 
+	struct cell*    prev_c;
 	/* sync mutex */
 	ser_lock_t      mutex;
+	/* currently highest sequence number in a synonym list */
+	unsigned int    next_label;
+#ifdef TM_HASH_STATS
 	unsigned long acc_entries;
 	unsigned long cur_entries;
+#endif
+	char _pad[ENTRY_PAD_BYTES];
 }entry_type;
 
 
@@ -355,9 +381,12 @@ typedef struct entry
 struct s_table
 {
 	/* table of hash entries; each of them is a list of synonyms  */
-	struct entry   entrys[ TABLE_ENTRIES ];
+	struct entry   entries[ TABLE_ENTRIES ];
 };
 
+/* pointer to the big table where all the transaction data
+   lives */
+struct s_table*  _tm_table; /* private internal stuff, don't touch directly */
 
 #define list_entry(ptr, type, member) \
 	((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
@@ -390,18 +419,55 @@ void reset_kr();
 void set_kr( enum kill_reason kr );
 enum kill_reason get_kr();
 
-struct s_table* get_tm_table();
+#define get_tm_table() (_tm_table)
+
 struct s_table* init_hash_table();
 void   free_hash_table( );
 void   free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
-void   remove_from_hash_table_unsafe( struct cell * p_cell);
-#ifdef OBSOLETED
-void   insert_into_hash_table( struct cell * p_cell, unsigned int _hash);
-#endif
-void   insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash );
 
+#ifdef TM_HASH_STATS
 unsigned int transaction_count( void );
+#endif
+
+
+/*  Takes an already created cell and links it into hash table on the
+ *  appropriate entry. */
+inline static void insert_into_hash_table_unsafe( struct cell * p_cell,
+													unsigned int hash )
+{
+	p_cell->label = _tm_table->entries[hash].next_label++;
+	p_cell->hash_index=hash;
+	/* insert at the beginning */
+	clist_insert(&_tm_table->entries[hash], p_cell, next_c, prev_c);
+
+	/* update stats */
+#ifdef TM_HASH_STATS
+	_tm_table->entries[hash].cur_entries++;
+	_tm_table->entries[hash].acc_entries++;
+#endif
+	t_stats_new( is_local(p_cell) );
+}
+
+
+
+/*  Un-link a  cell from hash_table, but the cell itself is not released */
+inline static void remove_from_hash_table_unsafe( struct cell * p_cell)
+{
+	clist_rm(p_cell, next_c, prev_c);
+#	ifdef EXTRA_DEBUG
+#ifdef TM_HASH_STATS
+	if (_tm_table->entries[p_cell->hash_index].cur_entries==0){
+		LOG(L_CRIT, "BUG: bad things happened: cur_entries=0\n");
+		abort();
+	}
+#endif
+#	endif
+#ifdef TM_HASH_STATS
+	_tm_table->entries[p_cell->hash_index].cur_entries--;
+#endif
+	t_stats_deleted( is_local(p_cell) );
+}
 
 #endif
 

@@ -43,6 +43,9 @@
  *             transactions (bogdan)
  * 2006-08-11  dns failover support (andrei)
  * 2007-05-16  callbacks called on destroy (andrei)
+ * 2007-06-06  don't allocate extra space for md5 if not used: syn_branch==1 
+ *              (andrei)
+ * 2007-06-06  switched tm bucket list to a simpler and faster clist (andrei)
  */
 
 #include <stdlib.h>
@@ -68,7 +71,7 @@ static enum kill_reason kr;
 
 /* pointer to the big table where all the transaction data
    lives */
-static struct s_table*  tm_table;
+struct s_table*  _tm_table;
 
 
 void reset_kr() {
@@ -88,22 +91,18 @@ enum kill_reason get_kr() {
 
 void lock_hash(int i) 
 {
-	lock(&tm_table->entrys[i].mutex);
+	lock(&_tm_table->entries[i].mutex);
 }
 
 
 void unlock_hash(int i) 
 {
-	unlock(&tm_table->entrys[i].mutex);
+	unlock(&_tm_table->entries[i].mutex);
 }
 
 
-struct s_table* get_tm_table()
-{
-	return tm_table;
-}
 
-
+#ifdef TM_HASH_STATS
 unsigned int transaction_count( void )
 {
 	unsigned int i;
@@ -111,9 +110,10 @@ unsigned int transaction_count( void )
 
 	count=0;	
 	for (i=0; i<TABLE_ENTRIES; i++) 
-		count+=tm_table->entrys[i].cur_entries;
+		count+=_tm_table->entries[i].cur_entries;
 	return count;
 }
+#endif
 
 
 
@@ -259,7 +259,9 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	avp_list_t* old;
 
 	/* allocs a new cell */
-	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
+	/* if syn_branch==0 add space for md5 (MD5_LEN -sizeof(struct cell.md5)) */
+	new_cell = (struct cell*)shm_malloc( sizeof( struct cell )+
+			((MD5_LEN-sizeof(((struct cell*)0)->md5))&((syn_branch!=0)-1)) );
 	if  ( !new_cell ) {
 		ser_error=E_OUT_OF_MEM;
 		return NULL;
@@ -348,21 +350,19 @@ void free_hash_table(  )
 	struct cell* tmp_cell;
 	int    i;
 
-	if (tm_table)
+	if (_tm_table)
 	{
 		/* remove the data contained by each entry */
 		for( i = 0 ; i<TABLE_ENTRIES; i++)
 		{
-			release_entry_lock( (tm_table->entrys)+i );
+			release_entry_lock( (_tm_table->entries)+i );
 			/* delete all synonyms at hash-collision-slot i */
-			p_cell=tm_table->entrys[i].first_cell;
-			for( ; p_cell; p_cell = tmp_cell )
-			{
-				tmp_cell = p_cell->next_cell;
-				free_cell( p_cell );
+			clist_foreach_safe(&_tm_table->entries[i], p_cell, tmp_cell,
+									next_c){
+				free_cell(p_cell);
 			}
 		}
-		shm_free(tm_table);
+		shm_free(_tm_table);
 	}
 }
 
@@ -376,26 +376,28 @@ struct s_table* init_hash_table()
 	int              i;
 
 	/*allocs the table*/
-	tm_table= (struct s_table*)shm_malloc( sizeof( struct s_table ) );
-	if ( !tm_table) {
+	_tm_table= (struct s_table*)shm_malloc( sizeof( struct s_table ) );
+	if ( !_tm_table) {
 		LOG(L_ERR, "ERROR: init_hash_table: no shmem for TM table\n");
 		goto error0;
 	}
 
-	memset( tm_table, 0, sizeof (struct s_table ) );
+	memset( _tm_table, 0, sizeof (struct s_table ) );
 
 	/* try first allocating all the structures needed for syncing */
 	if (lock_initialize()==-1)
 		goto error1;
 
-	/* inits the entrys */
+	/* inits the entriess */
 	for(  i=0 ; i<TABLE_ENTRIES; i++ )
 	{
-		init_entry_lock( tm_table, (tm_table->entrys)+i );
-		tm_table->entrys[i].next_label = rand();
+		init_entry_lock( _tm_table, (_tm_table->entries)+i );
+		_tm_table->entries[i].next_label = rand();
+		/* init cell list */
+		clist_init(&_tm_table->entries[i], next_c, prev_c);
 	}
 
-	return  tm_table;
+	return  _tm_table;
 
 error1:
 	free_hash_table( );
@@ -404,62 +406,4 @@ error0:
 }
 
 
-
-
-/*  Takes an already created cell and links it into hash table on the
- *  appropriate entry. */
-void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
-{
-	struct entry* p_entry;
-
-	p_cell->hash_index=_hash;
-
-	/* locates the appropriate entry */
-	p_entry = &tm_table->entrys[ _hash ];
-
-	p_cell->label = p_entry->next_label++;
-	if ( p_entry->last_cell )
-	{
-		p_entry->last_cell->next_cell = p_cell;
-		p_cell->prev_cell = p_entry->last_cell;
-	} else p_entry->first_cell = p_cell;
-
-	p_entry->last_cell = p_cell;
-
-	/* update stats */
-	p_entry->cur_entries++;
-	p_entry->acc_entries++;
-	t_stats_new( is_local(p_cell) );
-}
-
-
-/*  Un-link a  cell from hash_table, but the cell itself is not released */
-void remove_from_hash_table_unsafe( struct cell * p_cell)
-{
-	struct entry*  p_entry  = &(tm_table->entrys[p_cell->hash_index]);
-
-	/* unlink the cell from entry list */
-	/* lock( &(p_entry->mutex) ); */
-
-	if ( p_cell->prev_cell )
-		p_cell->prev_cell->next_cell = p_cell->next_cell;
-	else
-		p_entry->first_cell = p_cell->next_cell;
-
-	if ( p_cell->next_cell )
-		p_cell->next_cell->prev_cell = p_cell->prev_cell;
-	else
-		p_entry->last_cell = p_cell->prev_cell;
-	/* update stats */
-#	ifdef EXTRA_DEBUG
-	if (p_entry->cur_entries==0) {
-		LOG(L_CRIT, "BUG: bad things happened: cur_entries=0\n");
-		abort();
-	}
-#	endif
-	p_entry->cur_entries--;
-	t_stats_deleted( is_local(p_cell) );
-
-	/* unlock( &(p_entry->mutex) ); */
-}
 

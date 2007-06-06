@@ -96,6 +96,7 @@
 *              added support for turning off 100 repl. sending on inv. (andrei)
  * 2007-06-01  support for different retransmissions intervals per transaction;
  *             added maximum inv. and non-inv. transaction life time (andrei)
+ * 2007-06-06  switched tm bucket list to a simpler and faster clist;
  */
 
 #include "defs.h"
@@ -317,6 +318,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	int dlg_parsed;
 	int ret = 0;
 	struct cell *e2e_ack_trans;
+	struct entry* hash_bucket;
 
 	*cancel=0;
 	e2e_ack_trans=0;
@@ -327,9 +329,9 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	via1->tid.s=via1->branch->value.s+MCOOKIE_LEN;
 	via1->tid.len=via1->branch->value.len-MCOOKIE_LEN;
 
-	for ( p_cell = get_tm_table()->entrys[p_msg->hash_index].first_cell;
-		p_cell; p_cell = p_cell->next_cell ) 
-	{
+	hash_bucket=&(get_tm_table()->entries[p_msg->hash_index]);
+	clist_foreach(hash_bucket, p_cell, next_c){
+		prefetch_loc_r(p_cell->next_c, 1);
 		t_msg=p_cell->uas.request;
 		if (!t_msg) continue;  /* don't try matching UAC transactions */
 		/* we want to set *cancel for transaction for which there is
@@ -384,10 +386,10 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			}
 			if (skip_method & t_msg->REQ_METHOD) continue;
 		}
+		prefetch_w(p_cell); /* great chance of modifiying it */
 		/* all matched -- we found the transaction ! */
 		DBG("DEBUG: RFC3261 transaction matched, tid=%.*s\n",
 			via1->tid.len, via1->tid.s);
-
 		*trans=p_cell;
 		return 1;
 	}
@@ -420,9 +422,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 	struct via_param *branch;
 	int match_status;
 	struct cell *e2e_ack_trans;
+	struct entry* hash_bucket;
 
 	/* parse all*/
-	if (check_transaction_quadruple(p_msg)==0)
+	if (unlikely(check_transaction_quadruple(p_msg)==0))
 	{
 		LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
 		set_t(0);	
@@ -465,7 +468,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				cancel);
 		switch(match_status) {
 				case 0:	goto notfound;	/* no match */
-				case 1:	goto found; 	/* match */
+				case 1:	 goto found; 	/* match */
 				case 2:	goto e2e_ack;	/* e2e proxy ACK */
 		}
 	}
@@ -478,10 +481,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 	/* lock the whole entry*/
 	LOCK_HASH(p_msg->hash_index);
 
+	hash_bucket=&(get_tm_table()->entries[p_msg->hash_index]);
 	/* all the transactions from the entry are compared */
-	for ( p_cell = get_tm_table()->entrys[p_msg->hash_index].first_cell;
-		  p_cell; p_cell = p_cell->next_cell ) 
-	{
+	clist_foreach(hash_bucket, p_cell, next_c){
+		prefetch_loc_r(p_cell->next_c, 1);
 		t_msg = p_cell->uas.request;
 
 		if (!t_msg) continue; /* skip UAC transactions */
@@ -618,6 +621,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	unsigned int     hash_index;
 	struct sip_msg  *t_msg;
 	struct via_param *branch;
+	struct entry* hash_bucket;
 	int foo;
 	int ret;
 
@@ -664,16 +668,16 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 
 	LOCK_HASH(hash_index);
 
+	hash_bucket=&(get_tm_table()->entries[hash_index]);
 	/* all the transactions from the entry are compared */
-	for (p_cell=get_tm_table()->entrys[hash_index].first_cell;
-		p_cell; p_cell = p_cell->next_cell )
-	{
+	clist_foreach(hash_bucket, p_cell, next_c){
+		prefetch_loc_r(p_cell->next_c, 1);
 		t_msg = p_cell->uas.request;
 
 		if (!t_msg) continue; /* skip UAC transactions */
 
 		/* we don't cancel CANCELs ;-) */
-		if (t_msg->REQ_METHOD==METHOD_CANCEL)
+		if (unlikely(t_msg->REQ_METHOD==METHOD_CANCEL))
 			continue;
 
 		/* check lengths now */	
@@ -753,6 +757,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	unsigned int entry_label  = 0;
 	unsigned int branch_id    = 0;
 	char  *hashi, *branchi, *p, *n;
+	struct entry* hash_bucket;
 	int hashl, branchl;
 	int scan_space;
 	str cseq_method;
@@ -823,12 +828,12 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	branchi=p;
 
 	/* sanity check */
-	if (reverse_hex2int(hashi, hashl, &hash_index)<0
+	if (unlikely(reverse_hex2int(hashi, hashl, &hash_index)<0
 		||hash_index>=TABLE_ENTRIES
 		|| reverse_hex2int(branchi, branchl, &branch_id)<0
 		||branch_id>=MAX_BRANCHES
 		|| (syn_branch ? (reverse_hex2int(syni, synl, &entry_label))<0 
-			: loopl!=MD5_LEN )
+			: loopl!=MD5_LEN ))
 	) {
 		DBG("DEBUG: t_reply_matching: poor reply labels %d label %d "
 			"branch %d\n", hash_index, entry_label, branch_id );
@@ -847,12 +852,12 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	is_cancel=cseq_method.len==CANCEL_LEN 
 		&& memcmp(cseq_method.s, CANCEL, CANCEL_LEN)==0;
 	LOCK_HASH(hash_index);
-	for (p_cell = get_tm_table()->entrys[hash_index].first_cell; p_cell; 
-		p_cell=p_cell->next_cell) {
-
+	hash_bucket=&(get_tm_table()->entries[hash_index]);
+	/* all the transactions from the entry are compared */
+	clist_foreach(hash_bucket, p_cell, next_c){
+		prefetch_loc_r(p_cell->next_c, 1);
 		/* first look if branch matches */
-
-		if (syn_branch) {
+		if (likely(syn_branch)) {
 			if (p_cell->label != entry_label) 
 				continue;
 		} else {
@@ -861,7 +866,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		}
 
 		/* sanity check ... too high branch ? */
-		if ( branch_id>=p_cell->nr_of_outgoings )
+		if (unlikely(branch_id>=p_cell->nr_of_outgoings))
 			continue;
 
 		/* does method match ? (remember -- CANCELs have the same branch
@@ -953,6 +958,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 		/* transaction lookup */
 		if ( p_msg->first_line.type==SIP_REQUEST ) {
 			/* force parsing all the needed headers*/
+			prefetch_loc_r(p_msg->unparsed+64, 1);
 			if (parse_headers(p_msg, HDR_EOH_F, 0 )==-1) {
 				LOG(L_ERR, "ERROR: t_check: parsing error\n");
 				return -1;
@@ -1380,21 +1386,23 @@ int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned 
     return 1;
 }
 
-int t_lookup_ident(struct cell ** trans, unsigned int hash_index, unsigned int label)
+int t_lookup_ident(struct cell ** trans, unsigned int hash_index, 
+					unsigned int label)
 {
-    struct cell* p_cell;
+	struct cell* p_cell;
+	struct entry* hash_bucket;
 
-    if(hash_index >= TABLE_ENTRIES){
+	if(unlikely(hash_index >= TABLE_ENTRIES)){
 		LOG(L_ERR,"ERROR: t_lookup_ident: invalid hash_index=%u\n",hash_index);
 		return -1;
-    }
-
-    LOCK_HASH(hash_index);
-
-    /* all the transactions from the entry are compared */
-    for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
-	  p_cell; p_cell = p_cell->next_cell ) 
-    {
+	}
+	
+	LOCK_HASH(hash_index);
+	
+	hash_bucket=&(get_tm_table()->entries[hash_index]);
+	/* all the transactions from the entry are compared */
+	clist_foreach(hash_bucket, p_cell, next_c){
+		prefetch_loc_r(p_cell->next_c, 1);
 		if(p_cell->label == label){
 			REF_UNSAFE(p_cell);
     			UNLOCK_HASH(hash_index);
@@ -1436,6 +1444,7 @@ int t_is_local(struct sip_msg* p_msg)
 int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	struct cell* p_cell;
 	unsigned hash_index;
+	struct entry* hash_bucket;
 
 	/* I use MAX_HEADER, not sure if this is a good choice... */
 	char callid_header[MAX_HEADER];
@@ -1454,7 +1463,7 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	/* lookup the hash index where the transaction is stored */
 	hash_index=hash(callid, cseq);
 
-	if(hash_index >= TABLE_ENTRIES){
+	if(unlikely(hash_index >= TABLE_ENTRIES)){
 		LOG(L_ERR,"ERROR: t_lookup_callid: invalid hash_index=%u\n",hash_index);
 		return -1;
 	}
@@ -1471,15 +1480,18 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	LOCK_HASH(hash_index);
 	DBG("just locked hash index %u, looking for transactions there:\n", hash_index);
 
+	hash_bucket=&(get_tm_table()->entries[hash_index]);
 	/* all the transactions from the entry are compared */
-	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
-	  p_cell; p_cell = p_cell->next_cell ) {
+	clist_foreach(hash_bucket, p_cell, next_c){
 		
-		/* compare complete header fields, casecmp to make sure invite=INVITE */
-		if ( (strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
-			&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len) == 0) ) {
-			DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n", p_cell->callid.len, 
-				p_cell->callid.s, p_cell->cseq_n.len, p_cell->cseq_n.s);
+		prefetch_loc_r(p_cell->next_c, 1);
+		/* compare complete header fields, casecmp to make sure invite=INVITE*/
+		if ((strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
+			&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len)
+				== 0)) {
+			DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n",
+					p_cell->callid.len, p_cell->callid.s, p_cell->cseq_n.len,
+					p_cell->cseq_n.s);
 			REF_UNSAFE(p_cell);
 			UNLOCK_HASH(hash_index);
 			set_t(p_cell);
