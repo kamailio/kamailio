@@ -68,6 +68,7 @@ struct pg_params {
 	const char** data;
 	int* len;
 	int* formats;
+	Oid* types;
 };
 
 
@@ -77,6 +78,7 @@ static void free_pg_params(struct pg_params* ptr)
 	if (ptr->data) pkg_free(ptr->data);
 	if (ptr->len) pkg_free(ptr->len);
 	if (ptr->formats) pkg_free(ptr->formats);
+	if (ptr->types) pkg_free(ptr->types);
 	pkg_free(ptr);
 }
 
@@ -96,9 +98,13 @@ static struct pg_params* new_pg_params(int n)
 
 	ptr->len = (int*)pkg_malloc(sizeof(int) * n);
 	if (!ptr->len) goto error;
+
+	ptr->types = (int*)pkg_malloc(sizeof(Oid) * n);
+	if (!ptr->types) goto error;
 	
 	memset((char*)ptr->data, 0, sizeof(const char*) * n);
 	memset(ptr->len, 0, sizeof(int) * n);
+	memset(ptr->types, 0, sizeof(Oid) * n);
 	ptr->n = n;
 	ptr->cur = 0;
 	return ptr;
@@ -141,6 +147,7 @@ static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals,
 			val->val.int_val = ntohl(val->val.int_val);
 			p->data[p->cur] = (const char*)&val->val.int_val;
 			p->len[p->cur] = 4;
+			p->types[p->cur] = INT4OID;
 			break;
 
 		case DB_FLOAT:
@@ -150,6 +157,7 @@ static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals,
 			val->val.int_val = htonl(val->val.int_val);
 			p->data[p->cur] = (const char*)&val->val.int_val;
 			p->len[p->cur] = 4;
+			p->types[p->cur] = FLOAT4OID;
 			break;
 			
 		case DB_DOUBLE:
@@ -162,6 +170,7 @@ static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals,
 			(&val->val.int_val)[1] = i2;
 			p->data[p->cur] = (const char*)&val->val.int_val;
 			p->len[p->cur] = 8;
+			p->types[p->cur] = FLOAT8OID;
 			break;
 			
 		case DB_STRING:
@@ -187,6 +196,7 @@ static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals,
 			(&val->val.int_val)[1] = i2;
 			p->data[p->cur] = (const char*)&val->val.int_val;
 			p->len[p->cur] = 8;
+			p->types[p->cur] = TIMESTAMPOID;
 			break;
 			
 		case DB_BLOB:
@@ -199,6 +209,7 @@ static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals,
 			val->val.int_val = htonl(32);
 			p->data[p->cur] = (const char*)&val->val.int_val;
 			p->len[p->cur] = 8;
+			p->types[p->cur] = BITOID;
 			break;
 		}
 		
@@ -756,7 +767,7 @@ static int submit_query(db_res_t** res, db_con_t* con, const char* query, struct
 	DBG("Executing '%s'\n", query);
 	if (params && params->cur) {
 	        pgres = PQexecParams(CON_CONNECTION(con), query,
-				     params->cur, 0,
+				     params->cur, params->types,
 				     params->data, params->len,
 				     params->formats, 1);
 	} else {
