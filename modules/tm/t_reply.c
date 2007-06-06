@@ -1100,7 +1100,7 @@ int t_retransmit_reply( struct cell *t )
 	UNLOCK_REPLIES( t );
 	SEND_PR_BUFFER( & t->uas.response, b, len );
 #ifdef TMCB_ONSEND
-	if (unlikely(has_tran_tmcbs(r_buf->my_T, TMCB_RESPONSE_SENT))){ 
+	if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){ 
 		/* we don't know if it's a retransmission of a local reply or a 
 		 * forwarded reply */
 		run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, 0, 0,
