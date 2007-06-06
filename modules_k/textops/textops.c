@@ -715,6 +715,9 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	/* we need to be sure we have seen all HFs */
 	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
+		/* for well known header names str_hf->s will be set to NULL 
+		   during parsing of openser.cfg and str_hf->len contains 
+		   the header type */
 		if(((str*)str_hf)->s==NULL)
 		{
 			if (((str*)str_hf)->len!=hf->type)
