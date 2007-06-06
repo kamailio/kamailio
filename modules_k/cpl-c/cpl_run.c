@@ -550,6 +550,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 				status = n;
 				break;
 			case REASON_ATTR:
+				reason.len = n;
 				get_str_attr( p, reason.s, reason.len, intr, script_error,1);
 				break;
 			default:
