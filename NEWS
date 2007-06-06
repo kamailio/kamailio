@@ -7,11 +7,46 @@ $Id$
 2.1.0 changes
 
 modules:
- - tm        - new onsend callbacks support (require defining TMCB_ONSEND prior
+ - tm        - different error replies for too many branches (500 but with
+               different text), resolve error (478) or send error
+               (477).
+             - tm can be configured not to automatically send 100 replies
+               for invites either globally (see the auto_inv_100 parameter)
+               or on a per transaction basis (see t_set_auto_inv_100(...))
+             - t_relay* error reply are delayed till the end of the script
+               to allow the script writer to overwrite them
+             - branches are always canceled hop by hop
+             - cancels for silently canceled branches (no replies ever 
+               received) are automatically generated if later a provisional
+               reply arrives on such a branch
+             - noisy_ctimer is now 1 (on) by default
+             - added maximum transaction lifetime - a transaction is not
+               allowed to be active longer then this interval. See
+               t_set_max_lifetime(), max_inv_lifetime and max_noninv_lifetime.
+             - support for changing the retransmission intervals on the fly,
+               on a per transaction basis (it is enabled if tm is compiled
+               with -DTM_DIFF_RT_TIMEOUT -- default): t_set_retr(t1, t2).
+             - transaction are deleted the moment they are not referenced 
+               anymore (removed the need for the delete timer) -- this 
+               should improve memory usage on very busy proxies.
+             - lots of callbacks added
+             - new onsend callbacks support (require defining TMCB_ONSEND prior
                to compiling tm)
              - behaviour when receiving a CANCEL which doesn't match any 
                transaction can be selected using the unmatched_cancel param.
              - params: 
+                        - auto_inv_100 - if set (default) tm will automatically
+                          send an 100 reply to INVITEs (see also 
+                         t_set_auto_inv_100())
+                        - noisy_ctimer is now 1 by default
+                        - max_inv_lifetime & max_noninv_lifetime - default
+                          maximum lifetimes for an invite or non-invite 
+                          transaction. After this interval has passed from 
+                          the transaction creation the transaction will be 
+                          either switched into the wait state or in the
+                          final response retransmission state => a transaction
+                          will be kept in memory for maximum: 
+                           max_*inv_lifetime + fr_timer /*ack w.*/ +wait_timer.
                         - unmatched_cancel - selects between forwarding cancels
                            that do not match any transaction statefully (0, 
                            default value), statelessly (1) or dropping them
@@ -25,6 +60,19 @@ modules:
                            (since the CANCEL cannot be authenticated, each
                            received bogus CANCEL will create a new transaction 
                            that will live by default 30s).
+             - functions:
+                        - t_set_auto_inv_100(on/off) - switch automatically
+                          sending 100 replies to INVITEs on/off on a per
+                          transaction basis. It overrides the tm param.
+                          auto_inv_100.
+                        - t_set_max_lifetime(inv, noninv) - changes the 
+                          maximum transaction lifetime on the fly, for the
+                          current or next to be created transaction.
+                        - t_set_retr(t1, t2) - changes the retransmissions
+                           intervals on the fly, on a per transaction basis.
+core:
+             - futex support on linux (better behaviour when waiting on 
+               long held locks, almost no performance impact otherwise)
 
 new config variables:
   tcp_source_ipv4 = IPv4 address
