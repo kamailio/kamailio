@@ -150,6 +150,6 @@
 #endif
 
 int init_pkg_mallocs();
-int init_shm_mallocs();
+int init_shm_mallocs(int force_alloc);
 
 #endif

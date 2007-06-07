@@ -94,10 +94,10 @@ int init_pkg_mallocs()
 
 
 
-int init_shm_mallocs()
+int init_shm_mallocs(int force_alloc)
 {
 #ifdef SHM_MEM
-	if (shm_mem_init()<0) {
+	if (shm_mem_init(force_alloc)<0) {
 		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
 		 fprintf(stderr, "Too much shared memory demanded: %ld\n",
 			shm_mem_size );
