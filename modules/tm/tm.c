@@ -611,19 +611,23 @@ static int mod_init(void)
 	return 0;
 }
 
-static int child_init(int rank) {
-	if (child_init_callid(rank) < 0) {
-		LOG(L_ERR, "ERROR: child_init: Error while initializing Call-ID generator\n");
-		return -2;
-	}
-
-	if (rank == 1) {
+static int child_init(int rank)
+{
+	if (rank == PROC_INIT) {
+		/* we must init stats when rank==PROC_INIT: after mod_init we know
+		 * the exact number of processes and we must init the shared structure
+		 * before any other process is starting (or else some new process
+		 * might try to use the stats before the stats array is allocated) */
 		if (init_tm_stats_child() < 0) {
 			ERR("Error while initializing tm statistics structures\n");
 			return -1;
 		}
+	}else if (child_init_callid(rank) < 0) { 
+		/* don't init callid for PROC_INIT*/
+		LOG(L_ERR, "ERROR: child_init: Error while initializing Call-ID"
+				" generator\n");
+		return -2;
 	}
-
 	return 0;
 }
 

@@ -40,48 +40,54 @@
 #include "../../pt.h"
 
 
-extern struct t_stats *tm_stats;
 typedef unsigned long stat_counter;
 
-struct t_stats {
-#ifdef TM_MORE_STATS
-	/* number of created transactions */
-	stat_counter *t_created;
-	/* number of freed transactions */
-	stat_counter *t_freed;
-	/* number of transactions for which free was deleted */
-	stat_counter *delayed_free;
-#endif /* TM_MORE_STATS */
+struct t_proc_stats {
 	/* number of transactions in wait state */
-	stat_counter *s_waiting;
+	stat_counter waiting;
 	/* number of server transactions */
-	stat_counter *s_transactions;
+	stat_counter transactions;
 	/* number of UAC transactions (part of transactions) */
-	stat_counter *s_client_transactions;
+	stat_counter client_transactions;
 	/* number of transactions which completed with this status */
 	stat_counter completed_3xx, completed_4xx, completed_5xx, 
 		completed_6xx, completed_2xx;
-	stat_counter replied_localy;
+	stat_counter replied_locally;
 	stat_counter deleted;
+#ifdef TM_MORE_STATS
+	/* number of created transactions */
+	stat_counter t_created;
+	/* number of freed transactions */
+	stat_counter t_freed;
+	/* number of transactions for which free was deleted */
+	stat_counter delayed_free;
+#endif /* TM_MORE_STATS */
 };
+
+union t_stats{
+	struct t_proc_stats s;
+	char _pad[256]; /* pad at least to cache line size 
+	                    athlon=64, p4=128, some sparcs=256 */
+};
+extern union t_stats *tm_stats;
 
 #ifdef TM_MORE_STATS 
 inline void static t_stats_created()
 {
 	/* keep it in process's piece of shmem */
-	tm_stats->t_created[process_no]++;
+	tm_stats[process_no].s.t_created++;
 }
 
 inline void static t_stats_freed()
 {
 	/* keep it in process's piece of shmem */
-	tm_stats->t_freed[process_no]++;
+	tm_stats[process_no].s.t_freed++;
 }
 
 inline void static t_stats_delayed_free()
 {
 	/* keep it in process's piece of shmem */
-	tm_stats->delayed_free[process_no]++;
+	tm_stats[process_no].s.delayed_free++;
 }
 #else /* TM_MORE_STATS  */
 /* do nothing */
@@ -94,35 +100,41 @@ inline void static t_stats_delayed_free()
 inline void static t_stats_new(int local)
 {
 	/* keep it in process's piece of shmem */
-	tm_stats->s_transactions[process_no]++;
-	if(local) tm_stats->s_client_transactions[process_no]++;
+	tm_stats[process_no].s.transactions++;
+	if(local) tm_stats[process_no].s.client_transactions++;
 }
 
 inline void static t_stats_wait()
 {
 	/* keep it in process's piece of shmem */
-	tm_stats->s_waiting[process_no]++;
+	tm_stats[process_no].s.waiting++;
 }
 
 inline void static t_stats_deleted( int local )
 {
-	/* no locking needed here -- only timer process deletes */
-	tm_stats->deleted++;
+	tm_stats[process_no].s.deleted++;
 }
 
 inline static void update_reply_stats( int code ) {
 	if (code>=600) {
-		tm_stats->completed_6xx++;
+		tm_stats[process_no].s.completed_6xx++;
 	} else if (code>=500) {
-		tm_stats->completed_5xx++;
+		tm_stats[process_no].s.completed_5xx++;
 	} else if (code>=400) {
-		tm_stats->completed_4xx++;
+		tm_stats[process_no].s.completed_4xx++;
 	} else if (code>=300) {
-		tm_stats->completed_3xx++;
+		tm_stats[process_no].s.completed_3xx++;
 	} else if (code>=200) {
-		tm_stats->completed_2xx++;
+		tm_stats[process_no].s.completed_2xx++;
 	}
 }
+
+
+inline void static t_stats_replied_locally()
+{
+	tm_stats[process_no].s.replied_locally++;
+}
+
 
 
 int init_tm_stats(void);

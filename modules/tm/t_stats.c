@@ -43,19 +43,11 @@
 #include "../../config.h"
 #include "../../pt.h"
 
-struct t_stats *tm_stats=0;
+union t_stats *tm_stats=0;
 
 int init_tm_stats(void)
 {
-
-	tm_stats = shm_malloc(sizeof(struct t_stats));
-	if (tm_stats==0) {
-		ERR("No mem for stats\n");
-		return -1;
-	}
-	memset(tm_stats, 0, sizeof(struct t_stats) );
-
-	     /* Delay initialization of tm_stats structures to
+	     /* Delay initialization of tm_stats  to
 	      * init_tm_stats_child which gets called from child_init,
 	      * in mod_init function other modules can increase the value of
 	      * estimated_process_count and thus we do not know about processes created
@@ -70,98 +62,33 @@ int init_tm_stats_child(void)
 {
 	int size;
 
-	     /* We are called from child_init, estimated_process_count has definitive
-	      * value now and thus we can safely allocate the variables
-	      */
-	size = sizeof(stat_counter) * get_max_procs();
-	tm_stats->s_waiting = shm_malloc(size);
-	if (tm_stats->s_waiting == 0) {
-		ERR("No mem for stats\n");
-		goto error1;
+	/* We are called from child_init, estimated_process_count has definitive
+	 * value now and thus we can safely allocate the variables
+	 */
+	if (tm_stats==0){
+		size=sizeof(*tm_stats) * get_max_procs();
+		tm_stats=shm_malloc(size);
+		if (tm_stats == 0) {
+			ERR("No mem for stats\n");
+			goto error;
+		}
+		memset(tm_stats, 0, size);
 	}
-	memset(tm_stats->s_waiting, 0, size);
-
-	tm_stats->s_transactions = shm_malloc(size);
-	if (tm_stats->s_transactions == 0) {
-		ERR("No mem for stats\n");
-		goto error2;
-	}
-	memset(tm_stats->s_transactions, 0, size);
-
-	tm_stats->s_client_transactions = shm_malloc(size);
-	if (tm_stats->s_client_transactions == 0) {
-		ERR("No mem for stats\n");
-		goto error3;
-	}
-	memset(tm_stats->s_client_transactions, 0, size);
-
-#ifdef TM_MORE_STATS 
-	tm_stats->t_created = shm_malloc(size);
-	if (tm_stats->t_created == 0) {
-		ERR("No mem for stats\n");
-		goto error4;
-	}
-	memset(tm_stats->t_created, 0, size);
-
-	tm_stats->t_freed = shm_malloc(size);
-	if (tm_stats->t_freed == 0) {
-		ERR("No mem for stats\n");
-		goto error5;
-	}
-	memset(tm_stats->t_freed, 0, size);
-
-	tm_stats->delayed_free = shm_malloc(size);
-	if (tm_stats->delayed_free == 0) {
-		ERR("No mem for stats\n");
-		goto error6;
-	}
-	memset(tm_stats->delayed_free, 0, size);
-#endif /* TM_MORE_STATS  */
-
-
+	
 	return 0;
-#ifdef TM_MORE_STATS 
- error6:
-	shm_free(tm_stats->t_freed);
-	tm_stats->t_freed = 0;
- error5:
-	shm_free(tm_stats->t_created);
-	tm_stats->t_created = 0;
- error4:
-	shm_free(tm_stats->s_client_transactions);
-	tm_stats->s_client_transactions = 0;
-#endif /* TM_MORE_STATS */
- error3:
-	shm_free(tm_stats->s_transactions);
-	tm_stats->s_transactions = 0;
- error2:
-	shm_free(tm_stats->s_waiting);
-	tm_stats->s_waiting = 0;
- error1:
-	shm_free(tm_stats);
+error:
 	return -1;
 }
+
 
 
 void free_tm_stats()
 {
 	if (tm_stats == 0) return;
-#ifdef TM_MORE_STATS 
-	if (tm_stats->delayed_free)
-		shm_free(tm_stats->delayed_free);
-	if (tm_stats->t_freed)
-		shm_free(tm_stats->t_freed);
-	if (tm_stats->t_created)
-		shm_free(tm_stats->t_created);
-#endif
-	if (tm_stats->s_client_transactions) 
-		shm_free(tm_stats->s_client_transactions);
-	if (tm_stats->s_transactions)
-		shm_free(tm_stats->s_transactions);
-	if (tm_stats->s_waiting)
-		shm_free(tm_stats->s_waiting);
 	shm_free(tm_stats);
+	tm_stats=0;
 }
+
 
 
 const char* tm_rpc_stats_doc[2] = {
@@ -169,50 +96,73 @@ const char* tm_rpc_stats_doc[2] = {
 	0
 };
 
+
+/* res=s1+s2 */
+#define tm_proc_stats_add_base(res, s1, s2) \
+	do{\
+		(res)->waiting=(s1)->waiting+(s2)->waiting; \
+		(res)->transactions=(s1)->transactions+(s2)->transactions; \
+		(res)->client_transactions=(s1)->client_transactions+\
+									(s2)->client_transactions; \
+		(res)->completed_3xx=(s1)->completed_3xx+(s2)->completed_3xx; \
+		(res)->completed_4xx=(s1)->completed_4xx+(s2)->completed_4xx; \
+		(res)->completed_5xx=(s1)->completed_5xx+(s2)->completed_5xx; \
+		(res)->completed_6xx=(s1)->completed_6xx+(s2)->completed_6xx; \
+		(res)->completed_2xx=(s1)->completed_2xx+(s2)->completed_2xx; \
+		(res)->replied_locally=(s1)->replied_locally+(s2)->replied_locally; \
+		(res)->deleted=(s1)->deleted+(s2)->deleted; \
+	}while(0)
+
+
+#ifdef TM_MORE_STATS
+#define tm_proc_stats_add(res, s1, s2) \
+	do{\
+		tm_proc_stats_add_base(res, s1, s2); \
+		(res)->t_created=(s1)->t_created+(s2)->t_created; \
+		(res)->t_freed=(s1)->t_freed+(s2)->t_freed; \
+		(res)->delayed_free=(s1)->delayed_free+(s2)->delayed_free; \
+	}while(0)
+#else
+#define tm_proc_stats_add(res, s1, s2) tm_proc_stats_add_base(res, s1, s2)
+#endif
+
+
+
 /* we don't worry about locking data during reads (unlike
  * setting values which always happens from some locks) 
  */
 void tm_rpc_stats(rpc_t* rpc, void* c)
 {
 	void* st;
-	unsigned long total, current, waiting, total_local;
-#ifdef TM_MORE_STATS 
-	unsigned long created, freed, delayed_free;
-#endif
+	unsigned long current, waiting;
+	struct t_proc_stats all;
 	int i, pno;
 
 	pno = get_max_procs();
-#ifdef TM_MORE_STATS 
-	created=freed=delayed_free=0;
-#endif
-	for(i = 0, total = 0, waiting = 0, total_local = 0; i < pno; i++) {
-		total += tm_stats->s_transactions[i];
-		waiting += tm_stats->s_waiting[i];
-		total_local += tm_stats->s_client_transactions[i];
-#ifdef TM_MORE_STATS 
-		created+= tm_stats->t_created[i];
-		freed+= tm_stats->t_freed[i];
-		delayed_free+=tm_stats->delayed_free[i];
-#endif
+	memset(&all, 0, sizeof(all));
+	for(i = 0;i < pno; i++) {
+		tm_proc_stats_add(&all, &all, &tm_stats[i].s);
 	}
-	current = total - tm_stats->deleted;
-	waiting -= tm_stats->deleted;
+	current = all.transactions - all.deleted;
+	waiting = all.waiting - all.deleted;
 
 	if (rpc->add(c, "{", &st) < 0) return;
 
-	rpc->struct_add(st, "dd", "current", current, "waiting", waiting);
-	rpc->struct_add(st, "d", "total", total);
-	rpc->struct_add(st, "d", "total_local", total_local);
-	rpc->struct_add(st, "d", "replied_localy", tm_stats->replied_localy);
+	rpc->struct_add(st, "dd", "current", (unsigned) current, "waiting",
+										 (unsigned) waiting);
+	rpc->struct_add(st, "d", "total", (unsigned) all.transactions);
+	rpc->struct_add(st, "d", "total_local", (unsigned)all.client_transactions);
+	rpc->struct_add(st, "d", "replied_locally", (unsigned)all.replied_locally);
 	rpc->struct_add(st, "ddddd", 
-			"6xx", tm_stats->completed_6xx,
-			"5xx", tm_stats->completed_5xx,
-			"4xx", tm_stats->completed_4xx,
-			"3xx", tm_stats->completed_3xx,
-			"2xx", tm_stats->completed_2xx);
+			"6xx", (unsigned int)all.completed_6xx,
+			"5xx", (unsigned int)all.completed_5xx,
+			"4xx", (unsigned int)all.completed_4xx,
+			"3xx", (unsigned int)all.completed_3xx,
+			"2xx", (unsigned int)all.completed_2xx);
 #ifdef TM_MORE_STATS 
-	rpc->struct_add(st, "dd", "created", created, "freed", freed);
-	rpc->struct_add(st, "d", "delayed_free", delayed_free);
+	rpc->struct_add(st, "dd", "created", (unsigned int)all.t_created, "freed",
+						(unsigned int)all.t_freed);
+	rpc->struct_add(st, "d", "delayed_free", (unsigned int)all.delayed_free);
 #endif
 	/* rpc->fault(c, 100, "Trying"); */
 }
