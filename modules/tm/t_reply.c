@@ -474,7 +474,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* t_update_timers_after_sending_reply( rb ); */
 	update_reply_stats( code );
 	trans->relayed_reply_branch=-2;
-	tm_stats->replied_localy++;
+	t_stats_replied_locally();
 	if (lock) UNLOCK_REPLIES( trans );
 
 	/* do UAC cleanup procedures in case we generated
@@ -1344,7 +1344,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		 * or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg==FAKED_REPLY) {
-			tm_stats->replied_localy++;
 			relayed_code = branch==relay
 				? msg_status : t->uac[relay].last_received;
 			/* use to_tag from the original request, or if not present,
@@ -1447,9 +1446,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		memcpy( uas_rb->buffer, buf, res_len );
 		if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
 			update_local_tags(t, &bm, uas_rb->buffer, buf);
+			t_stats_replied_locally();
 		}
-		tm_stats->replied_localy++;
-
+		
 		/* update the status ... */
 		t->uas.status = relayed_code;
 		t->relayed_reply_branch = relay;
@@ -1550,7 +1549,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		winning_msg= branch==local_winner
 			? p_msg :  t->uac[local_winner].reply;
 		if (winning_msg==FAKED_REPLY) {
-			tm_stats->replied_localy++;
+			t_stats_replied_locally();
 			winning_code = branch==local_winner
 				? msg_status : t->uac[local_winner].last_received;
 		} else {
