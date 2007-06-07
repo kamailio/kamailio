@@ -142,6 +142,10 @@ else
 							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
 							unixsock eval dbg print_lib auth_identity
+	# excluded because they do not compile (remove them only after they are
+	#  fixed) -- andrei
+	exclude_modules+= avpops  bdb db_ops dbtext flatstore lcr msilo pdt \
+						permissions speeddial
 endif
 
 # always exclude the CVS dir
