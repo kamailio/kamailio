@@ -337,9 +337,9 @@ static int mod_child(int rank)
 {
 	if (tls_disable || (tls_cfg==0))
 		return 0;
-	/* fix tls config only from the main proc., when we know 
-	 * the exact process number */
-	if (rank == PROC_MAIN){
+	/* fix tls config only from the main proc/PROC_INIT., when we know 
+	 * the exact process number and before any other process starts*/
+	if (rank == PROC_INIT){
 		if (tls_cfg_file.s){
 			if (tls_fix_cfg(*tls_cfg, &srv_defaults, &cli_defaults) < 0) 
 				return -1;
