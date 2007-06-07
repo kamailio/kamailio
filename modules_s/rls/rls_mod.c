@@ -275,7 +275,7 @@ int rls_child_init(int _rank)
 {
 	rls_db = NULL;
 	if (use_db) {
-		if (_rank==PROC_MAIN || _rank==PROC_TCP_MAIN)
+		if (_rank==PROC_INIT || _rank==PROC_MAIN || _rank==PROC_TCP_MAIN)
 			return 0; /* do nothing for the main or tcp_main processes */
 		if (rls_dbf.init) rls_db = rls_dbf.init(db_url);
 		if (!rls_db) {

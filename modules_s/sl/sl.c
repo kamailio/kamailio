@@ -141,7 +141,7 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if (rank == 1) {
+	if (rank == PROC_INIT) {
 		if (init_sl_stats_child() < 0) {
 			ERR("init_sl_stats_child failed\n");
 			return -1;

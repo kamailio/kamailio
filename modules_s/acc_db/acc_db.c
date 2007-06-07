@@ -941,7 +941,7 @@ static void on_req(struct cell* t, int type, struct tmcb_params *ps)
 
 static int child_init(int rank)
 {
-	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
 	if (db_url.s) {

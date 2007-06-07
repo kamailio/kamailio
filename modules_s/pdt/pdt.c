@@ -261,7 +261,7 @@ static int child_init(int r)
 		}
 	}
 
-	if (r==PROC_MAIN || r==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || r==PROC_MAIN || r==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main or tcp_main processes */
 
 	db_con = pdt_dbf.init(db_url);

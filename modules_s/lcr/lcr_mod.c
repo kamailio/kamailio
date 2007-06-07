@@ -313,7 +313,7 @@ int lcr_db_ver(char* db_url, str* name)
  */
 static int child_init(int rank)
 {
-	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main or tcp_main processes */
 	if (lcr_db_init(db_url.s) < 0) {
 		LOG(L_ERR, "ERROR: lcr:child_init():"

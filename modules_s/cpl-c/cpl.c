@@ -389,7 +389,7 @@ static int cpl_child_init(int rank)
 	pid_t pid;
 
 	/* don't do anything for main process and TCP manager process */
-	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 
 	/* only child 1 will fork the aux process */

@@ -154,7 +154,7 @@ static int child_init(int rank)
 		{.name = NULL}
 	};
 
-	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 	
 	ctx = db_ctx("avp_db");
