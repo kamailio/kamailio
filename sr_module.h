@@ -38,6 +38,9 @@
  *  2004-09-19  switched to version.h for the module versions checks (andrei)
  *  2004-12-03  changed param_func_t to (modparam_t, void*), killed
  *               param_func_param_t   (andrei)
+ *  2007-06-07  added PROC_INIT, called in the main process context
+ *               (same as PROC_MAIN), buf guaranteed to be called before
+ *               any other process is forked (andrei)
  */
 
 
@@ -88,6 +91,16 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define PROC_FIFO      PROC_RPC  /* FIFO attendant process */
 #define PROC_TCP_MAIN -4  /* TCP main process */
 #define PROC_UNIXSOCK -5  /* Unix socket server */
+#define PROC_INIT     -127 /* special rank, the context is the main ser
+							  process, but this is guaranteed to be executed
+							  before any process is forked, so it can be used
+							  to setup shared variables that depend on some
+							  after mod_init available information (e.g.
+							  total number of processes).
+							 WARNING: child_init(PROC_MAIN) is again called
+							 in the same process (main), but latter 
+							 (before tcp), so make sure you don't init things 
+							 twice, bot in PROC_MAIN and PROC_INT */
 #define PROC_NOCHLDINIT -128 /* no child init functions will be called
                                 if this rank is used in fork_process() */
 

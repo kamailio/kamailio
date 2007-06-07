@@ -72,6 +72,8 @@
  *               safer shutdown on start-up error (andrei)
  * 2007-02-09  TLS support split into tls-in-core (CORE_TLS) and generic TLS 
  *             (USE_TLS)  (andrei)
+ * 2007-06-07  added support for locking pages in mem. and using real time
+ *              scheduling policies (andrei)
  */
 
 
@@ -330,6 +332,24 @@ int sock_mode= S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* rw-rw---- */
 /* more config stuff */
 int disable_core_dump=0; /* by default enabled */
 int open_files_limit=-1; /* don't touch it by default */
+
+/* memory options */
+int shm_force_alloc=0; /* force immediate (on startup) page allocation
+						  (by writting 0 in the pages), useful if
+						  mlock_pages is also 1 */
+int mlock_pages=0; /* default off, try to disable swapping */
+
+/* real time options */
+int real_time=0; /* default off, flags: 1 on only timer, 2  slow timer,
+					                    4 all procs (7=all) */
+int rt_prio=0;  
+int rt_policy=0; /* SCHED_OTHER */
+int rt_timer1_prio=0;  /* "fast" timer */
+int rt_timer2_prio=0;  /* "slow" timer */
+int rt_timer1_policy=0; /* "fast" timer, SCHED_OTHER */
+int rt_timer2_policy=0; /* "slow" timer, SCHED_OTHER */
+
+
 /* a hint to reply modules whether they should send reply
    to IP advertised in Via or IP from which a request came
 */
@@ -903,6 +923,9 @@ int main_loop()
 					/* child */
 					/* timer!*/
 					/* process_bit = 0; */
+					if (real_time&2)
+						set_rt_prio(rt_timer2_prio, rt_timer2_policy);
+					
 					if (arm_slow_timer()<0) goto error;
 					slow_timer_main();
 				}else{
@@ -919,6 +942,8 @@ int main_loop()
 					/* child */
 					/* timer!*/
 					/* process_bit = 0; */
+					if (real_time&1)
+						set_rt_prio(rt_timer1_prio, rt_timer1_policy);
 					if (arm_timer()<0) goto error;
 					timer_main();
 				}else{
@@ -931,18 +956,37 @@ int main_loop()
 			"stand-alone receiver @ %s:%s",
 			 bind_address->name.s, bind_address->port_no_str.s );
 
+		/* init childs with rank==PROC_INIT before forking any process, 
+		 * this is a place for delayed (after mod_init) initializations
+		 * (e.g. shared vars that depend on the total number of processes
+		 * that is known only after all mod_inits have been executed )
+		 * WARNING: the same init_child will be called latter, a second time
+		 * for the "main" process with rank PROC_MAIN (make sure things are 
+		 * not initialized twice)*/
+		if (init_child(PROC_INIT) < 0) {
+			LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_INT) --"
+						" exiting\n");
+			goto error;
+		}
+	
+	/* call it also w/ PROC_MAIN to make sure modules that init things only
+	 * in PROC_MAIN get a chance to run */
+	if (init_child(PROC_MAIN) < 0) {
+		LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_MAIN) -- exiting\n");
+		goto error;
+	}
 
-		     /* We will call child_init even if we
-		      * do not fork - and it will be called with rank 1 because
-		      * in fact we behave like a child, not like main process
-		      */
+		/* We will call child_init even if we
+		 * do not fork - and it will be called with rank 1 because
+		 * in fact we behave like a child, not like main process
+		 */
 
 		if (init_child(1) < 0) {
 			LOG(L_ERR, "main_dontfork: init_child failed\n");
 			goto error;
 		}
 		return udp_rcv_loop();
-	}else{
+	}else{ /* fork: */
 
 		for(si=udp_listen;si;si=si->next){
 			/* create the listening socket (for each address)*/
@@ -994,6 +1038,20 @@ int main_loop()
 			 * so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop privileges */
 
+		/* init childs with rank==PROC_INIT before forking any process, 
+		 * this is a place for delayed (after mod_init) initializations
+		 * (e.g. shared vars that depend on the total number of processes
+		 * that is known only after all mod_inits have been executed )
+		 * WARNING: the same init_child will be called latter, a second time
+		 * for the "main" process with rank PROC_MAIN (make sure things are 
+		 * not initialized twice)*/
+		if (init_child(PROC_INIT) < 0) {
+			LOG(L_ERR, "ERROR: main: error in init_child(PROC_INT) --"
+					" exiting\n");
+			goto error;
+		}
+
+
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
@@ -1021,7 +1079,6 @@ int main_loop()
 	/*this is the main process*/
 	bind_address=0;				/* main proc -> it shouldn't send anything, */
 
-
 	{
 #ifdef USE_SLOW_TIMER
 		/* fork again for the "slow" timer process*/
@@ -1031,6 +1088,8 @@ int main_loop()
 			goto error;
 		}else if (pid==0){
 			/* child */
+			if (real_time&2)
+				set_rt_prio(rt_timer2_prio, rt_timer2_policy);
 			if (arm_slow_timer()<0) goto error;
 			slow_timer_main();
 		}else{
@@ -1045,6 +1104,8 @@ int main_loop()
 			goto error;
 		}else if (pid==0){
 			/* child */
+			if (real_time&1)
+				set_rt_prio(rt_timer1_prio, rt_timer1_policy);
 			if (arm_timer()<0) goto error;
 			timer_main();
 		}else{
@@ -1055,7 +1116,7 @@ int main_loop()
  *  fork  a tcp capable process, the corresponding tcp. comm. fds in pt[] must
  *  be set before calling tcp_main_loop()) */
 	if (init_child(PROC_MAIN) < 0) {
-		LOG(L_ERR, "main: error in init_child\n");
+		LOG(L_ERR, "ERROR: main: error in init_child\n");
 		goto error;
 	}
 
@@ -1504,7 +1565,7 @@ try_again:
 	 *     -it must be after we know uid (so that in the SYSV sems case,
 	 *        the sems will have the correct euid)
 	 * --andrei */
-	if (init_shm_mallocs()==-1)
+	if (init_shm_mallocs(shm_force_alloc)==-1)
 		goto error;
 	if (init_atomic_ops()==-1)
 		goto error;
@@ -1556,6 +1617,11 @@ try_again:
 			goto error;
 		}
 	}
+	if (mlock_pages)
+		mem_lock_pages();
+	
+	if (real_time&4)
+			set_rt_prio(rt_prio, rt_policy);
 	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
