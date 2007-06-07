@@ -106,6 +106,8 @@ static inline void destroy_dlg(struct dlg_cell *dlg)
 	DBG("DBUG:dialog:destroy_dlg: destroing dialog %p\n",dlg);
 	if (dlg->to_tag.s && dlg->to_tag.len)
 		shm_free(dlg->to_tag.s);
+	if (dlg->cbs.first)
+		destroy_dlg_callbacks_list(dlg->cbs.first);
 	shm_free(dlg);
 }
 

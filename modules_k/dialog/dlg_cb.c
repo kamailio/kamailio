@@ -45,21 +45,25 @@ int init_dlg_callbacks()
 }
 
 
-void destroy_dlg_callbacks()
+void destroy_dlg_callbacks_list(struct dlg_callback *cb)
 {
-	struct dlg_callback *cb;
 	struct dlg_callback *cb_t;
 
-	if (create_cbs==0)
-		return;
-
-	cb = create_cbs->first;
 	while(cb) {
 		cb_t = cb;
 		cb = cb->next;
 		/* FIXME - what about parameters ? */
 		shm_free(cb_t);
 	}
+}
+
+
+void destroy_dlg_callbacks()
+{
+	if (create_cbs==0)
+		return;
+
+	destroy_dlg_callbacks_list(create_cbs->first);
 	shm_free(create_cbs);
 	create_cbs = 0;
 }

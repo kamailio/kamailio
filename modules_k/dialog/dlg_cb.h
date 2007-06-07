@@ -65,6 +65,8 @@ int init_dlg_callbacks();
 
 void destroy_dlg_callbacks();
 
+void destroy_dlg_callbacks_list(struct dlg_callback *cb);
+
 int register_dlgcb( struct dlg_cell* dlg, int types, dialog_cb f, void *param);
 
 void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg);
