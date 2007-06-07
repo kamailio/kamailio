@@ -289,11 +289,11 @@ static void core_shmmem(rpc_t* rpc, void* c)
 	shm_info(&mi);
 	rpc->add(c, "{", &handle);
 	rpc->struct_add(handle, "ddddd",
-		"total", mi.total_size,
-		"free", mi.free,
-		"used", mi.real_used,
-		"max_used", mi.max_used,
-		"fragments", mi.total_frags
+		"total", (unsigned int)mi.total_size,
+		"free", (unsigned int)mi.free,
+		"used", (unsigned int)mi.real_used,
+		"max_used", (unsigned int)mi.max_used,
+		"fragments", (unsigned int)mi.total_frags
 	);
 }
 

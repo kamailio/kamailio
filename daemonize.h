@@ -29,6 +29,7 @@
  * History:
  * --------
  *  2004-02-20  created by andrei
+ *  2007-06-07 added mem_lock_pages() (andrei)
  */
 
 #ifndef _daemonize_h
@@ -38,6 +39,8 @@ int daemonize(char* name);
 int do_suid();
 int increase_open_fds(int target);
 int set_core_dump(int enable, int size);
+int mem_lock_pages();
+int set_rt_prio(int prio, int policy);
 
 
 #endif

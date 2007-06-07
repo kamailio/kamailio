@@ -78,6 +78,9 @@
  *              (vlada)
  * 2007-02-09  separated command needed for tls-in-core and for tls in general
  *              (andrei)
+ *  2007-06-07  added SHM_FORCE_ALLOC, MLOCK_PAGES, REAL_TIME, RT_PRIO,
+ *              RT_POLICY, RT_TIMER1_PRIO, RT_TIMER1_POLICY, RT_TIMER2_PRIO,
+ *              RT_TIMER2_POLICY (andrei)
  */
 
 %{
@@ -328,6 +331,15 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token ADVERTISED_PORT
 %token DISABLE_CORE
 %token OPEN_FD_LIMIT
+%token SHM_FORCE_ALLOC
+%token MLOCK_PAGES
+%token REAL_TIME
+%token RT_PRIO
+%token RT_POLICY
+%token RT_TIMER1_PRIO
+%token RT_TIMER1_POLICY
+%token RT_TIMER2_PRIO
+%token RT_TIMER2_POLICY
 %token MCAST_LOOPBACK
 %token MCAST_TTL
 %token TOS
@@ -897,6 +909,24 @@ assign_stm:
 	| DISABLE_CORE EQUAL error { yyerror("boolean value expected"); }
 	| OPEN_FD_LIMIT EQUAL NUMBER { open_files_limit=$3; }
 	| OPEN_FD_LIMIT EQUAL error { yyerror("number expected"); }
+	| SHM_FORCE_ALLOC EQUAL NUMBER { shm_force_alloc=$3; }
+	| SHM_FORCE_ALLOC EQUAL error { yyerror("boolean value expected"); }
+	| MLOCK_PAGES EQUAL NUMBER { mlock_pages=$3; }
+	| MLOCK_PAGES EQUAL error { yyerror("boolean value expected"); }
+	| REAL_TIME EQUAL NUMBER { real_time=$3; }
+	| REAL_TIME EQUAL error { yyerror("boolean value expected"); }
+	| RT_PRIO EQUAL NUMBER { rt_prio=$3; }
+	| RT_PRIO EQUAL error { yyerror("boolean value expected"); }
+	| RT_POLICY EQUAL NUMBER { rt_policy=$3; }
+	| RT_POLICY EQUAL error { yyerror("boolean value expected"); }
+	| RT_TIMER1_PRIO EQUAL NUMBER { rt_timer1_prio=$3; }
+	| RT_TIMER1_PRIO EQUAL error { yyerror("boolean value expected"); }
+	| RT_TIMER1_POLICY EQUAL NUMBER { rt_timer1_policy=$3; }
+	| RT_TIMER1_POLICY EQUAL error { yyerror("boolean value expected"); }
+	| RT_TIMER2_PRIO EQUAL NUMBER { rt_timer2_prio=$3; }
+	| RT_TIMER2_PRIO EQUAL error { yyerror("boolean value expected"); }
+	| RT_TIMER2_POLICY EQUAL NUMBER { rt_timer2_policy=$3; }
+	| RT_TIMER2_POLICY EQUAL error { yyerror("boolean value expected"); }
 	| MCAST_LOOPBACK EQUAL NUMBER {
 		#ifdef USE_MCAST
 			mcast_loopback=$3;

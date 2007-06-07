@@ -71,10 +71,36 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - support for locking ser's pages in memory, pre-mapping
+               all the shared memory on startup (fill it with 0)
+             - real time options
+             - devel: new PROC_INIT rank, init_child(PROC_INIT) called first
              - futex support on linux (better behaviour when waiting on 
                long held locks, almost no performance impact otherwise)
 
 new config variables:
+  mlock_pages = yes |no (default no) - locks all ser pages into memory making 
+    it unswappable (in general one doesn't want his sip proxy swapped out :-))
+  shm_force_alloc = yes | no (default no) - tries to pre-fault all the 
+    shared memory, before starting. When on start time will increase, but
+    combined with mlock_pages will guarantee ser will get all its memory from
+    the beginning (no more kswapd slow downs)
+  real_time = <int> (flags) (default off). - sets real time priority
+     for all the ser processes, or the timers. 
+     Possible values:   0  - off
+                        1  - the "fast" timer
+                        2  - the "slow" timer
+                        4  - all processes, except the timers
+     Example: real_time= 7 => everything switched to real time priority.
+  rt_prio = <int> (default 0) - real time priority used for everything except
+     the timers, if real_time is enabled
+  rt_policy= <0..3> (default 0)- real time scheduling policy, 0 = SCHED_OTHER,
+     1= SCHED_RR and 2=SCHED_FIFO
+  rt_timer1_prio=<int> (default 0) - like rt_prio but for the "fast" timer
+     process (if real_time & 1)
+  rt_timer1_policy=<0..3> (default 0) - like rt_policy but for the "fast" timer
+  rt_timer2_prio=<int> (default 0) - like rt_prio but for the "slow" timer
+  rt_timer2_policy=<0..3> (default 0) - like rt_policy but for the "slow" timer
   tcp_source_ipv4 = IPv4 address
   tcp_source_ipv6 = IPv6 address
     Set the given source IP for all outbound TCP connections.

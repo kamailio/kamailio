@@ -64,6 +64,9 @@
  *              options (andrei)
  *  2006-10-13  added STUN_ALLOW_STUN, STUN_ALLOW_FP, STUN_REFRESH_INTERVAL
  *              (vlada)
+ *  2007-06-07  added SHM_FORCE_ALLOC, MLOCK_PAGES, REAL_TIME, RT_PRIO,
+ *              RT_POLICY, RT_TIMER1_PRIO, RT_TIMER1_POLICY, RT_TIMER2_PRIO,
+ *              RT_TIMER2_POLICY (andrei)
  */
 
 
@@ -290,6 +293,15 @@ ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
 DISABLE_CORE		"disable_core_dump"
 OPEN_FD_LIMIT		"open_files_limit"
+SHM_FORCE_ALLOC		"shm_force_alloc"
+MLOCK_PAGES			"mlock_pages"
+REAL_TIME			"real_time"
+RT_PRIO				"rt_prio"
+RT_POLICY			"rt_policy"
+RT_TIMER1_PRIO		"rt_timer1_prio"|"rt_fast_timer_prio"|"rt_ftimer_prio"
+RT_TIMER1_POLICY	"rt_timer1_policy"|"rt_ftimer_policy"
+RT_TIMER2_PRIO		"rt_timer2_prio"|"rt_stimer_prio"
+RT_TIMER2_POLICY	"rt_timer2_policy"|"rt_stimer_policy"
 MCAST_LOOPBACK		"mcast_loopback"
 MCAST_TTL		"mcast_ttl"
 TOS			"tos"
@@ -535,6 +547,24 @@ EAT_ABLE	[\ \t\b\r]
 									return DISABLE_CORE; }
 <INITIAL>{OPEN_FD_LIMIT}		{	count(); yylval.strval=yytext;
 									return OPEN_FD_LIMIT; }
+<INITIAL>{SHM_FORCE_ALLOC}		{	count(); yylval.strval=yytext;
+									return SHM_FORCE_ALLOC; }
+<INITIAL>{MLOCK_PAGES}		{	count(); yylval.strval=yytext;
+									return MLOCK_PAGES; }
+<INITIAL>{REAL_TIME}		{	count(); yylval.strval=yytext;
+									return REAL_TIME; }
+<INITIAL>{RT_PRIO}		{	count(); yylval.strval=yytext;
+									return RT_PRIO; }
+<INITIAL>{RT_POLICY}		{	count(); yylval.strval=yytext;
+									return RT_POLICY; }
+<INITIAL>{RT_TIMER1_PRIO}		{	count(); yylval.strval=yytext;
+									return RT_TIMER1_PRIO; }
+<INITIAL>{RT_TIMER1_POLICY}		{	count(); yylval.strval=yytext;
+									return RT_TIMER1_POLICY; }
+<INITIAL>{RT_TIMER2_PRIO}		{	count(); yylval.strval=yytext;
+									return RT_TIMER2_PRIO; }
+<INITIAL>{RT_TIMER2_POLICY}		{	count(); yylval.strval=yytext;
+									return RT_TIMER2_POLICY; }
 <INITIAL>{MCAST_LOOPBACK}		{	count(); yylval.strval=yytext;
 									return MCAST_LOOPBACK; }
 <INITIAL>{MCAST_TTL}		{	count(); yylval.strval=yytext;

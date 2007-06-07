@@ -32,6 +32,8 @@
  *  2004-03-04  moved setuid/setgid in do_suid() (andrei)
  *  2004-03-25  added increase_open_fds & set_core_dump (andrei)
  *  2004-05-03  applied pgid patch from janakj
+ *  2007-06-07  added mlock_pages (no swap) support (andrei)
+  *             added set_rt_prio() (andrei)
  */
 
 
@@ -55,6 +57,15 @@
 #include <sys/time.h>    
 #include <sys/resource.h> /* setrlimit */
 #include <unistd.h>
+
+#ifdef HAVE_SCHED_SETSCHEDULER
+#include <sched.h>
+#endif
+
+#ifdef _POSIX_MEMLOCK
+#define HAVE_MLOCKALL
+#include <sys/mman.h>
+#endif
 
 #include "daemonize.h"
 #include "globals.h"
@@ -337,3 +348,75 @@ done:
 error:
 	return -1;
 }
+
+
+
+/* lock pages in memory (make the process not swapable) */
+int mem_lock_pages()
+{
+#ifdef HAVE_MLOCKALL
+	if (mlockall(MCL_CURRENT|MCL_FUTURE) !=0){
+		LOG(L_WARN,"failed to lock the memory pages (disable swap): %s [%d]\n",
+				strerror(errno), errno);
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+#else /* if MLOCKALL not defined return error */
+		LOG(L_WARN,"failed to lock the memory pages: no mlockall support\n");
+	return -1;
+#endif 
+}
+
+
+/* tries to set real time priority 
+ * policy: 0 - SCHED_OTHER, 1 - SCHED_RR, 2 - SCHED_FIFO */
+int set_rt_prio(int prio, int policy)
+{
+#ifdef HAVE_SCHED_SETSCHEDULER
+	struct sched_param sch_p;
+	int min_prio, max_prio;
+	int sched_policy;
+	
+	switch(policy){
+		case 0:
+			sched_policy=SCHED_OTHER;
+			break;
+		case 1:
+			sched_policy=SCHED_RR;
+			break;
+		case 2:
+			sched_policy=SCHED_FIFO;
+			break;
+		default:
+			LOG(L_WARN, "WARNING: invalid scheduling policy,using"
+						" SCHED_OTHER\n");
+			sched_policy=SCHED_OTHER;
+	}
+	memset(&sch_p, 0, sizeof(sch_p));
+	max_prio=sched_get_priority_max(policy);
+	min_prio=sched_get_priority_min(policy);
+	if (prio<min_prio){
+		LOG(L_WARN, "scheduling priority %d too small, using minimum value"
+					" (%d)\n", prio, min_prio);
+		prio=min_prio;
+	}else if (prio>max_prio){
+		LOG(L_WARN, "scheduling priority %d too big, using maximum value"
+					" (%d)\n", prio, max_prio);
+		prio=max_prio;
+	}
+	sch_p.sched_priority=prio;
+	if (sched_setscheduler(0, sched_policy, &sch_p) != 0){
+		LOG(L_WARN, "could not switch to real time priority: %s [%d]\n",
+					strerror(errno), errno);
+		return -1;
+	};
+	return 0;
+#else
+	LOG(L_WARN, "real time support not available\n");
+	return -1;
+#endif
+}
+
+
