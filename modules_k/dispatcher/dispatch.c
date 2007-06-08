@@ -904,12 +904,14 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 	DBG("DISPATCHER:ds_select_dst: alg hash [%u]\n", hash);
 	cnt = 0;
-	if(ds_use_default!=0)
+
+	if(ds_use_default!=0 && _ds_list[idx].nr!=1)
 		hash = hash%(_ds_list[idx].nr-1);
 	else
 		hash = hash%_ds_list[idx].nr;
 	i=hash;
-	while ((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST) || (_ds_list[idx].dlist[i].flags & DS_PROBING_DST))
+	while ((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
+			|| (_ds_list[idx].dlist[i].flags & DS_PROBING_DST))
 	{
 		if(ds_use_default!=0)
 			i = (i+1)%(_ds_list[idx].nr-1);
