@@ -226,23 +226,18 @@ static inline int calculate_hooks(dlg_t* _d)
 {
 	str* uri;
 	struct sip_uri puri;
-	param_hooks_t hooks;
-	param_t* params;
 
+	/* we might re-calc. some existing hooks =>
+	 * reset all the hooks to 0 */
+	memset(&_d->hooks, 0, sizeof(_d->hooks));
 	if (_d->route_set) {
 		uri = &_d->route_set->nameaddr.uri;
 		if (parse_uri(uri->s, uri->len, &puri) < 0) {
 			LOG(L_ERR, "calculate_hooks(): Error while parsing URI\n");
 			return -1;
 		}
-
-		if (parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0) {
-			LOG(L_ERR, "calculate_hooks(): Error while parsing parameters\n");
-			return -2;
-		}
-		free_params(params);
 		
-		if (hooks.uri.lr) {
+		if (puri.lr.s) {
 			if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
 			else _d->hooks.request_uri = &_d->rem_uri;
 			_d->hooks.next_hop = &_d->route_set->nameaddr.uri;
