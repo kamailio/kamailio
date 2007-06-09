@@ -587,8 +587,13 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 #endif
 	if (retr_remainder<fr_remainder)
 		return retr_remainder;
-	else
+	else{
+		/* hack to switch to the slow timer */
+#ifdef TM_FAST_RETR_TIMER
+		tl->flags&=~F_TIMER_FAST;
+#endif
 		return fr_remainder;
+	}
 disabled:
 	return rbuf->fr_expire-ticks;
 }

@@ -32,6 +32,9 @@
  *  2005-11-03  rewritten to use the new timers (andrei)
  *  2007-06-01  support for different retr. intervals per transaction;
  *              added maximum inv. and non-inv. transaction life time (andrei)
+ *  2007-06-09  wait timers and retr. timers (if TM_FAST_RETR_TIMER is defined)
+ *               are run in a fast timer context switching to SLOW timer
+ *               automatically for FR (andrei)
  */
 
 
@@ -40,11 +43,14 @@
 
 #include "defs.h"
 
+#include "../../compiler_opt.h"
 #include "lock.h"
 
 #include "../../timer.h"
 #include "h_table.h"
 
+/* try to do fast retransmissions (but fall back to slow timer for FR */
+#define TM_FAST_RETR_TIMER
 
 
 #ifdef  TM_DIFF_RT_TIMEOUT
@@ -84,8 +90,9 @@ extern int tm_init_timers();
 ticks_t wait_handler(ticks_t t, struct timer_ln *tl, void* data);
 ticks_t retr_buf_handler(ticks_t t, struct timer_ln *tl, void* data);
 
+
 #define init_cell_timers(c) \
-	timer_init(&(c)->wait_timer, wait_handler, (c), 0) /* slow? */
+	timer_init(&(c)->wait_timer, wait_handler, (c), F_TIMER_FAST) /* slow? */
 
 #define init_rb_timers(rb) \
 	timer_init(&(rb)->timer, retr_buf_handler, \
@@ -126,6 +133,10 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 	}
 	/* set active & if retr==-1 set disabled */
 	rb->flags|= (F_RB_RETR_DISABLED & -(retr==-1)); 
+#ifdef TM_FAST_RETR_TIMER
+	/* set timer to fast if retr enabled (retr!=-1) */
+	rb->timer.flags|=(F_TIMER_FAST & -(retr!=-1));
+#endif
 	/* adjust timeout to MIN(fr, maximum lifetime) if rb is a request
 	 *  (for neg. replies we are force to wait for the ACK so use fr) */
 	if (unlikely ((rb->activ_type==TYPE_REQUEST) && 
