@@ -11,12 +11,4 @@
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>openser</name>
     <xi:include href="version.xml"/>
-    <!-- Include extra definitions if found, it is not
-         an error if they are not present, although it
-         would produce a warning
-         -->
-    <xi:include href="extra.xml">
-        <xi:fallback/>
-    </xi:include>
-
 </database>
