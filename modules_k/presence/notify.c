@@ -1424,7 +1424,12 @@ jump_over_body:
 		if(notify_body!=NULL)
 		{
 			if(notify_body->s!=NULL)
-				free(notify_body->s);
+			{
+				if(subs->event->agg_nbody!=NULL)
+					free(notify_body->s);
+				else
+					pkg_free(notify_body->s);
+			}
 			pkg_free(notify_body);
 		}
 	}	
