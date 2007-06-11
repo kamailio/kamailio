@@ -182,7 +182,7 @@ inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
 	int len = 0;
 
 	if ((!_c) || (!_n) || (!_b) || (!_l)) {
-		LOG(L_ERR, "ERROR:print_columns: Invalid parameter value\n");
+		LOG(L_ERR, "ERROR:db_print_columns: Invalid parameter value\n");
 		return -1;
 	}
 
@@ -200,7 +200,7 @@ inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
 	return len;
 
 	error:
-	LOG(L_ERR, "ERROR:print_columns: Error in snprintf\n");
+	LOG(L_ERR, "ERROR:db_print_columns: Error in snprintf\n");
 	return -1;
 }
 
@@ -220,7 +220,7 @@ int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n, int (*
 	for(i = 0; i < _n; i++) {
 		l = _l - res;
 		if ( (*val2str)(_c, _v + i, _b + res, &l) < 0) {
-			LOG(L_ERR, "print_values: Error while converting value to string\n");
+			LOG(L_ERR, "db_print_values: Error while converting value to string\n");
 			return -1;
 		}
 		res += l;
@@ -244,7 +244,7 @@ int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, db
 	int l;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
-		LOG(L_ERR, "print_where: Invalid parameter value\n");
+		LOG(L_ERR, "db_print_where: Invalid parameter value\n");
 		return -1;
 	}
 
@@ -270,7 +270,7 @@ int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, db
 	return len;
 
  error:
-	LOG(L_ERR, "print_where: Error in snprintf\n");
+	LOG(L_ERR, "db_print_where: Error in snprintf\n");
 	return -1;
 }
 
@@ -285,7 +285,7 @@ int db_print_set(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v, int
 	int l;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
-		LOG(L_ERR, "print_set: Invalid parameter value\n");
+		LOG(L_ERR, "db_print_set: Invalid parameter value\n");
 		return -1;
 	}
 
@@ -306,6 +306,6 @@ int db_print_set(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v, int
 	return len;
 
  error:
-	LOG(L_ERR, "print_set: Error in snprintf\n");
+	LOG(L_ERR, "db_print_set: Error in snprintf\n");
 	return -1;
 }
