@@ -33,6 +33,7 @@
 #include "../../db/db_ut.h"
 #include "db_mod.h"
 #include "val.h"
+#include "my_con.h"
 
 
 #include <string.h>
@@ -149,7 +150,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int val2str(SQLHDBC* _c, db_val_t* _v, char* _s, int* _len)
+int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 {
 	int l;
 	char* old_s;

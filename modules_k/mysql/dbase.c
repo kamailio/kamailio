@@ -96,110 +96,6 @@ static int db_mysql_submit_query(db_con_t* _h, const char* _s)
 }
 
 
-/*
- * Print list of values separated by comma
- */
-static int db_mysql_print_values(MYSQL* _c, char* _b, int _l, db_val_t* _v, int _n)
-{
-	int i, res = 0, l;
-
-	if (!_c || !_b || !_l || !_v || !_n) {
-		LOG(L_ERR, "print_values: Invalid parameter value\n");
-		return -1;
-	}
-
-	for(i = 0; i < _n; i++) {
-		l = _l - res;
-		if (val2str(_c, _v + i, _b + res, &l) < 0) {
-			LOG(L_ERR, "print_values: Error while converting value to string\n");
-			return -1;
-		}
-		res += l;
-		if (i != (_n - 1)) {
-			*(_b + res) = ',';
-			res++;
-		}
-	}
-	return res;
-}
-
-
-/*
- * Print where clause of SQL statement
- */
-static int db_mysql_print_where(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
-{
-	int i;
-	int len = 0, ret;
-	int l;
-
-	if (!_c || !_b || !_l || !_k || !_v || !_n) {
-		LOG(L_ERR, "print_where: Invalid parameter value\n");
-		return -1;
-	}
-
-	for(i = 0; i < _n; i++) {
-		if (_o) {
-			ret = snprintf(_b + len, _l - len, "%s%s", _k[i], _o[i]);
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
-		} else {
-			ret = snprintf(_b + len, _l - len, "%s=", _k[i]);
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
-		}
-		l = _l - len;
-		val2str(_c, &(_v[i]), _b + len, &l);
-		len += l;
-		if (i != (_n - 1)) {
-			ret = snprintf(_b + len, _l - len, " AND ");
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
-		}
-	}
-	return len;
-
- error:
-	LOG(L_ERR, "print_where: Error in snprintf\n");
-	return -1;
-}
-
-
-/*
- * Print set clause of update SQL statement
- */
-static int db_mysql_print_set(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
-{
-	int i;
-	int len = 0, ret;
-	int l;
-
-	if (!_c || !_b || !_l || !_k || !_v || !_n) {
-		LOG(L_ERR, "print_set: Invalid parameter value\n");
-		return -1;
-	}
-
-	for(i = 0; i < _n; i++) {
-		ret = snprintf(_b + len, _l - len, "%s=", _k[i]);
-		if (ret < 0 || ret >= (_l - len)) goto error;
-		len += ret;
-
-		l = _l - len;
-		val2str(_c, &(_v[i]), _b + len, &l);
-		len += l;
-		if (i != (_n - 1)) {
-			if ((_l - len) >= 1) {
-				*(_b + len++) = ',';
-			}
-		}
-	}
-	return len;
-
- error:
-	LOG(L_ERR, "print_set: Error in snprintf\n");
-	return -1;
-}
-
 
 /*
  * Initialize database module
@@ -388,8 +284,8 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 
-		ret = db_mysql_print_where(CON_CONNECTION(_h), sql_buf + off,
-				SQL_BUF_LEN - off, _k, _op, _v, _n);
+		ret = db_print_where(_h, sql_buf + off,
+				SQL_BUF_LEN - off, _k, _op, _v, _n, val2str);
 		if (ret < 0) return -1;;
 		off += ret;
 	}
@@ -549,8 +445,7 @@ int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
 
-	ret = db_mysql_print_values(CON_CONNECTION(_h), sql_buf + off,
-			SQL_BUF_LEN - off, _v, _n);
+	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
@@ -595,8 +490,8 @@ int db_mysql_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 
-		ret = db_mysql_print_where(CON_CONNECTION(_h), sql_buf + off,
-				SQL_BUF_LEN - off, _k, _o, _v, _n);
+		ret = db_print_where(_h, sql_buf + off,
+				SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
 		if (ret < 0) return -1;
 		off += ret;
 	}
@@ -639,7 +534,7 @@ int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
-	ret = db_mysql_print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
+	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un, val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
@@ -648,7 +543,7 @@ int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 
-		ret = db_mysql_print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		ret = db_print_where(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
 		if (ret < 0) return -1;
 		off += ret;
 
@@ -691,7 +586,7 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
 
-	ret = db_mysql_print_values(CON_CONNECTION(handle), sql_buf + off, SQL_BUF_LEN - off, vals, n);
+	ret = db_print_values(handle, sql_buf + off, SQL_BUF_LEN - off, vals, n, val2str);
 	if (ret < 0) return -1;
 	off += ret;
 

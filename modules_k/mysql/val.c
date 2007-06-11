@@ -24,6 +24,7 @@
 #include "../../dprint.h"
 #include "../../db/db_ut.h"
 #include "val.h"
+#include "my_con.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -121,7 +122,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
+int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 {
 	int l;
 	char* old_s;
@@ -176,7 +177,7 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			_s += mysql_real_escape_string(_c, _s, VAL_STRING(_v), l);
+			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STRING(_v), l);
 			*_s++ = '\'';
 			*_s = '\0'; /* FIXME */
 			*_len = _s - old_s;
@@ -192,7 +193,7 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			_s += mysql_real_escape_string(_c, _s, VAL_STR(_v).s, l);
+			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STR(_v).s, l);
 			*_s++ = '\'';
 			*_s = '\0';
 			*_len = _s - old_s;
@@ -217,7 +218,7 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			_s += mysql_real_escape_string(_c, _s, VAL_STR(_v).s, l);
+			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STR(_v).s, l);
 			*_s++ = '\'';
 			*_s = '\0';
 			*_len = _s - old_s;

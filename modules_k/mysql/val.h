@@ -25,6 +25,7 @@
 
 #include <mysql/mysql.h>
 #include "../../db/db_val.h"
+#include "../../db/db.h"
 
 
 /*
@@ -36,7 +37,6 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l);
 /*
  * Used when converting result from a query
  */
-int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len);
-
+int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len);
 
 #endif /* VAL_H */
