@@ -59,6 +59,9 @@
 	((struct fm_frag*)((char*)(f)+sizeof(struct fm_frag)+(f)->size ))
 
 #define FRAG_OVERHEAD	(sizeof(struct fm_frag))
+#define INIT_OVERHEAD	\
+	(ROUNDUP(sizeof(struct fm_block))+sizeof(struct fm_frag))
+
 
 
 /* ROUNDTO= 2^k so the following works */
@@ -208,7 +211,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 	if (size <(MIN_FRAG_SIZE+FRAG_OVERHEAD)) return 0;
 	size=ROUNDDOWN(size);
 
-	init_overhead=(ROUNDUP(sizeof(struct fm_block))+sizeof(struct fm_frag));
+	init_overhead=INIT_OVERHEAD;
 	
 	
 	if (size < init_overhead)
@@ -596,6 +599,8 @@ void fm_info(struct fm_block* qm, struct mem_info* info)
 	}
 	info->real_used=info->total_size-info->free;
 	info->used=0; /* we don't really now */
+	info->used=info->real_used-total_frags*FRAG_OVERHEAD-INIT_OVERHEAD-
+					FRAG_OVERHEAD;
 	info->max_used=0; /* we don't really now */
 #endif
 	info->total_frags=total_frags;
