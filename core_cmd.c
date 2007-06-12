@@ -288,10 +288,11 @@ static void core_shmmem(rpc_t* rpc, void* c)
 
 	shm_info(&mi);
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "ddddd",
+	rpc->struct_add(handle, "dddddd",
 		"total", (unsigned int)mi.total_size,
 		"free", (unsigned int)mi.free,
-		"used", (unsigned int)mi.real_used,
+		"used", (unsigned int)mi.used,
+		"real_used",(unsigned int)mi.real_used,
 		"max_used", (unsigned int)mi.max_used,
 		"fragments", (unsigned int)mi.total_frags
 	);
@@ -301,6 +302,121 @@ static const char* core_shmmem_doc[] = {
 	"Returns shared memory info.",  /* Documentation string */
 	0                               /* Method signature(s) */
 };
+
+
+#if defined(SF_MALLOC) || defined(LL_MALLOC)
+static void core_sfmalloc(rpc_t* rpc, void* c)
+{
+	void *handle;
+	int i,r;
+	unsigned long frags, main_s_frags, main_b_frags, pool_frags;
+	unsigned long misses;
+	unsigned long max_misses;
+	unsigned long max_frags;
+	unsigned long max_mem;
+	int max_frags_pool, max_frags_hash;
+	int max_misses_pool, max_misses_hash;
+	int max_mem_pool, max_mem_hash;
+	unsigned long mem;
+
+	if (rpc->scan(c, "d", &r) >= 1) {
+		if (r>=(int)SF_HASH_POOL_SIZE){
+			rpc->fault(c, 500, "invalid hash number %d (max %d)",
+								r, (unsigned int)SF_HASH_POOL_SIZE-1);
+			return;
+		}else if (r<0) goto all;
+		rpc->add(c, "{", &handle);
+		rpc->struct_add(handle, "dd",
+				"hash  ", r,
+				"size  ", r*SF_ROUNDTO);
+		for (i=0; i<SFM_POOLS_NO; i++){
+			rpc->struct_add(handle, "dddd",
+				"pool  ", i,
+				"frags ", (unsigned int)shm_block->pool[i].pool_hash[r].no,
+				"misses", (unsigned int)shm_block->pool[i].pool_hash[r].misses,
+				"mem   ",   (unsigned int)shm_block->pool[i].pool_hash[r].no *
+							r*SF_ROUNDTO
+			);
+		}
+	}
+	return;
+all:
+	max_frags=max_misses=max_mem=0;
+	max_frags_pool=max_frags_hash=0;
+	max_misses_pool=max_misses_hash=0;
+	max_mem_pool=max_mem_hash=0;
+	pool_frags=0;
+	for (i=0; i<SFM_POOLS_NO; i++){
+		frags=0;
+		misses=0;
+		mem=0;
+		for (r=0; r<SF_HASH_POOL_SIZE; r++){
+			frags+=shm_block->pool[i].pool_hash[r].no;
+			misses+=shm_block->pool[i].pool_hash[r].misses;
+			mem+=shm_block->pool[i].pool_hash[r].no*r*SF_ROUNDTO;
+			if (shm_block->pool[i].pool_hash[r].no>max_frags){
+				max_frags=shm_block->pool[i].pool_hash[r].no;
+				max_frags_pool=i;
+				max_frags_hash=r;
+			}
+			if (shm_block->pool[i].pool_hash[r].misses>max_misses){
+				max_misses=shm_block->pool[i].pool_hash[r].misses;
+				max_misses_pool=i;
+				max_misses_hash=r;
+			}
+			if (shm_block->pool[i].pool_hash[r].no*r*SF_ROUNDTO>max_mem){
+				max_mem=shm_block->pool[i].pool_hash[r].no*r*SF_ROUNDTO;
+				max_mem_pool=i;
+				max_mem_hash=r;
+			}
+		}
+		rpc->add(c, "{", &handle);
+		rpc->struct_add(handle, "ddddddd",
+			"pool  ", i,
+			"frags ", (unsigned int)frags,
+			"t. misses", (unsigned int)misses,
+			"mem   ", (unsigned int)mem,
+			"bitmap", (unsigned int)shm_block->pool[i].bitmap,
+			"missed", (unsigned int)shm_block->pool[i].missed,
+			"hits",   (unsigned int)shm_block->pool[i].hits
+		);
+		pool_frags+=frags;
+	}
+	main_s_frags=0;
+	for (r=0; r<SF_HASH_POOL_SIZE; r++){
+		main_s_frags+=shm_block->free_hash[r].no;
+	}
+	main_b_frags=0;
+	for (; r<SF_HASH_SIZE; r++){
+		main_b_frags+=shm_block->free_hash[r].no;
+	}
+	rpc->add(c, "{", &handle);
+	rpc->struct_add(handle, "dddddddddddddd",
+		"max_frags      ", (unsigned int)max_frags,
+		"max_frags_pool ", max_frags_pool,
+		"max_frags_hash", max_frags_hash,
+		"max_misses     ", (unsigned int)max_misses,
+		"max_misses_pool", max_misses_pool,
+		"max_misses_hash", max_misses_hash,
+		"max_mem        ", (unsigned int)max_mem,
+		"max_mem_pool   ", max_mem_pool,
+		"max_mem_hash   ", max_mem_hash,
+		"in_pools_frags ", (unsigned int)pool_frags,
+		"main_s_frags   ", (unsigned int)main_s_frags,
+		"main_b_frags   ", (unsigned int)main_b_frags,
+		"main_frags     ", (unsigned int)(main_b_frags+main_s_frags),
+		"main_bitmap    ", (unsigned int)shm_block->bitmap
+	);
+}
+
+
+
+static const char* core_sfmalloc_doc[] = {
+	"Returns sfmalloc debugging  info.",  /* Documentation string */
+	0                                     /* Method signature(s) */
+};
+#endif
+
 
 
 static const char* core_tcpinfo_doc[] = {
@@ -345,6 +461,9 @@ rpc_export_t core_rpc_methods[] = {
 	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
 	{"core.kill",              core_kill,              core_kill_doc,              0        },
 	{"core.shmmem",            core_shmmem,            core_shmmem_doc,            0	},
+#if defined(SF_MALLOC) || defined(LL_MALLOC)
+	{"core.sfmalloc",          core_sfmalloc,          core_sfmalloc_doc,   0},
+#endif
 	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,          0	},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
