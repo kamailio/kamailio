@@ -153,10 +153,6 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-mysql-module
 
-	mv $(CURDIR)/debian/openser-mysql-module/usr/sbin/openser_mysql.sh $(CURDIR)/debian/openser-mysql-module/usr/sbin/openser_mysql
-	sed -i -e "s/^PATH.*//" $(CURDIR)/debian/openser-mysql-module/usr/sbin/openser_mysql
-	chmod +x $(CURDIR)/debian/openser-mysql-module/usr/sbin/openser_mysql
-
 	# install only the postgres module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-postgres-module \
@@ -164,10 +160,6 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/openser-postgres-module \
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-postgres-module
-
-	mv $(CURDIR)/debian/openser-postgres-module/usr/sbin/openser_postgresql.sh $(CURDIR)/debian/openser-postgres-module/usr/sbin/openser_postgresql
-	sed -i -e "s/^PATH.*//" $(CURDIR)/debian/openser-postgres-module/usr/sbin/openser_postgresql
-	chmod +x $(CURDIR)/debian/openser-postgres-module/usr/sbin/openser_postgresql
 
 	# install only the unixodbc module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(UNIXODBC_MOD_PATH)"  \
