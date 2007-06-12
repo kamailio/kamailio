@@ -51,17 +51,6 @@ if [ -z "$MYLIBDIR" ] ; then
 fi
 
 
-### include resource files, if any
-if [ -f /usr/local/etc/openser/openserctlrc ]; then
-	. /usr/local/etc/openser/openserctlrc
-fi
-if [ -f ~/.openserctlrc ]; then
-	. ~/.openserctlrc
-fi
-if [ -f ./openserctlrc ]; then
-	. ./openserctlrc
-fi
-
 # force values for variables in this section
 # you better set the variables in ~/.openserctlrc
 if [ -z "$ETCDIR" ] ; then
@@ -175,6 +164,7 @@ case $1 in
 #		minfo "Migration successfully completed."
 #		exit 0;
 		usage
+		exit 1
 		;;
 	copy)
 		# copy database to some other name
