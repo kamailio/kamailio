@@ -1,0 +1,343 @@
+#!/bin/bash
+# Configuration script that creates the basic site configuration file
+#
+# Copyright (C) 2006, 2007 Greger Viken Teigre
+# This file is part of ser, a free SIP server.
+# ser is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version
+#  
+# ser is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+# This configuration script copies all the templates from the templates/site
+# directory into the local directory. Either to the 'default' sub-directory or
+# to a named sub-directory. Specifying a name to the configure script will
+# make it use that name as the sub-directory name below $local_prefix (see 
+# below).  If you manage several servers, you will have one such sub-directory
+# per server.
+#
+# You can always generate a new config.m4. If local.m4 exists in the target directory,
+# local.m4 and any other site/server configs will be left untouched.
+# 
+# The generated output from this interactive script goes into config.m4
+# Thus, the most basic switches are turned on and off there.
+
+# Can be changed to generate local sub-dirs somewhere else...
+# Use either absolute or relative path to dir with configure in.
+local_prefix="./local"
+
+if [ ! -d $local_prefix ]; then
+    mkdir $local_prefix
+fi
+
+# Set output file
+if [ -z "$1" ]; then
+    out="$local_prefix/default/config.m4"
+    dir="$local_prefix/default"
+    #Name to be used as a define
+    name="default"
+else
+    out="$local_prefix/$1/config.m4"
+    dir="$local_prefix/$1"
+    name="$1"
+fi
+
+echo "This configure script will generate a new local configuration to $out."
+echo "======================"
+if [ -f "$out" ]; then
+  if [ ! "$2" = "new" ]; then
+    echo "$out already exists. To confirm overwriting this config, please run: $0 [default|yourconfigname] new"
+    exit
+  fi
+fi
+
+# Now read all the parameters
+echo " "
+
+EXTERNAL_IP="`grep 'IPADDR' /etc/sysconfig/network-scripts/ifcfg-eth0 | awk '{split($1,subs,"=");print(subs[2]);}'`"
+
+if [ "$EXTERNAL_IP" = "" ]; then
+    echo "WARNING!!! eth0 does not have a configured IP address in /etc/systconfig/network-scripts/ifcfg-eth0."
+    echo "           This may indicate that you don't have a static IP address or are using another interface (or you have a distrobution not using that file...)."
+    echo "           Using SER with a DHCP-assigned (non-static) IP address is NOT recommended."
+fi
+echo "Press ENTER to accept default values."
+echo " "
+echo "SER Server IP address:"
+echo -n "  IP address to listen on ($EXTERNAL_IP): "
+read ip
+if [ -z "$ip" ]; then
+    ip="$EXTERNAL_IP"
+fi
+echo -n "  Port to listen on (5060): "
+read port
+if [ -z "$port" ]; then
+    port="5060"
+fi
+echo -n "  Public IP address of server (ENTER if same as listen IP): "
+read publicip
+echo " "
+echo -n "Domain name for this SER installation (i.e. mydomain.com, def. mytestser.org) : "
+read seralias
+if [ -z "$seralias" ]; then
+    seralias="mytestser.org"
+fi
+echo " "
+echo -n "SER installation path (/usr/local, i.e. modules in /usr/local/lib/ser/modules): "
+read path
+if [ -z "$path" ]; then
+    path="/usr/local"
+fi
+echo " "
+echo    "Usage:       dbtype://readwriteuser:password@host/databasename"
+echo -n "Database URL (mysql://ser:heslo@localhost/ser): "
+read dburl
+
+if [ -z "$dburl" ]; then
+    dburl="mysql://ser:heslo@localhost/ser"
+fi
+
+echo " "
+echo "You may choose to turn on logging as found in the SER - Getting Started guide."
+echo "This logging can be turned on and off in a live environment, and we recommend"
+echo "everybody to include the logging except in high-load environments."
+echo "(You can also later disable it from your config.m4)"
+echo -n "  Turn on logging (yes): "
+read logging
+if [ -z "$logging" ]; then
+    logging="defined"
+    echo -n "  How much log possibilities to include (low/medium/high, default high): "
+    read level
+    if [ -z "$level" ]; then
+	lognotice="yes"
+	loginfo="yes"
+	logdebug="yes"
+    else
+	if [ "$level" = "low" ]; then
+	    lognotice="yes"
+	else
+	    if [ "$level" = "medium" ]; then
+		lognotice="yes"
+		loginfo="yes"
+	    else
+		lognotice="yes"
+		loginfo="yes"
+		logdebug="yes"
+	    fi
+	fi
+
+    fi
+else 
+  # Did not choose default
+  logging=""
+fi
+
+echo " "
+# ADD your new feature package below
+all_packages="gettingstarted sems"
+
+echo "You can base your configuration file on one of the feature packages available."
+# ADD new feature packages using the directory name of the feature package in the below echo
+echo "Currently, the supported packages are ($all_packages)"
+echo "   gettingstarted  : A set of basic configurations found in most setups"
+echo "   sems            : A configuration file that enables SER as a front-end for SEMS"
+# ADD a one-line description of the new feature package
+echo " "
+echo "You can also choose to include specific components within a feature package (components)."
+echo "And finally, you can choose to include no prepared features, just use your own code in $local_prefix."
+echo " "
+echo "Your choice of feature, choose only one, "
+echo -n "   default is gettingstarted (none, components or $all_packages) ? " 
+read features
+
+if [ -z "$features" ]; then
+	features="gettingstarted"
+fi
+
+if [ "$features" = "components" ]; then
+	echo " "
+	echo "You have chosen to include features per component. Please modify the generated"
+	echo "$out file to include specific components."
+	echo -n "Press enter..."
+	read
+fi
+
+if [ "$features" = "sems" ]; then
+    echo " "
+    echo "sems feature packages is not yet implemented."
+    echo "Exiting..."
+    exit
+fi
+
+if [ "$features" = "gettingstarted" ]; then
+	echo " "
+	echo "You have chosen the SER - Getting Started feature package.  (See SER - Getting Started document)"
+	echo "Which feature set do you want to base your configuration on:"
+	echo "   helloworld     : basic configuration"
+	echo "   auth           : authentication using mysql database"
+	echo "   nat		: NAT traversal handling"
+	echo "   pstn		: Functionality for PSTN integration"
+	echo "   callfwd        : basic call features like call forwarding"
+	echo " "
+	echo "**** WARNING! Only helloworld is implemented!!!!"
+	echo -n "Your choice (default helloworld, auth, nat, pstn, callfwd): "
+	read gettingstarted
+	
+	if [ -z "$gettingstarted" ]; then
+		gettingstarted="helloworld"
+	fi
+	if [ "$gettingstarted" = "nat" ]; then
+		echo " "
+		echo "You have chosen NAT traversal, do you want to use rtpproxy (iptel.org) or mediaproxy (ag-projects)?"
+		echo -n "Your choice (default rtpproxy, mediaproxy): "
+		read proxychoice
+		if [ -z "$proxychoice" ]; then
+			proxychoice="rtpproxy"
+		fi
+	fi
+fi
+
+# Now all options have been answered, create the template local.m4 file.
+if [ ! -f "$dir/local.m4" ]; then
+    if [ ! -d "$dir" ]; then
+      echo "Creating server-specific directory $dir..."
+      mkdir $dir
+    fi
+    echo "Copying site templates to $dir..."
+    cp templates/site/config/* $dir/ > /dev/null 2>&1
+else
+    echo "$dir/local.m4 already exists. Keeping site configurations..."
+    echo "    (only $dir/config.m4 will be created in $dir)"
+fi
+if [ ! -d "$local_prefix/common" ]; then
+    echo "Creating common config directory..."
+    mkdir $local_prefix/common
+    echo "Copying common configs to $local_prefix/common..."
+    cp templates/site/common/* $local_prefix/common/
+else
+    echo "$local_prefix/common already exists, skipping common config templates..."
+fi
+
+def()
+{
+  echo "define(\`$1', \`$2')dnl"
+}
+
+include()
+{
+  echo "include(\`$1')dnl"
+}
+
+cat > $out  << EOF
+dnl  Copyright (C) 2006, 2007 Greger Viken Teigre
+dnl  This file is part of ser, a free SIP server.
+dnl ser is free software; you can redistribute it and/or modify
+dnl it under the terms of the GNU General Public License as published by
+dnl the Free Software Foundation; either version 2 of the License, or
+dnl (at your option) any later version
+dnl  
+dnl ser is distributed in the hope that it will be useful,
+dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+dnl GNU General Public License for more details.
+dnl
+dnl You should have received a copy of the GNU General Public License
+dnl along with this program; if not, write to the Free Software
+dnl Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+dnl
+dnl -------------------------------------
+dnl This file is the basic configuration for a specific SER server.
+dnl Run configure to generate the file automatically.
+dnl -------------------------------------
+dnl The below define can be used throughout the whole build system if you
+dnl want to keep most of your configuration the same across many servers,
+dnl but still want to have differences based on which config is generated.
+dnl How to use the define in your site-specific m4 files in local/:
+dnl   ifdef(`echo '\`'`CFG_$name',`echo '\`'`
+dnl     code_to_include_if_$name
+dnl   ')
+`def CFG_$name true`
+dnl CFGNAME is used by the template system to include the correct site-specific files
+`def CFGNAME $name`
+dnl The local prefix where local common and local sever configs are found
+`def CFGPREFIX $local_prefix`
+dnl
+dnl The public IP address of your SER server
+dnl If you use a private address, that is okay if only user agents on your local network
+dnl will contact your SER server.
+dnl If you map statically a public IP address to your SER server, please define
+dnl SER_PUBLIC_IP below to the public IP address statically mapped to SER_LISTEN_IP 
+dnl NOTE! If your SER server has two interfaces, one public and one private, you
+dnl       must use mhome=yes in your configuration file (add to local-directives.m4)
+dnl       and you should add a new listen= directive too.
+`def "SER_LISTEN_IP" $ip`
+`def "SER_LISTEN_PORT" $port`
+dnl Remove 'dnl ' from the below define to allow the private IP address of your SER server
+dnl to be accessed through a public IP addressed mapped to your private address on your NAT/firewall
+`if [ -z "$publicip" ]; then echo "dnl "; fi``def "SER_PUBLIC_IP" $publicip`
+dnl
+dnl The alias is used to identity messages for this server. If a user agent
+dnl dials (or registers as) sip:user@mytestser.org, that is a local uri.
+`def "SER_ALIAS" $seralias`
+dnl
+`def "SER_INSTALL_PREFIX" $path`
+`def "SER_DB_URL" $dburl`
+dnl Major "switches", put dnl in front of a switch to turn off the functionality
+`if [ -z "$logging" ]; then echo "dnl "; fi``def "INCLUDE_GETTING_STARTED_LOGGING" yes`
+`if [ -z "$lognotice" ]; then echo "dnl "; fi``def "INCLUDE_NOTICE_LOGGING" yes`
+`if [ -z "$loginfo" ]; then echo "dnl "; fi``def "INCLUDE_INFO_LOGGING" yes`
+`if [ -z "$logdebug" ]; then echo "dnl "; fi``def "INCLUDE_DEBUG_LOGGING" yes`
+dnl
+dnl If you want to control in more detail which features to include, you can specify
+dnl the package name as GRANULAR:
+`if [ "$features" != "components" ]; then echo "dnl "; fi``def "GETTINGSTARTED" GRANULAR`
+dnl Then each of the features you want must be defined:
+dnl `def "GS_AUTHENTICATION" yes`
+dnl See the documentation for each feature package for available features to include. 
+dnl 
+dnl Features from other feature packages can also be included in a similar way:
+dnl 1. Set main define (name of feature package) to GRANULAR
+dnl 2. Based on the documented features available, define each XX_FEATURENAME to yes
+dnl
+dnl Below each configuration file within a feature package can be included
+dnl WARNING!!! DO *NOT* include specific features above while ANY of the defines below are active (no dnl in front) 
+`if [ "$gettingstarted" != "helloworld" ]; then echo "dnl "; fi``def "GETTINGSTARTED" HELLOWORLD` 
+`if [ "$gettingstarted" != "auth" ]; then echo "dnl "; fi``def "GETTINGSTARTED" AUTHENTICATION` 
+`if [ "$gettingstarted" != "nat" ]; then echo "dnl "; fi``def "GETTINGSTARTED" HANDLINGNAT` 
+`if [ "$gettingstarted" != "pstn" ]; then echo "dnl "; fi``def "GETTINGSTARTED" PSTN`
+`if [ "$gettingstarted" != "callfwd" ]; then echo "dnl "; fi``def "GETTINGSTARTED" CALLFORWARDING`
+dnl
+dnl Which NAT handling system to include, DON'T define both at the same time
+`if [ "$proxychoice" != "rtpproxy" ]; then echo "dnl "; fi``def "GS_NAT_RTPPROXY" yes`
+`if [ "$proxychoice" != "mediaproxy" ]; then echo "dnl "; fi``def "GS_NAT_MEDIAPROXY" yes`
+dnl
+dnl *******************************
+dnl ******* Other defines *********
+dnl *******************************
+dnl Remove 'dnl ' in front of this define to set DEVELOPMENT
+dnl to tell that this configuration should include DEVELOPMENT ser.cfg code
+dnl You can use this define to turn on and off inclusion of test code in the various
+dnl .m4 files like this:
+dnl ifdef(\`DEVELOPMENT',\`
+dnl   # Code included for testing purposes
+dnl ')dnl
+dnl define(\`DEVELOPMENT',\`defined')dnl
+dnl If this define is not defined, the separators showing start and stop of the various included m4 files
+dnl will not be included in the final ser.cfg
+`def "INCLUDE_SEPARATORS" defined`
+dnl
+dnl Include the local configuration file.
+dnl Copy local.m4 from local/common/ to this directory if you want 
+dnl to control parameters in local.m4 per server. 
+dnl local/common/local.m4 will then be ignored for this server.
+`include "local.m4"`
+EOF

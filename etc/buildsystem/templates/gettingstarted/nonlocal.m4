@@ -1,0 +1,30 @@
+dnl Non-local messages should NOT be left at the end of this part.
+dnl Use uri!=myself or !is_uri_local() etc to determine whether this is a non-local
+dnl call and send to another route (ex. SEND/t_relay) and break; afterwards.
+changequote({{,}})dnl
+ifdef({{GS_HELLOWORLD}},{{
+ANNOTATE({{Up to now we have treated messages for our local server (i.e. destined for a local
+	subscriber) and another server (ex. a gateway to the public telephony network) in the
+	same way.  Now we need to split the processing.  All messages not for myself should
+	just be relayed. In the hello-world script, we assume that SER's relaying knows where
+	to send the message (normally this means looking up the domain part of the sip address
+	found in the message using Domain Name Service, DNS). 
+PARA The keyword 'uri' is defined in the SER core and is a synonym
+        for the request URI or R-URI for short.
+PARA myself is also defined in SER core
+	and it will test the request URI against all listen addresses and aliases that have
+	been defined at the top of ser.cfg (among the directives).
+PARA So, this line tests to see if the R-URI is the same as the SIP
+        proxy itself. Another way to look at it is by saying that if this
+        statement is TRUE then the SIP message is not being sent to our SIP
+        proxy, but rather to some other destination, such as a third party SIP
+        phone.}},
+{{	# Make sure that non-local messages are just relayed. 
+	# myself will test against listen addresses and aliases defined in directives.m4}},
+{{	if (uri!=myself) {
+		route(RELAY);
+		break;
+	};
+}})dnl
+}})dnl
+changequote(`,')dnl
