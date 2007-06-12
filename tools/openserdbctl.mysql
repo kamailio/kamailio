@@ -1,5 +1,3 @@
-#!/bin/sh
-#
 # $Id$
 #
 # Script for adding and dropping OpenSER MySQL tables
@@ -29,52 +27,10 @@
 # 2006-10-27  subscriber table cleanup; some columns are created only if
 #             serweb is installed (bogdan)
 # 2007-02-28  DB migration added (bogdan)
-#
 # 2007-05-21  Move SQL database definitions out of this script (henning)
-#
 # 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
-
-PATH=$PATH:/usr/local/sbin
-
-### include resource files, if any
-if [ -f /usr/local/etc/openser/openserctlrc ]; then
-	. /usr/local/etc/openser/openserctlrc
-fi
-if [ -f ~/.openserctlrc ]; then
-	. ~/.openserctlrc
-fi
-if [ -f ./openserctlrc ]; then
-	. ./openserctlrc
-fi
-
-# force values for variables in this section
-# you better set the variables in ~/.openserctlrc
-if [ -z "$ETCDIR" ] ; then
-	ETCDIR="/usr/local/etc/openser"
-fi
-
-### version for this script
-VERSION='1.3dev - $Revision$'
-
-if [ -z "$MYDIR" ] ; then
-	MYDIR=`dirname $0`
-fi
-
-if [ -z "$MYLIBDIR" ] ; then
-	MYLIBDIR="/usr/local/lib/openser/openserctl"
-	if [ ! -d "$MYLIBDIR" ]; then
-		MYLIBDIR=$MYDIR
-	fi
-fi
-
-# load base functions
-if [ -f "$MYLIBDIR/openserdbctl.base" ]; then
-	. "$MYLIBDIR/openserdbctl.base"
-else
-	echo "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ..."
-	exit -1
-fi
-
+#
+# 2007-06-11  Use a common control tool for database tasks, like the openserctl
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/openser"
@@ -95,8 +51,6 @@ fi
 
 CMD="mysql -h $DBHOST -u$DBROOTUSER "
 DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
-BACKUP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c "
-
 #################################################################
 
 
@@ -104,7 +58,7 @@ BACKUP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c "
 prompt_pw()
 {
 	savetty=`stty -g`
-	printf "MySQL password for $DBROOTUSER: "
+	echo -n "MySQL password for $DBROOTUSER: "
 	stty -echo
 	read PW
 	stty $savetty
@@ -137,65 +91,21 @@ sql_query()
 	fi
 }
 
-# dump all rows
-openser_dump()  # pars: <database name>
-{
-	if [ $# -ne 1 ] ; then
-		echo "openser_dump function takes one param"
-		exit 1
-	fi
-	$DUMP_CMD "-p$PW" $1
-}
-
-
-# copy a database to database_bak
-openser_backup() # par: <database name>
-{
-	if [ $# -ne 1 ] ; then
-		echo  "openser_backup function takes one param"
-		exit 1
-	fi
-	BU=/tmp/mysql_bup.$$
-	$BACKUP_CMD "-p$PW" $1 > $BU
-	if [ "$?" -ne 0 ] ; then
-		echo "openser_backup dump failed"
-		exit 1
-	fi
-	sql_query "" "create database $1_bak;"
-
-	openser_restore $1_bak $BU
-	if [ "$?" -ne 0 ]; then
-		echo "openser backup/restore failed"
-		rm $BU
-		exit 1
-	fi
-}
-
-
-openser_restore() #pars: <database name> <filename>
-{
-if [ $# -ne 2 ] ; then
-	echo "openser_restore function takes two params"
-	exit 1
-fi
-sql_query $1 < $2
-}
-
 
 openser_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	echo "openser_drop function takes two params"
+	merr "openser_drop function takes two params"
 	exit 1
 fi
 
 sql_query "" "drop database $1;"
 
 if [ $? -ne 0 ] ; then
-	echo "Dropping database $1 failed!"
+	merr "Dropping database $1 failed!"
 	exit 1
 fi
-echo "Database $1 deleted"
+minfo "Database $1 deleted"
 }
 
 
@@ -205,12 +115,12 @@ db_charset_test()
 	ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv utf8\|ucs2`
 	while [ `echo "$ALLCHARSETS" | $GREP -icw $CURRCHARSET`  = "0" ]
 	do
-		echo "Your current default mysql characters set cannot be used to create DB. Please choice another one from the following list:"
-		echo "$ALLCHARSETS"
-		echo -n "Enter character set name: "
+		mwarn "Your current default mysql characters set cannot be used to create DB. Please choice another one from the following list:"
+		mecho "$ALLCHARSETS"
+		mecho -n "Enter character set name: "
 		read CURRCHARSET
 		if [ `echo $CURRCHARSET | $GREP -cE "\w+"` = "0" ]; then
-			echo "can't continue: user break"
+			merr "can't continue: user break"
 			exit 1
 		fi
 	done
@@ -221,13 +131,13 @@ db_charset_test()
 openser_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	echo "openser_create function takes one param"
+	merr "openser_create function takes one param"
 	exit 1
 fi
 
 db_charset_test
 
-echo "creating database $1 ..."
+minfo "creating database $1 ..."
 
 # Users: ser is the regular user, serro only for reading
 sql_query "" "create database $1 character set $CHARSET;
@@ -238,20 +148,20 @@ sql_query "" "create database $1 character set $CHARSET;
 
 
 if [ $? -ne 0 ] ; then
-	echo "Creating core database and grant privileges failed!"
+	merr "Creating core database and grant privileges failed!"
 	exit 1
 fi
 
 for TABLE in $STANDARD_MODULES; do
-    echo "Creating core table: $TABLE"
+    mdbg "Creating core table: $TABLE"
     sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
     if [ $? -ne 0 ] ; then
-	echo "Creating core tables failed!"
+	merr "Creating core tables failed!"
 	exit 1
     fi
 done
 
-echo "Core OpenSER tables succesfully created."
+minfo "Core OpenSER tables succesfully created."
 
 echo -n "Install presence related tables ?(y/n):"
 read INPUT
@@ -281,58 +191,58 @@ fi
 presence_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	echo "presence_create function takes one param"
+	merr "presence_create function takes one param"
 	exit 1
 fi
 
-echo "creating presence tables into $1 ..."
+minfo "creating presence tables into $1 ..."
 
 sql_query $1 < $DB_SCHEMA/presence-create.sql
 
 if [ $? -ne 0 ] ; then
-	echo "Failed to create presence tables!"
+	merr "Failed to create presence tables!"
 	exit 1
 fi
 
-echo "Presence tables succesfully created."
+minfo "Presence tables succesfully created."
 }  # end presence_create
 
 
 extra_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	echo "extra_create function takes one param"
+	merr "extra_create function takes one param"
 	exit 1
 fi
 
-echo "creating extra tables into $1 ..."
+minfo "creating extra tables into $1 ..."
 
 for TABLE in $EXTRA_MODULES; do
-    echo "Creating extra table: $TABLE"
+    mdbg "Creating extra table: $TABLE"
     sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
     if [ $? -ne 0 ] ; then
-	echo "Creating extra tables failed!"
+	merr "Creating extra tables failed!"
 	exit 1
     fi
 done
 
-echo "Extra tables succesfully created."
+minfo "Extra tables succesfully created."
 }  # end extra_create
 
 
 serweb_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	echo "serweb_create function takes one param"
+	merr "serweb_create function takes one param"
 	exit 1
 fi
 
-echo "creating serweb tables into $1 ..."
+minfo "creating serweb tables into $1 ..."
 
 sql_query $1 < $DB_SCHEMA/serweb-create.sql 
 
 if [ $? -ne 0 ] ; then
-	echo "Failed to create serweb tables!"
+	merr "Failed to create serweb tables!"
 	exit 1
 fi
 
@@ -349,7 +259,7 @@ sql_query $1 "ALTER TABLE subscriber
     ADD UNIQUE KEY phplib_id (phplib_id);"
 
 if [ $? -ne 0 ] ; then
-	echo "Failed to alter subscriber table for serweb!"
+	merr "Failed to alter subscriber table for serweb!"
 	exit 1
 fi
 
@@ -372,15 +282,16 @@ if [ -z "$NO_USER_INIT" ] ; then
 	VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
 
 	if [ $? -ne 0 ] ; then
-		echo "Failed to create serweb credentials tables!"
+		merr "Failed to create serweb credentials tables!"
 		exit 1
 	fi
+	serweb_message
 fi
 
 
-echo "SERWEB tables succesfully created."
+minfo "SERWEB tables succesfully created."
 
-serweb_message
+
 }  # end serweb_create
 
 
@@ -388,7 +299,7 @@ serweb_message
 migrate_table () # 4 paremeters (dst_table, dst_cols, src_table, src_cols)
 {
 if [ $# -ne 4 ] ; then
-	echo "migrate_table function takes 4 params $@"
+	merr "migrate_table function takes 4 params $@"
 	exit 1
 fi
 
@@ -413,15 +324,15 @@ if [ $? -ne 0 ] ; then
 	exit 1;
 fi
 
-echo " -- Migrating $3 to $1.....OK"
+minfo " -- Migrating $3 to $1.....OK"
 
 }
 
-
+# FIXME needs update for 1.3
 migrate_db () # 2 parameters (src_db, dst_db)
 {
 if [ $# -ne 2 ] ; then
-	echo "migrate_db function takes 2 params"
+	merr "migrate_db function takes 2 params"
 	exit 1
 fi
 
@@ -603,115 +514,3 @@ export PW
 if [ "$#" -ne 0 ] && [ "$PW" = "" ]; then
 	prompt_pw
 fi
-
-
-
-
-case $1 in
-	migrate)
-		if [ $# -ne 3 ] ; then
-			echo "migrate requires 2 paramets: old and new database"
-			exit 1
-		fi
-		# create new database
-		echo "Creating new Database $3...."
-		NO_USER_INIT="yes"
-		openser_create $3
-		if [ "$?" -ne 0 ] ; then
-			echo "migrate: creating new database failed"
-			exit 1
-		fi
-		# migrate data
-		echo "Migrating data from $2 to $3...."
-		migrate_db $2 $3
-		echo "Migration successfully completed."
-		exit 0;
-		;;
-	copy)
-		# copy database to some other name
-		shift
-		if [ $# -ne 1 ]; then
-			usage
-			exit 1
-		fi
-		tmp_file=/tmp/openser_mysql.$$
-		openser_dump $DBNAME > $tmp_file
-		ret=$?
-		if [ "$ret" -ne 0 ]; then
-			echo "copy: dumping original db failed"
-			rm $tmp_file
-			exit $ret
-		fi
-		NO_USER_INIT="yes"
-		openser_create $1
-		ret=$?
-		if [ "$ret" -ne 0 ]; then
-			echo "copy: creating new db failed"
-			rm $tmp_file
-			exit $ret
-		fi
-		openser_restore $1 $tmp_file
-		ret=$?
-		rm -f $tmp_file
-		if [ "$ret" -ne 0 ]; then
-			echo "copy: restoring old db failed"
-		fi
-		exit $ret
-		;;
-	backup)
-		# backup current database
-		openser_dump $DBNAME
-		exit $?
-		;;
-	restore)
-		# restore database from a backup
-		shift
-		if [ $# -ne 1 ]; then
-			usage
-			exit 1
-		fi
-		openser_restore $DBNAME $1
-		exit $?
-		;;
-	create)
-		# create new database structures
-		shift
-		if [ $# -eq 1 ] ; then
-			DBNAME="$1"
-		fi
-		openser_create $DBNAME
-		exit $?
-		;;
-	serweb)
-		serweb_create $DBNAME
-		exit $?
-		;;
-	presence)
-		presence_create $DBNAME
-		exit $?
-		;;
-	extra)
-		extra_create $DBNAME
-		exit $?
-		;;
-	drop)
-		# delete openser database
-		openser_drop $DBNAME
-		exit $?
-		;;
-	reinit)
-		# delete database and create a new one
-		openser_drop $DBNAME
-		ret=$?
-		if [ "$ret" -ne 0 ]; then
-			exit $ret
-		fi
-		openser_create $DBNAME
-		exit $?
-		;;
-	*)
-		usage
-		exit 1;
-		;;
-esac
-

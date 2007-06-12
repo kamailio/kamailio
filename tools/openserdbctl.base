@@ -87,21 +87,21 @@ fi
 usage() {
 COMMAND=`basename $0`
 cat <<EOF
-usage: $COMMAND create
-       $COMMAND drop   (!!entirely deletes tables)
-       $COMMAND reinit (!!entirely deletes and than re-creates tables
-       $COMMAND backup (dumps current database to stdout)
+usage: $COMMAND create (creates a new database)
+       $COMMAND drop   (!entirely deletes tables!)
+       $COMMAND reinit (!entirely deletes and than re-creates tables!)
+       $COMMAND backup <file> (dumps current database to file)
        $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
-       $COMMAND migrate <old_db> <new_db> (migrates DB from 1.1 to 1.2)
+       $COMMAND migrate <old_db> <new_db> (migrates DB from 1.2 to 1.3, not implemented yet!)
        $COMMAND presence (adds the presence related tables)
        $COMMAND extra (adds the extra tables - imc,cpl,siptrace,domainpolicy)
        $COMMAND serweb (adds the SERWEB specific tables)
 
-       if you want to manipulate database as other MySQL user than
+       if you want to manipulate database as other database user than
        root, want to change database name from default value "$DBNAME",
        or want to use other values for users and password, edit the
-       "config vars" section of the command $COMMAND
+       "config vars" section of the command $COMMAND.
 
 EOF
 } #usage
@@ -123,12 +123,12 @@ credentials()
 {
 	HA1=`echo -n "admin:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
-		echo "HA1 calculation failed"
+		merr "HA1 calculation failed"
 		exit 1
 	fi
 	HA1B=`echo -n "admin@$SIP_DOMAIN:$SIP_DOMAIN:$DBRWPW" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
-		echo "HA1B calculation failed"
+		merr "HA1B calculation failed"
 		exit 1
 	fi
 
@@ -136,7 +136,7 @@ credentials()
 	NOW=`date`;
 	PHPLIB_ID=`echo -n "$RANDOM:$NOW:$SIP_DOMAIN" | $MD5 | $AWK '{ print $1 }'`
 	if [ $? -ne 0 ] ; then
-		echo "PHPLIB_ID calculation failed"
+		merr "PHPLIB_ID calculation failed"
 		exit 1
 	fi
 }
@@ -156,4 +156,48 @@ serweb_message()
 	echo "! from the subscriber and admin_privileges table. !"
 	echo "!                                                 !"
 	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+}
+
+# FIXME use the definition from openserctl.base
+
+mdbg() {
+	if [ "0$VERBOSE" -ne 0 ] ; then
+		if [ -t 1 -a -z "$NOHLPRINT" ] ; then
+			echo -e "\033[1m$1\033[0m"
+		else
+			echo "$1"
+		fi
+	fi
+}
+
+mwarn() {
+	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
+		echo -e '\E[37;32m'"\033[1mWARNING: $1\033[0m"
+	else
+		echo "** WARNING: $1"
+	fi
+}
+
+minfo() {
+	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
+		echo -e '\E[37;33m'"\033[1mINFO: $1\033[0m"
+	else
+		echo "** INFO: $1"
+	fi
+}
+
+mecho() {
+	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
+		echo -e "\033[1m$1\033[0m"
+	else
+		echo "$1"
+	fi
+}
+
+merr() {
+	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
+		echo -e '\E[37;31m'"\033[1mERROR: $1\033[0m"
+	else
+		echo "** ERROR: $1"
+	fi
 }

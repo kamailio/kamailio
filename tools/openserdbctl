@@ -1,0 +1,265 @@
+#!/bin/bash 
+#
+# $Id$
+#
+# openser control tool for maintaining openser databases
+#
+#===================================================================
+
+PATH=$PATH:/usr/local/sbin/
+
+
+### include resource files, if any
+if [ -f /usr/local/etc/openser/openserctlrc ]; then
+	. /usr/local/etc/openser/openserctlrc
+fi
+if [ -f ~/.openserctlrc ]; then
+	. ~/.openserctlrc
+fi
+### for testing only
+#if [ -f ./openserctlrc ]; then
+#	. ./openserctlrc
+#fi
+
+
+##### ------------------------------------------------ #####
+### force values for variables in this section
+#
+
+# you better set the variables in ~/.openserctlrc
+
+
+if [ -z "$ETCDIR" ] ; then
+	ETCDIR="/usr/local/etc/openser"
+fi
+
+##### ------------------------------------------------ #####
+### 
+#
+### version for this script
+VERSION='1.3dev - $Revision$'
+
+if [ -z "$MYDIR" ] ; then
+	MYDIR=`dirname $0`
+fi
+
+if [ -z "$MYLIBDIR" ] ; then
+	MYLIBDIR="/usr/local/lib/openser/openserctl"
+	if [ ! -d "$MYLIBDIR" ]; then
+		MYLIBDIR=$MYDIR
+	fi
+fi
+
+
+### include resource files, if any
+if [ -f /usr/local/etc/openser/openserctlrc ]; then
+	. /usr/local/etc/openser/openserctlrc
+fi
+if [ -f ~/.openserctlrc ]; then
+	. ~/.openserctlrc
+fi
+if [ -f ./openserctlrc ]; then
+	. ./openserctlrc
+fi
+
+# force values for variables in this section
+# you better set the variables in ~/.openserctlrc
+if [ -z "$ETCDIR" ] ; then
+	ETCDIR="/usr/local/etc/openser"
+fi
+
+
+##### ------------------------------------------------ #####
+### load base functions
+#
+if [ -f "$MYLIBDIR/openserdbctl.base" ]; then
+	. "$MYLIBDIR/openserdbctl.base"
+else
+	merr "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ..."
+	exit -1
+fi
+
+#
+##### ------------------------------------------------ #####
+### DBENGINE
+#
+DBENGINELOADED=0
+if [ -z "$DBENGINE" ] ; then
+	merr "database engine not specified, please setup one in the config script"
+	exit 1
+fi
+
+case $DBENGINE in
+	MYSQL|mysql|MySQL)
+		if [ -f "$MYLIBDIR/openserdbctl.mysql" ]; then
+			. "$MYLIBDIR/openserdbctl.mysql"
+			DBENGINELOADED=1
+		fi
+		;;
+	PGSQL|pgsql|postgres|postgresql|POSTGRESQL)
+		if [ -f "$MYLIBDIR/openserdbctl.pgsql" ]; then
+			. "$MYLIBDIR/openserdbctl.pgsql"
+			DBENGINELOADED=1
+		fi
+		;;
+	DBTEXT|dbtext|textdb)
+		if [ -f "$MYLIBDIR/openserdbctl.dbtext" ]; then
+			. "$MYLIBDIR/openserdbctl.dbtext"
+			DBENGINELOADED=1
+		fi
+		;;
+esac
+
+if [ $DBENGINELOADED -eq 1 ] ; then
+	mdbg "database engine '$DBENGINE' loaded"
+elif [ -n "$DBENGINE" ] ; then
+	merr "database engine not found - tried '$DBENGINE'"
+	exit 1
+fi
+
+
+# dump all rows
+openser_dump()  # pars: <database name>
+{
+	if [ $# -ne 2 ] ; then
+		merr "openser_dump function takes two param"
+		exit 1
+	fi
+	if [ "$PW" = "" ] ; then
+		$DUMP_CMD $1 > $2
+	else
+		$DUMP_CMD "-p$PW" $1 > $2
+	fi
+	if [ "$?" -ne 0 ]; then
+			merr "db dump failed"
+			exit 1
+	fi
+	minfo "db dump successful"
+}
+
+
+openser_restore() #pars: <database name> <filename>
+{
+	if [ $# -ne 2 ] ; then
+		merr "openser_restore function takes two params"
+		exit 1
+	fi
+	sql_query $1 < $2
+	if [ "$?" -ne 0 ]; then
+			merr "db restore failed"
+			exit 1
+	fi
+	minfo "db restore successful"
+}
+
+
+case $1 in
+# FIXME needs update for 1.3
+	migrate)
+		merr "not implemented yet"
+#		if [ $# -ne 3 ] ; then
+#			merr "migrate requires 2 parameters: old and new database"
+#			exit 1
+#		fi
+#		# create new database
+#		minfo "Creating new Database $3...."
+#		NO_USER_INIT="yes"
+#		openser_create $3
+#		if [ "$?" -ne 0 ] ; then
+#			echo "migrate: creating new database failed"
+#			exit 1
+#		fi
+#		# migrate data
+#		minfo "Migrating data from $2 to $3...."
+#		migrate_db $2 $3
+#		minfo "Migration successfully completed."
+#		exit 0;
+		usage
+		;;
+	copy)
+		# copy database to some other name
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		tmp_file=/tmp/openser_database.$$
+		openser_dump $DBNAME $tmp_file
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			rm $tmp_file
+			exit $ret
+		fi
+		NO_USER_INIT="yes"
+		openser_create $1
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			rm $tmp_file
+			exit $ret
+		fi
+		openser_restore $1 $tmp_file
+		ret=$?
+		rm -f $tmp_file
+		exit $ret
+		;;
+	backup)
+		# backup current database
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		openser_dump $DBNAME $1
+		exit $?
+		;;
+	restore)
+		# restore database from a backup
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		openser_restore $DBNAME $1
+		exit $?
+		;;
+	create)
+		# create new database structures
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+		openser_create $DBNAME
+		exit $?
+		;;
+	serweb)
+		serweb_create $DBNAME
+		exit $?
+		;;
+	presence)
+		presence_create $DBNAME
+		exit $?
+		;;
+	extra)
+		extra_create $DBNAME
+		exit $?
+		;;
+	drop)
+		# delete openser database
+		openser_drop $DBNAME
+		exit $?
+		;;
+	reinit)
+		# delete database and create a new one
+		openser_drop $DBNAME
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			exit $ret
+		fi
+		openser_create $DBNAME
+		exit $?
+		;;
+	*)
+		usage
+		exit 1;
+		;;
+esac
