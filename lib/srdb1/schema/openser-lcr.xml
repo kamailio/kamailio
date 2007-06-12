@@ -11,6 +11,5 @@
     <name>openser</name>
     <xi:include href="gw.xml"/>
     <xi:include href="gw_grp.xml"/>
-    <xi:include href="address.xml"/>
     <xi:include href="lcr.xml"/>
 </database>
