@@ -1,5 +1,3 @@
-#!/bin/sh
-#
 # $Id$
 #
 # Script for adding and dropping OpenSER Postgres tables
