@@ -124,7 +124,7 @@
     </column>
 
     <column>
-        <name>useragent</name>
+        <name>user_agent</name>
         <type>string</type>
         <size>&hf_len;</size>
         <default/>
