@@ -33,6 +33,7 @@
  * History:
  * --------
  *  2007-05-13  created by andrei
+ *  2007-06-12  added ADAPTIVE_WAIT busy waiting (andrei)
  */
 
 #ifndef _futexlock_h
@@ -49,7 +50,8 @@
 #include <unistd.h>
 #include "compiler_opt.h"
 
-
+/* either syscall directly or #include <sys/linux/syscall.h> and use
+ * sys_futex directly */
 #define sys_futex(addr, op, val, timeout, addr2, val3) \
 	syscall(__NR_futex , (addr), (op), (val), (timeout), (addr2), (val3))
 
@@ -70,13 +72,18 @@ inline static futex_lock_t* futex_init(futex_lock_t* lock)
 inline static void futex_get(futex_lock_t* lock)
 {
 	int v;
+#ifdef ADAPTIVE_WAIT
+	register int i=ADAPTIVE_WAIT_LOOPS;
+	
+retry:
+#endif
 	
 	v=atomic_cmpxchg(lock, 0, 1); /* lock if 0 */
 	if (likely(v==0)){  /* optimize for the uncontended case */
 		/* success */
 		membar_enter_lock();
 		return;
-	}else if (likely(v==2)){ /* if contended, optimize for the several waiters
+	}else if (unlikely(v==2)){ /* if contended, optimize for the one waiter
 								case */
 		/* waiting processes/threads => add ourselves to the queue */
 		do{
@@ -85,6 +92,12 @@ inline static void futex_get(futex_lock_t* lock)
 		}while(v);
 	}else{
 		/* v==1 */
+#ifdef ADAPTIVE_WAIT
+		if (i>0){
+			i--;
+			goto retry;
+		}
+#endif
 		v=atomic_get_and_set(lock, 2);
 		while(v){
 			sys_futex(&(lock)->val, FUTEX_WAIT, 2, 0, 0, 0);
