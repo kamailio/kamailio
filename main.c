@@ -453,10 +453,12 @@ char* pgid_file = 0;
 void cleanup(show_status)
 {
 	/*clean-up*/
+#ifndef SHM_SAFE_MALLOC
 	if (mem_lock)
 		shm_unlock(); /* hack: force-unlock the shared memory lock in case
 					 some process crashed and let it locked; this will
 					 allow an almost gracious shutdown */
+#endif
 	destroy_modules();
 #ifdef USE_DNS_CACHE
 	destroy_dns_cache();

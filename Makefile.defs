@@ -75,7 +75,7 @@ MAIN_NAME=ser
 VERSION = 2
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev7-tm
+EXTRAVERSION = -dev8-sf_malloc
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -318,6 +318,14 @@ endif
 #		an even faster malloc, not recommended for debugging
 # -DDL_MALLOC
 #		a malloc implementation based on Doug Lea's dl_malloc
+# -DSF_MALLOC 
+#		an experimental multi-CPU, pool based, multi-process safe version of 
+#		F_MALLOC. Should give better performance on machines with lots of CPUs
+#		after some tunning.
+# -DLL_MALLOC
+#		an experimental multi-CPU, pool based, multi-process safe, mostly
+#		lockless version of SF_MALLOC/F_MALLOC. Not for production use for
+#		now.
 # -DDBG_MALLOC
 #		issues additional debugging information if lock/unlock is called
 # -DFAST_LOCK
@@ -413,6 +421,8 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DDBG_QM_MALLOC \
+	 #-DLL_MALLOC \
+	 #-DSF_MALLOC \
 	 #-DDL_MALLOC \
 	 #-DF_MALLOC \
 	 #-DDBG_F_MALLOC \

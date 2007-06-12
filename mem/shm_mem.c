@@ -32,6 +32,7 @@
  *               (andrei)
  *  2004-07-27  ANON mmap support, needed on darwin (andrei)
  *  2004-09-19  shm_mem_destroy: destroy first the lock & then unmap (andrei)
+ *  2007-06-10   support for sfm_malloc & shm_malloc_destroy() (andrei)
  */
 
 
@@ -60,10 +61,16 @@
 static int shm_shmid=-1; /*shared memory id*/
 #endif
 
+#ifndef SHM_SAFE_MALLOC
 gen_lock_t* mem_lock=0;
+#endif
 
 static void* shm_mempool=(void*)-1;
-#ifdef VQ_MALLOC
+#ifdef LL_MALLOC
+	struct sfm_block* shm_block;
+#elif SF_MALLOC
+	struct sfm_block* shm_block;
+#elif VQ_MALLOC
 	struct vqm_block* shm_block;
 #elif F_MALLOC
 	struct fm_block* shm_block;
@@ -194,6 +201,7 @@ int shm_mem_init_mallocs(void* mempool, unsigned long pool_size)
 		shm_mem_destroy();
 		return -1;
 	}
+#ifndef SHM_SAFE_MALLOC
 	mem_lock=shm_malloc_unsafe(sizeof(gen_lock_t)); /* skip lock_alloc, 
 													   race cond*/
 	if (mem_lock==0){
@@ -206,6 +214,7 @@ int shm_mem_init_mallocs(void* mempool, unsigned long pool_size)
 		shm_mem_destroy();
 		return -1;
 	}
+#endif  /*SHM SAFE_MALLOC */
 	
 	DBG("shm_mem_init: success\n");
 	
@@ -232,9 +241,15 @@ void shm_mem_destroy()
 #endif
 	
 	DBG("shm_mem_destroy\n");
+#ifndef SHM_SAFE_MALLOC
 	if (mem_lock){
 		DBG("destroying the shared memory lock\n");
 		lock_destroy(mem_lock); /* we don't need to dealloc it*/
+	}
+#endif  /*SHM SAFE_MALLOC */
+	if (shm_block){
+		shm_malloc_destroy(shm_block);
+		shm_block=0;
 	}
 	if (shm_mempool && (shm_mempool!=(void*)-1)) {
 #ifdef SHM_MMAP

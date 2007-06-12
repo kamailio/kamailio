@@ -33,6 +33,7 @@
  *               realloc causes terrible fragmentation  (andrei)
  *  2005-03-02   added shm_info() & re-eneabled locking on shm_status (andrei)
  *  2007-02-23   added shm_available() (andrei)
+ *  2007-06-10   support for sf_malloc (andrei)
  */
 
 
@@ -74,13 +75,67 @@
 #include "../dprint.h"
 #include "../lock_ops.h" /* we don't include locking.h on purpose */
 
-#ifdef VQ_MALLOC
+#ifdef LL_MALLOC
+#	include "ll_malloc.h"
+#	define SHM_SAFE_MALLOC /* no need to lock */
+	extern struct sfm_block* shm_block;
+#ifdef __SUNPRO_C
+#	define shm_malloc(...) sfm_malloc(shm_block, __VA_ARGS__)
+#	define shm_free(...) sfm_free(shm_block, __VA_ARGS__)
+#	define shm_realloc(...) sfm_malloc(shm_block, __VA_ARGS__)
+	/* WARNING: test, especially if switched to real realloc */
+#	define shm_resize(...)	sfm_realloc(shm_block, __VA_ARGS__)
+#	define shm_info(...) sfm_info(shm_block, __VA_ARGS__)
+#else /* __SUNPRO_C */
+#	define shm_malloc(args...) sfm_malloc(shm_block, ## args)
+#	define shm_free(args...) sfm_free(shm_block, ## args)
+#	define shm_realloc(args...) sfm_malloc(shm_block, ## args)
+	/* WARNING: test, especially if switched to real realloc */
+#	define shm_resize(args...)	sfm_realloc(shm_block, ## args)
+#	define shm_info(args...) sfm_info(shm_block, ## args)
+#endif /* __SUNPRO_C */
+#	define shm_malloc_unsafe  shm_malloc
+#	define shm_free_unsafe shm_free
+#	define shm_available	sfm_available(shm_block)
+#	define shm_status() sfm_status(shm_block)
+#	define shm_malloc_init sfm_malloc_init
+#	define shm_malloc_destroy(b) sfm_malloc_destroy(b)
+#	define shm_malloc_on_fork()	sfm_pool_reset()
+#elif SF_MALLOC
+#	include "sf_malloc.h"
+#	define SHM_SAFE_MALLOC /* no need to lock */
+	extern struct sfm_block* shm_block;
+#ifdef __SUNPRO_C
+#	define shm_malloc(...) sfm_malloc(shm_block, __VA_ARGS__)
+#	define shm_free(...) sfm_free(shm_block, __VA_ARGS__)
+#	define shm_realloc(...) sfm_malloc(shm_block, __VA_ARGS__)
+	/* WARNING: test, especially if switched to real realloc */
+#	define shm_resize(...)	sfm_realloc(shm_block, __VA_ARGS__)
+#	define shm_info(...) sfm_info(shm_block, __VA_ARGS__)
+#else /* __SUNPRO_C */
+#	define shm_malloc(args...) sfm_malloc(shm_block, ## args)
+#	define shm_free(args...) sfm_free(shm_block, ## args)
+#	define shm_realloc(args...) sfm_malloc(shm_block, ## args)
+	/* WARNING: test, especially if switched to real realloc */
+#	define shm_resize(args...)	sfm_realloc(shm_block, ## args)
+#	define shm_info(args...) sfm_info(shm_block, ## args)
+#endif /* __SUNPRO_C */
+#	define shm_malloc_unsafe  shm_malloc
+#	define shm_free_unsafe shm_free
+#	define shm_available	sfm_available(shm_block)
+#	define shm_status() sfm_status(shm_block)
+#	define shm_malloc_init sfm_malloc_init
+#	define shm_malloc_destroy(b) sfm_malloc_destroy(b)
+#	define shm_malloc_on_fork()	sfm_pool_reset()
+#elif VQ_MALLOC
 #	include "vq_malloc.h"
 	extern struct vqm_block* shm_block;
 #	define MY_MALLOC vqm_malloc
 #	define MY_FREE vqm_free
 #	define MY_STATUS vqm_status
 #	define  shm_malloc_init vqm_malloc_init
+#	define shm_malloc_destroy(b) do{}while(0)
+#	define shm_malloc_on_fork() do{}while(0)
 #	warn "no proper vq_realloc implementation, try another memory allocator"
 #elif defined F_MALLOC
 #	include "f_malloc.h"
@@ -91,7 +146,9 @@
 #	define MY_STATUS fm_status
 #	define MY_MEMINFO	fm_info
 #	define  shm_malloc_init fm_malloc_init
+#	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_available() fm_available(shm_block)
+#	define shm_malloc_on_fork() do{}while(0)
 #elif defined DL_MALLOC
 #	include "dl_malloc.h"
 	extern mspace shm_block;
@@ -101,6 +158,8 @@
 #	define MY_STATUS(...) 0
 #	define MY_MEMINFO	mspace_info
 #	define  shm_malloc_init(buf, len) create_mspace_with_base(buf, len, 0)
+#	define shm_malloc_destroy(b) do{}while(0)
+#	define shm_malloc_on_fork() do{}while(0)
 #else
 #	include "q_malloc.h"
 	extern struct qm_block* shm_block;
@@ -110,11 +169,14 @@
 #	define MY_STATUS qm_status
 #	define MY_MEMINFO	qm_info
 #	define  shm_malloc_init qm_malloc_init
+#	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_available() qm_available(shm_block)
+#	define shm_malloc_on_fork() do{}while(0)
 #endif
 
-	
+#ifndef SHM_SAFE_MALLOC
 	extern gen_lock_t* mem_lock;
+#endif
 
 
 int shm_mem_init(int); /* calls shm_getmem & shm_mem_init_mallocs */
@@ -126,16 +188,20 @@ void shm_mem_destroy();
 
 
 
+#ifdef SHM_SAFE_MALLOC
+#define shm_lock() do{}while(0)
+#define shm_unlock() do{}while(0)
+
+#else /* ! SHM_SAFE_MALLOC */
+
 #define shm_lock()    lock_get(mem_lock)
 #define shm_unlock()  lock_release(mem_lock)
-
 
 #ifdef DBG_QM_MALLOC
 
 #ifdef __SUNPRO_C
 		#define __FUNCTION__ ""  /* gcc specific */
 #endif
-
 
 #define shm_malloc_unsafe(_size ) \
 	MY_MALLOC(shm_block, (_size), __FILE__, __FUNCTION__, __LINE__ )
@@ -234,7 +300,7 @@ void* _shm_resize(void* ptr, unsigned int size);
 /*#define shm_resize(_p, _s) shm_realloc( (_p), (_s))*/
 
 
-#endif
+#endif  /* DBG_QM_MALLOC */
 
 
 #define shm_status() \
@@ -252,8 +318,9 @@ do{\
 	shm_unlock(); \
 }while(0)
 
+#endif /* ! SHM_SAFE_MALLOC */
 
-#endif
+#endif /* shm_mem_h */
 
-#endif
+#endif /* SHM_MEM */
 
