@@ -90,7 +90,7 @@ oracle_clean:
 dbtext:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/scripts/dbtext/openser_db" \
+		--stringparam dir "$(ROOT)/scripts/dbtext/openser" \
 		--stringparam prefix "" \
 		--stringparam db "dbtext" \
 		$(DBTEXT_XSL) openser-"$$FILE".xml ; \
