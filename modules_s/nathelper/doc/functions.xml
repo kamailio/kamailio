@@ -153,12 +153,34 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
 	</title>
 	<para>
 	    Tries to guess if client's request originated behind a nat.  The
-	    parameter determines what heuristics is used. If flag 1 is set, the
-	    "received" test is used -- address in Via is compared against
-	    source IP address of signaling. If flag 2 is set, Contact header
-	    field is searched for occurrence of RFC1918 addresses. Both flags
-	    can be bitwise combined, the test returns true if any of the tests
-	    identified a NAT.
+	    mode parameter determines what heuristics is used. If mode contains:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>01</emphasis> - the Contact URI host contains a private IP address (from RFC1981).
+		</para>
+		<para>
+			<emphasis>02</emphasis> - the address in the topmost Via header differs from the source IP address of the request.
+		</para>
+		<para>
+			<emphasis>04</emphasis> - the address in the topmost Via contains a private IP address (RFC1918).
+		</para>
+		<para>
+			<emphasis>08</emphasis> - the SDP body of the request contains a private IP address (RFC1918).
+		</para>
+		<para>
+			<emphasis>16</emphasis> - the port in the topmost Via differs from the source port of the request.
+		</para>
+		<para>
+			<emphasis>32</emphasis> - the Contact URI port differs from the source port of the request (Warning: this is might be legal or even intended combination in non natted scenarios).
+		</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+	All of them might be bitwise combined (which is equal to the sum of the 
+	values from the list above). If one of the test matched the function
+	returns true.
 	</para>
     </section>
 

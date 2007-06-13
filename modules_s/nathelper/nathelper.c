@@ -222,6 +222,7 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_V_1918	0x04
 #define	NAT_UAC_TEST_S_1918	0x08
 #define	NAT_UAC_TEST_RPORT	0x10
+#define	NAT_UAC_TEST_C_PORT	0x20
 
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
@@ -852,6 +853,24 @@ contact_1918(struct sip_msg* msg)
 	return (is1918addr(&(uri.host)) == 1) ? 1 : 0;
 }
 
+static int
+contact_rport(struct sip_msg* msg)
+{
+	struct sip_uri uri;
+	contact_t* c;
+
+	if (get_contact_uri(msg, &uri, &c) == -1) {
+		return -1;
+	}
+
+	if (msg->rcv.src_port != (uri.port_no ? uri.port_no : SIP_PORT)) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+
 /*
  * test for occurrence of RFC1918 IP address in SDP
  */
@@ -920,6 +939,11 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test for occurrences of RFC1918 addresses top Via
 	 */
 	if ((tests & NAT_UAC_TEST_V_1918) && via_1918(msg))
+		return 1;
+	/* test if source port of signaling is different from
+	 * port advertised in Contact
+	 */
+	if ((tests & NAT_UAC_TEST_C_PORT) && (contact_rport(msg)>0))
 		return 1;
 
 	/* no test succeeded */
