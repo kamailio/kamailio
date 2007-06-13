@@ -17,9 +17,9 @@ if [ -f ~/.openserctlrc ]; then
 	. ~/.openserctlrc
 fi
 ### for testing only
-#if [ -f ./openserctlrc ]; then
-#	. ./openserctlrc
-#fi
+if [ -f ./openserctlrc ]; then
+	. ./openserctlrc
+fi
 
 
 ##### ------------------------------------------------ #####
@@ -95,6 +95,7 @@ case $DBENGINE in
 		if [ -f "$MYLIBDIR/openserdbctl.dbtext" ]; then
 			. "$MYLIBDIR/openserdbctl.dbtext"
 			DBENGINELOADED=1
+			DBTEXT=1
 		fi
 		;;
 esac
@@ -168,6 +169,10 @@ case $1 in
 		;;
 	copy)
 		# copy database to some other name
+		if [ $DBTEXT = "1" ] ; then
+			merr "DBTEXT don't support this operation"
+			exit 1
+		fi
 		shift
 		if [ $# -ne 1 ]; then
 			usage
@@ -193,6 +198,10 @@ case $1 in
 		exit $ret
 		;;
 	backup)
+		if [ $DBTEXT = "1" ] ; then
+			merr "DBTEXT don't support this operation"
+			exit 1
+		fi
 		# backup current database
 		shift
 		if [ $# -ne 1 ]; then
@@ -203,6 +212,10 @@ case $1 in
 		exit $?
 		;;
 	restore)
+		if [ $DBTEXT = "1" ] ; then
+			merr "DBTEXT don't support this operation"
+			exit 1
+		fi
 		# restore database from a backup
 		shift
 		if [ $# -ne 1 ]; then
@@ -235,11 +248,21 @@ case $1 in
 		;;
 	drop)
 		# delete openser database
+		# create new database structures
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
 		openser_drop $DBNAME
 		exit $?
 		;;
 	reinit)
 		# delete database and create a new one
+		# create new database structures
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
 		openser_drop $DBNAME
 		ret=$?
 		if [ "$ret" -ne 0 ]; then

@@ -4,7 +4,6 @@
 #
 # TO-DO: update_structures command for migriting to new
 #        table definitons
-# USAGE: call the command without any parameters for info
 #
 # 2003-01-21 changed SILO table definition, by dcm
 #

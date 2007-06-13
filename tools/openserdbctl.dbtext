@@ -1,0 +1,209 @@
+# $Id$
+#
+# Script for adding and dropping OpenSER DBTEXT tables
+#
+#
+# History:
+# 2007-02-14  Branch from mysqldb.sh script and adapt minimal capabilities(Cesc Santasusana)
+#
+# 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
+# 2007-06-13  Move database definitions out of this script, use a common
+#             control tool for database tasks, like the openserctl (henning)
+
+# dbtext don't want the tables combined like the other databases
+STANDARD_TABLES="version acc dbaliases lcr domain grp uri speed_dial gw pdt
+		   subscriber location re_grp trusted address missed_calls
+		   usr_preferences aliases gw_grp silo"
+
+EXTRA_TABLES="imc_members imc_rooms cpl sip_trace domainpolicy"
+
+PRESENCE_TABLES="presentity active_watchers watchers xcap_xml pua"
+
+SERWEB_TABLES="active_sessions pending phonebook usr_preferences_types
+		server_monitoring server_monitoring_agg admin_privileges"
+
+
+# path to the database schemas
+DATA_DIR="/usr/local/share/openser"
+if [ -d "$DATA_DIR/dbtext/openser" ] ; then
+	DB_SCHEMA="$DATA_DIR/dbtext/openser"
+else
+	DB_SCHEMA="./dbtext/openser"
+fi
+
+openser_drop()  # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_drop function takes one param"
+	exit 1
+fi
+
+DBTEXT_PATH=$1
+
+minfo "DBTEXT ... erasing all files at: $DBTEXT_PATH"
+rm -f $DBTEXT_PATH/*
+}
+
+openser_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_create function takes one param (DBTEXT_PATH)"
+	exit 1
+fi
+
+DBTEXT_PATH=$1
+
+minfo "creating DBTEXT tables at: $DBTEXT_PATH ..."
+
+mkdir -p $DBTEXT_PATH
+
+for TABLE in $STANDARD_TABLES; do
+    mdbg "Creating core table: $TABLE"
+    cp $DB_SCHEMA/$TABLE $DBTEXT_PATH/$TABLE
+    if [ $? -ne 0 ] ; then
+	merr "Creating core tables failed!"
+	exit 1
+    fi
+done
+
+
+# FIXME needs update in dbtext XSL script
+minfo "inserting version data"
+
+# Dumping data for table 'version'
+echo "subscriber:6" 		>> $DBTEXT_PATH/version;
+echo "missed_calls:3" 		>> $DBTEXT_PATH/version;
+echo "location:1004" 		>> $DBTEXT_PATH/version;
+echo "aliases:1004" 		>> $DBTEXT_PATH/version;
+echo "grp:2" 			>> $DBTEXT_PATH/version;
+echo "re_grp:1" 		>> $DBTEXT_PATH/version;
+echo "acc:4" 			>> $DBTEXT_PATH/version;
+echo "silo:5" 			>> $DBTEXT_PATH/version;
+echo "domain:1" 		>> $DBTEXT_PATH/version;
+echo "uri:1" 			>> $DBTEXT_PATH/version;
+echo "trusted:4" 		>> $DBTEXT_PATH/version;
+echo "usr_preferences:2"	>> $DBTEXT_PATH/version;
+echo "speed_dial:2" 		>> $DBTEXT_PATH/version;
+echo "dbaliases:1" 		>> $DBTEXT_PATH/version;
+echo "gw:4" 			>> $DBTEXT_PATH/version;
+echo "gw_grp:1" 		>> $DBTEXT_PATH/version;
+echo "lcr:2" 			>> $DBTEXT_PATH/version;
+echo "address:3" 		>> $DBTEXT_PATH/version;
+
+echo -n "Install presence related tables ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	presence_create $1
+fi
+
+echo -n "Install extra tables - imc,cpl,siptrace,domainpolicy ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	extra_create $1
+fi
+
+echo -n "Install SERWEB related tables ?(y/n):"
+read INPUT
+if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+then
+	HAS_SERWEB="yes"
+	serweb_create $1
+fi
+
+} # openser_create
+
+
+presence_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "presence_create function takes one param (DBTEXT_PATH)"
+	exit 1
+fi
+
+DBTEXT_PATH=$1
+
+minfo "creating DBTEXT presence tables at: $DBTEXT_PATH ..."
+
+mkdir -p $DBTEXT_PATH
+
+for TABLE in $PRESENCE_TABLES; do
+    mdbg "Creating presence table: $TABLE"
+    cp $DB_SCHEMA/$TABLE $DBTEXT_PATH/$TABLE
+    if [ $? -ne 0 ] ; then
+	merr "Creating presence tables failed!"
+	exit 1
+    fi
+done
+
+
+minfo "inserting version data"
+echo "presentity:1" 		>> $DBTEXT_PATH/version;
+echo "active_watchers:4" 	>> $DBTEXT_PATH/version;
+echo "watchers:1" 		>> $DBTEXT_PATH/version;
+echo "xcap_xml:1" 		>> $DBTEXT_PATH/version;
+echo "pua:3" 			>> $DBTEXT_PATH/version;
+
+}  # end presence_create
+
+
+extra_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "extra_create function takes one param"
+	exit 1
+fi
+
+minfo "creating DBTEXT extra tables at: $DBTEXT_PATH ..."
+
+for TABLE in $EXTRA_TABLES; do
+    mdbg "Creating extra table: $TABLE"
+    cp $DB_SCHEMA/$TABLE $DBTEXT_PATH/$TABLE
+    if [ $? -ne 0 ] ; then
+	merr "Creating extra tables failed!"
+	exit 1
+    fi
+done
+
+minfo "inserting version data"
+echo "cpl:1" 			>> $DBTEXT_PATH/version;
+echo "imc_members:1"		>> $DBTEXT_PATH/version;
+echo "imc_rooms:1" 		>> $DBTEXT_PATH/version;
+echo "sip_trace:1" 		>> $DBTEXT_PATH/version;
+echo "domainpolicy:2"		>> $DBTEXT_PATH/version;
+
+}  # end extra_create
+
+
+# FIXME admin data is missing
+serweb_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "serweb_create function takes one param"
+	exit 1
+fi
+
+mwarn "admin data for serweb is missing!"
+
+minfo "creating DBTEXT serweb tables at: $DBTEXT_PATH ..."
+
+for TABLE in $SERWEB_TABLES; do
+    mdbg "Creating serweb table: $TABLE"
+    cp $DB_SCHEMA/$TABLE $DBTEXT_PATH/$TABLE
+    if [ $? -ne 0 ] ; then
+	merr "Creating serweb tables failed!"
+	exit 1
+    fi
+done
+
+minfo "inserting version data"
+echo "active_sessions:1"	>> $DBTEXT_PATH/version;
+echo "pending:6" 		>> $DBTEXT_PATH/version;
+echo "phonebook:1" 		>> $DBTEXT_PATH/version;
+echo "usr_preferences_types:1" 	>> $DBTEXT_PATH/version;
+echo "server_monitoring:1" 	>> $DBTEXT_PATH/version;
+echo "server_monitoring_agg:1" 	>> $DBTEXT_PATH/version;
+echo "admin_privileges:1" 	>> $DBTEXT_PATH/version;
+
+}  # end serweb_create
