@@ -39,6 +39,7 @@
 #include "../../mem/mem.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_uri.h"
 
 MODULE_VERSION
 
@@ -46,6 +47,14 @@ static str acpt_body = STR_STATIC_INIT("*/*");
 static str acpt_enc_body = STR_STATIC_INIT("");
 static str acpt_lan_body = STR_STATIC_INIT("en");
 static str supt_body = STR_STATIC_INIT("");
+static str contact = STR_STATIC_INIT("");
+static str cont_param = STR_STATIC_INIT("");
+
+#define ADD_CONT_OFF      0
+#define ADD_CONT_MODPARAM 1
+#define ADD_CONT_IP       2
+#define ADD_CONT_RURI     3
+static int add_cont = ADD_CONT_OFF;
 
 /*
  * sl_send_reply function pointer
@@ -71,6 +80,8 @@ static param_export_t params[] = {
 	{"accept_encoding", PARAM_STR, &acpt_enc_body},
 	{"accept_language", PARAM_STR, &acpt_lan_body},
 	{"supported",       PARAM_STR, &supt_body},
+	{"contact",         PARAM_STR, &contact},
+	{"contact_param",   PARAM_STR, &cont_param},
 	{0, 0, 0}
 };
 
@@ -96,42 +107,236 @@ static int mod_init(void)
 {
 	bind_sl_t bind_sl;
 
-	DBG("options initializing\n");
+	DBG("options - initializing\n");
 
-        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
 	if (!bind_sl) {
-		ERR("This module requires sl module\n");
+		ERR("options: init: module requires sl module\n");
 		return -1;
 	}
-	if (bind_sl(&sl) < 0) return -1;
+	if (bind_sl(&sl) < 0) {
+		return -1;
+	}
+
+	if (contact.len > 0) {
+		LOG(L_DBG, "contact: '%.*s'\n", contact.len, contact.s);
+		add_cont = ADD_CONT_MODPARAM;
+		if (strncasecmp("dstip", contact.s, contact.len) == 0) {
+			contact.s = NULL;
+			contact.len = 0;
+			add_cont = ADD_CONT_IP;
+		}
+		else if (strncasecmp("ruri", contact.s, contact.len) == 0) {
+			contact.s = NULL;
+			contact.len = 0;
+			add_cont = ADD_CONT_RURI;
+		}
+		/* more possible candidates here could be the To 
+		 * or topmost Route URI */
+	}
+
+	if (cont_param.len > 0 && add_cont == ADD_CONT_OFF) {
+		/* by default we add the IP */
+		add_cont = ADD_CONT_IP;
+	}
 
 	return 0;
 }
 
 
+/*
+ * calculates and returns the length of the Contact header to be inserted.
+ */
+static int contact_length(struct sip_msg* _msg)
+{
+	int ret = 0;
+
+	if (add_cont == ADD_CONT_OFF) {
+		return 0;
+	}
+
+	ret = CONT_STR_LEN + CRLF_LEN + 1;
+	if (add_cont == ADD_CONT_MODPARAM) {
+		ret += contact.len;
+	}
+	else if (add_cont == ADD_CONT_IP) {
+		ret += _msg->rcv.bind_address->name.len;
+		ret += 1;
+		ret += _msg->rcv.bind_address->port_no_str.len;
+		switch (_msg->rcv.bind_address->proto) {
+			case PROTO_NONE:
+			case PROTO_UDP:
+				break;
+			case PROTO_TCP:
+			case PROTO_TLS:
+				ret += TRANSPORT_PARAM_LEN + 3;
+				break;
+			case PROTO_SCTP:
+				ret += TRANSPORT_PARAM_LEN + 4;
+				break;
+			default:
+				LOG(L_CRIT, "contact_length(): unsupported proto (%d)\n",
+						_msg->rcv.bind_address->proto);
+		}
+	}
+	else if (add_cont == ADD_CONT_RURI) {
+		if (parse_sip_msg_uri(_msg) != 1) {
+			LOG(L_WARN, "add_contact(): failed to parse ruri\n");
+		}
+		if (_msg->parsed_orig_ruri_ok) {
+			ret += _msg->parsed_orig_ruri.host.len;
+			if (_msg->parsed_orig_ruri.port.len > 0) {
+				ret += 1;
+				ret += _msg->parsed_orig_ruri.port.len;
+			}
+		}
+		else if (_msg->parsed_uri_ok){
+			ret += _msg->parsed_uri.host.len;
+			if (_msg->parsed_uri.port.len > 0) {
+				ret += 1;
+				ret += _msg->parsed_uri.port.len;
+			}
+		}
+	}
+	if (cont_param.len > 0) {
+		if (*(cont_param.s) != ';') {
+			ret += 1;
+		}
+		ret += cont_param.len;
+	}
+
+	return ret;
+}
+
+/*
+ * inserts the Contact header at _dst and returns the number of written bytes
+ */
+static int add_contact(struct sip_msg* _msg, char* _dst)
+{
+	int ret = 0;
+
+	memcpy(_dst, CONT_STR, CONT_STR_LEN);
+	ret += CONT_STR_LEN;
+	if (add_cont == ADD_CONT_MODPARAM) {
+		memcpy(_dst + ret, contact.s, contact.len);
+		ret += contact.len;
+	}
+	else if (add_cont == ADD_CONT_IP) {
+		memcpy(_dst + ret, _msg->rcv.bind_address->name.s,
+				_msg->rcv.bind_address->name.len);
+		ret += _msg->rcv.bind_address->name.len;
+		memcpy(_dst + ret, ":", 1);
+		ret += 1;
+		memcpy(_dst + ret, _msg->rcv.bind_address->port_no_str.s,
+				_msg->rcv.bind_address->port_no_str.len);
+		ret += _msg->rcv.bind_address->port_no_str.len;
+		switch (_msg->rcv.bind_address->proto) {
+			case PROTO_NONE:
+			case PROTO_UDP:
+				break;
+			case PROTO_TCP:
+				memcpy(_dst + ret, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+				ret += TRANSPORT_PARAM_LEN;
+				memcpy(_dst + ret, "tcp", 3);
+				ret += 3;
+				break;
+			case PROTO_TLS:
+				memcpy(_dst + ret, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+				ret += TRANSPORT_PARAM_LEN;
+				memcpy(_dst + ret, "tls", 3);
+				ret += 3;
+				break;
+			case PROTO_SCTP:
+				memcpy(_dst + ret, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+				ret += TRANSPORT_PARAM_LEN;
+				memcpy(_dst + ret, "sctp", 4);
+				ret += 3;
+				break;
+			default:
+				LOG(L_CRIT, "add_contact(): unknown transport protocol (%d)\n",
+						_msg->rcv.bind_address->proto);
+		}
+	}
+	else if (add_cont == ADD_CONT_RURI) {
+		/* the parser was called by the contact_length function above */
+		if (_msg->parsed_orig_ruri_ok) {
+			memcpy(_dst + ret, _msg->parsed_orig_ruri.host.s,
+					_msg->parsed_orig_ruri.host.len);
+			ret += _msg->parsed_orig_ruri.host.len;
+			if (_msg->parsed_orig_ruri.port.len > 0) {
+				memcpy(_dst + ret, ":", 1);
+				ret += 1;
+				memcpy(_dst + ret, _msg->parsed_orig_ruri.port.s,
+						_msg->parsed_orig_ruri.port.len);
+				ret += _msg->parsed_orig_ruri.port.len;
+			}
+		}
+		else if (_msg->parsed_uri_ok){
+			memcpy(_dst + ret, _msg->parsed_uri.host.s,
+					_msg->parsed_uri.host.len);
+			ret += _msg->parsed_uri.host.len;
+			if (_msg->parsed_uri.port.len > 0) {
+				memcpy(_dst + ret, ":", 1);
+				ret += 1;
+				memcpy(_dst + ret, _msg->parsed_uri.port.s,
+						_msg->parsed_uri.port.len);
+				ret += _msg->parsed_uri.port.len;
+			}
+		}
+	}
+	if (cont_param.len > 0) {
+		if (*(cont_param.s) != ';') {
+			memcpy(_dst + ret, ";", 1);
+			ret += 1;
+		}
+		memcpy(_dst + ret, cont_param.s, cont_param.len);
+		ret += cont_param.len;
+	}
+	memcpy(_dst + ret, ">", 1);
+	ret += 1;
+	memcpy(_dst + ret, CRLF, CRLF_LEN);
+	ret += CRLF_LEN;
+
+	return ret;
+}
+
+/*
+ * assembles and send the acctual reply
+ */
 static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) 
 {
 	str rpl_hf;
+	int ret;
 	int offset = 0;
+	int cont_len = 0;
 
 	if ((_msg->REQ_METHOD != METHOD_OTHER) ||
 	    (_msg->first_line.u.request.method.len != OPTIONS_LEN) ||
 	    (strncasecmp(_msg->first_line.u.request.method.s, OPTIONS, OPTIONS_LEN) != 0)) {
 		LOG(L_ERR, "options_reply(): called for non-OPTIONS request\n");
-		return -1;
+		return 0;
 	}
 
-	/* FIXME: should we additionally check if ruri == server addresses ?! */
-	/* janakj: no, do it in the script */
+	/* ruri == server address check has to be done in the script */
+	if (_msg->parsed_uri_ok != 1) {
+		if (parse_sip_msg_uri(_msg) != 1) {
+			LOG(L_WARN, "opt_reply(): failed to parse ruri\n");
+		}
+	}
 	if (_msg->parsed_uri.user.len != 0) {
-		LOG(L_ERR, "options_reply(): ruri contains username\n");
-		return -1;
+		LOG(L_ERR, "options_reply(): wont reply because ruri contains"
+				" a username\n");
+		return 0;
 	}
 
 	/* calculate the length and allocated the mem */
 	rpl_hf.len = ACPT_STR_LEN + ACPT_ENC_STR_LEN + ACPT_LAN_STR_LEN +
 			SUPT_STR_LEN + 4 * CRLF_LEN + acpt_body.len + acpt_enc_body.len +
 			acpt_lan_body.len + supt_body.len;
+	if (add_cont) {
+		cont_len = contact_length(_msg);
+		rpl_hf.len += cont_len;
+	}
 	rpl_hf.s = (char*)pkg_malloc(rpl_hf.len);
 	if (!rpl_hf.s) {
 		LOG(L_CRIT, "options_reply(): out of memory\n");
@@ -167,32 +372,48 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar)
 	memcpy(rpl_hf.s + offset, CRLF, CRLF_LEN);
 	offset += CRLF_LEN;
 
+	if (cont_len > 0) {
+		ret = add_contact(_msg, rpl_hf.s + offset);
+		if (ret != cont_len) {
+			LOG(L_CRIT, "options_reply(): add_contact (%i) != contact_length" \
+					"(%i)\n", ret, cont_len);
+			goto error;
+		}
+		else {
+			offset += cont_len;
+		}
+	}
+
 #ifdef EXTRA_DEBUG
 	if (offset != rpl_hf.len) {
 		LOG(L_CRIT, "options_reply(): headerlength (%i) != offset (%i)\n",
 			rpl_hf.len, offset);
 		abort();
 	}
+	else {
+		DBG("options_reply(): successfully build OPTIONS reply\n");
+	}
 #endif
 
 	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
-	LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
+			LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
+		/* the memory is freed when _msg is destroyed */
 		if (sl.reply(_msg, 200, "OK") == -1) {
 			LOG(L_ERR, "options_reply(): failed to send 200 via send_reply\n");
-			return -1;
-		} else {
 			return 0;
+		} else {
+			return 1;
 		}
 	} else {
-		pkg_free(rpl_hf.s);
 		LOG(L_ERR, "options_reply(): add_lump_rpl failed\n");
 	}
 
 error:
+	if (rpl_hf.s) {
+		pkg_free(rpl_hf.s);
+	}
 	if (sl.reply(_msg, 500, "Server internal error") == -1) {
 		LOG(L_ERR, "options_reply(): failed to send 500 via send_reply\n");
-		return -1;
-	} else {
-		return 0;
 	}
+	return 0;
 }

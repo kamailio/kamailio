@@ -99,4 +99,49 @@ modparam("options", "supported", "100rel")
 	</example>
     </section>
 
+    <section id="options.contact">
+	<title><varname>contact</varname> (string)</title>
+	<para>
+	    The content of this parameter will be inserted into the reply as the
+		URI of the Contact header. If this parameter is empty (default case)
+		then no Contact header in included in the reply. If this parameter
+		is set to "dstip" the reply contains a Contact header with the
+		IP, port and transport of the socket where the request was sent to.
+		If this parameter is set to "ruri" the reply contains a Contact header
+		with the same URI as the request URI of the original OPTIONS request.
+	</para>
+	<para>
+	    Default value is "".
+	</para>
+	<example>
+	    <title>Set <varname>contact</varname> parameter</title>
+	    <programlisting>
+...
+modparam("options", "contact", "example.com")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="options.contact_param">
+	<title><varname>contact_param</varname> (string)</title>
+	<para>
+	    This parameter is appended to the value of the Contact header is
+		case it is set. If just this parameter is set but the contact module
+		parameter not, then the contact parameter is automatically set to
+		dstip.
+	</para>
+	<para>
+	    Default value is "".
+	</para>
+	<example>
+	    <title>Set <varname>contact_param</varname> parameter</title>
+	    <programlisting>
+...
+modparam("options", "contact_param", "lr=on")
+...
+	    </programlisting>
+	</example>
+    </section>
+
 </section>

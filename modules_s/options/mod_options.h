@@ -45,4 +45,7 @@
 #define SUPT_STR "Supported: "
 #define SUPT_STR_LEN (sizeof(SUPT_STR) - 1)
 
+#define CONT_STR "Contact: <sip:"
+#define CONT_STR_LEN (sizeof(CONT_STR) - 1)
+
 #endif /* _MOD_OPTIONS_H */
