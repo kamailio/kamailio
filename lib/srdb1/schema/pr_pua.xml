@@ -28,7 +28,7 @@
     </column>
 
     <column>
-        <name>pres_user</name>
+        <name>pres_uri</name>
         <type>string</type>
         <size>&uri_len;</size>
         <description>URI</description>
