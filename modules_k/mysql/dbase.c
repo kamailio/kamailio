@@ -610,6 +610,10 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
  */
 int db_last_inserted_id(db_con_t* _h)
 {
+	if (!_h) {
+		LOG(L_ERR, "db_last_inserted_id: Invalid parameter value\n");
+		return -1;
+	}
 	return mysql_insert_id(CON_CONNECTION(_h));
 }
 
