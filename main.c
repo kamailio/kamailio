@@ -154,6 +154,7 @@
 #ifdef USE_DST_BLACKLIST
 #include "dst_blacklist.h"
 #endif
+#include "rand/fastrand.h" /* seed */
 
 #include "stats.h"
 
@@ -1351,8 +1352,9 @@ try_again:
 	seed+=getpid()+time(0);
 	DBG("seeding PRNG with %u\n", seed);
 	srand(seed);
+	fastrand_seed(rand());
 	srandom(rand()+time(0));
-	DBG("test random number %u\n", rand());
+	DBG("test random numbers %u %lu %u\n", rand(), random(), fastrand());
 
 	/*register builtin  modules*/
 	register_builtin_modules();

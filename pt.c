@@ -41,6 +41,7 @@
 #include "pt.h"
 #include "tcp_init.h"
 #include "sr_module.h"
+#include "rand/fastrand.h"
 
 #include <stdio.h>
 #include <time.h> /* time(), used to initialize random numbers */
@@ -196,6 +197,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
 		srand(new_seed1);
+		fastrand_seed(rand());
 		srandom(new_seed2+time(0));
 		shm_malloc_on_fork();
 #ifdef PROFILING
@@ -330,6 +332,7 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
 		srand(new_seed1);
+		fastrand_seed(rand());
 		srandom(new_seed2+time(0));
 		shm_malloc_on_fork();
 #ifdef PROFILING
