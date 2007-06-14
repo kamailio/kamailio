@@ -6,14 +6,16 @@
 <para>Sometimes it is needed to solve problems with presence related stuff...
 ;-)</para>
 
-<section><title>Known problems</title>
+<section id="pres.known_problems"><title>Known problems</title>
 <para>
 <itemizedlist>
+
 	<listitem><para>AVPs might not work properly with presence. If you create
 	AVPs they can disappear after call to handle_subscription or similar
 	function. The reason is that from such functions is created new transaction
 	(sent a NOTIFY request) and AVPs are not returned correctly to previous
 	one.</para></listitem>
+
 	<listitem><para>There are some standard
 	incompliances in presence modules, often caused by standard ambiguity
 	or contradiction or by partial implementation only. Please refer to specific
@@ -21,6 +23,14 @@
 	<listitem><para>SIP clients often use broken data, not corresponding with
 	data format specification. Look into specification in such cases (for
 	example <xref linkend="pres_rfc_pidf"/>).</para></listitem>
+
+	<listitem><para>XCAP module is incompatible with TLS module due to openssl
+	initialization!</para>
+	<para>XCAP module uses libcurl for HTTP comunication and libcurl is using
+	libopenssl internaly. But TLS module needs some extra openssl initialization which
+	is not working when libcurl initializes openssl by itself.</para>
+	<para>Thanks Samuel (samu60@gmail.com) for pointing this out.</para></listitem>
+
 </itemizedlist>
 </para>
 </section>
