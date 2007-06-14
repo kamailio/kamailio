@@ -44,6 +44,8 @@
  *  2006-07-27  dns cache and dns based send address failover support (andrei)
  *  2006-12-06  on popular request last_retcode set also by module functions
  *              (andrei)
+ *  2007-06-14  run_actions & do_action need a ctx or handle now, no more 
+ *               static vars (andrei)
  */
 
 
@@ -78,11 +80,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-#define USE_LONGJMP
-
-#ifdef USE_LONGJMP
-#include <setjmp.h>
-#endif
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -90,13 +87,11 @@
 
 
 struct onsend_info* p_onsend=0; /* onsend route send info */
-unsigned int run_flags=0;
-int last_retcode=0; /* last return from a route() */
 
 /* ret= 0! if action -> end of list(e.g DROP),
       > 0 to continue processing next actions
    and <0 on error */
-int do_action(struct action* a, struct sip_msg* msg)
+int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 {
 	int ret;
 	int v;
@@ -123,10 +118,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 	switch ((unsigned char)a->type){
 		case DROP_T:
 				if (a->val[0].type==RETCODE_ST)
-					ret=last_retcode;
+					ret=h->last_retcode;
 				else
 					ret=(int) a->val[0].u.number;
-				run_flags|=(unsigned int)a->val[1].u.number;
+				h->run_flags|=(unsigned int)a->val[1].u.number;
 			break;
 		case FORWARD_T:
 #ifdef USE_TCP
@@ -436,9 +431,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 				break;
 			}
 			/*ret=((ret=run_actions(rlist[a->val[0].u.number], msg))<0)?ret:1;*/
-			ret=run_actions(main_rt.rlist[a->val[0].u.number], msg);
-			last_retcode=ret;
-			run_flags&=~RETURN_R_F; /* absorb returns */
+			ret=run_actions(h, main_rt.rlist[a->val[0].u.number], msg);
+			h->last_retcode=ret;
+			h->run_flags&=~RETURN_R_F; /* absorb returns */
 			break;
 		case EXEC_T:
 			if (a->val[0].type!=STRING_ST){
@@ -649,7 +644,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case IF_T:
 				/* if null expr => ignore if? */
 				if ((a->val[0].type==EXPR_ST)&&a->val[0].u.data){
-					v=eval_expr((struct expr*)a->val[0].u.data, msg);
+					v=eval_expr(h, (struct expr*)a->val[0].u.data, msg);
 #if 0
 					if (v<0){
 						if (v==EXPR_DROP){ /* hack to quit on DROP*/
@@ -661,18 +656,20 @@ int do_action(struct action* a, struct sip_msg* msg)
 						}
 					}
 #endif
-					if (run_flags & EXIT_R_F){
+					if (h->run_flags & EXIT_R_F){
 						ret=0;
 						break;
 					}
-					run_flags &= ~RETURN_R_F; /* catch returns in expr */
+					h->run_flags &= ~RETURN_R_F; /* catch returns in expr */
 					ret=1;  /*default is continue */
 					if (v>0) {
 						if ((a->val[1].type==ACTIONS_ST)&&a->val[1].u.data){
-							ret=run_actions((struct action*)a->val[1].u.data, msg);
+							ret=run_actions(h, 
+										(struct action*)a->val[1].u.data, msg);
 						}
 					}else if ((a->val[2].type==ACTIONS_ST)&&a->val[2].u.data){
-							ret=run_actions((struct action*)a->val[2].u.data, msg);
+							ret=run_actions(h, 
+										(struct action*)a->val[2].u.data, msg);
 					}
 				}
 			break;
@@ -682,8 +679,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 					(char*)a->val[2].u.data,
 					(char*)a->val[3].u.data
 				);
-				if (ret==0) run_flags|=EXIT_R_F;
-				last_retcode=ret;
+				if (ret==0) h->run_flags|=EXIT_R_F;
+				h->last_retcode=ret;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -753,7 +750,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	        case ADD_T:
 	        case ASSIGN_T:
 
-			/* If the left attr was specified withou indexing brackets delete
+			/* If the left attr was specified without indexing brackets delete
 			 * existing AVPs before adding new ones
 			 */
 			if ((a->val[0].u.attr->type & AVP_INDEX_ALL) != AVP_INDEX_ALL) delete_avp(a->val[0].u.attr->type, a->val[0].u.attr->name);
@@ -772,13 +769,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 				flags = a->val[0].u.attr->type;
 				name = a->val[0].u.attr->name;
 				if (a->val[1].u.data) {
-					value.n = run_actions((struct action*)a->val[1].u.data, msg);
+					value.n = run_actions(h, (struct action*)a->val[1].u.data,
+											msg);
 				} else {
 					value.n = -1;
 				}
 				ret = value.n;
 			} else if(a->val[1].type == EXPR_ST && a->val[1].u.data) {
-				v = eval_expr((struct expr*)a->val[1].u.data, msg);
+				v = eval_expr(h, (struct expr*)a->val[1].u.data, msg);
 				if (v < 0) {
 					if (v == EXPR_DROP){ /* hack to quit on DROP*/
 						ret = 0;
@@ -884,54 +882,56 @@ error_fwd_uri:
 
 /* returns: 0, or 1 on success, <0 on error */
 /* (0 if drop or break encountered, 1 if not ) */
-int run_actions(struct action* a, struct sip_msg* msg)
+int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
 	int ret;
-	static int rec_lev=0;
-	static jmp_buf jmp_env;
 	struct sr_module *mod;
 
 	ret=E_UNSPEC;
-	rec_lev++;
-	if (rec_lev>ROUTE_MAX_REC_LEV){
+	h->rec_lev++;
+	if (h->rec_lev>ROUTE_MAX_REC_LEV){
 		LOG(L_ERR, "WARNING: too many recursive routing table lookups (%d)"
-					" giving up!\n", rec_lev);
+					" giving up!\n", h->rec_lev);
 		ret=E_UNSPEC;
 		goto error;
 	}
-	if (rec_lev==1){
-		run_flags=0;
-		last_retcode=0;
-		if (setjmp(jmp_env)){
-			rec_lev=0;
-			ret=last_retcode;
+	if (h->rec_lev==1){
+		h->run_flags=0;
+		h->last_retcode=0;
+#ifdef USE_LONGJMP
+		if (setjmp(h->jmp_env)){
+			h->rec_lev=0;
+			ret=h->last_retcode;
 			goto end;
 		}
+#endif
 	}
 
 	if (a==0){
 		DBG("DEBUG: run_actions: null action list (rec_level=%d)\n",
-			rec_lev);
+				h->rec_lev);
 		ret=1;
 	}
 
 	for (t=a; t!=0; t=t->next){
-		ret=do_action(t, msg);
-		if (run_flags & (RETURN_R_F|EXIT_R_F)){
-			if (run_flags & EXIT_R_F){
-				last_retcode=ret;
-				longjmp(jmp_env, ret);
+		ret=do_action(h, t, msg);
+		if (h->run_flags & (RETURN_R_F|EXIT_R_F)){
+			if (h->run_flags & EXIT_R_F){
+#ifdef USE_LONGJMP
+				h->last_retcode=ret;
+				longjmp(h->jmp_env, ret);
+#endif
 			}
 			break;
 		}
 		/* ignore error returns */
 	}
 
-	rec_lev--;
+	h->rec_lev--;
 end:
 	/* process module onbreak handlers if present */
-	if (rec_lev==0 && ret==0)
+	if (h->rec_lev==0 && ret==0)
 		for (mod=modules;mod;mod=mod->next)
 			if (mod->exports && mod->exports->onbreak_f) {
 				mod->exports->onbreak_f( msg );
@@ -941,7 +941,7 @@ end:
 
 
 error:
-	rec_lev--;
+	h->rec_lev--;
 	return ret;
 }
 

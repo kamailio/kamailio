@@ -933,7 +933,8 @@ error_op:
 
 
 /* returns: 0/1 (false/true) or -1 on error */
-inline static int eval_elem(struct expr* e, struct sip_msg* msg)
+inline static int eval_elem(struct run_act_ctx* h, struct expr* e, 
+								struct sip_msg* msg)
 {
 	struct sip_uri uri;
 	int ret;
@@ -1048,7 +1049,7 @@ inline static int eval_elem(struct expr* e, struct sip_msg* msg)
 		break;
 
 	case ACTION_O:
-		ret=run_actions( (struct action*)e->r.param, msg);
+		ret=run_actions(h, (struct action*)e->r.param, msg);
 		if (ret<=0) ret=0;
 		else ret=1;
 		break;
@@ -1124,7 +1125,7 @@ inline static int eval_elem(struct expr* e, struct sip_msg* msg)
 		break;
 
 	case RETCODE_O:
-		ret=comp_num(e->op, last_retcode, e->r_type, &e->r);
+		ret=comp_num(e->op, h->last_retcode, e->r_type, &e->r);
 		break;
 
 	case AVP_O:
@@ -1147,28 +1148,28 @@ error:
 
 
 /* ret= 0/1 (true/false) ,  -1 on error */
-int eval_expr(struct expr* e, struct sip_msg* msg)
+int eval_expr(struct run_act_ctx* h, struct expr* e, struct sip_msg* msg)
 {
 	int ret;
 
 	if (e->type==ELEM_T){
-		ret=eval_elem(e, msg);
+		ret=eval_elem(h, e, msg);
 	}else if (e->type==EXP_T){
 		switch(e->op){
 			case LOGAND_OP:
-				ret=eval_expr(e->l.expr, msg);
+				ret=eval_expr(h, e->l.expr, msg);
 				/* if error or false stop evaluating the rest */
 				if (ret!=1) break;
-				ret=eval_expr(e->r.expr, msg); /*ret1 is 1*/
+				ret=eval_expr(h, e->r.expr, msg); /*ret1 is 1*/
 				break;
 			case LOGOR_OP:
-				ret=eval_expr(e->l.expr, msg);
+				ret=eval_expr(h, e->l.expr, msg);
 				/* if true or error stop evaluating the rest */
 				if (ret!=0) break;
-				ret=eval_expr(e->r.expr, msg); /* ret1 is 0 */
+				ret=eval_expr(h, e->r.expr, msg); /* ret1 is 0 */
 				break;
 			case NOT_OP:
-				ret=eval_expr(e->l.expr, msg);
+				ret=eval_expr(h, e->l.expr, msg);
 				if (ret<0) break;
 				ret= ! ret;
 				break;
