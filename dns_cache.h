@@ -46,6 +46,9 @@
 #error "DNS FAILOVER requires DNS CACHE support (define USE_DNS_CACHE)"
 #endif
 
+/* uncomment the define below for SRV weight based load balancing */
+#define DNS_SRV_LB
+
 #define DNS_LU_LST
 
 /* dns functions return them as negative values (e.g. return -E_DNS_NO_IP)
@@ -76,6 +79,7 @@ enum dns_errors{
 
 
 extern int dns_flags; /* default flags used for dns lookup */
+extern int dns_srv_lb; /* default SRV LB support value */
 
 /* return a short string, printable error description (err <=0) */
 const char* dns_strerror(int err);
@@ -88,6 +92,7 @@ const char* dns_strerror(int err);
 #define DNS_IPV4_ONLY	1
 #define DNS_IPV6_ONLY	2
 #define DNS_IPV6_FIRST	4
+#define DNS_SRV_RR_LB		8  /* SRV RR weight based load balancing */
 
 
 /* ip blacklist error flags */
@@ -136,10 +141,14 @@ struct dns_hash_entry{
 };
 
 
+typedef unsigned int srv_flags_t;
 
 struct dns_srv_handle{
 	struct dns_hash_entry* srv; /* srv entry */
 	struct dns_hash_entry* a;   /* a or aaaa current entry */
+#ifdef DNS_SRV_LB
+	srv_flags_t srv_tried_rrs;
+#endif
 	unsigned short port; /* current port */
 	unsigned char srv_no; /* current record no. in the srv entry */
 	unsigned char ip_no;   /* current record no. in the a/aaaa entry */
@@ -232,6 +241,9 @@ inline static void dns_srv_handle_init(struct dns_srv_handle* h)
 {
 	h->srv=h->a=0;
 	h->srv_no=h->ip_no=0;
+#ifdef DNS_SRV_LB
+	h->srv_tried_rrs=0;
+#endif
 }
 
 

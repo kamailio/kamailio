@@ -30,13 +30,20 @@
  * --------
  *  2006-07-13  created by andrei
  *  2006-10-06  port fix (andrei)
+ *  2007-06-14  dns iterate through A & AAAA records fix (andrei)
+ *  2007-06-15  srv rr weight based load balancing support (andrei)
  */
 
 #ifdef USE_DNS_CACHE
 
+#ifdef DNS_SRV_LB
+#include <stdlib.h> /* FIXME: rand() */
+#endif
+
 #include "globals.h"
 #include "dns_cache.h"
 #include "dns_wrappers.h"
+#include "compiler_opt.h"
 #include "mem/shm_mem.h"
 #include "hashes.h"
 #include "clist.h"
@@ -47,6 +54,7 @@
 #include "timer_ticks.h"
 #include "error.h"
 #include "rpc.h"
+#include "rand/fastrand.h"
 
 
 
@@ -80,6 +88,7 @@ unsigned int dns_cache_min_ttl=DEFAULT_DNS_CACHE_MIN_TTL; /* minimum ttl */
 unsigned int dns_timer_interval=DEFAULT_DNS_TIMER_INTERVAL; /* in s */
 int dns_flags=0; /* default flags used for the  dns_*resolvehost 
                     (compatibility wrappers) */
+int dns_srv_lb=1; /* off by default */
 
 #define LOCK_DNS_HASH()		lock_get(dns_hash_lock)
 #define UNLOCK_DNS_HASH()	lock_release(dns_hash_lock)
@@ -276,7 +285,14 @@ int init_dns_cache()
 	if (dns_flags & DNS_IPV4_ONLY){
 		dns_flags&=~(DNS_IPV6_ONLY|DNS_IPV6_FIRST);
 	}
-			;
+	if (dns_srv_lb){
+#ifdef DNS_SRV_LB
+		dns_flags|=DNS_SRV_RR_LB;
+#else
+		LOG(L_WARN, "WARING: dns_cache_init: SRV loadbalaning is set, but"
+					" support for it is not compiled -- ignoring\n");
+#endif
+	}
 	dns_timer_h=timer_alloc();
 	if (dns_timer_h==0){
 		ret=E_OUT_OF_MEM;
@@ -1526,7 +1542,7 @@ end:
 /* tries to lookup (name, type) in the hash and if not found tries to make
  *  a dns request
  *  return: 0 on error, pointer to a dns_hash_entry on success
- *  WARNING: when *   not needed anymore dns_hash_put() must be called! */
+ *  WARNING: when not needed anymore dns_hash_put() must be called! */
 inline static struct dns_hash_entry* dns_get_entry(str* name, int type)
 {
 	int h;
@@ -1612,6 +1628,138 @@ inline static struct dns_rr* dns_entry_get_rr(	struct dns_hash_entry* e,
 	*no=n;
 	return 0;
 }
+
+
+#ifdef DNS_SRV_LB
+
+#define srv_reset_tried(p)	(*(p)=0)
+#define srv_marked(p, i)	(*(p)&(1UL<<(i)))
+#define srv_mark_tried(p, i)	\
+	do{ \
+		(*(p)|=(1UL<<(i))); \
+	}while(0)
+
+#define srv_next_rr(n, f, i) srv_mark_tried(f, i)
+
+/* returns a random number between 0 and max inclusive (0<=r<=max) */
+inline static unsigned dns_srv_random(unsigned max)
+{
+	return fastrand_max(max);
+}
+
+/* for a SRV record it will return the next entry to be tried according
+ * to the RFC2782 server selection mechanism
+ * params:
+ *    e     is a dns srv hash entry
+ *    no    is the start index of the current group (a group is a set of SRV 
+ *          rrs with the same priority)
+ *    tried is a bitmap where the tried srv rrs of the same priority are 
+ *          marked
+ *    now - current time/ticks value
+ * returns pointer to the rr on success and sets no to the rr number
+ *         0 on error and fills the error flags
+ * WARNING: unlike dns_entry_get_rr() this will always return another
+ *           another rr automatically (*no must not be incremented)
+ *
+ * Example usage:
+ * list all non-expired, non-bad-marked, never tried before srv records
+ * using the rfc2782 algo:
+ * e=dns_get_entry(name, T_SRV);
+ * if (e){
+ *    no=0;
+ *    srv_reset_tried(&tried);
+ *    now=get_ticks_raw();
+ *    while(rr=dns_srv_get_nxt_rr(e, &tried, &no, now){
+ *       DBG("address %d\n", *no);
+ *     }
+ *  }
+ *
+ */
+inline static struct dns_rr* dns_srv_get_nxt_rr(struct dns_hash_entry* e,
+											 srv_flags_t* tried,
+											 unsigned char* no, ticks_t now)
+{
+#define MAX_SRV_GRP_IDX		(sizeof(srv_flags_t)*8) 
+	struct dns_rr* rr;
+	struct dns_rr* start_grp;
+	int n;
+	unsigned sum;
+	unsigned prio;
+	unsigned rand_w;
+	int found;
+	int saved_idx;
+	int i, idx;
+	struct r_sums_entry{
+			unsigned r_sum;
+			struct dns_rr* rr;
+			}r_sums[MAX_SRV_GRP_IDX];
+	
+	rand_w=0;
+	for(rr=e->rr_lst, n=0;rr && (n<*no);rr=rr->next, n++);/* skip *no records*/
+	
+retry:
+	if (unlikely(rr==0))
+		goto no_more_rrs;
+	start_grp=rr;
+	prio=((struct srv_rdata*)start_grp->rdata)->priority;
+	sum=0;
+	saved_idx=-1;
+	found=0;
+	for (idx=0;rr && (prio==((struct srv_rdata*)rr->rdata)->priority) &&
+						(idx < MAX_SRV_GRP_IDX); idx++, rr=rr->next){
+		if ( ((s_ticks_t)(now-rr->expire)>=0) /* expired entry */ ||
+				(rr->err_flags) /* bad rr */ ||
+				(srv_marked(tried, idx)) ) /* already tried */{
+			r_sums[idx].r_sum=0; /* 0 sum, to skip over it */
+			r_sums[idx].rr=0;    /* debug: mark it as unused */
+			continue;
+		}
+		/* special case, 0 weight records should be "first":
+		 * remember the first rr int the "virtual" list: A 0 weight must
+		 *  come first if present, else get the first one */
+		if ((saved_idx==-1) || (((struct srv_rdata*)rr->rdata)->weight==0)){
+			saved_idx=idx;
+		}
+		sum+=((struct srv_rdata*)rr->rdata)->weight;
+		r_sums[idx].r_sum=sum;
+		r_sums[idx].rr=rr;
+		found++;
+	}
+	if (found==0){
+		/* try in the next priority group */
+		n+=idx; /* next group start idx, last rr */
+		srv_reset_tried(tried);
+		goto retry;
+	}else if ((found==1) || ((rand_w=dns_srv_random(sum))==0)){
+		/* 1. if only one found, avoid a useless random() call or
+		 * 2. if rand_w==0, immediately select a 0 weight record if present, 
+		 *     or else the first record found
+		 *  (this takes care of the 0-weight at the beginning requirement) */
+		i=saved_idx; /* saved idx contains either first 0 weight or first
+						valid record */
+		goto found;
+	}
+	/* if we are here => rand_w is not 0 and we have at least 2 valid options
+	 * => we can safely iterate on the whole r_sums[] whithout any other
+	 * extra checks */
+	for (i=0; (i<idx) && (r_sums[i].r_sum<rand_w); i++);
+found:
+#ifdef DNS_CACHE_DEBUG
+	DBG("dns_srv_get_nxt_rr(%p, %lx, %d, %u): selected %d/%d in grp. %d"
+			" (rand_w=%d, rr=%p p=%d w=%d rsum=%d)\n",
+		e, (unsigned long)*tried, *no, now, i, idx, n, rand_w, r_sums[i].rr,
+		((struct srv_rdata*)r_sums[i].rr->rdata)->priority,
+		((struct srv_rdata*)r_sums[i].rr->rdata)->weight, r_sums[i].r_sum);
+#endif
+	/* i is the winner */
+	*no=n; /* grp. start */
+	srv_mark_tried(tried, i); /* mark it */
+	return r_sums[i].rr;
+no_more_rrs:
+	*no=n;
+	return 0;
+}
+#endif /* DNS_SRV_LB */
 
 
 
@@ -1930,7 +2078,7 @@ skip_srv:
  *                  returned ip
  * returns 0 on success, <0 on error (see the error codes),
  *         fills e, ip and rr_no
- *          On end of records (when use to iterate on all the ips) it
+ *          On end of records (when used to iterate on all the ips) it
  *          will return E_DNS_EOR (you should not log an error for this
  *          value, is just a signal that the address list end has been reached)
  * WARNING: dns_hash_put(*e) must be called when you don't need
@@ -2043,17 +2191,45 @@ int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 {
 	int ret;
 	
-	if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
+	ret=-E_DNS_NO_IP; 
+	if (*e==0){ /* first call */
+		if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
+			ret=dns_aaaa_resolve(e, rr_no, name, ip);
+			if (ret>=0) return ret;
+		}else{
+			ret=dns_a_resolve(e, rr_no, name, ip);
+			if (ret>=0) return ret;
+		}
+		if (flags&DNS_IPV6_FIRST){
+			ret=dns_a_resolve(e, rr_no, name, ip);
+		}else if (!(flags&(DNS_IPV6_ONLY|DNS_IPV4_ONLY))){
+			ret=dns_aaaa_resolve(e, rr_no, name, ip);
+		}
+	}else if ((*e)->type==T_A){
+		/* continue A resolving */
+		ret=dns_a_resolve(e, rr_no, name, ip);
+		if (ret>=0) return ret;
+		if (!(flags&(DNS_IPV6_ONLY|DNS_IPV6_FIRST|DNS_IPV4_ONLY))){
+			/* not found, try with AAAA */
+			dns_hash_put(*e);
+			*e=0;
+			*rr_no=0;
+			ret=dns_aaaa_resolve(e, rr_no, name, ip);
+		}
+	}else if ((*e)->type==T_AAAA){
+		/* continue AAAA resolving */
 		ret=dns_aaaa_resolve(e, rr_no, name, ip);
 		if (ret>=0) return ret;
+		if ((flags&DNS_IPV6_FIRST) && !(flags&DNS_IPV6_ONLY)){
+			/* not found, try with A */
+			dns_hash_put(*e);
+			*e=0;
+			*rr_no=0;
+			ret=dns_a_resolve(e, rr_no, name, ip);
+		}
 	}else{
-		ret=dns_a_resolve(e, rr_no, name, ip);
-		if (ret>=0) return ret;
-	}
-	if (flags&DNS_IPV6_FIRST){
-		ret=dns_a_resolve(e, rr_no, name, ip);
-	}else if (!(flags&(DNS_IPV6_ONLY|DNS_IPV4_ONLY))){
-		ret=dns_aaaa_resolve(e, rr_no, name, ip);
+		LOG(L_CRIT, "BUG: dns_ip_resolve: invalid record type %d\n", 
+					(*e)->type);
 	}
 	return ret;
 }
@@ -2061,10 +2237,23 @@ int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 
 
 /*  gets the first srv record starting at rr_no
- *  (similar to dns_a_resolve but for srv, sets host, port)
+ *  Next call will return the next record a.s.o.
+ *  (similar to dns_a_resolve but for srv, sets host, port and automatically
+ *   switches to the next record in the future)
+ *
+ *   if DNS_SRV_LB and tried!=NULL will do random weight based selection
+ *   for choosing between SRV RRs with the same priority (as described in
+ *    RFC2782).
+ *   If tried==NULL or DNS_SRV_LB is not defined => always returns next
+ *    record in the priority order and for records with the same priority
+ *     the record with the higher weight (from the remaining ones)
  */
-int dns_srv_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
-					str* name, str* host, unsigned short* port)
+int dns_srv_resolve_nxt(struct dns_hash_entry** e,
+#ifdef DNS_SRV_LB
+						srv_flags_t* tried,
+#endif
+						unsigned char* rr_no,
+						str* name, str* host, unsigned short* port)
 {
 	struct dns_rr* rr;
 	int ret;
@@ -2077,10 +2266,22 @@ int dns_srv_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 			goto error;
 		/* found it */
 		*rr_no=0;
+#ifdef DNS_SRV_LB
+		if (tried)
+			srv_reset_tried(tried);
+#endif
 		ret=-E_DNS_BAD_SRV_ENTRY;
 	}
 	now=get_ticks_raw();
-	rr=dns_entry_get_rr(*e, rr_no, now);
+#ifdef DNS_SRV_LB
+	if (tried){
+		rr=dns_srv_get_nxt_rr(*e, tried, rr_no, now);
+	}else
+#endif
+	{
+		rr=dns_entry_get_rr(*e, rr_no, now);
+		(*rr_no)++; /* try next record next time */
+	}
 	if (rr){
 		host->s=((struct srv_rdata*)rr->rdata)->name;
 		host->len=((struct srv_rdata*)rr->rdata)->name_len;
@@ -2111,29 +2312,38 @@ int dns_srv_resolve_ip(struct dns_srv_handle* h,
 	host.len=0;
 	host.s=0;
 	do{
-		if (h->a==0){ 
-			if ((ret=dns_srv_resolve(&h->srv, &h->srv_no,
-													name, &host, port))<0)
+		if (h->a==0){
+#ifdef DNS_SRV_LB
+			if ((ret=dns_srv_resolve_nxt(&h->srv, 
+								(flags & DNS_SRV_RR_LB)?&h->srv_tried_rrs:0,
+								&h->srv_no,
+								name, &host, port))<0)
 				goto error;
+#else
+			if ((ret=dns_srv_resolve_nxt(&h->srv, &h->srv_no,
+								name, &host, port))<0)
+				goto error;
+#endif
 			h->port=*port; /* store new port */
 		}else{
 			*port=h->port; /* return the stored port */
 		}
 		if ((ret=dns_ip_resolve(&h->a, &h->ip_no, &host, ip, flags))<0){
 			/* couldn't find any good ip for this record, try the next one */
-			h->srv_no++;
 			if (h->a){
 				dns_hash_put(h->a);
 				h->a=0;
 			}
 		}else if (h->a==0){
 			/* this was an ip, try the next srv record in the future */
-			h->srv_no++;
 		}
 	}while(ret<0);
 error:
+#ifdef DNS_CACHE_DEBUG
 	DBG("dns_srv_resolve_ip(\"%.*s\", %d, %d), ret=%d, ip=%s\n", 
-			name->len, name->s, h->srv_no, h->ip_no, ret, ip_addr2a(ip));
+			name->len, name->s, h->srv_no, h->ip_no, ret, 
+			ip?ZSW(ip_addr2a(ip)):"");
+#endif
 	return ret;
 }
 
@@ -2143,11 +2353,11 @@ error:
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
  * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
- * dns_res_h must be initialized prior to  calling this function and can be
- * used to get the subsequent ips
+ * h must be initialized prior to  calling this function and can be used to 
+ * get the subsequent ips
  * returns:  <0 on error
  *            0 on success and it fills *ip, *port, dns_sip_resolve_h
- * WARNING: when finished, dns_sip_resolve_put(dns_res_h) must be called!
+ * WARNING: when finished, dns_sip_resolve_put(h) must be called!
  */
 int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 						struct ip_addr* ip, unsigned short* port, int proto,
@@ -2172,7 +2382,7 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 		return -E_DNS_NO_SRV;
 	}
 	len=0;
-	if ((h->srv==0) && (h->a==0)){
+	if ((h->srv==0) && (h->a==0)){ /* first call */
 		h->port=(proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
 														don't find another */
 		if (port){
@@ -2234,8 +2444,10 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 					if ((ret=dns_srv_resolve_ip(h, &srv_name, ip,
 															port, flags))>=0)
 					{
+#ifdef DNS_CACHE_DEBUG
 						DBG("dns_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n", 
 							name->len, name->s, h->srv_no, h->ip_no, ret);
+#endif
 						return ret;
 					}
 				}
