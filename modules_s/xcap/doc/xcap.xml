@@ -43,6 +43,12 @@ HTTP) or other such stuff.
 </para>
 </section>
 
+<section><title>Incompatibility</title>
+<para>This module is not working with TLS module. Fro
+more information see section "Known problems" in presence handbook.
+</para>
+</section>
+
 <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
 <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
 
