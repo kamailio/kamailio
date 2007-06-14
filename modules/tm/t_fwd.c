@@ -142,6 +142,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	struct sip_uri parsed_uri_bak;
 	int parsed_uri_ok_bak, uri_backed_up;
 	str msg_uri_bak;
+	struct run_act_ctx ra_ctx;
 
 	shbuf=0;
 	msg_uri_bak.s=0; /* kill warnings */
@@ -175,7 +176,8 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 
 	if (unlikely(branch_route)) {
 		     /* run branch_route actions if provided */
-		if (run_actions(branch_rt.rlist[branch_route], i_req) < 0) {
+		init_run_actions_ctx(&ra_ctx);
+		if (run_actions(&ra_ctx, branch_rt.rlist[branch_route], i_req) < 0) {
 			LOG(L_ERR, "ERROR: print_uac_request: Error in run_actions\n");
                }
 	}

@@ -733,6 +733,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_failure;
+	struct run_act_ctx ra_ctx;
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
@@ -768,7 +769,8 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
-		if (run_actions(failure_rt.rlist[on_failure], &faked_req)<0)
+		init_run_actions_ctx(&ra_ctx);
+		if (run_actions(&ra_ctx, failure_rt.rlist[on_failure], &faked_req)<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
 	}
 
@@ -1621,6 +1623,7 @@ int reply_received( struct sip_msg  *p_msg )
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
 	avp_list_t* backup_uri_from, *backup_uri_to;
+	struct run_act_ctx ra_ctx;
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
 	int prev_branch;
@@ -1756,7 +1759,8 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
-		if (run_actions(onreply_rt.rlist[t->on_reply], p_msg)<0)
+		init_run_actions_ctx(&ra_ctx);
+		if (run_actions(&ra_ctx, onreply_rt.rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
