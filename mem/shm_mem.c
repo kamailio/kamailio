@@ -55,6 +55,9 @@
 
 #endif
 
+#define _ROUND2TYPE(s, type) \
+	(((s)+(sizeof(type)-1))&(~(sizeof(type)-1)))
+#define _ROUND_LONG(s) _ROUND2TYPE(s, long)
 
 
 #ifndef SHM_MMAP
@@ -225,11 +228,26 @@ int shm_mem_init_mallocs(void* mempool, unsigned long pool_size)
 int shm_mem_init(int force_alloc)
 {
 	int ret;
+	long sz;
+	long* p;
+	long* end;
 	
 	ret=shm_getmem();
 	if (ret<0) return ret;
-	if (force_alloc)
-		memset(shm_mempool, 0, shm_mem_size);
+	if (force_alloc){
+		sz=sysconf(_SC_PAGESIZE);
+		DBG("shm_mem_init: %ld bytes/page\n", sz);
+		if ((sz<sizeof(*p)) || (_ROUND_LONG(sz)!=sz)){
+			LOG(L_WARN, "shm_mem_init: invalid page size %ld, using 4096\n",
+					sz);
+			sz=4096; /* invalid page size, use 4096 */
+		}
+		end=shm_mempool+shm_mem_size-sizeof(*p);
+		/* touch one word in every page */
+		for(p=(long*)_ROUND_LONG((long)shm_mempool); p<=end;
+										p=(long*)((char*)p+sz))
+			*p=0; 
+	}
 	return shm_mem_init_mallocs(shm_mempool, shm_mem_size);
 }
 
