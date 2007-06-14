@@ -455,6 +455,7 @@ static int attr2uri(struct sip_msg* msg, char* p1, char* p2)
     int_str value;
     avp_t* avp_entry;
     struct action act;
+	struct run_act_ctx ra_ctx;
     int pnr;
     
     if (p2) {
@@ -473,7 +474,8 @@ static int attr2uri(struct sip_msg* msg, char* p1, char* p2)
     act.val[0].type = STRING_ST;
     act.val[0].u.string = value.s.s;
     act.type = pnr;
-    if (do_action(&act, msg) < 0) {
+	init_run_actions_ctx(&ra_ctx);
+    if (do_action(&ra_ctx, &act, msg) < 0) {
 	ERR("failed to change ruri part'n");
 	return -1;
     }

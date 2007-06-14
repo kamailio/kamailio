@@ -985,6 +985,8 @@ static int dbops_foreach_fixup(void** param, int param_no) {
 
 static int dbops_foreach_func(struct sip_msg* m, char* query_no, char* route_no) {
 	int save_row_no, res;
+	struct run_act_ctx ra_ctx;
+	
 	if ((long)route_no >= main_rt.idx) {
 		BUG("invalid routing table number #%ld of %d\n", (long) route_no, main_rt.idx);
 		return -1;
@@ -1001,8 +1003,8 @@ static int dbops_foreach_func(struct sip_msg* m, char* query_no, char* route_no)
 	save_row_no = open_queries[(long) query_no].cur_row_no;
 	for (open_queries[(long) query_no].cur_row_no=0; open_queries[(long) query_no].cur_row_no < RES_ROW_N(open_queries[(long) query_no].result); open_queries[(long) query_no].cur_row_no++) {
 		/* exec the routing script */
-		res = run_actions(main_rt.rlist[(long) route_no], m);
-		run_flags &= ~RETURN_R_F; /* absorb returns */
+		init_run_actions_ctx(&ra_ctx);
+		res = run_actions(&ra_ctx, main_rt.rlist[(long) route_no], m);
 		if (res <= 0) break;
 	}
 	open_queries[(long) query_no].cur_row_no = save_row_no;

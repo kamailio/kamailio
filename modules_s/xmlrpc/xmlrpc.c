@@ -1318,6 +1318,7 @@ static int em_receive_request(struct sip_msg* orig_msg,
 {
 	struct sip_msg tmp_msg;
 	struct sip_msg* msg;
+	struct run_act_ctx ra_ctx;
 	
 	if (new_buf && new_len){
 		memset(&tmp_msg, 0, sizeof(struct sip_msg));
@@ -1348,7 +1349,8 @@ static int em_receive_request(struct sip_msg* orig_msg,
 	if (exec_pre_req_cb(msg)==0)
 		goto end; /* drop request */
 	/* exec routing script */
-	if (run_actions(main_rt.rlist[xmlrpc_route_no], msg)<0){
+	init_run_actions_ctx(&ra_ctx);
+	if (run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg)<0){
 		WARN("xmlrpc: error while trying script\n");
 		goto end;
 	}

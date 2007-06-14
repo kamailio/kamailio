@@ -118,6 +118,7 @@ int exec_str(struct sip_msg *msg, str* cmd, char *param, int param_len) {
 	int uri_cnt;
 	int uri_len;
 	int exit_status;
+	struct run_act_ctx ra_ctx;
 
 	/* pessimist: assume error by default */
 	ret=-1;
@@ -163,7 +164,8 @@ int exec_str(struct sip_msg *msg, str* cmd, char *param, int param_len) {
 			act.type = SET_URI_T;
 			act.val[0].type = STRING_ST;
 			act.val[0].u.string = uri_line;
-			if (do_action(&act, msg)<0) {
+			init_run_actions_ctx(&ra_ctx);
+			if (do_action(&ra_ctx, &act, msg)<0) {
 				LOG(L_ERR,"ERROR:exec_str : SET_URI_T action failed\n");
 				ser_error=E_OUT_OF_MEM;
 				goto error02;

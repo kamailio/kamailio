@@ -116,6 +116,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 	#define MSG "GET /timer HTTP/0.9\n\n"
 	struct sip_msg* msg;
 	struct timer_action *a;
+	struct run_act_ctx ra_ctx;
 
 	a = data;
 	if (!a->disable_itself) {
@@ -156,9 +157,8 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 		if (exec_pre_req_cb(msg)==0 )
 			goto end; /* drop the request */
 		/* exec the routing script */
-		run_actions(main_rt.rlist[a->route_no], msg);
-		run_flags &= ~RETURN_R_F; /* absorb returns */
-
+		init_run_actions_ctx(&ra_ctx);
+		run_actions(&ra_ctx, main_rt.rlist[a->route_no], msg);
 		/* execute post request-script callbacks */
 		exec_post_req_cb(msg);
 	end:

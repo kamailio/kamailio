@@ -809,17 +809,19 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     struct action act;
     int rval;
     struct usr_avp *avp;
+	struct run_act_ctx ra_ctx;
 
     avp = search_first_avp(gw_uri_avp_name_str, gw_uri_name, &val, 0);
     if (!avp) return -1;
 
     memset(&act, 0, sizeof(act));
+	init_run_actions_ctx(&ra_ctx);
     if (*(tmb.route_mode) == MODE_REQUEST) {
 
 	act.type = SET_URI_T;
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val.s.s;
-	rval = do_action(&act, _m);
+	rval = do_action(&ra_ctx, &act, _m);
 	destroy_avp(avp);
 	if (rval != 1) {
 	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
@@ -835,7 +837,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	act.val[0].u.string = val.s.s;
 	act.val[1].type = NUMBER_ST;
 	act.val[1].u.number = 0;
-	rval = do_action(&act, _m);
+	rval = do_action(&ra_ctx, &act, _m);
 	destroy_avp(avp);
 	if (rval != 1) {
 	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
@@ -1077,6 +1079,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
     int_str val;
     struct action act;
     int rval;
+	struct run_act_ctx ra_ctx;
 
     if (*(tmb.route_mode) == MODE_REQUEST) {
 
@@ -1092,7 +1095,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	act.type = SET_URI_T;
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = val.s.s;
-	rval = do_action(&act, msg);
+	init_run_actions_ctx(&ra_ctx);
+	rval = do_action(&ra_ctx, &act, msg);
 	if (rval != 1) {
 	    destroy_avp(avp);
 	    return rval;
@@ -1119,7 +1123,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    act.val[0].u.string = val.s.s;
 	    act.val[1].type = NUMBER_ST;
 	    act.val[1].u.number = 0;
-	    rval = do_action(&act, msg);
+		init_run_actions_ctx(&ra_ctx);
+	    rval = do_action(&ra_ctx, &act, msg);
 	    if (rval != 1) {
 		destroy_avp(avp);
 		LOG(L_ERR, "next_contacts(): ERROR: do_action failed with return value <%d>\n", rval);
@@ -1151,7 +1156,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    act.val[0].u.string = val.s.s;
 	    act.val[1].type = NUMBER_ST;
 	    act.val[1].u.number = 0;
-	    rval = do_action(&act, msg);
+		init_run_actions_ctx(&ra_ctx);
+	    rval = do_action(&ra_ctx, &act, msg);
 	    if (rval != 1) {
 		destroy_avp(avp);
 		return rval;

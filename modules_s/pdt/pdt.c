@@ -385,6 +385,7 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 {
 	struct action act;
+	struct run_act_ctx ra_ctx;
 	if(msg==NULL || d==NULL)
 	{
 		LOG(L_ERR, "PDT:update_new_uri: bad parameters\n");
@@ -402,7 +403,8 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 			act.val[0].u.number = prefix.len;
 		act.next = 0;
 
-		if (do_action(&act, msg) < 0)
+	init_run_actions_ctx(&ra_ctx);
+		if (do_action(&ra_ctx, &act, msg) < 0)
 		{
 			LOG(L_ERR, "PDT:update_new_uri:Error removing prefix\n");
 			return -1;
@@ -414,7 +416,8 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	act.val[0].u.string = d->s;
 	act.next = 0;
 
-	if (do_action(&act, msg) < 0)
+	init_run_actions_ctx(&ra_ctx);
+	if (do_action(&ra_ctx, &act, msg) < 0)
 	{
 		LOG(L_ERR, "PDT:update_new_uri:Error changing domain\n");
 		return -1;

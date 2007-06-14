@@ -781,6 +781,7 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 	int ret, idx;
 	struct stack_item *pivot;
 	struct eval_stack_oper *so;
+	struct run_act_ctx ra_ctx;
 
 	so = (struct eval_stack_oper *)param1;
 	if (param2) {
@@ -843,7 +844,8 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 							return -1;
 					}
 					a.next = 0;
-					ret = do_action(&a, msg);
+					init_run_actions_ctx(&ra_ctx);
+					ret = do_action(&ra_ctx, &a, msg);
 					if (so->oper_type == esotPop)
 						remove_stack_item(pivot);
 					return ret<0?-1:1;
@@ -1834,6 +1836,7 @@ static int eval_while_fixup(void **param, int param_no) {
 static int eval_while_func(struct sip_msg *msg, char *route_no, char *param2) {
 	int ret, idx;
 	struct stack_item *pivot;
+	struct run_act_ctx ra_ctx;
 
 	if (param2) {
 		long l;
@@ -1861,8 +1864,8 @@ static int eval_while_func(struct sip_msg *msg, char *route_no, char *param2) {
 			return -1;
 		}
 		/* exec the routing script */
-		ret = run_actions(main_rt.rlist[(int) route_no], msg);
-		run_flags &= ~RETURN_R_F; /* absorb returns */
+		init_run_actions_ctx(&ra_ctx);
+		ret = run_actions(&ra_ctx, main_rt.rlist[(int) route_no], msg);
 		if (ret <= 0) break;
 	}
 	return ret;
@@ -1870,6 +1873,8 @@ static int eval_while_func(struct sip_msg *msg, char *route_no, char *param2) {
 
 static int eval_while_stack_func(struct sip_msg *msg, char *route_no, char *param2) {
 	int ret, count;
+	struct run_act_ctx ra_ctx;
+	
 	if (param2) {
 		long l;
 		struct eval_value v;
@@ -1892,8 +1897,8 @@ static int eval_while_stack_func(struct sip_msg *msg, char *route_no, char *para
 			return -1;
 		}
 		/* exec the routing script */
-		ret = run_actions(main_rt.rlist[(int) route_no], msg);
-		run_flags &= ~RETURN_R_F; /* absorb returns */
+		init_run_actions_ctx(&ra_ctx);
+		ret = run_actions(&ra_ctx, main_rt.rlist[(int) route_no], msg);
 		if (ret <= 0) break;
 	}
 	return ret;
