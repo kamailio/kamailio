@@ -59,8 +59,8 @@ static void destroy_avps(avp_t *avp)
 	avp_t *n;
 
 	while (avp) {
-		shm_free(avp); /* FIXME: really ?? */
 		n = avp->next;
+		shm_free(avp); /* FIXME: really ?? */
 		avp = n;
 	}
 }
