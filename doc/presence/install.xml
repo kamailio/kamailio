@@ -11,6 +11,12 @@ compilation procedure and running is a bit more difficult than usual. For detail
 description of libraries see their separate documentation (stored in
 <filename>lib/doc</filename> subdirectory of main SER directory).</para>
 
+<section><title>Incompatibility</title>
+<para>XCAP module needed for authorization is not working with TLS module. Fro
+more information see <xref linkend="pres.known_problems"/>.
+</para>
+</section>
+
 <section id="pres.dependencies"><title>Dependencies</title>
 <para>Presence module dependecies may be found in sections <link
 linkend="pa.dependencies">PA module dependencies</link> and <link
