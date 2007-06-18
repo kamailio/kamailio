@@ -1579,7 +1579,7 @@ try_again:
 		goto error;
 	}
 #ifdef USE_DNS_CACHE
-	if (init_dns_cache()<0){
+	if (use_dns_cache && init_dns_cache()<0){
 		LOG(L_CRIT, "could not initialize the dns cache, exiting...\n");
 		goto error;
 	}

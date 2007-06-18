@@ -3,6 +3,7 @@
 # History:
 # --------
 # 2006-09-08  created by andrei
+# 2007-06-18  added naptr & friends, dns_srv_lb, more compile options (andrei)
 #
 
 Overview
@@ -18,6 +19,8 @@ Overview
   destination host doesn't send any reply to a forwarded invite within the
   sip timeout interval (whose value can be configured using the tm fr_timer
    parameter).
+ When SRV based load balancing is enabled ser can even do DNS based load 
+ balancing (see RFC2782 and the dns_srv_lb option below).
 
 
 DNS Cache and Failover Drawbacks
@@ -42,6 +45,19 @@ DNS Cache and Failover Drawbacks
      Workaround: compile without dns failover support (-DUSE_DNS_FAILOVER).
   Turning it off from the config file is not enough in this case (the extra
    memory will still be used).
+ 
+ On the other hand using the dns cache saves lots of DNS queries and makes
+ DNS based failover and DNS based load balancing possible. If the destination
+ blacklist is enabled, ser can do failover even if forwarding in stateless 
+ mode.
+ In the ideal case with dns cache enabled ser will do only one query for
+ a NAPTR (if enabled) or SRV lookup and then it will use the results for the
+ record's TTL (for example if all the resulting records have 1 minute TTL,
+  ser won't make another query for this domain for 1 minute). Even negative
+ answers will be cached.
+ Without the dns cache, each NAPTR or SRV lookup will result in at least 2 
+ queries. These queries will happen every time, for each message (even if 
+ all of them go to the same domain).
 
 
 DNS Resolver Options
@@ -58,6 +74,41 @@ DNS Resolver Options
       ipv6 (AAAA) lookups will be performed if the ipv4 (A) lookups fail. 
       If off only ipv4 (A) lookups will be used.
       Default: on if ser is compiled with ipv6 support.
+
+   dns_try_naptr = on | off - if on ser will first try a NAPTR lookup for
+      destinations that don't have the protocol or port specified and 
+      are not simple ip addresses (as described in RFC 3263). This will 
+      introduce a slight performance penalty and will probably cause extra
+      DNS lookups. For example a lookup for a non-existing domain will
+      produce one extra query: NAPTR(domain), SRV(_sip._udp.domain) 
+      and A/AAAA(domain).
+      If the result of a query contains several NAPTR records, ser will select
+      among them according to the RFC2915 and ser preference towards a
+      specific protocol (see dns_udp_pref, dns_tcp_pref and dns_tls_pref 
+      below). For an RFC3263 compliant configuration (choose the remote side
+      preferred protocol if supported), set dns_udp_pref, dns_tcp_pref and
+      dns_tls_pref to the same value (>=0), e.g. 0.
+      Default: off
+
+   dns_udp_pref = number - udp protocol preference when doing NAPTR lookups.
+      This option works together with dns_tcp_pref and dns_tls_pref. If all
+      this options have the same positive value and more NAPTR records are
+      available, ser will select the NAPTR record preferred by the remote side
+      (according to RFC2915). If the values are positive but different, ser
+      will select the NAPTR record whose protocol it prefers the most
+      (the protocol with the highest dns_<proto>_pref number). If there are 
+       several NAPTR records with the same preferred protocol, ser will select        among them based on their order and preference (see RFC2915).
+      To completely disable selecting a specific protocol, use  a negative
+       number. For example dns_tcp_pref=-1 will completely disable selection
+       of tcp NAPTR records, even if this will result in the NAPTR lookup
+       failure.
+       Default: dns_udp_pref=3, dns_tcp_pref=2 and dns_tls_pref=1
+       (prefer udp, but if no udp NAPTR record found or no SRV-resolvable 
+        udp NAPTR record found use tcp records and if this fails too use tls)
+
+   dns_tcp_pref = number  (see dns_udp_pref above)
+
+   dns_tls_pref = number (see dns_udp_pref above)
 
    dns_retr_time = time - time in s before retrying a dns request.
       Default: system specific, depends also on the/etc/resolv.conf content
@@ -98,6 +149,19 @@ DNS Resolver Options
  dns server (to avoid unnecessary extra lookups).
 
 
+DNS Resolver Compile Options
+
+   USE_NAPTR - if defined the naptr lookup support will be compiled in.
+      NAPTR support still has to be enabled from ser's config file (it's
+      off by default).
+
+   RESOLVE_DBG - if defined, the resolver will be very verbose: it will log
+      a lot of debugging information at L_DBG level.
+
+   NAPTR_DBG - if defined the NAPTR related resolver functions will be very
+       verbose.
+
+
 DNS Cache and Failover Config Variables
 
    use_dns_cache = on | off - if off the dns cache won't be used (all dns
@@ -117,6 +181,32 @@ DNS Cache and Failover Config Variables
       Default: off.
    Depends on use_dns_cache being on. If tm is used along with dns failover is
    recommended to also turn on dst_blacklist.
+
+   dns_srv_lb = on | off or
+   dns_srv_loadbalancing = on | off - if on instead of doing simple dns 
+        failover (like above), ser will load balance requests to different srv
+        records of the same priority based on the srv records weights (like 
+        described in RFC2782). For a destination which has different priorities
+        for all its srv records, this option will be equivalent with simple
+        dns failover.
+        Note: this option requires having dns failover enabled (see 
+        use_dns_failover above).
+        Default: off.
+
+   dns_try_ipv6 = on | off - shared with the resolver (see resolver 
+        description).
+
+   dns_try_naptr = on | off - shared with the resolver (see resolver 
+        description).
+
+   dns_udp_pref =  number - shared with the resolver (see resolver 
+        description).
+
+   dns_tcp_pref =  number - shared with the resolver (see resolver 
+        description).
+
+   dns_tls_pref =  number - shared with the resolver (see resolver 
+        description).
 
    dns_cache_flags = dns cache specific resolver flags, used for overriding
      the default behaviour (low level).
@@ -165,9 +255,38 @@ DNS Cache Compile Options
    USE_DNS_FAILOVER - if defined the dns failover support will be compiled in.
       (default). Compiling the dns failover support has a few disadvantages,
       see the "Drawbacks" section.
+
+   DNS_SRV_LB  - if defined (default) support for load balancing using 
+       srv records weights (as described in RFC2782) will be compiled in.
+       Note however that it still must be enabled from the ser config, it's
+       disabled by default (see the dns_srv_lb config option).
+
+   USE_NAPTR  - (shared with the resolver)  if defined NAPTR support will
+       be compiled in (default). Note that even if compiled, NAPTR support
+       must be enabled also from the ser config (see the dns_try_naptr option).
+
+   NAPTR_CACHE_ALL_ARS - if defined all the additional records in a NAPTR
+       answer will be cached. Normally ser would cache only "related" records
+       (records that are directly referred), but for answers with lots of 
+        A/AAAA records it might happen that not all of the SRV records will fit
+       in the AR section. In this case, without this compile option ser will 
+       not cache the un-referred A/AAAA records. BY default this option is
+       disabled.
+
+   CACHE_RELEVANT_RECS_ONLY - if defined (default), records in the AR section
+       of an answer will be cached only if they are "related" to the query.
+       For example if the query is for a SRV record, A & AAAA records in the
+       AR section will be cached only if there are SRV records pointing to 
+       them. This avoids adding possible garbage to the cache.
+       If this option is not defined (experimental), everything in the AR
+       section will be added to the cache.
+
+   DNS_CACHE_DEBUG - if defined the dns cache will be very verbose (it will
+       log lots of messages at the L_DBG levell).
  
  Note: To remove a compile options,  edit ser's Makefile.defs and remove it 
    form DEFS list. To add a compile options add it to the make command line,
      e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
    or for a permanent solution, edit Makefile.defs and add it to DEFS 
-   (don't foget to prefix it with -D).
+   (don't foget to prefix it with -D). Some options require editing 
+   dns_cache.c or resolve.[ch] (just grep after them).

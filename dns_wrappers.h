@@ -36,6 +36,6 @@
 
 struct hostent* dns_resolvehost(char* name);
 struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
-										int proto);
+										char* proto);
 
 #endif

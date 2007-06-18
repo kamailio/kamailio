@@ -33,6 +33,7 @@
  *  2006-07-13  rdata structures put on diet (andrei)
  *  2006-07-17  rdata contains now also the record name (andrei)
  *  2006-08-18  get_record uses flags (andrei)
+ *  2006-06-16  naptr support (andrei)
  */
 
 
@@ -53,6 +54,11 @@
 #ifdef USE_DNS_CACHE
 #include "dns_wrappers.h"
 #endif
+
+/* define RESOLVE_DBG for debugging info (very noisy) */
+#define RESOLVE_DBG
+/* define NAPTR_DBG for naptr related debugging info (very noisy) */
+#define NAPTR_DBG
 
 
 #define MAX_QUERY_SIZE 8192
@@ -151,6 +157,10 @@ void free_rdata_list(struct rdata* head);
 
 
 extern int dns_try_ipv6;
+extern int dns_try_naptr;
+extern int dns_udp_pref;  /* udp transport preference (for naptr) */
+extern int dns_tcp_pref;  /* tcp transport preference (for naptr) */
+extern int dns_tls_pref;  /* tls transport preference (for naptr) */
 
 
 #define rev_resolvehost(ip)\
@@ -200,8 +210,10 @@ static inline struct ip_addr* str2ip(str* st)
 	
 	return &ip;
 error_dots:
+#ifdef RESOLVE_DBG
 	DBG("str2ip: ERROR: too %s dots in [%.*s]\n", (i>3)?"many":"few", 
 			st->len, st->s);
+#endif
 	return 0;
  error_char:
 	/*
@@ -291,15 +303,21 @@ static inline struct ip_addr* str2ip6(str* st)
 	return &ip;
 
 error_too_many_colons:
+#ifdef RESOLVE_DBG
 	DBG("str2ip6: ERROR: too many colons in [%.*s]\n", st->len, st->s);
+#endif
 	return 0;
 
 error_too_few_colons:
+#ifdef RESOLVE_DBG
 	DBG("str2ip6: ERROR: too few colons in [%.*s]\n", st->len, st->s);
+#endif
 	return 0;
 
 error_colons:
+#ifdef RESOLVE_DBG
 	DBG("str2ip6: ERROR: too many double colons in [%.*s]\n", st->len, st->s);
+#endif
 	return 0;
 
 error_char:
@@ -311,7 +329,7 @@ error_char:
 
 
 
-struct hostent* _sip_resolvehost(str* name, unsigned short* port, int proto);
+struct hostent* _sip_resolvehost(str* name, unsigned short* port, char* proto);
 
 
 
@@ -390,7 +408,7 @@ skip_ipv4:
 int resolv_init();
 
 int sip_hostport2su(union sockaddr_union* su, str* host, unsigned short port,
-						int proto);
+						char* proto);
 
 
 
@@ -403,5 +421,35 @@ int sip_hostport2su(union sockaddr_union* su, str* host, unsigned short port,
 #define sip_resolvehost _sip_resolvehost
 #endif
 
+
+
+#ifdef USE_NAPTR
+/* NAPTR helper functions */
+typedef unsigned int naptr_bmp_t; /* type used for keeping track of tried
+									 naptr records*/
+#define MAX_NAPTR_RRS (sizeof(naptr_bmp_t)*8)
+
+/* use before first call to naptr_sip_iterate */
+#define naptr_iterate_init(bmp) \
+	do{ \
+		*(bmp)=0; \
+	}while(0) \
+
+struct rdata* naptr_sip_iterate(struct rdata* naptr_head, 
+										naptr_bmp_t* tried,
+										str* srv_name, char* proto);
+/* returns sip proto if valis sip naptr record, .-1 otherwise */
+char naptr_get_sip_proto(struct naptr_rdata* n);
+/* returns true if new_proto is preferred over old_proto */
+int naptr_proto_preferred(char new_proto, char old_proto);
+/* returns true if we support the protocol */
+int naptr_proto_supported(char proto);
+/* choose between 2 naptr records, should take into account local
+ * preferences too
+ * returns 1 if the new record was selected, 0 otherwise */
+int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
+									struct naptr_rdata* n , char n_proto);
+
+#endif/* USE_NAPTR */
 
 #endif

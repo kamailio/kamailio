@@ -212,6 +212,8 @@ extern unsigned int dns_cache_min_ttl; /* minimum ttl */
 extern unsigned int dns_timer_interval; /* gc timer interval in s */
 extern int dns_flags; /* default flags used for the  dns_*resolvehost 
                     (compatibility wrappers) */
+extern int dns_srv_lb; /* default SRV LB support value */
+
 #endif
 #ifdef USE_DST_BLACKLIST
 extern int use_dst_blacklist; /* 1 if the blacklist is enabled */

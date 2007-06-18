@@ -315,7 +315,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (use_dns_failover){
 			dns_srv_handle_init(&dns_srv_h);
 			err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
-									send_info->proto, dns_flags);
+									&send_info->proto, dns_flags);
 			if (err!=0){
 				LOG(L_ERR, "ERROR: forward_request: resolving \"%.*s\""
 						" failed: %s [%d]\n", dst->len, ZSW(dst->s),
@@ -325,7 +325,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			}
 		}else
 #endif
-		if (sip_hostport2su(&send_info->to, dst, port, send_info->proto)<0){
+		if (sip_hostport2su(&send_info->to, dst, port, &send_info->proto)<0){
 			LOG(L_ERR, "ERROR: forward_request: bad host name %.*s,"
 						" dropping packet\n", dst->len, ZSW(dst->s));
 			ret=E_BAD_ADDRESS;
@@ -449,7 +449,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 #ifdef USE_DNS_FAILOVER
 	}while(dst && use_dns_failover && dns_srv_handle_next(&dns_srv_h, err) && 
 			((err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
-								  send_info->proto, dns_flags))==0));
+								  &send_info->proto, dns_flags))==0));
 	if ((err!=0) && (err!=-E_DNS_EOR)){
 		LOG(L_ERR, "ERROR:  resolving %.*s host name in uri"
 							" failed: %s [%d] (dropping packet)\n",
@@ -483,6 +483,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	str* name;
 	int err;
 	unsigned short port;
+	char proto;
 
 	port=0;
 	if(via==msg->via1){ 
@@ -526,7 +527,8 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	    sip_resolvehost now accepts str -janakj
 	*/
 	DBG("update_sock_struct_from_via: trying SRV lookup\n");
-	he=sip_resolvehost(name, &port, via->proto);
+	proto=via->proto;
+	he=sip_resolvehost(name, &port, &proto);
 	
 	if (he==0){
 		LOG(L_NOTICE, "ERROR:forward_reply:resolve_host(%.*s) failure\n",

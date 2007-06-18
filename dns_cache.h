@@ -29,6 +29,7 @@
 /* History:
  * --------
  *  2006-07-13  created by andrei
+ *  2007-06-16  naptr support (andrei)
  */
 
 
@@ -36,6 +37,7 @@
 #define __dns_cache_h
 
 #include "str.h"
+#include "config.h" /* MAX_BRANCHES */
 #include "timer.h"
 #include "ip_addr.h"
 #include "atomic_ops.h"
@@ -73,13 +75,12 @@ enum dns_errors{
 					E_DNS_AF_MISMATCH /* ipv4 or ipv6 only requested, but 
 										 name contains an ip addr. of the
 										 opossite type */ ,
+					E_DNS_NO_NAPTR /* unresolvable naptr record */,
 					E_DNS_CRITICAL /* critical error, marks the end
 									  of the error table (always last) */
 };
 
 
-extern int dns_flags; /* default flags used for dns lookup */
-extern int dns_srv_lb; /* default SRV LB support value */
 
 /* return a short string, printable error description (err <=0) */
 const char* dns_strerror(int err);
@@ -92,7 +93,8 @@ const char* dns_strerror(int err);
 #define DNS_IPV4_ONLY	1
 #define DNS_IPV6_ONLY	2
 #define DNS_IPV6_FIRST	4
-#define DNS_SRV_RR_LB		8  /* SRV RR weight based load balancing */
+#define DNS_SRV_RR_LB	8  /* SRV RR weight based load balancing */
+#define DNS_TRY_NAPTR	16 /* enable naptr lookup */
 
 
 /* ip blacklist error flags */
@@ -141,7 +143,14 @@ struct dns_hash_entry{
 };
 
 
+#if MAX_BRANCHES < 16
+/* forking is limited by tm to 12 by default */
+typedef unsigned short srv_flags_t;
+#elif MAX_BRANCHES < 32
 typedef unsigned int srv_flags_t;
+#else
+typedef unsigned long long srv_flags_t;
+#endif
 
 struct dns_srv_handle{
 	struct dns_hash_entry* srv; /* srv entry */
@@ -151,7 +160,8 @@ struct dns_srv_handle{
 #endif
 	unsigned short port; /* current port */
 	unsigned char srv_no; /* current record no. in the srv entry */
-	unsigned char ip_no;   /* current record no. in the a/aaaa entry */
+	unsigned char ip_no;  /* current record no. in the a/aaaa entry */
+	unsigned char proto;  /* protocol number */
 };
 
 
@@ -241,6 +251,8 @@ inline static void dns_srv_handle_init(struct dns_srv_handle* h)
 {
 	h->srv=h->a=0;
 	h->srv_no=h->ip_no=0;
+	h->port=0;
+	h->proto=0;
 #ifdef DNS_SRV_LB
 	h->srv_tried_rrs=0;
 #endif
@@ -280,13 +292,13 @@ struct hostent* dns_get_he(str* name, int flags);
  *  dns_srv_handle_put(h) must be called when h is no longer needed
  */
 int dns_sip_resolve(struct dns_srv_handle* h,  str* name, struct ip_addr* ip,
-					unsigned short* port, int proto, int flags);
+					unsigned short* port, char* proto, int flags);
 
 /* same as above, but fills su intead of changing port and filling an ip */ 
 inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 									 union sockaddr_union* su,
 									 str* name, unsigned short port,
-									 int proto, int flags)
+									 char* proto, int flags)
 {
 	struct ip_addr ip;
 	int ret;

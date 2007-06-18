@@ -89,13 +89,13 @@ struct socket_info{
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /* ip address */
 	str address_str;        /* ip address converted to string -- optimization*/
-	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
 	enum si_flags flags; /* SI_IS_IP | SI_IS_LO | SI_IS_MCAST */
 	union sockaddr_union su; 
-	int proto; /* tcp or udp*/
 	struct socket_info* next;
 	struct socket_info* prev;
+	unsigned short port_no;  /* port number */
+	char proto; /* tcp or udp*/
 };
 
 
@@ -109,7 +109,7 @@ struct receive_info{
 	union sockaddr_union src_su; /* useful for replies*/
 	struct socket_info* bind_address; /* sock_info structure on which 
 									  the msg was received*/
-	short proto;
+	char proto;
 #ifdef USE_COMP
 	short comp; /* compression */
 #endif
@@ -121,7 +121,7 @@ struct dest_info{
 	struct socket_info* send_sock;
 	union sockaddr_union to;
 	int id; /* tcp stores the connection id here */ 
-	short proto;
+	char proto;
 #ifdef USE_COMP
 	short comp;
 #endif

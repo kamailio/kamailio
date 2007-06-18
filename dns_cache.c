@@ -32,6 +32,7 @@
  *  2006-10-06  port fix (andrei)
  *  2007-06-14  dns iterate through A & AAAA records fix (andrei)
  *  2007-06-15  srv rr weight based load balancing support (andrei)
+ *  2007-06-16  naptr support (andrei)
  */
 
 #ifdef USE_DNS_CACHE
@@ -88,7 +89,7 @@ unsigned int dns_cache_min_ttl=DEFAULT_DNS_CACHE_MIN_TTL; /* minimum ttl */
 unsigned int dns_timer_interval=DEFAULT_DNS_TIMER_INTERVAL; /* in s */
 int dns_flags=0; /* default flags used for the  dns_*resolvehost 
                     (compatibility wrappers) */
-int dns_srv_lb=1; /* off by default */
+int dns_srv_lb=0; /* off by default */
 
 #define LOCK_DNS_HASH()		lock_get(dns_hash_lock)
 #define UNLOCK_DNS_HASH()	lock_release(dns_hash_lock)
@@ -126,6 +127,7 @@ static const char* dns_str_errors[]={
 	"blacklisted ip",
 	"name too long ", /* try again with a shorter name */
 	"ip AF mismatch", /* address family mismatch */
+	"unresolvable NAPTR request", 
 	"bug - critical error"
 };
 
@@ -293,6 +295,13 @@ int init_dns_cache()
 					" support for it is not compiled -- ignoring\n");
 #endif
 	}
+	if (dns_try_naptr){
+#ifndef USE_NAPTR
+	LOG(L_WARN, "WARING: dns_cache_init: NAPTR support is enabled, but"
+				" support for it is not compiled -- ignoring\n");
+#endif
+		dns_flags|=DNS_TRY_NAPTR;
+	}
 	dns_timer_h=timer_alloc();
 	if (dns_timer_h==0){
 		ret=E_OUT_OF_MEM;
@@ -411,8 +420,10 @@ inline static struct dns_hash_entry* _dns_hash_find(str* name, int type,
 	*err=0;
 again:
 	*h=dns_hash_no(name->s, name->len, type);
+#ifdef DNS_CACHE_DEBUG
 	DBG("dns_hash_find(%.*s(%d), %d), h=%d\n", name->len, name->s,
 												name->len, type, *h);
+#endif
 	clist_foreach_safe(&dns_hash[*h], e, tmp, next){
 		/* automatically remove expired elements */
 		if ((s_ticks_t)(now-e->expire)>=0){
@@ -645,8 +656,10 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 	}
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
+#ifdef DNS_CACHE_DEBUG
 	DBG("dns_cache_add: adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->err_flags, h);
+#endif
 	LOCK_DNS_HASH();
 		*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
@@ -681,8 +694,10 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 	}
 	atomic_inc(&e->refcnt);
 	h=dns_hash_no(e->name, e->name_len, e->type);
+#ifdef DNS_CACHE_DEBUG
 	DBG("dns_cache_add: adding %.*s(%d) %d (flags=%0x) at %d\n",
 			e->name_len, e->name, e->name_len, e->type, e->err_flags, h);
+#endif
 	*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
 	clist_append(&dns_hash[h], e, next, prev);
@@ -704,8 +719,10 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	int size;
 	ticks_t now;
 	
+#ifdef DNS_CACHE_DEBUG
 	DBG("dns_cache_mk_bad_entry(%.*s, %d, %d, %d)\n", name->len, name->s,
 									type, ttl, flags);
+#endif
 	size=sizeof(struct dns_hash_entry)+name->len-1+1;
 	e=shm_malloc(size);
 	if (e==0){
@@ -937,8 +954,10 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	}
 	*tail=0; /* mark the end of our tmp_lst */
 	if (size==0){
+#ifdef DNS_CACHE_DEBUG
 		DBG("dns_cache_mk_rd_entry: entry %.*s (%d) not found\n",
 				name->len, name->s, type);
+#endif
 		return 0;
 	}
 	/* compute size */
@@ -949,6 +968,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 		return 0;
 	}
 	memset(e, 0, size); /* init with 0 */
+	clist_init(e, next, prev);
 	e->total_size=size;
 	e->name_len=name->len;
 	e->type=type;
@@ -1013,7 +1033,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				max_ttl=MAX(max_ttl, ttl);
 				rr->rdata=(void*)((char*)rr+
 								ROUND_POINTER(sizeof(struct dns_rr)));
-				/* copy the whole srv_rdata block*/
+				/* copy the whole naptr_rdata block*/
 				memcpy(rr->rdata, l->rdata, 
 						NAPTR_RDATA_SIZE(*(struct naptr_rdata*)l->rdata) );
 				/* adjust the string pointer */
@@ -1034,6 +1054,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 										NAPTR_RDATA_SIZE(
 											*(struct naptr_rdata*)l->rdata)));
 				tail_rr=&(rr->next);
+				rr=rr->next;
 			}
 			break;
 		case T_CNAME:
@@ -1267,6 +1288,7 @@ found:
 										NAPTR_RDATA_SIZE(
 											*(struct naptr_rdata*)l->rdata)));
 				rec[r].tail_rr=&(rec[r].rr->next);
+				rec[r].rr=rec[r].rr->next;
 				break;
 			case T_CNAME:
 				rec[r].rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
@@ -1332,8 +1354,10 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 	
 	ret=0;
 	l=e;
+#ifdef DNS_CACHE_DEBUG
 	DBG("dns_get_related(%p (%.*s, %d), %d, *%p) (%d)\n", e,
 			e->name_len, e->name, e->type, type, *records, cname_chain_len);
+#endif
 	clist_init(l, next, prev);
 	if (type==e->type){
 		ret=e;
@@ -1347,7 +1371,8 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 						if (t){
 							if ((t->type==T_CNAME) && *records)
 								dns_get_related(t, T_A, records);
-							clist_append(l, t, next, prev);
+							lst_end=t->prev; /* needed for clist_append*/
+							clist_append_sublist(l, t, lst_end, next, prev);
 						}
 					}
 					if (!(dns_flags&DNS_IPV4_ONLY)){
@@ -1355,10 +1380,33 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 						if (t){
 							if ((t->type==T_CNAME) && *records)
 								dns_get_related(t, T_AAAA, records);
-							clist_append(l, t, next, prev);
+							lst_end=t->prev; /* needed for clist_append*/
+							clist_append_sublist(l, t, lst_end, next, prev);
 						}
 					}
 				}
+				break;
+#ifdef USE_NAPTR
+			case T_NAPTR:
+#ifdef NAPTR_CACHE_ALL_ARS
+				if (*records)
+						dns_cache_mk_rd_entry2(*records);
+#else
+				for (rr=e->rr_lst; rr && *records; rr=rr->next){
+					if (naptr_get_sip_proto((struct naptr_rdata*)rr->rdata)>0){
+						tmp.s=((struct naptr_rdata*)rr->rdata)->repl;
+						tmp.len=((struct naptr_rdata*)rr->rdata)->repl_len;
+						t=dns_cache_mk_rd_entry(&tmp, T_SRV, records);
+						if (t){
+							if (*records)
+								dns_get_related(t, T_SRV, records);
+							lst_end=t->prev; /* needed for clist_append*/
+							clist_append_sublist(l, t, lst_end, next, prev);
+						}
+					}
+				}
+#endif /* NAPTR_CACHE_ALL_ARS */
+#endif /* USE_NAPTR */
 				break;
 			default:
 				/* nothing extra */
@@ -1593,7 +1641,7 @@ error:
  *               now - current time/ticks value
  * returns pointer to the rr on success and sets no to the rr number
  *         0 on error and fills the error flags
- *
+	*
  * Example usage:
  * list all non-expired non-bad-marked ips for name:
  * e=dns_get_entry(name, T_A);
@@ -1980,6 +2028,36 @@ struct hostent* dns_resolvehost(char* name)
 
 
 
+
+#if 0
+/* resolves a host name trying  NAPTR,  SRV, A & AAAA lookups, for details
+ *  see dns_sip_resolve()
+ *  FIXME: this version will return only the first ip
+ * returns: hostent struct & *port filled with the port from the SRV record;
+ *  0 on error
+ */
+struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, 
+										char* proto)
+{
+	struct dns_srv_handle h;
+	struct ip_addr ip;
+	int ret;
+	
+	if ((use_dns_cache==0) || (dns_hash==0)){ 
+		/* not init or off => use normal, non-cached version */
+		return _sip_resolvehost(name, port, proto);
+	}
+	dns_srv_handle_init(&h);
+	ret=dns_sip_resolve(&h, name, &ip, port, proto, dns_flags);
+	dns_srv_handle_put(&h);
+	if (ret>=0)
+		return ip_addr2he(name, &ip);
+	return 0;
+}
+#endif
+
+
+
 /* resolves a host name trying SRV lookup if *port==0 or normal A/AAAA lookup
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
@@ -1987,23 +2065,33 @@ struct hostent* dns_resolvehost(char* name)
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, int proto)
+struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port, 
+										char* proto)
 {
 	struct hostent* he;
 	struct ip_addr* ip;
 	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
 	int len;
 	str srv_name;
+	char srv_proto;
 
 	if ((use_dns_cache==0) || (dns_hash==0)){ 
 		/* not init or off => use normal, non-cached version */
 		return _sip_resolvehost(name, port, proto);
 	}
 	len=0;
+	if (proto){ /* makes sure we have a protocol set*/
+		if (*proto==0)
+			*proto=srv_proto=PROTO_UDP; /* default */
+		else
+			srv_proto=*proto;
+	}else{
+		srv_proto=PROTO_UDP;
+	}
 	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
 	if ((port)&&(*port==0)){
-		*port=(proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we don't
-														find another */
+		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we 
+														 don't find another */
 		if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
 			LOG(L_WARN, "WARNING: dns_sip_resolvehost: domain name too long"
 						" (%d), unable to perform SRV lookup\n", name->len);
@@ -2018,9 +2106,11 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, int proto)
 				return ip_addr2he(name,ip);
 			}
 			
-			switch(proto){
+			switch(srv_proto){
 				case PROTO_NONE: /* no proto specified, use udp */
-					goto skip_srv;
+					if (proto)
+						*proto=PROTO_UDP;
+					/* no break */
 				case PROTO_UDP:
 					memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
 					memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
@@ -2041,7 +2131,7 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, int proto)
 					break;
 				default:
 					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
-							proto);
+							(int)srv_proto);
 					return 0;
 			}
 
@@ -2051,13 +2141,177 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, int proto)
 				return he;
 		}
 	}
-skip_srv:
+/*skip_srv:*/
 	if (name->len >= MAX_DNS_NAME) {
 		LOG(L_ERR, "dns_sip_resolvehost: domain name too long\n");
 		return 0;
 	}
 	he=dns_get_he(name, dns_flags);
 	return he;
+}
+
+
+
+#ifdef USE_NAPTR
+/* iterates over a naptr rr list, returning each time a "good" naptr record
+ * is found.( srv type, no regex and a supported protocol)
+ * params:
+ *         naptr_head - naptr dns_rr list head
+ *         tried      - bitmap used to keep track of the already tried records
+ *                      (no more then sizeof(tried)*8 valid records are 
+ *                      ever walked
+ *         srv_name   - if succesfull, it will be set to the selected record
+ *                      srv name (naptr repl.)
+ *         proto      - if succesfull it will be set to the selected record
+ *                      protocol
+ * returns  0 if no more records found or a pointer to the selected record
+ *  and sets  protocol and srv_name
+ * WARNING: when calling first time make sure you run first 
+ *           naptr_iterate_init(&tried)
+ */
+struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head, 
+											naptr_bmp_t* tried,
+											str* srv_name, char* proto)
+{
+	int i, idx;
+	struct dns_rr* l;
+	struct naptr_rdata* naptr;
+	struct naptr_rdata* naptr_saved;
+	char saved_proto;
+	char naptr_proto;
+
+	idx=0;
+	naptr_proto=PROTO_NONE;
+	naptr_saved=0;
+	saved_proto=0;
+	i=0;
+	for(l=naptr_head; l && (i<MAX_NAPTR_RRS); l=l->next){
+		naptr=(struct naptr_rdata*) l->rdata;
+		if (naptr==0){
+				LOG(L_CRIT, "naptr_iterate: BUG: null rdata\n");
+			goto end;
+		}
+		/* check if valid and get proto */
+		if ((naptr_proto=naptr_get_sip_proto(naptr))<=0) continue;
+		if (*tried& (1<<i)){
+			i++;
+			continue; /* already tried */
+		}
+#ifdef DNS_CACHE_DEBUG
+		DBG("naptr_iterate: found a valid sip NAPTR rr %.*s,"
+					" proto %d\n", naptr->repl_len, naptr->repl, 
+					(int)naptr_proto);
+#endif
+		if ((naptr_proto_supported(naptr_proto))){
+			if (naptr_choose(&naptr_saved, &saved_proto,
+								naptr, naptr_proto))
+				idx=i;
+			}
+		i++;
+	}
+	if (naptr_saved){
+		/* found something */
+#ifdef DNS_CACHE_DEBUG
+		DBG("naptr_iterate: choosed NAPTR rr %.*s, proto %d"
+					" tried: 0x%x\n", naptr_saved->repl_len, 
+					naptr_saved->repl, (int)saved_proto, *tried);
+#endif
+		*tried|=1<<idx;
+		*proto=saved_proto;
+		srv_name->s=naptr_saved->repl;
+		srv_name->len=naptr_saved->repl_len;
+		return naptr_saved;
+	}
+end:
+	return 0;
+}
+
+
+
+/* resolves a host name trying NAPTR lookup if *proto==0 and *port==0, SRV 
+ * lookup if *port==0 or normal A/AAAA lookup
+ * if *port!=0.
+ * when performing SRV lookup (*port==0) it will use proto to look for
+ * tcp or udp hosts; if proto==0 => no SRV lookup
+ * returns: hostent struct & *port filled with the port from the SRV record;
+ *  0 on error
+ */
+struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port, 
+										char* proto)
+{
+	struct hostent* he;
+	struct ip_addr* tmp_ip;
+	naptr_bmp_t tried_bmp;
+	struct dns_hash_entry* e;
+	char n_proto;
+	str srv_name;
+	
+	he=0;
+	if (dns_hash==0){ /* not init => use normal, non-cached version */
+		LOG(L_WARN, "WARNING: dns_sip_resolvehost: called before dns cache"
+					" initialization\n");
+		return _sip_resolvehost(name, port, proto);
+	}
+	if (proto && port && (*proto==0) && (*port==0)){
+		*proto=PROTO_UDP; /* just in case we don't find another */
+		/* check if it's an ip address */
+		if ( ((tmp_ip=str2ip(name))!=0)
+#ifdef	USE_IPV6
+			  || ((tmp_ip=str2ip6(name))!=0)
+#endif
+			){
+			/* we are lucky, this is an ip address */
+#ifdef	USE_IPV6
+			if (((dns_flags&DNS_IPV4_ONLY) && (tmp_ip->af==AF_INET6))||
+				((dns_flags&DNS_IPV6_ONLY) && (tmp_ip->af==AF_INET))){
+				return 0;
+			}
+#endif
+			*port=SIP_PORT;
+			return ip_addr2he(name, tmp_ip);
+		}
+		/* do naptr lookup */
+		if ((e=dns_get_entry(name, T_NAPTR))==0)
+			goto naptr_not_found;
+		naptr_iterate_init(&tried_bmp);
+		while(dns_naptr_sip_iterate(e->rr_lst, &tried_bmp,
+												&srv_name, &n_proto)){
+			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0){
+#ifdef DNS_CACHE_DEBUG
+				DBG("dns_naptr_sip_resolvehost(%.*s, %d, %d) srv, ret=%p\n", 
+							name->len, name->s, (int)*port, (int)*proto, he);
+#endif
+				dns_hash_put(e);
+				*proto=n_proto;
+				return he;
+			}
+		}
+		/* no acceptable naptr record found, fallback to srv */
+		dns_hash_put(e);
+	}
+naptr_not_found:
+	return dns_srv_sip_resolvehost(name, port, proto);
+}
+#endif /* USE_NAPTR */
+
+
+
+/* resolves a host name trying NAPTR lookup if *proto==0 and *port==0, SRV 
+ * lookup if *port==0 or normal A/AAAA lookup
+ * if *port!=0.
+ * when performing SRV lookup (*port==0) it will use proto to look for
+ * tcp or udp hosts; if proto==0 => no SRV lookup
+ * returns: hostent struct & *port filled with the port from the SRV record;
+ *  0 on error
+ */
+struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, 
+										char* proto)
+{
+#ifdef USE_NAPTR
+	if (dns_flags&DNS_TRY_NAPTR)
+		return dns_naptr_sip_resolvehost(name, port, proto);
+#endif
+	return dns_srv_sip_resolvehost(name, port, proto);
 }
 
 
@@ -2359,8 +2613,8 @@ error:
  *            0 on success and it fills *ip, *port, dns_sip_resolve_h
  * WARNING: when finished, dns_sip_resolve_put(h) must be called!
  */
-int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
-						struct ip_addr* ip, unsigned short* port, int proto,
+int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
+						struct ip_addr* ip, unsigned short* port, char* proto,
 						int flags)
 {
 	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
@@ -2369,6 +2623,7 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 	struct ip_addr* tmp_ip;
 	int ret;
 	struct hostent* he;
+	char srv_proto;
 
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LOG(L_WARN, "WARNING: dns_sip_resolve: called before dns cache"
@@ -2383,8 +2638,17 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 	}
 	len=0;
 	if ((h->srv==0) && (h->a==0)){ /* first call */
-		h->port=(proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
+		if (proto){ /* makes sure we have a protocol set*/
+			if (*proto==0)
+				*proto=srv_proto=PROTO_UDP; /* default */
+			else
+				srv_proto=*proto;
+		}else{
+			srv_proto=PROTO_UDP;
+		}
+		h->port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
 														don't find another */
+		h->proto=srv_proto; /* store initial protocol */
 		if (port){
 			if (*port==0){
 				/* try SRV if initial call & no port specified
@@ -2409,12 +2673,15 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 #endif
 						*ip=*tmp_ip;
 						*port=h->port;
+						/* proto already set */
 						return 0;
 					}
 					
-					switch(proto){
+					switch(srv_proto){
 						case PROTO_NONE: /* no proto specified, use udp */
-							goto skip_srv;
+							if (proto)
+								*proto=PROTO_UDP;
+							/* no break */
 						case PROTO_UDP:
 							memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
 							memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
@@ -2435,12 +2702,11 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 							break;
 						default:
 							LOG(L_CRIT, "BUG: sip_resolvehost: "
-									"unknown proto %d\n", proto);
+									"unknown proto %d\n", (int)srv_proto);
 							return -E_DNS_CRITICAL;
 					}
 					srv_name.s=tmp;
 					srv_name.len=len;
-					
 					if ((ret=dns_srv_resolve_ip(h, &srv_name, ip,
 															port, flags))>=0)
 					{
@@ -2448,11 +2714,13 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 						DBG("dns_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n", 
 							name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
+						/* proto already set */
 						return ret;
 					}
 				}
 			}else{ /* if (*port==0) */
 				h->port=*port; /* store initial port */
+				/* proto already set */
 			}
 		} /* if (port) */
 	}else if (h->srv){
@@ -2460,11 +2728,13 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 			srv_name.len=h->srv->name_len;
 			/* continue srv resolving */
 			ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags);
+			if (proto)
+				*proto=h->proto;
 			DBG("dns_sip_resolve(%.*s, %d, %d), srv, ret=%d\n", 
 					name->len, name->s, h->srv_no, h->ip_no, ret);
 			return ret;
 	}
-skip_srv:
+/*skip_srv:*/
 	if (name->len >= MAX_DNS_NAME) {
 		LOG(L_ERR, "dns_sip_resolve: domain name too long\n");
 		return -E_DNS_NAME_TOO_LONG;
@@ -2472,12 +2742,132 @@ skip_srv:
 	ret=dns_ip_resolve(&h->a, &h->ip_no, name, ip, flags);
 	if (port)
 		*port=h->port;
+	if (proto)
+		*proto=h->proto;
+#ifdef DNS_CACHE_DEBUG
 	DBG("dns_sip_resolve(%.*s, %d, %d), ip, ret=%d\n", 
 			name->len, name->s, h->srv_no, h->ip_no, ret);
+#endif
 	return ret;
 }
 
 
+
+#ifdef USE_NAPTR
+/* resolves a host name trying:
+ * - NAPTR lookup if the address is not an ip and proto!=0, port!=0
+ *    *port==0 and *proto=0 and if flags allow NAPTR lookups
+ * -SRV lookup if  port!=0 and *port==0
+ * - normal A/AAAA lookup if *port!=0, or port==0
+ * when performing SRV lookup (*port==0) it will use proto to look for
+ * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
+ * h must be initialized prior to  calling this function and can be used to 
+ * get the subsequent ips
+ * returns:  <0 on error
+ *            0 on success and it fills *ip, *port, dns_sip_resolve_h
+ * WARNING: when finished, dns_sip_resolve_put(h) must be called!
+ */
+int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
+						struct ip_addr* ip, unsigned short* port, char* proto,
+						int flags)
+{
+	struct hostent* he;
+	struct ip_addr* tmp_ip;
+	naptr_bmp_t tried_bmp;
+	struct dns_hash_entry* e;
+	char n_proto;
+	str srv_name;
+	int ret;
+	
+	ret=-E_DNS_NO_NAPTR;
+	if (dns_hash==0){ /* not init => use normal, non-cached version */
+		LOG(L_WARN, "WARNING: dns_sip_resolve: called before dns cache"
+					" initialization\n");
+		h->srv=h->a=0;
+		he=_sip_resolvehost(name, port, proto);
+		if (he){
+			hostent2ip_addr(ip, he, 0);
+			return 0;
+		}
+		return -E_DNS_NO_NAPTR;
+	}
+	if (((h->srv==0) && (h->a==0)) && /* first call */
+			 proto && port && (*proto==0) && (*port==0)){
+		*proto=PROTO_UDP; /* just in case we don't find another */
+		
+		/* check if it's an ip address */
+		if ( ((tmp_ip=str2ip(name))!=0)
+#ifdef	USE_IPV6
+			  || ((tmp_ip=str2ip6(name))!=0)
+#endif
+			){
+			/* we are lucky, this is an ip address */
+#ifdef	USE_IPV6
+			if (((flags&DNS_IPV4_ONLY) && (tmp_ip->af==AF_INET6))||
+				((flags&DNS_IPV6_ONLY) && (tmp_ip->af==AF_INET))){
+				return -E_DNS_AF_MISMATCH;
+			}
+#endif
+			*ip=*tmp_ip;
+			h->port=SIP_PORT;
+			h->proto=*proto;
+			*port=h->port;
+			return 0;
+		}
+		/* do naptr lookup */
+		if ((e=dns_get_entry(name, T_NAPTR))==0)
+			goto naptr_not_found;
+		naptr_iterate_init(&tried_bmp);
+		while(dns_naptr_sip_iterate(e->rr_lst, &tried_bmp,
+												&srv_name, &n_proto)){
+			dns_srv_handle_init(h); /* make sure h does not contain garbage
+									from previous dns_srv_sip_resolve calls */
+			if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0){
+#ifdef DNS_CACHE_DEBUG
+				DBG("dns_naptr_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n", 
+								name->len, name->s, h->srv_no, h->ip_no, ret);
+#endif
+				dns_hash_put(e);
+				*proto=n_proto;
+				h->proto=*proto;
+				return ret;
+			}
+		}
+		/* no acceptable naptr record found, fallback to srv */
+		dns_hash_put(e);
+		dns_srv_handle_init(h); /* make sure h does not contain garbage
+								from previous dns_srv_sip_resolve calls */
+	}
+naptr_not_found:
+	return dns_srv_sip_resolve(h, name, ip, port, proto, flags);
+}
+#endif /* USE_NAPTR */
+
+
+
+/* resolves a host name trying:
+ * - NAPTR lookup if the address is not an ip and proto!=0, port!=0
+ *    *port==0 and *proto=0 and if flags allow NAPTR lookups
+ * -SRV lookup if  port!=0 and *port==0
+ * - normal A/AAAA lookup if *port!=0, or port==0
+ * when performing SRV lookup (*port==0) it will use proto to look for
+ * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
+ * h must be initialized prior to  calling this function and can be used to 
+ * get the subsequent ips
+ * returns:  <0 on error
+ *            0 on success and it fills *ip, *port, dns_sip_resolve_h
+ * WARNING: when finished, dns_sip_resolve_put(h) must be called!
+ */
+int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
+						struct ip_addr* ip, unsigned short* port, char* proto,
+						int flags)
+{
+#ifdef USE_NAPTR
+	if (flags&DNS_TRY_NAPTR)
+		return dns_naptr_sip_resolve(h, name, ip, port, proto, flags);
+#endif
+	return dns_srv_sip_resolve(h, name, ip, port, proto, flags);
+}
 
 /* performs an a lookup and fills ip with the first good ip address
  * returns 0 on success, <0 on error (see the error codes)
@@ -2596,12 +2986,12 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 			clist_foreach(&dns_hash[h], e, next){
 				for (i=0, rr=e->rr_lst; rr; i++, rr=rr->next){
 					rpc->add(ctx, "sddddddd", 
-								e->name, e->type, i, e->total_size,
-								e->refcnt.val,
-								(s_ticks_t)(e->expire-now)<0?-1:
+								e->name, (int)e->type, i, (int)e->total_size,
+								(int)e->refcnt.val,
+								(int)(s_ticks_t)(e->expire-now)<0?-1:
 									TICKS_TO_S(e->expire-now),
-								TICKS_TO_S(now-e->last_used),
-								e->err_flags);
+								(int)TICKS_TO_S(now-e->last_used),
+								(int)e->err_flags);
 					switch(e->type){
 						case T_A:
 						case T_AAAA:
@@ -2616,8 +3006,8 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 									((struct srv_rdata*)(rr->rdata))->name);
 							break;
 						case T_NAPTR:
-							rpc->add(ctx, "ss", "naptr", 
-									((struct naptr_rdata*)(rr->rdata))->flags);
+							rpc->add(ctx, "ss", "naptr ",
+								((struct naptr_rdata*)(rr->rdata))->flags);
 							break;
 						case T_CNAME:
 							rpc->add(ctx, "ss", "cname", 
@@ -2627,9 +3017,9 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 							rpc->add(ctx, "ss", "unknown", "?");
 					}
 					rpc->add(ctx, "dd",
-								(s_ticks_t)(rr->expire-now)<0?-1:
+								(int)(s_ticks_t)(rr->expire-now)<0?-1:
 									TICKS_TO_S(rr->expire-now),
-							rr->err_flags);
+								(int)rr->err_flags);
 				}
 			}
 		}

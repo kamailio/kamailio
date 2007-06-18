@@ -200,10 +200,11 @@ error:
 /* same as add_proxy, but it doesn't add the proxy to the list
  * uses also SRV if possible & port==0 (quick hack) */
 
-struct proxy_l* mk_proxy(str* name, unsigned short port, int proto)
+struct proxy_l* mk_proxy(str* name, unsigned short port, int protocol)
 {
 	struct proxy_l* p;
 	struct hostent* he;
+	char proto;
 
 	p=(struct proxy_l*) pkg_malloc(sizeof(struct proxy_l));
 	if (p==0){
@@ -214,10 +215,10 @@ struct proxy_l* mk_proxy(str* name, unsigned short port, int proto)
 	memset(p,0,sizeof(struct proxy_l));
 	p->name=*name;
 	p->port=port;
-	p->proto=proto;
 
 	DBG("DEBUG: mk_proxy: doing DNS lookup...\n");
-	he=sip_resolvehost(name, &(p->port), proto);
+	proto=protocol;
+	he=sip_resolvehost(name, &(p->port), &proto);
 	if (he==0){
 		ser_error=E_BAD_ADDRESS;
 		LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
@@ -229,6 +230,7 @@ struct proxy_l* mk_proxy(str* name, unsigned short port, int proto)
 		pkg_free(p);
 		goto error;
 	}
+	p->proto=proto;
 	p->ok=1;
 	return p;
 error:

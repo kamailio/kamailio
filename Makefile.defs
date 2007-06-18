@@ -75,7 +75,7 @@ MAIN_NAME=ser
 VERSION = 2
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev8-sf_malloc
+EXTRAVERSION = -dev9-dns
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -401,6 +401,8 @@ endif
 # -DNO_SIG_DEBUG
 #        turns off debugging messages in signal handlers (which might be 
 #         unsafe)
+# -DUSE_NAPTR
+#		 turns on naptr support (but must be also enabled from the config)
 
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
@@ -420,11 +422,12 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_CACHE \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
-	 -DDBG_QM_MALLOC \
+	 -DUSE_NAPTR \
 	 #-DLL_MALLOC \
 	 #-DSF_MALLOC \
 	 #-DDL_MALLOC \
 	 #-DF_MALLOC \
+	 #-DDBG_QM_MALLOC \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DEXTRA_DEBUG \

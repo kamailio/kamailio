@@ -67,6 +67,8 @@
  *  2007-06-07  added SHM_FORCE_ALLOC, MLOCK_PAGES, REAL_TIME, RT_PRIO,
  *              RT_POLICY, RT_TIMER1_PRIO, RT_TIMER1_POLICY, RT_TIMER2_PRIO,
  *              RT_TIMER2_POLICY (andrei)
+ *  2007-06-16  added DNS_SRV_LB, DNS_TRY_NAPTR (andrei)
+ *  2007-06-18  added DNS_{UDP,TCP,TLS}_PREF (andrei)
  */
 
 
@@ -231,6 +233,11 @@ ALIAS		alias
 DNS		 dns
 REV_DNS	 rev_dns
 DNS_TRY_IPV6	dns_try_ipv6
+DNS_TRY_NAPTR	dns_try_naptr
+DNS_SRV_LB		dns_srv_lb|dns_srv_loadbalancing
+DNS_UDP_PREF	dns_udp_pref|dns_udp_preference
+DNS_TCP_PREF	dns_tcp_pref|dns_tcp_preference
+DNS_TLS_PREF	dns_tls_pref|dns_tls_preference
 DNS_RETR_TIME	dns_retr_time
 DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
@@ -455,6 +462,16 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
 <INITIAL>{DNS_TRY_IPV6}	{ count(); yylval.strval=yytext;
 								return DNS_TRY_IPV6; }
+<INITIAL>{DNS_TRY_NAPTR}	{ count(); yylval.strval=yytext;
+								return DNS_TRY_NAPTR; }
+<INITIAL>{DNS_SRV_LB}	{ count(); yylval.strval=yytext;
+								return DNS_SRV_LB; }
+<INITIAL>{DNS_UDP_PREF}	{ count(); yylval.strval=yytext;
+								return DNS_UDP_PREF; }
+<INITIAL>{DNS_TCP_PREF}	{ count(); yylval.strval=yytext;
+								return DNS_TCP_PREF; }
+<INITIAL>{DNS_TLS_PREF}	{ count(); yylval.strval=yytext;
+								return DNS_TLS_PREF; }
 <INITIAL>{DNS_RETR_TIME}	{ count(); yylval.strval=yytext;
 								return DNS_RETR_TIME; }
 <INITIAL>{DNS_RETR_NO}	{ count(); yylval.strval=yytext;

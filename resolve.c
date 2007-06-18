@@ -35,6 +35,7 @@
  *  2006-07-17  rdata contains now also the record name (andrei)
  *  2006-08-18  get_record can append also the additional records to the
  *               returned list (andrei)
+ *  2007-06-15  naptr support (andrei)
  */ 
 
 
@@ -45,10 +46,12 @@
 #include <string.h>
 
 #include "resolve.h"
+#include "compiler_opt.h"
 #include "dprint.h"
 #include "mem/mem.h"
 #include "ip_addr.h"
 #include "error.h"
+#include "globals.h" /* tcp_disable, tls_disable a.s.o */
 
 #ifdef USE_DNS_CACHE
 #include "dns_cache.h"
@@ -65,11 +68,39 @@ int dns_try_ipv6=1; /* default on */
 #else
 int dns_try_ipv6=0; /* off, if no ipv6 support */
 #endif
+int dns_try_naptr=0;  /* off by default */
+
+int dns_udp_pref=3;  /* udp transport preference (for naptr) */
+int dns_tcp_pref=2;  /* tcp transport preference (for naptr) */
+int dns_tls_pref=1;  /* tls transport preference (for naptr) */
+
+#ifdef USE_NAPTR
+#define PROTO_LAST  PROTO_SCTP
+static int naptr_proto_pref[PROTO_LAST];
+#endif
+
 /* declared in globals.h */
 int dns_retr_time=-1;
 int dns_retr_no=-1;
 int dns_servers_no=-1;
 int dns_search_list=-1;
+
+
+#ifdef USE_NAPTR
+void init_naptr_proto_prefs()
+{
+	if ((PROTO_UDP >= PROTO_LAST) || (PROTO_TCP >= PROTO_LAST) ||
+		(PROTO_TLS >= PROTO_LAST)){
+		BUG("init_naptr_proto_prefs: array too small \n");
+		return;
+	}
+	naptr_proto_pref[PROTO_UDP]=dns_udp_pref;
+	naptr_proto_pref[PROTO_TCP]=dns_tcp_pref;
+	naptr_proto_pref[PROTO_TLS]=dns_tls_pref;
+}
+
+#endif /* USE_NAPTR */
+
 
 
 /* init. the resolver
@@ -102,6 +133,9 @@ int resolv_init()
 #warning "no resolv timeout support"
 	LOG(L_WARN, "WARNING: resolv_init: no resolv options support - resolv"
 			" options will be ignored\n");
+#endif
+#ifdef USE_NAPTR
+	init_naptr_proto_prefs();
 #endif
 	return 0;
 }
@@ -266,8 +300,8 @@ struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
 		LOG(L_ERR, "ERROR: dns_naptr_parser: out of memory\n");
 		goto error;
 	}
-	naptr->order=ntohs(naptr->order);
-	naptr->pref=ntohs(naptr->pref);
+	naptr->order=ntohs(order);
+	naptr->pref=ntohs(pref);
 	
 	naptr->flags=&naptr->str_table[0];
 	naptr->flags_len=flags_len;
@@ -555,7 +589,9 @@ again:
 	if (flags & RES_AR){
 		flags&=~RES_AR;
 		answers_no=ntohs((unsigned short)buff.hdr.nscount);
+#ifdef RESOLVE_DBG
 		DBG("get_record: skipping %d NS (p=%p, end=%p)\n", answers_no, p, end);
+#endif
 		for (r=0; (r<answers_no) && (p<end); r++){
 			/* skip over the ns records */
 			if ((p=dns_skipname(p, end))==0) {
@@ -568,7 +604,9 @@ again:
 			p+=2+2+4+2+ntohs(rdlength);
 		}
 		answers_no=ntohs((unsigned short)buff.hdr.arcount);
+#ifdef RESOLVE_DBG
 		DBG("get_record: parsing %d ARs (p=%p, end=%p)\n", answers_no, p, end);
+#endif
 		goto again; /* add also the additional records */
 	}
 			
@@ -591,47 +629,242 @@ not_found:
 	return 0;
 }
 
+#ifdef USE_NAPTR
+
+/* service matching constants, lowercase */
+#define SIP_SCH		0x2b706973
+#define SIPS_SCH	0x73706973
+#define SIP_D2U		0x00753264
+#define SIP_D2T		0x00743264
+#define SIP_D2S		0x00733264
+#define SIPS_D2T	0x7432642b
+
+
+/* get protocol from a naptr rdata and check for validity
+ * returns > 0 (PROTO_UDP, PROTO_TCP, PROTO_SCTP or PROTO_TLS)
+ *         <=0  on error 
+ */
+char naptr_get_sip_proto(struct naptr_rdata* n)
+{
+	unsigned int s;
+	char proto;
+
+	proto=-1;
+	
+	if ((n->flags_len!=1) || (*n->flags!='s'))
+		return -1;
+	if (n->regexp_len!=0)
+		return -1;
+	/* SIP+D2U, SIP+D2T, SIP+D2S, SIPS+D2T */
+	if (n->services_len==7){ /* SIP+D2X */
+		s=n->services[0]+(n->services[1]<<8)+(n->services[2]<<16)+
+				(n->services[3]<<24);
+		s|=0x20202020;
+		if (s==SIP_SCH){
+			s=n->services[4]+(n->services[5]<<8)+(n->services[6]<<16);
+			s|=0x00202020;
+			switch(s){
+				case SIP_D2U:
+					proto=PROTO_UDP;
+					break;
+				case SIP_D2T:
+					proto=PROTO_TCP;
+					break;
+				case SIP_D2S:
+					proto=PROTO_SCTP;
+					break;
+				default:
+					return -1;
+			}
+		}else{
+			return -1;
+		}
+	}else if  (n->services_len==8){ /*SIPS+D2T */
+		s=n->services[0]+(n->services[1]<<8)+(n->services[2]<<16)+
+				(n->services[3]<<24);
+		s|=0x20202020;
+		if (s==SIPS_SCH){
+			s=n->services[4]+(n->services[5]<<8)+(n->services[6]<<16)+
+					(n->services[7]<<24);
+			s|=0x20202020;
+			if (s==SIPS_D2T){
+				proto=PROTO_TLS;
+			}
+		}else{
+			return -1;
+		}
+	}else{
+		return -1;
+	}
+	return proto;
+}
+
+
+
+inline static int proto_pref_score(char proto)
+{
+	if ((proto>=PROTO_UDP) && (proto<= PROTO_TLS))
+		return naptr_proto_pref[(int)proto];
+	return 0;
+}
+
+
+
+/* returns true if we support the protocol */
+int naptr_proto_supported(char proto)
+{
+	if (proto_pref_score(proto)<0)
+		return 0;
+	switch(proto){
+		case PROTO_UDP:
+			return 1;
+#ifdef USE_TCP
+		case PROTO_TCP:
+			return !tcp_disable;
+#ifdef USE_TLS
+		case PROTO_TLS:
+			return !tls_disable;
+#endif /* USE_TLS */
+#endif /* USE_TCP */
+		case PROTO_SCTP:
+			return 0; /* not supported */
+	}
+	return 0;
+}
 
 
 
 
-/* resolves a host name trying SRV lookup if *port==0 or normal A/AAAA lookup
- * if *port!=0.
- * when performing SRV lookup (*port==0) it will use proto to look for
+/* returns true if new_proto is preferred over old_proto */
+int naptr_proto_preferred(char new_proto, char old_proto)
+{
+	return proto_pref_score(new_proto)>proto_pref_score(old_proto);
+}
+
+
+/* choose between 2 naptr records, should take into account local
+ * preferences too
+ * returns 1 if the new record was selected, 0 otherwise */
+int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
+									struct naptr_rdata* n , char n_proto)
+{
+#ifdef NAPTR_DBG
+	DBG("naptr_choose(o: %d w: %d p:%d , o: %d w:%d p:%d)\n",
+			*crt?(int)(*crt)->order:-1, *crt?(int)(*crt)->pref:-1,
+			(int)*crt_proto,
+			(int)n->order, (int)n->pref, (int)n_proto);
+#endif
+	if ((*crt==0) || ((*crt_proto!=n_proto) && 
+						( naptr_proto_preferred(n_proto, *crt_proto))) )
+			goto change;
+	if ((n->order<(*crt)->order) || ((n->order== (*crt)->order) &&
+									(n->pref < (*crt)->pref))){
+			goto change;
+	}
+#ifdef NAPTR_DBG
+	DBG("naptr_choose: no change\n");
+#endif
+	return 0;
+change:
+#ifdef NAPTR_DBG
+	DBG("naptr_choose: changed\n");
+#endif
+	*crt_proto=n_proto;
+	*crt=n;
+	return 1;
+}
+#endif /* USE_NAPTR */
+
+
+
+/* internal sip srv resolver: resolves a host name trying:
+ * - SRV lookup if the address is not an ip *port==0. The result of the SRV
+ *   query will be used for an A/AAAA lookup.
+ *  - normal A/AAAA lookup (either fallback from the above or if *port!=0
+ *   and *proto!=0 or port==0 && proto==0)
+ * when performing SRV lookup (*port==0) it will use *proto to look for
  * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
+ * If zt is set, name will be assumed to be 0 terminated and some copy 
+ * operations will be avoided.
+ * If is_srv is set it will assume name has the srv prefixes for sip already
+ *  appended and it's already 0-term'ed; if not it will append them internally.
+ * If ars !=0, it will first try to look through them and only if the SRV
+ *   record is not found it will try doing a DNS query  (ars will not be
+ *   freed, the caller should take care of them)
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* _sip_resolvehost(str* name, unsigned short* port, int proto)
+struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
+									char* proto, int is_srv, struct rdata* ars)
 {
 	struct hostent* he;
 	struct ip_addr* ip;
-	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
-	struct rdata* head;
+	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups and
+	                                  null. term  strings */
 	struct rdata* l;
 	struct srv_rdata* srv;
+	struct rdata* srv_head;
+	char* srv_target;
+	char srv_proto;
 
+	/* init */
+	srv_head=0;
+	srv_target=0;
+	if (name->len >= MAX_DNS_NAME) {
+		LOG(L_ERR, "sip_resolvehost: domain name too long\n");
+		he=0;
+		goto end;
+	}
+#ifdef RESOLVE_DBG
+	DBG("srv_sip_resolvehost: %.*s:%d proto=%d\n", name->len, name->s,
+			port?(int)*port:-1, proto?(int)*proto:-1);
+#endif
+	if (is_srv){
+		/* skip directly to srv resolving */
+		srv_proto=(proto)?*proto:0;
+		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT;
+		if (zt){
+			srv_target=name->s; /* name.s must be 0 terminated in
+								  this case */
+		}else{
+			memcpy(tmp, name->s, name->len);
+			tmp[name->len] = '\0';
+			srv_target=tmp;
+		}
+		goto do_srv; /* skip to the actual srv query */
+	}
+	if (proto){ /* makes sure we have a protocol set*/
+		if (*proto==0)
+			*proto=srv_proto=PROTO_UDP; /* default */
+		else
+			srv_proto=*proto;
+	}else{
+		srv_proto=PROTO_UDP;
+	}
 	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
 	if ((port)&&(*port==0)){
-		*port=(proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we don't
-														find another */
+		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
+														  don't find another */
+		/* check if it's an ip address */
+		if (((ip=str2ip(name))!=0)
+#ifdef	USE_IPV6
+			  || ((ip=str2ip6(name))!=0) 
+#endif
+			 ){
+			/* we are lucky, this is an ip address */
+			he=ip_addr2he(name, ip);
+			goto end;
+		}
 		if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
 			LOG(L_WARN, "WARNING: sip_resolvehost: domain name too long (%d),"
 						" unable to perform SRV lookup\n", name->len);
 		}else{
-			/* check if it's an ip address */
-			if ( ((ip=str2ip(name))!=0)
-#ifdef	USE_IPV6
-				  || ((ip=str2ip6(name))!=0)
-#endif
-				){
-				/* we are lucky, this is an ip address */
-				return ip_addr2he(name,ip);
-			}
 			
-			switch(proto){
+			switch(srv_proto){
 				case PROTO_NONE: /* no proto specified, use udp */
-					goto skip_srv;
+					if (proto)
+						*proto=PROTO_UDP;
+					/* no break */
 				case PROTO_UDP:
 					memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
 					memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
@@ -649,54 +882,276 @@ struct hostent* _sip_resolvehost(str* name, unsigned short* port, int proto)
 					break;
 				default:
 					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
-							proto);
-					return 0;
+							srv_proto);
+					he=0;
+					goto end;
 			}
-			head=get_record(tmp, T_SRV, RES_ONLY_TYPE);
-			for(l=head; l; l=l->next){
-				if (l->type!=T_SRV) continue; /*should never happen*/
+			srv_target=tmp;
+do_srv:
+			/* try to find the SRV records inside previous ARs  first*/
+			for (l=ars; l; l=l->next){
+				if (l->type!=T_SRV) continue; 
 				srv=(struct srv_rdata*) l->rdata;
 				if (srv==0){
 					LOG(L_CRIT, "sip_resolvehost: BUG: null rdata\n");
-					free_rdata_list(head);
+					/* cleanup on exit only */
 					break;
 				}
 				he=resolvehost(srv->name);
 				if (he!=0){
 					/* we found it*/
-					DBG("sip_resolvehost: SRV(%s) = %s:%d\n",
-							tmp, srv->name, srv->port);
+#ifdef RESOLVE_DBG
+					DBG("sip_resolvehost: found SRV(%s) = %s:%d in AR\n",
+							srv_target, srv->name, srv->port);
+#endif
 					*port=srv->port;
-					free_rdata_list(head); /*clean up*/
-					return he;
+					/* cleanup on exit */
+					goto end;
 				}
 			}
-			if (head) free_rdata_list(head); /*clean up*/
+			srv_head=get_record(srv_target, T_SRV, RES_ONLY_TYPE);
+			for(l=srv_head; l; l=l->next){
+				if (l->type!=T_SRV) continue; /*should never happen*/
+				srv=(struct srv_rdata*) l->rdata;
+				if (srv==0){
+					LOG(L_CRIT, "sip_resolvehost: BUG: null rdata\n");
+					/* cleanup on exit only */
+					break;
+				}
+				he=resolvehost(srv->name);
+				if (he!=0){
+					/* we found it*/
+#ifdef RESOLVE_DBG
+					DBG("sip_resolvehost: SRV(%s) = %s:%d\n",
+							srv_target, srv->name, srv->port);
+#endif
+					*port=srv->port;
+					/* cleanup on exit */
+					goto end;
+				}
+			}
+			if (is_srv){
+				/* if the name was already into SRV format it doesn't make
+				 * any sense to fall back to A/AAAA */
+				he=0;
+				goto end;
+			}
+			/* cleanup on exit */
+#ifdef RESOLVE_DBG
 			DBG("sip_resolvehost: no SRV record found for %.*s," 
 					" trying 'normal' lookup...\n", name->len, name->s);
+#endif
 		}
 	}
-skip_srv:
-	if (name->len >= MAX_DNS_NAME) {
-		LOG(L_ERR, "sip_resolvehost: domain name too long\n");
-		return 0;
+/*skip_srv:*/
+	if (likely(!zt)){
+		memcpy(tmp, name->s, name->len);
+		tmp[name->len] = '\0';
+		he=resolvehost(tmp);
+	}else{
+		he=resolvehost(name->s);
 	}
-	memcpy(tmp, name->s, name->len);
-	tmp[name->len] = '\0';
-	he=resolvehost(tmp);
+end:
+#ifdef RESOLVE_DBG
+	DBG("srv_sip_resolvehost: returning %p (%.*s:%d proto=%d)\n",
+			he, name->len, name->s,
+			port?(int)*port:-1, proto?(int)*proto:-1);
+#endif
+	if (srv_head)
+		free_rdata_list(srv_head);
 	return he;
 }
 
+
+
+#ifdef USE_NAPTR 
+
+
+/* iterates over a naptr rr list, returning each time a "good" naptr record
+ * is found.( srv type, no regex and a supported protocol)
+ * params:
+ *         naptr_head - naptr rr list head
+ *         tried      - bitmap used to keep track of the already tried records
+ *                      (no more then sizeof(tried)*8 valid records are 
+ *                      ever walked
+ *         srv_name   - if succesfull, it will be set to the selected record
+ *                      srv name (naptr repl.)
+ *         proto      - if succesfull it will be set to the selected record
+ *                      protocol
+ * returns  0 if no more records found or a pointer to the selected record
+ *  and sets  protocol and srv_name
+ * WARNING: when calling first time make sure you run first 
+ *           naptr_iterate_init(&tried)
+ */
+struct rdata* naptr_sip_iterate(struct rdata* naptr_head, 
+										naptr_bmp_t* tried,
+										str* srv_name, char* proto)
+{
+	int i, idx;
+	struct rdata* l;
+	struct rdata* l_saved;
+	struct naptr_rdata* naptr;
+	struct naptr_rdata* naptr_saved;
+	char saved_proto;
+	char naptr_proto;
+
+	idx=0;
+	naptr_proto=PROTO_NONE;
+	naptr_saved=0;
+	l_saved=0;
+	saved_proto=0;
+	i=0;
+	for(l=naptr_head; l && (i<MAX_NAPTR_RRS); l=l->next){
+		if (l->type!=T_NAPTR) continue; 
+		naptr=(struct naptr_rdata*) l->rdata;
+		if (naptr==0){
+				LOG(L_CRIT, "naptr_iterate: BUG: null rdata\n");
+			goto end;
+		}
+		/* check if valid and get proto */
+		if ((naptr_proto=naptr_get_sip_proto(naptr))<=0) continue;
+		if (*tried& (1<<i)){
+			i++;
+			continue; /* already tried */
+		}
+#ifdef NAPTR_DBG
+		DBG("naptr_iterate: found a valid sip NAPTR rr %.*s,"
+					" proto %d\n", naptr->repl_len, naptr->repl, 
+					(int)naptr_proto);
+#endif
+		if ((naptr_proto_supported(naptr_proto))){
+			if (naptr_choose(&naptr_saved, &saved_proto,
+								naptr, naptr_proto))
+				idx=i;
+				l_saved=l;
+			}
+		i++;
+	}
+	if (naptr_saved){
+		/* found something */
+#ifdef NAPTR_DBG
+		DBG("naptr_iterate: choosed NAPTR rr %.*s, proto %d"
+					" tried: 0x%x\n", naptr_saved->repl_len, 
+					naptr_saved->repl, (int)saved_proto, *tried);
+#endif
+		*tried|=1<<idx;
+		*proto=saved_proto;
+		srv_name->s=naptr_saved->repl;
+		srv_name->len=naptr_saved->repl_len;
+		return l_saved;
+	}
+end:
+	return 0;
+}
+
+
+
+
+/* internal sip naptr resolver function: resolves a host name trying:
+ * - NAPTR lookup if the address is not an ip and *proto==0 and *port==0.
+ *   The result of the NAPTR query will be used for a SRV lookup
+ * - SRV lookup if the address is not an ip *port==0. The result of the SRV
+ *   query will be used for an A/AAAA lookup.
+ *  - normal A/AAAA lookup (either fallback from the above or if *port!=0
+ *   and *proto!=0 or port==0 && proto==0)
+ * when performing SRV lookup (*port==0) it will use proto to look for
+ * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
+ * returns: hostent struct & *port filled with the port from the SRV record;
+ *  0 on error
+ */
+struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
+										char* proto)
+{
+	struct hostent* he;
+	struct ip_addr* ip;
+	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups and
+	                                  null. term  strings */
+	struct rdata* l;
+	struct rdata* naptr_head;
+	char n_proto;
+	str srv_name;
+	naptr_bmp_t tried_bmp; /* tried bitmap */
+
+
+
+	naptr_head=0;
+	he=0;
+	if (name->len >= MAX_DNS_NAME) {
+		LOG(L_ERR, "naptr_sip_resolvehost: domain name too long\n");
+		goto end;
+	}
+	/* try NAPTR if no port or protocol is specified and NAPTR lookup is
+	 * enabled */
+	if (port && proto && (*proto==0) && (*port==0)){
+		*proto=PROTO_UDP; /* just in case we don't find another */
+		if ( ((ip=str2ip(name))!=0)
+#ifdef	USE_IPV6
+			  || ((ip=str2ip6(name))!=0)
+#endif
+		){
+			/* we are lucky, this is an ip address */
+			he=ip_addr2he(name,ip);
+			*port=SIP_PORT;
+			goto end;
+		}
+		memcpy(tmp, name->s, name->len);
+		tmp[name->len] = '\0';
+		naptr_head=get_record(tmp, T_NAPTR, RES_AR);
+		naptr_iterate_init(&tried_bmp);
+		while((l=naptr_sip_iterate(naptr_head, &tried_bmp,
+										&srv_name, &n_proto))!=0){
+			if ((he=srv_sip_resolvehost(&srv_name, 1, port, proto, 1, l))!=0){
+				*proto=n_proto;
+				return he;
+			}
+		}
+		/*clean up on exit*/
+#ifdef RESOLVE_DBG
+		DBG("naptr_sip_resolvehost: no NAPTR record found for %.*s," 
+				" trying SRV lookup...\n", name->len, name->s);
+#endif
+	}
+	/* fallback to normal srv lookup */
+	he=srv_sip_resolvehost(name, 0, port, proto, 0, 0);
+end:
+	if (naptr_head)
+		free_rdata_list(naptr_head);
+	return he;
+}
+#endif /* USE_NAPTR */
+
+
+
+/* resolves a host name trying:
+ * - NAPTR lookup if enabled, the address is not an ip and *proto==0 and 
+ *   *port==0. The result of the NAPTR query will be used for a SRV lookup
+ * - SRV lookup if the address is not an ip *port==0. The result of the SRV
+ *   query will be used for an A/AAAA lookup.
+ *  - normal A/AAAA lookup (either fallback from the above or if *port!=0
+ *   and *proto!=0 or port==0 && proto==0)
+ * when performing SRV lookup (*port==0) it will use *proto to look for
+ * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
+ *
+ * returns: hostent struct & *port filled with the port from the SRV record;
+ *  0 on error
+ */
+struct hostent* _sip_resolvehost(str* name, unsigned short* port, char* proto)
+{
+#ifdef USE_NAPTR
+	if (dns_try_naptr)
+		return naptr_sip_resolvehost(name, port, proto);
+#endif
+	return srv_sip_resolvehost(name, 0, port, proto, 0, 0);
+}
 
 
 /* resolve host, port, proto using sip rules (e.g. use SRV if port=0 a.s.o)
  *  and write the result in the sockaddr_union to
  *  returns -1 on error (resolve failed), 0 on success */
 int sip_hostport2su(union sockaddr_union* su, str* name, unsigned short port,
-						int proto)
+						char* proto)
 {
 	struct hostent* he;
-	
 	
 	he=sip_resolvehost(name, &port, proto);
 	if (he==0){

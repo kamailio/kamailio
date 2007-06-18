@@ -176,7 +176,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 											 from the uri */
 					switch(u->proto){
 						case PROTO_NONE:
-							dst.proto=PROTO_UDP;
+							/*dst.proto=PROTO_UDP; */
+							/* no proto, try to get it from the dns */
 							break;
 						case PROTO_UDP:
 #ifdef USE_TCP

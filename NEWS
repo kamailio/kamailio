@@ -71,6 +71,8 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - dns naptr support (see dns_try_naptr and dns_<proto>_pref)
+             - dns srv based load balancing support (see dns_srv_lb)
              - support for locking ser's pages in memory, pre-mapping
                all the shared memory on startup (fill it with 0)
              - real time options
@@ -79,6 +81,17 @@ core:
                long held locks, almost no performance impact otherwise)
 
 new config variables:
+  dns_srv_lb = yes | no (default no) - enable dns srv weight based load 
+    balancing (see doc/dns.txt)
+  dns_try_naptr = yes | no (default no) - enable naptr support 
+    (see doc/dns.txt for more info)
+  dns_{udp,tcp,tls}_pref = number - ser preference for each protocol when
+    doing naptr lookups. By default dns_udp_pref=3, dns_tcp_pref=2 and 
+    dns_tls_pref=1. To use the remote site preferences set all dns_*_pref to 
+    the same positive value (e.g. dns_udp_pref=1, dns_tcp_pref=1, 
+    dns_udp_pref=1). To completely ignore NAPTR records for a specific 
+    protocol, set the corresponding protocol preference to -1 (or any other 
+    negative number).  (see doc/dns.txt for more info)
   mlock_pages = yes |no (default no) - locks all ser pages into memory making 
     it unswappable (in general one doesn't want his sip proxy swapped out :-))
   shm_force_alloc = yes | no (default no) - tries to pre-fault all the 

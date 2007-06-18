@@ -78,9 +78,10 @@
  *              (vlada)
  * 2007-02-09  separated command needed for tls-in-core and for tls in general
  *              (andrei)
- *  2007-06-07  added SHM_FORCE_ALLOC, MLOCK_PAGES, REAL_TIME, RT_PRIO,
+ * 2007-06-07  added SHM_FORCE_ALLOC, MLOCK_PAGES, REAL_TIME, RT_PRIO,
  *              RT_POLICY, RT_TIMER1_PRIO, RT_TIMER1_POLICY, RT_TIMER2_PRIO,
  *              RT_TIMER2_POLICY (andrei)
+ * 2007-06-16  added DDNS_SRV_LB, DNS_TRY_NAPTR (andrei)
  */
 
 %{
@@ -137,6 +138,12 @@
 	#define IF_DNS_FAILOVER(x) x
 #else
 	#define IF_DNS_FAILOVER(x) warn("dns failover support not compiled in")
+#endif
+
+#ifdef USE_NAPTR
+	#define IF_NAPTR(x) x
+#else
+	#define IF_NAPTR(x) warn("dns naptr support not compiled in")
 #endif
 
 #ifdef USE_DST_BLACKLIST
@@ -265,6 +272,11 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token DNS
 %token REV_DNS
 %token DNS_TRY_IPV6
+%token DNS_TRY_NAPTR
+%token DNS_SRV_LB
+%token DNS_UDP_PREF
+%token DNS_TCP_PREF
+%token DNS_TLS_PREF
 %token DNS_RETR_TIME
 %token DNS_RETR_NO
 %token DNS_SERVERS_NO
@@ -570,6 +582,16 @@ assign_stm:
 	| REV_DNS EQUAL error { yyerror("boolean value expected"); }
 	| DNS_TRY_IPV6 EQUAL NUMBER   { dns_try_ipv6=$3; }
 	| DNS_TRY_IPV6 error { yyerror("boolean value expected"); }
+	| DNS_TRY_NAPTR EQUAL NUMBER   { IF_NAPTR(dns_try_naptr=$3); }
+	| DNS_TRY_NAPTR error { yyerror("boolean value expected"); }
+	| DNS_SRV_LB EQUAL NUMBER   { IF_DNS_FAILOVER(dns_srv_lb=$3); }
+	| DNS_SRV_LB error { yyerror("boolean value expected"); }
+	| DNS_UDP_PREF EQUAL NUMBER   { IF_NAPTR(dns_udp_pref=$3); }
+	| DNS_UDP_PREF error { yyerror("number expected"); }
+	| DNS_TCP_PREF EQUAL NUMBER   { IF_NAPTR(dns_tcp_pref=$3); }
+	| DNS_TCP_PREF error { yyerror("number expected"); }
+	| DNS_TLS_PREF EQUAL NUMBER   { IF_NAPTR(dns_tls_pref=$3); }
+	| DNS_TLS_PREF error { yyerror("number expected"); }
 	| DNS_RETR_TIME EQUAL NUMBER   { dns_retr_time=$3; }
 	| DNS_RETR_TIME error { yyerror("number expected"); }
 	| DNS_RETR_NO EQUAL NUMBER   { dns_retr_no=$3; }
