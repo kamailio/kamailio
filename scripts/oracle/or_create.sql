@@ -385,7 +385,7 @@ CREATE TABLE offline_winfo (
     created_on DATETIME NOT NULL DEFAULT '2006-01-31 13:13:13',
     expires_on DATETIME NOT NULL DEFAULT '2006-01-31 13:13:13',
     dbid INT(10) UNSIGNED NOT NULL,
-    KEY offline_winfo_key (dbid)
+    UNIQUE KEY offline_winfo_key (dbid)
 );
 
 INSERT INTO version (table_name, table_version) values ('rls_subscription','1');
