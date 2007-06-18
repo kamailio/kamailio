@@ -114,7 +114,7 @@
     </column>
 
     <column>
-        <name>remove_cseq</name>
+        <name>remote_cseq</name>
         <type>int</type>
         <size>&cseq_len;</size>
         <description>Remote cseq</description>
