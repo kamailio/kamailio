@@ -895,8 +895,11 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		}
 	}
 	if (success_branch<=0) {
-		if (ser_error==0)
-				ser_error=E_SEND;
+		/* return always E_SEND for now
+		 * (the real reason could be: denied by onsend routes, blacklisted,
+		 *  send failed or any of the errors listed before + dns failed
+		 *  when attempting dns failover) */
+		ser_error=E_SEND;
 		/* else return the last error (?) */
 		/* the caller should take care and delete the transaction */
 		return -1;
