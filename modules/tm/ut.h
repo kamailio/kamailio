@@ -68,8 +68,8 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 	switch(force_proto) {
 		case PROTO_NONE: /* no protocol has been forced -- look at proto */
 			switch(proto) {
-				case PROTO_NONE: /* uri default to UDP */
-						return PROTO_UDP;
+				case PROTO_NONE: /* leave it to dns */
+						return PROTO_NONE;
 				case PROTO_UDP:/* transport specified explicitly */
 #ifdef USE_TCP
 				case PROTO_TCP:
@@ -162,7 +162,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
  * returns 0 on success, < 0 on error
  */
 inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
-									short* proto, short* comp)
+									char* proto, short* comp)
 {
 	struct sip_uri parsed_uri;
 	enum sip_protos uri_proto;
@@ -216,7 +216,8 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
  *                 (see get_send_socket()) 
  *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
- *                 uri_proto, otherwise the uri proto will be used
+ *                 uri_proto, otherwise the uri proto will be used if set or
+ *                 the proto obtained from the dns lookup
  * returns 0 on error, dst on success
  */
 #ifdef USE_DNS_FAILOVER
@@ -274,7 +275,7 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 		do{
 			/* try all the ips until we find a good send socket */
 			err=dns_sip_resolve2su(dns_h, &to, host,
-									parsed_uri.port_no, dst->proto, dns_flags);
+								parsed_uri.port_no, &dst->proto, dns_flags);
 			if (err!=0){
 				if (ip_found==0){
 					LOG(L_ERR, "ERROR: uri2dst: failed to resolve \"%.*s\" :"
@@ -300,7 +301,7 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 		return dst;
 	}
 #endif
-	if (sip_hostport2su(&dst->to, host, parsed_uri.port_no, dst->proto)!=0){
+	if (sip_hostport2su(&dst->to, host, parsed_uri.port_no, &dst->proto)!=0){
 		LOG(L_ERR, "ERROR: uri2dst: failed to resolve \"%.*s\"\n",
 					host->len, ZSW(host->s));
 		return 0;
