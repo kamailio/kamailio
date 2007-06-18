@@ -88,6 +88,9 @@
 	    <xsl:call-template name="get-name"/>
 	</xsl:variable>
 
+	<!-- Create row in version table -->
+	<xsl:apply-templates select="version"/>
+
 	<xsl:text>CREATE TABLE </xsl:text>
 	<xsl:value-of select="$table.name"/>
 	<xsl:text> (&#x0A;</xsl:text>
