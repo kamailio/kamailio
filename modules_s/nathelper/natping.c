@@ -209,6 +209,7 @@ natping_contact(str contact, struct dest_info *dst) {
 	struct sip_uri curi;
 	struct hostent *he;
 	str p_method, p_from;
+	char proto;
 
 	if (natping_method != NULL) {
 		/* XXX: add send_sock handling */
@@ -230,7 +231,8 @@ natping_contact(str contact, struct dest_info *dst) {
 			return -1;
 		if (curi.port_no == 0)
 			curi.port_no = SIP_PORT;
-		he = sip_resolvehost(&curi.host, &curi.port_no, PROTO_UDP);
+		proto=PROTO_UDP;
+		he = sip_resolvehost(&curi.host, &curi.port_no, &proto);
 		if (he == NULL){
 			LOG(L_ERR, "ERROR: nathelper::natping: can't resolve host\n");
 			return -1;
