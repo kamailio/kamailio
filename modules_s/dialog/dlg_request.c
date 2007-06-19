@@ -7,6 +7,8 @@
  */
 int request_outside(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp)
 {
+	uac_req_t	uac_r;
+
 	/* check parameters */
 	if ((!dialog) || (!method)) goto err;
 	if ((method->len < 0) || (!method->s)) goto err;
@@ -24,7 +26,16 @@ int request_outside(str* method, str* headers, str* body, dlg_t* dialog, transac
 		}
 	}
 
-	return tmb.t_uac(method, headers, body, dialog, cb, cbp);
+	set_uac_req(&uac_r,
+			method,
+			headers,
+			body,
+			dialog,
+			TMCB_LOCAL_COMPLETED,
+			cb,
+			cbp);
+
+	return tmb.t_uac(&uac_r);
 
  err:
 /*	if (cbp) shm_free(cbp);*/	/* !!! never do this automaticaly??? !!! */
@@ -39,6 +50,8 @@ int request_outside(str* method, str* headers, str* body, dlg_t* dialog, transac
  */
 int request_inside(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb completion_cb, void* cbp)
 {
+	uac_req_t	uac_r;
+
 	if (!method || !dialog) {
 		LOG(L_ERR, "req_within: Invalid parameter value\n");
 		goto err;
@@ -53,7 +66,16 @@ int request_inside(str* method, str* headers, str* body, dlg_t* dialog, transact
 	if ((method->len == 6) && (!memcmp("CANCEL", method->s, 6))) goto send;
 	dialog->loc_seq.value++; /* Increment CSeq */
  send:
-	return tmb.t_uac(method, headers, body, dialog, completion_cb, cbp);
+	set_uac_req(&uac_r,
+			method,
+			headers,
+			body,
+			dialog,
+			TMCB_LOCAL_COMPLETED,
+			completion_cb,
+			cbp);
+
+	return tmb.t_uac(&uac_r);
 
  err:
 /*	if (cbp) shm_free(cbp); */ /* !!! never !!! */

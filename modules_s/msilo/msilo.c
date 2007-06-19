@@ -319,6 +319,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	static char buf1[1024];
 	int mime, mode;
 	str next_hop = STR_NULL;
+	uac_req_t	uac_r;
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
 
@@ -538,15 +539,21 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 			}
 		}
 
-		tmb.t_request(&msg_type,  /* Type of the message */
+		set_uac_req(&uac_r,
+				&msg_type,        /* Type of the message */
+				&str_hdr,         /* Optional headers including CRLF */
+				&body,            /* Message body */
+				0,                /* dialog */
+				0,                /* callback flags */
+				0,                /* callback function */
+				0                 /* callback parameter */
+			};
+				
+		tmb.t_request(&uac_r,
 				(ctaddr.s)?&ctaddr:&from->uri,    /* Request-URI */
 				&from->uri,       /* To */
 				&reg_addr,        /* From */
-				&str_hdr,         /* Optional headers including CRLF */
-				&body,            /* Message body */
-				next_hop.len ? &next_hop: NULL,        /* next hop */
-				NULL,             /* Callback function */
-				NULL              /* Callback parameter */
+				next_hop.len ? &next_hop: NULL        /* next hop */
 			);
 	}
 
@@ -570,6 +577,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	str str_vals[5], hdr_str , body_str, uid;
 	time_t rtime;
 	str next_hop = STR_NULL;
+	uac_req_t	uac_r;
 	
 	if (str1) {
 		next_hop.s = str1;
@@ -689,16 +697,21 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 		else
 			DBG("MSILO:m_dump: sending composed body\n");
 
-			tmb.t_request(&msg_type,  /* Type of the message */
-					&str_vals[4],     /* Request-URI */
-					&str_vals[1],     /* To */
-					&str_vals[0],     /* From */
-					&hdr_str,         /* Optional headers including CRLF */
-					(n<0)?&str_vals[2]:&body_str, /* Message body */
-					next_hop.len ? &next_hop: NULL, /* next hop */
-					m_tm_callback,    /* Callback function */
-					(void*)(long)mid        /* Callback parameter */
-				);
+		set_uac_req(&uac_r,
+				&msg_type,  /* Type of the message */
+				&hdr_str,         /* Optional headers including CRLF */
+				(n<0)?&str_vals[2]:&body_str, /* Message body */
+				0,                      /* dialog */
+				TMCB_LOCAL_COMPLETED,   /* callback flags */
+				m_tm_callback,          /* Callback function */
+				(void*)(long)mid        /* Callback parameter */
+			);
+		tmb.t_request(&uac_r
+				&str_vals[4],     /* Request-URI */
+				&str_vals[1],     /* To */
+				&str_vals[0],     /* From */
+				next_hop.len ? &next_hop: NULL /* next hop */
+			);
 	}
 
 done:

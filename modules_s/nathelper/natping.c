@@ -210,6 +210,7 @@ natping_contact(str contact, struct dest_info *dst) {
 	struct hostent *he;
 	str p_method, p_from;
 	char proto;
+	uac_req_t	uac_r;
 
 	if (natping_method != NULL) {
 		/* XXX: add send_sock handling */
@@ -217,8 +218,16 @@ natping_contact(str contact, struct dest_info *dst) {
 		p_method.len = strlen(p_method.s);
 		p_from.s = "sip:registrar"; /* XXX */
 		p_from.len = strlen(p_from.s);
-		if (tmb.t_request(&p_method, &contact, &contact, &p_from,
-		    NULL, NULL, NULL, NULL, NULL) == -1) {
+		set_uac_req(&uac_r,
+				&p_method,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			);				
+		if (tmb.t_request(&uac_r, &contact, &contact, &p_from, 0) == -1) {
 			LOG(L_ERR, "ERROR: nathelper::natping(): t_request() failed\n");
 			return -1;
 		}
