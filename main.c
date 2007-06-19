@@ -915,6 +915,19 @@ int main_loop()
 		   as new processes are forked (while skipping 0 reserved for main
 		*/
 
+		/* init childs with rank==PROC_INIT before forking any process, 
+		 * this is a place for delayed (after mod_init) initializations
+		 * (e.g. shared vars that depend on the total number of processes
+		 * that is known only after all mod_inits have been executed )
+		 * WARNING: the same init_child will be called latter, a second time
+		 * for the "main" process with rank PROC_MAIN (make sure things are 
+		 * not initialized twice)*/
+		if (init_child(PROC_INIT) < 0) {
+			LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_INT) --"
+						" exiting\n");
+			goto error;
+		}
+
 #ifdef USE_SLOW_TIMER
 		/* we need another process to act as the "slow" timer*/
 				pid = fork_process(PROC_TIMER, "slow timer", 0);
@@ -958,19 +971,6 @@ int main_loop()
 		snprintf(pt[process_no].desc, MAX_PT_DESC,
 			"stand-alone receiver @ %s:%s",
 			 bind_address->name.s, bind_address->port_no_str.s );
-
-		/* init childs with rank==PROC_INIT before forking any process, 
-		 * this is a place for delayed (after mod_init) initializations
-		 * (e.g. shared vars that depend on the total number of processes
-		 * that is known only after all mod_inits have been executed )
-		 * WARNING: the same init_child will be called latter, a second time
-		 * for the "main" process with rank PROC_MAIN (make sure things are 
-		 * not initialized twice)*/
-		if (init_child(PROC_INIT) < 0) {
-			LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_INT) --"
-						" exiting\n");
-			goto error;
-		}
 	
 	/* call it also w/ PROC_MAIN to make sure modules that init things only
 	 * in PROC_MAIN get a chance to run */
