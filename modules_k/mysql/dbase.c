@@ -28,6 +28,7 @@
 #include <time.h>
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
+#include <mysql/mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../db/db_pool.h"
@@ -195,7 +196,7 @@ static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 		if (mysql_field_count(CON_CONNECTION(_h)) == 0) {
 			(*_r)->col.n = 0;
 			(*_r)->n = 0;
-			return 0;
+			goto done;
 		} else {
 			LOG(L_ERR, "store_result: %s\n", mysql_error(CON_CONNECTION(_h)));
 			db_mysql_free_dbresult(*_r);
@@ -212,10 +213,24 @@ static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 		 * db_mysql_convert_result in case of error, but we also need
 		 * to free the mem from the mysql lib side */
 		mysql_free_result(CON_RESULT(_h));
+#if (MYSQL_VERSION_ID >= 40100)
+		while( mysql_next_result( CON_CONNECTION(_h) ) > 0 ) {
+			MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
+			mysql_free_result( res );
+		}
+#endif
 		CON_RESULT(_h) = 0;
 		return -4;
 	}
-	
+
+done:
+#if (MYSQL_VERSION_ID >= 40100)
+	while( mysql_next_result( CON_CONNECTION(_h) ) > 0 ) {
+		MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
+		mysql_free_result( res );
+	}
+#endif
+
 	return 0;
 }
 

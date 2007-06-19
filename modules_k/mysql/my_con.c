@@ -21,6 +21,7 @@
  */
 
 #include "my_con.h"
+#include <mysql/mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -75,7 +76,13 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 		    );
 	}
 
-	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password, id->database, id->port, 0, 0)) {
+#if (MYSQL_VERSION_ID >= 40100)
+	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password,
+				id->database, id->port, 0, CLIENT_MULTI_STATEMENTS)) {
+#else
+	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password,
+				id->database, id->port, 0, 0)) {
+#endif
 		LOG(L_ERR, "new_connection: %s\n", mysql_error(ptr->con));
 		mysql_close(ptr->con);
 		goto err;
