@@ -137,14 +137,14 @@ void generate_fromtag(str* tag, str* callid)
 /*
  * Check value of parameters
  */
-static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
+static inline int check_params(uac_req_t *uac_r, str* to, str* from)
 {
-	if (!method || !to || !from || !dialog) {
+	if (!uac_r || !uac_r->method || !to || !from) {
 		LOG(L_ERR, "check_params(): Invalid parameter value\n");
 		return -1;
 	}
 
-	if (!method->s || !method->len) {
+	if (!uac_r->method->s || !uac_r->method->len) {
 		LOG(L_ERR, "check_params(): Invalid request method\n");
 		return -2;
 	}
@@ -179,15 +179,15 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
  *            be added in the hash table (should be either deleted by the 
  *            caller) 
  */
-static inline int t_uac_prepare(str* method, str* headers, str* body, 
-		dlg_t* dialog, transaction_cb cb, void* cbp, struct retr_buf **dst_req,
+static inline int t_uac_prepare(uac_req_t *uac_r, 
+		struct retr_buf **dst_req,
 		struct cell **dst_cell)
 {
 	struct dest_info dst;
 	struct cell *new_cell;
 	struct retr_buf *request;
 	char* buf;
-        int buf_len, ret, flags;
+        int buf_len, ret;
 	unsigned int hi;
 	int is_ack;
 	ticks_t lifetime;
@@ -198,28 +198,28 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	ret=-1;
 	hi=0; /* make gcc happy */
 	/*if (dst_req) *dst_req = NULL;*/
-	is_ack = (((method->len == 3) && (memcmp("ACK", method->s, 3)==0)) ? 1 : 0);
+	is_ack = (((uac_r->method->len == 3) && (memcmp("ACK", uac_r->method->s, 3)==0)) ? 1 : 0);
 	
 	/*** added by dcm 
 	 * - needed by external ua to send a request within a dlg
 	 */
-	if (w_calculate_hooks(dialog)<0 && !dialog->hooks.next_hop)
+	if (w_calculate_hooks(uac_r->dialog)<0 && !uac_r->dialog->hooks.next_hop)
 		goto error2;
 
-	if (!dialog->loc_seq.is_set) {
+	if (!uac_r->dialog->loc_seq.is_set) {
 		/* this is the first request in the dialog,
 		set cseq to default value now - Miklos */
-		dialog->loc_seq.value = DEFAULT_CSEQ;
-		dialog->loc_seq.is_set = 1;
+		uac_r->dialog->loc_seq.value = DEFAULT_CSEQ;
+		uac_r->dialog->loc_seq.is_set = 1;
 	}
 
-	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
-			dialog->hooks.next_hop->s);
+	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",uac_r->dialog->hooks.next_hop->len,
+			uac_r->dialog->hooks.next_hop->s);
 	/* it's a new message, so we will take the default socket */
 #ifdef USE_DNS_FAILOVER
 	if (use_dns_failover){
 		dns_srv_handle_init(&dns_h);
-		if ((uri2dst(&dns_h, &dst, 0, dialog->hooks.next_hop, PROTO_NONE)==0)
+		if ((uri2dst(&dns_h, &dst, 0, uac_r->dialog->hooks.next_hop, PROTO_NONE)==0)
 				|| (dst.send_sock==0)){
 			dns_srv_handle_put(&dns_h);
 			ser_error = E_NO_SOCKET;
@@ -229,7 +229,7 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 		}
 		dns_srv_handle_put(&dns_h); /* not needed anymore */
 	}else{
-		if ((uri2dst(0, &dst, 0, dialog->hooks.next_hop, PROTO_NONE)==0) ||
+		if ((uri2dst(0, &dst, 0, uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
 				(dst.send_sock==0)){
 			ser_error = E_NO_SOCKET;
 			ret=ser_error;
@@ -238,7 +238,7 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 		}
 	}
 #else
-	if ((uri2dst(&dst, 0, dialog->hooks.next_hop, PROTO_NONE)==0) ||
+	if ((uri2dst(&dst, 0, uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
 			(dst.send_sock==0)){
 		ser_error = E_NO_SOCKET;
 		ret=ser_error;
@@ -253,7 +253,7 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 		LOG(L_ERR, "t_uac: short of cell shmem\n");
 		goto error2;
 	}
-	if (method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0){
+	if (uac_r->method->len==INVITE_LEN && memcmp(uac_r->method->s, INVITE, INVITE_LEN)==0){
 		new_cell->flags |= T_IS_INVITE_FLAG;
 		new_cell->flags|=T_AUTO_INV_100 & (!tm_auto_inv_100 -1);
 		lifetime=tm_max_inv_lifetime;
@@ -278,18 +278,6 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	 * this point (bogdan) */
 	reset_avps();
 
-	/* add the callback the the transaction for LOCAL_COMPLETED event */
- 
-	flags = TMCB_LOCAL_COMPLETED;
-	/* Add also TMCB_LOCAL_REPLY_OUT if provisional replies are desired */
-	if (pass_provisional_replies) flags |= TMCB_LOCAL_RESPONSE_OUT;
-
-	if(cb && insert_tmcb(&(new_cell->tmcb_hl), flags, cb, cbp)!=1){
-		ret=E_OUT_OF_MEM; 
-		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
-		goto error2;
-	}
-
 	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[0].request;
@@ -300,13 +288,13 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 #ifdef TM_DEL_UNREF
 		INIT_REF(new_cell, 1); /* ref'ed only from the hash */
 #endif
-		hi=dlg2hash(dialog);
+		hi=dlg2hash(uac_r->dialog);
 		LOCK_HASH(hi);
 		insert_into_hash_table_unsafe(new_cell, hi);
 		UNLOCK_HASH(hi);
 	}
 
-	buf = build_uac_req(method, headers, body, dialog, 0, new_cell,
+	buf = build_uac_req(uac_r->method, uac_r->headers, uac_r->body, uac_r->dialog, 0, new_cell,
 		&buf_len, &dst);
 	if (!buf) {
 		LOG(L_ERR, "t_uac: Error while building message\n");
@@ -315,16 +303,24 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	}
 
 	new_cell->method.s = buf;
-	new_cell->method.len = method->len;
+	new_cell->method.len = uac_r->method->len;
 
 	request->buffer = buf;
 	request->buffer_len = buf_len;
 	new_cell->nr_of_outgoings++;
-	
+
+	/* Register the callbacks after everything is successful and nothing can fail.
+	Otherwise the callback parameter would be freed twise, once from TMCB_DESTROY,
+	and again because of the negative return code. */
+	if(uac_r->cb && insert_tmcb(&(new_cell->tmcb_hl), uac_r->cb_flags, *(uac_r->cb), uac_r->cbp)!=1){
+		ret=E_OUT_OF_MEM; 
+		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
+		goto error1;
+	}
 	if (has_local_reqin_tmcbs())
 			run_local_reqin_callbacks(new_cell, 0, 0);
 #ifdef DIALOG_CALLBACKS
-	run_trans_dlg_callbacks(dialog, new_cell, request);
+	run_trans_dlg_callbacks(uac_r->dialog, new_cell, request);
 #endif /* DIALOG_CALLBACKS */
 	if (dst_req) *dst_req = request;
 	if (dst_cell) *dst_cell = new_cell;
@@ -353,25 +349,24 @@ error2:
 /*
  * Prepare a message within a dialog
  */
-int prepare_req_within(str* method, str* headers, 
-		str* body, dlg_t* dialog, transaction_cb completion_cb, 
-		void* cbp, struct retr_buf **dst_req)
+int prepare_req_within(uac_req_t *uac_r,
+		struct retr_buf **dst_req)
 {
-	if (!method || !dialog) {
+	if (!uac_r || !uac_r->method || !uac_r->dialog) {
 		LOG(L_ERR, "req_within: Invalid parameter value\n");
 		goto err;
 	}
 
-	if (dialog->state != DLG_CONFIRMED) {
+	if (uac_r->dialog->state != DLG_CONFIRMED) {
 		LOG(L_ERR, "req_within: Dialog is not confirmed yet\n");
 		goto err;
 	}
 
-	if ((method->len == 3) && (!memcmp("ACK", method->s, 3))) goto send;
-	if ((method->len == 6) && (!memcmp("CANCEL", method->s, 6))) goto send;
-	dialog->loc_seq.value++; /* Increment CSeq */
+	if ((uac_r->method->len == 3) && (!memcmp("ACK", uac_r->method->s, 3))) goto send;
+	if ((uac_r->method->len == 6) && (!memcmp("CANCEL", uac_r->method->s, 6))) goto send;
+	uac_r->dialog->loc_seq.value++; /* Increment CSeq */
  send:
-	return t_uac_prepare(method, headers, body, dialog, completion_cb, cbp, dst_req, 0);
+	return t_uac_prepare(uac_r, dst_req, 0);
 
  err:
 	/* if (cbp) shm_free(cbp); */
@@ -404,17 +399,16 @@ void send_prepared_request(struct retr_buf *request)
 /*
  * Send a request using data from the dialog structure
  */
-int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
-	  transaction_cb cb, void* cbp)
+int t_uac(uac_req_t *uac_r)
 {
 	struct retr_buf *request;
 	struct cell *cell;
 	int ret;
 	int is_ack;
 
-	ret = t_uac_prepare(method, headers, body, dialog, cb, cbp, &request, &cell);
+	ret = t_uac_prepare(uac_r, &request, &cell);
 	if (ret < 0) return ret;
-	is_ack = (method->len == 3) && (memcmp("ACK", method->s, 3)==0) ? 1 : 0;
+	is_ack = (uac_r->method->len == 3) && (memcmp("ACK", uac_r->method->s, 3)==0) ? 1 : 0;
 	send_prepared_request_impl(request, !is_ack /* retransmit */);
 	if (cell && is_ack)
 		free_cell(cell);
@@ -425,8 +419,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
  * Send a request using data from the dialog structure
  * ret_index and ret_label will identify the new cell
  */
-int t_uac_with_ids(str* method, str* headers, str* body, dlg_t* dialog,
-	transaction_cb cb, void* cbp,
+int t_uac_with_ids(uac_req_t *uac_r,
 	unsigned int *ret_index, unsigned int *ret_label)
 {
 	struct retr_buf *request;
@@ -434,9 +427,9 @@ int t_uac_with_ids(str* method, str* headers, str* body, dlg_t* dialog,
 	int ret;
 	int is_ack;
 
-	ret = t_uac_prepare(method, headers, body, dialog, cb, cbp, &request, &cell);
+	ret = t_uac_prepare(uac_r, &request, &cell);
 	if (ret < 0) return ret;
-	is_ack = (method->len == 3) && (memcmp("ACK", method->s, 3)==0) ? 1 : 0;
+	is_ack = (uac_r->method->len == 3) && (memcmp("ACK", uac_r->method->s, 3)==0) ? 1 : 0;
 	send_prepared_request_impl(request, !is_ack /* retransmit */);
 	if (is_ack) {
 		if (cell) free_cell(cell);
@@ -454,60 +447,64 @@ int t_uac_with_ids(str* method, str* headers, str* body, dlg_t* dialog,
 /*
  * Send a message within a dialog
  */
-int req_within(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb completion_cb, void* cbp)
+int req_within(uac_req_t *uac_r)
 {
-	if (!method || !dialog) {
+	if (!uac_r || !uac_r->method || !uac_r->dialog) {
 		LOG(L_ERR, "req_within: Invalid parameter value\n");
 		goto err;
 	}
 
-	if ((method->len == 3) && (!memcmp("ACK", method->s, 3))) goto send;
-	if ((method->len == 6) && (!memcmp("CANCEL", method->s, 6))) goto send;
-	dialog->loc_seq.value++; /* Increment CSeq */
+	if ((uac_r->method->len == 3) && (!memcmp("ACK", uac_r->method->s, 3))) goto send;
+	if ((uac_r->method->len == 6) && (!memcmp("CANCEL", uac_r->method->s, 6))) goto send;
+	uac_r->dialog->loc_seq.value++; /* Increment CSeq */
  send:
-	return t_uac(method, headers, body, dialog, completion_cb, cbp);
+	return t_uac(uac_r);
 
  err:
-	if (cbp) shm_free(cbp);
+	/* callback parameter must be freed outside of tm module
+	if (cbp) shm_free(cbp); */
 	return -1;
 }
 
 
 /*
  * Send an initial request that will start a dialog
+ * WARNING: writes uac_r->dialog
  */
-int req_outside(str* method, str* to, str* from, str* headers, str* body, dlg_t** dialog, transaction_cb cb, void* cbp)
+int req_outside(uac_req_t *uac_r, str* to, str* from)
 {
 	str callid, fromtag;
 
-	if (check_params(method, to, from, dialog) < 0) goto err;
+	if (check_params(uac_r, to, from) < 0) goto err;
 	
 	generate_callid(&callid);
 	generate_fromtag(&fromtag, &callid);
 
-	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, dialog) < 0) {
+	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &uac_r->dialog) < 0) {
 		LOG(L_ERR, "req_outside(): Error while creating new dialog\n");
 		goto err;
 	}
 
-	return t_uac(method, headers, body, *dialog, cb, cbp);
+	return t_uac(uac_r);
 
  err:
-	if (cbp) shm_free(cbp);
+	/* callback parameter must be freed outside of tm module
+	if (cbp) shm_free(cbp); */
 	return -1;
 }
 
 
 /*
  * Send a transactional request, no dialogs involved
+ * WARNING: writes uac_r->dialog
  */
-int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *next_hop, transaction_cb c, void* cp)
+int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 {
 	str callid, fromtag;
 	dlg_t* dialog;
 	int res;
 
-	if (check_params(m, to, from, &dialog) < 0) goto err;
+	if (check_params(uac_r, to, from) < 0) goto err;
 
 	generate_callid(&callid);
 	generate_fromtag(&fromtag, &callid);
@@ -537,14 +534,16 @@ int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *next_hop
 	 *   dialog->dst_uri.s = 0;
 	 * before freeing dialog here must be removed
 	 */
-
-	res = t_uac(m, h, b, dialog, c, cp);
+	uac_r->dialog = dialog;
+	res = t_uac(uac_r);
 	dialog->rem_target.s = 0;
 	dialog->dst_uri.s = 0;
 	free_dlg(dialog);
+	uac_r->dialog = 0;
 	return res;
 
  err:
-	if (cp) shm_free(cp);
+	/* callback parameter must be freed outside of tm module
+	if (cp) shm_free(cp); */
 	return -1;
 }

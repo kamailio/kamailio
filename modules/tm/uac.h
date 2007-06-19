@@ -44,18 +44,49 @@
 extern char *uac_from;  /* UAC From parameter */
 extern int pass_provisional_replies; /* Pass provisional replies to fifo applications */
 
+/* structure for UAC interface
+ *
+ * You can free the memory allocated
+ * for the callback parameter if necessary:
+ *  - when the function is unable to create the UAC
+ *    and returns failure
+ *  - when TMCB_DESTROY callback is called -- you must
+ *    register it explicitly!
+ */
+typedef struct uac_req {
+	str	*method;
+	str	*headers;
+	str	*body;
+	dlg_t	*dialog;
+	int	cb_flags;
+	transaction_cb	*cb;
+	void	*cbp;
+} uac_req_t;
+
+/* macro for setting the values of uac_req_t struct */
+#define set_uac_req(_req, \
+		_m, _h, _b, _dlg, _cb_flags, _cb, _cbp) \
+	do { \
+		(_req)->method = (_m); \
+		(_req)->headers = (_h); \
+		(_req)->body = (_b); \
+		(_req)->dialog = (_dlg); \
+		(_req)->cb_flags = (_cb_flags); \
+		(_req)->cb = (_cb); \
+		(_req)->cbp = (_cbp); \
+	} while (0)
+
 /*
  * Function prototypes
  */
-typedef int (*reqwith_t)(str* m, str* h, str* b, dlg_t* d, transaction_cb c, void* cp);
-typedef int (*reqout_t)(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
-typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, str *next_hop, transaction_cb c, void* cp);
-typedef int (*t_uac_t)(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp);
-typedef int (*t_uac_with_ids_t)(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp,
+typedef int (*reqwith_t)(uac_req_t *uac_r);
+typedef int (*reqout_t)(uac_req_t *uac_r, str* to, str* from);
+typedef int (*req_t)(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop);
+typedef int (*t_uac_t)(uac_req_t *uac_r);
+typedef int (*t_uac_with_ids_t)(uac_req_t *uac_r,
 		unsigned int *ret_index, unsigned int *ret_label);
-typedef int (*prepare_request_within_f)(str* method, str* headers, 
-		str* body, dlg_t* dialog, transaction_cb cb, void* cbp,
-		struct retr_buf **request_dst);
+typedef int (*prepare_request_within_f)(uac_req_t *uac_r,
+		struct retr_buf **dst_req);
 typedef void (*send_prepared_request_f)(struct retr_buf *request_dst);
 
 
@@ -74,32 +105,32 @@ int uac_init(void);
 /*
  * Send a request
  */
-int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp);
+int t_uac(uac_req_t *uac_r);
 
 /*
  * Send a request
  * ret_index and ret_label will identify the new cell
  */
-int t_uac_with_ids(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp,
-			unsigned int *ret_index, unsigned int *ret_label);
+int t_uac_with_ids(uac_req_t *uac_r,
+	unsigned int *ret_index, unsigned int *ret_label);
 /*
  * Send a message within a dialog
  */
-int req_within(str* m, str* h, str* b, dlg_t* d, transaction_cb c, void* cp);
+int req_within(uac_req_t *uac_r);
 
 
 /*
  * Send an initial request that will start a dialog
  */
-int req_outside(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
+int req_outside(uac_req_t *uac_r, str* to, str* from);
 
 /*
  * Send a transactional request, no dialogs involved
  */
-int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *next_hop, transaction_cb c, void* cp);
+int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop);
 
-int prepare_req_within(str* method, str* headers, str* body, dlg_t* dialog,
-	  transaction_cb cb, void* cbp, struct retr_buf **dst_req);
+int prepare_req_within(uac_req_t *uac_r,
+		struct retr_buf **dst_req);
 
 void send_prepared_request(struct retr_buf *request);
 
