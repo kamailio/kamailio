@@ -101,7 +101,8 @@ time_t _timegm(struct tm* t)
 {
 	time_t tl, tb;
 	struct tm* tg;
-	
+
+	t->tm_isdst = 0;
 	tl = mktime(t);
 	if (tl == -1) {
 		t->tm_hour--;
@@ -124,6 +125,29 @@ time_t _timegm(struct tm* t)
 		tb += 3600;
 	}
 	return (tl - (tb - tl));
+}
+
+
+/* Convert time_t value that is relative to local timezone to UTC */
+time_t local2utc(time_t in)
+{
+	struct tm* tt;
+	tt = gmtime(&in);
+	tt->tm_isdst = -1;
+	return mktime(tt);
+}
+
+
+/* Convert time_t value in UTC to to value relative to local time zone */
+time_t utc2local(time_t in)
+{
+	struct tm* tt;
+	tt = localtime(&in);
+#ifdef HAVE_TIMEGM
+	return timegm(tt);
+#else
+	return _timegm(tt);
+#endif
 }
 
 
