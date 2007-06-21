@@ -98,7 +98,8 @@ time_t _timegm(struct tm* t)
 {
 	time_t tl, tb;
 	struct tm* tg;
-	
+
+	t->tm_isdst = 0;
 	tl = mktime(t);
 	if (tl == -1) {
 		t->tm_hour--;
