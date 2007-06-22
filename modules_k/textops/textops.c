@@ -639,6 +639,7 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 	act.elem[0].type = STRING_ST;
 	act.elem[0].u.string = result->s;
 	rval = do_action(&act, msg);
+	pkg_free(result->s);
 	pkg_free(result);
 	return rval;
 }
