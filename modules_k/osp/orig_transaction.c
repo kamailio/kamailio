@@ -510,9 +510,10 @@ static int ospPrepareDestination(
             if (isfirst == OSP_FIRST_ROUTE) {
                 rewrite_uri(msg, &newuri);
             } else {
-                append_branch(msg, &newuri, NULL, NULL, 0, 0, NULL);
+                append_branch(msg, &newuri, NULL, NULL, Q_UNSPECIFIED, 0, NULL);
             }
             /* Do not add route specific OSP information */
+            result = MODULE_RETURNCODE_TRUE;
         } else if (type == OSP_BRANCH_ROUTE) {
             /* For branch route, add route specific OSP information */
 
