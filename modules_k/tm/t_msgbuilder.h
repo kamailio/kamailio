@@ -44,7 +44,7 @@
 #define FROMTAG_LEN (sizeof(FROMTAG)-1)
 #define TOTAG ";tag="
 #define TOTAG_LEN (sizeof(TOTAG)-1)
-
+#define LOCAL_MAXFWD_VALUE "70"
 
 char *build_local(struct cell *Trans, unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to);

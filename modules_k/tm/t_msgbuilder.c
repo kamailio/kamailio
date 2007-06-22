@@ -52,6 +52,9 @@
 #define ROUTE_SEPARATOR ", "
 #define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
 
+#define LOCAL_MAXFWD_HEADER "Max-Forwards: " LOCAL_MAXFWD_VALUE CRLF
+#define LOCAL_MAXFWD_HEADER_LEN (sizeof(LOCAL_MAXFWD_HEADER) - 1)
+
 /* convenience macros */
 #define  append_string(_d,_s,_len) \
 	do{\
@@ -247,8 +250,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	if (server_signature) {
 		*len += user_agent_header.len + CRLF_LEN;
 	}
-	/* Content Length, EoM */
-	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN;
+	/* Content Length, MaxFwd, EoM */
+	*len+=LOCAL_MAXFWD_HEADER_LEN + CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN;
 
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
@@ -274,7 +277,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_string( p, cseq_n.s, cseq_n.len );
 	*(p++) = ' ';
 	append_string( p, method, method_len );
-	append_string( p, CRLF, CRLF_LEN );
+	append_string( p, CRLF LOCAL_MAXFWD_HEADER,
+		CRLF_LEN+LOCAL_MAXFWD_HEADER_LEN );
 
 	if (!is_local(Trans))  {
 		/* Path */
