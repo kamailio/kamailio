@@ -203,13 +203,14 @@ static int mod_init(void)
 
 static int build_db_cmds(void)
 {
-	db_fld_t del_contact_params[] = {
+	INFO("usrloc: build_db_cmds()\n");
+	db_fld_t del_contact_match[] = {
 		{.name = uid_col.s, .type = DB_STR},
 		{.name = contact_col.s, .type = DB_STR},
 		{.name = NULL},
 	};
 	
-	db_fld_t ins_contact_params[] = {
+	db_fld_t ins_contact_values[] = {
 		{.name = uid_col.s,        .type = DB_STR},
 		{.name = contact_col.s,    .type = DB_STR},
 		{.name = expires_col.s,    .type = DB_DATETIME},
@@ -244,13 +245,15 @@ static int build_db_cmds(void)
 	}
 	memset(ins_contact, '\0', sizeof(ins_contact) * cmd_n);
 
+	INFO("usrloc: building del_contact queries()\n");
 	for(i = 0, ptr = root; ptr; ptr = ptr->next, i++) {
-		del_contact[i] = db_cmd(DB_DEL, db, ptr->name.s, NULL, del_contact_params);
+		del_contact[i] = db_cmd(DB_DEL, db, ptr->name.s, NULL, del_contact_match, NULL);
 		if (del_contact[i] == NULL) return -1;
 	}
 
+	INFO("usrloc: building inst_contact queries()\n");
 	for(i = 0, ptr = root; ptr; ptr = ptr->next, i++) {
-		ins_contact[i] = db_cmd(DB_PUT, db, ptr->name.s, NULL, ins_contact_params);
+		ins_contact[i] = db_cmd(DB_PUT, db, ptr->name.s, NULL, NULL, ins_contact_values);
 		if (ins_contact[i] == NULL) return -1;
 	}
 	return 0;
@@ -260,8 +263,13 @@ static int build_db_cmds(void)
 
 static int child_init(int _rank)
 {
-	if (_rank==PROC_INIT || _rank==PROC_MAIN || _rank==PROC_TCP_MAIN)
+	INFO("usrloc: child_init( rank: %d)\n", _rank);
+	if (_rank==PROC_INIT || _rank==PROC_MAIN || _rank==PROC_TCP_MAIN) {
+		INFO("usrloc: do nothing for the init, main or tcp_main processes\n");
 		return 0; /* do nothing for the main or tcp_main processes */
+	}
+	
+	INFO("usrloc: db_mode = %d\n", db_mode);
 	     /* Shall we use database ? */
 	if ( db_mode != NO_DB) { /* Yes */
 		db = db_ctx("usrloc");
@@ -274,6 +282,7 @@ static int child_init(int _rank)
 		if (db_connect(db) < 0) return -1;
 		if (build_db_cmds() < 0) return -1;
 	}
+	INFO("usrloc: child_init( rank: %d), done OK\n", _rank);
 
 	return 0;
 }

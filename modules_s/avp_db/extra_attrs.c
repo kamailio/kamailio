@@ -196,7 +196,7 @@ int declare_attr_group(modparam_t type, char* _param)
  * Variable default_res holds columns which can used by read_attrs. */
 static int init_queries(db_ctx_t *ctx, registered_table_t *t)
 {
-	db_fld_t params[] = {
+	db_fld_t match[] = {
 		{ .name = t->key_column, .type = DB_STR, .op = DB_EQ },
 		{ .name = NULL }
 	};
@@ -209,7 +209,7 @@ static int init_queries(db_ctx_t *ctx, registered_table_t *t)
 		{ .name = t->flags_column, .type = DB_BITMAP, .op = DB_EQ },
 		{ .name = NULL }
 	};
-	db_fld_t add_params[] = {
+	db_fld_t add_values[] = {
 		{ .name = t->key_column, .type = DB_STR, .op = DB_EQ },
 		{ .name = t->name_column, .type = DB_STR, .op = DB_EQ },
 		{ .name = t->type_column, .type = DB_INT, .op = DB_EQ },
@@ -218,9 +218,9 @@ static int init_queries(db_ctx_t *ctx, registered_table_t *t)
 		{ .name = NULL }
 	};
 
-	t->query = db_cmd(DB_GET, ctx, t->table_name, query_res, params);
-	t->remove = db_cmd(DB_DEL, ctx, t->table_name, NULL, params);
-	t->add = db_cmd(DB_PUT, ctx, t->table_name, NULL, add_params);
+	t->query = db_cmd(DB_GET, ctx, t->table_name, query_res, match, NULL);
+	t->remove = db_cmd(DB_DEL, ctx, t->table_name, NULL, match, NULL);
+	t->add = db_cmd(DB_PUT, ctx, t->table_name, NULL, NULL, add_values);
 
 	if (t->query && t->remove && t->add) return 0;
 	else return -1; /* not all queries were initialized */
@@ -261,16 +261,16 @@ static inline int save_avp(registered_table_t *t, avp_t *avp, str *id) /* id MUS
 	int type;
 	static str empty = STR_STATIC_INIT("");
 	
-	set_str_val(t->add->params[0], *id);
+	set_str_val(t->add->vals[0], *id);
 	
 	s = get_avp_name(avp);
 	if (!s) s = &empty;
-	set_str_val(t->add->params[1], *s);
+	set_str_val(t->add->vals[1], *s);
 	
 	get_avp_value_ex(avp, &v, &type);
-	set_int_val(t->add->params[2], type);
-	set_str_val(t->add->params[3], v);
-	set_int_val(t->add->params[4], avp->flags & (AVP_CLASS_ALL | AVP_TRACK_ALL | AVP_NAME_STR | AVP_VAL_STR));
+	set_int_val(t->add->vals[2], type);
+	set_str_val(t->add->vals[3], v);
+	set_int_val(t->add->vals[4], avp->flags & (AVP_CLASS_ALL | AVP_TRACK_ALL | AVP_NAME_STR | AVP_VAL_STR));
 	
 	if (db_exec(NULL, t->add) < 0) {
 		ERR("Can't insert record into DB\n");
@@ -315,7 +315,7 @@ static int read_avps(db_res_t *res, avp_flags_t flag) /* id must not be NULL */
 /** Removes all attributes with given ID.  The ID must not be NULL.  */
 static inline int remove_all_avps(registered_table_t *t, str *id)
 {
-	set_str_val(t->remove->params[0], *id);
+	set_str_val(t->remove->match[0], *id);
 	if (db_exec(NULL, t->remove) < 0) {
 		ERR("can't remove attrs\n");
 		return -1;
@@ -337,7 +337,7 @@ int load_extra_attrs(struct sip_msg* msg, char* _table, char* _id)
 		return -1;
 	}
 	
-	set_str_val(t->query->params[0], id);
+	set_str_val(t->query->match[0], id);
 	if (db_exec(&res, t->query) < 0) {
 		ERR("DB query failed\n");
 		return -1;

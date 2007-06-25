@@ -76,10 +76,10 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 		}
 	}
     
-    q->params[0].v.lstr = username->user;
-    q->params[1].v.lstr = *realm;
+    q->match[0].v.lstr = username->user;
+    q->match[1].v.lstr = *realm;
 
-	if (use_did) q->params[2].v.lstr = *did;
+	if (use_did) q->match[2].v.lstr = *did;
 
 	if (db_exec(res, q) < 0 ) {
 		ERR("Error while querying database\n");

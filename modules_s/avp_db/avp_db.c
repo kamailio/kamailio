@@ -136,20 +136,20 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	db_fld_t res[] = {
+	db_fld_t res_cols[] = {
 		{.name = name_column, .type = DB_STR},
 		{.name = type_column, .type = DB_INT},
 		{.name = val_column, .type = DB_STR},
 		{.name = flags_column, .type = DB_BITMAP},
 		{.name = NULL}
 	};
-	db_fld_t params_uri[] = {
+	db_fld_t match_uri[] = {
 		{.name = username_column, .type = DB_STR, .op = DB_EQ},
 		{.name = did_column, .type = DB_STR, .op = DB_EQ},
 		{.name = scheme_column, .type = DB_STR, .op = DB_EQ},
 		{.name = NULL}
 	};
-	db_fld_t params_user[] = {
+	db_fld_t match_user[] = {
 		{.name = uid_column, .type = DB_STR, .op = DB_EQ},
 		{.name = NULL}
 	};
@@ -162,10 +162,10 @@ static int child_init(int rank)
 	if (db_add_db(ctx, db_url) < 0) goto err;
 	if (db_connect(ctx) < 0) goto err;
 	
-	load_uri_attrs_cmd = db_cmd(DB_GET, ctx, uri_attrs_table, res, params_uri);
+	load_uri_attrs_cmd = db_cmd(DB_GET, ctx, uri_attrs_table, res_cols, match_uri, NULL);
 	if (!load_uri_attrs_cmd) goto err;
 
-	load_user_attrs_cmd = db_cmd(DB_GET, ctx, user_attrs_table, res, params_user);
+	load_user_attrs_cmd = db_cmd(DB_GET, ctx, user_attrs_table, res_cols, match_user, NULL);
 	if (!load_user_attrs_cmd) goto err;
 
 	if (init_extra_avp_queries(ctx) < 0) goto err;
@@ -266,21 +266,21 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
 		return -1;
 	}
 
-    load_uri_attrs_cmd->params[0].v.lstr = puri.user;
+    load_uri_attrs_cmd->match[0].v.lstr = puri.user;
 
 	if (puri.host.len) {
 		/* domain name is present */
-		if (dm_get_did(&load_uri_attrs_cmd->params[1].v.lstr, &puri.host) < 0) {
+		if (dm_get_did(&load_uri_attrs_cmd->match[1].v.lstr, &puri.host) < 0) {
 			DBG("Cannot lookup DID for domain %.*s, using default value\n", puri.host.len, ZSW(puri.host.s));
-			load_uri_attrs_cmd->params[1].v.lstr = default_did;
+			load_uri_attrs_cmd->match[1].v.lstr = default_did;
 		}
 	} else {
 		/* domain name is missing -- can be caused by tel: URI */
 		DBG("There is no domain name, using default value\n");
-		load_uri_attrs_cmd->params[1].v.lstr = default_did;
+		load_uri_attrs_cmd->match[1].v.lstr = default_did;
 	}
 
-    uri_type_to_str(puri.type, &(load_uri_attrs_cmd->params[2].v.lstr));
+    uri_type_to_str(puri.type, &(load_uri_attrs_cmd->match[2].v.lstr));
 
 	if (db_exec(&res, load_uri_attrs_cmd) < 0) {
 		ERR("Error while quering database\n");
@@ -299,7 +299,7 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
 {
     db_res_t* res;
 
-	if (get_str_fparam(&load_user_attrs_cmd->params[0].v.lstr, msg, (fparam_t*)fp) < 0) {
+	if (get_str_fparam(&load_user_attrs_cmd->match[0].v.lstr, msg, (fparam_t*)fp) < 0) {
 		ERR("Unable to get UID\n");
 		return -1;
 	}

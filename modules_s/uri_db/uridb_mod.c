@@ -153,13 +153,13 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
-	db_fld_t res[] = {
+	db_fld_t lookup_uid_columns[] = {
 		{.name = uid_col.s,   DB_STR},
 		{.name = flags_col.s, DB_BITMAP},
 		{.name = NULL}
 	};
 
-	db_fld_t params[] = {
+	db_fld_t lookup_uid_match[] = {
 		{.name = username_col.s, DB_STR},
 		{.name = did_col.s,      DB_STR},
 		{.name = scheme_col.s,   DB_STR},
@@ -177,7 +177,7 @@ static int child_init(int rank)
 	if (db_add_db(db, db_url.s) < 0) goto error;
 	if (db_connect(db) < 0) goto error;
 	
-	lookup_uid_cmd = db_cmd(DB_GET, db, uri_table.s, res, params);
+	lookup_uid_cmd = db_cmd(DB_GET, db, uri_table.s, lookup_uid_columns, lookup_uid_match, NULL);
 	if (lookup_uid_cmd == NULL) {
 		ERR("Error while building db query to load global attributes\n");
 		goto error;
@@ -233,8 +233,8 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing From URI\n");
 			return -1;
 		}
-		lookup_uid_cmd->params[0].v.lstr = puri.user;
-		uri_type_to_str(puri.type, &(lookup_uid_cmd->params[2].v.lstr));
+		lookup_uid_cmd->match[0].v.lstr = puri.user;
+		uri_type_to_str(puri.type, &(lookup_uid_cmd->match[2].v.lstr));
 	} else if (id == USE_TO) {
 		get_to_did(&did, msg);
 		if (!msg->to) {
@@ -252,23 +252,23 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing To URI\n");
 			return -1;
 		}
-		lookup_uid_cmd->params[0].v.lstr = puri.user;
-		uri_type_to_str(puri.type, &(lookup_uid_cmd->params[2].v.lstr));
+		lookup_uid_cmd->match[0].v.lstr = puri.user;
+		uri_type_to_str(puri.type, &(lookup_uid_cmd->match[2].v.lstr));
 		flag = DB_IS_TO;
 	} else {
 		get_to_did(&did, msg);
 		flag = DB_IS_TO;
 
 		if (parse_sip_msg_uri(msg) < 0) return -1;
-		lookup_uid_cmd->params[0].v.lstr = msg->parsed_uri.user;
-		uri_type_to_str(msg->parsed_uri.type, &(lookup_uid_cmd->params[2].v.lstr));
+		lookup_uid_cmd->match[0].v.lstr = msg->parsed_uri.user;
+		uri_type_to_str(msg->parsed_uri.type, &(lookup_uid_cmd->match[2].v.lstr));
 	}
 
 	if (did.s && did.len) {
-		lookup_uid_cmd->params[1].v.lstr = did;
+		lookup_uid_cmd->match[1].v.lstr = did;
 	} else {
 		LOG(L_DBG, "uri_db:lookup_uid: DID not found, using default value\n");
-		lookup_uid_cmd->params[1].v.lstr = default_did;
+		lookup_uid_cmd->match[1].v.lstr = default_did;
 	}
 
 	if (db_exec(&res, lookup_uid_cmd) < 0) {
@@ -378,9 +378,9 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 		did = default_did;
     }
 
-	lookup_uid_cmd->params[0].v.lstr = puri.user;
-    lookup_uid_cmd->params[1].v.lstr = did;
-    uri_type_to_str(puri.type, &(lookup_uid_cmd->params[2].v.lstr));
+	lookup_uid_cmd->match[0].v.lstr = puri.user;
+    lookup_uid_cmd->match[1].v.lstr = did;
+    uri_type_to_str(puri.type, &(lookup_uid_cmd->match[2].v.lstr));
 
     if (db_exec(&res, lookup_uid_cmd) < 0) {
 		LOG(L_ERR, "lookup_user: Error in db_query\n");

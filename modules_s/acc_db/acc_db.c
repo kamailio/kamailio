@@ -719,7 +719,7 @@ int log_request(struct sip_msg *rq, str* ouri, struct hdr_field *to, db_cmd_t* c
 	int cnt;
 	if (skip_cancel(rq)) return 1;
 
-	cnt = fmt2strar(log_fmt, rq, ouri, to, code, req_timestamp, cmd->params);
+	cnt = fmt2strar(log_fmt, rq, ouri, to, code, req_timestamp, cmd->vals);
 	if (cnt == 0) {
 		LOG(L_ERR, "ERROR:acc:log_request: fmt2strar failed\n");
 		return -1;
@@ -954,14 +954,14 @@ static int child_init(int rank)
 		if (db_add_db(acc_db, db_url.s) < 0) return -1;
 		if (db_connect(acc_db) < 0) return -1;
 
-		write_acc = db_cmd(DB_PUT, acc_db, acc_table.s, NULL, fld);
+		write_acc = db_cmd(DB_PUT, acc_db, acc_table.s, NULL, NULL, fld);
 		if (write_acc == NULL) {
 			ERR("Error while compiling database query\n");
 			db_ctx_free(acc_db);
 			return -1;
 		}
 
-		write_mc = db_cmd(DB_PUT, acc_db, mc_table.s, NULL, fld);
+		write_mc = db_cmd(DB_PUT, acc_db, mc_table.s, NULL, NULL, fld);
 		if (write_mc == NULL) {
 			ERR("Error while compiling database query\n");
 			db_cmd_free(write_acc);

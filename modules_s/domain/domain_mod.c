@@ -174,28 +174,28 @@ struct module_exports exports = {
 
 static int init_db(void)
 {
-	db_fld_t res1[] = {
+	db_fld_t load_domains_columns[] = {
 		{.name = did_col.s,    DB_STR},
 		{.name = domain_col.s, DB_STR},
 		{.name = flags_col.s,  DB_BITMAP},
 		{.name = NULL}
 	};
-	db_fld_t res2[] = {
+	db_fld_t get_did_columns[] = {
 		{.name = did_col.s, DB_STR},
 		{.name = NULL}
 	};
-	db_fld_t res3[] = {
+	db_fld_t load_attrs_columns[] = {
 		{.name = domattr_name.s, .type = DB_STR},
 		{.name = domattr_type.s, .type = DB_INT},
 		{.name = domattr_value.s, .type = DB_STR},
 		{.name = domattr_flags.s, .type = DB_BITMAP},
 		{.name = NULL}
 	};
-	db_fld_t params[] = {
+	db_fld_t get_did_match[] = {
 		{.name = domain_col.s, DB_STR},
 		{.name = NULL}
 	};
-	db_fld_t params2[] = {
+	db_fld_t load_attrs_match[] = {
 		{.name = domattr_did.s, .type = DB_STR},
 		{.name = NULL}
 	};
@@ -208,19 +208,22 @@ static int init_db(void)
 	if (db_add_db(db, db_url.s) < 0) return -1;
 	if (db_connect(db) < 0) return -1;
 	
-	load_domains_cmd = db_cmd(DB_GET, db, domain_table.s, res1, NULL);
+	INFO("prepare load_domains_cmd\n");
+	load_domains_cmd = db_cmd(DB_GET, db, domain_table.s, load_domains_columns, NULL, NULL);
 	if (load_domains_cmd == NULL) {
 		ERR("Error while preparing load_domains database command\n");
 		return -1;
 	}
 	
-	get_did_cmd = db_cmd(DB_GET, db, domain_table.s, res2, params);
+	INFO("prepare get_did_cmd\n");
+	get_did_cmd = db_cmd(DB_GET, db, domain_table.s, get_did_columns, get_did_match, NULL);
 	if (get_did_cmd == NULL) {
-		ERR("Error while preparing load_domains database command\n");
+		ERR("Error while preparing get_did database command\n");
 		return -1;
 	}
 
-	load_attrs_cmd = db_cmd(DB_GET, db, domattr_table.s, res3, params2);
+	INFO("prepare load_attrs_cmd\n");
+	load_attrs_cmd = db_cmd(DB_GET, db, domattr_table.s, load_attrs_columns, load_attrs_match, NULL);
 	if (load_attrs_cmd == NULL) {
 		ERR("Error while preparing load_attrs database command\n");
 		return -1;
@@ -396,7 +399,7 @@ static int db_get_did(str* did, str* domain)
 		goto err;
     }
     
-	get_did_cmd->params[0].v.lstr = *domain;
+	get_did_cmd->match[0].v.lstr = *domain;
 
 	if (db_exec(&res, get_did_cmd) < 0) {
 		ERR("Error in database query\n");

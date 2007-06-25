@@ -132,7 +132,7 @@ static int init_db(void)
 		{.name = NULL}
 	};
 
-	db_fld_t params[] = {
+	db_fld_t values[] = {
 		{.name = attr_name,  DB_CSTR},
 		{.name = attr_type,  DB_INT},
 		{.name = attr_value, DB_STR},
@@ -148,13 +148,14 @@ static int init_db(void)
 	if (db_add_db(db, db_url) < 0) return -1;
 	if (db_connect(db) < 0) return -1;
 	
-	load_attrs_cmd = db_cmd(DB_GET, db, attr_table, attr_res, NULL);
+	/* SELECT name, type, value, flags FROM global_attrs */
+	load_attrs_cmd = db_cmd(DB_GET, db, attr_table, attr_res, NULL, NULL);
 	if (load_attrs_cmd == NULL) {
 		ERR("Error while building db query to load global attributes\n");
 		return -1;
 	}
 
-	save_gflags_cmd = db_cmd(DB_PUT, db, attr_table, NULL, params);
+	save_gflags_cmd = db_cmd(DB_PUT, db, attr_table, NULL, NULL, values);
 	if (save_gflags_cmd == NULL) {
 		ERR("Error while building db query to save global flags\n");
 		return -1;
@@ -361,10 +362,10 @@ int save_gflags(unsigned int flags)
 
 	fl.s = int2str(flags, &fl.len);
 
-	save_gflags_cmd->params[0].v.cstr = AVP_GFLAGS;
-	save_gflags_cmd->params[1].v.int4 = 0;
-	save_gflags_cmd->params[2].v.lstr = fl;
-	save_gflags_cmd->params[3].v.bitmap = DB_LOAD_SER;
+	save_gflags_cmd->vals[0].v.cstr = AVP_GFLAGS;
+	save_gflags_cmd->vals[1].v.int4 = 0;
+	save_gflags_cmd->vals[2].v.lstr = fl;
+	save_gflags_cmd->vals[3].v.bitmap = DB_LOAD_SER;
 
 	if (db_exec(NULL, save_gflags_cmd) < 0) {
 		LOG(L_ERR, "gflags:save_gflag: Unable to store new value\n");

@@ -163,61 +163,61 @@ static authdb_table_info_t *registered_tables = NULL;
 
 static int generate_queries(authdb_table_info_t *info)
 {
-	db_fld_t params_with_did[] = {
+	db_fld_t match_with_did[] = {
 		{ .name = username_column.s, .type = DB_STR }, 
 		{ .name = realm_column.s, .type = DB_STR }, 
 		{ .name = did_column.s, .type = DB_STR }, 
 		{ .name = NULL }
 	};
-	db_fld_t params_without_did[] = {
+	db_fld_t match_without_did[] = {
 		{ .name = username_column.s, .type = DB_STR }, 
 		{ .name = realm_column.s, .type = DB_STR }, 
 		{ .name = NULL }
 	};
-	db_fld_t *results = NULL;
+	db_fld_t *result_cols = NULL;
 	int len, i;
 
-	len = sizeof(*results) * (credentials_n + 3);
-	results = pkg_malloc(len);
-	if (!results) {
+len = sizeof(*result_cols) * (credentials_n + 3);
+	result_cols = pkg_malloc(len);
+	if (!result_cols) {
 		ERR("can't allocate pkg mem\n");
 		return -1;
 	}
-	memset(results, 0, len);
+	memset(result_cols, 0, len);
 
-	results[0].name = pass_column.s;
-	results[0].type = DB_CSTR;
+	result_cols[0].name = pass_column.s;
+	result_cols[0].type = DB_CSTR;
 	
-	results[1].name = flags_column.s;
-	results[1].type = DB_INT;
+	result_cols[1].name = flags_column.s;
+	result_cols[1].type = DB_INT;
 	for (i = 0; i < credentials_n; i++) {
-		results[2 + i].name = credentials[i].s;
-		results[2 + i].type = DB_STR;
+		result_cols[2 + i].name = credentials[i].s;
+		result_cols[2 + i].type = DB_STR;
 	}
-	results[2 + i].name = NULL;
+	result_cols[2 + i].name = NULL;
 
 	if (use_did) {
 		info->query_pass = db_cmd(DB_GET, auth_db_handle, info->table.s, 
-				results, params_with_did);
-		results[0].name = pass_column_2.s;
+				result_cols, match_with_did, NULL);
+		result_cols[0].name = pass_column_2.s;
 		info->query_pass2 = db_cmd(DB_GET, auth_db_handle, info->table.s, 
-				results, params_with_did);
-		results[0].name = plain_password_column.s;
+				result_cols, match_with_did, NULL);
+		result_cols[0].name = plain_password_column.s;
 		info->query_password = db_cmd(DB_GET, auth_db_handle, info->table.s, 
-				results, params_with_did);
+				result_cols, match_with_did, NULL);
 	}
 	else {
 		info->query_pass = db_cmd(DB_GET, auth_db_handle, info->table.s, 
-				results, params_without_did);
-		results[0].name = pass_column_2.s;
+				result_cols, match_without_did, NULL);
+		result_cols[0].name = pass_column_2.s;
 		info->query_pass2 = db_cmd(DB_GET, auth_db_handle, info->table.s, 
-				results, params_without_did);
-		results[0].name = plain_password_column.s;
+				result_cols, match_without_did, NULL);
+		result_cols[0].name = plain_password_column.s;
 		info->query_password = db_cmd(DB_GET, auth_db_handle, info->table.s, 
-				results, params_without_did);
+				result_cols, match_without_did, NULL);
 	}
 
-	pkg_free(results);
+	pkg_free(result_cols);
 	if (info->query_pass && info->query_pass2 && info->query_password) return 0;
 	else return -1;
 }

@@ -309,7 +309,7 @@ int preload_udomain(udomain_t* _d)
 	urecord_t* r;
 	ucontact_t* c;
 
-	get_all = db_cmd(DB_GET, db, _d->name->s, columns, NULL);
+	get_all = db_cmd(DB_GET, db, _d->name->s, columns, NULL, NULL);
 	if (get_all == NULL) {
 		ERR("Error while compiling DB_GET command\n");
 		return -1;

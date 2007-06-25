@@ -183,7 +183,7 @@ int db_load_domain_attrs(domain_t* d)
 	db_rec_t* rec;
     unsigned short flags;
     
-	load_attrs_cmd->params[0].v.lstr = d->did;
+	load_attrs_cmd->match[0].v.lstr = d->did;
 
 	if (db_exec(&res, load_attrs_cmd) < 0) {
 		ERR("Error while quering database\n");
