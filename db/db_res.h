@@ -43,7 +43,7 @@ extern "C" {
 
 typedef struct db_res {
 	db_gen_t gen;           /* Generic part of the structure */
-	unsigned int fields;    /* Number of fields in the result */
+	unsigned int field_count;    /* Number of fields in the result */
 	struct db_rec* cur_rec; /* Currently active record in the result */
     struct db_cmd* cmd;     /* Command that produced the result */
 } db_res_t;

@@ -61,21 +61,27 @@ enum db_cmd_type {
 	DB_PUT,  /* Insert or update new record in database */
 	DB_DEL,  /* Delete all matching records from database */
 	DB_GET,  /* Get matching records from database */
+	DB_UPD,  /* Update matching records in database */
 	DB_SQL,  /* Raw SQL query */
 };
 
+/**
+ * Structure db_cmd describes command in DB-API
+ */
 typedef struct db_cmd {
-	db_gen_t gen;          /* Generic part of the structure, must be the 1st attribute */
-	enum db_cmd_type type; /* Type of the command to be executed */
-    struct db_ctx* ctx;   /* Context containing database connections to be used */
-    str table;            /* Name of the table to perform the command on */
-	db_exec_func_t exec[DB_PAYLOAD_MAX]; /* Array of exec functions provided by modules */
+	db_gen_t gen;          /**< Generic part of the structure, must be the 1st attribute */
+	enum db_cmd_type type; /**< Type of the command to be executed */
+    struct db_ctx* ctx;    /**< Context containing database connections to be used */
+    str table;             /**< Name of the table to perform the command on */
+	db_exec_func_t exec[DB_PAYLOAD_MAX]; /**< Array of exec functions provided by modules */
 	db_first_func_t first[DB_PAYLOAD_MAX];
 	db_next_func_t next[DB_PAYLOAD_MAX];
-	db_fld_t* result;        /* Fields to to be returned in result */
-	unsigned int res_fields; /* Number of fields in the result set */
-	db_fld_t* params;        /* Query parameters */
-	unsigned int param_fields; /* Number of fields in the parameter */
+	db_fld_t* result;       /**< Fields to to be returned in result */
+	db_fld_t* match;        /**< Fields describing WHERE clause */
+	db_fld_t* vals;         /**< Fields with values for UPDATE and INSERT statements */
+	unsigned int result_count; /* Number of fields in the result set */
+	unsigned int match_count;  /* Number of fields in the result set */
+	unsigned int vals_count;   /* Number of fields in the result set */
 } db_cmd_t;
 
 
@@ -85,7 +91,7 @@ typedef struct db_cmd {
 
 
 struct db_cmd* db_cmd(enum db_cmd_type type, struct db_ctx* ctx, char* table, 
-					  db_fld_t* result, db_fld_t* params);
+					  db_fld_t* result, db_fld_t* match, db_fld_t* value);
 void db_cmd_free(struct db_cmd* cmd);
 
 int db_exec(struct db_res** res, struct db_cmd* cmd);

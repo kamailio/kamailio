@@ -38,7 +38,7 @@
 
 
 db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, 
-				 db_fld_t* result, db_fld_t* params)
+				 db_fld_t* result, db_fld_t* match, db_fld_t* values)
 {
 	char* fname;
     db_cmd_t* newp;
@@ -59,14 +59,21 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 
 	newp->type = type;
 
+	/** FIXME: it is not clear now that this is necessary
+	 *         when we have match and value separate arrays */
 	if (result) {
 		newp->result = db_fld_copy(result);
 		if (newp->result == NULL) goto err;
 	}
 
-	if (params) {
-		newp->params = db_fld_copy(params);
-		if (newp->params == NULL) goto err;
+	if (match) {
+		newp->match = db_fld_copy(match);
+		if (newp->match == NULL) goto err;
+	}
+
+	if (values) {
+		newp->vals = db_fld_copy(values);
+		if (newp->vals == NULL) goto err;
 	}
 
 	for(i = 0; i < ctx->con_n; i++) {
@@ -81,18 +88,28 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			for(j = 0; !DB_FLD_LAST(newp->result[j]); j++) {
 				if (func && func(newp->result + j, table) < 0) goto err;
 			}
-			newp->res_fields = j;
+			newp->result_count = j;
 		}
 
-		if (!DB_FLD_EMPTY(newp->params)) {
-			for(j = 0; !DB_FLD_LAST(newp->params[j]); j++) {
-				if (func && func(newp->params + j, table) < 0) goto err;
+		if (!DB_FLD_EMPTY(newp->match)) {
+			for(j = 0; !DB_FLD_LAST(newp->match[j]); j++) {
+				if (func && func(newp->match + j, table) < 0) goto err;
 			}
-			newp->param_fields = j;
+			newp->match_count = j;
+		}
+
+		if (!DB_FLD_EMPTY(newp->vals)) {
+			for(j = 0; !DB_FLD_LAST(newp->vals[j]); j++) {
+				if (func && func(newp->vals + j, table) < 0) goto err;
+			}
+			newp->vals_count = j;
 		}
 
 		r = db_drv_call(&con->uri->scheme, "db_cmd", newp, i);
-		if (r < 0) goto err;
+		if (r < 0) {
+			ERR("db_drv_call(\"db_cmd\") failed\n");
+			goto err;
+		}
 		if (r > 0) {
 			ERR("DB driver %.*s does not implement mandatory db_cmd function\n",
 				con->uri->scheme.len, ZSW(con->uri->scheme.s));
@@ -106,6 +123,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			case DB_PUT: fname = "db_put"; break;
 			case DB_DEL: fname = "db_del"; break;
 			case DB_GET: fname = "db_get"; break;
+			case DB_UPD: fname = "db_upd"; break;
 			case DB_SQL: fname = "db_sql"; break;
 			default: ERR("db_cmd: Unsupported command type\n"); goto err;
 			}
@@ -143,8 +161,9 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
     ERR("db_cmd: Cannot create db_cmd structure\n");
     if (newp) {
 		db_gen_free(&newp->gen);
-		if (newp->result) db_fld_free(newp->result);
-		if (newp->params) db_fld_free(newp->params);
+		if (newp->result)  db_fld_free(newp->result);
+		if (newp->match)   db_fld_free(newp->match);
+		if (newp->vals)    db_fld_free(newp->vals);
 		if (newp->table.s) pkg_free(newp->table.s);
 		pkg_free(newp);
 	}
@@ -158,7 +177,8 @@ void db_cmd_free(db_cmd_t* cmd)
 	db_gen_free(&cmd->gen);
 
 	if (cmd->result) db_fld_free(cmd->result);
-	if (cmd->params) db_fld_free(cmd->params);
+	if (cmd->match)  db_fld_free(cmd->match);
+	if (cmd->vals)   db_fld_free(cmd->vals);
     if (cmd->table.s) pkg_free(cmd->table.s);
     pkg_free(cmd);
 }
