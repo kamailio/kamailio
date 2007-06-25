@@ -39,4 +39,10 @@
 extern int ping_interval;
 extern int auto_reconnect;
 
+extern unsigned int my_connect_to;
+extern unsigned int my_send_to;
+extern unsigned int my_recv_to;
+
+extern unsigned long my_client_ver;
+
 #endif /* _MYSQL_MOD_H */
