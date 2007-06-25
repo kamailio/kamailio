@@ -223,13 +223,13 @@ int str2facility(char *s);
 #endif
 
 #ifdef __SUNPRO_C
-		#define DEBUG(...) DBG("DEBUG"            LOC_INFO __VA_ARGS__)
+		#define DEBUG(...) DBG("DEBUG: "          LOC_INFO __VA_ARGS__)
 		#define ERR(...)  LOG(L_ERR, "ERROR: "    LOC_INFO __VA_ARGS__)
 		#define WARN(...) LOG(L_WARN, "WARNING: " LOC_INFO __VA_ARGS__)
 		#define INFO(...) LOG(L_INFO, "INFO: "    LOC_INFO __VA_ARGS__)
 		#define BUG(...) LOG(L_CRIT, "BUG: "      LOC_INFO __VA_ARGS__)
 #else
-		#define DEBUG(fmt, args...) DBG("DEBUG "        LOC_INFO fmt, ## args)
+		#define DEBUG(fmt, args...) DBG("DEBUG: "       LOC_INFO fmt, ## args)
 		#define ERR(fmt, args...) LOG(L_ERR, "ERROR: "  LOC_INFO fmt, ## args)
 		#define WARN(fmt, args...) LOG(L_WARN, "WARN: " LOC_INFO fmt, ## args)
 		#define INFO(fmt, args...) LOG(L_INFO, "INFO: " LOC_INFO fmt, ## args)
