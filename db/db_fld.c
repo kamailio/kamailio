@@ -115,6 +115,7 @@ db_fld_t* db_fld_copy(db_fld_t* fld)
 	return newp;
 
  error:
+ 	ERR("db_fld_copy() failed\n");
 	if (newp) {
 		db_gen_free(&newp->gen);
 		pkg_free(newp);

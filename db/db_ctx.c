@@ -233,6 +233,7 @@ int db_add_db(db_ctx_t* ctx, const char* uri)
 
  error:
 	if (parsed_uri) db_uri_free(parsed_uri);
+	ERR("db: db_add_db failed\n");
 	return -1;
 }
 

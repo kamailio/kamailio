@@ -94,7 +94,10 @@ int db_drv_call(str* module, char* func_name, void* db_struct, int offset)
 	int ret;
 
 	ret = db_drv_func(&func, module, func_name);
-	if (ret < 0) return -1;
+	if (ret < 0) {
+		ERR("db: db_drv_call failed\n");
+		return -1;
+	}
 
 	if (ret == 0) {
 		db_payload_idx = offset;
