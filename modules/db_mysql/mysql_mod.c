@@ -44,6 +44,14 @@
 
 int ping_interval = 5 * 60; /* Default is 5 minutes */
 int auto_reconnect = 1;     /* Default is enabled */
+unsigned int my_connect_to = 2; /* 2 s by default */
+unsigned int my_send_to = 0; /*  enabled only for mysql >= 5.25  */
+unsigned int my_recv_to = 0; /* enabled only for mysql >= 5.25 */
+
+unsigned long my_client_ver = 0;
+
+#define DEFAULT_MY_SEND_TO  2   /* in seconds */
+#define DEFAULT_MY_RECV_TO  4   /* in seconds */
 
 static int mysql_mod_init(void);
 
@@ -76,6 +84,9 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"ping_interval", PARAM_INT, &ping_interval},
 	{"auto_reconnect", PARAM_INT, &auto_reconnect},
+	{"connect_timeout", PARAM_INT, &my_connect_to},
+	{"send_timeout", PARAM_INT, &my_send_to},
+	{"receive_timeout", PARAM_INT, &my_recv_to},
 	{0, 0, 0}
 };
 
@@ -95,5 +106,30 @@ struct module_exports exports = {
 
 static int mysql_mod_init(void)
 {
+#if MYSQL_VERSION_ID >= 40101
+	my_client_ver = mysql_get_client_version();
+	if ((my_client_ver >= 50025) || 
+		((my_client_ver >= 40122) && 
+		 (my_client_ver < 50000))) {
+		if (my_send_to == 0) {
+			my_send_to= DEFAULT_MY_SEND_TO;
+		}
+		if (my_recv_to == 0) {
+			my_recv_to= DEFAULT_MY_RECV_TO;
+		}
+	} else if (my_recv_to || my_send_to) {
+		LOG(L_WARN, "WARNING: mysql send or received timeout set, but "
+			" not supported by the installed mysql client library"
+			" (needed at least 4.1.22 or 5.0.25, but installed %ld)\n",
+			my_client_ver);
+	}
+#else
+	if (my_recv_to || my_send_to) {
+		LOG(L_WARN, "WARNING: mysql send or received timeout set, but "
+			" not supported by the mysql client library used to compile"
+			" the mysql module (needed at least 4.1.1 but "
+			" compiled against %ld)\n", MYSQL_VERSION_ID);
+	}
+#endif
 	return 0;
 }

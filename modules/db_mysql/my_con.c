@@ -31,6 +31,7 @@
 #include "../../ut.h"
 #include <string.h>
 #include <time.h>
+#include "mysql_mod.h"
 #include "my_uri.h"
 #include "my_con.h"
 
@@ -57,6 +58,10 @@ static int my_con_connect(db_con_t* con)
 {
 	struct my_con* mcon;
 	struct my_uri* muri;
+#if MYSQL_VERSION_ID >= 50013 
+	my_bool my_auto_reconnect;
+#endif
+
 
 	mcon = DB_GET_PAYLOAD(con);
 	muri = DB_GET_PAYLOAD(con->uri);
@@ -68,6 +73,36 @@ static int my_con_connect(db_con_t* con)
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));
 
+#if MYSQL_VERSION_ID >= 50013 
+	my_auto_reconnect = 1;
+	if (my_client_ver >= 50013) {
+		if (mysql_options(mcon->con, MYSQL_OPT_RECONNECT , 
+						  (char*)&my_auto_reconnect))
+			WARN("mysql: failed to set MYSQL_OPT_RECONNECT\n");
+	}
+#endif
+	if (my_connect_to) {
+		if (mysql_options(mcon->con, MYSQL_OPT_CONNECT_TIMEOUT, 
+						  (char*)&my_connect_to))
+			WARN("mysql: failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
+	}
+#if MYSQL_VERSION_ID >= 40101 
+	if ((my_client_ver >= 50025) || 
+		((my_client_ver >= 40122) && 
+		 (my_client_ver < 50000))) {
+		if (my_send_to) {
+			if (mysql_options(mcon->con, MYSQL_OPT_WRITE_TIMEOUT , 
+							  (char*)&my_send_to))
+				WARN("mysql: failed to set MYSQL_OPT_WRITE_TIMEOUT\n");
+		}
+		if (my_recv_to){
+			if (mysql_options(mcon->con, MYSQL_OPT_READ_TIMEOUT , 
+							  (char*)&my_recv_to))
+				WARN("mysql: failed to set MYSQL_OPT_READ_TIMEOUT\n");
+		}
+	}
+#endif
+	
 	if (!mysql_real_connect(mcon->con, muri->host, muri->username, 
 							muri->password, muri->database, muri->port, 0, 0)) {
 		LOG(L_ERR, "my_con_connect: %s\n", mysql_error(mcon->con));
