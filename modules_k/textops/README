@@ -413,6 +413,12 @@ append_to_reply("Foo: $rm at $Ts\r\n");
      * txt - Header field to be appended. The value can contain
        pseudo-variables which will be replaced at run time.
 
+   Note: Headers which are added in main route cannot be removed
+   in further routes (e.g. failure routes). So, the idea is not
+   to add there any headers that you might want to remove later.
+   To add headers temporarely use the branch route because the
+   changes you do there are per-branch.
+
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
