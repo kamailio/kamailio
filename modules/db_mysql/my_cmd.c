@@ -26,6 +26,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/** @addtogroup mysql
+ *  @{
+ */
+
 #define _XOPEN_SOURCE 4     /* bsd */
 #define _XOPEN_SOURCE_EXTENDED 1    /* solaris */
 #define _SVID_SOURCE 1 /* timegm */
@@ -50,6 +54,7 @@ enum {
 	STR_UPDATE,
 	STR_SELECT,
 	STR_REPLACE,
+	STR_SET,
 	STR_WHERE,
 	STR_IS,
 	STR_AND,
@@ -67,9 +72,10 @@ enum {
 static str strings[] = {
 	STR_STATIC_INIT("delete from "),
 	STR_STATIC_INIT("insert into "),
-	STR_STATIC_INIT("update "),
+	STR_STATIC_INIT("UPDATE "),
 	STR_STATIC_INIT("select "),
 	STR_STATIC_INIT("replace "),
+	STR_STATIC_INIT(" SET "),
 	STR_STATIC_INIT(" where "),
 	STR_STATIC_INIT(" is "),
 	STR_STATIC_INIT(" and "),
@@ -108,6 +114,11 @@ static void my_cmd_free(db_cmd_t* cmd, struct my_cmd* payload)
 }
 
 
+/**
+ *  Builds DELETE statement where cmd->match specify WHERE clause.
+ * @param query  SQL statement as a result of this function
+ * @param cmd    input for statement creation
+ */
 static int build_delete_query(str* query, db_cmd_t* cmd)
 {
 	db_fld_t* fld;
@@ -117,10 +128,10 @@ static int build_delete_query(str* query, db_cmd_t* cmd)
 	query->len = strings[STR_DELETE].len;
 	query->len += cmd->table.len;
 
-	if (!DB_FLD_EMPTY(cmd->params)) {
+	if (!DB_FLD_EMPTY(cmd->match)) {
 		query->len += strings[STR_WHERE].len;
 
-		for(i = 0, fld = cmd->params; !DB_FLD_LAST(fld[i]); i++) {
+		for(i = 0, fld = cmd->match; !DB_FLD_LAST(fld[i]); i++) {
 			query->len += strlen(fld[i].name);
 
 			switch(fld[i].op) {
@@ -150,10 +161,10 @@ static int build_delete_query(str* query, db_cmd_t* cmd)
 	APPEND_STR(p, strings[STR_DELETE]);
 	APPEND_STR(p, cmd->table);
 
-	if (!DB_FLD_EMPTY(cmd->params)) {
+	if (!DB_FLD_EMPTY(cmd->match)) {
 		APPEND_STR(p, strings[STR_WHERE]);
 
-		for(i = 0, fld = cmd->params; !DB_FLD_LAST(fld[i]); i++) {
+		for(i = 0, fld = cmd->match; !DB_FLD_LAST(fld[i]); i++) {
 			APPEND_CSTR(p, fld[i].name);
 
 			switch(fld[i].op) {
@@ -174,6 +185,12 @@ static int build_delete_query(str* query, db_cmd_t* cmd)
 }
 
 
+/**
+ *  Builds SELECT statement where cmd->values specify column names
+ *  and cmd->match specify WHERE clause.
+ * @param query  SQL statement as a result of this function
+ * @param cmd    input for statement creation
+ */
 static int build_select_query(str* query, db_cmd_t* cmd)
 {
 	db_fld_t* fld;
@@ -193,10 +210,10 @@ static int build_select_query(str* query, db_cmd_t* cmd)
 	query->len += strings[STR_FROM].len;
 	query->len += cmd->table.len;
 
-	if (!DB_FLD_EMPTY(cmd->params)) {
+	if (!DB_FLD_EMPTY(cmd->match)) {
 		query->len += strings[STR_WHERE].len;
 
-		for(i = 0, fld = cmd->params; !DB_FLD_LAST(fld[i]); i++) {
+		for(i = 0, fld = cmd->match; !DB_FLD_LAST(fld[i]); i++) {
 			query->len += strlen(fld[i].name);
 
 			switch(fld[i].op) {
@@ -235,10 +252,10 @@ static int build_select_query(str* query, db_cmd_t* cmd)
 	APPEND_STR(p, strings[STR_FROM]);
 	APPEND_STR(p, cmd->table);
 
-	if (!DB_FLD_EMPTY(cmd->params)) {
+	if (!DB_FLD_EMPTY(cmd->match)) {
 		APPEND_STR(p, strings[STR_WHERE]);
 
-		for(i = 0, fld = cmd->params; !DB_FLD_LAST(fld[i]); i++) {
+		for(i = 0, fld = cmd->match; !DB_FLD_LAST(fld[i]); i++) {
 			APPEND_CSTR(p, fld[i].name);
 
 			switch(fld[i].op) {
@@ -259,6 +276,11 @@ static int build_select_query(str* query, db_cmd_t* cmd)
 }
 
 
+/**
+ *  Builds REPLACE statement where cmd->values specify column names.
+ * @param query  SQL statement as a result of this function
+ * @param cmd    input for statement creation
+ */
 static int build_replace_query(str* query, db_cmd_t* cmd)
 {
 	db_fld_t* fld;
@@ -269,7 +291,7 @@ static int build_replace_query(str* query, db_cmd_t* cmd)
 	query->len += cmd->table.len;
 	query->len += 2; /* " (" */
 
-	for(i = 0, fld = cmd->params; !DB_FLD_LAST(fld[i]); i++) {
+	for(i = 0, fld = cmd->vals; !DB_FLD_LAST(fld[i]); i++) {
 		query->len += strlen(fld[i].name);
 		query->len += strings[STR_ESC].len;
 		if (!DB_FLD_LAST(fld[i + 1])) query->len += 2; /* , twice */
@@ -289,19 +311,130 @@ static int build_replace_query(str* query, db_cmd_t* cmd)
 	*p++ = ' ';
 	*p++ = '(';
 
-	for(i = 0, fld = cmd->params; !DB_FLD_LAST(fld[i]); i++) {
+	for(i = 0, fld = cmd->vals; !DB_FLD_LAST(fld[i]); i++) {
 		APPEND_CSTR(p, fld[i].name);
 		if (!DB_FLD_LAST(fld[i + 1])) *p++ = ',';
 	}
 	APPEND_STR(p, strings[STR_VALUES]);
 
-	for(i = 0, fld = cmd->params; !DB_FLD_LAST(fld[i]); i++) {
+	for(i = 0, fld = cmd->vals; !DB_FLD_LAST(fld[i]); i++) {
 		APPEND_STR(p, strings[STR_ESC]);
 		if (!DB_FLD_LAST(fld[i + 1])) *p++ = ',';
 	}
 	*p++ = ')';
 	*p = '\0';
 	return 0;
+}
+
+/**
+ *  Reallocatable string buffer.
+ */
+struct string_buffer {
+	char *s;			/**< allocated memory itself */
+	int   len;			/**< used memory */
+	int   size;			/**< total size of allocated memory */
+	int   increment;	/**< increment when realloc is necessary */ 
+};
+/**
+ *  Add new string into string buffer.
+ * @param sb    string buffer
+ * @param nstr  string to add
+ * @return      0 if OK, -1 if failed
+ */
+static inline int sb_add(struct string_buffer *sb, str *nstr)
+{
+	int new_size = 0;
+	int rsize = sb->len + nstr->len;
+	int asize;
+	char *newp;
+	
+	if ( rsize > sb->size ) {
+		asize = rsize - sb->size;
+		new_size = sb->size + (asize / sb->increment  + (asize % sb->increment > 0)) * sb->increment;
+		newp = pkg_malloc(new_size);
+		if (!newp) {
+			ERR("not enough memory\n");
+			return -1;
+		}
+		memcpy(newp, sb->s, sb->len);
+		pkg_free(sb->s);
+		sb->s = newp;
+		sb->size = new_size;
+	}
+	memcpy(sb->s + sb->len, nstr->s, nstr->len);
+	sb->len += nstr->len;
+	return 0;
+}
+/**
+ *  Set members of str variable.
+ *  Used for temporary str variables. 
+ */
+static inline str* set_str(str *str, const char *s)
+{
+	str->s = (char *)s;
+	str->len = strlen(s);
+	return str;
+}
+
+
+/**
+ *  Builds UPDATE statement where cmd->valss specify column name-value pairs
+ *  and cmd->match specify WHERE clause.
+ * @param query  SQL statement as a result of this function
+ * @param cmd    input for statement creation
+ */
+static int build_update_query(str* query, db_cmd_t* cmd)
+{
+	struct string_buffer sql_buf = {.s = NULL, .len = 0, .size = 0, .increment = 128};
+	db_fld_t* fld;
+	int i;
+	int rv = 0;
+	str tmpstr;
+
+	rv = sb_add(&sql_buf, &strings[STR_UPDATE]);	/* "UPDATE " */
+	rv |= sb_add(&sql_buf, &cmd->table);			/* table name */
+	rv |= sb_add(&sql_buf, &strings[STR_SET]);		/* " SET " */
+
+	/* column name-value pairs */
+	for(i = 0, fld = cmd->vals; !DB_FLD_LAST(fld[i]); i++) {
+		rv |= sb_add(&sql_buf, set_str(&tmpstr, fld[i].name));
+		rv |= sb_add(&sql_buf, set_str(&tmpstr, " = "));
+		rv |= sb_add(&sql_buf, &strings[STR_ESC]);
+		if (!DB_FLD_LAST(fld[i + 1])) rv |= sb_add(&sql_buf, set_str(&tmpstr, ", "));
+	}
+	if (rv) {
+		goto err;
+	}
+
+	if (!DB_FLD_EMPTY(cmd->match)) {
+		rv |= sb_add(&sql_buf, &strings[STR_WHERE]);
+
+		for(i = 0, fld = cmd->match; !DB_FLD_LAST(fld[i]); i++) {
+			rv |= sb_add(&sql_buf, set_str(&tmpstr, fld[i].name));
+
+			switch(fld[i].op) {
+			case DB_EQ:  rv |= sb_add(&sql_buf, &strings[STR_OP_EQ]);  break;
+			case DB_LT:  rv |= sb_add(&sql_buf, &strings[STR_OP_LT]);  break;
+			case DB_GT:  rv |= sb_add(&sql_buf, &strings[STR_OP_GT]);  break;
+			case DB_LEQ: rv |= sb_add(&sql_buf, &strings[STR_OP_LEQ]); break;
+			case DB_GEQ: rv |= sb_add(&sql_buf, &strings[STR_OP_GEQ]); break;
+			}
+			
+			rv |= sb_add(&sql_buf, &strings[STR_ESC]);
+			if (!DB_FLD_LAST(fld[i + 1])) rv |= sb_add(&sql_buf, &strings[STR_AND]);
+		}
+	}
+	rv |= sb_add(&sql_buf, set_str(&tmpstr, "\0"));
+	if (rv) {
+		goto err;
+	}
+	query->s = sql_buf.s;
+
+	return 0;
+
+err:
+	if (sql_buf.s) pkg_free(sql_buf.s);
+	return -1;
 }
 
 
@@ -437,13 +570,17 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 	return 0;
 }
 
-
+/**
+ *  DB_DEL uses cmd->match
+ *  DB_PUT uses cmd->vals
+ */
 int my_cmd_write(db_res_t* res, db_cmd_t* cmd)
 {
 	struct my_cmd* mcmd;
 
 	mcmd = DB_GET_PAYLOAD(cmd);
-	if (mcmd->st->param_count && update_params(mcmd->st, cmd->params) < 0) return -1;
+	if (cmd->type == DB_DEL && mcmd->st->param_count && update_params(mcmd->st, cmd->match) < 0) return -1;
+	if (cmd->type == DB_PUT && mcmd->st->param_count && update_params(mcmd->st, cmd->vals) < 0) return -1;
 	if (mysql_stmt_execute(mcmd->st)) {
 		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
 		return -1;
@@ -457,7 +594,22 @@ int my_cmd_read(db_res_t* res, db_cmd_t* cmd)
 	struct my_cmd* mcmd;
    
 	mcmd = DB_GET_PAYLOAD(cmd);
-	if (mcmd->st->param_count && update_params(mcmd->st, cmd->params) < 0) return -1;
+	if (mcmd->st->param_count && update_params(mcmd->st, cmd->match) < 0) return -1;
+	if (mysql_stmt_execute(mcmd->st)) {
+		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
+		return -1;
+	}
+	return 0;
+}
+
+
+int my_cmd_update(db_res_t* res, db_cmd_t* cmd)
+{
+	struct my_cmd* mcmd;
+
+	mcmd = DB_GET_PAYLOAD(cmd);
+	if (mcmd->st->param_count && update_params(mcmd->st, cmd->match) < 0) return -1;
+	if (mcmd->st->param_count && update_params(mcmd->st, cmd->vals) < 0) return -1;
 	if (mysql_stmt_execute(mcmd->st)) {
 		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
 		return -1;
@@ -478,71 +630,87 @@ int my_cmd_sql(db_res_t* res, db_cmd_t* cmd)
 	return 0;
 }
 
-
-static int bind_params(MYSQL_STMT* st, db_fld_t* fld)
+static void set_field(MYSQL_BIND *bind, db_fld_t* fld )
 {
-	int i, n;
 	struct my_fld* f;
-	MYSQL_BIND* params;
+	
+	f = DB_GET_PAYLOAD(fld);
+	bind->is_null = &f->is_null;
+	/* We can do it for all the types here, mysql will ignore it
+	 * for fixed-size types such as MYSQL_TYPE_LONG
+	 */
+	bind->length = &f->length;
+	switch(fld->type) {
+	case DB_INT:
+	case DB_BITMAP:
+		bind->buffer_type = MYSQL_TYPE_LONG;
+		bind->buffer = &fld->v.int4;
+		break;
+	
+	case DB_FLOAT:
+		bind->buffer_type = MYSQL_TYPE_FLOAT;
+		bind->buffer = &fld->v.flt;
+		break;
+		
+	case DB_DOUBLE:
+		bind->buffer_type = MYSQL_TYPE_DOUBLE;
+		bind->buffer = &fld->v.dbl;
+		break;
+	
+	case DB_DATETIME:
+		bind->buffer_type = MYSQL_TYPE_DATETIME;
+		bind->buffer = &f->time;
+		break;
+	
+	case DB_STR:
+	case DB_CSTR:
+		bind->buffer_type = MYSQL_TYPE_VAR_STRING;
+		bind->buffer = ""; /* Updated on runtime */
+		break;
+	
+	case DB_BLOB:
+		bind->buffer_type = MYSQL_TYPE_BLOB;
+		bind->buffer = ""; /* Updated on runtime */
+		break;
+	
+	case DB_NONE:
+		/* Eliminates gcc warning */
+		break;
+	
+	}
+}
+
+/**
+ *  Bind params, values first and match after them.
+ */
+static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
+{
+	int my_idx, fld_idx;
+	int value_count, match_count;
+	MYSQL_BIND* my_params;
 
 	/* Calculate the number of parameters */
-	for(n = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[n]); n++);
+	for(value_count = 0; !DB_FLD_EMPTY(fld_value) && !DB_FLD_LAST(fld_value[value_count]); value_count++);
+	for(match_count = 0; !DB_FLD_EMPTY(fld_match) && !DB_FLD_LAST(fld_match[match_count]); match_count++);
 
-	params = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * n);
-	if (params == NULL) {
+	my_params = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * (value_count+match_count));
+	if (my_params == NULL) {
 		ERR("No memory left\n");
 		return -1;
 	}
-	memset(params, '\0', sizeof(MYSQL_BIND) * n);
-	
-	for(i = 0; i < n; i++) {
-		f = DB_GET_PAYLOAD(fld + i);
-		params[i].is_null = &f->is_null;
-		/* We can do it for all the types here, mysql will ignore it
-		 * for fixed-size types such as MYSQL_TYPE_LONG
-		 */
-		params[i].length = &f->length;
-		switch(fld[i].type) {
-		case DB_INT:
-		case DB_BITMAP:
-			params[i].buffer_type = MYSQL_TYPE_LONG;
-			params[i].buffer = &fld[i].v.int4;
-			break;
+	memset(my_params, '\0', sizeof(MYSQL_BIND) * (value_count+match_count));
 
-		case DB_FLOAT:
-			params[i].buffer_type = MYSQL_TYPE_FLOAT;
-			params[i].buffer = &fld[i].v.flt;
-			break;
-			
-		case DB_DOUBLE:
-			params[i].buffer_type = MYSQL_TYPE_DOUBLE;
-			params[i].buffer = &fld[i].v.dbl;
-			break;
-
-		case DB_DATETIME:
-			params[i].buffer_type = MYSQL_TYPE_DATETIME;
-			params[i].buffer = &f->time;
-			break;
-
-		case DB_STR:
-		case DB_CSTR:
-			params[i].buffer_type = MYSQL_TYPE_VAR_STRING;
-			params[i].buffer = ""; /* Updated on runtime */
-			break;
-
-		case DB_BLOB:
-			params[i].buffer_type = MYSQL_TYPE_BLOB;
-			params[i].buffer = ""; /* Updated on runtime */
-			break;
-
-		case DB_NONE:
-			/* Eliminates gcc warning */
-			break;
-
-		}
+	/* values */
+	my_idx = 0;
+	for (fld_idx = 0; fld_idx < value_count; fld_idx++, my_idx++) {
+		set_field(&my_params[my_idx], fld_value + fld_idx);
 	}
-
-	if (mysql_stmt_bind_param(st, params)) {
+	/* match */
+	for (fld_idx = 0; fld_idx < match_count; fld_idx++, my_idx++) {
+		set_field(&my_params[my_idx], fld_match + fld_idx);
+	}
+	
+	if (mysql_stmt_bind_param(st, my_params)) {
 		ERR("Error while binding parameters: %s\n", mysql_stmt_error(st));
 		goto error;
 	}
@@ -550,28 +718,31 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld)
 	/* We do not need the array of MYSQL_BIND anymore, mysql_stmt_bind_param
 	 * creates a copy in the statement and we will update it there
 	 */
-	pkg_free(params);
+	pkg_free(my_params);
 	return 0;
    
  error:
-	if (params) pkg_free(params);
+	if (my_params) pkg_free(my_params);
 	return -1;
 }
 
+#include <stdlib.h>
 /* FIXME: Add support for DB_NONE, in this case the function should determine
  * the type of the column in the database and set the field type appropriately
  */
-
 static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 {
 	int i, n;
 	struct my_fld* f;
 	MYSQL_BIND* result;
 
+INFO("bind_result(st = %p, fld = %p)\n", st, fld);
+INFO("bind_result: field count: %d\n", st->field_count);
 	/* Calculate the number of fields in the result */
 	for(n = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[n]); n++);
-
+INFO("bind_result: n = %d\n", n);
 	result = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * n);
+INFO("bind_result: result = %p\n", result);
 	if (result == NULL) {
 		ERR("No memory left\n");
 		return -1;
@@ -579,6 +750,8 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 	memset(result, '\0', sizeof(MYSQL_BIND) * n);
 	
 	for(i = 0; i < n; i++) {
+INFO("bind_result: i = %d\n", i);
+INFO("bind_result: fld[%d].type = %d\n", i, fld[i].type);
 		f = DB_GET_PAYLOAD(fld + i);
 		result[i].is_null = &f->is_null;
 		/* We can do it for all the types here, mysql will ignore it
@@ -649,7 +822,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 
 		}
 	}
-
+INFO("bind_result: result = %p\n", result);
 	if (mysql_stmt_bind_result(st, result)) {
 		ERR("Error while binding result: %s\n", mysql_stmt_error(st));
 		goto error;
@@ -662,6 +835,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 	return 0;
    
  error:
+ 	abort();
 	if (result) pkg_free(result);
 	return -1;
 }
@@ -672,6 +846,7 @@ int my_cmd(db_cmd_t* cmd)
 	struct my_cmd* res;
 	struct my_con* mcon;
 
+INFO("my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cmd->match, cmd->vals);
 	res = (struct my_cmd*)pkg_malloc(sizeof(struct my_cmd));
 	if (res == NULL) {
 		ERR("No memory left\n");
@@ -690,48 +865,77 @@ int my_cmd(db_cmd_t* cmd)
 
 	switch(cmd->type) {
 	case DB_PUT:
-		if (DB_FLD_EMPTY(cmd->params)) {
+		if (DB_FLD_EMPTY(cmd->vals)) {
 			ERR("BUG: No parameters provided for DB_PUT in context '%.*s'\n", 
 				cmd->ctx->id.len, ZSW(cmd->ctx->id.s));
 			goto error;
 		}
 		if (build_replace_query(&res->query, cmd) < 0) goto error;
+		INFO("build_replace_query: query = '%.*s'\n", res->query.len, res->query.s);
 		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
 			ERR("Error while preparing replace query: %s\n", 
 				mysql_stmt_error(res->st));
 			goto error;
 		}
-		if (bind_params(res->st, cmd->params) < 0) goto error;
+		if (bind_params(res->st, cmd->vals, NULL) < 0) goto error;
 		break;
 
 	case DB_DEL:
 		if (build_delete_query(&res->query, cmd) < 0) goto error;
+		INFO("build_delete_query: query = '%.*s'\n", res->query.len, res->query.s);
 		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
 			ERR("Error while preparing delete query: %s\n",
 				mysql_stmt_error(res->st));
 				goto error;
 		}
-		if (!DB_FLD_EMPTY(cmd->params)) {
-			if (bind_params(res->st, cmd->params) < 0) goto error;
+		if (!DB_FLD_EMPTY(cmd->match)) {
+			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
 		}
 		break;
 
 	case DB_GET:
 		if (build_select_query(&res->query, cmd) < 0) goto error;
+		INFO("build_select_query: query = '%.*s'\n", res->query.len, res->query.s);
 		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
 			ERR("Error while preparing select query: %s\n",
 				mysql_stmt_error(res->st));
 			goto error;
 		}
-		if (!DB_FLD_EMPTY(cmd->params)) {
-			if (bind_params(res->st, cmd->params) < 0) goto error;
+		if (!DB_FLD_EMPTY(cmd->match)) {
+			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
 		}
-		if (bind_result(res->st, cmd->result) < 0) goto error;
+		if (bind_result(res->st, cmd->result) < 0) {
+			ERR("mysql: DB_GET bind_result() failed\n");
+			goto error;
+		}
+		break;
+
+	case DB_UPD:
+		if (build_update_query(&res->query, cmd) < 0) goto error;
+		INFO("build_update_query: query = '%.*s'\n", res->query.len, res->query.s);
+		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
+			ERR("mysql: Error while preparing UPDATE query: %s\n",
+				mysql_stmt_error(res->st));
+			goto error;
+		}
+		/* FIXME: remove ELSE */
+		if (!DB_FLD_EMPTY(cmd->vals)) {
+			if (bind_params(res->st, cmd->vals, cmd->match) < 0) {
+				ERR("mysql: DB_UPD bind_params() failed\n");
+				goto error;
+			}
+		}
+		else {
+			if (bind_params(res->st, NULL, cmd->match) < 0) {
+				ERR("mysql: DB_UPD bind_params() failed\n");
+				goto error;
+			}
+		}
 		break;
 
 	case DB_SQL:
 		if (mysql_stmt_prepare(res->st, cmd->table.s, cmd->table.len)) {
-			ERR("Error while preparing raw SQL query: %s\n",
+			ERR("mysql: Error while preparing raw SQL query: %s\n",
 				mysql_stmt_error(res->st));
 			goto error;
 		}
@@ -751,6 +955,7 @@ int my_cmd(db_cmd_t* cmd)
 		if (res->st) mysql_stmt_close(res->st);
 		pkg_free(res);
 	}
+	ERR("mysql: my_cmd() failed\n");
 	return -1;
 }
 
@@ -779,3 +984,4 @@ int my_cmd_next(db_res_t* res)
 	return 0;
 }
 
+/** @} */

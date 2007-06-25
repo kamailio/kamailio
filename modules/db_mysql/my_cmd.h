@@ -48,6 +48,9 @@ int my_cmd_read(db_res_t* res, db_cmd_t* cmd);
 /* Runtime execution function for DB_PUT and DB_DEL */
 int my_cmd_write(db_res_t* res, db_cmd_t* cmd);
 
+/* Runtime execution function for DB_UPD */
+int my_cmd_update(db_res_t* res, db_cmd_t* cmd);
+
 /* Raw SQL query */
 int my_cmd_sql(db_res_t* res, db_cmd_t* cmd);
 
