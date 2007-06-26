@@ -33,6 +33,7 @@
  *  2004-07-19  support for 64 bit (2^64 mem. block) and more info
  *               for the future de-fragmentation support (andrei)
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
+ *  2007-06-23  added hash bitmap (andrei)
  */
 
 
@@ -46,6 +47,10 @@
 #include "meminfo.h"
 
 /* defs*/
+
+/* use a bitmap to quickly find free fragments, should speed up
+ * especially startup (non-warmed-up malloc) */
+#define F_MALLOC_HASH_BITMAP
 
 #ifdef DBG_F_MALLOC
 #if defined(__CPU_sparc64) || defined(__CPU_sparc)
@@ -72,6 +77,13 @@
 
 #define F_HASH_SIZE (F_MALLOC_OPTIMIZE/ROUNDTO + \
 		(sizeof(long)*8-F_MALLOC_OPTIMIZE_FACTOR)+1)
+
+#ifdef F_MALLOC_HASH_BITMAP
+typedef unsigned long fm_hash_bitmap_t;
+#define FM_HASH_BMP_BITS  (sizeof(fm_hash_bitmap_t)*8)
+#define FM_HASH_BMP_SIZE  \
+	((F_HASH_SIZE+FM_HASH_BMP_BITS-1)/FM_HASH_BMP_BITS)
+#endif
 
 /* hash structure:
  * 0 .... F_MALLOC_OPTIMIZE/ROUNDTO  - small buckets, size increases with
@@ -107,7 +119,9 @@ struct fm_block{
 	
 	struct fm_frag* first_frag;
 	struct fm_frag* last_frag;
-	
+#ifdef F_MALLOC_HASH_BITMAP
+	fm_hash_bitmap_t free_bitmap[FM_HASH_BMP_SIZE];
+#endif
 	struct fm_frag_lnk free_hash[F_HASH_SIZE];
 };
 

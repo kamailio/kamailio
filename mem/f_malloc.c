@@ -39,6 +39,7 @@
  *  2006-02-03  fixed realloc out of mem. free bug (andrei)
  *  2006-04-07  s/DBG/MDBG (andrei)
  *  2007-02-23  added fm_available() (andrei)
+ *  2007-06-23  added hash bitmap (andrei)
  */
 
 
@@ -50,7 +51,9 @@
 #include "f_malloc.h"
 #include "../dprint.h"
 #include "../globals.h"
+#include "../compiler_opt.h"
 #include "memdbg.h"
+#include "../bit_scan.h"
 
 
 /*useful macros*/
@@ -88,6 +91,62 @@
 							F_MALLOC_OPTIMIZE_FACTOR-1)\
 					)
 
+#ifdef F_MALLOC_HASH_BITMAP
+
+#define fm_bmp_set(qm, b) \
+	do{ \
+		(qm)->free_bitmap[(b)/FM_HASH_BMP_BITS] |= \
+											1UL<<((b)%FM_HASH_BMP_BITS); \
+	}while(0)
+
+#define fm_bmp_reset(qm, b) \
+	do{ \
+		(qm)->free_bitmap[(b)/FM_HASH_BMP_BITS] &= \
+											~(1UL<<((b)%FM_HASH_BMP_BITS)); \
+	}while(0)
+
+/* returns 0 if not set, !=0 if set */
+#define fm_bmp_is_set(qm, b) \
+	((qm)->free_bitmap[(b)/FM_HASH_BMP_BITS] & (1UL<<((b)%FM_HASH_BMP_BITS)))
+
+inline static int fm_bmp_first_set(struct fm_block* qm, int start)
+{
+	int bmp_idx;
+	int bit;
+	int r;
+	fm_hash_bitmap_t test_val;
+	fm_hash_bitmap_t v;
+	
+	bmp_idx=start/FM_HASH_BMP_BITS;
+	bit=start%FM_HASH_BMP_BITS;
+	test_val=1UL <<((unsigned long)bit);
+	if (qm->free_bitmap[bmp_idx] & test_val)
+		return start;
+	else if (qm->free_bitmap[bmp_idx] & ~(test_val-1)){
+#if 0
+		test_val<<=1;
+		for (r=bit+1; r<FM_HASH_BMP_BITS; r++, test_val<<=1){
+			if (qm->free_bitmap[bmp_idx] & test_val)
+				return (start-bit+r);
+		}
+#endif
+		v=qm->free_bitmap[bmp_idx]>>(bit+1);
+		return start+1+bit_scan_forward((unsigned long)v);
+	}
+	for (r=bmp_idx+1;r<FM_HASH_BMP_SIZE; r++){
+		if (qm->free_bitmap[r]){
+			/* find first set bit */
+			return r*FM_HASH_BMP_BITS+
+						bit_scan_forward((unsigned long)qm->free_bitmap[r]);
+		}
+	}
+	/* not found, nothing free */
+	return -1;
+}
+#endif /* F_MALLOC_HASH_BITMAP */
+
+
+
 /* mark/test used/unused frags */
 #define FRAG_MARK_USED(f)
 #define FRAG_CLEAR_USED(f)
@@ -101,17 +160,21 @@
 
 
 /* computes hash number for big buckets*/
+#if 0
 inline static unsigned long big_hash_idx(unsigned long s)
 {
 	unsigned long idx;
 	/* s is rounded => s = k*2^n (ROUNDTO=2^n) 
-	 * index= i such that 2^i > s >= 2^(i-1)
+	 * index= i such that 2^(i+1) > s >= 2^i
 	 *
 	 * => index = number of the first non null bit in s*/
 	idx=sizeof(long)*8-1;
 	for (; !(s&(1UL<<(sizeof(long)*8-1))) ; s<<=1, idx--);
 	return idx;
 }
+#else
+#define big_hash_idx(s) ((unsigned long)bit_scan_reverse((unsigned long)(s)))
+#endif
 
 
 #ifdef DBG_F_MALLOC
@@ -141,6 +204,9 @@ static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 	frag->u.nxt_free=*f;
 	*f=frag;
 	qm->free_hash[hash].no++;
+#ifdef F_MALLOC_HASH_BITMAP
+	fm_bmp_set(qm, hash);
+#endif /* F_MALLOC_HASH_BITMAP */
 }
 
 
@@ -272,12 +338,27 @@ void* fm_malloc(struct fm_block* qm, unsigned long size)
 	
 	/*search for a suitable free frag*/
 
+#ifdef F_MALLOC_HASH_BITMAP
+	hash=fm_bmp_first_set(qm, GET_HASH(size));
+	if (likely(hash>=0)){
+		f=&(qm->free_hash[hash].first);
+	if (likely(hash<=F_MALLOC_OPTIMIZE)) /* return first match */
+			goto found; 
+		for(;(*f); f=&((*f)->u.nxt_free))
+			if ((*f)->size>=size) goto found;
+	}
+#else /* F_MALLOC_HASH_BITMAP */
 	for(hash=GET_HASH(size);hash<F_HASH_SIZE;hash++){
 		f=&(qm->free_hash[hash].first);
+#if 0
+		if (likely(hash<=F_MALLOC_OPTIMIZE)) /* return first match */
+				goto found; 
+#endif
 		for(;(*f); f=&((*f)->u.nxt_free))
 			if ((*f)->size>=size) goto found;
 		/* try in a bigger bucket */
 	}
+#endif /* F_MALLOC_HASH_BITMAP */
 	/* not found, bad! */
 	return 0;
 
@@ -288,6 +369,10 @@ found:
 	*f=frag->u.nxt_free;
 	frag->u.nxt_free=0; /* mark it as 'taken' */
 	qm->free_hash[hash].no--;
+#ifdef F_MALLOC_HASH_BITMAP
+	if (qm->free_hash[hash].no==0)
+		fm_bmp_reset(qm, hash);
+#endif /* F_MALLOC_HASH_BITMAP */
 	
 	/*see if we'll use full frag, or we'll split it in 2*/
 	
@@ -438,6 +523,10 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 			/* detach */
 			*pf=n->u.nxt_free;
 			qm->free_hash[hash].no--;
+#ifdef F_MALLOC_HASH_BITMAP
+			if (qm->free_hash[hash].no==0)
+				fm_bmp_reset(qm, hash);
+#endif /* F_MALLOC_HASH_BITMAP */
 			/* join */
 			f->size+=n->size+FRAG_OVERHEAD;
 		#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
