@@ -30,6 +30,7 @@
  * --------
  *  2006-07-29  created by andrei
  *  2007-05-39  added hooks for add; more locks to reduce contention (andrei)
+ *  2007-06-26  added hooks for search (andrei)
  */
 
 
@@ -129,84 +130,149 @@ struct dst_blst_lst_head* dst_blst_hash=0;
 
 #ifdef DST_BLACKLIST_HOOKS
 
+/* there 2 types of callbacks supported: on add new entry to the blacklist
+ *  (DST_BLACKLIST_ADD_CB) and on blacklist search (DST_BLACKLIST_SEARCH_CB).
+ *  Both of them take a struct dest_info* and a flags pointer as parameters 
+ *   (unsigned char*). The flags can be changed.
+ *  A callback should return one of:
+ *    DST_BLACKLIST_CONTINUE - do nothing, let other callbacks run
+ *    DST_BLACKLIST_ACCEPT   - for blacklist add: force accept immediately,
+ *                             for blacklist search: force match and use
+ *                              the flags as the blacklist search return.
+ *                              ( so the flags should be set to some valid
+ *                                non zero BLST flags value )
+ *   DST_BLACKLIST_DENY      - for blacklist add: don't allow adding the
+ *                              destination to the blacklist.
+ *                             for blacklist search: force return not found
+ */
+
 #define MAX_BLST_HOOKS 1
 
-static struct blacklist_hook* blacklist_hooks;
-static unsigned int blacklist_max_hooks=MAX_BLST_HOOKS;
-static int last_blacklist_hook_idx=0;
+struct blst_callbacks_lst{
+	struct blacklist_hook* hooks;
+	unsigned int max_hooks;
+	int last_idx;
+};
 
-static int init_blacklist_hooks()
+static struct blst_callbacks_lst blst_add_cb;
+static struct blst_callbacks_lst blst_search_cb;
+
+static int init_blst_callback_lst(struct blst_callbacks_lst*  cb_lst, int max)
 {
-	blacklist_hooks=pkg_malloc(blacklist_max_hooks*
-								sizeof(struct blacklist_hook));
-	if (blacklist_hooks==0)
+
+	cb_lst->max_hooks=MAX_BLST_HOOKS;
+	cb_lst->last_idx=0;
+	cb_lst->hooks=pkg_malloc(cb_lst->max_hooks*sizeof(struct blacklist_hook));
+	if (cb_lst->hooks==0)
 		goto error;
-	memset(blacklist_hooks, 0,
-				blacklist_max_hooks*sizeof(struct blacklist_hook));
+	memset(cb_lst->hooks, 0, cb_lst->max_hooks*sizeof(struct blacklist_hook));
 	return 0;
 error:
-	LOG(L_ERR, "blacklist_hooks: memory allocation failure\n");
 	return -1;
+}
+
+
+static void destroy_blst_callback_lst(struct blst_callbacks_lst* cb_lst)
+{
+	int r;
+	if (cb_lst && cb_lst->hooks){
+		for (r=0; r<cb_lst->last_idx; r++){
+			if (cb_lst->hooks[r].destroy)
+				cb_lst->hooks[r].destroy();
+		}
+		pkg_free(cb_lst->hooks);
+		cb_lst->hooks=0;
+		cb_lst->last_idx=0;
+		cb_lst->max_hooks=0;
+	}
 }
 
 
 static void destroy_blacklist_hooks()
 {
-	int r;
-
-	if (blacklist_hooks){
-		for (r=0; r<last_blacklist_hook_idx; r++){
-			if (blacklist_hooks[r].destroy)
-				blacklist_hooks[r].destroy();
-		}
-		pkg_free(blacklist_hooks);
-		blacklist_hooks=0;
-	}
+	destroy_blst_callback_lst(&blst_add_cb);
+	destroy_blst_callback_lst(&blst_search_cb);
 }
+
+
+static int init_blacklist_hooks()
+{
+
+	if (init_blst_callback_lst(&blst_add_cb, MAX_BLST_HOOKS)!=0)
+		goto error;
+	if (init_blst_callback_lst(&blst_search_cb, MAX_BLST_HOOKS)!=0)
+		goto error;
+	return 0;
+error:
+	LOG(L_ERR, "blacklist_hooks: failure initializing internal lists\n");
+	destroy_blacklist_hooks();
+	return -1;
+}
+
+
 
 
 /* allocates a new hook
  * returns 0 on success and -1 on error
  * must be called from mod init (from the main process, before forking)*/
-int register_blacklist_hook(struct blacklist_hook *h)
+int register_blacklist_hook(struct blacklist_hook *h, int type)
 {
+	struct blst_callbacks_lst* cb_lst;
 	struct blacklist_hook* tmp;
 	int new_max_hooks;
 	
-	if (blacklist_max_hooks==0)
+	switch(type){
+		case DST_BLACKLIST_ADD_CB:
+			cb_lst=&blst_add_cb;
+			break;
+		case DST_BLACKLIST_SEARCH_CB:
+			cb_lst=&blst_search_cb;
+			break;
+		default:
+			BUG("register_blacklist_hook: invalid type %d\n", type);
+			goto error;
+	}
+	if (cb_lst==0 || cb_lst->hooks==0 || cb_lst->max_hooks==0){
+		BUG("register_blacklist_hook: intialization error\n");
 		goto error;
-	if (last_blacklist_hook_idx >= blacklist_max_hooks){
-		new_max_hooks=2*blacklist_max_hooks;
-		tmp=pkg_realloc(blacklist_hooks, 
+	}
+
+	if (cb_lst->last_idx >= cb_lst->max_hooks){
+		new_max_hooks=2*cb_lst->max_hooks;
+		tmp=pkg_realloc(cb_lst->hooks, 
 				new_max_hooks*sizeof(struct blacklist_hook));
 		if (tmp==0){
 			goto error;
 		}
-		blacklist_hooks=tmp;
-		/* init the new chunk */
-		memset(&blacklist_hooks[last_blacklist_hook_idx+1], 0, 
-					(new_max_hooks-blacklist_max_hooks-1)*
+		cb_lst->hooks=tmp;
+		/* init the new chunk (but not the current entry which is 
+		 * overwritten anyway) */
+		memset(&cb_lst->hooks[cb_lst->max_hooks+1], 0, 
+					(new_max_hooks-cb_lst->max_hooks-1)*
 						sizeof(struct blacklist_hook));
-		blacklist_max_hooks=new_max_hooks;
+		cb_lst->max_hooks=new_max_hooks;
 	}
-	blacklist_hooks[last_blacklist_hook_idx]=*h;
-	last_blacklist_hook_idx++;
+	cb_lst->hooks[cb_lst->last_idx]=*h;
+	cb_lst->last_idx++;
 	return 0;
 error:
 	return -1;
 }
 
 
-int blacklist_run_hooks(struct dest_info* si, unsigned char* flags)
+inline static int blacklist_run_hooks(struct blst_callbacks_lst *cb_lst,
+							struct dest_info* si, unsigned char* flags)
 {
 	int r;
 	int ret;
 	
-	ret=DST_BLACKLIST_ACCEPT; /* default, if no hook installed accept 
+	ret=DST_BLACKLIST_CONTINUE; /* default, if no hook installed accept 
 								blacklist operation */
-	for (r=0; r<last_blacklist_hook_idx; r++){
-		ret=blacklist_hooks[r].on_blst_add(si, flags);
-		if (ret!=DST_BLACKLIST_ACCEPT) break;
+	if (likely(cb_lst->last_idx==0))
+		return ret;
+	for (r=0; r<cb_lst->last_idx; r++){
+		ret=cb_lst->hooks[r].on_blst_add(si, flags);
+		if (ret!=DST_BLACKLIST_CONTINUE) break;
 	}
 	return ret;
 }
@@ -593,13 +659,15 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 	ret=0;
 	now=get_ticks_raw();
 	hash=dst_blst_hash_no(proto, ip, port);
-	LOCK_BLST(hash);
-		e=_dst_blacklist_lst_find(&dst_blst_hash[hash].first, ip, proto,
-									port, now);
-		if (e){
-			ret=e->flags;
-		}
-	UNLOCK_BLST(hash);
+	if (unlikely(dst_blst_hash[hash].first)){
+		LOCK_BLST(hash);
+			e=_dst_blacklist_lst_find(&dst_blst_hash[hash].first, ip, proto,
+										port, now);
+			if (e){
+				ret=e->flags;
+			}
+		UNLOCK_BLST(hash);
+	}
 	return ret;
 }
 
@@ -610,7 +678,8 @@ int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si)
 	struct ip_addr ip;
 
 #ifdef DST_BLACKLIST_HOOKS
-	if (blacklist_run_hooks(si, &err_flags)!=DST_BLACKLIST_ACCEPT)
+	if (unlikely (blacklist_run_hooks(&blst_add_cb, si, &err_flags) ==
+					DST_BLACKLIST_DENY))
 		return 0;
 #endif
 	su2ip_addr(&ip, &si->to);
@@ -623,7 +692,22 @@ int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si)
 int dst_is_blacklisted(struct dest_info* si)
 {
 	struct ip_addr ip;
+#ifdef DST_BLACKLIST_HOOKS
+	unsigned char err_flags;
+	int action;
+#endif
 	su2ip_addr(&ip, &si->to);
+
+#ifdef DST_BLACKLIST_HOOKS
+	err_flags=0;
+	if (unlikely((action=(blacklist_run_hooks(&blst_search_cb, si, &err_flags))
+					) != DST_BLACKLIST_CONTINUE)){
+		if (action==DST_BLACKLIST_DENY)
+			return 0;
+		else  /* if (action==DST_BLACKLIST_ACCEPT) */
+			return err_flags;
+	}
+#endif
 	return dst_is_blacklisted_ip(si->proto, &ip, su_getport(&si->to));
 }
 
