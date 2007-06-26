@@ -150,8 +150,8 @@
  *  ("Using de Bruijn Sequences to Index a 1 in a Computer Word")
  */
 
-extern int _debruijn_hash32[32]; /* see bit_scan.c */
-extern int _debruijn_hash64[64]; /* see bit_scan.c */
+extern unsigned char _debruijn_hash32[32]; /* see bit_scan.c */
+extern unsigned char _debruijn_hash64[64]; /* see bit_scan.c */
 
 #define DEBRUIJN_CT32  0x04653ADFU
 #define DEBRUIJN_CT64  0x0218A392CD3D5DBFULL 
