@@ -58,7 +58,7 @@
 
 #ifdef DST_BLACKLIST_HOOKS
 struct blacklist_hook{
-	int (*on_blst_add)(struct dest_info* si, unsigned char* err_flags);
+	int (*on_blst_action)(struct dest_info* si, unsigned char* err_flags);
 	/* called before ser shutdown */
 	void (*destroy)(void);
 };
