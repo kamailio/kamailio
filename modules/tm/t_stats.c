@@ -42,6 +42,9 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../pt.h"
+#ifdef TM_HASH_STATS
+#include "h_table.h"
+#endif
 
 union t_stats *tm_stats=0;
 
@@ -96,6 +99,11 @@ const char* tm_rpc_stats_doc[2] = {
 	0
 };
 
+const char* tm_rpc_hash_stats_doc[2] = {
+	"Prints hash table statistics (can be used only if tm is compiled"
+		" with -DTM_HASH_STATS).",
+	0
+};
 
 /* res=s1+s2 */
 #define tm_proc_stats_add_base(res, s1, s2) \
@@ -165,4 +173,90 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 	rpc->struct_add(st, "d", "delayed_free", (unsigned int)all.delayed_free);
 #endif
 	/* rpc->fault(c, 100, "Trying"); */
+}
+
+
+
+/*  hash statistics */
+void tm_rpc_hash_stats(rpc_t* rpc, void* c)
+{
+#ifdef TM_HASH_STATS
+	void* st;
+	unsigned long acc_min, acc_max, acc_zeroes, acc_dev_no;
+	unsigned long crt_min, crt_max, crt_zeroes, crt_dev_no;
+	unsigned long crt_count, acc_count;
+	double acc_average, acc_dev, acc_d;
+	double crt_average, crt_dev, crt_d;
+	unsigned long acc, crt;
+	int r;
+	
+	acc_count=0;
+	acc_min=(unsigned long)(-1);
+	acc_max=0;
+	acc_zeroes=0;
+	acc_dev_no=0;
+	acc_dev=0;
+	crt_count=0;
+	crt_min=(unsigned long)(-1);
+	crt_max=0;
+	crt_zeroes=0;
+	crt_dev_no=0;
+	crt_dev=0;
+	for (r=0; r<TABLE_ENTRIES; r++){
+		acc=_tm_table->entries[r].acc_entries;
+		crt=_tm_table->entries[r].cur_entries;
+		
+		acc_count+=acc;
+		if (acc<acc_min) acc_min=acc;
+		if (acc>acc_max) acc_max=acc;
+		if (acc==0) acc_zeroes++;
+		
+		crt_count+=crt;
+		if (crt<crt_min) crt_min=crt;
+		if (crt>crt_max) crt_max=crt;
+		if (crt==0) crt_zeroes++;
+	}
+	acc_average=acc_count/(double)TABLE_ENTRIES;
+	crt_average=crt_count/(double)TABLE_ENTRIES;
+	
+	for (r=0; r<TABLE_ENTRIES; r++){
+		acc=_tm_table->entries[r].acc_entries;
+		crt=_tm_table->entries[r].cur_entries;
+		
+		acc_d=acc-acc_average;
+		/* instead of fabs() which requires -lm */
+		if (acc_d<0) acc_d=-acc_d;
+		if (acc_d>1) acc_dev_no++;
+		acc_dev+=acc_d*acc_d;
+		crt_d=crt-crt_average;
+		/* instead of fabs() which requires -lm */
+		if (crt_d<0) crt_d=-crt_d;
+		if (crt_d>1) crt_dev_no++;
+		crt_dev+=crt_d*crt_d;
+	}
+	
+	if (rpc->add(c, "{", &st) < 0) return;
+	rpc->struct_add(st, "d", "hash_size", (unsigned) TABLE_ENTRIES);
+	rpc->struct_add(st, "d", "crt_transactions", (unsigned)crt_count);
+	rpc->struct_add(st, "f", "crt_target_per_cell", crt_average);
+	rpc->struct_add(st, "dd", "crt_min", (unsigned)crt_min,
+							  "crt_max", (unsigned) crt_max);
+	rpc->struct_add(st, "d", "crt_worst_case_extra_cells", 
+							(unsigned)(crt_max-(unsigned)crt_average));
+	rpc->struct_add(st, "d", "crt_no_zero_cells", (unsigned)crt_zeroes);
+	rpc->struct_add(st, "d", "crt_no_deviating_cells", crt_dev_no);
+	rpc->struct_add(st, "f", "crt_deviation_sq_sum", crt_dev);
+	rpc->struct_add(st, "d", "acc_transactions", (unsigned)acc_count);
+	rpc->struct_add(st, "f", "acc_target_per_cell", acc_average);
+	rpc->struct_add(st, "dd", "acc_min", (unsigned)acc_min,
+							  "acc_max", (unsigned) acc_max);
+	rpc->struct_add(st, "d", "acc_worst_case_extra_cells", 
+							(unsigned)(acc_max-(unsigned)acc_average));
+	rpc->struct_add(st, "d", "acc_no_zero_cells", (unsigned)acc_zeroes);
+	rpc->struct_add(st, "d", "acc_no_deviating_cells", acc_dev_no);
+	rpc->struct_add(st, "f", "acc_deviation_sq_sum", acc_dev);
+#else /* TM_HASH_STATS */
+	rpc->fault(c, 500, "Hash statistics not supported (try"
+				"recompiling with -DTM_HASH_STATS)");
+#endif /* TM_HASH_STATS */
 }

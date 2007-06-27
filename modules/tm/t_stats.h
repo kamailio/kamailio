@@ -144,4 +144,7 @@ void free_tm_stats();
 extern const char* tm_rpc_stats_doc[2];
 void tm_rpc_stats(rpc_t* rpc, void* c);
 
+extern const char* tm_rpc_hash_stats_doc[2];
+void tm_rpc_hash_stats(rpc_t* rpc, void* c);
+
 #endif
