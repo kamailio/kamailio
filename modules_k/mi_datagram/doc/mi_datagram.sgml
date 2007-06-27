@@ -1,0 +1,55 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "mi_datagram_user.sgml">
+<!ENTITY devel SYSTEM "mi_datagram_devel.sgml">
+<!ENTITY faq SYSTEM "mi_datagram_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>mi_datagram Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Andreea-Ancuta</firstname>
+		<surname>Onofrei</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		<email>ancuta@voice-system.ro</email>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+		</author>
+		<editor>
+		<firstname>Andreea-Ancuta</firstname>
+		<surname>Onofrei</surname>
+		<address>
+			<email>ancuta@voice-system.ro</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2007</year>
+		<holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 1133 $</revnumber>
+		<date>$Date: 2007-05-04 14:31:13 +0300 (Thu, 05 Apr 2006) $</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&devel;
+	&faq;
+	
+</book>

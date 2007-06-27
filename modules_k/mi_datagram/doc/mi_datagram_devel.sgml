@@ -1,0 +1,22 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 1133 $</revnumber>
+		<date>$Date: 2007-05-04 14:31:13 +0300 (Thu, 05 Apr 2007) $</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>Developer's Guide</title>
+	<para>
+	The module does not provide any <acronym>API</acronym> to use in other &ser; modules.
+	</para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("mi_datagram.sgml" "book" "chapter")
+End:
+-->

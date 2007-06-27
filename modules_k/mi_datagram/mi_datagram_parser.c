@@ -1,0 +1,333 @@
+/*
+ * $Id: mi_datagram.h 1133 2007-04-02 17:31:13Z ancuta_onofrei $
+ *
+ * Copyright (C) 2007 Voice Sistem SRL
+ *
+ * This file is part of openser, a free SIP server.
+ *
+ * openser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * openser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ *
+ * History:
+ * ---------
+ *  2007-06-25  first version (ancuta)
+ */
+
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "../../str.h"
+#include "../../dprint.h"
+#include "../../mi/tree.h"
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+#include "datagram_fnc.h"
+#include "mi_datagram.h"
+#include "mi_datagram_parser.h"
+
+/*static unsigned int mi_parse_buffer_len = 0;
+
+int mi_datagram_parser_init( unsigned int size )
+{
+	mi_parse_buffer_len = size;
+
+	return 0;
+}*/
+
+
+
+/* returns -1 = error
+ *          0 = ok
+ *          1 = end of input
+ */
+/*example: mi_parse_node(datagram, &buf, &name, &value)*/
+static inline int mi_datagram_parse_node(datagram_stream * data, str *name, 
+											str *value)
+{
+	char *p, *pmax;
+	char *start, *start1;
+	char *mark_nsp;
+	int newline_found = 0;
+
+	DBG("DBG:mi_datagram:mi_parse_tree: the remaining datagram to" 
+		"be parsed is %s and %i in length \n",data->current,data->len);
+
+	p =data->current;
+	start1 = start = p;
+	if(data->len > DATAGRAM_SOCK_BUF_SIZE) {
+		LOG(L_ERR,"ERROR: datagram:datagram_parse_node: overflow while parsing"
+			"the received datagram\n");
+		goto parse_err;
+	}
+	pmax  = start + data->len ;
+
+	/* remove leading spaces */
+	for( ; start<pmax && isspace((int)*start) ; start++ );
+	/*no valuable data---end of input*/
+	if(start == pmax)
+		return 1;
+
+	/* init */
+	name->s = value->s = 0;
+	name->len = value->len = 0;
+
+	mark_nsp = 0;
+
+	/* start parsing */
+	if (*start!='"') {
+		DBG("DBG:mi_datagram_parser:mi_parse_node: the string "
+			"is not just a quoted string\n");
+		/* look for the atribute name */
+
+		p = mark_nsp = start;
+		while ( p!=pmax && (( *p!=MI_ATTR_VAL_SEP1) || p+1==pmax 
+		||*(p+1)!=MI_ATTR_VAL_SEP2) ) {
+			if (!isspace((int)*p)) {
+				if (*p=='"')
+				{
+					DBG("DBG:mi_datagram_parser:mi_parse_node:"
+						"found \" before attr_separator\n");
+					goto parse_err;
+				}
+				mark_nsp = p;
+			}
+			if(*p=='\n' && p!=(pmax -1)){
+				DBG("DBG:mi_datagram_parser:mi_parse_node: "
+					"found newline before attr_separator--we have just the "
+					"attribute's value\n");
+				mark_nsp++; pmax = ++p;
+				break;
+			}else if (p == (pmax-1)){
+				mark_nsp++; pmax = ++p;
+				DBG("mi_datagram:mi_datagram_parser: just a value, no new"
+					" line");
+				break;
+			}
+			p++;
+		}
+
+		if (p!=pmax) {
+			/* we have found the separator */
+			DBG("DBG:mi_datagram_parser:mi_parse_node: we've found "
+				"the attr_separator\n");
+			if (p==start) {
+				/* empty attr name */
+				DBG("DBG:mi_datagram_parser:mi_parse_node: "
+					"empty attr_name\n");
+			} else {
+				name->s = start;
+				name->len = mark_nsp - start+1;
+				DBG("DBG:mi_datagram:mi_parse_node: attr name <%.*s> "
+				"found\n",name->len, name->s);
+			}
+
+			p += 2; /* for separator */
+				
+			/* consume the trailing spaces */
+			for( ; p!=pmax && isspace((int)*p) ; p++)
+			{
+				if(*p=='\n')
+				{
+					DBG("DBG:mi_datagram:mi_parse_node: empty value\n");
+					/* empty value.....we are done */
+					goto done;
+				}
+			}
+			/*DBG("mi_datagram:mi_datagram_parser:p is %s case2\n",p);*/
+
+			if(p==pmax && *p=='\n')
+			{
+				DBG("DBG:mi_datagram:mi_parse_node: empty value\n");
+					/* empty value.....we are done */
+				goto done;
+			}
+			/*DBG("mi_datagram:mi_datagram_parser:p is %s case1\n",p);*/
+			/* value (only if not quoted ) */
+			if (*p!='"') {
+				DBG("DBG:mi_datagram_parser:mi_parse_node: "
+					"not quoted value, p is %c \n", *p);
+				for( start=p ; p!=pmax ; p++ ) {
+				/*DBG("mi_datagram:mi_datagram_parser: p is %s\n",p);*/
+					if (!isspace((int)*p)) {
+						if (*p=='"'){
+						/*	DBG("mi_datagram:mi_datagram_parser:i've "
+								"found \"");*/
+							goto parse_err;
+						}
+						mark_nsp = p;
+						DBG("DGB: mi_datagram:mi_datagram_parse_node:"
+							"nsp is %p ,p is %p, pmax is %p and *p is %c\n",
+							mark_nsp, p, pmax,*p);
+					}
+					if(*p=='\n'){/*end of the node*/
+						pmax = p;
+						break;
+					}
+				}
+			
+				value->s = start;
+				value->len = mark_nsp - start+1;
+				DBG("DBG:mi_datagram:mi_datagram_parse_node:*start is "
+					"%c and start is %p\n",*start, start);
+				DBG("DBG:mi_datagram:mi_parse_node: "
+					"attr value <%s> found\n"/*,value->len*/, value->s);
+				goto done;
+			}
+			/* quoted value....continue */
+		} else {
+			/* we have an empty name ... and we read a non-quoted value */
+			value->s = start;
+			value->len = mark_nsp  - start;
+			DBG("DBG:mi_datagram:mi_parse_node: the value's length is "
+				"%i\n",value->len);
+			DBG("DBG:mi_datagram:mi_parse_node: empty name, "
+				"attr not quoted value <%.*s> found\n",value->len, value->s);
+			goto done;
+		}
+	} else {
+		p = start; /*send the value only: as a quoted string*/
+	}
+	/*we have a quoted value*/
+	DBG("DBG:mi_datagram:mi_parse_node: we have a  quoted value, %s\n",
+		p);
+	start = p+1; /*skip the first "*/
+	value->s = start;
+
+	p = start;
+	/* parse the buffer and look for " */
+	while (p<pmax) {
+		if (*p=='"' && start!=p){ /*search the closing "*/
+
+			DBG("DBG:mi_datagram:mi_parse_node, \" found p is %s\n",p);
+
+			if (start+1!=p && *(p-1)=='\\') {
+				DBG("DBG:mi_datagram:mi_parse_node: skipping %c",*p);
+				/* skip current char */
+				memmove( p-1, p, pmax-p);
+				pmax--; 
+			} else {
+				DBG("DBG:mi_datagram:mi_parse_node: we have reached "
+					"the end of attr value, p is %s\n", p);
+				/* end of value */
+				value->len = p - value->s;
+				DBG("DBG:mi_datagram:mi_parse_node:attr value"
+					"<%.*s> found\n",value->len, value->s);
+				
+				/* is the line ending propely (only spaces) ? */
+				p++;
+				for(; p!=pmax && isspace((int)*p) ; p++)
+				{
+					if(*p=='\n') {
+						/*case : ""quoted string"  \n on a line */
+						DBG("DBG:mi_datagram:mi_parse_node:"
+							"line ended properly case1\n");
+						pmax = p;
+						break;
+					}
+				}
+				if (p!=pmax )/*didn't find the second " on the current line*/
+				{
+					LOG(L_ERR, "ERROR:mi_datagram:mi_parse_node: didn't find "
+						"newline case1 \n");
+					goto parse_err;
+				}
+				newline_found = 1;
+				/* found! */
+				goto done;
+			}
+		}else {
+			p++;
+		}
+	}
+
+	if(p== pmax && !newline_found)
+	{
+		LOG(L_ERR, "ERROR: mi_datagram:mi_datagram_parse_node: didn't find "
+			"newline case2\n");
+		goto parse_err;
+	}
+
+done:
+	/*set the current datagram's offset */
+	DBG("mi_datagram:mi_datagram_parser:1 data->len is %i\n",data->len);
+	data->len -= p-start1;
+	DBG("mi_datagram:mi_datagram_parser:2 data->len is %i\n",data->len);
+	data->current = p;
+	return 0;
+parse_err:
+	LOG(L_ERR,"ERROR:mi_datagram_parser:mi_parse_node: parse error "
+			"around %c\n",*p);
+	return -1;
+}
+
+
+
+/*parsing the datagram buffer*/
+struct mi_root * mi_datagram_parse_tree(datagram_stream * datagram) {
+	struct mi_root *root;
+	struct mi_node *node;
+	str name;
+	str value;
+	int ret;
+
+	if(!datagram || datagram->current[0] == '\0')
+	{
+		LOG(L_ERR,"ERROR:mi_datagram:mi_parse_node:no data in the datagram\n");
+		return 0;
+	}
+
+	root = init_mi_tree(0,0,0);
+	if (!root) {
+		LOG(L_ERR, "ERROR:mi_datagram:mi_parse_tree: the MI tree cannot be "
+			"initialized!\n");
+		goto error;
+	}
+	node = &root->node;
+
+	name.s = value.s = 0;
+	name.len = value.len = 0;
+
+	/* every tree for a command ends with a \n that is alone on its line */
+	while ((ret=mi_datagram_parse_node(datagram, &name, &value))>=0 ) {
+		
+		if(ret == 1)
+			return root;
+		DBG("INFO:mi_datagram:mi_parse_tree: adding node <%.*s> ; val" 
+			"<%.*s>\n",name.len,name.s, value.len,value.s);
+
+		if(!add_mi_node_child(node,0,name.s,name.len,value.s,value.len)){
+			LOG(L_ERR, "ERROR:mi_datagram:mi_parse_tree: cannot add the child "
+				"node to the tree\n");
+			goto error;
+		}
+		DBG("DBG: mi_datagram:mi_datagram_parse_tree: the remaining "
+				"datagram has %i bytes\n",datagram->len);
+		/*end condition*/
+		if(datagram->len == 0) {
+			DBG("DBG:mi_datagram:mi_parse_tree: found end of input\n");
+			return root;
+		}
+	}
+
+	LOG(L_ERR, "ERROR:mi_datagram:mi_parse_tree: Parse error!\n");
+error:
+	if (root)
+		free_mi_tree(root);
+	return 0;
+}
+
+
