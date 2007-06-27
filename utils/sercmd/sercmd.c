@@ -336,6 +336,9 @@ void print_binrpc_val(struct binrpc_val* v, int ident)
 		case BINRPC_T_STRUCT:
 			printf("%c", (v->u.end)?'}':'{');
 			break;
+		case BINRPC_T_DOUBLE:
+			printf("%f", v->u.fval);
+			break;
 		default:
 			printf("ERROR: unknown type %d\n", v->type);
 	};
