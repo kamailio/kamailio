@@ -106,6 +106,7 @@
 #include "../../usr_avp.h"
 #include "../../atomic_ops.h" /* membar_write() */
 #include "../../compiler_opt.h"
+#include "../../select_buf.h" /* reset_static_buffer() */
 
 #include "defs.h"
 #include "h_table.h"
@@ -768,6 +769,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		 * on failure */
 		on_failure = t->on_negative;
 		t->on_negative=0;
+		reset_static_buffer();
 		/* run a reply_route action if some was marked */
 		init_run_actions_ctx(&ra_ctx);
 		if (run_actions(&ra_ctx, failure_rt.rlist[on_failure], &faked_req)<0)
@@ -1759,6 +1761,7 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+		reset_static_buffer();
 		init_run_actions_ctx(&ra_ctx);
 		if (run_actions(&ra_ctx, onreply_rt.rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");

@@ -105,6 +105,7 @@
 #ifdef USE_DST_BLACKLIST
 #include "../../dst_blacklist.h"
 #endif
+#include "../../select_buf.h" /* reset_static_buffer() */
 
 /* cancel hop by hop */
 #define E2E_CANCEL_HOP_BY_HOP
@@ -175,6 +176,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	i_req->body_lumps = dup_lump_list(i_req->body_lumps);
 
 	if (unlikely(branch_route)) {
+		reset_static_buffer();
 		     /* run branch_route actions if provided */
 		init_run_actions_ctx(&ra_ctx);
 		if (run_actions(&ra_ctx, branch_rt.rlist[branch_route], i_req) < 0) {
