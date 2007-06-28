@@ -95,6 +95,7 @@
 #ifdef USE_DST_BLACKLIST
 #include "../../dst_blacklist.h"
 #endif
+#include "../../select_buf.h" /* reset_static_buffer() */
 
 
 
@@ -161,6 +162,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	i_req->body_lumps = dup_lump_list(i_req->body_lumps);
 
 	if (branch_route) {
+		reset_static_buffer();
 		     /* run branch_route actions if provided */
 		if (run_actions(branch_rt.rlist[branch_route], i_req) < 0) {
 			LOG(L_ERR, "ERROR: print_uac_request: Error in run_actions\n");
