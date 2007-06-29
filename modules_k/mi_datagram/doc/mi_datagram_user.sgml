@@ -26,7 +26,10 @@
 		following syntax:
 		<itemizedlist>
 			<listitem><para><emphasis>
-			request = first_line argument*
+			request = first_line argument_list?
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			argument_list = (argument '\n')* argument
 			</emphasis></para></listitem>
 			<listitem><para><emphasis>
 			first_line = ':'command_name':''\n'
