@@ -1333,7 +1333,7 @@ branch_route[1] {
 
 	<section>
 		<title>
-		<function moreinfo="none">t_uac_cancel</function>
+		<function moreinfo="none">t_reply</function>
 		</title>
 		<para>
 		Generates and sends a reply for an existing inbound SIP transaction.

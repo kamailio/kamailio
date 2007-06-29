@@ -84,7 +84,7 @@ Bogdan-Andrei Iancu
               1.6.1. t_uac_dlg
               1.6.2. t_uac_cancel
               1.6.3. t_hash
-              1.6.4. t_uac_cancel
+              1.6.4. t_reply
 
         1.7. Exported statistics
 
@@ -1044,7 +1044,7 @@ branch_route[1] {
      * none
      _________________________________________________________
 
-1.6.4. t_uac_cancel
+1.6.4. t_reply
 
    Generates and sends a reply for an existing inbound SIP
    transaction.
