@@ -226,11 +226,11 @@ int mi_sock_check(int fd, char* fname)
 	 */
 	/*DBG("for %s lst.st_dev %fl fst.st_dev %i lst.st_ino %i fst.st_ino"
 		"%i\n", fname, lst.st_dev, fst.st_dev, lst.st_ino, fst.st_ino);*/
-	if ((lst.st_dev!=fst.st_dev)||(lst.st_ino!=fst.st_ino)){
+	/*if ((lst.st_dev!=fst.st_dev)||(lst.st_ino!=fst.st_ino)){
 		LOG(L_ERR, "ERROR:datagram_fnc:mi_sock_check: security: sock_check: "
 			"socket	%s inode/dev number differ: %d %d \n", fname,
 			(int)fst.st_ino, (int)lst.st_ino);
-	}
+	}*/
 	/* success */
 	return 0;
 }
