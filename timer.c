@@ -33,6 +33,8 @@
  *              a timer handle; added timer_allow_del()  (andrei)
  *  2007-05-26  workaround for darwin sigwait() bug, see slow_timer_main() or
  *              grep __OS_darwin for more info (andrei)
+ *  2007-07-01  timer_del() returns <0 if the timer is not active or 
+ *               cannot be deleted (andrei)
  */
 
 
@@ -496,10 +498,11 @@ static inline int _timer_add(ticks_t t, struct timer_ln* tl)
 /* "public", safe timer add functions
  * adds a timer at delta ticks from the current time
  * returns -1 on error, 0 on success
- * WARNING: to re-add a deleted or expired timer you must call
+ * WARNING: to re-add an expired or deleted timer you must call
  *          timer_reinit(tl) prior to timer_add
  *          The default behaviour allows timer_add to add a timer only if it
- *          has never been added before.*/
+ *          has never been added before.
+ */
 #ifdef TIMER_DEBUG
 int timer_add_safe(struct timer_ln* tl, ticks_t delta,
 					const char* file, const char* func, unsigned line)
@@ -553,18 +556,19 @@ error:
 
 /* safe timer delete
  * deletes tl and inits the list pointer to 0
- * WARNING: to be able to reuse a deleted timer you must call
- *          timer_reinit(tl) on it
- * 
+ * returns  <0 on error (-1 if timer not active/already deleted and -2 if 
+ *           delete attempted from the timer handler) and 0 on success
  */
 #ifdef TIMER_DEBUG
-void timer_del_safe(struct timer_ln* tl,
+int timer_del_safe(struct timer_ln* tl,
 					const char* file, const char* func, unsigned line)
 #else
-void timer_del_safe(struct timer_ln* tl)
+int timer_del_safe(struct timer_ln* tl)
 #endif
 {
+	int ret;
 	
+	ret=-1;
 again:
 	/* quick exit if timer inactive */
 	if ( !(tl->flags & F_TIMER_ACTIVE)){
@@ -580,10 +584,12 @@ again:
 					tl->del_calls, tl->del_func, tl->del_file, tl->del_line,
 					tl->init, tl->expires_no);
 #else
+/*
 		DBG("timer_del called on an inactive timer %p (%p, %p),"
 					" flags %x\n", tl, tl->next, tl->prev, tl->flags);
+*/
 #endif
-		return;
+		return -1;
 	}
 #ifdef USE_SLOW_TIMER
 		if (IS_ON_SLOW_LIST(tl) && (tl->slow_idx!=*t_idx)){
@@ -609,7 +615,7 @@ again:
 						tl->add_line, tl->del_calls, tl->del_func, 
 						tl->del_file, tl->del_line, tl->init, tl->expires_no);
 #endif
-					return; /* do nothing */
+					return -2; /* do nothing */
 				}
 				sched_yield(); /* wait for it to complete */
 				goto again;
@@ -617,6 +623,7 @@ again:
 			if (tl->next!=0){
 				_timer_rm_list(tl); /* detach */
 				tl->next=tl->prev=0;
+				ret=0;
 #ifdef TIMER_DEBUG
 				tl->del_file=file;
 				tl->del_func=func;
@@ -643,10 +650,13 @@ again:
 						tl->del_func, tl->del_file, tl->del_line,
 						tl->init, tl->expires_no);
 #else
+/*
 				DBG("timer_del: (s) timer %p (%p, %p) flags %x "
 							"already detached\n",
 							tl, tl->next, tl->prev, tl->flags);
+*/
 #endif
+				ret=-1;
 			}
 			UNLOCK_SLOW_TIMER_LIST();
 		}else{
@@ -675,7 +685,7 @@ again:
 						tl->add_line, tl->del_calls, tl->del_func, 
 						tl->del_file, tl->del_line, tl->init, tl->expires_no);
 #endif
-					return; /* do nothing */
+					return -2; /* do nothing */
 				}
 				sched_yield(); /* wait for it to complete */
 				goto again;
@@ -683,6 +693,7 @@ again:
 			if ((tl->next!=0)&&(tl->prev!=0)){
 				_timer_rm_list(tl); /* detach */
 				tl->next=tl->prev=0;
+				ret=0;
 #ifdef TIMER_DEBUG
 				tl->del_file=file;
 				tl->del_func=func;
@@ -709,15 +720,19 @@ again:
 						tl->del_func, tl->del_file, tl->del_line,
 						tl->init, tl->expires_no);
 #else
+/*
 				DBG("timer_del: (f) timer %p (%p, %p) flags %x "
 							"already detached\n",
 							tl, tl->next, tl->prev, tl->flags);
+*/
 #endif
+				ret=-1;
 			}
 			UNLOCK_TIMER_LIST();
 #ifdef USE_SLOW_TIMER
 		}
 #endif
+return ret;
 }
 
 
@@ -749,7 +764,10 @@ void timer_allow_del()
 }
 
 
-/* called from timer_handle, must be called with the timer lock held */
+/* called from timer_handle, must be called with the timer lock held
+ * WARNING: expired one shot timers are _not_ automatically reinit
+ *          (because they could have been already freed from the timer
+ *           handler so a reinit would not be safe!) */
 inline static void timer_list_expire(ticks_t t, struct timer_head* h
 #ifdef USE_SLOW_TIMER
 										, struct timer_head* slow_l,

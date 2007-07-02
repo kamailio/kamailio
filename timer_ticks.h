@@ -30,6 +30,7 @@
 /* History:
  * --------
  *  2005-07-27  complete re-design/re-implemnetation (andrei)
+ *  2007-07-02  added ticks comparison macros (andrei)
  */
 
 #ifndef _timer_ticks_h
@@ -52,6 +53,19 @@
 
 /* how many ms per t ticks, integer value */
 #define TICKS_TO_MS(t) (((t)*1000U)/TIMER_TICKS_HZ)
+
+
+/* ticks comparison operations: t1 OP t2, where OP can be <, >, <=, >= */
+#define TICKS_CMP_OP(t1, t2, OP) \
+	(((s_ticks_t)((ticks_t)(t1)-(ticks_t)(t2))) OP (s_ticks_t)0)
+/* t1 < t2 */
+#define TICKS_LT(t1, t2)  TICKS_CMP_OP(t1, t2, <)
+/* t1 <= t2 */
+#define TICKS_LE(t1, t2)  TICKS_CMP_OP(t1, t2, <=)
+/* t1 > t2 */
+#define TICKS_GT(t1, t2)  TICKS_CMP_OP(t1, t2, >)
+/* t1 >= t2 */
+#define TICKS_GE(t1, t2)  TICKS_CMP_OP(t1, t2, >=)
 
 
 typedef unsigned int ticks_t;/* type used to keep the ticks (must be 32 bits)*/

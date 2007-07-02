@@ -161,7 +161,7 @@ void timer_free(struct timer_ln* t);
 #ifdef TIMER_DEBUG
 int timer_add_safe(struct timer_ln *tl, ticks_t delta, 
 					const char*, const char*, unsigned);
-void timer_del_safe(struct timer_ln *tl,
+int timer_del_safe(struct timer_ln *tl,
 					const char*, const char*, unsigned);
 #define timer_add(tl, d) \
 	timer_add_safe((tl), (d), __FILE__, __FUNCTION__, __LINE__)
@@ -169,7 +169,7 @@ void timer_del_safe(struct timer_ln *tl,
 	timer_del_safe((tl), __FILE__, __FUNCTION__, __LINE__)
 #else
 int timer_add_safe(struct timer_ln *tl, ticks_t delta);
-void timer_del_safe(struct timer_ln *tl);
+int timer_del_safe(struct timer_ln *tl);
 #define timer_add timer_add_safe
 #define timer_del timer_del_safe
 #endif

@@ -106,6 +106,7 @@ The timer handler can be periodic, one shot or it can change from call to call. 
 
 The timer becomes active after you add it with timer_add. timer_add takes as parameters a pointer to the corresponding timer_ln structure and an expire interval (in ticks, use the macros from timer_ticks.h to convert from s/ms).
 The timer must be intialized (with timer_init()) before adding it the first time.
+timer_add returns 0 on success and -1 on error (timer already active or timer not intialized).
 If you want to re-add a deleted timer (timer_del was called on it) or an expired one shot timer (the timer handlers returned 0 on the last run), you have to re-init it first, either by calling timer_reinit(t) or by calling again timer_init(...). If you don't re-initialize the timer, timer_add will refuse to add it and it will return -1. So if timer_add returns error (-1) it means that either you're trying to re-add a running timer or a deleted/expired timer that was not re-initialized.
 WARNING: do not initialize/re-initialize a running timer!
 
@@ -114,6 +115,7 @@ WARNING: do not initialize/re-initialize a running timer!
 
 To remove a timer from the active timer list call timer_del(struct timer_ln*).
 timer_del is the slowest of all the timer functions. If you are trying to delete a timer whose timer is executing. timer_del will wait until it finishes.
+timer_del returns 0 on success and a negative number on error (for now -1 if an attempt to delete and already removed or expired timer is made and -2 if timer_del is called from the timer handle it is supposed to delete).
 WARNING: - avoid deleting your own timer from its timer handle (if you try it, you'll get a BUG message in the log). If you _must_ have this, you have a broken design. If you still want it, look at  timer_allow_del().
          - if you have an one shot timer that frees its memory before exiting, make sure you don't call timer_del afterwards (e.g. use some reference counters and free the memory only if the counter is 0).
 
@@ -138,7 +140,7 @@ timer_add(&f->timer, rand());
 timer_del(&f->timer); /* if the timer is already expired => f is already
                          deleted => problems */
 
-The above timer_del/free_in_one_shot_timer race example is very simple, but consider that you can have much more complex scenarios, when timer_del can be called from different processes on some asynchronous events. If this looks like you're intended usage, make sure you use some  reference counters or some other protection mechanism to avoid the above race.
+The above timer_del/free_in_one_shot_timer race example is very simple, but consider that you can have much more complex scenarios, when timer_del can be called from different processes on some asynchronous events. If this looks like your intended usage, make sure you use some  reference counters or some other protection mechanism to avoid the above race.
 
 4.5 timer_allow_del
 -------------------
@@ -169,8 +171,20 @@ TICKS_TO_MS(t)  /* converts from ticks to milliseconds, can overflow for
                    that you'll deal with such large values */
 TICKS_TO_S(t)  /* converts from ticks to s, rounded down */
 
+4.8 Ticks value comparison
+---------------------------
 
-4.8 Backward compatibility
+The ticks value can (and will) overflow so ticks values should never be compared directly (e.g. ticks1<ticks2). To compare them include timer_ticks.h and use
+ one of the macros:
+
+TICKS_LT(t1, t2)  /*  t1 < t2 */
+TICKS_GT(t1, t2)  /*  t1 > t2 */
+TICKS_LE(t1, t2)  /*  t1 <= t2 */
+TICKS_GE(t1, t2)  /*  t1 >= t2 */
+
+These macros work as long as the difference between t1 and t2 is less then 2^(sizeof(ticks_t)*8-1). For the default TIMER_TICKS_HZ values, this means 4.25 years.
+
+4.9 Backward compatibility
 --------------------------
 
 The old  register_timer and get_ticks() are still supported for backward compatibility. This means that you don't have to change your existing working code.
