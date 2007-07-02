@@ -62,6 +62,7 @@ int xml_add_events()
 	event.is_watcher_allowed= pres_watcher_allowed;
 	event.agg_nbody= pres_agg_nbody;
 	event.evs_publ_handl= xml_publ_handl;
+	event.free_body= free_xml_body;
 
 	if(pres_add_event(&event)< 0)
 	{
@@ -77,6 +78,7 @@ int xml_add_events()
 	event.content_type.s= "application/watcherinfo+xml";
 	event.content_type.len= 27;
 	event.type= WINFO_TYPE;
+	event.free_body= free_xml_body;
 
 	if(pres_add_event(&event)< 0)
 	{
@@ -97,6 +99,7 @@ int xml_add_events()
 	event.content_type.s= "application/dialog-info+xml";
 	event.content_type.len= 27;
 	event.type= PUBL_TYPE;
+	event.free_body= free_xml_body;
 
 	if(pres_add_event(&event)< 0)
 	{

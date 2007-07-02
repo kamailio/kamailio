@@ -58,6 +58,9 @@ typedef int (is_allowed_t)(struct subscription* subs);
  *	>0   if change in status
  *	*/
 
+/* event specific body free function */
+typedef void(free_body_t)(char* body);
+
 struct ev
 {
 	str name;
@@ -89,7 +92,7 @@ struct ev
 	agg_nbody_t* agg_nbody;
 	publ_handling_t  * evs_publ_handl;
 	subs_handling_t  * evs_subs_handl;
-
+	free_body_t* free_body;
 	struct ev* wipeer;			
 	struct ev* next;
 	

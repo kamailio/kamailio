@@ -41,6 +41,16 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 extern int force_active;
 extern int pidf_manipulation;
 
+void free_xml_body(char* body)
+{
+	if(body== NULL)
+		return;
+
+	xmlFree(body);
+	body= NULL;
+}
+
+
 str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
 {
 	str* n_body= NULL;

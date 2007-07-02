@@ -684,7 +684,7 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 	}
 	memset(td, 0, sizeof(dlg_t));
 
-	td->loc_seq.value = subs->cseq+ 1;
+	td->loc_seq.value = subs->cseq++;
 	td->loc_seq.is_set = 1;
 
 	td->id.call_id = subs->callid;
@@ -1108,7 +1108,7 @@ done:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			free(notify_body->s);
+			p->event->free_body(notify_body->s);
 		pkg_free(notify_body);
 	}
 
@@ -1127,7 +1127,7 @@ error:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			free(notify_body->s);
+			p->event->free_body(notify_body->s);
 		pkg_free(notify_body);
 	}
 	return -1;
@@ -1191,7 +1191,7 @@ done:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			free(notify_body->s);
+			event->free_body(notify_body->s);
 		pkg_free(notify_body);
 	}
 
@@ -1210,7 +1210,7 @@ error:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			free(notify_body->s);
+			event->free_body(notify_body->s);
 		pkg_free(notify_body);
 	}
 	return -1;
@@ -1379,7 +1379,7 @@ jump_over_body:
 	update_keys[n_update_keys] = "local_cseq";
 	update_vals[n_update_keys].type = DB_INT;
 	update_vals[n_update_keys].nul = 0;
-	update_vals[n_update_keys].val.int_val = subs->cseq +1;
+	update_vals[n_update_keys].val.int_val = subs->cseq;
 	n_update_keys++;
 
 	update_keys[n_update_keys] = "status";
@@ -1387,7 +1387,6 @@ jump_over_body:
 	update_vals[n_update_keys].nul = 0;
 	update_vals[n_update_keys].val.str_val = subs->status;
 	n_update_keys++;
-
 
 	if(subs->event->type & WINFO_TYPE)
 	{	
@@ -1425,10 +1424,7 @@ jump_over_body:
 		{
 			if(notify_body->s!=NULL)
 			{
-				if(subs->event->agg_nbody!=NULL)
-					free(notify_body->s);
-				else
-					pkg_free(notify_body->s);
+				subs->event->free_body(notify_body->s);
 			}
 			pkg_free(notify_body);
 		}
@@ -1457,7 +1453,7 @@ error:
 		if(notify_body!=NULL)
 		{
 			if(notify_body->s!=NULL)
-				free(notify_body->s);
+				subs->event->free_body(notify_body->s);
 			pkg_free(notify_body);
 		}
 	}	

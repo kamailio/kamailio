@@ -250,7 +250,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 							" notify for winfo\n");
 						goto error;
 					}
-				}	
+				}
+
 			}	
 			else /* if unsubscribe for winfo */
 			{
@@ -261,6 +262,14 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 					goto error;
 				}
 			}
+
+			if(notify(subs, NULL, NULL, 0)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
+				" notify \n");
+				goto error;
+			}
+
 			return 1;
 		}
 
@@ -1257,9 +1266,10 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 					" from database\n");
 			goto error;
 		}
+			
 		DBG("PRESENCE: handle_subscribe: pres_user= %.*s\t pres_domain= %.*s\n", 
-				subs.pres_user.len, subs.pres_user.s,
-				subs.pres_domain.len, subs.pres_domain.s);
+			subs.pres_user.len, subs.pres_user.s,
+			subs.pres_domain.len, subs.pres_domain.s);
 	}	
 
 	DBG("PRESENCE: handle_subscribe: local_contact: %.*s --- len= %d\n", 
@@ -1688,10 +1698,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs,
 		*error_ret= 0;
 		return -1;
 	}
-	else
-	   remote_cseq= subs->cseq;
 	
-	*rem_cseq= remote_cseq;
+	*rem_cseq= subs->cseq;
 	
 	pres_user.s= (char*)row_vals[pres_user_col].val.string_val;
 	pres_user.len= strlen(pres_user.s);
