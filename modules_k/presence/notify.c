@@ -1108,7 +1108,12 @@ done:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			p->event->free_body(notify_body->s);
+		{
+			if(	p->event->agg_nbody== NULL && 	p->event->apply_auth_nbody== NULL)
+				pkg_free(notify_body->s);
+			else
+				p->event->free_body(notify_body->s);
+		}
 		pkg_free(notify_body);
 	}
 
@@ -1127,7 +1132,12 @@ error:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			p->event->free_body(notify_body->s);
+		{
+			if(	p->event->agg_nbody== NULL && 	p->event->apply_auth_nbody== NULL)
+				pkg_free(notify_body->s);
+			else
+				p->event->free_body(notify_body->s);
+		}
 		pkg_free(notify_body);
 	}
 	return -1;
@@ -1191,7 +1201,12 @@ done:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			event->free_body(notify_body->s);
+		{
+			if(event->agg_nbody== NULL && event->apply_auth_nbody== NULL)
+				pkg_free(notify_body->s);
+			else
+				event->free_body(notify_body->s);
+		}
 		pkg_free(notify_body);
 	}
 
@@ -1210,7 +1225,12 @@ error:
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)
-			event->free_body(notify_body->s);
+		{
+			if(event->agg_nbody== NULL && event->apply_auth_nbody== NULL)
+				pkg_free(notify_body->s);
+			else
+				event->free_body(notify_body->s);
+		}
 		pkg_free(notify_body);
 	}
 	return -1;

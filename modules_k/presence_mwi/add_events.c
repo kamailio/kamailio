@@ -105,13 +105,6 @@ err:
     return -1;
 
 }
-void free_mwi_body(char* body)
-{
-	if(body== NULL)
-		return;
-	pkg_free(body);
-	body= NULL;
-}
 
 int mwi_add_events()
 {
@@ -131,7 +124,6 @@ int mwi_add_events()
     event.is_watcher_allowed = mwi_watcher_allowed;
     event.agg_nbody = 0;
     event.evs_publ_handl = mwi_publ_handl;
-	event.free_body= free_mwi_body;
 
     if (pres_add_event(&event) < 0) {
 	LOG(L_ERR, "presence_mwi: ERROR while adding event "
