@@ -41,21 +41,21 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 				 db_fld_t* result, db_fld_t* match, db_fld_t* values)
 {
 	char* fname;
-    db_cmd_t* newp;
+	db_cmd_t* newp;
 	db_con_t* con;
 	int i, r, j;
 	db_drv_func_t func;
 
-    newp = (db_cmd_t*)pkg_malloc(sizeof(db_cmd_t));
-    if (newp == NULL) goto err;
-    memset(newp, '\0', sizeof(db_cmd_t));
+	newp = (db_cmd_t*)pkg_malloc(sizeof(db_cmd_t));
+	if (newp == NULL) goto err;
+	memset(newp, '\0', sizeof(db_cmd_t));
 	if (db_gen_init(&newp->gen) < 0) goto err;
-    newp->ctx = ctx;
+	newp->ctx = ctx;
 
 	newp->table.len = strlen(table);
-    newp->table.s = (char*)pkg_malloc(newp->table.len + 1);
-    if (newp->table.s == NULL) goto err;
-    memcpy(newp->table.s, table, newp->table.len + 1);
+	newp->table.s = (char*)pkg_malloc(newp->table.len + 1);	
+	if (newp->table.s == NULL) goto err;
+	memcpy(newp->table.s, table, newp->table.len + 1);
 
 	newp->type = type;
 
