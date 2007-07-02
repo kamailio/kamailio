@@ -1202,6 +1202,9 @@ done:
 	{
 		if(notify_body->s)
 		{
+			if(event->type & WINFO_TYPE)
+				pkg_free(notify_body->s);
+			else
 			if(event->agg_nbody== NULL && event->apply_auth_nbody== NULL)
 				pkg_free(notify_body->s);
 			else
@@ -1226,6 +1229,9 @@ error:
 	{
 		if(notify_body->s)
 		{
+			if(event->type & WINFO_TYPE)
+				pkg_free(notify_body->s);
+			else
 			if(event->agg_nbody== NULL && event->apply_auth_nbody== NULL)
 				pkg_free(notify_body->s);
 			else
@@ -1444,6 +1450,12 @@ jump_over_body:
 		{
 			if(notify_body->s!=NULL)
 			{
+				if(subs->event->type& WINFO_TYPE)
+					xmlFree(notify_body->s);
+				else
+				if(subs->event->apply_auth_nbody== NULL && subs->event->agg_nbody== NULL)
+					pkg_free(notify_body->s);
+				else
 				subs->event->free_body(notify_body->s);
 			}
 			pkg_free(notify_body);
@@ -1473,7 +1485,15 @@ error:
 		if(notify_body!=NULL)
 		{
 			if(notify_body->s!=NULL)
+			{
+				if(subs->event->type& WINFO_TYPE)
+					xmlFree(notify_body->s);
+				else
+				if(subs->event->apply_auth_nbody== NULL && subs->event->agg_nbody== NULL)
+					pkg_free(notify_body->s);
+				else
 				subs->event->free_body(notify_body->s);
+			}
 			pkg_free(notify_body);
 		}
 	}	
