@@ -689,6 +689,7 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
 	int value_count, match_count;
 	MYSQL_BIND* my_params;
 
+	INFO("bind_params(st=%p, fld_value=%p, fld_match=%p)\n", st, fld_value, fld_match);
 	/* Calculate the number of parameters */
 	for(value_count = 0; !DB_FLD_EMPTY(fld_value) && !DB_FLD_LAST(fld_value[value_count]); value_count++);
 	for(match_count = 0; !DB_FLD_EMPTY(fld_match) && !DB_FLD_LAST(fld_match[match_count]); match_count++);
@@ -709,7 +710,7 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
 	for (fld_idx = 0; fld_idx < match_count; fld_idx++, my_idx++) {
 		set_field(&my_params[my_idx], fld_match + fld_idx);
 	}
-	
+	INFO("bind_params: binding params, my_params = %p\n", my_params);
 	if (mysql_stmt_bind_param(st, my_params)) {
 		ERR("Error while binding parameters: %s\n", mysql_stmt_error(st));
 		goto error;
@@ -726,7 +727,6 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
 	return -1;
 }
 
-#include <stdlib.h>
 /* FIXME: Add support for DB_NONE, in this case the function should determine
  * the type of the column in the database and set the field type appropriately
  */
@@ -750,8 +750,8 @@ INFO("bind_result: result = %p\n", result);
 	memset(result, '\0', sizeof(MYSQL_BIND) * n);
 	
 	for(i = 0; i < n; i++) {
-INFO("bind_result: i = %d\n", i);
-INFO("bind_result: fld[%d].type = %d\n", i, fld[i].type);
+//INFO("bind_result: i = %d\n", i);
+//INFO("bind_result: fld[%d].type = %d\n", i, fld[i].type);
 		f = DB_GET_PAYLOAD(fld + i);
 		result[i].is_null = &f->is_null;
 		/* We can do it for all the types here, mysql will ignore it
@@ -835,7 +835,7 @@ INFO("bind_result: result = %p\n", result);
 	return 0;
    
  error:
- 	abort();
+ 	ERR("bind_result failed\n");
 	if (result) pkg_free(result);
 	return -1;
 }
