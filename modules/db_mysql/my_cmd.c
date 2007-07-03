@@ -438,11 +438,77 @@ err:
 }
 
 
-static inline int update_params(MYSQL_STMT* st, db_fld_t* params)
+static inline void update_field(MYSQL_BIND *param, db_fld_t* fld)
 {
-	int i;
-	struct my_fld* fp; /* Current field payload */
+	struct my_fld* fp;      /* field payload */
 	struct tm* t;
+	
+	fp = DB_GET_PAYLOAD(fld);
+
+	fp->is_null = fld->flags & DB_NULL;
+	if (fp->is_null) return;
+
+	switch(fld->type) {
+	case DB_STR:
+		param->buffer = fld->v.lstr.s;
+		fp->length = fld->v.lstr.len;
+		break;
+
+	case DB_BLOB:
+		param->buffer = fld->v.blob.s;
+		fp->length = fld->v.blob.len;
+		break;
+
+	case DB_CSTR:
+		param->buffer = (char*)fld->v.cstr;
+		fp->length = strlen(fld->v.cstr);
+		break;
+
+	case DB_DATETIME:
+		t = gmtime(&fld->v.time);
+		fp->time.second = t->tm_sec;
+		fp->time.minute = t->tm_min;
+		fp->time.hour = t->tm_hour;
+		fp->time.day = t->tm_mday;
+		fp->time.month = t->tm_mon + 1;
+		fp->time.year = t->tm_year + 1900;
+		break;
+		
+	case DB_NONE:
+	case DB_INT:
+	case DB_FLOAT:
+	case DB_DOUBLE:
+	case DB_BITMAP:
+		/* No need to do anything for these types */
+		break;
+
+	}
+}
+
+/**
+ *  Update params with given values.
+ *  Up to two sets of parameters are provided.
+ *  Both of them are used in UPDATE query, params1 as colspecs and values and
+ *  params2 as WHERE clause.
+ * @param st MySQL query statement
+ * @param params1 first set of params
+ * @param params2 second set of params
+ * @see bind_params
+ */
+static inline int update_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params2)
+{
+	int  my_idx, fld_idx;
+	int  count1, count2;
+
+	INFO("mysql: update_params(st=%p, params1=%p, params2=%p)\n", st, params1, params2);
+	/* Calculate the number of parameters */
+	for(count1 = 0; !DB_FLD_EMPTY(params1) && !DB_FLD_LAST(params1[count1]); count1++);
+	for(count2 = 0; !DB_FLD_EMPTY(params2) && !DB_FLD_LAST(params2[count2]); count2++);
+	
+	if (st->param_count != count1 + count2) {
+		ERR("MySQL param count do not match with given parameter arrays\n");
+		return -1;
+	}
 
 	/* Iterate through all the query parameters and update
 	 * their values if needed
@@ -451,50 +517,16 @@ static inline int update_params(MYSQL_STMT* st, db_fld_t* params)
 	/* FIXME: We are updating internals of the prepared statement here,
 	 * this is probably not nice but I could not find another way of
 	 * updating the pointer to the buffer without the need to run
-	 * mysql_stmt_bind_param again (which would be innefficient
+	 * mysql_stmt_bind_param again (which would be innefficient)
 	 */
-
-	for(i = 0; i < st->param_count; i++) {
-		fp = DB_GET_PAYLOAD(params + i);
-
-		fp->is_null = params[i].flags & DB_NULL;
-		if (fp->is_null) continue;
-
-		switch(params[i].type) {
-		case DB_STR:
-			st->params[i].buffer = params[i].v.lstr.s;
-			fp->length = params[i].v.lstr.len;
-			break;
-
-		case DB_BLOB:
-			st->params[i].buffer = params[i].v.blob.s;
-			fp->length = params[i].v.blob.len;
-			break;
-
-		case DB_CSTR:
-			st->params[i].buffer = (char*)params[i].v.cstr;
-			fp->length = strlen(params[i].v.cstr);
-			break;
-
-		case DB_DATETIME:
-			t = gmtime(&params[i].v.time);
-			fp->time.second = t->tm_sec;
-			fp->time.minute = t->tm_min;
-			fp->time.hour = t->tm_hour;
-			fp->time.day = t->tm_mday;
-			fp->time.month = t->tm_mon + 1;
-			fp->time.year = t->tm_year + 1900;
-			break;
-			
-		case DB_NONE:
-		case DB_INT:
-		case DB_FLOAT:
-		case DB_DOUBLE:
-		case DB_BITMAP:
-			/* No need to do anything for these types */
-			break;
-
-		}
+	/* params1 */
+	my_idx = 0;
+	for (fld_idx = 0; fld_idx < count1; fld_idx++, my_idx++) {
+		update_field(&st->params[my_idx], params1 + fld_idx);
+	}
+	/* params2 */
+	for (fld_idx = 0; fld_idx < count2; fld_idx++, my_idx++) {
+		update_field(&st->params[my_idx], params2 + fld_idx);
 	}
 
 	return 0;
@@ -579,8 +611,8 @@ int my_cmd_write(db_res_t* res, db_cmd_t* cmd)
 	struct my_cmd* mcmd;
 
 	mcmd = DB_GET_PAYLOAD(cmd);
-	if (cmd->type == DB_DEL && mcmd->st->param_count && update_params(mcmd->st, cmd->match) < 0) return -1;
-	if (cmd->type == DB_PUT && mcmd->st->param_count && update_params(mcmd->st, cmd->vals) < 0) return -1;
+	if (cmd->type == DB_DEL && mcmd->st->param_count && update_params(mcmd->st, cmd->match, NULL) < 0) return -1;
+	if (cmd->type == DB_PUT && mcmd->st->param_count && update_params(mcmd->st, cmd->vals, NULL) < 0) return -1;
 	if (mysql_stmt_execute(mcmd->st)) {
 		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
 		return -1;
@@ -594,7 +626,7 @@ int my_cmd_read(db_res_t* res, db_cmd_t* cmd)
 	struct my_cmd* mcmd;
    
 	mcmd = DB_GET_PAYLOAD(cmd);
-	if (mcmd->st->param_count && update_params(mcmd->st, cmd->match) < 0) return -1;
+	if (mcmd->st->param_count && update_params(mcmd->st, cmd->match, NULL) < 0) return -1;
 	if (mysql_stmt_execute(mcmd->st)) {
 		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
 		return -1;
@@ -608,8 +640,7 @@ int my_cmd_update(db_res_t* res, db_cmd_t* cmd)
 	struct my_cmd* mcmd;
 
 	mcmd = DB_GET_PAYLOAD(cmd);
-	if (mcmd->st->param_count && update_params(mcmd->st, cmd->match) < 0) return -1;
-	if (mcmd->st->param_count && update_params(mcmd->st, cmd->vals) < 0) return -1;
+	if (mcmd->st->param_count && update_params(mcmd->st, cmd->vals, cmd->match) < 0) return -1;
 	if (mysql_stmt_execute(mcmd->st)) {
 		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
 		return -1;
@@ -696,32 +727,32 @@ static void set_field(MYSQL_BIND *bind, db_fld_t* fld )
  * @param params2 second set of params
  * @see update_params
  */
-static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
+static int bind_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params2)
 {
 	int my_idx, fld_idx;
-	int value_count, match_count;
+	int count1, count2;
 	MYSQL_BIND* my_params;
 
-	INFO("mysql: bind_params(st=%p, fld_value=%p, fld_match=%p)\n", st, fld_value, fld_match);
+	INFO("mysql: bind_params(st=%p, params1=%p, params2=%p)\n", st, params1, params2);
 	/* Calculate the number of parameters */
-	for(value_count = 0; !DB_FLD_EMPTY(fld_value) && !DB_FLD_LAST(fld_value[value_count]); value_count++);
-	for(match_count = 0; !DB_FLD_EMPTY(fld_match) && !DB_FLD_LAST(fld_match[match_count]); match_count++);
+	for(count1 = 0; !DB_FLD_EMPTY(params1) && !DB_FLD_LAST(params1[count1]); count1++);
+	for(count2 = 0; !DB_FLD_EMPTY(params2) && !DB_FLD_LAST(params2[count2]); count2++);
 
-	my_params = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * (value_count+match_count));
+	my_params = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * (count1+count2));
 	if (my_params == NULL) {
 		ERR("No memory left\n");
 		return -1;
 	}
-	memset(my_params, '\0', sizeof(MYSQL_BIND) * (value_count+match_count));
+	memset(my_params, '\0', sizeof(MYSQL_BIND) * (count1+count2));
 
-	/* values */
+	/* params1 */
 	my_idx = 0;
-	for (fld_idx = 0; fld_idx < value_count; fld_idx++, my_idx++) {
-		set_field(&my_params[my_idx], fld_value + fld_idx);
+	for (fld_idx = 0; fld_idx < count1; fld_idx++, my_idx++) {
+		set_field(&my_params[my_idx], params1 + fld_idx);
 	}
-	/* match */
-	for (fld_idx = 0; fld_idx < match_count; fld_idx++, my_idx++) {
-		set_field(&my_params[my_idx], fld_match + fld_idx);
+	/* params2 */
+	for (fld_idx = 0; fld_idx < count2; fld_idx++, my_idx++) {
+		set_field(&my_params[my_idx], params2 + fld_idx);
 	}
 	INFO("mysql: bind_params: binding params, my_params = %p\n", my_params);
 	if (mysql_stmt_bind_param(st, my_params)) {
