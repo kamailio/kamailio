@@ -33,6 +33,7 @@
 #include <libxml/parser.h>
 #include <time.h>
 
+#include "../presence_xml/pidf.h"
 #include "../../sr_module.h"
 #include "../../parser/parse_expires.h"
 #include "../../dprint.h"
@@ -65,6 +66,8 @@ char* db_table= "pua";
 int update_period= 100;
 int startup_time = 0;
 pua_event_t* pua_evlist= NULL;
+xmlNodeGetAttrContentByName_t XMLNodeGetAttrContentByName;
+xmlDocGetNodeByName_t XMLDocGetNodeByName;
 
 /* database connection */
 db_con_t *pua_db = NULL;
@@ -124,8 +127,7 @@ struct module_exports exports= {
 	child_init                  /* per-child init function */
 };
 	
-/**#include "../../db/db.h"
-
+/**
  * init module function
  */
 static int mod_init(void)
@@ -134,6 +136,8 @@ static int mod_init(void)
 	int ver = 0;
 	
 	load_tm_f  load_tm;
+	bind_libxml_t bind_libxml;
+	libxml_api_t libxml_api;
 
 	DBG("PUA: initializing module ...\n");
 	
@@ -156,7 +160,24 @@ static int mod_init(void)
 		LOG(L_ERR, "PUA:mod_init:ERROR can't load tm functions\n");
 		return -1;
 	}
-	
+	if((bind_libxml= (bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
+	{
+		LOG(L_ERR, "PUA:mod_init:ERROR:can't import bind_libxml_api\n");
+		return -1;
+	}
+	if(bind_libxml(&libxml_api)< 0)
+	{
+		LOG(L_ERR, "PUA:mod_init:ERROR:can not bind libxml api\n");
+		return -1;
+	}
+	XMLNodeGetAttrContentByName= libxml_api.xmlNodeGetAttrContentByName;
+	XMLDocGetNodeByName= libxml_api.xmlDocGetNodeByName;
+	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL)
+	{
+		LOG(L_ERR, "PUA:mod_init:ERROR: libxml wrapper functions could not be bound");
+		return -1;
+	}
+
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	DBG("PUA:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	

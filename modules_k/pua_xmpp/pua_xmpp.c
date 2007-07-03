@@ -69,6 +69,13 @@ xmpp_translate_uri_f euri_sip_xmpp;
 xmpp_translate_uri_f duri_xmpp_sip;
 xmpp_translate_uri_f euri_xmpp_sip;
 
+/* libxml wrapper functions */
+xmlNodeGetAttrContentByName_t XMLNodeGetAttrContentByName;
+xmlDocGetNodeByName_t XMLDocGetNodeByName;
+xmlNodeGetNodeByName_t XMLNodeGetNodeByName;
+xmlNodeGetNodeContentByName_t XMLNodeGetNodeContentByName;
+
+
 /** module functions */
 
 static int mod_init(void);
@@ -82,7 +89,7 @@ static cmd_export_t cmds[]=
 {
 	{"pua_xmpp_notify",		 Notify2Xmpp,	       0,		0,		  REQUEST_ROUTE},
 	{"pua_xmpp_req_winfo",   request_winfo,	       2,  fixup_pua_xmpp,REQUEST_ROUTE},
-	{     0,			       0,			   0,		0,			   0	   }
+	{     0,			       0,		    	   0,		0,			   0	   }
 };
 
 static param_export_t params[]={
@@ -114,7 +121,8 @@ static int mod_init(void)
 	load_tm_f  load_tm;
 	bind_pua_t bind_pua;
 	bind_xmpp_t bind_xmpp;
-
+	bind_libxml_t bind_libxml;
+	libxml_api_t libxml_api;
 
 	/* import the TM auto-loading function */
 	if((load_tm=(load_tm_f)find_export("load_tm", 0, 0))==NULL)
@@ -129,6 +137,30 @@ static int mod_init(void)
 		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR can't load tm functions\n");
 		return -1;
 	}
+
+	/* bind libxml wrapper functions */
+	if((bind_libxml= (bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
+	{
+		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR:can't import bind_libxml_api\n");
+		return -1;
+	}
+	if(bind_libxml(&libxml_api)< 0)
+	{
+		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR:can not bind libxml api\n");
+		return -1;
+	}
+	XMLNodeGetAttrContentByName= libxml_api.xmlNodeGetAttrContentByName;
+	XMLDocGetNodeByName= libxml_api.xmlDocGetNodeByName;
+	XMLNodeGetNodeByName= libxml_api.xmlNodeGetNodeByName;
+    XMLNodeGetNodeContentByName= libxml_api.xmlNodeGetNodeContentByName;
+
+	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL ||
+			XMLNodeGetNodeByName== NULL || XMLNodeGetNodeContentByName== NULL)
+	{
+		LOG(L_ERR, "PUA:mod_init:ERROR: libxml wrapper functions could not be bound\n");
+		return -1;
+	}
+
 
 	/* bind xmpp */
 	bind_xmpp= (bind_xmpp_t)find_export("bind_xmpp", 0,0);

@@ -29,6 +29,7 @@
 #ifndef _XMMPP_TO_SIP_
 #define _XMMPP_TO_SIP_
 
+#include "../presence_xml/pidf.h"
 #include "../pua/pua_bind.h"
 #include "../xmpp/xmpp_api.h"
 
@@ -46,5 +47,11 @@ extern xmpp_translate_uri_f duri_sip_xmpp;
 extern xmpp_translate_uri_f euri_sip_xmpp;
 extern xmpp_translate_uri_f duri_xmpp_sip;
 extern xmpp_translate_uri_f euri_xmpp_sip;
+
+
+extern xmlNodeGetAttrContentByName_t XMLNodeGetAttrContentByName;
+extern xmlDocGetNodeByName_t XMLDocGetNodeByName;
+extern xmlNodeGetNodeByName_t XMLNodeGetNodeByName;
+extern xmlNodeGetNodeContentByName_t XMLNodeGetNodeContentByName;
 
 #endif

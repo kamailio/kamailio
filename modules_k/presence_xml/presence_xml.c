@@ -69,20 +69,20 @@ db_func_t pxml_dbf;
 
 static cmd_export_t cmds[]=
 {
-	{"bind_libxml_api",					(cmd_function)bind_libxml_api,			   0, 0, 0},	    
-	{"xmlDocGetNodeByName",				(cmd_function)xmlDocGetNodeByName,		   0, 0, 0},
-	{"xmlNodeGetChildByName",			(cmd_function)xmlNodeGetChildByName,       0, 0, 0},
-	{"xmlNodeGetNodeContentByName",		(cmd_function)xmlNodeGetNodeContentByName, 0, 0, 0},
-	{"xmlNodeGetAttrContentByName",     (cmd_function)xmlNodeGetAttrContentByName, 0, 0, 0},
+	{"bind_libxml_api",					(cmd_function)bind_libxml_api,			   1, 0, 0},	    
+	{"xmlDocGetNodeByName",				(cmd_function)xmlDocGetNodeByName,		   1, 0, 0},
+	{"xmlNodeGetNodeByName",			(cmd_function)xmlNodeGetNodeByName,        1, 0, 0},
+	{"xmlNodeGetNodeContentByName",		(cmd_function)xmlNodeGetNodeContentByName, 1, 0, 0},
+	{"xmlNodeGetAttrContentByName",     (cmd_function)xmlNodeGetAttrContentByName, 1, 0, 0},
 	{	    0,								0,						               0, 0, 0}
 };
 
 static param_export_t params[]={
-	{ "db_url",					STR_PARAM, &db_url.s},
-	{ "xcap_table",				STR_PARAM, &xcap_table},
-	{ "force_active",			INT_PARAM, &force_active },
-	{ "pidf_manipulation",      INT_PARAM, &pidf_manipulation}, 
-	{0,0,0}
+	{ "db_url",					STR_PARAM,  &db_url.s},
+	{ "xcap_table",				STR_PARAM,  &xcap_table},
+	{ "force_active",			INT_PARAM,  &force_active },
+	{ "pidf_manipulation",      INT_PARAM,  &pidf_manipulation}, 
+	{  0,						0,							 0}
 };
 	/** module exports */
 struct module_exports exports= {

@@ -38,7 +38,6 @@
 #include "../../parser/parse_fline.h"
 #include "../../mem/mem.h"
 #include "pua_xmpp.h"
-#include "pidf.h"
 #include "simple2xmpp.h"
 
 int winfo2xmpp(str* to_uri, str* body, str* id);
@@ -367,7 +366,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 				" memory\n");
 		return -1;
 	}
-	sip_root= xmlDocGetNodeByName(sip_doc, "presence", NULL);
+	sip_root= XMLDocGetNodeByName(sip_doc, "presence", NULL);
 	if(sip_root== NULL)
 	{
 		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while extracting"
@@ -375,7 +374,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 		goto error;
 	}
 	
-	node = xmlNodeGetNodeByName(sip_root, "basic", NULL);
+	node = XMLNodeGetNodeByName(sip_root, "basic", NULL);
 	if(node== NULL)
 	{
 		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while extracting status"
@@ -405,17 +404,17 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 
 	xmlFree(basic);
 	/* addind show node */
-	node= xmlNodeGetNodeByName(sip_root, "note", NULL);
+	node= XMLNodeGetNodeByName(sip_root, "note", NULL);
 	if(node== NULL)
 	{
 		DBG("PUA_XMPP:build_xmpp_content: No note node found\n");
-		node= xmlNodeGetNodeByName(sip_root, "person", NULL);
+		node= XMLNodeGetNodeByName(sip_root, "person", NULL);
 		if(node== NULL)
 		{
 			DBG("PUA_XMPP:build_xmpp_content: No person node found\n");
 			goto done;
 		}
-		node= xmlNodeGetNodeByName(node, "note", NULL);
+		node= XMLNodeGetNodeByName(node, "note", NULL);
 		if(node== NULL)
 		{	
 			DBG("PUA_XMPP:build_xmpp_content: Person node has no note node\n");
@@ -504,14 +503,14 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 	note= NULL;
 
 	/* adding priotity node*/
-	node= xmlNodeGetNodeByName(sip_root, "contact", NULL);
+	node= XMLNodeGetNodeByName(sip_root, "contact", NULL);
 	if(node== NULL)
 	{
 		DBG("PUA_XMPP:build_xmpp_content: No contact node found\n");
 	}
 	else
 	{
-		priority= xmlNodeGetAttrContentByName(node, "priority");
+		priority= XMLNodeGetAttrContentByName(node, "priority");
 		if(priority== NULL)
 			DBG("PUA_XMPP:build_xmpp_content: No priority attribute found\n");
 		else
@@ -606,7 +605,7 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 		LOG(L_ERR, "PUA_XMPP: winfo2xmpp: Error while parsing xml memory\n");
 		return -1;
 	}
-	pidf_root= xmlDocGetNodeByName(notify_doc, "watcherinfo", NULL);
+	pidf_root= XMLDocGetNodeByName(notify_doc, "watcherinfo", NULL);
 	if(pidf_root== NULL)
 	{
 		LOG(L_ERR, "PUA_XMPP:winfo2xmpp: Error while extracting 'presence'"
@@ -614,7 +613,7 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 		goto error;
 	}
 	
-	node = xmlNodeGetNodeByName(pidf_root, "watcher", NULL);
+	node = XMLNodeGetNodeByName(pidf_root, "watcher", NULL);
 
 	for (; node!=NULL; node = node->next)
 	{		

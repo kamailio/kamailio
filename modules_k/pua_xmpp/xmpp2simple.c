@@ -37,7 +37,6 @@
 #include "../../mem/mem.h"
 #include "../../ut.h"
 #include "../pua/pua.h"
-#include "pidf.h"
 #include "pua_xmpp.h"
 
 int build_publish(xmlNodePtr pres_node, int expire);
@@ -60,13 +59,13 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 		return;
 	}
 
-	pres_node= xmlDocGetNodeByName(doc, "presence", NULL);
+	pres_node= XMLDocGetNodeByName(doc, "presence", NULL);
 	if(pres_node == NULL)
 	{
 		DBG("PUA_XMPP:pres_Xmpp2Sip Error while getting node\n");
 		goto error;
 	}
-	pres_type= xmlNodeGetAttrContentByName(pres_node, "type" );
+	pres_type= XMLNodeGetAttrContentByName(pres_node, "type" );
 	
 	if(pres_type== NULL )
 	{
@@ -208,7 +207,7 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 		goto error;
 	}
 
-	type=  xmlNodeGetAttrContentByName(pres_node, "type");
+	type=  XMLNodeGetAttrContentByName(pres_node, "type");
 	if(type== NULL)
 	{
 		basic_node = xmlNewChild(status_node, NULL, BAD_CAST "basic",
@@ -232,8 +231,8 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 		goto done;		
 	}
 	/*if no type present search for suplimentary information */
-	status_cont= xmlNodeGetNodeContentByName(pres_node, "status", NULL);
-	show_cont= xmlNodeGetNodeContentByName(pres_node, "show", NULL);
+	status_cont= XMLNodeGetNodeContentByName(pres_node, "status", NULL);
+	show_cont= XMLNodeGetNodeContentByName(pres_node, "show", NULL);
 	
 	if(show_cont)
 	{
@@ -366,7 +365,7 @@ int build_publish(xmlNodePtr pres_node, int expires)
 
 	DBG("PUA_XMPP: build publish .. \n");
 	
-	uri= xmlNodeGetAttrContentByName(pres_node, "from");
+	uri= XMLNodeGetAttrContentByName(pres_node, "from");
 	if(uri== NULL)
 	{
 		DBG("PUA_XMPP:build_publish: Error while getting 'from' attribute\n");
@@ -467,7 +466,7 @@ int presence_subscribe(xmlNodePtr pres_node, int expires,int  flag)
 	str to_uri_str;
 	str from_uri_str;
 
-	uri= xmlNodeGetAttrContentByName(pres_node, "to"); 
+	uri= XMLNodeGetAttrContentByName(pres_node, "to"); 
 	if(uri== NULL)
 	{
 		LOG(L_ERR, "PUA_XMPP: build_subscribe:ERRor while getting attribute"
@@ -485,7 +484,7 @@ int presence_subscribe(xmlNodePtr pres_node, int expires,int  flag)
 	to_uri_str.s= to_uri;
 	to_uri_str.len= strlen(to_uri);
 
-	uri= xmlNodeGetAttrContentByName(pres_node, "from"); 
+	uri= XMLNodeGetAttrContentByName(pres_node, "from"); 
 	if(uri== NULL)
 	{
 		LOG(L_ERR, "PUA_XMPP:build_subscribe:ERROR while getting attribute"
@@ -509,7 +508,7 @@ int presence_subscribe(xmlNodePtr pres_node, int expires,int  flag)
 	subs.watcher_uri= &from_uri_str;
 	subs.contact= subs.watcher_uri;
 	/*
-	type= xmlNodeGetAttrContentByName(pres_node, "type" );
+	type= XMLNodeGetAttrContentByName(pres_node, "type" );
 	if(strcmp(type, "subscribe")==0 ||strcmp(type, "probe")== 0)
 		subs->flag|= INSERT_TYPE;
 	else	

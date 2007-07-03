@@ -30,45 +30,7 @@
 
 #include "event_list.h"
 #include "add_events.h"
-
-xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
-															const char *ns)
-{
-	xmlNodePtr cur = node;
-	while (cur) {
-		xmlNodePtr match = NULL;
-		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0) {
-			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix,
-							(unsigned char*)ns) == 0))
-				return cur;
-		}
-		match = xmlNodeGetNodeByName(cur->children, name, ns);
-		if (match)
-			return match;
-		cur = cur->next;
-	}
-	return NULL;
-}
-xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
-{
-	xmlAttrPtr attr = node->properties;
-	while (attr) {
-		if (xmlStrcasecmp(attr->name, (unsigned char*)name) == 0)
-			return attr;
-		attr = attr->next;
-	}
-	return NULL;
-}
-
-char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name)
-{
-	xmlAttrPtr attr = xmlNodeGetAttrByName(node, name);
-	if (attr)
-		return (char*)xmlNodeGetContent(attr->children);
-	else
-		return NULL;
-}
-
+#include "pua.h"
 
 int pua_add_events()
 {
@@ -126,13 +88,13 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		goto error;
 	}
 
-	node= xmlNodeGetNodeByName(doc->children, "tuple", NULL);
+	node= XMLDocGetNodeByName(doc, "tuple", NULL);
 	if(node == NULL)
 	{
 		LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting tuple node\n");
 		goto error;
 	}
-	tuple_id= xmlNodeGetAttrContentByName(node, "id");
+	tuple_id= XMLNodeGetAttrContentByName(node, "id");
 	if(tuple_id== NULL)
 	{
 		tuple= *(tuple_param);
@@ -207,11 +169,11 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		}	
 	}	
 
-	node= xmlNodeGetNodeByName(doc->children, "person", NULL);
+	node= XMLDocGetNodeByName(doc, "person", NULL);
 	if(node)
 	{
 		DBG("PUA: pres_process_body:found person node\n");
-		person_id= xmlNodeGetAttrContentByName(node, "id");
+		person_id= XMLNodeGetAttrContentByName(node, "id");
 		if(person_id== NULL)
 		{	
 			if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
@@ -282,7 +244,7 @@ int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 		goto error;
 	}
 	/* change version and state*/
-	node= xmlNodeGetNodeByName(doc->children, "dialog-info", NULL);
+	node= XMLDocGetNodeByName(doc, "dialog-info", NULL);
 	if(node == NULL)
 	{
 		LOG(L_ERR, "PUA: bla_process_body: ERROR while extracting dialog-info node\n");

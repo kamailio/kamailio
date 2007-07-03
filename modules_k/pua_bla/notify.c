@@ -34,10 +34,6 @@
 #include "../pua/hash.h"
 #include"pua_bla.h"
 
-
-xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns);
-xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name);
-
 int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 {
  	publ_info_t publ;
@@ -245,42 +241,5 @@ error:
    		xmlFreeDoc(doc);
    
    	return 0;
-}
-
-
-xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
-															const char *ns)
-{
-	xmlNodePtr cur = node;
-	while (cur) {
-		xmlNodePtr match = NULL;
-		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0) {
-			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix,
-							(unsigned char*)ns) == 0))
-				return cur;
-		}
-		match = xmlNodeGetNodeByName(cur->children, name, ns);
-		if (match)
-			return match;
-		cur = cur->next;
-	}
-	return NULL;
-}
-
-xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns)
-{
-	xmlNodePtr cur = doc->children;
-	return xmlNodeGetNodeByName(cur, name, ns);
-}
-
-xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
-{
-	xmlNodePtr cur = node->children;
-	while (cur) {
-		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0)
-			return cur;
-		cur = cur->next;
-	}
-	return NULL;
 }
 

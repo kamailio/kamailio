@@ -33,7 +33,7 @@
 #include <libxml/parser.h>
 
 typedef xmlNodePtr (*xmlDocGetNodeByName_t)(xmlDocPtr doc, const char *name, const char *ns);
-typedef xmlNodePtr (*xmlNodeGetChildByName_t)(xmlNodePtr node, const char *name);
+typedef xmlNodePtr (*xmlNodeGetNodeByName_t)(xmlNodePtr node, const char *name, const char *ns);
 typedef char* (*xmlNodeGetNodeContentByName_t)(xmlNodePtr root, const char *name,
 		const char *ns);
 typedef char* (*xmlNodeGetAttrContentByName_t)(xmlNodePtr node, const char *name);
@@ -41,7 +41,7 @@ xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
 															const char *ns);
 typedef struct libxml_api {
 	xmlDocGetNodeByName_t xmlDocGetNodeByName;
-	xmlNodeGetChildByName_t xmlNodeGetChildByName;
+	xmlNodeGetNodeByName_t xmlNodeGetNodeByName;
 	xmlNodeGetNodeContentByName_t xmlNodeGetNodeContentByName;
 	xmlNodeGetAttrContentByName_t xmlNodeGetAttrContentByName;
 } libxml_api_t;

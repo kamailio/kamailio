@@ -31,7 +31,6 @@
 #include <libxml/parser.h>
 #include "../../dprint.h"
 #include "../../sr_module.h"
-#include "pidf.h"
 
 
 xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
@@ -125,9 +124,9 @@ int bind_libxml_api(libxml_api_t* api)
 		return -1;
 	}
 
-	api->xmlNodeGetChildByName = (xmlNodeGetChildByName_t )find_export
-		("xmlNodeGetChildByName", 1, 0);
-	if (api->xmlNodeGetChildByName == 0)
+	api->xmlNodeGetNodeByName = (xmlNodeGetNodeByName_t )find_export
+		("xmlNodeGetNodeByName", 1, 0);
+	if (api->xmlNodeGetNodeByName == 0)
 	{
 		LOG(L_ERR, "PRESENCE_XML:bind_libxml: Can't bind xmlNodeGetChildByName \n");
 		return -1;

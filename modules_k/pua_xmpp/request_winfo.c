@@ -31,7 +31,6 @@
 #include <libxml/parser.h>
 
 #include "pua_xmpp.h"
-#include "pidf.h"
 #include "request_winfo.h"
 
 #define PRINTBUF_SIZE 256
