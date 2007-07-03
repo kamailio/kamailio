@@ -33,6 +33,10 @@
  *  2003-03-16  flags export parameter added (janakj)
  */
 
+/** @addtogroup mysql
+ *  @{
+ */
+ 
 #include "../../sr_module.h"
 #include "../../db/db.h"
 #include "my_uri.h"
@@ -134,3 +138,5 @@ static int mysql_mod_init(void)
 #endif
 	return 0;
 }
+
+/** @} */

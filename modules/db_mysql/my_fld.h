@@ -29,6 +29,10 @@
 #ifndef _MY_FLD_H
 #define _MY_FLD_H  1
 
+/** @addtogroup mysql
+ *  @{
+ */
+
 #include "../../db/db_drv.h"
 #include "../../db/db_fld.h"
 #include <mysql/mysql.h>
@@ -43,5 +47,7 @@ struct my_fld {
 };
 
 int my_fld(db_fld_t* fld, char* table);
+
+/** @} */
 
 #endif /* _MY_FLD_H */
