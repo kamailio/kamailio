@@ -66,17 +66,6 @@ struct sl_binds slb;
 db_con_t *pxml_db = NULL;
 db_func_t pxml_dbf;
 
-
-static cmd_export_t cmds[]=
-{
-	{"bind_libxml_api",					(cmd_function)bind_libxml_api,			   1, 0, 0},	    
-	{"xmlDocGetNodeByName",				(cmd_function)xmlDocGetNodeByName,		   1, 0, 0},
-	{"xmlNodeGetNodeByName",			(cmd_function)xmlNodeGetNodeByName,        1, 0, 0},
-	{"xmlNodeGetNodeContentByName",		(cmd_function)xmlNodeGetNodeContentByName, 1, 0, 0},
-	{"xmlNodeGetAttrContentByName",     (cmd_function)xmlNodeGetAttrContentByName, 1, 0, 0},
-	{	    0,								0,						               0, 0, 0}
-};
-
 static param_export_t params[]={
 	{ "db_url",					STR_PARAM,  &db_url.s},
 	{ "xcap_table",				STR_PARAM,  &xcap_table},
@@ -88,7 +77,7 @@ static param_export_t params[]={
 struct module_exports exports= {
 	"presence_xml",				/* module name */
 	 DEFAULT_DLFLAGS,           /* dlopen flags */
-	 cmds,						/* exported functions */
+	 0,  						/* exported functions */
 	 params,					/* exported parameters */
 	 0,							/* exported statistics */
 	 0,							/* exported MI functions */

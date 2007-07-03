@@ -33,7 +33,6 @@
 #include <libxml/parser.h>
 #include <time.h>
 
-#include "../presence_xml/pidf.h"
 #include "../../sr_module.h"
 #include "../../parser/parse_expires.h"
 #include "../../dprint.h"
@@ -51,6 +50,7 @@
 #include "pua_callback.h"
 #include "event_list.h"
 #include "add_events.h"
+#include "pidf.h"
 
 MODULE_VERSION
 #define PUA_TABLE_VERSION 3
@@ -66,8 +66,6 @@ char* db_table= "pua";
 int update_period= 100;
 int startup_time = 0;
 pua_event_t* pua_evlist= NULL;
-xmlNodeGetAttrContentByName_t XMLNodeGetAttrContentByName;
-xmlDocGetNodeByName_t XMLDocGetNodeByName;
 
 /* database connection */
 db_con_t *pua_db = NULL;
@@ -93,12 +91,8 @@ void hashT_clean(unsigned int ticks,void *param);
 
 static cmd_export_t cmds[]=
 {
+	{"bind_libxml_api",  (cmd_function)bind_libxml_api,  1, 0, 0},
 	{"bind_pua",	     (cmd_function)bind_pua,		 1, 0, 0},
-	{"send_publish",     (cmd_function)send_publish,     1, 0, 0},
-	{"send_subscribe",   (cmd_function)send_subscribe,   1, 0, 0},
-	{"pua_is_dialog",    (cmd_function)is_dialog,		 1, 0, 0},
-	{"register_puacb",   (cmd_function)register_puacb,   1, 0, 0},
-	{"add_pua_event",    (cmd_function)add_pua_event,    4, 0, 0},
 	{0,							0,					     0, 0, 0} 
 };
 
@@ -136,8 +130,6 @@ static int mod_init(void)
 	int ver = 0;
 	
 	load_tm_f  load_tm;
-	bind_libxml_t bind_libxml;
-	libxml_api_t libxml_api;
 
 	DBG("PUA: initializing module ...\n");
 	
@@ -158,23 +150,6 @@ static int mod_init(void)
 	if(load_tm(&tmb)==-1)
 	{
 		LOG(L_ERR, "PUA:mod_init:ERROR can't load tm functions\n");
-		return -1;
-	}
-	if((bind_libxml= (bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
-	{
-		LOG(L_ERR, "PUA:mod_init:ERROR:can't import bind_libxml_api\n");
-		return -1;
-	}
-	if(bind_libxml(&libxml_api)< 0)
-	{
-		LOG(L_ERR, "PUA:mod_init:ERROR:can not bind libxml api\n");
-		return -1;
-	}
-	XMLNodeGetAttrContentByName= libxml_api.xmlNodeGetAttrContentByName;
-	XMLDocGetNodeByName= libxml_api.xmlDocGetNodeByName;
-	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL)
-	{
-		LOG(L_ERR, "PUA:mod_init:ERROR: libxml wrapper functions could not be bound");
 		return -1;
 	}
 

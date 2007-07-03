@@ -29,7 +29,7 @@
 #ifndef _XMMPP_TO_SIP_
 #define _XMMPP_TO_SIP_
 
-#include "../presence_xml/pidf.h"
+#include "../pua/pidf.h"
 #include "../pua/pua_bind.h"
 #include "../xmpp/xmpp_api.h"
 

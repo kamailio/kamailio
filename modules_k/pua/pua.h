@@ -25,7 +25,6 @@
 #ifndef PUBLISH_H
 #define PUBLISH_H
 
-#include "../presence_xml/pidf.h"
 #include "../../str.h"
 #include "hash.h"
 
@@ -39,7 +38,5 @@ extern int HASH_SIZE;
 extern int min_expires;
 extern int pua_ul_publish;
 extern int default_expires;
-extern xmlNodeGetAttrContentByName_t XMLNodeGetAttrContentByName;
-extern xmlDocGetNodeByName_t XMLDocGetNodeByName;
 
 #endif

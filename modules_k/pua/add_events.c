@@ -88,13 +88,13 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		goto error;
 	}
 
-	node= XMLDocGetNodeByName(doc, "tuple", NULL);
+	node= xmlDocGetNodeByName(doc, "tuple", NULL);
 	if(node == NULL)
 	{
 		LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting tuple node\n");
 		goto error;
 	}
-	tuple_id= XMLNodeGetAttrContentByName(node, "id");
+	tuple_id= xmlNodeGetAttrContentByName(node, "id");
 	if(tuple_id== NULL)
 	{
 		tuple= *(tuple_param);
@@ -169,11 +169,11 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		}	
 	}	
 
-	node= XMLDocGetNodeByName(doc, "person", NULL);
+	node= xmlDocGetNodeByName(doc, "person", NULL);
 	if(node)
 	{
 		DBG("PUA: pres_process_body:found person node\n");
-		person_id= XMLNodeGetAttrContentByName(node, "id");
+		person_id= xmlNodeGetAttrContentByName(node, "id");
 		if(person_id== NULL)
 		{	
 			if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
@@ -244,7 +244,7 @@ int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 		goto error;
 	}
 	/* change version and state*/
-	node= XMLDocGetNodeByName(doc, "dialog-info", NULL);
+	node= xmlDocGetNodeByName(doc, "dialog-info", NULL);
 	if(node == NULL)
 	{
 		LOG(L_ERR, "PUA: bla_process_body: ERROR while extracting dialog-info node\n");

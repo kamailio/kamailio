@@ -1,9 +1,9 @@
 /*
  * $Id: pidf.c 1953 2007-04-04 08:50:33Z anca_vamanu $
  *
- * presence module - presence server implementation
+ * pua module
  *
- * Copyright (C) 2006 Voice Sistem S.R.L.
+ * Copyright (C) 2007 Voice Sistem S.R.L.
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- *  2007-04-14  initial version (anca)
+ *  2007-07-03  initial version (anca)
  */
 
 #include <string.h>
@@ -32,6 +32,7 @@
 #include "../../dprint.h"
 #include "../../sr_module.h"
 #include "pidf.h"
+
 
 xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
 {
@@ -108,3 +109,19 @@ char *xmlDocGetNodeContentByName(xmlDocPtr doc, const char *name,
 	else
 		return NULL;
 }
+
+int bind_libxml_api(libxml_api_t* api)
+{
+	if (!api)
+	{
+		LOG(L_ERR, "PRESENCE_XML:bind_libxml: Invalid parameter value\n");
+		return -1;
+	}
+	api->xmlDocGetNodeByName         =  xmlDocGetNodeByName;
+	api->xmlNodeGetNodeByName        =  xmlNodeGetNodeByName;
+	api->xmlNodeGetNodeContentByName =  xmlNodeGetNodeContentByName;
+	api->xmlNodeGetAttrContentByName =  xmlNodeGetAttrContentByName;
+	
+	return 0;
+}	
+
