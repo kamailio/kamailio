@@ -1056,7 +1056,8 @@ branch_route[1] {
      * trans_id - transaction identifier (has the
        hash_entry:label format)
      * to_tag - To tag to be added to TO header
-     * new_headers - extra headers to be appended to the reply
+     * new_headers - extra headers to be appended to the reply;
+       use a dot (".") char only if there are no headers;
      * body - (optional, may not be present) reply body (if
        present, requires the "Content-Type" and "Content-length"
        headers)

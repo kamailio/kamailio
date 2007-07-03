@@ -1355,7 +1355,8 @@ branch_route[1] {
 			</para></listitem>
 			<listitem><para>
 				<emphasis>new_headers</emphasis> - extra headers to be
-				appended to the reply
+				appended to the reply; use a dot (<quote>.</quote>) char 
+				only if there are no headers;
 			</para></listitem>
 			<listitem><para>
 				<emphasis>body</emphasis> - (optional, may not be present)
