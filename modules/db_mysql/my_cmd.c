@@ -702,7 +702,7 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
 	int value_count, match_count;
 	MYSQL_BIND* my_params;
 
-	INFO("bind_params(st=%p, fld_value=%p, fld_match=%p)\n", st, fld_value, fld_match);
+	INFO("mysql: bind_params(st=%p, fld_value=%p, fld_match=%p)\n", st, fld_value, fld_match);
 	/* Calculate the number of parameters */
 	for(value_count = 0; !DB_FLD_EMPTY(fld_value) && !DB_FLD_LAST(fld_value[value_count]); value_count++);
 	for(match_count = 0; !DB_FLD_EMPTY(fld_match) && !DB_FLD_LAST(fld_match[match_count]); match_count++);
@@ -723,7 +723,7 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
 	for (fld_idx = 0; fld_idx < match_count; fld_idx++, my_idx++) {
 		set_field(&my_params[my_idx], fld_match + fld_idx);
 	}
-	INFO("bind_params: binding params, my_params = %p\n", my_params);
+	INFO("mysql: bind_params: binding params, my_params = %p\n", my_params);
 	if (mysql_stmt_bind_param(st, my_params)) {
 		ERR("Error while binding parameters: %s\n", mysql_stmt_error(st));
 		goto error;
@@ -749,13 +749,13 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 	struct my_fld* f;
 	MYSQL_BIND* result;
 
-INFO("bind_result(st = %p, fld = %p)\n", st, fld);
-INFO("bind_result: field count: %d\n", st->field_count);
+INFO("mysql: bind_result(st = %p, fld = %p)\n", st, fld);
+INFO("mysql: bind_result: field count: %d\n", st->field_count);
 	/* Calculate the number of fields in the result */
 	for(n = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[n]); n++);
-INFO("bind_result: n = %d\n", n);
+INFO("mysql: bind_result: n = %d\n", n);
 	result = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * n);
-INFO("bind_result: result = %p\n", result);
+INFO("mysql: bind_result: result = %p\n", result);
 	if (result == NULL) {
 		ERR("No memory left\n");
 		return -1;
@@ -763,8 +763,8 @@ INFO("bind_result: result = %p\n", result);
 	memset(result, '\0', sizeof(MYSQL_BIND) * n);
 	
 	for(i = 0; i < n; i++) {
-//INFO("bind_result: i = %d\n", i);
-//INFO("bind_result: fld[%d].type = %d\n", i, fld[i].type);
+//INFO("mysql: bind_result: i = %d\n", i);
+//INFO("mysql: bind_result: fld[%d].type = %d\n", i, fld[i].type);
 		f = DB_GET_PAYLOAD(fld + i);
 		result[i].is_null = &f->is_null;
 		/* We can do it for all the types here, mysql will ignore it
@@ -835,7 +835,7 @@ INFO("bind_result: result = %p\n", result);
 
 		}
 	}
-INFO("bind_result: result = %p\n", result);
+INFO("mysql: bind_result: result = %p\n", result);
 	if (mysql_stmt_bind_result(st, result)) {
 		ERR("Error while binding result: %s\n", mysql_stmt_error(st));
 		goto error;
@@ -859,7 +859,7 @@ int my_cmd(db_cmd_t* cmd)
 	struct my_cmd* res;
 	struct my_con* mcon;
 
-INFO("my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cmd->match, cmd->vals);
+INFO("mysql: my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cmd->match, cmd->vals);
 	res = (struct my_cmd*)pkg_malloc(sizeof(struct my_cmd));
 	if (res == NULL) {
 		ERR("No memory left\n");
@@ -884,7 +884,7 @@ INFO("my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cm
 			goto error;
 		}
 		if (build_replace_query(&res->query, cmd) < 0) goto error;
-		INFO("build_replace_query: query = '%.*s'\n", res->query.len, res->query.s);
+		INFO("mysql: build_replace_query: query = '%.*s'\n", res->query.len, res->query.s);
 		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
 			ERR("Error while preparing replace query: %s\n", 
 				mysql_stmt_error(res->st));
@@ -895,7 +895,7 @@ INFO("my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cm
 
 	case DB_DEL:
 		if (build_delete_query(&res->query, cmd) < 0) goto error;
-		INFO("build_delete_query: query = '%.*s'\n", res->query.len, res->query.s);
+		INFO("mysql: build_delete_query: query = '%.*s'\n", res->query.len, res->query.s);
 		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
 			ERR("Error while preparing delete query: %s\n",
 				mysql_stmt_error(res->st));
@@ -908,7 +908,7 @@ INFO("my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cm
 
 	case DB_GET:
 		if (build_select_query(&res->query, cmd) < 0) goto error;
-		INFO("build_select_query: query = '%.*s'\n", res->query.len, res->query.s);
+		INFO("mysql: build_select_query: query = '%.*s'\n", res->query.len, res->query.s);
 		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
 			ERR("Error while preparing select query: %s\n",
 				mysql_stmt_error(res->st));
@@ -925,7 +925,7 @@ INFO("my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cm
 
 	case DB_UPD:
 		if (build_update_query(&res->query, cmd) < 0) goto error;
-		INFO("build_update_query: query = '%.*s'\n", res->query.len, res->query.s);
+		INFO("mysql: build_update_query: query = '%.*s'\n", res->query.len, res->query.s);
 		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
 			ERR("mysql: Error while preparing UPDATE query: %s\n",
 				mysql_stmt_error(res->st));
