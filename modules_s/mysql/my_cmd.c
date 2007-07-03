@@ -571,8 +571,8 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 }
 
 /**
- *  DB_DEL uses cmd->match
- *  DB_PUT uses cmd->vals
+ *  DB_DEL uses cmd-&gt;match
+ *  DB_PUT uses cmd-&gt;vals
  */
 int my_cmd_write(db_res_t* res, db_cmd_t* cmd)
 {
@@ -630,6 +630,11 @@ int my_cmd_sql(db_res_t* res, db_cmd_t* cmd)
 	return 0;
 }
 
+/**
+ * Set MYSQL_BIND item.
+ * @param bind destination
+ * @param fld  source
+ */
 static void set_field(MYSQL_BIND *bind, db_fld_t* fld )
 {
 	struct my_fld* f;
@@ -681,7 +686,15 @@ static void set_field(MYSQL_BIND *bind, db_fld_t* fld )
 }
 
 /**
- *  Bind params, values first and match after them.
+ *  Bind params, give real values into prepared statement.
+ *  Up to two sets of parameters are provided.
+ *  Both of them are used in UPDATE query, params1 as colspecs and values and
+ *  params2 as WHERE clause. In other cases one set could be enough because values
+ *  or match (WHERE clause) is needed.
+ * @param st MySQL query statement
+ * @param params1 first set of params
+ * @param params2 second set of params
+ * @see update_params
  */
 static int bind_params(MYSQL_STMT* st, db_fld_t* fld_value, db_fld_t* fld_match)
 {
