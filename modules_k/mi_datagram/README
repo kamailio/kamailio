@@ -66,8 +66,7 @@ Chapter 1. User's Guide
    The external commands issued via DATAGRAM interface must
    follow the following syntax:
 
-     * request = first_line argument_list? 
-     * argument_list = (argument '\n')* argument 
+     * request = first_line (argument '\n')* 
      * first_line = ':'command_name':''\n' 
      * argument = (arg_name '::' (arg_value)? ) | (arg_value) 
      * arg_name = not-quoted_string 
