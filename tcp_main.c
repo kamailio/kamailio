@@ -148,7 +148,7 @@
 #ifndef TCP_CHILD_NON_BLOCKING
 #define TCP_CHILD_NON_BLOCKING
 #endif
-#define MAX_SEND_FD_QUEUE_SIZE	tcp_max_fd_no
+#define MAX_SEND_FD_QUEUE_SIZE	tcp_main_max_fd_no
 #define SEND_FD_QUEUE_SIZE		128  /* initial size */
 #define MAX_SEND_FD_RETRIES		96	 /* FIXME: not used for now */
 #define SEND_FD_QUEUE_TIMEOUT	MS_TO_TICKS(2000)  /* 2 s */
@@ -170,7 +170,7 @@ int tcp_send_timeout=DEFAULT_TCP_SEND_TIMEOUT;
 int tcp_con_lifetime=DEFAULT_TCP_CONNECTION_LIFETIME;
 enum poll_types tcp_poll_method=0; /* by default choose the best method */
 int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
-int tcp_max_fd_no=0;
+int tcp_main_max_fd_no=0;
 
 int tcp_use_source_ipv4 = 0;
 struct sockaddr_in tcp_source_ipv4;
@@ -1691,6 +1691,7 @@ void tcp_main_loop()
 	
 	is_tcp_main=1; /* mark this process as tcp main */
 	
+	tcp_main_max_fd_no=get_max_open_fds();
 	/* init send fd queues (here because we want mem. alloc only in the tcp
 	 *  process */
 #ifdef SEND_FD_QUEUE
@@ -1701,8 +1702,7 @@ void tcp_main_loop()
 #endif
 	/* init io_wait (here because we want the memory allocated only in
 	 * the tcp_main process) */
-	
-	if  (init_io_wait(&io_h, tcp_max_fd_no, tcp_poll_method)<0)
+	if  (init_io_wait(&io_h, tcp_main_max_fd_no, tcp_poll_method)<0)
 		goto error;
 	/* init: start watching all the fds*/
 	
@@ -2023,12 +2023,14 @@ int tcp_init_children()
 		for (si=tls_listen; si; si=si->next, r++);
 #endif
 	
+	register_fds(r+tcp_max_connections+get_max_procs()-1 /* tcp main */);
+#if 0
 	tcp_max_fd_no=get_max_procs()*2 +r-1 /* timer */ +3; /* stdin/out/err*/
 	/* max connections can be temporarily exceeded with estimated_process_count
 	 * - tcp_main (tcpconn_connect called simultaneously in all all the 
 	 *  processes) */
 	tcp_max_fd_no+=tcp_max_connections+get_max_procs()-1 /* tcp main */;
-	
+#endif
 	/* alloc the children array */
 	tcp_children=pkg_malloc(sizeof(struct tcp_child)*tcp_children_no);
 	if (tcp_children==0){

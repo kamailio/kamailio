@@ -1157,6 +1157,7 @@ int main_loop()
 		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
 	}
 #endif
+	DBG("Expect maximum %d  open fds\n", get_max_open_fds());
 
 	for(;;){
 			handle_sigs();
