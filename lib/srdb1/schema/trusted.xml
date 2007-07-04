@@ -40,7 +40,7 @@
 	<name>proto</name>
 	<type>string</type>
 	<size>4</size>
-        <description>Transport protocol is either “any” or equal to transport protocol of request. Possible values that can be stored are “any”, “udp”, “tcp”, “tls”, and “sctp”.</description>
+        <description>Transport protocol is either "any" or equal to transport protocol of request. Possible values that can be stored are "any", "udp", "tcp", "tls", and "sctp".</description>
     </column>
 
     <column>

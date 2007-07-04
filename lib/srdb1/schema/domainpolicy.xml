@@ -38,7 +38,7 @@
         <name>type</name>
         <type>string</type>
         <size>&rule_len;</size>
-        <description> Domain policy rule type. In the case of federation names, this is “fed”. For standard referrals according to draft-lendl-speermint-technical-policy-00, this is “std”. For direct domain lookups, this is “dom”. Default value is “type”.</description>
+        <description> Domain policy rule type. In the case of federation names, this is "fed". For standard referrals according to draft-lendl-speermint-technical-policy-00, this is "std". For direct domain lookups, this is "dom". Default value is "type".</description>
     </column>
 
     <column id="att">
@@ -46,7 +46,7 @@
         <type>string</type>
         <size>&rule_len;</size>
         <null/>
-        <description>It contains the AVP’s name. If the rule stored in this row triggers, than dp_can_connect() will add an AVP with that name.</description>
+        <description>It contains the AVP's name. If the rule stored in this row triggers, than dp_can_connect() will add an AVP with that name.</description>
     </column>
 
     <column id="val">
@@ -54,7 +54,7 @@
         <type>string</type>
         <size>&avp_val_len;</size>
         <null/>
-        <description>It contains the values for AVPs created by dp_can_connect(). Default value is “val”</description>
+        <description>It contains the values for AVPs created by dp_can_connect(). Default value is "val"</description>
     </column>
 
     <column>

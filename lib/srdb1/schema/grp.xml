@@ -12,7 +12,7 @@
     <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table us used by the group module as a means of group membership checking. Used primarily for Access Control Lists (ACL‘s). More information about the group module can be found at: http://www.openser.org/docs/modules/1.2.x/group.html
+        <db:para>This table us used by the group module as a means of group membership checking. Used primarily for Access Control Lists (ACL's). More information about the group module can be found at: http://www.openser.org/docs/modules/1.2.x/group.html
         </db:para>
     </description>
 
@@ -24,6 +24,7 @@
         <primary/>
         <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
     </column>
 
     <column id="username">
