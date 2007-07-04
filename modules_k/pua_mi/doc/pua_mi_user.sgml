@@ -141,7 +141,7 @@
 <![CDATA[
 :pua_publish:fifo_test_reply
 sip:system@openser.org
-10
+3600
 presence
 application/pidf+xml
 .
@@ -152,7 +152,39 @@ application/pidf+xml
 		</section>
 
 	</section>		
+	<section>
+		<title>
+			<function moreinfo="none">pua_subscribe</function>
+		</title>
+		<para>
+			Command parameters:
+			<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>presentity_uri</emphasis>
+					- e.g. sip:presentity@openser.org
+				</para>	
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>watcher_uri</emphasis>
+					- e.g. sip:watcher@openser.org
+				</para>	
+			</listitem>
 
+			<listitem>
+				<para>
+					<emphasis>event package</emphasis>
+				</para>	
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>expires<emphasis>
+					- Relative time in seconds for the desired validity of the subscription.
+				    </para> 
+			</listitem>	
+			<para>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

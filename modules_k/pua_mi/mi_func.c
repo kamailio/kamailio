@@ -50,7 +50,7 @@ int mi_publ_rpl_cback(struct sip_msg* reply, void* param);
 
 struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 {
-	int len;
+	int exp;
 	struct mi_node* node= NULL;
 	str pres_uri, expires;
 	str body= {0, 0};
@@ -60,6 +60,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	str content_type;
 	str etag;
 	int result;
+	int sign= 1;
 
 	DBG("DEBUG:pua_mi:mi_pua_publish: start\n");
 
@@ -94,13 +95,22 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		    "empty expires parameter\n");
 		return init_mi_tree(400, "Empty expires parameter", 23);
 	}
-	if( str2int(&expires, (unsigned int*) &len)< 0)
+	if(expires.s[0]== '-')
+	{
+		sign= -1;
+		expires.s++;
+		expires.len--;
+	}
+	if( str2int(&expires, (unsigned int*) &exp)< 0)
 	{
 		LOG(L_ERR,"ERROR;pua_mi:mi_pua_publish: "
 		    "invalid expires parameter\n" );
 		goto error;
 	}
-	DBG("DEBUG:pua_mi:mi_pua_publish: expires '%d'\n", len);
+	
+	exp= exp* sign;
+
+	DBG("DEBUG:pua_mi:mi_pua_publish: expires '%d'\n", exp);
 
 	node = node->next;
 	if(node == NULL)
@@ -204,7 +214,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	{
 		publ.etag= &etag;
 	}	
-	publ.expires= len;
+	publ.expires= exp;
 	publ.source_flag|= MI_PUBLISH;
 	
 	if (cmd->async_hdl!=NULL)
@@ -309,7 +319,13 @@ done:
 error:
 	return  -1;
 }	
-
+/*Command parameters:
+ * pua_subscribe
+ *		<presentity_uri>
+ *		<watcher_uri>
+ *		<event_package>
+ *		<expires>
+ * */
 
 
 struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
@@ -320,6 +336,8 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	struct mi_root* rpl= NULL;
 	struct sip_uri uri;
 	subs_info_t subs;
+	int sign= 1;
+	str event;
 
 	node = cmd->node.kids;
 	if(node == NULL)
@@ -351,6 +369,21 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 		return init_mi_tree(400, "Bad uri", 7);
 	}
 
+	/* Get event */
+	node = node->next;
+	if(node == NULL)
+		return 0;
+
+	event= node->value;
+	if(event.s== NULL || event.len== 0)
+	{
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_subscribe: "
+		    "empty event parameter\n");
+		return init_mi_tree(400, "Empty event parameter", 21);
+	}
+	DBG("DEBUG:pua_mi:mi_pua_subscribe: event '%.*s'\n",
+	    event.len, event.s);
+
 	node = node->next;
 	if(node == NULL || node->next!=NULL)
 	{
@@ -365,16 +398,24 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 		LOG(L_ERR, "pua_mi:pua_mi_subscribe: Bad expires parameter\n");
 		return init_mi_tree(400, "Bad expires", 11);
 	}		
-
-	if( str2int(&expires,(unsigned int*) &exp)< 0 )
+	if(expires.s[0]== '-')
 	{
-		LOG(L_ERR, "pua_mi:pua_mi_subscribe: Error while transforming str to"
-				" int\n");
-		return 0;
+		sign= -1;
+		expires.s++;
+		expires.len--;
+	}
+	if( str2int(&expires, (unsigned int*) &exp)< 0)
+	{
+		LOG(L_ERR,"ERROR;pua_mi:mi_pua_subscribe: "
+		    "invalid expires parameter\n" );
+		goto error;
 	}
 	
-	memset(&subs, 0, sizeof(subs_info_t));
+	exp= exp* sign;
 
+	DBG("DEBUG:pua_mi:mi_pua_publish: expires '%d'\n", exp);
+	
+	memset(&subs, 0, sizeof(subs_info_t));
 	
 	subs.pres_uri= &pres_uri;
 
@@ -384,7 +425,13 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	
 	subs.expires= exp;
 	subs.source_flag |= MI_SUBSCRIBE;
-	subs.event= PRESENCE_EVENT;
+	subs.event= get_event_flag(&event);
+	if(subs.event< 0)
+	{
+		LOG(L_ERR, "ERROR:pua_mi:mi_pua_subscribe: "
+			    "unkown event\n");
+		return init_mi_tree(400, "Unknown event", 13);
+	}
 
 	if(pua_send_subscribe(&subs)< 0)
 	{
@@ -392,7 +439,6 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 		goto error;
 	}
 	
-
 	rpl= init_mi_tree(202, "accepted", 8);
 	if(rpl == NULL)
 		return 0;
