@@ -106,7 +106,16 @@ docbook:
 		--stringparam dir "$(ROOT)/doc/database" \
 		--stringparam prefix "$$FILE-" \
 		$(DOCBOOK_XSL) openser-"$$FILE".xml ; \
-	done
+	done ; \
+	# small hack to create the version table entries, this is here easier as with XSL
+	for FILE in  $(wildcard $(ROOT)/scripts/dbtext/openser/*) ; do \
+		if [ -f "$$FILE" ]; then \
+			tail -n 1 "$$FILE" >> "$(ROOT)/scripts/dbtext/openser/version" ; \
+ 			head -n -1 "$$FILE" > /tmp/openser-dbtext.tmp ; \
+			cp /tmp/openser-dbtext.tmp "$$FILE" ; \
+		fi ; \
+	done ; \
+	rm /tmp/openser-dbtext.tmp
 
 docbook_clean:
 	-@rm -f $(ROOT)/doc/database/*.xml
