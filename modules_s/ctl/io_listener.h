@@ -33,6 +33,8 @@
 #define _io_listener_h
 #include "ctrl_socks.h"
 
+#define MAX_IO_READ_CONNECTIONS		128 /* FIXME: make it a config var */
+
 enum sock_con_type { S_CONNECTED, S_DISCONNECTED
 #ifdef USE_FIFO
 						, S_FIFO

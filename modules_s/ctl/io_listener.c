@@ -51,7 +51,6 @@
 #include <fcntl.h> /* required by io_wait.h if SIGIO_RT is used */
 #include <sys/uio.h> /* iovec */
 
-#define MAX_IO_READ_CONNECTIONS		128 /* FIXME: make it a config var */
 #define IO_STREAM_CONN_TIMEOUT		S_TO_TICKS(120)
 #define IO_LISTEN_TIMEOUT			10 /* in s,  how often the timer 
 										  will be run */
@@ -192,11 +191,13 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 	
 	clist_init(&stream_conn_lst, next, prev);
 	type=UNKNOWN_SOCK;
+#if 0
 	/* estimate used fd numbers -- FIXME: broken, make it a function in pt.h */
 	max_fd_no=get_max_procs()*3 -1 /* timer */ +3; /* stdin/out/err*/;
 	max_fd_no+=fd_no+MAX_IO_READ_CONNECTIONS; /*our listen fds + max.
 												allowed tmp. fds */
-	
+#endif
+	max_fd_no=get_max_open_fds();
 	/* choose/fix the poll method */
 	/* FIXME: make it a config param? */
 #if USE_TCP
