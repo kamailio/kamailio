@@ -1,14 +1,14 @@
 <!ENTITY user_len "64">
-<!ENTITY domain_len "128">
+<!ENTITY domain_len "64">
 <!ENTITY realm_len "64">
-<!ENTITY uri_len "255">
+<!ENTITY uri_len "128">
 <!ENTITY id_len "64">
 <!ENTITY table_id_len "10">
 <!ENTITY hf_len "255">
 <!ENTITY rule_len "255">
 <!ENTITY method_len "16">
 <!ENTITY avp_name_len "32">
-<!ENTITY avp_val_len "255">
+<!ENTITY avp_val_len "128">
 <!ENTITY ip_add_len "50">
 <!ENTITY sip_code_len "3">
 <!ENTITY sip_reason_len "32">
