@@ -35,7 +35,6 @@
 #include "t_cancel.h"
 #include "t_msgbuilder.h"
 #include "t_lookup.h" /* for t_lookup_callid in fifo_uac_cancel */
-#include "../../unixsock_server.h"
 
 
 /* determine which branches should be canceled; do it
@@ -122,43 +121,6 @@ char *build_cancel(struct cell *Trans,unsigned int branch,
 		CANCEL, CANCEL_LEN, &Trans->to );
 }
 
-
-int unixsock_uac_cancel(str* msg)
-{
-	struct cell *trans;
-	str cseq, callid;
-
-	     /* first param callid read */
-	if (unixsock_read_line(&callid, msg) != 0) {
-		unixsock_reply_asciiz("400 Call-ID Expected\n");
-		unixsock_reply_send();
-		return -1;
-	}
-
-	     /* second param cseq read */
-	if (unixsock_read_line(&cseq, msg) != 0) {
-		unixsock_reply_asciiz("400 CSeq Expected\n");
-		unixsock_reply_send();
-		return -1;
-	}
-
-	if (t_lookup_callid(&trans, callid, cseq) < 0) {
-		LOG(L_ERR, "unixsock_uac_cancel: Lookup failed\n");
-		unixsock_reply_asciiz("481 uac_cancel: No such transaction\n");
-		unixsock_reply_send();
-		return 1;
-	}
-
-	     /* tell tm to cancel the call */
-	(*cancel_uacs)(trans, ~0);
-
-	     /* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
-	UNREF(trans);
-
-	unixsock_reply_asciiz("200 uac_cancel succeeded\n");
-	unixsock_reply_send();
-	return 0;
-}
 
 /**
  * This function cancels a previously created local invite transaction.

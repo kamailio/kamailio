@@ -42,7 +42,6 @@
 #include "../../items.h"
 #include "domain.h"
 #include "mi.h"
-#include "unixsock.h"
 #include "hash.h"
 
 /*
@@ -164,12 +163,6 @@ static int mod_init(void)
 		} else if (ver < TABLE_VERSION) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): invalid table"
 					" version (use openser_mysql.sh reinstall)\n");
-			goto error;
-		}
-
-		if (init_domain_unixsock() < 0) {
-			LOG(L_ERR, "ERROR: domain:mod_init(): error while initializing"
-					" unix socket interface\n");
 			goto error;
 		}
 

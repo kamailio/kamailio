@@ -32,7 +32,6 @@
 
 #include "permissions.h"
 #include "hash.h"
-#include "unixsock.h"
 #include "../../config.h"
 #include "../../db/db.h"
 #include "../../ip_addr.h"
@@ -198,13 +197,6 @@ int init_trusted(void)
 			LOG(L_ERR, "permissions:init_trusted(): Invalid table version %d "
 					"- expected %d (use openser_mysql.sh reinstall)\n",
 					ver,TABLE_VERSION);
-			perm_dbf.close(db_handle);
-			return -1;
-		}
-		
-		if (init_trusted_unixsock() < 0) {
-			LOG(L_ERR, "permissions:init_trusted(): Error while initializing "
-				"unixsock interface\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}

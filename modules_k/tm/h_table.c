@@ -48,7 +48,6 @@
 #include "../../md5utils.h"
 #include "../../ut.h"
 #include "../../error.h"
-#include "../../unixsock_server.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_stats.h"
@@ -434,31 +433,4 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	/* update stats */
 	p_entry->cur_entries--;
 	if_update_stat(tm_enable_stats, tm_trans_inuse , -1 );
-}
-
-
-
-int unixsock_hash(str* msg)
-{
-	unsigned int i, ret;
-
-	ret = 0;
-	unixsock_reply_asciiz( "200 OK\n\tcurrent\ttotal\n");
-
-	for (i = 0; i < TM_TABLE_ENTRIES; i++) {
-		if (unixsock_reply_printf("%d.\t%lu\t%lu\n", 
-					  i, tm_table->entrys[i].cur_entries,
-					  tm_table->entrys[i].acc_entries
-					  ) < 0) {
-			unixsock_reply_reset();
-			unixsock_reply_asciiz("500 Error while creating reply\n");
-			ret = -1;
-			break;
-		}
-	}
-
-	if (unixsock_reply_send() < 0) {
-		ret = -1;
-	}
-	return ret;
 }

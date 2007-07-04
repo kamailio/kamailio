@@ -36,7 +36,6 @@
 #include "subscribe.h"
 #include "publish.h"
 #include "dlist.h"
-#include "unixsock.h"
 #include "location.h"
 #include "pa_mod.h"
 #include "pidf.h"
@@ -195,11 +194,6 @@ static int pa_mod_init(void)
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
 		LOG(L_ERR, "ERROR:acc:mod_init: can't load TM API\n");
-		return -1;
-	}
-
-	if (init_unixsock_iface() < 0) {
-		LOG(L_ERR, "pa_mod_init: Error while initializing unix socket interface\n");
 		return -1;
 	}
 
