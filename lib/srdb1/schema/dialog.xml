@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dialog" xmlns:db="http://docbook.org/ns/docbook">
+	<name>dialog</name>
+	<version>1</version>
+	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
+	<description>
+		<db:para>Persistent dialog information for the dialog module. More 
+		information can be found at: 
+		http://www.openser.org/docs/modules/1.3.x/dialog.html
+		</db:para>
+	</description>
+
+	<column id="id">
+		<name>id</name>
+		<type>unsigned int</type>
+		<size>&table_id_len;</size>
+		<autoincrement/>
+		<primary/>
+		<type db="postgres">SERIAL PRIMARY KEY</type>
+		<type db="dbtext">int,auto</type>
+		<description>unique ID</description>
+	</column>
+
+	<column id="hash_entry">
+		<name>hash_entry</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>Number of the hash entry in the dialog hash table
+		</description>
+	</column>
+
+	<column id="hash_id">
+		<name>hash_id</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The ID on the hash entry</description>
+	</column>
+
+	<column>
+		<name>callid</name>
+		<type>string</type>
+		<size>&hf_len;</size>
+		<description>Call-ID of the dialog</description>
+	</column>
+
+	<column>
+		<name>from_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>The URI of the FROM header (as per INVITE)</description>
+	</column>
+
+	<column>
+		<name>from_tag</name>
+		<type>string</type>
+		<size>&user_len;</size>
+		<description>The tag parameter serves as a general mechanism to 
+		identify a dialog, which is the combination of the Call-ID along 
+		with two tags, one from participant in the dialog.</description>
+	</column>
+
+	<column>
+		<name>to_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>The URI of the TO header (as per INVITE)</description>
+	</column>
+
+	<column>
+		<name>to_tag</name>
+		<type>string</type>
+		<size>&user_len;</size>
+		<description>The tag parameter serves as a general mechanism to 
+		identify a dialog, which is the combination of the Call-ID along 
+		with two tags, one from participant in the dialog.</description>
+	</column>
+
+	<column>
+		<name>state</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The state of the dialog.</description>
+	</column>
+
+	<column>
+		<name>start_time</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The timestamp (unix time) when the dialog was confirmed.
+		</description>
+	</column>
+
+	<column>
+		<name>timeout</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The timestamp (unix time) when the dialog will expire.
+		</description>
+	</column>
+
+	<index>
+		<name>ei_dialog</name>
+		<colref linkend="hash_entry"/>
+		<colref linkend="hash_id"/>
+	</index>
+</table>

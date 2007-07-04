@@ -4,7 +4,7 @@
 
 # OpenSER database descriptions for modules
 TABLES = standard acc imc lcr siptrace domainpolicy cpl domain group \
-	permissions registrar usrloc msilo alias_db uri_db speeddial \
+	dialog permissions registrar usrloc msilo alias_db uri_db speeddial \
 	avpops auth_db pdt presence serweb extensions
 
 ROOT=../..
