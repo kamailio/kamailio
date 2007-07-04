@@ -52,6 +52,10 @@
 #define DLG_EVENT_REQBYE       6
 #define DLG_EVENT_REQ          7
 
+#define DLG_FLAG_NEW           (1<<0)
+#define DLG_FLAG_CHANGED       (1<<1)
+
+
 struct dlg_cell
 {
 	volatile int         ref;
@@ -62,6 +66,7 @@ struct dlg_cell
 	unsigned int         state;
 	unsigned int         lifetime;
 	unsigned int         start_ts;
+	unsigned int         flags;
 	struct dlg_tl        tl;
 	str                  callid;
 	str                  from_uri;
@@ -92,6 +97,13 @@ struct dlg_table
 };
 
 
+extern struct dlg_table *d_table;
+
+
+#define dlg_lock(_table, _entry) \
+		lock_set_get( (_table)->locks, (_entry)->lock_idx);
+#define dlg_unlock(_table, _entry) \
+		lock_set_release( (_table)->locks, (_entry)->lock_idx);
 
 
 int init_dlg_table(unsigned int size);

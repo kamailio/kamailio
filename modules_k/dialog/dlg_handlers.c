@@ -1,5 +1,5 @@
 /*
- * $Id $
+ * $Id$
  *
  * Copyright (C) 2006 Voice System SRL
  *
@@ -30,6 +30,9 @@
  * 2007-04-30  added dialog matching without DID (dialog ID), but based only
  *             on RFC3261 elements - based on an original patch submitted 
  *             by Michel Bensoussan <michel@extricom.com> (bogdan)
+ * 2007-05-17  new feature: saving dialog info into a database if 
+ *             realtime update is set(ancuta)
+
  */
 
 
@@ -46,6 +49,7 @@
 #include "dlg_timer.h"
 #include "dlg_cb.h"
 #include "dlg_handlers.h"
+#include "dlg_db_handler.h"
 
 static str       rr_param;
 static int       dlg_flag;
@@ -189,6 +193,13 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 		/* set start time */
 		dlg->start_ts = get_ticks();
+
+		/* save the settings to the database, 
+		 * if realtime saving mode configured- save dialog now
+		 * else: the next the timer will fire the update*/
+		dlg->flags |= DLG_FLAG_CHANGED;
+		if ( dlg_db_mode==DB_MODE_REALTIME )
+			update_dialog_dbinfo(dlg);
 
 		insert_dlg_timer( &dlg->tl, dlg->lifetime );
 
@@ -461,9 +472,13 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		DBG("DEBUG:dialog:dlg_onroute: sequential request successfully "
 			"processed\n");
 		dlg->lifetime = get_dlg_timeout(req);
-		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1)
+		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1) {
+			dlg->flags |= DLG_FLAG_CHANGED;
+			if ( dlg_db_mode==DB_MODE_REALTIME )
+				update_dialog_dbinfo(dlg);
 			/* within dialog request */
 			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
+		}
 	}
 
 	unref_dlg( dlg , 1);

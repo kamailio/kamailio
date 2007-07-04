@@ -37,18 +37,13 @@
 #include "../../hash_func.h"
 #include "../../mi/mi.h"
 #include "dlg_hash.h"
+#include "dlg_db_handler.h"
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
 
 
-static struct dlg_table *d_table = 0;
-
-#define dlg_lock(_table, _entry) \
-		lock_set_get( (_table)->locks, (_entry)->lock_idx);
-#define dlg_unlock(_table, _entry) \
-		lock_set_release( (_table)->locks, (_entry)->lock_idx);
-
+struct dlg_table *d_table = 0;
 
 int init_dlg_table(unsigned int size)
 {
@@ -104,6 +99,8 @@ error0:
 static inline void destroy_dlg(struct dlg_cell *dlg)
 {
 	DBG("DBUG:dialog:destroy_dlg: destroing dialog %p\n",dlg);
+	if (dlg_db_mode)
+		remove_dialog_from_db(dlg);
 	if (dlg->to_tag.s && dlg->to_tag.len)
 		shm_free(dlg->to_tag.s);
 	if (dlg->cbs.first)

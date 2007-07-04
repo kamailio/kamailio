@@ -23,21 +23,23 @@
  *
  * History:
  * --------
- *  2006-04-14  initial version (bogdan)
- *  2006-11-28  Added statistic support for the number of early and failed
+ *  2006-04-14 initial version (bogdan)
+ *  2006-11-28 Added statistic support for the number of early and failed
  *              dialogs. (Jeffrey Magder - SOMA Networks) 
- * 2007-04-30  added dialog matching without DID (dialog ID), but based only
- *             on RFC3261 elements - based on an original patch submitted 
- *             by Michel Bensoussan <michel@extricom.com> (bogdan)
+ *  2007-04-30 added dialog matching without DID (dialog ID), but based only
+ *              on RFC3261 elements - based on an original patch submitted 
+ *              by Michel Bensoussan <michel@extricom.com> (bogdan)
+ *  2007-05-15 added saving dialogs' information to database (ancuta)
  */
 
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <sys/time.h>
 
 #include "../../sr_module.h"
+#include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
@@ -52,6 +54,7 @@
 #include "dlg_handlers.h"
 #include "dlg_load.h"
 #include "dlg_cb.h"
+#include "dlg_db_handler.h"
 
 MODULE_VERSION
 
@@ -80,9 +83,15 @@ struct tm_binds d_tmb;
 struct rr_binds d_rrb;
 xl_spec_t timeout_avp;
 
+/* db stuff */
+static char * db_url = 0;
+static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
-static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
+
+
+static int it_get_dlg_count( struct sip_msg *msg, xl_value_t *res,
 		xl_param_t *param, int flags);
+
 
 
 static cmd_export_t cmds[]={
@@ -91,14 +100,29 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t mod_params[]={
-	{ "enable_stats",          INT_PARAM, &dlg_enable_stats       },
-	{ "hash_size",             INT_PARAM, &dlg_hash_size          },
-	{ "rr_param",              STR_PARAM, &rr_param               },
-	{ "dlg_flag",              INT_PARAM, &dlg_flag               },
-	{ "timeout_avp",           STR_PARAM, &timeout_spec           },
-	{ "default_timeout",       INT_PARAM, &default_timeout        },
-	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode         },
-	{ "use_tight_match",       INT_PARAM, &use_tight_match        },
+	{ "enable_stats",          INT_PARAM, &dlg_enable_stats         },
+	{ "hash_size",             INT_PARAM, &dlg_hash_size            },
+	{ "rr_param",              STR_PARAM, &rr_param                 },
+	{ "dlg_flag",              INT_PARAM, &dlg_flag                 },
+	{ "timeout_avp",           STR_PARAM, &timeout_spec             },
+	{ "default_timeout",       INT_PARAM, &default_timeout          },
+	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
+	{ "use_tight_match",       INT_PARAM, &use_tight_match          },
+
+	{ "db_url",                STR_PARAM, &db_url                   },
+	{ "db_mode",               INT_PARAM, &dlg_db_mode              },
+	{ "table_name",            STR_PARAM, &dialog_table_name        },
+	{ "call_id_column",        STR_PARAM, &call_id_column           },
+	{ "from_uri_column",       STR_PARAM, &from_uri_column          },
+	{ "from_tag_column",       STR_PARAM, &from_tag_column          },
+	{ "to_uri_column",         STR_PARAM, &to_uri_column            },
+	{ "to_tag_column",         STR_PARAM, &to_tag_column            },
+	{ "h_id_column",           STR_PARAM, &h_id_column              },
+	{ "h_entry_column",        STR_PARAM, &h_entry_column           },
+	{ "state_column",          STR_PARAM, &state_column             },
+	{ "start_time_column",     STR_PARAM, &start_time_column        },
+	{ "timeout_column",        STR_PARAM, &timeout_column           },
+	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ 0,0,0 }
 };
 
@@ -141,13 +165,11 @@ struct module_exports exports= {
 };
 
 
-
 int load_dlg( struct dlg_binds *dlgb )
 {
 	dlgb->register_dlgcb = register_dlgcb;
 	return 1;
 }
-
 
 
 static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
@@ -172,7 +194,6 @@ static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
 
 	return 0;
 }
-
 
 
 static int mod_init(void)
@@ -256,6 +277,7 @@ static int mod_init(void)
 		return -1;
 	}
 
+
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
 		timeout_spec?&timeout_avp:0, default_timeout,
@@ -284,9 +306,22 @@ static int mod_init(void)
 			dlg_hash_size = 1<<(n-1);
 		}
 	}
+
 	if ( init_dlg_table(dlg_hash_size)<0 ) {
 		LOG(L_ERR,"ERROR:dialog:mod_init: failed to create hash table\n");
 		return -1;
+	}
+
+	/*if a database should be used to store the dialogs' information*/
+	if (dlg_db_mode==DB_MODE_NONE)
+		db_url = 0;
+	if ( db_url && db_url[0]!='\0' ) {
+		if (dlg_db_mode!=DB_MODE_REALTIME && dlg_db_mode!=DB_MODE_DELAYED){
+			LOG(L_ERR,"ERROR:dialog:mod_init: unsupported db_mode %d\n",
+				dlg_db_mode);
+			return -1;
+		}
+		return init_dlg_db( db_url, dlg_hash_size, db_update_period);
 	}
 
 	return 0;
@@ -295,6 +330,7 @@ static int mod_init(void)
 
 static void mod_destroy()
 {
+	destroy_dlg_db();
 	destroy_dlg_timer();
 	destroy_dlg_table();
 	destroy_dlg_callbacks();
