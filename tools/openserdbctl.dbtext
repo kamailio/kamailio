@@ -66,30 +66,6 @@ for TABLE in $STANDARD_TABLES; do
     fi
 done
 
-
-# FIXME needs update in dbtext XSL script
-minfo "inserting version data"
-
-# Dumping data for table 'version'
-echo "subscriber:6" 		>> $DBTEXT_PATH/version;
-echo "missed_calls:3" 		>> $DBTEXT_PATH/version;
-echo "location:1004" 		>> $DBTEXT_PATH/version;
-echo "aliases:1004" 		>> $DBTEXT_PATH/version;
-echo "grp:2" 			>> $DBTEXT_PATH/version;
-echo "re_grp:1" 		>> $DBTEXT_PATH/version;
-echo "acc:4" 			>> $DBTEXT_PATH/version;
-echo "silo:5" 			>> $DBTEXT_PATH/version;
-echo "domain:1" 		>> $DBTEXT_PATH/version;
-echo "uri:1" 			>> $DBTEXT_PATH/version;
-echo "trusted:4" 		>> $DBTEXT_PATH/version;
-echo "usr_preferences:2"	>> $DBTEXT_PATH/version;
-echo "speed_dial:2" 		>> $DBTEXT_PATH/version;
-echo "dbaliases:1" 		>> $DBTEXT_PATH/version;
-echo "gw:4" 			>> $DBTEXT_PATH/version;
-echo "gw_grp:1" 		>> $DBTEXT_PATH/version;
-echo "lcr:2" 			>> $DBTEXT_PATH/version;
-echo "address:3" 		>> $DBTEXT_PATH/version;
-
 echo -n "Install presence related tables ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
@@ -137,14 +113,6 @@ for TABLE in $PRESENCE_TABLES; do
     fi
 done
 
-
-minfo "inserting version data"
-echo "presentity:1" 		>> $DBTEXT_PATH/version;
-echo "active_watchers:4" 	>> $DBTEXT_PATH/version;
-echo "watchers:1" 		>> $DBTEXT_PATH/version;
-echo "xcap_xml:1" 		>> $DBTEXT_PATH/version;
-echo "pua:3" 			>> $DBTEXT_PATH/version;
-
 }  # end presence_create
 
 
@@ -165,13 +133,6 @@ for TABLE in $EXTRA_TABLES; do
 	exit 1
     fi
 done
-
-minfo "inserting version data"
-echo "cpl:1" 			>> $DBTEXT_PATH/version;
-echo "imc_members:1"		>> $DBTEXT_PATH/version;
-echo "imc_rooms:1" 		>> $DBTEXT_PATH/version;
-echo "sip_trace:1" 		>> $DBTEXT_PATH/version;
-echo "domainpolicy:2"		>> $DBTEXT_PATH/version;
 
 }  # end extra_create
 
@@ -196,14 +157,5 @@ for TABLE in $SERWEB_TABLES; do
 	exit 1
     fi
 done
-
-minfo "inserting version data"
-echo "active_sessions:1"	>> $DBTEXT_PATH/version;
-echo "pending:6" 		>> $DBTEXT_PATH/version;
-echo "phonebook:1" 		>> $DBTEXT_PATH/version;
-echo "usr_preferences_types:1" 	>> $DBTEXT_PATH/version;
-echo "server_monitoring:1" 	>> $DBTEXT_PATH/version;
-echo "server_monitoring_agg:1" 	>> $DBTEXT_PATH/version;
-echo "admin_privileges:1" 	>> $DBTEXT_PATH/version;
 
 }  # end serweb_create
