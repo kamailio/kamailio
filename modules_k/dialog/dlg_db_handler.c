@@ -370,16 +370,20 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 
 	} else if((cell->flags & DLG_FLAG_CHANGED) != 0) {
 		/* save only dialog's state and timeout */
+		VAL_TYPE(values) = VAL_TYPE(values+1) =
 		VAL_TYPE(values+8) = VAL_TYPE(values+9) = DB_INT;
 
 		/* lock the entry */
 		entry = (d_table->entries)[cell->h_entry];
 		dlg_lock( d_table, &entry);
 
+		VAL_INT(values)			= cell->h_entry;
+		VAL_INT(values+1)		= cell->h_id;
 		VAL_INT(values+8)		= cell->state;
 		VAL_INT(values+9)		= cell->tl.timeout - get_ticks() + 
 							(unsigned int)clock_time;
 
+		VAL_NULL(values) = VAL_NULL(values+1) =
 		VAL_NULL(values+8) = VAL_NULL(values+9) = 0;
 
 		if((dialog_dbf.update(dialog_db_handle, (insert_keys), 0, 
@@ -388,7 +392,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 				"update database info\n");
 			goto error;
 		}
-		cell->flags &= ~DLG_FLAG_CHANGED;
+		cell->flags &= ~(DLG_FLAG_CHANGED);
 	} else {
 		return 0;
 	}
@@ -461,10 +465,12 @@ static void dialog_update_db(unsigned int ticks, void * param)
 					goto error;
 				}
 
-				cell->flags &= ~DLG_FLAG_NEW;
+				cell->flags &= ~(DLG_FLAG_NEW|DLG_FLAG_CHANGED);
 
 			} else if( (cell->flags & DLG_FLAG_CHANGED)!=0 ){
 
+				VAL_INT(values)			= cell->h_entry;
+				VAL_INT(values+1)		= cell->h_id;
 				VAL_INT(values+8)		= cell->state;
 				VAL_INT(values+9)		= cell->tl.timeout - get_ticks() +
 									(unsigned int)clock_time;

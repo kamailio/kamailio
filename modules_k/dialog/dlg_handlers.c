@@ -196,8 +196,8 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 		/* save the settings to the database, 
 		 * if realtime saving mode configured- save dialog now
-		 * else: the next the timer will fire the update*/
-		dlg->flags |= DLG_FLAG_CHANGED;
+		 * else: the next time the timer will fire the update*/
+		dlg->flags |= DLG_FLAG_NEW;
 		if ( dlg_db_mode==DB_MODE_REALTIME )
 			update_dialog_dbinfo(dlg);
 
@@ -479,6 +479,12 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			/* within dialog request */
 			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
 		}
+	}
+
+	if(new_state==DLG_STATE_CONFIRMED && old_state==DLG_STATE_CONFIRMED_NA) {
+		dlg->flags |= DLG_FLAG_CHANGED;
+		if(dlg_db_mode == DB_MODE_REALTIME)
+			update_dialog_dbinfo(dlg);
 	}
 
 	unref_dlg( dlg , 1);
