@@ -26,7 +26,6 @@
  *  2006-08-15  initial version (anca)
  */
 
-
 #include "../../ut.h"
 #include "../../usr_avp.h"
 #include "../../data_lump_rpl.h"
@@ -47,7 +46,6 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* remote_cs
 static str su_200_rpl  = str_init("OK");
 static str pu_481_rpl  = str_init("Subscription does not exist");
 static str pu_400_rpl  = str_init("Bad request");
-static str pu_489_rpl  = str_init("Bad Event");
 
 int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 {
@@ -1531,11 +1529,9 @@ bad_event:
 
 	LOG(L_ERR, "PRESENCE: handle_subscribe:Missing or unsupported event"
 		" header field value\n");
-	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
-	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
-			" reply\n");
-	}
+	if(reply_bad_event(msg)< 0)
+		return -1;
+
 	error_ret = 0;
 
 error:

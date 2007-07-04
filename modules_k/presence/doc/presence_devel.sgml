@@ -64,6 +64,7 @@ typedef struct ev
 	agg_nbody_t* agg_nbody;
 	publ_handling_t  * evs_publ_handl;
 	subs_handling_t  * evs_subs_handl;
+	free_body_t*    free_body;
 
 /* this two should not be filed when the structure is given as a
 	parmeter for add_event function */
@@ -130,7 +131,27 @@ typedef int (is_allowed_t)(struct subscription* subs);
 typedef str* (agg_nbody_t)(str** body_array, int n, int off_index);
 ..
 			</programlisting>
-			</para>
+		</para>
+</section>	
+
+<section>
+		<title>
+			<function moreinfo="none">free_body</function>
+		</title>
+		<para>
+			This field must be field in if subsequent processing is performed on the info
+			from database before beeing inserted in Notify message body(if agg_nbody
+			or apply_auth_nbody fields are filled in). It should match the allocation 
+			function used when processing the body.  
+		</para>
+		<para>
+		Filed type:
+			<programlisting format="linespecific">
+...
+typedef void(free_body_t)(char* body);
+..
+			</programlisting>
+		</para>
 </section>	
 
 <section>

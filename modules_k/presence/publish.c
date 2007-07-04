@@ -53,9 +53,6 @@ extern int startup_time;
 
 static str pu_400a_rpl = str_init("Bad request");
 static str pu_400b_rpl = str_init("Invalid request");
-static str pu_489_rpl  = str_init("Bad Event");
-
-
 
 void msg_presentity_clean(unsigned int ticks,void *param)
 {
@@ -534,18 +531,17 @@ error:
 	return error_ret;
 
 unsupported_event:
-
+	
 	LOG(L_ERR, "PRESENCE: handle_publish:Missing or unsupported event"
 			" header field value\n");
-
+		
 	if(msg->event && msg->event->body.s && msg->event->body.len>0)
 		LOG(L_ERR, "\tevent=[%.*s]\n", msg->event->body.len,
 			msg->event->body.s);
+	
+	if(reply_bad_event(msg)< 0)
+		return -1;
 
-	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
-	{
-		LOG(L_ERR, "PRESENCE: handle_publish: Error while sending reply\n");
-	}
 	return 0;
 
 }

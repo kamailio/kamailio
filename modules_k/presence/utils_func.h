@@ -35,6 +35,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../str.h"
+#include "../../parser/msg_parser.h"
 
 static inline int uandd_to_uri(str user,  str domain, str *out)
 {
@@ -72,6 +73,7 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 int a_to_i (char *s,int len);
 
 void to64frombits(unsigned char *out, const unsigned char *in, int inlen);
+int reply_bad_event(struct sip_msg * msg);
 
 #endif
 

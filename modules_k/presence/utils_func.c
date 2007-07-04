@@ -26,13 +26,18 @@
  *  2006-08-15  initial version (anca)
  */
 
-#include "utils_func.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include <ctype.h>
+#include "../../ut.h"
+#include "../../data_lump_rpl.h"
+#include "utils_func.h"
+#include "event_list.h"
+
+static str pu_489_rpl  = str_init("Bad Event");
 
 static const char base64digits[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -79,46 +84,6 @@ void to64frombits(unsigned char *out, const unsigned char *in, int inlen)
 		
 }
 
-
-
-/*
-str* int_to_str(long int n)
-{
-	str* n_str;
-	int m = n, i=0;
-	if(m==0)
-		i=1;
-
-	while( m>0 )
-	{
-		m= m/10;
-		i++;
-	}
-
-	n_str = (str*)pkg_malloc(sizeof(str));
-	if(n_str == NULL)
-	{
-		LOG(L_ERR,"PRESENCE:int_to_str: ERROR while allocating memory\n");
-		return NULL;
-	}	
-	n_str->s = (char*)pkg_malloc( (i+1) * sizeof(char));
-	if(n_str->s == NULL)
-	{
-		LOG(L_ERR,"PRESENCE:int_to_str: ERROR while allocating memory\n");
-		return NULL;
-	}
-	
-	n_str->len = i;
-	n_str->s[i] = 0;	
-	while( i>0 )
-	{
-		i--;
-		n_str->s[i]=n%10 + '0';
-		n = n/10;
-	}
-	return n_str;
-}
-*/
 int a_to_i (char *s,int len)
 {
 	int n = 0, i= 0;
@@ -127,5 +92,50 @@ int a_to_i (char *s,int len)
 		n=n*10+( s[i++] -'0');
 	
 	return n;
+}
+
+int reply_bad_event(struct sip_msg * msg)
+{
+	str hdr_append;
+	char buffer[256];
+	int i;
+	ev_t* ev= EvList->events;
+
+	hdr_append.s = buffer;
+	hdr_append.s[0]='\0';
+	hdr_append.len = sprintf(hdr_append.s, "Allow-Events: ");
+	if(hdr_append.len < 0)
+	{
+		LOG(L_ERR, "PRESENCE:handle_publish: ERROR unsuccessful sprintf\n");
+		return -1;
+	}
+
+	for(i= 0; i< EvList->ev_count; i++)
+	{
+		if(i> 0)
+		{
+			memcpy(hdr_append.s+ hdr_append.len, ", ", 2);
+			hdr_append.len+= 2;
+		}	
+		memcpy(hdr_append.s+ hdr_append.len, ev->stored_name.s, ev->stored_name.len );
+		hdr_append.len+= ev->stored_name.len ;
+		ev= ev->next;
+	}
+	memcpy(hdr_append.s+ hdr_append.len, CRLF, CRLF_LEN);
+	hdr_append.len+=  CRLF_LEN;
+	hdr_append.s[hdr_append.len]= '\0';
+		
+	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
+	{
+		LOG(L_ERR,"PRESENCE: handle_publish:ERROR unable to add lump_rl\n");
+		return -1;
+	}
+
+	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
+	{
+		LOG(L_ERR, "PRESENCE: handle_publish: Error while sending reply\n");
+		return -1;
+	}
+	return 0;
 }
 
