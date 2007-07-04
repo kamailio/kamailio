@@ -45,7 +45,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext #docbook oracle
+all: mysql postgres dbtext docbook #oracle
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -101,12 +101,15 @@ dbtext_clean:
 
 .PHONY: docbook docbook_clean
 docbook:
-#	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-#           --stringparam dir "$(ROOT)/doc/database" \
-#	    --stringparam prefix "" \
-#	    $(DOCBOOK_XSL) $(DOC_ROOT)
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/doc/database" \
+		--stringparam prefix "$$FILE-" \
+		$(DOCBOOK_XSL) openser-"$$FILE".xml ; \
+	done
 
 docbook_clean:
+	rm -f $(ROOT)/doc/database/*.xml
 
 
 .PHONY: clean
