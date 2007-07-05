@@ -142,7 +142,6 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 	int i ;
-	
 
 	DBG("PRESENCE: update_subscription...\n");
 	printf_subs(subs);	
@@ -260,7 +259,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 					goto error;
 				}
 			}
-
+		
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
@@ -1283,7 +1282,18 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}
 	}	
-		/* subscription status handling */
+
+	/* particular case for expires= 0*/	
+	if( subs.expires== 0 )
+	{
+		subs.status.s= "terminated";
+		subs.status.len= 10;
+		subs.reason.s= "timeout";
+		subs.reason.len= 7;
+		goto after_status;	
+	}	
+
+	/* subscription status handling */
 	db_keys[n_query_cols] ="p_user";
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
@@ -1500,6 +1510,9 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			
 		}
 	}
+
+after_status:
+
 	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen, remote_cseq) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
