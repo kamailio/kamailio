@@ -31,6 +31,7 @@
 #include "event_list.h"
 #include "add_events.h"
 #include "pua.h"
+#include "pidf.h"
 
 int pua_add_events()
 {
