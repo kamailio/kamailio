@@ -289,10 +289,10 @@ done:
 }
 
 
-int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr)
+int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
+																	int start)
 {
-	static int start = 0;
-	static struct usr_avp *avp[MAX_ACC_EXTRA];
+	static struct usr_avp *avp[MAX_ACC_LEG];
 	unsigned short name_type;
 	int_str name;
 	int_str value;
@@ -305,7 +305,7 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr)
 
 	for( n=0 ; legs ; legs=legs->next,n++ ) {
 		/* search for the AVP */
-		if (start==0) {
+		if (start) {
 			if ( xl_get_avp_name( rq, &legs->spec, &name, &name_type)<0 )
 				goto exit;
 			avp[n] = search_first_avp( name_type, name, &value, 0);
@@ -331,12 +331,9 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr)
 
 	}
 
-	if (found || !start) {
-		start=1;
+	if (found || start)
 		return n;
-	}
 exit:
-	start = 0;
 	return 0;
 }
 

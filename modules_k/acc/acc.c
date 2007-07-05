@@ -227,7 +227,8 @@ int acc_log_request( struct sip_msg *rq)
 
 	/* get per leg attributes */
 	if ( leg_info ) {
-		while ( p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m))!=0 ) {
+		n = legs2strar(leg_info,rq,val_arr+m,1);
+		do {
 			for (i=m; i<m+n; i++) {
 				if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
 					LOG(L_WARN,"WARNING:acc:acc_log_request: acc message too "
@@ -242,7 +243,7 @@ int acc_log_request( struct sip_msg *rq)
 				memcpy(p, val_arr[i].s, val_arr[i].len);
 				p += val_arr[i].len;
 			}
-		}
+		}while (p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m,0))!=0);
 	}
 
 	/* terminating line */
@@ -380,7 +381,8 @@ int acc_db_request( struct sip_msg *rq)
 			return -1;
 		}
 	} else {
-		while ( (n=legs2strar(leg_info,rq,val_arr+m))!=0 ) {
+		n = legs2strar(leg_info,rq,val_arr+m,1);
+		do {
 			for (i=m; i<m+n; i++)
 				VAL_STR(db_vals+i)=val_arr[i];
 			if (acc_dbf.insert(db_handle, db_keys, db_vals, m+n) < 0) {
@@ -388,7 +390,7 @@ int acc_db_request( struct sip_msg *rq)
 					"Error while inserting to database\n");
 				return -1;
 			}
-		}
+		}while ( (n=legs2strar(leg_info,rq,val_arr+m,0))!=0 );
 	}
 
 	return 1;
@@ -543,10 +545,11 @@ int acc_rad_request( struct sip_msg *req )
 	/* call-legs attributes also get inserted */
 	if ( leg_info ) {
 		offset += attr_cnt;
-		while ( (attr_cnt=legs2strar(leg_info,req,val_arr))!=0 ) {
+		attr_cnt = legs2strar(leg_info,req,val_arr,q,1);
+		do {
 			for (i=0; i<attr_cnt; i++)
 				ADD_RAD_AVPAIR( offset+i, val_arr[i].s, val_arr[i].len );
-		}
+		}while ( (attr_cnt=legs2strar(leg_info,req,val_arr,q,0))!=0 );
 	}
 
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
@@ -634,6 +637,7 @@ int acc_diam_request( struct sip_msg *req )
 	str *uri;
 	int ret;
 	int i;
+	int s;
 	int status;
 	char tmp[2];
 	unsigned int mid;
@@ -709,7 +713,8 @@ int acc_diam_request( struct sip_msg *req )
 
 	/* and the leg attributes */
 	if ( leg_info ) {
-		while ( (cnt=legs2strar(leg_info,req,val_arr))!=0 ) {
+		cnt = legs2strar(leg_info,req,val_arr,1);
+		do {
 			for (i=0; i<cnt; i++) {
 				if((avp=AAACreateAVP(diam_attr[attr_cnt+i], 0, 0,
 				val_arr[i].s, val_arr[i].len, AVP_DUPLICATE_DATA)) == 0) {
@@ -723,7 +728,7 @@ int acc_diam_request( struct sip_msg *req )
 					goto error;
 				}
 			}
-		}
+		} while ( (cnt=legs2strar(leg_info,req,val_arr,0))!=0 );
 	}
 
 	if (get_uri(req, &uri) < 0) {
