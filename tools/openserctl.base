@@ -117,8 +117,10 @@ fi
 ALL_METHODS=4294967295
 USERNAME_RE="[-a-zA-Z0-9&=\+\$,;\?/_\.\!~\*'\(\)]+"
 
-##### ----------------------------------------------- #####
-#### Common functions
+#
+##### ------------------------------------------------ #####
+### usage functions
+#
 
 usage_base() {
 	echo
@@ -143,6 +145,161 @@ EOF
 }
 
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_base"
+
+usage_acl() {
+	echo
+	mecho " -- command 'acl' - manage access control lists (acl)"
+	echo
+cat <<EOF
+ acl show [<username>] .............. show user membership
+ acl grant <username> <group> ....... grant user membership (*)
+ acl revoke <username> [<group>] .... grant user membership(s) (*)
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_acl"
+
+
+usage_alias_db() {
+	echo
+	mecho " -- command 'alias_db' - manage database aliases"
+	echo
+cat <<EOF
+ alias_db show <alias> .............. show alias details
+ alias_db list <sip-id> ............. list aliases for uri
+ alias_db add <alias> <sip-id> ...... add an alias (*)
+ alias_db rm <alias> ................ remove an alias (*)
+ alias_db help ...................... help message
+    - <alias> must be an AoR (username@domain)"
+    - <sip-id> must be an AoR (username@domain)"
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_alias_db"
+
+usage_avp() {
+	echo
+	mecho " -- command 'avp' - manage AVPs"
+	echo
+cat <<EOF
+ avp list [-T table] [-u <sip-id|uuid>]
+     [-a attribute] [-v value] [-t type] ... list AVPs
+ avp add [-T table] <sip-id|uuid>
+     <attribute> <type> <value> ............ add AVP (*)
+ avp rm [-T table]  [-u <sip-id|uuid>]
+     [-a attribute] [-v value] [-t type] ... remove AVP (*)
+ avp help .................................. help message
+    - -T - table name
+    - -u - SIP id or unique id
+    - -a - AVP name
+    - -v - AVP value
+    - -t - AVP name and type (0 (str:str), 1 (str:int),
+                              2 (int:str), 3 (int:int))
+    - <sip-id> must be an AoR (username@domain)
+    - <uuid> must be a string but not AoR
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_avp"
+
+usage_db_ops() {
+	echo
+	mecho " -- command 'db' - database operations"
+	echo
+cat <<EOF
+ db exec <query> ..................... execute SQL query
+ db roexec <roquery> ................. execute read-only SQL query
+ db run <id> ......................... execute SQL query from \$id variable
+ db rorun <id> ....................... execute read-only SQL query from 
+                                       \$id variable
+ db show <table> ..................... display table content
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_db_ops"
+
+usage_lcr() {
+	echo
+	mecho " -- command 'lcr' - manage least cost routes (lcr)"
+	echo
+cat <<EOF
+           * lcr *
+   * IP addresses must be entered in dotted quad format e.g. 1.2.3.4 *
+   * <uri_scheme> and <transport> must be entered in integer or text,*
+   * e.g. transport '2' is identical to transport 'tcp'.             *
+   *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls       *
+   * Examples:  lcr addgw_grp usa 1                                  *
+   *            lcr addgw level3 1.2.3.4 5080 sip tcp 1              *
+   *            lcr addroute +1 '' 1 1                               *
+ lcr show ....................................................................
+           ............. show routes, gateways and groups
+ lcr reload ..................................................................
+           ............. reload lcr gateways
+ lcr addgw_grp <grp_name> ....................................................
+           .............. add gateway group, autocreate grp_id
+ lcr addgw_grp <grp_name> <grp_id> ...........................................
+           ............... add gateway group with grp_id
+ lcr rmgw_grp  <grp_id> ......................................................
+           ............... delete the gw_grp
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> ...............
+           ............... add a gateway
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> ......
+           ............... add a gateway with prefix
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> <strip>
+           ............... add a gateway with prefix and strip
+ lcr rmgw  <gw_name> .........................................................
+           ............... delete a gateway
+ lcr addroute <prefix> <from> <grp_id> <prio> ................................
+           .............. add a route ( use '' to match anything in <from> )
+ lcr rmroute  <prefix> <from> <grp_id> <prio> ................................
+           .............. delete a route
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_lcr"
+
+usage_rpid() {
+	echo
+	mecho " -- command 'rpid' - manage Remote-Party-ID (RPID)"
+	echo
+cat <<EOF
+ rpid add <username> <rpid> ......... add rpid for a user (*)
+ rpid rm <username> ................. set rpid to NULL for a user (*)
+ rpid show <username> ............... show rpid of a user
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_rpid"
+
+usage_speeddial() {
+	echo
+	mecho " -- command 'speeddial' - manage speed dials (short numbers)"
+	echo
+cat <<EOF
+ speeddial show <speeddial-id> ....... show speeddial details
+ speeddial list <sip-id> ............. list speeddial for uri
+ speeddial add <sip-id> <sd-id> <new-uri> [<desc>] ... 
+           ........................... add a speedial (*)
+ speeddial rm <sip-id> <sd-id> ....... remove a speeddial (*)
+ speeddial help ...................... help message
+    - <speeddial-id>, <sd-id> must be an AoR (username@domain)
+    - <sip-id> must be an AoR (username@domain)
+    - <new-uri> must be a SIP AoR (sip:username@domain)
+    - <desc> a description for speeddial
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_speeddial"
+
+usage_subscriber() {
+	echo
+	mecho " -- command 'add|mail|passwd|rm' - manage subscribers"
+	echo
+cat <<EOF
+ add <username> <password> <email> .. add a new subscriber (*)
+ passwd <username> <passwd> ......... change user's password (*)
+ rm <username> ...................... delete a user (*)
+ mail <username> .................... send an email to a user
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_subscriber"
+
+##### ----------------------------------------------- #####
+#### Common functions
+
 
 mdbg() {
 	if [ "0$VERBOSE" -ne 0 ] ; then
