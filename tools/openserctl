@@ -2003,7 +2003,7 @@ case $1 in
 
 	monitor|console|moni|con)
 		require_ctlengine
-		$OPENSER_MONITOR
+		$OPENSER_MONITOR "$@"
 		;;
 
 	online)
