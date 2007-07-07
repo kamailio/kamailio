@@ -726,7 +726,7 @@ ifeq		($(CC_NAME), gcc)
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= ultrasparc
 					#use 32bit for now
-					CFLAGS+=-mcpu=ultrasparc -minline-all-stringops \
+					CFLAGS+=-mcpu=ultrasparc  \
 							-mtune=$(CPU) \
 							-ftree-vectorize
 else
