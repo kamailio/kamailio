@@ -7,7 +7,7 @@ NAME=sercmd
 RELEASE=0.1
 
 readline_locations= /usr/include/readline/readline.h \
-					$(LOCALBASE)/usr/include/readline/readline.h
+					$(LOCALBASE)/include/readline/readline.h
 use_readline ?=
 
 DEFS:= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' \
@@ -40,7 +40,7 @@ $(info command completion enabled)
 else
 $(info "no readline include files detected, disabling readline support")
 $(info "command completion disabled" )
-$(info "(to force readline support try 'make use_readline=1')")
+$(info "to force readline support try 'make use_readline=1'")
 endif
 
 $(NAME).o: 
