@@ -35,6 +35,7 @@
  *  2006-09-20	added profile support (-DPROFILING) (hscholz)
  *  2006-10-25	sanity check before allowing forking w/ tcp support (is_main
  *               & tcp not started yet); set is_main=0 in childs (andrei)
+ *  2007-07-04	added register_fds() and get_max_open_fds(() (andrei)
  */
 
 
@@ -60,6 +61,25 @@
 
 
 static int estimated_proc_no=0;
+static int estimated_fds_no=0;
+
+
+/* number of known "common" used fds */
+static int calc_common_open_fds_no()
+{
+	int max_fds_no;
+	
+	/* 1 tcp send unix socket/all_proc, 
+	 *  + 1 udp sock/udp proc + 1 possible dns comm. socket + 
+	 *  + 1 temporary tcp send sock.
+	 */
+	max_fds_no=estimated_proc_no*4 /* udp + tcp unix sock + tmp. tcp send +
+									  tmp dns.*/ -1 /* timer (no udp)*/ + 
+				3 /* stdin/out/err */;
+	return max_fds_no;
+}
+
+
 
 /* returns 0 on success, -1 on error */
 int init_pt(int proc_no)
@@ -69,6 +89,7 @@ int init_pt(int proc_no)
 #endif
 	
 	estimated_proc_no+=proc_no;
+	estimated_fds_no+=calc_common_open_fds_no();
 	/*alloc pids*/
 #ifdef SHM_MEM
 	pt=shm_malloc(sizeof(struct process_table)*estimated_proc_no);
@@ -123,6 +144,35 @@ int get_max_procs()
 		abort(); /* crash to quickly catch offenders */
 	}
 	return estimated_proc_no;
+}
+
+
+/* register no fds, used from mod_init when modules will open more global
+ *  fds (from mod_init or child_init(PROC_INIT)
+ *  or from child_init(rank) when the module will open fds local to the
+ *   process "rank".
+ *   (this is needed because some other parts of ser code rely on knowing
+ *    the maximum open fd number in a process)
+ *  returns 0 on success, -1 on error
+ */
+int register_fds(int no)
+{
+	/* can be called at runtime, but should be called from child_init() */
+	estimated_fds_no+=no;
+	return 0;
+}
+
+
+
+/* returns the maximum open fd number */
+int get_max_open_fds()
+{
+	if (pt==0){
+		LOG(L_CRIT, "BUG: get_max_open_fds() called too early "
+				"(it must _not_ be called from mod_init())\n");
+		abort(); /* crash to quickly catch offenders */
+	}
+	return estimated_fds_no;
 }
 
 
