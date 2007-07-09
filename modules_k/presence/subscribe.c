@@ -1152,7 +1152,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	/*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
 	{
-		rt = print_rr_body(msg->record_route, &rec_route, 0);
+		rt = print_rr_body(msg->record_route, &rec_route, 0, 0);
 		if(rt != 0)
 		{
 			LOG(L_ERR,"PRESENCE:handle_subscribe:error processing the record"

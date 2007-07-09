@@ -393,7 +393,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	/*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
 	{
-		rt = print_rr_body(msg->record_route, &record_route, 1);
+		rt = print_rr_body(msg->record_route, &record_route, 1, 0);
 		if(rt != 0)
 		{
 			LOG(L_ERR,"PRESENCE:handle_subscribe:error processing the record"
