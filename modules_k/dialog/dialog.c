@@ -30,6 +30,8 @@
  *              on RFC3261 elements - based on an original patch submitted 
  *              by Michel Bensoussan <michel@extricom.com> (bogdan)
  *  2007-05-15 added saving dialogs' information to database (ancuta)
+ *  2007-07-04 added saving dialog cseq, contact, record route 
+ *              and bind_addresses(sock_info) for caller and callee (ancuta)
  */
 
 
@@ -122,6 +124,14 @@ static param_export_t mod_params[]={
 	{ "state_column",          STR_PARAM, &state_column             },
 	{ "start_time_column",     STR_PARAM, &start_time_column        },
 	{ "timeout_column",        STR_PARAM, &timeout_column           },
+	{ "to_cseq_column",        STR_PARAM, &to_cseq_column           },
+	{ "from_cseq_column",      STR_PARAM, &from_cseq_column         },
+	{ "to_route_column",       STR_PARAM, &to_route_column          },
+	{ "from_route_column",     STR_PARAM, &from_route_column        },
+	{ "to_contact_column",     STR_PARAM, &to_contact_column        },
+	{ "from_contact_column",   STR_PARAM, &from_contact_column      },
+	{ "to_sock_column",        STR_PARAM, &to_sock_column           },
+	{ "from_sock_column",      STR_PARAM, &from_sock_column         },
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ 0,0,0 }
 };

@@ -41,11 +41,19 @@ Bogdan-Andrei Iancu
               1.4.15. from_tag_column (string)
               1.4.16. to_uri_column (string)
               1.4.17. to_tag_column (string)
-              1.4.18. h_id_column (string)
-              1.4.19. h_entry_column (string)
-              1.4.20. state_column (string)
-              1.4.21. start_time_column (string)
-              1.4.22. timeout_column (string)
+              1.4.18. caller_cseq_column (string)
+              1.4.19. callee_cseq_column (string)
+              1.4.20. caller_route_column (string)
+              1.4.21. callee_route_column (string)
+              1.4.22. caller_contact_column (string)
+              1.4.23. callee_contact_column (string)
+              1.4.24. caller_sock_column (string)
+              1.4.25. callee_sock_column (string)
+              1.4.26. h_id_column (string)
+              1.4.27. h_entry_column (string)
+              1.4.28. state_column (string)
+              1.4.29. start_time_column (string)
+              1.4.30. timeout_column (string)
 
         1.5. Exported Functions
         1.6. Exported statistics
@@ -84,7 +92,7 @@ Bogdan-Andrei Iancu
    1-7. Set dlg_match_mode parameter
    1-8. Set use_tight_match parameter
    1-9. Set db_url parameter
-   1-10. Set realtime_update_mode parameter
+   1-10. Set db_mode parameter
    1-11. Set db_update_period parameter
    1-12. Set table_name parameter
    1-13. Set callid_column parameter
@@ -92,11 +100,19 @@ Bogdan-Andrei Iancu
    1-15. Set from_tag_column parameter
    1-16. Set to_uri_column parameter
    1-17. Set to_tag_column parameter
-   1-18. Set h_id_column parameter
-   1-19. Set h_entry_column parameter
-   1-20. Set state_column parameter
-   1-21. Set start_time_column parameter
-   1-22. Set timeout_column parameter
+   1-18. Set caller_cseq_column parameter
+   1-19. Set callee_cseq_column parameter
+   1-20. Set caller_route_column parameter
+   1-21. Set to_route_column parameter
+   1-22. Set caller_contact_column parameter
+   1-23. Set callee_contact_column parameter
+   1-24. Set caller_sock_column parameter
+   1-25. Set callee_sock_column parameter
+   1-26. Set h_id_column parameter
+   1-27. Set h_entry_column parameter
+   1-28. Set state_column parameter
+   1-29. Set start_time_column parameter
+   1-30. Set timeout_column parameter
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -305,9 +321,9 @@ modparam("dialog", "db_url", "mysql://user:passwb@localhost/database")
 
    Default value is "0". 
 
-   Example 1-10. Set realtime_update_mode parameter
+   Example 1-10. Set db_mode parameter
 ...
-modparam("dialog", "realtime_update_mode", "1")
+modparam("dialog", "db_mode", "1")
 ...
      _________________________________________________________
 
@@ -331,11 +347,11 @@ modparam("dialog", "db_update_period", "120")
    If you want to store the information about the dialogs in a
    database a table name must be specified.
 
-   Default value is "dialog_table". 
+   Default value is "dialog". 
 
    Example 1-12. Set table_name parameter
 ...
-modparam("dialog", "table_name", "name")
+modparam("dialog", "table_name", "my_dialog")
 ...
      _________________________________________________________
 
@@ -344,7 +360,7 @@ modparam("dialog", "table_name", "name")
    The column's name in the database to store the dialogs'
    callid.
 
-   Default value is "call_id". 
+   Default value is "callid". 
 
    Example 1-13. Set callid_column parameter
 ...
@@ -404,66 +420,170 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 ...
      _________________________________________________________
 
-1.4.18. h_id_column (string)
+1.4.18. caller_cseq_column (string)
+
+   The column's name in the database to store the cseq from
+   caller side.
+
+   Default value is "caller_cseq". 
+
+   Example 1-18. Set caller_cseq_column parameter
+...
+modparam("dialog", "caller_cseq_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.19. callee_cseq_column (string)
+
+   The column's name in the database to store the cseq from
+   callee side.
+
+   Default value is "callee_cseq". 
+
+   Example 1-19. Set callee_cseq_column parameter
+...
+modparam("dialog", "callee_cseq_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.20. caller_route_column (string)
+
+   The column's name in the database to store the route records
+   from caller side (proxy to caller).
+
+   Default value is "caller_route_set". 
+
+   Example 1-20. Set caller_route_column parameter
+...
+modparam("dialog", "caller_route_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.21. callee_route_column (string)
+
+   The column's name in the database to store the route records
+   from callee side (proxy to callee).
+
+   Default value is "callee_route_set". 
+
+   Example 1-21. Set to_route_column parameter
+...
+modparam("dialog", "to_route_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.22. caller_contact_column (string)
+
+   The column's name in the database to store the caller's
+   contact uri.
+
+   Default value is "from_contact". 
+
+   Example 1-22. Set caller_contact_column parameter
+...
+modparam("dialog", "caller_contact_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.23. callee_contact_column (string)
+
+   The column's name in the database to store the callee's
+   contact uri.
+
+   Default value is "callee_contact". 
+
+   Example 1-23. Set callee_contact_column parameter
+...
+modparam("dialog", "callee_contact_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.24. caller_sock_column (string)
+
+   The column's name in the database to store the information
+   about the local interface receiving the traffic from caller.
+
+   Default value is "caller_sock". 
+
+   Example 1-24. Set caller_sock_column parameter
+...
+modparam("dialog", "caller_sock_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.25. callee_sock_column (string)
+
+   The column's name in the database to store information about
+   the local interface receiving the traffic from callee.
+
+   Default value is "callee_contact". 
+
+   Example 1-25. Set callee_sock_column parameter
+...
+modparam("dialog", "callee_sock_column", "column_name")
+...
+     _________________________________________________________
+
+1.4.26. h_id_column (string)
 
    The column's name in the database to store the dialogs' hash
    id information.
 
    Default value is "hash_id". 
 
-   Example 1-18. Set h_id_column parameter
+   Example 1-26. Set h_id_column parameter
 ...
 modparam("dialog", "h_id_column", "hash_id_c_name")
 ...
      _________________________________________________________
 
-1.4.19. h_entry_column (string)
+1.4.27. h_entry_column (string)
 
    The column's name in the database to store the dialogs' hash
    entry information.
 
    Default value is "hash_entry". 
 
-   Example 1-19. Set h_entry_column parameter
+   Example 1-27. Set h_entry_column parameter
 ...
 modparam("dialog", "h_entry_column", "h_entry_c_name")
 ...
      _________________________________________________________
 
-1.4.20. state_column (string)
+1.4.28. state_column (string)
 
    The column's name in the database to store the dialogs' state
    information.
 
    Default value is "state". 
 
-   Example 1-20. Set state_column parameter
+   Example 1-28. Set state_column parameter
 ...
 modparam("dialog", "state_column", "state_c_name")
 ...
      _________________________________________________________
 
-1.4.21. start_time_column (string)
+1.4.29. start_time_column (string)
 
    The column's name in the database to store the dialogs' start
    time information.
 
    Default value is "start_time". 
 
-   Example 1-21. Set start_time_column parameter
+   Example 1-29. Set start_time_column parameter
 ...
 modparam("dialog", "start_time_column", "start_time_c_name")
 ...
      _________________________________________________________
 
-1.4.22. timeout_column (string)
+1.4.30. timeout_column (string)
 
    The column's name in the database to store the dialogs'
    timeout.
 
    Default value is "timeout". 
 
-   Example 1-22. Set timeout_column parameter
+   Example 1-30. Set timeout_column parameter
 ...
 modparam("dialog", "timeout_column", "timeout_c_name")
 ...

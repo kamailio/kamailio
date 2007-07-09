@@ -27,6 +27,9 @@
  * 2007-04-30  added dialog matching without DID (dialog ID), but based only
  *             on RFC3261 elements - based on an original patch submitted 
  *             by Michel Bensoussan <michel@extricom.com> (bogdan)
+ * 2007-07-06  additional information stored in order to save it in the db:
+ *             cseq, route_set, contact and sock_info for both caller and 
+ *             callee (ancuta)
  */
 
 #include <stdlib.h>
@@ -101,10 +104,22 @@ static inline void destroy_dlg(struct dlg_cell *dlg)
 	DBG("DBUG:dialog:destroy_dlg: destroing dialog %p\n",dlg);
 	if (dlg_db_mode)
 		remove_dialog_from_db(dlg);
-	if (dlg->to_tag.s && dlg->to_tag.len)
-		shm_free(dlg->to_tag.s);
+
+	if (dlg->tag[DLG_CALLER_LEG].s)
+		shm_free(dlg->tag[DLG_CALLER_LEG].s);
+
+	if (dlg->tag[DLG_CALLEE_LEG].s)
+		shm_free(dlg->tag[DLG_CALLEE_LEG].s);
+
+	if (dlg->cseq[DLG_CALLER_LEG].s)
+		shm_free(dlg->cseq[DLG_CALLER_LEG].s);
+
+	if (dlg->cseq[DLG_CALLEE_LEG].s)
+		shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
+
 	if (dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);
+
 	shm_free(dlg);
 }
 
@@ -142,14 +157,14 @@ void destroy_dlg_table()
 
 
 struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
-												str *from_tag)
+																str *from_tag)
 {
 	struct dlg_cell *dlg;
 	int len;
 	char *p;
 
 	len = sizeof(struct dlg_cell) + callid->len + from_uri->len +
-		to_uri->len + from_tag->len;
+		to_uri->len;
 	dlg = (struct dlg_cell*)shm_malloc( len );
 	if (dlg==0) {
 		LOG(L_ERR,"ERROR:dialog:build_new_dlg: no more shm mem (%d)\n",len);
@@ -179,11 +194,6 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	memcpy( p, to_uri->s, to_uri->len);
 	p += to_uri->len;
 
-	dlg->from_tag.s = p;
-	dlg->from_tag.len = from_tag->len;
-	memcpy( p, from_tag->s, from_tag->len);
-	p += from_tag->len;
-
 	if ( p!=(((char*)dlg)+len) ) {
 		LOG(L_CRIT,"BUG:dialog:build_new_dlg: buffer overflow\n");
 		shm_free(dlg);
@@ -195,17 +205,70 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 
 
 
-int dlg_set_totag(struct dlg_cell *dlg, str *tag)
+int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
+					str *cseq, unsigned int leg)
 {
-	dlg->to_tag.s = (char*)shm_malloc( tag->len );
-	if (dlg->to_tag.s==0) {
-		LOG(L_ERR,"ERROR:dialog:dlg_set_totag: no more shm mem (%d)\n",
-				tag->len);
+	char *p;
+
+	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len + contact->len );
+	dlg->cseq[leg].s = (char*)shm_malloc( cseq->len );
+	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL) {
+		LOG(L_ERR,"ERROR:dialog:dlg_set_leg_info: no more shm mem\n");
+		if (dlg->tag[leg].s) shm_free(dlg->tag[leg].s);
+		if (dlg->cseq[leg].s) shm_free(dlg->cseq[leg].s);
 		return -1;
 	}
-	memcpy( dlg->to_tag.s, tag->s, tag->len);
-	dlg->to_tag.len = tag->len;
+	p = dlg->tag[leg].s;
+
+	/* tag */
+	dlg->tag[leg].len = tag->len;
+	memcpy( p, tag->s, tag->len);
+	p += tag->len;
+	/* contact */
+	dlg->contact[leg].s = p;
+	dlg->contact[leg].len = contact->len;
+	memcpy( p, contact->s, contact->len);
+	p += contact->len;
+	/* rr */
+	if (rr->len) {
+		dlg->route_set[leg].s = p;
+		dlg->route_set[leg].len = rr->len;
+		memcpy( p, rr->s, rr->len);
+	}
+
+	/* cseq */
+	dlg->cseq[leg].len = cseq->len;
+	memcpy( dlg->cseq[leg].s, cseq->s, cseq->len);
+
 	return 0;
+}
+
+
+
+int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
+{
+	if ( dlg->cseq[leg].s ) {
+		if (dlg->cseq[leg].len < cseq->len) {
+			shm_free(dlg->cseq[leg].s);
+			dlg->cseq[leg].s = (char*)shm_malloc(cseq->len);
+			if (dlg->cseq[leg].s==NULL)
+				goto error;
+		}
+	} else {
+		dlg->cseq[leg].s = (char*)shm_malloc(cseq->len);
+		if (dlg->cseq[leg].s==NULL)
+			goto error;
+	}
+
+	memcpy( dlg->cseq[leg].s, cseq->s, cseq->len );
+	dlg->cseq[leg].len = cseq->len;
+
+	DBG("DBG:dialog:dlg_update_cseq: cseq is %.*s\n",
+		dlg->cseq[leg].len, dlg->cseq[leg].s);
+	return 0;
+error:
+	LOG(L_ERR,"ERROR:dialog:dlg_update_cseq: not more shm mem\n");
+	return -1;
 }
 
 
@@ -449,6 +512,16 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 						"state %d\n",event,dlg->state);
 			}
 			break;
+		case DLG_EVENT_REQPRACK:
+			switch (dlg->state) {
+				case DLG_STATE_EARLY:
+				case DLG_STATE_CONFIRMED_NA:
+					break;
+				default:
+					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
+						"state %d\n",event,dlg->state);
+			}
+			break;
 		case DLG_EVENT_REQ:
 			switch (dlg->state) {
 				case DLG_STATE_CONFIRMED_NA:
@@ -478,6 +551,7 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 {
 	struct dlg_cell *dlg;
 	struct mi_node* rpl = NULL, *node= NULL;
+	struct mi_node* node1 = NULL;
 	struct mi_attr* attr= NULL;
 	struct mi_root* rpl_tree= NULL;
 	unsigned int i;
@@ -488,6 +562,8 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 	if (rpl_tree==0)
 		return 0;
 	rpl = &rpl_tree->node;
+	
+	LOG(L_DBG, "DBG:dialog:mi_print_dlgs:printing %i dialogs\n", d_table->size);
 
 	for( i=0 ; i<d_table->size ; i++ ) {
 		dlg_lock( d_table, &(d_table->entries[i]) );
@@ -503,40 +579,93 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 				goto error;
 
 			p= int2str((unsigned long)dlg->state, &len);
-			attr = add_mi_attr( node, MI_DUP_VALUE, "state", 5, p, len);
-			if (attr==0)
+			node1 = add_mi_node_child( node, MI_DUP_VALUE, "state", 5, p, len);
+			if (node1==0)
 				goto error;
 
-			p= int2str((unsigned long)dlg->lifetime, &len);
-			attr = add_mi_attr( node, MI_DUP_VALUE, "timeout", 7, p, len);
-			if (attr==0)
+			p= int2str((unsigned long)dlg->start_ts, &len);
+			node1 = add_mi_node_child(node,MI_DUP_VALUE,"timestart",9, p, len);
+			if (node1==0)
 				goto error;
 
-			attr = add_mi_attr(node, MI_DUP_VALUE, "callid", 6,
+			p= int2str((unsigned long)dlg->tl.timeout, &len);
+			node1 = add_mi_node_child(node,MI_DUP_VALUE, "timeout", 7, p, len);
+			if (node1==0)
+				goto error;
+
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "callid", 6,
 					dlg->callid.s, dlg->callid.len);
-			if(attr == 0)
+			if(node1 == 0)
 				goto error;
 
-			attr = add_mi_attr(node, MI_DUP_VALUE, "from_uri", 8,
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "from_uri", 8,
 					dlg->from_uri.s, dlg->from_uri.len);
-			if(attr == 0)
+			if(node1 == 0)
 				goto error;
 
-			attr = add_mi_attr(node, MI_DUP_VALUE, "from_tag", 8,
-					dlg->from_tag.s, dlg->from_tag.len);
-			if(attr == 0)
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "from_tag", 8,
+					dlg->tag[DLG_CALLER_LEG].s, dlg->tag[DLG_CALLER_LEG].len);
+			if(node1 == 0)
+				goto error;
+
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "caller_contact", 14,
+					dlg->contact[DLG_CALLER_LEG].s,
+					dlg->contact[DLG_CALLER_LEG].len);
+			if(node1 == 0)
+				goto error;
+
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "caller_cseq", 11,
+					dlg->cseq[DLG_CALLER_LEG].s,
+					dlg->cseq[DLG_CALLER_LEG].len);
+			if(node1 == 0)
+				goto error;
+
+			node1 = add_mi_node_child(node, MI_DUP_VALUE,"caller_route_set",16,
+					dlg->route_set[DLG_CALLER_LEG].s,
+					dlg->route_set[DLG_CALLER_LEG].len);
+			if(node1 == 0)
 				goto error;
 	
-			attr = add_mi_attr(node, MI_DUP_VALUE, "to_uri", 6,
+			node1 = add_mi_node_child(node, MI_DUP_VALUE,"caller_bind_addr",16,
+					dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s, 
+					dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len);
+			if(node1 == 0)
+				goto error;
+
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "to_uri", 6,
 					dlg->to_uri.s, dlg->to_uri.len);
-			if(attr == 0)
+			if(node1 == 0)
 				goto error;
 
-			attr = add_mi_attr(node, MI_DUP_VALUE, "to_tag", 6,
-					dlg->to_tag.s, dlg->to_tag.len);
-			if(attr == 0)
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "to_tag", 6,
+					dlg->tag[DLG_CALLEE_LEG].s, dlg->tag[DLG_CALLEE_LEG].len);
+			if(node1 == 0)
+				goto error;
+		
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "callee_contact", 14,
+					dlg->contact[DLG_CALLEE_LEG].s,
+					dlg->contact[DLG_CALLEE_LEG].len);
+			if(node1 == 0)
 				goto error;
 
+			node1 = add_mi_node_child(node, MI_DUP_VALUE, "callee_cseq", 11,
+					dlg->cseq[DLG_CALLEE_LEG].s,
+					dlg->cseq[DLG_CALLEE_LEG].len);
+			if(node1 == 0)
+				goto error;
+
+			node1 = add_mi_node_child(node, MI_DUP_VALUE,"callee_route_set",16,
+					dlg->route_set[DLG_CALLEE_LEG].s,
+					dlg->route_set[DLG_CALLEE_LEG].len);
+			if(node1 == 0)
+				goto error;
+
+			node1 = add_mi_node_child(node, MI_DUP_VALUE,"callee_bind_addr",16,
+					dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s, 
+					dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len);
+			if(node1 == 0)
+				goto error;
+		
 		}
 		dlg_unlock( d_table, &(d_table->entries[i]) );
 	}

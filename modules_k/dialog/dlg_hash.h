@@ -27,6 +27,9 @@
  *             (Jeffrey Magder - SOMA Networks)
  * 2007-03-06  syncronized state machine added for dialog state. New tranzition
  *             design based on events; removed num_1xx and num_2xx (bogdan)
+ * 2007-07-06  added flags, cseq, contact, route_set and bind_addr 
+ *             to struct dlg_cell in order to store these information into db
+ *             (ancuta)
  */
 
 
@@ -48,12 +51,16 @@
 #define DLG_EVENT_RPL1xx       2
 #define DLG_EVENT_RPL2xx       3
 #define DLG_EVENT_RPL3xx       4
-#define DLG_EVENT_REQACK       5
-#define DLG_EVENT_REQBYE       6
-#define DLG_EVENT_REQ          7
+#define DLG_EVENT_REQPRACK     5
+#define DLG_EVENT_REQACK       6
+#define DLG_EVENT_REQBYE       7
+#define DLG_EVENT_REQ          8
 
 #define DLG_FLAG_NEW           (1<<0)
 #define DLG_FLAG_CHANGED       (1<<1)
+
+#define DLG_CALLER_LEG         0
+#define DLG_CALLEE_LEG         1
 
 
 struct dlg_cell
@@ -67,12 +74,16 @@ struct dlg_cell
 	unsigned int         lifetime;
 	unsigned int         start_ts;
 	unsigned int         flags;
+	unsigned int         from_rr_nb;
 	struct dlg_tl        tl;
 	str                  callid;
 	str                  from_uri;
 	str                  to_uri;
-	str                  from_tag;
-	str                  to_tag;
+	str                  tag[2];
+	str                  cseq[2];
+	str                  route_set[2];
+	str                  contact[2];
+	struct socket_info * bind_addr[2];
 	struct dlg_head_cbl  cbs;
 };
 
@@ -113,7 +124,10 @@ void destroy_dlg_table();
 struct dlg_cell* build_new_dlg(str *callid, str *from_uri,
 		str *to_uri, str *from_tag);
 
-int dlg_set_totag(struct dlg_cell *dlg, str *tag);
+int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
+		str *cseq, unsigned int leg);
+
+int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq);
 
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
 
@@ -131,11 +145,11 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
 static inline int match_dialog(struct dlg_cell *dlg, str *callid,
 													str *ftag, str *ttag ) {
 	if (dlg->callid.len!=callid->len ||
-	dlg->from_tag.len!=ftag->len ||
-	dlg->to_tag.len!=ttag->len ||
+	dlg->tag[DLG_CALLER_LEG].len!=ftag->len ||
+	dlg->tag[DLG_CALLEE_LEG].len!=ttag->len ||
 	strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
-	strncmp(dlg->from_tag.s,ftag->s,ftag->len)!=0 ||
-	strncmp(dlg->to_tag.s,ttag->s,ttag->len)!=0)
+	strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)!=0 ||
+	strncmp(dlg->tag[DLG_CALLEE_LEG].s,ttag->s,ttag->len)!=0)
 		return 0;
 	return 1;
 }

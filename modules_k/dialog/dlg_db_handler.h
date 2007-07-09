@@ -31,7 +31,7 @@
 #include "../../str.h"
 #include "../../db/db.h"
 
-#define CALL_ID_COL				"call_id"
+#define CALL_ID_COL				"callid"
 #define FROM_URI_COL			"from_uri"
 #define FROM_TAG_COL			"from_tag"
 #define TO_URI_COL				"to_uri"
@@ -41,9 +41,17 @@
 #define STATE_COL				"state"
 #define START_TIME_COL			"start_time"
 #define TIMEOUT_COL				"timeout"
-#define DIALOG_TABLE_NAME		"dialog_table"
+#define TO_CSEQ_COL				"callee_cseq"
+#define FROM_CSEQ_COL			"caller_cseq"
+#define TO_ROUTE_COL			"callee_route_set"
+#define FROM_ROUTE_COL			"caller_route_set"
+#define TO_CONTACT_COL			"callee_contact"
+#define FROM_CONTACT_COL		"caller_contact"
+#define FROM_SOCK_COL			"caller_sock"
+#define TO_SOCK_COL				"callee_sock"
+#define DIALOG_TABLE_NAME		"dialog"
 
-#define DLG_TABLE_VERSION		1
+#define DLG_TABLE_VERSION		2
 
 /*every minute the dialogs' information will be refreshed*/
 #define DB_DEFAULT_UPDATE_PERIOD	60
@@ -51,7 +59,7 @@
 #define DB_MODE_REALTIME			1
 #define DB_MODE_DELAYED				2
 
-#define DIALOG_TABLE_COL_NO 10
+#define DIALOG_TABLE_COL_NO 		18
 
 
 extern char* call_id_column; 
@@ -64,6 +72,14 @@ extern char* h_entry_column;
 extern char* state_column;
 extern char* start_time_column;
 extern char* timeout_column;
+extern char* to_cseq_column;
+extern char* from_cseq_column;
+extern char* to_route_column;
+extern char* from_route_column;
+extern char* to_contact_column;
+extern char* from_contact_column;
+extern char* to_sock_column;
+extern char* from_sock_column;
 extern char* dialog_table_name;
 extern int dlg_db_mode;
 
