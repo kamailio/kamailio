@@ -63,7 +63,6 @@
 
 #ifdef DIAM_ACC
 #include "diam_dict.h"
-#include "dict.h"
 #include "diam_tcp.h"
 #endif
 

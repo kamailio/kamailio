@@ -545,11 +545,11 @@ int acc_rad_request( struct sip_msg *req )
 	/* call-legs attributes also get inserted */
 	if ( leg_info ) {
 		offset += attr_cnt;
-		attr_cnt = legs2strar(leg_info,req,val_arr,q,1);
+		attr_cnt = legs2strar(leg_info,req,val_arr,1);
 		do {
 			for (i=0; i<attr_cnt; i++)
 				ADD_RAD_AVPAIR( offset+i, val_arr[i].s, val_arr[i].len );
-		}while ( (attr_cnt=legs2strar(leg_info,req,val_arr,q,0))!=0 );
+		}while ( (attr_cnt=legs2strar(leg_info,req,val_arr,0))!=0 );
 	}
 
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
@@ -608,6 +608,8 @@ int acc_diam_init()
 		return -1;
 	}
 	n += m;
+
+	return 0;
 }
 
 
@@ -637,7 +639,6 @@ int acc_diam_request( struct sip_msg *req )
 	str *uri;
 	int ret;
 	int i;
-	int s;
 	int status;
 	char tmp[2];
 	unsigned int mid;
@@ -699,7 +700,7 @@ int acc_diam_request( struct sip_msg *req )
 
 	/* add attributes */
 	for(i=0; i<attr_cnt; i++) {
-		if((avp=AAACreateAVP(diam_attr[i], 0,0, val_arr[i].s, val_arr[i].len,
+		if((avp=AAACreateAVP(diam_attrs[i], 0,0, val_arr[i].s, val_arr[i].len,
 		AVP_DUPLICATE_DATA)) == 0) {
 			LOG(L_ERR,"ERROR:acc:acc_diam_request: no more free memory!\n");
 			goto error;
@@ -716,7 +717,7 @@ int acc_diam_request( struct sip_msg *req )
 		cnt = legs2strar(leg_info,req,val_arr,1);
 		do {
 			for (i=0; i<cnt; i++) {
-				if((avp=AAACreateAVP(diam_attr[attr_cnt+i], 0, 0,
+				if((avp=AAACreateAVP(diam_attrs[attr_cnt+i], 0, 0,
 				val_arr[i].s, val_arr[i].len, AVP_DUPLICATE_DATA)) == 0) {
 					LOG(L_ERR,"ERROR:acc:acc_diam_request: no more "
 						"free memory!\n");
