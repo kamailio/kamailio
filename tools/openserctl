@@ -51,7 +51,7 @@ fi
 if [ -f "$MYLIBDIR/openserctl.base" ]; then
 	. "$MYLIBDIR/openserctl.base"
 else
-	echo "Cannot load core functions '$MYLIBDIR/openserctl.base' - exiting ..."
+	merr "Cannot load core functions '$MYLIBDIR/openserctl.base' - exiting ..."
 	exit -1
 fi
 
@@ -73,6 +73,13 @@ case $DBENGINE in
 	PGSQL|pgsql|postgres|postgresql)
 		if [ -f "$MYLIBDIR/openserctl.pgsql" ]; then
 			. "$MYLIBDIR/openserctl.pgsql"
+			DBENGINELOADED=1
+		fi
+		;;
+
+	DBTEXT|dbtext)
+		if [ -f "$MYLIBDIR/openserctl.dbtext" ]; then
+			. "$MYLIBDIR/openserctl.dbtext"
 			DBENGINELOADED=1
 		fi
 		;;
@@ -136,14 +143,14 @@ done
 
 require_dbengine() {
 	if [ $DBENGINELOADED -eq 0 ] ; then 
-		echo "This command requires a database engine - none was loaded"
+		merr "This command requires a database engine - none was loaded"
 		exit -1
 	fi
 }
 
 require_ctlengine() {
 	if [ $CTLENGINELOADED -eq 0 ] ; then 
-		echo "This command requires a control engine - none was loaded"
+		merr "This command requires a control engine - none was loaded"
 		exit -1
 	fi
 }
@@ -162,6 +169,15 @@ require_ctlengine() {
 # params: user
 # output: false if exists, true otherwise
 is_user() {
+    if  [ "$DBENGINE" = "DBTEXT" ] ; then
+        CNT=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | wc -w`
+
+        if [ "0$CNT" -eq 0 ] ; then
+                false
+        else
+                true
+        fi
+    else
 	set_user $1
 	
 	QUERY="select count(*) from $SUB_TABLE where \
@@ -174,6 +190,7 @@ $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 	else
 		true
 	fi
+    fi
 }
 
 
@@ -183,16 +200,108 @@ $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 #
 acl() {
 	require_dbengine
+    if [ "$DBENGINE" = "DBTEXT" ] ; then
+        case $1 in
+                show)
+                        if [ $# -eq 2 ] ; then
+                                set_user $2
+                                is_user
+                                if [ $? -ne 0 ] ; then
+                                        mecho "Non-existent user. Still proceeding? [Y|N] "
+                                        read answer
+                                        if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+                                                minfo "Proceeding with non-local user"
+                                        else
+                                                exit 1
+                                        fi
+                                fi
+                                EGREP_COND="^$SERUSER:$SERDOMAIN:"
+                        elif [ $# -ne 1 ] ; then
+                                usage_acl
+                                exit 1
+                        fi
+                        if [ -z $EGREP_COND ]; then
+                                EGREP_COND=""
+                        fi
+                        echo -e "\nuser*domain**group*lastmodified" | tr "*" "\t"
+                        cat $ACL_FILE | $EGREP -v "username" | $EGREP "$EGREP_COND" | tr ":" "\t"
+
+                        ;;
+
+                grant)
+                        if [ $# -lt 3 ] ; then
+                                usage_acl
+                                exit 1
+                        fi
+                        set_user $2
+                        is_user
+                        if [ $? -ne 0 ] ; then
+                                mecho "Non-existent user. Still proceeding? [Y|N] "
+                                read answer
+                                if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+                                        minfo "Proceeding with non-local user"
+                                else
+                                        exit 1
+                                fi
+                        fi
+                        shift 2
+                        while [ $# -gt 0 ] ; do
+
+                                if [ $VERIFY_ACL -eq 1 ] ; then
+                                        found=0
+                                        for i in $ACL_GROUPS ; do
+                                                if [ "$1" = "$i" ] ; then
+                                                        found=1
+                                                        break
+                                                fi
+                                        done
+                                        if [ $found -eq 0 ] ; then
+                                                mwarn "Invalid privilege: $1 ignored"
+                                                shift
+                                                continue
+                                        fi
+                                fi
+
+                                line="$SERUSER:$SERDOMAIN:$1:$date_now"
+                                echo $line >> $ACL_FILE
+                                shift
+                        done
+
+                        $0 acl show $SERUSER@$SERDOMAIN
+
+                        ;;
+
+                revoke)
+                        if [ $# -eq 3 ] ; then
+                                CLAUSE="$3:"
+                        elif [ $# -ne 2 ] ; then
+                                usage_acl
+                                exit 1
+                        fi
+
+                        set_user $2
+
+                        cat $ACL_FILE | $EGREP -v "^$SERUSER:$SERDOMAIN:$CLAUSE" >> $ACL_FILE.tmp
+                        mv -f $ACL_FILE.tmp $ACL_FILE
+                        $0 acl show $2
+
+                        ;;
+
+                *)
+                        usage_acl
+                        exit 1
+                        ;;
+        esac
+    else
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
 				is_user $2 
 				if [ $? -ne 0 ] ; then
-					printf "Non-existent user '$2'. Still proceeding? \
-[Y|N] " > /dev/stderr
+					mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
 					read answer
 					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-						mecho "Proceeding with non-local user"
+						minfo "Proceeding with non-local user"
 					else
 						exit 1
 					fi
@@ -216,11 +325,10 @@ acl() {
 			fi
 			is_user $2 
 			if [ $? -ne 0 ] ; then
-				printf "Non-existent user '$2'. Still proceeding?\
-					[Y|N] " > /dev/stderr
+				mecho "Non-existent user '$2'. Still proceeding? [Y|N] "
 				read answer
 				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-					mecho "Proceeding with non-local user"
+					minfo "Proceeding with non-local user"
 				else
 					exit 1
 				fi
@@ -289,6 +397,7 @@ $CLAUSE"
 			exit 1
 			;;
 	esac
+    fi
 }
 
 
@@ -302,16 +411,14 @@ check_ul_alias() {
 	RET="$?"
 	ALIAS_UL_EXISTS=0
 	if [ $RET -ne 0 ] ; then
-		merr "OpenSER $CTLENGINE not accessible: $RET" \
-			> /dev/stderr
+		merr "OpenSER $CTLENGINE not accessible: $RET"
 		exit 1
 	fi
 	echo "$RES" | grep "^404" > /dev/null
 	if [ $? -ne 0 ] ; then
 		echo "$RES" | grep "^400" > /dev/null
 		if [ $? -eq 0 ] ; then
-			merr "400; check if you use aliases in OpenSER" \
-				> /dev/stderr
+			merr "400; check if you use aliases in OpenSER"
 			exit 1
 		fi
 		echo "$RES" | grep "^200" > /dev/null
@@ -319,7 +426,7 @@ check_ul_alias() {
 			ALIAS_UL_EXISTS=1
 		fi
 		# other errors
-		merr "$RES" > /dev/stderr
+		merr "$RES"
 		exit 1
 	fi
 }
@@ -402,8 +509,7 @@ $DA_DOMAIN_COLUMN='$OSERDOMAIN'"
 									#			else print line ")\t" $1 "@" $2;
 									#			line++; }'
 			elif [ $# -eq 1 ] ; then
-				printf "Dumping all aliases may take long: do you want to \
-proceed? [Y|N] "
+				mecho "Dumping all aliases may take long: do you want to proceed? [Y|N] "
 				read answer
 				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
 					mecho "Dumping all aliases..."
@@ -682,7 +788,7 @@ FROM $AVP_TABLE $CLAUSE;"
 					shift
 					shift
 				else
-					echo "avp add - unknown parameter '$1'"
+					mecho "avp add - unknown parameter '$1'"
 					exit 1					
 				fi
 			fi
@@ -899,6 +1005,44 @@ db_ops() {
 ### domain management
 #
 domain() {
+    if [ "$DBENGINE" = "DBTEXT" ] ; then
+        case $1 in
+                show)
+                        # QUERY="select * FROM $DOMAIN_TABLE ; "
+                        # sql_ro_query "$QUERY"
+                        fifo_cmd domain_dump
+                        ;;
+                add)
+                        shift
+                        if [ $# -ne 1 ] ; then
+                                merr "missing domain to be added"
+                                exit 1
+                        fi
+                        line="$1:$date_now"
+                        echo "$line" >> $DOMAIN_FILE
+                        minfo "Domain $1 saved into DBTEXT database"
+			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
+                        #FIXME: domain_reload command not supported yet
+                        #fifo_cmd domain_reload
+                        ;;
+                rm)
+                        shift
+                        if [ $# -ne 1 ] ; then
+                                merr "missing domain to be removed"
+                                exit 1
+                        fi
+                        cat $DOMAIN_FILE | $EGREP -v "^$1:" > $DOMAIN_FILE.tmp
+                        mv -f $DOMAIN_FILE.tmp $DOMAIN_FILE
+                        minfo "Domain $1 removed from DBTEXT database"
+			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
+                        #FIXME: domain_reload command not supported yet
+                        #fifo_cmd domain_reload
+                        ;;
+                *)
+                        usage_domain
+                        exit 1
+        esac
+    else
 	case $1 in
 		reload)
 			require_ctlengine
@@ -927,8 +1071,7 @@ domain() {
 				merr "domain - SQL Error"
 				exit 1
 			fi
-			minfo "execute '$0 domain reload' to synchronoze cache and \
-				database"
+			minfo "execute '$0 domain reload' to synchronize cache and database"
 			;;
 		rm)
 			require_dbengine
@@ -940,16 +1083,16 @@ domain() {
 			QUERY="delete from $DOMAIN_TABLE where domain='$1';"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
-				merr "domai - SQL Error"
+				merr "domain - SQL Error"
 				exit 1
 			fi
-			minfo "execute '$0 domain reload' to synchronoze cache and \
-				database"
+			minfo "execute '$0 domain reload' to synchronize cache and database"
 			;;
 		*)
 			usage_domain
 			exit 1
 	esac
+    fi
 }
 
 #
@@ -959,6 +1102,143 @@ domain() {
 lcr() {
 	require_dbengine
 	require_ctlengine
+    if [ "$DBENGINE" = "DBTEXT" ] ; then
+        case $1 in
+                show)
+                        mecho "lcr routes"
+                        lines=`wc -l $LCR_FILE | cut -d " " -f 1`
+                        let "lines=$lines-1"
+                        tail -n $lines $LCR_FILE
+
+                        mecho "lcr gateway groups"
+                        lines=`wc -l $GW_GRP_FILE | cut -d " " -f 1`
+                        let "lines=$lines-1"
+                        tail -n $lines $GW_GRP_FILE
+
+                        mecho "lcr gateways"
+                        lines=`wc -l $GW_FILE | cut -d " " -f 1`
+                        let "lines=$lines-1"
+                        tail -n $lines $GW_FILE
+                        ;;
+
+                addgw_grp)
+                        shift
+                        if [ $# -lt 2 ] ; then
+                                merr "too few parameters"
+                                usage
+                                exit 1
+                        fi
+                        GRP_ID=$2
+                        cat $GW_GRP_FILE | $EGREP ^$GRP_ID: > /dev/null
+                        if [ $? -eq 0 ] ; then
+                                merr "error: group already present"
+                                exit 1
+                        fi
+                        echo $2:$1 >> $GW_GRP_FILE
+                        chown_openser $GW_GRP_FILE
+                        #FIXME: lcr_reload command not supported yet
+                        #fifo_cmd lcr_reload
+                        ;;
+
+                rmgw_grp)
+                        shift
+                        if [ $# -ne 1 ] ; then
+                                echo missing grp_id to be removed
+                                exit 1
+                        fi
+                        cat $GW_GRP_FILE | $EGREP -v "^$1:" > $GW_GRP_FILE.tmp
+                        mv -f $GW_GRP_FILE.tmp $GW_GRP_FILE
+                        chown_openser $GW_GRP_FILE
+                        #FIXME: lcr_reload command not supported yet
+                        #fifo_cmd lcr_reload
+                        ;;
+
+                addgw)
+                        shift
+                        if [ $# -lt 6 ] ; then
+                                echo too few parameters
+                                usage
+                                exit 1
+                        fi
+                        if [ $# -gt 6 ] ; then
+                                GW_PREFIX=$7
+                                if [ $# -gt 7 ] ; then
+                                        STRIP=$8
+                                else
+                                        STRIP=0
+                                fi
+                        else
+                                GW_PREFIX=""
+                                STRIP=0
+                        fi
+                        GW_NAME=$1
+                        GW_IP=$2
+                        GW_PORT=$3
+                        GW_URI_SCHEME=$4
+                        if   [ $GW_URI_SCHEME = 'sip' ]; then
+                                GW_URI_SCHEME=1
+                        elif [ $GW_URI_SCHEME = 'sips' ]; then
+                                GW_URI_SCHEME=2
+                        fi
+                        GW_TRANSPORT=$5
+                        if   [ $GW_TRANSPORT = 'udp' ]; then
+                                GW_TRANSPORT=1
+                        elif [ $GW_TRANSPORT = 'tcp' ]; then
+                                GW_TRANSPORT=2
+                        elif [ $GW_TRANSPORT = 'tls' ]; then
+                                GW_TRANSPORT=3
+                        fi
+                        GW_GRP_ID=$6
+                        echo $GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX >> $GW_FILE
+                        chown_openser $GW_FILE
+                        #FIXME: lcr_reload command not supported yet
+                        #fifo_cmd lcr_reload
+                        ;;
+
+                rmgw)
+                        shift
+                        if [ $# -ne 1 ] ; then
+                                merr "missing gateway to be removed"
+                                exit 1
+                        fi
+                        cat $GW_FILE | $EGREP -v "^$1:" > $GW_FILE.tmp
+                        mv -f $GW_FILE.tmp $GW_FILE
+                        chown_openser $GW_FILE
+                        #FIXME: lcr_reload command not supported yet
+                        #fifo_cmd lcr_reload
+                        ;;
+
+                addroute)
+                        shift
+                        if [ $# -ne 4 ] ; then
+                                merr "too few parameters"
+                                usage
+                                exit 1
+                        fi
+                        echo $1:$2:$3:$4 >> $LCR_FILE
+                        chown_openser $LCR_FILE
+                        #FIXME: lcr_reload command not supported yet
+                        #fifo_cmd lcr_reload
+                        ;;
+
+                rmroute)
+                        shift
+                        if [ $# -ne 4 ] ; then
+                                merr "too few parameters"
+                                usage
+                                exit 1
+                        fi
+                        cat $LCR_FILE | $EGREP -v "^$1:$2:$3:$4\$" > $LCR_FILE.tmp
+                        mv -f $LCR_FILE.tmp $LCR_FILE
+                        chown_openser $LCR_FILE
+                        #FIXME: lcr_reload command not supported yet
+                        #fifo_cmd lcr_reload
+                        ;;
+                *)
+                        usage_lcr
+                        exit 1
+        esac
+    else
 	case $1 in
 		show)
 			mecho "lcr routes"
@@ -981,7 +1261,7 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 		addgw_grp)
 			shift
 			if [ $# -lt 1 ] ; then
-				merr "lcr - too few paramters"
+				merr "lcr - too few parameters"
 				usage_lcr
 				exit 1
 			fi
@@ -1017,7 +1297,7 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 		addroute)
 			shift
 			if [ $# -ne 4 ] ; then
-				merr "lcr - too few paramters"
+				merr "lcr - too few parameters"
 				usage_lcr
 				exit 1
 			fi
@@ -1035,7 +1315,7 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 		rmroute)
 			shift
 			if [ $# -ne 4 ] ; then
-				merr "too few paramters"
+				merr "too few parameters"
 				usage_lcr
 				exit 1
 			fi
@@ -1052,7 +1332,7 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 		addgw)
 			shift
 			if [ $# -lt 6 ] ; then
-				merr "lcr - too few paramters"
+				merr "lcr - too few parameters"
 				usage_lcr
 				exit 1
 			fi
@@ -1118,6 +1398,7 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 			usage_lcr
 			exit 1
 	esac
+    fi
 }
 
 #
@@ -1126,7 +1407,7 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 #
 openser_start() {
 	echo
-	printf "Starting OpenSER : "
+	minfo "Starting OpenSER : "
 	if [ -r $PID_FILE ] ; then
 		ps axw | grep openser
 		ls -l $PID_FILE
@@ -1160,7 +1441,7 @@ openser_start() {
 #
 openser_stop() {
 	echo
-	printf "Stopping OpenSER : "
+	minfo "Stopping OpenSER : "
 	if [ -r $PID_FILE ] ; then
 		kill `cat $PID_FILE`
 		minfo "stopped"
@@ -1198,7 +1479,77 @@ rpid() {
     shift;
 
 	require_dbengine
+    if [ "$DBENGINE" = "DBTEXT" ] ; then
+        case $1 in
+                show)
+                        echo
+                        if [ $# -eq 2 ] ; then
+                                set_user $2
+                                is_user
+                                if [ $? -ne 0 ] ; then
+                                        merr "non-existent user"
+                                        exit 1;
+                                fi
+                                CLAUSE=":$SERUSER:$SERDOMAIN:"
 
+                        elif [ $# -ne 1 ] ; then
+                                usage
+                                exit 1
+                        fi
+                        mecho "RPID show ... "
+                        if [ -z $CLAUSE ]; then
+                                CLAUSE=""
+                        fi
+                        #19 is the rpid field
+                        cat $SUB_FILE | $EGREP "$CLAUSE" | cut -s -d : -f 2,19
+                        echo
+                        ;;
+                add|rm)
+                        MODE=$1;
+
+                        if [ "$MODE" = "add" ] ; then
+                            ARG_NUM=3;
+                        else
+                            ARG_NUM=2;
+                        fi
+
+                        if [ $# -lt $ARG_NUM ] ; then
+                                usage
+                                exit 1
+                        fi
+
+                        set_user $2
+                        is_user
+                        if [ $? -ne 0 ] ; then
+                                merr "non-existent user"
+                                exit 1
+                        fi
+                        shift 2
+
+                        if [ "$MODE" = "add" ] ; then
+                                RPID_VAL="'$1'";
+                        else
+                                RPID_VAL="";
+                        fi
+
+                        old_line=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | head -n 1`
+                        pre_rpid=`echo $old_line | cut -s -d : -f 1-18`
+                        post_rpid=`echo $old_line | cut -s -d : -f 20-25`
+                        new_line=$pre_rpid:$RPID_VAL:$post_rpid
+                        cat $SUB_FILE | sed s/$old_line/$new_line/g >> $SUB_FILE.tmp
+                        mv -f $SUB_FILE.tmp $SUB_FILE
+
+                        minfo "RPID added/removed ... showing current value"
+                        $0 rpid show $SERUSER@$SERDOMAIN
+
+                        ;;
+
+                *)
+                        usage_rpid
+                        exit 1
+                        ;;
+        esac
+    else
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
@@ -1264,6 +1615,7 @@ WHERE $SUBSCRIBER_COLUMN='$OSERUSER' AND $REALM_COLUMN='$OSERDOMAIN';"
 			exit 1
 			;;
 	esac
+    fi
 }
 
 #
@@ -1339,10 +1691,10 @@ $SD_DESC_COLUMN FROM $SD_TABLE $CLAUSE;"
 					#	line++;
 					#}'
 			elif [ $# -eq 1 ] ; then
-				printf "Dumping all speed-dials may take long: do you want to proceed? [Y|N] "
+				mecho "Dumping all speed-dials may take long: do you want to proceed? [Y|N] "
 				read answer
 				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-					echo "Dumping all speed-dials..."
+					mecho "Dumping all speed-dials..."
 					echo
 				else
 					exit 1
@@ -1393,7 +1745,7 @@ $SD_SD_DOMAIN_COLUMN='$OSERDOMAIN'"
 			QUERY="SELECT CONCAT($SD_USER_COLUMN,'@',$SD_DOMAIN_COLUMN) \
 AS 'Owner', $SD_NEW_URI_COLUMN AS 'New URI', $SD_DESC_COLUMN FROM \
 $SD_TABLE $CLAUSE ; "
-			echo "Details for speeddial <$2>"
+			mecho "Details for speeddial <$2>"
 			$DBROCMD "$QUERY"
 			# | $AWK 'BEGIN {line=0;} /^\+/ { next } 
 			# { 
@@ -1619,7 +1971,7 @@ WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 			if [ $? -ne 0 ] ; then
 				merr "password change failed"
 			else
-				echo "password change succeeded"
+				minfo "password change succeeded"
 			fi
 			;;
 
@@ -1936,7 +2288,156 @@ tls_ca() {
 	fi
 }
 
+#======================================================
+# dbtext specific functions
 
+dbtext_add() {
+	if [ "$DBENGINE" = "DBTEXT" ] ; then
+                if [ $# -ne 4 ] ; then
+                        usage
+                        exit 1
+                fi
+                shift
+                credentials $1 $2
+                is_user $1
+                if [ $? -eq 0 ] ; then
+                        merr "user already exists"
+                        exit 1
+                fi
+
+                #Add to SUBSCRIBER file                 
+                #phplib_id(str) username(str) domain(str) password(str) 
+                #first_name(str,null) last_name(str,null) phone(str,null) email_address(str) 
+                #datetime_created(int) datetime_modified(int) confirmation(str,null) flag(str,null) sendnotification(str,null) greeting(str,null) ha1(str) ha1b(str) allow_find(str) timezone(str,null) rpid(str,null) domn(int,null) uuid(str,null)
+                line="$HA1:$SERUSER:$SERDOMAIN:$2::::$3:$date_now:$date_now::o:::$HA1:$HA1B:0::::"
+                echo $line >> $SUB_FILE
+
+                #Add to URI file
+                #username(str) domain(str) uri_user(str) last_modified(int)
+                line="$SERUSER:$SERDOMAIN:$SERUSER:$date_now"
+                echo $line >> $URI_FILE
+
+                minfo "New user ($SERUSER@$SERDOMAIN) added to DBTEXT files"
+	else
+		merr "dbtext_add: unknown command for DBENGINE=$DBENGINE"
+	fi
+}
+
+dbtext_passwd() {
+	if [ "$DBENGINE" = "DBTEXT" ] ; then
+                if [ $# -ne 3 ] ; then
+                        usage
+                        exit 1
+                fi
+                shift
+                credentials $1 $2
+
+                is_user $1
+                if [ $? -ne 0 ] ; then
+                        merr "non-existent user"
+                        exit 1
+                fi
+
+                line1=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | head -n 1`
+                #9 is the date_created field
+                line1_keep1=`echo $line1 | cut -s -d : -f 5,6,7,8,9`
+                line1_keep2=`echo $line1 | cut -s -d : -f 11,12,13,14`
+                line1_keep3=`echo $line1 | cut -s -d : -f 17,18,19,20,21`
+                line2_update="$HA1:$SERUSER:$SERDOMAIN:$2:$line1_keep1:$date_now:$line1_keep2:$HA1:$HA1B:$line1_keep3"
+                cat $SUB_FILE | sed s/"$line1"/"$line2_update"/g >> $SUB_FILE.tmp
+                mv -f $SUB_FILE.tmp $SUB_FILE
+                minfo "Password change succeeded (DBTEXT)"
+	else
+		merr "dbtext_passwd: unknown command for DBENGINE=$DBENGINE"
+	fi
+}
+
+dbtext_rm() {
+        if [ "$DBENGINE" = "DBTEXT" ] ; then
+                if [ $# -ne 2 ] ; then
+                        usage
+                        exit 1
+                fi
+                shift
+
+                set_user $1
+                is_user
+                if [ $? -ne 0 ] ; then
+                        merr "non-existent user"
+                        exit 1
+                fi
+
+                # begin with remove all user's privileges
+                minfo "ACL revoke not implemented for DBTEXT ... rights not removed"
+
+                cat $URI_FILE | $EGREP -v "^$SERUSER:" > $URI_FILE.tmp
+                mv -f $URI_FILE.tmp $URI_FILE
+
+                # destroy the user now
+                cat $SUB_FILE | $EGREP -v ":$SERUSER:$SERDOMAIN:" >> $SUB_FILE.tmp
+                mv -f $SUB_FILE.tmp $SUB_FILE
+
+                # and also all his contacts
+                $0 ul rm $1   > /dev/null 2>&1
+                minfo "\nUSER $SERUSER removed\n"
+
+        else
+                merr "dbtext_rm: unknown command for DBENGINE=$DBENGINE"
+        fi
+}
+
+dbtext_showdb() {
+	if [ "$DBENGINE" = "DBTEXT" ] ; then
+                shift
+                if [ $# -eq 1 ] ; then
+                        set_user $1
+                        is_user
+                        if [ $? -ne 0 ] ; then
+                                merr "nnon-existent user"
+                                exit 1;
+                        fi
+                        #The email field is number 8 ...
+                        echo -e "\n** In Subscriber Table: ** "
+                        cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | cut -s -d : -f 8
+                        echo -e "\n** In Location Table: ** "
+                        cat $UL_FILE | head -n 1 | tr -d "(,)" | sed s/"str\|int\|null"/""/g | tr " " ":"
+                        cat $UL_FILE | $EGREP "^$SERUSER:($SERDOMAIN)?\B?:" 
+                else
+                        usr_loc=`cat $UL_FILE | cut -s -d : -f 1 | tr '\n' '|' | sed s/'|\$'/''/g`
+                        if [ -n $usr_loc ]; then
+                                echo -e "\n** Subscribers (username and email) currently registered: ** " 
+                                cat $SUB_FILE | $EGREP $usr_loc | cut -s -d : -f 2,8
+                                echo -e "\n** Deatailed location data available on disk (username, domain, contact, callid): ** " 
+                                cat $UL_FILE | $EGREP $usr_loc | cut -s -d : -f 1,2,3,8
+                        fi
+                fi
+                minfo "Note: Due to usage of cache, server's list may differ from DB list."
+	else
+		merr "dbtext_showdb: unknown command for DBENGINE=$DBENGINE"
+	fi
+}
+
+dbtext_mail() {
+	if [ "$DBENGINE" = "DBTEXT" ] ; then
+                if [ $# -ne 2 ] ; then
+			merr "wrong parameters"
+			usage 
+                        exit 1
+                fi
+                shift
+                set_user $1
+                EA=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | cut -s -d : -f 8 | $LAST_LINE`
+                minfo "Write email to $1: $EA now ..."
+                mail -s "Message from $SERDOMAIN SIP admin" $EA
+                if [ $? -eq 0 ] ; then
+                        minfo "message sent"
+                else
+                        mwarn "sending message failed"
+                fi
+	else
+                merr "dbtext_mail: unknown command for DBENGINE=$DBENGINE"
+        fi
+}
 
 #
 ##### ================================================ #####
@@ -1948,8 +2449,28 @@ case $1 in
 		acl "$@"
 		;;
 
-	add|passwd|rm)
+	add)
+	    if [ "$DBENGINE" = "DBTEXT" ] ; then
+		dbtext_add "$@"
+	    else
 		subscriber "$@"
+	    fi
+		;;
+
+	passwd)
+	    if [ "$DBENGINE" = "DBTEXT" ] ; then
+		dbtext_passwd "$@"
+	    else
+		subscriber "$@"
+	    fi
+		;;
+
+	rm)
+	    if [ "$DBENGINE" = "DBTEXT" ] ; then
+		dbtext_rm "$@"
+	    else
+		subscriber "$@"
+	    fi
 		;;
 
 	alias|ul|usrloc)
@@ -1974,7 +2495,21 @@ case $1 in
 
 	db)
 		shift
+	    if [ "$DBENGINE" = "DBTEXT" ] ; then
+		usage
+		exit 1
+	    else
 		db_ops "$@"
+	    fi
+		;;
+
+	showdb|userdb)
+	    if [ "$DBENGINE" = "DBTEXT" ] ; then
+		dbtext_showdb "$@"
+	    else
+		usage
+		exit 1
+	    fi
 		;;
 
 	domain)
@@ -1994,11 +2529,15 @@ case $1 in
 		;;
 
 	mail|email)
+	    if [ "$DBENGINE" = "DBTEXT" ] ; then
+		dbtext_mail "$@"
+	    else
 		if [ $# -ne 2 ] ; then
 			usage_send_email
 			exit 1
 		fi
 		send_email $1
+	    fi
 		;;
 
 	monitor|console|moni|con)
