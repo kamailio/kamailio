@@ -45,7 +45,7 @@
 
 void init_dlg_handlers(char *rr_param, int dlg_flag,
 		xl_spec_t *timeout_avp, int default_timeout,
-		int use_tight_match, int seq_match_mode);
+		int seq_match_mode);
 
 void destroy_dlg_handlers();
 

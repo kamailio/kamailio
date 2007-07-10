@@ -30,6 +30,12 @@
  * 2007-07-06  additional information stored in order to save it in the db:
  *             cseq, route_set, contact and sock_info for both caller and 
  *             callee (ancuta)
+ * 2007-07-10  Optimized dlg_match_mode 2 (DID_NONE), it now employs a proper
+ *             hash table lookup and isn't dependant on the is_direction 
+ *             function (which requires an RR param like dlg_match_mode 0 
+ *             anyways.. ;) ; based on a patch from 
+ *             Tavis Paquette <tavis@galaxytelecom.net> 
+ *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
  */
 
 #include <stdlib.h>
@@ -307,45 +313,60 @@ not_found:
 }
 
 
-/* Get dialog that correspond to CallId, From Tag and To Tag         */
-/* See RFC 3261, paragraph 4. Overview of Operation:                 */
-/* "The combination of the To tag, From tag, and Call-ID completely  */
-/* defines a peer-to-peer SIP relationship between [two UAs] and is  */
-/* referred to as a dialog."*/
-struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag)
+
+static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
+						str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
 	struct dlg_cell *dlg;
 	struct dlg_entry *d_entry;
-	unsigned int i;
 
-	for( i=0 ; i < d_table->size; i++ ) {
+	d_entry = &(d_table->entries[h_entry]);
 
-		d_entry = &(d_table->entries[i]);
+	dlg_lock( d_table, d_entry);
 
-		dlg_lock( d_table, d_entry);
-
-		for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
-			/* Check callid / fromtag / totag */
-			if (match_dialog( dlg, callid, ftag, ttag )==1) {
-				if (dlg->state==DLG_STATE_DELETED) {
-					dlg_unlock( d_table, d_entry);
-					goto not_found;
-				}
-				dlg->ref++;
+	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
+		/* Check callid / fromtag / totag */
+		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
+			if (dlg->state==DLG_STATE_DELETED) {
 				dlg_unlock( d_table, d_entry);
-				DBG("DEBUG:dialog:lookup_dlg: dialog callid='%.*s' found\n"
-					" on entry %u\n",callid->len, callid->s,i);
-				return dlg;
+				goto not_found;
 			}
+			dlg->ref++;
+			dlg_unlock( d_table, d_entry);
+			DBG("DEBUG:dialog:internal_get_dlg: dialog callid='%.*s' found\n"
+				" on entry %u, dir=%d\n",callid->len, callid->s,h_entry,*dir);
+			return dlg;
 		}
-
-		dlg_unlock( d_table, d_entry);
 	}
+
+	dlg_unlock( d_table, d_entry);
 
 not_found:
 	DBG("DEBUG:dialog:get_dlg: no dialog callid='%.*s' found\n",
 		callid->len, callid->s);
 	return 0;
+}
+
+
+
+/* Get dialog that correspond to CallId, From Tag and To Tag         */
+/* See RFC 3261, paragraph 4. Overview of Operation:                 */
+/* "The combination of the To tag, From tag, and Call-ID completely  */
+/* defines a peer-to-peer SIP relationship between [two UAs] and is  */
+/* referred to as a dialog."*/
+struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
+{
+	struct dlg_cell *dlg;
+
+	if ((dlg = internal_get_dlg(core_hash(callid, ftag->len?ftag:0,
+			d_table->size), callid, ftag, ttag, dir)) == 0 &&
+			(dlg = internal_get_dlg(core_hash(callid, ttag->len
+			?ttag:0, d_table->size), callid, ttag, ftag, dir)) == 0) {
+		DBG("DEBUG:dialog:lookup_dlg: no dialog callid='%.*s' found\n",
+			callid->len, callid->s);
+		return 0;
+	}
+	return dlg;
 }
 
 
@@ -626,7 +647,7 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 			if(node1 == 0)
 				goto error;
 	
-			node1 = add_mi_node_child(node, MI_DUP_VALUE,"caller_bind_addr",16,
+			node1 = add_mi_node_child(node, 0,"caller_bind_addr",16,
 					dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s, 
 					dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len);
 			if(node1 == 0)
@@ -660,9 +681,15 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 			if(node1 == 0)
 				goto error;
 
-			node1 = add_mi_node_child(node, MI_DUP_VALUE,"callee_bind_addr",16,
+			if (dlg->bind_addr[DLG_CALLEE_LEG]) {
+				node1 = add_mi_node_child(node, 0,
+					"callee_bind_addr",16,
 					dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s, 
 					dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len);
+			} else {
+				node1 = add_mi_node_child(node, 0,
+					"callee_bind_addr",16,0,0);
+			}
 			if(node1 == 0)
 				goto error;
 		

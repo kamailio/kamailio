@@ -62,6 +62,11 @@
 #define DLG_CALLER_LEG         0
 #define DLG_CALLEE_LEG         1
 
+#define DLG_DIR_NONE           0
+#define DLG_DIR_DOWNSTREAM     1
+#define DLG_DIR_UPSTREAM       2
+
+
 
 struct dlg_cell
 {
@@ -131,7 +136,7 @@ int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq);
 
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
 
-struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag);
+struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 void link_dlg(struct dlg_cell *dlg, int n);
 
@@ -143,14 +148,58 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
 
 static inline int match_dialog(struct dlg_cell *dlg, str *callid,
-													str *ftag, str *ttag ) {
-	if (dlg->callid.len!=callid->len ||
-	dlg->tag[DLG_CALLER_LEG].len!=ftag->len ||
-	dlg->tag[DLG_CALLEE_LEG].len!=ttag->len ||
-	strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
-	strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)!=0 ||
-	strncmp(dlg->tag[DLG_CALLEE_LEG].s,ttag->s,ttag->len)!=0)
-		return 0;
+									str *ftag, str *ttag, unsigned int *dir ) {
+	if (*dir==DLG_DIR_DOWNSTREAM) {
+		if (dlg->callid.len!=callid->len ||
+		dlg->tag[DLG_CALLER_LEG].len!=ftag->len ||
+		dlg->tag[DLG_CALLEE_LEG].len!=ttag->len ||
+		strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
+		strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)!=0 ||
+		strncmp(dlg->tag[DLG_CALLEE_LEG].s,ttag->s,ttag->len)!=0)
+			return 0;
+		return 1;
+	} else if (*dir==DLG_DIR_UPSTREAM) {
+		if (dlg->callid.len!=callid->len ||
+		dlg->tag[DLG_CALLEE_LEG].len!=ftag->len ||
+		dlg->tag[DLG_CALLER_LEG].len!=ttag->len ||
+		strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
+		strncmp(dlg->tag[DLG_CALLEE_LEG].s,ftag->s,ftag->len)!=0 ||
+		strncmp(dlg->tag[DLG_CALLER_LEG].s,ttag->s,ttag->len)!=0)
+			return 0;
+		return 1;
+	} else {
+		if (dlg->callid.len!=callid->len)
+			return 0;
+		if (dlg->tag[DLG_CALLEE_LEG].len==ftag->len &&
+		dlg->tag[DLG_CALLER_LEG].len==ttag->len) {
+			if (strncmp(dlg->callid.s,callid->s,callid->len)!=0)
+				return 0;
+			if (ftag->len == ttag->len) {
+				if (strncmp(dlg->tag[DLG_CALLEE_LEG].s,ftag->s,ftag->len)==0 &&
+				strncmp(dlg->tag[DLG_CALLER_LEG].s,ttag->s,ttag->len)==0) {
+					*dir = DLG_DIR_DOWNSTREAM;
+				} else 
+				if (strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)==0 &&
+				strncmp(dlg->tag[DLG_CALLEE_LEG].s,ttag->s,ttag->len)==0) {
+					*dir = DLG_DIR_UPSTREAM;
+				} else return 0;
+			} else {
+				if (strncmp(dlg->tag[DLG_CALLEE_LEG].s,ftag->s,ftag->len)!=0 ||
+				strncmp(dlg->tag[DLG_CALLER_LEG].s,ttag->s,ttag->len)!=0)
+					return 0;
+				*dir = DLG_DIR_DOWNSTREAM;
+			}
+		} else if (dlg->tag[DLG_CALLER_LEG].len==ftag->len &&
+		dlg->tag[DLG_CALLEE_LEG].len==ttag->len) {
+			if (strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
+			strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)!=0 ||
+			strncmp(dlg->tag[DLG_CALLEE_LEG].s,ttag->s,ttag->len)!=0)
+				return 0;
+			*dir = DLG_DIR_UPSTREAM;
+		} else
+			return 0;
+	}
+
 	return 1;
 }
 

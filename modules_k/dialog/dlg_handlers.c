@@ -33,7 +33,13 @@
  * 2007-05-17  new feature: saving dialog info into a database if 
  *             realtime update is set(ancuta)
  * 2007-07-06  support for saving additional dialog info : cseq, contact, 
- * 			   route_set and socket_info for both caller and callee (ancuta)
+ *             route_set and socket_info for both caller and callee (ancuta)
+ * 2007-07-10  Optimized dlg_match_mode 2 (DID_NONE), it now employs a proper
+ *             hash table lookup and isn't dependant on the is_direction 
+ *             function (which requires an RR param like dlg_match_mode 0 
+ *             anyways.. ;) ; based on a patch from 
+ *             Tavis Paquette <tavis@galaxytelecom.net> 
+ *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
  */
 
 
@@ -60,7 +66,6 @@ static str       rr_param;
 static int       dlg_flag;
 static xl_spec_t *timeout_avp;
 static int       default_timeout;
-static int       use_tight_match;
 static int       seq_match_mode;
 static int       shutdown_done = 0;
 
@@ -86,7 +91,7 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;
 
 void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 		xl_spec_t *timeout_avp_p ,int default_timeout_p, 
-		int use_tight_match_p, int seq_match_mode_p)
+		int seq_match_mode_p)
 {
 	rr_param.s = rr_param_p;
 	rr_param.len = strlen(rr_param.s);
@@ -95,7 +100,6 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 
 	timeout_avp = timeout_avp_p;
 	default_timeout = default_timeout_p;
-	use_tight_match = use_tight_match_p;
 	seq_match_mode = seq_match_mode_p;
 }
 
@@ -484,23 +488,16 @@ static inline int pre_match_parse( struct sip_msg *req, str *callid,
 	/* callid */
 	*callid = req->callid->body;
 	trim(callid);
-
-	if (d_rrb.is_direction(req,RR_FLOW_UPSTREAM)==0) {
-		/* to tag */
-		*ttag = get_from(req)->tag_value;
-		/* from tag */
-		*ftag = get_to(req)->tag_value;
-	} else {
-		/* to tag */
-		*ttag = get_to(req)->tag_value;
-		/* from tag */
-		*ftag = get_from(req)->tag_value;
-	}
+	/* to tag */
+	*ttag = get_to(req)->tag_value;
+	/* from tag */
+	*ftag = get_from(req)->tag_value;
 	return 0;
 }
 
 
-static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req)
+static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req,
+															unsigned int dir)
 {
 	if ( (!req->cseq && parse_headers(req,HDR_CSEQ_F,0)<0) || !req->cseq ||
 	!req->cseq->parsed) {
@@ -509,12 +506,16 @@ static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req)
 		return -1;
 	}
 
-	if (d_rrb.is_direction(req,RR_FLOW_UPSTREAM)==0) {
+	if ( dir==DLG_DIR_UPSTREAM) {
 		return dlg_update_cseq(dlg, DLG_CALLEE_LEG,&((get_cseq(req))->number));
-	} else {
+	} else if ( dir==DLG_DIR_DOWNSTREAM) {
 		return dlg_update_cseq(dlg, DLG_CALLER_LEG,&((get_cseq(req))->number));
+	} else {
+		LOG(L_CRIT,"BUG:update_cseqs: dir is not set!\n");
+		return -1;
 	}
 }
+
 
 
 void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
@@ -530,8 +531,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	int old_state;
 	int unref;
 	int event;
+	unsigned int dir;
 
 	dlg = 0;
+	dir = DLG_DIR_NONE;
+
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID ) {
 		if( d_rrb.get_route_param( req, &rr_param, &val)!=0) {
 			DBG("DEBUG:dialog:dlg_onroute: Route param '%.*s' not found\n",
@@ -552,14 +556,12 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				return;
 			}
 
-			if (use_tight_match) {
-				if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
-					return;
-				if (match_dialog( dlg, &callid, &ftag, &ttag )==0) {
-					LOG(L_WARN,"WARNING:dialog:dlg_onroute: "
-						"tight matching failed\n");
-					return;
-				}
+			if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
+				return;
+			if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
+				LOG(L_WARN,"WARNING:dialog:dlg_onroute: "
+					"tight matching failed\n");
+				return;
 			}
 		}
 	}
@@ -567,7 +569,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	if (dlg==0) {
 		if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
 			return;
-		dlg = get_dlg(&callid, &ftag, &ttag);
+		/* TODO - try to use the RR dir detection to speed up here the
+		 * search -bogdan */
+		dlg = get_dlg(&callid, &ftag, &ttag, &dir);
 		if (!dlg){
 			DBG("DEBUG:dialog:dlg_onroute: Callid '%.*s' not found\n",
 				req->callid->body.len, req->callid->body.s);
@@ -615,7 +619,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		dlg->lifetime = get_dlg_timeout(req);
 		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1) {
 
-			if(update_cseqs(dlg, req) != 0){
+			if (update_cseqs(dlg, req, dir)!=0) {
 				LOG(L_ERR, "ERROR:dialog:dlg_onroute: error after updating"
 					" cseqs\n");
 				goto end;

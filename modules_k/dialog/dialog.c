@@ -70,7 +70,6 @@ static char* rr_param = "did";
 static int dlg_flag = -1;
 static char* timeout_spec = 0;
 static int default_timeout = 60 * 60 * 12;  /* 12 hours */
-static int use_tight_match = 1;
 static int seq_match_mode = SEQ_MATCH_STRICT_ID;
 
 /* statistic variables */
@@ -109,7 +108,6 @@ static param_export_t mod_params[]={
 	{ "timeout_avp",           STR_PARAM, &timeout_spec             },
 	{ "default_timeout",       INT_PARAM, &default_timeout          },
 	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
-	{ "use_tight_match",       INT_PARAM, &use_tight_match          },
 
 	{ "db_url",                STR_PARAM, &db_url                   },
 	{ "db_mode",               INT_PARAM, &dlg_db_mode              },
@@ -290,8 +288,7 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec?&timeout_avp:0, default_timeout,
-		use_tight_match, seq_match_mode);
+		timeout_spec?&timeout_avp:0, default_timeout, seq_match_mode);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {
