@@ -54,7 +54,7 @@ fifo_cmd()
 	path=/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
 		merr "Error opening OpenSER's FIFO $OSER_FIFO"
-		merr "Make sure you have line the 'modparam("mi_fifo", "fifo_name", "$OSER_FIFO")' in your config"
+		merr "Make sure you have the line 'modparam(\"mi_fifo\", \"fifo_name\", \"$OSER_FIFO\")' in your config"
 		merr "and also have loaded the mi_fifo module."
 		exit 2
 	fi
@@ -98,7 +98,7 @@ fifo_openser_monitor() {
 	path=/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
 		merr "Error opening OpenSER's FIFO $OSER_FIFO"
-		merr "Make sure you have the line 'modparam("mi_fifo", "fifo_name", "$OSER_FIFO")' in your config"
+		merr "Make sure you have the line 'modparam(\"mi_fifo\", \"fifo_name\", \"$OSER_FIFO\")' in your config"
 		merr "and also have loaded the mi_fifo module."
 		exit 1
 	fi
