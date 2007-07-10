@@ -262,30 +262,6 @@ modparam("dialog", "dlg_match_mode", 0)
 	</section>
 
 	<section>
-		<title><varname>use_tight_match</varname> (integer)</title>
-		<para>
-		If tight matching should be use in DID-based dialog matching for 
-		sequential requests.
-		By default, the matching is done only on the RR cookie; tight matching
-		extra checks the callid, TO and FROM tags. Set it to zero to disable 
-		or to non-zero to enable it.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>1 (enabled)</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>use_tight_match</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("dialog", "use_tight_match", 0)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		If you want to store the information about the dialogs in a database 
