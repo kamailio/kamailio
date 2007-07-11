@@ -26,7 +26,7 @@
 
 #include "../../str.h"
 
-#define MAX_HSIZE_TWO_POW 20
+#define MAX_HSIZE_TWO_POW 16
 #define MAX_HASH_SIZE 1<<MAX_HSIZE_TWO_POW 
 
 #define PDT_ADD			1
@@ -69,7 +69,6 @@ typedef struct _hash_list
 	gen_lock_t hl_lock;	
 
 	unsigned int hash_size;
-	int workers;
 } hash_list_t;
 
 pd_t* new_cell(str* p, str *d);
@@ -87,8 +86,8 @@ void free_hash(hash_t* hash);
 hash_list_t* init_hash_list(int hash_size);
 void free_hash_list(hash_list_t* hl);
 
-int add_to_hash(hash_t *hash, str *sp, str *sd, int mode);
-int pdt_add_to_hash(hash_list_t *hash, str* sdomain, str *sp, str *sd, int mode);
+int add_to_hash(hash_t *hash, str *sp, str *sd);
+int pdt_add_to_hash(hash_list_t *hash, str* sdomain, str *sp, str *sd);
 
 hash_t* pdt_search_hash(hash_list_t*, str *d);
 

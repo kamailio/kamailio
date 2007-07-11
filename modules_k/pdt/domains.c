@@ -307,12 +307,11 @@ void free_hash_list(hash_list_t* hl)
 }
 
 
-int add_to_hash(hash_t *hash, str *sp, str *sd, int mode)
+int add_to_hash(hash_t *hash, str *sp, str *sd)
 {
 	int hash_entry=0;
 	unsigned int dhash;
 	pd_t *it, *prev, *cell;
-	pd_op_t *ito, *tmp;
 	
 	if(hash==NULL || sp==NULL || sp->s==NULL
 			|| sd==NULL || sd->s==NULL)
@@ -350,36 +349,11 @@ int add_to_hash(hash_t *hash, str *sp, str *sd, int mode)
 	if(it)
 		it->p=cell;
 
-	if(mode == 0)
-		return 0;
-
-	/* mark the changes for the sync with pdtree */
-	tmp = new_pd_op(cell, 0, PDT_ADD);
-	if(tmp==NULL)
-	{
-		LOG(L_ERR, "PDT:add_to_hash: no more shm! Cache not synchron!!\n");
-		return -1;
-	}
-
-	hash->max_id++;
-	tmp->id = hash->max_id;
-	if(hash->diff==NULL)
-	{
-		hash->diff = tmp;
-		return 0;		
-	}
-	ito = hash->diff;
-	while(ito->n!=NULL)
-		ito = ito->n;
-
-	ito->n = tmp;
-	tmp->p = ito;
-	
 	return 0;
 }
 
 
-int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd, int mode)
+int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 {
 	hash_t *it, *prev, *ph;
 	
@@ -404,14 +378,15 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd, int mode)
 	/* add new sdomain, i.e. new entry in the hash list */
 	if(it==NULL || str_strcmp(&it->sdomain, sdomain)>0)
 	{
-		ph = init_hash(hl->hash_size, sdomain); /* !!!! check this hash size setting mode */
+		/* !!!! check this hash size setting mode */
+		ph = init_hash(hl->hash_size, sdomain);
 		if(ph==NULL)
 		{
 			LOG(L_ERR, "PDT: pdt_add_to_hash: null pointer returned\n");
 			goto error1;
 		}
 		
-		if(add_to_hash(ph, sp, sd, mode)<0)
+		if(add_to_hash(ph, sp, sd)<0)
 		{
 			LOG(L_ERR, "PDT: pdt_add_to_hash: could not add to hash\n");
 			goto error;
@@ -424,11 +399,11 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd, int mode)
 			prev->next = ph;
 
 		ph->next = it;
-	}   
-	else 
-		/* it is the entry of sdomain, just add a new prefix/domain pair to its hash */
-	{
-		if(add_to_hash(it, sp, sd, mode)<0)
+	} else {
+		/* it is the entry of sdomain, just add a new prefix/domain pair
+		 * to its hash
+		 */
+		if(add_to_hash(it, sp, sd)<0)
 		{
 			LOG(L_ERR, "PDT: pdt_add_to_hash: could not add to hash\n");
 			goto error1;
@@ -483,8 +458,6 @@ int remove_from_hash(hash_t *hash, str *sd)
 	int hash_entry=0;
 	unsigned int dhash;
 	pd_t *it, *prev;
-	pd_op_t *ito, *tmp;
-
 
 	if(hash==NULL || sd==NULL || sd->s==NULL)
 	{
@@ -525,28 +498,8 @@ int remove_from_hash(hash_t *hash, str *sd)
 	if(it->n)
 		it->n->p = it->p;
 
-//	free_cell(it); no free, it will be free up by clean_cache
-	/* mark the changes for sync with pdtree */
-	tmp = new_pd_op(it, 0, PDT_DELETE);
-	if(tmp==NULL)
-	{
-		LOG(L_ERR, "PDT:remove_from_hash: no more shm!Cache not synchon!\n");
-		return -1; /* error */
-	}
-	hash->max_id++;
-	tmp->id = hash->max_id;
-	if(hash->diff==NULL)
-	{
-		hash->diff = tmp;
-		return 0;
-	}
-	ito = hash->diff;
-	while(ito->n!=NULL)
-		ito = ito->n;
-
-	ito->n = tmp;
-	tmp->p = ito;
-
+	// check who should do it
+	// free_cell(it);
 	return 0;
 	
 }

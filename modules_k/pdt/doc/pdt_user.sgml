@@ -249,44 +249,20 @@ modparam("pdt", "hsize_2pow", 4)
 	</section>
 
 	<section>
-	    <title><varname>sync_time</varname> (integer)</title>
+	    <title><varname>char_list</varname> (string)</title>
 	    <para>
-		Time in seconds to synchronize the cache of each process with the
-		changes made through FIFO. Any prefix-domain change made through FIFO
-		is guaranteed to have efect after this period of time past.
+		The list with characters allowed in prefix.
 		</para>
 	    <para>
 		<emphasis>
-		    Default value is 600.
+		    Default value is <quote>0123456789</quote>.
 		</emphasis>
 	    </para>
 	    <example>
-		<title>Set <varname>sync_time</varname> parameter</title>
+		<title>Set <varname>char_list</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pdt", "sync_time", 300)
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>clean_time</varname> (integer)</title>
-	    <para>
-		Time in seconds to clean the changes inserted via FIFO. The changes
-		will be removed from FIFO diff list only when all &ser; processes
-		applied these changes.
-		</para>
-	    <para>
-		<emphasis>
-		    Default value is 900.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>clean_time</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("pdt", "clean_time", 600)
+modparam("pdt", "char_list", "0123456789*+")
 ...
 </programlisting>
 	    </example>
@@ -493,6 +469,29 @@ prefix2domain();
 			</para></listitem>	
 		</itemizedlist>
 		<para>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">pdt_reload</function>
+		</title>
+		<para>
+		Reload all sdomain-prefix-domain records from database.
+		</para>
+		<para>
+		Name: <emphasis>pdt_reload</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>none</para></listitem>	  
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:pdt_reload:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
     </section>
     </section>
 
