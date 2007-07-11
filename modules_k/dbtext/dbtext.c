@@ -43,6 +43,11 @@ static int mod_init(void);
 static void destroy(void);
 
 /*
+ * Module parameter variables
+ */
+int db_mode = 0;  /* Database usage mode: 0 = cache, 1 = no cache */
+
+/*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -52,9 +57,9 @@ static cmd_export_t cmds[] = {
 	{"db_query",       (cmd_function)dbt_query,      2, 0, 0},
 	{"db_raw_query",   (cmd_function)dbt_raw_query,  2, 0, 0},
 	{"db_free_result", (cmd_function)dbt_free_query, 2, 0, 0},
-	{"db_insert",     (cmd_function)dbt_insert,     2, 0, 0},
-	{"db_delete",     (cmd_function)dbt_delete,     2, 0, 0},
-	{"db_update",     (cmd_function)dbt_update,     2, 0, 0},
+	{"db_insert",      (cmd_function)dbt_insert,     2, 0, 0},
+	{"db_delete",      (cmd_function)dbt_delete,     2, 0, 0},
+	{"db_update",      (cmd_function)dbt_update,     2, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -63,6 +68,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
+	{"db_mode", INT_PARAM, &db_mode},
 	{0, 0, 0}
 };
 
@@ -86,7 +92,7 @@ static int mod_init(void)
 {
 	if(dbt_init_cache())
 		return -1;
-	/*return make_demo(); */
+	/* return make_demo(); */
 	
 	return 0;
 }

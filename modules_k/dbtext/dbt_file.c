@@ -31,6 +31,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 
 #include "../../mem/shm_mem.h"
@@ -40,6 +41,45 @@
 #include "dbt_util.h"
 #include "dbt_lib.h"
 
+
+/**
+ *
+ */
+int dbt_check_mtime(str *tbn, str *dbn, time_t *mt)
+{
+	char path[512];
+	struct stat s;
+	int ret = 0;
+
+	path[0] = 0;
+	if(dbn && dbn->s && dbn->len>0)
+	{
+		if(dbn->len+tbn->len<511)
+		{
+			strncpy(path, dbn->s, dbn->len);
+			path[dbn->len] = '/';
+			strncpy(path+dbn->len+1, tbn->s, tbn->len);
+			path[dbn->len+tbn->len+1] = 0;
+		}
+	}
+	if(path[0] == 0)
+	{
+		strncpy(path, tbn->s, tbn->len);
+		path[tbn->len] = 0;
+	}
+	if(stat(path, &s) == 0)
+	{
+		if((int)s.st_mtime > (int)*mt)
+		{
+			ret = 1;
+		}
+		*mt = s.st_mtime;
+	} else {
+		DBG("DBT:dbt_check_mtime: stat failed on [%.*s]\n", tbn->len, tbn->s);
+		ret = -1;
+	}
+	return ret;
+}
 
 /**
  *
@@ -83,7 +123,7 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 	if(!fin)
 		return NULL;	
 	
-	dtp = dbt_table_new(tbn->s, tbn->len);
+	dtp = dbt_table_new(tbn->s, path, tbn->len);
 	if(!dtp)
 		goto done;
 	

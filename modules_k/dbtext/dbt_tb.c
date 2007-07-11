@@ -31,6 +31,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 
 #include "../../mem/shm_mem.h"
@@ -136,8 +137,9 @@ int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
 /**
  *
  */
-dbt_table_p dbt_table_new(char *_s, int _l)
+dbt_table_p dbt_table_new(char *_s, char *path, int _l)
 {
+	struct stat s;
 	dbt_table_p dtp = NULL;
 	if(!_s || _l <= 0)
 		return NULL;
@@ -162,6 +164,12 @@ dbt_table_p dbt_table_new(char *_s, int _l)
 	dtp->flag = DBT_TBFL_ZERO;
 	dtp->nrrows = dtp->nrcols = dtp->auto_val = 0;
 	dtp->auto_col = -1;
+	dtp->mt = 0;
+	if(stat(path, &s) == 0)
+	{
+		dtp->mt = s.st_mtime;
+		DBG("DBT:dbt_table_new: mtime is %d\n", (int)s.st_mtime);
+	}
 	
 done:
 	return dtp;

@@ -50,6 +50,11 @@
 #define DBT_DELIM_C	' '
 #define DBT_DELIM_R	'\n'
 
+/*
+ *  * Module parameters variables
+ *   */
+extern int db_mode; /* Database usage mode: 0 = no cache, 1 = cache */
+
 /***
 typedef struct _dbt_val
 {
@@ -96,6 +101,7 @@ typedef struct _dbt_table
 	dbt_column_p *colv;
 	int nrrows;
 	dbt_row_p rows;
+	time_t mt;
 } dbt_table_t, *dbt_table_p;
 
 typedef struct _tbl_cache
@@ -140,7 +146,7 @@ int dbt_cache_free(dbt_cache_p);
 
 dbt_column_p dbt_column_new(char*, int);
 dbt_row_p dbt_row_new(int);
-dbt_table_p dbt_table_new(char*, int);
+dbt_table_p dbt_table_new(char*, char*, int);
 tbl_cache_p tbl_cache_new();
 
 int dbt_row_free(dbt_table_p, dbt_row_p);
@@ -156,6 +162,7 @@ int dbt_table_add_row(dbt_table_p, dbt_row_p);
 int dbt_table_check_row(dbt_table_p, dbt_row_p);
 int dbt_table_update_flags(dbt_table_p, int, int, int);
 
+int dbt_check_mtime(str *, str *, time_t *);
 dbt_table_p dbt_load_file(str *, str *);
 int dbt_print_table(dbt_table_p, str *);
 

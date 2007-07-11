@@ -255,76 +255,6 @@ int dbt_cache_del_db(str *_s)
 /**
  *
  */
-tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
-{
-//	dbt_db_p _dbp = NULL;
-	tbl_cache_p _tbc = NULL;
-	dbt_table_p _dtp = NULL;
-
-	if(!_dc || !_s || !_s->s || _s->len<=0)
-		return NULL;
-
-	lock_get(&_dc->sem);
-	if(!_dc->dbp)
-	{
-		lock_release(&_dc->sem);
-		return NULL;
-	}
-	
-	_tbc = _dc->dbp->tables;
-	while(_tbc)
-	{
-		if(_tbc->dtp)
-		{
-			lock_get(&_tbc->sem);
-			if(_tbc->dtp->name.len == _s->len 
-				&& !strncasecmp(_tbc->dtp->name.s, _s->s, _s->len ))
-			{
-				lock_release(&_tbc->sem);
-				lock_release(&_dc->sem);
-				return _tbc;
-			}
-			lock_release(&_tbc->sem);
-		}
-		_tbc = _tbc->next;
-	}
-
-	// new table
-	_tbc = tbl_cache_new();
-	if(!_tbc)
-	{
-		lock_release(&_dc->sem);
-		return NULL;
-	}
-	
-	_dtp = dbt_load_file(_s, &(_dc->dbp->name));
-
-#ifdef DBT_EXTRA_DEBUG
-	DBG("DTB:dbt_db_get_table: %.*s\n", _s->len, _s->s);
-	dbt_print_table(_dtp, NULL);
-#endif
-
-	if(!_dtp)
-	{
-		lock_release(&_dc->sem);
-		return NULL;
-	}
-	_tbc->dtp = _dtp;
-	
-	if(_dc->dbp->tables)
-		(_dc->dbp->tables)->prev = _tbc;
-	_tbc->next = _dc->dbp->tables;
-	_dc->dbp->tables = _tbc;
-		
-	lock_release(&_dc->sem);
-
-	return _tbc;
-}
-
-/**
- *
- */
-#if 0
 int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 {
 	tbl_cache_p _tbc = NULL;
@@ -368,7 +298,86 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 	
 	return 0;
 }
-#endif 
+
+/**
+ *
+ */
+tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
+{
+//	dbt_db_p _dbp = NULL;
+	tbl_cache_p _tbc = NULL;
+	dbt_table_p _dtp = NULL;
+
+	if(!_dc || !_s || !_s->s || _s->len<=0)
+		return NULL;
+
+	lock_get(&_dc->sem);
+	if(!_dc->dbp)
+	{
+		lock_release(&_dc->sem);
+		return NULL;
+	}
+	
+	/* lookup table in memory */
+	_tbc = _dc->dbp->tables;
+	while(_tbc)
+	{
+		if(_tbc->dtp)
+		{
+			lock_get(&_tbc->sem);
+			if(_tbc->dtp->name.len == _s->len 
+				&& !strncasecmp(_tbc->dtp->name.s, _s->s, _s->len ))
+			{
+				/* found - if cache mode or no-change, return */
+				lock_release(&_tbc->sem);
+				if(db_mode==0
+					|| !dbt_check_mtime(_s,&(_dc->dbp->name), &(_tbc->dtp->mt)))
+				{
+					lock_release(&_dc->sem);
+					DBG("DBT:dbt_cache_get_table: cache or mtime succeeded\n");
+					return _tbc;
+				}
+				break;
+			}
+			lock_release(&_tbc->sem);
+		}
+		_tbc = _tbc->next;
+	}
+	
+	/* new table */
+	if(_tbc) /* free old one */
+		dbt_db_del_table(_dc, _s);
+
+	_tbc = tbl_cache_new();
+	if(!_tbc)
+	{
+		lock_release(&_dc->sem);
+		return NULL;
+	}
+	
+	_dtp = dbt_load_file(_s, &(_dc->dbp->name));
+
+#ifdef DBT_EXTRA_DEBUG
+	DBG("DTB:dbt_db_get_table: %.*s\n", _s->len, _s->s);
+	dbt_print_table(_dtp, NULL);
+#endif
+
+	if(!_dtp)
+	{
+		lock_release(&_dc->sem);
+		return NULL;
+	}
+	_tbc->dtp = _dtp;
+	
+	if(_dc->dbp->tables)
+		(_dc->dbp->tables)->prev = _tbc;
+	_tbc->next = _dc->dbp->tables;
+	_dc->dbp->tables = _tbc;
+		
+	lock_release(&_dc->sem);
+
+	return _tbc;
+}
 
 /**
  *
