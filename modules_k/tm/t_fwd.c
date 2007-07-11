@@ -695,7 +695,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	t->first_branch=t->nr_of_outgoings;
 
 	/* on first-time forwarding, use current uri, later only what
-)	   is in additional branches (which may be continuously refilled)
+	   is in additional branches (which may be continuously refilled)
 	*/
 	if (t->first_branch==0) {
 		try_new=1;

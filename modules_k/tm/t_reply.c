@@ -758,7 +758,6 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		goto discard;
 	}
 
-
 	/* no final response sent yet */
 	/* negative replies subject to fork picking */
 	if (new_code >=300 ) {
@@ -769,20 +768,26 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		 * save of the final reply per branch */
 		Trans->uac[branch].reply = reply;
 
-		/* if all_final return lowest */
-		picked_branch = t_pick_branch( Trans, &picked_code);
-		if (picked_branch==-2) { /* branches open yet */
-			*should_store=1;
-			*should_relay=-1;
-			picked_branch=-1;
-			Trans->uac[branch].reply = 0;
-			return RPS_STORE;
-		}
-		if (picked_branch==-1) {
-			LOG(L_CRIT, "ERROR:tm:t_should_relay_response: pick_branch failed "
-				"(lowest==-1) for code %d\n",new_code);
-			Trans->uac[branch].reply = 0;
-			goto discard;
+		if (new_code>=600) {
+			/* this is a winner and close all branches */
+			which_cancel( Trans, cancel_bitmap );
+			picked_branch=branch;
+		} else {
+			/* if all_final return lowest */
+			picked_branch = t_pick_branch( Trans, &picked_code);
+			if (picked_branch==-2) { /* branches open yet */
+				*should_store=1;
+				*should_relay=-1;
+				picked_branch=-1;
+				Trans->uac[branch].reply = 0;
+				return RPS_STORE;
+			}
+			if (picked_branch==-1) {
+				LOG(L_CRIT, "ERROR:tm:t_should_relay_response: pick_branch "
+					"failed (lowest==-1) for code %d\n",new_code);
+				Trans->uac[branch].reply = 0;
+				goto discard;
+			}
 		}
 
 		/* no more pending branches -- try if that changes after
