@@ -134,7 +134,7 @@ void run_dlg_callbacks(int type , struct dlg_cell *dlg, struct sip_msg *msg)
 
 	for ( cb=dlg->cbs.first; cb; cb=cb->next)  {
 		if ( (cb->types)&type ) {
-			DBG("DEBUG:dialog:run_create_callbacks: dialog=%p, type=%d\n",
+			DBG("DEBUG:dialog:run_dlg_callbacks: dialog=%p, type=%d\n",
 				dlg, type);
 			cb->callback( dlg, type, msg, &cb->param );
 		}
