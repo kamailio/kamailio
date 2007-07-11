@@ -84,6 +84,65 @@
 	</column>
 
 	<column>
+		<name>caller_cseq</name>
+		<type>string</type>
+		<size>7</size>
+		<description>Last Cseq number on the caller side.</description>
+	</column>
+
+	<column>
+		<name>callee_cseq</name>
+		<type>string</type>
+		<size>7</size>
+		<description>Last Cseq number on the caller side.</description>
+	</column>
+
+	<column>
+		<name>caller_route_set</name>
+		<type>string</type>
+		<size>512</size>
+		<null/>
+		<description>Route set on the caller side.</description>
+	</column>
+
+	<column>
+		<name>callee_route_set</name>
+		<type>string</type>
+		<size>512</size>
+		<null/>
+		<description>Route set on on the caller side.</description>
+	</column>
+
+	<column>
+		<name>caller_contact</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>Caller's contact uri.</description>
+	</column>
+
+	<column>
+		<name>callee_contact</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>Callee's contact uri.</description>
+	</column>
+
+	<column>
+		<name>caller_sock</name>
+		<type>string</type>
+		<size>64</size>
+		<description>Local socket used to communicate with caller</description>
+	</column>
+
+	<column>
+		<name>callee_sock</name>
+		<type>string</type>
+		<size>64</size>
+		<description>Local socket used to communicate with callee</description>
+	</column>
+
+
+	<column>
 		<name>state</name>
 		<type>unsigned int</type>
 		<size>10</size>
