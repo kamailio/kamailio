@@ -1629,6 +1629,13 @@ add(p_name, p_val)
 		if (RETVAL == 0) {
 			RETVAL = add_avp(flags, name, val);
 		}
+
+		if (flags & AVP_NAME_STR) {
+			pkg_free(name.s.s);
+		}
+		if (flags & AVP_VAL_STR) {
+			pkg_free(val.s.s);
+		}
 	}
   OUTPUT:
 	RETVAL
@@ -1682,6 +1689,10 @@ get(p_name)
 		}
 	}
 
+	if (flags & AVP_NAME_STR) {
+		pkg_free(name.s.s);
+	}
+
 	ST(0) = ret;
 
 
@@ -1729,6 +1740,11 @@ destroy(p_name)
 			/* Empty AVP requested. */
 		}
 	}
+
+	if (flags & AVP_NAME_STR) {
+		pkg_free(name.s.s);
+	}
+
   OUTPUT:
 	RETVAL
 
