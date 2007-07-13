@@ -140,7 +140,7 @@ int check_nonce(str* _nonce, str* _secret)
 	expires = get_nonce_expires(_nonce);
 	calc_nonce(non, expires, _secret);
 
-	DBG("check_nonce(): comparing [%.*s] and [%.*s]\n",
+	DBG("auth:check_nonce: comparing [%.*s] and [%.*s]\n",
 	    _nonce->len, ZSW(_nonce->s), NONCE_LEN, non);
 	
 	if (!memcmp(non, _nonce->s, _nonce->len)) {

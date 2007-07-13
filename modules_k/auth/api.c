@@ -96,7 +96,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 	if (*hook == 0) {
 		/* No credentials parsed yet */
 		if (parse_headers(_m, hdr_flags, 0) == -1) {
-			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
+			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
 			return -1;
 		}
 	}
@@ -110,7 +110,8 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 	while(ptr) {
 		res = parse_credentials(ptr);
 		if (res < 0) {
-			LOG(L_ERR, "find_credentials(): Error while parsing credentials\n");
+			LOG(L_ERR, 
+				"auth:find_credentials: Error while parsing credentials\n");
 			return (res == -1) ? -2 : -3;
 		} else if (res == 0) {
 			r = &(((auth_body_t*)(ptr->parsed))->digest.realm);
@@ -125,7 +126,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 
 		prev = ptr;
 		if (parse_headers(_m, hdr_flags, 1) == -1) {
-			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
+			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
 			return -4;
 		} else {
 			if (prev != _m->last_header) {
@@ -161,13 +162,14 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 	 * the request to be canceled
 	 */
 
-	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL)) return AUTHORIZED;
+	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL))
+		return AUTHORIZED;
 
 	if (_realm->len == 0) {
 		if (get_realm(_m, _hftype, &uri) < 0) {
-			LOG(L_ERR, "pre_auth(): Error while extracting realm\n");
+			LOG(L_ERR, "auth:pre_auth: Error while extracting realm\n");
 			if (send_resp(_m, 400, &auth_400_err, 0, 0) == -1) {
-				LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
+				LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
 			}
 			return ERROR;
 		}
@@ -182,14 +184,14 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 	 */
 	ret = find_credentials(_m, _realm, _hftype, _h);
 	if (ret < 0) {
-		LOG(L_ERR, "pre_auth(): Error while looking for credentials\n");
+		LOG(L_ERR, "auth:pre_auth: Error while looking for credentials\n");
 		if (send_resp(_m, (ret == -2) ? 500 : 400, 
 			      (ret == -2) ? &auth_500_err : &auth_400_err, 0, 0) == -1) {
-			LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
+			LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
 		}
 		return ERROR;
 	} else if (ret > 0) {
-		DBG("pre_auth(): Credentials with given realm not found\n");
+		DBG("auth:pre_auth: Credentials with given realm not found\n");
 		return NO_CREDENTIALS;
 	}
 
@@ -198,15 +200,16 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 
 	/* Check credentials correctness here */
 	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
-		LOG(L_ERR, "pre_auth(): Credentials received are not filled properly\n");
+		LOG(L_ERR,
+			"auth:pre_auth: Credentials received are not filled properly\n");
 		if (send_resp(_m, 400, &auth_400_err, 0, 0) == -1) {
-			LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
+			LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
 		}
 		return ERROR;
 	}
 
 	if (check_nonce(&c->digest.nonce, &secret) != 0) {
-		DBG("pre_auth(): Invalid nonce value received\n");
+		DBG("auth:pre_auth: Invalid nonce value received\n");
 		return STALE_NONCE;
 	}
 
@@ -235,16 +238,16 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 			 * to be canceled)
 			 */
 		} else {
-			DBG("post_auth(): Response is OK, but nonce is stale\n");
+			DBG("auth:post_auth: Response is OK, but nonce is stale\n");
 			c->stale = 1;
 			res = STALE_NONCE;
 		}
 	}
 
 	if (mark_authorized_cred(_m, _h) < 0) {
-		LOG(L_ERR, "post_auth(): Error while marking parsed credentials\n");
+		LOG(L_ERR, "auth:post_auth: Error while marking parsed credentials\n");
 		if (send_resp(_m, 500, &auth_400_err, 0, 0) == -1) {
-			LOG(L_ERR, "post_auth(): Error while sending 500 reply\n");
+			LOG(L_ERR, "auth:post_auth: Error while sending 500 reply\n");
 		}
 		res = ERROR;
 	}
@@ -252,16 +255,56 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 	return res;
 }
 
+int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
+{
+	HASHHEX resp, hent;
+
+	/*
+	 * First, we have to verify that the response received has
+	 * the same length as responses created by us
+	 */
+	if (_cred->response.len != 32) {
+		DBG("auth:check_response: Receive response len != 32\n");
+		return 1;
+	}
+
+	/*
+	 * Now, calculate our response from parameters received
+	 * from the user agent
+	 */
+	calc_response(_ha1, &(_cred->nonce),
+		&(_cred->nc), &(_cred->cnonce),
+		&(_cred->qop.qop_str), _cred->qop.qop_parsed == QOP_AUTHINT,
+		_method, &(_cred->uri), hent, resp);
+	
+	DBG("auth:check_response: Our result = \'%s\'\n", resp);
+	
+	/*
+	 * And simply compare the strings, the user is
+	 * authorized if they match
+	 */
+	if (!memcmp(resp, _cred->response.s, 32)) {
+		DBG("auth:check_response: Authorization is OK\n");
+		return 0;
+	} else {
+		DBG("auth:check_response: Authorization failed\n");
+		return 2;
+	}
+}
+
+
 
 int bind_auth(auth_api_t* api)
 {
 	if (!api) {
-		LOG(L_ERR, "bind_auth: Invalid parameter value\n");
+		LOG(L_ERR, "auth:bind_auth: Invalid parameter value\n");
 		return -1;
 	}
 
 	api->pre_auth = pre_auth;
 	api->post_auth = post_auth;
+	api->calc_HA1 = calc_HA1;
+	api->check_response = check_response;
 
 	get_rpid_avp( &api->rpid_avp, &api->rpid_avp_type );
 

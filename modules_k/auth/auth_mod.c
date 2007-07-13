@@ -58,6 +58,7 @@ MODULE_VERSION
 #define DEF_STRIP_REALM ""
 #define DEF_RPID_AVP "$avp(s:rpid)"
 
+static str auth_500_err = str_init("Server Internal Error");
 
 /*
  * Module destroy function prototype
@@ -78,6 +79,10 @@ static int challenge_fixup(void** param, int param_no);
  */
 static int rpid_fixup(void** param, int param_no);
 
+static int auth_fixup(void** param, int param_no);
+
+int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2);
+int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2);
 
 /** SL binds */
 struct sl_binds slb;
@@ -92,6 +97,7 @@ int   nonce_expire = 300; /* Nonce lifetime */
 str secret;
 char* sec_rand = 0;
 
+int auth_calc_ha1 = 0;
 
 /* Default Remote-Party-ID prefix */
 str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1};
@@ -103,6 +109,15 @@ str realm_prefix = {DEF_STRIP_REALM, sizeof(DEF_STRIP_REALM) - 1};
 /* definition of AVP containing rpid value */
 char* rpid_avp_param = DEF_RPID_AVP;
 
+/* definition of AVP containing username value */
+char* user_spec_param = 0;
+static xl_spec_t user_spec;
+
+
+/* definition of AVP containing password value */
+char* passwd_spec_param = 0;
+static xl_spec_t passwd_spec;
+
 /*
  * Exported functions 
  */
@@ -110,6 +125,10 @@ static cmd_export_t cmds[] = {
 	{"www_challenge",       www_challenge,           2, challenge_fixup,
 			REQUEST_ROUTE},
 	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup,
+			REQUEST_ROUTE},
+	{"pv_www_authorize",    pv_www_authorize,        1, auth_fixup,
+			REQUEST_ROUTE},
+	{"pv_proxy_authorize",  pv_proxy_authorize,      1, auth_fixup,
 			REQUEST_ROUTE},
 	{"consume_credentials", consume_credentials,     0, 0,
 			REQUEST_ROUTE},
@@ -135,6 +154,9 @@ static param_export_t params[] = {
 	{"rpid_suffix",     STR_PARAM, &rpid_suffix.s  },
 	{"realm_prefix",    STR_PARAM, &realm_prefix.s },
 	{"rpid_avp",        STR_PARAM, &rpid_avp_param },
+	{"username_spec",   STR_PARAM, &user_spec_param   },
+	{"password_spec",   STR_PARAM, &passwd_spec_param },
+	{"calculate_ha1",   INT_PARAM, &auth_calc_ha1     },
 	{0, 0, 0}
 };
 
@@ -219,6 +241,43 @@ static int mod_init(void)
 	rpid_suffix.len = strlen(rpid_suffix.s);
 	realm_prefix.len = strlen(realm_prefix.s);
 
+	if(user_spec_param!=0)
+	{
+		if(xl_parse_spec(user_spec_param, &user_spec, 0)==NULL)
+		{
+			LOG(L_ERR,"ERROR:auth:mod_init: failed to parse username spec\n");
+			return -5;
+		}
+		switch(user_spec.type) {
+			case XL_NONE:
+			case XL_EMPTY:
+			case XL_NULL:
+			case XL_MARKER:
+			case XL_COLOR:
+				LOG(L_ERR,"ERROR:auth:mod_init: invalid username spec\n");
+				return -6;
+			default: ;
+		}
+	}
+	if(passwd_spec_param!=0)
+	{
+		if(xl_parse_spec(passwd_spec_param, &passwd_spec, 0)==NULL)
+		{
+			LOG(L_ERR,"ERROR:auth:mod_init: failed to parse password spec\n");
+			return -7;
+		}
+		switch(passwd_spec.type) {
+			case XL_NONE:
+			case XL_EMPTY:
+			case XL_NULL:
+			case XL_MARKER:
+			case XL_COLOR:
+				LOG(L_ERR,"ERROR:auth:mod_init: invalid password spec\n");
+				return -8;
+			default: ;
+		}
+	}
+
 	return 0;
 }
 
@@ -227,6 +286,118 @@ static int mod_init(void)
 static void destroy(void)
 {
 	if (sec_rand) pkg_free(sec_rand);
+}
+
+static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
+		str* _domain, char* _ha1)
+{
+	xl_value_t sval;
+	
+	/* get username from PV */
+	memset(&sval, 0, sizeof(xl_value_t));
+	if(xl_get_spec_value(msg, &user_spec, &sval, 0)==0)
+	{
+		if(sval.flags==XL_VAL_NONE || (sval.flags&XL_VAL_NULL)
+				|| (sval.flags&XL_VAL_EMPTY) || (!(sval.flags&XL_VAL_STR)))
+		{
+			xl_value_destroy(&sval);
+			return 1;
+		}
+		if(sval.rs.len!= _username->user.len
+				|| strncasecmp(sval.rs.s, _username->user.s, sval.rs.len))
+		{
+			DBG("auth: auth_get_ha1: username mismatch [%.*s] [%.*s]\n",
+				_username->user.len, _username->user.s, sval.rs.len, sval.rs.s);
+			xl_value_destroy(&sval);
+			return 1;
+		}
+	} else {
+		return 1;
+	}
+	/* get password from PV */
+	memset(&sval, 0, sizeof(xl_value_t));
+	if(xl_get_spec_value(msg, &passwd_spec, &sval, 0)==0)
+	{
+		if(sval.flags==XL_VAL_NONE || (sval.flags&XL_VAL_NULL)
+				|| (sval.flags&XL_VAL_EMPTY) || (!(sval.flags&XL_VAL_STR)))
+		{
+			xl_value_destroy(&sval);
+			return 1;
+		}
+	} else {
+		return 1;
+	}
+	if (auth_calc_ha1) {
+		/* Only plaintext passwords are stored in database,
+		 * we have to calculate HA1 */
+		calc_HA1(HA_MD5, &_username->whole, _domain, &sval.rs, 0, 0, _ha1);
+		DBG("auth:auth_get_ha1: HA1 string calculated: %s\n", _ha1);
+	} else {
+		memcpy(_ha1, sval.rs.s, sval.rs.len);
+		_ha1[sval.rs.len] = '\0';
+	}
+
+	return 0;
+}
+
+static inline int pv_authorize(struct sip_msg* msg, xl_elem_t* realm,
+										hdr_types_t hftype)
+{
+	static char ha1[256];
+	int res;
+	struct hdr_field* h;
+	auth_body_t* cred;
+	auth_result_t ret;
+	str domain;
+
+	if (realm) {
+		if (xl_printf_s(msg, realm, &domain)!=0) {
+			LOG(L_ERR, "ERROR:auth:authorize: xl_printf_s failed\n");
+			return AUTH_ERROR;
+		}
+	} else {
+		domain.len = 0;
+		domain.s = 0;
+	}
+
+	ret = pre_auth(msg, &domain, hftype, &h);
+
+	if (ret != DO_AUTHORIZATION)
+		return ret;
+
+	cred = (auth_body_t*)h->parsed;
+
+	res = auth_get_ha1(msg, &cred->digest.username, &domain, ha1);
+	if (res < 0) {
+		/* Error */
+		if (slb.reply(msg, 500, &auth_500_err) == -1) {
+			LOG(L_ERR, "auth:authorize: Error while sending 500 reply\n");
+		}
+		return ERROR;
+	}
+	if (res > 0) {
+		/* Username not found */
+		return USER_UNKNOWN;
+	}
+
+	/* Recalculate response, it must be same to authorize successfully */
+	if (!check_response(&(cred->digest),&msg->first_line.u.request.method,ha1))
+	{
+		return post_auth(msg, h);
+	}
+	return AUTH_ERROR;
+}
+
+
+int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2)
+{
+	return pv_authorize(msg, (xl_elem_t*)realm, HDR_PROXYAUTH_T);
+}
+
+
+int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2)
+{
+	return pv_authorize(msg, (xl_elem_t*)realm, HDR_AUTHORIZATION_T);
 }
 
 
@@ -279,3 +450,27 @@ static int rpid_fixup(void** param, int param_no)
 	return 0;
 }
 
+/*
+ * Convert the char* parameters
+ */
+static int auth_fixup(void** param, int param_no)
+{
+	xl_elem_t *model;
+	char* s;
+
+	if (param_no == 1) {
+		s = (char*)*param;
+		if (s==0 || s[0]==0) {
+			model = 0;
+		} else {
+			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
+				LOG(L_ERR, "ERROR:auth:auth_fixup: xl_parse_format "
+					"failed\n");
+				return E_OUT_OF_MEM;
+			}
+		}
+		*param = (void*)model;
+	}
+
+	return 0;
+}

@@ -1,4 +1,3 @@
-
 Auth Module
 
 Jan Janak
@@ -20,7 +19,7 @@ Jan Janak
    Copyright © 2002, 2003 FhG FOKUS
 
    Copyright © 2005 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -39,6 +38,9 @@ Jan Janak
               1.3.4. rpid_suffix (string)
               1.3.5. realm_prefix (string)
               1.3.6. rpid_avp (string)
+              1.3.7. username_spec (string)
+              1.3.8. password_spec (string)
+              1.3.9. calculate_ha1 (integer)
 
         1.4. Exported Functions
 
@@ -48,6 +50,8 @@ Jan Janak
               1.4.4. is_rpid_user_e164()
               1.4.5. append_rpid_hf()
               1.4.6. append_rpid_hf(prefix, suffix)
+              1.4.7. pv_www_authorize(realm)
+              1.4.8. pv_proxy_authorize(realm)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -59,40 +63,38 @@ Jan Janak
    1-4. rpid_suffix parameter example
    1-5. realm_prefix parameter example
    1-6. rpid_avp parameter example
-   1-7. www_challenge usage
-   1-8. proxy_challenge usage
-   1-9. consume_credentials example
-   1-10. is_rpid_user_e164 usage
-   1-11. append_rpid_hf usage
-   1-12. append_rpid_hf(prefix, suffix) usage
-     _________________________________________________________
+   1-7. username_spec parameter usage
+   1-8. password_spec parameter usage
+   1-9. calculate_ha1 parameter usage
+   1-10. www_challenge usage
+   1-11. proxy_challenge usage
+   1-12. consume_credentials example
+   1-13. is_rpid_user_e164 usage
+   1-14. append_rpid_hf usage
+   1-15. append_rpid_hf(prefix, suffix) usage
+   1-16. pv_www_authorize usage
+   1-17. pv_proxy_authorize usage
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   This is a generic module that itself doesn't provide all
-   functions necessary for authentication but provides functions
-   that are needed by all other authentication related modules
-   (so called authentication backends).
-
-   We decided to break the authentication code into several
-   modules because there are now more than one backends
-   (currently database authentication and radius are supported).
-   This allows us to create separate packages so uses can install
-   and load only required functionality. This also allows us to
-   avoid unnecessary dependencies in the binary packages.
-     _________________________________________________________
+   This is a module that provides common functions that are needed
+   by other authentication related modules. Also, it can perform
+   authentication taking username and password from
+   pseudo-variables.
+     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
 
      * sl -- Stateless replies
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -100,7 +102,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * none
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -112,7 +114,7 @@ Chapter 1. User's Guide
 
    Example 1-1. secret parameter example
 modparam("auth", "secret", "johndoessecretphrase")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. nonce_expire (integer)
 
@@ -129,7 +131,7 @@ modparam("auth", "secret", "johndoessecretphrase")
 
    Example 1-2. nonce_expire parameter example
 modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. rpid_prefix (string)
 
@@ -140,7 +142,7 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 
    Example 1-3. rpid_prefix parameter example
 modparam("auth", "rpid_prefix", "Whatever <")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. rpid_suffix (string)
 
@@ -152,7 +154,7 @@ modparam("auth", "rpid_prefix", "Whatever <")
 
    Example 1-4. rpid_suffix parameter example
 modparam("auth", "rpid_suffix", "@1.2.3.4>")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. realm_prefix (string)
 
@@ -168,14 +170,14 @@ modparam("auth", "rpid_suffix", "@1.2.3.4>")
 
    Example 1-5. realm_prefix parameter example
 modparam("auth", "realm_prefix", "sip.")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. rpid_avp (string)
 
-   Full AVP specification for the AVP which stores the RPID
-   value. It used to transport the RPID value from authntication
-   backend modules (auth_db or auth_radius) or from script to the
-   auth function append_rpid_hf and is_rpid_user_e164.
+   Full AVP specification for the AVP which stores the RPID value.
+   It used to transport the RPID value from authntication backend
+   modules (auth_db or auth_radius) or from script to the auth
+   function append_rpid_hf and is_rpid_user_e164.
 
    If defined to NULL string, all RPID functions will fail at
    runtime.
@@ -184,7 +186,56 @@ modparam("auth", "realm_prefix", "sip.")
 
    Example 1-6. rpid_avp parameter example
 modparam("auth", "rpid_avp", "$avp(i:13)")
-     _________________________________________________________
+     __________________________________________________________
+
+1.3.7. username_spec (string)
+
+   This name of the pseudo-variable that will hold the username.
+
+   Default value is "NULL".
+
+   Example 1-7. username_spec parameter usage
+modparam("auth", "username_spec", "$var(username)")
+     __________________________________________________________
+
+1.3.8. password_spec (string)
+
+   This name of the pseudo-variable that will hold the password.
+
+   Default value is "NULL".
+
+   Example 1-8. password_spec parameter usage
+modparam("auth", "password_spec", "$avp(s:password)")
+     __________________________________________________________
+
+1.3.9. calculate_ha1 (integer)
+
+   This parameter tells server whether it should expect plaintext
+   passwords in the database or HA1 string. If the parameter is
+   set to 1 then the server will assume that the column pointed to
+   by password_column contains plaintext passwords and it will
+   calculate HA1 strings on the fly.
+
+   If the parameter is set to 0 then the server assumes that the
+   database contains HA1 strings directly and will not calculate
+   them. If username parameter of credentials contains also
+   @domain (some user agents put domain in username parameter),
+   then column pointed to by password_column_2 parameter will be
+   used instead. This column should also contain HA1 strings but
+   they should be calculated including the domain in the username
+   parameter (as opposed to password_column which (when containing
+   HA1 strings) should always contains HA1 strings calculated
+   without domain in username.
+
+   This ensures that the authentication will always work when
+   using pre-calculated HA1 string, not depending on the presence
+   of the domain in username.
+
+   Default value of this parameter is 0.
+
+   Example 1-9. calculate_ha1 parameter usage
+modparam("auth_db", "calculate_ha1", 1)
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -200,35 +251,35 @@ modparam("auth", "rpid_avp", "$avp(i:13)")
 
    Meaning of the parameters is as follows:
 
-     * realm - Realm is a opaque string that the user agent
-       should present to the user so he can decide what username
-       and password to use. Usually this is domain of the host
-       the server is running on.
-       If an empty string "" is used then the server will
-       generate it from the request. In case of REGISTER requests
-       To header field domain will be used (because this header
-       field represents a user being registered), for all other
-       messages From header field domain will be used.
+     * realm - Realm is a opaque string that the user agent should
+       present to the user so he can decide what username and
+       password to use. Usually this is domain of the host the
+       server is running on.
+       If an empty string "" is used then the server will generate
+       it from the request. In case of REGISTER requests To header
+       field domain will be used (because this header field
+       represents a user being registered), for all other messages
+       From header field domain will be used.
        The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
-       When set to 1 then the server will put qop parameter in
-       the challenge. When set to 0 then the server will not put
-       qop parameter in the challenge. It is strongly recommended
-       to use qop parameter, however there are still some user
-       agents that cannot handle qop parameter properly so we
-       made this optional. On the other hand there are still some
-       user agents that cannot handle request without qop
-       parameter too.
+       When set to 1 then the server will put qop parameter in the
+       challenge. When set to 0 then the server will not put qop
+       parameter in the challenge. It is strongly recommended to
+       use qop parameter, however there are still some user agents
+       that cannot handle qop parameter properly so we made this
+       optional. On the other hand there are still some user
+       agents that cannot handle request without qop parameter
+       too.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-7. www_challenge usage
+   Example 1-10. www_challenge usage
 ...
 if (www_authorize("siphub.net", "subscriber")) {
         www_challenge("siphub.net", "1");
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. proxy_challenge(realm, qop)
 
@@ -242,104 +293,103 @@ if (www_authorize("siphub.net", "subscriber")) {
 
    Meaning of the parameters is as follows:
 
-     * realm - Realm is a opaque string that the user agent
-       should present to the user so he can decide what username
-       and password to use. Usually this is domain of the host
-       the server is running on.
-       If an empty string "" is used then the server will
-       generate it from the request. From header field domain
-       will be used as realm.
+     * realm - Realm is a opaque string that the user agent should
+       present to the user so he can decide what username and
+       password to use. Usually this is domain of the host the
+       server is running on.
+       If an empty string "" is used then the server will generate
+       it from the request. From header field domain will be used
+       as realm.
        The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
-       When set to 1 then the server will put qop parameter in
-       the challenge. When set to 0 then the server will not put
-       qop parameter in the challenge. It is strongly recommended
-       to use qop parameter, however there are still some user
-       agents that cannot handle qop parameter properly so we
-       made this optional. On the other hand there are still some
-       user agents that cannot handle request without qop
-       parameter too.
+       When set to 1 then the server will put qop parameter in the
+       challenge. When set to 0 then the server will not put qop
+       parameter in the challenge. It is strongly recommended to
+       use qop parameter, however there are still some user agents
+       that cannot handle qop parameter properly so we made this
+       optional. On the other hand there are still some user
+       agents that cannot handle request without qop parameter
+       too.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-8. proxy_challenge usage
+   Example 1-11. proxy_challenge usage
 ...
 if (!proxy_authorize("", "subscriber)) {
         proxy_challenge("", "1");  # Realm will be autogenerated
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.3. consume_credentials()
 
    This function removes previously authorized credentials from
    the message being processed by the server. That means that the
-   downstream message will not contain credentials there were
-   used by this server. This ensures that the proxy will not
-   reveal information about credentials used to downstream
-   elements and also the message will be a little bit shorter.
-   The function must be called after www_authorize or
-   proxy_authorize.
+   downstream message will not contain credentials there were used
+   by this server. This ensures that the proxy will not reveal
+   information about credentials used to downstream elements and
+   also the message will be a little bit shorter. The function
+   must be called after www_authorize or proxy_authorize.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-9. consume_credentials example
+   Example 1-12. consume_credentials example
 ...
 if (www_authorize("", "subscriber)) {
     consume_credentials();
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.4. is_rpid_user_e164()
 
    The function checks if the SIP URI received from the database
    or radius server and will potentially be used in
-   Remote-Party-ID header field contains an E164 number
-   (+followed by up to 15 decimal digits) in its user part. Check
-   fails, if no such SIP URI exists (i.e. radius server or
-   database didn't provide this information).
+   Remote-Party-ID header field contains an E164 number (+followed
+   by up to 15 decimal digits) in its user part. Check fails, if
+   no such SIP URI exists (i.e. radius server or database didn't
+   provide this information).
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-10. is_rpid_user_e164 usage
+   Example 1-13. is_rpid_user_e164 usage
 ...
 if (is_rpid_user_e164()) {
     # do something here
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.5. append_rpid_hf()
 
    Appends to the message a Remote-Party-ID header that contains
    header 'Remote-Party-ID: ' followed by the saved value of the
-   SIP URI received from the database or radius server followed
-   by the value of module parameter radius_rpid_suffix. The
-   function does nothing if no saved SIP URI exists.
+   SIP URI received from the database or radius server followed by
+   the value of module parameter radius_rpid_suffix. The function
+   does nothing if no saved SIP URI exists.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-11. append_rpid_hf usage
+   Example 1-14. append_rpid_hf usage
 ...
 append_rpid_hf();  # Append Remote-Party-ID header field
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.6. append_rpid_hf(prefix, suffix)
 
-   This function is the same as Section 1.4.5. The only
-   difference is that it accepts two parameters--prefix and
-   suffix to be added to Remote-Party-ID header field. This
-   function ignores rpid_prefix and rpid_suffix parameters,
-   instead of that allows to set them in every call.
+   This function is the same as Section 1.4.5. The only difference
+   is that it accepts two parameters--prefix and suffix to be
+   added to Remote-Party-ID header field. This function ignores
+   rpid_prefix and rpid_suffix parameters, instead of that allows
+   to set them in every call.
 
    Meaning of the parameters is as follows:
 
-     * prefix - Prefix of the Remote-Party-ID URI. The string
-       will be added at the begining of body of the header field,
-       just before the URI.
+     * prefix - Prefix of the Remote-Party-ID URI. The string will
+       be added at the begining of body of the header field, just
+       before the URI.
      * suffix - Suffix of the Remote-Party-ID header field. The
        string will be appended at the end of the header field. It
        can be used to set various URI parameters, for example.
@@ -347,18 +397,97 @@ append_rpid_hf();  # Append Remote-Party-ID header field
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-12. append_rpid_hf(prefix, suffix) usage
+   Example 1-15. append_rpid_hf(prefix, suffix) usage
 ...
-append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");  #
-Append Remote-Party-ID header field
+append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");  # A
+ppend Remote-Party-ID header field
 ...
-     _________________________________________________________
+     __________________________________________________________
+
+1.4.7. pv_www_authorize(realm)
+
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
+   succeed and mark the credentials as authorized (marked
+   credentials can be later used by some other functions). If the
+   function was unable to verify the credentials for some reason
+   then it will fail and the script should call www_challenge
+   which will challenge the user again.
+
+   Negative codes may be interpreted as follows:
+
+     * -5 (generic error) - some generic error occurred and no
+       reply was sent out;
+     * -4 (no credentials) - credentials were not found in
+       request;
+     * -3 (stale nonce) - stale nonce;
+     * -2 (invalid password) - valid user, but wrong password;
+     * -1 (invalid user) - authentication user does not exist.
+
+   Meaning of the parameters is as follows:
+
+     * realm - Realm is a opaque string that the user agent should
+       present to the user so he can decide what username and
+       password to use. Usually this is domain of the host the
+       server is running on.
+       If an empty string "" is used then the server will generate
+       it from the request. In case of REGISTER requests To header
+       field domain will be used (because this header field
+       represents a user being registered), for all other messages
+       From header field domain will be used.
+       The string may contain pseudo variables.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-16. pv_www_authorize usage
+...
+$var(username)="abc";
+$avp(s:password)="xyz";
+if (pv_www_authorize("openser.org")) {
+        www_challenge("openser.org", "1");
+};
+...
+     __________________________________________________________
+
+1.4.8. pv_proxy_authorize(realm)
+
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
+   succeed and mark the credentials as authorized (marked
+   credentials can be later used by some other functions). If the
+   function was unable to verify the credentials for some reason
+   then it will fail and the script should call proxy_challenge
+   which will challenge the user again. For more about the
+   negative return codes, see the above functions.
+
+   Meaning of the parameters is as follows:
+
+     * realm - Realm is a opaque string that the user agent should
+       present to the user so he can decide what username and
+       password to use. Usually this is domain of the host the
+       server is running on.
+       If an empty string "" is used then the server will generate
+       it from the request. From header field domain will be used
+       as realm.
+       The string may contain pseudo variables.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-17. pv_proxy_authorize usage
+...
+$var(username)="abc";
+$avp(s:password)="xyz";
+if (!pv_proxy_authorize("")) {
+        proxy_challenge("", "1");  # Realm will be autogenerated
+};
+...
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -372,8 +501,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

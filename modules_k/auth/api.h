@@ -26,10 +26,12 @@
 #define AUTH_API_H
 
 
+#include "../../parser/digest/digest.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/hf.h"
 #include "../../str.h"
 #include "../../usr_avp.h"
+#include "rfc2617.h"
 
 
 typedef enum auth_result {
@@ -67,6 +69,16 @@ typedef auth_result_t (*post_auth_t)(struct sip_msg* _m, struct hdr_field* _h);
 auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h);
 
 /*
+ * Calculate the response and compare with the given response string
+ * Authorization is successful if this two strings are same
+ */
+typedef int (*check_response_t)(dig_cred_t* _cred, str* _method, char* _ha1);
+int check_response(dig_cred_t* _cred, str* _method, char* _ha1);
+
+typedef void (*calc_HA1_t)(ha_alg_t _alg, str* _username, str* _realm,
+		str* _password, str* _nonce, str* _cnonce, HASHHEX _sess_key);
+
+/*
  * Strip the beginning of realm
  */
 void strip_realm(str *_realm);
@@ -80,6 +92,8 @@ typedef struct auth_api {
 	int     rpid_avp_type; /* type of the RPID AVP */
 	pre_auth_t  pre_auth;  /* The function to be called before auth */
 	post_auth_t post_auth; /* The function to be called after auth */
+	calc_HA1_t  calc_HA1;  /* calculate H(A1) as per spec */
+	check_response_t check_response; /* check auth response */
 } auth_api_t;
 
 
