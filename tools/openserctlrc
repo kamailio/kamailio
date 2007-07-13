@@ -16,6 +16,9 @@
 ## database name
 # DBNAME=openser
 
+# dbtext database path
+# DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+
 ## database read/write user
 # DBRWUSER=openser
 

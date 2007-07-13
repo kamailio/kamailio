@@ -31,6 +31,11 @@ else
 	DB_SCHEMA="./dbtext/openser"
 fi
 
+# path to the dbtext database
+if [ -z "$DBTEXT_PATH" ] ; then
+	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+fi
+
 openser_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then

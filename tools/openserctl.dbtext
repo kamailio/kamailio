@@ -1,5 +1,3 @@
-#!/bin/sh 
-#
 # $Id$
 #
 # sc: openser control; tool for maintaining openser's databases
@@ -13,6 +11,11 @@
 #
 
 #===================================================================
+
+# path to the dbtext database
+if [ -z "$DBTEXT_PATH" ] ; then
+	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+fi
 
 #Set variables to dbtext's files ...
 

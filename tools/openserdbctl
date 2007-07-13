@@ -230,20 +230,38 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
+			DBTEXT_PATH="$1"
 		fi
-		openser_create $DBNAME
+
+		if [ $DBTEXT = "1" ] ; then
+			openser_create $DBTEXT_PATH
+		else
+			openser_create $DBNAME
+		fi
 		exit $?
 		;;
 	serweb)
-		serweb_create $DBNAME
+		if [ $DBTEXT = "1" ] ; then
+			serweb_create $DBTEXT_PATH
+		else
+			serweb_create $DBNAME
+		fi
 		exit $?
 		;;
 	presence)
-		presence_create $DBNAME
+		if [ $DBTEXT = "1" ] ; then
+			presence_create $DBTEXT_PATH
+		else
+			presence_create $DBNAME
+		fi
 		exit $?
 		;;
 	extra)
-		extra_create $DBNAME
+		if [ $DBTEXT = "1" ] ; then
+			presence_create $DBTEXT_PATH
+		else
+			extra_create $DBNAME
+		fi
 		exit $?
 		;;
 	drop)
@@ -252,8 +270,14 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
+			DBTEXT_PATH="$1"
 		fi
-		openser_drop $DBNAME
+
+		if [ $DBTEXT = "1" ] ; then
+			openser_drop $DBTEXT_PATH
+		else
+			openser_drop $DBNAME
+		fi
 		exit $?
 		;;
 	reinit)
@@ -262,13 +286,22 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
+			DBTEXT_PATH="$1"
 		fi
-		openser_drop $DBNAME
+		if [ $DBTEXT = "1" ] ; then
+			openser_drop $DBTEXT_PATH
+		else
+			openser_drop $DBNAME
+		fi
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		openser_create $DBNAME
+		if [ $DBTEXT = "1" ] ; then
+			openser_create $DBTEXT_PATH
+		else
+			openser_create $DBNAME
+		fi
 		exit $?
 		;;
 	*)
