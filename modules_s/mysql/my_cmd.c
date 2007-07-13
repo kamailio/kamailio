@@ -38,6 +38,8 @@
 #include <stdio.h>
 #include <time.h>  /*strptime, XOPEN issue must be >=4 */
 #include <string.h>
+#include <mysql/errmsg.h>
+#include <mysql/mysqld_error.h>
 #include "../../mem/mem.h"
 #include "../../str.h"
 #include "../../db/db_cmd.h"
@@ -103,6 +105,8 @@ static str strings[] = {
 	(p) += _len;				  \
 } while(0)
 
+
+static int upload_query(db_cmd_t* cmd);
 
 
 static void my_cmd_free(db_cmd_t* cmd, struct my_cmd* payload)
@@ -500,7 +504,6 @@ static inline int update_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* par
 	int  my_idx, fld_idx;
 	int  count1, count2;
 
-	INFO("mysql: update_params(st=%p, params1=%p, params2=%p)\n", st, params1, params2);
 	/* Calculate the number of parameters */
 	for(count1 = 0; !DB_FLD_EMPTY(params1) && !DB_FLD_LAST(params1[count1]); count1++);
 	for(count2 = 0; !DB_FLD_EMPTY(params2) && !DB_FLD_LAST(params2[count2]); count2++);
@@ -609,28 +612,73 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 int my_cmd_write(db_res_t* res, db_cmd_t* cmd)
 {
 	struct my_cmd* mcmd;
-
+	int ret, myerr;
+	
 	mcmd = DB_GET_PAYLOAD(cmd);
 	if (cmd->type == DB_DEL && mcmd->st->param_count && update_params(mcmd->st, cmd->match, NULL) < 0) return -1;
 	if (cmd->type == DB_PUT && mcmd->st->param_count && update_params(mcmd->st, cmd->vals, NULL) < 0) return -1;
-	if (mysql_stmt_execute(mcmd->st)) {
-		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
+	ret = mysql_stmt_execute(mcmd->st);
+
+	/* If the connection to the server was lost then try to resubmit the query,
+	 * it will fail if the connection is not yet working, and try to execute
+	 * it again if the upload was successful
+	 */
+	if (ret) {
+		myerr = mysql_stmt_errno(mcmd->st);
+		if (myerr == ER_UNKNOWN_STMT_HANDLER || myerr == CR_SERVER_LOST) {
+			if (upload_query(cmd) < 0) {
+				LOG(L_CRIT, "Failed to re-initialize DB connection, DB server is not working\n");
+				return -1;
+			}
+
+			if (cmd->type == DB_DEL && mcmd->st->param_count && update_params(mcmd->st, cmd->match, NULL) < 0) return -1;
+			if (cmd->type == DB_PUT && mcmd->st->param_count && update_params(mcmd->st, cmd->vals, NULL) < 0) return -1;
+			ret = mysql_stmt_execute(mcmd->st);
+		}
+	}
+
+	if (ret) {
+		ERR("Error while executing query: %d, %s\n", mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
 		return -1;
 	}
+
 	return 0;
 }
 
 
 int my_cmd_read(db_res_t* res, db_cmd_t* cmd)
 {
+	int ret, myerr;
 	struct my_cmd* mcmd;
    
 	mcmd = DB_GET_PAYLOAD(cmd);
+
 	if (mcmd->st->param_count && update_params(mcmd->st, cmd->match, NULL) < 0) return -1;
-	if (mysql_stmt_execute(mcmd->st)) {
-		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
+	ret = mysql_stmt_execute(mcmd->st);
+
+
+	/* If the connection to the server was lost then try to resubmit the query,
+	 * it will fail if the connection is not yet working, and try to execute
+	 * it again if the upload was successful
+	 */
+	if (ret) {
+		myerr = mysql_stmt_errno(mcmd->st);
+		if (myerr == ER_UNKNOWN_STMT_HANDLER || myerr == CR_SERVER_LOST) {
+			if (upload_query(cmd) < 0) {
+				LOG(L_CRIT, "Failed to re-initialize DB connection, DB server is not working\n");
+				return -1;
+			}
+
+			if (mcmd->st->param_count && update_params(mcmd->st, cmd->match, NULL) < 0) return -1;
+			ret = mysql_stmt_execute(mcmd->st);
+		}
+	}
+
+	if (ret) {
+		ERR("Error while executing query: %d, %s\n", mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -638,13 +686,34 @@ int my_cmd_read(db_res_t* res, db_cmd_t* cmd)
 int my_cmd_update(db_res_t* res, db_cmd_t* cmd)
 {
 	struct my_cmd* mcmd;
+	int ret, myerr;
 
 	mcmd = DB_GET_PAYLOAD(cmd);
 	if (mcmd->st->param_count && update_params(mcmd->st, cmd->vals, cmd->match) < 0) return -1;
-	if (mysql_stmt_execute(mcmd->st)) {
-		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
+	ret = mysql_stmt_execute(mcmd->st);
+
+	/* If the connection to the server was lost then try to resubmit the query,
+	 * it will fail if the connection is not yet working, and try to execute
+	 * it again if the upload was successful
+	 */
+	if (ret) {
+		myerr = mysql_stmt_errno(mcmd->st);
+		if (myerr == ER_UNKNOWN_STMT_HANDLER || myerr == CR_SERVER_LOST) {
+			if (upload_query(cmd) < 0) {
+				LOG(L_CRIT, "Failed to re-initialize DB connection, DB server is not working\n");
+				return -1;
+			}
+
+			if (mcmd->st->param_count && update_params(mcmd->st, cmd->vals, cmd->match) < 0) return -1;
+			ret = mysql_stmt_execute(mcmd->st);
+		}
+	}
+
+	if (ret) {
+		ERR("Error while executing query: %d, %s\n", mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -652,12 +721,32 @@ int my_cmd_update(db_res_t* res, db_cmd_t* cmd)
 int my_cmd_sql(db_res_t* res, db_cmd_t* cmd)
 {
 	struct my_cmd* mcmd;
+	int ret, myerr;
    
 	mcmd = DB_GET_PAYLOAD(cmd);
-	if (mysql_stmt_execute(mcmd->st)) {
-		ERR("Error while executing query: %s\n", mysql_stmt_error(mcmd->st));
+	ret = mysql_stmt_execute(mcmd->st);
+
+	/* If the connection to the server was lost then try to resubmit the query,
+	 * it will fail if the connection is not yet working, and try to execute
+	 * it again if the upload was successful
+	 */
+	if (ret) {
+		myerr = mysql_stmt_errno(mcmd->st);
+		if (myerr == ER_UNKNOWN_STMT_HANDLER || myerr == CR_SERVER_LOST) {
+			if (upload_query(cmd) < 0) {
+				LOG(L_CRIT, "Failed to re-initialize DB connection, DB server is not working\n");
+				return -1;
+			}
+
+			ret = mysql_stmt_execute(mcmd->st);
+		}
+	}
+
+	if (ret) {
+		ERR("Error while executing query: %d, %s\n", mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -733,7 +822,6 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params2)
 	int count1, count2;
 	MYSQL_BIND* my_params;
 
-	INFO("mysql: bind_params(st=%p, params1=%p, params2=%p)\n", st, params1, params2);
 	/* Calculate the number of parameters */
 	for(count1 = 0; !DB_FLD_EMPTY(params1) && !DB_FLD_LAST(params1[count1]); count1++);
 	for(count2 = 0; !DB_FLD_EMPTY(params2) && !DB_FLD_LAST(params2[count2]); count2++);
@@ -754,7 +842,6 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params2)
 	for (fld_idx = 0; fld_idx < count2; fld_idx++, my_idx++) {
 		set_field(&my_params[my_idx], params2 + fld_idx);
 	}
-	INFO("mysql: bind_params: binding params, my_params = %p\n", my_params);
 	if (mysql_stmt_bind_param(st, my_params)) {
 		ERR("Error while binding parameters: %s\n", mysql_stmt_error(st));
 		goto error;
@@ -780,13 +867,9 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 	struct my_fld* f;
 	MYSQL_BIND* result;
 
-INFO("mysql: bind_result(st = %p, fld = %p)\n", st, fld);
-INFO("mysql: bind_result: field count: %d\n", st->field_count);
 	/* Calculate the number of fields in the result */
 	for(n = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[n]); n++);
-INFO("mysql: bind_result: n = %d\n", n);
 	result = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * n);
-INFO("mysql: bind_result: result = %p\n", result);
 	if (result == NULL) {
 		ERR("No memory left\n");
 		return -1;
@@ -794,8 +877,6 @@ INFO("mysql: bind_result: result = %p\n", result);
 	memset(result, '\0', sizeof(MYSQL_BIND) * n);
 	
 	for(i = 0; i < n; i++) {
-//INFO("mysql: bind_result: i = %d\n", i);
-//INFO("mysql: bind_result: fld[%d].type = %d\n", i, fld[i].type);
 		f = DB_GET_PAYLOAD(fld + i);
 		result[i].is_null = &f->is_null;
 		/* We can do it for all the types here, mysql will ignore it
@@ -826,7 +907,7 @@ INFO("mysql: bind_result: result = %p\n", result);
 
 		case DB_STR:
 			result[i].buffer_type = MYSQL_TYPE_VAR_STRING;
-			f->buf.s = pkg_malloc(STR_BUF_SIZE);
+			if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 			if (f->buf.s == NULL) {
 				ERR("No memory left\n");
 				return -1;
@@ -838,7 +919,7 @@ INFO("mysql: bind_result: result = %p\n", result);
 
 		case DB_CSTR:
 			result[i].buffer_type = MYSQL_TYPE_VAR_STRING;
-			f->buf.s = pkg_malloc(STR_BUF_SIZE);
+			if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 			if (f->buf.s == NULL) {
 				ERR("No memory left\n");
 				return -1;
@@ -850,7 +931,7 @@ INFO("mysql: bind_result: result = %p\n", result);
 
 		case DB_BLOB:
 			result[i].buffer_type = MYSQL_TYPE_BLOB;
-			f->buf.s = pkg_malloc(STR_BUF_SIZE);
+			if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 			if (f->buf.s == NULL) {
 				ERR("No memory left\n");
 				return -1;
@@ -866,7 +947,6 @@ INFO("mysql: bind_result: result = %p\n", result);
 
 		}
 	}
-INFO("mysql: bind_result: result = %p\n", result);
 	if (mysql_stmt_bind_result(st, result)) {
 		ERR("Error while binding result: %s\n", mysql_stmt_error(st));
 		goto error;
@@ -885,12 +965,79 @@ INFO("mysql: bind_result: result = %p\n", result);
 }
 
 
-int my_cmd(db_cmd_t* cmd)
+static int upload_query(db_cmd_t* cmd)
 {
 	struct my_cmd* res;
 	struct my_con* mcon;
+	MYSQL_STMT* st;
 
-INFO("mysql: my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->result, cmd->match, cmd->vals);
+	res = DB_GET_PAYLOAD(cmd);
+
+	/* FIXME: The function should take the connection as one of parameters */
+	mcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
+
+	st = mysql_stmt_init(mcon->con);
+	if (st == NULL) goto error;
+
+	/* Close the previously created statement if exists */
+	if (res->st) mysql_stmt_close(res->st);
+    res->st = st;
+
+	if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
+		goto error;
+	}
+
+	switch(cmd->type) {
+	case DB_PUT:
+		if (bind_params(res->st, cmd->vals, NULL) < 0) goto error;
+		break;
+
+	case DB_DEL:
+		if (!DB_FLD_EMPTY(cmd->match)) {
+			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
+		}
+		break;
+
+	case DB_GET:
+		if (!DB_FLD_EMPTY(cmd->match)) {
+			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
+		}
+		if (bind_result(res->st, cmd->result) < 0) goto error;
+		break;
+
+	case DB_UPD:
+		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
+			goto error;
+		}
+
+        /* FIXME: remove ELSE */
+        if (!DB_FLD_EMPTY(cmd->vals)) {
+            if (bind_params(res->st, cmd->vals, cmd->match) < 0) goto error;
+        } else {
+            if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
+        }
+		break;
+
+	case DB_SQL:
+		if (!DB_FLD_EMPTY(cmd->result)) {
+			if (bind_result(res->st, cmd->result) < 0) goto error;
+		}
+		break;
+	}
+	return 0;
+
+ error:
+	ERR("Error while uploading query to server: %s\n", 
+		mysql_stmt_error(res->st));
+
+	return -1;
+}
+
+
+int my_cmd(db_cmd_t* cmd)
+{
+	struct my_cmd* res;
+ 
 	res = (struct my_cmd*)pkg_malloc(sizeof(struct my_cmd));
 	if (res == NULL) {
 		ERR("No memory left\n");
@@ -898,14 +1045,6 @@ INFO("mysql: my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->res
 	}
 	memset(res, '\0', sizeof(struct my_cmd));
 	if (db_drv_init(&res->gen, my_cmd_free) < 0) goto error;
-
-	/* FIXME */
-	mcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
-	res->st = mysql_stmt_init(mcon->con);
-	if (res->st == NULL) {
-		ERR("No memory left\n");
-		goto error;
-	}
 
 	switch(cmd->type) {
 	case DB_PUT:
@@ -915,94 +1054,36 @@ INFO("mysql: my_cmd(cmd = %p, res = %p, match = %p, vals = %p)\n", cmd, cmd->res
 			goto error;
 		}
 		if (build_replace_query(&res->query, cmd) < 0) goto error;
-		INFO("mysql: build_replace_query: query = '%.*s'\n", res->query.len, res->query.s);
-		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
-			ERR("Error while preparing replace query: %s\n", 
-				mysql_stmt_error(res->st));
-			goto error;
-		}
-		if (bind_params(res->st, cmd->vals, NULL) < 0) goto error;
 		break;
 
 	case DB_DEL:
 		if (build_delete_query(&res->query, cmd) < 0) goto error;
-		INFO("mysql: build_delete_query: query = '%.*s'\n", res->query.len, res->query.s);
-		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
-			ERR("Error while preparing delete query: %s\n",
-				mysql_stmt_error(res->st));
-				goto error;
-		}
-		if (!DB_FLD_EMPTY(cmd->match)) {
-			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
-		}
 		break;
 
 	case DB_GET:
 		if (build_select_query(&res->query, cmd) < 0) goto error;
-		INFO("mysql: build_select_query: query = '%.*s'\n", res->query.len, res->query.s);
-		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
-			ERR("Error while preparing select query: %s\n",
-				mysql_stmt_error(res->st));
-			goto error;
-		}
-		if (!DB_FLD_EMPTY(cmd->match)) {
-			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
-		}
-		if (bind_result(res->st, cmd->result) < 0) {
-			ERR("mysql: DB_GET bind_result() failed\n");
-			goto error;
-		}
 		break;
 
 	case DB_UPD:
 		if (build_update_query(&res->query, cmd) < 0) goto error;
-		INFO("mysql: build_update_query: query = '%.*s'\n", res->query.len, res->query.s);
-		if (mysql_stmt_prepare(res->st, res->query.s, res->query.len)) {
-			ERR("mysql: Error while preparing UPDATE query: %s\n",
-				mysql_stmt_error(res->st));
-			goto error;
-		}
-		/* FIXME: remove ELSE */
-		if (!DB_FLD_EMPTY(cmd->vals)) {
-			if (bind_params(res->st, cmd->vals, cmd->match) < 0) {
-				ERR("mysql: DB_UPD bind_params() failed\n");
-				goto error;
-			}
-		}
-		else {
-			if (bind_params(res->st, NULL, cmd->match) < 0) {
-				ERR("mysql: DB_UPD bind_params() failed\n");
-				goto error;
-			}
-		}
 		break;
 
 	case DB_SQL:
-		if (mysql_stmt_prepare(res->st, cmd->table.s, cmd->table.len)) {
-			ERR("mysql: Error while preparing raw SQL query: %s\n",
-				mysql_stmt_error(res->st));
-			goto error;
-		}
-		if (!DB_FLD_EMPTY(cmd->result)) {
-			if (bind_result(res->st, cmd->result) < 0) goto error;
-		}
 		break;
 	}
 
 	DB_SET_PAYLOAD(cmd, res);
+	if (upload_query(cmd) < 0) goto error;
 	return 0;
 
  error:
 	if (res) {
 		db_drv_free(&res->gen);
 		if (res->query.s) pkg_free(res->query.s);
-		if (res->st) mysql_stmt_close(res->st);
 		pkg_free(res);
 	}
-	ERR("mysql: my_cmd() failed\n");
 	return -1;
 }
-
 
 int my_cmd_next(db_res_t* res)
 {

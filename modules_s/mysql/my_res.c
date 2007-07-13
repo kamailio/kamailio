@@ -40,7 +40,7 @@ void my_res_free(db_res_t* res, struct my_res* payload)
 
 	mcmd = DB_GET_PAYLOAD(res->cmd);
 
-	if (mysql_stmt_free_result(mcmd->st)) {
+	if (mcmd->st && mysql_stmt_free_result(mcmd->st)) {
 		ERR("Error while freeing MySQL result: %s\n", mysql_stmt_error(mcmd->st));
 	}
 
