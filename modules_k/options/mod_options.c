@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_uri.h"
 #include "../sl/sl_api.h"
 
 MODULE_VERSION
@@ -145,6 +146,11 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	/* check if it is called for an OPTIONS request */
 	if (_msg->REQ_METHOD!=METHOD_OPTIONS) {
 		LOG(L_ERR, "options_reply(): called for non-OPTIONS request\n");
+		return -1;
+	}
+	if(_msg->parsed_uri_ok==0 && parse_sip_msg_uri(_msg)<0)
+	{
+		LOG(L_ERR, "options_reply(): ERROR while parsing the R-URI\n");
 		return -1;
 	}
 	/* FIXME: should we additionally check if ruri == server addresses ?! */
