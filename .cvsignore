@@ -2,4 +2,4 @@ cfg.tab.c
 cfg.tab.h
 lex.yy.c
 ser
-
+librpath.lst
