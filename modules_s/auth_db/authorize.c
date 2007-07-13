@@ -83,6 +83,7 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 
 	if (db_exec(res, q) < 0 ) {
 		ERR("Error while querying database\n");
+		return -1;
 	}
 
 	if (*res) *row = db_first(*res);
@@ -245,70 +246,70 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
     switch(auth_api.pre_auth(msg, realm, hftype, &h)) {
     case ERROR:
     case BAD_CREDENTIALS:
-	ret = -3;
-	goto end;
-	
+		ret = -3;
+		goto end;
+		
     case NOT_AUTHENTICATED: 
-	ret = -1;
-	goto end;
-	
+		ret = -1;
+		goto end;
+		
     case DO_AUTHENTICATION: 
-	break;
-	
+		break;
+		
     case AUTHENTICATED:
-	ret = 1; 
-	goto end;
+		ret = 1; 
+		goto end;
     }
     
     cred = (auth_body_t*)h->parsed;
-
+	
     if (use_did) {
-	if (msg->REQ_METHOD == METHOD_REGISTER) {
-	    ret = get_to_did(&did, msg);
-	} else {
-	    ret = get_from_did(&did, msg);
-	}
-	if (ret == 0) {
-	    did.s = DEFAULT_DID;
-	    did.len = sizeof(DEFAULT_DID) - 1;
-	}
+		if (msg->REQ_METHOD == METHOD_REGISTER) {
+			ret = get_to_did(&did, msg);
+		} else {
+			ret = get_from_did(&did, msg);
+		}
+		if (ret == 0) {
+			did.s = DEFAULT_DID;
+			did.len = sizeof(DEFAULT_DID) - 1;
+		}
     } else {
-	did.len = 0;
-	did.s = 0;
+		did.len = 0;
+		did.s = 0;
     }
-
+	
     res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
     if (res < 0) {
-	ret = -2;
-	goto end;
+		ret = -2;
+		goto end;
     }
     if (res > 0) {
-	     /* Username not found in the database */
-	ret = -1;
-	goto end;
+		/* Username not found in the database */
+		ret = -1;
+		goto end;
     }
     
-	 /* Recalculate response, it must be same to authorize successfully */
+	/* Recalculate response, it must be same to authorize successfully */
     if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
-	switch(auth_api.post_auth(msg, h)) {
-	case ERROR:
-	case BAD_CREDENTIALS:
-	    ret = -2; 
-	    break;
-	    
-	case NOT_AUTHENTICATED: 
-	    ret = -1; 
-	    break;
-	    
-	case AUTHENTICATED:
-	    generate_avps(result, row);
-	    ret = 1;
-	    break;
-	    
-	default:
-	    ret = -1;
-	    break;
-	}
+		switch(auth_api.post_auth(msg, h)) {
+		case ERROR:
+		case BAD_CREDENTIALS:
+			ret = -2; 
+			break;
+			
+		case NOT_AUTHENTICATED: 
+			ret = -1; 
+			break;
+			
+		case AUTHENTICATED:
+			generate_avps(result, row);
+			ret = 1;
+			break;
+			
+		default:
+			ret = -1;
+			break;
+		}
     } else {
 		ret = -1;
 	}
@@ -316,10 +317,10 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
  end:
     if (result) db_res_free(result);
     if (ret < 0) {
-	if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
-	    ERR("Error while creating challenge\n");
-	    ret = -2;
-	}
+		if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
+			ERR("Error while creating challenge\n");
+			ret = -2;
+		}
     }
     return ret;
 }
