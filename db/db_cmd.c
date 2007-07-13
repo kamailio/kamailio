@@ -187,16 +187,23 @@ void db_cmd_free(db_cmd_t* cmd)
 int db_exec(db_res_t** res, db_cmd_t* cmd)
 {
 	db_res_t* r = NULL;
-
+	int ret;
+	
 	if (res) {
 		r = db_res(cmd);
 		if (r == NULL) return -1;
-		if (res) *res = r;
 	}
 
 	/* FIXME */
 	db_payload_idx = 0;
-	return cmd->exec[0](r, cmd);
+	ret = cmd->exec[0](r, cmd);
+	if (ret < 0) {
+		if (r) db_res_free(r);
+		return ret;
+	}
+
+	if (res) *res = r;
+	return ret;
 }
 
 /** @} */
