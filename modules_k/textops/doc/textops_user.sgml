@@ -87,7 +87,7 @@ From: medabeda
 		<title><function>search</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
+if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
 ...
 </programlisting>
 		</example>
@@ -115,7 +115,7 @@ if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
 		<title><function>search_body</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if ( search_body("[Ss][Ii][Pp]" ) { /*....*/ };
+if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
 ...
 </programlisting>
 		</example>

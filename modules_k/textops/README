@@ -1,4 +1,3 @@
-
 textops Module
 
 Andrei Pelinescu-Onciul
@@ -12,7 +11,7 @@ Andrei Pelinescu-Onciul
 Daniel-Constantin Mierla
 
    Copyright © 2003 FhG FOKUS
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -83,7 +82,7 @@ Daniel-Constantin Mierla
    1-22. remove_hf usage
    1-23. has_body usage
    1-24. is_privacy usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
@@ -91,7 +90,7 @@ Chapter 1. User's Guide
 
    This is mostly an example module. It implements text based
    operation (search, replace, append a.s.o).
-     _________________________________________________________
+     __________________________________________________________
 
 1.1.1. Known Limitations
 
@@ -100,7 +99,7 @@ Chapter 1. User's Guide
    header field:
 From: medabeda
  <sip:medameda@foo.bar>;tag=1234
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -109,7 +108,7 @@ From: medabeda
    The following modules must be loaded before this module:
 
      * No dependencies on other OpenSER modules.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -117,7 +116,7 @@ From: medabeda
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Functions
 
@@ -134,9 +133,9 @@ From: medabeda
 
    Example 1-1. search usage
 ...
-if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
+if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. search_body(re)
 
@@ -151,9 +150,9 @@ if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
 
    Example 1-2. search_body usage
 ...
-if ( search_body("[Ss][Ii][Pp]" ) { /*....*/ };
+if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. search_append(re, txt)
 
@@ -171,7 +170,7 @@ if ( search_body("[Ss][Ii][Pp]" ) { /*....*/ };
 ...
 search_append("[Oo]pen[Ss]er", " SIP Proxy");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. search_append_body(re, txt)
 
@@ -190,7 +189,7 @@ search_append("[Oo]pen[Ss]er", " SIP Proxy");
 ...
 search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. replace(re, txt)
 
@@ -208,7 +207,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 ...
 replace("openser", "OpenSER SIP Proxy");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. replace_body(re, txt)
 
@@ -227,7 +226,7 @@ replace("openser", "OpenSER SIP Proxy");
 ...
 replace_body("openser", "OpenSER SIP Proxy");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. replace_all(re, txt)
 
@@ -245,7 +244,7 @@ replace_body("openser", "OpenSER SIP Proxy");
 ...
 replace_all("openser", "OpenSER SIP Proxy");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.8. replace_body_all(re, txt)
 
@@ -264,7 +263,7 @@ replace_all("openser", "OpenSER SIP Proxy");
 ...
 replace_body_all("openser", "OpenSER SIP Proxy");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.9. subst('/re/repl/flags')
 
@@ -288,13 +287,13 @@ replace_body_all("openser", "OpenSER SIP Proxy");
 # replace the uri in to: with the message uri (just an example)
 if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 
-# replace the uri in to: with the value of avp sip_address (just an exa
-mple)
-if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)
-\2/ig') ) {};
+# replace the uri in to: with the value of avp sip_address (just an exam
+ple)
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\
+2/ig') ) {};
 
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.10. subst_uri('/re/repl/flags')
 
@@ -316,24 +315,23 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)
 
    Example 1-10. subst_uri usage
 ...
-# adds 3463 prefix to numeric uris, and save the original uri (\0 match
-)
+# adds 3463 prefix to numeric uris, and save the original uri (\0 match)
 # as a parameter: orig_uri (just an example)
 if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 
-# adds the avp 'uri_prefix' as prefix to numeric uris, and save the ori
-ginal
+# adds the avp 'uri_prefix' as prefix to numeric uris, and save the orig
+inal
 # uri (\0 match) as a parameter: orig_uri (just an example)
-if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=
-\0/i')){$
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\
+0/i')){$
 
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.11. subst_user('/re/repl/flags')
 
-   Runs the re substitution on the message uri (like subst_uri
-   but works only on the user portion of the uri)
+   Runs the re substitution on the message uri (like subst_uri but
+   works only on the user portion of the uri)
 
    Meaning of the parameters is as follows:
 
@@ -354,12 +352,11 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=
 if (subst_user('/3642$/36423463/')){$
 
 ...
-# adds avp 'user_prefix' as prefix to username in r-uri ending with 364
-2
+# adds avp 'user_prefix' as prefix to username in r-uri ending with 3642
 if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.12. subst_body('/re/repl/flags')
 
@@ -384,7 +381,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.13. append_to_reply(txt)
 
@@ -402,7 +399,7 @@ if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 append_to_reply("Foo: bar\r\n");
 append_to_reply("Foo: $rm at $Ts\r\n");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.14. append_hf(txt)
 
@@ -414,9 +411,9 @@ append_to_reply("Foo: $rm at $Ts\r\n");
        pseudo-variables which will be replaced at run time.
 
    Note: Headers which are added in main route cannot be removed
-   in further routes (e.g. failure routes). So, the idea is not
-   to add there any headers that you might want to remove later.
-   To add headers temporarely use the branch route because the
+   in further routes (e.g. failure routes). So, the idea is not to
+   add there any headers that you might want to remove later. To
+   add headers temporarely use the branch route because the
    changes you do there are per-branch.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -427,7 +424,7 @@ append_to_reply("Foo: $rm at $Ts\r\n");
 append_hf("P-hint: VOICEMAIL\r\n");
 append_hf("From-username: $fU\r\n");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.15. append_hf(txt, hdr)
 
@@ -447,7 +444,7 @@ append_hf("From-username: $fU\r\n");
 append_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
 append_hf("From-username: $fU\r\n", "Call-ID");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.16. insert_hf(txt)
 
@@ -466,7 +463,7 @@ append_hf("From-username: $fU\r\n", "Call-ID");
 insert_hf("P-hint: VOICEMAIL\r\n");
 insert_hf("To-username: $tU\r\n");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.17. insert_hf(txt, hdr)
 
@@ -486,7 +483,7 @@ insert_hf("To-username: $tU\r\n");
 insert_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
 insert_hf("To-username: $tU\r\n", "Call-ID");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.18. append_urihf(prefix, suffix)
 
@@ -504,7 +501,7 @@ insert_hf("To-username: $tU\r\n", "Call-ID");
 ...
 append_urihf("CC-Diversion: ", "\r\n");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.19. is_present_hf(hf_name)
 
@@ -512,8 +509,8 @@ append_urihf("CC-Diversion: ", "\r\n");
 
    Note
 
-   The function is also able to distinguish the compact names.
-   For exmaple "From" will match with "f"
+        The function is also able to distinguish the compact names. For
+        exmaple "From" will match with "f"
 
    Meaning of the parameters is as follows:
 
@@ -526,14 +523,14 @@ append_urihf("CC-Diversion: ", "\r\n");
 ...
 if (is_present_hf("From")) log(1, "From HF Present");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.20. append_time()
 
-   Adds a time header to the reply of the request. You must use
-   it before functions that are likely to send a reply, e.g.,
-   save() from 'registrar' module. Header format is: "Date: %a,
-   %d %b %Y %H:%M:%S GMT", with the legend:
+   Adds a time header to the reply of the request. You must use it
+   before functions that are likely to send a reply, e.g., save()
+   from 'registrar' module. Header format is: "Date: %a, %d %b %Y
+   %H:%M:%S GMT", with the legend:
 
      * %a abbreviated week of day name (locale)
      * %d day of month as decimal number
@@ -552,12 +549,12 @@ if (is_present_hf("From")) log(1, "From HF Present");
 ...
 append_time();
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.21. is_method(name)
 
-   Check if the method of the message matches the name. If name
-   is a known method (invite, cancel, ack, bye, options, info,
+   Check if the method of the message matches the name. If name is
+   a known method (invite, cancel, ack, bye, options, info,
    update, register, message, subscribe, notify, refer, prack),
    the function performs method ID testing (integer comparison)
    instead of ignore case string comparison.
@@ -591,7 +588,7 @@ if(is_method("OPTION|UPDATE"))
     # process OPTIONs and UPDATEs here
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.22. remove_hf(hname)
 
@@ -613,16 +610,16 @@ if(remove_hf("User-Agent"))
     # User Agent header removed
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.23. has_body(), has_body(mime)
 
    The function returns true if the SIP message has a body
-   attached. The checked includes also the "Content-Lenght"
-   header presence and value.
+   attached. The checked includes also the "Content-Lenght" header
+   presence and value.
 
-   If a paramter is given, the mime described will be also
-   checked against the "Content-Type" header.
+   If a paramter is given, the mime described will be also checked
+   against the "Content-Type" header.
 
    Meaning of the parameters is as follows:
 
@@ -639,7 +636,7 @@ if(has_body("application/sdp"))
     # do interesting stuff here
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.24. is_privacy(privacy_type)
 
@@ -659,20 +656,20 @@ if(is_privacy("id"))
     # do interesting stuff here
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Known Limitations
 
    Search functions are applied to the original request, i.e.,
    they ignore all changes resulting from message processing in
    OpenSER script.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -686,8 +683,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users
