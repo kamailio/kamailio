@@ -160,22 +160,15 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		<title><varname>calculate_ha1</varname> (integer)</title>
 		<para>
 		This parameter tells server whether it should expect plaintext 
-		passwords in the database or HA1 string. If the parameter is set to 1 
-		then the server will assume that the column pointed to by 
-		<varname>password_column</varname> contains plaintext
-		passwords and it will calculate HA1 strings on the fly.
+		passwords in the pseudo-variable or HA1 string. If the parameter
+		is set to 1 then the server will assume that the value in the 
+		<varname>password_spec</varname> pseudo-variable contains plaintext
+		password and it will calculate HA1 strings on the fly.
 		</para>
 		<para>
-		If the parameter is set to 0 then the server assumes that the database 
-		contains HA1 strings directly and will not calculate them. If username 
-		parameter of credentials contains also @domain (some user agents put 
-		domain in username parameter), then column pointed to by 
-		<varname>password_column_2</varname> parameter will be used
-		instead. This column should also contain HA1 strings but they should 
-		be calculated including the domain in the username parameter 
-		(as opposed to <varname>password_column</varname> which (when 
-		containing HA1 strings) should always contains HA1 strings calculated 
-		without domain in username.
+		If the parameter is set to 0 then the server assumes that the value
+		in the <varname>password_spec</varname> pseudo-variable contains HA1
+		string directly and will not calculate it.
 		</para>
 		<para>
 		This ensures that the authentication will always work when using 
@@ -188,7 +181,7 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		<example>
 		<title><varname>calculate_ha1</varname> parameter usage</title>
 		<programlisting format="linespecific">
-modparam("auth_db", "calculate_ha1", 1)
+modparam("auth", "calculate_ha1", 1)
 </programlisting>
 		</example>
 	</section>

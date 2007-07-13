@@ -46,7 +46,6 @@
 #include "../../mem/mem.h"
 #include "aaa_avps.h"
 #include "authdb_mod.h"
-#include "rfc2617.h"
 
 
 static str auth_500_err = str_init("Server Internal Error");
@@ -117,7 +116,8 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	if (calc_ha1) {
 		/* Only plaintext passwords are stored in database,
 		 * we have to calculate HA1 */
-		calc_HA1(HA_MD5, &_username->whole, _domain, &result, 0, 0, _ha1);
+		auth_api.calc_HA1(HA_MD5, &_username->whole, _domain, &result,
+				0, 0, _ha1);
 		DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
@@ -125,47 +125,6 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	}
 
 	return 0;
-}
-
-/*
- * Calculate the response and compare with the given response string
- * Authorization is successful if this two strings are same
- */
-static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
-{
-	HASHHEX resp, hent;
-
-	/*
-	 * First, we have to verify that the response received has
-	 * the same length as responses created by us
-	 */
-	if (_cred->response.len != 32) {
-		DBG("check_response(): Receive response len != 32\n");
-		return 1;
-	}
-
-	/*
-	 * Now, calculate our response from parameters received
-	 * from the user agent
-	 */
-	calc_response(_ha1, &(_cred->nonce),
-		&(_cred->nc), &(_cred->cnonce),
-		&(_cred->qop.qop_str), _cred->qop.qop_parsed == QOP_AUTHINT,
-		_method, &(_cred->uri), hent, resp);
-	
-	DBG("check_response(): Our result = \'%s\'\n", resp);
-	
-	/*
-	 * And simply compare the strings, the user is
-	 * authorized if they match
-	 */
-	if (!memcmp(resp, _cred->response.s, 32)) {
-		DBG("check_response(): Authorization is OK\n");
-		return 0;
-	} else {
-		DBG("check_response(): Authorization failed\n");
-		return 2;
-	}
 }
 
 
@@ -289,7 +248,8 @@ static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	if (!check_response(&(cred->digest),&_m->first_line.u.request.method,ha1)) {
+	if (!auth_api.check_response(&(cred->digest),
+				&_m->first_line.u.request.method, ha1)) {
 		ret = auth_api.post_auth(_m, h);
 		if (ret == AUTHORIZED)
 			generate_avps(result);
