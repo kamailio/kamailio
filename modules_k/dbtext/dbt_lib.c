@@ -331,10 +331,11 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 				/* found - if cache mode or no-change, return */
 				lock_release(&_tbc->sem);
 				if(db_mode==0
-					|| !dbt_check_mtime(_s,&(_dc->dbp->name), &(_tbc->dtp->mt)))
+						|| dbt_check_mtime(_s,&(_dc->dbp->name),
+												&(_tbc->dtp->mt))==1)
 				{
 					lock_release(&_dc->sem);
-					DBG("DBT:dbt_cache_get_table: cache or mtime succeeded\n");
+					DBG("DBT:dbt_db_get_table: cache or mtime succeeded\n");
 					return _tbc;
 				}
 				break;

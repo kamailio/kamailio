@@ -43,7 +43,9 @@
 
 
 /**
- *
+ * -1 - error
+ *  0 - no change
+ *  1 - changed
  */
 int dbt_check_mtime(str *tbn, str *dbn, time_t *mt)
 {
@@ -72,8 +74,9 @@ int dbt_check_mtime(str *tbn, str *dbn, time_t *mt)
 		if((int)s.st_mtime > (int)*mt)
 		{
 			ret = 1;
+			*mt = s.st_mtime;
+			DBG("DBT:dbt_check_mtime: [%.*s] was updated\n", tbn->len, tbn->s);
 		}
-		*mt = s.st_mtime;
 	} else {
 		DBG("DBT:dbt_check_mtime: stat failed on [%.*s]\n", tbn->len, tbn->s);
 		ret = -1;
