@@ -347,7 +347,11 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	
 	/* new table */
 	if(_tbc) /* free old one */
+	{
+		lock_release(&_dc->sem);
 		dbt_db_del_table(_dc, _s);
+		lock_get(&_dc->sem);
+	}
 
 	_tbc = tbl_cache_new();
 	if(!_tbc)
