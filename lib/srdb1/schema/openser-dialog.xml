@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>openser</name>
+    <name>Dialog support</name>
     <xi:include href="dialog.xml"/>
 </database>

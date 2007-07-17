@@ -7,7 +7,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>openser</name>
+    <name>Instant Message Conference</name>
     <xi:include href="imc_rooms.xml"/>
     <xi:include href="imc_members.xml"/>
 </database>

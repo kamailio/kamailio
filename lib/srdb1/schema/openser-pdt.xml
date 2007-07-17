@@ -8,6 +8,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>openser</name>
+    <name>Prefix-Domain Translation</name>
     <xi:include href="pdt.xml"/>
 </database>

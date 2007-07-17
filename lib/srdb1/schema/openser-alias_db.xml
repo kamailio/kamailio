@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>openser</name>
+    <name>alias db</name>
     <xi:include href="dbaliases.xml"/>
 </database>

@@ -9,7 +9,7 @@
 <!-- Inclusion point for custom extensions for OpenSER -->
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>openser</name>
+    <name>Extensions</name>
     <!-- Include extra definitions if found, it is not
          an error if they are not present, although it
          would produce a warning -->

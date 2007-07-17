@@ -8,7 +8,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>openser</name>
+    <name>Presence</name>
     <xi:include href="pr_presentity.xml"/>
     <xi:include href="pr_active_watchers.xml"/>
     <xi:include href="pr_watchers.xml"/>

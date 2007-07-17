@@ -7,7 +7,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>openser</name>
+    <name>Permissions</name>
     <xi:include href="trusted.xml"/>
     <xi:include href="address.xml"/>
 </database>
