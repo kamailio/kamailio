@@ -95,6 +95,15 @@ dbtext:
 		--stringparam db "dbtext" \
 		$(DBTEXT_XSL) openser-"$$FILE".xml ; \
 	done
+	# small hack to create the version table entries, this is here easier as with XSL
+	for FILE in  $(wildcard $(ROOT)/scripts/dbtext/openser/*) ; do \
+		if [ -f "$$FILE" ]; then \
+			tail -n 1 "$$FILE" >> "$(ROOT)/scripts/dbtext/openser/version" ; \
+ 			head -n -1 "$$FILE" > /tmp/openser-dbtext.tmp ; \
+			cp /tmp/openser-dbtext.tmp "$$FILE" ; \
+		fi ; \
+	done ; \
+	rm /tmp/openser-dbtext.tmp
 
 dbtext_clean:
 	-@rm -f $(ROOT)/scripts/dbtext/openser_db/*
@@ -107,15 +116,25 @@ docbook:
 		--stringparam prefix "$$FILE-" \
 		$(DOCBOOK_XSL) openser-"$$FILE".xml ; \
 	done ; \
-	# small hack to create the version table entries, this is here easier as with XSL
-	for FILE in  $(wildcard $(ROOT)/scripts/dbtext/openser/*) ; do \
-		if [ -f "$$FILE" ]; then \
-			tail -n 1 "$$FILE" >> "$(ROOT)/scripts/dbtext/openser/version" ; \
- 			head -n -1 "$$FILE" > /tmp/openser-dbtext.tmp ; \
-			cp /tmp/openser-dbtext.tmp "$$FILE" ; \
-		fi ; \
+
+	# link all documents to one file, to get nicer output
+	echo "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook V4.4//EN\" \"http://www.oasis-open.org/docbook/sgml/4.4/docbook.dtd\"[" > "$(ROOT)/doc/database/tables.sgml"
+	
+	# create entities, as xi:include is not available in sgml docbook
+	# substitute '-' for '_', docbook smgl don't like this
+	for FILE in $(wildcard $(ROOT)/doc/database/*.xml); do \
+		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/database/tables.sgml" ; \
 	done ; \
-	rm /tmp/openser-dbtext.tmp
+	echo "]>" >> "$(ROOT)/doc/database/tables.sgml"
+
+	echo "<book>" >> "$(ROOT)/doc/database/tables.sgml"
+	echo "  <title>OpenSER database tables</title>" >> "$(ROOT)/doc/database/tables.sgml"
+
+	# actually include the entities
+	for FILE in $(wildcard $(ROOT)/doc/database/*.xml); do \
+		echo "    &`basename "$$FILE" | sed -e 's#_#-#g'`" >> "$(ROOT)/doc/database/tables.sgml" ; \
+	done ; \
+	echo "</book>" >> "$(ROOT)/doc/database/tables.sgml"
 
 docbook_clean:
 	-@rm -f $(ROOT)/doc/database/*.xml
