@@ -123,7 +123,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 		return 0;
 
 	case DB_STR:
-		LOG(L_DBG, "PG[str2val]: Convertingg STR [%s]\n", _s);
+		LOG(L_DBG, "PG[str2val]: Converting STR [%s]\n", _s);
 		VAL_STR(_v).s = (char*)_s;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
