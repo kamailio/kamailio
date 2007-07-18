@@ -125,11 +125,11 @@ docbook:
 	for FILE in $(wildcard $(ROOT)/doc/database/*.xml); do \
 		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/database/tables.sgml" ; \
 	done ; \
+	#Include general documentation entities
+	echo "  <!ENTITY % docentities SYSTEM \"../entities.sgml\"> %docentities;" >> "$(ROOT)/doc/database/tables.sgml" ; \
 	echo "]>" >> "$(ROOT)/doc/database/tables.sgml"
-
-	echo "<book>" >> "$(ROOT)/doc/database/tables.sgml"
-	echo "  <title>OpenSER database tables</title>" >> "$(ROOT)/doc/database/tables.sgml"
-
+	# add bookinfo
+	cat "$(ROOT)/doc/dbschema/bookinfo.xml" >> "$(ROOT)/doc/database/tables.sgml"
 	# actually include the entities
 	for FILE in $(wildcard $(ROOT)/doc/database/*.xml); do \
 		echo "    &`basename "$$FILE" | sed -e 's#_#-#g'`" >> "$(ROOT)/doc/database/tables.sgml" ; \
