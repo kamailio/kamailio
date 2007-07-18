@@ -650,3 +650,58 @@ int db_last_inserted_id(db_con_t* _h)
 	return mysql_insert_id(CON_CONNECTION(_h));
 }
 
+ 
+ /*
+  * Insert a row into specified table, update on duplicate key
+  * _h: structure representing database connection
+  * _k: key names
+  * _v: values of the keys
+  * _n: number of key=value pairs
+ */
+ int db_insert_update(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+ {
+	int off, ret;
+ 
+	if ((!_h) || (!_k) || (!_v) || (!_n)) {
+		LOG(L_ERR, "db_insert_update(): Invalid parameter value\n");
+		return -1;
+	}
+ 
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
+	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	off = ret;
+
+	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
+	if (ret < 0) return -1;
+	off += ret;
+
+	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
+	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	off += ret;
+
+	ret = db_mysql_print_values(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _v, _n);
+	if (ret < 0) return -1;
+	off += ret;
+
+	*(sql_buf + off++) = ')';
+	
+	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " ON DUPLICATE KEY UPDATE ");
+	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	off += ret;
+	
+	ret = db_mysql_print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
+	if (ret < 0) return -1;
+	off += ret;
+	
+	*(sql_buf + off) = '\0';
+ 
+	if (db_mysql_submit_query(_h, sql_buf) < 0) {
+		LOG(L_ERR, "db_insert: Error while submitting query\n");
+		return -2;
+	}
+	return 0;
+
+ error:
+		 LOG(L_ERR, "db_insert: Error in snprintf\n");
+ return -1;
+}

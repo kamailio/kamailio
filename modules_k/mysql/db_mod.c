@@ -58,6 +58,7 @@ static cmd_export_t cmds[] = {
 	{"db_update",           (cmd_function)db_mysql_update,        2, 0, 0},
 	{"db_replace",          (cmd_function)db_mysql_replace,       2, 0, 0},
 	{"db_last_inserted_id", (cmd_function)db_last_inserted_id,    1, 0, 0},
+	{"db_insert_update",    (cmd_function)db_insert_update,       2, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 

@@ -100,6 +100,12 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 int db_last_inserted_id(db_con_t* _h);
 
 /*
+ * Insert a row into table, update on duplicate key
+ */
+int db_insert_update(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+
+
+/*
  * Store name of table that will be used by
  * subsequent database functions
  */
