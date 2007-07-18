@@ -326,6 +326,12 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	return -1;
 }
 
+/*
+ * gets a partial result set
+ * _h: structure representing the database connection
+ * _r: pointer to a structure representing the result
+ * nrows: number of fetched rows
+ */
 int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 {
 	int n;
@@ -336,7 +342,13 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 		return -1;
 	}
 
+	/* exit if the fetch count is zero */
+	if (nrows == 0) {
+		return 0;
+	}
+
 	if(*_r==0) {
+		/* Allocate a new result structure */
 		*_r = db_mysql_new_result();
 		if (*_r == 0) {
 			LOG(L_ERR, "db_fetch_result: No memory left\n");
@@ -376,12 +388,18 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 		RES_ROW_N(*_r) = 0;
 	}
 
+	/* determine the number of rows remaining to be processed */
 	n = RES_NUM_ROWS(*_r) - RES_LAST_ROW(*_r);
+
+	/* If there aren't any more rows left to process, exit */
 	if(n<=0)
 		return 0;
 
-	if(nrows>0 && nrows<n)
+	/* if the fetch count is less than the remaining rows to process		 */
+	/* set the number of rows to process (during this call) equal to the fetch count */
+	if(nrows < n)
 		n = nrows;
+
 	RES_LAST_ROW(*_r) += n;
 	RES_ROW_N(*_r) = n;
 
