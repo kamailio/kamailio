@@ -646,7 +646,8 @@ does not use an AUTO_INCREMENT value.
 
 2.12.1 Description
 
-The function fetches a number of rows from a database result.
+The function fetches a number of rows from a database result. If the number
+of wanted rows is zero, the function return anything with a result of zero.
 
 2.12.2 Prototype
    int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n)
