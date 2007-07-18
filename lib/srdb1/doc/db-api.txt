@@ -663,3 +663,28 @@ _n: the number of rows that should be fetched
 
 The function returns 0 if everything is ok, otherwise the function returns a
 value < 0.
+
+2.13 Callback dbf.insert_update
+
+2.13.1 Description
+
+The function implements the INSERT ON DUPLICATE KEY UPDATE SQL directive.
+It is possible to insert a row and update if one already exists.
+The old row will not deleted before the insertion of the new data.
+
+2.13.2 Prototype
+   int db_insert_update(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+
+2.13.3 Parameters
+
+The function takes four parameters:
+
+_h: structure representing database connection
+_k: key names
+_v: values of the keys
+_n: number of key=value pairs
+
+2.13.4 Return Value
+
+The function returns 0 if everything is ok, otherwise the function returns a
+value < 0.

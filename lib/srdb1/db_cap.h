@@ -36,12 +36,14 @@ typedef enum db_cap {
 	DB_CAP_REPLACE =   1 << 5,  /* Replace (also known as INSERT OR UPDATE) support */
 	DB_CAP_FETCH   =   1 << 6,  /* Fetch result support */
 	DB_CAP_LAST_INSERTED_ID = 1 << 7,  /* ID of the last insert */
+ 	DB_CAP_INSERT_UPDATE = 1 << 8 /* Database driver can insert data into database and update on duplicate */
+
 } db_cap_t;
 
 
 /*
- * All database capabilities except raw_query and replace which should be checked
- * separately when needed
+ * All database capabilities except raw_query, replace, insert_update and 
+ * last_inserted_id which should be checked separately when needed
  */
 #define DB_CAP_ALL (DB_CAP_QUERY | DB_CAP_INSERT | DB_CAP_DELETE | DB_CAP_UPDATE)
 

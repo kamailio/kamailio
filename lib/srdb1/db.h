@@ -155,6 +155,15 @@ typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, i
  */
 typedef int (*db_last_inserted_id_f) (db_con_t* handle);
 
+/*
+ * Insert a row into specified table, update on duplicate key
+ * _h: structure representing database connection
+ * _k: key names
+ * _v: values of the keys
+ * _n: number of key=value pairs
+ */
+typedef int (*db_insert_update_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+
 
 typedef struct db_func {
 	unsigned int     cap;           /* Capability vector of the database transport */
@@ -171,6 +180,7 @@ typedef struct db_func {
 	db_replace_f      replace;       /* Replace row in a table */
 	db_last_inserted_id_f  last_inserted_id;  /* Retrieve the last inserted ID
 	                                            in a table */
+	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
 } db_func_t;
 
 

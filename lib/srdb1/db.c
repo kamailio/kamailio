@@ -147,6 +147,11 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 		dbf.cap |= DB_CAP_LAST_INSERTED_ID;
 	}
 
+	dbf.insert_update = (db_insert_update_f)find_mod_export(tmp, "db_insert_update", 2, 0);
+	if (dbf.insert_update) {
+		dbf.cap |= DB_CAP_INSERT_UPDATE;
+	}
+
 	*mydbf=dbf; /* copy */
 	if (tmp != mod) pkg_free(tmp);
 	return 0;
