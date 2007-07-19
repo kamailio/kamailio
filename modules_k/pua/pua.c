@@ -208,12 +208,12 @@ static int mod_init(void)
 		return -1;
 	}
 	if ( init_puacb_list() < 0)
-    {
+	{
 		LOG(L_ERR, "PUA:mod_init: ERROR: callbacks initialization failed\n");
-        return -1;
-    }
+		return -1;
+	}
 	pua_evlist= init_pua_evlist();
-	if(pua_evlist< 0)
+	if(pua_evlist==0)
 	{
 		LOG(L_ERR, "PUA:mod_init: ERROR when initializing pua_evlist\n");
 		return -1;
