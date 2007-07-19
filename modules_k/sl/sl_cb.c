@@ -51,7 +51,7 @@ int register_slcb( sl_cb_t f, void *param )
 
 	/* build a new callback structure */
 	if (!(cbp=pkg_malloc( sizeof( struct sl_callback)))) {
-		LOG(L_ERR, "ERROR:sl:register_slcb: out of pkg. mem\n");
+		LM_ERR("out of pkg. mem\n");
 		return -1;
 	}
 
@@ -84,7 +84,7 @@ void run_sl_callbacks( struct sip_msg *req, str *buffer, int code,
 
 	for ( cbp=slcb_hl ; cbp ; cbp=cbp->next ) {
 		cb_params.param = cbp->param;
-		DBG("DBG:sl:run_sl_callbacks: callback id %d entered\n", cbp->id );
+		LM_DBG("callback id %d entered\n", cbp->id );
 			cbp->callback( req, &cb_params);
 	}
 }

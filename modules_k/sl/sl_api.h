@@ -25,6 +25,7 @@
 #define _SL_API_H_
 
 #include "../../sr_module.h"
+#include "../../dprint.h"
 
 typedef int (*sl_send_reply_f)(struct sip_msg *msg, int code, str *reason);
 typedef int (*sl_send_reply_dlg_f)(struct sip_msg *msg, int code, str *reason,
@@ -46,7 +47,7 @@ static inline int load_sl_api( struct sl_binds *slb )
 
 	/* import the SL auto-loading function */
 	if ( !(load_sl=(load_sl_f)find_export("load_sl", 0, 0))) {
-		LOG(L_ERR, "ERROR:sl:load_sl_api: can't import load_sl\n");
+		LM_ERR("can't import load_sl\n");
 		return -1;
 	}
 	/* let the auto-loading function load all TM stuff */

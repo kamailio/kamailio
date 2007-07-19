@@ -80,7 +80,7 @@ int sl_startup()
 	sl_timeout = (unsigned int*)shm_malloc(sizeof(unsigned int));
 	if (!sl_timeout)
 	{
-		LOG(L_ERR,"ERROR:sl_startup: no more free memory!\n");
+		LM_ERR("no more shm memory!\n");
 		return -1;
 	}
 	*(sl_timeout)=get_ticks();
@@ -147,8 +147,7 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 
 	if (reply_to_via) {
 		if (update_sock_struct_from_via(  &(to), msg, msg->via1 )==-1) {
-			LOG(L_ERR, "ERROR:sl:sl_send_reply: cannot lookup reply dst: "
-				"%s\n", msg->via1->host.s );
+			LM_ERR("cannot lookup reply dst: %s\n", msg->via1->host.s );
 			goto error;
 		}
 	} else update_sock_struct_from_ip( &to, msg );
@@ -179,7 +178,7 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 			(unsigned int*)&buf.len, &dummy_bm);
 	}
 	if (!buf.s) {
-		DBG("DEBUG: sl_send_reply: response building failed\n");
+		LM_ERR("response building failed\n");
 		goto error;
 	}
 
@@ -232,12 +231,12 @@ int sl_reply_error(struct sip_msg *msg )
 	ret = err2reason_phrase( prev_ser_error, &sip_error, 
 		err_buf, sizeof(err_buf), "SL");
 	if (ret<=0) {
-		LOG(L_ERR, "ERROR: sl_reply_error: err2reason failed\n");
+		LM_ERR("err2reason failed\n");
 		return -1;
 	}
 	text.len = ret;
 	text.s = err_buf;
-	DBG("DEBUG:sl:sl_reply_error: error text is %.*s\n",text.len,text.s);
+	LM_DBG("error text is %.*s\n",text.len,text.s);
 
 	ret = sl_send_reply_helper( msg, sip_error, &text, 0);
 	if (ret==-1)
@@ -263,14 +262,14 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 	/*check the timeout value*/
 	if ( *(sl_timeout)<= get_ticks() )
 	{
-		DBG("DEBUG : sl_filter_ACK: to late to be a local ACK!\n");
+		LM_DBG("to late to be a local ACK!\n");
 		goto pass_it;
 	}
 
 	/*force to parse to header -> we need it for tag param*/
 	if (parse_headers( msg, HDR_TO_F, 0 )==-1)
 	{
-		LOG(L_ERR,"ERROR : SL_FILTER_ACK: unable to parse To header\n");
+		LM_ERR("unable to parse To header\n");
 		return -1;
 	}
 
@@ -282,7 +281,7 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
 			if (memcmp(tag_str->s,sl_tag.s,sl_tag.len)==0) {
-				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it!\n");
+				LM_DBG("local ACK found -> dropping it!\n");
 				if_update_stat( sl_enable_stats, rcv_acks, 1);
 				return 0;
 			}

@@ -127,7 +127,7 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	LOG(L_INFO,"StateLess module - initializing\n");
+	LM_INFO("Initializing StateLess engine\n");
 
 	/* if statistics are disabled, prevent their registration to core */
 	if (sl_enable_stats==0)
@@ -139,13 +139,13 @@ static int mod_init(void)
 
 	/* filter all ACKs before script */
 	if (register_script_cb(sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )!=0) {
-		LOG(L_ERR,"ERROR:sl:mod_init: register_script_cb failed\n");
+		LM_ERR("register_script_cb failed\n");
 		return -1;
 	}
 
 	/* init internal SL stuff */
 	if (sl_startup()!=0) {
-		LOG(L_ERR,"ERROR:sl:mod_init: sl_startup failed\n");
+		LM_ERR("sl_startup failed\n");
 		return -1;
 	}
 
@@ -177,14 +177,13 @@ static int fixup_sl_send_reply(void** param, int param_no)
 	{
 		if(s.len==0)
 		{
-			LOG(L_ERR, "ERROR:sl:fixup_sl_reply: no param %d!\n", param_no);
+			LM_ERR("no param %d!\n", param_no);
 			return E_UNSPEC;
 		}
 
 		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0 || model==NULL)
 		{
-			LOG(L_ERR, "ERROR:sl:fixup_sl_reply: wrong format [%s] "
-				"for param no %d!\n", s.s, param_no);
+			LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
 			return E_UNSPEC;
 		}
 		if(model->spec.itf==NULL)
@@ -194,8 +193,8 @@ static int fixup_sl_send_reply(void** param, int param_no)
 			   if(str2int(&s, (unsigned int*)&model->spec.p.ind)!=0
 					   || model->spec.p.ind<100)
 			   {
-					LOG(L_ERR, "ERROR:sl:fixup_sl_reply: wrong value [%s] "
-						"for param no %d!\n", s.s, param_no);
+					LM_ERR("wrong value [%s] for param no %d!\n",
+						s.s, param_no);
 					return E_UNSPEC;
 			   }
 			}
