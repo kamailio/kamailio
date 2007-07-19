@@ -39,8 +39,6 @@
 #include "notify.h"
 #include "../../ip_addr.h"
 
-#define LCONTACT_BUF_SIZE 1024
-
 int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* remote_cseq, int* error_ret);
 
 static str su_200_rpl  = str_init("OK");
@@ -879,7 +877,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	str rtag_value;
 	subs_t subs;
 	static char buf[50];
-	static char cont_buf[LCONTACT_BUF_SIZE];
 	str rec_route= {0, 0};
 	int error_ret = -1;
 	int rt  = 0;
@@ -895,7 +892,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	db_val_t *row_vals ;
 	str status= {0, 0};
 	str reason= {0, 0};
-	str contact;
+	str* contact= NULL;
 	ev_t* event= NULL;
 	param_t* ev_param= NULL;
 	str ev_name;
@@ -1178,67 +1175,14 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	
 	if((!server_address.s) || (server_address.len== 0))
 	{
-		str ip;
-		char* proto;
-		int port;
-		int len;
-
-		memset(cont_buf, 0, LCONTACT_BUF_SIZE*sizeof(char));
-		contact.s= cont_buf;
-		contact.len= 0;
-	
-		if(msg->rcv.proto== PROTO_NONE || msg->rcv.proto==PROTO_UDP)
+		contact= get_local_contact(msg);
+		if(contact== NULL)
 		{
-			proto= "udp";
-		}
-		else
-		if(msg->rcv.proto== PROTO_TLS )
-		{
-			proto= "tls";
-		}
-		else	
-		if(msg->rcv.proto== PROTO_TCP)
-		{
-			proto= "tcp";
-		}
-		else
-		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR unsupported proto\n");
-			goto error;
-		}	
-		ip.s= ip_addr2a(&msg->rcv.dst_ip);
-		if(ip.s== NULL)
-		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR while transforming ip_addr to ascii\n");
+			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR in function"
+					" get_local_contact\n");
 			goto error;
 		}
-		ip.len= strlen(ip.s);
-		port = msg->rcv.dst_port;
-
-		if(strncmp(ip.s, "sip:", 4)!=0)
-		{
-			strncpy(contact.s, "sip:", 4);
-			contact.len+= 4;
-		}	
-		strncpy(contact.s+contact.len, ip.s, ip.len);
-		contact.len += ip.len;
-		if(contact.len> LCONTACT_BUF_SIZE - 21)
-		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR buffer overflow\n");
-			goto error;
-		}	
-		len= sprintf(contact.s+contact.len, ":%d;transport=" , port);
-		if(len< 0)
-		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR in function sprintf\n");
-			goto error;
-
-		}	
-		contact.len+= len;
-		strncpy(contact.s+ contact.len, proto, 3);
-		contact.len += 3;
-		
-		subs.local_contact= contact;
+		subs.local_contact= *contact;
 	}
 	else
 		subs.local_contact= server_address;
@@ -1535,7 +1479,12 @@ after_status:
 		if(subs.pres_domain.s)
 			pkg_free(subs.pres_domain.s);
 	}
-
+	if(contact)
+	{	
+		if(contact->s)
+			pkg_free(contact->s);
+		pkg_free(contact);
+	}
 	return 1;
 
 bad_event:
@@ -1564,6 +1513,13 @@ error:
 		if(subs.pres_domain.s)
 			pkg_free(subs.pres_domain.s);
 	}
+	if(contact)
+	{	
+		if(contact->s)
+			pkg_free(contact->s);
+		pkg_free(contact);
+	}
+
 	return error_ret;
 
 }

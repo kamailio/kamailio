@@ -742,7 +742,7 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 	return td;
 
 error:
-	if(w_uri.s ==NULL)
+	if(w_uri.s)
 	{
 		pkg_free(w_uri.s);
 		w_uri.s= NULL;

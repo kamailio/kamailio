@@ -93,6 +93,7 @@ struct ev
 	publ_handling_t  * evs_publ_handl;
 	subs_handling_t  * evs_subs_handl;
 	free_body_t* free_body;
+	int default_expires;
 	struct ev* wipeer;			
 	struct ev* next;
 	
@@ -112,6 +113,8 @@ int add_event(ev_t* event);
 typedef int (*add_event_t)(ev_t* event);
 
 ev_t* contains_event(str* name, str* param);
+
+typedef ev_t* (*contains_event_t) (str* name, str* param);
 
 void destroy_evlist();
 

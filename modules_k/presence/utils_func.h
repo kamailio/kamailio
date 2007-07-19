@@ -37,6 +37,8 @@
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
 
+#define LCONTACT_BUF_SIZE 1024
+
 static inline int uandd_to_uri(str user,  str domain, str *out)
 {
 	int size;
@@ -66,6 +68,89 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 	DBG("presence:uandd_to_uri: uri=%.*s\n", out->len, out->s);
 	
 	return 0;
+}
+
+static inline str* get_local_contact(struct sip_msg* msg)
+{
+	str ip;
+	char* proto;
+	int port;
+	int len;
+	str* contact;
+
+	contact= (str*)pkg_malloc(sizeof(str));
+	if(contact== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR No more memory\n");
+		return NULL;
+	}
+	contact->s= (char*)pkg_malloc(LCONTACT_BUF_SIZE* sizeof(char));
+	if(contact->s== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR No more memory\n");
+		pkg_free(contact);
+		return NULL;
+	}
+
+	memset(contact->s, 0, LCONTACT_BUF_SIZE*sizeof(char));
+	contact->len= 0;
+	
+	if(msg->rcv.proto== PROTO_NONE || msg->rcv.proto==PROTO_UDP)
+		proto= "udp";
+	else
+	if(msg->rcv.proto== PROTO_TLS )
+			proto= "tls";
+	else	
+	if(msg->rcv.proto== PROTO_TCP)
+		proto= "tcp";
+	else
+	{
+		LOG(L_ERR, "PRESENCE: get_local_contact:ERROR unsupported proto\n");
+		pkg_free(contact->s);
+		pkg_free(contact);
+		return NULL;
+	}	
+	
+	ip.s= ip_addr2a(&msg->rcv.dst_ip);
+	if(ip.s== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: get_local_contact:ERROR while transforming ip_addr to ascii\n");
+		pkg_free(contact->s);
+		pkg_free(contact);
+		return NULL;
+	}
+	ip.len= strlen(ip.s);
+	port = msg->rcv.dst_port;
+
+	if(strncmp(ip.s, "sip:", 4)!=0)
+	{
+		strncpy(contact->s, "sip:", 4);
+		contact->len+= 4;
+	}	
+	strncpy(contact->s+contact->len, ip.s, ip.len);
+	contact->len += ip.len;
+	if(contact->len> LCONTACT_BUF_SIZE - 21)
+	{
+		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR buffer overflow\n");
+		pkg_free(contact->s);
+		pkg_free(contact);
+		return NULL;
+
+	}	
+	len= sprintf(contact->s+contact->len, ":%d;transport=" , port);
+	if(len< 0)
+	{
+		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR in function sprintf\n");
+		pkg_free(contact->s);
+		pkg_free(contact);
+		return NULL;
+	}	
+	contact->len+= len;
+	strncpy(contact->s+ contact->len, proto, 3);
+	contact->len += 3;
+	
+	return contact;
+	
 }
 
 //str* int_to_str(long int n);

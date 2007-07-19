@@ -59,8 +59,9 @@
 
 MODULE_VERSION
 
-#define S_TABLE_VERSION 1
-#define ACTWATCH_TABLE_VERSION 4
+#define S_TABLE_VERSION  1
+#define P_TABLE_VERSION  2
+#define ACTWATCH_TABLE_VERSION 5
 
 char *log_buf = NULL;
 static int clean_period=100;
@@ -91,6 +92,7 @@ struct sl_binds slb;
 
 static int mod_init(void);
 static int child_init(int);
+void destroy(void);
 int handle_publish(struct sip_msg*, char*, char*);
 int handle_subscribe(struct sip_msg*, char*, char*);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
@@ -106,16 +108,12 @@ int expires_offset = 0;
 int default_expires = 3600;
 int max_expires = 3600;
 
-
-void destroy(void);
-
 static cmd_export_t cmds[]=
 {
 	{"handle_publish",		handle_publish,	     0,	   0,        REQUEST_ROUTE},
 	{"handle_publish",		handle_publish,	     1,fixup_presence,REQUEST_ROUTE},
 	{"handle_subscribe",	handle_subscribe,	 0,	   0,         REQUEST_ROUTE},
 	{"bind_presence",(cmd_function)bind_presence,1,    0,            0         },
-	{"add_event",    (cmd_function)add_event,    1,    0,            0         },
 	{0,						0,				     0,	   0,            0	       }	 
 };
 
@@ -225,10 +223,10 @@ static int mod_init(void)
 	_s.s = presentity_table;
 	_s.len = strlen(presentity_table);
 	 ver =  table_version(&pa_dbf, pa_db, &_s);
-	if(ver!=S_TABLE_VERSION)
+	if(ver!=P_TABLE_VERSION)
 	{
 		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
+				" need v%d\n", ver, _s.s, P_TABLE_VERSION);
 		return -1;
 	}
 	
@@ -424,4 +422,6 @@ struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
 	}	
 	
 	return init_mi_tree(200, "OK", 2);
-}	
+}
+
+

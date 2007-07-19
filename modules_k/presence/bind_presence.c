@@ -35,12 +35,9 @@ int bind_presence(event_api_t* api)
 		LOG(L_ERR, "NOTIFIER:bind_notifier: Invalid parameter value\n");
 		return -1;
 	}
-	api->add_event = (add_event_t )find_export("add_event", 1, 0);
-	if(!api->add_event)
-	{
-		LOG(L_ERR, "NOTIFIER:bind_notifier: Can't bind add_event\n");
-		return -1;
-	}
+	
+	api->add_event = add_event;
+	api->contains_event= contains_event;
 
 	return 0;
 }

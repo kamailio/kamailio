@@ -2,7 +2,7 @@
 use openser;
 
 CREATE TABLE `presentity` (
-  `id` int(10) NOT NULL auto_increment,
+  `id` int(10)  NOT NULL auto_increment,
   `username` varchar(64) NOT NULL,
   `domain` varchar(124) NOT NULL,
   `event` varchar(64) NOT NULL,
@@ -10,9 +10,12 @@ CREATE TABLE `presentity` (
   `expires` int(11) NOT NULL,
   `received_time` int(11) NOT NULL,
   `body` text NOT NULL,
-  UNIQUE KEY udee_presentity (`username`,`domain`,`event`,`etag`),
-  PRIMARY KEY (id)
+  UNIQUE KEY `uk_id` (`id`),
+  UNIQUE KEY `udee_presentity` (`username`,`domain`,`event`, `etag`),
+  KEY `ude_presentity` (`username`,`domain`,`event`),
+  KEY `exp_presentity` (`expires`)
 ) ENGINE=MyISAM;
+
 
 CREATE TABLE `active_watchers` (
   `id` int(10) NOT NULL auto_increment,
@@ -23,7 +26,7 @@ CREATE TABLE `active_watchers` (
   `from_user` varchar(64) NOT NULL,
   `from_domain` varchar(128) NOT NULL,
   `event` varchar(64) NOT NULL default 'presence',
-  `event_id` varchar(64),
+  `event_id` varchar(64) default NULL,
   `to_tag` varchar(128) NOT NULL,
   `from_tag` varchar(128) NOT NULL,
   `callid` varchar(128) NOT NULL,
@@ -38,8 +41,9 @@ CREATE TABLE `active_watchers` (
   `local_contact` varchar(255) NOT NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `tt_watchers` (`to_tag`),
-  KEY `due_activewatchers` (`to_domain`,`to_user`,`event`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+  KEY `ude_active_watchers` (`pres_domain`,`pres_user`,`event`),
+  KEY `exp_active_watchers` (`expires`)
+) ENGINE=MyISAM;
 
 
 CREATE TABLE `watchers` (

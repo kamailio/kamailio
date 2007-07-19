@@ -106,7 +106,7 @@ int reply_bad_event(struct sip_msg * msg)
 	hdr_append.len = sprintf(hdr_append.s, "Allow-Events: ");
 	if(hdr_append.len < 0)
 	{
-		LOG(L_ERR, "PRESENCE:handle_publish: ERROR unsuccessful sprintf\n");
+		LOG(L_ERR, "PRESENCE:reply_bad_event: ERROR unsuccessful sprintf\n");
 		return -1;
 	}
 
@@ -127,13 +127,13 @@ int reply_bad_event(struct sip_msg * msg)
 		
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"PRESENCE: handle_publish:ERROR unable to add lump_rl\n");
+		LOG(L_ERR,"PRESENCE: reply_bad_event:ERROR unable to add lump_rl\n");
 		return -1;
 	}
 
 	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
 	{
-		LOG(L_ERR, "PRESENCE: handle_publish: Error while sending reply\n");
+		LOG(L_ERR, "PRESENCE: reply_bad_event: Error while sending reply\n");
 		return -1;
 	}
 	return 0;

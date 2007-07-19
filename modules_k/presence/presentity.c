@@ -82,7 +82,7 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*100);
 	if(hdr_append.s == NULL)
 	{
-		LOG(L_ERR,"ERROR:publ_send200ok: unable to add lump_rl\n");
+		LOG(L_ERR,"ERROR:publ_send200ok: ERROR no more memory\n");
 		return -1;
 	}
 	hdr_append.s[0]='\0';
@@ -107,7 +107,7 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	hdr_append2.s = (char *)pkg_malloc( sizeof(char)*(16+etag.len) );
 	if(hdr_append2.s == NULL)
 	{
-		LOG(L_ERR,"PRESENCE:publ_send200ok:ERROR unable to add lump_rl\n");
+		LOG(L_ERR,"PRESENCE:publ_send200ok:ERROR no more memory\n");
 		return -1;
 	}
 	hdr_append2.s[0]='\0';
