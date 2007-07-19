@@ -96,7 +96,7 @@ static int mod_init(void)
 {
 	LM_NOTICE("initializing\n");
 	if ( max_limit<1 || max_limit>MAXFWD_UPPER_LIMIT ) {
-		LM_ERR("init: invalid max limit (%d) [1,%d]\n",
+		LM_ERR("invalid max limit (%d) [1,%d]\n",
 			max_limit,MAXFWD_UPPER_LIMIT);
 		return E_CFG;
 	}
@@ -114,20 +114,20 @@ static int fixup_maxfwd_header(void** param, int param_no)
 		code=str2s(*param, strlen(*param), &err);
 		if (err==0){
 			if (code<1 || code>MAXFWD_UPPER_LIMIT){
-				LM_ERR("fixup_maxfwd_header: invalid MAXFWD number "
-					"<%ld> [1,%d]\n",code,MAXFWD_UPPER_LIMIT);
+				LM_ERR("invalid MAXFWD number <%ld> [1,%d]\n",
+					code,MAXFWD_UPPER_LIMIT);
 				return E_UNSPEC;
 			}
 			if (code>max_limit) {
-				LM_ERR("fixup_maxfwd_header: default value <%ld> bigger "
-					"than max limit(%d)\n", code, max_limit);
+				LM_ERR("default value <%ld> bigger than max limit(%d)\n",
+					code, max_limit);
 				return E_UNSPEC;
 			}
 			pkg_free(*param);
 			*param=(void*)code;
 			return 0;
 		}else{
-			LM_ERR("fixup_maxfwd_header: bad  number <%s>\n",(char*)(*param));
+			LM_ERR("bad  number <%s>\n",(char*)(*param));
 			return E_UNSPEC;
 		}
 	}
@@ -156,12 +156,11 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 			return -1;
 		default:
 			if (val>max_limit){
-				LM_DBG("process_maxfwd_header: value %d decreased to %d\n",
-					val, max_limit);
+				LM_DBG("value %d decreased to %d\n", val, max_limit);
 				val = max_limit+1;
 			}
 			if ( decrement_maxfwd(msg, val, &mf_value)!=0 ) {
-				LM_ERR("process_maxfwd_header: decrement failed!\n");
+				LM_ERR("decrement failed!\n");
 				goto error;
 			}
 	}
@@ -181,7 +180,7 @@ static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo)
 
 	limit = (int)(long)slimit;
 	val = is_maxfwd_present( msg, &mf_value);
-	LM_DBG("is_maxfwd_lt: value = %d \n",val);
+	LM_DBG("value = %d \n",val);
 
 	if ( val<0 ) {
 		/* error or not found */

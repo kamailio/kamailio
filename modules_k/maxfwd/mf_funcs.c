@@ -59,11 +59,11 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 	/* lookup into the message for MAX FORWARDS header*/
 	if ( !msg->maxforwards ) {
 		if  ( parse_headers( msg , HDR_MAXFORWARDS_F, 0 )==-1 ){
-			LM_ERR("is_maxfwd_present: parsing MAX_FORWARD header failed!\n");
+			LM_ERR("parsing MAX_FORWARD header failed!\n");
 			return -2;
 		}
 		if (!msg->maxforwards) {
-			LM_DBG("is_maxfwd_present: max_forwards header not found!\n");
+			LM_DBG("max_forwards header not found!\n");
 			return -1;
 		}
 	} else if (IS_MAXWD_STORED(msg)) {
@@ -76,12 +76,12 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 	/* convert from string to number */
 	x = str2s( foo->s,foo->len,&err);
 	if (err){
-		LM_ERR("is_maxfwd_present: unable to parse the max forwards number\n");
+		LM_ERR("unable to parse the max forwards number\n");
 		return -2;
 	}
 	/* store the parsed values */
 	STORE_MAXWD_VAL(msg, x);
-	LM_DBG("is_maxfwd_present: value = %d \n",x);
+	LM_DBG("value = %d \n",x);
 	return x;
 }
 
