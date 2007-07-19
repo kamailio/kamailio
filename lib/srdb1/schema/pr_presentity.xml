@@ -9,7 +9,7 @@
 
 <table id="presentity" xmlns:db="http://docbook.org/ns/docbook">
     <name>presentity</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/presence.html
@@ -81,5 +81,13 @@
         <colref linkend="event"/>
         <colref linkend="etag"/>
         <unique/>
+	</index>
+	<index>
+        <name>ude_presentity</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="event"/>
+        <unique/>
     </index>
+
 </table>
