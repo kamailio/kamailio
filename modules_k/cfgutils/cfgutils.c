@@ -146,8 +146,7 @@ static int fixup_prob( void** param, int param_no)
 	str2int(&param_str, &myint);
 
 	if (myint > 100) {
-		LOG(L_ERR, "ERROR:cfgutils:fixup_prob: incorrect probability<%s>\n",
-			(char *)(*param));
+		LM_ERR("invalid probability <%d>\n", myint);
 		return E_CFG;
 	}
 
@@ -170,7 +169,7 @@ static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param )
 	if( strno2int( &node->value, &percent) <0)
 		goto error;
 	if (percent > 100) {
-		LOG(L_ERR, "ERROR:cfgutils:mi_set_prob: incorrect probability\n");
+		LM_ERR("incorrect probability <%u>\n", percent);
 		goto error;
 	}
 	*probability = percent;
@@ -195,7 +194,7 @@ static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param )
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
 	if(rpl_tree == NULL)
 		return 0;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "actual probability: %u percent",(*probability));
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "actual probability: %u percent\n",(*probability));
 	if(node == NULL)
 		goto error;
 	
@@ -208,14 +207,12 @@ error:
 
 static int set_prob(struct sip_msg *bar, char *percent_par, char *foo) 
 {
-
 	*probability=(int) percent_par;
 	return 1;
 }
 	
 static int reset_prob(struct sip_msg *bar, char *percent_par, char *foo)
 {
-
 	*probability=initial;
 	return 1;
 }
@@ -232,13 +229,13 @@ static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 	 * uniformly distributed numbers as rand()
 	 */
 	double tmp = drand48();
-	LOG(L_DBG, "cfgutils: generated random %f\n", tmp);
+	LM_DBG("generated random %f\n", tmp);
 	if (tmp < ((double) (*probability) / 100)) {
-		LOG(L_DBG, "cfgutils: get_random return true");
+		LM_DBG("return true\n");
 		return 1;
 	}
 	else {
-		LOG(L_DBG, "cfgutils: get_random return false");
+		LM_DBG("return false\n");
 		return -1;
 	}
 }
@@ -266,12 +263,14 @@ static int it_get_random_val(struct sip_msg *msg, xl_value_t *res, xl_param_t *p
 
 static int m_sleep(struct sip_msg *msg, char *time, char *str2)
 {
+	LM_DBG("sleep %d seconds\n", time);
 	sleep((int)time);
 	return 1;
 }
 
 static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 {
+	LM_DBG("sleep %d microseconds\n", time);
 	sleep_us((int)time);
 	return 1;
 }
@@ -282,11 +281,17 @@ static int mod_init(void)
 	srand48(rand());
 	probability=(int *) shm_malloc(sizeof(int));
 	if (!probability) {
-		LOG(L_ERR, "Error: cfgutils/mod_init: no shmem\n");
+		LM_ERR("no shmem available\n");
 		return -1;
 	}
 	*probability = initial;
-	LOG(L_INFO, "cfgutils initialized, pid [%d]\n", getpid());
+	if (initial > 100) {
+		LM_ERR("invalid probability <%d>\n", initial);
+		return -1;
+	}
+	LM_DBG("initial probability %d percent\n", initial);
+
+	LM_INFO("module initialized, pid [%d]\n", getpid());
 
 	return 0;
 }
