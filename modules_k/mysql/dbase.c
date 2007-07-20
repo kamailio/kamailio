@@ -344,6 +344,8 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 
 	/* exit if the fetch count is zero */
 	if (nrows == 0) {
+		db_mysql_free_dbresult(*_r);
+		*_r = 0;
 		return 0;
 	}
 
@@ -679,7 +681,7 @@ int db_last_inserted_id(db_con_t* _h)
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
 
-	ret = db_mysql_print_values(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _v, _n);
+	ret = db_print_values(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _v, _n);
 	if (ret < 0) return -1;
 	off += ret;
 
@@ -689,7 +691,7 @@ int db_last_inserted_id(db_con_t* _h)
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
 	
-	ret = db_mysql_print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
+	ret = db_print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
 	if (ret < 0) return -1;
 	off += ret;
 	
