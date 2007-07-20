@@ -4,7 +4,6 @@
 <!ENTITY user SYSTEM "pua_user.sgml">
 <!ENTITY devel SYSTEM "pua_devel.sgml">
 <!ENTITY faq SYSTEM "pua_faq.sgml">
-<!ENTITY sql SYSTEM "pua.sql">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

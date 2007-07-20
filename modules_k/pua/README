@@ -51,7 +51,6 @@ Anca-Maria Vamanu
    1-4. Set min_expires parameter
    1-5. Set default_expires parameter
    1-6. Set update_period parameter
-   1-7. PUA tables
    2-1. pua_api structure
    2-2. pua_is_dialog usage example
    2-3. register_puacb usage example
@@ -185,35 +184,11 @@ modparam("pua", "update_period", 100)
 
 1.5. Installation
 
-   The module requires a new table in OpenSER database. Next SQL
-   statement shows the syntax to create it.
-
-   Example 1-7. PUA tables
-...
-
-use openser;
-
-CREATE TABLE pua (
-  id int(10) unsigned NOT NULL auto_increment,
-  pres_uri varchar(128) NOT NULL,
-  pres_id varchar(128) NOT NULL,
-  event int(11) NOT NULL,
-  expires int(11) NOT NULL,
-  flag int(11) NOT NULL,
-  etag varchar(128) NOT NULL,
-  tuple_id varchar(128) NOT NULL,
-  watcher_uri varchar(128) NOT NULL,
-  call_id varchar(128) NOT NULL,
-  to_tag varchar(128) NOT NULL,
-  from_tag varchar(128) NOT NULL,
-  cseq int(11) NOT NULL,
-  record_route text NULL,
-  version int(11) NOT NULL,
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM;
-
-
-...
+   The module requires 1 table in OpenSER database: pua. The SQL
+   syntax to create it can be found in presence_xml-create.sql
+   script in the database directories in the openser/scripts
+   folder. You can also find the complete database documentation
+   on the project webpage, http://openser.org/docs/.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

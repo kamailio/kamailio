@@ -195,18 +195,12 @@ modparam("pua", "update_period", 100)
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires a new table in OpenSER database. Next SQL statement
-	shows the syntax to create it.
+	The module requires 1 table in OpenSER database: pua. The SQL 
+	syntax to create it can be found in presence_xml-create.sql     
+	script in the database directories in the openser/scripts folder.
+	You can also find the complete database documentation on the
+	project webpage, &openserdbdocs;.
 	</para>
-	<example>
-	<title>PUA tables</title>
-	<programlisting format="linespecific">
-...
-&sql;
-...
-</programlisting>
-	</example>
-
 </section>
 
 

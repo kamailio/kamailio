@@ -167,17 +167,12 @@ modparam("presence_xml", "pidf_manipulation", 1)
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires 1 table in OpenSER database. Next SQL statements
-	shows the syntax to create it.
+	The module requires 1 table in OpenSER database: xcap_xml. The SQL 
+	syntax to create it can be found in presence_xml-create.sql     
+	script in the database directories in the openser/scripts folder.
+	You can also find the complete database documentation on the
+	project webpage, &openserdbdocs;.
 	</para>
-	<example>
-	<title>PRESECE_XML tables</title>
-	<programlisting format="linespecific">
-...
-&sql;
-...
-</programlisting>
-	</example>
 </section>
 
 </chapter>
