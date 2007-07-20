@@ -473,6 +473,9 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
 
 	/* exit if the fetch count is zero */
 	if (nrows == 0) {
+		if (*_res)
+			pg_free_result(*_res);
+        	*_res = 0;
 		return 0;
 	}
 
@@ -542,9 +545,8 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
 
         if (pg_convert_rows(_con, *_res, RES_LAST_ROW(*_res), RES_ROW_N(*_res)) < 0) {
                 LOG(L_ERR, "PG[fetch_result]: Error while converting rows\n");
-                pg_free_columns(*_res);
-       		if (*_res) 
-			pg_free_result(*_res);
+		if (*_res) 
+                	pg_free_result(*_res);
         	*_res = 0;
 		return -3;
         }
