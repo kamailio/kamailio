@@ -27,28 +27,28 @@
         <description>Unique ID</description>
     </column>
 
-    <column>
+    <column id="pres_user">
         <name>pres_user</name>
         <type>string</type>
         <size>&user_len;</size>
         <description>Presence User</description>
     </column>
 
-    <column>
+    <column id="pres_domain">
         <name>pres_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
         <description>Presence Domain</description>
     </column>
 
-    <column id="to_user">
+    <column>
         <name>to_user</name>
         <type>string</type>
         <size>&user_len;</size>
         <description>To User</description>
     </column>
 
-    <column id="to_domain">
+    <column>
         <name>to_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
@@ -134,7 +134,7 @@
         <description>Record route</description>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>int</type>
         <size>&expires_len;</size>

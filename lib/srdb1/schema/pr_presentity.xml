@@ -55,7 +55,7 @@
         <description>User name</description>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>int</type>
         <size>&expires_len;</size>
