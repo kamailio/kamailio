@@ -4,7 +4,6 @@
 <!ENTITY user SYSTEM "imc_user.sgml">
 <!ENTITY devel SYSTEM "imc_devel.sgml">
 <!ENTITY faq SYSTEM "imc_faq.sgml">
-<!ENTITY sql SYSTEM "imc.sql">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

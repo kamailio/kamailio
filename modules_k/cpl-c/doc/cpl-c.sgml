@@ -4,7 +4,6 @@
 <!ENTITY user SYSTEM "cpl-c_user.sgml">
 <!ENTITY devel SYSTEM "cpl-c_devel.sgml">
 <!ENTITY faq SYSTEM "cpl-c_faq.sgml">
-<!ENTITY cplsql SYSTEM "cpl-c.sql">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

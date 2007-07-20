@@ -686,20 +686,15 @@ if (method=="REGISTER") {
 			Before running &ser; with cpl-c, you have to setup the database 
 			table where the module will store the CPL scripts. For that, if 
 			the table was not created by the installation script or you choose
-			to install everything by yourself you can use the following 
-			<acronym>SQL</acronym> script (good for MySQL) as template. 
+			to install everything by yourself you can use the cpc-create.sql
+			<acronym>SQL</acronym> script in the database directories in the 
+			openser/scripts folder as template. 
 			Database and table name can be set with module parameters so they 
 			can be changed, but the name of the columns must be as they are 
-			in the next <acronym>SQL</acronym> script.
+			in the <acronym>SQL</acronym> script.
+			You can also find the complete database documentation on the
+			project webpage, &openserdbdocs;.
 			</para>
-			<example>
-			<title>CPL-C sql script</title>
-			<programlisting format="linespecific">
-...
-&cplsql;
-...
-</programlisting>
-			</example>
 		</section>
 	</section>
 </chapter>

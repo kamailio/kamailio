@@ -312,33 +312,17 @@ sip_trace();
 	</section>
 	
 	<section>
-	<title>sip_trace table definition</title>
-	<para>
-	Next is presented the definition of sip_trace table
-	</para>
-		<example>
-		<title>sip_trace sql</title>
-		<programlisting format="linespecific">
-CREATE TABLE `sip_trace` (
-  `id` int(10) NOT NULL auto_increment,
-  `date` datetime NOT NULL default '0000-00-00 00:00:00',
-  `callid` varchar(254) NOT NULL default '',
-  `traced_user` varchar(128) NOT NULL default '',
-  `msg` text NOT NULL,
-  `method` varchar(50) NOT NULL default '',
-  `status` varchar(254) NOT NULL default '',
-  `fromip` varchar(50) NOT NULL default '',
-  `toip` varchar(50) NOT NULL default '',
-  `fromtag` varchar(64) NOT NULL default '',
-  `direction` varchar(4) NOT NULL default '',
-  INDEX user_idx (traced_user),
-  INDEX date_id (date),
-  INDEX ip_idx (fromip),
-  KEY `call_id` (`callid`),
-  PRIMARY KEY  (`id`)
-);
-</programlisting>
-		</example>
+		<title>Database setup</title>
+		<para>
+			Before running &ser; with siptrace, you have to setup the database 
+			tables where the module will store the data. For that, if the 
+			table were not created by the installation script or you choose
+			to install everything by yourself you can use the siptrace-create.sql
+			<acronym>SQL</acronym> script in the database directories in the 
+			openser/scripts folder as template. 
+			You can also find the complete database documentation on the
+			project webpage, &openserdbdocs;.
+		</para>
 	</section>
 
 	<section>

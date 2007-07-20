@@ -79,7 +79,6 @@ Bogdan-Andrei Iancu
    1-17. cpl_run_script usage
    1-18. cpl_process_register usage
    1-19. cpl_process_register_norpl usage
-   1-20. CPL-C sql script
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -532,26 +531,12 @@ if (method=="REGISTER") {
    database table where the module will store the CPL scripts.
    For that, if the table was not created by the installation
    script or you choose to install everything by yourself you can
-   use the following SQL script (good for MySQL) as template.
-   Database and table name can be set with module parameters so
-   they can be changed, but the name of the columns must be as
-   they are in the next SQL script.
-
-   Example 1-20. CPL-C sql script
-...
-USE openser;
-
-CREATE TABLE `cpl` (
-  `id` int(10) NOT NULL auto_increment,
-  `username` varchar(64) NOT NULL,
-  `domain` varchar(64) NOT NULL default '',
-  `cpl_xml` blob,
-  `cpl_bin` blob,
-  UNIQUE KEY ud_cpl (`username`,`domain`),
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM;
-
-...
+   use the cpc-create.sql SQL script in the database directories
+   in the openser/scripts folder as template. Database and table
+   name can be set with module parameters so they can be changed,
+   but the name of the columns must be as they are in the SQL
+   script. You can also find the complete database documentation
+   on the project webpage, http://openser.org/docs/TODO.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

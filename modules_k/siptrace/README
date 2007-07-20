@@ -40,7 +40,7 @@ Daniel-Constantin Mierla
 
               1.5.1. sip_trace
 
-        1.6. sip_trace table definition
+        1.6. Database setup
         1.7. Known issues
 
    2. Developer's Guide
@@ -56,7 +56,6 @@ Daniel-Constantin Mierla
    1-7. Set duplicate_uri parameter
    1-8. Set trace_local_ip parameter
    1-9. sip_trace() usage
-   1-10. sip_trace sql
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -249,29 +248,16 @@ sip_trace();
                 _empty_line_
      _________________________________________________________
 
-1.6. sip_trace table definition
+1.6. Database setup
 
-   Next is presented the definition of sip_trace table
-
-   Example 1-10. sip_trace sql
-CREATE TABLE `sip_trace` (
-  `id` int(10) NOT NULL auto_increment,
-  `date` datetime NOT NULL default '0000-00-00 00:00:00',
-  `callid` varchar(254) NOT NULL default '',
-  `traced_user` varchar(128) NOT NULL default '',
-  `msg` text NOT NULL,
-  `method` varchar(50) NOT NULL default '',
-  `status` varchar(254) NOT NULL default '',
-  `fromip` varchar(50) NOT NULL default '',
-  `toip` varchar(50) NOT NULL default '',
-  `fromtag` varchar(64) NOT NULL default '',
-  `direction` varchar(4) NOT NULL default '',
-  INDEX user_idx (traced_user),
-  INDEX date_id (date),
-  INDEX ip_idx (fromip),
-  KEY `call_id` (`callid`),
-  PRIMARY KEY  (`id`)
-);
+   Before running OpenSER with siptrace, you have to setup the
+   database tables where the module will store the data. For
+   that, if the table were not created by the installation script
+   or you choose to install everything by yourself you can use
+   the siptrace-create.sql SQL script in the database directories
+   in the openser/scripts folder as template. You can also find
+   the complete database documentation on the project webpage,
+   http://openser.org/docs/TODO.
      _________________________________________________________
 
 1.7. Known issues

@@ -346,17 +346,15 @@ if(is_method("MESSAGE)
 	<section>
 	<title>Installation</title>
 		<para>
-		Before running IMC you have to create two new tables in database.
-		Use the next SQL statements for that.
+		Before running &ser; with IMC, you have to setup the database 
+		tables where the module will store the data. For that, if the 
+		tables were not created by the installation script or you choose
+		to install everything by yourself you can use the imc-create.sql
+		<acronym>SQL</acronym> script in the database directories in the 
+		openser/scripts folder as template. 
+		You can also find the complete database documentation on the
+		project webpage, &openserdbdocs;.
 		</para>
-		<example>
-		<title>IMC tables</title>
-		<programlisting format="linespecific">
-...
-&sql;
-...
-</programlisting>
-		</example>
 	</section>
 
 </chapter>

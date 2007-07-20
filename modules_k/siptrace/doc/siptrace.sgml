@@ -6,7 +6,6 @@
 <!ENTITY faq SYSTEM "siptrace_faq.sgml">
 
 <!ENTITY siptracecfg SYSTEM "siptrace.cfg">
-<!ENTITY siptracesql SYSTEM "siptrace.sql">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
