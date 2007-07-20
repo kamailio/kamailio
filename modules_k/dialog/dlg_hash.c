@@ -458,7 +458,8 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 				case DLG_STATE_UNCONFIRMED:
 				case DLG_STATE_EARLY:
 					dlg->state = DLG_STATE_DELETED;
-					unref_dlg_unsafe(dlg,2,d_entry);
+					unref_dlg_unsafe(dlg,1,d_entry);
+					*unref = 1;
 					break;
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:

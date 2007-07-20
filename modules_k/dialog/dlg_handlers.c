@@ -327,7 +327,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
-	if ( event==DLG_EVENT_RPL3xx && new_state==DLG_STATE_DELETED ) {
+	if ( old_state!=DLG_STATE_DELETED && new_state==DLG_STATE_DELETED ) {
 		DBG("DEBUG:dialog:dlg_onreply: dialog %p failed (negative reply)\n",
 			dlg);
 		/* dialog setup not completed (3456XX) */
