@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <linux/types.h>
 #include "../../ip_addr.h"
 #include "../../str.h"
 #include "../../dprint.h"
