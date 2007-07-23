@@ -78,7 +78,7 @@
 
 
 
-inline struct via_body* via_body_cloner( char* new_buf,
+inline static struct via_body* via_body_cloner( char* new_buf,
 					char *org_buf, struct via_body *param_org_via, char **p)
 {
 	struct via_body *new_via;
@@ -147,6 +147,9 @@ inline struct via_body* via_body_cloner( char* new_buf,
 							break;
 					case PARAM_ALIAS:
 							new_via->alias = new_vp;
+							break;
+					case PARAM_MADDR:
+							new_via->maddr = new_vp;
 							break;
 				}
 
