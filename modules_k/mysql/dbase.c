@@ -680,8 +680,7 @@ int db_last_inserted_id(db_con_t* _h)
 	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
-
-	ret = db_print_values(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _v, _n);
+	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
@@ -691,7 +690,7 @@ int db_last_inserted_id(db_con_t* _h)
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
 	
-	ret = db_print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
+	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n, val2str);
 	if (ret < 0) return -1;
 	off += ret;
 	
