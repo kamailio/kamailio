@@ -312,7 +312,7 @@ if(is_method("MESSAGE)
    use the imc-create.sql SQL script in the database directories
    in the openser/scripts folder as template. You can also find
    the complete database documentation on the project webpage,
-   http://openser.org/docs/TODO.
+   http://www.openser.org/docs/db-tables/openser-db-devel.html.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

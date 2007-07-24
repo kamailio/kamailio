@@ -536,7 +536,8 @@ if (method=="REGISTER") {
    name can be set with module parameters so they can be changed,
    but the name of the columns must be as they are in the SQL
    script. You can also find the complete database documentation
-   on the project webpage, http://openser.org/docs/TODO.
+   on the project webpage,
+   http://www.openser.org/docs/db-tables/openser-db-devel.html.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

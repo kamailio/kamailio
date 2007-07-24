@@ -199,7 +199,7 @@ modparam("pua", "update_period", 100)
 	syntax to create it can be found in presence_xml-create.sql     
 	script in the database directories in the openser/scripts folder.
 	You can also find the complete database documentation on the
-	project webpage, &openserdbdocs;.
+	project webpage, &openserdbdocslink;.
 	</para>
 </section>
 

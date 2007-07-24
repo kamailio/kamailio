@@ -353,7 +353,7 @@ if(is_method("MESSAGE)
 		<acronym>SQL</acronym> script in the database directories in the 
 		openser/scripts folder as template. 
 		You can also find the complete database documentation on the
-		project webpage, &openserdbdocs;.
+		project webpage, &openserdbdocslink;.
 		</para>
 	</section>
 

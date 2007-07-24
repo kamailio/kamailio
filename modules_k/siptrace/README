@@ -257,7 +257,7 @@ sip_trace();
    the siptrace-create.sql SQL script in the database directories
    in the openser/scripts folder as template. You can also find
    the complete database documentation on the project webpage,
-   http://openser.org/docs/TODO.
+   http://www.openser.org/docs/db-tables/openser-db-devel.html.
      _________________________________________________________
 
 1.7. Known issues

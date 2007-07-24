@@ -693,7 +693,7 @@ if (method=="REGISTER") {
 			can be changed, but the name of the columns must be as they are 
 			in the <acronym>SQL</acronym> script.
 			You can also find the complete database documentation on the
-			project webpage, &openserdbdocs;.
+			project webpage, &openserdbdocslink;.
 			</para>
 		</section>
 	</section>
