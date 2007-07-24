@@ -24,7 +24,6 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "db_utils.h"
 #include <string.h>
 #include <time.h>
 

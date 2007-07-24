@@ -38,7 +38,6 @@
 #include "../../db/db_ut.h"
 #include "../../dprint.h"
 #include "defs.h"
-#include "db_utils.h"
 #include "pg_con.h"
 
 #include "../../mem/mem.h"

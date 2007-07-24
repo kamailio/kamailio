@@ -71,7 +71,6 @@
 #include "../../mem/mem.h"
 #include "../../db/db.h"
 #include "../../db/db_ut.h"
-#include "db_utils.h"
 #include "defs.h"
 #include "dbase.h"
 #include "pg_con.h"
