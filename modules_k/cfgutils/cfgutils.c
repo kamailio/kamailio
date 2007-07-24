@@ -240,7 +240,8 @@ static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 	}
 }
 
-static int it_get_random_val(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+static int it_get_random_val(struct sip_msg *msg, xl_value_t *res, 
+											xl_param_t *param, int flags)
 {
 	int n;
 	int l = 0;
@@ -263,21 +264,21 @@ static int it_get_random_val(struct sip_msg *msg, xl_value_t *res, xl_param_t *p
 
 static int m_sleep(struct sip_msg *msg, char *time, char *str2)
 {
-	LM_DBG("sleep %d seconds\n", time);
-	sleep((int)time);
+	LM_DBG("sleep %lu seconds\n", (unsigned long)time);
+	sleep((unsigned int)(unsigned long)time);
 	return 1;
 }
 
 static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 {
-	LM_DBG("sleep %d microseconds\n", time);
-	sleep_us((int)time);
+	LM_DBG("sleep %lu microseconds\n", (unsigned long)time);
+	sleep_us((unsigned int)(unsigned long)time);
 	return 1;
 }
 
 static int mod_init(void)
 {
-	// rand is seeded from urandom, so use this as seed for the rand48 PRNG
+	/* rand is seeded from urandom, so use this as seed for the rand48 PRNG */
 	srand48(rand());
 	probability=(int *) shm_malloc(sizeof(int));
 	if (!probability) {
