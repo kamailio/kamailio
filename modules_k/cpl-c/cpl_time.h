@@ -74,7 +74,6 @@ typedef struct _ac_tm
 
 ac_tm_p ac_tm_new();
 
-int ac_tm_set(ac_tm_p, struct tm*);
 int ac_tm_set_time(ac_tm_p, time_t);
 
 int ac_tm_reset(ac_tm_p);
