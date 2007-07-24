@@ -1,5 +1,5 @@
 /*
- * $Id: gflags.c,v 1.1.1.1 2005/06/13 16:47:38 bogdan_iancu Exp $
+ * $Id$
  *
  * Copyright (C) 2007 1und1 Internet AG
  * Copyright (C) 2007 BASIS AudioNet GmbH

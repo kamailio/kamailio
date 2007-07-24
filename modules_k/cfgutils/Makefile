@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.1 2005/06/13 16:47:38 bogdan_iancu Exp $
+# $Id$
 #
 # cfgutils module makefile
 #
