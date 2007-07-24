@@ -188,7 +188,7 @@ inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo, char *_bar
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
-inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
+inline static int t_check_status(struct sip_msg* msg, char *match, char *foo);
 static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo);
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
 static int w_t_set_retr(struct sip_msg* msg, char* retr_t1, char* retr_t2);
@@ -211,6 +211,7 @@ static rpc_export_t tm_rpc[];
 static int default_code = 500;
 static str default_reason = STR_STATIC_INIT("Server Internal Error");
 
+static int fixup_t_check_status(void** param, int param_no);
 
 static cmd_export_t cmds[]={
 	{"t_newtran",          w_t_newtran,             0, 0,
@@ -277,7 +278,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_on_branch",       w_t_on_branch,         1, fixup_on_branch,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_check_status",     t_check_status,          1, fixup_regex_1,
+	{"t_check_status",     t_check_status,          1, fixup_t_check_status,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_write_req",       t_write_req,              2, fixup_t_write,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -499,6 +500,20 @@ static int fixup_proto_hostport2proxy(void** param, int param_no) {
 }
 
 
+static int fixup_t_check_status(void** param, int param_no)
+{
+	int ret;
+
+	ret = fix_param(FPARAM_AVP, param);
+	if (ret <= 0) return ret;
+
+	ret = fix_param(FPARAM_SELECT, param);
+	if (ret <= 0) return ret;
+
+	return fix_param(FPARAM_REGEX, param);
+}
+
+
 /***************************** init functions *****************************/
 static int w_t_unref( struct sip_msg *foo, void *bar)
 {
@@ -640,52 +655,95 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 {
 	regmatch_t pmatch;
 	struct cell *t;
-	char *status;
+	char *status, *s = NULL;
 	char backup;
-	int lowest_status;
-	int n;
-
+	int lowest_status, n;
+	fparam_t* fp;
+	regex_t* re = NULL;
+	str tmp;
+	
 	/* first get the transaction */
-	if (t_check( msg , 0 )==-1) return -1;
-	if ( (t=get_t())==0) {
+	if (t_check(msg, 0 ) == -1) return -1;
+	if ((t = get_t()) == 0) {
 		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
 			"which has no T-state established\n");
-		return -1;
+		goto error;
 	}
 	backup = 0;
+	
+	fp = (fparam_t*)p1;
+	
+	switch(fp->type) {
+	case FPARAM_REGEX:
+		re = fp->v.regex;
+		break;
+		
+	default:
+		/* AVP or select, get the value and compile the regex */
+		if (get_str_fparam(&tmp, msg, fp) < 0) goto error;
+		s = pkg_malloc(tmp.len + 1);
+		if (s == NULL) {
+			ERR("Out of memory\n");
+			goto error;
+		}
+		memcpy(s, tmp.s, tmp.len);
+		s[tmp.len] = '\0';
+		
+		if ((re = pkg_malloc(sizeof(regex_t))) == 0) {
+			ERR("No memory left\n");
+			goto error;
+		}
+		
+		if (regcomp(re, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+			ERR("Bad regular expression '%s'\n", s);
+			goto error;
+		}
+		break;
+	}
+	
+	switch(rmode) {
+	case MODE_REQUEST:
+		/* use the status of the last sent reply */
+		status = int2str( t->uas.status, 0);
+		break;
+		
+	case MODE_ONREPLY:
+		/* use the status of the current reply */
+		status = msg->first_line.u.reply.status.s;
+		backup = status[msg->first_line.u.reply.status.len];
+		status[msg->first_line.u.reply.status.len] = 0;
+		break;
 
-	switch (rmode) {
-		case MODE_REQUEST:
-			/* use the status of the last sent reply */
-			status = int2str( t->uas.status, 0);
-			break;
-		case MODE_ONREPLY:
-			/* use the status of the current reply */
-			status = msg->first_line.u.reply.status.s;
-			backup = status[msg->first_line.u.reply.status.len];
-			status[msg->first_line.u.reply.status.len] = 0;
-			break;
-		case MODE_ONFAILURE:
-			/* use the status of the winning reply */
-			if (t_pick_branch( -1, 0, t, &lowest_status)<0 ) {
-				LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
-					" a final response in MODE_ONFAILURE\n");
-				return -1;
-			}
-			status = int2str( lowest_status , 0);
-			break;
-		default:
-			LOG(L_ERR,"ERROR:t_check_status: unsupported mode %d\n",rmode);
-			return -1;
+	case MODE_ONFAILURE:
+		/* use the status of the winning reply */
+		if (t_pick_branch( -1, 0, t, &lowest_status)<0 ) {
+			LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
+				" a final response in MODE_ONFAILURE\n");
+			goto error;
+		}
+		status = int2str( lowest_status , 0);
+		break;
+
+	default:
+		LOG(L_ERR,"ERROR:t_check_status: unsupported mode %d\n",rmode);
+		goto error;
 	}
 
 	DBG("DEBUG:t_check_status: checked status is <%s>\n",status);
 	/* do the checking */
-	n = regexec(((fparam_t*)p1)->v.regex, status, 1, &pmatch, 0);
+	n = regexec(re, status, 1, &pmatch, 0);
 
 	if (backup) status[msg->first_line.u.reply.status.len] = backup;
+	if (s) pkg_free(s);
+	if ((fp->type != FPARAM_REGEX) && re) pkg_free(re);
+
 	if (n!=0) return -1;
 	return 1;
+
+ error:
+	if (s) pkg_free(s);
+	if ((fp->type != FPARAM_REGEX) && re) pkg_free(re);
+	return -1;
 }
 
 
