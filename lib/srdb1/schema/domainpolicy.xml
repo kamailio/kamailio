@@ -65,6 +65,7 @@
     </column>
 
     <index>
+        <name>rav_idx</name>
         <colref linkend="rule"/>
         <colref linkend="att"/>
         <colref linkend="val"/>

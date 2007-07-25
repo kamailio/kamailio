@@ -55,6 +55,7 @@
     </column>
 
     <index>
+        <name>sw_sm_idx</name>
         <colref linkend="id"/>
         <colref linkend="param"/>
         <primary/>
