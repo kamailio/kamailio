@@ -1,0 +1,1 @@
+id(int,auto) username(str) domain(str) event(str) etag(str) expires(int) received_time(int) body(str) 

@@ -1,0 +1,1 @@
+id(int,auto) p_user(str) p_domain(str) w_user(str) w_domain(str) subs_status(str) reason(str,null) inserted_time(int) 

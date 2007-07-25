@@ -1,0 +1,1 @@
+id(int,auto) method(str) from_tag(str) to_tag(str) callid(str) sip_code(str) sip_reason(str) time(int) 
