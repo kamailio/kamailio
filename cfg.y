@@ -108,6 +108,7 @@
 #include "dset.h"
 #include "select.h"
 #include "flags.h"
+#include "tcp_init.h"
 
 #include "config.h"
 #ifdef CORE_TLS
@@ -746,9 +747,8 @@ assign_stm:
 	| TCP_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
 	| TCP_SOURCE_IPV4 EQUAL ipv4 {
 		#ifdef USE_TCP
-			tcp_use_source_ipv4 = 1;
-			tcp_source_ipv4 = (struct sockaddr_in) {.sin_family = AF_INET, .sin_port = 0};
-			memcpy(&tcp_source_ipv4.sin_addr, &($3)->u.addr, 4);
+			if (tcp_set_src_addr($3)<0)
+				warn("tcp_source_ipv4 failed");
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -758,9 +758,8 @@ assign_stm:
 	| TCP_SOURCE_IPV6 EQUAL ipv6 {
 		#ifdef USE_TCP
 			#ifdef USE_IPV6
-				tcp_use_source_ipv6 = 1;
-				tcp_source_ipv6 = (struct sockaddr_in6) {.sin6_family = AF_INET6, .sin6_port = 0};
-				memcpy(&tcp_source_ipv6.sin6_addr, &($3)->u.addr, 16);
+				if (tcp_set_src_addr($3)<0)
+					warn("tcp_source_ipv6 failed");
 			#else
 				warn("IPv6 support not compiled in");
 			#endif

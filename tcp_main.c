@@ -73,6 +73,8 @@
  *               (andrei)
  *  2006-11-04  switched to raw ticks (to fix conversion errors which could
  *               result in inf. lifetime) (andrei)
+ *  2007-07-25  tcpconn_connect can now bind the socket on a specified
+ *                source addr/port (andrei)
  */
 
 
@@ -155,7 +157,7 @@
 #endif
 
 /* maximum accepted lifetime (maximum possible is  ~ MAXINT/2) */
-#define MAX_TCP_CON_LIFETIME	(1U<<(sizeof(ticks_t)*8-1))
+#define MAX_TCP_CON_LIFETIME	((1U<<(sizeof(ticks_t)*8-1))-1)
 /* minimum interval tcpconn_timeout() is allowed to run, in ticks */
 #define TCPCONN_TIMEOUT_MIN_RUN S_TO_TICKS(1)  /* once per s */
 
@@ -172,11 +174,11 @@ enum poll_types tcp_poll_method=0; /* by default choose the best method */
 int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
 int tcp_main_max_fd_no=0;
 
-int tcp_use_source_ipv4 = 0;
-struct sockaddr_in tcp_source_ipv4;
+static union sockaddr_union tcp_source_ipv4_addr; /* saved bind/srv v4 addr. */
+static union sockaddr_union* tcp_source_ipv4=0;
 #ifdef USE_IPV6
-int tcp_use_source_ipv6 = 0;
-struct sockaddr_in6 tcp_source_ipv6;
+static union sockaddr_union tcp_source_ipv6_addr; /* saved bind/src v6 addr. */
+static union sockaddr_union* tcp_source_ipv6=0;
 #endif
 
 static int* tcp_connections_no=0; /* current open connections */
@@ -197,6 +199,31 @@ static int tcp_proto_no=-1; /* tcp protocol number as returned by
 							   getprotobyname */
 
 static io_wait_h io_h;
+
+
+
+/* sets source address used when opening new sockets and no source is specified
+ *  (by default the address is choosen by the kernel)
+ * Should be used only on init.
+ * returns -1 on error */
+int tcp_set_src_addr(struct ip_addr* ip)
+{
+	switch (ip->af){
+		case AF_INET:
+			ip_addr2su(&tcp_source_ipv4_addr, ip, 0);
+			tcp_source_ipv4=&tcp_source_ipv4_addr;
+			break;
+		#ifdef USE_IPV6
+		case AF_INET6:
+			ip_addr2su(&tcp_source_ipv6_addr, ip, 0);
+			tcp_source_ipv6=&tcp_source_ipv6_addr;
+			break;
+		#endif
+		default:
+			return -1;
+	}
+	return 0;
+}
 
 
 
@@ -415,6 +442,7 @@ end:
 
 
 struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
+									union sockaddr_union* local_addr,
 									struct socket_info* ba, int type, 
 									int state)
 {
@@ -439,7 +467,10 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	su2ip_addr(&c->rcv.src_ip, su);
 	c->rcv.src_port=su_getport(su);
 	c->rcv.bind_address=ba;
-	if (ba){
+	if (likely(local_addr)){
+		su2ip_addr(&c->rcv.dst_ip, local_addr);
+		c->rcv.dst_port=su_getport(local_addr);
+	}else if (ba){
 		c->rcv.dst_ip=ba->address;
 		c->rcv.dst_port=ba->port_no;
 	}
@@ -472,7 +503,9 @@ error:
 
 
 
-struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
+struct tcp_connection* tcpconn_connect( union sockaddr_union* server, 
+										union sockaddr_union* from,
+										int type)
 {
 	int s;
 	struct socket_info* si;
@@ -480,8 +513,6 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 	socklen_t my_name_len;
 	struct tcp_connection* con;
 	struct ip_addr ip;
-	int do_bind = 0;
-	struct sockaddr *bind_addr;
 
 	s=-1;
 	
@@ -501,61 +532,47 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 		LOG(L_ERR, "ERROR: tcpconn_connect: init_sock_opt failed\n");
 		goto error;
 	}
-
-	switch (server->s.sa_family) {
-		case AF_INET: {
-			if (tcp_use_source_ipv4) {
-				my_name_len = sizeof(tcp_source_ipv4);
-				bind_addr = (struct sockaddr *) &tcp_source_ipv4;
-				do_bind = 1;
-			}
-			break;
-		}
-#ifdef USE_IPV6
-		case AF_INET6: {
-			if (tcp_use_source_ipv6) {
-				my_name_len = sizeof(tcp_source_ipv6);
-				bind_addr = (struct sockaddr *) &tcp_source_ipv6;
-				do_bind = 1;
-			}
-			break;
-		}
-#endif
-		default: {
-			/* do nothing special */
-			break;
-		}
-	}
-	if (do_bind && bind(s, bind_addr, my_name_len) != 0)
-		LOG(L_WARN, "WARNING: tcpconn_connect: binding to source address failed: %s\n", strerror(errno));
+	
+	if (from && bind(s, &from->s, sockaddru_len(*from)) != 0)
+		LOG(L_WARN, "WARNING: tcpconn_connect: binding to source address"
+					" failed: %s [%d]\n", strerror(errno), errno);
 
 	if (tcp_blocking_connect(s, &server->s, sockaddru_len(*server))<0){
 		LOG(L_ERR, "ERROR: tcpconn_connect: tcp_blocking_connect failed\n");
 		goto error;
+	}
+	if (from){
+		su2ip_addr(&ip, from);
+		if (!ip_addr_any(&ip))
+			/* we already know the source ip, skip the sys. call */
+			goto find_socket;
 	}
 	my_name_len=sizeof(my_name);
 	if (getsockname(s, &my_name.s, &my_name_len)!=0){
 		LOG(L_ERR, "ERROR: tcp_connect: getsockname failed: %s(%d)\n",
 				strerror(errno), errno);
 		si=0; /* try to go on */
+		goto skip;
 	}
+	from=&my_name; /* update from with the real "from" address */
 	su2ip_addr(&ip, &my_name);
+find_socket:
 #ifdef USE_TLS
 	if (type==PROTO_TLS)
 		si=find_si(&ip, 0, PROTO_TLS);
 	else
 #endif
 		si=find_si(&ip, 0, PROTO_TCP);
-
+skip:
 	if (si==0){
-		LOG(L_ERR, "ERROR: tcp_connect: could not find corresponding"
+		LOG(L_WARN, "WARNING: tcp_connect: could not find corresponding"
 				" listening socket, using default...\n");
 		if (server->s.sa_family==AF_INET) si=sendipv4_tcp;
 #ifdef USE_IPV6
 		else si=sendipv6_tcp;
 #endif
 	}
-	con=tcpconn_new(s, server, si, type, S_CONN_CONNECT);
+	con=tcpconn_new(s, server, from, si,  type, S_CONN_CONNECT);
 	if (con==0){
 		LOG(L_ERR, "ERROR: tcp_connect: tcpconn_new failed, closing the "
 				 " socket\n");
@@ -766,6 +783,7 @@ int tcp_send(struct dest_info* dst, char* buf, unsigned len)
 	int fd;
 	long response[2];
 	int n;
+	union sockaddr_union* from;
 	
 	port=su_getport(&dst->to);
 	if (port){
@@ -795,7 +813,22 @@ no_id:
 		if (c==0){
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
-			if ((c=tcpconn_connect(&dst->to, dst->proto))==0){
+				from=0;
+				/* check to see if we have to use a specific source addr. */
+				switch (dst->to.s.sa_family) {
+					case AF_INET:
+							from = tcp_source_ipv4;
+						break;
+#ifdef USE_IPV6
+					case AF_INET6:
+							from = tcp_source_ipv6;
+						break;
+#endif
+					default:
+						/* error, bad af, ignore ... */
+						break;
+				}
+			if ((c=tcpconn_connect(&dst->to, from, dst->proto))==0){
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;
 			}
@@ -1503,7 +1536,7 @@ static inline int handle_new_connect(struct socket_info* si)
 	(*tcp_connections_no)++;
 	
 	/* add socket to list */
-	tcpconn=tcpconn_new(new_sock, &su, si, si->proto, S_CONN_ACCEPT);
+	tcpconn=tcpconn_new(new_sock, &su, &si->su, si, si->proto, S_CONN_ACCEPT);
 	if (tcpconn){
 #ifdef TCP_PASS_NEW_CONNECTION_ON_DATA
 		io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
