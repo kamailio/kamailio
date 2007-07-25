@@ -41,7 +41,7 @@
 #include "../../socket_info.h"
 
 #include "../../resolve.h"
-#include "regexp.h"
+#include "../../regexp.h"
 
 #define IS_D2PNAPTR(naptr) ((naptr->services_len >= 7) && (!strncasecmp("D2P+SIP", naptr->services, 7)))
 
