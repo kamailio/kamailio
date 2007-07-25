@@ -103,7 +103,7 @@ dbtext:
 			cp /tmp/openser-dbtext.tmp "$$FILE" ; \
 		fi ; \
 	done ; \
-	rm /tmp/openser-dbtext.tmp
+	rm -f /tmp/openser-dbtext.tmp
 
 dbtext_clean:
 	-@rm -f $(ROOT)/scripts/dbtext/openser_db/*
