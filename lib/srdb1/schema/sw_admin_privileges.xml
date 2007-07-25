@@ -48,6 +48,7 @@
     </column>
 
     <index>
+        <name>sw_ap_idx</name>
         <colref linkend="username"/>
         <colref linkend="priv_name"/>
         <colref linkend="priv_value"/>

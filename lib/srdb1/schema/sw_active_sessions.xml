@@ -47,6 +47,7 @@
     </column>
 
     <index>
+        <name>sw_as_idx</name>
         <colref linkend="name"/>
         <colref linkend="sid"/>
         <primary/>
