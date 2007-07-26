@@ -155,7 +155,7 @@
 #endif
 
 /* maximum accepted lifetime (maximum possible is  ~ MAXINT/2) */
-#define MAX_TCP_CON_LIFETIME	(1U<<(sizeof(ticks_t)*8-1))
+#define MAX_TCP_CON_LIFETIME	((1U<<(sizeof(ticks_t)*8-1))-1)
 /* minimum interval tcpconn_timeout() is allowed to run, in ticks */
 #define TCPCONN_TIMEOUT_MIN_RUN S_TO_TICKS(1)  /* once per s */
 
