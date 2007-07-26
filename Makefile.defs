@@ -60,6 +60,7 @@
 #  2007-05-26  changed darwin module link flags (instead of -bundle_loader ser
 #               -flat_namespace -undefined suppress) (andrei)
 #  2007-07-07  added HAVE_SCHED_SETSCHEDULER for linux (andrei)
+#  2007-07-18  added DNS_WATCHDOG_SUPPORT (Miklos)
 
 # check if already included/exported
 
@@ -403,6 +404,11 @@ endif
 #         unsafe)
 # -DUSE_NAPTR
 #		 turns on naptr support (but must be also enabled from the config)
+# -DDNS_WATCHDOG_SUPPORT
+#		turns on DNS watchdog support which can be used to inform the
+#		core that the DNS servers are down. No DNS query is performed
+#		when the servers are unreachable, and even expired resource
+#		records are used from the cache. (requires external watchdog)
 
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
@@ -423,6 +429,7 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DUSE_NAPTR \
+	 #-DDNS_WATCHDOG_SUPPORT \
 	 #-DLL_MALLOC \
 	 #-DSF_MALLOC \
 	 #-DDL_MALLOC \

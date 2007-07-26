@@ -33,6 +33,8 @@
  *  2007-06-14  dns iterate through A & AAAA records fix (andrei)
  *  2007-06-15  srv rr weight based load balancing support (andrei)
  *  2007-06-16  naptr support (andrei)
+ *  2008-07-18  DNS watchdog support -- can be used to inform the core
+ *              that the DNS servers are down (Miklos)
  */
 
 #ifdef USE_DNS_CACHE
@@ -111,6 +113,10 @@ static struct dns_hash_head* dns_hash=0;
 
 
 static struct timer_ln* dns_timer_h=0;
+
+#ifdef DNS_WATCHDOG_SUPPORT
+static atomic_t *dns_servers_up = NULL;
+#endif
 
 
 
@@ -192,6 +198,11 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only);
 
 static ticks_t dns_timer(ticks_t ticks, struct timer_ln* tl, void* data)
 {
+#ifdef DNS_WATCHDOG_SUPPORT
+	/* do not clean the hash table if the servers are down */
+	if (atomic_get(dns_servers_up) == 0)
+		return (ticks_t)(-1);
+#endif
 	if (*dns_cache_mem_used>12*(dns_cache_max_mem/16)){ /* ~ 75% used */
 		dns_cache_free_mem(dns_cache_max_mem/2, 1); 
 	}else{
@@ -210,6 +221,12 @@ void destroy_dns_cache()
 		timer_free(dns_timer_h);
 		dns_timer_h=0;
 	}
+#ifdef DNS_WATCHDOG_SUPPORT
+	if (dns_servers_up){
+		shm_free(dns_servers_up);
+		dns_servers_up=0;
+	}
+#endif
 	if (dns_hash_lock){
 		lock_destroy(dns_hash_lock);
 		lock_dealloc(dns_hash_lock);
@@ -277,6 +294,15 @@ int init_dns_cache()
 		ret=-1;
 		goto error;
 	}
+
+#ifdef DNS_WATCHDOG_SUPPORT
+	dns_servers_up=shm_malloc(sizeof(atomic_t));
+	if (dns_servers_up==0){
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+	atomic_set(dns_servers_up, 1);
+#endif
 	
 	/* fix options */
 	dns_cache_max_mem<<=10; /* Kb */ /* TODO: test with 0 */
@@ -413,6 +439,11 @@ inline static struct dns_hash_entry* _dns_hash_find(str* name, int type,
 	ticks_t now;
 	int cname_chain;
 	str cname;
+#ifdef DNS_WATCHDOG_SUPPORT
+	int servers_up;
+
+	servers_up = atomic_get(dns_servers_up);
+#endif
 	
 	cname_chain=0;
 	ret=0;
@@ -425,8 +456,14 @@ again:
 												name->len, type, *h);
 #endif
 	clist_foreach_safe(&dns_hash[*h], e, tmp, next){
-		/* automatically remove expired elements */
-		if ((s_ticks_t)(now-e->expire)>=0){
+		if (
+#ifdef DNS_WATCHDOG_SUPPORT
+			/* remove expired elements only when the dns servers are up */
+			servers_up &&
+#endif
+			/* automatically remove expired elements */
+			((s_ticks_t)(now-e->expire)>=0)
+		) {
 				_dns_hash_remove(e);
 		}else if ((e->type==type) && (e->name_len==name->len) &&
 			(strncasecmp(e->name, name->s, e->name_len)==0)){
@@ -1476,6 +1513,10 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 				goto end;/* we do not cache obvious stuff */
 		}
 	}
+#ifdef DNS_WATCHDOG_SUPPORT
+	if (atomic_get(dns_servers_up)==0)
+		goto end; /* the servers are down, needless to perform the query */
+#endif
 	if (name->len>=MAX_DNS_NAME){
 		LOG(L_ERR, "ERROR: dns_cache_do_request: name too long (%d chars)\n",
 					name->len);
@@ -1660,11 +1701,22 @@ inline static struct dns_rr* dns_entry_get_rr(	struct dns_hash_entry* e,
 	struct dns_rr* rr;
 	int n;
 	int flags;
+#ifdef DNS_WATCHDOG_SUPPORT
+	int servers_up;
+
+	servers_up = atomic_get(dns_servers_up);
+#endif
 	
 	flags=0;
 	for(rr=e->rr_lst, n=0;rr && (n<*no);rr=rr->next, n++);/* skip *no records*/
 	for(;rr;rr=rr->next){
-		if ((s_ticks_t)(now-e->expire)>=0) /* expired entry */
+		if (
+#ifdef DNS_WATCHDOG_SUPPORT
+			/* check the expiration time only when the servers are up */
+			servers_up &&
+#endif
+			((s_ticks_t)(now-rr->expire)>=0) /* expired rr */
+		)
 			continue;
 		if (rr->err_flags){ /* bad rr */
 			continue;
@@ -1741,6 +1793,11 @@ inline static struct dns_rr* dns_srv_get_nxt_rr(struct dns_hash_entry* e,
 			unsigned r_sum;
 			struct dns_rr* rr;
 			}r_sums[MAX_SRV_GRP_IDX];
+#ifdef DNS_WATCHDOG_SUPPORT
+	int servers_up;
+
+	servers_up = atomic_get(dns_servers_up);
+#endif
 	
 	rand_w=0;
 	for(rr=e->rr_lst, n=0;rr && (n<*no);rr=rr->next, n++);/* skip *no records*/
@@ -1755,7 +1812,12 @@ retry:
 	found=0;
 	for (idx=0;rr && (prio==((struct srv_rdata*)rr->rdata)->priority) &&
 						(idx < MAX_SRV_GRP_IDX); idx++, rr=rr->next){
-		if ( ((s_ticks_t)(now-rr->expire)>=0) /* expired entry */ ||
+		if ((
+#ifdef DNS_WATCHDOG_SUPPORT
+			/* check the expiration time only when the servers are up */
+			servers_up &&
+#endif
+			((s_ticks_t)(now-rr->expire)>=0) /* expired entry */) ||
 				(rr->err_flags) /* bad rr */ ||
 				(srv_marked(tried, idx)) ) /* already tried */{
 			r_sums[idx].r_sum=0; /* 0 sum, to skip over it */
@@ -2939,6 +3001,16 @@ int dns_srv_get_ip(str* name, struct ip_addr* ip, unsigned short* port,
 }
 
 
+#ifdef DNS_WATCHDOG_SUPPORT
+/* sets the state of the DNS servers:
+ * 1: at least one server is up
+ * 0: all the servers are down
+ */
+void dns_set_server_state(int state)
+{
+	atomic_set(dns_servers_up, state);
+}
+#endif /* DNS_WATCHDOG_SUPPORT */
 
 /* rpc functions */
 void dns_cache_mem_info(rpc_t* rpc, void* ctx)
@@ -3026,5 +3098,16 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 	UNLOCK_DNS_HASH();
 }
 
+#ifdef DNS_WATCHDOG_SUPPORT
+/* sets the DNS server states */
+void dns_set_server_state_rpc(rpc_t* rpc, void* ctx)
+{
+	int	state;
+
+	if (rpc->scan(ctx, "d", &state) < 1)
+		return;
+	dns_set_server_state(state);
+}
+#endif /* DNS_WATCHDOG_SUPPORT */
 
 #endif

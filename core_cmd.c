@@ -57,7 +57,17 @@ static const char* dns_cache_debug_all_doc[] = {
 	"complete dns debug  dump",    /* Documentation string */
 	0                              /* Method signature(s) */
 };
-#endif
+
+#ifdef DNS_WATCHDOG_SUPPORT
+void dns_set_server_state_rpc(rpc_t* rpc, void* ctx);
+
+static const char* dns_set_server_state_doc[] = {
+	"sets the state of the DNS servers " \
+	"(0: all the servers are down, 1: at least one server is up)",    /* Documentation string */
+	0                              /* Method signature(s) */
+};
+#endif /* DNS_WATCHDOG_SUPPORT */
+#endif /* USE_DNS_CACHE */
 #ifdef USE_DST_BLACKLIST
 void dst_blst_debug(rpc_t* rpc, void* ctx);
 void dst_blst_mem_info(rpc_t* rpc, void* ctx);
@@ -469,6 +479,9 @@ rpc_export_t core_rpc_methods[] = {
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
 	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,        0	},
 	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,        0	},
+#ifdef DNS_WATCHDOG_SUPPORT
+	{"dns.set_server_state",   dns_set_server_state_rpc, dns_set_server_state_doc, 0 },
+#endif
 #endif
 #ifdef USE_DST_BLACKLIST
 	{"dst_blacklist.mem_info",  dst_blst_mem_info,     dst_blst_mem_info_doc,     0	},
