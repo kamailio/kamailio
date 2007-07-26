@@ -43,6 +43,15 @@
 void dns_cache_debug(rpc_t* rpc, void* ctx);
 void dns_cache_debug_all(rpc_t* rpc, void* ctx);
 void dns_cache_mem_info(rpc_t* rpc, void* ctx);
+void dns_cache_view(rpc_t* rpc, void* ctx);
+void dns_cache_delete_all(rpc_t* rpc, void* ctx);
+void dns_cache_add_a(rpc_t* rpc, void* ctx);
+void dns_cache_add_aaaa(rpc_t* rpc, void* ctx);
+void dns_cache_add_srv(rpc_t* rpc, void* ctx);
+void dns_cache_delete_a(rpc_t* rpc, void* ctx);
+void dns_cache_delete_aaaa(rpc_t* rpc, void* ctx);
+void dns_cache_delete_srv(rpc_t* rpc, void* ctx);
+
 
 static const char* dns_cache_mem_info_doc[] = {
 	"dns cache memory info.",    /* Documentation string */
@@ -56,6 +65,45 @@ static const char* dns_cache_debug_doc[] = {
 static const char* dns_cache_debug_all_doc[] = {
 	"complete dns debug  dump",    /* Documentation string */
 	0                              /* Method signature(s) */
+};
+
+static const char* dns_cache_view_doc[] = {
+	"dns cache dump in a human-readable format",
+	0
+};
+
+static const char* dns_cache_delete_all_doc[] = {
+	"deletes all the entries from the DNS cache",
+	0
+};
+
+static const char* dns_cache_add_a_doc[] = {
+	"adds an A record to the DNS cache",
+	0
+};
+
+static const char* dns_cache_add_aaaa_doc[] = {
+	"adds an AAAA record to the DNS cache",
+	0
+};
+static const char* dns_cache_add_srv_doc[] = {
+	"adds an SRV record to the DNS cache",
+	0
+};
+
+static const char* dns_cache_delete_a_doc[] = {
+	"deletes an A record from the DNS cache",
+	0
+};
+
+static const char* dns_cache_delete_aaaa_doc[] = {
+	"deletes an AAAA record from the DNS cache",
+	0
+};
+
+static const char* dns_cache_delete_srv_doc[] = {
+	"deletes an SRV record from the DNS cache",
+	0
 };
 
 #ifdef DNS_WATCHDOG_SUPPORT
@@ -479,6 +527,14 @@ rpc_export_t core_rpc_methods[] = {
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
 	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,        0	},
 	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,        0	},
+	{"dns.view",               dns_cache_view,        dns_cache_view_doc,        0	},
+	{"dns.delete_all",         dns_cache_delete_all,  dns_cache_delete_all_doc,  0	},
+	{"dns.add_a",              dns_cache_add_a,       dns_cache_add_a_doc,       0	},
+	{"dns.add_aaaa",           dns_cache_add_aaaa,    dns_cache_add_aaaa_doc,    0	},
+	{"dns.add_srv",            dns_cache_add_srv,     dns_cache_add_srv_doc,     0	},
+	{"dns.delete_a",           dns_cache_delete_a,    dns_cache_delete_a_doc,    0	},
+	{"dns.delete_aaaa",        dns_cache_delete_aaaa, dns_cache_delete_aaaa_doc, 0	},
+	{"dns.delete_srv",         dns_cache_delete_srv,  dns_cache_delete_srv_doc,  0	},
 #ifdef DNS_WATCHDOG_SUPPORT
 	{"dns.set_server_state",   dns_set_server_state_rpc, dns_set_server_state_doc, 0 },
 #endif

@@ -313,6 +313,9 @@ inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 	return ret;
 }
 
+/* deletes all the entries from the cache */
+void dns_cache_flush(void);
+
 #ifdef DNS_WATCHDOG_SUPPORT
 /* sets the state of the DNS servers:
  * 1: at least one server is up

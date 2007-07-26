@@ -35,6 +35,8 @@
  *  2007-06-16  naptr support (andrei)
  *  2008-07-18  DNS watchdog support -- can be used to inform the core
  *              that the DNS servers are down (Miklos)
+ *  2008-07-25  various rpc commands to manipulate the content
+ *		of the cache (Miklos)
  */
 
 #ifdef USE_DNS_CACHE
@@ -824,6 +826,61 @@ inline static struct dns_hash_entry* dns_cache_mk_ip_entry(str* name,
 	return e;
 }
 
+/* creates an srv hash entry from the given parameters
+ * returns 0 on error */
+static struct dns_hash_entry* dns_cache_mk_srv_entry(str* name,
+							unsigned short priority,
+							unsigned short weight,
+							unsigned short port,
+							str* rr_name,
+							int ttl)
+{
+	struct dns_hash_entry* e;
+	int size;
+	ticks_t now;
+	
+	/* everything is allocated in one block: dns_hash_entry + name +
+	 * + dns_rr + rdata;  dns_rr must start at an aligned adress,
+	 * hence we need to round dns_hash_entry+name size to a sizeof(long),
+	 * and similarly, dns_rr must be rounded to sizeof(short).
+	 * multiple.
+	 * Memory image:
+	 * struct dns_hash_entry
+	 * name (name_len+1 bytes)
+	 * padding to multiple of sizeof(long)
+	 * dns_rr
+	 * padding to multiple of sizeof(short)
+	 * rdata 
+	  */
+	size=ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1) + 
+		ROUND_SHORT(sizeof(struct dns_rr)) +
+		sizeof(struct srv_rdata)-1 +
+		rr_name->len+1;
+
+	e=shm_malloc(size);
+	if (e==0){
+		LOG(L_ERR, "ERROR: dns_cache_srv_ip_entry: out of memory\n");
+		return 0;
+	}
+	memset(e, 0, size); /* init with 0*/
+	e->total_size=size;
+	e->name_len=name->len;
+	e->type=T_SRV;
+	now=get_ticks_raw();
+	e->last_used=now;
+	e->expire=now+S_TO_TICKS(ttl);
+	memcpy(e->name, name->s, name->len); /* memset makes sure is 0-term. */
+	e->rr_lst=(void*)((char*)e+
+				ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1));
+	e->rr_lst->rdata=(void*)((char*)e->rr_lst+ROUND_SHORT(sizeof(struct dns_rr)));
+	e->rr_lst->expire=e->expire;
+	((struct srv_rdata*)e->rr_lst->rdata)->priority = priority;
+	((struct srv_rdata*)e->rr_lst->rdata)->weight = weight;
+	((struct srv_rdata*)e->rr_lst->rdata)->port = port;
+	((struct srv_rdata*)e->rr_lst->rdata)->name_len = rr_name->len;
+	memcpy(((struct srv_rdata*)e->rr_lst->rdata)->name, rr_name->s, rr_name->len);
+	return e;
+}
 
 
 /* create a dns hash entry from a name and a rdata list (pkg_malloc'ed)
@@ -3097,6 +3154,505 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 		}
 	UNLOCK_DNS_HASH();
 }
+
+static char *print_type(unsigned short type)
+{
+	switch (type) {
+		case T_A:
+			return "A";
+		case T_AAAA:
+			return "AAAA";
+		case T_SRV:
+			return "SRV";
+		case T_NAPTR:
+			return "NAPTR";
+		case T_CNAME:
+			return "CNAME";
+		default:
+			return "unkown";
+	}
+}
+
+/* dumps the content of the cache in a human-readable format */
+void dns_cache_view(rpc_t* rpc, void* ctx)
+{
+	int h;
+	struct dns_hash_entry* e;
+	struct dns_rr* rr;
+	struct ip_addr ip;
+	ticks_t now;
+	void* handle;
+	str s;
+	
+	now=get_ticks_raw();
+	LOCK_DNS_HASH();
+		for (h=0; h<DNS_HASH_SIZE; h++){
+			clist_foreach(&dns_hash[h], e, next){
+				rpc->add(ctx, "{", &handle);
+				rpc->struct_add(handle, "s", "name", e->name);
+				rpc->struct_add(handle, "s", "type", print_type(e->type));
+				rpc->struct_add(handle, "d", "size (bytes)", e->total_size);
+				rpc->struct_add(handle, "d", "reference counter", e->refcnt.val);
+				rpc->struct_add(handle, "d", "expires in (s)", (s_ticks_t)(e->expire-now)<0?-1:
+									TICKS_TO_S(e->expire-now));
+				rpc->struct_add(handle, "d", "last used (s)", TICKS_TO_S(now-e->last_used));
+				rpc->struct_add(handle, "d", "error flags", e->err_flags);
+
+				for (rr=e->rr_lst; rr; rr=rr->next){
+					switch(e->type){
+						case T_A:
+						case T_AAAA:
+							if (dns_rr2ip(e->type, rr, &ip)==0){
+								rpc->struct_add(handle, "s", "rr ip",
+									ip_addr2a(&ip) );
+							}else{
+								rpc->struct_add(handle, "s", "rr ip",
+									"<error: bad rr>");
+							}
+							break;
+						case T_SRV:
+							rpc->struct_add(handle, "s", "rr name",
+									((struct srv_rdata*)(rr->rdata))->name);
+							rpc->struct_add(handle, "d", "rr port",
+									((struct srv_rdata*)(rr->rdata))->port);
+							rpc->struct_add(handle, "d", "rr priority",
+									((struct srv_rdata*)(rr->rdata))->priority);
+							rpc->struct_add(handle, "d", "rr weight",
+									((struct srv_rdata*)(rr->rdata))->weight);
+							break;
+						case T_NAPTR:
+							rpc->struct_add(handle, "d", "rr order",
+									((struct naptr_rdata*)(rr->rdata))->order);
+							rpc->struct_add(handle, "d", "rr preference",
+									((struct naptr_rdata*)(rr->rdata))->pref);
+
+							s.s = ((struct naptr_rdata*)(rr->rdata))->flags;
+							s.len = ((struct naptr_rdata*)(rr->rdata))->flags_len;
+							rpc->struct_add(handle, "S", "rr flags", &s);
+
+							s.s = ((struct naptr_rdata*)(rr->rdata))->services;
+							s.len = ((struct naptr_rdata*)(rr->rdata))->services_len;
+							rpc->struct_add(handle, "S", "rr service", &s);
+
+							s.s = ((struct naptr_rdata*)(rr->rdata))->regexp;
+							s.len = ((struct naptr_rdata*)(rr->rdata))->regexp_len;
+							rpc->struct_add(handle, "S", "rr regexp", &s);
+
+							s.s = ((struct naptr_rdata*)(rr->rdata))->repl;
+							s.len = ((struct naptr_rdata*)(rr->rdata))->repl_len;
+							rpc->struct_add(handle, "S", "rr replacement", &s);
+							break;
+						case T_CNAME:
+							rpc->struct_add(handle, "s",  "rr name",
+									((struct cname_rdata*)(rr->rdata))->name);
+							break;
+						default:
+							rpc->struct_add(ctx, "ss", "resource record",
+									"unknown");
+					}
+					rpc->struct_add(handle, "d", "rr expires in (s)", (s_ticks_t)(rr->expire-now)<0?-1:
+										TICKS_TO_S(rr->expire-now));
+					rpc->struct_add(handle, "d", "rr error flags", rr->err_flags);
+				}
+			}
+		}
+	UNLOCK_DNS_HASH();
+}
+
+
+/* deletes all the entries from the cache */
+void dns_cache_flush(void)
+{
+	int h;
+	struct dns_hash_entry* e;
+	struct dns_hash_entry* tmp;
+
+	DBG("dns_cache_flush(): removing elements from the cache\n");
+	LOCK_DNS_HASH();
+		for (h=0; h<DNS_HASH_SIZE; h++){
+			clist_foreach_safe(&dns_hash[h], e, tmp, next){
+				_dns_hash_remove(e);
+			}
+		}
+	UNLOCK_DNS_HASH();
+}
+
+/* deletes all the entries from the cache */
+void dns_cache_delete_all(rpc_t* rpc, void* ctx)
+{
+	dns_cache_flush();
+}
+
+/* clons an entry and extends the memory area of it for a new rr if rdata_size>0
+ * the new dns_rr struct is initialized, but the rdata is only filled with 0.
+ */
+static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e, int rdata_size, int ttl,
+							struct dns_rr **_new_rr)
+{
+	struct dns_hash_entry *new;
+	struct dns_rr *rr, *last_rr, *new_rr;
+	int size, rounded_size, rr_size;
+	ticks_t now;
+
+	now=get_ticks_raw();
+	size = e->total_size;
+	if (rdata_size) {
+		/* we have to extend the entry */
+		rounded_size = 	ROUND_POINTER(size); /* size may not have been rounded previously */
+		switch (e->type) {
+			case T_A:
+			case T_AAAA:
+			case T_CNAME:
+				rr_size = sizeof(struct dns_rr);
+				break;
+			case T_SRV:
+				rr_size = ROUND_SHORT(sizeof(struct dns_rr));
+				break;
+			case T_NAPTR:
+				rr_size = ROUND_POINTER(sizeof(struct dns_rr));
+				break;
+			default:
+				LOG(L_ERR, "ERROR: dns_cache_clone_entry: type %d not supported\n",
+						e->type);
+				return NULL;				
+		}
+	} else {
+		rounded_size = size; /* no need to round the size, we just clone the entry
+					without extending it */
+		rr_size = 0;
+	}
+
+	new=shm_malloc(rounded_size+rr_size+rdata_size);
+	if (!new) {
+		LOG(L_ERR, "ERROR: dns_cache_clone_entry: out of memory\n");
+		return NULL;
+	}
+	/* clone the entry */
+	memcpy(new, e, size);
+	/* fix the values and pointers */
+	new->next = new->prev = NULL;
+#ifdef DNS_LU_LST
+	new->last_used_lst.next = new->last_used_lst.next = NULL;
+#endif
+	new->rr_lst = (struct dns_rr*)translate_pointer((char*)new, (char*)e, (char*)new->rr_lst);
+	atomic_set(&new->refcnt, 0);
+	new->last_used = now;
+	/* expire and total_size are fixed later if needed */
+	/* fix the pointers inside the rr structures */
+	last_rr = NULL;
+	for (rr=new->rr_lst; rr; rr=rr->next) {
+		rr->rdata = (void*)translate_pointer((char*)new, (char*)e, (char*)rr->rdata);
+		if (rr->next)
+			rr->next = (struct dns_rr*)translate_pointer((char*)new, (char*)e, (char*)rr->next);
+		else
+			last_rr = rr;
+
+		if (e->type == T_NAPTR) {
+			/* there are pointers inside the NAPTR rdata stucture */
+			((struct naptr_rdata*)rr->rdata)->flags =
+				translate_pointer((char*)new, (char*)e,
+					((struct naptr_rdata*)rr->rdata)->flags);
+
+			((struct naptr_rdata*)rr->rdata)->services =
+				translate_pointer((char*)new, (char*)e,
+					((struct naptr_rdata*)rr->rdata)->services);
+
+			((struct naptr_rdata*)rr->rdata)->regexp =
+				translate_pointer((char*)new, (char*)e,
+					((struct naptr_rdata*)rr->rdata)->regexp);
+
+			((struct naptr_rdata*)rr->rdata)->repl =
+				translate_pointer((char*)new, (char*)e,
+					((struct naptr_rdata*)rr->rdata)->repl);
+		}
+	}
+	
+
+	if (rdata_size) {
+		memset(new+size, 0, rounded_size-size+rr_size+rdata_size);
+
+		/* set the pointer to the new rr structure */
+		new_rr = (void*)((char*)new + rounded_size);
+		new_rr->rdata = (void*)((char*)new_rr+rr_size);
+		new_rr->expire = now + S_TO_TICKS(ttl);
+		/* link the rr to the previous one */
+		last_rr->next = new_rr;
+
+		/* fix the total_size and expires values */
+		new->total_size=rounded_size+rr_size+rdata_size;
+		new->expire = MAX(new->expire, new_rr->expire);
+
+
+		if (_new_rr)
+			*_new_rr = new_rr;
+	} else {
+		if (_new_rr)
+			*_new_rr = NULL;
+	}
+
+	return new;
+}
+
+/* Adds a new record to the cache.
+ * If there is an existing record with the same name and value
+ * (ip address in case of A/AAAA record, name in case of SRV record)
+ * only the remaining fields are updated.
+ *
+ * Currently only A, AAAA, and SRV records are supported.
+ */
+static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
+{
+	struct dns_hash_entry *old=NULL, *new=NULL;
+	struct dns_rr *rr;
+	str name;
+	int ttl;
+	str ip, rr_name;
+	int flags;
+	struct ip_addr *ip_addr;
+	int priority, weight, port; 
+	ticks_t expire;
+	int err, h;
+	int size;
+
+	/* eliminate gcc warnings */
+	ip_addr = 0;
+	size = 0;
+
+	switch(type) {
+	case T_A:
+	case T_AAAA:
+		if (rpc->scan(ctx, "SdSd", &name, &ttl, &ip, &flags) < 4)
+			return;
+		break;
+	case T_SRV:
+		if (rpc->scan(ctx, "SddddSd", &name, &ttl, &priority, &weight, &port, &rr_name, &flags) < 7)
+			return;
+		break;
+	case T_CNAME:
+	case T_NAPTR:
+		rpc->fault(ctx, 400, "not implemented");
+		return;			
+	default:
+		rpc->fault(ctx, 400, "unknown type");
+		return;			
+	}
+
+	if (!flags) {
+		/* fix-up the values */
+		switch(type) {
+		case T_A:
+			ip_addr = str2ip(&ip);
+			if (!ip_addr) {
+				rpc->fault(ctx, 400, "Malformed ip address");
+				goto error;
+			}
+			break;
+		case T_AAAA:
+			ip_addr = str2ip6(&ip);
+			if (!ip_addr) {
+				rpc->fault(ctx, 400, "Malformed ip address");
+				goto error;
+			}
+			break;
+		/* case T_SRV: nothing to do */
+		}
+	}
+
+	/* check whether there is a matching entry in the cache */
+	old = dns_hash_get(&name, type, &h, &err);
+	if (old && old->type!=type) {
+		/* probably we found a CNAME instead of the specified type,
+		it is not needed */
+		dns_hash_put(old);
+		old=NULL;
+	}
+
+	/* prepare the entry */
+	if (flags) {
+		/* negative entry */
+		new = dns_cache_mk_bad_entry(&name, type, ttl, flags);
+		if (!new) {
+			rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+			goto error;
+		}
+	} else {
+		if (!old || old->err_flags) {
+			/* there was no matching entry in the hash table,
+			or the entry is a negative record with inefficient space,
+			let us create a new one */
+			switch(type) {
+			case T_A:
+			case T_AAAA:
+				new = dns_cache_mk_ip_entry(&name, ip_addr);
+				if (!new) {
+					rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+					goto error;
+				}
+				/* fix the expiration time, dns_cache_mk_ip_entry() sets it to now-1 */
+				expire = get_ticks_raw() + S_TO_TICKS(ttl);
+				new->expire = expire;
+				new->rr_lst->expire = expire;
+				break;
+			case T_SRV:
+				new = dns_cache_mk_srv_entry(&name, priority, weight, port, &rr_name, ttl);
+				if (!new) {
+					rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+					goto error;
+				}
+			}
+		} else {
+			/* we must modify the entry, so better to clone it, modify the new one,
+			and replace the old with the new entry in the hash table, because the
+			entry is not always locked */
+
+			/* check whether there is an rr with the same value */
+			for (rr=old->rr_lst; rr; rr=rr->next)
+				if ((((type == T_A) || (type == T_AAAA)) &&
+					(memcmp(ip_addr->u.addr, ((struct a_rdata*)rr->rdata)->ip, ip_addr->len)==0))
+				|| ((type == T_SRV) &&
+					(((struct srv_rdata*)rr->rdata)->name_len == rr_name.len) &&
+					(memcmp(rr_name.s, ((struct srv_rdata*)rr->rdata)->name, rr_name.len)==0)))
+				break;
+
+			if (rr) {
+				/* the rr was found in the list */
+				new = dns_cache_clone_entry(old, 0, 0, 0);
+				if (!new) {
+					rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+					goto error;
+				}
+				/* let the rr point to the new structure */
+				rr = (struct dns_rr*)translate_pointer((char*)new, (char*)old, (char*)rr);
+
+				if (type == T_SRV) {
+					/* fix the priority, weight, and port */
+					((struct srv_rdata*)rr->rdata)->priority = priority;
+					((struct srv_rdata*)rr->rdata)->weight = weight;
+					((struct srv_rdata*)rr->rdata)->port = port;
+				}
+
+				/* fix the expire value */
+				rr->expire = get_ticks_raw() + S_TO_TICKS(ttl);
+				new->expire = 0;
+				for (rr=new->rr_lst; rr; rr=rr->next)
+					new->expire = MAX(new->expire, rr->expire);
+			} else {
+				/* there was no matching rr, extend the structure with a new one */
+				switch(type) {
+				case T_A:
+					size = sizeof(struct a_rdata);
+					break;
+				case T_AAAA:
+					size = sizeof(struct aaaa_rdata);
+					break;
+				case T_SRV:
+					size = sizeof(struct srv_rdata)-1 +
+						rr_name.len+1;
+					break;
+				}
+				new = dns_cache_clone_entry(old, size, ttl, &rr);
+				if (!new) {
+					rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+					goto error;
+				}
+			
+				switch(type) {
+				case T_A:
+				case T_AAAA:
+					memcpy(rr->rdata, ip_addr->u.addr, ip_addr->len);
+					break;
+				case T_SRV:
+					((struct srv_rdata*)rr->rdata)->priority = priority;
+					((struct srv_rdata*)rr->rdata)->weight = weight;
+					((struct srv_rdata*)rr->rdata)->port = port;
+					((struct srv_rdata*)rr->rdata)->name_len = rr_name.len;
+					memcpy(((struct srv_rdata*)rr->rdata)->name, rr_name.s, rr_name.len);
+				}
+				/* maximum expire value has been already fixed by dns_cache_clone_entry() */
+			}
+		}
+	}
+	
+	LOCK_DNS_HASH();
+	if (dns_cache_add_unsafe(new)) {
+		rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+		UNLOCK_DNS_HASH();
+		goto error;
+	} else {
+		/* remove the old entry from the list */
+		if (old)
+			_dns_hash_remove(old);
+	}
+	UNLOCK_DNS_HASH();
+
+	if (old)
+		dns_hash_put(old);
+	return;
+
+error:
+	/* leave the old entry in the list, and free the new one */
+	if (old)
+		dns_hash_put(old);
+	if (new)
+		dns_destroy_entry(new);
+}
+
+/* deletes a record from the cache */
+static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
+{
+	struct dns_hash_entry *e;
+	str name;
+	int err, h, found=0;
+
+	if (rpc->scan(ctx, "S", &name) < 1)
+		return;
+
+	LOCK_DNS_HASH();
+
+	e=_dns_hash_find(&name, type, &h, &err);
+	if (e && (e->type==type)) {
+		_dns_hash_remove(e);
+		found = 1;
+	}
+
+	UNLOCK_DNS_HASH();
+
+	if (!found)
+		rpc->fault(ctx, 400, "Not found");
+}
+
+/* wrapper functions for adding and deleting records */
+void dns_cache_add_a(rpc_t* rpc, void* ctx)
+{
+	dns_cache_add_record(rpc, ctx, T_A);
+}
+
+void dns_cache_add_aaaa(rpc_t* rpc, void* ctx)
+{
+	dns_cache_add_record(rpc, ctx, T_AAAA);
+}
+
+void dns_cache_add_srv(rpc_t* rpc, void* ctx)
+{
+	dns_cache_add_record(rpc, ctx, T_SRV);
+}
+
+void dns_cache_delete_a(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_A);
+}
+
+void dns_cache_delete_aaaa(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_AAAA);
+}
+
+void dns_cache_delete_srv(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_SRV);
+}
+
+
 
 #ifdef DNS_WATCHDOG_SUPPORT
 /* sets the DNS server states */
