@@ -45,7 +45,7 @@
         </para>
 
         <para>
-        The <varname>ldap_search</varname> function (<xref linkend="ldap-search-fn">) performs an LDAP search operation. It expects an LDAP URL as input which includes the LDAP session name and search parameters. Section <xref linkend="ldap-urls"> gives a quick overview on LDAP URLs.
+	The <varname>ldap_search</varname> function (<xref linkend="ldap-search-fn">) performs an LDAP search operation. It expects an LDAP URL as input which includes the LDAP session name and search parameters. <xref linkend="ldap-urls">  provides a quick overview on LDAP URLs.
         </para>
         
         <para>
@@ -259,7 +259,8 @@ ldap_client_bind_timeout   = 500
                 <programlisting format="linespecific">
 ldap_server_url = "ldap://localhost"
 ldap_server_url = "ldap://ldap.example.com:7777"
-ldap_server_url = "ldap://ldap1.example.com, ldap://ldap2.example.com:80389"
+ldap_server_url = "ldap://ldap1.example.com, 
+                   ldap://ldap2.example.com:80389"
 				</programlisting>
               </example>
             </listitem>
@@ -465,7 +466,10 @@ modparam("ldap", "config_file", "/etc/openser/ldap.ini")
                 <varname>SIPIdentityUserName</varname> and
                 <varname>SIPIdentityServiceLevel</varname> attributes</para>
 
-                <programlisting>ldap://ldap_1/dc=example,dc=com?SIPIdentityUserName,SIPIdentityServiceLevel?sub?(cn=$(avp(s:name)))</programlisting>
+                <programlisting>
+ldap://ldap_1/dc=example,dc=com?
+       SIPIdentityUserName,SIPIdentityServiceLevel?sub?(cn=$(avp(s:name)))
+	        </programlisting>
               </example>
             </listitem>
           </varlistentry>
@@ -975,7 +979,8 @@ if (!ldap_filter_url_encode("cn=$avp(s:name)", "$avp(s:name_esc)"))
 
 xlog("L_INFO", "encoded LDAP filter component: [$avp(s:name_esc)]\n");
 
-if (ldap_search("ldap://h350/ou=commObjects,dc=example,dc=com??sub?($avp(s:name_esc))")) 
+if (ldap_search(
+     "ldap://h350/ou=commObjects,dc=example,dc=com??sub?($avp(s:name_esc))")) 
     { ... }
 ...
 			</programlisting>

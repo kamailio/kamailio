@@ -29,7 +29,7 @@ static int mod_init(void)
      */
     if (load_ldap_api(&ldap_api) != 0)
     {
-        LOG(L_ERR, "ERROR:module_name:mod_init: Unable to load LDAP API - this module requires ldap module\n");
+        LM_ERR("Unable to load LDAP API - this module requires ldap module\n");
         return -1;
     }
 
@@ -483,7 +483,8 @@ typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);
 				Returns the OpenLDAP LDAP handle and OpenLDAP result handle of the last LDAP search operation. These handles can be used as input for OpenLDAP LDAP result API functions. <varname>LDAP</varname> and <varname>LDAPMessage</varname> structures are defined in OpenLDAP's <varname>ldap.h</varname>, which has to be included.
 			</para> 
 			<programlisting><![CDATA[
-typedef void (*get_last_ldap_result_t)(LDAP** _last_ldap_handle, LDAPMessage** _last_ldap_result);
+typedef void (*get_last_ldap_result_t)
+	     (LDAP** _last_ldap_handle, LDAPMessage** _last_ldap_result);
 ]]>
 			</programlisting>
 			<variablelist>
@@ -524,7 +525,7 @@ char* sip_username = "test";
 scope = ldap_api.ldap_str2scope("sub");
 if (scope == -1)
 {
-    LOG(L_ERR, "ERROR: ldap_str2scope failed\n");
+    LM_ERR("ldap_str2scope failed\n");
     return -1;
 }
 
@@ -532,17 +533,18 @@ if (scope == -1)
  * perform LDAP search
  */
 
-if (ldap_api.ldap_params_search(&ld_result_count,
-                                "campus",
-                                "dc=example,dc=com",
-                                scope,
-                                NULL,
-                                "(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))",
-                                sip_username)
+if (ldap_api.ldap_params_search(
+       &ld_result_count,
+       "campus",
+       "dc=example,dc=com",
+       scope,
+       NULL,
+       "(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))",
+       sip_username)
      != 0)
 {
-                LOG(L_ERR, "ERROR: LDAP search failed\n");
-                return -1;
+    LM_ERR("LDAP search failed\n");
+    return -1;
 }
 
 /*
@@ -550,7 +552,7 @@ if (ldap_api.ldap_params_search(&ld_result_count,
  */
 if (ld_result_count < 1)
 {
-    LOG(L_ERR, "LDAP search returned no entry\n");
+    LM_ERR("LDAP search returned no entry\n");
     return 1;
 }
 
@@ -565,13 +567,13 @@ str res_password;
 rc = ldap_api.ldap_result_attr_vals(&ldap_pwd_attr_name, &attr_vals);
 if (rc < 0)
 {
-    LOG(L_ERR, "ERROR: ldap_result_attr_vals failed\n");
+    LM_ERR("ldap_result_attr_vals failed\n");
     ldap_api.ldap_value_free_len(attr_vals);
     return -1;
 }
 if (rc == 1)
 {
-    LOG(L_INFO, "No password attribute value found for [%s]\n", sip_username);
+    LM_INFO("No password attribute value found for [%s]\n", sip_username);
     ldap_api.ldap_value_free_len(attr_vals);
     return 2;
 }
@@ -581,7 +583,7 @@ res_password.len = attr_vals[0]->bv_len;
 
 ldap_api.ldap_value_free_len(attr_vals);
 
-LOG(L_INFO, "Password for user [%s]: [%s]\n", sip_username, res_password.s);
+LM_INFO("Password for user [%s]: [%s]\n", sip_username, res_password.s);
 
 ...
 
