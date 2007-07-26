@@ -72,4 +72,10 @@ void destroy_dst_blacklist();
 int dst_blacklist_add(unsigned char err_flags, struct dest_info* si);
 
 int dst_is_blacklisted(struct dest_info* si);
+
+/* deletes all the entries from the blacklist except the permanent ones
+ * (which are marked with BLST_PERMANENT)
+ */
+void dst_blst_flush(void);
+
 #endif

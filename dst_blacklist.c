@@ -46,6 +46,7 @@
 #include "error.h"
 #include "rpc.h"
 #include "compiler_opt.h"
+#include "resolve.h" /* for str2ip */
 
 
 
@@ -786,6 +787,110 @@ void dst_blst_hash_stats(rpc_t* rpc, void* ctx)
 		}
 }
 
+/* dumps the content of the blacklist in a human-readable format */
+void dst_blst_view(rpc_t* rpc, void* ctx)
+{
+	int h;
+	struct dst_blst_entry* e;
+	ticks_t now;
+	struct ip_addr ip;
+	void* handle;
+	
+	now=get_ticks_raw();
+		for(h=0; h<DST_BLST_HASH_SIZE; h++){
+			LOCK_BLST(h);
+			for(e=dst_blst_hash[h].first; e; e=e->next){
+				rpc->add(ctx, "{", &handle);
+				dst_blst_entry2ip(&ip, e);
+				rpc->struct_add(handle, "s", "protocol",
+							get_proto_name(e->proto));
+				rpc->struct_add(handle, "s", "ip",
+							ip_addr2a(&ip));
+				rpc->struct_add(handle, "d", "port",
+							e->port);
+				rpc->struct_add(handle, "d", "expires in (s)",
+							(s_ticks_t)(now-e->expire)<=0?
+							TICKS_TO_S(e->expire-now):
+							-TICKS_TO_S(now-e->expire));
+				rpc->struct_add(handle, "d", "flags",
+							e->flags);
+			}
+			UNLOCK_BLST(h);
+		}
+}
+
+/* deletes all the entries from the blacklist except the permanent ones
+ * (which are marked with BLST_PERMANENT)
+ */
+void dst_blst_flush(void)
+{
+	int h;
+	struct dst_blst_entry* e;
+	struct dst_blst_entry** last;
+
+	for(h=0; h<DST_BLST_HASH_SIZE; h++){
+		LOCK_BLST(h);
+		last = &dst_blst_hash[h].first;
+		for(e=dst_blst_hash[h].first; e; e=e->next){
+			if (e->flags & BLST_PERMANENT) {
+				/* permanent entry, do not remove it from the list */
+				*last = e;
+				last = &e->next;
+			} else {
+				/* remove the entry from the list */
+				*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
+				blst_destroy_entry(e);
+				BLST_HASH_STATS_DEC(h);
+			}
+		}
+		*last = NULL;
+		UNLOCK_BLST(h);
+	}
+}
+
+/* rpc wrapper function for dst_blst_flush() */
+void dst_blst_delete_all(rpc_t* rpc, void* ctx)
+{
+	dst_blst_flush();
+}
+
+/* Adds a new entry to the blacklist */
+void dst_blst_add(rpc_t* rpc, void* ctx)
+{
+	str ip;
+	int port, proto, flags;
+	unsigned char err_flags;
+	struct ip_addr *ip_addr;
+
+	if (rpc->scan(ctx, "Sddd", &ip, &port, &proto, &flags) < 4)
+		return;
+
+	err_flags = (unsigned char)flags;
+	/* sanity checks */
+	if ((unsigned char)proto > PROTO_SCTP) {
+		rpc->fault(ctx, 400, "Unknown protocol");
+		return;
+	}
+
+	if (err_flags & BLST_IS_IPV6) {
+		/* IPv6 address is specified */
+		ip_addr = str2ip6(&ip);
+	} else {
+		/* try IPv4 first, than IPv6 */
+		ip_addr = str2ip(&ip);
+		if (!ip_addr) {
+			ip_addr = str2ip6(&ip);
+			err_flags |= BLST_IS_IPV6;
+		}
+	}
+	if (!ip_addr) {
+		rpc->fault(ctx, 400, "Malformed ip address");
+		return;
+	}
+
+	if (dst_blacklist_add_ip(err_flags, proto, ip_addr, port))
+		rpc->fault(ctx, 400, "Failed to add the entry to the blacklist");
+}
 
 #endif /* USE_DST_BLACKLIST */
 

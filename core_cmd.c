@@ -119,6 +119,9 @@ static const char* dns_set_server_state_doc[] = {
 #ifdef USE_DST_BLACKLIST
 void dst_blst_debug(rpc_t* rpc, void* ctx);
 void dst_blst_mem_info(rpc_t* rpc, void* ctx);
+void dst_blst_view(rpc_t* rpc, void* ctx);
+void dst_blst_delete_all(rpc_t* rpc, void* ctx);
+void dst_blst_add(rpc_t* rpc, void* ctx);
 
 static const char* dst_blst_mem_info_doc[] = {
 	"dst blacklist memory usage info.",  /* Documentation string */
@@ -128,6 +131,19 @@ static const char* dst_blst_debug_doc[] = {
 	"dst blacklist  debug  info.",  /* Documentation string */
 	0                               /* Method signature(s) */
 };
+static const char* dst_blst_view_doc[] = {
+	"dst blacklist dump in human-readable format.",  /* Documentation string */
+	0                               /* Method signature(s) */
+};
+static const char* dst_blst_delete_all_doc[] = {
+	"Deletes all the entries from the dst blacklist except the permanent ones.",  /* Documentation string */
+	0                               /* Method signature(s) */
+};
+static const char* dst_blst_add_doc[] = {
+	"Adds a new entry to the dst blacklist.",  /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
 #endif
 
 
@@ -542,6 +558,9 @@ rpc_export_t core_rpc_methods[] = {
 #ifdef USE_DST_BLACKLIST
 	{"dst_blacklist.mem_info",  dst_blst_mem_info,     dst_blst_mem_info_doc,     0	},
 	{"dst_blacklist.debug",    dst_blst_debug,         dst_blst_debug_doc,        0	},
+	{"dst_blacklist.view",     dst_blst_view,         dst_blst_view_doc,         0	},
+	{"dst_blacklist.delete_all", dst_blst_delete_all, dst_blst_delete_all_doc,   0	},
+	{"dst_blacklist.add",      dst_blst_add,          dst_blst_add_doc,          0	},
 #endif
 	{0, 0, 0, 0}
 };
