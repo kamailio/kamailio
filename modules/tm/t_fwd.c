@@ -691,7 +691,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 	}
 #ifdef USE_DST_BLACKLIST
 	if (use_dst_blacklist){
-		if (dst_is_blacklisted(&uac->request.dst)){
+		if (dst_is_blacklisted(&uac->request.dst, p_msg)){
 			su2ip_addr(&ip, &uac->request.dst.to);
 			DBG("t_send_branch: blacklisted destination: %s:%d (%d)\n",
 							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
@@ -735,7 +735,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 							uac->request.dst.proto);
 #ifdef USE_DST_BLACKLIST
 		if (use_dst_blacklist)
-			dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst);
+			dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 		/* if the destination resolves to more ips, add another

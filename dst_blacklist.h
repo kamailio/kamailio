@@ -35,6 +35,7 @@
 #define dst_black_list_h
 
 #include "ip_addr.h"
+#include "parser/msg_parser.h"
 
 /* flags: */
 #define BLST_IS_IPV6		1		/* set if the address is ipv6 */
@@ -58,7 +59,10 @@
 
 #ifdef DST_BLACKLIST_HOOKS
 struct blacklist_hook{
-	int (*on_blst_action)(struct dest_info* si, unsigned char* err_flags);
+	/* WARNING: msg might be NULL, and it might point to shared memory
+	 * without locking, do not modify it! msg can be used typically for checking
+	 * the message flags with isflagset() */
+	int (*on_blst_action)(struct dest_info* si, unsigned char* err_flags, struct sip_msg* msg);
 	/* called before ser shutdown */
 	void (*destroy)(void);
 };
@@ -69,9 +73,9 @@ int register_blacklist_hook(struct blacklist_hook *h, int type);
 int init_dst_blacklist();
 void destroy_dst_blacklist();
 
-int dst_blacklist_add(unsigned char err_flags, struct dest_info* si);
+int dst_blacklist_add(unsigned char err_flags, struct dest_info* si, struct sip_msg* msg);
 
-int dst_is_blacklisted(struct dest_info* si);
+int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg);
 
 /* deletes all the entries from the blacklist except the permanent ones
  * (which are marked with BLST_PERMANENT)

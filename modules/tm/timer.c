@@ -456,7 +456,8 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 		/* no reply received */
 #ifdef USE_DST_BLACKLIST
 		if (use_dst_blacklist)
-			dst_blacklist_add( BLST_ERR_TIMEOUT, &r_buf->dst);
+			dst_blacklist_add( BLST_ERR_TIMEOUT, &r_buf->dst,
+				(r_buf->my_T)?r_buf->my_T->uas.request:NULL);
 #endif
 #ifdef USE_DNS_FAILOVER
 		/* if this is an invite, the destination resolves to more ips, and

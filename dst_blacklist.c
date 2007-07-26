@@ -133,8 +133,8 @@ struct dst_blst_lst_head* dst_blst_hash=0;
 
 /* there 2 types of callbacks supported: on add new entry to the blacklist
  *  (DST_BLACKLIST_ADD_CB) and on blacklist search (DST_BLACKLIST_SEARCH_CB).
- *  Both of them take a struct dest_info* and a flags pointer as parameters 
- *   (unsigned char*). The flags can be changed.
+ *  Both of them take a struct dest_info*, a flags pointer(unsigned char*),
+ *  and a struct sip_msg* as parameters. The flags can be changed.
  *  A callback should return one of:
  *    DST_BLACKLIST_CONTINUE - do nothing, let other callbacks run
  *    DST_BLACKLIST_ACCEPT   - for blacklist add: force accept immediately,
@@ -262,7 +262,7 @@ error:
 
 
 inline static int blacklist_run_hooks(struct blst_callbacks_lst *cb_lst,
-							struct dest_info* si, unsigned char* flags)
+							struct dest_info* si, unsigned char* flags, struct sip_msg* msg)
 {
 	int r;
 	int ret;
@@ -272,7 +272,7 @@ inline static int blacklist_run_hooks(struct blst_callbacks_lst *cb_lst,
 	if (likely(cb_lst->last_idx==0))
 		return ret;
 	for (r=0; r<cb_lst->last_idx; r++){
-		ret=cb_lst->hooks[r].on_blst_add(si, flags);
+		ret=cb_lst->hooks[r].on_blst_action(si, flags, msg);
 		if (ret!=DST_BLACKLIST_CONTINUE) break;
 	}
 	return ret;
@@ -674,12 +674,12 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 
 
 
-int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si)
+int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si, struct sip_msg* msg)
 {
 	struct ip_addr ip;
 
 #ifdef DST_BLACKLIST_HOOKS
-	if (unlikely (blacklist_run_hooks(&blst_add_cb, si, &err_flags) ==
+	if (unlikely (blacklist_run_hooks(&blst_add_cb, si, &err_flags, msg) ==
 					DST_BLACKLIST_DENY))
 		return 0;
 #endif
@@ -690,7 +690,7 @@ int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si)
 
 
 
-int dst_is_blacklisted(struct dest_info* si)
+int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg)
 {
 	struct ip_addr ip;
 #ifdef DST_BLACKLIST_HOOKS
@@ -701,7 +701,7 @@ int dst_is_blacklisted(struct dest_info* si)
 
 #ifdef DST_BLACKLIST_HOOKS
 	err_flags=0;
-	if (unlikely((action=(blacklist_run_hooks(&blst_search_cb, si, &err_flags))
+	if (unlikely((action=(blacklist_run_hooks(&blst_search_cb, si, &err_flags, msg))
 					) != DST_BLACKLIST_CONTINUE)){
 		if (action==DST_BLACKLIST_DENY)
 			return 0;

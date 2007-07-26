@@ -414,7 +414,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		}
 #ifdef USE_DST_BLACKLIST
 		if (use_dst_blacklist){
-			if (dst_is_blacklisted(send_info)){
+			if (dst_is_blacklisted(send_info, msg)){
 				su2ip_addr(&ip, &send_info->to);
 				LOG(L_DBG, "DEBUG: blacklisted destination:%s:%d (%d)\n",
 							ip_addr2a(&ip), su_getport(&send_info->to),
@@ -432,7 +432,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			ret=ser_error=E_SEND;
 #ifdef USE_DST_BLACKLIST
 			if (use_dst_blacklist)
-				dst_blacklist_add(BLST_ERR_SEND, send_info);
+				dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 			continue; /* try another ip */
