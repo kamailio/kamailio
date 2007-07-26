@@ -60,6 +60,7 @@ int _osp_retry_limit = OSP_DEF_RETRY;
 int _osp_timeout = OSP_DEF_TIMEOUT;
 int _osp_max_dests = OSP_DEF_DESTS;
 int _osp_use_rpid = OSP_DEF_USERPID;
+int _osp_redir_uri = OSP_DEF_REDIRURI;
 char _osp_PRIVATE_KEY[OSP_KEYBUF_SIZE];
 char _osp_LOCAL_CERTIFICATE[OSP_KEYBUF_SIZE];
 char _osp_CA_CERTIFICATE[OSP_KEYBUF_SIZE];

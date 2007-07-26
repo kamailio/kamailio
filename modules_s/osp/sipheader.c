@@ -508,13 +508,15 @@ int ospGetRouteParameters(
  * param called Called number
  * param dest Destination IP
  * param port Destination port
+ * param format URI format
  * return 0 success, -1 failure
  */
 int ospRebuildDestionationUri(
     str* newuri, 
     char* called,
     char* dest, 
-    char* port) 
+    char* port,
+    int format) 
 {
     static const str TRANS = {";transport=tcp", 14};
     char* buffer;
@@ -528,22 +530,27 @@ int ospRebuildDestionationUri(
     destsize = strlen(dest);
     portsize = strlen(port);
 
-    LOG(L_DBG, "osp: '%s'(%i) '%s'(%i) '%s'(%i)\n",
+    LOG(L_DBG, "osp: '%s'(%i) '%s'(%i) '%s'(%i) '%d'\n",
         called, 
         calledsize,
         dest, 
         destsize, 
         port, 
-        portsize); 
+        portsize,
+        format); 
 
-    /* "sip:" + called + "@" + dest + : + port + " SIP/2.0" */
-    newuri->s = (char*)pkg_malloc(4 + calledsize + 1 + destsize + 1 + portsize + 1 + 16 + TRANS.len);
+    /* "sip:" + called + "@" + dest + : + port + " SIP/2.0" for URI format 0 */
+    /* "<sip:" + called + "@" + dest + : + port> + " SIP/2.0" for URI format 1 */
+    newuri->s = (char*)pkg_malloc(1 + 4 + calledsize + 1 + destsize + 1 + portsize + 1 + 1 + 16 + TRANS.len);
     if (newuri == NULL) {
         LOG(L_ERR, "osp: ERROR: no memory\n");
         return -1;
     }    
     buffer = newuri->s;
 
+    if (format == 1) {
+      *buffer++ = '<';
+    }
     *buffer++ = 's';
     *buffer++ = 'i';
     *buffer++ = 'p';
@@ -566,6 +573,10 @@ int ospRebuildDestionationUri(
         *buffer++ = ':';
         memcpy(buffer, port, portsize);
         buffer += portsize;
+    }
+
+    if (format == 1) {
+      *buffer++ = '>';
     }
 
 /*    

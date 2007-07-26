@@ -52,7 +52,7 @@ int ospGetOspHeader(struct sip_msg* msg, unsigned char* token, unsigned int* tok
 int ospGetSourceAddress(struct sip_msg* msg, char* sourceaddress, int buffersize);
 int ospGetCallId(struct sip_msg* msg, OSPTCALLID** callid);
 int ospGetRouteParameters(struct sip_msg* msg, char* routeparams, int buffersize);
-int ospRebuildDestionationUri(str* newuri, char* called, char* dest, char* port);
+int ospRebuildDestionationUri(str* newuri, char* called, char* dest, char* port, int format);
 void ospGetNextHop(struct sip_msg* msg, char* nexthop, int buffersize);
 int ospGetDirection(struct sip_msg* msg);
 

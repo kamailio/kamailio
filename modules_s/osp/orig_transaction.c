@@ -50,6 +50,7 @@ extern char* _osp_device_port;
 extern int _osp_max_dests;
 extern OSPTPROVHANDLE _osp_provider;
 extern auth_api_t osp_auth;
+extern int _osp_redir_uri;
 
 const int OSP_FIRST_ROUTE = 1;
 const int OSP_NEXT_ROUTE = 0;
@@ -58,7 +59,7 @@ const int OSP_BRANCH_ROUTE = 0;
 const str OSP_CALLING_NAME = {"_osp_calling_translated_", 24};
 
 static int ospLoadRoutes(struct sip_msg* msg, OSPTTRANHANDLE transaction, int destcount, char* source, char* sourcedev, time_t authtime);
-static int ospPrepareDestination(struct sip_msg* msg, int isfirst, int type);
+static int ospPrepareDestination(struct sip_msg* msg, int isfirst, int type, int format);
 
 /*
  * Get routes from AuthRsp
@@ -420,12 +421,14 @@ int ospAppendHeaders(
  * param msg SIP message
  * param isfirst Is first destination
  * param type Main or branch route block
+ * param format URI format
  * return MODULE_RETURNCODE_TRUE success MODULE_RETURNCODE_FALSE failure
  */
 static int ospPrepareDestination(
     struct sip_msg* msg, 
     int isfirst,
-    int type)
+    int type,
+    int format)
 {
     str newuri = {NULL, 0};
     int result = MODULE_RETURNCODE_FALSE;
@@ -435,7 +438,7 @@ static int ospPrepareDestination(
     osp_dest* dest = ospGetNextOrigDestination();
 
     if (dest != NULL) {
-        ospRebuildDestionationUri(&newuri, dest->called, dest->host, "");
+        ospRebuildDestionationUri(&newuri, dest->called, dest->host, "", format);
 
         LOG(L_INFO, 
             "osp: prepare route to URI '%.*s' for call_id '%.*s' transaction_id '%lld'\n",
@@ -486,7 +489,7 @@ int ospPrepareFirstRoute(
 
     LOG(L_DBG, "osp: ospPrepareFirstRoute\n");
 
-    result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE);
+    result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE, 0);
 
     return result;
 }
@@ -509,7 +512,7 @@ int ospPrepareNextRoute(
 
     LOG(L_DBG, "osp: ospPrepareNextRoute\n");
 
-    result = ospPrepareDestination(msg, OSP_NEXT_ROUTE, OSP_MAIN_ROUTE);
+    result = ospPrepareDestination(msg, OSP_NEXT_ROUTE, OSP_MAIN_ROUTE, 0);
 
     return result;
 }
@@ -531,9 +534,9 @@ int ospPrepareAllRoutes(
 
     LOG(L_DBG, "osp: ospPrepareAllRoutes\n");
 
-    for(result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE);
+    for(result = ospPrepareDestination(msg, OSP_FIRST_ROUTE, OSP_MAIN_ROUTE, _osp_redir_uri);
         result == MODULE_RETURNCODE_TRUE;
-        result = ospPrepareDestination(msg, OSP_NEXT_ROUTE, OSP_MAIN_ROUTE))
+        result = ospPrepareDestination(msg, OSP_NEXT_ROUTE, OSP_MAIN_ROUTE, _osp_redir_uri))
     {
     }
 
