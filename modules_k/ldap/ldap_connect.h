@@ -34,18 +34,7 @@
 #define LDAP_CONNECT_H
 
 #include "../../str.h"
-
-/* define L_LDAP_DBG, 
-* setting LDAP_DBG will set log_level to L_DBG for this module only
-*/
 #include "../../dprint.h"
-
-#ifdef LDAP_DBG
-#define L_LDAP_DBG L_INFO
-#else
-#define L_LDAP_DBG L_DBG
-#endif
-
 
 extern int ldap_connect(char* _ld_name);
 extern int ldap_disconnect(char* _ld_name);

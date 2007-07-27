@@ -100,7 +100,7 @@ static inline int load_ldap_api(ldap_api_t *api)
 
 	if (!(load_ldap = (load_ldap_t) find_export("load_ldap", 0, 0)))
 	{
-		LOG(L_ERR, "ERROR:ldap:load_ldap_api: can't import load_ldap\n");
+		LM_ERR("can't import load_ldap\n");
 		return -1;
 	}
 

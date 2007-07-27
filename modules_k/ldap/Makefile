@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 
-#DEFS += -DLDAP_PERF -DLDAP_DBG
+#DEFS += -DLDAP_PERF
 
 auto_gen=
 NAME=ldap.so

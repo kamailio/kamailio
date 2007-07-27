@@ -99,11 +99,7 @@ int get_connected_ldap_session(char* _lds_name, struct ld_session** _lds)
 	*/
 	if ((*_lds = get_ld_session(_lds_name)) == NULL)
 	{
-		LOG(
-			L_ERR, 
-			"ERROR:ldap:get_connected_ldap_session: [%s]: ldap_session"
-			" not found\n",
-			_lds_name);
+		LM_ERR("[%s]: ldap_session not found\n", _lds_name);
 		return -1;
 	}
 
@@ -114,11 +110,7 @@ int get_connected_ldap_session(char* _lds_name, struct ld_session** _lds)
 		{
 			if ((*_lds = get_ld_session(_lds_name)) == NULL)
 			{
-				LOG(
-					L_ERR, 
-					"ERROR:ldap:get_connected_ldap_session: [%s]: ldap_session"
-					" not found\n",
-					_lds_name);
+				LM_ERR("[%s]: ldap_session not found\n", _lds_name);
 				return -1;
 			}
 		}
@@ -130,11 +122,7 @@ int get_connected_ldap_session(char* _lds_name, struct ld_session** _lds)
 				last_ldap_result = NULL;
 			}
 			ldap_disconnect(_lds_name);
-			LOG(
-				L_ERR, 
-				"ERROR:ldap:get_connected_ldap_session: [%s]: reconnect"
-				" failed\n",
-				_lds_name);
+			LM_ERR("[%s]: reconnect failed\n", _lds_name);
 			return -1;
 		}
 	}
@@ -182,8 +170,7 @@ int ldap_params_search(
 	case LDAP_SCOPE_SUBTREE:
 		break;
 	default:
-		LOG(L_ERR, "ERROR:ldap:ldap_params_search: [%s]: invalid scope"
-				" argument [%d]\n", _lds_name, _scope);
+		LM_ERR("[%s]: invalid scope argument [%d]\n", _lds_name, _scope);
 		return -1;
 	}
 
@@ -195,10 +182,7 @@ int ldap_params_search(
 			filter_vars);
 	if (rc >= LDAP_MAX_FILTER_LEN)
 	{
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_params_search: [%s]: filter string too long"
-			" (len [%d], max len [%d])\n",
+		LM_ERR(	"[%s]: filter string too long (len [%d], max len [%d])\n",
 			_lds_name,
 			rc, 
 			LDAP_MAX_FILTER_LEN);
@@ -206,7 +190,7 @@ int ldap_params_search(
 	}
 	else if (rc < 0)
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_params_search: vsnprintf failed\n");
+		LM_ERR("vsnprintf failed\n");
 		return -1;
 	}
 
@@ -234,9 +218,7 @@ int ldap_params_search(
 						_ld_result_count,
 						&rc) != 0))
 		{
-			LOG(
-				L_ERR,
-				"ERROR:ldap: [%s]: LDAP search (dn [%s], scope [%d],"
+			LM_ERR(	"[%s]: LDAP search (dn [%s], scope [%d],"
 				" filter [%s]) failed: %s\n",
 				_lds_name,
 				_dn,
@@ -247,9 +229,7 @@ int ldap_params_search(
 		}
 	}
 	
-	LOG(
-		L_LDAP_DBG,
-		"ldap:ldap_params_search: [%s]: [%d] LDAP entries found\n", 
+	LM_DBG(	"[%s]: [%d] LDAP entries found\n", 
 		_lds_name,
 		*_ld_result_count);
 	
@@ -265,10 +245,7 @@ int ldap_url_search(
 	int rc;
 
 	if (ldap_url_parse(_ldap_url, &ludp) != 0) {
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_url_search: invalid LDAP URL [%s]\n",
-			ZSW(_ldap_url));
+		LM_ERR("invalid LDAP URL [%s]\n", ZSW(_ldap_url));
 		if (ludp != NULL) {
 			ldap_free_urldesc(ludp);
 		}
@@ -276,16 +253,13 @@ int ldap_url_search(
 	}
 	if (ludp->lud_host == NULL)
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_url_search: no ldap session name found"
-				" in ldap URL [%s]\n",
-				ZSW(_ldap_url));
+		LM_ERR(	"no ldap session name found in ldap URL [%s]\n",
+			ZSW(_ldap_url));
 		return -2;
 	}
 
 
-	LOG(
-		L_DBG,
-		"ldap:ldap_search_first_entry: LDAP URL parsed into session_name"
+	LM_DBG(	"LDAP URL parsed into session_name"
 		" [%s], base [%s], scope [%d], filter [%s]\n",
 		ZSW(ludp->lud_host),
 		ZSW(ludp->lud_dn),
@@ -311,14 +285,12 @@ int ldap_inc_result_pointer()
 	* check for last_ldap_result
 	*/
 	if (last_ldap_result == NULL) {
-		LOG(L_ERR,
-			"ERROR:ldap:ldap_inc_result_pointer: last_ldap_result == NULL\n");
+		LM_ERR("last_ldap_result == NULL\n");
 		return -1;
 	}
 	if (last_ldap_handle == NULL)
 	{
-		LOG(L_ERR,
-			"ERROR:ldap:ldap_inc_result_pointer: last_ldap_handle == NULL\n");
+		LM_ERR("last_ldap_handle == NULL\n");
 		return -1;
 	}
 
@@ -345,12 +317,12 @@ int ldap_get_attr_vals(str *_attr_name, struct berval ***_vals)
 	* check for last_ldap_result
 	*/
 	if (last_ldap_result == NULL) {
-		LOG(L_ERR, "ERROR:ldap:ldap_get_attr_val: last_ldap_result == NULL\n");
+		LM_ERR("last_ldap_result == NULL\n");
 		return -1;
 	}
 	if (last_ldap_handle == NULL)
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_get_attr_val: last_ldap_handle == NULL\n");
+		LM_ERR("last_ldap_handle == NULL\n");
 		return -1;
 	}
 
@@ -432,8 +404,7 @@ int lds_search(
 	 */
 	if (get_connected_ldap_session(_lds_name, &lds) != 0)
 	{
-		LOG(L_ERR, "ERROR:ldap:lds_search: [%s]: couldn't get ldap session\n",
-				_lds_name);
+		LM_ERR("[%s]: couldn't get ldap session\n", _lds_name);
 		return -1;
 	}
 
@@ -446,9 +417,7 @@ int lds_search(
         }
 
 	
-	LOG(
-		L_LDAP_DBG,
-		"ldap:ldap_params_search: [%s]: performing LDAP search: dn [%s],"
+	LM_DBG(	"[%s]: performing LDAP search: dn [%s],"
 		" scope [%d], filter [%s], client_timeout [%d] usecs\n",
 		_lds_name,
 		_dn,
@@ -480,9 +449,7 @@ int lds_search(
 #ifdef LDAP_PERF
 	gettimeofday(&after_search, NULL);
 
-	LOG(
-		L_INFO, 
-		"ldap:lds_search: [%s]: LDAP search took [%d] usecs\n",
+	LM_INFO("[%s]: LDAP search took [%d] usecs\n",
 		_lds_name,
 		(int)((after_search.tv_sec * 1000000 + after_search.tv_usec)
 		- (before_search.tv_sec * 1000000 + before_search.tv_usec)));
@@ -501,9 +468,7 @@ int lds_search(
 			ldap_disconnect(_lds_name);
 		}
 		
-		LOG(
-			L_LDAP_DBG,
-			"ldap:lds_search: [%s]: ldap_search_ext_st failed: %s\n",
+		LM_DBG( "[%s]: ldap_search_ext_st failed: %s\n",
 			_lds_name,
 			ldap_err2string(*_ld_error));
 		return -1;
@@ -513,10 +478,7 @@ int lds_search(
 	*_ld_result_count = ldap_count_entries(lds->handle, last_ldap_result);
 	if (*_ld_result_count < 0)
 	{
-		LOG(
-			L_ERR, 
-			"ERROR:ldap:lds_search: [%s]: ldap_count_entries failed\n",
-			_lds_name);
+		LM_DBG("[%s]: ldap_count_entries failed\n", _lds_name);
 		return -1;
 	}
 

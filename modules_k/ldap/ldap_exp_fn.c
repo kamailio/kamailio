@@ -69,15 +69,11 @@ int ldap_search_impl(
 	*/
 	if (_ldap_url) {
 		if (xl_printf_s(_msg, _ldap_url, &ldap_url) != 0) {
-			LOG(
-				L_ERR, 
-				"ERROR:ldap:ldap_search: xl_printf_s failed\n");
+			LM_ERR("xl_printf_s failed\n");
 			return -2;
 		}
 	} else {
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_search: empty ldap_url\n");
+		LM_ERR("empty ldap_url\n");
 		return -2;
 	}
 
@@ -92,7 +88,7 @@ int ldap_search_impl(
 	if (ld_result_count < 1)
 	{
 		/* no LDAP entry found */
-		LOG(L_INFO, "ldap:ldap_search: no LDAP entry found\n");
+		LM_INFO("no LDAP entry found\n");
 		return -1;
 	}
 	return ld_result_count;
@@ -120,14 +116,14 @@ int ldap_write_result(
 				&dst_avp_type)
 			!= 0) 
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_result: error getting dst AVP name\n");
+		LM_ERR("error getting dst AVP name\n");
 		return -2;
 	}
 	if (dst_avp_type & AVP_NAME_STR)
 	{
 		if (dst_avp_name.s.len >= STR_BUF_SIZE)
 		{
-			LOG(L_ERR, "ERROR:ldap:ldap_result: dst AVP name too long\n");
+			LM_ERR("dst AVP name too long\n");
 			return -2;
 		}
 		strncpy(str_buf, dst_avp_name.s.s, dst_avp_name.s.len);
@@ -196,7 +192,7 @@ int ldap_write_result(
 		
 		if (rc < 0) 
 		{
-			LOG(L_ERR, "ERROR:ldap:ldap_result: failed to create new AVP\n");
+			LM_ERR("failed to create new AVP\n");
 			ldap_value_free_len(attr_vals);
 			return -2;
 		}
@@ -248,18 +244,16 @@ int ldap_result_check(
 	{
 		if (xl_printf_s(_msg, _lrp->check_str_elem_p, &check_str) != 0)
 		{
-			LOG(
-				L_ERR,
-				"ERROR:ldap:ldap_result_check: xl_printf_s failed\n");
+			LM_ERR("xl_printf_s failed\n");
 			return -2;
 		}
 	} else 
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_result_check: empty check string\n");
+		LM_ERR("empty check string\n");
 		return -2;
 	}
 
-	LOG(L_LDAP_DBG, "ldap:ldap_result_check: check_str [%s]\n", check_str.s);
+	LM_DBG("check_str [%s]\n", check_str.s);
 	
 	/*
 	* get LDAP attr values
@@ -294,7 +288,7 @@ int ldap_result_check(
 			attr_val = subst_result->s;
 		}
 		
-		LOG(L_LDAP_DBG, "ldap:ldap_result_check: attr_val [%s]\n", attr_val);
+		LM_DBG("attr_val [%s]\n", attr_val);
 		rc = strncmp(check_str.s, attr_val, check_str.len);
 		if (_se != NULL) 
 		{
@@ -325,15 +319,11 @@ int ldap_filter_url_encode(
 	*/
 	if (_filter_component) {
 		if (xl_printf_s(_msg, _filter_component, &filter_component_str) != 0) {
-			LOG(
-				L_ERR,
-				"ERROR:ldap:ldap_filter_url_encode: xl_printf_s failed\n");
+			LM_ERR("xl_printf_s failed\n");
 			return -1;
 		}
 	} else {
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_filter_url_encode: empty first argument\n");
+		LM_ERR("empty first argument\n");
 		return -1;
 	}
 
@@ -342,16 +332,14 @@ int ldap_filter_url_encode(
 	*/
 	if (xl_get_avp_name(_msg, _dst_avp_spec, &dst_avp_name, &dst_avp_type) != 0)
 	{
-		LOG(L_ERR,
-			"ERROR:ldap:ldap_filter_url_encode: error getting dst AVP name\n");
+		LM_ERR("error getting dst AVP name\n");
 		return -1;
 	}
 	if (dst_avp_type & AVP_NAME_STR)
 	{
 		if (dst_avp_name.s.len >= STR_BUF_SIZE)
 		{
-			LOG(L_ERR,
-				"ERROR:ldap:ldap_filter_url_encode: dst AVP name too long\n");
+			LM_ERR("dst AVP name too long\n");
 			return -1;
 		}
 		strncpy(str_buf, dst_avp_name.s.s, dst_avp_name.s.len);
@@ -366,8 +354,7 @@ int ldap_filter_url_encode(
 	esc_str.len = ESC_BUF_SIZE;
 	if (ldap_rfc4515_escape(&filter_component_str, &esc_str, 1) != 0)
 	{
-		LOG(L_ERR,
-		"ERROR:ldap:ldap_filter_url_encode: ldap_rfc4515_escape() failed\n");
+		LM_ERR("ldap_rfc4515_escape() failed\n");
 		return -1;
 	}
 
@@ -376,8 +363,7 @@ int ldap_filter_url_encode(
 	*/
 	if (add_avp(dst_avp_type|AVP_VAL_STR, dst_avp_name, (int_str)esc_str) != 0)
 	{
-		LOG(L_ERR,
-			"ERROR:ldap:ldap_filter_url_encode: failed to add new AVP\n");
+		LM_ERR("failed to add new AVP\n");
 		return -1;
 	}
 

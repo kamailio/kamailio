@@ -49,7 +49,7 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 	new_lds = (struct ld_session*)pkg_malloc(sizeof(struct ld_session));
 	if (new_lds == NULL)
 	{
-		LOG(L_ERR, "ERROR:ldap:add_ld_session: no memory\n");
+		LM_ERR("no memory\n");
 		return -1;
 	}
 
@@ -65,7 +65,7 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 		CFG_DEF_HOST_NAME);
 	new_lds->host_name = (char*)pkg_malloc(strlen(host_name)+1);
 	if (new_lds->host_name == NULL) {
-		LOG(L_ERR, "ERROR:ldap:add_ld_session: no memory\n");
+		LM_ERR("no memory\n");
 		return -1;
 	}
 	strcpy(new_lds->host_name, host_name);
@@ -83,9 +83,7 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 		CFG_DEF_LDAP_CLIENT_SEARCH_TIMEOUT);
 	if (client_search_timeout_ms < CFG_LDAP_CLIENT_SEARCH_TIMEOUT_MIN)
 	{
-		LOG(
-			L_INFO, 
-			"WARNING:ldap:add_ld_session: [%s = %d ms] is below allowed min"
+		LM_INFO("[%s = %d ms] is below allowed min"
 			" [%d ms] - [%s] set to [%d ms]\n",
 			CFG_N_LDAP_CLIENT_SEARCH_TIMEOUT,
 			client_search_timeout_ms,
@@ -122,7 +120,7 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 		CFG_DEF_LDAP_BIND_DN);
 	new_lds->bind_dn = (char*)pkg_malloc(strlen(bind_dn)+1);
 	if (new_lds->bind_dn == NULL) {
-		LOG(L_ERR, "ERROR:ldap:add_ld_session: no memory\n");
+		LM_ERR("no memory\n");
 		return -1;
 	}
 	strcpy(new_lds->bind_dn, bind_dn);
@@ -134,7 +132,7 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 		CFG_DEF_LDAP_BIND_PWD);
 	new_lds->bind_pwd = (char*)pkg_malloc(strlen(bind_pwd)+1);
 	if (new_lds->bind_pwd == NULL) {
-		LOG(L_ERR, "ERROR:ldap:add_ld_session: no memory\n");
+		LM_ERR("no memory\n");
 		return -1;
 	}
 	strcpy(new_lds->bind_pwd, bind_pwd);
@@ -165,7 +163,7 @@ struct ld_session* get_ld_session(char* _name)
 	
 	if (_name == NULL)
 	{
-		LOG(L_ERR, "ERROR:ldap:get_ld_session: lds_name == NULL\n");
+		LM_ERR("lds_name == NULL\n");
 		return NULL;
 	}
 	while (current != NULL)

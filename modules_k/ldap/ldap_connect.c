@@ -58,10 +58,7 @@ int ldap_connect(char* _ld_name)
 	
 	if ((lds = get_ld_session(_ld_name)) == NULL)
 	{
-		LOG(
-			L_ERR, 
-			"ERROR:ldap:ldap_connect: ld_session [%s] not found\n",
-			_ld_name);
+		LM_ERR("ld_session [%s] not found\n", _ld_name);
 		return -1;
 	}
 	
@@ -72,9 +69,7 @@ int ldap_connect(char* _ld_name)
 	rc = ldap_initialize(&lds->handle, lds->host_name);
 	if (rc != LDAP_SUCCESS)
 	{
-		LOG(
-			L_ERR, 
-			"ERROR:ldap:ldap_connect: [%s]: ldap_initialize (%s) failed: %s\n",
+		LM_ERR(	"[%s]: ldap_initialize (%s) failed: %s\n",
 			_ld_name,
 			lds->host_name,
 			ldap_err2string(rc));
@@ -94,22 +89,19 @@ int ldap_connect(char* _ld_name)
 		ldap_proto_version = LDAP_VERSION3;
 		break;
 	default:
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_connect: [%s]: Invalid LDAP protocol"
-			" version [%d]\n",
-			_ld_name, lds->version);
+		LM_ERR(	"[%s]: Invalid LDAP protocol version [%d]\n",
+			_ld_name, 
+			lds->version);
 		return -1;
 	}
 	if (ldap_set_option(lds->handle,
 				LDAP_OPT_PROTOCOL_VERSION,
 				&ldap_proto_version)
-			!= LDAP_OPT_SUCCESS) {
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_connect: [%s]: Could not set"
-			" LDAP_OPT_PROTOCOL_VERSION [%d]\n",
-			_ld_name, ldap_proto_version);
+			!= LDAP_OPT_SUCCESS) 
+	{
+		LM_ERR(	"[%s]: Could not set LDAP_OPT_PROTOCOL_VERSION [%d]\n",
+			_ld_name, 
+			ldap_proto_version);
 		return -1;
 	}
 
@@ -118,28 +110,24 @@ int ldap_connect(char* _ld_name)
 				LDAP_OPT_RESTART,
 				LDAP_OPT_ON)
 			!= LDAP_OPT_SUCCESS) {
-		LOG(
-			L_ERR, 
-				"ERROR:ldap:ldap_connect: [%s]: Could not set LDAP_OPT_RESTART"
-				" to ON\n",
-			_ld_name);
+		LM_ERR("[%s]: Could not set LDAP_OPT_RESTART to ON\n", _ld_name);
 		return -1;
 	}
 
 	/* LDAP_OPT_TIMELIMIT */
 	/*
-		if (lds->server_search_timeout > 0) {
-				if (ldap_set_option(lds->handle,
-									LDAP_OPT_TIMELIMIT,
-									&lds->server_search_timeout)
-					!= LDAP_OPT_SUCCESS) {
-						LOG(L_ERR,
-							"ERROR:ldap:ldap_connect: [%s]: Could not set LDAP_OPT_TIMELIMIT to [%d]\n",
-							_ld_name, lds->server_search_timeout);
-						return -1;
-				}
+	if (lds->server_search_timeout > 0) {
+		if (ldap_set_option(lds->handle,
+				LDAP_OPT_TIMELIMIT,
+				&lds->server_search_timeout)
+			!= LDAP_OPT_SUCCESS) {
+			LOG(L_ERR,
+			"ERROR:ldap:ldap_connect: [%s]: Could not set LDAP_OPT_TIMELIMIT to [%d]\n",
+			_ld_name, lds->server_search_timeout);
+			return -1;
 		}
-*/
+	}
+	*/
 	
 	/* LDAP_OPT_NETWORK_TIMEOUT */
 	if ((lds->network_timeout.tv_sec > 0) || (lds->network_timeout.tv_usec > 0))
@@ -149,11 +137,10 @@ int ldap_connect(char* _ld_name)
 					(const void *)&lds->network_timeout)
 				!= LDAP_OPT_SUCCESS)
 		{
-			LOG(
-				L_ERR,
-				"ERROR:ldap:ldap_connect: [%s]: Could not set"
+			LM_ERR(	"[%s]: Could not set"
 				" LDAP_NETWORK_TIMEOUT to [%d.%d]\n",
-				_ld_name, (int)lds->network_timeout.tv_sec,
+				_ld_name, 
+				(int)lds->network_timeout.tv_sec,
 				(int)lds->network_timeout.tv_usec);
 		}
 	}
@@ -175,9 +162,7 @@ int ldap_connect(char* _ld_name)
 		&msgid);
 	if (rc != LDAP_SUCCESS)
 	{
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_connect [%s]: ldap bind failed: %s\n",
+		LM_ERR(	"[%s]: ldap bind failed: %s\n",
 			_ld_name,
 			ldap_err2string(rc));
 		return -1;
@@ -201,19 +186,14 @@ int ldap_connect(char* _ld_name)
 	{
 		ldap_get_option(lds->handle, LDAP_OPT_ERROR_NUMBER, &rc);
 		ldap_err_str = ldap_err2string(rc);
-		LOG(
-			L_ERR,
-			"ERROR: ldap:ldap_connect: [%s]: ldap_result failed: %s\n",
+		LM_ERR(	"[%s]: ldap_result failed: %s\n",
 			_ld_name,
 			ldap_err_str);
 		return -1;
 	} 
 	else if (rc == 0)
 	{
-		LOG(
-			L_ERR,
-			"ERROR: ldap:ldap_connect: [%s]: bind operation timed out\n",
-			_ld_name);
+		LM_ERR("[%s]: bind operation timed out\n", _ld_name);
 		return -1;
 	}
 
@@ -229,18 +209,16 @@ int ldap_connect(char* _ld_name)
 		1);
 	if (rc != LDAP_SUCCESS)
 	{
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_connect: [%s]: ldap_parse_result failed: %s\n",
-			_ld_name, ldap_err2string(rc));
+		LM_ERR(	"[%s]: ldap_parse_result failed: %s\n",
+			_ld_name, 
+			ldap_err2string(rc));
 		return -1;
 	}
 	if (ldap_bind_result_code != LDAP_SUCCESS)
 	{
-		LOG(
-			L_ERR,
-			"ERROR:ldap:ldap_connect: [%s]: ldap bind failed: %s\n",
-			_ld_name, ldap_err2string(ldap_bind_result_code));
+		LM_ERR(	"[%s]: ldap bind failed: %s\n",
+			_ld_name, 
+			ldap_err2string(ldap_bind_result_code));
 		return -1;
 	}
 
@@ -249,9 +227,7 @@ int ldap_connect(char* _ld_name)
 	/* ldap_msgfree(result); */
 
 
-	LOG(
-		L_LDAP_DBG, 
-		"ldap:ldap_connect: [%s]: LDAP bind successful (ldap_host [%s])\n",
+	LM_DBG(	"[%s]: LDAP bind successful (ldap_host [%s])\n",
 		_ld_name, 
 		lds->host_name);
 
@@ -268,10 +244,7 @@ int ldap_disconnect(char* _ld_name)
 
 	if ((lds = get_ld_session(_ld_name)) == NULL)
 	{
-		LOG(
-			L_ERR, 
-			"ERROR:ldap:ldap_disconnect: ld_session [%s] not found\n",
-			_ld_name);
+		LM_ERR("ld_session [%s] not found\n", _ld_name);
 		return -1;
 	}
 
@@ -291,21 +264,18 @@ int ldap_reconnect(char* _ld_name)
 	
 	if (ldap_disconnect(_ld_name) != 0)
 	{
-		LOG(
-			L_ERR, 
-			"ERROR:ldap:ldap_reconnect: [%s]: disconnect failed\n", 
-			_ld_name);
+		LM_ERR("[%s]: disconnect failed\n", _ld_name);
 		return -1;
 	}
 
 	if ((rc = ldap_connect(_ld_name)) != 0)
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_reconnect: [%s]: reconnect failed\n",
+		LM_ERR("[%s]: reconnect failed\n",
 				_ld_name);
 	}
 	else
 	{
-		LOG(L_INFO, "ldap:ldap_reconnect: [%s]: LDAP reconnect successful\n",
+		LM_ERR("[%s]: LDAP reconnect successful\n",
 				_ld_name);
 	}
 	return rc;
@@ -325,8 +295,7 @@ int ldap_get_vendor_version(char** _version)
 	
 	if (ldap_get_option(NULL, LDAP_OPT_API_INFO, &api) != LDAP_SUCCESS)
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_get_vendor_version:"
-				" ldap_get_option(API_INFO) failed\n");
+		LM_ERR("ldap_get_option(API_INFO) failed\n");
 		return -1;
 	}
 
@@ -334,7 +303,7 @@ int ldap_get_vendor_version(char** _version)
 			api.ldapai_vendor_version);
 	if ((rc >= 128) || (rc < 0))
 	{
-		LOG(L_ERR, "ERROR:ldap:ldap_get_vendor_version: snprintf failed\n");
+		LM_ERR("snprintf failed\n");
 		return -1;
 	}
 

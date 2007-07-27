@@ -173,15 +173,13 @@ static int child_init(int rank)
 					config_vals)
 				!= 0)
 		{
-			LOG(L_ERR, "ERROR:ldap:child_init: [%s]: add_ld_session failed\n",
-			ld_name);
+			LM_ERR("[%s]: add_ld_session failed\n", ld_name);
 			return -1;
 		}
 
 		if (ldap_connect(ld_name) != 0)
 		{
-			LOG(L_ERR, "ERROR:ldap:child_init: [%s]: failed to connect to LDAP host(s)\n",
-			ld_name);
+			LM_ERR("[%s]: failed to connect to LDAP host(s)\n", ld_name);
 			ldap_disconnect(ld_name);
 			return -1;
 		}
@@ -198,28 +196,24 @@ static int mod_init(void)
 	char* section_name;
 	char* ldap_version;
 	
-	LOG(L_INFO, "LDAP_H350 module - initializing\n");
+	LM_INFO("LDAP_H350 module - initializing\n");
 
 	/*
 	* read config file
 	*/
 	if (strlen(ldap_config.s) == 0)
 	{
-		LOG(L_ERR, "ERROR:ldap:mod_init: config_file is empty"
-				" - this module param is mandatory\n");
+		LM_ERR("config_file is empty - this module param is mandatory\n");
 		return -2;
 	}
 	if ((config_vals = iniparser_new(ldap_config.s)) == NULL)
 	{
-		LOG(L_ERR, "ERROR:ldap:mod_init: failed to read config_file [%s]\n",
-				ldap_config.s);
+		LM_ERR("failed to read config_file [%s]\n", ldap_config.s);
 		return -2;
 	}
 	if ((ld_count = iniparser_getnsec(config_vals)) < 1)
 	{
-		LOG(L_ERR,
-			"ERROR:ldap:mod_init: no section found in config_file [%s]\n",
-			ldap_config.s);
+		LM_ERR("no section found in config_file [%s]\n", ldap_config.s);
 		return -2;
 	}
 	/* check if mandatory settings are present */
@@ -228,17 +222,17 @@ static int mod_init(void)
 		section_name = iniparser_getsecname(config_vals, i);
 		if (strlen(section_name) > 255)
 		{
-			LOG(L_ERR, "ERROR:ldap:mod_init: config_file section name [%s]"
-					" longer than allowed 255 characters",
-			section_name);
+			LM_ERR(	"config_file section name [%s]"
+				" longer than allowed 255 characters",
+				section_name);
 			return -2;
 		}
 		if (!iniparser_find_entry(config_vals,
 					get_ini_key_name(section_name, CFG_N_LDAP_HOST)))
 		{
-			LOG(L_ERR,
-				"ERROR:ldap:mod_init: mandatory %s not defined in [%s]\n", 
-			CFG_N_LDAP_HOST, section_name);
+			LM_ERR(	"mandatory %s not defined in [%s]\n", 
+				CFG_N_LDAP_HOST, 
+				section_name);
 			return -2;
 		}
 	}	
@@ -248,10 +242,10 @@ static int mod_init(void)
 	*/
 	if (ldap_get_vendor_version(&ldap_version) != 0)
 	{
-		LOG(L_ERR, "ERROR:ldap:mod_init: ldap_get_vendor_version failed\n");
+		LM_ERR("ldap_get_vendor_version failed\n");
 		return -2;
 	}
-	LOG(L_INFO, "LDAP: ldap api version: %s\n", ldap_version);
+	LM_ERR("%s\n", ldap_version);
 
 	return 0;
 }
@@ -328,10 +322,9 @@ static int ldap_search_fixup(void** param, int param_no)
 		if (s==0 || s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-				LOG(	L_ERR, 
-					"ERROR:ldap:ldap_search_fixup: xl_parse_format "
-					"failed\n");
+			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) 
+			{
+				LM_ERR("xl_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -352,11 +345,10 @@ static int ldap_result_fixup(void** param, int param_no)
 	
 	if (param_no == 1) {
 		arg_str = (char*)*param;
-		if ((dst_avp_str = strchr(arg_str, '/')) == 0) {
+		if ((dst_avp_str = strchr(arg_str, '/')) == 0) 
+		{
 			/* no / found in arg_str */
-			LOG(	L_ERR, 
-				"ERROR:ldap:ldap_result: invalid first argument [%s]\n",
-				arg_str);
+			LM_ERR("invalid first argument [%s]\n", arg_str);
 			return E_UNSPEC;
 		}
 		*(dst_avp_str++) = 0;
@@ -370,8 +362,7 @@ static int ldap_result_fixup(void** param, int param_no)
 			}
 			else if (strcmp(dst_avp_val_type_str, "str"))
 			{
-				LOG(	L_ERR,
-					"ERROR:ldap:ldap_result: invalid avp_type [%s]\n",
+				LM_ERR(	"invalid avp_type [%s]\n",
 					dst_avp_val_type_str);
 				return E_UNSPEC;
 			}
@@ -379,7 +370,7 @@ static int ldap_result_fixup(void** param, int param_no)
 
 		lp = (struct ldap_result_params*)pkg_malloc(sizeof(struct ldap_result_params));
 		if (lp == NULL) {
-			LOG(L_ERR, "ERROR:ldap:ldap_result: no memory\n");
+			LM_ERR("no memory\n");
 			return E_OUT_OF_MEM;
 		}
 		memset(lp, 0, sizeof(struct ldap_result_params));
@@ -395,15 +386,14 @@ static int ldap_result_fixup(void** param, int param_no)
 			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
 		if (p == 0) {
 			pkg_free(lp);
-			LOG(L_ERR, "ERROR:ldap:ldap_result: parse error for [%s]\n",
+			LM_ERR("parse error for [%s]\n",
 					dst_avp_str);
 			return E_UNSPEC;
 		}
 		if (lp->dst_avp_spec.type != XL_AVP) {
 			pkg_free(lp);
-			LOG(L_ERR, 
-			"ERROR:ldap:ldap_result: bad attribute name [%s]\n",
-			dst_avp_str);
+			LM_ERR(	"bad attribute name [%s]\n",
+				dst_avp_str);
 			return E_UNSPEC;
 		}
 		*param = (void*)lp;
@@ -413,8 +403,7 @@ static int ldap_result_fixup(void** param, int param_no)
 		subst.len = strlen(*param);
 		se = subst_parser(&subst);
 		if (se == 0) {
-			LOG(L_ERR,
-			"ERROR:ldap:ldap_result: bad subst re [%s]\n",
+			LM_ERR("bad subst re [%s]\n",
 			(char*)*param);
 			return E_BAD_RE;
 		}
@@ -439,10 +428,7 @@ static int ldap_result_check_fixup(void** param, int param_no)
 		if ((check_str = strchr(arg_str, '/')) == 0)
 		{
 			/* no / found in arg_str */
-			LOG(
-				L_ERR,
-				"ERROR:ldap:ldap_result_check: invalid first argument [%s]"
-				" (no '/' found)\n",
+			LM_ERR(	"invalid first argument [%s] (no '/' found)\n",
 				arg_str);
 			return E_UNSPEC;
 		}
@@ -450,7 +436,7 @@ static int ldap_result_check_fixup(void** param, int param_no)
 		
 		lp = (struct ldap_result_check_params*)pkg_malloc(sizeof(struct ldap_result_check_params));
 		if (lp == NULL) {
-			LOG(L_ERR, "ERROR:ldap:ldap_result_check: no memory\n");
+			LM_ERR("no memory\n");
 			return E_OUT_OF_MEM;
 		}
 		memset(lp, 0, sizeof(struct ldap_result_check_params));
@@ -468,7 +454,7 @@ static int ldap_result_check_fixup(void** param, int param_no)
 			if (xl_parse_format(check_str, &(lp->check_str_elem_p),
 						XL_DISABLE_COLORS) < 0)
 			{
-				LOG(L_ERR, "ERROR:ldap:ldap_result_check: xl_parse_format "
+				LM_ERR("xl_parse_format "
 				"failed\n");
 				return E_OUT_OF_MEM;
 			}
@@ -481,9 +467,7 @@ static int ldap_result_check_fixup(void** param, int param_no)
 		subst.len = strlen(*param);
 		se = subst_parser(&subst);
 		if (se == 0) {
-			LOG(
-				L_ERR,
-				"ERROR:ldap:ldap_result_check: bad subst re [%s]\n",
+			LM_ERR(	"bad subst re [%s]\n",
 				(char*)*param);
 			return E_BAD_RE;
 		}
@@ -505,8 +489,7 @@ static int ldap_filter_url_encode_fixup(void** param, int param_no)
 			elem_p = 0;
 		} else {
 			if (xl_parse_format(s, &elem_p, XL_DISABLE_COLORS) < 0) {
-				LOG(L_ERR, "ERROR:ldap:ldap_filter_url_encode_fixup:"
-						" xl_parse_format failed\n");
+				LM_ERR("xl_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -516,7 +499,7 @@ static int ldap_filter_url_encode_fixup(void** param, int param_no)
 	{
 		spec_p = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
 		if (spec_p == NULL) {
-			LOG(L_ERR, "ERROR:ldap:ldap_filter_url_encode_fixup: no memory\n");
+			LM_ERR("no memory\n");
 			return E_OUT_OF_MEM;
 		}
 		
@@ -526,15 +509,13 @@ static int ldap_filter_url_encode_fixup(void** param, int param_no)
 				== 0)
 		{
 			pkg_free(spec_p);
-			LOG(L_ERR,
-			"ERROR:ldap:ldap_filter_url_encode_fixup: parse error for [%s]\n",
+			LM_ERR("parse error for [%s]\n",
 				(char*)*param);
 			return E_UNSPEC;
 		}
 		if (spec_p->type != XL_AVP) {
 			pkg_free(spec_p);
-			LOG(L_ERR,
-				"ERROR:ldap:ldap_filter_url_encode_fixup: bad attribute name"
+			LM_ERR("bad attribute name"
 				" [%s]\n", (char*)*param);
 			return E_UNSPEC;
 		}
