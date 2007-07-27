@@ -463,7 +463,7 @@ static int cpl_exit(void)
 				return -1;
 			}
 		} else {
-			LOG(L_INFO,"INFO:cl_c:cpl_exit: killed my child!");
+			LOG(L_INFO,"INFO:cl_c:cpl_exit: killed my child!\n");
 		}
 	}
 	return 0;

@@ -264,7 +264,7 @@ static int mi_destroy(void)
 			}
 		} else {
 			LOG(L_INFO,"INFO:mi_fifo:mi_destroy: fifo child successfully "
-				"killed!");
+				"killed!\n");
 		}
 	}
 

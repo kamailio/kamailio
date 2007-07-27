@@ -381,7 +381,7 @@ static int mi_destroy(void)
 			else
 			{
 				LOG(L_INFO,"INFO:mi_datagram:mi_destroy: datagram child "
-						"successfully killed!");
+						"successfully killed!\n");
 			}		
 		}
 
