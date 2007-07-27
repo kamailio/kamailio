@@ -8,6 +8,7 @@ aliases:1004
 cpl:1
 dbaliases:1
 dialog:1
+dispatcher:1
 domain:1
 domainpolicy:2
 grp:2

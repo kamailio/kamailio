@@ -75,7 +75,7 @@ fi
 if [ -z "$STANDARD_MODULES" ] ; then
 	STANDARD_MODULES="standard acc lcr domain group permissions registrar
 			  usrloc msilo alias_db uri_db speeddial avpops auth_db pdt
-			  dialog"
+			  dialog dispatcher"
 fi
 if [ -z "$EXTRA_MODULES" ] ; then
 	EXTRA_MODULES="imc cpl siptrace domainpolicy"
