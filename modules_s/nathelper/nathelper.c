@@ -1853,7 +1853,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 	char **ap, *argv[10];
 	struct lump* anchor;
 	struct rtpp_node *node;
-	struct iovec v[14] = {
+	struct iovec v[16] = {
 		{NULL, 0},	/* command */
 		{NULL, 0},	/* options */
 		{" ", 1},	/* separator */
@@ -1867,7 +1867,9 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 		{";", 1},	/* separator */
 		{NULL, 0},	/* medianum */
 		{" ", 1},	/* separator */
-		{NULL, 0}	/* to_tag */
+		{NULL, 0},	/* to_tag */
+		{";", 1},	/* separator */
+		{NULL, 0}	/* medianum */
 	};
 	char *v1p, *v2p, *c1p, *c2p, *m1p, *m2p, *bodylimit;
 	char medianum_buf[20];
@@ -2102,13 +2104,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 				v[10].iov_len = v[11].iov_len = 0;
 			}
 			STR2IOVEC(to_tag, v[13]);
+			STR2IOVEC(medianum_str, v[15]);
 			do {
 				node = select_rtpp_node(callid, 1, node_idx);
 				if (!node) {
 					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
 					return -1;
 				}
-				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 14 : 12);
+				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
 			} while (cp == NULL);
 			LOG(L_DBG, "force_rtp_proxy2: proxy reply: %s\n", cp);
 			/* Parse proxy reply to <argc,argv> */
