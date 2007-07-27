@@ -84,6 +84,7 @@ extern char* dialog_table_name;
 extern int dlg_db_mode;
 
 int init_dlg_db(char *db_url, int dlg_hash_size, int db_update_period);
+int dlg_connect_db(char *db_url);
 void destroy_dlg_db();
 
 int remove_dialog_from_db(struct dlg_cell * cell);

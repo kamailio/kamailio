@@ -97,6 +97,17 @@ static void dialog_update_db(unsigned int ticks, void * param);
 static int load_dialog_info_from_db(int dlg_hash_size);
 
 
+int dlg_connect_db(char *db_url)
+{
+	if (dialog_db_handle) {
+		LM_CRIT("BUG - db connection found already open\n");
+		return -1;
+	}
+	if ((dialog_db_handle = dialog_dbf.init(db_url)) == 0)
+		return -1;
+	return 0;
+}
+
 
 int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 {
@@ -112,7 +123,7 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 		return -1;
 	}
 
-	if ((dialog_db_handle = dialog_dbf.init(db_url)) == 0){
+	if (dlg_connect_db(db_url)!=0){
 		LOG(L_ERR, "ERROR:dialog:init_dialog_db: unable to connect to " 
 			"the database\n");
 		return -1;
@@ -145,6 +156,9 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 			"dialog data\n");
 		return -1;
 	}
+
+	dialog_dbf.close(dialog_db_handle);
+	dialog_db_handle = 0;
 
 	return 0;
 }

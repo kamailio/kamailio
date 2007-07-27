@@ -62,6 +62,7 @@ MODULE_VERSION
 
 
 static int mod_init(void);
+static int child_init(int rank);
 static void mod_destroy();
 
 /* module parameter */
@@ -169,7 +170,7 @@ struct module_exports exports= {
 	mod_init,        /* module initialization function */
 	0,               /* reply processing function */
 	mod_destroy,
-	0                /* per-child init function */
+	child_init       /* per-child init function */
 };
 
 
@@ -333,6 +334,23 @@ static int mod_init(void)
 
 	return 0;
 }
+
+
+static int child_init(int rank)
+{
+	if ( (dlg_db_mode==DB_MODE_REALTIME && rank>0) ||
+	(dlg_db_mode==DB_MODE_DELAYED && rank==PROC_TIMER) ){
+		if ( dlg_connect_db(db_url) ) {
+			LM_ERR("failed to connect to database (rank=%d)\n",rank);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
+
 
 
 static void mod_destroy()
