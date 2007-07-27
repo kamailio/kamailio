@@ -810,18 +810,24 @@ inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r,
 {
 	int ret;
 	str val;
+	char empty_str=0;
 
 	ret = run_select(&val, sel, msg);
 	if (ret < 0) return -1;
 	if (ret > 0) return 0;
-	if (val.len==0) return 0;
 
 	switch(op) {
-	case NO_OP: return 1;
+	case NO_OP: return (val.len>0);
 	case BINOR_OP:
 	case BINAND_OP:
 		ERR("Binary operators cannot be used with string selects\n");
 		return -1;
+	}
+	if (val.len==0) {
+		/* make sure the string pointer uses accessible memory range
+		 * the comp_str function might dereference it
+		 */
+		val.s=&empty_str;
 	}
 	return comp_str(op, &val, rtype, r, msg);
 }
