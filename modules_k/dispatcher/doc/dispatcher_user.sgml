@@ -77,6 +77,89 @@ modparam("dispatcher", "list_file", "/var/run/openser/dispatcher.list")
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+ 		<title><varname>db_url</varname> (string)</title>
+ 		<para>
+		If you want to load the sets of gateways from the database you must set
+		this parameter.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>NULL</quote> (disable DB support).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>db_url</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>table_name</varname> (string)</title>
+		<para>
+		If you want to load the sets of gateways from the database you must set
+		this parameter as the database name.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>dispatcher</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>table_name</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "table_name", "my_dispatcher")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>setid_col</varname> (string)</title>
+		<para>
+			The column's name in the database storing the gateway's group id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>setid</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>setid_col</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "setid_col", "groupid")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>destination_col</varname> (string)</title>
+		<para>
+			The column's name in the database storing the gateway's sip uri.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>destination</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>destination_col</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "destination_col", "uri")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section>
 		<title><varname>force_dst</varname> (int)</title>
 		<para>
@@ -371,6 +454,11 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			<listitem>
 				<para>
+				<quote>6</quote> - random (using rand()).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
@@ -559,6 +647,26 @@ ds_select_dst("1", "0");
 		_empty_line_
 		</programlisting>
     </section>
+	<section>
+		<title>
+		<function moreinfo="none">ds_reload</function>
+		</title>
+		<para>
+		It reloads the groups and included destinations.
+		Available only when DB support configured.
+		</para>
+		<para>
+		Name: <emphasis>ds_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI DATAGRAM Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		":ds_reload:\n."
+		</programlisting>
+    </section>
+
     </section>
 	
 	<section>

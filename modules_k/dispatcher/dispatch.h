@@ -48,6 +48,10 @@
 #define DS_PROBING_DST		2  /* checking destination */
 #define DS_RESET_FAIL_DST	4  /* Reset-Failure-Counter */
 
+extern char *ds_db_url;
+extern char *ds_table_name;
+extern char *ds_set_id_col;
+extern char *ds_dest_uri_col;
 
 typedef struct _ds_param
 {
@@ -70,11 +74,13 @@ extern unsigned short cnt_avp_type;
 
 /* Structure containing pointers to TM-functions */
 struct tm_binds tmb;
-extern str ping_method;
-extern str ping_from;
+extern str ds_ping_method;
+extern str ds_ping_from;
 extern int probing_threshhold; /* number of failed requests, before a destination is taken into probing */ 
 
+int init_data();
 int ds_load_list(char *lfile);
+int ds_load_db();
 int ds_destroy_list();
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);

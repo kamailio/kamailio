@@ -35,6 +35,8 @@
  * re-enabling of destinations (carsten)
  * 2007-05-08  Ported the changes to SVN-Trunk, renamed ds_is_domain to
  * ds_is_from_list and modified the function to work with IPv6 adresses.
+ * 2007-07-18  removed index stuff 
+ * 			   added DB support to load/reload data(ancuta)
  */
 
 #include <stdio.h>
@@ -55,16 +57,12 @@
 #include "../../parser/digest/digest.h"
 #include "../../resolve.h"
 #include "../tm/tm_load.h"
+#include "../../db/db.h"
+#include "../../db/db_res.h"
 
 #include "dispatch.h"
 
-typedef struct _ds_setidx
-{
-	int id;
-	int index;
-	struct _ds_setidx *next;
-} ds_setidx_t, *ds_setidx_p;
-
+#define DS_TABLE_VERSION	1
 
 typedef struct _ds_dest
 {
@@ -73,7 +71,6 @@ typedef struct _ds_dest
 	struct ip_addr ip_address; /* IP-Address of the entry */
     unsigned short int port; /* Port of the request URI */
     int failure_count;
-    	
 	struct _ds_dest *next;
 } ds_dest_t, *ds_dest_p;
 
@@ -81,7 +78,6 @@ typedef struct _ds_set
 {
 	int id;				/* id of dst set */
 	int nr;				/* number of items in dst set */
-	int index;			/* index pf dst set */
 	int last;			/* last used item in dst set */
 	ds_dest_p dlist;
 	struct _ds_set *next;
@@ -89,39 +85,201 @@ typedef struct _ds_set
 
 extern int ds_force_dst;
 
-ds_setidx_p _ds_index = NULL;
-ds_set_p _ds_list = NULL;
-int _ds_list_nr = 0;
+static db_func_t ds_dbf;
+static db_con_t* ds_db_handle = 0;
+ds_set_p *ds_lists=NULL;
+int *ds_list_nr, *crt_idx, *next_idx;
 
-/**
- *
- */
+#define _ds_list 	(ds_lists[*crt_idx])
+#define _ds_list_nr (*ds_list_nr)
+
+void destroy_list(int);
+
+int init_data()
+{
+	int * p;
+
+	ds_lists = (ds_set_p*)shm_malloc(2*sizeof(ds_set_p));
+	if(!ds_lists)
+	{
+		LM_ERR("Out of memory\n");
+		return -1;
+	}
+	ds_lists[0] = ds_lists[1] = 0;
+
+	
+	p = (int*)shm_malloc(3*sizeof(int));
+	if(!p)
+	{
+		LM_ERR("Out of memory\n");
+		return -1;
+	}
+
+	crt_idx = p;
+	next_idx = p+1;
+	ds_list_nr = p+2;
+	*crt_idx= *next_idx = 0;
+
+	return 0;
+}
+
+int add_dest2list(int id, str uri, int list_idx, int * setn)
+{
+	ds_dest_p dp = NULL;
+	ds_set_p  sp = NULL;
+	
+	/* For DNS-Lookups */
+	static char hn[256];
+	struct hostent* he;
+	struct sip_uri puri;
+
+	/* check uri */
+	if(parse_uri(uri.s, uri.len, &puri)!=0 || puri.host.len>254)
+	{
+		LM_ERR("bad uri [%.*s]\n", uri.len, uri.s);
+		goto err;
+	}
+	
+	/* get dest set */
+	sp = ds_lists[list_idx];
+	while(sp)
+	{
+		if(sp->id == id)
+			break;
+		sp = sp->next;
+	}
+
+	if(sp==NULL)
+	{
+		sp = (ds_set_p)shm_malloc(sizeof(ds_set_t));
+		if(sp==NULL)
+		{
+			LM_ERR("no more memory.\n");
+			goto err;
+		}
+		
+		memset(sp, 0, sizeof(ds_set_t));
+		sp->next = ds_lists[list_idx];
+		ds_lists[list_idx] = sp;
+		*setn = *setn+1;
+	}
+	sp->id = id;
+	sp->nr++;
+
+	/* store uri */
+	dp = (ds_dest_p)shm_malloc(sizeof(ds_dest_t));
+	if(dp==NULL)
+	{
+		LM_ERR("no more memory!\n");
+		goto err;
+	}
+	memset(dp, 0, sizeof(ds_dest_t));
+
+	dp->uri.s = (char*)shm_malloc((uri.len+1)*sizeof(char));
+	if(dp->uri.s==NULL)
+	{
+		LM_ERR("no more memory!\n");
+		goto err;
+	}
+	strncpy(dp->uri.s, uri.s, uri.len);
+	dp->uri.s[uri.len]='\0';
+	dp->uri.len = uri.len;
+
+	/* The Hostname needs to be \0 terminated for resolvehost, so we
+	 * make a copy here. */
+	strncpy(hn, puri.host.s, puri.host.len);
+	hn[puri.host.len]='\0';
+		
+	/* Do a DNS-Lookup for the Host-Name: */
+	he=resolvehost(hn, 1);
+	if (he==0)
+	{
+		LM_ERR("could not resolve %.*s\n", puri.host.len, puri.host.s);
+		pkg_free(hn);
+		goto err;
+	}
+	/* Free the hostname */
+	hostent2ip_addr(&dp->ip_address, he, 0);
+		
+	/* Copy the Port out of the URI: */
+	dp->port = puri.port_no;		
+
+	dp->next = sp->dlist;
+	sp->dlist = dp;
+
+	LM_DBG("dest [%d/%d] <%.*s>\n", sp->id, sp->nr, dp->uri.len, dp->uri.s);
+	
+	return 0;
+err:
+	/* free allocated memory */
+	if(dp!=NULL)
+	{
+		if(dp->uri.s!=NULL)
+			shm_free(dp->uri.s);
+		shm_free(dp);
+	}
+	return -1;
+}
+
+/* compact destinations from sets for fast access */
+int reindex_dests(int list_idx, int setn)
+{
+	int j;
+	ds_set_p  sp = NULL;
+	ds_dest_p dp = NULL, dp0= NULL;
+
+	for(sp = ds_lists[list_idx]; sp!= NULL;	sp->dlist = dp0, sp = sp->next)
+	{
+		dp0 = (ds_dest_p)shm_malloc(sp->nr*sizeof(ds_dest_t));
+		if(dp0==NULL)
+		{
+			LM_ERR("no more memory!\n");
+			goto err1;
+		}
+		memset(dp0, 0, sp->nr*sizeof(ds_dest_t));
+
+		/*copy from the old pointer to destination, and then free it*/
+		for(j=sp->nr-1; j>=0 && sp->dlist!= NULL; j--)
+		{
+			memcpy(&dp0[j], sp->dlist, sizeof(ds_dest_t));
+			if(j==sp->nr-1)
+				dp0[j].next = NULL;
+			else
+				dp0[j].next = &dp0[j+1];
+	
+			dp = sp->dlist;
+			sp->dlist = dp->next;
+			
+			shm_free(dp);
+			dp=NULL;
+		}
+	}
+
+	LM_DBG("found [%d] dest sets\n", setn);
+	return 0;
+
+err1:
+	return -1;
+}
+
+/*load groups of destinations from file */
 int ds_load_list(char *lfile)
 {
 	char line[256], *p;
 	FILE *f = NULL;
-	int id, i, j, setn;
+	int id, setn;
 	str uri;
-	struct sip_uri puri;
-	ds_dest_p dp = NULL, dp0 = NULL;
-	ds_set_p  sp = NULL, sp0 = NULL;
-	ds_setidx_p si = NULL, si0 = NULL;
 
-	/* For DNS-Lookups */
-	char *hn;
-	struct hostent* he;
-	
 	if(lfile==NULL || strlen(lfile)<=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_load_list: bad list file\n");
+		LM_ERR("bad list file\n");
 		return -1;
 	}
 
 	f = fopen(lfile, "r");
 	if(f==NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_load_list: can't open list file [%s]\n",
-				lfile);
+		LM_ERR("can't open list file [%s]\n", lfile);
 		return -1;
 		
 	}
@@ -149,7 +307,7 @@ int ds_load_list(char *lfile)
 			p++;
 		if(*p=='\0' || *p=='#')
 		{
-			LOG(L_ERR, "DISPATCHER:ds_load_list: bad line [%s]\n", line);
+			LM_ERR("bad line [%s]\n", line);
 			goto error;
 		}
 
@@ -159,253 +317,193 @@ int ds_load_list(char *lfile)
 			p++;
 		uri.len = p-uri.s;
 
-		/* check uri */
-		if(parse_uri(uri.s, uri.len, &puri)!=0)
-		{
-			LOG(L_ERR, "DISPATCHER:ds_load_list: bad uri [%.*s]\n",
-					uri.len, uri.s);
+		if(add_dest2list(id, uri, *next_idx, &setn) != 0)
 			goto error;
-		}
-		
-		/* check index */
-		si = _ds_index;
-		while(si)
-		{
-			if(si->id == id)
-				break;
-			si = si->next;
-		}
-
-		if(si==NULL)
-		{
-			si = (ds_setidx_p)shm_malloc(sizeof(ds_setidx_t));
-			if(si==NULL)
-			{
-				LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory\n");
-				goto error;
-			}
-			memset(si, 0, sizeof(ds_setidx_t));
-			si->id = id;
-			si->next = _ds_index;
-			if(_ds_index!=NULL)
-				si->index = _ds_index->index + 1;
-			
-			_ds_index = si;
-		}
-		
-		/* get dest set */
-		sp = _ds_list;
-		while(sp)
-		{
-			if(sp->id == id)
-				break;
-			sp = sp->next;
-		}
-
-		if(sp==NULL)
-		{
-			sp = (ds_set_p)shm_malloc(sizeof(ds_set_t));
-			if(sp==NULL)
-			{
-				LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory.\n");
-				goto error;
-			}
-			memset(sp, 0, sizeof(ds_set_t));
-			sp->next = _ds_list;
-			_ds_list = sp;
-			setn++;
-		}
-		sp->id = id;
-		sp->nr++;
-		sp->index = si->index;
-
-		/* store uri */
-		dp = (ds_dest_p)shm_malloc(sizeof(ds_dest_t));
-		if(dp==NULL)
-		{
-			LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!\n");
-			goto error;
-		}
-		memset(dp, 0, sizeof(ds_dest_t));
-
-		dp->uri.s = (char*)shm_malloc(uri.len+1);
-		if(dp->uri.s==NULL)
-		{
-			LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!!\n");
-			shm_free(dp);
-			goto error;
-		}
-		strncpy(dp->uri.s, uri.s, uri.len);
-		dp->uri.s[uri.len]='\0';
-		dp->uri.len = uri.len;
-
-		/* The Hostname needs to be \0 terminated for resolvehost, so we
-		 * make a copy here. */
-		hn = (char*)pkg_malloc(puri.host.len + 1);
-		if(hn==NULL)
-		{
-			LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!!\n");
-			pkg_free(hn);
-			goto error;
-		}
-		strncpy(hn, puri.host.s, puri.host.len);
-		hn[puri.host.len]='\0';
-		
-		/* Do a DNS-Lookup for the Host-Name: */
-		he=resolvehost(hn, 1);
-		if (he==0){
-			LOG(L_ERR, "DISPATCHER:ds_load_list: could not resolve %.*s\n",
-					puri.host.len, puri.host.s);
-			pkg_free(hn);
-			goto error;
-		}
-		/* Free the hostname */
-		pkg_free(hn);
-		hostent2ip_addr(&dp->ip_address, he, 0);
-		
-		/* Copy the Port out of the URI: */
-		dp->port = puri.port_no;		
-
-		dp->next = sp->dlist;
-		sp->dlist = dp;
-		DBG("DISPATCHER:ds_load_list: dest [%d/%d/%d] <%.*s>\n", sp->index,
-				sp->id, sp->nr, dp->uri.len, dp->uri.s);
+					
 		
 next_line:
 		p = fgets(line, 256, f);
 	}
 		
-	fclose(f);
-	f = NULL;
-	
-	DBG("DISPATCHER:ds_load_list: found [%d] dest sets\n", setn);
-	
-	/* re-index destination sets for fast access */
-	sp0 = (ds_set_p)shm_malloc(setn*sizeof(ds_set_t));
-	if(sp0==NULL)
-	{
-		LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!!\n");
+	if(reindex_dests(*next_idx, setn)!=0){
+		LM_ERR("error on reindex\n");
 		goto error;
 	}
-	memset(sp0, 0, setn*sizeof(ds_set_t));
-	sp = _ds_list;
-	for(i=setn-1; i>=0; i--)
-	{
-		memcpy(&sp0[i], sp, sizeof(ds_set_t));
-		if(i==setn-1)
-			sp0[i].next = NULL;
-		else
-			sp0[i].next = &sp0[i+1];
-		dp0 = (ds_dest_p)shm_malloc(sp0[i].nr*sizeof(ds_dest_t));
-		if(dp0==NULL)
-		{
-			LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!\n");
-			ds_destroy_list();
-			goto error;
-		}
-		memset(dp0, 0, sp0[i].nr*sizeof(ds_dest_t));
-		dp = sp0[i].dlist;
-		for(j=sp0[i].nr-1; j>=0; j--)
-		{
-			memcpy(&dp0[j], dp, sizeof(ds_dest_t));
-			if(j==sp0[j].nr-1)
-				dp0[j].next = NULL;
-			else
-				dp0[j].next = &dp0[j+1];
-			dp = dp->next;
-		}
-		sp0[i].dlist = dp0;
-		sp = sp->next;
-	}
-	
-	sp = _ds_list;
-	_ds_list = sp0;
-	while(sp)
-	{
-		dp = sp->dlist;
-		while(dp)
-		{
-			dp0 = dp;
-			dp = dp->next;
-			shm_free(dp0);
-		}
-		sp0 = sp;
-		sp = sp->next;
-		shm_free(sp0);
-	}
 
+	fclose(f);
+	f = NULL;
 	_ds_list_nr = setn;
-	
 	return 0;
 
 error:
 	if(f!=NULL)
 		fclose(f);
-
-	si = _ds_index;
-	while(si)
-	{
-		si0 = si;
-		si = si->next;
-		shm_free(si0);
-	}
-	_ds_index = NULL;
-
-	sp = _ds_list;
-	while(sp)
-	{
-		dp = sp->dlist;
-		while(dp)
-		{
-			if(dp->uri.s!=NULL)
-				shm_free(dp->uri.s);
-			dp->uri.s=NULL;
-			dp0 = dp;
-			dp = dp->next;
-			shm_free(dp0);
-		}
-		sp0 = sp;
-		sp = sp->next;
-		shm_free(sp0);
-	}
+	destroy_list(*next_idx);
 	return -1;
 }
 
+/*connect to the DB*/
+int init_db_conn()
+{
+	str table;
+	int ver;
+
+	if(ds_table_name == 0)
+	{
+		LM_ERR("invalid database name\n");
+		return -1;
+	}
+
+	/* Find a database module */
+	if (bind_dbmod(ds_db_url, &ds_dbf) < 0)
+	{
+		LM_ERR("Unable to bind to a database driver\n");
+		return -1;
+	}
+
+	if ((ds_db_handle = ds_dbf.init(ds_db_url)) == 0)
+	{
+		LM_ERR("unable to connect to the database\n");
+		return -1;
+	}
+
+	table.s = ds_table_name;
+	table.len = strlen(table.s);
+
+	ver = table_version(&ds_dbf, ds_db_handle, &table );
+	if (ver < 0) 
+	{
+		LM_ERR("failed to query table version\n");
+		return -1;
+	} else if (ver != DS_TABLE_VERSION) {
+		LM_ERR("invalid table version (found %d , required %d)\n"
+			"(use openser_mysql.sh reinstall)\n",
+			ver, DS_TABLE_VERSION );
+		return -1;
+	}
+
+	return 0;
+}
+
+/*load groups of destinations from DB*/
+int ds_load_db()
+{
+	int i, id, nr_rows, setn;
+	str uri;
+	db_res_t * res;
+	db_val_t * values;
+	db_row_t * rows;
+	db_key_t query_cols[2] = {ds_set_id_col, ds_dest_uri_col};
+	
+	if( (*crt_idx) != (*next_idx))
+	{
+		LM_WARN("load command already generated, aborting reload...\n");
+		return 0;
+	}
+
+	if(ds_db_url != NULL && ds_db_handle == NULL && init_db_conn()!= 0)
+			return -1;
+	
+	if (ds_dbf.use_table(ds_db_handle, ds_table_name) < 0)
+	{
+		LM_ERR("error in use_table\n");
+		return -1;
+	}
+
+	/*select the whole table and all the columns*/
+	if(ds_dbf.query(ds_db_handle,0,0,0,query_cols, 0, 2, 0, &res) < 0)
+	{
+		LM_ERR("error while querying database\n");
+		return -1;
+	}
+
+	nr_rows = RES_ROW_N(res);
+	rows 	= RES_ROWS(res);
+	if(nr_rows == 0)
+	{
+		LM_WARN("no dispatching data in the db - module cannot run\n");
+		ds_dbf.free_result(ds_db_handle, res);
+		return 1;
+	}
+
+	setn = 0;
+	*next_idx = (*crt_idx + 1)%2;
+	destroy_list(*next_idx);
+	
+	for(i=0; i<nr_rows; i++)
+	{
+		values = ROW_VALUES(rows+i);
+
+		id = VAL_INT(values);
+		uri.s = VAL_STR(values+1).s;
+		uri.len = strlen(uri.s);
+
+		if(add_dest2list(id, uri, *next_idx, &setn) != 0)
+			goto err2;
+
+	}
+
+	if(reindex_dests(*next_idx, setn)!=0)
+	{
+		LM_ERR("error on reindex\n");
+		goto err2;
+	}
+
+	/*update data*/
+	_ds_list_nr = setn;
+	*crt_idx = *next_idx;
+	ds_dbf.free_result(ds_db_handle, res);
+
+	return 0;
+
+err2:
+	destroy_list(*next_idx);
+	ds_dbf.free_result(ds_db_handle, res);
+	*next_idx = *crt_idx; 
+
+	return -1;
+}
+
+/*called from dispatcher.c: free all*/
+int ds_destroy_list()
+{
+	destroy_list(0);
+	destroy_list(1);
+
+	shm_free(ds_lists);
+	shm_free(crt_idx);
+
+	if(ds_db_handle){
+		ds_dbf.close(ds_db_handle);
+		ds_db_handle = 0;
+	}
+	return 0;
+}
 /**
  *
  */
-int ds_destroy_list()
+void destroy_list(int list_id)
 {
-	int i;
 	ds_set_p  sp = NULL;
-	ds_setidx_p si = NULL, si0 = NULL;
-	
-	sp = _ds_list;
+	ds_dest_p dest = NULL;
+
+	sp = ds_lists[list_id];
+
 	while(sp)
 	{
-		for(i=0; i<sp->nr; i++)
+		for(dest = sp->dlist; dest!= NULL; dest=dest->next)
 		{
-			if(sp->dlist[i].uri.s!=NULL)
-			{
-				shm_free(sp->dlist[i].uri.s);
-				sp->dlist[i].uri.s = NULL;
-			}
+			if(dest->uri.s!=NULL)
+   			{
+   				shm_free(dest->uri.s);
+   				dest->uri.s = NULL;
+	   		}
 		}
 		shm_free(sp->dlist);
 		sp = sp->next;
 	}
-	if (_ds_list) shm_free(_ds_list);
 	
-	si = _ds_index;
-	while(si)
-	{
-		si0 = si;
-		si = si->next;
-		shm_free(si0);
-	}
-	_ds_index = NULL;
-
-	return 0;
+	ds_lists[list_id]  = NULL;
 }
 
 /**
@@ -484,18 +582,20 @@ static inline int get_uri_hash_keys(str* key1, str* key2,
 {
 	struct sip_uri tmp_p_uri; /* used only if parsed_uri==0 */
 	
-	if (parsed_uri==0){
-		if (parse_uri(uri->s, uri->len, &tmp_p_uri)<0){
-			LOG(L_ERR, "DISPATCHER: get_uri_hash_keys: invalid uri %.*s\n",
-					uri->len, uri->len?uri->s:"");
+	if (parsed_uri==0)
+	{
+		if (parse_uri(uri->s, uri->len, &tmp_p_uri)<0)
+		{
+			LM_ERR("invalid uri %.*s\n", uri->len, uri->len?uri->s:"");
 			goto error;
 		}
 		parsed_uri=&tmp_p_uri;
 	}
 	/* uri sanity checks */
-	if (parsed_uri->host.s==0){
-			LOG(L_ERR, "DISPATCHER: get_uri_hash_keys: invalid uri, no host"
-					   "present: %.*s\n", uri->len, uri->len?uri->s:"");
+	if (parsed_uri->host.s==0)
+	{
+			LM_ERR("invalid uri, no host present: %.*s\n",
+					uri->len, uri->len?uri->s:"");
 			goto error;
 	}
 	
@@ -505,20 +605,21 @@ static inline int get_uri_hash_keys(str* key1, str* key2,
 	*key1=parsed_uri->user;
 	key2->s=0;
 	key2->len=0;
-	if (!(flags & DS_HASH_USER_ONLY)){
-		/* key2=host */
+	if (!(flags & DS_HASH_USER_ONLY))
+	{	/* key2=host */
 		*key2=parsed_uri->host;
 		/* add port if needed */
-		if (parsed_uri->port.s!=0){ /* uri has a port */
+		if (parsed_uri->port.s!=0)
+		{ /* uri has a port */
 			/* skip port if == 5060 or sips and == 5061 */
 			if (parsed_uri->port_no !=
 					((parsed_uri->type==SIPS_URI_T)?SIPS_PORT:SIP_PORT))
 				key2->len+=parsed_uri->port.len+1 /* ':' */;
 		}
 	}
-	if (key1->s==0){
-		LOG(L_WARN, "DISPATCHER: get_uri_hashs_keys: empty username in:"
-					" %.*s\n", uri->len, uri->len?uri->s:"");
+	if (key1->s==0)
+	{
+		LM_WARN("empty username in: %.*s\n", uri->len, uri->len?uri->s:"");
 	}
 	return 0;
 error:
@@ -538,19 +639,19 @@ int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 	
 	if(msg==NULL || hash == NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_fromuri: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
 	if(parse_from_header(msg)<0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_fromuri:ERROR cannot parse From hdr\n");
+		LM_ERR("cannot parse From hdr\n");
 		return -1;
 	}
 	
 	if(msg->from==NULL || get_from(msg)==NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_fromuri:ERROR cannot get From uri\n");
+		LM_ERR("cannot get From uri\n");
 		return -1;
 	}
 	
@@ -576,13 +677,13 @@ int ds_hash_touri(struct sip_msg *msg, unsigned int *hash)
 	
 	if(msg==NULL || hash == NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_touri: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	if ((msg->to==0) && ((parse_headers(msg, HDR_TO_F, 0)==-1) ||
 				(msg->to==0)))
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_touri:ERROR cannot parse To hdr\n");
+		LM_ERR("cannot parse To hdr\n");
 		return -1;
 	}
 	
@@ -607,14 +708,14 @@ int ds_hash_callid(struct sip_msg *msg, unsigned int *hash)
 	str cid;
 	if(msg==NULL || hash == NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_callid: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
 	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1) ||
 				(msg->callid==NULL)) )
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_callid:ERROR cannot parse Call-Id\n");
+		LM_ERR("cannot parse Call-Id\n");
 		return -1;
 	}
 	
@@ -638,11 +739,11 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 	
 	if(msg==NULL || hash == NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_ruri: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	if (parse_sip_msg_uri(msg)<0){
-		LOG(L_ERR, "DISPATCHER: ds_hash_ruri: ERROR: bad request uri\n");
+		LM_ERR("bad request uri\n");
 		return -1;
 	}
 	
@@ -665,12 +766,12 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 	
 	if(msg==NULL || hash == NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_authusername: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	if (parse_headers(msg, HDR_PROXYAUTH_F, 0) == -1)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_authusername: Error Parsing headers!\n");
+		LM_ERR("error parsing headers!\n");
 		return -1;
 	}
 	if (msg->proxy_auth && !msg->proxy_auth->parsed)
@@ -682,7 +783,7 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 	{
 		if (parse_headers(msg, HDR_AUTHORIZATION_F, 0) == -1)
 		{
-			LOG(L_ERR, "DISPATCHER:ds_hash_authusername: Error Parsing headers!\n");
+			LM_ERR("error parsing headers!\n");
 			return -1;
 		}
 		if (msg->authorization && !msg->authorization->parsed)
@@ -693,14 +794,14 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 	}
 	if (!h)
 	{
-		LOG(L_DBG, "DISPATCHER:ds_hash_authusername: No Authorization-Header!\n");
+		LM_DBG("No Authorization-Header!\n");
 		return 1;
 	}
 
 	cred=(auth_body_t*)(h->parsed);
 	if (!cred || !cred->digest.username.user.len)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_hash_authusername: No Authorization-Username or Credentials!\n");
+		LM_ERR("No Authorization-Username or Credentials!\n");
 		return 1;
 	}
 	
@@ -714,20 +815,20 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 	return 0;
 }
 
-static inline int ds_get_index(int group, int *index)
+static inline int ds_get_index(int group, ds_set_p *index)
 {
-	ds_setidx_p si = NULL;
+	ds_set_p si = NULL;
 	
-	if(index==NULL || group<0 || _ds_index==NULL)
+	if(index==NULL || group<0 || _ds_list==NULL)
 		return -1;
 	
 	/* get the index of the set */
-	si = _ds_index;
+	si = _ds_list;
 	while(si)
 	{
 		if(si->id == group)
 		{
-			*index = si->index;
+			*index = si;
 			break;
 		}
 		si = si->next;
@@ -735,8 +836,7 @@ static inline int ds_get_index(int group, int *index)
 
 	if(si==NULL)
 	{
-		LOG(L_ERR,
-			"DISPATCHER:ds_get_index: destination set [%d] not found\n",group);
+		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
 
@@ -759,17 +859,14 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			act.next = 0;
 	
 			if (do_action(&act, msg) < 0) {
-				LOG(L_ERR,
-					"DISPATCHER:dst_update_dst: Error while setting host\n");
+				LM_ERR("error while setting host\n");
 				return -1;
 			}
 			if(route_type==FAILURE_ROUTE)
 			{
 				if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 				{
-					LOG(L_ERR,
-						"DISPATCHER:dst_update_dst: append_branch action"
-						" failed\n");
+					LM_ERR("append_branch action failed\n");
 					return -1;
 				}
 			}
@@ -779,15 +876,12 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			{
 				if (append_branch(msg, 0, uri, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 				{
-					LOG(L_ERR,
-						"DISPATCHER:dst_update_dst: append_branch action"
-						" failed\n");
+					LM_ERR("append_branch action failed\n");
 					return -1;
 				}
 			} else {
 				if (set_dst_uri(msg, uri) < 0) {
-					LOG(L_ERR,
-					"DISPATCHER:dst_update_dst: Error while setting dst_uri\n");
+					LM_ERR("error while setting dst uri\n");
 					return -1;
 				}	
 			}
@@ -801,28 +895,28 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
  */
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 {
-	int idx, i, cnt;
+	int i, cnt;
 	unsigned int hash;
 	int_str avp_val;
+	ds_set_p idx = NULL;
 
 	if(msg==NULL)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_select_dst: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
-	if(_ds_list==NULL || _ds_index==NULL)
+	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_select_dst: no destination sets\n");
+		LM_ERR("no destination sets\n");
 		return -1;
 	}
 
 	if((mode==0) && (ds_force_dst==0)
 			&& (msg->dst_uri.s!=NULL || msg->dst_uri.len>0))
 	{
-		LOG(L_ERR,
-			"DISPATCHER:ds_select_dst: destination already set [%.*s]\n",
-			msg->dst_uri.len, msg->dst_uri.s);
+		LM_ERR("destination already set [%.*s]\n", msg->dst_uri.len,
+				msg->dst_uri.s);
 		return -1;
 	}
 	
@@ -830,12 +924,11 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	/* get the index of the set */
 	if(ds_get_index(set, &idx)!=0)
 	{
-		LOG(L_ERR,
-			"DISPATCHER:ds_select_dst: destination set [%d] not found\n",set);
+		LM_ERR("destination set [%d] not found\n", set);
 		return -1;
 	}
 	
-	DBG("DISPATCHER:ds_select_dst: set index [%d->%d]\n", set, idx);
+	LM_DBG("set [%d]\n", set);
 
 	hash = 0;
 	switch(alg)
@@ -843,38 +936,34 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 		case 0:
 			if(ds_hash_callid(msg, &hash)!=0)
 			{
-				LOG(L_ERR,
-					"DISPATCHER:ds_select_dst: can't get callid hash\n");
+				LM_ERR("can't get callid hash\n");
 				return -1;
 			}
 		break;
 		case 1:
 			if(ds_hash_fromuri(msg, &hash)!=0)
 			{
-				LOG(L_ERR,
-					"DISPATCHER:ds_select_dst: can't get From uri hash\n");
+				LM_ERR("can't get From uri hash\n");
 				return -1;
 			}
 		break;
 		case 2:
 			if(ds_hash_touri(msg, &hash)!=0)
 			{
-				LOG(L_ERR,
-					"DISPATCHER:ds_select_dst: can't get To uri hash\n");
+				LM_ERR("can't get To uri hash\n");
 				return -1;
 			}
 		break;
 		case 3:
 			if (ds_hash_ruri(msg, &hash)!=0)
 			{
-				LOG(L_ERR,	
-					"DISPATCHER:ds_select_dst: can't get ruri hash\n");
+				LM_ERR("can't get ruri hash\n");
 				return -1;
 			}
 		break;
 		case 4:
-			hash = _ds_list[idx].last;
-			_ds_list[idx].last = (_ds_list[idx].last+1) % _ds_list[idx].nr;
+			hash = idx->last;
+			idx->last = (idx->last+1) % idx->nr;
 		break;
 		case 5:
 			i = ds_hash_authusername(msg, &hash);
@@ -885,43 +974,43 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 				break;
 				case 1:
 					/* No Authorization found: Use round robin */
-					hash = _ds_list[idx].last;
-					_ds_list[idx].last = (_ds_list[idx].last+1) % _ds_list[idx].nr;
+					hash = idx->last;
+					idx->last = (idx->last+1) % idx->nr;
 				break;
 				default:
-					LOG(L_ERR, "DISPATCHER:ds_select_dst: can't get"
-							" authorization hash\n");
+					LM_ERR("can't get authorization hash\n");
 					return -1;
 				break;
 			}
 		break;
+		case 6:
+			hash = rand() % idx->nr;
+		break;
 		default:
-			LOG(L_WARN,
-					"WARNING: ds_select_dst: algo %d not implemented"
-					" - using first entry...\n", alg);
+			LM_WARN("algo %d not implemented - using first entry...\n", alg);
 			hash = 0;
 	}
 
-	DBG("DISPATCHER:ds_select_dst: alg hash [%u]\n", hash);
+	LM_DBG("alg hash [%u]\n", hash);
 	cnt = 0;
 
-	if(ds_use_default!=0 && _ds_list[idx].nr!=1)
-		hash = hash%(_ds_list[idx].nr-1);
+	if(ds_use_default!=0 && idx->nr!=1)
+		hash = hash%(idx->nr-1);
 	else
-		hash = hash%_ds_list[idx].nr;
+		hash = hash%idx->nr;
 	i=hash;
-	while ((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
-			|| (_ds_list[idx].dlist[i].flags & DS_PROBING_DST))
+	while ((idx->dlist[i].flags & DS_INACTIVE_DST)
+			|| (idx->dlist[i].flags & DS_PROBING_DST))
 	{
 		if(ds_use_default!=0)
-			i = (i+1)%(_ds_list[idx].nr-1);
+			i = (i+1)%(idx->nr-1);
 		else
-			i = (i+1)%_ds_list[idx].nr;
+			i = (i+1)%idx->nr;
 		if(i==hash)
 		{
 			if(ds_use_default!=0)
 			{
-				i = _ds_list[idx].nr-1;
+				i = idx->nr-1;
 			} else {
 				return -1;
 			}
@@ -930,24 +1019,23 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 	hash = i;
 
-	if(ds_update_dst(msg, &_ds_list[idx].dlist[hash].uri, mode)!=0)
+	if(ds_update_dst(msg, &idx->dlist[hash].uri, mode)!=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_select_dst: cannot set dst addr\n");
+		LM_ERR("cannot set dst addr\n");
 		return -1;
 	}
 	
-	DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
-		alg, set, idx, hash, _ds_list[idx].dlist[hash].uri.len,
-		_ds_list[idx].dlist[hash].uri.s);
+	LM_DBG("selected [%d-%d/%d] <%.*s>\n", alg, set, hash,
+			idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
 
 	if(!(ds_flags&DS_FAILOVER_ON))
 		return 1;
 
 	if(dst_avp_name.n!=0)
 	{
-		if(ds_use_default!=0 && hash!=_ds_list[idx].nr-1)
+		if(ds_use_default!=0 && hash!=idx->nr-1)
 		{
-			avp_val.s = _ds_list[idx].dlist[_ds_list[idx].nr-1].uri;
+			avp_val.s = idx->dlist[idx->nr-1].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 				return -1;
 			cnt++;
@@ -957,32 +1045,30 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 		for(i=hash-1; i>=0; i--)
 		{	
-			if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
-					|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
+			if((idx->dlist[i].flags & DS_INACTIVE_DST)
+					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
-			DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
-					set, i);
-			avp_val.s = _ds_list[idx].dlist[i].uri;
+			LM_DBG("using entry [%d/%d]\n", set, i);
+			avp_val.s = idx->dlist[i].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 				return -1;
 			cnt++;
 		}
 
-		for(i=_ds_list[idx].nr-1; i>hash; i--)
+		for(i=idx->nr-1; i>hash; i--)
 		{	
-			if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
-					|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
+			if((idx->dlist[i].flags & DS_INACTIVE_DST)
+					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
-			DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
-					set, i);
-			avp_val.s = _ds_list[idx].dlist[i].uri;
+			LM_DBG("using entry [%d/%d]\n", set, i);
+			avp_val.s = idx->dlist[i].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 				return -1;
 			cnt++;
 		}
 	
 		/* add to avp the first used dst */
-		avp_val.s = _ds_list[idx].dlist[hash].uri;
+		avp_val.s = idx->dlist[hash].uri;
 		if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 			return -1;
 		cnt++;
@@ -1015,7 +1101,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	
 	if(!(ds_flags&DS_FAILOVER_ON) || dst_avp_name.n==0)
 	{
-		LOG(L_WARN, "DISPATCHER:ds_next_dst: failover support disabled\n");
+		LM_WARN("failover support disabled\n");
 		return -1;
 	}
 
@@ -1031,11 +1117,10 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	
 	if(ds_update_dst(msg, &avp_value.s, mode)!=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_next_dst: cannot set dst addr\n");
+		LM_ERR("cannot set dst addr\n");
 		return -1;
 	}
-	DBG("DISPATCHER:ds_next_dst: using [%.*s]\n",
-			avp_value.s.len, avp_value.s.s);
+	LM_DBG("using [%.*s]\n", avp_value.s.len, avp_value.s.s);
 	
 	return 1;
 }
@@ -1048,7 +1133,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 	
 	if(!(ds_flags&DS_FAILOVER_ON))
 	{
-		LOG(L_WARN, "DISPATCHER:ds_mark_dst: failover support disabled\n");
+		LM_WARN("failover support disabled\n");
 		return -1;
 	}
 
@@ -1076,59 +1161,59 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 				DS_PROBING_DST, 0);
 	}
 	
-	DBG("DISPATCHER:ds_mark_dst: mode [%d] grp [%d] dst [%.*s]\n",
-			mode, group, avp_value.s.len, avp_value.s.s);
+	LM_DBG("mode [%d] grp [%d] dst [%.*s]\n", mode, group, avp_value.s.len,
+			avp_value.s.s);
 	
 	return (ret==0)?1:-1;
 }
 
 int ds_set_state(int group, str *address, int state, int type)
 {
-	int i=0, idx=0;
+	int i=0;
+	ds_set_p idx = NULL;
 
-	if(_ds_list==NULL)
+	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_set_state: the list is null\n");
+		LM_ERR("the list is null\n");
 		return -1;
 	}
 	
 	/* get the index of the set */
 	if(ds_get_index(group, &idx)!=0)
 	{
-		LOG(L_ERR,
-			"DISPATCHER:ds_set_state: destination set [%d] not found\n",group);
+		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
 
-	while(i<_ds_list[idx].nr)
+	while(i<idx->nr)
 	{
-		if(_ds_list[idx].dlist[i].uri.len==address->len 
-				&& strncasecmp(_ds_list[idx].dlist[i].uri.s, address->s,
+		if(idx->dlist[i].uri.len==address->len 
+				&& strncasecmp(idx->dlist[i].uri.s, address->s,
 					address->len)==0)
 		{
 			/* remove the Probing/Inactive-State? Set the fail-count to 0. */
 			if (state == DS_PROBING_DST) {
 				if (type) {
-					_ds_list[idx].dlist[i].failure_count++;
+					idx->dlist[i].failure_count++;
 					/* Fire only, if the Threshold is reached. */
-					if (_ds_list[idx].dlist[i].failure_count 
+					if (idx->dlist[i].failure_count 
 							< probing_threshhold) return 0;
-					if (_ds_list[idx].dlist[i].failure_count
+					if (idx->dlist[i].failure_count
 							> probing_threshhold) 
-						_ds_list[idx].dlist[i].failure_count
+						idx->dlist[i].failure_count
 							= probing_threshhold;				
 				}
 			}
 			/* Reset the Failure-Counter */
 			if ((state & DS_RESET_FAIL_DST) > 0) {
-				_ds_list[idx].dlist[i].failure_count = 0;
+				idx->dlist[i].failure_count = 0;
 				state &= ~DS_RESET_FAIL_DST;
 			}
 			
 			if(type)
-				_ds_list[idx].dlist[i].flags |= state;
+				idx->dlist[i].flags |= state;
 			else
-				_ds_list[idx].dlist[i].flags &= ~state;
+				idx->dlist[i].flags &= ~state;
 				
 			return 0;
 		}
@@ -1140,38 +1225,41 @@ int ds_set_state(int group, str *address, int state, int type)
 
 int ds_print_list(FILE *fout)
 {
-	int i, j;
-	
+	int j;
+	ds_set_p list;
+		
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_print_list: the list is null\n");
+		LM_ERR("no destination sets\n");
 		return -1;
 	}
 	
 	fprintf(fout, "\nnumber of destination sets: %d\n", _ds_list_nr);
-	for(i=0; i<_ds_list_nr; i++)
+	
+	for(list = _ds_list; list!= NULL; list= list->next)
 	{
-		fprintf(fout, "\n set #%d\n", _ds_list[i].id);
-		for(j=0; j<_ds_list[i].nr; j++)
+		for(j=0; j<list->nr; j++)
 		{
-			if (_ds_list[i].dlist[j].flags&DS_INACTIVE_DST)
-				fprintf(fout, "    Disabled         ");
-			else if (_ds_list[i].dlist[j].flags&DS_PROBING_DST)
-				fprintf(fout, "    Probing          ");
-			else {
-				fprintf(fout, "    Active");
-				/* Optional: Print the tries for this host. */
-				if (_ds_list[i].dlist[j].failure_count > 0) {
-					fprintf(fout, " (Fail %d/%d)", 
-							_ds_list[i].dlist[j].failure_count,
-							probing_threshhold);
-				} else {
-					fprintf(fout, "           ");
-				}
-			}
-			
-			fprintf(fout, "   %.*s\n",
-				_ds_list[i].dlist[j].uri.len, _ds_list[i].dlist[j].uri.s);
+			fprintf(fout, "\n set #%d\n", list->id);
+		
+			if (list->dlist[j].flags&DS_INACTIVE_DST)
+  				fprintf(fout, "    Disabled         ");
+  			else if (list->dlist[j].flags&DS_PROBING_DST)
+  				fprintf(fout, "    Probing          ");
+  			else {
+  				fprintf(fout, "    Active");
+  				/* Optional: Print the tries for this host. */
+  				if (list->dlist[j].failure_count > 0) {
+  					fprintf(fout, " (Fail %d/%d)",
+  							list->dlist[j].failure_count,
+ 							probing_threshhold);
+  				} else {
+  					fprintf(fout, "           ");
+  				}
+  			}
+  
+  			fprintf(fout, "   %.*s\n",
+  				list->dlist[j].uri.len, list->dlist[j].uri.s);		
 		}
 	}
 	return 0;
@@ -1182,16 +1270,22 @@ int ds_print_list(FILE *fout)
  * (group-id or -1 for all groups)
  */
 int ds_is_from_list(struct sip_msg *_m, int group) {
-    int i, j;
-	for(i=0; i<_ds_list_nr; i++) {
-		if ((group == -1) || (group == _ds_list[i].id)) {
-			for(j=0; j<_ds_list[i].nr; j++) {
+    
+	ds_set_p list;
+	int j;
+
+	for(list = _ds_list; list!= NULL; list= list->next)
+	{
+		if ((group == -1) || (group == list->id)) 
+		{
+			for(j=0; j<list->nr; j++)
+			{
 				if (ip_addr_cmp(&_m->rcv.src_ip,
-							&_ds_list[i].dlist[j].ip_address)
-					&& (_m->rcv.src_port == _ds_list[i].dlist[j].port)) {
-					return 1;
-				}
-			}
+ 							&list->dlist[j].ip_address)
+  					&& (_m->rcv.src_port == list->dlist[j].port)) {
+  				return 1;
+  				}
+ 			}
 		}
 	}
 	return -1;
@@ -1199,48 +1293,48 @@ int ds_is_from_list(struct sip_msg *_m, int group) {
 
 int ds_print_mi_list(struct mi_node* rpl)
 {
-	int i, j, len;
+	int len, j;
 	char* p;
 	char c;
+	ds_set_p list;
 	struct mi_node* node = NULL;
 	struct mi_node* set_node = NULL;
 	struct mi_attr* attr = NULL;
-
+	
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_mi_print_list: the list is null\n");
+		LM_ERR("no destination sets\n");
 		return  0;
 	}
 
 	p= int2str(_ds_list_nr, &len); 
-	node = add_mi_node_child(rpl, MI_DUP_VALUE, "SET_NO",6, p,
-			len);
+	node = add_mi_node_child(rpl, MI_DUP_VALUE, "SET_NO",6, p, len);
 	if(node== NULL)
 		return -1;
 
-	for(i=0; i<_ds_list_nr; i++)
+	for(list = _ds_list; list!= NULL; list= list->next)
 	{
-		p = int2str(_ds_list[i].id, &len);
+		p = int2str(list->id, &len);
 		set_node= add_mi_node_child(rpl, MI_DUP_VALUE,"SET", 3, p, len);
 		if(set_node == NULL)
 			return -1;
 
-		for(j=0; j<_ds_list[i].nr; j++)
-		{
-			node= add_mi_node_child(set_node, 0, "URI", 3,
-					_ds_list[i].dlist[j].uri.s, _ds_list[i].dlist[j].uri.len);
-			if(node == NULL)
-				return -1;
-
-			if (_ds_list[i].dlist[j].flags & DS_INACTIVE_DST) c = 'I';
-			else if (_ds_list[i].dlist[j].flags & DS_PROBING_DST) c = 'P';
-			else c = 'A';
-			
-			attr = add_mi_attr (node, MI_DUP_VALUE, "flag",4, &c, 1);
-			if(attr == 0)
-				return -1;
-
-		}
+		for(j=0; j<list->nr; j++)
+  		{
+  			node= add_mi_node_child(set_node, 0, "URI", 3,
+  					list->dlist[j].uri.s, list->dlist[j].uri.len);
+  			if(node == NULL)
+  				return -1;
+  
+  			if (list->dlist[j].flags & DS_INACTIVE_DST) c = 'I';
+  			else if (list->dlist[j].flags & DS_PROBING_DST) c = 'P';
+  			else c = 'A';
+  
+  			attr = add_mi_attr (node, MI_DUP_VALUE, "flag",4, &c, 1);
+  			if(attr == 0)
+  				return -1;
+  
+ 		}
 	}
 
 	return 0;
@@ -1252,14 +1346,16 @@ int ds_print_mi_list(struct mi_node* rpl)
  * (e. g. a Response came in, the timeout was hit, ...)
  * 
  */ 
-static void ds_options_callback( struct cell *t, int type, struct tmcb_params *ps )
+static void ds_options_callback( struct cell *t, int type,
+		struct tmcb_params *ps )
 {
 	int group = 0;
 	str uri = {0, 0};
 	/* The Param does contain the group, in which the failed host
 	 * can be found.*/
-	if (!*ps->param) {
-		LOG(L_DBG, "No parameter provided, OPTIONS-Request was finished"
+	if (!*ps->param)
+	{
+		LM_DBG("No parameter provided, OPTIONS-Request was finished"
 				" with code %d\n", ps->code);
 		return;
 	}
@@ -1271,8 +1367,7 @@ static void ds_options_callback( struct cell *t, int type, struct tmcb_params *p
 	 * - 2 (\r\n)). */
 	uri.s = t->to.s + 4;
 	uri.len = t->to.len - 6;
-	LOG(L_DBG,
-			"OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
+	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
 	/* ps->code contains the result-code of the request.
 	 * 
@@ -1280,14 +1375,15 @@ static void ds_options_callback( struct cell *t, int type, struct tmcb_params *p
 	 * successful reply.
 	 *   501: Cisco-Gateways reply with a "501 Not supported" to the request.
 	 *   403: Aastra-Gateways reply with a "403" to the request. */
-	if ((ps->code == 200) || (ps->code == 501) || (ps->code == 403)) {
+	if ((ps->code == 200) || (ps->code == 501) || (ps->code == 403))
+	{
 		/* Set the according entry back to "Active":
 		 *  remove the Probing/Inactive Flag and reset the failure counter. */
 		if (ds_set_state(group, &uri,
-					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 0) != 0) {
-			LOG(L_ERR, "Setting the state failed (%.*s, group %d)\n", 
-				uri.len, uri.s,
-				group);
+					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 0) != 0)
+		{
+			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
+					uri.s, group);
 		}
 	}
 
@@ -1299,38 +1395,43 @@ static void ds_options_callback( struct cell *t, int type, struct tmcb_params *p
  * 
  * This timer is regularly fired.
  */
-void ds_check_timer(unsigned int ticks, void* param) {
-	int i, j;
+void ds_check_timer(unsigned int ticks, void* param)
+{
+	
 	struct socket_info* send_sock = 0;
 	struct sip_uri curi;
 	union sockaddr_union to;
 	struct hostent* he;
 	unsigned short proto;
 	dlg_t * dialog;	
+	ds_set_p list;
+	int j;
 	
 	/* Check for the list. */
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
-		LOG(L_ERR, "DISPATCHER:ds_print_list: the list is null\n");
+		LM_ERR("no destination sets\n");
 		return;
 	}
-	
+
 	/* Iterate over the groups and the entries of each group: */
-	for(i=0; i<_ds_list_nr; i++) {
-		for(j=0; j<_ds_list[i].nr; j++) {
+	for(list = _ds_list; list!= NULL; list= list->next)
+	{
+		for(j=0; j<list->nr; j++) 
+		{
 			/* If the Flag of the entry has "Probing set, send a probe:	*/
-			if ((_ds_list[i].dlist[j].flags&DS_PROBING_DST) > 0) {
-				LOG(L_DBG, "Probing set #%d, URI %.*s\n", _ds_list[i].id,
-						_ds_list[i].dlist[j].uri.len,
-						_ds_list[i].dlist[j].uri.s);
+			if ((list->dlist[j].flags&DS_PROBING_DST) > 0)
+			{
+				LM_DBG("probing set #%d, URI %.*s\n", list->id,
+						list->dlist[j].uri.len, list->dlist[j].uri.s);
 				
 				/* Parse the URI of the destination, we want to probe (we need
 				 * more information about the destination) */
-				if (parse_uri(_ds_list[i].dlist[j].uri.s,
-							_ds_list[i].dlist[j].uri.len, &curi) < 0) {
-					LOG(L_ERR, "dispatcher: ds_check_timer: Unable to parse"
-							" URI (%.*s)\n", _ds_list[i].dlist[j].uri.len,
-							_ds_list[i].dlist[j].uri.s);
+				if (parse_uri(list->dlist[j].uri.s,
+							list->dlist[j].uri.len, &curi) < 0)
+				{
+					LM_ERR("unable to parse URI (%.*s)\n",
+							list->dlist[j].uri.len, list->dlist[j].uri.s);
 					continue;
 				}
 				
@@ -1342,9 +1443,9 @@ void ds_check_timer(unsigned int ticks, void* param) {
 				proto = curi.proto;
 				he = sip_resolvehost(&curi.host, &curi.port_no, &proto, 
 						(curi.type==SIPS_URI_T)?1:0 , 0);
-				if (he == NULL){
-					LOG(L_ERR,
-						"dispatcher: ds_check_timer: can't resolve_host\n");
+				if (he == NULL)
+				{
+					LM_ERR("can't resolve_host\n");
 					continue;
 				}
 				
@@ -1358,8 +1459,7 @@ void ds_check_timer(unsigned int ticks, void* param) {
 					send_sock=get_send_socket(0, &to, PROTO_UDP);
 				}
 				if (send_sock == NULL) {
-					LOG(L_ERR,
-					"dispatcher: ds_check_timer: can't get sending socket\n");
+					LM_ERR("can't get sending socket\n");
 					continue;
 				}
 				
@@ -1367,19 +1467,20 @@ void ds_check_timer(unsigned int ticks, void* param) {
 				 * TM-Module.
 				 * req_outside(str* m, str* t, str* f, str* h, str* b,
 				 *		dlg_t** d, transaction_cb c, void* cp); */
-				if (tmb.t_request_outside(&ping_method,
-							&_ds_list[i].dlist[j].uri,
-							&ping_from,
+				if (tmb.t_request_outside(&ds_ping_method,
+							&list->dlist[j].uri,
+							&ds_ping_from,
 							NULL,
 							NULL,
 							&dialog,
 							ds_options_callback,
-							(void*)_ds_list[i].id) < 0) {
-					LOG(L_ERR,
-					"dispatcher: ds_check_timer: unable to execute dialog\n");
+							(void*)list->id) < 0) {
+					LM_ERR("unable to execute dialog\n");
 				}
 			}
 		}
 	}
 }
+
+
 
