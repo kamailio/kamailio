@@ -1,0 +1,64 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "benchmark_user.sgml">
+<!ENTITY devel SYSTEM "benchmark_devel.sgml">
+<!ENTITY faq SYSTEM "benchmark_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Benchmark Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Bastian</firstname>
+		<surname>Friedrich</surname>
+		<affiliation><orgname>Collax GmbH</orgname></affiliation>
+		<address>
+		    <email>bastian.friedrich@collax.com</email>
+		</address>
+	    </author>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>Voice System SRL</orgname></affiliation>
+		<address>
+		    <email>daniel@voice-system.ro</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Bastian</firstname>
+		<surname>Friedrich</surname>
+		<address>
+		    <email>bastian.friedrich@collax.com</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Collax GmbH</holder>
+	</copyright>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Voice System SRL</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 1.1.1.1 $</revnumber>
+		<date>$Date: 2007-04-11 14:40:39 +0200 (Mi, 11 Apr 2007) $</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
