@@ -25,6 +25,7 @@
 
 #include "pua_bind.h"
 #include "../../dprint.h"
+#include "hash.h"
 
 int bind_pua(pua_api_t* api)
 {
@@ -37,6 +38,7 @@ int bind_pua(pua_api_t* api)
 	api->send_subscribe =  send_subscribe;
 	api->register_puacb =  register_puacb;
 	api->is_dialog      =  is_dialog;
+	api->get_record_id  =  get_record_id;
 	api->add_event      =  add_pua_event;
 
 	return 0;

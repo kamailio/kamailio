@@ -51,7 +51,7 @@ void print_ua_pres(ua_pres_t* p)
 htable_t* new_htable()
 {
 	htable_t* H= NULL;
-	int i;
+	int i= 0, j;
 
 	H= (htable_t*)shm_malloc(sizeof(htable_t));
 	if(H== NULL)
@@ -90,11 +90,11 @@ error:
 
 	if(H->p_records)
 	{
-		for(i=0; i<HASH_SIZE; i++)
+		for(j=0; j< i; j++)
 		{
-			if(H->p_records[i].entity)
-				shm_free(H->p_records[i].entity);
-			lock_destroy(&H->p_records[i].lock);
+			if(H->p_records[j].entity)
+				shm_free(H->p_records[j].entity);
+			lock_destroy(&H->p_records[j].lock);
 
 		}
 		shm_free(H->p_records);
@@ -141,14 +141,13 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 				else
 				{
 					ok= 1;
-
 					if(id.s && id.len) 
 					{	
 
 						if(!(id.len== p->id.len &&
 								strncmp(p->id.s, id.s, id.len)==0))
 							ok= 0;
-					}
+					}				
 					if(etag)
 					{
 						if(!(etag->len== p->etag.len &&
@@ -299,16 +298,18 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 
 		if(p->flag& dialog->flag)
 		{
-			DBG("PUA: get_dialog: pres_uri= %.*s\twatcher_uri=%.*s\n\tcallid= %.*s\tto_tag= %.*s\tfrom_tag= %.*s\n",
-					p->pres_uri->len, p->pres_uri->s, p->watcher_uri->len, p->watcher_uri->s,
-					p->call_id.len, p->call_id.s, p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
+			DBG("PUA: get_dialog: pres_uri= %.*s\twatcher_uri=%.*s\n\t"
+					"callid= %.*s\tto_tag= %.*s\tfrom_tag= %.*s\n",
+				p->pres_uri->len, p->pres_uri->s, p->watcher_uri->len,
+				p->watcher_uri->s,p->call_id.len, p->call_id.s,
+				p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
 
 			DBG("PUA: get_dialog: searched to_tag= %.*s\tfrom_tag= %.*s\n",
-					 p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
+				 p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
 	    	if((p->pres_uri->len== dialog->pres_uri->len) &&
 				(strncmp(p->pres_uri->s, dialog->pres_uri->s,p->pres_uri->len)==0)&&
 				(p->watcher_uri->len== dialog->watcher_uri->len) &&
-				(strncmp(p->watcher_uri->s, dialog->watcher_uri->s, p->watcher_uri->len )==0)&&
+ 	    		(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&
 				(strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
 				(strncmp(p->to_tag.s, dialog->to_tag.s, p->to_tag.len)== 0) &&
 				(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) )
@@ -321,7 +322,50 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 	}
 		
 	return p;
-}	
+}
+
+int get_record_id(ua_pres_t* dialog, str** rec_id)
+{
+	unsigned int hash_code;
+	ua_pres_t* rec;
+	str* id;
+
+	*rec_id= NULL;
+
+	hash_code= core_hash(dialog->pres_uri, dialog->watcher_uri, HASH_SIZE);
+	lock_get(&HashT->p_records[hash_code].lock);
+
+	rec= get_dialog(dialog, hash_code);
+	if(rec== NULL)
+	{
+		DBG("PUA:get_record_id: Record not found\n");
+		lock_release(&HashT->p_records[hash_code].lock);
+		return 0;
+	}
+	id= (str*)pkg_malloc(sizeof(str));
+	if(id== NULL)
+	{
+		LOG(L_ERR, "PUA: get_record_id: ERROR No more memory\n");
+		lock_release(&HashT->p_records[hash_code].lock);
+		return -1;
+	}
+	id->s= (char*)pkg_malloc(rec->id.len* sizeof(char));
+	if(id->s== NULL)
+	{
+		LOG(L_ERR, "PUA: get_record_id: ERROR No more memory\n");
+		pkg_free(id);
+		lock_release(&HashT->p_records[hash_code].lock);
+		return -1;
+	}
+	memcpy(id->s, rec->id.s, rec->id.len);
+	id->len= rec->id.len;
+	lock_release(&HashT->p_records[hash_code].lock);
+
+	*rec_id= id;
+
+	return 0;
+}
+
 int is_dialog(ua_pres_t* dialog)
 {
 	int ret_code= 0;

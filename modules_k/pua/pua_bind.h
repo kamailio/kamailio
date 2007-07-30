@@ -28,12 +28,14 @@
 #include "send_subscribe.h"
 #include "send_publish.h"
 #include "pua_callback.h"
+#include "hash.h"
 
 typedef struct pua_api {
 	send_subscribe_t send_subscribe;
 	send_publish_t send_publish;
 	register_puacb_t register_puacb;
 	query_dialog_t is_dialog;
+	get_record_id_t get_record_id;
 	add_pua_event_t add_event;
 } pua_api_t;
 

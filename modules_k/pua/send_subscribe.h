@@ -40,17 +40,17 @@ typedef struct subs_info
 	str* contact;
 	str* outbound_proxy;
 	int event;
+	str* extra_headers;
 	int expires;
 	int source_flag;
 	int flag;         /*  it can be : INSERT_TYPE or UPDATE_TYPE
                       *  not compulsory */
-
 }subs_info_t;
 
 typedef int (*send_subscribe_t)(subs_info_t* subs);
 int send_subscribe(subs_info_t* subs);
 void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps);
-str* subs_build_hdr(str* watcher_uri, int expires, int event);
+str* subs_build_hdr(str* watcher_uri, int expires, int event, str* extra_headers);
 dlg_t* pua_build_dlg_t(ua_pres_t* presentity);
 
 #endif

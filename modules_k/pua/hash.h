@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "../../str.h"
 #include "../../lock_ops.h"
+#include "../../dprint.h"
 
 #define PRESENCE_EVENT      1<<0
 #define PWINFO_EVENT        1<<1
@@ -45,6 +46,7 @@
 #define XMPP_INITIAL_SUBS   1<<5
 #define MI_PUBLISH			1<<6
 #define MI_SUBSCRIBE		1<<7
+#define RLS_SUBSCRIBE       1<<8
 
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1
@@ -53,8 +55,8 @@
 typedef struct ua_pres{
  
     /* common*/
-    str* pres_uri;
 	str id;
+    str* pres_uri;
 	int event;
 	time_t expires;
 	time_t desired_expires;
@@ -77,7 +79,9 @@ typedef struct ua_pres{
 	int version;
     int watcher_count;
 	str* outbound_proxy;
+	str* extra_headers;
 	str record_route;
+	str contact;
  /*?? should this be long? */
 }ua_pres_t;
 
@@ -105,7 +109,11 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code);
 
 void destroy_htable();
 int is_dialog(ua_pres_t* dialog);
+
 ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code);
+
+int get_record_id(ua_pres_t* dialog, str** rec_id);
+typedef int (*get_record_id_t)(ua_pres_t* dialog, str** rec_id);
 
 /* for degug */
 void print_ua_pres(ua_pres_t* p);

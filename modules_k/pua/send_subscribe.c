@@ -56,7 +56,7 @@ void print_subs(subs_info_t* subs)
 
 }
 
-str* subs_build_hdr(str* contact, int expires, int event)
+str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 {
 	str* str_hdr= NULL;
 	static char buf[3000];
@@ -116,6 +116,12 @@ str* subs_build_hdr(str* contact, int expires, int event)
 	str_hdr->len += len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 	str_hdr->len += CRLF_LEN;
+
+	if(extra_headers && extra_headers->len)
+	{
+		memcpy(str_hdr->s+str_hdr->len, extra_headers->s, extra_headers->len);
+		str_hdr->len += extra_headers->len;
+	}
 
 	str_hdr->s[str_hdr->len]= '\0';
 
@@ -226,7 +232,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	if(msg == NULL || msg== FAKED_REPLY)
 	{
 		LOG(L_ERR, "PUA:subs_cback_func: no reply message found\n ");
-		goto done;
+		goto error;
 	}
 
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
@@ -329,7 +335,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			memset(&subs, 0, sizeof(subs_info_t));
 			subs.pres_uri= hentity->pres_uri; 
 			subs.watcher_uri= hentity->watcher_uri;
-			subs.contact= hentity->watcher_uri;
+			subs.contact= &hentity->contact;
 			subs.expires= (hentity->desired_expires>0)?
 					hentity->desired_expires- (int)time(NULL)+ 10:-1;
 			subs.flag= INSERT_TYPE;
@@ -405,7 +411,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	size= sizeof(ua_pres_t)+ 2*sizeof(str)+( pto->uri.len+
 		pfrom->uri.len+ pto->tag_value.len+ pfrom->tag_value.len
-		+msg->callid->body.len+ record_route.len )*sizeof(char);
+		+msg->callid->body.len+ record_route.len+ hentity->contact.len+
+		hentity->id.len )*sizeof(char);
 
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
@@ -457,13 +464,29 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		presentity->record_route.len= record_route.len;
 		size+= record_route.len;
 		pkg_free(record_route.s);
-	}	
+	}
+
+	presentity->contact.s= (char*)presentity + size;
+	memcpy(presentity->contact.s, hentity->contact.s, hentity->contact.len);
+	presentity->contact.len= hentity->contact.len;
+	size+= hentity->contact.len;
+
+	if(hentity->id.s)
+	{
+		presentity->id.s=(char*)presentity+ size;
+		memcpy(presentity->id.s, hentity->id.s, 
+			hentity->id.len);
+		presentity->id.len= hentity->id.len; 
+		size+= presentity->id.len;
+	}
+
 	presentity->event|= hentity->event;
 	presentity->flag= hentity->flag;
 	presentity->etag.s= NULL;
 	presentity->cseq= cseq;
 	presentity->desired_expires= hentity->desired_expires;
 	presentity->expires= lexpire+ (int)time(NULL);
+	presentity->id= hentity->id;
 	if(BLA_SUBSCRIBE & presentity->flag)
 	{
 		DBG("PUA: subs_cback_func:  BLA_SUBSCRIBE FLAG inserted\n");
@@ -476,7 +499,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 done:
 	hentity->flag= flag;
 	run_pua_callbacks( hentity, &msg->first_line);
-	
+error:	
 	if(hentity)
 	{	
 		shm_free(hentity);
@@ -492,7 +515,8 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 	int size;
 
 	size= sizeof(ua_pres_t)+ 2*sizeof(str)+(subs->pres_uri->len+
-		subs->watcher_uri->len+ 1)* sizeof(char);
+		subs->watcher_uri->len+ subs->contact->len+ subs->id.len+ 1)*
+		sizeof(char);
 	
 	if(subs->outbound_proxy && subs->outbound_proxy->len && subs->outbound_proxy->s )
 		size+= sizeof(str)+ subs->outbound_proxy->len* sizeof(char);
@@ -525,6 +549,12 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 	hentity->watcher_uri->len= subs->watcher_uri->len;
 	size+= subs->watcher_uri->len;
 
+	hentity->contact.s = (char*)hentity+ size;
+	memcpy(hentity->contact.s, subs->contact->s ,
+		subs->contact->len );
+	hentity->contact.len= subs->contact->len;
+	size+= subs->contact->len;
+
 	if(subs->outbound_proxy)
 	{
 		hentity->outbound_proxy= (str*)((char*)hentity+ size);
@@ -539,9 +569,16 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 	else
 		hentity->desired_expires=subs->expires+ (int)time(NULL);
 
+	if(subs->id.s)
+	{
+		hentity->id.s= (char*)hentity+ size;
+		memcpy(hentity->id.s, subs->id.s, subs->id.len);
+		hentity->id.len= subs->id.len;
+		size+= subs->id.len;
+	}
 	hentity->flag= subs->source_flag;
 	hentity->event= subs->event;
-
+	
 	return hentity;
 
 }	
@@ -570,7 +607,8 @@ int send_subscribe(subs_info_t* subs)
 	else
 		expires= subs->expires;
 
-	str_hdr= subs_build_hdr(subs->contact, expires, subs->event);
+	str_hdr= subs_build_hdr(subs->contact, expires, subs->event, 
+			subs->extra_headers);
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
 		LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
