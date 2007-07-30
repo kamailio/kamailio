@@ -53,7 +53,7 @@
 #include "pidf.h"
 
 MODULE_VERSION
-#define PUA_TABLE_VERSION 3
+#define PUA_TABLE_VERSION 4
 
 struct tm_binds tmb;
 htable_t* HashT= NULL;
@@ -293,7 +293,7 @@ static void destroy(void)
 int db_restore()
 {
 	ua_pres_t* p= NULL;
-	db_key_t result_cols[14]; 
+	db_key_t result_cols[15]; 
 	db_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
@@ -301,11 +301,12 @@ int db_restore()
 	str etag, tuple_id;
 	str watcher_uri, call_id;
 	str to_tag, from_tag;
-	str record_route;
+	str record_route, contact;
 	int size= 0, i;
 	int n_result_cols= 0;
-	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col, record_route_col;
-	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,event_col;
+	int puri_col,pid_col,expires_col,flag_col,etag_col;
+	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col;
+	int event_col,contact_col,tuple_col,record_route_col;
 
 	result_cols[puri_col=n_result_cols++]	="pres_uri";		
 	result_cols[pid_col=n_result_cols++]	="pres_id";	
@@ -320,6 +321,7 @@ int db_restore()
 	result_cols[cseq_col= n_result_cols++]	="cseq";
 	result_cols[event_col= n_result_cols++]	="event";
 	result_cols[record_route_col= n_result_cols++]	="record_route";
+	result_cols[contact_col= n_result_cols++]	="contact";
 	
 	if(!pua_db)
 	{
@@ -374,7 +376,8 @@ int db_restore()
 		memset(&from_tag,		 0, sizeof(str));
 		memset(&record_route,	 0, sizeof(str));
 		memset(&pres_id,         0, sizeof(str));
-	
+		memset(&contact,         0, sizeof(str));
+
 		pres_id.s= (char*)row_vals[pid_col].val.string_val;
 		if(pres_id.s)
 			pres_id.len = strlen(pres_id.s);
@@ -407,6 +410,9 @@ int db_restore()
 				record_route.s= (char*)row_vals[record_route_col].val.string_val;
 				record_route.len= strlen(record_route.s);
 			}	
+			
+			contact.s= (char*)row_vals[contact_col].val.string_val;
+			contact.len = strlen(contact.s);
 		}
 		
 		size= sizeof(ua_pres_t)+ sizeof(str)+ pres_uri.len+ pres_id.len+
@@ -414,7 +420,7 @@ int db_restore()
 		
 		if(watcher_uri.s)
 			size+= sizeof(str)+ watcher_uri.len+ call_id.len+ to_tag.len+
-				from_tag.len+ record_route.len;
+				from_tag.len+ record_route.len+ contact.len;
 		
 		p= (ua_pres_t*)shm_malloc(size);
 		if(p== NULL)
@@ -478,7 +484,12 @@ int db_restore()
 				memcpy(p->record_route.s, record_route.s, record_route.len);
 				p->record_route.len= record_route.len;
 				size+= record_route.len;
-			}	
+			}
+			p->contact.s= (char*)p + size;
+			memcpy(p->contact.s, contact.s, contact.len);
+			p->contact.len= contact.len;
+			size+= contact.len;
+
 			p->cseq= row_vals[cseq_col].val.int_val;
 		}
 		
@@ -683,17 +694,17 @@ error:
 void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
-	db_key_t q_cols[15], result_cols[1];
+	db_key_t q_cols[16], result_cols[1];
 	db_res_t *res= NULL;
 	db_key_t db_cols[3];
-	db_val_t q_vals[15], db_vals[4];
+	db_val_t q_vals[16], db_vals[4];
 	db_op_t  db_ops[1] ;
 	int n_query_cols= 0, n_query_update= 0;
 	int n_update_cols= 0;
 	int i;
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,record_route_col,cseq_col;
-	int no_lock= 0;
+	int no_lock= 0, contact_col;
 	
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
@@ -765,6 +776,11 @@ void db_update(unsigned int ticks,void *param)
 	q_vals[record_route_col= n_query_cols].nul = 0;
 	n_query_cols++;
 	
+	q_cols[contact_col= n_query_cols] ="contact";
+	q_vals[contact_col= n_query_cols].type = DB_STR;
+	q_vals[contact_col= n_query_cols].nul = 0;
+	n_query_cols++;
+
 	/* cols and values used for update */
 	db_cols[0]= "expires";
 	db_vals[0].type = DB_INT;
@@ -928,6 +944,7 @@ void db_update(unsigned int ticks,void *param)
 						DBG("PUA: db_update: record has record_route\\t n_query_cols= %d\n",n_query_cols );
 
 					q_vals[record_route_col].val.str_val = p->record_route;
+					q_vals[contact_col].val.str_val = p->contact;
 						
 					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_query_cols )<0)
 					{
