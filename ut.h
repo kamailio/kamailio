@@ -130,6 +130,9 @@
 #define MIN_int(a, b) (((a)<(b))?(a):(b))
 #define MAX_int(a, b) (((a)>(b))?(a):(b))
 
+#define MIN_unsigned(a, b) (unsigned)(((unsigned)(a)<(unsigned)(b))?(a):(b))
+#define MAX_unsigned(a, b) (unsigned)(((unsigned)(a)>(unsigned)(b))?(a):(b))
+
 #if 0
 #define MIN_int(a, b) ((b)+(((a)-(b))& -((a)<(b))))
 #define MAX_int(a, b) ((a)-(((a)-(b))& -((b)>(a))))
