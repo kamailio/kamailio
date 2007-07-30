@@ -7,7 +7,14 @@ $Id$
 2.1.0 changes
 
 modules:
- - tm        - different error replies for too many branches (500 but with
+ - blst      - new module containing script blacklist manipulations functions
+               (the source of a message can be blacklisted, removed from the
+                blacklist or checked for presence in the blacklist).
+ - tm        - support for adding a 503 reply source to the blacklist for
+               the time specified in the Retry-After header (see the new tm
+               parameters blst_503, blst_503_def_timeout, blst_503_min_timeout
+               and blst_503_max_timeout).
+             - different error replies for too many branches (500 but with
                different text), resolve error (478) or send error
                (477).
              - tm can be configured not to automatically send 100 replies
@@ -35,6 +42,22 @@ modules:
              - behaviour when receiving a CANCEL which doesn't match any 
                transaction can be selected using the unmatched_cancel param.
              - params: 
+                        - blst_503 - if set and if the blacklist is used
+                          (use_dst_blacklist=1), add the source of a 503 reply
+                          to the blacklist
+                        - blst_503_def_timeout - if the Retry-After header from
+                          a 503 reply is missing, use this value for the 
+                          blacklist timeout (in s). Depends on blst_503.
+                          The default value is dst_blacklist_expire (60s if 
+                          not changed in the config script).
+                        - blst_503_min_timeot (in s) - if the 503 reply 
+                          Retry-After header value is less, use this value
+                          for the blacklist timeout. Depends on blst_503.
+                          The default value is 0.
+                        - blst_503_max_timeout (in s) - if the 503 reply 
+                          Retry-After header value is greater, use this value
+                          instead. Depends on blst_503.
+                          The default value is 3600 s.
                         - auto_inv_100 - if set (default) tm will automatically
                           send an 100 reply to INVITEs (see also 
                          t_set_auto_inv_100())
