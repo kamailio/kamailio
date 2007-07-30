@@ -52,10 +52,10 @@
 	<section>
 		<title><varname>secret</varname> (string)</title>
 		<para>
-		Secret phrase.
+		Secret phrase used to seed the pseudo random number generator.
 		</para>
 		<para>
-		Default value is randomly generated string.
+		The default is to seed the generator from the system random source in the core.
 		</para>
 		<example>
 		<title>secret parameter example</title>

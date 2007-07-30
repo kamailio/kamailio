@@ -193,7 +193,7 @@ static inline int generate_random_secret(void)
 		return -1;
 	}
 
-	srandom(time(0));
+	/* the generator is seeded from the core */
 
 	for(i = 0; i < RAND_SECRET_LEN; i++) {
 		sec_rand[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));

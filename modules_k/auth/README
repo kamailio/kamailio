@@ -110,7 +110,8 @@ Chapter 1. User's Guide
 
    Secret phrase.
 
-   Default value is randomly generated string.
+   The default is to seed the generator from the system random
+   source in the core.
 
    Example 1-1. secret parameter example
 modparam("auth", "secret", "johndoessecretphrase")
