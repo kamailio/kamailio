@@ -36,6 +36,9 @@
 
 #include "ip_addr.h"
 #include "parser/msg_parser.h"
+#include "timer_ticks.h"
+
+#define DEFAULT_BLST_TIMEOUT		60  /* 1 min. */
 
 /* flags: */
 #define BLST_IS_IPV6		1		/* set if the address is ipv6 */
@@ -43,7 +46,7 @@
 #define BLST_ERR_CONNECT	(1<<2)	/* set if connect failed (tcp/tls) */
 #define BLST_ICMP_RCVD		(1<<3)	/* set if icmp error */
 #define BLST_ERR_TIMEOUT	(1<<4)	/* set if sip timeout */
-#define BLST_RESERVED		(1<<5)	/* not used yet */
+#define BLST_503			(1<<5)	/* set for 503 replies */
 #define BLST_ADM_PROHIBITED	(1<<6)	/* administratively prohibited */
 #define BLST_PERMANENT		(1<<7)  /* never deleted, never expires */
 
@@ -62,7 +65,8 @@ struct blacklist_hook{
 	/* WARNING: msg might be NULL, and it might point to shared memory
 	 * without locking, do not modify it! msg can be used typically for checking
 	 * the message flags with isflagset() */
-	int (*on_blst_action)(struct dest_info* si, unsigned char* err_flags, struct sip_msg* msg);
+	int (*on_blst_action)(struct dest_info* si, unsigned char* err_flags,
+							struct sip_msg* msg);
 	/* called before ser shutdown */
 	void (*destroy)(void);
 };
@@ -73,9 +77,18 @@ int register_blacklist_hook(struct blacklist_hook *h, int type);
 int init_dst_blacklist();
 void destroy_dst_blacklist();
 
-int dst_blacklist_add(unsigned char err_flags, struct dest_info* si, struct sip_msg* msg);
+
+/* like dst_blacklist_add, but the timeout can be also set */
+int dst_blacklist_add_to(unsigned char err_flags, struct dest_info* si,
+						struct sip_msg* msg, ticks_t timeout);
+
+/* adds a dst to the blacklist with default timeout */
+#define dst_blacklist_add(err_flags, si, msg) \
+	dst_blacklist_add_to((err_flags), (si), (msg), S_TO_TICKS(blst_timeout))
 
 int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg);
+/* delete an entry from the blacklist */
+int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg);
 
 /* deletes all the entries from the blacklist except the permanent ones
  * (which are marked with BLST_PERMANENT)

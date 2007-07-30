@@ -31,6 +31,7 @@
  *  2006-07-29  created by andrei
  *  2007-05-39  added hooks for add; more locks to reduce contention (andrei)
  *  2007-06-26  added hooks for search (andrei)
+ *  2007-07-30  added dst_blacklist_del() and dst_blacklist_add_to()  (andrei)
  */
 
 
@@ -65,7 +66,6 @@ struct dst_blst_entry{
 
 
 #define DST_BLST_HASH_SIZE		1024
-#define DEFAULT_BLST_TIMEOUT		60  /* 1 min. */
 #define DEFAULT_BLST_MAX_MEM	250 /* 1 Kb FIXME (debugging)*/
 #define DEFAULT_BLST_TIMER_INTERVAL		60 /* 1 min */
 
@@ -262,7 +262,8 @@ error:
 
 
 inline static int blacklist_run_hooks(struct blst_callbacks_lst *cb_lst,
-							struct dest_info* si, unsigned char* flags, struct sip_msg* msg)
+							struct dest_info* si, unsigned char* flags,
+							struct sip_msg* msg)
 {
 	int r;
 	int ret;
@@ -472,7 +473,7 @@ do{ \
  * it also deletes expired elements (expire<=now) as it searches
  * proto==PROTO_NONE = wildcard */
 inline static struct dst_blst_entry* _dst_blacklist_lst_find(
-												struct dst_blst_entry** head,
+												unsigned short hash,
 												struct ip_addr* ip,
 												unsigned char proto,
 												unsigned short port,
@@ -481,8 +482,10 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
 	struct dst_blst_entry** crt;
 	struct dst_blst_entry** tmp;
 	struct dst_blst_entry* e;
+	struct dst_blst_entry** head;
 	unsigned char type;
 	
+	head=&dst_blst_hash[hash].first;
 	type=(ip->af==AF_INET6)*BLST_IS_IPV6;
 	for (crt=head, tmp=&(*head)->next; *crt; crt=tmp, tmp=&(*crt)->next){
 		e=*crt;
@@ -491,12 +494,57 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
 		if ((s_ticks_t)(now-(*crt)->expire)>=0){
 			*crt=(*crt)->next;
 			*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
+			BLST_HASH_STATS_DEC(hash);
 			blst_destroy_entry(e);
 		}else if ((e->port==port) && ((e->flags & BLST_IS_IPV6)==type) &&
 				((e->proto==PROTO_NONE) || (proto==PROTO_NONE) ||
 					(e->proto==proto)) && 
 					(memcmp(ip->u.addr, e->ip, ip->len)==0)){
 			return e;
+		}
+	}
+	return 0;
+}
+
+
+
+/* must be called with the lock held
+ * returns 1 if a matching entry was deleted, 0 otherwise
+ * it also deletes expired elements (expire<=now) as it searches
+ * proto==PROTO_NONE = wildcard */
+inline static int _dst_blacklist_del(
+												unsigned short hash,
+												struct ip_addr* ip,
+												unsigned char proto,
+												unsigned short port,
+												ticks_t now)
+{
+	struct dst_blst_entry** crt;
+	struct dst_blst_entry** tmp;
+	struct dst_blst_entry* e;
+	struct dst_blst_entry** head;
+	unsigned char type;
+	
+	head=&dst_blst_hash[hash].first;
+	type=(ip->af==AF_INET6)*BLST_IS_IPV6;
+	for (crt=head, tmp=&(*head)->next; *crt; crt=tmp, tmp=&(*crt)->next){
+		e=*crt;
+		prefetch_loc_r((*crt)->next, 1);
+		/* remove old expired entries */
+		if ((s_ticks_t)(now-(*crt)->expire)>=0){
+			*crt=(*crt)->next;
+			*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
+			BLST_HASH_STATS_DEC(hash);
+			blst_destroy_entry(e);
+		}else if ((e->port==port) && ((e->flags & BLST_IS_IPV6)==type) &&
+				((e->proto==PROTO_NONE) || (proto==PROTO_NONE) ||
+					(e->proto==proto)) && 
+					(memcmp(ip->u.addr, e->ip, ip->len)==0)){
+			*crt=(*crt)->next;
+			*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
+			BLST_HASH_STATS_DEC(hash);
+			blst_destroy_entry(e);
+			return 1;
 		}
 	}
 	return 0;
@@ -586,7 +634,8 @@ static ticks_t blst_timer(ticks_t ticks, struct timer_ln* tl, void* data)
  */
 inline static int dst_blacklist_add_ip(unsigned char err_flags, 
 									unsigned char proto,
-									struct ip_addr* ip, unsigned short port)
+									struct ip_addr* ip, unsigned short port,
+									ticks_t timeout)
 {
 	int size;
 	struct dst_blst_entry* e;
@@ -606,11 +655,10 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 	hash=dst_blst_hash_no(proto, ip, port);
 	/* check if the entry already exists */
 	LOCK_BLST(hash);
-		e=_dst_blacklist_lst_find(&dst_blst_hash[hash].first, ip, proto,
-																port, now);
+		e=_dst_blacklist_lst_find(hash, ip, proto, port, now);
 		if (e){
 			e->flags|=err_flags;
-			e->expire=now+S_TO_TICKS(blst_timeout); /* update the timeout */
+			e->expire=now+timeout; /* update the timeout */
 		}else{
 			if (unlikely((*blst_mem_used+size)>=blst_max_mem)){
 				UNLOCK_BLST(hash);
@@ -635,7 +683,7 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 			e->proto=proto;
 			e->port=port;
 			memcpy(e->ip, ip->u.addr, ip->len);
-			e->expire=now+S_TO_TICKS(blst_timeout); /* update the timeout */
+			e->expire=now+timeout; /* update the timeout */
 			e->next=0;
 			dst_blacklist_lst_add(&dst_blst_hash[hash].first, e);
 			BLST_HASH_STATS_INC(hash);
@@ -655,15 +703,14 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 	struct dst_blst_entry* e;
 	unsigned short hash;
 	ticks_t now;
-	int ret=0;
+	int ret;
 	
 	ret=0;
 	now=get_ticks_raw();
 	hash=dst_blst_hash_no(proto, ip, port);
 	if (unlikely(dst_blst_hash[hash].first)){
 		LOCK_BLST(hash);
-			e=_dst_blacklist_lst_find(&dst_blst_hash[hash].first, ip, proto,
-										port, now);
+			e=_dst_blacklist_lst_find(hash, ip, proto, port, now);
 			if (e){
 				ret=e->flags;
 			}
@@ -674,7 +721,8 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 
 
 
-int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si, struct sip_msg* msg)
+int dst_blacklist_add_to(unsigned char err_flags,  struct dest_info* si,
+						struct sip_msg* msg, ticks_t timeout)
 {
 	struct ip_addr ip;
 
@@ -685,7 +733,7 @@ int dst_blacklist_add(unsigned char err_flags,  struct dest_info* si, struct sip
 #endif
 	su2ip_addr(&ip, &si->to);
 	return dst_blacklist_add_ip(err_flags, si->proto, &ip,
-								su_getport(&si->to));
+								su_getport(&si->to), timeout);
 }
 
 
@@ -710,6 +758,30 @@ int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg)
 	}
 #endif
 	return dst_is_blacklisted_ip(si->proto, &ip, su_getport(&si->to));
+}
+
+
+
+/* returns 1 if the entry was deleted, 0 if not found */
+int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg)
+{
+	unsigned short hash;
+	struct ip_addr ip;
+	ticks_t now;
+	int ret;
+	unsigned short port;
+	
+	ret=0;
+	su2ip_addr(&ip, &si->to);
+	port=su_getport(&si->to);
+	now=get_ticks_raw();
+	hash=dst_blst_hash_no(si->proto, &ip, port);
+	if (unlikely(dst_blst_hash[hash].first)){
+		LOCK_BLST(hash);
+			ret=_dst_blacklist_del(hash, &ip, si->proto, port, now);
+		UNLOCK_BLST(hash);
+	}
+	return ret;
 }
 
 
@@ -888,7 +960,8 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	if (dst_blacklist_add_ip(err_flags, proto, ip_addr, port))
+	if (dst_blacklist_add_ip(err_flags, proto, ip_addr, port, 
+											S_TO_TICKS(blst_timeout)))
 		rpc->fault(ctx, 400, "Failed to add the entry to the blacklist");
 }
 
