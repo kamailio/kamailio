@@ -30,6 +30,7 @@
  * 2003-04-26 ZSW (jiri)
  * 2003-08-05 free the parsed part of Accept header (bogdan)
  * 2007-01-26 HDR_DATE_T, HDR_IDENTITY_T, HDR_IDENTITY_INFO_T added (gergo)
+ * 2007-07-27 added HDR_RETRY_AFTER_T (andrei)
  */
 
 
@@ -105,6 +106,9 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_CONTENTLENGTH_T:
+			break;
+
+		case HDR_RETRY_AFTER_T:
 			break;
 
 		case HDR_AUTHORIZATION_T:

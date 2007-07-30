@@ -32,6 +32,7 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-05-01 added support for Accept HF (janakj)
  * 2007-01-26 Date, Identity, Identity_info HF support added (gergo)
+ * 2007-07-27 added support for Retry-After (andrei)
  */
 
 
@@ -96,6 +97,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_www.h"      /* WWW-Authenticate */
 #include "case_date.h"     /* Date */
 #include "case_iden.h"     /* Identity, Identity-info */
+#include "case_retr.h"     /* Retry-After */
 
 
 #define READ(val) \
@@ -140,6 +142,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _www__: www_CASE; \
 	case _date_: date_CASE; \
 	case _iden_: iden_CASE; \
+	case _retr_: retr_CASE; \
 
 
 

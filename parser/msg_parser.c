@@ -58,6 +58,7 @@
 #include "parse_hname2.h"
 #include "parse_uri.h"
 #include "parse_content.h"
+#include "../compiler_opt.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -82,7 +83,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	struct date_body* date_b;
 	struct identity_body* identity_b;
 	struct identityinfo_body* identityinfo_b;
-	int integer;
+	int integer, err;
+	unsigned uval;
 
 	if ((*buf)=='\n' || (*buf)=='\r'){
 		/* double crlf or lflf or crcr */
@@ -185,6 +187,18 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			hdr->body.len=tmp-hdr->body.s;
 			DBG("DEBUG: get_hdr_body : content_length=%d\n",
 					(int)(long)hdr->parsed);
+			break;
+		case HDR_RETRY_AFTER_T:
+			hdr->body.s=tmp;
+			tmp=parse_retry_after(tmp,end, &uval, &err);
+			if (err){
+				LOG(L_ERR, "ERROR:get_hdr_field: bad retry_after header\n");
+				goto error;
+			}
+			hdr->parsed=(void*)(unsigned long)uval;
+			hdr->body.len=tmp-hdr->body.s;
+			DBG("DEBUG: get_hdr_body : retry_after=%d\n",
+					(unsigned)(long)hdr->parsed);
 			break;
 		case HDR_DATE_T:
 			date_b=pkg_malloc(sizeof(*date_b));
@@ -351,8 +365,9 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 
 	DBG("parse_headers: flags=%llx\n", (unsigned long long)flags);
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
+		prefetch_loc_r(tmp+64, 1);
 		hf=pkg_malloc(sizeof(struct hdr_field));
-		if (hf==0){
+		if (unlikely(hf==0)){
 			ser_error=E_OUT_OF_MEM;
 			LOG(L_ERR, "ERROR:parse_headers: memory allocation error\n");
 			goto error;
@@ -377,6 +392,7 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_REQUESTDISPOSITION_T:
 			case HDR_WWW_AUTHENTICATE_T:
 			case HDR_PROXY_AUTHENTICATE_T:
+			case HDR_RETRY_AFTER_T:
 			case HDR_OTHER_T: /*do nothing*/
 				break;
 			case HDR_CALLID_T:

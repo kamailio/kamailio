@@ -32,6 +32,7 @@
  * 2005-02-14 hdr_flags_t && hdr_flags_f defined, split HDR_xxx into
  *             HDR_xxx_F & HDR_xxx_T [WARNING: don't mix them!] (andrei)
  * 2007-01-26 HDR_DATE_T, HDR_IDENTITY_T, HDR_IDENTITY_INFO_T added (gergo)
+ * 2007-07-27 HDR_RETRY_AFTER_[TF] added (andrei)
  */
 
 
@@ -105,6 +106,7 @@ enum _hdr_types_t {
 	HDR_DATE_T			       /* Date header field */,
 	HDR_IDENTITY_T			       /* Identity header field */,
 	HDR_IDENTITY_INFO_T		       /* Identity-info header field */,
+	HDR_RETRY_AFTER_T		           /* Retry-After header field */,
 
 	HDR_EOH_T					       /* End of message header */
 };
@@ -172,6 +174,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_DATE_F			HDR_F_DEF(DATE)
 #define HDR_IDENTITY_F			HDR_F_DEF(IDENTITY)
 #define HDR_IDENTITY_INFO_F		HDR_F_DEF(IDENTITY_INFO)
+#define HDR_RETRY_AFTER_F			HDR_F_DEF(RETRY_AFTER)
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 
