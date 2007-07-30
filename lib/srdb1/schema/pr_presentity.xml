@@ -82,12 +82,5 @@
         <colref linkend="etag"/>
         <unique/>
 	</index>
-	<index>
-        <name>ude_presentity</name>
-        <colref linkend="username"/>
-        <colref linkend="domain"/>
-        <colref linkend="event"/>
-        <unique/>
-    </index>
 
 </table>
