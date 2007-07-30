@@ -9,7 +9,7 @@
 
 <table id="pua" xmlns:db="http://docbook.org/ns/docbook">
     <name>pua</name>
-    <version>3</version>
+    <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence related pua module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/pua.html
@@ -116,6 +116,13 @@
         <type>text</type>
         <null/>
         <description>Record route</description>
+    </column>
+   
+	<column>
+        <name>contact</name>
+        <type>string</type>
+		<size>&uri_len;</size>
+		<description>Contact</description>
     </column>
 
     <column>
