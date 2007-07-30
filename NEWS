@@ -48,8 +48,8 @@ modules:
                         - blst_503_def_timeout - if the Retry-After header from
                           a 503 reply is missing, use this value for the 
                           blacklist timeout (in s). Depends on blst_503.
-                          The default value is dst_blacklist_expire (60s if 
-                          not changed in the config script).
+                          The default value is 0 ( do not blacklist if no
+                          Retry-After is present).
                         - blst_503_min_timeot (in s) - if the 503 reply 
                           Retry-After header value is less, use this value
                           for the blacklist timeout. Depends on blst_503.

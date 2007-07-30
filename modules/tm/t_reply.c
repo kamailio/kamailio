@@ -138,7 +138,8 @@ int tm_blst_503=0;
 #ifndef DEFAULT_BLST_TIMEOUT
 #define DEFAULT_BLST_TIMEOUT 60
 #endif
-int tm_blst_503_default=DEFAULT_BLST_TIMEOUT; /* in s */
+int tm_blst_503_default=0; /* rfc conformant: do not blacklist if 
+							  no retry-after */
 /* minimum 503 blacklist time */
 int tm_blst_503_min=0; /* in s */
 /* maximum 503 blacklist time */
@@ -1807,11 +1808,13 @@ int reply_received( struct sip_msg  *p_msg )
 					if (hf->type==HDR_RETRY_AFTER_T){
 						/* found */
 						blst_503_timeout=(unsigned)(unsigned long)hf->parsed;
+						blst_503_timeout=MAX_unsigned(blst_503_timeout, 
+															tm_blst_503_min);
+						blst_503_timeout=MIN_unsigned(blst_503_timeout,
+															tm_blst_503_max);
 						break;
 					}
 			}
-			blst_503_timeout=MAX_unsigned(blst_503_timeout, tm_blst_503_min);
-			blst_503_timeout=MIN_unsigned(blst_503_timeout, tm_blst_503_max);
 			if (blst_503_timeout){
 				src.send_sock=0;
 				src.to=p_msg->rcv.src_su;

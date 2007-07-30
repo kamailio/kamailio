@@ -625,10 +625,6 @@ static int mod_init(void)
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to process timer AVPs\n");
 		return -1;
 	}
-#ifdef USE_DST_BLACKLIST
-	tm_blst_503_default=blst_timeout; /* by default use blacklist's generic 
-										 value */
-#endif
 	tm_init = 1;
 	return 0;
 }

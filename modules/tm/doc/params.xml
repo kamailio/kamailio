@@ -308,8 +308,9 @@ modparam("tm", "blst_503", 1)
 		<varname>blst_503_max_timeout</varname>.
 	</para>
 	<para>
-		The default value is the <varname>dst_blacklist_expire</varname>'s 
-		value (which is 60 s, if not changed in the config).
+		The default value is 0, which means that if no Retry-After header is
+		present, the 503 reply source will not be blacklisted (rfc conformant
+		 behaviour).
 	</para>
 	<example>
 	    <title>Set <varname>blst_503_def_timeout</varname> parameter</title>
