@@ -269,4 +269,104 @@ modparam("tm", "ac_extra_hdrs", "myfavoriteheaders-")
 	    </programlisting>
 	</example>
     </section>
+
+    <section id="blst_503">
+	<title><varname>blst_503</varname> (integer)</title>
+	<para>
+		If set and the blacklist support is enabled, every 503 reply source is
+		added to the blacklist. The initial blacklist timeout (or ttl) depends
+		on the presence of a Retry-After header in the reply and the values of
+		the following tm parameters: <varname>blst_503_def_timeout</varname>, 
+		<varname>blst_503_min_timeout</varname> and 
+		<varname>blst_503_max_timeout</varname>.
+	</para>
+	<para>
+		<emphasis>WARNING:</emphasis>blindly allowing 503 blacklisting could 
+		be very easily exploited for DOS attacks in most network setups.
+	</para>
+	<para>
+		The default value is 0 (disabled due to the reasons above).
+	</para>
+	<example>
+	    <title>Set <varname>blst_503</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "blst_503", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="blst_503_def_timeout">
+	<title><varname>blst_503_def_timeout</varname> (integer)</title>
+	<para>
+		
+		Blacklist interval in seconds for a 503 reply with no Retry-After 
+		header.
+		See also <varname>blst_503</varname>, 
+		<varname>blst_503_min_timeout</varname> and 
+		<varname>blst_503_max_timeout</varname>.
+	</para>
+	<para>
+		The default value is the <varname>dst_blacklist_expire</varname>'s 
+		value (which is 60 s, if not changed in the config).
+	</para>
+	<example>
+	    <title>Set <varname>blst_503_def_timeout</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "blst_503_def_timeout", 120)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="blst_503_min_timeout">
+	<title><varname>blst_503_min_timeout</varname> (integer)</title>
+	<para>
+		
+		Minimum blacklist interval in seconds for a 503 reply with a 
+		Retry-After header. It will be used if the Retry-After value is 
+		smaller.
+		See also <varname>blst_503</varname>, 
+		<varname>blst_503_def_timeout</varname> and 
+		<varname>blst_503_max_timeout</varname>.
+	</para>
+	<para>
+		The default value is 0 
+	</para>
+	<example>
+	    <title>Set <varname>blst_503_min_timeout</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "blst_503_min_timeout", 30)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="blst_503_max_timeout">
+	<title><varname>blst_503_max_timeout</varname> (integer)</title>
+	<para>
+		
+		Maximum blacklist interval in seconds for a 503 reply with a 
+		Retry-After header. It will be used if the Retry-After value is 
+		greater.
+		See also <varname>blst_503</varname>, 
+		<varname>blst_503_def_timeout</varname> and 
+		<varname>blst_503_min_timeout</varname>.
+	</para>
+	<para>
+		The default value is 3600 
+	</para>
+	<example>
+	    <title>Set <varname>blst_503_max_timeout</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "blst_503_max_timeout", 604800)
+...
+	    </programlisting>
+	</example>
+    </section>
+
 </section>

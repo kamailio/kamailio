@@ -107,6 +107,9 @@
 #include "../../atomic_ops.h" /* membar_write() */
 #include "../../compiler_opt.h"
 #include "../../select_buf.h" /* reset_static_buffer() */
+#ifdef USE_DST_BLACKLIST
+#include "../../dst_blacklist.h"
+#endif
 
 #include "defs.h"
 #include "h_table.h"
@@ -127,6 +130,20 @@ int restart_fr_on_each_reply=1;
 /* if the final reponse is a 401 or a 407, aggregate all the 
  * authorization headers (challenges) (rfc3261 requires this to be on) */
 int tm_aggregate_auth=1;
+
+/* if 1 blacklist 503 sources, using tm_blst_503_min, tm_blst_503_max,
+ * tm_blst_503_default and the Retry-After header in the 503 reply */
+int tm_blst_503=0;
+/* default 503 blacklist time (when no Retry-After header is present */
+#ifndef DEFAULT_BLST_TIMEOUT
+#define DEFAULT_BLST_TIMEOUT 60
+#endif
+int tm_blst_503_default=DEFAULT_BLST_TIMEOUT; /* in s */
+/* minimum 503 blacklist time */
+int tm_blst_503_min=0; /* in s */
+/* maximum 503 blacklist time */
+int tm_blst_503_max=3600; /* in s */
+
 
 /* are we processing original or shmemed request ? */
 enum route_mode rmode=MODE_REQUEST;
@@ -1630,6 +1647,11 @@ int reply_received( struct sip_msg  *p_msg )
 	int branch_ret;
 	int prev_branch;
 #endif
+#ifdef USE_DST_BLACKLIST
+	int blst_503_timeout;
+	struct dest_info src;
+	struct hdr_field* hf;
+#endif
 #ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
 #endif
@@ -1775,6 +1797,31 @@ int reply_received( struct sip_msg  *p_msg )
 		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 	}
+#ifdef USE_DST_BLACKLIST
+		/* add temporary to the blacklist the source of a 503 reply */
+		if (tm_blst_503 && use_dst_blacklist && (msg_status==503)){
+			blst_503_timeout=tm_blst_503_default;
+			if ((parse_headers(p_msg, HDR_RETRY_AFTER_F, 0)==0) && 
+				(p_msg->parsed_flag & HDR_RETRY_AFTER_F)){
+				for (hf=p_msg->headers; hf; hf=hf->next)
+					if (hf->type==HDR_RETRY_AFTER_T){
+						/* found */
+						blst_503_timeout=(unsigned)(unsigned long)hf->parsed;
+						break;
+					}
+			}
+			blst_503_timeout=MAX_unsigned(blst_503_timeout, tm_blst_503_min);
+			blst_503_timeout=MIN_unsigned(blst_503_timeout, tm_blst_503_max);
+			if (blst_503_timeout){
+				src.send_sock=0;
+				src.to=p_msg->rcv.src_su;
+				src.id=p_msg->rcv.proto_reserved1;
+				src.proto=p_msg->rcv.proto;
+				dst_blacklist_add_to(BLST_503, &src,  p_msg, 
+									S_TO_TICKS(blst_503_timeout));
+			}
+		}
+#endif /* USE_DST_BLACKLIST */
 #ifdef USE_DNS_FAILOVER
 		/* if this is a 503 reply, the destination resolves to more ips, and
 		 *  the branch is still active (no timeout), add another branch/uac.

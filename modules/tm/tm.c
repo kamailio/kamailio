@@ -360,6 +360,10 @@ static param_export_t params[]={
 	{"default_reason",      PARAM_STR, &default_reason                       },
 	{"reparse_invite",      PARAM_INT, &reparse_invite                       },
 	{"ac_extra_hdrs",       PARAM_STR, &ac_extra_hdrs                        },
+	{"blst_503",            PARAM_INT, &tm_blst_503                          },
+	{"blst_503_def_timeout",PARAM_INT, &tm_blst_503_default                  },
+	{"blst_503_min_timeout",PARAM_INT, &tm_blst_503_min                      },
+	{"blst_503_max_timeout",PARAM_INT, &tm_blst_503_max                      },
 	{0,0,0}
 };
 
@@ -621,7 +625,10 @@ static int mod_init(void)
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to process timer AVPs\n");
 		return -1;
 	}
-
+#ifdef USE_DST_BLACKLIST
+	tm_blst_503_default=blst_timeout; /* by default use blacklist's generic 
+										 value */
+#endif
 	tm_init = 1;
 	return 0;
 }
