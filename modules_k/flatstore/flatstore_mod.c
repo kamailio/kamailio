@@ -142,7 +142,7 @@ static int child_init(int rank)
 	if (rank <= 0) {
 		flat_pid = - rank;
 	} else {
-		flat_pid = rank - PROC_UNIXSOCK;
+		flat_pid = rank - PROC_TCP_MAIN;
 	}
 	return 0;
 }

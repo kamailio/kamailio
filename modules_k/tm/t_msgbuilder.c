@@ -180,7 +180,7 @@ done:
 }
 
 
-/* Build a local request based on a previous request; main
+/* Build a local request based on a previous request; the only
    customers of this function are local ACK and local CANCEL
  */
 char *build_local(struct cell *Trans,unsigned int branch,

@@ -255,9 +255,7 @@ int init_child_trusted(int rank)
 	}
 	
 	/* Check if database is needed by child */
-	if ((db_mode==DISABLE_CACHE && rank>0) ||
-	    (db_mode==ENABLE_CACHE  && rank==PROC_UNIXSOCK)
-	   ) {
+	if (db_mode==DISABLE_CACHE && rank>0) {
 		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
 			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"

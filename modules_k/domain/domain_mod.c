@@ -209,7 +209,7 @@ error:
 static int child_init(int rank)
 {
 	/* Check if database is needed by child */
-	if ((db_mode==0 && rank>0) || (db_mode!=0 && rank==PROC_UNIXSOCK)) {
+	if ( db_mode==0 && rank>0 ) {
 		if (domain_db_init(db_url.s)<0) {
 			LOG(L_ERR, "ERROR: domain:child_init():"
 					" Unable to connect to the database\n");
