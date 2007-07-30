@@ -38,7 +38,7 @@ pingClients(unsigned int ticks, void *param)
 
     buf = pkg_malloc(length);
     if (buf == NULL) {
-        LOG(L_ERR, "error: mediaproxy/pingClients(): out of memory\n");
+        LM_ERR("out of memory\n");
         return;
     }
     needed = userLocation.get_all_ucontacts(buf, length,userLocation.nat_flag);
@@ -48,7 +48,7 @@ pingClients(unsigned int ticks, void *param)
         length = (length + needed) * 2;
         ptr = pkg_realloc(buf, length);
         if (ptr == NULL) {
-            LOG(L_ERR, "error: mediaproxy/pingClients(): out of memory\n");
+            LM_ERR("out of memory\n");
             pkg_free(buf);
             return;
         } else {
@@ -75,7 +75,7 @@ pingClients(unsigned int ticks, void *param)
 		memcpy( &flags, ptr, sizeof(flags));
 		ptr = (char*)ptr + sizeof(flags);
         if (parse_uri(contact.s, contact.len, &uri) < 0) {
-            LOG(L_ERR, "error: mediaproxy/pingClients(): can't parse contact uri\n");
+            LM_ERR("can't parse contact uri\n");
             continue;
         }
         if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
@@ -85,15 +85,14 @@ pingClients(unsigned int ticks, void *param)
 		proto = uri.proto;
         hostent = sip_resolvehost(&uri.host, &uri.port_no, &proto, 0, 0);
         if (hostent == NULL){
-            LOG(L_ERR, "error: mediaproxy/pingClients(): can't resolve host\n");
+            LM_ERR("failed to resolve host\n");
             continue;
         }
         hostent2su(&to, hostent, 0, uri.port_no);
 		if (sock==0) {
 			sock = get_send_socket(0, &to, PROTO_UDP);
 			if (sock == NULL) {
-				LOG(L_ERR, "error: mediaproxy/pingClients(): can't get "
-					"sending socket\n");
+				LM_ERR("can't get sending socket\n");
 				continue;
 			}
         }
@@ -150,7 +149,7 @@ FixContact(struct sip_msg* msg, char* str1, char* str2)
     // deleted and not replaced. at least this way we keep the original.
     buf = pkg_malloc(len);
     if (buf == NULL) {
-        LOG(L_ERR, "error: fix_contact(): out of memory\n");
+        LM_ERR("out of memory\n");
         return -1;
     }
 
@@ -182,8 +181,8 @@ FixContact(struct sip_msg* msg, char* str1, char* str2)
     contact->uri.len = len;
 
     if (asymmetric) {
-        LOG(L_INFO, "info: fix_contact(): preserved port for SIP "
-            "asymmetric client: `%.*s'\n", agent.len, agent.s);
+        LM_INFO("preserved port for SIP asymmetric client: `%.*s'\n",
+                agent.len, agent.s);
     }
 
     return 1;

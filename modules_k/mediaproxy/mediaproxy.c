@@ -350,7 +350,7 @@ encodeQuopri(str buf)
 
     result = pkg_malloc(buf.len*3+1);
     if (!result) {
-        LOG(L_ERR, "error: mediaproxy/encodeQuopri(): out of memory\n");
+        LM_ERR("out of memory\n");
         return NULL;
     }
 
@@ -498,14 +498,14 @@ getFromDomain(struct sip_msg* msg)
     str uri;
 
     if (parse_from_header(msg) < 0) {
-        LOG(L_ERR, "error: mediaproxy/getFromDomain(): error parsing `From' header\n");
+        LM_ERR("cannot parse the From header\n");
         return notfound;
     }
 
     uri = get_from(msg)->uri;
 
     if (parse_uri(uri.s, uri.len, &puri) < 0) {
-        LOG(L_ERR, "error: mediaproxy/getFromDomain(): error parsing `From' URI\n");
+        LM_ERR("cannot parse the From URI\n");
         return notfound;
     } else if (puri.host.len == 0) {
         return notfound;
@@ -523,7 +523,7 @@ getDestinationDomain(struct sip_msg* msg)
     static str notfound = {buf, 7};  // use the constant string directly!
 
     if (parse_sip_msg_uri(msg) < 0) {
-        LOG(L_ERR, "error: mediaproxy/getDestinationDomain(): error parsing destination URI\n");
+        LM_ERR("cannot parse the destination URI\n");
         return notfound;
     } else if (msg->parsed_uri.host.len==0) {
         return notfound;
@@ -542,8 +542,8 @@ getFromAddress(struct sip_msg *msg)
     str uri;
     char *ptr;
 
-    if (parse_from_header(msg)<0) {
-        LOG(L_ERR, "error: mediaproxy/getFromAddress(): error parsing From: field\n");
+    if (parse_from_header(msg) < 0) {
+        LM_ERR("cannot parse the From header\n");
         return notfound;
     }
 
@@ -575,7 +575,7 @@ getToAddress(struct sip_msg *msg)
     char *ptr;
 
     if (!msg->to) {
-        LOG(L_ERR, "error: mediaproxy/getToAddress(): missing To: field\n");
+        LM_ERR("missing To header\n");
         return notfound;
     }
 
@@ -605,8 +605,8 @@ getFromTag(struct sip_msg *msg)
     static str notfound = {buf, 0}; // use the constant string directly!
     str tag;
 
-    if (parse_from_header(msg)<0) {
-        LOG(L_ERR, "error: mediaproxy/getFromTag(): error parsing From: field\n");
+    if (parse_from_header(msg) < 0) {
+        LM_ERR("cannot parse the From header\n");
         return notfound;
     }
 
@@ -628,7 +628,7 @@ getToTag(struct sip_msg *msg)
     str tag;
 
     if (!msg->to) {
-        LOG(L_ERR, "error: mediaproxy/getToTag(): missing To: field\n");
+        LM_ERR("missing To header\n");
         return notfound;
     }
 
@@ -655,11 +655,8 @@ getUserAgent(struct sip_msg* msg)
         return msg->user_agent->body;
     }
 
-    // If we can't find user-agent, look after the Server: field
-
-    // This is a temporary hack. Normally it should be extracted by ser
-    // (either as the Server field, or if User-Agent is missing in place
-    // of the User-Agent field)
+    // If we can't find user-agent, look after the `Server' header
+    // This is a temporary hack. Normally it should be extracted by openser.
 
     block.s   = msg->buf;
     block.len = msg->len;
@@ -687,7 +684,7 @@ getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
         return False;
 
     if (!msg->contact->parsed && parse_contact(msg->contact) < 0) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): cannot parse Contact header\n");
+        LM_ERR("cannot parse the Contact header\n");
         return False;
     }
 
@@ -698,7 +695,7 @@ getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
     }
 
     if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): cannot parse Contact URI\n");
+        LM_ERR("cannot parse the Contact URI\n");
         return False;
     }
 
@@ -714,8 +711,8 @@ checkContentType(struct sip_msg *msg)
     str type;
 
     if (!msg->content_type) {
-        LOG(L_WARN, "warning: mediaproxy/checkContentType(): Content-Type "
-            "header missing! Let's assume the content is text/plain ;-)\n");
+        LM_WARN("the Content-Type header is missing! Assume the content type "
+                "is text/plain ;-)\n");
         return True;
     }
 
@@ -723,14 +720,12 @@ checkContentType(struct sip_msg *msg)
     trim(&type);
 
     if (strncasecmp(type.s, "application/sdp", 15) != 0) {
-        LOG(L_ERR, "error: mediaproxy/checkContentType(): invalid Content-Type "
-            "for SDP message\n");
+        LM_ERR("invalid Content-Type for SDP: %.*s\n", type.len, type.s);
         return False;
     }
 
     if (!(isspace((int)type.s[15]) || type.s[15] == ';' || type.s[15] == 0)) {
-        LOG(L_ERR,"error: mediaproxy/checkContentType(): invalid character "
-            "after Content-Type!\n");
+        LM_ERR("invalid character after Content-Type: `%c'\n", type.s[15]);
         return False;
     }
 
@@ -748,7 +743,7 @@ getSDPMessage(struct sip_msg *msg, str *sdp)
 {
     sdp->s = get_body(msg);
     if (sdp->s==NULL) {
-        LOG(L_ERR, "error: mediaproxy/getSDPMessage(): cannot get body from message\n");
+        LM_ERR("cannot get the SDP body\n");
         return -1;
     }
 
@@ -757,7 +752,7 @@ getSDPMessage(struct sip_msg *msg, str *sdp)
         return -2;
 
     if (!checkContentType(msg)) {
-        LOG(L_ERR, "error: mediaproxy/getSDPMessage(): content type is not `application/sdp'\n");
+        LM_ERR("content type is not `application/sdp'\n");
         return -1;
     }
 
@@ -788,8 +783,7 @@ getMediaIPFromBlock(str *block, str *mediaip)
     count = getStrTokens(&zone, tokens, 3);
 
     if (count != 3) {
-        LOG(L_ERR, "error: mediaproxy/getMediaIPFromBlock(): invalid `c=' "
-            "line in SDP body\n");
+        LM_ERR("invalid `c=' line in SDP body\n");
         return -1;
     }
 
@@ -817,8 +811,8 @@ getSessionLevelMediaIP(str *sdp, str *mediaip)
     }
 
     if (getMediaIPFromBlock(&block, mediaip) == -1) {
-        LOG(L_ERR, "error: mediaproxy/getSessionLevelMediaIP(): parse error "
-            "while getting session-level media IP from SDP body\n");
+        LM_ERR("parse error while getting session-level media IP from "
+               "the SDP body\n");
         return False;
     }
 
@@ -849,8 +843,7 @@ getMediaStreams(str *sdp, str *sessionIP, StreamInfo *streams, int limit)
         count = getStrTokens(&zone, tokens, 2);
 
         if (count != 2) {
-            LOG(L_ERR, "error: mediaproxy/getMediaStreams(): invalid `m=' "
-                "line in SDP body\n");
+            LM_ERR("invalid `m=' line in the SDP body\n");
             return -1;
         }
 
@@ -872,14 +865,13 @@ getMediaStreams(str *sdp, str *sessionIP, StreamInfo *streams, int limit)
 
         result = getMediaIPFromBlock(&block, &(streams[i].ip));
         if (result == -1) {
-            LOG(L_ERR, "error: mediaproxy/getMediaStreams(): parse error in "
-                "getting the contact IP for the media stream nr. %d\n", i+1);
+            LM_ERR("parse error while getting the contact IP for the "
+                   "media stream number %d\n", i+1);
             return -1;
         } else if (result == 0) {
             if (sessionIP->s == NULL) {
-                LOG(L_ERR, "error: mediaproxy/getMediaStreams(): media stream "
-                    "doesn't define a contact IP and the session-level IP "
-                    "is missing\n");
+                LM_ERR("media stream number %d doesn't define a contact IP "
+                       "and the session-level IP is missing\n", i+1);
                 return -1;
             }
             streams[i].ip = *sessionIP;
@@ -906,13 +898,13 @@ replaceElement(struct sip_msg *msg, str *oldElem, str *newElem)
 
     buf = pkg_malloc(newElem->len);
     if (!buf) {
-        LOG(L_ERR, "error: mediaproxy/replaceElement(): out of memory\n");
+        LM_ERR("out of memory\n");
         return False;
     }
 
     anchor = del_lump(msg, oldElem->s - msg->buf, oldElem->len, 0);
     if (!anchor) {
-        LOG(L_ERR, "error: mediaproxy/replaceElement(): failed to delete old element\n");
+        LM_ERR("failed to delete old element\n");
         pkg_free(buf);
         return False;
     }
@@ -920,7 +912,7 @@ replaceElement(struct sip_msg *msg, str *oldElem, str *newElem)
     memcpy(buf, newElem->s, newElem->len);
 
     if (insert_new_lump_after(anchor, buf, newElem->len, 0)==0) {
-        LOG(L_ERR, "error: mediaproxy/replaceElement(): failed to insert new element\n");
+        LM_ERR("failed to insert new element\n");
         pkg_free(buf);
         return False;
     }
@@ -989,12 +981,12 @@ sendMediaproxyCommand(char *command)
 
     smpSocket = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (smpSocket < 0) {
-        LOG(L_ERR, "error: mediaproxy/sendMediaproxyCommand(): can't create socket\n");
+        LM_ERR("failed to create socket\n");
         return NULL;
     }
     if (connect(smpSocket, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         close(smpSocket);
-        LOG(L_ERR, "error: mediaproxy/sendMediaproxyCommand(): can't connect to MediaProxy\n");
+        LM_ERR("failed to connect to MediaProxy\n");
         return NULL;
     }
 
@@ -1002,7 +994,7 @@ sendMediaproxyCommand(char *command)
 
     if (len <= 0) {
         close(smpSocket);
-        LOG(L_ERR, "error: mediaproxy/sendMediaproxyCommand(): can't send command to MediaProxy\n");
+        LM_ERR("failed to send command to MediaProxy\n");
         return NULL;
     }
 
@@ -1011,7 +1003,7 @@ sendMediaproxyCommand(char *command)
     close(smpSocket);
 
     if (len < 0) {
-        LOG(L_ERR, "error: mediaproxy/sendMediaproxyCommand(): can't read reply from MediaProxy\n");
+        LM_ERR("failed to read reply from MediaProxy\n");
         return NULL;
     }
 
@@ -1089,10 +1081,9 @@ checkAsymmetricFile(AsymmetricClients *aptr)
         size = 32;
         aptr->clients = (regex_t**)pkg_malloc(size*sizeof(regex_t**));
         if (!aptr->clients) {
-            LOG(L_WARN, "warning: mediaproxy/checkAsymmetricFile() cannot "
-                "allocate memory for the %s asymmetric client list. "
-                "%s asymmetric clients will not be handled properly.\n",
-                which, which);
+            LM_WARN("cannot allocate memory for the %s asymmetric client list."
+                    " %s asymmetric clients will not be handled properly.\n",
+                    which, which);
             return; // ignore as it is not fatal
         }
         aptr->size  = size;
@@ -1125,10 +1116,9 @@ checkAsymmetricFile(AsymmetricClients *aptr)
 
         re = (regex_t*)pkg_malloc(sizeof(regex_t));
         if (!re) {
-            LOG(L_WARN, "warning: mediaproxy/checkAsymmetricFile(): "
-                "cannot allocate memory for all the %s asymmetric "
-                "clients listed in file. Some of them will not be "
-                "handled properly.\n", which);
+            LM_WARN("cannot allocate memory for all the %s asymmetric "
+                    "clients listed in file. Some of them will not be "
+                    "handled properly.\n", which);
             break;
         }
         code = regcomp(re, line.s, REG_EXTENDED|REG_ICASE|REG_NOSUB);
@@ -1138,10 +1128,9 @@ checkAsymmetricFile(AsymmetricClients *aptr)
                 regs = aptr->clients;
                 regs = (regex_t**)pkg_realloc(regs, size*sizeof(regex_t**));
                 if (!regs) {
-                    LOG(L_WARN, "warning: mediaproxy/checkAsymmetricFile(): "
-                        "cannot allocate memory for all the %s asymmetric "
-                        "clients listed in file. Some of them will not be "
-                        "handled properly.\n", which);
+                    LM_WARN("cannot allocate memory for all the %s asymmetric "
+                            "clients listed in file. Some of them will not be "
+                            "handled properly.\n", which);
                     break;
                 }
                 aptr->clients = regs;
@@ -1151,18 +1140,18 @@ checkAsymmetricFile(AsymmetricClients *aptr)
             aptr->count++;
         } else {
             regerror(code, re, errbuf, 256);
-            LOG(L_WARN, "warning: mediaproxy/checkAsymmetricFile(): cannot "
-                "compile line %d of the %s asymmetric clients file into a "
-                "regular expression (will be ignored): %s", i, which, errbuf);
+            LM_WARN("cannot compile line %d of the %s asymmetric clients file "
+                    "into a regular expression (will be ignored): %s",
+                    i, which, errbuf);
             pkg_free(re);
         }
     }
 
     aptr->timestamp = statbuf.st_mtime;
 
-    LOG(L_INFO, "info: mediaproxy: %sloaded %s asymmetric clients file "
-        "containing %d entr%s.\n", firstTime ? "" : "re",
-        which, aptr->count, aptr->count==1 ? "y" : "ies");
+    LM_INFO("%sloaded %s asymmetric clients file containing %d entr%s.\n",
+            firstTime ? "" : "re", which, aptr->count,
+            aptr->count==1 ? "y" : "ies");
 
 }
 
@@ -1213,8 +1202,7 @@ isSIPAsymmetric(str userAgent)
         } else if (code != REG_NOMATCH) {
             char errbuf[256];
             regerror(code, sipAsymmetrics.clients[i], errbuf, 256);
-            LOG(L_WARN, "warning: mediaproxy/isSIPAsymmetric() failed to "
-                "match regexp: %s\n", errbuf);
+            LM_WARN("failed to match regexp: %s\n", errbuf);
         }
     }
 
@@ -1246,8 +1234,7 @@ isRTPAsymmetric(str userAgent)
         } else if (code != REG_NOMATCH) {
             char errbuf[256];
             regerror(code, rtpAsymmetrics.clients[i], errbuf, 256);
-            LOG(L_WARN, "warning: mediaproxy/isRTPAsymmetric() failed to "
-                "match regexp: %s\n", errbuf);
+            LM_WARN("failed to match regexp: %s\n", errbuf);
         }
     }
 
@@ -1327,13 +1314,13 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
     str callId;
 
     if (!getCallId(msg, &callId)) {
-        LOG(L_ERR, "error: end_media_session(): can't get Call-Id\n");
+        LM_ERR("can't get Call-Id\n");
         return -1;
     }
 
     command = pkg_malloc(callId.len + 20);
     if (command == NULL) {
-        LOG(L_ERR, "error: end_media_session(): out of memory\n");
+        LM_ERR("out of memory\n");
         return -1;
     }
 
@@ -1365,7 +1352,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     }
 
     if (!getCallId(msg, &callId)) {
-        LOG(L_ERR, "error: use_media_proxy(): can't get Call-Id\n");
+        LM_ERR("can't get Call-Id\n");
         return -1;
     }
 
@@ -1375,21 +1362,18 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         return status;
 
     if (!getSessionLevelMediaIP(&sdp, &sessionIP)) {
-        LOG(L_ERR, "error: use_media_proxy(): error parsing the SDP message\n");
+        LM_ERR("failed to parse the SDP message\n");
         return -1;
     }
 
     streamCount = getMediaStreams(&sdp, &sessionIP, streams, 64);
     if (streamCount == -1) {
-        LOG(L_ERR, "error: use_media_proxy(): can't extract media streams "
-            "from the SDP message\n");
+        LM_ERR("can't extract media streams from the SDP message\n");
         return -1;
     }
 
-    if (streamCount == 0) {
-        // there are no media streams. we have nothing to do.
-        return 1;
-    }
+    if (streamCount == 0)
+        return 1; // there are no media streams. we have nothing to do.
 
     fromDomain = getFromDomain(msg);
     fromType   = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
@@ -1421,7 +1405,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 
     command = pkg_malloc(cmdlen);
     if (!command) {
-        LOG(L_ERR, "error: use_media_proxy(): out of memory\n");
+        LM_ERR("out of memory\n");
         return -1;
     }
 
@@ -1441,14 +1425,14 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 
     agent = encodeQuopri(userAgent);
     if (!agent) {
-        LOG(L_ERR, "error: use_media_proxy(): out of memory\n");
+        LM_ERR("out of memory\n");
         pkg_free(command);
         return -1;
     }
 
     info = pkg_malloc(infolen);
     if (!info) {
-        LOG(L_ERR, "error: use_media_proxy(): out of memory\n");
+        LM_ERR("out of memory\n");
         pkg_free(command);
         pkg_free(agent);
         return -1;
@@ -1478,23 +1462,22 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     count = getTokens(result, tokens, sizeof(tokens)/sizeof(str));
 
     if (count == 0) {
-        LOG(L_ERR, "error: use_media_proxy(): empty response from mediaproxy\n");
+        LM_ERR("empty response from mediaproxy\n");
         return -1;
     } else if (count<streamCount+1) {
         if (request) {
-            LOG(L_ERR, "error: use_media_proxy(): insufficient ports returned "
-                "from mediaproxy: got %d, expected %d\n", count-1, streamCount);
+            LM_ERR("insufficient ports returned from mediaproxy: got %d, "
+                   "expected %d\n", count-1, streamCount);
             return -1;
         } else {
-            LOG(L_WARN, "warning: use_media_proxy(): broken client. Called UA "
-                "added extra media stream(s) in the OK reply\n");
+            LM_WARN("broken client. Called UA added extra media stream(s) "
+                    "in the OK reply\n");
         }
     }
 
     if (sessionIP.s && !isAnyAddress(sessionIP)) {
         if (!replaceElement(msg, &sessionIP, &tokens[0])) {
-            LOG(L_ERR, "error: use_media_proxy(): failed to replace "
-                "session-level media IP in SDP body\n");
+            LM_ERR("failed to replace session-level media IP in the SDP body\n");
             return -1;
         }
     }
@@ -1505,24 +1488,22 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         // check. is this really necessary?
         port = strtoint(&tokens[i+1]);
         if (port <= 0 || port > 65535) {
-            LOG(L_ERR, "error: use_media_proxy(): invalid port returned "
-                "by mediaproxy: %.*s\n", tokens[i+1].len, tokens[i+1].s);
+            LM_ERR("invalid port returned by mediaproxy: %.*s\n",
+                   tokens[i+1].len, tokens[i+1].s);
             //return -1;
             continue;
         }
 
         if (streams[i].port.len!=1 || streams[i].port.s[0]!='0') {
             if (!replaceElement(msg, &(streams[i].port), &tokens[i+1])) {
-                LOG(L_ERR, "error: use_media_proxy(): failed to replace "
-                    "port in media stream nr. %d\n", i+1);
+                LM_ERR("failed to replace port in media stream number %d\n", i+1);
                 return -1;
             }
         }
 
         if (streams[i].localIP && !isAnyAddress(streams[i].ip)) {
             if (!replaceElement(msg, &(streams[i].ip), &tokens[0])) {
-                LOG(L_ERR, "error: use_media_proxy(): failed to replace "
-                    "IP address in media stream nr. %d\n", i+1);
+                LM_ERR("failed to replace IP address in media stream number %d\n", i+1);
                 return -1;
             }
         }
@@ -1541,41 +1522,38 @@ mod_init(void)
 
     // initialize the signaling_ip_avp structure
     if (signaling_ip_avp.name.s==NULL || *(signaling_ip_avp.name.s)==0) {
-        LOG(L_ERR, "error: mediaproxy/mod_init: missing/empty signaling_ip_avp parameter. using default.\n");
+        LM_WARN("missing/empty signaling_ip_avp parameter. will use default.\n");
         signaling_ip_avp.name.s = SIGNALING_IP_AVP_NAME;
     }
     signaling_ip_avp.name.len = strlen(signaling_ip_avp.name.s);
     if (parse_avp_spec(&(signaling_ip_avp.name), &(signaling_ip_avp.type), &(signaling_ip_avp.avp)) < 0) {
-        LOG(L_CRIT, "error: mediaproxy/mod_init: invalid signaling_ip_avp specification `%s'\n", signaling_ip_avp.name.s);
+        LM_CRIT("invalid signaling_ip_avp specification `%s'\n", signaling_ip_avp.name.s);
         return -1;
     }
 
     isFromLocal = (CheckLocalPartyProc)find_export("is_from_local", 0, 0);
     isDestinationLocal = (CheckLocalPartyProc)find_export("is_uri_host_local", 0, 0);
     if (!isFromLocal || !isDestinationLocal) {
-        LOG(L_ERR, "error: mediaproxy/mod_init(): can't find is_from_local "
-            "and/or is_uri_host_local functions. Check if domain.so is loaded\n");
+        LM_CRIT("can't find the is_from_local and/or is_uri_host_local "
+                "functions. Check if domain.so is loaded\n");
         return -1;
     }
 
     if (natpingInterval > 0) {
         ul_bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
         if (!ul_bind_usrloc) {
-            LOG(L_ERR, "error: mediaproxy/mod_init(): can't find the usrloc "
-                "module. Check if usrloc.so is loaded.\n");
+            LM_CRIT("can't find the usrloc module. Check if usrloc.so is loaded.\n");
             return -1;
         }
 
         if (ul_bind_usrloc(&userLocation) < 0) {
-            LOG(L_ERR, "error: mediaproxy/mod_init(): can't access the usrloc "
-                "module.\n");
+            LM_CRIT("can't access the usrloc module.\n");
             return -1;
         }
 
         if (userLocation.nat_flag==0) {
-            LOG(L_ERR, "ERROR:mediaproxy:mod_init: Bad config - "
-                "nat ping enabled, but not nat bflag set in usrloc "
-                "module\n");
+            LM_CRIT("bad config - nat ping enabled, but no nat bflag set in "
+                    "the usrloc module\n");
             return -1;
         }
 
@@ -1606,8 +1584,7 @@ fixstring2int(void **param, int param_count)
             *param = (void*)number;
             return 0;
         } else {
-            LOG(L_ERR, "error: mediaproxy/fixstring2int(): bad number `%s'\n",
-                (char*)(*param));
+            LM_ERR("bad number `%s'\n", (char*)(*param));
             return E_CFG;
         }
     }
