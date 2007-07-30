@@ -183,12 +183,13 @@ static int mod_init(void)
 			LM_ERR("no dispatching list loaded from database\n");
 			return -1;
 		}
-	} else if(ds_load_list(dslistfile)!=0) {
-		LM_ERR("no dispatching list loaded from file\n");
-		return -1;
 	} else {
-		LM_ERR("no way to load dispatching list\n");
-		return -1;
+		if(ds_load_list(dslistfile)!=0) {
+			LM_ERR("no dispatching list loaded from file\n");
+			return -1;
+		} else {
+			LM_DBG("loaded dispatching list\n");
+		}
 	}
 	
 	if (dst_avp_param && *dst_avp_param)
