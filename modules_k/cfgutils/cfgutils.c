@@ -224,12 +224,9 @@ static int get_prob(struct sip_msg *bar, char *foo1, char *foo2)
 
 static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 {
-	/* 
-	 * use drand48(), as these generator provide much more
-	 * uniformly distributed numbers as rand()
-	 */
-	double tmp = drand48();
+	double tmp = ((double) rand() / RAND_MAX);
 	LM_DBG("generated random %f\n", tmp);
+	LM_DBG("my pid is %d", getpid());
 	if (tmp < ((double) (*probability) / 100)) {
 		LM_DBG("return true\n");
 		return 1;
@@ -278,8 +275,6 @@ static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 
 static int mod_init(void)
 {
-	/* rand is seeded from urandom, so use this as seed for the rand48 PRNG */
-	srand48(rand());
 	probability=(int *) shm_malloc(sizeof(int));
 	if (!probability) {
 		LM_ERR("no shmem available\n");
