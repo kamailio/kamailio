@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Copyright (C) 2004 Dan Pascu
+ * Copyright (C) 2004-2007 Dan Pascu
  *
  * This file is part of openser, a free SIP server.
  *
@@ -61,6 +61,7 @@
 MODULE_VERSION
 
 #define SIGNALING_IP_AVP_NAME  "s:signaling_ip"
+#define DOMAIN_AVP_NAME        "s:mediaproxy_domain"
 
 
 // Although `AF_LOCAL' is mandated by POSIX.1g, `AF_UNIX' is portable to
@@ -157,6 +158,9 @@ static int natpingInterval = 60; // 60 seconds
 /* The AVP where the caller signaling IP is stored (if defined) */
 static AVP_Param signaling_ip_avp = {{SIGNALING_IP_AVP_NAME, sizeof(SIGNALING_IP_AVP_NAME)-1}, 0, {0}};
 
+/* The AVP where the application-defined mediaproxy domain is stored */
+static AVP_Param domain_avp = {{DOMAIN_AVP_NAME, sizeof(DOMAIN_AVP_NAME)-1}, 0, {0}};
+
 static usrloc_api_t userLocation;
 
 static AsymmetricClients sipAsymmetrics = {
@@ -194,15 +198,11 @@ NatTest natTests[] = {
 };
 
 static cmd_export_t commands[] = {
-	{"fix_contact",       FixContact,      0, 0,
-		REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"use_media_proxy",   UseMediaProxy,   0, 0,
-		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"end_media_session", EndMediaSession, 0, 0,
-		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"client_nat_test",   ClientNatTest,   1, fixstring2int,
-		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{0, 0, 0, 0, 0}
+    {"fix_contact",       FixContact,      0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+    {"use_media_proxy",   UseMediaProxy,   0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {"end_media_session", EndMediaSession, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {"client_nat_test",   ClientNatTest,   1, fixstring2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {0, 0, 0, 0, 0}
 };
 
 static param_export_t parameters[] = {
@@ -211,29 +211,28 @@ static param_export_t parameters[] = {
     {"rtp_asymmetrics",   STR_PARAM, &(rtpAsymmetrics.file)},
     {"natping_interval",  INT_PARAM, &natpingInterval},
     {"signaling_ip_avp",  STR_PARAM, &(signaling_ip_avp.name.s)},
+    {"domain_avp",        STR_PARAM, &(domain_avp.name.s)},
     {0, 0, 0}
 };
 
 struct module_exports exports = {
-    "mediaproxy", // module name
-	DEFAULT_DLFLAGS, /* dlopen flags */
-    commands,     // module exported functions
-    parameters,   // module exported parameters
-    NULL,         // exported statistics
-    NULL,         /* exported MI functions */
-	NULL,         /* exported pseudo-variables */
-	NULL,         /* extra processes */
-    mod_init,     // module init (before any kid is created. kids will inherit)
-    NULL,         // reply processing
-    NULL,         // destroy function
-    NULL          // child_init
+    "mediaproxy",    // module name
+    DEFAULT_DLFLAGS, // dlopen flags
+    commands,        // module exported functions
+    parameters,      // module exported parameters
+    NULL,            // exported statistics
+    NULL,            // exported MI functions
+    NULL,            // exported pseudo-variables
+    NULL,            // extra processes
+    mod_init,        // module init (before fork. kids will inherit)
+    NULL,            // reply processing
+    NULL,            // destroy function
+    NULL             // child_init
 };
 
 
 
-/* Helper functions */
-
-// Functions dealing with strings
+// String processing functions
 
 /*
  * strfind() finds the start of the first occurrence of the substring needle
@@ -450,9 +449,8 @@ getStrTokens(str *string, str *tokens, int limit)
 }
 
 
-/* Functions to extract the info we need from the SIP/SDP message */
+// Functions to extract the info we need from the SIP/SDP message
 
-/* Extract Call-ID value. */
 static Bool
 getCallId(struct sip_msg* msg, str *cid)
 {
@@ -480,10 +478,24 @@ getSignalingIP(struct sip_msg* msg)
 
     if (!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
                           signaling_ip_avp.avp, &value, NULL) ||
-        !value.s.s || value.s.len==0) {
+        value.s.s==NULL || value.s.len==0) {
 
         value.s.s = ip_addr2a(&msg->rcv.src_ip);
         value.s.len = strlen(value.s.s);
+    }
+
+    return value.s;
+}
+
+/* Get the application-defined mediaproxy domain if defined */
+static str
+getMediaproxyDomain(struct sip_msg* msg)
+{
+    int_str value;
+
+    if (!search_first_avp(domain_avp.type | AVP_VAL_STR,
+                          domain_avp.avp, &value, NULL) || value.s.s==NULL) {
+        value.s.len = 0;
     }
 
     return value.s;
@@ -515,8 +527,7 @@ getFromDomain(struct sip_msg* msg)
     return puri.host;
 }
 
-/* Get destination domain */
-// This function only works when called for a request
+/* Get destination domain (only works for requests) */
 static str
 getDestinationDomain(struct sip_msg* msg)
 {
@@ -534,7 +545,6 @@ getDestinationDomain(struct sip_msg* msg)
 }
 
 
-/* Get From tag */
 static str
 getFromAddress(struct sip_msg *msg)
 {
@@ -566,7 +576,6 @@ getFromAddress(struct sip_msg *msg)
 }
 
 
-/* Get To tag */
 static str
 getToAddress(struct sip_msg *msg)
 {
@@ -598,7 +607,6 @@ getToAddress(struct sip_msg *msg)
 }
 
 
-/* Get From tag */
 static str
 getFromTag(struct sip_msg *msg)
 {
@@ -620,7 +628,6 @@ getFromTag(struct sip_msg *msg)
 }
 
 
-/* Get To tag */
 static str
 getToTag(struct sip_msg *msg)
 {
@@ -642,7 +649,6 @@ getToTag(struct sip_msg *msg)
 }
 
 
-/* Extract User-Agent */
 static str
 getUserAgent(struct sip_msg* msg)
 {
@@ -676,7 +682,7 @@ getUserAgent(struct sip_msg* msg)
     return server;
 }
 
-// Get URI from the Contact: field.
+
 static Bool
 getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
 {
@@ -795,7 +801,6 @@ getMediaIPFromBlock(str *block, str *mediaip)
 }
 
 
-// Get the session-level media IP defined by the SDP message
 static Bool
 getSessionLevelMediaIP(str *sdp, str *mediaip)
 {
@@ -823,7 +828,6 @@ getSessionLevelMediaIP(str *sdp, str *mediaip)
 }
 
 
-// will get all media streams
 static int
 getMediaStreams(str *sdp, str *sessionIP, StreamInfo *streams, int limit)
 {
@@ -1070,8 +1074,6 @@ checkAsymmetricFile(AsymmetricClients *aptr)
     if (statbuf.st_mtime <= aptr->timestamp)
         return; // not changed
 
-    // now we have work to do
-
     which = (aptr == &sipAsymmetrics ? "SIP" : "RTP");
 
     if (!aptr->clients) {
@@ -1247,7 +1249,7 @@ isRTPAsymmetric(str userAgent)
 
 // NAT tests
 
-/* tests if address of signaling is different from address in 1st Via field */
+/* Test if address of signaling is different from address in 1st Via field */
 static Bool
 testSourceAddress(struct sip_msg* msg)
 {
@@ -1266,7 +1268,7 @@ testSourceAddress(struct sip_msg* msg)
     return (diffIP || diffPort);
 }
 
-/* tests if Contact field contains a private IP address as defined in RFC1918 */
+/* Test if Contact field contains a private IP address as defined in RFC1918 */
 static Bool
 testPrivateContact(struct sip_msg* msg)
 {
@@ -1279,7 +1281,7 @@ testPrivateContact(struct sip_msg* msg)
     return isPrivateAddress(&(uri.host));
 }
 
-/* tests if top Via field contains a private IP address as defined in RFC1918 */
+/* Test if top Via field contains a private IP address as defined in RFC1918 */
 static Bool
 testPrivateVia(struct sip_msg* msg)
 {
@@ -1338,7 +1340,7 @@ static int
 UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 {
     str sdp, sessionIP, signalingIP, callId, userAgent, tokens[64];
-    str fromDomain, toDomain, fromAddr, toAddr, fromTag, toTag;
+    str fromDomain, toDomain, fromAddr, toAddr, fromTag, toTag, domain;
     char *ptr, *command, *result, *agent, *fromType, *toType, *info;
     int streamCount, i, port, count, portCount, cmdlen, infolen, status;
     StreamInfo streams[64], stream;
@@ -1393,8 +1395,10 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     }
 
     signalingIP = getSignalingIP(msg);
+    domain = getMediaproxyDomain(msg);
 
-    infolen = fromAddr.len + toAddr.len + fromTag.len + toTag.len + 64;
+    infolen = fromAddr.len + toAddr.len + fromTag.len + toTag.len +
+        domain.len + 64;
 
     cmdlen = callId.len + signalingIP.len + fromDomain.len + toDomain.len +
         userAgent.len*3 + infolen + 128;
@@ -1442,6 +1446,11 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     sprintf(info, "from:%.*s,to:%.*s,fromtag:%.*s,totag:%.*s",
             fromAddr.len, fromAddr.s, toAddr.len, toAddr.s,
             fromTag.len, fromTag.s, toTag.len, toTag.s);
+
+    if (domain.len) {
+        strcat(info, ",domain:");
+        strncat(info, domain.s, domain.len);
+    }
     if (isRTPAsymmetric(userAgent)) {
         strcat(info, ",asymmetric");
     }
@@ -1529,6 +1538,17 @@ mod_init(void)
     signaling_ip_avp.name.len = strlen(signaling_ip_avp.name.s);
     if (parse_avp_spec(&(signaling_ip_avp.name), &(signaling_ip_avp.type), &(signaling_ip_avp.avp)) < 0) {
         LM_CRIT("invalid signaling_ip_avp specification `%s'\n", signaling_ip_avp.name.s);
+        return -1;
+    }
+
+    // initialize the domain_avp structure
+    if (domain_avp.name.s==NULL || *(domain_avp.name.s)==0) {
+        LM_WARN("missing/empty domain_avp parameter. will use default.\n");
+        domain_avp.name.s = DOMAIN_AVP_NAME;
+    }
+    domain_avp.name.len = strlen(domain_avp.name.s);
+    if (parse_avp_spec(&(domain_avp.name), &(domain_avp.type), &(domain_avp.avp)) < 0) {
+        LM_CRIT("invalid domain_avp specification `%s'\n", domain_avp.name.s);
         return -1;
     }
 
