@@ -87,7 +87,10 @@ static void accessStringValue ( xmlrpc_env * env, xmlrpc_value * value, size_t *
 		verifyNoNulls(env, content, len);
 		*length = len;
         *contents = content;
-    }
+    } else {
+		*length = 0;
+		*contents = NULL;
+	}
 }
 
 static void xmlrpc_read_string( xmlrpc_env * env, xmlrpc_value * value, char ** stringValue ) {

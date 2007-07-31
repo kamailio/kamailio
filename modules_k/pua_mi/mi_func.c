@@ -277,12 +277,13 @@ int mi_publ_rpl_cback(struct sip_msg* reply, void* param)
 	
 	
 	if(statuscode== 200)
-	{	
+	{
 		/* extract ETag and expires */
 		lexpire = ((exp_body_t*)reply->expires->parsed)->val;
 		DBG("PUA:mi_publ_rpl_cback: lexpire= %d\n", lexpire);
 		
 		hdr = reply->headers;
+		found = 0;
 		while (hdr!= NULL)
 		{
 			if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
@@ -293,7 +294,7 @@ int mi_publ_rpl_cback(struct sip_msg* reply, void* param)
 			hdr = hdr->next;
 		}
 		if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
-		{	
+		{
 			LOG(L_ERR, "PUA:mi_publ_rpl_cback: SIP-ETag header field not found\n");
 			goto error;
 		}
