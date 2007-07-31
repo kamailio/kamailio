@@ -74,17 +74,18 @@ static param_export_t mi_params[] = {
 
 /* module exports */
 struct module_exports exports = {
-	"mi_xmlrpc",                     	/* module name */
+	"mi_xmlrpc",                        /* module name */
 	DEFAULT_DLFLAGS,                    /* dlopen flags */
-	0,                             		/* exported functions */
-	mi_params,                    		/* exported parameters */
-	0,                             		/* exported statistics */
-	0,                             		/* exported MI functions */
-	0,                             		/* exported PV */
-	mod_init,                   		/* module initialization function */
-	(response_function) 0,         		/* response handling function */
-	(destroy_function) destroy, 		/* destroy function */
-	mod_child_init                  	/* per-child init function */
+	0,                                  /* exported functions */
+	mi_params,                          /* exported parameters */
+	0,                                  /* exported statistics */
+	0,                                  /* exported MI functions */
+	0,                                  /* exported PV */
+	0,                                  /* extra processes */
+	mod_init,                           /* module initialization function */
+	(response_function) 0,              /* response handling function */
+	(destroy_function) destroy,         /* destroy function */
+	mod_child_init                      /* per-child init function */
 };
 
 static int mod_init(void)

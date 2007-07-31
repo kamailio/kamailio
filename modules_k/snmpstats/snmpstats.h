@@ -110,8 +110,9 @@ struct module_exports exports =
 	0,                       /* exported functions */
 	mod_params,              /* param exports */
 	0,                       /* exported statistics */
-	0,	                 /* MI Functions */	
-	0,                       /* psuedo-variables */
+	0,                       /* MI Functions */
+	0,                       /* pseudo-variables */
+	0,                       /* extra processes */
 	mod_init,                /* module initialization function */
 	0,                       /* reply processing function */
 	mod_destroy,   /* Destroy function */

@@ -171,6 +171,7 @@ struct module_exports exports = {
 	0,        /* exported statistics */
 	mi_cmds,  /* exported MI functions */
 	0,        /* exported pseudo-variables */
+	0,        /* extra processes */
 	cpl_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) cpl_exit,

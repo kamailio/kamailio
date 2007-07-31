@@ -84,16 +84,17 @@ struct module_exports exec_exports = {
 struct module_exports exports= {
 #endif
 	"exec",
-	DEFAULT_DLFLAGS, /* dlopen flags */
+	DEFAULT_DLFLAGS,/* dlopen flags */
 	cmds,           /* Exported functions */
 	params,         /* Exported parameters */
 	0,              /* exported statistics */
 	0,              /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	mod_init, 	/* initialization module */
-	0,		/* response function */
-	exec_shutdown,	/* destroy function */
-	0		/* per-child init function */
+	0,              /* exported pseudo-variables */
+	0,              /* extra processes */
+	mod_init,       /* initialization module */
+	0,              /* response function */
+	exec_shutdown,  /* destroy function */
+	0               /* per-child init function */
 };
 
 void exec_shutdown()

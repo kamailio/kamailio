@@ -222,6 +222,7 @@ struct module_exports exports = {
 	mod_stats,  /* exported statistics */
 	mi_cmds,    /* exported MI functions */
 	0,          /* exported pseudo-variables */
+	0,          /* extra processes */
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */
 	destroy,    /* Destroy function */

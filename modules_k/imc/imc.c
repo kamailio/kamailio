@@ -136,6 +136,7 @@ struct module_exports exports= {
 #endif
 	mi_cmds,    /* exported MI functions */
 	0,          /* exported pseudo-variables */
+	0,          /* extra processes */
 	mod_init,   /* mod init */
 	(response_function) 0,       /* response handler */
 	(destroy_function) destroy,  /* destroy function */

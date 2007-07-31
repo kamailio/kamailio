@@ -205,6 +205,7 @@ struct module_exports exports = {
 	mod_stats,   /* exported statistics */
 	0,           /* exported MI functions */
 	0,           /* exported pseudo-variables */
+	0,           /* extra processes */
 	mod_init,    /* module initialization function */
 	0,
 	mod_destroy, /* destroy function */
