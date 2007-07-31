@@ -22,13 +22,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /* History:
  * --------
  *  2006-07-29  created by andrei
+ *  2007-07-30  dst blacklist measurements added (Gergo)
  */
 
 #ifndef dst_black_list_h
@@ -75,6 +76,10 @@ int register_blacklist_hook(struct blacklist_hook *h, int type);
 #endif /* DST_BLACKLIST_HOOKS */
 
 int init_dst_blacklist();
+#ifdef USE_DST_BLACKLIST_STATS
+int init_dst_blacklist_stats(int iproc_num);
+#define DST_BLACKLIST_ALL_STATS "bkl_all_stats"
+#endif
 void destroy_dst_blacklist();
 
 
