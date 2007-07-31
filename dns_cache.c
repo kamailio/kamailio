@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /* History:
@@ -37,6 +37,7 @@
  *              that the DNS servers are down (Miklos)
  *  2008-07-25  various rpc commands to manipulate the content
  *		of the cache (Miklos)
+ *  2007-07-30  DNS cache measurements added (Gergo)
  */
 
 #ifdef USE_DNS_CACHE
@@ -60,6 +61,9 @@
 #include "error.h"
 #include "rpc.h"
 #include "rand/fastrand.h"
+#ifdef USE_DNS_CACHE_STATS
+#include "pt.h"
+#endif
 
 
 
@@ -70,7 +74,7 @@
 	#define MAX(a,b) ( ((a)>(b))?(a):(b))
 #endif
 
-#define MAX_DNS_RECORDS 255  /* maximum dns records number  received in a 
+#define MAX_DNS_RECORDS 255  /* maximum dns records number  received in a
 							   dns answer*/
 
 #define DNS_HASH_SIZE	1024 /* must be <= 65535 */
@@ -80,7 +84,7 @@
 #define DEFAULT_DNS_MAX_MEM 500 /* 500 Kb */
 #define DEFAULT_DNS_TIMER_INTERVAL 120  /* 2 min. */
 #define DNS_HE_MAX_ADDR 10  /* maxium addresses returne in a hostent struct */
-#define MAX_CNAME_CHAIN  10 
+#define MAX_CNAME_CHAIN  10
 
 
 static gen_lock_t* dns_hash_lock=0;
@@ -91,9 +95,13 @@ unsigned int dns_neg_cache_ttl=DEFAULT_DNS_NEG_CACHE_TTL; /* neg. cache ttl */
 unsigned int dns_cache_max_ttl=DEFAULT_DNS_CACHE_MAX_TTL; /* maximum ttl */
 unsigned int dns_cache_min_ttl=DEFAULT_DNS_CACHE_MIN_TTL; /* minimum ttl */
 unsigned int dns_timer_interval=DEFAULT_DNS_TIMER_INTERVAL; /* in s */
-int dns_flags=0; /* default flags used for the  dns_*resolvehost 
+int dns_flags=0; /* default flags used for the  dns_*resolvehost
                     (compatibility wrappers) */
 int dns_srv_lb=0; /* off by default */
+
+#ifdef USE_DNS_CACHE_STATS
+struct t_dns_cache_stats* dns_cache_stats=0;
+#endif
 
 #define LOCK_DNS_HASH()		lock_get(dns_hash_lock)
 #define UNLOCK_DNS_HASH()	lock_release(dns_hash_lock)
@@ -135,7 +143,7 @@ static const char* dns_str_errors[]={
 	"blacklisted ip",
 	"name too long ", /* try again with a shorter name */
 	"ip AF mismatch", /* address family mismatch */
-	"unresolvable NAPTR request", 
+	"unresolvable NAPTR request",
 	"bug - critical error"
 };
 
@@ -206,7 +214,7 @@ static ticks_t dns_timer(ticks_t ticks, struct timer_ln* tl, void* data)
 		return (ticks_t)(-1);
 #endif
 	if (*dns_cache_mem_used>12*(dns_cache_max_mem/16)){ /* ~ 75% used */
-		dns_cache_free_mem(dns_cache_max_mem/2, 1); 
+		dns_cache_free_mem(dns_cache_max_mem/2, 1);
 	}else{
 		dns_cache_clean(-1, 1); /* all the table, only expired entries */
 		/* TODO: better strategy? */
@@ -244,6 +252,10 @@ void destroy_dns_cache()
 		dns_last_used_lst=0;
 	}
 #endif
+#ifdef USE_DNS_CACHE_STATS
+	if (dns_cache_stats)
+		shm_free(dns_cache_stats);
+#endif
 	if (dns_cache_mem_used){
 		shm_free((void*)dns_cache_mem_used);
 		dns_cache_mem_used=0;
@@ -256,7 +268,7 @@ int init_dns_cache()
 {
 	int r;
 	int ret;
-	
+
 	ret=0;
 	/* sanity check */
 	if (E_DNS_CRITICAL>=sizeof(dns_str_errors)/sizeof(char*)){
@@ -284,7 +296,7 @@ int init_dns_cache()
 	}
 	for (r=0; r<DNS_HASH_SIZE; r++)
 		clist_init(&dns_hash[r], next, prev);
-	
+
 	dns_hash_lock=lock_alloc();
 	if (dns_hash_lock==0){
 		ret=E_OUT_OF_MEM;
@@ -305,7 +317,7 @@ int init_dns_cache()
 	}
 	atomic_set(dns_servers_up, 1);
 #endif
-	
+
 	/* fix options */
 	dns_cache_max_mem<<=10; /* Kb */ /* TODO: test with 0 */
 	/* fix flags */
@@ -344,13 +356,28 @@ int init_dns_cache()
 			goto error;
 		}
 	}
-	
+
 	return 0;
 error:
 	destroy_dns_cache();
 	return ret;
 }
 
+#ifdef USE_DNS_CACHE_STATS
+int init_dns_cache_stats(int iproc_num) {
+	/* if it is already initialized */
+	if (dns_cache_stats)
+		shm_free(dns_cache_stats);
+
+	dns_cache_stats=shm_malloc(sizeof(*dns_cache_stats) * iproc_num);
+	if (dns_cache_stats==0){
+		return E_OUT_OF_MEM;
+	}
+	memset(dns_cache_stats, 0, sizeof(*dns_cache_stats) * iproc_num);
+
+	return 0;
+}
+#endif
 
 /* hash function, type is not used (obsolete)
  * params: char* s, int len, int type
@@ -375,7 +402,7 @@ error:
 					(l), (l)->next, (l)->prev, \
 					(l)->prev, (l)->prev->next, (l)->prev->prev, \
 					(l)->next, (l)->next->next, (l)->next->prev \
-				) 
+				)
 
 #define debug_lu_lst( txt, l) \
 	do{ \
@@ -446,7 +473,7 @@ inline static struct dns_hash_entry* _dns_hash_find(str* name, int type,
 
 	servers_up = atomic_get(dns_servers_up);
 #endif
-	
+
 	cname_chain=0;
 	ret=0;
 	now=get_ticks_raw();
@@ -496,7 +523,7 @@ again:
 			debug_lu_lst("_dns_hash_find: cname: post append:",
 							&e->last_used_lst);
 #endif
-#endif		
+#endif
 			ret=e; /* if this is an unfinished cname chain, we try to
 					  return the last cname */
 			/* this is a cname => retry using its value */
@@ -519,7 +546,7 @@ again:
 
 
 
-/* frees cache entries, if expired_only=0 only expired entries will be 
+/* frees cache entries, if expired_only=0 only expired entries will be
  * removed, else all of them
  * it will process maximum no entries (to process all of them use -1)
  * returns the number of deleted entries
@@ -538,7 +565,7 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 	unsigned int h;
 	static unsigned int start=0;
 #endif
-	
+
 	n=0;
 	deleted=0;
 	now=get_ticks_raw();
@@ -587,9 +614,9 @@ skip:
 
 
 
-/* frees cache entries, if expired_only=0 only expired entries will be 
+/* frees cache entries, if expired_only=0 only expired entries will be
  * removed, else all of them
- * it will stop when the dns cache used memory reaches target (to process all 
+ * it will stop when the dns cache used memory reaches target (to process all
  * of them use 0)
  * returns the number of deleted entries */
 inline static int dns_cache_free_mem(unsigned int target, int expired_only)
@@ -605,7 +632,7 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 	unsigned int h;
 	static unsigned int start=0;
 #endif
-	
+
 	deleted=0;
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
@@ -622,7 +649,7 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 #else
 	for(h=start; h!=(start+DNS_HASH_SIZE); h++){
 		clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-			if (*dns_cache_mem_used<=target) 
+			if (*dns_cache_mem_used<=target)
 				goto skip;
 			if  ((s_ticks_t)(now-e->expire)>=0){
 				_dns_hash_remove(e);
@@ -634,7 +661,7 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 	if (!expired_only){
 		for(h=start; h!=(start+DNS_HASH_SIZE); h++){
 			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-				if (*dns_cache_mem_used<=target) 
+				if (*dns_cache_mem_used<=target)
 					goto skip;
 				if  ((s_ticks_t)(now-e->expire)>=0){
 					_dns_hash_remove(e);
@@ -654,7 +681,7 @@ skip:
 
 /* locking  version (the dns hash must _not_be locked externally)
  * returns 0 when not found, the searched entry on success (with CNAMEs
- *  followed) or the last CNAME entry from an unfinished CNAME chain, 
+ *  followed) or the last CNAME entry from an unfinished CNAME chain,
  *  if the search matches a CNAME. On error sets *err (e.g. recursive CNAMEs).
  * it increases the internal refcnt => when finished dns_hash_put() must
  *  be called on the returned entry
@@ -663,7 +690,7 @@ inline static struct dns_hash_entry* dns_hash_get(str* name, int type, int* h,
 													int* err)
 {
 	struct dns_hash_entry* e;
-	
+
 	LOCK_DNS_HASH();
 	e=_dns_hash_find(name, type, h, err);
 	if (e){
@@ -681,10 +708,13 @@ inline static struct dns_hash_entry* dns_hash_get(str* name, int type, int* h,
 inline static int dns_cache_add(struct dns_hash_entry* e)
 {
 	int h;
-	
+
 	/* check space */
 	/* atomic_add_long(dns_cache_total_used, e->size); */
 	if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
+#ifdef USE_DNS_CACHE_STATS
+		dns_cache_stats[process_no].dc_lru_cnt++;
+#endif
 		LOG(L_WARN, "WARNING: dns_cache_add: cache full, trying to free...\n");
 		/* free ~ 12% of the cache */
 		dns_cache_free_mem(*dns_cache_mem_used/16*14, 1);
@@ -717,10 +747,13 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 {
 	int h;
-	
+
 	/* check space */
 	/* atomic_add_long(dns_cache_total_used, e->size); */
 	if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
+#ifdef USE_DNS_CACHE_STATS
+		dns_cache_stats[process_no].dc_lru_cnt++;
+#endif
 		LOG(L_WARN, "WARNING: dns_cache_add: cache full, trying to free...\n");
 		/* free ~ 12% of the cache */
 		UNLOCK_DNS_HASH();
@@ -757,7 +790,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	struct dns_hash_entry* e;
 	int size;
 	ticks_t now;
-	
+
 #ifdef DNS_CACHE_DEBUG
 	DBG("dns_cache_mk_bad_entry(%.*s, %d, %d, %d)\n", name->len, name->s,
 									type, ttl, flags);
@@ -790,7 +823,7 @@ inline static struct dns_hash_entry* dns_cache_mk_ip_entry(str* name,
 	struct dns_hash_entry* e;
 	int size;
 	ticks_t now;
-	
+
 	/* everything is allocated in one block: dns_hash_entry + name +
 	 * + dns_rr + rdata;  dns_rr must start at an aligned adress,
 	 * hence we need to round dns_hash_entry+name size to a sizeof(long)
@@ -802,7 +835,7 @@ inline static struct dns_hash_entry* dns_cache_mk_ip_entry(str* name,
 	 * dns_rr
 	 * rdata  (no padding needed, since for ip is just an array of chars)
 	  */
-	size=ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1)+ 
+	size=ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1)+
 			sizeof(struct dns_rr)+ ip->len;
 	e=shm_malloc(size);
 	if (e==0){
@@ -838,7 +871,7 @@ static struct dns_hash_entry* dns_cache_mk_srv_entry(str* name,
 	struct dns_hash_entry* e;
 	int size;
 	ticks_t now;
-	
+
 	/* everything is allocated in one block: dns_hash_entry + name +
 	 * + dns_rr + rdata;  dns_rr must start at an aligned adress,
 	 * hence we need to round dns_hash_entry+name size to a sizeof(long),
@@ -850,9 +883,9 @@ static struct dns_hash_entry* dns_cache_mk_srv_entry(str* name,
 	 * padding to multiple of sizeof(long)
 	 * dns_rr
 	 * padding to multiple of sizeof(short)
-	 * rdata 
+	 * rdata
 	  */
-	size=ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1) + 
+	size=ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1) +
 		ROUND_SHORT(sizeof(struct dns_rr)) +
 		sizeof(struct srv_rdata)-1 +
 		rr_name->len+1;
@@ -902,15 +935,15 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	ticks_t now;
 	unsigned int max_ttl;
 	unsigned int ttl;
-	
+
 #define rec_matches(rec, t, n) /*(struct rdata* record, int type, str* name)*/\
 	(	((rec)->name_len==(n)->len) && ((rec)->type==(t)) && \
 		(strncasecmp((rec)->name, (n)->s, (n)->len)==0))
 	/* init */
 	tmp_lst=0;
 	tail=&tmp_lst;
-	
-	
+
+
 	/* everything is allocated in one block: dns_hash_entry + name +
 	 * + dns_rr + rdata_raw+ ....;  dns_rr must start at an aligned adress,
 	 * hence we need to round dns_hash_entry+name size to a sizeof(long)
@@ -921,7 +954,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	 * name (name_len+1 bytes)  (&e->name[0])
 	 * padding to multiple of sizeof(char*)
 	 * dns_rr1 (e->rr_lst)
-	 * possible padding: no padding for a_rdata or aaaa_rdata, 
+	 * possible padding: no padding for a_rdata or aaaa_rdata,
 	 *                   multipe of sizeof(short) for srv_rdata,
 	 *                   multiple of sizeof(long) for naptr_rdata and others
 	 * dns_rr1->rdata  (e->rr_lst->rdata)
@@ -947,7 +980,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	switch(type){
 		case T_A:
 			for(; *p;){
-				if (!rec_matches((*p), type, name)){ 
+				if (!rec_matches((*p), type, name)){
 					/* skip this record */
 					p=&(*p)->next; /* advance */
 					continue;
@@ -965,7 +998,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 			break;
 		case T_AAAA:
 			for(; *p;){
-				if (!rec_matches((*p), type, name)){ 
+				if (!rec_matches((*p), type, name)){
 					/* skip this record */
 					p=&(*p)->next; /* advance */
 					continue;
@@ -984,7 +1017,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 			break;
 		case T_SRV:
 			for(; *p;){
-				if (!rec_matches((*p), type, name)){ 
+				if (!rec_matches((*p), type, name)){
 					/* skip this record */
 					p=&(*p)->next; /* advance */
 					continue;
@@ -1003,7 +1036,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 			break;
 		case T_NAPTR:
 			for(; *p;){
-				if (!rec_matches((*p), type, name)){ 
+				if (!rec_matches((*p), type, name)){
 					/* skip this record */
 					p=&(*p)->next; /* advance */
 					continue;
@@ -1022,7 +1055,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 			break;
 		case T_CNAME:
 			for(; *p;){
-				if (!rec_matches((*p), type, name)){ 
+				if (!rec_matches((*p), type, name)){
 					/* skip this record */
 					p=&(*p)->next; /* advance */
 					continue;
@@ -1110,7 +1143,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				rr->rdata=(void*)((char*)rr+
 								ROUND_SHORT(sizeof(struct dns_rr)));
 				/* copy the whole srv_rdata block*/
-				memcpy(rr->rdata, l->rdata, 
+				memcpy(rr->rdata, l->rdata,
 						SRV_RDATA_SIZE(*(struct srv_rdata*)l->rdata) );
 				rr->next=(void*)((char*)rr+
 							ROUND_POINTER( ROUND_SHORT(sizeof(struct dns_rr))+
@@ -1128,7 +1161,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				rr->rdata=(void*)((char*)rr+
 								ROUND_POINTER(sizeof(struct dns_rr)));
 				/* copy the whole naptr_rdata block*/
-				memcpy(rr->rdata, l->rdata, 
+				memcpy(rr->rdata, l->rdata,
 						NAPTR_RDATA_SIZE(*(struct naptr_rdata*)l->rdata) );
 				/* adjust the string pointer */
 				((struct naptr_rdata*)rr->rdata)->flags=
@@ -1157,7 +1190,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
 				max_ttl=MAX(max_ttl, ttl);
 				rr->rdata=(void*)((char*)rr+sizeof(struct dns_rr));
-				memcpy(rr->rdata, l->rdata, 
+				memcpy(rr->rdata, l->rdata,
 							CNAME_RDATA_SIZE(*(struct cname_rdata*)l->rdata));
 				rr->next=(void*)((char*)rr+ROUND_POINTER(sizeof(struct dns_rr)+
 							CNAME_RDATA_SIZE(*(struct cname_rdata*)l->rdata)));
@@ -1203,9 +1236,9 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry2(struct rdata* rd)
 	int r, i;
 	int no_records; /* number of different records */
 	unsigned int ttl;
-	
-	
-	no_records=0; 
+
+
+	no_records=0;
 	rec[0].e=0;
 	/* everything is allocated in one block: dns_hash_entry + name +
 	 * + dns_rr + rdata_raw+ ....;  dns_rr must start at an aligned adress,
@@ -1217,7 +1250,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry2(struct rdata* rd)
 	 * name (name_len+1 bytes)  (&e->name[0])
 	 * padding to multiple of sizeof(char*)
 	 * dns_rr1 (e->rr_lst)
-	 * possible padding: no padding for a_rdata or aaaa_rdata, 
+	 * possible padding: no padding for a_rdata or aaaa_rdata,
 	 *                   multipe of sizeof(short) for srv_rdata,
 	 *                   multiple of sizeof(long) for naptr_rdata and others
 	 * dns_rr1->rdata  (e->rr_lst->rdata)
@@ -1229,7 +1262,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry2(struct rdata* rd)
 	/* compute size */
 	for(l=rd, i=0; l && (i<MAX_DNS_RECORDS); l=l->next, i++){
 		for (r=0; r<no_records; r++){
-			if ((l->type==rec[r].rd->type) && 
+			if ((l->type==rec[r].rd->type) &&
 					(l->name_len==rec[r].rd->name_len)
 				&& (strncasecmp(l->name, rec[r].rd->name, l->name_len)==0)){
 				/* found */
@@ -1283,7 +1316,7 @@ found:
 							"supported\n", l->type);
 		}
 	}
-	
+
 	now=get_ticks_raw();
 	/* alloc & init the entries */
 	for (r=0; r<no_records; r++){
@@ -1298,7 +1331,7 @@ found:
 		rec[r].e->type=rec[r].rd->type;
 		rec[r].e->last_used=now;
 		/* memset makes sure is 0-term. */
-		memcpy(rec[r].e->name, rec[r].rd->name, rec[r].rd->name_len); 
+		memcpy(rec[r].e->name, rec[r].rd->name, rec[r].rd->name_len);
 		rec[r].e->rr_lst=(struct dns_rr*)((char*)rec[r].e+
 				ROUND_POINTER(sizeof(struct dns_hash_entry)+rec[r].e->name_len
 								 -1+1));
@@ -1347,7 +1380,7 @@ found:
 				rec[r].rr->rdata=(void*)((char*)rec[r].rr+
 								ROUND_SHORT(sizeof(struct dns_rr)));
 				/* copy the whole srv_rdata block*/
-				memcpy(rec[r].rr->rdata, l->rdata, 
+				memcpy(rec[r].rr->rdata, l->rdata,
 						SRV_RDATA_SIZE(*(struct srv_rdata*)l->rdata) );
 				rec[r].rr->next=(void*)((char*)rec[r].rr+
 							ROUND_POINTER( ROUND_SHORT(sizeof(struct dns_rr))+
@@ -1362,7 +1395,7 @@ found:
 				rec[r].rr->rdata=(void*)((char*)rec[r].rr+
 								ROUND_POINTER(sizeof(struct dns_rr)));
 				/* copy the whole srv_rdata block*/
-				memcpy(rec[r].rr->rdata, l->rdata, 
+				memcpy(rec[r].rr->rdata, l->rdata,
 						NAPTR_RDATA_SIZE(*(struct naptr_rdata*)l->rdata) );
 				/* adjust the string pointer */
 				((struct naptr_rdata*)rec[r].rr->rdata)->flags=
@@ -1445,7 +1478,7 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 	struct dns_rr* rr;
 	static int cname_chain_len=0;
 	str tmp;
-	
+
 	ret=0;
 	l=e;
 #ifdef DNS_CACHE_DEBUG
@@ -1521,10 +1554,10 @@ inline static struct dns_hash_entry* dns_get_related(struct dns_hash_entry* e,
 				clist_append_sublist(l, t, lst_end, next, prev);
 			}else{
 				/* if no more recs, but we found the orig. target anyway,
-				 *  return it (e.g. recs are only CNAME x & x A 1.2.3.4 or 
+				 *  return it (e.g. recs are only CNAME x & x A 1.2.3.4 or
 				 *  CNAME & SRV) */
 				if (t->type==type)
-					ret=t; 
+					ret=t;
 				clist_append(l, t, next, prev);
 			}
 		}
@@ -1550,11 +1583,16 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 	struct ip_addr* ip;
 	str cname_val;
 	char name_buf[MAX_DNS_NAME];
-	
+
 	e=0;
 	l=0;
 	cname_val.s=0;
-	
+
+#ifdef USE_DNS_CACHE_STATS
+	if (dns_cache_stats)
+		dns_cache_stats[process_no].dns_req_cnt++;
+#endif /* USE_DNS_CACHE_STATS */
+
 	if (type==T_A){
 		if ((ip=str2ip(name))!=0){
 				e=dns_cache_mk_ip_entry(name, ip);
@@ -1592,12 +1630,12 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 			/* e should contain the searched entry (if found) and l
 			 * all the entries (e and related) */
 			if (e){
-				atomic_set(&e->refcnt, 1); /* 1 because we return a 
+				atomic_set(&e->refcnt, 1); /* 1 because we return a
 												ref. to it */
 			}else{
 				/* e==0 => l contains a  cname list => we use the last
 				 * cname from the chain for a new resolve attempt (l->prev) */
-				/* only one cname record is allowed (rfc2181), so we ignore 
+				/* only one cname record is allowed (rfc2181), so we ignore
 				 * the others (we take only the first one) */
 				cname_val.s=
 					((struct cname_rdata*)l->prev->rr_lst->rdata)->name;
@@ -1621,7 +1659,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 			}
 			UNLOCK_DNS_HASH();
 			/* if only cnames found => try to resolve the last one */
-			if (cname_val.s){ 
+			if (cname_val.s){
 				DBG("dns_cache_do_request: dns_get_entry(cname: %.*s (%d))\n",
 						cname_val.len, cname_val.s, cname_val.len);
 				e=dns_get_entry(&cname_val, type);
@@ -1660,7 +1698,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 				}else if ((r->type==type) && (r->name_len==name->len) &&
 							(strncasecmp(r->name, name->s, name->len)==0)){
 					e=r;
-					atomic_set(&e->refcnt, 1); /* 1 because we return a ref. 
+					atomic_set(&e->refcnt, 1); /* 1 because we return a ref.
 												  to it */
 				}
 			}
@@ -1696,7 +1734,7 @@ inline static struct dns_hash_entry* dns_get_entry(str* name, int type)
 	str cname_val;
 	int err;
 	static int rec_cnt=0; /* recursion protection */
-	
+
 	e=0;
 	if (rec_cnt>MAX_CNAME_CHAIN){
 		LOG(L_WARN, "WARNING: dns_get_entry: CNAME chain too long or"
@@ -1705,12 +1743,25 @@ inline static struct dns_hash_entry* dns_get_entry(str* name, int type)
 	}
 	rec_cnt++;
 	e=dns_hash_get(name, type, &h, &err);
+#ifdef USE_DNS_CACHE_STATS
+	if (e) {
+		if (e->err_flags==DNS_BAD_NAME && dns_cache_stats)
+			/* negative DNS cache hit */
+			dns_cache_stats[process_no].dc_neg_hits_cnt++;
+		else if (!e->err_flags && dns_cache_stats) /* DNS cache hit */
+			dns_cache_stats[process_no].dc_hits_cnt++;
+
+		if (dns_cache_stats)
+			dns_cache_stats[process_no].dns_req_cnt++;
+	}
+#endif /* USE_DNS_CACHE_STATS */
+
 	if ((e==0) && ((err) || ((e=dns_cache_do_request(name, type))==0))){
 		goto error;
 	}else if ((e->type==T_CNAME) && (type!=T_CNAME)){
 		/* cname found instead which couldn't be resolved with the cached
 		 * info => try a dns request */
-		/* only one cname record is allowed (rfc2181), so we ignore 
+		/* only one cname record is allowed (rfc2181), so we ignore
 		 * the others (we take only the first one) */
 		cname_val.s= ((struct cname_rdata*)e->rr_lst->rdata)->name;
 		cname_val.len=((struct cname_rdata*)e->rr_lst->rdata)->name_len;
@@ -1763,7 +1814,7 @@ inline static struct dns_rr* dns_entry_get_rr(	struct dns_hash_entry* e,
 
 	servers_up = atomic_get(dns_servers_up);
 #endif
-	
+
 	flags=0;
 	for(rr=e->rr_lst, n=0;rr && (n<*no);rr=rr->next, n++);/* skip *no records*/
 	for(;rr;rr=rr->next){
@@ -1808,9 +1859,9 @@ inline static unsigned dns_srv_random(unsigned max)
  * to the RFC2782 server selection mechanism
  * params:
  *    e     is a dns srv hash entry
- *    no    is the start index of the current group (a group is a set of SRV 
+ *    no    is the start index of the current group (a group is a set of SRV
  *          rrs with the same priority)
- *    tried is a bitmap where the tried srv rrs of the same priority are 
+ *    tried is a bitmap where the tried srv rrs of the same priority are
  *          marked
  *    now - current time/ticks value
  * returns pointer to the rr on success and sets no to the rr number
@@ -1836,7 +1887,7 @@ inline static struct dns_rr* dns_srv_get_nxt_rr(struct dns_hash_entry* e,
 											 srv_flags_t* tried,
 											 unsigned char* no, ticks_t now)
 {
-#define MAX_SRV_GRP_IDX		(sizeof(srv_flags_t)*8) 
+#define MAX_SRV_GRP_IDX		(sizeof(srv_flags_t)*8)
 	struct dns_rr* rr;
 	struct dns_rr* start_grp;
 	int n;
@@ -1855,10 +1906,10 @@ inline static struct dns_rr* dns_srv_get_nxt_rr(struct dns_hash_entry* e,
 
 	servers_up = atomic_get(dns_servers_up);
 #endif
-	
+
 	rand_w=0;
 	for(rr=e->rr_lst, n=0;rr && (n<*no);rr=rr->next, n++);/* skip *no records*/
-	
+
 retry:
 	if (unlikely(rr==0))
 		goto no_more_rrs;
@@ -1899,7 +1950,7 @@ retry:
 		goto retry;
 	}else if ((found==1) || ((rand_w=dns_srv_random(sum))==0)){
 		/* 1. if only one found, avoid a useless random() call or
-		 * 2. if rand_w==0, immediately select a 0 weight record if present, 
+		 * 2. if rand_w==0, immediately select a 0 weight record if present,
 		 *     or else the first record found
 		 *  (this takes care of the 0-weight at the beginning requirement) */
 		i=saved_idx; /* saved idx contains either first 0 weight or first
@@ -1930,10 +1981,10 @@ no_more_rrs:
 
 
 
-/* gethostbyname compatibility: converts a dns_hash_entry structure 
+/* gethostbyname compatibility: converts a dns_hash_entry structure
  * to a statical internal hostent structure
  * returns a pointer to the internal hostent structure on success or
- *          0 on error 
+ *          0 on error
  */
 struct hostent* dns_entry2he(struct dns_hash_entry* e)
 {
@@ -1947,7 +1998,7 @@ struct hostent* dns_entry2he(struct dns_hash_entry* e)
 	unsigned char rr_no;
 	ticks_t now;
 	int i;
-	
+
 	switch(e->type){
 		case T_A:
 			af=AF_INET;
@@ -1962,12 +2013,12 @@ struct hostent* dns_entry2he(struct dns_hash_entry* e)
 					e->type, e->name_len, e->name);
 			return 0;
 	}
-	
-	
+
+
 	rr_no=0;
 	now=get_ticks_raw();
 	rr=dns_entry_get_rr(e, &rr_no, now);
-	for(i=0; rr && (i<DNS_HE_MAX_ADDR); i++, 
+	for(i=0; rr && (i<DNS_HE_MAX_ADDR); i++,
 							rr=dns_entry_get_rr(e, &rr_no, now)){
 				p_addr[i]=&address[i*len];
 				memcpy(p_addr[i], ((struct a_rdata*)rr->rdata)->ip, len);
@@ -1977,24 +2028,24 @@ struct hostent* dns_entry2he(struct dns_hash_entry* e)
 				rr_no, e->name_len, e->name, e->type);
 		return 0; /* no good record found */
 	}
-	
+
 	p_addr[i]=0; /* mark the end of the addresses */
 	p_aliases[0]=0; /* no aliases */
 	memcpy(hostname, e->name, e->name_len);
 	hostname[e->name_len]=0;
-	
+
 	he.h_addrtype=af;
 	he.h_length=len;
 	he.h_addr_list=p_addr;
 	he.h_aliases=p_aliases;
 	he.h_name=hostname;
-	
+
 	return &he;
 }
 
 
 
-/* gethostbyname compatibility: performs an a_lookup and returns a pointer 
+/* gethostbyname compatibility: performs an a_lookup and returns a pointer
  * to a statical internal hostent structure
  * returns 0 on success, <0 on error (see the error codes)
  */
@@ -2003,7 +2054,7 @@ struct hostent* dns_a_get_he(str* name)
 	struct dns_hash_entry* e;
 	struct ip_addr* ip;
 	struct hostent* he;
-	
+
 	e=0;
 	if ((ip=str2ip(name))!=0){
 		return ip_addr2he(name, ip);
@@ -2018,7 +2069,7 @@ struct hostent* dns_a_get_he(str* name)
 
 
 
-/* gethostbyname compatibility: performs an aaaa_lookup and returns a pointer 
+/* gethostbyname compatibility: performs an aaaa_lookup and returns a pointer
  * to a statical internal hostent structure
  * returns 0 on success, <0 on error (see the error codes)
  */
@@ -2027,7 +2078,7 @@ struct hostent* dns_aaaa_get_he(str* name)
 	struct dns_hash_entry* e;
 	struct ip_addr* ip;
 	struct hostent* he;
-	
+
 	e=0;
 	if ((ip=str2ip6(name))!=0){
 		return ip_addr2he(name, ip);
@@ -2075,8 +2126,8 @@ inline static int dns_rr2ip(int type, struct dns_rr* rr, struct ip_addr* ip)
 struct hostent* dns_get_he(str* name, int flags)
 {
 	struct hostent* he;
-	
-	
+
+
 	if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
 		he=dns_aaaa_get_he(name);
 		if (he) return he;
@@ -2105,7 +2156,7 @@ struct hostent* dns_srv_get_he(str* name, unsigned short* port, int flags)
 	struct hostent* he;
 	ticks_t now;
 	unsigned char rr_no;
-	
+
 	rr=0;
 	he=0;
 	now=get_ticks_raw();
@@ -2136,7 +2187,7 @@ error:
 struct hostent* dns_resolvehost(char* name)
 {
 	str host;
-	
+
 	if ((use_dns_cache==0) || (dns_hash==0)){ /* not init yet */
 		return _resolvehost(name);
 	}
@@ -2155,14 +2206,14 @@ struct hostent* dns_resolvehost(char* name)
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, 
+struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
 										char* proto)
 {
 	struct dns_srv_handle h;
 	struct ip_addr ip;
 	int ret;
-	
-	if ((use_dns_cache==0) || (dns_hash==0)){ 
+
+	if ((use_dns_cache==0) || (dns_hash==0)){
 		/* not init or off => use normal, non-cached version */
 		return _sip_resolvehost(name, port, proto);
 	}
@@ -2184,7 +2235,7 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port, 
+struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 										char* proto)
 {
 	struct hostent* he;
@@ -2194,7 +2245,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 	str srv_name;
 	char srv_proto;
 
-	if ((use_dns_cache==0) || (dns_hash==0)){ 
+	if ((use_dns_cache==0) || (dns_hash==0)){
 		/* not init or off => use normal, non-cached version */
 		return _sip_resolvehost(name, port, proto);
 	}
@@ -2209,7 +2260,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 	}
 	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
 	if ((port)&&(*port==0)){
-		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we 
+		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we
 														 don't find another */
 		if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
 			LOG(L_WARN, "WARNING: dns_sip_resolvehost: domain name too long"
@@ -2224,7 +2275,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 				/* we are lucky, this is an ip address */
 				return ip_addr2he(name,ip);
 			}
-			
+
 			switch(srv_proto){
 				case PROTO_NONE: /* no proto specified, use udp */
 					if (proto)
@@ -2277,7 +2328,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
  * params:
  *         naptr_head - naptr dns_rr list head
  *         tried      - bitmap used to keep track of the already tried records
- *                      (no more then sizeof(tried)*8 valid records are 
+ *                      (no more then sizeof(tried)*8 valid records are
  *                      ever walked
  *         srv_name   - if succesfull, it will be set to the selected record
  *                      srv name (naptr repl.)
@@ -2285,10 +2336,10 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
  *                      protocol
  * returns  0 if no more records found or a pointer to the selected record
  *  and sets  protocol and srv_name
- * WARNING: when calling first time make sure you run first 
+ * WARNING: when calling first time make sure you run first
  *           naptr_iterate_init(&tried)
  */
-struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head, 
+struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 											naptr_bmp_t* tried,
 											str* srv_name, char* proto)
 {
@@ -2318,7 +2369,7 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 		}
 #ifdef DNS_CACHE_DEBUG
 		DBG("naptr_iterate: found a valid sip NAPTR rr %.*s,"
-					" proto %d\n", naptr->repl_len, naptr->repl, 
+					" proto %d\n", naptr->repl_len, naptr->repl,
 					(int)naptr_proto);
 #endif
 		if ((naptr_proto_supported(naptr_proto))){
@@ -2332,7 +2383,7 @@ struct naptr_rdata* dns_naptr_sip_iterate(struct dns_rr* naptr_head,
 		/* found something */
 #ifdef DNS_CACHE_DEBUG
 		DBG("naptr_iterate: choosed NAPTR rr %.*s, proto %d"
-					" tried: 0x%x\n", naptr_saved->repl_len, 
+					" tried: 0x%x\n", naptr_saved->repl_len,
 					naptr_saved->repl, (int)saved_proto, *tried);
 #endif
 		*tried|=1<<idx;
@@ -2347,7 +2398,7 @@ end:
 
 
 
-/* resolves a host name trying NAPTR lookup if *proto==0 and *port==0, SRV 
+/* resolves a host name trying NAPTR lookup if *proto==0 and *port==0, SRV
  * lookup if *port==0 or normal A/AAAA lookup
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
@@ -2355,7 +2406,7 @@ end:
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port, 
+struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 										char* proto)
 {
 	struct hostent* he;
@@ -2364,7 +2415,7 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 	struct dns_hash_entry* e;
 	char n_proto;
 	str srv_name;
-	
+
 	he=0;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LOG(L_WARN, "WARNING: dns_sip_resolvehost: called before dns cache"
@@ -2397,7 +2448,7 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 												&srv_name, &n_proto)){
 			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0){
 #ifdef DNS_CACHE_DEBUG
-				DBG("dns_naptr_sip_resolvehost(%.*s, %d, %d) srv, ret=%p\n", 
+				DBG("dns_naptr_sip_resolvehost(%.*s, %d, %d) srv, ret=%p\n",
 							name->len, name->s, (int)*port, (int)*proto, he);
 #endif
 				dns_hash_put(e);
@@ -2415,7 +2466,7 @@ naptr_not_found:
 
 
 
-/* resolves a host name trying NAPTR lookup if *proto==0 and *port==0, SRV 
+/* resolves a host name trying NAPTR lookup if *proto==0 and *port==0, SRV
  * lookup if *port==0 or normal A/AAAA lookup
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
@@ -2423,7 +2474,7 @@ naptr_not_found:
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, 
+struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
 										char* proto)
 {
 #ifdef USE_NAPTR
@@ -2437,7 +2488,7 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
 
 /* performs an a lookup, fills the dns_entry pointer and the ip addr.
  *  (with the first good ip). if *e ==0 does the a lookup, and changes it
- *   to the result, if not it uses the current value and tries to use 
+ *   to the result, if not it uses the current value and tries to use
  *   the rr_no record from it.
  * params:  e - must contain the "in-use" dns_hash_entry pointer (from
  *               a previous call) or *e==0 (for the first call)
@@ -2447,7 +2498,7 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
  *                 at *rr_no
  *          rr_no - record number to start searching for a good ip from
  *                  (e.g. value from previous call + 1), filled on return
- *                  with the number of the record corresponding to the 
+ *                  with the number of the record corresponding to the
  *                  returned ip
  * returns 0 on success, <0 on error (see the error codes),
  *         fills e, ip and rr_no
@@ -2474,9 +2525,9 @@ int dns_a_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 	int ret;
 	ticks_t now;
 	struct ip_addr* tmp;
-	
+
 	rr=0;
-	ret=-E_DNS_NO_IP; 
+	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* do lookup */
 		/* if ip don't set *e */
 		if ((tmp=str2ip(name))!=0){
@@ -2509,19 +2560,19 @@ error:
 
 /* lookup, fills the dns_entry pointer and the ip addr.
  *  (with the first good ip). if *e ==0 does the a lookup, and changes it
- *   to the result, if not it uses the current value and tries to use 
+ *   to the result, if not it uses the current value and tries to use
  * Same as dns_a_resolve but for aaaa records (see above).
  */
-int dns_aaaa_resolve(struct dns_hash_entry** e, unsigned char* rr_no, 
+int dns_aaaa_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 						str* name, struct ip_addr* ip)
 {
 	struct dns_rr* rr;
 	int ret;
 	ticks_t now;
 	struct ip_addr* tmp;
-	
+
 	rr=0;
-	ret=-E_DNS_NO_IP; 
+	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* do lookup */
 		/* if ip don't set *e */
 		if ((tmp=str2ip6(name))!=0){
@@ -2559,12 +2610,12 @@ error:
  *  see dns_a_resolve() for the rest of the params., examples a.s.o
  *  WARNING: don't forget dns_hash_put(*e) when e is not needed anymore
  */
-int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no, 
+int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 					str* name, struct ip_addr* ip, int flags)
 {
 	int ret;
-	
-	ret=-E_DNS_NO_IP; 
+
+	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* first call */
 		if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
 			ret=dns_aaaa_resolve(e, rr_no, name, ip);
@@ -2601,7 +2652,7 @@ int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 			ret=dns_a_resolve(e, rr_no, name, ip);
 		}
 	}else{
-		LOG(L_CRIT, "BUG: dns_ip_resolve: invalid record type %d\n", 
+		LOG(L_CRIT, "BUG: dns_ip_resolve: invalid record type %d\n",
 					(*e)->type);
 	}
 	return ret;
@@ -2631,9 +2682,9 @@ int dns_srv_resolve_nxt(struct dns_hash_entry** e,
 	struct dns_rr* rr;
 	int ret;
 	ticks_t now;
-	
+
 	rr=0;
-	ret=-E_DNS_NO_SRV; 
+	ret=-E_DNS_NO_SRV;
 	if (*e==0){
 		if ((*e=dns_get_entry(name, T_SRV))==0)
 			goto error;
@@ -2681,13 +2732,13 @@ int dns_srv_resolve_ip(struct dns_srv_handle* h,
 {
 	int ret;
 	str host;
-	
+
 	host.len=0;
 	host.s=0;
 	do{
 		if (h->a==0){
 #ifdef DNS_SRV_LB
-			if ((ret=dns_srv_resolve_nxt(&h->srv, 
+			if ((ret=dns_srv_resolve_nxt(&h->srv,
 								(flags & DNS_SRV_RR_LB)?&h->srv_tried_rrs:0,
 								&h->srv_no,
 								name, &host, port))<0)
@@ -2713,8 +2764,8 @@ int dns_srv_resolve_ip(struct dns_srv_handle* h,
 	}while(ret<0);
 error:
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_srv_resolve_ip(\"%.*s\", %d, %d), ret=%d, ip=%s\n", 
-			name->len, name->s, h->srv_no, h->ip_no, ret, 
+	DBG("dns_srv_resolve_ip(\"%.*s\", %d, %d), ret=%d, ip=%s\n",
+			name->len, name->s, h->srv_no, h->ip_no, ret,
 			ip?ZSW(ip_addr2a(ip)):"");
 #endif
 	return ret;
@@ -2726,7 +2777,7 @@ error:
  * if *port!=0.
  * when performing SRV lookup (*port==0) it will use proto to look for
  * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
- * h must be initialized prior to  calling this function and can be used to 
+ * h must be initialized prior to  calling this function and can be used to
  * get the subsequent ips
  * returns:  <0 on error
  *            0 on success and it fills *ip, *port, dns_sip_resolve_h
@@ -2795,7 +2846,7 @@ int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						/* proto already set */
 						return 0;
 					}
-					
+
 					switch(srv_proto){
 						case PROTO_NONE: /* no proto specified, use udp */
 							if (proto)
@@ -2830,7 +2881,7 @@ int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 															port, flags))>=0)
 					{
 #ifdef DNS_CACHE_DEBUG
-						DBG("dns_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n", 
+						DBG("dns_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n",
 							name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
 						/* proto already set */
@@ -2849,7 +2900,7 @@ int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 			ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags);
 			if (proto)
 				*proto=h->proto;
-			DBG("dns_sip_resolve(%.*s, %d, %d), srv, ret=%d\n", 
+			DBG("dns_sip_resolve(%.*s, %d, %d), srv, ret=%d\n",
 					name->len, name->s, h->srv_no, h->ip_no, ret);
 			return ret;
 	}
@@ -2864,7 +2915,7 @@ int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 	if (proto)
 		*proto=h->proto;
 #ifdef DNS_CACHE_DEBUG
-	DBG("dns_sip_resolve(%.*s, %d, %d), ip, ret=%d\n", 
+	DBG("dns_sip_resolve(%.*s, %d, %d), ip, ret=%d\n",
 			name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
 	return ret;
@@ -2880,7 +2931,7 @@ int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
  * - normal A/AAAA lookup if *port!=0, or port==0
  * when performing SRV lookup (*port==0) it will use proto to look for
  * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
- * h must be initialized prior to  calling this function and can be used to 
+ * h must be initialized prior to  calling this function and can be used to
  * get the subsequent ips
  * returns:  <0 on error
  *            0 on success and it fills *ip, *port, dns_sip_resolve_h
@@ -2897,7 +2948,7 @@ int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 	char n_proto;
 	str srv_name;
 	int ret;
-	
+
 	ret=-E_DNS_NO_NAPTR;
 	if (dns_hash==0){ /* not init => use normal, non-cached version */
 		LOG(L_WARN, "WARNING: dns_sip_resolve: called before dns cache"
@@ -2913,7 +2964,7 @@ int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 	if (((h->srv==0) && (h->a==0)) && /* first call */
 			 proto && port && (*proto==0) && (*port==0)){
 		*proto=PROTO_UDP; /* just in case we don't find another */
-		
+
 		/* check if it's an ip address */
 		if ( ((tmp_ip=str2ip(name))!=0)
 #ifdef	USE_IPV6
@@ -2943,7 +2994,7 @@ int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 									from previous dns_srv_sip_resolve calls */
 			if ((ret=dns_srv_resolve_ip(h, &srv_name, ip, port, flags))>=0){
 #ifdef DNS_CACHE_DEBUG
-				DBG("dns_naptr_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n", 
+				DBG("dns_naptr_sip_resolve(%.*s, %d, %d), srv0, ret=%d\n",
 								name->len, name->s, h->srv_no, h->ip_no, ret);
 #endif
 				dns_hash_put(e);
@@ -2971,7 +3022,7 @@ naptr_not_found:
  * - normal A/AAAA lookup if *port!=0, or port==0
  * when performing SRV lookup (*port==0) it will use proto to look for
  * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
- * h must be initialized prior to  calling this function and can be used to 
+ * h must be initialized prior to  calling this function and can be used to
  * get the subsequent ips
  * returns:  <0 on error
  *            0 on success and it fills *ip, *port, dns_sip_resolve_h
@@ -2996,7 +3047,7 @@ int dns_a_get_ip(str* name, struct ip_addr* ip)
 	struct dns_hash_entry* e;
 	int ret;
 	unsigned char rr_no;
-	
+
 	e=0;
 	rr_no=0;
 	ret=dns_a_resolve(&e, &rr_no, name, ip);
@@ -3011,7 +3062,7 @@ int dns_aaaa_get_ip(str* name, struct ip_addr* ip)
 	struct dns_hash_entry* e;
 	int ret;
 	unsigned char rr_no;
-	
+
 	e=0;
 	rr_no=0;
 	ret=dns_aaaa_resolve(&e, &rr_no, name, ip);
@@ -3033,7 +3084,7 @@ int dns_get_ip(str* name, struct ip_addr* ip, int flags)
 	int ret;
 	struct dns_hash_entry* e;
 	unsigned char rr_no;
-	
+
 	e=0;
 	rr_no=0;
 	ret=dns_ip_resolve(&e, &rr_no, name, ip, flags);
@@ -3050,7 +3101,7 @@ int dns_srv_get_ip(str* name, struct ip_addr* ip, unsigned short* port,
 {
 	int ret;
 	struct dns_srv_handle h;
-	
+
 	dns_srv_handle_init(&h);
 	ret=dns_srv_resolve_ip(&h, name, ip, port, flags);
 	dns_srv_handle_put(&h);
@@ -3081,12 +3132,12 @@ void dns_cache_debug(rpc_t* rpc, void* ctx)
 	int h;
 	struct dns_hash_entry* e;
 	ticks_t now;
-	
+
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
 			clist_foreach(&dns_hash[h], e, next){
-				rpc->add(ctx, "sdddddd", 
+				rpc->add(ctx, "sdddddd",
 								e->name, e->type, e->total_size, e->refcnt.val,
 								(s_ticks_t)(e->expire-now)<0?-1:
 									TICKS_TO_S(e->expire-now),
@@ -3098,6 +3149,86 @@ void dns_cache_debug(rpc_t* rpc, void* ctx)
 }
 
 
+#ifdef USE_DNS_CACHE_STATS
+void dns_cache_stats_get(rpc_t* rpc, void* c)
+{
+	char *name=NULL;
+	void *handle;
+	int found=0,i=0;
+	int reset=0;
+	char* dns_cache_stats_names[] = {
+		"dns_req_cnt",
+		"dc_hits_cnt",
+		"dc_neg_hits_cnt",
+		"dc_lru_cnt",
+		NULL
+	};
+	unsigned long  stat_sum(int ivar, int breset) {
+		unsigned long isum=0;
+		int i1=0;
+
+		for (; i1 < get_max_procs(); i1++)
+			switch (ivar) {
+				case 0:
+					isum+=dns_cache_stats[i1].dns_req_cnt;
+					if (breset)
+						dns_cache_stats[i1].dns_req_cnt=0;
+					break;
+				case 1:
+					isum+=dns_cache_stats[i1].dc_hits_cnt;
+					if (breset)
+						dns_cache_stats[i1].dc_hits_cnt=0;
+					break;
+				case 2:
+					isum+=dns_cache_stats[i1].dc_neg_hits_cnt;
+					if (breset)
+						dns_cache_stats[i1].dc_neg_hits_cnt=0;
+					break;
+				case 3:
+					isum+=dns_cache_stats[i1].dc_lru_cnt;
+					if (breset)
+						dns_cache_stats[i1].dc_lru_cnt=0;
+					break;
+			}
+
+		return isum;
+	}
+
+
+	if (!use_dns_cache) {
+		rpc->fault(c, 500, "dns cache support disabled");
+		return;
+	}
+	if (rpc->scan(c, "s", &name) < 0)
+		return;
+	if (rpc->scan(c, "d", &reset) < 0)
+		return;
+	if (!strcasecmp(name, DNS_CACHE_ALL_STATS)) {
+		/* dump all the dns cache stat values */
+		rpc->add(c, "{", &handle);
+		for (i=0; dns_cache_stats_names[i]; i++)
+			rpc->struct_add(handle, "d",
+							dns_cache_stats_names[i],
+							stat_sum(i, reset));
+
+		found=1;
+	} else {
+		for (i=0; dns_cache_stats_names[i]; i++)
+			if (!strcasecmp(dns_cache_stats_names[i], name)) {
+				rpc->add(c, "{", &handle);
+				rpc->struct_add(handle, "d",
+								dns_cache_stats_names[i],
+								stat_sum(i, reset));
+				found=1;
+				break;
+			}
+	}
+	if(!found)
+		rpc->fault(c, 500, "unknown dns cache stat parameter");
+
+	return;
+}
+#endif /* USE_DNS_CACHE_STATS */
 
 /* rpc functions */
 void dns_cache_debug_all(rpc_t* rpc, void* ctx)
@@ -3108,13 +3239,13 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 	struct ip_addr ip;
 	int i;
 	ticks_t now;
-	
+
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
 			clist_foreach(&dns_hash[h], e, next){
 				for (i=0, rr=e->rr_lst; rr; i++, rr=rr->next){
-					rpc->add(ctx, "sddddddd", 
+					rpc->add(ctx, "sddddddd",
 								e->name, (int)e->type, i, (int)e->total_size,
 								(int)e->refcnt.val,
 								(int)(s_ticks_t)(e->expire-now)<0?-1:
@@ -3131,7 +3262,7 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 							}
 							break;
 						case T_SRV:
-							rpc->add(ctx, "ss", "srv", 
+							rpc->add(ctx, "ss", "srv",
 									((struct srv_rdata*)(rr->rdata))->name);
 							break;
 						case T_NAPTR:
@@ -3139,7 +3270,7 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 								((struct naptr_rdata*)(rr->rdata))->flags);
 							break;
 						case T_CNAME:
-							rpc->add(ctx, "ss", "cname", 
+							rpc->add(ctx, "ss", "cname",
 									((struct cname_rdata*)(rr->rdata))->name);
 							break;
 						default:
@@ -3183,7 +3314,7 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	void* handle;
 	str s;
-	
+
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
@@ -3314,7 +3445,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e, in
 			default:
 				LOG(L_ERR, "ERROR: dns_cache_clone_entry: type %d not supported\n",
 						e->type);
-				return NULL;				
+				return NULL;
 		}
 	} else {
 		rounded_size = size; /* no need to round the size, we just clone the entry
@@ -3366,7 +3497,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e, in
 					((struct naptr_rdata*)rr->rdata)->repl);
 		}
 	}
-	
+
 
 	if (rdata_size) {
 		memset(new+size, 0, rounded_size-size+rr_size+rdata_size);
@@ -3409,7 +3540,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	str ip, rr_name;
 	int flags;
 	struct ip_addr *ip_addr;
-	int priority, weight, port; 
+	int priority, weight, port;
 	ticks_t expire;
 	int err, h;
 	int size;
@@ -3431,10 +3562,10 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	case T_CNAME:
 	case T_NAPTR:
 		rpc->fault(ctx, 400, "not implemented");
-		return;			
+		return;
 	default:
 		rpc->fault(ctx, 400, "unknown type");
-		return;			
+		return;
 	}
 
 	if (!flags) {
@@ -3555,7 +3686,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 					rpc->fault(ctx, 400, "Failed to add the entry to the cache");
 					goto error;
 				}
-			
+
 				switch(type) {
 				case T_A:
 				case T_AAAA:
@@ -3572,7 +3703,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 			}
 		}
 	}
-	
+
 	LOCK_DNS_HASH();
 	if (dns_cache_add_unsafe(new)) {
 		rpc->fault(ctx, 400, "Failed to add the entry to the cache");

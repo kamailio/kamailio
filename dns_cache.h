@@ -22,14 +22,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /* History:
  * --------
  *  2006-07-13  created by andrei
  *  2007-06-16  naptr support (andrei)
+ *  2007-07-30  DNS cache measurements added (Gergo)
  */
 
 
@@ -64,7 +65,7 @@
 enum dns_errors{
 					E_DNS_OK=0,
 					E_DNS_EOR, /* no more records (not an error)
-					              -- returned only by the dns_resolve* 
+					              -- returned only by the dns_resolve*
 								  functions when called iteratively,; it
 								  signals the end of the ip/records list */
 					E_DNS_UNKNOWN /* unkown error */,
@@ -73,10 +74,10 @@ enum dns_errors{
 					E_DNS_NO_SRV /* unresolvable srv record */,
 					E_DNS_BAD_IP_ENTRY,
 					E_DNS_NO_IP /* unresolvable a or aaaa records*/,
-					E_DNS_BAD_IP /* the ip is invalid */, 
-					E_DNS_BLACKLIST_IP /* the ip is blacklisted */, 
+					E_DNS_BAD_IP /* the ip is invalid */,
+					E_DNS_BLACKLIST_IP /* the ip is blacklisted */,
 					E_DNS_NAME_TOO_LONG /* try again with a shorter name */,
-					E_DNS_AF_MISMATCH /* ipv4 or ipv6 only requested, but 
+					E_DNS_AF_MISMATCH /* ipv4 or ipv6 only requested, but
 										 name contains an ip addr. of the
 										 opossite type */ ,
 					E_DNS_NO_NAPTR /* unresolvable naptr record */,
@@ -142,7 +143,7 @@ struct dns_hash_entry{
 	unsigned short type;
 	unsigned char err_flags;
 	unsigned char name_len; /* can be maximum 255 bytes */
-	char name[1]; /* variable length, name, null terminated 
+	char name[1]; /* variable length, name, null terminated
 	                 (actual lenght = name_len +1)*/
 };
 
@@ -173,6 +174,10 @@ struct dns_srv_handle{
 const char* dns_strerror(int err);
 
 int init_dns_cache();
+#ifdef USE_DNS_CACHE_STATS
+int init_dns_cache_stats(int iproc_num);
+#define DNS_CACHE_ALL_STATS "dc_all_stats"
+#endif
 void destroy_dns_cache();
 
 
@@ -238,7 +243,7 @@ inline static void dns_srv_handle_put_shm_unsafe(struct dns_srv_handle* h)
 
 /* get "next" ip next time a dns_srv_handle function is called
  * params: h   - struct dns_srv_handler
- *         err - return code of the last dns_*_resolve* call 
+ *         err - return code of the last dns_*_resolve* call
  * returns: 0 if it doesn't make sense to try another record,
  * 1 otherwise
  */
@@ -298,7 +303,7 @@ struct hostent* dns_get_he(str* name, int flags);
 int dns_sip_resolve(struct dns_srv_handle* h,  str* name, struct ip_addr* ip,
 					unsigned short* port, char* proto, int flags);
 
-/* same as above, but fills su intead of changing port and filling an ip */ 
+/* same as above, but fills su intead of changing port and filling an ip */
 inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 									 union sockaddr_union* su,
 									 str* name, unsigned short port,
@@ -306,7 +311,7 @@ inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 {
 	struct ip_addr ip;
 	int ret;
-	
+
 	ret=dns_sip_resolve(h, name, &ip, &port, proto, flags);
 	if (ret>=0)
 		init_su(su, &ip, port);
