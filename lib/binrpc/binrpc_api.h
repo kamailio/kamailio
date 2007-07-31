@@ -288,4 +288,14 @@ char *binrpc_get_last_errs();
  * */
 void binrpc_clear_last_err();
 
+/**
+ * Function: binrpc_free_rpc_array
+ *
+ * Description:
+ *    The function frees memory allocated internally to store reply values
+ *    and finally frees the values array
+ *
+ * */
+void binrpc_free_rpc_array(struct binrpc_val* a, int size);
+
 #endif /*BINRPC_API_H_*/
