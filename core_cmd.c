@@ -106,6 +106,14 @@ static const char* dns_cache_delete_srv_doc[] = {
 	0
 };
 
+#ifdef USE_DNS_CACHE_STATS
+void dns_cache_stats_get(rpc_t* rpc, void* ctx);
+
+static const char* dns_cache_stats_get_doc[] = {
+	"returns the dns measurement counters.",
+	0
+};
+#endif /* USE_DNS_CACHE_STATS */
 #ifdef DNS_WATCHDOG_SUPPORT
 void dns_set_server_state_rpc(rpc_t* rpc, void* ctx);
 
@@ -143,6 +151,14 @@ static const char* dst_blst_add_doc[] = {
 	"Adds a new entry to the dst blacklist.",  /* Documentation string */
 	0                               /* Method signature(s) */
 };
+#ifdef USE_DST_BLACKLIST_STATS
+void dst_blst_stats_get(rpc_t* rpc, void* ctx);
+
+static const char* dst_blst_stats_get_doc[] = {
+	"returns the dst blacklist measurement counters.",
+	0
+};
+#endif /* USE_DST_BLACKLIST_STATS */
 
 #endif
 
@@ -489,6 +505,7 @@ static const char* core_sfmalloc_doc[] = {
 	"Returns sfmalloc debugging  info.",  /* Documentation string */
 	0                                     /* Method signature(s) */
 };
+
 #endif
 
 
@@ -503,7 +520,7 @@ static void core_tcpinfo(rpc_t* rpc, void* c)
 	void *handle;
 #ifdef USE_TCP
 	struct tcp_gen_info ti;
-	
+
 	if (!tcp_disable){
 		tcp_get_info(&ti);
 		rpc->add(c, "{", &handle);
@@ -551,6 +568,9 @@ rpc_export_t core_rpc_methods[] = {
 	{"dns.delete_a",           dns_cache_delete_a,    dns_cache_delete_a_doc,    0	},
 	{"dns.delete_aaaa",        dns_cache_delete_aaaa, dns_cache_delete_aaaa_doc, 0	},
 	{"dns.delete_srv",         dns_cache_delete_srv,  dns_cache_delete_srv_doc,  0	},
+#ifdef USE_DNS_CACHE_STATS
+	{"dns.stats_get",    dns_cache_stats_get,   dns_cache_stats_get_doc,        0	},
+#endif /* USE_DNS_CACHE_STATS */
 #ifdef DNS_WATCHDOG_SUPPORT
 	{"dns.set_server_state",   dns_set_server_state_rpc, dns_set_server_state_doc, 0 },
 #endif
@@ -561,6 +581,9 @@ rpc_export_t core_rpc_methods[] = {
 	{"dst_blacklist.view",     dst_blst_view,         dst_blst_view_doc,         0	},
 	{"dst_blacklist.delete_all", dst_blst_delete_all, dst_blst_delete_all_doc,   0	},
 	{"dst_blacklist.add",      dst_blst_add,          dst_blst_add_doc,          0	},
+#ifdef USE_DST_BLACKLIST_STATS
+	{"dst_blacklist.stats_get", dst_blst_stats_get, dst_blst_stats_get_doc, 0 },
+#endif /* USE_DST_BLACKLIST_STATS */
 #endif
 	{0, 0, 0, 0}
 };

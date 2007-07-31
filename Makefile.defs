@@ -61,6 +61,7 @@
 #               -flat_namespace -undefined suppress) (andrei)
 #  2007-07-07  added HAVE_SCHED_SETSCHEDULER for linux (andrei)
 #  2007-07-18  added DNS_WATCHDOG_SUPPORT (Miklos)
+#  2007-07-30  added USE_DNS_CACHE_STATS and USE_DST_BLACKLIST_STATS (Gergo)
 
 # check if already included/exported
 
@@ -388,12 +389,16 @@ endif
 #		which (mis)uses this parameter.
 # -DUSE_DNS_CACHE
 #		use an internal dns cache instead of making dns requests each time
+# -DUSE_DNS_CACHE_STATS
+#		turns on DNS cache measurements
 # -DUSE_DNS_FAILOVER
 #		if the destination resolves to multiple ips, on send error fall back
 #		to the others
 # -DUSE_DST_BLACKLIST
 #		blacklist bad destination (timeout, failed to connect, error sending
 #        a.s.o)
+# -DUSE_DST_BLACKLIST_STATS
+#		turns on blacklist bad destination measurements
 # -DPROFILING
 #		if enabled profiling will be enabled for child processes
 #		Don't forget to set PROFILE (see below)
@@ -409,7 +414,6 @@ endif
 #		core that the DNS servers are down. No DNS query is performed
 #		when the servers are unreachable, and even expired resource
 #		records are used from the cache. (requires external watchdog)
-
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
 DEFS+= $(extra_defs) \
@@ -429,6 +433,8 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DUSE_NAPTR \
+	 #-DUSE_DNS_CACHE_STATS \
+	 #-DUSE_DST_BLACKLIST_STATS \
 	 #-DDNS_WATCHDOG_SUPPORT \
 	 #-DLL_MALLOC \
 	 #-DSF_MALLOC \

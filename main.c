@@ -70,10 +70,11 @@
  *               tcp usage for module started processes (andrei)
  * 2007-01-18  children shutdown procedure moved into shutdown_children;
  *               safer shutdown on start-up error (andrei)
- * 2007-02-09  TLS support split into tls-in-core (CORE_TLS) and generic TLS 
+ * 2007-02-09  TLS support split into tls-in-core (CORE_TLS) and generic TLS
  *             (USE_TLS)  (andrei)
  * 2007-06-07  added support for locking pages in mem. and using real time
  *              scheduling policies (andrei)
+ * 2007-07-30  dst blacklist and DNS cache measurements added (Gergo)
  */
 
 
@@ -279,7 +280,7 @@ int tls_disable = 1;  /* tls disabled by default */
 
 struct process_table *pt=0;		/*array with children pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
-int *process_count = 0;			/* Total number of SER processes currently 
+int *process_count = 0;			/* Total number of SER processes currently
 								   running */
 gen_lock_t* process_lock;		/* lock on the process table */
 int process_no = 0;				/* index of process in the pt */
@@ -343,7 +344,7 @@ int mlock_pages=0; /* default off, try to disable swapping */
 /* real time options */
 int real_time=0; /* default off, flags: 1 on only timer, 2  slow timer,
 					                    4 all procs (7=all) */
-int rt_prio=0;  
+int rt_prio=0;
 int rt_policy=0; /* SCHED_OTHER */
 int rt_timer1_prio=0;  /* "fast" timer */
 int rt_timer2_prio=0;  /* "slow" timer */
@@ -522,7 +523,7 @@ static void kill_all_children(int signum)
 		  * (only main can add processes, so from main is safe not to lock
 		  *  and moreover it avoids the lock-holding suicidal children problem)
 		  */
-		if (!is_main) lock_get(process_lock); 
+		if (!is_main) lock_get(process_lock);
 		for (r=1; r<*process_count; r++){
 			if (r==process_no) continue; /* try not to be suicidal */
 			if (pt[r].pid) {
@@ -569,7 +570,7 @@ static void shutdown_children(int sig, int show_status)
 		 * alarm is installed which is exactly what we want */
 	}
 	alarm(ser_kill_timeout);
-	while((wait(0) > 0) || (errno==EINTR)); /* wait for all the 
+	while((wait(0) > 0) || (errno==EINTR)); /* wait for all the
 											   children to terminate*/
 	set_sig_h(SIGALRM, sig_alarm_abort);
 	cleanup(show_status); /* cleanup & show status*/
@@ -915,12 +916,12 @@ int main_loop()
 		   as new processes are forked (while skipping 0 reserved for main
 		*/
 
-		/* init childs with rank==PROC_INIT before forking any process, 
+		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
 		 * (e.g. shared vars that depend on the total number of processes
 		 * that is known only after all mod_inits have been executed )
 		 * WARNING: the same init_child will be called latter, a second time
-		 * for the "main" process with rank PROC_MAIN (make sure things are 
+		 * for the "main" process with rank PROC_MAIN (make sure things are
 		 * not initialized twice)*/
 		if (init_child(PROC_INIT) < 0) {
 			LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_INT) --"
@@ -941,7 +942,7 @@ int main_loop()
 					/* process_bit = 0; */
 					if (real_time&2)
 						set_rt_prio(rt_timer2_prio, rt_timer2_policy);
-					
+
 					if (arm_slow_timer()<0) goto error;
 					slow_timer_main();
 				}else{
@@ -971,7 +972,7 @@ int main_loop()
 		snprintf(pt[process_no].desc, MAX_PT_DESC,
 			"stand-alone receiver @ %s:%s",
 			 bind_address->name.s, bind_address->port_no_str.s );
-	
+
 	/* call it also w/ PROC_MAIN to make sure modules that init things only
 	 * in PROC_MAIN get a chance to run */
 	if (init_child(PROC_MAIN) < 0) {
@@ -1041,12 +1042,12 @@ int main_loop()
 			 * so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop privileges */
 
-		/* init childs with rank==PROC_INIT before forking any process, 
+		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
 		 * (e.g. shared vars that depend on the total number of processes
 		 * that is known only after all mod_inits have been executed )
 		 * WARNING: the same init_child will be called latter, a second time
-		 * for the "main" process with rank PROC_MAIN (make sure things are 
+		 * for the "main" process with rank PROC_MAIN (make sure things are
 		 * not initialized twice)*/
 		if (init_child(PROC_INIT) < 0) {
 			LOG(L_ERR, "ERROR: main: error in init_child(PROC_INT) --"
@@ -1059,7 +1060,7 @@ int main_loop()
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
 				snprintf(si_desc, MAX_PT_DESC, "receiver child=%d sock=%s:%s",
-					i, si->name.s, si->port_no_str.s);	
+					i, si->name.s, si->port_no_str.s);
 				child_rank++;
 				pid = fork_process(child_rank, si_desc, 1);
 				if (pid<0){
@@ -1115,7 +1116,7 @@ int main_loop()
 		}
 	}
 
-/* init childs with rank==MAIN before starting tcp main (in case they want to 
+/* init childs with rank==MAIN before starting tcp main (in case they want to
  *  fork  a tcp capable process, the corresponding tcp. comm. fds in pt[] must
  *  be set before calling tcp_main_loop()) */
 	if (init_child(PROC_MAIN) < 0) {
@@ -1321,7 +1322,7 @@ int main(int argc, char** argv)
 					abort();
 		}
 	}
-	
+
 	if (init_routes()<0) goto error;
 	if (init_nonsip_hooks()<0) goto error;
 	/* fill missing arguments with the default values*/
@@ -1586,12 +1587,26 @@ try_again:
 	}
 	if (use_dns_cache==0)
 		use_dns_failover=0; /* cannot work w/o dns_cache support */
+#ifdef USE_DNS_CACHE_STATS
+	/* preinitializing before the nubmer of processes is determined */
+	if (init_dns_cache_stats(1)<0){
+		LOG(L_CRIT, "could not initialize the dns cache measurement\n");
+		goto error;
+	}
+#endif /* USE_DNS_CACHE_STATS */
 #endif
 #ifdef USE_DST_BLACKLIST
 	if (init_dst_blacklist()<0){
 		LOG(L_CRIT, "could not initialize the dst blacklist, exiting...\n");
 		goto error;
 	}
+#ifdef USE_DST_BLACKLIST_STATS
+	/* preinitializing before the nubmer of processes is determined */
+	if (init_dst_blacklist_stats(1)<0){
+		LOG(L_CRIT, "could not initialize the dst blacklist measurement\n");
+		goto error;
+	}
+#endif /* USE_DST_BLACKLIST_STATS */
 #endif
 	if (init_avps()<0) goto error;
 	if (rpc_init_time() < 0) goto error;
@@ -1624,15 +1639,15 @@ try_again:
 	}
 	if (mlock_pages)
 		mem_lock_pages();
-	
+
 	if (real_time&4)
 			set_rt_prio(rt_prio, rt_policy);
-	
+
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
-	/* initialize process_table, add core process no. (calc_proc_no()) to the 
+	/* initialize process_table, add core process no. (calc_proc_no()) to the
 	 * processes registered from the modules*/
 	if (init_pt(calc_proc_no())==-1)
 		goto error;
@@ -1653,13 +1668,26 @@ try_again:
 	}
 #endif /* USE_TLS */
 #endif /* USE_TCP */
-	
+
 	/* The total number of processes is now known, note that no
 	 * function being called before this point may rely on the
 	 * number of processes !
 	 */
 	DBG("Expect (at least) %d SER processes in your process list\n",
 			get_max_procs());
+
+#if defined USE_DNS_CACHE && defined USE_DNS_CACHE_STATS
+	if (init_dns_cache_stats(get_max_procs())<0){
+		LOG(L_CRIT, "could not initialize the dns cache measurement\n");
+		goto error;
+	}
+#endif
+#if defined USE_DST_BLACKLIST && defined USE_DST_BLACKLIST_STATS
+	if (init_dst_blacklist_stats(get_max_procs())<0){
+		LOG(L_CRIT, "could not initialize the dst blacklist measurement\n");
+		goto error;
+	}
+#endif
 
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){

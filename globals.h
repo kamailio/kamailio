@@ -23,8 +23,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -179,7 +179,7 @@ extern int shm_force_alloc;
 extern int mlock_pages;
 
 /* real time stuff */
-extern int real_time; 
+extern int real_time;
 extern int rt_prio;
 extern int rt_policy; /* SCHED_OTHER */
 extern int rt_timer1_prio;  /* "fast" timer */
@@ -197,23 +197,40 @@ extern int dns_search_list;
 #ifdef USE_DNS_CACHE
 extern int use_dns_cache; /* 1 if the cache is enabled, 0 otherwise */
 extern int use_dns_failover; /* 1 if failover is enabled, 0 otherwise */
-extern unsigned int dns_cache_max_mem; /* maximum memory used for the cached 
+extern unsigned int dns_cache_max_mem; /* maximum memory used for the cached
 										  entries*/
 extern unsigned int dns_neg_cache_ttl; /* neg. cache ttl */
 extern unsigned int dns_cache_max_ttl; /* maximum ttl */
 extern unsigned int dns_cache_min_ttl; /* minimum ttl */
 extern unsigned int dns_timer_interval; /* gc timer interval in s */
-extern int dns_flags; /* default flags used for the  dns_*resolvehost 
+extern int dns_flags; /* default flags used for the  dns_*resolvehost
                     (compatibility wrappers) */
 extern int dns_srv_lb; /* default SRV LB support value */
 
+#ifdef USE_DNS_CACHE_STATS
+struct t_dns_cache_stats{
+	unsigned long dns_req_cnt;
+	unsigned long dc_hits_cnt;
+	unsigned long dc_neg_hits_cnt;
+	unsigned long dc_lru_cnt;
+};
+extern struct t_dns_cache_stats* dns_cache_stats;
+#endif /* USE_DNS_CACHE_STATS */
 #endif
 #ifdef USE_DST_BLACKLIST
 extern int use_dst_blacklist; /* 1 if the blacklist is enabled */
-extern unsigned int  blst_max_mem; /* maximum memory used for the blacklist 
+extern unsigned int  blst_max_mem; /* maximum memory used for the blacklist
 									  entries*/
 extern unsigned int blst_timeout; /* blacklist entry ttl */
 extern unsigned int blst_timer_interval; /*blacklist gc timer interval (in s)*/
+
+#ifdef USE_DST_BLACKLIST_STATS
+struct t_dst_blacklist_stats{
+	unsigned long bkl_hit_cnt;
+	unsigned long bkl_lru_cnt;
+};
+extern struct t_dst_blacklist_stats* dst_blacklist_stats;
+#endif /* USE_DST_BLACKLIST_STATS */
 #endif
 
 #endif
