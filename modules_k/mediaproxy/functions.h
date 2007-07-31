@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Copyright (C) 2004 Dan Pascu
+ * Copyright (C) 2004-2007 Dan Pascu
  * Copyright (C) 2003 Porta Software Ltd
  *
  * This file is part of openser, a free SIP server.
@@ -20,6 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+
 
 static void
 pingClients(unsigned int ticks, void *param)
@@ -70,10 +71,10 @@ pingClients(unsigned int ticks, void *param)
             break;
         contact.s = (char*)ptr + sizeof(contact.len);
         ptr = contact.s + contact.len;
-		memcpy( &sock, ptr, sizeof(sock));
-		ptr = (char*)ptr + sizeof(sock);
-		memcpy( &flags, ptr, sizeof(flags));
-		ptr = (char*)ptr + sizeof(flags);
+        memcpy( &sock, ptr, sizeof(sock));
+        ptr = (char*)ptr + sizeof(sock);
+        memcpy( &flags, ptr, sizeof(flags));
+        ptr = (char*)ptr + sizeof(flags);
         if (parse_uri(contact.s, contact.len, &uri) < 0) {
             LM_ERR("can't parse contact uri\n");
             continue;
@@ -82,19 +83,19 @@ pingClients(unsigned int ticks, void *param)
             continue;
         if (uri.port_no == 0)
             uri.port_no = SIP_PORT;
-		proto = uri.proto;
+        proto = uri.proto;
         hostent = sip_resolvehost(&uri.host, &uri.port_no, &proto, 0, 0);
         if (hostent == NULL){
             LM_ERR("failed to resolve host\n");
             continue;
         }
         hostent2su(&to, hostent, 0, uri.port_no);
-		if (sock==0) {
-			sock = get_send_socket(0, &to, PROTO_UDP);
-			if (sock == NULL) {
-				LM_ERR("can't get sending socket\n");
-				continue;
-			}
+        if (sock==0) {
+            sock = get_send_socket(0, &to, PROTO_UDP);
+            if (sock == NULL) {
+                LM_ERR("can't get sending socket\n");
+                continue;
+            }
         }
         udp_send(sock, pingbuf, sizeof(pingbuf), &to);
     }
