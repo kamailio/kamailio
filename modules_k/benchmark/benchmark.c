@@ -132,7 +132,7 @@ static mi_export_t mi_cmds[] = {
 	{ "bm_enable_timer",  mi_bm_enable_timer,   0,  0,  0  },
 	{ "bm_granularity",   mi_bm_granularity,    0,  0,  0  },
 	{ "bm_loglevel",      mi_bm_loglevel,       0,  0,  0  },
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
 };
 
 static int bm_get_time_diff(struct sip_msg *msg, xl_value_t *res,
