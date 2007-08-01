@@ -1,0 +1,1027 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 2 $</revnumber>
+		<date>$Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun 2005) $</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+
+    <section>
+	<title>Overview</title>
+	<para>Module description</para>
+	<para>A module which provides routing, balancing and blacklisting capabilities.</para>
+	<para>This module reads routing entries from a databases or from a config file at 
+		OpenSER startup. The data can be refreshed manually via MI commands, in config
+		file mode it can also be edited.
+		Based on the data, the module decides which number prefixes are forwarded 
+		to which gateway. It can also distribute the traffic by ratio parameters.
+		Furthermore, the requests can be distributed by a hash funcion to
+		predictable destinations.
+	<para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+				<emphasis>hash module</emphasis>
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>a database module</emphasis>, when a database is used as configuration data source.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+		<itemizedlist>
+		    <listitem>
+			<para>
+				<emphasis>libconfuse</emphasis>, a configuration file parser library.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+    <section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		Url to the database containing the routing data.
+	    </para>
+	    <para>
+		<emphasis>
+		Default value is <quote>mysql://openser:heslo@localhost/openser</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("carrierroute", "db_url", "mysql://openser:heslo@localhost/ser")
+...
+		</programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>db_table</varname> (string)</title>
+	    <para>
+		    Name of the table where the routing data is stored.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>carrierroute</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>db_table</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "db_table", "carrierroute")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>id_column</varname> (string)</title>
+	    <para>
+		    Name of the column containing the id identifier.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>id</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>id_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "id_column", "id")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>carrier_column</varname> (string)</title>
+	    <para>
+		    Name of the column containing the  carrier id.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>carrier</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>carrier_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "carrier_column", "carrier")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>scan_prefix_column</varname> (string)</title>
+	    <para>
+		    Name of column containing the scan prefixes. Scan prexies define
+		    the matching portion of a phone number, e.g. we have the scan 
+		    prefixes 49721 and 49, the called number is 49721913740, it matches
+		    49721, because the longest match is taken.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>scan_prefix</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>scan_prefix_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "scan_prefix_column", "scan_prefix")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>level_column</varname> (string)</title>
+	    <para>
+		    Name of column containing the rule level. You can define several routing
+		    levels to have different routing rules. Maybe you use level 0 for normal
+		    routing and level 1 if level 0 failed.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>level</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>level_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "level_column", "level")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>prob_column</varname> (string)</title>
+	    <para>
+		    Name of column containing probability. The probability value is used to 
+		    distribute the traffic between several gateways. Let's say 70 % of the 
+		    traffic shall be routed to gateway A, the other 30 % shall be routed to 
+		    gateway B, we define a rule for gateway A with a prob value of 0.7 and a 
+		    rule for gateway B with a prob value of 0.3.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>prob</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>prob_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "prob_column", "prob")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>rewrite_host_column</varname> (string)</title>
+	    <para>
+		    Name of column containing rewrite host value. An empty field represents a
+		    blacklist entry, anything else is put as domain part into the Request URI
+		    of the SIP message.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>rewrite_host</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>rewrite_host_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "rewrite_host_column", "rewrite_host")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>strip_column</varname> (string)</title>
+	    <para>
+		    Name of the column containing the number of digits to be stripped of the
+		    userpart of an URI before prepending rewrite_prefix.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>strip</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>strip_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "strip_column", "strip")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>comment_column</varname> (string)</title>
+	    <para>
+		    Name of the column containing an optional comment (useful in large routing tables)
+		    The comment is also displayed by the fifo cmd "cr_dump_routes".
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>comment</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>comment_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "comment_column", "comment")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>carrier_table</varname> (string)</title>
+	    <para>
+		    The name of the table containing the existing Carriers, contains ids and
+		    corresponding names.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>route_tree</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>carrier_table</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "carrier_table", "route_tree")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>rewrite_prefix_column</varname> (string)</title>
+	    <para>
+		    Name of column containing rewrite prefixes. Here you can define a rewrite
+		    prefix for the localpart of the SIP URI. Currently unused.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>rewrite_prefix</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>rewrite_prefix_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "rewrite_prefix_column", "rewrite_host")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>rewrite_suffix_column</varname> (string)</title>
+	    <para>
+		    Name of column containing rewrite suffixes. Here you can define a rewrite
+		    suffix for the localpart of the SIP URI. Currently unused.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>rewrite_suffix</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>rewrite_suffix_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+			    ...
+			    modparam("carrierroute", "rewrite_suffix_column", "rewrite_suffix")
+			    ...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>carrier_id_col</varname> (string)</title>
+	    <para>
+		    The name of the column in the carrier table containing the carrier id.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>id</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>id_col</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "carrier_id_col", "id")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>carrier_name_col</varname> (string)</title>
+	    <para>
+		    The name of the column in the carrier table containing the carrier name.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>carrier</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>carrier_name_col</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "carrier_name_col", "carrier")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>subscriber_table</varname> (string)</title>
+	    <para>
+		    The name of the table containing the subscribers
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>subscriber</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>subscriber_table</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "subscriber_table", "subscriber")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>subscriber_user_col</varname> (string)</title>
+	    <para>
+		    The name of the column in the subscriber table containing the usernames.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>username</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>subscriber_user_col</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "susbscriber_user_col", "username")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>subscriber_domain_col</varname> (string)</title>
+	    <para>
+		    The name of the column in the subscriber table containing the domain of 
+		    the subscriber.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>domain</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>subscriber_domain_col</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "subscriber_domain_col", "domain")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>subscriber_carrier_col</varname> (string)</title>
+	    <para>
+		    The name of the column in the subscriber table containing the carrier id
+		    of the subscriber.
+
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>cr_preferred_carrier</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>subscriber_carrier_col</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrier")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>config_source</varname> (string)</title>
+	    <para>
+		    Specifies whether the module loads its config data from a file or from a
+		    database. Possible values are file or db.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>file</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>config_source</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "config_source", "file")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>config_file</varname> (string)</title>
+	    <para>
+		    Specifies the path to the config file.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>/etc/openser/carrierroute.conf</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>config_file</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "config_file", "/etc/openser/carrierroute.conf")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>default_tree</varname> (string)</title>
+	    <para>
+		    The name of the carrier tree used per default (if the current
+		    subscriber has no preferred tree)
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>default</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>default_tree</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "default_tree", "default")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>use_domain</varname> (string)</title>
+	    <para>
+		    When using tree lookup per user, this parameter specifies whether
+		    to use the domain part for user matching or not.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>0</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>use_domain</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "use_domain", "0")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+	    <title><varname>fallback_default</varname> (string)</title>
+	    <para>
+		    This parameter defines the behaviour when using user-based tree
+		    lookup. If the user has a non-existing tree set and fallback_default
+		    is set to 1, the default tree is used. Otherwise, cr_user_rewrite_uri
+		    returns an error.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>1</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>fallback_default</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "fallback_default", "1")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+</section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">cr_rewrite_uri (string level, int hash_source)</function>
+	    </title>
+	    <para>
+		    This function searches for the longest match for the Request URI in the
+		    given level and rewrites the Request URI. Returns -1 if there is no data
+   		    found or an empty rewrite host on the longest match.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
+		    must be a contiguous range starting at 1, limited by the configuration parameter max_locdb.
+		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">cr_rewrite_branches(level, hash_source)</function>
+	    </title>
+	    <para>
+		    Like cr_rewrite_uri, the difference is that cr_rewrite_branches rewrites
+		    all branches of the transaction. This function is not available at the moment.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
+		    must be a contiguous range starting at 1, limited by the configuration parameter max_locdb.
+		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">cr_prime_balance_uri (string level, int hash_source)</function>
+	    </title>
+	    <para>
+		    Balances the request URI to the desination set given by level. hash_source
+		    defines the parameter which is passed to the hash function. Parameters are
+		    the same as for cr_rewrite_uri
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
+		    must be a contiguous range starting at 1, limited by the configuration parameter max_locdb.
+		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">cr_rewrite_by_to (string level, int hash_source)</function>
+	    </title>
+	    <para>
+		    Like route_uri, except that the to URI is used for prefix matching instead
+		    the request URI. Parameters are the same as for cr_rewrite_uri
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
+		    must be a contiguous range starting at 1, limited by the configuration parameter max_locdb.
+		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">cr_prime_balance_by_to (string level, int hash_source)</function>
+	    </title>
+	    <para>
+		    Like cr_prime_balance_uri, except that the to URI is used for prefix 
+		    matching instead the request URI. Parameters are the same as for
+		    cr_rewrite_uri.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
+		    must be a contiguous range starting at 1, limited by the configuration parameter max_locdb.
+		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">cr_user_rewrite_uri (string user, string level)</function>
+	    </title>
+	    <para>
+		    Rewrites the request URI, the given user is used to determine the
+		    carrier tree to be used. The level identifies the routing level
+		    inside the carrier tree
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>user</emphasis> - Name of the user for the carrier tree lookup
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">cr_tree_rewrite_uri (string tree, string level)</function>
+	    </title>
+	    <para>
+		    Uses the carrier tree specified by tree and uses the given level
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>tree</emphasis> - The routing tree to be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+    </section>
+
+    <section>
+	    <title><acronym>MI</acronym> Commands</title>
+	<section>
+	    <title><function moreinfo="none">reload_routes</function></title>
+	    <para>
+		This command reloads the routing data from the data source.
+	    </para>
+	</section>
+	<section>
+	    <title><function moreinfo="none">dump_routes</function></title>
+	    <para>
+		This command prints the route rules on the command line.
+	    </para>
+	</section>
+	<section>
+	    <title><function moreinfo="none">replace_host</function></title>
+	    <para>
+		This command can replace the rewrite_host of a route rule, it is only
+		usable in file mode. Following options are possible:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>-d</emphasis> - the domain containing the host</para>
+	        </listitem>
+		<listitem>
+		    <para><emphasis>-p</emphasis> - the prefix containing the host</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-h</emphasis> - the host to be replaced</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-t</emphasis> - the new host</para>
+		</listitem>
+	    </itemizedlist>
+	    <para>The options have to be quoted as one string to be passed to MI interface.
+		    Each option except host and new host can be wildcarded by * (but
+		    only * and not things like "-d prox*")
+	    </para>
+	    <example>
+		<title><function>replace_host</function> usage</title>
+		<programlisting format="linespecific">
+...
+openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><function moreinfo="none">deactivate_host</function></title>
+	    <para>
+		    This command deactivates the specified host, i.e. it sets its status to 0.
+		    It is only usable in file mode. Following options are possible:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>-d</emphasis> - the domain containing the host</para>
+	        </listitem>
+		<listitem>
+		    <para><emphasis>-p</emphasis> - the prefix containing the host</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-h</emphasis> - the host to be deactivated</para>
+		</listitem>
+	    </itemizedlist>
+	    <para>The options have to be quoted as one string to be passed to MI interface.
+		    Each option except host and new host can be wildcarded by * (but
+		    only * and not things like "-d prox*")
+	    </para>
+	    <example>
+		<title><function>deactivate_host</function> usage</title>
+		<programlisting format="linespecific">
+...
+openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><function moreinfo="none">activate_host</function></title>
+	    <para>
+		    This command activates the specified host, i.e. it sets its status to 1.
+		    It is only usable in file mode. Following options are possible:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>-d</emphasis> - the domain containing the host</para>
+	        </listitem>
+		<listitem>
+		    <para><emphasis>-p</emphasis> - the prefix containing the host</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-h</emphasis> - the host to be activated</para>
+		</listitem>
+	    </itemizedlist>
+	    <para>The options have to be quoted as one string to be passed to MI interface.
+		    Each option except host and new host can be wildcarded by * (but
+		    only * and not things like "-d prox*")
+	    </para>
+	    <example>
+		<title><function>activate_host</function> usage</title>
+		<programlisting format="linespecific">
+...
+openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+...
+		</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">add_host</function></title>
+	    <para>
+		    This command adds a route rule, it is only usable in file mode. Following options
+		    are possible:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>-d</emphasis> - the domain containing the host</para>
+	        </listitem>
+		<listitem>
+		    <para><emphasis>-p</emphasis> - the prefix containing the host</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-h</emphasis> - the host to be added</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-w</emphasis> - the weight of the rule</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-P</emphasis> - an optional rewrite prefix</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-S</emphasis> - an optional rewrite suffix</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-i</emphasis> - an optional hash index</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-s</emphasis> - an optional strip value</para>
+	    </itemizedlist>
+	    <para>The options have to be quoted as one string to be passed to MI interface.
+		    Each option except host and new host can be wildcarded by * (but
+		    only * and not things like "-d prox*")
+	    </para>
+	    <example>
+		<title><function>add_host</function> usage</title>
+		<programlisting format="linespecific">
+...
+openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
+...
+		</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">delete_host</function></title>
+	    <para>
+		    This command delete the specified hosts or rules, i.e. remove 
+		    them from the route tree. It is only usable in file mode.
+		    Following options are possible:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>-d</emphasis> - the domain containing the host</para>
+	        </listitem>
+		<listitem>
+		    <para><emphasis>-p</emphasis> - the prefix containing the host</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-h</emphasis> - the host to be added</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-w</emphasis> - the weight of the rule</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-P</emphasis> - an optional rewrite prefix</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-S</emphasis> - an optional rewrite suffix</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-i</emphasis> - an optional hash index</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>-s</emphasis> - an optional strip value</para>
+	    </itemizedlist>
+	    <para>The options have to be quoted as one string to be passed to MI interface.
+		    Each option except host and new host can be wildcarded by * (but
+		    only * and not things like "-d prox*")
+	    </para>
+	</section>
+    </section>
+
+    <section>
+	<title>Examples</title>
+	<example>
+		<title>Configuration example - OpenSER script</title>
+		<programlisting format="linespecific">
+...
+if(!cr_rewrite_uri("pstn", "call_id")){
+sl_send_reply("403", "Not allowed");
+} else {
+t_relay();
+}
+break;
+...
+		</programlisting>
+	</example>
+
+	<example>
+		<title>Configuration example - module configuration</title>
+		<programlisting format="linespecific">
+...
+domain proxy {
+   max_locdb = 2
+   prefix 49 {
+      target test1.localdomain {
+         prob = 0.500000
+         hash_index = 1
+         status = 1
+         comment = "test target 1"
+      }
+      target test9.localdomain {
+         prob = 0.500000
+         hash_index = 2
+         status = 1
+         comment = "test target 2"
+      }
+   }
+}
+...
+		</programlisting>
+	</example>
+    </section>
+
+    <section>
+	<title>Installation & Running</title>
+	<section>
+		<title>Database setup</title>
+		<para>
+			Before running &ser; with carrierroute, you have to setup the database 
+			table where the module will store the routing data. For that, if 
+			the table was not created by the installation script or you choose
+			to install everything by yourself you can use the carrierroute-create.sql
+			<acronym>SQL</acronym> script in the database directories in the 
+			openser/scripts folder as template. 
+			Database and table name can be set with module parameters so they 
+			can be changed, but the name of the columns must be as they are 
+			in the <acronym>SQL</acronym> script.
+			You can also find the complete database documentation on the
+			project webpage, &openserdbdocs;.
+		</para>
+		<para>
+			For a minimal configuration either use the config file given above, or
+			insert some data into the tables of the module.
+		</para>
+	<example>
+		<title>Example database content - carrierroute table</title>
+		<programlisting format="linespecific">
+...
++----+---------+-------------+-------+------+-------+---------------+
+| id | carrier | scan_prefix | level | prob | strip | rewrite_host  |
++----+---------+-------------+-------+------+-------+---------------+
+|  1 |       2 | 49          | 0     |  0.5 | 0     | host1.local   |
+|  2 |       2 | 49          | 0     |  0.5 | 0     | host2.local   |
+|  3 |       1 |             | 0     |    1 | 0     | default.local |
++----+---------+-------------+-------+------+-------+---------------+
+...
+		</programlisting>
+	</example>
+		<para>
+			This table contains two routes to two hosts for the "49" prefix for the
+			carrier 2, and a default route over carrier 1.
+		</para>
+	<example>
+		<title>Example database content - route_tree table</title>
+		<programlisting format="linespecific">
+...
++----+----------+
+| id | carrier  |
++----+----------+
+|  1 | carrier1 |
+|  2 | carrier2 |
+|  3 | default  |
++----+----------+
+...
+		</programlisting>
+		</example>
+		<para>
+			This table contains the mapping of the carrier id to actual names
+			For a functional routing the "cr_prefered_carrier" column must be
+			added to the subscriber table to choose the actual carrier for the users.
+		</para>
+		</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("module.sgml" "Book" "chapter")
+End:
+-->
