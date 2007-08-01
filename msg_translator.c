@@ -196,7 +196,7 @@ static int check_via_address(struct ip_addr* ip, str *name,
 	if (resolver&DO_DNS){
 		DBG("check_via_address: doing dns lookup\n");
 		/* try all names ips */
-		he=sip_resolvehost(name, &port, 0); /* FIXME proto? */
+		he=sip_resolvehost(name, &port, 0); /* don't use naptr */
 		if (he && ip->af==he->h_addrtype){
 			for(i=0;he && he->h_addr_list[i];i++){
 				if ( memcmp(&he->h_addr_list[i], ip->u.addr, ip->len)==0)

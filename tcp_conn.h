@@ -31,6 +31,8 @@
  *  2003-06-30  added tcp_connection flags & state (andrei) 
  *  2003-10-27  tcp port aliases support added (andrei)
  *  2006-10-13  added tcp_req_states for STUN (vlada)
+ *  2007-07-26  improved tcp connection hash function; increased aliases
+ *               hash size (andrei)
  */
 
 
@@ -43,7 +45,8 @@
 #include "atomic_ops.h"
 #include "timer_ticks.h"
 
-#define TCP_CON_MAX_ALIASES 4 /* maximum number of port aliases */
+/* maximum number of port aliases x search wildcard possibilities */
+#define TCP_CON_MAX_ALIASES (4*3) 
 
 #define TCP_BUF_SIZE	4096 
 #define DEFAULT_TCP_CONNECTION_LIFETIME 120 /* in  seconds */
@@ -180,25 +183,41 @@ struct tcp_connection{
 #define TCPCONN_LOCK lock_get(tcpconn_lock);
 #define TCPCONN_UNLOCK lock_release(tcpconn_lock);
 
-#define TCP_ALIAS_HASH_SIZE 1024
+#define TCP_ALIAS_HASH_SIZE 4096
 #define TCP_ID_HASH_SIZE 1024
 
-static inline unsigned tcp_addr_hash(struct ip_addr* ip, unsigned short port)
+/* hash (dst_ip, dst_port, local_ip, local_port) */
+static inline unsigned tcp_addr_hash(	struct ip_addr* ip, 
+										unsigned short port,
+										struct ip_addr* l_ip,
+										unsigned short l_port)
 {
-	if(ip->len==4) return (ip->u.addr32[0]^port)&(TCP_ALIAS_HASH_SIZE-1);
+	unsigned h;
+
+	if(ip->len==4)
+		h=(ip->u.addr32[0]^port)^(l_ip->u.addr32[0]^l_port);
 	else if (ip->len==16) 
-			return (ip->u.addr32[0]^ip->u.addr32[1]^ip->u.addr32[2]^
-					ip->u.addr32[3]^port) & (TCP_ALIAS_HASH_SIZE-1);
+		h= (ip->u.addr32[0]^ip->u.addr32[1]^ip->u.addr32[2]^
+				ip->u.addr32[3]^port) ^
+			(l_ip->u.addr32[0]^l_ip->u.addr32[1]^l_ip->u.addr32[2]^
+				l_ip->u.addr32[3]^l_port);
 	else{
 		LOG(L_CRIT, "tcp_addr_hash: BUG: bad len %d for an ip address\n",
 				ip->len);
 		return 0;
 	}
+	/* make sure the first bits are influenced by all 32
+	 * (the first log2(TCP_ALIAS_HASH_SIZE) bits should be a mix of all
+	 *  32)*/
+	h ^= h>>17;
+	h ^= h>>7;
+	return h & (TCP_ALIAS_HASH_SIZE-1);
 }
 
 #define tcp_id_hash(id) (id&(TCP_ID_HASH_SIZE-1))
 
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
+									union sockaddr_union* local_addr,
 									ticks_t timeout);
 
 #endif

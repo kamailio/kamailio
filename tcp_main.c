@@ -75,6 +75,8 @@
  *               result in inf. lifetime) (andrei)
  *  2007-07-25  tcpconn_connect can now bind the socket on a specified
  *                source addr/port (andrei)
+ *  2007-07-26   tcp_send() and tcpconn_get() can now use a specified source
+ *                addr./port (andrei)
  */
 
 
@@ -199,6 +201,11 @@ static int tcp_proto_no=-1; /* tcp protocol number as returned by
 							   getprotobyname */
 
 static io_wait_h io_h;
+
+
+
+inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
+										struct ip_addr* l_ip, int l_port);
 
 
 
@@ -589,23 +596,36 @@ error:
 
 /* adds a tcp connection to the tcpconn hashes
  * Note: it's called _only_ from the tcp_main process */
-struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
+inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 {
+	struct ip_addr zero_ip;
 
-	if (c){
+	if (likely(c)){
+		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
 		c->id_hash=tcp_id_hash(c->id);
-		c->con_aliases[0].hash=tcp_addr_hash(&c->rcv.src_ip, c->rcv.src_port);
+		c->aliases=0;
 		TCPCONN_LOCK;
 		/* add it at the begining of the list*/
 		tcpconn_listadd(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
-		/* set the first alias */
-		c->con_aliases[0].port=c->rcv.src_port;
-		c->con_aliases[0].parent=c;
-		tcpconn_listadd(tcpconn_aliases_hash[c->con_aliases[0].hash],
-							&c->con_aliases[0], next, prev);
-		c->aliases++;
+		/* set the aliases */
+		/* first alias is for (peer_ip, peer_port, 0 ,0) -- for finding
+		 *  any connection to peer_ip, peer_port
+		 * the second alias is for (peer_ip, peer_port, local_addr, 0) -- for
+		 *  finding any conenction to peer_ip, peer_port from local_addr 
+		 * the third alias is for (peer_ip, peer_port, local_addr, local_port) 
+		 *   -- for finding if a fully specified connection exists */
+		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &zero_ip, 0);
+		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip, 0);
+		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
+														c->rcv.dst_port);
+		/* ignore add_alias errors, there are some valid cases when one
+		 *  of the add_alias would fail (e.g. first add_alias for 2 connections
+		 *   with the same destination but different src. ip*/
 		TCPCONN_UNLOCK;
-		DBG("tcpconn_add: hashes: %d, %d\n", c->con_aliases[0].hash,
+		DBG("tcpconn_add: hashes: %d:%d:%d, %d\n",
+												c->con_aliases[0].hash,
+												c->con_aliases[1].hash,
+												c->con_aliases[2].hash,
 												c->id_hash);
 		return c;
 	}else{
@@ -651,15 +671,20 @@ void tcpconn_rm(struct tcp_connection* c)
 }
 
 
-/* finds a connection, if id=0 uses the ip addr & port (host byte order)
+/* finds a connection, if id=0 uses the ip addr, port, local_ip and local port
+ *  (host byte order) and tries to find the connection that matches all of
+ *   them. Wild cards can be used for local_ip and local_port (a 0 filled
+ *   ip address and/or a 0 local port).
  * WARNING: unprotected (locks) use tcpconn_get unless you really
  * know what you are doing */
-struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
+struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
+										struct ip_addr* l_ip, int l_port)
 {
 
 	struct tcp_connection *c;
 	struct tcp_conn_alias* a;
 	unsigned hash;
+	int is_local_ip_any;
 	
 #ifdef EXTRA_DEBUG
 	DBG("tcpconn_find: %d  port %d\n",id, port);
@@ -675,7 +700,8 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 			if ((id==c->id)&&(c->state!=S_CONN_BAD)) return c;
 		}
 	}else if (ip){
-		hash=tcp_addr_hash(ip, port);
+		hash=tcp_addr_hash(ip, port, l_ip, l_port);
+		is_local_ip_any=ip_addr_any(l_ip);
 		for (a=tcpconn_aliases_hash[hash]; a; a=a->next){
 #ifdef EXTRA_DEBUG
 			DBG("a=%p, c=%p, c->id=%d, alias port= %d port=%d\n", a, a->parent,
@@ -683,7 +709,11 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 			print_ip("ip=",&a->parent->rcv.src_ip,"\n");
 #endif
 			if ( (a->parent->state!=S_CONN_BAD) && (port==a->port) &&
-					(ip_addr_cmp(ip, &a->parent->rcv.src_ip)) )
+					((l_port==0) || (l_port==a->parent->rcv.dst_port)) &&
+					(ip_addr_cmp(ip, &a->parent->rcv.src_ip)) &&
+					(is_local_ip_any ||
+						ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip))
+				)
 				return a->parent;
 		}
 	}
@@ -692,13 +722,30 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 
 
 
-/* _tcpconn_find with locks and timeout */
+/* _tcpconn_find with locks and timeout
+ * local_addr contains the desired local ip:port. If null any local address 
+ * will be used.  IN*ADDR_ANY or 0 port are wild cards.
+ */
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
+									union sockaddr_union* local_addr,
 									ticks_t timeout)
 {
 	struct tcp_connection* c;
+	struct ip_addr local_ip;
+	int local_port;
+	
+	local_port=0;
+	if (ip){
+		if (local_addr){
+			su2ip_addr(&local_ip, local_addr);
+			local_port=su_getport(local_addr);
+		}else{
+			ip_addr_mk_any(ip->af, &local_ip);
+			local_port=0;
+		}
+	}
 	TCPCONN_LOCK;
-	c=_tcpconn_find(id, ip, port);
+	c=_tcpconn_find(id, ip, port, &local_ip, local_port);
 	if (c){ 
 			atomic_inc(&c->refcnt);
 			c->timeout=get_ticks_raw()+timeout;
@@ -709,26 +756,29 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 
 
 
-/* add port as an alias for the "id" connection
- * returns 0 on success,-1 on failure */
-int tcpconn_add_alias(int id, int port, int proto)
+/* add c->dst:port, local_addr as an alias for the "id" connection, 
+ * returns 0 on success, <0 on failure ( -1  - null c, -2 too many aliases,
+ *  -3 alias already present and pointing to another connection)
+ * WARNING: must be called with TCPCONN_LOCK held */
+inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
+										struct ip_addr* l_ip, int l_port)
 {
-	struct tcp_connection* c;
 	unsigned hash;
 	struct tcp_conn_alias* a;
+	int is_local_ip_any;
 	
 	a=0;
-	/* fix the port */
-	port=port?port:((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT);
-	TCPCONN_LOCK;
-	/* check if alias already exists */
-	c=_tcpconn_find(id, 0, 0);
+	is_local_ip_any=ip_addr_any(l_ip);
 	if (c){
-		hash=tcp_addr_hash(&c->rcv.src_ip, port);
+		hash=tcp_addr_hash(&c->rcv.src_ip, port, l_ip, l_port);
 		/* search the aliases for an already existing one */
 		for (a=tcpconn_aliases_hash[hash]; a; a=a->next){
 			if ( (a->parent->state!=S_CONN_BAD) && (port==a->port) &&
-					(ip_addr_cmp(&c->rcv.src_ip, &a->parent->rcv.src_ip)) ){
+					( (l_port==0) || (l_port==a->parent->rcv.dst_port)) &&
+					(ip_addr_cmp(&c->rcv.src_ip, &a->parent->rcv.src_ip)) &&
+					( is_local_ip_any || 
+					  ip_addr_cmp(&a->parent->rcv.dst_ip, l_ip))
+					){
 				/* found */
 				if (a->parent!=c) goto error_sec;
 				else goto ok;
@@ -743,38 +793,88 @@ int tcpconn_add_alias(int id, int port, int proto)
 		c->aliases++;
 	}else goto error_not_found;
 ok:
-	TCPCONN_UNLOCK;
 #ifdef EXTRA_DEBUG
-	if (a) DBG("tcpconn_add_alias: alias already present\n");
-	else   DBG("tcpconn_add_alias: alias port %d for hash %d, id %d\n",
+	if (a) DBG("_tcpconn_add_alias_unsafe: alias already present\n");
+	else   DBG("_tcpconn_add_alias_unsafe: alias port %d for hash %d, id %d\n",
 			port, hash, c->id);
 #endif
 	return 0;
 error_aliases:
-	TCPCONN_UNLOCK;
-	LOG(L_ERR, "ERROR: tcpconn_add_alias: too many aliases for connection %p"
-				" (%d)\n", c, c->id);
+	/* too many aliases */
+	return -2;
+error_not_found:
+	/* null connection */
 	return -1;
+error_sec:
+	/* alias already present and pointing to a different connection
+	 * (hijack attempt?) */
+	return -3;
+}
+
+
+
+/* add port as an alias for the "id" connection, 
+ * returns 0 on success,-1 on failure */
+int tcpconn_add_alias(int id, int port, int proto)
+{
+	struct tcp_connection* c;
+	int ret;
+	struct ip_addr zero_ip;
+	
+	/* fix the port */
+	port=port?port:((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT);
+	TCPCONN_LOCK;
+	/* check if alias already exists */
+	c=_tcpconn_find(id, 0, 0, 0, 0);
+	if (c){
+		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
+		
+		/* alias src_ip:port, 0, 0 */
+		ret=_tcpconn_add_alias_unsafe(c, port,  &zero_ip, 0);
+		if (ret<0 && ret!=-3) goto error;
+		/* alias src_ip:port, local_ip, 0 */
+		ret=_tcpconn_add_alias_unsafe(c, port,  &c->rcv.dst_ip, 0);
+		if (ret<0 && ret!=-3) goto error;
+		/* alias src_ip:port, local_ip, local_port */
+		ret=_tcpconn_add_alias_unsafe(c, port,  &c->rcv.dst_ip,
+															c->rcv.dst_port);
+		if (ret<0) goto error;
+	}else goto error_not_found;
+	TCPCONN_UNLOCK;
+	return 0;
 error_not_found:
 	TCPCONN_UNLOCK;
 	LOG(L_ERR, "ERROR: tcpconn_add_alias: no connection found for id %d\n",id);
 	return -1;
-error_sec:
+error:
 	TCPCONN_UNLOCK;
-	LOG(L_ERR, "ERROR: tcpconn_add_alias: possible port hijack attempt\n");
-	LOG(L_ERR, "ERROR: tcpconn_add_alias: alias already present and points"
-			" to another connection (%d : %d and %d : %d)\n",
-			a->parent->id,  port, c->id, port);
+	switch(ret){
+		case -2:
+			LOG(L_ERR, "ERROR: tcpconn_add_alias: too many aliases"
+					" for connection %p (%d)\n", c, c->id);
+			break;
+		case -3:
+			LOG(L_ERR, "ERROR: tcpconn_add_alias: possible port"
+					" hijack attempt\n");
+			LOG(L_ERR, "ERROR: tcpconn_add_alias: alias for %d port %d already"
+						" present and points to another connection \n",
+						c->id, port);
+			break;
+		default:
+			LOG(L_ERR, "ERROR: tcpconn_add_alias: unkown error %d\n", ret);
+	}
 	return -1;
 }
 
 
 
 /* finds a tcpconn & sends on it
- * uses the dst members to, proto (TCP|TLS) and id
+ * uses the dst members to, proto (TCP|TLS) and id and tries to send
+ *  from the "from" address (if non null and id==0)
  * returns: number of bytes written (>=0) on success
  *          <0 on error */
-int tcp_send(struct dest_info* dst, char* buf, unsigned len)
+int tcp_send(struct dest_info* dst, union sockaddr_union* from,
+					char* buf, unsigned len)
 {
 	struct tcp_connection *c;
 	struct tcp_connection *tmp;
@@ -783,14 +883,13 @@ int tcp_send(struct dest_info* dst, char* buf, unsigned len)
 	int fd;
 	long response[2];
 	int n;
-	union sockaddr_union* from;
 	
 	port=su_getport(&dst->to);
 	if (port){
 		su2ip_addr(&ip, &dst->to);
-		c=tcpconn_get(dst->id, &ip, port, tcp_con_lifetime); 
+		c=tcpconn_get(dst->id, &ip, port, from, tcp_con_lifetime); 
 	}else if (dst->id){
-		c=tcpconn_get(dst->id, 0, 0, tcp_con_lifetime);
+		c=tcpconn_get(dst->id, 0, 0, 0, tcp_con_lifetime);
 	}else{
 		LOG(L_CRIT, "BUG: tcp_send called with null id & to\n");
 		return -1;
@@ -800,7 +899,7 @@ int tcp_send(struct dest_info* dst, char* buf, unsigned len)
 		if (c==0) {
 			if (port){
 				/* try again w/o id */
-				c=tcpconn_get(0, &ip, port, tcp_con_lifetime);
+				c=tcpconn_get(0, &ip, port, from, tcp_con_lifetime);
 				goto no_id;
 			}else{
 				LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
@@ -813,7 +912,7 @@ no_id:
 		if (c==0){
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
-				from=0;
+			if (from==0){
 				/* check to see if we have to use a specific source addr. */
 				switch (dst->to.s.sa_family) {
 					case AF_INET:
@@ -828,6 +927,7 @@ no_id:
 						/* error, bad af, ignore ... */
 						break;
 				}
+			}
 			if ((c=tcpconn_connect(&dst->to, from, dst->proto))==0){
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;

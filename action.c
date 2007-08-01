@@ -272,7 +272,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						/*tcp*/
 						dst.proto=PROTO_TCP;
 						dst.id=0;
-						ret=tcp_send(&dst, tmp, len);
+						ret=tcp_send(&dst, 0, tmp, len);
 				}
 #endif
 			}else{

@@ -32,6 +32,7 @@
  *  2003-04-06  all ports are stored/passed in host byte order now (andrei)
  *  2006-04-20  comp support in recv_info and dest_info (andrei)
  *  2006-04-21  added init_dst_from_rcv (andrei)
+ *  2007-06-26  added ip_addr_mk_any() (andrei)
  */
 
 #ifndef ip_addr_h
@@ -43,6 +44,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include "str.h"
+#include "compiler_opt.h"
 
 
 #include "dprint.h"
@@ -203,6 +205,31 @@ inline static int ip_addr_any(struct ip_addr* ip)
 }
 
 
+
+/* creates an ANY ip_addr (filled with 0, af and len properly set) */
+inline static void ip_addr_mk_any(int af, struct ip_addr* ip)
+{
+	ip->af=af;
+	if (likely(af==AF_INET)){
+		ip->len=4;
+		ip->u.addr32[0]=0;
+	}
+#ifdef USE_IPV6
+	else{
+		ip->len=16;
+#if (defined (ULONG_MAX) && ULONG_MAX > 4294967295) || defined LP64
+		/* long is 64 bits */
+		ip->u.addrl[0]=0;
+		ip->u.addrl[1]=0;
+#else
+		ip->u.addr32[0]=0;
+		ip->u.addr32[1]=0;
+		ip->u.addr32[2]=0;
+		ip->u.addr32[3]=0;
+#endif /* ULONG_MAX */
+	}
+#endif
+}
 
 /* returns 1 if ip & net.mask == net.ip ; 0 otherwise & -1 on error 
 	[ diff. address families ]) */

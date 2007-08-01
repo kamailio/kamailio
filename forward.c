@@ -281,8 +281,8 @@ found:
  *               be !=0 
  *   port      - used only if dst!=0 (else the port in send_info->to is used)
  *   send_info - filled dest_info structure:
- *               if the send_socket memeber is null, a send_socket will be 
- *               choosen automatically
+ *               if the send_socket member is null, a send_socket will be 
+ *               chosen automatically
  * WARNING: don't forget to zero-fill all the  unused members (a non-zero 
  * random id along with proto==PROTO_TCP can have bad consequences, same for
  *   a bogus send_socket value)
