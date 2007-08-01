@@ -1,0 +1,851 @@
+
+carrierroute
+
+Jonas Appel
+
+   1&1 Internet AG
+
+Henning Westerholt
+
+   1&1 Internet AG
+
+   Copyright � 2007 1&1 Internet AG
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. OpenSER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. db_url (string)
+              1.3.2. db_table (string)
+              1.3.3. id_column (string)
+              1.3.4. carrier_column (string)
+              1.3.5. scan_prefix_column (string)
+              1.3.6. level_column (string)
+              1.3.7. prob_column (string)
+              1.3.8. rewrite_host_column (string)
+              1.3.9. strip_column (string)
+              1.3.10. comment_column (string)
+              1.3.11. carrier_table (string)
+              1.3.12. rewrite_prefix_column (string)
+              1.3.13. rewrite_suffix_column (string)
+              1.3.14. carrier_id_col (string)
+              1.3.15. carrier_name_col (string)
+              1.3.16. subscriber_table (string)
+              1.3.17. subscriber_user_col (string)
+              1.3.18. subscriber_domain_col (string)
+              1.3.19. subscriber_carrier_col (string)
+              1.3.20. config_source (string)
+              1.3.21. config_file (string)
+              1.3.22. default_tree (string)
+              1.3.23. use_domain (string)
+              1.3.24. fallback_default (string)
+
+        1.4. Exported Functions
+
+              1.4.1. cr_rewrite_uri (string level, int
+                      hash_source)
+
+              1.4.2. cr_rewrite_branches(level, hash_source)
+              1.4.3. cr_prime_balance_uri (string level, int
+                      hash_source)
+
+              1.4.4. cr_rewrite_by_to (string level, int
+                      hash_source)
+
+              1.4.5. cr_prime_balance_by_to (string level, int
+                      hash_source)
+
+              1.4.6. cr_user_rewrite_uri (string user, string
+                      level)
+
+              1.4.7. cr_tree_rewrite_uri (string tree, string
+                      level)
+
+        1.5. MI Commands
+
+              1.5.1. reload_routes
+              1.5.2. dump_routes
+              1.5.3. replace_host
+              1.5.4. deactivate_host
+              1.5.5. activate_host
+              1.5.6. add_host
+              1.5.7. delete_host
+
+        1.6. Examples
+        1.7. Installation & Running
+
+              1.7.1. Database setup
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set db_url parameter
+   1-2. Set db_table parameter
+   1-3. Set id_column parameter
+   1-4. Set carrier_column parameter
+   1-5. Set scan_prefix_column parameter
+   1-6. Set level_column parameter
+   1-7. Set prob_column parameter
+   1-8. Set rewrite_host_column parameter
+   1-9. Set strip_column parameter
+   1-10. Set comment_column parameter
+   1-11. Set carrier_table parameter
+   1-12. Set rewrite_prefix_column parameter
+   1-13. Set rewrite_suffix_column parameter
+   1-14. Set carrier_id_col parameter
+   1-15. Set carrier_name_col parameter
+   1-16. Set subscriber_table parameter
+   1-17. Set subscriber_user_col parameter
+   1-18. Set subscriber_domain_col parameter
+   1-19. Set subscriber_carrier_col parameter
+   1-20. Set config_source parameter
+   1-21. Set config_file parameter
+   1-22. Set default_tree parameter
+   1-23. Set use_domain parameter
+   1-24. Set fallback_default parameter
+   1-25. replace_host usage
+   1-26. deactivate_host usage
+   1-27. activate_host usage
+   1-28. add_host usage
+   1-29. Configuration example - OpenSER script
+   1-30. Configuration example - module configuration
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Module description
+
+   A module which provides routing, balancing and blacklisting
+   capabilities.
+
+   This module reads routing entries from a databases or from a
+   config file at OpenSER startup. The data can be refreshed
+   manually via MI commands, in config file mode it can also be
+   edited. Based on the data, the module decides which number
+   prefixes are forwarded to which gateway. It can also
+   distribute the traffic by ratio parameters. Furthermore, the
+   requests can be distributed by a hash funcion to predictable
+   destinations.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * hash module
+     * a database module, when a database is used as
+       configuration data source.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * libconfuse, a configuration file parser library.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. db_url (string)
+
+   Url to the database containing the routing data.
+
+   Default value is "mysql://openser:heslo@localhost/openser". 
+
+   Example 1-1. Set db_url parameter
+...
+modparam("carrierroute", "db_url", "mysql://openser:heslo@localhost/ser")
+...
+     _________________________________________________________
+
+1.3.2. db_table (string)
+
+   Name of the table where the routing data is stored.
+
+   Default value is "carrierroute". 
+
+   Example 1-2. Set db_table parameter
+...
+modparam("carrierroute", "db_table", "carrierroute")
+...
+
+     _________________________________________________________
+
+1.3.3. id_column (string)
+
+   Name of the column containing the id identifier.
+
+   Default value is "id". 
+
+   Example 1-3. Set id_column parameter
+...
+modparam("carrierroute", "id_column", "id")
+...
+
+     _________________________________________________________
+
+1.3.4. carrier_column (string)
+
+   Name of the column containing the carrier id.
+
+   Default value is "carrier". 
+
+   Example 1-4. Set carrier_column parameter
+...
+modparam("carrierroute", "carrier_column", "carrier")
+...
+
+     _________________________________________________________
+
+1.3.5. scan_prefix_column (string)
+
+   Name of column containing the scan prefixes. Scan prexies
+   define the matching portion of a phone number, e.g. we have
+   the scan prefixes 49721 and 49, the called number is
+   49721913740, it matches 49721, because the longest match is
+   taken.
+
+   Default value is "scan_prefix". 
+
+   Example 1-5. Set scan_prefix_column parameter
+...
+modparam("carrierroute", "scan_prefix_column", "scan_prefix")
+...
+
+     _________________________________________________________
+
+1.3.6. level_column (string)
+
+   Name of column containing the rule level. You can define
+   several routing levels to have different routing rules. Maybe
+   you use level 0 for normal routing and level 1 if level 0
+   failed.
+
+   Default value is "level". 
+
+   Example 1-6. Set level_column parameter
+...
+modparam("carrierroute", "level_column", "level")
+...
+
+     _________________________________________________________
+
+1.3.7. prob_column (string)
+
+   Name of column containing probability. The probability value
+   is used to distribute the traffic between several gateways.
+   Let's say 70 % of the traffic shall be routed to gateway A,
+   the other 30 % shall be routed to gateway B, we define a rule
+   for gateway A with a prob value of 0.7 and a rule for gateway
+   B with a prob value of 0.3.
+
+   Default value is "prob". 
+
+   Example 1-7. Set prob_column parameter
+...
+modparam("carrierroute", "prob_column", "prob")
+...
+
+     _________________________________________________________
+
+1.3.8. rewrite_host_column (string)
+
+   Name of column containing rewrite host value. An empty field
+   represents a blacklist entry, anything else is put as domain
+   part into the Request URI of the SIP message.
+
+   Default value is "rewrite_host". 
+
+   Example 1-8. Set rewrite_host_column parameter
+...
+modparam("carrierroute", "rewrite_host_column", "rewrite_host")
+...
+
+     _________________________________________________________
+
+1.3.9. strip_column (string)
+
+   Name of the column containing the number of digits to be
+   stripped of the userpart of an URI before prepending
+   rewrite_prefix.
+
+   Default value is "strip". 
+
+   Example 1-9. Set strip_column parameter
+...
+modparam("carrierroute", "strip_column", "strip")
+...
+
+     _________________________________________________________
+
+1.3.10. comment_column (string)
+
+   Name of the column containing an optional comment (useful in
+   large routing tables) The comment is also displayed by the
+   fifo cmd "cr_dump_routes".
+
+   Default value is "comment". 
+
+   Example 1-10. Set comment_column parameter
+...
+modparam("carrierroute", "comment_column", "comment")
+...
+
+     _________________________________________________________
+
+1.3.11. carrier_table (string)
+
+   The name of the table containing the existing Carriers,
+   contains ids and corresponding names.
+
+   Default value is "route_tree". 
+
+   Example 1-11. Set carrier_table parameter
+...
+modparam("carrierroute", "carrier_table", "route_tree")
+...
+
+     _________________________________________________________
+
+1.3.12. rewrite_prefix_column (string)
+
+   Name of column containing rewrite prefixes. Here you can
+   define a rewrite prefix for the localpart of the SIP URI.
+   Currently unused.
+
+   Default value is "rewrite_prefix". 
+
+   Example 1-12. Set rewrite_prefix_column parameter
+...
+modparam("carrierroute", "rewrite_prefix_column", "rewrite_host")
+...
+
+     _________________________________________________________
+
+1.3.13. rewrite_suffix_column (string)
+
+   Name of column containing rewrite suffixes. Here you can
+   define a rewrite suffix for the localpart of the SIP URI.
+   Currently unused.
+
+   Default value is "rewrite_suffix". 
+
+   Example 1-13. Set rewrite_suffix_column parameter
+                            ...
+                            modparam("carrierroute", "rewrite_suffix_colum
+n", "rewrite_suffix")
+                            ...
+
+     _________________________________________________________
+
+1.3.14. carrier_id_col (string)
+
+   The name of the column in the carrier table containing the
+   carrier id.
+
+   Default value is "id". 
+
+   Example 1-14. Set carrier_id_col parameter
+...
+modparam("carrierroute", "carrier_id_col", "id")
+...
+
+     _________________________________________________________
+
+1.3.15. carrier_name_col (string)
+
+   The name of the column in the carrier table containing the
+   carrier name.
+
+   Default value is "carrier". 
+
+   Example 1-15. Set carrier_name_col parameter
+...
+modparam("carrierroute", "carrier_name_col", "carrier")
+...
+
+     _________________________________________________________
+
+1.3.16. subscriber_table (string)
+
+   The name of the table containing the subscribers
+
+   Default value is "subscriber". 
+
+   Example 1-16. Set subscriber_table parameter
+...
+modparam("carrierroute", "subscriber_table", "subscriber")
+...
+
+     _________________________________________________________
+
+1.3.17. subscriber_user_col (string)
+
+   The name of the column in the subscriber table containing the
+   usernames.
+
+   Default value is "username". 
+
+   Example 1-17. Set subscriber_user_col parameter
+...
+modparam("carrierroute", "susbscriber_user_col", "username")
+...
+
+     _________________________________________________________
+
+1.3.18. subscriber_domain_col (string)
+
+   The name of the column in the subscriber table containing the
+   domain of the subscriber.
+
+   Default value is "domain". 
+
+   Example 1-18. Set subscriber_domain_col parameter
+...
+modparam("carrierroute", "subscriber_domain_col", "domain")
+...
+
+     _________________________________________________________
+
+1.3.19. subscriber_carrier_col (string)
+
+   The name of the column in the subscriber table containing the
+   carrier id of the subscriber.
+
+   Default value is "cr_preferred_carrier". 
+
+   Example 1-19. Set subscriber_carrier_col parameter
+...
+modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrier")
+...
+
+     _________________________________________________________
+
+1.3.20. config_source (string)
+
+   Specifies whether the module loads its config data from a file
+   or from a database. Possible values are file or db.
+
+   Default value is "file". 
+
+   Example 1-20. Set config_source parameter
+...
+modparam("carrierroute", "config_source", "file")
+...
+
+     _________________________________________________________
+
+1.3.21. config_file (string)
+
+   Specifies the path to the config file.
+
+   Default value is "/etc/openser/carrierroute.conf". 
+
+   Example 1-21. Set config_file parameter
+...
+modparam("carrierroute", "config_file", "/etc/openser/carrierroute.conf")
+...
+
+     _________________________________________________________
+
+1.3.22. default_tree (string)
+
+   The name of the carrier tree used per default (if the current
+   subscriber has no preferred tree)
+
+   Default value is "default". 
+
+   Example 1-22. Set default_tree parameter
+...
+modparam("carrierroute", "default_tree", "default")
+...
+
+     _________________________________________________________
+
+1.3.23. use_domain (string)
+
+   When using tree lookup per user, this parameter specifies
+   whether to use the domain part for user matching or not.
+
+   Default value is "0". 
+
+   Example 1-23. Set use_domain parameter
+...
+modparam("carrierroute", "use_domain", "0")
+...
+
+     _________________________________________________________
+
+1.3.24. fallback_default (string)
+
+   This parameter defines the behaviour when using user-based
+   tree lookup. If the user has a non-existing tree set and
+   fallback_default is set to 1, the default tree is used.
+   Otherwise, cr_user_rewrite_uri returns an error.
+
+   Default value is "1". 
+
+   Example 1-24. Set fallback_default parameter
+...
+modparam("carrierroute", "fallback_default", "1")
+...
+
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. cr_rewrite_uri (string level, int hash_source)
+
+   This function searches for the longest match for the Request
+   URI in the given level and rewrites the Request URI. Returns
+   -1 if there is no data found or an empty rewrite host on the
+   longest match.
+
+   Meaning of the parameters is as follows:
+
+     * level - Name of the routing level to be used.
+     * hash_source - The hash values of the destination set must
+       be a contiguous range starting at 1, limited by the
+       configuration parameter max_locdb. Possible values for
+       hash_source are: call_id, from_uri, from_user, to_uri,
+       to_user.
+     _________________________________________________________
+
+1.4.2. cr_rewrite_branches(level, hash_source)
+
+   Like cr_rewrite_uri, the difference is that
+   cr_rewrite_branches rewrites all branches of the transaction.
+   This function is not available at the moment.
+
+   Meaning of the parameters is as follows:
+
+     * level - Name of the routing level to be used.
+     * hash_source - The hash values of the destination set must
+       be a contiguous range starting at 1, limited by the
+       configuration parameter max_locdb. Possible values for
+       hash_source are: call_id, from_uri, from_user, to_uri,
+       to_user.
+     _________________________________________________________
+
+1.4.3. cr_prime_balance_uri (string level, int hash_source)
+
+   Balances the request URI to the desination set given by level.
+   hash_source defines the parameter which is passed to the hash
+   function. Parameters are the same as for cr_rewrite_uri
+
+   Meaning of the parameters is as follows:
+
+     * level - Name of the routing level to be used.
+     * hash_source - The hash values of the destination set must
+       be a contiguous range starting at 1, limited by the
+       configuration parameter max_locdb. Possible values for
+       hash_source are: call_id, from_uri, from_user, to_uri,
+       to_user.
+     _________________________________________________________
+
+1.4.4. cr_rewrite_by_to (string level, int hash_source)
+
+   Like route_uri, except that the to URI is used for prefix
+   matching instead the request URI. Parameters are the same as
+   for cr_rewrite_uri
+
+   Meaning of the parameters is as follows:
+
+     * level - Name of the routing level to be used.
+     * hash_source - The hash values of the destination set must
+       be a contiguous range starting at 1, limited by the
+       configuration parameter max_locdb. Possible values for
+       hash_source are: call_id, from_uri, from_user, to_uri,
+       to_user.
+     _________________________________________________________
+
+1.4.5. cr_prime_balance_by_to (string level, int hash_source)
+
+   Like cr_prime_balance_uri, except that the to URI is used for
+   prefix matching instead the request URI. Parameters are the
+   same as for cr_rewrite_uri.
+
+   Meaning of the parameters is as follows:
+
+     * level - Name of the routing level to be used.
+     * hash_source - The hash values of the destination set must
+       be a contiguous range starting at 1, limited by the
+       configuration parameter max_locdb. Possible values for
+       hash_source are: call_id, from_uri, from_user, to_uri,
+       to_user.
+     _________________________________________________________
+
+1.4.6. cr_user_rewrite_uri (string user, string level)
+
+   Rewrites the request URI, the given user is used to determine
+   the carrier tree to be used. The level identifies the routing
+   level inside the carrier tree
+
+   Meaning of the parameters is as follows:
+
+     * user - Name of the user for the carrier tree lookup
+     * level - Name of the routing level to be used.
+     _________________________________________________________
+
+1.4.7. cr_tree_rewrite_uri (string tree, string level)
+
+   Uses the carrier tree specified by tree and uses the given
+   level
+
+   Meaning of the parameters is as follows:
+
+     * tree - The routing tree to be used.
+     * level - Name of the routing level to be used.
+     _________________________________________________________
+
+1.5. MI Commands
+
+1.5.1. reload_routes
+
+   This command reloads the routing data from the data source.
+     _________________________________________________________
+
+1.5.2. dump_routes
+
+   This command prints the route rules on the command line.
+     _________________________________________________________
+
+1.5.3. replace_host
+
+   This command can replace the rewrite_host of a route rule, it
+   is only usable in file mode. Following options are possible:
+
+     * -d - the domain containing the host
+     * -p - the prefix containing the host
+     * -h - the host to be replaced
+     * -t - the new host
+
+   The options have to be quoted as one string to be passed to MI
+   interface. Each option except host and new host can be
+   wildcarded by * (but only * and not things like "-d prox*")
+
+   Example 1-25. replace_host usage
+...
+openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
+...
+     _________________________________________________________
+
+1.5.4. deactivate_host
+
+   This command deactivates the specified host, i.e. it sets its
+   status to 0. It is only usable in file mode. Following options
+   are possible:
+
+     * -d - the domain containing the host
+     * -p - the prefix containing the host
+     * -h - the host to be deactivated
+
+   The options have to be quoted as one string to be passed to MI
+   interface. Each option except host and new host can be
+   wildcarded by * (but only * and not things like "-d prox*")
+
+   Example 1-26. deactivate_host usage
+...
+openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+...
+     _________________________________________________________
+
+1.5.5. activate_host
+
+   This command activates the specified host, i.e. it sets its
+   status to 1. It is only usable in file mode. Following options
+   are possible:
+
+     * -d - the domain containing the host
+     * -p - the prefix containing the host
+     * -h - the host to be activated
+
+   The options have to be quoted as one string to be passed to MI
+   interface. Each option except host and new host can be
+   wildcarded by * (but only * and not things like "-d prox*")
+
+   Example 1-27. activate_host usage
+...
+openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+...
+     _________________________________________________________
+
+1.5.6. add_host
+
+   This command adds a route rule, it is only usable in file
+   mode. Following options are possible:
+
+     * -d - the domain containing the host
+     * -p - the prefix containing the host
+     * -h - the host to be added
+     * -w - the weight of the rule
+     * -P - an optional rewrite prefix
+     * -S - an optional rewrite suffix
+     * -i - an optional hash index
+     * -s - an optional strip value
+
+   The options have to be quoted as one string to be passed to MI
+   interface. Each option except host and new host can be
+   wildcarded by * (but only * and not things like "-d prox*")
+
+   Example 1-28. add_host usage
+...
+openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
+...
+     _________________________________________________________
+
+1.5.7. delete_host
+
+   This command delete the specified hosts or rules, i.e. remove
+   them from the route tree. It is only usable in file mode.
+   Following options are possible:
+
+     * -d - the domain containing the host
+     * -p - the prefix containing the host
+     * -h - the host to be added
+     * -w - the weight of the rule
+     * -P - an optional rewrite prefix
+     * -S - an optional rewrite suffix
+     * -i - an optional hash index
+     * -s - an optional strip value
+
+   The options have to be quoted as one string to be passed to MI
+   interface. Each option except host and new host can be
+   wildcarded by * (but only * and not things like "-d prox*")
+     _________________________________________________________
+
+1.6. Examples
+
+   Example 1-29. Configuration example - OpenSER script
+...
+if(!cr_rewrite_uri("pstn", "call_id")){
+sl_send_reply("403", "Not allowed");
+} else {
+t_relay();
+}
+break;
+...
+
+   Example 1-30. Configuration example - module configuration
+...
+domain proxy {
+   max_locdb = 2
+   prefix 49 {
+      target test1.localdomain {
+         prob = 0.500000
+         hash_index = 1
+         status = 1
+         comment = "test target 1"
+      }
+      target test9.localdomain {
+         prob = 0.500000
+         hash_index = 2
+         status = 1
+         comment = "test target 2"
+      }
+   }
+}
+...
+     _________________________________________________________
+
+1.7. Installation & Running
+
+1.7.1. Database setup
+
+   Before running OpenSER with carrierroute, you have to setup the
+   database table where the module will store the routing data.
+   For that, if the table was not created by the installation
+   script or you choose to install everything by yourself you can
+   use the carrierroute-create.sql SQL script in the database
+   directories in the openser/scripts folder as template.
+   Database and table name can be set with module parameters so
+   they can be changed, but the name of the columns must be as
+   they are in the SQL script. You can also find the complete
+   database documentation on the project webpage,
+   http://www.openser.org/docs/db-tables/openser-db-devel.html.
+
+   For a minimal configuration either use the config file given
+   above, or insert some data into the tables of the module.
+
+   Example 1-31. Example database content - carrierroute table
+...
++----+---------+-------------+-------+------+-------+---------------+
+| id | carrier | scan_prefix | level | prob | strip | rewrite_host  |
++----+---------+-------------+-------+------+-------+---------------+
+|  1 |       2 | 49          | 0     |  0.5 | 0     | host1.local   |
+|  2 |       2 | 49          | 0     |  0.5 | 0     | host2.local   |
+|  3 |       1 |             | 0     |    1 | 0     | default.local |
++----+---------+-------------+-------+------+-------+---------------+
+...
+
+   This table contains two routes to two hosts for the "49"
+   prefix for the carrier 2, and a default route over carrier 1.
+
+   Example 1-32. Example database content - route_tree table
+...
++----+----------+
+| id | carrier  |
++----+----------+
+|  1 | carrier1 |
+|  2 | carrier2 |
+|  3 | default  |
++----+----------+
+...
+
+   This table contains the mapping of the carrier id to actual
+   names. For a functional routing the "cr_prefered_carrier"
+   column must added to the subscriber table to choose the actual
+   carrier for the users.
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://sourceforge.net/tracker/?group_id=139143.
