@@ -1,0 +1,54 @@
+hash Module
+
+   Martin Hoffmann
+   1&1 Internet AG
+
+
+   A module for determinung a pseudo random number based on a message's
+   Call-ID header field, based on a prime number algorithm.
+
+
+1. Overview
+
+   The hash module is used to determine a pseudo-random number based
+   on the contents of the Call-ID header field of a message.
+
+   This is useful to provide the same number for all messages of the same
+   call.
+
+
+1.1. Configuration Example
+
+loadmodule "modules/hash/hash.so"
+
+
+1.3. Developer's Usage
+
+1.3.1. Exported Types
+
+1.3.1.1. enum hash_source
+
+    Determines from which part of a message the hash shall be calculated.
+    Values are:
+
+       shs_call_id     the content of the Call-ID header field
+       shs_from_uri    the entire URI in the From header field
+       shs_from_user   the username part of the URI in the From header field
+       shs_to_uri      the entire URI in the To header field
+       shs_to_user     the username part of the URI in the To header field
+
+
+1.3.2. Exported Functions
+
+1.3.2.1. int real_hash (struct sip_msg *msg, int denominator)
+
+    Returns an integer number between 0 and denominator - 1 based on
+    the hash for msg.
+
+
+1.3.2.2 int hash (struct sip_msg *msg, enum hash_source source,
+			int denominator)
+
+    Returns an integer number between 0 and denominator - 1 based on
+    the hash from source of msg.
+
