@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN" 
+	  "http://openser.org/pub/openser/dbschema/dtd/1.0/dbschema.dtd" [
+	  
+	  <!ENTITY % entities SYSTEM "entities.xml">
+	  %entities;
+	  
+	  ]>
+	  
+	  <table id="sp-route2" xmlns:db="http://docbook.org/ns/docbook">
+		  <name>route_tree</name>
+		  <version>1</version>
+		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+		  <description>
+			  <db:para>This table is used by the carrierroute module to provides routing, balancing and blacklisting capabilities. More information is available at: http://www.openser.org/docs/modules/devel/carrierroute.html
+			  </db:para>
+		  </description>
+		  
+		  <column id="id">
+			  <name>id</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <primary/>
+		          <default>0</default>
+			  <description>unique ID</description>
+		  </column>
+		  
+		  <column>
+			  <name>carrier</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <null/>
+			  <default><null/></default>
+			  <description>This column contains the carrier name.</description>
+		  </column>
+	  </table>

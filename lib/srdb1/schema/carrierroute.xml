@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN" 
+	  "http://openser.org/pub/openser/dbschema/dtd/1.0/dbschema.dtd" [
+	  
+	  <!ENTITY % entities SYSTEM "entities.xml">
+	  %entities;
+	  
+	  ]>
+	  
+	  <table id="sp-route2" xmlns:db="http://docbook.org/ns/docbook">
+		  <name>carrierroute</name>
+		  <version>1</version>
+		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+		  <description>
+			  <db:para>This table is used by the carrierroute module to provides routing, balancing and blacklisting capabilities. More information is available at: http://www.openser.org/docs/modules/devel/carrierroute.html
+			  </db:para>
+		  </description>
+		  
+		  <column id="id">
+			  <name>id</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <autoincrement/>
+			  <primary/>
+			  <type db="postgres">SERIAL PRIMARY KEY</type>
+			  <type db="dbtext">int,auto</type>
+			  <description>unique ID</description>
+		  </column>
+		  
+		  <column>
+			  <name>carrier</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <description>This column contains the carrier id.</description>
+		  </column>
+		  
+		  <column>
+			  <name>scan_prefix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>This column contains the scan prefix, which define the matching portion of a phone number.</description>
+		  </column>
+		  
+		  <column>
+			  <name>level</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>This column contains the route level. Additional levels could be used for example as fallback.</description>
+		  </column>
+		  
+		  <column>
+			  <name>prob</name>
+			  <type>float</type>
+			  <default>0</default>
+			  <description>Name of column containing the probability. The probability value is used to distribute the traffic between several gateways.</description>
+		  </column>
+		  
+		  <column>
+			  <name>strip</name>
+			  <type>string</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>Name of the column containing the number of digits to be stripped of the userpart of an URI before prepending rewrite_prefix.</description>
+		  </column>
+		  
+		  <column>
+			  <name>rewrite_host</name>
+			  <type>string</type>
+			  <size>&uri_len;</size>
+			  <default/>
+			  <description>Name of column containing rewrite prefixes. Here you can define a rewrite prefix for the localpart of the SIP URI.</description>
+		  </column>
+		  
+		  <column>
+			  <name>rewrite_prefix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>Rewrite prefix for the localpart of the SIP URI.</description>
+		  </column>
+		  
+		  <column>
+			  <name>rewrite_suffix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>Rewrite suffix for the localpart of the SIP URI.</description>
+		  </column>
+		  
+		  <column>
+			  <name>comment</name>
+			  <type>string</type>
+			  <size>&hf_len;</size>
+			  <null/>
+			  <default><null/></default>
+			  <description>A comment for the route entry, useful for larger routing tables.</description>
+		  </column>
+	  </table>
