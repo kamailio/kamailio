@@ -258,7 +258,7 @@ case $1 in
 		;;
 	extra)
 		if [ $DBTEXT = "1" ] ; then
-			presence_create $DBTEXT_PATH
+			extra_create $DBTEXT_PATH
 		else
 			extra_create $DBNAME
 		fi
