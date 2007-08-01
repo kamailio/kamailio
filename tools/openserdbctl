@@ -169,7 +169,7 @@ case $1 in
 		;;
 	copy)
 		# copy database to some other name
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			merr "DBTEXT don't support this operation"
 			exit 1
 		fi
@@ -198,7 +198,7 @@ case $1 in
 		exit $ret
 		;;
 	backup)
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			merr "DBTEXT don't support this operation"
 			exit 1
 		fi
@@ -212,7 +212,7 @@ case $1 in
 		exit $?
 		;;
 	restore)
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			merr "DBTEXT don't support this operation"
 			exit 1
 		fi
@@ -233,7 +233,7 @@ case $1 in
 			DBTEXT_PATH="$1"
 		fi
 
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			openser_create $DBTEXT_PATH
 		else
 			openser_create $DBNAME
@@ -241,7 +241,7 @@ case $1 in
 		exit $?
 		;;
 	serweb)
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			serweb_create $DBTEXT_PATH
 		else
 			serweb_create $DBNAME
@@ -249,7 +249,7 @@ case $1 in
 		exit $?
 		;;
 	presence)
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			presence_create $DBTEXT_PATH
 		else
 			presence_create $DBNAME
@@ -257,7 +257,7 @@ case $1 in
 		exit $?
 		;;
 	extra)
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			extra_create $DBTEXT_PATH
 		else
 			extra_create $DBNAME
@@ -273,7 +273,7 @@ case $1 in
 			DBTEXT_PATH="$1"
 		fi
 
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			openser_drop $DBTEXT_PATH
 		else
 			openser_drop $DBNAME
@@ -288,7 +288,7 @@ case $1 in
 			DBNAME="$1"
 			DBTEXT_PATH="$1"
 		fi
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			openser_drop $DBTEXT_PATH
 		else
 			openser_drop $DBNAME
@@ -297,7 +297,7 @@ case $1 in
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		if [ $DBTEXT = "1" ] ; then
+		if [ "$DBTEXT" = "1" ] ; then
 			openser_create $DBTEXT_PATH
 		else
 			openser_create $DBNAME
