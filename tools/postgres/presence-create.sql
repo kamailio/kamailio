@@ -8,8 +8,7 @@ CREATE TABLE presentity (
     expires INTEGER NOT NULL,
     received_time INTEGER NOT NULL,
     body BYTEA NOT NULL,
-    CONSTRAINT udee_presentity UNIQUE (username, domain, event, etag),
-    CONSTRAINT ude_presentity UNIQUE (username, domain, event)
+    CONSTRAINT udee_presentity UNIQUE (username, domain, event, etag)
 );
 
 INSERT INTO version (table_name, table_version) values ('active_watchers','5');
@@ -64,7 +63,7 @@ CREATE TABLE xcap_xml (
     CONSTRAINT udd_xcap UNIQUE (username, domain, doc_type)
 );
 
-INSERT INTO version (table_name, table_version) values ('pua','3');
+INSERT INTO version (table_name, table_version) values ('pua','4');
 CREATE TABLE pua (
     id SERIAL PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,
@@ -80,6 +79,7 @@ CREATE TABLE pua (
     from_tag VARCHAR(64) NOT NULL,
     cseq INTEGER NOT NULL,
     record_route TEXT,
+    contact VARCHAR(128) NOT NULL,
     version INTEGER NOT NULL
 );
 

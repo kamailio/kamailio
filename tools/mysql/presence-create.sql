@@ -8,8 +8,7 @@ CREATE TABLE presentity (
     expires INT(11) NOT NULL,
     received_time INT(11) NOT NULL,
     body BLOB NOT NULL,
-    UNIQUE KEY udee_presentity (username, domain, event, etag),
-    UNIQUE KEY ude_presentity (username, domain, event)
+    UNIQUE KEY udee_presentity (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('active_watchers','5');
@@ -63,7 +62,7 @@ CREATE TABLE xcap_xml (
     UNIQUE KEY udd_xcap (username, domain, doc_type)
 ) ENGINE=MyISAM;
 
-INSERT INTO version (table_name, table_version) values ('pua','3');
+INSERT INTO version (table_name, table_version) values ('pua','4');
 CREATE TABLE pua (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,
@@ -79,6 +78,7 @@ CREATE TABLE pua (
     from_tag VARCHAR(64) NOT NULL,
     cseq INT(11) NOT NULL,
     record_route TEXT,
+    contact VARCHAR(128) NOT NULL,
     version INT(11) NOT NULL
 ) ENGINE=MyISAM;
 

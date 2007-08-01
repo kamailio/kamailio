@@ -5,6 +5,7 @@ active_watchers:5
 address:3
 admin_privileges:1
 aliases:1004
+carrierroute:1
 cpl:1
 dbaliases:1
 dialog:1
@@ -23,8 +24,9 @@ pdt:1
 pending:6
 phonebook:1
 presentity:2
-pua:3
+pua:4
 re_grp:1
+route_tree:1
 server_monitoring:1
 server_monitoring_agg:1
 silo:5
