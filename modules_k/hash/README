@@ -7,6 +7,11 @@ hash Module
    A module for determinung a pseudo random number based on a message's
    Call-ID header field, based on a prime number algorithm.
 
+   WARNING: 
+   This is work in progress, the code will probably be merged into
+   the OpenSER core alongside the other hash functions.
+   The only user of this code is carrierroute, no new modules should
+   use this deprecated functionality provided by this module.
 
 1. Overview
 
