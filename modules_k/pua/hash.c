@@ -108,7 +108,6 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 			str id, str* etag,  unsigned int hash_code)
 {
 	ua_pres_t* p= NULL,* L= NULL;
-	int ok;
 
 	L= HashT->p_records[hash_code].entity;
 	DBG("PUA: search_htable: core_hash= %u\n", hash_code);
@@ -119,7 +118,6 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 
 	for(p= L->next; p; p=p->next)
 	{
-
 		if(p->flag & FLAG)
 		{
 			DBG("PUA: search_htable:pres_uri= %.*s len= %d\n",
@@ -129,6 +127,13 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 			if((p->pres_uri->len==pres_uri->len) &&
 					(strncmp(p->pres_uri->s, pres_uri->s,pres_uri->len)==0))
 			{
+				if(id.s && id.len) 
+				{	
+					if(!(id.len== p->id.len &&
+						strncmp(p->id.s, id.s, id.len)==0))
+							continue;
+				}				
+
 				if(watcher_uri)
 				{
 					if(p->watcher_uri->len==watcher_uri->len &&
@@ -140,27 +145,17 @@ ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
 				}
 				else
 				{
-					ok= 1;
-					if(id.s && id.len) 
-					{	
-
-						if(!(id.len== p->id.len &&
-								strncmp(p->id.s, id.s, id.len)==0))
-							ok= 0;
-					}				
 					if(etag)
 					{
-						if(!(etag->len== p->etag.len &&
-								strncmp(p->etag.s, etag->s, etag->len)==0))
-							ok= 0;
-						
+						if(etag->len== p->etag.len &&
+								strncmp(p->etag.s, etag->s, etag->len)==0)
+							break;		
 					}	
-					if(ok== 1)
-						break;
 				}
 			}
 		}
 	}
+
 	if(p)
 		DBG("PUA:search_htable: found record\n");
 	else
@@ -306,7 +301,8 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 
 			DBG("PUA: get_dialog: searched to_tag= %.*s\tfrom_tag= %.*s\n",
 				 p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
-	    	if((p->pres_uri->len== dialog->pres_uri->len) &&
+	    
+			if((p->pres_uri->len== dialog->pres_uri->len) &&
 				(strncmp(p->pres_uri->s, dialog->pres_uri->s,p->pres_uri->len)==0)&&
 				(p->watcher_uri->len== dialog->watcher_uri->len) &&
  	    		(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&

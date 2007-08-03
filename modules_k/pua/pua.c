@@ -713,73 +713,73 @@ void db_update(unsigned int ticks,void *param)
 	DBG("PUA: db_update...\n");
 	/* cols and values used for insert */
 	q_cols[puri_col= n_query_cols] ="pres_uri";
-	q_vals[puri_col= n_query_cols].type = DB_STR;
-	q_vals[puri_col= n_query_cols].nul = 0;
+	q_vals[puri_col].type = DB_STR;
+	q_vals[puri_col].nul = 0;
 	n_query_cols++;
 	
 	q_cols[pid_col= n_query_cols] ="pres_id";	
-	q_vals[pid_col= n_query_cols].type = DB_STR;
-	q_vals[pid_col= n_query_cols].nul = 0;
+	q_vals[pid_col].type = DB_STR;
+	q_vals[pid_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[flag_col= n_query_cols] ="flag";
-	q_vals[flag_col= n_query_cols].type = DB_INT;
-	q_vals[flag_col= n_query_cols].nul = 0;
+	q_vals[flag_col].type = DB_INT;
+	q_vals[flag_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[event_col= n_query_cols] ="event";
-	q_vals[event_col= n_query_cols].type = DB_INT;
-	q_vals[event_col= n_query_cols].nul = 0;
+	q_vals[event_col].type = DB_INT;
+	q_vals[event_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[watcher_col= n_query_cols] ="watcher_uri";
-	q_vals[watcher_col= n_query_cols].type = DB_STR;
-	q_vals[watcher_col= n_query_cols].nul = 0;
+	q_vals[watcher_col].type = DB_STR;
+	q_vals[watcher_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[callid_col= n_query_cols] ="call_id";
-	q_vals[callid_col= n_query_cols].type = DB_STR;
-	q_vals[callid_col= n_query_cols].nul = 0;
+	q_vals[callid_col].type = DB_STR;
+	q_vals[callid_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[totag_col= n_query_cols] ="to_tag";
-	q_vals[totag_col= n_query_cols].type = DB_STR;
-	q_vals[totag_col= n_query_cols].nul = 0;
+	q_vals[totag_col].type = DB_STR;
+	q_vals[totag_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[fromtag_col= n_query_cols] ="from_tag";
-	q_vals[fromtag_col= n_query_cols].type = DB_STR;
-	q_vals[fromtag_col= n_query_cols].nul = 0;
+	q_vals[fromtag_col].type = DB_STR;
+	q_vals[fromtag_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[etag_col= n_query_cols] ="etag";
-	q_vals[etag_col= n_query_cols].type = DB_STR;
-	q_vals[etag_col= n_query_cols].nul = 0;
+	q_vals[etag_col].type = DB_STR;
+	q_vals[etag_col].nul = 0;
 	n_query_cols++;	
 
 	q_cols[tuple_col= n_query_cols] ="tuple_id";
-	q_vals[tuple_col= n_query_cols].type = DB_STR;
-	q_vals[tuple_col= n_query_cols].nul = 0;
+	q_vals[tuple_col].type = DB_STR;
+	q_vals[tuple_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[cseq_col= n_query_cols]="cseq";
-	q_vals[cseq_col= n_query_cols].type = DB_INT;
-	q_vals[cseq_col= n_query_cols].nul = 0;
+	q_vals[cseq_col].type = DB_INT;
+	q_vals[cseq_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[expires_col= n_query_cols] ="expires";
-	q_vals[expires_col= n_query_cols].type = DB_INT;
-	q_vals[expires_col= n_query_cols].nul = 0;
+	q_vals[expires_col].type = DB_INT;
+	q_vals[expires_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[record_route_col= n_query_cols] ="record_route";
-	q_vals[record_route_col= n_query_cols].type = DB_STR;
-	q_vals[record_route_col= n_query_cols].nul = 0;
+	q_vals[record_route_col].type = DB_STR;
+	q_vals[record_route_col].nul = 0;
 	n_query_cols++;
 	
 	q_cols[contact_col= n_query_cols] ="contact";
-	q_vals[contact_col= n_query_cols].type = DB_STR;
-	q_vals[contact_col= n_query_cols].nul = 0;
+	q_vals[contact_col].type = DB_STR;
+	q_vals[contact_col].nul = 0;
 	n_query_cols++;
 
 	/* cols and values used for update */
@@ -826,7 +826,6 @@ void db_update(unsigned int ticks,void *param)
 			{
 				case NO_UPDATEDB_FLAG:
 				{
-			
 					DBG("PUA: db_update: NO_UPDATEDB_FLAG\n");
 					break;			  
 				}

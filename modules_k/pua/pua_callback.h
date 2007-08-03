@@ -28,7 +28,7 @@
 #include "../../parser/parse_fline.h"
 #include "../pua/hash.h"
 
-#define PUACB_MAX    		(1<<7)
+#define PUACB_MAX    		(1<<8)
 
 /* callback function prototype */
 typedef void (pua_cb)(ua_pres_t* hentity, struct msg_start * fl);

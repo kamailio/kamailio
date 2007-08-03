@@ -341,7 +341,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.flag= INSERT_TYPE;
 			subs.source_flag= flag;
 			subs.event= hentity->event;
-			DBG("PUA:subs_cback_func: event_parameter= %d\n",subs.event);
 			subs.id= hentity->id;
 			subs.outbound_proxy= hentity->outbound_proxy;
 			if(send_subscribe(&subs)< 0)
@@ -353,8 +352,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		else 
 		{
 			DBG("PUA:subs_cback_func: No dialog found\n");			
+			lock_release(&HashT->p_records[hash_code].lock);
 		}
-		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
 	}
 	/*if a 2XX reply handle the two cases- an existing dialog and a new one*/
