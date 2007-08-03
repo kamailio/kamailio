@@ -53,7 +53,6 @@ static int child_init(int);
 static void destroy(void);
 
 /** module variables ***/
-event_api_t pres;
 add_event_t pres_add_event;
 char* xcap_table="xcap_xml";  
 str db_url = {0, 0};
@@ -98,6 +97,7 @@ static int mod_init(void)
 	int ver = 0;
 	DBG("presence_xml: mod_init...\n");
 	bind_presence_t bind_presence;
+	event_api_t pres;
 	
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	DBG("presence_xml:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,
@@ -153,7 +153,7 @@ static int mod_init(void)
 	}
 
 	pres_add_event= pres.add_event;
-	if (add_event == NULL)
+	if (pres_add_event == NULL)
 	{
 		LOG(L_ERR, "presence_xml:mod_init Could not import add_event\n");
 		return -1;
