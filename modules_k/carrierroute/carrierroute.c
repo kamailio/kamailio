@@ -93,6 +93,7 @@ int fallback_default = 1;
 /************* Declaration of Interface Functions **************************/
 static int mod_init(void);
 static int child_init();
+static int mi_child_init();
 static void mod_destroy(void);
 static int route_fixup(void ** param, int param_no);
 static int user_route_fixup(void ** param, int param_no);
@@ -149,7 +150,7 @@ static param_export_t params[]= {
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "cr_reload_routes",   reload_fifo,     MI_NO_INPUT_FLAG, 0,  0 },
+	{ "cr_reload_routes",   reload_fifo,     MI_NO_INPUT_FLAG, 0,  mi_child_init },
 	{ "cr_dump_routes",     dump_fifo,       MI_NO_INPUT_FLAG, 0,  0 },
 	{ "cr_replace_host",    replace_host,    0,                0,  0 },
 	{ "cr_deactivate_host", deactivate_host, 0,                0,  0 },
@@ -301,6 +302,10 @@ static int tree_route_fixup(void ** param, int param_no) {
 }
 
 static int child_init() {
+	return data_child_init();
+}
+
+static int mi_child_init() {
 	return data_child_init();
 }
 
