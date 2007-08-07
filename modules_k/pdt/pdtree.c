@@ -370,8 +370,11 @@ int pdt_print_tree(pdt_tree_t *pt)
 	int len;
 
 	if(pt == NULL)
+	{
+		DBG("pdt_print_tree: tree is empty\n");
 		return 0;
-
+	}
+	
 	DBG("pdt_print_tree: [%.*s]\n", pt->sdomain.len, pt->sdomain.s);
 	len = 0;
 	pdt_print_node(pt->head, code_buf, len);

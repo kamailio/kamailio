@@ -219,14 +219,14 @@ static int mod_init(void)
 		LOG(L_CRIT,"PDT:mod_init: failed to get shm mem for dhash\n");
 		goto error1;
 	}
-	*_dhash = 0;
+	*_dhash=0;
+	
 	_ptree = (pdt_tree_t**)shm_malloc( sizeof(pdt_tree_t*) );
 	if (_ptree==0) {
 		LOG(L_CRIT,"PDT:mod_init: failed to get shm mem for ptree\n");
 		goto error1;
 	}
-	*_dhash = 0;
-	
+	*_ptree=0;
 
 	/* loading all information from database */
 	if(pdt_load_db()!=0)

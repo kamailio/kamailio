@@ -715,6 +715,12 @@ void pdt_print_hash_list(hash_list_t* hl)
 	pd_t *it;
 	hash_t *hash;
 	
+	if(hl==NULL)
+	{	
+		DBG("pdt_print_hash_list: hash list is empty\n");
+		return;
+	}
+	
 	hash = hl->hash;
 	lock_get(&hl->hl_lock);
 	while(hash!=NULL)
