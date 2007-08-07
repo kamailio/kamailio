@@ -108,6 +108,7 @@ static int ds_warn_fixup(void** param, int param_no);
 struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
 struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
 struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param);
+static int mi_child_init();
 
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    w_ds_select_dst,    2, ds_fixup, REQUEST_ROUTE},
@@ -145,7 +146,7 @@ static param_export_t params[]={
 static mi_export_t mi_cmds[] = {
 	{ "ds_set_state",   ds_mi_set,   0,                 0,  0 },
 	{ "ds_list",        ds_mi_list,  MI_NO_INPUT_FLAG,  0,  0 },
-	{ "ds_reload",		ds_mi_reload, 0,				0,	0},
+	{ "ds_reload",		ds_mi_reload, 0,				0,	mi_child_init},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -179,9 +180,9 @@ static int mod_init(void)
 
 	if(ds_db_url!= NULL)
 	{
-		if(ds_load_db()!= 0)
+		if(init_ds_db()!= 0)
 		{
-			LM_ERR("no dispatching list loaded from database\n");
+			LM_ERR("could not initiate a connect to the database\n");
 			return -1;
 		}
 	} else {
@@ -290,9 +291,26 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	
 	LM_DBG(" #%d / pid <%d>\n", rank, getpid());
+	if(rank >0)
+	{
+		if(ds_connect_db() != 0)
+		{	
+			LM_ERR("could not connect to database\n");
+			return -1;
+		}
+	}
+
 	srand((11+rank)*getpid()*7);
+
 	return 0;
+}
+
+static int mi_child_init()
+{
+	return ds_connect_db();
+
 }
 
 static inline int ds_get_ivalue(struct sip_msg* msg, ds_param_p dp, int *val)
@@ -405,6 +423,8 @@ void destroy(void)
 {
 	LM_DBG("destroying module ...\n");
 	ds_destroy_list();
+	if(ds_db_url)
+		ds_disconnect_db();
 }
 
 /**
@@ -551,7 +571,6 @@ struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
 {
 	if(ds_db_url==NULL)
 		return init_mi_tree(400, MI_NOT_SUPPORTED, MI_NOT_SUPPORTED_LEN);
-
 
 	if(ds_load_db()<0)
 		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);

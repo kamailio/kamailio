@@ -86,7 +86,7 @@ typedef struct _ds_set
 extern int ds_force_dst;
 
 static db_func_t ds_dbf;
-static db_con_t* ds_db_handle = 0;
+static db_con_t* ds_db_handle=0;
 ds_set_p *ds_lists=NULL;
 int *ds_list_nr, *crt_idx, *next_idx;
 
@@ -342,31 +342,57 @@ error:
 	return -1;
 }
 
-/*connect to the DB*/
-int init_db_conn()
+int ds_connect_db()
+{
+	if (ds_db_handle) 
+	{
+		LM_CRIT("BUG - db connection found already open\n");
+		return -1;
+	}
+
+	if ((ds_db_handle = ds_dbf.init(ds_db_url)) == 0){
+		
+			return -1;
+	}
+	return 0;
+}
+
+void ds_disconnect_db()
+{
+								
+	if(ds_db_handle)
+	{
+		ds_dbf.close(ds_db_handle);
+		ds_db_handle = 0;
+	}
+}
+
+/*initialize and verify DB stuff*/
+int init_ds_db()
 {
 	str table;
 	int ver;
+	int ret;
 
 	if(ds_table_name == 0)
 	{
 		LM_ERR("invalid database name\n");
 		return -1;
 	}
-
+	
 	/* Find a database module */
 	if (bind_dbmod(ds_db_url, &ds_dbf) < 0)
 	{
 		LM_ERR("Unable to bind to a database driver\n");
 		return -1;
 	}
-
-	if ((ds_db_handle = ds_dbf.init(ds_db_url)) == 0)
-	{
+	
+	if(ds_connect_db()!=0){
+		
 		LM_ERR("unable to connect to the database\n");
 		return -1;
 	}
-
+	
 	table.s = ds_table_name;
 	table.len = strlen(table.s);
 
@@ -382,7 +408,11 @@ int init_db_conn()
 		return -1;
 	}
 
-	return 0;
+	ret = ds_load_db();
+
+	ds_disconnect_db();
+
+	return ret;
 }
 
 /*load groups of destinations from DB*/
@@ -401,9 +431,11 @@ int ds_load_db()
 		return 0;
 	}
 
-	if(ds_db_url != NULL && ds_db_handle == NULL && init_db_conn()!= 0)
+	if(ds_db_handle == NULL){
+			LM_ERR("invalid DB handler\n");
 			return -1;
-	
+	}
+
 	if (ds_dbf.use_table(ds_db_handle, ds_table_name) < 0)
 	{
 		LM_ERR("error in use_table\n");
@@ -473,10 +505,6 @@ int ds_destroy_list()
 	shm_free(ds_lists);
 	shm_free(crt_idx);
 
-	if(ds_db_handle){
-		ds_dbf.close(ds_db_handle);
-		ds_db_handle = 0;
-	}
 	return 0;
 }
 /**

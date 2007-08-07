@@ -79,7 +79,10 @@ extern str ds_ping_from;
 extern int probing_threshhold; /* number of failed requests, before a destination is taken into probing */ 
 
 int init_data();
+int init_ds_db();
 int ds_load_list(char *lfile);
+int ds_connect_db();
+void ds_disconnect_db();
 int ds_load_db();
 int ds_destroy_list();
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
