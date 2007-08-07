@@ -73,9 +73,7 @@
 static int mi_mod_init(void);
 static int mi_child_init(int rank);
 static int mi_destroy(void);
-
-/* module-specific worker processes */
-static pid_t * mi_socket_pid; /*children's pids*/
+static void datagram_process(int rank);
 
 /* local variables */
 static int mi_socket_domain =  AF_LOCAL;
@@ -84,6 +82,7 @@ static sockaddr_dtgram mi_dtgram_addr;
 /* socket definition parameter */
 static char *mi_socket = 0;
 int mi_socket_timeout = 2000;
+static rx_tx_sockets sockets;
 
 /* unixsock specific parameters */
 static int  mi_unix_socket_uid = -1;
@@ -94,15 +93,20 @@ static int mi_unix_socket_mode = S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP;
 
 /* mi specific parameters */
 static char *mi_reply_indent = DEFAULT_MI_REPLY_IDENT;
-static int  mi_children_count  = MI_CHILD_NO;
-
 
 
 
 MODULE_VERSION
 
+
+static proc_export_t mi_procs[] = {
+	{"MI Datagram", datagram_process, MI_CHILD_NO },
+	{0,0,0}
+};
+
+
 static param_export_t mi_params[] = {
-	{"children_count",      INT_PARAM,    &mi_children_count        },
+	{"children_count",      INT_PARAM,    &mi_procs[0].no           },
 	{"socket_name",         STR_PARAM,    &mi_socket                },
 	{"socket_timeout",      INT_PARAM,    &mi_socket_timeout        },
 	{"unix_socket_mode",    INT_PARAM,    &mi_unix_socket_mode      },
@@ -115,7 +119,6 @@ static param_export_t mi_params[] = {
 };
 
 
-
 struct module_exports exports = {
 	"mi_datagram",                 /* module name */
 	DEFAULT_DLFLAGS,               /* dlopen flags */
@@ -124,7 +127,7 @@ struct module_exports exports = {
 	0,                             /* exported statistics */
 	0,                             /* exported MI functions */
 	0,                             /* exported pseudo-variables */
-	0,                             /* extra processes */
+	mi_procs,                      /* extra processes */
 	mi_mod_init,                   /* module initialization function */
 	(response_function) 0,         /* response handling function */
 	(destroy_function) mi_destroy, /* destroy function */
@@ -140,6 +143,7 @@ static int mi_mod_init(void)
 	struct hostent * host;
 	char *p, *host_s;
 	str port_str;
+	int res;
 
 	/* checking the mi_socket module param */
 	DBG("DBG: mi_datagram: mi_mod_init: testing socket existance ...\n");
@@ -257,14 +261,18 @@ static int mi_mod_init(void)
 			mi_socket, strlen(mi_socket));
 	}
 
-	/* create the shared memory where the mi_socket_pids are kept */
-	mi_socket_pid = (pid_t *)shm_malloc(mi_children_count * sizeof(pid_t));
-	if(!mi_socket_pid){
-		LOG(L_ERR, "ERROR:mi_datagram: mi_mod_init:cannot allocate shared "
-			"memory for the mi_socket_pid\n");
+	/*create the sockets*/
+	res = mi_init_datagram_server(&mi_dtgram_addr, mi_socket_domain, &sockets,
+								mi_unix_socket_mode, mi_unix_socket_uid, 
+								mi_unix_socket_gid);
+
+	if ( res ) {
+		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_init: The function "
+			"mi_init_datagram_server returned with error!!!\n");
 		return -1;
 	}
-	memset(mi_socket_pid, 0, mi_children_count);
+	/* FIXME - the sockets will remain open in all processes and not only
+	 * in the mi_datagram ones .... */
 
 	return 0;
 }
@@ -272,9 +280,6 @@ static int mi_mod_init(void)
 
 static int mi_child_init(int rank)
 {
-	int i, pid, res;
-	rx_tx_sockets sockets;
-
 	if (rank==PROC_TIMER || rank>0 ) {
 		if(mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
 		mi_reply_indent )!= 0){
@@ -283,108 +288,44 @@ static int mi_child_init(int rank)
 			return -1;
 		}
 	}
-
-	if(rank != 1)
-		return 0;
-
-	/*create the sockets*/
-	res = mi_init_datagram_server(&mi_dtgram_addr, mi_socket_domain, &sockets,
-								mi_unix_socket_mode, mi_unix_socket_uid, 
-								mi_unix_socket_gid);
-
-	if ( res ) {
-		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_child_init: The function "
-			"mi_init_datagram_server returned with error!!!\n");
-		return -1;
-	}
-
-	LOG(L_INFO,"INFO:mi_datagram:mi_child_init: forking %d workers\n",
-		mi_children_count);
-
-	for(i = 0;i<mi_children_count; i++)
-	{
-		pid = fork();
-
-		if (pid < 0){
-		/*error*/
-			LOG(L_ERR, "ERROR:mi_datagram:mi_child_init: the process cannot "
-				"fork!\n");
-			return -1;
-		}
-		else if (pid==0) {
-			/*child*/
-			LOG(L_INFO,"INFO:mi_datagram:mi_child_init(%d): a new child:"
-					"%d\n",rank, getpid());
-			/*child's initial settings*/
-			if( init_mi_child()!=0) {
-				LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to init"
-					"the mi process\n");
-				exit(-1);
-			}
-			if(mi_init_datagram_buffer()!=0){
-				LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to "
-					"allocate datagram buffer\n");
-				exit(-1);
-			}
-			
-			mi_datagram_server(sockets.rx_sock, sockets.tx_sock);
-			
-			return 0;
-		}
-		/*parent*/
-		DBG("DEBUG:mi_datagram:mi_child_init: new process with pid = %d "
-				"created.\n",pid);
-		/*put the child's pid in the shared memory*/
-		mi_socket_pid[i] = pid;
-	}
-	/*close the parent's sockets*/
-	close(sockets.rx_sock);
-	close(sockets.tx_sock);
-
 	return 0;
+}
 
+
+static void datagram_process(int rank)
+{
+	LOG(L_INFO,"INFO:mi_datagram:mi_child_init: a new child %d/%d\n",
+		rank, getpid());
+
+	/*child's initial settings*/
+	if( init_mi_child()!=0) {
+		LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to init"
+			"the mi process\n");
+		exit(-1);
+	}
+	if(mi_init_datagram_buffer()!=0){
+		LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to "
+			"allocate datagram buffer\n");
+		exit(-1);
+	}
+
+	if(mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
+	mi_reply_indent )!= 0){
+		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_child_init: failed to "
+			"initiate mi_datagram_writer\n");
+		exit(-1);
+	}
+
+	mi_datagram_server(sockets.rx_sock, sockets.tx_sock);
+
+	exit(-1);
 }
 
 
 static int mi_destroy(void)
 {
-	int i, n;
+	int n;
 	struct stat filestat;
-
-	if(!mi_socket_pid){
-		LOG(L_INFO, "INFO:mi_datagram:mi_destroy:memory for the child's "
-			"mi_socket_pid was not allocated -> nothing to destroy\n");
-		return 0;
-	}
-
-	/* killing the children */
-	for(i=0;i<mi_children_count; i++)
-	
-		if (!mi_socket_pid[i]) {
-			LOG(L_INFO,"INFO:mi_datagram:mi_destroy: processes %i "
-					"hasn't been created -> nothing to kill\n",i);
-		} 
-		else {
-			if (kill( mi_socket_pid[i], SIGKILL)!=0) {
-				DBG("DBG:mi_datagram:mi_destroy: trying to kill "
-					"the child %i\n",mi_socket_pid[i]);
-				if (errno==ESRCH) {
-					LOG(L_INFO,"INFO:mi_datagram:mi_destroy: seems that "
-							"datagram child is already dead!\n");
-				} 
-				else {
-					LOG(L_ERR,"ERROR:mi_datagram:mi_destroy: killing the "
-							"aux. process failed! kill said: %s\n",
-							strerror(errno));
-					goto error;
-				}
-			}
-			else
-			{
-				LOG(L_INFO,"INFO:mi_datagram:mi_destroy: datagram child "
-						"successfully killed!\n");
-			}		
-		}
 
 	/* destroying the socket descriptors */
 	if(mi_socket_domain == AF_UNIX){
@@ -401,13 +342,9 @@ static int mi_destroy(void)
 			goto error;
 		}
 	}
-	/* freeing the shm shared memory */
-	shm_free(mi_socket_pid);
 
 	return 0;
 error:
-	/* freeing the shm shared memory */
-	shm_free(mi_socket_pid);
 	return -1;
 
 }
