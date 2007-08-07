@@ -48,6 +48,7 @@
 
 static int mi_mod_init(void);
 static int mi_child_init(int rank);
+static void fifo_process(int rank);
 static int mi_destroy(void);
 
 /* FIFO server vars */
@@ -56,7 +57,6 @@ static char *mi_fifo = 0;
 /* dir where reply fifos are allowed */
 static char *mi_fifo_reply_dir = DEFAULT_MI_REPLY_DIR;
 static char *mi_reply_indent = DEFAULT_MI_REPLY_IDENT;
-pid_t *mi_fifo_pid = 0;
 static int  mi_fifo_uid = -1;
 static char *mi_fifo_uid_s = 0;
 static int  mi_fifo_gid = -1;
@@ -79,6 +79,11 @@ static param_export_t mi_params[] = {
 };
 
 
+static proc_export_t mi_procs[] = {
+	{"MI FIFO",  fifo_process,  1 },
+	{0,0,0}
+};
+
 
 struct module_exports exports = {
 	"mi_fifo",                     /* module name */
@@ -88,7 +93,7 @@ struct module_exports exports = {
 	0,                             /* exported statistics */
 	0,                             /* exported MI functions */
 	0,                             /* exported pseudo-variables */
-	0,                             /* extra processes */
+	mi_procs,                      /* extra processes */
 	mi_mod_init,                   /* module initialization function */
 	(response_function) 0,         /* response handling function */
 	(destroy_function) mi_destroy, /* destroy function */
@@ -159,23 +164,12 @@ static int mi_mod_init(void)
 		}
 	}
 
-	/* create the shared memory where the mi_fifo_pid is kept */
-	mi_fifo_pid = (pid_t *)shm_malloc(sizeof(pid_t));
-	if(!mi_fifo_pid){
-		LM_ERR("cannot allocate shared memory for the mi_fifo_pid\n");
-		return -1;
-	}
-
-	*mi_fifo_pid = 0;
-
 	return 0;
 }
 
 
 static int mi_child_init(int rank)
 {
-	FILE *fifo_stream;
-
 	if (rank==PROC_TIMER || rank>0 ) {
 		if ( mi_writer_init(read_buf_size, mi_reply_indent)!=0 ) {
 			LM_CRIT("failed to init the reply writer\n");
@@ -183,18 +177,13 @@ static int mi_child_init(int rank)
 		}
 	}
 
-	if(rank != 1)
-		return 0;
+	return 0;
+}
 
-	*mi_fifo_pid = fork();
 
-	if (*mi_fifo_pid < 0){
-		LM_CRIT("the process cannot fork!\n");
-		return -1;
-	} else if (*mi_fifo_pid) {
-		LM_DBG("extra fifo listener processes created\n");
-		return 0;
-	}
+static void fifo_process(int rank)
+{
+	FILE *fifo_stream;
 
 	LM_DBG("new process with pid = %d created\n",getpid());
 
@@ -215,6 +204,11 @@ static int mi_child_init(int rank)
 		exit(-1);
 	}
 
+	if ( mi_writer_init(read_buf_size, mi_reply_indent)!=0 ) {
+		LM_CRIT("failed to init the reply writer\n");
+		exit(-1);
+	}
+
 	mi_fifo_server( fifo_stream );
 
 	LM_CRIT("the function mi_fifo_server returned with error!!!\n");
@@ -226,29 +220,6 @@ static int mi_destroy(void)
 {
 	int n;
 	struct stat filestat;
-
-	if(!mi_fifo_pid){
-		LM_DBG("memory for the child's mi_fifo_pid was not allocated -> "
-			"nothing to destroy\n");
-		return 0;
-	}
-
-	/* killing the first child */
-	if (!*mi_fifo_pid) {
-		LM_DBG("process hasn't been created -> nothing to kill\n");
-	} else {
-		if (kill( *mi_fifo_pid, SIGKILL)!=0) {
-			if (errno==ESRCH) {
-				LM_NOTICE("seems that fifo child is already dead!\n");
-			} else {
-				LM_ERR("killing the aux. process failed! kill said: %s\n",
-					strerror(errno));
-				goto error;
-			}
-		} else {
-			LM_DBG("fifo child successfully killed!\n");
-		}
-	}
 
 	/* destroying the fifo file */
 	n=stat(mi_fifo, &filestat);
@@ -264,13 +235,8 @@ static int mi_destroy(void)
 		goto error;
 	}
 
-	/* freeing the shm shared memory */
-	shm_free(mi_fifo_pid);
-
 	return 0;
 error:
-	/* freeing the shm shared memory */
-	shm_free(mi_fifo_pid);
 	return -1;
 }
 
