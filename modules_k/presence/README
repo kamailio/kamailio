@@ -81,8 +81,14 @@ Chapter 1. User's Guide
    presence.winfo, dialog;sla from presence_xml module and
    message-summary from presence_mwi module.
 
-   The modules works with database storage. It stores published
-   information and Subscribe -Notify dialog characteristics.
+   The presence server works with database storage. It stores
+   published information and Subscribe -Notify dialog
+   characteristics.
+
+   It can also work only with the functionality of a library,
+   with no message processing and generation, but used only for
+   the exported functions. This mode of operation is enabled if
+   the db_url parameter is not set to any value.
 
    The server follows the specifications in: RFC3265, RFC3856,
    RFC3857, RFC3858.
@@ -109,6 +115,10 @@ Chapter 1. User's Guide
 1.3.1. db_url(str)
 
    The database url.
+
+   If set, the module is a fully operational presence server.
+   Otherwise, it is used as a 'library', for its exported
+   functions.
 
    Default value is "NULL". 
 
@@ -325,6 +335,7 @@ typedef struct ev
         str* param;         // required param
         str stored_name;
         str content_type;
+        int default_expires; /* the package default expires*/
         int type;
 /*      it can be: PUBL_TYPE or WINFO_TYPE */
         int req_auth;

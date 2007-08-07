@@ -379,10 +379,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	else
 	{
 		DBG("PRESENCE:handle_publish: SIP-If-Match found\n");
-
-		etag.s = hdr->body.s;
-		etag.len = hdr->body.len;
-		etag.s[ etag.len] = '\0';
+		etag = hdr->body;
 		DBG("PRESENCE:handle_publish: existing etag  = %.*s \n", etag.len,
 				etag.s);
 	}
@@ -404,8 +401,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	else 
 	{
 		DBG("PRESENCE: handle_publish: 'expires' not found; default=%d\n",
-				default_expires);
-		lexpire = default_expires;
+				event->default_expires);
+		lexpire = event->default_expires;
 	}
 	if(lexpire > max_expires)
 		lexpire = max_expires;

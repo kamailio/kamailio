@@ -34,6 +34,8 @@
 typedef struct event_api {
 	add_event_t add_event;
 	contains_event_t contains_event;
+	get_sname_event_t get_sname_event;
+	get_event_list_t get_event_list;
 } event_api_t;
 
 int bind_presence(event_api_t* api);

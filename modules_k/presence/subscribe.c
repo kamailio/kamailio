@@ -421,7 +421,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			goto error;
 		}
 		
-		if(subs->event->wipeer)
+		if(subs->expires!= 0 && subs->event->wipeer)
 		{	
 			DBG("PRESENCE:update_subscription: send Notify with winfo\n");
 			if(query_db_notify(&subs->pres_user,&subs->pres_domain, subs->event->wipeer,
@@ -989,8 +989,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	else 
 	{
 		DBG("PRESENCE: handle_subscribe: 'expires' not found; default=%d\n",
-				default_expires);
-		lexpire = default_expires;
+				event->default_expires);
+		lexpire = event->default_expires;
 	}
 	if(lexpire > max_expires)
 		lexpire = max_expires;

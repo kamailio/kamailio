@@ -68,6 +68,7 @@ struct ev
 	/* to do: transform it in a list ( for multimple param)*/
 	str stored_name;
 	str content_type;
+	int default_expires;
 	int type;
 	int etag_not_new;
 	/*
@@ -93,7 +94,6 @@ struct ev
 	publ_handling_t  * evs_publ_handl;
 	subs_handling_t  * evs_subs_handl;
 	free_body_t* free_body;
-	int default_expires;
 	struct ev* wipeer;			
 	struct ev* next;
 	
@@ -115,6 +115,14 @@ typedef int (*add_event_t)(ev_t* event);
 ev_t* contains_event(str* name, str* param);
 
 typedef ev_t* (*contains_event_t) (str* name, str* param);
+
+ev_t* get_sname_event(str* stored_name);
+
+typedef ev_t* (*get_sname_event_t)(str* stored_name);
+
+int get_event_list(str** ev_list);
+
+typedef int (*get_event_list_t) (str** ev_list);
 
 void destroy_evlist();
 

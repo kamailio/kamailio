@@ -32,13 +32,14 @@
 int bind_presence(event_api_t* api)
 {
 	if (!api) {
-		LOG(L_ERR, "NOTIFIER:bind_notifier: Invalid parameter value\n");
+		LOG(L_ERR, "PRESENCE:bind_notifier: Invalid parameter value\n");
 		return -1;
 	}
 	
 	api->add_event = add_event;
 	api->contains_event= contains_event;
-
+	api->get_sname_event= get_sname_event;
+	api->get_event_list= get_event_list;
 	return 0;
 }
 

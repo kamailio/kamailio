@@ -20,8 +20,12 @@
 	module and message-summary from presence_mwi module.
 	</para>
 	<para>
-	The modules works with database storage. It stores published information 
+	The presence server works with database storage. It stores published information 
 	and Subscribe -Notify dialog characteristics.
+	</para>
+	<para>It can also work only with the functionality of a library, with no message 
+	processing and generation, but used only for the exported functions.
+	This mode of operation is enabled if the db_url parameter is not set to any value.
 	</para>
 	<para>
 	The server follows the specifications in: RFC3265, RFC3856, RFC3857, 
@@ -69,6 +73,10 @@
 		<title><varname>db_url</varname>(str)</title>
 		<para>
 		The database url.
+		</para>
+		<para>If set, the module is a fully operational
+		presence server. Otherwise, it is used as a 'library', for 
+		its exported functions.
 		</para>
 		<para>
 		<emphasis>	Default value is <quote>NULL</quote>.	
@@ -219,27 +227,28 @@ modparam("presence", "expires_offset", 10)
 ...
 </programlisting>
 		</example>
-	</section>
 
-	<section>
-		<title><varname>max_expires</varname> (int)</title>
-		<para>
-		The the maximum admissible expires value for PUBLISH/SUBSCRIBE 
-		message.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>3600</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>max_expires</varname> parameter</title>
-		<programlisting format="linespecific">
+</section>
+       <section>
+               <title><varname>max_expires</varname> (int)</title>
+               <para>
+               The the maximum admissible expires value for PUBLISH/SUBSCRIBE
+               message.
+               </para>
+               <para>
+               <emphasis>Default value is <quote>3600</quote>.
+               </emphasis>
+               </para>
+               <example>
+               <title>Set <varname>max_expires</varname> parameter</title>
+               <programlisting format="linespecific">
 ...
 modparam("presence", "max_expires", 3600)
 ...
 </programlisting>
-		</example>
-	</section>
+               </example>
+       </section>
+
 <section>
 		<title><varname>server_address</varname> (str)</title>
 		<para>

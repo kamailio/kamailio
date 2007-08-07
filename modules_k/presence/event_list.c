@@ -34,6 +34,8 @@
 #include "../../mem/shm_mem.h" 
 #include "event_list.h"
 
+#define MAX_EVNAME_SIZE 20
+
 int add_event(ev_t* event)
 {
 	ev_t* ev= NULL;
@@ -109,7 +111,7 @@ int add_event(ev_t* event)
 	ev->content_type.len= event->content_type.len;
 	memcpy(ev->content_type.s, event->content_type.s, event->content_type.len);
 	size+= ev->content_type.len;
-	
+
 	sep= strchr(event->name.s, '.');
 
 	if(sep && strncmp(sep+1, "winfo", 5)== 0)
@@ -140,6 +142,8 @@ int add_event(ev_t* event)
 	ev->evs_publ_handl= event->evs_publ_handl;
 	ev->etag_not_new= event->etag_not_new;
 	ev->free_body= event->free_body;
+	ev->default_expires= event->default_expires;
+
 	ev->next= EvList->events;
 	EvList->events= ev;
 	EvList->ev_count++;
@@ -194,6 +198,62 @@ ev_t* contains_event(str* name, str* param)
 	}	
 
 	return NULL;	
+}
+
+ev_t* get_sname_event(str* stored_name)
+{
+	ev_t* event;
+	event= EvList->events;
+
+	while(event)
+	{
+		if(stored_name->len== event->stored_name.len && 
+			strncmp(stored_name->s,event->stored_name.s,stored_name->len)==0)
+			return event;
+		event= event->next;
+	}
+	return NULL;
+}
+int get_event_list(str** ev_list)
+{	
+	ev_t* ev= EvList->events;
+	int i;
+	str* list;
+	*ev_list= NULL;
+	
+	if(EvList->ev_count== 0)
+		return 0;
+	
+	list= (str*)pkg_malloc(sizeof(str));
+	if(list== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: get_event_list: ERROR No more memory\n");
+		return -1;
+	}
+	memset(list, 0, sizeof(str));
+	list->s= (char*)pkg_malloc(EvList->ev_count* MAX_EVNAME_SIZE);
+	if(list->s== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: get_event_list: ERROR No more memory\n");
+		pkg_free(list);
+		return -1;
+	}
+	list->s[0]= '\0';
+	
+	for(i= 0; i< EvList->ev_count; i++)
+	{
+		if(i> 0)
+		{
+			memcpy(list->s+ list->len, ", ", 2);
+			list->len+= 2;
+		}	
+		memcpy(list->s+ list->len, ev->stored_name.s, ev->stored_name.len );
+		list->len+= ev->stored_name.len ;
+		ev= ev->next;
+	}
+	
+	*ev_list= list;
+	return 0;
 }
 
 void destroy_evlist()

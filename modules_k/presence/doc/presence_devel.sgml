@@ -54,6 +54,7 @@ typedef struct ev
 	str* param;         // required param 
 	str stored_name;
 	str content_type;
+	int default_expires; /* the package default expires*/
 	int type;
 /*	it can be: PUBL_TYPE or WINFO_TYPE */
 	int req_auth;

@@ -105,8 +105,7 @@ char prefix='a';
 int startup_time=0;
 str db_url = {0, 0};
 int expires_offset = 0;
-int default_expires = 3600;
-int max_expires = 3600;
+int max_expires= 3600;
 
 static cmd_export_t cmds[]=
 {
@@ -126,7 +125,7 @@ static param_export_t params[]={
 	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
 	{ "totag_avpid",			INT_PARAM, &reply_tag_avp_id },
 	{ "expires_offset",			INT_PARAM, &expires_offset },
-	{ "max_expires",			INT_PARAM, &max_expires  },
+	{ "max_expires",			INT_PARAM, &max_expires },
 	{ "server_address",         STR_PARAM, &server_address.s},
 	{0,0,0}
 };
@@ -161,6 +160,21 @@ static int mod_init(void)
 	int ver = 0;
 
 	DBG("PRESENCE: initializing module ...\n");
+
+	if(db_url.s== NULL)
+	{
+		use_db= 0;
+		DBG("PRESENCE:mod_init: presence module used for library"
+				" purpose only\n");
+		EvList= init_evlist();
+		if(!EvList)
+		{
+			LOG(L_ERR,"PRESENCE:mod_init: ERROR while initializing event list\n");
+			return -1;
+		}
+		return 0;
+
+	}
 
 	if(expires_offset<0)
 		expires_offset = 0;
@@ -291,6 +305,12 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	DBG("PRESENCE: init_child [%d]  pid [%d]\n", rank, getpid());
+	
+	pid = my_pid();
+	
+	if(use_db== 0)
+		return 0;
+
 	if (pa_dbf.init==0)
 	{
 		LOG(L_CRIT, "BUG: PRESENCE: child_init: database not bound\n");
@@ -323,7 +343,6 @@ static int child_init(int rank)
 
 		DBG("PRESENCE: child %d: Database connection opened successfully\n", rank);
 	}
-	pid = my_pid();
 	return 0;
 }
 
@@ -357,6 +376,7 @@ static int fixup_presence(void** param, int param_no)
  	LOG(L_ERR, "PRESENCE:fixup_presence: ERROR null format\n");
  	return E_UNSPEC;
 }
+
 /* 
  *  mi cmd: refreshWatchers
  *			<presentity_uri> 

@@ -54,7 +54,7 @@ struct subscription
 	unsigned int cseq; 
 	str contact;
 	str record_route;
-	int expires;
+	unsigned int expires;
 	str status;
 	str reason;
 	int version;

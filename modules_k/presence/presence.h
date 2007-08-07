@@ -56,10 +56,9 @@ extern int startup_time;
 extern int reply_tag_avp_id;
 extern char *to_tag_pref;
 extern int expires_offset;
-extern int default_expires;
 extern int lock_set_size;
-extern int max_expires;
 extern struct sl_binds slb;
 extern str server_address;
+extern int max_expires;
 
 #endif /* PA_MOD_H */
