@@ -50,9 +50,10 @@ struct subscription
 	str from_tag;
 	str callid;
 	str sockinfo_str;
-	str local_contact;
-	unsigned int cseq; 
+	unsigned int remote_cseq; 
+	unsigned int local_cseq; 
 	str contact;
+	str local_contact;
 	str record_route;
 	unsigned int expires;
 	str status;

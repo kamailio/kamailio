@@ -415,8 +415,7 @@ error:
 	return NULL;
 
 }
-str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
-		subs_t* subs)
+str* get_p_notify_body(str user, str host, ev_t* event, str* etag)
 {
 	db_key_t query_cols[6];
 	db_val_t query_vals[6];
@@ -438,15 +437,13 @@ str* get_p_notify_body(str user, str host, ev_t* event, str* etag,
 	query_cols[n_query_cols] = "domain";
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = host.s;
-	query_vals[n_query_cols].val.str_val.len = host.len;
+	query_vals[n_query_cols].val.str_val = host;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "username";
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = user.s;
-	query_vals[n_query_cols].val.str_val.len = user.len;
+	query_vals[n_query_cols].val.str_val = user;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "event";
@@ -684,7 +681,7 @@ dlg_t* build_dlg_t (str p_uri, subs_t* subs)
 	}
 	memset(td, 0, sizeof(dlg_t));
 
-	td->loc_seq.value = subs->cseq++;
+	td->loc_seq.value = subs->local_cseq++;
 	td->loc_seq.is_set = 1;
 
 	td->id.call_id = subs->callid;
@@ -1021,7 +1018,7 @@ int get_subs_dialog(str* p_user, str* p_domain, ev_t* event,str* sender,
 		subs->local_contact.len = local_contact.len;
 		size+= local_contact.len;
 
-		subs->cseq = row_vals[cseq_col].val.int_val;
+		subs->local_cseq = row_vals[cseq_col].val.int_val;
 		subs->expires = row_vals[expires_col].val.int_val - 
 			(int)time(NULL);
 		subs->version = row_vals[version_col].val.int_val;
@@ -1074,7 +1071,7 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag)
 	if(p->event->agg_nbody)
 	{	
 		notify_body = get_p_notify_body(p->user, p->domain,
-				p->event , offline_etag, NULL);
+				p->event , offline_etag);
 		if(notify_body == NULL)
 		{
 			DBG( "PRESENCE: publ_notify: Could not get the"
@@ -1168,7 +1165,7 @@ int query_db_notify(str* p_user, str* p_domain, ev_t* event,
 	if(event->type & PUBL_TYPE)
 	{
 		notify_body = get_p_notify_body(*p_user, *p_domain, event,
-				NULL, NULL);
+				NULL);
 		if(notify_body == NULL)
 		{
 			DBG( "PRESENCE:query_db_notify: Could not get the"
@@ -1305,7 +1302,7 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 			else
 			{
 				notify_body = get_p_notify_body(subs->pres_user,
-						subs->pres_domain, subs->event, NULL, subs);
+						subs->pres_domain, subs->event, NULL);
 				if(notify_body == NULL || notify_body->s== NULL)
 				{
 					DBG("PRESENCE:notify: Could not get the notify_body\n");
@@ -1405,7 +1402,7 @@ jump_over_body:
 	update_keys[n_update_keys] = "local_cseq";
 	update_vals[n_update_keys].type = DB_INT;
 	update_vals[n_update_keys].nul = 0;
-	update_vals[n_update_keys].val.int_val = subs->cseq;
+	update_vals[n_update_keys].val.int_val = subs->local_cseq;
 	n_update_keys++;
 
 	update_keys[n_update_keys] = "status";
@@ -1670,7 +1667,7 @@ c_back_param* shm_dup_subs(subs_t* subs, str to_tag)
 	cb_param->wi_subs->callid.len = subs->callid.len;
 	size+= subs->callid.len;
 
-	cb_param->wi_subs->cseq = subs->cseq;
+	cb_param->wi_subs->local_cseq = subs->local_cseq;
 	
 	cb_param->wi_subs->contact.s = (char*)cb_param + size;
 	strncpy(cb_param->wi_subs->contact.s, subs->contact.s, subs->contact.len);

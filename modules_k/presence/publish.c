@@ -379,7 +379,15 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	else
 	{
 		DBG("PRESENCE:handle_publish: SIP-If-Match found\n");
-		etag = hdr->body;
+		etag.s = (char*)pkg_malloc(sizeof(char)*hdr->body.len);
+		if(etag.s== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:handle_publish: ERROR No more memory\n");
+			goto error;
+		}
+		memcpy(etag.s, hdr->body.s, hdr->body.len );
+		etag.len = hdr->body.len; 	 
+		etag.s[ etag.len] = '\0';
 		DBG("PRESENCE:handle_publish: existing etag  = %.*s \n", etag.len,
 				etag.s);
 	}
@@ -508,7 +516,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 
 	if(presentity)
 		pkg_free(presentity);
-	if(etag_gen && etag.s)
+	if(etag.s)
 		pkg_free(etag.s);
 	if(sender)
 		pkg_free(sender);
@@ -520,7 +528,7 @@ error:
 	
 	if(presentity)
 		pkg_free(presentity);
-	if(etag_gen && etag.s)
+	if(etag.s)
 		pkg_free(etag.s);
 	if(sender)
 		pkg_free(sender);

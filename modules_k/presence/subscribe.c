@@ -39,7 +39,7 @@
 #include "notify.h"
 #include "../../ip_addr.h"
 
-int get_database_info(struct sip_msg* msg, subs_t* subs, unsigned int* remote_cseq, int* error_ret);
+int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret);
 
 static str su_200_rpl  = str_init("OK");
 static str pu_481_rpl  = str_init("Subscription does not exist");
@@ -132,7 +132,7 @@ error:
 }
 
 int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
-		int to_tag_gen, unsigned int remote_cseq)
+		int to_tag_gen)
 {	
 	db_key_t query_cols[22];
 	db_val_t query_vals[22], update_vals[5];
@@ -279,7 +279,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		update_keys[n_update_cols] = "remote_cseq";
 		update_vals[n_update_cols].type = DB_INT;
 		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = remote_cseq ; // the last cseq in dialog
+		update_vals[n_update_cols].val.int_val = subs->remote_cseq ; // the last cseq in dialog
 		n_update_cols++;
 
 		update_keys[n_update_cols] = "status";
@@ -329,7 +329,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			query_cols[n_query_cols] = "remote_cseq";
 			query_vals[n_query_cols].type = DB_INT;
 			query_vals[n_query_cols].nul = 0;
-			query_vals[n_query_cols].val.int_val = subs->cseq; 
+			query_vals[n_query_cols].val.int_val = subs->remote_cseq; 
 			n_query_cols++;
 
 
@@ -338,7 +338,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			query_vals[n_query_cols].nul = 0;
 			query_vals[n_query_cols].val.int_val = 0; // initialise with 0
 			n_query_cols++;
-			subs->cseq= 0;
+			subs->local_cseq= 0;
 
 			DBG("PRESENCE: update_subscription: expires: %d\n", subs->expires);
 			query_cols[n_query_cols] = "expires";
@@ -815,7 +815,7 @@ void msg_active_watchers_clean(unsigned int ticks,void *param)
 
 		
 		subs->expires = 0;
-		subs->cseq= cseq;
+		subs->local_cseq= cseq;
 		subs->reason.len = 7;
 
 		subs_array[i]= subs;
@@ -884,7 +884,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	db_val_t db_vals[10];
 	db_key_t update_keys[5];
 	db_val_t update_vals[5];
-	unsigned int remote_cseq;
 	int n_query_cols= 0; 
 	db_key_t result_cols[2];
 	db_res_t *result = NULL;
@@ -1114,7 +1113,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 				" header\n");
 		goto error;
 	}
-	if (str2int( &(get_cseq(msg)->number), &subs.cseq)!=0 )
+	if (str2int( &(get_cseq(msg)->number), &subs.remote_cseq)!=0 )
 	{
 		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse cseq"
 				" number\n");
@@ -1201,7 +1200,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	else
 	{
-		if(get_database_info(msg, &subs, &remote_cseq, &error_ret )< 0)
+		if(get_database_info(msg, &subs, &error_ret )< 0)
 		{
 			LOG(L_ERR, "PRESENCE: handle_subscribe:error while getting info"
 					" from database\n");
@@ -1457,7 +1456,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 after_status:
 
-	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen, remote_cseq) <0 )
+	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
 		goto error;
@@ -1524,14 +1523,12 @@ error:
 
 }
 
-int get_database_info(struct sip_msg* msg, subs_t* subs,
-		unsigned int* rem_cseq, int* error_ret)
+int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 {	
 	db_key_t query_cols[10];
 	db_val_t query_vals[10];
 	db_key_t result_cols[5];
 	db_res_t *result= NULL;
-	unsigned int local_cseq;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int n_query_cols = 0;
@@ -1647,13 +1644,13 @@ int get_database_info(struct sip_msg* msg, subs_t* subs,
 
 	row = &result->rows[0];
 	row_vals = ROW_VALUES(row);
-	local_cseq= row_vals[local_cseq_col].val.int_val;
+	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
 	remote_cseq= row_vals[remote_cseq_col].val.int_val;
 	
-	if(subs->cseq<= remote_cseq)
+	if(subs->remote_cseq<= remote_cseq)
 	{
 		LOG(L_ERR, "PRESENCE: get_database_info: ERROR wrong sequence number"
-				" received: %d -  stored: %d\n",subs->cseq, remote_cseq);
+				" received: %d -  stored: %d\n",subs->remote_cseq, remote_cseq);
 		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
 		{
 			LOG(L_ERR, "PRESENCE: get_database_info: ERROR while"
@@ -1663,8 +1660,6 @@ int get_database_info(struct sip_msg* msg, subs_t* subs,
 		*error_ret= 0;
 		return -1;
 	}
-	
-	*rem_cseq= subs->cseq;
 	
 	pres_user.s= (char*)row_vals[pres_user_col].val.string_val;
 	pres_user.len= strlen(pres_user.s);
@@ -1680,10 +1675,6 @@ int get_database_info(struct sip_msg* msg, subs_t* subs,
 
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;
-	// from this point on the subs.cseq field will store 
-	// the local_cseq used for Notify
-	subs->cseq= local_cseq;
-
 
 	return 0;
 

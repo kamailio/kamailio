@@ -54,7 +54,7 @@ char* generate_ETag(int publ_count)
 {
 	char* etag;
 	int size = 0;
-	etag = (char*)pkg_malloc(60*sizeof(char));
+	etag = (char*)pkg_malloc(128*sizeof(char));
 	if(etag ==NULL)
 	{
 		LOG(L_ERR, "PRESENCE:generate_ETag:Error while allocating memory \n");
@@ -65,8 +65,16 @@ char* generate_ETag(int publ_count)
 	if( size <0 )
 	{
 		LOG(L_ERR, "PRESENCE: generate_ETag: ERROR unsuccessfull sprintf\n ");
+		pkg_free(etag);
 		return NULL;
 	}
+	if(size> 128)
+	{
+		LOG(L_ERR, "PRESENCE: generate_ETag: ERROR buffer size overflown\n");
+		pkg_free(etag);
+		return NULL;
+	}
+
 	etag[size] = '\0';
 	DBG("PRESENCE: generate_ETag: etag= %s / %d\n ",etag, size);
 	return etag;
@@ -74,64 +82,77 @@ char* generate_ETag(int publ_count)
 
 int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 {
-	str hdr_append, hdr_append2 ;
+	char buf[128];
+	int buf_len= 128, size;
+	str hdr_append= {0, 0}, hdr_append2= {0, 0} ;
 
 	DBG("PRESENCE:publ_send200ok: send 200OK reply\n");	
 	DBG("PRESENCE:publ_send200ok: etag= %s - len= %d\n", etag.s, etag.len);
+	
 	/* ??? should we use static allocated buffer */
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*100);
-	if(hdr_append.s == NULL)
-	{
-		LOG(L_ERR,"ERROR:publ_send200ok: ERROR no more memory\n");
-		return -1;
-	}
+	
+	hdr_append.s = buf;
 	hdr_append.s[0]='\0';
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n",lexpire -
 			expires_offset);
 	if(hdr_append.len < 0)
 	{
 		LOG(L_ERR, "PRESENCE:publ_send200ok: ERROR unsuccessful sprintf\n");
-		pkg_free(hdr_append.s);
-			return -1;
+		goto error;
+	}
+	if(hdr_append.len > buf_len)
+	{
+		LOG(L_ERR, "PRESENCE:publ_send200ok: ERROR buffer size overflown\n");
+		goto error;
 	}
 	hdr_append.s[hdr_append.len]= '\0';
 		
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"PRESENCE: publ_send200ok:ERROR unable to add lump_rl\n");
-		pkg_free(hdr_append.s);
-		return -1;
+		goto error;
 	}
-	pkg_free(hdr_append.s);
 
-	hdr_append2.s = (char *)pkg_malloc( sizeof(char)*(16+etag.len) );
+	size= sizeof(char)*(20+etag.len) ;
+	hdr_append2.s = (char *)pkg_malloc(size);
 	if(hdr_append2.s == NULL)
 	{
 		LOG(L_ERR,"PRESENCE:publ_send200ok:ERROR no more memory\n");
-		return -1;
+		goto error;
 	}
 	hdr_append2.s[0]='\0';
 	hdr_append2.len = sprintf(hdr_append2.s, "SIP-ETag: %s\r\n", etag.s);
 	if(hdr_append2.len < 0)
 	{
 		LOG(L_ERR, "PRESENCE:publ_send200ok:ERROR unsuccessful sprintf\n ");
-		pkg_free(hdr_append2.s);
-		return -1;
+		goto error;
 	}
+	if(hdr_append2.len > size)
+	{
+		LOG(L_ERR, "PRESENCE:publ_send200ok: ERROR buffer size overflown\n");
+		goto error;
+	}
+
 	hdr_append2.s[hdr_append2.len]= '\0';
 	if (add_lump_rpl(msg, hdr_append2.s, hdr_append2.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"PRESENCE:publ_send200ok: unable to add lump_rl\n");
-		pkg_free(hdr_append2.s);
-		return -1;
+		goto error;
 	}
-	pkg_free(hdr_append2.s);
 
 	if( slb.reply( msg, 200, &pu_200_rpl)== -1)
 	{
 		LOG(L_ERR,"PRESENCE: publ_send200ok: ERORR while sending reply\n");
-		return -1;
+		goto error;
 	}
+
+	pkg_free(hdr_append2.s);
+	return 0;
+
+error:
+
+	if(hdr_append2.s)
+		pkg_free(hdr_append2.s);
 
 	return 0;
 
@@ -140,13 +161,16 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 		ev_t* event, str* etag, str* sender)
 {
 	presentity_t *presentity;
-	int size;
+	int size, init_len;
 	
-	/* alocating memory for presentity */
-	size = sizeof(presentity_t)+ domain->len+ user->len+ etag->len + 1;
+	/* allocating memory for presentity */
+	size = sizeof(presentity_t)+ (domain->len+ user->len+ etag->len + 50)
+		* sizeof(char);
 	if(sender)
 		size+= sizeof(str)+ sender->len* sizeof(char);
 	
+	init_len= size;
+
 	presentity = (presentity_t*)pkg_malloc(size);
 	if(presentity == NULL)
 	{
@@ -156,20 +180,19 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 	memset(presentity, 0, size);
 	size= sizeof(presentity_t);
 
-	presentity->domain.s = (char*)((char*)presentity+ size);
+	presentity->domain.s = (char*)presentity+ size;
 	strncpy(presentity->domain.s, domain->s, domain->len);
 	presentity->domain.len = domain->len;
 	size+= domain->len;	
 	
-	presentity->user.s = (char*)((char*)presentity+size);
+	presentity->user.s = (char*)presentity+size;
 	strncpy(presentity->user.s, user->s, user->len);
 	presentity->user.len = user->len;
 	size+= user->len;
 
-	presentity->etag.s = ((char*)presentity)+ size;
+	presentity->etag.s = (char*)presentity+ size;
 	strcpy(presentity->etag.s, etag->s);
 	presentity->etag.s[etag->len]= '\0';
-	presentity->etag.len = etag->len;
 
 	size+= etag->len+1;
 	
@@ -183,6 +206,14 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 		size+= sender->len;
 	}
 
+	if(size> init_len)
+	{
+		LOG(L_ERR, "PRESENCE: new_presentity: ERROR"
+			" buffer size overflow init_len= %d, size= %d\n", init_len, size);
+		pkg_free(presentity);
+		return NULL;
+	}
+	DBG("PRESENCE: new_presentity:init_len= %d size= %d\n", init_len, size);
 	presentity->event= event;
 	presentity->expires = expires;
 	presentity->received_time= (int)time(NULL);
@@ -190,12 +221,13 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
     
 }
 
-int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body, int new_t)
+int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
+		int new_t)
 {
-	db_key_t query_cols[8], result_cols[1];
-	db_op_t  query_ops[8];
-	db_val_t query_vals[8], update_vals[5];
-	db_key_t update_keys[5];
+	db_key_t query_cols[11], result_cols[5];
+	db_op_t  query_ops[11];
+	db_val_t query_vals[11], update_vals[7];
+	db_key_t update_keys[7];
 	db_res_t *result= NULL;
 	int n_query_cols = 0;
 	int n_update_cols = 0;
