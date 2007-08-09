@@ -1041,8 +1041,12 @@ ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 	ua_pres_t* hentity;
 	int size;
 
-	size= sizeof(ua_pres_t)+ sizeof(str)*2+ (p->pres_uri->len+ p->watcher_uri->len)*sizeof(char);
-	
+	size= sizeof(ua_pres_t)+ sizeof(str)*2+ (p->pres_uri->len+ 
+			p->watcher_uri->len+ + p->contact.len+ p->id.len)*sizeof(char);
+
+	if(p->outbound_proxy && p->outbound_proxy->len && p->outbound_proxy->s )
+		size+= sizeof(str)+ p->outbound_proxy->len* sizeof(char);
+
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
@@ -1069,6 +1073,30 @@ ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 	hentity->watcher_uri->len= p->watcher_uri->len;
 	size+= p->watcher_uri->len;
 	
+	hentity->contact.s = (char*)hentity+ size;
+	memcpy(hentity->contact.s, p->contact.s ,
+		p->contact.len );
+	hentity->contact.len= p->contact.len;
+	size+= p->contact.len;
+
+	if(p->outbound_proxy)
+	{
+		hentity->outbound_proxy= (str*)((char*)hentity+ size);
+		size+= sizeof(str);
+		hentity->outbound_proxy->s= (char*)hentity+ size;
+		memcpy(hentity->outbound_proxy->s, p->outbound_proxy->s, p->outbound_proxy->len);
+		hentity->outbound_proxy->len= p->outbound_proxy->len;
+		size+= p->outbound_proxy->len;
+	}	
+	if(p->id.s)
+	{
+		hentity->id.s= (char*)hentity+ size;
+		memcpy(hentity->id.s, p->id.s, p->id.len);
+		hentity->id.len= p->id.len;
+		size+= p->id.len;
+	}
+
+	hentity->event|= p->event;
 	hentity->flag|= p->flag;
 	
 	return hentity;
