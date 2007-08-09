@@ -26,7 +26,7 @@
  *  2007-04-18  initial version (anca)
  */
 
-#ifdef _PRES_XML_H_
+#ifndef _PRES_XML_H_
 #define _PRES_XML_H_
 
 #include "../../db/db.h"
