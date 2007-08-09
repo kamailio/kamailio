@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 
+#include "../../mem/mem.h"
 #include "xcap_auth.h"
 #include "pidf.h"
 #include "notify_body.h"

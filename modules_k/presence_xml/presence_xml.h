@@ -30,10 +30,12 @@
 #define _PRES_XML_H_
 
 #include "../../db/db.h"
+#include "../sl/sl_api.h"
+#include "../presence/event_list.h"
 
 extern char *xcap_table;  
 extern add_event_t pres_add_event;
-extern db_con_t *pxml_db = NULL;
+extern db_con_t *pxml_db;
 extern db_func_t pxml_dbf;
 extern int force_active;
 extern int pidf_manipulation;

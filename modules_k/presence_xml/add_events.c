@@ -35,6 +35,7 @@
 #include <libxml/parser.h>
 #include "../../parser/parse_content.h"
 #include "../../data_lump_rpl.h"
+#include "../../ut.h"
 #include "xcap_auth.h"
 #include "notify_body.h"
 #include "add_events.h"
@@ -63,6 +64,7 @@ int xml_add_events()
 	event.agg_nbody= pres_agg_nbody;
 	event.evs_publ_handl= xml_publ_handl;
 	event.free_body= free_xml_body;
+	event.default_expires= 3600;
 
 	if(pres_add_event(&event)< 0)
 	{
@@ -79,6 +81,7 @@ int xml_add_events()
 	event.content_type.len= 27;
 	event.type= WINFO_TYPE;
 	event.free_body= free_xml_body;
+	event.default_expires= 3600;
 
 	if(pres_add_event(&event)< 0)
 	{
@@ -100,7 +103,7 @@ int xml_add_events()
 	event.content_type.len= 27;
 	event.type= PUBL_TYPE;
 	event.free_body= free_xml_body;
-
+	event.default_expires= 3600;
 	if(pres_add_event(&event)< 0)
 	{
 		LOG(L_ERR, "PRESENCE_XML: ERROR while adding event dialog;sla\n");

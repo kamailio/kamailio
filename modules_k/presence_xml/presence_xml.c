@@ -35,6 +35,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../str.h"
+#include "../../ut.h"
 #include "../../parser/msg_parser.h"
 #include "../../mem/mem.h"
 #include "../presence/bind_presence.h"
