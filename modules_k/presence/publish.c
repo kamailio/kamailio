@@ -379,7 +379,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	else
 	{
 		DBG("PRESENCE:handle_publish: SIP-If-Match found\n");
-		etag.s = (char*)pkg_malloc(sizeof(char)*hdr->body.len);
+		etag.s = (char*)pkg_malloc((hdr->body.len+ 1)* sizeof(char));
 		if(etag.s== NULL)
 		{
 			LOG(L_ERR, "PRESENCE:handle_publish: ERROR No more memory\n");
