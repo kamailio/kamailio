@@ -32,6 +32,7 @@
 #include <libxml/parser.h>
 #include <time.h>
 
+#include "../../script_cb.h"
 #include "../../sr_module.h"
 #include "../../parser/parse_expires.h"
 #include "../../dprint.h"
@@ -70,8 +71,8 @@ send_subscribe_t pua_send_subscribe;
 
 static cmd_export_t cmds[]=
 {
-	{"pua_set_publish",				pua_set_publish,   0, 0, REQUEST_ROUTE}, 	
-	{0,							0,					   0, 0, 0} 
+	{"pua_set_publish",			pua_set_publish,   0, 0, REQUEST_ROUTE}, 	
+	{0,							0,				   0, 0, 0} 
 };
 
 static param_export_t params[]={
@@ -188,6 +189,14 @@ static int mod_init(void)
 		return -1;
 	}
 	pua_send_subscribe= pua.send_subscribe;
+	
+	/* register post-script pua_unset_publish unset function */
+	if (register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
+		LOG(L_ERR,"pua_usrloc:mod_init: failed to register POST request "
+			"callback\n");
+		return -1;
+	}
+
 
 	return 0;
 }

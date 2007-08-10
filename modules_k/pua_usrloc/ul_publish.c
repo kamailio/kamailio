@@ -42,7 +42,15 @@ int pua_set_publish(struct sip_msg* msg , char* s1, char* s2)
 	DBG("pua_usrloc:pua_set_publish: set send publish\n");
 	pua_ul_publish= 1;
 	return 1;
-}	
+}
+
+int pua_unset_publish(struct sip_msg* msg , void* param)
+{
+	pua_ul_publish= 0;
+	return 1;
+}
+
+	
 /* for debug purpose only */
 void print_publ(publ_info_t* p)
 {
