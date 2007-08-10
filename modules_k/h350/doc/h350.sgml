@@ -1,0 +1,45 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "h350_user.sgml">
+<!ENTITY devel SYSTEM "h350_devel.sgml">
+<!ENTITY faq SYSTEM "h350_faq.sgml">
+<!ENTITY biblio SYSTEM "h350_biblio.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+        <bookinfo>
+        <title>H350 Module</title>
+        <productname class="trade">&ser;</productname>
+        <authorgroup>
+                <author>
+                <firstname>Christian</firstname>
+                <surname>Schlatter</surname>
+                <affiliation><orgname>University of North Carolina</orgname></affiliation>
+                <email>cs@unc.edu</email>
+                </author>
+        </authorgroup>
+        <copyright>
+                <year>2007</year>
+                <holder>University of North Carolina</holder>
+        </copyright>
+        <revhistory>
+                <revision>
+                <revnumber>0.1</revnumber>
+                <date>05-17-2007</date>
+                </revision>
+        </revhistory>
+        </bookinfo>
+        <toc></toc>
+
+        &user;
+        &devel;
+        &faq;
+		&biblio;
+
+</book>
+
