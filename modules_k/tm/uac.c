@@ -205,7 +205,8 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 
 	/* better reset avp list now - anyhow, it's useless from
 	 * this point (bogdan) */
-	reset_avps();
+	/* dcm: for testing: avps should stay to parrent message
+	 * reset_avps(); */
 
 	/* add the callback the the transaction for LOCAL_COMPLETED event */
 	flags = TMCB_LOCAL_COMPLETED;

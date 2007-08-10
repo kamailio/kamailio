@@ -263,10 +263,15 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 #endif
 	new_cell->uas.response.my_T=new_cell;
 
-	/* move the current avp list to transaction -bogdan */
-	old = set_avp_list( &new_cell->user_avps );
-	new_cell->user_avps = *old;
-	*old = 0;
+	/* dcm: - local generation transactions should not inherit AVPs 
+	 * - commpletely new message */
+	if(p_msg!=0)
+	{
+		/* move the current avp list to transaction -bogdan */
+		old = set_avp_list( &new_cell->user_avps );
+		new_cell->user_avps = *old;
+		*old = 0;
+	}
 
 	if (p_msg) {
 		/* move the pending callbacks to transaction -bogdan */
