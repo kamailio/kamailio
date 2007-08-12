@@ -169,7 +169,7 @@ then
 	presence_create $1
 fi
 
-echo -n "Install extra tables - imc,cpl,siptrace,domainpolicy ?(y/n):"
+echo -n "Install extra tables - $EXTRA_MODULES ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
 then
