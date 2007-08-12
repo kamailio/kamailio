@@ -216,14 +216,12 @@ fi
 
 minfo "creating extra tables into $1 ..."
 
-for TABLE in $EXTRA_MODULES; do
-    mdbg "Creating extra table: $TABLE"
-    sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
-    if [ $? -ne 0 ] ; then
+sql_query $1 < $DB_SCHEMA/extensions-create.sql 
+
+if [ $? -ne 0 ] ; then
 	merr "Creating extra tables failed!"
 	exit 1
-    fi
-done
+fi
 
 minfo "Extra tables succesfully created."
 }  # end extra_create
