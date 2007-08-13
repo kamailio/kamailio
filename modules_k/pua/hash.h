@@ -45,8 +45,9 @@
 #define XMPP_SUBSCRIBE		1<<4
 #define XMPP_INITIAL_SUBS   1<<5
 #define MI_PUBLISH			1<<6
-#define MI_SUBSCRIBE		1<<7
-#define RLS_SUBSCRIBE       1<<8
+#define MI_ASYN_PUBLISH     1<<7
+#define MI_SUBSCRIBE		1<<8
+#define RLS_SUBSCRIBE       1<<9
 
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1
@@ -58,11 +59,13 @@ typedef struct ua_pres{
 	str id;
     str* pres_uri;
 	int event;
-	time_t expires;
-	time_t desired_expires;
+	unsigned int expires;
+	unsigned int desired_expires;
 	int flag;
 	int db_flag;
+	void* cb_param;
 	struct ua_pres* next;
+	int ua_flag;
 	
 	/* publish */
 	str etag;
@@ -82,7 +85,8 @@ typedef struct ua_pres{
 	str* extra_headers;
 	str record_route;
 	str contact;
- /*?? should this be long? */
+
+	/*?? should this be long? */
 }ua_pres_t;
 
 typedef struct hash_entry

@@ -46,7 +46,6 @@
  *		<ETag>             - ETag that publish should match or . if no ETag
  *		<publish_body>     - may not be present in case of update for expire
  */
-int mi_publ_rpl_cback(struct sip_msg* reply, void* param);
 
 struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 {
@@ -215,13 +214,14 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		publ.etag= &etag;
 	}	
 	publ.expires= exp;
-	publ.source_flag|= MI_PUBLISH;
 	
 	if (cmd->async_hdl!=NULL)
 	{
-		publ.cbrpl= mi_publ_rpl_cback;
-		publ.cbparam= (void*)cmd->async_hdl;
+		publ.source_flag= MI_ASYN_PUBLISH;
+		publ.cb_param= (void*)cmd->async_hdl;
 	}	
+	else
+		publ.source_flag|= MI_PUBLISH;
 
 	DBG("DEBUG:pua_mi:mi_pua_publish: send publish\n");
 
@@ -246,7 +246,7 @@ error:
 	return 0;
 }
 
-int mi_publ_rpl_cback(struct sip_msg* reply, void* param)
+int mi_publ_rpl_cback( ua_pres_t* hentity, struct sip_msg* reply)
 {
 	struct mi_root *rpl_tree= NULL;
 	struct mi_handler* mi_hdl= NULL;
@@ -255,25 +255,33 @@ int mi_publ_rpl_cback(struct sip_msg* reply, void* param)
 	int lexpire;
 	int found;
 	str etag;
+	str reason= {0, 0};
 
-	if(reply== NULL || param== NULL)
+	if(reply== NULL || hentity== NULL || hentity->cb_param== NULL)
 	{
 		LOG(L_ERR, "pua_mi:mi_publ_rpl_cback: ERROR NULL parameter\n");
 		return -1;
 	}
 	if(reply== FAKED_REPLY)
-		return 0;
+	{
+		statuscode= 408;
+		reason.s= "Request Timeout";
+		reason.len= strlen(reason.s);
+	}
+	else
+	{
+		statuscode= reply->first_line.u.reply.statuscode;
+		reason= reply->first_line.u.reply.reason;
+	}
 
-	mi_hdl = (struct mi_handler *)(param);
-	statuscode= reply->first_line.u.reply.statuscode;
+	mi_hdl = (struct mi_handler *)(hentity->cb_param);
 	
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-		if (rpl_tree==0)
-			goto done;
+	if (rpl_tree==0)
+		goto done;
 	
 	addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%d %.*s",
-		statuscode, reply->first_line.u.reply.reason.len,
-		reply->first_line.u.reply.reason.s);
+		statuscode, reason.len, reason.s);
 	
 	
 	if(statuscode== 200)
@@ -309,7 +317,6 @@ done:
 	if ( statuscode >= 200) 
 	{
 		mi_hdl->handler_f( rpl_tree, mi_hdl, 1);
-		param= 0;
 	}
 	else 
 	{
@@ -319,7 +326,9 @@ done:
 
 error:
 	return  -1;
-}	
+}
+
+
 /*Command parameters:
  * pua_subscribe
  *		<presentity_uri>

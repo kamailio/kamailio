@@ -81,8 +81,8 @@ int send_subscribe(subs_info_t*);
 int send_publish(publ_info_t*);
 
 int update_pua(ua_pres_t* p, unsigned int hash_code);
-treq_cbparam_t* build_uppubl_cbparam(ua_pres_t* pres);
 ua_pres_t* build_upsubs_cbparam(ua_pres_t* pres);
+ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
 
 int db_store();
 int db_restore();
@@ -601,15 +601,17 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 	if(p->watcher_uri== NULL)
 	{
 		str met= {"PUBLISH", 7};
-		treq_cbparam_t* cb_param;
+		ua_pres_t* cb_param;
 
-		str_hdr = publ_build_hdr(expires, get_event(p->event), NULL, &p->etag, NULL, 0);
+		str_hdr = publ_build_hdr(expires, get_event(p->event), NULL,
+				&p->etag, p->extra_headers, 0);
 		if(str_hdr == NULL)
 		{
 			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");
 			goto error;
 		}
 		DBG("PUA: update_pua: str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
+		
 		cb_param= build_uppubl_cbparam(p);
 		if(cb_param== NULL)
 		{
@@ -648,7 +650,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			goto error;
 		};
 	
-		str_hdr= subs_build_hdr(&p->contact, expires, p->event, p->extra_headers);
+		str_hdr= subs_build_hdr(&p->contact, expires,p->event,p->extra_headers);
 		if(str_hdr== NULL || str_hdr->s== NULL)
 		{
 			LOG(L_ERR, "PUA:update_pua: Error while building extra headers\n");
@@ -976,129 +978,58 @@ void db_update(unsigned int ticks,void *param)
 	return ;
 
 }	
-	
-treq_cbparam_t* build_uppubl_cbparam(ua_pres_t* pres)
-{
-	int size;
-	treq_cbparam_t* cb_param= NULL;
-	
-	size= sizeof(treq_cbparam_t)+ sizeof(str)*2+ (pres->pres_uri->len+ 
-		+ pres->id.len+ pres->etag.len+ pres->tuple_id.len)*sizeof(char); 
 
-	DBG("PUA: build_uppubl_cbparam: before allocating size= %d\n", size);
-	cb_param= (treq_cbparam_t*)shm_malloc(size);
+ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
+{
+	publ_info_t publ;
+	ua_pres_t* cb_param= NULL;
+
+	memset(&publ, 0, sizeof(publ_info_t));
+	publ.pres_uri= p->pres_uri;
+	publ.content_type= p->content_type;
+	publ.id= p->id;
+	publ.expires= (p->desired_expires== 0) ?-1:p->desired_expires- (int)time(NULL);
+	publ.flag= UPDATE_TYPE; 
+	publ.source_flag= p->flag; 
+	publ.event= p->event;
+	publ.etag= &p->etag;
+	publ.extra_headers= p->extra_headers;
+
+	cb_param= publish_cbparam(&publ, NULL, &p->tuple_id, REQ_ME);
 	if(cb_param== NULL)
 	{
-		LOG(L_ERR, "PUA: build_uppubl_cbparam: ERROR no more share memory while"
-				" allocating cb_param - size= %d\n", size);
+		LOG(L_ERR, "PUA:build_uppubl_cbparam:ERROR constructing callback"
+				" parameter\n");
 		return NULL;
 	}
-	memset(cb_param, 0, size);
-	memset(&cb_param->publ, 0, sizeof(publ_info_t));
-	size =  sizeof(treq_cbparam_t);
-	DBG("PUA: build_uppubl_cbparam: size= %d\n", size);
-
-	cb_param->publ.pres_uri = (str*)((char*)cb_param + size);
-	size+= sizeof(str);
-
-	cb_param->publ.pres_uri->s = (char*)cb_param + size;
-	memcpy(cb_param->publ.pres_uri->s, pres->pres_uri->s ,
-			pres->pres_uri->len ) ;
-	cb_param->publ.pres_uri->len= pres->pres_uri->len;
-	size+= pres->pres_uri->len;
-
-	if(pres->id.s && pres->id.len)
-	{	
-		cb_param->publ.id.s = ((char*)cb_param+ size);
-		memcpy(cb_param->publ.id.s, pres->id.s, pres->id.len);
-		cb_param->publ.id.len= pres->id.len;
-		size+= pres->id.len;
-	}
-
-	cb_param->publ.etag = (str*)((char*)cb_param  + size);
-	size+= sizeof(str);
-	cb_param->publ.etag->s = (char*)cb_param + size;
-	memcpy(cb_param->publ.etag->s, pres->etag.s, pres->etag.len ) ;
-	cb_param->publ.etag->len= pres->etag.len;
-	size+= pres->etag.len;
-	
-		
-	cb_param->tuple_id.s = (char*)cb_param+ size;
-	memcpy(cb_param->tuple_id.s, pres->tuple_id.s ,pres->tuple_id.len);
-	cb_param->tuple_id.len= pres->tuple_id.len;
-	size+= pres->tuple_id.len;
-	
-	DBG("PUA:build_uppubl_cbparam: after allocating: size= %d\n", size);
-	cb_param->publ.event= pres->event;
-	cb_param->publ.source_flag|= pres->flag;
-	cb_param->publ.expires= pres->expires;
-
 	return cb_param;
 }
 
 ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 {
-	ua_pres_t* hentity;
-	int size;
+	subs_info_t subs;
+	ua_pres_t* cb_param= NULL;
 
-	size= sizeof(ua_pres_t)+ sizeof(str)*2+ (p->pres_uri->len+ 
-			p->watcher_uri->len+ + p->contact.len+ p->id.len)*sizeof(char);
+	memset(&subs, 0, sizeof(subs_info_t));
 
-	if(p->outbound_proxy && p->outbound_proxy->len && p->outbound_proxy->s )
-		size+= sizeof(str)+ p->outbound_proxy->len* sizeof(char);
+	subs.pres_uri= p->pres_uri;
+	subs.id= p->id;
+	subs.watcher_uri= p->watcher_uri;
+	subs.contact= &p->contact;
+	subs.outbound_proxy= p->outbound_proxy;
+	subs.event= p->event;
+	subs.source_flag= p->flag;
+	subs.flag= UPDATE_TYPE;
+	subs.expires= (p->desired_expires== 0) ?-1:p->desired_expires- (int)time(NULL);
 
-	hentity= (ua_pres_t*)shm_malloc(size);
-	if(hentity== NULL)
+	cb_param= subscribe_cbparam(&subs, REQ_ME);
+	if(cb_param== NULL)
 	{
-		LOG(L_ERR, "PUA: update_pua: ERROR no more share memory\n");
+		LOG(L_ERR, "PUA: build_upsubs_cbparam: ERROR constructing"
+				" callback parameter\n");
 		return NULL;
 	}
-	memset(hentity, 0, size);
 
-	size =  sizeof(ua_pres_t);
-
-	hentity->pres_uri = (str*)((char*)hentity + size);
-	size+= sizeof(str);
-
-	hentity->pres_uri->s = (char*)hentity+ size;
-	memcpy(hentity->pres_uri->s, p->pres_uri->s ,
-			p->pres_uri->len ) ;
-	hentity->pres_uri->len= p->pres_uri->len;
-	size+= p->pres_uri->len;
-		
-	hentity->watcher_uri=(str*)((char*)hentity+ size);
-	size+= sizeof(str);
-	hentity->watcher_uri->s= (char*)hentity+ size;
-	memcpy(hentity->watcher_uri->s, p->watcher_uri->s,p->watcher_uri->len);
-	hentity->watcher_uri->len= p->watcher_uri->len;
-	size+= p->watcher_uri->len;
-	
-	hentity->contact.s = (char*)hentity+ size;
-	memcpy(hentity->contact.s, p->contact.s ,
-		p->contact.len );
-	hentity->contact.len= p->contact.len;
-	size+= p->contact.len;
-
-	if(p->outbound_proxy)
-	{
-		hentity->outbound_proxy= (str*)((char*)hentity+ size);
-		size+= sizeof(str);
-		hentity->outbound_proxy->s= (char*)hentity+ size;
-		memcpy(hentity->outbound_proxy->s, p->outbound_proxy->s, p->outbound_proxy->len);
-		hentity->outbound_proxy->len= p->outbound_proxy->len;
-		size+= p->outbound_proxy->len;
-	}	
-	if(p->id.s)
-	{
-		hentity->id.s= (char*)hentity+ size;
-		memcpy(hentity->id.s, p->id.s, p->id.len);
-		hentity->id.len= p->id.len;
-		size+= p->id.len;
-	}
-
-	hentity->event|= p->event;
-	hentity->flag|= p->flag;
-	
-	return hentity;
-	
+	return cb_param;
 }
+

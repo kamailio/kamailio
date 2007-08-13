@@ -27,5 +27,6 @@
 
 struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param);
 struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param);
+int mi_publ_rpl_cback(ua_pres_t* hentity, struct sip_msg* reply);
 
 #endif	

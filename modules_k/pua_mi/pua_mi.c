@@ -115,6 +115,12 @@ static int mod_init(void)
 		return -1;
 	}
 	pua_send_subscribe= pua.send_subscribe;
+	
+	if(pua.register_puacb(MI_ASYN_PUBLISH, mi_publ_rpl_cback, NULL)< 0)
+	{
+		LOG(L_ERR, "pua_mi:mod_init Could not register callback\n");
+		return -1;
+	}	
 
 	return 0;
 }

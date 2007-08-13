@@ -46,7 +46,7 @@ void print_ua_pres(ua_pres_t* p)
 	}	
 	else
 		DBG("\tetag= %.*s - len= %d\n", p->etag.len, p->etag.s, p->etag.len);
-	DBG("\texpires= %ld\n", p->expires- (int)time(NULL));
+	DBG("\texpires= %d\n", p->expires- (int)time(NULL));
 }	
 htable_t* new_htable()
 {

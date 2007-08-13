@@ -229,10 +229,28 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	/* get dialog information from reply message: callid, to_tag, from_tag */
 	msg= ps->rpl;
-	if(msg == NULL || msg== FAKED_REPLY)
+	if(msg == NULL)
 	{
 		LOG(L_ERR, "PUA:subs_cback_func: no reply message found\n ");
 		goto error;
+	}
+
+	if(msg== FAKED_REPLY)
+	{
+		/* delete record from hash_table and call registered functions */
+		lock_get(&HashT->p_records[hash_code].lock);
+
+		presentity= get_dialog(hentity, hash_code);
+		if(presentity== NULL)
+		{
+			LOG(L_ERR, "PUA:subs_cback_func: ERROR no record found"
+					" in hash table\n");
+			goto done;
+		}
+		delete_htable(presentity, hash_code);
+		lock_release(&HashT->p_records[hash_code].lock);
+
+		goto done;
 	}
 
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
@@ -344,6 +362,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.id= hentity->id;
 			subs.outbound_proxy= hentity->outbound_proxy;
 			subs.extra_headers= hentity->extra_headers;
+			subs.cb_param= hentity->cb_param;
 			if(send_subscribe(&subs)< 0)
 			{
 				LOG(L_ERR, "PUA:subs_cback_func: ERROR when trying to send SUBSCRIBE\n");
@@ -511,8 +530,11 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	insert_htable(presentity);
 
 done:
-	hentity->flag= flag;
-	run_pua_callbacks( hentity, &msg->first_line);
+	if(hentity->ua_flag == REQ_OTHER)
+	{
+		hentity->flag= flag;
+		run_pua_callbacks( hentity, msg);
+	}
 error:	
 	if(hentity)
 	{	
@@ -523,7 +545,7 @@ error:
 
 }
 
-ua_pres_t* build_cback_param(subs_info_t* subs)
+ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 {	
 	ua_pres_t* hentity= NULL;
 	int size;
@@ -605,7 +627,8 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 	}
 	hentity->flag= subs->source_flag;
 	hentity->event= subs->event;
-	
+	hentity->ua_flag= hentity->ua_flag;
+	hentity->cb_param= subs->cb_param;
 	return hentity;
 
 }	
@@ -659,9 +682,7 @@ int send_subscribe(subs_info_t* subs)
 	if(presentity== NULL )
 	{
 insert:
-	
 		lock_release(&HashT->p_records[hash_code].lock); 
-
 		if(subs->flag & UPDATE_TYPE)
 		{
 			/*
@@ -677,7 +698,7 @@ insert:
 			subs->flag= INSERT_TYPE;
 
 		}	
-		hentity= build_cback_param(subs);
+		hentity= subscribe_cbparam(subs, REQ_OTHER);
 		if(hentity== NULL)
 		{
 			LOG(L_ERR, "PUA:send_subscribe:ERROR while building callback"
@@ -758,7 +779,7 @@ insert:
 		}
 		lock_release(&HashT->p_records[hash_code].lock);
 		
-		hentity= build_cback_param(subs);
+		hentity= subscribe_cbparam(subs, REQ_OTHER);
 		if(hentity== NULL)
 		{
 			LOG(L_ERR, "PUA:send_subscribe:ERROR while building callback"

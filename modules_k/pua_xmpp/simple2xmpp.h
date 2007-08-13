@@ -32,6 +32,6 @@
 #include "../pua/pua_bind.h"
 
 int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2);
-void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl);
+int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg);
 
 #endif

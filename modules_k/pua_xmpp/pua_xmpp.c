@@ -87,9 +87,9 @@ static int fixup_pua_xmpp(void** param, int param_no);
 
 static cmd_export_t cmds[]=
 {
-	{"pua_xmpp_notify",		 Notify2Xmpp,	       0,		0,		  REQUEST_ROUTE},
-	{"pua_xmpp_req_winfo",   request_winfo,	       2,  fixup_pua_xmpp,REQUEST_ROUTE},
-	{     0,			       0,		    	   0,		0,			   0	   }
+	{"pua_xmpp_notify",		 Notify2Xmpp,	0,		0,		  REQUEST_ROUTE},
+	{"pua_xmpp_req_winfo",   request_winfo,	2,  fixup_pua_xmpp,REQUEST_ROUTE},
+	{     0,			       0,		    0,		0,			   0	    }
 };
 
 static param_export_t params[]={
@@ -111,8 +111,6 @@ struct module_exports exports= {
 	(destroy_function) 0,       /* destroy function */
 	child_init                  /* per-child init function */
 };
-
-
 
 /**
  * init module function
@@ -156,9 +154,10 @@ static int mod_init(void)
     XMLNodeGetNodeContentByName= libxml_api.xmlNodeGetNodeContentByName;
 
 	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL ||
-			XMLNodeGetNodeByName== NULL || XMLNodeGetNodeContentByName== NULL)
+		XMLNodeGetNodeByName== NULL || XMLNodeGetNodeContentByName== NULL)
 	{
-		LOG(L_ERR, "PUA:mod_init:ERROR: libxml wrapper functions could not be bound\n");
+		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR: libxml wrapper functions could"
+				" not be bound\n");
 		return -1;
 	}
 

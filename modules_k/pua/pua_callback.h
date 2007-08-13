@@ -28,10 +28,10 @@
 #include "../../parser/parse_fline.h"
 #include "../pua/hash.h"
 
-#define PUACB_MAX    		(1<<8)
+#define PUACB_MAX    		(1<<9)
 
 /* callback function prototype */
-typedef void (pua_cb)(ua_pres_t* hentity, struct msg_start * fl);
+typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
 /* register callback function prototype */
 typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 
@@ -61,7 +61,7 @@ void destroy_puacb_list();
 int register_puacb( int types, pua_cb f, void* param );
 
 /* run all transaction callbacks for an event type */
-static inline void run_pua_callbacks(ua_pres_t* hentity, struct msg_start * fl)
+static inline void run_pua_callbacks(ua_pres_t* hentity, struct sip_msg* msg)
 {
 	struct pua_callback *cbp;
 
@@ -69,8 +69,10 @@ static inline void run_pua_callbacks(ua_pres_t* hentity, struct msg_start * fl)
 		if(cbp->types & hentity->flag) 
 		{	
 			DBG("pua: run_pua_callbacks: found callback\n");
-			cbp->callback(hentity, fl);
+			cbp->callback(hentity, msg);
 		}
 	}
 }
+
+/* Q: should I call the registered callback functions when the modules refreshes a request? */
 #endif

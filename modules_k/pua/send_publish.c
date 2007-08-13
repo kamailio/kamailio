@@ -141,12 +141,11 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	struct hdr_field* hdr= NULL;
 	struct sip_msg* msg= NULL;
 	ua_pres_t* presentity= NULL;
-	treq_cbparam_t* hentity= NULL;
+	ua_pres_t* hentity= NULL;
 	int found = 0;
 	int size= 0;
 	int lexpire= 0;
 	str etag;
-	int desired_expires;
 	unsigned int hash_code;
 
 	if(ps->param== NULL)
@@ -164,7 +163,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	if(msg== FAKED_REPLY)
 	{
 		DBG("PUA:publ_cback_func: FAKED_REPLY\n");
-		goto error;
+		goto done;
 	}
 
 	if( ps->code>= 300 )
@@ -174,17 +173,15 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			DBG("PUA publ_cback_func: NULL callback parameter\n");
 			return;
 		}
-		hentity= (treq_cbparam_t*)(*ps->param);
+		hentity= (ua_pres_t*)(*ps->param);
 
-		hash_code= core_hash(hentity->publ.pres_uri, NULL,
-					HASH_SIZE);
+		hash_code= core_hash(hentity->pres_uri, NULL,HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
-		presentity= search_htable( hentity->publ.pres_uri, NULL, hentity->publ.source_flag,
-				hentity->publ.id, hentity->publ.etag, hash_code);
+		presentity= search_htable( hentity->pres_uri, NULL, hentity->flag,
+			hentity->id,(hentity->etag.s)?&hentity->etag: NULL,hash_code);
 		if(presentity)
 		{
-			if(ps->code== 412 && hentity->publ.body && 
-					hentity->publ.source_flag!= MI_PUBLISH)
+			if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH)
 			{
 				/* sent a PUBLISH within a dialog that no longer exists
 				 * send again an intial PUBLISH */
@@ -194,14 +191,16 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				lock_release(&HashT->p_records[hash_code].lock);
 				publ_info_t publ;
 				memset(&publ, 0, sizeof(publ_info_t));
-				publ.pres_uri= hentity->publ.pres_uri; 
-				publ.body= hentity->publ.body;
-				publ.expires= hentity->publ.expires;
-				publ.source_flag|= hentity->publ.source_flag;
-				publ.event|= hentity->publ.event;
-				publ.content_type= hentity->publ.content_type;	
-				publ.id= hentity->publ.id;
-				publ.extra_headers= hentity->publ.extra_headers;
+				publ.pres_uri= hentity->pres_uri; 
+				publ.body= hentity->body;
+				publ.expires= (hentity->desired_expires>0)?
+					hentity->desired_expires- (int)time(NULL)+ 10:-1;
+				publ.source_flag|= hentity->flag;
+				publ.event|= hentity->event;
+				publ.content_type= hentity->content_type;	
+				publ.id= hentity->id;
+				publ.extra_headers= hentity->extra_headers;
+				publ.cb_param= hentity->cb_param;
 				if(send_publish(&publ)< 0)
 				{
 					LOG(L_ERR, "PUA:publ_cback_func: ERROR when trying to send PUBLISH\n");
@@ -257,32 +256,22 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	etag= hdr->body;
 
-	/* if publish with 0 the callback parameter is NULL*/
-	if(lexpire== 0 && *ps->param== NULL )	
-	{
-		DBG("PUA: publ_cback_func: reply with expires= 0 and entity already"
-				" deleted\n");
-		return;
-	}
-
 	if( *ps->param== NULL ) 
 	{
 		DBG("PUA publ_cback_func: Error NULL callback parameter\n");
 		return;
 	}
 		
-	hentity= (treq_cbparam_t*)(*ps->param);
+	hentity= (ua_pres_t*)(*ps->param);
 
 	LOG(L_DBG, "PUA:publ_cback_func: completed with status %d [contact:"
-			"%.*s]\n",ps->code, hentity->publ.pres_uri->len, hentity->publ.pres_uri->s);
+			"%.*s]\n",ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
 
-	desired_expires= hentity->publ.expires<0?0: hentity->publ.expires+ (int)time(NULL);
-
-	hash_code= core_hash(hentity->publ.pres_uri, NULL, HASH_SIZE);
+	hash_code= core_hash(hentity->pres_uri, NULL, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 	
-	presentity= search_htable(hentity->publ.pres_uri, NULL,hentity->publ.source_flag,
-			hentity->publ.id, hentity->publ.etag,  hash_code);
+	presentity= search_htable(hentity->pres_uri, NULL,hentity->flag,
+			hentity->id,(hentity->etag.s)?&hentity->etag: NULL,hash_code);
 	if(presentity)
 	{
 			DBG("PUA:publ_cback_func: update record\n");
@@ -294,7 +283,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				goto done;
 			}
 			
-			update_htable(presentity, desired_expires,
+			update_htable(presentity, hentity->desired_expires,
 					lexpire, &etag, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
@@ -304,11 +293,14 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	if(lexpire== 0)
 	{
 		LOG(L_ERR, "PUA:publ_cback_func:expires= 0: no not insert\n");
-		goto error;
+		goto done;
 	}
 	size= sizeof(ua_pres_t)+ sizeof(str)+ 
-		(hentity->publ.pres_uri->len+ hentity->tuple_id.len + 
-		 hentity->publ.id.len)* sizeof(char);
+		(hentity->pres_uri->len+ hentity->tuple_id.len + 
+		 hentity->id.len)* sizeof(char);
+	if(hentity->extra_headers)
+		size+= sizeof(str)+ hentity->extra_headers->len* sizeof(char);
+
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
@@ -323,10 +315,10 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= sizeof(str);
 
 	presentity->pres_uri->s= (char*)presentity+ size;
-	memcpy(presentity->pres_uri->s, hentity->publ.pres_uri->s, 
-			hentity->publ.pres_uri->len);
-	presentity->pres_uri->len= hentity->publ.pres_uri->len;
-	size+= hentity->publ.pres_uri->len;
+	memcpy(presentity->pres_uri->s, hentity->pres_uri->s, 
+			hentity->pres_uri->len);
+	presentity->pres_uri->len= hentity->pres_uri->len;
+	size+= hentity->pres_uri->len;
 	
 	presentity->tuple_id.s= (char*)presentity+ size;
 	memcpy(presentity->tuple_id.s, hentity->tuple_id.s,
@@ -335,15 +327,26 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	size+= presentity->tuple_id.len;
 
 	presentity->id.s=(char*)presentity+ size;
-	memcpy(presentity->id.s, hentity->publ.id.s, 
-			hentity->publ.id.len);
-	presentity->id.len= hentity->publ.id.len; 
+	memcpy(presentity->id.s, hentity->id.s, 
+			hentity->id.len);
+	presentity->id.len= hentity->id.len; 
 	size+= presentity->id.len;
 		
-	presentity->expires= lexpire +(int)time(NULL);
-	presentity->desired_expires= desired_expires;
-	presentity->flag|= hentity->publ.source_flag;
-	presentity->event|= hentity->publ.event;
+	if(hentity->extra_headers)
+	{
+		presentity->extra_headers= (str*)((char*)presentity+ size);
+		size+= sizeof(str);
+		presentity->extra_headers->s= (char*)presentity+ size;
+		memcpy(presentity->extra_headers->s, hentity->extra_headers->s, 
+				hentity->extra_headers->len);
+		presentity->extra_headers->len= hentity->extra_headers->len;
+		size+= hentity->extra_headers->len;
+	}
+
+	presentity->desired_expires= hentity->desired_expires;
+	presentity->expires= lexpire+ (int)time(NULL);
+	presentity->flag|= hentity->flag;
+	presentity->event|= hentity->event;
 
 	presentity->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
 	if(presentity->etag.s== NULL)
@@ -358,16 +361,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		
 
 done:
+	if(hentity == REQ_OTHER)
+		run_pua_callbacks(hentity, msg);
 
-	if(hentity->publ.cbrpl )
-	{
-		if( hentity->publ.cbrpl(msg,  hentity->publ.cbparam)< 0)
-		{
-			LOG(L_ERR,"PUA:publ_cback_func: in callback function ERROR ");
-			goto error;
-		}	
-			
-	}	
 	if(*ps->param)
 	{
 		shm_free(*ps->param);
@@ -383,7 +379,6 @@ error:
 	}
 
 	return;
-
 }	
 
 int send_publish( publ_info_t* publ )
@@ -391,10 +386,9 @@ int send_publish( publ_info_t* publ )
 	str met = {"PUBLISH", 7};
 	str* str_hdr = NULL;
 	ua_pres_t* presentity= NULL;
-	unsigned int size= 0;
 	str* body= NULL;
 	str* tuple_id= NULL;
-	treq_cbparam_t* cb_param= NULL;
+	ua_pres_t* cb_param= NULL;
 	unsigned int hash_code;
 	str etag= {0, 0};
 	int ver= 0;
@@ -413,7 +407,6 @@ int send_publish( publ_info_t* publ )
 		LOG(L_ERR, "PUA:send_publish: ERROR event not found in list\n");
 		goto error;
 	}	
-
 
 	hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
 
@@ -491,9 +484,6 @@ insert:
 		if(publ->expires== 0)
 		{
 			DBG("PUA:send_publish: expires= 0- delete from hash table\n");
-			delete_htable(presentity, hash_code);
-			presentity= NULL;
-			lock_release(&HashT->p_records[hash_code].lock);
 			goto send_publish;
 		}
 		presentity->version++;
@@ -517,105 +507,17 @@ insert:
 	if(tuple_id)
 		DBG("\n\nPUA:send_publish: tuple_id= %.*s\n\n", tuple_id->len, tuple_id->s  );
 	
-	/* construct the callback parameter */
-
-	size= sizeof(treq_cbparam_t)+ sizeof(str)+ (publ->pres_uri->len+ 
-		+ publ->content_type.len+ publ->id.len+ 1)*sizeof(char);
-	if(body && body->s && body->len)
-		size+= sizeof(str)+ body->len* sizeof(char);
-	if(publ->etag)
-		size+= sizeof(str)+ publ->etag->len* sizeof(char);
-	if(publ->extra_headers)
-		size+= sizeof(str)+ publ->extra_headers->len* sizeof(char);
-	if(tuple_id )
-		size+= tuple_id->len* sizeof(char);
-
-	DBG("PUA: send_publish: before allocating size= %d\n", size);
-	cb_param= (treq_cbparam_t*)shm_malloc(size);
-	if(cb_param== NULL)
-	{
-		LOG(L_ERR, "PUA: send_publish: ERROR no more share memory while"
-				" allocating cb_param - size= %d\n", size);
-		goto error;
-	}
-	memset(cb_param, 0, size);
-	memset(&cb_param->publ, 0, sizeof(publ_info_t));
-	size =  sizeof(treq_cbparam_t);
-	DBG("PUA: send_publish: size= %d\n", size);
-
-	cb_param->publ.pres_uri = (str*)((char*)cb_param + size);
-	size+= sizeof(str);
-
-	cb_param->publ.pres_uri->s = (char*)cb_param + size;
-	memcpy(cb_param->publ.pres_uri->s, publ->pres_uri->s ,
-			publ->pres_uri->len ) ;
-	cb_param->publ.pres_uri->len= publ->pres_uri->len;
-	size+= publ->pres_uri->len;
-
-	if(publ->id.s && publ->id.len)
-	{	
-		cb_param->publ.id.s = ((char*)cb_param+ size);
-		memcpy(cb_param->publ.id.s, publ->id.s, publ->id.len);
-		cb_param->publ.id.len= publ->id.len;
-		size+= publ->id.len;
-	}
-
-	if(body && body->s && body->len)
-	{
-		cb_param->publ.body = (str*)((char*)cb_param  + size);
-		size+= sizeof(str);
-		
-		cb_param->publ.body->s = (char*)cb_param + size;
-		memcpy(cb_param->publ.body->s, body->s ,
-			body->len ) ;
-		cb_param->publ.body->len= body->len;
-		size+= body->len;
-	}
-	if(publ->etag)
-	{
-		cb_param->publ.etag = (str*)((char*)cb_param  + size);
-		size+= sizeof(str);
-		cb_param->publ.etag->s = (char*)cb_param + size;
-		memcpy(cb_param->publ.etag->s, publ->etag->s ,
-			publ->etag->len ) ;
-		cb_param->publ.etag->len= publ->etag->len;
-		size+= publ->etag->len;
-	}
-	if(publ->extra_headers)
-	{
-		cb_param->publ.extra_headers = (str*)((char*)cb_param  + size);
-		size+= sizeof(str);
-		cb_param->publ.extra_headers->s = (char*)cb_param + size;
-		memcpy(cb_param->publ.extra_headers->s, publ->extra_headers->s ,
-			publ->extra_headers->len ) ;
-		cb_param->publ.extra_headers->len= publ->extra_headers->len;
-		size+= publ->extra_headers->len;
-	}	
-
-	if(publ->content_type.s && publ->content_type.len)
-	{
-		cb_param->publ.content_type.s= (char*)cb_param + size;
-		memcpy(cb_param->publ.content_type.s, publ->content_type.s, publ->content_type.len);
-		cb_param->publ.content_type.len= publ->content_type.len;
-		size+= cb_param->publ.content_type.len;
-
-	}	
-	if(tuple_id)
-	{	
-		cb_param->tuple_id.s = (char*)cb_param+ size;
-		memcpy(cb_param->tuple_id.s, tuple_id->s ,tuple_id->len);
-		cb_param->tuple_id.len= tuple_id->len;
-		size+= tuple_id->len;
-	}
-	DBG("PUA:send_publish: after allocating: size= %d\n", size);
-	cb_param->publ.cbparam= publ->cbparam;
-	cb_param->publ.cbrpl= publ->cbrpl;
-	cb_param->publ.event= publ->event;
-	cb_param->publ.source_flag|= publ->source_flag;
-	cb_param->publ.expires= publ->expires;
-	
 send_publish:
 	
+	/* construct the callback parameter */
+
+	cb_param= publish_cbparam(publ, body, tuple_id, REQ_OTHER);
+	if(cb_param== NULL)
+	{
+		LOG(L_ERR, "PUA:send_publish:ERROR constructing callback parameter\n");
+		goto error;
+	}
+
 	if(publ->flag & UPDATE_TYPE)
 		DBG("PUA:send_publish: etag:%.*s\n", etag.len, etag.s);
 	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, ev, &publ->content_type, 
@@ -673,9 +575,8 @@ error:
 		pkg_free(etag.s);
 
 	if(cb_param)
-	{
 		shm_free(cb_param);
-	}	
+
 	if(body&& ret_code)
 	{
 		if(body->s)
@@ -693,4 +594,106 @@ error:
 	return -1;
 }
 
+ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
+		int ua_flag)
+{
+	int size;
+	ua_pres_t* cb_param= NULL;
 
+	size= sizeof(ua_pres_t)+ sizeof(str)+ (publ->pres_uri->len+ 
+		+ publ->content_type.len+ publ->id.len+ 1)*sizeof(char);
+	if(body && body->s && body->len)
+		size+= sizeof(str)+ body->len* sizeof(char);
+	if(publ->etag)
+		size+= publ->etag->len* sizeof(char);
+	if(publ->extra_headers)
+		size+= sizeof(str)+ publ->extra_headers->len* sizeof(char);
+	if(tuple_id )
+		size+= tuple_id->len* sizeof(char);
+
+	DBG("PUA: send_publish: before allocating size= %d\n", size);
+	cb_param= (ua_pres_t*)shm_malloc(size);
+	if(cb_param== NULL)
+	{
+		LOG(L_ERR, "PUA: send_publish: ERROR no more share memory while"
+				" allocating cb_param - size= %d\n", size);
+		return NULL;
+	}
+	memset(cb_param, 0, size);
+	
+	size =  sizeof(ua_pres_t);
+	DBG("PUA: send_publish: size= %d\n", size);
+
+	cb_param->pres_uri = (str*)((char*)cb_param + size);
+	size+= sizeof(str);
+	cb_param->pres_uri->s = (char*)cb_param + size;
+	memcpy(cb_param->pres_uri->s, publ->pres_uri->s ,
+			publ->pres_uri->len ) ;
+	cb_param->pres_uri->len= publ->pres_uri->len;
+	size+= publ->pres_uri->len;
+
+	if(publ->id.s && publ->id.len)
+	{	
+		cb_param->id.s = ((char*)cb_param+ size);
+		memcpy(cb_param->id.s, publ->id.s, publ->id.len);
+		cb_param->id.len= publ->id.len;
+		size+= publ->id.len;
+	}
+
+	if(body && body->s && body->len)
+	{
+		cb_param->body = (str*)((char*)cb_param  + size);
+		size+= sizeof(str);
+		
+		cb_param->body->s = (char*)cb_param + size;
+		memcpy(cb_param->body->s, body->s ,
+			body->len ) ;
+		cb_param->body->len= body->len;
+		size+= body->len;
+	}
+	if(publ->etag)
+	{
+		cb_param->etag.s = (char*)cb_param + size;
+		memcpy(cb_param->etag.s, publ->etag->s ,
+			publ->etag->len ) ;
+		cb_param->etag.len= publ->etag->len;
+		size+= publ->etag->len;
+	}
+	if(publ->extra_headers)
+	{
+		cb_param->extra_headers = (str*)((char*)cb_param  + size);
+		size+= sizeof(str);
+		cb_param->extra_headers->s = (char*)cb_param + size;
+		memcpy(cb_param->extra_headers->s, publ->extra_headers->s ,
+			publ->extra_headers->len ) ;
+		cb_param->extra_headers->len= publ->extra_headers->len;
+		size+= publ->extra_headers->len;
+	}	
+
+	if(publ->content_type.s && publ->content_type.len)
+	{
+		cb_param->content_type.s= (char*)cb_param + size;
+		memcpy(cb_param->content_type.s, publ->content_type.s, publ->content_type.len);
+		cb_param->content_type.len= publ->content_type.len;
+		size+=  publ->content_type.len;
+	}	
+	if(tuple_id)
+	{	
+		cb_param->tuple_id.s = (char*)cb_param+ size;
+		memcpy(cb_param->tuple_id.s, tuple_id->s ,tuple_id->len);
+		cb_param->tuple_id.len= tuple_id->len;
+		size+= tuple_id->len;
+	}
+	DBG("PUA:send_publish: after allocating: size= %d\n", size);
+	cb_param->event= publ->event;
+	cb_param->flag|= publ->source_flag;
+	cb_param->cb_param= publ->cb_param;
+	cb_param->ua_flag= ua_flag;
+
+	if(publ->expires< 0)
+		cb_param->desired_expires= 0;
+	else
+		cb_param->desired_expires=publ->expires+ (int)time(NULL);
+
+	return cb_param;
+}

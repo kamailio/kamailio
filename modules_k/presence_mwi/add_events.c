@@ -118,13 +118,14 @@ int mwi_add_events()
     event.content_type.s = "application/simple-message-summary";
     event.content_type.len = 34;
 
+	event.default_expires= 3600;
     event.type = PUBL_TYPE;
-    event.req_auth = 0;
+	event.req_auth = 0;
     event.apply_auth_nbody = 0;
     event.is_watcher_allowed = mwi_watcher_allowed;
     event.agg_nbody = 0;
     event.evs_publ_handl = mwi_publ_handl;
-
+	
     if (pres_add_event(&event) < 0) {
 	LOG(L_ERR, "presence_mwi: ERROR while adding event "
 	    "\"message-summary\"\n");

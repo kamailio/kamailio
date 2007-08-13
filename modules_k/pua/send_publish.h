@@ -31,8 +31,6 @@
 #include "hash.h"
 #include "event_list.h"
 
-typedef int (publrpl_cb_t)(struct sip_msg* reply, void*  extra_param);
-
 typedef struct publ_info
 {
 	str id;
@@ -46,15 +44,11 @@ typedef struct publ_info
 					   *	 same as the default value for that event) */	 
 	str* etag;
 	str* extra_headers;
-	publrpl_cb_t* cbrpl;
-	void* cbparam;
+	void* cb_param;   /* the parameter for the function to be called on the callback 
+						 for the received reply; it must be allocated in share memory;
+						 a reference to it will be found in the cb_param filed of the ua_pres_structure
+						 receied as a parameter for the registered function*/
 }publ_info_t;
-
-typedef struct treq_cbparam
-{
-	publ_info_t publ;
-	str tuple_id;
-}treq_cbparam_t;
 
 typedef int (*send_publish_t)(publ_info_t* publ);
 int send_publish( publ_info_t* publ );
@@ -62,5 +56,7 @@ int send_publish( publ_info_t* publ );
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps);
 str* publ_build_hdr(int expires, pua_event_t* event, str* content_type, str* etag,
 		str* extra_headers, int is_body);
+ua_pres_t* publish_cbparam(publ_info_t* publ, str* body, str* tuple_id,
+		int ua_flag);
 
 #endif

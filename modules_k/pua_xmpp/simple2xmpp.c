@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 
+#include "../../ut.h"
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
@@ -793,7 +794,7 @@ char* get_error_reason(int code, str* reason)
 }	
 
 
-void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl) 
+int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg) 
 {
 	char* uri;
 	/* named according to the direction of the message in xmpp*/
@@ -869,9 +870,18 @@ void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl)
 		goto error;
 	}
 
-	code= fl->u.reply.statuscode;
-	reason= fl->u.reply.reason;
-    
+	if(msg== FAKED_REPLY)
+	{
+		code = 408;
+		reason.s= "Request Timeout";
+		reason.len= strlen(reason.s)- 1;
+	}
+	else
+	{
+		code= msg->first_line.u.reply.statuscode;
+		reason= msg->first_line.u.reply.reason;
+	}
+
 	DBG("PUA_XMPP: Sipreply2Xmpp: to_uri= %s\n\t from_uri= %s\n",
 			to_uri.s, from_uri.s);
 
@@ -966,7 +976,7 @@ void Sipreply2Xmpp(ua_pres_t* hentity, struct msg_start * fl)
 		pkg_free(err_reason);
 	xmlFreeDoc(doc);
 	
-	return ;
+	return 0;
 
 error:
 
@@ -974,7 +984,7 @@ error:
 		xmlFreeDoc(doc);
 	if(err_reason)
 		pkg_free(err_reason);
-	return ;
+	return -1;
 
 }
 
