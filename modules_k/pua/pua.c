@@ -648,7 +648,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			goto error;
 		};
 	
-		str_hdr= subs_build_hdr(&p->contact, expires, p->event, NULL);
+		str_hdr= subs_build_hdr(&p->contact, expires, p->event, p->extra_headers);
 		if(str_hdr== NULL || str_hdr->s== NULL)
 		{
 			LOG(L_ERR, "PUA:update_pua: Error while building extra headers\n");

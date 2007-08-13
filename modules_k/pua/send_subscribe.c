@@ -343,6 +343,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.event= hentity->event;
 			subs.id= hentity->id;
 			subs.outbound_proxy= hentity->outbound_proxy;
+			subs.extra_headers= hentity->extra_headers;
 			if(send_subscribe(&subs)< 0)
 			{
 				LOG(L_ERR, "PUA:subs_cback_func: ERROR when trying to send SUBSCRIBE\n");
@@ -413,6 +414,9 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		+msg->callid->body.len+ record_route.len+ hentity->contact.len+
 		hentity->id.len )*sizeof(char);
 
+	if(hentity->extra_headers)
+		size+= sizeof(str)+ hentity->extra_headers->len*sizeof(char);
+
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
@@ -478,6 +482,17 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		presentity->id.len= hentity->id.len; 
 		size+= presentity->id.len;
 	}
+	
+	if(hentity->extra_headers)
+	{
+		presentity->extra_headers= (str*)((char*)presentity+ size);
+		size+= sizeof(str);
+		presentity->extra_headers->s=(char*)presentity+ size;
+		memcpy(presentity->extra_headers->s, hentity->extra_headers->s, 
+			hentity->extra_headers->len);
+		presentity->extra_headers->len= hentity->extra_headers->len; 
+		size+= hentity->extra_headers->len;
+	}
 
 	presentity->event|= hentity->event;
 	presentity->flag= hentity->flag;
@@ -519,6 +534,9 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 	
 	if(subs->outbound_proxy && subs->outbound_proxy->len && subs->outbound_proxy->s )
 		size+= sizeof(str)+ subs->outbound_proxy->len* sizeof(char);
+
+	if(subs->extra_headers && subs->extra_headers->s)
+		size+= sizeof(str)+ subs->extra_headers->len* sizeof(char);
 
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
@@ -574,6 +592,16 @@ ua_pres_t* build_cback_param(subs_info_t* subs)
 		memcpy(hentity->id.s, subs->id.s, subs->id.len);
 		hentity->id.len= subs->id.len;
 		size+= subs->id.len;
+	}
+	if(subs->extra_headers)
+	{
+		hentity->extra_headers= (str*)((char*)hentity+ size);
+		size+= sizeof(str);
+		hentity->extra_headers->s= (char*)hentity+ size;
+		memcpy(hentity->extra_headers->s, subs->extra_headers->s,
+				subs->extra_headers->len);
+		hentity->extra_headers->len= subs->extra_headers->len;
+		size+= subs->extra_headers->len;
 	}
 	hentity->flag= subs->source_flag;
 	hentity->event= subs->event;
