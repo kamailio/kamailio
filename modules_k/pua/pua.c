@@ -53,7 +53,7 @@
 #include "pidf.h"
 
 MODULE_VERSION
-#define PUA_TABLE_VERSION 4
+#define PUA_TABLE_VERSION 5
 
 struct tm_binds tmb;
 htable_t* HashT= NULL;
@@ -294,7 +294,7 @@ static void destroy(void)
 int db_restore()
 {
 	ua_pres_t* p= NULL;
-	db_key_t result_cols[15]; 
+	db_key_t result_cols[17]; 
 	db_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
@@ -302,12 +302,12 @@ int db_restore()
 	str etag, tuple_id;
 	str watcher_uri, call_id;
 	str to_tag, from_tag;
-	str record_route, contact;
+	str record_route, contact, extra_headers;
 	int size= 0, i;
 	int n_result_cols= 0;
-	int puri_col,pid_col,expires_col,flag_col,etag_col;
+	int puri_col,pid_col,expires_col,flag_col,etag_col, desired_expires_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col;
-	int event_col,contact_col,tuple_col,record_route_col;
+	int event_col,contact_col,tuple_col,record_route_col, extra_headers_col;
 
 	result_cols[puri_col=n_result_cols++]	="pres_uri";		
 	result_cols[pid_col=n_result_cols++]	="pres_id";	
@@ -323,6 +323,8 @@ int db_restore()
 	result_cols[event_col= n_result_cols++]	="event";
 	result_cols[record_route_col= n_result_cols++]	="record_route";
 	result_cols[contact_col= n_result_cols++]	="contact";
+	result_cols[extra_headers_col= n_result_cols++]	="extra_headers";
+	result_cols[desired_expires_col= n_result_cols++]	="desired_expires";
 	
 	if(!pua_db)
 	{
@@ -378,7 +380,8 @@ int db_restore()
 		memset(&record_route,	 0, sizeof(str));
 		memset(&pres_id,         0, sizeof(str));
 		memset(&contact,         0, sizeof(str));
-
+		memset(&extra_headers,   0, sizeof(str));
+		
 		pres_id.s= (char*)row_vals[pid_col].val.string_val;
 		if(pres_id.s)
 			pres_id.len = strlen(pres_id.s);
@@ -415,10 +418,15 @@ int db_restore()
 			contact.s= (char*)row_vals[contact_col].val.string_val;
 			contact.len = strlen(contact.s);
 		}
-		
+		extra_headers.s= (char*)row_vals[extra_headers_col].val.string_val;
+		if(extra_headers.s)
+			extra_headers.len= strlen(extra_headers.s);
+
 		size= sizeof(ua_pres_t)+ sizeof(str)+ pres_uri.len+ pres_id.len+
 					tuple_id.len;
-		
+		if(extra_headers.len)
+				size+= sizeof(str)+ extra_headers.len* sizeof(char);
+
 		if(watcher_uri.s)
 			size+= sizeof(str)+ watcher_uri.len+ call_id.len+ to_tag.len+
 				from_tag.len+ record_route.len+ contact.len;
@@ -493,9 +501,19 @@ int db_restore()
 
 			p->cseq= row_vals[cseq_col].val.int_val;
 		}
-		
+		if(extra_headers.s)
+		{
+			p->extra_headers= (str*)((char*)p+ size);
+			size+= sizeof(str);
+			p->extra_headers->s= (char*)p+ size;
+			memcpy(p->extra_headers->s, extra_headers.s, extra_headers.len);
+			p->extra_headers->len= extra_headers.len;
+			size+= extra_headers.len;
+		}
+
 		p->event= row_vals[event_col].val.int_val;
 		p->expires= row_vals[expires_col].val.int_val;
+		p->desired_expires= row_vals[desired_expires_col].val.int_val;
 		p->flag|=	row_vals[flag_col].val.int_val;
 
 		memset(&p->etag, 0, sizeof(str));
@@ -697,17 +715,17 @@ error:
 void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
-	db_key_t q_cols[16], result_cols[1];
+	db_key_t q_cols[19], result_cols[1];
 	db_res_t *res= NULL;
-	db_key_t db_cols[3];
-	db_val_t q_vals[16], db_vals[4];
+	db_key_t db_cols[5];
+	db_val_t q_vals[19], db_vals[5];
 	db_op_t  db_ops[1] ;
 	int n_query_cols= 0, n_query_update= 0;
 	int n_update_cols= 0;
 	int i;
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,record_route_col,cseq_col;
-	int no_lock= 0, contact_col;
+	int no_lock= 0, contact_col, desired_expires_col, extra_headers_col;
 	
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
@@ -763,7 +781,7 @@ void db_update(unsigned int ticks,void *param)
 	q_vals[tuple_col].type = DB_STR;
 	q_vals[tuple_col].nul = 0;
 	n_query_cols++;
-
+	
 	q_cols[cseq_col= n_query_cols]="cseq";
 	q_vals[cseq_col].type = DB_INT;
 	q_vals[cseq_col].nul = 0;
@@ -772,6 +790,11 @@ void db_update(unsigned int ticks,void *param)
 	q_cols[expires_col= n_query_cols] ="expires";
 	q_vals[expires_col].type = DB_INT;
 	q_vals[expires_col].nul = 0;
+	n_query_cols++;
+	
+	q_cols[desired_expires_col= n_query_cols] ="desired_expires";
+	q_vals[desired_expires_col].type = DB_INT;
+	q_vals[desired_expires_col].nul = 0;
 	n_query_cols++;
 
 	q_cols[record_route_col= n_query_cols] ="record_route";
@@ -783,6 +806,13 @@ void db_update(unsigned int ticks,void *param)
 	q_vals[contact_col].type = DB_STR;
 	q_vals[contact_col].nul = 0;
 	n_query_cols++;
+
+	/* must keep this the last  column to be inserted */
+	q_cols[extra_headers_col= n_query_cols] ="extra_headers";
+	q_vals[extra_headers_col].type = DB_STR;
+	q_vals[extra_headers_col].nul = 0;
+	n_query_cols++;
+
 
 	/* cols and values used for update */
 	db_cols[0]= "expires";
@@ -797,6 +827,10 @@ void db_update(unsigned int ticks,void *param)
 	db_vals[2].type = DB_STR;
 	db_vals[2].nul = 0;
 
+	db_cols[3]= "desired_expires";
+	db_vals[3].type = DB_INT;
+	db_vals[3].nul = 0;
+	
 	result_cols[0]= "expires";
 
 	if(pua_db== NULL)
@@ -868,18 +902,14 @@ void db_update(unsigned int ticks,void *param)
 					db_vals[0].val.int_val= p->expires;
 					n_update_cols++;
 
-					db_cols[1]= "cseq";
-					db_vals[1].type = DB_INT;
-					db_vals[1].nul = 0;
 					db_vals[1].val.int_val= p->cseq	;
 					n_update_cols++;
 					
-					db_cols[2]= "etag";
-					db_vals[2].type = DB_STR;
-					db_vals[2].nul = 0;
 					db_vals[2].val.str_val= p->etag	;
 					n_update_cols++;
 						
+					db_vals[3].val.int_val= p->desired_expires;
+					n_update_cols++;
 					
 					DBG("PUA: db_update: Updating ..n_query_update= %d\t"
 						" n_update_cols= %d\n", n_query_update, n_update_cols);
@@ -941,12 +971,16 @@ void db_update(unsigned int ticks,void *param)
 					q_vals[fromtag_col].val.str_val = p->from_tag;
 					q_vals[cseq_col].val.int_val= p->cseq;
 					q_vals[expires_col].val.int_val = p->expires;
+					q_vals[desired_expires_col].val.int_val = p->desired_expires;
 					q_vals[event_col].val.int_val = p->event;
-					if(p->record_route.s)
-						DBG("PUA: db_update: record has record_route\\t n_query_cols= %d\n",n_query_cols );
-
+					
 					q_vals[record_route_col].val.str_val = p->record_route;
 					q_vals[contact_col].val.str_val = p->contact;
+					
+					if(p->extra_headers)
+						q_vals[extra_headers_col].val.str_val = *(p->extra_headers);
+					else
+						n_query_cols--;
 						
 					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_query_cols )<0)
 					{

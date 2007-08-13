@@ -640,7 +640,7 @@ int send_subscribe(subs_info_t* subs)
 	str* str_hdr= NULL;
 	int ret= 0;
 	unsigned int hash_code;
-	ua_pres_t* hentity= NULL;
+	ua_pres_t* hentity= NULL, pres;
 	int expires;
 	int flag;
 	int result;
@@ -669,8 +669,13 @@ int send_subscribe(subs_info_t* subs)
 
 	lock_get(&HashT->p_records[hash_code].lock);
 
-	presentity= search_htable(subs->pres_uri, subs->watcher_uri,
-				 subs->source_flag, subs->id, NULL, hash_code);
+	memset(&pres, 0, sizeof(ua_pres_t));
+	pres.pres_uri= subs->pres_uri;
+	pres.watcher_uri= subs->watcher_uri;
+	pres.flag= subs->source_flag;
+	pres.id= subs->id;
+
+	presentity= search_htable(&pres, hash_code);
 
 	/* if flag == INSERT_TYPE insert no matter what the search result is */
 	if(subs->flag & INSERT_TYPE)

@@ -177,8 +177,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 		hash_code= core_hash(hentity->pres_uri, NULL,HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
-		presentity= search_htable( hentity->pres_uri, NULL, hentity->flag,
-			hentity->id,(hentity->etag.s)?&hentity->etag: NULL,hash_code);
+		presentity= search_htable( hentity, hash_code);
 		if(presentity)
 		{
 			if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH)
@@ -270,8 +269,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	hash_code= core_hash(hentity->pres_uri, NULL, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 	
-	presentity= search_htable(hentity->pres_uri, NULL,hentity->flag,
-			hentity->id,(hentity->etag.s)?&hentity->etag: NULL,hash_code);
+	presentity= search_htable(hentity, hash_code);
 	if(presentity)
 	{
 			DBG("PUA:publ_cback_func: update record\n");
@@ -388,7 +386,7 @@ int send_publish( publ_info_t* publ )
 	ua_pres_t* presentity= NULL;
 	str* body= NULL;
 	str* tuple_id= NULL;
-	ua_pres_t* cb_param= NULL;
+	ua_pres_t* cb_param= NULL, pres;
 	unsigned int hash_code;
 	str etag= {0, 0};
 	int ver= 0;
@@ -408,12 +406,19 @@ int send_publish( publ_info_t* publ )
 		goto error;
 	}	
 
+	memset(&pres, 0, sizeof(ua_pres_t));
+	pres.pres_uri= publ->pres_uri;
+	pres.flag= publ->source_flag;
+	pres.id= publ->id;
+
+	if(publ->etag)
+		pres.etag= *publ->etag;
+
 	hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
 
 	lock_get(&HashT->p_records[hash_code].lock);
 	
-	presentity= search_htable(publ->pres_uri, NULL,
-			     publ->source_flag, publ->id, publ->etag, hash_code);
+	presentity= search_htable(&pres, hash_code);
 
 	if(publ->etag && presentity== NULL)
 	{

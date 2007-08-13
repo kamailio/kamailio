@@ -101,8 +101,7 @@ typedef struct htable{
 
 htable_t* new_htable();
 
-ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG,
-		str id, str* etag, unsigned int hash_code);
+ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code);
 
 void insert_htable(ua_pres_t* presentity );
 

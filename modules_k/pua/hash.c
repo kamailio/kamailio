@@ -104,51 +104,42 @@ error:
 
 }
 
-ua_pres_t* search_htable(str* pres_uri, str* watcher_uri, int FLAG, 
-			str id, str* etag,  unsigned int hash_code)
+ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL,* L= NULL;
 
 	L= HashT->p_records[hash_code].entity;
 	DBG("PUA: search_htable: core_hash= %u\n", hash_code);
-	if(FLAG& BLA_SUBSCRIBE)
-	{
-		DBG("PUA: search_htable: Search BLA_SUBSCRIBE_FLAG\n");
-	}
 
 	for(p= L->next; p; p=p->next)
 	{
-		if(p->flag & FLAG)
+		if((p->flag & pres->flag) && (p->event & pres->event))
 		{
-			DBG("PUA: search_htable:pres_uri= %.*s len= %d\n",
-					p->pres_uri->len, p->pres_uri->s, p->pres_uri->len);
-			DBG("PUA: search_htable:searched uri= %.*s len= %d\n",
-					pres_uri->len,pres_uri->s, pres_uri->len);
-			if((p->pres_uri->len==pres_uri->len) &&
-					(strncmp(p->pres_uri->s, pres_uri->s,pres_uri->len)==0))
+			if((p->pres_uri->len==pres->pres_uri->len) &&
+					(strncmp(p->pres_uri->s, pres->pres_uri->s,pres->pres_uri->len)==0))
 			{
-				if(id.s && id.len) 
+				if(pres->id.s && pres->id.len) 
 				{	
-					if(!(id.len== p->id.len &&
-						strncmp(p->id.s, id.s, id.len)==0))
+					if(!(pres->id.len== p->id.len &&
+						strncmp(p->id.s, pres->id.s,pres->id.len)==0))
 							continue;
 				}				
 
-				if(watcher_uri)
+				if(pres->watcher_uri)
 				{
-					if(p->watcher_uri->len==watcher_uri->len &&
-						(strncmp(p->watcher_uri->s, watcher_uri->s,
-								 watcher_uri->len )==0))
+					if(p->watcher_uri->len==pres->watcher_uri->len &&
+						(strncmp(p->watcher_uri->s, pres->watcher_uri->s,
+								  pres->watcher_uri->len )==0))
 					{
 						break;
 					}
 				}
 				else
 				{
-					if(etag)
+					if(pres->etag.s)
 					{
-						if(etag->len== p->etag.len &&
-								strncmp(p->etag.s, etag->s, etag->len)==0)
+						if(pres->etag.len== p->etag.len &&
+							strncmp(p->etag.s, pres->etag.s,pres->etag.len)==0)
 							break;		
 					}	
 				}
@@ -171,8 +162,7 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires,
 	DBG("PUA:hash_update ..\n");
 
 
-	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-				 presentity->flag, presentity->id, &presentity->etag, hash_code);
+	p= search_htable(presentity, hash_code);
 	if(p== NULL)
 	{
 		DBG("PUA:hash_update : no recod found\n");
@@ -236,8 +226,7 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 	ua_pres_t* p= NULL, *q= NULL;
 	DBG("PUA:delete_htable...\n");
 
-	p= search_htable(presentity->pres_uri, presentity->watcher_uri,
-			 presentity->flag, presentity->id, &presentity->etag, hash_code);
+	p= search_htable(presentity, hash_code);
 	if(p== NULL)
 		return;
 
