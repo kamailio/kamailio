@@ -173,6 +173,18 @@ mantainer-clean: distclean
 	 done 
 
 
+.PHONY: doxygen
+doxygen:
+	-@mkdir -p $(doxygen_dir)
+	doxygen ./$(COREPATH)/doc/doxygen/ser.doxygen
+
+
+.PHONY: clean_doxygen
+clean_doxygen:
+	-@rm -rf $(doxygen_dir)/{xml,man,rtf,latex,html}
+	-@rmdir --ignore-fail-on-non-empty -p $(doxygen_dir) || true
+
+
 .PHONY: TAGS
 TAGS:
 	$(MKTAGS) 

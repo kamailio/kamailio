@@ -68,3 +68,4 @@ install-libs:
 	@for lib in $(dir $(SER_LIBS)); do \
 		$(MAKE) -C "$${lib}" install-if-newer ;\
 	done
+

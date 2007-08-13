@@ -166,6 +166,9 @@ endif
 endif
 endif
 
+# Doxygen directory
+doxygen_dir=doc/doxygen
+
  # install location
 DESTDIR ?= $(LOCALBASE)
 PREFIX ?= $(DESTDIR)
