@@ -3458,6 +3458,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e, in
 		LOG(L_ERR, "ERROR: dns_cache_clone_entry: out of memory\n");
 		return NULL;
 	}
+	memset(new, 0, rounded_size+rr_size+rdata_size);
 	/* clone the entry */
 	memcpy(new, e, size);
 	/* fix the values and pointers */
@@ -3500,8 +3501,6 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e, in
 
 
 	if (rdata_size) {
-		memset(new+size, 0, rounded_size-size+rr_size+rdata_size);
-
 		/* set the pointer to the new rr structure */
 		new_rr = (void*)((char*)new + rounded_size);
 		new_rr->rdata = (void*)((char*)new_rr+rr_size);
