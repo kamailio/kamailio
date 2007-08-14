@@ -52,7 +52,7 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 	char *prefix, *suffix, *crlf;
 	int prefix_len, suffix_len;
 	struct hdr_field *hf;
-	str rcv_addr;
+	str rcv_addr = {0, 0};
 	char *src_ip;
 		
 	prefix = suffix = crlf = 0;
@@ -61,7 +61,7 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 	prefix = pkg_malloc(prefix_len);
 	if (!prefix) {
 		LOG(L_ERR, "prepend_path(): No memory left for prefix\n");
-		goto out;
+		goto out1;
 	}
 	memcpy(prefix, PATH_PREFIX, PATH_PREFIX_LEN);
 	if (user->len) {
@@ -73,7 +73,7 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 	suffix = pkg_malloc(suffix_len);
 	if (!suffix) {
 		LOG(L_ERR, "prepend_path(): No memory left for suffix\n");
-		goto out;
+		goto out1;
 	}
 	memcpy(suffix, PATH_LR_PARAM, PATH_LR_PARAM_LEN);
 	if(recv)
@@ -82,13 +82,13 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 	crlf = pkg_malloc(PATH_CRLF_LEN);
 	if (!crlf) {
 		LOG(L_ERR, "prepend_path(): No memory left for crlf\n");
-		goto out;
+		goto out1;
 	}
 	memcpy(crlf, PATH_CRLF, PATH_CRLF_LEN);
 
 	if (parse_headers(_m, HDR_PATH_F, 0) < 0) {
 		LOG(L_ERR, "prepend_path(): Failed to parse message for Path header\n");
-		goto out;
+		goto out1;
 	}
 	for (hf = _m->headers; hf; hf = hf->next) {
 		if (hf->type == HDR_PATH_T) {
@@ -103,40 +103,43 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 		l = anchor_lump(_m, _m->unparsed - _m->buf, 0, 0);
 	if (!l) {
 		LOG(L_ERR, "ERROR: prepend_path(): Failed to get anchor\n");
-		goto out;
+		goto out1;
 	}
 
 	l = insert_new_lump_before(l, prefix, prefix_len, 0);
-	if (!l) goto lump_err;
+	if (!l) goto out1;
 	l = insert_subst_lump_before(l, SUBST_SND_ALL, 0);
-	if (!l) goto lump_err;
+	if (!l) goto out2;
 	l = insert_new_lump_before(l, suffix, suffix_len, 0);
-	if (!l) goto lump_err;
+	if (!l) goto out2;
 	if (recv) {
 		/* TODO: agranig: optimize this one! */
 		src_ip = ip_addr2a(&_m->rcv.src_ip);
 		rcv_addr.s = pkg_malloc(4 + IP_ADDR_MAX_STR_SIZE + 7); /* sip:<ip>:<port>\0 */
 		if(!rcv_addr.s) {
 			LOG(L_ERR, "ERROR: prepend_path(): No memory left for receive-address\n");
-			goto out;
+			goto out3;
 		}
 		rcv_addr.len = snprintf(rcv_addr.s, 4 + IP_ADDR_MAX_STR_SIZE + 6, "sip:%s:%u", src_ip, _m->rcv.src_port);
 		l = insert_new_lump_before(l, rcv_addr.s, rcv_addr.len, 0);
-		if (!l) goto lump_err;
+		if (!l) goto out3;
 	}
 	l = insert_new_lump_before(l, crlf, CRLF_LEN+1, 0);
-	if (!l) goto lump_err;
+	if (!l) goto out4;
 	
 	return 1;
 	
-lump_err:
+out1:
+	if (prefix) pkg_free(prefix);
+out2:
+	if (suffix) pkg_free(suffix);
+out3:
+	if (rcv_addr.s) pkg_free(rcv_addr.s);
+out4:
+	if (crlf) pkg_free(crlf);
+
 	LOG(L_ERR, "ERROR: prepend_path(): Failed to insert prefix lump\n");
 
-out:
-	
-	if (prefix) pkg_free(prefix);
-	if (suffix) pkg_free(suffix);
-	if (crlf) pkg_free(crlf);
 	return -1;
 }
 
@@ -189,14 +192,12 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 		LOG(L_ERR, "ERROR: path_rr_callback: Failed to parse route parametes\n");
 		return;
 	}
-	for (;params; params = params->next) {
-		if (params->type == P_RECEIVED) {
-			if (set_dst_uri(_m, &hooks.contact.received->body) != 0) {
-				LOG(L_ERR, "ERROR: path_rr_callback: Failed to set dst-uri\n");
-				free_params(params);
-				return;
-			}
-			break;
+
+	if (hooks.contact.received) {
+		if (set_dst_uri(_m, &hooks.contact.received->body) != 0) {
+			LOG(L_ERR, "ERROR: path_rr_callback: Failed to set dst-uri\n");
+			free_params(params);
+			return;
 		}
 	}
 	free_params(params);
