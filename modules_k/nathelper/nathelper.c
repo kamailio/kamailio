@@ -2575,12 +2575,21 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 				newip.s = (argc < 2) ? str2 : argv[1];
 				newip.len = strlen(newip.s);
 			}
+			/* marker to double check : newport goes: str -> int -> str ?!?! */
 			newport.s = int2str(port, &newport.len); /* beware static buffer */
 			/* Alter port. */
 			body1.s = m1p;
 			body1.len = bodylimit - body1.s;
-			if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
-				return -1;
+			/* do not do it if old port was 0 (means media disable)
+			 * - check if actually should be better done in rtpptoxy,
+			 *   by returning also 0
+			 * - or by not sending to rtpproxy the old port if 0
+			 */
+			if(oldport.len!=1 || oldport.s[0]!='0')
+			{
+				if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
+					return -1;
+			}
 			/*
 			 * Alter IP. Don't alter IP common for the session
 			 * more than once.
