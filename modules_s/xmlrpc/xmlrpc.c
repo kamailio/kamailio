@@ -2,27 +2,27 @@
  * $Id$
  *
  * Copyright (C) 2005 iptelorg GmbH
+ * Written by Jan Janak <jan@iptel.org>
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SER, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
+ * SER is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
+ * For a license to use the SER software under conditions other than those
+ * described here, or to purchase support for this software, please contact
+ * iptel.org by e-mail at the following addresses: info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * SER is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc., 59
+ * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #define _XOPEN_SOURCE 4           /* strptime */
@@ -62,6 +62,85 @@
 #include "../../route.h" /* route_get */
 #include "http.h"
 
+/** @addtogroup xmlrpc
+ * @ingroup modules
+ * @{
+ *
+ * <h1>Overview of Operation</h1> 
+ * This module provides XML-RPC based interface to management functions in
+ * SER. You can send XML-RPC requests to SER when the module is loaded and
+ * configured and it will send XML-RPC replies back.  XML-RPC requests are
+ * encoded as XML documents in the body of HTTP requests. Due to similarity
+ * between HTTP and SIP SER can easily parse HTTP requests and extract the XML
+ * document from their body.
+ *
+ * When you load this module into SER, it will register a callback function
+ * that will be called whenever the SER core receives a request with method it
+ * does not understand. The main callback function is process_xmlrpc(). The
+ * function first verifies if the protocol identifier inside the request is
+ * HTTP and whether the request method is either GET or POST. If both
+ * conditions are met then it will signal to the SER core that it is
+ * processing the request, otherwise it will reject the request and the SER
+ * core will pass the requests to other callbacks if they exist.
+ *
+ * As the next step the request will be converted from HTTP request to a SIP
+ * request to ensure that it can be processed by SER and its modules. The
+ * conversion will modify the URI in the Request-URI of the request, the new
+ * URI will be a SIP URI. In addition to that it will add a fake Via header
+ * field and copy all remaining header fields from the original HTTP request.
+ * The conversion is implemented in http_xmlrpc2sip() function.
+ * 
+ * After the conversion the module will execute the route statement whose
+ * number is configured in "route" module parameter. That route stament may
+ * perform additional security checks and when it ensures that the client is
+ * authorized to execute management functions then it will call dispatch_rpc()
+ * module function provided by this module.
+ *
+ * dispatch_rpc() function extracts the XML-RPC document from the body of the
+ * request to determine the name of the method to be called and then it
+ * searches through the list of all management functions to find a function
+ * with matching name. If such a function is found then dispatch_rpc() will
+ * pass control to the function to handle the request. dispatch_rpc() will
+ * send a reply back to the client when the management function terminates, if
+ * the function did not do that explicitly.
+ * 
+ * <h2>Memory Management</h2> 
+ * The module provides implementation for all the functions required by the
+ * management interface in SER, such as rpc->printf, rpc->add, rpc->struct_add
+ * and so on. Whenever the management function calls one of the functions then
+ * corresponding function in this module will be called to handle the request.
+ *
+ * The implementation functions build the reply, that will be sent to the
+ * client, as they execute and they need to allocate memory to do that. That
+ * memory must be freed again after the reply has been sent to the client. To
+ * remember all the memory regions allocated during the execution of the
+ * management function all functions within this module record all allocated
+ * memory in the global variable called waste_bin. dispatch_rpc() functions
+ * executes function collect_garbage() after the reply has been sent to the
+ * client to free all memory that was allocated from the management function.
+ * that was executed.
+ *
+ * <h2>Request Context</h2> 
+ * Before the module calls a management function it prepares a structure
+ * called context. The context is defined in structure rpc_ctx and it is
+ * passed as one of parameter to the management function being called. The
+ * context contains all the data that is needed during the execution of the
+ * management function, such as the pointer to the request being processed, a
+ * pointer to the reply being built, and so on.
+ *
+ * Another parameter to the management function being called is a structure
+ * that contains pointers to all implementation functions. This structure is
+ * of type rpc_t, this module keeps one global variable of that type called
+ * func_param and a pointer to that variable is passed to all management
+ * functions. The global variable is initialized in mod_init().
+ */
+
+/** @file 
+ *
+ * This is the main file of XMLRPC SER module which contains all the functions
+ * related to XML-RPC processing, as well as the module interface.
+ */
+
 /*
  * FIXME: Decouple code and reason phrase from reply body
  *        Escape special characters in strings
@@ -72,9 +151,9 @@ MODULE_VERSION
 int snprintf(char *str, size_t size, const char *format, ...);
 int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 
-static int process_xmlrpc(struct sip_msg* msg);
-static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2);
-static int xmlrpc_reply(struct sip_msg* msg, char* code, char* reason);
+static int process_xmlrpc(sip_msg_t* msg);
+static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2);
+static int xmlrpc_reply(sip_msg_t* msg, char* code, char* reason);
 static int mod_init(void);
 
 /* first line (w/o the version) of the sip msg created from the http xmlrpc */
@@ -90,6 +169,12 @@ static int mod_init(void);
 
 #define LF "\n"
 
+/** The beginning of XML document indicating an error.
+ *
+ * This is the beginning of the XML document that will be sent back to the
+ * client when the server encountered an error.  It will be immediately
+ * followed by a reason phrase.
+ */
 #define FAULT_PREFIX         \
 "<?xml version=\"1.0\"?>" LF \
 "<methodResponse>" LF        \
@@ -100,6 +185,10 @@ static int mod_init(void);
 "<name>faultCode</name>" LF  \
 "<value><int>"
 
+
+/** The text of XML document indicating error that goes between reason code
+ * and reason phrase.
+ */
 #define FAULT_BODY            \
 "</int></value>" LF           \
 "</member>" LF                \
@@ -107,6 +196,12 @@ static int mod_init(void);
 "<name>faultString</name>" LF \
 "<value><string>"
 
+
+/** The end of XML document that indicates an error.  
+ *
+ * This is the closing part of the XML-RPC document that indicates an error on
+ * the server.
+ */
 #define FAULT_SUFFIX   \
 "</string></value>" LF \
 "</member>" LF         \
@@ -115,6 +210,9 @@ static int mod_init(void);
 "</fault>" LF          \
 "</methodResponse>"
 
+
+/** The beginning of XML-RPC reply sent to the client.
+ */
 #define SUCCESS_PREFIX       \
 "<?xml version=\"1.0\"?>" LF \
 "<methodResponse>" LF        \
@@ -122,6 +220,10 @@ static int mod_init(void);
 "<param>" LF                 \
 "<value>"
 
+
+/** The closing part of XML-RPC reply document sent to
+ * the client.
+ */
 #define SUCCESS_SUFFIX \
 "</value>" LF          \
 "</param>" LF          \
@@ -156,60 +258,126 @@ static str name_prefix    = STR_STATIC_INIT("<name>");
 static str name_suffix    = STR_STATIC_INIT("</name>");
 
 
+/** Garbage collection data structure.
+ *
+ * This is the data structure used by the garbage collector in this module.
+ * When the xmlrpc SER module identifies the management function to be called,
+ * it calls corresponding function in SER. The function being called adds data
+ * to the reply, that will be later sent to the client, as it executes. This
+ * module needs to allocate memory for such data and the memory will be
+ * re-claimed after the reply was sent out.  All the memory allocated this way
+ * is recorded in this data structure so that it can be identified and
+ * re-claimed later (when the reply is being sent out).
+ * 
+ */
 static struct garbage {
 	enum {
 		JUNK_XMLCHAR,
-		JUNK_RPCSTRUCT
-	} type;
-	void* ptr;
-	struct garbage* next;
+		JUNK_RPCSTRUCT    /**< This type indicates that the memory block was
+						   * allocated for the RPC structure data type, this
+						   * type needs to be freed differently as it may
+						   * contain more allocated memory blocks
+						   */
+	} type;               /**< Type of the memory block */
+	void* ptr;            /**< Pointer to the memory block obtained from
+							 pkg_malloc */
+	struct garbage* next; /**< The linked list of all allocated memory
+							 blocks */
 } *waste_bin = 0;
 
 
+/** Representation of the XML-RPC reply being constructed.
+ *  
+ * This data structure describes the XML-RPC reply that is being constructed
+ * and will be sent to the client.
+ */
 struct xmlrpc_reply {
-	int code;
-	char* reason;
-	str body;
-	str buf;
+	int code;     /**< Reply code which indicates the type of the reply */
+	char* reason; /**< Reason phrase text which provides human-readable
+				   * description that augments the reply code */
+	str body;     /**< The XML-RPC document body built so far */
+	str buf;      /**< The memory buffer allocated for the reply, this is
+				   * where the body attribute of the structure points to
+				   */
 };
 
 
-/*
- * Global variables
+/** The context of the XML-RPC request being processed.
+ * 
+ * This is the data structure that contains all data related to the XML-RPC
+ * request being processed, such as the reply code and reason, data to be sent
+ * to the client in the reply, and so on.
+ *
+ * There is always one context per XML-RPC request.
  */
 typedef struct rpc_ctx {
-	struct sip_msg* msg;        /* The SIP/HTTP through which the RPC has been received */
-	struct xmlrpc_reply reply;  /* XML-RPC reply */
-	struct rpc_struct* structs; /* Structures to be added to the reply */
-	int reply_sent;             /* The flag is set after a reply is sent */
-	char* method;               /* Name of the method to call */
-	unsigned int flags;         /* Flags, such as return value type */
-	xmlDocPtr doc;              /* XML-RPC document */
-	xmlNodePtr act_param;       /* Actual parameter */
+	sip_msg_t* msg;        /**< The SIP/HTTP through which the RPC has been
+							  received */
+	struct xmlrpc_reply reply;  /**< XML-RPC reply to be sent to the client */
+	struct rpc_struct* structs; /**< Structures to be added to the reply */
+	int reply_sent;             /**< The flag is set after a reply is sent,
+								   this prevents a single reply being sent
+								   twice */
+	char* method;               /**< Name of the management function to be
+								   called */
+	unsigned int flags;         /**< Various flags, such as return value
+								   type */
+	xmlDocPtr doc;              /**< Pointer to the XML-RPC request
+								   document */
+	xmlNodePtr act_param;       /**< Pointer to the parameter being processed
+								   in the XML-RPC request document */
 } rpc_ctx_t;
 
 
+/** The structure represents a XML-RPC document structure.
+ *
+ * This is the data structure that represents XML-RPC structures that are sent
+ * to the client in the XML-RPC reply documents. A XML-RPC document structure
+ * is compound consting of name-value pairs.
+ * @sa http://www.xml-rpc.com
+ */
 struct rpc_struct {
-	xmlNodePtr struct_in;           /* Pointer to the structure parameter */
-	struct xmlrpc_reply struct_out; /* Structure to be sent in reply */
-	struct xmlrpc_reply* reply;     /* Print errors here */
-	int n;                          /* Number of structure members created */
-	xmlDocPtr doc;                  /* XML-RPC document */
-	int offset;                     /* Offset in the reply where the structure should be printed */
+	xmlNodePtr struct_in;           /**< Pointer to the structure parameter */
+	struct xmlrpc_reply struct_out; /**< Structure to be sent in reply */
+	struct xmlrpc_reply* reply;     /**< Print errors here */
+	int n;                          /**< Number of structure members
+									   created */
+	xmlDocPtr doc;                  /**< XML-RPC document */
+	int offset;                     /**< Offset in the reply where the
+									   structure should be printed */
 	struct rpc_struct* next;
 };
 
+
+/** The context of the XML-RPC request being processed.
+ *
+ * This is a global variable that records the context of the XML-RPC request
+ * being currently processed.  
+ * @sa rpc_ctx
+ */
 static rpc_ctx_t ctx;
 
 static void close_doc(rpc_ctx_t* ctx);
 static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...);
 static int fixup_xmlrpc_reply(void** param, int param_no);
 
-
+/** Pointers to the functions that implement the RPC interface
+ * of xmlrpc SER module
+ */
 static rpc_t func_param;
 
+/** Enable/disable additional introspection methods.  If set to 1 then the
+ * functions defined in http://scripts.incutio.com/xmlrpc/introspection.html
+ * will be available on the server. If set to 0 then the functions will be
+ * disabled.
+ */
 int enable_introspection = 1;
 static char* xmlrpc_route=0; /* default is the main route */
+
+
+/** Reference to the sl (stateless replies) module of SER The sl module of SER
+ * is needed so that the xmlrpc SER module can send replies back to clients
+ */
 sl_api_t sl;
 
 static int xmlrpc_route_no=DEFAULT_RT;
@@ -252,48 +420,78 @@ struct module_exports exports = {
 #define ESC_LT "&lt;"
 #define ESC_AMP "&amp;"
 
+
+/** Adds arbitrary text to the XML-RPC reply being constructed, special
+ * characters < and & will be escaped.
+ *
+ * This function adds arbitrary text to the body of the XML-RPC reply being
+ * constructed. Note well that the function does not check whether the XML
+ * document being constructed is well-formed or valid. Use with care.
+ *
+ * @param reply Pointer to the structure representing the XML-RPC reply
+ *              being constructed.
+ * @param text The text to be appended to the XML-RPC reply.
+ * @return -1 on error, 0 if the text was added successfuly.
+ * @sa add_xmlrpc_reply()
+ */
 static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
 {
     char* p;
     int i;
 
     for(i = 0; i < text->len; i++) {
-	     /* 10 must be bigger than size of longest escape sequence */
-	if (reply->body.len >= reply->buf.len - 10) { 
-	    p = pkg_malloc(reply->buf.len + 1024);
-	    if (!p) {
-		set_fault(reply, 500, "Internal Server Error (No memory left)");
-		ERR("No memory left: %d\n", reply->body.len + 1024);
-		return -1;
-	    }
-	    memcpy(p, reply->body.s, reply->body.len);
-	    pkg_free(reply->buf.s);
-	    reply->buf.s = p;
-	    reply->buf.len += 1024;
-	    reply->body.s = p;
-	}
-
-	switch(text->s[i]) {
-	case '<':
-	    memcpy(reply->body.s + reply->body.len, ESC_LT, sizeof(ESC_LT) - 1);
-	    reply->body.len += sizeof(ESC_LT) - 1;
-	    break;
-
-	case '&':
-	    memcpy(reply->body.s + reply->body.len, ESC_AMP, sizeof(ESC_AMP) - 1);
-	    reply->body.len += sizeof(ESC_AMP) - 1;
-	    break;
-
-	default:
-	    reply->body.s[reply->body.len] = text->s[i];
-	    reply->body.len++;
-	    break;
-	}
+		/* 10 must be bigger than size of longest escape sequence */
+		if (reply->body.len >= reply->buf.len - 10) { 
+			p = pkg_malloc(reply->buf.len + 1024);
+			if (!p) {
+				set_fault(reply, 500, 
+						  "Internal Server Error (No memory left)");
+				ERR("No memory left: %d\n", reply->body.len + 1024);
+				return -1;
+			}
+			memcpy(p, reply->body.s, reply->body.len);
+			pkg_free(reply->buf.s);
+			reply->buf.s = p;
+			reply->buf.len += 1024;
+			reply->body.s = p;
+		}
+		
+		switch(text->s[i]) {
+		case '<':
+			memcpy(reply->body.s + reply->body.len, ESC_LT, 
+				   sizeof(ESC_LT) - 1);
+			reply->body.len += sizeof(ESC_LT) - 1;
+			break;
+			
+		case '&':
+			memcpy(reply->body.s + reply->body.len, ESC_AMP, 
+				   sizeof(ESC_AMP) - 1);
+			reply->body.len += sizeof(ESC_AMP) - 1;
+			break;
+			
+		default:
+			reply->body.s[reply->body.len] = text->s[i];
+			reply->body.len++;
+			break;
+		}
     }
     return 0;
 }
 
-
+/** Add arbitrary text to the XML-RPC reply being constructed, no escaping
+ * done.
+ * 
+ * This is a more efficient version of add_xmlrpc_reply_esc(), the function
+ * appends arbitrary text to the end of the XML-RPC reply being constructed,
+ * but the text must not contain any characters that need to be escaped in
+ * XML, such as < and & (or the characters must be escaped already).
+ *
+ * @param reply Pointer to the structure representing the XML-RPC reply
+ *              being constructed.
+ * @param text The text to be appended to the XML-RPC reply.
+ * @return -1 on error, 0 if the text was added successfuly.
+ * @sa add_xmlrpc_reply_esc()
+ */
 static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
 {
 	char* p;
@@ -316,6 +514,23 @@ static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
 }
 
 
+/** Adds arbitrary text to the XML-RPC reply being constructed, the text will
+ * be inserted at a specified offset within the XML-RPC reply.
+ *
+ * This function inserts arbitrary text in the XML-RPC reply that is being
+ * constructed, unlike add_xmlrp_reply(), this function will not append the
+ * text at the end of the reply, but it will insert the text in the middle of
+ * the reply at the position provided to the function in "offset"
+ * parameter. The function does not escape special characters and thus the
+ * text must not contain such characters (or the must be escaped already).
+ *
+ * @param reply The XML-RPC reply structure representing the reply being
+ *              constructed.
+ * @param offset The position of the first character where the text should be
+ *               inserted. 
+ * @param text The text to be inserted.
+ * @return 0 of the text was inserted successfuly, a negative number on error.
+ */
 static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply, unsigned int offset, str* text)
 {
 	char* p;
@@ -332,30 +547,45 @@ static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply, unsigned int offs
 		reply->buf.len += text->len + 1024;
 		reply->body.s = p;
 	}
-	memmove(reply->body.s + offset + text->len, reply->body.s + offset, reply->body.len - offset);
+	memmove(reply->body.s + offset + text->len, reply->body.s + offset, 
+			reply->body.len - offset);
 	memcpy(reply->body.s + offset, text->s, text->len);
 	reply->body.len += text->len;
 	return 0;
 }
 
 
-
+/** Returns the current lenght of the XML-RPC reply body.
+ *
+ * @param reply The XML-RPC reply being constructed
+ * @return Number of bytes of the XML-RPC reply body.
+ */
 static unsigned int get_reply_len(struct xmlrpc_reply* reply)
 {
 	return reply->body.len;
 }
 
 
-/*
- * Reset XMLRPC reply, discard everything that has been written so far
- * and set start from the beginning
+/* Resets XMLRPC reply body.
+ *
+ * This function discards everything that has been written so far and starts
+ * constructing the XML-RPC reply body from the beginning.
+ *
+ * @param reply The XML-RPC reply being constructed.
  */
 static void reset_xmlrpc_reply(struct xmlrpc_reply* reply)
 {
 	reply->body.len = 0;
 }
 
-
+/** Initialize XML-RPC reply data structure.
+ *
+ * This function initializes the data structure that contains all data related
+ * to the XML-RPC reply being created. The function must be called before any
+ * other function that adds data to the reply.
+ * @param reply XML-RPC reply structure to be initialized.
+ * @return 0 on success, a negative number on error.
+ */
 static int init_xmlrpc_reply(struct xmlrpc_reply* reply)
 {
 	reply->code = 200;
@@ -372,11 +602,20 @@ static int init_xmlrpc_reply(struct xmlrpc_reply* reply)
 	return 0;
 }
 
+
+/** Free all memory used by the XML-RPC reply structure. */
 static void clean_xmlrpc_reply(struct xmlrpc_reply* reply)
 {
 	if (reply->buf.s) pkg_free(reply->buf.s);
 }
 
+/** Create XML-RPC reply that indicates an error to the caller.
+ *
+ * This function is used to build the XML-RPC reply body that indicates that
+ * an error ocurred on the server. It is called when a management function in
+ * SER reports an error. The reply will contain the reason code and reason
+ * phrase text provided by the management function that indicated the error.
+ */
 static int build_fault_reply(struct xmlrpc_reply* reply)
 {
 	str reason_s, code_s;
@@ -394,8 +633,15 @@ static int build_fault_reply(struct xmlrpc_reply* reply)
 }
 
 
-
-/* Garbage collection */
+/** Add a memory registion to the list of memory blocks that
+ * need to be re-claimed later.
+ *
+ * @param type The type of the memory block (ordinary text or structure).
+ * @param ptr A pointer to the memory block.
+ * @param reply The XML-RPC the memory block is associated with.
+ * @return 0 on success, a negative number on error.
+ * @sa collect_garbage()
+ */
 static int add_garbage(int type, void* ptr, struct xmlrpc_reply* reply)
 {
 	struct garbage* p;
@@ -414,7 +660,9 @@ static int add_garbage(int type, void* ptr, struct xmlrpc_reply* reply)
 	return 0;
 }
 
-
+/** Re-claims all memory allocated in the process of building XML-RPC
+ * reply.
+ */
 static void collect_garbage(void)
 {
 	struct rpc_struct* s;
@@ -442,10 +690,15 @@ static void collect_garbage(void)
 }
 
 
-/*
- * Extract XML-RPC query from a SIP/HTTP message
+/** Extract XML-RPC query from a SIP/HTTP message.
+ *
+ * @param doc A pointer to string descriptor that will be filled
+ *            with the pointer to the beginning of the XML-RPC
+ *            document and length of the document.
+ * @param msg A structure representing the SIP/HTTP message 
+ *            carrying the XML-RPC document in body.
  */
-static int get_rpc_document(str* doc, struct sip_msg* msg)
+static int get_rpc_document(str* doc, sip_msg_t* msg)
 {
  	doc->s = get_body(msg);
 	if (!doc->s) {
@@ -457,10 +710,15 @@ static int get_rpc_document(str* doc, struct sip_msg* msg)
 }
 
 
-/*
- * Send a pre-defined error
+/** Send a reply to the client with given body.
+ *
+ * This function sends a 200 OK reply back to the client, the body of the
+ * reply will contain text provided to the function in "body" parameter.
+ *
+ * @param msg The request that generated the reply.
+ * @param body The text that will be put in the body of the reply.
  */
-static int send_reply(struct sip_msg* msg, str* body)
+static int send_reply(sip_msg_t* msg, str* body)
 {
 	if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) < 0) {
 		ERR("Error while adding reply lump\n");
@@ -476,18 +734,33 @@ static int send_reply(struct sip_msg* msg, str* body)
 }
 
 
-static int print_structures(struct xmlrpc_reply* reply, struct rpc_struct* st)
+static int print_structures(struct xmlrpc_reply* reply, 
+							struct rpc_struct* st)
 {
 	while(st) {
 		     /* Close the structure first */
 		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
-		if (add_xmlrpc_reply_offset(reply, st->offset, &st->struct_out.body) < 0) return -1;
+		if (add_xmlrpc_reply_offset(reply, st->offset, 
+									&st->struct_out.body) < 0) return -1;
 		st = st->next;
 	}
 	return 0;
 }
 
-
+/** Implementation of rpc_send function required by the management API in SER.
+ *
+ * This is the function that will be called whenever a management function in
+ * SER asks the management interface to send the reply to the client. The
+ * function will generate the XML-RPC document, put it in body of a SIP
+ * response and send the response to the client. The SIP/HTTP reply sent to
+ * the client will be always 200 OK, if an error ocurred on the server then it
+ * will be indicated in the XML document in body.
+ *
+ * @param ctx A pointer to the context structure of the XML-RPC request that
+ *            generated the reply.  
+ * @return 1 if the reply was already sent, 0 on success, a negative number on
+ *            error
+ */
 static int rpc_send(rpc_ctx_t* ctx)
 {
 	struct xmlrpc_reply* reply;
@@ -498,8 +771,10 @@ static int rpc_send(rpc_ctx_t* ctx)
 	if (reply->code >= 300) {
 		if (build_fault_reply(reply) < 0) return -1;
 	} else {
-		if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &array_suffix) < 0) return -1;
-		if (ctx->structs && print_structures(reply, ctx->structs) < 0) return -1;
+		if (ctx->flags & RET_ARRAY && 
+			add_xmlrpc_reply(reply, &array_suffix) < 0) return -1;
+		if (ctx->structs && 
+			print_structures(reply, ctx->structs) < 0) return -1;
 		if (add_xmlrpc_reply(reply, &success_suffix) < 0) return -1;
 	}
 	if (send_reply(ctx->msg, &reply->body) < 0) return -1;
@@ -522,6 +797,19 @@ static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...)
 	reply->reason = buf;
 }
 
+/** Implementation of rpc_fault function required by the management API in 
+ * SER.
+ *
+ * This function will be called whenever a management function in SER
+ * indicates that an error ocurred while it was processing the request. The
+ * function takes the reply code and reason phrase as parameters, these will
+ * be put in the body of the reply.
+ *
+ * @param ctx A pointer to the context structure of the request being 
+ *            processed.
+ * @param code Reason code.
+ * @param fmt Formatting string used to build the reason phrase.
+ */
 static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
 {
 	static char buf[REASON_BUF_LEN];
@@ -534,8 +822,25 @@ static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
 	ctx->reply.reason = buf;
 }
 
-
-static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure, struct xmlrpc_reply* reply)
+/** Create and initialize a new rpc_structure data structure.
+ *
+ * This function allocates and initializes memory for a new rpc_struct
+ * structure. If the caller provided non-NULL pointers in doc and structure
+ * parameters then the structure is coming from an XML-RPC request. If either
+ * of the pointers is NULL then we are creating a structure that will be
+ * attached to a XML-RPC reply sent to the client. The memory allocated in
+ * this function will be added to the garbage collection list.
+ *
+ * @param doc A pointer to the XML-RPC request document or NULL if we create
+ *            a structure that will be put in a reply.
+ * @param structure A pointer to opening tag of the structure in the XML-RPC
+ *                  request document or NULL if we create a structure that
+ *                  will be put in a XML-RPC reply.
+ * @param reply A pointer to xml_reply structure, NULL if it is a structure
+ *              coming from a XML-RPC request.
+ */
+static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure, 
+										struct xmlrpc_reply* reply)
 {
 	struct rpc_struct* p;
 
@@ -568,8 +873,26 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure, str
 	return 0;
 }
 
-
-static int print_value(struct xmlrpc_reply* res, struct xmlrpc_reply* err_reply, char fmt, va_list* ap)
+/** Converts the variables provided in parameter ap according to formatting
+ * string provided in parameter fmt into parameters in XML-RPC format.
+ *
+ * This function takes the parameters provided in ap parameter and creates
+ * XML-RPC formatted parameters that will be put in the document in res
+ * parameter. The format of input parameters is described in formatting string
+ * fmt which follows the syntax of the management API in SER. In the case of
+ * an error the function will generate an error reply in err_reply parameter
+ * instead.
+ * @param res A pointer to the XML-RPC result structure where the parameters
+ *            will be written.
+ * @param err_reply An error reply document will be generated here if the
+ *                  function encounters a problem while processing input
+ *                  parameters.
+ * @param fmt Formatting string of the management API in SER.
+ * @param ap A pointer to the array of input parameters.
+ *
+ */
+static int print_value(struct xmlrpc_reply* res, 
+					   struct xmlrpc_reply* err_reply, char fmt, va_list* ap)
 {
 	str prefix, body, suffix;
 	str* sp;
@@ -645,7 +968,11 @@ static int print_value(struct xmlrpc_reply* res, struct xmlrpc_reply* err_reply,
 	return -1;
 }
 
-
+/** Implementation of rpc_add function required by the management API in SER.
+ *
+ * This function will be called when a management function in SER calls
+ * rpc->add to add a parameter to the XML-RPC reply being generated.
+ */
 static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	void* void_ptr;
@@ -657,7 +984,8 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 	reply = &ctx->reply;
 
 	while(*fmt) {
-		if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
+		if (ctx->flags & RET_ARRAY && 
+			add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 		if (*fmt == '{') {
 			void_ptr = va_arg(ap, void**);
 			p = new_rpcstruct(0, 0, reply);
@@ -670,7 +998,8 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
 		}
 
-		if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
+		if (ctx->flags & RET_ARRAY && 
+			add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 		fmt++;
 	}
@@ -682,9 +1011,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 }
 
 
-/*
- * Convert XML-RPC time to time_t
- */
+/** Convert time in XML-RPC format to time_t */
 static time_t xmlrpc2time(const char* str)
 {
 	struct tm time;
@@ -700,7 +1027,23 @@ static time_t xmlrpc2time(const char* str)
 }
 
 
-static int get_int(int* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xmlNodePtr value)
+/** Converts an XML-RPC encoded parameter into integer if possible.
+ *
+ * This function receives a pointer to a parameter encoded in XML-RPC format
+ * and tries to convert the value of the parameter into integer.  Only
+ * &lt;i4&gt;, &lt;int&gt;, &lt;boolean&gt;, &lt;dateTime.iso8601&gt; XML-RPC
+ * parameters can be converted to integer, attempts to conver other types will
+ * fail.
+ * @param val A pointer to an integer variable where the result will be 
+ *            stored.  
+ * @param reply A pointer to XML-RPC reply being constructed (used to 
+ *        indicate conversion errors).  
+ * @param doc A pointer to the XML-RPC request document.  
+ * @param value A pointer to the element containing the parameter to be 
+ *              converted within the document.
+ */
+static int get_int(int* val, struct xmlrpc_reply* reply, 
+				   xmlDocPtr doc, xmlNodePtr value)
 {
 	int type;
 	xmlNodePtr i4;
@@ -712,7 +1055,8 @@ static int get_int(int* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xmlNodeP
 	}
 
 	i4 = value->xmlChildrenNode;
-	if (!xmlStrcmp(i4->name, BAD_CAST "i4") || !xmlStrcmp(i4->name, BAD_CAST "int")) {
+	if (!xmlStrcmp(i4->name, BAD_CAST "i4") || 
+		!xmlStrcmp(i4->name, BAD_CAST "int")) {
 		type = 1;
 	} else if (!xmlStrcmp(i4->name, BAD_CAST "boolean")) {
 		type = 1;
@@ -739,7 +1083,22 @@ static int get_int(int* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xmlNodeP
 }
 
 
-static int get_double(double* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xmlNodePtr value)
+/** Converts an XML-RPC encoded parameter into double if possible.
+ *
+ * This function receives a pointer to a parameter encoded in XML-RPC format
+ * and tries to convert the value of the parameter into double.  Only
+ * &lt;i4&gt;, &lt;int&gt;, &lt;double&gt; XML-RPC parameters can be converted
+ * to double, attempts to conver other types will fail.
+ * @param val A pointer to an integer variable where the result will be 
+ *            stored.
+ * @param reply A pointer to XML-RPC reply being constructed (used to indicate
+ *              conversion errors).
+ * @param doc A pointer to the XML-RPC request document.
+ * @param value A pointer to the element containing the parameter to be 
+ *              converted within the document.
+ */
+static int get_double(double* val, struct xmlrpc_reply* reply, 
+					  xmlDocPtr doc, xmlNodePtr value)
 {
 	xmlNodePtr dbl;
 	char* val_str;
@@ -750,7 +1109,9 @@ static int get_double(double* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xm
 	}
 
 	dbl = value->xmlChildrenNode;
-	if (!dbl || (xmlStrcmp(dbl->name, BAD_CAST "double") && xmlStrcmp(dbl->name, BAD_CAST "int") && xmlStrcmp(dbl->name, BAD_CAST "int4"))) {
+	if (!dbl || (xmlStrcmp(dbl->name, BAD_CAST "double") && 
+				 xmlStrcmp(dbl->name, BAD_CAST "int") && 
+				 xmlStrcmp(dbl->name, BAD_CAST "int4"))) {
 		set_fault(reply, 400, "Invalid Parameter Type");
 		return -1;
 	}
@@ -766,7 +1127,18 @@ static int get_double(double* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xm
 }
 
 
-static int get_string(char** val, struct xmlrpc_reply* reply, xmlDocPtr doc, xmlNodePtr value)
+/** Convert a parameter encoded in XML-RPC to a zero terminated string.
+ *
+ * @param val A pointer to an integer variable where the result will be 
+              stored.
+ * @param reply A pointer to XML-RPC reply being constructed (used to indicate
+ *              conversion errors).
+ * @param doc A pointer to the XML-RPC request document.
+ * @param value A pointer to the element containing the parameter to be 
+ *              converted within the document.
+ */
+static int get_string(char** val, struct xmlrpc_reply* reply, 
+					  xmlDocPtr doc, xmlNodePtr value)
 {
 	static char* null_str = "";
 	xmlNodePtr dbl;
@@ -794,7 +1166,15 @@ static int get_string(char** val, struct xmlrpc_reply* reply, xmlDocPtr doc, xml
 	return 0;
 }
 
-
+/** Implementation of rpc->scan function required by the management API in
+ * SER.
+ *
+ * This is the function that will be called whenever a management function in
+ * SER calls rpc->scan to get the value of parameter from the XML-RPC
+ * request. This function will extract the current parameter from the XML-RPC
+ * document and attempts to convert it to the type requested by the management
+ * function that called it.
+ */
 static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int read;
@@ -825,10 +1205,12 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 			int_ptr = va_arg(ap, int*);
 			if (get_int(int_ptr, reply, ctx->doc, value) < 0) goto error;
 			break;
-
+			
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
-			if (get_double(double_ptr, reply, ctx->doc, value) < 0) goto error;
+			if (get_double(double_ptr, reply, ctx->doc, value) < 0) {
+				goto error;
+			}
 			break;
 
 		case 's': /* zero terminated string */
@@ -838,7 +1220,9 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 
 		case 'S': /* str structure */
 			str_ptr = va_arg(ap, str*);
-			if (get_string(&str_ptr->s, reply, ctx->doc, value) < 0) goto error;
+			if (get_string(&str_ptr->s, reply, ctx->doc, value) < 0) {
+				goto error;
+			}
 			str_ptr->len = strlen(str_ptr->s);
 			break;
 
@@ -852,7 +1236,8 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 
 		default:
 			ERR("Invalid parameter type in formatting string: %c\n", *fmt);
-			set_fault(reply, 500, "Server Internal Error (Invalid Formatting String)");
+			set_fault(reply, 500, 
+					  "Server Internal Error (Invalid Formatting String)");
 			goto error;
 		}
 		ctx->act_param = ctx->act_param->next;
@@ -869,6 +1254,13 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 
 #define RPC_BUF_SIZE 1024
 
+
+/** Implementation of rpc_printf function required by the management API in
+ *	SER.
+ *
+ * This function will be called whenever a management function in SER calls
+ * rpc-printf to add a parameter to the XML-RPC reply being constructed.
+ */
 static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int n, buf_size;
@@ -895,11 +1287,13 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		if (n > -1 && n < buf_size) {
 			s.s = buf;
 			s.len = n;
-			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
+			if (ctx->flags & RET_ARRAY && 
+				add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_prefix) < 0) goto err;
 			if (add_xmlrpc_reply_esc(reply, &s) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
-			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
+			if (ctx->flags & RET_ARRAY && 
+				add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 			pkg_free(buf);
 			return 0;
@@ -924,10 +1318,10 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 
 /* Structure manipulation functions */
 
-/*
- * Find a structure member by name
+/** Find a structure member by name.
  */
-static int find_member(xmlNodePtr* value, xmlDocPtr doc, xmlNodePtr structure, struct xmlrpc_reply* reply, char* member_name)
+static int find_member(xmlNodePtr* value, xmlDocPtr doc, xmlNodePtr structure,
+					   struct xmlrpc_reply* reply, char* member_name)
 {
 	char* name_str;
 	xmlNodePtr member, name;
@@ -978,7 +1372,8 @@ static int find_member(xmlNodePtr* value, xmlDocPtr doc, xmlNodePtr structure, s
 	return 1;
 }
 
-
+/** Adds a new member to structure.
+ */
 static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 {
 	va_list ap;
@@ -1010,8 +1405,10 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 	return -1;
 }
 
-
-static int rpc_struct_printf(struct rpc_struct* s, char* member_name, char* fmt, ...)
+/** Create a new member from formatting string and add it to a structure.
+ */
+static int rpc_struct_printf(struct rpc_struct* s, char* member_name, 
+							 char* fmt, ...)
 {
 	int n, buf_size;
 	char* buf;
@@ -1137,12 +1534,10 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 }
 
 
-/*
- * Start parsing XML-RPC document, get the name of the method
- * to be called and position the cursor at the first parameter
- * in the document
+/** Starts parsing XML-RPC document, get the name of the method to be called
+ * and position the cursor at the first parameter in the document.
  */
-static int open_doc(rpc_ctx_t* ctx, struct sip_msg* msg)
+static int open_doc(rpc_ctx_t* ctx, sip_msg_t* msg)
 {
 	str doc;
 	xmlNodePtr root;
@@ -1222,7 +1617,7 @@ static void close_doc(rpc_ctx_t* ctx)
 	ctx->doc = 0;
 }
 
-static int init_context(rpc_ctx_t* ctx, struct sip_msg* msg)
+static int init_context(rpc_ctx_t* ctx, sip_msg_t* msg)
 {
 	ctx->msg = msg;
 	ctx->method = 0;
@@ -1246,16 +1641,15 @@ static void clean_context(rpc_ctx_t* ctx)
 
 
 
-/* creates a sip msg (in "buffer" form) from a http xmlrpc request)
- *  returns 0 on error and a pkg_malloc'ed message buffer on success
- * NOTE: the result must be pkg_free()'ed when not needed anymore */
-static char* http_xmlrpc2sip(struct sip_msg* msg, int* new_msg_len)
+/** Creates a SIP message (in "buffer" form) from a HTTP XML-RPC request).
+ * 
+ * NOTE: the result must be pkg_free()'ed when not needed anymore.  
+ * @return 0 on error, buffer allocated using pkg_malloc on success.
+ */
+static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 {
-	unsigned int len;
-	char* via;
-	char* new_msg;
-	char* p;
-	unsigned int via_len;
+	unsigned int len, via_len;
+	char* via, *new_msg, *p;
 	str ip, port;
 	struct hostport hp;
 	struct dest_info dst;
@@ -1268,157 +1662,157 @@ static char* http_xmlrpc2sip(struct sip_msg* msg, int* new_msg_len)
 	hp.port = &port;
 	init_dst_from_rcv(&dst, &msg->rcv);
 	via = via_builder(&via_len, &dst, 0, 0, &hp);
-	if (via==0){
+	if (via == 0) {
 		DEBUG("failed to build via\n");
 		return 0;
 	}
-	len=msg->first_line.u.request.method.len+1 /* space */+XMLRPC_URI_LEN+
-			1 /* space */ + msg->first_line.u.request.version.len+
-			CRLF_LEN+via_len+(msg->len-msg->first_line.len);
-	p=new_msg=pkg_malloc(len+1);
-	if (new_msg==0){
+	len = msg->first_line.u.request.method.len + 1 /* space */ + 
+		XMLRPC_URI_LEN + 1 /* space */ + 
+		msg->first_line.u.request.version.len + CRLF_LEN + via_len + 
+		(msg->len-msg->first_line.len);
+	p = new_msg = pkg_malloc(len + 1);
+	if (new_msg == 0) {
 		DEBUG("memory allocation failure (%d bytes)\n", len);
 		pkg_free(via);
 		return 0;
 	}
+
 	/* new message:
 	 * <orig_http_method> sip:127.0.0.1:9 HTTP/1.x 
 	 * Via: <faked via>
 	 * <orig. http message w/o the first line>
 	 */
 	memcpy(p, msg->first_line.u.request.method.s, 
-				msg->first_line.u.request.method.len);
-	p+=msg->first_line.u.request.method.len;
-	*p=' ';
+		   msg->first_line.u.request.method.len);
+	p += msg->first_line.u.request.method.len;
+	*p = ' ';
 	p++;
 	memcpy(p, XMLRPC_URI, XMLRPC_URI_LEN);
-	p+=XMLRPC_URI_LEN;
-	*p=' ';
+	p += XMLRPC_URI_LEN;
+	*p = ' ';
 	p++;
 	memcpy(p, msg->first_line.u.request.version.s,
-				msg->first_line.u.request.version.len);
-	p+=msg->first_line.u.request.version.len;
+		   msg->first_line.u.request.version.len);
+	p += msg->first_line.u.request.version.len;
 	memcpy(p, CRLF, CRLF_LEN);
-	p+=CRLF_LEN;
+	p += CRLF_LEN;
 	memcpy(p, via, via_len);
-	p+=via_len;
-	memcpy(p,  SIP_MSG_START(msg)+msg->first_line.len, 
-			msg->len - msg->first_line.len);
-	new_msg[len]=0; /* null terminate, required by receive_msg() */
+	p += via_len;
+	memcpy(p,  SIP_MSG_START(msg) + msg->first_line.len, 
+		   msg->len - msg->first_line.len);
+	new_msg[len] = 0; /* null terminate, required by receive_msg() */
 	pkg_free(via);
-	*new_msg_len=len;
+	*new_msg_len = len;
 	return new_msg;
 }
 
 
 
-/* emulate receive_msg for an xmlrpc request */
-static int em_receive_request(struct sip_msg* orig_msg, 
-								char* new_buf, unsigned int new_len)
+/** Emulate receive_msg for an XML-RPC request .
+ */
+static int em_receive_request(sip_msg_t* orig_msg, 
+							  char* new_buf, unsigned int new_len)
 {
-	struct sip_msg tmp_msg;
-	struct sip_msg* msg;
+	sip_msg_t tmp_msg, *msg;
 	struct run_act_ctx ra_ctx;
 	
-	if (new_buf && new_len){
-		memset(&tmp_msg, 0, sizeof(struct sip_msg));
-		tmp_msg.buf=new_buf;
-		tmp_msg.len=new_len;
-		tmp_msg.rcv=orig_msg->rcv;
-		tmp_msg.id=orig_msg->id;
-		tmp_msg.set_global_address=orig_msg->set_global_address;
-		tmp_msg.set_global_port=orig_msg->set_global_port;
-		if (parse_msg(new_buf, new_len, &tmp_msg)!=0){
+	if (new_buf && new_len) {
+		memset(&tmp_msg, 0, sizeof(sip_msg_t));
+		tmp_msg.buf = new_buf;
+		tmp_msg.len = new_len;
+		tmp_msg.rcv = orig_msg->rcv;
+		tmp_msg.id = orig_msg->id;
+		tmp_msg.set_global_address = orig_msg->set_global_address;
+		tmp_msg.set_global_port = orig_msg->set_global_port;
+		if (parse_msg(new_buf, new_len, &tmp_msg) != 0) {
 			ERR("xmlrpc: parse_msg failed\n");
 			goto error;
 		}
-		msg=&tmp_msg;
-	}else{
-		msg=orig_msg;
+		msg = &tmp_msg;
+	} else {
+		msg = orig_msg;
 	}
 	
 	/* not needed, performed by the "real" receive_msg()
-	clear_branches();
-	reset_static_buffer();
+	   clear_branches();
+	   reset_static_buffer();
 	*/
-	if ((msg->first_line.type!=SIP_REQUEST) || (msg->via1==0) ||
-		(msg->via1->error!=PARSE_OK)){
+	if ((msg->first_line.type != SIP_REQUEST) || (msg->via1 == 0) ||
+		(msg->via1->error != PARSE_OK)) {
 		BUG("xmlrpc: strange message: %.*s\n", msg->len, msg->buf);
 		goto error;
 	}
-	if (exec_pre_req_cb(msg)==0)
+	if (exec_pre_req_cb(msg) == 0) {
 		goto end; /* drop request */
+	}
 	/* exec routing script */
 	init_run_actions_ctx(&ra_ctx);
-	if (run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg)<0){
+	if (run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg) < 0) {
 		WARN("xmlrpc: error while trying script\n");
 		goto end;
 	}
-end:
+ end:
 	exec_post_req_cb(msg); /* needed for example if tm is used */
 	/* reset_avps(); non needed, performed by the real receive_msg */
-	if (msg!=orig_msg) /* avoid double free (freed from receive_msg too) */
+	if (msg != orig_msg) { /* avoid double free (freed from receive_msg
+							  too) */
 		free_sip_msg(msg);
+	}
 	return 0;
-error:
+ error:
 	return -1;
 }
 
 
-
-static int process_xmlrpc(struct sip_msg* msg)
+/** The main handler that will be called when SER core receives a non-SIP
+ * request (i.e. HTTP request carrying XML-RPC document in the body).
+ */
+static int process_xmlrpc(sip_msg_t* msg)
 {
 	char* fake_msg;
 	int fake_msg_len;
 	unsigned char* method;
-	unsigned int method_len;
-	unsigned int n_method;
+	unsigned int method_len, n_method;
 	
-	if (IS_HTTP(msg)){
-		method=(unsigned char*)msg->first_line.u.request.method.s;
-		method_len=msg->first_line.u.request.method.len;
+	if (IS_HTTP(msg)) {
+		method = (unsigned char*)msg->first_line.u.request.method.s;
+		method_len = msg->first_line.u.request.method.len;
 		/* first line is always > 4, so it's always safe to try to read the
 		 * 1st 4 bytes from method, even if method is shorter*/
-		n_method=method[0]+(method[1]<<8)+(method[2]<<16)+(method[3]<<24);
-		n_method|=0x20202020;
-		n_method&= ((method_len<4)*(1U<<method_len*8)-1);
+		n_method = method[0] + (method[1] << 8) + (method[2] << 16) + 
+			(method[3] << 24);
+		n_method |= 0x20202020;
+		n_method &= ((method_len < 4) * (1U << method_len * 8) - 1);
 		/* accept only GET or POST */
-		if ((n_method==N_HTTP_GET) || 
-			((n_method==N_HTTP_POST) && (method_len==HTTP_POST_LEN))){
-			if (msg->via1==0){
+		if ((n_method == N_HTTP_GET) || 
+			((n_method == N_HTTP_POST) && (method_len == HTTP_POST_LEN))) {
+			if (msg->via1 == 0){
 				/* create a fake sip message */
-				fake_msg=http_xmlrpc2sip(msg, &fake_msg_len);
-				if (fake_msg==0){
+				fake_msg = http_xmlrpc2sip(msg, &fake_msg_len);
+				if (fake_msg == 0) {
 					ERR("xmlrpc: out of memory\n");
-				}else{
+				} else {
 					/* send it */
 					DBG("new fake xml msg created (%d bytes):\n<%.*s>\n",
-							fake_msg_len, fake_msg_len, fake_msg);
+						fake_msg_len, fake_msg_len, fake_msg);
 					em_receive_request(msg, fake_msg, fake_msg_len);
 					/* ignore the return code */
 					pkg_free(fake_msg);
 				}
 				return NONSIP_MSG_DROP; /* we "ate" the message, 
 										   stop processing */
-			}else{ /* the message has a via */
+			} else { /* the message has a via */
 				DBG("http xml msg unchanged (%d bytes):\n<%.*s>\n",
-						msg->len, msg->len, msg->buf);
+					msg->len, msg->len, msg->buf);
 				em_receive_request(msg, 0, 0);
 				return NONSIP_MSG_DROP;
 			}
-		}else{
+		} else {
 			ERR("xmlrpc: bad HTTP request method: \"%.*s\"\n",
-					msg->first_line.u.request.method.len,
-					msg->first_line.u.request.method.s);
+				msg->first_line.u.request.method.len,
+				msg->first_line.u.request.method.s);
 			/* the message was for us, but it is an error */
 			return NONSIP_MSG_ERROR; 
-#if 0
-			/* FIXME: temporary test only, remove when non-sip hook available*/
-			DEBUG("xmlrpc:  HTTP request method not recognized: \"%.*s\"\n",
-					msg->first_line.u.request.method.len,
-					msg->first_line.u.request.method.s);
-			return 1;
-#endif
 		}
 	}
 	return NONSIP_MSG_PASS; /* message not for us, maybe somebody 
@@ -1426,8 +1820,15 @@ static int process_xmlrpc(struct sip_msg* msg)
 }
 
 
-
-static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2)
+/** The main processing function of xmlrpc module.
+ *
+ * This is the main function of this module. It extracts the name
+ * of the method to be called from XML-RPC request and then it
+ * searches through the list of all available management function,
+ * when a function with matching name is found then it will be
+ * executed.
+ */
+static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2)
 {
 	rpc_export_t* exp;
 	int ret = 1;
@@ -1440,7 +1841,8 @@ static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2)
 		goto skip;
 	}
 	ctx.flags = exp->flags;
-	if (exp->flags & RET_ARRAY && add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0) goto skip;
+	if (exp->flags & RET_ARRAY && 
+		add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0) goto skip;
 	exp->function(&func_param, &ctx);
 
  skip:
@@ -1455,7 +1857,10 @@ static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2)
 }
 
 
-static int xmlrpc_reply(struct sip_msg* msg, char* p1, char* p2)
+/** This function can be called from SER scripts to generate
+ * an XML-RPC reply.
+ */
+static int xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
 {
         str reason;
 	static str succ = STR_STATIC_INIT("1");
@@ -1493,7 +1898,10 @@ static int xmlrpc_reply(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int select_method(str* res, struct select* s, struct sip_msg* msg)
+/** Implementation of \@xmlrpc.method select that can be used in
+ * SER scripts to retrieve the method string from XML-RPC documents
+ */
+static int select_method(str* res, struct select* s, sip_msg_t* msg)
 {
 	static char buf[1024];
 	str doc;
@@ -1505,7 +1913,10 @@ static int select_method(str* res, struct select* s, struct sip_msg* msg)
 	method = 0;
 
 	if (get_rpc_document(&doc, msg) < 0) goto err;
-	xmldoc = xmlReadMemory(doc.s, doc.len, 0, 0, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
+	xmldoc = xmlReadMemory(doc.s, doc.len, 0, 0, 
+						   XML_PARSE_NOBLANKS | 
+						   XML_PARSE_NONET | 
+						   XML_PARSE_NOCDATA);
 	
 	if (!xmldoc) goto err;
 	cur = xmlDocGetRootElement(xmldoc);
@@ -1514,7 +1925,8 @@ static int select_method(str* res, struct select* s, struct sip_msg* msg)
 	cur = cur->xmlChildrenNode;
 	while(cur) {
 		if (!xmlStrcmp(cur->name, (const xmlChar*)"methodName")) {
-			method = (char*)xmlNodeListGetString(xmldoc, cur->xmlChildrenNode, 1);
+			method = (char*)xmlNodeListGetString(xmldoc, cur->xmlChildrenNode,
+												 1);
 			if (!method) goto err;
 			break;
 		}
@@ -1610,3 +2022,4 @@ static int fixup_xmlrpc_reply(void** param, int param_no)
 	return 0;
 }
 
+/** @} */
