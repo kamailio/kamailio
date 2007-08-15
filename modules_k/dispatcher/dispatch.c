@@ -1052,6 +1052,9 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 		LM_ERR("cannot set dst addr\n");
 		return -1;
 	}
+	/* if alg is round-robin then update the shortcut to next to be used */
+	if(alg==4)
+		idx->last = (hash+1) % idx->nr;
 	
 	LM_DBG("selected [%d-%d/%d] <%.*s>\n", alg, set, hash,
 			idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
