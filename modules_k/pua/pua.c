@@ -1055,6 +1055,7 @@ ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 	subs.source_flag= p->flag;
 	subs.flag= UPDATE_TYPE;
 	subs.expires= (p->desired_expires== 0) ?-1:p->desired_expires- (int)time(NULL);
+	subs.extra_headers= p->extra_headers;
 
 	cb_param= subscribe_cbparam(&subs, REQ_ME);
 	if(cb_param== NULL)

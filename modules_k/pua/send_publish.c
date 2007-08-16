@@ -410,7 +410,7 @@ int send_publish( publ_info_t* publ )
 	pres.pres_uri= publ->pres_uri;
 	pres.flag= publ->source_flag;
 	pres.id= publ->id;
-
+	pres.event= publ->event;
 	if(publ->etag)
 		pres.etag= *publ->etag;
 

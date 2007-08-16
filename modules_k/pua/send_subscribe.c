@@ -674,6 +674,7 @@ int send_subscribe(subs_info_t* subs)
 	pres.watcher_uri= subs->watcher_uri;
 	pres.flag= subs->source_flag;
 	pres.id= subs->id;
+	pres.event= subs->event;
 
 	presentity= search_htable(&pres, hash_code);
 

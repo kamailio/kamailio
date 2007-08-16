@@ -195,11 +195,6 @@ void insert_htable(ua_pres_t* presentity)
 	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, 
 			HASH_SIZE);
 	
-	if(presentity->expires < (int)time(NULL))
-	{
-		LOG(L_ERR, "PUA: insert_htable: expired information- do not insert\n");
-		return;
-	}
 	lock_get(&HashT->p_records[hash_code].lock);
 
 /*	
