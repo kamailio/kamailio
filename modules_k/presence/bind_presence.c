@@ -38,7 +38,6 @@ int bind_presence(event_api_t* api)
 	
 	api->add_event = add_event;
 	api->contains_event= contains_event;
-	api->get_sname_event= get_sname_event;
 	api->get_event_list= get_event_list;
 	return 0;
 }

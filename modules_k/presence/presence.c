@@ -61,7 +61,7 @@ MODULE_VERSION
 
 #define S_TABLE_VERSION  1
 #define P_TABLE_VERSION  2
-#define ACTWATCH_TABLE_VERSION 5
+#define ACTWATCH_TABLE_VERSION 6
 
 char *log_buf = NULL;
 static int clean_period=100;
@@ -106,6 +106,12 @@ int startup_time=0;
 str db_url = {0, 0};
 int expires_offset = 0;
 int max_expires= 3600;
+int shtable_size;
+shtable_t subs_htable= NULL;
+int fallback2db= 0;
+
+int phtable_size;
+phtable_t* pres_htable;
 
 static cmd_export_t cmds[]=
 {
@@ -127,6 +133,8 @@ static param_export_t params[]={
 	{ "expires_offset",			INT_PARAM, &expires_offset },
 	{ "max_expires",			INT_PARAM, &max_expires },
 	{ "server_address",         STR_PARAM, &server_address.s},
+	{ "hash_size",              INT_PARAM, &shtable_size},
+	{ "fallback2db",            INT_PARAM, &fallback2db},
 	{0,0,0}
 };
 
@@ -284,13 +292,51 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(shtable_size< 1)
+		shtable_size= 512;
+	else
+		shtable_size= 1<< shtable_size;
+
+	subs_htable= new_shtable();
+	if(subs_htable== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR while initializing"
+				" subscribe hash table\n");
+		return -1;
+	}
+	if(restore_db_subs()< 0)
+	{
+		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR while "
+				"restoring info from database\n");
+		return -1;
+	}
+
+	if(phtable_size< 1)
+		phtable_size= 256;
+	else
+		phtable_size= 1<< phtable_size;
+
+	pres_htable= new_phtable();
+	if(pres_htable== NULL)
+	{
+		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR while initializing"
+				"presentity hash table\n");
+		return -1;
+	}
+	if(pres_htable_restore()< 0)
+	{
+		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR filling in presentity"
+				" hash table from database\n");
+		return -1;
+	}
+	
 	startup_time = (int) time(NULL);
 	
 	register_timer(msg_presentity_clean, 0, clean_period);
 	
-	register_timer(msg_active_watchers_clean, 0, clean_period);
-
 	register_timer(msg_watchers_clean, 0, clean_period);
+	
+	register_timer(timer_db_update, 0, clean_period);
 
 	if(pa_db)
 		pa_dbf.close(pa_db);
@@ -352,7 +398,16 @@ static int child_init(int rank)
 void destroy(void)
 {
 	DBG("PRESENCE: destroy module ...\n");
+
+	if(subs_htable && pa_db)
+		timer_db_update(0, 0);
 	
+	if(subs_htable)
+		destroy_shtable();
+	
+	if(pres_htable)
+		destroy_phtable();
+
 	if(pa_db && pa_dbf.close)
 		pa_dbf.close(pa_db);
 	destroy_evlist();
@@ -387,8 +442,7 @@ struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
 {
 	struct mi_node* node= NULL;
 	str pres_uri, event;
-	ev_t* ev;
-	struct sip_uri uri;
+	pres_ev_t* ev;
 
 	DBG("PRESENCE:refreshWatchers: start\n");
 	
@@ -403,13 +457,6 @@ struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
 		LOG(L_ERR, "PRESENCE:refreshWatchers: empty uri\n");
 		return init_mi_tree(404, "Empty presentity URI", 20);
 	}
-	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
-	{
-		LOG(L_ERR, "PRESENCE:refreshWatchers: bad uri\n");
-		return init_mi_tree(404, "Bad presentity URI", 18);
-	}
-	DBG("PRESENCE:refreshWatchers: pres_uri '%.*s'\n",
-	    pres_uri.len, pres_uri.s);
 	
 	node = node->next;
 	if(node == NULL)
@@ -436,7 +483,7 @@ struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
 		LOG(L_ERR, "PRESENCE:refreshWatchers: ERROR wrong event parameter\n");
 		return 0;
 	}	
-	if(query_db_notify(&uri.user, &uri.host, ev, NULL)< 0)
+	if(query_db_notify(&pres_uri, ev, NULL)< 0)
 	{
 		LOG(L_ERR, "PRESENCE:refreshWatchers: ERROR while sending notify");
 		return 0;

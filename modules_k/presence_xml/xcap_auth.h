@@ -41,7 +41,7 @@
 
 int pres_watcher_allowed(subs_t* subs);
 
-int get_xcap_tree(str user, str domain, int doc_type, xmlDocPtr* doc);
+int get_xcap_tree(str uri, int doc_type, xmlDocPtr* doc);
 xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree );
 
 #endif

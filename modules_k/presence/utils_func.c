@@ -36,6 +36,7 @@
 #include "../../data_lump_rpl.h"
 #include "utils_func.h"
 #include "event_list.h"
+#include "presence.h"
 
 static str pu_489_rpl  = str_init("Bad Event");
 
@@ -99,7 +100,7 @@ int reply_bad_event(struct sip_msg * msg)
 	str hdr_append;
 	char buffer[256];
 	int i;
-	ev_t* ev= EvList->events;
+	pres_ev_t* ev= EvList->events;
 
 	hdr_append.s = buffer;
 	hdr_append.s[0]='\0';
@@ -117,8 +118,8 @@ int reply_bad_event(struct sip_msg * msg)
 			memcpy(hdr_append.s+ hdr_append.len, ", ", 2);
 			hdr_append.len+= 2;
 		}	
-		memcpy(hdr_append.s+ hdr_append.len, ev->stored_name.s, ev->stored_name.len );
-		hdr_append.len+= ev->stored_name.len ;
+		memcpy(hdr_append.s+ hdr_append.len, ev->name.s, ev->name.len );
+		hdr_append.len+= ev->name.len ;
 		ev= ev->next;
 	}
 	memcpy(hdr_append.s+ hdr_append.len, CRLF, CRLF_LEN);

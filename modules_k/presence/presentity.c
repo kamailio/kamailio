@@ -41,6 +41,8 @@
 #include "presence.h" 
 #include "notify.h"
 #include "publish.h"
+#include "hash.h"
+#include "utils_func.h"
 
 extern int use_db;
 extern char* presentity_table;
@@ -158,7 +160,7 @@ error:
 
 }	
 presentity_t* new_presentity( str* domain,str* user,int expires, 
-		ev_t* event, str* etag, str* sender)
+		pres_ev_t* event, str* etag, str* sender)
 {
 	presentity_t *presentity;
 	int size, init_len;
@@ -191,7 +193,7 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 	size+= user->len;
 
 	presentity->etag.s = (char*)presentity+ size;
-	strcpy(presentity->etag.s, etag->s);
+	memcpy(presentity->etag.s, etag->s, etag->len);
 	presentity->etag.s[etag->len]= '\0';
 	presentity->etag.len = etag->len;
 
@@ -257,7 +259,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = presentity->event->stored_name;
+	query_vals[n_query_cols].val.str_val = presentity->event->name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = "etag";
@@ -295,11 +297,31 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		DBG("PRESENCE:update_presentity:delete from db %.*s\n",
 			presentity->user.len,presentity->user.s );
 
+		/* delete from hash table */
+	
+		if(delete_phtable(&msg->first_line.u.request.uri, 
+					presentity->event->evp->parsed)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_presentity: ERROR deleting record"
+					" from hash table\n");
+			goto error;
+		}
+
 		return 1;
 	}
 
 	if(new_t) 
 	{
+		/* insert new record in hash_table */
+		
+		if(insert_phtable(&msg->first_line.u.request.uri, 
+					presentity->event->evp->parsed)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_presentity: ERROR inserting record"
+					" in hash table\n");
+			goto error;
+		}
+		
 		/* insert new record into database */	
 		query_cols[n_query_cols] = "expires";
 		query_vals[n_query_cols].type = DB_INT;
@@ -518,4 +540,93 @@ error:
 
 	return -1;
 
+}
+
+int pres_htable_restore()
+{
+	/* query all records from presentity table and insert records 
+	 * in presentity table */
+	db_key_t result_cols[5];
+	db_res_t *result= NULL;
+	db_row_t *row= NULL ;	
+	db_val_t *row_vals;
+	int  i;
+	str user, domain, ev_str, uri;
+	int n_result_cols= 0;
+	int user_col, domain_col, event_col, expires_col;
+	int event;
+	event_t e;
+
+	result_cols[user_col= n_result_cols++]= "username";
+	result_cols[domain_col= n_result_cols++]= "domain";
+	result_cols[event_col= n_result_cols++]= "event";
+	result_cols[expires_col= n_result_cols++]= "expires";
+
+	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
+		goto error;
+	}
+
+	if (pa_dbf.query (pa_db, 0, 0, 0,result_cols,0, n_result_cols,
+				"username", &result) < 0)
+	{
+		LOG(L_ERR, "PRESENCE:pres_htable_restore: Error while querying"
+				" presentity\n");
+		goto error;
+	}
+	if(result== NULL)
+		goto error;
+
+	if(result->n<= 0)
+	{
+		pa_dbf.free_result(pa_db, result);
+		return 0;
+	}
+		
+	for(i= 0; i< result->n; i++)
+	{
+		row = &result->rows[i];
+		row_vals = ROW_VALUES(row);
+
+		if(row_vals[expires_col].val.int_val< (int)time(NULL))
+			continue;
+
+		user.s= (char*)row_vals[user_col].val.string_val;
+		user.len= strlen(user.s);
+		domain.s= (char*)row_vals[domain_col].val.string_val;
+		domain.len= strlen(domain.s);
+		ev_str.s= (char*)row_vals[event_col].val.string_val;
+		ev_str.len= strlen(ev_str.s);
+	
+		if(event_parser(ev_str.s, ev_str.len, &e)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:pres_htable_restore: ERROR parsing event\n");
+			goto error;
+		}
+		event= e.parsed;
+
+		if(uandd_to_uri(user, domain, &uri)< 0)
+		{
+			LOG(L_ERR,"PRESENCE:pres_htable_restore:ERROR constructing uri\n");
+			goto error;
+		}
+		/* insert in hash_table*/
+		if(insert_phtable(&uri, event)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:pres_htable_restore: ERROR "
+				"inserting record in presentity hash table");
+			pkg_free(uri.s);
+			goto error;
+		}
+		pkg_free(uri.s);
+	}
+	pa_dbf.free_result(pa_db, result);
+
+	return 0;
+
+error:
+	if(result)
+		pa_dbf.free_result(pa_db, result);
+	return -1;	
 }

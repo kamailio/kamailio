@@ -31,6 +31,7 @@
 #include <libxml/parser.h>
 
 #include "../../mem/mem.h"
+#include "../presence/utils_func.h"
 #include "xcap_auth.h"
 #include "pidf.h"
 #include "notify_body.h"
@@ -101,7 +102,7 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody)
 	if(force_active)
 		return 0;
 
-	if(get_xcap_tree(subs->to_user, subs->to_domain, PRES_RULES, &doc)< 0)
+	if(get_xcap_tree(subs->pres_uri, PRES_RULES, &doc)< 0)
 	{
 		LOG(L_ERR, "PRESENCE_XML:pres_apply_auth: Error while getting xcap doc"
 				" for pres_rules\n");
@@ -161,7 +162,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	new_body = (str*)pkg_malloc(sizeof(str));
 	if(new_body == NULL)
 	{
-		LOG(L_ERR,"get_final_notify_body: ERROR while allocating memory\n");
+		LOG(L_ERR,"PRESENCE_XML:get_final_notify_body: ERROR while allocating memory\n");
 		return NULL;
 	}	
 
@@ -170,7 +171,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	doc = xmlParseMemory(notify_body->s, notify_body->len);
 	if(doc== NULL) 
 	{
-		LOG(L_ERR,"get_final_notify_body: ERROR while parsing the xml body"
+		LOG(L_ERR,"PRESENCE_XML:get_final_notify_body: ERROR while parsing the xml body"
 				" message\n");
 		goto error;
 	}
@@ -475,7 +476,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	if(xml_array== NULL)
 	{
 	
-		LOG(L_ERR,"PRESENCE:agregate_xmls: Error while alocating memory");
+		LOG(L_ERR,"PRESENCE_XML:agregate_xmls: Error while alocating memory");
 		return NULL;
 	}
 	memset(xml_array, 0, (n+2)*sizeof(xmlDocPtr)) ;
@@ -483,16 +484,25 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	/* if pidf_manipulation usage is configured */
 	if(pidf_manipulation)
 	{
-		if( get_xcap_tree(*pres_user, *pres_domain, PIDF_MANIPULATION, &pidf_manip_doc)< 0)
+		str pres_uri;
+		if(uandd_to_uri(*pres_user, *pres_domain, &pres_uri)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:agregate_xmls: Error while getting xcap tree"
+			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: ERROR while"
+					" constructing uri\n");
+			goto error;
+		}
+		if( get_xcap_tree(pres_uri, PIDF_MANIPULATION, &pidf_manip_doc)< 0)
+		{
+			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while getting xcap tree"
 					" for doc_type PIDF_MANIPULATION\n");
+			pkg_free(pres_uri.s);
 			goto error;
 		}	
+		pkg_free(pres_uri.s);
 
 		if(pidf_manip_doc== NULL)
 		{
-			DBG( "PRESENCE:agregate_xmls: No PIDF_MANIPULATION doc for [user]= %.*s"
+			DBG( "PRESENCE_XML:agregate_xmls: No PIDF_MANIPULATION doc for [user]= %.*s"
 					" [domain]= %.*s found\n", pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
 		}		
 		else
@@ -512,7 +522,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		
 		if( xml_array[j]== NULL)
 		{
-			LOG(L_ERR,"PRESENCE:agregate_xmls: ERROR while parsing xml body message\n");
+			LOG(L_ERR,"PRESENCE_XML:agregate_xmls: ERROR while parsing xml body message\n");
 			goto error;
 		}
 		j++;
@@ -530,7 +540,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	p_root = xmlDocGetNodeByName( xml_array[j], "presence", NULL);
 	if(p_root ==NULL)
 	{
-		LOG(L_ERR,"PRESENCE:agregate_xmls: ERROR while geting the xml_tree root\n");
+		LOG(L_ERR,"PRESENCE_XML:agregate_xmls: ERROR while geting the xml_tree root\n");
 		goto error;
 	}
 
@@ -539,21 +549,21 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		new_p_root= xmlDocGetNodeByName( xml_array[i], "presence", NULL);
 		if(new_p_root ==NULL)
 		{
-			LOG(L_ERR,"PRESENCE:agregate_xmls: ERROR while geting the xml_tree root\n");
+			LOG(L_ERR,"PRESENCE_XML:agregate_xmls: ERROR while geting the xml_tree root\n");
 			goto error;
 		}
 
 		node= xmlNodeGetChildByName(new_p_root, "tuple");
 		if(node== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:agregate_xmls: ERROR couldn't "
+			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: ERROR couldn't "
 					"extract tuple node\n");
 			goto error;
 		}
 		tuple_id= xmlNodeGetAttrContentByName(node, "id");
 		if(tuple_id== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting tuple id\n");
+			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while extracting tuple id\n");
 			goto error;
 		}
 		append= 1;
@@ -567,7 +577,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 				id = xmlNodeGetAttrContentByName(node, "id");
 				if(id== NULL)
 				{
-					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while extracting tuple id\n");
+					LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while extracting tuple id\n");
 					goto error;
 				}
 				
@@ -591,12 +601,12 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 				add_node= xmlCopyNode(node, 1);
 				if(add_node== NULL)
 				{
-					LOG(L_ERR, "PRESENCE:agregate_xmls: Error while copying node\n");
+					LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while copying node\n");
 					goto error;
 				}
 				if(xmlAddChild(p_root, add_node)== NULL)
 				{
-					LOG(L_ERR,"PRESENCE:agregate_xmls:Error while adding child\n");
+					LOG(L_ERR,"PRESENCE_XML:agregate_xmls:Error while adding child\n");
 					goto error;
 				}
 								
@@ -607,7 +617,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		LOG(L_ERR,"PRESENCE:agregate_xmls:Error while allocating memory\n");
+		LOG(L_ERR,"PRESENCE_XML:agregate_xmls:Error while allocating memory\n");
 		goto error;
 	}
 
@@ -656,13 +666,13 @@ str* offline_nbody(str* body)
 	doc= xmlParseMemory(body->s, body->len);
 	if(doc==  NULL)
 	{
-		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while parsing xml memory\n");
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while parsing xml memory\n");
 		return NULL;
 	}
 	node= xmlDocGetNodeByName(doc, "basic", NULL);
 	if(node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while extracting basic node\n");
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting basic node\n");
 		goto error;
 	}
 	xmlNodeSetContent(node, (const unsigned char*)"closed");
@@ -670,13 +680,13 @@ str* offline_nbody(str* body)
 	tuple_node= xmlDocGetNodeByName(doc, "tuple", NULL);
 	if(node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while extracting tuple node\n");
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting tuple node\n");
 		goto error;
 	}
 	pres_node= xmlDocGetNodeByName(doc, "presence", NULL);
 	if(node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:offline_nbody: ERROR while extracting presence node\n");
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting presence node\n");
 		goto error;
 	}
 
@@ -686,7 +696,7 @@ str* offline_nbody(str* body)
 	root_node= xmlCopyNode(pres_node, 2);
 	if(root_node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:offline_nbody: Error while copying node\n");
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: Error while copying node\n");
 		goto error;
 	}
     xmlDocSetRootElement(new_doc, root_node);
@@ -694,7 +704,7 @@ str* offline_nbody(str* body)
   	add_node= xmlCopyNode(tuple_node, 1);
 	if(add_node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:offline_nbody: Error while copying node\n");
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: Error while copying node\n");
 		goto error;
 	}
 	xmlAddChild(root_node, add_node);
@@ -702,7 +712,7 @@ str* offline_nbody(str* body)
 	new_body = (str*)pkg_malloc(sizeof(str));
 	if(new_body == NULL)
 	{
-		LOG(L_ERR,"PRESENCE: offline_nbody:Error while allocating memory\n");
+		LOG(L_ERR,"PRESENCE_XML: offline_nbody:Error while allocating memory\n");
 		goto error;
 	}
 	memset(new_body, 0, sizeof(str));

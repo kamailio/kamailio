@@ -46,11 +46,10 @@ extern add_event_t pres_add_event;
 
 int xml_add_events()
 {
-	ev_t event;
-	str param;
+	pres_ev_t event;
 	
 	/* constructing presence event */
-	memset(&event, 0, sizeof(ev_t));
+	memset(&event, 0, sizeof(pres_ev_t));
 	event.name.s= "presence";
 	event.name.len= 8;
 
@@ -73,7 +72,7 @@ int xml_add_events()
 	}		
 
 	/* constructing presence.winfo event */
-	memset(&event, 0, sizeof(ev_t));
+	memset(&event, 0, sizeof(pres_ev_t));
 	event.name.s= "presence.winfo";
 	event.name.len= 14;
 
@@ -90,14 +89,11 @@ int xml_add_events()
 	}
 	
 	/* constructing bla event */
-	memset(&event, 0, sizeof(ev_t));
-	event.name.s= "dialog";
-	event.name.len= 6;
+	memset(&event, 0, sizeof(pres_ev_t));
+	event.name.s= "dialog;sla";
+	event.name.len= 10;
 
-	param.s= "sla";
-	param.len= 3;
 	event.etag_not_new= 1;
-	event.param= &param;
 	event.evs_publ_handl= xml_publ_handl;
 	event.content_type.s= "application/dialog-info+xml";
 	event.content_type.len= 27;

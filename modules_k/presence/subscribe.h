@@ -29,22 +29,25 @@
 #ifndef SUBSCRIBE_H
 #define SUBSCRIBE_H
 
-#include "presence.h"
+//#include "presence.h"
 #include "../../str.h"
 
-struct ev;
+struct pres_ev;
 
 #include "event_list.h"
 
+#define ACTIVE_STATUS        1
+#define PENDING_STATUS       2
+#define TERMINATED_STATUS    3
+
 struct subscription
 {
-	str pres_user;
-	str pres_domain;
+	str pres_uri;
 	str to_user;
 	str to_domain;
 	str from_user;
 	str from_domain;
-	struct ev* event;
+	struct pres_ev* event;
 	str event_id;
 	str to_tag;
 	str from_tag;
@@ -56,13 +59,13 @@ struct subscription
 	str local_contact;
 	str record_route;
 	unsigned int expires;
-	str status;
+	int status;
 	str reason;
 	int version;
 	int send_on_cback;
-/* flag to check whether the notify for presence is sent on the callback of
- * the notify for wather info
- */
+	int db_flag;
+	struct subscription* next;
+
 };
 typedef struct subscription subs_t;
 
@@ -71,5 +74,13 @@ void msg_active_watchers_clean(unsigned int ticks,void *param);
 void msg_watchers_clean(unsigned int ticks,void *param);
 
 int handle_subscribe(struct sip_msg*, char*, char*);
+
+int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag);
+
+void timer_db_update(unsigned int ticks,void *param);
+
+int restore_db_subs();
+
+int update_subs_db(subs_t* subs, int type);
 
 #endif

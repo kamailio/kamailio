@@ -108,10 +108,10 @@ err:
 
 int mwi_add_events()
 {
-    ev_t event;
+    pres_ev_t event;
 	
     /* constructing message-summary event */
-    memset(&event, 0, sizeof(ev_t));
+    memset(&event, 0, sizeof(pres_ev_t));
     event.name.s = "message-summary";
     event.name.len = 15;
 

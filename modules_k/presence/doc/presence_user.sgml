@@ -20,11 +20,21 @@
 	module and message-summary from presence_mwi module.
 	</para>
 	<para>
-	The presence server works with database storage. It stores published information 
-	and Subscribe -Notify dialog characteristics.
+	The modules uses database storage. 
+	It has later been improved with memory caching operations to improve
+	performance. The Subscribe dialog information are stored in memory and 
+	are periodically updated in database, while for Publish only the presence
+	or absence of stored info for a certain resource is maintained in memory
+	to avoid unnecessary, costly db operations. 
+	It is possible to configure a fallback to database mode(by setting module
+	parameter "fallback2db"). In this mode, in case a searched record is not 
+	found in cache, the search is continued	in database. This is useful for
+	an architecture in which processing and memory load might be divided on 
+	more machines using the same database.
 	</para>
-	<para>It can also work only with the functionality of a library, with no message 
-	processing and generation, but used only for the exported functions.
+	<para>The module can also work only with the functionality of a library,
+	with no message processing and generation, but used only for the exported
+	functions.
 	This mode of operation is enabled if the db_url parameter is not set to any value.
 	</para>
 	<para>
@@ -260,6 +270,24 @@ modparam("presence", "max_expires", 3600)
 		<programlisting format="linespecific">
 ...
 modparam("presence", "server_address", "sip:10.10.10.10:5060")
+...
+</programlisting>
+		</example>
+	</section>
+<section>
+		<title><varname>fallback2db</varname> (int)</title>
+		<para>
+		Setting this parameter enables a fallback to db mode of operation.
+		In this mode, in case a searched record is not found in cache, 
+		the search is continued	in database. Useful for an architecture in
+		which processing and memory load might be divided on more machines
+		using the same database.
+		</para>
+		<example>
+		<title>Set <varname>fallback2db</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "fallback2db", 1)
 ...
 </programlisting>
 		</example>

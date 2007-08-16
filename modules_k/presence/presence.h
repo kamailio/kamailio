@@ -36,6 +36,7 @@
 #include "../../db/db.h"
 #include "../../parser/parse_from.h"
 #include "event_list.h"
+#include "hash.h"
 
 /* TM bind */
 extern struct tm_binds tmb;
@@ -60,5 +61,12 @@ extern int lock_set_size;
 extern struct sl_binds slb;
 extern str server_address;
 extern int max_expires;
+extern int fallback2db;
+
+extern int shtable_size;
+extern shtable_t subs_htable;
+
+extern int phtable_size;
+extern phtable_t* pres_htable;
 
 #endif /* PA_MOD_H */

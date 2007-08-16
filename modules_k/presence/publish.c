@@ -59,20 +59,20 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	db_key_t db_keys[2];
 	db_val_t db_vals[2];
 	db_op_t  db_ops[2] ;
-	db_key_t result_cols[5];
+	db_key_t result_cols[6];
 	db_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int i =0, size= 0;
 	presentity_t** p= NULL;
 	presentity_t* pres= NULL;
-	int user_len, domain_len, etag_len;
 	int n= 0;
-	str event;
-	char* sep;
-	str ev_name;
-	str* ev_param= NULL;
-	
+	int event_col, etag_col, user_col, domain_col;
+	event_t e;
+	str user, domain, etag, event;
+	int n_result_cols= 0;
+	str pres_uri;
+
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:msg_presentity_clean: Error in use_table\n");
@@ -88,13 +88,13 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = (int)time(NULL);
 		
-	result_cols[0] = "username";
-	result_cols[1] = "domain";
-	result_cols[2] = "etag";
-	result_cols[3] = "event";
+	result_cols[user_col= n_result_cols++] = "username";
+	result_cols[domain_col=n_result_cols++] = "domain";
+	result_cols[etag_col=n_result_cols++] = "etag";
+	result_cols[event_col=n_result_cols++] = "event";
 
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
-						1, 4, 0, &result )< 0)
+						1, n_result_cols, "username", &result )< 0)
 	{
 		LOG(L_ERR,
 			"PRESENCE:msg_presentity_clean: ERROR while querying database"
@@ -119,7 +119,8 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	p= (presentity_t**)pkg_malloc(n* sizeof(presentity_t*));
 	if(p== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR while allocating memory\n");
+		LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR while"
+				" allocating memory\n");
 		goto error;
 	}
 	memset(p, 0, n* sizeof(presentity_t*));
@@ -128,32 +129,20 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	{	
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
-		
-		if(row_vals[0].val.string_val== NULL)
-		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL username row result"
-					" from database\n");
-			goto error;	
-		}
-		if(row_vals[1].val.string_val== NULL)
-		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL domain row result"
-					" from database\n");
-			goto error;	
-		}
-
-		 if(row_vals[2].val.string_val== NULL)
-		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR NULL etag row result"
-					" from database\n");
-			goto error;	
-		}
 	
-		user_len = strlen(row_vals[0].val.string_val);
-		domain_len = strlen(row_vals[1].val.string_val);
-		etag_len= strlen(row_vals[2].val.string_val);
+		user.s= (char*)row_vals[user_col].val.string_val;
+		user.len= strlen(user.s);
 		
-		size= sizeof(presentity_t)+ user_len+ domain_len+ etag_len; 
+		domain.s= (char*)row_vals[domain_col].val.string_val;
+		domain.len= strlen(domain.s);
+
+		etag.s= (char*)row_vals[etag_col].val.string_val;
+		etag.len= strlen(etag.s);
+
+		event.s= (char*)row_vals[event_col].val.string_val;
+		event.len= strlen(event.s);
+		
+		size= sizeof(presentity_t)+ user.len+ domain.len+ etag.len; 
 		pres= (presentity_t*)pkg_malloc(size);
 		if(pres== NULL)
 		{
@@ -164,62 +153,44 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		size= sizeof(presentity_t);
 		
 		pres->user.s= (char*)pres+ size;	
-		memcpy(pres->user.s, (char*)row_vals[0].val.string_val, user_len);
-		pres->user.len= user_len;
-		size+= user_len;
+		memcpy(pres->user.s, user.s, user.len);
+		pres->user.len= user.len;
+		size+= user.len;
 
 		pres->domain.s= (char*)pres+ size;
-		memcpy(pres->domain.s, (char*)row_vals[1].val.string_val, domain_len);
-		pres->domain.len= domain_len;
-		size+= domain_len;
+		memcpy(pres->domain.s, domain.s, domain.len);
+		pres->domain.len= domain.len;
+		size+= domain.len;
 
 		pres->etag.s= (char*)pres+ size;
-		memcpy(pres->etag.s, (char*)row_vals[2].val.string_val, etag_len);
-		pres->etag.len= etag_len;
-		size+= etag_len;
-		
-		event.s= (char*)row_vals[3].val.string_val;
-		event.len= strlen(event.s);
-		/* search for a parameter*/
-		ev_param= NULL;
-		sep= memchr(event.s, ';', event.len);
-		if(sep == NULL)
-		{
-			ev_name= event;
-		}
-		else
-		{
-			ev_name.s= event.s;
-			ev_name.len= sep- event.s;
-
-			ev_param= (str*)pkg_malloc(sizeof(str));
-			if(ev_param== NULL)
-			{
-				LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR no more memory\n");
-				goto error;
-			}
-			ev_param->s= sep+1;
-			ev_param->len= event.len- ev_name.len -1;
-			DBG("PRESENCE:msg_presentity_clean: ev_name= %.*s ev_param= %.*s\n", 
-			ev_name.len, ev_name.s,ev_param->len, ev_param->s );
-		}	
-	
-		pres->event= contains_event(&ev_name, ev_param);
-
-		if(ev_param)
-		{
-			pkg_free(ev_param);
-			ev_param= NULL;
-		}
-
+		memcpy(pres->etag.s, etag.s, etag.len);
+		pres->etag.len= etag.len;
+		size+= etag.len;
+			
+		pres->event= contains_event(&event, &e);
 		if(pres->event== NULL)
 		{
 			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while searching"
 					" for event\n");
 			goto error;
 		}	
-
 		p[i]= pres;
+
+		/* delete from hash table */
+		if(uandd_to_uri(user, domain, &pres_uri)< 0)
+		{
+			LOG(L_ERR,"PRESENCE:pres_htable_restore:ERROR constructing uri\n");
+			goto error;
+		}
+
+		if(delete_phtable(&pres_uri, e.parsed)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR"
+					" deleting from pres hash table\n");
+			pkg_free(pres_uri.s);
+			goto error;
+		}
+		pkg_free(pres_uri.s);
 
 	}
 	pa_dbf.free_result(pa_db, result);
@@ -291,9 +262,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	str* sender= NULL;
 	static char buf[256];
 	int buf_len= 255;
-	ev_t* event= NULL;
-	param_t* ev_param= NULL;
-	str ev_name;
+	pres_ev_t* event= NULL;
 	str pres_user;
 	str pres_domain;
 	struct sip_uri pres_uri;
@@ -325,30 +294,13 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	else
 		goto unsupported_event;
 
-	ev_name= ((event_t*)msg->event->parsed)->text;
-	ev_param= ((event_t*)msg->event->parsed)->params;
-	DBG("PRESENCE: handle_publish: name= %.*s\n", ev_name.len, ev_name.s);
-	if(ev_param)
-		DBG("PRESENCE: handle_publish: param= %.*s\n", ev_param->name.len, ev_param->name.s);
-
-	event= contains_event(&ev_name, NULL);
-	
-	if(!event && ev_param)
-	{
-		while(ev_param)
-		{
-			event= contains_event(&ev_name, &ev_param->name);
-			if(event)
-				break;
-			ev_param= ev_param->next;
-		}	
-	}	
-
+	/* search event in the list */
+	event= search_event((event_t*)msg->event->parsed);
 	if(event== NULL)
 	{
 		goto unsupported_event;
-	}	
-
+	}
+	
 	/* examine the SIP-If-Match header field */
 	hdr = msg->headers;
 	while (hdr!= NULL)

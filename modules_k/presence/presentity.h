@@ -47,7 +47,7 @@ typedef struct presentity
 	int presid;
 	str user;
 	str domain;
-	ev_t* event;
+	pres_ev_t* event;
 	str etag;
 	str* sender;
 	time_t expires;
@@ -56,15 +56,17 @@ typedef struct presentity
 
 /* create new presentity */
 presentity_t* new_presentity( str* domain,str* user,int expires, 
- 		ev_t* event, str* etag, str* sender);
+ 		pres_ev_t* event, str* etag, str* sender);
 
 /* update presentity in database */
-int update_presentity(struct sip_msg* msg, presentity_t* p, str* body, int t_new);
+int update_presentity(struct sip_msg* msg,presentity_t* p,str* body,int t_new);
 
 /* free memory */
 void free_presentity(presentity_t* p);
 
 char* generate_ETag(int publ_count);
+
+int pres_htable_restore();
 
 #endif
 

@@ -30,7 +30,7 @@
 int mwi_watcher_allowed(subs_t* subs)
 {
 
-    subs->status.s = "active";
-    subs->status.len = 6;
-    return 1;
+    subs->status = ACTIVE_STATUS;
+    
+	return 1;
 }

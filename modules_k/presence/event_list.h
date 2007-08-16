@@ -30,6 +30,7 @@
 #define  _PRES_EV_LST_H
 
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_event.h"
 #include "../../str.h"
 #include "subscribe.h"
 
@@ -61,12 +62,10 @@ typedef int (is_allowed_t)(struct subscription* subs);
 /* event specific body free function */
 typedef void(free_body_t)(char* body);
 
-struct ev
+struct pres_ev
 {
 	str name;
-	str* param;         // required param 
-	/* to do: transform it in a list ( for multimple param)*/
-	str stored_name;
+	event_t* evp;
 	str content_type;
 	int default_expires;
 	int type;
@@ -94,31 +93,27 @@ struct ev
 	publ_handling_t  * evs_publ_handl;
 	subs_handling_t  * evs_subs_handl;
 	free_body_t* free_body;
-	struct ev* wipeer;			
-	struct ev* next;
+	struct pres_ev* wipeer;			
+	struct pres_ev* next;
 	
 };
-typedef struct ev ev_t;
+typedef struct pres_ev pres_ev_t;
 
 typedef struct evlist
 {
 	int ev_count;
-	ev_t* events;
+	pres_ev_t* events;
 }evlist_t;	
 
 evlist_t* init_evlist();
 
-int add_event(ev_t* event);
+int add_event(pres_ev_t* event);
 
-typedef int (*add_event_t)(ev_t* event);
+typedef int (*add_event_t)(pres_ev_t* event);
 
-ev_t* contains_event(str* name, str* param);
+pres_ev_t* contains_event(str* name, event_t* parsed_event);
 
-typedef ev_t* (*contains_event_t) (str* name, str* param);
-
-ev_t* get_sname_event(str* stored_name);
-
-typedef ev_t* (*get_sname_event_t)(str* stored_name);
+typedef pres_ev_t* (*contains_event_t)(str* name, event_t* parsed_event);
 
 int get_event_list(str** ev_list);
 
@@ -127,5 +122,14 @@ typedef int (*get_event_list_t) (str** ev_list);
 void destroy_evlist();
 
 extern evlist_t* EvList;
+
+pres_ev_t* search_event(event_t* event);
+
+event_t* shm_copy_event(event_t* e);
+
+void shm_free_event(event_t* ev);
+
+void free_pres_event(pres_ev_t* ev);
+
 
 #endif

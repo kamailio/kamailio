@@ -28,6 +28,7 @@
 
 #include "../../str.h"
 #include "../../dprint.h"
+#include "../../parser/parse_uri.h"
 #include "../presence/utils_func.h"
 #include "presence_xml.h"
 #include "xcap_auth.h"
@@ -44,7 +45,7 @@ int pres_watcher_allowed(subs_t* subs)
 {
 	xmlDocPtr doc= NULL;
 	int ret_code= 0;
-	str status= {"active", 6};
+	int status= ACTIVE_STATUS; 
 
 	DBG("PRESENCE_XML:pres_watcher_allowed: ...\n");
 	/* if force_active set status to active*/
@@ -55,7 +56,7 @@ int pres_watcher_allowed(subs_t* subs)
 	}
 	/* else search in xcap_table */
 
-	if( get_xcap_tree(subs->to_user, subs->to_domain, PRES_RULES, &doc)< 0)
+	if( get_xcap_tree(subs->pres_uri, PRES_RULES, &doc)< 0)
 	{
 		LOG(L_ERR, "PRESENCE_XML:pres_watcher_allowed: ERROR while getting xcap_tree\n");
 		return -1;	
@@ -294,30 +295,26 @@ int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 	}
 	if( strncmp((char*)sub_handling, "block",5 )==0)
 	{	
-		subs->status.s = "terminated";
-		subs->status.len = 10;
+		subs->status = TERMINATED_STATUS;;
 		subs->reason.s= "rejected";
 		subs->reason.len = 8;
 	}
 	else	
 	if( strncmp((char*)sub_handling, "confirm",7 )==0)
 	{	
-		subs->status.s = "pending";
-		subs->status.len = 7;
+		subs->status = PENDING_STATUS;
 	}
 	else
 	if( strncmp((char*)sub_handling , "polite-block",12 )==0)
 	{	
-		subs->status.s = "active";
-		subs->status.len = 6;
+		subs->status = ACTIVE_STATUS;
 		subs->reason.s= "polite-block";
 		subs->reason.len = 12;
 	}
 	else	
 	if( strncmp((char*)sub_handling , "allow",5 )==0)
 	{	
-		subs->status.s = "active";
-		subs->status.len = 6;
+		subs->status = ACTIVE_STATUS;
 		subs->reason.s = NULL;
 	}
 	xmlFree(sub_handling);
@@ -329,7 +326,7 @@ int is_watcher_allowed( subs_t* subs, xmlDocPtr xcap_tree )
 }
 
 
-int get_xcap_tree(str user, str domain, int doc_type, xmlDocPtr* doc )
+int get_xcap_tree(str uri, int doc_type, xmlDocPtr* doc )
 {
 	db_key_t query_cols[5];
 	db_val_t query_vals[5];
@@ -341,19 +338,23 @@ int get_xcap_tree(str user, str domain, int doc_type, xmlDocPtr* doc )
 	str body ;
 	xmlDocPtr xcap_tree =NULL;
 	int err_ret= -1;
+	struct sip_uri pres_uri;
 
+	if(parse_uri(uri.s, uri.len, &pres_uri)< 0)
+	{
+		LOG(L_ERR, "PRESENCE_XML: get_xcap_tree: ERROR while parsing uri\n");
+		goto error;
+	}
 	query_cols[n_query_cols] = "username";
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = user.s;
-	query_vals[n_query_cols].val.str_val.len = user.len;
+	query_vals[n_query_cols].val.str_val = pres_uri.user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = "domain";
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = domain.s;
-	query_vals[n_query_cols].val.str_val.len = domain.len;
+	query_vals[n_query_cols].val.str_val = pres_uri.host;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = "doc_type";
@@ -376,8 +377,7 @@ int get_xcap_tree(str user, str domain, int doc_type, xmlDocPtr* doc )
 				n_query_cols, 1, 0, &result)<0)
 	{
 		LOG(L_ERR, "PRESENCE_XML:get_xcap_tree:Error while querying table xcap for"
-		" [username]=%.*s , domain=%.*s\n",user.len, user.s, domain.len,
-		domain.s);
+		" [uri]=%.*s \n",uri.len, uri.s);
 		if(result)
 			pxml_dbf.free_result(pxml_db, result);
 		return -1;
@@ -388,15 +388,11 @@ int get_xcap_tree(str user, str domain, int doc_type, xmlDocPtr* doc )
 	if(result && result->n<=0)
 	{
 		DBG("PRESENCE_XML:get_xcap_tree:The query in table xcap for"
-				" [username]=%.*s , domain=%.*s returned no result\n",
-				user.len, user.s, domain.len, domain.s);
+				" [uri]=%.*s returned no result\n",uri.len, uri.s);
 		err_ret= 0;
 		goto error;
 	}
-	DBG("PRESENCE_XML:get_xcap_tree:The query in table xcap for"
-			" [username]=%.*s , domain=%.*s , doc_type= %d returned result\n",
-			user.len, user.s, domain.len, domain.s, doc_type );
-
+	
 	row = &result->rows[0];
 	row_vals = ROW_VALUES(row);
 

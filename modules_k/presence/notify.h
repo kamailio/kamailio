@@ -46,16 +46,19 @@ typedef struct watcher
 {
 	str uri;
 	str id;
-	str status;
+	int status;
 	str event;
 	str display_name;
 	str expiration;
 	str duration_subscribed;
+	struct watcher* next;
 }watcher_t;
 
 typedef struct wid_cback
 {
-	char* w_id;
+	str pres_uri;
+	str ev_name;
+	str to_tag;   /* to identify the exact record */
 	subs_t* wi_subs;
 }c_back_param;
 
@@ -63,17 +66,12 @@ void PRINT_DLG(FILE* out, dlg_t* _d);
 
 void printf_subs(subs_t* subs);
 
-//str* build_str_hdr(str event, str status, int expires_t, str reason);
-
-int free_tm_dlg(dlg_t *td);
-
-dlg_t* build_dlg_t (str p_uri, subs_t* subs);
-
-int query_db_notify(str* p_user, str* p_domain, ev_t* event, 
-		subs_t* watcher_subs);
+int query_db_notify(str* pres_uri,pres_ev_t* event, subs_t* watcher_subs );
 
 int publ_notify(presentity_t* p, str* body, str* offline_etag);
 
 int notify(subs_t* subs, subs_t* watcher_subs, str* n_body, int force_null_body);
 
+int send_notify_request(subs_t* subs, subs_t * watcher_subs,
+		str* n_body,int force_null_body);
 #endif
