@@ -9,7 +9,7 @@
 
 <table id="active_watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>active_watchers</name>
-    <version>5</version>
+    <version>6</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/presence.html
@@ -27,18 +27,11 @@
         <description>Unique ID</description>
     </column>
 
-    <column id="pres_user">
-        <name>pres_user</name>
+    <column id="pres_uri">
+        <name>pres_uri</name>
         <type>string</type>
-        <size>&user_len;</size>
-        <description>Presence User</description>
-    </column>
-
-    <column id="pres_domain">
-        <name>pres_domain</name>
-        <type>string</type>
-        <size>&domain_len;</size>
-        <description>Presence Domain</description>
+        <size>&uri_len;</size>
+        <description>Presence URI</description>
     </column>
 
     <column>
@@ -143,9 +136,9 @@
 
     <column>
         <name>status</name>
-        <type>string</type>
-        <size>32</size>
-        <default>pending</default>
+		<type>int</type>
+        <size>11</size>
+        <default>2</default>
         <description>Status</description>
     </column>
 
@@ -178,9 +171,8 @@
     </index>
 
     <index>
-        <name>ude_active_watchers</name>
-        <colref linkend="pres_domain"/>
-        <colref linkend="pres_user"/>
+        <name>ue_active_watchers</name>
+        <colref linkend="pres_uri"/>
         <colref linkend="event"/>
 	</index>
 	
