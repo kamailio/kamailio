@@ -1086,6 +1086,7 @@ int update_in_list(subs_t* s, subs_t* s_array, int n)
 			ls->expires= ls->expires;
 			ls->version= ls->version;
 			ls->status= ls->status;
+			return 1;
 		}
 		ls= ls->next;
 	}
@@ -1140,7 +1141,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 				if(update_in_list(s, s_array, n)< 0)
 				{
 					LOG(L_ERR, "PRESENCE: get_subs_dialog: ERROR"
-							"updating subscription in list\n");
+							" updating subscription in list\n");
 					lock_release(&subs_htable[hash_code].lock);
 					goto error;
 				}
