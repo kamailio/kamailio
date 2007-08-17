@@ -208,7 +208,8 @@ inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
 /*
  * Print values of SQL statement
  */
-int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n, int (*val2str)() )
+int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n,
+		int (*val2str)() )
 {
 	int i, res = 0, l;  
 
@@ -220,7 +221,8 @@ int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n, int (*
 	for(i = 0; i < _n; i++) {
 		l = _l - res;
 		if ( (*val2str)(_c, _v + i, _b + res, &l) < 0) {
-			LOG(L_ERR, "db_print_values: Error while converting value to string\n");
+			LOG(L_ERR,
+				"db_print_values: Error while converting value to string\n");
 			return -1;
 		}
 		res += l;
@@ -237,7 +239,8 @@ int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n, int (*
 /*
  * Print where clause of SQL statement
  */
-int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n, int (*val2str)() )
+int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o,
+		db_val_t* _v, int _n, int (*val2str)() )
 {
 	int i;
 	int len = 0, ret;
@@ -278,7 +281,8 @@ int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, db
 /*
  * Print set clause of update SQL statement
  */
-int db_print_set(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n, int (*val2str)() )
+int db_print_set(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v,
+		int _n, int (*val2str)() )
 {
 	int i;
 	int len = 0, ret;
