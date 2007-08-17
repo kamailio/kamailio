@@ -305,7 +305,7 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 		off += ret;
 	}
 	if (_o) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " order by %s", _o);
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 	}

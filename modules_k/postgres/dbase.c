@@ -803,7 +803,7 @@ int pg_query(db_con_t* _con, db_key_t* _k, db_op_t* _op,
 	}
 	if (_o) {
 		off += snprintf(_s + off, SQL_BUF_LEN - off,
-			"order by %s", _o);
+			" order by %s", _o);
 	}
 
 	LOG (L_DBG, "PG[pg_query]: %p %p %s\n", _con, _r, _s);

@@ -358,7 +358,7 @@ db_key_t _o, db_res_t** _r)
 	}
 	if (_o)
 	{
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " order by %s", _o);
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 	}
