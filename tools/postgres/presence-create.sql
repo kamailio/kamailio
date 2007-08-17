@@ -11,11 +11,10 @@ CREATE TABLE presentity (
     CONSTRAINT udee_presentity UNIQUE (username, domain, event, etag)
 );
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','5');
+INSERT INTO version (table_name, table_version) values ('active_watchers','6');
 CREATE TABLE active_watchers (
     id SERIAL PRIMARY KEY NOT NULL,
-    pres_user VARCHAR(64) NOT NULL,
-    pres_domain VARCHAR(64) NOT NULL,
+    pres_uri VARCHAR(128) NOT NULL,
     to_user VARCHAR(64) NOT NULL,
     to_domain VARCHAR(64) NOT NULL,
     from_user VARCHAR(64) NOT NULL,
@@ -30,14 +29,14 @@ CREATE TABLE active_watchers (
     contact VARCHAR(64) NOT NULL,
     record_route TEXT,
     expires INTEGER NOT NULL,
-    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    status INTEGER NOT NULL DEFAULT 2,
     version INTEGER NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
     CONSTRAINT tt_watchers UNIQUE (to_tag)
 );
 
-CREATE INDEX ude_active_watchers ON active_watchers (pres_domain, pres_user, event);
+CREATE INDEX ue_active_watchers ON active_watchers (pres_uri, event);
 CREATE INDEX exp_active_watchers ON active_watchers (expires);
 
 INSERT INTO version (table_name, table_version) values ('watchers','1');
@@ -63,13 +62,14 @@ CREATE TABLE xcap_xml (
     CONSTRAINT udd_xcap UNIQUE (username, domain, doc_type)
 );
 
-INSERT INTO version (table_name, table_version) values ('pua','4');
+INSERT INTO version (table_name, table_version) values ('pua','5');
 CREATE TABLE pua (
     id SERIAL PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,
     pres_id VARCHAR(64) NOT NULL,
     event INTEGER NOT NULL,
     expires INTEGER NOT NULL,
+    desired_expires INTEGER NOT NULL,
     flag INTEGER NOT NULL,
     etag VARCHAR(64) NOT NULL,
     tuple_id VARCHAR(64),
@@ -80,7 +80,8 @@ CREATE TABLE pua (
     cseq INTEGER NOT NULL,
     record_route TEXT,
     contact VARCHAR(128) NOT NULL,
-    version INTEGER NOT NULL
+    version INTEGER NOT NULL,
+    extra_headers TEXT NOT NULL
 );
 
  

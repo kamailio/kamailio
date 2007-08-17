@@ -1,7 +1,7 @@
 table_name(str) table_version(int) 
 acc:4
 active_sessions:1
-active_watchers:5
+active_watchers:6
 address:3
 admin_privileges:1
 aliases:1004
@@ -24,7 +24,7 @@ pdt:1
 pending:6
 phonebook:1
 presentity:2
-pua:4
+pua:5
 re_grp:1
 route_tree:1
 server_monitoring:1

@@ -1,1 +1,1 @@
-id(int,auto) pres_uri(str) pres_id(str) event(int) expires(int) flag(int) etag(str) tuple_id(str,null) watcher_uri(str) call_id(str) to_tag(str) from_tag(str) cseq(int) record_route(str,null) contact(str) version(int) 
+id(int,auto) pres_uri(str) pres_id(str) event(int) expires(int) desired_expires(int) flag(int) etag(str) tuple_id(str,null) watcher_uri(str) call_id(str) to_tag(str) from_tag(str) cseq(int) record_route(str,null) contact(str) version(int) extra_headers(str) 
