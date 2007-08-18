@@ -756,13 +756,16 @@ int dst_blacklist_add_to(unsigned char err_flags,  struct dest_info* si,
 {
 	struct ip_addr ip;
 
-#ifdef USE_DST_BLACKLIST_STATS
-	dst_blacklist_stats[process_no].bkl_hit_cnt++;
-#endif
 #ifdef DST_BLACKLIST_HOOKS
 	if (unlikely (blacklist_run_hooks(&blst_add_cb, si, &err_flags, msg) ==
 					DST_BLACKLIST_DENY))
 		return 0;
+#endif
+#ifdef USE_DST_BLACKLIST_STATS
+	/* if hooks are defined then increment hit counter only when a
+	 * destination is added into blacklist
+	 */
+        dst_blacklist_stats[process_no].bkl_hit_cnt++;
 #endif
 	su2ip_addr(&ip, &si->to);
 	return dst_blacklist_add_ip(err_flags, si->proto, &ip,
