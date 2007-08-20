@@ -78,9 +78,8 @@
     </column>
 
     <index>
-        <name>udud_watchers</name>
-        <colref linkend="p_user"/>
-        <colref linkend="p_domain"/>
+        <name>uud_watchers</name>
+        <colref linkend="p_uri"/>
         <colref linkend="w_user"/>
         <colref linkend="w_domain"/>
         <unique/>
