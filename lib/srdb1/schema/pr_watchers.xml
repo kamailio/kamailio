@@ -9,7 +9,7 @@
 
 <table id="watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>watchers</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/presence.html
@@ -27,32 +27,33 @@
         <description>Unique ID</description>
     </column>
 
-    <column id="p_user">
-        <name>p_user</name>
+    <column id="p_uri">
+        <name>p_uri</name>
         <type>string</type>
-        <size>&user_len;</size>
-        <description>User</description>
-    </column>
-
-    <column id="p_domain">
-        <name>p_domain</name>
-        <type>string</type>
-        <size>&domain_len;</size>
-        <description>Domain</description>
+        <size>&uri_len;</size>
+        <description>Presentity Uri</description>
     </column>
 
     <column id="w_user">
         <name>w_user</name>
         <type>string</type>
         <size>&user_len;</size>
-        <description>User</description>
+        <description>Watcher User</description>
     </column>
 
     <column id="w_domain">
         <name>w_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
-        <description>Domain</description>
+        <description>Watcher Domain</description>
+    </column>
+	
+	<column id="event">
+        <name>event</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default>presence</default>
+        <description>Event description</description>
     </column>
 
     <column>
