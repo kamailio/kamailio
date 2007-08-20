@@ -49,4 +49,39 @@ CREATE TABLE watchers (
     subs_status VARCHAR(64) NOT NULL,
     reason VARCHAR(64),
     inserted_time INTEGER NOT NULL,
-    CONSTRAINT udud_watchers UNIQUE (
+    CONSTRAINT uud_watchers UNIQUE (p_uri, w_user, w_domain)
+);
+
+INSERT INTO version (table_name, table_version) values ('xcap_xml','1');
+CREATE TABLE xcap_xml (
+    id SERIAL PRIMARY KEY NOT NULL,
+    username VARCHAR(64) NOT NULL,
+    domain VARCHAR(64) NOT NULL,
+    xcap BYTEA NOT NULL,
+    doc_type INTEGER NOT NULL,
+    CONSTRAINT udd_xcap UNIQUE (username, domain, doc_type)
+);
+
+INSERT INTO version (table_name, table_version) values ('pua','5');
+CREATE TABLE pua (
+    id SERIAL PRIMARY KEY NOT NULL,
+    pres_uri VARCHAR(128) NOT NULL,
+    pres_id VARCHAR(64) NOT NULL,
+    event INTEGER NOT NULL,
+    expires INTEGER NOT NULL,
+    desired_expires INTEGER NOT NULL,
+    flag INTEGER NOT NULL,
+    etag VARCHAR(64) NOT NULL,
+    tuple_id VARCHAR(64),
+    watcher_uri VARCHAR(128) NOT NULL,
+    call_id VARCHAR(64) NOT NULL,
+    to_tag VARCHAR(64) NOT NULL,
+    from_tag VARCHAR(64) NOT NULL,
+    cseq INTEGER NOT NULL,
+    record_route TEXT,
+    contact VARCHAR(128) NOT NULL,
+    version INTEGER NOT NULL,
+    extra_headers TEXT NOT NULL
+);
+
+ 
