@@ -856,6 +856,12 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs.from_domain;
 	n_query_cols++;
+	
+	db_keys[n_query_cols] ="event";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs.event->name;
+	n_query_cols++;
 
 	result_cols[0] = "subs_status";
 	result_cols[1] = "reason";
