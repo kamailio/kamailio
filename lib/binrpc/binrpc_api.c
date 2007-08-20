@@ -451,12 +451,17 @@ static int get_reply(struct binrpc_handle *handle,
 	
 	do {		
 		n = read(handle->socket, crt, handle->buf_size - (crt-handle->buf));
-		if (n < 0){
+		if (n <= 0){
 			if (errno==EINTR)
 				continue;
-			snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
-				"get_reply: read reply failed: %s (%d)",
-				strerror(errno), errno);
+			if (n == 0)
+				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
+					"get_reply: read unexpected EOF: received %d bytes"
+					" of reply", n);
+			else
+				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
+					"get_reply: read reply failed: %s (%d)",
+					strerror(errno), errno);
 			return FATAL_ERROR;
 		}
 		if (verbose >= 3){

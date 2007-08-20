@@ -573,7 +573,7 @@ static int get_reply(int s, unsigned char* reply_buf, int max_reply_size,
 	binrpc_errno=0;
 	do{
 		n=read(s, crt, (int)(msg_end-crt));
-		if (n<0){
+		if (n<=0){
 			if (errno==EINTR)
 				continue;
 			goto error_read;
