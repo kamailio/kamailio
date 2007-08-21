@@ -293,14 +293,6 @@ static int child_init(int rank)
 {
 	
 	LM_DBG(" #%d / pid <%d>\n", rank, getpid());
-	if(rank >0)
-	{
-		if(ds_connect_db() != 0)
-		{	
-			LM_ERR("could not connect to database\n");
-			return -1;
-		}
-	}
 
 	srand((11+rank)*getpid()*7);
 
@@ -309,8 +301,22 @@ static int child_init(int rank)
 
 static int mi_child_init()
 {
-	return ds_connect_db();
+	
+	if(ds_db_url!= NULL)
+		return ds_connect_db();
+	return 0;
 
+}
+
+/**
+ * destroy function
+ */
+void destroy(void)
+{
+	LM_DBG("destroying module ...\n");
+	ds_destroy_list();
+	if(ds_db_url)
+		ds_disconnect_db();
 }
 
 static inline int ds_get_ivalue(struct sip_msg* msg, ds_param_p dp, int *val)
@@ -414,17 +420,6 @@ static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 		return ds_mark_dst(msg, 2);
 	else
 		return ds_mark_dst(msg, 1);
-}
-
-/**
- * destroy function
- */
-void destroy(void)
-{
-	LM_DBG("destroying module ...\n");
-	ds_destroy_list();
-	if(ds_db_url)
-		ds_disconnect_db();
 }
 
 /**

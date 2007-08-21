@@ -344,6 +344,9 @@ error:
 
 int ds_connect_db()
 {
+	if(ds_db_url==0)
+		return -1;
+
 	if (ds_db_handle) 
 	{
 		LM_CRIT("BUG - db connection found already open\n");
