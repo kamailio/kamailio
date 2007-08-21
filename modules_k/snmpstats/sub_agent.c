@@ -95,63 +95,46 @@ static int initialize_agentx(void)
 /* Creates a child that will become the AgentX sub-agent.  The child will
  * insulate itself from the rest of OpenSER by overriding most of signal
  * handlers. */
-int spawn_agentx_child() 
+void agentx_child(int rank)
 {
-	pid_t pid = fork();
+	struct sigaction new_sigterm_handler;
+	struct sigaction default_handlers;
+	struct sigaction sigpipe_handler;
 
-	/* If we are the child of the fork, then lets set up our sub-agent */
-	if (pid == 0) 
-	{	
-		struct sigaction new_sigterm_handler;
-		struct sigaction default_handlers;
-		struct sigaction sigpipe_handler;
+	/* Setup a SIGTERM handler */
+	sigfillset(&new_sigterm_handler.sa_mask);
+	new_sigterm_handler.sa_flags   = 0;
+	new_sigterm_handler.sa_handler = sigterm_handler;
+	sigaction(SIGTERM, &new_sigterm_handler, NULL);
 
-		/* Setup a SIGTERM handler */
-		sigfillset(&new_sigterm_handler.sa_mask);
-		new_sigterm_handler.sa_flags   = 0;
-		new_sigterm_handler.sa_handler = sigterm_handler;
-		sigaction(SIGTERM, &new_sigterm_handler, NULL);
+	/* We don't want OpenSER's normal handlers doing anything when
+	 * we die.  As far as OpenSER knows this process never existed.
+	 * So override all signal handlers to the OS default. */
+	sigemptyset(&default_handlers.sa_mask);
+	default_handlers.sa_flags = 0;
+	default_handlers.sa_handler = SIG_DFL;
 
-		/* We don't want OpenSER's normal handlers doing anything when
-		 * we die.  As far as OpenSER knows this process never existed.
-		 * So override all signal handlers to the OS default. */
-		sigemptyset(&default_handlers.sa_mask);
-		default_handlers.sa_flags = 0;
-		default_handlers.sa_handler = SIG_DFL;
+	sigaction(SIGCHLD, &default_handlers, NULL);
+	sigaction(SIGINT,  &default_handlers, NULL);
+	sigaction(SIGHUP,  &default_handlers, NULL);
+	sigaction(SIGUSR1, &default_handlers, NULL);
+	sigaction(SIGUSR2, &default_handlers, NULL);
 
-		sigaction(SIGCHLD, &default_handlers, NULL);
-		sigaction(SIGINT,  &default_handlers, NULL);
-		sigaction(SIGHUP,  &default_handlers, NULL);
-		sigaction(SIGUSR1, &default_handlers, NULL);
-		sigaction(SIGUSR2, &default_handlers, NULL);
+	/* It is possible that the master agent will unregister us if we
+	 * take too long to respond to an SNMP request.  This would
+	 * happen if a large number of users/contacts have been
+	 * registered between snmp requests to the user/contact tables.
+	 * In this situation we may try to write to a closed socket when
+	 * we are done processing, resulting in a SIGPIPE.  This doesn't
+	 * need to be fatal however, because we can re-establish our
+	 * connection.  Therefore we set ourselves up to ignore the
+	 * SIGPIPE. */
+	sigpipe_handler.sa_flags = SA_RESTART;
+	sigpipe_handler.sa_handler = SIG_IGN;
 
-		/* It is possible that the master agent will unregister us if we
-		 * take too long to respond to an SNMP request.  This would
-		 * happen if a large number of users/contacts have been
-		 * registered between snmp requests to the user/contact tables.
-		 * In this situation we may try to write to a closed socket when
-		 * we are done processing, resulting in a SIGPIPE.  This doesn't
-		 * need to be fatal however, because we can re-establish our
-		 * connection.  Therefore we set ourselves up to ignore the
-		 * SIGPIPE. */
-		sigpipe_handler.sa_flags = SA_RESTART;
-		sigpipe_handler.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &sigpipe_handler, NULL);
 
-		sigaction(SIGPIPE, &sigpipe_handler, NULL);
-
-		initialize_agentx();
-	} 
-	else if (pid < 0) 
-	{
-		return -1;
-	} 
-	else 
-	{
-		LOG(L_INFO, "INFO: SNMPStats: The AgentX Sub-Agent is running "
-				"under PID %d\n", pid);
-	}
-
-	return 0;
+	initialize_agentx();
 }
 
 

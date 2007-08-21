@@ -35,10 +35,10 @@
 
 #define AGENT_PROCESS_NAME   "snmpstats_sub_agent"
 
-/* Creates a child that will become the AgentX sub-agent.  The child will
+/* Run the AgentX sub-agent as a separate process.  The child will
  * insulate itself from the rest of OpenSER by overriding most of signal
  * handlers. */
-int  spawn_agentx_child(); 
+void agentx_child(int rank);
 
 /* This function opens up a connection with the master agent specified in
  * the snmpstats modules configuration file */

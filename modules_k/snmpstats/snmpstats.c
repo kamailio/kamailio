@@ -267,18 +267,13 @@ static int mod_child_init(int rank)
 		return 0;
 	}
 
-	/* If we couldn't spawn a child, we can't continue. */
-	if (spawn_agentx_child() != 0) {
-		return -1;
-	}
-
 	/* Spawn a child that will check the system up time. */
 	spawn_sysUpTime_child();
-	
+
 	return 0;
 }
 
-/* This function is called when OpenSER is shutting down.  When this happens, we
+/* This function is called when OpenSER is shutting down. When this happens, we
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy() 
 {
@@ -289,10 +284,10 @@ static void mod_destroy()
 
 
 /* The SNMPStats module forks off a child process to run an snmp command via
- * execve().   We need a customized handler to catch and ignore its SIGCHLD when it
- * terminates.  We also need to make sure to forward other processes SIGCHLD's to
- * OpenSER's usual SIGCHLD handler.  We do this by resetting back OpenSER's own
- * signal handlers after we caught our appropriate SIGCHLD. */
+ * execve(). We need a customized handler to catch and ignore its SIGCHLD when 
+ * it terminates. We also need to make sure to forward other processes 
+ * SIGCHLD's to OpenSER's usual SIGCHLD handler.  We do this by resetting back
+ * OpenSER's own signal handlers after we caught our appropriate SIGCHLD. */
 static void sigchld_handler(int signal)
 {
 	int pid_of_signalled_process_status;
@@ -331,9 +326,9 @@ static void sigchld_handler(int signal)
 }
 
 /*
- * This function will spawn a child that retrieves the sysUpTime, and stores the
- * result in a file.  This file will be read by the AgentX Sub-agent process to
- * supply the openserSIPServiceStartTime time.   This function never returns,
+ * This function will spawn a child that retrieves the sysUpTime and stores the
+ * result in a file. This file will be read by the AgentX Sub-agent process to
+ * supply the openserSIPServiceStartTime time. This function never returns,
  * but it will generated a SIGCHLD when it terminates.  There must a SIGCHLD
  * handler to ignore the SIGCHLD for only this process. (See sigchld_handler
  * above).
@@ -360,7 +355,7 @@ static int spawn_sysUpTime_child()
 	new_sigchld_handler.sa_handler = sigchld_handler;
 	sigaction(SIGCHLD, &new_sigchld_handler, &old_sigchld_handler);
 
-	int result_pid = fork();
+	pid_t result_pid = fork();
 
 	if (result_pid < 0) {
 		LOG(L_ERR, "ERROR: SNMPStats: Could not spawn an agent to "

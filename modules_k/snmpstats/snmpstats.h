@@ -67,6 +67,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "snmpstats_globals.h"
+#include "sub_agent.h"
 
 #define SNMPSTATS_MODULE_NAME "snmpstats"
 #define SYSUPTIME_OID         ".1.3.6.1.2.1.1.3.0"
@@ -87,22 +88,37 @@ static int  mod_child_init(int rank);
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy();
 
+
+static proc_export_t mod_procs[] = {
+	{"SNMP AgentX",  0,  0, agentx_child, 1 },
+	{0,0,0}
+};
+
+
 /*
  * This structure defines the SNMPStats parameters that can be configured
  * through the openser.cfg configuration file.  
  */
 static param_export_t mod_params[] = 
 {
-	{ "sipEntityType",          STR_PARAM|USE_FUNC_PARAM, (void *)handleSipEntityType       },
-	{ "MsgQueueMinorThreshold", INT_PARAM|USE_FUNC_PARAM, (void *)set_queue_minor_threshold }, 
-	{ "MsgQueueMajorThreshold", INT_PARAM|USE_FUNC_PARAM, (void *)set_queue_major_threshold }, 
-	{ "dlg_minor_threshold",    INT_PARAM|USE_FUNC_PARAM, (void *)set_dlg_minor_threshold   },
-	{ "dlg_major_threshold",    INT_PARAM|USE_FUNC_PARAM, (void *)set_dlg_major_threshold   },
-	{ "snmpgetPath",            STR_PARAM|USE_FUNC_PARAM, (void *)set_snmpget_path          }, 
-	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM, (void *)set_snmp_community        }, 
+	{ "sipEntityType",          STR_PARAM|USE_FUNC_PARAM,
+			(void *)handleSipEntityType       },
+	{ "MsgQueueMinorThreshold", INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_queue_minor_threshold }, 
+	{ "MsgQueueMajorThreshold", INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_queue_major_threshold }, 
+	{ "dlg_minor_threshold",    INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_dlg_minor_threshold   },
+	{ "dlg_major_threshold",    INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_dlg_major_threshold   },
+	{ "snmpgetPath",            STR_PARAM|USE_FUNC_PARAM,
+			(void *)set_snmpget_path          },
+	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM,
+			(void *)set_snmp_community        }, 
 	{ 0,0,0 }
 };
- 
+
+
 struct module_exports exports = 
 {
 	SNMPSTATS_MODULE_NAME,   /* module's name */
@@ -112,7 +128,7 @@ struct module_exports exports =
 	0,                       /* exported statistics */
 	0,                       /* MI Functions */
 	0,                       /* pseudo-variables */
-	0,                       /* extra processes */
+	mod_procs,               /* extra processes */
 	mod_init,                /* module initialization function */
 	0,                       /* reply processing function */
 	mod_destroy,   /* Destroy function */
