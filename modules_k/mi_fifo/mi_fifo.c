@@ -80,7 +80,7 @@ static param_export_t mi_params[] = {
 
 
 static proc_export_t mi_procs[] = {
-	{"MI FIFO",  fifo_process,  1 },
+	{"MI FIFO",  0,  0,  fifo_process,  1 },
 	{0,0,0}
 };
 
