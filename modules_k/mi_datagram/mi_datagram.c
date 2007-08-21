@@ -73,6 +73,8 @@
 static int mi_mod_init(void);
 static int mi_child_init(int rank);
 static int mi_destroy(void);
+static int pre_datagram_process();
+static int post_datagram_process();
 static void datagram_process(int rank);
 
 /* local variables */
@@ -100,7 +102,8 @@ MODULE_VERSION
 
 
 static proc_export_t mi_procs[] = {
-	{"MI Datagram", datagram_process, MI_CHILD_NO },
+	{"MI Datagram",  pre_datagram_process,  post_datagram_process,
+			datagram_process, MI_CHILD_NO },
 	{0,0,0}
 };
 
@@ -143,7 +146,6 @@ static int mi_mod_init(void)
 	struct hostent * host;
 	char *p, *host_s;
 	str port_str;
-	int res;
 
 	/* checking the mi_socket module param */
 	DBG("DBG: mi_datagram: mi_mod_init: testing socket existance ...\n");
@@ -261,19 +263,6 @@ static int mi_mod_init(void)
 			mi_socket, strlen(mi_socket));
 	}
 
-	/*create the sockets*/
-	res = mi_init_datagram_server(&mi_dtgram_addr, mi_socket_domain, &sockets,
-								mi_unix_socket_mode, mi_unix_socket_uid, 
-								mi_unix_socket_gid);
-
-	if ( res ) {
-		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_init: The function "
-			"mi_init_datagram_server returned with error!!!\n");
-		return -1;
-	}
-	/* FIXME - the sockets will remain open in all processes and not only
-	 * in the mi_datagram ones .... */
-
 	return 0;
 }
 
@@ -292,24 +281,43 @@ static int mi_child_init(int rank)
 }
 
 
+static int pre_datagram_process()
+{
+	int res;
+
+	/*create the sockets*/
+	res = mi_init_datagram_server(&mi_dtgram_addr, mi_socket_domain, &sockets,
+								mi_unix_socket_mode, mi_unix_socket_uid, 
+								mi_unix_socket_gid);
+
+	if ( res ) {
+		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_init: The function "
+			"mi_init_datagram_server returned with error!!!\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+
 static void datagram_process(int rank)
 {
 	LOG(L_INFO,"INFO:mi_datagram:mi_child_init: a new child %d/%d\n",
 		rank, getpid());
 
 	/*child's initial settings*/
-	if( init_mi_child()!=0) {
+	if ( init_mi_child()!=0) {
 		LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to init"
 			"the mi process\n");
 		exit(-1);
 	}
-	if(mi_init_datagram_buffer()!=0){
+	if (mi_init_datagram_buffer()!=0){
 		LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to "
 			"allocate datagram buffer\n");
 		exit(-1);
 	}
 
-	if(mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
+	if (mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
 	mi_reply_indent )!= 0){
 		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_child_init: failed to "
 			"initiate mi_datagram_writer\n");
@@ -319,6 +327,15 @@ static void datagram_process(int rank)
 	mi_datagram_server(sockets.rx_sock, sockets.tx_sock);
 
 	exit(-1);
+}
+
+
+static int post_datagram_process()
+{
+	/* close the sockets */
+	close(sockets.rx_sock);
+	close(sockets.tx_sock);
+	return 0;
 }
 
 

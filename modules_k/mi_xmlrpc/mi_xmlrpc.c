@@ -35,6 +35,7 @@
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <grp.h>
+#include <stdlib.h>
 #include "mi_xmlrpc.h"
 #include "xr_writer.h"
 #include "xr_parser.h"
@@ -53,22 +54,28 @@ int rpl_opt = 0;
 
 /* module functions */
 static int mod_init();
-static int mod_child_init(int rank);
 static int destroy(void);
+static void xmlrpc_process(int rank);
 
-static pid_t * mi_xmlrpc_pid = 0;
 static int port = 8080;
 static char *log_file = NULL; 
 static int read_buf_size = MAX_READ;
 static TServer srv;
 MODULE_VERSION
 
+
+static proc_export_t mi_procs[] = {
+	{"MI XMLRPC",  0,  0, xmlrpc_process, 1 },
+	{0,0,0}
+};
+
+
 /* module parameters */
 static param_export_t mi_params[] = {
-	{"port",        				INT_PARAM, &port},
-	{"log_file",       				STR_PARAM, &log_file},
-	{"reply_option",        		INT_PARAM, &rpl_opt},
-	{"buffer_size", 				INT_PARAM, &read_buf_size},
+	{"port",					INT_PARAM, &port},
+	{"log_file",				STR_PARAM, &log_file},
+	{"reply_option",			INT_PARAM, &rpl_opt},
+	{"buffer_size",				INT_PARAM, &read_buf_size},
 	{0,0,0}
 };
 
@@ -81,12 +88,13 @@ struct module_exports exports = {
 	0,                                  /* exported statistics */
 	0,                                  /* exported MI functions */
 	0,                                  /* exported PV */
-	0,                                  /* extra processes */
+	mi_procs,                           /* extra processes */
 	mod_init,                           /* module initialization function */
 	(response_function) 0,              /* response handling function */
 	(destroy_function) destroy,         /* destroy function */
-	mod_child_init                      /* per-child init function */
+	0                                   /* per-child init function */
 };
+
 
 static int mod_init(void)
 {
@@ -95,13 +103,6 @@ static int mod_init(void)
 	if ( port <= 1024 ) {
 		LOG(L_WARN,"WARNING: mi_xmlrpc: mod_init: port<1024, using 8080...\n");
 		port = 8080;
-	}
-
-	mi_xmlrpc_pid = (pid_t*) shm_malloc ( sizeof(pid_t) );
-	if ( mi_xmlrpc_pid == 0 ) {
-		LOG(L_ERR, "ERROR mi_xmlrpc: mod_init: failed to init shm mem for "
-			"mi_xmlrpc_pid\n");
-		return -1;
 	}
 
 	if (init_async_lock()!=0) {
@@ -135,28 +136,14 @@ static void xmlrpc_sigchld( int sig )
 	}
 }
 
-static int mod_child_init( int rank )
-{
-	if ( rank != 1 )
-		return 0;
-	
-	*mi_xmlrpc_pid = fork();
-	
-	if ( *mi_xmlrpc_pid < 0 ){
-		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: The process cannot "
-			"fork!\n");
-		return -1;
-	} else if ( *mi_xmlrpc_pid ) {
-		LOG(L_INFO, "INFO: mi_xmlrpc: mod_child_init: XMLRPC listener "
-			"process created (pid: %d)\n", *mi_xmlrpc_pid);
-		return 0;
-	}
 
+static void xmlrpc_process(int rank)
+{
 	/* install handler to catch termination of child processes */
 	if (signal(SIGCHLD, xmlrpc_sigchld)==SIG_ERR) {
 		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to install "
 			"signal handler for SIGCHLD\n");
-		return -1;
+		goto error;
 	}
 
 	/* Server Abyss init */
@@ -167,13 +154,13 @@ static int mod_child_init( int rank )
 	if (!ServerCreate(&srv, "XmlRpcServer", port, "", log_file)) {
 		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to create XMLRPC "
 			"server\n");
-		return -1;
+		goto error;
 	}
 
 	if (!ServerAddHandler(&srv, xmlrpc_server_abyss_rpc2_handler)) {
 		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to add handler "
 			"to server\n");
-		return -1;
+		goto error;
 	}
 
 	ServerDefaultHandler(&srv, xmlrpc_server_abyss_default_handler);
@@ -182,13 +169,13 @@ static int mod_child_init( int rank )
 	if( init_mi_child() != 0 ) {
 		LOG(L_CRIT, "CRITICAL: mi_xmlrpc: mod_child_init: Failed to init "
 			"the mi process\n");
-		return -1;
+		goto error;
 	}
 
 	if ( xr_writer_init(read_buf_size) != 0 ) {
 		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to init the "
 			"reply writer\n");
-		return -1;
+		goto error;
 	}
 
 	xmlrpc_env_init(&env);
@@ -212,40 +199,21 @@ static int mod_child_init( int rank )
 	LOG(L_INFO, "INFO: mi_xmlrpc: mod_child_init: Starting xmlrpc server "
 		"on (%d)\n", getpid());
 
-	ServerRun(&srv); 
+	ServerRun(&srv);
 
 	LOG(L_CRIT, "CRITICAL: mi_xmlrpc: mod_child_init: Server terminated!!!\n");
 
 cleanup:
 	xmlrpc_env_clean(&env);
 	if ( xr_response ) xmlrpc_DECREF(xr_response);
-	return -1;
+error:
+	exit(-1);
 }
+
 
 int destroy(void)
 {
 	DBG("DBG: mi_xmlrpc: destroy: Destroying module ...\n");
-
-	if ( mi_xmlrpc_pid == 0 ) {
-		LOG(L_INFO, "INFO: mi_xmlrpc: destroy: Process hasn't been created "
-			"-> nothing to kill\n");
-	} else {
-		if ( *mi_xmlrpc_pid != 0 ) {
-			if ( kill(*mi_xmlrpc_pid, SIGKILL) != 0 ) {
-				if ( errno == ESRCH ) {
-					LOG(L_INFO, "INFO: mi_xmlrpc: destroy: seems that xmlrpc"
-						" process is already dead!\n");
-				} else {
-					LOG(L_ERR, "ERROR: mi_xmlrpc: destroy: killing the aux. "
-						"process failed! kill said: %s\n", strerror(errno));
-				}
-			} else {
-				LOG(L_INFO, "INFO: mi_xmlrpc: destroy: xmlrpc child "
-					"successfully killed!");
-			}
-		}
-		shm_free(mi_xmlrpc_pid);
-	}
 
 	destroy_async_lock();
 
