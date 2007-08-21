@@ -55,10 +55,10 @@ MODULE_VERSION
 
 static int sms_init(void);
 static int sms_exit(void);
-static int sms_child_init(int);
 static int w_sms_send_msg(struct sip_msg*, char*, char* );
 static int w_sms_send_msg_to_net(struct sip_msg*, char*, char*);
 static int fixup_sms_send_msg_to_net(void** param, int param_no);
+static void sms_process(int);
 
 
 
@@ -77,6 +77,12 @@ int    *queued_msgs    = 0;
 int    use_contact     = 0;
 int    sms_report_type = NO_REPORT;
 struct tm_binds tmb;
+
+
+static proc_export_t sms_procs[] = {
+	{"SMS receiver",  0,  0, sms_process, 0 },
+	{0,0,0}
+};
 
 
 static cmd_export_t cmds[]={
@@ -109,11 +115,11 @@ struct module_exports exports= {
 	0,          /* exported statistics */
 	0,          /* exported MI functions */
 	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
+	sms_procs,  /* extra processes */
 	sms_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) sms_exit,   /* module exit function */
-	(child_init_function) sms_child_init  /* per-child init function */
+	0           /* per-child init function */
 };
 
 
@@ -600,33 +606,11 @@ error:
 
 
 
-
-int sms_child_init(int rank)
+void sms_process(int rank)
 {
-	int  i, foo;
-
-	/* only the child 1 will execute this */
-	if (rank != 1) goto done;
-
-	/* creates processes for each modem */
-	for(i=0;i<nr_of_modems;i++)
-	{
-		if ( (foo=fork())<0 ) {
-			LOG(L_ERR,"ERROR: sms_child_init: cannot fork \n");
-			goto error;
-		}
-		if (!foo) {
-			modem_process(&(modems[i]));
-			goto done;
-		}
-	}
-
-done:
-	return 0;
-error:
-	return-1;
+	modem_process(&(modems[rank]));
+	exit(-1);
 }
-
 
 
 
@@ -638,6 +622,8 @@ static int sms_init(void)
 		return -1;
 	if (global_init()==-1)
 		return -1;
+	/* update the number of required processes */
+	sms_procs[0].no = nr_of_modems;
 	return 0;
 }
 

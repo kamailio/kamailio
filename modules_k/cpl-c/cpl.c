@@ -75,7 +75,6 @@ static char *DB_URL        = 0;  /* database url */
 static char *DB_TABLE      = 0;  /* */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
-static pid_t aux_process   = 0;  /* pid of the private aux. process */
 static char *timer_avp     = 0;  /* name of variable timer AVP */
 
 
@@ -110,6 +109,16 @@ static int cpl_init(void);
 static int mi_child_init();
 static int cpl_child_init(int rank);
 static int cpl_exit(void);
+static void cpl_process(int rank);
+
+
+/*
+ * Exported processes
+ */
+static proc_export_t cpl_procs[] = {
+	{"CPL Aux",  0,  0,  cpl_process, 1 },
+	{0,0,0}
+};
 
 
 /*
@@ -171,7 +180,7 @@ struct module_exports exports = {
 	0,        /* exported statistics */
 	mi_cmds,  /* exported MI functions */
 	0,        /* exported pseudo-variables */
-	0,        /* extra processes */
+	cpl_procs,/* extra processes */
 	cpl_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) cpl_exit,
@@ -407,32 +416,7 @@ error:
 
 static int cpl_child_init(int rank)
 {
-	pid_t pid;
-
-	/* don't do anything for non-worker process */
-	if (rank<1)
-		return 0;
-
-	/* only child 1 will fork the aux process */
-	if (rank==1) {
-		pid = fork();
-		if (pid==-1) {
-			LOG(L_CRIT,"ERROR:cpl_child_init(%d): cannot fork: %s!\n",
-				rank, strerror(errno));
-			goto error;
-		} else if (pid==0) {
-			/* I'm the child */
-			cpl_aux_process( cpl_env.cmd_pipe[0], cpl_env.log_dir);
-		} else {
-			LOG(L_INFO,"INFO:cpl_child_init(%d): child created\n",rank);
-			/* I'm the parent -> remember the pid */
-			aux_process = pid;
-		}
-	}
-
 	return cpl_db_init(DB_URL, DB_TABLE);
-error:
-	return -1;
 }
 
 
@@ -442,31 +426,19 @@ static int mi_child_init()
 }
 
 
+static void cpl_process(int rank)
+{
+	cpl_aux_process( cpl_env.cmd_pipe[0], cpl_env.log_dir);
+	exit(-1);
+}
+
+
 static int cpl_exit(void)
 {
 	/* free the TZ orig */
 	if (cpl_env.orig_tz.s)
 		shm_free(cpl_env.orig_tz.s);
 
-	/* if still running, stop the aux process */
-	if (!aux_process) {
-		LOG(L_INFO,"INFO:cpl_c:cpl_exit: aux process hasn't been created -> "
-			"nothing to kill\n");
-	} else {
-		/* kill the auxiliary process */
-		if (kill( aux_process, SIGKILL)!=0) {
-			if (errno==ESRCH) {
-				LOG(L_INFO,"INFO:cpl_c:cpl_exit: seems that my child is "
-					"already dead!\n");
-			} else {
-				LOG(L_ERR,"ERROR:cpl_c:cpl_exit: killing the aux. process "
-					"failed! error from kill: %s\n",strerror(errno));
-				return -1;
-			}
-		} else {
-			LOG(L_INFO,"INFO:cl_c:cpl_exit: killed my child!\n");
-		}
-	}
 	return 0;
 }
 
