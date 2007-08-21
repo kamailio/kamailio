@@ -108,12 +108,12 @@ MODULE_VERSION
 
 struct tm_binds tmb;
 
-static int mod_init(void);
-static int child_init(int rank);
-static int cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar);
+static int  mod_init(void);
+static void xmpp_process(int rank);
+static int  cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar);
 void destroy(void);
 
-static int pipe_fd = -1;
+static int pipe_fds[2] = {-1,-1};
 
 /*
  * Configuration
@@ -130,13 +130,18 @@ char *xmpp_password = "secret";
 #define DEFAULT_COMPONENT_PORT 5347
 #define DEFAULT_SERVER_PORT 5269
 
+static proc_export_t procs[] = {
+	{"XMPP receiver",  0,  0, xmpp_process, 1 },
+	{0,0,0}
+};
+
+
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
 	{"xmpp_send_message", (cmd_function)cmd_send_message, 0, 0, REQUEST_ROUTE},
 	{"bind_xmpp",         (cmd_function)bind_xmpp,        0, 0, 0},
-
 	{0, 0, 0, 0}
 };
 
@@ -165,11 +170,11 @@ struct module_exports exports = {
 	0,               /* exported statistics */
 	0,               /* exported MI functions */
 	0,               /* exported pseudo-variables */
-	0,               /* extra processes */
+	procs,           /* extra processes */
 	mod_init,        /* Initialization function */
 	0,               /* Response function */
 	destroy,         /* Destroy function */
-	child_init,      /* Child init function */
+	0,               /* Child init function */
 };
 
 /*
@@ -205,47 +210,29 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	if (pipe(pipe_fds) < 0) {
+		LOG(L_ERR, "xmpp: cannot pipe()\n");
+		return -1;
+	}
+
 	return 0;
 }
 
-static int child_init(int rank)
-{
-	int pid;
-	int fds[2];
 
+static void xmpp_process(int rank)
+{
 	/* if this blasted server had a decent I/O loop, we'd
 	 * just add our socket to it and connect().
 	 */
-	
-	DBG("xmpp: child_init: initializing child <%d>\n", rank);
-	if (rank == 1) {
-		if (pipe(fds) < 0) {
-			LOG(L_ERR, "xmpp: cannot pipe()\n");
-			return -1;
-		}
-		if ((pid = fork()) < 0) {
-			LOG(L_ERR, "xmpp: cannot fork()\n");
-			return -1;
-		}
+	close(pipe_fds[1]);
 
-		if (pid) {
-			/* parent */
-			close(fds[0]);
-			pipe_fd = fds[1];
-		} else {
-			/* child */
-			close(fds[1]);
-			
-			DBG("xmpp: started child connection process\n");
-			if (!strcmp(backend, "component"))
-				xmpp_component_child_process(fds[0]);
-			else if (!strcmp(backend, "server"))
-				xmpp_server_child_process(fds[0]);
-			_exit(127);
-		}
-	}
-	return 0;
+	DBG("xmpp: started child connection process\n");
+	if (!strcmp(backend, "component"))
+		xmpp_component_child_process(pipe_fds[0]);
+	else if (!strcmp(backend, "server"))
+		xmpp_server_child_process(pipe_fds[0]);
 }
+
 
 /* to be done */
 void destroy(void)
@@ -321,7 +308,7 @@ static int xmpp_send_pipe_cmd(enum xmpp_pipe_cmd_type type, str *from, str *to,
 	cmd->body = shm_strdup(body);
 	cmd->id = shm_strdup(id);
 
-	if (write(pipe_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
+	if (write(pipe_fds[1], &cmd, sizeof(cmd)) != sizeof(cmd)) {
 		LOG(L_ERR, "xmpp: unable to write to command pipe: %s\n", strerror(errno));
 		xmpp_free_pipe_cmd(cmd);
 		return -1;
