@@ -251,6 +251,7 @@ DNS_CACHE_MIN_TTL	dns_cache_min_ttl
 DNS_CACHE_MAX_TTL	dns_cache_max_ttl
 DNS_CACHE_MEM		dns_cache_mem
 DNS_CACHE_GC_INT	dns_cache_gc_interval
+DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
 /* blacklist */
 USE_DST_BLST		use_dst_blacklist
 DST_BLST_MEM		dst_blacklist_mem
@@ -496,6 +497,8 @@ EAT_ABLE	[\ \t\b\r]
 								return DNS_CACHE_MEM; }
 <INITIAL>{DNS_CACHE_GC_INT}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_GC_INT; }
+<INITIAL>{DNS_CACHE_DEL_NONEXP}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_DEL_NONEXP; }
 <INITIAL>{USE_DST_BLST}	{ count(); yylval.strval=yytext;
 								return USE_DST_BLST; }
 <INITIAL>{DST_BLST_MEM}	{ count(); yylval.strval=yytext;

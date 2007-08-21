@@ -38,6 +38,7 @@
  *  2008-07-25  various rpc commands to manipulate the content
  *		of the cache (Miklos)
  *  2007-07-30  DNS cache measurements added (Gergo)
+ *  2007-08-17  dns_cache_del_nonexp config option is introduced (Miklos)
  */
 
 #ifdef USE_DNS_CACHE
@@ -98,6 +99,7 @@ unsigned int dns_timer_interval=DEFAULT_DNS_TIMER_INTERVAL; /* in s */
 int dns_flags=0; /* default flags used for the  dns_*resolvehost
                     (compatibility wrappers) */
 int dns_srv_lb=0; /* off by default */
+int dns_cache_del_nonexp=0; /* delete only expired entries by default */
 
 #ifdef USE_DNS_CACHE_STATS
 struct t_dns_cache_stats* dns_cache_stats=0;
@@ -717,7 +719,7 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 #endif
 		LOG(L_WARN, "WARNING: dns_cache_add: cache full, trying to free...\n");
 		/* free ~ 12% of the cache */
-		dns_cache_free_mem(*dns_cache_mem_used/16*14, 1);
+		dns_cache_free_mem(*dns_cache_mem_used/16*14, !dns_cache_del_nonexp);
 		if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
 			LOG(L_ERR, "ERROR: dns_cache_add: max. cache mem size exceeded\n");
 			return -1;
@@ -757,7 +759,7 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 		LOG(L_WARN, "WARNING: dns_cache_add: cache full, trying to free...\n");
 		/* free ~ 12% of the cache */
 		UNLOCK_DNS_HASH();
-		dns_cache_free_mem(*dns_cache_mem_used/16*14, 1);
+		dns_cache_free_mem(*dns_cache_mem_used/16*14, !dns_cache_del_nonexp);
 		LOCK_DNS_HASH();
 		if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
 			LOG(L_ERR, "ERROR: dns_cache_add: max. cache mem size exceeded\n");

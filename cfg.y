@@ -290,6 +290,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token DNS_CACHE_MAX_TTL
 %token DNS_CACHE_MEM
 %token DNS_CACHE_GC_INT
+%token DNS_CACHE_DEL_NONEXP
 /*blacklist*/
 %token USE_DST_BLST
 %token DST_BLST_MEM
@@ -617,6 +618,8 @@ assign_stm:
 	| DNS_CACHE_MEM error { yyerror("boolean value expected"); }
 	| DNS_CACHE_GC_INT EQUAL NUMBER   { IF_DNS_CACHE(dns_timer_interval=$3); }
 	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
+	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_del_nonexp=$3); }
+	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER   { IF_DST_BLACKLIST(use_dst_blacklist=$3); }
 	| USE_DST_BLST error { yyerror("boolean value expected"); }
 	| DST_BLST_MEM EQUAL NUMBER   { IF_DST_BLACKLIST(blst_max_mem=$3); }
