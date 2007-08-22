@@ -44,7 +44,7 @@ shtable_t new_shtable()
 	htable= (subs_entry_t*)shm_malloc(shtable_size* sizeof(subs_entry_t));
 	if(htable== NULL)
 	{
-		ERR_MEM("new_shtable");
+		ERR_MEM("PRESENCE","new_shtable");
 	}
 	memset(htable, 0, shtable_size* sizeof(subs_entry_t));
 	for(i= 0; i< shtable_size; i++)
@@ -58,7 +58,7 @@ shtable_t new_shtable()
 		htable[i].entries= (subs_t*)shm_malloc(sizeof(subs_t));
 		if(htable[i].entries== NULL)
 		{
-			ERR_MEM("new_shtable");
+			ERR_MEM("PRESENCE","new_shtable");
 		}
 		memset(htable[i].entries, 0, sizeof(subs_t));
 		htable[i].entries->next= NULL;
@@ -137,7 +137,7 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 	memset(dest, 0, size);
 	if(dest== NULL)
 	{
-		ERR_MEM("mem_copy_subs");
+		ERR_MEM("PRESENCE","mem_copy_subs");
 	}
 	size= sizeof(subs_t);
 
@@ -303,7 +303,7 @@ phtable_t* new_phtable()
 	htable= (phtable_t*)shm_malloc(phtable_size* sizeof(phtable_t));
 	if(htable== NULL)
 	{
-		ERR_MEM("new_phtable");
+		ERR_MEM("PRESENCE","new_phtable");
 	}
 	memset(htable, 0, phtable_size* sizeof(phtable_t));
 
@@ -318,7 +318,7 @@ phtable_t* new_phtable()
 		htable[i].entries= (pres_entry_t*)shm_malloc(sizeof(pres_entry_t));
 		if(htable[i].entries== NULL)
 		{
-			ERR_MEM("new_phtable");
+			ERR_MEM("PRESENCE","new_phtable");
 		}
 		memset(htable[i].entries, 0, sizeof(pres_entry_t));
 		htable[i].entries->next= NULL;
@@ -403,7 +403,7 @@ int insert_phtable(str* pres_uri, int event)
 	if(p== NULL)
 	{
 		lock_release(&pres_htable[hash_code].lock);
-		ERR_MEM("insert_phtable");
+		ERR_MEM("PRESENCE","insert_phtable");
 	}
 	memset(p, 0, size);
 

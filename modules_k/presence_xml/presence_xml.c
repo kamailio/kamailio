@@ -37,8 +37,12 @@
 #include "../../str.h"
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_uri.h"
 #include "../../mem/mem.h"
 #include "../presence/bind_presence.h"
+#include "../presence/hash.h"
+#include "../presence/notify.h"
+#include "../xcap_client/xcap_functions.h"
 #include "../sl/sl_api.h"
 #include "pidf.h"
 #include "add_events.h"
@@ -52,13 +56,22 @@ MODULE_VERSION
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
+int pxml_add_xcap_server( modparam_t type, void* val);
+int shm_copy_xcap_list();
+void free_xs_list(xcap_serv_t* xs_list, int mem_type);
+int xcap_doc_updated(int doc_type, str xid, char* doc);
 
 /** module variables ***/
 add_event_t pres_add_event;
+update_watchers_t pres_update_watchers;
+
 char* xcap_table="xcap_xml";  
 str db_url = {0, 0};
 int force_active= 0;
 int pidf_manipulation= 0;
+int integrated_xcap_server= 0;
+xcap_serv_t* xs_list= NULL;
+
 /* SL bind */
 struct sl_binds slb;
 
@@ -66,12 +79,18 @@ struct sl_binds slb;
 db_con_t *pxml_db = NULL;
 db_func_t pxml_dbf;
 
+/* functions imported from xcap_client module */
+
+xcap_get_elem_t xcap_GetElem;
+
 static param_export_t params[]={
-	{ "db_url",					STR_PARAM,  &db_url.s},
-	{ "xcap_table",				STR_PARAM,  &xcap_table},
-	{ "force_active",			INT_PARAM,  &force_active },
-	{ "pidf_manipulation",      INT_PARAM,  &pidf_manipulation}, 
-	{  0,						0,							 0}
+	{ "db_url",					STR_PARAM,                          &db_url.s},
+	{ "xcap_table",				STR_PARAM,                        &xcap_table},
+	{ "force_active",			INT_PARAM,                     &force_active },
+	{ "pidf_manipulation",      INT_PARAM,                 &pidf_manipulation}, 
+	{ "integrated_xcap_server", INT_PARAM,            &integrated_xcap_server}, 
+	{ "xcap_server",     STR_PARAM|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
+	{  0,						0,										    0}
 };
 	/** module exports */
 struct module_exports exports= {
@@ -98,10 +117,10 @@ static int mod_init(void)
 	int ver = 0;
 	DBG("presence_xml: mod_init...\n");
 	bind_presence_t bind_presence;
-	event_api_t pres;
-	
+	presence_api_t pres;
+		
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	DBG("presence_xml:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,
+	DBG("presence_xml:mod_init: db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len,
 			db_url.s);
 	
 	/* binding to mysql module  */
@@ -111,7 +130,6 @@ static int mod_init(void)
 		return -1;
 	}
 	
-
 	if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
 		LOG(L_ERR,"presence_xml:mod_init: ERROR Database module does not implement "
 		    "all functions needed by the module\n");
@@ -154,7 +172,8 @@ static int mod_init(void)
 	}
 
 	pres_add_event= pres.add_event;
-	if (pres_add_event == NULL)
+	pres_update_watchers= pres.update_watchers;
+	if (pres_add_event == NULL || pres_update_watchers== NULL)
 	{
 		LOG(L_ERR, "presence_xml:mod_init Could not import add_event\n");
 		return -1;
@@ -163,7 +182,49 @@ static int mod_init(void)
 	{
 		LOG(L_ERR, "presence_xml:mod_init: ERROR while adding xml events\n");
 		return -1;		
-	}	
+	}
+	
+	if(!integrated_xcap_server )
+	{
+		xcap_api_t xcap_api;
+		bind_xcap_t bind_xcap;
+
+		/* bind xcap */
+		bind_xcap= (bind_xcap_t)find_export("bind_xcap", 1, 0);
+		if (!bind_xcap)
+		{
+			LOG(L_ERR, "presence_xml:mod_init: Can't bind xcap_client\n");
+			return -1;
+		}
+	
+		if (bind_xcap(&xcap_api) < 0)
+		{
+			LOG(L_ERR, "presence_xml:mod_init: Can't bind xcap\n");
+			return -1;
+		}
+		xcap_GetElem= xcap_api.get_elem;
+		if(xcap_GetElem== NULL)
+		{
+			LOG(L_ERR, "presence_xml:mod_init:erorr NULL could not import"
+					" get_elem from xcap_client module\n");
+			return -1;
+		}
+
+		if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
+		{
+			LOG(L_ERR,"presence_xml:mod_init:ERROR registering xcap"
+					" callback function\n");
+			return -1;
+		}
+	}
+
+	if(shm_copy_xcap_list()< 0)
+	{
+		LOG(L_ERR, "presence_xml:mod_init:erorr copying xcap server list"
+				" in share memory\n");
+		return -1;
+	}
+
 	if(pxml_db)
 		pxml_dbf.close(pxml_db);
 	pxml_db = NULL;
@@ -207,6 +268,168 @@ static void destroy(void)
 	if(pxml_db && pxml_dbf.close)
 		pxml_dbf.close(pxml_db);
 
+	free_xs_list(xs_list, SHM_MEM_TYPE);
+
 	return ;
 }
 
+int pxml_add_xcap_server( modparam_t type, void* val)
+{
+	xcap_serv_t* xs;
+	int size;
+	char* serv_addr= (char*)val;
+
+	size= sizeof(xcap_serv_t)+ (strlen(serv_addr)+ 1)* sizeof(char);
+	xs= (xcap_serv_t*)pkg_malloc(size);
+	if(xs== NULL)
+	{
+		ERR_MEM("PRESENCE_XML", "pxml_add_xcap_server");
+	}
+	memset(xs, 0, size);
+	size= sizeof(xcap_serv_t);
+
+	xs->addr= (char*)xs+ size;
+	strcpy(xs->addr, serv_addr);
+	/* check for duplicates */
+	xs->next= xs_list;
+	xs_list= xs;
+	return 0;
+
+error:
+	free_xs_list(xs_list, PKG_MEM_TYPE);
+	return -1;
+}
+
+int shm_copy_xcap_list()
+{
+	xcap_serv_t* xs, *shm_xs, *prev_xs;
+	int size;
+
+	xs= xs_list;
+	if(xs== NULL)
+	{
+		if(!integrated_xcap_server)
+		{
+			LOG(L_ERR, "PRESENCE_XML:shm_copy_xcap_list: ERROR"
+				" no xcap_server parameter set\n");
+			return -1;
+		}
+		return 0;
+	}
+	xs_list= NULL;
+	size= sizeof(xcap_serv_t);
+	
+	while(xs)
+	{
+		size+= (strlen(xs->addr)+ 1)* sizeof(char);
+		shm_xs= (xcap_serv_t*)shm_malloc(size);
+		if(shm_xs== NULL)
+		{
+			ERR_MEM("PRESENCE_XML", "pxml_add_xcap_server");
+		}
+		memset(shm_xs, 0, size);
+		size= sizeof(xcap_serv_t);
+
+		shm_xs->addr= (char*)shm_xs+ size;
+		strcpy(shm_xs->addr, xs->addr);
+		shm_xs->next= xs_list; 
+		xs_list= shm_xs;
+
+		prev_xs= xs;
+		xs= xs->next;
+
+		pkg_free(prev_xs);
+	}
+	return 0;
+
+error:
+	free_xs_list(xs_list, SHM_MEM_TYPE);
+	return -1;
+}
+
+void free_xs_list(xcap_serv_t* xsl, int mem_type)
+{
+	xcap_serv_t* xs, *prev_xs;
+
+	xs= xsl;
+
+	while(xs)
+	{
+		prev_xs= xs;
+		xs= xs->next;
+		if(mem_type & SHM_MEM_TYPE)
+			shm_free(prev_xs);
+		else
+			pkg_free(prev_xs);
+	}
+	xsl= NULL;
+}
+
+int xcap_doc_updated(int doc_type, str xid, char* doc)
+{
+	struct sip_uri uri;
+	db_key_t query_cols[3], update_cols[3];
+	db_val_t query_vals[3], update_vals[3];
+	int n_query_cols= 0;
+	pres_ev_t ev;
+	str rules_doc;
+
+	if(parse_uri(xid.s, xid.len, &uri)< 0)
+	{
+		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR parsing uri\n");
+		return -1;
+	}
+
+	/* update in xml table */
+	query_cols[n_query_cols]= "username";
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].val.str_val= uri.user;
+	n_query_cols++;
+
+	query_cols[n_query_cols]= "domain";
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].val.str_val= uri.host;
+	n_query_cols++;
+
+	query_cols[n_query_cols]= "doc_type";
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_INT;
+	query_vals[n_query_cols].val.int_val= doc_type;
+	n_query_cols++;
+
+	update_cols[0]= "xcap";
+	update_vals[0].nul= 0;
+	update_vals[0].type= DB_STR;
+	update_vals[0].val.string_val= doc;
+
+	if(pxml_dbf.use_table(pxml_db, xcap_table)< 0)
+	{
+		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR in sql use table\n");
+		return -1;
+	}
+	if(pxml_dbf.update(pxml_db, query_cols, 0, query_vals, update_cols, 
+				update_vals, n_query_cols, 1)< 0)
+	{
+		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR in sql update\n");
+		return -1;	
+	}
+
+
+	/* call updating watchers */
+	ev.name.s= "presence";
+	ev.name.len= PRES_LEN;
+
+	rules_doc.s= doc;
+	rules_doc.len= strlen(doc);
+
+	if(pres_update_watchers(xid, &ev, &rules_doc)< 0)
+	{
+		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR updating watchers"
+				" in presence\n");
+		return -1;	
+	}
+	return 0;
+
+}

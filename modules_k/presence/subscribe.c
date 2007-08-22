@@ -40,6 +40,11 @@
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret);
 int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret);
+int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
+		int status, str* reason);
+
+int get_db_subs_auth(subs_t* subs, int* found);
+int insert_db_subs_auth(subs_t* subs);
 
 static str su_200_rpl  = str_init("OK");
 static str pu_481_rpl  = str_init("Subscription does not exist");
@@ -337,13 +342,16 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				}
 			}
 		
+			subs->status= TERMINATED_STATUS;
+			subs->reason.s= "timeout";
+			subs->reason.len= 7;
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
 				" notify \n");
 				goto error;
 			}
-
+	
 			return 1;
 		}
 
@@ -512,22 +520,13 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	str rec_route= {0, 0};
 	int error_ret = -1;
 	int rt  = 0;
-	db_key_t db_keys[10];
-	db_val_t db_vals[10];
-	db_key_t update_keys[5];
-	db_val_t update_vals[5];
-	int n_query_cols= 0; 
-	db_key_t result_cols[2];
-	db_res_t *result = NULL;
-	db_row_t *row ;	
-	db_val_t *row_vals ;
-	int status= PENDING_STATUS;
-	str reason= {0, 0};
 	str* contact= NULL;
 	pres_ev_t* event= NULL;
 	event_t* parsed_event= NULL;
 	param_t* ev_param= NULL;
-	int result_code, result_n;
+	int found;
+	str reason= {0, 0};
+	struct sip_uri uri;
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
@@ -829,216 +828,67 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}	
 
-	/* particular case for expires= 0*/	
-	if( subs.expires== 0 )
+
+	/* if dialog initiation Subscribe - get subscription state */
+	if(to_tag_gen)
 	{
-		subs.status= TERMINATED_STATUS;
-		subs.reason.s= "timeout";
-		subs.reason.len= 7;
-		goto after_status;	
-	}	
-
-	/* subscription status handling */
-	db_keys[n_query_cols] ="p_uri";
-	db_vals[n_query_cols].type = DB_STR;
-	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val= subs.pres_uri;
-	n_query_cols++;
-
-	db_keys[n_query_cols] ="w_user";
-	db_vals[n_query_cols].type = DB_STR;
-	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs.from_user;
-	n_query_cols++;
-
-	db_keys[n_query_cols] ="w_domain";
-	db_vals[n_query_cols].type = DB_STR;
-	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs.from_domain;
-	n_query_cols++;
-	
-	db_keys[n_query_cols] ="event";
-	db_vals[n_query_cols].type = DB_STR;
-	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs.event->name;
-	n_query_cols++;
-
-	result_cols[0] = "subs_status";
-	result_cols[1] = "reason";
-
-	if(pa_dbf.use_table(pa_db, watchers_table)< 0)
-	{
-		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR in use table\n");
-		goto error;
-	}	
-
-	if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols,
-					n_query_cols, 2, 0, &result )< 0)
-	{
-		LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR while querying"
-				" watchers table\n");
-		if(result)
-			pa_dbf.free_result(pa_db, result);
-		goto error;
-	}
-	if(result== NULL)
-		goto error;
-	
-	result_n= result->n;
-	if(result_n> 0)
-	{	
-		row = &result->rows[0];
-		row_vals = ROW_VALUES(row);
-		status= row_vals[0].val.int_val;
-
-		if(row_vals[1].val.string_val)
+		if( subs.expires== 0 )
 		{
-			reason.len= strlen(row_vals[1].val.string_val);
-			if(reason.len== 0)
-				reason.s= NULL;
-			else
+			subs.status= TERMINATED_STATUS;
+			subs.reason.s= "timeout";
+			subs.reason.len= 7;
+			goto after_status;	
+		}	
+
+		if(!event->req_auth) 
+			subs.status = ACTIVE_STATUS;
+		else   
+		{
+			/* query in watchers_table */
+			if(get_db_subs_auth(&subs, &found)< 0)
 			{
-				reason.s= (char*)pkg_malloc(reason.len*sizeof(char));
-				if(reason.s== NULL)
-				{
-					LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR No more memory"
-							" when allocating reason\n");
-					pa_dbf.free_result(pa_db, result);
-					goto error;		
-				}		
-				memcpy(reason.s, row_vals[1].val.string_val, reason.len);
-			}
-		}
-	}	
-	pa_dbf.free_result(pa_db, result);
-	subs.status= status;
-	subs.reason= reason;
-	
-	/* get subs.status */
-
-	if(!event->req_auth)
-	{
-		subs.status = ACTIVE_STATUS;
-		/* if record noes not exist in watchers_table insert */
-		if(result_n<= 0)
-		{
-			db_keys[n_query_cols] ="subs_status";
-			db_vals[n_query_cols].type = DB_INT;
-			db_vals[n_query_cols].nul = 0;
-			db_vals[n_query_cols].val.int_val = ACTIVE_STATUS;
-			n_query_cols++;
-								
-			db_keys[n_query_cols] = "inserted_time";
-			db_vals[n_query_cols].type = DB_INT;
-			db_vals[n_query_cols].nul = 0;
-			db_vals[n_query_cols].val.int_val= (int)time(NULL);
-			n_query_cols++;
-			
-			if(pa_dbf.insert(pa_db, db_keys, db_vals, n_query_cols )< 0)
-			{	
-				LOG(L_ERR, "PRESENCE: subscribe:ERROR while updating watchers table\n");
+				LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR getting subscription"
+					"status from watchers table\n");
 				goto error;
 			}
-		}	
-	}
-	else    /* check authorization rules or take status from 'watchers' table */
-	{
-		result_code= subs.event->is_watcher_allowed(&subs);
-		if(result_code< 0)
-		{
-			LOG(L_ERR, "PRESENCE: subscribe: ERROR in event specific function"
-					" is_watcher_allowed\n");
-			goto error;
-		}	
-		if(result_code!=0)	/* a change has ocured */
-		{
-			if(result_n <=0)
+			if(found== 0)
 			{
-				db_keys[n_query_cols] ="subs_status";
-				db_vals[n_query_cols].type = DB_INT;
-				db_vals[n_query_cols].nul = 0;
-				db_vals[n_query_cols].val.int_val = subs.status;
-				n_query_cols++;
-					
-				if(subs.reason.s && subs.reason.len)
-				{
-					db_keys[n_query_cols] ="reason";
-					db_vals[n_query_cols].type = DB_STR;
-					db_vals[n_query_cols].nul = 0;
-					db_vals[n_query_cols].val.str_val = subs.reason;
-					n_query_cols++;	
-				}	
-				
-				db_keys[n_query_cols] = "inserted_time";
-				db_vals[n_query_cols].type = DB_INT;
-				db_vals[n_query_cols].nul = 0;
-				db_vals[n_query_cols].val.int_val= (int)time(NULL);
-				n_query_cols++;
+				/*default 'pending' status */
+				subs.status= PENDING_STATUS;
 
-				if(pa_dbf.insert(pa_db, db_keys, db_vals, n_query_cols )< 0)
-				{	
-					LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR while updating watchers table\n");
+				/* here a query to xcap server must be done -> new process maybe */
+			
+				if(parse_uri(subs.pres_uri.s, subs.pres_uri.len, &uri)< 0)
+				{
+					LOG(L_ERR,"PRESENCE:handle_subscribe:ERROR parsing uri\n");
+					goto error;
+
+				}
+				if(subs.event->get_rules_doc(&uri.user, &uri.host, &subs.auth_rules_doc)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:handle_subscribe:ERROR"
+							" getting rules doc\n");
+					goto error;
+				}
+				
+				if(subs.event->get_auth_status(&subs)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR in event specific function"
+						" is_watcher_allowed\n");
+					goto error;
+				}
+				
+				if(insert_db_subs_auth(&subs)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR while inserting record"
+							" in watchers table\n");
 					goto error;
 				}
 			}
 			else
-			{	/* update if different */
-				if((status!= subs.status)||	(reason.s && subs.reason.s &&
-						strncmp(reason.s, subs.reason.s, reason.len)))
-				{										
-					int n_update_cols= 0;
-
-					update_keys[0]="subs_status";
-					update_vals[0].type = DB_INT;
-					update_vals[0].nul = 0;
-					update_vals[0].val.int_val= subs.status;
-					n_update_cols++;
-
-					if(subs.reason.s && subs.reason.len)
-					{
-						update_keys[1]="reason";
-						update_vals[1].type = DB_STR;
-						update_vals[1].nul = 0;
-						update_vals[1].val.str_val= subs.reason;
-						n_update_cols++;
-					}	
-					
-					if(pa_dbf.update(pa_db, db_keys, 0, db_vals, 
-								update_keys, update_vals, n_query_cols, n_update_cols)< 0)
-					{
-						LOG(L_ERR, "PRESENCE:handle_subscribe: ERORR while"
-								" updating database table\n");
-						goto error;
-					}
-				}
-			}
-		}
-		else	/* if nothing is known put status "pending" */
-		{	
-			if(result_n<= 0)
 			{
-				subs.status= PENDING_STATUS;
-				
-				db_keys[n_query_cols] ="subs_status";
-				db_vals[n_query_cols].type = DB_INT;
-				db_vals[n_query_cols].nul = 0;
-				db_vals[n_query_cols].val.int_val = subs.status;
-				n_query_cols++;
-					
-				db_keys[n_query_cols] = "inserted_time";
-				db_vals[n_query_cols].type = DB_INT;
-				db_vals[n_query_cols].nul = 0;
-				db_vals[n_query_cols].val.int_val= (int)time(NULL);
-				n_query_cols++;
-
-				if(pa_dbf.insert(pa_db, db_keys, db_vals, n_query_cols )< 0)
-				{	
-					LOG(L_ERR, "PRESENCE: handle_subscribe:ERROR while updating watchers table\n");
-					goto error;
-				}
-
+				reason= subs.reason;
 			}
-			
 		}
 	}
 
@@ -1049,10 +899,15 @@ after_status:
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
 		goto error;
 	}
-
-
-	if(reason.s )
-			pkg_free(reason.s);
+	if(subs.auth_rules_doc)
+	{
+		pkg_free(subs.auth_rules_doc->s);
+		pkg_free(subs.auth_rules_doc);
+	}
+	if(reason.s)
+		pkg_free(reason.s);
+	if(subs.expires && subs.reason.s )
+			pkg_free(subs.reason.s);
 	
 	if(subs.record_route.s)
 		pkg_free(subs.record_route.s);
@@ -1081,7 +936,7 @@ bad_event:
 		LOG(L_ERR,"\n");
 	
 	if(reply_bad_event(msg)< 0)
-		return -1;
+		goto error;
 
 	error_ret = 0;
 
@@ -1101,10 +956,17 @@ error:
 			pkg_free(contact->s);
 		pkg_free(contact);
 	}
+	if(subs.auth_rules_doc)
+	{
+		if(subs.auth_rules_doc->s)
+			pkg_free(subs.auth_rules_doc->s);
+		pkg_free(subs.auth_rules_doc);
+	}
 
 	return error_ret;
 
 }
+
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 {	
@@ -1171,9 +1033,13 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	return -1;
 
 found_rec:
+	
 	DBG("PRESENCE: get_stored_info: Record found in hash_table\n");
 	subs->pres_uri= pres_uri;
+	subs->status= s->status;
+	subs->reason= s->reason;
 	subs->local_cseq= s->local_cseq;
+	
 	if(subs->remote_cseq<= s->remote_cseq)
 	{
 		LOG(L_ERR, "PRESENCE: get_stored_info: ERROR wrong sequence number"
@@ -1761,13 +1627,13 @@ int restore_db_subs()
 			event= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 			if(event== NULL)
 			{
-				ERR_MEM("restore_db_subs");
+				ERR_MEM("PRESENCE","restore_db_subs");
 			}
 			memset(event, 0, sizeof(pres_ev_t));
 			event->name.s= (char*)shm_malloc(ev_sname.len* sizeof(char));
 			if(event->name.s== NULL)
 			{
-				ERR_MEM("restore_db_subs");
+				ERR_MEM("PRESENCE","restore_db_subs");
 			}
 			memcpy(event->name.s,ev_sname.s, ev_sname.len);
 			event->name.len= ev_sname.len;
@@ -1835,3 +1701,298 @@ error:
 	return -1;
 
 }
+
+int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
+		int status, str* reason)
+{
+	unsigned int hash_code;
+	subs_t* s, *s_copy;
+	pres_ev_t* ev;		
+	struct sip_uri uri;
+	str user, domain;
+	/* refresh status in subs_htable and send notify */
+
+	ev=	contains_event(event, NULL);
+	if(ev== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:refresh_watcher: ERROR while searching"
+				" event in list\n");
+		return -1;
+	}
+
+	if(parse_uri(watcher_uri->s, watcher_uri->len, &uri)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:refresh_watcher: ERROR parsing uri\n");
+		return -1;
+	}
+	user= uri.user;
+	domain= uri.host;
+
+	hash_code= core_hash(pres_uri, event, shtable_size);
+
+	lock_get(&subs_htable[hash_code].lock);
+
+	s= subs_htable[hash_code].entries->next;
+
+	while(s)
+	{
+		if(s->event== ev && s->pres_uri.len== pres_uri->len &&
+			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0 &&
+			s->from_user.len==user.len && strncmp(s->from_user.s,user.s, user.len)==0 &&
+			s->from_domain.len== domain.len && 
+			strncmp(s->from_domain.s, domain.s, domain.len)== 0)
+		{
+			s->status= status;
+			if(reason)
+				s->reason= *reason;
+			
+			s_copy= mem_copy_subs(s, PKG_MEM_TYPE);
+			if(s_copy== NULL)
+			{
+				LOG(L_ERR,"PRESENCE:refresh_watcher:ERROR copying subs_t\n");
+				lock_release(&subs_htable[hash_code].lock);
+				return -1;
+			}
+			lock_release(&subs_htable[hash_code].lock);
+			if(notify(s_copy, NULL, NULL, 0)< 0)
+			{
+				LOG(L_ERR,"PRESENCE:refresh_watcher:ERROR in notify function\n");
+				pkg_free(s_copy);
+				return -1;
+			}
+			pkg_free(s_copy);
+			lock_get(&subs_htable[hash_code].lock);
+		}
+		s= s->next;
+	}
+	return 0;
+}
+
+int get_db_subs_auth(subs_t* subs, int* found)
+{
+	db_key_t db_keys[5];
+	db_val_t db_vals[5];
+	int n_query_cols= 0; 
+	db_key_t result_cols[2];
+	db_res_t *result = NULL;
+	db_row_t *row ;	
+	db_val_t *row_vals ;
+
+	db_keys[n_query_cols] ="p_uri";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val= subs->pres_uri;
+	n_query_cols++;
+
+	db_keys[n_query_cols] ="w_user";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->from_user;
+	n_query_cols++;
+
+	db_keys[n_query_cols] ="w_domain";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->from_domain;
+	n_query_cols++;
+	
+	db_keys[n_query_cols] ="event";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->event->name;
+	n_query_cols++;
+
+	result_cols[0] = "subs_status";
+	result_cols[1] = "reason";
+
+	if(pa_dbf.use_table(pa_db, watchers_table)< 0)
+	{
+		LOG(L_ERR,"PRESENCE:get_db_subs_status: ERROR in use table\n");
+		return -1;
+	}	
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:get_db_subs_status: Error in use_table\n");
+		return -1;
+	}
+
+	if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols,
+					n_query_cols, 2, 0, &result )< 0)
+	{
+		LOG(L_ERR, "PRESENCE:get_db_subs_status:ERROR while querying"
+				" watchers table\n");
+		if(result)
+			pa_dbf.free_result(pa_db, result);
+		return -1;
+	}
+	if(result== NULL)
+		return -1;
+	
+	if(result->n<= 0)
+	{
+		*found= 0;
+		pa_dbf.free_result(pa_db, result);
+		return 0;
+	}
+
+	*found= 1;
+	row = &result->rows[0];
+	row_vals = ROW_VALUES(row);
+	subs->status= row_vals[0].val.int_val;
+
+	if(row_vals[1].val.string_val)
+	{
+
+		subs->reason.len= strlen(row_vals[1].val.string_val);
+		if(subs->reason.len== 0)
+			subs->reason.s= NULL;
+		else
+		{
+			subs->reason.s= (char*)pkg_malloc(subs->reason.len*sizeof(char));
+			if(subs->reason.s== NULL)
+			{
+				pa_dbf.free_result(pa_db, result);
+				ERR_MEM("PRESENCE","get_db_subs_status");
+			}		
+			memcpy(subs->reason.s, row_vals[1].val.string_val, subs->reason.len);
+		}
+	}
+	
+	pa_dbf.free_result(pa_db, result);
+	return 0;
+error:
+	return -1;
+}	
+
+int insert_db_subs_auth(subs_t* subs)
+{
+	db_key_t db_keys[10];
+	db_val_t db_vals[10];
+	int n_query_cols= 0; 
+
+	db_keys[n_query_cols] ="p_uri";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val= subs->pres_uri;
+	n_query_cols++;
+
+	db_keys[n_query_cols] ="w_user";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->from_user;
+	n_query_cols++;
+
+	db_keys[n_query_cols] ="w_domain";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->from_domain;
+	n_query_cols++;
+	
+	db_keys[n_query_cols] ="event";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->event->name;
+	n_query_cols++;
+
+	db_keys[n_query_cols] ="subs_status";
+	db_vals[n_query_cols].type = DB_INT;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.int_val = subs->status;
+	n_query_cols++;
+								
+	db_keys[n_query_cols] = "inserted_time";
+	db_vals[n_query_cols].type = DB_INT;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.int_val= (int)time(NULL);
+	n_query_cols++;
+	
+	if(subs->reason.s && subs->reason.len)
+	{
+		db_keys[n_query_cols] ="reason";
+		db_vals[n_query_cols].type = DB_STR;
+		db_vals[n_query_cols].nul = 0;
+		db_vals[n_query_cols].val.str_val = subs->reason;
+		n_query_cols++;	
+	}	
+	
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:insert_db_auth_subs: Error in use_table\n");
+		return -1;
+	}
+
+	if(pa_dbf.insert(pa_db, db_keys, db_vals, n_query_cols )< 0)
+	{	
+		LOG(L_ERR, "PRESENCE:insert_db_auth_subs:ERROR in sql insert\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int update_db_subs_auth(subs_t* subs)	
+{	
+	db_key_t db_keys[10], update_keys[3];
+	db_val_t db_vals[10], update_vals[3];
+	int n_query_cols= 0; 
+
+	db_keys[n_query_cols] ="p_uri";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val= subs->pres_uri;
+	n_query_cols++;
+
+	db_keys[n_query_cols] ="w_user";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->from_user;
+	n_query_cols++;
+
+	db_keys[n_query_cols] ="w_domain";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->from_domain;
+	n_query_cols++;
+	
+	db_keys[n_query_cols] ="event";
+	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].nul = 0;
+	db_vals[n_query_cols].val.str_val = subs->event->name;
+	n_query_cols++;
+
+	/* update if different */
+	int n_update_cols= 0;
+
+	update_keys[0]="subs_status";
+	update_vals[0].type = DB_INT;
+	update_vals[0].nul = 0;
+	update_vals[0].val.int_val= subs->status;
+	n_update_cols++;
+
+	if(subs->reason.s && subs->reason.len)
+	{
+		update_keys[1]="reason";
+		update_vals[1].type = DB_STR;
+		update_vals[1].nul = 0;
+		update_vals[1].val.str_val= subs->reason;
+		n_update_cols++;
+	}	
+
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:update_db_subs_auth: Error in use_table\n");
+		return -1;
+	}
+
+				
+	if(pa_dbf.update(pa_db, db_keys, 0, db_vals, 
+		update_keys, update_vals, n_query_cols, n_update_cols)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:update_db_subs_auth: ERORR while"
+				" updating database table\n");
+		return -1;
+	}
+	return 0;	
+	
+}
+

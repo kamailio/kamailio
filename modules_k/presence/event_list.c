@@ -48,14 +48,14 @@ event_t* shm_copy_event(event_t* e)
 	ev= (event_t*)shm_malloc(sizeof(event_t));
 	if(ev== NULL)
 	{
-		ERR_MEM("shm_copy_event");
+		ERR_MEM("PRESENCE","shm_copy_event");
 	}
 	memset(ev, 0, sizeof(event_t));
 
 	ev->text.s= (char*)shm_malloc(e->text.len* sizeof(char));
 	if(ev->text.s== NULL)
 	{
-		ERR_MEM("shm_copy_event");
+		ERR_MEM("PRESENCE","shm_copy_event");
 	}
 	memcpy(ev->text.s, e->text.s, e->text.len);
 	ev->text.len= e->text.len;
@@ -67,7 +67,7 @@ event_t* shm_copy_event(event_t* e)
 		p2= (param_t*)shm_malloc(size);
 		if(p2== NULL)
 		{
-			ERR_MEM("shm_copy_event");
+			ERR_MEM("PRESENCE","shm_copy_event");
 		}
 		memset(p2, 0, size);
 
@@ -138,13 +138,13 @@ int add_event(pres_ev_t* event)
 		ev= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 		if(ev== NULL)
 		{
-			ERR_MEM("add_event");
+			ERR_MEM("PRESENCE","add_event");
 		}
 		memset(ev, 0, sizeof(pres_ev_t));
 		ev->name.s= (char*)shm_malloc(event->name.len* sizeof(char));
 		if(ev->name.s== NULL)
 		{
-			ERR_MEM("add_events");
+			ERR_MEM("PRESENCE","add_events");
 		}
 		memcpy(ev->name.s, event->name.s, event->name.len);
 		ev->name.len= event->name.len;
@@ -168,7 +168,7 @@ int add_event(pres_ev_t* event)
 	ev->content_type.s=(char*)shm_malloc(event->content_type.len* sizeof(char)) ;
 	if(ev->content_type.s== NULL)
 	{
-		ERR_MEM("add_event");
+		ERR_MEM("PRESENCE","add_event");
 	}	
 	ev->content_type.len= event->content_type.len;
 	memcpy(ev->content_type.s, event->content_type.s, event->content_type.len);
@@ -198,7 +198,8 @@ int add_event(pres_ev_t* event)
 	ev->req_auth= event->req_auth;
 	ev->agg_nbody= event->agg_nbody;
 	ev->apply_auth_nbody= event->apply_auth_nbody;
-	ev->is_watcher_allowed= event->is_watcher_allowed;
+	ev->get_auth_status= event->get_auth_status;
+	ev->get_rules_doc= event->get_rules_doc;
 	ev->evs_publ_handl= event->evs_publ_handl;
 	ev->etag_not_new= event->etag_not_new;
 	ev->free_body= event->free_body;

@@ -59,12 +59,12 @@ int xml_add_events()
 	event.type= PUBL_TYPE;
 	event.req_auth= 1;
 	event.apply_auth_nbody= pres_apply_auth;
-	event.is_watcher_allowed= pres_watcher_allowed;
+	event.get_auth_status= pres_watcher_allowed;
 	event.agg_nbody= pres_agg_nbody;
 	event.evs_publ_handl= xml_publ_handl;
 	event.free_body= free_xml_body;
 	event.default_expires= 3600;
-
+	event.get_rules_doc= pres_get_rules_doc;
 	if(pres_add_event(&event)< 0)
 	{
 		LOG(L_ERR, "PRESENCE_XML: ERROR while adding event presence\n");

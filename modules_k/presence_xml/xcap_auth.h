@@ -28,20 +28,15 @@
 #ifndef _AUTH_XML_H_
 #define _AUTH_XML_H_
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <libxml/parser.h>
 #include "../../str.h"
 #include "../presence/subscribe.h"
-
-#define PRES_RULES        1
-#define RESOURCE_LIST     2
-#define RLS_SERVICE       3
-#define PIDF_MANIPULATION 4
+#include "../xcap_client/xcap_callbacks.h"
 
 int pres_watcher_allowed(subs_t* subs);
 
-int get_xcap_tree(str uri, int doc_type, xmlDocPtr* doc);
 xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree );
+int get_rules_doc(str* user, str* domain, int type, str** rules_doc);
+int pres_get_rules_doc(str* user, str* domain, str** rules_doc);
 
 #endif

@@ -41,8 +41,6 @@
 #include "../../parser/msg_parser.h"
 #include "presentity.h"
 #include "../alias_db/alias_db.h"
-#define PRESENCE_EVENT 1<<0
-#define BLA_EVENT	   1<<1	
 
 void msg_presentity_clean(unsigned int ticks,void *param);
 

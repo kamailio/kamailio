@@ -306,7 +306,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t** watchers)
 		w= (watcher_t*)pkg_malloc(sizeof(watcher_t));
 		if(w== NULL)
 		{
-			ERR_MEM("get_wi_subs_db");
+			ERR_MEM("PRESENCE","get_wi_subs_db");
 		}
 		w->status= row_vals[status_col].val.int_val;
 		if(uandd_to_uri(from_user, from_domain, &w->uri)<0)
@@ -364,7 +364,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	watchers= (watcher_t*)pkg_malloc(sizeof(watcher_t));
 	if(watchers== NULL)
 	{
-		ERR_MEM("get_wi_notify_body");
+		ERR_MEM("PRESENCE","get_wi_notify_body");
 	}
 	memset(watchers, 0, sizeof(watcher_t));
 
@@ -373,7 +373,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		w= (watcher_t *)pkg_malloc(sizeof(watcher_t));
 		if(w== NULL)
 		{
-			ERR_MEM("get_wi_notify_body");
+			ERR_MEM("PRESENCE","get_wi_notify_body");
 		}
 		memset(w, 0, sizeof(watcher_t));
 
@@ -391,7 +391,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		{
 			pkg_free(w->uri.s);
 			pkg_free(w);
-			ERR_MEM("get_wi_notify_body");
+			ERR_MEM("PRESENCE","get_wi_notify_body");
 		}
 		to64frombits((unsigned char *)w->id.s,
 				(const unsigned char*)w->uri.s, w->uri.len );
@@ -447,7 +447,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			if(w== NULL)
 			{
 				lock_release(&subs_htable[hash_code].lock);
-				ERR_MEM("get_wi_notify_body");
+				ERR_MEM("PRESENCE","get_wi_notify_body");
 			}
 			w->status= s->status;
 			if(uandd_to_uri(s->from_user, s->from_domain, &w->uri)<0)
@@ -931,6 +931,13 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	query_vals[n_query_cols].val.str_val = event->name;
 	n_query_cols++;
 
+	query_cols[n_query_cols] = "status";
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = ACTIVE_STATUS;
+	n_query_cols++;
+
 	if(sender)
 	{	
 		DBG("PRESENCE:get_subs_db: Should not send Notify to: [uri]= %.*s\n",
@@ -1069,9 +1076,14 @@ int update_in_list(subs_t* s, subs_t* s_array, int n)
 	subs_t* ls;
 
 	ls= s_array->next;
-
+	DBG("PRESENCE:update_in_list....n= %d\n", n);
 	for(i = 0; i< n; i++)
 	{
+		if(ls== NULL)
+		{
+			LOG(L_ERR, "PRESENCE:update_in_list: ERROR wrong records count\n");
+			return -1;
+		}
 		if(ls->event== s->event && 
 		ls->pres_uri.len== s->pres_uri.len &&
 		strncmp(ls->pres_uri.s, s->pres_uri.s, s->pres_uri.len)==0 &&
@@ -1098,12 +1110,13 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	unsigned int hash_code;
 	subs_t* s= NULL, *s_new;
 	subs_t* s_array= NULL;
-	int n;
-
+	int n= 0;
+	
+	/* get only active subscriptions */
 	s_array= (subs_t*)pkg_malloc(sizeof(subs_t));
 	if(s_array== NULL)
 	{
-		ERR_MEM("get_subs_dialog");
+		ERR_MEM("PRESENCE","get_subs_dialog");
 	}
 	memset(s_array, 0, sizeof(subs_t));
 
@@ -1138,7 +1151,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			
 			if(s->db_flag== UPDATEDB_FLAG)
 			{
-				if(update_in_list(s, s_array, n)< 0)
+				if(n>0 && update_in_list(s, s_array, n)< 0)
 				{
 					LOG(L_ERR, "PRESENCE: get_subs_dialog: ERROR"
 							" updating subscription in list\n");
@@ -1149,7 +1162,8 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			}
 		}
 
-		if(s->event== event && s->pres_uri.len== pres_uri->len &&
+		if(s->status== ACTIVE_STATUS && 
+			s->event== event && s->pres_uri.len== pres_uri->len &&
 			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)
 		{
 			if(sender && sender->len== s->contact.len && 
@@ -1178,7 +1192,7 @@ error:
 	
 }
 
-int publ_notify(presentity_t* p, str* body, str* offline_etag)
+int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
 {
 	str* notify_body = NULL;
 	subs_t* subs_array= NULL, *s= NULL;
@@ -1223,6 +1237,7 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag)
 	s= subs_array->next;
 	while(s)
 	{
+		s->auth_rules_doc= rules_doc;
 		if(notify(s, NULL, notify_body?notify_body:body, 0)< 0 )
 		{
 			LOG(L_ERR, "PRESENCE: publ_notify: Could not send notify for"
@@ -1241,7 +1256,7 @@ done:
 	{
 		if(notify_body->s)
 		{
-			if(	p->event->agg_nbody== NULL && 	p->event->apply_auth_nbody== NULL)
+			if(	p->event->agg_nbody== NULL && p->event->apply_auth_nbody== NULL)
 				pkg_free(notify_body->s);
 			else
 				p->event->free_body(notify_body->s);
@@ -1340,8 +1355,10 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	if(n_body!= NULL && subs->status== ACTIVE_STATUS)
 	{
 		if( subs->event->req_auth)
-		{	
-			if( subs->event->apply_auth_nbody(n_body, subs, &notify_body)< 0)
+		{
+			
+			if(subs->auth_rules_doc &&
+				subs->event->apply_auth_nbody(n_body, subs, &notify_body)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:send_notify_request: "
 						"ERROR in function apply_auth_nbody\n");
@@ -1387,8 +1404,8 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 				if(subs->event->req_auth)
 				{
 					 
-					if(subs->event->apply_auth_nbody(notify_body,
-								subs, &final_body)< 0)
+					if(subs->auth_rules_doc && 
+					subs->event->apply_auth_nbody(notify_body,subs,&final_body)<0)
 					{
 						LOG(L_ERR, "PRESENCE:send_notify_request: ERROR in function"
 								" apply_auth\n");
@@ -1406,15 +1423,6 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	}
 	
 jump_over_body:
-
-	/* built extra headers */	
-
-	DBG("PRESENCE:send_notify_request: build notify to user= %.*s domain= %.*s"
-		" for event= %.*s\n", subs->from_user.len, subs->from_user.s,
-		subs->from_domain.len, subs->from_domain.s,subs->event->name.len,
-		subs->event->name.s);
-
-	printf_subs(subs);
 
 	/* build extra headers */
 	if( build_str_hdr( subs, notify_body?1:0, &str_hdr)< 0 )
@@ -1629,14 +1637,14 @@ c_back_param* shm_dup_cbparam(subs_t* w_subs, subs_t* subs)
 	cb_param= (c_back_param*)shm_malloc(sizeof(c_back_param));
 	if(cb_param== NULL)
 	{
-		ERR_MEM("shm_dup_cbparam");
+		ERR_MEM("PRESENCE","shm_dup_cbparam");
 	}
 	memset(cb_param, 0, sizeof(c_back_param));
 
 	cb_param->pres_uri.s= (char*)shm_malloc(subs->pres_uri.len* sizeof(char));
 	if(cb_param->pres_uri.s== NULL)
 	{
-		ERR_MEM("shm_dup_cbparam");
+		ERR_MEM("PRESENCE","shm_dup_cbparam");
 	}
 	memcpy(cb_param->pres_uri.s, subs->pres_uri.s, subs->pres_uri.len);
 	cb_param->pres_uri.len= subs->pres_uri.len;
@@ -1645,7 +1653,7 @@ c_back_param* shm_dup_cbparam(subs_t* w_subs, subs_t* subs)
 			(subs->event->name.len* sizeof(char));
 	if(cb_param->ev_name.s== NULL)
 	{
-		ERR_MEM("shm_dup_cbparam");
+		ERR_MEM("PRESENCE","shm_dup_cbparam");
 	}
 	memcpy(cb_param->ev_name.s, subs->event->name.s,
 			subs->event->name.len);
@@ -1654,7 +1662,7 @@ c_back_param* shm_dup_cbparam(subs_t* w_subs, subs_t* subs)
 	cb_param->to_tag.s= (char*)shm_malloc(subs->to_tag.len*sizeof(char));
 	if(cb_param->to_tag.s== NULL)
 	{
-		ERR_MEM("shm_dup_cbparam");
+		ERR_MEM("PRESENCE","shm_dup_cbparam");
 	}
 	memcpy(cb_param->to_tag.s, subs->to_tag.s ,subs->to_tag.len) ;
 	cb_param->to_tag.len= subs->to_tag.len;
@@ -1728,7 +1736,7 @@ str* create_winfo_xml(watcher_t* watchers, char* version,
 	res= (char*)pkg_malloc(sizeof(char)*(resource.len+ 1));
 	if(res== NULL)
 	{
-		ERR_MEM("create_winfo_xml");
+		ERR_MEM("PRESENCE","create_winfo_xml");
 	}
 	memcpy(res, resource.s, resource.len);
 	res[resource.len]= '\0';
@@ -1777,7 +1785,7 @@ str* create_winfo_xml(watcher_t* watchers, char* version,
     body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		ERR_MEM("create_winfo_xml");	
+		ERR_MEM("PRESENCE","create_winfo_xml");	
 	}
 	memset(body, 0, sizeof(str));
 

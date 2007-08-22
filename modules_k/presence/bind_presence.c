@@ -25,11 +25,15 @@
  * --------
  *  2007-04-17  initial version (anca)
  */
-#include "bind_presence.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include "../../dprint.h"
 #include "../../sr_module.h"
+#include "presence.h"
+#include "bind_presence.h"
 
-int bind_presence(event_api_t* api)
+int bind_presence(presence_api_t* api)
 {
 	if (!api) {
 		LOG(L_ERR, "PRESENCE:bind_notifier: Invalid parameter value\n");
@@ -39,6 +43,7 @@ int bind_presence(event_api_t* api)
 	api->add_event = add_event;
 	api->contains_event= contains_event;
 	api->get_event_list= get_event_list;
+	api->update_watchers_status= update_watchers;
 	return 0;
 }
 

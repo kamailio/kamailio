@@ -35,7 +35,7 @@
 #define REMOTE_TYPE   1<<1
 #define LOCAL_TYPE    1<<2
 
-#define ERR_MEM(func)  LOG(L_ERR, "PRESENCE: %s: ERROR No more memory\n", func);\
+#define ERR_MEM(module, func)  LOG(L_ERR, "%s:%s:ERROR No more memory\n", module,func);\
 						goto error
 
 #define CONT_COPY(buf, dest, source)\

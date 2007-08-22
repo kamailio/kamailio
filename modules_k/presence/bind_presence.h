@@ -31,15 +31,18 @@
 
 #include "event_list.h"
 
-typedef struct event_api {
+typedef int (*update_watchers_t)(str pres_uri, pres_ev_t* ev, str* rules_doc);
+
+typedef struct presence_api {
 	add_event_t add_event;
 	contains_event_t contains_event;
 	get_event_list_t get_event_list;
-} event_api_t;
+	update_watchers_t update_watchers_status;
+} presence_api_t;
 
-int bind_presence(event_api_t* api);
+int bind_presence(presence_api_t* api);
 
-typedef int (*bind_presence_t)(event_api_t* api);
+typedef int (*bind_presence_t)(presence_api_t* api);
 
 #endif
 

@@ -237,9 +237,18 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	char* dot= NULL;
 	str etag= {0, 0};
 	str cur_etag= {0, 0};
+	str* rules_doc= NULL;
 
-	if( !use_db )
-		return 0;
+	if(presentity->event->req_auth)
+	{
+		/* get rules_document */
+		if(presentity->event->get_rules_doc(&presentity->user,
+					&presentity->domain, &rules_doc))
+		{
+			LOG(L_ERR, "PRESENCE:update_presentity: ERROR getting rules doc\n");
+			goto error;
+		}
+	}
 
 	query_cols[n_query_cols] = "domain";
 	query_ops[n_query_cols] = OP_EQ;
@@ -270,45 +279,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	n_query_cols++;
 
 	result_cols[0]= "expires"; 
-	if(presentity->expires == 0 && !new_t ) 
-	{
-		if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
-		{
-			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
-			return -1;
-		}
-		if( publ_notify( presentity, body, &presentity->etag)< 0 )
-		{
-			LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
-			return -1;
-		}
-		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
-		{
-			LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
-			goto error;
-		}
-		DBG("PRESENCE:update_presentity: expires =0 -> deleting"
-			" from database\n");
-		if(pa_dbf.delete(pa_db, query_cols, 0 ,query_vals,n_query_cols)< 0 )
-		{
-			DBG( "PRESENCE:update_presentity: ERROR cleaning"
-					" unsubscribed messages\n");
-		}
-		DBG("PRESENCE:update_presentity:delete from db %.*s\n",
-			presentity->user.len,presentity->user.s );
-
-		/* delete from hash table */
-	
-		if(delete_phtable(&msg->first_line.u.request.uri, 
-					presentity->event->evp->parsed)< 0)
-		{
-			LOG(L_ERR, "PRESENCE:update_presentity: ERROR deleting record"
-					" from hash table\n");
-			goto error;
-		}
-
-		return 1;
-	}
 
 	if(new_t) 
 	{
@@ -359,19 +329,12 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					" inserting new presentity\n");
 			goto error;
 		}
-		/* send 200ok */
-		if(publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+		if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 2000k\n");
-			goto error;
-		}
-		
-		/* send notify with presence information */
-		if (publ_notify(presentity, body,NULL )<0)
-		{
-			LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
+			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
 			return -1;
 		}
+		goto send_notify;
 	}
 	else
 	{
@@ -394,10 +357,49 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 		if (result->n > 0)
 		{
-			n_update_cols= 0;
 			pa_dbf.free_result(pa_db, result);
 			result= NULL;
 
+			if(presentity->expires == 0) 
+			{
+				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
+					return -1;
+				}
+				if( publ_notify( presentity, body, &presentity->etag, rules_doc)< 0 )
+				{
+					LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
+					return -1;
+				}
+				if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+				{
+					LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
+					goto error;
+				}
+				DBG("PRESENCE:update_presentity: expires =0 -> deleting"
+					" from database\n");
+				if(pa_dbf.delete(pa_db, query_cols, 0 ,query_vals,n_query_cols)< 0 )
+				{
+					DBG( "PRESENCE:update_presentity: ERROR cleaning"
+							" unsubscribed messages\n");
+				}
+				DBG("PRESENCE:update_presentity:delete from db %.*s\n",
+					presentity->user.len,presentity->user.s );
+
+				/* delete from hash table */
+	
+				if(delete_phtable(&msg->first_line.u.request.uri, 
+						presentity->event->evp->parsed)< 0)
+				{
+					LOG(L_ERR, "PRESENCE:update_presentity: ERROR deleting record"
+						" from hash table\n");
+					goto error;
+				}
+				return 1;
+			}
+
+			n_update_cols= 0;
 			if(presentity->event->etag_not_new== 0)
 			{	
 				/* generate another etag */
@@ -457,37 +459,16 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			update_vals[n_update_cols].val.int_val = presentity->received_time;
 			n_update_cols++;
 
-			if(body==NULL || body->s==NULL) /* if there is no body update expires value
-											   and sender if present */
+			if(body && body->s)
 			{
-				if( pa_dbf.update( pa_db,query_cols, query_ops,
-						query_vals, update_keys, update_vals, n_query_cols,n_update_cols)<0) 
-				{
-					LOG( L_ERR , "PRESENCE:update_presentity:ERROR while"
-							" updating presence information\n");
-					goto error;
-				}
-		
-				/* send 200ok */
-				if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
-				{
-					LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
-					if(etag.s)
-						pkg_free(etag.s);
-					return -1;
-				}
-				if(etag.s)
-					pkg_free(etag.s);
-				return 0;
+				update_keys[n_update_cols] = "body";
+				update_vals[n_update_cols].type = DB_BLOB;
+				update_vals[n_update_cols].nul = 0;
+				update_vals[n_update_cols].val.str_val.s = body->s;
+				update_vals[n_update_cols].val.str_val.len=body->len;
+				n_update_cols++;
 			}
 
-			update_keys[n_update_cols] = "body";
-			update_vals[n_update_cols].type = DB_BLOB;
-			update_vals[n_update_cols].nul = 0;
-			update_vals[n_update_cols].val.str_val.s = body->s;
-			update_vals[n_update_cols].val.str_val.len=body->len;
-			n_update_cols++;
-		
 			if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
 			update_keys,update_vals, n_query_cols, n_update_cols )<0) 
 			{
@@ -495,7 +476,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 						" updating presence information\n");
 				goto error;
 			}
-
 			
 			/* send 200OK */
 			if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
@@ -509,12 +489,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				pkg_free(etag.s);
 			etag.s= NULL;
 			
-			/* presentity body is updated so send notify to all watchers */
-			if (publ_notify(presentity, body, NULL)<0)
-			{
-				LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
-				return -1;
-			}
+			if(!body)
+				return 0;
+		
+			goto send_notify;
 		}  
 		else  /* if there isn't no registration with those 3 values */
 		{
@@ -529,6 +507,23 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			}
 		}
 	}
+
+send_notify:
+			
+	/* send notify with presence information */
+	if (publ_notify(presentity, body, NULL, rules_doc)<0)
+	{
+		LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
+		return -1;
+	}
+
+	if(rules_doc)
+	{
+		if(rules_doc->s)
+			pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+	}
+
 	return 0;
 
 error:
@@ -537,7 +532,12 @@ error:
 		pa_dbf.free_result(pa_db, result);
 	if(etag.s)
 		pkg_free(etag.s);
-
+	if(rules_doc)
+	{
+		if(rules_doc->s)
+			pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+	}
 	return -1;
 
 }

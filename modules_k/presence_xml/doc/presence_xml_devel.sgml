@@ -11,33 +11,9 @@
     </chapterinfo>
     <title>Developer's Guide</title>
 	<para>
-		The module provides an imporved xml library on top of libxml that can
-		be used in other &ser; modules.
-   </para>
- 		<section>
-				<title>
-				<function moreinfo="none">bind_libxml_api(libxml_api_t* api)</function>
-				</title>
-			<para>
-				This function binds the presece_xml modules and fills the structure 
-				with the 4 exported function.
-			</para>
-		<example>
-		<title><function>libxml_api</function> structure</title>
-	<programlisting format="linespecific">
-...
-typedef struct libxml_api {
-	xmlDocGetNodeByName_t xmlDocGetNodeByName;
-	xmlNodeGetChildByName_t xmlNodeGetChildByName;
-	xmlNodeGetNodeContentByName_t xmlNodeGetNodeContentByName;
-	xmlNodeGetAttrContentByName_t xmlNodeGetAttrContentByName;
-} libxml_api_t;
-...
-	</programlisting>
-	</example>
-	</section>
-
-</chapter>
+	The module exports no function to be used in other &ser; modules.
+	</para>
+	</chapter>
 
 <!-- Keep this element at the end of the file
 Local Variables:

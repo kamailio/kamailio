@@ -16,7 +16,7 @@
    </para>
  		<section>
 				<title>
-				<function moreinfo="none">bind_presence(event_api_t* api)</function>
+				<function moreinfo="none">bind_presence(presence_api_t* api)</function>
 				</title>
 			<para>
 				This function binds the presence modules and fills the structure 
@@ -24,12 +24,15 @@
 				new event to be handled by presence.
 			</para>
 		<example>
-		<title><function>event_api_t</function> structure</title>
+		<title><function>presence_api_t</function> structure</title>
 	<programlisting format="linespecific">
 ...
-typedef struct event_api {
+typedef struct presence_api {
 	add_event_t add_event;
-} event_api_t;
+	contains_event_t contains_event;
+	get_event_list_t get_event_list;
+	update_watchers_t update_watchers_status;
+}presence_api_t;
 ...
 </programlisting>
 		</example>
@@ -37,99 +40,146 @@ typedef struct event_api {
 		</section>
 	
 	<section>
-			<title>
-			<function moreinfo="none">add_event(ev_t* event)</function>
-			</title>
+		<title>
+		<function moreinfo="none">add_event</function>
+		</title>
+		<para>
+			Field type:
+			<programlisting format="linespecific">
+...
+typedef int (*add_event_t)(pres_ev_t* event);
+...
+		</para>
 		<para>
 			This function receives as a parameter a structure with event specific
-			information and adds it to presence list.
+			information and adds it to presence event list.
 		</para>
 		<para>
 		The structure received as a parameter:
 	<programlisting format="linespecific">
 ...
-typedef struct ev
+typedef struct pres_ev
 {
 	str name;
-	str* param;         // required param 
-	str stored_name;
+	event_t* evp;
 	str content_type;
-	int default_expires; /* the package default expires*/
+	int default_expires;
 	int type;
-/*	it can be: PUBL_TYPE or WINFO_TYPE */
+	int etag_not_new;
+	/*
+	 *  0 - the standard mechanism (allocating new etag
+			for each Publish)
+	 *  1 - allocating an etag only
+			for an initial Publish 
+	*/
 	int req_auth;
-/* flag to mark if the event requires authorization*/	
+	get_rules_doc_t* get_rules_doc;
 	apply_auth_t*  apply_auth_nbody;
-	is_allowed_t*  is_watcher_allowed;
+	is_allowed_t*  get_auth_status;
 	
+	/* an agg_body_t function should be registered
+	 * if the event permits having multiple published
+	 * states and requires an aggregation of the information
+	 * otherwise, this field should be NULL and the last
+	 * published state is taken when constructing Notify msg
+	 */
 	agg_nbody_t* agg_nbody;
 	publ_handling_t  * evs_publ_handl;
 	subs_handling_t  * evs_subs_handl;
-	free_body_t*    free_body;
-
-/* this two should not be filed when the structure is given as a
-	parmeter for add_event function */
-	struct ev* wipeer;			
-	struct ev* next;
+	free_body_t* free_body;
+	struct pres_ev* wipeer;			
+	struct pres_ev* next;
 	
-}ev_t;
+}pres_ev_t;
 ...
 </programlisting>
 		</section>
-
 <section>
 		<title>
-			<function moreinfo="none">apply_auth_nbody</function>
+			<function moreinfo="none">get_rules_doc</function>
 		</title>
 		<para>
-			This parameter should be a function to be calledfor an event that requires
-			authorization, when constructing final body. It is called only if the
-			req_auth field is not 0.
+		
 		</para>
 		<para>
 			Filed type:
 			<programlisting format="linespecific">
 ...
-typedef int (apply_auth_t)(str* , struct subscription*, str* );
-..
+typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
+...
 			</programlisting>
-			</para>
-</section>			
+		</para>
+		<para>
+		This function returns the authorization rules document that will be
+		used in obtaining the status of the subscription and processing the
+		notified body. A reference to the document should be put in the 
+		auth_rules_doc of the subs_t structure given as a parameter to the
+		functions described bellow.
+		</para>
+</section>	
 
 <section>
 		<title>
-			<function moreinfo="none">is_watcher_allowed</function>
+			<function moreinfo="none">get_auth_status</function>
 		</title>
 		<para>
-			This filed is a function to be called for a subscription request to
-			return the state for that subscription according to authorization rules.
-			It is called only if the req_auth field is not 0.
+			This filed is a function to be called for a subscription request
+			to return the state for that subscription according to
+			authorization rules. In the auth_rules_doc field of the subs_t
+			structure received as a parameter should contain the rules 
+			document of the presentity in case, if it exists.
+		</para>
+		<para>
+			It is called only if the req_auth field is not 0. 
 		</para>
 		<para>
 			Filed type:
 			<programlisting format="linespecific">
 ...
 typedef int (is_allowed_t)(struct subscription* subs);
-..
+...
 			</programlisting>
 			</para>
 </section>	
 
 <section>
 		<title>
+			<function moreinfo="none">apply_auth_nbody</function>
+		</title>
+		<para>
+			This parameter should be a function to be called for an event 
+			that requires authorization, when constructing final body. 
+			The authorization document is taken from the auth_rules_doc
+			field of the subs_t structure given as a parameter.
+			It is called only if the req_auth field is not 0.
+		</para>
+		<para>
+			Filed type:
+			<programlisting format="linespecific">
+...
+typedef int (apply_auth_t)(str* , struct subscription*, str** );
+...
+			</programlisting>
+			</para>
+</section>			
+
+<section>
+		<title>
 			<function moreinfo="none">agg_nbody</function>
 		</title>
 		<para>
-			If present, this field marks that the events requires aggregation of states.
-			This function receives a body array and should return the final body.
-			If not present, it is considered that the event does not require aggregation and
-			the most recent published information is used when constructing Notifies.
+			If present, this field marks that the events requires aggregation
+			of states. This function receives a body array and should return
+			the final body.	If not present, it is considered that the event
+			does not require aggregation and the most recent published
+			information is used when constructing Notifies.
 		</para>
 		<para>
 		Filed type:
 			<programlisting format="linespecific">
 ...
-typedef str* (agg_nbody_t)(str** body_array, int n, int off_index);
+typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain, 
+str** body_array, int n, int off_index);
 ..
 			</programlisting>
 		</para>
@@ -140,10 +190,11 @@ typedef str* (agg_nbody_t)(str** body_array, int n, int off_index);
 			<function moreinfo="none">free_body</function>
 		</title>
 		<para>
-			This field must be field in if subsequent processing is performed on the info
-			from database before beeing inserted in Notify message body(if agg_nbody
-			or apply_auth_nbody fields are filled in). It should match the allocation 
-			function used when processing the body.  
+			This field must be field in if subsequent processing is performed
+			on the info from database before being inserted in Notify
+			message body(if agg_nbody or apply_auth_nbody fields are
+			filled in). It should match the allocation function used when
+			processing the body.  
 		</para>
 		<para>
 		Filed type:
@@ -161,7 +212,7 @@ typedef void(free_body_t)(char* body);
 		</title>
 		<para>
 		This function is called when handling Publish requests. Most contain 
-		body correctitude check.
+		body correctness check.
 		</para>
 		<para>
 			<programlisting format="linespecific">
@@ -190,6 +241,63 @@ typedef int (subs_handling_t)(struct sip_msg*);
 			</para>
 </section>	
 
+<section>
+	<title>
+	<function moreinfo="none">contains_event</function>
+	</title>
+	<para>
+		Field type:
+		<programlisting format="linespecific">
+..
+typedef pres_ev_t* (*contains_event_t)(str* name,
+event_t* parsed_event);
+...
+	</para>
+	<para>
+	The function parses the event name received as a parameter and searches
+	the result in the list. It returns the found event or NULL, if not found. 
+	If the second argument is an allocated event_t* structure it fills it
+	with the result of the parsing.
+	</para>
+</section>
+
+<section>
+	<title>
+	<function moreinfo="none">get_event_list</function>
+	</title>
+	<para>
+		Field type:
+		<programlisting format="linespecific">
+...
+typedef int (*get_event_list_t) (str** ev_list);
+...
+	</para>
+	<para>
+	This function returns a string representation of the events registered
+	in presence module.( used for Allowed-Events header).
+	</para>
+</section>
+
+<section>
+	<title>
+	<function moreinfo="none">update_watchers_status</function>
+	</title>
+	<para>
+		Field type:
+		<programlisting format="linespecific">
+...
+typedef int (*update_watchers_t)(str pres_uri, pres_ev_t* ev,
+str* rules_doc);
+...
+	</para>
+	<para>
+	This function is an external command that can be used to announce a change
+	in authorization rules for a presentity. It updates the stored status and
+	sends a Notify to the watchers whose status has changes. (used by
+	presence_xml module when notified through an MI command of a change in
+	an xcap document).
+	</para>
+</section>
 
 </chapter>
 

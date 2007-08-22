@@ -72,6 +72,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	str user, domain, etag, event;
 	int n_result_cols= 0;
 	str pres_uri;
+	str* rules_doc= NULL;
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
@@ -201,13 +202,24 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		DBG( "PRESENCE:msg_presentity_clean:found expired publish"
 				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
 				p[i]->domain.len, p[i]->domain.s);
-		if(publ_notify( p[i], NULL, &p[i]->etag)< 0)
+		if(p[i]->event->get_rules_doc(&p[i]->user, &p[i]->domain, &rules_doc)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:msg_presentity_clean:ERROR getting rules doc\n");
+			goto error;
+		}
+		if(publ_notify( p[i], NULL, &p[i]->etag, rules_doc)< 0)
 		{
 			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while sending Notify\n");
 			goto error;
 		}
+		if(rules_doc)
+		{
+			if(rules_doc->s)
+				pkg_free(rules_doc->s);
+			pkg_free(rules_doc);
+		}
+		rules_doc= NULL;
 	}
-
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
@@ -242,6 +254,13 @@ error:
 		}
 		pkg_free(p);
 	}
+	if(rules_doc)
+	{
+		if(rules_doc->s)
+			pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+	}
+
 	return;	
 }
 

@@ -51,6 +51,7 @@
 #include "../sl/sl_api.h"
 #include "../../pt.h"
 #include "../../mi/mi.h"
+#include "../pua/hash.h"
 #include "publish.h"
 #include "subscribe.h"
 #include "event_list.h"
@@ -97,7 +98,8 @@ int handle_publish(struct sip_msg*, char*, char*);
 int handle_subscribe(struct sip_msg*, char*, char*);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
-struct mi_root* refreshWatchers(struct mi_root* cmd, void* param);
+struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
+int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
 
 int counter =0;
 int pid = 0;
@@ -115,7 +117,7 @@ phtable_t* pres_htable;
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",		handle_publish,	     0,	   0,        REQUEST_ROUTE},
+	{"handle_publish",		handle_publish,	     0,	   0,         REQUEST_ROUTE},
 	{"handle_publish",		handle_publish,	     1,fixup_presence,REQUEST_ROUTE},
 	{"handle_subscribe",	handle_subscribe,	 0,	   0,         REQUEST_ROUTE},
 	{"bind_presence",(cmd_function)bind_presence,1,    0,            0         },
@@ -139,8 +141,8 @@ static param_export_t params[]={
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "refreshWatchers", refreshWatchers,    0,  0,  0},
-	{ 0, 0, 0, 0}
+	{ "refreshWatchers", mi_refreshWatchers,    0,  0,  0},
+	{  0,                0,                     0,  0,  0}
 };
 
 /** module exports */
@@ -436,15 +438,19 @@ static int fixup_presence(void** param, int param_no)
  *  mi cmd: refreshWatchers
  *			<presentity_uri> 
  *			<event>
+ *			?? should I receive the changed doc also?? 
+ *			(faster- does not require a query) 
  * */
 
-struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
+struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 {
 	struct mi_node* node= NULL;
 	str pres_uri, event;
+	struct sip_uri uri;
 	pres_ev_t* ev;
+	str* rules_doc;
 
-	DBG("PRESENCE:refreshWatchers: start\n");
+	DBG("PRESENCE:mi_refreshWatchers: start\n");
 	
 	node = cmd->node.kids;
 	if(node == NULL)
@@ -452,9 +458,9 @@ struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
 
 	/* Get presentity URI */
 	pres_uri = node->value;
-	if(pres_uri.s == NULL || pres_uri.s== 0)
+	if(pres_uri.s == NULL || pres_uri.len== 0)
 	{
-		LOG(L_ERR, "PRESENCE:refreshWatchers: empty uri\n");
+		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: empty uri\n");
 		return init_mi_tree(404, "Empty presentity URI", 20);
 	}
 	
@@ -464,32 +470,256 @@ struct mi_root* refreshWatchers(struct mi_root* cmd, void* param)
 	event= node->value;
 	if(event.s== NULL || event.len== 0)
 	{
-		LOG(L_ERR, "PRESENCE:refreshWatchers: "
+		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: "
 		    "empty event parameter\n");
 		return init_mi_tree(400, "Empty event parameter", 21);
 	}
-	DBG("PRESENCE:refreshWatchers: event '%.*s'\n",
+	DBG("PRESENCE:mi_refreshWatchers: event '%.*s'\n",
 	    event.len, event.s);
 	
 	if(node->next!= NULL)
 	{
-		LOG(L_ERR, "PRESENCE:refreshWatchers: Too many parameters\n");
+		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: Too many parameters\n");
 		return init_mi_tree(400, "Too many parameters", 19);
+	}
+
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: ERROR parsing uri\n");
+		goto error;
 	}
 
 	ev= contains_event(&event, NULL);
 	if(ev== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:refreshWatchers: ERROR wrong event parameter\n");
+		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: ERROR wrong event parameter\n");
 		return 0;
-	}	
-	if(query_db_notify(&pres_uri, ev, NULL)< 0)
+	}
+
+	if(ev->get_rules_doc(&uri.user,&uri.host,&rules_doc)< 0 || rules_doc==0
+			|| rules_doc->s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:refreshWatchers: ERROR while sending notify");
-		return 0;
-	}	
-	
+		LOG(L_ERR, "PRESENCE:mi_refreshWatchers:ERROR getting rules doc\n");
+		goto error;
+	}
+
+	if(update_watchers(pres_uri, ev, rules_doc)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:mi_refreshWatchers:ERROR updating watchers\n");
+		goto error;
+	}
+
 	return init_mi_tree(200, "OK", 2);
+
+error:
+	if(rules_doc)
+	{
+		if(rules_doc->s)
+			pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+	}
+	return 0;
 }
 
+int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
+{
+	subs_t subs;
+	db_key_t query_cols[3], result_cols[5], update_cols[5];
+	db_val_t query_vals[3], update_vals[2];
+	int n_update_cols= 0, n_result_cols= 0, n_query_cols = 0;
+	db_res_t* result= NULL;
+	db_row_t *row ;	
+	db_val_t *row_vals ;
+	int i;
+	str w_user, w_domain, reason;
+	int status;
+	int status_col, w_user_col, w_domain_col, reason_col;
+	int u_status_col, u_reason_col;
+	subs_t* subs_array= NULL,* s;
+	unsigned int hash_code;
+				
+	if(ev->content_type.s== NULL)
+	{
+		ev= contains_event(&ev->name, NULL);
+		if(ev== NULL)
+		{
+			LOG(L_ERR,"PRESENCE:update_watchers:ERROR wrong event parameter\n");
+			return 0;
+		}
+	}
 
+	subs.pres_uri= pres_uri;
+	subs.event= ev;
+	subs.auth_rules_doc= rules_doc;
+
+	/* update in watchers_table */
+	query_cols[n_query_cols]= "p_uri";
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].val.str_val= pres_uri;
+	n_query_cols++;
+
+	query_cols[n_query_cols]= "event";
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].val.str_val= ev->name;
+	n_query_cols++;
+
+	result_cols[status_col= n_result_cols++]= "status";
+	result_cols[reason_col= n_result_cols++]= "reason";
+	result_cols[w_user_col= n_result_cols++]= "w_user";
+	result_cols[w_domain_col= n_result_cols++]= "w_domain";
+	
+	update_cols[u_status_col= n_update_cols]= "status";
+	update_vals[u_status_col].nul= 0;
+	update_vals[u_status_col].type= DB_INT;
+	n_update_cols++;
+
+	update_cols[u_reason_col= n_update_cols]= "reason";
+	update_vals[u_reason_col].nul= 0;
+	update_vals[u_reason_col].type= DB_STR;
+	n_update_cols++;
+
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	{
+		LOG(L_ERR, "PRESENCE:update_watchers: ERROR in use_table\n");
+		goto error;
+	}
+
+	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,n_query_cols,
+				n_result_cols, 0, &result)< 0)
+	{
+		LOG(L_ERR, "PRESENCE:update_watchers: ERROR in sql query\n");
+		goto error;
+	}
+	if(result== NULL)
+		return 0;
+
+	if(result->n<= 0)
+		goto done;
+
+	hash_code= core_hash(&pres_uri, &ev->name, shtable_size);
+	lock_get(&subs_htable[hash_code].lock);
+
+	for(i = 0; i< result->n; i++)
+	{
+		row= &result->rows[i];
+		row_vals = ROW_VALUES(row);
+
+		status= row_vals[status_col].val.int_val;
+	
+		reason.s= (char*)row_vals[reason_col].val.string_val;
+		reason.len= reason.s?strlen(reason.s):0;
+
+		w_user.s= (char*)row_vals[w_user_col].val.string_val;
+		w_user.len= strlen(w_user.s);
+
+		w_domain.s= (char*)row_vals[w_domain_col].val.string_val;
+		w_domain.len= strlen(w_domain.s);
+
+		subs.from_user= w_user;
+		subs.from_domain= w_domain;
+
+		if(ev->get_auth_status(&subs)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_watchers: ERROR while getting status"
+					" from rules document\n");
+			lock_release(&subs_htable[hash_code].lock);
+			goto error;
+		}
+		if(subs.status!= status || reason.len!= subs.reason.len ||
+			(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
+												  reason.len)))
+		{
+			/* update in watchers_table */
+			update_vals[u_status_col].val.int_val= subs.status;
+			update_vals[u_reason_col].val.str_val= subs.reason;
+			if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+			{
+				LOG(L_ERR, "PRESENCE:update_watchers: ERROR in use_table\n");
+				lock_release(&subs_htable[hash_code].lock);
+				goto error;
+			}
+
+			if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
+						update_vals, n_query_cols, 2)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:update_watchers: ERROR in sql update\n");
+				lock_release(&subs_htable[hash_code].lock);
+				goto error;
+			}
+			/* save in the list all affected dialogs */
+			if(get_pw_dialogs(&subs, hash_code, &subs_array)< 0)
+			{
+				LOG(L_ERR, "PRESENCE:update_watchers: ERROR ERROR extracting"
+						"from [watcher]=%.*s@%.*s to [presentity]=%.*s\n",
+						w_user.len, w_user.s, w_domain.len, w_domain.s, 
+						pres_uri.len, pres_uri.s);
+				lock_release(&subs_htable[hash_code].lock);
+				goto error;
+			}
+		}
+			
+	}
+	lock_release(&subs_htable[hash_code].lock);
+
+	s= subs_array;
+
+	while(s)
+	{
+		if(notify(s, NULL, NULL, 0)< 0)
+		{
+			LOG(L_ERR, "PRESENCE:update_watchers: ERROR sending"
+					" Notify request\n");
+			goto error;
+		}
+		s= s->next;
+	}
+	
+done:
+	pa_dbf.free_result(pa_db, result);
+	free_subs_list(subs_array, PKG_MEM_TYPE);
+	return 0;
+
+error:
+	if(result)
+		pa_dbf.free_result(pa_db, result);
+	free_subs_list(subs_array, PKG_MEM_TYPE);
+	return 0;
+}
+
+int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
+{
+	subs_t* s, *cs;
+	
+	s= subs_htable[hash_code].entries->next;
+	
+	while(s)
+	{
+		if(s->event== subs->event && s->pres_uri.len== subs->pres_uri.len &&
+			s->from_user.len== subs->from_user.len && 
+			s->from_domain.len==subs->from_domain.len &&
+			strncmp(s->pres_uri.s, subs->pres_uri.s, subs->pres_uri.len)== 0 &&
+			strncmp(s->from_user.s, subs->from_user.s, s->from_user.len)== 0 &&
+			strncmp(s->from_domain.s,subs->from_domain.s,s->from_domain.len)==0)
+		{
+			s->status= subs->status;
+			s->reason= subs->reason;
+			s->db_flag= UPDATEDB_FLAG;
+
+			cs= mem_copy_subs(s, PKG_MEM_TYPE);
+			if(cs== NULL)
+			{
+				LOG(L_ERR, "PRESENCE:get_pw_dialogs:ERROR copying subs_t"
+						" stucture\n");
+				return -1;
+			}
+			cs->next= (*subs_array);
+			(*subs_array)= cs;
+
+		}
+		s= s->next;
+	}
+	return 0;
+
+}

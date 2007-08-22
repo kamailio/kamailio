@@ -53,6 +53,7 @@ typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain, str** body_array, i
  *				with Expires: 0 has just been received
  *	*/
 typedef int (is_allowed_t)(struct subscription* subs);
+typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
 /* return code rules for is_allowed_t
  *	< 0  if error occured
  *	=0	 if no change in status(if no xcap document exists)
@@ -81,8 +82,9 @@ struct pres_ev
 	 *  apply_auth_nbody    - alter the body according to authorization rules
 	 */
 	int req_auth;
+	get_rules_doc_t* get_rules_doc;
 	apply_auth_t*  apply_auth_nbody;
-	is_allowed_t*  is_watcher_allowed;
+	is_allowed_t*  get_auth_status;
 	
 	/* an agg_body_t function should be registered if the event permits having
 	 * multiple published states and requires an aggregation of the information

@@ -102,17 +102,16 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody)
 	if(force_active)
 		return 0;
 
-	if(get_xcap_tree(subs->pres_uri, PRES_RULES, &doc)< 0)
+	if(subs->auth_rules_doc== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:pres_apply_auth: Error while getting xcap doc"
-				" for pres_rules\n");
+		LOG(L_ERR, "PRESENCE_XML:pres_apply_auth:ERROR NULL rules doc\n");
 		return -1;
 	}
-
+	doc= xmlParseMemory(subs->auth_rules_doc->s, subs->auth_rules_doc->len);
 	if(doc== NULL)
 	{
-		DBG("PRESENCE_XML:pres_apply_auth: No xcap document found\n");
-		return 0;
+		LOG(L_ERR,"PRESENCE_XML:pres_apply_auth:ERROR parsing xml doc\n");
+		return -1;
 	}
 	
 	node= get_rule_node(subs, doc);
@@ -471,6 +470,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	str *body= NULL;
 	char* id= NULL, *tuple_id = NULL;
 	xmlDocPtr pidf_manip_doc= NULL;
+	str* pidf_doc= NULL;
 
 	xml_array = (xmlDocPtr*)pkg_malloc( (n+2)*sizeof(xmlDocPtr));
 	if(xml_array== NULL)
@@ -484,31 +484,33 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	/* if pidf_manipulation usage is configured */
 	if(pidf_manipulation)
 	{
-		str pres_uri;
-		if(uandd_to_uri(*pres_user, *pres_domain, &pres_uri)< 0)
-		{
-			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: ERROR while"
-					" constructing uri\n");
-			goto error;
-		}
-		if( get_xcap_tree(pres_uri, PIDF_MANIPULATION, &pidf_manip_doc)< 0)
+		if( get_rules_doc(pres_user, pres_domain, PIDF_MANIPULATION, &pidf_doc)< 0)
 		{
 			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while getting xcap tree"
 					" for doc_type PIDF_MANIPULATION\n");
-			pkg_free(pres_uri.s);
 			goto error;
 		}	
-		pkg_free(pres_uri.s);
-
-		if(pidf_manip_doc== NULL)
+		if(pidf_doc== NULL)
 		{
 			DBG( "PRESENCE_XML:agregate_xmls: No PIDF_MANIPULATION doc for [user]= %.*s"
-					" [domain]= %.*s found\n", pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
-		}		
+				" [domain]= %.*s found\n", pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
+		}
 		else
-		{	
-			xml_array[0]= pidf_manip_doc;
-			j++;
+		{
+			pidf_manip_doc= xmlParseMemory(pidf_doc->s, pidf_doc->len);
+			pkg_free(pidf_doc->s);
+			pkg_free(pidf_doc);
+
+			if(pidf_manip_doc== NULL)
+			{
+				LOG(L_ERR, "PRESENCE_XML:agregate_xmls:ERROR parsing xml memory\n");
+				goto error;
+			}		
+			else
+			{	
+				xml_array[0]= pidf_manip_doc;
+				j++;
+			}
 		}
 	}
 	
@@ -659,7 +661,7 @@ str* offline_nbody(str* body)
 {
 	xmlDocPtr doc= NULL;
 	xmlDocPtr new_doc= NULL;
-	xmlNodePtr node, tuple_node= NULL;
+	xmlNodePtr node, tuple_node= NULL, status_node;
 	xmlNodePtr root_node, add_node, pres_node;
 	str* new_body;
 
@@ -678,11 +680,18 @@ str* offline_nbody(str* body)
 	xmlNodeSetContent(node, (const unsigned char*)"closed");
 
 	tuple_node= xmlDocGetNodeByName(doc, "tuple", NULL);
-	if(node== NULL)
+	if(tuple_node== NULL)
 	{
 		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting tuple node\n");
 		goto error;
 	}
+	status_node= xmlDocGetNodeByName(doc, "status", NULL);
+	if(status_node== NULL)
+	{
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting tuple node\n");
+		goto error;
+	}
+
 	pres_node= xmlDocGetNodeByName(doc, "presence", NULL);
 	if(node== NULL)
 	{
@@ -701,13 +710,21 @@ str* offline_nbody(str* body)
 	}
     xmlDocSetRootElement(new_doc, root_node);
 
-  	add_node= xmlCopyNode(tuple_node, 1);
+	tuple_node= xmlCopyNode(tuple_node, 2);
+	if(tuple_node== NULL)
+	{
+		LOG(L_ERR, "PRESENCE_XML:offline_nbody: Error while copying node\n");
+		goto error;
+	}
+	xmlAddChild(root_node, tuple_node);
+
+	add_node= xmlCopyNode(status_node, 1);
 	if(add_node== NULL)
 	{
 		LOG(L_ERR, "PRESENCE_XML:offline_nbody: Error while copying node\n");
 		goto error;
 	}
-	xmlAddChild(root_node, add_node);
+	xmlAddChild(tuple_node, add_node);
 
 	new_body = (str*)pkg_malloc(sizeof(str));
 	if(new_body == NULL)

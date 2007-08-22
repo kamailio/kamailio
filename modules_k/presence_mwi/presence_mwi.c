@@ -48,7 +48,6 @@ static int child_init(int);
 static void destroy(void);
 
 /* module variables */
-event_api_t pres;
 add_event_t pres_add_event;
 
 /* module exported commands */
@@ -83,6 +82,7 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	presence_api_t pres;
     DBG("presence_mwi: mod_init...\n");
 
     bind_presence_t bind_presence;
