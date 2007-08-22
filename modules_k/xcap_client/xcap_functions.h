@@ -1,0 +1,114 @@
+/*
+ * $Id: xcap_functions.h 2230 2007-06-06 07:13:20Z anca_vamanu $
+ *
+ * xcap_client module - XCAP client for openser
+ *
+ * Copyright (C) 2007 Voice Sistem S.R.L.
+ *
+ * This file is part of openser, a free SIP server.
+ *
+ * openser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * openser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *  2007-08-20  initial version (anca)
+ */
+
+#ifndef XCAP_FUNC_H
+#define XCAP_FUNC_H
+
+#include "xcap_callbacks.h"
+
+#define USERS_TYPE      1
+#define GLOBAL_TYPE     2
+
+typedef struct xcap_doc_sel
+{
+	str auid;
+	int type; 
+	str xid;
+	str filename;
+}xcap_doc_sel_t;
+
+typedef struct ns_list
+{
+	int name;
+	str value;
+	struct ns_list* next;
+}ns_list_t;
+
+typedef struct step
+{
+	str val;
+	struct step* next;
+}step_t;
+
+typedef struct xcap_node_sel
+{
+	step_t* steps;
+	step_t* last_step;
+	int size;
+	ns_list_t* ns_list;
+	ns_list_t* last_ns;
+	int ns_no;
+
+}xcap_node_sel_t;
+
+typedef struct att_test
+{
+	str name;
+	str value;
+}attr_test_t;
+
+xcap_node_sel_t* xcapInitNodeSel();
+typedef xcap_node_sel_t* (*xcap_nodeSel_init_t )(void);
+
+xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,
+		str* namespace, int pos, attr_test_t*  attr_test, str* extra_sel);
+
+typedef xcap_node_sel_t* (*xcap_nodeSel_add_step_t)(xcap_node_sel_t* curr_sel,
+	str* name,str* namespace,int pos,attr_test_t*  attr_test,str* extra_sel);
+
+xcap_node_sel_t* xcapNodeSelAddTerminal(xcap_node_sel_t* curr_sel, 
+		char* attr_sel, char* namespace_sel, char* extra_sel );
+
+typedef xcap_node_sel_t* (*xcap_nodeSel_add_terminal_t)(xcap_node_sel_t* curr_sel, 
+		char* attr_sel, char* namespace_sel, char* extra_sel );
+
+char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel,
+		xcap_node_sel_t* node_sel);
+
+typedef char* (*xcap_get_elem_t)(char* xcap_root, xcap_doc_sel_t* doc_sel, 
+		xcap_node_sel_t* node_sel);
+
+void xcapFreeNodeSel(xcap_node_sel_t* node);
+typedef void (*xcap_nodeSel_free_t)(xcap_node_sel_t* node);
+
+typedef struct xcap_api {
+	xcap_get_elem_t get_elem;
+	xcap_nodeSel_init_t int_node_sel;
+	xcap_nodeSel_add_step_t add_step;
+	xcap_nodeSel_add_terminal_t add_terminal;
+	xcap_nodeSel_free_t free_node_sel;
+	register_xcapcb_t register_xcb;
+}xcap_api_t;
+
+int bind_xcap(xcap_api_t* api);
+
+typedef int (*bind_xcap_t)(xcap_api_t* api);
+
+char* send_http_get(char* path);
+
+#endif
