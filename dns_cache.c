@@ -3120,6 +3120,12 @@ void dns_set_server_state(int state)
 {
 	atomic_set(dns_servers_up, state);
 }
+
+/* returns the state of the DNS servers */
+int dns_get_server_state(void)
+{
+	return atomic_get(dns_servers_up);
+}
 #endif /* DNS_WATCHDOG_SUPPORT */
 
 /* rpc functions */
@@ -3795,6 +3801,12 @@ void dns_set_server_state_rpc(rpc_t* rpc, void* ctx)
 	if (rpc->scan(ctx, "d", &state) < 1)
 		return;
 	dns_set_server_state(state);
+}
+
+/* prints the DNS server state */
+void dns_get_server_state_rpc(rpc_t* rpc, void* ctx)
+{
+	rpc->add(ctx, "d", dns_get_server_state());
 }
 #endif /* DNS_WATCHDOG_SUPPORT */
 

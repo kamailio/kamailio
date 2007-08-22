@@ -327,6 +327,9 @@ void dns_cache_flush(void);
  * 0: all the servers are down
  */
 void dns_set_server_state(int state);
+
+/* returns the state of the DNS servers */
+int dns_get_server_state(void);
 #endif /* DNS_WATCHDOG_SUPPORT */
 
 #endif
