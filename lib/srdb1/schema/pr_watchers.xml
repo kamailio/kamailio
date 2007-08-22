@@ -78,10 +78,11 @@
     </column>
 
     <index>
-        <name>uud_watchers</name>
+        <name>uude_watchers</name>
         <colref linkend="p_uri"/>
         <colref linkend="w_user"/>
         <colref linkend="w_domain"/>
+        <colref linkend="event"/>
         <unique/>
     </index>
 </table>
