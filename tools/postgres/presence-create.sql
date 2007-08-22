@@ -49,7 +49,7 @@ CREATE TABLE watchers (
     subs_status VARCHAR(64) NOT NULL,
     reason VARCHAR(64),
     inserted_time INTEGER NOT NULL,
-    CONSTRAINT uud_watchers UNIQUE (p_uri, w_user, w_domain)
+    CONSTRAINT uude_watchers UNIQUE (p_uri, w_user, w_domain, event)
 );
 
 INSERT INTO version (table_name, table_version) values ('xcap_xml','1');

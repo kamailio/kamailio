@@ -48,7 +48,7 @@ CREATE TABLE watchers (
     subs_status VARCHAR(64) NOT NULL,
     reason VARCHAR(64),
     inserted_time INT(11) NOT NULL,
-    UNIQUE KEY uud_watchers (p_uri, w_user, w_domain)
+    UNIQUE KEY uude_watchers (p_uri, w_user, w_domain, event)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('xcap_xml','1');
