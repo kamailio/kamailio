@@ -172,7 +172,7 @@ static int mod_init(void)
 	}
 
 	pres_add_event= pres.add_event;
-	pres_update_watchers= pres.update_watchers;
+	pres_update_watchers= pres.update_watchers_status;
 	if (pres_add_event == NULL || pres_update_watchers== NULL)
 	{
 		LOG(L_ERR, "presence_xml:mod_init Could not import add_event\n");
