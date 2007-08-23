@@ -77,6 +77,7 @@
  *                source addr/port (andrei)
  *  2007-07-26   tcp_send() and tcpconn_get() can now use a specified source
  *                addr./port (andrei)
+ *  2007-08-23   getsockname() for INADDR_ANY(SI_IS_ANY) sockets (andrei)
  */
 
 
@@ -1608,6 +1609,9 @@ inline static int send2child(struct tcp_connection* tcpconn)
 static inline int handle_new_connect(struct socket_info* si)
 {
 	union sockaddr_union su;
+	union sockaddr_union sock_name;
+	unsigned sock_name_len;
+	union sockaddr_union* dst_su;
 	struct tcp_connection* tcpconn;
 	socklen_t su_len;
 	int new_sock;
@@ -1635,8 +1639,21 @@ static inline int handle_new_connect(struct socket_info* si)
 	}
 	(*tcp_connections_no)++;
 	
+	dst_su=&si->su;
+	if (si->flags & SI_IS_ANY){
+		/* INADDR_ANY => get local dst */
+		sock_name_len=sizeof(sock_name);
+		if (getsockname(new_sock, &sock_name.s, &sock_name_len)!=0){
+			LOG(L_ERR, "ERROR: handle_new_connect:"
+						" getsockname failed: %s(%d)\n",
+						strerror(errno), errno);
+			/* go on with the 0.0.0.0 dst from the sock_info */
+		}else{
+			dst_su=&sock_name;
+		}
+	}
 	/* add socket to list */
-	tcpconn=tcpconn_new(new_sock, &su, &si->su, si, si->proto, S_CONN_ACCEPT);
+	tcpconn=tcpconn_new(new_sock, &su, dst_su, si, si->proto, S_CONN_ACCEPT);
 	if (tcpconn){
 #ifdef TCP_PASS_NEW_CONNECTION_ON_DATA
 		io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);

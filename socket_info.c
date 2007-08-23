@@ -34,6 +34,7 @@
  *  2003-10-22  created by andrei
  *  2004-10-10  added grep_sock_info (andrei)
  *  2004-11-08  added find_si (andrei)
+ *  2007-08-23  added detection for INADDR_ANY types of sockets (andrei)
  */
 
 
@@ -646,6 +647,10 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 			si->flags |= SI_IS_MCAST;
 		}
 #endif /* USE_MCAST */
+		
+		/* check if INADDR_ANY */
+		if (ip_addr_any(&si->address))
+			si->flags|=SI_IS_ANY;
 
 #ifdef EXTRA_DEBUG
 		printf("              %.*s [%s]:%s%s\n", si->name.len, 
