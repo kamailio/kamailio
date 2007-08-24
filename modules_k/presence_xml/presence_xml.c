@@ -184,7 +184,7 @@ static int mod_init(void)
 		return -1;		
 	}
 	
-	if(!integrated_xcap_server )
+	if(force_active== 0 && !integrated_xcap_server )
 	{
 		xcap_api_t xcap_api;
 		bind_xcap_t bind_xcap;
@@ -308,7 +308,7 @@ int shm_copy_xcap_list()
 	xs= xs_list;
 	if(xs== NULL)
 	{
-		if(!integrated_xcap_server)
+		if(force_active== 0 && !integrated_xcap_server)
 		{
 			LOG(L_ERR, "PRESENCE_XML:shm_copy_xcap_list: ERROR"
 				" no xcap_server parameter set\n");
