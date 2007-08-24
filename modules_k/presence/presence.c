@@ -380,7 +380,8 @@ static int child_init(int rank)
 		}
 		if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
 		{
-			LOG(L_ERR, "PRESENCE: child %d: Error in use_table active_watchers_table\n", rank);
+			LOG(L_ERR, "PRESENCE: child %d: Error in use_table active_watchers_table\n",
+					rank);
 			return -1;
 		}
 		if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
@@ -403,7 +404,7 @@ void destroy(void)
 
 	if(subs_htable && pa_db)
 		timer_db_update(0, 0);
-	
+
 	if(subs_htable)
 		destroy_shtable();
 	
@@ -412,6 +413,7 @@ void destroy(void)
 
 	if(pa_db && pa_dbf.close)
 		pa_dbf.close(pa_db);
+	
 	destroy_evlist();
 }
 

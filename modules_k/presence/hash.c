@@ -96,6 +96,7 @@ void destroy_shtable()
 		free_subs_list(subs_htable[i].entries, SHM_MEM_TYPE);
 	}
 	shm_free(subs_htable);
+	subs_htable= NULL;
 }
 
 subs_t* search_shtable(str callid,str to_tag,str from_tag,unsigned int hash_code)

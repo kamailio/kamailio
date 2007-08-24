@@ -405,7 +405,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		if(subs->expires!= 0 && subs->event->wipeer)
 		{	
 			DBG("PRESENCE:update_subscription: send Notify with winfo\n");
-			if(query_db_notify(&subs->pres_uri, subs->event->wipeer,subs )< 0)
+			if(query_db_notify(&subs->pres_uri, subs->event->wipeer, subs)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
 					" notify winfo\n");
@@ -416,7 +416,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				if(notify(subs, NULL, NULL, 0)< 0)
 				{
 					LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
-					" notify \n");
+					" notify\n");
 					goto error;
 				}
 			}
@@ -866,8 +866,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 				}
 				if(subs.event->get_rules_doc(&uri.user, &uri.host, &subs.auth_rules_doc)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:handle_subscribe:ERROR"
-							" getting rules doc\n");
+					LOG(L_ERR, "PRESENCE:handle_subscribe:ERROR getting rules doc\n");
 					goto error;
 				}
 				
@@ -1064,13 +1063,13 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 {	
 	db_key_t query_cols[10];
 	db_val_t query_vals[10];
-	db_key_t result_cols[5];
+	db_key_t result_cols[7];
 	db_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int n_query_cols = 0;
 	int n_result_cols = 0;
-	int remote_cseq_col= 0, local_cseq_col= 0;
+	int remote_cseq_col= 0, local_cseq_col= 0, status_col, reason_col;
 	int pres_uri_col;
 	unsigned int remote_cseq;
 	str pres_uri;	
@@ -1141,18 +1140,20 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	result_cols[pres_uri_col=n_result_cols++] = "pres_uri";
 	result_cols[remote_cseq_col=n_result_cols++] = "remote_cseq";
 	result_cols[local_cseq_col=n_result_cols++] = "local_cseq";
-
+	result_cols[status_col=n_result_cols++] = "status";
+	result_cols[reason_col=n_result_cols++] = "reason";
+	
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE: get_database_info: ERROR in use_table\n");
 		return -1;
 	}
 	
-	DBG("PRESENCE: get_database_info: querying database  \n");
+	DBG("PRESENCE:get_database_info: querying database  \n");
 	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE: get_database_info: ERROR while querying"
+		LOG(L_ERR, "PRESENCE:get_database_info: ERROR while querying"
 				" presentity\n");
 		if(result)
 			pa_dbf.free_result(pa_db, result);
@@ -1163,12 +1164,12 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 	if(result && result->n <=0)
 	{
-		LOG(L_ERR, "PRESENCE: get_database_info: The query returned"
+		LOG(L_ERR, "PRESENCE:get_database_info: The query returned"
 				" no result\n");
 		
 		if (slb.reply(msg, 481, &pu_481_rpl) == -1)
 		{
-			LOG(L_ERR, "PRESENCE: get_database_info: ERROR while"
+			LOG(L_ERR, "PRESENCE:get_database_info: ERROR while"
 					" sending reply\n");
 			pa_dbf.free_result(pa_db, result);
 			return -1;
@@ -1180,22 +1181,25 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 	row = &result->rows[0];
 	row_vals = ROW_VALUES(row);
-	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
 	remote_cseq= row_vals[remote_cseq_col].val.int_val;
 	
 	if(subs->remote_cseq<= remote_cseq)
 	{
-		LOG(L_ERR, "PRESENCE: get_database_info: ERROR wrong sequence number"
+		LOG(L_ERR, "PRESENCE:get_database_info: ERROR wrong sequence number"
 				" received: %d -  stored: %d\n",subs->remote_cseq, remote_cseq);
 		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
 		{
-			LOG(L_ERR, "PRESENCE: get_database_info: ERROR while"
+			LOG(L_ERR, "PRESENCE:get_database_info: ERROR while"
 					" sending reply\n");
 		}
 		pa_dbf.free_result(pa_db, result);
 		*error_ret= 0;
 		return -1;
 	}
+	
+	subs->status= row_vals[status_col].val.init_val;
+	subs->reason= row_vals[reason_col].val.init_val;
+	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
 	
 	pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
 	pres_uri.len= strlen(pres_uri.s);
@@ -1431,7 +1435,7 @@ void timer_db_update(unsigned int ticks,void *param)
 				}
 				case UPDATEDB_FLAG:
 				{
-					DBG("PRESENCE:timer_db_update: UPDATEDB_FLAG\n ");
+					DBG("PRESENCE:timer_db_update: UPDATEDB_FLAG\n");
 
 					query_vals[pres_uri_col].val.str_val= s->pres_uri;
 					query_vals[callid_col].val.str_val= s->callid;
@@ -1457,7 +1461,7 @@ void timer_db_update(unsigned int ticks,void *param)
 				}
 				case  INSERTDB_FLAG:
 				{
-					DBG("PRESENCE:timer_db_update: INSERTDB_FLAG\n ");
+					DBG("PRESENCE:timer_db_update: INSERTDB_FLAG\n");
 
 					query_vals[pres_uri_col].val.str_val= s->pres_uri;
 					query_vals[callid_col].val.str_val= s->callid;

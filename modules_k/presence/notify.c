@@ -1275,12 +1275,12 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 	subs_array= get_subs_dialog(pres_uri, event , NULL);
 	if( subs_array== NULL)
 	{
-		LOG(L_ERR,"PRESENCE:query_db_:send_notify_requestERROR while getting subs_dialog\n");
+		LOG(L_ERR,"PRESENCE:query_db_notify:ERROR while getting subs_dialog\n");
 		goto done;
 	}
 	if(subs_array->next == NULL)
 	{
-		DBG("PRESENCE:query_db_:send_notify_request Could not get subs_dialog\n");
+		DBG("PRESENCE:query_db_notify:Could not get subsubscription dialog\n");
 		ret_code= 1;
 		goto done;
 	}
@@ -1290,8 +1290,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 		notify_body = get_p_notify_body(*pres_uri, event,NULL);
 		if(notify_body == NULL)
 		{
-			DBG( "PRESENCE:query_db_:send_notify_request Could not get the"
-					" notify_body\n");
+			DBG( "PRESENCE:query_db_notify:Could not get the notify_body\n");
 			/* goto error; */
 		}
 	}	
@@ -1302,7 +1301,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 	{
 		if(notify(s, watcher_subs, notify_body, 0)< 0 )
 		{
-			LOG(L_ERR, "PRESENCE:query_db_:send_notify_request Could not send notify for"
+			LOG(L_ERR, "PRESENCE:query_db_notify:Could not send notify for"
 					"%.*s\n", event->name.len, event->name.s);
 			goto done;
 		}
@@ -1383,7 +1382,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 		{		
 			if(subs->event->type & WINFO_TYPE)	
 			{	
-				notify_body = get_wi_notify_body(subs, watcher_subs );
+				notify_body = get_wi_notify_body(subs, watcher_subs);
 				if(notify_body == NULL)
 				{
 					DBG("PRESENCE:send_notify_request: Could not get the "
@@ -1461,7 +1460,7 @@ jump_over_body:
 		p_tm_callback,				        
 		(void*)cb_param);				
 
-	if(result < 0)
+	if(result< 0)
 	{
 		LOG(L_ERR, "PRESENCE:send_notify_request: ERROR in function tmb.t_request_within\n");
 		free_cbparam(cb_param);
