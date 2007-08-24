@@ -279,18 +279,12 @@ static int mod_init(void)
 	if(!EvList)
 	{
 		LOG(L_ERR,"PRESENCE:mod_init: ERROR while initializing event list\n");
-		if(pa_db)
-			pa_dbf.close(pa_db);
-		pa_db = NULL;
 		return -1;
 	}	
 
 	if(clean_period<=0)
 	{
 		DBG("PRESENCE: ERROR: mod_init: wrong clean_period \n");
-		if(pa_db)
-			pa_dbf.close(pa_db);
-		pa_db = NULL;
 		return -1;
 	}
 

@@ -815,6 +815,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 					" stored info\n");
 			goto error;
 		}
+		reason= subs.reason;
 	}	
 
 	/* call event specific subscription handling */
@@ -1072,7 +1073,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	int remote_cseq_col= 0, local_cseq_col= 0, status_col, reason_col;
 	int pres_uri_col;
 	unsigned int remote_cseq;
-	str pres_uri;	
+	str pres_uri;
+	str reason;
 
 	*error_ret= -1;
 
@@ -1197,13 +1199,31 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 		return -1;
 	}
 	
-	subs->status= row_vals[status_col].val.init_val;
-	subs->reason= row_vals[reason_col].val.init_val;
+	subs->status= row_vals[status_col].val.int_val;
+	reason.s= (char*)row_vals[reason_col].val.string_val;
+	if(reason.s)
+	{
+		reason.len= strlen(reason.s);
+		subs->reason.s= (char*)pkg_malloc(reason.len* sizeof(char));
+		if(subs->reason.s== NULL)
+		{
+			ERR_MEM("PRESENCE", "get_database_info");
+		}
+		memcpy(subs->reason.s, reason.s, reason.len);
+		subs->reason.len= reason.len;
+	}
+
 	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
 	
 	pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
 	pres_uri.len= strlen(pres_uri.s);
 	subs->pres_uri.s= (char*)pkg_malloc(pres_uri.len);
+	if(subs->pres_uri.s== NULL)
+	{
+		if(subs->reason.s)
+			pkg_free(subs->reason.s);
+		ERR_MEM("PRESENCE", "get_database_info");
+	}
 	memcpy(subs->pres_uri.s, pres_uri.s, pres_uri.len);
 	subs->pres_uri.len= pres_uri.len;
 
@@ -1211,6 +1231,11 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	result= NULL;
 
 	return 0;
+error:
+	if(result)
+		pa_dbf.free_result(pa_db, result);
+
+	return -1;
 
 }
 
