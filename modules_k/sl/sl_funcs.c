@@ -98,7 +98,7 @@ int sl_shutdown()
 
 
 /* Take care of the statistics associated with numerical codes and replies */
-void update_sl_reply_stat(int code) 
+static inline void update_sl_reply_stat(int code) 
 {
 	stat_var *numerical_stat;
 
