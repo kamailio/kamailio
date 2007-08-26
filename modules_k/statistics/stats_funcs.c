@@ -99,6 +99,7 @@ int register_all_mod_stats()
 	stat_elem *se_tmp;
 
 	se = stat_list;
+	stat = NULL;
 	while( se ) {
 		se_tmp = se;
 		se = se->next;
