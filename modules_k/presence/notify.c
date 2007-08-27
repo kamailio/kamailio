@@ -77,6 +77,7 @@ void printf_subs(subs_t* subs)
 	DBG("\n\t[event]= %.*s\n\t[status]= %s\n\t[expires]= %u",
 		subs->event->name.len, subs->event->name.s,	
 		get_status_str(subs->status), subs->expires );
+	DBG("\n\t[callid]= %.*s", subs->callid.len, subs->callid.s); 
 	DBG("\n\t[to_tag]= %.*s\n\t[from_tag]= %.*s",subs->to_tag.len, 
 		subs->to_tag.s,	subs->from_tag.len, subs->from_tag.s);
 	DBG("\n\t[contact]= %.*s\n",subs->contact.len, subs->contact.s);
@@ -823,7 +824,7 @@ dlg_t* build_dlg_t(subs_t* subs)
 	}
 	memset(td, 0, sizeof(dlg_t));
 
-	td->loc_seq.value = subs->local_cseq++;
+	td->loc_seq.value = subs->local_cseq;
 	td->loc_seq.is_set = 1;
 
 	td->id.call_id = subs->callid;
@@ -897,14 +898,14 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	db_key_t query_cols[7];
 	db_op_t  query_ops[7];
 	db_val_t query_vals[7];
-	db_key_t result_cols[18];
+	db_key_t result_cols[19];
 	int n_result_cols = 0, n_query_cols = 0;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	db_res_t *result = NULL;
 	int from_user_col, from_domain_col, from_tag_col;
 	int to_user_col, to_domain_col, to_tag_col;
-	int expires_col= 0,callid_col, cseq_col, i, status_col =0;
+	int expires_col= 0,callid_col, cseq_col, i, status_col, reason_col;
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0, event_id_col = 0;
 	subs_t s, *s_new;
@@ -963,6 +964,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	result_cols[contact_col=n_result_cols++]      =   "contact";
 	result_cols[expires_col=n_result_cols++]      =   "expires";
 	result_cols[status_col=n_result_cols++]       =   "status"; 
+	result_cols[reason_col=n_result_cols++]       =   "reason"; 
 	result_cols[sockinfo_col=n_result_cols++]     =   "socket_info"; 
 	result_cols[local_contact_col=n_result_cols++]=   "local_contact"; 
 	result_cols[version_col=n_result_cols++]      =   "version";
@@ -1033,7 +1035,10 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		s.contact.len= strlen(s.contact.s);
 		
 		s.status= row_vals[status_col].val.int_val;
-			
+		s.reason.s= (char*)row_vals[reason_col].val.string_val;
+		if(s.reason.s)
+			s.reason.len= strlen(s.reason.s);
+
 		s.sockinfo_str.s = (char*)row_vals[sockinfo_col].val.string_val;
 		s.sockinfo_str.len = s.sockinfo_str.s?strlen(s.sockinfo_str.s):0;
 
@@ -1079,15 +1084,15 @@ int update_in_list(subs_t* s, subs_t* s_array, int n)
 	DBG("PRESENCE:update_in_list....n= %d\n", n);
 	for(i = 0; i< n; i++)
 	{
+		DBG("\t%d subs from list\n", i);
 		if(ls== NULL)
 		{
 			LOG(L_ERR, "PRESENCE:update_in_list: ERROR wrong records count\n");
 			return -1;
 		}
-		if(ls->event== s->event && 
-		ls->pres_uri.len== s->pres_uri.len &&
-		strncmp(ls->pres_uri.s, s->pres_uri.s, s->pres_uri.len)==0 &&
-		ls->callid.len== s->callid.len &&
+		printf_subs(ls);
+		
+		if(ls->callid.len== s->callid.len &&
 		strncmp(ls->callid.s, s->callid.s, s->callid.len)== 0 &&
 		ls->to_tag.len== s->to_tag.len &&
 		strncmp(ls->to_tag.s, s->to_tag.s, s->to_tag.len)== 0 &&
@@ -1110,7 +1115,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	unsigned int hash_code;
 	subs_t* s= NULL, *s_new;
 	subs_t* s_array= NULL;
-	int n= 0;
+	int n= 0, i= 0;
 	
 	/* get only active subscriptions */
 	s_array= (subs_t*)pkg_malloc(sizeof(subs_t));
@@ -1143,46 +1148,55 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	
 		if(s->expires< (int)time(NULL))
 			continue;
+		
+		if(!(s->status== ACTIVE_STATUS && 
+			s->event== event && s->pres_uri.len== pres_uri->len &&
+			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0))
+			continue;
 
 		if(fallback2db)
 		{
 			if(s->db_flag== NO_UPDATEDB_FLAG)
+			{
+				DBG("PRESENCE:get_subs_dialog:s->db_flag==NO_UPDATEDB_FLAG\n");
 				continue;
+			}
 			
 			if(s->db_flag== UPDATEDB_FLAG)
 			{
+				DBG("PRESENCE: get_subs_dialog:s->db_flag== UPDATEDB_FLAG\n");
+				printf_subs(s);
 				if(n>0 && update_in_list(s, s_array, n)< 0)
 				{
-					LOG(L_ERR, "PRESENCE: get_subs_dialog: ERROR"
-							" updating subscription in list\n");
-					lock_release(&subs_htable[hash_code].lock);
-					goto error;
+					DBG("PRESENCE: get_subs_dialog: dialog not found in list"
+							" fetched from database\n");
+					/* insert record */
 				}
-				continue;			
+				else
+					continue;			
 			}
 		}
 
-		if(s->status== ACTIVE_STATUS && 
-			s->event== event && s->pres_uri.len== pres_uri->len &&
-			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)
+		if(sender && sender->len== s->contact.len && 
+			strncmp(sender->s, s->contact.s, sender->len)== 0)
+			continue;
+		s_new= mem_copy_subs(s, PKG_MEM_TYPE);
+		if(s_new== NULL)
 		{
-			if(sender && sender->len== s->contact.len && 
-					strncmp(sender->s, s->contact.s, sender->len)== 0)
-				continue;
-			s_new= mem_copy_subs(s, PKG_MEM_TYPE);
-			if(s_new== NULL)
-			{
-				LOG(L_ERR, "PRESENCE: get_subs_dialog: ERROR while copying"
-						" subs_t structure\n");
-				lock_release(&subs_htable[hash_code].lock);
-				goto error;
-			}
-			s_new->expires-= (int)time(NULL);
-			s_new->next= s_array->next;
-			s_array->next= s_new;
+			LOG(L_ERR, "PRESENCE: get_subs_dialog: ERROR while copying"
+					" subs_t structure\n");
+			lock_release(&subs_htable[hash_code].lock);
+			goto error;
 		}
+		s_new->expires-= (int)time(NULL);
+		s_new->next= s_array->next;
+		s_array->next= s_new;
+		i++;
 	}
+
 	lock_release(&subs_htable[hash_code].lock);
+	DBG("PRESENCE: get_subs_dialog: found %d dialogs( %d in database"
+		" and %d in hash_table)\n", n+i , n, i);
 
 	return s_array;
 
@@ -1241,8 +1255,7 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
 		if(notify(s, NULL, notify_body?notify_body:body, 0)< 0 )
 		{
 			LOG(L_ERR, "PRESENCE: publ_notify: Could not send notify for"
-					"%.*s\n", p->event->name.len, 
-					p->event->name.s);
+					" %.*s\n", p->event->name.len, p->event->name.s);
 			goto done;
 		}
 		s= s->next;
@@ -1521,16 +1534,12 @@ error:
 
 int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 {
-	if(send_notify_request(subs, watcher_subs, n_body, force_null_body)< 0)
-	{
-		LOG(L_ERR,"PRESENCE:notify: ERROR send Notify not successful\n");
-		return -1;
-	}
+	/* update first in hash table and the send Notify */
 	if(subs->expires!= 0)
 	{
 		if(update_shtable(subs, LOCAL_TYPE)< 0)
 		{
-			if(fallback2db)
+			if(subs->db_flag!= INSERTDB_FLAG && fallback2db)
 			{
 				DBG("PRESENCE:notify: record not found in subs htable\n");
 				if(update_subs_db(subs, LOCAL_TYPE)< 0)
@@ -1547,6 +1556,12 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 				return -1;
 			}
 		}
+	}
+
+	if(send_notify_request(subs, watcher_subs, n_body, force_null_body)< 0)
+	{
+		LOG(L_ERR,"PRESENCE:notify: ERROR send Notify not successful\n");
+		return -1;
 	}
 	return 0;	
 }

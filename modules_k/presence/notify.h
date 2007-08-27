@@ -74,4 +74,7 @@ int notify(subs_t* subs, subs_t* watcher_subs, str* n_body, int force_null_body)
 
 int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 		str* n_body,int force_null_body);
+
+char* get_status_str(int flag);
+
 #endif

@@ -227,10 +227,9 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		int new_t)
 {
-	db_key_t query_cols[11], result_cols[5];
+	db_key_t query_cols[11], update_keys[7], result_cols[5];
 	db_op_t  query_ops[11];
 	db_val_t query_vals[11], update_vals[7];
-	db_key_t update_keys[7];
 	db_res_t *result= NULL;
 	int n_query_cols = 0;
 	int n_update_cols = 0;
@@ -303,8 +302,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		query_cols[n_query_cols] = "body";
 		query_vals[n_query_cols].type = DB_BLOB;
 		query_vals[n_query_cols].nul = 0;
-		query_vals[n_query_cols].val.str_val.s = body->s;
-		query_vals[n_query_cols].val.str_val.len = body->len;
+		query_vals[n_query_cols].val.str_val = *body;
 		n_query_cols++;
 		
 		query_cols[n_query_cols] = "received_time";
@@ -381,8 +379,9 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					" from database\n");
 				if(pa_dbf.delete(pa_db, query_cols, 0 ,query_vals,n_query_cols)< 0 )
 				{
-					DBG( "PRESENCE:update_presentity: ERROR cleaning"
-							" unsubscribed messages\n");
+					LOG(L_ERR,"PRESENCE:update_presentity:ERROR deleting"
+						" expired record from presentity database table\n");
+					goto error;
 				}
 				DBG("PRESENCE:update_presentity:delete from db %.*s\n",
 					presentity->user.len,presentity->user.s );

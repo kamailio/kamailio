@@ -127,19 +127,20 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 
 	size= sizeof(subs_t)+ (s->pres_uri.len+ s->to_user.len
 		+ s->to_domain.len+ s->from_user.len+ s->from_domain.len+ s->callid.len
-		+ s->to_tag.len+ s->from_tag.len+ s->sockinfo_str.len+
-		+ s->local_contact.len+ s->contact.len+ s->record_route.len+ 1)*sizeof(char);
+		+ s->to_tag.len+ s->from_tag.len+s->sockinfo_str.len+s->event_id.len
+		+ s->local_contact.len+ s->contact.len+ s->record_route.len+
+		+ s->reason.len+ 1)*sizeof(char);
 
 	if(mem_type & PKG_MEM_TYPE)
 		dest= (subs_t*)pkg_malloc(size);
 	else
 		dest= (subs_t*)shm_malloc(size);
 
-	memset(dest, 0, size);
 	if(dest== NULL)
 	{
 		ERR_MEM("PRESENCE","mem_copy_subs");
 	}
+	memset(dest, 0, size);
 	size= sizeof(subs_t);
 
 	CONT_COPY(dest, dest->pres_uri, s->pres_uri)
@@ -166,6 +167,7 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 	dest->version= s->version;
 	dest->send_on_cback= s->send_on_cback;
 	dest->expires= s->expires;
+	dest->db_flag= s->db_flag;
 
 	return dest;
 
@@ -283,11 +285,13 @@ int update_shtable(subs_t* subs, int type)
 	}
 	else
 	{
-		s->local_cseq= subs->local_cseq;	
+		s->local_cseq= subs->local_cseq+ 1;	
 		s->version= subs->version+ 1;
 	}
 	s->status= subs->status;
 	s->event= subs->event;
+	subs->db_flag= s->db_flag;
+
 	if(s->db_flag & NO_UPDATEDB_FLAG)
 		s->db_flag= UPDATEDB_FLAG;
 

@@ -58,8 +58,11 @@ int pres_watcher_allowed(subs_t* subs)
 	if(force_active)
 	{
 		subs->status= ACTIVE_STATUS;
+		subs->reason.s= NULL;
+		subs->reason.len= 0;
 		return 0;
 	}
+
 	if(subs->auth_rules_doc== NULL)
 		return 0;
 
@@ -371,7 +374,10 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	str* doc= NULL;
 
 	if(force_active)
+	{
+		*rules_doc= NULL;
 		return 0;
+	}
 
 	/* first search in database */
 	query_cols[n_query_cols] = "username";

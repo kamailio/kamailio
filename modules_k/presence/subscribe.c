@@ -179,9 +179,8 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 
 int update_subs_db(subs_t* subs, int type)
 {
-	db_key_t query_cols[22];
-	db_val_t query_vals[22], update_vals[6];
-	db_key_t update_keys[5];
+	db_key_t query_cols[22], update_keys[7];
+	db_val_t query_vals[22], update_vals[7];
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 
@@ -250,11 +249,11 @@ int update_subs_db(subs_t* subs, int type)
 		n_update_cols++;
 	}
 	else
-	{
+	{	
 		update_keys[n_update_cols] = "local_cseq";
 		update_vals[n_update_cols].type = DB_INT;
 		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = subs->local_cseq;
+		update_vals[n_update_cols].val.int_val = subs->local_cseq+ 1;
 		n_update_cols++;
 	
 		update_keys[n_update_cols] = "version";
@@ -262,12 +261,18 @@ int update_subs_db(subs_t* subs, int type)
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->version+ 1; 
 		n_update_cols++;
-
 	}
+
 	update_keys[n_update_cols] = "status";
 	update_vals[n_update_cols].type = DB_INT;
 	update_vals[n_update_cols].nul = 0;
 	update_vals[n_update_cols].val.int_val = subs->status;
+	n_update_cols++;
+
+	update_keys[n_update_cols] = "reason";
+	update_vals[n_update_cols].type = DB_STR;
+	update_vals[n_update_cols].nul = 0;
+	update_vals[n_update_cols].val.str_val = subs->reason;
 	n_update_cols++;
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
@@ -277,7 +282,7 @@ int update_subs_db(subs_t* subs, int type)
 	}
 		
 	if( pa_dbf.update( pa_db,query_cols, 0, query_vals,
-				update_keys, update_vals, n_query_cols,n_update_cols )<0) 
+				update_keys, update_vals, n_query_cols,n_update_cols)<0) 
 	{
 		LOG( L_ERR , "PRESENCE:update_subs_db:ERROR while updating"
 				" presence information\n");
@@ -388,7 +393,6 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		}
 		/*otherwise there is a subscription outside a dialog with expires= 0 
 		 * no update in database, but should try to send Notify */
-		 
 	}
 
 /* reply_and_notify  */
@@ -811,8 +815,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if(get_stored_info(msg, &subs, &error_ret )< 0)
 		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe:error while getting"
-					" stored info\n");
+			LOG(L_ERR,"PRESENCE:handle_subscribe:ERROR getting stored info\n");
 			goto error;
 		}
 		reason= subs.reason;
@@ -856,7 +859,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			{
 				/*default 'pending' status */
 				subs.status= PENDING_STATUS;
-
+				subs.reason.s= NULL;
+				subs.reason.len= 0;
 				/* here a query to xcap server must be done -> new process maybe */
 			
 				if(parse_uri(subs.pres_uri.s, subs.pres_uri.len, &uri)< 0)
@@ -893,7 +897,13 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 after_status:
-
+	/* check if correct status */
+	if(get_status_str(subs.status)== NULL)
+	{
+		LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR wrong status\n");
+		goto error;
+	}
+	
 	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen) <0 )
 	{	
 		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
@@ -906,9 +916,7 @@ after_status:
 	}
 	if(reason.s)
 		pkg_free(reason.s);
-	if(subs.expires && subs.reason.s )
-			pkg_free(subs.reason.s);
-	
+
 	if(subs.record_route.s)
 		pkg_free(subs.record_route.s);
 	
@@ -962,15 +970,16 @@ error:
 			pkg_free(subs.auth_rules_doc->s);
 		pkg_free(subs.auth_rules_doc);
 	}
+	if(reason.s)
+		pkg_free(reason.s);
 
 	return error_ret;
 
 }
 
-
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 {	
-	str pres_uri= {0, 0};
+	str pres_uri= {0, 0}, reason={0, 0};
 	subs_t* s;
 	int i;
 	unsigned int hash_code;
@@ -1009,6 +1018,11 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 		if(s)
 		{
 			pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
+			if(pres_uri.s== NULL)
+			{
+				lock_release(&subs_htable[i].lock);
+				ERR_MEM("PRESENCE", "get_stored_info");
+			}
 			memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
 			pres_uri.len= s->pres_uri.len;
 			goto found_rec;
@@ -1037,7 +1051,19 @@ found_rec:
 	DBG("PRESENCE: get_stored_info: Record found in hash_table\n");
 	subs->pres_uri= pres_uri;
 	subs->status= s->status;
-	subs->reason= s->reason;
+	if(s->reason.s && s->reason.len)
+	{	
+		reason.s= (char*)pkg_malloc(s->reason.len* sizeof(char));
+		if(reason.s== NULL)
+		{
+			lock_release(&subs_htable[i].lock);
+			ERR_MEM("PRESENCE", "get_stored_info");
+		}
+		memcpy(reason.s, s->reason.s, s->reason.len);
+		reason.len= s->reason.len;
+		subs->reason= reason;
+	}
+
 	subs->local_cseq= s->local_cseq;
 	
 	if(subs->remote_cseq<= s->remote_cseq)
@@ -1051,13 +1077,18 @@ found_rec:
 		}
 		*error_ret= 0;
 		lock_release(&subs_htable[i].lock);
-		if(pres_uri.s)
-			pkg_free(pres_uri.s);
-		return -1;
+		goto error;
 	}	
 	lock_release(&subs_htable[i].lock);
 
 	return 0;
+
+error:
+	if(pres_uri.s)
+		pkg_free(pres_uri.s);
+	if(reason.s)
+		pkg_free(reason.s);
+	return -1;
 }
 
 int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
@@ -1156,7 +1187,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
 		LOG(L_ERR, "PRESENCE:get_database_info: ERROR while querying"
-				" presentity\n");
+				" subscription dialog\n");
 		if(result)
 			pa_dbf.free_result(pa_db, result);
 		return -1;
@@ -1166,8 +1197,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 	if(result && result->n <=0)
 	{
-		LOG(L_ERR, "PRESENCE:get_database_info: The query returned"
-				" no result\n");
+		LOG(L_ERR, "PRESENCE:get_database_info:ERROR No matching subscription"
+				" dialog found in database\n");
 		
 		if (slb.reply(msg, 481, &pu_481_rpl) == -1)
 		{
@@ -1263,17 +1294,17 @@ int handle_expired_subs(subs_t* s, subs_t* prev_s)
 
 void timer_db_update(unsigned int ticks,void *param)
 {
-	db_key_t query_cols[21], update_cols[6], result_cols[6];
-	db_val_t query_vals[21], update_vals[6];
+	db_key_t query_cols[22], update_cols[7], result_cols[6];
+	db_val_t query_vals[22], update_vals[7];
 	db_op_t update_ops[1];
 	subs_t* del_s;
 
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col, 
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col, 
-		contact_col, local_contact_col, version_col, socket_info_col;
-	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col,
-		u_status_col; 
+		contact_col, local_contact_col, version_col,socket_info_col,reason_col;
+	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col, 
+		u_reason_col, u_status_col; 
 	int no_lock= 0, i;
 	subs_t* s= NULL, *prev_s= NULL;
 	int n_query_cols= 0, n_update_cols= 0;
@@ -1355,6 +1386,11 @@ void timer_db_update(unsigned int ticks,void *param)
 	query_vals[status_col].nul = 0;
 	n_query_cols++;
 
+	query_cols[reason_col= n_query_cols] ="reason";
+	query_vals[reason_col].type = DB_STR;
+	query_vals[reason_col].nul = 0;
+	n_query_cols++;
+
 	query_cols[record_route_col= n_query_cols] ="record_route";
 	query_vals[record_route_col].type = DB_STR;
 	query_vals[record_route_col].nul = 0;
@@ -1391,6 +1427,11 @@ void timer_db_update(unsigned int ticks,void *param)
 	update_vals[u_status_col].nul = 0;
 	n_update_cols++;
 
+	update_cols[u_reason_col= n_update_cols]= "reason";
+	update_vals[u_reason_col].type = DB_STR;
+	update_vals[u_reason_col].nul = 0;
+	n_update_cols++;
+
 	update_cols[u_remote_cseq_col= n_update_cols]= "remote_cseq";
 	update_vals[u_remote_cseq_col].type = DB_INT;
 	update_vals[u_remote_cseq_col].nul = 0;
@@ -1410,12 +1451,12 @@ void timer_db_update(unsigned int ticks,void *param)
 
 	if(pa_db== NULL)
 	{
-		LOG(L_ERR,"RLS: active_watchers_table_update:ERROR null database connection\n");
+		LOG(L_ERR,"RLS: timer_db_update:ERROR null database connection\n");
 		return;
 	}
 	if(pa_dbf.use_table(pa_db, active_watchers_table)< 0)
 	{
-		LOG(L_ERR, "RLS: active_watchers_table_update:ERROR in use table\n");
+		LOG(L_ERR, "RLS: timer_db_update:ERROR in use table\n");
 		return ;
 	}
 
@@ -1472,6 +1513,7 @@ void timer_db_update(unsigned int ticks,void *param)
 					update_vals[u_remote_cseq_col].val.int_val= s->remote_cseq;
 					update_vals[u_version_col].val.int_val= s->version;
 					update_vals[u_status_col].val.int_val= s->status;
+					update_vals[u_reason_col].val.str_val= s->reason;
 
 					if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols, 
 								update_vals, n_query_update, n_update_cols)< 0)
@@ -1506,6 +1548,7 @@ void timer_db_update(unsigned int ticks,void *param)
 					query_vals[local_contact_col].val.str_val = s->local_contact;
 					query_vals[version_col].val.int_val= s->version;
 					query_vals[status_col].val.int_val= s->status;
+					query_vals[reason_col].val.str_val= s->reason;
 					query_vals[socket_info_col].val.str_val= s->sockinfo_str;
 				
 					if(pa_dbf.insert(pa_db,query_cols,query_vals,n_query_cols )<0)
@@ -1539,14 +1582,14 @@ void timer_db_update(unsigned int ticks,void *param)
 
 int restore_db_subs()
 {
-	db_key_t result_cols[21]; 
+	db_key_t result_cols[22]; 
 	db_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
 	int i;
 	int n_result_cols= 0;
 	int pres_uri_col, expires_col, from_user_col, from_domain_col,to_user_col; 
-	int callid_col,totag_col,fromtag_col,to_domain_col, sockinfo_col;
+	int callid_col,totag_col,fromtag_col,to_domain_col,sockinfo_col,reason_col;
 	int event_col,contact_col,record_route_col, event_id_col, status_col;
 	int remote_cseq_col, local_cseq_col, local_contact_col, version_col;
 	subs_t s;
@@ -1574,6 +1617,7 @@ int restore_db_subs()
 	result_cols[local_contact_col= n_result_cols++]	="local_contact";
 	result_cols[version_col= n_result_cols++]	="version";
 	result_cols[status_col= n_result_cols++]	="status";
+	result_cols[reason_col= n_result_cols++]	="reason";
 	
 	if(!pa_db)
 	{
@@ -1690,6 +1734,10 @@ int restore_db_subs()
 		
 		s.expires= expires- (int)time(NULL);
 		s.status= row_vals[status_col].val.int_val;
+
+		s.reason.s= (char*)row_vals[reason_col].val.string_val;
+		if(s.reason.s)
+			s.reason.len= strlen(s.reason.s);
 
 		s.contact.s=(char*)row_vals[contact_col].val.string_val;
 		s.contact.len= strlen(s.contact.s);
