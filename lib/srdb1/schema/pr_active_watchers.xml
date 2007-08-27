@@ -9,7 +9,7 @@
 
 <table id="active_watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>active_watchers</name>
-    <version>6</version>
+    <version>7</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/presence.html
@@ -140,6 +140,13 @@
         <size>11</size>
         <default>2</default>
         <description>Status</description>
+    </column>
+	
+	<column>
+        <name>reason</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>Reason</description>
     </column>
 
     <column>
