@@ -548,7 +548,8 @@ if (!next_gw()) {
 
    Checks if request came from IP address of a gateway. If an
    optional group-id is given, only gateways belonging to this
-   group are checked.
+   group are checked. Sets or resets a message flag depending on
+   whether the gateway supports directed media.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.

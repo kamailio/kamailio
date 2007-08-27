@@ -1635,13 +1635,17 @@ static int do_from_gw(struct sip_msg* _m, int grp_id)
     src_addr = _m->rcv.src_ip.u.addr32[0];
 
     for (i = 0; i < MAX_NO_OF_GWS; i++) {
-	    if ((*gws)[i].ip_addr == 0) {
-		    return -1;
-	    }
-	    if ((*gws)[i].ip_addr == src_addr && 
-		    (grp_id < 0 || (*gws)[i].grp_id == grp_id)) {
-		    return 1;
-	    }
+	if ((*gws)[i].ip_addr == 0) {
+	    return -1;
+	}
+	if ((*gws)[i].ip_addr == src_addr && 
+	    (grp_id < 0 || (*gws)[i].grp_id == grp_id)) {
+	    if ((*gws)[i].dm == 0)
+		resetflag(_m, dm_flag);
+	    else 
+		setflag(_m, dm_flag);
+	    return 1;
+	}
     }
 
     return -1;
