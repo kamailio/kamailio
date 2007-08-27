@@ -11,7 +11,7 @@ CREATE TABLE presentity (
     UNIQUE KEY udee_presentity (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','6');
+INSERT INTO version (table_name, table_version) values ('active_watchers','7');
 CREATE TABLE active_watchers (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,
@@ -30,6 +30,7 @@ CREATE TABLE active_watchers (
     record_route TEXT,
     expires INT(11) NOT NULL,
     status INT(11) NOT NULL DEFAULT 2,
+    reason VARCHAR(64) NOT NULL,
     version INT(11) NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
@@ -83,3 +84,4 @@ CREATE TABLE pua (
     extra_headers TEXT NOT NULL
 ) ENGINE=MyISAM;
 
+ 
