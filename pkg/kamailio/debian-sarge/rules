@@ -113,6 +113,9 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(SNMPSTATS_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMPP_MOD_PATH)" cfg-target=/etc/openser/
 
+	# generate the db schemas
+	$(MAKE) dbschema
+
 	touch build-stamp
 
 clean: real-clean unpatch
