@@ -90,4 +90,3 @@ CREATE TABLE admin_privileges (
     PRIMARY KEY sw_ap_idx (username, priv_name, priv_value, domain)
 ) ENGINE=MyISAM;
 
- 

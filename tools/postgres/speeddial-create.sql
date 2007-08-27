@@ -12,4 +12,3 @@ CREATE TABLE speed_dial (
     CONSTRAINT udss_sd UNIQUE (username, domain, sd_domain, sd_username)
 );
 
- 

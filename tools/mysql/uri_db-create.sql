@@ -8,4 +8,3 @@ CREATE TABLE uri (
     UNIQUE KEY udu_uri (username, domain, uri_user)
 ) ENGINE=MyISAM;
 
- 

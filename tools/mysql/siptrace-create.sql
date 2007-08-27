@@ -17,4 +17,3 @@ CREATE TABLE sip_trace (
     KEY call_id (callid)
 ) ENGINE=MyISAM;
 
- 

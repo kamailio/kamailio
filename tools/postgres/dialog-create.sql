@@ -23,4 +23,3 @@ CREATE TABLE dialog (
 
 CREATE INDEX ei_dialog ON dialog (hash_entry, hash_id);
 
- 

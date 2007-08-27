@@ -11,4 +11,3 @@ CREATE TABLE domainpolicy (
 
 CREATE INDEX rule_idx ON domainpolicy (rule);
 
- 

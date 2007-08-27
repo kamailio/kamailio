@@ -13,4 +13,3 @@ CREATE TABLE usr_preferences (
 CREATE INDEX ua_idx ON usr_preferences (uuid, attribute);
 CREATE INDEX uda_idx ON usr_preferences (username, domain, attribute);
 
- 

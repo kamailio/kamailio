@@ -167,6 +167,16 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
+if [ -e $DB_SCHEMA/extensions-create.sql ]
+then
+	minfo "Creating custom extensions tables"
+	sql_query $1 < $DB_SCHEMA/extensions-create.sql
+	if [ $? -ne 0 ] ; then
+	merr "Creating custom extensions tables failed!"
+	exit 1
+	fi
+fi
+
 minfo "Core OpenSER tables succesfully created."
 
 echo -n "Install presence related tables ?(y/n):"

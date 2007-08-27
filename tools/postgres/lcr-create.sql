@@ -33,4 +33,3 @@ CREATE INDEX lcr_prefix_idx ON lcr (prefix);
 CREATE INDEX lcr_from_uri_idx ON lcr (from_uri);
 CREATE INDEX lcr_grp_id_idx ON lcr (grp_id);
 
- 

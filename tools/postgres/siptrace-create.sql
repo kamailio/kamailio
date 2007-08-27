@@ -18,4 +18,3 @@ CREATE INDEX date_id ON sip_trace (date);
 CREATE INDEX ip_idx ON sip_trace (fromip);
 CREATE INDEX call_id ON sip_trace (callid);
 
- 

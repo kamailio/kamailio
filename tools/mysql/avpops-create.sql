@@ -12,4 +12,3 @@ CREATE TABLE usr_preferences (
     KEY uda_idx (username, domain, attribute)
 ) ENGINE=MyISAM;
 
- 

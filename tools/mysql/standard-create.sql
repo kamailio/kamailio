@@ -3,4 +3,3 @@ CREATE TABLE version (
     table_version INT UNSIGNED NOT NULL DEFAULT 0
 ) ENGINE=MyISAM;
 
- 

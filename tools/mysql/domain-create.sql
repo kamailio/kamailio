@@ -6,4 +6,3 @@ CREATE TABLE domain (
     UNIQUE KEY d_domain (domain)
 ) ENGINE=MyISAM;
 
- 

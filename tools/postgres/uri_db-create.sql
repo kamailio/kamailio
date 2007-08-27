@@ -8,4 +8,3 @@ CREATE TABLE uri (
     CONSTRAINT udu_uri UNIQUE (username, domain, uri_user)
 );
 
- 

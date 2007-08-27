@@ -7,4 +7,3 @@ CREATE TABLE pdt (
     CONSTRAINT sp_pdt UNIQUE (sdomain, prefix)
 );
 
- 

@@ -9,4 +9,3 @@ CREATE TABLE dbaliases (
     KEY alias_user (username, domain)
 ) ENGINE=MyISAM;
 
- 

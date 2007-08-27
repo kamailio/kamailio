@@ -12,4 +12,3 @@ CREATE TABLE speed_dial (
     UNIQUE KEY udss_sd (username, domain, sd_domain, sd_username)
 ) ENGINE=MyISAM;
 
- 

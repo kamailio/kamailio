@@ -16,4 +16,3 @@ CREATE TABLE re_grp (
     KEY gid_grp (group_id)
 ) ENGINE=MyISAM;
 
- 

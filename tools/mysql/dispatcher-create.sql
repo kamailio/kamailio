@@ -6,4 +6,3 @@ CREATE TABLE dispatcher (
     description VARCHAR(64) NOT NULL DEFAULT ''
 ) ENGINE=MyISAM;
 
- 

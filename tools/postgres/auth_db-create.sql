@@ -17,4 +17,3 @@ CREATE TABLE subscriber (
 
 CREATE INDEX username_id ON subscriber (username);
 
- 

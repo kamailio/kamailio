@@ -3,4 +3,3 @@ CREATE TABLE version (
     table_version INTEGER NOT NULL DEFAULT 0
 );
 
- 

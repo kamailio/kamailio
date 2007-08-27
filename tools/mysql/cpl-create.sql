@@ -8,4 +8,3 @@ CREATE TABLE cpl (
     UNIQUE KEY ud_cpl (username, domain)
 ) ENGINE=MyISAM;
 
- 

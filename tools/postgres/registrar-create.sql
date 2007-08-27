@@ -20,4 +20,3 @@ CREATE TABLE aliases (
 
 CREATE INDEX udc_als ON aliases (username, domain, contact);
 
- 

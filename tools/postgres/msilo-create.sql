@@ -14,4 +14,3 @@ CREATE TABLE silo (
 
 CREATE INDEX ud_silo ON silo (username, domain);
 
- 

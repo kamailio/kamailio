@@ -10,4 +10,3 @@ CREATE TABLE dbaliases (
 
 CREATE INDEX alias_user ON dbaliases (username, domain);
 
- 

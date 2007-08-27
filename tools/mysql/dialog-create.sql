@@ -22,4 +22,3 @@ CREATE TABLE dialog (
     KEY ei_dialog (hash_entry, hash_id)
 ) ENGINE=MyISAM;
 
- 

@@ -31,4 +31,3 @@ CREATE TABLE lcr (
     KEY lcr_grp_id_idx (grp_id)
 ) ENGINE=MyISAM;
 
- 

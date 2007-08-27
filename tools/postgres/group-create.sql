@@ -17,4 +17,3 @@ CREATE TABLE re_grp (
 
 CREATE INDEX gid_grp ON re_grp (group_id);
 
- 

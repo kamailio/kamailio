@@ -18,4 +18,3 @@ CREATE TABLE address (
     port SMALLINT NOT NULL DEFAULT 0
 );
 
- 

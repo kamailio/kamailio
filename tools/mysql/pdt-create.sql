@@ -7,4 +7,3 @@ CREATE TABLE pdt (
     UNIQUE KEY sp_pdt (sdomain, prefix)
 ) ENGINE=MyISAM;
 
- 

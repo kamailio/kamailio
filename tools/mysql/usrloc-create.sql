@@ -19,4 +19,3 @@ CREATE TABLE location (
     KEY udc_loc (username, domain, contact)
 ) ENGINE=MyISAM;
 
- 

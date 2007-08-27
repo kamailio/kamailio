@@ -8,4 +8,3 @@ CREATE TABLE cpl (
     CONSTRAINT ud_cpl UNIQUE (username, domain)
 );
 
- 

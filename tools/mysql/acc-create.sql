@@ -24,4 +24,3 @@ CREATE TABLE missed_calls (
     KEY mc_callid_idx (callid)
 ) ENGINE=MyISAM;
 
- 

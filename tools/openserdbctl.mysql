@@ -162,6 +162,16 @@ done
 
 minfo "Core OpenSER tables succesfully created."
 
+if [ -e $DB_SCHEMA/extensions-create.sql ]
+then
+	minfo "Creating custom extensions tables"
+	sql_query $1 < $DB_SCHEMA/extensions-create.sql
+	if [ $? -ne 0 ] ; then
+	merr "Creating custom extensions tables failed!"
+	exit 1
+	fi
+fi
+
 echo -n "Install presence related tables ?(y/n):"
 read INPUT
 if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
@@ -216,13 +226,14 @@ fi
 
 minfo "creating extra tables into $1 ..."
 
-sql_query $1 < $DB_SCHEMA/extensions-create.sql 
-
-if [ $? -ne 0 ] ; then
-	merr "Creating extra tables failed!"
-	exit 1
-fi
-
+for TABLE in $EXTRA_MODULES; do
+	mdbg "Creating extra table: $TABLE"
+	sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
+	if [ $? -ne 0 ] ; then
+		merr "Creating extra tables failed!"
+		exit 1
+		fi
+	done
 minfo "Extra tables succesfully created."
 }  # end extra_create
 

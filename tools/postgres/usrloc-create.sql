@@ -20,4 +20,3 @@ CREATE TABLE location (
 
 CREATE INDEX udc_loc ON location (username, domain, contact);
 
- 

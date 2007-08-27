@@ -16,4 +16,3 @@ CREATE TABLE subscriber (
     KEY username_id (username)
 ) ENGINE=MyISAM;
 
- 

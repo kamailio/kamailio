@@ -10,4 +10,3 @@ CREATE TABLE domainpolicy (
     KEY rule_idx (rule)
 ) ENGINE=MyISAM;
 
- 

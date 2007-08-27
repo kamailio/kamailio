@@ -6,4 +6,3 @@ CREATE TABLE domain (
     CONSTRAINT d_domain UNIQUE (domain)
 );
 
- 

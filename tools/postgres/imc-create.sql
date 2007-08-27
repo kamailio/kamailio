@@ -17,4 +17,3 @@ CREATE TABLE imc_members (
     CONSTRAINT ndr_imc UNIQUE (username, domain, room)
 );
 
- 

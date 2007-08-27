@@ -19,4 +19,3 @@ CREATE TABLE aliases (
     KEY udc_als (username, domain, contact)
 ) ENGINE=MyISAM;
 
- 

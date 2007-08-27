@@ -17,4 +17,3 @@ CREATE TABLE imc_members (
     UNIQUE KEY ndr_imc (username, domain, room)
 ) ENGINE=MyISAM;
 
- 

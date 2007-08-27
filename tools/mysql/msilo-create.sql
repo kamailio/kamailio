@@ -13,4 +13,3 @@ CREATE TABLE silo (
     KEY ud_silo (username, domain)
 ) ENGINE=MyISAM;
 
- 

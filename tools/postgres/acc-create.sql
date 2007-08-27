@@ -26,4 +26,3 @@ CREATE TABLE missed_calls (
 
 CREATE INDEX mc_callid_idx ON missed_calls (callid);
 
- 

@@ -18,4 +18,3 @@ CREATE TABLE route_tree (
     carrier VARCHAR(64) DEFAULT NULL
 ) ENGINE=MyISAM;
 
- 

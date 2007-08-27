@@ -92,4 +92,3 @@ CREATE TABLE admin_privileges (
     CONSTRAINT sw_ap_idx PRIMARY KEY sw_ap_idx (username, priv_name, priv_value, domain)
 );
 
- 
