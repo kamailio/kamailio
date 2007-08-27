@@ -59,7 +59,7 @@
 	</description>
     </column>
 
-    <column>
+	<column id="location.expires">
 	<name>expires</name>
 	<type>datetime</type>
 	<default>1970-01-01 00:00:00</default>
@@ -141,5 +141,9 @@
     <index>
 	<name>location_contact</name>
 	<colref linkend="location.contact"/>
+    </index>
+	<index>
+	<name>location_expires</name>
+	<colref linkend="location.expires"/>
     </index>
 </table>

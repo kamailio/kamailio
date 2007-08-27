@@ -180,6 +180,7 @@ CREATE TABLE location (
 );
 
 CREATE INDEX location_contact ON location (contact);
+CREATE INDEX location_expires ON location (expires);
 
 INSERT INTO version (table_name, table_version) values ('contact_attrs','1');
 CREATE TABLE contact_attrs (
