@@ -291,6 +291,7 @@ OPEN_FD_LIMIT		"open_files_limit"
 MCAST_LOOPBACK		"mcast_loopback"
 MCAST_TTL		"mcast_ttl"
 TOS			"tos"
+PMTU_DISCOVERY	"pmtu_discovery"
 KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 
 /* stun config variables */
@@ -535,6 +536,8 @@ EAT_ABLE	[\ \t\b\r]
 									return MCAST_TTL; }
 <INITIAL>{TOS}			{	count(); yylval.strval=yytext;
 									return TOS; }
+<INITIAL>{PMTU_DISCOVERY}		{	count(); yylval.strval=yytext;
+									return PMTU_DISCOVERY; }
 <INITIAL>{KILL_TIMEOUT}			{	count(); yylval.strval=yytext;
 									return KILL_TIMEOUT; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }

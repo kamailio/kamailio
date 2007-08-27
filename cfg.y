@@ -329,6 +329,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token MCAST_LOOPBACK
 %token MCAST_TTL
 %token TOS
+%token PMTU_DISCOVERY
 %token KILL_TIMEOUT
 
 %token FLAGS_DECL
@@ -887,6 +888,8 @@ assign_stm:
 	| MCAST_TTL EQUAL error { yyerror("number expected"); }
 	| TOS EQUAL NUMBER { tos=$3; }
 	| TOS EQUAL error { yyerror("number expected"); }
+	| PMTU_DISCOVERY EQUAL NUMBER { pmtu_discovery=$3; }
+	| PMTU_DISCOVERY error { yyerror("number expected"); }
 	| KILL_TIMEOUT EQUAL NUMBER { ser_kill_timeout=$3; }
 	| KILL_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| STUN_REFRESH_INTERVAL EQUAL NUMBER { IF_STUN(stun_refresh_interval=$3); }

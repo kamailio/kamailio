@@ -122,6 +122,7 @@ extern int stun_allow_fp;
 #endif
 
 extern int tos;
+extern int pmtu_discovery;
 
 /*
  * debug & log_stderr moved to dprint.h*/

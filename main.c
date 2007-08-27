@@ -347,6 +347,7 @@ int use_dst_blacklist=0; /* 1 if the blacklist is enabled */
 #endif
 
 int tos = IPTOS_LOWDELAY;
+int pmtu_discovery = 0;
 
 #if 0
 char* names[MAX_LISTEN];              /* our names */

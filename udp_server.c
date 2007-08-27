@@ -38,6 +38,10 @@
  *  2005-06-26  failure to set mcast options is not an error anymore (andrei)
  *  2006-04-12  udp_send() switched to struct dest_info (andrei)
  *  2006-10-13  added STUN support (vlada)
+ *  2007-08-28  disable/set MTU discover option for the udp sockets
+ *               (in linux it's enabled by default which produces udp packets
+ *                with the DF flag ser) (patch from hscholz)
+ *
  */
 
 
@@ -309,11 +313,21 @@ int udp_init(struct socket_info* sock_info)
 		LOG(L_WARN, "WARNING: udp_init: setsockopt tos: %s\n", strerror(errno));
 		/* continue since this is not critical */
 	}
-#if defined (__linux__) && defined(UDP_ERRORS)
+#if defined (__OS_linux) && defined(UDP_ERRORS)
 	optval=1;
 	/* enable error receiving on unconnected sockets */
 	if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
 					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
+		goto error;
+	}
+#endif
+#if defined (__OS_linux)
+	/* if pmtu_discovery=1 then set DF bit and do Path MTU discovery
+	 * disabled by default */
+	optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
+	if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
+			(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
 		goto error;
 	}

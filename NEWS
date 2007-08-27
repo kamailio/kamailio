@@ -9,6 +9,7 @@ $Id$
 new archs:
 
 
+
 modules:
  - tls        - new module that enables tls support (set enable_tls=yes
                 in the config file and load the tls module)
@@ -182,6 +183,7 @@ core:
    are available (see tm docs)
 - avps directly accessible from script with %avp_name (variable style)
 new config variables:
+   pmtu_discovery = 0 | 1 (default 0) - set DF bit in outbound IP if enabled
    enable_tls/disable_tls = enable/disable tls support, default disable.
        Note: a tls "engine" is still needed (e.g. the tls module must
               be loaded, enable_tls by itself is not enough).
