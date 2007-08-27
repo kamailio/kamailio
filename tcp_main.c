@@ -78,6 +78,9 @@
  *  2007-07-26   tcp_send() and tcpconn_get() can now use a specified source
  *                addr./port (andrei)
  *  2007-08-23   getsockname() for INADDR_ANY(SI_IS_ANY) sockets (andrei)
+ *  2007-08-27   split init_sock_opt into a lightweight init_sock_opt_accept() 
+ *               used when accepting connections and init_sock_opt used for 
+ *               connect/ new sockets (andrei)
  */
 
 
@@ -235,7 +238,9 @@ int tcp_set_src_addr(struct ip_addr* ip)
 
 
 
-/* set all socket/fd options:  disable nagle, tos lowdelay, non-blocking
+/* set all socket/fd options for new sockets (e.g. before connect): 
+ *  disable nagle, tos lowdelay, reuseaddr, non-blocking
+ *
  * return -1 on error */
 static int init_sock_opt(int s)
 {
@@ -257,6 +262,16 @@ static int init_sock_opt(int s)
 				strerror(errno));
 		/* continue since this is not critical */
 	}
+#if  !defined(TCP_DONT_REUSEADDR) 
+	optval=1;
+	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+						(void*)&optval, sizeof(optval))==-1){
+		LOG(L_ERR, "ERROR: setsockopt SO_REUSEADDR %s\n",
+				strerror(errno));
+		/* continue, not critical */
+	}
+#endif /* !TCP_DONT_REUSEADDR */
+	
 	/* non-blocking */
 	flags=fcntl(s, F_GETFL);
 	if (flags==-1){
@@ -267,6 +282,42 @@ static int init_sock_opt(int s)
 	if (fcntl(s, F_SETFL, flags|O_NONBLOCK)==-1){
 		LOG(L_ERR, "ERROR: init_sock_opt: fcntl: set non-blocking failed:"
 				" (%d) %s\n", errno, strerror(errno));
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+
+/* set all socket/fd options for "accepted" sockets 
+ *  only nonblocking is set since the rest is inherited from the
+ *  "parent" (listening) socket
+ *  Note: setting O_NONBLOCK is required on linux but it's not needed on
+ *        BSD and possibly solaris (where the flag is inherited from the 
+ *        parent socket). However since there is no standard document 
+ *        requiring a specific behaviour in this case it's safer to always set
+ *        it (at least for now)  --andrei
+ *  TODO: check on which OSes  O_NONBLOCK is inherited and make this 
+ *        function a nop.
+ *
+ * return -1 on error */
+static int init_sock_opt_accept(int s)
+{
+	int flags;
+	
+	/* non-blocking */
+	flags=fcntl(s, F_GETFL);
+	if (flags==-1){
+		LOG(L_ERR, "ERROR: init_sock_opt_accept: fnctl failed: (%d) %s\n",
+				errno, strerror(errno));
+		goto error;
+	}
+	if (fcntl(s, F_SETFL, flags|O_NONBLOCK)==-1){
+		LOG(L_ERR, "ERROR: init_sock_opt_accept: "
+					"fcntl: set non-blocking failed: (%d) %s\n",
+					errno, strerror(errno));
 		goto error;
 	}
 	return 0;
@@ -1632,7 +1683,7 @@ static inline int handle_new_connect(struct socket_info* si)
 		close(new_sock);
 		return 1; /* success, because the accept was succesfull */
 	}
-	if (init_sock_opt(new_sock)<0){
+	if (init_sock_opt_accept(new_sock)<0){
 		LOG(L_ERR, "ERROR: handle_new_connect: init_sock_opt failed\n");
 		close(new_sock);
 		return 1; /* success, because the accept was succesfull */
