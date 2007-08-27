@@ -4,6 +4,7 @@ Release notes for SIP Express Router (ser)
 $Id$
 
 
+
 2.1.0 changes
 
 modules:
@@ -104,6 +105,7 @@ core:
                long held locks, almost no performance impact otherwise)
 
 new config variables:
+  pmtu_discovery = 0 | 1 (default 0) - set DF bit in outbound IP if enabled
   dns_srv_lb = yes | no (default no) - enable dns srv weight based load 
     balancing (see doc/dns.txt)
   dns_try_naptr = yes | no (default no) - enable naptr support 
