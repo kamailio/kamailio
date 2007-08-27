@@ -66,7 +66,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 4
+#define GW_TABLE_VERSION 5
 #define LCR_TABLE_VERSION 2
 
 /* usr_avp flag for sequential forking */
@@ -94,6 +94,8 @@ int reload_gws ( void );
 #define TRANSPORT_COL "transport"
 
 #define GRP_ID_COL "grp_id"
+
+#define DM_COL "dm"
 
 #define LCR_TABLE "lcr"
 
@@ -130,6 +132,7 @@ struct gw_info {
     unsigned int strip;
     char prefix[MAX_PREFIX_LEN];
     unsigned short prefix_len;
+    unsigned short dm; /* gw supports directed media */
 };
 
 struct lcr_info {
@@ -173,6 +176,7 @@ str port_col         = str_init(PORT_COL);
 str uri_scheme_col   = str_init(URI_SCHEME_COL);
 str transport_col    = str_init(TRANSPORT_COL);
 str grp_id_col       = str_init(GRP_ID_COL);
+str dm_col           = str_init(DM_COL);
 str lcr_table        = str_init(LCR_TABLE);
 str strip_col        = str_init(STRIP_COL);
 str prefix_col       = str_init(PREFIX_COL);
@@ -189,6 +193,9 @@ static char *gw_uri_avp_param = NULL;
 static char *ruri_user_avp_param = NULL;
 static char *contact_avp_param = NULL;
 static char *rpid_avp_param = NULL;
+
+/* flags */
+unsigned int dm_flag = 1024;
 
 /*
  * Other module types and variables
@@ -276,6 +283,7 @@ static param_export_t params[] = {
 	{"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
 	{"transport_column",         STR_PARAM, &transport_col.s },
 	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
+	{"dm_column",                STR_PARAM, &dm_col.s       },
 	{"lcr_table",                STR_PARAM, &lcr_table.s    },
 	{"strip_column",             STR_PARAM, &strip_col.s    },
 	{"prefix_column",            STR_PARAM, &prefix_col.s   },
@@ -288,6 +296,7 @@ static param_export_t params[] = {
 	{"rpid_avp",                 STR_PARAM, &rpid_avp_param },
 	{"fr_timer",                 INT_PARAM, &fr_inv_timer },
 	{"fr_inv_timer_next",        INT_PARAM,	&fr_inv_timer_next },
+	{"dm_flag",                  INT_PARAM,	&dm_flag },
 	{0, 0, 0}
 };
 
@@ -444,6 +453,7 @@ static int mod_init(void)
     from_uri_col.len = strlen(from_uri_col.s);
     priority_col.len = strlen(priority_col.s);
 
+    /* Process AVP params */
     if (fr_inv_timer_avp_param && *fr_inv_timer_avp_param) {
 	if (xl_parse_spec(fr_inv_timer_avp_param, &avp_spec,
 			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
@@ -549,6 +559,12 @@ static int mod_init(void)
 	return -1;
     }
     
+    /* Check dm_flag value */
+    if (dm_flag > 31) {
+	LOG(L_ERR, "ERROR:lcr:mod_init: undefined or invalid dm_flag value\n");
+	return -1;
+    }
+
     /* Check table version */
     ver = lcr_db_ver(db_url.s, &gw_table);
     if (ver < 0) {
@@ -737,6 +753,7 @@ int load_from_uri_regex()
 int reload_gws ( void )
 {
     unsigned int i, port, strip, prefix_len, from_uri_len, grp_id, priority;
+    unsigned int dm;
     struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
@@ -744,7 +761,7 @@ int reload_gws ( void )
     char *prefix, *from_uri;
     db_res_t* res = NULL;
     db_row_t* row;
-    db_key_t gw_cols[7];
+    db_key_t gw_cols[8];
     db_key_t lcr_cols[4];
 
     gw_cols[0] = ip_addr_col.s;
@@ -756,6 +773,7 @@ int reload_gws ( void )
     /* FIXME: is this ok if we have different names for grp_id
        in the two tables? (ge vw lcr) */
     gw_cols[6] = grp_id_col.s;
+    gw_cols[7] = dm_col.s;
 
     lcr_cols[0] = prefix_col.s;
     lcr_cols[1] = from_uri_col.s;
@@ -779,7 +797,7 @@ int reload_gws ( void )
 	return -1;
     }
 
-    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 7, 0, &res) < 0) {
+    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 8, 0, &res) < 0) {
 	    LOG(L_ERR, "lcr_reload_gws(): Failed to query gw data\n");
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -859,12 +877,28 @@ int reload_gws ( void )
 	} else {
 	    grp_id = VAL_INT(ROW_VALUES(row) + 6);
 	}
+	if (!VAL_NULL(ROW_VALUES(row) + 7) &&
+	    (VAL_TYPE(ROW_VALUES(row) + 7) == DB_INT)) {
+	    dm = (unsigned int)VAL_INT(ROW_VALUES(row) + 7);
+	    if ((dm != 0) && (dm != 1)) {
+		LOG(L_ERR, "reload_gws(): invalid dm value\n");
+		lcr_dbf.free_result(dbh, res);
+		lcr_dbf.close(dbh);
+		return -1;
+	    }
+	} else {
+	    LOG(L_ERR, "reload_gws(): dm is NULL or non-int\n");
+	    lcr_dbf.free_result(dbh, res);
+	    lcr_dbf.close(dbh);
+	    return -1;
+	}
 	if (*gws == gws_1) {
 	    gws_2[i].ip_addr = (unsigned int)ip_addr.s_addr;
 	    gws_2[i].port = port;
 	    gws_2[i].grp_id = grp_id;
 	    gws_2[i].scheme = scheme;
 	    gws_2[i].transport = transport;
+	    gws_2[i].dm = dm;
 	    gws_2[i].strip = strip;
 	    gws_2[i].prefix_len = prefix_len;
 	    if (prefix_len)
@@ -875,6 +909,7 @@ int reload_gws ( void )
 	    gws_1[i].grp_id = grp_id;
 	    gws_1[i].scheme = scheme;
 	    gws_1[i].transport = transport;
+	    gws_1[i].dm = dm;
 	    gws_1[i].strip = strip;
 	    gws_1[i].prefix_len = prefix_len;
 	    if (prefix_len)
@@ -1054,6 +1089,11 @@ int mi_print_gws (struct mi_node* rpl)
 			   (*gws)[i].prefix, (*gws)[i].prefix_len );
 	if(attr == NULL)
 	    return -1;
+
+	p = int2str((unsigned long)(*gws)[i].dm, &len );
+	attr = add_mi_attr(node, MI_DUP_VALUE, "DM", 2, p, len);
+	if(attr == NULL)
+	    return -1;
     }
 
     for (i = 0; i < MAX_NO_OF_LCRS; i++) {
@@ -1098,6 +1138,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
     unsigned int i, j, k, index;
     unsigned int addr, port;
     unsigned int strip, gw_index, duplicated_gw;
+    unsigned short dm;
     uri_type scheme;
     uri_transport transport;
     struct ip_addr address;
@@ -1299,6 +1340,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	port = (*gws)[index].port;
 	scheme = (*gws)[index].scheme;
 	transport = (*gws)[index].transport;
+	dm = (*gws)[index].dm;
 	strip = (*gws)[index].strip;
 	if (strip > ruri_user.len) {
 	    LOG(L_ERR, "load_gws(): Strip count of gw is too large\n");
@@ -1308,12 +1350,17 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	prefix_len = (*gws)[index].prefix_len;
 	prefix = (*gws)[index].prefix;
 
-	if (5 + prefix_len + 1 + strip_len + 1 + 15 + 1 + 5 + 1 + 14 >
+	if (6 + prefix_len + 1 + strip_len + 1 + 15 + 1 + 5 + 1 + 14 >
 	    MAX_URI_SIZE) {
 	    LOG(L_ERR, "load_gws(): Request URI would be too long\n");
 	    goto skip;
 	}
 	at = (char *)&(ruri[0]);
+	if (dm == 0)
+	    *at = '0';
+	else
+	    *at = '1';
+	at = at + 1;
 	if (scheme == SIP_URI_T) {
 	    memcpy(at, "sip:", 4); at = at + 4;
 	} else if (scheme == SIPS_URI_T) {
@@ -1432,6 +1479,14 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
     gu_avp = search_first_avp(gw_uri_avp_type, gw_uri_avp, &gw_uri_val, 0);
     if (!gu_avp) return -1;
+
+    /* Set dm_flag based on first char of gw_uri */
+    if (*(gw_uri_val.s.s) == '0')
+	resetflag(_m, dm_flag);
+    else 
+	setflag(_m, dm_flag);
+    gw_uri_val.s.s = gw_uri_val.s.s + 1;
+    gw_uri_val.s.len = gw_uri_val.s.len - 1;
 
     if (route_type == REQUEST_ROUTE) {
 	/* Create new Request-URI taking URI user from current Request-URI

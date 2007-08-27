@@ -58,6 +58,11 @@
 	protocol values are NULL = none, 1 = udp, 2 = tcp, and 3 = tls.
 	</para>
 	<para>
+	As a side effect of gateway selection, a message flag is set or reset
+	depending on whether selected gateway supports directed media
+	(RFC 4145).
+	</para>
+	<para>
 	Table lcr contains prefix of user part of Request-URI, From URI
 	pattern, gateway group id, and priority.  From URI pattern is a
 	regular expression.  Empty From URI pattern matches any From
@@ -268,6 +273,28 @@ modparam("lcr","transport_column","transport")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","grp_id_column","grp_id")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+<section>
+		<title><varname>dm_column</varname> (string)</title>
+		<para>
+		Name of the column holding information on whether gateway
+		supports directed media.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>dm</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>dm_column/varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","dm_column","directed_media")
 ...
 </programlisting>
 		</example>
@@ -532,6 +559,28 @@ modparam("lcr","fr_inv_timer_next",30)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>dm_flag</varname> (integer)</title>
+		<para>
+		Contains number of message flag that next_gw() function
+		sets or resets depending on whether selected gateway
+		supports directed media.
+		</para>
+		<para>
+		<emphasis>
+			There is no valid default value.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>dm_flag</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "dm_flag", 25)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -601,6 +650,11 @@ if (!load_gws("$avp(s:gateway_group)")) {
 		is replaced by the values stored in the first gw_uri_avp AVP and
 		destroys that AVP.  Request-URI user is taken from ruri_user_avp
 		AVP.
+		</para>
+		<para>
+		As side effect, sets or resets a message flag depending
+	on whether gateway of first gw_uri_avp AVP supports directed
+	media.
 		</para>
 		<para>
 		Returns 1 on success and -1 if there were no gateways left or if an
