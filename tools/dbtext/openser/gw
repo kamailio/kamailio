@@ -1,1 +1,1 @@
-id(int,auto) gw_name(str) grp_id(int) ip_addr(str) port(int,null) uri_scheme(int,null) transport(int,null) strip(int,null) prefix(str,null) 
+id(int,auto) gw_name(str) grp_id(int) ip_addr(str) port(int,null) uri_scheme(int,null) transport(int,null) strip(int,null) prefix(str,null) dm(int) 

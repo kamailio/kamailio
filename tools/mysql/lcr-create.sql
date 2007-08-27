@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('gw','4');
+INSERT INTO version (table_name, table_version) values ('gw','5');
 CREATE TABLE gw (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     gw_name VARCHAR(128) NOT NULL,
@@ -9,6 +9,7 @@ CREATE TABLE gw (
     transport TINYINT UNSIGNED,
     strip TINYINT UNSIGNED,
     prefix VARCHAR(16) DEFAULT NULL,
+    dm TINYINT UNSIGNED NOT NULL DEFAULT 1,
     UNIQUE KEY name_gw (gw_name),
     KEY gid_gw (grp_id)
 ) ENGINE=MyISAM;
