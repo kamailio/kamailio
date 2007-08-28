@@ -32,7 +32,7 @@
 
 static struct dlg_head_cbl* create_cbs = 0;
 
-int init_dlg_callbacks()
+int init_dlg_callbacks(void)
 {
 	create_cbs = (struct dlg_head_cbl*)shm_malloc(sizeof(struct dlg_head_cbl));
 	if (create_cbs==0) {
@@ -58,7 +58,7 @@ void destroy_dlg_callbacks_list(struct dlg_callback *cb)
 }
 
 
-void destroy_dlg_callbacks()
+void destroy_dlg_callbacks(void)
 {
 	if (create_cbs==0)
 		return;

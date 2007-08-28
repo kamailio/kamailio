@@ -71,21 +71,21 @@ int bind_data_loader(const char * source, route_data_load_func_t * api){
 	return -1;
 }
 
-int data_main_finalize(){
+int data_main_finalize(void){
 	if(mode == SP_ROUTE_MODE_DB){
 		main_db_close();
 	}
 	return 0;
 }
 
-int data_child_init(){
+int data_child_init(void){
 	if(mode == SP_ROUTE_MODE_DB){
 		return db_child_init();
 	}
 	return 0;
 }
 
-void data_destroy(){
+void data_destroy(void){
 	if(mode == SP_ROUTE_MODE_DB){
 		db_destroy();
 	}

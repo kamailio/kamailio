@@ -170,7 +170,7 @@ static str log_attrs[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
 		n++; \
 	} while(0)
 
-void acc_log_init()
+void acc_log_init(void)
 {
 	struct acc_extra *extra;
 	int n;
@@ -268,7 +268,7 @@ static db_key_t db_keys[ACC_CORE_LEN+1+MAX_ACC_EXTRA+MAX_ACC_LEG];
 static db_val_t db_vals[ACC_CORE_LEN+1+MAX_ACC_EXTRA+MAX_ACC_LEG];
 
 
-static void acc_db_init_keys()
+static void acc_db_init_keys(void)
 {
 	struct acc_extra *extra;
 	int time_idx;
@@ -341,7 +341,7 @@ int acc_db_init_child(char *db_url)
 
 
 /* close a db connection */
-void acc_db_close()
+void acc_db_close(void)
 {
 	if (db_handle && acc_dbf.close)
 		acc_dbf.close(db_handle);

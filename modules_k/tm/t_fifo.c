@@ -365,7 +365,7 @@ int init_twrite_sock(void)
 
 
 
-int init_twrite_lines()
+int init_twrite_lines(void)
 {
 	int i;
 

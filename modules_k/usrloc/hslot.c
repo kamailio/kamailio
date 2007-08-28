@@ -31,7 +31,7 @@ gen_lock_set_t* ul_locks=0;
 /*
  * Initialize locks
  */
-int ul_init_locks()
+int ul_init_locks(void)
 {
 	int i;
 	i = ul_locks_no;
@@ -58,7 +58,7 @@ int ul_init_locks()
 	} while (1);
 }
 
-void ul_destroy_locks()
+void ul_destroy_locks(void)
 {
 	if (ul_locks !=0){
 		lock_set_destroy(ul_locks);

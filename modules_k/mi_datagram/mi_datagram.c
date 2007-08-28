@@ -73,8 +73,8 @@
 static int mi_mod_init(void);
 static int mi_child_init(int rank);
 static int mi_destroy(void);
-static int pre_datagram_process();
-static int post_datagram_process();
+static int pre_datagram_process(void);
+static int post_datagram_process(void);
 static void datagram_process(int rank);
 
 /* local variables */
@@ -281,7 +281,7 @@ static int mi_child_init(int rank)
 }
 
 
-static int pre_datagram_process()
+static int pre_datagram_process(void)
 {
 	int res;
 
@@ -330,7 +330,7 @@ static void datagram_process(int rank)
 }
 
 
-static int post_datagram_process()
+static int post_datagram_process(void)
 {
 	/* close the sockets */
 	close(sockets.rx_sock);
@@ -365,5 +365,3 @@ error:
 	return -1;
 
 }
-
-

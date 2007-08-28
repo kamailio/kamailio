@@ -131,7 +131,7 @@ static inline void destroy_dlg(struct dlg_cell *dlg)
 
 
 
-void destroy_dlg_table()
+void destroy_dlg_table(void)
 {
 	struct dlg_cell *dlg, *l_dlg;
 	unsigned int i;

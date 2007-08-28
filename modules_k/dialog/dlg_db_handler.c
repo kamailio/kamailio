@@ -165,7 +165,7 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 
 
 
-void destroy_dlg_db()
+void destroy_dlg_db(void)
 {
 	/*save the dialogs' info*/
 	if (dialog_db_handle) {
@@ -177,7 +177,7 @@ void destroy_dlg_db()
 
 
 
-static int use_dialog_table()
+static int use_dialog_table(void)
 {
 	if(!dialog_db_handle){
 		LOG(L_ERR, "ERROR:dialog:use_dialog_table: invalid database handle\n");

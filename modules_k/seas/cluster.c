@@ -46,7 +46,7 @@ char *cluster_cfg;
  * -1 if config is malformed (unable to parse);
  *  1 if config is successfully set
  */
-int parse_cluster_cfg()
+int parse_cluster_cfg(void)
 {
    char *p,*start;
    int n,k;

@@ -71,7 +71,7 @@ static int mod_init(void);                          /* Module initialization fun
 static void destroy(void);                          /* Module destroy function */
 static void timer(unsigned int ticks, void* param); /* Timer handler */
 static int child_init(int rank);                    /* Per-child init function */
-static int mi_child_init();
+static int mi_child_init(void);
 
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
@@ -368,7 +368,7 @@ static int child_init(int _rank)
 
 
 /* */
-static int mi_child_init()
+static int mi_child_init(void)
 {
 	static int done = 0;
 

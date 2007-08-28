@@ -162,8 +162,7 @@ static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 #endif
 
 
-int
-prepare ()
+int prepare (void)
 {
 
 	/* using pre-compiled expressions to speed things up*/
@@ -186,8 +185,7 @@ prepare ()
 
 
 
-static int
-mod_init (void)
+static int mod_init (void)
 {
 	ipExpression = NULL;
 	portExpression = NULL;
@@ -200,8 +198,7 @@ mod_init (void)
 }
 
 
-static void
-destroy (void)
+static void destroy (void)
 {
 	/*free some compiled regex expressions */
 	free_compiled_expresions();	

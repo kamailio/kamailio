@@ -288,7 +288,7 @@ int init_child_trusted(int rank)
 /*
  * Open database connection if necessary
  */
-int mi_init_trusted()
+int mi_init_trusted(void)
 {
     if (!db_url || db_handle) return 0;
     db_handle = perm_dbf.init(db_url);

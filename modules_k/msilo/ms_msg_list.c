@@ -39,7 +39,7 @@
 /**
  * create a new element
  */
-msg_list_el msg_list_el_new()
+msg_list_el msg_list_el_new(void)
 {
 	msg_list_el mle = NULL;
 	mle = (msg_list_el)shm_malloc(sizeof(t_msg_list_el));
@@ -85,7 +85,7 @@ void msg_list_el_free_all(msg_list_el mle)
 /**
  * init a list
  */
-msg_list msg_list_init()
+msg_list msg_list_init(void)
 {
 	msg_list ml = NULL;
 	

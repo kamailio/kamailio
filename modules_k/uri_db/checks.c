@@ -281,7 +281,7 @@ int uridb_db_bind(char* db_url)
 }
 
 
-void uridb_db_close()
+void uridb_db_close(void)
 {
 	if (db_handle && uridb_dbf.close){
 		uridb_dbf.close(db_handle);

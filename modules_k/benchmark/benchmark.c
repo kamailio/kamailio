@@ -169,7 +169,7 @@ struct module_exports exports = {
  * mod_init
  * Called by openser at init time
  */
-static int mod_init() {
+static int mod_init(void) {
 
 	int ret = 0;
 
@@ -226,7 +226,7 @@ void reset_timer(int i)
 	bm_mycfg->tindex[i]->global_min = 0xffffffff;
 }
 
-void reset_timers()
+void reset_timers(void)
 {
 	int i;
 	if(bm_mycfg==NULL)

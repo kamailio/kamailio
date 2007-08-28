@@ -93,7 +93,7 @@ static int  w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2);
 static int  w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sd_en);
 static int  mod_init(void);
 static void mod_destroy(void);
-static int  child_init();
+static int  child_init(void);
 static int  mod_child_init(int r);
 
 static int prefix2domain(struct sip_msg*, int mode, int sd_en);
@@ -266,7 +266,7 @@ error1:
 }
 
 
-static int child_init()
+static int child_init(void)
 {
 	db_con = pdt_dbf.init(db_url);
 	if(db_con==NULL)
@@ -551,7 +551,7 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	return 0;
 }
 
-int pdt_load_db()
+int pdt_load_db(void)
 {
 	db_key_t db_cols[3] = {sdomain_column, prefix_column, domain_column};
 	str p, d, sdomain;

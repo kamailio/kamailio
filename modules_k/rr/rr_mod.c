@@ -154,7 +154,7 @@ static int mod_init(void)
 }
 
 
-static void mod_destroy()
+static void mod_destroy(void)
 {
 	destroy_rrcb_lists();
 }

@@ -275,7 +275,7 @@ static int mod_child_init(int rank)
 
 /* This function is called when OpenSER is shutting down. When this happens, we
  * log a useful message and kill the AgentX Sub-Agent child process */
-static void mod_destroy() 
+static void mod_destroy(void) 
 {
 	LOG(L_INFO, "INFO: SNMPStats: The SNMPStats module got the kill "
 			"signal\n");

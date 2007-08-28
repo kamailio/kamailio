@@ -61,7 +61,7 @@ static void sig_handler(int signo)
    LOG(L_WARN,"Statistics process:caught signal (%d)\n",signo);
 }
 
-struct statstable* init_seas_stats_table()
+struct statstable* init_seas_stats_table(void)
 {
    /*allocs the table*/
    seas_stats_table= (struct statstable*)shm_malloc( sizeof( struct statstable ) );
@@ -79,7 +79,7 @@ struct statstable* init_seas_stats_table()
    return seas_stats_table;
 }
 
-inline void destroy_seas_stats_table()
+inline void destroy_seas_stats_table(void)
 {
    /*deallocs the table*/
    if(seas_stats_table){
@@ -299,7 +299,7 @@ error:
  * 1 if stats properly started
  * -1 if error
  */
-inline int stop_stats_server()
+inline int stop_stats_server(void)
 {
    if(pid)
       kill(SIGTERM,pid);
@@ -436,7 +436,7 @@ error:/*mutex is locked*/
    return -1;
 }
 
-inline void stats_reply()
+inline void stats_reply(void)
 {
    lock_get(seas_stats_table->mutex);
    seas_stats_table->received_replies++;

@@ -133,7 +133,7 @@ int schedule_to_kill( int pid )
 	return 1;
 }
 
-int initialize_kill()
+int initialize_kill(void)
 {
 	/* if disabled ... */
 	if (time_to_kill==0) return 1;
@@ -157,7 +157,7 @@ int initialize_kill()
 	return 1;
 }
 
-void destroy_kill()
+void destroy_kill(void)
 {
 	/* if disabled ... */
 	if (time_to_kill==0) 

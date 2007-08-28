@@ -77,7 +77,7 @@ static ser_lock_t* timer_group_lock=0; /* pointer to a TG_NR lock array,
 
 /* initialize the locks; return 0 on success, -1 otherwise
 */
-int lock_initialize()
+int lock_initialize(void)
 {
 	int i;
 #ifndef GEN_LOCK_T_PREFERED
@@ -190,7 +190,7 @@ error:
 
 
 #ifdef GEN_LOCK_T_PREFERED
-void lock_cleanup()
+void lock_cleanup(void)
 {
 	/* must check if someone uses them, for now just leave them allocated*/
 	if (timer_group_lock) shm_free((void*)timer_group_lock);

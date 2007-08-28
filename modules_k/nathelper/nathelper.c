@@ -1876,8 +1876,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 	return 0;
 }
 
-static char *
-gencookie()
+static char * gencookie(void)
 {
 	static char cook[34];
 

@@ -42,7 +42,7 @@ static int nr_filters[NR_FILTER_TYPES];
 static int start_filters[NR_FILTER_TYPES];
 
 
-void init_filters()
+void init_filters(void)
 {
 	memset( rd_filters , 0, NR_FILTER_TYPES*MAX_FILTERS*sizeof(regex_t*));
 	reset_filters();
@@ -55,7 +55,7 @@ void set_default_rule( int type )
 }
 
 
-void reset_filters()
+void reset_filters(void)
 {
 	nr_filters[ACCEPT_FILTER] = 1;
 	nr_filters[DENY_FILTER]   = 1;

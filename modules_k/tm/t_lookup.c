@@ -148,15 +148,15 @@ static struct cell *cancelled_T;
 static struct cell *e2eack_T;
 
 
-struct cell *get_t() { return T; }
+struct cell *get_t(void) { return T; }
 void set_t(struct cell *t) { T=t; }
-void init_t() {set_t(T_UNDEFINED);}
+void init_t(void) {set_t(T_UNDEFINED);}
 
-struct cell *get_cancelled_t() { return cancelled_T; }
-void reset_cancelled_t() { cancelled_T=T_UNDEFINED; }
+struct cell *get_cancelled_t(void) { return cancelled_T; }
+void reset_cancelled_t(void) { cancelled_T=T_UNDEFINED; }
 
-struct cell *get_e2eack_t() { return e2eack_T; }
-void reset_e2eack_t() { e2eack_T=T_UNDEFINED; }
+struct cell *get_e2eack_t(void) { return e2eack_T; }
+void reset_e2eack_t(void) { e2eack_T=T_UNDEFINED; }
 
 
 

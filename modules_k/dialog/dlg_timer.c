@@ -69,7 +69,7 @@ error0:
 
 
 
-void destroy_dlg_timer()
+void destroy_dlg_timer(void)
 {
 	if (d_timer==0)
 		return;

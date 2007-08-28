@@ -60,7 +60,7 @@ static str  sipping_method = {"OPTIONS",7};
 
 
 
-static void init_sip_ping()
+static void init_sip_ping(void)
 {
 	int len;
 	char *p;

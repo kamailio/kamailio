@@ -38,7 +38,7 @@ struct ulcb_head_list* ulcb_list = 0;
 
 
 
-int init_ulcb_list()
+int init_ulcb_list(void)
 {
 	ulcb_list = (struct ulcb_head_list*)shm_malloc
 		( sizeof(struct ulcb_head_list) );
@@ -52,7 +52,7 @@ int init_ulcb_list()
 }
 
 
-void destroy_ulcb_list()
+void destroy_ulcb_list(void)
 {
 	struct ul_callback *cbp, *cbp_tmp;
 

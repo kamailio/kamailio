@@ -54,7 +54,7 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
 static int fixup_sl_send_reply(void** param, int param_no);
 static int mod_init(void);
-static void mod_destroy();
+static void mod_destroy(void);
 /* module parameter */
 int sl_enable_stats = 1;
 
@@ -156,7 +156,7 @@ static int mod_init(void)
 
 
 
-static void mod_destroy()
+static void mod_destroy(void)
 {
 	sl_shutdown();
 	destroy_slcb_lists();

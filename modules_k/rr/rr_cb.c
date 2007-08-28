@@ -33,7 +33,7 @@ struct rr_callback* rrcb_hl = 0;  /* head list */
 
 
 
-void destroy_rrcb_lists()
+void destroy_rrcb_lists(void)
 {
 	struct rr_callback *cbp, *cbp_tmp;
 

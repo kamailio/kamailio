@@ -56,7 +56,7 @@ static char int_buf[INT2STR_MAX_LEN*MAX_ACC_INT_BUF];
 
 static char *static_detector = 0;
 
-void init_acc_extra()
+void init_acc_extra(void)
 {
 	int i;
 	/* ugly trick to get the address of the static buffer */

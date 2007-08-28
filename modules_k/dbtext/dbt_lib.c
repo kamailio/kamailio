@@ -46,7 +46,7 @@ static gen_lock_t *_cachesem = NULL;
 /**
  *
  */
-int dbt_init_cache()
+int dbt_init_cache(void)
 {
 	if(!_cachesem)
 	{
@@ -387,7 +387,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 /**
  *
  */
-int dbt_cache_destroy()
+int dbt_cache_destroy(void)
 {
 	dbt_cache_p _dc=NULL, _dc0=NULL;
 	
@@ -523,7 +523,7 @@ int dbt_db_free(dbt_db_p _dbp)
 /**
  *
  */
-tbl_cache_p tbl_cache_new()
+tbl_cache_p tbl_cache_new(void)
 {
 	tbl_cache_p _tbc = NULL;
 	_tbc = (tbl_cache_p)shm_malloc(sizeof(tbl_cache_t));

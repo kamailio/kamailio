@@ -366,7 +366,7 @@ int lcr_db_bind(char* db_url)
 }
 
 
-void lcr_db_close()
+void lcr_db_close(void)
 {
 	if (db_handle && lcr_dbf.close){
 		lcr_dbf.close(db_handle);
@@ -414,7 +414,7 @@ static int child_init(int rank)
 }
 
 
-static int mi_child_init()
+static int mi_child_init(void)
 {
 	return lcr_db_init(db_url.s);
 }
@@ -717,7 +717,7 @@ static int rand_lcrs(const void *m1, const void *m2)
 /*
  * regcomp each from_uri.
  */
-int load_from_uri_regex()
+int load_from_uri_regex(void)
 {
     int i, status, result = 0;
     

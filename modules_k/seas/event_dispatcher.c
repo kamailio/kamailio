@@ -83,7 +83,7 @@ static int open_server_sockets(struct ip_addr *address,unsigned short port,int *
 /** Main loop for the Event Dispatcher process.
  * 
  */
-int dispatcher_main_loop()
+int dispatcher_main_loop(void)
 {
    struct pollfd poll_fds[3+MAX_AS_NR],*poll_tmp;
    int clean_index,i,j,k,fd,poll_events=0,socks[2],chld_status;
@@ -409,7 +409,7 @@ union helper{
  * which are not related to any transaction (finish event, or error event...)
  * we should separate event-specific handling in different functions...
  */
-static int dispatch_relay()
+static int dispatch_relay(void)
 {
    int i,j,retval,tries;
    union helper thepointer;

@@ -54,7 +54,7 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl);
 static int it_list_fixup(void** param, int param_no);
 static int exec_avp_fixup(void** param, int param_no);
 
-inline static void exec_shutdown();
+inline static void exec_shutdown(void);
 
 /*
  * Exported functions
@@ -97,7 +97,7 @@ struct module_exports exports= {
 	0               /* per-child init function */
 };
 
-void exec_shutdown()
+void exec_shutdown(void)
 {
 	if (time_to_kill) destroy_kill();
 }

@@ -104,7 +104,7 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 }
 
 
-void destroy_dlg_handlers()
+void destroy_dlg_handlers(void)
 {
 	shutdown_done = 1;
 }

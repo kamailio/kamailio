@@ -75,7 +75,7 @@ static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
 static int fixup_replace_from1(void** param, int param_no);
 static int fixup_replace_from2(void** param, int param_no);
 static int mod_init(void);
-static void mod_destroy();
+static void mod_destroy(void);
 
 
 /* Exported functions */
@@ -213,7 +213,7 @@ error:
 }
 
 
-static void mod_destroy()
+static void mod_destroy(void)
 {
 	destroy_credentials();
 }

@@ -108,7 +108,7 @@ static int ds_warn_fixup(void** param, int param_no);
 struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
 struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
 struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param);
-static int mi_child_init();
+static int mi_child_init(void);
 
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    w_ds_select_dst,    2, ds_fixup, REQUEST_ROUTE},
@@ -299,7 +299,7 @@ static int child_init(int rank)
 	return 0;
 }
 
-static int mi_child_init()
+static int mi_child_init(void)
 {
 	
 	if(ds_db_url!= NULL)

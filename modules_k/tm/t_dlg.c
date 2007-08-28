@@ -31,7 +31,7 @@ int t_newdlg( struct sip_msg *msg )
 	return 0;
 }
 
-dlg_t t_getdlg() {
+dlg_t t_getdlg(void) {
 	return dlg;
 }
 

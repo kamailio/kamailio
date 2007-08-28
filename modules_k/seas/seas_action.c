@@ -84,7 +84,7 @@ int process_pong(struct ha *the_table,unsigned int seqno);
 int print_local_uri(as_p as,char processor_id,char *where,int len);
 
 
-int dispatch_actions()
+int dispatch_actions(void)
 {
    int fd,n,ret,timeout,elapsed_ms;
    static int ktimeout;

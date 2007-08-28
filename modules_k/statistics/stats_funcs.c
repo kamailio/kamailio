@@ -92,7 +92,7 @@ error:
 
 
 
-int register_all_mod_stats()
+int register_all_mod_stats(void)
 {
 	stat_var  *stat;
 	stat_elem *se;

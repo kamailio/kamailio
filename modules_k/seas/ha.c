@@ -52,7 +52,7 @@ static inline int send_ping(struct as_entry *the_as,struct timeval *now);
  * 1 if High Availability
  * -1 if config error
  */
-int prepare_ha()
+int prepare_ha(void)
 {
    use_ha=0;
    if(!(jain_ping_config || servlet_ping_config)){
@@ -165,7 +165,7 @@ static inline int parse_ping(char * string,int *ping_period,int *pings_lost,int 
  * returns:
  * 	-1 on error;
  */
-int spawn_pinger()
+int spawn_pinger(void)
 {
    int n,next_jain,next_servlet,timeout;
    struct timeval now,last_jain,last_servlet;

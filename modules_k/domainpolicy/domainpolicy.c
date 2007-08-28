@@ -224,7 +224,7 @@ error:
 }
 
 
-void domainpolicy_db_close()
+void domainpolicy_db_close(void)
 {
 	if (db_handle && domainpolicy_dbf.close){
 		domainpolicy_dbf.close(db_handle);

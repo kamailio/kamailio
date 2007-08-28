@@ -73,7 +73,7 @@ static struct uac_credential *crd_list = 0;
 #define PROXY_AUTH_HDR_LEN  (sizeof(PROXY_AUTH_HDR)-1)
 
 
-int has_credentials()
+int has_credentials(void)
 {
 	return (crd_list!=0)?1:0;
 }
@@ -185,7 +185,7 @@ error:
 }
 
 
-void destroy_credentials()
+void destroy_credentials(void)
 {
 	struct uac_credential *foo;
 

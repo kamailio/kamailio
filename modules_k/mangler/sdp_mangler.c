@@ -540,7 +540,7 @@ int compile_expresions(char *port,char *ip)
 	return 0;
 }
 
-int free_compiled_expresions()
+int free_compiled_expresions(void)
 {
 	if (portExpression != NULL) 
 		{

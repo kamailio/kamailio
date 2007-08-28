@@ -86,7 +86,7 @@ static int  mod_child_init(int rank);
 
 /* This function is called when OpenSER is shutting down.  When this happens, we
  * log a useful message and kill the AgentX Sub-Agent child process */
-static void mod_destroy();
+static void mod_destroy(void);
 
 
 static proc_export_t mod_procs[] = {

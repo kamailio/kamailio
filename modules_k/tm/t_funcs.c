@@ -89,7 +89,7 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len
 
 
 
-void tm_shutdown()
+void tm_shutdown(void)
 {
 
 	DBG("DEBUG: tm_shutdown : start\n");

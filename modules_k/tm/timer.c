@@ -477,13 +477,13 @@ inline static void delete_handler( struct timer_link *dele_tl )
 
 /***********************************************************/
 
-struct timer_table *get_timertable()
+struct timer_table *get_timertable(void)
 {
 	return timertable;
 }
 
 
-void unlink_timer_lists()
+void unlink_timer_lists(void)
 {
 	struct timer_link  *tl, *end, *tmp;
 	enum lists i;
@@ -508,7 +508,7 @@ void unlink_timer_lists()
 
 
 
-struct timer_table *tm_init_timers()
+struct timer_table *tm_init_timers(void)
 {
 	enum lists i;
 
@@ -584,7 +584,7 @@ error0:
 	return 0;
 }
 
-void free_timer_table()
+void free_timer_table(void)
 {
 	enum lists i;
 

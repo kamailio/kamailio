@@ -50,7 +50,7 @@
 static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
-static int mi_child_init();
+static int mi_child_init(void);
 static int parameter_fixup(void** param, int param_no);
 
 MODULE_VERSION
@@ -221,7 +221,7 @@ static int child_init(int rank)
 }
 
 
-static int mi_child_init()
+static int mi_child_init(void)
 {
 	return domain_db_init(db_url.s);
 }

@@ -79,7 +79,7 @@ void t_on_branch( unsigned int go_to )
 }
 
 
-unsigned int get_on_branch()
+unsigned int get_on_branch(void)
 {
 	return goto_on_branch;
 }
@@ -275,7 +275,7 @@ error0:
    and FR must be ticking, whereas the request is "forwarded"
    using a non-SIP way and will be replied the same way
 */
-int add_blind_uac( /*struct cell *t*/ )
+int add_blind_uac(void)  /*struct cell *t*/
 {
 	unsigned short branch;
 	struct cell *t;

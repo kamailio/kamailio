@@ -85,7 +85,7 @@ static int reg_param_stat( modparam_t type, void* val)
 
 
 
-static int mod_init()
+static int mod_init(void)
 {
 	LOG(L_INFO,"Statistics module - initializing\n");
 

@@ -470,7 +470,7 @@ void print_all_udomains(FILE* _f)
 
 
 /* Loops through all domains summing up the number of users. */
-unsigned long get_number_of_users() 
+unsigned long get_number_of_users(void)
 {
 	int numberOfUsers = 0;
 

@@ -63,7 +63,7 @@ static time_t get_time_sys(void)
 }
 /* detects if the ser time function get_ticks works, and depending of that
    sets the correct time function to be used */
-void set_gettime_function()
+void set_gettime_function(void)
 {
 	unsigned int t1,t2;
 
@@ -98,7 +98,7 @@ inline void free_report_cell(struct report_cell *cell)
 
 
 
-int init_report_queue()
+int init_report_queue(void)
 {
 	report_queue = (struct report_cell*)
 		shm_malloc(NR_CELLS*sizeof(struct report_cell));
@@ -113,7 +113,7 @@ int init_report_queue()
 
 
 
-void destroy_report_queue()
+void destroy_report_queue(void)
 {
 	int i;
 
@@ -194,7 +194,7 @@ done:
 
 
 
-void check_timeout_in_report_queue()
+void check_timeout_in_report_queue(void)
 {
 	int i;
 	time_t current_time;

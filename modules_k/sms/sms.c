@@ -283,7 +283,7 @@ error:
 
 
 
-int parse_config_lines()
+int parse_config_lines(void)
 {
 	char *p,*start;
 	int  i, k, step;
@@ -521,7 +521,7 @@ error:
 
 
 
-int global_init()
+int global_init(void)
 {
 	int   i, net_pipe[2], foo;
 	char  *p;

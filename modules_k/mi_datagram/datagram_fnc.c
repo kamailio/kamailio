@@ -172,7 +172,7 @@ err_rx:
 
 
 
-int mi_init_datagram_buffer(){
+int mi_init_datagram_buffer(void){
 
 	mi_buf = pkg_malloc(DATAGRAM_SOCK_BUF_SIZE);
 	if ( mi_buf==NULL) {

@@ -33,7 +33,7 @@ struct sl_callback* slcb_hl = 0;  /* head list */
 
 
 
-void destroy_slcb_lists()
+void destroy_slcb_lists(void)
 {
 	struct sl_callback *cbp, *cbp_tmp;
 

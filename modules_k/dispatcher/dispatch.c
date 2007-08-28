@@ -95,7 +95,7 @@ int *ds_list_nr, *crt_idx, *next_idx;
 
 void destroy_list(int);
 
-int init_data()
+int init_data(void)
 {
 	int * p;
 
@@ -342,7 +342,7 @@ error:
 	return -1;
 }
 
-int ds_connect_db()
+int ds_connect_db(void)
 {
 	if(ds_db_url==0)
 		return -1;
@@ -360,7 +360,7 @@ int ds_connect_db()
 	return 0;
 }
 
-void ds_disconnect_db()
+void ds_disconnect_db(void)
 {
 								
 	if(ds_db_handle)
@@ -371,7 +371,7 @@ void ds_disconnect_db()
 }
 
 /*initialize and verify DB stuff*/
-int init_ds_db()
+int init_ds_db(void)
 {
 	str table;
 	int ver;
@@ -419,7 +419,7 @@ int init_ds_db()
 }
 
 /*load groups of destinations from DB*/
-int ds_load_db()
+int ds_load_db(void)
 {
 	int i, id, nr_rows, setn;
 	str uri;
@@ -500,7 +500,7 @@ err2:
 }
 
 /*called from dispatcher.c: free all*/
-int ds_destroy_list()
+int ds_destroy_list(void)
 {
 	destroy_list(0);
 	destroy_list(1);
@@ -1515,6 +1515,3 @@ void ds_check_timer(unsigned int ticks, void* param)
 		}
 	}
 }
-
-
-

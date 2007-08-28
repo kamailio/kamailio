@@ -65,7 +65,7 @@ static struct s_table*  tm_table;
 int syn_branch = 1;
 
 
-void reset_kr()
+void reset_kr(void)
 {
 	kr = 0;
 }
@@ -76,7 +76,7 @@ void set_kr( enum kill_reason _kr )
 }
 
 
-enum kill_reason get_kr() {
+enum kill_reason get_kr(void) {
 	return kr;
 }
 
@@ -93,7 +93,7 @@ void unlock_hash(int i)
 }
 
 
-struct s_table* get_tm_table()
+struct s_table* get_tm_table(void)
 {
 	return tm_table;
 }
@@ -328,7 +328,7 @@ error:
 
 /* Release all the data contained by the hash table. All the aux. structures
  *  as sems, lists, etc, are also released */
-void free_hash_table(  )
+void free_hash_table(void)
 {
 	struct cell* p_cell;
 	struct cell* tmp_cell;
@@ -355,7 +355,7 @@ void free_hash_table(  )
 
 /*
  */
-struct s_table* init_hash_table()
+struct s_table* init_hash_table(void)
 {
 	int              i;
 

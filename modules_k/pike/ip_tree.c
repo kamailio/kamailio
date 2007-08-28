@@ -169,7 +169,7 @@ static inline void destroy_ip_node(struct ip_node *node)
 
 
 /* destroy and free the IP tree */
-void destroy_ip_tree()
+void destroy_ip_tree(void)
 {
 	int i;
 

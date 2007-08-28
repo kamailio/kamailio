@@ -3,7 +3,7 @@
  *
  * PERMISSIONS module
  *
- * Copyright (C) 2003 MiklÛs Tirp·k (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Mikl√≥s Tirp√°k (mtirpak@sztaki.hu)
  * Copyright (C) 2003 iptel.org
  * Copyright (C) 2003-2007 Juha Heinanen
  *
@@ -737,13 +737,13 @@ static int child_init(int rank)
 }
 
 
-static int mi_trusted_child_init()
+static int mi_trusted_child_init(void)
 {
     return mi_init_trusted();
 }
 
 
-static int mi_addr_child_init()
+static int mi_addr_child_init(void)
 {
     return mi_init_addresses();
 }

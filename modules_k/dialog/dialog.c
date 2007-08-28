@@ -63,7 +63,7 @@ MODULE_VERSION
 
 static int mod_init(void);
 static int child_init(int rank);
-static void mod_destroy();
+static void mod_destroy(void);
 
 /* module parameter */
 static int dlg_hash_size = 4096;
@@ -354,7 +354,7 @@ static int child_init(int rank)
 
 
 
-static void mod_destroy()
+static void mod_destroy(void)
 {
 	destroy_dlg_db();
 	destroy_dlg_timer();

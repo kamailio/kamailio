@@ -74,7 +74,7 @@ error:
 }
 
 
-void domain_db_close()
+void domain_db_close(void)
 {
 	if (db_handle && domain_dbf.close){
 		domain_dbf.close(db_handle);

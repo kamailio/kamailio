@@ -84,7 +84,7 @@ int   trace_on      = 0;
 str    dup_uri_str      = {0, 0};
 struct sip_uri *dup_uri = 0;
 
-int   *trace_on_flag = NULL;      
+int   *trace_on_flag = NULL;
 
 static unsigned short traced_user_avp_type;
 static int_str traced_user_avp;
@@ -325,7 +325,7 @@ static void destroy(void)
 		shm_free(trace_on_flag);
 }
 
-static inline char* siptrace_get_table()
+static inline char* siptrace_get_table(void)
 {
 	int_str        avp_value;
 	struct usr_avp *avp;

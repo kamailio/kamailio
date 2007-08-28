@@ -69,7 +69,7 @@ static char           *tag_suffix;
    we do not filter */
 static unsigned int  *sl_timeout = 0;
 
-int sl_startup()
+int sl_startup(void)
 {
 
 	init_tags( sl_tag.s, &tag_suffix,
@@ -89,7 +89,7 @@ int sl_startup()
 }
 
 
-int sl_shutdown()
+int sl_shutdown(void)
 {
 	if (sl_timeout)
 		shm_free(sl_timeout);

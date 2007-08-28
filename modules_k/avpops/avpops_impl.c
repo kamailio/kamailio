@@ -1329,7 +1329,7 @@ error:
 }
 
 
-int ops_print_avp()
+int ops_print_avp(void)
 {
 	struct usr_avp **avp_list;
 	struct usr_avp *avp;

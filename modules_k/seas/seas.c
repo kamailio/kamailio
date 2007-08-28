@@ -684,7 +684,7 @@ error:
 
 /**Initializes SEAS to-tags
 */
-static void seas_init_tags()
+static void seas_init_tags(void)
 {
    init_tags(seas_tags, &seas_tag_suffix,"VozTele-Seas/tags",'-');
    LOG(L_DBG,"seas_init_tags, seas_tags=%s\n",seas_tags);
@@ -726,7 +726,7 @@ static int seas_child_init(int rank)
  * send them an EOF event or something that signals that SER is beeing shutdown,
  * so they could do their cleanup, etc.
  */
-static int seas_exit()
+static int seas_exit(void)
 {
    if(seas_listen_ip!=&(get_first_socket()->address))
       pkg_free(seas_listen_ip);

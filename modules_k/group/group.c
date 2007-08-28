@@ -208,7 +208,7 @@ int group_db_bind(char* db_url)
 }
 
 
-void group_db_close()
+void group_db_close(void)
 {
 	if (group_dbh && group_dbf.close){
 		group_dbf.close(group_dbh);

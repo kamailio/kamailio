@@ -110,7 +110,7 @@ static int goto_on_reply=0;
 
 
 /* returns the picked branch */
-int t_get_picked_branch()
+int t_get_picked_branch(void)
 {
 	return picked_branch;
 }
@@ -154,16 +154,16 @@ void t_on_reply( unsigned int go_to )
 }
 
 
-unsigned int get_on_negative()
+unsigned int get_on_negative(void)
 {
 	return goto_on_negative;
 }
-unsigned int get_on_reply()
+unsigned int get_on_reply(void)
 {
 	return goto_on_reply;
 }
 
-void tm_init_tags()
+void tm_init_tags(void)
 {
 	init_tags(tm_tags, &tm_tag_suffix, 
 		"OpenSER-TM/tags", TM_TAG_SEPARATOR );

@@ -106,7 +106,7 @@ static int w_process_register_norpl(struct sip_msg* msg, char* str,char* str2);
 static int cpl_process_register(struct sip_msg* msg, int no_rpl);
 static int fixup_cpl_run_script(void** param, int param_no);
 static int cpl_init(void);
-static int mi_child_init();
+static int mi_child_init(void);
 static int cpl_child_init(int rank);
 static int cpl_exit(void);
 static void cpl_process(int rank);
@@ -420,7 +420,7 @@ static int cpl_child_init(int rank)
 }
 
 
-static int mi_child_init()
+static int mi_child_init(void)
 {
 	return cpl_db_init(DB_URL, DB_TABLE);
 }

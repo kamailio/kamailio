@@ -294,7 +294,7 @@ static int mod_init(void)
 }
 
 
-static void mod_destroy()
+static void mod_destroy(void)
 {
 	if (probability)
 		shm_free(probability);

@@ -45,7 +45,7 @@ struct tmcb_head_list tmcb_pending_hl = {0,0};
 unsigned int tmcb_pending_id = -1;
 
 
-int init_tmcb_lists()
+int init_tmcb_lists(void)
 {
 	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
 		( sizeof(struct tmcb_head_list) );
@@ -73,7 +73,7 @@ inline static void empty_tmcb_list(struct tmcb_head_list *head)
 	head->reg_types = 0;
 }
 
-void destroy_tmcb_lists()
+void destroy_tmcb_lists(void)
 {
 	if (!req_in_tmcb_hl)
 		return;

@@ -45,7 +45,7 @@ extern char imc_cmd_start_char;
 /**
  * hash thable init
  */
-int imc_htable_init()
+int imc_htable_init(void)
 {
 	int i;
 
@@ -86,7 +86,7 @@ error:
 /**
  * destroy hash table
  */
-int imc_htable_destroy()
+int imc_htable_destroy(void)
 {
 	int i,room_deleted;
 	imc_room_p irp = NULL, irp_temp=NULL;
@@ -418,5 +418,3 @@ int imc_del_member(imc_room_p room, str* user, str* domain)
 	
 	return 0;
 }
-
-

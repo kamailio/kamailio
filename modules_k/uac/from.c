@@ -62,7 +62,7 @@ static void restore_to_reply(struct cell* t, int type, struct tmcb_params *p);
 #define text3B64_len(_l)   ( ( ((_l)+2)/3 ) << 2 )
 
 
-void init_from_replacer()
+void init_from_replacer(void)
 {
 	int i;
 
