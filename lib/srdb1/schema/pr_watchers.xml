@@ -58,8 +58,8 @@
 
     <column>
         <name>subs_status</name>
-        <type>string</type>
-        <size>&user_len;</size>
+		<type>int</type>
+		<size>11</size>
         <description>Status</description>
     </column>
 
