@@ -324,25 +324,41 @@ static int child_init(int _rank)
 {
 	dlist_t* ptr;
 
-	/* Shall we use database ? */
-	if (db_mode != NO_DB) { /* Yes */
-		ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
-		if (!ul_dbh) {
-			LOG(L_ERR, "ERROR:ul:child_init(%d): "
-					"Error while connecting database\n", _rank);
-			return -1;
-		}
-		/* _rank==1 is used even when fork is disabled */
-		if (_rank==1 && db_mode!= DB_ONLY) {
-			/* if cache is used, populate domains from DB */
-			for( ptr=root ; ptr ; ptr=ptr->next) {
-				if (preload_udomain(ul_dbh, ptr->d) < 0) {
-					LOG(L_ERR,
-						"ERROR:ul:child_init(%d): Error while preloading "
-						"domain '%.*s'\n", _rank, ptr->name.len,
-						ZSW(ptr->name.s));
-					return -1;
-				}
+	/* connecting to DB ? */
+	switch (db_mode) {
+		case NO_DB:
+			return 0;
+		case DB_ONLY:
+		case WRITE_THROUGH:
+			/* we need connection from working SIP and TIMER and MAIN
+			 * processes only */
+			if (_rank<=0 && _rank!=PROC_TIMER && _rank!=PROC_MAIN)
+				return 0;
+			break;
+		case WRITE_BACK:
+			/* connect only from TIMER (for flush) and from MAIN (for
+			 * final flush() */
+			if (_rank!=PROC_TIMER && _rank!=PROC_MAIN)
+				return 0;
+			break;
+	}
+
+	ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
+	if (!ul_dbh) {
+		LOG(L_ERR, "ERROR:ul:child_init(%d): "
+				"Error while connecting database\n", _rank);
+		return -1;
+	}
+	/* _rank==1 is used even when fork is disabled */
+	if (_rank==1 && db_mode!= DB_ONLY) {
+		/* if cache is used, populate domains from DB */
+		for( ptr=root ; ptr ; ptr=ptr->next) {
+			if (preload_udomain(ul_dbh, ptr->d) < 0) {
+				LOG(L_ERR,
+					"ERROR:ul:child_init(%d): Error while preloading "
+					"domain '%.*s'\n", _rank, ptr->name.len,
+					ZSW(ptr->name.s));
+				return -1;
 			}
 		}
 	}
@@ -378,18 +394,16 @@ static int mi_child_init()
  */
 static void destroy(void)
 {
-	/* Parent only, synchronize the world
-	* and then nuke it */
-	if (is_main) {
-		if (ul_dbh && synchronize_all_udomains() != 0) {
+	/* we need to sync DB in order to flush the cache */
+	if (ul_dbh) {
+		if (synchronize_all_udomains() != 0) {
 			LOG(L_ERR, "timer(): Error while flushing cache\n");
 		}
-		free_all_udomains();
-		ul_destroy_locks();
+		ul_dbf.close(ul_dbh);
 	}
-	
-	/* All processes close database connection */
-	if (ul_dbh) ul_dbf.close(ul_dbh);
+
+	free_all_udomains();
+	ul_destroy_locks();
 
 	/* free callbacks list */
 	destroy_ulcb_list();
@@ -405,3 +419,4 @@ static void timer(unsigned int ticks, void* param)
 		LOG(L_ERR, "timer(): Error while synchronizing cache\n");
 	}
 }
+
