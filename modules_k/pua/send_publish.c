@@ -553,6 +553,7 @@ send_publish:
 	if(result< 0)
 	{
 		LOG(L_ERR, "PUA: send_publish: ERROR while sending request\n");
+		shm_free(cb_param);
 		goto error;
 	}
 

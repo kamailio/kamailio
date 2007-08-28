@@ -97,7 +97,7 @@ int register_puacb( int types, pua_cb f, void* param )
 	cbp->next = puacb_list->first;
 	puacb_list->first = cbp;
 	puacb_list->reg_types |= types;
-	/* ... and fill it up */
+
 	cbp->callback = f;
     cbp->param= param;
 	cbp->types = types;

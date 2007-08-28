@@ -381,6 +381,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	str room_name;
 	struct sip_uri inv_uri;
 	del_member_t *cback_param = NULL;
+	int result;
 
 
 	size = cmd->param[0].len+2 ;	
@@ -509,7 +510,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	cback_param->member_domain = member->domain;
 	cback_param->inv_uri = member->uri;
 	/*?!?! possible race with 'remove user' */
-	tmb.t_request(&imc_msg_type,      /* Tipul mesajului */
+	result= tmb.t_request(&imc_msg_type,      /* Tipul mesajului */
 				&member->uri,         /* Request-URI */
 				&member->uri,         /* To */
 				&room->uri,           /* From */
@@ -519,7 +520,12 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 				imc_inv_callback,     /* functie callback */
 				(void*)(cback_param)  /* parametru callback */
 			);				
-				
+	if(result< 0)
+	{
+		LOG(L_ERR, "imc:imc_handle_invite:ERROR in tm send request\n");
+		shm_free(cback_param);
+		goto error;
+	}
 	if(uri.s!=NULL)
 		pkg_free(uri.s);
 
