@@ -165,6 +165,8 @@
  *
  * 2007-04-23	New function start_recording() allowing to start recording RTP
  *		session in the RTP proxy.
+ * 2007-08-28 tcpping_crlf option was introduced (jiri)
+ *
  */
 
 #include "nhelpr_funcs.h"
@@ -329,6 +331,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"natping_interval",      PARAM_INT,    &natping_interval      },
+	{"tcpping_crlf",      	  PARAM_INT,    &tcpping_crlf		},
 	{"natping_method",        PARAM_STRING, &natping_method        },
 	{"ping_nated_only",       PARAM_INT,    &ping_nated_only       },
 	{"rtpproxy_sock",         PARAM_STRING, &rtpproxy_sock         },

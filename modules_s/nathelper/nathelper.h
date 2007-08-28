@@ -47,5 +47,7 @@ int natping_contact(str, struct dest_info *);
 extern int natping_interval;
 extern int ping_nated_only;
 extern char *natping_method;
+extern int tcpping_crlf;
+
 
 #endif

@@ -23,6 +23,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * History:
+ * --------
+ *  LONG-YEARS-AGO, natping.c was born without history tracking in it
+ *  2007-08-28 tcpping_crlf option was introduced (jiri)
+ *
  */
 
 #include <unistd.h>
@@ -40,6 +45,12 @@ int natping_interval = 0;
  * that have the NAT flag set in user location database
  */
 int ping_nated_only = 0;
+
+
+/* if this parameter is set, then pings to TCP destinations will not
+ * be full requests but only CRLFs
+ */
+int tcpping_crlf = 0;
 
 /*
  * Ping method. Any word except NULL is treated as method name.
@@ -213,6 +224,43 @@ natping_contact(str contact, struct dest_info *dst) {
 	uac_req_t	uac_r;
 
 	if (natping_method != NULL) {
+
+		/* if natping-ing is set to send full SIP request and crlf
+		 * is set, send only CRLF only for TCP; this is much more
+		 * leightweighted, free of SIP-interop struggles, and solicits
+		 * TCP packets in reverse direction, thus keeping NAT alive
+		 * Note: the code bellow deserves a review, as it was rather
+		 * copied'and'pasted from the natping_method==NULL section
+		 * bellow
+		 */
+		if (tcpping_crlf && 
+				parse_uri(contact.s, contact.len, &curi) == 0 &&
+				curi.proto == PROTO_TCP) {
+			if (curi.port_no==0) curi.port_no=SIP_PORT;
+			he=sip_resolvehost(&curi.host,&curi.port_no,&proto);
+			if (he==NULL) {
+				LOG(L_ERR, "ERROR: nathelper: tcpping)_crlf can't resolve\n");
+				return -1;
+			}
+			hostent2su(&dst->to, he, 0, curi.port_no);
+			if (dst->send_sock == NULL) {
+				dst->send_sock = force_socket ? force_socket :
+			    	get_send_socket(0, &dst->to, PROTO_TCP);
+			}
+			if (dst->send_sock == NULL) {
+				LOG(L_ERR, "ERROR: nathelper::crlf: can't get socket\n");
+				return -1;
+			}
+			dst->proto=PROTO_TCP;
+			if (msg_send(dst, CRLF, CRLF_LEN)==-1) {
+				LOG(L_ERR, "ERROR: nathelper: crlf: can't send\n");
+				return -1;
+			}
+			return 1;
+		}
+
+
+
 		/* XXX: add send_sock handling */
 		p_method.s = natping_method;
 		p_method.len = strlen(p_method.s);
