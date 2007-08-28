@@ -46,13 +46,13 @@
  *
  * @return 0 means ok, -1 means an error occured.
  */
-int db_init();
+int db_init(void);
 
-void main_db_close();
+void main_db_close(void);
 
-int db_child_init();
+int db_child_init(void);
 
-void db_destroy();
+void db_destroy(void);
 
 /**
  * Loads the routing data from the database given in global

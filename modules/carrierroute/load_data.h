@@ -55,10 +55,10 @@ typedef int (*route_data_load_func_t)(struct rewrite_data * rd);
  */
 int bind_data_loader(const char * source, route_data_load_func_t * api);
 
-int data_main_finalize();
+int data_main_finalize(void);
 
-int data_child_init();
+int data_child_init(void);
 
-void data_destroy();
+void data_destroy(void);
 
 #endif

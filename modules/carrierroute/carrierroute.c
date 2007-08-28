@@ -92,8 +92,8 @@ int fallback_default = 1;
 
 /************* Declaration of Interface Functions **************************/
 static int mod_init(void);
-static int child_init();
-static int mi_child_init();
+static int child_init(int);
+static int mi_child_init(void);
 static void mod_destroy(void);
 static int route_fixup(void ** param, int param_no);
 static int user_route_fixup(void ** param, int param_no);
@@ -301,11 +301,11 @@ static int tree_route_fixup(void ** param, int param_no) {
 	return 0;
 }
 
-static int child_init() {
+static int child_init(int rank) {
 	return data_child_init();
 }
 
-static int mi_child_init() {
+static int mi_child_init(void) {
 	return data_child_init();
 }
 
