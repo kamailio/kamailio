@@ -79,6 +79,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	lock_tree_branch( ip->u.addr[0] );
 	node = mark_node( ip->u.addr, ip->len, &father, &flags);
 	if (node==0) {
+		unlock_tree_branch( ip->u.addr[0] );
 		/* even if this is an error case, we return true in script to avoid
 		 * considering the IP as marked (bogdan) */
 		return 1;
