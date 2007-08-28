@@ -84,4 +84,3 @@ CREATE TABLE pua (
     extra_headers TEXT NOT NULL
 ) ENGINE=MyISAM;
 
- 
