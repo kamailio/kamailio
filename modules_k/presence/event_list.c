@@ -258,6 +258,7 @@ pres_ev_t* contains_event(str* sname, event_t* parsed_event)
 	event_t event;
 	pres_ev_t* e;
 
+	memset(&event, 0, sizeof(event_t));
 	if(event_parser(sname->s, sname->len, &event)< 0)
 	{
 		LOG(L_ERR, "PRESENCE:contains_event: ERROR parsing event\n");

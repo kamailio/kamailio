@@ -234,7 +234,7 @@ int delete_shtable(str pres_uri, str ev_stored_name, str to_tag)
 		if(s->to_tag.len== to_tag.len &&
 				strncmp(s->to_tag.s, to_tag.s, to_tag.len)== 0)
 		{
-			found= 1;
+			found= s->local_cseq;
 			ps->next= s->next;
 			shm_free(s);
 			break;
@@ -267,13 +267,14 @@ int update_shtable(subs_t* subs, int type)
 	unsigned int hash_code;
 	subs_t* s;
 
+	DBG("PRESENCE:update_shtable..\n");
 	hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 
 	s= search_shtable(subs->callid, subs->to_tag, subs->from_tag, hash_code);
 	if(s== NULL)
 	{
-		DBG("PRESENCE: update_shtable: record not found in hash table\n");
+		DBG("PRESENCE:update_shtable: record not found in hash table\n");
 		lock_release(&subs_htable[hash_code].lock);
 		return -1;
 	}
@@ -285,7 +286,8 @@ int update_shtable(subs_t* subs, int type)
 	}
 	else
 	{
-		s->local_cseq= subs->local_cseq+ 1;	
+		subs->local_cseq= s->local_cseq;
+		s->local_cseq++;	
 		s->version= subs->version+ 1;
 	}
 	s->status= subs->status;

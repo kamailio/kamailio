@@ -77,7 +77,8 @@ void printf_subs(subs_t* subs)
 	DBG("\n\t[event]= %.*s\n\t[status]= %s\n\t[expires]= %u",
 		subs->event->name.len, subs->event->name.s,	
 		get_status_str(subs->status), subs->expires );
-	DBG("\n\t[callid]= %.*s", subs->callid.len, subs->callid.s); 
+	DBG("\n\t[callid]= %.*s\t[local_cseq]=%d", subs->callid.len, subs->callid.s,
+			subs->local_cseq); 
 	DBG("\n\t[to_tag]= %.*s\n\t[from_tag]= %.*s",subs->to_tag.len, 
 		subs->to_tag.s,	subs->from_tag.len, subs->from_tag.s);
 	DBG("\n\t[contact]= %.*s\n",subs->contact.len, subs->contact.s);
@@ -909,7 +910,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0, event_id_col = 0;
 	subs_t s, *s_new;
-	int count= 0;
+	int inc= 0;
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
@@ -998,8 +999,8 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
 		
-		if(row_vals[expires_col].val.int_val< (int)time(NULL))
-			continue;
+	//	if(row_vals[expires_col].val.int_val< (int)time(NULL))
+	//		continue;
 
 		memset(&s, 0, sizeof(subs_t));
 
@@ -1057,14 +1058,15 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 					" structure\n");
 			goto error;
 		}
-		s_new->next= (*s_array)->next;
-		(*s_array)->next= s_new;
-		
-		count++;
+		s_new->next= (*s_array);
+		(*s_array)= s_new;
+		printf_subs(s_new);	
+		inc++;
 		
 	}
+	DBG("PRESENCE: get_subs_db: left function\n");
 	pa_dbf.free_result(pa_db, result);
-	*n= count;
+	*n= inc;
 
 	return 0;
 
@@ -1075,13 +1077,19 @@ error:
 	return -1;
 }
 
-int update_in_list(subs_t* s, subs_t* s_array, int n)
+int update_in_list(subs_t* s, subs_t* s_array, int new_rec_no, int n)
 {
-	int i;
+	int i= 0;
 	subs_t* ls;
 
-	ls= s_array->next;
+	ls= s_array;
 	DBG("PRESENCE:update_in_list....n= %d\n", n);
+	while(i< new_rec_no)
+	{
+		i++;
+		ls= ls->next;
+	}
+
 	for(i = 0; i< n; i++)
 	{
 		DBG("\t%d subs from list\n", i);
@@ -1100,9 +1108,9 @@ int update_in_list(subs_t* s, subs_t* s_array, int n)
 		strncmp(ls->from_tag.s, s->from_tag.s, s->from_tag.len)== 0 )
 		{
 			ls->local_cseq= s->local_cseq;
-			ls->expires= ls->expires;
-			ls->version= ls->version;
-			ls->status= ls->status;
+			ls->expires= s->expires- (int)time(NULL);
+			ls->version= s->version;
+			ls->status= s->status;
 			return 1;
 		}
 		ls= ls->next;
@@ -1117,14 +1125,6 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	subs_t* s_array= NULL;
 	int n= 0, i= 0;
 	
-	/* get only active subscriptions */
-	s_array= (subs_t*)pkg_malloc(sizeof(subs_t));
-	if(s_array== NULL)
-	{
-		ERR_MEM("PRESENCE","get_subs_dialog");
-	}
-	memset(s_array, 0, sizeof(subs_t));
-
 	/* if fallback2db -> should take all dialogs from db
 	 * and the only those dialogs from cache with db_flag= INSERTDB_FLAG */
 
@@ -1132,7 +1132,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	{
 		if(get_subs_db(pres_uri, event, sender, &s_array, &n)< 0)			
 		{
-			LOG(L_ERR, "PRESENCE: get_subs_dialog: ERROR getting dialogs from database\n");
+			LOG(L_ERR, "PRESENCE:get_subs_dialog: ERROR getting dialogs from database\n");
 			goto error;
 		}
 	}
@@ -1146,12 +1146,19 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	{
 		s= s->next;
 	
-		if(s->expires< (int)time(NULL))
-			continue;
+		printf_subs(s);
 		
-		if(!(s->status== ACTIVE_STATUS && 
+		if(s->expires< (int)time(NULL))
+		{
+			DBG("PRESENCE:get_subs_dialog: This one is expired\n");
+			continue;
+		}
+		
+		if((!(s->status== ACTIVE_STATUS && 
 			s->event== event && s->pres_uri.len== pres_uri->len &&
-			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0))
+			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)) || 
+			(sender && sender->len== s->contact.len && 
+			strncmp(sender->s, s->contact.s, sender->len)== 0))
 			continue;
 
 		if(fallback2db)
@@ -1165,8 +1172,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			if(s->db_flag== UPDATEDB_FLAG)
 			{
 				DBG("PRESENCE: get_subs_dialog:s->db_flag== UPDATEDB_FLAG\n");
-				printf_subs(s);
-				if(n>0 && update_in_list(s, s_array, n)< 0)
+				if(n>0 && update_in_list(s, s_array, i, n)< 0)
 				{
 					DBG("PRESENCE: get_subs_dialog: dialog not found in list"
 							" fetched from database\n");
@@ -1176,10 +1182,8 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 					continue;			
 			}
 		}
-
-		if(sender && sender->len== s->contact.len && 
-			strncmp(sender->s, s->contact.s, sender->len)== 0)
-			continue;
+		
+		DBG("PRESENCE:get_subs_dialog:s->db_flag= INSERTDB_FLAG\n");
 		s_new= mem_copy_subs(s, PKG_MEM_TYPE);
 		if(s_new== NULL)
 		{
@@ -1189,8 +1193,8 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			goto error;
 		}
 		s_new->expires-= (int)time(NULL);
-		s_new->next= s_array->next;
-		s_array->next= s_new;
+		s_new->next= s_array;
+		s_array= s_new;
 		i++;
 	}
 
@@ -1221,15 +1225,8 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
 	}
 	
 	subs_array= get_subs_dialog(&pres_uri, p->event , p->sender);
-	if(subs_array== NULL)
-	{
-		LOG(L_ERR, "PRESENCE:publ_notify: ERROR while getting subs_dialog\n");
-		pkg_free(pres_uri.s);
-		goto done;
-	}
-	pkg_free(pres_uri.s);
-	
-	if(subs_array->next == NULL)
+	pkg_free(pres_uri.s);	
+	if(subs_array == NULL)
 	{
 		DBG("PRESENCE: publ_notify: Could not find subs_dialog\n");
 		ret_code= 0;
@@ -1248,7 +1245,7 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
 		}
 	}
 	
-	s= subs_array->next;
+	s= subs_array;
 	while(s)
 	{
 		s->auth_rules_doc= rules_doc;
@@ -1256,7 +1253,6 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
 		{
 			LOG(L_ERR, "PRESENCE: publ_notify: Could not send notify for"
 					" %.*s\n", p->event->name.len, p->event->name.s);
-			goto done;
 		}
 		s= s->next;
 	}
@@ -1286,14 +1282,9 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 	int ret_code= -1;
 
 	subs_array= get_subs_dialog(pres_uri, event , NULL);
-	if( subs_array== NULL)
+	if(subs_array == NULL)
 	{
-		LOG(L_ERR,"PRESENCE:query_db_notify:ERROR while getting subs_dialog\n");
-		goto done;
-	}
-	if(subs_array->next == NULL)
-	{
-		DBG("PRESENCE:query_db_notify:Could not get subsubscription dialog\n");
+		DBG("PRESENCE:query_db_notify:Could not get subscription dialog\n");
 		ret_code= 1;
 		goto done;
 	}
@@ -1308,7 +1299,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 		}
 	}	
 
-	s= subs_array->next;
+	s= subs_array;
 	
 	while(s)
 	{

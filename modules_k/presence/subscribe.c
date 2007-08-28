@@ -314,7 +314,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			}
 			/* delete record from hash table also */
 
-			delete_shtable(subs->pres_uri,subs->event->name,subs->to_tag);
+			subs->local_cseq= delete_shtable(subs->pres_uri,
+					subs->event->name, subs->to_tag);
 		
 			if(subs->event->type & PUBL_TYPE)
 			{	
@@ -356,7 +357,6 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				" notify \n");
 				goto error;
 			}
-	
 			return 1;
 		}
 
@@ -1470,8 +1470,8 @@ void timer_db_update(unsigned int ticks,void *param)
 	
 		while(s)
 		{
-	//		printf_subs(s);
-			if(s->expires <= (int)time(NULL))	
+			printf_subs(s);
+			if(s->expires < ((int)time(NULL)- 50))	
 			{
 				DBG("PRESENCE:timer_db_update: Found expired record\n");
 				if(!no_lock)
