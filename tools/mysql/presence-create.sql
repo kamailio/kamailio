@@ -46,7 +46,7 @@ CREATE TABLE watchers (
     w_user VARCHAR(64) NOT NULL,
     w_domain VARCHAR(64) NOT NULL,
     event VARCHAR(64) NOT NULL DEFAULT 'presence',
-    subs_status VARCHAR(64) NOT NULL,
+    subs_status INT(11) NOT NULL,
     reason VARCHAR(64),
     inserted_time INT(11) NOT NULL,
     UNIQUE KEY uude_watchers (p_uri, w_user, w_domain, event)

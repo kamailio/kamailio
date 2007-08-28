@@ -1,1 +1,1 @@
-id(int,auto) p_uri(str) w_user(str) w_domain(str) event(str) subs_status(str) reason(str,null) inserted_time(int) 
+id(int,auto) p_uri(str) w_user(str) w_domain(str) event(str) subs_status(int) reason(str,null) inserted_time(int) 
