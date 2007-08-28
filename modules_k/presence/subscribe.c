@@ -477,10 +477,9 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 
 	db_keys[1] = "subs_status";
 	db_ops [1] = OP_EQ;
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
-	db_vals[1].val.str_val.s = "pending";
-	db_vals[1].val.str_val.len = 7;
+	db_vals[1].val.int_val = PENDING_STATUS;
 
 	result_cols[0]= "id";
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
@@ -1850,7 +1849,7 @@ int get_db_subs_auth(subs_t* subs, int* found)
 	db_key_t db_keys[5];
 	db_val_t db_vals[5];
 	int n_query_cols= 0; 
-	db_key_t result_cols[2];
+	db_key_t result_cols[3];
 	db_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -1887,11 +1886,6 @@ int get_db_subs_auth(subs_t* subs, int* found)
 		LOG(L_ERR,"PRESENCE:get_db_subs_status: ERROR in use table\n");
 		return -1;
 	}	
-	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
-	{
-		LOG(L_ERR, "PRESENCE:get_db_subs_status: Error in use_table\n");
-		return -1;
-	}
 
 	if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols,
 					n_query_cols, 2, 0, &result )< 0)
