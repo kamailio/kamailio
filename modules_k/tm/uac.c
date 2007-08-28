@@ -270,7 +270,8 @@ error2:
 /*
  * Send a message within a dialog
  */
-int req_within(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb completion_cb, void* cbp)
+int req_within(str* method, str* headers, str* body, dlg_t* dialog,
+									transaction_cb completion_cb, void* cbp)
 {
 	if (!method || !dialog) {
 		LOG(L_ERR, "req_within: Invalid parameter value\n");
@@ -282,14 +283,13 @@ int req_within(str* method, str* headers, str* body, dlg_t* dialog, transaction_
 		goto err;
 	}
 
-	if ((method->len == 3) && (!memcmp("ACK", method->s, 3))) goto send;
-	if ((method->len == 6) && (!memcmp("CANCEL", method->s, 6))) goto send;
-	dialog->loc_seq.value++; /* Increment CSeq */
- send:
-	return t_uac(method, headers, body, dialog, completion_cb, cbp);
+	if ( !( ((method->len == 3) && !memcmp("ACK", method->s, 3)) ||
+	        ((method->len == 6) && !memcmp("CANCEL", method->s, 6)) ) )  {
+		dialog->loc_seq.value++; /* Increment CSeq */
+	}
 
- err:
-	if (cbp) shm_free(cbp);
+	return t_uac(method, headers, body, dialog, completion_cb, cbp);
+err:
 	return -1;
 }
 
@@ -297,7 +297,8 @@ int req_within(str* method, str* headers, str* body, dlg_t* dialog, transaction_
 /*
  * Send an initial request that will start a dialog
  */
-int req_outside(str* method, str* to, str* from, str* headers, str* body, dlg_t** dialog, transaction_cb cb, void* cbp)
+int req_outside(str* method, str* to, str* from, str* headers, str* body,
+								dlg_t** dialog, transaction_cb cb, void* cbp)
 {
 	str callid, fromtag;
 
@@ -312,9 +313,7 @@ int req_outside(str* method, str* to, str* from, str* headers, str* body, dlg_t*
 	}
 
 	return t_uac(method, headers, body, *dialog, cb, cbp);
-
- err:
-	if (cbp) shm_free(cbp);
+err:
 	return -1;
 }
 
@@ -322,7 +321,8 @@ int req_outside(str* method, str* to, str* from, str* headers, str* body, dlg_t*
 /*
  * Send a transactional request, no dialogs involved
  */
-int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *oburi, transaction_cb c, void* cp)
+int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *oburi,
+											transaction_cb cb, void* cbp)
 {
 	str callid, fromtag;
 	dlg_t* dialog;
@@ -348,12 +348,11 @@ int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *oburi, t
 
 	w_calculate_hooks(dialog);
 
-	res = t_uac(m, h, b, dialog, c, cp);
+	res = t_uac(m, h, b, dialog, cb, cbp);
 	dialog->rem_target.s = 0;
 	free_dlg(dialog);
 	return res;
 
- err:
-	if (cp) shm_free(cp);
+err:
 	return -1;
 }
