@@ -84,7 +84,7 @@ void xcapFreeNodeSel(xcap_node_sel_t* node)
 
 }
 
-xcap_node_sel_t* xcapInitNodeSel()
+xcap_node_sel_t* xcapInitNodeSel(void)
 {
 	xcap_node_sel_t* nsel= NULL;
 

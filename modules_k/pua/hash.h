@@ -99,7 +99,7 @@ typedef struct htable{
     hash_entry_t* p_records;        	              
 }htable_t;
 
-htable_t* new_htable();
+htable_t* new_htable(void);
 
 ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code);
 
@@ -110,7 +110,7 @@ void update_htable(ua_pres_t* presentity,time_t desired_expires,
 
 void delete_htable(ua_pres_t* presentity, unsigned int hash_code);
 
-void destroy_htable();
+void destroy_htable(void);
 int is_dialog(ua_pres_t* dialog);
 
 ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code);

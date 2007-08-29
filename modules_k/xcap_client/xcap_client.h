@@ -33,5 +33,4 @@
 
 extern xcap_callback_t* xcapcb_list;
 
-
 #endif

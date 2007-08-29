@@ -48,7 +48,7 @@ void print_ua_pres(ua_pres_t* p)
 		DBG("\tetag= %.*s - len= %d\n", p->etag.len, p->etag.s, p->etag.len);
 	DBG("\texpires= %d\n", p->expires- (int)time(NULL));
 }	
-htable_t* new_htable()
+htable_t* new_htable(void)
 {
 	htable_t* H= NULL;
 	int i= 0, j;
@@ -230,7 +230,7 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 
 }
 	
-void destroy_htable()
+void destroy_htable(void)
 {
 	ua_pres_t* p= NULL,*q= NULL;
 	int i;

@@ -52,9 +52,9 @@ struct puacb_head_list {
 
 extern struct puacb_head_list*  puacb_list;
 
-int init_puacb_list();
+int init_puacb_list(void);
 
-void destroy_puacb_list();
+void destroy_puacb_list(void);
 
 
 /* register a callback for several types of events */

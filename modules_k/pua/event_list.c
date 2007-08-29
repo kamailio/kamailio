@@ -32,7 +32,7 @@
 #include "../../mem/shm_mem.h"
 #include "event_list.h"
 
-pua_event_t* init_pua_evlist()
+pua_event_t* init_pua_evlist(void)
 {
 	pua_event_t* list= NULL;
 
@@ -138,7 +138,7 @@ pua_event_t* get_event(int ev_flag)
 }
 
 
-void destroy_pua_evlist()
+void destroy_pua_evlist(void)
 {
 	pua_event_t* e1, *e2;
 

@@ -69,7 +69,7 @@ error:
 	return -1;
 }
 
-void destroy_xcapcb_list()
+void destroy_xcapcb_list(void)
 {
 	xcap_callback_t* xcb, *prev_xcb;
 	

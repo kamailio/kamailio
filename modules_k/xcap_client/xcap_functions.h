@@ -72,7 +72,7 @@ typedef struct att_test
 	str value;
 }attr_test_t;
 
-xcap_node_sel_t* xcapInitNodeSel();
+xcap_node_sel_t* xcapInitNodeSel(void);
 typedef xcap_node_sel_t* (*xcap_nodeSel_init_t )(void);
 
 xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,

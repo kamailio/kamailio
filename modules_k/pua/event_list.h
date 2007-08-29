@@ -47,7 +47,7 @@ typedef struct pua_event
 
 extern pua_event_t* pua_evlist;
 
-pua_event_t* init_pua_evlist();
+pua_event_t* init_pua_evlist(void);
 
 int add_pua_event(int ev_flag, char* name, char* content_type,
 		evs_process_body_t* process_body);
@@ -59,6 +59,6 @@ pua_event_t* contains_pua_event(str* name);
 
 pua_event_t* get_event(int ev_flag);
 
-void destroy_pua_evlist();
+void destroy_pua_evlist(void);
 
 #endif

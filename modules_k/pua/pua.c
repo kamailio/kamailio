@@ -84,8 +84,8 @@ int update_pua(ua_pres_t* p, unsigned int hash_code);
 ua_pres_t* build_upsubs_cbparam(ua_pres_t* pres);
 ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
 
-int db_store();
-int db_restore();
+int db_store(void);
+int db_restore(void);
 void db_update(unsigned int ticks,void *param);
 void hashT_clean(unsigned int ticks,void *param);
 
@@ -291,7 +291,7 @@ static void destroy(void)
 	return ;
 }
 
-int db_restore()
+int db_restore(void)
 {
 	ua_pres_t* p= NULL;
 	db_key_t result_cols[17]; 

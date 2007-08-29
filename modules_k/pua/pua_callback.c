@@ -31,7 +31,7 @@
 
 struct puacb_head_list* puacb_list = 0;
 
-int init_puacb_list()
+int init_puacb_list(void)
 {
 	puacb_list = (struct puacb_head_list*)shm_malloc
 		( sizeof(struct puacb_head_list) );
@@ -46,7 +46,7 @@ int init_puacb_list()
 }
 
 
-void destroy_puacb_list()
+void destroy_puacb_list(void)
 {
 	struct pua_callback *cbp, *cbp_tmp;
 

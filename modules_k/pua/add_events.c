@@ -33,7 +33,7 @@
 #include "pua.h"
 #include "pidf.h"
 
-int pua_add_events()
+int pua_add_events(void)
 {
 	/* add presence */
 	if(add_pua_event(PRESENCE_EVENT, "presence", "application/pidf+xml", 

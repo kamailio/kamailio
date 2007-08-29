@@ -51,7 +51,7 @@ typedef struct xcap_callback {
 }xcap_callback_t;
 
 /* destroy registered callback list */
-void destroy_xcapcb_list();
+void destroy_xcapcb_list(void);
 
 /* register a callback for several types of events */
 int register_xcapcb( int types, xcap_cb f);
