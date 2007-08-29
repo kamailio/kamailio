@@ -88,7 +88,7 @@ int check_table_version(db_func_t* dbf, db_con_t* dbh, char* table, const int ve
  *
  * @return 0 means ok, -1 means an error occured.
  */
-int db_init() {
+int db_init(void) {
 	if (db_url == NULL) {
 		LM_ERR("You have to set the db_url module parameter.\n");
 		return -1;
@@ -109,12 +109,12 @@ int db_init() {
 	return 0;
 }
 
-void main_db_close(){
+void main_db_close(void){
 	dbf.close(dbh);
 	dbh = NULL;
 }
 
-int db_child_init() {
+int db_child_init(void) {
 	if(dbh){
 		dbf.close(dbh);
 	}
@@ -125,7 +125,7 @@ int db_child_init() {
 	return 0;
 }
 
-void db_destroy(){
+void db_destroy(void){
 	if(dbh){
 		dbf.close(dbh);
 	}

@@ -151,7 +151,7 @@ int load_config(struct rewrite_data * rd) {
  *
  * @return a pointer to the configuration data structure, NULL on failure
  */
-static cfg_t * parse_config() {
+static cfg_t * parse_config(void) {
 	cfg_t * cfg = NULL;
 
 	cfg_opt_t target_opts[] = {

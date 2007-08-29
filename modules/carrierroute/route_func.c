@@ -51,10 +51,11 @@
 #include "../../mem/mem.h"
 #include "../../qvalue.h"
 #include "../../dset.h"
+#include "../../prim_hash.h"
 #include "carrierroute.h"
 
-hash_func_t hash_func = NULL;
-hash_func_t prime_hash_func = NULL;
+hash_func_t my_hash_func = NULL;
+hash_func_t my_prime_hash_func = NULL;
 
 enum hash_algorithm {
     alg_crc32, /*!< hashing algorithm is CRC32 */
@@ -106,12 +107,12 @@ static struct route_rule * get_rule_by_hash(struct route_tree_item * rt, int pro
  *
  * @return 0 on success, -1 on failure
  */
-int init_route_funcs() {
-	if ((hash_func = (hash_func_t) find_export("hash", 0, 0)) == NULL) {
+int init_route_funcs(void) {
+	if ((my_hash_func = (hash_func_t) find_export("hash", 0, 0)) == NULL) {
 		LM_ERR("Need hash module to work.\n");
 		return -1;
 	}
-	if ((prime_hash_func = (hash_func_t) find_export("prime_hash", 0, 0)) == NULL) {
+	if ((my_prime_hash_func = (hash_func_t) find_export("prime_hash", 0, 0)) == NULL) {
 		LM_ERR("Need prime_hash function of hash module to work.\n");
 		return -1;
 	}
@@ -783,7 +784,7 @@ static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
 
 	switch (alg) {
 		case alg_prime:
-			if ((prob = prime_hash_func(msg, hash_source, route_tree->max_locdb)) < 0) {
+			if ((prob = my_prime_hash_func(msg, hash_source, route_tree->max_locdb)) < 0) {
 				return -1;
 			}
 			if ((rr = get_rule_by_hash(route_tree, prob)) == NULL) {
@@ -792,7 +793,7 @@ static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
 			}
 			break;
 		case alg_crc32:
-			if ((prob = hash_func(msg, hash_source, DICE_MAX)) < 0) {
+			if ((prob = my_hash_func(msg, hash_source, DICE_MAX)) < 0) {
 				return -1;
 			}
 			/* This auto-magically takes the last rule if anything is broken.  */

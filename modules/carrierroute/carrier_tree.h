@@ -41,7 +41,6 @@
 
 #include <sys/types.h>
 #include "../../str.h"
-#include "../hash/hash.h"
 #include "route.h"
 
 
@@ -63,7 +62,7 @@ int init_route_data(const char * source);
  *
  * @return 0 on success, -1 on failure
  */
-int prepare_route_tree();
+int prepare_route_tree(void);
 
 /**
  * Increases lock counter and returns a pointer to the
@@ -72,7 +71,7 @@ int prepare_route_tree();
  * @return pointer to the global routing data on success,
  * NULL on failure
 */
-struct rewrite_data * get_data();
+struct rewrite_data * get_data(void);
 
 /**
  * decrements the lock counter of the routing data

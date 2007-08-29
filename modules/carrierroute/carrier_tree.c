@@ -146,7 +146,7 @@ int prepare_route_tree(void) {
  * @return pointer to the global routing data on success,
  * NULL on failure
 */
-struct rewrite_data * get_data() {
+struct rewrite_data * get_data(void) {
 	struct rewrite_data *ret;
 	if (!global_data || !*global_data) {
 		return NULL;
@@ -396,7 +396,7 @@ int add_tree(const char * tree, int carrier_id) {
 	return id;
 }
 
-void destroy_route_data(){
+void destroy_route_data(void){
 	struct rewrite_data * rd = get_data();
 	struct tree_map * tmp3, * tmp4;
 	destroy_rewrite_data(rd);
