@@ -48,6 +48,7 @@
 #include "../../ut.h"
 #include "../../route.h"
 #include "../../mem/mem.h"
+#include "../../mod_fix.h"
 
 #include "dispatch.h"
 
@@ -98,7 +99,6 @@ static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
 
 static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
-static int fixstring2int(void **, int);
 
 void destroy(void);
 
@@ -118,7 +118,7 @@ static cmd_export_t cmds[]={
 	{"ds_mark_dst",      w_ds_mark_dst0,     0, ds_warn_fixup, FAILURE_ROUTE},
 	{"ds_mark_dst",      w_ds_mark_dst1,     1, ds_warn_fixup, FAILURE_ROUTE},
 	{"ds_is_from_list",  w_ds_is_from_list0, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"ds_is_from_list",  w_ds_is_from_list1, 1, fixstring2int, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"ds_is_from_list",  w_ds_is_from_list1, 1, fixup_str2int, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -589,27 +589,4 @@ static int w_ds_is_from_list0(struct sip_msg *msg, char *str1, char *str2)
 static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 {
 	return ds_is_from_list(msg, (int)set);
-}
-
-/* 
- * Convert string parameter to integer for functions that expect an integer.
- * Taken from mediaproxy/LCR module.
- */
-static int fixstring2int(void **param, int param_count)
-{
-	unsigned long number;
-	int err;
-
-	if (param_count == 1) {
-		number = str2s(*param, strlen(*param), &err);
-		if (err == 0) {
-			pkg_free(*param);
-			*param = (void*)number;
-			return 0;
-		} else {
-			LM_ERR("ERROR: bad number `%s'\n", (char*)(*param));
-			return E_CFG;
-		}
-	}
-	return 0;
 }

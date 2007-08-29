@@ -57,6 +57,7 @@
 #include "../../ip_addr.h"
 #include "../../mi/mi.h"
 #include "../mysql/dbase.h"
+#include "../../mod_fix.h"
 #include "mi.h"
 
 MODULE_VERSION
@@ -76,7 +77,6 @@ static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
 static int mi_child_init(void);
 static int mod_init(void);       /* Module initialization function */
-static int fixstring2int(void **param, int param_count);
 static int fixstringloadgws(void **param, int param_count);
 
 int reload_gws ( void );
@@ -257,11 +257,11 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"from_gw",       from_gw,       0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw",       from_gw_grp,   1, fixstring2int,
+	{"from_gw",       from_gw_grp,   1, fixup_str2int,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"to_gw",         to_gw,         0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"to_gw",         to_gw_grp,     1, fixstring2int,
+	{"to_gw",         to_gw_grp,     1, fixup_str2int,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"load_contacts", load_contacts, 0, 0,
 		REQUEST_ROUTE},
@@ -1975,29 +1975,6 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
     return 1;
 }
 
-/* 
- * Convert string parameter to integer for functions that expect an integer.
- * Taken from mediaproxy module.
- */
-static int fixstring2int(void **param, int param_count)
-{
-    unsigned long number;
-    int err;
-
-    if (param_count == 1) {
-	number = str2s(*param, strlen(*param), &err);
-	if (err == 0) {
-	    pkg_free(*param);
-	    *param = (void*)number;
-	    return 0;
-	} else {
-	    LOG(L_ERR, "lcr/fixstring2int(): ERROR: bad number `%s'\n",
-		(char*)(*param));
-	    return E_CFG;
-	}
-    }
-    return 0;
-}
 
 /* 
  * Convert string parameter to integer for functions that expect an integer.
