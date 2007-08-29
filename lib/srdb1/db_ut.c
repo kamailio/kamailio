@@ -42,14 +42,14 @@ inline int db_str2int(const char* _s, int* _v)
 	long tmp;
 
 	if (!_s || !_v) {
-	       LOG(L_ERR, "ERROR:db_str2int: Invalid parameter value\n");
+	       LM_ERR("Invalid parameter value\n");
 	       return -1;
 	}
 
 	tmp = strtoul(_s, 0, 10);
 	if ((tmp == ULONG_MAX && errno == ERANGE) || 
 	    (tmp < INT_MIN) || (tmp > UINT_MAX)) {
-		LOG(L_ERR, "ERROR:db_str2int: Value out of range\n");
+		LM_ERR("Value out of range\n");
 		return -1;
 	}
 
@@ -64,7 +64,7 @@ inline int db_str2int(const char* _s, int* _v)
 inline int db_str2double(const char* _s, double* _v)
 {
 	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "ERROR:db_str2double: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -82,13 +82,13 @@ inline int db_int2str(int _v, char* _s, int* _l)
 	int ret;
 
 	if ((!_s) || (!_l) || (!*_l)) {
-		LOG(L_ERR, "ERROR:db_int2str: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	ret = snprintf(_s, *_l, "%-d", _v);
 	if (ret < 0 || ret >= *_l) {
-		LOG(L_ERR, "ERROR:db_int2str: error in sprintf\n");
+		LM_ERR("Error in sprintf\n");
 		return -1;
 	}
 	*_l = ret;
@@ -105,13 +105,13 @@ inline int db_double2str(double _v, char* _s, int* _l)
 	int ret;
 
 	if ((!_s) || (!_l) || (!*_l)) {
-		LOG(L_ERR, "ERROR:db_double2str: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	ret = snprintf(_s, *_l, "%-10.2f", _v);
 	if (ret < 0 || ret >= *_l) {
-		LOG(L_ERR, "ERROR:db_double2str: Error in snprintf\n");
+		LM_ERR("Error in snprintf\n");
 		return -1;
 	}
 	*_l = ret;
@@ -126,7 +126,7 @@ inline int db_double2str(double _v, char* _s, int* _l)
 inline int db_str2time(const char* _s, time_t* _v)
 {
 	if ((!_s) || (!_v)) {
-		LOG(L_ERR, "ERROR:db_str2time: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -134,7 +134,10 @@ inline int db_str2time(const char* _s, time_t* _v)
 	struct tm time;
 	/* It is necessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
-	strptime(_s, "%Y-%m-%d %H:%M:%S", &time);
+	if (strptime(_s, "%Y-%m-%d %H:%M:%S", &time) == NULL) {
+		LM_ERR("Error during time conversion\n");
+		return -1;
+	}
 
 	/* Daylight saving information got lost in the database
 	* so let mktime to guess it. This eliminates the bug when
@@ -156,7 +159,7 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 	int l;
 
 	if ((!_s) || (!_l) || (*_l < 2)) {
-		LOG(L_ERR, "ERROR:db_time2str: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -166,6 +169,14 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 	struct tm* t;
 	t = localtime(&_v);
 	l = strftime(_s, *_l -1, "%Y-%m-%d %H:%M:%S", t);
+
+	if (l == 0) {
+		LM_ERR("Error during time conversion\n");
+		// the value of _s is now unspecified
+		_s = NULL;
+		_l = 0;
+		return -1;
+	}
 
 	*(_s + l) = '\'';
 	*_l = l + 2;
@@ -182,7 +193,7 @@ inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
 	int len = 0;
 
 	if ((!_c) || (!_n) || (!_b) || (!_l)) {
-		LOG(L_ERR, "ERROR:db_print_columns: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -200,7 +211,7 @@ inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
 	return len;
 
 	error:
-	LOG(L_ERR, "ERROR:db_print_columns: Error in snprintf\n");
+	LM_ERR("Error in snprintf\n");
 	return -1;
 }
 
@@ -214,15 +225,14 @@ int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n,
 	int i, res = 0, l;  
 
 	if (!_c || !_b || !_l || !_v || !_n) {
-		LOG(L_ERR, "db_print_values: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	for(i = 0; i < _n; i++) {
 		l = _l - res;
 		if ( (*val2str)(_c, _v + i, _b + res, &l) < 0) {
-			LOG(L_ERR,
-				"db_print_values: Error while converting value to string\n");
+			LM_ERR("Error while converting value to string\n");
 			return -1;
 		}
 		res += l;
@@ -247,7 +257,7 @@ int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o,
 	int l;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
-		LOG(L_ERR, "db_print_where: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -273,7 +283,7 @@ int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o,
 	return len;
 
  error:
-	LOG(L_ERR, "db_print_where: Error in snprintf\n");
+	LM_ERR("Error in snprintf\n");
 	return -1;
 }
 
@@ -289,7 +299,7 @@ int db_print_set(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v,
 	int l;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
-		LOG(L_ERR, "db_print_set: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -310,6 +320,6 @@ int db_print_set(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v,
 	return len;
 
  error:
-	LOG(L_ERR, "db_print_set: Error in snprintf\n");
+	LM_ERR("Error in snprintf\n");
 	return -1;
 }
