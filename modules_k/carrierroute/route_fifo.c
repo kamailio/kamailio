@@ -428,7 +428,7 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
  *
  * @param file filehandle for writing output
  */
-static struct mi_root* print_replace_help() {
+static struct mi_root* print_replace_help(void) {
 	struct mi_root* rpl_tree;
 	struct mi_node* node;
 	

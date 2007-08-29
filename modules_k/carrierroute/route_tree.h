@@ -40,9 +40,6 @@
 #define SP_ROUTE_ROUTE_TREE_H
 
 #include "route.h"
-#include <sys/types.h>
-#include "../../str.h"
-#include "../hash/hash.h"
 
 /**
  * Adds the given route information to the route tree identified by
@@ -72,7 +69,7 @@
  * @see add_route()
  */
 int add_route_to_tree(struct route_tree_item * rt, const char * scan_prefix,
-                             const char * full_prefix, int max_locdb,double prob,
+                             const char * full_prefix, int max_locdb, double prob,
                              const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
                              const char * rewrite_local_suffix, int status, int hash_index,
                              const char * comment);
@@ -105,6 +102,6 @@ struct route_tree * get_route_tree_by_id(struct carrier_tree * ct, int id);
 
 void destroy_route_tree(struct route_tree *route_tree);
 
-void destroy_route_map();
+void destroy_route_map(void);
 
 #endif

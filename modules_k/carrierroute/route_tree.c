@@ -42,7 +42,6 @@
 #include "route.h"
 #include "route_rule.h"
 #include "load_data.h"
-#include <unistd.h>
 
 
 
@@ -236,7 +235,7 @@ int add_route_to_tree(struct route_tree_item * route_tree, const char * scan_pre
 	}
 }
 
-void destroy_route_map() {
+void destroy_route_map(void) {
 	struct route_map * tmp, *tmp2;
 	if (script_routes) {
 		tmp = *script_routes;
