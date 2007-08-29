@@ -56,7 +56,6 @@
 #include "../../dset.h"
 #include "../../ip_addr.h"
 #include "../../mi/mi.h"
-#include "../mysql/dbase.h"
 #include "../../mod_fix.h"
 #include "mi.h"
 
