@@ -57,9 +57,10 @@ typedef struct subs_entry
 
 typedef subs_entry_t* shtable_t;
 
-shtable_t new_shtable();
+shtable_t new_shtable(void);
 
-subs_t* search_shtable();
+subs_t* search_shtable(str callid,str to_tag,str from_tag,
+		unsigned int hash_code);
 
 int insert_shtable(subs_t* subs);
 
@@ -71,7 +72,7 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type);
 
 void free_subs_list(subs_t* s_array, int mem_type);
 
-void destroy_shtable();
+void destroy_shtable(void);
 
 /* presentity hash table */
 typedef struct pres_entry
@@ -88,7 +89,7 @@ typedef struct pres_htable
 	gen_lock_t lock;
 }phtable_t;
 
-phtable_t* new_phtable();
+phtable_t* new_phtable(void);
 
 pres_entry_t* search_phtable(str* pres_uri, int event, unsigned int hash_code);
 
@@ -96,7 +97,7 @@ int insert_phtable(str* pres_uri, int event);
 
 int delete_phtable(str* pres_uri, int event);
 
-void destroy_phtable();
+void destroy_phtable(void);
 
 #endif
 

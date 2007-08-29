@@ -107,7 +107,7 @@ typedef struct evlist
 	pres_ev_t* events;
 }evlist_t;	
 
-evlist_t* init_evlist();
+evlist_t* init_evlist(void);
 
 int add_event(pres_ev_t* event);
 
@@ -121,7 +121,7 @@ int get_event_list(str** ev_list);
 
 typedef int (*get_event_list_t) (str** ev_list);
 
-void destroy_evlist();
+void destroy_evlist(void);
 
 extern evlist_t* EvList;
 

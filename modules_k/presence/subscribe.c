@@ -1579,7 +1579,7 @@ void timer_db_update(unsigned int ticks,void *param)
 
 }
 
-int restore_db_subs()
+int restore_db_subs(void)
 {
 	db_key_t result_cols[22]; 
 	db_res_t *res= NULL;

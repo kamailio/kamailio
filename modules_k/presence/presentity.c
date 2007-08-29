@@ -541,7 +541,7 @@ error:
 
 }
 
-int pres_htable_restore()
+int pres_htable_restore(void)
 {
 	/* query all records from presentity table and insert records 
 	 * in presentity table */

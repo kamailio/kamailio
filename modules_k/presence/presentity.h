@@ -66,7 +66,7 @@ void free_presentity(presentity_t* p);
 
 char* generate_ETag(int publ_count);
 
-int pres_htable_restore();
+int pres_htable_restore(void);
 
 #endif
 

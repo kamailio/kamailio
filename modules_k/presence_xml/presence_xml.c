@@ -57,9 +57,11 @@ static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 int pxml_add_xcap_server( modparam_t type, void* val);
-int shm_copy_xcap_list();
+int shm_copy_xcap_list(void);
 void free_xs_list(xcap_serv_t* xs_list, int mem_type);
 int xcap_doc_updated(int doc_type, str xid, char* doc);
+int mi_child_init(void);
+struct mi_root* dum(struct mi_root* cmd, void* param);
 
 /** module variables ***/
 add_event_t pres_add_event;
@@ -92,14 +94,20 @@ static param_export_t params[]={
 	{ "xcap_server",     STR_PARAM|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
 	{  0,						0,										    0}
 };
-	/** module exports */
+
+static mi_export_t mi_cmds[] = {
+	{ "dum",             dum,            0,  0,  mi_child_init},
+	{  0,                0,            0,  0,        0      }
+};
+
+/** module exports */
 struct module_exports exports= {
 	"presence_xml",				/* module name */
 	 DEFAULT_DLFLAGS,           /* dlopen flags */
 	 0,  						/* exported functions */
 	 params,					/* exported parameters */
 	 0,							/* exported statistics */
-	 0,							/* exported MI functions */
+	 mi_cmds,							/* exported MI functions */
 	 0,							/* exported pseudo-variables */
 	 0,							/* extra processes */
 	 mod_init,					/* module initialization function */
@@ -232,6 +240,33 @@ static int mod_init(void)
 	return 0;
 }
 
+int mi_child_init(void)
+{
+	DBG("presence_xml: mi_child_init\n");
+	
+	if (pxml_dbf.init==0)
+	{
+		LOG(L_CRIT, "PRESENCE_XML:mi_child_init:ERROR database not bound\n");
+		return -1;
+	}
+	pxml_db = pxml_dbf.init(db_url.s);
+	if (pxml_db== NULL)
+	{
+		LOG(L_ERR,"PRESENCE_XML:mi_child_init:ERROR while connecting database\n");
+		return -1;
+	}
+		
+	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
+	{
+		LOG(L_ERR, "PRESENCE_XML:mi_child_init: ERROR in use_table\n");
+		return -1;
+	}
+	
+	DBG("PRESENCE_XML:mi_child_init:Database connection opened successfully\n");
+
+	return 0;
+}	
+
 static int child_init(int rank)
 {
 	DBG("presence_xml: init_child [%d]  pid [%d]\n", rank, getpid());
@@ -242,22 +277,21 @@ static int child_init(int rank)
 		return -1;
 	}
 	pxml_db = pxml_dbf.init(db_url.s);
-	if (!pxml_db)
+	if (pxml_db== NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML: child %d: Error while connecting database\n",
+		LOG(L_ERR,"PRESENCE_XML: child %d: ERROR while connecting database\n",
 				rank);
 		return -1;
 	}
-	else
-	{
-		if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
-		{
-			LOG(L_ERR, "PRESENCE_XML: child %d: Error in use_table\n", rank);
-			return -1;
-		}
 		
-		DBG("PRESENCE_XML: child %d: Database connection opened successfully\n", rank);
+	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
+	{
+		LOG(L_ERR, "PRESENCE_XML: child %d: ERROR in use_table\n", rank);
+		return -1;
 	}
+	
+	DBG("PRESENCE_XML:child %d: Database connection opened successfully\n",
+			rank);
 
 	return 0;
 }	
@@ -300,7 +334,7 @@ error:
 	return -1;
 }
 
-int shm_copy_xcap_list()
+int shm_copy_xcap_list(void)
 {
 	xcap_serv_t* xs, *shm_xs, *prev_xs;
 	int size;
@@ -432,4 +466,8 @@ int xcap_doc_updated(int doc_type, str xid, char* doc)
 	}
 	return 0;
 
+}
+struct mi_root* dum(struct mi_root* cmd, void* param)
+{
+	return 0;
 }

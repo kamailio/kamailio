@@ -378,7 +378,7 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 		*rules_doc= NULL;
 		return 0;
 	}
-
+	DBG("PRESENCE_XML:get_rules_doc..\n");
 	/* first search in database */
 	query_cols[n_query_cols] = "username";
 	query_vals[n_query_cols].type = DB_STR;
@@ -402,7 +402,8 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 
 	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE_XML:get_rules_doc: Error in use_table\n");
+		LOG(L_ERR, "PRESENCE_XML:get_rules_doc: Error in use_table-"
+				"[table]= %s\n", xcap_table);
 		return -1;
 	}
 

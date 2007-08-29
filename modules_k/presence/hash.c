@@ -36,7 +36,7 @@
 #include "hash.h"
 #include "notify.h"
 
-shtable_t new_shtable()
+shtable_t new_shtable(void)
 {
 	shtable_t htable= NULL;
 	int i, j;
@@ -83,7 +83,7 @@ error:
 
 }
 
-void destroy_shtable()
+void destroy_shtable(void)
 {
 	int i;
 
@@ -302,7 +302,7 @@ int update_shtable(subs_t* subs, int type)
 	return 0;
 }
 
-phtable_t* new_phtable()
+phtable_t* new_phtable(void)
 {
 	phtable_t* htable= NULL;
 	int i, j;
@@ -350,7 +350,7 @@ error:
 
 }
 
-void destroy_phtable()
+void destroy_phtable(void)
 {
 	int i;
 	pres_entry_t* p, *prev_p;

@@ -29,7 +29,7 @@
 #ifndef _XML_ADD_EV_H_
 #define _XML_ADD_EV_H_
 
-int xml_add_events();
+int xml_add_events(void);
 int	xml_publ_handl(struct sip_msg* msg);
 
 #endif

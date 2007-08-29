@@ -237,7 +237,7 @@ void free_pres_event(pres_ev_t* ev)
 
 }
 
-evlist_t* init_evlist()
+evlist_t* init_evlist(void)
 {
 	evlist_t*  list= NULL;
 
@@ -361,7 +361,7 @@ int get_event_list(str** ev_list)
 	return 0;
 }
 
-void destroy_evlist()
+void destroy_evlist(void)
 {
     pres_ev_t* e1, *e2;
     if (EvList) 

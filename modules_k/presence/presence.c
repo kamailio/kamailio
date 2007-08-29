@@ -100,6 +100,7 @@ int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
 struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
 int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
+int mi_child_init(void);
 
 int counter =0;
 int pid = 0;
@@ -141,7 +142,7 @@ static param_export_t params[]={
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "refreshWatchers", mi_refreshWatchers,    0,  0,  0},
+	{ "refreshWatchers", mi_refreshWatchers,    0,  0,  mi_child_init},
 	{  0,                0,                     0,  0,  0}
 };
 
@@ -365,29 +366,68 @@ static int child_init(int rank)
 				rank);
 		return -1;
 	}
-	else
+		
+	if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
 	{
-		if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
-		{
-			LOG(L_ERR, "PRESENCE: child %d: Error in use_table presentity_table\n", rank);
-			return -1;
-		}
-		if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
-		{
-			LOG(L_ERR, "PRESENCE: child %d: Error in use_table active_watchers_table\n",
-					rank);
-			return -1;
-		}
-		if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
-		{
-			LOG(L_ERR, "PRESENCE: child %d: Error in use_table watchers_table\n", rank);
-			return -1;
-		}
-
-		DBG("PRESENCE: child %d: Database connection opened successfully\n", rank);
+		LOG(L_ERR, "PRESENCE: child %d: Error in use_table presentity_table\n", rank);
+		return -1;
 	}
+	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
+	{
+		LOG(L_ERR, "PRESENCE: child %d: Error in use_table active_watchers_table\n",
+				rank);
+		return -1;
+	}
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
+	{
+		LOG(L_ERR, "PRESENCE: child %d: Error in use_table watchers_table\n", rank);
+		return -1;
+	}
+
+	DBG("PRESENCE: child %d: Database connection opened successfully\n", rank);
+	
 	return 0;
 }
+
+int mi_child_init(void)
+{
+	if(use_db== 0)
+		return 0;
+
+	if (pa_dbf.init==0)
+	{
+		LOG(L_CRIT,"PRESENCE:mi_child_init:ERROR database not bound\n");
+		return -1;
+	}
+	pa_db = pa_dbf.init(db_url.s);
+	if (!pa_db)
+	{
+		LOG(L_ERR,"PRESENCE:mi_child_init:Error while connecting database\n");
+		return -1;
+	}
+	
+	if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
+	{
+		LOG(L_ERR, "PRESENCE:mi_child_init: Error in use_table"
+				" presentity_table\n");
+		return -1;
+	}
+	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
+	{
+		LOG(L_ERR, "PRESENCE:mi_child_init: Error in use_table"
+				" active_watchers_table\n");
+		return -1;
+	}
+	if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
+	{
+		LOG(L_ERR, "PRESENCE:mi_child_init: Error in use_table watchers_table\n");
+		return -1;
+	}
+
+	DBG("PRESENCE:mi_child_init: Database connection opened successfully\n");
+	return 0;
+}
+
 
 /*
  * destroy function
@@ -444,7 +484,8 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	str pres_uri, event;
 	struct sip_uri uri;
 	pres_ev_t* ev;
-	str* rules_doc;
+	str* rules_doc= NULL;
+	int result;
 
 	DBG("PRESENCE:mi_refreshWatchers: start\n");
 	
@@ -491,14 +532,14 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: ERROR wrong event parameter\n");
 		return 0;
 	}
-
-	if(ev->get_rules_doc(&uri.user,&uri.host,&rules_doc)< 0 || rules_doc==0
-			|| rules_doc->s== NULL)
+	
+	result= ev->get_rules_doc(&uri.user,&uri.host,&rules_doc);
+	if(result< 0 || rules_doc==NULL || rules_doc->s== NULL)
 	{
 		LOG(L_ERR, "PRESENCE:mi_refreshWatchers:ERROR getting rules doc\n");
 		goto error;
 	}
-
+	
 	if(update_watchers(pres_uri, ev, rules_doc)< 0)
 	{
 		LOG(L_ERR, "PRESENCE:mi_refreshWatchers:ERROR updating watchers\n");
@@ -561,12 +602,12 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	query_vals[n_query_cols].val.str_val= ev->name;
 	n_query_cols++;
 
-	result_cols[status_col= n_result_cols++]= "status";
+	result_cols[status_col= n_result_cols++]= "subs_status";
 	result_cols[reason_col= n_result_cols++]= "reason";
 	result_cols[w_user_col= n_result_cols++]= "w_user";
 	result_cols[w_domain_col= n_result_cols++]= "w_domain";
 	
-	update_cols[u_status_col= n_update_cols]= "status";
+	update_cols[u_status_col= n_update_cols]= "subs_status";
 	update_vals[u_status_col].nul= 0;
 	update_vals[u_status_col].type= DB_INT;
 	n_update_cols++;
@@ -615,7 +656,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 
 		subs.from_user= w_user;
 		subs.from_domain= w_domain;
-
+		memset(&subs.reason, 0, sizeof(str));
 		if(ev->get_auth_status(&subs)< 0)
 		{
 			LOG(L_ERR, "PRESENCE:update_watchers: ERROR while getting status"
@@ -638,7 +679,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			}
 
 			if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
-						update_vals, n_query_cols, 2)< 0)
+						update_vals, n_query_cols, n_update_cols)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_watchers: ERROR in sql update\n");
 				lock_release(&subs_htable[hash_code].lock);
@@ -647,7 +688,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			/* save in the list all affected dialogs */
 			if(get_pw_dialogs(&subs, hash_code, &subs_array)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_watchers: ERROR ERROR extracting"
+				LOG(L_ERR, "PRESENCE:update_watchers: ERROR extracting dialogs"
 						"from [watcher]=%.*s@%.*s to [presentity]=%.*s\n",
 						w_user.len, w_user.s, w_domain.len, w_domain.s, 
 						pres_uri.len, pres_uri.s);
@@ -687,7 +728,8 @@ error:
 int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 {
 	subs_t* s, *cs;
-	
+	int i= 0;
+
 	s= subs_htable[hash_code].entries->next;
 	
 	while(s)
@@ -699,6 +741,7 @@ int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 			strncmp(s->from_user.s, subs->from_user.s, s->from_user.len)== 0 &&
 			strncmp(s->from_domain.s,subs->from_domain.s,s->from_domain.len)==0)
 		{
+			i++;
 			s->status= subs->status;
 			s->reason= subs->reason;
 			s->db_flag= UPDATEDB_FLAG;
@@ -710,12 +753,14 @@ int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 						" stucture\n");
 				return -1;
 			}
+			cs->expires-= (int)time(NULL);
 			cs->next= (*subs_array);
 			(*subs_array)= cs;
 
 		}
 		s= s->next;
 	}
-	return 0;
+	DBG("PRESENCE:get_pw_dialogs:found %d matching dialogs\n", i);
 
+	return 0;
 }
