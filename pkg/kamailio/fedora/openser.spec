@@ -3,13 +3,14 @@
 Summary:	Open Source SIP Server
 Name:		openser
 Version:	1.2.2
-Release:	5%{?dist}
+Release:	6%{?dist}
 License:	GPLv2+
 Group:		System Environment/Daemons
 Source0:	http://www.openser.org/pub/%{name}/%{version}/src/%{name}-%{version}-tls_src.tar.gz
 Source1:	openser.init
 Patch1:		openser--acc_radius_enable.diff
 #Patch2:		openser--mi_xmlrpc-correct_include.diff
+Patch3:		openser--openssl-paths.diff
 URL:		http://www.openser.org/
 
 BuildRequires:	expat-devel
@@ -139,18 +140,27 @@ simple access to the full world of CPAN modules. SIP URI rewriting could be
 implemented based on regular expressions; accessing arbitrary data backends,
 e.g. LDAP or Berkeley DB files, is now extremely simple.
 
+%package	xmpp
+Summary:	Gateway between OpenSER and a jabber server
+Group:		System Environment/Daemons
+Requires:	%{name} = %{version}-%{release}
+#Requires:	%{name}-tm
+
+%description	xmpp
+This modules is a gateway between Openser and a jabber server. It enables
+the exchange of instant messages between SIP clients and XMPP(jabber)
+clients.
+
 %package	jabber
 Summary:	Gateway between OpenSER and a jabber server
 Group:		System Environment/Daemons
 Requires:	%{name} = %{version}-%{release}
 #Requires:	database // TODO
-Provides:	%{name}-xmpp = %{version}-%{release}
+#Requires:	%{name}-pa
+#Requires:	%{name}-tm
 
-%description	jabber
-This modules is a gateway between Openser and a jabber server. It enables
-the exchange of instant messages between SIP clients and XMPP(jabber)
-clients.
-Jabber module integrates XODE XML parser for parsing Jabber messages.
+%description 	jabber
+Jabber module that integrates XODE XML parser for parsing Jabber messages.
 
 %package	sms
 Summary:	Gateway between SIP and GSM networks via sms
@@ -246,19 +256,55 @@ This module implements a CPL (Call Processing Language) interpreter.
 Support for uploading/downloading/removing scripts via SIP REGISTER method
 is present.
 
-%package	presence
+%package	pua_usrloc
+Summary:	Connector between usrloc and pua modules
+Group:		System Environment/Daemons
+Requires:	%{name} = %{version}-%{release}
+Requires:	%{name}-pua
+#Requires:	%{name}-usrloc
+
+%description	pua_usrloc
+This module is the connector between usrloc and pua modules. It creates the
+environment to send PUBLISH requests for user location records, on specific
+events (e.g., when new record is added in usrloc, a PUBLISH with status open
+(online) is issued; when expires, it sends closed (offline)). Using this
+module, phones which have no support for presence can be seen as
+online/offline.
+
+%package	pua_mi
+Summary:	Connector between usrloc and MI interface
+Group:		System Environment/Daemons
+Requires:	%{name} = %{version}-%{release}
+Requires:	%{name}-pua
+#Requires:	%{name}-mi_fifo
+
+%description	pua_mi
+The pua_mi sends offer the possibility to publish presence information
+via MI transports.  Using this module you can create independent
+applications/scripts to publish not sip-related information (e.g., system
+resources like CPU-usage, memory, number of active subscribers ...)
+
+%package	pua
 Summary:	Offer the functionality of a presence user agent client
 Group:		System Environment/Daemons
 Requires:	%{name} = %{version}-%{release}
 #Requires:	database // TODO
 #Requires:	%{name}-tm
-Provides:	%{name}-pua = %{version}-%{release}
 
-%description	presence
+%description	pua
 This module offer the functionality of a presence user agent client, sending
 Subscribe and Publish messages.
 
-Presence module implements a presence server. It handles PUBLISH and SUBSCRIBE
+%package	presence
+Summary:	Presence server
+Group:		System Environment/Daemons
+Requires:	%{name} = %{version}-%{release}
+#Requires:	database // TODO
+#Requires:	%{name}-sl
+#Requires:	%{name}-tm
+
+%description	presence
+This module implements a presence server. It handles PUBLISH and SUBSCRIBE
 messages and generates NOTIFY messages. It offers support for aggregation
 of published presence information for the same presentity using more devices.
 It can also filter the information provided to watchers according to privacy
@@ -269,12 +315,13 @@ rules.
 cp -pRf modules/acc modules/acc_radius
 %patch1
 #%patch2
+%patch3
 
 # fix wrong permissions to avoid rpmlint complaining
 chmod 644 ./tls/*.[ch] ./tls/TODO.TLS
 
 %build
-%{__make} all TLS=1 \
+LOCALBASE=/usr CFLAGS="%{optflags}" %{__make} all TLS=1 \
   exclude_modules="%EXCLUDE_MODULES" \
   cfg-target=%{_sysconfdir}/openser/ \
   modules-dir=%{_lib}/openser/modules
@@ -294,7 +341,7 @@ mv $RPM_BUILD_ROOT/%{_sysconfdir}/openser/tls/README \
 rm -f $RPM_BUILD_ROOT%{_docdir}/openser/INSTALL
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-cp -f %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/openser
+install -D -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/openser
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -322,7 +369,7 @@ fi
 %dir %{_libdir}/openser/modules/
 %dir %{_libdir}/openser/openserctl/
 
-%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/openser
+%{_sysconfdir}/rc.d/init.d/openser
 
 %config(noreplace) %{_sysconfdir}/openser/dictionary.radius
 %config(noreplace) %{_sysconfdir}/openser/openser.cfg
@@ -493,12 +540,15 @@ fi
 %{_libdir}/openser/perl/OpenSER/Utils/PhoneNumbers.pm
 %{_docdir}/openser/README.perl
 
+%files xmpp
+%defattr(-,root,root,-)
+%{_libdir}/openser/modules/xmpp.so
+%{_docdir}/openser/README.xmpp
+
 %files jabber
 %defattr(-,root,root,-)
 %{_libdir}/openser/modules/jabber.so
 %{_docdir}/openser/README.jabber
-%{_libdir}/openser/modules/xmpp.so
-%{_docdir}/openser/README.xmpp
 
 %files sms
 %defattr(-,root,root,-)
@@ -540,22 +590,34 @@ fi
 %{_libdir}/openser/modules/cpl-c.so
 %{_docdir}/openser/README.cpl-c
 
-%files presence
+%files	pua_usrloc
 %defattr(-,root,root,-)
 %{_libdir}/openser/modules/pua_usrloc.so
 %{_docdir}/openser/README.pua_usrloc
+
+%files pua_mi
+%defattr(-,root,root,-)
 %{_libdir}/openser/modules/pua_mi.so
 %{_docdir}/openser/README.pua_mi
+
+%files pua
+%defattr(-,root,root,-)
 %{_libdir}/openser/modules/pua.so
 %{_docdir}/openser/README.pua
+
+%files	presence
+%defattr(-,root,root,-)
 %{_libdir}/openser/modules/presence.so
 %{_docdir}/openser/README.presence
 
 %changelog
-* Sun Aug 26 2007 Jan ONDREJ (SAL) <ondrejj(at)salstar.sk> 1.2.2-5
+
+* Sun Aug 26 2007 Jan ONDREJ (SAL) <ondrejj(at)salstar.sk> 1.2.2-6
 - Fedora Core 6 build updates
-- module joins for (presence+pua*) and (jabber+xmpp)
 - changed attributes for openser.init to be rpmlint more silent
+
+* Sun Aug 26 2007 Peter Lemenkov <lemenkov@gmail.com> 1.2.2-5
+- fixed paths for openssl libs and includes
 
 * Sun Aug 26 2007 Peter Lemenkov <lemenkov@gmail.com> 1.2.2-4
 - Introduced acc and acc_radius modules (Jan Ondrej)
@@ -576,3 +638,4 @@ fi
 
 * Tue Jul 24 2007 Peter Lemenkov <lemenkov@gmail.com> 1.2.1-1
 - Initial spec.
+
