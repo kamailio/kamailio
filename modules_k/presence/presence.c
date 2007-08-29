@@ -99,7 +99,7 @@ int handle_subscribe(struct sip_msg*, char*, char*);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
 struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
-int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
+int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
 int mi_child_init(void);
 
 int counter =0;
@@ -686,7 +686,8 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 				goto error;
 			}
 			/* save in the list all affected dialogs */
-			if(get_pw_dialogs(&subs, hash_code, &subs_array)< 0)
+			/* if status switches to terminated -> delete dialog */
+			if(update_pw_dialogs(&subs, hash_code, &subs_array)< 0)
 			{
 				LOG(L_ERR, "PRESENCE:update_watchers: ERROR extracting dialogs"
 						"from [watcher]=%.*s@%.*s to [presentity]=%.*s\n",
@@ -695,11 +696,12 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 				lock_release(&subs_htable[hash_code].lock);
 				goto error;
 			}
-		}
+		 }
 			
 	}
 	lock_release(&subs_htable[hash_code].lock);
-
+	pa_dbf.free_result(pa_db, result);
+	result= NULL;
 	s= subs_array;
 
 	while(s)
@@ -725,15 +727,17 @@ error:
 	return 0;
 }
 
-int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
+int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 {
-	subs_t* s, *cs;
+	subs_t* s, *ps, *cs;
 	int i= 0;
 
-	s= subs_htable[hash_code].entries->next;
+	ps= subs_htable[hash_code].entries;
 	
-	while(s)
+	while(ps && ps->next)
 	{
+		s= ps->next;
+
 		if(s->event== subs->event && s->pres_uri.len== subs->pres_uri.len &&
 			s->from_user.len== subs->from_user.len && 
 			s->from_domain.len==subs->from_domain.len &&
@@ -749,7 +753,7 @@ int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 			cs= mem_copy_subs(s, PKG_MEM_TYPE);
 			if(cs== NULL)
 			{
-				LOG(L_ERR, "PRESENCE:get_pw_dialogs:ERROR copying subs_t"
+				LOG(L_ERR, "PRESENCE:update_dialogs:ERROR copying subs_t"
 						" stucture\n");
 				return -1;
 			}
@@ -757,10 +761,16 @@ int get_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 			cs->next= (*subs_array);
 			(*subs_array)= cs;
 
+			if(s->status== TERMINATED_STATUS)
+			{
+				cs->expires= 0;
+				ps->next= s->next;
+				shm_free(s);
+			}
 		}
-		s= s->next;
+		ps= ps->next;
 	}
-	DBG("PRESENCE:get_pw_dialogs:found %d matching dialogs\n", i);
+	DBG("PRESENCE:update_dialogs:found %d matching dialogs\n", i);
 
 	return 0;
 }
