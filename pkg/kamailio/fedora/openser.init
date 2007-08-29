@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# Startup script for OpenSER
+#
+# chkconfig: 345 85 15
+# description: OpenSER is a fast SIP Proxy.
+#
+# processname: openser
+# pidfile: /var/run/openser.pid
+# config: /etc/openser/openser.cfg
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+oser=/usr/sbin/openser
+prog=openser
+RETVAL=0
+
+[ -f /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+
+start() {
+	echo -n $"Starting $prog: "
+	# there is something at end of this output which is needed to
+	# report proper [ OK ] status in Fedora scripts
+	daemon $oser $OPTIONS 2>/dev/null | tail -1
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/$prog
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $oser
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/$prog /var/run/$prog.pid
+}
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status $oser
+		RETVAL=$?
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/run/openser.pid ] ; then
+			stop
+			start
+		fi
+		;;
+	*)
+		echo $"Usage: $prog {start|stop|restart|condrestart|status|help}"
+		exit 1
+esac
+
+exit $RETVAL
