@@ -155,19 +155,11 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 	return p;
 }
 
-void update_htable(ua_pres_t* presentity,time_t desired_expires, 
-		int expires,str* etag, unsigned int hash_code)
+void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
+		str* etag, unsigned int hash_code)
 {
-	ua_pres_t* p= NULL;
 	DBG("PUA:hash_update ..\n");
 
-
-	p= search_htable(presentity, hash_code);
-	if(p== NULL)
-	{
-		DBG("PUA:hash_update : no recod found\n");
-		return; 
-	}
 	if(etag)
 	{	
 		shm_free(p->etag.s);

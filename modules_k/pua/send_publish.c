@@ -144,7 +144,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	ua_pres_t* hentity= NULL;
 	int found = 0;
 	int size= 0;
-	int lexpire= 0;
+	unsigned int lexpire= 0;
 	str etag;
 	unsigned int hash_code;
 
@@ -236,7 +236,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 	lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-	DBG("PUA:publ_cback_func: lexpire= %d\n", lexpire);
+	DBG("PUA:publ_cback_func: lexpire= %u\n", lexpire);
 		
 	hdr = msg->headers;
 	while (hdr!= NULL)
@@ -359,9 +359,10 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		
 
 done:
-	if(hentity == REQ_OTHER)
+	if(hentity->ua_flag == REQ_OTHER)
+	{
 		run_pua_callbacks(hentity, msg);
-
+	}
 	if(*ps->param)
 	{
 		shm_free(*ps->param);
@@ -617,7 +618,6 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 	if(tuple_id )
 		size+= tuple_id->len* sizeof(char);
 
-	DBG("PUA: send_publish: before allocating size= %d\n", size);
 	cb_param= (ua_pres_t*)shm_malloc(size);
 	if(cb_param== NULL)
 	{
@@ -628,7 +628,6 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 	memset(cb_param, 0, size);
 	
 	size =  sizeof(ua_pres_t);
-	DBG("PUA: send_publish: size= %d\n", size);
 
 	cb_param->pres_uri = (str*)((char*)cb_param + size);
 	size+= sizeof(str);
@@ -690,7 +689,6 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 		cb_param->tuple_id.len= tuple_id->len;
 		size+= tuple_id->len;
 	}
-	DBG("PUA:send_publish: after allocating: size= %d\n", size);
 	cb_param->event= publ->event;
 	cb_param->flag|= publ->source_flag;
 	cb_param->cb_param= publ->cb_param;
