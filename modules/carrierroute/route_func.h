@@ -41,13 +41,6 @@
 #include "../../parser/msg_parser.h"
 
 /**
- * initialises the hash functions
- *
- * @return 0 on success, -1 on failure
- */
-int init_route_funcs();
-
-/**
  * rewrites the request URI of msg by calculating a rule, using 
  * crc32 for hashing. The request URI is used to determine tree node
  *

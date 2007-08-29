@@ -43,7 +43,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "../../error.h"
-#include "../../prim_hash.h"
+#include "../../prime_hash.h"
 #include "carrierroute.h"
 #include "load_data.h"
 #include "route_fifo.h"
@@ -192,10 +192,6 @@ static int mod_init(void) {
 		LM_ERR("could not prepare route tree\n");
 		return -1;
 	}
-	if(init_route_funcs() < 0) {
-		return -1;
-	}
-
 	if(data_main_finalize() < 0) {
 		return -1;
 	}
