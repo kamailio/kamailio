@@ -36,6 +36,7 @@
 #include "config.h"
 #include "error.h"
 #include "route_struct.h"
+#include "action.h"
 #include "parser/msg_parser.h"
 #include "str_hash.h"
 
@@ -69,7 +70,7 @@ int add_actions(struct action* a, struct action** head);
 void print_rls();
 int fix_rls();
 
-int eval_expr(struct expr* e, struct sip_msg* msg);
+int eval_expr(struct run_act_ctx* h, struct expr* e, struct sip_msg* msg);
 
 
 
