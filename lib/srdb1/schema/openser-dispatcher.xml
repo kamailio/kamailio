@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>Domain</name>
+    <name>Dispatcher</name>
     <xi:include href="dispatcher.xml"/>
 </database>
