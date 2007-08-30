@@ -446,7 +446,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_keys[6] = date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
-	db_vals[6].val.int_val = time(NULL);
+	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = direction_column;
 	db_vals[7].type = DB_STRING;
@@ -730,7 +730,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_keys[6] = date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
-	db_vals[6].val.int_val = time(NULL);
+	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = direction_column;
 	db_vals[7].type = DB_STRING;
@@ -918,7 +918,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	db_keys[6] = date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
-	db_vals[6].val.int_val = time(NULL);
+	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = direction_column;
 	db_vals[7].type = DB_STRING;
@@ -1138,7 +1138,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_keys[6] = date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
-	db_vals[6].val.int_val = time(NULL);
+	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = direction_column;
 	db_vals[7].type = DB_STRING;
@@ -1323,7 +1323,7 @@ static void trace_sl_onreply_out(struct sip_msg* req,
 	db_keys[6] = date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
-	db_vals[6].val.int_val = time(NULL);
+	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = direction_column;
 	db_vals[7].type = DB_STRING;
