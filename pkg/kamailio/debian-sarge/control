@@ -3,13 +3,13 @@ Section: net
 Priority: optional
 Maintainer: Debian VoIP Maintainers <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Julien BLACHE <jblache@debian.org>
-Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp5-dev, libsensors-dev
+Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp5-dev, libsensors-dev, libconfuse0
 Standards-Version: 3.7.2
 
 Package: openser
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
-Suggests: openser-mysql-module, openser-postgres-module, openser-unixodbc-module, openser-jabber-module, openser-cpl-module, openser-radius-modules, openser-presence-modules, openser-xmlrpc-module, openser-perl-module, openser-snmpstats-module, openser-xmpp-module
+Suggests: openser-mysql-module, openser-postgres-module, openser-unixodbc-module, openser-jabber-module, openser-cpl-module, openser-radius-modules, openser-presence-modules, openser-xmlrpc-module, openser-perl-module, openser-snmpstats-module, openser-xmpp-module, openser-carrierroute-module
 Description: very fast and configurable SIP proxy
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -156,3 +156,14 @@ Description: XMPP gateway module for OpenSER
  per second even on low-budget hardware.
  .
  This package provides the SIP to XMPP IM translator module for OpenSER.
+
+Package: openser-carrierroute-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version}), libconfuse0
+Description: Carrierroute module for OpenSER
+ OpenSER is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the carrierroute module for OpenSER, an integrated
+ solution for routing, balancing and blacklisting.
