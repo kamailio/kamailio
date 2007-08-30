@@ -510,7 +510,7 @@ int h350_service_level(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix)
         }
 }
 
-int h350_exp_fn_init()
+int h350_exp_fn_init(void)
 {
 	int rc;
 
