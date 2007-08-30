@@ -13,29 +13,44 @@
 
     <section>
 	<title>Overview</title>
-	<para>Module description</para>
 	<para>A module which provides routing, balancing and blacklisting capabilities.</para>
-	<para>This module reads routing entries from a databases or from a config file at 
-		OpenSER startup. The data can be refreshed manually via MI commands, in config
-		file mode it can also be edited.
-		Based on the data, the module decides which number prefixes are forwarded 
-		to which gateway. It can also distribute the traffic by ratio parameters.
-		Furthermore, the requests can be distributed by a hash funcion to
-		predictable destinations.
 	<para>
+		The module provides routing, balancing and blacklisting capabilities.
+		It reads routing entries from a database source or from a config file at OpenSER
+		startup. It can uses one routing tree, or if needed for every user a different
+		routing tree for number prefix based routing. It supports several route tree levels,
+		e.g. for failback routes. Based on the tree, the module decides which number
+		prefixes are forwarded to which gateway. It can also distribute the traffic by
+		ratio parameters. Furthermore, the requests can be distributed by a hash funcion 
+		to predictable destinations.
+	</para>
+	<para>
+		This modules scales up to more than a million users, and is able to handle 
+		more than 10k routing table entries. It should be able to handle more, but 
+		this is untested at the moment.
+	</para>
+	<para>
+		Routing tables can be reloaded and edited (in config file mode) with the MI 
+		interface, the config file is updated according the changes. This is not 
+		implemented for the db interface, because its easier to do the changes 
+		directly on the db. But the reload and dump functions works of course here 
+		too.
+	</para>
+	<para>
+		Basically this module could be used as an replacement for the lcr and the 
+		dispatcher module, if you have certain performance, flexibility and/or 
+		integration requirements that these modules don't handle properly. But for 
+		small installations it probably make more sense to use the lcr and dispatcher
+		module.
+	</para>
     </section>
     <section>
 	<title>Dependencies</title>
 	<section>
 	    <title>&ser; Modules</title>
 	    <para>
-		The following modules must be loaded before this module:
+		The following module must be loaded before this module:
 	    	<itemizedlist>
-		    <listitem>
-			<para>
-				<emphasis>hash module</emphasis>
-			</para>
-		    </listitem>
 		    <listitem>
 			<para>
 				<emphasis>a database module</emphasis>, when a database is used as configuration data source.
