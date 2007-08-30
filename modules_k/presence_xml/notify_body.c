@@ -74,7 +74,7 @@ str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, i
 	}
 
 	n_body= agregate_xmls(pres_user, pres_domain, body_array, n);
-	if(n_body== NULL)
+	if(n_body== NULL && n!= 0)
 	{
 		LOG(L_ERR, "PRESENCE_XML: ERROR while aggregating body\n");
 	}
