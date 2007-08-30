@@ -9,7 +9,7 @@ Henning Westerholt
 
    1&1 Internet AG
 
-   Copyright ï¿½ 2007 1&1 Internet AG
+   Copyright © 2007 1&1 Internet AG
      _________________________________________________________
 
    Table of Contents
@@ -101,7 +101,7 @@ Henning Westerholt
    1-11. Set carrier_table parameter
    1-12. Set rewrite_prefix_column parameter
    1-13. Set rewrite_suffix_column parameter
-   1-14. Set carrier_id_col parameter
+   1-14. Set id_col parameter
    1-15. Set carrier_name_col parameter
    1-16. Set subscriber_table parameter
    1-17. Set subscriber_user_col parameter
@@ -118,6 +118,8 @@ Henning Westerholt
    1-28. add_host usage
    1-29. Configuration example - OpenSER script
    1-30. Configuration example - module configuration
+   1-31. Example database content - carrierroute table
+   1-32. Example database content - route_tree table
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -168,7 +170,8 @@ Chapter 1. User's Guide
 
    Example 1-1. Set db_url parameter
 ...
-modparam("carrierroute", "db_url", "mysql://openser:heslo@localhost/ser")
+modparam("carrierroute", "db_url", "mysql://openser:heslo@localhost/ser
+")
 ...
      _________________________________________________________
 
@@ -346,8 +349,8 @@ modparam("carrierroute", "rewrite_prefix_column", "rewrite_host")
 
    Example 1-13. Set rewrite_suffix_column parameter
                             ...
-                            modparam("carrierroute", "rewrite_suffix_colum
-n", "rewrite_suffix")
+                            modparam("carrierroute", "rewrite_suffix_co
+lumn", "rewrite_suffix")
                             ...
 
      _________________________________________________________
@@ -359,7 +362,7 @@ n", "rewrite_suffix")
 
    Default value is "id". 
 
-   Example 1-14. Set carrier_id_col parameter
+   Example 1-14. Set id_col parameter
 ...
 modparam("carrierroute", "carrier_id_col", "id")
 ...
@@ -430,7 +433,8 @@ modparam("carrierroute", "subscriber_domain_col", "domain")
 
    Example 1-19. Set subscriber_carrier_col parameter
 ...
-modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrier")
+modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrie
+r")
 ...
 
      _________________________________________________________
@@ -457,7 +461,8 @@ modparam("carrierroute", "config_source", "file")
 
    Example 1-21. Set config_file parameter
 ...
-modparam("carrierroute", "config_file", "/etc/openser/carrierroute.conf")
+modparam("carrierroute", "config_file", "/etc/openser/carrierroute.conf
+")
 ...
 
      _________________________________________________________
@@ -637,6 +642,7 @@ modparam("carrierroute", "fallback_default", "1")
    The options have to be quoted as one string to be passed to MI
    interface. Each option except host and new host can be
    wildcarded by * (but only * and not things like "-d prox*")
+   Use the "null" prefix to specify an empty prefix.
 
    Example 1-25. replace_host usage
 ...
@@ -657,6 +663,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
    The options have to be quoted as one string to be passed to MI
    interface. Each option except host and new host can be
    wildcarded by * (but only * and not things like "-d prox*")
+   Use the "null" prefix to specify an empty prefix.
 
    Example 1-26. deactivate_host usage
 ...
@@ -677,6 +684,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
    The options have to be quoted as one string to be passed to MI
    interface. Each option except host and new host can be
    wildcarded by * (but only * and not things like "-d prox*")
+   Use the "null" prefix to specify an empty prefix.
 
    Example 1-27. activate_host usage
 ...
@@ -701,6 +709,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
    The options have to be quoted as one string to be passed to MI
    interface. Each option except host and new host can be
    wildcarded by * (but only * and not things like "-d prox*")
+   Use the "null" prefix to specify an empty prefix.
 
    Example 1-28. add_host usage
 ...
@@ -726,6 +735,7 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
    The options have to be quoted as one string to be passed to MI
    interface. Each option except host and new host can be
    wildcarded by * (but only * and not things like "-d prox*")
+   Use the "null" prefix to specify an empty prefix.
      _________________________________________________________
 
 1.6. Examples
@@ -741,6 +751,13 @@ break;
 ...
 
    Example 1-30. Configuration example - module configuration
+
+   The following config file specifies an prefix with two hosts.
+   All traffic will be equally distributed between the hosts,
+   both are active. The hash algorithm will working over the
+   [1,2] set, messages hashed to one will go to the first host,
+   the other to the second one. Use the "null" prefix to specify
+   an empty prefix in the config file.
 ...
 domain proxy {
    max_locdb = 2
@@ -766,16 +783,16 @@ domain proxy {
 
 1.7.1. Database setup
 
-   Before running OpenSER with carrierroute, you have to setup the
-   database table where the module will store the routing data.
-   For that, if the table was not created by the installation
-   script or you choose to install everything by yourself you can
-   use the carrierroute-create.sql SQL script in the database
-   directories in the openser/scripts folder as template.
-   Database and table name can be set with module parameters so
-   they can be changed, but the name of the columns must be as
-   they are in the SQL script. You can also find the complete
-   database documentation on the project webpage,
+   Before running OpenSER with carrierroute, you have to setup
+   the database table where the module will store the routing
+   data. For that, if the table was not created by the
+   installation script or you choose to install everything by
+   yourself you can use the carrierroute-create.sql SQL script in
+   the database directories in the openser/scripts folder as
+   template. Database and table name can be set with module
+   parameters so they can be changed, but the name of the columns
+   must be as they are in the SQL script. You can also find the
+   complete database documentation on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
 
    For a minimal configuration either use the config file given
@@ -807,9 +824,9 @@ domain proxy {
 ...
 
    This table contains the mapping of the carrier id to actual
-   names. For a functional routing the "cr_prefered_carrier"
-   column must added to the subscriber table to choose the actual
-   carrier for the users.
+   names For a functional routing the "cr_prefered_carrier"
+   column must be added to the subscriber table to choose the
+   actual carrier for the users.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

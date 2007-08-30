@@ -554,8 +554,13 @@ static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[], 
 							op = -1;
 							break;
 							case OPT_PREFIX:
-							opts->prefix.s = opt_argv[i];
-							opts->prefix.len = strlen(opt_argv[i]);
+							if (strcasecmp(opt_argv[i], SP_EMPTY_PREFIX) == 0) {
+								opts->prefix.s = NULL;
+								opts->prefix.len = 0;
+							} else {
+								opts->prefix.s = opt_argv[i];
+								opts->prefix.len = strlen(opt_argv[i]);
+							}
 							op = -1;
 							break;
 							case OPT_HOST:
@@ -743,7 +748,9 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 						rt->rule_num--;
 						rt->max_locdb--;
 						break;
-					default: rr = rr->next; break;
+					default:
+						rr = rr->next;
+						break;
 				}
 			} else {
 				prev = rr;
