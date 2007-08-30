@@ -104,7 +104,7 @@ MODULE_VERSION
 static proc_export_t mi_procs[] = {
 	{"MI Datagram",  pre_datagram_process,  post_datagram_process,
 			datagram_process, MI_CHILD_NO },
-	{0,0,0}
+	{0,0,0,0,0}
 };
 
 

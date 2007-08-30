@@ -66,7 +66,7 @@ MODULE_VERSION
 
 static proc_export_t mi_procs[] = {
 	{"MI XMLRPC",  0,  0, xmlrpc_process, 1 },
-	{0,0,0}
+	{0,0,0,0,0}
 };
 
 

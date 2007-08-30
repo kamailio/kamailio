@@ -117,7 +117,7 @@ static void cpl_process(int rank);
  */
 static proc_export_t cpl_procs[] = {
 	{"CPL Aux",  0,  0,  cpl_process, 1 },
-	{0,0,0}
+	{0,0,0,0,0}
 };
 
 

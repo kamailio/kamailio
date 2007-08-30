@@ -81,7 +81,7 @@ struct tm_binds tmb;
 
 static proc_export_t sms_procs[] = {
 	{"SMS receiver",  0,  0, sms_process, 0 },
-	{0,0,0}
+	{0,0,0,0,0}
 };
 
 

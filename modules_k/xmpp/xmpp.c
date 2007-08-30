@@ -132,7 +132,7 @@ char *xmpp_password = "secret";
 
 static proc_export_t procs[] = {
 	{"XMPP receiver",  0,  0, xmpp_process, 1 },
-	{0,0,0}
+	{0,0,0,0,0}
 };
 
 
@@ -142,7 +142,7 @@ static proc_export_t procs[] = {
 static cmd_export_t cmds[] = {
 	{"xmpp_send_message", (cmd_function)cmd_send_message, 0, 0, REQUEST_ROUTE},
 	{"bind_xmpp",         (cmd_function)bind_xmpp,        0, 0, 0},
-	{0, 0, 0, 0}
+	{0, 0, 0, 0,0}
 };
 
 /*
