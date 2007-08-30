@@ -40,8 +40,6 @@
 str* offline_nbody(str* body);
 str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
 str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node);
-extern int force_active;
-extern int pidf_manipulation;
 
 void free_xml_body(char* body)
 {
@@ -72,11 +70,12 @@ str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, i
 			return NULL;
 		}
 	}
-
+	DBG("PRESENCE_XML:agregate_xmls:[user]=%.*s  [domain]= %.*s\n",
+			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
 	n_body= agregate_xmls(pres_user, pres_domain, body_array, n);
 	if(n_body== NULL && n!= 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML: ERROR while aggregating body\n");
+		LOG(L_ERR, "PRESENCE_XML:agregate_xmls:ERROR while aggregating body\n");
 	}
 
 	if(off_index>= 0)

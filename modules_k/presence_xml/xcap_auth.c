@@ -39,10 +39,6 @@
 #include "xcap_auth.h"
 #include "pidf.h"
 
-extern char* xcap_table;
-extern int force_active;
-extern db_func_t pxml_dbf;
-extern db_con_t *pxml_db;
 int http_get_rules_doc(str* user, str* domain, str* rules_doc);
 
 int pres_watcher_allowed(subs_t* subs)

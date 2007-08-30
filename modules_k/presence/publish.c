@@ -289,9 +289,13 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	counter++;
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
-		LOG(L_ERR, "PRESENCE:handle_publish: error parsing headers\n");
-		slb.reply(msg, 400, &pu_400a_rpl);
-		return 0;
+		LOG(L_ERR, "PRESENCE:handle_publish:ERROR parsing headers\n");
+		if (slb.reply(msg, 400, &pu_400a_rpl) == -1)
+ 			LOG(L_ERR, "PRESENCE: handle_publish: Error while sending"
+						" reply\n");
+		else
+			error_ret = 0;
+		return error_ret;
 	}
 	memset(&body, 0, sizeof(str));
 	
@@ -302,7 +306,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if (!msg->event->parsed && (parse_event(msg->event) < 0))
 		{
 			LOG(L_ERR,
-				"PRESENCE: handle_publish: ERROR cannot parse Event header\n");
+				"PRESENCE:handle_publish:ERROR cannot parse Event header\n");
 			goto error;
 		}
 		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
@@ -409,15 +413,13 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		body.s = NULL;
 		if (etag_gen)
 		{
-			LOG(L_ERR, "PRESENCE: handle_publish: No E-Tag and no body"
-					" present\n");
-
+			LOG(L_ERR,"PRESENCE:handle_publish:No E-Tag and no body found\n");
 			if (slb.reply(msg, 400, &pu_400b_rpl) == -1)
 			{
- 				LOG(L_ERR, "PRESENCE: handle_publish: Error while sending"
-						" reply\n");
+ 				LOG(L_ERR, "PRESENCE:handle_publish:ERROR sending reply\n");
 			}
-			error_ret = 0;
+			else
+				error_ret = 0;
 			goto error;
 		}
 	}
@@ -426,8 +428,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		body.s=get_body(msg);
 		if (body.s== NULL) 
 		{
-			LOG(L_ERR,"PRESENCE: handle_publish: ERROR cannot extract body"
-					" from msg\n");
+			LOG(L_ERR,"PRESENCE: handle_publish: ERROR cannot extract body\n");
 			goto error;
 		}
 		body.len= get_content_length( msg );

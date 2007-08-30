@@ -540,7 +540,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag)
 	db_val_t *row_vals;
 	int n_result_cols = 0;
 	int n_query_cols = 0;
-	int i, n, len;
+	int i, n= 0, len;
 	int build_off_n= -1; 
 	str etags;
 	str* body;
@@ -616,12 +616,13 @@ db_query:
 	if(result== NULL)
 		return NULL;
 
+
 	if (result->n<=0 )
 	{
 		DBG("PRESENCE: get_p_notify_body: The query returned no"
-				" result\n[username]= %.*s\t[domain]= %.*s\t[event]= %.*s\n",
-				uri.user.len, uri.user.s, uri.host.len, uri.host.s,
-				event->name.len, event->name.s);
+			" result\n[username]= %.*s\t[domain]= %.*s\t[event]= %.*s\n",
+			uri.user.len,uri.user.s,uri.host.len,uri.host.s,
+			event->name.len,event->name.s);
 		
 		pa_dbf.free_result(pa_db, result);
 		result= NULL;
@@ -676,13 +677,12 @@ db_query:
 		
 		DBG("PRESENCE:get_p_notify_body: Event requires aggregation\n");
 		
-		body_array =(str**)pkg_malloc( (n+1) *sizeof(str*));
+		body_array =(str**)pkg_malloc( (n+2) *sizeof(str*));
 		if(body_array == NULL)
 		{
-			LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR while allocating"
-					" memory\n");
-			goto error;
+			ERR_MEM("PRESENCE", "get_p_notify_body");
 		}
+		memset(body_array, 0, (n+2) *sizeof(str*));
 
 		if(etag!= NULL)
 		{
@@ -704,7 +704,7 @@ db_query:
 					DBG("PRESENCE:get_p_notify_body found etag  \n");
 					build_off_n= i;
 				}
-				len= strlen(row_vals[body_col].val.string_val);
+				len= strlen((char*)row_vals[body_col].val.string_val);
 				if(len== 0)
 				{
 					LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR Empty notify body record\n");
@@ -715,13 +715,12 @@ db_query:
 				body= (str*)pkg_malloc(size);
 				if(body== NULL)
 				{
-					LOG(L_ERR, "PRESENCE:get_p_notify_body: ERROR while allocating memory\n");
-					goto error;
+					ERR_MEM("PRESENCE", "get_p_notify_body");
 				}
 				memset(body, 0, size);
 				size= sizeof(str);
 				body->s= (char*)body+ size;
-				memcpy(body->s, row_vals[body_col].val.string_val, len);
+				memcpy(body->s, (char*)row_vals[body_col].val.string_val, len);
 				body->len= len;
 
 				body_array[i]= body;
@@ -734,7 +733,7 @@ db_query:
 				row = &result->rows[i];
 				row_vals = ROW_VALUES(row);
 				
-				len= strlen(row_vals[body_col].val.string_val);
+				len= strlen((char*)row_vals[body_col].val.string_val);
 				if(len== 0)
 				{
 					LOG(L_ERR, "PRESENCE:get_p_notify_body:ERROR Empty notify body record\n");
@@ -759,6 +758,9 @@ db_query:
 		}
 		pa_dbf.free_result(pa_db, result);
 		result= NULL;
+		
+		DBG("PRESENCE: get_p_notify_body: [user]= %.*s\t[domain]= %.*s\n",
+				uri.user.len, uri.user.s, uri.host.len, uri.host.s);
 
 		notify_body = event->agg_nbody(&uri.user, &uri.host, body_array, n, build_off_n);
 	}
@@ -792,7 +794,6 @@ error:
 	
 		pkg_free(body_array);
 	}
-
 	return NULL;
 }
 
@@ -1219,16 +1220,15 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
 
 	if(uandd_to_uri(p->user, p->domain, &pres_uri)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:publ_notify: ERROR while constructing uri"
+		LOG(L_ERR, "PRESENCE:publ_notify:ERROR while constructing uri"
 				" from user and domain\n");
 		return -1;
 	}
 	
 	subs_array= get_subs_dialog(&pres_uri, p->event , p->sender);
-	pkg_free(pres_uri.s);	
 	if(subs_array == NULL)
 	{
-		DBG("PRESENCE: publ_notify: Could not find subs_dialog\n");
+		DBG("PRESENCE:publ_notify:Could not find subs_dialog\n");
 		ret_code= 0;
 		goto done;
 	}
@@ -1239,7 +1239,7 @@ int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
 		notify_body = get_p_notify_body(pres_uri, p->event , offline_etag);
 		if(notify_body == NULL)
 		{
-			DBG( "PRESENCE: publ_notify: Could not get the"
+			DBG( "PRESENCE:publ_notify: Could not get the"
 					" notify_body\n");
 			/* goto error; */
 		}
@@ -1272,6 +1272,7 @@ done:
 		}
 		pkg_free(notify_body);
 	}
+	pkg_free(pres_uri.s);	
 	return ret_code;
 }	
 
