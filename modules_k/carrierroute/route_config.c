@@ -227,6 +227,7 @@ int save_config(struct rewrite_data * rd) {
 	return 0;
 errout:
 	fclose(outfile);
+	LM_ERR("Cannot save config file %s\n", config_file);
 	return -1;
 }
 
