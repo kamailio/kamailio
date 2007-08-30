@@ -277,7 +277,7 @@ int ldap_url_search(
 }
 
 
-int ldap_inc_result_pointer()
+int ldap_inc_result_pointer(void)
 {
 	LDAPMessage *next_result = NULL;
 
@@ -396,7 +396,7 @@ int lds_search(
 {
 	struct ld_session* lds;
 #ifdef LDAP_PERF
-	struct timeval before_search = { 0 }, after_search = { 0 };
+	struct timeval before_search = { 0, 0 }, after_search = { 0, 0 };
 #endif
 
 	/*
