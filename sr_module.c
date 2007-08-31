@@ -620,7 +620,7 @@ int fix_param(int type, void** param)
 {	
     fparam_t* p;
     str name, s;
-    unsigned long num;
+    unsigned int num;
     int err;
     
     p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
@@ -646,9 +646,11 @@ int fix_param(int type, void** param)
 	break;
 	
     case FPARAM_INT:
-	num = str2s(*param, strlen(*param), &err);
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+	err = str2int(&s, &num);
 	if (err == 0) {
-	    p->v.i = num;
+	    p->v.i = (int)num;
 	} else {
 		 /* Not a number */
 	    pkg_free(p);
