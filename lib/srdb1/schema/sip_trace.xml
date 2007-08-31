@@ -12,7 +12,7 @@
 	<version>1</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
-		<db:para>This table is used to store incoming/outgoing SIP messages in database. More informations can be found in the siptrace module documentation at http://www.openser.org/docs/modules/1.2.x/siptrace.html.
+		<db:para>This table is used to store incoming/outgoing SIP messages in database. More informations can be found in the siptrace module documentation at: &OPENSER_MOD_DOC;siptrace.html.
 		</db:para>
 	</description>
 

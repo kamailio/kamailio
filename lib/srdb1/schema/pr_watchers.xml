@@ -12,7 +12,7 @@
     <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Table for the presence module. More information can be found at: http://www.openser.org/docs/modules/1.2.x/presence.html
+        <db:para>Table for the presence module. More information can be found at: &OPENSER_MOD_DOC;presence.html
         </db:para>
     </description>
 

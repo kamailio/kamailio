@@ -13,7 +13,7 @@
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 	    <db:para> This table is used by uri_db module to implement various SIP URI checks.
-		    More information about the uri_db module can be found at: http://www.openser.org/docs/modules/1.2.x/uri_db.html 
+		    More information about the uri_db module can be found at: &OPENSER_MOD_DOC;uri_db.html 
 	    </db:para>
     </description>
 

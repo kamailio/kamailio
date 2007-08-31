@@ -14,7 +14,7 @@
     <version>4</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table is used by the permissions module to determine if a call has the appropriate permission to be established More information about the permissions module can be found at: http://www.openser.org/docs/modules/1.2.x/permissions.html
+	    <db:para>This table is used by the permissions module to determine if a call has the appropriate permission to be established More information about the permissions module can be found at: &OPENSER_MOD_DOC;permissions.html
 	</db:para>
     </description>
 

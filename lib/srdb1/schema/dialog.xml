@@ -13,8 +13,7 @@
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>Persistent dialog information for the dialog module. More 
-		information can be found at: 
-		http://www.openser.org/docs/modules/1.3.x/dialog.html
+		information can be found at: &OPENSER_MOD_DOC;dialog.html
 		</db:para>
 	</description>
 

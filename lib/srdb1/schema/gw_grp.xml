@@ -13,7 +13,7 @@
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used from the lcr module for administrative purposes only to associate names with gateway group ids.
-            More information can be found at: http://www.openser.org/docs/modules/1.2.x/lcr.html Gateways (gw) Table.
+            More information can be found at: &OPENSER_MOD_DOC;lcr.html.
         </db:para>
     </description>
 

@@ -12,7 +12,7 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). More information can be found at: http://www.openser.org/docs/modules/1.2.x/pdt.html 
+        <db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). More information can be found at: &OPENSER_MOD_DOC;pdt.html 
         </db:para>
     </description>
 

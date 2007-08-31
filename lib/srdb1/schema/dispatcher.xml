@@ -12,7 +12,7 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table is used by the dispatcher module. It contains the sets of destinations used for load balancing and dispatching. More information about the dispatcher module can be found at: http://www.openser.org/docs/modules/devel/dispatcher.html
+        <db:para>This table is used by the dispatcher module. It contains the sets of destinations used for load balancing and dispatching. More information about the dispatcher module can be found at: &OPENSER_MOD_DOC;dispatcher.html
         </db:para>
     </description>
 

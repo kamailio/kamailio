@@ -12,7 +12,7 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table us used by the alias_db module as an alternative for user aliases via userloc. More information about the alias_db module can be found at: http://www.openser.org/docs/modules/1.2.x/alias_db.html
+        <db:para>This table us used by the alias_db module as an alternative for user aliases via userloc. More information about the alias_db module can be found at: &OPENSER_MOD_DOC;alias_db.html
         </db:para>
     </description>
 

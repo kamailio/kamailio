@@ -12,7 +12,7 @@
     <version>6</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table is used to provide authentication information. More information about the auth_db module can be found at: http://www.openser.org/docs/modules/1.2.x/auth_db.html
+        <db:para>This table is used to provide authentication information. More information about the auth_db module can be found at: &OPENSER_MOD_DOC;auth_db.html
         </db:para>
     </description>
 
