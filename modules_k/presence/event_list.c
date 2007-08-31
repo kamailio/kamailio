@@ -195,6 +195,12 @@ int add_event(pres_ev_t* event)
 	if(ev->wipeer)	
 		ev->wipeer->wipeer= ev;
 
+	if(event->req_auth && 
+		( event->get_auth_status==0 ||event->get_rules_doc== 0))
+	{
+		LOG(L_ERR, "PRESENCE:add_event:ERROR bad event structure\n");
+		goto error;
+	}
 	ev->req_auth= event->req_auth;
 	ev->agg_nbody= event->agg_nbody;
 	ev->apply_auth_nbody= event->apply_auth_nbody;

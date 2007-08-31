@@ -199,10 +199,13 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	
 	for(i= 0; i<n ; i++)
 	{
+		rules_doc= NULL;
 		DBG( "PRESENCE:msg_presentity_clean:found expired publish"
 				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
 				p[i]->domain.len, p[i]->domain.s);
-		if(p[i]->event->get_rules_doc(&p[i]->user, &p[i]->domain, &rules_doc)< 0)
+		
+		if(p[i]->event->get_rules_doc && 
+		p[i]->event->get_rules_doc(&p[i]->user, &p[i]->domain, &rules_doc)< 0)
 		{
 			LOG(L_ERR, "PRESENCE:msg_presentity_clean:ERROR getting rules doc\n");
 			goto error;
