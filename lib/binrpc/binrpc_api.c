@@ -457,7 +457,7 @@ static int get_reply(struct binrpc_handle *handle,
 			if (n == 0)
 				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 					"get_reply: read unexpected EOF: received %d bytes"
-					" of reply", n);
+					" of reply", crt - handle->buf);
 			else
 				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 					"get_reply: read reply failed: %s (%d)",
@@ -931,7 +931,7 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 			if (((*vals)[i].name.s=binrpc_malloc(val.name.len+1))==0)
 				goto error_mem;
 			memcpy((*vals)[i].name.s, val.name.s, val.name.len);
-			(*vals)[i].name.s[val.name.len+1]=0; /* 0-term */
+			(*vals)[i].name.s[val.name.len]=0; /* 0-term */
 		}
 		if (val.u.strval.s){
 			if (val.type==BINRPC_T_STR){
