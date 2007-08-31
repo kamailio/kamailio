@@ -9,6 +9,10 @@ DEFS+=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/xmlrpc-c \
 		-I$(SYSBASE)/include/xmlrpc-c
 LIBS+=-L$(SYSBASE)/lib  -L$(LOCALBASE)/lib -lxmlrpc -lxmlrpc_xmlparse \
 		-lxmlrpc_xmltok -lxmlrpc_abyss -lxmlrpc_abyss_server \
-		-lxmlrpc_client -lwwwinit -lwwwstream -lwwwxml
+		-lxmlrpc_client -lwwwinit -lwwwstream -lwwwxml \
+		-lwwwapp -lwwwcache -lwwwcore -lwwwdir -lwwwfile \
+		-lwwwftp -lwwwgopher -lwwwhtml -lwwwhttp \
+		-lwwwmime -lwwwmux -lwwwnews -lwwwtelnet \
+		-lwwwtrans -lwwwzip
 
 include ../../Makefile.modules
