@@ -37,8 +37,8 @@ xmlrpc_value * default_method ( xmlrpc_env * env, char * host,
 
 int set_default_method ( xmlrpc_env * env );
 
-int init_async_lock();
+int init_async_lock(void);
 
-void destroy_async_lock();
+void destroy_async_lock(void);
 
 #endif /* _XR_SERVER_H_ */

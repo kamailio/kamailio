@@ -132,7 +132,7 @@ static inline struct mi_root* wait_async_reply(struct mi_handler *hdl)
 
 
 
-static inline struct mi_handler* build_async_handler()
+static inline struct mi_handler* build_async_handler(void)
 {
 	struct mi_handler *hdl;
 
@@ -281,7 +281,7 @@ int set_default_method ( xmlrpc_env * env )
 	return 0;
 }
 
-int init_async_lock()
+int init_async_lock(void)
 {
 	xr_lock = lock_alloc();
 	if (xr_lock==NULL) {
@@ -298,7 +298,7 @@ int init_async_lock()
 	return 0;
 }
 
-void destroy_async_lock()
+void destroy_async_lock(void)
 {
 	if (xr_lock) {
 		lock_destroy(xr_lock);
