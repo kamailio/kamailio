@@ -30,6 +30,17 @@ ANNOTATE({{       Here is a main overview of what happens:</para>
         sections.</para>
 
         <para>The details are below.}})dnl
+ANNOTATE({{It always make sense to stop invalid SIP messages as early as possible.
+	This way you will prevent some (badly made) Denial of Service attacks, as well
+	as avoid spending server resources on messages that will be denied somewhere or
+	may cause problems. The type of checks done can be controlled by the sanity module's
+	'default_checks' parameter. In the Getting Started configurations, this parameter
+	is not explicitly set (defaults to all), so by adding this configuration to your
+	common/local modparams.m4 file, you can change the behavior of sanity_check() below.}},
+{{	# ------------------------------------------------------------------------
+	# Sanity Check Section
+	# ------------------------------------------------------------------------}},
+{{	sanity_check();}})
 ANNOTATE({{mf_process_maxfwd_header is a safety check that you should
         always include as the first line of your main route block. This
         function is exposed in the mf.so module and is used to keep track of
@@ -39,9 +50,7 @@ ANNOTATE({{mf_process_maxfwd_header is a safety check that you should
         same thing. PARA The basic rule here is that if this function ever returns 'true'
         then you need to stop processing the problematic message to avoid
         endless looping.}},
-{{	# ------------------------------------------------------------------------
-	# Sanity Check Section
-	# ------------------------------------------------------------------------}},
+{{	# Check whether we might be in a loop.}},
 {{	if (!mf_process_maxfwd_header("10")) {
 }})dnl
 ANNOTATE({{If a looping situation is detected then SER needs a way to tell
@@ -53,14 +62,13 @@ ANNOTATE({{If a looping situation is detected then SER needs a way to tell
         reply. PARA You can specify an appropriate error message as shown. The error
         message can only selected by the defined SIP error codes and messages.
         Many IP phones will show the text message to the user.}},,
-{{		sl_send_reply("483", "Too Many Hops");
+{{		sl_reply("483", "Too Many Hops");
 }})dnl
-ANNOTATE({{The break statement tells SER to stop processing the SIP message
-        and exit from the route block that it is currently executing. Since we
-        are calling break in the main route block, SER will completely stop
-        processing the current message.}},
+ANNOTATE({{The exit statement tells SER to stop processing the SIP message
+        and exit from the route block that it is currently executing and 
+	completely stop processing the current message.}},
 ,
-{{		break;
+{{		exit;
 	};
 }})dnl
 ANNOTATE({{msg:len is a core SER function that returns the length in bytes
@@ -72,8 +80,8 @@ ANNOTATE({{msg:len is a core SER function that returns the length in bytes
         detected.}},
 {{}},
 {{	if (msg:len > max_len) {
-		sl_send_reply("513", "Message Overflow");
-		break;
+		sl_reply("513", "Message Overflow");
+		exit;
 	};
 }})dnl
 }})dnl

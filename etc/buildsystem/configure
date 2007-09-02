@@ -97,11 +97,14 @@ read path
 if [ -z "$path" ]; then
     path="/usr/local"
 fi
+
 echo " "
 echo    "Usage:       dbtype://readwriteuser:password@host/databasename"
 echo -n "Database URL (mysql://ser:heslo@localhost/ser): "
 read dburl
 
+# Set default usrloc mode to 1 (write-through)
+usrlocdbmode="1"
 if [ -z "$dburl" ]; then
     dburl="mysql://ser:heslo@localhost/ser"
 fi
@@ -156,19 +159,11 @@ echo "You can also choose to include specific components within a feature packag
 echo "And finally, you can choose to include no prepared features, just use your own code in $local_prefix."
 echo " "
 echo "Your choice of feature, choose only one, "
-echo -n "   default is gettingstarted (none, components or $all_packages) ? " 
+echo -n "   default is gettingstarted (none or $all_packages) ? " 
 read features
 
 if [ -z "$features" ]; then
 	features="gettingstarted"
-fi
-
-if [ "$features" = "components" ]; then
-	echo " "
-	echo "You have chosen to include features per component. Please modify the generated"
-	echo "$out file to include specific components."
-	echo -n "Press enter..."
-	read
 fi
 
 if [ "$features" = "sems" ]; then
@@ -181,21 +176,44 @@ fi
 if [ "$features" = "gettingstarted" ]; then
 	echo " "
 	echo "You have chosen the SER - Getting Started feature package.  (See SER - Getting Started document)"
-	echo "Which feature set do you want to base your configuration on:"
-	echo "   helloworld     : basic configuration"
-	echo "   auth           : authentication using mysql database"
-	echo "   nat		: NAT traversal handling"
-	echo "   pstn		: Functionality for PSTN integration"
-	echo "   callfwd        : basic call features like call forwarding"
 	echo " "
-	echo "**** WARNING! Only helloworld is implemented!!!!"
-	echo -n "Your choice (default helloworld, auth, nat, pstn, callfwd): "
-	read gettingstarted
-	
-	if [ -z "$gettingstarted" ]; then
-		gettingstarted="helloworld"
+	echo "You now have to choose which features to include (press ENTER for defaults)."
+	echo " "
+	echo -n "-- basic configuration (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_helloworld="yes"
+	        # if helloworld is chosen, we don't want to use a db and the usrloc db mode is 0 (don't use db)
+	        usrlocdbmode="0"
+	else 
+		echo "WARNING!!!! not including the basic configuration is for experts only and should be used to extract"
+		echo "            specific features or just an empty config shell."
+		read warning
 	fi
-	if [ "$gettingstarted" = "nat" ]; then
+	feat=""
+	echo -n "-- SIP Registrar functions (ENTER to include) "
+	if [ "$feat" == "yes" ]; then
+		gs_registrar="yes"
+	fi
+	feat=""
+	echo -n "-- authentication using database (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_auth="yes"
+		# Write-through db mode is default
+		usrlocdbmode="1"
+	fi
+	feat=""
+	echo -n "-- load domain attributes and global flags from database on start-up  (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_global_load="yes"
+	fi
+	feat=""
+	echo -n "-- NAT traversal handling (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_nat="yes"
 		echo " "
 		echo "You have chosen NAT traversal, do you want to use rtpproxy (iptel.org) or mediaproxy (ag-projects)?"
 		echo -n "Your choice (default rtpproxy, mediaproxy): "
@@ -204,6 +222,63 @@ if [ "$features" = "gettingstarted" ]; then
 			proxychoice="rtpproxy"
 		fi
 	fi
+	feat=""	
+	echo -n "-- Basic call features like call forwarding (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_callfwd="yes"
+	fi
+	feat=""	
+	echo -n "-- Functionality for PSTN integration (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_pstn="yes"
+	fi
+	feat=""	
+	echo -n "-- XMLRPC management interface (default no, yes to include) "
+	read feat
+	if [ "$feat" == "yes" ]; then
+		gs_xmlrpc="yes"
+	fi
+	feat=""
+	echo -n "-- Accounting (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_acc="yes"
+		echo " "
+		echo "You have chosen accounting, do you want to do accounting to database or syslog?"
+		echo -n "Your choice (default database, syslog): "
+		read accchoice
+		if [ -z "$accchoice" ]; then
+			accchoice="database"
+		fi
+	fi
+	feat=""	
+	echo -n "-- Handling of MESSAGE, including offline storage (default no, yes to include) "
+	read feat
+	if [ "$feat" == "yes" ]; then
+		gs_message="yes"
+	fi
+	feat=""	
+	echo -n "-- Handling of OPTIONS (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_options="yes"
+	fi
+	feat=""	
+	echo -n "-- Outbound calls to the Internet (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_outbound="yes"
+	fi
+	feat=""	
+	echo -n "-- Inbound calls from the Internet (ENTER to include) "
+	read feat
+	if [ -z "$feat" ]; then
+		gs_inbound="yes"
+	fi
+	feat=""	
+
 fi
 
 # Now all options have been answered, create the template local.m4 file.
@@ -258,6 +333,10 @@ dnl -------------------------------------
 dnl This file is the basic configuration for a specific SER server.
 dnl Run configure to generate the file automatically.
 dnl -------------------------------------
+dnl
+dnl *******************************
+dnl ******* Admin defines *********
+dnl *******************************
 dnl The below define can be used throughout the whole build system if you
 dnl want to keep most of your configuration the same across many servers,
 dnl but still want to have differences based on which config is generated.
@@ -271,6 +350,22 @@ dnl CFGNAME is used by the template system to include the correct site-specific 
 dnl The local prefix where local common and local sever configs are found
 `def CFGPREFIX $local_prefix`
 dnl
+dnl Remove 'dnl ' in front of this define to set DEVELOPMENT
+dnl to tell that this configuration should include DEVELOPMENT ser.cfg code
+dnl You can use this define to turn on and off inclusion of test code in the various
+dnl .m4 files like this:
+dnl ifdef(\`DEVELOPMENT',\`
+dnl   # Code included for testing purposes
+dnl ')dnl
+dnl define(\`DEVELOPMENT',\`defined')dnl
+dnl
+dnl If this define is not defined, the separators showing start and stop of the various included m4 files
+dnl will not be included in the final ser.cfg
+`def "INCLUDE_SEPARATORS" defined`
+dnl
+dnl *******************************
+dnl ******* Global defines ********
+dnl *******************************
 dnl The public IP address of your SER server
 dnl If you use a private address, that is okay if only user agents on your local network
 dnl will contact your SER server.
@@ -291,49 +386,52 @@ dnl dials (or registers as) sip:user@mytestser.org, that is a local uri.
 dnl
 `def "SER_INSTALL_PREFIX" $path`
 `def "SER_DB_URL" $dburl`
+dnl
+dnl *******************************
+dnl ******* Log defines   *********
+dnl *******************************
 dnl Major "switches", put dnl in front of a switch to turn off the functionality
 `if [ -z "$logging" ]; then echo "dnl "; fi``def "INCLUDE_GETTING_STARTED_LOGGING" yes`
 `if [ -z "$lognotice" ]; then echo "dnl "; fi``def "INCLUDE_NOTICE_LOGGING" yes`
 `if [ -z "$loginfo" ]; then echo "dnl "; fi``def "INCLUDE_INFO_LOGGING" yes`
 `if [ -z "$logdebug" ]; then echo "dnl "; fi``def "INCLUDE_DEBUG_LOGGING" yes`
 dnl
-dnl If you want to control in more detail which features to include, you can specify
-dnl the package name as GRANULAR:
-`if [ "$features" != "components" ]; then echo "dnl "; fi``def "GETTINGSTARTED" GRANULAR`
-dnl Then each of the features you want must be defined:
+dnl *********************************************
+dnl ******* Package and feature defines *********
+dnl *********************************************
+dnl
+dnl Each of the features you want to be included must be defined with the two-letter package name prefix, example:
 dnl `def "GS_AUTHENTICATION" yes`
 dnl See the documentation for each feature package for available features to include. 
-dnl 
-dnl Features from other feature packages can also be included in a similar way:
-dnl 1. Set main define (name of feature package) to GRANULAR
-dnl 2. Based on the documented features available, define each XX_FEATURENAME to yes
 dnl
-dnl Below each configuration file within a feature package can be included
-dnl WARNING!!! DO *NOT* include specific features above while ANY of the defines below are active (no dnl in front) 
-`if [ "$gettingstarted" != "helloworld" ]; then echo "dnl "; fi``def "GETTINGSTARTED" HELLOWORLD` 
-`if [ "$gettingstarted" != "auth" ]; then echo "dnl "; fi``def "GETTINGSTARTED" AUTHENTICATION` 
-`if [ "$gettingstarted" != "nat" ]; then echo "dnl "; fi``def "GETTINGSTARTED" HANDLINGNAT` 
-`if [ "$gettingstarted" != "pstn" ]; then echo "dnl "; fi``def "GETTINGSTARTED" PSTN`
-`if [ "$gettingstarted" != "callfwd" ]; then echo "dnl "; fi``def "GETTINGSTARTED" CALLFORWARDING`
+dnl Below each configuration feature within a feature package are included
+`if [ -z "$gs_helloworld" ]; then echo "dnl "; fi``def "GS_HELLOWORLD" yes` 
+`if [ -z "$gs_auth" ]; then echo "dnl "; fi``def "GS_AUTH" yes` 
+`if [ -z "$gs_global_load" ]; then echo "dnl "; fi``def "GS_GLOBAL_LOAD" yes` 
+`if [ -z "$gs_nat" ]; then echo "dnl "; fi``def "GS_NAT" yes` 
+`if [ -z "$gs_pstn" ]; then echo "dnl "; fi``def "GS_PSTN" yes` 
+`if [ -z "$gs_callfwd" ]; then echo "dnl "; fi``def "GS_CALLFWD" yes` 
+`if [ -z "$gs_registrar" ]; then echo "dnl "; fi``def "GS_REGISTRAR" yes` 
+`if [ -z "$gs_options" ]; then echo "dnl "; fi``def "GS_OPTIONS" yes` 
+`if [ -z "$gs_message" ]; then echo "dnl "; fi``def "GS_MESSAGE" yes` 
+`if [ -z "$gs_xmlrpc" ]; then echo "dnl "; fi``def "GS_XMLRPC" yes` 
+`if [ -z "$gs_acc" ]; then echo "dnl "; fi``def "GS_ACC" yes` 
+`if [ -z "$gs_outbound" ]; then echo "dnl "; fi``def "GS_OUTBOUND" yes` 
+`if [ -z "$gs_inbound" ]; then echo "dnl "; fi``def "GS_INBOUND" yes` 
+dnl
+dnl Which accounting to include, DON'T define both at the same time
+`if [ "$accchoice" != "database" ]; then echo "dnl "; fi``def "GS_ACC_DB" yes`
+`if [ "$accchoice" != "syslog" ]; then echo "dnl "; fi``def "GS_ACC_SYSLOG" yes`
 dnl
 dnl Which NAT handling system to include, DON'T define both at the same time
 `if [ "$proxychoice" != "rtpproxy" ]; then echo "dnl "; fi``def "GS_NAT_RTPPROXY" yes`
 `if [ "$proxychoice" != "mediaproxy" ]; then echo "dnl "; fi``def "GS_NAT_MEDIAPROXY" yes`
 dnl
-dnl *******************************
-dnl ******* Other defines *********
-dnl *******************************
-dnl Remove 'dnl ' in front of this define to set DEVELOPMENT
-dnl to tell that this configuration should include DEVELOPMENT ser.cfg code
-dnl You can use this define to turn on and off inclusion of test code in the various
-dnl .m4 files like this:
-dnl ifdef(\`DEVELOPMENT',\`
-dnl   # Code included for testing purposes
-dnl ')dnl
-dnl define(\`DEVELOPMENT',\`defined')dnl
-dnl If this define is not defined, the separators showing start and stop of the various included m4 files
-dnl will not be included in the final ser.cfg
-`def "INCLUDE_SEPARATORS" defined`
+dnl ******************************************
+dnl ******* Module-related defines   *********
+dnl ******************************************
+dnl
+`def "USRLOC_DB_MODE" $usrlocdbmode`
 dnl
 dnl Include the local configuration file.
 dnl Copy local.m4 from local/common/ to this directory if you want 

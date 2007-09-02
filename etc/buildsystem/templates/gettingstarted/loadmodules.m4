@@ -44,5 +44,71 @@ ANNOTATE({{Load the ctl for the control socket interface used to send commands t
 ANNOTATE({{Load the global flags module used by the logging system to turn dynamically on and off logging on a running SER server.}},
 {{# Load the gflags, global flags module.}},
 {{loadmodule "SER_LIB_DIR/gflags.so"}})
+ANNOTATE({{The textops module is a generix utility module that offers useful functions for searching, substituting, 
+	and in other ways manipulating SIP messaging. Simple, but very powerful, and beware! You can quickly break
+	an RFC...}},
+{{# Load textops used for searching/selecting text in messages and manipulating headers.}},
+{{loadmodule "SER_LIB_DIR/textops.so"}})
+ANNOTATE({{}},
+{{# Load the sanity check module to do integrity checks on incoming messages.}},
+{{loadmodule "SER_LIB_DIR/sanity.so"}})
+}})dnl
+ifdef({{USE_MYSQL_DB}},
+{{ANNOTATE({{}},
+{{# Load the mysql connector module.}},
+{{loadmodule "SER_LIB_DIR/mysql.so"}})
+}})dnl
+ifdef({{GS_AUTH}},
+{{
+ANNOTATE({{}},
+{{# Load the auth module with all the core authentication functions.}},
+{{loadmodule "SER_LIB_DIR/auth.so"}})
+dnl if USRLOC_DB_MODE is not 0, we need the db functions as well
+ifelse({{USRLOC_DB_MODE}},{{0}},{{}},
+{{
+ANNOTATE({{}},
+{{# Load the auth module with the database functions.}},
+{{loadmodule "SER_LIB_DIR/auth_db.so"}})
+ANNOTATE({{}},
+{{# The uri_db module uses database to check the uri.}},
+{{loadmodule "SER_LIB_DIR/uri_db.so"}})
+}})dnl ifelse USRLOC_DB_MODE
+ANNOTATE({{}},
+{{# Load domain module used to verify the local domains.}},
+{{loadmodule "SER_LIB_DIR/domain.so"}})
+}})dnl ifdef GS_AUTH
+ifdef({{GS_ACC_DB}},
+{{ANNOTATE({{}},
+{{# The acc_db module allows accounting directly to database.}},
+{{loadmodule "SER_LIB_DIR/acc_db.so"}})
+}})dnl
+ifdef({{GS_ACC_SYSLOG}},
+{{ANNOTATE({{}},
+{{# The acc_syslog module allows accounting directly to the syslog daemon.}},
+{{loadmodule "SER_LIB_DIR/acc_syslog.so"}})
+}})dnl
+ifdef({{GS_MESSAGE}},
+{{ANNOTATE({{}},
+{{# Load msilo to store MESSAGE in db if receiver is offline.}},
+{{loadmodule "SER_LIB_DIR/msilo.so"}})
+}})dnl
+ifdef({{GS_XMLRPC}},
+{{ANNOTATE({{}},
+{{# Load the module implementing the XMLRPC interface into the management of SER.}},
+{{loadmodule "SER_LIB_DIR/xmlrpc.so"}})
+}})dnl
+ifdef({{GS_NAT}},
+{{ifdef({{GS_NAT_RTPPROXY}},
+{{
+ANNOTATE({{}},
+{{# Load the nathelper module, which regularly pings UAs behind NAT and connects to rtpproxy (iptel.org).}},
+{{loadmodule "SER_LIB_DIR/nathelper.so"}})
+}})dnl
+ifdef({{GS_NAT_MEDIAPROXY}},
+{{
+ANNOTATE({{}},
+{{# Load the mediaproxy module, which regularly pings UAs behind NAT and connects to mediaproxy (AG Projects).}},
+{{loadmodule "SER_LIB_DIR/mediaproxy.so"}})
+}})dnl
 }})dnl
 changequote(`,')dnl

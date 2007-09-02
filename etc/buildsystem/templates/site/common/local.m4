@@ -32,13 +32,21 @@ dnl ***************************************
 define(`SER_ETC_DIR',`SER_INSTALL_PREFIX/etc/ser')dnl
 define(`SER_LIB_DIR',`SER_INSTALL_PREFIX/lib/ser/modules')dnl
 define(`SER_FIFO_PATH',`/tmp/ser_fifo')dnl
+define(`SER_SOCK_PATH',`/tmp/ser_ctl')dnl
+define(`SER_XMLRPC',`tcp:localhost:2049')dnl
 dnl
-dnl ****************************** 
-dnl ******** Local configs *******
-dnl ****************************** 
+dnl *********************************************
+dnl ******** Local configs for directives *******
+dnl *********************************************
 dnl The debug=x directice, controls the amount of logging from SER internals
 dnl <=2 is recommended for a production system. >=5 will give LOTS of logging
 define(`DEBUG_LEVEL',`3')dnl
+dnl Debug level for memory operations
+define(`MEM_DEBUG_LEVEL',`10')dnl
+dnl Debug level for memory statistics
+define(`MEM_STAT_DEBUG_LEVEL',`10')dnl
+dnl Disable core dumping (not good for production systems)
+define(`DISABLE_CORE_DUMPS',`yes')dnl
 dnl Should we fork? [yes|no] Recommended: yes
 dnl If no is defined, only one process will be used and the system will slow down A LOT!
 dnl (and especially if the DEBUG_LEVEL is high)
@@ -52,8 +60,13 @@ dnl Turn DNS lookup on?`
 define(`SER_DNS_ON',`no')dnl
 dnl Turn DNS reverse lookup on?
 define(`SER_REVERSE_DNS_ON',`no')dnl
+dnl Is this host multi-homed and need to route SIP messages on more than one adapter?
+dnl NOTE! Leaving default modparam("rr", "enable_double_rr", 1) is recommended if you set this to yes!
+define(`MULTIHOMED',`no')dnl
 dnl
+dnl ***************************
 dnl ******** LOG SYSTEM *******
+dnl ***************************
 dnl Global flags for the gflags module
 dnl Make sure that these flags are not defined elsewhere
 define(`GFLAG_NOTICE',`29')dnl
@@ -70,3 +83,31 @@ define(`XLOG_INFO',`L_NOTICE')dnl
 dnl Log level to be used for DEBUG level messages
 define(`LOG_DEBUG',`2')dnl
 define(`XLOG_DEBUG',`L_NOTICE')dnl
+dnl **********************
+dnl ******** FLAGS *******
+dnl **********************
+dnl
+dnl If you use own flags, make sure that you don't overlap values.
+dnl accounting flag
+define(`DEF_FLAG_ACC',`1')dnl
+dnl Flag set when script has been in failure route
+define(`DEF_FLAG_FAILUREROUTE',`2')dnl
+dnl Flag set if NAT is detected for UAC (caller)
+define(`DEF_FLAG_NAT_UAC',`6')dnl
+dnl NAT flag loaded from database for UAS (callee)
+define(`DEF_FLAG_NAT_UAS',`7')dnl
+dnl
+dnl **************************
+dnl ******** MODULES  ********
+dnl **************************
+dnl
+dnl *** rr
+define(`ENABLE_FULL_RR',`1')dnl
+define(`RR_COOKIE_SECRET',`ChangeThisIfYouStoreSecretStuffInCookie')dnl
+dnl *** mysql
+define(`USE_MYSQL_DB',`yes')dnl
+dnl *** nathelper
+define(`NATHELPER_NATPING_INTVL',`30')dnl
+define(`NATHELPER_PING_METHOD',`OPTIONS')dnl
+define(`NATHELPER_PING_NATED_ONLY',`1')dnl
+define(`NATHELPER_RTPPROXY_SOCK',`udp:127.0.0.1:22222')dnl

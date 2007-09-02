@@ -13,10 +13,12 @@ local_prefix?=local
 makefile_defs=0
 DEFS:=
 
+m4_param?=
+
 # This is how local.m4 in a server-dir is preferred over the one in common
 m4_include_dirs=-I $(local_prefix)/$(use_config) -I $(local_prefix)/common
 # Change if m4 is located somewhere else
-M4=/usr/bin/m4 $(m4_include_dirs)
+M4=/usr/bin/m4 $(m4_param) $(m4_include_dirs)
 
 # If no target is specified, use the first (none)
 none:

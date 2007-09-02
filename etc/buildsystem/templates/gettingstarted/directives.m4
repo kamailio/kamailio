@@ -1,14 +1,20 @@
 changequote({{,}})dnl
 ifdef({{GS_HELLOWORLD}},
-{{ANNOTATEHEAD({{SER has debug information that can be enabled or suppressed using the
+{{
+ANNOTATEHEAD({{SER has debug information that can be enabled or suppressed using the
         debug directive. A nominal value of 3 is usually specified to obtain
         enough debug information when errors occur. The debug directive
         specifies how much information to write to syslog. The higher the
         number, the more verbose SER becomes. The most verbose debug level is
         9. When the debug level is set higher than 3 SER becomes very verbose
-        and the start up time can take a bit longer.}},
+        and the start up time can take a bit longer. The commented memory log level directives
+        are there so you can easily control memory debugging (if needed at a later point).}},
 {{# Debug level on logging}},
-{{debug=DEBUG_LEVEL}})
+{{debug=DEBUG_LEVEL
+# memory debug log level
+#memdbg=MEM_DEBUG_LEVEL 
+# memory statistics log level
+#memlog=MEM_STAT_DEBUG_LEVEL}})
 ANNOTATE({{The fork directive tells the SER daemon to run in the foreground
         or the background. When you are ready to operate SER as a system
         service, you must set this directive to yes. For now we will just
@@ -45,6 +51,13 @@ ANNOTATE({{The children directive tells SER how many processes to spawn
         production environment you may need to increase this number.}},
 {{# Number of children to fork per port per protocol}},
 {{children=NR_OF_CHILDREN}})
+ANNOTATE({{If you have more than one network card on your server and expect SIP
+	messages to be sent and received on more than one of them, you should turn on
+	mhome. SER will then be able to forward SIP messages from one interface to another.
+	This is typical for a scenario where you have SIP devices on a local LAN, as well 
+	as communicate with SIP devices on the Internet.}},
+{{# Is this host multihomed?}},
+{{mhome=MULTIHOMED}})
 ANNOTATE({{These lines are really to prevent SER from attempting to lookup
         its IP addresses in DNS. By adding these two lines to ser.cfg we
         suppress any warnings if your IP is not in your DNS server.}},
@@ -53,5 +66,8 @@ ANNOTATE({{These lines are really to prevent SER from attempting to lookup
 ANNOTATE({{}},
 {{# Should reverse dns resolving be used?}},
 {{rev_dns=SER_REVERSE_DNS_ON}})
+ANNOTATE({{}},
+{{# Should reverse dns resolving be used?}},
+{{disable_core=DISABLE_CORE_DUMPS}})
 }})dnl
 changequote(`,')dnl
