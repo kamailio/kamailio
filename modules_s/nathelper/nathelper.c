@@ -470,7 +470,6 @@ mod_init(void)
 				pnode->rn_umode = 0;
 				pnode->rn_address += 5;
 			}
-			LOG(L_ERR, "DEB: IP address of RTPPROXY is %s", pnode->rn_address);
 		}
 	}
 	register_select_table(sel_declaration);
