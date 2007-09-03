@@ -518,12 +518,11 @@ maxProcessors="10"
 
 addresses="localhost:5060"
 
-   Specifies the SIP address and port in which the Application
-   Server from which the Application Server will process the SIP
-   messages. This Addres is where OpenSER listens for the
-   messages, so in fact, OpenSER is listening on them, but
-   OpenSER passes the messages to WeSIP, so WeSIP must be aware
-   of this IP/port.
+   Specifies the SIP address and port from which the Application
+   Server will process the SIP messages. This address is where
+   OpenSER listens for the messages, so in fact, OpenSER is
+   listening on them, but OpenSER passes the messages to WeSIP,
+   so WeSIP must be aware of this IP/port.
 
    Warning
 
