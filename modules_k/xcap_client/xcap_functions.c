@@ -36,6 +36,7 @@
 #include <time.h>
 #include <curl/curl.h>
 #include "../../mem/mem.h"
+#include "../presence/hash.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"
 
@@ -43,8 +44,9 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream);
 
 int bind_xcap(xcap_api_t* api)
 {
-	if (!api) {
-		LOG(L_ERR, "NOTIFIER:bind_notifier: Invalid parameter value\n");
+	if (!api) 
+	{
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 	api->get_elem= xcapGetElem;
@@ -91,15 +93,13 @@ xcap_node_sel_t* xcapInitNodeSel(void)
 	nsel= (xcap_node_sel_t*)pkg_malloc(sizeof(xcap_node_sel_t));
 	if(nsel== NULL)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapInitNodeSel: ERROR No more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(nsel, 0, sizeof(xcap_node_sel_t));
 	nsel->steps= (step_t*)pkg_malloc(sizeof(step_t));
 	if(nsel->steps== NULL)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapInitNodeSel: ERROR No more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(nsel->steps, 0, sizeof(step_t));
 	nsel->last_step= nsel->steps;
@@ -107,8 +107,7 @@ xcap_node_sel_t* xcapInitNodeSel(void)
 	nsel->ns_list= (ns_list_t*)pkg_malloc(sizeof(ns_list_t));
 	if(nsel->ns_list== NULL)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapInitNodeSel: ERROR No more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(nsel->ns_list, 0, sizeof(ns_list_t));
 	nsel->last_ns= nsel->ns_list;
@@ -154,8 +153,7 @@ xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,
 	new_step.s= (char*)pkg_malloc(size* sizeof(char));
 	if(new_step.s== NULL)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapNodeSelAddStep: ERROR No more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	if(name)
 	{
@@ -166,8 +164,7 @@ xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,
 
 			if(ns_card> 'z')
 			{
-				LOG(L_ERR, "XCAP_CLIENT: xcapNodeSelAddStep: ERROR Insuficient name cards"
-						" for namespaces\n");
+				LM_ERR("Insuficient name cards for namespaces\n");
 				goto error;
 			}
 			new_step.len= sprintf(new_step.s, "%c:", ns_card);		
@@ -195,8 +192,7 @@ xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,
 	s= (step_t*)pkg_malloc(sizeof(step_t));
 	if(s== NULL)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapNodeSelAddStep: ERROR No more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	s->val= new_step;
 	s->next= NULL;
@@ -210,15 +206,13 @@ xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,
 		ns= (ns_list_t*)pkg_malloc(sizeof(ns_list_t));
 		if(ns== NULL)
 		{
-			LOG(L_ERR, "XCAP_CLIENT: xcapNodeSelAddStep: ERROR No more memory");
-			goto error;
+			ERR_MEM(PKG_MEM_STR);
 		}
 		ns->name= ns_card;
 		ns->value.s= (char*)pkg_malloc(namespace->len* sizeof(char));
 		if(ns->value.s== NULL)
 		{
-			LOG(L_ERR, "XCAP_CLIENT: xcapNodeSelAddStep: ERROR No more memory");
-			goto error;
+			ERR_MEM(PKG_MEM_STR);
 		}
 		memcpy(ns->value.s, namespace->s, namespace->len);
 		ns->value.len= namespace->len;
@@ -267,8 +261,7 @@ char* get_node_selector(xcap_node_sel_t* node_sel)
 	buf= (char*)pkg_malloc((node_sel->size+ 10)* sizeof(char));
 	if(buf== NULL)
 	{
-		LOG(L_ERR, "XCAP_client: get_node_selector: ERROR No more memory\n");
-		return NULL;
+		ERR_MEM(PKG_MEM_STR);
 	}
 
 	s= node_sel->steps->next;
@@ -297,44 +290,10 @@ char* get_node_selector(xcap_node_sel_t* node_sel)
 	
 	buf[len]= '\0';
 
+	return buf;
+
+error:
 	return NULL;
-}
-
-/* for testing purposes only
- * function to write data at the xcap server */
-int xcapWriteData(char* path, char* file_name)
-{
-	CURL* curl_handle= NULL;
-	FILE* f= NULL;
-
-	f= fopen(file_name, "rt");
-	if(f== NULL)
-	{
-		LOG(L_ERR, "XCAP_client: xcapWriteData: ERROR while opening"
-				" file %s for reading\n", file_name);
-		return -1;
-	}
-	curl_handle = curl_easy_init();
-
-	curl_easy_setopt(curl_handle, CURLOPT_URL, path);
-	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);	
-	curl_easy_setopt(curl_handle,  CURLOPT_STDERR, stdout);	
-	
-	/* enable uploading */
-	curl_easy_setopt(curl_handle, CURLOPT_UPLOAD, 1) ;
-
-	/* HTTP PUT please */
-	curl_easy_setopt(curl_handle, CURLOPT_PUT, 1);
-
-//	curl_easy_setopt(curl_handle, CURLOPT_READFUNCTION, read_function);
-	
-	curl_easy_setopt(curl_handle, CURLOPT_READDATA, f);
-	
-	curl_easy_perform(curl_handle);
-	
-	curl_global_cleanup();
-
-	return 0;
 }
 
 /* xcap_root must be a NULL terminated string */
@@ -355,8 +314,7 @@ char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel, xcap_node_sel_t* nod
 	path= (char*)pkg_malloc(len);
 	if(path== NULL)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapGetElem: ERROR NO more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 
 	if(node_sel)
@@ -364,8 +322,7 @@ char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel, xcap_node_sel_t* nod
 		node_selector= get_node_selector(node_sel);
 		if(node_selector== NULL)
 		{
-			LOG(L_ERR, "XCAP_CLIENT: xcapGetElem:ERROR while constructing"
-					" node selector\n");
+			LM_ERR("while constructing node selector\n");
 			goto error;
 		}
 	}
@@ -385,14 +342,14 @@ char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel, xcap_node_sel_t* nod
 
 	if(size> len)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapGetElem:ERROR buffer size overflow\n");
+		LM_ERR("buffer size overflow\n");
 		goto error;
 	}
 
 	stream= send_http_get(path);
 	if(stream== NULL)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapGetElem:ERROR sending xcap get request\n");
+		LM_ERR("sending xcap get request\n");
 		goto error;
 	}
 
@@ -428,8 +385,7 @@ char* send_http_get(char* path)
 	
 	if( ret_code== CURLE_WRITE_ERROR)
 	{
-		LOG(L_ERR, "XCAP_CLIENT: xcapGetElem:ERROR while performing"
-				" curl option\n");
+		LM_ERR("while performing curl option\n");
 		if(stream)
 			pkg_free(stream);
 		stream= NULL;
@@ -446,8 +402,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
 	data= (char*)pkg_malloc(size* nmemb);
 	if(data== NULL)
 	{
-		LOG(L_ERR, "XCAP_client: write_function: ERROR No more memory\n");
-		return CURLE_WRITE_ERROR;
+		ERR_MEM(PKG_MEM_STR);
 	}
 
 	memcpy(data, (char*)ptr, size* nmemb);
@@ -455,4 +410,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
 	*((char**) stream)= data;
 
 	return size* nmemb;
+
+error:
+	return CURLE_WRITE_ERROR;
 }

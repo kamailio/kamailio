@@ -42,7 +42,7 @@ void run_xcap_update_cb(int type, str xid, char* stream)
 	{
 		if(cb->types & type) 
 		{	
-			DBG("xcap_client: run_xcap_update_cb: found callback\n");
+			LM_DBG("found callback\n");
 			cb->callback(type, xid, stream);
 		}
 	}
@@ -55,7 +55,7 @@ int register_xcapcb( int types, xcap_cb f)
 	xcb= (xcap_callback_t*)shm_malloc(sizeof(xcap_callback_t));
 	if(xcb== NULL)
 	{
-		ERR_MEM("xcap_client", "register_xcapcb");
+		ERR_MEM(SHARE_MEM);
 	}
 	memset(xcb, 0, sizeof(xcap_callback_t));
 

@@ -153,7 +153,7 @@ struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param)
 	doc_url = node->value;
 	if(doc_url.s == NULL || doc_url.len== 0)
 	{
-		LOG(L_ERR, "xcap_client:refreshXcapDoc: empty uri\n");
+		LM_ERR("empty uri\n");
 		return init_mi_tree(404, "Empty document URL", 20);
 	}
 	
@@ -164,22 +164,22 @@ struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param)
 	stream=	send_http_get(doc_url.s);
 	if(stream== NULL)
 	{
-		LOG(L_ERR, "xcap_client:refreshXcapDoc: ERROR in http get\n");
+		LM_ERR("in http get\n");
 		return 0;
 	}
 	
 	/* call registered functions with document argument */
 	if(parse_doc_url(doc_url, &serv_addr, &doc_sel)< 0)
 	{
-		LOG(L_ERR, "xcap_client:refreshXcapDoc: ERROR parsing document url\n");
+		LM_ERR("parsing document url\n");
 		return 0;
 	}
 
 	type= get_auid_flag(doc_sel.auid);
 	if(type< 0)
 	{
-		LOG(L_ERR, "xcap_client:refreshXcapDoc: ERROR incorect auid"
-				": %.*s\n",doc_sel.auid.len, doc_sel.auid.s);
+		LM_ERR("incorect auid: %.*s\n",
+				doc_sel.auid.len, doc_sel.auid.s);
 		goto error;
 	}
 
@@ -198,7 +198,7 @@ int get_auid_flag(str auid)
 
 	switch (auid.len)
 	{
-		case strlen("pres-rules"):	if(strncmp(auid.s, "pres-rules",
+		case strlen("pres-rules"): if(strncmp(auid.s, "pres-rules",
 											strlen("pres-rules"))== 0)
 										return PRES_RULES;
 
