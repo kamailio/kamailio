@@ -57,8 +57,7 @@ int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(local_contact->len+ 128));
 	if(hdr_append.s == NULL)
 	{
-		LOG(L_ERR,"PRESENCE: send_202ok:ERROR no more pkg memory\n");
-		return -1;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);	
 	
@@ -75,13 +74,13 @@ int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 	
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"ERROR:send_202oky : unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		goto error;
 	}
 
 	if( slb.reply_dlg( msg, 202, &su_200_rpl, rtag)== -1)
 	{
-		LOG(L_ERR,"PRESENCE:send_202ok: ERORR while sending reply\n");
+		LM_ERR("sending reply\n");
 		goto error;
 	}
 	
@@ -101,7 +100,7 @@ int send_200ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(local_contact->len+ 128));
 	if(hdr_append.s == NULL)
 	{
-		LOG(L_ERR,"ERROR:send_200ok : unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		return -1;
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
@@ -118,13 +117,13 @@ int send_200ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"ERROR:send_200ok: unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		goto error;
 	}
 
 	if( slb.reply_dlg( msg, 200, &su_200_rpl, rtag)== -1)
 	{
-		LOG(L_ERR,"PRESENCE:send_200ok : ERORR while sending reply\n");
+		LM_ERR("sending 200OK reply\n");
 		goto error;
 	}
 	
@@ -162,15 +161,14 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 	
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE: delete_db_subs: ERROR in use_table\n");
+		LM_ERR("in use table sql operation\n");
 		return -1;
 	}
 
 	if(pa_dbf.delete(pa_db, query_cols, 0, query_vals,
 				n_query_cols)< 0 )
 	{
-		LOG(L_ERR,"PRESENCE: delete_db_subs: ERROR cleaning"
-				" unsubscribed messages\n");
+		LM_ERR("cleaning unsubscribed messages\n");
 		return -1;
 	}
 
@@ -277,15 +275,14 @@ int update_subs_db(subs_t* subs, int type)
 
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:update_subs_db: ERROR in use_table\n");
+		LM_ERR("in use table sql operation\n");	
 		return -1;
 	}
 		
 	if( pa_dbf.update( pa_db,query_cols, 0, query_vals,
 				update_keys, update_vals, n_query_cols,n_update_cols)<0) 
 	{
-		LOG( L_ERR , "PRESENCE:update_subs_db:ERROR while updating"
-				" presence information\n");
+		LM_ERR("updating presence information\n");
 		return -1;
 	}
 	return 0;
@@ -295,21 +292,18 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		int to_tag_gen)
 {	
 
-	DBG("PRESENCE: update_subscription...\n");
 	printf_subs(subs);	
 	
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
 	{
 		if(subs->expires == 0)
 		{
-			DBG("PRESENCE:update_subscription: expires =0 ->"
-					" deleting record\n");
+			LM_DBG("expires =0 -> deleting record\n");
 		
 			if( delete_db_subs(subs->pres_uri, 
 						subs->event->name, subs->to_tag)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_subscription: ERROR while deleting"
-						"subscription record from database\n");
+				LM_ERR("deleting subscription record from database\n");
 				goto error;
 			}
 			/* delete record from hash table also */
@@ -321,8 +315,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			{	
 				if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
-						" sending 202 OK\n");
+					LM_ERR("sending 202 OK\n");
 					goto error;
 				}
 				
@@ -331,8 +324,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 					if(query_db_notify(&subs->pres_uri,
 								subs->event->wipeer, NULL)< 0)
 					{
-						LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
-							" notify for winfo\n");
+						LM_ERR("Could not send notify for winfo\n");
 						goto error;
 					}
 				}
@@ -342,8 +334,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			{
 				if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
-						" sending 202 OK\n");
+					LM_ERR("sending 202 OK reply\n");
 					goto error;
 				}
 			}
@@ -353,8 +344,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			subs->reason.len= 7;
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
-				" notify \n");
+				LM_ERR("Could not send notify \n");
 				goto error;
 			}
 			return 1;
@@ -367,15 +357,13 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 				/* update in database table */
 				if(update_subs_db(subs, REMOTE_TYPE)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscription: ERROR updating"
-							"subscription in database table\n");
+					LM_ERR("updating subscription in database table\n");
 					goto error;
 				}
 			}
 			else
 			{
-				LOG(L_ERR, "PRESENCE:update_subscription: ERROR updating"
-					"subscription record in hash table\n");
+				LM_ERR("updating subscription record in hash table\n");
 				goto error;
 			}
 		}
@@ -386,8 +374,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		{	
 			if(insert_shtable(subs)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_subscription: ERROR when inserting"
-						" new record in subs_htable\n");
+				LM_ERR("inserting new record in subs_htable\n");
 				goto error;
 			}
 		}
@@ -401,26 +388,23 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	{	
 		if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
-					" sending 202 OK\n");
+			LM_ERR("sending 202 OK reply\n");
 			goto error;
 		}
 		
 		if(subs->expires!= 0 && subs->event->wipeer)
 		{	
-			DBG("PRESENCE:update_subscription: send Notify with winfo\n");
+			LM_DBG("send Notify with winfo\n");
 			if(query_db_notify(&subs->pres_uri, subs->event->wipeer, subs)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_subscription:Could not send"
-					" notify winfo\n");
+				LM_ERR("Could not send notify winfo\n");
 				goto error;
 			}	
 			if(subs->send_on_cback== 0)
 			{	
 				if(notify(subs, NULL, NULL, 0)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
-					" notify\n");
+					LM_ERR("Could not send notify\n");
 					goto error;
 				}
 			}
@@ -429,8 +413,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		{
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_subscription: Could not send"
-				" notify\n");
+				LM_ERR("Could not send notify\n");
 				goto error;
 			}
 		}	
@@ -440,14 +423,12 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	{
 		if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscription:ERROR while"
-					" sending 202 OK\n");
+			LM_ERR("sending 202 OK reply\n");
 			goto error;
 		}		
 		if(notify(subs, NULL, NULL, 0 )< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_subscription: ERROR while"
-				" sending notify\n");
+			LM_ERR("sending notify request\n");
 			goto error;
 		}
 	}
@@ -455,7 +436,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	
 error:
 
-	LOG(L_ERR, "PRESENCE:update_presentity: ERROR occured\n");
+	LM_ERR("occured\n");
 	return -1;
 
 }
@@ -467,7 +448,7 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	db_op_t  db_ops[3] ;
 	db_res_t *result= NULL;
 
-	DBG("PRESENCE: msg_watchers_clean:cleaning pending subscriptions\n");
+	LM_DBG("cleaning pending subscriptions\n");
 	
 	db_keys[0] ="inserted_time";
 	db_ops[0] = OP_LT;
@@ -484,14 +465,13 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	result_cols[0]= "id";
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR in use_table\n");
+		LM_ERR("unsuccessful use table sql operation\n");
 		return ;
 	}
 	
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols, 2, 1, 0, &result )< 0)
 	{
-		LOG(L_ERR, "PRESENCE:msg_watchers_clean: ERROR while querying database"
-				" for expired messages\n");
+		LM_ERR("querying database for expired messages\n");
 		if(result)
 			pa_dbf.free_result(pa_db, result);
 		return;
@@ -506,8 +486,7 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	pa_dbf.free_result(pa_db, result);
 
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
-		LOG(L_ERR,"PRESENCE:msg_watchers_clean: ERROR cleaning pending "
-				" subscriptions\n");
+		LM_ERR("cleaning pending subscriptions\n");
 }
 
 int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
@@ -539,12 +518,11 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe:error parsing headers\n");
+		LM_ERR("parsing headers\n");
 
 		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
 		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while sending"
-					" 400 reply\n");
+			LM_ERR("sending 400 reply\n");
 		}
 		error_ret = 0;
 		goto error;
@@ -555,8 +533,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if (!msg->event->parsed && (parse_event(msg->event) < 0))
 		{
-			LOG(L_ERR,
-				"PRESENCE: handle_subscribe: ERROR cannot parse Event header\n");
+			LM_ERR("cannot parse Event header\n");
 			goto error;
 		}
 		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
@@ -593,19 +570,16 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
 		{
-			LOG(L_ERR,
-				"PRESENCE: handle_subscribe: ERROR cannot parse Expires header\n");
+			LM_ERR("cannot parse Expires header\n");
 			goto error;
 		}
-		DBG("PRESENCE: handle_subscribe: 'expires' found\n");
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		DBG("PRESENCE: handle_subscribe: lexpire= %d\n", lexpire);
+		LM_DBG("'Expires' header found, value= %d\n", lexpire);
 
 	}
 	else 
 	{
-		DBG("PRESENCE: handle_subscribe: 'expires' not found; default=%d\n",
-				event->default_expires);
+		LM_DBG("'expires' not found; default=%d\n",event->default_expires);
 		lexpire = event->default_expires;
 	}
 	if(lexpire > max_expires)
@@ -615,23 +589,21 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 	if( msg->to==NULL || msg->to->body.s==NULL)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse TO"
-				" header\n");
+		LM_ERR("cannot parse TO header\n");
 		goto error;
 	}
 	/* examine the to header */
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
-		DBG("PRESENCE: handle_subscribe: 'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
+		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
 	}
 	else
 	{
 		memset( &TO , 0, sizeof(TO) );
 		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO));
 		{
-			DBG("PRESENCE: handle_subscribe: 'To' header NOT parsed\n");
+			LM_DBG("'To' header NOT parsed\n");
 			goto error;
 		}
 		pto = &TO;
@@ -639,35 +611,32 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	
 	if(parse_uri(pto->uri.s, pto->uri.len, &to_uri)!=0)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: bad R-URI!\n");
+		LM_ERR("bad R-URI!\n");
 		goto error;
 	}
 
 	if(to_uri.user.len<=0 || to_uri.user.s==NULL || to_uri.host.len<=0 ||
 			to_uri.host.s==NULL)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: bad URI in To header!\n");
+		LM_ERR("bad URI in To header!\n");
 		goto error;
 	}
-	subs.to_user.s = to_uri.user.s;
-	subs.to_user.len = to_uri.user.len;
-
-	subs.to_domain.s = to_uri.host.s;
-	subs.to_domain.len = to_uri.host.len;
+	subs.to_user = to_uri.user;
+	subs.to_domain = to_uri.host;
 	
 	/* examine the from header */
 	if (!msg->from || !msg->from->body.s)
 	{
-		DBG("PRESENCE:handle_subscribe: ERROR cannot find 'from' header!\n");
+		LM_DBG("cannot find 'from' header!\n");
 		goto error;
 	}
 	if (msg->from->parsed == NULL)
 	{
-		DBG("PRESENCE:handle_subscribe: 'From' header not parsed\n");
+		LM_DBG("'From' header not parsed\n");
 		/* parsing from header */
 		if ( parse_from_header( msg )<0 ) 
 		{
-			DBG("PRESENCE:handle_subscribe: ERROR cannot parse From header\n");
+			LM_DBG("cannot parse From header\n");
 			goto error;
 		}
 	}
@@ -675,27 +644,24 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 	if(parse_uri(pfrom->uri.s, pfrom->uri.len, &from_uri)!=0)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: bad R-URI!\n");
+		LM_ERR("bad R-URI!\n");
 		goto error;
 	}
 
 	if(from_uri.user.len<=0 || from_uri.user.s==NULL || from_uri.host.len<=0 ||
 			from_uri.host.s==NULL)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: bad URI in To header!\n");
+		LM_ERR("bad URI in To header!\n");
 		goto error;
 	}
 	
-	subs.from_user.s = from_uri.user.s;
-	subs.from_user.len = from_uri.user.len;
-
-	subs.from_domain.s = from_uri.host.s;
-	subs.from_domain.len = from_uri.host.len;
+	subs.from_user = from_uri.user;
+	subs.from_domain = from_uri.host;
 
 	/*generate to_tag if the message does not have a to_tag*/
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
-		DBG("PRESENCE:handle_subscribe: generating to_tag\n");
+		LM_DBG("generating to_tag\n");
 		to_tag_gen = 1;
 		/*generate to_tag then insert it in avp*/
 		
@@ -704,8 +670,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 				pid, (int)time(NULL), counter);
 		if(rtag_value.len<= 0)
 		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR while creating"
-					" to_tag\n");
+			LM_ERR("while creating to_tag\n");
 			goto error;
 		}
 	}
@@ -717,34 +682,29 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse callid"
-				" header\n");
+		LM_ERR("cannot parse callid header\n");
 		goto error;
 	}
-	subs.callid.s = msg->callid->body.s;
-	subs.callid.len = msg->callid->body.len;
+	subs.callid = msg->callid->body;
 
 	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse cseq"
-				" header\n");
+		LM_ERR("cannot parse cseq header\n");
 		goto error;
 	}
 	if (str2int( &(get_cseq(msg)->number), &subs.remote_cseq)!=0 )
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse cseq"
-				" number\n");
+		LM_ERR("cannot parse cseq number\n");
 		goto error;
 	}
 	if( msg->contact==NULL || msg->contact->body.s==NULL)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse contact"
-				" header\n");
+		LM_ERR("cannot parse contact header\n");
 		goto error;
 	}
 	if( parse_contact(msg->contact) <0 )
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse contact"
+		LM_ERR(" cannot parse contact"
 				" header\n");
 		goto error;
 	}
@@ -752,15 +712,13 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 	if(b == NULL)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR cannot parse contact"
-				" header\n");
+		LM_ERR("cannot parse contact header\n");
 		goto error;
 	}
-	subs.contact.s = b->contacts->uri.s;
-	subs.contact.len = b->contacts->uri.len;
+	subs.contact = b->contacts->uri;
 
-	DBG("PRESENCE: handle_subscribe: subs.contact= %.*s - len = %d\n",
-			subs.contact.len, subs.contact.s, subs.contact.len);	
+	LM_DBG("subs.contact= %.*s - len = %d\n",subs.contact.len,
+			subs.contact.s, subs.contact.len);	
 
 	/*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
@@ -768,26 +726,22 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		rt = print_rr_body(msg->record_route, &rec_route, 0, 0);
 		if(rt != 0)
 		{
-			LOG(L_ERR,"PRESENCE:handle_subscribe:error processing the record"
-					" route [%d]\n", rt);	
+			LM_ERR("processing the record route [%d]\n", rt);	
 			rec_route.s=NULL;
 			rec_route.len=0;
 		//	goto error;
 		}
 	}
-	subs.record_route.s = rec_route.s;
-	subs.record_route.len = rec_route.len;
+	subs.record_route = rec_route;
 			
 	subs.sockinfo_str= msg->rcv.bind_address->sock_str;
 
 	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 	{
-		LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR no from tag value"
-				" present\n");
+		LM_ERR("no from tag value present\n");
 		goto error;
 	}
-	subs.from_tag.s = pfrom->tag_value.s;
-	subs.from_tag.len = pfrom->tag_value.len;
+	subs.from_tag = pfrom->tag_value;
 
 	subs.version = 0;
 	
@@ -796,8 +750,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		contact= get_local_contact(msg);
 		if(contact== NULL)
 		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR in function"
-					" get_local_contact\n");
+			LM_ERR("in function get_local_contact\n");
 			goto error;
 		}
 		subs.local_contact= *contact;
@@ -814,7 +767,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if(get_stored_info(msg, &subs, &error_ret )< 0)
 		{
-			LOG(L_ERR,"PRESENCE:handle_subscribe:ERROR getting stored info\n");
+			LM_ERR("getting stored info\n");
 			goto error;
 		}
 		reason= subs.reason;
@@ -825,8 +778,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if(event->evs_subs_handl(msg)< 0)
 		{
-			LOG(L_ERR, "PRESENCE: handle_subscribe: ERROR in event specific"
-					" subscription handling\n");
+			LM_ERR("in event specific subscription handling\n");
 			goto error;
 		}
 	}	
@@ -850,8 +802,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			/* query in watchers_table */
 			if(get_db_subs_auth(&subs, &found)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR getting subscription"
-					"status from watchers table\n");
+				LM_ERR("getting subscription status from watchers table\n");
 				goto error;
 			}
 			if(found== 0)
@@ -864,27 +815,25 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			
 				if(parse_uri(subs.pres_uri.s, subs.pres_uri.len, &uri)< 0)
 				{
-					LOG(L_ERR,"PRESENCE:handle_subscribe:ERROR parsing uri\n");
+					LM_ERR("parsing uri\n");
 					goto error;
 
 				}
 				if(subs.event->get_rules_doc(&uri.user, &uri.host, &subs.auth_rules_doc)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:handle_subscribe:ERROR getting rules doc\n");
+					LM_ERR("getting rules doc\n");
 					goto error;
 				}
 				
 				if(subs.event->get_auth_status(&subs)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR in event specific function"
-						" is_watcher_allowed\n");
+					LM_ERR("in event specific function is_watcher_allowed\n");
 					goto error;
 				}
 				
 				if(insert_db_subs_auth(&subs)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR while inserting record"
-							" in watchers table\n");
+					LM_ERR("while inserting record in watchers table\n");
 					goto error;
 				}
 			}
@@ -899,13 +848,13 @@ after_status:
 	/* check if correct status */
 	if(get_status_str(subs.status)== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:handle_subscribe: ERROR wrong status\n");
+		LM_ERR("wrong status\n");
 		goto error;
 	}
 	
 	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen) <0 )
 	{	
-		LOG(L_ERR,"PRESENCE:handle_subscribe: ERROR while updating database\n");
+		LM_ERR("in update_subscription\n");
 		goto error;
 	}
 	if(subs.auth_rules_doc)
@@ -934,13 +883,10 @@ after_status:
 
 bad_event:
 
-	LOG(L_ERR, "PRESENCE: handle_subscribe:Missing or unsupported event"
-		" header field value");
+	LM_ERR("Missing or unsupported event header field value\n");
 		
 	if(parsed_event)
-		LOG(L_ERR," event= %.*s\n",parsed_event->text.len,parsed_event->text.s);
-	else
-		LOG(L_ERR,"\n");
+		LM_ERR("\tevent= %.*s\n",parsed_event->text.len,parsed_event->text.s);
 	
 	if(reply_bad_event(msg)< 0)
 		goto error;
@@ -956,7 +902,7 @@ error:
 	{
 		if(subs.pres_uri.s)
 			pkg_free(subs.pres_uri.s);
-		}
+	}
 	if(contact)
 	{	
 		if(contact->s)
@@ -985,14 +931,12 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 	*error_ret= -1;
 
-	DBG("PRESENCE:get_stored_info ...\n");
 	/* first try to_user== pres_user and to_domain== pres_domain */
 
 	uandd_to_uri(subs->to_user, subs->to_domain, &pres_uri);
 	if(pres_uri.s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: get_stored_info: ERROR when creating uri"
-				" from user and domain\n");
+		LM_ERR("creating uri from user and domain\n");
 		return -1;
 	}
 	hash_code= core_hash(&pres_uri, &subs->event->name, shtable_size);
@@ -1007,8 +951,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 	pkg_free(pres_uri.s);
 	pres_uri.s= NULL;
-	DBG("PRESENCE: get_stored_info: record not found using R-URI"
-			"-> search iteratively\n");
+	LM_DBG("record not found using R-URI search iteratively\n");
 	/* take one row at a time */
 	for(i= 0; i< shtable_size; i++)
 	{
@@ -1020,7 +963,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 			if(pres_uri.s== NULL)
 			{
 				lock_release(&subs_htable[i].lock);
-				ERR_MEM("PRESENCE", "get_stored_info");
+				ERR_MEM(PKG_MEM_STR);
 			}
 			memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
 			pres_uri.len= s->pres_uri.len;
@@ -1034,12 +977,10 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 		return get_database_info(msg, subs, error_ret);	
 	}
 
-	LOG(L_ERR, "PRESENCE: get_stored_info: ERROR Record not found"
-			" in hash_table\n");
+	LM_ERR("record not found in hash_table\n");
 	if (slb.reply(msg, 481, &pu_481_rpl) == -1)
 	{
-		LOG(L_ERR, "PRESENCE: get_stored_info: ERROR while"
-				" sending reply\n");
+		LM_ERR("sending '481 Subscription does not exist' reply\n");
 		return -1;
 	}
 	*error_ret= 0;
@@ -1047,7 +988,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 found_rec:
 	
-	DBG("PRESENCE: get_stored_info: Record found in hash_table\n");
+	LM_DBG("Record found in hash_table\n");
 	subs->pres_uri= pres_uri;
 	subs->status= s->status;
 	if(s->reason.s && s->reason.len)
@@ -1056,7 +997,7 @@ found_rec:
 		if(reason.s== NULL)
 		{
 			lock_release(&subs_htable[i].lock);
-			ERR_MEM("PRESENCE", "get_stored_info");
+			ERR_MEM(PKG_MEM_STR);
 		}
 		memcpy(reason.s, s->reason.s, s->reason.len);
 		reason.len= s->reason.len;
@@ -1067,14 +1008,14 @@ found_rec:
 	
 	if(subs->remote_cseq<= s->remote_cseq)
 	{
-		LOG(L_ERR, "PRESENCE: get_stored_info: ERROR wrong sequence number"
-			" received: %d -  stored: %d\n",subs->remote_cseq, s->remote_cseq);
+		LM_ERR("wrong sequence number;received: %d - stored: %d\n",
+				subs->remote_cseq, s->remote_cseq);
 		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
 		{
-			LOG(L_ERR, "PRESENCE: get_stored_info: ERROR while"
-					" sending reply\n");
+			LM_ERR("sending '400 Bad request' reply\n");
 		}
-		*error_ret= 0;
+		else
+			*error_ret= 0;
 		lock_release(&subs_htable[i].lock);
 		goto error;
 	}	
@@ -1177,16 +1118,14 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE: get_database_info: ERROR in use_table\n");
+		LM_ERR("unsuccessful use_table sql operation\n");
 		return -1;
 	}
 	
-	DBG("PRESENCE:get_database_info: querying database  \n");
 	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 		 result_cols, n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:get_database_info: ERROR while querying"
-				" subscription dialog\n");
+		LM_ERR("querying subscription dialog\n");
 		if(result)
 			pa_dbf.free_result(pa_db, result);
 		return -1;
@@ -1196,13 +1135,11 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 	if(result && result->n <=0)
 	{
-		LOG(L_ERR, "PRESENCE:get_database_info:ERROR No matching subscription"
-				" dialog found in database\n");
+		LM_ERR("No matching subscription dialog found in database\n");
 		
 		if (slb.reply(msg, 481, &pu_481_rpl) == -1)
 		{
-			LOG(L_ERR, "PRESENCE:get_database_info: ERROR while"
-					" sending reply\n");
+			LM_ERR("sending '481 Subscription does not exist' reply\n");
 			pa_dbf.free_result(pa_db, result);
 			return -1;
 		}
@@ -1217,15 +1154,15 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	
 	if(subs->remote_cseq<= remote_cseq)
 	{
-		LOG(L_ERR, "PRESENCE:get_database_info: ERROR wrong sequence number"
-				" received: %d -  stored: %d\n",subs->remote_cseq, remote_cseq);
+		LM_ERR("wrong sequence number received: %d - stored: %d\n",
+				subs->remote_cseq, remote_cseq);
+
 		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
-		{
-			LOG(L_ERR, "PRESENCE:get_database_info: ERROR while"
-					" sending reply\n");
-		}
+			LM_ERR("sending '400 Bad request' reply\n");
+		else
+			*error_ret= 0;
+
 		pa_dbf.free_result(pa_db, result);
-		*error_ret= 0;
 		return -1;
 	}
 	
@@ -1237,7 +1174,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 		subs->reason.s= (char*)pkg_malloc(reason.len* sizeof(char));
 		if(subs->reason.s== NULL)
 		{
-			ERR_MEM("PRESENCE", "get_database_info");
+			ERR_MEM(PKG_MEM_STR);
 		}
 		memcpy(subs->reason.s, reason.s, reason.len);
 		subs->reason.len= reason.len;
@@ -1247,12 +1184,12 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	
 	pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
 	pres_uri.len= strlen(pres_uri.s);
-	subs->pres_uri.s= (char*)pkg_malloc(pres_uri.len);
+	subs->pres_uri.s= (char*)pkg_malloc(pres_uri.len* sizeof(char));
 	if(subs->pres_uri.s== NULL)
 	{
 		if(subs->reason.s)
 			pkg_free(subs->reason.s);
-		ERR_MEM("PRESENCE", "get_database_info");
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memcpy(subs->pres_uri.s, pres_uri.s, pres_uri.len);
 	subs->pres_uri.len= pres_uri.len;
@@ -1273,7 +1210,6 @@ error:
 int handle_expired_subs(subs_t* s, subs_t* prev_s)
 {
 	/* send Notify with state=terminated;reason=timeout */
-	DBG("PRESENCE:handle_expired_subs ...\n");
 	
 	s->status= TERMINATED_STATUS;
 	s->reason.s= "timeout";
@@ -1282,8 +1218,7 @@ int handle_expired_subs(subs_t* s, subs_t* prev_s)
 
 	if(send_notify_request(s, NULL, NULL, 0)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:handle_expired_subs:"
-				"ERROR send Notify not successful\n");
+		LM_ERR("send Notify not successful\n");
 		return -1;
 	}
 	
@@ -1312,7 +1247,6 @@ void timer_db_update(unsigned int ticks,void *param)
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
 
-	DBG("PRESENCE: timer_db_update ...\n");
 	query_cols[pres_uri_col= n_query_cols] ="pres_uri";
 	query_vals[pres_uri_col].type = DB_STR;
 	query_vals[pres_uri_col].nul = 0;
@@ -1450,12 +1384,12 @@ void timer_db_update(unsigned int ticks,void *param)
 
 	if(pa_db== NULL)
 	{
-		LOG(L_ERR,"RLS: timer_db_update:ERROR null database connection\n");
+		LM_ERR("null database connection\n");
 		return;
 	}
 	if(pa_dbf.use_table(pa_db, active_watchers_table)< 0)
 	{
-		LOG(L_ERR, "RLS: timer_db_update:ERROR in use table\n");
+		LM_ERR("in use table\n");
 		return ;
 	}
 
@@ -1472,13 +1406,12 @@ void timer_db_update(unsigned int ticks,void *param)
 			printf_subs(s);
 			if(s->expires < ((int)time(NULL)- 50))	
 			{
-				DBG("PRESENCE:timer_db_update: Found expired record\n");
+				LM_DBG("Found expired record\n");
 				if(!no_lock)
 				{
 					if(handle_expired_subs(s, prev_s)< 0)
 					{
-						LOG(L_ERR, "PRESENCE:timer_db_update: ERROR in function"
-								" handle_expired_record\n");
+						LM_ERR("in function handle_expired_record\n");
 						if(!no_lock)
 							lock_release(&subs_htable[i].lock);	
 						return ;
@@ -1495,12 +1428,12 @@ void timer_db_update(unsigned int ticks,void *param)
 			{
 				case NO_UPDATEDB_FLAG:
 				{
-					DBG("PRESENCE:timer_db_update: NO_UPDATEDB_FLAG\n");
+					LM_DBG("NO_UPDATEDB_FLAG\n");
 					break;			  
 				}
 				case UPDATEDB_FLAG:
 				{
-					DBG("PRESENCE:timer_db_update: UPDATEDB_FLAG\n");
+					LM_DBG("UPDATEDB_FLAG\n");
 
 					query_vals[pres_uri_col].val.str_val= s->pres_uri;
 					query_vals[callid_col].val.str_val= s->callid;
@@ -1517,8 +1450,7 @@ void timer_db_update(unsigned int ticks,void *param)
 					if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols, 
 								update_vals, n_query_update, n_update_cols)< 0)
 					{
-						LOG(L_ERR, "PRESENCE:timer_db_update: ERROR while updating"
-								" in database\n");
+						LM_ERR("updating in database\n");
 						if(!no_lock)
 							lock_release(&subs_htable[i].lock);	
 						return ;
@@ -1527,7 +1459,7 @@ void timer_db_update(unsigned int ticks,void *param)
 				}
 				case  INSERTDB_FLAG:
 				{
-					DBG("PRESENCE:timer_db_update: INSERTDB_FLAG\n");
+					LM_DBG("INSERTDB_FLAG\n");
 
 					query_vals[pres_uri_col].val.str_val= s->pres_uri;
 					query_vals[callid_col].val.str_val= s->callid;
@@ -1552,7 +1484,7 @@ void timer_db_update(unsigned int ticks,void *param)
 				
 					if(pa_dbf.insert(pa_db,query_cols,query_vals,n_query_cols )<0)
 					{
-						LOG(L_ERR, "PRESENCE:timer_db_update: ERROR in sql insert\n");
+						LM_ERR("unsuccessful sql insert\n");
 						if(!no_lock)
 							lock_release(&subs_htable[i].lock);
 						return ;
@@ -1573,8 +1505,7 @@ void timer_db_update(unsigned int ticks,void *param)
 	update_ops[0]= OP_LT;
 	if(pa_dbf.delete(pa_db, update_cols, update_ops, update_vals, 1) < 0)
 	{
-		LOG(L_ERR,"PRESENCE:timer_db_update: ERROR cleaning expired"
-				" information\n");
+		LM_ERR("deleting expired information from database\n");
 	}
 
 }
@@ -1620,18 +1551,18 @@ int restore_db_subs(void)
 	
 	if(!pa_db)
 	{
-		LOG(L_ERR,"PRESENCE:restore_db_subs: ERROR null database connection\n");
+		LM_ERR("null database connection\n");
 		return -1;
 	}
 	if(pa_dbf.use_table(pa_db, active_watchers_table)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:restore_db_subs:ERROR in use table\n");
+		LM_ERR("in use table\n");
 		return -1;
 	}
 
 	if(pa_dbf.query(pa_db,0, 0, 0, result_cols,0, n_result_cols, 0,&res)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:restore_db_subs:ERROR while querrying table\n");
+		LM_ERR("while querrying table\n");
 		if(res)
 		{
 			pa_dbf.free_result(pa_db, res);
@@ -1644,13 +1575,13 @@ int restore_db_subs(void)
 
 	if(res->n<=0)
 	{
-		LOG(L_INFO, "PRESENCE:restore_db_subs:The query returned no result\n");
+		LM_INFO("The query returned no result\n");
 		pa_dbf.free_result(pa_db, res);
 		res = NULL;
 		return 0;
 	}
 
-	DBG("PRESENCE:restore_db_subs: found %d db entries\n", res->n);
+	LM_DBG("found %d db entries\n", res->n);
 
 	for(i =0 ; i< res->n ; i++)
 	{
@@ -1693,19 +1624,20 @@ int restore_db_subs(void)
 		event= contains_event(&ev_sname, &parsed_event);
 		if(event== NULL)
 		{
-			DBG("PRESENCE:restore_db_subs:insert a new event structure in the "
-					"list waiting to be filled in\n");
+			LM_DBG("insert a new event structure in the list waiting"
+					" to be filled in\n");
+	
 			/*insert a new event structure in the list waiting to be filled in*/
 			event= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 			if(event== NULL)
 			{
-				ERR_MEM("PRESENCE","restore_db_subs");
+				ERR_MEM(SHM_MEM_STR);
 			}
 			memset(event, 0, sizeof(pres_ev_t));
 			event->name.s= (char*)shm_malloc(ev_sname.len* sizeof(char));
 			if(event->name.s== NULL)
 			{
-				ERR_MEM("PRESENCE","restore_db_subs");
+				ERR_MEM(SHM_MEM_STR);
 			}
 			memcpy(event->name.s,ev_sname.s, ev_sname.len);
 			event->name.len= ev_sname.len;
@@ -1713,11 +1645,9 @@ int restore_db_subs(void)
 			event->evp= shm_copy_event(&parsed_event);
 			if(event->evp== NULL)
 			{
-				LOG(L_ERR, "PRESENCE:restore_db_subs: ERROR copying event_t"
-						" structure\n");
+				LM_ERR("ERROR copying event_t structure\n");
 				goto error;
 			}
-
 			event->next= EvList->events;
 			EvList->events= event;
 		}
@@ -1753,8 +1683,7 @@ int restore_db_subs(void)
 
 		if(insert_shtable(&s)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:restore_db_subs: ERROR while" 
-					"adding new record in hash table\n");
+			LM_ERR("adding new record in hash table\n");
 			goto error;
 		}
 	}
@@ -1764,8 +1693,7 @@ int restore_db_subs(void)
 	/* delete all records */
 	if(pa_dbf.delete(pa_db, 0,0,0,0)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:restore_db_subs:ERROR when deleting all records"
-				" from rl_presentity table\n");
+		LM_ERR("deleting all records from database table\n");
 		return -1;
 	}
 
@@ -1791,14 +1719,13 @@ int refresh_watcher(str* pres_uri, str* watcher_uri, str* event,
 	ev=	contains_event(event, NULL);
 	if(ev== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:refresh_watcher: ERROR while searching"
-				" event in list\n");
+		LM_ERR("while searching event in list\n");
 		return -1;
 	}
 
 	if(parse_uri(watcher_uri->s, watcher_uri->len, &uri)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:refresh_watcher: ERROR parsing uri\n");
+		LM_ERR("parsing uri\n");
 		return -1;
 	}
 	user= uri.user;
@@ -1825,14 +1752,14 @@ int refresh_watcher(str* pres_uri, str* watcher_uri, str* event,
 			s_copy= mem_copy_subs(s, PKG_MEM_TYPE);
 			if(s_copy== NULL)
 			{
-				LOG(L_ERR,"PRESENCE:refresh_watcher:ERROR copying subs_t\n");
+				LM_ERR("copying subs_t\n");
 				lock_release(&subs_htable[hash_code].lock);
 				return -1;
 			}
 			lock_release(&subs_htable[hash_code].lock);
 			if(notify(s_copy, NULL, NULL, 0)< 0)
 			{
-				LOG(L_ERR,"PRESENCE:refresh_watcher:ERROR in notify function\n");
+				LM_ERR("in notify function\n");
 				pkg_free(s_copy);
 				return -1;
 			}
@@ -1883,15 +1810,14 @@ int get_db_subs_auth(subs_t* subs, int* found)
 
 	if(pa_dbf.use_table(pa_db, watchers_table)< 0)
 	{
-		LOG(L_ERR,"PRESENCE:get_db_subs_status: ERROR in use table\n");
+		LM_ERR("in use table\n");
 		return -1;
 	}	
 
 	if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols,
 					n_query_cols, 2, 0, &result )< 0)
 	{
-		LOG(L_ERR, "PRESENCE:get_db_subs_status:ERROR while querying"
-				" watchers table\n");
+		LM_ERR("while querying watchers table\n");
 		if(result)
 			pa_dbf.free_result(pa_db, result);
 		return -1;
@@ -1923,7 +1849,7 @@ int get_db_subs_auth(subs_t* subs, int* found)
 			if(subs->reason.s== NULL)
 			{
 				pa_dbf.free_result(pa_db, result);
-				ERR_MEM("PRESENCE","get_db_subs_status");
+				ERR_MEM(PKG_MEM_STR);
 			}		
 			memcpy(subs->reason.s, row_vals[1].val.string_val, subs->reason.len);
 		}
@@ -1988,13 +1914,13 @@ int insert_db_subs_auth(subs_t* subs)
 	
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:insert_db_auth_subs: Error in use_table\n");
+		LM_ERR("in use_table\n");
 		return -1;
 	}
 
 	if(pa_dbf.insert(pa_db, db_keys, db_vals, n_query_cols )< 0)
 	{	
-		LOG(L_ERR, "PRESENCE:insert_db_auth_subs:ERROR in sql insert\n");
+		LM_ERR("in sql insert\n");
 		return -1;
 	}
 
@@ -2051,7 +1977,7 @@ int update_db_subs_auth(subs_t* subs)
 
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:update_db_subs_auth: Error in use_table\n");
+		LM_ERR("in use_table\n");
 		return -1;
 	}
 
@@ -2059,8 +1985,7 @@ int update_db_subs_auth(subs_t* subs)
 	if(pa_dbf.update(pa_db, db_keys, 0, db_vals, 
 		update_keys, update_vals, n_query_cols, n_update_cols)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:update_db_subs_auth: ERORR while"
-				" updating database table\n");
+		LM_ERR("updating database table\n");
 		return -1;
 	}
 	return 0;	

@@ -52,34 +52,40 @@ extern db_func_t pa_dbf;
 static str pu_200_rpl  = str_init("OK");
 static str pu_412_rpl  = str_init("Conditional request failed");
 
+#define ETAG_LEN  128
+
 char* generate_ETag(int publ_count)
 {
-	char* etag;
+	char* etag= NULL;
 	int size = 0;
-	etag = (char*)pkg_malloc(128*sizeof(char));
+
+	etag = (char*)pkg_malloc(ETAG_LEN*sizeof(char));
 	if(etag ==NULL)
 	{
-		LOG(L_ERR, "PRESENCE:generate_ETag:Error while allocating memory \n");
-		return NULL ;
+		ERR_MEM(PKG_MEM_STR);
 	}
-	memset(etag, 0, 60*sizeof(char));
+	memset(etag, 0, ETAG_LEN*sizeof(char));
 	size = sprintf (etag, "%c.%d.%d.%d.%d",prefix, startup_time, pid, counter, publ_count);
 	if( size <0 )
 	{
-		LOG(L_ERR, "PRESENCE: generate_ETag: ERROR unsuccessfull sprintf\n ");
+		LM_ERR("unsuccessfull sprintf\n ");
 		pkg_free(etag);
 		return NULL;
 	}
-	if(size> 128)
+	if(size+ 1> ETAG_LEN)
 	{
-		LOG(L_ERR, "PRESENCE: generate_ETag: ERROR buffer size overflown\n");
+		LM_ERR("buffer size overflown\n");
 		pkg_free(etag);
 		return NULL;
 	}
 
 	etag[size] = '\0';
-	DBG("PRESENCE: generate_ETag: etag= %s / %d\n ",etag, size);
+	LM_DBG("etag= %s / %d\n ",etag, size);
 	return etag;
+
+error:
+	return NULL;
+
 }
 
 int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
@@ -88,10 +94,8 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	int buf_len= 128, size;
 	str hdr_append= {0, 0}, hdr_append2= {0, 0} ;
 
-	DBG("PRESENCE:publ_send200ok: send 200OK reply\n");	
-	DBG("PRESENCE:publ_send200ok: etag= %s - len= %d\n", etag.s, etag.len);
-	
-	/* ??? should we use static allocated buffer */
+	LM_DBG("send 200OK reply\n");	
+	LM_DBG("etag= %s - len= %d\n", etag.s, etag.len);
 	
 	hdr_append.s = buf;
 	hdr_append.s[0]='\0';
@@ -99,19 +103,19 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 			expires_offset);
 	if(hdr_append.len < 0)
 	{
-		LOG(L_ERR, "PRESENCE:publ_send200ok: ERROR unsuccessful sprintf\n");
+		LM_ERR("unsuccessful sprintf\n");
 		goto error;
 	}
 	if(hdr_append.len > buf_len)
 	{
-		LOG(L_ERR, "PRESENCE:publ_send200ok: ERROR buffer size overflown\n");
+		LM_ERR("buffer size overflown\n");
 		goto error;
 	}
 	hdr_append.s[hdr_append.len]= '\0';
 		
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"PRESENCE: publ_send200ok:ERROR unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		goto error;
 	}
 
@@ -119,32 +123,31 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	hdr_append2.s = (char *)pkg_malloc(size);
 	if(hdr_append2.s == NULL)
 	{
-		LOG(L_ERR,"PRESENCE:publ_send200ok:ERROR no more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	hdr_append2.s[0]='\0';
 	hdr_append2.len = sprintf(hdr_append2.s, "SIP-ETag: %s\r\n", etag.s);
 	if(hdr_append2.len < 0)
 	{
-		LOG(L_ERR, "PRESENCE:publ_send200ok:ERROR unsuccessful sprintf\n ");
+		LM_ERR("unsuccessful sprintf\n ");
 		goto error;
 	}
-	if(hdr_append2.len > size)
+	if(hdr_append2.len+1 > size)
 	{
-		LOG(L_ERR, "PRESENCE:publ_send200ok: ERROR buffer size overflown\n");
+		LM_ERR("buffer size overflown\n");
 		goto error;
 	}
 
 	hdr_append2.s[hdr_append2.len]= '\0';
 	if (add_lump_rpl(msg, hdr_append2.s, hdr_append2.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"PRESENCE:publ_send200ok: unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		goto error;
 	}
 
 	if( slb.reply( msg, 200, &pu_200_rpl)== -1)
 	{
-		LOG(L_ERR,"PRESENCE: publ_send200ok: ERORR while sending reply\n");
+		LM_ERR("sending reply\n");
 		goto error;
 	}
 
@@ -162,7 +165,7 @@ error:
 presentity_t* new_presentity( str* domain,str* user,int expires, 
 		pres_ev_t* event, str* etag, str* sender)
 {
-	presentity_t *presentity;
+	presentity_t *presentity= NULL;
 	int size, init_len;
 	
 	/* allocating memory for presentity */
@@ -176,8 +179,7 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 	presentity = (presentity_t*)pkg_malloc(size);
 	if(presentity == NULL)
 	{
-		LOG(L_ERR, "PRESENCE:new_presentity: No memory left: size=%d\n", size);
-		return NULL;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(presentity, 0, size);
 	size= sizeof(presentity_t);
@@ -211,17 +213,18 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 
 	if(size> init_len)
 	{
-		LOG(L_ERR, "PRESENCE: new_presentity: ERROR"
-			" buffer size overflow init_len= %d, size= %d\n", init_len, size);
-		pkg_free(presentity);
-		return NULL;
+		LM_ERR("buffer size overflow init_len= %d, size= %d\n", init_len, size);
+		goto error;
 	}
-	DBG("PRESENCE: new_presentity:init_len= %d size= %d\n", init_len, size);
 	presentity->event= event;
 	presentity->expires = expires;
 	presentity->received_time= (int)time(NULL);
 	return presentity;
     
+error:
+	if(presentity)
+		pkg_free(presentity);
+	return NULL;
 }
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
@@ -244,7 +247,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		if(presentity->event->get_rules_doc(&presentity->user,
 					&presentity->domain, &rules_doc))
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: ERROR getting rules doc\n");
+			LM_ERR("getting rules doc\n");
 			goto error;
 		}
 	}
@@ -286,8 +289,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		if(insert_phtable(&msg->first_line.u.request.uri, 
 					presentity->event->evp->parsed)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: ERROR inserting record"
-					" in hash table\n");
+			LM_ERR("inserting record in hash table\n");
 			goto error;
 		}
 		
@@ -313,24 +315,21 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
+			LM_ERR("unsuccessful use_table\n");
 			goto error;
 		}
 
-		DBG( "PRESENCE:update_presentity: inserting %d cols into"
-				" table\n",
-				n_query_cols);
+		LM_DBG("inserting %d cols into table\n",n_query_cols);
 				
 		if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: Error while"
-					" inserting new presentity\n");
+			LM_ERR("inserting new record in database\n");
 			goto error;
 		}
 		if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
-			return -1;
+			LM_ERR("sending 200OK\n");
+			goto error;
 		}
 		goto send_notify;
 	}
@@ -338,16 +337,14 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	{
 		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
+			LM_ERR("unsuccessful sql use table\n");
 			goto error;
 		}
 
-		DBG("PRESENCE:update_presentity: querying presentity  \n");
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			 result_cols, n_query_cols, 1, 0, &result) < 0) 
 		{
-			LOG(L_ERR, "PRESENCE:update_presentity: Error while querying"
-					" presentity\n");
+			LM_ERR("unsuccessful sql query\n");
 			goto error;
 		}
 		if(result== NULL)
@@ -362,37 +359,36 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			{
 				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
-					return -1;
+					LM_ERR("sending 200OK reply\n");
+					goto error;
 				}
 				if( publ_notify( presentity, body, &presentity->etag, rules_doc)< 0 )
 				{
-					LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
-					return -1;
+					LM_ERR("while sending notify\n");
+					goto error;
 				}
+				
 				if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 				{
-					LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
+					LM_ERR("unsuccessful sql use table\n");
 					goto error;
 				}
-				DBG("PRESENCE:update_presentity: expires =0 -> deleting"
-					" from database\n");
-				if(pa_dbf.delete(pa_db, query_cols, 0 ,query_vals,n_query_cols)< 0 )
+
+				LM_DBG("expires =0 -> deleting from database\n");
+				if(pa_dbf.delete(pa_db,query_cols,0,query_vals,n_query_cols)<0)
 				{
-					LOG(L_ERR,"PRESENCE:update_presentity:ERROR deleting"
-						" expired record from presentity database table\n");
+					LM_ERR("unsuccessful sql delete operation");
 					goto error;
 				}
-				DBG("PRESENCE:update_presentity:delete from db %.*s\n",
-					presentity->user.len,presentity->user.s );
+				LM_DBG("deleted from db %.*s\n",	presentity->user.len,
+						presentity->user.s);
 
 				/* delete from hash table */
 	
-				if(delete_phtable(&msg->first_line.u.request.uri, 
-						presentity->event->evp->parsed)< 0)
+				if(delete_phtable(&msg->first_line.u.request.uri,
+							presentity->event->evp->parsed)< 0)
 				{
-					LOG(L_ERR, "PRESENCE:update_presentity: ERROR deleting record"
-						" from hash table\n");
+					LM_ERR("deleting record from hash table\n");
 					goto error;
 				}
 				return 1;
@@ -413,7 +409,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				}
 				if(str_publ_nr.len== presentity->etag.len)
 				{
-					LOG(L_ERR, "PRESENCE:update_presentity: ERROR wrong etag\n");
+					LM_ERR("wrong etag\n");
 					return -1;			
 				}	
 				str_publ_nr.s= dot+1;
@@ -421,18 +417,16 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	
 				if( str2int(&str_publ_nr, &publ_nr)< 0)
 				{
-					LOG(L_ERR, "PRESENCE: update_presentity: ERROR while converting string to int\n");
+					LM_ERR("converting string to int\n");
 					goto error;
 				}
 				etag.s = generate_ETag(publ_nr+1);
 				if(etag.s == NULL)
 				{
-					LOG(L_ERR,"PRESENCE:update_presentity: ERROR while generating etag\n");
+					LM_ERR("while generating etag\n");
 					return -1;
 				}
 				etag.len=(strlen(etag.s));
-				DBG("PRESENCE:update_presentity: new etag  = %.*s \n", etag.len,
-					etag.s);
 				
 				cur_etag= etag;
 
@@ -449,13 +443,14 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			update_keys[n_update_cols] = "expires";
 			update_vals[n_update_cols].type = DB_INT;
 			update_vals[n_update_cols].nul = 0;
-			update_vals[n_update_cols].val.int_val = presentity->expires + (int)time(NULL);
+			update_vals[n_update_cols].val.int_val= presentity->expires +
+				(int)time(NULL);
 			n_update_cols++;
 
 			update_keys[n_update_cols] = "received_time";
 			update_vals[n_update_cols].type = DB_INT;
 			update_vals[n_update_cols].nul = 0;
-			update_vals[n_update_cols].val.int_val = presentity->received_time;
+			update_vals[n_update_cols].val.int_val= presentity->received_time;
 			n_update_cols++;
 
 			if(body && body->s)
@@ -463,23 +458,21 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				update_keys[n_update_cols] = "body";
 				update_vals[n_update_cols].type = DB_BLOB;
 				update_vals[n_update_cols].nul = 0;
-				update_vals[n_update_cols].val.str_val.s = body->s;
-				update_vals[n_update_cols].val.str_val.len=body->len;
+				update_vals[n_update_cols].val.str_val = *body;
 				n_update_cols++;
 			}
 
 			if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
 			update_keys,update_vals, n_query_cols, n_update_cols )<0) 
 			{
-				LOG( L_ERR , "PRESENCE:update_presentity: ERROR while"
-						" updating presence information\n");
+				LM_ERR("updating published info in database\n");
 				goto error;
 			}
 			
 			/* send 200OK */
 			if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_presentity: ERROR while sending 200OK\n");
+				LM_ERR("sending 200OK reply\n");
 				if(etag.s)
 					pkg_free(etag.s);
 				return -1;
@@ -497,11 +490,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		{
 			pa_dbf.free_result(pa_db, result);
 			result= NULL;
-			LOG(L_DBG, "PRESENCE:update_presentity: No E_Tag match\n");
+			LM_ERR("No E_Tag match\n");
 			if (slb.reply(msg, 412, &pu_412_rpl) == -1)
 			{
-				LOG(L_ERR, "PRESENCE:PRESENCE:update_presentity: ERROR while sending"
-					"reply\n");
+				LM_ERR("sending '412 Conditional request failed' reply\n");
 				goto error;
 			}
 		}
@@ -512,8 +504,8 @@ send_notify:
 	/* send notify with presence information */
 	if (publ_notify(presentity, body, NULL, rules_doc)<0)
 	{
-		LOG(L_ERR,"PRESENCE:update_presentity: ERROR while sending notify\n");
-		return -1;
+		LM_ERR("while sending Notify requests to watchers\n");
+		goto error;
 	}
 
 	if(rules_doc)
@@ -526,7 +518,6 @@ send_notify:
 	return 0;
 
 error:
-	LOG(L_ERR, "PRESENCE:update_presentity: ERROR occured\n");
 	if(result)
 		pa_dbf.free_result(pa_db, result);
 	if(etag.s)
@@ -563,15 +554,14 @@ int pres_htable_restore(void)
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:update_presentity: Error in use_table\n");
+		LM_ERR("unsuccessful use table sql operation\n");
 		goto error;
 	}
 
 	if (pa_dbf.query (pa_db, 0, 0, 0,result_cols,0, n_result_cols,
 				"username", &result) < 0)
 	{
-		LOG(L_ERR, "PRESENCE:pres_htable_restore: Error while querying"
-				" presentity\n");
+		LM_ERR("querying presentity\n");
 		goto error;
 	}
 	if(result== NULL)
@@ -600,21 +590,20 @@ int pres_htable_restore(void)
 	
 		if(event_parser(ev_str.s, ev_str.len, &e)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:pres_htable_restore: ERROR parsing event\n");
+			LM_ERR("parsing event\n");
 			goto error;
 		}
 		event= e.parsed;
 
 		if(uandd_to_uri(user, domain, &uri)< 0)
 		{
-			LOG(L_ERR,"PRESENCE:pres_htable_restore:ERROR constructing uri\n");
+			LM_ERR("constructing uri\n");
 			goto error;
 		}
 		/* insert in hash_table*/
 		if(insert_phtable(&uri, event)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:pres_htable_restore: ERROR "
-				"inserting record in presentity hash table");
+			LM_ERR("inserting record in presentity hash table");
 			pkg_free(uri.s);
 			goto error;
 		}

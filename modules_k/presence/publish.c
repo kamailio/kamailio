@@ -76,12 +76,11 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:msg_presentity_clean: Error in use_table\n");
+		LM_ERR("in use_table\n");
 		return ;
 	}
 	
-	DBG("PRESENCE:msg_presentity_clean:cleaning expired presentity"
-			" information\n");
+	LM_DBG("cleaning expired presentity information\n");
 
 	db_keys[0] ="expires";
 	db_ops[0] = OP_LT;
@@ -97,9 +96,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
 						1, n_result_cols, "username", &result )< 0)
 	{
-		LOG(L_ERR,
-			"PRESENCE:msg_presentity_clean: ERROR while querying database"
-			" for expired messages\n");
+		LM_ERR("querying database for expired messages\n");
 		if(result)
 			pa_dbf.free_result(pa_db, result);
 		return;
@@ -112,17 +109,14 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		pa_dbf.free_result(pa_db, result);	
 		return;
 	}
-	DBG("PRESENCE:msg_presentity_clean: found n= %d expires messages\n ",
-			result->n);
+	LM_DBG("found n= %d expires messages\n ",result->n);
 
 	n= result->n;
 	
 	p= (presentity_t**)pkg_malloc(n* sizeof(presentity_t*));
 	if(p== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR while"
-				" allocating memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);	
 	}
 	memset(p, 0, n* sizeof(presentity_t*));
 
@@ -147,8 +141,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		pres= (presentity_t*)pkg_malloc(size);
 		if(pres== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR while allocating memory\n");
-			goto error;
+			ERR_MEM(PKG_MEM_STR);
 		}
 		memset(pres, 0, size);
 		size= sizeof(presentity_t);
@@ -171,8 +164,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		pres->event= contains_event(&event, &e);
 		if(pres->event== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while searching"
-					" for event\n");
+			LM_ERR("event not found\n");
 			goto error;
 		}	
 		p[i]= pres;
@@ -180,14 +172,13 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		/* delete from hash table */
 		if(uandd_to_uri(user, domain, &pres_uri)< 0)
 		{
-			LOG(L_ERR,"PRESENCE:pres_htable_restore:ERROR constructing uri\n");
+			LM_ERR("constructing uri\n");
 			goto error;
 		}
 
 		if(delete_phtable(&pres_uri, e.parsed)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean:  ERROR"
-					" deleting from pres hash table\n");
+			LM_ERR("deleting from pres hash table\n");
 			pkg_free(pres_uri.s);
 			goto error;
 		}
@@ -199,20 +190,20 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	
 	for(i= 0; i<n ; i++)
 	{
+		LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
+			p[i]->user.len,p[i]->user.s, p[i]->domain.len, p[i]->domain.s);
+		
 		rules_doc= NULL;
-		DBG( "PRESENCE:msg_presentity_clean:found expired publish"
-				" for [user]=%.*s  [domanin]=%.*s\n",p[i]->user.len,p[i]->user.s,
-				p[i]->domain.len, p[i]->domain.s);
 		
 		if(p[i]->event->get_rules_doc && 
 		p[i]->event->get_rules_doc(&p[i]->user, &p[i]->domain, &rules_doc)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean:ERROR getting rules doc\n");
+			LM_ERR("getting rules doc\n");
 			goto error;
 		}
 		if(publ_notify( p[i], NULL, &p[i]->etag, rules_doc)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:msg_presentity_clean: ERROR while sending Notify\n");
+			LM_ERR("sending Notify request\n");
 			goto error;
 		}
 		if(rules_doc)
@@ -226,13 +217,12 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:msg_presentity_clean: Error in use_table\n");
+		LM_ERR("in use_table\n");
 		goto error;
 	}
 	
 	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
-		LOG(L_ERR,"PRESENCE:msg_presentity_clean: ERROR cleaning expired"
-				" messages\n");
+		LM_ERR("cleaning expired messages\n");
 	
 	for(i= 0; i< n; i++)
 	{
@@ -280,7 +270,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	struct hdr_field* hdr;
 	int found= 0, etag_gen = 0;
 	str etag={0, 0};
-	int error_ret = -1; /* error return code */
+	int error_ret = -1; 
 	str* sender= NULL;
 	static char buf[256];
 	int buf_len= 255;
@@ -292,10 +282,9 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	counter++;
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
-		LOG(L_ERR, "PRESENCE:handle_publish:ERROR parsing headers\n");
+		LM_ERR("parsing headers\n");
 		if (slb.reply(msg, 400, &pu_400a_rpl) == -1)
- 			LOG(L_ERR, "PRESENCE: handle_publish: Error while sending"
-						" reply\n");
+ 			LM_ERR("Error while sending 400 reply\n");
 		else
 			error_ret = 0;
 		return error_ret;
@@ -308,8 +297,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	{
 		if (!msg->event->parsed && (parse_event(msg->event) < 0))
 		{
-			LOG(L_ERR,
-				"PRESENCE:handle_publish:ERROR cannot parse Event header\n");
+			LM_ERR("cannot parse Event header\n");
 			goto error;
 		}
 		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
@@ -341,33 +329,29 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	}
 	if(found==0 )
 	{
-		DBG("PRESENCE:handle_publish: SIP-If-Match not found\n");
+		LM_DBG("SIP-If-Match header not found\n");
 		etag.s = generate_ETag(0);
 		if(etag.s == NULL)
 		{
-			LOG(L_ERR,
-				"PRESENCE:handle_publish:ERROR while generating etag\n");
+			LM_ERR("when generating etag\n");
 			return -1;
 		}
 		etag.len=(strlen(etag.s));
 		etag_gen=1;
-		DBG("PRESENCE:handle_publish: new etag  = %.*s \n", etag.len,
-				etag.s);
+		LM_DBG("new etag  = %.*s \n", etag.len,	etag.s);
 	}
 	else
 	{
-		DBG("PRESENCE:handle_publish: SIP-If-Match found\n");
+		LM_DBG("SIP-If-Match header found\n");
 		etag.s = (char*)pkg_malloc((hdr->body.len+ 1)* sizeof(char));
 		if(etag.s== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:handle_publish: ERROR No more memory\n");
-			goto error;
+			ERR_MEM(PKG_MEM_STR);
 		}
 		memcpy(etag.s, hdr->body.s, hdr->body.len );
 		etag.len = hdr->body.len; 	 
 		etag.s[ etag.len] = '\0';
-		DBG("PRESENCE:handle_publish: existing etag  = %.*s \n", etag.len,
-				etag.s);
+		LM_DBG("existing etag  = %.*s \n", etag.len, etag.s);
 	}
 
 	/* examine the expire header field */
@@ -375,19 +359,16 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	{
 		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
 		{
-			LOG(L_ERR,
-				"PRESENCE: handle_publish: ERROR cannot parse Expires header\n");
+			LM_ERR("cannot parse Expires header\n");
 			goto error;
 		}
-		DBG("PRESENCE: handle_publish: 'expires' found\n");
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		DBG("PRESENCE: handle_publish: lexpire= %d\n", lexpire);
+		LM_DBG("Expires header found, value= %d\n", lexpire);
 
 	}
 	else 
 	{
-		DBG("PRESENCE: handle_publish: 'expires' not found; default=%d\n",
-				event->default_expires);
+		LM_DBG("'expires' not found; default=%d\n",	event->default_expires);
 		lexpire = event->default_expires;
 	}
 	if(lexpire > max_expires)
@@ -397,7 +378,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	if( parse_uri(msg->first_line.u.request.uri.s, 
 				msg->first_line.u.request.uri.len, &pres_uri)< 0)
 	{
-		LOG(L_ERR, "PRESENCE: handle_publish:error parsing Request URI\n");
+		LM_ERR("parsing Request URI\n");
 		goto error;
 	}
 	pres_user= pres_uri.user;
@@ -405,8 +386,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 
 	if (!msg->content_length) 
 	{
-		LOG(L_ERR,"PRESENCE: handle_publish: ERROR no Content-Length"
-				" header found!\n");
+		LM_ERR("no Content-Length header found!\n");
 		goto error;
 	}	
 
@@ -416,11 +396,9 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		body.s = NULL;
 		if (etag_gen)
 		{
-			LOG(L_ERR,"PRESENCE:handle_publish:No E-Tag and no body found\n");
+			LM_ERR("No E-Tag and no body found\n");
 			if (slb.reply(msg, 400, &pu_400b_rpl) == -1)
-			{
- 				LOG(L_ERR, "PRESENCE:handle_publish:ERROR sending reply\n");
-			}
+				LM_ERR("sending 400 Invalid request reply\n");
 			else
 				error_ret = 0;
 			goto error;
@@ -431,7 +409,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		body.s=get_body(msg);
 		if (body.s== NULL) 
 		{
-			LOG(L_ERR,"PRESENCE: handle_publish: ERROR cannot extract body\n");
+			LM_ERR("cannot extract body\n");
 			goto error;
 		}
 		body.len= get_content_length( msg );
@@ -442,20 +420,20 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		sender=(str*)pkg_malloc(sizeof(str));
 		if(sender== NULL)
 		{
-			LOG(L_ERR, "PRESENCE: handle_publish: ERROR while allocating memery\n");
-			goto error;
+			ERR_MEM(PKG_MEM_STR);
 		}	
 		if(xl_printf(msg, (xl_elem_t*)sender_uri, buf, &buf_len)<0)
 		{
-			LOG(L_ERR, "PRESENCE: handle_publish:error - cannot print the format\n");
+			LM_ERR("cannot print the format\n");
 			goto error;
 		}
 		if(parse_uri(buf, buf_len, &puri)!=0)
 		{
-			LOG(L_ERR, "PRESENCE: handle_publish: bad owner SIP address!\n");
+			LM_ERR("bad owner SIP address!\n");
 			goto error;
-		} else {
-			DBG("PRESENCE: handle_publish:using user id [%.*s]\n",buf_len,buf);
+		} else 
+		{
+			LM_DBG("using user id [%.*s]\n",buf_len,buf);
 		}
 		sender->s= buf;
 		sender->len= buf_len;
@@ -465,8 +443,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	{
 		if(event->evs_publ_handl(msg)< 0)
 		{
-			LOG(L_ERR, "PRESENCE: handle_publish: ERROR in event specific"
-					" publish handling\n");
+			LM_ERR("in event specific publish handling\n");
 			goto error;
 		}
 	}
@@ -477,15 +454,14 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	presentity= new_presentity(&pres_domain, &pres_user, lexpire, event, &etag, sender);
 	if(presentity== NULL)
 	{
-		LOG(L_ERR,"PRESENCE: handle_publish: ERORR creating presentity\n");
+		LM_ERR("creating presentity structure\n");
 		goto error;
 	}
 
 	/* querry the database and update or insert */
 	if(update_presentity(msg, presentity, &body, etag_gen) <0)
 	{
-		LOG(L_ERR, "PRESENCE:handle_publish: ERROR occured while updating"
-				" presentity\n");
+		LM_ERR("when updating presentity\n");
 		goto error;
 	}
 
@@ -499,7 +475,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	return 1;
 
 error:
-	LOG(L_ERR, "PRESENCE: handle_publish: ERROR occured\n");
 	
 	if(presentity)
 		pkg_free(presentity);
@@ -512,12 +487,10 @@ error:
 
 unsupported_event:
 	
-	LOG(L_ERR, "PRESENCE: handle_publish:Missing or unsupported event"
-			" header field value\n");
+	LM_ERR("Missing or unsupported event header field value\n");
 		
 	if(msg->event && msg->event->body.s && msg->event->body.len>0)
-		LOG(L_ERR, "\tevent=[%.*s]\n", msg->event->body.len,
-			msg->event->body.s);
+		LM_ERR("\tevent=[%.*s]\n", msg->event->body.len, msg->event->body.s);
 	
 	if(reply_bad_event(msg)< 0)
 		return -1;

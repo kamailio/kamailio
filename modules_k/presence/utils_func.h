@@ -51,7 +51,7 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 	out->s = (char*)pkg_malloc(size*sizeof(char));
 	if(out->s == NULL)
 	{
-		LOG(L_ERR, "PRESENCE: uandd_to_uri: Error while allocating memory\n");
+		LM_ERR("no more memory\n");
 		return -1;
 	}
 	out->len = 0;
@@ -65,7 +65,6 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 	out->len += domain.len;
 
 	out->s[out->len] = 0;
-	DBG("presence:uandd_to_uri: uri=%.*s\n", out->len, out->s);
 	
 	return 0;
 }
@@ -81,13 +80,13 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	contact= (str*)pkg_malloc(sizeof(str));
 	if(contact== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR No more memory\n");
+		LM_ERR("No more memory\n");
 		return NULL;
 	}
 	contact->s= (char*)pkg_malloc(LCONTACT_BUF_SIZE* sizeof(char));
 	if(contact->s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR No more memory\n");
+		LM_ERR("No more memory\n");
 		pkg_free(contact);
 		return NULL;
 	}
@@ -105,7 +104,7 @@ static inline str* get_local_contact(struct sip_msg* msg)
 		proto= "tcp";
 	else
 	{
-		LOG(L_ERR, "PRESENCE: get_local_contact:ERROR unsupported proto\n");
+		LM_ERR("unsupported proto\n");
 		pkg_free(contact->s);
 		pkg_free(contact);
 		return NULL;
@@ -114,7 +113,7 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	ip.s= ip_addr2a(&msg->rcv.dst_ip);
 	if(ip.s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: get_local_contact:ERROR while transforming ip_addr to ascii\n");
+		LM_ERR("transforming ip_addr to ascii\n");
 		pkg_free(contact->s);
 		pkg_free(contact);
 		return NULL;
@@ -131,7 +130,7 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	contact->len += ip.len;
 	if(contact->len> LCONTACT_BUF_SIZE - 21)
 	{
-		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR buffer overflow\n");
+		LM_ERR("buffer overflow\n");
 		pkg_free(contact->s);
 		pkg_free(contact);
 		return NULL;
@@ -140,7 +139,7 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	len= sprintf(contact->s+contact->len, ":%d;transport=" , port);
 	if(len< 0)
 	{
-		LOG(L_ERR, "PRESENCE: get_local_contact: ERROR in function sprintf\n");
+		LM_ERR("unsuccessful sprintf\n");
 		pkg_free(contact->s);
 		pkg_free(contact);
 		return NULL;

@@ -48,14 +48,14 @@ event_t* shm_copy_event(event_t* e)
 	ev= (event_t*)shm_malloc(sizeof(event_t));
 	if(ev== NULL)
 	{
-		ERR_MEM("PRESENCE","shm_copy_event");
+		ERR_MEM(SHARE_MEM);
 	}
 	memset(ev, 0, sizeof(event_t));
 
 	ev->text.s= (char*)shm_malloc(e->text.len* sizeof(char));
 	if(ev->text.s== NULL)
 	{
-		ERR_MEM("PRESENCE","shm_copy_event");
+		ERR_MEM(SHARE_MEM);
 	}
 	memcpy(ev->text.s, e->text.s, e->text.len);
 	ev->text.len= e->text.len;
@@ -67,7 +67,7 @@ event_t* shm_copy_event(event_t* e)
 		p2= (param_t*)shm_malloc(size);
 		if(p2== NULL)
 		{
-			ERR_MEM("PRESENCE","shm_copy_event");
+			ERR_MEM(SHARE_MEM);
 		}
 		memset(p2, 0, size);
 
@@ -121,13 +121,13 @@ int add_event(pres_ev_t* event)
 
 	if(event->name.s== NULL || event->name.len== 0)
 	{
-		LOG(L_ERR, "PRESENCE: add_event: NULL event name\n");
+		LM_ERR("NULL event name\n");
 		return -1;
 	}
 
 	if(event->content_type.s== NULL || event->content_type.len== 0)
 	{
-		LOG(L_ERR, "PRESENCE: add_event: NULL content_type param\n");
+		LM_ERR("NULL content_type param\n");
 		return -1;
 	}
 	
@@ -138,13 +138,13 @@ int add_event(pres_ev_t* event)
 		ev= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 		if(ev== NULL)
 		{
-			ERR_MEM("PRESENCE","add_event");
+			ERR_MEM(SHARE_MEM);
 		}
 		memset(ev, 0, sizeof(pres_ev_t));
 		ev->name.s= (char*)shm_malloc(event->name.len* sizeof(char));
 		if(ev->name.s== NULL)
 		{
-			ERR_MEM("PRESENCE","add_events");
+			ERR_MEM(SHARE_MEM);
 		}
 		memcpy(ev->name.s, event->name.s, event->name.len);
 		ev->name.len= event->name.len;
@@ -152,7 +152,7 @@ int add_event(pres_ev_t* event)
 		ev->evp= shm_copy_event(&parsed_event);
 		if(ev->evp== NULL)
 		{
-			LOG(L_ERR, "PRESENCE:add_event:ERROR copying event_t structure\n");
+			LM_ERR("copying event_t structure\n");
 			goto error;
 		}
 	}
@@ -160,7 +160,7 @@ int add_event(pres_ev_t* event)
 	{
 		if(ev->content_type.s)
 		{
-			DBG("PRESENCE: add_event: Event already registered\n");
+			LM_DBG("Event already registered\n");
 			return 0;
 		}
 	}
@@ -168,7 +168,7 @@ int add_event(pres_ev_t* event)
 	ev->content_type.s=(char*)shm_malloc(event->content_type.len* sizeof(char)) ;
 	if(ev->content_type.s== NULL)
 	{
-		ERR_MEM("PRESENCE","add_event");
+		ERR_MEM(SHARE_MEM);
 	}	
 	ev->content_type.len= event->content_type.len;
 	memcpy(ev->content_type.s, event->content_type.s, event->content_type.len);
@@ -198,7 +198,7 @@ int add_event(pres_ev_t* event)
 	if(event->req_auth && 
 		( event->get_auth_status==0 ||event->get_rules_doc== 0))
 	{
-		LOG(L_ERR, "PRESENCE:add_event:ERROR bad event structure\n");
+		LM_ERR("bad event structure\n");
 		goto error;
 	}
 	ev->req_auth= event->req_auth;
@@ -218,8 +218,8 @@ int add_event(pres_ev_t* event)
 	}
 	EvList->ev_count++;
 	
-	DBG("PRESENCE: add_event: succesfully added event: %.*s - len= %d\n", 
-			ev->name.len, ev->name.s, ev->name.len);
+	LM_DBG("succesfully added event: %.*s - len= %d\n",ev->name.len,
+			ev->name.s, ev->name.len);
 	return 0;
 error:
 	if(ev && not_in_list)
@@ -250,7 +250,7 @@ evlist_t* init_evlist(void)
 	list= (evlist_t*)shm_malloc(sizeof(evlist_t));
 	if(list== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: init_evlist: ERROR no more share memory\n");
+		LM_ERR("no more share memory\n");
 		return NULL;
 	}
 	list->ev_count= 0;
@@ -267,7 +267,7 @@ pres_ev_t* contains_event(str* sname, event_t* parsed_event)
 	memset(&event, 0, sizeof(event_t));
 	if(event_parser(sname->s, sname->len, &event)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:contains_event: ERROR parsing event\n");
+		LM_ERR("parsing event\n");
 		return NULL;
 	}
 	if(parsed_event)
@@ -286,7 +286,6 @@ pres_ev_t* search_event(event_t* event)
 	param_t* ps, *p;
 	int found;
 
-	DBG("PRESENCE:search_event...\n");
 	while(pres_ev)
 	{
 		if(pres_ev->evp->parsed== event->parsed)
@@ -338,14 +337,14 @@ int get_event_list(str** ev_list)
 	list= (str*)pkg_malloc(sizeof(str));
 	if(list== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: get_event_list: ERROR No more memory\n");
+		LM_ERR("No more memory\n");
 		return -1;
 	}
 	memset(list, 0, sizeof(str));
 	list->s= (char*)pkg_malloc(EvList->ev_count* MAX_EVNAME_SIZE);
 	if(list->s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: get_event_list: ERROR No more memory\n");
+		LM_ERR("No more memory\n");
 		pkg_free(list);
 		return -1;
 	}

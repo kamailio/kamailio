@@ -44,21 +44,20 @@ shtable_t new_shtable(void)
 	htable= (subs_entry_t*)shm_malloc(shtable_size* sizeof(subs_entry_t));
 	if(htable== NULL)
 	{
-		ERR_MEM("PRESENCE","new_shtable");
+		ERR_MEM(SHARE_MEM);
 	}
 	memset(htable, 0, shtable_size* sizeof(subs_entry_t));
 	for(i= 0; i< shtable_size; i++)
 	{
 		if(lock_init(&htable[i].lock)== 0)
 		{
-			LOG(L_ERR,"PRESENCE:new_shtable: ERROR initializing lock"
-					" [%d]\n", i);
+			LM_ERR("initializing lock [%d]\n", i);
 			goto error;
 		}
 		htable[i].entries= (subs_t*)shm_malloc(sizeof(subs_t));
 		if(htable[i].entries== NULL)
 		{
-			ERR_MEM("PRESENCE","new_shtable");
+			ERR_MEM(SHARE_MEM);
 		}
 		memset(htable[i].entries, 0, sizeof(subs_t));
 		htable[i].entries->next= NULL;
@@ -138,7 +137,7 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 
 	if(dest== NULL)
 	{
-		ERR_MEM("PRESENCE","mem_copy_subs");
+		ERR_MEM((mem_type==PKG_MEM_TYPE)?PKG_MEM_STR:SHARE_MEM);
 	}
 	memset(dest, 0, size);
 	size= sizeof(subs_t);
@@ -190,8 +189,7 @@ int insert_shtable(subs_t* subs)
 	new_rec= mem_copy_subs(subs, SHM_MEM_TYPE);
 	if(new_rec== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: insert_shtable: ERROR while copying in"
-				" share memory a subs_t structure\n");
+		LM_ERR("copying in share memory a subs_t structure\n");
 		goto error;
 	}
 
@@ -222,7 +220,6 @@ int delete_shtable(str pres_uri, str ev_stored_name, str to_tag)
 	subs_t* s= NULL, *ps= NULL;
 	int found= -1;
 
-	DBG("PRESENCE: delete_shtable..\n");
 	hash_code= core_hash(&pres_uri, &ev_stored_name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 	
@@ -267,14 +264,13 @@ int update_shtable(subs_t* subs, int type)
 	unsigned int hash_code;
 	subs_t* s;
 
-	DBG("PRESENCE:update_shtable..\n");
 	hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 
 	s= search_shtable(subs->callid, subs->to_tag, subs->from_tag, hash_code);
 	if(s== NULL)
 	{
-		DBG("PRESENCE:update_shtable: record not found in hash table\n");
+		LM_DBG("record not found in hash table\n");
 		lock_release(&subs_htable[hash_code].lock);
 		return -1;
 	}
@@ -310,7 +306,7 @@ phtable_t* new_phtable(void)
 	htable= (phtable_t*)shm_malloc(phtable_size* sizeof(phtable_t));
 	if(htable== NULL)
 	{
-		ERR_MEM("PRESENCE","new_phtable");
+		ERR_MEM(SHARE_MEM);
 	}
 	memset(htable, 0, phtable_size* sizeof(phtable_t));
 
@@ -318,14 +314,13 @@ phtable_t* new_phtable(void)
 	{
 		if(lock_init(&htable[i].lock)== 0)
 		{
-			LOG(L_ERR,"PRESENCE:new_phtable: ERROR initializing lock"
-					" [%d]\n", i);
+			LM_ERR("initializing lock [%d]\n", i);
 			goto error;
 		}
 		htable[i].entries= (pres_entry_t*)shm_malloc(sizeof(pres_entry_t));
 		if(htable[i].entries== NULL)
 		{
-			ERR_MEM("PRESENCE","new_phtable");
+			ERR_MEM(SHARE_MEM);
 		}
 		memset(htable[i].entries, 0, sizeof(pres_entry_t));
 		htable[i].entries->next= NULL;
@@ -410,7 +405,7 @@ int insert_phtable(str* pres_uri, int event)
 	if(p== NULL)
 	{
 		lock_release(&pres_htable[hash_code].lock);
-		ERR_MEM("PRESENCE","insert_phtable");
+		ERR_MEM(SHARE_MEM);
 	}
 	memset(p, 0, size);
 
@@ -431,6 +426,7 @@ int insert_phtable(str* pres_uri, int event)
 error:
 	return -1;
 }
+
 int delete_phtable(str* pres_uri, int event)
 {
 	unsigned int hash_code;
@@ -443,7 +439,7 @@ int delete_phtable(str* pres_uri, int event)
 	p= search_phtable(pres_uri, event, hash_code);
 	if(p== NULL)
 	{
-		DBG("PRESENCE: delete_phtable: record not found\n");
+		LM_DBG("record not found\n");
 		lock_release(&pres_htable[hash_code].lock);
 		return 0;
 	}
@@ -461,8 +457,7 @@ int delete_phtable(str* pres_uri, int event)
 		}
 		if(prev_p->next== NULL)
 		{
-			LOG(L_ERR, "PRESENCE: delete_phtable: ERROR "
-					"previous record not found\n");
+			LM_ERR("record not found\n");
 			lock_release(&pres_htable[hash_code].lock);
 			return -1;
 		}

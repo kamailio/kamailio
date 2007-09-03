@@ -170,17 +170,16 @@ static int mod_init(void)
 	str _s;
 	int ver = 0;
 
-	DBG("PRESENCE: initializing module ...\n");
+	LM_NOTICE("initializing module ...\n");
 
 	if(db_url.s== NULL)
 	{
 		use_db= 0;
-		DBG("PRESENCE:mod_init: presence module used for library"
-				" purpose only\n");
+		LM_DBG("presence module used for library purpose only\n");
 		EvList= init_evlist();
 		if(!EvList)
 		{
-			LOG(L_ERR,"PRESENCE:mod_init: ERROR while initializing event list\n");
+			LM_ERR("unsuccessful initialize event list\n");
 			return -1;
 		}
 		return 0;
@@ -197,10 +196,7 @@ static int mod_init(void)
 		max_expires = 3600;
 
 	if(server_address.s== NULL)
-	{
-		DBG("PRESENCE:mod_init: server_address parameter not set in"
-				" configuration file\n");
-	}
+		LM_DBG("server_address parameter not set in configuration file\n");
 	
 	if(server_address.s)
 		server_address.len= strlen(server_address.s);
@@ -210,39 +206,39 @@ static int mod_init(void)
 	/* load SL API */
 	if(load_sl_api(&slb)==-1)
 	{
-		LOG(L_ERR, "PRESENCE:mod_init:ERROR can't load sl functions\n");
+		LM_ERR("can't load sl functions\n");
 		return -1;
 	}
 
 	/* load all TM stuff */
 	if(load_tm_api(&tmb)==-1)
 	{
-		LOG(L_ERR, "PRESENCE:mod_init:ERROR can't load tm functions\n");
+		LM_ERR("can't load tm functions\n");
 		return -1;
 	}
 
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	DBG("presence:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,
-			db_url.s);
+	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
 	
 	/* binding to mysql module  */
 	if (bind_dbmod(db_url.s, &pa_dbf))
 	{
-		DBG("PRESENCE:mod_init: ERROR: Database module not found\n");
+		LM_ERR("Database module not found\n");
 		return -1;
 	}
 	
 
-	if (!DB_CAPABILITY(pa_dbf, DB_CAP_ALL)) {
-		LOG(L_ERR,"PRESENCE:mod_init: ERROR Database module does not implement "
-		    "all functions needed by the module\n");
+	if (!DB_CAPABILITY(pa_dbf, DB_CAP_ALL))
+	{
+		LM_ERR("Database module does not implement all functions"
+				" needed by presence module\n");
 		return -1;
 	}
 
 	pa_db = pa_dbf.init(db_url.s);
 	if (!pa_db)
 	{
-		LOG(L_ERR,"PRESENCE:mod_init: Error while connecting database\n");
+		LM_ERR("connecting database\n");
 		return -1;
 	}
 	// verify table version 
@@ -251,8 +247,8 @@ static int mod_init(void)
 	 ver =  table_version(&pa_dbf, pa_db, &_s);
 	if(ver!=P_TABLE_VERSION)
 	{
-		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, P_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%s>, need v%d\n", 
+				ver, _s.s, P_TABLE_VERSION);
 		return -1;
 	}
 	
@@ -261,8 +257,8 @@ static int mod_init(void)
 	 ver =  table_version(&pa_dbf, pa_db, &_s);
 	if(ver!=ACTWATCH_TABLE_VERSION)
 	{
-		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, ACTWATCH_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%s>, need v%d\n", 
+				ver, _s.s, ACTWATCH_TABLE_VERSION);
 		return -1;
 	}
 
@@ -271,21 +267,21 @@ static int mod_init(void)
 	 ver =  table_version(&pa_dbf, pa_db, &_s);
 	if(ver!=S_TABLE_VERSION)
 	{
-		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%s>, need v%d\n",
+				ver, _s.s, S_TABLE_VERSION);
 		return -1;
 	}
 
 	EvList= init_evlist();
 	if(!EvList)
 	{
-		LOG(L_ERR,"PRESENCE:mod_init: ERROR while initializing event list\n");
+		LM_ERR("initializing event list\n");
 		return -1;
 	}	
 
 	if(clean_period<=0)
 	{
-		DBG("PRESENCE: ERROR: mod_init: wrong clean_period \n");
+		LM_DBG("wrong clean_period \n");
 		return -1;
 	}
 
@@ -297,14 +293,12 @@ static int mod_init(void)
 	subs_htable= new_shtable();
 	if(subs_htable== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR while initializing"
-				" subscribe hash table\n");
+		LM_ERR(" initializing subscribe hash table\n");
 		return -1;
 	}
 	if(restore_db_subs()< 0)
 	{
-		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR while "
-				"restoring info from database\n");
+		LM_ERR("restoring subscribe info from database\n");
 		return -1;
 	}
 
@@ -316,14 +310,12 @@ static int mod_init(void)
 	pres_htable= new_phtable();
 	if(pres_htable== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR while initializing"
-				"presentity hash table\n");
+		LM_ERR("initializing presentity hash table\n");
 		return -1;
 	}
 	if(pres_htable_restore()< 0)
 	{
-		LOG(L_ERR, "PRESENCE: ERROR: mod_init: ERROR filling in presentity"
-				" hash table from database\n");
+		LM_ERR("filling in presentity hash table from database\n");
 		return -1;
 	}
 	
@@ -347,7 +339,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	DBG("PRESENCE: init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_NOTICE("init_child [%d]  pid [%d]\n", rank, getpid());
 	
 	pid = my_pid();
 	
@@ -356,35 +348,34 @@ static int child_init(int rank)
 
 	if (pa_dbf.init==0)
 	{
-		LOG(L_CRIT, "BUG: PRESENCE: child_init: database not bound\n");
+		LM_CRIT("child_init: database not bound\n");
 		return -1;
 	}
 	pa_db = pa_dbf.init(db_url.s);
 	if (!pa_db)
 	{
-		LOG(L_ERR,"PRESENCE: child %d: Error while connecting database\n",
-				rank);
+		LM_ERR("child %d: unsuccessful connecting to database\n", rank);
 		return -1;
 	}
 		
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE: child %d: Error in use_table presentity_table\n", rank);
+		LM_ERR( "child %d:unsuccessful use_table presentity_table\n", rank);
 		return -1;
 	}
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE: child %d: Error in use_table active_watchers_table\n",
+		LM_ERR( "child %d:unsuccessful use_table active_watchers_table\n",
 				rank);
 		return -1;
 	}
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE: child %d: Error in use_table watchers_table\n", rank);
+		LM_ERR( "child %d:unsuccessful use_table watchers_table\n", rank);
 		return -1;
 	}
 
-	DBG("PRESENCE: child %d: Database connection opened successfully\n", rank);
+	LM_DBG("child %d: Database connection opened successfully\n", rank);
 	
 	return 0;
 }
@@ -396,35 +387,33 @@ int mi_child_init(void)
 
 	if (pa_dbf.init==0)
 	{
-		LOG(L_CRIT,"PRESENCE:mi_child_init:ERROR database not bound\n");
+		LM_CRIT("database not bound\n");
 		return -1;
 	}
 	pa_db = pa_dbf.init(db_url.s);
 	if (!pa_db)
 	{
-		LOG(L_ERR,"PRESENCE:mi_child_init:Error while connecting database\n");
+		LM_ERR("connecting database\n");
 		return -1;
 	}
 	
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE:mi_child_init: Error in use_table"
-				" presentity_table\n");
+		LM_ERR( "unsuccessful use_table presentity_table\n");
 		return -1;
 	}
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE:mi_child_init: Error in use_table"
-				" active_watchers_table\n");
+		LM_ERR( "unsuccessful use_table active_watchers_table\n");
 		return -1;
 	}
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE:mi_child_init: Error in use_table watchers_table\n");
+		LM_ERR( "unsuccessful use_table watchers_table\n");
 		return -1;
 	}
 
-	DBG("PRESENCE:mi_child_init: Database connection opened successfully\n");
+	LM_DBG("Database connection opened successfully\n");
 	return 0;
 }
 
@@ -434,7 +423,7 @@ int mi_child_init(void)
  */
 void destroy(void)
 {
-	DBG("PRESENCE: destroy module ...\n");
+	LM_NOTICE("destroy module ...\n");
 
 	if(subs_htable && pa_db)
 		timer_db_update(0, 0);
@@ -458,15 +447,14 @@ static int fixup_presence(void** param, int param_no)
  	{
  		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
  		{
- 			LOG(L_ERR, "PRESENCE:fixup_presence: ERROR wrong format[%s]\n",
- 				(char*)(*param));
+ 			LM_ERR( "wrong format[%s]\n",(char*)(*param));
  			return E_UNSPEC;
  		}
  
  		*param = (void*)model;
  		return 0;
  	}
- 	LOG(L_ERR, "PRESENCE:fixup_presence: ERROR null format\n");
+ 	LM_ERR( "null format\n");
  	return E_UNSPEC;
 }
 
@@ -487,7 +475,7 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	str* rules_doc= NULL;
 	int result;
 
-	DBG("PRESENCE:mi_refreshWatchers: start\n");
+	LM_DBG("start\n");
 	
 	node = cmd->node.kids;
 	if(node == NULL)
@@ -497,7 +485,7 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	pres_uri = node->value;
 	if(pres_uri.s == NULL || pres_uri.len== 0)
 	{
-		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: empty uri\n");
+		LM_ERR( "empty uri\n");
 		return init_mi_tree(404, "Empty presentity URI", 20);
 	}
 	
@@ -507,42 +495,40 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	event= node->value;
 	if(event.s== NULL || event.len== 0)
 	{
-		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: "
-		    "empty event parameter\n");
+		LM_ERR( "empty event parameter\n");
 		return init_mi_tree(400, "Empty event parameter", 21);
 	}
-	DBG("PRESENCE:mi_refreshWatchers: event '%.*s'\n",
-	    event.len, event.s);
+	LM_DBG("event '%.*s'\n",  event.len, event.s);
 	
 	if(node->next!= NULL)
 	{
-		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: Too many parameters\n");
+		LM_ERR( "Too many parameters\n");
 		return init_mi_tree(400, "Too many parameters", 19);
 	}
 
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: ERROR parsing uri\n");
+		LM_ERR( "parsing uri\n");
 		goto error;
 	}
 
 	ev= contains_event(&event, NULL);
 	if(ev== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:mi_refreshWatchers: ERROR wrong event parameter\n");
+		LM_ERR( "wrong event parameter\n");
 		return 0;
 	}
 	
 	result= ev->get_rules_doc(&uri.user,&uri.host,&rules_doc);
 	if(result< 0 || rules_doc==NULL || rules_doc->s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE:mi_refreshWatchers:ERROR getting rules doc\n");
+		LM_ERR( "getting rules doc\n");
 		goto error;
 	}
 	
 	if(update_watchers(pres_uri, ev, rules_doc)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:mi_refreshWatchers:ERROR updating watchers\n");
+		LM_ERR( "updating watchers\n");
 		goto error;
 	}
 
@@ -580,7 +566,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		ev= contains_event(&ev->name, NULL);
 		if(ev== NULL)
 		{
-			LOG(L_ERR,"PRESENCE:update_watchers:ERROR wrong event parameter\n");
+			LM_ERR("wrong event parameter\n");
 			return 0;
 		}
 	}
@@ -619,14 +605,14 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE:update_watchers: ERROR in use_table\n");
+		LM_ERR( "in use_table\n");
 		goto error;
 	}
 
 	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,n_query_cols,
 				n_result_cols, 0, &result)< 0)
 	{
-		LOG(L_ERR, "PRESENCE:update_watchers: ERROR in sql query\n");
+		LM_ERR( "in sql query\n");
 		goto error;
 	}
 	if(result== NULL)
@@ -659,8 +645,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		memset(&subs.reason, 0, sizeof(str));
 		if(ev->get_auth_status(&subs)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_watchers: ERROR while getting status"
-					" from rules document\n");
+			LM_ERR( "getting status from rules document\n");
 			lock_release(&subs_htable[hash_code].lock);
 			goto error;
 		}
@@ -673,7 +658,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			update_vals[u_reason_col].val.str_val= subs.reason;
 			if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
 			{
-				LOG(L_ERR, "PRESENCE:update_watchers: ERROR in use_table\n");
+				LM_ERR( "in use_table\n");
 				lock_release(&subs_htable[hash_code].lock);
 				goto error;
 			}
@@ -681,7 +666,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
 						update_vals, n_query_cols, n_update_cols)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_watchers: ERROR in sql update\n");
+				LM_ERR( "in sql update\n");
 				lock_release(&subs_htable[hash_code].lock);
 				goto error;
 			}
@@ -689,10 +674,9 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			/* if status switches to terminated -> delete dialog */
 			if(update_pw_dialogs(&subs, hash_code, &subs_array)< 0)
 			{
-				LOG(L_ERR, "PRESENCE:update_watchers: ERROR extracting dialogs"
-						"from [watcher]=%.*s@%.*s to [presentity]=%.*s\n",
-						w_user.len, w_user.s, w_domain.len, w_domain.s, 
-						pres_uri.len, pres_uri.s);
+				LM_ERR( "extracting dialogs from [watcher]=%.*s@%.*s to"
+					" [presentity]=%.*s\n",	w_user.len, w_user.s, w_domain.len,
+					w_domain.s, pres_uri.len, pres_uri.s);
 				lock_release(&subs_htable[hash_code].lock);
 				goto error;
 			}
@@ -708,8 +692,7 @@ int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	{
 		if(notify(s, NULL, NULL, 0)< 0)
 		{
-			LOG(L_ERR, "PRESENCE:update_watchers: ERROR sending"
-					" Notify request\n");
+			LM_ERR( "sending Notify request\n");
 			goto error;
 		}
 		s= s->next;
@@ -753,8 +736,7 @@ int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 			cs= mem_copy_subs(s, PKG_MEM_TYPE);
 			if(cs== NULL)
 			{
-				LOG(L_ERR, "PRESENCE:update_dialogs:ERROR copying subs_t"
-						" stucture\n");
+				LM_ERR( "copying subs_t stucture\n");
 				return -1;
 			}
 			cs->expires-= (int)time(NULL);
@@ -770,7 +752,7 @@ int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 		}
 		ps= ps->next;
 	}
-	DBG("PRESENCE:update_dialogs:found %d matching dialogs\n", i);
+	LM_DBG("found %d matching dialogs\n", i);
 
 	return 0;
 }
