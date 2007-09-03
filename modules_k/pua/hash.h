@@ -145,7 +145,7 @@ static inline int get_event_flag(str* event)
     default:
 	break;
     }
-    LOG(L_ERR, "PUA: get_event: Unknown event string\n");
+    LM_ERR("Unknown event string\n");
     return -1;
 }	
 

@@ -31,6 +31,7 @@
 #define PS_HASH_H
 
 #include "subscribe.h"
+#include "../../lock_ops.h"
 
 #define REMOTE_TYPE   1<<1
 #define LOCAL_TYPE    1<<2

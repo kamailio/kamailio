@@ -114,7 +114,7 @@ int bind_libxml_api(libxml_api_t* api)
 {
 	if (!api)
 	{
-		LOG(L_ERR, "PRESENCE_XML:bind_libxml: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 	api->xmlDocGetNodeByName         =  xmlDocGetNodeByName;

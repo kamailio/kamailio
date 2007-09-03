@@ -39,7 +39,7 @@ int pua_add_events(void)
 	if(add_pua_event(PRESENCE_EVENT, "presence", "application/pidf+xml", 
 				pres_process_body)< 0)
 	{
-		LOG(L_ERR, "PUA: pua_add_events: ERROR while adding event presence\n");
+		LM_ERR("while adding event presence\n");
 		return -1;
 	}
 
@@ -47,7 +47,7 @@ int pua_add_events(void)
 	if(add_pua_event(BLA_EVENT, "dialog;sla", "application/dialog-info+xml",
 				bla_process_body)< 0)
 	{
-		LOG(L_ERR, "PUA: pua_add_events: ERROR while adding event presence\n");
+		LM_ERR("while adding event presence\n");
 		return -1;
 	}
 
@@ -55,14 +55,14 @@ int pua_add_events(void)
 	if(add_pua_event(MSGSUM_EVENT, "message-summary", 
 				"application/simple-message-summary", mwi_process_body)< 0)
 	{
-		LOG(L_ERR, "PUA: pua_add_events: ERROR while adding event presence\n");
+		LM_ERR("while adding event presence\n");
 		return -1;
 	}
 	
 	/* add presence;winfo */
 	if(add_pua_event(PWINFO_EVENT, "presence.winfo", NULL, NULL)< 0)
 	{
-		LOG(L_ERR, "PUA: pua_add_events: ERROR while adding event presence\n");
+		LM_ERR("while adding event presence\n");
 		return -1;
 	}
 	
@@ -85,14 +85,14 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 	doc= xmlParseMemory(publ->body->s, publ->body->len );
 	if(doc== NULL)
 	{
-		LOG(L_ERR, "PUA: pres_process_body: ERROR while parsing xml memory\n");
+		LM_ERR("while parsing xml memory\n");
 		goto error;
 	}
 
 	node= xmlDocGetNodeByName(doc, "tuple", NULL);
 	if(node == NULL)
 	{
-		LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting tuple node\n");
+		LM_ERR("while extracting tuple node\n");
 		goto error;
 	}
 	tuple_id= xmlNodeGetAttrContentByName(node, "id");
@@ -109,13 +109,13 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			tuple=(str*)pkg_malloc(sizeof(str));
 			if(tuple== NULL)
 			{
-				LOG(L_ERR, "PUA: pres_process_body:ERROR No more memory\n");
+				LM_ERR("No more memory\n");
 				goto error;
 			}
 			tuple->s= (char*)pkg_malloc(tuple_id_len* sizeof(char));
 			if(tuple->s== NULL)
 			{
-				LOG(L_ERR, "PUA: pres_process_body:ERROR NO more memory\n");
+				LM_ERR("NO more memory\n");
 				goto error;
 			}
 			memcpy(tuple->s, tuple_id, tuple_id_len);
@@ -124,7 +124,7 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			*tuple_param= tuple;
 			alloc_tuple= 1;
 
-			DBG("PUA: pres_process_body: allocated tuple_id\n\n");
+			LM_DBG("allocated tuple_id\n\n");
 
 		}
 		else
@@ -137,7 +137,7 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		/* add tuple id */
 		if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
 		{
-			LOG(L_ERR, "PUA: pres_process_body:ERROR while extracting xml"
+			LM_ERR("while extracting xml"
 						" node\n");
 			goto error;
 		}
@@ -154,13 +154,13 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			tuple=(str*)pkg_malloc(sizeof(str));
 			if(tuple== NULL)
 			{
-				LOG(L_ERR, "PUA: pres_process_body:ERROR No more memory\n");
+				LM_ERR("No more memory\n");
 				goto error;
 			}
 			tuple->s= (char*)pkg_malloc(tuple_id_len* sizeof(char));
 			if(tuple->s== NULL)
 			{
-				LOG(L_ERR, "PUA: pres_process_body:ERROR NO more memory\n");
+				LM_ERR("NO more memory\n");
 				goto error;
 			}
 			memcpy(tuple->s, tuple_id, tuple_id_len);
@@ -173,13 +173,13 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 	node= xmlDocGetNodeByName(doc, "person", NULL);
 	if(node)
 	{
-		DBG("PUA: pres_process_body:found person node\n");
+		LM_DBG("found person node\n");
 		person_id= xmlNodeGetAttrContentByName(node, "id");
 		if(person_id== NULL)
 		{	
 			if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
 			{
-				LOG(L_ERR, "PUA:pres_process_body:ERROR while extracting xml"
+				LM_ERR("while extracting xml"
 						" node\n");
 				goto error;
 			}
@@ -192,14 +192,14 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 	body= (str*)pkg_malloc(sizeof(str));
 	if(body== NULL)
 	{
-		LOG(L_ERR, "PUA:pres_process_body ERROR NO more memory left\n");
+		LM_ERR("NO more memory left\n");
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
 	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s, &body->len, 1);	
 	if(body->s== NULL || body->len== 0)
 	{
-		LOG(L_ERR, "PUA: pres_process_body: ERROR while dumping xml format\n");
+		LM_ERR("while dumping xml format\n");
 		goto error;
 	}	
 	xmlFreeDoc(doc);
@@ -237,18 +237,17 @@ int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 
 	init_body= publ->body;
 
-	DBG("PUA: bla_process_body: start\n");
 	doc= xmlParseMemory(init_body->s, init_body->len );
 	if(doc== NULL)
 	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR while parsing xml memory\n");
+		LM_ERR("while parsing xml memory\n");
 		goto error;
 	}
 	/* change version and state*/
 	node= xmlDocGetNodeByName(doc, "dialog-info", NULL);
 	if(node == NULL)
 	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR while extracting dialog-info node\n");
+		LM_ERR("while extracting dialog-info node\n");
 		goto error;
 	}
 	version= int2str(ver,&len);
@@ -256,13 +255,13 @@ int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 
 	if( xmlSetProp(node, (const xmlChar *)"version",(const xmlChar*)version)== NULL)
 	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR while setting version attribute\n");
+		LM_ERR("while setting version attribute\n");
 		goto error;	
 	}
 	body= (str*)pkg_malloc(sizeof(str));
 	if(body== NULL)
 	{
-		LOG(L_ERR, "PUA: bla_process_body: ERROR NO more memory left\n");
+		LM_ERR("NO more memory left\n");
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
@@ -272,11 +271,11 @@ int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 	doc= NULL;
 	*fin_body= body;	
 	if(*fin_body== NULL)
-		DBG("PUA: bla_process_body: NULL fin_body\n");
+		LM_DBG("NULL fin_body\n");
 
 	xmlMemoryDump();
 	xmlCleanupParser();
-	DBG("PUA: bla_process_body: successful\n");
+	LM_DBG("successful\n");
 	return 1;
 
 error:

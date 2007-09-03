@@ -104,18 +104,18 @@ static int mod_init(void)
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
 
-	DBG("pua_usrloc: initializing module ...\n");
+	LM_DBG("initializing module ...\n");
 	
 	if(default_domain.s == NULL )
 	{	
-		LOG(L_ERR, "pua_usrloc: default domain not found\n");
+		LM_ERR("default domain not found\n");
 		return -1;
 	}
 	default_domain.len= strlen(default_domain.s);
 	
 	if(pres_prefix.s == NULL )
 	{	
-		DBG("pua_usrloc: No pres_prefix configured\n");
+		LM_DBG("No pres_prefix configured\n");
 	}
 	else
 		pres_prefix.len= strlen(pres_prefix.s);
@@ -123,77 +123,75 @@ static int mod_init(void)
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init:ERROR Can't bind usrloc\n");
+		LM_ERR("Can't bind usrloc\n");
 		return -1;
 	}
 	if (bind_usrloc(&ul) < 0)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init Can't bind usrloc\n");
+		LM_ERR("Can't bind usrloc\n");
 		return -1;
 	}
 	if(ul.register_ulcb == NULL)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init Could not import ul_register_ulcb\n");
+		LM_ERR("Could not import ul_register_ulcb\n");
 		return -1;
 	}
 
 	if(ul.register_ulcb(UL_CONTACT_INSERT, ul_publish, 0)< 0)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init can not register callback for"
+		LM_ERR("can not register callback for"
 				" insert\n");
 		return -1;
 	}
 	if(ul.register_ulcb(UL_CONTACT_EXPIRE, ul_publish, 0)< 0)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init can not register callback for"
+		LM_ERR("can not register callback for"
 				" expire\n");
 		return -1;
 	}
 	
 	if(ul.register_ulcb(UL_CONTACT_UPDATE, ul_publish, 0)< 0)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init can not register callback for"
-				" update\n");
+		LM_ERR("can not register callback for update\n");
 		return -1;
 	}
 	
 	if(ul.register_ulcb(UL_CONTACT_DELETE, ul_publish, 0)< 0)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init can not register callback for"
-				" delete\n");
+		LM_ERR("can not register callback for delete\n");
 		return -1;
 	}
 	
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init: Can't bind pua\n");
+		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
 	
 	if (bind_pua(&pua) < 0)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init Can't bind pua\n");
+		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
 	if(pua.send_publish == NULL)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init Could not import send_publish\n");
+		LM_ERR("Could not import send_publish\n");
 		return -1;
 	}
 	pua_send_publish= pua.send_publish;
 
 	if(pua.send_subscribe == NULL)
 	{
-		LOG(L_ERR, "pua_usrloc:mod_init Could not import send_subscribe\n");
+		LM_ERR("Could not import send_subscribe\n");
 		return -1;
 	}
 	pua_send_subscribe= pua.send_subscribe;
 	
 	/* register post-script pua_unset_publish unset function */
-	if (register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
-		LOG(L_ERR,"pua_usrloc:mod_init: failed to register POST request "
-			"callback\n");
+	if(register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0)
+	{
+		LM_ERR("failed to register POST request callback\n");
 		return -1;
 	}
 
@@ -203,13 +201,13 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	DBG("pua_usrloc: init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 	return 0;
 }	
 
 static void destroy(void)
 {	
-	DBG("pua_usrloc: destroying module ...\n");
+	LM_DBG("destroying module ...\n");
 
 	return ;
 }

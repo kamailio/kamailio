@@ -87,38 +87,38 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	DBG("pua_mi: mod_init...\n");
+	LM_DBG("...\n");
 	bind_pua_t bind_pua;
 	
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
 	{
-		LOG(L_ERR, "pua_mi:mod_init: Can't bind pua\n");
+		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
 	
 	if (bind_pua(&pua) < 0)
 	{
-		LOG(L_ERR, "pua_mi:mod_init Can't bind pua\n");
+		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
 	if(pua.send_publish == NULL)
 	{
-		LOG(L_ERR, "pua_mi:mod_init Could not import send_publish\n");
+		LM_ERR("Could not import send_publish\n");
 		return -1;
 	}
 	pua_send_publish= pua.send_publish;
 
 	if(pua.send_subscribe == NULL)
 	{
-		LOG(L_ERR, "pua_mi:mod_init Could not import send_subscribe\n");
+		LM_ERR("Could not import send_subscribe\n");
 		return -1;
 	}
 	pua_send_subscribe= pua.send_subscribe;
 	
 	if(pua.register_puacb(MI_ASYN_PUBLISH, mi_publ_rpl_cback, NULL)< 0)
 	{
-		LOG(L_ERR, "pua_mi:mod_init Could not register callback\n");
+		LM_ERR("Could not register callback\n");
 		return -1;
 	}	
 
@@ -127,13 +127,13 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	DBG("pua_mi: init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 	return 0;
 }	
 
 static void destroy(void)
 {	
-	DBG("pua_mi: destroying module ...\n");
+	LM_DBG("destroying module ...\n");
 
 	return ;
 }

@@ -39,7 +39,7 @@
 
 int pua_set_publish(struct sip_msg* msg , char* s1, char* s2)
 {
-	DBG("pua_usrloc:pua_set_publish: set send publish\n");
+	LM_DBG("set send publish\n");
 	pua_ul_publish= 1;
 	return 1;
 }
@@ -54,10 +54,10 @@ int pua_unset_publish(struct sip_msg* msg , void* param)
 /* for debug purpose only */
 void print_publ(publ_info_t* p)
 {
-	DBG("publ:\n");
-	DBG("uri= %.*s\n", p->pres_uri->len, p->pres_uri->s);
-	DBG("id= %.*s\n", p->id.len, p->id.s);
-	DBG("expires= %d\n", p->expires);
+	LM_DBG("publ:\n");
+	LM_DBG("uri= %.*s\n", p->pres_uri->len, p->pres_uri->s);
+	LM_DBG("id= %.*s\n", p->id.len, p->id.s);
+	LM_DBG("expires= %d\n", p->expires);
 }	
 
 str* build_pidf(ucontact_t* c)
@@ -72,11 +72,9 @@ str* build_pidf(ucontact_t* c)
 	char buf[265];
 	char* at= NULL;
 
-	DBG("pua_usrloc:build_pidf... \n");
-
 	if(c->expires< (int)time(NULL))
 	{
-		DBG("pua_usrloc:build_pidf: found expired \n\n");
+		LM_DBG("found expired \n\n");
 		return NULL;
 	}
 
@@ -126,14 +124,14 @@ str* build_pidf(ucontact_t* c)
 	tuple_node =xmlNewChild(root_node, NULL, BAD_CAST "tuple", NULL) ;
 	if( tuple_node ==NULL)
 	{
-		LOG(L_ERR, "pua_usrloc:build_pidf: ERROR while adding child\n");
+		LM_ERR("while adding child\n");
 		goto error;
 	}
 	
 	status_node = xmlNewChild(tuple_node, NULL, BAD_CAST "status", NULL) ;
 	if( status_node ==NULL)
 	{
-		LOG(L_ERR, "pua_usrloc:build_pidf: ERROR while adding child\n");
+		LM_ERR("while adding child\n");
 		goto error;
 	}
 	
@@ -142,21 +140,21 @@ str* build_pidf(ucontact_t* c)
 	
 	if( basic_node ==NULL)
 	{
-		LOG(L_ERR, "pua_usrloc:build_pidf: ERROR while adding child\n");
+		LM_ERR("while adding child\n");
 		goto error;
 	}
 	
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		LOG(L_ERR,"pua_usrloc:build_pidf: Error while allocating memory\n");
+		LM_ERR("while allocating memory\n");
 		return NULL;
 	}
 	memset(body, 0, sizeof(str));
 
 	xmlDocDumpFormatMemory(doc,(unsigned char**)(void*)&body->s,&body->len,1);
 
-	DBG("pua_usrloc:build_pidf: new_body:\n%.*s\n",body->len, body->s);
+	LM_DBG("new_body:\n%.*s\n",body->len, body->s);
 
     /*free the document */
 	xmlFreeDoc(doc);
@@ -190,21 +188,21 @@ void ul_publish(ucontact_t* c, int type, void* param)
 
 	if(pua_ul_publish== 0)
 	{
-		LOG(L_INFO, "pua_usrloc:ul_publish: should not send ul publish\n");
+		LM_INFO("should not send ul publish\n");
 		return;
 	}	
 
 	if(type & UL_CONTACT_DELETE)
-		DBG("\nul_publish: DELETE type\n");
+		LM_DBG("\nul_publish: DELETE type\n");
 	else
 		if(type & UL_CONTACT_INSERT)
-			DBG("\nul_publish: INSERT type\n");
+			LM_DBG("\nul_publish: INSERT type\n");
 		else
 			if(type & UL_CONTACT_UPDATE)
-				DBG("\nul_publish: UPDATE type\n");
+				LM_DBG("\nul_publish: UPDATE type\n");
 			else
 				if(type & UL_CONTACT_EXPIRE)
-					DBG("\nul_publish: EXPIRE type\n");
+					LM_DBG("\nul_publish: EXPIRE type\n");
 
 	if((type & UL_CONTACT_INSERT) || (type& UL_CONTACT_UPDATE))
 	{
@@ -230,7 +228,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 		memcpy(uri.s+ uri.len, default_domain.s, default_domain.len);
 		uri.len+= default_domain.len;		
 	}
-	DBG("ul_publish: uri= %.*s\n", uri.len, uri.s);
+	LM_DBG("ul_publish: uri= %.*s\n", uri.len, uri.s);
 	
 	size= sizeof(publ_info_t)+ sizeof(str)+( uri.len 
 			+c->callid.len+ 12 + content_type.len)*sizeof(char); 
@@ -241,7 +239,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	publ= (publ_info_t*)pkg_malloc(size);
 	if(publ== NULL)
 	{
-		LOG(L_ERR, "pua_usrloc: ul_publish: Error no more share memory\n");
+		LM_ERR("no more share memory\n");
 		goto error;
 	}
 	memset(publ, 0, size);
@@ -291,7 +289,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	print_publ(publ);
 	if(pua_send_publish(publ)< 0)
 	{
-		LOG(L_ERR, "pua_usrloc:ul_publish: ERROR while sending publish\n");
+		LM_ERR("while sending publish\n");
 	}	
 
 	pua_ul_publish= 0;

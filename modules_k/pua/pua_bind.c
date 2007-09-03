@@ -30,7 +30,7 @@
 int bind_pua(pua_api_t* api)
 {
 	if (!api) {
-		LOG(L_ERR, "PUA:bind_pua: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 

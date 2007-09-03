@@ -55,11 +55,10 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	int t= 0;
 	str ctype;
 
-	DBG("PUA: publ_build_hdr ...\n");
-	str_hdr =(str*) pkg_malloc(sizeof(str));
+	str_hdr =(str*)pkg_malloc(sizeof(str));
 	if(!str_hdr)
 	{
-		LOG(L_ERR, "PUA: publ_build_hdr:ERROR while allocating memory\n");
+		LM_ERR("no more memory\n");
 		return NULL;
 	}
 	memset(str_hdr, 0 , sizeof(str));
@@ -97,7 +96,7 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	
 	if(etag)
 	{
-		DBG("PUA:publ_build_hdr: UPDATE_TYPE\n");
+		LM_DBG("UPDATE_TYPE [etag]= %.*s\n", etag->len, etag->s);
 		memcpy(str_hdr->s+str_hdr->len,"SIP-If-Match: ", 14);
 		str_hdr->len += 14;
 		memcpy(str_hdr->s+str_hdr->len, etag->s, etag->len);
@@ -150,19 +149,19 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	if(ps->param== NULL)
 	{
-		LOG(L_ERR, "PUA:publ_cback_func: Error NULL callback parameter\n");
+		LM_ERR("NULL callback parameter\n");
 		goto error;
 	}
 
 	msg= ps->rpl;
 	if(msg == NULL)
 	{
-		LOG(L_ERR, "PUA:publ_cback_func: ERROR no reply message found\n ");
+		LM_ERR("no reply message found\n ");
 		goto error;
 	}
 	if(msg== FAKED_REPLY)
 	{
-		DBG("PUA:publ_cback_func: FAKED_REPLY\n");
+		LM_DBG("FAKED_REPLY\n");
 		goto done;
 	}
 
@@ -170,7 +169,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	{
 		if( *ps->param== NULL ) 
 		{
-			DBG("PUA publ_cback_func: NULL callback parameter\n");
+			LM_DBG("NULL callback parameter\n");
 			return;
 		}
 		hentity= (ua_pres_t*)(*ps->param);
@@ -184,8 +183,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			{
 				/* sent a PUBLISH within a dialog that no longer exists
 				 * send again an intial PUBLISH */
-				DBG("PUA:publ_cback_func: received s 412 reply- send an"
-						" INSERT_TYPE publish request\n");
+				LM_DBG("received s 412 reply- send an INSERT_TYPE"
+						" publish request\n");
 				delete_htable(presentity, hash_code);
 				lock_release(&HashT->p_records[hash_code].lock);
 				publ_info_t publ;
@@ -202,14 +201,14 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				publ.cb_param= hentity->cb_param;
 				if(send_publish(&publ)< 0)
 				{
-					LOG(L_ERR, "PUA:publ_cback_func: ERROR when trying to send PUBLISH\n");
+					LM_ERR("when trying to send PUBLISH\n");
 					goto error;
 				}
 			}
 			else 
 			{	
 				delete_htable(presentity, hash_code);
-				DBG("PUA:publ_cback_func: ***Delete from table\n");
+				LM_DBG("***Delete from table\n");
 				lock_release(&HashT->p_records[hash_code].lock);
 			}
 		}
@@ -220,23 +219,22 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
-		LOG(L_ERR, "PUA:publ_cback_func: error parsing headers\n");
+		LM_ERR("parsing headers\n");
 		goto error;
 	}	
 	if(msg->expires== NULL || msg->expires->body.len<= 0)
 	{
-			LOG(L_ERR, "PUA:publ_cback_func: ERROR No Expires header found\n");
+			LM_ERR("No Expires header found\n");
 			goto error;
 	}	
 	
 	if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
 	{
-		LOG(L_ERR, "PUA:publ_cback_func: ERROR cannot parse Expires"
-					" header\n");
+		LM_ERR("cannot parse Expires header\n");
 		goto error;
 	}
 	lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-	DBG("PUA:publ_cback_func: lexpire= %u\n", lexpire);
+	LM_DBG("lexpire= %u\n", lexpire);
 		
 	hdr = msg->headers;
 	while (hdr!= NULL)
@@ -250,21 +248,21 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
 	{	
-		LOG(L_ERR, "PUA:publ_cback_func:no SIP-ETag header field found\n");
+		LM_ERR("no SIP-ETag header field found\n");
 		goto error;
 	}
 	etag= hdr->body;
 
 	if( *ps->param== NULL ) 
 	{
-		DBG("PUA publ_cback_func: Error NULL callback parameter\n");
+		LM_ERR("NULL callback parameter\n");
 		return;
 	}
 		
 	hentity= (ua_pres_t*)(*ps->param);
 
-	LOG(L_DBG, "PUA:publ_cback_func: completed with status %d [contact:"
-			"%.*s]\n",ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
+	LM_DBG("completed with status %d [contact:%.*s]\n",
+			ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
 
 	hash_code= core_hash(hentity->pres_uri, NULL, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
@@ -272,10 +270,10 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity= search_htable(hentity, hash_code);
 	if(presentity)
 	{
-			DBG("PUA:publ_cback_func: update record\n");
+			LM_DBG("update record\n");
 			if(lexpire == 0)
 			{
-				DBG("PUA:publ_cback_func: expires= 0- delete from htable\n"); 
+				LM_DBG("expires= 0- delete from htable\n"); 
 				delete_htable(presentity, hash_code);
 				lock_release(&HashT->p_records[hash_code].lock);
 				goto done;
@@ -290,7 +288,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	if(lexpire== 0)
 	{
-		LOG(L_ERR, "PUA:publ_cback_func:expires= 0: no not insert\n");
+		LM_DBG("expires= 0: no not insert\n");
 		goto done;
 	}
 	size= sizeof(ua_pres_t)+ sizeof(str)+ 
@@ -302,7 +300,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
-		LOG(L_ERR,"PUA:publ_cback_func: ERROR no more share memory\n");
+		LM_ERR("no more share memory\n");
 		goto error;
 	}	
 	memset(presentity, 0, size);
@@ -349,14 +347,14 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
 	if(presentity->etag.s== NULL)
 	{
-		LOG(L_ERR, "PUA: publ_cback_func: ERROR No more share memory\n");
+		LM_ERR("No more share memory\n");
 		goto error;
 	}
 	memcpy(presentity->etag.s, etag.s, etag.len);
 	presentity->etag.len= etag.len;
 
 	insert_htable( presentity);
-	DBG("PUA: publ_cback_func: ***Inserted in hash table\n");		
+	LM_DBG("***Inserted in hash table\n");		
 
 done:
 	if(hentity->ua_flag == REQ_OTHER)
@@ -395,15 +393,14 @@ int send_publish( publ_info_t* publ )
 	int ret_code= 0;
 	pua_event_t* ev= NULL;
 
-	DBG("PUA: send_publish for: uri=%.*s\n", publ->pres_uri->len,
-			publ->pres_uri->s );
+	LM_DBG("pres_uri=%.*s\n", publ->pres_uri->len, publ->pres_uri->s );
 	
 	/* get event from list */
 
 	ev= get_event(publ->event);
 	if(ev== NULL)
 	{
-		LOG(L_ERR, "PUA:send_publish: ERROR event not found in list\n");
+		LM_ERR("event not found in list\n");
 		goto error;
 	}	
 
@@ -434,22 +431,22 @@ int send_publish( publ_info_t* publ )
 	{
 insert:	
 		lock_release(&HashT->p_records[hash_code].lock);
-		DBG("PUA: send_publish: insert type\n"); 
+		LM_DBG("insert type\n"); 
 		
 		if(publ->flag & UPDATE_TYPE )
 		{
-			DBG("PUA: send_publish: UPDATE_TYPE and no record found \n");
+			LM_DBG("UPDATE_TYPE and no record found \n");
 			publ->flag= INSERT_TYPE;
 		}
 		if(publ->expires== 0)
 		{
-			DBG("PUA: send_publish: request for a publish with expires 0 and"
+			LM_DBG("request for a publish with expires 0 and"
 					" no record found\n");
 			return 0;
 		}
 		if(publ->body== NULL)
 		{
-			LOG(L_INFO, "PUA: send_publish: New PUBLISH and no body found\n");
+			LM_ERR("New PUBLISH and no body found- invalid request\n");
 			return -1;
 		}
 	}
@@ -459,7 +456,7 @@ insert:
 		etag.s= (char*)pkg_malloc(presentity->etag.len* sizeof(char));
 		if(etag.s== NULL)
 		{
-			LOG(L_ERR, "PUA:send_publish: ERROR while allocating memory\n");
+			LM_ERR("while allocating memory\n");
 			lock_release(&HashT->p_records[hash_code].lock);
 			return -1;
 		}
@@ -472,14 +469,14 @@ insert:
 			tuple_id=(str*)pkg_malloc(sizeof(str));
 			if(tuple_id== NULL)
 			{
-				LOG(L_ERR, "PUA:send_publish: ERROR No more memory\n");
+				LM_ERR("No more memory\n");
 				lock_release(&HashT->p_records[hash_code].lock);
 				goto error;
 			}	
 			tuple_id->s= (char*)pkg_malloc(presentity->tuple_id.len* sizeof(char));
 			if(tuple_id->s== NULL)
 			{
-				LOG(L_ERR, "PUA:send_publish: ERROR No more memory\n");
+				LM_ERR("No more memory\n");
 				lock_release(&HashT->p_records[hash_code].lock);
 				goto error;
 			}	
@@ -489,7 +486,7 @@ insert:
 
 		if(publ->expires== 0)
 		{
-			DBG("PUA:send_publish: expires= 0- delete from hash table\n");
+			LM_DBG("expires= 0- delete from hash table\n");
 			goto send_publish;
 		}
 		presentity->version++;
@@ -504,14 +501,14 @@ insert:
 		ret_code= ev->process_body(publ, &body, ver, &tuple_id );
 		if( ret_code< 0 || body== NULL)
 		{
-			LOG(L_ERR, "PUA:send_publish: ERROR while processing body\n");
+			LM_ERR("while processing body\n");
 			if(body== NULL)
-				LOG(L_ERR, "PUA:send_publish: ERROR NULL body\n");
+				LM_ERR("NULL body\n");
 			goto error;
 		}
 	}
 	if(tuple_id)
-		DBG("\n\nPUA:send_publish: tuple_id= %.*s\n\n", tuple_id->len, tuple_id->s  );
+		LM_DBG("tuple_id= %.*s\n", tuple_id->len, tuple_id->s  );
 	
 send_publish:
 	
@@ -520,25 +517,25 @@ send_publish:
 	cb_param= publish_cbparam(publ, body, tuple_id, REQ_OTHER);
 	if(cb_param== NULL)
 	{
-		LOG(L_ERR, "PUA:send_publish:ERROR constructing callback parameter\n");
+		LM_ERR("constructing callback parameter\n");
 		goto error;
 	}
 
 	if(publ->flag & UPDATE_TYPE)
-		DBG("PUA:send_publish: etag:%.*s\n", etag.len, etag.s);
+		LM_DBG("etag:%.*s\n", etag.len, etag.s);
 	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, ev, &publ->content_type, 
 				(publ->flag & UPDATE_TYPE)?&etag:NULL, publ->extra_headers, (body)?1:0);
 
 	if(str_hdr == NULL)
 	{
-		LOG(L_ERR, "PUA:send_publish: ERROR while building extra_headers\n");
+		LM_ERR("while building extra_headers\n");
 		goto error;
 	}
 
-	DBG("PUA: send_publish: publ->pres_uri:\n%.*s\n ", publ->pres_uri->len, publ->pres_uri->s);
-	DBG("PUA: send_publish: str_hdr:\n%.*s %d\n ", str_hdr->len, str_hdr->s, str_hdr->len);
+	LM_DBG("publ->pres_uri:\n%.*s\n ", publ->pres_uri->len, publ->pres_uri->s);
+	LM_DBG("str_hdr:\n%.*s %d\n ", str_hdr->len, str_hdr->s, str_hdr->len);
 	if(body && body->len && body->s )
-		DBG("PUA: send_publish: body:\n%.*s\n ", body->len, body->s);
+		LM_DBG("body:\n%.*s\n ", body->len, body->s);
 
 	result= tmb.t_request(&met,				/* Type of the message */
 			publ->pres_uri,					/* Request-URI */
@@ -553,7 +550,7 @@ send_publish:
 
 	if(result< 0)
 	{
-		LOG(L_ERR, "PUA: send_publish: ERROR while sending request\n");
+		LM_ERR("in t_request tm module function\n");
 		shm_free(cb_param);
 		goto error;
 	}
@@ -621,8 +618,8 @@ ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,
 	cb_param= (ua_pres_t*)shm_malloc(size);
 	if(cb_param== NULL)
 	{
-		LOG(L_ERR, "PUA: send_publish: ERROR no more share memory while"
-				" allocating cb_param - size= %d\n", size);
+		LM_ERR("ERROR no more share memory while allocating cb_param"
+				" - size= %d\n", size);
 		return NULL;
 	}
 	memset(cb_param, 0, size);

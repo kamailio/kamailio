@@ -49,28 +49,28 @@ int request_winfo(struct sip_msg* msg, char* uri, char* expires)
 		printbuf_len = PRINTBUF_SIZE-1;
 		if(xl_printf(msg, (xl_elem_t*)uri, buffer, &printbuf_len)<0)
 		{
-			LOG(L_ERR, "PUA_XMPP: send_winfo: ERROR cannot print the format\n");
+			LM_ERR("cannot print the format\n");
 			return -1;
 		}
 		if(parse_uri(buffer, printbuf_len, &puri)!=0)
 		{
-			LOG(L_ERR, "PUA_XMPP: send_winfo: bad owner SIP address!\n");
+			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else
 		{
-			DBG("PUA_XMPP: send_winfo: using user id [%.*s]\n", printbuf_len,
+			LM_DBG("using user id [%.*s]\n", printbuf_len,
 					buffer);
 		}
 	} 
 	if(puri.user.len<=0 || puri.user.s==NULL
 			|| puri.host.len<=0 || puri.host.s==NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: send_winfo: bad owner URI!\n");
+		LM_ERR("bad owner URI!\n");
 		goto error;
 	}
 	uri_str.s= buffer;
 	uri_str.len=  printbuf_len;
-	DBG("pua_xmpp: xmpp_send_winfo  uri= %.*s:\n", uri_str.len, uri_str.s);
+	LM_DBG("uri= %.*s:\n", uri_str.len, uri_str.s);
 
 	memset(&subs, 0, sizeof(subs_info_t));
 	
@@ -97,7 +97,7 @@ int request_winfo(struct sip_msg* msg, char* uri, char* expires)
 
 	if(pua_send_subscribe(&subs)< 0)
 	{
-		LOG(L_ERR, "pua_xmpp: xmpp_send_winfo:ERROR while sending subscribe\n");
+		LM_ERR("while sending subscribe\n");
 		goto error;
 	}
 

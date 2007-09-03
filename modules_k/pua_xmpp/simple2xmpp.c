@@ -60,30 +60,29 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 
 	memset(&dialog, 0, sizeof(ua_pres_t));
 	
-	DBG("PUA_XMPP:Notify2Xmpp ....\n\n");
+	LM_DBG("start...\n\n");
 
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
-		LOG(L_ERR, "PUA_XMPP:Notify2Xmpp: error parsing headers\n");
+		LM_ERR("parsing headers\n");
 		return -1;
 	}
 	if((!msg->event ) ||(msg->event->body.len<=0))
 	{
-		LOG(L_ERR, "PUA_XMPP:Notify2Xmpp:Missing event header field value\n");
+		LM_ERR("Missing event header field value\n");
 		return -1;
 	}
 
 	if( msg->to==NULL || msg->to->body.s==NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:Notify2Xmpp: ERROR cannot parse TO header\n");
+		LM_ERR("cannot parse TO header\n");
 		return -1;
 	}
 
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
-		DBG("PUA_XMPP:Notify2Xmpp: 'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
+		LM_ERR("'To' header ALREADY PARSED:<%.*s>\n",pto->uri.len,pto->uri.s);
 	}
 	else
 	{
@@ -91,7 +90,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
 		if(TO.uri.len <= 0) 
 		{
-			DBG("PUA_XMPP:Notify2Xmpp: 'To' header NOT parsed\n");
+			LM_ERR("'To' header NOT parsed\n");
 			return -1;
 		}
 		pto = &TO;
@@ -102,7 +101,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	uri=(char*)pkg_malloc(sizeof(char)*( pto->uri.len+1));
 	if(uri== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR no more memory\n");
+		LM_ERR("no more memory\n");
 		return -1;
 	}
 	memcpy(uri, pto->uri.s, pto->uri.len);
@@ -110,7 +109,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	to_uri.s= duri_sip_xmpp(uri);
 	if(to_uri.s== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR whil decoding sip uri in xmpp\n");
+		LM_ERR("while decoding sip uri in xmpp\n");
 		return -1;	
 	}	
 	to_uri.len= strlen(to_uri.s);
@@ -118,7 +117,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 
     if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
-		LOG(L_ERR, "PUA_XMPP:Notify2Xmpp: ERROR to tag value not parsed\n");
+		LM_ERR("to tag value not parsed\n");
 		goto error;
 	}
 	id=  pto->tag_value;
@@ -126,24 +125,23 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp:ERROR cannot parse callid"
-				" header\n");
+		LM_ERR("cannot parse callid header\n");
 		goto error;
 	}
 	dialog.call_id = msg->callid->body;
 
 	if (!msg->from || !msg->from->body.s)
 	{
-		DBG("PUA_XMPP:Notify2Xmpp: ERROR cannot find 'from' header!\n");
+		LM_ERR("ERROR cannot find 'from' header!\n");
 		goto error;
 	}
 	if (msg->from->parsed == NULL)
 	{
-		DBG("PUA_XMPP:Notify2Xmpp: 'From' header not parsed\n");
+		LM_ERR("'From' header not parsed\n");
 		/* parsing from header */
 		if ( parse_from_header( msg )<0 ) 
 		{
-			DBG("PUA_XMPP:Notify2Xmpp: ERROR cannot parse From header\n");
+			LM_ERR("ERROR cannot parse From header\n");
 			goto error;
 		}
 	}
@@ -153,7 +151,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	uri=(char*)pkg_malloc(sizeof(char)*( pfrom->uri.len+1));
 	if(uri== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR no more memory\n");
+		LM_ERR("no more memory\n");
 		goto error;
 	}
 	memcpy(uri, pfrom->uri.s, pfrom->uri.len);
@@ -162,7 +160,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	from_uri.s= euri_sip_xmpp(uri);
 	if(from_uri.s== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR while encoding sip uri in xmpp\n");
+		LM_ERR("while encoding sip uri in xmpp\n");
 		goto error;
 	}	
 	from_uri.len= strlen(from_uri.s);
@@ -170,8 +168,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	
 	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp:ERROR no from tag value"
-				" present\n");
+		LM_ERR("no from tag value present\n");
 		goto error;
 	}
 
@@ -186,15 +183,14 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 		event_flag|= PWINFO_EVENT;
 	else
 	{
-		LOG(L_ERR,"PUA_XMPP: Notify2Xmpp: ERROR wrong event\n");
+		LM_ERR("wrong event\n");
 		goto error;
 	}	
 	dialog.event= event_flag;
 	
 	if(pua_is_dialog(&dialog)< 0) // verify if within a stored dialog
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR Notify in a non existing"
-				" dialog\n");
+		LM_ERR("Notify in a non existing dialog\n");
 		goto error;
 	}
 	/*constructing the xml body*/
@@ -208,8 +204,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 		body.s=get_body(msg);
 		if (body.s== NULL) 
 		{
-			LOG(L_ERR,"PUA_XMPP: Notify2Xmpp: ERROR cannot extract body"
-					" from msg\n");
+			LM_ERR("cannot extract body from msg\n");
 			goto error;
 		}
 		body.len = get_content_length( msg );
@@ -218,7 +213,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	/* treat the two cases: event= presence & event=presence.winfo */	
 	if(event_flag & PRESENCE_EVENT)
 	{	
-		DBG("PUA_XMPP: Notify2Xmpp: PRESENCE\n");
+		LM_DBG("PRESENCE\n");
 		hdr = msg->headers;
 		while (hdr!= NULL)
 		{
@@ -231,7 +226,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 			/* chack if reason timeout => don't send notification */
 			if(strncmp(hdr->body.s+11,"reason=timeout", 14)== 0)
 			{
-				DBG("PUA_XMPP: Notify2Xmpp: Received Notification with state"
+				LM_DBG("Received Notification with state"
 					"terminated; reason= timeout=> don't send notification\n");
 				return 1;
 			}	
@@ -241,8 +236,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	
 		if(build_xmpp_content(&to_uri, &from_uri, &body, &id, is_terminated)< 0)
 		{
-			LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR in function"
-					" build_xmpp_content\n");	
+			LM_ERR("in function build_xmpp_content\n");	
 			goto error;
 		}
 		xmlFreeDoc(doc);
@@ -251,7 +245,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	{	
 		if(event_flag & PWINFO_EVENT)
 		{
-			DBG("PUA_XMPP: Notify2Xmpp: PRESENCE.WINFO\n");
+			LM_DBG("PRESENCE.WINFO\n");
 			hdr = msg->headers;
 			while (hdr!= NULL)
 			{
@@ -261,22 +255,20 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 			}
 			if(hdr && strncmp(hdr->body.s,"terminated", 10)== 0)
 			{
-				DBG("PUA_XMPP: Notify2Xmpp: Notify for presence.winfo with" 
+				LM_DBG("Notify for presence.winfo with" 
 					" Subscription-State terminated- should not translate\n");
 				goto error;
 			}
 			if(winfo2xmpp(&to_uri, &body, &id)< 0)
 			{
-				LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: Error while sending"
-						" subscription\n");
+				LM_ERR("while sending subscription\n");
 				goto error;
 			}
 
 		}
 		else
 		{
-			LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: Missing or unsupported event"
-			" header field value\n");
+			LM_ERR("Missing or unsupported event header field value\n");
 			goto error;
 		}
 
@@ -303,21 +295,19 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 	char* basic= NULL, *priority= NULL, *note= NULL;
 	str xmpp_msg;
 
-	DBG("PUA_XMPP: build_xmpp_content...\n");
+	LM_DBG("start...\n");
 
 	/* creating the xml doc for the xmpp message*/
 	doc= xmlNewDoc(0);
 	if(doc== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content : Error when creating"
-				" new xml doc\n");
+		LM_ERR("when creating new xml doc\n");
 		goto error;
 	}
 	xmpp_root = xmlNewNode(NULL, BAD_CAST "presence");
 	if(xmpp_root==0)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content : Error when adding new"
-				" node- presence\n");
+		LM_ERR("when adding new node- presence\n");
 		goto error;
 	}
 	xmlDocSetRootElement(doc, xmpp_root);
@@ -325,15 +315,13 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 	attr= xmlNewProp(xmpp_root, BAD_CAST "to", BAD_CAST to_uri->s);
 	if(attr== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content : Error while adding new"
-				" attribute\n");
+		LM_ERR("while adding new attribute\n");
 		goto error;
 	}
 	attr= xmlNewProp(xmpp_root, BAD_CAST "from", BAD_CAST from_uri->s);
 	if(attr== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content : Error while adding new"
-				" attribute\n");
+		LM_ERR("while adding new attribute\n");
 		goto error;
 	}
 	if(is_terminated)
@@ -341,8 +329,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 		attr=  xmlNewProp(xmpp_root, BAD_CAST "type", BAD_CAST "unsubscribed");
 		if(attr== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:build_xmpp_content : Error while adding new"
-				" attribute\n");
+			LM_ERR("while adding new attribute\n");
 			goto error;
 		}
 		goto done;
@@ -352,9 +339,8 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 		attr=  xmlNewProp(xmpp_root, BAD_CAST "type", BAD_CAST "unavailable");
 		if(attr== NULL)
 		{
-				LOG(L_ERR, "PUA_XMPP:build_xmpp_content : Error while adding"
-						" new attribute\n");
-				goto error;
+			LM_ERR("while adding new attribute\n");
+			goto error;
 		}
 		goto done;
 	}
@@ -363,30 +349,26 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 	sip_doc= xmlParseMemory(body->s, body->len);
 	if(sip_doc== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while parsing xml"
-				" memory\n");
+		LM_ERR("while parsing xml memory\n");
 		return -1;
 	}
 	sip_root= XMLDocGetNodeByName(sip_doc, "presence", NULL);
 	if(sip_root== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while extracting"
-				" 'presence' node\n");
+		LM_ERR("while extracting 'presence' node\n");
 		goto error;
 	}
 	
 	node = XMLNodeGetNodeByName(sip_root, "basic", NULL);
 	if(node== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while extracting status"
-				" basic node\n");
+		LM_ERR("while extracting status basic node\n");
 		goto error;
 	}
 	basic= (char*)xmlNodeGetContent(node);
 	if(basic== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while extracting"
-				" status basic node content\n");
+		LM_ERR("while extracting status basic node content\n");
 		goto error;
 	}
 	if(xmlStrcasecmp( (unsigned char*)basic,(unsigned char*) "closed")==0 )
@@ -394,8 +376,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 		attr= xmlNewProp(xmpp_root, BAD_CAST "type", BAD_CAST "unavailable");
 		if(attr== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding"
-					" node attr\n");
+			LM_ERR("while adding node attr\n");
 			xmlFree(basic);
 			goto error;
 		}
@@ -408,25 +389,24 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 	node= XMLNodeGetNodeByName(sip_root, "note", NULL);
 	if(node== NULL)
 	{
-		DBG("PUA_XMPP:build_xmpp_content: No note node found\n");
+		LM_DBG("No note node found\n");
 		node= XMLNodeGetNodeByName(sip_root, "person", NULL);
 		if(node== NULL)
 		{
-			DBG("PUA_XMPP:build_xmpp_content: No person node found\n");
+			LM_DBG("No person node found\n");
 			goto done;
 		}
 		node= XMLNodeGetNodeByName(node, "note", NULL);
 		if(node== NULL)
 		{	
-			DBG("PUA_XMPP:build_xmpp_content: Person node has no note node\n");
+			LM_DBG("Person node has no note node\n");
 			goto done;
 		}	
 	}	
 	note= (char*)xmlNodeGetContent(node);
 	if(note== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while extracting note"
-				" node content\n");
+		LM_ERR("while extracting note node content\n");
 		goto error;
 	}
 
@@ -436,8 +416,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 				BAD_CAST "away");
 		if(new_node== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding node"
-					" show: away\n");
+			LM_ERR("while adding node show: away\n");
 			goto error;
 		}	
 	}
@@ -448,8 +427,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 					, BAD_CAST "xa");
 			if(new_node== NULL)
 			{
-				LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding"
-						" node show: away\n");
+				LM_ERR("while adding node show: away\n");
 				goto error;
 			}	
 		}
@@ -460,7 +438,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 			new_node = xmlNewChild(xmpp_root, NULL, BAD_CAST "show", BAD_CAST "chat");
 			if(new_node== NULL)
 			{
-				LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding node show: chat\n");
+				LM_ERR("while adding node show: chat\n");
 				goto error;
 			}	
 		}
@@ -470,7 +448,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 				new_node = xmlNewChild(xmpp_root, NULL, BAD_CAST "show", BAD_CAST "idle");
 				if(new_node== NULL)
 				{
-					LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding node: idle\n");
+					LM_ERR("while adding node: idle\n");
 					goto error;
 				}	
 			}
@@ -484,8 +462,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 							BAD_CAST "dnd");
 					if(new_node== NULL)
 					{
-						LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while"
-								" adding node show: dnd\n");
+						LM_ERR("while adding node show: dnd\n");
 						goto error;
 					}		
 				}
@@ -495,8 +472,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 	new_node = xmlNewChild(xmpp_root, NULL, BAD_CAST "status", BAD_CAST note);
 	if(new_node== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding node"
-				" status\n");
+		LM_ERR("while adding node status\n");
 		goto error;
 	}	
 	
@@ -507,21 +483,20 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 	node= XMLNodeGetNodeByName(sip_root, "contact", NULL);
 	if(node== NULL)
 	{
-		DBG("PUA_XMPP:build_xmpp_content: No contact node found\n");
+		LM_DBG("No contact node found\n");
 	}
 	else
 	{
 		priority= XMLNodeGetAttrContentByName(node, "priority");
 		if(priority== NULL)
-			DBG("PUA_XMPP:build_xmpp_content: No priority attribute found\n");
+			LM_DBG("No priority attribute found\n");
 		else
 		{
 			new_node= xmlNewChild(xmpp_root, NULL, BAD_CAST "priority",
 					BAD_CAST priority);
 			if(sip_root== NULL)
 			{
-				LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding"
-						" node\n");
+				LM_ERR("while adding node\n");
 				xmlFree(priority);
 				goto error;
 			}
@@ -533,31 +508,27 @@ done:
 	buffer= xmlBufferCreate();
 	if(buffer== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: Error while adding creating"
-				" new buffer\n");
+		LM_ERR("while adding creating new buffer\n");
 		goto error;
 	}
 	
 	xmpp_msg.len= xmlNodeDump(buffer, doc, xmpp_root, 1,1);
 	if(xmpp_msg.len== -1)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content:Error while dumping node\n");
+		LM_ERR("while dumping node\n");
 		goto error;
 	}
 	xmpp_msg.s= (char*)xmlBufferContent( buffer);
 	if(xmpp_msg.s==  NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content:Error while extracting buffer"
-				" content\n");
+		LM_ERR("while extracting buffer content\n");
 		goto error;
 	}
 	
-	DBG("PUA_XMPP:build_xmpp_content:xmpp_msg: %.*s\n",xmpp_msg.len,
-			xmpp_msg.s);
+	LM_DBG("xmpp_msg: %.*s\n",xmpp_msg.len, xmpp_msg.s);
 	if( xmpp_notify(from_uri, to_uri, &xmpp_msg, id)< 0)
 	{
-		LOG(L_ERR, "PUA_XMPP:build_xmpp_content: ERROR while sending"
-				" xmpp_notify\n");
+		LM_ERR("while sending xmpp_notify\n");
 		goto error;
 	}
 
@@ -599,18 +570,17 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 	xmlNodePtr node= NULL;
 	xmlBufferPtr buffer= NULL;
 
-	DBG("PUA_XMPP: winfo2xmpp ...\n");
+	LM_DBG("start...\n");
 	notify_doc= xmlParseMemory(body->s, body->len);
 	if(notify_doc== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: winfo2xmpp: Error while parsing xml memory\n");
+		LM_ERR("while parsing xml memory\n");
 		return -1;
 	}
 	pidf_root= XMLDocGetNodeByName(notify_doc, "watcherinfo", NULL);
 	if(pidf_root== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:winfo2xmpp: Error while extracting 'presence'"
-				" node\n");
+		LM_ERR("while extracting 'presence' node\n");
 		goto error;
 	}
 	
@@ -624,15 +594,13 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 		watcher= (char*)xmlNodeGetContent(node->children);	
 		if(watcher== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: winfo2xmpp: Error while extracting watcher"
-					" node content\n");
+			LM_ERR("while extracting watcher node content\n");
 			goto error;
 		}
 		from_uri.s= euri_sip_xmpp(watcher);
 		if(from_uri.s== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: winfo2xmpp: Error while encoding sip uri "
-					"in xmpp\n");
+			LM_ERR("while encoding sip uri in xmpp\n");
 			goto error;
 		}	
 		from_uri.len= strlen(from_uri.s);
@@ -642,14 +610,13 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 		doc= xmlNewDoc( 0 );
 		if(doc== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: winfo2xmpp: Error when creating new xml"
-					" doc\n");
+			LM_ERR("when creating new xml doc\n");
 			goto error;
 		}
 		root_node = xmlNewNode(NULL, BAD_CAST "presence");
 		if(root_node== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: Error when adding new node\n");
+			LM_ERR("when adding new node\n");
 			goto error;
 		}
 		xmlDocSetRootElement(doc, root_node);
@@ -657,52 +624,46 @@ int winfo2xmpp(str* to_uri, str* body, str* id)
 		attr= xmlNewProp(root_node, BAD_CAST "to", BAD_CAST to_uri->s);
 		if(attr== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp: Error while adding attribute"
-					" to_uri\n");
+			LM_ERR("while adding attribute to_uri\n");
 			goto error;
 		}
 		attr= xmlNewProp(root_node, BAD_CAST "from", BAD_CAST from_uri.s);
 		if(attr== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp: Error while adding attribute"
-					" from_uri\n");
+			LM_ERR("while adding attribute from_uri\n");
 			goto error;
 		}
 		attr= xmlNewProp(root_node, BAD_CAST "type", BAD_CAST "subscribe");
 		if(attr== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp: Error while adding attribute"
-					" type\n");
+			LM_ERR("while adding attribute type\n");
 			goto error;
 		}
 		buffer= xmlBufferCreate();
 		if(buffer== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp: Error while adding creating"
-					" new buffer\n");
+			LM_ERR("while adding creating new buffer\n");
 			goto error;
 		}
 		
 		xmpp_msg.len= xmlNodeDump(buffer, doc, root_node, 1,1);
 		if(xmpp_msg.len== -1)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp:Error while dumping node\n");
+			LM_ERR("while dumping node\n");
 			goto error;
 		}
 		xmpp_msg.s= (char*)xmlBufferContent( buffer);
 		if(xmpp_msg.s==  NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp:Error while extracting buffer"
-					" content\n");
+			LM_ERR("while extracting buffer content\n");
 			goto error;
 		}
 	
-		DBG("winfo2xmpp:xmpp_msg: %.*s\n",xmpp_msg.len, xmpp_msg.s);
+		LM_DBG("xmpp_msg: %.*s\n",xmpp_msg.len, xmpp_msg.s);
 		
 		if( xmpp_subscribe(&from_uri, to_uri, &xmpp_msg, id)< 0)
 		{
-			LOG(L_ERR, "PUA_XMPP: winfo2xmpp: ERROR while sending"
-					" xmpp_subscribe\n");
+			LM_ERR("while sending xmpp_subscribe\n");
 			goto error;
 		}
 		xmlBufferFree(buffer);
@@ -740,7 +701,7 @@ char* get_error_reason(int code, str* reason)
 	err_cond= (char*)pkg_malloc(50* sizeof(char));
 	if(err_cond== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: get_error_reason: Error no more memory\n");
+		LM_ERR("no more memory\n");
 		return NULL;
 	}
 	
@@ -809,11 +770,11 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	char* err_reason= NULL;
 	xmlBufferPtr buffer= NULL;
 	
-	DBG("PUA_XMPP:Sipreply2Xmpp ..\n");
+	LM_DBG("start..\n");
 	uri=(char*)pkg_malloc(sizeof(char)*( hentity->watcher_uri->len+1));
 	if(uri== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:Sipreply2Xmpp: ERROR no more memory\n");
+		LM_ERR("no more memory\n");
 		goto error;
 	}
 	memcpy(uri, hentity->watcher_uri->s, hentity->watcher_uri->len);
@@ -821,7 +782,7 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	to_uri.s= duri_sip_xmpp(uri);
 	if(to_uri.s== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Notify2Xmpp: ERROR whil decoding sip uri in xmpp\n");
+		LM_ERR("whil decoding sip uri in xmpp\n");
 		goto error;	
 	}	
 
@@ -831,7 +792,7 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	uri=(char*)pkg_malloc(sizeof(char)*( hentity->pres_uri->len+1));
 	if(uri== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Sipreply2SIP: ERROR no more memory\n");
+		LM_ERR("no more memory\n");
 		goto error;
 	}
 	memcpy(uri, hentity->pres_uri->s, hentity->pres_uri->len);
@@ -839,7 +800,7 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	from_uri.s= euri_sip_xmpp(uri);
 	if(from_uri.s== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Sipreply2SIP: ERROR while encoding sip uri in xmpp\n");
+		LM_ERR("while encoding sip uri in xmpp\n");
 		goto error;
 	}
 
@@ -858,15 +819,13 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	attr= xmlNewProp(root_node, BAD_CAST "to", BAD_CAST to_uri.s);
 	if(attr== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Sipreply2Xmpp: Error while adding attribute"
-				" to\n");
+		LM_ERR("while adding attribute to\n");
 		goto error;
 	}
 	attr= xmlNewProp(root_node, BAD_CAST "from", BAD_CAST from_uri.s);
 	if(attr== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP: Sipreply2Xmpp: Error while adding attribute"
-				" from\n");
+		LM_ERR("while adding attribute from\n");
 		goto error;
 	}
 
@@ -882,39 +841,35 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 		reason= msg->first_line.u.reply.reason;
 	}
 
-	DBG("PUA_XMPP: Sipreply2Xmpp: to_uri= %s\n\t from_uri= %s\n",
+	LM_DBG(" to_uri= %s\n\t from_uri= %s\n",
 			to_uri.s, from_uri.s);
 
 	if(code>=300)
 	{
-		DBG("PUA_XMPP: Sipreply2Xmpp: error code(>= 300)\n");
+		LM_DBG(" error code(>= 300)\n");
 		err_reason= get_error_reason(code, &reason);
 		if(err_reason== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: Sipreply2SIP: Notify2Xmpp:Error couldn't get"
-					" response phrase\n");
+			LM_ERR("couldn't get response phrase\n");
 			goto error;
 		}
 	
 		attr= xmlNewProp(root_node, BAD_CAST "type", BAD_CAST "error");
 		if(attr== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: Sipreply2Xmpp: Error while adding new"
-					" attribute\n");
+			LM_ERR("while adding new attribute\n");
 			goto error;
 		}
 		node= xmlNewChild(root_node, 0, BAD_CAST  "error", 0 );
 		if(node== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: Sipreply2Xmpp: Error while adding new"
-					" node\n");
+			LM_ERR("while adding new node\n");
 			goto error;
 		}	
 		node= xmlNewChild(node, 0,  BAD_CAST err_reason, 0 );
 		if(node== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: Sipreply2Xmpp: Error while adding new"
-					" node\n");
+			LM_ERR("while adding new node\n");
 			goto error;
 		}	
 
@@ -922,8 +877,7 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 				BAD_CAST "urn:ietf:params:xml:ns:xmpp-stanzas");
 		if(attr== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP: Sipreply2Xmpp: Error while adding new"
-					" attribute\n");
+			LM_ERR("while adding new attribute\n");
 			goto error;
 		}
 
@@ -931,12 +885,11 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	else
 		if(code>=200 )
 		{
-			DBG("PUA_XMPP: Sipreply2Xmpp: 2xx code\n");
+			LM_DBG(" 2xx code\n");
 			attr= xmlNewProp(root_node, BAD_CAST "type", BAD_CAST "subscribed");
 			if(attr== NULL)
 			{
-				LOG(L_ERR, "PUA_XMPP: Sipreply2Xmpp: Error while adding new"
-				" attribute\n");
+				LM_ERR("while adding new attribute\n");
 				goto error;
 			}
 		}
@@ -944,32 +897,29 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 		buffer= xmlBufferCreate();
 		if(buffer== NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp: Error while adding creating"
-					" new buffer\n");
+			LM_ERR("while adding creating new buffer\n");
 			goto error;
 		}
 		
 		xmpp_msg.len= xmlNodeDump(buffer, doc, root_node, 1,1);
 		if(xmpp_msg.len== -1)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp:Error while dumping node\n");
+			LM_ERR("while dumping node\n");
 			goto error;
 		}
 		xmpp_msg.s= (char*)xmlBufferContent( buffer);
 		if(xmpp_msg.s==  NULL)
 		{
-			LOG(L_ERR, "PUA_XMPP:winfo2xmpp:Error while extracting buffer"
-					" content\n");
+			LM_ERR("while extracting buffer content\n");
 			goto error;
 		}
 	
 
-	DBG("PUA_XMPP: Sipreply2Xmpp:xmpp_msg: %.*s\n",xmpp_msg.len, xmpp_msg.s);
+	LM_DBG("xmpp_msg: %.*s\n",xmpp_msg.len, xmpp_msg.s);
 	
 	if(xmpp_packet(&from_uri, &to_uri, &xmpp_msg, &hentity->to_tag)< 0)
 	{
-		LOG(L_ERR, "PUA_XMPP:Sipreply2Xmpp: ERROR while sending"
-				" xmpp_reply_to_subscribe\n");
+		LM_ERR("while sending xmpp_reply_to_subscribe\n");
 		goto error;
 	}
 	if(err_reason)

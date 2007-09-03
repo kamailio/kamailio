@@ -37,7 +37,7 @@ int init_puacb_list(void)
 		( sizeof(struct puacb_head_list) );
 	if (puacb_list==0)
 	{
-		LOG(L_CRIT,"ERROR:usrloc:init_puacb_list: no more shared mem\n");
+		LM_CRIT("no more shared mem\n");
 		return -1;
 	}
 	puacb_list->first = 0;
@@ -75,21 +75,20 @@ int register_puacb( int types, pua_cb f, void* param )
 	/* are the callback types valid?... */
 	if ( types<0 || types>PUACB_MAX ) 
 	{
-		LOG(L_CRIT, "BUG:usrloc:register_puacb: invalid callback types: "
-			"mask=%d\n",types);
+		LM_CRIT("invalid callback types: mask=%d\n",types);
 		return E_BUG;
 	}
 	/* we don't register null functions */
 	if (f==0)
 	{
-		LOG(L_CRIT, "BUG:usrloc:register_puacb: null callback function\n");
+		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
 	/* build a new callback structure */
 	if (!(cbp=(struct pua_callback*)shm_malloc(sizeof( struct pua_callback)))) 
 	{
-		LOG(L_ERR, "ERROR:usrloc:register_puacb: out of shm. mem\n");
+		LM_ERR("out of share mem\n");
 		return E_OUT_OF_MEM;
 	}
 

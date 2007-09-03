@@ -48,9 +48,9 @@ extern int min_expires;
 
 void print_subs(subs_info_t* subs)
 {
-	DBG("PUA:send_subscribe\tpres_uri= %.*s - len: %d\n", 
+	LM_DBG("pres_uri= %.*s - len: %d\n", 
 			subs->pres_uri->len,  subs->pres_uri->s, subs->pres_uri->len );
-	DBG("PUA:send_subscribe\twatcher_uri= %.*s - len: %d\n",
+	LM_DBG("watcher_uri= %.*s - len: %d\n",
 			subs->watcher_uri->len,  subs->watcher_uri->s,
 			subs->watcher_uri->len);
 
@@ -67,7 +67,7 @@ str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 	str_hdr= (str*)pkg_malloc(sizeof(str));
 	if(str_hdr== NULL)
 	{
-		LOG(L_ERR, "PUA:subs_build_hdr:ERROR while allocating memory\n");
+		LM_ERR("no more memory\n");
 		return NULL;
 	}
 	memset(str_hdr, 0, sizeof(str));
@@ -76,7 +76,7 @@ str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 	ev= get_event(event);	
 	if(ev== NULL)
 	{
-		LOG(L_ERR, "PUA: publ_build_hdr:ERROR while getting event from list\n");
+		LM_ERR("getting event from list\n");
 		goto error;
 	}
 
@@ -107,8 +107,7 @@ str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 		
 	if(subs_expires == NULL || len == 0)
 	{
-		LOG(L_ERR, "PUA:subs_build_hdr: ERROR while converting int "
-				" to str\n");
+		LM_ERR("while converting int to str\n");
 		pkg_free(str_hdr);
 		return NULL;
 	}
@@ -145,7 +144,7 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	td = (dlg_t*)pkg_malloc(size);
 	if(td == NULL)
 	{
-		LOG(L_ERR, "PUA:pua_build_dlg_t: No memory left\n");
+		LM_ERR("No memory left\n");
 		return NULL;
 	}
 	memset(td, 0, size);
@@ -188,7 +187,7 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 		if(parse_rr_body(presentity->record_route.s, presentity->record_route.len,
 				&td->route_set)< 0)
 		{
-			LOG(L_ERR, "PUA:pua_build_dlg_t: ERROR in function parse_rr_body\n");
+			LM_ERR("ERROR in function parse_rr_body\n");
 			pkg_free(td);
 			return NULL;
 		}
@@ -216,10 +215,10 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	if( ps->param== NULL || *ps->param== NULL )
 	{
-		LOG(L_ERR, "PUA:subs_cback_func:ERROR null callback parameter\n");
+		LM_ERR("null callback parameter\n");
 		return;
 	}
-	DBG("PUA:subs_cback_func: completed with status %d\n",ps->code) ;
+	LM_DBG("completed with status %d\n",ps->code) ;
 	hentity= (ua_pres_t*)(*ps->param);
 	hash_code= core_hash(hentity->pres_uri,hentity->watcher_uri,
 				HASH_SIZE);
@@ -231,7 +230,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	msg= ps->rpl;
 	if(msg == NULL)
 	{
-		LOG(L_ERR, "PUA:subs_cback_func: no reply message found\n ");
+		LM_ERR("no reply message found\n ");
 		goto error;
 	}
 
@@ -243,8 +242,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		presentity= get_dialog(hentity, hash_code);
 		if(presentity== NULL)
 		{
-			LOG(L_ERR, "PUA:subs_cback_func: ERROR no record found"
-					" in hash table\n");
+			LM_ERR("no record found in hash table\n");
 			goto done;
 		}
 		delete_htable(presentity, hash_code);
@@ -255,25 +253,24 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
-		LOG(L_ERR, "PUA:subs_cback_func: error parsing headers\n");
+		LM_ERR("when parsing headers\n");
 		goto done;
 	}
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR cannot parse callid"
-		" header\n");
+		LM_ERR("cannot parse callid header\n");
 		goto done;
 	}		
 	if (!msg->from || !msg->from->body.s)
 	{
-		DBG("PUA:subs_cback_func: ERROR cannot find 'from' header!\n");
+		LM_ERR("cannot find 'from' header!\n");
 		goto done;
 	}
 	if (msg->from->parsed == NULL)
 	{
 		if ( parse_from_header( msg )<0 ) 
 		{
-			DBG("PUA:subs_cback_func: ERROR cannot parse From header\n");
+			LM_ERR("cannot parse From header\n");
 			goto done;
 		}
 	}
@@ -281,21 +278,18 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	
 	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR no from tag value"
-			" present\n");
+		LM_ERR("no from tag value present\n");
 		goto done;
 	}	
 	if( msg->to==NULL || msg->to->body.s==NULL)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR cannot parse TO"
-				" header\n");
+		LM_ERR("cannot parse TO header\n");
 		goto done;
 	}		
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
-		DBG("PUA: subs_cback_func: 'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
+		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
 	}
 	else
 	{
@@ -304,15 +298,14 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 				msg->to->body.len + 1, &TO);
 		if(TO.uri.len <= 0) 
 		{
-			DBG("PUA: subs_cback_func: 'To' header NOT parsed\n");
+			LM_DBG("'To' header NOT parsed\n");
 			goto done;
 		}
 		pto = &TO;
 	}		
 	if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR no from tag value"
-			" present\n");
+		LM_ERR("no from tag value present\n");
 		goto done;
 	}
 	/* extract the other necesary information for inserting a new record */		
@@ -320,12 +313,11 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	{
 		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
 		{
-			LOG(L_ERR, "PUA:subs_cback_func: ERROR cannot parse Expires"
-					" header\n");
+			LM_ERR("cannot parse Expires header\n");
 			goto done;
 		}
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		DBG("PUA:subs_cback_func: lexpire= %d\n", lexpire);
+		LM_DBG("lexpire= %d\n", lexpire);
 	}		
 
 
@@ -365,13 +357,13 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.cb_param= hentity->cb_param;
 			if(send_subscribe(&subs)< 0)
 			{
-				LOG(L_ERR, "PUA:subs_cback_func: ERROR when trying to send SUBSCRIBE\n");
+				LM_ERR("when trying to send SUBSCRIBE\n");
 				goto done;
 			}
 		}
 		else 
 		{
-			DBG("PUA:subs_cback_func: No dialog found\n");			
+			LM_DBG("No dialog found\n");			
 			lock_release(&HashT->p_records[hash_code].lock);
 		}
 		goto done;
@@ -382,12 +374,12 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	{		
 		if(lexpire== 0 )
 		{
-			DBG("PUA:subs_cback_func: lexpire= 0 Delete from hash table");
+			LM_DBG("lexpire= 0 Delete from hash table");
 			delete_htable(presentity, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 		}
-		DBG("PUA:subs_cback_func: *** Update expires\n");
+		LM_DBG("*** Update expires\n");
 		update_htable(presentity, hentity->desired_expires, lexpire, NULL, hash_code);
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
@@ -397,21 +389,19 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	/* if a new dialog -> insert */
 	if(lexpire== 0)
 	{	
-		LOG(L_ERR, "PUA: subs_cback_func:expires= 0: no not insert\n");
+		LM_DBG("expires= 0: no not insert\n");
 		goto done;
 	}
 
 	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR cannot parse cseq"
-		" header\n");
+		LM_ERR("cannot parse cseq header\n");
 		goto done;
 	}
 
 	if( str2int( &(get_cseq(msg)->number), &cseq)< 0)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: ERROR while converting str"
-					" to int\n");
+		LM_ERR("while converting str to int\n");
 		goto done;
     }	
 	
@@ -421,8 +411,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		rt = print_rr_body(msg->record_route, &record_route, 1, 0);
 		if(rt != 0)
 		{
-			LOG(L_ERR,"PRESENCE:handle_subscribe:error processing the record"
-					" route [%d]\n", rt);	
+			LM_ERR("parsing record route [%d]\n", rt);	
 			record_route.s=NULL;
 			record_route.len=0;
 		}
@@ -439,7 +428,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	presentity= (ua_pres_t*)shm_malloc(size);
 	if(presentity== NULL)
 	{
-		LOG(L_ERR, "PUA: subs_cback_func: Error no more share memory\n");
+		LM_ERR("no more share memory\n");
 		if(record_route.s)
 			pkg_free(record_route.s);
 		goto done;
@@ -522,10 +511,10 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	presentity->id= hentity->id;
 	if(BLA_SUBSCRIBE & presentity->flag)
 	{
-		DBG("PUA: subs_cback_func:  BLA_SUBSCRIBE FLAG inserted\n");
+		LM_DBG("BLA_SUBSCRIBE FLAG inserted\n");
 	}	
-	DBG("PUA: subs_cback_func: record for subscribe from %.*s to %.*s inserted in"
-			" datatbase\n", presentity->watcher_uri->len, presentity->watcher_uri->s,
+	LM_DBG("record for subscribe from %.*s to %.*s inserted in datatbase\n",
+			presentity->watcher_uri->len, presentity->watcher_uri->s,
 			presentity->pres_uri->len, presentity->pres_uri->s);
 	insert_htable(presentity);
 
@@ -563,7 +552,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
-		LOG(L_ERR, "PUA: build_cback_param: No more share memory\n");
+		LM_ERR("No more share memory\n");
 		return NULL;
 	}
 	memset(hentity, 0, size);
@@ -645,7 +634,6 @@ int send_subscribe(subs_info_t* subs)
 	int flag;
 	int result;
 
-	DBG("send_subscribe... \n");
 	print_subs(subs);
 
 	flag= subs->source_flag;
@@ -661,7 +649,7 @@ int send_subscribe(subs_info_t* subs)
 			subs->extra_headers);
 	if(str_hdr== NULL || str_hdr->s== NULL)
 	{
-		LOG(L_ERR, "PUA:send_subscribe: Error while building extra headers\n");
+		LM_ERR("while building extra headers\n");
 		return -1;
 	}
 
@@ -681,7 +669,7 @@ int send_subscribe(subs_info_t* subs)
 	/* if flag == INSERT_TYPE insert no matter what the search result is */
 	if(subs->flag & INSERT_TYPE)
 	{
-		DBG("PUA:send_subscribe: A subscription request with insert type\n");
+		LM_DBG("A subscription request with insert type\n");
 		goto insert;
 	}
 	
@@ -692,22 +680,22 @@ insert:
 		if(subs->flag & UPDATE_TYPE)
 		{
 			/*
-			LOG(L_ERR, "PUA:send_subscribe:ERROR request for a subscription"
+			LM_ERR("request for a subscription"
 					" with update type and no record found\n");
 			ret= -1;
 			goto done;
 			commented this because of the strange type parameter in usrloc callback functions
 			*/
 			
-			DBG("PUA:send_subscribe:request for a subscription"
-					" with update type and no record found\n");
+			LM_DBG("request for a subscription with update type"
+					" and no record found\n");
 			subs->flag= INSERT_TYPE;
 
 		}	
 		hentity= subscribe_cbparam(subs, REQ_OTHER);
 		if(hentity== NULL)
 		{
-			LOG(L_ERR, "PUA:send_subscribe:ERROR while building callback"
+			LM_ERR("while building callback"
 					" param\n");
 			ret= -1;
 			goto done;
@@ -727,7 +715,7 @@ insert:
 			);
 		if(result< 0)
 		{
-			LOG(L_ERR, "PUA:send_subscribe: ERROR while sending request with t_request\n");
+			LM_ERR("while sending request with t_request\n");
 			shm_free(hentity);
 			goto  done;
 		}
@@ -739,8 +727,8 @@ insert:
 		{
 			if(subs->expires< 0)
 			{
-				DBG("PUA:send_subscribe: Found previous request for"
-						" unlimited subscribe- do not send subscribe\n");
+				LM_DBG("Found previous request for unlimited subscribe-"
+						" do not send subscribe\n");
 				if (subs->event & PWINFO_EVENT)
 				{	
 					presentity->watcher_count++;
@@ -777,8 +765,7 @@ insert:
 		td= pua_build_dlg_t(presentity);
 		if(td== NULL)
 		{
-			LOG(L_ERR, "PUA:send_subscribe: Error while building tm dlg_t"
-					"structure");
+			LM_ERR("while building tm dlg_t structure");
 			ret= -1;
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
@@ -788,14 +775,13 @@ insert:
 		hentity= subscribe_cbparam(subs, REQ_OTHER);
 		if(hentity== NULL)
 		{
-			LOG(L_ERR, "PUA:send_subscribe:ERROR while building callback"
-					" param\n");
+			LM_ERR("while building callback param\n");
 			ret= -1;
 			pkg_free(td);
 			goto done;
 		}
 	//	hentity->flag= flag;
-		DBG("PUA:send_subscribe: event parameter: %d\n", hentity->event);	
+		LM_DBG("event parameter: %d\n", hentity->event);	
 		result= tmb.t_request_within
 			(&met,
 			str_hdr,
@@ -808,7 +794,7 @@ insert:
 		{
 			shm_free(hentity);
 			hentity= NULL;
-			LOG(L_ERR, "PUA:send_subscribe: ERROR while sending request with t_request\n");
+			LM_ERR("while sending request with t_request\n");
 			goto done;
 		}
 

@@ -40,24 +40,24 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	subs_info_t subs;
 	str uri={0, 0};
 	char* at;
-	DBG("PUA_BLA: bla_cb ...\n");
+	LM_DBG("start\n");
 	if(is_bla_aor== 0)
 	{
-		DBG("PUA_BLA: Not a recognized BLA AOR\n");
+		LM_DBG("Not a recognized BLA AOR\n");
 		return ;
 	}	
 
 	if(type & UL_CONTACT_INSERT)
-		DBG("\t type= UL_CONTACT_INSERT\n");
+		LM_DBG("type= UL_CONTACT_INSERT\n");
 	else
 	if(type & UL_CONTACT_UPDATE)
-		DBG("\t type= UL_CONTACT_UPDATE\n");
+		LM_DBG("type= UL_CONTACT_UPDATE\n");
 	else
 	if(type & UL_CONTACT_EXPIRE)
-		DBG("\t type= UL_CONTACT_EXPIRE\n");
+		LM_DBG("type= UL_CONTACT_EXPIRE\n");
 	else
 	if(type & UL_CONTACT_DELETE)
-		DBG("\t type= UL_CONTACT_DELETE\n");
+		LM_DBG("type= UL_CONTACT_DELETE\n");
 
 	memset(&subs, 0, sizeof(subs_info_t));
 	subs.pres_uri= &c->c;
@@ -92,7 +92,7 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	
 	if(outbound_proxy.s && outbound_proxy.len)
 	{
-		DBG("PUA_BLA: bla_cb : outbound_proxy= %.*s\n", outbound_proxy.len, 
+		LM_DBG("outbound_proxy= %.*s\n", outbound_proxy.len, 
 				outbound_proxy.s);
 		subs.outbound_proxy= &outbound_proxy;
 	}
@@ -106,7 +106,7 @@ void bla_cb(ucontact_t* c, int type, void* param)
 
 	if(pua_send_subscribe(&subs)< 0)
 	{
-		LOG(L_ERR, "PUA_BLA: bla_cb: ERROR while sending subscribe\n");
+		LM_ERR("while sending subscribe\n");
 	}	
 	pkg_free(uri.s);
 error:

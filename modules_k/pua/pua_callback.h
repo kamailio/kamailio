@@ -68,7 +68,7 @@ static inline void run_pua_callbacks(ua_pres_t* hentity, struct sip_msg* msg)
 	for (cbp= puacb_list->first; cbp; cbp=cbp->next)  {
 		if(cbp->types & hentity->flag) 
 		{	
-			DBG("pua: run_pua_callbacks: found callback\n");
+			LM_DBG("found callback\n");
 			cbp->callback(hentity, msg);
 		}
 	}

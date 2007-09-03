@@ -39,7 +39,7 @@ pua_event_t* init_pua_evlist(void)
 	list= (pua_event_t*)shm_malloc(sizeof(pua_event_t));
 	if(list== NULL)
 	{
-		LOG(L_ERR, "PUA: init_pua_evlist: ERROR no more share memory\n");
+		LM_ERR("no more share memory\n");
 		return NULL;
 	}
 	list->next= NULL;
@@ -64,7 +64,7 @@ int add_pua_event(int ev_flag, char* name, char* content_type,
 
 	if(contains_pua_event(&str_name))
 	{
-		DBG("PUA: add_pua_event: Event already exists\n");
+		LM_DBG("Event already exists\n");
 		return 0;
 	}
 	if(content_type)
@@ -75,7 +75,7 @@ int add_pua_event(int ev_flag, char* name, char* content_type,
 	event= (pua_event_t*)shm_malloc(size);
 	if(event== NULL)
 	{
-		LOG(L_ERR, "PUA: add_pua_event: ERROR No more share memory\n");
+		LM_ERR("No more share memory\n");
 		return -1;
 	}	
 	memset(event, 0, size);

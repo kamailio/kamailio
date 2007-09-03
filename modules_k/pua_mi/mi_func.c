@@ -61,7 +61,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	int result;
 	int sign= 1;
 
-	DBG("DEBUG:pua_mi:mi_pua_publish: start\n");
+	LM_DBG("start\n");
 
 	node = cmd->node.kids;
 	if(node == NULL)
@@ -71,16 +71,15 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	pres_uri = node->value;
 	if(pres_uri.s == NULL || pres_uri.s== 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: empty uri\n");
+		LM_ERR("empty uri\n");
 		return init_mi_tree(404, "Empty presentity URI", 20);
 	}
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: bad uri\n");
+		LM_ERR("bad uri\n");
 		return init_mi_tree(404, "Bad presentity URI", 18);
 	}
-	DBG("DEBUG:pua_mi:mi_pua_publish: pres_uri '%.*s'\n",
-	    pres_uri.len, pres_uri.s);
+	LM_DBG("pres_uri '%.*s'\n", pres_uri.len, pres_uri.s);
 
 	node = node->next;
 	if(node == NULL)
@@ -90,8 +89,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	expires= node->value;
 	if(expires.s== NULL || expires.len== 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-		    "empty expires parameter\n");
+		LM_ERR("empty expires parameter\n");
 		return init_mi_tree(400, "Empty expires parameter", 23);
 	}
 	if(expires.s[0]== '-')
@@ -102,14 +100,13 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	}
 	if( str2int(&expires, (unsigned int*) &exp)< 0)
 	{
-		LOG(L_ERR,"ERROR;pua_mi:mi_pua_publish: "
-		    "invalid expires parameter\n" );
+		LM_ERR("invalid expires parameter\n" );
 		goto error;
 	}
 	
 	exp= exp* sign;
 
-	DBG("DEBUG:pua_mi:mi_pua_publish: expires '%d'\n", exp);
+	LM_DBG("expires '%d'\n", exp);
 
 	node = node->next;
 	if(node == NULL)
@@ -119,11 +116,10 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	event= node->value;
 	if(event.s== NULL || event.len== 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-		    "empty event parameter\n");
+		LM_ERR("empty event parameter\n");
 		return init_mi_tree(400, "Empty event parameter", 21);
 	}
-	DBG("DEBUG:pua_mi:mi_pua_publish: event '%.*s'\n",
+	LM_DBG("event '%.*s'\n",
 	    event.len, event.s);
 
 	node = node->next;
@@ -134,11 +130,10 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	content_type= node->value;
 	if(content_type.s== NULL || content_type.len== 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-		    "empty content type\n");
+		LM_ERR("empty content type\n");
 		return init_mi_tree(400, "Empty content type parameter", 28);
 	}
-	DBG("DEBUG:pua_mi:mi_pua_publish: content type '%.*s'\n",
+	LM_DBG("content type '%.*s'\n",
 	    content_type.len, content_type.s);
 
 	node = node->next;
@@ -149,11 +144,10 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	etag= node->value;
 	if(etag.s== NULL || etag.len== 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi: mi_pua_publish: "
-		    "empty etag parameter\n");
+		LM_ERR("empty etag parameter\n");
 		return init_mi_tree(400, "Bad expires", 11);
 	}
-	DBG("DEBUG:pua_mi:mi_pua_publish: etag '%.*s'\n",
+	LM_DBG("etag '%.*s'\n",
 	    etag.len, etag.s);
 
 	node = node->next;
@@ -172,19 +166,17 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		body= node->value;
 		if(body.s == NULL || body.s== 0)
 		{
-			LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-			    "empty body parameter\n");
+			LM_ERR("empty body parameter\n");
 			return init_mi_tree(400, "Empty body parameter", 20);
 		}
 	}
-	DBG("DEBUG:pua_mi:mi_pua_publish: body '%.*s'\n",
+	LM_DBG("body '%.*s'\n",
 	    body.len, body.s);
 
 	/* Check that body is NULL iff content type is . */
 	if(body.s== NULL && (content_type.len!= 1 || content_type.s[0]!= '.'))
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-			    "body is missing, but content type is not .\n");
+		LM_ERR("body is missing, but content type is not .\n");
 		return init_mi_tree(400, "Body parameter is missing", 25);
 	}
 
@@ -200,8 +192,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	publ.event= get_event_flag(&event);
 	if(publ.event< 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-			    "unkown event\n");
+		LM_ERR("unkown event\n");
 		return init_mi_tree(400, "Unknown event", 13);
 	}
 	if(content_type.len!= 1)
@@ -223,14 +214,13 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	else
 		publ.source_flag|= MI_PUBLISH;
 
-	DBG("DEBUG:pua_mi:mi_pua_publish: send publish\n");
+	LM_DBG("send publish\n");
 
 	result= pua_send_publish(&publ);
 
 	if(result< 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_publish: "
-		    "sending publish failed\n");
+		LM_ERR("sending publish failed\n");
 		return init_mi_tree(500, "MI/PUBLISH failed", 17);
 	}	
 	if(result== 418)
@@ -259,7 +249,7 @@ int mi_publ_rpl_cback( ua_pres_t* hentity, struct sip_msg* reply)
 
 	if(reply== NULL || hentity== NULL || hentity->cb_param== NULL)
 	{
-		LOG(L_ERR, "pua_mi:mi_publ_rpl_cback: ERROR NULL parameter\n");
+		LM_ERR("NULL parameter\n");
 		return -1;
 	}
 	if(reply== FAKED_REPLY)
@@ -288,7 +278,7 @@ int mi_publ_rpl_cback( ua_pres_t* hentity, struct sip_msg* reply)
 	{
 		/* extract ETag and expires */
 		lexpire = ((exp_body_t*)reply->expires->parsed)->val;
-		DBG("PUA:mi_publ_rpl_cback: lexpire= %d\n", lexpire);
+		LM_ERR("lexpire= %d\n", lexpire);
 		
 		hdr = reply->headers;
 		found = 0;
@@ -303,7 +293,7 @@ int mi_publ_rpl_cback( ua_pres_t* hentity, struct sip_msg* reply)
 		}
 		if(found== 0) /* must find SIP-Etag header field in 200 OK msg*/
 		{
-			LOG(L_ERR, "PUA:mi_publ_rpl_cback: SIP-ETag header field not found\n");
+			LM_ERR("SIP-ETag header field not found\n");
 			goto error;
 		}
 		etag= hdr->body;
@@ -360,7 +350,7 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	}
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0 )
 	{
-		LOG(L_ERR, "pua_mi:mi_pua_subscribe: ERROR bad uri\n");	
+		LM_ERR("bad uri\n");	
 		return init_mi_tree(400, "Bad uri", 7);
 	}
 
@@ -375,7 +365,7 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	}
 	if(parse_uri(watcher_uri.s, watcher_uri.len, &uri)<0 )
 	{
-		LOG(L_ERR, "pua_mi:pua_mi_subscribe: ERROR bad uri\n");	
+		LM_ERR("bad uri\n");	
 		return init_mi_tree(400, "Bad uri", 7);
 	}
 
@@ -387,25 +377,22 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	event= node->value;
 	if(event.s== NULL || event.len== 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_subscribe: "
-		    "empty event parameter\n");
+		LM_ERR("empty event parameter\n");
 		return init_mi_tree(400, "Empty event parameter", 21);
 	}
-	DBG("DEBUG:pua_mi:mi_pua_subscribe: event '%.*s'\n",
-	    event.len, event.s);
+	LM_DBG("event '%.*s'\n", event.len, event.s);
 
 	node = node->next;
 	if(node == NULL || node->next!=NULL)
 	{
-		LOG(L_ERR, "pua_mi:pua_mi_subscribe: Too much or too many"
-				" parameters\n");
+		LM_ERR("Too much or too many parameters\n");
 		return 0;
 	}
 
 	expires= node->value;
 	if(expires.s== NULL || expires.len== 0)
 	{
-		LOG(L_ERR, "pua_mi:pua_mi_subscribe: Bad expires parameter\n");
+		LM_ERR("Bad expires parameter\n");
 		return init_mi_tree(400, "Bad expires", 11);
 	}		
 	if(expires.s[0]== '-')
@@ -416,14 +403,13 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	}
 	if( str2int(&expires, (unsigned int*) &exp)< 0)
 	{
-		LOG(L_ERR,"ERROR;pua_mi:mi_pua_subscribe: "
-		    "invalid expires parameter\n" );
+		LM_ERR("invalid expires parameter\n" );
 		goto error;
 	}
 	
 	exp= exp* sign;
 
-	DBG("DEBUG:pua_mi:mi_pua_publish: expires '%d'\n", exp);
+	LM_DBG("expires '%d'\n", exp);
 	
 	memset(&subs, 0, sizeof(subs_info_t));
 	
@@ -438,14 +424,13 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 	subs.event= get_event_flag(&event);
 	if(subs.event< 0)
 	{
-		LOG(L_ERR, "ERROR:pua_mi:mi_pua_subscribe: "
-			    "unkown event\n");
+		LM_ERR("unkown event\n");
 		return init_mi_tree(400, "Unknown event", 13);
 	}
 
 	if(pua_send_subscribe(&subs)< 0)
 	{
-		LOG(L_ERR, "pua_mi:pua_mi_subscribe: ERROR while sending subscribe\n");
+		LM_ERR("while sending subscribe\n");
 		goto error;
 	}
 	

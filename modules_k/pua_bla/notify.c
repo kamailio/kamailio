@@ -51,25 +51,24 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	memset(&publ, 0, sizeof(publ_info_t));
 	memset(&dialog, 0, sizeof(ua_pres_t));
  
-  	DBG( "PUA_BLA: handle_notify...\n");
+  	LM_DBG("start\n");
   
   	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
   	{
-  		LOG(L_ERR, "PUA_BLA: handle_notify:ERROR parsing headers\n");
+  		LM_ERR("parsing headers\n");
   		return -1;
   	}
   
   	if( msg->to==NULL || msg->to->body.s==NULL)
   	{
-  		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR cannot parse TO"
-  				" header\n");
+  		LM_ERR("cannot parse TO header\n");
   		goto error;
   	}
   	/* examine the to header */
   	if(msg->to->parsed != NULL)
   	{
   		pto = (struct to_body*)msg->to->parsed;
-  		DBG("PUA_BLA: handle_notify: 'To' header ALREADY PARSED: <%.*s>\n",
+  		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",
   				pto->uri.len, pto->uri.s );
   	}
  	else
@@ -78,7 +77,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
   		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
   		if(TO.uri.len <= 0)
   		{
-  			DBG("PUA_BLA: handle_notify: 'To' header NOT parsed\n");
+  			LM_DBG("'To' header NOT parsed\n");
   			goto error;
   		}
   		pto = &TO;
@@ -88,31 +87,30 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
   
   	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
   	{
-  		LOG(L_ERR ,"PUA_BLA: handle_notify: ERROR: NULL to_tag value\n");
+  		LM_ERR("NULL to_tag value\n");
+		goto error;
   	}
   	dialog.from_tag= pto->tag_value;
   
   	if( msg->callid==NULL || msg->callid->body.s==NULL)
  	{
-  		LOG(L_ERR, "PUA_BLA: handle_notify:ERROR cannot parse callid"
-  				" header\n");
+  		LM_ERR("cannot parse callid header\n");
   		goto error;
   	}
   	dialog.call_id = msg->callid->body;
   
   	if (!msg->from || !msg->from->body.s)
   	{
-  		LOG(L_ERR, "PUA_BLA: handle_notify:  ERROR cannot find 'from'"
-  				" header!\n");
+  		LM_ERR("cannot find 'from' header!\n");
   		goto error;
   	}
   	if (msg->from->parsed == NULL)
   	{
-  		DBG("PUA_BLA: handle_notify:  'From' header not parsed\n");
+  		LM_DBG(" 'From' header not parsed\n");
   		/* parsing from header */
   		if ( parse_from_header( msg )<0 )
   		{
-  			DBG("PUA_BLA: handle_notify:  ERROR cannot parse From header\n");
+  			LM_DBG(" ERROR cannot parse From header\n");
   			goto error;
   		}
  	}
@@ -121,8 +119,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
  
  	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
  	{
- 		LOG(L_ERR, "PPUA_BLA: handle_notify:ERROR no from tag value"
- 				" present\n");
+ 		LM_ERR("no from tag value present\n");
  		goto error;
  	}
  
@@ -131,11 +128,10 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
  	dialog.flag= BLA_SUBSCRIBE;
  	if(pua_is_dialog(&dialog)< 0)
  	{
- 		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR Notify in a non existing"
- 				" dialog\n");
+ 		LM_ERR("Notify in a non existing dialog\n");
  		goto error;
  	}
- 	DBG("PUA_BLA: handle_notify: found a matching dialog\n");
+ 	LM_DBG("found a matching dialog\n");
  
  	/* parse Subscription-State and extract expires if existing */
 	hdr = msg->headers;
@@ -150,8 +146,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
   	}
 	if(found==0 )
 	{
-		LOG(L_ERR, "PUA_BLA: handle_notify: No Subscription-State header"
-			" found\n");
+		LM_ERR("No Subscription-State header found\n");
 		goto error;
  	}
  	subs_state= hdr->body;
@@ -166,14 +161,12 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
   			sep= strchr(subs_state.s, ';');
    			if(sep== NULL)
    			{
-   				LOG(L_ERR, "PUA_BLA: handle_notify: No expires found in"
-   						" Notify\n");
+   				LM_ERR("No expires found in Notify\n");
    				goto error;
    			}
    			if(strncmp(sep+1, "expires=", 8)!= 0)
    			{
-   				LOG(L_ERR, "PUA_BLA: handle_notify: No expires found in"
-  					" Notify\n");
+   				LM_ERR("No expires found in Notify\n");
    				goto error;
    			}
    			exp.s= sep+ 9;
@@ -185,14 +178,14 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
    			}
    			if( str2int(&exp, &expires)< 0)
    			{
-   				LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while parsing int\n");
+   				LM_ERR("while parsing int\n");
    				goto error;
    			}
    		}
    
    	if ( get_content_length(msg) == 0 )
    	{
-   		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR content length= 0\n");
+   		LM_ERR("content length= 0\n");
    		goto error;
    	}
    	else
@@ -200,8 +193,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
    		body.s=get_body(msg);
    		if (body.s== NULL)
    		{
-   			LOG(L_ERR,"PUA_BLA: handle_notify: ERROR cannot extract body"
-   					" from msg\n");
+   			LM_ERR("cannot extract body from msg\n");
    			goto error;
    		}
    		body.len = get_content_length( msg );
@@ -227,7 +219,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	
    	if(pua_send_publish(&publ)< 0)
    	{
-   		LOG(L_ERR, "PUA_BLA: handle_notify: ERROR while sending Publish\n");
+   		LM_ERR("while sending Publish\n");
    		goto error;
    	}
       

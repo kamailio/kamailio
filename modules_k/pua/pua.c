@@ -132,7 +132,7 @@ static int mod_init(void)
 	
 	load_tm_f  load_tm;
 
-	DBG("PUA: initializing module ...\n");
+	LM_DBG("...\n");
 	
 	if(min_expires< 0)
 		min_expires= 0;
@@ -143,36 +143,36 @@ static int mod_init(void)
 	/* import the TM auto-loading function */
 	if((load_tm=(load_tm_f)find_export("load_tm", 0, 0))==NULL)
 	{
-		LOG(L_ERR, "PUA:mod_init:ERROR:can't import load_tm\n");
+		LM_ERR("can't import load_tm\n");
 		return -1;
 	}
 	/* let the auto-loading function load all TM stuff */
 
 	if(load_tm(&tmb)==-1)
 	{
-		LOG(L_ERR, "PUA:mod_init:ERROR can't load tm functions\n");
+		LM_ERR("can't load tm functions\n");
 		return -1;
 	}
 
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	DBG("PUA:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
+	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	
 	/* binding to mysql module  */
 	if (bind_dbmod(db_url.s, &pua_dbf))
 	{
-		DBG("PUA:mod_init: ERROR: Database module not found\n");
+		LM_ERR("Database module not found\n");
 		return -1;
 	}
 	if (!DB_CAPABILITY(pua_dbf, DB_CAP_ALL)) {
-		LOG(L_ERR,"PUA:mod_init: ERROR Database module does not implement "
-		    "all functions needed by the module\n");
+		LM_ERR("Database module does not implement all functions needed"
+				" by the module\n");
 		return -1;
 	}
 
 	pua_db = pua_dbf.init(db_url.s);
 	if (!pua_db)
 	{
-		LOG(L_ERR,"PUA:mod_init: Error while connecting database\n");
+		LM_ERR("while connecting database\n");
 		return -1;
 	}
 	// verify table version 
@@ -181,7 +181,7 @@ static int mod_init(void)
 	 ver =  table_version(&pua_dbf, pua_db, &_s);
 	if(ver!=PUA_TABLE_VERSION)
 	{
-		LOG(L_ERR,"PRESENCE:mod_init: Wrong version v%d for table <%s>,"
+		LM_ERR("Wrong version v%d for table <%s>,"
 				" need v%d\n", ver, _s.s, PUA_TABLE_VERSION);
 		return -1;
 	}
@@ -194,34 +194,34 @@ static int mod_init(void)
 	HashT= new_htable();
 	if(HashT== NULL)
 	{
-		LOG(L_ERR, "PUA:mod_init: ERROR while creating new hash table\n");
+		LM_ERR("while creating new hash table\n");
 		return -1;
 	}
 	if(db_restore()< 0)
 	{
-		LOG(L_ERR, "PUA:mod_init: ERROR while restoring hash_table\n");
+		LM_ERR("while restoring hash_table\n");
 		return -1;
 	}
 
 	if(update_period<=0)
 	{
-		DBG("PUA: ERROR: mod_init: wrong clean_period \n");
+		LM_ERR("wrong clean_period\n");
 		return -1;
 	}
 	if ( init_puacb_list() < 0)
 	{
-		LOG(L_ERR, "PUA:mod_init: ERROR: callbacks initialization failed\n");
+		LM_ERR("callbacks initialization failed\n");
 		return -1;
 	}
 	pua_evlist= init_pua_evlist();
 	if(pua_evlist==0)
 	{
-		LOG(L_ERR, "PUA:mod_init: ERROR when initializing pua_evlist\n");
+		LM_ERR("when initializing pua_evlist\n");
 		return -1;
 	}
 	if(pua_add_events()< 0)
 	{
-		LOG(L_ERR, "PUA:mod_init: ERROR while adding events\n");
+		LM_ERR("while adding events\n");
 		return -1;
 	}
 
@@ -243,37 +243,34 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	DBG("PUA: init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 
 	if (pua_dbf.init==0)
 	{
-		LOG(L_CRIT, "Pua:child_init: database not bound\n");
+		LM_CRIT("database not bound\n");
 		return -1;
 	}
 	pua_db = pua_dbf.init(db_url.s);
 	if (!pua_db)
 	{
-		LOG(L_ERR,"Pua:child %d: Error while connecting database\n",
-				rank);
+		LM_ERR("Child %d: connecting to database failed\n", rank);
 		return -1;
 	}
-	else
+		
+	if (pua_dbf.use_table(pua_db, db_table) < 0)  
 	{
-		if (pua_dbf.use_table(pua_db, db_table) < 0)  
-		{
-			LOG(L_ERR, "Pua:child %d: Error in use_table pua\n", rank);
-			return -1;
-		}
-	
-		DBG("Pua:child %d: Database connection opened successfully\n", rank);
+		LM_ERR("child %d: Error in use_table pua\n", rank);
+		return -1;
 	}
+	
+	LM_DBG("child %d: Database connection opened successfully\n", rank);
 
 	return 0;
 }	
 
 static void destroy(void)
 {	
-	DBG("PUA: destroying module ...\n");
+	LM_DBG("destroying module ...\n");
 	if (puacb_list)
 		destroy_puacb_list();
 
@@ -328,19 +325,19 @@ int db_restore(void)
 	
 	if(!pua_db)
 	{
-		LOG(L_ERR,"PUA: db_restore: ERROR null database connection\n");
+		LM_ERR("null database connection\n");
 		return -1;
 	}
 
 	if(pua_dbf.use_table(pua_db, db_table)< 0)
 	{
-		LOG(L_ERR, "PUA: db_restore:ERROR in use table\n");
+		LM_ERR("in use table\n");
 		return -1;
 	}
 
 	if(pua_dbf.query(pua_db,0, 0, 0, result_cols,0, n_result_cols, 0,&res)< 0)
 	{
-		LOG(L_ERR, "PUA: db_restore:ERROR while querrying table\n");
+		LM_ERR("while querrying table\n");
 		if(res)
 		{
 			pua_dbf.free_result(pua_db, res);
@@ -353,13 +350,13 @@ int db_restore(void)
 
 	if(res->n<=0)
 	{
-		LOG(L_INFO, "PUA: db_restore:the query returned no result\n");
+		LM_INFO("the query returned no result\n");
 		pua_dbf.free_result(pua_db, res);
 		res = NULL;
 		return 0;
 	}
 
-	DBG("PUA: db_restore: found %d db entries\n", res->n);
+	LM_DBG("found %d db entries\n", res->n);
 
 	for(i =0 ; i< res->n ; i++)
 	{
@@ -369,7 +366,7 @@ int db_restore(void)
 		pres_uri.s= (char*)row_vals[puri_col].val.string_val;
 		pres_uri.len = strlen(pres_uri.s);
 		
-		DBG("PUA: db_restore: pres_uri= %.*s\n", pres_uri.len, pres_uri.s);
+		LM_DBG("pres_uri= %.*s\n", pres_uri.len, pres_uri.s);
 
 		memset(&etag,			 0, sizeof(str));
 		memset(&tuple_id,		 0, sizeof(str));
@@ -434,7 +431,7 @@ int db_restore(void)
 		p= (ua_pres_t*)shm_malloc(size);
 		if(p== NULL)
 		{
-			LOG(L_ERR, "PUA: db_restore: Error no more share memmory");
+			LM_ERR("no more share memmory");
 			goto error;
 		}
 		memset(p, 0, size);
@@ -523,7 +520,7 @@ int db_restore(void)
 			p->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
 			if(p->etag.s==  NULL)
 			{
-				LOG(L_ERR, "pua:db_restore:ERROR while aloocating memory\n");
+				LM_ERR("no more share memory\n");
 				goto error;
 			}	
 			memcpy(p->etag.s, etag.s, etag.len);
@@ -542,7 +539,7 @@ int db_restore(void)
 	
 	if(pua_dbf.delete(pua_db, 0, 0 , 0, 0) < 0)
 	{
-		LOG(L_ERR,"pua:db_restore:ERROR while deleting information from db\n");
+		LM_ERR("while deleting information from db\n");
 		goto error;
 	}
 
@@ -563,7 +560,6 @@ void hashT_clean(unsigned int ticks,void *param)
 	time_t now;
 	ua_pres_t* p= NULL, *q= NULL;
 
-	DBG("PUA: hashT_clean ..\n");
 	now = time(NULL);
 	for(i= 0;i< HASH_SIZE; i++)
 	{
@@ -579,7 +575,7 @@ void hashT_clean(unsigned int ticks,void *param)
 				{
 					if(update_pua(p, i)< 0)
 					{
-						LOG(L_ERR, "PUA: hashT_clean: Error while updating\n");
+						LM_ERR("while updating record\n");
 						lock_release(&HashT->p_records[i].lock);
 						return;
 					}
@@ -589,7 +585,7 @@ void hashT_clean(unsigned int ticks,void *param)
 			    if(p->expires < now - 10)
 				{
 					q= p->next;
-					DBG("PUA: hashT_clean: Found expired: uri= %.*s\n", p->pres_uri->len,
+					LM_DBG("Found expired: uri= %.*s\n", p->pres_uri->len,
 							p->pres_uri->s);
 					delete_htable(p, i);
 					p= q;
@@ -605,6 +601,7 @@ void hashT_clean(unsigned int ticks,void *param)
 
 
 }
+
 int update_pua(ua_pres_t* p, unsigned int hash_code)
 {
 	str* str_hdr= NULL;
@@ -625,15 +622,15 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 				&p->etag, p->extra_headers, 0);
 		if(str_hdr == NULL)
 		{
-			LOG(L_ERR, "PUA: update_pua: ERROR while building extra_headers\n");
+			LM_ERR("while building extra_headers\n");
 			goto error;
 		}
-		DBG("PUA: update_pua: str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
+		LM_DBG("str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
 		
 		cb_param= build_uppubl_cbparam(p);
 		if(cb_param== NULL)
 		{
-			LOG(L_ERR, "PUA: update_pua: ERROR while constructing publ callback param\n");
+			LM_ERR("while constructing publ callback param\n");
 			goto error;
 		}	
 		result= tmb.t_request(&met,				/* Type of the message */
@@ -648,7 +645,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 				);
 		if(result< 0)
 		{
-			LOG(L_ERR, "PUA: update_pua: ERROR in t_request function\n"); 
+			LM_ERR("in t_request function\n"); 
 			shm_free(cb_param);
 			goto error;
 		}
@@ -663,22 +660,21 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		td= pua_build_dlg_t(p);
 		if(td== NULL)
 		{
-			LOG(L_ERR, "PUA:update_pua: Error while building tm dlg_t"
-					"structure");		
+			LM_ERR("while building tm dlg_t structure");		
 			goto error;
 		};
 	
 		str_hdr= subs_build_hdr(&p->contact, expires,p->event,p->extra_headers);
 		if(str_hdr== NULL || str_hdr->s== NULL)
 		{
-			LOG(L_ERR, "PUA:update_pua: Error while building extra headers\n");
+			LM_ERR("while building extra headers\n");
 			pkg_free(td);
 			return -1;
 		}
 		cb_param= build_upsubs_cbparam(p);
 		if(cb_param== NULL)
 		{
-			LOG(L_ERR, "PUA: update_pua: ERROR while constructing subs callback param\n");
+			LM_ERR("while constructing subs callback param\n");
 			goto error;
 
 		}	
@@ -692,7 +688,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 				);
 		if(result< 0)
 		{
-			LOG(L_ERR, "PUA: update_pua: ERROR in t_request function\n"); 
+			LM_ERR("in t_request function\n"); 
 			shm_free(cb_param);
 			pkg_free(td);
 			goto error;
@@ -730,7 +726,6 @@ void db_update(unsigned int ticks,void *param)
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
 
-	DBG("PUA: db_update...\n");
 	/* cols and values used for insert */
 	q_cols[puri_col= n_query_cols] ="pres_uri";
 	q_vals[puri_col].type = DB_STR;
@@ -835,12 +830,12 @@ void db_update(unsigned int ticks,void *param)
 
 	if(pua_db== NULL)
 	{
-		LOG(L_ERR,"PUA: db_update: ERROR null database connection\n");
+		LM_ERR("null database connection\n");
 		return;
 	}
 	if(pua_dbf.use_table(pua_db, db_table)< 0)
 	{
-		LOG(L_ERR, "PUA: db_update:ERROR in use table\n");
+		LM_ERR("in use table\n");
 		return ;
 	}
 
@@ -862,13 +857,13 @@ void db_update(unsigned int ticks,void *param)
 			{
 				case NO_UPDATEDB_FLAG:
 				{
-					DBG("PUA: db_update: NO_UPDATEDB_FLAG\n");
+					LM_DBG("NO_UPDATEDB_FLAG\n");
 					break;			  
 				}
 				
 				case UPDATEDB_FLAG:
 				{
-					DBG("PUA: db_update: UPDATEDB_FLAG\n ");
+					LM_DBG("UPDATEDB_FLAG\n ");
 					n_update_cols= 0;
 					n_query_update= 0;
 
@@ -911,14 +906,13 @@ void db_update(unsigned int ticks,void *param)
 					db_vals[3].val.int_val= p->desired_expires;
 					n_update_cols++;
 					
-					DBG("PUA: db_update: Updating ..n_query_update= %d\t"
-						" n_update_cols= %d\n", n_query_update, n_update_cols);
+					LM_DBG("Updating:n_query_update= %d\tn_update_cols= %d\n",
+							n_query_update, n_update_cols);
 
 					if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
 								 result_cols, n_query_update, 1, 0, &res)< 0)
 					{
-						LOG(L_ERR, "PUA: db_update:ERROR while querying"
-								" database");
+						LM_ERR("while querying db table pua\n");
 						if(!no_lock)
 							lock_release(&HashT->p_records[i].lock);
 						if(res)
@@ -930,8 +924,7 @@ void db_update(unsigned int ticks,void *param)
 						if(pua_dbf.update(pua_db, q_cols, 0, q_vals, db_cols, 
 								db_vals, n_query_update, n_update_cols)<0)
 						{
-							LOG(L_ERR, "PUA: db_update: ERROR while updating"
-									" in database");
+							LM_ERR("while updating in database\n");
 							if(!no_lock)
 								lock_release(&HashT->p_records[i].lock);	
 							pua_dbf.free_result(pua_db, res);
@@ -948,15 +941,14 @@ void db_update(unsigned int ticks,void *param)
 							pua_dbf.free_result(pua_db, res);
 							res= NULL;
 						}
-						DBG("PUA:db_update: UPDATEDB_FLAG and no record"
-								" found\n");
+						LM_DBG("UPDATEDB_FLAG and no record found\n");
 					//	p->db_flag= INSERTDB_FLAG;
 					}	
 					break;	
 				}
 				case INSERTDB_FLAG:
 				{	
-					DBG("PUA: db_update: INSERTDB_FLAG\n ");
+					LM_DBG("INSERTDB_FLAG\n ");
 					q_vals[puri_col].val.str_val = *(p->pres_uri);
 					q_vals[pid_col].val.str_val = p->id;
 					q_vals[flag_col].val.int_val = p->flag;
@@ -984,8 +976,7 @@ void db_update(unsigned int ticks,void *param)
 						
 					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_query_cols )<0)
 					{
-						LOG(L_ERR, "PUA: db_update: ERROR while inserting"
-								" into table pua\n");
+						LM_ERR("while inserting in db table pua\n");
 						if(!no_lock)
 							lock_release(&HashT->p_records[i].lock);
 						return ;
@@ -1005,12 +996,10 @@ void db_update(unsigned int ticks,void *param)
 	db_ops[0]= OP_LT;
 	if(pua_dbf.delete(pua_db, db_cols, db_ops, db_vals, 1) < 0)
 	{
-		LOG(L_ERR,"PUA: db_update: ERROR cleaning expired"
-				" information\n");
+		LM_ERR("while deleting from db table pua\n");
 	}
-	DBG("PUA: db_update: updated records in database tables\n");
+	
 	return ;
-
 }	
 
 ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
@@ -1032,8 +1021,7 @@ ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 	cb_param= publish_cbparam(&publ, NULL, &p->tuple_id, REQ_ME);
 	if(cb_param== NULL)
 	{
-		LOG(L_ERR, "PUA:build_uppubl_cbparam:ERROR constructing callback"
-				" parameter\n");
+		LM_ERR("constructing callback parameter\n");
 		return NULL;
 	}
 	return cb_param;
@@ -1060,8 +1048,7 @@ ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 	cb_param= subscribe_cbparam(&subs, REQ_ME);
 	if(cb_param== NULL)
 	{
-		LOG(L_ERR, "PUA: build_upsubs_cbparam: ERROR constructing"
-				" callback parameter\n");
+		LM_ERR("constructing callback parameter\n");
 		return NULL;
 	}
 

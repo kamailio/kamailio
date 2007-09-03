@@ -37,17 +37,17 @@
 
 void print_ua_pres(ua_pres_t* p)
 {
-	DBG("PUA:print_ua_pres: \n");
-	DBG("\tpres_uri= %.*s   len= %d\n", p->pres_uri->len, p->pres_uri->s, p->pres_uri->len);
+	LM_DBG("\tpres_uri= %.*s   len= %d\n", p->pres_uri->len, p->pres_uri->s, p->pres_uri->len);
 	if(p->watcher_uri)
 	{	
-		DBG("\twatcher_uri= %.*s  len= %d\n", p->watcher_uri->len, p->watcher_uri->s, p->watcher_uri->len);
-		DBG("\tcall_id= %.*s   len= %d\n", p->call_id.len, p->call_id.s, p->call_id.len);
+		LM_DBG("\twatcher_uri= %.*s  len= %d\n", p->watcher_uri->len, p->watcher_uri->s, p->watcher_uri->len);
+		LM_DBG("\tcall_id= %.*s   len= %d\n", p->call_id.len, p->call_id.s, p->call_id.len);
 	}	
 	else
-		DBG("\tetag= %.*s - len= %d\n", p->etag.len, p->etag.s, p->etag.len);
-	DBG("\texpires= %d\n", p->expires- (int)time(NULL));
-}	
+		LM_DBG("\tetag= %.*s - len= %d\n", p->etag.len, p->etag.s, p->etag.len);
+	LM_DBG("\texpires= %d\n", p->expires- (int)time(NULL));
+}
+
 htable_t* new_htable(void)
 {
 	htable_t* H= NULL;
@@ -56,7 +56,7 @@ htable_t* new_htable(void)
 	H= (htable_t*)shm_malloc(sizeof(htable_t));
 	if(H== NULL)
 	{
-		LOG(L_ERR, "PUA: new_htable: No more memory\n");
+		LM_ERR("No more memory\n");
 		return NULL;
 	}
 	memset(H, 0, sizeof(htable_t));
@@ -64,7 +64,7 @@ htable_t* new_htable(void)
 	H->p_records= (hash_entry_t*)shm_malloc(HASH_SIZE* sizeof(hash_entry_t));
 	if(H->p_records== NULL)
 	{
-		LOG(L_ERR, "PUA: new_htable: No more share memory\n");
+		LM_ERR("No more share memory\n");
 		goto error;		
 	}
 
@@ -72,14 +72,13 @@ htable_t* new_htable(void)
 	{
 		if(lock_init(&H->p_records[i].lock)== 0)
 		{
-			LOG(L_CRIT,
-				"PUA: new_htable: ERROR initializing lock [%d]\n", i);
+			LM_CRIT("initializing lock [%d]\n", i);
 			goto error;
 		}
 		H->p_records[i].entity= (ua_pres_t*)shm_malloc(sizeof(ua_pres_t));
 		if(H->p_records[i].entity== NULL)
 		{
-			LOG(L_ERR, "PUA: new_htable: No more share memory\n");
+			LM_ERR("No more share memory\n");
 			goto error;		
 		}	
 		H->p_records[i].entity->next= NULL;
@@ -109,7 +108,7 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 	ua_pres_t* p= NULL,* L= NULL;
 
 	L= HashT->p_records[hash_code].entity;
-	DBG("PUA: search_htable: core_hash= %u\n", hash_code);
+	LM_DBG("core_hash= %u\n", hash_code);
 
 	for(p= L->next; p; p=p->next)
 	{
@@ -148,9 +147,9 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 	}
 
 	if(p)
-		DBG("PUA:search_htable: found record\n");
+		LM_DBG("found record\n");
 	else
-		DBG("PUA:search_htable: record not found\n");
+		LM_DBG("record not found\n");
 
 	return p;
 }
@@ -158,8 +157,6 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 		str* etag, unsigned int hash_code)
 {
-	DBG("PUA:hash_update ..\n");
-
 	if(etag)
 	{	
 		shm_free(p->etag.s);
@@ -193,7 +190,7 @@ void insert_htable(ua_pres_t* presentity)
  *	useless since always checking before calling insert
 	if(get_dialog(presentity, hash_code)!= NULL )
 	{
-		DBG("PUA: insert_htable: Dialog already found- do not insert\n");
+		LM_DBG("Dialog already found- do not insert\n");
 		return; 
 	}
 */	
@@ -211,7 +208,6 @@ void insert_htable(ua_pres_t* presentity)
 void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 { 
 	ua_pres_t* p= NULL, *q= NULL;
-	DBG("PUA:delete_htable...\n");
 
 	p= search_htable(presentity, hash_code);
 	if(p== NULL)
@@ -235,7 +231,6 @@ void destroy_htable(void)
 	ua_pres_t* p= NULL,*q= NULL;
 	int i;
 
-	DBG("PUA: destroy htable.. \n");
 	for(i=0; i<HASH_SIZE; i++)
 	{	
 		lock_destroy(&HashT->p_records[i].lock);
@@ -261,7 +256,7 @@ void destroy_htable(void)
 ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL, *L;
-	DBG("PUA: get_dialog: core_hash= %u\n", hash_code);
+	LM_DBG("core_hash= %u\n", hash_code);
 
 	L= HashT->p_records[hash_code].entity;
 	for(p= L->next; p; p=p->next)
@@ -269,13 +264,13 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 
 		if(p->flag& dialog->flag)
 		{
-			DBG("PUA: get_dialog: pres_uri= %.*s\twatcher_uri=%.*s\n\t"
+			LM_DBG("pres_uri= %.*s\twatcher_uri=%.*s\n\t"
 					"callid= %.*s\tto_tag= %.*s\tfrom_tag= %.*s\n",
 				p->pres_uri->len, p->pres_uri->s, p->watcher_uri->len,
 				p->watcher_uri->s,p->call_id.len, p->call_id.s,
 				p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
 
-			DBG("PUA: get_dialog: searched to_tag= %.*s\tfrom_tag= %.*s\n",
+			LM_DBG("searched to_tag= %.*s\tfrom_tag= %.*s\n",
 				 p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
 	    
 			if((p->pres_uri->len== dialog->pres_uri->len) &&
@@ -286,7 +281,7 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 				(strncmp(p->to_tag.s, dialog->to_tag.s, p->to_tag.len)== 0) &&
 				(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) )
 				{	
-					DBG("PUA: get_dialog: FOUND dialog\n");
+					LM_DBG("FOUND dialog\n");
 					break;
 				}
 		}	
@@ -310,21 +305,21 @@ int get_record_id(ua_pres_t* dialog, str** rec_id)
 	rec= get_dialog(dialog, hash_code);
 	if(rec== NULL)
 	{
-		DBG("PUA:get_record_id: Record not found\n");
+		LM_DBG("Record not found\n");
 		lock_release(&HashT->p_records[hash_code].lock);
 		return 0;
 	}
 	id= (str*)pkg_malloc(sizeof(str));
 	if(id== NULL)
 	{
-		LOG(L_ERR, "PUA: get_record_id: ERROR No more memory\n");
+		LM_ERR("No more memory\n");
 		lock_release(&HashT->p_records[hash_code].lock);
 		return -1;
 	}
 	id->s= (char*)pkg_malloc(rec->id.len* sizeof(char));
 	if(id->s== NULL)
 	{
-		LOG(L_ERR, "PUA: get_record_id: ERROR No more memory\n");
+		LM_ERR("No more memory\n");
 		pkg_free(id);
 		lock_release(&HashT->p_records[hash_code].lock);
 		return -1;

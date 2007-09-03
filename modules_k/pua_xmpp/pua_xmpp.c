@@ -126,26 +126,26 @@ static int mod_init(void)
 	/* import the TM auto-loading function */
 	if((load_tm=(load_tm_f)find_export("load_tm", 0, 0))==NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR:can't import load_tm\n");
+		LM_ERR("can't import load_tm\n");
 		return -1;
 	}
 	/* let the auto-loading function load all TM stuff */
 
 	if(load_tm(&tmb)==-1)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR can't load tm functions\n");
+		LM_ERR("can't load tm functions\n");
 		return -1;
 	}
 
 	/* bind libxml wrapper functions */
 	if((bind_libxml= (bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR:can't import bind_libxml_api\n");
+		LM_ERR("can't import bind_libxml_api\n");
 		return -1;
 	}
 	if(bind_libxml(&libxml_api)< 0)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR:can not bind libxml api\n");
+		LM_ERR("can not bind libxml api\n");
 		return -1;
 	}
 	XMLNodeGetAttrContentByName= libxml_api.xmlNodeGetAttrContentByName;
@@ -156,8 +156,7 @@ static int mod_init(void)
 	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL ||
 		XMLNodeGetNodeByName== NULL || XMLNodeGetNodeContentByName== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init:ERROR: libxml wrapper functions could"
-				" not be bound\n");
+		LM_ERR("libxml wrapper functions could not be bound\n");
 		return -1;
 	}
 
@@ -166,50 +165,50 @@ static int mod_init(void)
 	bind_xmpp= (bind_xmpp_t)find_export("bind_xmpp", 0,0);
 	if (!bind_xmpp)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init: Can't bind xmpp\n");
+		LM_ERR("Can't bind xmpp\n");
 		return -1;
 	}
 	if(bind_xmpp(&xmpp_api)< 0)
 	{
-		LOG(L_ERR, "mod_init Can't bind xmpp\n");
+		LM_ERR("Can't bind xmpp\n");
 		return -1;
 	}
 	if(xmpp_api.xsubscribe== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import xsubscribe from xmpp\n");
+		LM_ERR("Could not import xsubscribe from xmpp\n");
 		return -1;
 	}
 	xmpp_subscribe= xmpp_api.xsubscribe;
 
 	if(xmpp_api.xnotify== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import xnotify from xmpp\n");
+		LM_ERR("Could not import xnotify from xmpp\n");
 		return -1;
 	}
 	xmpp_notify= xmpp_api.xnotify;
 	
 	if(xmpp_api.xpacket== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import xnotify from xmpp\n");
+		LM_ERR("Could not import xnotify from xmpp\n");
 		return -1;
 	}
 	xmpp_packet= xmpp_api.xpacket;
 
 	if(xmpp_api.register_callback== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import register_callback"
+		LM_ERR("Could not import register_callback"
 				" to xmpp\n");
 		return -1;
 	}
 	if(xmpp_api.register_callback(XMPP_RCV_PRESENCE, pres_Xmpp2Sip, NULL)< 0)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init: ERROR while registering callback"
+		LM_ERR("ERROR while registering callback"
 				" to xmpp\n");
 		return -1;
 	}
 	if(xmpp_api.decode_uri_sip_xmpp== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import decode_uri_sip_xmpp"
+		LM_ERR("Could not import decode_uri_sip_xmpp"
 				" from xmpp\n");
 		return -1;
 	}
@@ -217,7 +216,7 @@ static int mod_init(void)
 
 	if(xmpp_api.encode_uri_sip_xmpp== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import encode_uri_sip_xmpp"
+		LM_ERR("Could not import encode_uri_sip_xmpp"
 				" from xmpp\n");
 		return -1;
 	}
@@ -225,7 +224,7 @@ static int mod_init(void)
 
 	if(xmpp_api.decode_uri_xmpp_sip== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import decode_uri_xmpp_sip"
+		LM_ERR("Could not import decode_uri_xmpp_sip"
 				" from xmpp\n");
 		return -1;
 	}
@@ -233,7 +232,7 @@ static int mod_init(void)
 
 	if(xmpp_api.encode_uri_xmpp_sip== NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import encode_uri_xmpp_sip"
+		LM_ERR("Could not import encode_uri_xmpp_sip"
 				" from xmpp\n");
 		return -1;
 	}
@@ -243,39 +242,39 @@ static int mod_init(void)
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init: Can't bind pua\n");
+		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
 	
 	if (bind_pua(&pua) < 0)
 	{
-		LOG(L_ERR, "mod_init Can't bind pua\n");
+		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
 	if(pua.send_publish == NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import send_publish\n");
+		LM_ERR("Could not import send_publish\n");
 		return -1;
 	}
 	pua_send_publish= pua.send_publish;
 
 	if(pua.send_subscribe == NULL)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not import send_subscribe\n");
+		LM_ERR("Could not import send_subscribe\n");
 		return -1;
 	}
 	pua_send_subscribe= pua.send_subscribe;
 	
 	if(pua.is_dialog == NULL)
 	{
-		LOG(L_ERR, "pua_bla:mod_init Could not import send_subscribe\n");
+		LM_ERR("Could not import send_subscribe\n");
 		return -1;
 	}
 	pua_is_dialog= pua.is_dialog;
 
 	if(pua.register_puacb(XMPP_INITIAL_SUBS, Sipreply2Xmpp, NULL)< 0)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not register callback\n");
+		LM_ERR("Could not register callback\n");
 		return -1;
 	}	
 
@@ -284,7 +283,7 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	DBG("pua_xmpp init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 	return 0;
 }
 
@@ -295,15 +294,14 @@ static int fixup_pua_xmpp(void** param, int param_no)
 	{
 		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
 		{
-			LOG(L_ERR, "PUA_XMPP: fixup_PUA_XMPP: ERROR wrong format[%s]\n",
-				(char*)(*param));
+			LM_ERR("wrong format[%s]\n",(char*)(*param));
 			return E_UNSPEC;
 		}
 			
 		*param = (void*)model;
 		return 0;
 	}
-	LOG(L_ERR, "PUA_XMPP:fixup_PUA_XMPP: ERROR null format\n");
+	LM_ERR("null format\n");
 	return E_UNSPEC;
 }
 

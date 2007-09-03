@@ -169,7 +169,7 @@ typedef int  (*query_dialog_t)(ua_pres_t* presentity);
 ...	
 	if(pua_is_dialog(dialog)< 0)
 	{
-		LOG(L_ERR, "ERROR while querying dialog\n");
+		LM_ERR("querying dialog\n");
 		goto error;
 	}
 ...	
@@ -205,8 +205,7 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 ...
 	if(pua.register_puacb(XMPP_SUBSCRIBE, Sipreply2Xmpp, NULL)< 0)
 	{
-		LOG(L_ERR, "PUA_XMPP:mod_init Could not register
-		callback\n");
+		LM_ERR("Could not register callback\n");
 		return -1;
 	}
 ...	
@@ -266,7 +265,7 @@ typedef int (evs_process_body_t)(struct publ_info* publ,
 	if(pua.add_event((PRESENCE_EVENT, "presence", "application/pidf+xml", 
 				pres_process_body)< 0)
 	{
-		LOG(L_ERR,"Could not register new event\n");
+		LM_ERR("Could not register new event\n");
 		return -1;
 	}
 ...	
