@@ -57,6 +57,7 @@
 #include "../../ip_addr.h"
 #include "../../mi/mi.h"
 #include "../../mod_fix.h"
+#include "../../socket_info.h"
 #include "mi.h"
 
 MODULE_VERSION
@@ -203,6 +204,10 @@ unsigned int dm_flag = 1024;
 struct contact {
     str uri;
     qvalue_t q;
+    str dst_uri;
+    str path;
+    unsigned int flags;
+    struct socket_info* sock;
     unsigned short q_flag;
     struct contact *next;
 };
@@ -332,12 +337,12 @@ struct module_exports exports = {
 int lcr_db_init(char* db_url)
 {
 	if (lcr_dbf.init==0){
-		LOG(L_CRIT, "BUG: lcr_db_bind: null dbf\n");
+		LM_CRIT("Null lcr_dbf\n");
 		goto error;
 	}
 	db_handle=lcr_dbf.init(db_url);
 	if (db_handle==0){
-		LOG(L_ERR, "ERROR: lcr_db_bind: unable to connect to the database\n");
+		LM_ERR("Unable to connect to the database\n");
 		goto error;
 	}
 	return 0;
@@ -349,19 +354,17 @@ error:
 
 int lcr_db_bind(char* db_url)
 {
-	if (bind_dbmod(db_url, &lcr_dbf)<0){
-		LOG(L_ERR, "ERROR: lcr_db_bind: unable to bind to the database"
-				" module\n");
-		return -1;
-	}
+    if (bind_dbmod(db_url, &lcr_dbf)<0){
+	LM_ERR("Unable to bind to the database module\n");
+	return -1;
+    }
 
-	if (!DB_CAPABILITY(lcr_dbf, DB_CAP_QUERY)) {
-		LOG(L_ERR, "ERROR: lcr_db_bind: Database module does not "
-		    "implement 'query' function\n");
-		return -1;
-	}
+    if (!DB_CAPABILITY(lcr_dbf, DB_CAP_QUERY)) {
+	LM_ERR("Database module does not implement 'query' function\n");
+	return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -380,12 +383,12 @@ int lcr_db_ver(char* db_url, str* name)
 	int ver;
 
 	if (lcr_dbf.init==0){
-		LOG(L_CRIT, "BUG: lcr_db_ver: unbound database\n");
+		LM_CRIT("Unbound database\n");
 		return -1;
 	}
 	dbh=lcr_dbf.init(db_url);
 	if (dbh==0){
-		LOG(L_ERR, "ERROR: lcr_db_ver: unable to open database connection\n");
+		LM_ERR("Unable to open database connection\n");
 		return -1;
 	}
 	ver=table_version(&lcr_dbf, dbh, name);
@@ -399,17 +402,16 @@ int lcr_db_ver(char* db_url, str* name)
  */
 static int child_init(int rank)
 {
-	/* don't do anything for non-worker process */
-	if (rank<1)
-		return 0;
-
-	if (lcr_db_init(db_url.s) < 0) {
-		LOG(L_ERR, "ERROR: lcr:child_init():"
-		    " Unable to connect to the database\n");
-		return -1;
-	}
-
+    /* don't do anything for non-worker process */
+    if (rank<1)
 	return 0;
+
+    if (lcr_db_init(db_url.s) < 0) {
+	LM_ERR("Unable to connect to database\n");
+	return -1;
+    }
+
+    return 0;
 }
 
 
@@ -429,11 +431,11 @@ static int mod_init(void)
     xl_spec_t avp_spec;
     unsigned short avp_flags;
 
-    DBG("DEBUG:lcr:mod_init: initializing\n");
+    LM_DBG("Initializing\n");
 
     /* Bind database */
     if (lcr_db_bind(db_url.s)) {
-	LOG(L_ERR, "ERROR: lcr:mod_init(): No database module found\n");
+	LM_ERR("No database module found\n");
 	return -1;
     }
 
@@ -457,20 +459,18 @@ static int mod_init(void)
 	if (xl_parse_spec(fr_inv_timer_avp_param, &avp_spec,
 			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
 	    || avp_spec.type!=XL_AVP) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: malformed or non AVP %s "
-		"AVP definition\n", fr_inv_timer_avp_param);
+	    LM_ERR("Malformed or non AVP definition <%s>\n",
+		   fr_inv_timer_avp_param);
 	    return -1;
 	}
 	
 	if(xl_get_avp_name(0, &avp_spec, &fr_inv_timer_avp, &avp_flags)!=0) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: [%s]- invalid "
-		"AVP definition\n", fr_inv_timer_avp_param);
+	    LM_ERR("Invalid AVP definition <%s>\n", fr_inv_timer_avp_param);
 	    return -1;
 	}
 	fr_inv_timer_avp_type = avp_flags;
     } else {
-	LOG(L_ERR, "ERROR:lcr:init_avp_params: fr_inv_timer_avp has not "
-	    "been defined\n");
+	LM_ERR("AVP fr_inv_timer_avp has not been defined\n");
 	return -1;
     }
 
@@ -478,20 +478,17 @@ static int mod_init(void)
 	if (xl_parse_spec(gw_uri_avp_param, &avp_spec,
 			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
 	    || avp_spec.type!=XL_AVP) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: malformed or non AVP %s "
-		"AVP definition\n", gw_uri_avp_param);
+	    LM_ERR("Malformed or non AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
 	
 	if(xl_get_avp_name(0, &avp_spec, &gw_uri_avp, &avp_flags)!=0) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: [%s]- invalid "
-		"AVP definition\n", gw_uri_avp_param);
+	    LM_ERR("Invalid AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
 	gw_uri_avp_type = avp_flags;
     } else {
-	LOG(L_ERR, "ERROR:lcr:init_avp_params: gw_uri_avp has not "
-	    "been defined\n");
+	LM_ERR("AVP gw_uri_avp has not been defined\n");
 	return -1;
     }
 
@@ -499,20 +496,18 @@ static int mod_init(void)
 	if (xl_parse_spec(ruri_user_avp_param, &avp_spec,
 			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
 	    || avp_spec.type!=XL_AVP) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: malformed or non AVP %s "
-		"AVP definition\n", ruri_user_avp_param);
+	    LM_ERR("Malformed or non AVP definition <%s>\n",
+		   ruri_user_avp_param);
 	    return -1;
 	}
 	
 	if(xl_get_avp_name(0, &avp_spec, &ruri_user_avp, &avp_flags)!=0) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: [%s]- invalid "
-		"AVP definition\n", ruri_user_avp_param);
+	    LM_ERR("Invalid AVP definition <%s>\n", ruri_user_avp_param);
 	    return -1;
 	}
 	ruri_user_avp_type = avp_flags;
     } else {
-	LOG(L_ERR, "ERROR:lcr:init_avp_params: ruri_user_avp has not "
-	    "been defined\n");
+	LM_ERR("AVP ruri_user_avp has not been defined\n");
 	return -1;
     }
 
@@ -520,20 +515,18 @@ static int mod_init(void)
 	if (xl_parse_spec(contact_avp_param, &avp_spec,
 			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
 	    || avp_spec.type!=XL_AVP) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: malformed or non AVP %s "
-		"AVP definition\n", contact_avp_param);
+	    LM_ERR("Malformed or non AVP definition <%s>\n",
+		   contact_avp_param);
 	    return -1;
 	}
 	
 	if(xl_get_avp_name(0, &avp_spec, &contact_avp, &avp_flags)!=0) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: [%s]- invalid "
-		"AVP definition\n", contact_avp_param);
+	    LM_ERR("Invalid AVP definition <%s>\n", contact_avp_param);
 	    return -1;
 	}
 	contact_avp_type = avp_flags;
     } else {
-	LOG(L_ERR, "ERROR:lcr:init_avp_params: contact_avp has not "
-	    "been defined\n");
+	LM_ERR("AVP contact_avp has not been defined\n");
 	return -1;
     }
 
@@ -541,50 +534,43 @@ static int mod_init(void)
 	if (xl_parse_spec(rpid_avp_param, &avp_spec,
 			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
 	    || avp_spec.type!=XL_AVP) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: malformed or non AVP %s "
-		"AVP definition\n", rpid_avp_param);
+	    LM_ERR("Malformed or non AVP definition <%s>\n", rpid_avp_param);
 	    return -1;
 	}
 	
 	if(xl_get_avp_name(0, &avp_spec, &rpid_avp, &avp_flags)!=0) {
-	    LOG(L_ERR, "ERROR:lcr:init_avp_params: [%s]- invalid "
-		"AVP definition\n", rpid_avp_param);
+	    LM_ERR("Invalid AVP definition <%s>\n", rpid_avp_param);
 	    return -1;
 	}
 	rpid_avp_type = avp_flags;
     } else {
-	LOG(L_ERR, "ERROR:lcr:init_avp_params: rpid_avp has not "
-	    "been defined\n");
+	LM_ERR("AVP rpid_avp has not been defined\n");
 	return -1;
     }
     
     /* Check dm_flag value */
     if (dm_flag > 31) {
-	LOG(L_ERR, "ERROR:lcr:mod_init: undefined or invalid dm_flag value\n");
+	LM_ERR("Undefined or invalid dm_flag value <%u>\n", dm_flag);
 	return -1;
     }
 
     /* Check table version */
     ver = lcr_db_ver(db_url.s, &gw_table);
     if (ver < 0) {
-	LOG(L_ERR, "ERROR: lcr:mod_init():"
-	    " Error while querying table version\n");
+	LM_ERR("Error while querying gw table version\n");
 	goto err;
     } else if (ver < GW_TABLE_VERSION) {
-	LOG(L_ERR, "ERROR: lcr:mod_init(): Invalid table version"
-	    " of gw table\n");
+	LM_ERR("Invalid table version of gw table <%d>\n", ver);
 	goto err;
     }		
 
     /* Check table version */
     ver = lcr_db_ver(db_url.s, &lcr_table);
     if (ver < 0) {
-	LOG(L_ERR, "ERROR: lcr:mod_init():"
-	    " Error while querying table version\n");
+	LM_ERR("Error while querying lcr table version\n");
 	goto err;
     } else if (ver < LCR_TABLE_VERSION) {
-	LOG(L_ERR, "ERROR: lcr:mod_init(): Invalid table version of"
-	    " lcr table (use openser_mysql.sh reinstall)\n");
+	LM_ERR("Invalid table version of lcr table <%d>\n", ver);
 	goto err;
     }		
 
@@ -592,13 +578,13 @@ static int mod_init(void)
     gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) *
 					 (MAX_NO_OF_GWS + 1));
     if (gws_1 == 0) {
-	LOG(L_ERR, "ERROR: lcr: mod_init(): No memory for gw table\n");
+	LM_ERR("No memory for gw table\n");
 	goto err;
     }
     gws_2 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) *
 					 (MAX_NO_OF_GWS + 1));
     if (gws_2 == 0) {
-	LOG(L_ERR, "ERROR: lcr: mod_init(): No memory for gw table\n");
+	LM_ERR("No memory for gw table\n");
 	goto err;
     }
     for (i = 0; i < MAX_NO_OF_GWS + 1; i++) {
@@ -606,7 +592,7 @@ static int mod_init(void)
     }
     gws = (struct gw_info **)shm_malloc(sizeof(struct gw_info *));
     if (gws == 0) {
-	LOG(L_ERR, "ERROR: lcr: mod_init(): No memory for gw table pointer\n");
+	LM_ERR("No memory for gw table pointer\n");
     }
     *gws = gws_1;
 
@@ -614,13 +600,13 @@ static int mod_init(void)
     lcrs_1 = (struct lcr_info *)shm_malloc(sizeof(struct lcr_info) *
 					   (MAX_NO_OF_LCRS + 1));
     if (lcrs_1 == 0) {
-	LOG(L_ERR, "ERROR: lcr: mod_init(): No memory for lcr table\n");
+	LM_ERR("No memory for lcr table\n");
 	goto err;
     }
     lcrs_2 = (struct lcr_info *)shm_malloc(sizeof(struct lcr_info) *
 					   (MAX_NO_OF_LCRS + 1));
     if (lcrs_2 == 0) {
-	LOG(L_ERR, "ERROR: lcr: mod_init(): No memory for lcr table\n");
+	LM_ERR("No memory for lcr table\n");
 	goto err;
     }
     for (i = 0; i < MAX_NO_OF_LCRS + 1; i++) {
@@ -628,16 +614,14 @@ static int mod_init(void)
     }
     lcrs = (struct lcr_info **)shm_malloc(sizeof(struct lcr_info *));
     if (lcrs == 0) {
-	LOG(L_ERR, "ERROR: lcr: mod_init(): "
-	    "No memory for lcr table pointer\n");
+	LM_ERR("No memory for lcr table pointer\n");
 	goto err;
     }
     *lcrs = lcrs_1;
 
     lcrs_ws_reload_counter = (unsigned int *)shm_malloc(sizeof(unsigned int));
     if (lcrs_ws_reload_counter == 0) {
-	LOG(L_ERR, "ERROR: lcr: mod_init(): "
-	    "No memory for counter\n");
+	LM_ERR("No memory for reload counter\n");
 	goto err;
     }
     *lcrs_ws_reload_counter = reload_counter = 0;
@@ -646,8 +630,7 @@ static int mod_init(void)
 
     /* First reload */
     if (reload_gws() == -1) {
-	LOG(L_CRIT, "ERROR: lcr:mod_init():"
-	    " failed to reload gateways and routes\n");
+	LM_CRIT("Failed to reload gateways and routes\n");
 	goto err;
     }
 
@@ -730,8 +713,7 @@ int load_from_uri_regex(void)
 	}
 	memset(&(from_uri_reg[i].re), 0, sizeof(regex_t));
 	if ((status=regcomp(&(from_uri_reg[i].re),(*lcrs)[i].from_uri,0))!=0){
-	    LOG(L_ERR, "ERROR:lcr:load_regex: bad from_uri re %s\n", 
-		(*lcrs)[i].from_uri);
+	    LM_ERR("Bad from_uri re <%s>\n", (*lcrs)[i].from_uri);
 	    result = -1;
 	    break;
 	}
@@ -782,28 +764,28 @@ int reload_gws ( void )
     lcr_cols[3] = priority_col.s;
 
     if (lcr_dbf.init==0){
-	LOG(L_CRIT, "ERROR: lcr_db_ver: unbound database\n");
+	LM_CRIT("Unbound database\n");
 	return -1;
     }
     dbh=lcr_dbf.init(db_url.s);
     if (dbh==0){
-	LOG(L_ERR, "ERROR: reload_gws: unable to open database connection\n");
+	LM_ERR("Unable to open database connection\n");
 	return -1;
     }
 
     if (lcr_dbf.use_table(dbh, gw_table.s) < 0) {
-	LOG(L_ERR, "lcr_reload_gws(): Error while trying to use gw table\n");
+	LM_ERR("Error while trying to use gw table\n");
 	return -1;
     }
 
     if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 8, 0, &res) < 0) {
-	    LOG(L_ERR, "lcr_reload_gws(): Failed to query gw data\n");
+	    LM_ERR("Failed to query gw data\n");
 	    lcr_dbf.close(dbh);
 	    return -1;
     }
 
     if (RES_ROW_N(res) + 1 > MAX_NO_OF_GWS) {
-	    LOG(L_ERR, "reload_gws(): Too many gateways\n");
+	    LM_ERR("Too many gateways\n");
 	    lcr_dbf.free_result(dbh, res);
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -814,7 +796,8 @@ int reload_gws ( void )
 	if (!((VAL_TYPE(ROW_VALUES(row)) == DB_STRING) &&
 	      !VAL_NULL(ROW_VALUES(row)) &&
 	      inet_aton((char *)VAL_STRING(ROW_VALUES(row)), &ip_addr) != 0)) {
-	    LOG(L_ERR, "reload_gws(): Invalid IP address of GW\n");
+	    LM_ERR("Invalid IP address of gw <%s>\n",
+		   (char *)VAL_STRING(ROW_VALUES(row)));
 	    lcr_dbf.free_result(dbh, res);
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -825,7 +808,7 @@ int reload_gws ( void )
 	    port = (unsigned int)VAL_INT(ROW_VALUES(row) + 1);
 	}
 	if (port > 65536) {
-	    LOG(L_ERR, "reload_gws(): Port of GW is too large: %u\n", port);
+	    LM_ERR("Port of gw is too large <%u>\n", port);
 	    lcr_dbf.free_result(dbh, res);
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -835,7 +818,8 @@ int reload_gws ( void )
 	} else {
 	    scheme = (uri_type)VAL_INT(ROW_VALUES(row) + 2);
 	    if ((scheme != SIP_URI_T) && (scheme != SIPS_URI_T)) {
-		LOG(L_ERR, "reload_gws(): Unknown or unsupported URI scheme: %u\n", (unsigned int)scheme);
+		LM_ERR("Unknown or unsupported URI scheme <%u>\n",
+		       (unsigned int)scheme);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
@@ -847,7 +831,8 @@ int reload_gws ( void )
 	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);
 	    if ((transport != PROTO_UDP) && (transport != PROTO_TCP) &&
 		(transport != PROTO_TLS)) {
-		LOG(L_ERR, "reload_gws(): Unknown or unsupported transport: %u\n", (unsigned int)transport);
+		LM_ERR("Unknown or unsupported transport <%u>\n",
+		       (unsigned int)transport);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
@@ -865,7 +850,7 @@ int reload_gws ( void )
 	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 5);
 	    prefix_len = strlen(prefix);
 	    if (prefix_len > MAX_PREFIX_LEN) {
-		LOG(L_ERR, "reload_gws(): too long gw prefix\n");
+		LM_ERR("Too long gw prefix <%u>\n", prefix_len);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
@@ -880,13 +865,13 @@ int reload_gws ( void )
 	    (VAL_TYPE(ROW_VALUES(row) + 7) == DB_INT)) {
 	    dm = (unsigned int)VAL_INT(ROW_VALUES(row) + 7);
 	    if ((dm != 0) && (dm != 1)) {
-		LOG(L_ERR, "reload_gws(): invalid dm value\n");
+		LM_ERR("Invalid dm value <%u>\n", dm);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
 	    }
 	} else {
-	    LOG(L_ERR, "reload_gws(): dm is NULL or non-int\n");
+	    LM_ERR("Attribute dm is NULL or non-int\n");
 	    lcr_dbf.free_result(dbh, res);
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -928,18 +913,18 @@ int reload_gws ( void )
 
 
     if (lcr_dbf.use_table(dbh, lcr_table.s) < 0) {
-	LOG(L_ERR, "lcr_reload_gws(): Error while trying to use lcr table\n");
+	LM_ERR("Error while trying to use lcr table\n");
 	return -1;
     }
 
     if (lcr_dbf.query(dbh, NULL, 0, NULL, lcr_cols, 0, 4, 0, &res) < 0) {
-	LOG(L_ERR, "lcr_reload_gws(): Failed to query lcr data\n");
+	LM_ERR("Failed to query lcr data\n");
 	lcr_dbf.close(dbh);
 	return -1;
     }
 
     if (RES_ROW_N(res) + 1 > MAX_NO_OF_LCRS) {
-	LOG(L_ERR, "reload_gws(): Too many lcr entries\n");
+	LM_ERR("Too many lcr entries <%d>\n", RES_ROW_N(res));
 	lcr_dbf.free_result(dbh, res);
 	lcr_dbf.close(dbh);
 	return -1;
@@ -953,7 +938,7 @@ int reload_gws ( void )
 	    prefix = (char *)VAL_STRING(ROW_VALUES(row));
 	    prefix_len = strlen(prefix);
 	    if (prefix_len > MAX_PREFIX_LEN) {
-		LOG(L_ERR, "reload_gws(): too long lcr prefix\n");
+		LM_ERR("Too long lcr prefix %u>\n", prefix_len);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
@@ -966,21 +951,21 @@ int reload_gws ( void )
 	    from_uri = (char *)VAL_STRING(ROW_VALUES(row) + 1);
 	    from_uri_len = strlen(from_uri);
 	    if (from_uri_len > MAX_FROM_URI_LEN) {
-		LOG(L_ERR, "reload_gws(): too long from_uri\n");
+		LM_ERR("Too long from_uri <%u>\n", from_uri_len);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
 	    }
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
-	    LOG(L_ERR, "reload_gws(): route grp_id is NULL\n");
+	    LM_ERR("Route grp_id is NULL\n");
 	    lcr_dbf.free_result(dbh, res);
 	    lcr_dbf.close(dbh);
 	    return -1;
 	}
 	grp_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 2);
 	if (VAL_NULL(ROW_VALUES(row) + 3) == 1) {
-	    LOG(L_ERR, "reload_gws(): route priority is NULL\n");
+	    LM_ERR("Route priority is NULL\n");
 	    lcr_dbf.free_result(dbh, res);
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -1151,7 +1136,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 
     /* Find Request-URI user */
     if (parse_sip_msg_uri(_m) < 0) {
-	    LOG(L_ERR, "load_gws(): Error while parsing R-URI\n");
+	    LM_ERR("Error while parsing R-URI\n");
 	    return -1;
     }
     ruri_user = _m->parsed_uri.user;
@@ -1165,15 +1150,15 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
     } else {
 	/* Get URI from From URI */
 	if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
-	    LOG(L_ERR, "load_gws(): Error while parsing message\n");
+	    LM_ERR("Error while parsing headers\n");
 	    return -1;
 	}
 	if (!_m->from) {
-	    LOG(L_ERR, "load_gws(): FROM header field not found\n");
+	    LM_ERR("From header field not found\n");
 	    return -1;
 	}
 	if ((!(_m->from)->parsed) && (parse_from_header(_m) < 0)) {
-	    LOG(L_ERR, "load_gws(): Error while parsing From body\n");
+	    LM_ERR("Error while parsing From header\n");
 	    return -1;
 	}
 	from_uri = get_from(_m)->uri;
@@ -1182,7 +1167,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	strncpy(from_uri_str, from_uri.s, from_uri.len);
 	from_uri_str[from_uri.len] = '\0';
     } else {
-	LOG(L_ERR, "load_gws(): from_uri is too long\n");
+	LM_ERR("From URI is too long <%u>\n", from_uri.len);
 	return -1;
     }
 
@@ -1231,21 +1216,21 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 				/* Found the same gw in the list  */
 				/* Let's keep the one with higher */
 				/* match on prefix len            */
-				DBG("DEBUG:lcr:load_gws: duplicate gw for index"
-				    " %d [%d,%d] and current [%d,%d] \n",
-				    k, matched_gws[k].route_index,
-				    matched_gws[k].route_index, i, j);
+				LM_DBG("Duplicate gw for index"
+				       " %d [%d,%d] and current [%d,%d] \n",
+				       k, matched_gws[k].route_index,
+				       matched_gws[k].route_index, i, j);
 				duplicated_gw = 1;
 				if (lcr_rec.prefix_len >
 				    (*lcrs)[matched_gws[k].route_index].prefix_len) {
 				    /* Replace the old entry with the new one */
-				    DBG("DEBUG:lcr:load_gws: replace[%d,%d]"
-					" with [%d,%d] on index %d:"
-					" prefix reason %d>%d\n",
-					matched_gws[k].route_index,
-					matched_gws[k].gw_index, i, j, k,
-					lcr_rec.prefix_len,
-					(*lcrs)[matched_gws[k].route_index].prefix_len);
+				    LM_DBG("Replace [%d,%d]"
+					   " with [%d,%d] on index %d:"
+					   " prefix reason %d>%d\n",
+					   matched_gws[k].route_index,
+					   matched_gws[k].gw_index, i, j, k,
+					   lcr_rec.prefix_len,
+					   (*lcrs)[matched_gws[k].route_index].prefix_len);
 				    matched_gws[k].route_index = i;
 				    matched_gws[k].gw_index = j;
 				    /* Stop searching in the matched_gws list */
@@ -1255,13 +1240,13 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 				    if (lcr_rec.priority >
 					(*lcrs)[matched_gws[k].route_index].priority) {
 					/* Replace the old entry with the new one */
-					DBG("DEBUG:lcr:load_gws: replace[%d,%d] with"
-					    " [%d,%d] on index %d:"
-					    " priority reason %d>%d\n",
-					    matched_gws[k].route_index,
-					    matched_gws[k].gw_index, i, j, k,
-					    lcr_rec.priority,
-					    (*lcrs)[matched_gws[k].route_index].priority);
+					LM_DBG("Replace [%d,%d] with"
+					       " [%d,%d] on index %d:"
+					       " priority reason %d>%d\n",
+					       matched_gws[k].route_index,
+					       matched_gws[k].gw_index,
+					       i, j, k, lcr_rec.priority,
+					       (*lcrs)[matched_gws[k].route_index].priority);
 					matched_gws[k].route_index = i;
 					matched_gws[k].gw_index = j;
 					/* Stop searching in the matched_gws list */
@@ -1274,8 +1259,8 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 			    /* This is a new gw */
 			    matched_gws[gw_index].route_index = i;
 			    matched_gws[gw_index].gw_index = j;
-			    DBG("DEBUG:lcr:load_gws: added matched_gws[%d]=[%d,%d]\n",
-				gw_index, i, j);
+			    LM_DBG("Added matched_gws[%d]=[%d,%d]\n",
+				   gw_index, i, j);
 			    gw_index++;
 			} else {
 			    duplicated_gw = 0;
@@ -1342,7 +1327,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	dm = (*gws)[index].dm;
 	strip = (*gws)[index].strip;
 	if (strip > ruri_user.len) {
-	    LOG(L_ERR, "load_gws(): Strip count of gw is too large\n");
+	    LM_ERR("Strip count of gw is too large <%u>\n", strip);
 	    goto skip;
 	}
 	strip_string = int2str(strip, &strip_len);
@@ -1351,7 +1336,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 
 	if (6 + prefix_len + 1 + strip_len + 1 + 15 + 1 + 5 + 1 + 14 >
 	    MAX_URI_SIZE) {
-	    LOG(L_ERR, "load_gws(): Request URI would be too long\n");
+	    LM_ERR("Request URI would be too long\n");
 	    goto skip;
 	}
 	at = (char *)&(ruri[0]);
@@ -1365,8 +1350,8 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	} else if (scheme == SIPS_URI_T) {
 	    memcpy(at, "sips:", 5); at = at + 5;
 	} else {
-	    LOG(L_ERR, "load_gws(): Unknown or unsupported URI scheme: %u\n",
-		(unsigned int)scheme);
+	    LM_ERR("Unknown or unsupported URI scheme <%u>\n",
+		   (unsigned int)scheme);
 	    goto skip;
 	}
 	if (prefix_len) {
@@ -1388,7 +1373,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	memcpy(at, addr_str.s, addr_str.len); at = at + addr_str.len;
 	if (port != 0) {
 	    if (port > 65536) {
-		LOG(L_ERR, "load_gws(): Port of GW is too large: %u\n", port);
+		LM_ERR("Port of GW is too large <%u>\n", port);
 		goto skip;
 	    }
 	    *at = ':'; at = at + 1;
@@ -1404,8 +1389,8 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	    } else if (transport == PROTO_TLS) {
 		memcpy(at, "tls", 3); at = at + 3;
 	    } else {
-		LOG(L_ERR, "load_gws(): Unknown or unsupported transport: %u\n",
-		    (unsigned int)transport);
+		LM_ERR("Unknown or unsupported transport <%u>\n",
+		       (unsigned int)transport);
 		goto skip;
 	    }
 	}
@@ -1413,8 +1398,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	value.len = at - value.s;
 	val.s = value;
 	add_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp, val);
-	DBG("DEBUG:lcr:load_gws: added gw_uri_avp <%.*s>\n",
-	    value.len, value.s);
+	LM_DBG("Added gw_uri_avp <%.*s>\n", value.len, value.s);
     skip:
 	continue;
     }
@@ -1488,28 +1472,31 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     gw_uri_val.s.len = gw_uri_val.s.len - 1;
 
     if (route_type == REQUEST_ROUTE) {
+
 	/* Create new Request-URI taking URI user from current Request-URI
 	   and other parts of from gw_uri AVP. */
 	if (parse_sip_msg_uri(_m) < 0) {
-	    LOG(L_ERR, "next_gw(): Parsing of R-URI failed.\n");
+	    LM_ERR("Parsing of R-URI failed\n");
 	    return -1;
 	}
 	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
 	if (!new_ruri.s) {
-	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
+	    LM_ERR("No memory for new R-URI\n");
 	    return -1;
 	}
 	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
 	if (!at_char) {
 	    pkg_free(new_ruri.s);
-	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
+	    LM_ERR("No @ in gateway URI <%.*s>\n",
+		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
 	if (!strip_char || strip_char + 1 >= at_char) {
 	    pkg_free(new_ruri.s);
-	    LOG(L_ERR, "next_gw(): No strip character | and at least one "
-		"character before @ in gateway URI.\n");
+	    LM_ERR("No strip character | and at least one "
+		   "character before @ in gateway URI <%.*s>\n",
+		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	at = new_ruri.s;
@@ -1517,8 +1504,8 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	at = at + (strip_char - gw_uri_val.s.s);
 	strip = strtol(strip_char + 1, &endptr, 10);
 	if (endptr != at_char) {
-	    LOG(L_ERR, "next_gw(): Non-digit character between | "
-		"and @ chars\n");
+	    LM_ERR("Non-digit char between | and @ chars in gw URI <%.*s>\n",
+		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	if (_m->parsed_uri.user.len - strip > 0) {
@@ -1538,8 +1525,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	/* Save Request-URI user for use in FAILURE_ROUTE */
 	val.s = _m->parsed_uri.user;
 	add_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp, val);
-	DBG("DEBUG:lcr:next_gw: added ruri_user_avp <%.*s>\n",
-	    val.s.len, val.s.s);
+	LM_DBG("Added ruri_user_avp <%.*s>\n", val.s.len, val.s.s);
 	/* Rewrite Request URI */
 	act.type = SET_URI_T;
 	act.elem[0].type = STRING_ST;
@@ -1548,36 +1534,39 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	pkg_free(new_ruri.s);
 	destroy_avp(gu_avp);
 	if (rval != 1) {
-	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
-		"value <%d>\n", rval);
+	    LM_ERR("Calling do_action failed with return value <%d>\n", rval);
 	    return -1;
 	}
 	return 1;
+
     } else if (route_type == FAILURE_ROUTE) {
+
 	/* Create new Request-URI taking URI user from ruri_user AVP
 	   and other parts of from gateway URI AVP. */
 	ru_avp = search_first_avp(ruri_user_avp_type, ruri_user_avp,
 				  &ruri_user_val, 0);
 	if (!ru_avp) {
-	    LOG(L_ERR, "next_gw(): No ruri_user AVP\n");
+	    LM_ERR("No ruri_user AVP\n");
 	    return -1;
 	}
 	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
 	if (!new_ruri.s) {
-	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
+	    LM_ERR("No memory for new R-URI.\n");
 	    return -1;
 	}
 	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
 	if (!at_char) {
 	    pkg_free(new_ruri.s);
-	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
+	    LM_ERR("No @ in gateway URI <%.*s>\n",
+		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
 	if (!strip_char || strip_char + 1 >= at_char) {
 	    pkg_free(new_ruri.s);
-	    LOG(L_ERR, "next_gw(): No strip character | and at least one "
-		"character before @ in gateway URI.\n");
+	    LM_ERR("No strip char | and at least one "
+		   "char before @ in gateway URI <%.*s>\n",
+		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	at = new_ruri.s;
@@ -1585,8 +1574,8 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	at = at + (strip_char - gw_uri_val.s.s);
 	strip = strtol(strip_char + 1, &endptr, 10);
 	if (endptr != at_char) {
-	    LOG(L_ERR, "next_gw(): Non-digit character between | "
-		"and @ chars\n");
+	    LM_ERR("Non-digit char between | and @ chars in gw URI <%.*s>\n",
+		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	if (ruri_user_val.s.len - strip > 0) {
@@ -1612,13 +1601,14 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	pkg_free(new_ruri.s);
 	destroy_avp(gu_avp);
 	if (rval != 1) {
-	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
-		"value <%d>\n", rval);
+	    LM_ERR("Calling do_action failed with return value <%d>\n", rval);
 	    return -1;
 	}
 	return 1;
     }
+
     /* unsupported route type */
+    LM_ERR("Unsupported route type\n");
     return -1;
 }
 
@@ -1683,7 +1673,7 @@ static int do_to_gw(struct sip_msg* _m, int grp_id)
     unsigned int i;
 
     if((_m->parsed_uri_ok == 0) && (parse_sip_msg_uri(_m) < 0)) {
-	LOG(L_ERR, "LCR: to_gw: ERROR while parsing the R-URI\n");
+	LM_ERR("Error while parsing the R-URI\n");
 	return -1;
     }
 
@@ -1746,6 +1736,120 @@ static inline void free_contact_list(struct contact *curr) {
     }
 }
 
+/* Encode branch info from contact struct to str */
+inline int encode_branch_info(str *info, struct contact *con)
+{
+    char *at, *s;
+    int len;
+
+    info->len = con->uri.len + con->dst_uri.len +
+	con->path.len + MAX_SOCKET_STR + INT2STR_MAX_LEN + 5;
+    info->s = pkg_malloc(info->len);
+    if (!info->s) {
+	LM_ERR("No mamory left for branch info\n");
+	return 0;
+    }
+    at = info->s;
+    memcpy(at, con->uri.s, con->uri.len);
+    at = at + con->uri.len;
+    *at = '\n';
+    at++;
+    memcpy(at, con->dst_uri.s, con->dst_uri.len);
+    at = at + con->dst_uri.len;
+    *at = '\n';
+    at++;
+    memcpy(at, con->path.s, con->path.len);
+    at = at + con->path.len;
+    *at = '\n';
+    at++;
+    len = MAX_SOCKET_STR;
+    if (!socket2str(con->sock, at, &len)) {
+	LM_ERR("Failed to convert socket to str\n");
+	return 0;
+    }
+    at = at + len;
+    *at = '\n';
+    at++;
+    s = int2str(con->flags, &len);
+    memcpy(at, s, len);
+    at = at + len;
+    *at = '\n';
+    info->len = at - info->s + 1;
+
+    return 1;
+}
+
+
+/* Encode branch info from str */
+inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
+			      struct socket_info **sock, unsigned int *flags)
+{
+    str s, host;
+    int port, proto;
+    char *pos, *at;
+
+    pos = strchr(info, '\n');
+    uri->len = pos - info;
+    if (uri->len) {
+	uri->s = info;
+    } else {
+	uri->s = 0;
+    }
+    at = pos + 1;
+
+    pos = strchr(at, '\n');
+    dst->len = pos - at;
+    if (dst->len) {
+	dst->s = at;
+    } else {
+	dst->s = 0;
+    }
+    at = pos + 1;
+
+    pos = strchr(at, '\n');
+    path->len = pos - at;
+    if (path->len) {
+	path->s = at;
+    } else {
+	path->s = 0;
+    }
+    at = pos + 1;
+
+    pos = strchr(at, '\n');
+    s.len = pos - at;
+    if (s.len) {
+	s.s = at;
+	if (parse_phostport(s.s, s.len, &host.s, &host.len,
+			    &port, &proto) != 0) {
+	    LM_ERR("Parsing of socket info <%.*s> failed\n",  s.len, s.s);
+	    return 0;
+	}
+	*sock = grep_sock_info(&host, (unsigned short)port,
+			       (unsigned short)proto);
+	if (*sock == 0) {
+	    LM_ERR("Invalid socket <%.*s>\n", s.len, s.s);
+	    return 0;
+	}
+    } else {
+	*sock = 0;
+    }
+    at = pos + 1;
+
+    pos = strchr(at, '\n');
+    s.len = pos - at;
+    if (s.len) {
+	s.s = at;
+	if (str2int(&s, flags) != 0) {
+	    LM_ERR("Failed to decode flags <%.*s>\n", s.len, s.s);
+	    return 0;
+	}
+    } else {
+	*flags = 0;
+    }
+
+    return 1;
+}
+
 
 /* 
  * Loads contacts in destination set into "lcr_contact" AVP in reverse
@@ -1755,57 +1859,70 @@ static inline void free_contact_list(struct contact *curr) {
  */
 int load_contacts(struct sip_msg* msg, char* key, char* value)
 {
-    str branch, *ruri;
+    str uri, dst_uri, path, branch_info, *ruri;
     qvalue_t q, ruri_q;
     struct contact *contacts, *next, *prev, *curr;
     int_str val;
     int idx;
+    struct socket_info* sock;
+    unsigned int flags;
 
     /* Check if anything needs to be done */
     if (nr_branches == 0) {
-	DBG("DEBUG:lcr:load_contacts: nothing to do - no branches!\n");
+	LM_DBG("Nothing to do - no branches!\n");
 	return 1;
     }
 
     ruri = GET_RURI(msg);
     if (!ruri) {
-	LOG(L_ERR, "ERROR: load_contacts(): No Request-URI found\n");
+	LM_ERR("No Request-URI found\n");
 	return -1;
     }
     ruri_q = get_ruri_q();
 
-    for(idx = 0; (branch.s = get_branch(idx,&branch.len,&q,0,0,0,0)) != 0;
+    for(idx = 0; (uri.s = get_branch(idx, &uri.len, &q, 0, 0, 0, 0)) != 0;
 	idx++) {
 	if (q != ruri_q) {
 	    goto rest;
 	}
     }
-    DBG("DEBUG:lcr:load_contacts: nothing to do - all same q!\n");
+    LM_DBG("Nothing to do - all contacts have same q!\n");
     return 1;
 
 rest:
-    /* Insert Request-URI to contact list */
+    /* Insert Request-URI branch to contact list */
     contacts = (struct contact *)pkg_malloc(sizeof(struct contact));
     if (!contacts) {
-	LOG(L_ERR, "ERROR: load_contacts(): No memory for Request-URI\n");
+	LM_ERR("No memory for contact info\n");
 	return -1;
     }
     contacts->uri.s = ruri->s;
     contacts->uri.len = ruri->len;
     contacts->q = ruri_q;
+    contacts->dst_uri = msg->dst_uri;
+    contacts->sock = msg->force_send_socket;
+    contacts->flags = getb0flags();
+    contacts->path = msg->path_vec;
     contacts->next = (struct contact *)0;
 
-    /* Insert branch URIs to contact list in increasing q order */
-    for(idx = 0; (branch.s = get_branch(idx,&branch.len,&q,0,0,0,0)) != 0;
+    /* Insert branches to contact list in increasing q order */
+    for(idx = 0;
+	(uri.s = get_branch(idx,&uri.len,&q,&dst_uri,&path,&flags,&sock))
+	    != 0;
 	idx++ ) {
 	next = (struct contact *)pkg_malloc(sizeof(struct contact));
 	if (!next) {
-	    LOG(L_ERR, "ERROR: load_contacts(): No memory for branch URI\n");
+	    LM_ERR("No memory for contact info\n");
 	    free_contact_list(contacts);
 	    return -1;
 	}
-	next->uri = branch;
+	next->uri = uri;
 	next->q = q;
+	next->dst_uri = dst_uri;
+	next->path = path;
+	next->flags = flags;
+	next->sock = sock;
+	next->next = (struct contact *)0;
 	prev = (struct contact *)0;
 	curr = contacts;
 	while (curr && (curr->q < q)) {
@@ -1840,18 +1957,25 @@ rest:
     /* Add contacts to "contacts" AVP */
     curr = contacts;
     while (curr) {
-	val.s = curr->uri;
+	if (encode_branch_info(&branch_info, curr) == 0) {
+	    LM_ERR("Encoding of branch info failed\n");
+	    free_contact_list(contacts);
+	    if (branch_info.s) pkg_free(branch_info.s);
+	    return -1;
+	}
+	val.s = branch_info;
 	add_avp(contact_avp_type|AVP_VAL_STR|(curr->q_flag),
 		contact_avp, val);
-	DBG("DEBUG:lcr:load_contacts: loaded <%s>, q_flag <%d>\n",
-	    val.s.s, curr->q_flag);
+	pkg_free(branch_info.s);
+	LM_DBG("Loaded contact <%.*s> with q_flag <%d>\n",
+	       val.s.len, val.s.s, curr->q_flag);
 	curr = curr->next;
     }
 
     /* Clear all branches */
     clear_branches();
 
-    /* Free contacts list */
+    /* Free contact list */
     free_contact_list(contacts);
     
     return 1;
@@ -1863,68 +1987,78 @@ rest:
  * class contacts in "lcr_contact" AVP.   If called from a route block,
  * rewrites the request uri with first contact and adds the remaining
  * contacts as branches.  If called from failure route block, adds all
- * contacts as brances.  Removes added contacts from "lcr_contact" AVP.
+ * contacts as branches.  Removes added contacts from "lcr_contact" AVP.
  */
 int next_contacts(struct sip_msg* msg, char* key, char* value)
 {
     struct usr_avp *avp, *prev;
     int_str val;
-    struct action act;
-    int rval;
+    str uri, dst, path;
+    struct socket_info *sock;
+    unsigned int flags;
 
     if (route_type == REQUEST_ROUTE) {
 	/* Find first lcr_contact_avp value */
 	avp = search_first_avp(contact_avp_type, contact_avp, &val, 0);
 	if (!avp) {
-	    DBG("DEBUG:lcr:next_contacts: no AVPs -- we are done!\n");
+	    LM_DBG("No AVPs -- we are done!\n");
 	    return 1;
 	}
 
-	/* Set Request-URI */
-	act.type = SET_URI_T;
-	act.elem[0].type = STRING_ST;
-	act.elem[0].u.string = val.s.s;
-	rval = do_action(&act, msg);
-	if (rval != 1) {
+	LM_DBG("Next contact is <%s>\n", val.s.s);
+
+	if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
+	    == 0) {
+	    LM_ERR("Decoding of branch info <%.*s> failed\n",
+		   val.s.len, val.s.s);
 	    destroy_avp(avp);
-	    return rval;
+	    return -1;
 	}
-	DBG("DEBUG:lcr:next_contacts: R-URI is <%s>\n", val.s.s);
+
+	rewrite_uri(msg, &uri);
+	set_dst_uri(msg, &dst);
+	set_path_vector(msg, &path);
+	msg->force_send_socket = sock;
+	setb0flags(flags);
+	    
 	if (avp->flags & Q_FLAG) {
 	    destroy_avp(avp);
 	    /* Set fr_inv_timer */
 	    val.n = fr_inv_timer_next;
 	    if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-		LOG(L_ERR, "next_contacts(): ERROR: setting of "
-		    "fr_inv_timer_avp failed\n");
+		LM_ERR("Setting of fr_inv_timer_avp failed\n");
 		return -1;
 	    }
 	    return 1;
 	}
+
 	/* Append branches until out of branches or Q_FLAG is set */
 	prev = avp;
 	while ((avp = search_next_avp(avp, &val))) {
 	    destroy_avp(prev);
-	    act.type = APPEND_BRANCH_T;
-	    act.elem[0].type = STRING_ST;
-	    act.elem[0].u.s = val.s;
-	    act.elem[1].type = NUMBER_ST;
-	    act.elem[1].u.number = 0;
-	    rval = do_action(&act, msg);
-	    if (rval != 1) {
+
+	    LM_DBG("Next contact is <%s>\n", val.s.s);
+
+	    if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
+		== 0) {
+		LM_ERR("Decoding of branch info <%.*s> failed\n",
+		       val.s.len, val.s.s);
 		destroy_avp(avp);
-		LOG(L_ERR, "next_contacts(): ERROR: do_action failed "
-		    "with return value <%d>\n", rval);
 		return -1;
 	    }
-	    DBG("DEBUG:lcr:next_contacts: branch is <%s>\n", val.s.s);
+	    
+	    if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
+		LM_ERR("Appending branch failed\n");
+		destroy_avp(avp);
+		return -1;
+	    }
+
 	    if (avp->flags & Q_FLAG) {
 		destroy_avp(avp);
 		val.n = fr_inv_timer_next;
 		if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val)
 		    != 0) {
-		    LOG(L_ERR, "next_contacts(): ERROR: setting of "
-			"fr_inv_timer_avp failed\n");
+		    LM_ERR("Setting of fr_inv_timer_avp failed\n");
 		    return -1;
 		}
 		return 1;
@@ -1933,41 +2067,50 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	}
 	
     } else if ( route_type == FAILURE_ROUTE) {
+
 	avp = search_first_avp(contact_avp_type, contact_avp, &val, 0);
 	if (!avp) return -1;
-	
+
 	prev = avp;
 	do {
-	    act.type = APPEND_BRANCH_T;
-	    act.elem[0].type = STRING_ST;
-	    act.elem[0].u.s = val.s;
-	    act.elem[1].type = NUMBER_ST;
-	    act.elem[1].u.number = 0;
-	    rval = do_action(&act, msg);
-	    if (rval != 1) {
+
+	    LM_DBG("next contact is <%s>\n", val.s.s);
+
+	    if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
+		== 0) {
+		LM_ERR("Decoding of branch info <%.*s> failed\n",
+		       val.s.len, val.s.s);
 		destroy_avp(avp);
-		return rval;
+		return -1;
 	    }
-	    DBG("DEBUG:lcr:next_contacts: new branch is <%s>\n", val.s.s);
+	    
+	    if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
+		LM_ERR("Appending branch failed\n");
+		destroy_avp(avp);
+		return -1;
+	    }
+
 	    if (avp->flags & Q_FLAG) {
 		destroy_avp(avp);
 		return 1;
 	    }
+
 	    prev = avp;
 	    avp = search_next_avp(avp, &val);
 	    destroy_avp(prev);
+
 	} while (avp);
 
 	/* Restore fr_inv_timer */
 	val.n = fr_inv_timer;
 	if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-	    LOG(L_ERR, "next_contacts(): ERROR: setting of "
-		"fr_inv_timer_avp failed\n");
+	    LM_ERR("Setting of fr_inv_timer_avp failed\n");
 	    return -1;
 	}
 	
     } else {
-	/* unsupported rout type */
+	/* unsupported route type */
+	LM_ERR("Unsupported route type\n");
 	return -1;
     }
     
@@ -1981,43 +2124,36 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
  */
 static int fixstringloadgws(void **param, int param_count)
 {
-	xl_elem_t *model=NULL;
-	str s;
+    xl_elem_t *model=NULL;
+    str s;
 
-	/* convert to str */
-	s.s = (char*)*param;
-	s.len = strlen(s.s);
+    /* convert to str */
+    s.s = (char*)*param;
+    s.len = strlen(s.s);
 
-	model=NULL;
-	if (param_count==1) {
-		if(s.len==0)
-		{
-			LOG(L_ERR, "lcr/fixstringloadgws(): no param %d!\n", param_count);
-			return E_UNSPEC;
-		}
-
-		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0 || model==NULL)
-		{
-			LOG(L_ERR, "lcr/fixstringloadgws(): wrong format [%s] "
-				"for param no %d!\n", s.s, param_count);
-			return E_UNSPEC;
-		}
-		if(model->spec.itf==NULL)
-		{
-			if(param_count==1)
-			{
-			   if(str2int(&s, (unsigned int*)&model->spec.p.ind)!=0
-					   || model->spec.p.ind<100)
-			   {
-					LOG(L_ERR, "lcr/fixstringloadgws(): wrong value [%s] "
-						"for param no %d!\n", s.s, param_count);
-					return E_UNSPEC;
-			   }
-			}
-		}
-		*param = (void*)model;
+    model=NULL;
+    if (param_count==1) {
+	if(s.len==0) {
+	    LM_ERR("No param <%d>!\n", param_count);
+	    return -1;
 	}
+	
+	if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0 || model==NULL) {
+	    LM_ERR("Wrong format <%s> for param <%d>!\n", s.s, param_count);
+	    return -1;
+	}
+	if(model->spec.itf==NULL) {
+	    if(param_count==1) {
+		if(str2int(&s, (unsigned int*)&model->spec.p.ind)!=0
+		   || model->spec.p.ind<100) {
+		    LM_ERR("Wrong value <%s> for param <%d>!\n",
+			   s.s, param_count);
+		    return -1;
+		}
+	    }
+	}
+	*param = (void*)model;
+    }
 
-	return 0;
+    return 0;
 }
-
