@@ -58,26 +58,24 @@
 static inline int get_ha1(struct username* username, str* did, str* realm,
 			  authdb_table_info_t *table_info, char* ha1, db_res_t** res, db_rec_t** row)
 {
-    str result;
+	str result;
 	db_cmd_t *q = NULL;
    
 	if (calc_ha1) {
 		q = table_info->query_password;
 		DBG("querying plain password\n");
-	}
-	else {
-	    if (username->domain.len) {
+	} else {
+		if (username->domain.len) {
 			q = table_info->query_pass2;
 			DBG("querying ha1b\n");
-		}
-		else {
+		} else {
 			q = table_info->query_pass;
 			DBG("querying ha1\n");
 		}
 	}
     
-    q->match[0].v.lstr = username->user;
-    q->match[1].v.lstr = *realm;
+	q->match[0].v.lstr = username->user;
+	q->match[1].v.lstr = *realm;
 
 	if (use_did) q->match[2].v.lstr = *did;
 
@@ -91,13 +89,11 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 	while (*row) {
 		if (IS_NULL((*row)->fld[0]) || IS_NULL((*row)->fld[1])) {
 			LOG(L_ERR, "auth_db:get_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
-					username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
-		}
-		else {
+				username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+		} else {
 			if ((*row)->fld[1].v.int4 & DB_DISABLED) {
 				/* disabled rows ignored */
-			}
-			else {
+			} else {
 				if ((*row)->fld[1].v.int4 & DB_LOAD_SER) {
 					/* *row = i; */
 					break;
@@ -109,7 +105,7 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 
 	if (!*row) {
 		DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found\n",
-				username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+			username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
 		return 1;
 	}		
 
@@ -135,39 +131,39 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
  */
 static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 {
-    HASHHEX resp, hent;
+	HASHHEX resp, hent;
     
-	 /*
-	  * First, we have to verify that the response received has
-	  * the same length as responses created by us
-	  */
-    if (cred->response.len != 32) {
-	DBG("auth_db:check_response: Receive response len != 32\n");
-	return 1;
-    }
+	/*
+	 * First, we have to verify that the response received has
+	 * the same length as responses created by us
+	 */
+	if (cred->response.len != 32) {
+		DBG("auth_db:check_response: Receive response len != 32\n");
+		return 1;
+	}
     
-	 /*
-	  * Now, calculate our response from parameters received
-	  * from the user agent
-	  */
-    calc_response(ha1, &(cred->nonce), 
-		  &(cred->nc), &(cred->cnonce), 
-		  &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
-		  method, &(cred->uri), hent, resp);
+	/*
+	 * Now, calculate our response from parameters received
+	 * from the user agent
+	 */
+	calc_response(ha1, &(cred->nonce), 
+				  &(cred->nc), &(cred->cnonce), 
+				  &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
+				  method, &(cred->uri), hent, resp);
     
-    DBG("auth_db:check_response: Our result = \'%s\'\n", resp);
+	DBG("auth_db:check_response: Our result = \'%s\'\n", resp);
     
-	 /*
-	  * And simply compare the strings, the user is
-	  * authorized if they match
-	  */
-    if (!memcmp(resp, cred->response.s, 32)) {
-	DBG("auth_db:check_response: Authorization is OK\n");
-	return 0;
-    } else {
-	DBG("auth_db:check_response: Authorization failed\n");
-	return 2;
-    }
+	/*
+	 * And simply compare the strings, the user is
+	 * authorized if they match
+	 */
+	if (!memcmp(resp, cred->response.s, 32)) {
+		DBG("auth_db:check_response: Authorization is OK\n");
+		return 0;
+	} else {
+		DBG("auth_db:check_response: Authorization failed\n");
+		return 2;
+	}
 }
 
 
@@ -176,10 +172,10 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
  */
 static int generate_avps(db_res_t* result, db_rec_t *row)
 {
-    int i;
-    int_str iname, ivalue;
-    str value;
-    char buf[32];
+	int i;
+	int_str iname, ivalue;
+	str value;
+	char buf[32];
     
 	for (i = 2; i < credentials_n + 2; i++) {
 		value = row->fld[i].v.lstr;
@@ -189,21 +185,21 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
 
 		switch (row->fld[i].type) {
 		case DB_STR:
-		    value = row->fld[i].v.lstr;
-		    break;
+			value = row->fld[i].v.lstr;
+			break;
 
 		case DB_INT:
-		    value.len = sprintf(buf, "%d", row->fld[i].v.int4);
-		    value.s = buf;
-		    break;
+			value.len = sprintf(buf, "%d", row->fld[i].v.int4);
+			value.s = buf;
+			break;
 
 		default:
-		    abort();
-		    break;
+			abort();
+			break;
 		}
 
 		if (value.s == NULL)
-		    continue;
+			continue;
 
 		iname.s = credentials[i - 2];
 		ivalue.s = value;
@@ -214,10 +210,10 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
 		}
 
 		DBG("auth_db:generate_avps: set string AVP \'%.*s = %.*s\'\n",
-				iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
+			iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
 	}
     
-    return 0;
+	return 0;
 }
 
 
@@ -231,39 +227,39 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
  */
 static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_info_t *table, hdr_types_t hftype)
 {
-    char ha1[256];
-    int res, ret;
+	char ha1[256];
+	int res, ret;
 	db_rec_t *row;
-    struct hdr_field* h;
-    auth_body_t* cred;
-    db_res_t* result;
-    str did;
+	struct hdr_field* h;
+	auth_body_t* cred;
+	db_res_t* result;
+	str did;
     
-    cred = 0;
-    result = 0;
-    ret = -1;
+	cred = 0;
+	result = 0;
+	ret = -1;
     
-    switch(auth_api.pre_auth(msg, realm, hftype, &h)) {
-    case ERROR:
-    case BAD_CREDENTIALS:
+	switch(auth_api.pre_auth(msg, realm, hftype, &h)) {
+	case ERROR:
+	case BAD_CREDENTIALS:
 		ret = -3;
 		goto end;
 		
-    case NOT_AUTHENTICATED: 
+	case NOT_AUTHENTICATED: 
 		ret = -1;
 		goto end;
 		
-    case DO_AUTHENTICATION: 
+	case DO_AUTHENTICATION: 
 		break;
 		
-    case AUTHENTICATED:
+	case AUTHENTICATED:
 		ret = 1; 
 		goto end;
-    }
+	}
     
-    cred = (auth_body_t*)h->parsed;
+	cred = (auth_body_t*)h->parsed;
 	
-    if (use_did) {
+	if (use_did) {
 		if (msg->REQ_METHOD == METHOD_REGISTER) {
 			ret = get_to_did(&did, msg);
 		} else {
@@ -273,24 +269,24 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
 			did.s = DEFAULT_DID;
 			did.len = sizeof(DEFAULT_DID) - 1;
 		}
-    } else {
+	} else {
 		did.len = 0;
 		did.s = 0;
-    }
+	}
 	
-    res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
-    if (res < 0) {
+	res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
+	if (res < 0) {
 		ret = -2;
 		goto end;
-    }
-    if (res > 0) {
+	}
+	if (res > 0) {
 		/* Username not found in the database */
 		ret = -1;
 		goto end;
-    }
+	}
     
 	/* Recalculate response, it must be same to authorize successfully */
-    if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
+	if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
 		switch(auth_api.post_auth(msg, h)) {
 		case ERROR:
 		case BAD_CREDENTIALS:
@@ -310,19 +306,19 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
 			ret = -1;
 			break;
 		}
-    } else {
+	} else {
 		ret = -1;
 	}
-    
+
  end:
-    if (result) db_res_free(result);
-    if (ret < 0) {
+	if (result) db_res_free(result);
+	if (ret < 0) {
 		if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
 			ERR("Error while creating challenge\n");
 			ret = -2;
 		}
-    }
-    return ret;
+	}
+	return ret;
 }
 
 
@@ -347,12 +343,12 @@ int proxy_authenticate(struct sip_msg* msg, char* p1, char* p2)
  */
 int www_authenticate(struct sip_msg* msg, char* p1, char* p2)
 {
-    str realm;
+	str realm;
 
 	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
 		ERR("Cannot obtain digest realm from parameter '%s'\n", ((fparam_t*)p1)->orig);
 		return -1;
 	}
 
-    return authenticate(msg, &realm, (authdb_table_info_t*)p2, HDR_AUTHORIZATION_T);
+	return authenticate(msg, &realm, (authdb_table_info_t*)p2, HDR_AUTHORIZATION_T);
 }
