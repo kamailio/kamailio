@@ -985,7 +985,11 @@ mod_init(void)
 			init_sip_ping();
 		}
 
-		register_timer(nh_timer, NULL, natping_interval);
+		if (register_timer_process(nh_timer, NULL, natping_interval, 
+		TIMER_PROC_INIT_FLAG)<0) {
+			LM_ERR("failed to register timer routine as process\n");
+			return -1;
+		}
 	}
 
 	/* Prepare 1918 networks list */
