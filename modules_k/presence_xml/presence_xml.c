@@ -123,31 +123,29 @@ static int mod_init(void)
 {
 	str _s;
 	int ver = 0;
-	DBG("presence_xml: mod_init...\n");
 	bind_presence_t bind_presence;
 	presence_api_t pres;
 		
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	DBG("presence_xml:mod_init: db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len,
-			db_url.s);
+	LM_DBG("db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len, db_url.s);
 	
 	/* binding to mysql module  */
 	if (bind_dbmod(db_url.s, &pxml_dbf))
 	{
-		DBG("presence_xml:mod_init: ERROR: Database module not found\n");
+		LM_ERR("Database module not found\n");
 		return -1;
 	}
 	
 	if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
-		LOG(L_ERR,"presence_xml:mod_init: ERROR Database module does not implement "
-		    "all functions needed by the module\n");
+		LM_ERR("Database module does not implement all functions"
+				" needed by the module\n");
 		return -1;
 	}
 
 	pxml_db = pxml_dbf.init(db_url.s);
 	if (!pxml_db)
 	{
-		LOG(L_ERR,"presence_xml:mod_init: Error while connecting database\n");
+		LM_ERR("while connecting to database\n");
 		return -1;
 	}
 
@@ -156,26 +154,26 @@ static int mod_init(void)
 	 ver =  table_version(&pxml_dbf, pxml_db, &_s);
 	if(ver!=S_TABLE_VERSION)
 	{
-		LOG(L_ERR,"presence_xml:mod_init: Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, S_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%s>, need v%d\n",
+				 ver, _s.s, S_TABLE_VERSION);
 		return -1;
 	}
 	/* load SL API */
 	if(load_sl_api(&slb)==-1)
 	{
-		LOG(L_ERR, "presence_xml:mod_init:ERROR can't load sl functions\n");
+		LM_ERR("can't load sl functions\n");
 		return -1;
 	}
 
 	bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
 	if (!bind_presence)
 	{
-		LOG(L_ERR, "presence_xml:mod_init: Can't bind presence\n");
+		LM_ERR("Can't bind presence\n");
 		return -1;
 	}
 	if (bind_presence(&pres) < 0)
 	{
-		LOG(L_ERR, "presence_xml:mod_init Can't bind pua\n");
+		LM_ERR("Can't bind module pua\n");
 		return -1;
 	}
 
@@ -183,12 +181,12 @@ static int mod_init(void)
 	pres_update_watchers= pres.update_watchers_status;
 	if (pres_add_event == NULL || pres_update_watchers== NULL)
 	{
-		LOG(L_ERR, "presence_xml:mod_init Could not import add_event\n");
+		LM_ERR("Can't import add_event\n");
 		return -1;
 	}
 	if(xml_add_events()< 0)
 	{
-		LOG(L_ERR, "presence_xml:mod_init: ERROR while adding xml events\n");
+		LM_ERR("adding xml events\n");
 		return -1;		
 	}
 	
@@ -201,35 +199,32 @@ static int mod_init(void)
 		bind_xcap= (bind_xcap_t)find_export("bind_xcap", 1, 0);
 		if (!bind_xcap)
 		{
-			LOG(L_ERR, "presence_xml:mod_init: Can't bind xcap_client\n");
+			LM_ERR("Can't bind xcap_client\n");
 			return -1;
 		}
 	
 		if (bind_xcap(&xcap_api) < 0)
 		{
-			LOG(L_ERR, "presence_xml:mod_init: Can't bind xcap\n");
+			LM_ERR("Can't bind xcap_api\n");
 			return -1;
 		}
 		xcap_GetElem= xcap_api.get_elem;
 		if(xcap_GetElem== NULL)
 		{
-			LOG(L_ERR, "presence_xml:mod_init:erorr NULL could not import"
-					" get_elem from xcap_client module\n");
+			LM_ERR("can't import get_elem from xcap_client module\n");
 			return -1;
 		}
 
 		if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
 		{
-			LOG(L_ERR,"presence_xml:mod_init:ERROR registering xcap"
-					" callback function\n");
+			LM_ERR("registering xcap callback function\n");
 			return -1;
 		}
 	}
 
 	if(shm_copy_xcap_list()< 0)
 	{
-		LOG(L_ERR, "presence_xml:mod_init:erorr copying xcap server list"
-				" in share memory\n");
+		LM_ERR("copying xcap server list in share memory\n");
 		return -1;
 	}
 
@@ -242,63 +237,59 @@ static int mod_init(void)
 
 int mi_child_init(void)
 {
-	DBG("presence_xml: mi_child_init\n");
-	
 	if (pxml_dbf.init==0)
 	{
-		LOG(L_CRIT, "PRESENCE_XML:mi_child_init:ERROR database not bound\n");
+		LM_CRIT("database not bound\n");
 		return -1;
 	}
 	pxml_db = pxml_dbf.init(db_url.s);
 	if (pxml_db== NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML:mi_child_init:ERROR while connecting database\n");
+		LM_ERR("while connecting database\n");
 		return -1;
 	}
 		
 	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE_XML:mi_child_init: ERROR in use_table\n");
+		LM_ERR("in use_table sql operation\n");
 		return -1;
 	}
 	
-	DBG("PRESENCE_XML:mi_child_init:Database connection opened successfully\n");
+	LM_DBG("Database connection opened successfully\n");
 
 	return 0;
 }	
 
 static int child_init(int rank)
 {
-	DBG("presence_xml: init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_DBG("[%d]  pid [%d]\n", rank, getpid());
 	
 	if (pxml_dbf.init==0)
 	{
-		LOG(L_CRIT, "BUG: PRESENCE_XML: child_init: database not bound\n");
+		LM_CRIT("database not bound\n");
 		return -1;
 	}
 	pxml_db = pxml_dbf.init(db_url.s);
 	if (pxml_db== NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML: child %d: ERROR while connecting database\n",
-				rank);
+		LM_ERR("child %d: ERROR while connecting database\n",rank);
 		return -1;
 	}
 		
 	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
 	{
-		LOG(L_ERR, "PRESENCE_XML: child %d: ERROR in use_table\n", rank);
+		LM_ERR("child %d: ERROR in use_table\n", rank);
 		return -1;
 	}
 	
-	DBG("PRESENCE_XML:child %d: Database connection opened successfully\n",
-			rank);
+	LM_DBG("child %d: Database connection opened successfully\n",rank);
 
 	return 0;
 }	
 
 static void destroy(void)
 {	
-	DBG("presence_xml: destroying module ...\n");
+	LM_DBG("...\n");
 	if(pxml_db && pxml_dbf.close)
 		pxml_dbf.close(pxml_db);
 
@@ -317,7 +308,7 @@ int pxml_add_xcap_server( modparam_t type, void* val)
 	xs= (xcap_serv_t*)pkg_malloc(size);
 	if(xs== NULL)
 	{
-		ERR_MEM("PRESENCE_XML", "pxml_add_xcap_server");
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(xs, 0, size);
 	size= sizeof(xcap_serv_t);
@@ -344,8 +335,7 @@ int shm_copy_xcap_list(void)
 	{
 		if(force_active== 0 && !integrated_xcap_server)
 		{
-			LOG(L_ERR, "PRESENCE_XML:shm_copy_xcap_list: ERROR"
-				" no xcap_server parameter set\n");
+			LM_ERR("no xcap_server parameter set\n");
 			return -1;
 		}
 		return 0;
@@ -359,7 +349,7 @@ int shm_copy_xcap_list(void)
 		shm_xs= (xcap_serv_t*)shm_malloc(size);
 		if(shm_xs== NULL)
 		{
-			ERR_MEM("PRESENCE_XML", "pxml_add_xcap_server");
+			ERR_MEM(SHARE_MEM);
 		}
 		memset(shm_xs, 0, size);
 		size= sizeof(xcap_serv_t);
@@ -410,7 +400,7 @@ int xcap_doc_updated(int doc_type, str xid, char* doc)
 
 	if(parse_uri(xid.s, xid.len, &uri)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR parsing uri\n");
+		LM_ERR("parsing uri\n");
 		return -1;
 	}
 
@@ -440,13 +430,13 @@ int xcap_doc_updated(int doc_type, str xid, char* doc)
 
 	if(pxml_dbf.use_table(pxml_db, xcap_table)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR in sql use table\n");
+		LM_ERR("in sql use table\n");
 		return -1;
 	}
 	if(pxml_dbf.update(pxml_db, query_cols, 0, query_vals, update_cols, 
 				update_vals, n_query_cols, 1)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR in sql update\n");
+		LM_ERR("in sql update\n");
 		return -1;	
 	}
 
@@ -460,8 +450,7 @@ int xcap_doc_updated(int doc_type, str xid, char* doc)
 
 	if(pres_update_watchers(xid, &ev, &rules_doc)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:xcap_doc_updated:ERROR updating watchers"
-				" in presence\n");
+		LM_ERR("updating watchers in presence\n");
 		return -1;	
 	}
 	return 0;

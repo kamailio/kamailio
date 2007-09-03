@@ -32,6 +32,7 @@
 
 #include "../../mem/mem.h"
 #include "../presence/utils_func.h"
+#include "../presence/hash.h"
 #include "xcap_auth.h"
 #include "pidf.h"
 #include "notify_body.h"
@@ -66,16 +67,16 @@ str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, i
 
 		if(body_array[off_index]== NULL || body_array[off_index]->s== NULL)
 		{
-			LOG(L_ERR, "PRESENCE_XML: ERROR while constructing offline body\n");
+			LM_ERR("while constructing offline body\n");
 			return NULL;
 		}
 	}
-	DBG("PRESENCE_XML:agregate_xmls:[user]=%.*s  [domain]= %.*s\n",
+	LM_DBG("[user]=%.*s  [domain]= %.*s\n",
 			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
 	n_body= agregate_xmls(pres_user, pres_domain, body_array, n);
 	if(n_body== NULL && n!= 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:agregate_xmls:ERROR while aggregating body\n");
+		LM_ERR("while aggregating body\n");
 	}
 
 	if(off_index>= 0)
@@ -103,21 +104,20 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody)
 
 	if(subs->auth_rules_doc== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:pres_apply_auth:ERROR NULL rules doc\n");
+		LM_ERR("NULL rules doc\n");
 		return -1;
 	}
 	doc= xmlParseMemory(subs->auth_rules_doc->s, subs->auth_rules_doc->len);
 	if(doc== NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML:pres_apply_auth:ERROR parsing xml doc\n");
+		LM_ERR("parsing xml doc\n");
 		return -1;
 	}
 	
 	node= get_rule_node(subs, doc);
 	if(node== NULL)
 	{
-		DBG("PRESENCE_XML:pres_apply_auth: The subscriber didn't match"
-					" the conditions\n");
+		LM_DBG("The subscriber didn't match the conditions\n");
 		xmlFreeDoc(doc);
 		return 0;
 	}
@@ -125,8 +125,7 @@ int pres_apply_auth(str* notify_body, subs_t* subs, str** final_nbody)
 	n_body= get_final_notify_body(subs, notify_body, node);
 	if(n_body== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:pres_apply_auth: ERROR in function"
-				" get_final_notify_body\n");
+		LM_ERR("in function get_final_notify_body\n");
 		xmlFreeDoc(doc);
 		return -1;
 	}
@@ -160,7 +159,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	new_body = (str*)pkg_malloc(sizeof(str));
 	if(new_body == NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML:get_final_notify_body: ERROR while allocating memory\n");
+		LM_ERR("while allocating memory\n");
 		return NULL;
 	}	
 
@@ -169,23 +168,20 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	doc = xmlParseMemory(notify_body->s, notify_body->len);
 	if(doc== NULL) 
 	{
-		LOG(L_ERR,"PRESENCE_XML:get_final_notify_body: ERROR while parsing the xml body"
-				" message\n");
+		LM_ERR("while parsing the xml body message\n");
 		goto error;
 	}
 	doc_root = xmlDocGetNodeByName(doc,"presence", NULL);
 	if(doc_root == NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML:get_final_notify_body:ERROR while extracting"
-				" the transformation node\n");
+		LM_ERR("while extracting the transformation node\n");
 		goto error;
 	}
 
 	transf_node = xmlNodeGetChildByName(rule_node, "transformations");
 	if(transf_node == NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML:get_final_notify_body:ERROR while extracting"
-				" the transformation node\n");
+		LM_ERR("while extracting the transformation node\n");
 		goto error;
 	}
 	
@@ -194,7 +190,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 		if(xmlStrcasecmp(node->name, (unsigned char*)"text")== 0)
 			continue;
 
-		DBG("PRESENCE_XML:get_final_notify_body:transf_node->name:%s\n",node->name);
+		LM_DBG("transf_node->name:%s\n",node->name);
 
 		strcpy((char*)name ,(char*)(node->name + 8));
 		strcpy(all_name+4, name);
@@ -207,17 +203,17 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 		doc_node = xmlNodeGetNodeByName(doc_root, name, NULL);
 		if(doc_node == NULL)
 			continue;
-		DBG("PRESENCE_XML:get_final_notify_body:searched doc_node->name:%s\n",name);
+		LM_DBG("searched doc_node->name:%s\n",name);
 	
 		content = (char*)xmlNodeGetContent(node);
 		if(content)
 		{
-			DBG("PRESENCE_XML:get_final_notify_body: content = %s\n", content);
+			LM_DBG("content = %s\n", content);
 		
 			if(xmlStrcasecmp((unsigned char*)content,
 					(unsigned char*) "FALSE") == 0)
 			{
-				DBG("PRESENCE_XML:get_final_notify_body:found content false\n");
+				LM_DBG("found content false\n");
 				while( doc_node )
 				{
 					xmlUnlinkNode(doc_node);	
@@ -231,7 +227,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 			if(xmlStrcasecmp((unsigned char*)content,
 					(unsigned char*) "TRUE") == 0)
 			{
-				DBG("PRESENCE_XML:get_final_notify_body:found content true\n");
+				LM_DBG("found content true\n");
 				xmlFree(content);
 				continue;
 			}
@@ -254,7 +250,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 		
 			if( all_node )
 			{
-				DBG("PRESENCE_XML:get_final_notify_body: must provide all\n");
+				LM_DBG("must provide all\n");
 				doc_node = doc_node->next;
 				continue;
 			}
@@ -263,35 +259,31 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 			class_cont = xmlNodeGetNodeContentByName(doc_node, "class", 
 					NULL);
 			if(class_cont == NULL)
-				DBG("PRESENCE_XML:get_final_notify_body: no class tag found\n");
+				LM_DBG("no class tag found\n");
 			else
-				DBG("PRESENCE_XML:get_final_notify_body found class = %s\n",
-						class_cont);
+				LM_DBG("found class = %s\n", class_cont);
 
 			occurence_ID = xmlNodeGetAttrContentByName(doc_node, "id");
 			if(occurence_ID == NULL)
-				DBG("PRESENCE_XML:get_final_notify_body: no id found\n");
+				LM_DBG("no id found\n");
 			else
-				DBG("PRESENCE_XML:get_final_notify_body found id = %s\n",
-						occurence_ID);
+				LM_DBG("found id = %s\n", occurence_ID);
 
 
 			deviceID = xmlNodeGetNodeContentByName(doc_node, "deviceID",
 					NULL);	
 			if(deviceID== NULL)
-				DBG("PRESENCE_XML:get_final_notify_body: no deviceID found\n");
+				LM_DBG("no deviceID found\n");
 			else
-				DBG("PRESENCE_XML:get_final_notify_body found deviceID = %s\n",
-						deviceID);
+				LM_DBG("found deviceID = %s\n",	deviceID);
 
 
 			service_uri = xmlNodeGetNodeContentByName(doc_node, "contact",
 					NULL);	
 			if(service_uri == NULL)
-				DBG("PRESENCE_XML:get_final_notify_body: no service_uri found\n");
+				LM_DBG("no service_uri found\n");
 			else
-				DBG("PRESENCE_XML:get_final_notify_body found service_uri = %s\n",
-						service_uri);
+				LM_DBG("found service_uri = %s\n", service_uri);
 
 			if(service_uri!= NULL)
 			{
@@ -301,8 +293,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 					i++;
 				}
 				service_uri_scheme[i] = '\0';
-				DBG("PRESENCE_XML:get_final_notify_body:service_uri_scheme: %s\n",
-						service_uri_scheme);
+				LM_DBG("service_uri_scheme: %s\n", service_uri_scheme);
 			}
 
 			provide_node = node->children;
@@ -324,8 +315,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 								(unsigned char*)class_cont) == 0)
 					{
 						found = 1;
-						DBG("PRESENCE_XML:get_final_notify_body: found class= %s",
-								class_cont);
+						LM_DBG("found class= %s", class_cont);
 						xmlFree(content);
 						break;
 					}
@@ -341,8 +331,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 								(unsigned char*)deviceID) == 0)
 					{
 						found = 1;
-						DBG("PRESENCE_XML:get_final_notify_body: found deviceID="
-								" %s", deviceID);
+						LM_DBG("found deviceID= %s", deviceID);
 						xmlFree(content);
 						break;
 					}
@@ -358,8 +347,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 								(unsigned char*)occurence_ID) == 0)
 					{
 						found = 1;
-						DBG("PRESENCE_XML:get_final_notify_body:" 
-								" found occurenceID= %s\n", occurence_ID);
+						LM_DBG("found occurenceID= %s\n", occurence_ID);
 						xmlFree(content);
 						break;
 					}
@@ -375,8 +363,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 								(unsigned char*)service_uri) == 0)
 					{
 						found = 1;
-						DBG("PRESENCE_XML:get_final_notify_body: found"
-								" service_uri= %s", service_uri);
+						LM_DBG("found service_uri= %s", service_uri);
 						xmlFree(content);
 						break;
 					}
@@ -390,14 +377,12 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 						&& service_uri_scheme)
 				{
 					content = (char*)xmlNodeGetContent(provide_node);
-					DBG("PRESENCE_XML:get_final_notify_body:"
-							" service_uri_scheme=%s\n",content);
+					LM_DBG("service_uri_scheme=%s\n",content);
 					if(content && xmlStrcasecmp((unsigned char*)content,
 								(unsigned char*)service_uri_scheme) == 0)
 					{
 						found = 1;
-						DBG("PRESENCE_XML:get_final_notify_body: found"
-								" service_uri_scheme= %s", service_uri_scheme);
+						LM_DBG("found service_uri_scheme= %s", service_uri_scheme);
 						xmlFree(content);
 						break;
 					}	
@@ -411,8 +396,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 			
 			if(found == 0)
 			{
-				DBG("PRESENCE_XML:get_final_notify_body: delete node: %s\n",
-						doc_node->name);
+				LM_DBG("delete node: %s\n", doc_node->name);
 				dont_provide = doc_node;
 				doc_node = doc_node->next;
 				xmlUnlinkNode(dont_provide);	
@@ -425,7 +409,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	}
 	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&new_body->s,
 			&new_body->len, 1);
-	DBG("PRESENCE_XML:get_final_notify_body: body = \n%.*s\n", new_body->len,
+	LM_DBG("body = \n%.*s\n", new_body->len,
 			new_body->s);
 
     xmlFreeDoc(doc);
@@ -475,7 +459,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	if(xml_array== NULL)
 	{
 	
-		LOG(L_ERR,"PRESENCE_XML:agregate_xmls: Error while alocating memory");
+		LM_ERR("while alocating memory");
 		return NULL;
 	}
 	memset(xml_array, 0, (n+2)*sizeof(xmlDocPtr)) ;
@@ -485,14 +469,13 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	{
 		if( get_rules_doc(pres_user, pres_domain, PIDF_MANIPULATION, &pidf_doc)< 0)
 		{
-			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while getting xcap tree"
-					" for doc_type PIDF_MANIPULATION\n");
+			LM_ERR("while getting xcap tree for doc_type PIDF_MANIPULATION\n");
 			goto error;
 		}	
 		if(pidf_doc== NULL)
 		{
-			DBG( "PRESENCE_XML:agregate_xmls: No PIDF_MANIPULATION doc for [user]= %.*s"
-				" [domain]= %.*s found\n", pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
+			LM_DBG("No PIDF_MANIPULATION doc for [user]= %.*s [domain]= %.*s\n"
+			,pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
 		}
 		else
 		{
@@ -502,7 +485,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 
 			if(pidf_manip_doc== NULL)
 			{
-				LOG(L_ERR, "PRESENCE_XML:agregate_xmls:ERROR parsing xml memory\n");
+				LM_ERR("parsing xml memory\n");
 				goto error;
 			}		
 			else
@@ -523,7 +506,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		
 		if( xml_array[j]== NULL)
 		{
-			LOG(L_ERR,"PRESENCE_XML:agregate_xmls: ERROR while parsing xml body message\n");
+			LM_ERR("while parsing xml body message\n");
 			goto error;
 		}
 		j++;
@@ -541,7 +524,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	p_root = xmlDocGetNodeByName( xml_array[j], "presence", NULL);
 	if(p_root ==NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML:agregate_xmls: ERROR while geting the xml_tree root\n");
+		LM_ERR("while geting the xml_tree root\n");
 		goto error;
 	}
 
@@ -550,21 +533,20 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		new_p_root= xmlDocGetNodeByName( xml_array[i], "presence", NULL);
 		if(new_p_root ==NULL)
 		{
-			LOG(L_ERR,"PRESENCE_XML:agregate_xmls: ERROR while geting the xml_tree root\n");
+			LM_ERR("while geting the xml_tree root\n");
 			goto error;
 		}
 
 		node= xmlNodeGetChildByName(new_p_root, "tuple");
 		if(node== NULL)
 		{
-			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: ERROR couldn't "
-					"extract tuple node\n");
+			LM_ERR("couldn't extract tuple node\n");
 			goto error;
 		}
 		tuple_id= xmlNodeGetAttrContentByName(node, "id");
 		if(tuple_id== NULL)
 		{
-			LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while extracting tuple id\n");
+			LM_ERR("while extracting tuple id\n");
 			goto error;
 		}
 		append= 1;
@@ -578,7 +560,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 				id = xmlNodeGetAttrContentByName(node, "id");
 				if(id== NULL)
 				{
-					LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while extracting tuple id\n");
+					LM_ERR("while extracting tuple id\n");
 					goto error;
 				}
 				
@@ -602,12 +584,12 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 				add_node= xmlCopyNode(node, 1);
 				if(add_node== NULL)
 				{
-					LOG(L_ERR, "PRESENCE_XML:agregate_xmls: Error while copying node\n");
+					LM_ERR("while copying node\n");
 					goto error;
 				}
 				if(xmlAddChild(p_root, add_node)== NULL)
 				{
-					LOG(L_ERR,"PRESENCE_XML:agregate_xmls:Error while adding child\n");
+					LM_ERR("while adding child\n");
 					goto error;
 				}
 								
@@ -618,8 +600,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML:agregate_xmls:Error while allocating memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 
 	xmlDocDumpFormatMemory(xml_array[j],(xmlChar**)(void*)&body->s, 
@@ -667,13 +648,13 @@ str* offline_nbody(str* body)
 	doc= xmlParseMemory(body->s, body->len);
 	if(doc==  NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while parsing xml memory\n");
+		LM_ERR("while parsing xml memory\n");
 		return NULL;
 	}
 	node= xmlDocGetNodeByName(doc, "basic", NULL);
 	if(node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting basic node\n");
+		LM_ERR("while extracting basic node\n");
 		goto error;
 	}
 	xmlNodeSetContent(node, (const unsigned char*)"closed");
@@ -681,20 +662,20 @@ str* offline_nbody(str* body)
 	tuple_node= xmlDocGetNodeByName(doc, "tuple", NULL);
 	if(tuple_node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting tuple node\n");
+		LM_ERR("while extracting tuple node\n");
 		goto error;
 	}
 	status_node= xmlDocGetNodeByName(doc, "status", NULL);
 	if(status_node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting tuple node\n");
+		LM_ERR("while extracting tuple node\n");
 		goto error;
 	}
 
 	pres_node= xmlDocGetNodeByName(doc, "presence", NULL);
 	if(node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: ERROR while extracting presence node\n");
+		LM_ERR("while extracting presence node\n");
 		goto error;
 	}
 
@@ -704,7 +685,7 @@ str* offline_nbody(str* body)
 	root_node= xmlCopyNode(pres_node, 2);
 	if(root_node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: Error while copying node\n");
+		LM_ERR("while copying node\n");
 		goto error;
 	}
     xmlDocSetRootElement(new_doc, root_node);
@@ -712,7 +693,7 @@ str* offline_nbody(str* body)
 	tuple_node= xmlCopyNode(tuple_node, 2);
 	if(tuple_node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: Error while copying node\n");
+		LM_ERR("while copying node\n");
 		goto error;
 	}
 	xmlAddChild(root_node, tuple_node);
@@ -720,7 +701,7 @@ str* offline_nbody(str* body)
 	add_node= xmlCopyNode(status_node, 1);
 	if(add_node== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:offline_nbody: Error while copying node\n");
+		LM_ERR("while copying node\n");
 		goto error;
 	}
 	xmlAddChild(tuple_node, add_node);
@@ -728,8 +709,7 @@ str* offline_nbody(str* body)
 	new_body = (str*)pkg_malloc(sizeof(str));
 	if(new_body == NULL)
 	{
-		LOG(L_ERR,"PRESENCE_XML: offline_nbody:Error while allocating memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(new_body, 0, sizeof(str));
 

@@ -35,6 +35,7 @@
 #include "../../dprint.h"
 #include "../../parser/parse_uri.h"
 #include "../presence/utils_func.h"
+#include "../presence/hash.h"
 #include "presence_xml.h"
 #include "xcap_auth.h"
 #include "pidf.h"
@@ -48,8 +49,6 @@ int pres_watcher_allowed(subs_t* subs)
 	xmlNodePtr sub_handling_node = NULL;
 	char* sub_handling = NULL;
 	
-	DBG("PRESENCE_XML:pres_watcher_allowed: ...\n");
-	
 	/* if force_active set status to active*/
 	if(force_active)
 	{
@@ -60,13 +59,18 @@ int pres_watcher_allowed(subs_t* subs)
 	}
 
 	if(subs->auth_rules_doc== NULL)
+	{
+		subs->status= PENDING_STATUS;
+		subs->reason.s= NULL;
+		subs->reason.len= 0;
 		return 0;
+	}
 
 	xcap_tree= xmlParseMemory(subs->auth_rules_doc->s,
 			subs->auth_rules_doc->len);
 	if(xcap_tree== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:pres_watcher_allowed: ERROR parsing xml memory\n");
+		LM_ERR("parsing xml memory\n");
 		return -1;
 	}
 
@@ -78,28 +82,27 @@ int pres_watcher_allowed(subs_t* subs)
 	actions_node = xmlNodeGetChildByName(node, "actions");
 	if(actions_node == NULL)
 	{	
-		DBG( "PRESENCE_XML:pres_watcher_allowed: actions_node NULL\n");
+		LM_DBG("actions_node NULL\n");
 		return 0;
 	}
-	DBG("PRESENCE_XML:pres_watcher_allowed:actions_node->name= %s\n",
+	LM_DBG("actions_node->name= %s\n",
 			actions_node->name);
 			
 	sub_handling_node = xmlNodeGetChildByName(actions_node, "sub-handling");
 	if(sub_handling_node== NULL)
 	{	
-		DBG( "PRESENCE_XML:pres_watcher_allowed:sub_handling_node NULL\n");
+		LM_DBG("sub_handling_node NULL\n");
 		return 0;
 	}
 	sub_handling = (char*)xmlNodeGetContent(sub_handling_node);
-		DBG("PRESENCE_XML:pres_watcher_allowed:sub_handling_node->name= %s\n",
+		LM_DBG("sub_handling_node->name= %s\n",
 			sub_handling_node->name);
-	DBG("PRESENCE_XML:pres_watcher_allowed:sub_handling_node->content= %s\n",
+	LM_DBG("sub_handling_node->content= %s\n",
 			sub_handling);
 	
 	if(sub_handling== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:pres_watcher_allowed:ERROR Couldn't get"
-				" sub-handling content\n");
+		LM_ERR("Couldn't get sub-handling content\n");
 		return -1;
 	}
 	if( strncmp((char*)sub_handling, "block",5 )==0)
@@ -145,13 +148,13 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 	uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
 	if(w_uri.s == NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML: get_rule_node:Error while creating uri\n");
+		LM_ERR("while creating uri\n");
 		return NULL;
 	}
 	ruleset_node = xmlDocGetNodeByName(xcap_tree, "ruleset", NULL);
 	if(ruleset_node == NULL)
 	{
-		DBG( "PRESENCE_XML:get_rule_node: ruleset_node NULL\n");
+		LM_DBG("ruleset_node NULL\n");
 		goto error;
 
 	}	
@@ -161,21 +164,20 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 				continue;
 
 		/* process conditions */
-		DBG("PRESENCE_XML:get_rule_node: node1->name= %s\n",node1->name);
+		LM_DBG("node1->name= %s\n", node1->name);
 
 		cond_node = xmlNodeGetChildByName(node1, "conditions");
 		if(cond_node == NULL)
 		{	
-			DBG( "PRESENCE_XML:get_rule_node:cond node NULL\n");
+			LM_DBG("cond node NULL\n");
 			goto error;
 		}
-		DBG("PRESENCE_XML:get_rule_node:cond_node->name= %s\n",
-				cond_node->name);
+		LM_DBG("cond_node->name= %s\n", cond_node->name);
 
 		validity_node = xmlNodeGetChildByName(cond_node, "validity");
 		if(validity_node !=NULL)
 		{
-			DBG("PRESENCE_XML:get_rule_node:found validity tag\n");
+			LM_DBG("found validity tag\n");
 
 		}	
 		sphere_node = xmlNodeGetChildByName(cond_node, "sphere");
@@ -183,8 +185,7 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 		identity_node = xmlNodeGetChildByName(cond_node, "identity");
 		if(identity_node == NULL)
 		{
-			LOG(L_ERR, "PRESENCE_XML:get_rule_node:ERROR didn't find"
-					" identity tag\n");
+			LM_ERR("didn't find identity tag\n");
 			goto error;
 		}	
 		
@@ -199,8 +200,7 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 				id = xmlNodeGetAttrContentByName(node2, "id");	
 				if(id== NULL)
 				{
-					LOG(L_ERR, "PRESENCE_XML:get_rule_node:Error while extracting"
-							" attribute\n");
+					LM_ERR("while extracting attribute\n");
 					goto error;
 				}
 				if((strlen(id)== w_uri.len && 
@@ -227,11 +227,11 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 				domain = xmlNodeGetAttrContentByName(node2, "domain");
 				if(domain == NULL)
 				{	
-					DBG("PRESENCE_XML:get_rule_node: No domain attribute to many\n");
+					LM_DBG("No domain attribute to many\n");
 				}
 				else	
 				{
-					DBG("PRESENCE_XML:get_rule_node: <many domain= %s>\n", domain);
+					LM_DBG("<many domain= %s>\n", domain);
 					if((strlen(domain)!= subs->from_domain.len && 
 								strncmp(domain, subs->from_domain.s,
 									subs->from_domain.len) ))
@@ -269,12 +269,12 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 						domain = xmlNodeGetAttrContentByName(except_node, "domain");
 						if(domain!=NULL)
 						{
-							DBG("PRESENCE_XML:get_rule_node: Found except domain= %s\n- strlen(domain)= %d\n",
+							LM_DBG("Found except domain= %s\n- strlen(domain)= %d\n",
 									domain, strlen(domain));
 							if(strlen(domain)==subs->from_domain.len &&
 								(strncmp(domain,subs->from_domain.s , subs->from_domain.len)==0))	
 							{
-								DBG("PRESENCE_XML:get_rule_node: except domain match\n");
+								LM_DBG("except domain match\n");
 								xmlFree(domain);
 								apply_rule = 0;
 								break;
@@ -293,7 +293,7 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 			break;
 	}
 
-	DBG("PRESENCE_XML:get_rule_node: apply_rule= %d\n", apply_rule);
+	LM_DBG("apply_rule= %d\n", apply_rule);
 	if(w_uri.s!=NULL)
 		pkg_free(w_uri.s);
 
@@ -339,12 +339,12 @@ int insert_db_xcap_doc(str* user, str* domain, str body)
 
 	if(pxml_dbf.use_table(pxml_db, xcap_table)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:insert_db_xcap_doc:ERORR in sql use table\n");
+		LM_ERR("in sql use table\n");
 		return -1;
 	}
 	if(pxml_dbf.insert(pxml_db, query_cols, query_vals, n_query_cols)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:insert_db_xcap_doc:ERORR in sql use table\n");
+		LM_ERR("in sql use table\n");
 		return -1;
 	}
 	
@@ -374,7 +374,6 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 		*rules_doc= NULL;
 		return 0;
 	}
-	DBG("PRESENCE_XML:get_rules_doc..\n");
 	/* first search in database */
 	query_cols[n_query_cols] = "username";
 	query_vals[n_query_cols].type = DB_STR;
@@ -398,17 +397,15 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 
 	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0) 
 	{
-		LOG(L_ERR, "PRESENCE_XML:get_rules_doc: Error in use_table-"
-				"[table]= %s\n", xcap_table);
+		LM_ERR("in use_table-[table]= %s\n", xcap_table);
 		return -1;
 	}
 
 	if( pxml_dbf.query(pxml_db, query_cols, 0 , query_vals, result_cols, 
 				n_query_cols, 1, 0, &result)<0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:get_rules_doc:Error while querying table"
-			" xcap for [user]=%.*s\t[domain]= %.*s\n",user->len, user->s,
-			domain->len, domain->s);
+		LM_ERR("while querying table xcap for [user]=%.*s\t[domain]= %.*s\n",
+				user->len, user->s,	domain->len, domain->s);
 		if(result)
 			pxml_dbf.free_result(pxml_db, result);
 		return -1;
@@ -418,7 +415,7 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 
 	if(result->n<=0)
 	{
-		DBG("PRESENCE_XML:get_rules_doc:No xcap document found for [user]=%.*s"
+		LM_DBG("No xcap document found for [user]=%.*s"
 			"\t[domain]= %.*s\n",user->len, user->s,domain->len, domain->s);
 		pxml_dbf.free_result(pxml_db, result);
 		result= NULL;
@@ -427,16 +424,14 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 			/* send a query to the server for the document */	
 			if(http_get_rules_doc(user, domain, &body)< 0)
 			{
-				LOG(L_ERR, "PRESENCE_XML:get_rules_doc:Error sending http"
-						" GET request to xcap server\n");
+				LM_ERR("sending http GET request to xcap server\n");
 				goto error;
 			}
 			if(body.s && body.len)
 			{
 				if(insert_db_xcap_doc(user, domain, body)< 0)
 				{
-					LOG(L_ERR, "PRESENCE_XML:get_rules_doc:Error inserting"
-							" in xcap_xml db table\n");
+					LM_ERR("inserting in xcap_xml db table\n");
 					goto error;
 				}
 				goto done; 
@@ -450,30 +445,28 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	body.s = row_vals[0].val.str_val.s;
 	if(body.s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:get_rules_doc:ERROR Xcap doc NULL\n");
+		LM_ERR("Xcap doc NULL\n");
 		goto error;
 	}	
 	body.len = strlen(body.s);
 	if(body.len== 0)
 	{
-		LOG(L_ERR,"PRESENCE_XML:get_rules_doc:ERROR Xcap doc empty\n");
+		LM_ERR("Xcap doc empty\n");
 		goto error;
 	}			
-	DBG("PRESENCE_XML:get_xcap_tree: xcap body:\n%.*s", body.len,body.s);
+	LM_DBG("xcap body:\n%.*s", body.len,body.s);
 
 done:
 	doc= (str*)pkg_malloc(sizeof(str));
 	if(doc== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:get_rules_doc:ERROR No more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	doc->s= (char*)pkg_malloc(body.len* sizeof(char));
 	if(doc->s== NULL)
 	{
-		LOG(L_ERR, "PRESENCE_XML:get_rules_doc:ERROR No more memory\n");
 		pkg_free(doc);
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memcpy(doc->s, body.s, body.len);
 	doc->len= body.len;
@@ -502,7 +495,7 @@ int http_get_rules_doc(str* user, str* domain, str* rules_doc)
 
 	if(uandd_to_uri(*user, *domain, &uri)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML:http_get_doc:ERROR constructing uri\n");
+		LM_ERR("constructing uri\n");
 		goto error;
 	}
 
@@ -522,8 +515,7 @@ int http_get_rules_doc(str* user, str* domain, str* rules_doc)
 		doc= xcap_GetElem(xs->addr, &doc_sel, NULL);
 		if(doc== NULL)
 		{
-			LOG(L_ERR, "PRESENCE_XML:http_get_doc: ERROR while fetching"
-					" data from xcap server\n");
+			LM_ERR("while fetching data from xcap server\n");
 			goto error;	
 		}
 	}

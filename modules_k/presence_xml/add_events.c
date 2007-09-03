@@ -67,7 +67,7 @@ int xml_add_events(void)
 	event.get_rules_doc= pres_get_rules_doc;
 	if(pres_add_event(&event)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML: ERROR while adding event presence\n");
+		LM_ERR("while adding event presence\n");
 		return -1;
 	}		
 
@@ -84,7 +84,7 @@ int xml_add_events(void)
 
 	if(pres_add_event(&event)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML: ERROR while adding event presence.winfo\n");
+		LM_ERR("while adding event presence.winfo\n");
 		return -1;
 	}
 	
@@ -102,7 +102,7 @@ int xml_add_events(void)
 	event.default_expires= 3600;
 	if(pres_add_event(&event)< 0)
 	{
-		LOG(L_ERR, "PRESENCE_XML: ERROR while adding event dialog;sla\n");
+		LM_ERR("while adding event dialog;sla\n");
 		return -1;
 	}
 	
@@ -122,21 +122,19 @@ int	xml_publ_handl(struct sip_msg* msg)
 	body.s=get_body(msg);
 	if (body.s== NULL) 
 	{
-		LOG(L_ERR,"PRESENCE_XML:xml_publ_handl: ERROR cannot extract body"
-				" from msg\n");
+		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
 	/* content-length (if present) must be already parsed */
 
 	body.len = get_content_length( msg );
-	doc= xmlParseMemory( body.s , body.len );
+	doc= xmlParseMemory( body.s, body.len );
 	if(doc== NULL)
 	{
-		LOG(L_ERR, "PRESENCE: xml_publ_handl: bad body format\n");
+		LM_ERR("bad body format\n");
 		if( slb.reply( msg, 415, &pu_415_rpl)== -1)
 		{
-			LOG(L_ERR,"PRESENCE: handle_publish: ERORR while sending"
-					" reply\n");
+			LM_ERR("while sending '415 Unsupported media type' reply\n");
 		}
 		goto error;
 	}
