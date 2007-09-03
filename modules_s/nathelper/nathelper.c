@@ -358,7 +358,11 @@ struct module_exports exports = {
 	child_init
 };
 
-static int sel_nathelper(str* res, select_t* s, struct sip_msg* msg) {  /* dummy */
+static int
+sel_nathelper(str* res, select_t* s, struct sip_msg* msg)
+{
+
+	/* dummy */
 	return 0;
 }
 
@@ -382,10 +386,10 @@ mod_init(void)
 	struct in_addr addr;
 	str socket_str;
 
-	if (force_socket_str) {
-		socket_str.s=force_socket_str;
-		socket_str.len=strlen(socket_str.s);
-		force_socket=grep_sock_info(&socket_str,0,0);
+	if (force_socket_str != NULL) {
+		socket_str.s = force_socket_str;
+		socket_str.len = strlen(socket_str.s);
+		force_socket = grep_sock_info(&socket_str, 0, 0);
 	}
 
 	if (natpinger_init() < 0) {
@@ -466,7 +470,7 @@ mod_init(void)
 				pnode->rn_umode = 0;
 				pnode->rn_address += 5;
 			}
-			 LOG(L_ERR, "DEB: IP address of RTPPROXY is %s", pnode->rn_address);
+			LOG(L_ERR, "DEB: IP address of RTPPROXY is %s", pnode->rn_address);
 		}
 	}
 	register_select_table(sel_declaration);
@@ -570,6 +574,7 @@ isnulladdr(str *sx, int pf)
 static void *
 ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 {
+
 	/* Initialize search pointer */
 	char *sp = (char *) b1;
 
@@ -650,7 +655,7 @@ get_from_tag(struct sip_msg* _m, str* _tag)
  * Extract Call-ID value
  * assumes the callid header is already parsed
  * (so make sure it is, before calling this function or
- *  it might fail even if the message _has_ a callid)
+ * it might fail even if the message _has_ a callid)
  */
 static inline int
 get_callid(struct sip_msg* _m, str* _cid)
@@ -760,7 +765,9 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	return 1;
 }
 
-static int sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg) {
+static int
+sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg)
+{
 	static char buf[500];
 	contact_t* c;
 	int n, def_port_fl, len;
@@ -871,8 +878,7 @@ contact_rport(struct sip_msg* msg)
 
 	if (msg->rcv.src_port != (uri.port_no ? uri.port_no : SIP_PORT)) {
 		return 1;
-	}
-	else {
+	} else {
 		return 0;
 	}
 }
@@ -915,13 +921,14 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	int tests;
 
-	if (get_int_fparam(&tests, msg, (fparam_t*) str1) < -1) return -1;
+	if (get_int_fparam(&tests, msg, (fparam_t*) str1) < -1)
+		return -1;
 
 	/* return true if any of the NAT-UAC tests holds */
 
 	/* test if the source port is different from the port in Via */
 	if ((tests & NAT_UAC_TEST_RPORT) &&
-		 (msg->rcv.src_port!=(msg->via1->port?msg->via1->port:SIP_PORT)) ){
+	    (msg->rcv.src_port != (msg->via1->port ? msg->via1->port : SIP_PORT))) {
 		return 1;
 	}
 	/*
@@ -934,7 +941,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test for occurrences of RFC1918 addresses in Contact
 	 * header field
 	 */
-	if ((tests & NAT_UAC_TEST_C_1918) && (contact_1918(msg)>0))
+	if ((tests & NAT_UAC_TEST_C_1918) && (contact_1918(msg) > 0))
 		return 1;
 	/*
 	 * test for occurrences of RFC1918 addresses in SDP body
@@ -946,10 +953,11 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 */
 	if ((tests & NAT_UAC_TEST_V_1918) && via_1918(msg))
 		return 1;
-	/* test if source port of signaling is different from
+	/*
+	 * test if source port of signaling is different from
 	 * port advertised in Contact
 	 */
-	if ((tests & NAT_UAC_TEST_C_PORT) && (contact_rport(msg)>0))
+	if ((tests & NAT_UAC_TEST_C_PORT) && (contact_rport(msg) > 0))
 		return 1;
 
 	/* no test succeeded */
@@ -988,7 +996,8 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	char *buf;
 	struct lump* anchor;
 
-	if (get_int_fparam(&level, msg, (fparam_t*) str1) < -1) return -1;
+	if (get_int_fparam(&level, msg, (fparam_t*) str1) < -1)
+		return -1;
 	
 	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
