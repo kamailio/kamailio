@@ -378,6 +378,11 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 		did = default_did;
     }
 
+    /* don't lookup users with empty username -- wasted DB time */
+    if (puri.user.len==0) {
+    	return -1;
+    }
+
 	lookup_uid_cmd->match[0].v.lstr = puri.user;
     lookup_uid_cmd->match[1].v.lstr = did;
     uri_type_to_str(puri.type, &(lookup_uid_cmd->match[2].v.lstr));
