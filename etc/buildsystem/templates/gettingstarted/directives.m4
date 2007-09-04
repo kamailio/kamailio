@@ -1,7 +1,6 @@
 changequote({{,}})dnl
 ifdef({{GS_HELLOWORLD}},
-{{
-ANNOTATEHEAD({{SER has debug information that can be enabled or suppressed using the
+{{ANNOTATEHEAD({{SER has debug information that can be enabled or suppressed using the
         debug directive. A nominal value of 3 is usually specified to obtain
         enough debug information when errors occur. The debug directive
         specifies how much information to write to syslog. The higher the

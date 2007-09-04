@@ -2,12 +2,12 @@ dnl Use this file to define global macros to be includes across the templates.
 dnl These macros are not intended to be used by users.
 dnl
 define(`SEPARATOR',`ifdef(`INCLUDE_SEPARATORS',`$1',`dnl')')dnl
-define(`PKG_INCLUDE',
-`include(`./templates/gettingstarted/$1.m4')dnl
-')dnl
 dnl Add more include statements below to create new packages of functionality
 dnl you can wrap them in an ifdef statement to control the inclusion from the make file
+define(`PKG_INCLUDE',
+`include(`./templates/gettingstarted/$1.m4')dnl
 dnl !!!!!! NO PACKAGES BELOW HERE
+')dnl
 dnl 
 dnl All the logging macros are defined as empty here, because if no logging is included, the macros
 dnl must expand to empty
@@ -24,7 +24,7 @@ ifdef(`INCLUDE_GETTING_STARTED_LOGGING',
 define(`NOTICE',
 `if(is_gflag("GFLAG_NOTICE")){
   log(LOG_NOTICE,$1);
-}')')')
+}')')')dnl
 ifdef(`INCLUDE_GETTING_STARTED_LOGGING',
 `ifdef(`INCLUDE_INFO_LOGGING',
 `undefine(`INFO')dnl
@@ -50,7 +50,7 @@ ifdef(`INCLUDE_GETTING_STARTED_LOGGING',
 define(`XNOTICE',
 `if(is_gflag("GFLAG_NOTICE")){
   xlog("XLOG_NOTICE",$1);
-}')')')
+}')')')dnl
 ifdef(`INCLUDE_GETTING_STARTED_LOGGING',
 `ifdef(`INCLUDE_INFO_LOGGING',
 `undefine(`XINFO')dnl

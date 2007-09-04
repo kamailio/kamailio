@@ -309,7 +309,7 @@ def()
 
 include()
 {
-  echo "include(\`$1')dnl"
+  echo "include(\`$1')"
 }
 
 cat > $out  << EOF
