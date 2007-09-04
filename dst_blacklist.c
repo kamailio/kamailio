@@ -125,7 +125,6 @@ void destroy_dst_blacklist()
 {
 	int r;
 	struct dst_blst_entry** crt;
-	struct dst_blst_entry** tmp;
 	struct dst_blst_entry* e;
 	
 	if (blst_timer_h){
@@ -140,11 +139,11 @@ void destroy_dst_blacklist()
 	}
 	if (dst_blst_hash){
 		for(r=0; r<DST_BLST_HASH_SIZE; r++){
-			for (crt=&dst_blst_hash[r], tmp=&(*crt)->next; *crt; 
-					crt=tmp, tmp=&(*crt)->next){
-			e=*crt;
-			*crt=(*crt)->next;
-			blst_destroy_entry(e);
+			crt=&dst_blst_hash[r];
+			while(*crt){
+				e=*crt;
+				*crt=(*crt)->next;
+				blst_destroy_entry(e);
 			}
 		}
 		shm_free(dst_blst_hash);
@@ -243,6 +242,7 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
 		/* remove old expired entries */
 		if ((s_ticks_t)(now-(*crt)->expire)>=0){
 			*crt=(*crt)->next;
+			tmp=crt;
 			*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
 			blst_destroy_entry(e);
 		}else if ((e->port==port) && ((e->flags & BLST_IS_IPV6)==type) &&
@@ -291,6 +291,7 @@ inline static int _dst_blacklist_clean_expired_unsafe(unsigned int target,
 			e=*crt;
 			if ((s_ticks_t)(now+delta-(*crt)->expire)>=0){
 				*crt=(*crt)->next;
+				tmp=crt;
 				*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
 				blst_destroy_entry(e);
 				no++;
