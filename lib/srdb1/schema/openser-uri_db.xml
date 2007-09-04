@@ -7,6 +7,6 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>uri db</name>
+    <name>SIP URI checks</name>
     <xi:include href="uri.xml"/>
 </database>
