@@ -265,15 +265,12 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 	/* dcm: - local generation transactions should not inherit AVPs 
 	 * - commpletely new message */
-	if(p_msg!=0)
-	{
+	if(p_msg) {
 		/* move the current avp list to transaction -bogdan */
 		old = set_avp_list( &new_cell->user_avps );
 		new_cell->user_avps = *old;
 		*old = 0;
-	}
 
-	if (p_msg) {
 		/* move the pending callbacks to transaction -bogdan */
 		if (p_msg->id==tmcb_pending_id) {
 			new_cell->tmcb_hl = tmcb_pending_hl;
