@@ -555,7 +555,7 @@ if (pv_www_authorize("openser.org")) {
 		the script should call 
 		<function moreinfo="none">proxy_challenge</function> which will
 		challenge the user again. For more about the negative return codes,
-		see the above functions.
+		see the above function.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

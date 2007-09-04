@@ -183,7 +183,7 @@ if(!diameter_www_authorize("siphub.net"))
    then a challenge is sent back to UAC. If the credentials don't
    match the ones computed by DISC then "403 Forbidden" is sent
    back. For more about the negative return codes, see the above
-   functions.
+   function.
 
    Meaning of the parameters is as follows:
 

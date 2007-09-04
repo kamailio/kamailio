@@ -209,7 +209,7 @@ if (!radius_www_authorize("siphub.net")) {
    function was unable to verify the credentials for some reason
    then it will fail and the script should call proxy_challenge
    which will challenge the user again. For more about the
-   negative return codes, see the above functions.
+   negative return codes, see the above function.
 
    This function will, in fact, perform sanity checks over the
    received credentials and then pass them along to the radius
