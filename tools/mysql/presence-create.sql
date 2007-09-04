@@ -52,13 +52,14 @@ CREATE TABLE watchers (
     UNIQUE KEY uude_watchers (p_uri, w_user, w_domain, event)
 ) ENGINE=MyISAM;
 
-INSERT INTO version (table_name, table_version) values ('xcap_xml','1');
+INSERT INTO version (table_name, table_version) values ('xcap_xml','2');
 CREATE TABLE xcap_xml (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
     domain VARCHAR(64) NOT NULL,
     xcap BLOB NOT NULL,
     doc_type INT(11) NOT NULL,
+    etag VARCHAR(64) NOT NULL,
     UNIQUE KEY udd_xcap (username, domain, doc_type)
 ) ENGINE=MyISAM;
 
