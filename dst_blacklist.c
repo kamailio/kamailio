@@ -333,7 +333,6 @@ void destroy_dst_blacklist()
 {
 	int r;
 	struct dst_blst_entry** crt;
-	struct dst_blst_entry** tmp;
 	struct dst_blst_entry* e;
 
 	if (blst_timer_h){
@@ -360,11 +359,11 @@ void destroy_dst_blacklist()
 
 	if (dst_blst_hash){
 		for(r=0; r<DST_BLST_HASH_SIZE; r++){
-			for (crt=&dst_blst_hash[r].first, tmp=&(*crt)->next; *crt;
-					crt=tmp, tmp=&(*crt)->next){
-			e=*crt;
-			*crt=(*crt)->next;
-			blst_destroy_entry(e);
+			crt=&dst_blst_hash[r].first;
+			while(*crt){
+				e=*crt;
+				*crt=(*crt)->next;
+				blst_destroy_entry(e);
 			}
 		}
 		shm_free(dst_blst_hash);
@@ -520,6 +519,7 @@ inline static struct dst_blst_entry* _dst_blacklist_lst_find(
 		/* remove old expired entries */
 		if ((s_ticks_t)(now-(*crt)->expire)>=0){
 			*crt=(*crt)->next;
+			tmp=crt;
 			*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
 			BLST_HASH_STATS_DEC(hash);
 			blst_destroy_entry(e);
@@ -560,6 +560,7 @@ inline static int _dst_blacklist_del(
 		/* remove old expired entries */
 		if ((s_ticks_t)(now-(*crt)->expire)>=0){
 			*crt=(*crt)->next;
+			tmp=crt;
 			*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
 			BLST_HASH_STATS_DEC(hash);
 			blst_destroy_entry(e);
@@ -568,6 +569,7 @@ inline static int _dst_blacklist_del(
 					(e->proto==proto)) && 
 					(memcmp(ip->u.addr, e->ip, ip->len)==0)){
 			*crt=(*crt)->next;
+			tmp=crt;
 			*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
 			BLST_HASH_STATS_DEC(hash);
 			blst_destroy_entry(e);
@@ -616,6 +618,7 @@ inline static int dst_blacklist_clean_expired(unsigned int target,
 				prefetch_loc_r((*crt)->next, 1);
 				if ((s_ticks_t)(now+delta-(*crt)->expire)>=0){
 					*crt=(*crt)->next;
+					tmp=crt;
 					*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
 					blst_destroy_entry(e);
 					BLST_HASH_STATS_DEC(i);
@@ -1003,24 +1006,23 @@ void dst_blst_flush(void)
 {
 	int h;
 	struct dst_blst_entry* e;
-	struct dst_blst_entry** last;
+	struct dst_blst_entry** crt;
+	struct dst_blst_entry** tmp;
 
 	for(h=0; h<DST_BLST_HASH_SIZE; h++){
 		LOCK_BLST(h);
-		last = &dst_blst_hash[h].first;
-		for(e=dst_blst_hash[h].first; e; e=e->next){
-			if (e->flags & BLST_PERMANENT) {
-				/* permanent entry, do not remove it from the list */
-				*last = e;
-				last = &e->next;
-			} else {
-				/* remove the entry from the list */
+		for (crt=&dst_blst_hash[h].first, tmp=&(*crt)->next;
+				*crt; crt=tmp, tmp=&(*crt)->next){
+			e=*crt;
+			prefetch_loc_r((*crt)->next, 1);
+			if (!(e->flags &  BLST_PERMANENT)){
+				*crt=(*crt)->next;
+				tmp=crt;
 				*blst_mem_used-=DST_BLST_ENTRY_SIZE(*e);
 				blst_destroy_entry(e);
 				BLST_HASH_STATS_DEC(h);
 			}
 		}
-		*last = NULL;
 		UNLOCK_BLST(h);
 	}
 }
