@@ -49,7 +49,7 @@
 #include "presence_xml.h"
 
 MODULE_VERSION
-#define S_TABLE_VERSION 1
+#define S_TABLE_VERSION 2
 
 /** module functions */
 
