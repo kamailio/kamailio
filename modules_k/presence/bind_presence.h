@@ -30,6 +30,7 @@
 #define _PRES_BIND_H_
 
 #include "event_list.h"
+#include "hash.h"
 
 typedef int (*update_watchers_t)(str pres_uri, pres_ev_t* ev, str* rules_doc);
 
@@ -38,6 +39,13 @@ typedef struct presence_api {
 	contains_event_t contains_event;
 	get_event_list_t get_event_list;
 	update_watchers_t update_watchers_status;
+	/* subs hash table functions */
+	new_shtable_t new_shtable;
+	destroy_shtable_t destroy_shtable;
+	insert_shtable_t insert_shtable;
+	search_shtable_t search_shtable;
+	delete_shtable_t delete_shtable;
+	update_shtable_t update_shtable;
 } presence_api_t;
 
 int bind_presence(presence_api_t* api);

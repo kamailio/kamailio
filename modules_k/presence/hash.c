@@ -36,18 +36,18 @@
 #include "hash.h"
 #include "notify.h"
 
-shtable_t new_shtable(void)
+shtable_t new_shtable(int hash_size)
 {
 	shtable_t htable= NULL;
 	int i, j;
 
-	htable= (subs_entry_t*)shm_malloc(shtable_size* sizeof(subs_entry_t));
+	htable= (subs_entry_t*)shm_malloc(hash_size* sizeof(subs_entry_t));
 	if(htable== NULL)
 	{
 		ERR_MEM(SHARE_MEM);
 	}
-	memset(htable, 0, shtable_size* sizeof(subs_entry_t));
-	for(i= 0; i< shtable_size; i++)
+	memset(htable, 0, hash_size* sizeof(subs_entry_t));
+	for(i= 0; i< hash_size; i++)
 	{
 		if(lock_init(&htable[i].lock)== 0)
 		{
@@ -82,27 +82,28 @@ error:
 
 }
 
-void destroy_shtable(void)
+void destroy_shtable(shtable_t htable, int hash_size)
 {
 	int i;
 
-	if(subs_htable== NULL)
+	if(htable== NULL)
 		return;
 
-	for(i= 0; i< shtable_size; i++)
+	for(i= 0; i< hash_size; i++)
 	{
-		lock_destroy(&subs_htable[i].lock);
-		free_subs_list(subs_htable[i].entries, SHM_MEM_TYPE);
+		lock_destroy(&htable[i].lock);
+		free_subs_list(htable[i].entries, SHM_MEM_TYPE);
 	}
-	shm_free(subs_htable);
-	subs_htable= NULL;
+	shm_free(htable);
+	htable= NULL;
 }
 
-subs_t* search_shtable(str callid,str to_tag,str from_tag,unsigned int hash_code)
+subs_t* search_shtable(shtable_t htable,str callid,str to_tag,
+		str from_tag,unsigned int hash_code)
 {
 	subs_t* s;
 
-	s= subs_htable[hash_code].entries->next;
+	s= htable[hash_code].entries->next;
 
 	while(s)
 	{
@@ -181,10 +182,9 @@ error:
 	return NULL;
 }
 
-int insert_shtable(subs_t* subs)
+int insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 {
 	subs_t* new_rec= NULL;
-	unsigned int hash_code;
 		
 	new_rec= mem_copy_subs(subs, SHM_MEM_TYPE);
 	if(new_rec== NULL)
@@ -196,15 +196,13 @@ int insert_shtable(subs_t* subs)
 	new_rec->expires+= (int)time(NULL);
 	new_rec->db_flag= INSERTDB_FLAG;
 
-	hash_code=core_hash(&subs->pres_uri,&subs->event->name,shtable_size);
-
-	lock_get(&subs_htable[hash_code].lock);
+	lock_get(&htable[hash_code].lock);
 	
-	new_rec->next= subs_htable[hash_code].entries->next;
+	new_rec->next= htable[hash_code].entries->next;
 	
-	subs_htable[hash_code].entries->next= new_rec;
+	htable[hash_code].entries->next= new_rec;
 	
-	lock_release(&subs_htable[hash_code].lock);
+	lock_release(&htable[hash_code].lock);
 	
 	return 0;
 
@@ -214,16 +212,15 @@ error:
 	return -1;
 }
 
-int delete_shtable(str pres_uri, str ev_stored_name, str to_tag)
+int delete_shtable(shtable_t htable,unsigned int hash_code, 
+		str pres_uri, str ev_stored_name, str to_tag)
 {
-	unsigned int hash_code;
 	subs_t* s= NULL, *ps= NULL;
 	int found= -1;
 
-	hash_code= core_hash(&pres_uri, &ev_stored_name, shtable_size);
-	lock_get(&subs_htable[hash_code].lock);
+	lock_get(&htable[hash_code].lock);
 	
-	ps= subs_htable[hash_code].entries;
+	ps= htable[hash_code].entries;
 	s= ps->next;
 		
 	while(s)
@@ -239,7 +236,7 @@ int delete_shtable(str pres_uri, str ev_stored_name, str to_tag)
 		ps= s;
 		s= s->next;
 	}
-	lock_release(&subs_htable[hash_code].lock);
+	lock_release(&htable[hash_code].lock);
 	return found;
 }
 
@@ -259,19 +256,19 @@ void free_subs_list(subs_t* s_array, int mem_type)
 	
 }
 
-int update_shtable(subs_t* subs, int type)
+int update_shtable(shtable_t htable,unsigned int hash_code, 
+		subs_t* subs, int type)
 {
-	unsigned int hash_code;
 	subs_t* s;
 
-	hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
-	lock_get(&subs_htable[hash_code].lock);
+	lock_get(&htable[hash_code].lock);
 
-	s= search_shtable(subs->callid, subs->to_tag, subs->from_tag, hash_code);
+	s= search_shtable(htable,subs->callid, subs->to_tag, subs->from_tag,
+			hash_code);
 	if(s== NULL)
 	{
 		LM_DBG("record not found in hash table\n");
-		lock_release(&subs_htable[hash_code].lock);
+		lock_release(&htable[hash_code].lock);
 		return -1;
 	}
 
@@ -293,7 +290,7 @@ int update_shtable(subs_t* subs, int type)
 	if(s->db_flag & NO_UPDATEDB_FLAG)
 		s->db_flag= UPDATEDB_FLAG;
 
-	lock_release(&subs_htable[hash_code].lock);
+	lock_release(&htable[hash_code].lock);
 	
 	return 0;
 }
@@ -350,7 +347,7 @@ void destroy_phtable(void)
 	int i;
 	pres_entry_t* p, *prev_p;
 
-	if(subs_htable== NULL)
+	if(pres_htable== NULL)
 		return;
 
 	for(i= 0; i< phtable_size; i++)

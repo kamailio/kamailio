@@ -44,6 +44,12 @@ int bind_presence(presence_api_t* api)
 	api->contains_event= contains_event;
 	api->get_event_list= get_event_list;
 	api->update_watchers_status= update_watchers_status;
+	api->new_shtable= new_shtable;
+    api->destroy_shtable= destroy_shtable;
+    api->insert_shtable= insert_shtable;
+    api->search_shtable= search_shtable;
+    api->delete_shtable= delete_shtable;
+    api->update_shtable= update_shtable;
 	return 0;
 }
 

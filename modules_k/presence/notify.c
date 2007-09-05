@@ -1486,7 +1486,10 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 	/* update first in hash table and the send Notify */
 	if(subs->expires!= 0)
 	{
-		if(update_shtable(subs, LOCAL_TYPE)< 0)
+		unsigned int hash_code;
+		hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+
+		if(update_shtable(subs_htable, hash_code, subs, LOCAL_TYPE)< 0)
 		{
 			if(subs->db_flag!= INSERTDB_FLAG && fallback2db)
 			{
@@ -1532,9 +1535,13 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 	if(ps->code >= 300)
 	{
+		unsigned int hash_code;
+
 		c_back_param*  cb= (c_back_param*)(*ps->param);
-		
-		delete_shtable(cb->pres_uri, cb->ev_name, cb->to_tag);
+
+		hash_code= core_hash(&cb->pres_uri, &cb->ev_name, shtable_size);
+		delete_shtable(subs_htable, hash_code,cb->pres_uri, cb->ev_name,
+				cb->to_tag);
 
 		delete_db_subs(cb->pres_uri, cb->ev_name, cb->to_tag);
 

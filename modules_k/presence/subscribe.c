@@ -291,9 +291,12 @@ int update_subs_db(subs_t* subs, int type)
 int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		int to_tag_gen)
 {	
+	unsigned int hash_code;
 
 	printf_subs(subs);	
 	
+	hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
 	{
 		if(subs->expires == 0)
@@ -308,8 +311,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			}
 			/* delete record from hash table also */
 
-			subs->local_cseq= delete_shtable(subs->pres_uri,
-					subs->event->name, subs->to_tag);
+			subs->local_cseq= delete_shtable(subs_htable,hash_code,
+					subs->pres_uri, subs->event->name, subs->to_tag);
 		
 			if(subs->event->type & PUBL_TYPE)
 			{	
@@ -350,7 +353,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			return 1;
 		}
 
-		if(update_shtable(subs, REMOTE_TYPE)< 0)
+		if(update_shtable(subs_htable, hash_code, subs, REMOTE_TYPE)< 0)
 		{
 			if(fallback2db)
 			{
@@ -372,7 +375,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	{
 		if(subs->expires!= 0)
 		{	
-			if(insert_shtable(subs)< 0)
+			if(insert_shtable(subs_htable,hash_code,subs)< 0)
 			{
 				LM_ERR("inserting new record in subs_htable\n");
 				goto error;
@@ -491,8 +494,6 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 
 int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 {
-	struct sip_uri to_uri;
-	struct sip_uri from_uri;
 	struct to_body *pto, *pfrom = NULL, TO;
 	int lexpire;
 	int  to_tag_gen = 0;
@@ -509,10 +510,10 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	int found;
 	str reason= {0, 0};
 	struct sip_uri uri;
+	contact_body_t *b;
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
-	contact_body_t *b;
 
 	memset(&subs, 0, sizeof(subs_t));
 
@@ -608,22 +609,24 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 		pto = &TO;
 	}
-	
-	if(parse_uri(pto->uri.s, pto->uri.len, &to_uri)!=0)
+
+	if( pto->parsed_uri.user.s && pto->parsed_uri.host.s &&
+		pto->parsed_uri.user.len && pto->parsed_uri.host.len)
 	{
-		LM_ERR("bad R-URI!\n");
-		goto error;
+		subs.to_user = pto->parsed_uri.user;
+		subs.to_domain = pto->parsed_uri.host;
+	}
+	else
+	{
+		if(parse_uri(pto->uri.s, pto->uri.len, &uri)< 0)
+		{
+			LM_ERR("while parsing uri\n");
+			goto error;
+		}
+		subs.to_user = uri.user;
+		subs.to_domain = uri.host;
 	}
 
-	if(to_uri.user.len<=0 || to_uri.user.s==NULL || to_uri.host.len<=0 ||
-			to_uri.host.s==NULL)
-	{
-		LM_ERR("bad URI in To header!\n");
-		goto error;
-	}
-	subs.to_user = to_uri.user;
-	subs.to_domain = to_uri.host;
-	
 	/* examine the from header */
 	if (!msg->from || !msg->from->body.s)
 	{
@@ -641,22 +644,24 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 	pfrom = (struct to_body*)msg->from->parsed;
-
-	if(parse_uri(pfrom->uri.s, pfrom->uri.len, &from_uri)!=0)
-	{
-		LM_ERR("bad R-URI!\n");
-		goto error;
-	}
-
-	if(from_uri.user.len<=0 || from_uri.user.s==NULL || from_uri.host.len<=0 ||
-			from_uri.host.s==NULL)
-	{
-		LM_ERR("bad URI in To header!\n");
-		goto error;
-	}
 	
-	subs.from_user = from_uri.user;
-	subs.from_domain = from_uri.host;
+	if( pfrom->parsed_uri.user.s && pfrom->parsed_uri.host.s && 
+		pfrom->parsed_uri.user.len && pfrom->parsed_uri.host.len)
+	{
+		subs.from_user = pfrom->parsed_uri.user;
+		subs.from_domain = pfrom->parsed_uri.host;
+	}
+	else
+	{
+		if(parse_uri(pfrom->uri.s, pfrom->uri.len, &uri)< 0)
+		{
+			LM_ERR("while parsing uri\n");
+			goto error;
+		}
+		subs.from_user = uri.user;
+		subs.from_domain = uri.host;
+	}
+
 
 	/*generate to_tag if the message does not have a to_tag*/
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
@@ -942,7 +947,8 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	hash_code= core_hash(&pres_uri, &subs->event->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 	i= hash_code;
-	s= search_shtable(subs->callid, subs->to_tag, subs->from_tag, hash_code);
+	s= search_shtable(subs_htable, subs->callid, subs->to_tag,
+			subs->from_tag, hash_code);
 	if(s)
 	{
 		goto found_rec;
@@ -956,7 +962,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	for(i= 0; i< shtable_size; i++)
 	{
 		lock_get(&subs_htable[i].lock);
-		s= search_shtable(subs->callid,subs->to_tag,subs->from_tag, i);
+		s= search_shtable(subs_htable, subs->callid,subs->to_tag,subs->from_tag, i);
 		if(s)
 		{
 			pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
@@ -1527,6 +1533,7 @@ int restore_db_subs(void)
 	pres_ev_t* event= NULL;
 	event_t parsed_event;
 	unsigned int expires;
+	unsigned int hash_code;
 
 	result_cols[pres_uri_col=n_result_cols++]	="pres_uri";		
 	result_cols[expires_col=n_result_cols++]="expires";
@@ -1681,7 +1688,8 @@ int restore_db_subs(void)
 		s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
 		s.sockinfo_str.len= strlen(s.sockinfo_str.s);
 
-		if(insert_shtable(&s)< 0)
+		hash_code= core_hash(&s.pres_uri, &s.event->name, shtable_size);
+		if(insert_shtable(subs_htable, hash_code, &s)< 0)
 		{
 			LM_ERR("adding new record in hash table\n");
 			goto error;

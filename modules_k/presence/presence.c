@@ -290,7 +290,7 @@ static int mod_init(void)
 	else
 		shtable_size= 1<< shtable_size;
 
-	subs_htable= new_shtable();
+	subs_htable= new_shtable(shtable_size);
 	if(subs_htable== NULL)
 	{
 		LM_ERR(" initializing subscribe hash table\n");
@@ -429,7 +429,7 @@ void destroy(void)
 		timer_db_update(0, 0);
 
 	if(subs_htable)
-		destroy_shtable();
+		destroy_shtable(subs_htable, shtable_size);
 	
 	if(pres_htable)
 		destroy_phtable();

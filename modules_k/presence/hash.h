@@ -61,22 +61,43 @@ typedef struct subs_entry
 
 typedef subs_entry_t* shtable_t;
 
-shtable_t new_shtable(void);
+shtable_t new_shtable(int hash_size);
 
-subs_t* search_shtable(str callid,str to_tag,str from_tag,
+subs_t* search_shtable(shtable_t htable, str callid,str to_tag,str from_tag,
 		unsigned int hash_code);
 
-int insert_shtable(subs_t* subs);
+int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t* subs);
 
-int delete_shtable(str pres_uri, str ev_stored_name, str to_tag);
+int delete_shtable(shtable_t htable, unsigned int hash_code, str pres_uri,
+		str ev_stored_name, str to_tag);
 
-int update_shtable(subs_t* subs, int type);
+int update_shtable(shtable_t htable, unsigned int hash_code, subs_t* subs,
+		int type);
 
 subs_t* mem_copy_subs(subs_t* s, int mem_type);
 
 void free_subs_list(subs_t* s_array, int mem_type);
 
-void destroy_shtable(void);
+void destroy_shtable(shtable_t htable, int hash_size);
+
+/* subs htable functions type definitions */
+typedef shtable_t (*new_shtable_t)(int hash_size);
+
+typedef subs_t* (*search_shtable_t)(shtable_t htable, str callid,str to_tag,
+		str from_tag, unsigned int hash_code);
+
+typedef int (*insert_shtable_t)(shtable_t htable, unsigned int hash_code,
+		subs_t* subs);
+
+typedef int (*delete_shtable_t)(shtable_t htable, unsigned int hash_code,
+		str pres_uri, str ev_stored_name, str to_tag);
+
+typedef int (*update_shtable_t)(shtable_t htable, unsigned int hash_code,
+		subs_t* subs, int type);
+
+typedef void (*destroy_shtable_t)(shtable_t htable, int hash_size);
+
+
 
 /* presentity hash table */
 typedef struct pres_entry
