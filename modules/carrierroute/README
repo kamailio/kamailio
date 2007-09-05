@@ -71,13 +71,13 @@ Henning Westerholt
 
         1.5. MI Commands
 
-              1.5.1. reload_routes
-              1.5.2. dump_routes
-              1.5.3. replace_host
-              1.5.4. deactivate_host
-              1.5.5. activate_host
-              1.5.6. add_host
-              1.5.7. delete_host
+              1.5.1. cr_reload_routes
+              1.5.2. cr_dump_routes
+              1.5.3. cr_replace_host
+              1.5.4. cr_deactivate_host
+              1.5.5. cr_activate_host
+              1.5.6. cr_add_host
+              1.5.7. cr_delete_host
 
         1.6. Examples
         1.7. Installation & Running
@@ -636,17 +636,17 @@ modparam("carrierroute", "fallback_default", "1")
 
 1.5. MI Commands
 
-1.5.1. reload_routes
+1.5.1. cr_reload_routes
 
    This command reloads the routing data from the data source.
      _________________________________________________________
 
-1.5.2. dump_routes
+1.5.2. cr_dump_routes
 
    This command prints the route rules on the command line.
      _________________________________________________________
 
-1.5.3. replace_host
+1.5.3. cr_replace_host
 
    This command can replace the rewrite_host of a route rule, it
    is only usable in file mode. Following options are possible:
@@ -667,7 +667,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
      _________________________________________________________
 
-1.5.4. deactivate_host
+1.5.4. cr_deactivate_host
 
    This command deactivates the specified host, i.e. it sets its
    status to 0. It is only usable in file mode. Following options
@@ -688,7 +688,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
      _________________________________________________________
 
-1.5.5. activate_host
+1.5.5. cr_activate_host
 
    This command activates the specified host, i.e. it sets its
    status to 1. It is only usable in file mode. Following options
@@ -705,11 +705,11 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 
    Example 1-27. activate_host usage
 ...
-openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
      _________________________________________________________
 
-1.5.6. add_host
+1.5.6. cr_add_host
 
    This command adds a route rule, it is only usable in file
    mode. Following options are possible:
@@ -734,7 +734,7 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
      _________________________________________________________
 
-1.5.7. delete_host
+1.5.7. cr_delete_host
 
    This command delete the specified hosts or rules, i.e. remove
    them from the route tree. It is only usable in file mode.

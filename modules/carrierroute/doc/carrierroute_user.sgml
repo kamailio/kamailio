@@ -742,19 +742,19 @@ modparam("carrierroute", "fallback_default", "1")
     <section>
 	    <title><acronym>MI</acronym> Commands</title>
 	<section>
-	    <title><function moreinfo="none">reload_routes</function></title>
+	    <title><function moreinfo="none">cr_reload_routes</function></title>
 	    <para>
 		This command reloads the routing data from the data source.
 	    </para>
 	</section>
 	<section>
-	    <title><function moreinfo="none">dump_routes</function></title>
+	    <title><function moreinfo="none">cr_dump_routes</function></title>
 	    <para>
 		This command prints the route rules on the command line.
 	    </para>
 	</section>
 	<section>
-	    <title><function moreinfo="none">replace_host</function></title>
+	    <title><function moreinfo="none">cr_replace_host</function></title>
 	    <para>
 		This command can replace the rewrite_host of a route rule, it is only
 		usable in file mode. Following options are possible:
@@ -788,7 +788,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 	    </example>
 	</section>
 	<section>
-	    <title><function moreinfo="none">deactivate_host</function></title>
+	    <title><function moreinfo="none">cr_deactivate_host</function></title>
 	    <para>
 		    This command deactivates the specified host, i.e. it sets its status to 0.
 		    It is only usable in file mode. Following options are possible:
@@ -819,7 +819,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 	    </example>
 	</section>
 	<section>
-	    <title><function moreinfo="none">activate_host</function></title>
+	    <title><function moreinfo="none">cr_activate_host</function></title>
 	    <para>
 		    This command activates the specified host, i.e. it sets its status to 1.
 		    It is only usable in file mode. Following options are possible:
@@ -844,14 +844,14 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 		<title><function>activate_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
-openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
 		</programlisting>
 	    </example>
 	</section>
 
 	<section>
-	    <title><function moreinfo="none">add_host</function></title>
+	    <title><function moreinfo="none">cr_add_host</function></title>
 	    <para>
 		    This command adds a route rule, it is only usable in file mode. Following options
 		    are possible:
@@ -897,7 +897,7 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 	</section>
 
 	<section>
-	    <title><function moreinfo="none">delete_host</function></title>
+	    <title><function moreinfo="none">cr_delete_host</function></title>
 	    <para>
 		    This command delete the specified hosts or rules, i.e. remove 
 		    them from the route tree. It is only usable in file mode.
