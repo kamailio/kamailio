@@ -462,9 +462,9 @@ static int fixup_presence(void** param, int param_no)
  *  mi cmd: refreshWatchers
  *			<presentity_uri> 
  *			<event>
- *			?? should I receive the changed doc also?? 
- *			(faster- does not require a query) 
- * */
+ *          <refresh_type> // can be:  = 0 -> watchers autentification type or
+ *									  != 0 -> publish type //		   
+ *		* */
 
 struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 {
@@ -474,6 +474,7 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	pres_ev_t* ev;
 	str* rules_doc= NULL;
 	int result;
+	unsigned int refresh_type;
 
 	LM_DBG("start\n");
 	
@@ -500,16 +501,24 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	}
 	LM_DBG("event '%.*s'\n",  event.len, event.s);
 	
+	node = node->next;
+	if(node == NULL)
+		return 0;
+	if(node->value.s== NULL || node->value.len== 0)
+	{
+		LM_ERR( "empty event parameter\n");
+		return init_mi_tree(400, "Empty event parameter", 21);		
+	}
+	if(str2int(&node->value, &refresh_type)< 0)
+	{
+		LM_ERR("converting string to int\n");
+		goto error;
+	}
+
 	if(node->next!= NULL)
 	{
 		LM_ERR( "Too many parameters\n");
 		return init_mi_tree(400, "Too many parameters", 19);
-	}
-
-	if(parse_uri(pres_uri.s, pres_uri.len, &uri)< 0)
-	{
-		LM_ERR( "parsing uri\n");
-		goto error;
 	}
 
 	ev= contains_event(&event, NULL);
@@ -519,19 +528,45 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 		return 0;
 	}
 	
-	result= ev->get_rules_doc(&uri.user,&uri.host,&rules_doc);
-	if(result< 0 || rules_doc==NULL || rules_doc->s== NULL)
+	if(refresh_type== 0) /* if a request to refresh watchers authorization*/
 	{
-		LM_ERR( "getting rules doc\n");
-		goto error;
-	}
-	
-	if(update_watchers(pres_uri, ev, rules_doc)< 0)
-	{
-		LM_ERR( "updating watchers\n");
-		goto error;
-	}
+		if(ev->get_rules_doc== NULL)
+		{
+			LM_ERR("wrong request for a refresh watchers authorization status"
+					"for an event that does not require authorization\n");
+			goto error;
+		}
+		
+		if(parse_uri(pres_uri.s, pres_uri.len, &uri)< 0)
+		{
+			LM_ERR( "parsing uri\n");
+			goto error;
+		}
 
+		result= ev->get_rules_doc(&uri.user,&uri.host,&rules_doc);
+		if(result< 0 || rules_doc==NULL || rules_doc->s== NULL)
+		{
+			LM_ERR( "getting rules doc\n");
+			goto error;
+		}
+	
+		if(update_watchers_status(pres_uri, ev, rules_doc)< 0)
+		{
+			LM_ERR( "updating watchers\n");
+			goto error;
+		}
+
+	}                 
+	else                 /* if a request to refresh Notified info */
+	{
+		if(query_db_notify(&pres_uri, ev, NULL)< 0)
+		{
+			LM_ERR("sending Notify requests\n");
+			goto error;
+		}
+
+	}
+		
 	return init_mi_tree(200, "OK", 2);
 
 error:
@@ -544,7 +579,7 @@ error:
 	return 0;
 }
 
-int update_watchers(str pres_uri, pres_ev_t* ev, str* rules_doc)
+int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 {
 	subs_t subs;
 	db_key_t query_cols[3], result_cols[5], update_cols[5];

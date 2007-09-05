@@ -43,7 +43,7 @@ int bind_presence(presence_api_t* api)
 	api->add_event = add_event;
 	api->contains_event= contains_event;
 	api->get_event_list= get_event_list;
-	api->update_watchers_status= update_watchers;
+	api->update_watchers_status= update_watchers_status;
 	return 0;
 }
 
