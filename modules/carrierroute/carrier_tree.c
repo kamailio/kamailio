@@ -308,13 +308,15 @@ struct carrier_tree * create_carrier_tree(const char * tree, int carrier_id, int
 	tmp->id = carrier_id;
 	tmp->index = id;
 	tmp->tree_num = trees;
-	if ((tmp->trees = shm_malloc(sizeof(struct route_tree *) * trees)) == NULL) {
+	if(trees > 0){
+		if ((tmp->trees = shm_malloc(sizeof(struct route_tree *) * trees)) == NULL) {
 			LM_ERR("out of shared memory\n");
 			shm_free(tmp->name.s);
 			shm_free(tmp);
 			return NULL;
 		}
-	memset(tmp->trees, 0, sizeof(struct route_tree *) * trees);
+		memset(tmp->trees, 0, sizeof(struct route_tree *) * trees);
+	}
 	return tmp;
 }
 

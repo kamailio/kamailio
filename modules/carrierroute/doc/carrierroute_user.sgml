@@ -779,7 +779,7 @@ modparam("carrierroute", "fallback_default", "1")
 	    	    Use the "null" prefix to specify an empty prefix.
 	    </para>
 	    <example>
-		<title><function>replace_host</function> usage</title>
+		<title><function>cr_replace_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
 openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
@@ -810,7 +810,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 		    Use the "null" prefix to specify an empty prefix.
 	    </para>
 	    <example>
-		<title><function>deactivate_host</function> usage</title>
+		<title><function>cr_deactivate_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
 openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
@@ -841,7 +841,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 		    Use the "null" prefix to specify an empty prefix.
 	    </para>
 	    <example>
-		<title><function>activate_host</function> usage</title>
+		<title><function>cr_activate_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
 openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
@@ -887,7 +887,7 @@ openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 		    Use the "null" prefix to specify an empty prefix.
 	    </para>
 	    <example>
-		<title><function>add_host</function> usage</title>
+		<title><function>cr_add_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
 openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
@@ -933,6 +933,14 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 		    only * and not things like "-d prox*")
 		    Use the "null" prefix to specify an empty prefix.
 	    </para>
+	    <example>
+		<title><function>cr_delete_host</function> usage</title>
+		<programlisting format="linespecific">
+...
+openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
+...
+		</programlisting>
+	    </example>
 	    
 	</section>
     </section>

@@ -224,12 +224,10 @@ int load_route_data(struct rewrite_data * rd) {
 			LM_ERR("Failed to query database.\n");
 			goto errout;
 		}
-		if(RES_ROW_N(res) > 0){
-			LM_INFO("add_carrier: name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));
-			if (add_carrier_tree(tmp->name, tmp->id, rd, RES_ROW_N(res)) == NULL) {
-				LM_ERR("cant add carrier %s\n", tmp->name);
-				goto errout;
-			}
+		LM_INFO("add_carrier: name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));			
+		if (add_carrier_tree(tmp->name, tmp->id, rd, RES_ROW_N(res)) == NULL) {
+			LM_ERR("cant add carrier %s\n", tmp->name);
+			goto errout;
 		}
 		tmp = tmp->next;
 		dbf.free_result(dbh, res);
