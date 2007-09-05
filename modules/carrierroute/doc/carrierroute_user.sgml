@@ -965,8 +965,8 @@ break;
 		<programlisting format="linespecific">
 ...
 domain proxy {
-   max_locdb = 2
    prefix 49 {
+     max_locdb = 2
       target test1.localdomain {
          prob = 0.500000
          hash_index = 1
