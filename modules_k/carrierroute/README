@@ -112,14 +112,15 @@ Henning Westerholt
    1-22. Set default_tree parameter
    1-23. Set use_domain parameter
    1-24. Set fallback_default parameter
-   1-25. replace_host usage
-   1-26. deactivate_host usage
-   1-27. activate_host usage
-   1-28. add_host usage
-   1-29. Configuration example - OpenSER script
-   1-30. Configuration example - module configuration
-   1-31. Example database content - carrierroute table
-   1-32. Example database content - route_tree table
+   1-25. cr_replace_host usage
+   1-26. cr_deactivate_host usage
+   1-27. cr_activate_host usage
+   1-28. cr_add_host usage
+   1-29. cr_delete_host usage
+   1-30. Configuration example - OpenSER script
+   1-31. Configuration example - module configuration
+   1-32. Example database content - carrierroute table
+   1-33. Example database content - route_tree table
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -661,7 +662,7 @@ modparam("carrierroute", "fallback_default", "1")
    wildcarded by * (but only * and not things like "-d prox*")
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-25. replace_host usage
+   Example 1-25. cr_replace_host usage
 ...
 openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
@@ -682,7 +683,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
    wildcarded by * (but only * and not things like "-d prox*")
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-26. deactivate_host usage
+   Example 1-26. cr_deactivate_host usage
 ...
 openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -703,7 +704,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
    wildcarded by * (but only * and not things like "-d prox*")
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-27. activate_host usage
+   Example 1-27. cr_activate_host usage
 ...
 openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -728,7 +729,7 @@ openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
    wildcarded by * (but only * and not things like "-d prox*")
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-28. add_host usage
+   Example 1-28. cr_add_host usage
 ...
 openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
@@ -753,11 +754,16 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
    interface. Each option except host and new host can be
    wildcarded by * (but only * and not things like "-d prox*")
    Use the "null" prefix to specify an empty prefix.
+
+   Example 1-29. cr_delete_host usage
+...
+openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
+...
      _________________________________________________________
 
 1.6. Examples
 
-   Example 1-29. Configuration example - OpenSER script
+   Example 1-30. Configuration example - OpenSER script
 ...
 if(!cr_rewrite_uri("pstn", "call_id")){
 sl_send_reply("403", "Not allowed");
@@ -767,7 +773,7 @@ t_relay();
 break;
 ...
 
-   Example 1-30. Configuration example - module configuration
+   Example 1-31. Configuration example - module configuration
 
    The following config file specifies an prefix with two hosts.
    All traffic will be equally distributed between the hosts,
@@ -815,7 +821,7 @@ domain proxy {
    For a minimal configuration either use the config file given
    above, or insert some data into the tables of the module.
 
-   Example 1-31. Example database content - carrierroute table
+   Example 1-32. Example database content - carrierroute table
 ...
 +----+---------+-------------+-------+------+-------+---------------+
 | id | carrier | scan_prefix | level | prob | strip | rewrite_host  |
@@ -829,7 +835,7 @@ domain proxy {
    This table contains two routes to two hosts for the "49"
    prefix for the carrier 2, and a default route over carrier 1.
 
-   Example 1-32. Example database content - route_tree table
+   Example 1-33. Example database content - route_tree table
 ...
 +----+----------+
 | id | carrier  |
