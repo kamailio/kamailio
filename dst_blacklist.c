@@ -970,33 +970,25 @@ void dst_blst_hash_stats(rpc_t* rpc, void* ctx)
 /* dumps the content of the blacklist in a human-readable format */
 void dst_blst_view(rpc_t* rpc, void* ctx)
 {
-	int h;
-	struct dst_blst_entry* e;
-	ticks_t now;
-	struct ip_addr ip;
-	void* handle;
+int h;
+  struct dst_blst_entry* e;
+  ticks_t now;
+  struct ip_addr ip;
 
-	now=get_ticks_raw();
-		for(h=0; h<DST_BLST_HASH_SIZE; h++){
-			LOCK_BLST(h);
-			for(e=dst_blst_hash[h].first; e; e=e->next){
-				rpc->add(ctx, "{", &handle);
-				dst_blst_entry2ip(&ip, e);
-				rpc->struct_add(handle, "s", "protocol",
-							get_proto_name(e->proto));
-				rpc->struct_add(handle, "s", "ip",
-							ip_addr2a(&ip));
-				rpc->struct_add(handle, "d", "port",
-							e->port);
-				rpc->struct_add(handle, "d", "expires in (s)",
-							(s_ticks_t)(now-e->expire)<=0?
-							TICKS_TO_S(e->expire-now):
-							-TICKS_TO_S(now-e->expire));
-				rpc->struct_add(handle, "d", "flags",
-							e->flags);
-			}
-			UNLOCK_BLST(h);
-		}
+  now=get_ticks_raw();
+  for(h=0; h<DST_BLST_HASH_SIZE; h++) {
+    LOCK_BLST(h);
+    for(e=dst_blst_hash[h].first; e; e=e->next) {
+      dst_blst_entry2ip(&ip, e);
+      rpc->printf(ctx, "{\n    protocol: %s", get_proto_name(e->proto));
+      rpc->printf(ctx, "    ip: %s", ip_addr2a(&ip));
+      rpc->printf(ctx, "    port: %d", e->port);
+      rpc->printf(ctx, "    expires in (s):", (s_ticks_t)(now-e->expire)<=0?
+                       TICKS_TO_S(e->expire-now): -TICKS_TO_S(now-e->expire));
+      rpc->printf(ctx, "    flags: %d\n}", e->flags);
+    }
+    UNLOCK_BLST(h);
+  }
 }
 
 /* deletes all the entries from the blacklist except the permanent ones
