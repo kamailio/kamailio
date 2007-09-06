@@ -1,4 +1,3 @@
-
 Presence Module
 
 Anca-Maria Vamanu
@@ -10,7 +9,7 @@ Edited by
 Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -40,7 +39,11 @@ Anca-Maria Vamanu
               1.4.1. handle_publish(char* sender_uri)
               1.4.2. handle_subscribe()
 
-        1.5. Installation
+        1.5. Exported MI Functions
+
+              1.5.1. refreshWatchers
+
+        1.6. Installation
 
    2. Developer's Guide
 
@@ -74,7 +77,7 @@ Anca-Maria Vamanu
    1-12. handle_publish usage
    1-13. handle_subscribe usage
    2-1. presence_api_t structure
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
@@ -107,7 +110,7 @@ Chapter 1. User's Guide
 
    The server follows the specifications in: RFC3265, RFC3856,
    RFC3857, RFC3858.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -118,12 +121,12 @@ Chapter 1. User's Guide
      * a database module.
      * sl.
      * tm.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -135,143 +138,143 @@ Chapter 1. User's Guide
    Otherwise, it is used as a 'library', for its exported
    functions.
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1-1. Set db_url parameter
 ...
 modparam("presence", "db_url",
         "mysql://openser:openserrw@192.168.2.132/openser")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. presentity_table(str)
 
    The name of the db table where Publish information are stored.
 
-   Default value is "presentity". 
+   Default value is "presentity".
 
    Example 1-2. Set presentity_table parameter
 ...
 modparam("presence", "presentity_table", "presentity");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. active_watchers_table(str)
 
    The name of the db table where active subscription information
    are stored.
 
-   Default value is "active_watchers". 
+   Default value is "active_watchers".
 
    Example 1-3. Set active_watchers_table parameter
 ...
 modparam("presence", "active_watchers_table", "active_watchers")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. watchers_table(str)
 
    The name of the db table where subscription states are stored.
 
-   Default value is "watchers". 
+   Default value is "watchers".
 
    Example 1-4. Set watchers_table parameter
 ...
 modparam("presence", "watchers_table", "watchers")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. clean_period (int)
 
    The period at which to verify if there are expired messages
    stored in database.
 
-   Default value is "100". 
+   Default value is "100".
 
    Example 1-5. Set clean_period parameter
 ...
 modparam("presence", "clean_period", 100)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. to_tag_pref (str)
 
-   The prefix used when generating to_tag when sending replies
-   for SUBSCRIBE requests.
+   The prefix used when generating to_tag when sending replies for
+   SUBSCRIBE requests.
 
-   Default value is "10". 
+   Default value is "10".
 
    Example 1-6. Set to_tag_pref parameter
 ...
 modparam("presence", "to_tag_pref", 'a')
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. lock_set_size (int)
 
    The size of the lock used for synchronizing updating
    information from database.
 
-   Default value is "8". 
+   Default value is "8".
 
    Example 1-7. Set lock_set_size parameter
 ...
 modparam("presence", "lock_set_size", 8)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.8. expires_offset (int)
 
-   The value that should be subtracted from the expires value
-   when sending a 200OK for a publish. It is used for forcing the
+   The value that should be subtracted from the expires value when
+   sending a 200OK for a publish. It is used for forcing the
    client cu send an update before the old publish expires.
 
-   Default value is "0". 
+   Default value is "0".
 
    Example 1-8. Set expires_offset parameter
 ...
 modparam("presence", "expires_offset", 10)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.9. max_expires (int)
 
    The the maximum admissible expires value for PUBLISH/SUBSCRIBE
    message.
 
-   Default value is "3600". 
+   Default value is "3600".
 
    Example 1-9. Set max_expires parameter
 ...
 modparam("presence", "max_expires", 3600)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.10. server_address (str)
 
    The presence server address which will become the value of
-   Contact header filed for 200OK replies to Subscribe and
-   Publish and in Notify messages.
+   Contact header filed for 200OK replies to Subscribe and Publish
+   and in Notify messages.
 
    Example 1-10. Set server_address parameter
 ...
 modparam("presence", "server_address", "sip:10.10.10.10:5060")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.11. fallback2db (int)
 
    Setting this parameter enables a fallback to db mode of
-   operation. In this mode, in case a searched record is not
-   found in cache, the search is continued in database. Useful
-   for an architecture in which processing and memory load might
-   be divided on more machines using the same database.
+   operation. In this mode, in case a searched record is not found
+   in cache, the search is continued in database. Useful for an
+   architecture in which processing and memory load might be
+   divided on more machines using the same database.
 
    Example 1-11. Set fallback2db parameter
 ...
 modparam("presence", "fallback2db", 1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -281,13 +284,13 @@ modparam("presence", "fallback2db", 1)
    published information in database and calls functions to send
    NOTIFY messages when changes in the published information
    occur. It takes one argument -> sender_uri. The parameter was
-   added for enabling BLA implementation. If present,
-   Notification of a change in published state is not sent to the
-   respective uri even though a subscription exists. It should be
-   taken from the Sender header. It was left at the decision of
-   the administrator whether or not to transmit the content of
-   this header as parameter for handle_publish, to prevent
-   security problems.
+   added for enabling BLA implementation. If present, Notification
+   of a change in published state is not sent to the respective
+   uri even though a subscription exists. It should be taken from
+   the Sender header. It was left at the decision of the
+   administrator whether or not to transmit the content of this
+   header as parameter for handle_publish, to prevent security
+   problems.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -302,7 +305,7 @@ modparam("presence", "fallback2db", 1)
                 t_release();
         }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. handle_subscribe()
 
@@ -318,9 +321,39 @@ modparam("presence", "fallback2db", 1)
 if(method=="SUBSCRIBE")
     handle_subscribe();
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.5. Installation
+1.5. Exported MI Functions
+
+1.5.1. refreshWatchers
+
+   Triggers sending Notify messages to watchers if a change in
+   watchers authorization or in published state occurred.
+
+   Name: refreshWatchers
+
+   Parameters:
+
+     * presentity_uri : the uri of the user who made the change
+       and whose watchers should be informed
+     * event : the event package
+     * refresh type : it distinguishes between the two different
+       types of events that can trigger a refresh:
+          + a change in watchers authentication: refresh type= 0 ;
+          + a statical update in published state (either through
+            direct update in db table or by modifying the pidf
+            manipulation document, if pidf_manipulation parameter
+            is set): refresh type!= 0.
+
+   MI FIFO Command Format:
+                :refreshWatchers:fifo_reply
+                sip:11@192.168.2.132
+                presence
+                1
+                _empty_line_
+     __________________________________________________________
+
+1.6. Installation
 
    The module requires 3 table in OpenSER database: presentity,
    active_watchers and watchers tables. The SQL syntax to create
@@ -329,13 +362,13 @@ if(method=="SUBSCRIBE")
    also find the complete database documentation on the project
    webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
-   The module provides the following functions that can be used
-   in other OpenSER modules.
-     _________________________________________________________
+   The module provides the following functions that can be used in
+   other OpenSER modules.
+     __________________________________________________________
 
 2.1. bind_presence(presence_api_t* api)
 
@@ -352,7 +385,7 @@ typedef struct presence_api {
         update_watchers_t update_watchers_status;
 }presence_api_t;
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 2.2. add_event
 
@@ -400,7 +433,7 @@ typedef struct pres_ev
 
 }pres_ev_t;
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 2.3. get_rules_doc
 
@@ -414,7 +447,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
    processing the notified body. A reference to the document
    should be put in the auth_rules_doc of the subs_t structure
    given as a parameter to the functions described bellow.
-     _________________________________________________________
+     __________________________________________________________
 
 2.4. get_auth_status
 
@@ -430,51 +463,50 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
 ...
 typedef int (is_allowed_t)(struct subscription* subs);
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 2.5. apply_auth_nbody
 
    This parameter should be a function to be called for an event
    that requires authorization, when constructing final body. The
    authorization document is taken from the auth_rules_doc field
-   of the subs_t structure given as a parameter. It is called
-   only if the req_auth field is not 0.
+   of the subs_t structure given as a parameter. It is called only
+   if the req_auth field is not 0.
 
    Filed type:
 ...
 typedef int (apply_auth_t)(str* , struct subscription*, str** );
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 2.6. agg_nbody
 
    If present, this field marks that the events requires
    aggregation of states. This function receives a body array and
    should return the final body. If not present, it is considered
-   that the event does not require aggregation and the most
-   recent published information is used when constructing
-   Notifies.
+   that the event does not require aggregation and the most recent
+   published information is used when constructing Notifies.
 
    Filed type:
 ...
 typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain,
 str** body_array, int n, int off_index);
 ..
-     _________________________________________________________
+     __________________________________________________________
 
 2.7. free_body
 
    This field must be field in if subsequent processing is
    performed on the info from database before being inserted in
-   Notify message body(if agg_nbody or apply_auth_nbody fields
-   are filled in). It should match the allocation function used
-   when processing the body.
+   Notify message body(if agg_nbody or apply_auth_nbody fields are
+   filled in). It should match the allocation function used when
+   processing the body.
 
    Filed type:
 ...
 typedef void(free_body_t)(char* body);
 ..
-     _________________________________________________________
+     __________________________________________________________
 
 2.8. evs_publ_handl
 
@@ -484,7 +516,7 @@ typedef void(free_body_t)(char* body);
 ...
 typedef int (publ_handling_t)(struct sip_msg*);
 ..
-     _________________________________________________________
+     __________________________________________________________
 
 2.9. evs_subs_handl
 
@@ -495,7 +527,7 @@ typedef int (publ_handling_t)(struct sip_msg*);
 ...
 typedef int (subs_handling_t)(struct sip_msg*);
 ..
-     _________________________________________________________
+     __________________________________________________________
 
 2.10. contains_event
 
@@ -509,7 +541,7 @@ event_t* parsed_event);
    searches the result in the list. It returns the found event or
    NULL, if not found. If the second argument is an allocated
    event_t* structure it fills it with the result of the parsing.
-     _________________________________________________________
+     __________________________________________________________
 
 2.11. get_event_list
 
@@ -521,7 +553,7 @@ typedef int (*get_event_list_t) (str** ev_list);
    This function returns a string representation of the events
    registered in presence module.( used for Allowed-Events
    header).
-     _________________________________________________________
+     __________________________________________________________
 
 2.12. update_watchers_status
 
@@ -537,7 +569,7 @@ str* rules_doc);
    whose status has changes. (used by presence_xml module when
    notified through an MI command of a change in an xcap
    document).
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -551,8 +583,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

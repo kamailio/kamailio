@@ -360,6 +360,63 @@ if(method=="SUBSCRIBE")
 </section>
 
 <section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">refreshWatchers</function>
+		</title>
+		<para>
+		Triggers sending Notify messages to watchers if a change in watchers
+		authorization or in published state occurred.
+		</para>
+		<para>
+		Name: <emphasis>refreshWatchers</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>presentity_uri : the uri of the user who made the change
+				and whose watchers should be informed</para>
+			</listitem>
+			<listitem>
+				<para>event : the event package</para>
+			</listitem>
+			<listitem>
+				<para>refresh type : it distinguishes between the two different types of events
+									that can trigger a refresh: 
+									<itemizedlist>
+									<listitem>
+									<para>
+									a change in watchers authentication: refresh type= 0 ;
+									</para>
+									</listitem>
+									<listitem>
+									<para>
+									a statical update in published state (either through direct 
+									update in db table or by modifying the pidf manipulation document,
+									if pidf_manipulation parameter is set): refresh type!= 0.
+									</para>
+									</listitem>
+				</para>
+			</listitem>
+        </itemizedlist>
+
+        <para>
+		MI FIFO Command Format:
+        <programlisting  format="linespecific">
+		:refreshWatchers:fifo_reply
+		sip:11@192.168.2.132
+		presence
+		1
+		_empty_line_
+		</programlisting>
+	</section>
+
+   	</section>
+
+
+
+<section>
 	<title>Installation</title>
 	<para>
 	The module requires 3 table in OpenSER database: presentity,
