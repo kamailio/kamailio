@@ -330,8 +330,8 @@ static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("code"), select_msg_response_status, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("reason"), select_msg_response_reason, 0},
 
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("proxy_authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_PROXY},
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_WWW}, 
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("proxy_authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_PROXY | FIXUP_CALL},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("authorization"), select_auth, CONSUME_NEXT_STR | DIVERSION | SEL_AUTH_WWW | FIXUP_CALL}, 
 	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("username"), select_auth_username, DIVERSION | SEL_AUTH_USERNAME},
 	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("realm"), select_auth_param, DIVERSION | SEL_AUTH_REALM},
 	{ select_auth, SEL_PARAM_STR, STR_STATIC_INIT("nonce"), select_auth_param, DIVERSION | SEL_AUTH_NONCE},

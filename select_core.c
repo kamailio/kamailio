@@ -57,6 +57,7 @@
 #include "parser/parse_refer_to.h"
 #include "parser/parse_rpid.h"
 #include "dset.h"
+#include "sr_module.h"
 
 #define RETURN0_res(x) {*res=(x);return 0;}
 #define TRIM_RET0_res(x) {*res=(x);trim(res);return 0;} 
@@ -889,11 +890,32 @@ static struct hdr_field* get_credentials(struct sip_msg* msg, select_t* s)
 	str realm;
 	hdr_types_t hdr_type;
 
+	if (!msg) {
+		/* fix-up call check domain for fparam conversion */
+		int ret;
+		void * ptr;
+		char chr;
+		ptr=(void *)(s->params[1].v.s.s);
+		chr=s->params[1].v.s.s[s->params[1].v.s.len];
+		s->params[1].v.s.s[s->params[1].v.s.len]=0;
+		ret=fixup_var_str_12(&ptr,0);
+		s->params[1].v.s.s[s->params[1].v.s.len]=chr;
+		s->params[1].v.p=ptr;
+		s->params[1].type=SEL_PARAM_PTR;
+		return (void*)ret;
+	}
+	
+
 	     /* Try to find credentials with corresponding realm
 	      * in the message, parse them and return pointer to
 	      * parsed structure
 	      */
-	realm = s->params[1].v.s;
+	if (s->params[1].type==SEL_PARAM_PTR) {
+		if (get_str_fparam(&realm, msg, s->params[1].v.p)<0)
+			return 0;
+	} else {
+		realm = s->params[1].v.s;
+	}
 
 	switch (s->params[0].v.i) {
 	case SEL_AUTH_WWW:
@@ -925,14 +947,16 @@ int select_auth(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct hdr_field* hdr;
 
-	if (s->n != 2 && s->params[1].type != SEL_PARAM_STR) return -1;
+	if (s->n != 2 && s->params[1].type != SEL_PARAM_STR
+	              && s->params[1].type != SEL_PARAM_PTR) return -1;
 
 	if (s->params[0].type != SEL_PARAM_DIV) {
 		BUG("Last parameter should have type DIV (converted)\n");
 		return -1;
 	}
 
-        hdr = get_credentials(msg, s);
+	hdr = get_credentials(msg, s);
+	if (!msg && !res) return (int)hdr;
 	if (!hdr) return -1;
 	RETURN0_res(hdr->body);
 }
@@ -945,6 +969,7 @@ int select_auth_param(str* res, select_t* s, struct sip_msg* msg)
 	if ((s->n != 3 && s->n != 4) || (s->params[s->n - 1].type != SEL_PARAM_DIV)) return -1;
 
 	hdr = get_credentials(msg, s);
+	if (!msg && !res) return (int)hdr;
 	if (!hdr) return 1;
 	cred = &((auth_body_t*)hdr->parsed)->digest;
 
