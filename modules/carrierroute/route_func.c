@@ -769,18 +769,30 @@ static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
 				return -1;
 			}
 			if ((rr = get_rule_by_hash(route_tree, prob)) == NULL) {
-				LM_CRIT("rewrite_on_rule: FATAL: no route found\n");
+				LM_CRIT("no route found\n");
 				return -1;
 			}
 			break;
 		case alg_crc32:
-			if ((prob = hash_func(msg, hash_source, DICE_MAX)) < 0) {
+			if ((prob = hash_func(msg, hash_source, route_tree->dice_max)) < 0) {
 				return -1;
 			}
 			/* This auto-magically takes the last rule if anything is broken.  */
 			for (rr = route_tree->rule_list;
 			        rr->next != NULL && rr->dice_to < prob;
 		        rr = rr->next) {}
+			if (!rr->status) {
+				if (!rr->backup) {
+					LM_ERR("all routes are off\n");
+					return -1;
+				} else {
+					if (!rr->backup->rr) {
+						LM_ERR("all routes are off\n");
+						return -1;
+					}
+					rr = rr->backup->rr;
+				}
+			}
 			break;
 		default: return -1;
 	}
@@ -889,32 +901,21 @@ static int extract_localpart(str * uri, str * user) {
  * @return pointer to route rule on success, NULL on failure
  */
 static struct route_rule * get_rule_by_hash(struct route_tree_item * rt, int prob) {
-	int act_hash, orig_hash;
+	struct route_rule * act_hash = NULL;
 
-	act_hash = prob - 1;
-	orig_hash = prob - 1;
-
-	if (act_hash >= rt->rule_num) {
+	if (prob > rt->rule_num) {
 		LM_WARN("too large desired hash, taking highest\n");
-		act_hash = rt->rule_num - 1;
+		act_hash = rt->rules[rt->rule_num - 1];
 	}
+	act_hash = rt->rules[prob - 1];
 
-	while (!rt->rules[act_hash]->status) {
-		if (act_hash >= orig_hash) {
-			if (act_hash >= rt->rule_num) {
-				act_hash = orig_hash - 1;
-			} else {
-				act_hash++;
-			}
+	if (!act_hash->status) {
+		if (act_hash->backup && act_hash->backup->rr) {
+			act_hash = act_hash->backup->rr;
 		} else {
-			if (act_hash > 0) {
-				act_hash--;
-			} else {
-				LM_ERR("no working rule found\n");
-				return NULL;
-			}
+			act_hash = NULL;
 		}
 	}
-	LM_INFO("desired hash was %i, return %i\n", prob, rt->rules[act_hash]->hash_index);
-	return rt->rules[act_hash];
+	LM_INFO("desired hash was %i, return %i\n", prob, act_hash ? act_hash->hash_index : -1);
+	return act_hash;
 }

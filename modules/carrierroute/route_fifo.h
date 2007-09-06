@@ -22,6 +22,28 @@
  *
  */
 
+extern int fifo_err;
+
+#define E_MISC -1
+#define E_NOOPT -2
+#define E_WRONGOPT -3
+#define E_NOMEM -4
+#define E_RESET -5
+#define E_NOAUTOBACKUP -6
+#define E_NOHASHBACKUP -7
+#define E_NOHOSTBACKUP -8
+#define E_ADDBACKUP -9
+#define E_DELBACKUP -10
+#define E_LOADCONF -11
+#define E_SAVECONF -12
+#define E_INVALIDOPT -13
+#define E_MISSOPT -14
+#define E_RULEFIXUP -15
+#define E_NOUPDATE -16
+#define E_HELP -17
+
+#define FIFO_ERR(e) (fifo_err = e)
+
 /**
  * @file route_fifo.h
  *

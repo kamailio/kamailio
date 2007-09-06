@@ -34,7 +34,10 @@
  * @brief API to bind a data loading function
  *
  */
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "../../globals.h"
 #include "load_data.h"
 #include "route_db.h"
 #include "route_config.h"
@@ -52,6 +55,7 @@
  * @return 0 means everything is ok, -1 means an error
  */
 int bind_data_loader(const char * source, route_data_load_func_t * api){
+	struct stat fs;
 	if(strcmp(source, "db") == 0){
 		LM_INFO("use database as configuration source");
 		*api = load_route_data;
@@ -65,6 +69,18 @@ int bind_data_loader(const char * source, route_data_load_func_t * api){
 		LM_INFO("use file as configuration source");
 		*api = load_config;
 		mode = SP_ROUTE_MODE_FILE;
+		if(stat(config_file, &fs) != 0){
+			LM_ERR("can't stat config file\n");
+			return -1;
+		}
+		if(!(fs.st_mode & S_IWOTH)){
+			if(!((fs.st_mode & S_IWGRP) && ((gid && (gid == fs.st_gid)) || (!gid && (fs.st_gid == getegid()))))){
+				if(!((fs.st_mode & S_IWUSR) && ((uid && (uid == fs.st_uid)) || (!uid && (fs.st_uid == geteuid()))))) {
+					LM_ERR("config file not writable\n");
+					return -1;
+				}
+			}
+		}
 		return 0;
 	}
 	LM_NOTICE("could bind configuration source <%s>", source);

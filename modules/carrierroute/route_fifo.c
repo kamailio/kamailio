@@ -56,19 +56,21 @@
 static unsigned int opt_settings[5][3] = {{O_PREFIX|O_DOMAIN|O_HOST|O_PROB, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX, O_NEW_TARGET},
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX},
         {O_HOST|O_NEW_TARGET, O_PREFIX|O_DOMAIN|O_PROB, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX},
-        {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX},
+        {O_HOST|O_DOMAIN|O_PREFIX, O_PROB|O_NEW_TARGET, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX},
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX}};
 
 
 static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree, char *prefix);
 
-static struct mi_root* print_replace_help();
+static struct mi_root* print_replace_help(void);
 
-static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[], struct mi_root* error_msg);
+static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[]);
 
 static int update_route_data(fifo_opt_t * opts);
 
 static int update_route_data_recursor(struct route_tree_item * rt, char * act_domain, fifo_opt_t * opts);
+
+static struct mi_root* print_fifo_err(void);
 
 /**
  * reloads the routing data
@@ -89,6 +91,10 @@ struct mi_root* reload_fifo (struct mi_root* cmd_tree, void *param) {
 	}
 	return tmp;
 }
+
+int fifo_err;
+
+static int updated;
 
 /**
  * prints the routing data
@@ -172,13 +178,8 @@ struct mi_root* replace_host (struct mi_root* cmd_tree, void *param) {
 	if (buf==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	struct mi_root* error_msg = NULL;
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_REPLACE], error_msg)) <  0) {
-		if(ret == -2) {
-			return error_msg;
-		} else {
-			return init_mi_tree(500, "error during command processing", 31);
-		}
+	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_REPLACE])) <  0) {
+		return print_fifo_err();
 	}
 
 	options.status = 1;
@@ -221,13 +222,8 @@ struct mi_root* deactivate_host (struct mi_root* cmd_tree, void *param) {
 	if (buf==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	struct mi_root* error_msg = NULL;
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_DEACTIVATE], error_msg)) <  0) {
-		if(ret == -2) {
-			return error_msg;
-		} else {
-			return init_mi_tree(500, "error during command processing", 31);
-		}
+	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_DEACTIVATE])) <  0) {
+		return print_fifo_err();
 	}
 
 	options.status = 0;
@@ -270,13 +266,8 @@ struct mi_root* activate_host (struct mi_root* cmd_tree, void *param) {
 	if (buf==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	struct mi_root* error_msg = NULL;
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_ACTIVATE], error_msg)) <  0) {
-		if(ret == -2) {
-			return error_msg;
-		} else {
-			return init_mi_tree(500, "error during command processing", 31);
-		}
+	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_ACTIVATE])) <  0) {
+		return print_fifo_err();
 	}
 
 	options.status = 1;
@@ -319,13 +310,8 @@ struct mi_root* add_host (struct mi_root* cmd_tree, void *param) {
 	if (buf==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	struct mi_root* error_msg = NULL;
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_ADD], error_msg)) <  0) {
-		if(ret == -2) {
-			return error_msg;
-		} else {
-			return init_mi_tree(500, "error during command processing", 31);
-		}
+	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_ADD])) <  0) {
+		return print_fifo_err();
 	}
 
 	options.status = 1;
@@ -368,13 +354,8 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
 	if (buf==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	struct mi_root* error_msg = NULL;
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_REMOVE], error_msg)) <  0) {
-		if(ret == -2) {
-			return error_msg;
-		} else {
-			return init_mi_tree(500, "error during command processing", 31);
-		}
+	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_REMOVE])) <  0) {
+		return print_fifo_err();
 	}
 
 	options.cmd = OPT_REMOVE;
@@ -401,6 +382,8 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 	char *p;
 	int i;
 	struct route_rule *rr;
+	struct route_rule_p_list * rl;
+	double prob;
 
 	strcpy (s, prefix);
 	p = s + strlen (s);
@@ -413,64 +396,32 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 	}
 	*p = '\0';
 	for (rr = tree->rule_list; rr != NULL; rr = rr->next) {
+		if(tree->dice_max){
+			prob = (double)(rr->prob * DICE_MAX)/(double)tree->dice_max;
+		} else {
+			prob = rr->prob;
+		}
 		addf_mi_node_child(msg->next, 0, 0, 0, "%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'\n",
-		         prefix, rr->prob * 100, rr->host.len, rr->host.s,
+		         strlen(prefix) > 0 ? prefix : "NULL", prob * 100, rr->host.len, rr->host.s,
 		         (rr->status ? "ON" : "OFF"), rr->strip,
 		         rr->local_prefix.len, rr->local_prefix.s,
 		         rr->local_suffix.len, rr->local_suffix.s,
 		         rr->comment.len, rr->comment.s);
+		if(!rr->status && rr->backup && rr->backup->rr){
+			addf_mi_node_child(msg->next, 0, 0, 0, "\t---> Rule is backed up by: %.*s\n", rr->backup->rr->host.len, rr->backup->rr->host.s);
+		}
+		if(rr->backed_up){
+			rl = rr->backed_up;
+			i=0;
+			while(rl){
+				if(rl->rr){
+					addf_mi_node_child(msg->next, 0, 0, 0, "\t---> Rule is backup for: %.*s", rl->rr->host.len, rl->rr->host.s);
+			}
+				rl = rl->next;
+				i++;
+			}
+		}
 	}
-	return 0;
-}
-
-/**
- * prints a short help text for fifo command usage
- *
- * @param file filehandle for writing output
- */
-static struct mi_root* print_replace_help(void) {
-	struct mi_root* rpl_tree;
-	struct mi_node* node;
-	
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
-	if(rpl_tree == NULL)
-		return 0;
-
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "carrierroute options usage:");
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c searched/new remote host\n", OPT_HOST_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c replacement host", OPT_NEW_TARGET_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: searched/new domain", OPT_DOMAIN_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: searched/new prefix", OPT_PREFIX_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: searched/new weight (0..1)", OPT_PROB_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: new rewrite prefix", OPT_R_PREFIX_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: new rewrite suffix", OPT_R_SUFFIX_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: new hash index", OPT_HASH_INDEX_CHR);
-	if(node == NULL)
-		goto error;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: prints this help", OPT_HELP_CHR);
-	if(node == NULL)
-		goto error;
-
-	return rpl_tree;
-
-error:
-	free_mi_tree(rpl_tree);
 	return 0;
 }
 
@@ -484,12 +435,11 @@ error:
  *
  * @see dump_fifo()
  */
-static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[], struct mi_root* error_msg) {
+static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
 	int opt_argc = 0;
 	char * opt_argv[20];
 	int i, op = -1;
 	unsigned int used_opts = 0;
-	error_msg = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
 
 	memset(opt_argv, 0, sizeof(opt_argv));
 	memset(opts, 0, sizeof(fifo_opt_t));
@@ -538,12 +488,12 @@ static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[], 
 							used_opts |= O_H_INDEX;
 							break;
 							case OPT_HELP_CHR:
-							error_msg = print_replace_help();
-							return -2;
+							FIFO_ERR(E_HELP);
+							return -1;
 							default: {
-								error_msg = init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+								FIFO_ERR(E_WRONGOPT);
 								LM_DBG("Unknown option: %s\n", opt_argv[i]);
-								return -2;
+								return -1;
 							}
 					}
 					break;
@@ -596,9 +546,9 @@ static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[], 
 							op = -1;
 							break;
 							default: {
-								error_msg = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 								LM_DBG("No option given\n");
-								return -2;
+								FIFO_ERR(E_NOOPT);
+								return -1;
 							}
 					}
 					break;
@@ -606,14 +556,14 @@ static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[], 
 		}
 	}
 	if((used_opts & opt_set[OPT_INVALID]) != 0) {
-		error_msg = init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 		LM_DBG("invalid option\n");
-		return -2;
+		FIFO_ERR(E_INVALIDOPT);
+		return -1;
 	}
 	if((used_opts & opt_set[OPT_MANDATORY]) != opt_set[OPT_MANDATORY]) {
-		error_msg = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 		LM_DBG("option missing\n");
-		return -2;
+		FIFO_ERR(E_MISSOPT);
+		return -1;
 	}
 	return 0;
 }
@@ -638,13 +588,20 @@ static int update_route_data(fifo_opt_t * opts) {
 	}
 	memset(rd, 0, sizeof(struct rewrite_data));
 	if (load_config(rd) < 0) {
+		FIFO_ERR(E_LOADCONF);
 		return -1;
 	}
+
+	if (rule_fixup(rd) < 0) {
+		FIFO_ERR(E_RULEFIXUP);
+		return -1;
+	}
+	updated = 0;
 
 	if (opts->cmd == OPT_ADD) {
 		if (add_route(rd, 1, opts->domain.s, opts->prefix.s, 0, opts->prob,
 		              opts->host.s, opts->strip, opts->rewrite_prefix.s, opts->rewrite_suffix.s,
-		              opts->status, opts->hash_index, NULL) < 0) {
+		              opts->status, opts->hash_index, -1, NULL, NULL) < 0) {
 			goto errout;
 		}
 	} else {
@@ -661,11 +618,18 @@ static int update_route_data(fifo_opt_t * opts) {
 		}
 	}
 
-	if (save_config(rd) < -1) {
+	if(!updated){
+		FIFO_ERR(E_NOUPDATE);
+		goto errout;
+	}
+
+	if (save_config(rd) < 0) {
+		FIFO_ERR(E_SAVECONF);
 		goto errout;
 	}
 
 	if (prepare_route_tree() == -1) {
+		FIFO_ERR(E_LOADCONF);
 		goto errout;
 	}
 
@@ -690,8 +654,8 @@ errout:
  * @return 0 on success, -1 on failure
  */
 static int update_route_data_recursor(struct route_tree_item * rt, char * act_domain, fifo_opt_t * opts) {
-	int i;
-	struct route_rule * rr, * prev = NULL, * tmp;
+	int i, hash = 0;
+	struct route_rule * rr, * prev = NULL, * tmp, * backup;
 	if (rt->rule_list) {
 		rr = rt->rule_list;
 		while (rr) {
@@ -711,6 +675,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 						if (opts->new_host.len) {
 							if ((rr->host.s = shm_malloc(opts->new_host.len + 1)) == NULL) {
 								LM_ERR("out of shared mem\n");
+								FIFO_ERR(E_NOMEM);
 								return -1;
 							}
 							memmove(rr->host.s, opts->new_host.s, opts->new_host.len + 1);
@@ -722,16 +687,80 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 						rr->status = opts->status;
 						prev = rr;
 						rr = rr->next;
+						updated = 1;
 						break;
 					case OPT_DEACTIVATE:
-					case OPT_ACTIVATE:
-						LM_INFO("(de)activating host %s\n", rr->host.s);
+						if (remove_backed_up(rr) < 0) {
+							LM_ERR("could not reset backup hosts\n");
+							FIFO_ERR(E_RESET);
+							return -1;
+						}
+						if (opts->new_host.len > 0) {
+							LM_INFO("deactivating host %s\n", rr->host.s);
+							if (opts->new_host.len == 1 && opts->new_host.s[0] == 'a') {
+								if ((backup = find_auto_backup(rt, rr)) == NULL) {
+									LM_ERR("didn't find auto backup route\n");
+									FIFO_ERR(E_NOAUTOBACKUP);
+									return -1;
+								}
+							} else {
+								errno = 0;
+								hash = strtol(opts->new_host.s, NULL, 10);
+								if (errno == EINVAL || errno == ERANGE) {
+									if ((backup = find_rule_by_hash(rt, hash)) == NULL) {
+										LM_ERR("didn't find given backup route (hash %i)\n", hash);
+										FIFO_ERR(E_NOHASHBACKUP);
+										return -1;
+									}
+								} else {
+									if ((backup = find_rule_by_host(rt, &opts->new_host)) == NULL) {
+										LM_ERR("didn't find given backup route (host %.*s)\n", opts->new_host.len, opts->new_host.s);
+										FIFO_ERR(E_NOHOSTBACKUP);
+										return -1;
+									}
+								}
+							}
+							if (add_backup_route(rr, backup) < 0) {
+								LM_ERR("couldn't set backup route\n");
+								FIFO_ERR(E_ADDBACKUP);
+								return -1;
+							}
+						} else {
+							if(rr->backed_up){
+								LM_ERR("can't deactivate route without backup route because it is backup route for others\n");
+								FIFO_ERR(E_DELBACKUP);
+								return -1;
+							}
+						}
 						rr->status = opts->status;
 						prev = rr;
 						rr = rr->next;
+						updated = 1;
+						break;
+					case OPT_ACTIVATE:
+						LM_INFO("activating host %s\n", rr->host.s);
+						if (remove_backed_up(rr) < 0) {
+							LM_ERR("could not reset backup hosts\n");
+							FIFO_ERR(E_RESET);
+							return -1;
+						}
+						rr->status = opts->status;
+						prev = rr;
+						rr = rr->next;
+						updated = 1;
 						break;
 					case OPT_REMOVE:
 						LM_INFO("removing host %s\n", rr->host.s);
+						if (rr->backed_up){
+							LM_ERR("cannot remove host %.*s which is backup for other hosts\n", rr->host.len, rr->host.s);
+							FIFO_ERR(E_DELBACKUP);
+							return -1;
+						}
+						if (remove_backed_up(rr) < 0) {
+							LM_ERR("could not reset backup hosts\n");
+							FIFO_ERR(E_RESET);
+							return -1;
+						}
 						if (prev) {
 							prev->next = rr->next;
 							tmp = rr;
@@ -747,6 +776,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 						}
 						rt->rule_num--;
 						rt->max_locdb--;
+						updated = 1;
 						break;
 					default:
 						rr = rr->next;
@@ -766,4 +796,152 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 		}
 	}
 	return 0;
+}
+
+/**
+ * prints a short help text for fifo command usage
+ */
+static struct mi_root* print_replace_help(void) {
+       struct mi_root* rpl_tree;
+       struct mi_node* node;
+
+       rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+       if(rpl_tree == NULL)
+               return 0;
+
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "carrierroute options usage:");
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c searched/new remote host\n", OPT_HOST_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c replacement/backup host", OPT_NEW_TARGET_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: searched/new domain", OPT_DOMAIN_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: searched/new prefix", OPT_PREFIX_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: searched/new weight (0..1)", OPT_PROB_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: new rewrite prefix", OPT_R_PREFIX_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: new rewrite suffix", OPT_R_SUFFIX_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: new hash index", OPT_HASH_INDEX_CHR);
+       if(node == NULL)
+               goto error;
+       node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "\t-%c: prints this help", OPT_HELP_CHR);
+       if(node == NULL)
+               goto error;
+
+       return rpl_tree;
+
+error:
+       free_mi_tree(rpl_tree);
+       return 0;
+}
+
+/**
+ * interpret the fifo errors, creates a mi tree
+ */
+struct mi_root* print_fifo_err(void) {
+	struct mi_root* rpl_tree;
+	
+	switch (fifo_err) {
+		case E_MISC: 
+			rpl_tree = init_mi_tree( 400, "An error occured", 17);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_NOOPT:
+			rpl_tree = init_mi_tree( 400, "No option given", 16);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_WRONGOPT:
+			rpl_tree = init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_NOMEM:
+			rpl_tree = init_mi_tree( 500, "Out of memory", 14);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_RESET:
+			rpl_tree = init_mi_tree( 500, "Could not reset backup routes", 30);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_NOAUTOBACKUP:
+			rpl_tree = init_mi_tree( 400, "No auto backup route found", 27);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_NOHASHBACKUP:
+			rpl_tree = init_mi_tree( 400, "No backup route for given hash found", 37);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_NOHOSTBACKUP:
+			rpl_tree = init_mi_tree( 400, "No backup route for given host found", 37);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_ADDBACKUP:
+			rpl_tree = init_mi_tree( 500, "Could not set backup route", 27);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_DELBACKUP:
+			rpl_tree = init_mi_tree( 400, "Could not delete or deactivate route, it is backup for other routes", 68);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_LOADCONF:
+			rpl_tree = init_mi_tree( 500, "Could not load config from file", 32);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_SAVECONF:
+			rpl_tree = init_mi_tree( 500, "Could not save config", 22);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_INVALIDOPT:
+			rpl_tree = init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_MISSOPT:
+			rpl_tree = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_RULEFIXUP:
+			rpl_tree = init_mi_tree( 500, "Could not fixup rules", 22);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_NOUPDATE:
+			rpl_tree = init_mi_tree( 500, "No match for update found", 26);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+		case E_HELP:
+			return print_replace_help();
+			break;
+		default:
+			rpl_tree = init_mi_tree( 500, "An error occured", 17);
+			if(rpl_tree == NULL)
+				return 0;
+			break;
+	}
+	return rpl_tree;
 }
