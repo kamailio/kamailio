@@ -44,6 +44,8 @@
 
 static int rule_fixup_recursor(struct route_tree_item * rt);
 
+static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr);
+
 /**
  * Adds a route rule to rt
  *
@@ -56,6 +58,11 @@ static int rule_fixup_recursor(struct route_tree_item * rt);
  * @param rewrite_local_suffix the rewrite suffix
  * @param status the status of the rule
  * @param hash_index the hash index of the rule
+ * @param backup indicates if the route is backed up by another. only
+                 useful if status==0, if set, it is the hash value
+                 of another rule
+ * @param backed_up an NULL-termintated array of hash indices of the route
+                    for which this route is backup
  * @param comment a comment for the route rule
  *
  * @return 0 on success, -1 on failure
@@ -63,11 +70,13 @@ static int rule_fixup_recursor(struct route_tree_item * rt);
  * @see add_route_to_tree()
  */
 int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
-                          int max_locdb, double prob, const char * rewrite_hostpart, int strip,
-                          const char * rewrite_local_prefix, const char * rewrite_local_suffix,
-                          int status, int hash_index, const char * comment) {
+                   int max_locdb, double prob, const char * rewrite_hostpart, int strip,
+                   const char * rewrite_local_prefix, const char * rewrite_local_suffix,
+                   int status, int hash_index, int backup, int * backed_up,
+                   const char * comment) {
 	struct route_rule * shm_rr;
-	struct route_rule *trr;
+	struct route_rule_p_list * t_rl;
+	int * t_bu;
 
 	if (max_locdb) {
 		route_tree->max_locdb = max_locdb;
@@ -135,18 +144,40 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 
 	shm_rr->status = status;
 	shm_rr->hash_index = hash_index;
-	shm_rr->prob = prob;
-
-	if (route_tree->rule_list == NULL) {
-		shm_rr->dice_to = prob * DICE_MAX;
-		route_tree->rule_list = shm_rr;
-	} else {
-		for (trr = route_tree->rule_list; trr->next != NULL;
-	        trr = trr->next) { }
-		shm_rr->dice_to = trr->dice_to + prob * DICE_MAX;
-		trr->next = shm_rr;
+	shm_rr->orig_prob = prob;
+	if (shm_rr->status || backup != -1) {
+		shm_rr->prob = prob;
+	}	else {
+	    shm_rr->prob = 0;
 	}
-	shm_rr->next = NULL;
+	if (backup >= 0) {
+		if ((shm_rr->backup = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
+			LM_ERR("out of shared memory\n");
+			destroy_route_rule(shm_rr);
+			return -1;
+		}
+		shm_rr->backup->hash_index = backup;
+	}
+	shm_rr->backed_up = NULL;
+	t_bu = backed_up;
+	if(!backed_up){
+		LM_ERR("no backed up rules\n");
+	}
+	while (t_bu && *t_bu != -1) {
+		if ((t_rl = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
+			LM_ERR("out of shared memory\n");
+			destroy_route_rule(shm_rr);
+			return -1;
+		}
+		memset(t_rl, 0, sizeof(struct route_rule_p_list));
+		t_rl->hash_index = *t_bu;
+		t_rl->next = shm_rr->backed_up;
+		shm_rr->backed_up = t_rl;
+		t_bu++;
+	}
+
+	shm_rr->next = route_tree->rule_list;
+	route_tree->rule_list = shm_rr;
 
 	return 0;
 }
@@ -192,12 +223,21 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 	struct route_rule * rr;
 	int i;
 	int ret = 0;
+	int p_dice = 0;
 	if (rt->rule_list) {
 		rr = rt->rule_list;
 		while (rr) {
 			rt->rule_num++;
+			rt->dice_max += rr->prob * DICE_MAX;
 			rr = rr->next;
 		}
+		rr = rt->rule_list;
+		while (rr) {
+			rr->dice_to = (rr->prob * DICE_MAX) + p_dice;
+			p_dice = rr->dice_to;
+			rr = rr->next;
+		}
+
 		if (rt->rule_num != rt->max_locdb) {
 			LM_ERR("number of rules(%i) differs from max_locdb(%i), maybe your config is wrong?\n", rt->rule_num, rt->max_locdb);
 			return -1;
@@ -223,6 +263,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 				LM_ERR("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
 			}
 		}
+
 		rr = rt->rule_list;
 		i=0;
 		while (rr && i < rt->rule_num) {
@@ -244,6 +285,9 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 			LM_ERR("rule_fixup_recursor: Could not populate rules\n");
 			return -1;
 		}
+		for(i=0; i<rt->rule_num; i++){
+			ret += fixup_rule_backup(rt, rt->rules[i]);
+		}
 	}
 	for (i=0; i<10; i++) {
 		if (rt->nodes[i]) {
@@ -253,12 +297,140 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 	return ret;
 }
 
+static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr){
+	struct route_rule_p_list * rl;
+	if(!rr->status && rr->backup){
+		if((rr->backup->rr = find_rule_by_hash(rt, rr->backup->hash_index)) == NULL){
+			LM_ERR("didn't find backup route\n");
+			return -1;
+		}
+	}
+	rl = rr->backed_up;
+	while(rl){
+		if((rl->rr = find_rule_by_hash(rt, rl->hash_index)) == NULL){
+			LM_ERR("didn't find backed up route\n");
+			return -1;
+		}
+		rl = rl->next;
+	}
+	return 0;
+}
+
+
+struct route_rule * find_rule_by_hash(struct route_tree_item * rt, int hash){
+	struct route_rule * rr;
+	rr = rt->rule_list;
+	while(rr){
+		if(rr->hash_index == hash){
+			return rr;
+		}
+		rr = rr->next;
+	}
+	return NULL;
+}
+
+
+struct route_rule * find_rule_by_host(struct route_tree_item * rt, str * host){
+	struct route_rule * rr;
+	rr = rt->rule_list;
+	while(rr){
+		if(strcmp(rr->host.s, host->s) == 0){
+			return rr;
+		}
+		rr = rr->next;
+	}
+	return NULL;
+}
+
+int add_backup_route(struct route_rule * rule, struct route_rule * backup){
+	struct route_rule_p_list * tmp = NULL;
+	if(!backup->status){
+		LM_ERR("desired backup route is inactive\n");
+		return -1;
+	}
+	if((tmp = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
+		LM_ERR("out of shared memory\n");
+		return -1;
+	}
+	tmp->hash_index = rule->hash_index;
+	tmp->rr = rule;
+	tmp->next = backup->backed_up;
+	backup->backed_up =  tmp;
+
+	tmp = NULL;
+	if((tmp = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
+		LM_ERR("out of shared memory\n");
+		return -1;
+	}
+	tmp->hash_index = backup->hash_index;
+	tmp->rr = backup;
+	rule->backup = tmp;
+
+	if(rule->backed_up){
+		tmp = rule->backed_up;
+		while(tmp->next){
+			tmp = tmp->next;
+		}
+		tmp->next = backup->backed_up;
+		backup->backed_up = rule->backed_up;
+		rule->backed_up = NULL;
+	}
+	tmp = rule->backup->rr->backed_up;
+	while(tmp){
+		tmp->rr->backup->hash_index = rule->backup->hash_index;
+		tmp->rr->backup->rr = rule->backup->rr;
+		tmp = tmp->next;
+	}
+	return 0;
+}
+
+
+int remove_backed_up(struct route_rule * rule){
+	struct route_rule_p_list * rl, * prev = NULL;
+	if(rule->backup){
+		if(rule->backup->rr){
+			rl = rule->backup->rr->backed_up;
+			while(rl){
+				if(rl->hash_index == rule->hash_index){
+					if(prev){
+						prev->next = rl->next;
+					} else {
+						rule->backup->rr->backed_up = rl->next;
+					}
+					shm_free(rl);
+					shm_free(rule->backup);
+					rule->backup = NULL;
+					return 0;
+				}
+				prev = rl;
+				rl = rl->next;
+			}
+		}
+		return -1;
+	}
+	return 0;
+}
+
+
+struct route_rule * find_auto_backup(struct route_tree_item * rt, struct route_rule * rule){
+	struct route_rule * rr;
+	rr = rt->rule_list;
+	while(rr){
+		if(!rr->backed_up && (rr->hash_index != rule->hash_index) && rr->status){
+			return rr;
+		}
+		rr = rr->next;
+	}
+	return NULL;
+}
+
 /**
  * Destroys route rule rr by freeing all its memory.
  *
  * @param rr route rule to be destroyed
  */
 void destroy_route_rule(struct route_rule * rr) {
+	struct route_rule_p_list * t_rl;
 	if (rr->host.s) {
 		shm_free(rr->host.s);
 	}
@@ -273,6 +445,14 @@ void destroy_route_rule(struct route_rule * rr) {
 	}
 	if (rr->prefix.s) {
 		shm_free(rr->prefix.s);
+	}
+	if(rr->backup){
+		shm_free(rr->backup);
+	}
+	while(rr->backed_up){
+		t_rl = rr->backed_up->next;
+		shm_free(rr->backed_up);
+		rr->backed_up = t_rl;
 	}
 	shm_free(rr);
 	return;

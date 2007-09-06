@@ -211,6 +211,11 @@ int find_tree(const char * tree){
  * @param rewrite_local_suffix the rewrite suffix
  * @param status the status of the rule
  * @param hash_index the hash index of the rule
+ * @param backup indicates if the route is backed up by another. only 
+                 useful if status==0, if set, it is the hash value
+                 of another rule
+ * @param backed_up an -1-termintated array of hash indices of the route 
+                    for which this route is backup
  * @param comment a comment for the route rule
  *
  * @return 0 on success, -1 on error in which case it LOGs a message.
@@ -219,7 +224,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
               const char * domain, const char * scan_prefix, int max_locdb,
               double prob, const char * rewrite_hostpart, int strip,
               const char * rewrite_local_prefix, const char * rewrite_local_suffix,
-              int status, int hash_index, const char * comment) {
+              int status, int hash_index, int backup, int * backed_up, const char * comment) {
 	struct carrier_tree * ct = NULL;
 	struct route_tree_item * rt = NULL;
 	LM_NOTICE("adding prefix %s, prob %f\n", scan_prefix, prob);
@@ -236,7 +241,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
 	LM_INFO("found route, now adding\n");
 	return add_route_to_tree(rt, scan_prefix, scan_prefix, max_locdb, prob, rewrite_hostpart,
 	                         strip, rewrite_local_prefix, rewrite_local_suffix, status,
-	                         hash_index,comment);
+	                         hash_index, backup, backed_up, comment);
 }
 
 /**

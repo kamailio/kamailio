@@ -44,6 +44,8 @@
 #include "../../str.h"
 #include "../../locking.h"
 
+struct route_rule_p_list;
+
 /**
  * @struct route_rule Second stage of processing: Try to
  * map the end of the user part of the URI to a given
@@ -52,6 +54,7 @@
 struct route_rule {
 	int dice_to; /*!< prob * DICE_MAX */
 	double prob; /*!< The probability for that rule, only useful when using crc32 hashing */
+	double orig_prob; /*!< The original probability for that rule, only useful when using crc32 hashing */
 	str host; /*!< The new target host for the request */
 	int strip; /*!< the number of digits to be stripped off from uri befor prepending prefix */
 	str local_prefix; /*!< the pefix to be attached to the new destination */
@@ -59,8 +62,16 @@ struct route_rule {
 	str comment; /*!< A comment for the route rule */
 	str prefix; /*!< The prefix for which the route ist valid */
 	int status; /*!< The status of the route rule, only useful when using prime number hashing */
+	struct route_rule_p_list * backed_up; /*!< indicates if the rule is already backup route for another */
+	struct route_rule_p_list * backup; /*!< if not NULL, it points to a route rule which shall be used instead (only used if status is 0) */
 	int hash_index; /*!< The hash index of the route rule, only useful when using prime number hashing */
-	struct route_rule *next; /*!< A pointer to the next route rule */
+	struct route_rule * next; /*!< A pointer to the next route rule */
+};
+
+struct route_rule_p_list {
+	struct route_rule * rr;
+	int hash_index;
+	struct route_rule_p_list * next;
 };
 
 /**
@@ -76,6 +87,7 @@ struct route_tree_item {
 	struct route_rule * rule_list; /*!< Each node MAY contain a rule list */
 	struct route_rule ** rules; /*!< The array points to the rules in order of hash indices */
 	int rule_num; /*!< The number of rules */
+	int dice_max; /*!< The DICE_MAX value for the rule set, calculated by rule_fixup */
 	int max_locdb; /*!< upper edge of hashing via prime number algorithm, must be eqal to @var rule_num */
 };
 

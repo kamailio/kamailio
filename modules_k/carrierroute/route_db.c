@@ -259,6 +259,8 @@ int load_route_data(struct rewrite_data * rd) {
 		              row->values[COL_REWRITE_SUFFIX].val.string_val,
 		              1,
 		              0,
+		              -1,
+		              NULL,
 		              row->values[COL_COMMENT].val.string_val) == -1) {
 			goto errout;
 		}

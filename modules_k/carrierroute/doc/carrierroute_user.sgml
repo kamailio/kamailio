@@ -704,7 +704,7 @@ modparam("carrierroute", "fallback_default", "1")
 	    <para>
 		    Rewrites the request URI, the given user is used to determine the
 		    carrier tree to be used. The level identifies the routing level
-		    inside the carrier tree
+		    inside the carrier tree.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -741,6 +741,10 @@ modparam("carrierroute", "fallback_default", "1")
 
     <section>
 	    <title><acronym>MI</acronym> Commands</title>
+		<para>All commands understand the "-?" parameter to print a short help message.
+		The options have to be quoted as one string to be passed to MI interface.
+		Each option except host and new host can be wildcarded by * (but only * and not things
+		like "-d prox*").</para>
 	<section>
 	    <title><function moreinfo="none">cr_reload_routes</function></title>
 	    <para>
@@ -773,11 +777,7 @@ modparam("carrierroute", "fallback_default", "1")
 			<para><emphasis>-t</emphasis> - the new host</para>
 		</listitem>
 	    </itemizedlist>
-	    <para>The options have to be quoted as one string to be passed to MI interface.
-		    Each option except host and new host can be wildcarded by * (but
-		    only * and not things like "-d prox*")
-	    	    Use the "null" prefix to specify an empty prefix.
-	    </para>
+	    <para>Use the "null" prefix to specify an empty prefix.</para>
 	    <example>
 		<title><function>cr_replace_host</function> usage</title>
 		<programlisting format="linespecific">
@@ -803,12 +803,14 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 		<listitem>
 		    <para><emphasis>-h</emphasis> - the host to be deactivated</para>
 		</listitem>
+		<listitem>
+			<para><emphasis>-t</emphasis> - the new host used as backup</para>
+		</listitem>
 	    </itemizedlist>
-	    <para>The options have to be quoted as one string to be passed to MI interface.
-		    Each option except host and new host can be wildcarded by * (but
-		    only * and not things like "-d prox*")
-		    Use the "null" prefix to specify an empty prefix.
-	    </para>
+	    <para>When -t (new_host) is specified, the portion of traffic for the deactivated host
+		is routed to the host given by -t. This is indicated in the output of dump_routes.
+		The backup route is deactivated if the host is activated again.</para>
+		<para>Use the "null" prefix to specify an empty prefix.</para>
 	    <example>
 		<title><function>cr_deactivate_host</function> usage</title>
 		<programlisting format="linespecific">
@@ -835,11 +837,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 		    <para><emphasis>-h</emphasis> - the host to be activated</para>
 		</listitem>
 	    </itemizedlist>
-	    <para>The options have to be quoted as one string to be passed to MI interface.
-		    Each option except host and new host can be wildcarded by * (but
-		    only * and not things like "-d prox*")
-		    Use the "null" prefix to specify an empty prefix.
-	    </para>
+	    <para>Use the "null" prefix to specify an empty prefix.</para>
 	    <example>
 		<title><function>cr_activate_host</function> usage</title>
 		<programlisting format="linespecific">
@@ -881,11 +879,7 @@ openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 		<listitem>
 		    <para><emphasis>-s</emphasis> - an optional strip value</para>
 	    </itemizedlist>
-	    <para>The options have to be quoted as one string to be passed to MI interface.
-		    Each option except host and new host can be wildcarded by * (but
-		    only * and not things like "-d prox*")
-		    Use the "null" prefix to specify an empty prefix.
-	    </para>
+		<para>Use the "null" prefix to specify an empty prefix.</para>
 	    <example>
 		<title><function>cr_add_host</function> usage</title>
 		<programlisting format="linespecific">
@@ -928,11 +922,7 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 		<listitem>
 		    <para><emphasis>-s</emphasis> - an optional strip value</para>
 	    </itemizedlist>
-	    <para>The options have to be quoted as one string to be passed to MI interface.
-		    Each option except host and new host can be wildcarded by * (but
-		    only * and not things like "-d prox*")
-		    Use the "null" prefix to specify an empty prefix.
-	    </para>
+	    <para>Use the "null" prefix to specify an empty prefix.</para>
 	    <example>
 		<title><function>cr_delete_host</function> usage</title>
 		<programlisting format="linespecific">
@@ -941,10 +931,8 @@ openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 		</programlisting>
 	    </example>
-	    
 	</section>
     </section>
-
     <section>
 	<title>Examples</title>
 	<example>
