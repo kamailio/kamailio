@@ -583,7 +583,7 @@ static int update_route_data(fifo_opt_t * opts) {
 	int i,j;
 
 	if ((rd = shm_malloc(sizeof(struct rewrite_data))) == NULL) {
-		LM_ERR("out of shared mem\n");
+		LM_ERR("out of shared memory\n");
 		return -1;
 	}
 	memset(rd, 0, sizeof(struct rewrite_data));
@@ -604,6 +604,12 @@ static int update_route_data(fifo_opt_t * opts) {
 		              opts->status, opts->hash_index, -1, NULL, NULL) < 0) {
 			goto errout;
 		}
+		updated = 1;
+		if (rule_fixup(rd) < 0) {
+			FIFO_ERR(E_RULEFIXUP);
+			return -1;
+		}
+
 	} else {
 		for (i=0; i<rd->tree_num; i++) {
 			if(rd->carriers[i]){
