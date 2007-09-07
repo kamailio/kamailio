@@ -226,6 +226,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 	int p_dice = 0;
 	if (rt->rule_list) {
 		rr = rt->rule_list;
+		rt->rule_num = 0;
 		while (rr) {
 			rt->rule_num++;
 			rt->dice_max += rr->prob * DICE_MAX;
@@ -241,6 +242,9 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 		if (rt->rule_num != rt->max_locdb) {
 			LM_ERR("number of rules(%i) differs from max_locdb(%i), maybe your config is wrong?\n", rt->rule_num, rt->max_locdb);
 			return -1;
+		}
+		if(rt->rules){
+			shm_free(rt->rules);
 		}
 		if ((rt->rules = shm_malloc(sizeof(struct route_rule *) * rt->rule_num)) == NULL) {
 			LM_ERR("out of shared memory\n");
@@ -274,7 +278,6 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 					rt->rules[i] = rr;
 					rr->hash_index = i + 1;
 					LM_ERR("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
-					i++;
 					rr = rr->next;
 				}
 			} else {
@@ -282,7 +285,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 			}
 		}
 		if (rr) {
-			LM_ERR("rule_fixup_recursor: Could not populate rules\n");
+			LM_ERR("Could not populate rules\n");
 			return -1;
 		}
 		for(i=0; i<rt->rule_num; i++){
