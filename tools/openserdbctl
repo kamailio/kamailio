@@ -83,12 +83,16 @@ case $DBENGINE in
 		if [ -f "$MYLIBDIR/openserdbctl.mysql" ]; then
 			. "$MYLIBDIR/openserdbctl.mysql"
 			DBENGINELOADED=1
+		else
+			merr "could not load the script in $MYLIBDIR/openserdbctl.mysql for database engine $DBENGINE"
 		fi
 		;;
 	PGSQL|pgsql|postgres|postgresql|POSTGRESQL)
 		if [ -f "$MYLIBDIR/openserdbctl.pgsql" ]; then
 			. "$MYLIBDIR/openserdbctl.pgsql"
 			DBENGINELOADED=1
+		else
+			merr "could not load the script in $MYLIBDIR/openserdbctl.pgsql for database engine $DBENGINE"
 		fi
 		;;
 	DBTEXT|dbtext|textdb)
@@ -96,14 +100,16 @@ case $DBENGINE in
 			. "$MYLIBDIR/openserdbctl.dbtext"
 			DBENGINELOADED=1
 			DBTEXT=1
+		else
+			merr "could not load the script in $MYLIBDIR/openserdbctl.dbtext for database engine $DBENGINE"
 		fi
 		;;
 esac
 
 if [ $DBENGINELOADED -eq 1 ] ; then
 	mdbg "database engine '$DBENGINE' loaded"
-elif [ -n "$DBENGINE" ] ; then
-	merr "database engine not found - tried '$DBENGINE'"
+else
+	merr "database engine not loaded - tried '$DBENGINE'"
 	exit 1
 fi
 

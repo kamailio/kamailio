@@ -22,6 +22,9 @@
 ## database read/write user
 # DBRWUSER=openser
 
+## password for database read/write user
+# DBRWPW="openserrw"
+
 ## database read only user
 # DBROUSER=openserro
 
