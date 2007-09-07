@@ -218,7 +218,8 @@ inline static int binrpc_add_tag(struct binrpc_pkt* pkt, int type, int end)
 
 /*  writes a minimal int, returns the new offset and sets
  * len to the number of bytes written (<=4)
- * to check for oveflow use: returned_value-p < *len
+ * to check for oveflow use: returned_value>=end
+ * or returned_value-p < *len && *len!=0
  */
 inline static unsigned char* binrpc_write_int(	unsigned char* p,
 												unsigned char* end,
@@ -346,7 +347,7 @@ inline static int binrpc_add_int_type(struct binrpc_pkt* pkt, int i, int type)
 	int size;
 	
 	p=binrpc_write_int(pkt->crt+1, pkt->end, i, &size);
-	if ((int)(p-pkt->crt)<(size+1)) goto error_len;
+	if (p>=pkt->end) goto error_len;
 	*(pkt->crt)=(size<<4) | type;
 	pkt->crt=p;
 	return 0;
@@ -398,7 +399,7 @@ inline static int binrpc_add_str_mark(struct binrpc_pkt* pkt, int type,
 		p=pkt->crt+1;
 	}else{ /* we need a separate len */
 		p=binrpc_write_int(pkt->crt+1, pkt->end, l, &size);
-		if ((int)(p-pkt->crt)<(size+1)) goto error_len;
+		if (p>=pkt->end) goto error_len;
 		size|=8; /* mark it as having external len  */
 	}
 	*(pkt->crt)=(size)<<4|type;
