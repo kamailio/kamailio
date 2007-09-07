@@ -40,7 +40,7 @@
 #include "xcap_auth.h"
 #include "pidf.h"
 
-int http_get_rules_doc(str* user, str* domain, str* rules_doc);
+int http_get_rules_doc(str user, str domain, str* rules_doc);
 
 int pres_watcher_allowed(subs_t* subs)
 {
@@ -307,49 +307,6 @@ error:
 		pkg_free(w_uri.s);
 	return NULL;
 }	
-int insert_db_xcap_doc(str* user, str* domain, str body)
-{
-	db_key_t query_cols[5];
-	db_val_t query_vals[5];
-	int n_query_cols= 0;
-
-	query_cols[n_query_cols]= "username";
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
-	query_vals[n_query_cols].val.str_val= *user;
-	n_query_cols++;
-	
-	query_cols[n_query_cols]= "domain";
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
-	query_vals[n_query_cols].val.str_val= *domain;
-	n_query_cols++;
-
-	query_cols[n_query_cols]= "xcap";
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
-	query_vals[n_query_cols].val.str_val= body;
-	n_query_cols++;
-
-	query_cols[n_query_cols]= "doc_type";
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_INT;
-	query_vals[n_query_cols].val.int_val= PRES_RULES;
-	n_query_cols++;
-
-	if(pxml_dbf.use_table(pxml_db, xcap_table)< 0)
-	{
-		LM_ERR("in sql use table\n");
-		return -1;
-	}
-	if(pxml_dbf.insert(pxml_db, query_cols, query_vals, n_query_cols)< 0)
-	{
-		LM_ERR("in sql use table\n");
-		return -1;
-	}
-	
-	return 0;
-}
 
 int pres_get_rules_doc(str* user, str* domain, str** rules_doc)
 {
@@ -368,12 +325,15 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	db_val_t *row_vals ;
 	str body ;
 	str* doc= NULL;
+	int n_result_cols= 0, xcap_doc_col;
 
 	if(force_active)
 	{
 		*rules_doc= NULL;
 		return 0;
 	}
+	LM_DBG("[user]= %.*s\t[domain]= %.*s", 
+			user->len, user->s,	domain->len, domain->s);
 	/* first search in database */
 	query_cols[n_query_cols] = "username";
 	query_vals[n_query_cols].type = DB_STR;
@@ -393,8 +353,8 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	query_vals[n_query_cols].val.int_val= type;
 	n_query_cols++;
 
-	result_cols[0] = "xcap";
-
+	result_cols[xcap_doc_col= n_result_cols++] = "doc";
+		
 	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0) 
 	{
 		LM_ERR("in use_table-[table]= %s\n", xcap_table);
@@ -413,36 +373,30 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	if(result== NULL)
 		return -1;
 
-	if(result->n<=0)
+	if(result->n<= 0)
 	{
-		LM_DBG("No xcap document found for [user]=%.*s"
-			"\t[domain]= %.*s\n",user->len, user->s,domain->len, domain->s);
-		pxml_dbf.free_result(pxml_db, result);
-		result= NULL;
+		LM_DBG("No document found in db table for [user]=%.*s"
+			"\t[domain]= %.*s\t[doc_type]= %d\n",user->len, user->s,
+			domain->len, domain->s, type);
+		
 		if(!integrated_xcap_server)
 		{
-			/* send a query to the server for the document */	
-			if(http_get_rules_doc(user, domain, &body)< 0)
+			if(http_get_rules_doc(*user, *domain, &body)< 0)
 			{
-				LM_ERR("sending http GET request to xcap server\n");
+				LM_ERR("sending http GET request to xcap server\n");		
 				goto error;
 			}
 			if(body.s && body.len)
-			{
-				if(insert_db_xcap_doc(user, domain, body)< 0)
-				{
-					LM_ERR("inserting in xcap_xml db table\n");
-					goto error;
-				}
 				goto done; 
-			}
 		}
+		pxml_dbf.free_result(pxml_db, result);
 		return 0;
 	}	
-	row = &result->rows[0];
+	
+	row = &result->rows[xcap_doc_col];
 	row_vals = ROW_VALUES(row);
 
-	body.s = row_vals[0].val.str_val.s;
+	body.s = (char*)row_vals[0].val.string_val;
 	if(body.s== NULL)
 	{
 		LM_ERR("Xcap doc NULL\n");
@@ -454,7 +408,7 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 		LM_ERR("Xcap doc empty\n");
 		goto error;
 	}			
-	LM_DBG("xcap body:\n%.*s", body.len,body.s);
+	LM_DBG("xcap document:\n%.*s", body.len,body.s);
 
 done:
 	doc= (str*)pkg_malloc(sizeof(str));
@@ -486,14 +440,16 @@ error:
 
 }
 
-int http_get_rules_doc(str* user, str* domain, str* rules_doc)
+int http_get_rules_doc(str user, str domain, str* rules_doc)
 {
 	str uri;
 	xcap_doc_sel_t doc_sel;
 	char* doc= NULL;
 	xcap_serv_t* xs;
+	xcap_get_req_t req;
 
-	if(uandd_to_uri(*user, *domain, &uri)< 0)
+	memset(&req, 0, sizeof(xcap_get_req_t));
+	if(uandd_to_uri(user, domain, &uri)< 0)
 	{
 		LM_ERR("constructing uri\n");
 		goto error;
@@ -501,6 +457,7 @@ int http_get_rules_doc(str* user, str* domain, str* rules_doc)
 
 	doc_sel.auid.s= "presence-rules";
 	doc_sel.auid.len= strlen("presence-rules");
+	doc_sel.doc_type= PRES_RULES;
 	doc_sel.type= USERS_TYPE;
 	doc_sel.xid= uri;
 	doc_sel.filename.s= "index";
@@ -508,11 +465,15 @@ int http_get_rules_doc(str* user, str* domain, str* rules_doc)
 
 	/* need the whole document so the node selector is NULL */
 	/* don't know which is the authoritative server for the user
-	 * so send requet to all in the list */
+	 * so send request to all in the list */
+	req.doc_sel= doc_sel;
+
 	xs= xs_list;
 	while(xs)
 	{
-		doc= xcap_GetElem(xs->addr, &doc_sel, NULL);
+		req.xcap_root= xs->addr;
+		req.port= xs->port;
+		doc= xcap_GetNewDoc(req, user, domain);
 		if(doc== NULL)
 		{
 			LM_ERR("while fetching data from xcap server\n");
@@ -522,7 +483,7 @@ int http_get_rules_doc(str* user, str* domain, str* rules_doc)
 
 	rules_doc->s= doc;
 	rules_doc->len= doc?strlen(doc):0;
-
+	
 	return 0;
 
 error:

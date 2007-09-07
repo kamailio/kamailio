@@ -36,11 +36,17 @@
 #include <time.h>
 #include <curl/curl.h>
 #include "../../mem/mem.h"
-#include "../presence/hash.h"
+#include "../../db/db.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"
+#include "../presence/hash.h"
+
+
+#define ETAG_HDR          "Etag: "
+#define ETAG_HDR_LEN      strlen("Etag: ")
 
 size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream);
+char* get_xcap_path(xcap_get_req_t req);
 
 int bind_xcap(xcap_api_t* api)
 {
@@ -55,7 +61,8 @@ int bind_xcap(xcap_api_t* api)
 	api->add_terminal= xcapNodeSelAddTerminal;
 	api->free_node_sel= xcapFreeNodeSel;
 	api->register_xcb= register_xcapcb;
-
+	api->getNewDoc= xcapGetNewDoc;
+	
 	return 0;
 }
 
@@ -296,20 +303,113 @@ error:
 	return NULL;
 }
 
-/* xcap_root must be a NULL terminated string */
+char* xcapGetNewDoc(xcap_get_req_t req, str user, str domain)
+{
+	char* etag= NULL;
+	char* doc= NULL;
+	db_key_t query_cols[9];
+	db_val_t query_vals[9];
+	int n_query_cols = 0;
+	char* path= NULL;
 
-char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel, xcap_node_sel_t* node_sel)
+	path= get_xcap_path(req);
+	if(path== NULL)
+	{
+		LM_ERR("while constructing xcap path\n");
+		return NULL;
+	}
+	/* send HTTP request */
+	doc= send_http_get(path, req.port, NULL, 0, &etag);
+	if(doc== NULL)
+	{
+		LM_DBG("the searched document was not found\n");
+		goto done;
+	}
+
+	if(etag== NULL)
+	{
+		LM_ERR("no etag found\n");
+		pkg_free(doc); 
+		doc= NULL;
+		goto done;
+	}
+	/* insert in xcap table*/
+	query_cols[n_query_cols] = "username";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = user;
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "domain";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = domain;
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "doc_type";
+	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= req.doc_sel.doc_type;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "doc";
+	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.string_val= doc;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "etag";
+	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.string_val= etag;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "source";
+	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= XCAP_CL_MOD;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "doc_uri";
+	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.string_val= path;
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "port";
+	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= req.port;
+	n_query_cols++;
+
+	if (xcap_dbf.use_table(xcap_db, xcap_db_table) < 0) 
+	{
+		LM_ERR("in use_table-[table]= %s\n", xcap_db_table);
+		goto done;
+	}
+	
+	if(xcap_dbf.insert(xcap_db, query_cols, query_vals, n_query_cols)< 0)
+	{
+		LM_ERR("in sql insert\n");
+		goto done;
+	}
+
+done:
+	pkg_free(path);
+	return doc;
+}
+
+char* get_xcap_path(xcap_get_req_t req)
 {
 	int len= 0, size;
 	char* path= NULL;
 	char* node_selector= NULL;
-	char* stream= NULL;
-		
-	len= (strlen(xcap_root)+ 1+ doc_sel->auid.len+ 5+ doc_sel->xid.len+
-		doc_sel->filename.len+ 50)* sizeof(char);
+
+	len= (strlen(req.xcap_root)+ 1+ req.doc_sel.auid.len+ 5+
+			req.doc_sel.xid.len+ req.doc_sel.filename.len+ 50)* sizeof(char);
 	
-	if(node_sel)
-		len+= node_sel->size;
+	if(req.node_sel)
+		len+= req.node_sel->size;
 
 	path= (char*)pkg_malloc(len);
 	if(path== NULL)
@@ -317,9 +417,9 @@ char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel, xcap_node_sel_t* nod
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-	if(node_sel)
+	if(req.node_sel)
 	{
-		node_selector= get_node_selector(node_sel);
+		node_selector= get_node_selector(req.node_sel);
 		if(node_selector== NULL)
 		{
 			LM_ERR("while constructing node selector\n");
@@ -327,13 +427,16 @@ char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel, xcap_node_sel_t* nod
 		}
 	}
 	
-	size= sprintf(path, "%s/%.*s/", xcap_root,doc_sel->auid.len,doc_sel->auid.s);
+	size= sprintf(path, "%s/%.*s/", req.xcap_root, req.doc_sel.auid.len,
+			req.doc_sel.auid.s);
 
-	if(doc_sel->type==USERS_TYPE)
-		size+= sprintf(path+ size, "%s/%.*s/", "users", doc_sel->xid.len, doc_sel->xid.s);
+	if(req.doc_sel.type==USERS_TYPE)
+		size+= sprintf(path+ size, "%s/%.*s/", "users", req.doc_sel.xid.len,
+				req.doc_sel.xid.s);
 	else
 		size+= sprintf(path+ size, "%s/", "global");
-	size+= sprintf(path+ size, "%.*s", doc_sel->filename.len, doc_sel->filename.s);
+	size+= sprintf(path+ size, "%.*s", req.doc_sel.filename.len,
+			req.doc_sel.filename.s);
 	
 	if(node_selector)
 	{
@@ -345,38 +448,119 @@ char* xcapGetElem(char* xcap_root, xcap_doc_sel_t* doc_sel, xcap_node_sel_t* nod
 		LM_ERR("buffer size overflow\n");
 		goto error;
 	}
+	pkg_free(node_selector);
 
-	stream= send_http_get(path);
-	if(stream== NULL)
+	return path;
+	
+error:
+	if(path)
+		pkg_free(path);
+	if(node_selector)
+		pkg_free(node_selector);
+	return NULL;
+}
+
+/* xcap_root must be a NULL terminated string */
+
+char* xcapGetElem(xcap_get_req_t req, char** etag)
+{
+	char* path= NULL;
+	char* stream= NULL;
+	
+	path= get_xcap_path(req);
+	if(path== NULL)
 	{
-		LM_ERR("sending xcap get request\n");
-		goto error;
+		LM_ERR("while constructing xcap path\n");
+		return NULL;
 	}
 
-error:		
+	stream= send_http_get(path, req.port, req.etag, req.match_type, etag);
+	if(stream== NULL)
+	{
+		LM_DBG("the serched element was not found\n");
+	}
+	
+	if(etag== NULL)
+	{
+		LM_ERR("no etag found\n");
+		pkg_free(stream);
+		stream= NULL;
+	}
+
 	if(path)
 		pkg_free(path);
 	
 	return stream;
 }
 
-char* send_http_get(char* path)
+size_t get_xcap_etag( void *ptr, size_t size, size_t nmemb, void *stream)
 {
+	int len= 0;
+	char* etag= NULL;
+
+	if(strncmp(ptr, ETAG_HDR, ETAG_HDR_LEN)== 0)
+	{
+		len= size* nmemb- ETAG_HDR_LEN;
+		etag= (char*)pkg_malloc((len+ 1)* sizeof(char));
+		if(etag== NULL)
+		{
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memcpy(etag, ptr+ETAG_HDR_LEN, len);
+		etag[len]= '\0';
+		*((char**)stream)= etag;
+	}
+	return len;
+
+error:
+	return -1;
+}
+
+char* send_http_get(char* path, unsigned int xcap_port, char* match_etag,
+		int match_type, char** etag)
+{
+	int len;
 	char* stream= NULL;
 	CURLcode ret_code;
 	CURL* curl_handle= NULL;
+	static char buf[128];
+	char* match_header= NULL;
+	*etag= NULL;
+	
+	if(match_etag)
+	{
+		char* hdr_name= NULL;
+		
+		memset(buf, 128* sizeof(char), 0);
+		match_header= buf;
+		
+		hdr_name= (match_type==IF_MATCH)?"If-Match":"If-None-Match"; 
+		
+		len=sprintf(match_header, "%s: %s\n", hdr_name, match_etag);
+		
+		match_header[len]= '\0';	
+	}
 
 	curl_handle = curl_easy_init();
 	
 	curl_easy_setopt(curl_handle, CURLOPT_URL, path);
+	
+	curl_easy_setopt(curl_handle, CURLOPT_PORT, xcap_port);
 
-	//	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);	
+	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);	
 
 	curl_easy_setopt(curl_handle,  CURLOPT_STDERR, stdout);	
 	
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_function);
 	
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &stream);
+
+	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, get_xcap_etag);
+	
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, &etag);
+
+	if(match_header)
+		curl_easy_setopt(curl_handle, CURLOPT_HEADER, match_header);
 
 	/* non-2xx => error */
 	curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
@@ -389,7 +573,9 @@ char* send_http_get(char* path)
 		if(stream)
 			pkg_free(stream);
 		stream= NULL;
+		return NULL;
 	}
+
 	curl_global_cleanup();
 	return stream;
 }

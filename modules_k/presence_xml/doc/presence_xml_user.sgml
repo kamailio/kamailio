@@ -101,10 +101,10 @@ modparam("presence_xml", "db_url",
 	<section>
 		<title><varname>xcap_table</varname>(str)</title>
 		<para>
-		The name of the db table where XCAP XMLs are stored.
+		The name of the db table where XCAP documents are stored.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>xcap_xml</quote>.
+		<emphasis>	Default value is <quote>xcap</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -183,11 +183,7 @@ modparam("presence_xml", "pidf_manipulation", 1)
 		</para>
 		<para>
 		Otherwise, it uses xcap_client module to fetch documents 
-		from the XCAP servers with HTTP requests. There is a restriction 
-		imposed on the XCAP servers	that openser can work with. They must 
-		be able to send a MI command 'refreshXcapDoc [doc_url]' to OpenSER,
-		when a document is updated. 
-		</para>
+		from the XCAP servers with HTTP requests.</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
 		</emphasis>
@@ -206,9 +202,7 @@ modparam("presence_xml", "integrated_xcap_server", 1)
 		<para>
 		This parameter is compulsory if the integrated_xcap_server parameter
 		is not set. It can be set more that once, to construct an address
-		list of trusted XCAP servers. The servers used must communicate with 
-		OpenSER using the MI command described in the previous paragraph.
-		</para>
+		list of trusted XCAP servers.</para>
 		<example>
 		<title>Set <varname>xcap_server</varname> parameter</title>
 		<programlisting format="linespecific">

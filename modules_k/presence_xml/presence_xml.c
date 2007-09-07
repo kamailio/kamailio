@@ -49,7 +49,7 @@
 #include "presence_xml.h"
 
 MODULE_VERSION
-#define S_TABLE_VERSION 2
+#define S_TABLE_VERSION 3
 
 /** module functions */
 
@@ -67,7 +67,7 @@ struct mi_root* dum(struct mi_root* cmd, void* param);
 add_event_t pres_add_event;
 update_watchers_t pres_update_watchers;
 
-char* xcap_table="xcap_xml";  
+char* xcap_table="xcap";  
 str db_url = {0, 0};
 int force_active= 0;
 int pidf_manipulation= 0;
@@ -83,7 +83,7 @@ db_func_t pxml_dbf;
 
 /* functions imported from xcap_client module */
 
-xcap_get_elem_t xcap_GetElem;
+xcapGetNewDoc_t xcap_GetNewDoc;
 
 static param_export_t params[]={
 	{ "db_url",					STR_PARAM,                          &db_url.s},
@@ -208,13 +208,13 @@ static int mod_init(void)
 			LM_ERR("Can't bind xcap_api\n");
 			return -1;
 		}
-		xcap_GetElem= xcap_api.get_elem;
-		if(xcap_GetElem== NULL)
+		xcap_GetNewDoc= xcap_api.getNewDoc;
+		if(xcap_GetNewDoc== NULL)
 		{
 			LM_ERR("can't import get_elem from xcap_client module\n");
 			return -1;
 		}
-
+	
 		if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
 		{
 			LM_ERR("registering xcap callback function\n");
@@ -303,8 +303,42 @@ int pxml_add_xcap_server( modparam_t type, void* val)
 	xcap_serv_t* xs;
 	int size;
 	char* serv_addr= (char*)val;
+	char* sep= NULL;
+	unsigned int port= 80;
+	str serv_addr_str;
+		
+	serv_addr_str.s= serv_addr;
+	serv_addr_str.len= strlen(serv_addr);
 
-	size= sizeof(xcap_serv_t)+ (strlen(serv_addr)+ 1)* sizeof(char);
+	sep= strchr(serv_addr, ':');
+	if(sep)
+	{	
+		char* sep2= NULL;
+		str port_str;
+		
+		sep2= strchr(sep+ 1, ':');
+		if(sep2)
+			sep= sep2;
+		
+
+		port_str.s= sep+ 1;
+		port_str.len= serv_addr_str.len- (port_str.s- serv_addr);
+
+		if(str2int(&port_str, &port)< 0)
+		{
+			LM_ERR("while converting string to int\n");
+			goto error;
+		}
+		if(port< 0 || port> 65535)
+		{
+			LM_ERR("wrong port number\n");
+			goto error;
+		}
+		*sep = '\0';
+		serv_addr_str.len= sep- serv_addr;
+	}
+
+	size= sizeof(xcap_serv_t)+ (serv_addr_str.len+ 1)* sizeof(char);
 	xs= (xcap_serv_t*)pkg_malloc(size);
 	if(xs== NULL)
 	{
@@ -315,6 +349,8 @@ int pxml_add_xcap_server( modparam_t type, void* val)
 
 	xs->addr= (char*)xs+ size;
 	strcpy(xs->addr, serv_addr);
+
+	xs->port= port;
 	/* check for duplicates */
 	xs->next= xs_list;
 	xs_list= xs;
@@ -391,55 +427,8 @@ void free_xs_list(xcap_serv_t* xsl, int mem_type)
 
 int xcap_doc_updated(int doc_type, str xid, char* doc)
 {
-	struct sip_uri uri;
-	db_key_t query_cols[3], update_cols[3];
-	db_val_t query_vals[3], update_vals[3];
-	int n_query_cols= 0;
 	pres_ev_t ev;
 	str rules_doc;
-
-	if(parse_uri(xid.s, xid.len, &uri)< 0)
-	{
-		LM_ERR("parsing uri\n");
-		return -1;
-	}
-
-	/* update in xml table */
-	query_cols[n_query_cols]= "username";
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
-	query_vals[n_query_cols].val.str_val= uri.user;
-	n_query_cols++;
-
-	query_cols[n_query_cols]= "domain";
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
-	query_vals[n_query_cols].val.str_val= uri.host;
-	n_query_cols++;
-
-	query_cols[n_query_cols]= "doc_type";
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_INT;
-	query_vals[n_query_cols].val.int_val= doc_type;
-	n_query_cols++;
-
-	update_cols[0]= "xcap";
-	update_vals[0].nul= 0;
-	update_vals[0].type= DB_STR;
-	update_vals[0].val.string_val= doc;
-
-	if(pxml_dbf.use_table(pxml_db, xcap_table)< 0)
-	{
-		LM_ERR("in sql use table\n");
-		return -1;
-	}
-	if(pxml_dbf.update(pxml_db, query_cols, 0, query_vals, update_cols, 
-				update_vals, n_query_cols, 1)< 0)
-	{
-		LM_ERR("in sql update\n");
-		return -1;	
-	}
-
 
 	/* call updating watchers */
 	ev.name.s= "presence";
@@ -456,6 +445,7 @@ int xcap_doc_updated(int doc_type, str xid, char* doc)
 	return 0;
 
 }
+
 struct mi_root* dum(struct mi_root* cmd, void* param)
 {
 	return 0;

@@ -29,8 +29,18 @@
 #ifndef XCAP_CL_H
 #define XCAP_CL_H
 
+#include "../../db/db.h"
 #include "xcap_callbacks.h"
 
 extern xcap_callback_t* xcapcb_list;
+extern str xcap_db_url;
+extern char* xcap_db_table;
+
+/* database connection */
+extern db_con_t *xcap_db;
+extern db_func_t xcap_dbf;
+
+extern int periodical_query;
+extern unsigned int query_period;
 
 #endif

@@ -44,18 +44,39 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../presence/utils_func.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"
 
 MODULE_VERSION
+
+#define XCAP_TABLE_VERSION   3
 
 static int mod_init(void);
 static int child_init(int);
 void destroy(void);
 struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param);
 int get_auid_flag(str auid);
-
+char* xcap_db_table= "xcap";
+str xcap_db_url = {0, 0};
 xcap_callback_t* xcapcb_list= NULL;
+int periodical_query= 1;
+unsigned int query_period= 100;
+
+/* database connection */
+db_con_t *xcap_db = NULL;
+db_func_t xcap_dbf;
+
+void query_xcap_update(unsigned int ticks, void* param);
+
+static param_export_t params[]={
+	{ "db_url",					STR_PARAM,         &xcap_db_url.s    },
+	{ "xcap_table",				STR_PARAM,         &xcap_db_table    },
+	{ "periodical_query",		INT_PARAM,         &periodical_query },
+	{ "query_period",	       	INT_PARAM,         &query_period     },
+	{    0,                     0,                      0            }
+};
+
 
 static cmd_export_t  cmds[]=
 {	
@@ -73,7 +94,7 @@ struct module_exports exports= {
 	"xcap_client",				/* module name */
 	DEFAULT_DLFLAGS,			/* dlopen flags */
 	cmds,  						/* exported functions */
-	0,  						/* exported parameters */
+	params,						/* exported parameters */
 	0,      					/* exported statistics */
 	mi_cmds,   					/* exported MI functions */
 	0,							/* exported pseudo-variables */
@@ -89,7 +110,49 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	str _s;
+	int ver;
+
+	xcap_db_url.len = xcap_db_url.s ? strlen(xcap_db_url.s) : 0;
+	LM_DBG("db_url=%s/%d/%p\n",ZSW(xcap_db_url.s),xcap_db_url.len,
+			xcap_db_url.s);
+	
+	/* binding to mysql module  */
+	if (bind_dbmod(xcap_db_url.s, &xcap_dbf))
+	{
+		LM_ERR("Database module not found\n");
+		return -1;
+	}
+	
+	if (!DB_CAPABILITY(xcap_dbf, DB_CAP_ALL)) {
+		LM_ERR("Database module does not implement all functions"
+				" needed by the module\n");
+		return -1;
+	}
+
+	xcap_db = xcap_dbf.init(xcap_db_url.s);
+	if (!xcap_db)
+	{
+		LM_ERR("while connecting to database\n");
+		return -1;
+	}
+
+	_s.s = xcap_db_table;
+	_s.len = strlen(xcap_db_table);
+	 ver =  table_version(&xcap_dbf, xcap_db, &_s);
+	if(ver!=XCAP_TABLE_VERSION)
+	{
+		LM_ERR("Wrong version v%d for table <%s>, need v%d\n",
+				 ver, _s.s, XCAP_TABLE_VERSION);
+		return -1;
+	}
+
 	curl_global_init(CURL_GLOBAL_ALL);
+
+	if(periodical_query)
+	{
+		register_timer(query_xcap_update, 0, query_period);
+	}
 	return 0;
 }
 static int child_init(int rank)
@@ -102,6 +165,133 @@ void destroy(void)
 	curl_global_cleanup();
 }
 
+void query_xcap_update(unsigned int ticks, void* param)
+{
+	db_key_t query_cols[3], update_cols[3];
+	db_val_t query_vals[3], update_vals[3];
+	db_key_t result_cols[7];
+	int n_result_cols = 0, n_query_cols= 0, n_update_cols= 0;
+	db_res_t* result= NULL;
+	int user_col, domain_col, doc_type_col, etag_col, doc_uri_col, port_col; 
+	db_row_t *row ;	
+	db_val_t *row_vals ;
+	unsigned int port;
+	char* etag, *path, *new_etag= NULL, *doc= NULL;
+	int u_doc_col, u_etag_col;
+	str user, domain, uri;
+	int i;
+
+	/* query the ones I have to handle */
+	query_cols[n_query_cols] = "source";
+	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= XCAP_CL_MOD;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = "path";
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+
+	update_cols[u_doc_col=n_update_cols] = "doc";
+	update_vals[n_update_cols].type = DB_STRING;
+	update_vals[n_update_cols].nul = 0;
+	n_update_cols++;
+
+	update_cols[u_etag_col=n_update_cols] = "etag";
+	update_vals[n_update_cols].type = DB_STRING;
+	update_vals[n_update_cols].nul = 0;
+	n_update_cols++;
+
+	result_cols[user_col= n_result_cols++]     = "username";
+	result_cols[domain_col=n_result_cols++]    = "domain";
+	result_cols[doc_type_col=n_result_cols++]  = "doc_type";
+	result_cols[etag_col=n_result_cols++]      = "etag";
+	result_cols[doc_uri_col= n_result_cols++]  = "doc_uri";
+	result_cols[port_col= n_result_cols++]     = "port";
+	
+	if (xcap_dbf.use_table(xcap_db, xcap_db_table) < 0) 
+	{
+		LM_ERR("in use_table-[table]= %s\n", xcap_db_table);
+		goto error;
+	}
+
+	if(xcap_dbf.query(xcap_db, query_cols, 0, query_vals, result_cols, 1,
+				n_result_cols, 0, &result)< 0)
+	{
+		LM_ERR("in sql query\n");
+		goto error;
+	}
+	if(result== NULL)
+	{
+		LM_ERR("in sql query- null result\n");
+		return;
+	}
+	if(result->n<= 0)
+	{
+		xcap_dbf.free_result(xcap_db, result);
+		return;
+	}
+	n_query_cols++;
+	
+	/* ask if updated */
+	for(i= 0; i< result->n; i++)
+	{
+		row = &result->rows[i];
+		row_vals = ROW_VALUES(row);
+	
+		path= (char*)row_vals[doc_uri_col].val.string_val;
+		port= row_vals[port_col].val.int_val;
+		etag= (char*)row_vals[etag_col].val.string_val;	
+
+		user.s= (char*)row_vals[user_col].val.string_val;
+		user.len= strlen(user.s);
+
+		domain.s= (char*)row_vals[domain_col].val.string_val;
+		domain.len= strlen(domain.s);
+
+		/* send HTTP request */
+		doc= send_http_get(path, port, etag, IF_NONE_MATCH, &new_etag);
+		if(doc== NULL)
+		{
+			LM_DBG("document not update\n");
+			continue;
+		}
+		if(new_etag== NULL)
+		{
+			LM_ERR("etag not found\n");
+			pkg_free(doc);
+			goto error;
+		}
+		/* update in xcap db table */
+		update_vals[u_doc_col].val.string_val= doc;
+		update_vals[u_etag_col].val.string_val= etag;
+		
+		if(xcap_dbf.update(xcap_db, query_cols, 0, query_vals, update_cols,
+					update_vals, n_query_cols, n_update_cols)< 0)
+		{
+			LM_ERR("in sql update\n");
+			pkg_free(doc);
+			goto error;
+		}
+		/* call registered callbacks */
+		if(uandd_to_uri(user, domain, &uri)< 0)
+		{
+			LM_ERR("converting user and domain to uri\n");
+			pkg_free(doc);
+			goto error;
+		}
+		run_xcap_update_cb(row_vals[doc_type_col].val.int_val, uri, doc);
+		pkg_free(doc);
+
+	}
+
+	xcap_dbf.free_result(xcap_db, result);
+	return;
+
+error:
+	if(result)
+		xcap_dbf.free_result(xcap_db, result);
+}
 
 int parse_doc_url(str doc_url, char** serv_addr, xcap_doc_sel_t* doc_sel)
 {
@@ -134,7 +324,8 @@ int parse_doc_url(str doc_url, char** serv_addr, xcap_doc_sel_t* doc_sel)
 }
 /*
  * mi cmd: refreshXcapDoc
- *			<document url> 
+ *			<document uri> 
+ *			<xcap_port>
  * */
 
 struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param)
@@ -143,8 +334,10 @@ struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param)
 	str doc_url;
 	xcap_doc_sel_t doc_sel;
 	char* serv_addr;
-	char* stream;
+	char* stream= NULL;
 	int type;
+	unsigned int xcap_port;
+	char* etag= NULL;
 
 	node = cmd->node.kids;
 	if(node == NULL)
@@ -156,12 +349,25 @@ struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param)
 		LM_ERR("empty uri\n");
 		return init_mi_tree(404, "Empty document URL", 20);
 	}
-	
+	node= node->next;
+	if(node== NULL)
+		return 0;
+	if(node->value.s== NULL || node->value.len== 0)
+	{
+		LM_ERR("port number\n");
+		return init_mi_tree(404, "Empty document URL", 20);
+	}
+	if(str2int(&node->value, &xcap_port)< 0)
+	{
+		LM_ERR("while converting string to int\n");
+		goto error;
+	}
+
 	if(node->next!= NULL)
 		return 0;
 
 	/* send GET HTTP request to the server */
-	stream=	send_http_get(doc_url.s);
+	stream=	send_http_get(doc_url.s, xcap_port, NULL, 0, &etag);
 	if(stream== NULL)
 	{
 		LM_ERR("in http get\n");

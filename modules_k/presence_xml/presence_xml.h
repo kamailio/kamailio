@@ -37,6 +37,7 @@
 typedef struct xcap_serv
 {
 	char* addr;
+	unsigned int port;
 	struct xcap_serv* next;
 }xcap_serv_t;
 
@@ -48,7 +49,7 @@ extern int force_active;
 extern int pidf_manipulation;
 extern int integrated_xcap_server;
 extern xcap_serv_t* xs_list;
-extern xcap_get_elem_t xcap_GetElem;
+extern xcapGetNewDoc_t xcap_GetNewDoc;
 
 /* SL bind */
 extern struct sl_binds slb;
