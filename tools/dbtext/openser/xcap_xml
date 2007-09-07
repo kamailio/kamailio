@@ -1,1 +1,0 @@
-id(int,auto) username(str) domain(str) xcap(str) doc_type(int) etag(str) 

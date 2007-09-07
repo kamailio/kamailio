@@ -53,16 +53,21 @@ CREATE TABLE watchers (
     CONSTRAINT uude_watchers UNIQUE (p_uri, w_user, w_domain, event)
 );
 
-INSERT INTO version (table_name, table_version) values ('xcap_xml','2');
-CREATE TABLE xcap_xml (
+INSERT INTO version (table_name, table_version) values ('xcap','3');
+CREATE TABLE xcap (
     id SERIAL PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
     domain VARCHAR(64) NOT NULL,
-    xcap BYTEA NOT NULL,
+    doc BYTEA NOT NULL,
     doc_type INTEGER NOT NULL,
     etag VARCHAR(64) NOT NULL,
+    source INTEGER NOT NULL,
+    doc_uri VARCHAR(128) NOT NULL,
+    port INTEGER NOT NULL,
     CONSTRAINT udd_xcap UNIQUE (username, domain, doc_type)
 );
+
+CREATE INDEX source_xcap ON xcap (source);
 
 INSERT INTO version (table_name, table_version) values ('pua','5');
 CREATE TABLE pua (
