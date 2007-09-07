@@ -837,8 +837,8 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
 	if (c){
 		hash=tcp_addr_hash(&c->rcv.src_ip, port, l_ip, l_port);
 		/* search the aliases for an already existing one */
-		for (a=tcpconn_aliases_hash[hash], nxt=a?a->next:0; a;
-					a=nxt, nxt=a->next){
+		for (a=tcpconn_aliases_hash[hash], nxt=0; a; a=nxt){
+			nxt=a->next;
 			if ( (a->parent->state!=S_CONN_BAD) && (port==a->port) &&
 					( (l_port==0) || (l_port==a->parent->rcv.dst_port)) &&
 					(ip_addr_cmp(&c->rcv.src_ip, &a->parent->rcv.src_ip)) &&
