@@ -222,24 +222,6 @@ static inline int sip_match( struct naptr_rdata* naptr, str* service)
 
 
 /*
- * Check that From header is properly parsed and if so,
- * return pointer to parsed From header.  Otherwise return NULL.
- */
-static inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
-{
-	if (!(_msg->from)) {
-		LOG(L_ERR, "get_parsed_from(): Request does not have a From header\n");
-		return NULL;
-	}
-	if (!(_msg->from->parsed) || ((struct to_body *)_msg->from->parsed)->error != PARSE_OK) {
-		LOG(L_ERR, "get_parsed_from(): From header is not properly parsed\n");
-		return NULL;
-	}
-	return (struct to_body *)(_msg->from->parsed);
-}
-
-
-/*
  * Checks if argument is an e164 number starting with +
  */
 static inline int is_e164(str* _user)
@@ -288,8 +270,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	int user_len, i, j;
 	char name[MAX_DOMAIN_SIZE];
 	char uri[MAX_URI_SIZE];
-	struct to_body* body;
-	struct sip_uri muri;
+	struct sip_uri *furi;
 	struct sip_uri luri;
 	struct rdata* head;
 
@@ -302,26 +283,33 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	str pattern, replacement, result;
 	char string[17];
 
-	body = get_parsed_from_body(_msg);
-	if (!body) return -1;
+	if (parse_from_header(_msg) < 0) {
+	    LM_ERR("Failed to parse From header\n");
+	    return -1;
+	}
+	
+	if(_msg->from==NULL || get_from(_msg)==NULL) {
+	    LM_DBG("No From header\n");
+	    return -1;
+	}
 
-	if (parse_uri(body->uri.s, body->uri.len, &muri) < 0) {
-		LOG(L_ERR, "is_from_user_enum(): Error while parsing From uri\n");
-		return -1;
+	if ((furi = parse_from_uri(_msg)) == NULL) {
+	    LM_ERR("Failed to parse From URI\n");
+	    return -1;
 	}
 
 	suffix = (str*)_suffix;
 	service = (str*)_service;
 
-	if (is_e164(&(muri.user)) == -1) {
-		LOG(L_ERR, "is_from_user_enum(): from user is not an E164 number\n");
-		return -2;
+	if (is_e164(&(furi->user)) == -1) {
+	    LM_ERR("From URI user is not an E164 number\n");
+	    return -1;
 	}
 
 	/* assert: the from user is a valid formatted e164 string */
 
-	user_s = muri.user.s;
-	user_len = muri.user.len;
+	user_s = furi->user.s;
+	user_len = furi->user.len;
 
 	j = 0;
 	for (i = user_len - 1; i > 0; i--) {
@@ -932,8 +920,7 @@ int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	char uri[MAX_URI_SIZE];
 	char new_uri[MAX_URI_SIZE];
 	unsigned int priority, curr_prio;
-	struct to_body* body;
-	struct sip_uri muri;
+	struct sip_uri *furi;
 	qvalue_t q;
 	char tostring[17];
 	struct rdata* head;
@@ -968,25 +955,31 @@ int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	** to here
 	*/
 
+	if (parse_from_header(_msg) < 0) {
+	    LM_ERR("Failed to parse From header\n");
+	    return -1;
+	}
+	
+	if(_msg->from==NULL || get_from(_msg)==NULL) {
+	    LM_DBG("No From header\n");
+	    return -1;
+	}
 
-	body = get_parsed_from_body(_msg);
-	if (!body) return -1;
-
-	if (parse_uri(body->uri.s, body->uri.len, &muri) < 0) {
-		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
-		return -1;
+	if ((furi = parse_from_uri(_msg)) == NULL) {
+	    LM_ERR("Failed to parse From URI\n");
+	    return -1;
 	}
 
 	suffix = (str*)_suffix;
 	service = (str*)_service;
 
-	if (is_e164(&(muri.user)) == -1) {
+	if (is_e164(&(furi->user)) == -1) {
 		LOG(L_ERR, "enum_fquery(): uri user is not an E164 number\n");
 		return -1;
 	}
 
-	user_s = muri.user.s;
-	user_len = muri.user.len;
+	user_s = furi->user.s;
+	user_len = furi->user.len;
 
 	memcpy(&(string[0]), user_s, user_len);
 	string[user_len] = (char)0;
