@@ -1,5 +1,4 @@
 changequote({{,}})dnl
-ifdef({{GS_HELLOWORLD}},{{
 ANNOTATE({{Route[RELAY] is the default message handler that is used throughout
         the ser.cfg file to relay messages. Notice how the route block
         definition uses square brackets, but to call a route block you use
@@ -12,6 +11,39 @@ ANNOTATE(
 way we know when the message is leaving our server.}},
 {{# Log all outgoing messages}},
 {{XNOTICE("OUTGOING - %rm\nFrom: %is(%fu)\nTo: %ru\nCall-ID: %ci\n")}})dnl
+ifdef({{GS_NAT}},
+{{ANNOTATE({{}},
+{{	# Send to NAT fixing}},
+{{	route(NAT_MANGLE);}})
+ANNOTATE({{}},
+{{	# And make sure that the replies goes through the reply route for NAT fixing}},
+{{	t_on_reply("NAT_MANGLE");}})
+}})dnl ifdef GS_NAT
+ifdef({{GS_CALLFWD}},
+{{ANNOTATE({{}},
+{{	# If we have been in the failure route, this is a forwarding after a non-answered attempt.
+	# We need to add a branch.}},
+{{	if (isflagset(FLAG_FAILUREROUTE)) {
+		append_branch();
+	}
+}})
+ANNOTATE({{}},
+{{	# Initial INVITEs (not reINVITEs) should go to the failure route for forwarding, voicemail, etc}}
+	# if the INVITE is not answered.
+{{	if (method=="INVITE" && @to.tag=="") {
+		t_on_failure("ROUTE_FAILURE_ROUTE");
+	}
+}})
+}})dnl ifdef GS_CALLFWD
+ifdef({{GS_MESSAGE}},
+{{
+ANNOTATE({{}},
+{{	# If we are sending a MESSAGE, we want to store it if it fails, so use another failure route.}},
+{{	if (method=="MESSAGE") {
+		t_on_failure("MESSAGE");
+	}
+}})
+}})dnl ifdef GS_MESSAGEifdef({{GS_HELLOWORLD}},{{
 ANNOTATE(
 {{t_relay() is a function exposed by the tm.so module and is
         perhaps one of the most important functions in any ser.cfg file.
@@ -40,6 +72,5 @@ PARA	If everything is ok, we are done and exit will end execution of ser.cfg
 	};
 	exit;
 }
-}})dnl
-}})dnl
+}})dnl ifdef GS_HELLOWORLD
 changequote(`,')dnl

@@ -1,4 +1,27 @@
 changequote({{,}})dnl
+ANNOTATE({{}},
+{{# Flags set be various modules}},
+{{}})dnl
+ifdef({{GS_CALLFWD}},
+{{ANNOTATE({{}},
+{{# The flag set when the script has passed through the failure route}},
+{{flags
+	FLAG_FAILUREROUTE: DEF_FLAG_FAILUREROUTE;
+}})
+}})dnl
+ifdef({{GS_ACC}},
+{{
+ANNOTATE({{}},
+{{# The FLAG_ACC flag is set to mark a message for logging to the database or syslog}},
+{{flags
+	FLAG_ACC:	DEF_FLAG_ACC;
+}})
+}})dnl ifdef GS_ACC
+ifdef({{GS_NAT}},
+{{flags
+	FLAG_NAT_UAC:	DEF_FLAG_NAT_UAC,
+	FLAG_NAT_UAS:	DEF_FLAG_NAT_UAS;
+}})dnl
 ifdef({{GS_HELLOWORLD}},{{
 ANNOTATE({{The usrloc module is responsible for keeping track of SIP client
         registration locations. In other words, when a SIP client registers
@@ -130,29 +153,6 @@ ifdef({{GS_MESSAGE}},
 {{# The database to use when storing MESSAGEs for offline user agents.}},
 {{modparam("msilo", "db_url", "SER_DB_URL")}})
 }})dnl
-ANNOTATE({{}},
-{{# Flags set be various modules}},
-{{}})dnl
-ifdef({{GS_CALLFWD}},
-{{ANNOTATE({{}},
-{{# The flag set when the script has passed through the failure route}},
-{{flags:
-	FLAG_FAILUREROUTE: DEF_FLAG_FAILUREROUTE
-}})
-}})dnl
-ifdef({{GS_ACC}},
-{{
-ANNOTATE({{}},
-{{# The FLAG_ACC flag is set to mark a message for logging to the database or syslog}},
-{{flags:
-	FLAG_ACC:	DEF_FLAG_ACC
-}})
-}})dnl ifdef GS_ACC
-ifdef({{GS_NAT}},
-{{flags:
-	FLAG_NAT_UAC:	DEF_FLAG_NAT_UAC,
-	FLAG_NAT_UAC:	DEF_FLAG_NAT_UAS;
-}})dnl
 ifdef({{GS_HELLOWORLD}},
 {{
 ANNOTATE({{SER is not dialog stateful. This means that we don't have any information stored in 
@@ -165,7 +165,7 @@ ANNOTATE({{SER is not dialog stateful. This means that we don't have any informa
 	back again. The below name of the avpflag is used when we want to mark an attribute for inclusion
 	in the dialog cookie.}},
 {{# We can store some of our important attributes (inside the messages)}},
-{{avpflags:
+{{avpflags
   dialog_cookie;
 }})
 }})dnl ifdef GS_HELLOWORLD

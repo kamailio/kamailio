@@ -1,9 +1,30 @@
 dnl Non-local messages should NOT be left at the end of this part.
 dnl Use uri!=myself or !is_uri_local() etc to determine whether this is a non-local
-dnl call and send to another route (ex. SEND/t_relay) and break; afterwards.
+dnl call and send to another route (ex. SEND/t_relay) and exit; afterwards.
 changequote({{,}})dnl
 ifdef({{GS_HELLOWORLD}},{{
-ANNOTATE({{Up to now we have treated messages for our local server (i.e. destined for a local
+ifdef({{GS_AUTH}},
+{{
+ANNOTATE({{}},
+{{	# check if the caller is from a local domain (f=from, d=domain, $f will be set)}},
+{{	lookup_domain("$fd", "@from.uri.host");
+}})
+ANNOTATE({{}},
+{{	# check if the callee is at a local domain (t=to, d=domain, $t will be set)}},
+{{	lookup_domain("$td", "@ruri.host");
+}})
+ANNOTATE({{}},
+{{	# we dont know the domain of the caller and also not
+	# the domain of the callee -> someone uses our proxy as
+	# a relay
+}},
+{{	if (!$t.did && !$f.did) {
+		sl_reply("403", "Relaying Forbidden");
+		exit;
+	}
+}})	
+}},
+{{ANNOTATE({{Up to now we have treated messages for our local server (i.e. destined for a local
 	subscriber) and another server (ex. a gateway to the public telephony network) in the
 	same way.  Now we need to split the processing.  All messages not for myself should
 	just be relayed. In the hello-world script, we assume that SER's relaying knows where
@@ -23,8 +44,9 @@ PARA So, this line tests to see if the R-URI is the same as the SIP
 	# myself will test against listen addresses and aliases defined in directives.m4}},
 {{	if (uri!=myself) {
 		route(RELAY);
-		break;
+		exit;
 	};
-}})dnl
-}})dnl
+}})
+}})dnl ifdef GS_AUTH
+}})dnl ifdef GS_HELLOWORLD
 changequote(`,')dnl

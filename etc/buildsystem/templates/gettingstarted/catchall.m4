@@ -1,9 +1,8 @@
 changequote({{,}})dnl
-ifdef({{GS_HELLOWORLD}},{{
-ANNOTATE({{When we return from the NEWDIALOG route, we assume that our processing logic
-	has determined where to send the message, so we want to relay the message.}},
+ANNOTATE({{None of our routes matched (and the routes will have relayed the message if successful).
+	This is thus an error situation.}},
 {{	# By now, the request uri should be correct, relay}},
-{{	route(RELAY);
-}})dnl
-}})dnl
+XNOTICE("No route matched for the request\nCall-Id: %ci\n");
+{{	sl_reply("404", "No route matched");
+}})
 changequote(`,')dnl

@@ -31,7 +31,6 @@ dnl
 dnl
 dnl Include global macros
 include(`./templates/internals.m4')dnl
-SEPARATOR(`dnl The default buildsystem directives, show error if not found')
 PKG_INCLUDE(`directives')dnl
 SEPARATOR(`# *************Your local directives *****************')
 dnl The local extra directives, do NOT fail with error, but silent
@@ -65,9 +64,13 @@ PKG_INCLUDE(`route_t_relay')dnl
 
 PKG_INCLUDE(`route_register')dnl
 
+PKG_INCLUDE(`route_authenticate')dnl
+
 PKG_INCLUDE(`route_newdialog')dnl
 
 PKG_INCLUDE(`routes_pkg')dnl
+
+PKG_INCLUDE(`routes_nat')dnl
 
 dnl Load locally defined routes
 SEPARATOR(`# ************* Your local routes *****************

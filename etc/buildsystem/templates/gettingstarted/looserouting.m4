@@ -74,10 +74,28 @@ ANNOTATE({{loose_route() tests to see if the current SIP message should be
 
         <para>#relayed or blocked.}},
 {{	# ------------------------------------------------------------------------
-	# Loose Route Section
+	# Handling messages with Route headers (aka loose routing)
 	# ------------------------------------------------------------------------
 }},
 {{	if (loose_route()) {}})
+		XDEBUG("    loose routed - %rm\nFrom: %is(%fu)\nTo: %ru\nCall-ID: %ci\n")
+ifdef({{GS_NATHANDLING}},
+{{
+ANNOTATE({{}},
+{{# This attribute is set so we can check in NAT handling whether we are routing based on Route headers.}},
+{{		$loose_route = true;
+}})
+}})dnl ifdef GS_NATHANDLING
+ifdef({{GS_ACC}},
+{{
+ANNOTATE({{}},
+{{		# After loose_route(), any attributes found in the dialog cookie have been set.
+		# Check if this dialog is accounted.}},
+{{		if ($accounting) {
+			setflag(FLAG_ACC);
+		}
+}})
+}})dnl
 ANNOTATE({{If the test for loose routing returns 'true' then we must relay
         the message without other processing. To do so, we pass execution
         control to the route (ie, route[RELAY]). This route block is
@@ -86,11 +104,44 @@ ANNOTATE({{If the test for loose routing returns 'true' then we must relay
 {{}},
 {{		route(RELAY);}}) 
 ANNOTATE({{Since loose routing was required we cannot process the message
-        any further so we must use a break command to exit the main route
+        any further so we must use a command to exit the main route
         block.}},
 {{}},
-{{		break;
-	};}})
+{{		exit;
+	}
+}})
+ANNOTATE({{Here we look to see if the SIP message that was received is a
+        REGISTER message. If it is not a register message then we must
+        record-route the message to ensure that upstream and/or downstream SIP
+        proxies that we may interact with keep our SIP proxy informed of all
+        SIP state changes. By doing so, we can be certain that SER has a
+        chance to process all SIP messages for the conversation. PARA 
+	The keyword 'method' is provided by the SER core and allows you
+        to find out what type of SIP message you are dealing with.}},
+{{	# ------------------------------------------------------------------------
+	# Record Route Section
+	# ------------------------------------------------------------------------}},
+{{	else if (method!="REGISTER") {}})
+ifdef({{GS_ACC}},
+{{
+ANNOTATE({{}},
+{{		# If the accounting flag is set, we want to store that info in a dialog cookie
+		# This way we can quickly check if we should account.}},
+{{		if (isflagset(FLAG_ACC)) {
+			$accounting = true;
+			setavpflag($accounting, "dialog_cookie");
+		}
+}})
+}})dnl ifdef GS_ACC
+ANNOTATE({{The record_route() function simply adds a Record-Route header
+        field to the current SIP message. The inserted field will be inserted
+        before any other Record-Route headers that may already be present in
+        the SIP message. Other SIP servers or clients will use this header to
+        know where to send an answer or a new message in a SIP dialog.}},
+{{}},
+{{		record_route();
+	};
+}})
 ANNOTATE({{ACK is a special type of message. It is part of a transaction, ex. INVITE - 200 OK - ACK.
 	The INVITE will enter the main route and handled further below, while the OK will enter
 	our script in the onreply_route (see subsequent chapters) and NOT the main route. The ACK
@@ -104,9 +155,14 @@ ANNOTATE({{ACK is a special type of message. It is part of a transaction, ex. IN
 	# found in Contact of the original OK from the user agent, but will not be loose routed.
 	# Just relay the ACK to the user agent.}},
 {{	if (method=="ACK") {
+}})
+XDEBUG("    ACK relayed using ruri - %rm\nFrom: %is(%fu)\nTo: %ru\nCall-ID: %ci\n")
+ANNOTATE({{}},
+{{}},
+{{
 		route(RELAY);
-		break;
+		exit;
 	}
-}})dnl
-}})dnl
+}})
+}})dnl ifdef GS_HELLOWORLD
 changequote(`,')dnl

@@ -1,27 +1,6 @@
 changequote({{,}})dnl
 ifdef({{GS_HELLOWORLD}},
-{{ANNOTATE({{Here we look to see if the SIP message that was received is a
-        REGISTER message. If it is not a register message then we must
-        record-route the message to ensure that upstream and/or downstream SIP
-        proxies that we may interact with keep our SIP proxy informed of all
-        SIP state changes. By doing so, we can be certain that SER has a
-        chance to process all SIP messages for the conversation. PARA 
-	The keyword 'method' is provided by the SER core and allows you
-        to find out what type of SIP message you are dealing with.}},
-{{	# ------------------------------------------------------------------------
-	# Record Route Section
-	# ------------------------------------------------------------------------}},
-{{	if (method!="REGISTER") {}})
-ANNOTATE({{The record_route() function simply adds a Record-Route header
-        field to the current SIP message. The inserted field will be inserted
-        before any other Record-Route headers that may already be present in
-        the SIP message. Other SIP servers or clients will use this header to
-        know where to send an answer or a new message in a SIP dialog.}},
-{{}},
-{{		record_route();
-	};
-}})dnl 
-ANNOTATE({{As part of SER - Getting Started, we have included a log system.
+{{ANNOTATE({{As part of SER - Getting Started, we have included a log system.
 Using the m4 make system to generating your ser.cfg, you can turn on and off, as well as
 control how much SER should log (without restarting SER). 
 
@@ -40,4 +19,17 @@ XINFO, XDEBUG, NOTICE, INFO, DEBUG.}},
 {{# Log all incoming messages to see start of processing}},
 {{XNOTICE("INCOMING - %rm\nFrom: %is(%fu)\nTo: %ru\nCall-ID: %ci\n")}})
 }})dnl GS_HELLOWORLD
+ifdef({{GS_ACC}},
+{{
+ANNOTATE({{}},
+{{	# We only set the flag for initial INVITEs (i.e. without the to tag)
+	# We then set a record-route cookie in the INVITE to make sure that all messages are accounted.}},
+{{	if (method=="INVITE" && @to.tag=="") {
+		setflag(FLAG_ACC);
+	}
+}})
+dnl Execute the hook for setting the accounting flag
+sinclude(CFGPREFIX/common/h_set_acc_flag.m4)dnl
+sinclude(CFGPREFIX/CFGNAME/h_set_acc_flag.m4)dnl
+}})dnl
 changequote(`,')dnl

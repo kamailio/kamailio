@@ -33,7 +33,7 @@ define(`SER_ETC_DIR',`SER_INSTALL_PREFIX/etc/ser')dnl
 define(`SER_LIB_DIR',`SER_INSTALL_PREFIX/lib/ser/modules')dnl
 define(`SER_FIFO_PATH',`/tmp/ser_fifo')dnl
 define(`SER_SOCK_PATH',`/tmp/ser_ctl')dnl
-define(`SER_XMLRPC',`tcp:localhost:2049')dnl
+define(`SER_XMLRPC',`tcp:127.0.0.1:2049')dnl
 dnl
 dnl *********************************************
 dnl ******** Local configs for directives *******
@@ -63,6 +63,52 @@ define(`SER_REVERSE_DNS_ON',`no')dnl
 dnl Is this host multi-homed and need to route SIP messages on more than one adapter?
 dnl NOTE! Leaving default modparam("rr", "enable_double_rr", 1) is recommended if you set this to yes!
 define(`MULTIHOMED',`no')dnl
+dnl
+dnl *********************************************
+dnl ******** Global (not module) configs  *******
+dnl *********************************************
+dnl This defines which failure route to use as default. You can implement your own (in your routes.m4)
+dnl with a different name than default and replace the name here.
+define(`ROUTE_FAILURE_ROUTE',`FAILURE_ROUTE')dnl
+dnl This dial plan will be used as a filter when determining which INVITEs to send to $gw_ip
+define(`PSTN_DIAL_PLAN',`sips?:\+?[0-9]{3,18}@.*')dnl
+dnl When this define is defined, the specified attribute will be used to set Remote-Party-ID
+define(`PSTN_ASSERTED_ID_ATTR',`$asserted_id')dnl
+dnl
+dnl **************************
+dnl ******** MODULES  ********
+dnl **************************
+dnl
+dnl *** rr
+define(`ENABLE_FULL_RR',`1')dnl
+define(`RR_COOKIE_SECRET',`ChangeThisIfYouStoreSecretStuffInCookie')dnl
+dnl *** mysql
+define(`USE_MYSQL_DB',`yes')dnl
+dnl *** nathelper
+define(`NATHELPER_NATPING_INTVL',`30')dnl
+define(`NATHELPER_PING_METHOD',`OPTIONS')dnl
+define(`NATHELPER_PING_NATED_ONLY',`1')dnl
+define(`NATHELPER_RTPPROXY_SOCK',`udp:127.0.0.1:22222')dnl
+dnl The UAC tests (nat_uac_test function) used for new dialog messages
+define(`NATHELPER_UAC_TESTS_NEWDIALOG',`19')dnl
+dnl *** xmlrpc
+dnl This define will occur in the setting if(... && (XMLRPC_SRC_CHECK)) { ... do XMLRPC }
+dnl The default will only allow calls from localhost
+define(`XMLRPC_SRC_CHECK',`src_ip==127.0.0.1')dnl
+dnl *** auth
+dnl Which database table to authenticate against
+define(`REGISTER_CREDENTIALS_TABLE',`credentials')dnl
+define(`AUTH_CREDENTIALS_TABLE',`credentials')dnl
+dnl Should we force that the authentication user is the same as the user being registered?
+define(`REGISTER_CHECK_TO_EQUALS_AUTH',`defined')dnl
+dnl Should we force that the authentication user and From is the same user? (and not "register on behalf of")
+define(`REGISTER_CHECK_FROM_EQUALS_AUTH',`defined')dnl
+dnl Should we force that the authentication user and the From is the same user? (to prevent identity spoofing)
+define(`AUTH_CHECK_FROM_EQUALS_AUTH',`defined')dnl
+dnl
+dnl ====================================================================
+dnl **** DON'T CHANGE BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING ****
+dnl ====================================================================
 dnl
 dnl ***************************
 dnl ******** LOG SYSTEM *******
@@ -96,18 +142,3 @@ dnl Flag set if NAT is detected for UAC (caller)
 define(`DEF_FLAG_NAT_UAC',`6')dnl
 dnl NAT flag loaded from database for UAS (callee)
 define(`DEF_FLAG_NAT_UAS',`7')dnl
-dnl
-dnl **************************
-dnl ******** MODULES  ********
-dnl **************************
-dnl
-dnl *** rr
-define(`ENABLE_FULL_RR',`1')dnl
-define(`RR_COOKIE_SECRET',`ChangeThisIfYouStoreSecretStuffInCookie')dnl
-dnl *** mysql
-define(`USE_MYSQL_DB',`yes')dnl
-dnl *** nathelper
-define(`NATHELPER_NATPING_INTVL',`30')dnl
-define(`NATHELPER_PING_METHOD',`OPTIONS')dnl
-define(`NATHELPER_PING_NATED_ONLY',`1')dnl
-define(`NATHELPER_RTPPROXY_SOCK',`udp:127.0.0.1:22222')dnl

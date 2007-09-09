@@ -56,7 +56,7 @@ ANNOTATE({{If you have more than one network card on your server and expect SIP
 	This is typical for a scenario where you have SIP devices on a local LAN, as well 
 	as communicate with SIP devices on the Internet.}},
 {{# Is this host multihomed?}},
-{{mhome=MULTIHOMED}})
+{{mhomed=MULTIHOMED}})
 ANNOTATE({{These lines are really to prevent SER from attempting to lookup
         its IP addresses in DNS. By adding these two lines to ser.cfg we
         suppress any warnings if your IP is not in your DNS server.}},
@@ -67,6 +67,6 @@ ANNOTATE({{}},
 {{rev_dns=SER_REVERSE_DNS_ON}})
 ANNOTATE({{}},
 {{# Should reverse dns resolving be used?}},
-{{disable_core=DISABLE_CORE_DUMPS}})
+{{disable_core_dump=DISABLE_CORE_DUMPS}})
 }})dnl
 changequote(`,')dnl

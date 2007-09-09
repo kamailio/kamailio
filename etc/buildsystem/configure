@@ -192,7 +192,8 @@ if [ "$features" = "gettingstarted" ]; then
 	fi
 	feat=""
 	echo -n "-- SIP Registrar functions (ENTER to include) "
-	if [ "$feat" == "yes" ]; then
+	read feat
+	if [ -z "$feat" ]; then
 		gs_registrar="yes"
 	fi
 	feat=""
@@ -229,10 +230,24 @@ if [ "$features" = "gettingstarted" ]; then
 		gs_callfwd="yes"
 	fi
 	feat=""	
-	echo -n "-- Functionality for PSTN integration (ENTER to include) "
-	read feat
-	if [ -z "$feat" ]; then
-		gs_pstn="yes"
+	if [ "$gs_auth" != "yes" ]; then
+		echo " -- Functionality for PSTN integration is NOT included because authentication was not chosen."
+	else
+		echo -n "-- Functionality for PSTN integration (ENTER to include) "
+		read feat
+		if [ -z "$feat" ]; then
+			gs_pstn="yes"
+		fi
+		if [ "$feat" == "yes" ]; then
+			if [ "$gs_global_load" == "yes" ]; then
+				echo "       NOTE!!! gw_ip in the db table global_attrs must be set to IP address of"
+				echo "               the gateway. Use ser_db (ser_ctl) and use type=2, and flags=32"
+			else
+				echo "       NOTE!!! You have not select loading of global attributes/flags at start-up."
+				echo "               Please add '$gw_ip=\"a.b.c.d\";' to your local/default/mainroute.m4"
+				echo "               where a.b.c.d is the IP address to your PSTN gateway."
+			fi
+		fi
 	fi
 	feat=""	
 	echo -n "-- XMLRPC management interface (default no, yes to include) "

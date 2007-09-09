@@ -72,6 +72,9 @@ ANNOTATE({{}},
 ANNOTATE({{}},
 {{# The uri_db module uses database to check the uri.}},
 {{loadmodule "SER_LIB_DIR/uri_db.so"}})
+ANNOTATE({{}},
+{{# The avp_db module allows loading of user attributes from database.}},
+{{loadmodule "SER_LIB_DIR/avp_db.so"}})
 }})dnl ifelse USRLOC_DB_MODE
 ANNOTATE({{}},
 {{# Load domain module used to verify the local domains.}},
@@ -98,7 +101,8 @@ ifdef({{GS_XMLRPC}},
 {{loadmodule "SER_LIB_DIR/xmlrpc.so"}})
 }})dnl
 ifdef({{GS_NAT}},
-{{ifdef({{GS_NAT_RTPPROXY}},
+{{
+ifdef({{GS_NAT_RTPPROXY}},
 {{
 ANNOTATE({{}},
 {{# Load the nathelper module, which regularly pings UAs behind NAT and connects to rtpproxy (iptel.org).}},
@@ -110,5 +114,11 @@ ANNOTATE({{}},
 {{# Load the mediaproxy module, which regularly pings UAs behind NAT and connects to mediaproxy (AG Projects).}},
 {{loadmodule "SER_LIB_DIR/mediaproxy.so"}})
 }})dnl
-}})dnl
+}})dnl ifdef GS_NAT
+ifdef({{GS_CALLFWD}},
+{{
+ANNOTATE({{}},
+{{# avp module has a long range of functions for attribute manipulation.}},
+{{loadmodule "SER_LIB_DIR/avp.so"}})
+}})dnl ifdef GS_CALLFWD
 changequote(`,')dnl
