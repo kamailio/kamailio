@@ -428,7 +428,8 @@ static int mod_init(void)
 {
     int ver, i;
 
-    xl_spec_t avp_spec;
+    pv_spec_t avp_spec;
+	str s;
     unsigned short avp_flags;
 
     LM_DBG("Initializing\n");
@@ -456,15 +457,15 @@ static int mod_init(void)
 
     /* Process AVP params */
     if (fr_inv_timer_avp_param && *fr_inv_timer_avp_param) {
-	if (xl_parse_spec(fr_inv_timer_avp_param, &avp_spec,
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-	    || avp_spec.type!=XL_AVP) {
+	s.s = fr_inv_timer_avp_param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+	    || avp_spec.type!=PVT_AVP) {
 	    LM_ERR("Malformed or non AVP definition <%s>\n",
 		   fr_inv_timer_avp_param);
 	    return -1;
 	}
 	
-	if(xl_get_avp_name(0, &avp_spec, &fr_inv_timer_avp, &avp_flags)!=0) {
+	if(pv_get_avp_name(0, &(avp_spec.pvp), &fr_inv_timer_avp, &avp_flags)!=0) {
 	    LM_ERR("Invalid AVP definition <%s>\n", fr_inv_timer_avp_param);
 	    return -1;
 	}
@@ -475,14 +476,14 @@ static int mod_init(void)
     }
 
     if (gw_uri_avp_param && *gw_uri_avp_param) {
-	if (xl_parse_spec(gw_uri_avp_param, &avp_spec,
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-	    || avp_spec.type!=XL_AVP) {
+	s.s = gw_uri_avp_param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+	    || avp_spec.type!=PVT_AVP) {
 	    LM_ERR("Malformed or non AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
 	
-	if(xl_get_avp_name(0, &avp_spec, &gw_uri_avp, &avp_flags)!=0) {
+	if(pv_get_avp_name(0, &(avp_spec.pvp), &gw_uri_avp, &avp_flags)!=0) {
 	    LM_ERR("Invalid AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
@@ -493,15 +494,15 @@ static int mod_init(void)
     }
 
     if (ruri_user_avp_param && *ruri_user_avp_param) {
-	if (xl_parse_spec(ruri_user_avp_param, &avp_spec,
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-	    || avp_spec.type!=XL_AVP) {
+	s.s = ruri_user_avp_param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+	    || avp_spec.type!=PVT_AVP) {
 	    LM_ERR("Malformed or non AVP definition <%s>\n",
 		   ruri_user_avp_param);
 	    return -1;
 	}
 	
-	if(xl_get_avp_name(0, &avp_spec, &ruri_user_avp, &avp_flags)!=0) {
+	if(pv_get_avp_name(0, &(avp_spec.pvp), &ruri_user_avp, &avp_flags)!=0) {
 	    LM_ERR("Invalid AVP definition <%s>\n", ruri_user_avp_param);
 	    return -1;
 	}
@@ -512,15 +513,15 @@ static int mod_init(void)
     }
 
     if (contact_avp_param && *contact_avp_param) {
-	if (xl_parse_spec(contact_avp_param, &avp_spec,
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-	    || avp_spec.type!=XL_AVP) {
+	s.s = contact_avp_param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+	    || avp_spec.type!=PVT_AVP) {
 	    LM_ERR("Malformed or non AVP definition <%s>\n",
 		   contact_avp_param);
 	    return -1;
 	}
 	
-	if(xl_get_avp_name(0, &avp_spec, &contact_avp, &avp_flags)!=0) {
+	if(pv_get_avp_name(0, &(avp_spec.pvp), &contact_avp, &avp_flags)!=0) {
 	    LM_ERR("Invalid AVP definition <%s>\n", contact_avp_param);
 	    return -1;
 	}
@@ -531,14 +532,14 @@ static int mod_init(void)
     }
 
     if (rpid_avp_param && *rpid_avp_param) {
-	if (xl_parse_spec(rpid_avp_param, &avp_spec,
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-	    || avp_spec.type!=XL_AVP) {
+	s.s = rpid_avp_param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+	    || avp_spec.type!=PVT_AVP) {
 	    LM_ERR("Malformed or non AVP definition <%s>\n", rpid_avp_param);
 	    return -1;
 	}
 	
-	if(xl_get_avp_name(0, &avp_spec, &rpid_avp, &avp_flags)!=0) {
+	if(pv_get_avp_name(0, &(avp_spec.pvp), &rpid_avp, &avp_flags)!=0) {
 	    LM_ERR("Invalid AVP definition <%s>\n", rpid_avp_param);
 	    return -1;
 	}
@@ -1415,14 +1416,14 @@ int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2)
 	str grp_s;
 	unsigned int grp_id;
 	
-	if(((xl_elem_p)_s1)->spec.itf!=NULL)
+	if(((pv_elem_p)_s1)->spec.getf!=NULL)
 	{
-		if(xl_printf_s(_m, (xl_elem_p)_s1, &grp_s)!=0)
+		if(pv_printf_s(_m, (pv_elem_p)_s1, &grp_s)!=0)
 			return -1;
 		if(str2int(&grp_s, &grp_id)!=0)
 			return -1;
 	} else {
-		grp_id = ((xl_elem_p)_s1)->spec.p.ind;
+		grp_id = ((pv_elem_p)_s1)->spec.pvp.pvn.u.isname.name.n;
 	}
 	if (grp_id > 0) return do_load_gws(_m, (int)grp_id);
 	else return -1;
@@ -2124,7 +2125,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
  */
 static int fixstringloadgws(void **param, int param_count)
 {
-    xl_elem_t *model=NULL;
+    pv_elem_t *model=NULL;
     str s;
 
     /* convert to str */
@@ -2138,14 +2139,14 @@ static int fixstringloadgws(void **param, int param_count)
 	    return -1;
 	}
 	
-	if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0 || model==NULL) {
+	if(pv_parse_format(&s,&model)<0 || model==NULL) {
 	    LM_ERR("Wrong format <%s> for param <%d>!\n", s.s, param_count);
 	    return -1;
 	}
-	if(model->spec.itf==NULL) {
+	if(model->spec.getf==NULL) {
 	    if(param_count==1) {
-		if(str2int(&s, (unsigned int*)&model->spec.p.ind)!=0
-		   || model->spec.p.ind<100) {
+		if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0
+			   || model->spec.pvp.pvn.u.isname.name.n<100) {
 		    LM_ERR("Wrong value <%s> for param <%d>!\n",
 			   s.s, param_count);
 		    return -1;

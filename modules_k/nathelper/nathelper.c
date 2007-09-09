@@ -193,7 +193,7 @@
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../../mi/attr.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../msg_translator.h"
 #include "../../usr_avp.h"
 #include "../../socket_info.h"
@@ -690,7 +690,8 @@ static int fixup_set_id(void ** param, int param_no)
 static int
 fixup_fix_sdp(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 
 	if (param_no==1) {
 		/* flags */
@@ -698,7 +699,8 @@ fixup_fix_sdp(void** param, int param_no)
 	}
 	/* new IP */
 	model=NULL;
-	if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0) {
+	s.s = (char*)(*param); s.len = strlen(s.s);
+	if(pv_parse_format(&s,&model)<0) {
 		LOG(L_ERR, "ERROR:nathelper:fixup_fix_sdp: wrong format[%s]!\n",
 			(char*)(*param));
 		return E_UNSPEC;
@@ -901,18 +903,19 @@ mod_init(void)
 	bind_usrloc_t bind_usrloc;
 	struct in_addr addr;
 	str socket_str;
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
+	str s;
 
 	if (rcv_avp_param && *rcv_avp_param) {
-		if (xl_parse_spec(rcv_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		s.s = rcv_avp_param; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:nathelper:mod_init: malformed or non AVP %s "
 				"AVP definition\n", rcv_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &rcv_avp_name, &rcv_avp_type)!=0)
+		if(pv_get_avp_name(0, &avp_spec.pvp, &rcv_avp_name, &rcv_avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:nathelper:mod_init: [%s]- invalid "
 				"AVP definition\n", rcv_avp_param);
@@ -1530,7 +1533,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	struct lump* anchor;
 
 	level = (int)(long)str1;
-	if (str2 && xl_printf_s( msg, (xl_elem_p)str2, &ip)!=0)
+	if (str2 && pv_printf_s( msg, (pv_elem_p)str2, &ip)!=0)
 		return -1;
 
 	if (extract_body(msg, &body) == -1) {

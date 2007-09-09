@@ -38,7 +38,7 @@
 #include "../../db/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../tm/tm_load.h"
 #include "../sl/sl_cb.h"
 
@@ -180,7 +180,8 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
+	str s;
 
 	DBG("siptrace - initializing\n");
 	
@@ -259,15 +260,15 @@ static int mod_init(void)
 
 	if(traced_user_avp_str && *traced_user_avp_str)
 	{
-		if (xl_parse_spec(traced_user_avp_str, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		s.s = traced_user_avp_str; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:siptrace:mod_init: malformed or non AVP %s "
 				"AVP definition\n", traced_user_avp_str);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &traced_user_avp,
+		if(pv_get_avp_name(0, &avp_spec.pvp, &traced_user_avp,
 					&traced_user_avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:siptrace:mod_init: [%s]- invalid "
@@ -280,15 +281,15 @@ static int mod_init(void)
 	}
 	if(trace_table_avp_str && *trace_table_avp_str)
 	{
-		if (xl_parse_spec(trace_table_avp_str, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		s.s = trace_table_avp_str; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:siptrace:mod_init: malformed or non AVP %s "
 				"AVP definition\n", trace_table_avp_str);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &trace_table_avp,
+		if(pv_get_avp_name(0, &avp_spec.pvp, &trace_table_avp,
 					&trace_table_avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:siptrace:mod_init: [%s]- invalid "

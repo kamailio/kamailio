@@ -35,7 +35,7 @@
 
 
 #include "../../str.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 #include "../../re.h"
 
@@ -43,18 +43,18 @@ struct ldap_result_params
 {
 	str         ldap_attr_name;
 	int         dst_avp_val_type; /* 0: str, 1: int */
-	xl_spec_t   dst_avp_spec;
+	pv_spec_t   dst_avp_spec;
 };
 
 struct ldap_result_check_params
 {
 	str          ldap_attr_name;
-	xl_elem_p    check_str_elem_p;
+	pv_elem_p    check_str_elem_p;
 };
 
 int ldap_search_impl(
 	struct sip_msg* _msg, 
-	xl_elem_t* _ldap_url);
+	pv_elem_t* _ldap_url);
 
 int ldap_write_result(
 	struct sip_msg* _msg,
@@ -65,8 +65,8 @@ int ldap_result_next();
 
 int ldap_filter_url_encode(
 	struct sip_msg* _msg,
-	xl_elem_t* _filter_component,
-	xl_spec_t* _dst_avp_spec);
+	pv_elem_t* _filter_component,
+	pv_spec_t* _dst_avp_spec);
 
 int rfc2254_escape(
 	struct sip_msg* _msg,

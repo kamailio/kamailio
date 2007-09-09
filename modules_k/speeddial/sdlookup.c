@@ -87,7 +87,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	{
 		memset(&turi, 0, sizeof(struct sip_uri));
 		printbuf_len = SD_PRINTBUF_SIZE-1;
-		if(xl_printf(_msg, (xl_elem_t*)_owner, sd_printbuf, &printbuf_len)<0)
+		if(pv_printf(_msg, (pv_elem_t*)_owner, sd_printbuf, &printbuf_len)<0)
 		{
 			LOG(L_ERR, "sd_lookup: error - cannot print the format\n");
 			return -1;

@@ -39,7 +39,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "domain.h"
 #include "mi.h"
 #include "hash.h"
@@ -255,23 +255,23 @@ static void destroy(void)
  */
 static int parameter_fixup(void **param, int param_no)
 {
-    xl_spec_t *sp;
+    pv_spec_t *sp;
+	str s;
 
     if (*param && (param_no == 1)) {
-	sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if (sp == 0) {
 	    LOG(L_ERR,"domain:parameter_fixup(): no pkg memory left\n");
 	    return -1;
 	}
-	if (xl_parse_spec((char*)*param, sp, 
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)
-	    == 0) {
+	s.s = (char*)*param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, sp) == 0) {
 	    LOG(L_ERR,"domain:parameter_fixup(): parsing of "
 		"pseudo variable %s failed!\n", (char*)*param);
 	    pkg_free(sp);
 	    return -1;
 	}
-	if (sp->type == XL_NULL) {
+	if (sp->type == PVT_NULL) {
 	    LOG(L_ERR, "permissions:double_fixup(): bad pseudo variable\n");
 	    pkg_free(sp);
 	    return -1;

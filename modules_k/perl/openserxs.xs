@@ -41,7 +41,7 @@
 #include "../../usr_avp.h"
 #include "../../action.h"
 #include "../../flags.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../../route_struct.h"
 #include "../../serialize.h"
@@ -359,31 +359,32 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
  * Compile a string with pseudo variables substituted by their values.
  * A string buffer is allocated. Deallocate afterwards!
  */
-char *xl_sprintf(struct sip_msg *m, char *fmt) {
+char *pv_sprintf(struct sip_msg *m, char *fmt) {
 	int buf_size = 4096;
-	xl_elem_t *model;
-
+	pv_elem_t *model;
+	str s;
 	char *out = (char *)pkg_malloc(buf_size);
 	char *ret = NULL;
 
 	if (!out) {
-		LOG(L_ERR, "perl:xl_sprintf: Memory exhausted!\n");
+		LOG(L_ERR, "perl:pv_sprintf: Memory exhausted!\n");
 		return NULL;
 	}
 
-	if(xl_parse_format(fmt, &model, XL_DISABLE_NONE) < 0) {
-		LOG(L_ERR, "perl:xl_sprintf: ERROR: wrong format[%s]!\n",
+	s.s = fmt; s.len = strlen(s.s);
+	if(pv_parse_format(&s, &model) < 0) {
+		LOG(L_ERR, "perl:pv_sprintf: ERROR: wrong format[%s]!\n",
 			fmt);
 		return NULL;
 	}
 
-	if(xl_printf(m, model, out, &buf_size) < 0) {
+	if(pv_printf(m, model, out, &buf_size) < 0) {
 		ret = NULL;
 	} else {
 		ret = strdup(out);
 	}
 
-	xl_elem_free_all(model);
+	pv_elem_free_all(model);
 	pkg_free(out);
 
 	return ret;
@@ -1140,7 +1141,7 @@ pseudoVar(self, varstring)
 		LOG(L_ERR, "perl: Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
-		ret = xl_sprintf(msg, varstring);
+		ret = pv_sprintf(msg, varstring);
 		if (ret) {
 			ST(0) = sv_2mortal(newSVpv(ret, strlen(ret)));
 			free(ret);

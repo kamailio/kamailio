@@ -45,7 +45,7 @@
 #include "../../str.h"
 #include "../../ut.h"
 #include "../../dprint.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../../parser/parser_f.h"
 #include "../../parser/parse_from.h"
@@ -115,7 +115,7 @@ static int sock;
 
 struct append_elem {
 	str        name;       /* name / title */
-	xl_spec_t  spec;       /* value's spec */
+	pv_spec_t  spec;       /* value's spec */
 	struct append_elem *next;
 };
 
@@ -143,17 +143,16 @@ int parse_tw_append( modparam_t type, void* val)
 	struct append_elem *last;
 	struct append_elem *elem;
 	struct tw_append *app;
-	xl_spec_t lspec;
+	pv_spec_t lspec;
 	char *s;
 	str  foo;
-	int  xl_flags;
+	str  bar;
 
 	
 	if (val==0 || ((char*)val)[0]==0)
 		return 0;
 
 	s = (char*)val;
-	xl_flags = XL_THROW_ERROR | XL_DISABLE_COLORS;
 
 	/* start parsing - first the name */
 	while( *s && isspace((int)*s) )  s++;
@@ -243,12 +242,13 @@ int parse_tw_append( modparam_t type, void* val)
 		}
 
 		/* get value type */
-		if ( (foo.s=xl_parse_spec( s, &lspec, xl_flags))==0 )
+		bar.s = s; bar.len = strlen(bar.s);
+		if ( (foo.s=pv_parse_spec( &bar, &lspec))==0 )
 			goto parse_error;
 
 		/* if short element....which one? */
 		if (elem==0) {
-			if (lspec.type!=XL_MSG_BODY) {
+			if (lspec.type!=PVT_MSG_BODY) {
 			LOG(L_ERR,"ERROR:tm:parse_tw_append: short spec '%.*s' unknown"
 					"(aceepted only body)\n",(int)(long)(foo.s-s), s);
 				goto error;
@@ -444,7 +444,7 @@ static inline char* add2buf(char *buf, char *end, str *name, str *value)
 static inline char* append2buf( char *buf, int len, struct sip_msg *req, 
 				struct append_elem *elem)
 {
-	xl_value_t value;
+	pv_value_t value;
 	char *end;
 
 	end = buf+len;
@@ -452,14 +452,14 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 	while (elem)
 	{
 		/* get the value */
-		if (xl_get_spec_value(req, &elem->spec, &value, 0)!=0)
+		if (pv_get_spec_value(req, &elem->spec, &value)!=0)
 		{
 			LOG(L_ERR,"ERROR:tm:append2buf: failed to get '%.*s'\n",
 				elem->name.len,elem->name.s);
 		}
 
 		/* empty element? */
-		if ( !(value.flags&XL_VAL_NULL) ) {
+		if ( !(value.flags&PV_VAL_NULL) ) {
 			/* write the value into the buffer */
 			buf = add2buf( buf, end, &elem->name, &value.rs);
 			if (!buf)

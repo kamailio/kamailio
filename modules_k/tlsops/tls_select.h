@@ -26,7 +26,7 @@
 #include <openssl/ssl.h>
 
 #include "../../parser/msg_parser.h"
-#include "../../items.h"
+#include "../../pvar.h"
 
 enum {
 	CERT_LOCAL      = 1<<0,   /* Select local certificate */
@@ -57,38 +57,38 @@ enum {
 
 typedef int select_t;
 
-int tlsops_cipher(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_cipher(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_bits(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_bits(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_version(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_desc(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_desc(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_cert_version(struct sip_msg *msg, xl_value_t *res, 
-		xl_param_t *param, int flags);
+int tlsops_cert_version(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 /*
  * Check whether peer certificate exists and verify the result
  * of certificate verification
  */
-int tlsops_check_cert(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_check_cert(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_validity(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_validity(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_sn(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_sn(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-		int flags);
+int tlsops_alt(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 #endif

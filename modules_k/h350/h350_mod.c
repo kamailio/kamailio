@@ -47,7 +47,7 @@ static int child_init(int rank);
 /*
  * fixup functions
  */
-static int one_str_xl_elem_fixup(void** param, int param_no);
+static int one_str_pv_elem_fixup(void** param, int param_no);
 static int h350_auth_lookup_fixup(void** param, int param_no);
 
 /*
@@ -78,13 +78,13 @@ ldap_api_t ldap_api;
  */
 static cmd_export_t cmds[] = {
 	{"h350_sipuri_lookup",           w_h350_sipuri_lookup,     1,
-	 one_str_xl_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	 one_str_pv_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"h350_auth_lookup",             w_h350_auth_lookup,       2,
 	 h350_auth_lookup_fixup,         REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"h350_result_call_preferences", w_h350_call_preferences,  1,
-	 one_str_xl_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	 one_str_pv_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"h350_result_service_level",    w_h350_service_level,     1,
-	 one_str_xl_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	 one_str_pv_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -179,43 +179,44 @@ static void destroy(void)
  */
 static int w_h350_sipuri_lookup(struct sip_msg* msg, char* sip_uri, char* s2)
 {
-	return h350_sipuri_lookup(msg, (xl_elem_t*)sip_uri);
+	return h350_sipuri_lookup(msg, (pv_elem_t*)sip_uri);
 }
 
 static int w_h350_auth_lookup(struct sip_msg* msg, char* digest_username, char* avp_specs)
 {
 	return h350_auth_lookup(
 		msg, 
-		(xl_elem_t*)digest_username, 
+		(pv_elem_t*)digest_username, 
 		(struct h350_auth_lookup_avp_params*)avp_specs);
 }
 
 static int w_h350_call_preferences(struct sip_msg* msg, char* avp_name_prefix, char* s2)
 {
-	return h350_call_preferences(msg, (xl_elem_t*)avp_name_prefix);
+	return h350_call_preferences(msg, (pv_elem_t*)avp_name_prefix);
 }
 
 static int w_h350_service_level(struct sip_msg* msg, char* avp_name_prefix, char* s2)
 {
-	return h350_service_level(msg, (xl_elem_t*)avp_name_prefix);
+	return h350_service_level(msg, (pv_elem_t*)avp_name_prefix);
 }
 
 /*
  * FIXUP functions
  */
 
-static int one_str_xl_elem_fixup(void** param, int param_no)
+static int one_str_pv_elem_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
-	char* s;
+	pv_elem_t *model;
+	str s;
 
 	if (param_no == 1) {
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-				LM_ERR("xl_parse_format failed\n");
+			s.len = strlen(s.s);
+			if (pv_parse_format(&s,&model)<0) {
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -227,25 +228,24 @@ static int one_str_xl_elem_fixup(void** param, int param_no)
 
 static int h350_auth_lookup_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
-        char *p, *s, *username_avp_spec_str, *pwd_avp_spec_str;
+	pv_elem_t *model;
+    char *p, *username_avp_spec_str, *pwd_avp_spec_str;
+	str s;
 	struct h350_auth_lookup_avp_params *params;
 
-        if (param_no == 1) 
+    if (param_no == 1) 
 	{
-                s = (char*)*param;
-                if (s==0 || s[0]==0) {
-                        model = 0;
-                } else {
-                        if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-                                LM_ERR("xl_parse_format failed\n");
-                                return E_OUT_OF_MEM;
-                        }
-                }
-                *param = (void*)model;
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
+            model = 0;
+		} else {
+            if (pv_parse_format(&s,&model)<0) {
+                LM_ERR("pv_parse_format failed\n");
+                return E_OUT_OF_MEM;
+            }
         }
-	else if (param_no == 2)
-	{
+        *param = (void*)model;
+    } else if (param_no == 2) {
 		/*
 		 * parse *param into username_avp_spec_str and pwd_avp_spec_str
 		 */
@@ -260,7 +260,7 @@ static int h350_auth_lookup_fixup(void** param, int param_no)
 		*(pwd_avp_spec_str++) = 0;
 
 		/*
-		 * parse avp specs into xl_spec_t and store in params
+		 * parse avp specs into pv_spec_t and store in params
 		 */
 		params = (struct h350_auth_lookup_avp_params*)pkg_malloc
 				(sizeof(struct h350_auth_lookup_avp_params));
@@ -270,35 +270,29 @@ static int h350_auth_lookup_fixup(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		memset(params, 0, sizeof(struct h350_auth_lookup_avp_params));
-
-		p = xl_parse_spec(
-			username_avp_spec_str,
-			&params->username_avp_spec,
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		s.s = username_avp_spec_str; s.len = strlen(s.s);
+		p = pv_parse_spec(&s, &params->username_avp_spec);
 		if (p == 0)
 		{
 			pkg_free(params);
 			LM_ERR("parse error for [%s]\n", username_avp_spec_str);
 			return E_UNSPEC;
 		}
-		if (params->username_avp_spec.type != XL_AVP)
+		if (params->username_avp_spec.type != PVT_AVP)
 		{
 			pkg_free(params);
 			LM_ERR("invalid AVP specification [%s]\n", username_avp_spec_str);
 			return E_UNSPEC;
 		}
-
-		p = xl_parse_spec(
-                        pwd_avp_spec_str,
-                        &params->password_avp_spec,
-                        XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		s.s = pwd_avp_spec_str; s.len =  strlen(s.s);
+		p = pv_parse_spec(&s, &params->password_avp_spec);
                 if (p == 0)
                 {
                         pkg_free(params);
                         LM_ERR("parse error for [%s]\n", pwd_avp_spec_str);
                         return E_UNSPEC;
                 }
-                if (params->password_avp_spec.type != XL_AVP)
+                if (params->password_avp_spec.type != PVT_AVP)
                 {
                         pkg_free(params);
                         LM_ERR("invalid AVP specification [%s]\n", pwd_avp_spec_str);

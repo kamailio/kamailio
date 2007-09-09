@@ -44,7 +44,7 @@
 #include "../../sr_module.h"
 #include "../../ut.h"
 #include "../../error.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
 #include "loose.h"
@@ -162,10 +162,12 @@ static void mod_destroy(void)
 
 static int it_list_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 	if(*param)
 	{
-		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		s.s = (char*)(*param); s.len = strlen(s.s);
+		if(pv_parse_format(&s, &model)<0)
 		{
 			LOG(L_ERR, "ERROR:textops:item_list_fixup: wrong format[%s]\n",
 				(char*)(*param));
@@ -216,7 +218,7 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 		return -1;
 	}
 
-	if (key && xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
+	if (key && pv_printf_s(msg, (pv_elem_t*)key, &s)<0) {
 		LOG(L_ERR,"ERROR:rr:w_record_route1: failed to print "
 			"the format\n");
 		return -1;
@@ -239,7 +241,7 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
 		return -1;
 	}
 
-	if (xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
+	if (pv_printf_s(msg, (pv_elem_t*)key, &s)<0) {
 		LOG(L_ERR,"ERROR:rr:w_record_route_preset: failed to print "
 			"the format\n");
 		return -1;
@@ -256,7 +258,7 @@ static int w_add_rr_param(struct sip_msg *msg, char *key, char *foo)
 {
 	str s;
 
-	if (xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
+	if (pv_printf_s(msg, (pv_elem_t*)key, &s)<0) {
 		LOG(L_ERR,"ERROR:rr:w_add_rr_param: failed to print the format\n");
 		return -1;
 	}

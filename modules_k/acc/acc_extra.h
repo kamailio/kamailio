@@ -35,13 +35,13 @@
 #define _ACC_EXTRA_H_
 
 #include "../../str.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 
 struct acc_extra
 {
 	str        name;       /* name (log comment/ column name) */
-	xl_spec_t  spec;       /* value's spec */
+	pv_spec_t  spec;       /* value's spec */
 	struct acc_extra *next;
 };
 

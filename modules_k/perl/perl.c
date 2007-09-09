@@ -126,7 +126,8 @@ static param_export_t params[] = {
 static mi_export_t mi_cmds[] = {
 	/* FIXME This does not yet work... 
 	{ "perl_reload",  perl_mi_reload, MI_NO_INPUT_FLAG,  0,  0  },*/
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
+
 };
 
 

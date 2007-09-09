@@ -47,7 +47,7 @@ int request_winfo(struct sip_msg* msg, char* uri, char* expires)
 	if(uri)
 	{
 		printbuf_len = PRINTBUF_SIZE-1;
-		if(xl_printf(msg, (xl_elem_t*)uri, buffer, &printbuf_len)<0)
+		if(pv_printf(msg, (pv_elem_t*)uri, buffer, &printbuf_len)<0)
 		{
 			LM_ERR("cannot print the format\n");
 			return -1;

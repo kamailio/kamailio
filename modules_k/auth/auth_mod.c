@@ -40,7 +40,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../error.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../ut.h"
 #include "../../mod_fix.h"
 #include "../sl/sl_api.h"
@@ -111,12 +111,12 @@ char* rpid_avp_param = DEF_RPID_AVP;
 
 /* definition of AVP containing username value */
 char* user_spec_param = 0;
-static xl_spec_t user_spec;
+static pv_spec_t user_spec;
 
 
 /* definition of AVP containing password value */
 char* passwd_spec_param = 0;
-static xl_spec_t passwd_spec;
+static pv_spec_t passwd_spec;
 
 /*
  * Exported functions 
@@ -211,6 +211,7 @@ static inline int generate_random_secret(void)
 
 static int mod_init(void)
 {
+	str stmp;
 	LOG(L_INFO,"AUTH module - initializing\n");
 	
 	/* load the SL API */
@@ -244,17 +245,18 @@ static int mod_init(void)
 
 	if(user_spec_param!=0)
 	{
-		if(xl_parse_spec(user_spec_param, &user_spec, 0)==NULL)
+		stmp.s = user_spec_param; stmp.len = strlen(stmp.s);
+		if(pv_parse_spec(&stmp, &user_spec)==NULL)
 		{
 			LOG(L_ERR,"ERROR:auth:mod_init: failed to parse username spec\n");
 			return -5;
 		}
 		switch(user_spec.type) {
-			case XL_NONE:
-			case XL_EMPTY:
-			case XL_NULL:
-			case XL_MARKER:
-			case XL_COLOR:
+			case PVT_NONE:
+			case PVT_EMPTY:
+			case PVT_NULL:
+			case PVT_MARKER:
+			case PVT_COLOR:
 				LOG(L_ERR,"ERROR:auth:mod_init: invalid username spec\n");
 				return -6;
 			default: ;
@@ -262,17 +264,18 @@ static int mod_init(void)
 	}
 	if(passwd_spec_param!=0)
 	{
-		if(xl_parse_spec(passwd_spec_param, &passwd_spec, 0)==NULL)
+		stmp.s = passwd_spec_param; stmp.len = strlen(stmp.s);
+		if(pv_parse_spec(&stmp, &passwd_spec)==NULL)
 		{
 			LOG(L_ERR,"ERROR:auth:mod_init: failed to parse password spec\n");
 			return -7;
 		}
 		switch(passwd_spec.type) {
-			case XL_NONE:
-			case XL_EMPTY:
-			case XL_NULL:
-			case XL_MARKER:
-			case XL_COLOR:
+			case PVT_NONE:
+			case PVT_EMPTY:
+			case PVT_NULL:
+			case PVT_MARKER:
+			case PVT_COLOR:
 				LOG(L_ERR,"ERROR:auth:mod_init: invalid password spec\n");
 				return -8;
 			default: ;
@@ -292,16 +295,16 @@ static void destroy(void)
 static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 		str* _domain, char* _ha1)
 {
-	xl_value_t sval;
+	pv_value_t sval;
 	
 	/* get username from PV */
-	memset(&sval, 0, sizeof(xl_value_t));
-	if(xl_get_spec_value(msg, &user_spec, &sval, 0)==0)
+	memset(&sval, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(msg, &user_spec, &sval)==0)
 	{
-		if(sval.flags==XL_VAL_NONE || (sval.flags&XL_VAL_NULL)
-				|| (sval.flags&XL_VAL_EMPTY) || (!(sval.flags&XL_VAL_STR)))
+		if(sval.flags==PV_VAL_NONE || (sval.flags&PV_VAL_NULL)
+				|| (sval.flags&PV_VAL_EMPTY) || (!(sval.flags&PV_VAL_STR)))
 		{
-			xl_value_destroy(&sval);
+			pv_value_destroy(&sval);
 			return 1;
 		}
 		if(sval.rs.len!= _username->user.len
@@ -309,20 +312,20 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 		{
 			DBG("auth: auth_get_ha1: username mismatch [%.*s] [%.*s]\n",
 				_username->user.len, _username->user.s, sval.rs.len, sval.rs.s);
-			xl_value_destroy(&sval);
+			pv_value_destroy(&sval);
 			return 1;
 		}
 	} else {
 		return 1;
 	}
 	/* get password from PV */
-	memset(&sval, 0, sizeof(xl_value_t));
-	if(xl_get_spec_value(msg, &passwd_spec, &sval, 0)==0)
+	memset(&sval, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(msg, &passwd_spec, &sval)==0)
 	{
-		if(sval.flags==XL_VAL_NONE || (sval.flags&XL_VAL_NULL)
-				|| (sval.flags&XL_VAL_EMPTY) || (!(sval.flags&XL_VAL_STR)))
+		if(sval.flags==PV_VAL_NONE || (sval.flags&PV_VAL_NULL)
+				|| (sval.flags&PV_VAL_EMPTY) || (!(sval.flags&PV_VAL_STR)))
 		{
-			xl_value_destroy(&sval);
+			pv_value_destroy(&sval);
 			return 1;
 		}
 	} else {
@@ -341,7 +344,7 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 	return 0;
 }
 
-static inline int pv_authorize(struct sip_msg* msg, xl_elem_t* realm,
+static inline int pv_authorize(struct sip_msg* msg, pv_elem_t* realm,
 										hdr_types_t hftype)
 {
 	static char ha1[256];
@@ -352,8 +355,8 @@ static inline int pv_authorize(struct sip_msg* msg, xl_elem_t* realm,
 	str domain;
 
 	if (realm) {
-		if (xl_printf_s(msg, realm, &domain)!=0) {
-			LOG(L_ERR, "ERROR:auth:authorize: xl_printf_s failed\n");
+		if (pv_printf_s(msg, realm, &domain)!=0) {
+			LOG(L_ERR, "ERROR:auth:authorize: pv_printf_s failed\n");
 			return AUTH_ERROR;
 		}
 	} else {
@@ -392,30 +395,31 @@ static inline int pv_authorize(struct sip_msg* msg, xl_elem_t* realm,
 
 int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2)
 {
-	return pv_authorize(msg, (xl_elem_t*)realm, HDR_PROXYAUTH_T);
+	return pv_authorize(msg, (pv_elem_t*)realm, HDR_PROXYAUTH_T);
 }
 
 
 int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2)
 {
-	return pv_authorize(msg, (xl_elem_t*)realm, HDR_AUTHORIZATION_T);
+	return pv_authorize(msg, (pv_elem_t*)realm, HDR_AUTHORIZATION_T);
 }
 
 
 static int challenge_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
 	unsigned long qop;
 	int err;
-	char *s;
+	str s;
 	
 	if (param_no == 1) {
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-				LOG(L_ERR, "ERROR:auth:challenge_fixup: xl_parse_format "
+			s.len = strlen(s.s);
+			if (pv_parse_format(&s,&model)<0) {
+				LOG(L_ERR, "ERROR:auth:challenge_fixup: pv_parse_format "
 					"failed\n");
 				return E_OUT_OF_MEM;
 			}
@@ -456,16 +460,17 @@ static int rpid_fixup(void** param, int param_no)
  */
 static int auth_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
-	char* s;
+	pv_elem_t *model;
+	str s;
 
 	if (param_no == 1) {
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-				LOG(L_ERR, "ERROR:auth:auth_fixup: xl_parse_format "
+			s.len =  strlen(s.s);
+			if (pv_parse_format(&s,&model)<0) {
+				LOG(L_ERR, "ERROR:auth:auth_fixup: pv_parse_format "
 					"failed\n");
 				return E_OUT_OF_MEM;
 			}

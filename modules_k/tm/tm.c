@@ -61,7 +61,7 @@
 #include "../../mi/mi.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mod_fix.h"
 
 #include "sip_msg.h"
@@ -79,10 +79,10 @@
 MODULE_VERSION
 
 /* item functions */
-static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags);
-static int it_get_tm_reply_code(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags);
+static int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+static int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 /* fixup functions */
 static int fixup_t_send_reply(void** param, int param_no);
@@ -236,14 +236,13 @@ static stat_export_t mod_stats[] = {
 
 /**
  * pseudo-variables exported by TM module
- *   { name, function, type, xl_param_t}
- *   type: can be 0 if you do not want to use it in identifying the PV
- *   xl_param_t: is given as parameter to 'function'
  */
-static item_export_t mod_items[] = {
-	{ "T_branch_idx", it_get_tm_branch_idx, 100, {{0, 0}, 0, 0} },
-	{ "T_reply_code", it_get_tm_reply_code, 100, {{0, 0}, 0, 0} },
-	{ 0, 0, 0, {{0, 0}, 0, 0} }
+static pv_export_t mod_items[] = {
+	{ {"T_branch_idx", sizeof("T_branch_idx")-1}, 900, pv_get_tm_branch_idx, 0,
+		 0, 0, 0, 0 },
+	{ {"T_reply_code", sizeof("T_reply_code")-1}, 901, pv_get_tm_reply_code, 0,
+		 0, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 
@@ -942,8 +941,8 @@ route_err:
 
 
 /* item functions */
-static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags)
+static int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	extern int _tm_branch_index;
 	int l = 0;
@@ -958,13 +957,13 @@ static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
 	res->rs.len = l;
 
 	res->ri = _tm_branch_index;
-	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
 	return 0;
 }
 
-static int it_get_tm_reply_code(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags)
+static int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	struct cell *t;
 	int code;
@@ -1011,7 +1010,7 @@ static int it_get_tm_reply_code(struct sip_msg *msg, xl_value_t *res,
 	res->rs.s = int2str( code, &res->rs.len);
 
 	res->ri = code;
-	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 	return 0;
 }
 

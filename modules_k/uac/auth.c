@@ -32,7 +32,7 @@
 
 #include "../../str.h"
 #include "../../dprint.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
@@ -43,9 +43,9 @@
 
 
 extern struct tm_binds uac_tmb;
-extern xl_spec_t auth_username_spec;
-extern xl_spec_t auth_realm_spec;
-extern xl_spec_t auth_password_spec;
+extern pv_spec_t auth_username_spec;
+extern pv_spec_t auth_realm_spec;
+extern pv_spec_t auth_password_spec;
 
 
 static struct uac_credential *crd_list = 0;
@@ -260,28 +260,28 @@ static inline struct uac_credential *get_avp_credential(struct sip_msg *msg,
 																str *realm)
 {
 	static struct uac_credential crd;
-	xl_value_t xl_val;
+	pv_value_t pv_val;
 
-	if(xl_get_spec_value( msg, &auth_realm_spec, &xl_val, 0)!=0
-	|| xl_val.flags&XL_VAL_NULL || xl_val.rs.len<=0)
+	if(pv_get_spec_value( msg, &auth_realm_spec, &pv_val)!=0
+	|| pv_val.flags&PV_VAL_NULL || pv_val.rs.len<=0)
 		return 0;
 	
-	crd.realm = xl_val.rs;
+	crd.realm = pv_val.rs;
 	/* is it the domain we are looking for? */
 	if (realm->len!=crd.realm.len ||
 	strncmp( realm->s, crd.realm.s, realm->len)!=0 )
 		return 0;
 
 	/* get username and password */
-	if(xl_get_spec_value( msg, &auth_username_spec, &xl_val, 0)!=0
-	|| xl_val.flags&XL_VAL_NULL || xl_val.rs.len<=0)
+	if(pv_get_spec_value( msg, &auth_username_spec, &pv_val)!=0
+	|| pv_val.flags&PV_VAL_NULL || pv_val.rs.len<=0)
 		return 0;
-	crd.user = xl_val.rs;
+	crd.user = pv_val.rs;
 
-	if(xl_get_spec_value( msg, &auth_password_spec, &xl_val, 0)!=0
-	|| xl_val.flags&XL_VAL_NULL || xl_val.rs.len<=0)
+	if(pv_get_spec_value( msg, &auth_password_spec, &pv_val)!=0
+	|| pv_val.flags&PV_VAL_NULL || pv_val.rs.len<=0)
 		return 0;
-	crd.passwd = xl_val.rs;
+	crd.passwd = pv_val.rs;
 
 	return &crd;
 }
@@ -413,7 +413,7 @@ int uac_auth( struct sip_msg *msg)
 	/* can we authenticate this realm? */
 	crd = 0;
 	/* first look into AVP, if set */
-	if ( auth_realm_spec.type==XL_AVP )
+	if ( auth_realm_spec.type==PVT_AVP )
 		crd = get_avp_credential( msg, &auth.realm );
 	/* if not found, look into predefined credentials */
 	if (crd==0)

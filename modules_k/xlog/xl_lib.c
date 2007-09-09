@@ -34,9 +34,9 @@
 
 #include "xl_lib.h"
 
-int xl_print_log(struct sip_msg* msg, xl_elem_p list, char *buf, int *len)
+int xl_print_log(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 {
-	return xl_printf(msg, list, buf, len);
+	return pv_printf(msg, list, buf, len);
 }
 
 

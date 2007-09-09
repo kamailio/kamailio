@@ -422,7 +422,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		{
 			ERR_MEM(PKG_MEM_STR);
 		}	
-		if(xl_printf(msg, (xl_elem_t*)sender_uri, buf, &buf_len)<0)
+		if(pv_printf(msg, (pv_elem_t*)sender_uri, buf, &buf_len)<0)
 		{
 			LM_ERR("cannot print the format\n");
 			goto error;

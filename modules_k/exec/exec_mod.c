@@ -34,7 +34,7 @@
 #include "../../str.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/parse_uri.h"
 
 #include "exec.h"
@@ -116,7 +116,7 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	environment_t *backup;
 	int ret;
 	str command;
-	xl_elem_t *model;
+	pv_elem_t *model;
 	
 	if(msg==0 || cmd==0)
 		return -1;
@@ -135,8 +135,8 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	else
 		uri=&msg->first_line.u.request.uri;
 	
-	model = (xl_elem_t*)cmd;
-	if(xl_printf_s(msg, model, &command)<0)
+	model = (pv_elem_t*)cmd;
+	if(pv_printf_s(msg, model, &command)<0)
 	{
 		LOG(L_ERR,
 			"exec:w_exec_dset: error - cannot print the format\n");
@@ -160,7 +160,7 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 #define EXEC_MSG_PRINTBUF_SIZE   1024
 	static char exec_msg_printbuf[EXEC_MSG_PRINTBUF_SIZE];
 	int printbuf_len;
-	xl_elem_t *model;
+	pv_elem_t *model;
 	char *cp;
 	
 	if(msg==0 || cmd==0)
@@ -175,12 +175,12 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 		}
 	}
 	
-	model = (xl_elem_t*)cmd;
-	if(model->next==0 && model->spec.itf==0) {
+	model = (pv_elem_t*)cmd;
+	if(model->next==0 && model->spec.getf==0) {
 		cp = model->text.s;
 	} else {
 		printbuf_len = EXEC_MSG_PRINTBUF_SIZE-1;
-		if(xl_printf(msg, model, exec_msg_printbuf, &printbuf_len)<0)
+		if(pv_printf(msg, model, exec_msg_printbuf, &printbuf_len)<0)
 		{
 			LOG(L_ERR,
 				"exec:w_exec_msg: error - cannot print the format\n");
@@ -203,7 +203,7 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 	environment_t *backup;
 	int ret;
 	str command;
-	xl_elem_t *model;
+	pv_elem_t *model;
 	
 	if(msg==0 || cmd==0)
 		return -1;
@@ -217,8 +217,8 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 		}
 	}
 
-	model = (xl_elem_t*)cmd;
-	if(xl_printf_s(msg, model, &command)<0)
+	model = (pv_elem_t*)cmd;
+	if(pv_printf_s(msg, model, &command)<0)
 	{
 		LOG(L_ERR,
 			"exec:w_exec_avp: error - cannot print the format\n");
@@ -227,7 +227,7 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 	
 	DBG("exec:w_exec_avp: executing [%s]\n", command.s);
 
-	ret=exec_avp(msg, command.s, (itemname_list_p)avpl);
+	ret=exec_avp(msg, command.s, (pvname_list_p)avpl);
 	if (setvars) {
 		unset_env(backup);
 	}
@@ -235,16 +235,18 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 }
 
 /*
- * Convert char* parameter to xl_elem parameter
+ * Convert char* parameter to pv_elem parameter
  */
 static int it_list_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 	if(param_no==1)
 	{
 		if(*param)
 		{
-			if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+			s.s = (char*)(*param); s.len = strlen(s.s);
+			if(pv_parse_format(&s, &model)<0)
 			{
 				LOG(L_ERR, "ERROR:exec:it_list_fixup: wrong format[%s]\n",
 					(char*)(*param));
@@ -262,42 +264,44 @@ static int it_list_fixup(void** param, int param_no)
 
 static int exec_avp_fixup(void** param, int param_no)
 {
-	xl_elem_t *model = NULL;
-	itemname_list_t *anlist = NULL;
-	char *s;
+	pv_elem_t *model = NULL;
+	pvname_list_t *anlist = NULL;
+	str s;
 
-	s = (char*)(*param);
+	s.s = (char*)(*param);
 	if (param_no==1)
 	{
-		if(s==NULL)
+		if(s.s==NULL)
 		{
 			LOG(L_ERR, "ERROR:exec:exec_avp_fixup: null format in P%d\n",
 					param_no);
 			return E_UNSPEC;
 		}
-		if(xl_parse_format(s, &model, XL_DISABLE_COLORS|XL_THROW_ERROR)<0)
+		s.len =  strlen(s.s);
+		if(pv_parse_format(&s, &model)<0)
 		{
 			LOG(L_ERR,
 				"ERROR:exec:exec_avp_fixup: wrong format[%s]\n",
-				s);
+				s.s);
 			return E_UNSPEC;
 		}
 			
 		*param = (void*)model;
 		return 0;
 	} else if(param_no==2) {
-		if(s==NULL)
+		if(s.s==NULL)
 		{
 			LOG(L_ERR, "ERROR:exec:exec_avp_fixup: null format in P%d\n",
 					param_no);
 			return E_UNSPEC;
 		}
-		anlist = parse_itemname_list(s, XL_AVP);
+		s.len =  strlen(s.s);
+		anlist = parse_pvname_list(&s, PVT_AVP);
 		if(anlist==NULL)
 		{
 			LOG(L_ERR,
 				"ERROR:exec_avp_fixup: bad format in P%d [%s]\n",
-				param_no, s);
+				param_no, s.s);
 			return E_UNSPEC;
 		}
 		*param = (void*)anlist;

@@ -36,7 +36,7 @@
 #define _DISPATCH_H_
 
 #include <stdio.h>
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 #include "../tm/tm_load.h"
 
@@ -58,7 +58,7 @@ typedef struct _ds_param
 	int type;
 	union {
 		int id;
-		xl_spec_t sp;
+		pv_spec_t sp;
 	} v;
 } ds_param_t, *ds_param_p;
 

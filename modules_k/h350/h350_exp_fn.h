@@ -33,7 +33,7 @@
 #define H350_EXP_FN_H
 
 #include "../../parser/msg_parser.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 
 #define E_H350_SUCCESS 1
@@ -42,21 +42,21 @@
 
 struct h350_auth_lookup_avp_params
 {
-	xl_spec_t   username_avp_spec;
-	xl_spec_t   password_avp_spec;
+	pv_spec_t   username_avp_spec;
+	pv_spec_t   password_avp_spec;
 };
 
 int h350_exp_fn_init();
 
-int h350_sipuri_lookup(struct sip_msg* _msg, xl_elem_t* _sip_uri);
+int h350_sipuri_lookup(struct sip_msg* _msg, pv_elem_t* _sip_uri);
 
 int h350_auth_lookup(
 	struct sip_msg* _msg, 
-	xl_elem_t* _digest_username, 
+	pv_elem_t* _digest_username, 
 	struct h350_auth_lookup_avp_params* _avp_specs);
 
-int h350_call_preferences(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix);
+int h350_call_preferences(struct sip_msg* _msg, pv_elem_t* _avp_name_prefix);
 
-int h350_service_level(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix);
+int h350_service_level(struct sip_msg* _msg, pv_elem_t* _avp_name_prefix);
 
 #endif /* H350_EXP_FN_H */

@@ -283,7 +283,7 @@ auth_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 
 
 /* Authorize digest credentials */
-int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
+int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 {
 	auth_result_t ret;
 	struct hdr_field* h;
@@ -293,8 +293,8 @@ int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype)
 	str  domain;
 
 	if (realm) {
-		if (xl_printf_s(msg, realm, &domain)!=0) {
-			LOG(L_ERR,"ERROR:auth_diamtere:authorize: xl_printf_s "
+		if (pv_printf_s(msg, realm, &domain)!=0) {
+			LOG(L_ERR,"ERROR:auth_diamtere:authorize: pv_printf_s "
 				"failed\n");
 			return AUTH_ERROR;
 		}

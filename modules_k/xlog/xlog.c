@@ -36,6 +36,8 @@
 
 #include "xl_lib.h"
 
+#include "../../pvar.h"
+
 
 MODULE_VERSION
 
@@ -104,7 +106,6 @@ static int mod_init(void)
 		LOG(L_ERR, "XLOG:mod_init: ERROR: no more memory\n");
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -125,7 +126,7 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (xl_elem_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
@@ -142,7 +143,7 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (xl_elem_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
@@ -159,7 +160,7 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (xl_elem_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
@@ -215,22 +216,24 @@ static int xlog_fixup(void** param, int param_no)
 
 static int xdbg_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 
 	if(param_no==1)
 	{
 		if(*param)
 		{
+			s.s = (char*)(*param); s.len = strlen(s.s);
 			if(log_stderr!=0 || (log_stderr==0 && force_color!=0))
 			{
-				if(xl_parse_format((char*)(*param), &model, XL_DISABLE_NONE)<0)
+				if(pv_parse_format(&s, &model)<0)
 				{
 					LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]\n",
 						(char*)(*param));
 					return E_UNSPEC;
 				}
 			} else {
-				if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0)
+				if(pv_parse_format(&s, &model)<0)
 				{
 					LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]!\n",
 						(char*)(*param));

@@ -62,7 +62,7 @@
 #include "../../parser/parse_methods.h"
 #include "../../resolve.h"
 #include "../../usr_avp.h"
-#include "../../items.h"
+#include "../../pvar.h"
 
 #include "../tm/tm_load.h"
 
@@ -252,7 +252,7 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
 	str _s;
 	int ver = 0;
 
@@ -272,15 +272,15 @@ static int mod_init(void)
 	}
 
 	if (ms_snd_time_avp_param && *ms_snd_time_avp_param) {
-		if (xl_parse_spec(ms_snd_time_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		_s.s = ms_snd_time_avp_param; _s.len = strlen(_s.s);
+		if (pv_parse_spec(&_s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:MSILO:mod_init: malformed or non AVP %s "
 				"AVP definition\n", ms_snd_time_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &ms_snd_time_avp_name,
+		if(pv_get_avp_name(0, &(avp_spec.pvp), &ms_snd_time_avp_name,
 					&ms_snd_time_avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:MSILO:mod_init: [%s]- invalid "
@@ -465,7 +465,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	if(owner)
 	{
 		printbuf_len = MSILO_PRINTBUF_SIZE-1;
-		if(xl_printf(msg, (xl_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
+		if(pv_printf(msg, (pv_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
 		{
 			LOG(L_ERR, "MSILO:m_store: error - cannot print the format\n");
 			return -1;
@@ -856,7 +856,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	if(owner)
 	{
 		printbuf_len = MSILO_PRINTBUF_SIZE-1;
-		if(xl_printf(msg, (xl_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
+		if(pv_printf(msg, (pv_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
 		{
 			LOG(L_ERR, "MSILO:m_dump: error - cannot print the format\n");
 			return -1;
@@ -1376,10 +1376,12 @@ int check_message_support(struct sip_msg* msg)
 
 static int fixup_msilo(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 	if(*param)
 	{
-		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		s.s = (char*)(*param); s.len =  strlen(s.s);
+		if(pv_parse_format(&s, &model)<0)
 		{
 			LOG(L_ERR, "ERROR:msilo:fixup_msilo: wrong format[%s]\n",
 				(char*)(*param));

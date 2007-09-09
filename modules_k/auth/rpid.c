@@ -37,7 +37,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "auth_mod.h"
 #include "api.h"
 #include "rpid.h"
@@ -56,17 +56,19 @@ static int_str rpid_avp_name;
  */
 int init_rpid_avp(char *rpid_avp_param)
 {
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
+	str stmp;
 	if (rpid_avp_param && *rpid_avp_param) {
-		if (xl_parse_spec(rpid_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		stmp.s = rpid_avp_param; stmp.len = strlen(stmp.s);
+		if (pv_parse_spec(&stmp, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:auth:init_rpid_avp: malformed or non AVP %s "
 				"AVP definition\n", rpid_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &rpid_avp_name, &rpid_avp_type)!=0)
+		if(pv_get_avp_name(0, &(avp_spec.pvp), &rpid_avp_name,
+					&rpid_avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:auth:init_rpid_avp: [%s]- invalid "
 				"AVP definition\n", rpid_avp_param);

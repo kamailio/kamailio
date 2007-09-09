@@ -39,7 +39,7 @@
 #include "../../ut.h"                   /* Handy utilities */
 #include "../../db/db.h"                /* Database API */
 #include "../../dset.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "checks.h"
 
 
@@ -365,15 +365,15 @@ static inline int e164_check(str* _user)
  */
 int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 {
-    xl_spec_t *sp;
-    xl_value_t xl_val;
+    pv_spec_t *sp;
+    pv_value_t pv_val;
     struct sip_uri puri;
 
-    sp = (xl_spec_t *)_sp;
+    sp = (pv_spec_t *)_sp;
 
-    if (sp && (xl_get_spec_value(_m, sp, &xl_val, 0) == 0)) {
-	if (xl_val.flags & XL_VAL_STR) {
-	    if (parse_uri(xl_val.rs.s, xl_val.rs.len, &puri) < 0) {
+    if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    if (parse_uri(pv_val.rs.s, pv_val.rs.len, &puri) < 0) {
 		LOG(L_ERR, "is_uri_user_e164(): Error while parsing URI\n");
 		return -1;
 	    }

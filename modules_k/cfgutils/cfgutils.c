@@ -47,7 +47,7 @@
 
 #include "../../sr_module.h"
 #include "../../error.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -69,7 +69,8 @@ static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param );
 
-static int it_get_random_val(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags);
+static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 static int fixup_prob( void** param, int param_no);
 
@@ -111,9 +112,10 @@ static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
-static item_export_t mod_items[] = {
-	{ "RANDOM",    it_get_random_val,    100, {{0, 0}, 0, 0} },
-	{ 0, 0, 0, {{0, 0}, 0, 0} }
+static pv_export_t mod_items[] = {
+	{ {"RANDOM", sizeof("RANDOM")-1}, 1000, pv_get_random_val, 0,
+		0, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 struct module_exports exports = {
@@ -238,8 +240,8 @@ static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 	}
 }
 
-static int it_get_random_val(struct sip_msg *msg, xl_value_t *res, 
-											xl_param_t *param, int flags)
+static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	int n;
 	int l = 0;
@@ -255,7 +257,7 @@ static int it_get_random_val(struct sip_msg *msg, xl_value_t *res,
 	res->rs.len = l;
 
 	res->ri = n;
-	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
 	return 0;
 }

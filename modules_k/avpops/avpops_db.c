@@ -314,14 +314,14 @@ int db_delete_avp( str *uuid, str *username, str *domain, char *attr,
 	return 0;
 }
 
-int db_query_avp(struct sip_msg *msg, char *query, itemname_list_t* dest)
+int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 {
 	int_str avp_val;
 	int_str avp_name;
 	unsigned short avp_type;
 	db_res_t* db_res = NULL;
 	int i, j;
-	itemname_list_t* crt;
+	pvname_list_t* crt;
 	
 	if(query==NULL)
 	{
@@ -357,7 +357,8 @@ int db_query_avp(struct sip_msg *msg, char *query, itemname_list_t* dest)
 			{
 				avp_name.n = j+1;
 			} else {
-				if(xl_get_avp_name(msg, &crt->sname, &avp_name, &avp_type)!=0)
+				if(pv_get_avp_name(msg, &crt->sname.pvp, &avp_name,
+							&avp_type)!=0)
 				{
 					LOG(L_ERR,
 					"avpops:db_query_avp:error - cant get avp name [%d/%d]\n",

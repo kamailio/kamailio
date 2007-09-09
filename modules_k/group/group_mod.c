@@ -250,9 +250,10 @@ static void destroy(void)
  * Supported strings: 
  * "Request-URI", "To", "From", "Credentials"
  */
-static group_check_p get_hf( char *str)
+static group_check_p get_hf( char *str1)
 {
 	group_check_p gcp=NULL;
+	str s;
 
 	gcp = (group_check_p)pkg_malloc(sizeof(group_check_t));
 	if(gcp == NULL) {
@@ -261,18 +262,18 @@ static group_check_p get_hf( char *str)
 	}
 	memset(gcp, 0, sizeof(group_check_t));
 
-	if (!strcasecmp( str, "Request-URI")) {
+	if (!strcasecmp( str1, "Request-URI")) {
 		gcp->id = 1;
-	} else if (!strcasecmp( str, "To")) {
+	} else if (!strcasecmp( str1, "To")) {
 		gcp->id = 2;
-	} else if (!strcasecmp( str, "From")) {
+	} else if (!strcasecmp( str1, "From")) {
 		gcp->id = 3;
-	} else if (!strcasecmp( str, "Credentials")) {
+	} else if (!strcasecmp( str1, "Credentials")) {
 		gcp->id = 4;
 	} else {
-		if(xl_parse_spec( str, &gcp->sp,
-				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==NULL
-			|| gcp->sp.type!=XL_AVP)
+		s.s = str1; s.len = strlen(s.s);
+		if(pv_parse_spec( &s, &gcp->sp)==NULL
+			|| gcp->sp.type!=PVT_AVP)
 		{
 			LOG(L_ERR, "ERROR:group:get_hf: Unsupported User Field "
 				"identifier\n");
@@ -284,7 +285,7 @@ static group_check_p get_hf( char *str)
 
 	/* do not free all the time, needed by pseudo-variable spec */
 	if(gcp->id!=5)
-		pkg_free(str);
+		pkg_free(str1);
 
 	return gcp;
 }

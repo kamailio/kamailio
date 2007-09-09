@@ -172,7 +172,8 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
+	str stmp;
 	LM_DBG("initializing ...\n");
 
 	if(init_data()!= 0)
@@ -196,15 +197,15 @@ static int mod_init(void)
 	
 	if (dst_avp_param && *dst_avp_param)
 	{
-		if (xl_parse_spec(dst_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP)
+		stmp.s = dst_avp_param; stmp.len = strlen(stmp.s);
+		if (pv_parse_spec(&stmp, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP)
 		{
 			LM_ERR("malformed or non AVP %s AVP definition\n", dst_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &dst_avp_name, &dst_avp_type)!=0)
+		if(pv_get_avp_name(0, &(avp_spec.pvp), &dst_avp_name, &dst_avp_type)!=0)
 		{
 			LM_ERR("[%s]- invalid AVP definition\n", dst_avp_param);
 			return -1;
@@ -215,15 +216,15 @@ static int mod_init(void)
 	}
 	if (grp_avp_param && *grp_avp_param)
 	{
-		if (xl_parse_spec(grp_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP)
+		stmp.s = grp_avp_param; stmp.len = strlen(stmp.s);
+		if (pv_parse_spec(&stmp, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP)
 		{
 			LM_ERR("malformed or non AVP %s AVP definition\n", grp_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &grp_avp_name, &grp_avp_type)!=0)
+		if(pv_get_avp_name(0, &(avp_spec.pvp), &grp_avp_name, &grp_avp_type)!=0)
 		{
 			LM_ERR("[%s]- invalid AVP definition\n", grp_avp_param);
 			return -1;
@@ -234,15 +235,15 @@ static int mod_init(void)
 	}
 	if (cnt_avp_param && *cnt_avp_param)
 	{
-		if (xl_parse_spec(cnt_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP)
+		stmp.s = cnt_avp_param; stmp.len = strlen(stmp.s);
+		if (pv_parse_spec(&stmp, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP)
 		{
 			LM_ERR("malformed or non AVP %s AVP definition\n", cnt_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &cnt_avp_name, &cnt_avp_type)!=0)
+		if(pv_get_avp_name(0, &(avp_spec.pvp), &cnt_avp_name, &cnt_avp_type)!=0)
 		{
 			LM_ERR("[%s]- invalid AVP definition\n", cnt_avp_param);
 			return -1;
@@ -321,16 +322,14 @@ void destroy(void)
 
 static inline int ds_get_ivalue(struct sip_msg* msg, ds_param_p dp, int *val)
 {
-	xl_value_t value;
+	pv_value_t value;
 	if(dp->type==0) {
 		*val = dp->v.id;
 		return 0;
 	}
 	
-	LM_DBG("searching %d %d %d\n", dp->v.sp.type, dp->v.sp.p.ind,
-			dp->v.sp.p.val.len);
-	if(xl_get_spec_value(msg, &dp->v.sp, &value, 0)!=0 
-			|| value.flags&XL_VAL_NULL || !(value.flags&XL_VAL_INT))
+	if(pv_get_spec_value(msg, &dp->v.sp, &value)!=0 
+			|| value.flags&PV_VAL_NULL || !(value.flags&PV_VAL_INT))
 	{
 		LM_ERR("no AVP found (error in scripts)\n");
 		return -1;
@@ -428,6 +427,7 @@ static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 static int ds_fixup(void** param, int param_no)
 {
 	int err;
+	str s;
 	ds_param_p dsp;
 	
 	if(param_no==1 || param_no==2)
@@ -442,9 +442,9 @@ static int ds_fixup(void** param, int param_no)
 		if(((char*)(*param))[0]=='$')
 		{
 			dsp->type = 1;
-			if(xl_parse_spec((char*)*param, &dsp->v.sp,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==NULL
-				|| dsp->v.sp.type!=XL_AVP)
+			s.s = (char*)*param; s.len = strlen(s.s);
+			if(pv_parse_spec(&s, &dsp->v.sp)==NULL
+				|| dsp->v.sp.type!=PVT_AVP)
 			{
 				LM_ERR("Unsupported User Field identifier\n");
 				return E_UNSPEC;

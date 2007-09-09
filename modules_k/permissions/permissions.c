@@ -40,7 +40,7 @@
 #include "../../str.h"
 #include "../../dset.h"
 #include "../../globals.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../ut.h"
 
 MODULE_VERSION
@@ -513,7 +513,8 @@ static int double_fixup(void** param, int param_no)
 	char* buffer;
 	void* tmp;
 	int param_len, ret, suffix_len;
-	xl_spec_t *sp;
+	pv_spec_t *sp;
+	str s;
 
 	if (param_no == 1) { /* basename */
 	    param_len = strlen((char*)*param);
@@ -546,20 +547,20 @@ static int double_fixup(void** param, int param_no)
 
 	} else if (param_no == 2) { /* pseudo variable */
 
-	    sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+	    sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	    if (sp == 0) {
 		LOG(L_ERR,"permissions:double_fixup(): no pkg memory left\n");
 		return -1;
 	    }
-
-	    if (xl_parse_spec((char*)*param, sp, XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS) == 0) {
+		s.s = (char*)*param; s.len = strlen(s.s);
+	    if (pv_parse_spec(&s, sp) == 0) {
 		LOG(L_ERR,"permissions:double_fixup(): parsing of "
 		    "pseudo variable %s failed!\n", (char*)*param);
 		pkg_free(sp);
 		return -1;
 	    }
 
-	    if (sp->type == XL_NULL) {
+	    if (sp->type == PVT_NULL) {
 		LOG(L_ERR,"permissions:double_fixup(): bad pseudo "
 		    "variable\n");
 		pkg_free(sp);
@@ -582,24 +583,25 @@ static int double_fixup(void** param, int param_no)
  */
 static int address_fixup(void** param, int param_no)
 {
-    xl_spec_t *sp;
+    pv_spec_t *sp;
+	str s;
 
     if ((param_no == 1) || (param_no == 2)) { /* pseudo variables */
 	
-	sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if (sp == 0) {
 	    LOG(L_ERR,"permissions:single_pvar_fixup(): no pkg memory left\n");
 	    return -1;
 	}
-
-	if (xl_parse_spec((char*)*param, sp, XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS) == 0) {
+	s.s = (char*)*param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, sp) == 0) {
 	    LOG(L_ERR,"permissions:single_pvar_fixup(): parsing of "
 		"pseudo variable %s failed!\n", (char*)*param);
 	    pkg_free(sp);
 	    return -1;
 	}
 
-	if (sp->type == XL_NULL) {
+	if (sp->type == PVT_NULL) {
 	    LOG(L_ERR,"permissions:single_pvap_fixup(): bad pseudo "
 		"variable\n");
 	    pkg_free(sp);
@@ -622,7 +624,7 @@ static int address_fixup(void** param, int param_no)
  */
 static int int_or_pvar_fixup(void** param, int param_no)
 {
-    char *s;
+    str s;
     str str_param;
     int_or_pvar_t *res;
 
@@ -635,20 +637,18 @@ static int int_or_pvar_fixup(void** param, int param_no)
 	return -1;
     }
     
-    s = (char *)*param;
+    s.s = (char *)*param;
 
-    if (*s == '$') {  /* pvar */
-	res->pvar = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+    if (*s.s == '$') {  /* pvar */
+	res->pvar = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if (res->pvar == 0) {
 	    LOG(L_ERR,"permissions:int_or_pvar_fixup(): "
-		"no pkg memory left for xl_spec_t\n");
+		"no pkg memory left for pv_spec_t\n");
 	    pkg_free(res);
 	    return -1;
 	}
-
-	if (xl_parse_spec(s, res->pvar,
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)
-	    == 0) {
+	s.len = strlen(s.s);
+	if (pv_parse_spec(&s, res->pvar) == 0) {
 	    LOG(L_ERR,"permissions:int_or_pvar_fixup(): parsing of "
 		"pseudo variable %s failed!\n", (char*)*param);
 	    pkg_free(res->pvar);
@@ -656,7 +656,7 @@ static int int_or_pvar_fixup(void** param, int param_no)
 	    return -1;
 	}
 
-	if (res->pvar->type == XL_NULL) {
+	if (res->pvar->type == PVT_NULL) {
 	    LOG(L_ERR,"permissions:int_or_pvap_fixup(): bad pseudo "
 		"variable\n");
 	    pkg_free(res->pvar);
@@ -670,14 +670,14 @@ static int int_or_pvar_fixup(void** param, int param_no)
     }
 
     /* int */
-    str_param.s = s;
-    str_param.len = strlen(s);
+    str_param.s = s.s;
+    str_param.len = strlen(s.s);
     if (str2int(&str_param, &(res->i)) == 1) {
-	LOG(L_ERR, "permissions:int_or_pvar_fixup: bad integer <%s>\n", s);
+	LOG(L_ERR, "permissions:int_or_pvar_fixup: bad integer <%s>\n", s.s);
 	pkg_free(res);
 	return -1;
     } else {
-	res->pvar = (xl_spec_t *)0;
+	res->pvar = (pv_spec_t *)0;
 	*param = (void *)res;
 	return 0;
     }
@@ -920,11 +920,11 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 	int idx, len;
 	static char from_str[EXPRESSION_LENGTH+1];
 	static char uri_str[EXPRESSION_LENGTH+1];
-	xl_spec_t *sp;
-	xl_value_t xl_val;
+	pv_spec_t *sp;
+	pv_value_t pv_val;
 
 	idx = (int)(long)_idx;
-	sp = (xl_spec_t *)_sp;
+	sp = (pv_spec_t *)_sp;
 	
 	/* turn off control, allow any uri */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
@@ -959,15 +959,15 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 	strncpy(from_str, ((struct to_body*)from->parsed)->uri.s, len);
 	from_str[len] = '\0';
 
-	if (sp && (xl_get_spec_value(msg, sp, &xl_val, 0) == 0)) {
-	    if (xl_val.flags & XL_VAL_STR) {
-		if (xl_val.rs.len > EXPRESSION_LENGTH) {
+	if (sp && (pv_get_spec_value(msg, sp, &pv_val) == 0)) {
+	    if (pv_val.flags & PV_VAL_STR) {
+		if (pv_val.rs.len > EXPRESSION_LENGTH) {
 		    LOG(L_ERR, "allow_uri(): pseudo variable value is too "
-			"long: %d chars\n", xl_val.rs.len);
+			"long: %d chars\n", pv_val.rs.len);
 		    return -1;
 		}
-		strncpy(uri_str, xl_val.rs.s, xl_val.rs.len);
-		uri_str[xl_val.rs.len] = '\0';
+		strncpy(uri_str, pv_val.rs.s, pv_val.rs.len);
+		uri_str[pv_val.rs.len] = '\0';
 	    } else {
 		LOG(L_ERR, "allow_uri(): pseudo variable value is not "
 		    "string\n");

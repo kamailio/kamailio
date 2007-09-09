@@ -32,7 +32,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
-#include "../../items.h"
+#include "../../pvar.h"
 
 #include "sdlookup.h"
 
@@ -170,14 +170,16 @@ static void destroy(void)
 
 static int fixup_sd(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 
 	if(param_no==1)
 		return 0;
 
 	if(*param)
 	{
-		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		s.s = (char*)(*param); s.len = strlen(s.s);
+		if(pv_parse_format(&s, &model)<0)
 		{
 			LOG(L_ERR, "ERROR:speeddial:fixup_sd: wrong format[%s]\n",
 				(char*)(*param));

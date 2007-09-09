@@ -58,7 +58,7 @@ stat_var *expired_sst = 0;
  * code will set the dialog lifetime when it returns from the INVITE
  * and IN_ROUTE callbacks.
  */
-xl_spec_t timeout_avp; 
+pv_spec_t timeout_avp; 
 static char* timeout_spec = 0; /* Place holder for the passed in name */
 
 /*
@@ -140,6 +140,7 @@ struct module_exports exports= {
  */
 static int mod_init(void) 
 {
+	str s;
 	LOG(L_INFO,"SIP Session Timer module - initializing\n");
 	/*
 	 * if statistics are disabled, prevent their registration to core.
@@ -159,9 +160,9 @@ static int mod_init(void)
 
 	if (timeout_spec != NULL) {
 		DBG("Dialog AVP is %s", timeout_spec);
-		if (xl_parse_spec(timeout_spec, &timeout_avp,
-		XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0 
-		&& (timeout_avp.type != XL_AVP)){
+		s.s = timeout_spec; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &timeout_avp)==0 
+		&& (timeout_avp.type != PVT_AVP)){
 			LOG(L_ERR, "ERROR:sst:modInit: malformed or non AVP timeout AVP "
 				"definition in '%s'\n",timeout_spec);
 			return -1;

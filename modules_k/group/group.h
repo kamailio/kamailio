@@ -32,14 +32,14 @@
 #define GROUP_H
 
 #include "../../parser/msg_parser.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../usr_avp.h"
 
 
 typedef struct _group_check
 {
 	int id;
-	xl_spec_t sp;
+	pv_spec_t sp;
 } group_check_t, *group_check_p;
 
 

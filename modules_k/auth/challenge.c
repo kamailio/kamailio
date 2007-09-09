@@ -32,7 +32,7 @@
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../str.h"
 #include "../../ut.h"
 #include "auth_mod.h"
@@ -130,7 +130,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 /*
  * Create and send a challenge
  */
-static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
+static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
 						int _code, char* _message, char* _challenge_msg)
 {
 	int auth_hf_len;
@@ -169,8 +169,8 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
 		realm = uri->host;
 		strip_realm(&realm);
 	} else {
-		if(xl_printf_s(_msg, _realm, &realm)!=0) {
-			LOG(L_ERR, "ERROR:auth:challenge: xl_printf_s failed\n");
+		if(pv_printf_s(_msg, _realm, &realm)!=0) {
+			LOG(L_ERR, "ERROR:auth:challenge: pv_printf_s failed\n");
 			if (send_resp(_msg, 500, &auth_500_err, 0, 0)==-1)
 				return -1;
 			else
@@ -203,7 +203,7 @@ static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
  */
 int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, (xl_elem_t*)_realm, (int)(long)_qop, 401,
+	return challenge(_msg, (pv_elem_t*)_realm, (int)(long)_qop, 401,
 			MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
 
@@ -213,7 +213,7 @@ int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
  */
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, (xl_elem_t*)_realm, (int)(long)_qop, 407,
+	return challenge(_msg, (pv_elem_t*)_realm, (int)(long)_qop, 407,
 			MESSAGE_407, PROXY_AUTH_CHALLENGE);
 }
 

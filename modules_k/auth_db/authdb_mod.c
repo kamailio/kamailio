@@ -40,7 +40,7 @@
 #include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../auth/api.h"
 #include "../sl/sl_api.h"
@@ -232,19 +232,20 @@ static void destroy(void)
  */
 static int auth_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
 	db_con_t* dbh;
-	char* s;
+	str s;
 	int ver;
 	str name;
 
 	if (param_no == 1) {
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-				LOG(L_ERR, "ERROR:auth_db:auth_fixup: xl_parse_format "
+			s.len = strlen(s.s);
+			if (pv_parse_format(&s,&model)<0) {
+				LOG(L_ERR, "ERROR:auth_db:auth_fixup: pv_parse_format "
 					"failed\n");
 				return E_OUT_OF_MEM;
 			}

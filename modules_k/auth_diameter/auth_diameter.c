@@ -39,7 +39,7 @@
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../dprint.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../sl/sl_api.h"
 
@@ -169,20 +169,21 @@ static void destroy(void)
 
 
 /*
- * Convert char* parameter to xl_elem_t* parameter
+ * Convert char* parameter to pv_elem_t* parameter
  */
 static int auth_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
-	char* s;
+	pv_elem_t *model;
+	str s;
 
 	if (param_no == 1) {
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
-				LOG(L_ERR, "ERROR:auth_diameter:auth_fixup: xl_parse_format "
+			s.len = strlen(s.s);
+			if (pv_parse_format(&s,&model)<0) {
+				LOG(L_ERR, "ERROR:auth_diameter:auth_fixup: pv_parse_format "
 					"failed\n");
 				return E_OUT_OF_MEM;
 			}
@@ -200,7 +201,7 @@ static int auth_fixup(void** param, int param_no)
 int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
 	/* realm parameter is converted to str* in str_fixup */
-	return authorize(_msg, (xl_elem_t*)_realm, HDR_PROXYAUTH_T);
+	return authorize(_msg, (pv_elem_t*)_realm, HDR_PROXYAUTH_T);
 }
 
 
@@ -209,7 +210,7 @@ int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
  */
 int diameter_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	return authorize(_msg, (xl_elem_t*)_realm, HDR_AUTHORIZATION_T);
+	return authorize(_msg, (pv_elem_t*)_realm, HDR_AUTHORIZATION_T);
 }
 
 

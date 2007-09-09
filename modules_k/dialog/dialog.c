@@ -45,7 +45,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
@@ -83,7 +83,7 @@ stat_var *early_dlgs  = 0;
 
 struct tm_binds d_tmb;
 struct rr_binds d_rrb;
-xl_spec_t timeout_avp;
+pv_spec_t timeout_avp;
 
 /* db stuff */
 static char * db_url = 0;
@@ -91,8 +91,8 @@ static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
 
 
-static int it_get_dlg_count( struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags);
+static int pv_get_dlg_count( struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 
 
@@ -152,11 +152,14 @@ static mi_export_t mi_cmds[] = {
 };
 
 
-static item_export_t mod_items[] = {
-	{ "DLG_count",    it_get_dlg_count,    100, {{0, 0}, 0, 0} },
-	{ "DLG_lifetime", it_get_dlg_lifetime, 100, {{0, 0}, 0, 0} },
-	{ "DLG_status",   it_get_dlg_status  , 100, {{0, 0}, 0, 0} },
-	{ 0, 0, 0, {{0, 0}, 0, 0} }
+static pv_export_t mod_items[] = {
+	{ {"DLG_count",  sizeof("DLG_count")-1}, 1000,  pv_get_dlg_count,    0,
+		0, 0, 0, 0 },
+	{ {"DLG_lifetime",sizeof("DLG_lifetime")-1}, 1000, pv_get_dlg_lifetime, 0,
+		0, 0, 0, 0 },
+	{ {"DLG_status",  sizeof("DLG_status")-1}, 1000, pv_get_dlg_status, 0,
+		0, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 struct module_exports exports= {
@@ -182,8 +185,8 @@ int load_dlg( struct dlg_binds *dlgb )
 }
 
 
-static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
-												xl_param_t *param, int flags)
+static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	int n;
 	int l;
@@ -200,7 +203,7 @@ static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
 	res->rs.len = l;
 
 	res->ri = n;
-	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
 	return 0;
 }
@@ -209,6 +212,7 @@ static int it_get_dlg_count(struct sip_msg *msg, xl_value_t *res,
 static int mod_init(void)
 {
 	unsigned int n;
+	str stmp;
 
 	LOG(L_INFO,"Dialog module - initializing\n");
 
@@ -231,8 +235,9 @@ static int mod_init(void)
 	}
 
 	if (timeout_spec) {
-		if ( xl_parse_spec(timeout_spec, &timeout_avp, XL_THROW_ERROR
-		|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0 && (timeout_avp.type!=XL_AVP)){
+		stmp.s = timeout_spec; stmp.len = strlen(stmp.s);
+		if ( pv_parse_spec(&stmp, &timeout_avp)==0 
+				&& (timeout_avp.type!=PVT_AVP)){
 			LOG(L_ERR, "ERROR:dialog:mod_init: malformed or non AVP timeout "
 				"AVP definition in '%s'\n", timeout_spec);
 			return -1;

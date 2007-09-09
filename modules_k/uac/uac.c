@@ -39,7 +39,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
 #include "../tm/t_hooks.h"
@@ -64,9 +64,9 @@ str uac_passwd = str_init("");
 int from_restore_mode = FROM_AUTO_RESTORE;
 struct tm_binds uac_tmb;
 struct rr_binds uac_rrb;
-xl_spec_t auth_username_spec;
-xl_spec_t auth_realm_spec;
-xl_spec_t auth_password_spec;
+pv_spec_t auth_username_spec;
+pv_spec_t auth_realm_spec;
+pv_spec_t auth_password_spec;
 
 static int w_replace_from1(struct sip_msg* msg, char* str, char* str2);
 static int w_replace_from2(struct sip_msg* msg, char* str, char* str2);
@@ -123,10 +123,11 @@ struct module_exports exports= {
 };
 
 
-inline static int parse_auth_avp( char *avp_spec, xl_spec_t *avp, char *txt)
+inline static int parse_auth_avp( char *avp_spec, pv_spec_t *avp, char *txt)
 {
-	if (xl_parse_spec( avp_spec, avp, XL_THROW_ERROR|XL_DISABLE_MULTI|
-	XL_DISABLE_COLORS)==0 || avp->type!=XL_AVP) {
+	str s;
+	s.s = avp_spec; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, avp)) {
 		LOG(L_ERR, "ERROR:uac:parse_auth_avp: malformed or non AVP %s "
 			"AVP definition\n",txt);
 		return -1;
@@ -176,9 +177,9 @@ static int mod_init(void)
 			goto error;
 		}
 	} else {
-		memset( &auth_realm_spec, 0, sizeof(xl_spec_t));
-		memset( &auth_password_spec, 0, sizeof(xl_spec_t));
-		memset( &auth_username_spec, 0, sizeof(xl_spec_t));
+		memset( &auth_realm_spec, 0, sizeof(pv_spec_t));
+		memset( &auth_password_spec, 0, sizeof(pv_spec_t));
+		memset( &auth_username_spec, 0, sizeof(pv_spec_t));
 	}
 
 	/* load the TM API - FIXME it should be loaded only
@@ -224,10 +225,12 @@ static void mod_destroy(void)
 
 static int fixup_replace_from1(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 
 	model=NULL;
-	if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0)
+	s.s = (char*)(*param); s.len = strlen(s.s);
+	if(pv_parse_format(&s, &model)<0)
 	{
 		LOG(L_ERR, "ERROR:uac:fixup_replace_from1: wrong format[%s]!\n",
 			(char*)(*param));
@@ -246,7 +249,7 @@ static int fixup_replace_from1(void** param, int param_no)
 
 static int fixup_replace_from2(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
 	char *p;
 	str s;
 
@@ -277,7 +280,7 @@ static int fixup_replace_from2(void** param, int param_no)
 	}
 	if(s.len!=0)
 	{
-		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0)
+		if(pv_parse_format(&s ,&model)<0)
 		{
 			LOG(L_ERR, "ERROR:uac:fixup_replace_from2: wrong format [%s] "
 				"for param no %d!\n", s.s, param_no);
@@ -311,7 +314,7 @@ static int w_replace_from1(struct sip_msg* msg, char* uri, char* str2)
 {
 	str uri_s;
 
-	if(xl_printf_s( msg, (xl_elem_p)uri, &uri_s)!=0)
+	if(pv_printf_s( msg, (pv_elem_p)uri, &uri_s)!=0)
 		return -1;
 	return (replace_from(msg, 0, &uri_s)==0)?1:-1;
 }
@@ -325,7 +328,7 @@ static int w_replace_from2(struct sip_msg* msg, char* dsp, char* uri)
 	if (dsp!=NULL)
 	{
 		if(dsp!=NULL)
-			if(xl_printf_s( msg, (xl_elem_p)dsp, &dsp_s)!=0)
+			if(pv_printf_s( msg, (pv_elem_p)dsp, &dsp_s)!=0)
 				return -1;
 	} else {
 		dsp_s.s = 0;
@@ -334,7 +337,7 @@ static int w_replace_from2(struct sip_msg* msg, char* dsp, char* uri)
 
 	if(uri!=NULL)
 	{
-		if(xl_printf_s( msg, (xl_elem_p)uri, &uri_s)!=0)
+		if(pv_printf_s( msg, (pv_elem_p)uri, &uri_s)!=0)
 			return -1;
 	}
 

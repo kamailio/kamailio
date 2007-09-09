@@ -32,7 +32,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../tm/t_hooks.h"
 #include "dlg_timer.h"
 
@@ -44,7 +44,7 @@
 #define SEQ_MATCH_NO_ID      2
 
 void init_dlg_handlers(char *rr_param, int dlg_flag,
-		xl_spec_t *timeout_avp, int default_timeout,
+		pv_spec_t *timeout_avp, int default_timeout,
 		int seq_match_mode);
 
 void destroy_dlg_handlers();
@@ -56,9 +56,9 @@ void dlg_onroute(struct sip_msg* req, str *rr_param, void *param);
 void dlg_ontimeout( struct dlg_tl *tl);
 
 /* item/pseudo-variables functions */
-int it_get_dlg_lifetime(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags);
+int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
-int it_get_dlg_status(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags);
+int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 #endif

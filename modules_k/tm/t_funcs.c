@@ -284,18 +284,19 @@ done:
  */
 int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 {
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
 	unsigned short avp_flags;
+	str s;
 	if (fr_timer_param && *fr_timer_param) {
-		if (xl_parse_spec(fr_timer_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		s.s = fr_timer_param; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:tm:init_avp_params: malformed or non AVP %s "
 				"AVP definition\n", fr_timer_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &fr_timer_avp, &avp_flags)!=0)
+		if(pv_get_avp_name(0, &avp_spec.pvp, &fr_timer_avp, &avp_flags)!=0)
 		{
 			LOG(L_ERR, "ERROR:tm:init_avp_params: [%s]- invalid "
 				"AVP definition\n", fr_timer_param);
@@ -308,15 +309,15 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 	}
 
 	if (fr_inv_timer_param && *fr_inv_timer_param) {
-		if (xl_parse_spec(fr_inv_timer_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		s.s = fr_inv_timer_param; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:tm:init_avp_params: malformed or non AVP %s "
 				"AVP definition\n", fr_inv_timer_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &fr_inv_timer_avp, &avp_flags)!=0)
+		if(pv_get_avp_name(0, &avp_spec.pvp, &fr_inv_timer_avp, &avp_flags)!=0)
 		{
 			LOG(L_ERR, "ERROR:tm:init_avp_params: [%s]- invalid "
 				"AVP definition\n", fr_inv_timer_param);

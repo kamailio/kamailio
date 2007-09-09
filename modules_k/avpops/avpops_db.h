@@ -34,7 +34,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
 #include "../../sr_module.h"
-#include "../../items.h"
+#include "../../pvar.h"
 
 
 /* definition of a DB scheme*/
@@ -65,7 +65,7 @@ int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table);
 int db_delete_avp( str *uuid, str *username, str *domain,
 		char *attr, char *table);
 
-int db_query_avp(struct sip_msg* msg, char *query, itemname_list_t* dest);
+int db_query_avp(struct sip_msg* msg, char *query, pvname_list_t* dest);
 
 int avp_add_db_scheme( modparam_t type, void* val);
 

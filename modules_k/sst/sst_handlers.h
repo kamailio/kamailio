@@ -31,7 +31,7 @@
 #define _SST_HANDLERS_H_
 
 #include "../../sr_module.h" /* Needed for find_export() */
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 #include "../dialog/dlg_load.h"
 
@@ -49,7 +49,7 @@ int sst_check_min(struct sip_msg *msg, char *str1, char *str2);
 /**
  * The handlers initializer function
  */
-void sst_handler_init(xl_spec_t *timeout_avp, unsigned int minSE, 
+void sst_handler_init(pv_spec_t *timeout_avp, unsigned int minSE, 
 		int flag, unsigned int reject);
 
 #endif /* _SST_HANDLERS_H_ */

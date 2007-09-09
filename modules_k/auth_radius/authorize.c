@@ -39,7 +39,7 @@
 #include "../../parser/parse_to.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../auth/api.h"
 #include "authorize.h"
 #include "sterman.h"
@@ -75,8 +75,8 @@ static inline int get_uri_user(struct sip_msg* _m, str** _uri_user)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
-			    xl_spec_t * _uri_user, int _hftype)
+static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
+			    pv_spec_t * _uri_user, int _hftype)
 {
     int res;
     auth_result_t ret;
@@ -84,12 +84,12 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
     auth_body_t* cred;
     str *uri_user;
     str user, domain;
-    xl_value_t xl_val;
+    pv_value_t pv_val;
 
     /* get pre_auth domain from _realm pvar (if exists) */
     if (_realm) {
-	if (xl_printf_s(_msg, _realm, &domain)!=0) {
-	    LOG(L_ERR,"ERROR:auth_radius:authorize: xl_printf_s failed\n");
+	if (pv_printf_s(_msg, _realm, &domain)!=0) {
+	    LOG(L_ERR,"ERROR:auth_radius:authorize: pv_printf_s failed\n");
 	    return AUTH_ERROR;
 	}
     } else {
@@ -108,11 +108,11 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
     /* get uri_user from _uri_user pvap (if exists) or
        from To/From URI */
     if (_uri_user) {
-	if (xl_get_spec_value(_msg, _uri_user, &xl_val, 0) == 0) {
-	    if (xl_val.flags & XL_VAL_STR) {
+	if (pv_get_spec_value(_msg, _uri_user, &pv_val) == 0) {
+	    if (pv_val.flags & PV_VAL_STR) {
 		res = radius_authorize_sterman(_msg, &cred->digest, 
 					       &_msg->first_line.u.request.method,
-					       &xl_val.rs);
+					       &pv_val.rs);
 	    } else {
 		LOG(L_ERR, "ERROR:auth_radius:authorize: "
 		    "uri_user pvar value is not string\n");
@@ -155,7 +155,7 @@ static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
 int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2)
 {
     /* realm parameter is converted to str* in str_fixup */
-    return authorize(_msg, (xl_elem_t*)_realm, (xl_spec_t *)0,
+    return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)0,
 		     HDR_PROXYAUTH_T);
 }
 
@@ -166,7 +166,7 @@ int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2)
 int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm,
 			     char* _uri_user)
 {
-    return authorize(_msg, (xl_elem_t*)_realm, (xl_spec_t *)_uri_user,
+    return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)_uri_user,
 		     HDR_PROXYAUTH_T);
 }
 
@@ -176,6 +176,6 @@ int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm,
  */
 int radius_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	return authorize(_msg, (xl_elem_t*)_realm, (xl_spec_t *)0,
+	return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)0,
 			 HDR_AUTHORIZATION_T);
 }

@@ -28,7 +28,7 @@
 #include "../../hash_func.h"
 #include "../../usr_avp.h"
 #include "../../ip_addr.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "hash.h"
 #include "trusted.h"
 #include "address.h"
@@ -46,19 +46,19 @@ static int_str tag_avp;
  */
 int init_tag_avp(char *tag_avp_param)
 {
-    xl_spec_t avp_spec;
+    pv_spec_t avp_spec;
     unsigned short avp_flags;
+	str s;
 
     if (tag_avp_param && *tag_avp_param) {
-	if (xl_parse_spec(tag_avp_param, &avp_spec,
-			  XL_THROW_ERROR|XL_DISABLE_MULTI|
-			  XL_DISABLE_COLORS)==0
-	    || avp_spec.type != XL_AVP) {
+	s.s = tag_avp_param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+	    || avp_spec.type != PVT_AVP) {
 	    LOG(L_ERR, "ERROR:permissions:mod_init: malformed or non "
 		"AVP %s peer_tag_avp definition\n", tag_avp_param);
 	    return -1;
 	}
-	if(xl_get_avp_name(0, &avp_spec, &tag_avp, &avp_flags)!=0) {
+	if(pv_get_avp_name(0, &avp_spec.pvp, &tag_avp, &avp_flags)!=0) {
 	    LOG(L_ERR, "ERROR:permissions:mod_init: [%s]- invalid "
 		"peer_tag_avp AVP definition\n", tag_avp_param);
 	    return -1;

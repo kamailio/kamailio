@@ -442,10 +442,12 @@ void destroy(void)
 
 static int fixup_presence(void** param, int param_no)
 {
- 	xl_elem_t *model;
+ 	pv_elem_t *model;
+	str s;
  	if(*param)
  	{
- 		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		s.s = (char*)(*param); s.len = strlen(s.s);
+ 		if(pv_parse_format(&s, &model)<0)
  		{
  			LM_ERR( "wrong format[%s]\n",(char*)(*param));
  			return E_UNSPEC;

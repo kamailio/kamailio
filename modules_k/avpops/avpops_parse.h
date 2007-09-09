@@ -36,7 +36,7 @@
 
 char *parse_avp_attr(char *start, struct fis_param *attr, char end);
 
-struct fis_param *avpops_parse_pvar(char *s, int flags);
+struct fis_param *avpops_parse_pvar(char *s);
 
 int   parse_avp_db(char *s, struct db_param *dbp, int allow_scheme);
 
@@ -44,7 +44,7 @@ int   parse_avp_aliases(char *s, char c1, char c2);
 
 struct fis_param* parse_intstr_value(char *p, int len);
 
-int parse_avp_db_scheme( char *s, struct db_scheme *scheme);
+int parse_avp_db_scheme(char *s, struct db_scheme *scheme);
 
 struct fis_param*  parse_check_value(char *s);
 

@@ -42,7 +42,7 @@
 #include "../../ut.h"
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "sl_funcs.h"
 #include "sl_api.h"
 #include "sl_cb.h"
@@ -166,7 +166,7 @@ static void mod_destroy(void)
 
 static int fixup_sl_send_reply(void** param, int param_no)
 {
-	xl_elem_t *model=NULL;
+	pv_elem_t *model=NULL;
 	str s;
 
 	/* convert to str */
@@ -182,17 +182,18 @@ static int fixup_sl_send_reply(void** param, int param_no)
 			return E_UNSPEC;
 		}
 
-		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0 || model==NULL)
+		if(pv_parse_format(&s ,&model) || model==NULL)
 		{
 			LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
 			return E_UNSPEC;
 		}
-		if(model->spec.itf==NULL)
+		if(model->spec.getf==NULL)
 		{
 			if(param_no==1)
 			{
-			   if(str2int(&s, (unsigned int*)&model->spec.p.ind)!=0
-					   || model->spec.p.ind<100)
+			   if(str2int(&s,
+					(unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0
+					   || model->spec.pvp.pvn.u.isname.name.n<100)
 			   {
 					LM_ERR("wrong value [%s] for param no %d!\n",
 						s.s, param_no);
@@ -219,22 +220,22 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 	str code_s;
 	unsigned int code_i;
 
-	if(((xl_elem_p)str1)->spec.itf!=NULL)
+	if(((pv_elem_p)str1)->spec.getf!=NULL)
 	{
-		if(xl_printf_s(msg, (xl_elem_p)str1, &code_s)!=0)
+		if(pv_printf_s(msg, (pv_elem_p)str1, &code_s)!=0)
 			return -1;
 		if(str2int(&code_s, &code_i)!=0 || code_i<100)
 			return -1;
 	} else {
-		code_i = ((xl_elem_p)str1)->spec.p.ind;
+		code_i = ((pv_elem_p)str1)->spec.pvp.pvn.u.isname.name.n;
 	}
 	
-	if(((xl_elem_p)str2)->spec.itf!=NULL)
+	if(((pv_elem_p)str2)->spec.getf!=NULL)
 	{
-		if(xl_printf_s(msg, (xl_elem_p)str2, &code_s)!=0 || code_s.len <=0)
+		if(pv_printf_s(msg, (pv_elem_p)str2, &code_s)!=0 || code_s.len <=0)
 			return -1;
 	} else {
-		code_s = ((xl_elem_p)str2)->text;
+		code_s = ((pv_elem_p)str2)->text;
 	}
 
 	return sl_send_reply(msg, code_i, &code_s);

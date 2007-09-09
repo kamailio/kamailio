@@ -35,7 +35,7 @@
 #include "h350_mod.h"
 #include "h350_exp_fn.h"
 
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
 
@@ -54,7 +54,7 @@ static str h350_service_level_name = str_init("SIPIdentityServiceLevel");
 
 static regex_t* call_pref_preg;
 
-int h350_sipuri_lookup(struct sip_msg* _msg, xl_elem_t* _sip_uri)
+int h350_sipuri_lookup(struct sip_msg* _msg, pv_elem_t* _sip_uri)
 {
 	str sip_uri, sip_uri_escaped;
 	int ld_result_count;
@@ -63,9 +63,9 @@ int h350_sipuri_lookup(struct sip_msg* _msg, xl_elem_t* _sip_uri)
 	/*
 	 * get sip_uri
 	 */
-	if (xl_printf_s(_msg, _sip_uri, &sip_uri) != 0)
+	if (pv_printf_s(_msg, _sip_uri, &sip_uri) != 0)
 	{
-		LM_ERR("xl_printf_s failed\n");
+		LM_ERR("pv_printf_s failed\n");
 		return E_H350_INTERNAL;
 	}
 
@@ -106,7 +106,7 @@ int h350_sipuri_lookup(struct sip_msg* _msg, xl_elem_t* _sip_uri)
 
 int h350_auth_lookup(
         struct sip_msg* _msg,
-        xl_elem_t* _digest_username,
+        pv_elem_t* _digest_username,
         struct h350_auth_lookup_avp_params* _avp_specs)
 {
 	str                digest_username,
@@ -125,9 +125,9 @@ int h350_auth_lookup(
 	 */
 	if (_digest_username) 
 	{
-                if (xl_printf_s(_msg, _digest_username, &digest_username) != 0) 
+                if (pv_printf_s(_msg, _digest_username, &digest_username) != 0) 
 		{
-                        LM_ERR("xl_printf_s failed\n");
+                        LM_ERR("pv_printf_s failed\n");
                         return E_H350_INTERNAL;
                 }
         } else
@@ -140,13 +140,13 @@ int h350_auth_lookup(
 	 * get AVP names for username and password
 	 */
 
-	if (xl_get_avp_name(	_msg,
-				&_avp_specs->username_avp_spec,
+	if (pv_get_avp_name(	_msg,
+				&(_avp_specs->username_avp_spec.pvp),
 				&username_avp_name,
 				&username_avp_type)
 		!= 0)
 	{
-		LM_ERR("error getting AVP name - xl_get_avp_name failed\n");
+		LM_ERR("error getting AVP name - pv_get_avp_name failed\n");
 		return E_H350_INTERNAL;
 	}
 	if (username_avp_type & AVP_NAME_STR)
@@ -161,13 +161,13 @@ int h350_auth_lookup(
                 username_avp_name.s.s = username_avp_name_buf;
 	}
 
-	if (xl_get_avp_name(_msg,
-						&_avp_specs->password_avp_spec,
+	if (pv_get_avp_name(_msg,
+						&(_avp_specs->password_avp_spec.pvp),
 						&password_avp_name,
 						&password_avp_type)
                 != 0)
         {
-                LM_ERR("error getting AVP name - xl_get_avp_name failed\n");
+                LM_ERR("error getting AVP name - pv_get_avp_name failed\n");
                 return E_H350_INTERNAL;
         }
         if (password_avp_type & AVP_NAME_STR)
@@ -278,7 +278,7 @@ int h350_auth_lookup(
 	return E_H350_SUCCESS;
 }
 
-int h350_call_preferences(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix)
+int h350_call_preferences(struct sip_msg* _msg, pv_elem_t* _avp_name_prefix)
 {
 	int           rc, i, avp_count = 0;
 	struct berval **attr_vals;
@@ -293,9 +293,9 @@ int h350_call_preferences(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix)
         /*
          * get avp_name_prefix_str
          */
-        if (xl_printf_s(_msg, _avp_name_prefix, &avp_name_prefix_str) != 0)
+        if (pv_printf_s(_msg, _avp_name_prefix, &avp_name_prefix_str) != 0)
         {
-                LM_ERR("xl_printf_s failed\n");
+                LM_ERR("pv_printf_s failed\n");
                 return E_H350_INTERNAL;
         }
 
@@ -425,7 +425,7 @@ int h350_call_preferences(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix)
 	}
 }
 
-int h350_service_level(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix)
+int h350_service_level(struct sip_msg* _msg, pv_elem_t* _avp_name_prefix)
 {
 	int           i, rc, avp_count = 0;
         str           avp_name_prefix;
@@ -436,9 +436,9 @@ int h350_service_level(struct sip_msg* _msg, xl_elem_t* _avp_name_prefix)
         /*
          * get service_level
          */
-        if (xl_printf_s(_msg, _avp_name_prefix, &avp_name_prefix) != 0)
+        if (pv_printf_s(_msg, _avp_name_prefix, &avp_name_prefix) != 0)
         {
-                LM_ERR("xl_printf_s failed\n");
+                LM_ERR("pv_printf_s failed\n");
                 return E_H350_INTERNAL;
         }
 

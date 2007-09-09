@@ -39,7 +39,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../config.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../radius.h"
 #include "../../mem/mem.h"
 #include "authrad_mod.h"
@@ -175,22 +175,23 @@ static int mod_init(void)
 
 
 /*
- * Convert char* parameter to xl_elem_t* parameter
+ * Convert char* parameter to pv_elem_t* parameter
  */
 static int auth_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
-	char* s;
-	xl_spec_t *sp;
+	pv_elem_t *model;
+	str s;
+	pv_spec_t *sp;
 
 	if (param_no == 1) { /* realm (string that may contain pvars) */
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
+			s.len = strlen(s.s);
+			if (pv_parse_format(&s,&model)<0) {
 				LOG(L_ERR, "ERROR:auth_radius:auth_fixup: "
-				    "xl_parse_format failed\n");
+				    "pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -198,21 +199,21 @@ static int auth_fixup(void** param, int param_no)
 	}
 
 	if (param_no == 2) { /* URI user (a pvar) */
-		sp = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+		sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 		if (sp == 0) {
 			LOG(L_ERR, "ERROR:auth_radius:auth_fixup(): "
 			    "no pkg memory left\n");
 			return -1;
 		}
-		if (xl_parse_spec((char*)*param, sp,
-				  XL_THROW_ERROR|XL_DISABLE_MULTI|
-				  XL_DISABLE_COLORS) == 0) {
+		s.s = (char*)*param;
+		s.len = strlen(s.s);
+		if (pv_parse_spec(&s, sp) == 0) {
 			LOG(L_ERR,"ERROR:auth_radius:auth_fixup(): parsing of "
 			    "pseudo variable %s failed!\n", (char*)*param);
 			pkg_free(sp);
 			return -1;
 		}
-		if (sp->type == XL_NULL) {
+		if (sp->type == PVT_NULL) {
 			LOG(L_ERR,"ERROR:auth_radius:auth_fixup(): bad pseudo "
 			    "variable\n");
 			pkg_free(sp);

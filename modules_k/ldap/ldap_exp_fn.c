@@ -37,7 +37,7 @@
 
 #include "../../ut.h"
 #include "../../str.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "ldap_exp_fn.h"
@@ -59,17 +59,17 @@ static char esc_buf[ESC_BUF_SIZE];
 
 int ldap_search_impl(
 	struct sip_msg* _msg,
-	xl_elem_t* _ldap_url)
+	pv_elem_t* _ldap_url)
 {
 	str ldap_url;
 	int ld_result_count = 0;
 	
 	/*
-	* do variable substitution for _ldap_url (xl_printf_s)
+	* do variable substitution for _ldap_url (pv_printf_s)
 	*/
 	if (_ldap_url) {
-		if (xl_printf_s(_msg, _ldap_url, &ldap_url) != 0) {
-			LM_ERR("xl_printf_s failed\n");
+		if (pv_printf_s(_msg, _ldap_url, &ldap_url) != 0) {
+			LM_ERR("pv_printf_s failed\n");
 			return -2;
 		}
 	} else {
@@ -110,8 +110,8 @@ int ldap_write_result(
 	* get dst AVP name (dst_avp_name)
 	*/
 	
-	if (xl_get_avp_name(	_msg, 
-				&_lrp->dst_avp_spec, 
+	if (pv_get_avp_name(	_msg,
+				&(_lrp->dst_avp_spec.pvp), 
 				&dst_avp_name, 
 				&dst_avp_type)
 			!= 0) 
@@ -242,9 +242,9 @@ int ldap_result_check(
 	
 	if (_lrp->check_str_elem_p)
 	{
-		if (xl_printf_s(_msg, _lrp->check_str_elem_p, &check_str) != 0)
+		if (pv_printf_s(_msg, _lrp->check_str_elem_p, &check_str) != 0)
 		{
-			LM_ERR("xl_printf_s failed\n");
+			LM_ERR("pv_printf_s failed\n");
 			return -2;
 		}
 	} else 
@@ -307,8 +307,8 @@ int ldap_result_check(
 
 int ldap_filter_url_encode(
 	struct sip_msg* _msg,
-	xl_elem_t* _filter_component,
-	xl_spec_t* _dst_avp_spec)
+	pv_elem_t* _filter_component,
+	pv_spec_t* _dst_avp_spec)
 {
 	str             filter_component_str, esc_str;	
 	int_str         dst_avp_name;
@@ -318,8 +318,8 @@ int ldap_filter_url_encode(
 	* variable substitution for _filter_component
 	*/
 	if (_filter_component) {
-		if (xl_printf_s(_msg, _filter_component, &filter_component_str) != 0) {
-			LM_ERR("xl_printf_s failed\n");
+		if (pv_printf_s(_msg, _filter_component, &filter_component_str) != 0) {
+			LM_ERR("pv_printf_s failed\n");
 			return -1;
 		}
 	} else {
@@ -330,7 +330,8 @@ int ldap_filter_url_encode(
 	/*
 	* get dst AVP name (dst_avp_name)
 	*/
-	if (xl_get_avp_name(_msg, _dst_avp_spec, &dst_avp_name, &dst_avp_type) != 0)
+	if (pv_get_avp_name(_msg, &(_dst_avp_spec->pvp), &dst_avp_name,
+				&dst_avp_type) != 0)
 	{
 		LM_ERR("error getting dst AVP name\n");
 		return -1;

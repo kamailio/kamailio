@@ -32,7 +32,7 @@
 
 #include "../../sr_module.h"
 #include "../../db/db.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "rule.h"
 
 #define DEFAULT_ALLOW_FILE "permissions.allow"
@@ -64,7 +64,7 @@ char* port_col;             /* Name of port column */
 
 typedef struct int_or_pvar {
     unsigned int i;
-    xl_spec_t *pvar;  /* zero if int */
+    pv_spec_t *pvar;  /* zero if int */
 } int_or_pvar_t;
 
 #define DISABLE_CACHE 0

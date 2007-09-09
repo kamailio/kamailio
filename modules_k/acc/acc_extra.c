@@ -37,7 +37,6 @@
 #include <ctype.h>
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../items.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "acc_extra.h"
@@ -78,7 +77,7 @@ struct acc_extra *parse_acc_leg(char *extra_str)
 
 	/* check the type and len */
 	for( it=legs,n=0 ; it ; it=it->next ) {
-		if (it->spec.type!=XL_AVP) {
+		if (it->spec.type!=PVT_AVP) {
 			LOG(L_ERR,"ERROR:acc:parse_acc_leg: only AVP are accepted as "
 				"leg info\n");
 			destroy_extras(legs);
@@ -104,15 +103,14 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 	struct acc_extra *extra;
 	char *foo;
 	char *s;
-	int  xl_flags;
 	int  n;
+	str stmp;
 
 	n = 0;
 	head = 0;
 	extra = 0;
 	tail = 0;
 	s = extra_str;
-	xl_flags = XL_THROW_ERROR | XL_DISABLE_COLORS;
 
 	if (s==0) {
 		LOG(L_ERR,"ERROR:acc:parse_acc_extra: null string received\n");
@@ -166,7 +164,8 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 		while (*s && isspace((int)*s))  s++;
 
 		/* get value type */
-		if ( (foo=xl_parse_spec( s, &extra->spec, xl_flags))==0 )
+		stmp.s = s; stmp.len = strlen(s);
+		if ( (foo=pv_parse_spec(&stmp, &extra->spec))==0 )
 			goto parse_error;
 		s = foo;
 
@@ -243,7 +242,7 @@ int extra2int( struct acc_extra *extra, int *attrs )
 
 int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 {
-	xl_value_t value;
+	pv_value_t value;
 	int n;
 	int r;
 
@@ -252,7 +251,7 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 
 	while (extra) {
 		/* get the value */
-		if (xl_get_spec_value( rq, &extra->spec, &value, 0)!=0) {
+		if (pv_get_spec_value( rq, &extra->spec, &value)!=0) {
 			LOG(L_ERR,"ERROR:acc:extra2strar: failed to get '%.*s'\n",
 				extra->name.len,extra->name.s);
 		}
@@ -264,7 +263,7 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 			goto done;
 		}
 
-		if(value.flags&XL_VAL_NULL) {
+		if(value.flags&PV_VAL_NULL) {
 			/* convert <null> to empty to have consistency */
 			val_arr[n].s = 0;
 			val_arr[n].len = 0;
@@ -306,7 +305,7 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 	for( n=0 ; legs ; legs=legs->next,n++ ) {
 		/* search for the AVP */
 		if (start) {
-			if ( xl_get_avp_name( rq, &legs->spec, &name, &name_type)<0 )
+			if ( pv_get_avp_name( rq, &(legs->spec.pvp), &name, &name_type)<0 )
 				goto exit;
 			avp[n] = search_first_avp( name_type, name, &value, 0);
 		} else {

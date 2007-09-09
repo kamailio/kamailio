@@ -50,7 +50,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../socket_info.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../usrloc/ul_mod.h"
 #include "../sl/sl_api.h"
 #include "../../mod_fix.h"
@@ -218,7 +218,8 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
+	str s;
 	bind_usrloc_t bind_usrloc;
 
 	DBG("registrar - initializing\n");
@@ -235,15 +236,15 @@ static int mod_init(void)
 	rcv_param.len = strlen(rcv_param.s);
 
 	if (rcv_avp_param && *rcv_avp_param) {
-		if (xl_parse_spec(rcv_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		s.s = rcv_avp_param; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:registrar:mod_init: malformed or non AVP %s "
 				"AVP definition\n", rcv_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &rcv_avp_name, &rcv_avp_type)!=0)
+		if(pv_get_avp_name(0, &avp_spec.pvp, &rcv_avp_name, &rcv_avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:registrar:mod_init: [%s]- invalid "
 				"AVP definition\n", rcv_avp_param);
@@ -254,15 +255,15 @@ static int mod_init(void)
 		rcv_avp_type = 0;
 	}
 	if (aor_avp_param && *aor_avp_param) {
-		if (xl_parse_spec(aor_avp_param, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		s.s = aor_avp_param; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:registrar:mod_init: malformed or non AVP %s "
 				"AVP definition\n", aor_avp_param);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &aor_avp_name, &aor_avp_type)!=0)
+		if(pv_get_avp_name(0, &avp_spec.pvp, &aor_avp_name, &aor_avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:registrar:mod_init: [%s]- invalid "
 				"AVP definition\n", aor_avp_param);

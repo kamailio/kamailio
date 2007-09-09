@@ -46,7 +46,7 @@
 #include "string.h"
 
 #include "../../trim.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../timer.h"
 #include "../../statistics.h"
 #include "../../parser/parse_from.h"
@@ -64,7 +64,7 @@
 
 static str       rr_param;
 static int       dlg_flag;
-static xl_spec_t *timeout_avp;
+static pv_spec_t *timeout_avp;
 static int       default_timeout;
 static int       seq_match_mode;
 static int       shutdown_done = 0;
@@ -90,7 +90,7 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;
 
 
 void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
-		xl_spec_t *timeout_avp_p ,int default_timeout_p, 
+		pv_spec_t *timeout_avp_p ,int default_timeout_p, 
 		int seq_match_mode_p)
 {
 	rr_param.s = rr_param_p;
@@ -347,11 +347,11 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 inline static int get_dlg_timeout(struct sip_msg *req)
 {
-	xl_value_t xl_val;
+	pv_value_t pv_val;
 
-	if( timeout_avp && xl_get_spec_value( req, timeout_avp, &xl_val, 0)==0
-	&& xl_val.flags&XL_VAL_INT && xl_val.ri>0 ) {
-		return xl_val.ri;
+	if( timeout_avp && pv_get_spec_value( req, timeout_avp, &pv_val)==0
+	&& pv_val.flags&PV_VAL_INT && pv_val.ri>0 ) {
+		return pv_val.ri;
 	}
 	return default_timeout;
 }
@@ -680,8 +680,8 @@ void dlg_ontimeout( struct dlg_tl *tl)
 
 
 /* item/pseudo-variables functions */
-int it_get_dlg_lifetime(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags)
+int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	int l = 0;
 	char *ch = NULL;
@@ -690,7 +690,7 @@ int it_get_dlg_lifetime(struct sip_msg *msg, xl_value_t *res,
 		return -1;
 
 	if (CURR_DLG_ID!=msg->id)
-		return xl_get_null( msg, res, param, flags);
+		return pv_get_null( msg, param, res);
 
 	res->ri = CURR_DLG_LIFETIME;
 	ch = int2str( (unsigned long)res->ri, &l);
@@ -698,14 +698,14 @@ int it_get_dlg_lifetime(struct sip_msg *msg, xl_value_t *res,
 	res->rs.s = ch;
 	res->rs.len = l;
 
-	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
 	return 0;
 }
 
 
-int it_get_dlg_status(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags)
+int it_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	int l = 0;
 	char *ch = NULL;
@@ -714,7 +714,7 @@ int it_get_dlg_status(struct sip_msg *msg, xl_value_t *res,
 		return -1;
 
 	if (CURR_DLG_ID!=msg->id)
-		return xl_get_null( msg, res, param, flags);
+		return pv_get_null( msg, param, res);
 
 	res->ri = CURR_DLG_STATUS;
 	ch = int2str( (unsigned long)res->ri, &l);
@@ -722,7 +722,7 @@ int it_get_dlg_status(struct sip_msg *msg, xl_value_t *res,
 	res->rs.s = ch;
 	res->rs.len = l;
 
-	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
 	return 0;
 }

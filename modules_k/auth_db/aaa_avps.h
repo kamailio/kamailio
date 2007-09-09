@@ -30,7 +30,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../trim.h"
-#include "../../items.h"
+#include "../../pvar.h"
 
 #include <string.h>
 
@@ -75,7 +75,7 @@ static inline int parse_aaa_avps(char *definition,
 {
 	struct aaa_avp *avp;
 	int_str avp_name;
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
 	str  foo;
 	char *p;
 	char *e;
@@ -108,15 +108,15 @@ static inline int parse_aaa_avps(char *definition,
 			t = foo.s[foo.len];
 			foo.s[foo.len] = '\0';
 			
-			if (xl_parse_spec(foo.s, &avp_spec,
-						XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-					|| avp_spec.type!=XL_AVP) {
+			if (pv_parse_spec(&foo, &avp_spec)==0
+					|| avp_spec.type!=PVT_AVP) {
 				LOG(L_ERR, "ERROR:auth_aaa_avps: malformed or non AVP %s "
 					"AVP definition\n", foo.s);
 				goto parse_error;;
 			}
 
-			if(xl_get_avp_name(0, &avp_spec, &avp_name, &avp->avp_type)!=0)
+			if(pv_get_avp_name(0, &(avp_spec.pvp), &avp_name,
+						&avp->avp_type)!=0)
 			{
 				LOG(L_ERR, "ERROR:auth_aaa_avps: [%s]- invalid "
 					"AVP definition\n", foo.s);

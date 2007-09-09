@@ -31,7 +31,7 @@
 
 #include "../../str.h"
 #include "../../usr_avp.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../re.h"
 #include "../../parser/msg_parser.h"
 
@@ -102,7 +102,12 @@ struct fis_param
 {
 	int     ops;       /* operation flags */
 	int     opd;       /* operand flags */
-	xl_spec_t sval;    /* values int or str */
+	int     type;
+	union {
+		pv_spec_t sval;    /* values int or str */
+		int n;
+		str s;
+	} u;
 };
 
 struct db_param
@@ -124,8 +129,8 @@ int ops_dbdelete_avps(struct sip_msg* msg, struct fis_param *sp,
 int ops_dbstore_avps(struct sip_msg* msg, struct fis_param *sp,
 								struct db_param *dbp, int use_domain);
 
-int ops_dbquery_avps(struct sip_msg* msg, xl_elem_t* query,
-								itemname_list_t* dest);
+int ops_dbquery_avps(struct sip_msg* msg, pv_elem_t* query,
+								pvname_list_t* dest);
 
 int ops_delete_avp(struct sip_msg* msg,
 								struct fis_param *ap);
@@ -133,7 +138,7 @@ int ops_delete_avp(struct sip_msg* msg,
 int ops_copy_avp(struct sip_msg* msg, struct fis_param* name1,
 								struct fis_param* name2);
 
-int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format);
+int ops_printf(struct sip_msg* msg, struct fis_param* dest, pv_elem_t *format);
 
 int ops_pushto_avp(struct sip_msg* msg, struct fis_param* dst,
 								struct fis_param* ap);

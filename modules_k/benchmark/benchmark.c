@@ -135,12 +135,13 @@ static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
-static int bm_get_time_diff(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags);
+static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param, 
+		pv_value_t *res);
 
-static item_export_t mod_items[] = {
-	{ "BM_time_diff", bm_get_time_diff, 100, {{0, 0}, 0, 0} },
-	{ 0, 0, 0, {{0, 0}, 0, 0} }
+static pv_export_t mod_items[] = {
+	{ {"BM_time_diff", sizeof("BM_time_diff")-1}, 1000, bm_get_time_diff, 0,
+		0, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 /*
@@ -581,8 +582,8 @@ struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
 }
 
 /* item functions */
-static int bm_get_time_diff(struct sip_msg *msg, xl_value_t *res,
-		xl_param_t *param, int flags)
+static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	int l = 0;
 	char *ch = NULL;
@@ -596,7 +597,7 @@ static int bm_get_time_diff(struct sip_msg *msg, xl_value_t *res,
 	res->rs.len = l;
 
 	res->ri = _bm_last_time_diff;
-	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
 	return 0;
 }

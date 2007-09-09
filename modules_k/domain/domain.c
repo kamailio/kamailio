@@ -37,7 +37,7 @@
 #include "../../ut.h"
 #include "../../dset.h"
 #include "../../route.h"
-#include "../../items.h"
+#include "../../pvar.h"
 
 static db_con_t* db_handle=0;
 static db_func_t domain_dbf;
@@ -204,18 +204,18 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
  */
 int w_is_domain_local(struct sip_msg* _msg, char* _sp, char* _s2)
 {
-    xl_spec_t *sp;
-    xl_value_t xl_val;
+    pv_spec_t *sp;
+    pv_value_t pv_val;
 
-    sp = (xl_spec_t *)_sp;
+    sp = (pv_spec_t *)_sp;
 
-    if (sp && (xl_get_spec_value(_msg, sp, &xl_val, 0) == 0)) {
-	if (xl_val.flags & XL_VAL_STR) {
-	    if (xl_val.rs.len == 0 || xl_val.rs.s == NULL) {
+    if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
 		DBG("domain:w_is_domain_local(): Missing domain name\n");
 		return -1;
 	    }
-	    return is_domain_local(&(xl_val.rs));
+	    return is_domain_local(&(pv_val.rs));
 	} else {
 	   DBG("domain:w_is_domain_local(): pseudo variable value is "
 	       "not string\n");

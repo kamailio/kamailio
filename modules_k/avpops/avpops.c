@@ -206,7 +206,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	struct db_param  *dbp;
 	int flags;
 	int flags0;
-	char *s;
+	str s;
 	char *p;
 
 	flags=0;
@@ -218,7 +218,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		return E_UNSPEC;
 	}
 
-	s = (char*)*param;
+	s.s = (char*)*param;
 	if (param_no==1)
 	{
 		/* prepare the fis_param structure */
@@ -229,7 +229,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		}
 		memset( sp, 0, sizeof(struct fis_param));
 
-		if ( (p=strchr(s,'/'))!=0)
+		if ( (p=strchr(s.s,'/'))!=0)
 		{
 			*(p++) = 0;
 			/* check for extra flags/params */
@@ -247,30 +247,30 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 				return E_UNSPEC;
 			}
 		}
-		if (*s!='$')
+		if (*s.s!='$')
 		{
 			/* is a constant string -> use it as uuid*/
 			sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_STR;
-			sp->sval.p.val.s = (char*)pkg_malloc(strlen(s)+1);
-			if (sp->sval.p.val.s==0) {
+			sp->u.s.s = (char*)pkg_malloc(strlen(s.s)+1);
+			if (sp->u.s.s==0) {
 				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem!!\n");
 				return E_OUT_OF_MEM;
 			}
-			sp->sval.p.val.len = strlen(s);
-			strcpy(sp->sval.p.val.s,s);
+			sp->u.s.len = strlen(s.s);
+			strcpy(sp->u.s.s, s.s);
 		} else {
 			/* is a variable $xxxxx */
-			p = xl_parse_spec(s, &sp->sval,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
-			if (p==0 || sp->sval.type==XL_NULL || sp->sval.type==XL_EMPTY)
+			s.len = strlen(s.s);
+			p = pv_parse_spec(&s, &sp->u.sval);
+			if (p==0 || sp->u.sval.type==PVT_NULL || sp->u.sval.type==PVT_EMPTY)
 			{
 				LOG(L_ERR,"ERROR:avops:fixup_db_avp: bad param 1; "
 					"expected : $pseudo-variable or int/str value\n");
 				return E_UNSPEC;
 			}
 			
-			if(sp->sval.type==XL_RURI || sp->sval.type==XL_FROM
-					|| sp->sval.type==XL_TO || sp->sval.type==XL_OURI)
+			if(sp->u.sval.type==PVT_RURI || sp->u.sval.type==PVT_FROM
+					|| sp->u.sval.type==PVT_TO || sp->u.sval.type==PVT_OURI)
 			{
 				sp->opd = ((flags==0)?AVPOPS_FLAG_URI0:flags)|AVPOPS_VAL_PVAR;
 			} else {
@@ -287,7 +287,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			return E_OUT_OF_MEM;
 		}
 		memset( dbp, 0, sizeof(struct db_param));
-		if ( parse_avp_db( s, dbp, allow_scheme)!=0 )
+		if ( parse_avp_db( s.s, dbp, allow_scheme)!=0 )
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: parse failed\n");
 			return E_UNSPEC;
@@ -317,9 +317,9 @@ static int fixup_db_store_avp(void** param, int param_no)
 
 static int fixup_db_query_avp(void** param, int param_no)
 {
-	xl_elem_t *model = NULL;
-	itemname_list_t *anlist = NULL;
-	char *s;
+	pv_elem_t *model = NULL;
+	pvname_list_t *anlist = NULL;
+	str s;
 
 	if (DB_URL==0)
 	{
@@ -328,38 +328,41 @@ static int fixup_db_query_avp(void** param, int param_no)
 		return E_UNSPEC;
 	}
 
-	s = (char*)(*param);
+	s.s = (char*)(*param);
 	if (param_no==1)
 	{
-		if(s==NULL)
+		if(s.s==NULL)
 		{
 			LOG(L_ERR, "ERROR:avpops:fixup_db_query_avp: null format in P%d\n",
 					param_no);
 			return E_UNSPEC;
 		}
-		if(xl_parse_format(s, &model, XL_DISABLE_COLORS|XL_THROW_ERROR)<0)
+		s.len = strlen(s.s);
+		if(pv_parse_format(&s, &model)<0)
 		{
 			LOG(L_ERR,
 				"ERROR:avpops:fixup_db_query_avp: wrong format[%s]\n",
-				s);
+				s.s);
 			return E_UNSPEC;
 		}
 			
 		*param = (void*)model;
 		return 0;
 	} else if(param_no==2) {
-		if(s==NULL)
+		if(s.s==NULL)
 		{
 			LOG(L_ERR, "ERROR:avpops:fixup_db_query_avp: null format in P%d\n",
 					param_no);
 			return E_UNSPEC;
 		}
-		anlist = parse_itemname_list(s, XL_AVP);
+				s.len = strlen(s.s);
+
+		anlist = parse_pvname_list(&s, PVT_AVP);
 		if(anlist==NULL)
 		{
 			LOG(L_ERR,
 				"ERROR:avpops:fixup_db_query_avp: bad format in P%d [%s]\n",
-				param_no, s);
+				param_no, s.s);
 			return E_UNSPEC;
 		}
 		*param = (void*)anlist;
@@ -387,21 +390,21 @@ static int fixup_delete_avp(void** param, int param_no)
 		if(*s=='$')
 		{
 			/* is variable */
-			ap = avpops_parse_pvar(s, 
-				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+			ap = avpops_parse_pvar(s);
 			if (ap==0)
 			{
 				LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: unable to get"
 					" pseudo-variable in param \n");
 				return E_UNSPEC;
 			}
-			if (ap->sval.type!=XL_AVP)
+			if (ap->u.sval.type!=PVT_AVP)
 			{
 				LOG(L_ERR,"ERROR:avops:fixup_delete_avp: bad param; "
 					"expected : $avp(name)\n");
 				return E_UNSPEC;
 			}
 			ap->opd|=AVPOPS_VAL_PVAR;
+			ap->type = AVPOPS_VAL_PVAR;
 		} else {
 			if(strlen(s)<1)
 			{
@@ -448,7 +451,8 @@ static int fixup_delete_avp(void** param, int param_no)
 					return E_UNSPEC;
 				}
 			}
-			ap->sval.flags |= flags<<24;
+			ap->type = AVPOPS_VAL_INT;
+			ap->u.n = flags<<8;
 		}
 
 		/* flags */
@@ -495,8 +499,7 @@ static int fixup_copy_avp(void** param, int param_no)
 			*(p++)=0;
 	}
 
-	ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+	ap = avpops_parse_pvar(s);
 	if (ap==0)
 	{
 		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: unable to get"
@@ -505,7 +508,7 @@ static int fixup_copy_avp(void** param, int param_no)
 	}
 
 	/* attr name is mandatory */
-	if (ap->sval.type!=XL_AVP)
+	if (ap->u.sval.type!=PVT_AVP)
 	{
 		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: you must specify "
 			"only AVP as parameter\n");
@@ -567,8 +570,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 
 		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unable to get"
@@ -576,8 +578,8 @@ static int fixup_pushto_avp(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 
-		switch(ap->sval.type) {
-			case XL_RURI:
+		switch(ap->u.sval.type) {
+			case PVT_RURI:
 				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_RURI;
 				if ( p && !(
 					(!strcasecmp("username",p)
@@ -590,7 +592,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 					return E_UNSPEC;
 				}
 			break;
-			case XL_DSTURI:
+			case PVT_DSTURI:
 				if ( p!=0 )
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
@@ -599,14 +601,14 @@ static int fixup_pushto_avp(void** param, int param_no)
 				}
 				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_DURI;
 			break;
-			case XL_HDR:
+			case PVT_HDR:
 				/* what's the hdr destination ? request or reply? */
 				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: push to header "
 						" is obsoleted - use append_hf() or append_to_reply()"
 						" from textops module!\n");
 				return E_UNSPEC;
 			break;
-			case XL_BRANCH:
+			case PVT_BRANCH:
 				if ( p!=0 )
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
@@ -632,15 +634,14 @@ static int fixup_pushto_avp(void** param, int param_no)
 
 		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_COLORS);
+		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_pudhto_avp: unable to get"
 					" pseudo-variable in param 2\n");
 			return E_OUT_OF_MEM;
 		}
-		if (ap->sval.type==XL_NULL)
+		if (ap->u.sval.type==PVT_NULL)
 		{
 			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 2; "
 				"expected : $pseudo-variable ...\n");
@@ -681,8 +682,7 @@ static int fixup_check_avp(void** param, int param_no)
 
 	if (param_no==1)
 	{
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: unable to get"
@@ -690,7 +690,7 @@ static int fixup_check_avp(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		/* attr name is mandatory */
-		if (ap->sval.type==XL_NULL)
+		if (ap->u.sval.type==PVT_NULL)
 		{
 			LOG(L_ERR,
 				"ERROR:avpops:fixup_check_avp: NULL pseudo-variable in P1\n");
@@ -719,18 +719,18 @@ static int fixup_check_avp(void** param, int param_no)
 				return E_OUT_OF_MEM;
 			}
 			DBG("DEBUG:avpops:fixup_check_avp: compiling regexp <%.*s>\n",
-				ap->sval.p.val.len, ap->sval.p.val.s);
-			if (regcomp(re, ap->sval.p.val.s,
+				ap->u.s.len, ap->u.s.s);
+			if (regcomp(re, ap->u.s.s,
 						REG_EXTENDED|REG_ICASE|REG_NEWLINE))
 			{
 				pkg_free(re);
 				LOG(L_ERR,"ERROR:avpops:fixip_check_avp: bad re <%.*s>\n",
-					ap->sval.p.val.len, ap->sval.p.val.s);
+					ap->u.s.len, ap->u.s.s);
 				return E_BAD_RE;
 			}
 			/* free the string and link the regexp */
 			// pkg_free(ap->sval.p.s);
-			ap->sval.p.val.s = (char*)re;
+			ap->u.s.s = (char*)re;
 		} else if (ap->ops&AVPOPS_OP_FM) {
 			if ( !( ap->opd&AVPOPS_VAL_PVAR ||
 			(!(ap->opd&AVPOPS_VAL_PVAR) && ap->opd&AVPOPS_VAL_STR) ) )
@@ -750,14 +750,13 @@ static int fixup_check_avp(void** param, int param_no)
 static int fixup_printf(void** param, int param_no)
 {
 	struct fis_param *ap;
-	xl_elem_t *model;
-	char *s;
+	pv_elem_t *model;
+	str s;
 
-	s = (char*)(*param);
+	s.s = (char*)(*param);
 	if (param_no==1) {
 		/* attribute name / alias */
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		ap = avpops_parse_pvar(s.s);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_printf_avp: unable to get"
@@ -765,7 +764,7 @@ static int fixup_printf(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 
-		if (ap->sval.type!=XL_AVP)
+		if (ap->u.sval.type!=PVT_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_printf: bad avp name"
 				" <%s>\n", (char*)*param);
@@ -775,7 +774,8 @@ static int fixup_printf(void** param, int param_no)
 	} else if (param_no==2) {
 		if(*param)
 		{
-			if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+			s.len = strlen(s.s);
+			if(pv_parse_format(&s, &model)<0)
 			{
 				LOG(L_ERR, "ERROR:avpops:fixup_printf: wrong format[%s]\n",
 					(char*)(*param));
@@ -819,15 +819,14 @@ static int fixup_subst(void** param, int param_no)
 		/* avp src / avp dst /flags */
 		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
 					" pseudo-variable in param 2 [%s]\n", s);
 			return E_OUT_OF_MEM;
 		}
-		if (ap->sval.type!=XL_AVP)
+		if (ap->u.sval.type!=PVT_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
 				" <%s>\n", (char*)*param);
@@ -850,14 +849,13 @@ static int fixup_subst(void** param, int param_no)
 		
 		/* dst || flags */
 		s = p;
-		if(*s==ITEM_MARKER)
+		if(*s==PV_MARKER)
 		{
 			if ( (p=strchr(s,'/'))!=0 )
 				*(p++)=0;
 			if(p==0 || (p!=0 && p-s>1))
 			{
-				ap = avpops_parse_pvar(s, 
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+				ap = avpops_parse_pvar(s);
 				if (ap==0)
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
@@ -865,7 +863,7 @@ static int fixup_subst(void** param, int param_no)
 					return E_OUT_OF_MEM;
 				}
 			
-				if (ap->sval.type!=XL_AVP)
+				if (ap->u.sval.type!=PVT_AVP)
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
 						" <%s>!\n", s);
@@ -949,15 +947,14 @@ static int fixup_op_avp(void** param, int param_no)
 		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
 
-		av[0] = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		av[0] = avpops_parse_pvar(s);
 		if (av[0]==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: unable to get"
 					" pseudo-variable in param 1\n");
 			return E_OUT_OF_MEM;
 		}
-		if (av[0]->sval.type!=XL_AVP)
+		if (av[0]->u.sval.type!=PVT_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: bad attribute name"
 				" <%s>\n", (char*)*param);
@@ -971,15 +968,14 @@ static int fixup_op_avp(void** param, int param_no)
 		}
 		
 		s = p;
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: unable to get"
 					" pseudo-variable in param 1 (2)\n");
 			return E_OUT_OF_MEM;
 		}
-		if (ap->sval.type!=XL_AVP)
+		if (ap->u.sval.type!=PVT_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: bad attribute name"
 				"/alias <%s>!\n", s);
@@ -1021,8 +1017,7 @@ static int fixup_is_avp_set(void** param, int param_no)
 		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
 		
-		ap = avpops_parse_pvar(s, 
-			XL_THROW_ERROR|XL_DISABLE_COLORS);
+		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: unable to get"
@@ -1030,7 +1025,7 @@ static int fixup_is_avp_set(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		
-		if (ap->sval.type!=XL_AVP)
+		if (ap->u.sval.type!=PVT_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: bad attribute name"
 					" <%s>\n", (char*)*param);
@@ -1100,12 +1095,12 @@ static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param)
 
 static int w_dbquery1_avps(struct sip_msg* msg, char* query, char* param)
 {
-	return ops_dbquery_avps ( msg, (xl_elem_t*)query, 0);
+	return ops_dbquery_avps ( msg, (pv_elem_t*)query, 0);
 }
 
 static int w_dbquery2_avps(struct sip_msg* msg, char* query, char* dest)
 {
-	return ops_dbquery_avps ( msg, (xl_elem_t*)query, (itemname_list_t*)dest);
+	return ops_dbquery_avps ( msg, (pv_elem_t*)query, (pvname_list_t*)dest);
 }
 
 static int w_delete_avps(struct sip_msg* msg, char* param, char* foo)
@@ -1121,7 +1116,7 @@ static int w_copy_avps(struct sip_msg* msg, char* name1, char *name2)
 
 static int w_printf(struct sip_msg* msg, char* dest, char *format)
 {
-	return ops_printf(msg, (struct fis_param*)dest, (xl_elem_t*)format);
+	return ops_printf(msg, (struct fis_param*)dest, (pv_elem_t*)format);
 }
 
 static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param)

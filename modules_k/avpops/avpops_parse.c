@@ -99,19 +99,20 @@ char *parse_avp_attr(char *s, struct fis_param *attr, char end)
 					"int as type says <%s>\n", tmp.s);
 				goto error;
 			}
-			attr->sval.p.val.s = 0;
-			attr->sval.p.val.len = (int)uint;
+			attr->type = AVPOPS_VAL_INT;
+			attr->u.n = (int)uint;
 		} else {
 			/* duplicate name as str NULL terminated */
-			attr->sval.p.val.s = (char*)pkg_malloc(tmp.len + 1);
-			if (attr->sval.p.val.s==0)
+			attr->u.s.s = (char*)pkg_malloc(tmp.len + 1);
+			if (attr->u.s.s==0)
 			{
 				LOG(L_ERR,"ERROR:avpops:parse_avp_attr: no more pkg mem\n");
 				goto error;
 			}
-			attr->sval.p.val.len = tmp.len;
-			memcpy(attr->sval.p.val.s, tmp.s, tmp.len);
-			attr->sval.p.val.s[attr->sval.p.val.len] = 0;
+			attr->type = AVPOPS_VAL_STR;
+			attr->u.s.len = tmp.len;
+			memcpy(attr->u.s.s, tmp.s, tmp.len);
+			attr->u.s.s[attr->u.s.len] = 0;
 		}
 	}
 
@@ -120,10 +121,10 @@ error:
 	return 0;
 }
 
-struct fis_param *avpops_parse_pvar(char *s, int flags)
+struct fis_param *avpops_parse_pvar(char *in)
 {
 	struct fis_param *ap;
-	char *p;
+	str s;
 
 	/* compose the param structure */
 	ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
@@ -133,14 +134,15 @@ struct fis_param *avpops_parse_pvar(char *s, int flags)
 		return NULL;
 	}
 	memset( ap, 0, sizeof(struct fis_param));
-	p = xl_parse_spec(s, &ap->sval, flags);
-	if(p==0)
+	s.s = in; s.len = strlen(s.s);
+	if(pv_parse_spec(&s, &ap->u.sval)==0)
 	{
 		pkg_free(ap);
 		return NULL;
 	}
 
 	ap->opd |= AVPOPS_VAL_PVAR;
+	ap->type = AVPOPS_VAL_PVAR;
 	return ap;
 }
 
@@ -191,38 +193,44 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			s0.len = strlen(s0.s);
 			if(str2int(&s0, &flags)!=0)
 			{
-				LOG(L_ERR, "ERROR:avops:parse_avp_db:: error - bad avp flags\n");
+				LOG(L_ERR,
+					"ERROR:avops:parse_avp_db:: error - bad avp flags\n");
 				goto error;
 			}
 		}
-		dbp->a.sval.flags |= flags<<24;
+		dbp->a.u.sval.pvp.pvn.u.isname.type |= flags<<8;
+		dbp->a.type = AVPOPS_VAL_NONE;
 	} else {
-		p = xl_parse_spec(s, &dbp->a.sval,
-				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
-		if (p==0 || *p!='\0' || dbp->a.sval.type!=XL_AVP)
+		s0.s = s; s0.len = strlen(s0.s);
+		p = pv_parse_spec(&s0, &dbp->a.u.sval);
+		if (p==0 || *p!='\0' || dbp->a.u.sval.type!=PVT_AVP)
 		{
 			LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
 				"expected : $avp(name) or int/str value\n");
 			return E_UNSPEC;
 		}
-		if(dbp->a.sval.flags&XL_DPARAM)
-		{
-			dbp->a.opd = AVPOPS_VAL_PVAR;
-		} else {
-			dbp->a.opd = (dbp->a.sval.p.val.s)?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
-		}
+		dbp->a.type = AVPOPS_VAL_PVAR;
 	}
 
 	/* optimize and keep the attribute name as str also to
 	 * speed up db querie builds */
-	if (!(dbp->a.opd&AVPOPS_VAL_PVAR) && !(dbp->a.opd&AVPOPS_VAL_NONE))
+	if (dbp->a.type == AVPOPS_VAL_PVAR)
 	{
-		if (dbp->a.opd&AVPOPS_VAL_STR)
+		if(pv_has_sname(&dbp->a.u.sval))
 		{
-			dbp->sa = dbp->a.sval.p.val;
-			dbp->sa.s[dbp->sa.len] = '\0';
-		} else {
-			ul = (unsigned long)dbp->a.sval.p.val.len;
+			dbp->sa.s=(char*)pkg_malloc(
+					dbp->a.u.sval.pvp.pvn.u.isname.name.s.len+1);
+			if (dbp->sa.s==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_avp_db: no more pkg mem\n");
+				goto error;
+			}
+			memcpy(dbp->sa.s, dbp->a.u.sval.pvp.pvn.u.isname.name.s.s,
+					dbp->a.u.sval.pvp.pvn.u.isname.name.s.len);
+			dbp->sa.len = dbp->a.u.sval.pvp.pvn.u.isname.name.s.len;
+			dbp->sa.s[dbp->sa.len] = 0;
+		} else if(pv_has_iname(&dbp->a.u.sval)) {
+			ul = (unsigned long)dbp->a.u.sval.pvp.pvn.u.isname.name.n;
 			tmp.s = int2str( ul, &(tmp.len) );
 			dbp->sa.s = (char*)pkg_malloc( tmp.len + 1 );
 			if (dbp->sa.s==0)
@@ -364,18 +372,20 @@ struct fis_param* parse_intstr_value(char *p, int len)
 				goto error;
 			}
 		}
-		vp->sval.p.val.len = (int)uint;
+		vp->u.n = (int)uint;
+		vp->type = AVPOPS_VAL_INT;
 	} else {
 		/* duplicate the value as string */
-		vp->sval.p.val.s = (char*)pkg_malloc((val_str.len+1)*sizeof(char));
-		if (vp->sval.p.val.s==0)
+		vp->u.s.s = (char*)pkg_malloc((val_str.len+1)*sizeof(char));
+		if (vp->u.s.s==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: no more pkg mem\n");
 			goto error;
 		}
-		vp->sval.p.val.len = val_str.len;
-		memcpy(vp->sval.p.val.s, val_str.s, val_str.len);
-		vp->sval.p.val.s[vp->sval.p.val.len] = 0;
+		vp->u.s.len = val_str.len;
+		memcpy(vp->u.s.s, val_str.s, val_str.len);
+		vp->u.s.s[vp->u.s.len] = 0;
+		vp->type = AVPOPS_VAL_STR;
 	}
 
 	return vp;
@@ -575,14 +585,14 @@ struct fis_param* parse_check_value(char *s)
 	if (*p=='$')
 	{
 		/* is variable */
-		vp = avpops_parse_pvar(p, XL_THROW_ERROR|XL_DISABLE_COLORS);
+		vp = avpops_parse_pvar(p);
 		if (vp==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_check_value: unable to get"
 					" pseudo-variable\n");
 			goto error;
 		}
-		if (vp->sval.type==XL_NULL)
+		if (vp->u.sval.type==PVT_NULL)
 		{
 			LOG(L_ERR,"ERROR:avops:parse_check_value: bad param; "
 				"expected : $pseudo-variable or int/str value\n");
@@ -687,14 +697,14 @@ struct fis_param* parse_op_value(char *s)
 	if (*p=='$')
 	{
 		/* is variable */
-		vp = avpops_parse_pvar(p, XL_THROW_ERROR|XL_DISABLE_COLORS);
+		vp = avpops_parse_pvar(p);
 		if (vp==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_op_value: unable to get"
 					" pseudo-variable\n");
 			goto error;
 		}
-		if (vp->sval.type==XL_NULL)
+		if (vp->u.sval.type==PVT_NULL)
 		{
 			LOG(L_ERR,"ERROR:avops:parse_op_value: bad param; "
 				"expected : $pseudo-variable or int/str value\n");

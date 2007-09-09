@@ -208,7 +208,7 @@ error00:
 }
 
 
-int exec_avp(struct sip_msg *msg, char *cmd, itemname_list_p avpl)
+int exec_avp(struct sip_msg *msg, char *cmd, pvname_list_p avpl)
 {
 	int_str avp_val;
 	int_str avp_name;
@@ -219,7 +219,7 @@ int exec_avp(struct sip_msg *msg, char *cmd, itemname_list_p avpl)
 	str res;
 	int exit_status;
 	int i;
-	itemname_list_t* crt;
+	pvname_list_t* crt;
 
 	/* pessimist: assume error by default */
 	ret=-1;
@@ -255,7 +255,7 @@ int exec_avp(struct sip_msg *msg, char *cmd, itemname_list_p avpl)
 		{
 			avp_name.n = i+1;
 		} else {
-			if(xl_get_avp_name(msg, &crt->sname, &avp_name, &avp_type)!=0)
+			if(pv_get_avp_name(msg, &(crt->sname.pvp), &avp_name, &avp_type)!=0)
 			{
 				LOG(L_ERR,"exec:exec_avp:error - cant get item name [%d]\n",i);
 				goto error;

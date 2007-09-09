@@ -33,7 +33,7 @@
 #include "diameter_msg.h"
 #include "../../parser/digest/digest_parser.h"
 #include "../../parser/hf.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../str.h"
 #include "../auth/api.h"
 #include "defs.h"
@@ -48,7 +48,7 @@ auth_result_t diam_pre_auth(struct sip_msg* m, str* realm, int hftype,
 int find_credentials(struct sip_msg* m, str* realm, int hftype, 
 						struct hdr_field** h);
 
-int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype);
+int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype);
 
 int diameter_authorize(struct hdr_field* cred, str* p_method, 
 					struct sip_uri uri,	struct sip_uri ruri,

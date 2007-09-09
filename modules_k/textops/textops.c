@@ -825,7 +825,7 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
 	str s0;
 
 	if(key==NULL)
@@ -834,8 +834,8 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 		return -1;
 	}
 
-	model = (xl_elem_t*)key;
-	if (xl_printf_s(msg, model, &s0)<0)
+	model = (pv_elem_t*)key;
+	if (pv_printf_s(msg, model, &s0)<0)
 	{
 		LOG(L_ERR,"textops:add_hf_helper: error - cannot print the format\n");
 		return -1;
@@ -854,7 +854,7 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 /* add str1 to end of header or str1.r-uri.str2 */
 
 static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
-		xl_elem_t *model, int mode, str *hfs)
+		pv_elem_t *model, int mode, str *hfs)
 {
 	struct lump* anchor;
 	struct hdr_field *hf;
@@ -907,7 +907,7 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		s0 = *str1;
 	} else {
 		if(model) {
-			if (xl_printf_s(msg, model, &s0)<0)
+			if (pv_printf_s(msg, model, &s0)<0)
 			{
 				LOG(L_ERR,
 				"textops:add_hf_helper: error - cannot print the format\n");
@@ -944,23 +944,23 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 
 static int append_hf_1(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 0, 0);
+	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 0, 0);
 }
 
 static int append_hf_2(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 0,
+	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 0,
 			(str*)str2);
 }
 
 static int insert_hf_1(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 1, 0);
+	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 1, 0);
 }
 
 static int insert_hf_2(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 1, 
+	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 1, 
 			(str*)str2);
 }
 
@@ -1152,14 +1152,16 @@ static int fixup_privacy(void** param, int param_no)
 }
 
 /*
- * Convert char* parameter to xl_elem parameter
+ * Convert char* parameter to pv_elem parameter
  */
 static int it_list_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
+	pv_elem_t *model;
+	str s;
 	if(*param)
 	{
-		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		s.s = (char*)(*param); s.len = strlen(s.s);
+		if(pv_parse_format(&s, &model)<0)
 		{
 			LOG(L_ERR, "ERROR:textops:item_list_fixup: wrong format[%s]\n",
 				(char*)(*param));

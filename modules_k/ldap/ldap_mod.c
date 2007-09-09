@@ -37,7 +37,7 @@
 #include "../../ut.h"
 #include "../../parser/hf.h"
 #include "../../sr_module.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../mem/mem.h"
 
 #include "ld_session.h"
@@ -268,7 +268,7 @@ static void destroy(void)
 
 static int w_ldap_search(struct sip_msg* msg, char* ldap_url, char* param)
 {
-	return ldap_search_impl(msg, (xl_elem_t*)ldap_url);
+	return ldap_search_impl(msg, (pv_elem_t*)ldap_url);
 }
 
 static int w_ldap_result1(struct sip_msg* msg, char* src, char* param)
@@ -290,8 +290,8 @@ static int w_ldap_result_next(struct sip_msg* msg, char* foo, char *bar)
 static int w_ldap_filter_url_encode(struct sip_msg* msg,
 		char* filter_component, char* dst_avp_name)
 {
-	return ldap_filter_url_encode(msg, (xl_elem_t*)filter_component,
-			(xl_spec_t*)dst_avp_name);
+	return ldap_filter_url_encode(msg, (pv_elem_t*)filter_component,
+			(pv_spec_t*)dst_avp_name);
 }
 
 static int w_ldap_result_check_1(struct sip_msg* msg,
@@ -315,17 +315,18 @@ static int w_ldap_result_check_2(struct sip_msg* msg,
 
 static int ldap_search_fixup(void** param, int param_no)
 {
-	xl_elem_t *model;
-	char* s;
+	pv_elem_t *model;
+	str s;
 
 	if (param_no == 1) {
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			model = 0;
 		} else {
-			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) 
+			s.len = strlen(s.s);
+			if (pv_parse_format(&s,&model)<0) 
 			{
-				LM_ERR("xl_parse_format failed\n");
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -342,6 +343,7 @@ static int ldap_result_fixup(void** param, int param_no)
 	str subst;
 	char *arg_str, *dst_avp_str, *dst_avp_val_type_str;
 	char *p;
+	str s;
 	int dst_avp_val_type = 0;
 	
 	if (param_no == 1) {
@@ -380,18 +382,15 @@ static int ldap_result_fixup(void** param, int param_no)
 		lp->ldap_attr_name.len = strlen(arg_str);
 
 		lp->dst_avp_val_type = dst_avp_val_type;
-		
-		p = xl_parse_spec(
-			dst_avp_str, 
-			&lp->dst_avp_spec,
-			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		s.s = dst_avp_str; s.len = strlen(s.s);
+		p = pv_parse_spec(&s, &lp->dst_avp_spec);
 		if (p == 0) {
 			pkg_free(lp);
 			LM_ERR("parse error for [%s]\n",
 					dst_avp_str);
 			return E_UNSPEC;
 		}
-		if (lp->dst_avp_spec.type != XL_AVP) {
+		if (lp->dst_avp_spec.type != PVT_AVP) {
 			pkg_free(lp);
 			LM_ERR(	"bad attribute name [%s]\n",
 				dst_avp_str);
@@ -419,6 +418,7 @@ static int ldap_result_check_fixup(void** param, int param_no)
 	struct ldap_result_check_params *lp;
 	struct subst_expr *se;
 	str subst;
+	str s;
 	char *arg_str, *check_str;
 	int arg_str_len;
 	
@@ -452,11 +452,10 @@ static int ldap_result_check_fixup(void** param, int param_no)
 		}
 		else
 		{
-			if (xl_parse_format(check_str, &(lp->check_str_elem_p),
-						XL_DISABLE_COLORS) < 0)
+			s.s = check_str; s.len = strlen(s.s);
+			if (pv_parse_format(&s, &(lp->check_str_elem_p)) < 0)
 			{
-				LM_ERR("xl_parse_format "
-				"failed\n");
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}	
@@ -480,17 +479,18 @@ static int ldap_result_check_fixup(void** param, int param_no)
 
 static int ldap_filter_url_encode_fixup(void** param, int param_no)
 {
-	xl_elem_t *elem_p;
-	xl_spec_t *spec_p;
-	char* s;
+	pv_elem_t *elem_p;
+	pv_spec_t *spec_p;
+	str s;
 
 	if (param_no == 1) {
-		s = (char*)*param;
-		if (s==0 || s[0]==0) {
+		s.s = (char*)*param;
+		if (s.s==0 || s.s[0]==0) {
 			elem_p = 0;
 		} else {
-			if (xl_parse_format(s, &elem_p, XL_DISABLE_COLORS) < 0) {
-				LM_ERR("xl_parse_format failed\n");
+			s.len = strlen(s.s);
+			if (pv_parse_format(&s, &elem_p) < 0) {
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -498,15 +498,13 @@ static int ldap_filter_url_encode_fixup(void** param, int param_no)
 	}
 	else if (param_no == 2)
 	{
-		spec_p = (xl_spec_t*)pkg_malloc(sizeof(xl_spec_t));
+		spec_p = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 		if (spec_p == NULL) {
 			LM_ERR("no memory\n");
 			return E_OUT_OF_MEM;
 		}
-		
-		if (xl_parse_spec((char*)*param,
-					spec_p,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)
+		s.s = (char*)*param; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, spec_p)
 				== 0)
 		{
 			pkg_free(spec_p);
@@ -514,7 +512,7 @@ static int ldap_filter_url_encode_fixup(void** param, int param_no)
 				(char*)*param);
 			return E_UNSPEC;
 		}
-		if (spec_p->type != XL_AVP) {
+		if (spec_p->type != PVT_AVP) {
 			pkg_free(spec_p);
 			LM_ERR("bad attribute name"
 				" [%s]\n", (char*)*param);

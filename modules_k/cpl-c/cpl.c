@@ -49,7 +49,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
@@ -166,7 +166,7 @@ static mi_export_t mi_cmds[] = {
 	{ "LOAD_CPL",   mi_cpl_load,     0,  0,  mi_child_init },
 	{ "REMOVE_CPL", mi_cpl_remove,   0,  0,  0             },
 	{ "GET_CPL",    mi_cpl_get,      0,  0,  0             },
-	{ 0, 0, 0, 0}
+	{ 0, 0, 0, 0, 0}
 };
 
 
@@ -232,8 +232,9 @@ static int cpl_init(void)
 	struct stat   stat_t;
 	char *ptr;
 	int val;
-	xl_spec_t avp_spec;
+	pv_spec_t avp_spec;
 	unsigned short avp_type;
+	str stmp;
 
 	LOG(L_INFO,"CPL - initializing\n");
 
@@ -259,15 +260,16 @@ static int cpl_init(void)
 
 	/* fix the timer_avp name */
 	if (timer_avp && *timer_avp) {
-		if (xl_parse_spec(timer_avp, &avp_spec,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==0
-				|| avp_spec.type!=XL_AVP) {
+		stmp.s = timer_avp; stmp.len = strlen(stmp.s);
+		if (pv_parse_spec(&stmp, &avp_spec)==0
+				|| avp_spec.type!=PVT_AVP) {
 			LOG(L_ERR, "ERROR:cpl_init: malformed or non AVP %s "
 				"AVP definition\n", timer_avp);
 			return -1;
 		}
 
-		if(xl_get_avp_name(0, &avp_spec, &cpl_env.timer_avp, &avp_type)!=0)
+		if(pv_get_avp_name(0, &(avp_spec.pvp), &cpl_env.timer_avp,
+							&avp_type)!=0)
 		{
 			LOG(L_ERR, "ERROR:cpl_init: [%s]- invalid "
 				"AVP definition\n", timer_avp);

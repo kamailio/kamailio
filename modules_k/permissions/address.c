@@ -39,7 +39,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../usr_avp.h"
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../ut.h"
 
 #define TABLE_VERSION 3
@@ -331,16 +331,16 @@ void clean_addresses(void)
 int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
     int_or_pvar_t *i_or_p;
-    xl_value_t xl_val;
+    pv_value_t pv_val;
 
     i_or_p = (int_or_pvar_t *)_addr_group;
 
     if (i_or_p->pvar) {
-	if (xl_get_spec_value(_msg, i_or_p->pvar, &xl_val, 0) == 0) {
-	    if (xl_val.flags & XL_VAL_INT) {
-		addr_group = xl_val.ri;
-	    } else if (xl_val.flags & XL_VAL_STR) {
-		if (str2int(&(xl_val.rs), &addr_group) == -1) {
+	if (pv_get_spec_value(_msg, i_or_p->pvar, &pv_val) == 0) {
+	    if (pv_val.flags & PV_VAL_INT) {
+		addr_group = pv_val.ri;
+	    } else if (pv_val.flags & PV_VAL_STR) {
+		if (str2int(&(pv_val.rs), &addr_group) == -1) {
 		    LOG(L_ERR, "set_address_group(): Error while "
 			"converting group string to int\n");
 		    return -1;
@@ -373,20 +373,20 @@ int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2)
  */
 int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp) 
 {
-    xl_spec_t *addr_sp, *port_sp;
-    xl_value_t xl_val;
+    pv_spec_t *addr_sp, *port_sp;
+    pv_value_t pv_val;
 
     unsigned int addr, port;
     struct in_addr addr_struct;
 
-    addr_sp = (xl_spec_t *)_addr_sp;
-    port_sp = (xl_spec_t *)_port_sp;
+    addr_sp = (pv_spec_t *)_addr_sp;
+    port_sp = (pv_spec_t *)_port_sp;
 
-    if (addr_sp && (xl_get_spec_value(_msg, addr_sp, &xl_val, 0) == 0)) {
-	if (xl_val.flags & XL_VAL_INT) {
-	    addr = xl_val.ri;
-	} else if (xl_val.flags & XL_VAL_STR) {
-	    if (inet_aton(xl_val.rs.s, &addr_struct) == 0) {
+    if (addr_sp && (pv_get_spec_value(_msg, addr_sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_INT) {
+	    addr = pv_val.ri;
+	} else if (pv_val.flags & PV_VAL_STR) {
+	    if (inet_aton(pv_val.rs.s, &addr_struct) == 0) {
 		LOG(L_ERR, "allow_address(): Error while converting "
 		    "IP address string to in_addr\n");
 		return -1;
@@ -403,11 +403,11 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 	return -1;
     }
 
-    if (port_sp && (xl_get_spec_value(_msg, port_sp, &xl_val, 0) == 0)) {
-	if (xl_val.flags & XL_VAL_INT) {
-	    port = xl_val.ri;
-	} else if (xl_val.flags & XL_VAL_STR) {
-	    if (str2int(&(xl_val.rs), &port) == -1) {
+    if (port_sp && (pv_get_spec_value(_msg, port_sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_INT) {
+	    port = pv_val.ri;
+	} else if (pv_val.flags & PV_VAL_STR) {
+	    if (str2int(&(pv_val.rs), &port) == -1) {
 		LOG(L_ERR, "allow_address(): Error while converting "
 		    "port string to int\n");
 		return -1;
@@ -437,17 +437,17 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
     int_or_pvar_t *i_or_p;
-    xl_value_t xl_val;
+    pv_value_t pv_val;
     unsigned int group;
 
     i_or_p = (int_or_pvar_t *)_addr_group;
 
     if (i_or_p->pvar) {
-	if (xl_get_spec_value(_msg, i_or_p->pvar, &xl_val, 0) == 0) {
-	    if (xl_val.flags & XL_VAL_INT) {
-		group = xl_val.ri;
-	    } else if (xl_val.flags & XL_VAL_STR) {
-		if (str2int(&(xl_val.rs), &group) == -1) {
+	if (pv_get_spec_value(_msg, i_or_p->pvar, &pv_val) == 0) {
+	    if (pv_val.flags & PV_VAL_INT) {
+		group = pv_val.ri;
+	    } else if (pv_val.flags & PV_VAL_STR) {
+		if (str2int(&(pv_val.rs), &group) == -1) {
 		    LOG(L_ERR, "allow_source_address(): Error while "
 			"converting group string to int\n");
 		    return -1;

@@ -51,7 +51,7 @@
 #include <string.h> /* for memset() */
 #include <stdlib.h> /* For atoi() */
 
-#include "../../items.h"
+#include "../../pvar.h"
 #include "../../parser/parse_sst.h"
 #include "../../parser/parse_supported.h"
 #include "../../mem/mem.h"
@@ -161,7 +161,7 @@ extern struct sl_binds slb;
 /**
  * The dialog modules timeout AVP spac.
  */
-static xl_spec_t *timeout_avp = 0;
+static pv_spec_t *timeout_avp = 0;
 
 /**
  * Our Min-SE: header field value and test.
@@ -193,7 +193,7 @@ static str sst_422_rpl = str_init("Session Timer Too Small");
  * @param minSE - The minimum session expire value allowed by this
  *                PROXY.
  */
-void sst_handler_init(xl_spec_t *timeout_avp_p, unsigned int min_se, 
+void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se, 
 		int flag, unsigned int reject)
 {
 	timeout_avp = timeout_avp_p;
@@ -827,22 +827,22 @@ static int remove_header(struct sip_msg *msg, const char *header)
 static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 {
 	int rtn = -1; /* assume failure */
-	xl_value_t xl_val;
+	pv_value_t pv_val;
 	
 	/* Set the dialog timeout HERE */
 	if (timeout_avp) {
 		int result = 0;
-		if ((result = xl_get_spec_value(msg, timeout_avp, &xl_val, 0)) == 0) {
-			if (xl_val.flags & XL_VAL_INT) {
+		if ((result = pv_get_spec_value(msg, timeout_avp, &pv_val)) == 0) {
+			if (pv_val.flags & PV_VAL_INT) {
 				/* We now hold a reference to the AVP int value */
 				LOG(L_ERR, "Found current timeout value is %d, setting it to %d\n",
-						xl_val.ri, value);
-				xl_val.ri = value;
+						pv_val.ri, value);
+				pv_val.ri = value;
 				rtn = 0;
 			}
 			else {
 				/* Never set so it was never added */
-				if (xl_val.flags == XL_VAL_NULL) {
+				if (pv_val.flags == PV_VAL_NULL) {
 					int_str avp_name;
 					int_str avp_value;
 					unsigned short name_type = 0;
@@ -850,14 +850,15 @@ static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 					memset(&avp_value, 0, sizeof(int_str));
 					memset(&avp_name, 0, sizeof(int_str));
 
-					xl_get_avp_name(msg, timeout_avp, &avp_name, &name_type);
+					pv_get_avp_name(msg, &timeout_avp->pvp, &avp_name,
+							&name_type);
 					avp_value.n = value;
 					add_avp(name_type, avp_name, avp_value);
 					LOG(L_DBG, "Added the avp and set the value to %d\n", value);
 					rtn = 0;
 				}
 				else {
-					LOG(L_ERR, "AVP wrong type %d. Not an integer.\n", xl_val.flags);
+					LOG(L_ERR, "AVP wrong type %d. Not an integer.\n", pv_val.flags);
 				}
 			}
 		}

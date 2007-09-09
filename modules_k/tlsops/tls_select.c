@@ -94,8 +94,8 @@ err:
 }
 
 
-int tlsops_cipher(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
-																	int flags)
+int tlsops_cipher(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	str cipher;
 	static char buf[1024];
@@ -121,17 +121,18 @@ int tlsops_cipher(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
 	memcpy(buf, cipher.s, cipher.len);
 	res->rs.s = buf;
 	res->rs.len = cipher.len;
-	res->flags = XL_VAL_STR;
+	res->flags = PV_VAL_STR;
 	tcpconn_put(c);
 
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
 
-int tlsops_bits(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags) 
+int tlsops_bits(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	str bits;
 	int b;
@@ -159,17 +160,18 @@ int tlsops_bits(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	res->rs.s = buf;
 	res->rs.len = bits.len;
 	res->ri = b;
-	res->flags = XL_VAL_STR | XL_VAL_INT;
+	res->flags = PV_VAL_STR | PV_VAL_INT;
 	tcpconn_put(c);
 
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
 
-int tlsops_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_version(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	str version;
 	static char buf[1024];
@@ -196,18 +198,19 @@ int tlsops_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int 
 
 	res->rs.s = buf;
 	res->rs.len = version.len;
-	res->flags = XL_VAL_STR;
+	res->flags = PV_VAL_STR;
 
 	tcpconn_put(c);
 
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
 
-int tlsops_desc(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_desc(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	static char buf[128];
 
@@ -227,18 +230,19 @@ int tlsops_desc(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	SSL_CIPHER_description(SSL_get_current_cipher(ssl), buf, 128);
 	res->rs.s = buf;
 	res->rs.len = strlen(buf);
-	res->flags = XL_VAL_STR;
+	res->flags = PV_VAL_STR;
 
 	tcpconn_put(c);
 
 	return 0;
 err:
 	if (c) tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
 
-int tlsops_cert_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_cert_version(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	static char buf[INT2STR_MAX_LEN];
 	X509* cert;
@@ -246,21 +250,21 @@ int tlsops_cert_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
 	char* version;
 	int my;
 
-	if (param->ind & CERT_PEER) {
+	if (param->pvn.u.isname.name.n & CERT_PEER) {
 		my = 0;
-	} else if (param->ind & CERT_LOCAL) {
+	} else if (param->pvn.u.isname.name.n & CERT_LOCAL) {
 		my = 1;
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_version: bug in call to "
 			"tlsops_cert_version\n");
-		return xl_get_null(msg, res, param, flags);
+		return pv_get_null(msg, param, res);
 	}
 
 	if (get_cert(&cert, &c, msg, my) < 0) return -1;
 	version = int2str(X509_get_version(cert), &res->rs.len);
 	memcpy(buf, version, res->rs.len);
 	res->rs.s = buf;
-	res->flags = XL_VAL_STR;
+	res->flags = PV_VAL_STR;
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
@@ -271,7 +275,8 @@ int tlsops_cert_version(struct sip_msg *msg, xl_value_t *res, xl_param_t *param,
  * Check whether peer certificate exists and verify the result
  * of certificate verification
  */
-int tlsops_check_cert(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_check_cert(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	static str succ = str_init("1");
 	static str fail = str_init("0");
@@ -281,15 +286,15 @@ int tlsops_check_cert(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, i
 	SSL* ssl;
 	X509* cert = 0;
 
-	switch (param->ind) {
+	switch (param->pvn.u.isname.name.n) {
 	case CERT_VERIFIED:   err = X509_V_OK;                              break;
 	case CERT_REVOKED:    err = X509_V_ERR_CERT_REVOKED;                break;
 	case CERT_EXPIRED:    err = X509_V_ERR_CERT_HAS_EXPIRED;            break;
 	case CERT_SELFSIGNED: err = X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT; break;
 	default:
 		LOG(L_CRIT,"BUG:tlsops:tlsops_check_cert: unexpected parameter "
-			"value \"%d\"\n", param->ind);
-		return xl_get_null(msg, res, param, flags);
+			"value \"%d\"\n", param->pvn.u.isname.name.n);
+		return pv_get_null(msg, param, res);
 	}   
 
 	c = get_cur_connection(msg);
@@ -307,7 +312,7 @@ int tlsops_check_cert(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, i
 		res->rs.len = fail.len;
 		res->ri   = 0;
 	}
-	res->flags = XL_VAL_STR | XL_VAL_INT;
+	res->flags = PV_VAL_STR | PV_VAL_INT;
 
 	if (cert) X509_free(cert);
 	tcpconn_put(c);
@@ -316,11 +321,12 @@ int tlsops_check_cert(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, i
 err:
 	if (cert) X509_free(cert);
 	if (c) tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
 
-int tlsops_validity(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_validity(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	static char buf[1024];
 	X509* cert;
@@ -332,12 +338,12 @@ int tlsops_validity(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int
 
 	if (get_cert(&cert, &c, msg, my) < 0) return -1;
 
-	switch (param->ind) {
+	switch (param->pvn.u.isname.name.n) {
 	case CERT_NOTBEFORE: date = X509_get_notBefore(cert); break;
 	case CERT_NOTAFTER:  date = X509_get_notAfter(cert);  break;
 	default:
 		LOG(L_CRIT,"BUG:tlsops:tlsops_validity: unexpected parameter value "
-			"\"%d\"\n", param->ind);
+			"\"%d\"\n", param->pvn.u.isname.name.n);
 		goto err;
 	}
 
@@ -362,7 +368,7 @@ int tlsops_validity(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int
 	memcpy(buf, p->data, p->length);
 	res->rs.s = buf;
 	res->rs.len = p->length;
-	res->flags = XL_VAL_STR ;
+	res->flags = PV_VAL_STR ;
 
 	BIO_free(mem);
 	if (!my) X509_free(cert);
@@ -373,11 +379,12 @@ err:
 	if (mem) BIO_free(mem);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
 
-int tlsops_sn(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_sn(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	static char buf[INT2STR_MAX_LEN];
 	X509* cert;
@@ -385,31 +392,32 @@ int tlsops_sn(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags
 	int my, serial;
 	char* sn;
 
-	if (param->ind & CERT_PEER) {
+	if (param->pvn.u.isname.name.n & CERT_PEER) {
 		my = 0;
-	} else if (param->ind & CERT_LOCAL) {
+	} else if (param->pvn.u.isname.name.n & CERT_LOCAL) {
 		my = 1;
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_sn: could not determine certificate\n");
-		return xl_get_null(msg, res, param, flags);
+		return pv_get_null(msg, param, res);
 	}
 	
 	if (get_cert(&cert, &c, msg, my) < 0)
-		return xl_get_null(msg, res, param, flags);
+		return pv_get_null(msg, param, res);
 	
 	serial = ASN1_INTEGER_get(X509_get_serialNumber(cert));
 	sn = int2str( serial, &res->rs.len);
 	memcpy(buf, sn, res->rs.len);
 	res->rs.s = buf;
 	res->ri = serial;
-	res->flags = XL_VAL_STR | XL_VAL_INT;	
+	res->flags = PV_VAL_STR | PV_VAL_INT;	
 	
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 }
 
-int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	static char buf[1024];
 	X509* cert;
@@ -422,7 +430,8 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	str text;
 
 	text.s = 0;
-	ind_local = param->ind; /* copy callback value as we modify it */
+	/* copy callback value as we modify it */
+	ind_local = param->pvn.u.isname.name.n;
 
 	DBG("DEBUG:tlsops:tlsops_comp: ind_local = %x", ind_local);
 	if (ind_local & CERT_PEER) {
@@ -434,7 +443,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_comp: could not determine "
 			"certificate\n");
-		return xl_get_null(msg, res, param, flags);
+		return pv_get_null(msg, param, res);
 	}
 
 	if (ind_local & CERT_SUBJECT) {
@@ -446,7 +455,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_comp: could not determine "
 			"subject or issuer\n");
-		return xl_get_null(msg, res, param, flags);
+		return pv_get_null(msg, param, res);
 	}
 
 	switch(ind_local) {
@@ -472,7 +481,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 		X509_NAME_oneline(name, buf, sizeof(buf));
 		res->rs.s = buf;
 		res->rs.len = strlen(buf);
-		res->flags = XL_VAL_STR;
+		res->flags = PV_VAL_STR;
 	} else {
 		index = X509_NAME_get_index_by_NID(name, nid, -1);
 		if (index == -1) {
@@ -501,7 +510,7 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 		memcpy(buf, text.s, text.len);
 		res->rs.s = buf;
 		res->rs.len = text.len;
-		res->flags = XL_VAL_STR;
+		res->flags = PV_VAL_STR;
 	
 		OPENSSL_free(text.s);
 	}
@@ -513,10 +522,11 @@ int tlsops_comp(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int fla
 	if (text.s) OPENSSL_free(text.s);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
-int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flags)
+int tlsops_alt(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
 {
 	static char buf[1024];
 	int type = GEN_URI, my = 0, n, found = 0, ind_local;
@@ -527,7 +537,7 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 	str text;
 	struct ip_addr ip;
 
-	ind_local = param->ind;
+	ind_local = param->pvn.u.isname.name.n;
 
 	if (ind_local & CERT_PEER) {
 		my = 0;
@@ -537,7 +547,7 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 		ind_local = ind_local ^ CERT_LOCAL;
 	} else {
 		LOG(L_CRIT,"BUG:tlsops:tlsops_alt: could not determine certificate\n");
-		return xl_get_null(msg, res, param, flags);
+		return pv_get_null(msg, param, res);
 	}
 
 	switch(ind_local) {
@@ -547,7 +557,7 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 		case COMP_IP:   type = GEN_IPADD; break;
 		default:
 			LOG(L_CRIT,"BUG:tlsops:tlsops_alt: ind_local=%d\n", ind_local);
-			return xl_get_null(msg, res, param, flags);
+			return pv_get_null(msg, param, res);
 	}
 
 	if (get_cert(&cert, &c, msg, my) < 0) return -1;
@@ -577,7 +587,7 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 			memcpy(buf, text.s, text.len);
 			res->rs.s = buf;
 			res->rs.len = text.len;
-			res->flags = XL_VAL_STR;
+			res->flags = PV_VAL_STR;
 			found = 1;
 			break;
 
@@ -590,7 +600,7 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 			memcpy(buf, text.s, text.len);
 			res->rs.s = buf;
 			res->rs.len = text.len;
-			res->flags = XL_VAL_STR;
+			res->flags = PV_VAL_STR;
 			found = 1;
 			break;
 		}
@@ -606,6 +616,6 @@ int tlsops_alt(struct sip_msg *msg, xl_value_t *res, xl_param_t *param, int flag
 	if (names) sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
 	if (!my) X509_free(cert);
 	tcpconn_put(c);
-	return xl_get_null(msg, res, param, flags);
+	return pv_get_null(msg, param, res);
 }
 
