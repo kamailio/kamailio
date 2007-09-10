@@ -64,6 +64,8 @@
  *              options (andrei)
  *  2006-10-13  added STUN_ALLOW_STUN, STUN_ALLOW_FP, STUN_REFRESH_INTERVAL
  *              (vlada)
+ *  2007-09-10  introduced phone2uri option which allows NOT to consider
+ *              user=phone URIs as TEL URIs
  */
 
 
@@ -253,6 +255,7 @@ STAT	statistics
 MAXBUFFER maxbuffer
 CHILDREN children
 CHECK_VIA	check_via
+PHONE2TEL	phone2tel
 SYN_BRANCH syn_branch
 MEMLOG		"memlog"|"mem_log"
 MEMDBG		"memdbg"|"mem_dbg"
@@ -479,6 +482,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
+<INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{SYN_BRANCH}	{ count(); yylval.strval=yytext; return SYN_BRANCH; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
 <INITIAL>{MEMDBG}	{ count(); yylval.strval=yytext; return MEMDBG; }

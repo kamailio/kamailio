@@ -94,6 +94,7 @@ extern unsigned short tls_port_no;
 extern int dont_fork;
 extern int dont_daemonize;
 extern int check_via;
+extern int phone2tel;
 extern int received_dns;
 extern int syn_branch;
 /* extern int process_no; */
