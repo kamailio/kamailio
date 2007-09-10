@@ -597,7 +597,8 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	int u_status_col, u_reason_col, q_wuser_col, q_wdomain_col;
 	subs_t* subs_array= NULL,* s;
 	unsigned int hash_code;
-				
+	int err_ret= -1;
+
 	if(ev->content_type.s== NULL)
 	{
 		ev= contains_event(&ev->name, NULL);
@@ -643,20 +644,23 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
 	{
 		LM_ERR( "in use_table\n");
-		goto error;
+		goto done;
 	}
 
 	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,n_query_cols,
 				n_result_cols, 0, &result)< 0)
 	{
 		LM_ERR( "in sql query\n");
-		goto error;
+		goto done;
 	}
 	if(result== NULL)
 		return 0;
 
 	if(result->n<= 0)
+	{
+		err_ret= 0;
 		goto done;
+	}
 
 	query_cols[q_wuser_col=n_query_cols]= "w_user";
 	query_vals[n_query_cols].nul= 0;
@@ -694,7 +698,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		{
 			LM_ERR( "getting status from rules document\n");
 			lock_release(&subs_htable[hash_code].lock);
-			goto error;
+			goto done;
 		}
 		if(subs.status!= status || reason.len!= subs.reason.len ||
 			(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
@@ -710,7 +714,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			{
 				LM_ERR( "in use_table\n");
 				lock_release(&subs_htable[hash_code].lock);
-				goto error;
+				goto done;
 			}
 
 			if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
@@ -718,7 +722,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			{
 				LM_ERR( "in sql update\n");
 				lock_release(&subs_htable[hash_code].lock);
-				goto error;
+				goto done;
 			}
 			/* save in the list all affected dialogs */
 			/* if status switches to terminated -> delete dialog */
@@ -728,7 +732,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 					" [presentity]=%.*s\n",	w_user.len, w_user.s, w_domain.len,
 					w_domain.s, pres_uri.len, pres_uri.s);
 				lock_release(&subs_htable[hash_code].lock);
-				goto error;
+				goto done;
 			}
 		 }
 			
@@ -743,21 +747,19 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		if(notify(s, NULL, NULL, 0)< 0)
 		{
 			LM_ERR( "sending Notify request\n");
-			goto error;
+			goto done;
 		}
 		s= s->next;
 	}
 	
-done:
-	pa_dbf.free_result(pa_db, result);
 	free_subs_list(subs_array, PKG_MEM_TYPE);
 	return 0;
 
-error:
+done:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
 	free_subs_list(subs_array, PKG_MEM_TYPE);
-	return 0;
+	return err_ret;
 }
 
 int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
